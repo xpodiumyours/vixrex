@@ -1,5 +1,6 @@
 "use client";
 
+import { ensureAnonymousSession } from "./assistantConversation";
 import { supabase } from "./supabase";
 import { VIXREX_NIYET_SOZLUGU, type VixrexNiyetAlan } from "./vixrexNiyetSozlugu";
 import { resolveVixrexIntent, resolveVixrexIntentsAll } from "./vixrexIntentResolver";
@@ -22,13 +23,11 @@ export interface VixrexPipelineResult {
 
 // Adım 4 (2026-09-03): pending slot artık localStorage DEĞİL, kalıcı ve
 // paylaşılan `assistant_conversations.pending_slot` (Furkan, 2026-09-02,
-// "NLU Faz 1-3") — RPC'ler auth.uid() ister. OwnerAssistantPanel panel
-// açılışında ensureAnonymousSession() çağırıp her esnafa (hesabı olmasa
-// bile) gerçek bir auth.uid() sağlıyor; böylece assistant_conversations'ın
-// NOT NULL user_id kısıtına dokunmadan, mevcut cross-client tabloya
-// yazabiliyoruz. Oturum henüz kurulmadıysa RPC NOT_AUTHENTICATED döner —
-// diğer fire-and-forget yazımlarla aynı desende sessizce yutulur, pending
-// o turda basitçe "yok" sayılır.
+// "NLU Faz 1-3") — RPC'ler auth.uid() ister. Pipeline her mesajın başında
+// anonim/kalıcı Supabase Auth oturumunun hazır olduğunu garanti eder;
+// OwnerAssistantPanel'in arka plandaki hazırlığına yarış durumu bırakmaz.
+// Oturum açılamazsa motor yine tek turlu çalışır, yalnız pending hafızası
+// o turda devreye giremez.
 async function loadPending(): Promise<{ anahtar: string; etiket: string; tip: string } | null> {
   try {
     const { data, error } = await supabase.rpc("get_assistant_pending_slot");
@@ -65,6 +64,10 @@ function clarifySuccess(alan: VixrexNiyetAlan, deger: unknown): string {
 export async function handleVixrexNluMessage(input: string): Promise<VixrexPipelineResult> {
   const trimmed = input.trim();
   if (!trimmed) return { outcome: "notUnderstood", message: "Hangi alanı değiştirmek istediğini netleştirebilir misin? Örn: “İşletme adını ... yap”" };
+
+  // Panel açılışındaki fire-and-forget hazırlığa güvenme: ilk mesaj çok
+  // hızlı gelirse pending RPC'leri auth.uid() olmadan düşebiliyordu.
+  await ensureAnonymousSession();
 
   const norm = vixrexNormalizeDartParity(trimmed);
   const pending = await loadPending();
