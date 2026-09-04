@@ -54,9 +54,27 @@ import { ensureAnonymousSession } from "@/lib/assistantConversation";
 // nereden, nasıl ve NEDEN başlayacağını bilmesi için yazıldı. Aşağıdaki 5
 // madde (eski numaralandırmayla 1, 2, 5, 6, 10) 2026-09-03'teki ilk
 // incelemeden kalan, henüz UYGULANMAMIŞ maddelerdi. 2026-09-04'te Casper bir
-// "3 modlu, tek elle kullanılabilen" bottom-sheet mockup'ı tarif etti (görsel
-// dosyası bu oturuma ULAŞMADI — yalnız aşağıdaki karşılaştırma tablosu geldi;
-// sıradaki ajan koda dökmeden önce Casper'dan gerçek mockup'ı istemeli).
+// "3 modlu, tek elle kullanılabilen" bottom-sheet mockup'ı tarif etti; aynı
+// gün MOD 2'nin (Asistan Modu, sheet açık) gerçek görseli de geldi — aşağıdaki
+// tarif artık o görsele dayanıyor. MOD 1 (vitrin + kapalı asistan) ve MOD 3
+// HÂLÂ GÖRÜLMEDİ — yalnız MOD 2'nin üstünde kesik/soluk görünen MOD 1 satırı
+// var. Sıradaki ajan koda dökmeden önce Casper'dan MOD 1'in TAMAMINI ve
+// MOD 3'ü istemeli.
+//
+// MOD 2 GÖRSELİNDEN DOĞRULANAN SOMUT DETAYLAR (2026-09-04):
+//   - Sheet, vitrinin ÜSTÜNE yuvarlak köşeli bir kart olarak biner (tam ekranı
+//     kaplamaz), üstte sürükleme çubuğu (drag handle) var.
+//   - Sheet başlığı: robot avatar + "Vixrex Asistan" + yeşil nokta "Çevrimiçi"
+//     solda; sağda "Aşama 2/3" (vurgulu) + küçük gri "15/46" (ham sayaç
+//     TAMAMEN kalkmıyor, Aşama'nın yanında ikincil/küçük bilgi olarak kalıyor)
+//     + kapatma X'i (X'e basınca muhtemelen MOD 1'e döner).
+//   - Aksiyon butonlarında SÜRE TAHMİNİ var: "+ Hizmet & Fiyat Ekle" /
+//     "~2 dakika" — büyük yeşil buton, altta küçük gri alt yazı.
+//   - MOD 1→MOD 2 geçişi muhtemelen SWIPE değil DOKUNMA: MOD 2'nin üstünde
+//     görünen kesik MOD 1 satırı "Asistan sağ altta, sadece dokunulduğunda
+//     büyür" diyor — bu, koddaki MEVCUT yuvarlak Vixrex düğmesiyle
+//     (`fixed bottom-5 right-5`, bu dosyada "Canonical Vixrex düğmesi" yorumu)
+//     örtüşüyor; sıfırdan bir gesture sistemi kurmaya GEREK OLMAYABİLİR.
 //
 // MEVCUT SORUN → YENİ ÇÖZÜM (Casper'ın 2026-09-04 tarifi):
 //   Sol editör + sağ chat dikkat dağıtıyor
@@ -104,9 +122,9 @@ import { ensureAnonymousSession } from "@/lib/assistantConversation";
 //   ikon) — önceki plana hiç yoktu, eklendi.
 //
 // SIRADAKİ AJAN NEREDEN BAŞLAMALI (sıra önemli):
-//   1) Casper'dan GERÇEK mockup görselini iste — bu blok yalnız bir metin
-//      tablosundan türetildi, piksel/etkileşim detayları (sheet ne kadar
-//      açılıyor, hangi swipe eşiği, "Aşama 2/3" hangi 3 aşama) belirsiz.
+//   1) Casper'dan MOD 1'in TAMAMINI ve MOD 3'ü iste (yalnız MOD 2 görüldü,
+//      2026-09-04) — sheet ne kadar açılıyor, "Aşama 2/3" hangi 3 aşama,
+//      MOD 3 ne (muhtemelen ⚙️ ayarlar ya da 👁️ önizle modu) hâlâ belirsiz.
 //   2) CLAUDE.md kuralı gereği: bu tamamen görsel/etkileşimsel bir değişiklik
 //      — Browser pane / canlı önizleme ile GÖRÜP doğrulamadan "düzelttim"
 //      DENMEZ. Sandbox'ta public_web/.env.local yoksa (2026-09-03'te öyleydi)
