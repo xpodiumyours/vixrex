@@ -11,7 +11,7 @@ Aktif Katman 2 branch'i: `feat/blog-kutuphanesi-katman-2`
 
 - [x] RESEARCH — mevcut blog, DB, RLS, sitemap, UX ve ölçek araştırıldı
 - [x] UX-FIT — **UYGUN AMA ŞARTLI** sonucu kullanıcıya sunuldu ve şartlar onaylandı
-- [x] LOOK — gerçek kod, canlı `store_articles` şeması/policy ve Vixrex UX yüzeyleri doğrulandı
+- [x] LOOK — gerçek `store_articles` şeması/policy ve Vixrex UX yüzeyleri doğrulandı
 - [x] LOCK — `store_articles`, public vitrin, Keşfet, Kirala, Flutter ve 46 alan Asistan motoru kapsam dışı kilitlendi
 - [x] 1.1 BUILD — ayrı `vixrex_blog_articles` veri omurgası, RLS, index ve iki mevcut taslak migration'a alındı
 - [x] 1.2 BUILD — public veri erişimi merkezi Supabase kaynağına geçirildi
@@ -22,7 +22,7 @@ Aktif Katman 2 branch'i: `feat/blog-kutuphanesi-katman-2`
 ### 1.5 Teknik VERIFY
 
 - [x] Secret sızıntı taraması geçti
-- [x] Supabase auth security config kontrolü geçti
+- [x] CI auth-config işi çalıştı; bu iş secret yoksa kontrolü atlayabildiği için canlı Auth güvenliği kanıtı olarak sayılmıyor
 - [x] Şema üretim/sapma kontrolü geçti
 - [x] Supabase migration zinciri sıfırdan kuruldu ve GRANT güvenlik bekçisi geçti
 - [x] TypeScript `tsc --noEmit` geçti
@@ -63,7 +63,7 @@ Aktif Katman 2 branch'i: `feat/blog-kutuphanesi-katman-2`
 ### Katman 2 Teknik VERIFY
 
 - [x] Secret sızıntı taraması geçti
-- [x] Supabase auth security config kontrolü geçti
+- [x] CI auth-config işi çalıştı; canlı Security Advisor ayrı kontrol edildi ve `Leaked Password Protection` kapalı olduğu doğrulandı
 - [x] Şema üretim/sapma kontrolü geçti
 - [x] Katman 2 değişen dosyalarında hedefli lint geçti
 - [x] TypeScript `tsc --noEmit` geçti
@@ -80,6 +80,18 @@ Not: Genel Next.js lint yalnız main'de önceden bulunan `giris/page.tsx:23` hat
 
 Araştırma: `docs/research/katman-2-merkezi-blog-kutuphanesi-arastirma.md`
 LOCK: `docs/research/katman-2-merkezi-blog-kutuphanesi-lock.md`
+
+## Katman 2.5 — Katman 3 Öncesi Profesyonel Sertleştirme
+
+Plan: `docs/research/katman-2-5-profesyonel-sertlestirme.md`
+
+- [ ] 2.5.1 Migration history eşitliği — repo/canlı timestamp sapması doğrulandı; canlı şema yeniden uygulanmadan dosya/history eşitlenecek ve migration zinciri tekrar doğrulanacak
+- [ ] 2.5.2 Blog RLS performans sertleştirmesi — Supabase Advisor uyarıları giderilecek; yetki davranışı değişmeyecek
+- [ ] 2.5.3 Gerçek allow/deny + admin API davranış testleri — kaynak sözleşme testlerine ek olarak RLS/API davranışı gerçek DB üzerinde kanıtlanacak
+- [x] 2.5.4 Auth security raporlaması düzeltildi — CI job ile canlı Advisor sonucu artık ayrı tutuluyor; canlıda Leaked Password Protection kapalı kaydedildi
+- [ ] 2.5.5 Taslak içerik doğruluğu + provenance — iki taslak güncel birincil kaynaklarla doğrulanacak, `source_urls` doldurulacak; bitmeden yayın yok
+
+**KAPI:** 2.5.1–2.5.5 tamamlanmadan Katman 3 RESEARCH başlamaz.
 
 ## Sonraki katmanlar
 
