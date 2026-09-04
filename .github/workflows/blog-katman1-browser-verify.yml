@@ -86,11 +86,15 @@ jobs:
               ]) {
                 const context = await browser.newContext({ viewport: cihaz.viewport, isMobile: cihaz.isMobile });
                 const page = await context.newPage();
+
                 await assertPage(page, '/blog', `${cihaz.ad}-blog`, 'Esnaf için dijital rehber');
                 await assertPage(page, '/blog/isletmemi-googleda-nasil-gosteririm', `${cihaz.ad}-blog-detay`, "İşletmemi Google'da nasıl gösteririm?");
                 await assertPage(page, '/kesfet', `${cihaz.ad}-kesfet`);
-                await assertPage(page, '/v/kiralik-teknik', `${cihaz.ad}-public-vitrin`);
-                await assertPage(page, '/preview/kiralik-teknik', `${cihaz.ad}-kirala-preview`);
+
+                const kirala = page.getByRole('button', { name: /Kirala/i }).first();
+                await kirala.waitFor({ state: 'visible' });
+
+                await assertPage(page, '/v/kiralik-teknik', `${cihaz.ad}-public-vitrin`, 'Hızlı Teknik');
                 await context.close();
               }
             } finally {
