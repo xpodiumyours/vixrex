@@ -6,6 +6,7 @@ Güvenli geri dönüş: `checkpoint/main-post-413-20260904`
 Aktif PR Katman 1: `#414`
 Aktif Katman 2 PR: `#415`
 Aktif Katman 2 branch'i: `feat/blog-kutuphanesi-katman-2`
+Aktif Katman 3 araştırma branch'i: `research/vitrine-yazi-cekme-katman-3`
 
 ## Katman 1 — Vixrex Blog Omurgası
 
@@ -93,11 +94,22 @@ Plan: `docs/research/katman-2-5-profesyonel-sertlestirme.md`
 - [x] Katman 2.5 kapısı — migration zinciri + GRANT + production build + gerçek RLS/admin API doğrulamasının son turu başarıyla geçti
 - [x] Geçici Katman 2.5 doğrulama workflow'u kanıt alındıktan sonra branch'ten kaldırıldı
 
-**KAPI AÇILDI:** Katman 3 yalnız `RESEARCH` ile başlayabilir. Katman 3 BUILD, RESEARCH → UX-FIT → SECURITY/RISK → LOOK → LOCK tamamlanmadan başlamaz.
+## Katman 3 — Vitrine Yazı Çekme / Taslak Enjeksiyonu
+
+Araştırma: `docs/research/katman-3-vitrine-yazi-cekme-arastirma.md`
+
+- [x] RESEARCH — merkezi yazı modeli, canlı `store_articles`, CRUD, owner-session, Flutter/Next.js blog davranışı, duplicate/canonical riski ve ölçek araştırıldı; sonuç **UYGUN AMA ŞARTLI**
+- [x] UX-FIT — mevcut Blog Yönetimi + mevcut editör yeniden kullanılacak; paralel blog yönetim ekranı kurulmayacak
+- [x] SECURITY/RISK — yalnız published kaynak, zorunlu draft, DB owner-session tekrar doğrulaması, kaynak ilişkisi ve idempotency şartları çıkarıldı
+- [x] LOOK — canlı `store_articles` kolon/constraint/policy/index/trigger yapısı ve gerçek Next.js/Flutter CRUD yüzeyleri doğrulandı
+- [ ] LOCK — araştırma + UX-FIT şartları kullanıcı tarafından onaylandıktan sonra kapsam kilitlenecek
+- [ ] BUILD
+- [ ] Teknik VERIFY
+
+**KAPI:** Katman 3 BUILD, kullanıcı araştırma/UX-FIT sonucunu açıkça onaylamadan başlamaz.
 
 ## Sonraki katmanlar
 
-- [ ] Katman 3 — Vitrine Yazı Çekme / Taslak Enjeksiyonu
 - [ ] Katman 4 — Vixrex Asistan Blog Komutları
 - [ ] Katman 5 — Dijital Çarşı Bağlantı Omurgası
 
