@@ -11,8 +11,8 @@ import { supabase } from "@/lib/supabase";
  * 1. DB RLS anon/authenticated için yalnız `status='published'` satırlarını açar.
  * 2. Public sorgular yine açıkça `status='published'` filtresi uygular.
  *
- * Sorgu hatasında taslak/public karışıklığı yaratmak yerine boş sonuç döner;
- * `/blog` mevcut davranışındaki gibi 404 olur ve sitemap yanlış URL üretmez.
+ * Sorgu/istemci hatasında taslak-public karışıklığı yaratmak yerine fail-closed
+ * davranılır: liste boş, detay bulunamadı, yayın anahtarı false olur.
  */
 
 export type BlogYazisi = {
@@ -53,20 +53,29 @@ function satiriYaziyaDonustur(row: VixrexBlogRow): BlogYazisi {
   };
 }
 
+function hataMesaji(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
 /** Yalnız yayındaki Vixrex yazıları, yeniden eskiye sıralı. */
 export async function yayindakiYazilar(): Promise<BlogYazisi[]> {
-  const { data, error } = await supabase
-    .from("vixrex_blog_articles")
-    .select(PUBLIC_SELECT)
-    .eq("status", "published")
-    .order("published_at", { ascending: false });
+  try {
+    const { data, error } = await supabase
+      .from("vixrex_blog_articles")
+      .select(PUBLIC_SELECT)
+      .eq("status", "published")
+      .order("published_at", { ascending: false });
 
-  if (error) {
-    console.error("[vixrex-blog] published list failed:", error.message);
+    if (error) {
+      console.error("[vixrex-blog] published list failed:", error.message);
+      return [];
+    }
+
+    return ((data ?? []) as unknown as VixrexBlogRow[]).map(satiriYaziyaDonustur);
+  } catch (error) {
+    console.error("[vixrex-blog] published list unavailable:", hataMesaji(error));
     return [];
   }
-
-  return ((data ?? []) as unknown as VixrexBlogRow[]).map(satiriYaziyaDonustur);
 }
 
 /** Yayındaki bir Vixrex yazısını slug ile bulur. Taslakları asla döndürmez. */
@@ -74,32 +83,42 @@ export async function yaziyiBul(slug: string): Promise<BlogYazisi | undefined> {
   const temizSlug = slug.trim();
   if (!temizSlug) return undefined;
 
-  const { data, error } = await supabase
-    .from("vixrex_blog_articles")
-    .select(PUBLIC_SELECT)
-    .eq("slug", temizSlug)
-    .eq("status", "published")
-    .maybeSingle();
+  try {
+    const { data, error } = await supabase
+      .from("vixrex_blog_articles")
+      .select(PUBLIC_SELECT)
+      .eq("slug", temizSlug)
+      .eq("status", "published")
+      .maybeSingle();
 
-  if (error) {
-    console.error("[vixrex-blog] article read failed:", error.message);
+    if (error) {
+      console.error("[vixrex-blog] article read failed:", error.message);
+      return undefined;
+    }
+
+    return data ? satiriYaziyaDonustur(data as unknown as VixrexBlogRow) : undefined;
+  } catch (error) {
+    console.error("[vixrex-blog] article unavailable:", hataMesaji(error));
     return undefined;
   }
-
-  return data ? satiriYaziyaDonustur(data as unknown as VixrexBlogRow) : undefined;
 }
 
 /** Blog yüzeyinin görünür olup olmadığı. */
 export async function blogYayindaMi(): Promise<boolean> {
-  const { count, error } = await supabase
-    .from("vixrex_blog_articles")
-    .select("id", { count: "exact", head: true })
-    .eq("status", "published");
+  try {
+    const { count, error } = await supabase
+      .from("vixrex_blog_articles")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "published");
 
-  if (error) {
-    console.error("[vixrex-blog] publish state failed:", error.message);
+    if (error) {
+      console.error("[vixrex-blog] publish state failed:", error.message);
+      return false;
+    }
+
+    return (count ?? 0) > 0;
+  } catch (error) {
+    console.error("[vixrex-blog] publish state unavailable:", hataMesaji(error));
     return false;
   }
-
-  return (count ?? 0) > 0;
 }
