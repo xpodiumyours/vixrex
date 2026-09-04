@@ -47,6 +47,74 @@ import { ensureAnonymousSession } from "@/lib/assistantConversation";
 // Yayınla düğmesi de yalan söylemez — temel alan eksikken pasif ve nedenini
 // yazar (bkz. PublishBar).
 
+// ============================================================================
+// SAHİPLİK EKRANI — KALAN PLAN (Casper, 2026-09-03/04 konuşması)
+// ============================================================================
+// Bu blok, panelin görsel/etkileşim yeniden tasarımı için SIRADAKİ AJANIN
+// nereden, nasıl ve NEDEN başlayacağını bilmesi için yazıldı. Aşağıdaki 5
+// madde (eski numaralandırmayla 1, 2, 5, 6, 10) 2026-09-03'teki ilk
+// incelemeden kalan, henüz UYGULANMAMIŞ maddelerdi. 2026-09-04'te Casper bir
+// "3 modlu, tek elle kullanılabilen" bottom-sheet mockup'ı tarif etti (görsel
+// dosyası bu oturuma ULAŞMADI — yalnız aşağıdaki karşılaştırma tablosu geldi;
+// sıradaki ajan koda dökmeden önce Casper'dan gerçek mockup'ı istemeli).
+//
+// MEVCUT SORUN → YENİ ÇÖZÜM (Casper'ın 2026-09-04 tarifi):
+//   Sol editör + sağ chat dikkat dağıtıyor
+//     → Bottom sheet asistan: yukarı kaydırınca açılır, aşağı kaydırınca
+//       vitrin tam ekran. Şu anki "sağda sabit 460px panel" modelinin YERİNİ
+//       ALIYOR — madde 10'un (mobil split-view) hem mobil hem masaüstü için
+//       genelleşmiş hâli.
+//   "23/46" korkutucu
+//     → "Aşama 2/3": 3 aşamalı akış, her aşama bitince "Devam et / Şimdilik
+//       yeter". Madde 1'in ("N/6 zorunlu" göstergesi) YERİNE GEÇİYOR — sayaç
+//       değil, adım/aşama metaforu.
+//   Asistan aynı mesajı tekrar ediyor
+//     → Onay kartı: zaten VAR (bkz. useOwnerActions.gonder içindeki "Doğru/
+//       Geri al" kartı, 2026-09-03). Mockup'ta buton adları "Onayla/Düzelt" —
+//       küçük bir isimlendirme/UX cilası, mantık değişmiyor.
+//   Karar noktalarında sadece metin
+//     → Görsel karar kartları: "Hizmet ekle", "Yayınla" gibi büyük renkli
+//       butonlar. Yayınla'nın YERİ zaten düzeltildi (bkz. PublishBar'ın artık
+//       composer altında sabit şerit olması, 2026-09-03) — kalan iş yalnız
+//       GÖRSEL ağırlık/stil.
+//   Yayına alma dağınık
+//     → Alt navigasyon: 🏠(vitrin) / ✏️(düzenle) / 👁️(önizle=müşteri modu) /
+//       ⚙️(ayarlar). BU, önceki 10 maddede YOKTU — yeni bir yapısal öğe
+//       (kalıcı bottom tab bar). SpotlightGuide'ın "balonu küçült" fikrini
+//       (eski madde 5) muhtemelen gereksiz kılıyor: balon yerine zaten
+//       "✏️ düzenle" modunda esnaf tek bir aktif alanla baş başa kalıyor.
+//
+// SONUÇ — ESKİ 5 MADDE NASIL DEĞİŞTİ:
+//   Madde 1 (yüzde → N/6)         → YENİDEN ÇERÇEVELENDİ: "Aşama 2/3" stepper.
+//   Madde 2 (SIRADA tek görev)    → KORUNUYOR, bottom-sheet içinde "✏️ düzenle"
+//                                    modunun kendi ekranı olarak yaşıyor.
+//   Madde 5 (Spotlight küçült)    → MUHTEMELEN GEREKSİZLEŞTİ — balon modeli
+//                                    yerine ayrı bir "düzenle" tam-ekran modu
+//                                    geliyor. Sıradaki ajan SpotlightGuide'ı
+//                                    küçültmeden önce bunun hâlâ gerekip
+//                                    gerekmediğini Casper'a sormalı.
+//   Madde 6 (sohbet geçmişi kısa) → KORUNUYOR, bottom-sheet'in "sohbet" alt-
+//                                    modunda hâlâ geçerli.
+//   Madde 10 (mobil split-view)   → GENİŞLEDİ: yalnız mobil değil, masaüstü de
+//                                    dahil "bottom sheet, 3 mod" modeline.
+//   YENİ: alt navigasyon (🏠/✏️/👁️/⚙️) — önceki plana hiç yoktu, eklendi.
+//
+// SIRADAKİ AJAN NEREDEN BAŞLAMALI (sıra önemli):
+//   1) Casper'dan GERÇEK mockup görselini iste — bu blok yalnız bir metin
+//      tablosundan türetildi, piksel/etkileşim detayları (sheet ne kadar
+//      açılıyor, hangi swipe eşiği, "Aşama 2/3" hangi 3 aşama) belirsiz.
+//   2) CLAUDE.md kuralı gereği: bu tamamen görsel/etkileşimsel bir değişiklik
+//      — Browser pane / canlı önizleme ile GÖRÜP doğrulamadan "düzelttim"
+//      DENMEZ. Sandbox'ta public_web/.env.local yoksa (2026-09-03'te öyleydi)
+//      bunu açıkça söyle, kör tahminle commit atma.
+//   3) Küçük, geri alınabilir adımlarla ilerle — örn. önce yalnız alt
+//      navigasyonu (🏠/✏️/👁️/⚙️) ekle ve canlı doğrula, SONRA bottom-sheet
+//      geçişine geç. Hepsini tek commit'te denemek, ÖNCE SOR kuralını
+//      (bu dosyanın en üstündeki CLAUDE.md talimatı) ihlal eder.
+//   4) ÖNCE SOR: küçük görünse bile Casper'a sormadan hiçbir adımı uygulama
+//      (bkz. CLAUDE.md, "Çalışma kuralı — ÖNCE SOR").
+// ============================================================================
+
 interface Props {
   slug: string;
   /** Vitrin bir hesaba bağlı değil — cihaz belleğinde duruyor. Uyarı şeridi
