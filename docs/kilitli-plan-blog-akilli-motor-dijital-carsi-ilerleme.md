@@ -52,11 +52,12 @@ Aktif araştırma branch'i: `research/blog-kutuphanesi-katman-2`
 - [x] UX-FIT — merkezi kütüphane public `lp-*` Vixrex dilinde kalacak; owner/Keşfet/global shell değişmeyecek
 - [x] SECURITY/RISK — taslak RLS, tek kategori kaynağı, merkezi admin görsel yetkisi, filtre URL patlaması ve relation bütünlüğü riskleri çıkarıldı
 - [x] LOOK — canlı şema, RLS, `/api/articles`, owner blog editörü, public blog, kategori/konum kaynakları ve görsel upload çekirdeği gerçek kod/veriyle teyit edildi
-- [ ] LOCK — araştırmadaki 9 BUILD şartı kullanıcı onayından sonra kilitlenecek
+- [x] LOCK — 9 BUILD sınırı, 7 konu ailesi, kullanım amacı sözlüğü, konum ve etiket sınırları kullanıcı devam onayıyla kilitlendi
 - [ ] BUILD
 - [ ] Teknik VERIFY
 
 Araştırma: `docs/research/katman-2-merkezi-blog-kutuphanesi-arastirma.md`
+LOCK: `docs/research/katman-2-merkezi-blog-kutuphanesi-lock.md`
 
 ## Sonraki katmanlar
 
