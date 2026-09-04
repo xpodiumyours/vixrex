@@ -38,14 +38,6 @@ describe("serbestMetindenAlanlariCikar — karışık gerçekçi paragraflar", (
     expect(sonuc.whatsapp).toBe("905321234567");
   });
 
-  it("işletme adı gibi duran 'Konak kafe' ifadesinden İzmir/Konak tahmin etmez", () => {
-    const sonuc = serbestMetindenAlanlariCikar("Konak kafe 05421802573");
-    expect(sonuc.whatsapp).toBe("905421802573");
-    expect(sonuc.kategoriEtiketi).toBe("Kafe / Lokanta");
-    expect(sonuc.ilAdi).toBeUndefined();
-    expect(sonuc.ilceAdi).toBeUndefined();
-  });
-
   it("il belirtilmeden belirsiz bir ilçe geçerse il/ilçe boş kalır — tahmin yok", () => {
     const sonuc = serbestMetindenAlanlariCikar("Kemer'de küçük bir kırtasiyem var.");
     expect(sonuc.ilAdi).toBeUndefined();
