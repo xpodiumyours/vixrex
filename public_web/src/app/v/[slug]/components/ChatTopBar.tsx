@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { VixrexAvatar } from "./VixrexAvatar";
 import type { HazirlikRaporu } from "@/lib/vitrinReadiness";
 
@@ -10,11 +10,16 @@ interface Props {
 }
 
 // Sahiplik sayfasındaki Vixrex Asistan kabuğunun tek başlığı.
-// Bu bileşen yalnız OwnerAssistantPanel içinde kullanılır. Parent kabuğa
-// yerel bir class ekleyerek masaüstünde sağ çekmece, mobilde bottom-sheet
-// görünümü verir; Keşfet/public vitrin/global layout davranışına dokunmaz.
+// Mobil kural: asistan yalnız bilgi isterken alan kaplar. Kayıt gerçekten
+// başladığında mevcut owner state'ini bozmadan sheet görsel olarak çekilir;
+// canonical Vixrex düğmesi "Düzenleniyor" / "Düzenlendi" geri bildirimi
+// verir. Kayıt hatasında sheet tekrar görünür. Mesaj geçmişi varsayılan olarak
+// son iki mesaja daraltılır; "Geçmiş" ile tamamı açılır.
 export function ChatTopBar({ rapor, onKapat }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
+  const durumTimerRef = useRef<number | null>(null);
+  const kayitSuruyorRef = useRef(false);
+  const [gecmisAcik, setGecmisAcik] = useState(false);
   const asama = rapor.yuzde < 34 ? 1 : rapor.yuzde < 67 ? 2 : 3;
 
   useEffect(() => {
@@ -22,25 +27,121 @@ export function ChatTopBar({ rapor, onKapat }: Props) {
     if (!shell) return;
 
     shell.classList.add("vixrex-owner-assistant-shell");
-    return () => shell.classList.remove("vixrex-owner-assistant-shell");
+
+    const canonicalTetik = () =>
+      document.querySelector<HTMLButtonElement>('button[aria-label^="Vixrex Asistan"]');
+
+    const tetikDurumunuTemizle = () => {
+      const tetik = canonicalTetik();
+      if (!tetik) return;
+      tetik.removeAttribute("data-vixrex-status");
+      tetik.setAttribute("aria-label", "Vixrex Asistan");
+    };
+
+    const sonMesajDurumu = (): "basarili" | "hata" | "belirsiz" => {
+      const son = shell.querySelector<HTMLElement>(
+        ".vixrex-panel-kaydirici > :last-child",
+      );
+      const metin = (son?.textContent ?? "").toLocaleLowerCase("tr-TR");
+      if (
+        /kaydedemedim|kaydedilemedi|bağlantı kurulamadı|tekrar dene|birden fazla bilgi|sadece onu yazar mısın/.test(
+          metin,
+        )
+      ) {
+        return "hata";
+      }
+      if (/güncellendi|kaydettim|kaydedildi|dolduruldu/.test(metin)) {
+        return "basarili";
+      }
+      return "belirsiz";
+    };
+
+    const kayitDurumunuSenkronla = () => {
+      if (window.matchMedia("(min-width: 640px)").matches) return;
+      const kaydediliyor = document.body.classList.contains("vixrex-kaydediliyor");
+
+      if (kaydediliyor && !kayitSuruyorRef.current) {
+        kayitSuruyorRef.current = true;
+        shell.classList.add("vixrex-assistant-compact");
+        const tetik = canonicalTetik();
+        if (tetik) {
+          tetik.dataset.vixrexStatus = "saving";
+          tetik.setAttribute("aria-label", "Vixrex Asistan — düzenleniyor");
+        }
+        return;
+      }
+
+      if (!kaydediliyor && kayitSuruyorRef.current) {
+        kayitSuruyorRef.current = false;
+        // React mesaj state'i ve vitrin taslağı aynı turda güncelleniyor.
+        // Son balonu okumadan önce DOM'un o turu tamamlamasına izin ver.
+        window.setTimeout(() => {
+          const sonuc = sonMesajDurumu();
+          const tetik = canonicalTetik();
+
+          // Emin olmadığımız durumda başarı uydurmayız; asistan açık kalır.
+          if (sonuc !== "basarili") {
+            shell.classList.remove("vixrex-assistant-compact");
+            tetikDurumunuTemizle();
+            return;
+          }
+
+          if (tetik) {
+            tetik.dataset.vixrexStatus = "saved";
+            tetik.setAttribute("aria-label", "Vixrex Asistan — düzenlendi");
+          }
+
+          if (durumTimerRef.current !== null) {
+            window.clearTimeout(durumTimerRef.current);
+          }
+          durumTimerRef.current = window.setTimeout(() => {
+            // Canonical toggle üzerinden gerçekten kapat: ikinci bir açık/kapalı
+            // state üretmeyelim. Sonraki dokunuş aynı konuşmayı geri açar.
+            const guncelTetik = canonicalTetik();
+            if (guncelTetik?.getAttribute("aria-expanded") === "true") {
+              guncelTetik.click();
+            }
+            tetikDurumunuTemizle();
+          }, 1400);
+        }, 120);
+      }
+    };
+
+    const observer = new MutationObserver(kayitDurumunuSenkronla);
+    observer.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+    kayitDurumunuSenkronla();
+
+    return () => {
+      observer.disconnect();
+      shell.classList.remove(
+        "vixrex-owner-assistant-shell",
+        "vixrex-assistant-compact",
+        "vixrex-gecmis-acik",
+      );
+      tetikDurumunuTemizle();
+      if (durumTimerRef.current !== null) {
+        window.clearTimeout(durumTimerRef.current);
+      }
+    };
   }, []);
+
+  useEffect(() => {
+    const shell = rootRef.current?.parentElement;
+    if (!shell) return;
+    shell.classList.toggle("vixrex-gecmis-acik", gecmisAcik);
+    return () => shell.classList.remove("vixrex-gecmis-acik");
+  }, [gecmisAcik]);
 
   const kapat = () => {
     onKapat();
 
-    // OwnerAssistantPanel'ın eski mobil davranışında başlıktaki X yalnız
-    // `haritaAcik` state'ini kapatıyor, `acik` state'ini kapatmıyordu. Bu
-    // nedenle X ekranda hiçbir şey yapmıyormuş gibi kalıyordu. Parent iş
-    // akışını değiştirmeden, yalnız mobilde mevcut canonical Vixrex
-    // tetikleyicisini programatik olarak kapalı duruma geçiriyoruz. Böylece
-    // aynı toggle yolu kullanılır; ikinci bir açık/kapalı state üretilmez.
     if (
       typeof window !== "undefined" &&
       !window.matchMedia("(min-width: 640px)").matches
     ) {
       window.requestAnimationFrame(() => {
         const tetik = document.querySelector<HTMLButtonElement>(
-          'button[aria-label="Vixrex Asistan"][aria-expanded="true"]',
+          'button[aria-label^="Vixrex Asistan"][aria-expanded="true"]',
         );
         tetik?.click();
       });
@@ -73,11 +174,21 @@ export function ChatTopBar({ rapor, onKapat }: Props) {
                 Sahiplik modu
               </span>
             </div>
-            <p className="mt-0.5 truncate text-[11px] font-medium text-slate-400">
-              Vitrin düzenleme
-              <span className="mx-1.5 text-slate-600">·</span>
-              <span className="text-emerald-300">Çevrimiçi</span>
-            </p>
+            <div className="mt-0.5 flex items-center gap-2">
+              <p className="min-w-0 truncate text-[11px] font-medium text-slate-400">
+                Vitrin düzenleme
+                <span className="mx-1.5 text-slate-600">·</span>
+                <span className="text-emerald-300">Çevrimiçi</span>
+              </p>
+              <button
+                type="button"
+                onClick={() => setGecmisAcik((v) => !v)}
+                className="shrink-0 text-[10px] font-bold text-sky-300 underline decoration-dotted underline-offset-2 sm:hidden"
+                aria-pressed={gecmisAcik}
+              >
+                {gecmisAcik ? "Son mesajlar" : "Geçmiş"}
+              </button>
+            </div>
           </div>
 
           <div className="shrink-0 rounded-xl border border-white/10 bg-white/[0.045] px-2.5 py-1.5 text-right">
@@ -120,13 +231,68 @@ export function ChatTopBar({ rapor, onKapat }: Props) {
             0 0 0 1px rgba(255, 255, 255, 0.025) inset !important;
           backdrop-filter: blur(20px);
           -webkit-backdrop-filter: blur(20px);
+          transition: opacity 180ms ease, transform 180ms ease;
         }
 
         body.vixrex-asistan-acik
-          button[aria-label="Vixrex Asistan"][aria-expanded="true"] {
+          button[aria-label^="Vixrex Asistan"][aria-expanded="true"]:not([data-vixrex-status]) {
           opacity: 0;
           pointer-events: none;
           transform: translateY(6px) scale(0.92);
+        }
+
+        body.vixrex-asistan-acik button[data-vixrex-status] {
+          opacity: 1 !important;
+          transform: none !important;
+          min-width: 9.5rem;
+          justify-content: center;
+        }
+
+        body.vixrex-asistan-acik button[data-vixrex-status] > * {
+          display: none !important;
+        }
+
+        body.vixrex-asistan-acik button[data-vixrex-status]::before,
+        body.vixrex-asistan-acik button[data-vixrex-status]::after {
+          display: inline-block;
+        }
+
+        body.vixrex-asistan-acik button[data-vixrex-status="saving"] {
+          pointer-events: none;
+        }
+
+        body.vixrex-asistan-acik button[data-vixrex-status="saving"]::before {
+          content: "";
+          width: 0.9rem;
+          height: 0.9rem;
+          margin-right: 0.5rem;
+          border: 2px solid rgba(255, 255, 255, 0.35);
+          border-top-color: white;
+          border-radius: 999px;
+          animation: vixrex-assistant-spin 700ms linear infinite;
+        }
+
+        body.vixrex-asistan-acik button[data-vixrex-status="saving"]::after {
+          content: "Düzenleniyor…";
+          font-size: 0.78rem;
+          font-weight: 800;
+        }
+
+        body.vixrex-asistan-acik button[data-vixrex-status="saved"]::before {
+          content: "✓";
+          margin-right: 0.45rem;
+          font-size: 0.9rem;
+          font-weight: 900;
+        }
+
+        body.vixrex-asistan-acik button[data-vixrex-status="saved"]::after {
+          content: "Düzenlendi";
+          font-size: 0.78rem;
+          font-weight: 800;
+        }
+
+        @keyframes vixrex-assistant-spin {
+          to { transform: rotate(360deg); }
         }
 
         @media (max-width: 639px) {
@@ -140,20 +306,35 @@ export function ChatTopBar({ rapor, onKapat }: Props) {
             border-radius: 1.5rem 1.5rem 1.25rem 1.25rem !important;
           }
 
-          /* Mobilde sohbet alanı sabit başlık/Sırada/composer arasında sıfıra
-           * kadar eziliyordu. Mesaj state'i doğru çalışsa bile kullanıcı
-           * gönderdiğini göremiyordu. Sohbete gerçek bir minimum görünür alan
-           * ayırıyoruz; taşan mesajlar kendi mevcut scroll alanında kalır. */
-          .vixrex-owner-assistant-shell > .vixrex-panel-kaydirici {
+          .vixrex-owner-assistant-shell.vixrex-assistant-compact {
+            opacity: 0 !important;
+            pointer-events: none !important;
+            transform: translateY(18px) scale(0.96) !important;
+          }
+
+          /* Varsayılan mobil konuşma yalnız bağlam için gereken son iki
+           * mesajı gösterir. Kalıcı konuşma silinmez; Geçmiş düğmesi aynı
+           * DOM'daki tüm mesajları tekrar görünür yapar. */
+          .vixrex-owner-assistant-shell:not(.vixrex-gecmis-acik)
+            > .vixrex-panel-kaydirici {
+            min-height: 0 !important;
+            max-height: 9rem !important;
+            flex: 0 1 auto !important;
+          }
+
+          .vixrex-owner-assistant-shell:not(.vixrex-gecmis-acik)
+            > .vixrex-panel-kaydirici
+            > *:not(:nth-last-child(-n + 2)) {
+            display: none !important;
+          }
+
+          .vixrex-owner-assistant-shell.vixrex-gecmis-acik
+            > .vixrex-panel-kaydirici {
             min-height: 8.5rem !important;
+            max-height: 38dvh !important;
             flex: 1 1 8.5rem !important;
           }
 
-          /* Mobilde eski dolaşan SpotlightGuide ile yeni bottom-sheet aynı
-           * anda çizilince kullanıcı iki ayrı düzenleme yüzeyi görüyordu.
-           * Sheet artık mobilde TEK düzenleme yüzeyi; eski halka/balon yalnız
-           * masaüstünde kalır. Bu selector SpotlightGuide'ın mevcut kökünü
-           * hedefler ve sahiplik dışı hiçbir ekranı etkilemez. */
           body.vixrex-asistan-acik
             div[aria-hidden="false"].pointer-events-none.fixed.inset-0[class~="z-[80]"] {
             display: none !important;
