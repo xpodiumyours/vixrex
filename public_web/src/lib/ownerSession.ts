@@ -8,7 +8,7 @@
 //   → çalışma taslağını döndürür
 //   → herhangi bir halka başarısızsa owner modu fail-closed kapanır.
 
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 
 export const OWNER_SESSION_COOKIE = "vixrex_owner_session";
 // Kayan (sliding) oturum penceresi — sabit ömür değil. Panel açıkken
@@ -47,8 +47,31 @@ interface OwnerSessionPayload extends OwnerSession {
   exp: number;
 }
 
+/**
+ * Production'da OWNER_SESSION_SECRET zorunludur ve davranış değişmez.
+ *
+ * Vercel Preview ortamında bu secret tanımlı değilse sahiplik akışının daha
+ * Supabase'deki tek-kullanımlık kodu tüketmeden kapanması 411/412/413
+ * Preview'larında gerçek owner ekranının test edilmesini engelliyordu.
+ * Preview için proje-kimlikli deterministik bir HMAC anahtarı üretiyoruz.
+ * Bu değer production'da ASLA kullanılmaz. Asıl sahiplik yetkisi yine
+ * tahmin-edilemez 256-bit sessionToken + Supabase owner_sessions kaydıdır;
+ * uydurma/forged bir token RPC tarafından reddedilir.
+ */
+function getPreviewSecret(): string {
+  if (process.env.VERCEL_ENV !== "preview") return "";
+  const projectIdentity =
+    process.env.VERCEL_PROJECT_ID?.trim() ||
+    process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim() ||
+    "vixrex-public-preview";
+  return createHash("sha256")
+    .update(`vixrex-owner-session-preview:${projectIdentity}`)
+    .digest("hex");
+}
+
 function getSecret(): string {
-  return (process.env.OWNER_SESSION_SECRET || "").trim();
+  const configured = (process.env.OWNER_SESSION_SECRET || "").trim();
+  return configured || getPreviewSecret();
 }
 
 export function assertOwnerSessionConfigured(): void {
