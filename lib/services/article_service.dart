@@ -26,6 +26,53 @@ class ArticleService {
     }
   }
 
+  /// Yayındaki merkezi Vixrex yazılarını sınırlı sayıda getirir.
+  /// Katman 3: bütün kütüphane istemciye tek seferde yüklenmez.
+  Future<Result<List<Map<String, dynamic>>>> fetchVixrexLibrary({
+    int limit = 20,
+  }) async {
+    try {
+      final safeLimit = limit.clamp(1, 50);
+      final res = await _resolveClient
+          .from('vixrex_blog_articles')
+          .select(
+            'id, slug, title, summary, cover_image_url, reading_minutes, primary_topic, purpose, published_at',
+          )
+          .eq('status', 'published')
+          .order('published_at', ascending: false)
+          .limit(safeLimit);
+      return Result.success(List<Map<String, dynamic>>.from(res as List));
+    } catch (e, s) {
+      return Result.failure(SupabaseErrorMapper.map(e, s));
+    }
+  }
+
+  /// Merkezi Vixrex yazısını bu vitrinin bloguna TASLAK olarak çeker.
+  /// Yetki ve published→draft kuralı DB RPC içinde yeniden doğrulanır.
+  Future<Result<Map<String, dynamic>>> importVixrexBlogArticle({
+    required String storeSlug,
+    required String sourceArticleId,
+    required String mode,
+  }) async {
+    try {
+      final res = await _resolveClient.rpc(
+        'import_vixrex_blog_article_to_store',
+        params: {
+          'p_store_slug': storeSlug,
+          'p_source_article_id': sourceArticleId,
+          'p_mode': mode,
+          'p_session_token': null,
+        },
+      );
+      if (res is! Map) {
+        throw const FormatException('Geçersiz blog import yanıtı.');
+      }
+      return Result.success(Map<String, dynamic>.from(res));
+    } catch (e, s) {
+      return Result.failure(SupabaseErrorMapper.map(e, s));
+    }
+  }
+
   /// İnceleme bekleyen yazıları getirir (moderasyon için).
   Future<Result<List<Map<String, dynamic>>>>
   fetchPendingReviewArticles() async {
