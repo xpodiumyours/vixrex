@@ -1,6 +1,7 @@
 # KİLİTLİ PLAN — İlerleme Panosu
 
 Ana plan: `docs/kilitli-plan-blog-akilli-motor-dijital-carsi.md`
+Final entegrasyon kararı: `docs/kilitli-plan-final-entegrasyon-test-karari.md`
 Güvenli geri dönüş: `checkpoint/main-post-413-20260904`
 Aktif PR: `#414`
 
@@ -16,7 +17,7 @@ Aktif PR: `#414`
 - [x] 1.4 BUILD — blog ana sayfası Vixrex `lp-*` tasarım diliyle 1200px büyüyebilir katalog düzenine çıkarıldı; detay okuma genişliği korunuyor
 - [x] Güvenlik sözleşme testi — public yalnız `published`, iki mevcut yazı `draft`, `store_articles` dokunulmazlığı kaynak testine bağlandı
 
-### 1.5 VERIFY
+### 1.5 Teknik VERIFY
 
 - [x] Secret sızıntı taraması geçti
 - [x] Supabase auth security config kontrolü geçti
@@ -27,43 +28,41 @@ Aktif PR: `#414`
 - [x] Canlı DB'de 2 kayıt = 2 taslak / 0 yayın doğrulandı
 - [x] Canlı DB'de RLS, unique slug ve published index doğrulandı
 - [x] `anon` rolüyle taslak görünürlüğü = 0 satır doğrulandı
-- [x] İlk tam test turunda Katman 1 kaynaklı sitemap mock uyumsuzluğu bulundu ve fail-closed düzeltildi
-- [x] Katman 1 kapı testleri son turu — 7 dosya / 32 test geçti
-- [x] Production build — Next.js 16.2.11 production build başarıyla tamamlandı
-- [x] Vercel'siz gerçek tarayıcı doğrulaması — exact branch production build GitHub runner'da ayağa kaldırıldı; mobil 390×844 ve masaüstü 1440×1000 test edildi
-- [x] Gerçek yayın satırıyla `/blog` + `/blog/[slug]` mobil/masaüstü ekran doğrulaması geçti
-- [x] Ekran doğrulamasında Katman 1'e ait detay CTA kontrast sorunu bulundu, Vixrex `lp-*` yüzeyiyle düzeltildi ve ikinci gerçek tarayıcı turunda yeniden geçti
-- [x] Test için geçici yayınlanan merkezi yazı tekrar `draft` yapıldı; canlı DB yeniden 2 taslak / 0 yayın
-- [x] Geçici browser-verify GitHub Actions workflow'u kanıt alındıktan sonra branch'ten silindi; main'e taşınmayacak
-- [x] Katman 1 VERIFY tamamlandı — blog omurgası kendi kapsamındaki güvenlik, veri, build ve gerçek ekran kontrollerinden geçti
+- [x] Katman 1 kapı testleri — 7 dosya / 32 test geçti
+- [x] Production build başarıyla tamamlandı
+- [x] Katman 1 teknik VERIFY tamamlandı
 
-### Kapsam dışı regresyon notu — Katman 1'i bloklamaz
+### Kullanıcı kararı — ekran testinin zamanı
 
-- Public vitrin ve Keşfet ekranları ek smoke kontrolü olarak açıldı ve çalıştı.
-- Keşfet'te Kirala CTA görünürlüğü doğrulandı.
-- Kirala → sahiplik uçtan uca akışı **Katman 1 blog kapsamına dahil değildir**; bu nedenle Katman 1 kapanış şartı değildir ve ayrı genel regresyon kontrolü olarak ele alınır.
+- [x] Katman bazında teknik doğrulama devam edecek.
+- [x] Her katmanda ayrı ayrı ekran test döngüsüne girilmeyecek.
+- [x] Gerçek uçtan uca ekran testi Katman 1–5 tamamlandıktan sonra yapılacak.
+- [ ] FINAL E2E — deneme/kiralık vitrin kirala → sahipliği aç → Vixrex Asistan ile merkezi blog yazısını vitrinin bloguna taslak çek → ekranda doğrula → düzenle/yayınla → public vitrinde doğrula → Dijital Çarşı ilişkisini doğrula.
 
 ### Baseline notları — Katman 1 kaynaklı değil
 
 - Next.js genel lint, main'de önceden bulunan `giris/page.tsx:23` hatasında duruyor.
-- Tam Vitest turunda PR #413 sonrası main'de zaten bulunan iki kontrat beklentisi kırmızı: eski 36px maskot beklentisi ve owner-draft `SERVICE_ROLE` metin beklentisi. Katman 1 bu dosyalara dokunmuyor.
-- Tam test envanteri: 143 test dosyasından 141 geçti; 1022 testten 1019 geçti, 2 baseline hata ve 1 todo kaldı.
+- Tam Vitest turunda PR #413 sonrası main'de zaten bulunan iki kontrat beklentisi kırmızı: eski 36px maskot beklentisi ve owner-draft `SERVICE_ROLE` metin beklentisi.
 - Flutter format kontrolü mevcut baseline biçim farklarında kırmızı; Katman 1 Flutter dosyası değiştirmiyor.
-- Cookie izin bandı gerçek tarayıcı ekranlarında içerik üzerine geliyor; global/mevcut yüzeydir, Katman 1 tarafından eklenmedi.
 
-### Vercel engeli ve güvenli alternatif
+## Katman 2 — Merkezi Blog Kütüphanesi
 
-- Vercel `vixrex-public` ve `vixrex-app` Hobby build-rate-limit nedeniyle yeni Preview üretmedi.
-- Katman 1 blog doğrulaması bunun yerine exact branch production build + GitHub runner + Chromium ile yapıldı.
-
-- [ ] DECIDE — Katman 1 sonucu kullanıcıya sunulacak; merge kararı kullanıcıya ait
-- [ ] MERGE — yalnız kullanıcı açık onay verirse
+- [ ] RESEARCH
+- [ ] UX-FIT
+- [ ] SECURITY/RISK
+- [ ] LOOK
+- [ ] LOCK
+- [ ] BUILD
+- [ ] Teknik VERIFY
 
 ## Sonraki katmanlar
 
-- [ ] Katman 2 — Merkezi Blog Kütüphanesi
 - [ ] Katman 3 — Vitrine Yazı Çekme / Taslak Enjeksiyonu
 - [ ] Katman 4 — Vixrex Asistan Blog Komutları
 - [ ] Katman 5 — Dijital Çarşı Bağlantı Omurgası
 
-> Kural: Tik yalnız gerçekten tamamlanan adıma konur. Bir katmanın kapanış şartları yalnız o katmanın kilitli kapsamından seçilir; kapsam dışı regresyon kontrolleri katmanı bloklamaz.
+## Main kuralı
+
+- [ ] MERGE — yalnız kullanıcı açık onay verirse
+
+> Kural: Tik yalnız gerçekten tamamlanan adıma konur. Katman bazında teknik güvenlik doğrulaması atlanmaz; gerçek kullanıcı ekran kabul testi final entegrasyon kapısında yapılır.
