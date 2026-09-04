@@ -174,7 +174,7 @@ class _BlogPostListScreenState extends State<BlogPostListScreen> {
                                   sourceArticleId: id,
                                   mode: mode,
                                 );
-                            if (!mounted) return;
+                            if (!mounted || !sheetContext.mounted) return;
 
                             if (!importResult.isSuccess) {
                               if (Navigator.of(sheetContext).canPop()) {
@@ -191,7 +191,7 @@ class _BlogPostListScreenState extends State<BlogPostListScreen> {
                                     ?.trim();
                             final refreshed = await _articleService
                                 .fetchArticles(widget.storeSlug);
-                            if (!mounted) return;
+                            if (!mounted || !sheetContext.mounted) return;
 
                             Map<String, dynamic>? importedArticle;
                             if (refreshed.isSuccess && importedSlug != null) {
@@ -209,7 +209,7 @@ class _BlogPostListScreenState extends State<BlogPostListScreen> {
 
                             if (importedArticle != null) {
                               await AppRouter.navigateToBlogEditor(
-                                context,
+                                this.context,
                                 slug: widget.storeSlug,
                                 article: importedArticle,
                               );
