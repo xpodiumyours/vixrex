@@ -107,12 +107,12 @@ LOCK: `docs/research/katman-3-vitrine-yazi-cekme-lock.md`
 - [x] LOCK — 12 ürün/güvenlik şartı kullanıcı tarafından açıkça onaylandı; source provenance, iki import modu, idempotency ve mevcut editörü yeniden kullanma sınırları kilitlendi
 - [x] 3.1 BUILD — `store_articles` kaynak provenance alanları, kaynak-slug partial unique idempotency ve DB owner doğrulamalı published→draft import RPC'si kodlandı
 - [x] 3.2 BUILD — Next.js owner-session cookie + DB session tekrar doğrulamalı dar import API adapter'ı kodlandı
-- [ ] 3.3 BUILD — bounded merkezi kütüphane seçimi mevcut Next.js Blog Yönetimi yüzeyine bağlanacak
-- [ ] 3.4 BUILD — Flutter aynı RPC/veri sözleşmesine bağlanacak; ayrı backend kurulmayacak
-- [ ] BUILD tamamlandı
+- [x] 3.3 BUILD — bounded merkezi kütüphane seçimi mevcut Next.js Blog Yönetimi yüzeyine bağlandı; import sonrası mevcut editör açılıyor
+- [x] 3.4 BUILD — Flutter aynı merkezi published kütüphane ve aynı import RPC sözleşmesine bağlandı; ayrı backend kurulmadı
+- [x] BUILD tamamlandı — kilitli Katman 3 kapsamındaki kod yüzeyleri tamamlandı; kaynak sözleşme testi ve gerçek DB davranış testi eklendi
 - [ ] Teknik VERIFY
 
-**KURAL:** BUILD kodlandı işareti doğrulandı anlamına gelmez. Migration canlıya uygulanmadı; 3.1–3.4 tamamlandıktan sonra teknik VERIFY yapılacak.
+**KURAL:** BUILD tamamlandı işareti doğrulandı anlamına gelmez. Katman 3 migration canlıya uygulanmadı; Teknik VERIFY tüm kapıları geçmeden canlıya uygulanmayacak ve Katman 4 başlamayacak.
 
 ## Sonraki katmanlar
 
