@@ -260,6 +260,22 @@ export function useFieldSelection({
     return () => document.removeEventListener("click", tiklama);
   }, [alanSec]);
 
+  // Görsel/seçim/il-ilçe gibi özel bir alan seçiliyken normal textarea
+  // görünmez. FieldInputArea'daki "Serbest yaz" kapısı bu olayı yollar;
+  // seçim bırakılır ve aynı tek giriş kutusu 46 alanlık NLU moduna döner.
+  useEffect(() => {
+    const serbestMesajaGec = () => {
+      ++gecisRef.current; // devam eden otomatik kaydırmayı iptal et
+      setGecisSuruyor(false);
+      vurguyuTemizle();
+      setSeciliAlan(null);
+      setGirisState("");
+      window.setTimeout(() => girisRef.current?.focus(), 40);
+    };
+    document.addEventListener("vixrex-serbest-mesaj", serbestMesajaGec);
+    return () => document.removeEventListener("vixrex-serbest-mesaj", serbestMesajaGec);
+  }, [vurguyuTemizle]);
+
   useEffect(() => vurguyuTemizle, [vurguyuTemizle]);
 
   return {
