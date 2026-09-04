@@ -71,6 +71,17 @@ export function FieldInputArea({
 
   const kaliteMi = seciliAlan ? alanOnemi(seciliAlan) === "kalite" : false;
 
+  // Bu tiplerde ana giriş textarea değil; dropdown/görsel seçici çizilir.
+  // Akıllı motor bu sırada görünmez kalmasın diye tek dokunuşla serbest
+  // yazı moduna dönme kapısı gösterilir.
+  const ozelKontrolMu = Boolean(
+    seciliAlan &&
+      (seciliAlan.tip === "gorsel" ||
+        seciliAlan.tip === "secim" ||
+        seciliAlan.anahtar === "il" ||
+        seciliAlan.anahtar === "ilce"),
+  );
+
   return (
     <div>
       {seciliAlan && (
@@ -113,6 +124,18 @@ export function FieldInputArea({
           )}
         </p>
       )}
+
+      {ozelKontrolMu && (
+        <button
+          type="button"
+          onClick={() => document.dispatchEvent(new Event("vixrex-serbest-mesaj"))}
+          disabled={kaydediliyor}
+          className="mb-2 w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-left text-[11px] font-semibold text-slate-300 transition hover:bg-white/[0.06] hover:text-white disabled:opacity-50"
+        >
+          Başka bir şeyi değiştirmek için Vixrex’e serbest yaz
+        </button>
+      )}
+
       {seciliAlan?.tip === "gorsel" ? (
         <div>
           <label
