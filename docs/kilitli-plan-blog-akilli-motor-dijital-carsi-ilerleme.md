@@ -28,8 +28,8 @@ Aktif PR: `#414`
 - [x] Canlı DB'de RLS, unique slug ve published index doğrulandı
 - [x] `anon` rolüyle taslak görünürlüğü = 0 satır doğrulandı
 - [x] İlk tam test turunda Katman 1 kaynaklı sitemap mock uyumsuzluğu bulundu ve fail-closed düzeltildi
-- [ ] Katman 1 kapı testleri son turu
-- [ ] Production build
+- [x] Katman 1 kapı testleri son turu — 7 dosya / 32 test geçti
+- [x] Production build — Next.js 16.2.11 production build başarıyla tamamlandı
 - [ ] Gerçek yayın satırıyla Preview mobil + masaüstü ekran doğrulaması
 - [ ] `/v/[slug]`, Keşfet, Kirala/sahiplik regresyon kontrolü
 
@@ -37,6 +37,7 @@ Aktif PR: `#414`
 
 - Next.js genel lint, main'de önceden bulunan `giris/page.tsx:23` hatasında duruyor.
 - Tam Vitest turunda PR #413 sonrası main'de zaten bulunan iki kontrat beklentisi kırmızı: eski 36px maskot beklentisi ve owner-draft `SERVICE_ROLE` metin beklentisi. Katman 1 bu dosyalara dokunmuyor.
+- Tam test envanteri: 143 test dosyasından 141 geçti; 1022 testten 1019 geçti, 2 baseline hata ve 1 todo kaldı.
 - Flutter format kontrolü mevcut baseline biçim farklarında kırmızı; Katman 1 Flutter dosyası değiştirmiyor.
 
 - [ ] DECIDE — geçen/kalan maddeler kullanıcıya sunulacak
