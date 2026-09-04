@@ -1,0 +1,81 @@
+/*
+ * Vixrex sahiplik ekranı — MOD 2 bottom-sheet kabuğu.
+ *
+ * 2026-09-04'te doğrulanan mockup yalnız şu yerleşimi kesinleştirdi:
+ * asistan vitrinin üstüne binen, üstünde drag handle bulunan yuvarlak
+ * köşeli bir sheet; açıkken sağdaki tam-boy 460px sütun kullanılmıyor.
+ * Bu dosya yalnız o doğrulanmış yerleşimi uygular. MOD 3 için davranış
+ * uydurmaz; mevcut panel içeriği ve kayıt/yayın akışları aynen korunur.
+ */
+
+/* MOD 1: asistan kapalıyken mevcut canonical FAB görünür.
+ * MOD 2: sheet açıkken aynı FAB ikinci bir kontrol gibi üstte kalmasın. */
+body.vixrex-asistan-acik button[aria-label="Vixrex Asistan"] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* OwnerAssistantPanel JSX'inde canonical FAB'ın hemen sonraki kardeşi,
+ * açık panelin tek kök kutusudur. Tailwind'in masaüstü sağ-sütun
+ * konumlandırmasını burada bottom-sheet'e çeviriyoruz. */
+body.vixrex-asistan-acik button[aria-label="Vixrex Asistan"] + div {
+  left: 50% !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: max(12px, env(safe-area-inset-bottom)) !important;
+  width: min(760px, calc(100vw - 24px)) !important;
+  max-width: calc(100vw - 24px) !important;
+  max-height: min(76vh, 760px) !important;
+  min-height: min(440px, calc(100vh - 48px));
+  transform: translateX(-50%);
+  border-radius: 24px 24px 20px 20px !important;
+  padding-top: 12px;
+  box-shadow:
+    0 24px 80px rgba(2, 6, 23, 0.48),
+    0 8px 24px rgba(2, 6, 23, 0.24) !important;
+}
+
+/* Mockup'taki sürükleme tutamacı. Şimdilik yalnız görsel tutamaçtır;
+ * doğrulanmamış swipe eşiği/gesture davranışı eklenmez. Kapatma X'i ve
+ * canonical FAB zaten gerçek aç/kapat davranışını sağlıyor. */
+body.vixrex-asistan-acik button[aria-label="Vixrex Asistan"] + div::before {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  top: 7px;
+  left: 50%;
+  width: 44px;
+  height: 4px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.42);
+}
+
+@media (max-width: 639px) {
+  body.vixrex-asistan-acik button[aria-label="Vixrex Asistan"] + div {
+    bottom: max(8px, env(safe-area-inset-bottom)) !important;
+    width: calc(100vw - 16px) !important;
+    max-width: calc(100vw - 16px) !important;
+    max-height: min(78vh, 720px) !important;
+    min-height: min(420px, calc(100vh - 32px));
+    border-radius: 22px 22px 16px 16px !important;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  body.vixrex-asistan-acik button[aria-label="Vixrex Asistan"] + div {
+    animation: vixrex-sheet-in 180ms ease-out;
+    transform-origin: bottom center;
+  }
+}
+
+@keyframes vixrex-sheet-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 12px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}
