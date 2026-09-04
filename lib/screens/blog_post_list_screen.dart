@@ -133,10 +133,9 @@ class _BlogPostListScreenState extends State<BlogPostListScreen> {
                             ),
                           ),
                           IconButton(
-                            onPressed:
-                                importingId == null
-                                    ? () => Navigator.of(sheetContext).pop()
-                                    : null,
+                            onPressed: importingId == null
+                                ? () => Navigator.of(sheetContext).pop()
+                                : null,
                             icon: const Icon(Icons.close_rounded),
                           ),
                         ],
@@ -147,8 +146,8 @@ class _BlogPostListScreenState extends State<BlogPostListScreen> {
                       child: ListView.separated(
                         padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
                         itemCount: library.length,
-                        separatorBuilder:
-                            (_, __) => const SizedBox(height: AppColors.spacing12),
+                        separatorBuilder: (_, __) =>
+                            const SizedBox(height: AppColors.spacing12),
                         itemBuilder: (context, index) {
                           final article = library[index];
                           final id = (article['id'] as String?)?.trim() ?? '';
@@ -159,7 +158,8 @@ class _BlogPostListScreenState extends State<BlogPostListScreen> {
                               (article['summary'] as String?)?.trim() ?? '';
                           final minutes = article['reading_minutes'];
                           final topic =
-                              (article['primary_topic'] as String?)?.trim() ?? '';
+                              (article['primary_topic'] as String?)?.trim() ??
+                              '';
                           final isImporting = importingId == id;
 
                           Future<void> importWithMode(String mode) async {
@@ -187,9 +187,8 @@ class _BlogPostListScreenState extends State<BlogPostListScreen> {
                             final importedSlug =
                                 (importResult.data?['article_slug'] as String?)
                                     ?.trim();
-                            final refreshed = await _articleService.fetchArticles(
-                              widget.storeSlug,
-                            );
+                            final refreshed = await _articleService
+                                .fetchArticles(widget.storeSlug);
                             if (!mounted) return;
 
                             Map<String, dynamic>? importedArticle;
@@ -230,7 +229,9 @@ class _BlogPostListScreenState extends State<BlogPostListScreen> {
                               side: const BorderSide(color: AppColors.border),
                             ),
                             child: Padding(
-                              padding: const EdgeInsets.all(AppColors.spacing16),
+                              padding: const EdgeInsets.all(
+                                AppColors.spacing16,
+                              ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -273,12 +274,11 @@ class _BlogPostListScreenState extends State<BlogPostListScreen> {
                                     children: [
                                       Expanded(
                                         child: OutlinedButton(
-                                          onPressed:
-                                              importingId == null
-                                                  ? () => importWithMode(
-                                                    'linked_excerpt',
-                                                  )
-                                                  : null,
+                                          onPressed: importingId == null
+                                              ? () => importWithMode(
+                                                  'linked_excerpt',
+                                                )
+                                              : null,
                                           child: Text(
                                             isImporting
                                                 ? 'Ekleniyor…'
@@ -289,12 +289,11 @@ class _BlogPostListScreenState extends State<BlogPostListScreen> {
                                       const SizedBox(width: AppColors.spacing8),
                                       Expanded(
                                         child: FilledButton(
-                                          onPressed:
-                                              importingId == null
-                                                  ? () => importWithMode(
-                                                    'adaptable_draft',
-                                                  )
-                                                  : null,
+                                          onPressed: importingId == null
+                                              ? () => importWithMode(
+                                                  'adaptable_draft',
+                                                )
+                                              : null,
                                           child: Text(
                                             isImporting
                                                 ? 'Ekleniyor…'
