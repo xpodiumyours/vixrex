@@ -194,7 +194,14 @@ reset role;
 -- RPC PUBLIC'e açık değildir; yalnız gerekli iki istemci rolü execute alır.
 do $$
 begin
-  if has_function_privilege('public', 'public.import_vixrex_blog_article_to_store(text,uuid,text,text)', 'EXECUTE') then
+  if exists (
+    select 1
+    from information_schema.routine_privileges
+    where specific_schema = 'public'
+      and routine_name = 'import_vixrex_blog_article_to_store'
+      and grantee = 'PUBLIC'
+      and privilege_type = 'EXECUTE'
+  ) then
     raise exception 'PUBLIC import RPC execute yetkisi taşıyor';
   end if;
   if not has_function_privilege('anon', 'public.import_vixrex_blog_article_to_store(text,uuid,text,text)', 'EXECUTE') then
