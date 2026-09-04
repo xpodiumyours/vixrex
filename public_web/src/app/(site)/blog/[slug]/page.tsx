@@ -124,7 +124,7 @@ export default async function BlogYaziPage({ params }: SayfaProps) {
             />
           </article>
 
-          <section className="mt-6 rounded-2xl border border-lp-border bg-white px-6 py-6 text-center shadow-sm sm:px-8">
+          <section className="mt-6 rounded-2xl border border-lp-border bg-lp-bg-editor px-6 py-6 text-center shadow-sm sm:px-8">
             <p className="text-sm font-black text-lp-text sm:text-base">
               Kendi vitrinini görmek ister misin?
             </p>
