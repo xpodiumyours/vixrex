@@ -1,0 +1,111 @@
+name: TEMP — Blog Katman 1 tarayıcı doğrulama
+
+on:
+  push:
+    branches:
+      - feat/blog-omurga-katman-1
+
+permissions:
+  contents: read
+
+jobs:
+  browser-verify:
+    name: Katman 1 — mobil ve masaüstü gerçek tarayıcı
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: public_web/package-lock.json
+
+      - name: Bağımlılıklar
+        working-directory: public_web
+        run: npm ci
+
+      - name: Chromium kur
+        working-directory: public_web
+        run: npx playwright install --with-deps chromium
+
+      - name: Production build
+        working-directory: public_web
+        run: npm run build
+
+      - name: Uygulamayı başlat
+        working-directory: public_web
+        run: |
+          nohup npm run start > /tmp/vixrex-blog-verify.log 2>&1 &
+          for i in {1..60}; do
+            if curl -fsS http://127.0.0.1:3000/blog >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          cat /tmp/vixrex-blog-verify.log
+          exit 1
+
+      - name: Blog ve kritik public yüzeyleri doğrula
+        working-directory: public_web
+        run: |
+          mkdir -p test-results/blog-katman1
+          node <<'NODE'
+          const { chromium } = require('@playwright/test');
+          const fs = require('fs');
+          const path = require('path');
+
+          const baseURL = 'http://127.0.0.1:3000';
+          const out = path.join(process.cwd(), 'test-results', 'blog-katman1');
+
+          async function assertPage(page, pathname, name, expectedText) {
+            const response = await page.goto(baseURL + pathname, { waitUntil: 'networkidle' });
+            if (!response || response.status() >= 400) {
+              throw new Error(`${pathname} HTTP ${response ? response.status() : 'no-response'}`);
+            }
+            if (expectedText) {
+              await page.getByText(expectedText, { exact: false }).first().waitFor({ state: 'visible' });
+            }
+            await page.screenshot({ path: path.join(out, `${name}.png`), fullPage: true });
+          }
+
+          (async () => {
+            fs.mkdirSync(out, { recursive: true });
+            const browser = await chromium.launch();
+            try {
+              for (const cihaz of [
+                { ad: 'mobil', viewport: { width: 390, height: 844 }, isMobile: true },
+                { ad: 'masaustu', viewport: { width: 1440, height: 1000 }, isMobile: false },
+              ]) {
+                const context = await browser.newContext({ viewport: cihaz.viewport, isMobile: cihaz.isMobile });
+                const page = await context.newPage();
+                await assertPage(page, '/blog', `${cihaz.ad}-blog`, 'Esnaf için dijital rehber');
+                await assertPage(page, '/blog/isletmemi-googleda-nasil-gosteririm', `${cihaz.ad}-blog-detay`, "İşletmemi Google'da nasıl gösteririm?");
+                await assertPage(page, '/kesfet', `${cihaz.ad}-kesfet`);
+                await assertPage(page, '/v/kiralik-teknik', `${cihaz.ad}-public-vitrin`);
+                await assertPage(page, '/preview/kiralik-teknik', `${cihaz.ad}-kirala-preview`);
+                await context.close();
+              }
+            } finally {
+              await browser.close();
+            }
+          })().catch((error) => {
+            console.error(error);
+            process.exit(1);
+          });
+          NODE
+
+      - name: Ekran kanıtlarını yükle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: blog-katman1-browser-screens
+          path: public_web/test-results/blog-katman1
+          if-no-files-found: warn
