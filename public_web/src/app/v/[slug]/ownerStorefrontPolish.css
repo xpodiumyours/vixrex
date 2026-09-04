@@ -23,3 +23,45 @@ body.vixrex-owner-rental-preview #ust-bolum [data-vixrex-editable="heroRozet"] {
   line-height: 1.15;
   letter-spacing: 0.04em;
 }
+
+/* Mobilde kullanıcı Gönder'e bastığında panel canonical düğme üzerinden
+ * kapanır. Asistan gerçek kayıt/NLU işi sürerken aynı düğme küçük bir işlem
+ * göstergesine dönüşür; böylece vitrin görünür kalır ve ikinci bir panel/
+ * durum sistemi oluşturulmaz. */
+@keyframes vixrex-owner-assistant-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 639px) {
+  body.vixrex-asistan-isliyor button[aria-label="Vixrex Asistan"] {
+    min-width: 10.75rem;
+    justify-content: center;
+    gap: 0.5rem;
+    pointer-events: none;
+  }
+
+  body.vixrex-asistan-isliyor button[aria-label="Vixrex Asistan"] > span {
+    display: none !important;
+  }
+
+  body.vixrex-asistan-isliyor button[aria-label="Vixrex Asistan"]::before {
+    width: 0.8rem;
+    height: 0.8rem;
+    flex: 0 0 auto;
+    content: "";
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    border-top-color: #ffffff;
+    border-radius: 9999px;
+    animation: vixrex-owner-assistant-spin 0.8s linear infinite;
+  }
+
+  body.vixrex-asistan-isliyor button[aria-label="Vixrex Asistan"]::after {
+    content: "Düzenleniyor…";
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+  }
+}
