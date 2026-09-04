@@ -63,6 +63,10 @@ export function useFieldSelection({
   const [giris, setGiris] = useState("");
   const girisRef = useRef<HTMLTextAreaElement>(null);
   const vurguluRef = useRef<Element | null>(null);
+  // Aynı alan state/geçiş nedeniyle arka arkaya yeniden seçilirse aynı
+  // "alanını seçtin" balonunu tekrar basmayız. Başka alana geçince ref
+  // değişir; kullanıcı geri dönerse yeni bağlam mesajını yine görür.
+  const sonMesajlananAlanRef = useRef<string | null>(null);
   // Her geçişe artan numara: yolda yeni bir alan seçilirse eskisi susar.
   const gecisRef = useRef(0);
   const oncekiBolumRef = useRef<VitrinSection | null>(null);
@@ -148,12 +152,15 @@ export function useFieldSelection({
           ? ""
           : String(mevcut)
       );
-      mesajEkle(
-        "asistan",
-        `"${alan.etiket}" alanını seçtin. Yeni değeri yaz ve gönder.${
-          alan.ipucu ? ` (${alan.ipucu})` : ""
-        }`
-      );
+      if (sonMesajlananAlanRef.current !== anahtar) {
+        sonMesajlananAlanRef.current = anahtar;
+        mesajEkle(
+          "asistan",
+          `"${alan.etiket}" alanını seçtin. Yeni değeri yaz ve gönder.${
+            alan.ipucu ? ` (${alan.ipucu})` : ""
+          }`
+        );
+      }
     },
     [yerelTaslak, mesajEkle, vurguyuTemizle, onAlanSecildi, hedefeGit]
   );
@@ -204,6 +211,7 @@ export function useFieldSelection({
 
       vurguyuTemizle();
       setSeciliAlan(null);
+      sonMesajlananAlanRef.current = null;
       mesajEkle("asistan", "Harika, şu an eklenecek başka bir şey yok! 🎉");
     },
     [yerelTaslak, atlanmisAlanlar, alanSec, vurguyuTemizle, mesajEkle]
