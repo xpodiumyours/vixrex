@@ -101,6 +101,18 @@ export function BolumEksikleri({
 }: Props & { sade?: boolean }) {
   if (!ownerMode || !taslak) return null;
 
+  // Kiralanmış bir vitrinde hero'nun içindeki bu yardımcı şerit, #ust-bolum
+  // flex akışında ana vitrin gövdesiyle yatay alan paylaşıp hero'yu yaklaşık
+  // yarı genişliğe sıkıştırıyordu. Aynı görevler Vixrex Asistan'ın "Sırada"
+  // akışında zaten erişilebilir. Bu nedenle yalnız kiralık sahiplik hero'sunda
+  // bu ikinci flex child hiç render edilmez. Public görünüm ve diğer owner
+  // bölümleri değişmez.
+  const kiralikSahipHero =
+    bolum === "hero" &&
+    typeof taslak.cloned_from_slug === "string" &&
+    taslak.cloned_from_slug.trim().length > 0;
+  if (kiralikSahipHero) return null;
+
   const alanlar = seritAlanlari(bolum, taslak);
   if (alanlar.length === 0) return null;
 
