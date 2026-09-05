@@ -1,16 +1,10 @@
 import 'package:vixrex/core/result.dart';
 
 /// Çalışma taslağının tek arayüzü — controller yalnız bunu bilir.
-///
-/// PR5-C19: iki gerçek adaptör (Supabase + yerel kuyruk) bu portun
-/// arkasında durur. Yeni sorumluluk büyük controller'a eklenmez.
 abstract class WorkingDraftPort {
-  /// Taslağı yetkili kaynaktan yükler.
   Future<Result<WorkingDraftSnapshot>> yukle({required String sessionToken});
 
-  /// Tek alanı sürüm kontrollü yazar. Bu mevcut/manual working-draft yoludur;
-  /// Akıllı Motor action receipt/idempotency için [akilliMotorYamasiUygula]
-  /// kullanır.
+  /// Mevcut/manual working-draft yolu.
   Future<Result<WorkingDraftPatchResult>> yamaUygula({
     required String sessionToken,
     required String anahtar,
@@ -19,10 +13,7 @@ abstract class WorkingDraftPort {
     String? clientId,
   });
 
-  /// 5.8: Flutter owner-edit Akıllı Motor'un authoritative mutation sınırı.
-  /// Yeni persistence portu açılmaz; aynı WorkingDraftPort 5.5 RPC contract'ını
-  /// taşır. Flutter permanent auth yolunda [sessionToken] null'dır ve server
-  /// `auth.uid()` sahipliğini doğrular.
+  /// Flutter owner-edit Akıllı Motor authoritative mutation sınırı.
   Future<Result<WorkingDraftAssistantPatchResult>> akilliMotorYamasiUygula({
     String? sessionToken,
     required String anahtar,
@@ -33,12 +24,17 @@ abstract class WorkingDraftPort {
     String? clientId,
   });
 
-  /// Canonical taslağı canlıya alır.
+  /// 5.6/5.8 command-level authoritative Undo. Offline'da local rollback
+  /// yapılmaz ve Undo queue'lanmaz; başarı yalnız server receipt sonucudur.
+  Future<Result<WorkingDraftAssistantUndoResult>> akilliMotorCommandGeriAl({
+    String? sessionToken,
+    required String commandId,
+  });
+
   Future<Result<WorkingDraftPublishResult>> yayinla({
     required String sessionToken,
   });
 
-  /// Değişim sinyali — payload taşımaz, yalnız yeni sürümü bildirir.
   Stream<int> degisimSinyali({required String slug});
 }
 
@@ -78,18 +74,12 @@ class WorkingDraftPatchResult {
       );
 
   final WorkingDraftPatchStatus status;
-
-  /// Yalnız authoritative `succeeded` sonucunda vardır. Offline queue için
-  /// uydurma `-1` sürümü kullanılmaz.
   final int? draftVersion;
 
   bool get succeeded => status == WorkingDraftPatchStatus.succeeded;
   bool get queuedOffline => status == WorkingDraftPatchStatus.queuedOffline;
 }
 
-/// Flutter Akıllı Motor action sonucu. `Result.failure` gerçek failure'ı
-/// taşır; bu model yalnız server success veya güvenle kalıcı local queue'ya
-/// alınmış pending action'ı temsil eder.
 class WorkingDraftAssistantPatchResult {
   const WorkingDraftAssistantPatchResult._({
     required this.status,
@@ -143,6 +133,20 @@ class WorkingDraftAssistantPatchResult {
 
   bool get succeeded => status == WorkingDraftPatchStatus.succeeded;
   bool get queuedOffline => status == WorkingDraftPatchStatus.queuedOffline;
+}
+
+class WorkingDraftAssistantUndoResult {
+  const WorkingDraftAssistantUndoResult({
+    required this.commandId,
+    required this.draftVersion,
+    required this.rolledBackActionCount,
+    required this.idempotentReplay,
+  });
+
+  final String commandId;
+  final int draftVersion;
+  final int rolledBackActionCount;
+  final bool idempotentReplay;
 }
 
 class WorkingDraftPublishResult {
