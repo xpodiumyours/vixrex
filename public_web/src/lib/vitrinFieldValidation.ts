@@ -15,8 +15,29 @@ export type ValidationResult =
   | { ok: false; hata: string };
 
 const URL_PROTOKOLLERI = ["http:", "https:"];
-const ACIK_DEGERLER = new Set(["açık", "acik", "göster", "goster", "evet", "on", "true", "1"]);
-const KAPALI_DEGERLER = new Set(["kapalı", "kapali", "gizle", "hayır", "hayir", "off", "false", "0"]);
+const ACIK_DEGERLER = new Set([
+  "aç",
+  "ac",
+  "açık",
+  "acik",
+  "göster",
+  "goster",
+  "evet",
+  "on",
+  "true",
+  "1",
+]);
+const KAPALI_DEGERLER = new Set([
+  "kapat",
+  "kapalı",
+  "kapali",
+  "gizle",
+  "hayır",
+  "hayir",
+  "off",
+  "false",
+  "0",
+]);
 
 function guvenliUrlMu(deger: string, anchorIzinli: boolean): boolean {
   if (deger.startsWith("#")) return anchorIzinli && deger.length > 1;
