@@ -1,6 +1,6 @@
 {
   "_aciklama": "Vixrex Akıllı Motor Flutter ↔ Next.js ortak parity fixture kaynağı. Production mantığı içermez; iki runtime aynı girdide aynı canonical kararı kanıtlamak için kullanır.",
-  "_surum": 1,
+  "_surum": 2,
   "matcher": [
     {
       "id": "telefon-kontrollu-ek",
@@ -34,6 +34,20 @@
       "id": "il-kisa-exact",
       "input": "İl İstanbul olsun",
       "expectedFieldKeys": ["il"],
+      "expectedMatchClasses": ["exact_token"],
+      "mutationCandidate": true
+    },
+    {
+      "id": "il-acik-exact-form",
+      "input": "İli İstanbul yap",
+      "expectedFieldKeys": ["il"],
+      "expectedMatchClasses": ["exact_token"],
+      "mutationCandidate": true
+    },
+    {
+      "id": "ilce-acik-exact-form",
+      "input": "İlçeyi Kadıköy yap",
+      "expectedFieldKeys": ["ilce"],
       "expectedMatchClasses": ["exact_token"],
       "mutationCandidate": true
     },
