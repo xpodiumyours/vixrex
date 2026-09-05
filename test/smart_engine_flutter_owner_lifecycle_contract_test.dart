@@ -10,7 +10,10 @@ void main() {
       'lib/widgets/vixrex/vixrex_companion_chat.dart',
     );
 
-    expect(source, contains('final execution = await widget.onExecuteSmartEngine!(actions);'));
+    expect(
+      source,
+      contains('final execution = await widget.onExecuteSmartEngine!(actions);'),
+    );
     expect(source, contains('bot = _executionMessage(execution, result.message);'));
     expect(source, isNot(contains('widget.onUpdateField!(')));
     expect(source, isNot(contains("_appendBotAck('Kaydettim ✅')")));
@@ -27,7 +30,7 @@ void main() {
     );
     expect(source, contains('FlutterSmartEngineCommandStatus.partialResult'));
     expect(source, contains('FlutterSmartEngineCommandStatus.failed'));
-    expect(source, contains("case FlutterSmartEngineCommandStatus.succeeded:"));
+    expect(source, contains('case FlutterSmartEngineCommandStatus.succeeded:'));
   });
 
   test('owner executor context doğrulamadan mutation/projection yapmaz', () {
@@ -37,7 +40,9 @@ void main() {
 
     final contextIndex = source.indexOf('_contextService.resolve');
     final executeIndex = source.indexOf('_orchestrator.execute');
-    final projectionIndex = source.indexOf('for (final success in result.succeeded)');
+    final projectionIndex = source.indexOf(
+      'for (final success in result.succeeded)',
+    );
 
     expect(contextIndex, greaterThanOrEqualTo(0));
     expect(executeIndex, greaterThan(contextIndex));
@@ -64,6 +69,42 @@ void main() {
     expect(source, contains('VixRexOnboardingChatScreen('));
     expect(source, contains('VixRexCompanionChat('));
     expect(source, contains('onExecuteSmartEngine: _executeSmartEngine'));
-    expect(source, contains('_ownerExecutor.execute(controller: controller, actions: actions)'));
+    expect(source, contains('onUndoSmartEngine: _undoSmartEngine'));
+    expect(source, contains('_ownerExecutor.execute('));
+    expect(source, contains('_ownerExecutor.undo('));
+  });
+
+  test('Flutter command Undo yalnız server-backed commandId ile görünür', () {
+    final source = _read(
+      'lib/widgets/vixrex/vixrex_companion_chat.dart',
+    );
+
+    expect(source, contains("_smartEngineUndoPrefix = 'smart_engine_undo:'"));
+    expect(source, contains('execution.commandId.isEmpty'));
+    expect(source, contains('execution.succeeded.isEmpty'));
+    expect(source, contains('execution.queuedOffline.isNotEmpty'));
+    expect(source, contains("label: 'Geri al'"));
+    expect(
+      source,
+      contains("payload: '\$_smartEngineUndoPrefix\${execution.commandId}'"),
+    );
+    expect(source, contains('await undo(commandId.trim())'));
+  });
+
+  test('queuedOffline command için Flutter Undo sunulmaz', () {
+    final source = _read(
+      'lib/widgets/vixrex/vixrex_companion_chat.dart',
+    );
+
+    final undoHelperStart = source.indexOf('List<QuickReply> _undoReplies');
+    final executionMessageStart = source.indexOf(
+      'ChatMessage _executionMessage',
+      undoHelperStart,
+    );
+    expect(undoHelperStart, greaterThanOrEqualTo(0));
+    expect(executionMessageStart, greaterThan(undoHelperStart));
+    final undoHelper = source.substring(undoHelperStart, executionMessageStart);
+    expect(undoHelper, contains('execution.queuedOffline.isNotEmpty'));
+    expect(undoHelper, contains('return const [];'));
   });
 }
