@@ -6,11 +6,14 @@ on:
       - "public_web/src/lib/vitrinFieldSchema.ts"
       - "public_web/src/lib/vitrinFieldValidation.ts"
       - "public_web/src/lib/addressValidator.ts"
+      - "public_web/src/lib/turkeyCities.ts"
+      - "public_web/src/lib/turkeyPlaceMatcher.ts"
       - "public_web/src/lib/smartEngineCommandClient.ts"
       - "public_web/src/lib/ownerActionLifecycle.ts"
       - "public_web/src/app/api/owner-draft/route.ts"
       - "public_web/src/app/api/owner-smart-engine-action/**"
       - "public_web/src/app/api/owner-smart-engine-undo/**"
+      - "public_web/src/app/api/owner-location-bundle/**"
       - "public_web/src/app/v/[slug]/OwnerWorkspaceShell.tsx"
       - "public_web/src/app/v/[slug]/OwnerDraftVersionContext.tsx"
       - "public_web/src/app/v/[slug]/OwnerAssistantPanel.tsx"
@@ -26,13 +29,16 @@ on:
       - "public_web/tests/smart-engine-draft-version-context.test.ts"
       - "public_web/tests/smart-engine-owner-actions-wiring.test.ts"
       - "public_web/tests/smart-engine-owner-lifecycle.test.ts"
+      - "public_web/tests/turkey-place-matcher.test.ts"
       - "shared/vitrin_alanlari.json"
       - "shared/vixrex_validator_parity_fixtures.json"
       - "tool/sema_disa_aktar.ts"
       - "tool/alan_semasi_uret.dart"
       - "tool/server_field_contract_uret.ts"
       - "lib/config/vitrin_alanlari.g.dart"
+      - "lib/config/turkey_cities_config.dart"
       - "lib/services/vixrex_nlu/vixrex_field_validator.dart"
+      - "lib/services/store_location_fetch_service.dart"
       - "lib/utils/address_validator.dart"
       - "lib/services/working_draft/**"
       - "lib/services/owner_bootstrap_service.dart"
@@ -40,6 +46,7 @@ on:
       - "lib/screens/vixrex_screen.dart"
       - "lib/widgets/vixrex/vixrex_companion_chat.dart"
       - "test/vixrex_validator_parity_test.dart"
+      - "test/store_location_fetch_service_test.dart"
       - "test/smart_engine_working_draft_adapter_contract_test.dart"
       - "test/smart_engine_working_draft_orchestrator_test.dart"
       - "test/smart_engine_flutter_owner_lifecycle_contract_test.dart"
@@ -47,6 +54,8 @@ on:
       - "test/working_draft_queue_status_test.dart"
       - "supabase/migrations/20260905114039_vixrex_canonical_46_field_contract.sql"
       - "supabase/migrations/20260905114549_authoritative_smart_engine_core.sql"
+      - "supabase/migrations/20260905154433_smart_engine_location_bundle.sql"
+      - "supabase/migrations/20260905155137_harden_location_bundle_acl.sql"
       - ".github/workflows/smart-engine-validator.yml"
 
 concurrency:
@@ -94,6 +103,7 @@ jobs:
           tests/smart-engine-draft-version-context.test.ts
           tests/smart-engine-owner-actions-wiring.test.ts
           tests/smart-engine-owner-lifecycle.test.ts
+          tests/turkey-place-matcher.test.ts
           tests/vixrex-niyet-faz1.test.ts
           tests/vixrex-niyet-faz2.test.ts
           tests/vixrex-niyet-faz3.test.ts
@@ -122,7 +132,9 @@ jobs:
         run: >-
           dart analyze
           lib/config/vitrin_alanlari.g.dart
+          lib/config/turkey_cities_config.dart
           lib/services/vixrex_nlu/vixrex_field_validator.dart
+          lib/services/store_location_fetch_service.dart
           lib/services/working_draft/working_draft_port.dart
           lib/services/working_draft/supabase_working_draft_adapter.dart
           lib/services/working_draft/local_queue_working_draft_adapter.dart
@@ -134,6 +146,7 @@ jobs:
           lib/screens/vixrex_screen.dart
           lib/widgets/vixrex/vixrex_companion_chat.dart
           test/vixrex_validator_parity_test.dart
+          test/store_location_fetch_service_test.dart
           test/smart_engine_working_draft_adapter_contract_test.dart
           test/smart_engine_working_draft_orchestrator_test.dart
           test/smart_engine_flutter_owner_lifecycle_contract_test.dart
@@ -142,6 +155,7 @@ jobs:
         run: >-
           flutter test
           test/vixrex_validator_parity_test.dart
+          test/store_location_fetch_service_test.dart
           test/smart_engine_working_draft_adapter_contract_test.dart
           test/smart_engine_working_draft_orchestrator_test.dart
           test/smart_engine_flutter_owner_lifecycle_contract_test.dart
@@ -153,7 +167,7 @@ jobs:
           test/address_validator_test.dart
           --reporter expanded
 
-      - name: Yeni/5.8 Dart dosyalarında format drift
+      - name: Yeni/5.8/5.9 Dart dosyalarında format drift
         run: >-
           dart format --output=none --set-exit-if-changed
           lib/services/working_draft/working_draft_port.dart
@@ -162,10 +176,12 @@ jobs:
           lib/services/working_draft/smart_engine_working_draft_orchestrator.dart
           lib/services/working_draft/smart_engine_owner_context_service.dart
           lib/services/working_draft/flutter_smart_engine_owner_executor.dart
+          lib/services/store_location_fetch_service.dart
           lib/services/owner_bootstrap_service.dart
           lib/repositories/vitrin_sahiplik_repository.dart
           lib/screens/vixrex_screen.dart
           lib/widgets/vixrex/vixrex_companion_chat.dart
+          test/store_location_fetch_service_test.dart
           test/smart_engine_working_draft_adapter_contract_test.dart
           test/smart_engine_working_draft_orchestrator_test.dart
           test/smart_engine_flutter_owner_lifecycle_contract_test.dart
