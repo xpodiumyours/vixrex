@@ -152,14 +152,16 @@ Bu, motorun uygulanmış olduğu anlamına gelmez. Artık BUILD sırasında mima
 
 # KATMAN 5 — CORE BUILD 🔄
 
-## 5.0 — Baseline / parity üretim hattı 🔄
+## 5.0 — Baseline / parity üretim hattı ✅
 
-- ⬜ `shared/vixrex_niyet_sozlugu.json` → Dart generator.
-- ⬜ CI intent-dictionary drift kontrolü.
-- ⬜ Tek shared motor parity fixture iskeleti.
-- ⬜ Runtime davranış değişikliği yok.
+- ✅ `shared/vixrex_niyet_sozlugu.json` → Dart generator.
+- ✅ Generator 46 anahtar + etiket/tip/kolon/bölüm eşitliğini kanonik alan şemasına karşı doğruluyor.
+- ✅ CI intent-dictionary drift kontrolü.
+- ✅ Tek shared motor parity fixture iskeleti.
+- ✅ Runtime motor davranışı değiştirilmedi.
+- ✅ Draft PR #417 `schema-drift` job'ında generator + drift kontrolü gerçek CI'da geçti.
 
-## 5.1 — Fail-closed kill-switch ⬜
+## 5.1 — Fail-closed kill-switch 🔄
 
 - ⬜ `vixrex_smart_engine_enabled`.
 - ⬜ `vixrex_smart_engine_storefront_enabled`.
@@ -333,7 +335,9 @@ Akıllı Motor LOCK açılmadan Blog/Dijital Çarşı assistant domain BUILD'i y
 **KATMAN 2.5 ✅ UX-FIT/LOCK**  
 **KATMAN 3 ✅ Security/State Architecture LOCK**  
 **KATMAN 4 ✅ FINAL ARCHITECTURE LOCK**  
-**KATMAN 5 🔄 CORE BUILD**  
+**KATMAN 5.0 ✅ BASELINE/PARITY PIPELINE**  
+**KATMAN 5.1 🔄 KILL-SWITCH**  
+**KATMAN 5.2–5.10 ⬜ BUILD DEVAMI**  
 **KATMAN 6 🔒 46/46 VERIFY**  
 **KATMAN 7 🔒 ESNAF VERIFY**  
 **KATMAN 8 🔒 AKILLI MOTOR LOCK**  
