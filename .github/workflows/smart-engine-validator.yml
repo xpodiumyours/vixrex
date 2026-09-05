@@ -7,14 +7,18 @@ on:
       - "public_web/src/lib/vitrinFieldValidation.ts"
       - "public_web/src/lib/addressValidator.ts"
       - "public_web/tests/vixrex-validator-parity.test.ts"
+      - "public_web/tests/server-field-contract-generator.test.ts"
       - "shared/vitrin_alanlari.json"
       - "shared/vixrex_validator_parity_fixtures.json"
       - "tool/sema_disa_aktar.ts"
       - "tool/alan_semasi_uret.dart"
+      - "tool/server_field_contract_uret.ts"
       - "lib/config/vitrin_alanlari.g.dart"
       - "lib/services/vixrex_nlu/vixrex_field_validator.dart"
       - "lib/utils/address_validator.dart"
       - "test/vixrex_validator_parity_test.dart"
+      - "supabase/migrations/20260905114039_vixrex_canonical_46_field_contract.sql"
+      - "supabase/migrations/20260905114549_authoritative_smart_engine_core.sql"
       - ".github/workflows/smart-engine-validator.yml"
 
 concurrency:
@@ -142,3 +146,7 @@ jobs:
 
       - name: Shared JSON + Dart generated drift
         run: git diff --exit-code -- shared/vitrin_alanlari.json lib/config/vitrin_alanlari.g.dart
+
+      - name: 46-field server contract + migration drift
+        working-directory: public_web
+        run: npx vitest run tests/server-field-contract-generator.test.ts
