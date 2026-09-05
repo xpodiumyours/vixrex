@@ -18,8 +18,8 @@ const URL_PROTOKOLLERI = ["http:", "https:"];
 const ACIK_DEGERLER = new Set(["açık", "acik", "göster", "goster", "evet", "on", "true", "1"]);
 const KAPALI_DEGERLER = new Set(["kapalı", "kapali", "gizle", "hayır", "hayir", "off", "false", "0"]);
 
-function guvenliUrlMu(deger: string): boolean {
-  if (deger.startsWith("#")) return deger.length > 1; // sayfa içi çapa
+function guvenliUrlMu(deger: string, anchorIzinli: boolean): boolean {
+  if (deger.startsWith("#")) return anchorIzinli && deger.length > 1;
   try {
     const parsed = new URL(deger);
     return URL_PROTOKOLLERI.includes(parsed.protocol);
@@ -83,7 +83,11 @@ export function validateField(anahtar: string, hamDeger: unknown): ValidationRes
 
   // sayi: sayıya çevir, sınırları kontrol et
   if (alan.tip === "sayi") {
-    if (hamDeger === null || hamDeger === "") {
+    if (
+      hamDeger === null ||
+      hamDeger === "" ||
+      (typeof hamDeger === "string" && hamDeger.trim() === "")
+    ) {
       return { ok: true, alan, deger: null };
     }
     const sayi = typeof hamDeger === "number" ? hamDeger : Number(String(hamDeger).trim().replace(",", "."));
@@ -144,9 +148,18 @@ export function validateField(anahtar: string, hamDeger: unknown): ValidationRes
       return { ok: true, alan, deger };
     }
 
-    case "url":
+    case "url": {
+      if (!guvenliUrlMu(deger, true)) {
+        return {
+          ok: false,
+          hata: `${alan.etiket} yalnız http veya https adresi olabilir.`,
+        };
+      }
+      return { ok: true, alan, deger };
+    }
+
     case "gorsel": {
-      if (!guvenliUrlMu(deger)) {
+      if (!guvenliUrlMu(deger, false)) {
         return {
           ok: false,
           hata: `${alan.etiket} yalnız http veya https adresi olabilir.`,
