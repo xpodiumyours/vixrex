@@ -42,9 +42,34 @@ class WorkingDraftSnapshot {
   final List<String> atlananAlanlar;
 }
 
+enum WorkingDraftPatchStatus { succeeded, queuedOffline }
+
 class WorkingDraftPatchResult {
-  const WorkingDraftPatchResult({required this.draftVersion});
-  final int draftVersion;
+  const WorkingDraftPatchResult._({
+    required this.status,
+    required this.draftVersion,
+  });
+
+  const WorkingDraftPatchResult.succeeded({required int draftVersion})
+    : this._(
+        status: WorkingDraftPatchStatus.succeeded,
+        draftVersion: draftVersion,
+      );
+
+  const WorkingDraftPatchResult.queuedOffline()
+    : this._(
+        status: WorkingDraftPatchStatus.queuedOffline,
+        draftVersion: null,
+      );
+
+  final WorkingDraftPatchStatus status;
+
+  /// Yalnız authoritative `succeeded` sonucunda vardır. Offline queue için
+  /// uydurma `-1` sürümü kullanılmaz.
+  final int? draftVersion;
+
+  bool get succeeded => status == WorkingDraftPatchStatus.succeeded;
+  bool get queuedOffline => status == WorkingDraftPatchStatus.queuedOffline;
 }
 
 class WorkingDraftPublishResult {
