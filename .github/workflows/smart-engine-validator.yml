@@ -34,7 +34,17 @@ on:
       - "lib/config/vitrin_alanlari.g.dart"
       - "lib/services/vixrex_nlu/vixrex_field_validator.dart"
       - "lib/utils/address_validator.dart"
+      - "lib/services/working_draft/**"
+      - "lib/services/owner_bootstrap_service.dart"
+      - "lib/repositories/vitrin_sahiplik_repository.dart"
+      - "lib/screens/vixrex_screen.dart"
+      - "lib/widgets/vixrex/vixrex_companion_chat.dart"
       - "test/vixrex_validator_parity_test.dart"
+      - "test/smart_engine_working_draft_adapter_contract_test.dart"
+      - "test/smart_engine_working_draft_orchestrator_test.dart"
+      - "test/smart_engine_flutter_owner_lifecycle_contract_test.dart"
+      - "test/owner_bootstrap_state_version_test.dart"
+      - "test/working_draft_queue_status_test.dart"
       - "supabase/migrations/20260905114039_vixrex_canonical_46_field_contract.sql"
       - "supabase/migrations/20260905114549_authoritative_smart_engine_core.sql"
       - ".github/workflows/smart-engine-validator.yml"
@@ -113,22 +123,53 @@ jobs:
           dart analyze
           lib/config/vitrin_alanlari.g.dart
           lib/services/vixrex_nlu/vixrex_field_validator.dart
+          lib/services/working_draft/working_draft_port.dart
+          lib/services/working_draft/supabase_working_draft_adapter.dart
+          lib/services/working_draft/local_queue_working_draft_adapter.dart
+          lib/services/working_draft/smart_engine_working_draft_orchestrator.dart
+          lib/services/working_draft/smart_engine_owner_context_service.dart
+          lib/services/working_draft/flutter_smart_engine_owner_executor.dart
+          lib/services/owner_bootstrap_service.dart
+          lib/repositories/vitrin_sahiplik_repository.dart
+          lib/screens/vixrex_screen.dart
+          lib/widgets/vixrex/vixrex_companion_chat.dart
           test/vixrex_validator_parity_test.dart
+          test/smart_engine_working_draft_adapter_contract_test.dart
+          test/smart_engine_working_draft_orchestrator_test.dart
+          test/smart_engine_flutter_owner_lifecycle_contract_test.dart
 
-      - name: Validator parity + mevcut NLU regresyonları
+      - name: Validator parity + Flutter authoritative owner lifecycle + mevcut NLU regresyonları
         run: >-
           flutter test
           test/vixrex_validator_parity_test.dart
+          test/smart_engine_working_draft_adapter_contract_test.dart
+          test/smart_engine_working_draft_orchestrator_test.dart
+          test/smart_engine_flutter_owner_lifecycle_contract_test.dart
+          test/owner_bootstrap_state_version_test.dart
+          test/working_draft_queue_status_test.dart
           test/vixrex_nlu_faz1_test.dart
           test/vixrex_nlu_faz2_test.dart
           test/vixrex_nlu_faz3_test.dart
           test/address_validator_test.dart
           --reporter expanded
 
-      - name: Yeni Dart dosyalarında format drift
-        run: |
-          dart format tool/alan_semasi_uret.dart lib/config/vitrin_alanlari.g.dart lib/services/vixrex_nlu/vixrex_field_validator.dart test/vixrex_validator_parity_test.dart
-          git diff --exit-code -- tool/alan_semasi_uret.dart lib/config/vitrin_alanlari.g.dart lib/services/vixrex_nlu/vixrex_field_validator.dart test/vixrex_validator_parity_test.dart
+      - name: Yeni/5.8 Dart dosyalarında format drift
+        run: >-
+          dart format --output=none --set-exit-if-changed
+          lib/services/working_draft/working_draft_port.dart
+          lib/services/working_draft/supabase_working_draft_adapter.dart
+          lib/services/working_draft/local_queue_working_draft_adapter.dart
+          lib/services/working_draft/smart_engine_working_draft_orchestrator.dart
+          lib/services/working_draft/smart_engine_owner_context_service.dart
+          lib/services/working_draft/flutter_smart_engine_owner_executor.dart
+          lib/services/owner_bootstrap_service.dart
+          lib/repositories/vitrin_sahiplik_repository.dart
+          lib/screens/vixrex_screen.dart
+          lib/widgets/vixrex/vixrex_companion_chat.dart
+          test/smart_engine_working_draft_adapter_contract_test.dart
+          test/smart_engine_working_draft_orchestrator_test.dart
+          test/smart_engine_flutter_owner_lifecycle_contract_test.dart
+          test/vixrex_validator_parity_test.dart
 
   validator-schema-drift:
     name: Validator — canonical schema drift
