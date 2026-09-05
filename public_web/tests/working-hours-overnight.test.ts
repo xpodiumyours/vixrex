@@ -45,6 +45,26 @@ describe("resolveOpenState — overnight çalışma saatleri", () => {
     expect(state.label).toBe("Kapalı");
   });
 
+  it("start ve end eşitse 24 saat açık varsaymaz", () => {
+    const map: WeekMap = {
+      "1": { start: "09:00", end: "09:00", active: true },
+    };
+
+    // Pazartesi 12:00 Europe/Istanbul.
+    const state = resolveOpenState(
+      map,
+      "Açık",
+      new Date("2026-09-07T09:00:00.000Z"),
+    );
+
+    expect(state).toEqual({
+      isOpen: false,
+      label: "Kapalı",
+      detail: "Bugün kapalı",
+      source: "hours",
+    });
+  });
+
   it("manuel Kapalı durumu saatlerden önce kazanmayı sürdürür", () => {
     const state = resolveOpenState(
       overnightMonday,
