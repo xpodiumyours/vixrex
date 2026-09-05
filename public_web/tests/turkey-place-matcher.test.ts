@@ -45,6 +45,14 @@ describe("ilIlceCikar — serbest metinden il/ilçe çıkarımı", () => {
     });
   });
 
+  it("resmî kanonik ilçe adları korunur", () => {
+    expect(ilIlceCikar("Narman, Erzurum")).toEqual({ il: "Erzurum", ilce: "Narman" });
+    expect(ilIlceCikar("Pasinler, Erzurum")).toEqual({ il: "Erzurum", ilce: "Pasinler" });
+    expect(ilIlceCikar("İncirliova, Aydın")).toEqual({ il: "Aydın", ilce: "İncirliova" });
+    expect(ilIlceCikar("İncesu, Kayseri")).toEqual({ il: "Kayseri", ilce: "İncesu" });
+    expect(ilIlceCikar("Beytüşşebap, Şırnak")).toEqual({ il: "Şırnak", ilce: "Beytüşşebap" });
+  });
+
   it("kesme işaretsiz bitişik ek (örn. 'çekmeköyde') kelime sınırını bozduğu için eşleşmez — hassasiyet tercih edilir, tahmin yok", () => {
     // Kasıtlı tasarım: sağ kelime sınırını gevşetmek "kaşarcı" gibi yanlış
     // pozitifleri geri getirirdi (bkz. yukarıdaki test). Kesme işaretsiz
