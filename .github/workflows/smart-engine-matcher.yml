@@ -1,0 +1,99 @@
+name: Akıllı Motor — matcher parity doğrulama
+
+on:
+  pull_request:
+    paths:
+      - "shared/vixrex_matcher_contract.json"
+      - "shared/vixrex_motor_parity_fixtures.json"
+      - "tool/matcher_contract_uret.dart"
+      - "lib/config/vixrex_matcher_contract.g.dart"
+      - "lib/services/vixrex_nlu/vixrex_intent_resolver.dart"
+      - "test/vixrex_matcher_parity_test.dart"
+      - "public_web/src/lib/vixrexIntentResolver.ts"
+      - "public_web/tests/vixrex-matcher-parity.test.ts"
+      - ".github/workflows/smart-engine-matcher.yml"
+
+permissions:
+  contents: read
+
+env:
+  FLUTTER_VERSION: "3.44.4"
+
+jobs:
+  matcher-next:
+    name: Matcher — Next tip + parity
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: public_web
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: public_web/package-lock.json
+
+      - name: Bağımlılıklar
+        run: npm ci
+
+      - name: Tip kontrolü
+        run: npx tsc --noEmit
+
+      - name: Matcher parity + Faz 1 regresyon
+        run: npx vitest run tests/vixrex-matcher-parity.test.ts tests/vixrex-niyet-faz1.test.ts
+
+  matcher-flutter:
+    name: Matcher — Flutter analiz + parity
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Bağımlılıklar
+        run: flutter pub get
+
+      - name: Yeni Dart dosyalarında format kontrolü
+        run: dart format --output=none --set-exit-if-changed tool/matcher_contract_uret.dart lib/config/vixrex_matcher_contract.g.dart lib/services/vixrex_nlu/vixrex_intent_resolver.dart test/vixrex_matcher_parity_test.dart
+
+      - name: İlgili dosyaları analiz et
+        run: dart analyze lib/services/vixrex_nlu/vixrex_intent_resolver.dart lib/config/vixrex_matcher_contract.g.dart test/vixrex_matcher_parity_test.dart
+
+      - name: Matcher parity + Faz 1 regresyon
+        run: flutter test test/vixrex_matcher_parity_test.dart test/vixrex_nlu_faz1_test.dart --reporter expanded
+
+  matcher-contract-drift:
+    name: Matcher — shared contract drift
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Ortak kontrattan Dart üret
+        run: dart run tool/matcher_contract_uret.dart
+
+      - name: Üretilen kontrat commit ile aynı mı
+        run: git diff --exit-code -- lib/config/vixrex_matcher_contract.g.dart
