@@ -80,6 +80,13 @@ interface Deps {
   alanAtlandi: (anahtar: string) => void;
 }
 
+interface BonusAlan {
+  anahtar: string;
+  kolon: string;
+  etiket: string;
+  deger: string;
+}
+
 /**
  * Kaydedilen alanı sayfada kısa süre parlatır (Faz 2).
  *
@@ -168,16 +175,32 @@ export function temizlenmisSeciliDeger(metin: string, alan: VitrinField): string
 }
 
 /**
+ * Serbest metindeki güvenli, bağımsız bonus alanları hazırlar.
+ * Çalışma saatleri coupled/special-flow olduğu için generic command'a
+ * bilinçli olarak girmez; 5.9 özel akışına bırakılır.
+ */
+function bonusAlanlariniHazirla(metin: string, cevaplananKolon: string): BonusAlan[] {
+  const sonuc = serbestMetindenAlanlariCikar(metin);
+  return SERBEST_ANLATIM_ESLEME
+    .map(([sonucAnahtari, anahtar]) => {
+      if (anahtar === "calismaSaatleri") return null;
+      const deger = sonuc[sonucAnahtari];
+      const alan = FIELD_BY_KEY.get(anahtar);
+      if (!deger || !alan || alan.kolon === cevaplananKolon) return null;
+      return { anahtar, kolon: alan.kolon, etiket: alan.etiket, deger };
+    })
+    .filter((x): x is BonusAlan => x !== null);
+}
+
+/**
  * "Esnaf 46 alanı tek tek dolaşmasın" (2026-09-02) — YENİ bir ekran
- * elemanı EKLEMEDEN: esnaf zaten var olan bir soru kutusuna (ör.
- * "İşletme adın?") normalden uzun bir cümle yazarsa, aynı kutu üstünden
- * arka planda diğer alanları da doldurur (bkz. serbestMetinCikarim.ts).
- * Az önce doğrudan cevaplanan alan (`cevaplananKolon`) hariç tutulur —
- * o zaten kendi normal yoluyla (gonder() içinde) kaydedildi.
+ * elemanı EKLEMEDEN: esnaf zaten var olan bir soru kutusuna normalden uzun
+ * bir cümle yazarsa, güvenle ayrıştırılan ek alanları authoritative command
+ * üzerinden kaydeder.
  *
- * Bonus, gönderimin ANA sonucunu asla etkilemez: hata olursa sessizce
- * yutulur, "işledim" gibi yanıltıcı bir mesaj da verilmez (bkz.
- * serbestMetinCikarim.ts dosya başı yorumu — dürüstlük kuralı aynı).
+ * 5.6: Legacy `/api/owner-draft` assistant yolu artık kullanılmaz. Bonus
+ * alanların tamamı tek commandId altında actionId/version/audit/Undo zincirine
+ * girer. `initialDraftVersion` ekranda gösterilen server snapshot'tan gelir.
  */
 export async function bonusAlanlariCikarVeKaydet(
   metin: string,
@@ -186,54 +209,58 @@ export async function bonusAlanlariCikarVeKaydet(
   mesajEkle: Deps["mesajEkle"],
   setAlan: (kolon: string, deger: unknown) => void,
   routerRefresh: () => void,
+  initialDraftVersion: number,
+  onDraftVersion: (version: number) => void,
 ) {
-  // Handoff/bonus çağrıları da motor capability'sine bağlıdır. Flag okunamazsa
-  // sessizce hiçbir alan çıkarılmaz; manuel ana kayıt bundan etkilenmez.
   if (!(await smartEngineStorefrontClientEnabled(slug))) return;
 
-  const sonuc = serbestMetindenAlanlariCikar(metin);
-  const bulunanlar = SERBEST_ANLATIM_ESLEME
-    .map(([sonucAnahtari, anahtar]) => {
-      const deger = sonuc[sonucAnahtari];
-      const alan = FIELD_BY_KEY.get(anahtar);
-      if (!deger || !alan || alan.kolon === cevaplananKolon) return null;
-      return { anahtar, kolon: alan.kolon, etiket: alan.etiket, deger };
-    })
-    .filter((x): x is { anahtar: string; kolon: string; etiket: string; deger: string } => x !== null);
-
+  const bulunanlar = bonusAlanlariniHazirla(metin, cevaplananKolon);
   if (bulunanlar.length === 0) return;
 
   try {
-    const clientId = taslakClientId();
-    const yanitlar = await Promise.all(
-      bulunanlar.map(({ anahtar, deger }) =>
-        fetch("/api/owner-draft", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            slug,
-            anahtar,
-            deger,
-            clientId,
-            source: "smart_engine",
-          }),
-        })
-      )
-    );
-    const basarili = bulunanlar.filter((_, i) => yanitlar[i]?.ok);
-    if (basarili.length === 0) {
-      if (yanitlar.some((yanit) => yanit?.status === 503)) {
-        markSmartEngineStorefrontDisabled(slug);
-      }
-      return;
+    const commandResult = await executeSmartEngineCommand({
+      slug,
+      initialDraftVersion,
+      actions: bulunanlar.map(({ anahtar, deger }) => ({ anahtar, deger })),
+      clientId: taslakClientId(),
+    });
+    onDraftVersion(commandResult.draftVersion);
+
+    if (commandResult.failed.some((item) => item.code === "SMART_ENGINE_DISABLED")) {
+      markSmartEngineStorefrontDisabled(slug);
     }
 
-    basarili.forEach(({ kolon, deger }) => setAlan(kolon, deger));
+    const basarili = commandResult.succeeded
+      .map((item) => {
+        const alan = FIELD_BY_KEY.get(item.anahtar);
+        return alan
+          ? { anahtar: item.anahtar, kolon: alan.kolon, etiket: alan.etiket, deger: item.deger }
+          : null;
+      })
+      .filter(
+        (item): item is { anahtar: string; kolon: string; etiket: string; deger: unknown } =>
+          item !== null,
+      );
+
+    if (basarili.length === 0) return;
+
+    basarili.forEach(({ kolon, deger, anahtar }) => {
+      setAlan(kolon, deger);
+      alaniParlat(anahtar);
+    });
     routerRefresh();
     const liste = basarili.map(({ etiket }) => `✓ ${etiket}`).join("\n");
-    mesajEkle("asistan", `Yazdığından ayrıca şunları da anladım:\n${liste}`, undefined, "✨");
+    mesajEkle(
+      "asistan",
+      `Yazdığından ayrıca şunları da anladım:\n${liste}`,
+      [
+        { label: "Doğru", payload: "onay_tamam" },
+        { label: "Geri al", payload: `geri_al:command:${commandResult.commandId}` },
+      ],
+      "✨",
+    );
   } catch {
-    // Bonus bir zenginleştirme — başarısız olursa asıl kaydı etkilemez.
+    // Bonus bir zenginleştirme — başarısız olursa asıl akışı etkilemez.
   }
 }
 
@@ -519,7 +546,9 @@ export function useOwnerActions({
 
     const alan = seciliAlan;
     const richTextMotorEnabled =
-      alan.tip !== "acikKapali" && metin.length >= 15
+      alan.tip !== "acikKapali" &&
+      alan.anahtar !== "calismaSaatleri" &&
+      metin.length >= 15
         ? await smartEngineStorefrontClientEnabled(slug)
         : false;
 
@@ -535,14 +564,24 @@ export function useOwnerActions({
       if (temiz === null) {
         // Cümlede başka bir alana ait ipucu var ama seçili alanın kendi
         // değerini güvenle ayıramadık — ham metni YAZMAYIZ, dürüstçe
-        // sorarız. Bonus yine de diğer alanları ayrıca doğru kaydeder.
+        // sorarız. Diğer güvenli alanlar authoritative bonus command ile
+        // ayrı olarak işlenebilir.
         mesajEkle("kullanici", metin);
         mesajEkle(
           "asistan",
           `Bu cümlede birden fazla bilgi var gibi görünüyor. "${alan.etiket}" için sadece onu yazar mısın?`
         );
         setGiris("");
-        void bonusAlanlariCikarVeKaydet(metin, "", slug, mesajEkle, setAlan, () => router.refresh());
+        void bonusAlanlariCikarVeKaydet(
+          metin,
+          "",
+          slug,
+          mesajEkle,
+          setAlan,
+          () => router.refresh(),
+          draftVersion,
+          setDraftVersion,
+        );
         return;
       }
       gonderilecek = temiz;
@@ -552,6 +591,79 @@ export function useOwnerActions({
     setKaydediliyor(true);
 
     try {
+      if (richTextMotorEnabled) {
+        const bonusAlanlar = bonusAlanlariniHazirla(metin, alan.kolon);
+        const commandResult = await executeSmartEngineCommand({
+          slug,
+          initialDraftVersion: draftVersion,
+          actions: [
+            { anahtar: alan.anahtar, deger: gonderilecek },
+            ...bonusAlanlar.map(({ anahtar, deger }) => ({ anahtar, deger })),
+          ],
+          clientId: taslakClientId(),
+        });
+        setDraftVersion(commandResult.draftVersion);
+
+        if (commandResult.failed.some((item) => item.code === "SMART_ENGINE_DISABLED")) {
+          markSmartEngineStorefrontDisabled(slug);
+        }
+
+        const anaKayit = commandResult.succeeded.find((item) => item.anahtar === alan.anahtar);
+        if (!anaKayit) {
+          const hata = commandResult.failed.find((item) => item.anahtar === alan.anahtar);
+          mesajEkle(
+            "asistan",
+            hata?.message ?? "Bu değişikliği güvenle kaydedemedim. Güncel taslağı alıp tekrar dene.",
+          );
+          if (commandResult.stopped.length > 0) router.refresh();
+          return;
+        }
+
+        let tazeTaslak = { ...yerelTaslak };
+        const kaydedilenEtiketler: string[] = [];
+        for (const item of commandResult.succeeded) {
+          const kayitAlani = FIELD_BY_KEY.get(item.anahtar);
+          if (!kayitAlani) continue;
+          setAlan(kayitAlani.kolon, item.deger);
+          tazeTaslak = { ...tazeTaslak, [kayitAlani.kolon]: item.deger };
+          kaydedilenEtiketler.push(kayitAlani.etiket);
+          alaniParlat(item.anahtar);
+        }
+
+        const sorunlar = commandResult.failed
+          .filter((item) => item.anahtar !== alan.anahtar)
+          .map((item) => FIELD_BY_KEY.get(item.anahtar)?.etiket ?? item.anahtar);
+        const durdurulan = commandResult.stopped.map(
+          (item) => FIELD_BY_KEY.get(item.anahtar)?.etiket ?? item.anahtar,
+        );
+
+        const satirlar = [`${alan.etiket} güncellendi. Müşteriler yayınlayana kadar göremez.`];
+        const bonusBasarili = kaydedilenEtiketler.filter((etiket) => etiket !== alan.etiket);
+        if (bonusBasarili.length > 0) {
+          satirlar.push(`Ayrıca kaydettim: ${bonusBasarili.join(", ")}.`);
+        }
+        if (sorunlar.length > 0) {
+          satirlar.push(`Kaydedemedim: ${sorunlar.join(", ")}.`);
+        }
+        if (durdurulan.length > 0) {
+          satirlar.push(`Güvenlik için göndermedim: ${durdurulan.join(", ")}.`);
+        }
+
+        mesajEkle(
+          "asistan",
+          satirlar.join("\n"),
+          [
+            { label: "Doğru", payload: "onay_tamam" },
+            { label: "Geri al", payload: `geri_al:command:${commandResult.commandId}` },
+          ],
+          "✅",
+        );
+        setGiris("");
+        router.refresh();
+        alanaGecVeyaBitir(alan.anahtar, tazeTaslak);
+        return;
+      }
+
       const yanit = await fetch("/api/owner-draft", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -560,15 +672,11 @@ export function useOwnerActions({
           anahtar: alan.anahtar,
           deger: gonderilecek,
           clientId: taslakClientId(),
-          ...(richTextMotorEnabled ? { source: "smart_engine" } : {}),
         }),
       });
       const govde = await yanit.json();
 
       if (!yanit.ok) {
-        if (govde?.kod === "SMART_ENGINE_DISABLED") {
-          markSmartEngineStorefrontDisabled(slug);
-        }
         mesajEkle("asistan", govde?.hata ?? "Kaydedilemedi.");
         return;
       }
@@ -586,22 +694,6 @@ export function useOwnerActions({
       router.refresh();
       alaniParlat(alan.anahtar);
       alanaGecVeyaBitir(alan.anahtar, tazeTaslak);
-
-      // Akıllı bonus yalnız runtime flag açıkken çalışır.
-      if (
-        richTextMotorEnabled &&
-        typeof gonderilecek === "string" &&
-        metin.length >= 15
-      ) {
-        void bonusAlanlariCikarVeKaydet(
-          metin,
-          alan.kolon,
-          slug,
-          mesajEkle,
-          setAlan,
-          () => router.refresh()
-        );
-      }
     } catch {
       mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar dene.");
     } finally {
