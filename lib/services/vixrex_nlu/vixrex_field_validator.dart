@@ -191,6 +191,8 @@ class VixrexFieldValidator {
 
     final normalized = _turkceKucult(value.trim());
     const trueValues = {
+      'aç',
+      'ac',
       'açık',
       'acik',
       'göster',
@@ -201,6 +203,7 @@ class VixrexFieldValidator {
       '1',
     };
     const falseValues = {
+      'kapat',
       'kapalı',
       'kapali',
       'gizle',
