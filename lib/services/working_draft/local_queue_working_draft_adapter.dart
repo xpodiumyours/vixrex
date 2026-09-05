@@ -75,11 +75,12 @@ class LocalQueueWorkingDraftAdapter implements WorkingDraftPort {
       await _kuyruktanSil(anahtar);
       return res;
     }
-    // Ağ yoksa kuyruğa al, sonra dene.
+    // Ağ yoksa kuyruğa al, sonra aynı logical patch'i yeniden dene.
     if (_agYok(res.failure)) {
       await _kuyrugaEkle(anahtar, deger, beklenenSurum, clientId);
-      // Yerel iyimser güncelleme — çevrimdışı devam için.
-      return Result.success(const WorkingDraftPatchResult(draftVersion: -1));
+      // Queue'a güvenli yazılmış olması authoritative persistence değildir.
+      // Sahte draftVersion:-1 yerine açık queuedOffline sonucu döner.
+      return Result.success(const WorkingDraftPatchResult.queuedOffline());
     }
     return res;
   }
@@ -128,7 +129,7 @@ class LocalQueueWorkingDraftAdapter implements WorkingDraftPort {
         beklenenSurum: m['vs'] as int?,
         clientId: m['cid'] as String?,
       );
-      if (r.isSuccess) {
+      if (r.isSuccess && r.data?.succeeded == true) {
         list.remove(raw);
         await p.setStringList(_kKuyruk, List<String>.from(list));
       } else if (!_agYok(r.failure)) {
