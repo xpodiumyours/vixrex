@@ -43,10 +43,9 @@ class VixrexIntentResolver {
 
   static List<String> _tokenize(String text) {
     final normalized = VixrexNormalizer.normalize(text);
-    return RegExp(r'[a-z0-9]+')
-        .allMatches(normalized)
-        .map((m) => m.group(0)!)
-        .toList(growable: false);
+    return RegExp(
+      r'[a-z0-9]+',
+    ).allMatches(normalized).map((m) => m.group(0)!).toList(growable: false);
   }
 
   static int _classRank(String matchClass) {
@@ -63,7 +62,8 @@ class VixrexIntentResolver {
   }
 
   static bool _isSafeInflection(String inputToken, String aliasToken) {
-    if (!inputToken.startsWith(aliasToken) || inputToken.length <= aliasToken.length) {
+    if (!inputToken.startsWith(aliasToken) ||
+        inputToken.length <= aliasToken.length) {
       return false;
     }
     final suffix = inputToken.substring(aliasToken.length);
@@ -84,7 +84,11 @@ class VixrexIntentResolver {
     final normalizedAliasLength = aliasTokens.join().length;
     final out = <_Candidate>[];
 
-    for (var start = 0; start <= inputTokens.length - aliasTokens.length; start += 1) {
+    for (
+      var start = 0;
+      start <= inputTokens.length - aliasTokens.length;
+      start += 1
+    ) {
       var prefixMatches = true;
       for (var offset = 0; offset < aliasTokens.length - 1; offset += 1) {
         if (inputTokens[start + offset] != aliasTokens[offset]) {
@@ -143,19 +147,20 @@ class VixrexIntentResolver {
     return a.startToken <= b.endToken && b.startToken <= a.endToken;
   }
 
-  static List<VixrexIntentMatch> _selectSafeMatches(List<_Candidate> candidates) {
-    final sorted = [...candidates]
-      ..sort((a, b) {
-        final rank = _classRank(b.matchClass) - _classRank(a.matchClass);
-        if (rank != 0) return rank;
-        final tokens = b.tokenCount - a.tokenCount;
-        if (tokens != 0) return tokens;
-        final length = b.aliasLength - a.aliasLength;
-        if (length != 0) return length;
-        final start = a.startToken - b.startToken;
-        if (start != 0) return start;
-        return a.alan.anahtar.compareTo(b.alan.anahtar);
-      });
+  static List<VixrexIntentMatch> _selectSafeMatches(
+    List<_Candidate> candidates,
+  ) {
+    final sorted = [...candidates]..sort((a, b) {
+      final rank = _classRank(b.matchClass) - _classRank(a.matchClass);
+      if (rank != 0) return rank;
+      final tokens = b.tokenCount - a.tokenCount;
+      if (tokens != 0) return tokens;
+      final length = b.aliasLength - a.aliasLength;
+      if (length != 0) return length;
+      final start = a.startToken - b.startToken;
+      if (start != 0) return start;
+      return a.alan.anahtar.compareTo(b.alan.anahtar);
+    });
 
     final accepted = <_Candidate>[];
     for (final candidate in sorted) {
@@ -203,10 +208,16 @@ class VixrexIntentResolver {
         );
       }
 
-      final exactForms = vixrexMatcherExactFormsByField[alan.anahtar] ?? const <String>[];
+      final exactForms =
+          vixrexMatcherExactFormsByField[alan.anahtar] ?? const <String>[];
       for (final exactForm in exactForms) {
         candidates.addAll(
-          _collectFormMatches(inputTokens, alan, exactForm, allowInflected: false),
+          _collectFormMatches(
+            inputTokens,
+            alan,
+            exactForm,
+            allowInflected: false,
+          ),
         );
       }
     }
@@ -215,7 +226,8 @@ class VixrexIntentResolver {
   }
 
   /// Tüm sözlüğe göre ilk güvenli eşleşen alanı döner, yoksa null.
-  VixrexNiyetAlan? resolve(String input) => resolveMatches(input).firstOrNull?.alan;
+  VixrexNiyetAlan? resolve(String input) =>
+      resolveMatches(input).firstOrNull?.alan;
 
   /// Aynı cümledeki bağımsız güvenli alanları token sırasıyla döner.
   List<VixrexNiyetAlan> resolveAll(String input) {
