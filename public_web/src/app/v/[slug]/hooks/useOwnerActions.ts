@@ -9,6 +9,11 @@ import { serbestMetindenAlanlariCikar, type SerbestMetinSonuc } from "@/lib/serb
 import { handleVixrexNluMessage } from "@/lib/vixrexNluPipeline";
 import { VIXREX_NIYET_ALAN_BY_ANAHTAR } from "@/lib/vixrexNiyetSozlugu";
 import { extractVixrexValue, digerAlanaAitIpucuVarMi } from "@/lib/vixrexValueExtractor";
+import { SMART_ENGINE_DISABLED_MESSAGE } from "@/lib/smartEngineFlags";
+import {
+  markSmartEngineStorefrontDisabled,
+  smartEngineStorefrontClientEnabled,
+} from "@/lib/smartEngineFlagsClient";
 import type { Mesaj } from "./useOwnerChat";
 
 /** Hangi alan hangi tür hazır görsele karşılık geliyor. */
@@ -180,6 +185,10 @@ export async function bonusAlanlariCikarVeKaydet(
   setAlan: (kolon: string, deger: unknown) => void,
   routerRefresh: () => void,
 ) {
+  // Handoff/bonus çağrıları da motor capability'sine bağlıdır. Flag okunamazsa
+  // sessizce hiçbir alan çıkarılmaz; manuel ana kayıt bundan etkilenmez.
+  if (!(await smartEngineStorefrontClientEnabled(slug))) return;
+
   const sonuc = serbestMetindenAlanlariCikar(metin);
   const bulunanlar = SERBEST_ANLATIM_ESLEME
     .map(([sonucAnahtari, anahtar]) => {
@@ -199,12 +208,23 @@ export async function bonusAlanlariCikarVeKaydet(
         fetch("/api/owner-draft", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ slug, anahtar, deger, clientId }),
+          body: JSON.stringify({
+            slug,
+            anahtar,
+            deger,
+            clientId,
+            source: "smart_engine",
+          }),
         })
       )
     );
     const basarili = bulunanlar.filter((_, i) => yanitlar[i]?.ok);
-    if (basarili.length === 0) return;
+    if (basarili.length === 0) {
+      if (yanitlar.some((yanit) => yanit?.status === 503)) {
+        markSmartEngineStorefrontDisabled(slug);
+      }
+      return;
+    }
 
     basarili.forEach(({ kolon, deger }) => setAlan(kolon, deger));
     routerRefresh();
@@ -400,12 +420,16 @@ export function useOwnerActions({
     if (!seciliAlan) {
       // Esnaf hicbir yere tiklamadan da yazabilmeli: cumleyi akilli motor
       // cozer, hangi alan oldugunu 46 alanlik niyet sozlugunden kendi bulur.
-      // (Motor yaziliydi ama hicbir yerden cagrilmiyordu.)
       if (!metin) return;
       mesajEkle("kullanici", metin);
       setGiris("");
       setKaydediliyor(true);
       try {
+        if (!(await smartEngineStorefrontClientEnabled(slug))) {
+          mesajEkle("asistan", SMART_ENGINE_DISABLED_MESSAGE);
+          return;
+        }
+
         const sonuc = await handleVixrexNluMessage(metin);
         const cozulen = sonuc.tumu ?? [];
 
@@ -426,9 +450,18 @@ export function useOwnerActions({
           const yanit = await fetch("/api/owner-draft", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ slug, anahtar, deger, clientId: taslakClientId() }),
+            body: JSON.stringify({
+              slug,
+              anahtar,
+              deger,
+              clientId: taslakClientId(),
+              source: "smart_engine",
+            }),
           });
           if (!yanit.ok) {
+            if (yanit.status === 503) {
+              markSmartEngineStorefrontDisabled(slug);
+            }
             basarisizEtiketler.push(alan?.etiket ?? anahtar);
             continue;
           }
@@ -476,15 +509,17 @@ export function useOwnerActions({
     }
 
     const alan = seciliAlan;
+    const richTextMotorEnabled =
+      alan.tip !== "acikKapali" && metin.length >= 15
+        ? await smartEngineStorefrontClientEnabled(slug)
+        : false;
 
-    // Zengin cümle ayrıştırması (2026-09-03, bkz. temizlenmisSeciliDeger
-    // yorumu): kısa girdilerde ve aç/kapa alanlarda davranış AYNI kalır —
-    // ayrıştırma yalnız 15+ karakterlik metinlerde denenir (bonus'un
-    // tetiklenme eşiğiyle aynı, aşağıda).
+    // Zengin cümle ayrıştırması yalnız motor açıkken yapılır. Motor kapalıysa
+    // seçilmiş alanın manuel edit davranışı korunur ve ham değer yazılır.
     let gonderilecek: string | boolean;
     if (alan.tip === "acikKapali") {
       gonderilecek = ["evet", "aç", "açık", "göster", "true"].includes(metin.toLowerCase());
-    } else if (metin.length < 15) {
+    } else if (metin.length < 15 || !richTextMotorEnabled) {
       gonderilecek = metin;
     } else {
       const temiz = temizlenmisSeciliDeger(metin, alan);
@@ -516,11 +551,15 @@ export function useOwnerActions({
           anahtar: alan.anahtar,
           deger: gonderilecek,
           clientId: taslakClientId(),
+          ...(richTextMotorEnabled ? { source: "smart_engine" } : {}),
         }),
       });
       const govde = await yanit.json();
 
       if (!yanit.ok) {
+        if (govde?.kod === "SMART_ENGINE_DISABLED") {
+          markSmartEngineStorefrontDisabled(slug);
+        }
         mesajEkle("asistan", govde?.hata ?? "Kaydedilemedi.");
         return;
       }
@@ -539,11 +578,12 @@ export function useOwnerActions({
       alaniParlat(alan.anahtar);
       alanaGecVeyaBitir(alan.anahtar, tazeTaslak);
 
-      // "Esnaf 46 alanı tek tek dolaşmasın" (2026-09-02) — bu KUTUYA
-      // (ör. "İşletme adın?") normalden uzun bir cümle yazılırsa, arka
-      // planda diğer alanları da doldurmayı dener. Yeni bir ekran
-      // elemanı yok — yalnız zaten var olan bu giriş kutusu akıllanıyor.
-      if (typeof gonderilecek === "string" && metin.length >= 15) {
+      // Akıllı bonus yalnız runtime flag açıkken çalışır.
+      if (
+        richTextMotorEnabled &&
+        typeof gonderilecek === "string" &&
+        metin.length >= 15
+      ) {
         void bonusAlanlariCikarVeKaydet(
           metin,
           alan.kolon,
@@ -558,7 +598,7 @@ export function useOwnerActions({
     } finally {
       setKaydediliyor(false);
     }
-  }, [giris, seciliAlan, slug, mesajEkle, setAlan, setGiris, alanaGecVeyaBitir, router, yerelTaslak]);
+  }, [giris, seciliAlan, slug, mesajEkle, setAlan, setGiris, alanaGecVeyaBitir, router, yerelTaslak, alanSec]);
 
   // Yalnız isteğe bağlı alanlarda gösterilen "Boş geç" (ADR 0002, 3. alt-faz).
   // Vitrin İÇERİĞİ yazmaz — /api/owner-draft'tan bağımsız, kendi dar
