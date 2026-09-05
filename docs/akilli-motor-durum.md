@@ -113,16 +113,23 @@ KATMAN 5, **5.0–5.10 = 11 alt aşamadır**.
 
 ### 5.9 — Special-flow security parity 🔄
 - preflight LOCK ✅ (`akilli-motor-5-9-special-flow-security-preflight.md`)
-- Flutter görsel upload artık extension/MIME yerine gerçek JPEG/PNG/WebP signature doğruluyor ✅
-- WebP ham geçişinde codec decode doğrulaması eklendi ✅
-- görsel spoofing hedefli testleri eklendi; Flutter runtime kanıtı bekliyor
+- Flutter görsel upload extension/MIME yerine gerçek JPEG/PNG/WebP signature doğruluyor ✅
+- WebP ham geçişinde codec decode doğrulaması ✅
+- görsel spoofing hedefli testleri + Akıllı Motor CI kapsamı ✅
+- il/ilçe canonical eşleştirmede `Kemer` belirsizliği ve substring açığı kapatıldı ✅
 - çalışma saatleri generic mutation'dan çıkarıldı; Next + Flutter `needs_special_flow` ✅
 - overnight `22:00–02:00` public open-state hesabı düzeltildi ✅
-- overnight yerel mantık smoke 5/5 ✅
-- il/ilçe canonical special-flow korunacak ✅
-- GPS'in bugünkü 5 paralel field write'ı coupled/atomic bundle'a dönüşecek ✅
-- toggle/url 5.2 davranışı regresyon olarak korunacak ✅
-- 🔄 GPS atomic bundle 5.5 DB çekirdeğinin gerçek migration entegrasyonunu bekliyor
+- `start == end` 24 saat açık sayılmıyor ve testle kilitli ✅
+- GPS location bundle repo migration + ACL hardening + owner API yolu ✅
+- GPS owner UI artık 5 paralel field write yerine `/api/owner-location-bundle` kullanıyor ✅
+- GPS atomic bundle dev DB gerçek transaction testinden geçti; production DB değişmedi ✅
+- toggle explicit allowlist Next/Flutter eşitlendi ✅
+- URL `#anchor` kapsamı yalnız `galeriAksiyonLinki`; Next/Flutter/dev DB daraltıldı ✅
+- `20260905161400_tighten_storefront_url_anchor_scope.sql` Akıllı Motor validator workflow path kapsamına bağlandı ✅
+- `working-hours-overnight.test.ts`, `vixrex-decision-contract.test.ts` ve `vixrex_working_hours_special_flow_test.dart` dedicated validator workflow execution listesine bağlandı ✅
+- son CI wiring commit'i: `1d81c8f35b8f21d086bfc3ea4dfe32653461e385` ✅
+- son validator run `33977843912`: üç job da runner başlamadan `steps: []`; bu nedenle aynı-SHA runtime sonucu **doğrulanamadı** 🔄
+- 5.9 bu dış runtime kanıtı gelmeden ✅ sayılmayacak
 
 ### 5.10 — Core Build doğrulaması ⬜
 - targeted unit/integration
