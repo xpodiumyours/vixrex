@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { taslakClientId } from "@/lib/canliVitrinSenkron";
 import { FIELD_BY_KEY, type VitrinField } from "@/lib/vitrinFieldSchema";
+import { undoSmartEngineCommand } from "@/lib/smartEngineCommandClient";
+import { useOwnerDraftVersion } from "../OwnerDraftVersionContext";
 import type { Mesaj } from "./useOwnerChat";
 
 interface Deps {
@@ -18,11 +20,9 @@ interface FieldRestoreHook {
   geriAliniyor: boolean;
   canliyaDondur: () => Promise<void>;
   /**
-   * Faz 5 (Çalışma masası / Yön C, 2026-09-03): motorun tek cümleden
-   * birden fazla alanı birden doldurduğu durumda, onay kartındaki
-   * "Geri al" hepsini birden canlı hâline döndürür. `canliyaDondur`
-   * yalnız o an SEÇİLİ tek alanı bilir; bu, seçimden bağımsız, anahtar
-   * listesiyle çalışır.
+   * Legacy alan-listesi geri dönüşünü korur. 5.6 authoritative onay kartı
+   * ise tek öğe olarak `command:<uuid>` yollar; o durumda server receipt'leri
+   * çözer ve atomik command Undo çalışır.
    */
   coklaCanliyaDondur: (anahtarlar: string[]) => Promise<void>;
 }
@@ -35,6 +35,7 @@ export function useFieldRestore({
   setGiris,
 }: Deps): FieldRestoreHook {
   const router = useRouter();
+  const { setDraftVersion } = useOwnerDraftVersion();
   const [geriAliniyor, setGeriAliniyor] = useState(false);
   const seciliAnahtarRef = useRef(seciliAlan?.anahtar ?? null);
 
@@ -98,6 +99,39 @@ export function useFieldRestore({
 
   const coklaCanliyaDondur = useCallback(
     async (anahtarlar: string[]) => {
+      const commandToken =
+        anahtarlar.length === 1 && anahtarlar[0]?.startsWith("command:")
+          ? anahtarlar[0].slice("command:".length)
+          : null;
+
+      if (commandToken) {
+        setGeriAliniyor(true);
+        try {
+          const sonuc = await undoSmartEngineCommand({
+            slug,
+            commandId: commandToken,
+            clientId: taslakClientId(),
+          });
+
+          if (!sonuc.ok) {
+            mesajEkle("asistan", sonuc.message);
+            return;
+          }
+
+          setDraftVersion(sonuc.draftVersion);
+          mesajEkle(
+            "asistan",
+            sonuc.replayed
+              ? "Bu akıllı motor işlemi zaten geri alınmıştı."
+              : `${sonuc.rolledBackActionCount} değişiklik güvenle geri alındı.`
+          );
+          router.refresh();
+        } finally {
+          setGeriAliniyor(false);
+        }
+        return;
+      }
+
       const alanlar = anahtarlar
         .map((a) => FIELD_BY_KEY.get(a))
         .filter((a): a is VitrinField => Boolean(a));
@@ -148,7 +182,7 @@ export function useFieldRestore({
         setGeriAliniyor(false);
       }
     },
-    [slug, mesajEkle, setAlan, setGiris, router]
+    [slug, mesajEkle, setAlan, setGiris, router, setDraftVersion]
   );
 
   return { geriAliniyor, canliyaDondur, coklaCanliyaDondur };
