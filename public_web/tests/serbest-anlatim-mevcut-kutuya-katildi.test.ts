@@ -6,12 +6,9 @@ const oku = (yol: string) =>
   readFileSync(resolve(__dirname, `../src/${yol}`), "utf8");
 
 /**
- * Serbest metinle alan doldurma (2026-09-02) — kullanıcı NET olarak yeni
- * bir ekran elemanı istemedi, "sadece çalışmasında ve niyetinde değişiklik"
- * istedi. Bu yüzden ayrı bir kart YOK — mevcut soru kutusuna (gonder(),
- * useOwnerActions.ts) doğrudan cevaplanmayan alanları da bulan bir
- * "bonus çıkarım" eklendi. Panelin görünümü/DOM'u bu özellik için hiç
- * değişmedi.
+ * Serbest metinle alan doldurma (2026-09-02) — ayrı bir ekran elemanı yok;
+ * mevcut soru kutusu kullanılır. 5.6 itibarıyla motorun çıkardığı alanlar
+ * authoritative command/action/version/Undo yoluna girer.
  */
 describe("OwnerAssistantPanel — yeni bir ekran elemanı yok", () => {
   const panel = oku("app/v/[slug]/OwnerAssistantPanel.tsx");
@@ -22,36 +19,47 @@ describe("OwnerAssistantPanel — yeni bir ekran elemanı yok", () => {
     expect(panel).not.toContain("serbestMetindenAlanlariCikar");
   });
 
-  it("panel açılınca otomatik ilk-alan seçimi eski (2026-08-22'den beri değişmemiş) hâliyle çalışıyor", () => {
+  it("panel açılınca otomatik ilk-alan seçimi eski hâliyle çalışıyor", () => {
     expect(panel).toContain("if (!acik || seciliAlan) return;");
   });
 });
 
-describe("useOwnerActions.gonder() — mevcut kutuya bonus çıkarım katıldı", () => {
+describe("useOwnerActions.gonder() — mevcut kutuda authoritative rich-text/bonus", () => {
   const kaynak = oku("app/v/[slug]/hooks/useOwnerActions.ts");
 
-  it("yalnız gonder()'ın (metin girişi) başarılı akışının İÇİNDE tetiklenir — ayrı bir buton/kart yok", () => {
-    const gonderBaslangici = kaynak.indexOf("const gonder = useCallback(async () => {");
-    const cagriIndex = kaynak.indexOf("bonusAlanlariCikarVeKaydet(", gonderBaslangici);
-    expect(cagriIndex).toBeGreaterThan(gonderBaslangici);
-  });
-
-  it("kısa/tek kelimelik cevaplarda gereksiz yere çalışmaz (uzunluk eşiği var)", () => {
+  it("kısa/tek kelimelik cevaplarda gereksiz motor çalıştırmaz", () => {
     expect(kaynak).toContain("metin.length >= 15");
   });
 
-  it("az önce doğrudan cevaplanan alanın kolonu bonus setinden hariç tutulur — çift yazma yok", () => {
+  it("az önce doğrudan cevaplanan alan bonus setinden hariç tutulur — çift yazma yok", () => {
     expect(kaynak).toContain("alan.kolon === cevaplananKolon");
   });
 
-  it("bonus başarısız olursa asıl kayıt/akış hiç etkilenmez — sessizce yutulur", () => {
-    const idx = kaynak.indexOf("async function bonusAlanlariCikarVeKaydet");
-    const fonksiyon = kaynak.slice(idx, idx + 1600);
-    expect(fonksiyon).toContain("} catch {");
-    expect(fonksiyon).toContain("Bonus bir zenginleştirme");
+  it("çalışma saatleri generic bonus/rich-text mutation'a sokulmaz", () => {
+    expect(kaynak).toContain('if (anahtar === "calismaSaatleri") return null');
+    expect(kaynak).toContain('alan.anahtar !== "calismaSaatleri"');
   });
 
-  it("bonus bulunca aynı ✓ liste stilini kullanır (D3'teki desenle aynı)", () => {
+  it("bonus tek authoritative command kullanır ve legacy owner-draft'a düşmez", () => {
+    const baslangic = kaynak.indexOf("export async function bonusAlanlariCikarVeKaydet");
+    const bitis = kaynak.indexOf("export function useOwnerActions", baslangic);
+    const fonksiyon = kaynak.slice(baslangic, bitis);
+    expect(fonksiyon).toContain("executeSmartEngineCommand({");
+    expect(fonksiyon).toContain("initialDraftVersion");
+    expect(fonksiyon).toContain("onDraftVersion(commandResult.draftVersion)");
+    expect(fonksiyon).not.toContain('fetch("/api/owner-draft"');
+  });
+
+  it("seçili rich-text ana değer ve bonusları tek command/Undo altında toplar", () => {
+    const baslangic = kaynak.indexOf("if (richTextMotorEnabled) {");
+    const bitis = kaynak.indexOf('const yanit = await fetch("/api/owner-draft"', baslangic);
+    const blok = kaynak.slice(baslangic, bitis);
+    expect(blok).toContain("executeSmartEngineCommand({");
+    expect(blok).toContain("bonusAlanlar.map");
+    expect(blok).toContain('payload: `geri_al:command:${commandResult.commandId}`');
+  });
+
+  it("bonus bulunca aynı ✓ liste stilini kullanır", () => {
     expect(kaynak).toContain("Yazdığından ayrıca şunları da anladım");
     expect(kaynak).toContain("basarili.map(({ etiket }) => `✓ ${etiket}`)");
   });
