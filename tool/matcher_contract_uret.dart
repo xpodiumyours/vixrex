@@ -22,8 +22,11 @@ void main() {
 
   final decoded = jsonDecode(source.readAsStringSync()) as Map<String, dynamic>;
   final minLen = decoded['minInflectedAliasLength'] as int?;
-  final suffixes = (decoded['safeSuffixes'] as List?)?.cast<String>() ?? const <String>[];
-  final exactRaw = (decoded['exactFormsByField'] as Map?)?.cast<String, dynamic>() ?? const <String, dynamic>{};
+  final suffixes =
+      (decoded['safeSuffixes'] as List?)?.cast<String>() ?? const <String>[];
+  final exactRaw =
+      (decoded['exactFormsByField'] as Map?)?.cast<String, dynamic>() ??
+      const <String, dynamic>{};
 
   if (minLen == null || minLen < 1) {
     throw StateError('minInflectedAliasLength geçersiz.');
@@ -35,21 +38,26 @@ void main() {
   final exact = <String, List<String>>{};
   for (final entry in exactRaw.entries) {
     final values = (entry.value as List?)?.cast<String>() ?? const <String>[];
-    if (entry.key.trim().isEmpty || values.isEmpty || values.any((v) => v.trim().isEmpty)) {
+    if (entry.key.trim().isEmpty ||
+        values.isEmpty ||
+        values.any((v) => v.trim().isEmpty)) {
       throw StateError('exactFormsByField geçersiz: ${entry.key}');
     }
     exact[entry.key] = values;
   }
 
-  final out = StringBuffer()
-    ..writeln('// ÜRETİLMİŞ DOSYA — ELLE DÜZENLEME.')
-    ..writeln('// Kaynak: shared/vixrex_matcher_contract.json')
-    ..writeln()
-    ..writeln('const int vixrexMatcherMinInflectedAliasLength = $minLen;')
-    ..writeln(
-      'const List<String> vixrexMatcherSafeSuffixes = [${suffixes.map(_dartString).join(', ')}];',
-    )
-    ..writeln('const Map<String, List<String>> vixrexMatcherExactFormsByField = {');
+  final out =
+      StringBuffer()
+        ..writeln('// ÜRETİLMİŞ DOSYA — ELLE DÜZENLEME.')
+        ..writeln('// Kaynak: shared/vixrex_matcher_contract.json')
+        ..writeln()
+        ..writeln('const int vixrexMatcherMinInflectedAliasLength = $minLen;')
+        ..writeln(
+          'const List<String> vixrexMatcherSafeSuffixes = [${suffixes.map(_dartString).join(', ')}];',
+        )
+        ..writeln(
+          'const Map<String, List<String>> vixrexMatcherExactFormsByField = {',
+        );
 
   for (final entry in exact.entries) {
     out.writeln(
@@ -58,6 +66,11 @@ void main() {
   }
   out.writeln('};');
 
-  File('$root/lib/config/vixrex_matcher_contract.g.dart').writeAsStringSync(out.toString());
+  final output = File('$root/lib/config/vixrex_matcher_contract.g.dart');
+  output.writeAsStringSync(out.toString());
+  final formatResult = Process.runSync('dart', ['format', output.path]);
+  if (formatResult.exitCode != 0) {
+    throw StateError('Üretilen matcher kontratı biçimlendirilemedi: ${formatResult.stderr}');
+  }
   stdout.writeln('Üretildi: lib/config/vixrex_matcher_contract.g.dart');
 }
