@@ -39,6 +39,7 @@ on:
       - "lib/config/turkey_cities_config.dart"
       - "lib/services/vixrex_nlu/vixrex_field_validator.dart"
       - "lib/services/store_location_fetch_service.dart"
+      - "lib/services/image_optimization_service.dart"
       - "lib/utils/address_validator.dart"
       - "lib/services/working_draft/**"
       - "lib/services/owner_bootstrap_service.dart"
@@ -47,6 +48,7 @@ on:
       - "lib/widgets/vixrex/vixrex_companion_chat.dart"
       - "test/vixrex_validator_parity_test.dart"
       - "test/store_location_fetch_service_test.dart"
+      - "test/image_optimization_service_test.dart"
       - "test/smart_engine_working_draft_adapter_contract_test.dart"
       - "test/smart_engine_working_draft_orchestrator_test.dart"
       - "test/smart_engine_flutter_owner_lifecycle_contract_test.dart"
@@ -135,6 +137,7 @@ jobs:
           lib/config/turkey_cities_config.dart
           lib/services/vixrex_nlu/vixrex_field_validator.dart
           lib/services/store_location_fetch_service.dart
+          lib/services/image_optimization_service.dart
           lib/services/working_draft/working_draft_port.dart
           lib/services/working_draft/supabase_working_draft_adapter.dart
           lib/services/working_draft/local_queue_working_draft_adapter.dart
@@ -147,6 +150,7 @@ jobs:
           lib/widgets/vixrex/vixrex_companion_chat.dart
           test/vixrex_validator_parity_test.dart
           test/store_location_fetch_service_test.dart
+          test/image_optimization_service_test.dart
           test/smart_engine_working_draft_adapter_contract_test.dart
           test/smart_engine_working_draft_orchestrator_test.dart
           test/smart_engine_flutter_owner_lifecycle_contract_test.dart
@@ -156,6 +160,7 @@ jobs:
           flutter test
           test/vixrex_validator_parity_test.dart
           test/store_location_fetch_service_test.dart
+          test/image_optimization_service_test.dart
           test/smart_engine_working_draft_adapter_contract_test.dart
           test/smart_engine_working_draft_orchestrator_test.dart
           test/smart_engine_flutter_owner_lifecycle_contract_test.dart
@@ -177,11 +182,13 @@ jobs:
           lib/services/working_draft/smart_engine_owner_context_service.dart
           lib/services/working_draft/flutter_smart_engine_owner_executor.dart
           lib/services/store_location_fetch_service.dart
+          lib/services/image_optimization_service.dart
           lib/services/owner_bootstrap_service.dart
           lib/repositories/vitrin_sahiplik_repository.dart
           lib/screens/vixrex_screen.dart
           lib/widgets/vixrex/vixrex_companion_chat.dart
           test/store_location_fetch_service_test.dart
+          test/image_optimization_service_test.dart
           test/smart_engine_working_draft_adapter_contract_test.dart
           test/smart_engine_working_draft_orchestrator_test.dart
           test/smart_engine_flutter_owner_lifecycle_contract_test.dart
