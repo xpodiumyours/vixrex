@@ -81,6 +81,35 @@ class OwnerBootstrapService {
     }
   }
 
+  /// 5.8 Flutter owner-edit başlangıcı. `bootstrap_owner_state` mevcut çalışma
+  /// taslağını taşır; published owner'da taslak henüz yoksa yeni endpoint
+  /// açmadan mevcut `get_or_create_working_draft` RPC'siyle oluşturur ve
+  /// bootstrap'ı tekrar okuyarak gerçek draftVersion'ı döndürür.
+  ///
+  /// Anonymous kullanıcı için remote working draft assistant açılmaz.
+  Future<Result<OwnerBootstrapState>> getirVeCalismaTaslaginiHazirla() async {
+    final initial = await getir();
+    if (initial.isFailure) return initial;
+
+    final state = initial.data!;
+    if (!state.hasStore || !state.isPublished || state.hasDraft) return initial;
+    if (!_depo.kaliciHesapVar) return initial;
+
+    final client = _supabase;
+    if (client == null) return initial;
+
+    try {
+      await _depo.getOrCreateWorkingDraft(
+        client,
+        slug: state.slug,
+        editToken: state.editToken,
+      );
+      return getir();
+    } catch (e, s) {
+      return Result.failure(SupabaseErrorMapper.map(e, s));
+    }
+  }
+
   /// [state]'i cihaza yazar. Sunucudan gelen edit token her zaman yazılır
   /// (uzaktan düzenlemenin ön koşulu); içerik ise yalnız yerel taslak daha
   /// eskiyse yazılır.
