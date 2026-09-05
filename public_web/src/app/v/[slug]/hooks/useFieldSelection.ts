@@ -10,6 +10,11 @@ import {
 } from "@/lib/vitrinFieldSchema";
 import { bolumdeKalanSayisi, sonrakiRehberAlan } from "@/lib/vitrinReadiness";
 import {
+  OWNER_ACTION_LIFECYCLE_EVENT,
+  ownerLifecycleRequiresAttention,
+  type OwnerActionLifecycleResult,
+} from "@/lib/ownerActionLifecycle";
+import {
   bekle,
   ogeIcinHedefY,
   rahatGorunuyorMu,
@@ -225,6 +230,22 @@ export function useFieldSelection({
     },
     [yerelTaslak, atlanmisAlanlar, alanSec, vurguyuTemizle, mesajEkle]
   );
+
+  // 5.7: Gönderim sonucu açık lifecycle contract ile gelir. Mesaj metni,
+  // CSS class veya DOM görünümü okunarak sonuç tahmin edilmez. Kullanıcının
+  // müdahale etmesi gereken durumda yalnız mevcut React panel-aç callback'i
+  // çağrılır; success'te panel kapalı kalır.
+  useEffect(() => {
+    const lifecycle = (event: Event) => {
+      const result = (event as CustomEvent<OwnerActionLifecycleResult>).detail;
+      if (result && ownerLifecycleRequiresAttention(result)) {
+        onAlanSecildi?.();
+      }
+    };
+
+    window.addEventListener(OWNER_ACTION_LIFECYCLE_EVENT, lifecycle);
+    return () => window.removeEventListener(OWNER_ACTION_LIFECYCLE_EVENT, lifecycle);
+  }, [onAlanSecildi]);
 
   // Vitrindeki işaretli öğeler için tek dinleyici.
   useEffect(() => {
