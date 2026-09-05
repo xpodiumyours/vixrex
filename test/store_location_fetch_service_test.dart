@@ -45,6 +45,18 @@ void main() {
     expect(burdur.districtName, 'Kemer');
   });
 
+  test('açık il ile çelişen benzersiz ilçeyi başka ile taşımaz', () {
+    final mamak = servis.eslestirIlIlce('Mamak, Erzurum');
+    expect(mamak.provinceCode, '25');
+    expect(mamak.provinceName, 'Erzurum');
+    expect(mamak.districtName, isNull);
+
+    final kadikoy = servis.eslestirIlIlce('Kadıköy, Ankara');
+    expect(kadikoy.provinceCode, '06');
+    expect(kadikoy.provinceName, 'Ankara');
+    expect(kadikoy.districtName, isNull);
+  });
+
   test('alt-dize il eşleşmesi yapılmaz', () {
     final sonuc = servis.eslestirIlIlce('Vangölü kıyısında bir işletme');
     expect(sonuc.provinceCode, isNull);
