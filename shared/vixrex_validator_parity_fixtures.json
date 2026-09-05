@@ -1,6 +1,6 @@
 {
   "_aciklama": "Vixrex Akıllı Motor Flutter ↔ Next.js validator parity fixture kaynağı. Aynı alan ve ham değer iki runtime'da aynı ok/red ve canonical değeri üretmelidir.",
-  "_surum": 1,
+  "_surum": 2,
   "validator": [
     {
       "id": "required-bos-red",
@@ -94,6 +94,26 @@
       "expectedValue": "#galeri"
     },
     {
+      "id": "gorsel-https-kabul",
+      "fieldKey": "logo",
+      "input": "https://vixrex.com/logo.webp",
+      "expectedOk": true,
+      "expectedValue": "https://vixrex.com/logo.webp"
+    },
+    {
+      "id": "gorsel-anchor-red",
+      "fieldKey": "logo",
+      "input": "#logo",
+      "expectedOk": false
+    },
+    {
+      "id": "enlem-bos-null",
+      "fieldKey": "enlem",
+      "input": "   ",
+      "expectedOk": true,
+      "expectedValue": null
+    },
+    {
       "id": "enlem-ondalik-normalize",
       "fieldKey": "enlem",
       "input": "41,5",
@@ -134,9 +154,23 @@
       "expectedValue": true
     },
     {
+      "id": "acik-buyuk-harf-true",
+      "fieldKey": "puanGoster",
+      "input": "AÇIK",
+      "expectedOk": true,
+      "expectedValue": true
+    },
+    {
       "id": "kapali-gizle-false",
       "fieldKey": "yolTarifiGoster",
       "input": "gizle",
+      "expectedOk": true,
+      "expectedValue": false
+    },
+    {
+      "id": "kapali-buyuk-harf-false",
+      "fieldKey": "yolTarifiGoster",
+      "input": "KAPALI",
       "expectedOk": true,
       "expectedValue": false
     },
