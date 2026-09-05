@@ -1,6 +1,6 @@
 {
   "_aciklama": "Vixrex Akıllı Motor Flutter ↔ Next.js validator parity fixture kaynağı. Aynı alan ve ham değer iki runtime'da aynı ok/red ve canonical değeri üretmelidir.",
-  "_surum": 2,
+  "_surum": 3,
   "validator": [
     {
       "id": "required-bos-red",
@@ -87,6 +87,24 @@
       "expectedOk": false
     },
     {
+      "id": "website-anchor-red",
+      "fieldKey": "website",
+      "input": "#iletisim",
+      "expectedOk": false
+    },
+    {
+      "id": "harita-anchor-red",
+      "fieldKey": "haritaLinki",
+      "input": "#harita",
+      "expectedOk": false
+    },
+    {
+      "id": "referans-anchor-red",
+      "fieldKey": "referansLinki",
+      "input": "#referanslar",
+      "expectedOk": false
+    },
+    {
       "id": "anchor-kabul",
       "fieldKey": "galeriAksiyonLinki",
       "input": "#galeri",
@@ -104,6 +122,24 @@
       "id": "gorsel-anchor-red",
       "fieldKey": "logo",
       "input": "#logo",
+      "expectedOk": false
+    },
+    {
+      "id": "gorsel-javascript-red",
+      "fieldKey": "logo",
+      "input": "javascript:alert(1)",
+      "expectedOk": false
+    },
+    {
+      "id": "gorsel-data-red",
+      "fieldKey": "logo",
+      "input": "data:image/png;base64,AAAA",
+      "expectedOk": false
+    },
+    {
+      "id": "gorsel-ftp-red",
+      "fieldKey": "logo",
+      "input": "ftp://vixrex.com/logo.webp",
       "expectedOk": false
     },
     {
@@ -147,6 +183,20 @@
       "expectedOk": false
     },
     {
+      "id": "acik-ac-true",
+      "fieldKey": "puanGoster",
+      "input": "aç",
+      "expectedOk": true,
+      "expectedValue": true
+    },
+    {
+      "id": "acik-ascii-ac-true",
+      "fieldKey": "puanGoster",
+      "input": "ac",
+      "expectedOk": true,
+      "expectedValue": true
+    },
+    {
       "id": "acik-goster-true",
       "fieldKey": "puanGoster",
       "input": "göster",
@@ -159,6 +209,13 @@
       "input": "AÇIK",
       "expectedOk": true,
       "expectedValue": true
+    },
+    {
+      "id": "kapali-kapat-false",
+      "fieldKey": "yolTarifiGoster",
+      "input": "kapat",
+      "expectedOk": true,
+      "expectedValue": false
     },
     {
       "id": "kapali-gizle-false",
@@ -180,6 +237,18 @@
       "input": true,
       "expectedOk": true,
       "expectedValue": true
+    },
+    {
+      "id": "boolean-bilmiyorum-red",
+      "fieldKey": "puanGoster",
+      "input": "bilmiyorum",
+      "expectedOk": false
+    },
+    {
+      "id": "boolean-ilgisiz-red",
+      "fieldKey": "puanGoster",
+      "input": "bugün hava güzel",
+      "expectedOk": false
     },
     {
       "id": "boolean-belirsiz-red",
