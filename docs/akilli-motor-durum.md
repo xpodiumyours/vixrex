@@ -60,7 +60,21 @@ KATMAN 5, **5.0–5.10 = 11 alt aşamadır**.
 - web owner-session + permanent Flutter auth sınırı ✅
 - canonical 46 alan → generated server-contract generator ✅
 - generator için 46/46 + deterministic/privilege-free dar test ✅
-- authoritative DB mutation migration/RPC BUILD bekliyor
+- ücretsiz ve production'dan ayrı `vixrex-dev` Supabase test projesi oluşturuldu ✅
+- production'dan salt-okunur türetilmiş minimal 5.5 DB test harness kuruldu ✅
+- dev PostgreSQL'de kill-switch OFF → `SMART_ENGINE_DISABLED` ✅
+- web owner-session authoritative mutation ✅
+- permanent/non-anonymous Flutter `auth.uid()` yolu ✅
+- anonymous Flutter reject → `OWNER_AUTHORIZATION_REQUIRED` ✅
+- server semantic reject: geçersiz URL / koordinat / protected field ✅
+- expected-version stale write → `DRAFT_VERSION_CONFLICT` ✅
+- aynı action replay → ikinci mutation yok, önceki receipt döner ✅
+- aynı actionId farklı payload → `IDEMPOTENCY_KEY_REUSE` ✅
+- audit old/new/actionId/commandId/result version receipt ✅
+- multi-action version chaining gerçek DB'de 2→3→4 ✅
+- 🔄 46/46 generated DB contract'ın gerçek migration'a gömülmesi bekliyor
+- 🔄 authoritative migration/RPC'nin repo migration zincirine alınması bekliyor
+- 🔄 manuel owner edit regresyonu + full TS/Dart integration kanıtı bekliyor
 - production DB değişmedi
 
 ### 5.6 — Safe Undo + Multi-action 🔄
@@ -68,9 +82,15 @@ KATMAN 5, **5.0–5.10 = 11 alt aşamadır**.
 - mevcut sıralı multi-action modeli korunacak ✅
 - conflict/global failure stop kuralı ✅
 - gerçek Undo = `commandId` + receipt ✅
-- command Undo atomic + conflict-safe ✅
+- dev DB'de atomik command Undo BUILD edildi ✅
+- iki action command Undo: tüm succeeded action'lar old_value'ya döndü ✅
+- Undo draft version deterministik 4→6 ilerledi ✅
+- ikinci aynı Undo `replayed:true`, duplicate mutation yok ✅
+- daha sonra aynı alan değiştirildiyse `UNDO_CONFLICT` ✅
+- conflict durumunda sıfır rollback: diğer command alanı da korunuyor ✅
 - manual `Canlı hâline döndür` ayrı kalacak ✅
-- runtime BUILD 5.5 receipt katmanından sonra
+- 🔄 Next/Flutter orchestrator partial/failed/stopped sonucu ve commandId UI entegrasyonu bekliyor
+- 🔄 gerçek 46-field production migration entegrasyonu 5.5 ile birlikte bekliyor
 
 ### 5.7 — Next Owner UX lifecycle 🔄
 - preflight LOCK ✅ (`akilli-motor-5-7-next-owner-ux-preflight.md`)
@@ -79,26 +99,30 @@ KATMAN 5, **5.0–5.10 = 11 alt aşamadır**.
 - needs-input/failed/partial mobilde paneli yeniden açacak ✅
 - success panel kapalı kalacak ✅
 - aria-busy/status/reduced-motion sınırı ✅
-- runtime BUILD 5.5/5.6 ExecutionResult sonrası
+- runtime BUILD 5.5/5.6 ExecutionResult entegrasyonu sonrası
 
 ### 5.8 — Flutter owner-edit adapter/lifecycle 🔄
 - preflight LOCK ✅ (`akilli-motor-5-8-flutter-owner-lifecycle-preflight.md`)
 - onboarding local flow ayrı kalacak ✅
 - existing `WorkingDraftPort` evrilecek, yeni port yok ✅
-- `bootstrap_owner_state` içindeki mevcut draft_version Flutter modele taşınacak ✅
+- `bootstrap_owner_state` içindeki `draft_version` + `base_live_version` Flutter modele taşındı ✅
 - `saveLocally()` authoritative success değildir ✅
-- `queued_offline` ayrı ExecutionResult ✅
-- runtime BUILD 5.5 authoritative mutation sonrası
+- offline patch artık `draftVersion:-1` üretmiyor; `queuedOffline` ayrı state ✅
+- hedefli testler eklendi; Flutter gerçek runtime kanıtı bekliyor
+- runtime authoritative action adapter entegrasyonu 5.5 sonrası
 
 ### 5.9 — Special-flow security parity 🔄
 - preflight LOCK ✅ (`akilli-motor-5-9-special-flow-security-preflight.md`)
-- Flutter WebP/content-signature açığı doğrulandı ✅
+- Flutter görsel upload artık extension/MIME yerine gerçek JPEG/PNG/WebP signature doğruluyor ✅
+- WebP ham geçişinde codec decode doğrulaması eklendi ✅
+- görsel spoofing hedefli testleri eklendi; Flutter runtime kanıtı bekliyor
+- çalışma saatleri generic mutation'dan çıkarıldı; Next + Flutter `needs_special_flow` ✅
+- overnight `22:00–02:00` public open-state hesabı düzeltildi ✅
+- overnight yerel mantık smoke 5/5 ✅
 - il/ilçe canonical special-flow korunacak ✅
 - GPS'in bugünkü 5 paralel field write'ı coupled/atomic bundle'a dönüşecek ✅
-- çalışma saatleri gün tahmini yapmayacak ✅
-- overnight yanlış açık/kapalı sonucu engellenecek ✅
 - toggle/url 5.2 davranışı regresyon olarak korunacak ✅
-- runtime BUILD ilgili dependency'ler hazır oldukça
+- 🔄 GPS atomic bundle 5.5 DB çekirdeğinin gerçek migration entegrasyonunu bekliyor
 
 ### 5.10 — Core Build doğrulaması ⬜
 - targeted unit/integration
@@ -110,10 +134,12 @@ KATMAN 5, **5.0–5.10 = 11 alt aşamadır**.
 ## Dış / altyapı doğrulama durumu
 
 - GitHub Actions aylık dakika kotası dolu olduğu için yeni runner sonuçları kod failure kanıtı sayılmıyor.
-- Vercel deployment kotası da son doğrulama sırasında engeldi.
-- Supabase project'te ayrı bir development branch bulunmuyor; yalnız `main` branch görünüyor. Ücretli yeni branch kullanıcı onayı olmadan oluşturulmayacak.
-- Local çalışma ortamında Supabase CLI/PostgreSQL yok; migration dosyası sahte timestamp ile elle oluşturulmayacak.
-- Bu durum BUILD'i tamamen durdurmaz; fakat DB/runtime gerektiren aşamalar kanıt alınmadan tam ✅ yapılmaz.
+- Vercel deployment kotası son doğrulamada engeldi.
+- Ücretli Supabase development branch açılmadı.
+- Bunun yerine maliyeti `$0/ay` olarak doğrulanan ayrı `vixrex-dev` Supabase projesi kullanılıyor.
+- `vixrex-dev` yalnız disposable DB/runtime kanıt ortamıdır; production veri taşınmadı.
+- Production DB salt-okunur incelendi; yeni 5.5/5.6 DDL production'a uygulanmadı.
+- Bu durum BUILD'i durdurmaz; fakat 46/46 generated migration + aynı-SHA client/runtime kanıtları alınmadan 5.5/5.6 tam ✅ yapılmaz.
 
 ## Değişmeyen sınırlar
 
