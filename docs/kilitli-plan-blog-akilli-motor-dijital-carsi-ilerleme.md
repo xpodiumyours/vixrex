@@ -8,6 +8,7 @@ Aktif Katman 2 PR: `#415`
 Aktif Katman 2 branch'i: `feat/blog-kutuphanesi-katman-2`
 Aktif Katman 3 PR: `#416`
 Aktif Katman 3 branch'i: `feat/vitrine-yazi-cekme-katman-3`
+Aktif Katman 4 araştırma branch'i: `research/asistan-blog-komutlari-katman-4`
 
 ## Katman 1 — Vixrex Blog Omurgası
 
@@ -133,9 +134,22 @@ LOCK: `docs/research/katman-3-vitrine-yazi-cekme-lock.md`
 
 **KURAL:** Katman 3 teknik olarak kapandı. Gerçek kullanıcı ekran kabul testi plana uygun olarak final Katman 1–5 entegrasyon kapısında yapılacak; Katman 4 başlamadan önce Katman 3'te eksik teknik kapı kalmadı.
 
-## Sonraki katmanlar
+## Katman 4 — Vixrex Asistan Blog Komutları
 
-- [ ] Katman 4 — Vixrex Asistan Blog Komutları
+Araştırma: `docs/research/katman-4-asistan-blog-komutlari-arastirma.md`
+
+- [x] RESEARCH — mevcut 46 alan NLU, Next.js/Flutter Asistan gönderim akışı, Katman 3 import hattı, merkezi metadata, feature flags ve kalıcı konuşma state'i doğrulandı; sonuç **UYGUN AMA ŞARTLI**
+- [x] UX-FIT — mevcut Asistan paneli + ChatBubble hızlı cevapları yeniden kullanılacak; ayrı Asistan ekranı/modal kurulmayacak
+- [x] SECURITY/RISK — blog domain'i 46 alandan ayrıldı; published-only seçim, açık kullanıcı onayı, ayrı pending blog state'i, Katman 3 yetki tekrar doğrulaması ve flag-off fallback şartları çıkarıldı
+- [x] LOOK — `useOwnerActions`, `vixrexNluPipeline`, Flutter companion chat, `ArticleService`, `assistant_conversations`, `feature_flags`, blog taxonomy/kategori/konum kaynakları ve canlı merkezi yazı durumu gerçek kod/veriyle teyit edildi
+- [ ] LOCK — araştırmadaki 14 BUILD şartı kullanıcı açık onayından sonra kilitlenecek
+- [ ] BUILD
+- [ ] Teknik VERIFY
+
+**KURAL:** Katman 4 BUILD başlamadı. LOCK onayı alınmadan kod/migration uygulanmayacak. Ekran kabul testi final Katman 1–5 E2E kapısında kalacak.
+
+## Sonraki katman
+
 - [ ] Katman 5 — Dijital Çarşı Bağlantı Omurgası
 
 ## Main kuralı
