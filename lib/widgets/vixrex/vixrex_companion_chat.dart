@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:vixrex/models/chat_message.dart';
 import 'package:vixrex/config/chatbot_config.dart';
 import 'package:vixrex/services/chatbot_service.dart';
+import 'package:vixrex/services/feature_flag_service.dart';
 import 'package:vixrex/services/vixrex_assistant_nlu_service.dart';
 import 'package:vixrex/services/vixrex_assistant_nlu_types.dart';
 import 'package:vixrex/services/vixrex_guidance_service.dart';
@@ -55,12 +56,14 @@ class VixRexCompanionChat extends StatefulWidget {
 
 class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
   final _service = ChatbotService();
+  final _featureFlags = FeatureFlagService();
   final _nluService = VixRexAssistantNluService();
   final _inputCtrl = TextEditingController();
   final _scrollCtrl = ScrollController();
   final List<ChatMessage> _messages = [];
   bool _loading = true;
   bool _typing = false;
+  bool _smartEngineEnabled = false;
   Timer? _pollTimer;
   bool _pollActive = false;
 
@@ -148,6 +151,12 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
 
   Future<void> _bootstrap() async {
     final scope = _historyScope;
+
+    // Runtime kill-switch fail-closed: RPC/auth/ağ hatasında service false döner.
+    // Hardcoded true yok; iki capability flag'i de açık olmalı.
+    await _featureFlags.loadFlags();
+    final smartEngineEnabled = _featureFlags.isSmartEngineStorefrontEnabled;
+
     // Faz C, madde 1: yayına yeni geçilmişse yerel (henüz yayınlanmamış)
     // geçmiş bu scope'a bir kez taşınır. Hedefte zaten geçmiş varsa
     // dokunmaz — idempotent, her bootstrap'ta çağrılması güvenli.
@@ -168,6 +177,7 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
       _messages
         ..clear()
         ..addAll(reconciled);
+      _smartEngineEnabled = smartEngineEnabled;
       _loading = false;
     });
     await _service.saveHistory(_messages, scope: scope);
@@ -204,9 +214,8 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
     });
   }
 
-  // Faz 1: 46 alan borusu – feature-flag ile eski davranışı korur.
-  // Pipeline önce dener, notUnderstood ise eski ChatbotService’e düşer.
-  static const _pipelineEnabled = true;
+  // 46 alan borusu yalnız runtime capability açıkken devreye girer.
+  // Kapalı/yüklenememiş durumda mevcut ChatbotService davranışı korunur.
   final _pipeline = VixrexNluPipeline();
 
   bool _needsSpecialFlowFor(String anahtar) {
@@ -250,7 +259,7 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
                   prompt: remote.reply,
                 )
                 : ChatMessage.bot(remote.reply);
-      } else if (_pipelineEnabled) {
+      } else if (_smartEngineEnabled) {
         // 2) Yeni 46 alan borusu – önce dener.
         final result = await _pipeline.handle(
           input: text,
@@ -422,6 +431,7 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
   @override
   void dispose() {
     _pollTimer?.cancel();
+    _featureFlags.dispose();
     _inputCtrl.dispose();
     _scrollCtrl.dispose();
     super.dispose();
