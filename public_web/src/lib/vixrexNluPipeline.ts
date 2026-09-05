@@ -87,10 +87,19 @@ async function clearPending(): Promise<void> {
 }
 
 function needsSpecialFlow(anahtar: string): boolean {
-  return anahtar === "il" || anahtar === "ilce";
+  return (
+    anahtar === "il" ||
+    anahtar === "ilce" ||
+    // Tek saat aralığından günleri tahmin etmek yasak. Çalışma saatleri
+    // yapısal special-flow üzerinden hangi günlerin geçerli olduğunu sorar.
+    anahtar === "calismaSaatleri"
+  );
 }
 
 function clarifyAsk(alan: VixrexNiyetAlan): string {
+  if (alan.anahtar === "calismaSaatleri") {
+    return "Çalışma saatlerini günleriyle birlikte ayarlayalım. Hangi günler ve hangi saatler geçerli?";
+  }
   return `${alan.etiket} için ne yazayım?`;
 }
 
@@ -211,7 +220,7 @@ export async function handleVixrexNluMessage(input: string): Promise<VixrexPipel
     for (const match of matches) {
       const a = match.alan;
       if (needsSpecialFlow(a.anahtar)) {
-        hatalar.push(`${a.etiket} için panelden devam et`);
+        hatalar.push(`${a.etiket} için özel akış gerekli`);
         continue;
       }
       const ham = extractVixrexValue(trimmed, a);
@@ -268,7 +277,6 @@ export async function handleVixrexNluMessage(input: string): Promise<VixrexPipel
       anahtar: alan.anahtar,
     };
   }
-
   const ham = extractVixrexValue(trimmed, alan);
   if (!ham) {
     await savePending(alan, "missing_value");
@@ -280,7 +288,6 @@ export async function handleVixrexNluMessage(input: string): Promise<VixrexPipel
       anahtar: alan.anahtar,
     };
   }
-
   const v = validateField(alan.anahtar, ham);
   if (!v.ok) {
     return {
@@ -291,7 +298,6 @@ export async function handleVixrexNluMessage(input: string): Promise<VixrexPipel
       anahtar: alan.anahtar,
     };
   }
-
   await clearPending();
   const kesinDeger = v.deger;
   const action = createValidatedAction({
