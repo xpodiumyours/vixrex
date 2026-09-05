@@ -76,7 +76,8 @@ class _VixRexScreenState extends State<VixRexScreen> {
     }
 
     try {
-      await widget.editorInitialization;
+      final initialization = widget.editorInitialization;
+      if (initialization != null) await initialization;
     } catch (_) {
       return FlutterSmartEngineCommandResult.blocked(
         draftVersion: 0,
