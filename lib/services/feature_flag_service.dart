@@ -1,5 +1,18 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+const String vixrexSmartEngineFlag = 'vixrex_smart_engine_enabled';
+const String vixrexSmartEngineStorefrontFlag =
+    'vixrex_smart_engine_storefront_enabled';
+
+bool smartEngineStorefrontEnabledFromMap(
+  Map<String, bool> flags, {
+  required bool loaded,
+}) {
+  if (!loaded) return false;
+  return flags[vixrexSmartEngineFlag] == true &&
+      flags[vixrexSmartEngineStorefrontFlag] == true;
+}
+
 class FeatureFlagService {
   final SupabaseClient _client;
   final Map<String, bool> _cache = {};
@@ -12,15 +25,23 @@ class FeatureFlagService {
   Future<void> loadFlags() async {
     try {
       final res = await _client.rpc('get_feature_flags');
+      _cache.clear();
+      _targetUsers.clear();
       if (res is List) {
         for (final row in res) {
-          final key = row['flag_key'] as String;
-          _cache[key] = row['is_enabled'] as bool;
+          if (row is! Map) continue;
+          final key = row['flag_key'];
+          final enabled = row['is_enabled'];
+          if (key is! String || enabled is! bool) continue;
+          _cache[key] = enabled;
           _targetUsers[key] = row['target_users'] as String? ?? 'all';
         }
       }
       _loaded = true;
-    } catch (e) {
+    } catch (_) {
+      // Fail-closed: ağ/RPC/auth hatası eski true cache'ini kullanmaz.
+      _cache.clear();
+      _targetUsers.clear();
       _loaded = false;
     }
   }
@@ -50,6 +71,9 @@ class FeatureFlagService {
         return false;
     }
   }
+
+  bool get isSmartEngineStorefrontEnabled =>
+      smartEngineStorefrontEnabledFromMap(_cache, loaded: _loaded);
 
   bool get isLoaded => _loaded;
 
