@@ -75,11 +75,19 @@ function ilAdiMetindeGeciyorMu(il: string, normalizedMetin: string): boolean {
 
 export function ilIlceCikar(paragraf: string): YerSonucu | null {
   const normalize = normalizeTr(paragraf);
+  const ilEslesmeleri = eslesenleriBul(normalize, IL_ADAYLARI);
+  const acikIl = ilEslesmeleri.length === 1 ? ilEslesmeleri[0].deger : null;
 
   const ilceEslesmeleri = eslesenleriBul(normalize, ILCE_ADAYLARI);
   for (const { deger: adaylar } of ilceEslesmeleri) {
     if (adaylar.length === 1) {
-      return { il: adaylar[0].il, ilce: adaylar[0].ilce };
+      const aday = adaylar[0];
+      // Metinde tek bir il açıkça yazılmışsa benzersiz ilçe de o ile ait
+      // olmalıdır. Çelişkili "Mamak, Erzurum" gibi girdide Ankara/Mamak
+      // üretmek yerine ilçeyi atla; aşağıdaki il fallback'i Erzurum/null
+      // döndürür ve caller special-flow netleştirmesine gider.
+      if (acikIl !== null && aday.il !== acikIl) continue;
+      return { il: aday.il, ilce: aday.ilce };
     }
     // Belirsiz ilçe (birden fazla ilde var) — paragrafta illerden TAM BİR
     // tanesi de geçiyorsa o çift kullanılır. Sıfır ya da birden fazlası
@@ -91,7 +99,6 @@ export function ilIlceCikar(paragraf: string): YerSonucu | null {
     }
   }
 
-  const ilEslesmeleri = eslesenleriBul(normalize, IL_ADAYLARI);
   if (ilEslesmeleri.length > 0) {
     return { il: ilEslesmeleri[0].deger, ilce: null };
   }
