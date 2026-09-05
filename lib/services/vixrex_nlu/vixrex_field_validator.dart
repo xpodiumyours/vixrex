@@ -143,8 +143,17 @@ class VixrexFieldValidator {
         return (ok: true, hata: null, normalizedDeger: raw);
 
       case 'url':
+        if (!_isSafeUrl(raw, allowAnchor: true)) {
+          return (
+            ok: false,
+            hata: '$etiket yalnız http veya https adresi olabilir.',
+            normalizedDeger: null,
+          );
+        }
+        return (ok: true, hata: null, normalizedDeger: raw);
+
       case 'gorsel':
-        if (!_isSafeUrl(raw)) {
+        if (!_isSafeUrl(raw, allowAnchor: false)) {
           return (
             ok: false,
             hata: '$etiket yalnız http veya https adresi olabilir.',
@@ -180,7 +189,7 @@ class VixrexFieldValidator {
     if (value is bool) return value;
     if (value is! String) return null;
 
-    final normalized = value.trim().toLowerCase();
+    final normalized = _turkceKucult(value.trim());
     const trueValues = {
       'açık',
       'acik',
@@ -207,8 +216,12 @@ class VixrexFieldValidator {
     return null;
   }
 
-  static bool _isSafeUrl(String value) {
-    if (value.startsWith('#')) return value.length > 1;
+  static String _turkceKucult(String value) {
+    return value.replaceAll('I', 'ı').replaceAll('İ', 'i').toLowerCase();
+  }
+
+  static bool _isSafeUrl(String value, {required bool allowAnchor}) {
+    if (value.startsWith('#')) return allowAnchor && value.length > 1;
     final uri = Uri.tryParse(value);
     if (uri == null || uri.host.isEmpty) return false;
     return uri.scheme == 'http' || uri.scheme == 'https';
