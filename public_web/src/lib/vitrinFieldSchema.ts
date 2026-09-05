@@ -238,6 +238,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
     bolum: "contact",
     zorunlu: true,
     maxUzunluk: 200,
+    dogrulama: "adres",
   },
   // Faz F (Tek Asistan planı) eklendi: Flutter'ın addressCompleted'ı ve
   // asıl yayın kapısı store_publish_validator.dart adresle BİRLİKTE il/ilçe
