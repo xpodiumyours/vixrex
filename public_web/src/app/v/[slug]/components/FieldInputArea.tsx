@@ -1,7 +1,10 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { VitrinField } from "@/lib/vitrinFieldSchema";
 import { alanOnemi } from "@/lib/vitrinReadiness";
-import type { OwnerActionLifecycleResult } from "@/lib/ownerActionLifecycle";
+import {
+  ownerLifecycleStatusText,
+  type OwnerActionLifecycleResult,
+} from "@/lib/ownerActionLifecycle";
 import { ImagePickerPanel } from "./ImagePickerPanel";
 import { turkeyProvinces, getDistrictsForProvince } from "@/lib/turkeyCities";
 import type { HazirGorsel } from "../hooks/useOwnerActions";
@@ -66,7 +69,17 @@ export function FieldInputArea({
   const kaliteMi = seciliAlan ? alanOnemi(seciliAlan) === "kalite" : false;
   const gonderRef = useRef(false);
   const [gonderKilitli, setGonderKilitli] = useState(false);
+  const [sonGonderSonucu, setSonGonderSonucu] = useState<OwnerActionLifecycleResult | null>(null);
   const gonderEngelli = kaydediliyor || gonderKilitli;
+
+  // 5.7: Bu body class artık tüm decision süresini değil yalnız gerçek
+  // persistence/execution süresini temsil eder. useFieldSelection başarı
+  // sonrasında sıradaki alanı seçerken bu state sayesinde mobil sheet'i
+  // yeniden açmaz; storefront görünür kalır.
+  useEffect(() => {
+    document.body.classList.toggle("vixrex-asistan-isliyor", kaydediliyor);
+    return () => document.body.classList.remove("vixrex-asistan-isliyor");
+  }, [kaydediliyor]);
 
   // Mobil ilk davranış korunur: Gönder anında sheet kapanır ve vitrin görünür.
   // İşlem sonundaki yeniden-açma kararı CSS/mesaj tahminiyle değil, gonder()'ın
@@ -91,6 +104,7 @@ export function FieldInputArea({
       }
 
       const sonuc = await gonder();
+      setSonGonderSonucu(sonuc);
       onGonderSonucu?.(sonuc);
     } finally {
       gonderRef.current = false;
@@ -100,6 +114,12 @@ export function FieldInputArea({
 
   return (
     <div>
+      <p className="sr-only" role="status" aria-live="polite">
+        {kaydediliyor
+          ? "Vixrex Asistan değişikliği kaydediyor."
+          : ownerLifecycleStatusText(sonGonderSonucu)}
+      </p>
+
       {seciliAlan && (
         <p className="mb-2 flex items-center justify-end gap-2 text-[11px] text-slate-400">
           <button
@@ -190,9 +210,10 @@ export function FieldInputArea({
             type="button"
             onClick={() => void gonderVeVitriniGoster()}
             disabled={gonderEngelli || !mevcutIl}
+            aria-busy={kaydediliyor}
             className="h-12 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
           >
-            {kaydediliyor ? "…" : "Gönder"}
+            {kaydediliyor ? "Düzenleniyor…" : "Gönder"}
           </button>
         </div>
       ) : seciliAlan?.anahtar === "ilce" ? (
@@ -216,9 +237,10 @@ export function FieldInputArea({
             type="button"
             onClick={() => void gonderVeVitriniGoster()}
             disabled={gonderEngelli || !mevcutIlce}
+            aria-busy={kaydediliyor}
             className="h-12 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
           >
-            {kaydediliyor ? "…" : "Gönder"}
+            {kaydediliyor ? "Düzenleniyor…" : "Gönder"}
           </button>
         </div>
       ) : seciliAlan?.tip === "secim" && seciliAlan.secenekler ? (
@@ -240,9 +262,10 @@ export function FieldInputArea({
             type="button"
             onClick={() => void gonderVeVitriniGoster()}
             disabled={gonderEngelli || !giris}
+            aria-busy={kaydediliyor}
             className="h-12 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
           >
-            {kaydediliyor ? "…" : "Gönder"}
+            {kaydediliyor ? "Düzenleniyor…" : "Gönder"}
           </button>
         </div>
       ) : (
