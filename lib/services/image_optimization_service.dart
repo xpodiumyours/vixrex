@@ -229,18 +229,24 @@ class ImageOptimizationService {
     );
     final normalizedContentType = contentType.trim().toLowerCase();
 
-    final extensionType = switch (normalizedExtension) {
-      'jpg' || 'jpeg' => _ImageSourceType.jpeg,
-      'png' => _ImageSourceType.png,
-      'webp' => _ImageSourceType.webp,
-      _ => null,
-    };
-    final contentTypeValue = switch (normalizedContentType) {
-      'image/jpeg' || 'image/jpg' => _ImageSourceType.jpeg,
-      'image/png' => _ImageSourceType.png,
-      'image/webp' => _ImageSourceType.webp,
-      _ => null,
-    };
+    _ImageSourceType? extensionType;
+    if (normalizedExtension == 'jpg' || normalizedExtension == 'jpeg') {
+      extensionType = _ImageSourceType.jpeg;
+    } else if (normalizedExtension == 'png') {
+      extensionType = _ImageSourceType.png;
+    } else if (normalizedExtension == 'webp') {
+      extensionType = _ImageSourceType.webp;
+    }
+
+    _ImageSourceType? contentTypeValue;
+    if (normalizedContentType == 'image/jpeg' ||
+        normalizedContentType == 'image/jpg') {
+      contentTypeValue = _ImageSourceType.jpeg;
+    } else if (normalizedContentType == 'image/png') {
+      contentTypeValue = _ImageSourceType.png;
+    } else if (normalizedContentType == 'image/webp') {
+      contentTypeValue = _ImageSourceType.webp;
+    }
 
     if (extensionType != null &&
         contentTypeValue != null &&
