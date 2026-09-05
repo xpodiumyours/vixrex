@@ -14,6 +14,8 @@ export interface OwnerActionLifecycleResult {
   code?: string;
 }
 
+export const OWNER_ACTION_LIFECYCLE_EVENT = "vixrex:owner-action-lifecycle";
+
 export function ownerLifecycleFromCommand(
   result: SmartEngineCommandResult,
 ): OwnerActionLifecycleResult {
@@ -53,4 +55,13 @@ export function ownerLifecycleStatusText(
     case "queued_offline":
       return "Değişiklik henüz sunucuya kaydedilmedi.";
   }
+}
+
+export function dispatchOwnerActionLifecycle(result: OwnerActionLifecycleResult): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(
+    new CustomEvent<OwnerActionLifecycleResult>(OWNER_ACTION_LIFECYCLE_EVENT, {
+      detail: result,
+    }),
+  );
 }
