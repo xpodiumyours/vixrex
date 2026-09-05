@@ -88,6 +88,24 @@ class VixrexNluPipeline {
           ? 'Değişiklikler doğrulandı; kayıt için hazır.'
           : 'Değişiklik doğrulandı; kayıt için hazır.';
 
+  String _specialFlowMessage(VixrexNiyetAlan alan) {
+    if (alan.anahtar == 'calismaSaatleri') {
+      return 'Çalışma saatlerini günleriyle birlikte ayarlayalım. Hangi günler ve hangi saatler geçerli?';
+    }
+    return _clarifier.sor(alan);
+  }
+
+  /// Çalışma saatleri yapısal bir coupled flow'dur; callback verilmemesi bu
+  /// güvenlik kuralını kapatamaz. UI callback'i il/ilçe gibi ek özel yüzeyleri
+  /// tanımlamaya devam eder.
+  bool _requiresSpecialFlow(
+    VixrexNiyetAlan alan,
+    bool Function(VixrexNiyetAlan alan)? needsSpecialFlow,
+  ) {
+    if (alan.anahtar == 'calismaSaatleri') return true;
+    return needsSpecialFlow?.call(alan) == true;
+  }
+
   List<VixrexIntentMatch> _uniqueFieldMatches(String input) {
     final seen = <String>{};
     final unique = <VixrexIntentMatch>[];
@@ -147,11 +165,11 @@ class VixrexNluPipeline {
         final resolved = _intentResolver.resolve(trimmed);
         if (resolved == null) {
           final hamDeger = trimmed;
-          if (needsSpecialFlow != null && needsSpecialFlow(alanFromPending)) {
+          if (_requiresSpecialFlow(alanFromPending, needsSpecialFlow)) {
             return VixrexNluPipelineResult(
               decision: VixrexDecisionKind.needsSpecialFlow,
               outcome: VixrexNluPipelineOutcome.needsSpecialFlow,
-              message: ChatMessage.bot(_clarifier.sor(alanFromPending)),
+              message: ChatMessage.bot(_specialFlowMessage(alanFromPending)),
               appliedAnahtar: alanFromPending.anahtar,
             );
           }
@@ -203,8 +221,8 @@ class VixrexNluPipeline {
 
       for (final match in matches) {
         final a = match.alan;
-        if (needsSpecialFlow != null && needsSpecialFlow(a)) {
-          hatalar.add('${a.etiket} için panelden devam et');
+        if (_requiresSpecialFlow(a, needsSpecialFlow)) {
+          hatalar.add('${a.etiket} için özel akış gerekli');
           continue;
         }
 
@@ -263,7 +281,7 @@ class VixrexNluPipeline {
     final match = matches.first;
     final alan = match.alan;
 
-    if (needsSpecialFlow != null && needsSpecialFlow(alan)) {
+    if (_requiresSpecialFlow(alan, needsSpecialFlow)) {
       await _memory.savePendingSlot(
         VixrexPendingSlot(
           kind: VixrexPendingSlot.specialFlowKind,
@@ -277,7 +295,7 @@ class VixrexNluPipeline {
       return VixrexNluPipelineResult(
         decision: VixrexDecisionKind.needsSpecialFlow,
         outcome: VixrexNluPipelineOutcome.needsSpecialFlow,
-        message: ChatMessage.bot(_clarifier.sor(alan)),
+        message: ChatMessage.bot(_specialFlowMessage(alan)),
         appliedAnahtar: alan.anahtar,
       );
     }
