@@ -7,12 +7,15 @@ on:
       - "public_web/src/lib/vitrinFieldValidation.ts"
       - "public_web/src/lib/addressValidator.ts"
       - "public_web/src/lib/smartEngineCommandClient.ts"
+      - "public_web/src/lib/ownerActionLifecycle.ts"
       - "public_web/src/app/api/owner-draft/route.ts"
       - "public_web/src/app/api/owner-smart-engine-action/**"
       - "public_web/src/app/api/owner-smart-engine-undo/**"
       - "public_web/src/app/v/[slug]/OwnerWorkspaceShell.tsx"
       - "public_web/src/app/v/[slug]/OwnerDraftVersionContext.tsx"
       - "public_web/src/app/v/[slug]/OwnerAssistantPanel.tsx"
+      - "public_web/src/app/v/[slug]/components/FieldInputArea.tsx"
+      - "public_web/src/app/v/[slug]/ownerStorefrontPolish.css"
       - "public_web/src/app/v/[slug]/hooks/useOwnerActions.ts"
       - "public_web/src/app/v/[slug]/hooks/useFieldRestore.ts"
       - "public_web/tests/vixrex-validator-parity.test.ts"
@@ -21,6 +24,7 @@ on:
       - "public_web/tests/smart-engine-command-client.test.ts"
       - "public_web/tests/smart-engine-draft-version-context.test.ts"
       - "public_web/tests/smart-engine-owner-actions-wiring.test.ts"
+      - "public_web/tests/smart-engine-owner-lifecycle.test.ts"
       - "shared/vitrin_alanlari.json"
       - "shared/vixrex_validator_parity_fixtures.json"
       - "tool/sema_disa_aktar.ts"
@@ -70,7 +74,7 @@ jobs:
       - name: Tip kontrolü
         run: npx tsc --noEmit
 
-      - name: Validator parity + authoritative route/command sözleşmeleri + mevcut NLU regresyonları
+      - name: Validator parity + authoritative route/command/lifecycle sözleşmeleri + mevcut NLU regresyonları
         run: >-
           npx vitest run
           tests/vixrex-validator-parity.test.ts
@@ -78,6 +82,7 @@ jobs:
           tests/smart-engine-command-client.test.ts
           tests/smart-engine-draft-version-context.test.ts
           tests/smart-engine-owner-actions-wiring.test.ts
+          tests/smart-engine-owner-lifecycle.test.ts
           tests/vixrex-niyet-faz1.test.ts
           tests/vixrex-niyet-faz2.test.ts
           tests/vixrex-niyet-faz3.test.ts
