@@ -13,6 +13,10 @@ on:
       - "public_web/tests/vixrex-matcher-parity.test.ts"
       - ".github/workflows/smart-engine-matcher.yml"
 
+concurrency:
+  group: smart-engine-matcher-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
