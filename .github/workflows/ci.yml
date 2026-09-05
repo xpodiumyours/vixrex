@@ -279,6 +279,16 @@ jobs:
             exit 1
           fi
 
+      - name: JSON'dan Dart üret (niyet sözlüğü)
+        run: dart run tool/niyet_sozlugu_uret.dart
+
+      - name: Sapma var mı kontrol et (niyet sözlüğü)
+        run: |
+          if ! git diff --exit-code -- shared/vixrex_niyet_sozlugu.json lib/config/vixrex_niyet_sozlugu.g.dart; then
+            echo "::error::Niyet sözlüğü Flutter çıktısı ortak JSON ile uyuşmuyor. tool/niyet_sozlugu_uret.dart'ı tekrar çalıştır ve değişiklikleri commit et."
+            exit 1
+          fi
+
       - name: JSON'dan Dart üret (mesaj kataloğu)
         run: dart run tool/mesaj_semasi_uret.dart
 
