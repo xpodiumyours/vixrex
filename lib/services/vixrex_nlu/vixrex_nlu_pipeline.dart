@@ -266,6 +266,7 @@ class VixrexNluPipeline {
     if (needsSpecialFlow != null && needsSpecialFlow(alan)) {
       await _memory.savePendingSlot(
         VixrexPendingSlot(
+          kind: VixrexPendingSlot.specialFlowKind,
           anahtar: alan.anahtar,
           etiket: alan.etiket,
           tip: alan.tip,
