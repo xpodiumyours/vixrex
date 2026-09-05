@@ -55,6 +55,8 @@ Referanslar:
 - ✅ Türkçe ekli biçimler (`telefonumu`, `adresimi`, `kategorimi` vb.) yüzünden yalnız basit word-boundary yaklaşımı yeterli kabul edilmeyecek.
 - ✅ Kısa/generik alias'larda fuzzy matching yasak olacak.
 - ✅ Birden fazla eşit/geçerli aday varsa mutation yapılmayacak; netleştirme istenecek.
+- ✅ Matcher sonucu olasılık yüzdesi üretmeyecek; deterministik güven sınıfı kullanacak: kesin/izinli-varyant/şüpheli/çakışmalı.
+- ✅ Şüpheli/fuzzy sonuç doğrudan mutation tetikleyemeyecek.
 - 🔄 Kontrollü Türkçe ek desteği ve matcher skor/öncelik kuralları kesinleştiriliyor.
 - 🔄 Yazım hatası toleransı yalnız benzersiz ve güvenli aday üretirse kullanılacak; kesin eşik henüz LOCK edilmedi.
 
@@ -72,12 +74,21 @@ Referanslar:
 - ❌ Resolver şu an normalize edilmiş `includes()/contains()` ile eşleşiyor; kelime/token sınırı yok.
 - ❌ Kısa eş anlamlar yanlış pozitif üretebilir. Kanıt örneği: telefon alanındaki `tel`, `otel` kelimesinin içinde de eşleşebilir.
 - ❌ Flutter ve Next validator davranışı tam eşit değil: Flutter `adres` için ayrıca `AddressValidator` çalıştırıyor; Next.js aynı semantik adres kontrolünü yapmıyor.
+- ❌ `acikKapali` validator parity eşit değil: Flutter doğal dilde açık/kapalı varyantlarını boolean'a çeviriyor; Next.js validator yalnız boolean kabul ediyor.
+- ❌ URL ve görsel doğrulaması aynı yardımcı fonksiyonu kullandığı için `#...` çapa değeri görsel alanlarında da geçerli kabul edilebiliyor; görsel kontratıyla uyumsuz.
+- ❌ Görsel alanlar (`logo`, `kapakGorseli`, `bantGorsel`, `hakkindaGorsel`) Flutter companion'da gerçek upload özel akışına bağlanmamış; mevcut fonksiyon bunları özel akış saymıyor.
+- ✅ `il` ve `ilce` Flutter companion'da gerçek özel akış olarak ayrılıyor.
+- ❌ Flutter'daki “46 alan tek kaynakla aynı” adlı test gerçekte yalnız alan sayısını `46` kontrol ediyor; anahtar/kolon/tip drift'ini kanıtlamıyor.
+- ❌ Web↔Mobil parity testleri iki runtime'ı aynı fixture üzerinde gerçekten karşılaştırmıyor; örneklerin bir kısmı yalnız kendi runtime sonucunu beklenen sabitle karşılaştırıyor.
 - ⬜ 46/46 için yanlış pozitif / yanlış negatif / özel akış / validator parity matrisi tamamlanmadı.
 
 ### 2B — Tek karar sözleşmesi 🔄
 
 - ✅ Next.js NLU karar sonucu döndürüp yazmayı ayrı API hattında yapabiliyor.
 - ❌ Flutter NLU aynı katmanda executor çağırıp `saveLocally()` yapıyor.
+- ❌ Flutter companion `onUpdateField` çağrısının kalıcı kayıt sonucunu beklemeden motorun “Kaydettim” sonucunu gösterebiliyor.
+- ❌ HomeShell `_handleVixRexUpdateField` `saveLocally()` Future'ını beklemeden `Kaydedildi` SnackBar'ı gösterebiliyor; async persistence hatası başarı durumuna yansımıyor.
+- ⬜ Karar sonucu `proposed/validated/executing/succeeded/failed/rolled_back` gibi açık action yaşam döngüsünden geçecek.
 - ⬜ Flutter ve Next aynı typed action kontratına geçirilmedi.
 
 ### 2C — Domain Router 🔒
@@ -108,6 +119,12 @@ Kapsam içinde:
 - çoklu alan sonucu
 - undo / geri al
 - erişilebilir status mesajları
+
+LOCK ilkeleri:
+- ✅ “Motor anladı” ile “veri kalıcı kaydedildi” aynı durum değildir.
+- ✅ Başarı mesajı yalnız executor/persistence başarı sonucu geldikten sonra gösterilecek.
+- ✅ Hata sonucu biliniyorsa kullanıcıya neyin kaydedilmediği açık söylenecek.
+- ✅ Görsel alanlarda esnaftan URL istemek ana UX olmayacak; mevcut Next.js upload/hazır görsel deseni referans alınacak.
 
 Doğrulama kuralı: motor teknik olarak başarılı olsa bile kullanıcı ne olduğunu anlayamıyorsa madde tamamlanmış sayılmaz.
 
@@ -151,11 +168,14 @@ LOCK gereği:
 - ❌ Field mutation için action idempotency kontratı yok.
 - ⬜ Her mutation benzersiz action/idempotency kimliği taşıyacak.
 
-### 3D — Concurrency 🔄
+### 3D — Concurrency / çoklu action 🔄
 
 - ✅ `owner_flow_states` version kontrolü kullanıyor.
 - ✅ restore RPC satır kilidi kullanıyor.
 - ❌ normal field update için expected-version/idempotency kontratı yok.
+- ❌ Next.js çok alanlı motor sonucu alanları tek tek `/api/owner-draft` ile kaydediyor; aynı kullanıcı komutu atomik değil.
+- ✅ Mevcut Next.js kısmi başarısızlığı kullanıcıdan gizlemiyor; başarılı ve başarısız alanları ayrı raporluyor.
+- 🔄 LOCK kararı: aynı doğal dil komutunda şeffaf kısmi başarı mı, transaction/all-or-nothing batch mi kullanılacağı güvenlik+UX açısından karşılaştırılacak.
 - ⬜ Sessiz lost-update yasak.
 
 ### 3E — Audit / Undo 🔄
@@ -178,9 +198,11 @@ Aşağıdakiler kesinleşmeden BUILD açılmaz:
 - ⬜ Matcher/intent scoring kuralları
 - ⬜ Slot/state sözleşmesi
 - ⬜ Typed action sözleşmesi
+- ⬜ Action yaşam döngüsü ve gerçek başarı semantiği
 - ⬜ Executor sınırı
 - ⬜ Supabase state modeli
 - ⬜ Idempotency + concurrency modeli
+- ⬜ Çoklu action atomiklik kararı
 - ⬜ Audit + undo modeli
 - ⬜ Flutter/Next parity modeli
 - ⬜ Sahiplik UX state'leri
@@ -200,12 +222,14 @@ Aşağıdakiler kesinleşmeden BUILD açılmaz:
 
 1. Belirsiz mesaj veri değiştirmez.
 2. Motorun anlamadığı şey için başarı mesajı üretmesi yasaktır.
-3. Protected/legal alanlar genel motor tarafından bypass edilmez.
-4. Aynı action'ın tekrar gönderimi ikinci mutation üretmez.
-5. Flutter ve Next aynı girdide aynı intent/value/action sonucunu vermeden parity tamamlanmış sayılmaz.
-6. Kullanıcıya loading/success/error/undo durumu açık gösterilir.
-7. Mevcut `vitrinFieldSchema` tek kaynak zinciri korunur.
-8. Main'e merge yalnız LOCK sonrası, ilgili testler ve CI yeşilken yapılır.
+3. “Anlaşıldı/doğrulandı” sonucu “kaydedildi” diye gösterilemez; başarı yalnız persistence sonrası verilir.
+4. Protected/legal alanlar genel motor tarafından bypass edilmez.
+5. Aynı action'ın tekrar gönderimi ikinci mutation üretmez.
+6. Flutter ve Next aynı girdide aynı intent/value/action sonucunu vermeden parity tamamlanmış sayılmaz.
+7. Kullanıcıya loading/success/error/undo durumu açık gösterilir.
+8. Görsel alanlarda düz metin URL yazdırmak esnaf ana akışı değildir.
+9. Mevcut `vitrinFieldSchema` tek kaynak zinciri korunur.
+10. Main'e merge yalnız LOCK sonrası, ilgili testler ve CI yeşilken yapılır.
 
 ## Şu anki durum
 
