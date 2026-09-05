@@ -32,6 +32,11 @@ describe("ilIlceCikar — serbest metinden il/ilçe çıkarımı", () => {
     });
   });
 
+  it("açık il ile çelişen benzersiz ilçeyi başka ile taşımaz", () => {
+    expect(ilIlceCikar("Mamak, Erzurum")).toEqual({ il: "Erzurum", ilce: null });
+    expect(ilIlceCikar("Kadıköy, Ankara")).toEqual({ il: "Ankara", ilce: null });
+  });
+
   it("kelime sınırı korunur — bitişik bir kelimenin parçası yanlışlıkla eşleşmez", () => {
     // "Kaş" bir ilçe adı (Antalya) — "kaşarcı" gibi bitişik bir kelimenin
     // içinde geçse bile kelime sınırı sayesinde yanlış eşleşme olmamalı.
