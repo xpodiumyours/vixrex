@@ -7,6 +7,7 @@ const read = (path: string) => readFileSync(resolve(ROOT, path), "utf8");
 
 const actionRoute = read("src/app/api/owner-smart-engine-action/route.ts");
 const undoRoute = read("src/app/api/owner-smart-engine-undo/route.ts");
+const manualDraftRoute = read("src/app/api/owner-draft/route.ts");
 
 describe("Akıllı Motor authoritative owner routes", () => {
   it("action route HttpOnly owner session + authoritative RPC kullanır", () => {
@@ -48,5 +49,12 @@ describe("Akıllı Motor authoritative owner routes", () => {
     expect(undoRoute).not.toContain("restore_working_draft_field");
     expect(undoRoute).not.toContain("anahtarlar");
     expect(undoRoute).not.toContain("fieldKeys");
+  });
+
+  it("manual owner-draft route legacy smart-engine mutation'ı fail-closed reddeder", () => {
+    expect(manualDraftRoute).toContain('govde.source === "smart_engine"');
+    expect(manualDraftRoute).toContain("SMART_ENGINE_AUTHORITATIVE_ROUTE_REQUIRED");
+    expect(manualDraftRoute).toContain("status: 409");
+    expect(manualDraftRoute).toContain('rpc("update_working_draft_field"');
   });
 });
