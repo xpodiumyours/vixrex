@@ -67,6 +67,7 @@ on:
       - "supabase/migrations/20260905154433_smart_engine_location_bundle.sql"
       - "supabase/migrations/20260905155137_harden_location_bundle_acl.sql"
       - "supabase/migrations/20260905161400_tighten_storefront_url_anchor_scope.sql"
+      - "supabase/migrations/20260905163000_correct_turkey_location_contract.sql"
       - ".github/workflows/smart-engine-validator.yml"
 
 concurrency:
