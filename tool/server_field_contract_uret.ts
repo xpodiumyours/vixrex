@@ -12,7 +12,8 @@
 //   npx tsx ../tool/server_field_contract_uret.ts --out ../tmp/contract.sql
 
 import { readFileSync, writeFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 interface CanonicalField {
   anahtar: string;
@@ -52,7 +53,8 @@ export interface ServerFieldContract {
   emptyValues: string[] | null;
 }
 
-const canonicalPath = resolve(__dirname, "../shared/vitrin_alanlari.json");
+const moduleDir = dirname(fileURLToPath(import.meta.url));
+const canonicalPath = resolve(moduleDir, "../shared/vitrin_alanlari.json");
 
 function readCanonicalSchema(): CanonicalSchema {
   const parsed = JSON.parse(readFileSync(canonicalPath, "utf8")) as CanonicalSchema;
@@ -173,6 +175,7 @@ function main() {
   console.log("Kullanım: --check | --stdout | --out <path>");
 }
 
-if (require.main === module) {
+const invokedPath = process.argv[1] ? resolve(process.argv[1]) : null;
+if (invokedPath === fileURLToPath(import.meta.url)) {
   main();
 }
