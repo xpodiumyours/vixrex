@@ -161,22 +161,35 @@ Bu, motorun uygulanmış olduğu anlamına gelmez. Artık BUILD sırasında mima
 - ✅ Runtime motor davranışı değiştirilmedi.
 - ✅ Draft PR #417 `schema-drift` job'ında generator + drift kontrolü gerçek CI'da geçti.
 
-## 5.1 — Fail-closed kill-switch 🔄
+## 5.1 — Fail-closed kill-switch ✅
 
-- ⬜ `vixrex_smart_engine_enabled`.
-- ⬜ `vixrex_smart_engine_storefront_enabled`.
-- ⬜ Flutter + Next client guard.
-- ⬜ Authoritative server guard.
-- ⬜ OFF → manual owner edit devam.
+- ✅ `vixrex_smart_engine_enabled` migration/flag sözleşmesi.
+- ✅ `vixrex_smart_engine_storefront_enabled` migration/flag sözleşmesi.
+- ✅ Flutter + Next client guard.
+- ✅ Authoritative server guard.
+- ✅ OFF → manual owner edit devam.
+- ✅ Next typecheck + kill-switch unit testi gerçek CI'da geçti.
+- ✅ Flutter ilgili analiz + kill-switch unit testi gerçek CI'da geçti.
+- ✅ Supabase migration zinciri + GRANT guard + schema-drift geçti.
+- ⬜ Production DB'ye migration uygulanmadı; draft PR doğrulama aşamasında.
 
-## 5.2 — Matcher + Validator parity ⬜
+## 5.2 — Matcher + Validator parity 🔄
 
-- ⬜ substring matcher kaldırılacak.
-- ⬜ token/phrase matcher.
-- ⬜ controlled Turkish suffix.
-- ⬜ fuzzy yalnız clarification.
-- ⬜ semantic validator parity.
-- ⬜ special-flow classification.
+- ✅ Serbest substring matcher kaldırıldı.
+- ✅ Token/phrase matcher uygulandı.
+- ✅ Kontrollü Türkçe suffix + açık exact-form sözleşmesi uygulandı.
+- ✅ `tel` → `otel` yanlış pozitif yolu kapatıldı.
+- ✅ Belirsiz/eş skor durumunda mutation üretmeme davranışı korunuyor.
+- ✅ Flutter + Next matcher ortak fixture kaynağı.
+- ✅ Matcher parity + Faz-1 regresyonları daha önce gerçek runner'da geçti.
+- ✅ Validator canonical field-schema metadata'sına hizalandı.
+- ✅ `min/max` Dart üretim hattına taşındı.
+- ✅ `adres` semantic validation canonical şemaya bağlandı.
+- ✅ Toggle canonical boolean normalizasyonu iki runtime'a hizalandı.
+- ✅ Görsel anchor reddi, sayısal boşluk→null ve Türkçe büyük toggle edge-case'leri kapatıldı.
+- ✅ Shared validator fixture 32 senaryoya çıkarıldı; expected canonical value iki runtime testinde de kontrol ediliyor.
+- 🔄 Son 5.2 commitlerinin Flutter/Next gerçek runtime parity koşusu dış servis kotası nedeniyle bekliyor.
+- 🔄 GitHub Actions aylık dakika kotası dolu; Vercel günlük deployment limiti de dolu. Bu durum kod failure kanıtı sayılmıyor.
 
 ## 5.3 — Pure Decision + Typed Action ⬜
 
@@ -336,8 +349,9 @@ Akıllı Motor LOCK açılmadan Blog/Dijital Çarşı assistant domain BUILD'i y
 **KATMAN 3 ✅ Security/State Architecture LOCK**  
 **KATMAN 4 ✅ FINAL ARCHITECTURE LOCK**  
 **KATMAN 5.0 ✅ BASELINE/PARITY PIPELINE**  
-**KATMAN 5.1 🔄 KILL-SWITCH**  
-**KATMAN 5.2–5.10 ⬜ BUILD DEVAMI**  
+**KATMAN 5.1 ✅ KILL-SWITCH BUILD**  
+**KATMAN 5.2 🔄 MATCHER + VALIDATOR PARITY — KOD TAMAM / RUNTIME KANITI BEKLİYOR**  
+**KATMAN 5.3–5.10 ⬜ BUILD DEVAMI**  
 **KATMAN 6 🔒 46/46 VERIFY**  
 **KATMAN 7 🔒 ESNAF VERIFY**  
 **KATMAN 8 🔒 AKILLI MOTOR LOCK**  
