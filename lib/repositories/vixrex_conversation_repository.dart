@@ -37,6 +37,31 @@ class VixrexConversationRepository {
     return Map<String, dynamic>.from(raw);
   }
 
+  /// Kanonik pending state'i doğrudan mevcut güvenli RPC'den okur.
+  /// Anonymous/oturumsuz Flutter hesapları remote pending kullanmaz.
+  Future<Map<String, dynamic>?> loadPendingSlot() async {
+    final client = _persistentAccountClient;
+    if (client == null) return null;
+    final raw = await client.rpc('get_assistant_pending_slot');
+    if (raw == null) return null;
+    if (raw is! Map) {
+      throw const FormatException('INVALID_PENDING_SLOT_RESPONSE');
+    }
+    return Map<String, dynamic>.from(raw);
+  }
+
+  /// Kanonik pending state'i yazar. `null` remote pending'i temizler.
+  Future<void> savePendingSlot(Map<String, dynamic>? slot) async {
+    final client = _persistentAccountClient;
+    if (client == null) {
+      throw StateError('PERSISTENT_ACCOUNT_REQUIRED');
+    }
+    await client.rpc(
+      'set_assistant_pending_slot',
+      params: {'p_slot': slot},
+    );
+  }
+
   Future<List<ChatMessage>> loadMessages() async {
     final conversation = await _conversation();
     final rawMessages = conversation?['messages'];
