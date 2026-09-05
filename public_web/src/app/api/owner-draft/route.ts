@@ -5,15 +5,19 @@ import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { validateField } from "@/lib/vitrinFieldValidation";
 import { broadcastTaslakGuncellendi } from "@/lib/workingDraftBroadcast";
-import { SMART_ENGINE_DISABLED_MESSAGE } from "@/lib/smartEngineFlags";
-import { smartEngineStorefrontServerEnabled } from "@/lib/smartEngineFlagsServer";
 
-// Sahip çalışma taslağında tek alan günceller (implementation_plan.md Commit 8).
+// Sahip çalışma taslağında tek MANUEL alan günceller
+// (implementation_plan.md Commit 8).
 //
-// Zincir:
+// Akıllı Motor mutation'ları bu route'tan GEÇMEZ. 5.5/5.6 authoritative
+// yolunda expectedDraftVersion + commandId + actionId + audit/idempotency
+// zorunludur ve /api/owner-smart-engine-action üzerinden çalışır. Böylece
+// eski/bonus bir çağrı `source:"smart_engine"` yollasa bile legacy
+// update_working_draft_field RPC'sine düşüp concurrency korumasını atlayamaz.
+//
+// Manuel zincir:
 //   istek {slug, anahtar, deger}
 //   → HttpOnly sahip çerezi doğrulanır (gövdeden token ALINMAZ)
-//   → smart-engine kaynağıysa runtime kill-switch server'da doğrulanır
 //   → değer şemaya göre doğrulanır (vitrinFieldValidation)
 //   → Oran sınırı: consume_assistant_request (store-slug bazlı)
 //   → update_working_draft_field RPC'si çağrılır
@@ -107,6 +111,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ hata: "Vitrin veya alan belirtilmedi." }, { status: 400 });
   }
 
+  // Legacy assistant mutation burada fail-closed olur. Manuel yol etkilenmez.
+  if (smartEngineRequest) {
+    return NextResponse.json(
+      {
+        hata: "Akıllı Motor kaydı authoritative işlem yolundan gönderilmeli.",
+        kod: "SMART_ENGINE_AUTHORITATIVE_ROUTE_REQUIRED",
+      },
+      { status: 409 }
+    );
+  }
+
   // Oturum YALNIZ çerezden okunur. Gövdeden gelen bir token kabul edilmez.
   const cookieStore = await cookies();
   const ownerSessionCookie = cookieStore.get(OWNER_SESSION_COOKIE)?.value;
@@ -116,16 +131,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { hata: HATA_METNI.INVALID_SESSION_TOKEN },
       { status: 401 }
-    );
-  }
-
-  // Kill-switch yalnız assistant kaynaklı mutation'a uygulanır. Manuel owner
-  // edit aynı canonical taslak/validation yolunda çalışmaya devam eder.
-  // Flag eksik, DB/RPC erişilemez veya SERVICE_ROLE yoksa helper false döner.
-  if (smartEngineRequest && !(await smartEngineStorefrontServerEnabled())) {
-    return NextResponse.json(
-      { hata: SMART_ENGINE_DISABLED_MESSAGE, kod: "SMART_ENGINE_DISABLED" },
-      { status: 503 }
     );
   }
 
