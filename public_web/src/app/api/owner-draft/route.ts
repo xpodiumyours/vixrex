@@ -5,12 +5,15 @@ import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { validateField } from "@/lib/vitrinFieldValidation";
 import { broadcastTaslakGuncellendi } from "@/lib/workingDraftBroadcast";
+import { SMART_ENGINE_DISABLED_MESSAGE } from "@/lib/smartEngineFlags";
+import { smartEngineStorefrontServerEnabled } from "@/lib/smartEngineFlagsServer";
 
 // Sahip çalışma taslağında tek alan günceller (implementation_plan.md Commit 8).
 //
 // Zincir:
 //   istek {slug, anahtar, deger}
 //   → HttpOnly sahip çerezi doğrulanır (gövdeden token ALINMAZ)
+//   → smart-engine kaynağıysa runtime kill-switch server'da doğrulanır
 //   → değer şemaya göre doğrulanır (vitrinFieldValidation)
 //   → Oran sınırı: consume_assistant_request (store-slug bazlı)
 //   → update_working_draft_field RPC'si çağrılır
@@ -80,7 +83,13 @@ function rateLimitAdmin(): SupabaseClient | null {
 }
 
 export async function POST(request: NextRequest) {
-  let govde: { slug?: unknown; anahtar?: unknown; deger?: unknown; clientId?: unknown };
+  let govde: {
+    slug?: unknown;
+    anahtar?: unknown;
+    deger?: unknown;
+    clientId?: unknown;
+    source?: unknown;
+  };
   try {
     govde = await request.json();
   } catch {
@@ -89,6 +98,7 @@ export async function POST(request: NextRequest) {
 
   const slug = typeof govde.slug === "string" ? govde.slug.trim() : "";
   const anahtar = typeof govde.anahtar === "string" ? govde.anahtar.trim() : "";
+  const smartEngineRequest = govde.source === "smart_engine";
   // Yalnız kendi yankısını atlamak için kullanılan opak bir etiket — yetki
   // veya kimlik anlamı taşımaz, doğrulanmasına gerek yok.
   const clientId = typeof govde.clientId === "string" ? govde.clientId : null;
@@ -106,6 +116,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { hata: HATA_METNI.INVALID_SESSION_TOKEN },
       { status: 401 }
+    );
+  }
+
+  // Kill-switch yalnız assistant kaynaklı mutation'a uygulanır. Manuel owner
+  // edit aynı canonical taslak/validation yolunda çalışmaya devam eder.
+  // Flag eksik, DB/RPC erişilemez veya SERVICE_ROLE yoksa helper false döner.
+  if (smartEngineRequest && !(await smartEngineStorefrontServerEnabled())) {
+    return NextResponse.json(
+      { hata: SMART_ENGINE_DISABLED_MESSAGE, kod: "SMART_ENGINE_DISABLED" },
+      { status: 503 }
     );
   }
 
