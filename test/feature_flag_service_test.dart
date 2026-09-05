@@ -2,48 +2,38 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vixrex/services/feature_flag_service.dart';
 
 void main() {
-  group('Akıllı Motor runtime kill-switch', () {
-    test('iki flag de açıkken storefront motoru açılır', () {
-      expect(
-        smartEngineStorefrontEnabledFromMap(
-          {
-            vixrexSmartEngineFlag: true,
-            vixrexSmartEngineStorefrontFlag: true,
-          },
-          loaded: true,
-        ),
-        isTrue,
-      );
+  group('Akıllı Motor kill-switch', () {
+    test('iki flag açıkken motor açılır', () {
+      final flags = <String, bool>{
+        vixrexSmartEngineFlag: true,
+        vixrexSmartEngineStorefrontFlag: true,
+      };
+      final result = smartEngineStorefrontEnabledFromMap(flags, loaded: true);
+      expect(result, isTrue);
     });
 
-    test('eksik, kapalı veya yüklenmemiş flag fail-closed', () {
-      expect(
-        smartEngineStorefrontEnabledFromMap(
-          {vixrexSmartEngineFlag: true},
-          loaded: true,
-        ),
-        isFalse,
-      );
-      expect(
-        smartEngineStorefrontEnabledFromMap(
-          {
-            vixrexSmartEngineFlag: true,
-            vixrexSmartEngineStorefrontFlag: false,
-          },
-          loaded: true,
-        ),
-        isFalse,
-      );
-      expect(
-        smartEngineStorefrontEnabledFromMap(
-          {
-            vixrexSmartEngineFlag: true,
-            vixrexSmartEngineStorefrontFlag: true,
-          },
-          loaded: false,
-        ),
-        isFalse,
-      );
+    test('eksik flag fail-closed', () {
+      final flags = <String, bool>{vixrexSmartEngineFlag: true};
+      final result = smartEngineStorefrontEnabledFromMap(flags, loaded: true);
+      expect(result, isFalse);
+    });
+
+    test('kapalı storefront flag fail-closed', () {
+      final flags = <String, bool>{
+        vixrexSmartEngineFlag: true,
+        vixrexSmartEngineStorefrontFlag: false,
+      };
+      final result = smartEngineStorefrontEnabledFromMap(flags, loaded: true);
+      expect(result, isFalse);
+    });
+
+    test('yüklenmemiş flags fail-closed', () {
+      final flags = <String, bool>{
+        vixrexSmartEngineFlag: true,
+        vixrexSmartEngineStorefrontFlag: true,
+      };
+      final result = smartEngineStorefrontEnabledFromMap(flags, loaded: false);
+      expect(result, isFalse);
     });
   });
 }
