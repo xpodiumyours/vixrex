@@ -67,6 +67,54 @@ class FlutterSmartEngineCommandResult {
     required this.stopped,
   });
 
+  factory FlutterSmartEngineCommandResult.blocked({
+    required int draftVersion,
+    required List<FlutterSmartEngineAction> actions,
+    required String errorCode,
+    required String errorMessage,
+  }) {
+    if (actions.isEmpty) {
+      return FlutterSmartEngineCommandResult(
+        status: FlutterSmartEngineCommandStatus.failed,
+        commandId: '',
+        draftVersion: draftVersion,
+        succeeded: const [],
+        queuedOffline: const [],
+        failed: const [],
+        stopped: const [],
+      );
+    }
+
+    final first = actions.first;
+    return FlutterSmartEngineCommandResult(
+      status: FlutterSmartEngineCommandStatus.failed,
+      commandId: '',
+      draftVersion: draftVersion,
+      succeeded: const [],
+      queuedOffline: const [],
+      failed: [
+        FlutterSmartEngineActionResult(
+          status: FlutterSmartEngineActionStatus.failed,
+          fieldKey: first.fieldKey,
+          value: first.value,
+          actionId: first.actionId ?? '',
+          errorCode: errorCode,
+          errorMessage: errorMessage,
+        ),
+      ],
+      stopped: [
+        for (final action in actions.skip(1))
+          FlutterSmartEngineActionResult(
+            status: FlutterSmartEngineActionStatus.stopped,
+            fieldKey: action.fieldKey,
+            value: action.value,
+            actionId: action.actionId ?? '',
+            errorCode: errorCode,
+          ),
+      ],
+    );
+  }
+
   final FlutterSmartEngineCommandStatus status;
   final String commandId;
   final int draftVersion;
@@ -74,6 +122,15 @@ class FlutterSmartEngineCommandResult {
   final List<FlutterSmartEngineActionResult> queuedOffline;
   final List<FlutterSmartEngineActionResult> failed;
   final List<FlutterSmartEngineActionResult> stopped;
+
+  String? get firstErrorCode =>
+      failed.isNotEmpty ? failed.first.errorCode : queuedOffline.firstOrNull?.errorCode;
+
+  String? get firstErrorMessage => failed.isNotEmpty ? failed.first.errorMessage : null;
+}
+
+extension<T> on List<T> {
+  T? get firstOrNull => isEmpty ? null : first;
 }
 
 /// 5.8 Flutter owner-edit Akıllı Motor command orchestrator.
