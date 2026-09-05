@@ -5,10 +5,6 @@ import 'package:vixrex/core/supabase_error_mapper.dart';
 import 'package:vixrex/services/working_draft/working_draft_port.dart';
 import 'package:vixrex/utils/failure.dart';
 
-/// Supabase adaptörü — doğrudan RPC zinciri.
-///
-/// Not: Realtime sinyali payload taşımaz, yalnız `draft_version`
-/// bildirir (plan § Working Draft modülü).
 class SupabaseWorkingDraftAdapter implements WorkingDraftPort {
   const SupabaseWorkingDraftAdapter({SupabaseClient? client}) : _client = client;
   final SupabaseClient? _client;
@@ -27,15 +23,24 @@ class SupabaseWorkingDraftAdapter implements WorkingDraftPort {
     final c = _supabase;
     if (c == null) return Result.failure(Failure('NO_CLIENT'));
     try {
-      final raw = await c.rpc('get_working_draft_for_session', params: {'p_session_token': sessionToken});
+      final raw = await c.rpc(
+        'get_working_draft_for_session',
+        params: {'p_session_token': sessionToken},
+      );
       final m = Map<String, dynamic>.from(raw as Map);
-      return Result.success(WorkingDraftSnapshot(
-        slug: (m['slug'] as String?) ?? '',
-        draftData: Map<String, dynamic>.from((m['draft_data'] as Map?) ?? const {}),
-        draftVersion: (m['draft_version'] as num?)?.toInt() ?? 1,
-        baseLiveVersion: (m['base_live_version'] as num?)?.toInt() ?? 1,
-        atlananAlanlar: List<String>.from((m['atlanan_alanlar'] as List?) ?? const []),
-      ));
+      return Result.success(
+        WorkingDraftSnapshot(
+          slug: (m['slug'] as String?) ?? '',
+          draftData: Map<String, dynamic>.from(
+            (m['draft_data'] as Map?) ?? const {},
+          ),
+          draftVersion: (m['draft_version'] as num?)?.toInt() ?? 1,
+          baseLiveVersion: (m['base_live_version'] as num?)?.toInt() ?? 1,
+          atlananAlanlar: List<String>.from(
+            (m['atlanan_alanlar'] as List?) ?? const [],
+          ),
+        ),
+      );
     } catch (e, s) {
       return Result.failure(SupabaseErrorMapper.map(e, s));
     }
@@ -52,11 +57,14 @@ class SupabaseWorkingDraftAdapter implements WorkingDraftPort {
     final c = _supabase;
     if (c == null) return Result.failure(Failure('NO_CLIENT'));
     try {
-      final raw = await c.rpc('update_working_draft_field', params: {
-        'p_session_token': sessionToken,
-        'p_key': anahtar,
-        'p_value': deger,
-      });
+      final raw = await c.rpc(
+        'update_working_draft_field',
+        params: {
+          'p_session_token': sessionToken,
+          'p_key': anahtar,
+          'p_value': deger,
+        },
+      );
       final m = Map<String, dynamic>.from(raw as Map);
       return Result.success(
         WorkingDraftPatchResult.succeeded(
@@ -89,7 +97,9 @@ class SupabaseWorkingDraftAdapter implements WorkingDraftPort {
       }
     }
 
-    if (beklenenSurum < 1 || actionId.trim().isEmpty || commandId.trim().isEmpty) {
+    if (beklenenSurum < 1 ||
+        actionId.trim().isEmpty ||
+        commandId.trim().isEmpty) {
       return Result.failure(Failure('INVALID_ACTION_PRECONDITION'));
     }
 
@@ -97,7 +107,8 @@ class SupabaseWorkingDraftAdapter implements WorkingDraftPort {
       final raw = await c.rpc(
         'vixrex_apply_storefront_action',
         params: {
-          'p_session_token': normalizedSession.isEmpty ? null : normalizedSession,
+          'p_session_token':
+              normalizedSession.isEmpty ? null : normalizedSession,
           'p_field_key': anahtar,
           'p_value': deger,
           'p_expected_draft_version': beklenenSurum,
@@ -130,15 +141,76 @@ class SupabaseWorkingDraftAdapter implements WorkingDraftPort {
   }
 
   @override
-  Future<Result<WorkingDraftPublishResult>> yayinla({required String sessionToken}) async {
+  Future<Result<WorkingDraftAssistantUndoResult>> akilliMotorCommandGeriAl({
+    String? sessionToken,
+    required String commandId,
+  }) async {
+    final c = _supabase;
+    if (c == null) return Result.failure(Failure('NO_CLIENT'));
+
+    final normalizedSession = sessionToken?.trim() ?? '';
+    if (normalizedSession.isEmpty) {
+      final user = c.auth.currentUser;
+      if (user == null || user.isAnonymous) {
+        return Result.failure(Failure('OWNER_AUTHORIZATION_REQUIRED'));
+      }
+    }
+    if (commandId.trim().isEmpty) {
+      return Result.failure(Failure('INVALID_UNDO_PRECONDITION'));
+    }
+
+    try {
+      final raw = await c.rpc(
+        'vixrex_undo_storefront_command',
+        params: {
+          'p_session_token':
+              normalizedSession.isEmpty ? null : normalizedSession,
+          'p_command_id': commandId,
+        },
+      );
+      if (raw is! Map) {
+        return Result.failure(Failure('UNKNOWN_UNDO_OUTCOME'));
+      }
+      final m = Map<String, dynamic>.from(raw);
+      final draftVersion = (m['draft_version'] as num?)?.toInt();
+      final count = (m['rolled_back_action_count'] as num?)?.toInt();
+      if (m['ok'] != true ||
+          draftVersion == null ||
+          draftVersion < 1 ||
+          count == null ||
+          count < 1) {
+        return Result.failure(Failure('UNKNOWN_UNDO_OUTCOME'));
+      }
+      return Result.success(
+        WorkingDraftAssistantUndoResult(
+          commandId: commandId,
+          draftVersion: draftVersion,
+          rolledBackActionCount: count,
+          idempotentReplay: m['replayed'] == true,
+        ),
+      );
+    } catch (e, s) {
+      return Result.failure(SupabaseErrorMapper.map(e, s));
+    }
+  }
+
+  @override
+  Future<Result<WorkingDraftPublishResult>> yayinla({
+    required String sessionToken,
+  }) async {
     final c = _supabase;
     if (c == null) return Result.failure(Failure('NO_CLIENT'));
     try {
-      final raw = await c.rpc('publish_working_draft', params: {'p_session_token': sessionToken});
+      final raw = await c.rpc(
+        'publish_working_draft',
+        params: {'p_session_token': sessionToken},
+      );
       final m = Map<String, dynamic>.from(raw as Map);
-      return Result.success(WorkingDraftPublishResult(
-        liveVersion: (m['live_version'] as num?)?.toInt() ?? 1,
-      ));
+      return Result.success(
+        WorkingDraftPublishResult(
+          liveVersion: (m['live_version'] as num?)?.toInt() ?? 1,
+        ),
+      );
     } catch (e, s) {
       return Result.failure(SupabaseErrorMapper.map(e, s));
     }
@@ -150,10 +222,15 @@ class SupabaseWorkingDraftAdapter implements WorkingDraftPort {
     if (c == null) return const Stream.empty();
     final ctrl = StreamController<int>.broadcast();
     final ch = c.channel('draft:$slug');
-    ch.onBroadcast(event: 'alan_guncellendi', callback: (payload) {
-      final v = (payload['draft_version'] as num?)?.toInt();
-      if (v != null) ctrl.add(v);
-    }).subscribe();
+    ch
+        .onBroadcast(
+          event: 'alan_guncellendi',
+          callback: (payload) {
+            final v = (payload['draft_version'] as num?)?.toInt();
+            if (v != null) ctrl.add(v);
+          },
+        )
+        .subscribe();
     ctrl.onCancel = () async {
       await c.removeChannel(ch);
       await ctrl.close();
