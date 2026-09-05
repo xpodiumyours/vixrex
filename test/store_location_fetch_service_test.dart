@@ -65,6 +65,29 @@ void main() {
     expect(sonuc.districtName, 'Şişli');
   });
 
+  test('resmî kanonik ilçe adları korunur', () {
+    final narman = servis.eslestirIlIlce('Narman, Erzurum');
+    expect(narman.provinceCode, '25');
+    expect(narman.provinceName, 'Erzurum');
+    expect(narman.districtName, 'Narman');
+
+    final pasinler = servis.eslestirIlIlce('Pasinler, Erzurum');
+    expect(pasinler.provinceCode, '25');
+    expect(pasinler.districtName, 'Pasinler');
+
+    final incirliova = servis.eslestirIlIlce('İncirliova, Aydın');
+    expect(incirliova.provinceCode, '09');
+    expect(incirliova.districtName, 'İncirliova');
+
+    final incesu = servis.eslestirIlIlce('İncesu, Kayseri');
+    expect(incesu.provinceCode, '38');
+    expect(incesu.districtName, 'İncesu');
+
+    final beytussebap = servis.eslestirIlIlce('Beytüşşebap, Şırnak');
+    expect(beytussebap.provinceCode, '73');
+    expect(beytussebap.districtName, 'Beytüşşebap');
+  });
+
   test('kelime sınırı korunurken gerçek ilçe adı doğru eşleşir', () {
     final sonuc = servis.eslestirIlIlce(
       'Halaskargazi Caddesi, Şişli, İstanbul',
