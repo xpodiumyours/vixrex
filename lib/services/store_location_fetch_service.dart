@@ -127,6 +127,7 @@ class StoreLocationFetchService {
   /// Next `turkeyPlaceMatcher` ile aynı güvenlik ilkesi:
   /// - alt-dize değil kelime/sınır eşleşmesi,
   /// - benzersiz ilçe kendi ilini belirleyebilir,
+  /// - açıkça yazılan il ile çelişen benzersiz ilçe kabul edilmez,
   /// - birden fazla ilde bulunan ilçe (örn. Kemer) il açıkça doğrulanmadan
   ///   seçilmez,
   /// - `Merkez` tek başına il çıkarmak için kullanılmaz.
@@ -137,7 +138,10 @@ class StoreLocationFetchService {
     final provinceByCode = <String, Province>{
       for (final province in turkeyProvinces) province.code: province,
     };
-    final districtCandidates = <String, List<({Province province, String district})>>{};
+    final districtCandidates = <
+      String,
+      List<({Province province, String district})>
+    >{};
 
     for (final entry in turkeyDistricts.entries) {
       final province = provinceByCode[entry.key];
@@ -150,6 +154,18 @@ class StoreLocationFetchService {
             .add((province: province, district: district));
       }
     }
+
+    final provinceMatches = <({int position, Province province})>[];
+    for (final province in turkeyProvinces) {
+      final normalizedProvince = TextUtils.normalizeTurkish(province.name);
+      final position = _boundedTermPosition(normalizedAddress, normalizedProvince);
+      if (position >= 0) {
+        provinceMatches.add((position: position, province: province));
+      }
+    }
+    provinceMatches.sort((a, b) => a.position.compareTo(b.position));
+    final explicitProvince =
+        provinceMatches.length == 1 ? provinceMatches.single.province : null;
 
     final districtMatches = <({
       int position,
@@ -176,6 +192,10 @@ class StoreLocationFetchService {
     for (final match in districtMatches) {
       if (match.candidates.length == 1) {
         final candidate = match.candidates.single;
+        if (explicitProvince != null &&
+            candidate.province.code != explicitProvince.code) {
+          continue;
+        }
         return (
           provinceCode: candidate.province.code,
           provinceName: candidate.province.name,
@@ -199,16 +219,6 @@ class StoreLocationFetchService {
         );
       }
     }
-
-    final provinceMatches = <({int position, Province province})>[];
-    for (final province in turkeyProvinces) {
-      final normalizedProvince = TextUtils.normalizeTurkish(province.name);
-      final position = _boundedTermPosition(normalizedAddress, normalizedProvince);
-      if (position >= 0) {
-        provinceMatches.add((position: position, province: province));
-      }
-    }
-    provinceMatches.sort((a, b) => a.position.compareTo(b.position));
 
     if (provinceMatches.isNotEmpty) {
       final province = provinceMatches.first.province;
