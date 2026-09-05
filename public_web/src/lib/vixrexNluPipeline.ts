@@ -15,6 +15,12 @@ import {
   type VixrexDecisionKind,
   type VixrexValidatedAction,
 } from "./vixrexDecisionContract";
+import {
+  createPendingEnvelope,
+  parsePendingEnvelope,
+  type VixrexPendingEnvelope,
+  type VixrexPendingKind,
+} from "./vixrexPendingContract";
 
 export type VixrexPipelineOutcome =
   | "handled"
@@ -42,32 +48,33 @@ export interface VixrexPipelineResult {
   tumu?: Array<{ anahtar: string; kolon: string; deger: unknown }>;
 }
 
-// Adım 4 (2026-09-03): pending slot artık localStorage DEĞİL, kalıcı ve
-// paylaşılan `assistant_conversations.pending_slot` (Furkan, 2026-09-02,
-// "NLU Faz 1-3") — RPC'ler auth.uid() ister. OwnerAssistantPanel panel
-// açılışında ensureAnonymousSession() çağırıp her esnafa (hesabı olmasa
-// bile) gerçek bir auth.uid() sağlıyor; böylece assistant_conversations'ın
-// NOT NULL user_id kısıtına dokunmadan, mevcut cross-client tabloya
-// yazabiliyoruz. Oturum henüz kurulmadıysa RPC NOT_AUTHENTICATED döner —
-// diğer fire-and-forget yazımlarla aynı desende sessizce yutulur, pending
-// o turda basitçe "yok" sayılır.
-async function loadPending(): Promise<{ anahtar: string; etiket: string; tip: string } | null> {
+// 5.4: Supabase `assistant_conversations.pending_slot` kanonik state.
+// Parser eski {anahtar, etiket, tip...} kayıtlarını da v1 envelope'a taşır.
+async function loadPending(): Promise<VixrexPendingEnvelope | null> {
   try {
     const { data, error } = await supabase.rpc("get_assistant_pending_slot");
     if (error || !data) return null;
-    return data as { anahtar: string; etiket: string; tip: string };
+    return parsePendingEnvelope(data);
   } catch {
     return null;
   }
 }
 
-async function savePending(a: VixrexNiyetAlan): Promise<void> {
+async function savePending(
+  a: VixrexNiyetAlan,
+  kind: VixrexPendingKind = "missing_value",
+): Promise<void> {
   try {
     await supabase.rpc("set_assistant_pending_slot", {
-      p_slot: { anahtar: a.anahtar, etiket: a.etiket, tip: a.tip },
+      p_slot: createPendingEnvelope({
+        fieldKey: a.anahtar,
+        fieldType: a.tip,
+        fieldLabel: a.etiket,
+        kind,
+      }),
     });
   } catch {
-    // sessizce yut — bellek modu korunur
+    // Pending write başarısızsa cross-device state kaydedildi varsayılmaz.
   }
 }
 
@@ -75,7 +82,7 @@ async function clearPending(): Promise<void> {
   try {
     await supabase.rpc("set_assistant_pending_slot", { p_slot: null });
   } catch {
-    // sessizce yut
+    // Clear başarısızlığı persistence success olarak raporlanmaz.
   }
 }
 
@@ -118,7 +125,8 @@ export async function handleVixrexNluMessage(input: string): Promise<VixrexPipel
   const norm = vixrexNormalizeDartParity(trimmed);
   const pending = await loadPending();
 
-  // Evet/hayır pending ile – Faz 1 dar: sadece temizle.
+  // Evet/hayır pending ile – pending proposedValue taşımadığı sürece
+  // yalnız "evet" mutation üretemez.
   if (pending && (norm === "evet" || norm === "hayır" || norm === "hayir" || norm === "iptal")) {
     await clearPending();
     if (norm === "evet") {
@@ -139,7 +147,7 @@ export async function handleVixrexNluMessage(input: string): Promise<VixrexPipel
 
   // Pending varken yeni alan yoksa → ham mesajı pending alanın değeri say.
   if (pending) {
-    const alan = VIXREX_NIYET_SOZLUGU.find((a) => a.anahtar === pending.anahtar) ?? null;
+    const alan = VIXREX_NIYET_SOZLUGU.find((a) => a.anahtar === pending.fieldKey) ?? null;
     if (alan) {
       const resolved = resolveVixrexIntent(trimmed);
       if (!resolved) {
@@ -251,7 +259,7 @@ export async function handleVixrexNluMessage(input: string): Promise<VixrexPipel
   const match = matches[0];
   const alan = match.alan;
   if (needsSpecialFlow(alan.anahtar)) {
-    await savePending(alan);
+    await savePending(alan, "special_flow");
     return {
       decision: "needs_special_flow",
       actions: [],
@@ -263,7 +271,7 @@ export async function handleVixrexNluMessage(input: string): Promise<VixrexPipel
 
   const ham = extractVixrexValue(trimmed, alan);
   if (!ham) {
-    await savePending(alan);
+    await savePending(alan, "missing_value");
     return {
       decision: "needs_clarification",
       actions: [],
