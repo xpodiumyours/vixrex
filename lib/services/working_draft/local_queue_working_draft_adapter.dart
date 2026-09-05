@@ -8,16 +8,15 @@ import 'package:vixrex/utils/failure.dart';
 
 /// Yerel önbellek + kuyruk adaptörü — çevrimdışı önbellek ve kuyruk.
 ///
-/// Taslak verisi Supabase'in önbelleği. Normal yamalar legacy kimliğiyle,
-/// Akıllı Motor yamaları ise expectedVersion + actionId + commandId ile
-/// kuyruklanır. Reconnect'te aynı logical action aynı kimlikle tekrar edilir;
-/// 5.5 idempotency receipt duplicate mutation'ı engeller.
+/// Akıllı Motor action'ları expectedVersion + actionId + commandId ile
+/// kuyruklanabilir. Command Undo ise sunucudaki receipt/current-value kontrolüne
+/// bağlı olduğu için çevrimdışı queue edilmez; remote sonucu aynen döner.
 class LocalQueueWorkingDraftAdapter implements WorkingDraftPort {
   LocalQueueWorkingDraftAdapter({
     SupabaseWorkingDraftAdapter? remote,
     SharedPreferences? prefs,
-  })  : _remote = remote ?? const SupabaseWorkingDraftAdapter(),
-        _prefs = prefs;
+  }) : _remote = remote ?? const SupabaseWorkingDraftAdapter(),
+       _prefs = prefs;
 
   final SupabaseWorkingDraftAdapter _remote;
   final SharedPreferences? _prefs;
@@ -34,25 +33,28 @@ class LocalQueueWorkingDraftAdapter implements WorkingDraftPort {
   }
 
   @override
-  Future<Result<WorkingDraftSnapshot>> yukle({required String sessionToken}) async {
+  Future<Result<WorkingDraftSnapshot>> yukle({
+    required String sessionToken,
+  }) async {
     final remote = await _remote.yukle(sessionToken: sessionToken);
     if (remote.isSuccess) {
       final p = await _prefsAsync();
       await p.setString(_kOnbellek, jsonEncode(remote.data!.draftData));
       return remote;
     }
-    // Çevrimdışı: önbellekten dön.
     try {
       final p = await _prefsAsync();
       final raw = p.getString(_kOnbellek);
       if (raw == null) return remote;
       final data = Map<String, dynamic>.from(jsonDecode(raw) as Map);
-      return Result.success(WorkingDraftSnapshot(
-        slug: '',
-        draftData: data,
-        draftVersion: 1,
-        baseLiveVersion: 1,
-      ));
+      return Result.success(
+        WorkingDraftSnapshot(
+          slug: '',
+          draftData: data,
+          draftVersion: 1,
+          baseLiveVersion: 1,
+        ),
+      );
     } catch (_) {
       return remote;
     }
@@ -131,6 +133,19 @@ class LocalQueueWorkingDraftAdapter implements WorkingDraftPort {
     return res;
   }
 
+  @override
+  Future<Result<WorkingDraftAssistantUndoResult>> akilliMotorCommandGeriAl({
+    String? sessionToken,
+    required String commandId,
+  }) {
+    // Undo current server values + audit receipts ile atomik karar verir.
+    // Ağ yokken local rollback/queue yapmak bu garantiyi bozar.
+    return _remote.akilliMotorCommandGeriAl(
+      sessionToken: sessionToken,
+      commandId: commandId,
+    );
+  }
+
   bool _agYok(Failure? f) {
     if (f == null) return false;
     final m = f.message.toUpperCase();
@@ -150,13 +165,15 @@ class LocalQueueWorkingDraftAdapter implements WorkingDraftPort {
   ) async {
     final p = await _prefsAsync();
     final list = List<String>.from(p.getStringList(_kKuyruk) ?? const []);
-    list.add(jsonEncode({
-      'k': k,
-      'v': v,
-      'vs': vs,
-      'cid': cid,
-      'ts': DateTime.now().toIso8601String(),
-    }));
+    list.add(
+      jsonEncode({
+        'k': k,
+        'v': v,
+        'vs': vs,
+        'cid': cid,
+        'ts': DateTime.now().toIso8601String(),
+      }),
+    );
     await p.setStringList(_kKuyruk, list);
   }
 
@@ -171,9 +188,6 @@ class LocalQueueWorkingDraftAdapter implements WorkingDraftPort {
     final p = await _prefsAsync();
     final list = List<String>.from(p.getStringList(_kKuyruk) ?? const []);
 
-    // Aynı logical action response kaybı nedeniyle tekrar queue edilirse ikinci
-    // queue item üretme. Payload farklıysa server idempotency reuse ile reddeder;
-    // queue da kimliği değiştirmez.
     final alreadyQueued = list.any((raw) {
       try {
         final m = Map<String, dynamic>.from(jsonDecode(raw) as Map);
@@ -184,16 +198,18 @@ class LocalQueueWorkingDraftAdapter implements WorkingDraftPort {
     });
     if (alreadyQueued) return;
 
-    list.add(jsonEncode({
-      'kind': _assistantKind,
-      'k': anahtar,
-      'v': deger,
-      'vs': beklenenSurum,
-      'cid': clientId,
-      'aid': actionId,
-      'cmd': commandId,
-      'ts': DateTime.now().toIso8601String(),
-    }));
+    list.add(
+      jsonEncode({
+        'kind': _assistantKind,
+        'k': anahtar,
+        'v': deger,
+        'vs': beklenenSurum,
+        'cid': clientId,
+        'aid': actionId,
+        'cmd': commandId,
+        'ts': DateTime.now().toIso8601String(),
+      }),
+    );
     await p.setStringList(_kKuyruk, list);
   }
 
@@ -225,9 +241,6 @@ class LocalQueueWorkingDraftAdapter implements WorkingDraftPort {
     await p.setStringList(_kKuyruk, list);
   }
 
-  /// Kuyruktaki yamaları sırayla gönder — bağlantı gelince çağrılır.
-  /// Assistant action aynı actionId/commandId ile replay edilir; yeni kimlik
-  /// üretilmez. Gerçek hata/conflict sonrası zincir durur.
   Future<void> kuyruguBosalt({required String sessionToken}) async {
     final p = await _prefsAsync();
     final list = List<String>.from(p.getStringList(_kKuyruk) ?? const []);
@@ -275,9 +288,11 @@ class LocalQueueWorkingDraftAdapter implements WorkingDraftPort {
   }
 
   @override
-  Future<Result<WorkingDraftPublishResult>> yayinla({required String sessionToken}) =>
-      _remote.yayinla(sessionToken: sessionToken);
+  Future<Result<WorkingDraftPublishResult>> yayinla({
+    required String sessionToken,
+  }) => _remote.yayinla(sessionToken: sessionToken);
 
   @override
-  Stream<int> degisimSinyali({required String slug}) => _remote.degisimSinyali(slug: slug);
+  Stream<int> degisimSinyali({required String slug}) =>
+      _remote.degisimSinyali(slug: slug);
 }
