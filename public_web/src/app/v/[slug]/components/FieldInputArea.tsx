@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { VitrinField } from "@/lib/vitrinFieldSchema";
 import { alanOnemi } from "@/lib/vitrinReadiness";
 import {
+  dispatchOwnerActionLifecycle,
   ownerLifecycleStatusText,
   type OwnerActionLifecycleResult,
 } from "@/lib/ownerActionLifecycle";
@@ -75,15 +76,31 @@ export function FieldInputArea({
   // 5.7: Bu body class artık tüm decision süresini değil yalnız gerçek
   // persistence/execution süresini temsil eder. useFieldSelection başarı
   // sonrasında sıradaki alanı seçerken bu state sayesinde mobil sheet'i
-  // yeniden açmaz; storefront görünür kalır.
+  // yeniden açmaz; storefront görünür kalır. Canonical düğmenin keyboard/
+  // screen-reader semantiği de aynı gerçek state'ten türetilir.
   useEffect(() => {
     document.body.classList.toggle("vixrex-asistan-isliyor", kaydediliyor);
-    return () => document.body.classList.remove("vixrex-asistan-isliyor");
+    const canonicalButton = document.querySelector<HTMLButtonElement>(
+      'button[aria-label="Vixrex Asistan"]',
+    );
+    if (canonicalButton) {
+      canonicalButton.disabled = kaydediliyor;
+      canonicalButton.setAttribute("aria-busy", kaydediliyor ? "true" : "false");
+    }
+
+    return () => {
+      document.body.classList.remove("vixrex-asistan-isliyor");
+      if (canonicalButton) {
+        canonicalButton.disabled = false;
+        canonicalButton.removeAttribute("aria-busy");
+      }
+    };
   }, [kaydediliyor]);
 
   // Mobil ilk davranış korunur: Gönder anında sheet kapanır ve vitrin görünür.
   // İşlem sonundaki yeniden-açma kararı CSS/mesaj tahminiyle değil, gonder()'ın
-  // açık lifecycle sonucuyla üst bileşene iletilir.
+  // açık lifecycle sonucuyla taşınır. useFieldSelection bu explicit sonucu
+  // React `onAlanSecildi` callback'ine bağlar; success'te panel kapalı kalır.
   const gonderVeVitriniGoster = async () => {
     if (gonderRef.current) return;
     gonderRef.current = true;
@@ -105,6 +122,7 @@ export function FieldInputArea({
 
       const sonuc = await gonder();
       setSonGonderSonucu(sonuc);
+      dispatchOwnerActionLifecycle(sonuc);
       onGonderSonucu?.(sonuc);
     } finally {
       gonderRef.current = false;
