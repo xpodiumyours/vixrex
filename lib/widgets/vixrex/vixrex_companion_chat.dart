@@ -84,8 +84,6 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
   void initState() {
     super.initState();
     _bootstrap();
-    // Faz 2/3: kalıcı hesaplarda Next.js sahip paneli ile çift yönlü senkron
-    // RLS nedeniyle Realtime postgres_changes dinlenemez, 15sn RPC poll daha güvenilir
     _pollTimer = Timer.periodic(const Duration(seconds: 15), (_) => _poll());
   }
 
@@ -157,7 +155,6 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
 
   Future<void> _bootstrap() async {
     final scope = _historyScope;
-
     await _featureFlags.loadFlags();
     final smartEngineEnabled = _featureFlags.isSmartEngineStorefrontEnabled;
 
@@ -357,7 +354,8 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
         final parts = <String>[
           if (saved > 0) '$saved değişiklik kaydedildi.',
           if (pending > 0) '$pending değişiklik henüz buluta kaydedilmedi.',
-          if (unresolved > 0) '$unresolved değişiklik güvenlik için tamamlanmadı.',
+          if (unresolved > 0)
+            '$unresolved değişiklik güvenlik için tamamlanmadı.',
         ];
         return ChatMessage.bot(parts.join(' '));
       case FlutterSmartEngineCommandStatus.failed:
@@ -432,7 +430,9 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
     final fieldKey = _legacyFieldKey(field);
     final execute = widget.onExecuteSmartEngine;
     if (fieldKey == null || execute == null) {
-      _appendBotAck('Bu değişikliği güvenli sahiplik oturumu olmadan kaydetmedim.');
+      _appendBotAck(
+        'Bu değişikliği güvenli sahiplik oturumu olmadan kaydetmedim.',
+      );
       return;
     }
     final result = await execute([
@@ -454,7 +454,7 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
           (f) => f.name == fieldName,
           orElse: () => VixRexNluField.storeName,
         );
-        void _executeLegacyNluConfirm(field, value);
+        unawaited(_executeLegacyNluConfirm(field, value));
       }
       return;
     }
