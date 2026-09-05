@@ -8,6 +8,9 @@ on:
       - "public_web/src/lib/addressValidator.ts"
       - "public_web/src/lib/turkeyCities.ts"
       - "public_web/src/lib/turkeyPlaceMatcher.ts"
+      - "public_web/src/lib/vixrexDecisionContract.ts"
+      - "public_web/src/lib/vixrexNluPipeline.ts"
+      - "public_web/src/lib/workingHours.ts"
       - "public_web/src/lib/smartEngineCommandClient.ts"
       - "public_web/src/lib/ownerActionLifecycle.ts"
       - "public_web/src/app/api/owner-draft/route.ts"
@@ -23,6 +26,8 @@ on:
       - "public_web/src/app/v/[slug]/hooks/useFieldSelection.ts"
       - "public_web/src/app/v/[slug]/hooks/useFieldRestore.ts"
       - "public_web/tests/vixrex-validator-parity.test.ts"
+      - "public_web/tests/vixrex-decision-contract.test.ts"
+      - "public_web/tests/working-hours-overnight.test.ts"
       - "public_web/tests/server-field-contract-generator.test.ts"
       - "public_web/tests/smart-engine-authoritative-routes.test.ts"
       - "public_web/tests/smart-engine-command-client.test.ts"
@@ -37,7 +42,9 @@ on:
       - "tool/server_field_contract_uret.ts"
       - "lib/config/vitrin_alanlari.g.dart"
       - "lib/config/turkey_cities_config.dart"
+      - "lib/services/vixrex_nlu/vixrex_decision_contract.dart"
       - "lib/services/vixrex_nlu/vixrex_field_validator.dart"
+      - "lib/services/vixrex_nlu/vixrex_nlu_pipeline.dart"
       - "lib/services/store_location_fetch_service.dart"
       - "lib/services/image_optimization_service.dart"
       - "lib/utils/address_validator.dart"
@@ -47,6 +54,7 @@ on:
       - "lib/screens/vixrex_screen.dart"
       - "lib/widgets/vixrex/vixrex_companion_chat.dart"
       - "test/vixrex_validator_parity_test.dart"
+      - "test/vixrex_working_hours_special_flow_test.dart"
       - "test/store_location_fetch_service_test.dart"
       - "test/image_optimization_service_test.dart"
       - "test/smart_engine_working_draft_adapter_contract_test.dart"
@@ -58,6 +66,7 @@ on:
       - "supabase/migrations/20260905114549_authoritative_smart_engine_core.sql"
       - "supabase/migrations/20260905154433_smart_engine_location_bundle.sql"
       - "supabase/migrations/20260905155137_harden_location_bundle_acl.sql"
+      - "supabase/migrations/20260905161400_tighten_storefront_url_anchor_scope.sql"
       - ".github/workflows/smart-engine-validator.yml"
 
 concurrency:
@@ -100,6 +109,8 @@ jobs:
         run: >-
           npx vitest run
           tests/vixrex-validator-parity.test.ts
+          tests/vixrex-decision-contract.test.ts
+          tests/working-hours-overnight.test.ts
           tests/smart-engine-authoritative-routes.test.ts
           tests/smart-engine-command-client.test.ts
           tests/smart-engine-draft-version-context.test.ts
@@ -135,7 +146,9 @@ jobs:
           dart analyze
           lib/config/vitrin_alanlari.g.dart
           lib/config/turkey_cities_config.dart
+          lib/services/vixrex_nlu/vixrex_decision_contract.dart
           lib/services/vixrex_nlu/vixrex_field_validator.dart
+          lib/services/vixrex_nlu/vixrex_nlu_pipeline.dart
           lib/services/store_location_fetch_service.dart
           lib/services/image_optimization_service.dart
           lib/services/working_draft/working_draft_port.dart
@@ -149,6 +162,7 @@ jobs:
           lib/screens/vixrex_screen.dart
           lib/widgets/vixrex/vixrex_companion_chat.dart
           test/vixrex_validator_parity_test.dart
+          test/vixrex_working_hours_special_flow_test.dart
           test/store_location_fetch_service_test.dart
           test/image_optimization_service_test.dart
           test/smart_engine_working_draft_adapter_contract_test.dart
@@ -159,6 +173,7 @@ jobs:
         run: >-
           flutter test
           test/vixrex_validator_parity_test.dart
+          test/vixrex_working_hours_special_flow_test.dart
           test/store_location_fetch_service_test.dart
           test/image_optimization_service_test.dart
           test/smart_engine_working_draft_adapter_contract_test.dart
@@ -193,6 +208,7 @@ jobs:
           test/smart_engine_working_draft_orchestrator_test.dart
           test/smart_engine_flutter_owner_lifecycle_contract_test.dart
           test/vixrex_validator_parity_test.dart
+          test/vixrex_working_hours_special_flow_test.dart
 
   validator-schema-drift:
     name: Validator — canonical schema drift
