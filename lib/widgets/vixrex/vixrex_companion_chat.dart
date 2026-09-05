@@ -11,6 +11,7 @@ import 'package:vixrex/services/vixrex_guidance_service.dart';
 import 'package:vixrex/services/vixrex_profile_snapshot.dart';
 import 'package:vixrex/services/vixrex_nlu/vixrex_field_validator.dart';
 import 'package:vixrex/services/vixrex_nlu/vixrex_nlu_pipeline.dart';
+import 'package:vixrex/services/working_draft/flutter_smart_engine_owner_executor.dart';
 import 'package:vixrex/services/working_draft/smart_engine_working_draft_orchestrator.dart';
 import 'package:vixrex/widgets/chat/chat_bubble.dart';
 import 'package:vixrex/widgets/chat/chat_composer.dart';
@@ -20,11 +21,15 @@ import 'package:vixrex/widgets/vixrex_quick_replies.dart';
 
 const String _nluConfirmPrefix = 'nlu_confirm:';
 const String _nluCancelPayload = 'nlu_cancel';
+const String _smartEngineUndoPrefix = 'smart_engine_undo:';
 
 typedef FlutterSmartEngineExecute =
     Future<FlutterSmartEngineCommandResult> Function(
       List<FlutterSmartEngineAction> actions,
     );
+
+typedef FlutterSmartEngineUndo =
+    Future<FlutterSmartEngineUndoExecutionResult> Function(String commandId);
 
 /// Uygulama içi companion sohbeti.
 /// Motor: mevcut [ChatbotService] + [VixRexGuidanceService] (config üzerinden).
@@ -47,6 +52,7 @@ class VixRexCompanionChat extends StatefulWidget {
   final void Function(String anahtar, Object? deger)? onUpdateField;
 
   final FlutterSmartEngineExecute? onExecuteSmartEngine;
+  final FlutterSmartEngineUndo? onUndoSmartEngine;
   final FocusNode inputFocusNode;
 
   const VixRexCompanionChat({
@@ -60,6 +66,7 @@ class VixRexCompanionChat extends StatefulWidget {
     required this.onSaveField,
     this.onUpdateField,
     this.onExecuteSmartEngine,
+    this.onUndoSmartEngine,
     required this.inputFocusNode,
   });
 
@@ -334,6 +341,21 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
     });
   }
 
+  List<QuickReply> _undoReplies(FlutterSmartEngineCommandResult execution) {
+    if (widget.onUndoSmartEngine == null ||
+        execution.commandId.isEmpty ||
+        execution.succeeded.isEmpty ||
+        execution.queuedOffline.isNotEmpty) {
+      return const [];
+    }
+    return [
+      QuickReply(
+        label: 'Geri al',
+        payload: '$_smartEngineUndoPrefix${execution.commandId}',
+      ),
+    ];
+  }
+
   ChatMessage _executionMessage(
     FlutterSmartEngineCommandResult execution,
     ChatMessage decisionMessage,
@@ -342,7 +364,10 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
       case FlutterSmartEngineCommandStatus.noOp:
         return decisionMessage;
       case FlutterSmartEngineCommandStatus.succeeded:
-        return ChatMessage.bot('Kaydedildi ✅ ${decisionMessage.text}');
+        return ChatMessage.bot(
+          'Kaydedildi ✅ ${decisionMessage.text}',
+          quickReplies: _undoReplies(execution),
+        );
       case FlutterSmartEngineCommandStatus.queuedOffline:
         return ChatMessage.bot(
           'Değişiklik sıraya alındı; henüz buluta kaydedilmedi.',
@@ -357,7 +382,10 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
           if (unresolved > 0)
             '$unresolved değişiklik güvenlik için tamamlanmadı.',
         ];
-        return ChatMessage.bot(parts.join(' '));
+        return ChatMessage.bot(
+          parts.join(' '),
+          quickReplies: _undoReplies(execution),
+        );
       case FlutterSmartEngineCommandStatus.failed:
         return ChatMessage.bot(_executionFailureMessage(execution));
     }
@@ -382,6 +410,48 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
       default:
         return 'Değişikliği güvenle kaydedemedim. Güncel hâli kontrol edip tekrar dene.';
     }
+  }
+
+  String _undoFailureMessage(FlutterSmartEngineUndoExecutionResult result) {
+    switch (result.errorCode) {
+      case 'UNDO_CONFLICT':
+        return 'Vitrin bu işlemden sonra değişti. Güvenlik için geri almadım.';
+      case 'UNDO_COMMAND_NOT_FOUND':
+        return 'Geri alınacak işlem kaydı bulunamadı.';
+      case 'OWNER_AUTHORIZATION_REQUIRED':
+      case 'INVALID_SESSION_TOKEN':
+        return 'Bu geri alma işlemi için sahiplik doğrulanamadı.';
+      case 'SMART_ENGINE_DISABLED':
+        return 'Vixrex Akıllı Motor kapalı olduğu için geri alma yapılmadı.';
+      case 'NETWORK_ERROR':
+      case 'NO_CLIENT':
+        return 'Bağlantı kurulamadı; geri alma yapılmadı.';
+      default:
+        return 'Değişikliği güvenle geri alamadım.';
+    }
+  }
+
+  Future<void> _executeSmartEngineUndo(String commandId) async {
+    final undo = widget.onUndoSmartEngine;
+    if (undo == null || commandId.trim().isEmpty || _typing) return;
+
+    setState(() => _typing = true);
+    final result = await undo(commandId.trim());
+    if (!mounted) return;
+
+    final message =
+        result.succeeded
+            ? (result.idempotentReplay
+                ? 'Bu değişiklik zaten geri alınmış.'
+                : 'Değişiklik geri alındı.')
+            : _undoFailureMessage(result);
+
+    setState(() {
+      _typing = false;
+      _messages.add(ChatMessage.bot(message));
+    });
+    await _service.saveHistory(_messages, scope: _historyScope);
+    _scrollToEnd();
   }
 
   ChatMessage _buildNluConfirmMessage({
@@ -438,12 +508,22 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
     final result = await execute([
       FlutterSmartEngineAction(fieldKey: fieldKey, value: value),
     ]);
-    _appendBotAck(
-      _executionMessage(result, ChatMessage.bot('Değişiklik hazır.')).text,
+    final message = _executionMessage(
+      result,
+      ChatMessage.bot('Değişiklik hazır.'),
     );
+    if (!mounted) return;
+    setState(() => _messages.add(message));
+    await _service.saveHistory(_messages, scope: _historyScope);
+    _scrollToEnd();
   }
 
   void _onQuickReply(QuickReply reply) {
+    if (reply.payload.startsWith(_smartEngineUndoPrefix)) {
+      final commandId = reply.payload.substring(_smartEngineUndoPrefix.length);
+      unawaited(_executeSmartEngineUndo(commandId));
+      return;
+    }
     if (reply.payload.startsWith(_nluConfirmPrefix)) {
       final rest = reply.payload.substring(_nluConfirmPrefix.length);
       final sepIndex = rest.indexOf(':');
