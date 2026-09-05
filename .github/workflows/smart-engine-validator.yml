@@ -1,0 +1,144 @@
+name: Akıllı Motor — validator parity doğrulama
+
+on:
+  pull_request:
+    paths:
+      - "public_web/src/lib/vitrinFieldSchema.ts"
+      - "public_web/src/lib/vitrinFieldValidation.ts"
+      - "public_web/src/lib/addressValidator.ts"
+      - "public_web/tests/vixrex-validator-parity.test.ts"
+      - "shared/vitrin_alanlari.json"
+      - "shared/vixrex_validator_parity_fixtures.json"
+      - "tool/sema_disa_aktar.ts"
+      - "tool/alan_semasi_uret.dart"
+      - "lib/config/vitrin_alanlari.g.dart"
+      - "lib/services/vixrex_nlu/vixrex_field_validator.dart"
+      - "lib/utils/address_validator.dart"
+      - "test/vixrex_validator_parity_test.dart"
+      - ".github/workflows/smart-engine-validator.yml"
+
+concurrency:
+  group: smart-engine-validator-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  FLUTTER_VERSION: "3.44.4"
+
+jobs:
+  validator-next:
+    name: Validator — Next tip + parity
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: public_web
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: public_web/package-lock.json
+
+      - name: Bağımlılıklar
+        run: npm ci
+
+      - name: Tip kontrolü
+        run: npx tsc --noEmit
+
+      - name: Validator parity + mevcut NLU regresyonları
+        run: >-
+          npx vitest run
+          tests/vixrex-validator-parity.test.ts
+          tests/vixrex-niyet-faz1.test.ts
+          tests/vixrex-niyet-faz2.test.ts
+          tests/vixrex-niyet-faz3.test.ts
+          tests/address-validator-parity.test.ts
+
+  validator-flutter:
+    name: Validator — Flutter analiz + parity
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Bağımlılıklar
+        run: flutter pub get
+
+      - name: İlgili dosyaları analiz et
+        run: >-
+          dart analyze
+          lib/config/vitrin_alanlari.g.dart
+          lib/services/vixrex_nlu/vixrex_field_validator.dart
+          test/vixrex_validator_parity_test.dart
+
+      - name: Validator parity + mevcut NLU regresyonları
+        run: >-
+          flutter test
+          test/vixrex_validator_parity_test.dart
+          test/vixrex_nlu_faz1_test.dart
+          test/vixrex_nlu_faz2_test.dart
+          test/vixrex_nlu_faz3_test.dart
+          test/address_validator_test.dart
+          --reporter expanded
+
+      - name: Yeni Dart dosyalarında format drift
+        run: |
+          dart format tool/alan_semasi_uret.dart lib/config/vitrin_alanlari.g.dart lib/services/vixrex_nlu/vixrex_field_validator.dart test/vixrex_validator_parity_test.dart
+          git diff --exit-code -- tool/alan_semasi_uret.dart lib/config/vitrin_alanlari.g.dart lib/services/vixrex_nlu/vixrex_field_validator.dart test/vixrex_validator_parity_test.dart
+
+  validator-schema-drift:
+    name: Validator — canonical schema drift
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: public_web/package-lock.json
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Next bağımlılıkları
+        working-directory: public_web
+        run: npm ci
+
+      - name: Canonical şemayı JSON'a çıkar
+        working-directory: public_web
+        run: npx tsx ../tool/sema_disa_aktar.ts
+
+      - name: Dart şemasını üret
+        run: dart run tool/alan_semasi_uret.dart
+
+      - name: Üretilen Dart şemasını biçimlendir
+        run: dart format lib/config/vitrin_alanlari.g.dart
+
+      - name: Shared JSON + Dart generated drift
+        run: git diff --exit-code -- shared/vitrin_alanlari.json lib/config/vitrin_alanlari.g.dart
