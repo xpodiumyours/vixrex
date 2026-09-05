@@ -8,9 +8,10 @@ import 'package:vixrex/utils/failure.dart';
 
 /// Yerel önbellek + kuyruk adaptörü — çevrimdışı önbellek ve kuyruk.
 ///
-/// Taslak verisi Supabase'in önbelleği; yamalar `expected_version` + `clientId`
-/// ile kuyruklanır. Bağlantı gelince sırayla gönderilir. Farklı alanlar
-/// otomatik birleşir, aynı alan çakışması kullanıcıya gösterilir (C23).
+/// Taslak verisi Supabase'in önbelleği. Normal yamalar legacy kimliğiyle,
+/// Akıllı Motor yamaları ise expectedVersion + actionId + commandId ile
+/// kuyruklanır. Reconnect'te aynı logical action aynı kimlikle tekrar edilir;
+/// 5.5 idempotency receipt duplicate mutation'ı engeller.
 class LocalQueueWorkingDraftAdapter implements WorkingDraftPort {
   LocalQueueWorkingDraftAdapter({
     SupabaseWorkingDraftAdapter? remote,
@@ -23,6 +24,7 @@ class LocalQueueWorkingDraftAdapter implements WorkingDraftPort {
 
   static const _kKuyruk = 'wd_kuyruk_v1';
   static const _kOnbellek = 'wd_onbellek_v1';
+  static const _assistantKind = 'smart_engine';
 
   SharedPreferences? _cachedPrefs;
 
@@ -72,38 +74,150 @@ class LocalQueueWorkingDraftAdapter implements WorkingDraftPort {
       clientId: clientId,
     );
     if (res.isSuccess) {
-      await _kuyruktanSil(anahtar);
+      await _legacyKuyruktanSil(anahtar);
       return res;
     }
-    // Ağ yoksa kuyruğa al, sonra aynı logical patch'i yeniden dene.
     if (_agYok(res.failure)) {
-      await _kuyrugaEkle(anahtar, deger, beklenenSurum, clientId);
-      // Queue'a güvenli yazılmış olması authoritative persistence değildir.
-      // Sahte draftVersion:-1 yerine açık queuedOffline sonucu döner.
+      await _legacyKuyrugaEkle(anahtar, deger, beklenenSurum, clientId);
       return Result.success(const WorkingDraftPatchResult.queuedOffline());
     }
+    return res;
+  }
+
+  @override
+  Future<Result<WorkingDraftAssistantPatchResult>> akilliMotorYamasiUygula({
+    String? sessionToken,
+    required String anahtar,
+    required dynamic deger,
+    required int beklenenSurum,
+    required String actionId,
+    required String commandId,
+    String? clientId,
+  }) async {
+    final res = await _remote.akilliMotorYamasiUygula(
+      sessionToken: sessionToken,
+      anahtar: anahtar,
+      deger: deger,
+      beklenenSurum: beklenenSurum,
+      actionId: actionId,
+      commandId: commandId,
+      clientId: clientId,
+    );
+
+    if (res.isSuccess) {
+      await _assistantKuyruktanSil(actionId);
+      return res;
+    }
+
+    if (_agYok(res.failure)) {
+      await _assistantKuyrugaEkle(
+        anahtar: anahtar,
+        deger: deger,
+        beklenenSurum: beklenenSurum,
+        actionId: actionId,
+        commandId: commandId,
+        clientId: clientId,
+      );
+      return Result.success(
+        WorkingDraftAssistantPatchResult.queuedOffline(
+          actionId: actionId,
+          commandId: commandId,
+          fieldKey: anahtar,
+          normalizedValue: deger,
+        ),
+      );
+    }
+
     return res;
   }
 
   bool _agYok(Failure? f) {
     if (f == null) return false;
     final m = f.message.toUpperCase();
-    return m.contains('NO_CLIENT') || m.contains('NETWORK') || m.contains('SOCKET');
+    return m.contains('NO_CLIENT') ||
+        m.contains('NETWORK') ||
+        m.contains('SOCKET') ||
+        m.contains('İNTERNET') ||
+        m.contains('INTERNET') ||
+        m.contains('BAĞLANTI');
   }
 
-  Future<void> _kuyrugaEkle(String k, dynamic v, int? vs, String? cid) async {
+  Future<void> _legacyKuyrugaEkle(
+    String k,
+    dynamic v,
+    int? vs,
+    String? cid,
+  ) async {
     final p = await _prefsAsync();
     final list = List<String>.from(p.getStringList(_kKuyruk) ?? const []);
-    list.add(jsonEncode({'k': k, 'v': v, 'vs': vs, 'cid': cid, 'ts': DateTime.now().toIso8601String()}));
+    list.add(jsonEncode({
+      'k': k,
+      'v': v,
+      'vs': vs,
+      'cid': cid,
+      'ts': DateTime.now().toIso8601String(),
+    }));
     await p.setStringList(_kKuyruk, list);
   }
 
-  Future<void> _kuyruktanSil(String k) async {
+  Future<void> _assistantKuyrugaEkle({
+    required String anahtar,
+    required dynamic deger,
+    required int beklenenSurum,
+    required String actionId,
+    required String commandId,
+    String? clientId,
+  }) async {
+    final p = await _prefsAsync();
+    final list = List<String>.from(p.getStringList(_kKuyruk) ?? const []);
+
+    // Aynı logical action response kaybı nedeniyle tekrar queue edilirse ikinci
+    // queue item üretme. Payload farklıysa server idempotency reuse ile reddeder;
+    // queue da kimliği değiştirmez.
+    final alreadyQueued = list.any((raw) {
+      try {
+        final m = Map<String, dynamic>.from(jsonDecode(raw) as Map);
+        return m['kind'] == _assistantKind && m['aid'] == actionId;
+      } catch (_) {
+        return false;
+      }
+    });
+    if (alreadyQueued) return;
+
+    list.add(jsonEncode({
+      'kind': _assistantKind,
+      'k': anahtar,
+      'v': deger,
+      'vs': beklenenSurum,
+      'cid': clientId,
+      'aid': actionId,
+      'cmd': commandId,
+      'ts': DateTime.now().toIso8601String(),
+    }));
+    await p.setStringList(_kKuyruk, list);
+  }
+
+  Future<void> _legacyKuyruktanSil(String k) async {
     final p = await _prefsAsync();
     final list = List<String>.from(p.getStringList(_kKuyruk) ?? const []);
     list.removeWhere((e) {
       try {
-        return (jsonDecode(e) as Map)['k'] == k;
+        final m = Map<String, dynamic>.from(jsonDecode(e) as Map);
+        return m['kind'] != _assistantKind && m['k'] == k;
+      } catch (_) {
+        return false;
+      }
+    });
+    await p.setStringList(_kKuyruk, list);
+  }
+
+  Future<void> _assistantKuyruktanSil(String actionId) async {
+    final p = await _prefsAsync();
+    final list = List<String>.from(p.getStringList(_kKuyruk) ?? const []);
+    list.removeWhere((e) {
+      try {
+        final m = Map<String, dynamic>.from(jsonDecode(e) as Map);
+        return m['kind'] == _assistantKind && m['aid'] == actionId;
       } catch (_) {
         return false;
       }
@@ -112,6 +226,8 @@ class LocalQueueWorkingDraftAdapter implements WorkingDraftPort {
   }
 
   /// Kuyruktaki yamaları sırayla gönder — bağlantı gelince çağrılır.
+  /// Assistant action aynı actionId/commandId ile replay edilir; yeni kimlik
+  /// üretilmez. Gerçek hata/conflict sonrası zincir durur.
   Future<void> kuyruguBosalt({required String sessionToken}) async {
     final p = await _prefsAsync();
     final list = List<String>.from(p.getStringList(_kKuyruk) ?? const []);
@@ -122,6 +238,26 @@ class LocalQueueWorkingDraftAdapter implements WorkingDraftPort {
       } catch (_) {
         continue;
       }
+
+      if (m['kind'] == _assistantKind) {
+        final r = await _remote.akilliMotorYamasiUygula(
+          sessionToken: sessionToken.trim().isEmpty ? null : sessionToken,
+          anahtar: m['k'] as String,
+          deger: m['v'],
+          beklenenSurum: (m['vs'] as num).toInt(),
+          actionId: m['aid'] as String,
+          commandId: m['cmd'] as String,
+          clientId: m['cid'] as String?,
+        );
+        if (r.isSuccess && r.data?.succeeded == true) {
+          list.remove(raw);
+          await p.setStringList(_kKuyruk, List<String>.from(list));
+          continue;
+        }
+        if (!_agYok(r.failure)) break;
+        continue;
+      }
+
       final r = await _remote.yamaUygula(
         sessionToken: sessionToken,
         anahtar: m['k'] as String,
@@ -133,7 +269,7 @@ class LocalQueueWorkingDraftAdapter implements WorkingDraftPort {
         list.remove(raw);
         await p.setStringList(_kKuyruk, List<String>.from(list));
       } else if (!_agYok(r.failure)) {
-        break; // Gerçek hata — dur, kullanıcı çözecek (C23).
+        break;
       }
     }
   }
