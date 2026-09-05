@@ -17,6 +17,7 @@ on:
       - "public_web/src/app/v/[slug]/components/FieldInputArea.tsx"
       - "public_web/src/app/v/[slug]/ownerStorefrontPolish.css"
       - "public_web/src/app/v/[slug]/hooks/useOwnerActions.ts"
+      - "public_web/src/app/v/[slug]/hooks/useFieldSelection.ts"
       - "public_web/src/app/v/[slug]/hooks/useFieldRestore.ts"
       - "public_web/tests/vixrex-validator-parity.test.ts"
       - "public_web/tests/server-field-contract-generator.test.ts"
