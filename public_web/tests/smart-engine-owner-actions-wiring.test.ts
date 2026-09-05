@@ -11,6 +11,10 @@ const panelSource = readFileSync(
   resolve(ROOT, "src/app/v/[slug]/OwnerAssistantPanel.tsx"),
   "utf8",
 );
+const fieldInputSource = readFileSync(
+  resolve(ROOT, "src/app/v/[slug]/components/FieldInputArea.tsx"),
+  "utf8",
+);
 
 function between(start: string, end: string): string {
   const from = source.indexOf(start);
@@ -83,5 +87,27 @@ describe("useOwnerActions authoritative smart-engine wiring", () => {
   it("landing intent bridge aynı server-loaded draft version context'ini bonus command'a verir", () => {
     expect(panelSource).toContain('useOwnerDraftVersion();');
     expect(panelSource).toContain("draftVersion,\n          setDraftVersion,");
+  });
+
+  it("GPS düğmesi 5 ayrı field write yerine tek location-bundle route'una gider", () => {
+    expect(fieldInputSource).toContain('fetch("/api/owner-location-bundle"');
+    expect(fieldInputSource).toContain("expectedDraftVersion: draftVersion");
+    expect(fieldInputSource).toContain("setDraftVersion(body.taslakSurumu!)");
+    expect(fieldInputSource).toContain("commandId = crypto.randomUUID()");
+    expect(fieldInputSource).not.toContain("onClick={onGpsKonumAl}");
+    expect(fieldInputSource).not.toContain('fetch("/api/owner-draft"');
+    expect(fieldInputSource).not.toContain("Promise.all");
+  });
+
+  it("GPS success yalnız authoritative response sonrası lifecycle success olur", () => {
+    const fetchIndex = fieldInputSource.indexOf('fetch("/api/owner-location-bundle"');
+    const responseCheckIndex = fieldInputSource.indexOf("!response.ok || !body?.tamam", fetchIndex);
+    const versionIndex = fieldInputSource.indexOf("setDraftVersion(body.taslakSurumu!)", responseCheckIndex);
+    const successIndex = fieldInputSource.indexOf('status: "succeeded"', versionIndex);
+
+    expect(fetchIndex).toBeGreaterThanOrEqual(0);
+    expect(responseCheckIndex).toBeGreaterThan(fetchIndex);
+    expect(versionIndex).toBeGreaterThan(responseCheckIndex);
+    expect(successIndex).toBeGreaterThan(versionIndex);
   });
 });
