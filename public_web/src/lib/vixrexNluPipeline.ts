@@ -2,14 +2,36 @@
 
 import { supabase } from "./supabase";
 import { VIXREX_NIYET_SOZLUGU, type VixrexNiyetAlan } from "./vixrexNiyetSozlugu";
-import { resolveVixrexIntent, resolveVixrexIntentsAll } from "./vixrexIntentResolver";
+import {
+  resolveVixrexIntent,
+  resolveVixrexIntentMatches,
+  type VixrexIntentMatch,
+} from "./vixrexIntentResolver";
 import { extractVixrexValue } from "./vixrexValueExtractor";
 import { validateField } from "./vitrinFieldValidation";
 import { vixrexNormalizeDartParity } from "./vixrexNormalizer";
+import {
+  createValidatedAction,
+  type VixrexDecisionKind,
+  type VixrexValidatedAction,
+} from "./vixrexDecisionContract";
 
-export type VixrexPipelineOutcome = "handled" | "needsClarification" | "notUnderstood" | "needsSpecialFlow" | "blockedLegal";
+export type VixrexPipelineOutcome =
+  | "handled"
+  | "needsClarification"
+  | "notUnderstood"
+  | "needsSpecialFlow"
+  | "blockedLegal";
 
 export interface VixrexPipelineResult {
+  /** Canonical 5.3 decision contract. */
+  decision: VixrexDecisionKind;
+  actions: VixrexValidatedAction[];
+
+  /**
+   * Geriye uyum alanı. Aktif çağıranlar canonical `decision/actions` alanına
+   * geçirildikçe kaldırılabilir; decision engine artık persistence yapmaz.
+   */
   outcome: VixrexPipelineOutcome;
   message: string;
   anahtar?: string;
@@ -34,19 +56,27 @@ async function loadPending(): Promise<{ anahtar: string; etiket: string; tip: st
     const { data, error } = await supabase.rpc("get_assistant_pending_slot");
     if (error || !data) return null;
     return data as { anahtar: string; etiket: string; tip: string };
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
+
 async function savePending(a: VixrexNiyetAlan): Promise<void> {
   try {
     await supabase.rpc("set_assistant_pending_slot", {
       p_slot: { anahtar: a.anahtar, etiket: a.etiket, tip: a.tip },
     });
-  } catch { /* sessizce yut — bellek modu korunur */ }
+  } catch {
+    // sessizce yut — bellek modu korunur
+  }
 }
+
 async function clearPending(): Promise<void> {
   try {
     await supabase.rpc("set_assistant_pending_slot", { p_slot: null });
-  } catch { /* sessizce yut */ }
+  } catch {
+    // sessizce yut
+  }
 }
 
 function needsSpecialFlow(anahtar: string): boolean {
@@ -54,17 +84,36 @@ function needsSpecialFlow(anahtar: string): boolean {
 }
 
 function clarifyAsk(alan: VixrexNiyetAlan): string {
-  // Faz 1: ipucu varsa sor, yoksa genel.
-  // vitrinFieldSchema’daki ipucu’nu al – burada basitleştir.
   return `${alan.etiket} için ne yazayım?`;
 }
-function clarifySuccess(alan: VixrexNiyetAlan, deger: unknown): string {
-  return `Kaydettim: ${alan.etiket} → ${String(deger)}`;
+
+function validatedMessage(count: number): string {
+  return count > 1
+    ? "Değişiklikler doğrulandı; kayıt için hazır."
+    : "Değişiklik doğrulandı; kayıt için hazır.";
+}
+
+function uniqueFieldMatches(input: string): VixrexIntentMatch[] {
+  const seen = new Set<string>();
+  const unique: VixrexIntentMatch[] = [];
+  for (const match of resolveVixrexIntentMatches(input)) {
+    if (seen.has(match.alan.anahtar)) continue;
+    seen.add(match.alan.anahtar);
+    unique.push(match);
+  }
+  return unique;
 }
 
 export async function handleVixrexNluMessage(input: string): Promise<VixrexPipelineResult> {
   const trimmed = input.trim();
-  if (!trimmed) return { outcome: "notUnderstood", message: "Hangi alanı değiştirmek istediğini netleştirebilir misin? Örn: “İşletme adını ... yap”" };
+  if (!trimmed) {
+    return {
+      decision: "not_understood",
+      actions: [],
+      outcome: "notUnderstood",
+      message: "Hangi alanı değiştirmek istediğini netleştirebilir misin? Örn: “İşletme adını ... yap”",
+    };
+  }
 
   const norm = vixrexNormalizeDartParity(trimmed);
   const pending = await loadPending();
@@ -72,8 +121,20 @@ export async function handleVixrexNluMessage(input: string): Promise<VixrexPipel
   // Evet/hayır pending ile – Faz 1 dar: sadece temizle.
   if (pending && (norm === "evet" || norm === "hayır" || norm === "hayir" || norm === "iptal")) {
     await clearPending();
-    if (norm === "evet") return { outcome: "needsClarification", message: "Hangi alanı değiştirmek istediğini netleştirebilir misin?" };
-    return { outcome: "needsClarification", message: "Tamam, vazgeçtim. Başka nasıl yardımcı olabilirim?" };
+    if (norm === "evet") {
+      return {
+        decision: "needs_clarification",
+        actions: [],
+        outcome: "needsClarification",
+        message: "Hangi alanı değiştirmek istediğini netleştirebilir misin?",
+      };
+    }
+    return {
+      decision: "needs_clarification",
+      actions: [],
+      outcome: "needsClarification",
+      message: "Tamam, vazgeçtim. Başka nasıl yardımcı olabilirim?",
+    };
   }
 
   // Pending varken yeni alan yoksa → ham mesajı pending alanın değeri say.
@@ -82,59 +143,159 @@ export async function handleVixrexNluMessage(input: string): Promise<VixrexPipel
     if (alan) {
       const resolved = resolveVixrexIntent(trimmed);
       if (!resolved) {
-        if (needsSpecialFlow(alan.anahtar)) return { outcome: "needsSpecialFlow", message: clarifyAsk(alan), anahtar: alan.anahtar };
-        const v = validateField(alan.anahtar, trimmed);
-        if (!v.ok) return { outcome: "needsClarification", message: (v as { hata: string }).hata, anahtar: alan.anahtar };
-        await clearPending();
-        {
-          const kesin = (v as { deger: unknown }).deger ?? trimmed;
-          return { outcome: "handled", message: clarifySuccess(alan, kesin), anahtar: alan.anahtar, deger: kesin, tumu: [{ anahtar: alan.anahtar, kolon: alan.kolon, deger: kesin }] };
+        if (needsSpecialFlow(alan.anahtar)) {
+          return {
+            decision: "needs_special_flow",
+            actions: [],
+            outcome: "needsSpecialFlow",
+            message: clarifyAsk(alan),
+            anahtar: alan.anahtar,
+          };
         }
+        const v = validateField(alan.anahtar, trimmed);
+        if (!v.ok) {
+          return {
+            decision: "needs_clarification",
+            actions: [],
+            outcome: "needsClarification",
+            message: v.hata,
+            anahtar: alan.anahtar,
+          };
+        }
+        await clearPending();
+        const kesin = v.deger;
+        const action = createValidatedAction({
+          fieldKey: alan.anahtar,
+          normalizedValue: kesin,
+          matchClass: "pending_slot",
+        });
+        return {
+          decision: "validated_action",
+          actions: [action],
+          outcome: "handled",
+          message: validatedMessage(1),
+          anahtar: alan.anahtar,
+          deger: kesin,
+          tumu: [{ anahtar: alan.anahtar, kolon: alan.kolon, deger: kesin }],
+        };
       }
     }
   }
 
-  const all = resolveVixrexIntentsAll(trimmed);
-  if (all.length === 0) return { outcome: "notUnderstood", message: "Hangi alanı değiştirmek istediğini netleştirebilir misin? Örn: “İşletme adını ... yap”" };
-  if (all.length > 1) {
-    const ok: Array<{ alan: VixrexNiyetAlan; deger: unknown }> = [];
-    const hatalar: string[] = [];
-    for (const a of all) {
-      if (needsSpecialFlow(a.anahtar)) { hatalar.push(`${a.etiket} için panelden devam et`); continue; }
-      const ham = extractVixrexValue(trimmed, a);
-      if (!ham) { hatalar.push(`${a.etiket} için değer bulunamadı`); continue; }
-      const v = validateField(a.anahtar, ham);
-      if (!v.ok) { hatalar.push((v as { hata: string }).hata); continue; }
-      ok.push({ alan: a, deger: (v as { deger: unknown }).deger ?? ham });
-    }
-    if (ok.length === 0) return { outcome: "needsClarification", message: hatalar.join("\n") || "Hangi alanı değiştirmek istediğini netleştirebilir misin?" };
-    await clearPending();
-    const metin = ok.map(({ alan, deger }) => clarifySuccess(alan, deger)).join("\n");
+  const matches = uniqueFieldMatches(trimmed);
+  if (matches.length === 0) {
     return {
+      decision: "not_understood",
+      actions: [],
+      outcome: "notUnderstood",
+      message: "Hangi alanı değiştirmek istediğini netleştirebilir misin? Örn: “İşletme adını ... yap”",
+    };
+  }
+
+  if (matches.length > 1) {
+    const ok: Array<{
+      alan: VixrexNiyetAlan;
+      deger: string | number | boolean | null;
+      match: VixrexIntentMatch;
+    }> = [];
+    const hatalar: string[] = [];
+
+    for (const match of matches) {
+      const a = match.alan;
+      if (needsSpecialFlow(a.anahtar)) {
+        hatalar.push(`${a.etiket} için panelden devam et`);
+        continue;
+      }
+      const ham = extractVixrexValue(trimmed, a);
+      if (!ham) {
+        hatalar.push(`${a.etiket} için değer bulunamadı`);
+        continue;
+      }
+      const v = validateField(a.anahtar, ham);
+      if (!v.ok) {
+        hatalar.push(v.hata);
+        continue;
+      }
+      ok.push({ alan: a, deger: v.deger, match });
+    }
+
+    if (ok.length === 0) {
+      return {
+        decision: "needs_clarification",
+        actions: [],
+        outcome: "needsClarification",
+        message: hatalar.join("\n") || "Hangi alanı değiştirmek istediğini netleştirebilir misin?",
+      };
+    }
+
+    await clearPending();
+    const actions = ok.map(({ alan, deger, match }) =>
+      createValidatedAction({
+        fieldKey: alan.anahtar,
+        normalizedValue: deger,
+        matchClass: match.matchClass,
+      }),
+    );
+
+    return {
+      decision: actions.length > 1 ? "validated_action_group" : "validated_action",
+      actions,
       outcome: "handled",
-      message: metin,
+      message: validatedMessage(actions.length),
       anahtar: ok[0].alan.anahtar,
       deger: ok[0].deger,
       tumu: ok.map(({ alan, deger }) => ({ anahtar: alan.anahtar, kolon: alan.kolon, deger })),
     };
   }
-  const alan = all[0];
+
+  const match = matches[0];
+  const alan = match.alan;
   if (needsSpecialFlow(alan.anahtar)) {
     await savePending(alan);
-    return { outcome: "needsSpecialFlow", message: clarifyAsk(alan), anahtar: alan.anahtar };
+    return {
+      decision: "needs_special_flow",
+      actions: [],
+      outcome: "needsSpecialFlow",
+      message: clarifyAsk(alan),
+      anahtar: alan.anahtar,
+    };
   }
+
   const ham = extractVixrexValue(trimmed, alan);
   if (!ham) {
     await savePending(alan);
-    return { outcome: "needsClarification", message: clarifyAsk(alan), anahtar: alan.anahtar };
+    return {
+      decision: "needs_clarification",
+      actions: [],
+      outcome: "needsClarification",
+      message: clarifyAsk(alan),
+      anahtar: alan.anahtar,
+    };
   }
+
   const v = validateField(alan.anahtar, ham);
-  if (!v.ok) return { outcome: "needsClarification", message: (v as { hata: string }).hata, anahtar: alan.anahtar };
+  if (!v.ok) {
+    return {
+      decision: "needs_clarification",
+      actions: [],
+      outcome: "needsClarification",
+      message: v.hata,
+      anahtar: alan.anahtar,
+    };
+  }
+
   await clearPending();
-  const kesinDeger = (v as { deger: unknown }).deger ?? ham;
+  const kesinDeger = v.deger;
+  const action = createValidatedAction({
+    fieldKey: alan.anahtar,
+    normalizedValue: kesinDeger,
+    matchClass: match.matchClass,
+  });
   return {
+    decision: "validated_action",
+    actions: [action],
     outcome: "handled",
-    message: clarifySuccess(alan, kesinDeger),
+    message: validatedMessage(1),
     anahtar: alan.anahtar,
     deger: kesinDeger,
     tumu: [{ anahtar: alan.anahtar, kolon: alan.kolon, deger: kesinDeger }],
