@@ -1,5 +1,7 @@
+import { useRef, useState } from "react";
 import type { VitrinField } from "@/lib/vitrinFieldSchema";
 import { alanOnemi } from "@/lib/vitrinReadiness";
+import type { OwnerActionLifecycleResult } from "@/lib/ownerActionLifecycle";
 import { ImagePickerPanel } from "./ImagePickerPanel";
 import { turkeyProvinces, getDistrictsForProvince } from "@/lib/turkeyCities";
 import type { HazirGorsel } from "../hooks/useOwnerActions";
@@ -15,13 +17,9 @@ interface Props {
   seciliAlan: VitrinField | null;
   giris: string;
   girisRef: React.RefObject<HTMLTextAreaElement | null>;
-  /** owner draft'tan okunan mevcut il değeri — ilçe dropdown'unun bağımlısı */
   mevcutIl?: string;
-  /** owner draft'tan okunan mevcut ilçe değeri */
   mevcutIlce?: string;
-  /**İl değiştiğinde çağrılır — ilçe dropdown'unu temizler */
   onIlDegisti?: (il: string) => void;
-  /** İlçe değiştiğinde çağrılır */
   onIlceDegisti?: (ilce: string) => void;
   kaydediliyor: boolean;
   geriAliniyor: boolean;
@@ -31,13 +29,11 @@ interface Props {
   gorselYukle: (dosya: File) => Promise<void>;
   hazirGorselleriAc: () => Promise<void>;
   hazirGorselSec: (url: string) => Promise<void>;
-  gonder: () => Promise<void>;
+  gonder: () => Promise<OwnerActionLifecycleResult>;
+  onGonderSonucu?: (sonuc: OwnerActionLifecycleResult) => void;
   alanAtla: () => Promise<void>;
   canliyaDondur: () => Promise<void>;
-  /** Kalite alanında "Sonra" — sırayı ilerletir, `atlanmislar`'a YAZMAZ
-   * (ADR 0002: "boş geç" yalnız isteğe bağlıda). Yoksa düğme çizilmez. */
   sonrayaBirak?: () => void;
-  /** GPS: adres/enlem/boylam için konum al */
   onGpsKonumAl?: () => void;
   gpsLoading?: boolean;
 }
@@ -57,6 +53,7 @@ export function FieldInputArea({
   hazirGorselleriAc,
   hazirGorselSec,
   gonder,
+  onGonderSonucu,
   alanAtla,
   canliyaDondur,
   onIlDegisti,
@@ -65,41 +62,39 @@ export function FieldInputArea({
   onGpsKonumAl,
   gpsLoading = false,
 }: Props) {
-  // "Boş geç" yalnız isteğe bağlı alanlarda çıkar — temel/kalite alanlar
-  // rehberli akışta atlanamaz (ADR 0002).
   const istegeBagliMi = seciliAlan ? alanOnemi(seciliAlan) === "istege-bagli" : false;
-
   const kaliteMi = seciliAlan ? alanOnemi(seciliAlan) === "kalite" : false;
+  const gonderRef = useRef(false);
+  const [gonderKilitli, setGonderKilitli] = useState(false);
+  const gonderEngelli = kaydediliyor || gonderKilitli;
 
-  // Mobilde Gönder'e basıldığı anda asistan sheet'i geri çekilir; kayıt/NLU
-  // çalışırken kullanıcı vitrini görmeye devam eder. Canonical Vixrex düğmesi
-  // zaten panelin tek aç/kapat yüzeyi olduğu için ikinci bir state yolu açmıyoruz.
-  // Masaüstü davranışına dokunulmaz.
+  // Mobil ilk davranış korunur: Gönder anında sheet kapanır ve vitrin görünür.
+  // İşlem sonundaki yeniden-açma kararı CSS/mesaj tahminiyle değil, gonder()'ın
+  // açık lifecycle sonucuyla üst bileşene iletilir.
   const gonderVeVitriniGoster = async () => {
-    const mobil =
-      typeof window !== "undefined" &&
-      !window.matchMedia("(min-width: 640px)").matches;
-
-    if (!giris.trim() && seciliAlan?.tip !== "acikKapali") {
-      await gonder();
-      return;
-    }
-
-    if (mobil) {
-      document.body.classList.add("vixrex-asistan-isliyor");
-      document
-        .querySelector<HTMLButtonElement>(
-          'button[aria-label="Vixrex Asistan"][aria-expanded="true"]'
-        )
-        ?.click();
-    }
+    if (gonderRef.current) return;
+    gonderRef.current = true;
+    setGonderKilitli(true);
 
     try {
-      await gonder();
-    } finally {
-      if (mobil) {
-        document.body.classList.remove("vixrex-asistan-isliyor");
+      const mobil =
+        typeof window !== "undefined" &&
+        !window.matchMedia("(min-width: 640px)").matches;
+      const girdiVar = Boolean(giris.trim()) || seciliAlan?.tip === "acikKapali";
+
+      if (mobil && girdiVar) {
+        document
+          .querySelector<HTMLButtonElement>(
+            'button[aria-label="Vixrex Asistan"][aria-expanded="true"]'
+          )
+          ?.click();
       }
+
+      const sonuc = await gonder();
+      onGonderSonucu?.(sonuc);
+    } finally {
+      gonderRef.current = false;
+      setGonderKilitli(false);
     }
   };
 
@@ -130,9 +125,6 @@ export function FieldInputArea({
               Boş geç
             </button>
           )}
-          {/* Kalite alanında "boş geç" YOK (ADR 0002) — "Sonra" sırayı
-           * ilerletir ama atlanmislar'a YAZMAZ, bir sonraki turda yine
-           * önerilir. */}
           {kaliteMi && sonrayaBirak && (
             <button
               type="button"
@@ -161,7 +153,7 @@ export function FieldInputArea({
               className="hidden"
               onChange={(e) => {
                 const dosya = e.target.files?.[0];
-                e.target.value = ""; // aynı dosya tekrar seçilebilsin
+                e.target.value = "";
                 if (dosya) void gorselYukle(dosya);
               }}
             />
@@ -178,7 +170,6 @@ export function FieldInputArea({
           </p>
         </div>
       ) : seciliAlan?.anahtar === "il" ? (
-        /* İl dropdown — Flutter Web FormLocationInfo karşılığı */
         <div className="flex items-end gap-2">
           <select
             value={mevcutIl}
@@ -198,14 +189,13 @@ export function FieldInputArea({
           <button
             type="button"
             onClick={() => void gonderVeVitriniGoster()}
-            disabled={kaydediliyor || !mevcutIl}
+            disabled={gonderEngelli || !mevcutIl}
             className="h-12 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
           >
             {kaydediliyor ? "…" : "Gönder"}
           </button>
         </div>
       ) : seciliAlan?.anahtar === "ilce" ? (
-        /* İlçe dropdown — seçili ile göre filtrelenmiş */
         <div className="flex items-end gap-2">
           <select
             value={mevcutIlce}
@@ -225,7 +215,7 @@ export function FieldInputArea({
           <button
             type="button"
             onClick={() => void gonderVeVitriniGoster()}
-            disabled={kaydediliyor || !mevcutIlce}
+            disabled={gonderEngelli || !mevcutIlce}
             className="h-12 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
           >
             {kaydediliyor ? "…" : "Gönder"}
@@ -249,7 +239,7 @@ export function FieldInputArea({
           <button
             type="button"
             onClick={() => void gonderVeVitriniGoster()}
-            disabled={kaydediliyor || !giris}
+            disabled={gonderEngelli || !giris}
             className="h-12 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
           >
             {kaydediliyor ? "…" : "Gönder"}
@@ -275,18 +265,11 @@ export function FieldInputArea({
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
-                  if (!kaydediliyor) void gonderVeVitriniGoster();
+                  if (!gonderEngelli) void gonderVeVitriniGoster();
                 }
               }}
               rows={seciliAlan?.tip === "uzunMetin" ? 3 : 1}
-              /* Kutuya alan sınırı UYGULANMAZ: seçili alan varken bile
-               * esnaf zengin/uzun bir cümle yazabilmeli — gonder() zaten
-               * bu cümleden seçili alanın kendi değerini ayıklıyor
-               * (temizlenmisSeciliDeger) ve kalanı bonusAlanlariCikarVeKaydet
-               * ile diğer alanlara dağıtıyor (useOwnerActions.ts). Alanın
-               * kendi maxUzunluk'u, ayıklanan DEĞERE sunucuda validateField
-               * ile uygulanıyor — ham mesaja değil. */
-              disabled={kaydediliyor}
+              disabled={gonderEngelli}
               aria-label="Vixrex Asistan'a yaz"
               placeholder={
                 seciliAlan
@@ -300,10 +283,11 @@ export function FieldInputArea({
             <button
               type="button"
               onClick={() => void gonderVeVitriniGoster()}
-              disabled={kaydediliyor}
+              disabled={gonderEngelli}
+              aria-busy={kaydediliyor}
               className="h-12 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
             >
-              {kaydediliyor ? "…" : "Gönder"}
+              {kaydediliyor ? "Düzenleniyor…" : "Gönder"}
             </button>
           </div>
         </div>
