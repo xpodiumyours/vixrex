@@ -5,21 +5,31 @@ import { hazirlikRaporu, type HazirlikRaporu } from "@/lib/vitrinReadiness";
 import { useCanliVitrinSenkron } from "@/lib/canliVitrinSenkron";
 
 /**
- * Taslak verisini + authoritative draft sürümünü tutar ve Supabase Broadcast
- * üzerinden canlı güncel tutar.
+ * Taslak verisini tutar ve Supabase Broadcast üzerinden canlı güncel tutar.
  *
- * Başka oturumdan gelen değişiklikte broadcast yalnız sinyal taşır;
- * router.refresh() sonrası server `draft_data + draft_version` birlikte gelir.
- * Smart-engine optimistic concurrency bu sürümü kullanır: API kendi kendine
- * "en yeni sürümü" okuyup expectedVersion uydurmaz.
+ * Sorumluluk:
+ *   - sunucudan gelen draftData prop'u yerel kopyaya alır
+ *   - sayfa yenilenince (yayınla / bırak / başka oturumdan alan değişikliği
+ *     sinyali) draftData değişir → yerelTaslak güncellenir
+ *   - hazırlık raporunu hesaplar (doluluk %, eksik alanlar)
+ *
+ * Başka oturumdan gelen taslak değişikliği router.refresh() ile sunucudan
+ * yeniden okunur — broadcast payload'ı hiçbir zaman alan değeri taşımaz
+ * (bkz. canliVitrinSenkron.ts güvenlik notu), o yüzden local patch yoktur.
+ *
+ * draftData → yerelTaslak eşitlemesi bilinçli olarak effect'te DEĞİL, render
+ * sırasında yapılır (React'in "adjusting state when a prop changes" deseni,
+ * code-review 2026-08-10: `react-hooks/set-state-in-effect` kırmızıydı) —
+ * bir effect turu beklemeden aynı render'da güncel taslağı gösterir.
+ *
+ * Bu hook dışındaki hiçbir şey taslak state'ini doğrudan tutmaz.
  */
 export interface OwnerDraftHook {
   yerelTaslak: Record<string, unknown>;
   setAlan: (kolon: string, deger: unknown) => void;
-  draftVersion: number;
-  setDraftVersion: (version: number) => void;
   rapor: HazirlikRaporu;
-  /** "Boş geç" denen isteğe bağlı alanlar (ADR 0002, 3. alt-faz). */
+  /** "Boş geç" denen isteğe bağlı alanlar (ADR 0002, 3. alt-faz) — sunucudan
+   * gelen kalıcı listeyle başlar, yerelde `alanAtlandi` ile büyür. */
   atlanmisAlanlar: ReadonlySet<string>;
   alanAtlandi: (anahtar: string) => void;
 }
@@ -27,29 +37,27 @@ export interface OwnerDraftHook {
 export function useOwnerDraft(
   slug: string,
   draftData: Record<string, unknown>,
-  draftVersionBaslangic: number,
   atlananAlanlarBaslangic: readonly string[] = []
 ): OwnerDraftHook {
   const [yerelTaslak, setYerelTaslak] = useState<Record<string, unknown>>(draftData);
-  const [draftVersion, setDraftVersion] = useState(draftVersionBaslangic);
   const [atlanmisAlanlar, setAtlanmisAlanlar] = useState<Set<string>>(
     () => new Set(atlananAlanlarBaslangic)
   );
+  // draftData'nın son işlenen referansı — render sırasında karşılaştırmak
+  // için. Bu bir "eski değeri hatırla" state'i, ekranda gösterilmez.
   const [islenenDraftData, setIslenenDraftData] = useState(draftData);
-  const [islenenDraftVersion, setIslenenDraftVersion] = useState(draftVersionBaslangic);
 
-  // Tam sayfa yenilenince veya başka oturum draft'ı ilerletince içerik+sürüm
-  // aynı render'da birlikte tazelenir; effect ile bir tur gecikme yoktur.
-  if (
-    draftData !== islenenDraftData ||
-    draftVersionBaslangic !== islenenDraftVersion
-  ) {
+  // Tam sayfa yenilenince (yayınla, bırak, başka oturumdan taslak
+  // değişikliği) draftData prop'u yeni bir referans alır; yerelTaslak'ı
+  // effect beklemeden, aynı render'da tazele.
+  if (draftData !== islenenDraftData) {
     setIslenenDraftData(draftData);
-    setIslenenDraftVersion(draftVersionBaslangic);
     setYerelTaslak(draftData);
-    setDraftVersion(draftVersionBaslangic);
   }
 
+  // Uygulamadan yayınlanan değişiklik VEYA başka oturumdan taslak alan
+  // değişikliği → sayfa yenilenir → draftData prop'u tazelenir (yukarıdaki
+  // effect ile yerelTaslak'a yansır).
   useCanliVitrinSenkron(slug, true, true);
 
   const rapor = useMemo(
@@ -65,13 +73,5 @@ export function useOwnerDraft(
     setAtlanmisAlanlar((onceki) => new Set(onceki).add(anahtar));
   }, []);
 
-  return {
-    yerelTaslak,
-    setAlan,
-    draftVersion,
-    setDraftVersion,
-    rapor,
-    atlanmisAlanlar,
-    alanAtlandi,
-  };
+  return { yerelTaslak, setAlan, rapor, atlanmisAlanlar, alanAtlandi };
 }
