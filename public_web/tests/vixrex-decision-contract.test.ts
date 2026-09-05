@@ -37,4 +37,16 @@ describe("Vixrex 5.3 pure decision contract — Next.js", () => {
     ]);
     expect(result.message).not.toContain("Kaydettim");
   });
+
+  it("günsüz çalışma saati cümlesini generic mutation yapmaz", async () => {
+    const result = await handleVixrexNluMessage(
+      "Çalışma saatlerini 09:00-18:00 yap",
+    );
+
+    expect(result.decision).toBe("needs_special_flow");
+    expect(result.actions).toEqual([]);
+    expect(result.anahtar).toBe("calismaSaatleri");
+    expect(result.message).toContain("Hangi günler");
+    expect(result.message).not.toContain("Kaydettim");
+  });
 });
