@@ -36,6 +36,7 @@ Referanslar:
 - PostgreSQL 17 concurrency/row locking
 - OWASP API Security Top 10 2023
 - Unicode UAX #15 normalization
+- W3C WCAG 2.2 status/error guidance
 
 ### 1B — Güncel teknoloji uygunluğu ✅
 
@@ -44,13 +45,18 @@ Referanslar:
 - ✅ PostgreSQL 17 row-level locking ve transaction mekanizmaları Vixrex'in mevcut DB'siyle uyumlu.
 - ✅ Supabase 2026 Data API değişiklikleri incelendi; yeni tablolar/fonksiyonlar için explicit grant + RLS yaklaşımı korunacak.
 - ✅ Unicode normalization/case handling yalnız matching katmanında kullanılacak; kullanıcıya gösterilen metin bozulmayacak.
+- ✅ Kullanıcıya loading/success/error/netleştirme durumlarının görünür ve erişilebilir verilmesi UX LOCK kriteridir.
 
 ### 1C — Deterministik NLU araştırması 🔄
 
 - ✅ Sonlu terminoloji için rule-based phrase/token matching uygun.
 - ✅ Exact phrase + token-pattern yaklaşımı substring eşleşmeden daha güvenli.
-- ⬜ Vixrex için kesin matcher skor/öncelik kuralları LOCK edilmedi.
-- ⬜ Yazım hatası toleransı için deterministic fuzzy sınırı LOCK edilmedi.
+- ✅ Serbest substring eşleşmesi LOCK mimarisinde kullanılmayacak.
+- ✅ Türkçe ekli biçimler (`telefonumu`, `adresimi`, `kategorimi` vb.) yüzünden yalnız basit word-boundary yaklaşımı yeterli kabul edilmeyecek.
+- ✅ Kısa/generik alias'larda fuzzy matching yasak olacak.
+- ✅ Birden fazla eşit/geçerli aday varsa mutation yapılmayacak; netleştirme istenecek.
+- 🔄 Kontrollü Türkçe ek desteği ve matcher skor/öncelik kuralları kesinleştiriliyor.
+- 🔄 Yazım hatası toleransı yalnız benzersiz ve güvenli aday üretirse kullanılacak; kesin eşik henüz LOCK edilmedi.
 
 ## KATMAN 2 — Vixrex FIT 🔄
 
@@ -58,11 +64,15 @@ Referanslar:
 
 - ✅ `VIXREX_NIYET_SOZLUGU.length === 46` test ile korunuyor.
 - ✅ Her alanın anahtar / eş anlam / örnek ifade / beklenen veri tipi kontratı var.
+- ✅ Next.js `shared/vixrex_niyet_sozlugu.json` dosyasını doğrudan ortak kaynak olarak import ediyor.
+- ✅ Flutter üretilmiş sözlük dosyası da kaynak olarak aynı JSON'u işaretliyor.
+- ⚠️ Flutter üretilmiş kopyayı oluşturan otomatik generator script repoda henüz doğrulanamadı; bu nedenle niyet sözlüğü için tam otomatik tek üretim hattı şu aşamada kanıtlanmış sayılmıyor.
 - ✅ Normalize, resolver, extractor, validator ayrımları var.
 - ✅ Çok alanlı cümle için mevcut sınırlandırma düzeltmeleri var.
-- ❌ Resolver şu an normalize edilmiş `includes()` ile eşleşiyor; kelime/token sınırı yok.
-- ❌ Kısa eş anlamlar yanlış pozitif üretebilir. Örnek: telefon alanındaki `tel`, `otel` kelimesinin içinde de eşleşebilir.
-- ⬜ 46/46 için yanlış pozitif / yanlış negatif / özel akış matrisi tamamlanmadı.
+- ❌ Resolver şu an normalize edilmiş `includes()/contains()` ile eşleşiyor; kelime/token sınırı yok.
+- ❌ Kısa eş anlamlar yanlış pozitif üretebilir. Kanıt örneği: telefon alanındaki `tel`, `otel` kelimesinin içinde de eşleşebilir.
+- ❌ Flutter ve Next validator davranışı tam eşit değil: Flutter `adres` için ayrıca `AddressValidator` çalıştırıyor; Next.js aynı semantik adres kontrolünü yapmıyor.
+- ⬜ 46/46 için yanlış pozitif / yanlış negatif / özel akış / validator parity matrisi tamamlanmadı.
 
 ### 2B — Tek karar sözleşmesi 🔄
 
