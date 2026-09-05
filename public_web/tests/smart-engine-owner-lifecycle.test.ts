@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
+  OWNER_ACTION_LIFECYCLE_EVENT,
   ownerLifecycleFromCommand,
   ownerLifecycleRequiresAttention,
   ownerLifecycleStatusText,
@@ -81,10 +82,15 @@ describe("5.7 owner lifecycle sözleşmesi", () => {
     }
     expect(ownerLifecycleStatusText({ status: "no_op" })).toBe("");
   });
+
+  it("lifecycle event adı tek canonical sabittir", () => {
+    expect(OWNER_ACTION_LIFECYCLE_EVENT).toBe("vixrex:owner-action-lifecycle");
+  });
 });
 
 describe("5.7 FieldInputArea execution/accessibility wiring", () => {
   const input = read("src/app/v/[slug]/components/FieldInputArea.tsx");
+  const selection = read("src/app/v/[slug]/hooks/useFieldSelection.ts");
   const css = read("src/app/v/[slug]/ownerStorefrontPolish.css");
 
   it("duplicate submit ref + gerçek disabled guard kullanır", () => {
@@ -101,16 +107,31 @@ describe("5.7 FieldInputArea execution/accessibility wiring", () => {
     expect(input).not.toContain('classList.add("vixrex-asistan-isliyor")');
   });
 
-  it("lifecycle sonucu açık callback ve live-region üzerinden taşınır", () => {
+  it("lifecycle sonucu explicit event + live-region üzerinden taşınır", () => {
     expect(input).toContain("const sonuc = await gonder();");
+    expect(input).toContain("dispatchOwnerActionLifecycle(sonuc);");
     expect(input).toContain("onGonderSonucu?.(sonuc);");
     expect(input).toContain('role="status"');
     expect(input).toContain('aria-live="polite"');
     expect(input).toContain("ownerLifecycleStatusText(sonGonderSonucu)");
   });
 
-  it("gönder düğmeleri aria-busy taşır ve reduced-motion spinner'ı durdurur", () => {
+  it("attention lifecycle React panel-aç callback'ine bağlanır, success bağlanmaz", () => {
+    expect(selection).toContain("OWNER_ACTION_LIFECYCLE_EVENT");
+    expect(selection).toContain("ownerLifecycleRequiresAttention(result)");
+    expect(selection).toContain("onAlanSecildi?.();");
+    expect(selection).not.toContain("querySelector<HTMLButtonElement>");
+  });
+
+  it("canonical düğme executing sırasında keyboard-safe disabled + aria-busy olur", () => {
+    expect(input).toContain("canonicalButton.disabled = kaydediliyor;");
+    expect(input).toContain(
+      'canonicalButton.setAttribute("aria-busy", kaydediliyor ? "true" : "false")',
+    );
     expect(input).toContain("aria-busy={kaydediliyor}");
+  });
+
+  it("reduced-motion spinner'ı durdurur", () => {
     expect(css).toContain("@media (prefers-reduced-motion: reduce)");
     expect(css).toContain("animation: none;");
   });
