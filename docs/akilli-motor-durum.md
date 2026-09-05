@@ -58,34 +58,47 @@ KATMAN 5, **5.0–5.10 = 11 alt aşamadır**.
 - mevcut `store_working_drafts` + `audit_logs` kullanılacak ✅
 - `expectedDraftVersion`, `actionId`, `commandId` sözleşmesi ✅
 - web owner-session + permanent Flutter auth sınırı ✅
-- canonical 46 alan → server contract üretim hattı BUILD sırada
+- canonical 46 alan → generated server-contract generator ✅
+- generator için 46/46 + deterministic/privilege-free dar test ✅
 - authoritative DB mutation migration/RPC BUILD bekliyor
+- production DB değişmedi
 
 ### 5.6 — Safe Undo + Multi-action 🔄
 - preflight LOCK ✅ (`akilli-motor-5-6-safe-undo-multiaction-preflight.md`)
 - mevcut sıralı multi-action modeli korunacak ✅
 - conflict/global failure stop kuralı ✅
 - gerçek Undo = `commandId` + receipt ✅
+- command Undo atomic + conflict-safe ✅
 - manual `Canlı hâline döndür` ayrı kalacak ✅
 - runtime BUILD 5.5 receipt katmanından sonra
 
-### 5.7 — Next Owner UX lifecycle ⬜
-- real executing
-- success/error/partial/undo
-- mobile collapse/loading/storefront visible
-- accessible status
+### 5.7 — Next Owner UX lifecycle 🔄
+- preflight LOCK ✅ (`akilli-motor-5-7-next-owner-ux-preflight.md`)
+- mevcut mobile collapse/loading skeleton korunacak ✅
+- `gonder()` lifecycle result sözleşmesi ✅
+- needs-input/failed/partial mobilde paneli yeniden açacak ✅
+- success panel kapalı kalacak ✅
+- aria-busy/status/reduced-motion sınırı ✅
+- runtime BUILD 5.5/5.6 ExecutionResult sonrası
 
-### 5.8 — Flutter owner-edit adapter/lifecycle ⬜
-- canonical working draft
-- same ExecutionResult
-- async persistence result
-- `queued_offline` success değildir
+### 5.8 — Flutter owner-edit adapter/lifecycle 🔄
+- preflight LOCK ✅ (`akilli-motor-5-8-flutter-owner-lifecycle-preflight.md`)
+- onboarding local flow ayrı kalacak ✅
+- existing `WorkingDraftPort` evrilecek, yeni port yok ✅
+- `bootstrap_owner_state` içindeki mevcut draft_version Flutter modele taşınacak ✅
+- `saveLocally()` authoritative success değildir ✅
+- `queued_offline` ayrı ExecutionResult ✅
+- runtime BUILD 5.5 authoritative mutation sonrası
 
-### 5.9 — Special-flow security parity ⬜
-- image security parity
-- il/ilçe/GPS
-- çalışma saatleri
-- toggle/url edge cases
+### 5.9 — Special-flow security parity 🔄
+- preflight LOCK ✅ (`akilli-motor-5-9-special-flow-security-preflight.md`)
+- Flutter WebP/content-signature açığı doğrulandı ✅
+- il/ilçe canonical special-flow korunacak ✅
+- GPS'in bugünkü 5 paralel field write'ı coupled/atomic bundle'a dönüşecek ✅
+- çalışma saatleri gün tahmini yapmayacak ✅
+- overnight yanlış açık/kapalı sonucu engellenecek ✅
+- toggle/url 5.2 davranışı regresyon olarak korunacak ✅
+- runtime BUILD ilgili dependency'ler hazır oldukça
 
 ### 5.10 — Core Build doğrulaması ⬜
 - targeted unit/integration
@@ -94,11 +107,13 @@ KATMAN 5, **5.0–5.10 = 11 alt aşamadır**.
 - preview / owner screenshots
 - motor kaynaklı yeni regresyon = 0
 
-## Dış doğrulama durumu
+## Dış / altyapı doğrulama durumu
 
 - GitHub Actions aylık dakika kotası dolu olduğu için yeni runner sonuçları kod failure kanıtı sayılmıyor.
 - Vercel deployment kotası da son doğrulama sırasında engeldi.
-- Bu durum BUILD'i durdurmaz; fakat ilgili aşamalar dış runtime kanıtı alınmadan tam ✅ yapılmaz.
+- Supabase project'te ayrı bir development branch bulunmuyor; yalnız `main` branch görünüyor. Ücretli yeni branch kullanıcı onayı olmadan oluşturulmayacak.
+- Local çalışma ortamında Supabase CLI/PostgreSQL yok; migration dosyası sahte timestamp ile elle oluşturulmayacak.
+- Bu durum BUILD'i tamamen durdurmaz; fakat DB/runtime gerektiren aşamalar kanıt alınmadan tam ✅ yapılmaz.
 
 ## Değişmeyen sınırlar
 
