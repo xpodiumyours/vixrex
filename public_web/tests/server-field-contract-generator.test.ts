@@ -1,8 +1,15 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   buildServerFieldContracts,
   generateServerFieldContractSql,
 } from "../../tool/server_field_contract_uret";
+
+const CONTRACT_MIGRATION = resolve(
+  process.cwd(),
+  "../supabase/migrations/20260905114039_vixrex_canonical_46_field_contract.sql",
+);
 
 describe("Vixrex server field contract generator", () => {
   it("canonical şemadan tam 46 benzersiz field/column üretir", () => {
@@ -27,6 +34,26 @@ describe("Vixrex server field contract generator", () => {
       expect(sql).toContain(`when '${field.fieldKey}'`);
       expect(sql).toContain(`\"column\":\"${field.column}\"`);
     }
+  });
+
+  it("repo migration'ındaki 46-field snapshot generator ile birebir aynıdır", () => {
+    const generated = generateServerFieldContractSql();
+    const generatedStart = generated.indexOf(
+      "create or replace function public.vixrex_storefront_field_contract",
+    );
+    const generatedBody = generated.slice(generatedStart).trim();
+
+    const migration = readFileSync(CONTRACT_MIGRATION, "utf8");
+    const migrationStart = migration.indexOf(
+      "create or replace function public.vixrex_storefront_field_contract",
+    );
+    const validatorStart = migration.indexOf(
+      "-- DB sınırı yalnız canonical/normalize edilmiş action değerlerini kabul eder.",
+    );
+
+    expect(migrationStart).toBeGreaterThanOrEqual(0);
+    expect(validatorStart).toBeGreaterThan(migrationStart);
+    expect(migration.slice(migrationStart, validatorStart).trim()).toBe(generatedBody);
   });
 
   it("adres ve tip/min/max gibi semantic metadata'yı kaybetmez", () => {
