@@ -5,6 +5,7 @@
 //
 // Plan: implementation_plan.md Commit 8
 
+import { addressHataMesaji } from "./addressValidator";
 import { FIELD_BY_KEY, type VitrinField } from "./vitrinFieldSchema";
 
 export type FieldValue = string | number | boolean | null;
@@ -14,9 +15,11 @@ export type ValidationResult =
   | { ok: false; hata: string };
 
 const URL_PROTOKOLLERI = ["http:", "https:"];
+const ACIK_DEGERLER = new Set(["açık", "acik", "göster", "goster", "evet", "on", "true", "1"]);
+const KAPALI_DEGERLER = new Set(["kapalı", "kapali", "gizle", "hayır", "hayir", "off", "false", "0"]);
 
 function guvenliUrlMu(deger: string): boolean {
-  if (deger.startsWith("#")) return true; // sayfa içi çapa
+  if (deger.startsWith("#")) return deger.length > 1; // sayfa içi çapa
   try {
     const parsed = new URL(deger);
     return URL_PROTOKOLLERI.includes(parsed.protocol);
@@ -31,6 +34,15 @@ function normalizeTurkeyMobile(deger: string): string | null {
   if (/^05\d{9}$/.test(digits)) return `90${digits.slice(1)}`;
   if (/^5\d{9}$/.test(digits)) return `90${digits}`;
   if (/^905\d{9}$/.test(digits)) return digits;
+  return null;
+}
+
+function normalizeAcikKapali(deger: unknown): boolean | null {
+  if (typeof deger === "boolean") return deger;
+  if (typeof deger !== "string") return null;
+  const normalized = deger.trim().toLocaleLowerCase("tr-TR");
+  if (ACIK_DEGERLER.has(normalized)) return true;
+  if (KAPALI_DEGERLER.has(normalized)) return false;
   return null;
 }
 
@@ -60,12 +72,13 @@ export function validateField(anahtar: string, hamDeger: unknown): ValidationRes
     return { ok: false, hata: "Bilinmeyen alan." };
   }
 
-  // acikKapali: yalnız boolean
+  // acikKapali: gerçek boolean veya dar, açıkça izinli esnaf ifadeleri.
   if (alan.tip === "acikKapali") {
-    if (typeof hamDeger !== "boolean") {
+    const normalized = normalizeAcikKapali(hamDeger);
+    if (normalized === null) {
       return { ok: false, hata: `${alan.etiket} yalnız açık veya kapalı olabilir.` };
     }
-    return { ok: true, alan, deger: hamDeger };
+    return { ok: true, alan, deger: normalized };
   }
 
   // sayi: sayıya çevir, sınırları kontrol et
@@ -73,7 +86,7 @@ export function validateField(anahtar: string, hamDeger: unknown): ValidationRes
     if (hamDeger === null || hamDeger === "") {
       return { ok: true, alan, deger: null };
     }
-    const sayi = typeof hamDeger === "number" ? hamDeger : Number(String(hamDeger).replace(",", "."));
+    const sayi = typeof hamDeger === "number" ? hamDeger : Number(String(hamDeger).trim().replace(",", "."));
     if (!Number.isFinite(sayi)) {
       return { ok: false, hata: `${alan.etiket} sayı olmalı.` };
     }
@@ -98,6 +111,11 @@ export function validateField(anahtar: string, hamDeger: unknown): ValidationRes
 
   if (deger === "") {
     return { ok: true, alan, deger: null };
+  }
+
+  if (alan.dogrulama === "adres") {
+    const adresHatasi = addressHataMesaji(deger);
+    if (adresHatasi) return { ok: false, hata: adresHatasi };
   }
 
   switch (alan.tip) {
@@ -149,7 +167,6 @@ export function validateField(anahtar: string, hamDeger: unknown): ValidationRes
       return { ok: true, alan, deger };
 
     default: {
-      // Şemaya yeni bir tip eklenip burada karşılanmazsa derleme hatası verir.
       const kalan: never = alan.tip;
       return { ok: false, hata: `Desteklenmeyen alan tipi: ${String(kalan)}` };
     }
