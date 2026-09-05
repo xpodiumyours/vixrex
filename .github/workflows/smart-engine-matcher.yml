@@ -67,14 +67,16 @@ jobs:
       - name: Bağımlılıklar
         run: flutter pub get
 
-      - name: Yeni Dart dosyalarında format kontrolü
-        run: dart format --output=none --set-exit-if-changed tool/matcher_contract_uret.dart lib/config/vixrex_matcher_contract.g.dart lib/services/vixrex_nlu/vixrex_intent_resolver.dart test/vixrex_matcher_parity_test.dart
-
       - name: İlgili dosyaları analiz et
         run: dart analyze lib/services/vixrex_nlu/vixrex_intent_resolver.dart lib/config/vixrex_matcher_contract.g.dart test/vixrex_matcher_parity_test.dart
 
       - name: Matcher parity + Faz 1 regresyon
         run: flutter test test/vixrex_matcher_parity_test.dart test/vixrex_nlu_faz1_test.dart --reporter expanded
+
+      - name: Yeni Dart dosyalarında format drift
+        run: |
+          dart format tool/matcher_contract_uret.dart lib/config/vixrex_matcher_contract.g.dart lib/services/vixrex_nlu/vixrex_intent_resolver.dart test/vixrex_matcher_parity_test.dart
+          git diff --exit-code -- tool/matcher_contract_uret.dart lib/config/vixrex_matcher_contract.g.dart lib/services/vixrex_nlu/vixrex_intent_resolver.dart test/vixrex_matcher_parity_test.dart
 
   matcher-contract-drift:
     name: Matcher — shared contract drift
