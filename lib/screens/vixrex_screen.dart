@@ -5,6 +5,8 @@ import 'package:vixrex/screens/vixrex_onboarding_chat_screen.dart';
 import 'package:vixrex/services/vixrex_assistant_nlu_types.dart';
 import 'package:vixrex/services/vixrex_guidance_service.dart';
 import 'package:vixrex/services/vixrex_profile_snapshot.dart';
+import 'package:vixrex/services/working_draft/flutter_smart_engine_owner_executor.dart';
+import 'package:vixrex/services/working_draft/smart_engine_working_draft_orchestrator.dart';
 import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/widgets/chat/chat_top_bar.dart';
 import 'package:vixrex/widgets/common/app_screen_scaffold.dart';
@@ -22,6 +24,9 @@ class VixRexScreen extends StatefulWidget {
   final String? dismissedRecommendationId;
   final ValueChanged<VixRexAction> onAction;
   final ValueChanged<String> onDismissRecommendation;
+
+  /// Legacy remote NLU callbacks. 46-alan Akıllı Motor bunları kullanmaz;
+  /// HomeShell imzasını bu dilimde gereksiz yere büyütmemek için korunur.
   final void Function(VixRexNluField field, String value) onSaveField;
   final void Function(String anahtar, Object? deger)? onUpdateField;
   final VoidCallback? onSetupComplete;
@@ -46,6 +51,7 @@ class VixRexScreen extends StatefulWidget {
 
 class _VixRexScreenState extends State<VixRexScreen> {
   final _chatInputFocusNode = FocusNode();
+  final _ownerExecutor = FlutterSmartEngineOwnerExecutor();
 
   @override
   void dispose() {
@@ -55,6 +61,33 @@ class _VixRexScreenState extends State<VixRexScreen> {
 
   bool get _needsSetup =>
       widget.snapshot == null || !widget.snapshot!.isPublished;
+
+  Future<FlutterSmartEngineCommandResult> _executeSmartEngine(
+    List<FlutterSmartEngineAction> actions,
+  ) async {
+    final controller = widget.editorController;
+    if (controller == null) {
+      return FlutterSmartEngineCommandResult.blocked(
+        draftVersion: 0,
+        actions: actions,
+        errorCode: 'EDITOR_NOT_READY',
+        errorMessage: 'Vitrin henüz yüklenmedi.',
+      );
+    }
+
+    try {
+      await widget.editorInitialization;
+    } catch (_) {
+      return FlutterSmartEngineCommandResult.blocked(
+        draftVersion: 0,
+        actions: actions,
+        errorCode: 'EDITOR_NOT_READY',
+        errorMessage: 'Vitrin henüz yüklenmedi.',
+      );
+    }
+
+    return _ownerExecutor.execute(controller: controller, actions: actions);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -98,6 +131,7 @@ class _VixRexScreenState extends State<VixRexScreen> {
                     onDismissRecommendation: widget.onDismissRecommendation,
                     onSaveField: widget.onSaveField,
                     onUpdateField: widget.onUpdateField,
+                    onExecuteSmartEngine: _executeSmartEngine,
                     inputFocusNode: _chatInputFocusNode,
                   ),
                 ),
