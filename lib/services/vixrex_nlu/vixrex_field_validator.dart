@@ -143,7 +143,9 @@ class VixrexFieldValidator {
         return (ok: true, hata: null, normalizedDeger: raw);
 
       case 'url':
-        if (!_isSafeUrl(raw, allowAnchor: true)) {
+        // #anchor yalnız vitrin içindeki açık action-link alanında geçerlidir.
+        final anchorIzinli = alan.anahtar == 'galeriAksiyonLinki';
+        if (!_isSafeUrl(raw, allowAnchor: anchorIzinli)) {
           return (
             ok: false,
             hata: '$etiket yalnız http veya https adresi olabilir.',
