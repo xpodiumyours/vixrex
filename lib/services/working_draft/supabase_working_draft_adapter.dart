@@ -58,9 +58,11 @@ class SupabaseWorkingDraftAdapter implements WorkingDraftPort {
         'p_value': deger,
       });
       final m = Map<String, dynamic>.from(raw as Map);
-      return Result.success(WorkingDraftPatchResult(
-        draftVersion: (m['draft_version'] as num?)?.toInt() ?? 1,
-      ));
+      return Result.success(
+        WorkingDraftPatchResult.succeeded(
+          draftVersion: (m['draft_version'] as num?)?.toInt() ?? 1,
+        ),
+      );
     } catch (e, s) {
       return Result.failure(SupabaseErrorMapper.map(e, s));
     }
