@@ -15,7 +15,7 @@ import 'package:vixrex/widgets/vixrex/vixrex_companion_chat.dart';
 /// Vixrex sekmesinin tek yüzeyi.
 ///
 /// Yayın yok: landing ile aynı [VixRexOnboardingChatScreen] (sekme içinde).
-/// Yayın var: [VixRexCompanionChat] rehber (şablon → ürün → paylaş).
+/// Yayın var: [VixRexCompanionChat] rehber.
 class VixRexScreen extends StatefulWidget {
   final VixRexProfileSnapshot? snapshot;
   final StoreEditorController? editorController;
@@ -25,8 +25,7 @@ class VixRexScreen extends StatefulWidget {
   final ValueChanged<VixRexAction> onAction;
   final ValueChanged<String> onDismissRecommendation;
 
-  /// Legacy remote NLU callbacks. 46-alan Akıllı Motor bunları kullanmaz;
-  /// HomeShell imzasını bu dilimde gereksiz yere büyütmemek için korunur.
+  /// Legacy remote NLU callbacks. 46-alan Akıllı Motor bunları kullanmaz.
   final void Function(VixRexNluField field, String value) onSaveField;
   final void Function(String anahtar, Object? deger)? onUpdateField;
   final VoidCallback? onSetupComplete;
@@ -62,23 +61,21 @@ class _VixRexScreenState extends State<VixRexScreen> {
   bool get _needsSetup =>
       widget.snapshot == null || !widget.snapshot!.isPublished;
 
-  Future<FlutterSmartEngineCommandResult> _executeSmartEngine(
-    List<FlutterSmartEngineAction> actions,
-  ) async {
-    final controller = widget.editorController;
-    if (controller == null) {
-      return FlutterSmartEngineCommandResult.blocked(
-        draftVersion: 0,
-        actions: actions,
-        errorCode: 'EDITOR_NOT_READY',
-        errorMessage: 'Vitrin henüz yüklenmedi.',
-      );
-    }
-
+  Future<bool> _editorHazir() async {
+    if (widget.editorController == null) return false;
     try {
       final initialization = widget.editorInitialization;
       if (initialization != null) await initialization;
+      return true;
     } catch (_) {
+      return false;
+    }
+  }
+
+  Future<FlutterSmartEngineCommandResult> _executeSmartEngine(
+    List<FlutterSmartEngineAction> actions,
+  ) async {
+    if (!await _editorHazir()) {
       return FlutterSmartEngineCommandResult.blocked(
         draftVersion: 0,
         actions: actions,
@@ -86,8 +83,26 @@ class _VixRexScreenState extends State<VixRexScreen> {
         errorMessage: 'Vitrin henüz yüklenmedi.',
       );
     }
+    return _ownerExecutor.execute(
+      controller: widget.editorController!,
+      actions: actions,
+    );
+  }
 
-    return _ownerExecutor.execute(controller: controller, actions: actions);
+  Future<FlutterSmartEngineUndoExecutionResult> _undoSmartEngine(
+    String commandId,
+  ) async {
+    if (!await _editorHazir()) {
+      return FlutterSmartEngineUndoExecutionResult.failed(
+        commandId: commandId,
+        errorCode: 'EDITOR_NOT_READY',
+        errorMessage: 'Vitrin henüz yüklenmedi.',
+      );
+    }
+    return _ownerExecutor.undo(
+      controller: widget.editorController!,
+      commandId: commandId,
+    );
   }
 
   @override
@@ -133,6 +148,7 @@ class _VixRexScreenState extends State<VixRexScreen> {
                     onSaveField: widget.onSaveField,
                     onUpdateField: widget.onUpdateField,
                     onExecuteSmartEngine: _executeSmartEngine,
+                    onUndoSmartEngine: _undoSmartEngine,
                     inputFocusNode: _chatInputFocusNode,
                   ),
                 ),
