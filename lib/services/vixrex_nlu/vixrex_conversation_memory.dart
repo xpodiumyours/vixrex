@@ -183,14 +183,18 @@ class VixrexConversationMemory implements VixrexConversationMemoryPort {
       return null;
     }
 
-    if (dirty == _dirtySet && local != null) {
-      try {
-        await _repository.savePendingSlot(local.toJson());
+    if (dirty == _dirtySet) {
+      if (local == null) {
         await prefs.remove(dirtyKey);
-      } catch (_) {
+      } else {
+        try {
+          await _repository.savePendingSlot(local.toJson());
+          await prefs.remove(dirtyKey);
+        } catch (_) {
+          return local;
+        }
         return local;
       }
-      return local;
     }
 
     try {
