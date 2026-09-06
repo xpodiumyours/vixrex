@@ -41,6 +41,7 @@ describe("landing vitrin oluşturma akışı Flutter referansıyla eşit", () =>
     const flutterLanding = oku("../lib/screens/landing_screen.dart");
     const wrapper = oku("src/components/landing/LandingChatWrapper.tsx");
     const phoneMockup = oku("src/components/landing/PhoneMockup.tsx");
+    const apkAssistant = oku("src/components/landing/LandingApkAssistant.tsx");
 
     expect(flutterLanding).toContain("final isMobile = MediaQuery.sizeOf(context).width <= 768");
     expect(flutterLanding).toContain("final targetOffset = isMobile ? 560.0 : 0.0");
@@ -51,6 +52,22 @@ describe("landing vitrin oluşturma akışı Flutter referansıyla eşit", () =>
     expect(wrapper).toContain("const sure = 450");
     expect(wrapper).toContain("1 - Math.pow(1 - oran, 3)");
     expect(wrapper).not.toContain("scrollIntoView");
-    expect(phoneMockup).toContain("<LandingAsistanSohbeti");
+    expect(phoneMockup).toContain("<LandingApkAssistant");
+    expect(apkAssistant).toContain("<LandingAsistanSohbeti");
+  });
+
+  it("APK karşılama yüzü yalnız iki hızlı seçenek gösterir ve mevcut motora delege eder", () => {
+    const apkAssistant = oku("src/components/landing/LandingApkAssistant.tsx");
+
+    expect(apkAssistant).toContain("Dijital vitrin asistanı");
+    expect(apkAssistant).toContain("Kapat");
+    expect(apkAssistant).toContain("Hızlı Seçenekler");
+    expect(apkAssistant).toContain("Evet, Oluşturalım");
+    expect(apkAssistant).toContain("Bakınıyorum");
+    expect(apkAssistant).toContain("vixRexMesajlari.welcome_baslik");
+    expect(apkAssistant).toContain("vixRexMesajlari.welcome_aciklama");
+    expect(apkAssistant).not.toContain("hazir_vitrin_sec");
+    expect(apkAssistant).toContain("validateField(\"isletmeAdi\"");
+    expect(apkAssistant).toContain("<LandingAsistanSohbeti initialName={devamAdi}");
   });
 });
