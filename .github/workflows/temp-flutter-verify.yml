@@ -1,0 +1,38 @@
+name: TEMP Flutter verify
+
+on:
+  push:
+    branches:
+      - repair/main-baseline-20260905
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout exact formatted baseline SHA
+        uses: actions/checkout@v4
+        with:
+          ref: 3f73f49d0b1f379b64dcfba508a6ff4f7d5fd884
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.44.4"
+          channel: stable
+          cache: true
+
+      - name: Dependencies
+        run: flutter pub get
+
+      - name: Format gate
+        run: dart format --output=none --set-exit-if-changed lib test
+
+      - name: Analyze gate
+        run: dart analyze --fatal-infos
+
+      - name: Test gate
+        run: flutter test --reporter expanded
