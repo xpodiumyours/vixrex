@@ -60,13 +60,17 @@ void main() {
       expect(File('api/robots.js').existsSync(), isFalse);
     });
 
-    test('Next.js fallback origins point to canonical public and active app hosts', () {
-      final siteUrl = File('public_web/src/lib/siteUrl.ts').readAsStringSync();
+    test(
+      'Next.js fallback origins point to canonical public and active app hosts',
+      () {
+        final siteUrl =
+            File('public_web/src/lib/siteUrl.ts').readAsStringSync();
 
-      expect(siteUrl, contains('https://vixrex.com'));
-      expect(siteUrl, contains('https://vixrex-app.vercel.app'));
-      expect(siteUrl, isNot(contains('vixrex-two.vercel.app')));
-    });
+        expect(siteUrl, contains('https://vixrex.com'));
+        expect(siteUrl, contains('https://vixrex-app.vercel.app'));
+        expect(siteUrl, isNot(contains('vixrex-two.vercel.app')));
+      },
+    );
 
     test('project guide keeps public web ownership explicit', () {
       final projectGuide = File('CLAUDE.md').readAsStringSync();
