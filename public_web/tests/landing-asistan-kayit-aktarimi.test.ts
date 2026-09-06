@@ -19,7 +19,7 @@ afterEach(() => {
 });
 
 describe("landing asistanı kayıt sonrası devamlılık", () => {
-  it("toplanan cevapları kayıt sayfasından sonra vitrin oluşturma adımına taşır", () => {
+  it("toplanan cevapları kayıt sayfasından sonra VitrinimEditor oluşturma akışına taşır", () => {
     const hafiza = new Map<string, string>();
     const sessionStorage = {
       get length() {
@@ -56,10 +56,33 @@ describe("landing asistanı kayıt sonrası devamlılık", () => {
       resolve(KOK, "src/app/app/page.tsx"),
       "utf8",
     );
+
+    // Kayıt sayfası landing taslağını erken temizlememeli.
     expect(kayitSayfasi).not.toContain("taslagiTemizle");
+
+    // /app taslağı okur ve artık eski magazaOlustur/showNameForm yerine
+    // ortak VitrinimEditor creation yoluna verir.
     expect(sahipSayfasi).toContain("const taslak = taslagiOku()");
+    expect(sahipSayfasi).toContain("<VitrinimEditor");
+    expect(sahipSayfasi).toContain("isCreationMode");
     expect(sahipSayfasi).toContain(
-      "body: JSON.stringify({ name: yeniAd.trim(), ...asistanTaslagi })",
+      "initialDraft={{ ...flowDraft, ...asistanTaslagi, ...workingDraft, name: yeniAd }}",
     );
+
+    // onCreate, Assistant taslağını korur; editördeki güncel alanları payload'a
+    // ekler ve tek create-store kapısından gönderir.
+    expect(sahipSayfasi).toContain(
+      "const payload: Record<string, unknown> = { name: ad, ...asistanTaslagi };",
+    );
+    expect(sahipSayfasi).toContain(
+      "for (const [k, v] of Object.entries(draft as Record<string, unknown>))",
+    );
+    expect(sahipSayfasi).toContain('fetch("/api/create-store"');
+    expect(sahipSayfasi).toContain("body: JSON.stringify(payload)");
+
+    // Başarılı oluşturma sonrası taslak temizlenmeye devam etmeli.
+    expect(sahipSayfasi).toContain("taslagiTemizle()");
+    expect(sahipSayfasi).not.toContain("showNameForm");
+    expect(sahipSayfasi).not.toContain("magazaOlustur");
   });
 });
