@@ -1,0 +1,46 @@
+name: TEMP Flutter test diagnostic
+
+on:
+  push:
+    branches:
+      - repair/main-baseline-20260905
+
+permissions:
+  contents: read
+
+env:
+  FLUTTER_VERSION: "3.44.4"
+
+jobs:
+  flutter-test-log:
+    name: TEMP Flutter test log
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Bağımlılıklar
+        run: flutter pub get
+
+      - name: Testler ve log
+        shell: bash
+        run: |
+          set -o pipefail
+          flutter test --reporter expanded 2>&1 | tee flutter-test.log
+
+      - name: Test logunu artifact olarak sakla
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-test-log-${{ github.sha }}
+          path: flutter-test.log
+          if-no-files-found: error
+          retention-days: 1
