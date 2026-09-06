@@ -51,45 +51,41 @@ void main() {
       );
     });
 
-    test('yalnız RIFF/WEBP başlığı taklit edilmiş bozuk payload geçemez', () async {
-      final bytes = Uint8List.fromList([
-        0x52,
-        0x49,
-        0x46,
-        0x46,
-        0x00,
-        0x00,
-        0x00,
-        0x00,
-        0x57,
-        0x45,
-        0x42,
-        0x50,
-        0x00,
-        0x00,
-        0x00,
-        0x00,
-      ]);
+    test(
+      'yalnız RIFF/WEBP başlığı taklit edilmiş bozuk payload geçemez',
+      () async {
+        final bytes = Uint8List.fromList([
+          0x52,
+          0x49,
+          0x46,
+          0x46,
+          0x00,
+          0x00,
+          0x00,
+          0x00,
+          0x57,
+          0x45,
+          0x42,
+          0x50,
+          0x00,
+          0x00,
+          0x00,
+          0x00,
+        ]);
 
-      await expectLater(
-        service.optimize(
-          bytes,
-          fileExtension: 'webp',
-          contentType: 'image/webp',
-        ),
-        throwsA(isA<ImageOptimizationException>()),
-      );
-    });
+        await expectLater(
+          service.optimize(
+            bytes,
+            fileExtension: 'webp',
+            contentType: 'image/webp',
+          ),
+          throwsA(isA<ImageOptimizationException>()),
+        );
+      },
+    );
 
     test('JPEG içeriği WebP diye beyan edilirse reddedilir', () async {
-      final jpegLike = Uint8List.fromList([
-        0xff,
-        0xd8,
-        0xff,
-        0xe0,
-        0x00,
-        0x10,
-      ]);
+      final jpegLike = Uint8List.fromList([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]);
 
       await expectLater(
         service.optimize(

@@ -97,11 +97,17 @@ class SmartEngineOwnerContextService {
 
   Object? _sortJson(Object? value) {
     if (value is Map) {
-      final entries = value.entries
-          .map((entry) => MapEntry(entry.key.toString(), _sortJson(entry.value)))
-          .toList()
-        ..sort((a, b) => a.key.compareTo(b.key));
-      return <String, Object?>{for (final entry in entries) entry.key: entry.value};
+      final entries =
+          value.entries
+              .map(
+                (entry) =>
+                    MapEntry(entry.key.toString(), _sortJson(entry.value)),
+              )
+              .toList()
+            ..sort((a, b) => a.key.compareTo(b.key));
+      return <String, Object?>{
+        for (final entry in entries) entry.key: entry.value,
+      };
     }
     if (value is List) return value.map(_sortJson).toList();
     return value;

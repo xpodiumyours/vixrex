@@ -138,10 +138,8 @@ class StoreLocationFetchService {
     final provinceByCode = <String, Province>{
       for (final province in turkeyProvinces) province.code: province,
     };
-    final districtCandidates = <
-      String,
-      List<({Province province, String district})>
-    >{};
+    final districtCandidates =
+        <String, List<({Province province, String district})>>{};
 
     for (final entry in turkeyDistricts.entries) {
       final province = provinceByCode[entry.key];
@@ -149,16 +147,20 @@ class StoreLocationFetchService {
       for (final district in entry.value) {
         if (district == 'Merkez') continue;
         final normalizedDistrict = TextUtils.normalizeTurkish(district);
-        districtCandidates
-            .putIfAbsent(normalizedDistrict, () => [])
-            .add((province: province, district: district));
+        districtCandidates.putIfAbsent(normalizedDistrict, () => []).add((
+          province: province,
+          district: district,
+        ));
       }
     }
 
     final provinceMatches = <({int position, Province province})>[];
     for (final province in turkeyProvinces) {
       final normalizedProvince = TextUtils.normalizeTurkish(province.name);
-      final position = _boundedTermPosition(normalizedAddress, normalizedProvince);
+      final position = _boundedTermPosition(
+        normalizedAddress,
+        normalizedProvince,
+      );
       if (position >= 0) {
         provinceMatches.add((position: position, province: province));
       }
@@ -167,11 +169,14 @@ class StoreLocationFetchService {
     final explicitProvince =
         provinceMatches.length == 1 ? provinceMatches.single.province : null;
 
-    final districtMatches = <({
-      int position,
-      String term,
-      List<({Province province, String district})> candidates,
-    })>[];
+    final districtMatches =
+        <
+          ({
+            int position,
+            String term,
+            List<({Province province, String district})> candidates,
+          })
+        >[];
 
     for (final entry in districtCandidates.entries) {
       final position = _boundedTermPosition(normalizedAddress, entry.key);
@@ -203,12 +208,17 @@ class StoreLocationFetchService {
         );
       }
 
-      final verified = match.candidates.where((candidate) {
-        final normalizedProvince = TextUtils.normalizeTurkish(
-          candidate.province.name,
-        );
-        return _boundedTermPosition(normalizedAddress, normalizedProvince) >= 0;
-      }).toList();
+      final verified =
+          match.candidates.where((candidate) {
+            final normalizedProvince = TextUtils.normalizeTurkish(
+              candidate.province.name,
+            );
+            return _boundedTermPosition(
+                  normalizedAddress,
+                  normalizedProvince,
+                ) >=
+                0;
+          }).toList();
 
       if (verified.length == 1) {
         final candidate = verified.single;

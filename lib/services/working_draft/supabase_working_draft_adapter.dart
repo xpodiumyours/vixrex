@@ -6,7 +6,8 @@ import 'package:vixrex/services/working_draft/working_draft_port.dart';
 import 'package:vixrex/utils/failure.dart';
 
 class SupabaseWorkingDraftAdapter implements WorkingDraftPort {
-  const SupabaseWorkingDraftAdapter({SupabaseClient? client}) : _client = client;
+  const SupabaseWorkingDraftAdapter({SupabaseClient? client})
+    : _client = client;
   final SupabaseClient? _client;
 
   SupabaseClient? get _supabase {
@@ -19,7 +20,9 @@ class SupabaseWorkingDraftAdapter implements WorkingDraftPort {
   }
 
   @override
-  Future<Result<WorkingDraftSnapshot>> yukle({required String sessionToken}) async {
+  Future<Result<WorkingDraftSnapshot>> yukle({
+    required String sessionToken,
+  }) async {
     final c = _supabase;
     if (c == null) return Result.failure(Failure('NO_CLIENT'));
     try {

@@ -12,6 +12,7 @@
   "exactFormsByField": {
     "il": ["ili"],
     "ilce": ["ilceyi", "ilcemi"],
+    "mahalle": ["mahalleyi", "mahallemi"],
     "logo": ["logoyu", "logomu"],
     "isletmeTuru": ["turunu", "turumu"],
     "website": ["sitemi", "siteyi", "websiteyi"]

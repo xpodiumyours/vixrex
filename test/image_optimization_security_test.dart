@@ -84,37 +84,40 @@ void main() {
       );
     });
 
-    test('yalnız RIFF WEBP başlığı taklit edilmiş bozuk payload reddedilir', () async {
-      // Magic-byte kontrolünü geçer; gerçek codec decode kontrolünde düşmelidir.
-      final bytes = Uint8List.fromList(<int>[
-        0x52,
-        0x49,
-        0x46,
-        0x46, // RIFF
-        0x04,
-        0x00,
-        0x00,
-        0x00, // sahte size
-        0x57,
-        0x45,
-        0x42,
-        0x50, // WEBP
-      ]);
+    test(
+      'yalnız RIFF WEBP başlığı taklit edilmiş bozuk payload reddedilir',
+      () async {
+        // Magic-byte kontrolünü geçer; gerçek codec decode kontrolünde düşmelidir.
+        final bytes = Uint8List.fromList(<int>[
+          0x52,
+          0x49,
+          0x46,
+          0x46, // RIFF
+          0x04,
+          0x00,
+          0x00,
+          0x00, // sahte size
+          0x57,
+          0x45,
+          0x42,
+          0x50, // WEBP
+        ]);
 
-      await expectLater(
-        service.optimize(
-          bytes,
-          fileExtension: 'webp',
-          contentType: 'image/webp',
-        ),
-        throwsA(
-          isA<ImageOptimizationException>().having(
-            (error) => error.message,
-            'message',
-            contains('WebP fotoğraf doğrulanamadı'),
+        await expectLater(
+          service.optimize(
+            bytes,
+            fileExtension: 'webp',
+            contentType: 'image/webp',
           ),
-        ),
-      );
-    });
+          throwsA(
+            isA<ImageOptimizationException>().having(
+              (error) => error.message,
+              'message',
+              contains('WebP fotoğraf doğrulanamadı'),
+            ),
+          ),
+        );
+      },
+    );
   });
 }

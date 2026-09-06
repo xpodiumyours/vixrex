@@ -56,10 +56,7 @@ class VixrexConversationRepository {
     if (client == null) {
       throw StateError('PERSISTENT_ACCOUNT_REQUIRED');
     }
-    await client.rpc(
-      'set_assistant_pending_slot',
-      params: {'p_slot': slot},
-    );
+    await client.rpc('set_assistant_pending_slot', params: {'p_slot': slot});
   }
 
   Future<List<ChatMessage>> loadMessages() async {

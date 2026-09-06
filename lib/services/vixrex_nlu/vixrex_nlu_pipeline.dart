@@ -1,4 +1,3 @@
-import 'package:vixrex/config/vitrin_alanlari.g.dart';
 import 'package:vixrex/config/vixrex_niyet_sozlugu.g.dart';
 import 'package:vixrex/controllers/store_editor_controller.dart';
 import 'package:vixrex/models/chat_message.dart';

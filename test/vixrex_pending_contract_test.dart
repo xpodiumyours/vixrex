@@ -4,15 +4,15 @@ import 'package:vixrex/repositories/vixrex_conversation_repository.dart';
 import 'package:vixrex/services/vixrex_nlu/vixrex_conversation_memory.dart';
 
 class _FakeConversationRepository extends VixrexConversationRepository {
-  _FakeConversationRepository({
-    required this.syncEnabled,
-    this.remote,
-    this.failWrites = false,
-  }) : super();
+  _FakeConversationRepository({required this.syncEnabled, this.remote})
+    : super();
 
   bool syncEnabled;
   Map<String, dynamic>? remote;
-  bool failWrites;
+
+  /// Testler kurulum sonrası açıp yazma hatasını taklit edebilsin diye
+  /// kurucu parametresi değil, doğrudan alan olarak duruyor.
+  bool failWrites = false;
   int writeCount = 0;
 
   @override
@@ -66,17 +66,20 @@ void main() {
       expect(slot.deneme, 2);
     });
 
-    test('Supabase yokken SharedPrefs yalnız cache olarak devam eder', () async {
-      SharedPreferences.setMockInitialValues({});
-      const memory = VixrexConversationMemory();
+    test(
+      'Supabase yokken SharedPrefs yalnız cache olarak devam eder',
+      () async {
+        SharedPreferences.setMockInitialValues({});
+        const memory = VixrexConversationMemory();
 
-      await memory.savePendingSlot(_telefonSlot(), scope: 'test-store');
-      final loaded = await memory.loadPendingSlot(scope: 'test-store');
-      expect(loaded?.anahtar, 'telefon');
+        await memory.savePendingSlot(_telefonSlot(), scope: 'test-store');
+        final loaded = await memory.loadPendingSlot(scope: 'test-store');
+        expect(loaded?.anahtar, 'telefon');
 
-      await memory.clearPendingSlot(scope: 'test-store');
-      expect(await memory.loadPendingSlot(scope: 'test-store'), isNull);
-    });
+        await memory.clearPendingSlot(scope: 'test-store');
+        expect(await memory.loadPendingSlot(scope: 'test-store'), isNull);
+      },
+    );
 
     test('remote state kanoniktir ve local cache tazelenir', () async {
       SharedPreferences.setMockInitialValues({});
@@ -110,22 +113,25 @@ void main() {
       expect(repo.writeCount, 1);
     });
 
-    test('offline clear stale remote pending stateini geri diriltmez', () async {
-      SharedPreferences.setMockInitialValues({});
-      final repo = _FakeConversationRepository(
-        syncEnabled: false,
-        remote: _telefonSlot().toJson(),
-      );
-      final memory = VixrexConversationMemory(repository: repo);
+    test(
+      'offline clear stale remote pending stateini geri diriltmez',
+      () async {
+        SharedPreferences.setMockInitialValues({});
+        final repo = _FakeConversationRepository(
+          syncEnabled: false,
+          remote: _telefonSlot().toJson(),
+        );
+        final memory = VixrexConversationMemory(repository: repo);
 
-      await memory.savePendingSlot(_telefonSlot(), scope: 'store-c');
-      await memory.clearPendingSlot(scope: 'store-c');
+        await memory.savePendingSlot(_telefonSlot(), scope: 'store-c');
+        await memory.clearPendingSlot(scope: 'store-c');
 
-      repo.syncEnabled = true;
-      final loaded = await memory.loadPendingSlot(scope: 'store-c');
-      expect(loaded, isNull);
-      expect(repo.remote, isNull);
-      expect(repo.writeCount, 1);
-    });
+        repo.syncEnabled = true;
+        final loaded = await memory.loadPendingSlot(scope: 'store-c');
+        expect(loaded, isNull);
+        expect(repo.remote, isNull);
+        expect(repo.writeCount, 1);
+      },
+    );
   });
 }

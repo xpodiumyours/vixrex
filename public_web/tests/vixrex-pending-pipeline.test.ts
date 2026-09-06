@@ -1,7 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  rpc: vi.fn(async () => ({ data: null, error: null })),
+  // Parametreler imzada AÇIKÇA duruyor: `vi.fn(async () => ...)` sıfır
+  // argümanlı çıkarılıyor ve `mock.calls` boş tuple oluyor — testin
+  // `call?.[1]` ile okuduğu p_slot yükü tip hatası veriyordu.
+  rpc: vi.fn(
+    async (_name: string, _params?: Record<string, unknown>) => ({
+      data: null,
+      error: null,
+    }),
+  ),
 }));
 
 vi.mock("../src/lib/supabase", () => ({

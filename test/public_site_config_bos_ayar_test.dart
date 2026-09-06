@@ -31,10 +31,7 @@ void main() {
       'deneme',
       'abc123',
     );
-    expect(
-      link.startsWith('https://vixrex.com/api/owner-session'),
-      isTrue,
-    );
+    expect(link.startsWith('https://vixrex.com/api/owner-session'), isTrue);
     expect(link.contains('slug=deneme'), isTrue);
   });
 }

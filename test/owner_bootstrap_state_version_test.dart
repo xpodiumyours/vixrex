@@ -3,23 +3,26 @@ import 'package:vixrex/models/owner_bootstrap_state.dart';
 
 void main() {
   group('OwnerBootstrapState draft version', () {
-    test('bootstrap RPC draft_version ve base_live_version değerlerini korur', () {
-      final state = OwnerBootstrapState.fromJson({
-        'has_store': true,
-        'reason': 'OK',
-        'slug': 'ornek-vitrin',
-        'live_version': 9,
-        'has_draft': true,
-        'draft_version': 14,
-        'base_live_version': 9,
-        'draft_stale': false,
-      });
+    test(
+      'bootstrap RPC draft_version ve base_live_version değerlerini korur',
+      () {
+        final state = OwnerBootstrapState.fromJson({
+          'has_store': true,
+          'reason': 'OK',
+          'slug': 'ornek-vitrin',
+          'live_version': 9,
+          'has_draft': true,
+          'draft_version': 14,
+          'base_live_version': 9,
+          'draft_stale': false,
+        });
 
-      expect(state.hasStore, true);
-      expect(state.liveVersion, 9);
-      expect(state.draftVersion, 14);
-      expect(state.baseLiveVersion, 9);
-    });
+        expect(state.hasStore, true);
+        expect(state.liveVersion, 9);
+        expect(state.draftVersion, 14);
+        expect(state.baseLiveVersion, 9);
+      },
+    );
 
     test('string gelen sürüm değerlerini de güvenli tamsayıya çevirir', () {
       final state = OwnerBootstrapState.fromJson({

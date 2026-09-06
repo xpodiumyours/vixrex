@@ -68,10 +68,7 @@ class WorkingDraftPatchResult {
       );
 
   const WorkingDraftPatchResult.queuedOffline()
-    : this._(
-        status: WorkingDraftPatchStatus.queuedOffline,
-        draftVersion: null,
-      );
+    : this._(status: WorkingDraftPatchStatus.queuedOffline, draftVersion: null);
 
   final WorkingDraftPatchStatus status;
   final int? draftVersion;

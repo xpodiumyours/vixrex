@@ -63,6 +63,7 @@ const List<String> vixrexMatcherSafeSuffixes = [
 const Map<String, List<String>> vixrexMatcherExactFormsByField = {
   'il': ['ili'],
   'ilce': ['ilceyi', 'ilcemi'],
+  'mahalle': ['mahalleyi', 'mahallemi'],
   'logo': ['logoyu', 'logomu'],
   'isletmeTuru': ['turunu', 'turumu'],
   'website': ['sitemi', 'siteyi', 'websiteyi'],

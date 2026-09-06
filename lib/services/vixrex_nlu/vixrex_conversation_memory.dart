@@ -84,8 +84,7 @@ class VixrexPendingSlot {
     final tip = (json['fieldType'] ?? json['tip'])?.toString() ?? 'metin';
     final createdAtRaw =
         (json['createdAt'] ?? json['sorulduAt'])?.toString() ?? '';
-    final deneme =
-        ((json['attempt'] ?? json['deneme']) as num?)?.toInt() ?? 1;
+    final deneme = ((json['attempt'] ?? json['deneme']) as num?)?.toInt() ?? 1;
     final commandId = json['commandId']?.toString().trim();
 
     return VixrexPendingSlot(
@@ -98,8 +97,7 @@ class VixrexPendingSlot {
       sorulduAt: DateTime.tryParse(createdAtRaw) ?? DateTime.now(),
       deneme: deneme < 1 ? 1 : deneme,
       proposedValue: json['proposedValue'],
-      commandId:
-          commandId == null || commandId.isEmpty ? null : commandId,
+      commandId: commandId == null || commandId.isEmpty ? null : commandId,
     );
   }
 }

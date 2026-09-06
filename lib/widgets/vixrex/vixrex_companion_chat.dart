@@ -264,11 +264,7 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
           scope: _historyScope,
           onValidate: (alan, hamDeger) async {
             final v = VixrexFieldValidator.validate(alan, hamDeger);
-            return (
-              ok: v.ok,
-              hata: v.hata,
-              normalizedDeger: v.normalizedDeger,
-            );
+            return (ok: v.ok, hata: v.hata, normalizedDeger: v.normalizedDeger);
           },
           needsSpecialFlow: (alan) => _needsSpecialFlowFor(alan.anahtar),
         );

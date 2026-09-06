@@ -71,18 +71,12 @@ void main() {
         resolver.resolve('Telefonu 0212 123 45 67 yap')?.anahtar,
         'telefon',
       );
-      expect(
-        resolver.resolve('E-postamı test@a.com yap')?.anahtar,
-        'eposta',
-      );
+      expect(resolver.resolve('E-postamı test@a.com yap')?.anahtar, 'eposta');
       expect(
         resolver.resolve('Harita etiketini Çarşı içi yap')?.anahtar,
         'haritaEtiketi',
       );
-      expect(
-        resolver.resolve('Instagramı aymira yap')?.anahtar,
-        'instagram',
-      );
+      expect(resolver.resolve('Instagramı aymira yap')?.anahtar, 'instagram');
       expect(
         resolver.resolve('Web sitemi https://a.com yap')?.anahtar,
         'website',
@@ -333,42 +327,41 @@ void main() {
   });
 
   group('Faz 3 – pipeline çok-alanlı', () {
-    test('typed action üretir, controller üzerinde side-effect yapmaz', () async {
-      SharedPreferences.setMockInitialValues({});
-      final pipeline = VixrexNluPipeline();
-      final c = StoreEditorController(initialData: StoreData());
-      final oncekiTelefon = c.data.phone;
-      final oncekiInstagram = c.data.instagram;
+    test(
+      'typed action üretir, controller üzerinde side-effect yapmaz',
+      () async {
+        SharedPreferences.setMockInitialValues({});
+        final pipeline = VixrexNluPipeline();
+        final c = StoreEditorController(initialData: StoreData());
+        final oncekiTelefon = c.data.phone;
+        final oncekiInstagram = c.data.instagram;
 
-      final result = await pipeline.handle(
-        input: 'telefonu 0212 123 45 67 yap, instagramı aymira yap',
-        controller: c,
-        onValidate: (alan, ham) async {
-          final v = VixrexFieldValidator.validate(alan, ham);
-          return (
-            ok: v.ok,
-            hata: v.hata,
-            normalizedDeger: v.normalizedDeger,
-          );
-        },
-      );
+        final result = await pipeline.handle(
+          input: 'telefonu 0212 123 45 67 yap, instagramı aymira yap',
+          controller: c,
+          onValidate: (alan, ham) async {
+            final v = VixrexFieldValidator.validate(alan, ham);
+            return (ok: v.ok, hata: v.hata, normalizedDeger: v.normalizedDeger);
+          },
+        );
 
-      expect(result.outcome, VixrexNluPipelineOutcome.handled);
-      expect(result.decision, VixrexDecisionKind.validatedActionGroup);
-      expect(result.actions.length, 2);
-      expect(
-        result.actions.map((action) => action.fieldKey).toSet(),
-        {'telefon', 'instagram'},
-      );
-      for (final action in result.actions) {
-        expect(action.contractVersion, 1);
-        expect(action.domain, 'storefront');
-        expect(action.actionType, 'set_field');
-      }
-      expect(c.data.phone, oncekiTelefon);
-      expect(c.data.instagram, oncekiInstagram);
-      expect(result.message.text.contains('Kaydettim'), false);
-    });
+        expect(result.outcome, VixrexNluPipelineOutcome.handled);
+        expect(result.decision, VixrexDecisionKind.validatedActionGroup);
+        expect(result.actions.length, 2);
+        expect(result.actions.map((action) => action.fieldKey).toSet(), {
+          'telefon',
+          'instagram',
+        });
+        for (final action in result.actions) {
+          expect(action.contractVersion, 1);
+          expect(action.domain, 'storefront');
+          expect(action.actionType, 'set_field');
+        }
+        expect(c.data.phone, oncekiTelefon);
+        expect(c.data.instagram, oncekiInstagram);
+        expect(result.message.text.contains('Kaydettim'), false);
+      },
+    );
 
     test('değer ayıklama her alan için kendi değerini alır', () {
       final ex = VixrexValueExtractor();
@@ -385,11 +378,7 @@ void main() {
         'instagramı @aymira yap',
         vixrexNiyetAlanByAnahtar['instagram']!,
       );
-      expect(
-        v2 != null && v2.contains('aymira'),
-        true,
-        reason: 'v2=$v2',
-      );
+      expect(v2 != null && v2.contains('aymira'), true, reason: 'v2=$v2');
     });
   });
 }

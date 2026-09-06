@@ -14,13 +14,20 @@ bool smartEngineStorefrontEnabledFromMap(
 }
 
 class FeatureFlagService {
-  final SupabaseClient _client;
+  final SupabaseClient? _injectedClient;
   final Map<String, bool> _cache = {};
   final Map<String, String> _targetUsers = {};
   bool _loaded = false;
 
-  FeatureFlagService({SupabaseClient? client})
-    : _client = client ?? Supabase.instance.client;
+  FeatureFlagService({SupabaseClient? client}) : _injectedClient = client;
+
+  /// Supabase'e KURUCUDA değil, ilk gerçek kullanımda erişilir.
+  ///
+  /// NEDEN: bu servis widget state'lerinde (ör. VixRexCompanionChat)
+  /// doğrudan kuruluyor. Kurucuda `Supabase.instance` okunursa, Supabase
+  /// henüz hazır değilken widget hiç oluşamıyor ve ekran boş kalıyor —
+  /// widget testlerinde de canlıda erken açılışta da aynı çökme oluyordu.
+  SupabaseClient get _client => _injectedClient ?? Supabase.instance.client;
 
   Future<void> loadFlags() async {
     try {

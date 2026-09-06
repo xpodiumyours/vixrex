@@ -1,3 +1,4 @@
+import type { OwnerActionLifecycleResult } from "@/lib/ownerActionLifecycle";
 import type { VitrinField } from "@/lib/vitrinFieldSchema";
 import { SECTION_LABELS } from "@/lib/vitrinFieldSchema";
 import { alanOnemi, type EksikOnem } from "@/lib/vitrinReadiness";
@@ -22,7 +23,10 @@ interface Props {
   gorselYukle: (dosya: File) => Promise<void>;
   hazirGorselleriAc: () => Promise<void>;
   hazirGorselSec: (url: string) => Promise<void>;
-  gonder: () => Promise<void>;
+  // Akıllı Motor sonrası: gönderim artık sessizce bitmiyor, yaşam döngüsü
+  // sonucu (başarılı/kuyruğa alındı/hata) döndürüyor — FieldInputArea bu
+  // sonucu kullanıyor, StepCard da aynı sözleşmeyi taşımak zorunda.
+  gonder: () => Promise<OwnerActionLifecycleResult>;
   alanAtla: () => Promise<void>;
   canliyaDondur: () => Promise<void>;
   sonrayaBirak?: () => void;

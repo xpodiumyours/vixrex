@@ -124,9 +124,12 @@ class FlutterSmartEngineCommandResult {
   final List<FlutterSmartEngineActionResult> stopped;
 
   String? get firstErrorCode =>
-      failed.isNotEmpty ? failed.first.errorCode : queuedOffline.firstOrNull?.errorCode;
+      failed.isNotEmpty
+          ? failed.first.errorCode
+          : queuedOffline.firstOrNull?.errorCode;
 
-  String? get firstErrorMessage => failed.isNotEmpty ? failed.first.errorMessage : null;
+  String? get firstErrorMessage =>
+      failed.isNotEmpty ? failed.first.errorMessage : null;
 }
 
 extension<T> on List<T> {
@@ -338,7 +341,10 @@ class FlutterSmartEngineWorkingDraftOrchestrator {
     if (queued > 0 && succeeded == 0 && failed == 0) {
       return FlutterSmartEngineCommandStatus.queuedOffline;
     }
-    if (succeeded == 0 && queued == 0 && failed > 0 && failed + stopped == total) {
+    if (succeeded == 0 &&
+        queued == 0 &&
+        failed > 0 &&
+        failed + stopped == total) {
       return FlutterSmartEngineCommandStatus.failed;
     }
     return FlutterSmartEngineCommandStatus.partialResult;

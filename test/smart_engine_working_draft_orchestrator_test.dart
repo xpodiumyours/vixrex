@@ -22,15 +22,16 @@ class _AssistantCall {
 
 class _FakeWorkingDraftPort implements WorkingDraftPort {
   final calls = <_AssistantCall>[];
-  final outcomes = <
-    Result<WorkingDraftAssistantPatchResult> Function(
-      String fieldKey,
-      dynamic value,
-      int expectedVersion,
-      String actionId,
-      String commandId,
-    )
-  >[];
+  final outcomes =
+      <
+        Result<WorkingDraftAssistantPatchResult> Function(
+          String fieldKey,
+          dynamic value,
+          int expectedVersion,
+          String actionId,
+          String commandId,
+        )
+      >[];
 
   @override
   Future<Result<WorkingDraftAssistantPatchResult>> akilliMotorYamasiUygula({
@@ -54,6 +55,24 @@ class _FakeWorkingDraftPort implements WorkingDraftPort {
     return outcome(anahtar, deger, beklenenSurum, actionId, commandId);
   }
 
+  final undoCalls = <String>[];
+
+  @override
+  Future<Result<WorkingDraftAssistantUndoResult>> akilliMotorCommandGeriAl({
+    String? sessionToken,
+    required String commandId,
+  }) async {
+    undoCalls.add(commandId);
+    return Result.success(
+      WorkingDraftAssistantUndoResult(
+        commandId: commandId,
+        draftVersion: 1,
+        rolledBackActionCount: 1,
+        idempotentReplay: false,
+      ),
+    );
+  }
+
   @override
   Stream<int> degisimSinyali({required String slug}) => const Stream.empty();
 
@@ -63,15 +82,16 @@ class _FakeWorkingDraftPort implements WorkingDraftPort {
   }) async => Result.success(const WorkingDraftPublishResult(liveVersion: 1));
 
   @override
-  Future<Result<WorkingDraftSnapshot>> yukle({required String sessionToken}) async =>
-      Result.success(
-        const WorkingDraftSnapshot(
-          slug: 'test',
-          draftData: {},
-          draftVersion: 1,
-          baseLiveVersion: 1,
-        ),
-      );
+  Future<Result<WorkingDraftSnapshot>> yukle({
+    required String sessionToken,
+  }) async => Result.success(
+    const WorkingDraftSnapshot(
+      slug: 'test',
+      draftData: {},
+      draftVersion: 1,
+      baseLiveVersion: 1,
+    ),
+  );
 
   @override
   Future<Result<WorkingDraftPatchResult>> yamaUygula({
@@ -80,7 +100,8 @@ class _FakeWorkingDraftPort implements WorkingDraftPort {
     required dynamic deger,
     int? beklenenSurum,
     String? clientId,
-  }) async => Result.success(const WorkingDraftPatchResult.succeeded(draftVersion: 1));
+  }) async =>
+      Result.success(const WorkingDraftPatchResult.succeeded(draftVersion: 1));
 }
 
 Result<WorkingDraftAssistantPatchResult> _success(
@@ -89,16 +110,15 @@ Result<WorkingDraftAssistantPatchResult> _success(
   int expectedVersion,
   String actionId,
   String commandId,
-) =>
-    Result.success(
-      WorkingDraftAssistantPatchResult.succeeded(
-        actionId: actionId,
-        commandId: commandId,
-        fieldKey: fieldKey,
-        normalizedValue: value,
-        draftVersion: expectedVersion + 1,
-      ),
-    );
+) => Result.success(
+  WorkingDraftAssistantPatchResult.succeeded(
+    actionId: actionId,
+    commandId: commandId,
+    fieldKey: fieldKey,
+    normalizedValue: value,
+    draftVersion: expectedVersion + 1,
+  ),
+);
 
 void main() {
   test('iki action returned draftVersion ile 4→5→6 zinciri kurar', () async {
@@ -128,42 +148,49 @@ void main() {
     expect(port.calls.every((c) => c.commandId == 'cmd'), isTrue);
   });
 
-  test('field-level reject aynı version ile sonraki bağımsız actiona devam eder', () async {
-    final port = _FakeWorkingDraftPort()
-      ..outcomes.addAll([
-        (_, __, ___, ____, _____) => Result.failure(Failure('INVALID_FIELD_VALUE')),
-        _success,
-      ]);
-    final ids = <String>['cmd', 'a1', 'a2'].iterator;
-    String nextId() {
-      ids.moveNext();
-      return ids.current;
-    }
+  test(
+    'field-level reject aynı version ile sonraki bağımsız actiona devam eder',
+    () async {
+      final port =
+          _FakeWorkingDraftPort()
+            ..outcomes.addAll([
+              (_, __, ___, ____, _____) =>
+                  Result.failure(Failure('INVALID_FIELD_VALUE')),
+              _success,
+            ]);
+      final ids = <String>['cmd', 'a1', 'a2'].iterator;
+      String nextId() {
+        ids.moveNext();
+        return ids.current;
+      }
 
-    final result = await FlutterSmartEngineWorkingDraftOrchestrator(
-      port: port,
-      idFactory: nextId,
-    ).execute(
-      initialDraftVersion: 8,
-      actions: const [
-        FlutterSmartEngineAction(fieldKey: 'website', value: 'hatalı'),
-        FlutterSmartEngineAction(fieldKey: 'isletmeAdi', value: 'Vixrex'),
-      ],
-    );
+      final result = await FlutterSmartEngineWorkingDraftOrchestrator(
+        port: port,
+        idFactory: nextId,
+      ).execute(
+        initialDraftVersion: 8,
+        actions: const [
+          FlutterSmartEngineAction(fieldKey: 'website', value: 'hatalı'),
+          FlutterSmartEngineAction(fieldKey: 'isletmeAdi', value: 'Vixrex'),
+        ],
+      );
 
-    expect(result.status, FlutterSmartEngineCommandStatus.partialResult);
-    expect(result.failed.single.errorCode, 'INVALID_FIELD_VALUE');
-    expect(result.succeeded.single.fieldKey, 'isletmeAdi');
-    expect(port.calls.map((c) => c.expectedVersion), [8, 8]);
-    expect(result.draftVersion, 9);
-  });
+      expect(result.status, FlutterSmartEngineCommandStatus.partialResult);
+      expect(result.failed.single.errorCode, 'INVALID_FIELD_VALUE');
+      expect(result.succeeded.single.fieldKey, 'isletmeAdi');
+      expect(port.calls.map((c) => c.expectedVersion), [8, 8]);
+      expect(result.draftVersion, 9);
+    },
+  );
 
   test('version conflict sonrası kalan action hiç gönderilmez', () async {
-    final port = _FakeWorkingDraftPort()
-      ..outcomes.addAll([
-        _success,
-        (_, __, ___, ____, _____) => Result.failure(Failure('DRAFT_VERSION_CONFLICT')),
-      ]);
+    final port =
+        _FakeWorkingDraftPort()
+          ..outcomes.addAll([
+            _success,
+            (_, __, ___, ____, _____) =>
+                Result.failure(Failure('DRAFT_VERSION_CONFLICT')),
+          ]);
     final ids = <String>['cmd', 'a1', 'a2'].iterator;
     String nextId() {
       ids.moveNext();
@@ -177,7 +204,10 @@ void main() {
       initialDraftVersion: 10,
       actions: const [
         FlutterSmartEngineAction(fieldKey: 'isletmeAdi', value: 'A'),
-        FlutterSmartEngineAction(fieldKey: 'website', value: 'https://vixrex.com'),
+        FlutterSmartEngineAction(
+          fieldKey: 'website',
+          value: 'https://vixrex.com',
+        ),
         FlutterSmartEngineAction(fieldKey: 'instagram', value: 'vixrex'),
       ],
     );
@@ -190,17 +220,18 @@ void main() {
   });
 
   test('offline queue success değildir ve kalan action durur', () async {
-    final port = _FakeWorkingDraftPort()
-      ..outcomes.add(
-        (fieldKey, value, _, actionId, commandId) => Result.success(
-          WorkingDraftAssistantPatchResult.queuedOffline(
-            actionId: actionId,
-            commandId: commandId,
-            fieldKey: fieldKey,
-            normalizedValue: value,
-          ),
-        ),
-      );
+    final port =
+        _FakeWorkingDraftPort()
+          ..outcomes.add(
+            (fieldKey, value, _, actionId, commandId) => Result.success(
+              WorkingDraftAssistantPatchResult.queuedOffline(
+                actionId: actionId,
+                commandId: commandId,
+                fieldKey: fieldKey,
+                normalizedValue: value,
+              ),
+            ),
+          );
     final ids = <String>['cmd', 'a1'].iterator;
     String nextId() {
       ids.moveNext();
