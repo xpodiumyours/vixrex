@@ -54,10 +54,11 @@ jobs:
     defaults:
       run:
         # NOT (2026-09-06): self-hosted Windows runner'da PATH'teki ilk
-        # "bash", Git Bash değil WSL'nin System32 kabuk saplaması oluyor —
-        # WSL kurulu değilse "Bash/Service/E_UNEXPECTED" ile anında patlar.
-        # Git Bash'i tam yolla zorluyoruz.
-        shell: 'C:\Program Files\Git\bin\bash.exe -e -o pipefail {0}'
+        # "bash", Git Bash değil WSL'nin System32 kabuk saplaması olabiliyor.
+        # Çözüm burada değil, runner'ı başlatan PowerShell'in PATH'inde —
+        # Git\bin System32'den önce gelecek şekilde run.cmd başlatılıyor.
+        # (Tam yol vermek "Second path fragment..." runner hatasına çarpıyor.)
+        shell: bash
 
     steps:
       - name: Checkout
@@ -109,10 +110,11 @@ jobs:
     defaults:
       run:
         # NOT (2026-09-06): self-hosted Windows runner'da PATH'teki ilk
-        # "bash", Git Bash değil WSL'nin System32 kabuk saplaması oluyor —
-        # WSL kurulu değilse "Bash/Service/E_UNEXPECTED" ile anında patlar.
-        # Git Bash'i tam yolla zorluyoruz.
-        shell: 'C:\Program Files\Git\bin\bash.exe -e -o pipefail {0}'
+        # "bash", Git Bash değil WSL'nin System32 kabuk saplaması olabiliyor.
+        # Çözüm burada değil, runner'ı başlatan PowerShell'in PATH'inde —
+        # Git\bin System32'den önce gelecek şekilde run.cmd başlatılıyor.
+        # (Tam yol vermek "Second path fragment..." runner hatasına çarpıyor.)
+        shell: bash
     outputs:
       flutter: ${{ steps.classify.outputs.flutter }}
       schema: ${{ steps.classify.outputs.schema }}
@@ -219,10 +221,11 @@ jobs:
     defaults:
       run:
         # NOT (2026-09-06): self-hosted Windows runner'da PATH'teki ilk
-        # "bash", Git Bash değil WSL'nin System32 kabuk saplaması oluyor —
-        # WSL kurulu değilse "Bash/Service/E_UNEXPECTED" ile anında patlar.
-        # Git Bash'i tam yolla zorluyoruz.
-        shell: 'C:\Program Files\Git\bin\bash.exe -e -o pipefail {0}'
+        # "bash", Git Bash değil WSL'nin System32 kabuk saplaması olabiliyor.
+        # Çözüm burada değil, runner'ı başlatan PowerShell'in PATH'inde —
+        # Git\bin System32'den önce gelecek şekilde run.cmd başlatılıyor.
+        # (Tam yol vermek "Second path fragment..." runner hatasına çarpıyor.)
+        shell: bash
 
     steps:
       - name: Checkout
@@ -256,10 +259,11 @@ jobs:
     defaults:
       run:
         # NOT (2026-09-06): self-hosted Windows runner'da PATH'teki ilk
-        # "bash", Git Bash değil WSL'nin System32 kabuk saplaması oluyor —
-        # WSL kurulu değilse "Bash/Service/E_UNEXPECTED" ile anında patlar.
-        # Git Bash'i tam yolla zorluyoruz.
-        shell: 'C:\Program Files\Git\bin\bash.exe -e -o pipefail {0}'
+        # "bash", Git Bash değil WSL'nin System32 kabuk saplaması olabiliyor.
+        # Çözüm burada değil, runner'ı başlatan PowerShell'in PATH'inde —
+        # Git\bin System32'den önce gelecek şekilde run.cmd başlatılıyor.
+        # (Tam yol vermek "Second path fragment..." runner hatasına çarpıyor.)
+        shell: bash
 
     steps:
       - name: Checkout
@@ -335,10 +339,11 @@ jobs:
     defaults:
       run:
         # NOT (2026-09-06): self-hosted Windows runner'da PATH'teki ilk
-        # "bash", Git Bash değil WSL'nin System32 kabuk saplaması oluyor —
-        # WSL kurulu değilse "Bash/Service/E_UNEXPECTED" ile anında patlar.
-        # Git Bash'i tam yolla zorluyoruz.
-        shell: 'C:\Program Files\Git\bin\bash.exe -e -o pipefail {0}'
+        # "bash", Git Bash değil WSL'nin System32 kabuk saplaması olabiliyor.
+        # Çözüm burada değil, runner'ı başlatan PowerShell'in PATH'inde —
+        # Git\bin System32'den önce gelecek şekilde run.cmd başlatılıyor.
+        # (Tam yol vermek "Second path fragment..." runner hatasına çarpıyor.)
+        shell: bash
         working-directory: public_web
 
     steps:
