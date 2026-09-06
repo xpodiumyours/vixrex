@@ -13,27 +13,19 @@ jobs:
     name: PR425 format diff
     runs-on: [self-hosted, windows, vixrex]
     timeout-minutes: 10
-    defaults:
-      run:
-        shell: bash
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: "3.44.4"
-          channel: stable
-          cache: true
-
-      - name: Dependencies
-        run: flutter pub get
-
       - name: Format only the three failing files and print exact diff
+        shell: pwsh
         run: |
-          dart format test/architecture_routing_contract_test.dart test/main_navigation_screen_test.dart test/public_site_config_bos_ayar_test.dart
-          echo "===== FORMAT DIFF START ====="
+          $dart = 'C:\vixrex-runner\_work\_tool\flutter\stable-3.44.4-x64\flutter\bin\dart.bat'
+          if (-not (Test-Path $dart)) {
+            throw "Dart executable not found at $dart"
+          }
+          & $dart format --language-version=3.7 test/architecture_routing_contract_test.dart test/main_navigation_screen_test.dart test/public_site_config_bos_ayar_test.dart
+          Write-Host '===== FORMAT DIFF START ====='
           git diff -- test/architecture_routing_contract_test.dart test/main_navigation_screen_test.dart test/public_site_config_bos_ayar_test.dart
-          echo "===== FORMAT DIFF END ====="
+          Write-Host '===== FORMAT DIFF END ====='
