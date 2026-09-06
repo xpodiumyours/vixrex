@@ -18,7 +18,7 @@ jobs:
           ref: repair/main-baseline-20260905
           fetch-depth: 0
 
-      - name: Apply only verified analyzer hygiene edits
+      - name: Apply remaining verified analyzer hygiene edits
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -30,19 +30,9 @@ jobs:
                   raise SystemExit(f"expected text not found: {path}: {old[:80]!r}")
               p.write_text(s.replace(old, new, 1))
 
-          # pipeline: unused import + unused placeholder local
-          replace('lib/services/vixrex_nlu/vixrex_nlu_pipeline.dart',
-                  "import 'package:vixrex/config/vitrin_alanlari.g.dart';\n", '')
-          replace('lib/services/vixrex_nlu/vixrex_nlu_pipeline.dart',
-                  "    // 1b) Yasal alanlar bu borudan yasak – mevcut legal akışa yönlendir.\n    // Sözlükte yasal alanlar yok, bu dal Faz 1’de ölü – fakat emniyet için kontrol.\n    const yasakAlanlar = {\n      'isletmeAdi': false,\n    }; // placeholder, gerçek yasak sözlükte yok\n\n",
-                  "    // 1b) Yasal alanlar sözlükte yok; mevcut legal akış ayrı kalır.\n\n")
-
-          # value extractor: unused local + five brace-only lint fixes
+          # value extractor: five brace-only lint fixes
           p = Path('lib/services/vixrex_nlu/vixrex_value_extractor.dart')
           s = p.read_text()
-          block = "    final verbIdx = afterField.toLowerCase().indexOf(\n      RegExp(\n        r'\\b(yap|olsun|degistir|değiştir|ekle|guncelle|güncelle|ayarla|yaz)\\b',\n      ).pattern,\n    );\n"
-          if block not in s: raise SystemExit('verbIdx block not found')
-          s = s.replace(block, '', 1)
           pairs = [
             ("      if (withoutTrailingVerb.trim().isNotEmpty)\n        return withoutTrailingVerb.trim();",
              "      if (withoutTrailingVerb.trim().isNotEmpty) {\n        return withoutTrailingVerb.trim();\n      }"),
@@ -60,7 +50,7 @@ jobs:
               s=s.replace(old,new,1)
           p.write_text(s)
 
-          # field validator: brace-only lint fixes; return values unchanged
+          # field validator: eight brace-only lint fixes; return values unchanged
           p = Path('lib/services/vixrex_nlu/vixrex_field_validator.dart')
           s = p.read_text()
           pairs = [
@@ -86,12 +76,6 @@ jobs:
               s=s.replace(old,new,1)
           p.write_text(s)
 
-          replace('lib/services/working_draft/local_queue_working_draft_adapter.dart',
-                  '    if (_prefs != null) return _prefs!;',
-                  '    if (_prefs != null) return _prefs;')
-          replace('test/vixrex_nlu_faz1_test.dart',
-                  'VixrexFieldValidator.validate(adres, v2!).ok == false',
-                  'VixrexFieldValidator.validate(adres, v2).ok == false')
           replace('lib/config/web_navigate_web.dart',
                   "/// Web'de aynı sekmede navigasyon — package:web implementasyonu.\n/// dart:html Wasm'da `dart.library.html` false olur ve stub'a düşer, bu yüzden package:web kullanılır.",
                   "// Web'de aynı sekmede navigasyon — package:web implementasyonu.\n// dart:html Wasm'da `dart.library.html` false olur ve stub'a düşer, bu yüzden package:web kullanılır.")
@@ -100,14 +84,14 @@ jobs:
           PY
 
       - name: Show narrow diff
-        run: git diff --check && git diff --stat && git diff -- lib/services/vixrex_nlu/vixrex_nlu_pipeline.dart lib/services/vixrex_nlu/vixrex_value_extractor.dart lib/services/vixrex_nlu/vixrex_field_validator.dart lib/services/working_draft/local_queue_working_draft_adapter.dart lib/config/web_navigate_web.dart test/vixrex_nlu_faz1_test.dart test/vitrin_store_card_test.dart
+        run: git diff --check && git diff --stat && git diff -- lib/services/vixrex_nlu/vixrex_value_extractor.dart lib/services/vixrex_nlu/vixrex_field_validator.dart lib/config/web_navigate_web.dart test/vitrin_store_card_test.dart
 
       - name: Commit verified hygiene only
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add lib/services/vixrex_nlu/vixrex_nlu_pipeline.dart lib/services/vixrex_nlu/vixrex_value_extractor.dart lib/services/vixrex_nlu/vixrex_field_validator.dart lib/services/working_draft/local_queue_working_draft_adapter.dart lib/config/web_navigate_web.dart test/vixrex_nlu_faz1_test.dart test/vitrin_store_card_test.dart
-          git commit -m "chore(flutter): clear remaining analyzer hygiene"
+          git add lib/services/vixrex_nlu/vixrex_value_extractor.dart lib/services/vixrex_nlu/vixrex_field_validator.dart lib/config/web_navigate_web.dart test/vitrin_store_card_test.dart
+          git commit -m "chore(flutter): clear remaining analyzer infos"
           git fetch origin repair/main-baseline-20260905
           git rebase origin/repair/main-baseline-20260905
           git push origin HEAD:repair/main-baseline-20260905
