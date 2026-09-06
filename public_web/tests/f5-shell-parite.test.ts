@@ -4,10 +4,12 @@ import { describe, expect, it } from "vitest";
 
 describe("F5 shell paritesi — Flutter HomeShellScreen = Next ortak AppShell", () => {
   const flutterShell = readFileSync(resolve(__dirname, "../../lib/screens/home_shell_screen.dart"), "utf-8");
+  const flutterProfile = readFileSync(resolve(__dirname, "../../lib/screens/profile_screen.dart"), "utf-8");
   const appNav = readFileSync(resolve(__dirname, "../src/components/app/AppSidebar.tsx"), "utf-8");
   const appBoundary = readFileSync(resolve(__dirname, "../src/components/app/AppShellBoundary.tsx"), "utf-8");
   const kesfet = readFileSync(resolve(__dirname, "../src/components/kesfet/KesfetIcerik.tsx"), "utf-8");
   const vixrexPage = readFileSync(resolve(__dirname, "../src/app/app/vixrex/page.tsx"), "utf-8");
+  const profilePage = readFileSync(resolve(__dirname, "../src/app/app/profil/page.tsx"), "utf-8");
   const vitrinEditor = readFileSync(resolve(__dirname, "../src/components/owner/VitrinimEditor.tsx"), "utf-8");
   const ownerProduct = readFileSync(resolve(__dirname, "../src/components/owner/OwnerProductManager.tsx"), "utf-8");
 
@@ -53,6 +55,26 @@ describe("F5 shell paritesi — Flutter HomeShellScreen = Next ortak AppShell", 
     expect(appNav).toContain("min-[901px]:flex");
     expect(appNav).toContain("min-[901px]:hidden");
     expect(flutterShell).toContain("size.width > 900");
+  });
+
+  it("Profil yalnız Flutter referansındaki ana yüzeyi taşır", () => {
+    const ortakMetinler = [
+      "Profil",
+      "Hesap",
+      "Vitrin Bağlantısı",
+      "Hızlı QR Kod Paylaşımı",
+      "Uygulama Ayarları",
+      "Kullanım Bilgisi & Destek",
+      "Gizlilik ve Güvenlik politikası",
+    ];
+    for (const metin of ortakMetinler) {
+      expect(flutterProfile).toContain(metin);
+      expect(profilePage).toContain(metin);
+    }
+    expect(profilePage).not.toContain("Şifre Değiştir");
+    expect(profilePage).not.toContain("Tehlikeli Bölge");
+    expect(profilePage).not.toContain("Çıkış Yap");
+    expect(profilePage).not.toContain("← Geri");
   });
 
   it("Vitrinim header her iki yüzeyde aynı metinler (yayında/yayınla)", () => {
