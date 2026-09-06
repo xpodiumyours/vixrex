@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, type MouseEvent } from "react";
+import { useAppShellSearch } from "@/components/app/AppShellContext";
 import {
   BUSINESS_CATEGORIES,
   kategoriUrlParcasi,
@@ -12,7 +13,6 @@ import type { KesfetVitrini } from "@/lib/explore";
 import { kesfetVitrinleriniFiltrele } from "@/lib/kesfetFiltreleme";
 import { supabase } from "@/lib/supabase";
 import { VitrinKarti, type PremiumBilgisi } from "./VitrinKarti";
-import { StatusBar } from "./StatusBar";
 import { MascotFab } from "@/components/landing/MascotFab";
 
 const FAVORI_ANAHTARI = "favorite_stores";
@@ -51,7 +51,7 @@ export function KesfetIcerik({
   aciklama: string;
 }) {
   const router = useRouter();
-  const [sorgu, setSorgu] = useState("");
+  const { globalSearch: sorgu, setGlobalSearch: setSorgu } = useAppShellSearch();
   const [grup, setGrup] = useState<BusinessTemplateGroup | undefined>(undefined);
   const [kategoriKimligi, setKategoriKimligi] = useState<string | null>(ilkKategoriKimligi);
   const [sadeceFavoriler, setSadeceFavoriler] = useState(false);
@@ -60,9 +60,11 @@ export function KesfetIcerik({
   const [premium, setPremium] = useState<PremiumBilgisi | null>(null);
 
   useEffect(() => {
-    const vixrexIstenmis = new URLSearchParams(window.location.search).get("vixrex") === "1";
-    if (vixrexIstenmis) router.replace("/app/vixrex");
-  }, [router]);
+    const params = new URLSearchParams(window.location.search);
+    const query = params.get("q")?.trim() ?? "";
+    if (query) setSorgu(query);
+    if (params.get("vixrex") === "1") router.replace("/app/vixrex");
+  }, [router, setSorgu]);
 
   useEffect(() => {
     let iptal = false;
@@ -177,16 +179,15 @@ export function KesfetIcerik({
   return (
     <main className="min-h-full min-w-0 bg-lp-bg-editor text-lp-text">
       <MascotFab mesajGoster={false} onToggle={() => router.push("/app/vixrex")} />
-      <StatusBar sahipSlug={sahipSlug} premium={premium} />
 
       <header className="flex h-14 items-center px-4">
-        <h1 id="kesfet-baslik" className="text-[20px] font-black leading-tight text-lp-text">
+        <h1 id="kesfet-baslik" className="text-[18px] font-black leading-tight text-lp-text">
           {baslik}
         </h1>
       </header>
 
-      <section className="pb-[80px] min-[901px]:pb-0" aria-labelledby="kesfet-baslik">
-        <p className="px-6 pb-3 text-[12px] font-semibold leading-[1.5] text-lp-muted">
+      <section className="pb-[84px] min-[901px]:pb-0" aria-labelledby="kesfet-baslik">
+        <p className="px-6 pb-3 text-[12px] font-normal leading-[1.4] text-lp-muted">
           {aciklama}
         </p>
 
@@ -210,7 +211,7 @@ export function KesfetIcerik({
               value={sorgu}
               onChange={(event) => setSorgu(event.target.value)}
               placeholder="Vitrin, ürün veya il/ilçe ara"
-              className="h-12 w-full rounded-2xl border border-lp-border bg-lp-surface py-3 pl-11 pr-12 text-[14px] font-semibold text-lp-text placeholder:text-lp-muted focus:border-lp-primary focus:outline-none focus:ring-2 focus:ring-lp-primary/30"
+              className="h-12 w-full rounded-xl border border-lp-border bg-lp-bg-light py-3 pl-11 pr-12 text-[14px] font-normal text-lp-text placeholder:text-lp-muted focus:border-lp-secondary focus:outline-none focus:ring-2 focus:ring-lp-primary/30"
             />
             {sorgu ? (
               <button
@@ -232,10 +233,10 @@ export function KesfetIcerik({
             type="button"
             aria-pressed={grup === undefined}
             onClick={() => grubuSec(undefined)}
-            className={`my-auto min-h-8 shrink-0 rounded-full border px-4 text-[12px] font-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
+            className={`my-auto min-h-8 shrink-0 rounded-xl border px-4 text-[13px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
               grup === undefined
                 ? "border-lp-primary bg-lp-primary text-lp-on-primary"
-                : "border-lp-border bg-lp-surface text-lp-text-alt hover:bg-lp-surface-soft"
+                : "border-lp-border bg-lp-bg-light text-lp-text-alt hover:bg-lp-surface-soft"
             }`}
           >
             Tümü
@@ -246,10 +247,10 @@ export function KesfetIcerik({
               type="button"
               aria-pressed={grup === secenek.deger}
               onClick={() => grubuSec(secenek.deger)}
-              className={`my-auto min-h-8 shrink-0 rounded-full border px-4 text-[12px] font-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
+              className={`my-auto min-h-8 shrink-0 rounded-xl border px-4 text-[13px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
                 grup === secenek.deger
                   ? "border-lp-primary bg-lp-primary text-lp-on-primary"
-                  : "border-lp-border bg-lp-surface text-lp-text-alt hover:bg-lp-surface-soft"
+                  : "border-lp-border bg-lp-bg-light text-lp-text-alt hover:bg-lp-surface-soft"
               }`}
             >
               {secenek.etiket}
@@ -262,13 +263,13 @@ export function KesfetIcerik({
             type="button"
             aria-pressed={sadeceFavoriler}
             onClick={() => setSadeceFavoriler((deger) => !deger)}
-            className={`my-auto flex min-h-8 shrink-0 items-center gap-2 rounded-full border px-4 text-[12px] font-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
+            className={`my-auto flex min-h-8 shrink-0 items-center gap-2 rounded-xl border px-4 text-[13px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
               sadeceFavoriler
                 ? "border-lp-primary bg-lp-primary text-lp-on-primary"
-                : "border-lp-border bg-lp-surface text-lp-text-alt hover:bg-lp-surface-soft"
+                : "border-lp-border bg-lp-bg-light text-lp-text-alt hover:bg-lp-surface-soft"
             }`}
           >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill={sadeceFavoriler ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill={sadeceFavoriler ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" aria-hidden="true">
               <path d="M12 21s-6.5-4.2-8.2-8.2A5.2 5.2 0 0 1 12 5.2a5.2 5.2 0 0 1 8.2 7.6C18.5 16.8 12 21 12 21z" />
             </svg>
             Favorilerim
@@ -279,10 +280,10 @@ export function KesfetIcerik({
               href={`/kesfet/${kategoriUrlParcasi(kategori.id)}`}
               onClick={(event) => kategoriBaglantisiniFiltreyeCevir(event, kategori.id)}
               aria-current={kategoriKimligi === kategori.id ? "page" : undefined}
-              className={`my-auto flex min-h-8 shrink-0 items-center rounded-full border px-4 text-[12px] font-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
+              className={`my-auto flex min-h-8 shrink-0 items-center rounded-xl border px-4 text-[13px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
                 kategoriKimligi === kategori.id
                   ? "border-lp-primary bg-lp-primary text-lp-on-primary"
-                  : "border-lp-border bg-lp-surface text-lp-text-alt hover:bg-lp-surface-soft"
+                  : "border-lp-border bg-lp-bg-light text-lp-text-alt hover:bg-lp-surface-soft"
               }`}
             >
               {kategori.label}
@@ -339,7 +340,7 @@ export function KesfetIcerik({
           <div className="px-6 pb-3 pt-2">
             <Link
               href="/"
-              className="flex min-h-11 w-full items-center justify-center rounded-xl border border-lp-border bg-lp-surface px-5 text-[13px] font-black text-lp-text-alt hover:bg-lp-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary"
+              className="flex min-h-[46px] w-full items-center justify-center rounded-xl border border-lp-border bg-lp-surface px-5 text-[14px] font-bold text-lp-text-alt hover:bg-lp-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary"
             >
               Uygun olan yok, sıfırdan oluştur
             </Link>

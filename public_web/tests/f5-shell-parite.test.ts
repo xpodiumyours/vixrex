@@ -2,77 +2,89 @@ import { readFileSync } from "fs";
 import { resolve } from "path";
 import { describe, expect, it } from "vitest";
 
-describe("F5 shell paritesi — Flutter HomeShellScreen = Next ortak AppShell", () => {
+describe("Flutter Web ↔ Next.js tek-shell paritesi", () => {
   const flutterShell = readFileSync(resolve(__dirname, "../../lib/screens/home_shell_screen.dart"), "utf-8");
+  const flutterTheme = readFileSync(resolve(__dirname, "../../lib/theme/app_theme.dart"), "utf-8");
   const flutterProfile = readFileSync(resolve(__dirname, "../../lib/screens/profile_screen.dart"), "utf-8");
+  const appContext = readFileSync(resolve(__dirname, "../src/components/app/AppShellContext.tsx"), "utf-8");
   const appNav = readFileSync(resolve(__dirname, "../src/components/app/AppSidebar.tsx"), "utf-8");
   const appBoundary = readFileSync(resolve(__dirname, "../src/components/app/AppShellBoundary.tsx"), "utf-8");
+  const statusBar = readFileSync(resolve(__dirname, "../src/components/kesfet/StatusBar.tsx"), "utf-8");
   const kesfet = readFileSync(resolve(__dirname, "../src/components/kesfet/KesfetIcerik.tsx"), "utf-8");
   const vixrexPage = readFileSync(resolve(__dirname, "../src/app/app/vixrex/page.tsx"), "utf-8");
   const profilePage = readFileSync(resolve(__dirname, "../src/app/app/profil/page.tsx"), "utf-8");
   const vitrinEditor = readFileSync(resolve(__dirname, "../src/components/owner/VitrinimEditor.tsx"), "utf-8");
   const ownerProduct = readFileSync(resolve(__dirname, "../src/components/owner/OwnerProductManager.tsx"), "utf-8");
 
-  it("4 tab sırası her iki yüzeyde aynı: Vitrinim/Keşfet/Vixrex/Profil", () => {
+  it("dört ana sekme aynı sırada ve Vixrex gerçek üçüncü rotadır", () => {
     const sira = ["Vitrinim", "Keşfet", "Vixrex", "Profil"];
     for (const label of sira) {
-      expect(flutterShell, `Flutter ${label}`).toContain(label);
-      expect(appNav, `Next ${label}`).toContain(label);
+      expect(flutterShell).toContain(label);
+      expect(appNav).toContain(label);
     }
-
-    const menuIndex = (s: string, label: string) => s.indexOf(`label: "${label}"`);
+    const nextIndexes = sira.map((label) => appNav.indexOf(`label: "${label}"`));
+    const flutterIndexes = sira.map((label) => flutterShell.indexOf(`label: '${label}'`));
     for (let i = 0; i < sira.length - 1; i++) {
-      expect(menuIndex(appNav, sira[i]), `${sira[i]} → ${sira[i + 1]} sırası`).toBeLessThan(
-        menuIndex(appNav, sira[i + 1]),
-      );
+      expect(nextIndexes[i]).toBeLessThan(nextIndexes[i + 1]);
+      expect(flutterIndexes[i]).toBeLessThan(flutterIndexes[i + 1]);
     }
-
-    const flutterSira = sira.map((l) => flutterShell.indexOf(`label: '${l}'`));
-    for (let i = 0; i < flutterSira.length - 1; i++) {
-      expect(flutterSira[i], `Flutter ${sira[i]}`).toBeLessThan(flutterSira[i + 1]);
-    }
-  });
-
-  it("Vixrex üçüncü gerçek sekmedir; modal veya Keşfet iç görünümü değildir", () => {
     expect(appNav).toContain('href: "/app/vixrex"');
-    expect(appNav).not.toContain("AsistanPaneli");
-    expect(appNav).not.toContain("SharedVixrexAssistant");
     expect(vixrexPage).toContain("SharedVixrexAssistant");
+    expect(appNav).not.toContain("AsistanPaneli");
     expect(kesfet).not.toContain("SharedVixrexAssistant");
-    expect(kesfet).not.toContain("KesfetYanMenu");
-    expect(kesfet).toContain('router.push("/app/vixrex")');
   });
 
-  it("yalnız dört ana yüz shell içinde; Profil alt ekranları push ekranıdır", () => {
+  it("tek shell tek status bar taşır; sayfalar ikinci kopya üretmez", () => {
+    expect(appBoundary).toContain("<AppShellProvider>");
+    expect(appBoundary).toContain("<AppSidebar />");
+    expect(appBoundary).toContain("<StatusBar />");
+    expect(appBoundary).toContain("<AppBottomNav />");
+    expect(kesfet).not.toContain("<StatusBar");
+    expect(vitrinEditor).not.toContain("sticky top-0 z-20");
+    expect(statusBar).toContain("Vitrininiz henüz yayınlanmadı");
+    expect(statusBar).toContain("Vitrini yayınla");
+    expect(statusBar).toContain("Kopyala");
+    expect(statusBar).toContain("QR");
+    expect(statusBar).toContain("Vitrini aç");
+  });
+
+  it("sidebar ve Keşfet aynı arama state'ini kullanır", () => {
+    expect(appContext).toContain("globalSearch");
+    expect(appContext).toContain("setGlobalSearch");
+    expect(appNav).toContain("useAppShell");
+    expect(kesfet).toContain("useAppShellSearch");
+    expect(kesfet).not.toContain('useState("")');
+  });
+
+  it("masaüstü 220px/>900 ve mobil NavigationBar 68px sözleşmesini korur", () => {
+    expect(appNav).toContain("w-[220px]");
+    expect(appNav).toContain("min-[901px]:flex");
+    expect(appNav).toContain("min-[901px]:hidden");
+    expect(appNav).toContain("h-[68px]");
+    expect(flutterShell).toContain("size.width > 900");
+    expect(flutterTheme).toContain("height: 68");
+  });
+
+  it("yalnız ana yüzler shell'dedir; Profil alt ekranları push ekranıdır", () => {
     expect(appBoundary).toContain('pathname === "/app"');
     expect(appBoundary).toContain('pathname === "/app/vixrex"');
     expect(appBoundary).toContain('pathname === "/app/profil"');
     expect(appBoundary).toContain('pathname === "/kesfet"');
-    expect(appBoundary).toContain("<AppSidebar />");
-    expect(appBoundary).toContain("<AppBottomNav />");
     expect(appBoundary).not.toContain('pathname.startsWith("/app/")');
     expect(appBoundary).not.toContain('"/app/ayarlar"');
     expect(appBoundary).not.toContain('"/app/hesap"');
   });
 
-  it("Flutter masaüstü eşiği ve sidebar genişliği korunur", () => {
-    expect(appNav).toContain("w-[220px]");
-    expect(appNav).toContain("min-[901px]:flex");
-    expect(appNav).toContain("min-[901px]:hidden");
-    expect(flutterShell).toContain("size.width > 900");
-  });
-
-  it("Profil yalnız Flutter referansındaki ana yüzeyi taşır", () => {
-    const ortakMetinler = [
+  it("Profil Flutter ana yüzüyle aynı ana öğeleri taşır, Next'e özgü hesap blokları taşımaz", () => {
+    const ortak = [
       "Profil",
-      "Hesap",
       "Vitrin Bağlantısı",
       "Hızlı QR Kod Paylaşımı",
       "Uygulama Ayarları",
       "Kullanım Bilgisi & Destek",
       "Gizlilik ve Güvenlik politikası",
     ];
-    for (const metin of ortakMetinler) {
+    for (const metin of ortak) {
       expect(flutterProfile).toContain(metin);
       expect(profilePage).toContain(metin);
     }
@@ -82,14 +94,22 @@ describe("F5 shell paritesi — Flutter HomeShellScreen = Next ortak AppShell", 
     expect(profilePage).not.toContain("← Geri");
   });
 
-  it("Vitrinim header her iki yüzeyde aynı metinler (yayında/yayınla)", () => {
-    expect(flutterShell).toContain("Vixrex");
-    expect(vitrinEditor).toContain("Vixrex Düzenle");
-    expect(vitrinEditor).toContain("Vixrex Oluştur");
-    expect(vitrinEditor).toContain("Yayında");
+  it("Keşfet kategori başlangıcını filtre olarak tutar; Vixrex yalnız açık istekle açılır", () => {
+    expect(kesfet).toContain("ilkKategoriKimligi");
+    expect(kesfet).toContain('params.get("vixrex") === "1"');
+    expect(kesfet).not.toContain("ilkKategoriKimligi\n      ) {\n        router");
   });
 
-  it("ürün kuyruğu vitrin draft kuyruğundan ayrı ve akordeonla beraber (F4)", () => {
+  it("Vitrinim ortak shell'e aittir; Vixrex ile rozeti navigasyon değildir ve paylaşım kartı ortaktır", () => {
+    expect(vitrinEditor).toContain("Vixrex Düzenle");
+    expect(vitrinEditor).toContain("Vixrex Oluştur");
+    expect(vitrinEditor).toContain("Vixrex ile");
+    expect(vitrinEditor).toContain("VitrinPaylasimKarti");
+    expect(vitrinEditor).toContain("refreshShellStatus");
+    expect(vitrinEditor).not.toContain('router.push("/kesfet?vixrex=1")');
+  });
+
+  it("ürün kuyruğu vitrin taslak kuyruğundan ayrı kalır", () => {
     expect(ownerProduct).toContain("productQueueEnqueue");
     expect(ownerProduct).toContain("productQueueFlush");
     expect(ownerProduct).toContain("productQueueCount");

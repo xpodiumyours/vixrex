@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { KesfetIkonu, StorefrontIkonu } from "@/components/site/icons";
+import { useAppShell } from "@/components/app/AppShellContext";
 
 function MaskotIkonu({ boyut = 20 }: { boyut?: number }) {
   return (
@@ -43,28 +44,24 @@ const NAV = [
     href: "/app/vixrex",
     label: "Vixrex",
     icon: <MaskotIkonu boyut={20} />,
-    match: (p: string) => p.startsWith("/app/vixrex"),
+    match: (p: string) => p === "/app/vixrex",
   },
   {
     href: "/app/profil",
     label: "Profil",
     icon: <KisiIkonu />,
-    match: (p: string) =>
-      p.startsWith("/app/profil") ||
-      p.startsWith("/app/hesap") ||
-      p.startsWith("/app/ayarlar") ||
-      p.startsWith("/app/bildirimler"),
+    match: (p: string) => p === "/app/profil",
   },
 ] as Array<{ href: string; label: string; icon: ReactNode; match: (p: string) => boolean }>;
 
 export function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const [q, setQ] = useState("");
+  const { globalSearch, setGlobalSearch } = useAppShell();
 
   function onSearch(e: React.FormEvent) {
     e.preventDefault();
-    const query = q.trim();
+    const query = globalSearch.trim();
     router.push(query ? `/kesfet?q=${encodeURIComponent(query)}` : "/kesfet");
   }
 
@@ -80,9 +77,7 @@ export function AppSidebar() {
       </Link>
 
       <form onSubmit={onSearch} className="px-3 pb-2 pt-4">
-        <label htmlFor="app-shell-search" className="sr-only">
-          Vitrin veya ürün ara
-        </label>
+        <label htmlFor="app-shell-search" className="sr-only">Vitrin veya ürün ara</label>
         <div className="relative">
           <svg className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-lp-muted" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
             <circle cx="11" cy="11" r="7" />
@@ -90,10 +85,10 @@ export function AppSidebar() {
           </svg>
           <input
             id="app-shell-search"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
+            value={globalSearch}
+            onChange={(e) => setGlobalSearch(e.target.value)}
             placeholder="Vitrin veya ürün ara"
-            className="h-11 w-full rounded-xl border border-lp-border bg-lp-bg-light pl-10 pr-3 text-[13px] font-semibold text-lp-text placeholder:text-lp-muted focus:border-lp-primary focus:outline-none focus:ring-2 focus:ring-lp-primary/30"
+            className="h-11 w-full rounded-xl border border-lp-border bg-lp-bg-light pl-10 pr-3 text-[13px] font-semibold text-lp-text placeholder:text-lp-muted focus:border-lp-secondary focus:outline-none focus:ring-2 focus:ring-lp-primary/30"
           />
         </div>
       </form>
@@ -112,7 +107,7 @@ export function AppSidebar() {
                   : "text-lp-muted hover:bg-lp-surface-soft hover:text-lp-text"
               }`}
             >
-              <span className={active ? "text-lp-primary" : "text-current"}>{item.icon}</span>
+              <span className={active ? "text-lp-secondary" : "text-current"}>{item.icon}</span>
               {item.label}
             </Link>
           );
@@ -130,7 +125,7 @@ export function AppBottomNav() {
   return (
     <nav
       aria-label="Mobil uygulama menüsü"
-      className="fixed inset-x-0 bottom-0 z-40 flex h-[64px] items-center justify-around border-t border-lp-border bg-lp-surface px-1 pb-[env(safe-area-inset-bottom)] min-[901px]:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 flex h-[68px] items-center justify-around border-t border-lp-border bg-lp-bg-editor px-1 pb-[env(safe-area-inset-bottom)] min-[901px]:hidden"
     >
       {NAV.map((item) => {
         const active = item.match(pathname);
@@ -139,11 +134,15 @@ export function AppBottomNav() {
             key={item.label}
             href={item.href}
             aria-current={active ? "page" : undefined}
-            className={`flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-1 text-[10px] font-bold leading-none transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
-              active ? "text-lp-primary" : "text-lp-muted"
+            className={`flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 px-1 py-1 text-[11px] leading-none transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
+              active ? "font-bold text-lp-secondary" : "font-normal text-lp-muted"
             }`}
           >
-            <span className={active ? "text-lp-primary" : "text-current"}>{item.icon}</span>
+            <span className={`flex min-h-7 min-w-12 items-center justify-center rounded-full px-3 py-1 ${active ? "bg-lp-primary/20 text-lp-secondary" : "text-current"}`}>
+              <span className="scale-110">
+                {item.label === "Vixrex" ? <MaskotIkonu boyut={24} /> : item.icon}
+              </span>
+            </span>
             <span>{item.label}</span>
           </Link>
         );

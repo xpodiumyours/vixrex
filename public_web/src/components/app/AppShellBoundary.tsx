@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { AppShellProvider } from "@/components/app/AppShellContext";
 import { AppBottomNav, AppSidebar } from "@/components/app/AppSidebar";
 import { StatusBar } from "@/components/kesfet/StatusBar";
 
@@ -15,33 +16,23 @@ function shellRotasi(pathname: string): boolean {
   );
 }
 
-function ortakDurumCubuguGerekli(pathname: string): boolean {
-  // /app VitrinimEditor ve /kesfet KesfetIcerik henüz kendi aynı şeridini
-  // taşıyor. Bu iki tekrar sonraki cerrahi adımda sökülecek; Vixrex ve Profil
-  // şimdiden Flutter'daki tek shell durum çubuğunu doğrudan kullanır.
-  return pathname === "/app/vixrex" || pathname === "/app/profil";
-}
-
-/**
- * Flutter HomeShellScreen'in Next.js karşılığı.
- *
- * Vitrinim / Keşfet / Vixrex / Profil aynı uygulama kabuğunun çocuklarıdır.
- * Profil'den açılan Ayarlar/Hesap gibi alt ekranlar Flutter'da Navigator.push
- * ile shell dışına çıkar; Next.js'te de bu yüzden bu sınırın dışında kalır.
- */
+/** Flutter HomeShellScreen'in Next.js karşılığı: tek sidebar, tek durum çubuğu,
+ * tek mobil NavigationBar ve dört ana yüz. */
 export function AppShellBoundary({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   if (!shellRotasi(pathname)) return children;
 
   return (
-    <div className="flex min-h-screen bg-lp-bg-editor text-lp-text">
-      <AppSidebar />
-      <div className="flex min-h-screen min-w-0 flex-1 flex-col">
-        {ortakDurumCubuguGerekli(pathname) ? <StatusBar /> : null}
-        <div className="min-w-0 flex-1 pb-[64px] min-[901px]:pb-0">{children}</div>
-        <AppBottomNav />
+    <AppShellProvider>
+      <div className="flex min-h-screen bg-lp-bg-editor text-lp-text">
+        <AppSidebar />
+        <div className="flex min-h-screen min-w-0 flex-1 flex-col">
+          <StatusBar />
+          <div className="min-w-0 flex-1 pb-[68px] min-[901px]:pb-0">{children}</div>
+          <AppBottomNav />
+        </div>
       </div>
-    </div>
+    </AppShellProvider>
   );
 }
