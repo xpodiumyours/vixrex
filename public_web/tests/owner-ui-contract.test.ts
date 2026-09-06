@@ -21,6 +21,7 @@ const globals = oku("src/app/globals.css");
 const giris = oku("src/app/giris/page.tsx");
 const kayit = oku("src/app/kayit/page.tsx");
 const pano = oku("src/app/app/page.tsx");
+const vitrinimEditor = oku("src/components/owner/VitrinimEditor.tsx");
 const urunler = oku("src/components/owner/OwnerProductManager.tsx");
 
 // Sahip yönetim yüzeyleri — yeni sayfa eklenince buraya da eklenmeli.
@@ -45,12 +46,21 @@ describe("sahip yönetim arayüzü sözleşmesi", () => {
     expect(globals).toMatch(/\.vitrin-shell\s*\{/);
   });
 
-  it("yönetim formları etiket, meşgul durumu ve hata gösteriyor", () => {
-    for (const kaynak of [giris, kayit, pano]) {
+  it("yönetim formları etiket, işlem durumu ve hata gösteriyor", () => {
+    // /app creation formu #423 ile page.tsx içindeki eski tek alanlı formdan
+    // ortak VitrinimEditor'e taşındı. Sözleşme artık gerçek form sahibini
+    // denetler; eski magazaOlustur/showNameForm dalını geri istemez.
+    for (const kaynak of [giris, kayit]) {
       expect(kaynak).toMatch(/<label htmlFor=/);
       expect(kaynak).toMatch(/aria-busy=/);
       expect(kaynak).toMatch(/role="alert"/);
     }
+    expect(pano).toContain("<VitrinimEditor");
+    expect(pano).toContain("isCreationMode");
+    expect(pano).toMatch(/role="alert"/);
+    expect(vitrinimEditor).toMatch(/<label htmlFor=/);
+    expect(vitrinimEditor).toMatch(/disabled=\{publishing/);
+    expect(vitrinimEditor).toMatch(/role="status"/);
   });
 
   it("sahip dili tek-vitrin modelini izliyor", () => {
