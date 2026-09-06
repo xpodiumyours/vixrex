@@ -1,0 +1,58 @@
+{
+  "cases": [
+    {
+      "id": "storefront-default",
+      "input": "İşletme adımı Mavi Kafe yap",
+      "domain": "storefront",
+      "intent": null
+    },
+    {
+      "id": "blog-heading-is-storefront-field",
+      "input": "blog başlığını değiştir",
+      "domain": "storefront",
+      "intent": null
+    },
+    {
+      "id": "blog-draft-add",
+      "input": "Google'da görünmek hakkında vitrinin bloguna yazı ekle",
+      "domain": "blog",
+      "intent": "blog_yazisi_taslak_ekle"
+    },
+    {
+      "id": "blog-recommend",
+      "input": "Bana blog yazısı öner",
+      "domain": "blog",
+      "intent": "blog_yazisi_oner"
+    },
+    {
+      "id": "blog-find",
+      "input": "SEO hakkında blog yazısı bul",
+      "domain": "blog",
+      "intent": "blog_yazisi_bul"
+    },
+    {
+      "id": "blog-list-drafts",
+      "input": "Blog taslaklarımı göster",
+      "domain": "blog",
+      "intent": "blog_taslaklarini_listele"
+    },
+    {
+      "id": "blog-edit-draft",
+      "input": "Blog taslağını düzenle",
+      "domain": "blog",
+      "intent": "blog_taslak_duzenle"
+    },
+    {
+      "id": "blog-publish",
+      "input": "Blog yazısını yayınla",
+      "domain": "blog",
+      "intent": "blog_yayinla"
+    },
+    {
+      "id": "blog-ambiguous-multi-action",
+      "input": "Blog yazısı bul ve yayınla",
+      "domain": "ambiguous",
+      "intent": null
+    }
+  ]
+}
