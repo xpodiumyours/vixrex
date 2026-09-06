@@ -1,3 +1,4 @@
+import { resolveVixrexIntentMatches } from "./vixrexIntentResolver";
 import { VIXREX_NIYET_SOZLUGU, type VixrexNiyetAlan } from "./vixrexNiyetSozlugu";
 import { vixrexNormalizeDartParity } from "./vixrexNormalizer";
 import { seciliKimlikTelefonKestirmesiniCikar } from "./ownerSelectedInput";
@@ -80,7 +81,7 @@ function extractBetweenFieldAndVerb(input: string, alan: VixrexNiyetAlan): strin
   if (!m || m.index === undefined) return null;
   let after = input.slice(esAnlamEslesmeSonu(input, m)).trim();
   after = after.replace(/^[\s:=\-–—,]+/, "").trim();
-  after = after.replace(/^(nı|ni|nu|nü|mı|mi|mu|mü|yı|yi|yu|yü|sı|si|su|sü|sını|sini|sunı|adını|adimi|numaramı|numarami|imi|ımı|umu|ümü|yi|yı|u|ü|ı|i)\b\s*/i, "").trim();
+  after = after.replace(/^(nı|ni|nu|nü|mı|mi|mu|mü|yı|yi|yu|yü|sı|si|su|sü|sını|sini|sunı|adını|adimi|numaramı|numarami|imi|ımı|umu|ümü|yi|yı|u|ü|ı|i)(?=\s|$|[.,;:!?])\s*/i, "").trim();
   if (!after) return null;
   const vm = after.match(/\b(yap|olsun|degistir|değiştir|ekle|guncelle|güncelle|ayarla|yaz)\b/i);
   let cand = vm ? after.slice(0, vm.index).trim() : after;
@@ -146,7 +147,7 @@ function stripFieldMention(candidate: string, alan: VixrexNiyetAlan): string {
     out = out.replace(new RegExp(ea.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi"), "");
   }
   out = out
-    .replace(/^\s*(adını|adimi|adı|adi|numaramı|numarami|numarası|numarasi|ismi|imi|ımı|umu|ümü|si|sı|su|sü|yi|yı|yu|yü|nı|ni|nu|nü|mı|mi|mu|mü)\b\s*/i, "")
+    .replace(/^\s*(adını|adimi|adı|adi|numaramı|numarami|numarası|numarasi|ismi|imi|ımı|umu|ümü|si|sı|su|sü|yi|yı|yu|yü|nı|ni|nu|nü|mı|mi|mu|mü)(?=\s|$|[.,;:!?])\s*/i, "")
     .replace(/\s*(adını|adimi|adı|adi)\s*$/i, "")
     .trim()
     .replace(/^[\s:=\-–—,]+/, "")
@@ -176,7 +177,7 @@ function remainderAfterFieldMention(input: string, alan: VixrexNiyetAlan): strin
   if (!after) return null;
   const cleaned = after
     .replace(/^[\s:=\-–—,]+/, "")
-    .replace(/^(nı|ni|nu|nü|mı|mi|mu|mü|yı|yi|yu|yü|sı|si|su|sü|sını|sini|sunı|adını|adimi)\b\s*/i, "")
+    .replace(/^(nı|ni|nu|nü|mı|mi|mu|mü|yı|yi|yu|yü|sı|si|su|sü|sını|sini|sunı|adını|adimi)(?=\s|$|[.,;:!?])\s*/i, "")
     .trim();
   if (cleaned.length < 2) return null;
   return stripQuotes(cleaned);
@@ -267,6 +268,51 @@ function serbestMetinAdayiniSinirla(aday: string, alan: VixrexNiyetAlan): string
   return kesilmis.length >= 2 ? kesilmis : aday;
 }
 
+/**
+ * Ham metindeki kelimeleri KONUMLARIYLA döner.
+ *
+ * NEDEN: Değer çıkarıcı alan adını ham metinde `RegExp(..., "i")` ile arıyordu.
+ * Bu Türkçede güvenilir DEĞİL — JavaScript'in `i` bayrağı "İ"yi "i"ye, "ı"yı
+ * "i"ye katlamaz. Bu yüzden "İşletme adını Ada Kahve yap" cümlesinde
+ * "işletme adı" kalıbı HİÇ eşleşmiyordu, ek temizleme kuralları çalışmıyordu
+ * ve vitrine "nı Ada Kahve" yazılıyordu. Matcher aynı işi normalize edilmiş
+ * token'larla doğru yapıyor; burada onun bulduğu aralığı kullanıyoruz.
+ */
+function konumluKelimeler(input: string): Array<{ start: number; end: number }> {
+  const out: Array<{ start: number; end: number }> = [];
+  const re = /[\p{L}\p{N}]+/gu;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(input)) !== null) {
+    out.push({ start: m.index, end: m.index + m[0].length });
+  }
+  return out;
+}
+
+const DEGER_SONU_FIILLERI =
+  /(\s|^)(olarak\s+)?(yap|olsun|değiştir|degistir|ekle|güncelle|guncelle|ayarla|yaz)\s*$/iu;
+
+/** Matcher'ın bulduğu alan-adı aralığından SONRAKİ metni değer adayı sayar. */
+function alanAraligindanSonrakiDeger(
+  input: string,
+  alan: VixrexNiyetAlan,
+): string | null {
+  const eslesme = resolveVixrexIntentMatches(input).find(
+    (e) => e.alan.anahtar === alan.anahtar,
+  );
+  if (!eslesme) return null;
+
+  const son = konumluKelimeler(input)[eslesme.endToken];
+  if (!son) return null;
+
+  let aday = input.slice(son.end).trim();
+  aday = aday.replace(/^[\s:=\-–—,;]+/, "").trim();
+  aday = aday.replace(DEGER_SONU_FIILLERI, "").trim();
+  aday = aday.replace(/[\s.,;]+$/, "").trim();
+
+  // Kalıntı anlamsızsa değer sayma; eski yollar denemeye devam etsin.
+  return aday.length >= 2 ? aday : null;
+}
+
 export function extractVixrexValue(input: string, alan: VixrexNiyetAlan): string | null {
   const sonuc = extractVixrexValueHam(input, alan);
   return sonuc === null ? null : serbestMetinAdayiniSinirla(sonuc, alan);
@@ -291,6 +337,14 @@ function extractVixrexValueHam(input: string, alan: VixrexNiyetAlan): string | n
     if (p) return p;
   }
   if (isFieldOnlyWithoutValue(raw, alan)) return null;
+
+  // Tırnaklı/iki nokta gibi AÇIK biçimler önceliğini korur; onlar yoksa
+  // matcher'ın bulduğu alan aralığından sonrası en güvenilir adaydır.
+  if (!/["'“”‘’`:=]/.test(raw)) {
+    const aralikDegeri = alanAraligindanSonrakiDeger(raw, alan);
+    if (aralikDegeri) return aralikDegeri;
+  }
+
   const quoted = extractQuoted(raw);
   if (quoted && quoted.trim()) {
     const cleaned = stripFieldMention(quoted.trim(), alan);

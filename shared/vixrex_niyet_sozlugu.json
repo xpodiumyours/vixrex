@@ -241,7 +241,9 @@
         "mail",
         "e-mail",
         "elektronik posta",
-        "mail adresi"
+        "mail adresi",
+        "e-posta adresi",
+        "mail hesabı"
       ],
       "ornekIfadeler": [
         "E-postamı {deger} yap",
@@ -380,7 +382,10 @@
         "insta",
         "instagram adı",
         "instagram kullanıcı adı",
-        "ig"
+        "ig",
+        "instagram hesabı",
+        "instagram sayfası",
+        "insta hesabı"
       ],
       "ornekIfadeler": [
         "Instagramı aymiragiyim yap",
@@ -401,7 +406,9 @@
         "site",
         "internet sitesi",
         "web adresi",
-        "url"
+        "url",
+        "web adresim",
+        "site adresi"
       ],
       "ornekIfadeler": [
         "Web sitemi https://aymira.com yap",

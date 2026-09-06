@@ -143,8 +143,9 @@ class VixrexFieldValidator {
         return (ok: true, hata: null, normalizedDeger: raw);
 
       case 'url':
-        // #anchor yalnız vitrin içindeki açık action-link alanında geçerlidir.
-        final anchorIzinli = alan.anahtar == 'galeriAksiyonLinki';
+        // #anchor yalnız şemada "ic_baglanti" işaretli alanda geçerlidir.
+        // Alan ADINA göre dallanma YOK — kural şemadan okunur (Next.js ile aynı).
+        final anchorIzinli = alan.dogrulama == 'ic_baglanti';
         if (!_isSafeUrl(raw, allowAnchor: anchorIzinli)) {
           return (
             ok: false,
@@ -165,14 +166,20 @@ class VixrexFieldValidator {
         return (ok: true, hata: null, normalizedDeger: raw);
 
       case 'secim':
-        if (alan.secenekler != null && !alan.secenekler!.contains(raw)) {
+        if (alan.secenekler == null) {
+          return (ok: true, hata: null, normalizedDeger: raw);
+        }
+        final eslesenSecenek = _secenegeEsle(raw, alan.secenekler!);
+        if (eslesenSecenek == null) {
           return (
             ok: false,
             hata: '$etiket için geçersiz seçim.',
             normalizedDeger: null,
           );
         }
-        return (ok: true, hata: null, normalizedDeger: raw);
+        // Kanonik seçenek kaydedilir: esnaf "Kafe" yazar, vitrine şemadaki
+        // "Kafe / Lokanta" girer. (Next.js validateField ile aynı kural.)
+        return (ok: true, hata: null, normalizedDeger: eslesenSecenek);
 
       case 'metin':
       case 'uzunMetin':
@@ -185,6 +192,32 @@ class VixrexFieldValidator {
           normalizedDeger: null,
         );
     }
+  }
+
+  /// Esnafın yazdığı seçim değerini şemadaki kanonik seçeneğe eşler.
+  ///
+  /// Seçenek listesinde "Kafe / Lokanta" gibi birleşik etiketler var ama esnaf
+  /// "Kafe" yazıyor. Belirsizlik varsa (birden fazla seçenek eşleşiyorsa) null
+  /// döner — yanlış kategori yazmaktansa esnafa sormak doğrudur.
+  static String? _secenegeEsle(String deger, List<String> secenekler) {
+    String norm(String s) =>
+        s.toLowerCase().replaceAll(RegExp(r'\s+'), ' ').trim();
+    final hedef = norm(deger);
+
+    for (final s in secenekler) {
+      if (norm(s) == hedef) return s;
+    }
+
+    final parcaEslesen = secenekler
+        .where(
+          (s) => norm(
+            s,
+          ).split(RegExp(r'[/,]')).map((p) => p.trim()).contains(hedef),
+        )
+        .toList(growable: false);
+    if (parcaEslesen.length == 1) return parcaEslesen.first;
+
+    return null;
   }
 
   static bool? _normalizeBoolean(Object? value) {

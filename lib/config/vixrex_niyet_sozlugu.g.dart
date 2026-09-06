@@ -264,6 +264,8 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
       'e-mail',
       'elektronik posta',
       'mail adresi',
+      'e-posta adresi',
+      'mail hesabı',
     ],
     ornekIfadeler: [
       'E-postamı {deger} yap',
@@ -389,6 +391,9 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
       'instagram adı',
       'instagram kullanıcı adı',
       'ig',
+      'instagram hesabı',
+      'instagram sayfası',
+      'insta hesabı',
     ],
     ornekIfadeler: [
       'Instagramı aymiragiyim yap',
@@ -410,6 +415,8 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
       'internet sitesi',
       'web adresi',
       'url',
+      'web adresim',
+      'site adresi',
     ],
     ornekIfadeler: [
       'Web sitemi https://aymira.com yap',

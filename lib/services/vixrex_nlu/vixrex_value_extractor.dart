@@ -1,4 +1,5 @@
 import 'package:vixrex/config/vixrex_niyet_sozlugu.g.dart';
+import 'package:vixrex/services/vixrex_nlu/vixrex_intent_resolver.dart';
 import 'package:vixrex/services/vixrex_nlu/vixrex_normalizer.dart';
 
 /// Kural tabanlı değer ayıklayıcı – AI yok.
@@ -9,6 +10,45 @@ import 'package:vixrex/services/vixrex_nlu/vixrex_normalizer.dart';
 /// 4) Bulunamazsa null → netleştirme sorusu
 class VixrexValueExtractor {
   const VixrexValueExtractor();
+
+  static const _resolver = VixrexIntentResolver();
+
+  static final RegExp _kelimeDeseni = RegExp(r'[\p{L}\p{N}]+', unicode: true);
+
+  static final RegExp _degerSonuFiilleri = RegExp(
+    r'(\s|^)(olarak\s+)?(yap|olsun|değiştir|degistir|ekle|güncelle|guncelle|ayarla|yaz)\s*$',
+    caseSensitive: false,
+  );
+
+  /// Matcher'ın bulduğu alan-adı aralığından SONRAKİ metni değer adayı sayar.
+  ///
+  /// NEDEN: Eskiden alan adı ham metinde `RegExp(..., caseSensitive: false)`
+  /// ile aranıyordu. Bu Türkçede güvenilir DEĞİL — "İ"/"ı" büyük-küçük
+  /// katlaması çalışmıyor. Bu yüzden "İşletme adını Ada Kahve yap" cümlesinde
+  /// alan adı bulunamıyor, ek temizliği yapılamıyor ve vitrine
+  /// "nı Ada Kahve" yazılıyordu. Matcher aynı işi normalize edilmiş
+  /// token'larla doğru yapıyor; burada onun aralığını kullanıyoruz.
+  String? _alanAraligindanSonrakiDeger(String input, VixrexNiyetAlan alan) {
+    VixrexIntentMatch? eslesme;
+    for (final m in _resolver.resolveMatches(input)) {
+      if (m.alan.anahtar == alan.anahtar) {
+        eslesme = m;
+        break;
+      }
+    }
+    if (eslesme == null) return null;
+
+    final kelimeler = _kelimeDeseni.allMatches(input).toList(growable: false);
+    if (eslesme.endToken >= kelimeler.length) return null;
+    final son = kelimeler[eslesme.endToken];
+
+    var aday = input.substring(son.end).trim();
+    aday = aday.replaceFirst(RegExp(r'^[\s:=\-–—,;]+'), '').trim();
+    aday = aday.replaceFirst(_degerSonuFiilleri, '').trim();
+    aday = aday.replaceFirst(RegExp(r'[\s.,;]+$'), '').trim();
+
+    return aday.length >= 2 ? aday : null;
+  }
 
   /// `alan` için `input` içinden ham değeri ayıklar, yoksa null.
   /// Dönen değer hamdır; doğrulama/normalizasyon `validateField`’ta yapılır.
@@ -26,6 +66,14 @@ class VixrexValueExtractor {
     if (_isFieldOnlyWithoutValue(raw, alan)) {
       // print('isFieldOnlyWithoutValue true for $raw / ${alan.anahtar}');
       return null;
+    }
+
+    // Tırnak/iki nokta gibi AÇIK biçimler önceliğini korur; onlar yoksa
+    // matcher'ın bulduğu alan aralığından sonrası en güvenilir adaydır.
+    // (Next.js `vixrexValueExtractor.ts` ile aynı kural.)
+    if (!RegExp(r'''["'“”‘’`:=]''').hasMatch(raw)) {
+      final aralikDegeri = _alanAraligindanSonrakiDeger(raw, alan);
+      if (aralikDegeri != null) return aralikDegeri;
     }
 
     // 1) Tırnak içi – en güvenilir.

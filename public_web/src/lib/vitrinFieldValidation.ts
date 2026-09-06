@@ -39,6 +39,40 @@ const KAPALI_DEGERLER = new Set([
   "0",
 ]);
 
+/**
+ * Esnafın yazdığı seçim değerini şemadaki kanonik seçeneğe eşler.
+ *
+ * NEDEN: Seçenek listesinde "Kafe / Lokanta" gibi birleşik etiketler var ama
+ * esnaf "Kafe" yazıyor. Eskiden yalnız birebir eşitlik kabul ediliyordu ve
+ * "Kategoriyi Kafe yap" cümlesi "geçersiz seçim" ile reddediliyordu.
+ *
+ * Eşleşme sırası daralarak gider; belirsizlik varsa (birden fazla seçenek
+ * aynı ölçütle eşleşiyorsa) NULL döner — yanlış kategori yazmaktansa
+ * esnafa sormak doğrudur.
+ */
+function secenegeEsle(
+  deger: string,
+  secenekler: readonly string[],
+): string | null {
+  const norm = (s: string) =>
+    s.toLocaleLowerCase("tr-TR").replace(/\s+/g, " ").trim();
+  const hedef = norm(deger);
+
+  const birebir = secenekler.find((s) => norm(s) === hedef);
+  if (birebir) return birebir;
+
+  // "Kafe / Lokanta" → parçalarından biri birebir tutuyorsa kabul.
+  const parcaEslesen = secenekler.filter((s) =>
+    norm(s)
+      .split(/[/,]/)
+      .map((p) => p.trim())
+      .includes(hedef),
+  );
+  if (parcaEslesen.length === 1) return parcaEslesen[0];
+
+  return null;
+}
+
 function guvenliUrlMu(deger: string, anchorIzinli: boolean): boolean {
   if (deger.startsWith("#")) return anchorIzinli && deger.length > 1;
   try {
@@ -194,10 +228,14 @@ export function validateField(anahtar: string, hamDeger: unknown): ValidationRes
     }
 
     case "secim": {
-      if (alan.secenekler && !alan.secenekler.includes(deger)) {
+      if (!alan.secenekler) return { ok: true, alan, deger };
+      const eslesen = secenegeEsle(deger, alan.secenekler);
+      if (!eslesen) {
         return { ok: false, hata: `${alan.etiket} için geçersiz seçim.` };
       }
-      return { ok: true, alan, deger };
+      // Kanonik seçenek değeri kaydedilir: esnaf "Kafe" yazar, vitrine
+      // şemadaki "Kafe / Lokanta" girer.
+      return { ok: true, alan, deger: eslesen };
     }
 
     case "metin":
