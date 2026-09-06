@@ -2,9 +2,12 @@ import { readFileSync } from "fs";
 import { resolve } from "path";
 import { describe, expect, it } from "vitest";
 
-describe("F5 shell paritesi — Flutter HomeShellScreen = Next KesfetYanMenu/VitrinimEditor", () => {
+describe("F5 shell paritesi — Flutter HomeShellScreen = Next ortak AppShell", () => {
   const flutterShell = readFileSync(resolve(__dirname, "../../lib/screens/home_shell_screen.dart"), "utf-8");
-  const yanMenu = readFileSync(resolve(__dirname, "../src/components/kesfet/KesfetYanMenu.tsx"), "utf-8");
+  const appNav = readFileSync(resolve(__dirname, "../src/components/app/AppSidebar.tsx"), "utf-8");
+  const appBoundary = readFileSync(resolve(__dirname, "../src/components/app/AppShellBoundary.tsx"), "utf-8");
+  const kesfet = readFileSync(resolve(__dirname, "../src/components/kesfet/KesfetIcerik.tsx"), "utf-8");
+  const vixrexPage = readFileSync(resolve(__dirname, "../src/app/app/vixrex/page.tsx"), "utf-8");
   const vitrinEditor = readFileSync(resolve(__dirname, "../src/components/owner/VitrinimEditor.tsx"), "utf-8");
   const ownerProduct = readFileSync(resolve(__dirname, "../src/components/owner/OwnerProductManager.tsx"), "utf-8");
 
@@ -12,22 +15,47 @@ describe("F5 shell paritesi — Flutter HomeShellScreen = Next KesfetYanMenu/Vit
     const sira = ["Vitrinim", "Keşfet", "Vixrex", "Profil"];
     for (const label of sira) {
       expect(flutterShell, `Flutter ${label}`).toContain(label);
-      expect(yanMenu, `Next ${label}`).toContain(label);
+      expect(appNav, `Next ${label}`).toContain(label);
     }
-    // Sıra kontrolü — MENU dizisinde sırayla
-    const menuIndex = (s: string, label: string) => s.indexOf(`"${label}"`);
+
+    const menuIndex = (s: string, label: string) => s.indexOf(`label: "${label}"`);
     for (let i = 0; i < sira.length - 1; i++) {
-      expect(menuIndex(yanMenu, sira[i]), `${sira[i]} → ${sira[i + 1]} sırası`).toBeLessThan(menuIndex(yanMenu, sira[i + 1]));
+      expect(menuIndex(appNav, sira[i]), `${sira[i]} → ${sira[i + 1]} sırası`).toBeLessThan(
+        menuIndex(appNav, sira[i + 1]),
+      );
     }
-    // Flutter destinations sırası da aynı
+
     const flutterSira = sira.map((l) => flutterShell.indexOf(`label: '${l}'`));
     for (let i = 0; i < flutterSira.length - 1; i++) {
       expect(flutterSira[i], `Flutter ${sira[i]}`).toBeLessThan(flutterSira[i + 1]);
     }
   });
 
+  it("Vixrex üçüncü gerçek sekmedir; modal veya Keşfet iç görünümü değildir", () => {
+    expect(appNav).toContain('href: "/app/vixrex"');
+    expect(appNav).not.toContain("AsistanPaneli");
+    expect(appNav).not.toContain("SharedVixrexAssistant");
+    expect(vixrexPage).toContain("SharedVixrexAssistant");
+    expect(kesfet).not.toContain("SharedVixrexAssistant");
+    expect(kesfet).not.toContain("KesfetYanMenu");
+    expect(kesfet).toContain('router.push("/app/vixrex")');
+  });
+
+  it("Vitrinim ve Keşfet tek root shell sınırında tutulur", () => {
+    expect(appBoundary).toContain('pathname === "/app"');
+    expect(appBoundary).toContain('pathname === "/kesfet"');
+    expect(appBoundary).toContain("<AppSidebar />");
+    expect(appBoundary).toContain("<AppBottomNav />");
+  });
+
+  it("Flutter masaüstü eşiği ve sidebar genişliği korunur", () => {
+    expect(appNav).toContain("w-[220px]");
+    expect(appNav).toContain("min-[901px]:flex");
+    expect(appNav).toContain("min-[901px]:hidden");
+    expect(flutterShell).toContain("size.width > 900");
+  });
+
   it("Vitrinim header her iki yüzeyde aynı metinler (yayında/yayınla)", () => {
-    // Flutter: Vixrex Düzenle / Vixrex Oluştur + ShellStatusBar
     expect(flutterShell).toContain("Vixrex");
     expect(vitrinEditor).toContain("Vixrex Düzenle");
     expect(vitrinEditor).toContain("Vixrex Oluştur");
@@ -35,22 +63,11 @@ describe("F5 shell paritesi — Flutter HomeShellScreen = Next KesfetYanMenu/Vit
   });
 
   it("ürün kuyruğu vitrin draft kuyruğundan ayrı ve akordeonla beraber (F4)", () => {
-    // OwnerProductManager artık productQueue kullanıyor, VitrinimEditor owner-draft kullanıyor
     expect(ownerProduct).toContain("productQueueEnqueue");
     expect(ownerProduct).toContain("productQueueFlush");
     expect(ownerProduct).toContain("productQueueCount");
     expect(vitrinEditor).toContain('/api/owner-draft');
     expect(ownerProduct).toContain('/api/products');
     expect(ownerProduct).not.toContain('/api/owner-draft');
-  });
-
-  it("mobil alt menü Flutter bottomNavigationBar ile aynı 4 hedefi kullanır", () => {
-    // KesfetYanMenu mobil nav: fixed bottom-0 min-[901px]:hidden
-    expect(yanMenu).toContain("fixed");
-    expect(yanMenu).toContain("bottom-0");
-    expect(yanMenu).toContain("min-[901px]:hidden");
-    // Flutter bottomNavigationBar destinations aynı 4
-    const flutterDestinations = (flutterShell.match(/label: 'Vitrinim'/g) || []).length + (flutterShell.match(/label: 'Keşfet'/g) || []).length;
-    expect(flutterDestinations).toBeGreaterThan(0);
   });
 });
