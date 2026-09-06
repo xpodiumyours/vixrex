@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 const String vixrexSmartEngineFlag = 'vixrex_smart_engine_enabled';
 const String vixrexSmartEngineStorefrontFlag =
     'vixrex_smart_engine_storefront_enabled';
+const String vixrexSmartEngineBlogFlag = 'vixrex_smart_engine_blog_enabled';
 
 bool smartEngineStorefrontEnabledFromMap(
   Map<String, bool> flags, {
@@ -11,6 +12,15 @@ bool smartEngineStorefrontEnabledFromMap(
   if (!loaded) return false;
   return flags[vixrexSmartEngineFlag] == true &&
       flags[vixrexSmartEngineStorefrontFlag] == true;
+}
+
+bool smartEngineBlogEnabledFromMap(
+  Map<String, bool> flags, {
+  required bool loaded,
+}) {
+  if (!loaded) return false;
+  return flags[vixrexSmartEngineFlag] == true &&
+      flags[vixrexSmartEngineBlogFlag] == true;
 }
 
 class FeatureFlagService {
@@ -74,6 +84,9 @@ class FeatureFlagService {
 
   bool get isSmartEngineStorefrontEnabled =>
       smartEngineStorefrontEnabledFromMap(_cache, loaded: _loaded);
+
+  bool get isSmartEngineBlogEnabled =>
+      smartEngineBlogEnabledFromMap(_cache, loaded: _loaded);
 
   bool get isLoaded => _loaded;
 
