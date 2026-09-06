@@ -61,10 +61,8 @@ export function KesfetIcerik({
 
   useEffect(() => {
     const vixrexIstenmis = new URLSearchParams(window.location.search).get("vixrex") === "1";
-    if (vixrexIstenmis || ilkKategoriKimligi) {
-      router.replace("/app/vixrex");
-    }
-  }, [ilkKategoriKimligi, router]);
+    if (vixrexIstenmis) router.replace("/app/vixrex");
+  }, [router]);
 
   useEffect(() => {
     let iptal = false;
@@ -175,181 +173,182 @@ export function KesfetIcerik({
   const filtreVar = Boolean(
     sorgu.trim() || grup !== undefined || kategoriKimligi || sadeceFavoriler
   );
-  const gorunenAciklama = aciklama.split(". ")[0];
 
   return (
-    <main className="min-w-0">
+    <main className="min-h-full min-w-0 bg-lp-bg-editor text-lp-text">
       <MascotFab mesajGoster={false} onToggle={() => router.push("/app/vixrex")} />
-
       <StatusBar sahipSlug={sahipSlug} premium={premium} />
 
-      <section className="px-3 py-5 pb-[80px] min-[901px]:pb-5" aria-labelledby="kesfet-baslik">
-        <div className="w-full">
-          <h1 id="kesfet-baslik" className="text-[20px] font-black leading-tight text-lp-text">
-            {baslik}
-          </h1>
-          <p className="mt-3 text-[12px] font-semibold leading-[1.5] text-lp-muted" title={aciklama}>
-            <span aria-hidden="true">{gorunenAciklama}</span>
-            <span className="sr-only">{aciklama}</span>
-          </p>
+      <header className="flex h-14 items-center px-4">
+        <h1 id="kesfet-baslik" className="text-[20px] font-black leading-tight text-lp-text">
+          {baslik}
+        </h1>
+      </header>
 
-          <div className="mt-3 space-y-5">
-            <label htmlFor="kesfet-arama" className="sr-only">
-              Vitrin, ürün veya il/ilçe ara
-            </label>
-            <div className="relative">
-              <span
-                aria-hidden="true"
-                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-lp-muted"
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="11" cy="11" r="7" />
-                  <path d="m20 20-4.5-4.5" />
-                </svg>
-              </span>
-              <input
-                id="kesfet-arama"
-                type="search"
-                value={sorgu}
-                onChange={(event) => setSorgu(event.target.value)}
-                placeholder="Vitrin, ürün veya il/ilçe ara"
-                className="h-12 w-full rounded-2xl border border-lp-border bg-lp-surface py-3 pl-11 pr-12 text-[16px] font-semibold text-lp-text placeholder:text-lp-muted focus:border-lp-primary focus:outline-none focus:ring-2 focus:ring-lp-primary/30"
-              />
-              {sorgu ? (
-                <button
-                  type="button"
-                  onClick={() => setSorgu("")}
-                  aria-label="Aramayı temizle"
-                  className="absolute right-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full text-lp-muted transition-colors hover:bg-lp-surface-soft hover:text-lp-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
-                    <path d="M18 6 6 18M6 6l12 12" />
-                  </svg>
-                </button>
-              ) : null}
-            </div>
+      <section className="pb-[80px] min-[901px]:pb-0" aria-labelledby="kesfet-baslik">
+        <p className="px-6 pb-3 text-[12px] font-semibold leading-[1.5] text-lp-muted">
+          {aciklama}
+        </p>
 
-            <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Vitrin grupları">
-              <button
-                type="button"
-                aria-pressed={grup === undefined}
-                onClick={() => grubuSec(undefined)}
-                className={`min-h-8 shrink-0 rounded-full border px-4 text-[12px] font-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
-                  grup === undefined
-                    ? "border-lp-primary bg-lp-primary text-lp-on-primary"
-                    : "border-lp-border bg-lp-surface text-lp-text-alt hover:bg-lp-surface-soft"
-                }`}
-              >
-                Tümü
-              </button>
-              {GRUPLAR.map((secenek) => (
-                <button
-                  key={secenek.deger}
-                  type="button"
-                  aria-pressed={grup === secenek.deger}
-                  onClick={() => grubuSec(secenek.deger)}
-                  className={`min-h-8 shrink-0 rounded-full border px-4 text-[12px] font-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
-                    grup === secenek.deger
-                      ? "border-lp-primary bg-lp-primary text-lp-on-primary"
-                      : "border-lp-border bg-lp-surface text-lp-text-alt hover:bg-lp-surface-soft"
-                  }`}
-                >
-                  {secenek.etiket}
-                </button>
-              ))}
-            </div>
-
-            <nav className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Vitrin kategorileri">
-              <button
-                type="button"
-                aria-pressed={sadeceFavoriler}
-                onClick={() => setSadeceFavoriler((deger) => !deger)}
-                className={`flex min-h-8 shrink-0 items-center gap-2 rounded-full border px-4 text-[12px] font-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
-                  sadeceFavoriler
-                    ? "border-lp-primary bg-lp-primary text-lp-on-primary"
-                    : "border-lp-border bg-lp-surface text-lp-text-alt hover:bg-lp-surface-soft"
-                }`}
-              >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill={sadeceFavoriler ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                  <path d="M12 21s-6.5-4.2-8.2-8.2A5.2 5.2 0 0 1 12 5.2a5.2 5.2 0 0 1 8.2 7.6C18.5 16.8 12 21 12 21z" />
-                </svg>
-                Favorilerim
-              </button>
-              {kategoriler.map((kategori) => (
-                <Link
-                  key={kategori.id}
-                  href={`/kesfet/${kategoriUrlParcasi(kategori.id)}`}
-                  onClick={(event) => kategoriBaglantisiniFiltreyeCevir(event, kategori.id)}
-                  aria-current={kategoriKimligi === kategori.id ? "page" : undefined}
-                  className={`flex min-h-8 shrink-0 items-center rounded-full border px-4 text-[12px] font-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
-                    kategoriKimligi === kategori.id
-                      ? "border-lp-primary bg-lp-primary text-lp-on-primary"
-                      : "border-lp-border bg-lp-surface text-lp-text-alt hover:bg-lp-surface-soft"
-                  }`}
-                >
-                  {kategori.label}
-                </Link>
-              ))}
-            </nav>
-          </div>
-
-          {filtreliVitrinler.length === 0 ? (
-            <div className="mt-10 rounded-2xl border border-lp-border bg-lp-surface px-5 py-8 text-center">
-              <svg className="mx-auto text-lp-primary" width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
-                <path d="M3 10.5 12 4l9 6.5V20H3z" />
-                <path d="M8 20v-6h8v6" />
+        <div className="px-6 pb-3">
+          <label htmlFor="kesfet-arama" className="sr-only">
+            Vitrin, ürün veya il/ilçe ara
+          </label>
+          <div className="relative">
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-lp-muted"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="11" cy="11" r="7" />
+                <path d="m20 20-4.5-4.5" />
               </svg>
-              <p className="mt-3 text-[15px] font-black text-lp-text">
-                {sadeceFavoriler ? "Favorilere ekli vitrin yok" : "Aramanızla eşleşen vitrin yok"}
-              </p>
-              <p className="mt-2 text-[13px] font-semibold text-lp-muted">
-                {sadeceFavoriler
-                  ? "Beğendiğiniz vitrinleri kalp simgesiyle kaydedin."
-                  : "Farklı bir kelime deneyin veya filtreleri temizleyin."}
-              </p>
+            </span>
+            <input
+              id="kesfet-arama"
+              type="search"
+              value={sorgu}
+              onChange={(event) => setSorgu(event.target.value)}
+              placeholder="Vitrin, ürün veya il/ilçe ara"
+              className="h-12 w-full rounded-2xl border border-lp-border bg-lp-surface py-3 pl-11 pr-12 text-[14px] font-semibold text-lp-text placeholder:text-lp-muted focus:border-lp-primary focus:outline-none focus:ring-2 focus:ring-lp-primary/30"
+            />
+            {sorgu ? (
               <button
                 type="button"
-                onClick={sadeceFavoriler ? () => setSadeceFavoriler(false) : filtreleriTemizle}
-                className="mt-4 min-h-11 rounded-xl border border-lp-border bg-lp-surface-soft px-4 text-[12px] font-black text-lp-text-alt hover:bg-lp-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary"
+                onClick={() => setSorgu("")}
+                aria-label="Aramayı temizle"
+                className="absolute right-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full text-lp-muted transition-colors hover:bg-lp-surface-soft hover:text-lp-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary"
               >
-                {sadeceFavoriler ? "Tüm vitrinleri gör" : "Filtreleri temizle"}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+                  <path d="M18 6 6 18M6 6l12 12" />
+                </svg>
               </button>
-            </div>
-          ) : (
-            <ul className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4" aria-label="Vitrinler">
-              {filtreliVitrinler.map((vitrin, index) => (
-                <li
-                  key={vitrin.slug}
-                  className="animate-fade-in motion-reduce:animate-none"
-                  style={{ animationDelay: `${Math.min(index, 6) * 30}ms` }}
-                >
-                  <VitrinKarti
-                    vitrin={vitrin}
-                    favoriMi={favoriAdlari.includes(vitrin.ad)}
-                    favoriyiDegistir={() => favoriyiDegistir(vitrin.ad)}
-                    sahipMi={sahipSlug === vitrin.slug}
-                    premium={sahipSlug === vitrin.slug ? premium : null}
-                  />
-                </li>
-              ))}
-            </ul>
-          )}
-
-          {sadeceKiralik ? (
-            <div className="mt-8 text-center">
-              <Link
-                href="/"
-                className="inline-flex min-h-11 items-center rounded-xl border border-lp-border bg-lp-surface px-5 text-[13px] font-black text-lp-text-alt hover:bg-lp-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary"
-              >
-                Uygun olan yok, sıfırdan oluştur
-              </Link>
-            </div>
-          ) : null}
-
-          {!filtreVar && vitrinler.length > 0 ? (
-            <p className="sr-only" aria-live="polite">{vitrinler.length} vitrin gösteriliyor.</p>
-          ) : null}
+            ) : null}
+          </div>
         </div>
+
+        <div className="flex h-[52px] gap-2 overflow-x-auto px-5 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Vitrin grupları">
+          <button
+            type="button"
+            aria-pressed={grup === undefined}
+            onClick={() => grubuSec(undefined)}
+            className={`my-auto min-h-8 shrink-0 rounded-full border px-4 text-[12px] font-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
+              grup === undefined
+                ? "border-lp-primary bg-lp-primary text-lp-on-primary"
+                : "border-lp-border bg-lp-surface text-lp-text-alt hover:bg-lp-surface-soft"
+            }`}
+          >
+            Tümü
+          </button>
+          {GRUPLAR.map((secenek) => (
+            <button
+              key={secenek.deger}
+              type="button"
+              aria-pressed={grup === secenek.deger}
+              onClick={() => grubuSec(secenek.deger)}
+              className={`my-auto min-h-8 shrink-0 rounded-full border px-4 text-[12px] font-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
+                grup === secenek.deger
+                  ? "border-lp-primary bg-lp-primary text-lp-on-primary"
+                  : "border-lp-border bg-lp-surface text-lp-text-alt hover:bg-lp-surface-soft"
+              }`}
+            >
+              {secenek.etiket}
+            </button>
+          ))}
+        </div>
+
+        <nav className="flex h-[52px] gap-2 overflow-x-auto px-5 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Vitrin kategorileri">
+          <button
+            type="button"
+            aria-pressed={sadeceFavoriler}
+            onClick={() => setSadeceFavoriler((deger) => !deger)}
+            className={`my-auto flex min-h-8 shrink-0 items-center gap-2 rounded-full border px-4 text-[12px] font-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
+              sadeceFavoriler
+                ? "border-lp-primary bg-lp-primary text-lp-on-primary"
+                : "border-lp-border bg-lp-surface text-lp-text-alt hover:bg-lp-surface-soft"
+            }`}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill={sadeceFavoriler ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" aria-hidden="true">
+              <path d="M12 21s-6.5-4.2-8.2-8.2A5.2 5.2 0 0 1 12 5.2a5.2 5.2 0 0 1 8.2 7.6C18.5 16.8 12 21 12 21z" />
+            </svg>
+            Favorilerim
+          </button>
+          {kategoriler.map((kategori) => (
+            <Link
+              key={kategori.id}
+              href={`/kesfet/${kategoriUrlParcasi(kategori.id)}`}
+              onClick={(event) => kategoriBaglantisiniFiltreyeCevir(event, kategori.id)}
+              aria-current={kategoriKimligi === kategori.id ? "page" : undefined}
+              className={`my-auto flex min-h-8 shrink-0 items-center rounded-full border px-4 text-[12px] font-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
+                kategoriKimligi === kategori.id
+                  ? "border-lp-primary bg-lp-primary text-lp-on-primary"
+                  : "border-lp-border bg-lp-surface text-lp-text-alt hover:bg-lp-surface-soft"
+              }`}
+            >
+              {kategori.label}
+            </Link>
+          ))}
+        </nav>
+
+        {filtreliVitrinler.length === 0 ? (
+          <div className="m-3 rounded-2xl border border-lp-border bg-lp-surface px-5 py-8 text-center">
+            <svg className="mx-auto text-lp-primary" width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
+              <path d="M3 10.5 12 4l9 6.5V20H3z" />
+              <path d="M8 20v-6h8v6" />
+            </svg>
+            <p className="mt-3 text-[15px] font-black text-lp-text">
+              {sadeceFavoriler ? "Favorilere ekli vitrin yok" : "Aramanızla eşleşen vitrin yok"}
+            </p>
+            <p className="mt-2 text-[13px] font-semibold text-lp-muted">
+              {sadeceFavoriler
+                ? "Beğendiğiniz vitrinleri kalp simgesiyle kaydedin."
+                : "Farklı bir kelime deneyin veya filtreleri temizleyin."}
+            </p>
+            <button
+              type="button"
+              onClick={sadeceFavoriler ? () => setSadeceFavoriler(false) : filtreleriTemizle}
+              className="mt-4 min-h-11 rounded-xl border border-lp-border bg-lp-surface-soft px-4 text-[12px] font-black text-lp-text-alt hover:bg-lp-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary"
+            >
+              {sadeceFavoriler ? "Tüm vitrinleri gör" : "Filtreleri temizle"}
+            </button>
+          </div>
+        ) : (
+          <ul
+            className="grid grid-cols-2 gap-3 p-3 min-[700px]:grid-cols-3 min-[1000px]:grid-cols-4"
+            aria-label="Vitrinler"
+          >
+            {filtreliVitrinler.map((vitrin, index) => (
+              <li
+                key={vitrin.slug}
+                className="h-[280px] animate-fade-in motion-reduce:animate-none [&>article]:min-h-[280px] min-[700px]:h-[305px] min-[700px]:[&>article]:min-h-[305px] min-[1000px]:h-[320px] min-[1000px]:[&>article]:min-h-[320px]"
+                style={{ animationDelay: `${Math.min(index, 6) * 30}ms` }}
+              >
+                <VitrinKarti
+                  vitrin={vitrin}
+                  favoriMi={favoriAdlari.includes(vitrin.ad)}
+                  favoriyiDegistir={() => favoriyiDegistir(vitrin.ad)}
+                  sahipMi={sahipSlug === vitrin.slug}
+                  premium={sahipSlug === vitrin.slug ? premium : null}
+                />
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {sadeceKiralik ? (
+          <div className="px-6 pb-3 pt-2">
+            <Link
+              href="/"
+              className="flex min-h-11 w-full items-center justify-center rounded-xl border border-lp-border bg-lp-surface px-5 text-[13px] font-black text-lp-text-alt hover:bg-lp-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary"
+            >
+              Uygun olan yok, sıfırdan oluştur
+            </Link>
+          </div>
+        ) : null}
+
+        {!filtreVar && vitrinler.length > 0 ? (
+          <p className="sr-only" aria-live="polite">{vitrinler.length} vitrin gösteriliyor.</p>
+        ) : null}
       </section>
     </main>
   );
