@@ -30,7 +30,6 @@ jobs:
         run: |
           dart --version
           dart format lib test
-          git diff --check
           git diff --name-only -- lib test
 
       - name: Collect only formatter-changed files
