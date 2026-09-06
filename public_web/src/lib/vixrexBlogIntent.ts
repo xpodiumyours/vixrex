@@ -89,7 +89,7 @@ export function routeVixrexAssistantDomain(input: string): VixrexAssistantDomain
   if (!text) return { domain: "storefront", intent: null, query: "" };
 
   const mentionsBlog = text.includes("blog");
-  const mentionsContent = hasAny(text, ["yazi", "makale", "rehber", "taslak"]);
+  const mentionsContent = hasAny(text, ["yazi", "makale", "rehber", "taslak", "taslag"]);
   if (!mentionsBlog || !mentionsContent) {
     return { domain: "storefront", intent: null, query: "" };
   }
@@ -97,7 +97,7 @@ export function routeVixrexAssistantDomain(input: string): VixrexAssistantDomain
   const matches: VixrexBlogIntent[] = [];
 
   if (
-    text.includes("taslak") &&
+    hasAny(text, ["taslak", "taslag"]) &&
     hasAny(text, ["listele", "goster", "neler", "hangileri"])
   ) {
     matches.push("blog_taslaklarini_listele");
@@ -107,7 +107,7 @@ export function routeVixrexAssistantDomain(input: string): VixrexAssistantDomain
   }
   if (
     hasAny(text, ["duzenle", "degistir"]) &&
-    hasAny(text, ["yazi", "taslak", "makale"])
+    hasAny(text, ["yazi", "taslak", "taslag", "makale"])
   ) {
     matches.push("blog_taslak_duzenle");
   }
