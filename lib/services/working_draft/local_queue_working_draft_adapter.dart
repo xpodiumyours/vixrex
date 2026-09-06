@@ -27,7 +27,7 @@ class LocalQueueWorkingDraftAdapter implements WorkingDraftPort {
   SharedPreferences? _cachedPrefs;
 
   Future<SharedPreferences> _prefsAsync() async {
-    if (_prefs != null) return _prefs!;
+    if (_prefs != null) return _prefs;
     return _cachedPrefs ??= await SharedPreferences.getInstance();
   }
 

@@ -115,7 +115,7 @@ void main() {
       expect(
         v2 == null ||
             v2.trim().length < 10 ||
-            VixrexFieldValidator.validate(adres, v2!).ok == false,
+            VixrexFieldValidator.validate(adres, v2).ok == false,
         true,
         reason: 'v2=$v2',
       );

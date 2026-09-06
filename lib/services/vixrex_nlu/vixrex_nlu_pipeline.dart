@@ -1,4 +1,3 @@
-import 'package:vixrex/config/vitrin_alanlari.g.dart';
 import 'package:vixrex/config/vixrex_niyet_sozlugu.g.dart';
 import 'package:vixrex/controllers/store_editor_controller.dart';
 import 'package:vixrex/models/chat_message.dart';
@@ -256,9 +255,6 @@ class VixrexNluPipeline {
 
     // 1b) Yasal alanlar bu borudan yasak – mevcut legal akışa yönlendir.
     // Sözlükte yasal alanlar yok, bu dal Faz 1’de ölü – fakat emniyet için kontrol.
-    const yasakAlanlar = {
-      'isletmeAdi': false,
-    }; // placeholder, gerçek yasak sözlükte yok
 
     // 2) Özel akış gerektiren alanlar (il/ilce → listeden seç, gorsel → yükle)
     if (needsSpecialFlow != null && needsSpecialFlow(alan)) {

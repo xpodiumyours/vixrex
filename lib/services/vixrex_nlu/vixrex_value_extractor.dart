@@ -339,11 +339,6 @@ class VixrexValueExtractor {
             .trim();
     if (afterField.isEmpty) return null;
     // Fiilden öncesini al: " ... yap" → fiile kadar
-    final verbIdx = afterField.toLowerCase().indexOf(
-      RegExp(
-        r'\b(yap|olsun|degistir|değiştir|ekle|guncelle|güncelle|ayarla|yaz)\b',
-      ).pattern,
-    );
     // Basit: fiil var mı?
     final verbMatch = RegExp(
       r'\b(yap|olsun|degistir|değiştir|ekle|guncelle|güncelle|ayarla|yaz)\b',
