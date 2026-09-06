@@ -36,4 +36,21 @@ describe("landing vitrin oluşturma akışı Flutter referansıyla eşit", () =>
     expect(sohbet).toContain("initialName");
     expect(sohbet).toContain("name: initialName.trim()");
   });
+
+  it("APK mobil açılış hareketini birebir korur: 768px / 560px / 450ms easeOutCubic", () => {
+    const flutterLanding = oku("../lib/screens/landing_screen.dart");
+    const wrapper = oku("src/components/landing/LandingChatWrapper.tsx");
+    const phoneMockup = oku("src/components/landing/PhoneMockup.tsx");
+
+    expect(flutterLanding).toContain("final isMobile = MediaQuery.sizeOf(context).width <= 768");
+    expect(flutterLanding).toContain("final targetOffset = isMobile ? 560.0 : 0.0");
+    expect(flutterLanding).toContain("duration: const Duration(milliseconds: 450)");
+    expect(flutterLanding).toContain("curve: Curves.easeOutCubic");
+
+    expect(wrapper).toContain("window.innerWidth <= 768 ? 560 : 0");
+    expect(wrapper).toContain("const sure = 450");
+    expect(wrapper).toContain("1 - Math.pow(1 - oran, 3)");
+    expect(wrapper).not.toContain("scrollIntoView");
+    expect(phoneMockup).toContain("<LandingAsistanSohbeti");
+  });
 });
