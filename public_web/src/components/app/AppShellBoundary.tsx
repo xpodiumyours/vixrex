@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { AppBottomNav, AppSidebar } from "@/components/app/AppSidebar";
+import { StatusBar } from "@/components/kesfet/StatusBar";
 
 function shellRotasi(pathname: string): boolean {
   return (
@@ -12,6 +13,13 @@ function shellRotasi(pathname: string): boolean {
     pathname === "/kesfet" ||
     pathname.startsWith("/kesfet/")
   );
+}
+
+function ortakDurumCubuguGerekli(pathname: string): boolean {
+  // /app VitrinimEditor ve /kesfet KesfetIcerik henüz kendi aynı şeridini
+  // taşıyor. Bu iki tekrar sonraki cerrahi adımda sökülecek; Vixrex ve Profil
+  // şimdiden Flutter'daki tek shell durum çubuğunu doğrudan kullanır.
+  return pathname === "/app/vixrex" || pathname === "/app/profil";
 }
 
 /**
@@ -30,6 +38,7 @@ export function AppShellBoundary({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen bg-lp-bg-editor text-lp-text">
       <AppSidebar />
       <div className="flex min-h-screen min-w-0 flex-1 flex-col">
+        {ortakDurumCubuguGerekli(pathname) ? <StatusBar /> : null}
         <div className="min-w-0 flex-1 pb-[64px] min-[901px]:pb-0">{children}</div>
         <AppBottomNav />
       </div>
