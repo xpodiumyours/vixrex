@@ -48,6 +48,17 @@ describe("Flutter Web ↔ Next.js tek-shell paritesi", () => {
     expect(statusBar).toContain("Vitrini aç");
   });
 
+  it("dört ana ekran Flutter IndexedStack gibi mounted kalır ve sekme değişimi scroll sıçratmaz", () => {
+    expect(flutterShell).toContain("IndexedStack(index: safeIndex, children: pages)");
+    expect(appBoundary).toContain("KaliciAnaSekmeler");
+    expect(appBoundary).toContain("sekmeGovdeleri");
+    expect(appBoundary).toContain("hidden={!aktif}");
+    expect(appBoundary).toContain("router.prefetch(route)");
+    expect(appBoundary).toContain("kaydirmaKonumlari");
+    expect(appNav).toContain("scroll={false}");
+    expect(appNav).toContain("prefetch");
+  });
+
   it("sidebar ve Keşfet aynı arama state'ini kullanır", () => {
     expect(appContext).toContain("globalSearch");
     expect(appContext).toContain("setGlobalSearch");

@@ -62,7 +62,7 @@ export function AppSidebar() {
   function onSearch(e: React.FormEvent) {
     e.preventDefault();
     const query = globalSearch.trim();
-    router.push(query ? `/kesfet?q=${encodeURIComponent(query)}` : "/kesfet");
+    router.push(query ? `/kesfet?q=${encodeURIComponent(query)}` : "/kesfet", { scroll: false });
   }
 
   return (
@@ -100,6 +100,8 @@ export function AppSidebar() {
             <Link
               key={item.label}
               href={item.href}
+              prefetch
+              scroll={false}
               aria-current={active ? "page" : undefined}
               className={`relative my-1 flex min-h-11 items-center gap-3 rounded-xl px-3 text-[13px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
                 active
@@ -133,6 +135,8 @@ export function AppBottomNav() {
           <Link
             key={item.label}
             href={item.href}
+            prefetch
+            scroll={false}
             aria-current={active ? "page" : undefined}
             className={`flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 px-1 py-1 text-[11px] leading-none transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
               active ? "font-bold text-lp-secondary" : "font-normal text-lp-muted"
