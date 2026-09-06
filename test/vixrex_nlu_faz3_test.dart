@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vixrex/config/vixrex_niyet_sozlugu.g.dart';
 import 'package:vixrex/controllers/store_editor_controller.dart';
 import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/services/vixrex_nlu/vixrex_decision_contract.dart';
 import 'package:vixrex/services/vixrex_nlu/vixrex_executor.dart';
 import 'package:vixrex/services/vixrex_nlu/vixrex_field_validator.dart';
 import 'package:vixrex/services/vixrex_nlu/vixrex_intent_resolver.dart';
@@ -70,12 +71,18 @@ void main() {
         resolver.resolve('Telefonu 0212 123 45 67 yap')?.anahtar,
         'telefon',
       );
-      expect(resolver.resolve('E-postamı test@a.com yap')?.anahtar, 'eposta');
+      expect(
+        resolver.resolve('E-postamı test@a.com yap')?.anahtar,
+        'eposta',
+      );
       expect(
         resolver.resolve('Harita etiketini Çarşı içi yap')?.anahtar,
         'haritaEtiketi',
       );
-      expect(resolver.resolve('Instagramı aymira yap')?.anahtar, 'instagram');
+      expect(
+        resolver.resolve('Instagramı aymira yap')?.anahtar,
+        'instagram',
+      );
       expect(
         resolver.resolve('Web sitemi https://a.com yap')?.anahtar,
         'website',
@@ -326,24 +333,41 @@ void main() {
   });
 
   group('Faz 3 – pipeline çok-alanlı', () {
-    test('iki alan tek cümlede', () async {
+    test('typed action üretir, controller üzerinde side-effect yapmaz', () async {
       SharedPreferences.setMockInitialValues({});
       final pipeline = VixrexNluPipeline();
       final c = StoreEditorController(initialData: StoreData());
+      final oncekiTelefon = c.data.phone;
+      final oncekiInstagram = c.data.instagram;
+
       final result = await pipeline.handle(
         input: 'telefonu 0212 123 45 67 yap, instagramı aymira yap',
         controller: c,
         onValidate: (alan, ham) async {
           final v = VixrexFieldValidator.validate(alan, ham);
-          return (ok: v.ok, hata: v.hata, normalizedDeger: v.normalizedDeger);
+          return (
+            ok: v.ok,
+            hata: v.hata,
+            normalizedDeger: v.normalizedDeger,
+          );
         },
       );
+
       expect(result.outcome, VixrexNluPipelineOutcome.handled);
+      expect(result.decision, VixrexDecisionKind.validatedActionGroup);
+      expect(result.actions.length, 2);
       expect(
-        c.data.phone.replaceAll(RegExp(r'[^0-9]'), '').contains('2121234567'),
-        true,
+        result.actions.map((action) => action.fieldKey).toSet(),
+        {'telefon', 'instagram'},
       );
-      expect(c.data.instagram.contains('aymira'), true);
+      for (final action in result.actions) {
+        expect(action.contractVersion, 1);
+        expect(action.domain, 'storefront');
+        expect(action.actionType, 'set_field');
+      }
+      expect(c.data.phone, oncekiTelefon);
+      expect(c.data.instagram, oncekiInstagram);
+      expect(result.message.text.contains('Kaydettim'), false);
     });
 
     test('değer ayıklama her alan için kendi değerini alır', () {
@@ -361,7 +385,11 @@ void main() {
         'instagramı @aymira yap',
         vixrexNiyetAlanByAnahtar['instagram']!,
       );
-      expect(v2 != null && v2.contains('aymira'), true, reason: 'v2=$v2');
+      expect(
+        v2 != null && v2.contains('aymira'),
+        true,
+        reason: 'v2=$v2',
+      );
     });
   });
 }

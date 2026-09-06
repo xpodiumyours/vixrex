@@ -47,6 +47,19 @@ class VitrinSahiplikRepository {
     return client.rpc('bootstrap_owner_state');
   }
 
+  /// Mevcut güvenli working-draft bootstrap RPC'si. Yeni endpoint değildir;
+  /// 5.8 Flutter assistant yalnız çalışma taslağı henüz yoksa bunu kullanır.
+  Future<dynamic> getOrCreateWorkingDraft(
+    SupabaseClient client, {
+    required String slug,
+    required String editToken,
+  }) {
+    return client.rpc(
+      'get_or_create_working_draft',
+      params: {'p_slug': slug, 'p_edit_token': editToken},
+    );
+  }
+
   /// `rent_demo_canonical` — Flutter ve Next.js için tek kiralama zinciri.
   Future<dynamic> rentDemoForAccount(SupabaseClient client, String sourceSlug) {
     return client.rpc(

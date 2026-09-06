@@ -17,6 +17,8 @@ class VitrinAlani {
   final bool kalite;
   final int? minUzunluk;
   final int? maxUzunluk;
+  final num? min;
+  final num? max;
   final List<String>? secenekler;
   final String? ipucu;
   final String? dogrulama;
@@ -32,6 +34,8 @@ class VitrinAlani {
     this.kalite = false,
     this.minUzunluk,
     this.maxUzunluk,
+    this.min,
+    this.max,
     this.secenekler,
     this.ipucu,
     this.dogrulama,
@@ -164,6 +168,7 @@ const List<VitrinAlani> vitrinAlanlari = [
     bolum: 'contact',
     zorunlu: true,
     maxUzunluk: 200,
+    dogrulama: 'adres',
   ),
   VitrinAlani(
     anahtar: 'il',
@@ -240,6 +245,8 @@ const List<VitrinAlani> vitrinAlanlari = [
     etiket: 'Konum — Enlem',
     kolon: 'latitude',
     bolum: 'contact',
+    min: -90,
+    max: 90,
   ),
   VitrinAlani(
     anahtar: 'boylam',
@@ -247,6 +254,8 @@ const List<VitrinAlani> vitrinAlanlari = [
     etiket: 'Konum — Boylam',
     kolon: 'longitude',
     bolum: 'contact',
+    min: -180,
+    max: 180,
   ),
   VitrinAlani(
     anahtar: 'kategoriBolumBaslik',

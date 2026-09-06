@@ -4,12 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:vixrex/models/chat_message.dart';
 import 'package:vixrex/config/chatbot_config.dart';
 import 'package:vixrex/services/chatbot_service.dart';
+import 'package:vixrex/services/feature_flag_service.dart';
 import 'package:vixrex/services/vixrex_assistant_nlu_service.dart';
 import 'package:vixrex/services/vixrex_assistant_nlu_types.dart';
 import 'package:vixrex/services/vixrex_guidance_service.dart';
 import 'package:vixrex/services/vixrex_profile_snapshot.dart';
 import 'package:vixrex/services/vixrex_nlu/vixrex_field_validator.dart';
 import 'package:vixrex/services/vixrex_nlu/vixrex_nlu_pipeline.dart';
+import 'package:vixrex/services/working_draft/flutter_smart_engine_owner_executor.dart';
+import 'package:vixrex/services/working_draft/smart_engine_working_draft_orchestrator.dart';
 import 'package:vixrex/widgets/chat/chat_bubble.dart';
 import 'package:vixrex/widgets/chat/chat_composer.dart';
 import 'package:vixrex/widgets/chat/chat_progress.dart';
@@ -18,13 +21,21 @@ import 'package:vixrex/widgets/vixrex_quick_replies.dart';
 
 const String _nluConfirmPrefix = 'nlu_confirm:';
 const String _nluCancelPayload = 'nlu_cancel';
+const String _smartEngineUndoPrefix = 'smart_engine_undo:';
+
+typedef FlutterSmartEngineExecute =
+    Future<FlutterSmartEngineCommandResult> Function(
+      List<FlutterSmartEngineAction> actions,
+    );
+
+typedef FlutterSmartEngineUndo =
+    Future<FlutterSmartEngineUndoExecutionResult> Function(String commandId);
 
 /// Uygulama içi companion sohbeti.
 /// Motor: mevcut [ChatbotService] + [VixRexGuidanceService] (config üzerinden).
 /// Aksiyonlar: [onAction] → HomeShell’deki mevcut handler’lar.
-/// Serbest metin anlama: Supabase Function → onay kartı → [onSaveField] →
-/// HomeShell’deki gerçek `StoreEditorController`. Function erişilemezse mevcut
-/// kural tabanlı motor çalışmaya devam eder.
+/// 46-alan Akıllı Motor: decision pipeline → [onExecuteSmartEngine] →
+/// authoritative working draft → execution sonucu → sohbet UX.
 class VixRexCompanionChat extends StatefulWidget {
   final VixRexProfileSnapshot? snapshot;
   final bool hasShared;
@@ -32,8 +43,16 @@ class VixRexCompanionChat extends StatefulWidget {
   final bool isRecommendationDismissed;
   final ValueChanged<VixRexAction> onAction;
   final ValueChanged<String> onDismissRecommendation;
+
+  /// Legacy NLU callback. Remote OpenAI NLU bugün kapalıdır; 46-alan Akıllı
+  /// Motor bu callback'i kullanmaz.
   final void Function(VixRexNluField field, String value) onSaveField;
+
+  /// Legacy per-field callback. 46-alan Akıllı Motor yazma yolu değildir.
   final void Function(String anahtar, Object? deger)? onUpdateField;
+
+  final FlutterSmartEngineExecute? onExecuteSmartEngine;
+  final FlutterSmartEngineUndo? onUndoSmartEngine;
   final FocusNode inputFocusNode;
 
   const VixRexCompanionChat({
@@ -46,6 +65,8 @@ class VixRexCompanionChat extends StatefulWidget {
     required this.onDismissRecommendation,
     required this.onSaveField,
     this.onUpdateField,
+    this.onExecuteSmartEngine,
+    this.onUndoSmartEngine,
     required this.inputFocusNode,
   });
 
@@ -55,12 +76,14 @@ class VixRexCompanionChat extends StatefulWidget {
 
 class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
   final _service = ChatbotService();
+  final _featureFlags = FeatureFlagService();
   final _nluService = VixRexAssistantNluService();
   final _inputCtrl = TextEditingController();
   final _scrollCtrl = ScrollController();
   final List<ChatMessage> _messages = [];
   bool _loading = true;
   bool _typing = false;
+  bool _smartEngineEnabled = false;
   Timer? _pollTimer;
   bool _pollActive = false;
 
@@ -68,8 +91,6 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
   void initState() {
     super.initState();
     _bootstrap();
-    // Faz 2/3: kalıcı hesaplarda Next.js sahip paneli ile çift yönlü senkron
-    // RLS nedeniyle Realtime postgres_changes dinlenemez, 15sn RPC poll daha güvenilir
     _pollTimer = Timer.periodic(const Duration(seconds: 15), (_) => _poll());
   }
 
@@ -78,7 +99,6 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
     super.didUpdateWidget(oldWidget);
     final oldScope = _historyScopeFor(oldWidget.snapshot);
     if (oldScope != _historyScope) {
-      // Scope değişince poll’u sıfırla — eski conversation’a poll etmemek için
       _pollTimer?.cancel();
       _pollTimer = Timer.periodic(const Duration(seconds: 15), (_) => _poll());
       setState(() {
@@ -96,31 +116,25 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
 
   Future<void> _poll() async {
     if (_loading || _pollActive || !mounted) return;
-    // Kalıcı hesap değilse (anonim) poll yok — bellek modu
     if (!_service.canSync) return;
     final scope = _historyScope;
-    // Scope boşsa (yayın yok) poll’a gerek yok — local scope zaten tek cihaz
     if (scope.isEmpty) return;
     _pollActive = true;
     try {
       final history = await _service.loadHistory(scope: scope);
       if (!mounted || scope != _historyScope) return;
-      // Yeni mesaj var mı? (remote’dan gelen Next.js yazıları)
       if (history.length <= _messages.length) return;
-      // Handoff tekilleştirme: DB varsa handoff’u ez, yoksa rehber tipini yenile
       final reconciled = _service.reconcileGuidanceHistory(
         history: history,
         currentGuidance: _currentGuidanceFor(history),
         handoffMarker: _handoffMarker,
       );
-      // Sadece gerçekten yeni içerik varsa setState — gereksiz rebuild yok
       if (reconciled.length == _messages.length) return;
       setState(() {
         _messages
           ..clear()
           ..addAll(reconciled);
       });
-      // Yerel önbelleği de tazele (loadHistory zaten yazdı, ama reconcile sonrası da kaydet)
       await _service.saveHistory(_messages, scope: scope);
       _scrollToEnd();
     } finally {
@@ -148,9 +162,9 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
 
   Future<void> _bootstrap() async {
     final scope = _historyScope;
-    // Faz C, madde 1: yayına yeni geçilmişse yerel (henüz yayınlanmamış)
-    // geçmiş bu scope'a bir kez taşınır. Hedefte zaten geçmiş varsa
-    // dokunmaz — idempotent, her bootstrap'ta çağrılması güvenli.
+    await _featureFlags.loadFlags();
+    final smartEngineEnabled = _featureFlags.isSmartEngineStorefrontEnabled;
+
     if (scope.isNotEmpty) {
       await _service.migrateLocalToPublishedScope(scope);
     }
@@ -163,11 +177,11 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
       handoffMarker: _handoffMarker,
     );
 
-    // Companion yalnız yayın sonrası Vixrex sekmesinde; kurulum gömülü onboarding’de.
     setState(() {
       _messages
         ..clear()
         ..addAll(reconciled);
+      _smartEngineEnabled = smartEngineEnabled;
       _loading = false;
     });
     await _service.saveHistory(_messages, scope: scope);
@@ -204,21 +218,15 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
     });
   }
 
-  // Faz 1: 46 alan borusu – feature-flag ile eski davranışı korur.
-  // Pipeline önce dener, notUnderstood ise eski ChatbotService’e düşer.
-  static const _pipelineEnabled = true;
   final _pipeline = VixrexNluPipeline();
 
   bool _needsSpecialFlowFor(String anahtar) {
-    // Faz 1 dar: il/ilce listeden seçilmeli, serbest metinle yazılmamalı.
-    // gorsel alanlar da URL değilse özel akış (galeri/upload).
     if (anahtar == 'il' || anahtar == 'ilce') return true;
     if (anahtar == 'logo' ||
         anahtar == 'kapakGorseli' ||
         anahtar == 'bantGorsel' ||
         anahtar == 'hakkindaGorsel') {
-      // Sadece https URL ise düz yaz, yoksa özel akış.
-      return false; // şimdilik URL kabul, özel akış yok – Faz 2’de eklenecek.
+      return false;
     }
     return false;
   }
@@ -238,7 +246,6 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
     Future<void>.delayed(const Duration(milliseconds: 450), () async {
       if (!mounted) return;
       late final ChatMessage bot;
-      // 1) Eski NLU (OpenAI) hâlâ kapalı – isEnabled false, korunur.
       if (VixRexAssistantNluService.isEnabled) {
         final remote = await _nluService.propose(text);
         if (!mounted) return;
@@ -250,24 +257,24 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
                   prompt: remote.reply,
                 )
                 : ChatMessage.bot(remote.reply);
-      } else if (_pipelineEnabled) {
-        // 2) Yeni 46 alan borusu – önce dener.
+      } else if (_smartEngineEnabled) {
         final result = await _pipeline.handle(
           input: text,
-          controller:
-              null, // CompanionChat controller’a doğrudan erişmez, HomeShell onUpdateField’e delege eder.
+          controller: null,
           scope: _historyScope,
           onValidate: (alan, hamDeger) async {
             final v = VixrexFieldValidator.validate(alan, hamDeger);
-            return (ok: v.ok, hata: v.hata, normalizedDeger: v.normalizedDeger);
+            return (
+              ok: v.ok,
+              hata: v.hata,
+              normalizedDeger: v.normalizedDeger,
+            );
           },
           needsSpecialFlow: (alan) => _needsSpecialFlowFor(alan.anahtar),
         );
         if (result.outcome == VixrexNluPipelineOutcome.notUnderstood) {
-          // Alan bulunamadı → eski kural tabanlı sohbete düş.
           bot = _service.respond(text, widget.snapshot, widget.hasShared);
         } else if (result.outcome == VixrexNluPipelineOutcome.handled) {
-          // Başarılı doğrulama ama controller yok → HomeShell’e delege et (çok-alanlı dahil).
           final anahtarlar =
               result.appliedAnahtarlar ??
               (result.appliedAnahtar != null
@@ -278,26 +285,30 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
               (result.appliedDeger != null
                   ? [result.appliedDeger!]
                   : <Object>[]);
-          if (anahtarlar.isNotEmpty && widget.onUpdateField != null) {
+
+          if (anahtarlar.isNotEmpty &&
+              degerler.isNotEmpty &&
+              widget.onExecuteSmartEngine != null) {
+            final actions = <FlutterSmartEngineAction>[];
             for (var i = 0; i < anahtarlar.length && i < degerler.length; i++) {
-              widget.onUpdateField!(anahtarlar[i], degerler[i]);
+              actions.add(
+                FlutterSmartEngineAction(
+                  fieldKey: anahtarlar[i],
+                  value: degerler[i],
+                ),
+              );
             }
-            bot = result.message;
+            final execution = await widget.onExecuteSmartEngine!(actions);
+            bot = _executionMessage(execution, result.message);
           } else if (anahtarlar.isNotEmpty) {
-            // Fallback: eski 5 alan haritası (geriye uyum) – sadece ilk
-            final mapped = _mapAnahtarToLegacyField(anahtarlar.first);
-            if (mapped != null) {
-              widget.onSaveField(mapped, degerler.first.toString());
-              bot = ChatMessage.bot('Kaydettim ✅ ${result.message.text}');
-            } else {
-              bot = result.message;
-            }
+            bot = ChatMessage.bot(
+              'Bu değişikliği güvenli sahiplik oturumu doğrulanmadan kaydetmedim.',
+            );
           } else {
             bot = result.message;
           }
         } else if (result.outcome ==
             VixrexNluPipelineOutcome.needsSpecialFlow) {
-          // il/ilce gibi özel akış – mevcut VixrexAction’a yönlendir.
           final anahtar = result.appliedAnahtar;
           if (anahtar == 'il' || anahtar == 'ilce') {
             widget.onAction(VixRexAction.scrollToAddress);
@@ -315,7 +326,6 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
             bot = result.message;
           }
         } else {
-          // needsClarification / blockedLegal / notUnderstood dışındaki – netleştirme sorusu.
           bot = result.message;
         }
       } else {
@@ -331,21 +341,117 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
     });
   }
 
-  VixRexNluField? _mapAnahtarToLegacyField(String anahtar) {
-    switch (anahtar) {
-      case 'isletmeAdi':
-        return VixRexNluField.storeName;
-      case 'whatsapp':
-        return VixRexNluField.whatsapp;
-      case 'adres':
-        return VixRexNluField.address;
-      case 'kisaTanitim':
-        return VixRexNluField.description;
-      case 'kategori':
-        return VixRexNluField.category;
-      default:
-        return null;
+  List<QuickReply> _undoReplies(FlutterSmartEngineCommandResult execution) {
+    if (widget.onUndoSmartEngine == null ||
+        execution.commandId.isEmpty ||
+        execution.succeeded.isEmpty ||
+        execution.queuedOffline.isNotEmpty) {
+      return const [];
     }
+    return [
+      QuickReply(
+        label: 'Geri al',
+        payload: '$_smartEngineUndoPrefix${execution.commandId}',
+      ),
+    ];
+  }
+
+  ChatMessage _executionMessage(
+    FlutterSmartEngineCommandResult execution,
+    ChatMessage decisionMessage,
+  ) {
+    switch (execution.status) {
+      case FlutterSmartEngineCommandStatus.noOp:
+        return decisionMessage;
+      case FlutterSmartEngineCommandStatus.succeeded:
+        return ChatMessage.bot(
+          'Kaydedildi ✅ ${decisionMessage.text}',
+          quickReplies: _undoReplies(execution),
+        );
+      case FlutterSmartEngineCommandStatus.queuedOffline:
+        return ChatMessage.bot(
+          'Değişiklik sıraya alındı; henüz buluta kaydedilmedi.',
+        );
+      case FlutterSmartEngineCommandStatus.partialResult:
+        final saved = execution.succeeded.length;
+        final pending = execution.queuedOffline.length;
+        final unresolved = execution.failed.length + execution.stopped.length;
+        final parts = <String>[
+          if (saved > 0) '$saved değişiklik kaydedildi.',
+          if (pending > 0) '$pending değişiklik henüz buluta kaydedilmedi.',
+          if (unresolved > 0)
+            '$unresolved değişiklik güvenlik için tamamlanmadı.',
+        ];
+        return ChatMessage.bot(
+          parts.join(' '),
+          quickReplies: _undoReplies(execution),
+        );
+      case FlutterSmartEngineCommandStatus.failed:
+        return ChatMessage.bot(_executionFailureMessage(execution));
+    }
+  }
+
+  String _executionFailureMessage(FlutterSmartEngineCommandResult execution) {
+    switch (execution.firstErrorCode) {
+      case 'OWNER_AUTHORIZATION_REQUIRED':
+        return 'Bu düzenleme için kalıcı hesabınla giriş yapmalısın.';
+      case 'DRAFT_PROJECTION_STALE':
+      case 'WORKING_DRAFT_STALE':
+      case 'DRAFT_VERSION_CONFLICT':
+        return 'Taslak başka bir yerde değişti. Güncel hâli yükleyip tekrar dene.';
+      case 'SMART_ENGINE_DISABLED':
+        return 'Vixrex Akıllı Motor şu anda kapalı. Manuel düzenleme kullanabilirsin.';
+      case 'OWNER_EDIT_NOT_PUBLISHED':
+        return 'Bu işlem yayın sonrası sahip düzenleme modunda kullanılabilir.';
+      case 'WORKING_DRAFT_NOT_READY':
+        return 'Çalışma taslağı hazırlanamadı. Tekrar dene.';
+      case 'QUEUED_OFFLINE':
+        return 'Değişiklik henüz buluta kaydedilmedi.';
+      default:
+        return 'Değişikliği güvenle kaydedemedim. Güncel hâli kontrol edip tekrar dene.';
+    }
+  }
+
+  String _undoFailureMessage(FlutterSmartEngineUndoExecutionResult result) {
+    switch (result.errorCode) {
+      case 'UNDO_CONFLICT':
+        return 'Vitrin bu işlemden sonra değişti. Güvenlik için geri almadım.';
+      case 'UNDO_COMMAND_NOT_FOUND':
+        return 'Geri alınacak işlem kaydı bulunamadı.';
+      case 'OWNER_AUTHORIZATION_REQUIRED':
+      case 'INVALID_SESSION_TOKEN':
+        return 'Bu geri alma işlemi için sahiplik doğrulanamadı.';
+      case 'SMART_ENGINE_DISABLED':
+        return 'Vixrex Akıllı Motor kapalı olduğu için geri alma yapılmadı.';
+      case 'NETWORK_ERROR':
+      case 'NO_CLIENT':
+        return 'Bağlantı kurulamadı; geri alma yapılmadı.';
+      default:
+        return 'Değişikliği güvenle geri alamadım.';
+    }
+  }
+
+  Future<void> _executeSmartEngineUndo(String commandId) async {
+    final undo = widget.onUndoSmartEngine;
+    if (undo == null || commandId.trim().isEmpty || _typing) return;
+
+    setState(() => _typing = true);
+    final result = await undo(commandId.trim());
+    if (!mounted) return;
+
+    final message =
+        result.succeeded
+            ? (result.idempotentReplay
+                ? 'Bu değişiklik zaten geri alınmış.'
+                : 'Değişiklik geri alındı.')
+            : _undoFailureMessage(result);
+
+    setState(() {
+      _typing = false;
+      _messages.add(ChatMessage.bot(message));
+    });
+    await _service.saveHistory(_messages, scope: _historyScope);
+    _scrollToEnd();
   }
 
   ChatMessage _buildNluConfirmMessage({
@@ -366,12 +472,58 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
   }
 
   void _appendBotAck(String text) {
+    if (!mounted) return;
     setState(() => _messages.add(ChatMessage.bot(text)));
     _service.saveHistory(_messages, scope: _historyScope);
     _scrollToEnd();
   }
 
+  String? _legacyFieldKey(VixRexNluField field) {
+    switch (field) {
+      case VixRexNluField.storeName:
+        return 'isletmeAdi';
+      case VixRexNluField.whatsapp:
+        return 'whatsapp';
+      case VixRexNluField.address:
+        return 'adres';
+      case VixRexNluField.description:
+        return 'kisaTanitim';
+      case VixRexNluField.category:
+        return 'kategori';
+    }
+  }
+
+  Future<void> _executeLegacyNluConfirm(
+    VixRexNluField field,
+    String value,
+  ) async {
+    final fieldKey = _legacyFieldKey(field);
+    final execute = widget.onExecuteSmartEngine;
+    if (fieldKey == null || execute == null) {
+      _appendBotAck(
+        'Bu değişikliği güvenli sahiplik oturumu olmadan kaydetmedim.',
+      );
+      return;
+    }
+    final result = await execute([
+      FlutterSmartEngineAction(fieldKey: fieldKey, value: value),
+    ]);
+    final message = _executionMessage(
+      result,
+      ChatMessage.bot('Değişiklik hazır.'),
+    );
+    if (!mounted) return;
+    setState(() => _messages.add(message));
+    await _service.saveHistory(_messages, scope: _historyScope);
+    _scrollToEnd();
+  }
+
   void _onQuickReply(QuickReply reply) {
+    if (reply.payload.startsWith(_smartEngineUndoPrefix)) {
+      final commandId = reply.payload.substring(_smartEngineUndoPrefix.length);
+      unawaited(_executeSmartEngineUndo(commandId));
+      return;
+    }
     if (reply.payload.startsWith(_nluConfirmPrefix)) {
       final rest = reply.payload.substring(_nluConfirmPrefix.length);
       final sepIndex = rest.indexOf(':');
@@ -382,8 +534,7 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
           (f) => f.name == fieldName,
           orElse: () => VixRexNluField.storeName,
         );
-        widget.onSaveField(field, value);
-        _appendBotAck('Kaydettim ✅');
+        unawaited(_executeLegacyNluConfirm(field, value));
       }
       return;
     }
@@ -422,6 +573,7 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
   @override
   void dispose() {
     _pollTimer?.cancel();
+    _featureFlags.dispose();
     _inputCtrl.dispose();
     _scrollCtrl.dispose();
     super.dispose();
@@ -443,8 +595,6 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // 2026-09-03 (Çalışma masası düzeni, web paritesi): aynı ince,
-        // yüzeye uyumlu kaydırma şeridi (VixrexThinScrollbar).
         Expanded(
           child: VixrexThinScrollbar(
             controller: _scrollCtrl,

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useOwnerDraft } from "./hooks/useOwnerDraft";
+import { useOwnerDraftVersion } from "./OwnerDraftVersionContext";
 import { useOwnerChat } from "./hooks/useOwnerChat";
 import { useFieldSelection } from "./hooks/useFieldSelection";
 import { useOwnerActions, bonusAlanlariCikarVeKaydet } from "./hooks/useOwnerActions";
@@ -278,6 +279,7 @@ export default function OwnerAssistantPanel({
     draftData,
     atlananAlanlar ?? []
   );
+  const { draftVersion, setDraftVersion } = useOwnerDraftVersion();
   const { mesajlar, mesajEkle, akisRef } = useOwnerChat(rapor, assistantHandoff, { slug });
 
   const {
@@ -483,14 +485,16 @@ export default function OwnerAssistantPanel({
           slug,
           mesajEkle,
           setAlan,
-          () => router.refresh()
+          () => router.refresh(),
+          draftVersion,
+          setDraftVersion,
         );
       } catch {
         // Köprü opsiyonel bir zenginleştirme — bulunamazsa/başarısız
         // olursa normal tek-tek soru akışı hiç etkilenmeden devam eder.
       }
     })();
-  }, [draftYeniOlusturuldu, slug, mesajEkle, setAlan, router]);
+  }, [draftYeniOlusturuldu, slug, mesajEkle, setAlan, router, draftVersion, setDraftVersion]);
 
   // Faz E (Tek Asistan planı, 2026-09-02): yönetim modu — vitrin yayında
   // ise kurulum rehberi yerine "bugün ilgilenmen gereken şey" önerisi.

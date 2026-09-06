@@ -49,8 +49,34 @@ class ImageOptimizationService {
       );
     }
 
-    final sourceType = _sourceType(fileExtension, contentType);
-    if (sourceType == _ImageSourceType.webp) {
+    // Dosya uzantısı / MIME caller beyanıdır; güvenlik sınırı değildir.
+    // Gerçek format magic-byte üzerinden belirlenir. Beyan edilen tanınmış
+    // format gerçek içerikle uyuşmuyorsa dosya reddedilir.
+    final actualType = _detectSourceType(bytes);
+    if (actualType == null) {
+      throw const ImageOptimizationException(
+        'Fotoğraf formatı doğrulanamadı. JPG, PNG veya WebP kullanın.',
+      );
+    }
+
+    final declaredType = _declaredSourceType(fileExtension, contentType);
+    if (declaredType != null && declaredType != actualType) {
+      throw const ImageOptimizationException(
+        'Fotoğraf formatı dosya içeriğiyle uyuşmuyor.',
+      );
+    }
+
+    if (actualType == _ImageSourceType.webp) {
+      // Eski yol WebP için yalnız uzantı/MIME'a güvenip ham bytes döndürüyordu.
+      // En azından gerçek codec ile decode + ölçü okuma zorunlu: yalnız RIFF/
+      // WEBP başlığı taklit edilmiş bozuk payload Storage'a gitmez.
+      try {
+        await _readDimensions(bytes);
+      } catch (_) {
+        throw const ImageOptimizationException(
+          'WebP fotoğraf doğrulanamadı. Farklı bir dosya seçin.',
+        );
+      }
       return OptimizedImage(
         bytes: bytes,
         extension: 'webp',
@@ -65,7 +91,7 @@ class ImageOptimizationService {
         dimensions.height,
       );
       final format =
-          sourceType == _ImageSourceType.png
+          actualType == _ImageSourceType.png
               ? CompressFormat.png
               : CompressFormat.jpeg;
 
@@ -86,7 +112,7 @@ class ImageOptimizationService {
 
       if (optimized.length > maxPreferredBytes) {
         final retryTarget =
-            sourceType == _ImageSourceType.png
+            actualType == _ImageSourceType.png
                 ? targetSizeForDimensions(
                   dimensions.width,
                   dimensions.height,
@@ -111,9 +137,9 @@ class ImageOptimizationService {
 
       return OptimizedImage(
         bytes: optimized,
-        extension: sourceType == _ImageSourceType.png ? 'png' : 'jpg',
+        extension: actualType == _ImageSourceType.png ? 'png' : 'jpg',
         contentType:
-            sourceType == _ImageSourceType.png ? 'image/png' : 'image/jpeg',
+            actualType == _ImageSourceType.png ? 'image/png' : 'image/jpeg',
       );
     } on ImageOptimizationException {
       rethrow;
@@ -160,21 +186,76 @@ class ImageOptimizationService {
     }
   }
 
-  _ImageSourceType _sourceType(String extension, String contentType) {
+  _ImageSourceType? _detectSourceType(Uint8List bytes) {
+    if (bytes.length >= 3 &&
+        bytes[0] == 0xff &&
+        bytes[1] == 0xd8 &&
+        bytes[2] == 0xff) {
+      return _ImageSourceType.jpeg;
+    }
+
+    const pngSignature = <int>[0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+    if (bytes.length >= pngSignature.length) {
+      var png = true;
+      for (var i = 0; i < pngSignature.length; i++) {
+        if (bytes[i] != pngSignature[i]) {
+          png = false;
+          break;
+        }
+      }
+      if (png) return _ImageSourceType.png;
+    }
+
+    // WebP container: RIFF <size:4 bytes> WEBP
+    if (bytes.length >= 12 &&
+        bytes[0] == 0x52 &&
+        bytes[1] == 0x49 &&
+        bytes[2] == 0x46 &&
+        bytes[3] == 0x46 &&
+        bytes[8] == 0x57 &&
+        bytes[9] == 0x45 &&
+        bytes[10] == 0x42 &&
+        bytes[11] == 0x50) {
+      return _ImageSourceType.webp;
+    }
+
+    return null;
+  }
+
+  _ImageSourceType? _declaredSourceType(String extension, String contentType) {
     final normalizedExtension = extension.trim().toLowerCase().replaceAll(
       '.',
       '',
     );
     final normalizedContentType = contentType.trim().toLowerCase();
 
-    if (normalizedExtension == 'png' || normalizedContentType == 'image/png') {
-      return _ImageSourceType.png;
+    _ImageSourceType? extensionType;
+    if (normalizedExtension == 'jpg' || normalizedExtension == 'jpeg') {
+      extensionType = _ImageSourceType.jpeg;
+    } else if (normalizedExtension == 'png') {
+      extensionType = _ImageSourceType.png;
+    } else if (normalizedExtension == 'webp') {
+      extensionType = _ImageSourceType.webp;
     }
-    if (normalizedExtension == 'webp' ||
-        normalizedContentType == 'image/webp') {
-      return _ImageSourceType.webp;
+
+    _ImageSourceType? contentTypeValue;
+    if (normalizedContentType == 'image/jpeg' ||
+        normalizedContentType == 'image/jpg') {
+      contentTypeValue = _ImageSourceType.jpeg;
+    } else if (normalizedContentType == 'image/png') {
+      contentTypeValue = _ImageSourceType.png;
+    } else if (normalizedContentType == 'image/webp') {
+      contentTypeValue = _ImageSourceType.webp;
     }
-    return _ImageSourceType.jpeg;
+
+    if (extensionType != null &&
+        contentTypeValue != null &&
+        extensionType != contentTypeValue) {
+      throw const ImageOptimizationException(
+        'Fotoğraf uzantısı ile içerik türü uyuşmuyor.',
+      );
+    }
+    return extensionType ?? contentTypeValue;
   }
 }
 

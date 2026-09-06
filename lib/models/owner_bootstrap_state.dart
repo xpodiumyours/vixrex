@@ -4,7 +4,7 @@ import 'package:vixrex/models/store_data.dart';
 /// sahibin sunucudaki tam durumu.
 ///
 /// NEDEN TEK MODEL (2026-08-26): önceden "yeni cihazda vitrinimi bul" akışı
-/// üç ayrı parçadan toplanıyordu — slug `get_own_published_store`'dan,
+/// üç ayrı parçadan toplanıyor — slug `get_own_published_store`'dan,
 /// edit_token YALNIZ cihaz belleğinden, çalışma taslağı ise hiç. Yeni
 /// cihazda bellek boş olduğu için token da boş kalıyor, uygulama vitrini
 /// düzenleyemiyor ve taslak dalına düşüp YENİ bir vitrin satırı açıyordu.
@@ -22,6 +22,8 @@ class OwnerBootstrapState {
     this.liveData,
     this.hasDraft = false,
     this.draftData,
+    this.draftVersion = 0,
+    this.baseLiveVersion = 0,
     this.draftStale = false,
     this.liveUpdatedAt,
     this.draftUpdatedAt,
@@ -39,6 +41,8 @@ class OwnerBootstrapState {
       liveData = null,
       hasDraft = false,
       draftData = null,
+      draftVersion = 0,
+      baseLiveVersion = 0,
       draftStale = false,
       liveUpdatedAt = null,
       draftUpdatedAt = null;
@@ -69,6 +73,15 @@ class OwnerBootstrapState {
   /// Web'de bırakılmış, henüz yayınlanmamış çalışma taslağı var mı.
   final bool hasDraft;
   final StoreData? draftData;
+
+  /// `store_working_drafts.draft_version` — owner assistant optimistic
+  /// concurrency için mevcut server sürümü. 5.8 öncesinde RPC bunu dönmesine
+  /// rağmen Flutter model sınırında kayboluyordu.
+  final int draftVersion;
+
+  /// Taslağın üretildiği canlı sürüm. `draftStale` hesabının ham karşılığı;
+  /// assistant mutation için draftVersion ile karıştırılmaz.
+  final int baseLiveVersion;
 
   /// Taslak üretildikten sonra canlı kayıt ilerlemiş — sessiz ezme riski.
   final bool draftStale;
@@ -106,6 +119,8 @@ class OwnerBootstrapState {
       liveData: _vitrinVerisi(json['store_data']),
       hasDraft: json['has_draft'] == true,
       draftData: _vitrinVerisi(json['draft_data']),
+      draftVersion: _tamsayi(json['draft_version']),
+      baseLiveVersion: _tamsayi(json['base_live_version']),
       draftStale: json['draft_stale'] == true,
       liveUpdatedAt: _zaman(json['live_updated_at']),
       draftUpdatedAt: _zaman(json['draft_updated_at']),

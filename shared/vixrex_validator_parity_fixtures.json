@@ -1,0 +1,285 @@
+{
+  "_aciklama": "Vixrex Akıllı Motor Flutter ↔ Next.js validator parity fixture kaynağı. Aynı alan ve ham değer iki runtime'da aynı ok/red ve canonical değeri üretmelidir.",
+  "_surum": 3,
+  "validator": [
+    {
+      "id": "required-bos-red",
+      "fieldKey": "isletmeAdi",
+      "input": "   ",
+      "expectedOk": false
+    },
+    {
+      "id": "optional-bos-null",
+      "fieldKey": "heroRozet",
+      "input": "   ",
+      "expectedOk": true,
+      "expectedValue": null
+    },
+    {
+      "id": "metin-min-red",
+      "fieldKey": "isletmeAdi",
+      "input": "A",
+      "expectedOk": false
+    },
+    {
+      "id": "metin-min-kabul",
+      "fieldKey": "isletmeAdi",
+      "input": "Aymira",
+      "expectedOk": true,
+      "expectedValue": "Aymira"
+    },
+    {
+      "id": "metin-max-red",
+      "fieldKey": "heroRozet",
+      "input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "expectedOk": false
+    },
+    {
+      "id": "tr-mobil-normalize",
+      "fieldKey": "whatsapp",
+      "input": "0555 123 45 67",
+      "expectedOk": true,
+      "expectedValue": "905551234567"
+    },
+    {
+      "id": "tr-mobil-red",
+      "fieldKey": "whatsapp",
+      "input": "0555 ABC 45 67",
+      "expectedOk": false
+    },
+    {
+      "id": "genel-telefon-normalize",
+      "fieldKey": "telefon",
+      "input": "0212 123 45 67",
+      "expectedOk": true,
+      "expectedValue": "02121234567"
+    },
+    {
+      "id": "eposta-kabul",
+      "fieldKey": "eposta",
+      "input": "test@a.com",
+      "expectedOk": true,
+      "expectedValue": "test@a.com"
+    },
+    {
+      "id": "eposta-red",
+      "fieldKey": "eposta",
+      "input": "not-email",
+      "expectedOk": false
+    },
+    {
+      "id": "https-kabul",
+      "fieldKey": "website",
+      "input": "https://vixrex.com",
+      "expectedOk": true,
+      "expectedValue": "https://vixrex.com"
+    },
+    {
+      "id": "ftp-red",
+      "fieldKey": "website",
+      "input": "ftp://vixrex.com",
+      "expectedOk": false
+    },
+    {
+      "id": "eksik-url-red",
+      "fieldKey": "website",
+      "input": "http://",
+      "expectedOk": false
+    },
+    {
+      "id": "website-anchor-red",
+      "fieldKey": "website",
+      "input": "#iletisim",
+      "expectedOk": false
+    },
+    {
+      "id": "harita-anchor-red",
+      "fieldKey": "haritaLinki",
+      "input": "#harita",
+      "expectedOk": false
+    },
+    {
+      "id": "referans-anchor-red",
+      "fieldKey": "referansLinki",
+      "input": "#referanslar",
+      "expectedOk": false
+    },
+    {
+      "id": "anchor-kabul",
+      "fieldKey": "galeriAksiyonLinki",
+      "input": "#galeri",
+      "expectedOk": true,
+      "expectedValue": "#galeri"
+    },
+    {
+      "id": "gorsel-https-kabul",
+      "fieldKey": "logo",
+      "input": "https://vixrex.com/logo.webp",
+      "expectedOk": true,
+      "expectedValue": "https://vixrex.com/logo.webp"
+    },
+    {
+      "id": "gorsel-anchor-red",
+      "fieldKey": "logo",
+      "input": "#logo",
+      "expectedOk": false
+    },
+    {
+      "id": "gorsel-javascript-red",
+      "fieldKey": "logo",
+      "input": "javascript:alert(1)",
+      "expectedOk": false
+    },
+    {
+      "id": "gorsel-data-red",
+      "fieldKey": "logo",
+      "input": "data:image/png;base64,AAAA",
+      "expectedOk": false
+    },
+    {
+      "id": "gorsel-ftp-red",
+      "fieldKey": "logo",
+      "input": "ftp://vixrex.com/logo.webp",
+      "expectedOk": false
+    },
+    {
+      "id": "enlem-bos-null",
+      "fieldKey": "enlem",
+      "input": "   ",
+      "expectedOk": true,
+      "expectedValue": null
+    },
+    {
+      "id": "enlem-ondalik-normalize",
+      "fieldKey": "enlem",
+      "input": "41,5",
+      "expectedOk": true,
+      "expectedValue": 41.5
+    },
+    {
+      "id": "enlem-max-red",
+      "fieldKey": "enlem",
+      "input": "100",
+      "expectedOk": false
+    },
+    {
+      "id": "boylam-min-kabul",
+      "fieldKey": "boylam",
+      "input": -180,
+      "expectedOk": true,
+      "expectedValue": -180
+    },
+    {
+      "id": "secim-kabul",
+      "fieldKey": "kategori",
+      "input": "Kuaför",
+      "expectedOk": true,
+      "expectedValue": "Kuaför"
+    },
+    {
+      "id": "secim-red",
+      "fieldKey": "kategori",
+      "input": "Uzay",
+      "expectedOk": false
+    },
+    {
+      "id": "acik-ac-true",
+      "fieldKey": "puanGoster",
+      "input": "aç",
+      "expectedOk": true,
+      "expectedValue": true
+    },
+    {
+      "id": "acik-ascii-ac-true",
+      "fieldKey": "puanGoster",
+      "input": "ac",
+      "expectedOk": true,
+      "expectedValue": true
+    },
+    {
+      "id": "acik-goster-true",
+      "fieldKey": "puanGoster",
+      "input": "göster",
+      "expectedOk": true,
+      "expectedValue": true
+    },
+    {
+      "id": "acik-buyuk-harf-true",
+      "fieldKey": "puanGoster",
+      "input": "AÇIK",
+      "expectedOk": true,
+      "expectedValue": true
+    },
+    {
+      "id": "kapali-kapat-false",
+      "fieldKey": "yolTarifiGoster",
+      "input": "kapat",
+      "expectedOk": true,
+      "expectedValue": false
+    },
+    {
+      "id": "kapali-gizle-false",
+      "fieldKey": "yolTarifiGoster",
+      "input": "gizle",
+      "expectedOk": true,
+      "expectedValue": false
+    },
+    {
+      "id": "kapali-buyuk-harf-false",
+      "fieldKey": "yolTarifiGoster",
+      "input": "KAPALI",
+      "expectedOk": true,
+      "expectedValue": false
+    },
+    {
+      "id": "boolean-gercek-kabul",
+      "fieldKey": "puanGoster",
+      "input": true,
+      "expectedOk": true,
+      "expectedValue": true
+    },
+    {
+      "id": "boolean-bilmiyorum-red",
+      "fieldKey": "puanGoster",
+      "input": "bilmiyorum",
+      "expectedOk": false
+    },
+    {
+      "id": "boolean-ilgisiz-red",
+      "fieldKey": "puanGoster",
+      "input": "bugün hava güzel",
+      "expectedOk": false
+    },
+    {
+      "id": "boolean-belirsiz-red",
+      "fieldKey": "puanGoster",
+      "input": "belki",
+      "expectedOk": false
+    },
+    {
+      "id": "adres-kabul",
+      "fieldKey": "adres",
+      "input": "Atatürk Cad. No:24",
+      "expectedOk": true,
+      "expectedValue": "Atatürk Cad. No:24"
+    },
+    {
+      "id": "adres-eksik-red",
+      "fieldKey": "adres",
+      "input": "asd",
+      "expectedOk": false
+    },
+    {
+      "id": "metin-tip-red",
+      "fieldKey": "isletmeAdi",
+      "input": 123,
+      "expectedOk": false
+    },
+    {
+      "id": "bilinmeyen-alan-red",
+      "fieldKey": "yokBoyleAlan",
+      "input": "deger",
+      "expectedOk": false
+    }
+  ]
+}

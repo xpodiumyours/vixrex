@@ -1,0 +1,19 @@
+{
+  "_aciklama": "Vixrex Akıllı Motor storefront matcher için Flutter ↔ Next.js ortak güvenlik sözleşmesi. Runtime karar kodu değil; deterministik matcher parametrelerinin tek kaynağıdır.",
+  "_surum": 1,
+  "minInflectedAliasLength": 5,
+  "safeSuffixes": [
+    "m", "im", "um", "n", "in", "un", "i", "u",
+    "mi", "mu", "imi", "umu", "me", "ma", "ime", "uma", "ni", "nu", "ini", "unu", "ne", "na", "ine", "una",
+    "min", "mun", "imin", "umun", "nin", "nun", "inin", "unun",
+    "mde", "mda", "mden", "mdan", "imde", "imda", "imden", "imdan", "umde", "umda", "umden", "umdan",
+    "nde", "nda", "nden", "ndan", "inde", "inda", "inden", "indan", "unda", "unde", "undan", "unden"
+  ],
+  "exactFormsByField": {
+    "il": ["ili"],
+    "ilce": ["ilceyi", "ilcemi"],
+    "logo": ["logoyu", "logomu"],
+    "isletmeTuru": ["turunu", "turumu"],
+    "website": ["sitemi", "siteyi", "websiteyi"]
+  }
+}

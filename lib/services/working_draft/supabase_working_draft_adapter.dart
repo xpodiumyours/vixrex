@@ -5,13 +5,8 @@ import 'package:vixrex/core/supabase_error_mapper.dart';
 import 'package:vixrex/services/working_draft/working_draft_port.dart';
 import 'package:vixrex/utils/failure.dart';
 
-/// Supabase adaptörü — doğrudan RPC zinciri.
-///
-/// Not: Realtime sinyali payload taşımaz, yalnız `draft_version`
-/// bildirir (plan § Working Draft modülü).
 class SupabaseWorkingDraftAdapter implements WorkingDraftPort {
-  const SupabaseWorkingDraftAdapter({SupabaseClient? client})
-    : _client = client;
+  const SupabaseWorkingDraftAdapter({SupabaseClient? client}) : _client = client;
   final SupabaseClient? _client;
 
   SupabaseClient? get _supabase {
@@ -24,9 +19,7 @@ class SupabaseWorkingDraftAdapter implements WorkingDraftPort {
   }
 
   @override
-  Future<Result<WorkingDraftSnapshot>> yukle({
-    required String sessionToken,
-  }) async {
+  Future<Result<WorkingDraftSnapshot>> yukle({required String sessionToken}) async {
     final c = _supabase;
     if (c == null) return Result.failure(Failure('NO_CLIENT'));
     try {
@@ -74,8 +67,126 @@ class SupabaseWorkingDraftAdapter implements WorkingDraftPort {
       );
       final m = Map<String, dynamic>.from(raw as Map);
       return Result.success(
-        WorkingDraftPatchResult(
+        WorkingDraftPatchResult.succeeded(
           draftVersion: (m['draft_version'] as num?)?.toInt() ?? 1,
+        ),
+      );
+    } catch (e, s) {
+      return Result.failure(SupabaseErrorMapper.map(e, s));
+    }
+  }
+
+  @override
+  Future<Result<WorkingDraftAssistantPatchResult>> akilliMotorYamasiUygula({
+    String? sessionToken,
+    required String anahtar,
+    required dynamic deger,
+    required int beklenenSurum,
+    required String actionId,
+    required String commandId,
+    String? clientId,
+  }) async {
+    final c = _supabase;
+    if (c == null) return Result.failure(Failure('NO_CLIENT'));
+
+    final normalizedSession = sessionToken?.trim() ?? '';
+    if (normalizedSession.isEmpty) {
+      final user = c.auth.currentUser;
+      if (user == null || user.isAnonymous) {
+        return Result.failure(Failure('OWNER_AUTHORIZATION_REQUIRED'));
+      }
+    }
+
+    if (beklenenSurum < 1 ||
+        actionId.trim().isEmpty ||
+        commandId.trim().isEmpty) {
+      return Result.failure(Failure('INVALID_ACTION_PRECONDITION'));
+    }
+
+    try {
+      final raw = await c.rpc(
+        'vixrex_apply_storefront_action',
+        params: {
+          'p_session_token':
+              normalizedSession.isEmpty ? null : normalizedSession,
+          'p_field_key': anahtar,
+          'p_value': deger,
+          'p_expected_draft_version': beklenenSurum,
+          'p_action_id': actionId,
+          'p_command_id': commandId,
+        },
+      );
+      if (raw is! Map) {
+        return Result.failure(Failure('UNKNOWN_MUTATION_OUTCOME'));
+      }
+      final m = Map<String, dynamic>.from(raw);
+      final draftVersion = (m['draft_version'] as num?)?.toInt();
+      if (m['ok'] != true || draftVersion == null || draftVersion < 1) {
+        return Result.failure(Failure('UNKNOWN_MUTATION_OUTCOME'));
+      }
+
+      return Result.success(
+        WorkingDraftAssistantPatchResult.succeeded(
+          actionId: actionId,
+          commandId: commandId,
+          fieldKey: (m['field_key'] ?? anahtar).toString(),
+          normalizedValue: m.containsKey('new_value') ? m['new_value'] : deger,
+          draftVersion: draftVersion,
+          idempotentReplay: m['replayed'] == true,
+        ),
+      );
+    } catch (e, s) {
+      return Result.failure(SupabaseErrorMapper.map(e, s));
+    }
+  }
+
+  @override
+  Future<Result<WorkingDraftAssistantUndoResult>> akilliMotorCommandGeriAl({
+    String? sessionToken,
+    required String commandId,
+  }) async {
+    final c = _supabase;
+    if (c == null) return Result.failure(Failure('NO_CLIENT'));
+
+    final normalizedSession = sessionToken?.trim() ?? '';
+    if (normalizedSession.isEmpty) {
+      final user = c.auth.currentUser;
+      if (user == null || user.isAnonymous) {
+        return Result.failure(Failure('OWNER_AUTHORIZATION_REQUIRED'));
+      }
+    }
+    if (commandId.trim().isEmpty) {
+      return Result.failure(Failure('INVALID_UNDO_PRECONDITION'));
+    }
+
+    try {
+      final raw = await c.rpc(
+        'vixrex_undo_storefront_command',
+        params: {
+          'p_session_token':
+              normalizedSession.isEmpty ? null : normalizedSession,
+          'p_command_id': commandId,
+        },
+      );
+      if (raw is! Map) {
+        return Result.failure(Failure('UNKNOWN_UNDO_OUTCOME'));
+      }
+      final m = Map<String, dynamic>.from(raw);
+      final draftVersion = (m['draft_version'] as num?)?.toInt();
+      final count = (m['rolled_back_action_count'] as num?)?.toInt();
+      if (m['ok'] != true ||
+          draftVersion == null ||
+          draftVersion < 1 ||
+          count == null ||
+          count < 1) {
+        return Result.failure(Failure('UNKNOWN_UNDO_OUTCOME'));
+      }
+      return Result.success(
+        WorkingDraftAssistantUndoResult(
+          commandId: commandId,
+          draftVersion: draftVersion,
+          rolledBackActionCount: count,
+          idempotentReplay: m['replayed'] == true,
         ),
       );
     } catch (e, s) {

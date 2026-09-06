@@ -226,7 +226,7 @@
       "max": null,
       "secenekler": null,
       "ipucu": null,
-      "dogrulama": null,
+      "dogrulama": "adres",
       "bosDegerler": null
     },
     {

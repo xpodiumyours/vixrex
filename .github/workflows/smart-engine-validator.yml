@@ -1,0 +1,256 @@
+name: Akıllı Motor — validator parity doğrulama
+
+on:
+  pull_request:
+    paths:
+      - "public_web/src/lib/vitrinFieldSchema.ts"
+      - "public_web/src/lib/vitrinFieldValidation.ts"
+      - "public_web/src/lib/addressValidator.ts"
+      - "public_web/src/lib/turkeyCities.ts"
+      - "public_web/src/lib/turkeyPlaceMatcher.ts"
+      - "public_web/src/lib/vixrexDecisionContract.ts"
+      - "public_web/src/lib/vixrexNluPipeline.ts"
+      - "public_web/src/lib/workingHours.ts"
+      - "public_web/src/lib/smartEngineCommandClient.ts"
+      - "public_web/src/lib/ownerActionLifecycle.ts"
+      - "public_web/src/app/api/owner-draft/route.ts"
+      - "public_web/src/app/api/owner-smart-engine-action/**"
+      - "public_web/src/app/api/owner-smart-engine-undo/**"
+      - "public_web/src/app/api/owner-location-bundle/**"
+      - "public_web/src/app/v/[slug]/OwnerWorkspaceShell.tsx"
+      - "public_web/src/app/v/[slug]/OwnerDraftVersionContext.tsx"
+      - "public_web/src/app/v/[slug]/OwnerAssistantPanel.tsx"
+      - "public_web/src/app/v/[slug]/components/FieldInputArea.tsx"
+      - "public_web/src/app/v/[slug]/ownerStorefrontPolish.css"
+      - "public_web/src/app/v/[slug]/hooks/useOwnerActions.ts"
+      - "public_web/src/app/v/[slug]/hooks/useFieldSelection.ts"
+      - "public_web/src/app/v/[slug]/hooks/useFieldRestore.ts"
+      - "public_web/tests/vixrex-validator-parity.test.ts"
+      - "public_web/tests/vixrex-decision-contract.test.ts"
+      - "public_web/tests/working-hours-overnight.test.ts"
+      - "public_web/tests/server-field-contract-generator.test.ts"
+      - "public_web/tests/smart-engine-authoritative-routes.test.ts"
+      - "public_web/tests/smart-engine-command-client.test.ts"
+      - "public_web/tests/smart-engine-draft-version-context.test.ts"
+      - "public_web/tests/smart-engine-owner-actions-wiring.test.ts"
+      - "public_web/tests/smart-engine-owner-lifecycle.test.ts"
+      - "public_web/tests/turkey-place-matcher.test.ts"
+      - "shared/vitrin_alanlari.json"
+      - "shared/vixrex_validator_parity_fixtures.json"
+      - "tool/sema_disa_aktar.ts"
+      - "tool/alan_semasi_uret.dart"
+      - "tool/server_field_contract_uret.ts"
+      - "lib/config/vitrin_alanlari.g.dart"
+      - "lib/config/turkey_cities_config.dart"
+      - "lib/services/vixrex_nlu/vixrex_decision_contract.dart"
+      - "lib/services/vixrex_nlu/vixrex_field_validator.dart"
+      - "lib/services/vixrex_nlu/vixrex_nlu_pipeline.dart"
+      - "lib/services/store_location_fetch_service.dart"
+      - "lib/services/image_optimization_service.dart"
+      - "lib/utils/address_validator.dart"
+      - "lib/services/working_draft/**"
+      - "lib/services/owner_bootstrap_service.dart"
+      - "lib/repositories/vitrin_sahiplik_repository.dart"
+      - "lib/screens/vixrex_screen.dart"
+      - "lib/widgets/vixrex/vixrex_companion_chat.dart"
+      - "test/vixrex_validator_parity_test.dart"
+      - "test/vixrex_working_hours_special_flow_test.dart"
+      - "test/store_location_fetch_service_test.dart"
+      - "test/image_optimization_service_test.dart"
+      - "test/smart_engine_working_draft_adapter_contract_test.dart"
+      - "test/smart_engine_working_draft_orchestrator_test.dart"
+      - "test/smart_engine_flutter_owner_lifecycle_contract_test.dart"
+      - "test/owner_bootstrap_state_version_test.dart"
+      - "test/working_draft_queue_status_test.dart"
+      - "supabase/migrations/20260905114039_vixrex_canonical_46_field_contract.sql"
+      - "supabase/migrations/20260905114549_authoritative_smart_engine_core.sql"
+      - "supabase/migrations/20260905154433_smart_engine_location_bundle.sql"
+      - "supabase/migrations/20260905155137_harden_location_bundle_acl.sql"
+      - "supabase/migrations/20260905161400_tighten_storefront_url_anchor_scope.sql"
+      - "supabase/migrations/20260905163000_correct_turkey_location_contract.sql"
+      - ".github/workflows/smart-engine-validator.yml"
+
+concurrency:
+  group: smart-engine-validator-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  FLUTTER_VERSION: "3.44.4"
+
+jobs:
+  validator-next:
+    name: Validator — Next tip + parity
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: public_web
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: public_web/package-lock.json
+
+      - name: Bağımlılıklar
+        run: npm ci
+
+      - name: Tip kontrolü
+        run: npx tsc --noEmit
+
+      - name: Validator parity + authoritative route/command/lifecycle sözleşmeleri + mevcut NLU regresyonları
+        run: >-
+          npx vitest run
+          tests/vixrex-validator-parity.test.ts
+          tests/vixrex-decision-contract.test.ts
+          tests/working-hours-overnight.test.ts
+          tests/smart-engine-authoritative-routes.test.ts
+          tests/smart-engine-command-client.test.ts
+          tests/smart-engine-draft-version-context.test.ts
+          tests/smart-engine-owner-actions-wiring.test.ts
+          tests/smart-engine-owner-lifecycle.test.ts
+          tests/turkey-place-matcher.test.ts
+          tests/vixrex-niyet-faz1.test.ts
+          tests/vixrex-niyet-faz2.test.ts
+          tests/vixrex-niyet-faz3.test.ts
+          tests/address-validator-parity.test.ts
+
+  validator-flutter:
+    name: Validator — Flutter analiz + parity
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Bağımlılıklar
+        run: flutter pub get
+
+      - name: İlgili dosyaları analiz et
+        run: >-
+          dart analyze
+          lib/config/vitrin_alanlari.g.dart
+          lib/config/turkey_cities_config.dart
+          lib/services/vixrex_nlu/vixrex_decision_contract.dart
+          lib/services/vixrex_nlu/vixrex_field_validator.dart
+          lib/services/vixrex_nlu/vixrex_nlu_pipeline.dart
+          lib/services/store_location_fetch_service.dart
+          lib/services/image_optimization_service.dart
+          lib/services/working_draft/working_draft_port.dart
+          lib/services/working_draft/supabase_working_draft_adapter.dart
+          lib/services/working_draft/local_queue_working_draft_adapter.dart
+          lib/services/working_draft/smart_engine_working_draft_orchestrator.dart
+          lib/services/working_draft/smart_engine_owner_context_service.dart
+          lib/services/working_draft/flutter_smart_engine_owner_executor.dart
+          lib/services/owner_bootstrap_service.dart
+          lib/repositories/vitrin_sahiplik_repository.dart
+          lib/screens/vixrex_screen.dart
+          lib/widgets/vixrex/vixrex_companion_chat.dart
+          test/vixrex_validator_parity_test.dart
+          test/vixrex_working_hours_special_flow_test.dart
+          test/store_location_fetch_service_test.dart
+          test/image_optimization_service_test.dart
+          test/smart_engine_working_draft_adapter_contract_test.dart
+          test/smart_engine_working_draft_orchestrator_test.dart
+          test/smart_engine_flutter_owner_lifecycle_contract_test.dart
+
+      - name: Validator parity + Flutter authoritative owner lifecycle + mevcut NLU regresyonları
+        run: >-
+          flutter test
+          test/vixrex_validator_parity_test.dart
+          test/vixrex_working_hours_special_flow_test.dart
+          test/store_location_fetch_service_test.dart
+          test/image_optimization_service_test.dart
+          test/smart_engine_working_draft_adapter_contract_test.dart
+          test/smart_engine_working_draft_orchestrator_test.dart
+          test/smart_engine_flutter_owner_lifecycle_contract_test.dart
+          test/owner_bootstrap_state_version_test.dart
+          test/working_draft_queue_status_test.dart
+          test/vixrex_nlu_faz1_test.dart
+          test/vixrex_nlu_faz2_test.dart
+          test/vixrex_nlu_faz3_test.dart
+          test/address_validator_test.dart
+          --reporter expanded
+
+      - name: Yeni/5.8/5.9 Dart dosyalarında format drift
+        run: >-
+          dart format --output=none --set-exit-if-changed
+          lib/services/working_draft/working_draft_port.dart
+          lib/services/working_draft/supabase_working_draft_adapter.dart
+          lib/services/working_draft/local_queue_working_draft_adapter.dart
+          lib/services/working_draft/smart_engine_working_draft_orchestrator.dart
+          lib/services/working_draft/smart_engine_owner_context_service.dart
+          lib/services/working_draft/flutter_smart_engine_owner_executor.dart
+          lib/services/store_location_fetch_service.dart
+          lib/services/image_optimization_service.dart
+          lib/services/owner_bootstrap_service.dart
+          lib/repositories/vitrin_sahiplik_repository.dart
+          lib/screens/vixrex_screen.dart
+          lib/widgets/vixrex/vixrex_companion_chat.dart
+          test/store_location_fetch_service_test.dart
+          test/image_optimization_service_test.dart
+          test/smart_engine_working_draft_adapter_contract_test.dart
+          test/smart_engine_working_draft_orchestrator_test.dart
+          test/smart_engine_flutter_owner_lifecycle_contract_test.dart
+          test/vixrex_validator_parity_test.dart
+          test/vixrex_working_hours_special_flow_test.dart
+
+  validator-schema-drift:
+    name: Validator — canonical schema drift
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: public_web/package-lock.json
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Next bağımlılıkları
+        working-directory: public_web
+        run: npm ci
+
+      - name: Canonical şemayı JSON'a çıkar
+        working-directory: public_web
+        run: npx tsx ../tool/sema_disa_aktar.ts
+
+      - name: Dart şemasını üret
+        run: dart run tool/alan_semasi_uret.dart
+
+      - name: Üretilen Dart şemasını biçimlendir
+        run: dart format lib/config/vitrin_alanlari.g.dart
+
+      - name: Shared JSON + Dart generated drift
+        run: git diff --exit-code -- shared/vitrin_alanlari.json lib/config/vitrin_alanlari.g.dart
+
+      - name: 46-field server contract + migration drift
+        working-directory: public_web
+        run: npx vitest run tests/server-field-contract-generator.test.ts

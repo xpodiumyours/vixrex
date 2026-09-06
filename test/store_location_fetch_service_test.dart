@@ -1,10 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vixrex/services/store_location_fetch_service.dart';
 
-/// `StoreLocationFetchService.eslestirIlIlce` — Faz 4 (controller
-/// parçalama) ile mixin'den çıkarılan SAF il/ilçe eşleştirme fonksiyonu.
-/// Öncesinde bu mantık yalnız `fetchLocation`'ın içindeydi, GPS/ağ
-/// çağrısı olmadan tek başına test edilemiyordu.
 void main() {
   const servis = StoreLocationFetchService();
 
@@ -17,9 +13,54 @@ void main() {
     expect(sonuc.districtName, 'Çekmeköy');
   });
 
+  test('benzersiz ilçe il yazılmasa da canonical ilini belirler', () {
+    final sonuc = servis.eslestirIlIlce('Kadıköy Rıhtım Caddesi');
+    expect(sonuc.provinceCode, '34');
+    expect(sonuc.provinceName, 'İstanbul');
+    expect(sonuc.districtName, 'Kadıköy');
+  });
+
   test('yalnız il geçen adreste ilçe null döner, il yine de eşleşir', () {
     final sonuc = servis.eslestirIlIlce('Merkez, İstanbul');
     expect(sonuc.provinceCode, '34');
+    expect(sonuc.districtName, isNull);
+  });
+
+  test('ambiguous Kemer il belirtilmeden tahmin edilmez', () {
+    final sonuc = servis.eslestirIlIlce('Kemer merkezindeki işletmem');
+    expect(sonuc.provinceCode, isNull);
+    expect(sonuc.provinceName, isNull);
+    expect(sonuc.districtName, isNull);
+  });
+
+  test('ambiguous Kemer il ile birlikte doğru çifte çözülür', () {
+    final antalya = servis.eslestirIlIlce('Kemer, Antalya');
+    expect(antalya.provinceCode, '07');
+    expect(antalya.provinceName, 'Antalya');
+    expect(antalya.districtName, 'Kemer');
+
+    final burdur = servis.eslestirIlIlce('Kemer, Burdur');
+    expect(burdur.provinceCode, '15');
+    expect(burdur.provinceName, 'Burdur');
+    expect(burdur.districtName, 'Kemer');
+  });
+
+  test('açık il ile çelişen benzersiz ilçeyi başka ile taşımaz', () {
+    final mamak = servis.eslestirIlIlce('Mamak, Erzurum');
+    expect(mamak.provinceCode, '25');
+    expect(mamak.provinceName, 'Erzurum');
+    expect(mamak.districtName, isNull);
+
+    final kadikoy = servis.eslestirIlIlce('Kadıköy, Ankara');
+    expect(kadikoy.provinceCode, '06');
+    expect(kadikoy.provinceName, 'Ankara');
+    expect(kadikoy.districtName, isNull);
+  });
+
+  test('alt-dize il eşleşmesi yapılmaz', () {
+    final sonuc = servis.eslestirIlIlce('Vangölü kıyısında bir işletme');
+    expect(sonuc.provinceCode, isNull);
+    expect(sonuc.provinceName, isNull);
     expect(sonuc.districtName, isNull);
   });
 
@@ -36,9 +77,30 @@ void main() {
     expect(sonuc.districtName, 'Şişli');
   });
 
-  test('uzun ilçe adı önce denenir — kısa bir alt dize yanlış eşleşmez', () {
-    // "Şişli" başka bir ilçe adının içinde geçmiyor ama uzun-önce sıralama
-    // kuralı budur; en azından gerçek bir ilçe adı doğru döner.
+  test('resmî kanonik ilçe adları korunur', () {
+    final narman = servis.eslestirIlIlce('Narman, Erzurum');
+    expect(narman.provinceCode, '25');
+    expect(narman.provinceName, 'Erzurum');
+    expect(narman.districtName, 'Narman');
+
+    final pasinler = servis.eslestirIlIlce('Pasinler, Erzurum');
+    expect(pasinler.provinceCode, '25');
+    expect(pasinler.districtName, 'Pasinler');
+
+    final incirliova = servis.eslestirIlIlce('İncirliova, Aydın');
+    expect(incirliova.provinceCode, '09');
+    expect(incirliova.districtName, 'İncirliova');
+
+    final incesu = servis.eslestirIlIlce('İncesu, Kayseri');
+    expect(incesu.provinceCode, '38');
+    expect(incesu.districtName, 'İncesu');
+
+    final beytussebap = servis.eslestirIlIlce('Beytüşşebap, Şırnak');
+    expect(beytussebap.provinceCode, '73');
+    expect(beytussebap.districtName, 'Beytüşşebap');
+  });
+
+  test('kelime sınırı korunurken gerçek ilçe adı doğru eşleşir', () {
     final sonuc = servis.eslestirIlIlce(
       'Halaskargazi Caddesi, Şişli, İstanbul',
     );

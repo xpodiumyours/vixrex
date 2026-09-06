@@ -2,9 +2,6 @@ import 'package:vixrex/config/turkey_cities_config.dart';
 import 'package:vixrex/services/location_service.dart';
 import 'package:vixrex/utils/text_utils.dart';
 
-/// [StoreLocationFetchService.getir]'in dönebileceği sonuç türleri —
-/// `store_location_mixin.dart`'taki `StoreLocationStatus`'ın taşınmış hâli
-/// (Faz 4, controller parçalama); tek kaynak artık burası.
 enum StoreLocationStatus {
   idle,
   loading,
@@ -15,8 +12,6 @@ enum StoreLocationStatus {
   error,
 }
 
-/// [StoreLocationFetchService.getir] sonucu. `basarili` true ise
-/// konum/adres/il/ilçe alanlarının hepsi doludur.
 class LocationFetchSonucu {
   const LocationFetchSonucu._({
     required this.durum,
@@ -34,15 +29,10 @@ class LocationFetchSonucu {
 
   final StoreLocationStatus durum;
   final String mesaj;
-
-  /// Doğruluk eşiği geçildiyse dolu — adres/il/ilçe çözülemese BİLE
-  /// koordinat kaydedilir (orijinal davranış: yalnız doğruluk şartı).
   final double? latitude;
   final double? longitude;
   final double? accuracy;
   final DateTime? consentAt;
-
-  /// Yalnız [basarili] true ise dolu.
   final String? address;
   final String? provinceCode;
   final String? provinceName;
@@ -50,32 +40,13 @@ class LocationFetchSonucu {
   final String? districtName;
 
   bool get basarili => durum == StoreLocationStatus.success;
-
-  /// [latitude]/[longitude]/[accuracy] dolu mu — doğruluk eşiği geçildi mi.
   bool get konumGecerli =>
       latitude != null && longitude != null && accuracy != null;
 }
 
-/// `StoreEditorController`'ın (`StoreLocationMixin` üzerinden) GPS konum
-/// alma + il/ilçe eşleştirme iş mantığını sahiplenir.
-///
-/// UI/controller-state'e (`isDisposed`, `notifyListeners`, `_isLocating`
-/// gibi) hiç dokunmaz — yalnız [LocationFetchSonucu] döner, ekrana ne
-/// yansıtılacağına çağıran karar verir (`ProductCatalogSyncService` ile
-/// aynı desen: dar/derin arayüz, controller-state callback'i yok).
-///
-/// 2026-08-13: `store_location_mixin.dart`'tan (Faz 4, controller
-/// parçalama) birebir taşındı. Davranış kasıtlı olarak değiştirilmedi.
 class StoreLocationFetchService {
   const StoreLocationFetchService();
 
-  /// GPS'ten mevcut konumu alır, doğruluğu denetler, adresi çözer ve
-  /// il/ilçe eşleştirir.
-  ///
-  /// - 10 metreden kötü doğruluk KAYDEDİLMEZ (bkz. [eslestirIlIlce] altı
-  ///   yorum) — `LocationService.maxAcceptedAccuracyMeters`.
-  /// - il+ilçe eşleşemezse `provinceCode`/`districtCode` null döner;
-  ///   çağıran mevcut manuel adresi KORUMALIDIR, üzerine yazmamalıdır.
   Future<LocationFetchSonucu> getir(LocationService locationService) async {
     try {
       final result = await locationService.getCurrentLocation();
@@ -89,18 +60,6 @@ class StoreLocationFetchService {
         );
       }
 
-      // TEK KURAL: 10 metreden kötü konum KAYDEDİLMEZ.
-      //
-      // Bu kontrol eskiden yalnız location_editor_section.dart'ta vardı;
-      // GPS düğmesi ise BU yoldan geçiyordu ve sapma ne olursa olsun
-      // koordinatı yazıyordu (yalnız 2 km üstünde adres çözmeyi bırakıyordu).
-      // Yani 900 metrelik sapma sessizce kabul ediliyordu.
-      //
-      // İki ayrı yerde iki ayrı kural olması hatanın kendisiydi. Karar
-      // tek yerde: LocationService.maxAcceptedAccuracyMeters.
-      //
-      // Neden bu kadar katı: vitrinin işi "yakınındaki dükkânı" bulmak.
-      // Yanlış pin müşteriyi yanlış sokağa gönderir — yokluğundan beterdir.
       if (pos.accuracy > LocationService.maxAcceptedAccuracyMeters) {
         return LocationFetchSonucu._(
           durum: StoreLocationStatus.error,
@@ -108,10 +67,7 @@ class StoreLocationFetchService {
         );
       }
 
-      // Doğruluk eşiği geçildi — koordinat bu andan itibaren kaydedilir,
-      // adres/il/ilçe çözülemese bile (orijinal davranış).
       final consentAt = DateTime.now();
-
       final address = await locationService.getAddressFromCoordinates(
         pos.latitude,
         pos.longitude,
@@ -134,7 +90,6 @@ class StoreLocationFetchService {
       if (eslesme.provinceCode == null ||
           eslesme.provinceName == null ||
           eslesme.districtName == null) {
-        // Eşleşme başarısız — mevcut adres korunur (çağıran uygular).
         return LocationFetchSonucu._(
           durum: StoreLocationStatus.error,
           mesaj:
@@ -169,41 +124,122 @@ class StoreLocationFetchService {
     }
   }
 
-  /// Bir adres metninden il/ilçe eşleştirir — SAF fonksiyon, GPS/ağ
-  /// gerektirmez, doğrudan test edilebilir.
-  ///
-  /// Uzun ilçe adı önce denenir (ör. "Şişli" vs kısa eşleşmeler). İlk
-  /// eşleşen il kazanır; il içinde ilçe bulunamazsa yalnız il döner.
+  /// Next `turkeyPlaceMatcher` ile aynı güvenlik ilkesi:
+  /// - alt-dize değil kelime/sınır eşleşmesi,
+  /// - benzersiz ilçe kendi ilini belirleyebilir,
+  /// - açıkça yazılan il ile çelişen benzersiz ilçe kabul edilmez,
+  /// - birden fazla ilde bulunan ilçe (örn. Kemer) il açıkça doğrulanmadan
+  ///   seçilmez,
+  /// - `Merkez` tek başına il çıkarmak için kullanılmaz.
   ({String? provinceCode, String? provinceName, String? districtName})
   eslestirIlIlce(String address) {
     final normalizedAddress = TextUtils.normalizeTurkish(address);
 
+    final provinceByCode = <String, Province>{
+      for (final province in turkeyProvinces) province.code: province,
+    };
+    final districtCandidates = <
+      String,
+      List<({Province province, String district})>
+    >{};
+
+    for (final entry in turkeyDistricts.entries) {
+      final province = provinceByCode[entry.key];
+      if (province == null) continue;
+      for (final district in entry.value) {
+        if (district == 'Merkez') continue;
+        final normalizedDistrict = TextUtils.normalizeTurkish(district);
+        districtCandidates
+            .putIfAbsent(normalizedDistrict, () => [])
+            .add((province: province, district: district));
+      }
+    }
+
+    final provinceMatches = <({int position, Province province})>[];
     for (final province in turkeyProvinces) {
       final normalizedProvince = TextUtils.normalizeTurkish(province.name);
-      if (!normalizedAddress.contains(normalizedProvince)) continue;
+      final position = _boundedTermPosition(normalizedAddress, normalizedProvince);
+      if (position >= 0) {
+        provinceMatches.add((position: position, province: province));
+      }
+    }
+    provinceMatches.sort((a, b) => a.position.compareTo(b.position));
+    final explicitProvince =
+        provinceMatches.length == 1 ? provinceMatches.single.province : null;
 
-      String? matchedDistrict;
-      final districts = turkeyDistricts[province.code];
-      if (districts != null) {
-        final ordered = [...districts]
-          ..sort((a, b) => b.length.compareTo(a.length));
-        for (final district in ordered) {
-          final normalizedDistrict = TextUtils.normalizeTurkish(district);
-          if (normalizedAddress.contains(normalizedDistrict)) {
-            matchedDistrict = district;
-            break;
-          }
+    final districtMatches = <({
+      int position,
+      String term,
+      List<({Province province, String district})> candidates,
+    })>[];
+
+    for (final entry in districtCandidates.entries) {
+      final position = _boundedTermPosition(normalizedAddress, entry.key);
+      if (position < 0) continue;
+      districtMatches.add((
+        position: position,
+        term: entry.key,
+        candidates: entry.value,
+      ));
+    }
+    districtMatches.sort(
+      (a, b) =>
+          a.position != b.position
+              ? a.position.compareTo(b.position)
+              : b.term.length.compareTo(a.term.length),
+    );
+
+    for (final match in districtMatches) {
+      if (match.candidates.length == 1) {
+        final candidate = match.candidates.single;
+        if (explicitProvince != null &&
+            candidate.province.code != explicitProvince.code) {
+          continue;
         }
+        return (
+          provinceCode: candidate.province.code,
+          provinceName: candidate.province.name,
+          districtName: candidate.district,
+        );
       }
 
+      final verified = match.candidates.where((candidate) {
+        final normalizedProvince = TextUtils.normalizeTurkish(
+          candidate.province.name,
+        );
+        return _boundedTermPosition(normalizedAddress, normalizedProvince) >= 0;
+      }).toList();
+
+      if (verified.length == 1) {
+        final candidate = verified.single;
+        return (
+          provinceCode: candidate.province.code,
+          provinceName: candidate.province.name,
+          districtName: candidate.district,
+        );
+      }
+    }
+
+    if (provinceMatches.isNotEmpty) {
+      final province = provinceMatches.first.province;
       return (
         provinceCode: province.code,
         provinceName: province.name,
-        districtName: matchedDistrict,
+        districtName: null,
       );
     }
 
     return (provinceCode: null, provinceName: null, districtName: null);
+  }
+
+  int _boundedTermPosition(String text, String term) {
+    if (term.isEmpty) return -1;
+    final pattern = RegExp(
+      '(^|[^a-z0-9])${RegExp.escape(term)}(?=\$|[^a-z0-9])',
+    );
+    final match = pattern.firstMatch(text);
+    if (match == null) return -1;
+    return match.start + (match.group(1)?.length ?? 0);
   }
 
   StoreLocationStatus _basarisizlikDurumu(String? message) {

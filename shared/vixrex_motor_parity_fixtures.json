@@ -1,0 +1,69 @@
+{
+  "_aciklama": "Vixrex Akıllı Motor Flutter ↔ Next.js ortak parity fixture kaynağı. Production mantığı içermez; iki runtime aynı girdide aynı canonical kararı kanıtlamak için kullanır.",
+  "_surum": 2,
+  "matcher": [
+    {
+      "id": "telefon-kontrollu-ek",
+      "input": "Telefonumu 0212 555 55 55 yap",
+      "expectedFieldKeys": ["telefon"],
+      "expectedMatchClasses": ["inflected_safe"],
+      "mutationCandidate": true
+    },
+    {
+      "id": "telefon-otel-false-positive",
+      "input": "Otelimiz bugün açık",
+      "expectedFieldKeys": [],
+      "expectedMatchClasses": [],
+      "mutationCandidate": false
+    },
+    {
+      "id": "adres-kontrollu-ek",
+      "input": "Adresimi Atatürk Cad. No:24 yap",
+      "expectedFieldKeys": ["adres"],
+      "expectedMatchClasses": ["inflected_safe"],
+      "mutationCandidate": true
+    },
+    {
+      "id": "kategori-kontrollu-ek",
+      "input": "Kategorimi Kuaför yap",
+      "expectedFieldKeys": ["kategori"],
+      "expectedMatchClasses": ["inflected_safe"],
+      "mutationCandidate": true
+    },
+    {
+      "id": "il-kisa-exact",
+      "input": "İl İstanbul olsun",
+      "expectedFieldKeys": ["il"],
+      "expectedMatchClasses": ["exact_token"],
+      "mutationCandidate": true
+    },
+    {
+      "id": "il-acik-exact-form",
+      "input": "İli İstanbul yap",
+      "expectedFieldKeys": ["il"],
+      "expectedMatchClasses": ["exact_token"],
+      "mutationCandidate": true
+    },
+    {
+      "id": "ilce-acik-exact-form",
+      "input": "İlçeyi Kadıköy yap",
+      "expectedFieldKeys": ["ilce"],
+      "expectedMatchClasses": ["exact_token"],
+      "mutationCandidate": true
+    },
+    {
+      "id": "iki-bagimsiz-alan",
+      "input": "Telefonumu 0212 555 55 55 yap, adresimi Atatürk Cad. No:24 yap",
+      "expectedFieldKeys": ["telefon", "adres"],
+      "expectedMatchClasses": ["inflected_safe", "inflected_safe"],
+      "mutationCandidate": true
+    },
+    {
+      "id": "ilgisiz-cumle",
+      "input": "Bugün hava çok güzel",
+      "expectedFieldKeys": [],
+      "expectedMatchClasses": [],
+      "mutationCandidate": false
+    }
+  ]
+}

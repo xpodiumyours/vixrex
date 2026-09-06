@@ -1,14 +1,15 @@
+import 'package:vixrex/config/vitrin_alanlari.g.dart';
 import 'package:vixrex/config/vixrex_niyet_sozlugu.g.dart';
 import 'package:vixrex/controllers/store_editor_controller.dart';
 import 'package:vixrex/models/chat_message.dart';
 import 'package:vixrex/services/vixrex_nlu/vixrex_clarifier.dart';
 import 'package:vixrex/services/vixrex_nlu/vixrex_conversation_memory.dart';
+import 'package:vixrex/services/vixrex_nlu/vixrex_decision_contract.dart';
 import 'package:vixrex/services/vixrex_nlu/vixrex_intent_resolver.dart';
 import 'package:vixrex/services/vixrex_nlu/vixrex_normalizer.dart';
 import 'package:vixrex/services/vixrex_nlu/vixrex_value_extractor.dart';
-import 'package:vixrex/services/vixrex_nlu/vixrex_executor.dart';
 
-/// Faz 1 boru sonucu.
+/// Geriye uyum outcome'u. Canonical 5.3 karar sınıfı [VixrexNluPipelineResult.decision].
 enum VixrexNluPipelineOutcome {
   handled,
   needsClarification,
@@ -18,14 +19,22 @@ enum VixrexNluPipelineOutcome {
 }
 
 class VixrexNluPipelineResult {
+  /// Canonical decision/action contract.
+  final String decision;
+  final List<VixrexValidatedAction> actions;
+
+  /// Geriye uyum alanları. Aktif çağıranlar `decision/actions` kontratına
+  /// geçirildikçe sadeleştirilebilir.
   final VixrexNluPipelineOutcome outcome;
-  final ChatMessage message; // asistanın cevabı
+  final ChatMessage message;
   final String? appliedAnahtar;
   final Object? appliedDeger;
   final List<String>? appliedAnahtarlar;
-  final List<Object>? appliedDegerler;
+  final List<Object?>? appliedDegerler;
 
   const VixrexNluPipelineResult({
+    required this.decision,
+    this.actions = const <VixrexValidatedAction>[],
     required this.outcome,
     required this.message,
     this.appliedAnahtar,
@@ -35,26 +44,25 @@ class VixrexNluPipelineResult {
   });
 }
 
-/// Mesaj → niyet → 46 alan → değer → hafıza → doğrulama → mevcut işlem → kayıt → sonuç
-/// AI yok, feature-flag ile eski ChatbotService davranışı korunabilir.
+/// Mesaj → niyet → değer → hafıza → doğrulama → typed action.
+///
+/// 5.3 LOCK: Bu sınıf persistence yapmaz, executor çağırmaz ve authoritative
+/// write gerçekleşmeden "kaydedildi" başarı semantiği üretmez.
 class VixrexNluPipeline {
   VixrexNluPipeline({
     VixrexIntentResolver? intentResolver,
     VixrexValueExtractor? valueExtractor,
     VixrexConversationMemoryPort? memory,
     VixrexClarifier? clarifier,
-    VixrexExecutor? executor,
   }) : _intentResolver = intentResolver ?? const VixrexIntentResolver(),
        _valueExtractor = valueExtractor ?? const VixrexValueExtractor(),
        _memory = memory ?? const VixrexConversationMemory(),
-       _clarifier = clarifier ?? const VixrexClarifier(),
-       _executor = executor ?? const VixrexExecutor();
+       _clarifier = clarifier ?? const VixrexClarifier();
 
   final VixrexIntentResolver _intentResolver;
   final VixrexValueExtractor _valueExtractor;
   final VixrexConversationMemoryPort _memory;
   final VixrexClarifier _clarifier;
-  final VixrexExecutor _executor;
 
   static const _evetler = {
     'evet',
@@ -75,10 +83,41 @@ class VixrexNluPipeline {
     'hayır.',
   };
 
-  /// Ana giriş – sohbetten çağrılır.
-  /// `scope` = ChatbotService._historyKeyFor ile aynı (publicLink base64 veya local).
-  /// `onValidate` = Next.js tarafındaki validateField’a eşdeğer Dart doğrulama (tip/min/max/tr_mobil/url).
-  ///   Faz 1’de Flutter için: basit tip kontrolü, tam doğrulama `controller.updateField` içinde zaten var.
+  String _validatedMessage(int count) =>
+      count > 1
+          ? 'Değişiklikler doğrulandı; kayıt için hazır.'
+          : 'Değişiklik doğrulandı; kayıt için hazır.';
+
+  String _specialFlowMessage(VixrexNiyetAlan alan) {
+    if (alan.anahtar == 'calismaSaatleri') {
+      return 'Çalışma saatlerini günleriyle birlikte ayarlayalım. Hangi günler ve hangi saatler geçerli?';
+    }
+    return _clarifier.sor(alan);
+  }
+
+  /// Çalışma saatleri yapısal bir coupled flow'dur; callback verilmemesi bu
+  /// güvenlik kuralını kapatamaz. UI callback'i il/ilçe gibi ek özel yüzeyleri
+  /// tanımlamaya devam eder.
+  bool _requiresSpecialFlow(
+    VixrexNiyetAlan alan,
+    bool Function(VixrexNiyetAlan alan)? needsSpecialFlow,
+  ) {
+    if (alan.anahtar == 'calismaSaatleri') return true;
+    return needsSpecialFlow?.call(alan) == true;
+  }
+
+  List<VixrexIntentMatch> _uniqueFieldMatches(String input) {
+    final seen = <String>{};
+    final unique = <VixrexIntentMatch>[];
+    for (final match in _intentResolver.resolveMatches(input)) {
+      if (!seen.add(match.alan.anahtar)) continue;
+      unique.add(match);
+    }
+    return unique;
+  }
+
+  /// `controller` yalnız eski çağrı imzasını kırmamak için tutulur ve bu
+  /// decision katmanında KULLANILMAZ. Mutation 5.8 executor lifecycle'ındadır.
   Future<VixrexNluPipelineResult> handle({
     required String input,
     required StoreEditorController? controller,
@@ -86,12 +125,12 @@ class VixrexNluPipeline {
     required Future<({bool ok, String? hata, Object? normalizedDeger})>
     Function(VixrexNiyetAlan alan, String hamDeger)
     onValidate,
-    bool Function(VixrexNiyetAlan alan)?
-    needsSpecialFlow, // il/ilce/kategori listeden seç, gorsel yükle vb.
+    bool Function(VixrexNiyetAlan alan)? needsSpecialFlow,
   }) async {
     final trimmed = input.trim();
     if (trimmed.isEmpty) {
       return VixrexNluPipelineResult(
+        decision: VixrexDecisionKind.notUnderstood,
         outcome: VixrexNluPipelineOutcome.notUnderstood,
         message: ChatMessage.bot(_clarifier.belirsiz()),
       );
@@ -99,169 +138,153 @@ class VixrexNluPipeline {
 
     final norm = VixrexNormalizer.normalize(trimmed);
 
-    // 0) Evet/hayır – bekleyen slot varsa onayla/iptal et.
     final pending = await _memory.loadPendingSlot(scope: scope);
     if (pending != null) {
       if (_evetler.contains(norm) || _hayirlar.contains(norm)) {
-        // Evet/hayır tek başına eski bir soruya cevap değilse yutma.
-        // Pending varsa evet/hayır’ı ona bağla.
         if (_evetler.contains(norm)) {
-          // Evet → pending’teki değeri tekrar doğrula ve uygula (deger pending’te tutulmadığı için
-          // Faz 1’de pending sadece anahtar tutar – değer bir önceki turda yoktu, bu yüzden
-          // "evet" tek başına yetmez, tekrar değer istenmeli). Basit: pending’i temizle ve
-          // netleştirme sorusunu tekrar sor.
-          // Faz 1 dar: pending sadece "hangi alan" beklerken, evet/hayır anlamlı değil – belirsiz dön.
           await _memory.clearPendingSlot(scope: scope);
           return VixrexNluPipelineResult(
+            decision: VixrexDecisionKind.needsClarification,
             outcome: VixrexNluPipelineOutcome.needsClarification,
             message: ChatMessage.bot(_clarifier.belirsiz()),
           );
-        } else {
-          await _memory.clearPendingSlot(scope: scope);
-          return VixrexNluPipelineResult(
-            outcome: VixrexNluPipelineOutcome.needsClarification,
-            message: ChatMessage.bot(
-              'Tamam, vazgeçtim. Başka nasıl yardımcı olabilirim?',
-            ),
-          );
         }
+
+        await _memory.clearPendingSlot(scope: scope);
+        return VixrexNluPipelineResult(
+          decision: VixrexDecisionKind.needsClarification,
+          outcome: VixrexNluPipelineOutcome.needsClarification,
+          message: ChatMessage.bot(
+            'Tamam, vazgeçtim. Başka nasıl yardımcı olabilirim?',
+          ),
+        );
       }
-      // Pending varken yeni mesajda alan bulunamazsa → pending’teki alana değer olarak dene.
+
       final alanFromPending = vixrexNiyetAlanByAnahtar[pending.anahtar];
       if (alanFromPending != null) {
         final resolved = _intentResolver.resolve(trimmed);
         if (resolved == null) {
-          // Yeni alan yok → ham mesajı pending alanın değeri say.
           final hamDeger = trimmed;
-          // Özel akış gerektiriyorsa (il/ilce) → needsSpecialFlow
-          if (needsSpecialFlow != null && needsSpecialFlow(alanFromPending)) {
+          if (_requiresSpecialFlow(alanFromPending, needsSpecialFlow)) {
             return VixrexNluPipelineResult(
+              decision: VixrexDecisionKind.needsSpecialFlow,
               outcome: VixrexNluPipelineOutcome.needsSpecialFlow,
-              message: ChatMessage.bot(_clarifier.sor(alanFromPending)),
+              message: ChatMessage.bot(_specialFlowMessage(alanFromPending)),
               appliedAnahtar: alanFromPending.anahtar,
             );
           }
+
           final validated = await onValidate(alanFromPending, hamDeger);
           if (!validated.ok) {
             return VixrexNluPipelineResult(
+              decision: VixrexDecisionKind.needsClarification,
               outcome: VixrexNluPipelineOutcome.needsClarification,
               message: ChatMessage.bot(
                 _clarifier.hata(validated.hata ?? 'Geçersiz değer.'),
               ),
             );
           }
-          // Controller yoksa (Next.js tarafı) – sadece doğrula, uygulama çağıran tarafta.
-          if (controller != null) {
-            final ok = _executor.execute(
-              controller: controller,
-              alan: alanFromPending,
-              deger: validated.normalizedDeger ?? hamDeger,
-            );
-            if (!ok) {
-              return VixrexNluPipelineResult(
-                outcome: VixrexNluPipelineOutcome.needsSpecialFlow,
-                message: ChatMessage.bot(_clarifier.sor(alanFromPending)),
-                appliedAnahtar: alanFromPending.anahtar,
-              );
-            }
-            await controller.saveLocally();
-          }
+
           await _memory.clearPendingSlot(scope: scope);
+          final kesinDeger = validated.normalizedDeger ?? hamDeger;
+          final action = VixrexValidatedAction(
+            fieldKey: alanFromPending.anahtar,
+            normalizedValue: kesinDeger,
+            matchClass: 'pending_slot',
+          );
           return VixrexNluPipelineResult(
+            decision: VixrexDecisionKind.validatedAction,
+            actions: [action],
             outcome: VixrexNluPipelineOutcome.handled,
-            message: ChatMessage.bot(
-              _clarifier.basari(
-                alanFromPending,
-                (validated.normalizedDeger ?? hamDeger).toString(),
-              ),
-            ),
+            message: ChatMessage.bot(_validatedMessage(1)),
             appliedAnahtar: alanFromPending.anahtar,
-            appliedDeger: validated.normalizedDeger ?? hamDeger,
+            appliedDeger: kesinDeger,
           );
         }
       }
     }
 
-    // 1) Alan bul – Faz 3 çok-alanlı: birden fazla alan varsa hepsini dene.
-    final tumAlanlar = _intentResolver.resolveAll(trimmed);
-    if (tumAlanlar.isEmpty) {
+    final matches = _uniqueFieldMatches(trimmed);
+    if (matches.isEmpty) {
       return VixrexNluPipelineResult(
+        decision: VixrexDecisionKind.notUnderstood,
         outcome: VixrexNluPipelineOutcome.notUnderstood,
         message: ChatMessage.bot(_clarifier.belirsiz()),
       );
     }
-    // Çok-alanlı: 2+ alan ve her biri için değer varsa toplu işle (Faz 3).
-    if (tumAlanlar.length > 1) {
+
+    if (matches.length > 1) {
       final basarili = <VixrexNiyetAlan>[];
-      final basariliDegerler = <Object>[];
+      final basariliDegerler = <Object?>[];
+      final basariliMatches = <VixrexIntentMatch>[];
       final hatalar = <String>[];
-      for (final a in tumAlanlar) {
-        if (needsSpecialFlow != null && needsSpecialFlow(a)) {
-          hatalar.add('${a.etiket} için panelden devam et');
+
+      for (final match in matches) {
+        final a = match.alan;
+        if (_requiresSpecialFlow(a, needsSpecialFlow)) {
+          hatalar.add('${a.etiket} için özel akış gerekli');
           continue;
         }
+
         final ham = _valueExtractor.extract(trimmed, a);
         if (ham == null || ham.trim().isEmpty) {
           hatalar.add('${a.etiket} için değer bulunamadı');
           continue;
         }
+
         final v = await onValidate(a, ham);
         if (!v.ok) {
           hatalar.add(v.hata ?? '${a.etiket} geçersiz');
           continue;
         }
-        if (controller != null) {
-          final ok = _executor.execute(
-            controller: controller,
-            alan: a,
-            deger: v.normalizedDeger ?? ham,
-          );
-          if (!ok) {
-            hatalar.add('${a.etiket} için özel akış gerekli');
-            continue;
-          }
-        }
+
         basarili.add(a);
         basariliDegerler.add(v.normalizedDeger ?? ham);
+        basariliMatches.add(match);
       }
+
       if (basarili.isEmpty) {
         return VixrexNluPipelineResult(
+          decision: VixrexDecisionKind.needsClarification,
           outcome: VixrexNluPipelineOutcome.needsClarification,
           message: ChatMessage.bot(
             hatalar.isNotEmpty ? hatalar.join('\n') : _clarifier.belirsiz(),
           ),
         );
       }
-      if (controller != null) await controller.saveLocally();
+
       await _memory.clearPendingSlot(scope: scope);
-      final metin = basarili
-          .asMap()
-          .entries
-          .map(
-            (e) =>
-                _clarifier.basari(e.value, basariliDegerler[e.key].toString()),
-          )
-          .join('\n');
+      final actions = <VixrexValidatedAction>[
+        for (var i = 0; i < basarili.length; i++)
+          VixrexValidatedAction(
+            fieldKey: basarili[i].anahtar,
+            normalizedValue: basariliDegerler[i],
+            matchClass: basariliMatches[i].matchClass,
+          ),
+      ];
+
       return VixrexNluPipelineResult(
+        decision:
+            actions.length > 1
+                ? VixrexDecisionKind.validatedActionGroup
+                : VixrexDecisionKind.validatedAction,
+        actions: actions,
         outcome: VixrexNluPipelineOutcome.handled,
-        message: ChatMessage.bot(metin),
+        message: ChatMessage.bot(_validatedMessage(actions.length)),
         appliedAnahtar: basarili.first.anahtar,
         appliedDeger: basariliDegerler.first,
         appliedAnahtarlar: basarili.map((e) => e.anahtar).toList(),
         appliedDegerler: basariliDegerler,
       );
     }
-    final alan = tumAlanlar.first;
 
-    // 1b) Yasal alanlar bu borudan yasak – mevcut legal akışa yönlendir.
-    // Sözlükte yasal alanlar yok, bu dal Faz 1’de ölü – fakat emniyet için kontrol.
+    final match = matches.first;
+    final alan = match.alan;
 
-    // 2) Özel akış gerektiren alanlar (il/ilce → listeden seç, gorsel → yükle)
-    if (needsSpecialFlow != null && needsSpecialFlow(alan)) {
-      // Değer varsa bile özel akış – serbest metinle il/ilçe yazımı Faz 1’de desteklenmiyor.
-      // Pending’e al ve yönlendir.
+    if (_requiresSpecialFlow(alan, needsSpecialFlow)) {
       await _memory.savePendingSlot(
         VixrexPendingSlot(
+          kind: VixrexPendingSlot.specialFlowKind,
           anahtar: alan.anahtar,
           etiket: alan.etiket,
           tip: alan.tip,
@@ -270,16 +293,15 @@ class VixrexNluPipeline {
         scope: scope,
       );
       return VixrexNluPipelineResult(
+        decision: VixrexDecisionKind.needsSpecialFlow,
         outcome: VixrexNluPipelineOutcome.needsSpecialFlow,
-        message: ChatMessage.bot(_clarifier.sor(alan)),
+        message: ChatMessage.bot(_specialFlowMessage(alan)),
         appliedAnahtar: alan.anahtar,
       );
     }
 
-    // 3) Değer ayıkla.
     final hamDeger = _valueExtractor.extract(trimmed, alan);
     if (hamDeger == null || hamDeger.trim().isEmpty) {
-      // Değer yok → netleştirme sor.
       await _memory.savePendingSlot(
         VixrexPendingSlot(
           anahtar: alan.anahtar,
@@ -290,18 +312,17 @@ class VixrexNluPipeline {
         scope: scope,
       );
       return VixrexNluPipelineResult(
+        decision: VixrexDecisionKind.needsClarification,
         outcome: VixrexNluPipelineOutcome.needsClarification,
         message: ChatMessage.bot(_clarifier.sor(alan)),
         appliedAnahtar: alan.anahtar,
       );
     }
 
-    // 4) Doğrulama – çağıranın validateField’ı (Flutter/Next.js aynı kural).
     final validated = await onValidate(alan, hamDeger);
     if (!validated.ok) {
-      // Doğrulama hatası → hata mesajı + pending’i koru (tekrar deneme için).
-      // Faz 1’de deneme sayısını artırmıyoruz, sadece aynı soruyu tekrar sormuyoruz – hatayı göster.
       return VixrexNluPipelineResult(
+        decision: VixrexDecisionKind.needsClarification,
         outcome: VixrexNluPipelineOutcome.needsClarification,
         message: ChatMessage.bot(
           _clarifier.hata(validated.hata ?? 'Geçersiz değer.'),
@@ -310,46 +331,20 @@ class VixrexNluPipeline {
       );
     }
 
-    // 5) İşlem – mevcut Vixrex işlemi.
-    if (controller != null) {
-      final ok = _executor.execute(
-        controller: controller,
-        alan: alan,
-        deger: validated.normalizedDeger ?? hamDeger,
-      );
-      if (!ok) {
-        await _memory.savePendingSlot(
-          VixrexPendingSlot(
-            anahtar: alan.anahtar,
-            etiket: alan.etiket,
-            tip: alan.tip,
-            sorulduAt: DateTime.now(),
-          ),
-          scope: scope,
-        );
-        return VixrexNluPipelineResult(
-          outcome: VixrexNluPipelineOutcome.needsSpecialFlow,
-          message: ChatMessage.bot(_clarifier.sor(alan)),
-          appliedAnahtar: alan.anahtar,
-        );
-      }
-      await controller.saveLocally();
-    } else {
-      // Next.js tarafı – controller yok, doğrulama sonrası çağıran `update_working_draft_field`’i çağıracak.
-      // Burada sadece boru sonucunu dönüyoruz.
-    }
-
     await _memory.clearPendingSlot(scope: scope);
+    final kesinDeger = validated.normalizedDeger ?? hamDeger;
+    final action = VixrexValidatedAction(
+      fieldKey: alan.anahtar,
+      normalizedValue: kesinDeger,
+      matchClass: match.matchClass,
+    );
     return VixrexNluPipelineResult(
+      decision: VixrexDecisionKind.validatedAction,
+      actions: [action],
       outcome: VixrexNluPipelineOutcome.handled,
-      message: ChatMessage.bot(
-        _clarifier.basari(
-          alan,
-          (validated.normalizedDeger ?? hamDeger).toString(),
-        ),
-      ),
+      message: ChatMessage.bot(_validatedMessage(1)),
       appliedAnahtar: alan.anahtar,
-      appliedDeger: validated.normalizedDeger ?? hamDeger,
+      appliedDeger: kesinDeger,
     );
   }
 }

@@ -32,6 +32,11 @@ describe("ilIlceCikar — serbest metinden il/ilçe çıkarımı", () => {
     });
   });
 
+  it("açık il ile çelişen benzersiz ilçeyi başka ile taşımaz", () => {
+    expect(ilIlceCikar("Mamak, Erzurum")).toEqual({ il: "Erzurum", ilce: null });
+    expect(ilIlceCikar("Kadıköy, Ankara")).toEqual({ il: "Ankara", ilce: null });
+  });
+
   it("kelime sınırı korunur — bitişik bir kelimenin parçası yanlışlıkla eşleşmez", () => {
     // "Kaş" bir ilçe adı (Antalya) — "kaşarcı" gibi bitişik bir kelimenin
     // içinde geçse bile kelime sınırı sayesinde yanlış eşleşme olmamalı.
@@ -43,6 +48,14 @@ describe("ilIlceCikar — serbest metinden il/ilçe çıkarımı", () => {
       il: "İstanbul",
       ilce: "Çekmeköy",
     });
+  });
+
+  it("resmî kanonik ilçe adları korunur", () => {
+    expect(ilIlceCikar("Narman, Erzurum")).toEqual({ il: "Erzurum", ilce: "Narman" });
+    expect(ilIlceCikar("Pasinler, Erzurum")).toEqual({ il: "Erzurum", ilce: "Pasinler" });
+    expect(ilIlceCikar("İncirliova, Aydın")).toEqual({ il: "Aydın", ilce: "İncirliova" });
+    expect(ilIlceCikar("İncesu, Kayseri")).toEqual({ il: "Kayseri", ilce: "İncesu" });
+    expect(ilIlceCikar("Beytüşşebap, Şırnak")).toEqual({ il: "Şırnak", ilce: "Beytüşşebap" });
   });
 
   it("kesme işaretsiz bitişik ek (örn. 'çekmeköyde') kelime sınırını bozduğu için eşleşmez — hassasiyet tercih edilir, tahmin yok", () => {

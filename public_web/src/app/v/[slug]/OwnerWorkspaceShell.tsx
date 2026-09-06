@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import OwnerAssistantPanel from "./OwnerAssistantPanel";
+import { OwnerDraftVersionProvider } from "./OwnerDraftVersionContext";
 import "./ownerStorefrontPolish.css";
 import { vixRexMesajlari } from "@/lib/vixrexMesajlari";
 import type {
@@ -238,28 +239,30 @@ export default function OwnerWorkspaceShell({
        * Çekmece kaldırıldı, içeriği asistan paneline taşındı; doluluk
        * artık tek yerden, panelin kendi raporundan geliyor. */}
 
-      <OwnerAssistantPanel
-        slug={vitrinProps.storeSlug}
-        hesapBagliDegil={!isDemo && draft?.has_account === false}
-        oturumSaniye={sessionSecondsLeft}
-        yayinlanmamisDegisiklik={(draft?.draft_version ?? 1) > (draft?.live_version ?? 1)}
-        draftData={(draft?.draft_data ?? {}) as Record<string, unknown>}
-        draftYeniOlusturuldu={Boolean(draft?.created)}
-        urunFiyatsizSayisi={vitrinProps.urunFiyatsizSayisi ?? 0}
-        urunAciklamasizSayisi={vitrinProps.urunAciklamasizSayisi ?? 0}
-        haftalikPerformans={vitrinProps.haftalikPerformans ?? null}
-        assistantHandoff={assistantHandoff}
-        atlananAlanlar={
-          Array.isArray(draft?.atlanan_alanlar) ? draft.atlanan_alanlar : []
-        }
-        premiumAktifMi={Boolean(draft?.is_premium_active)}
-        bookingSettings={bookingSettings ?? null}
-        aboutSection={vitrinProps.aboutSection ? { kicker: vitrinProps.aboutSection.kicker ?? '', title: vitrinProps.aboutSection.title ?? '', body: vitrinProps.aboutSection.body ?? '', imageUrl: vitrinProps.aboutSection.imageUrl ?? '', imageCaption: vitrinProps.aboutSection.imageCaption ?? '', values: (vitrinProps.aboutSection.values ?? []).map(v => ({ id: v.id ?? '', title: v.title ?? '', description: v.description ?? '' })) } : null}
-        faqItems={(vitrinProps.faqItems ?? []).map(f => ({ id: f.id ?? '', question: f.question ?? '', answer: f.answer ?? '' }))}
-        campaignBanner={campaignBanner ?? null}
-        marketplaceLinks={(vitrinProps.marketplaceLinks ?? []).map((m) => ({ id: m.id ?? '', platform: m.platform ?? '', url: m.url ?? '', subtitle: m.subtitle ?? '' }))}
-        galleryItems={(vitrinProps.galleryItems ?? []).map((g) => ({ id: g.id || '', imageUrl: g.imageUrl || '', title: g.title || '' }))}
-      />
+      <OwnerDraftVersionProvider initialVersion={draft?.draft_version ?? 1}>
+        <OwnerAssistantPanel
+          slug={vitrinProps.storeSlug}
+          hesapBagliDegil={!isDemo && draft?.has_account === false}
+          oturumSaniye={sessionSecondsLeft}
+          yayinlanmamisDegisiklik={(draft?.draft_version ?? 1) > (draft?.live_version ?? 1)}
+          draftData={(draft?.draft_data ?? {}) as Record<string, unknown>}
+          draftYeniOlusturuldu={Boolean(draft?.created)}
+          urunFiyatsizSayisi={vitrinProps.urunFiyatsizSayisi ?? 0}
+          urunAciklamasizSayisi={vitrinProps.urunAciklamasizSayisi ?? 0}
+          haftalikPerformans={vitrinProps.haftalikPerformans ?? null}
+          assistantHandoff={assistantHandoff}
+          atlananAlanlar={
+            Array.isArray(draft?.atlanan_alanlar) ? draft.atlanan_alanlar : []
+          }
+          premiumAktifMi={Boolean(draft?.is_premium_active)}
+          bookingSettings={bookingSettings ?? null}
+          aboutSection={vitrinProps.aboutSection ? { kicker: vitrinProps.aboutSection.kicker ?? '', title: vitrinProps.aboutSection.title ?? '', body: vitrinProps.aboutSection.body ?? '', imageUrl: vitrinProps.aboutSection.imageUrl ?? '', imageCaption: vitrinProps.aboutSection.imageCaption ?? '', values: (vitrinProps.aboutSection.values ?? []).map(v => ({ id: v.id ?? '', title: v.title ?? '', description: v.description ?? '' })) } : null}
+          faqItems={(vitrinProps.faqItems ?? []).map(f => ({ id: f.id ?? '', question: f.question ?? '', answer: f.answer ?? '' }))}
+          campaignBanner={campaignBanner ?? null}
+          marketplaceLinks={(vitrinProps.marketplaceLinks ?? []).map((m) => ({ id: m.id ?? '', platform: m.platform ?? '', url: m.url ?? '', subtitle: m.subtitle ?? '' }))}
+          galleryItems={(vitrinProps.galleryItems ?? []).map((g) => ({ id: g.id || '', imageUrl: g.imageUrl || '', title: g.title || '' }))}
+        />
+      </OwnerDraftVersionProvider>
     </>
   );
 }

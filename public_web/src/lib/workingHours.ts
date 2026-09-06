@@ -88,7 +88,8 @@ export function findTimeRange(
   return { start, end, raw: `${start} - ${end}` };
 }
 
-/** Eski string alan: "09:00 - 20:00" → hafta içi varsayılan (bilgi amaçlı, zayıf) */
+/** Eski string alan: "09:00 - 20:00" → hafta içi varsayılan (bilgi amaçlı, zayıf).
+ * Bu fallback public görüntüleme içindir; Akıllı Motor mutation kaynağı değildir. */
 export function weekMapFromPlainString(value: string | null | undefined): WeekMap | null {
   const raw = String(value || "").trim();
   if (!raw) return null;
@@ -142,6 +143,15 @@ function toMinutes(hhmm: string): number {
   return h * 60 + m;
 }
 
+function previousDayKey(dayKey: string): string {
+  const day = Number(dayKey);
+  return String(day <= 1 ? 7 : day - 1);
+}
+
+function isOvernight(hours: DayHours): boolean {
+  return toMinutes(hours.start) > toMinutes(hours.end);
+}
+
 export function formatTodayLine(map: WeekMap, now = new Date()): string | null {
   const { dayKey } = istanbulParts(now);
   const day = map[dayKey];
@@ -163,6 +173,11 @@ export function formatWeekLines(map: WeekMap): Array<{ day: string; hours: strin
 /**
  * Kural A: status === "Kapalı" her zaman kazanır;
  * değilse saatten hesapla; saat yoksa status / Açık.
+ *
+ * Geceye sarkan aralık (örn. Pzt 22:00–02:00) iki takvim gününü kapsar:
+ * - Pazartesi 22:00 sonrası bugünkü satırdan,
+ * - Salı 02:00 öncesi bir önceki günün satırından
+ * hesaplanır. Böylece gece yarısından sonra yanlışlıkla "Kapalı" denmez.
  */
 export function resolveOpenState(
   map: WeekMap | null,
@@ -176,12 +191,52 @@ export function resolveOpenState(
 
   if (map) {
     const { dayKey, minutes } = istanbulParts(now);
+
+    // Önce dün başlayan ve gece yarısından sonra bugüne taşan aralığı kontrol et.
+    const previous = map[previousDayKey(dayKey)];
+    if (previous?.active && isOvernight(previous)) {
+      const previousEnd = toMinutes(previous.end);
+      if (minutes < previousEnd) {
+        return {
+          isOpen: true,
+          label: "Açık",
+          detail: `${previous.end} kadar`,
+          source: "hours",
+        };
+      }
+    }
+
     const day = map[dayKey];
     if (!day || !day.active) {
       return { isOpen: false, label: "Kapalı", detail: "Bugün kapalı", source: "hours" };
     }
+
     const start = toMinutes(day.start);
     const end = toMinutes(day.end);
+
+    // start === end mevcut sözleşmede 24 saat anlamına gelmez; kapalı kabul edilir.
+    if (start === end) {
+      return { isOpen: false, label: "Kapalı", detail: "Bugün kapalı", source: "hours" };
+    }
+
+    if (start > end) {
+      // Bugün başlayan overnight aralığın yalnız gece yarısına kadarki kısmı.
+      if (minutes >= start) {
+        return {
+          isOpen: true,
+          label: "Açık",
+          detail: `${day.end} kadar`,
+          source: "hours",
+        };
+      }
+      return {
+        isOpen: false,
+        label: "Kapalı",
+        detail: `${day.start} açılır`,
+        source: "hours",
+      };
+    }
+
     const open = minutes >= start && minutes < end;
     if (open) {
       return {

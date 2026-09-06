@@ -65,3 +65,9 @@ body.vixrex-owner-rental-preview #ust-bolum [data-vixrex-editable="heroRozet"] {
     white-space: nowrap;
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  body.vixrex-asistan-isliyor button[aria-label="Vixrex Asistan"]::before {
+    animation: none;
+  }
+}

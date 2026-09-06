@@ -6,9 +6,16 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { validateField } from "@/lib/vitrinFieldValidation";
 import { broadcastTaslakGuncellendi } from "@/lib/workingDraftBroadcast";
 
-// Sahip çalışma taslağında tek alan günceller (implementation_plan.md Commit 8).
+// Sahip çalışma taslağında tek MANUEL alan günceller
+// (implementation_plan.md Commit 8).
 //
-// Zincir:
+// Akıllı Motor mutation'ları bu route'tan GEÇMEZ. 5.5/5.6 authoritative
+// yolunda expectedDraftVersion + commandId + actionId + audit/idempotency
+// zorunludur ve /api/owner-smart-engine-action üzerinden çalışır. Böylece
+// eski/bonus bir çağrı `source:"smart_engine"` yollasa bile legacy
+// update_working_draft_field RPC'sine düşüp concurrency korumasını atlayamaz.
+//
+// Manuel zincir:
 //   istek {slug, anahtar, deger}
 //   → HttpOnly sahip çerezi doğrulanır (gövdeden token ALINMAZ)
 //   → değer şemaya göre doğrulanır (vitrinFieldValidation)
@@ -57,7 +64,7 @@ function supabaseAnon() {
 }
 
 /**
- * Preview ortamında service-role secret'ı tanımlı değilse eski kod
+ * Preview ortamında SERVICE_ROLE secret'ı tanımlı değilse eski kod
  * getSupabaseAdmin() içinde throw ediyor, Next.js HTML 500 dönüyor ve istemci
  * bunu JSON sanıp parse etmeye çalışınca yalnız "Bağlantı kurulamadı" görüyordu.
  *
@@ -80,7 +87,13 @@ function rateLimitAdmin(): SupabaseClient | null {
 }
 
 export async function POST(request: NextRequest) {
-  let govde: { slug?: unknown; anahtar?: unknown; deger?: unknown; clientId?: unknown };
+  let govde: {
+    slug?: unknown;
+    anahtar?: unknown;
+    deger?: unknown;
+    clientId?: unknown;
+    source?: unknown;
+  };
   try {
     govde = await request.json();
   } catch {
@@ -89,12 +102,24 @@ export async function POST(request: NextRequest) {
 
   const slug = typeof govde.slug === "string" ? govde.slug.trim() : "";
   const anahtar = typeof govde.anahtar === "string" ? govde.anahtar.trim() : "";
+  const smartEngineRequest = govde.source === "smart_engine";
   // Yalnız kendi yankısını atlamak için kullanılan opak bir etiket — yetki
   // veya kimlik anlamı taşımaz, doğrulanmasına gerek yok.
   const clientId = typeof govde.clientId === "string" ? govde.clientId : null;
 
   if (!slug || !anahtar) {
     return NextResponse.json({ hata: "Vitrin veya alan belirtilmedi." }, { status: 400 });
+  }
+
+  // Legacy assistant mutation burada fail-closed olur. Manuel yol etkilenmez.
+  if (smartEngineRequest) {
+    return NextResponse.json(
+      {
+        hata: "Akıllı Motor kaydı authoritative işlem yolundan gönderilmeli.",
+        kod: "SMART_ENGINE_AUTHORITATIVE_ROUTE_REQUIRED",
+      },
+      { status: 409 }
+    );
   }
 
   // Oturum YALNIZ çerezden okunur. Gövdeden gelen bir token kabul edilmez.

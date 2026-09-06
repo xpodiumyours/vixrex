@@ -1,0 +1,93 @@
+name: Akıllı Motor — kill-switch doğrulama
+
+on:
+  pull_request:
+    paths:
+      - "public_web/src/lib/smartEngineFlags*.ts"
+      - "public_web/src/app/api/owner-smart-engine-status/**"
+      - "public_web/src/app/api/owner-draft/route.ts"
+      - "public_web/src/app/v/**/hooks/useOwnerActions.ts"
+      - "public_web/tests/smart-engine-flags.test.ts"
+      - "lib/services/feature_flag_service.dart"
+      - "lib/widgets/vixrex/vixrex_companion_chat.dart"
+      - "test/feature_flag_service_test.dart"
+      - "supabase/migrations/*smart_engine_runtime_flags.sql"
+      - ".github/workflows/smart-engine-kill-switch.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "public_web/src/lib/smartEngineFlags*.ts"
+      - "public_web/src/app/api/owner-smart-engine-status/**"
+      - "public_web/src/app/api/owner-draft/route.ts"
+      - "public_web/src/app/v/**/hooks/useOwnerActions.ts"
+      - "public_web/tests/smart-engine-flags.test.ts"
+      - "lib/services/feature_flag_service.dart"
+      - "lib/widgets/vixrex/vixrex_companion_chat.dart"
+      - "test/feature_flag_service_test.dart"
+      - "supabase/migrations/*smart_engine_runtime_flags.sql"
+      - ".github/workflows/smart-engine-kill-switch.yml"
+
+permissions:
+  contents: read
+
+env:
+  FLUTTER_VERSION: "3.44.4"
+
+jobs:
+  web:
+    name: Kill-switch — Next tip + unit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: public_web
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: public_web/package-lock.json
+
+      - name: Bağımlılıklar
+        run: npm ci
+
+      - name: Tip kontrolü
+        run: npx tsc --noEmit
+
+      - name: Kill-switch unit testi
+        run: npx vitest run tests/smart-engine-flags.test.ts
+
+  flutter:
+    name: Kill-switch — Flutter analiz + unit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Bağımlılıklar
+        run: flutter pub get
+
+      - name: İlgili dosyaları analiz et
+        run: >-
+          dart analyze --fatal-infos
+          lib/services/feature_flag_service.dart
+          lib/widgets/vixrex/vixrex_companion_chat.dart
+          test/feature_flag_service_test.dart
+
+      - name: Kill-switch unit testi
+        run: flutter test test/feature_flag_service_test.dart --reporter expanded
