@@ -31,7 +31,7 @@ env:
 jobs:
   secret-tarama:
     name: Secret sızıntı taraması
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, windows, vixrex]
     timeout-minutes: 10
 
     steps:
@@ -47,8 +47,11 @@ jobs:
 
   auth-config-check:
     name: Supabase auth security config check
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, windows, vixrex]
     timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash
 
     steps:
       - name: Checkout
@@ -95,8 +98,11 @@ jobs:
 
   changes:
     name: Değişiklik yüzeyi
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, windows, vixrex]
     timeout-minutes: 5
+    defaults:
+      run:
+        shell: bash
     outputs:
       flutter: ${{ steps.classify.outputs.flutter }}
       schema: ${{ steps.classify.outputs.schema }}
@@ -135,6 +141,10 @@ jobs:
     # TRUNCATE/MAINTAIN/REFERENCES/TRIGGER yetkisi kalmadığını doğrular —
     # biri yeni bir tabloda/migration'da bunu yeniden açarsa (kasıtlı
     # veya yanlışlıkla) PR kırmızıya düşer.
+    #
+    # NOT (2026-09-06): self-hosted pilot'a henüz taşınmadı — Docker +
+    # psql gerektiriyor, ayrı bir doğrulama adımı ister. Şimdilik
+    # ubuntu-latest'te kalıyor, yalnız supabase/ değişen PR'larda tetiklenir.
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -194,8 +204,11 @@ jobs:
     name: Flutter — analiz ve testler
     needs: changes
     if: needs.changes.outputs.flutter == 'true'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, windows, vixrex]
     timeout-minutes: 25
+    defaults:
+      run:
+        shell: bash
 
     steps:
       - name: Checkout
@@ -224,8 +237,11 @@ jobs:
     name: Şema üretim hattı — sapma kontrolü
     needs: changes
     if: needs.changes.outputs.schema == 'true'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, windows, vixrex]
     timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
 
     steps:
       - name: Checkout
@@ -296,10 +312,11 @@ jobs:
     name: Next.js — lint, tip, test, build
     needs: changes
     if: needs.changes.outputs.public_web == 'true'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, windows, vixrex]
     timeout-minutes: 20
     defaults:
       run:
+        shell: bash
         working-directory: public_web
 
     steps:
@@ -350,6 +367,9 @@ jobs:
       run:
         working-directory: public_web
 
+    # NOT (2026-09-06): self-hosted pilot'a henüz taşınmadı — Playwright
+    # `--with-deps` apt-get kullanıyor, Windows'ta karşılığı yok. Ayrı ele
+    # alınacak. Zaten yalnız main push'ında (PR'da değil) çalışıyor.
     steps:
       - name: Checkout
         uses: actions/checkout@v4
