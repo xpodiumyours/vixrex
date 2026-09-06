@@ -31,7 +31,9 @@ env:
 jobs:
   secret-tarama:
     name: Secret sızıntı taraması
-    runs-on: [self-hosted, windows, vixrex]
+    # NOT (2026-09-06): gitleaks-action Windows binary'sini yanlış URL'den
+    # arıyor (404) — self-hosted pilotuna henüz taşınmadı, ayrı ele alınacak.
+    runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
@@ -51,7 +53,11 @@ jobs:
     timeout-minutes: 10
     defaults:
       run:
-        shell: bash
+        # NOT (2026-09-06): self-hosted Windows runner'da PATH'teki ilk
+        # "bash", Git Bash değil WSL'nin System32 kabuk saplaması oluyor —
+        # WSL kurulu değilse "Bash/Service/E_UNEXPECTED" ile anında patlar.
+        # Git Bash'i tam yolla zorluyoruz.
+        shell: 'C:\Program Files\Git\bin\bash.exe -e -o pipefail {0}'
 
     steps:
       - name: Checkout
@@ -102,7 +108,11 @@ jobs:
     timeout-minutes: 5
     defaults:
       run:
-        shell: bash
+        # NOT (2026-09-06): self-hosted Windows runner'da PATH'teki ilk
+        # "bash", Git Bash değil WSL'nin System32 kabuk saplaması oluyor —
+        # WSL kurulu değilse "Bash/Service/E_UNEXPECTED" ile anında patlar.
+        # Git Bash'i tam yolla zorluyoruz.
+        shell: 'C:\Program Files\Git\bin\bash.exe -e -o pipefail {0}'
     outputs:
       flutter: ${{ steps.classify.outputs.flutter }}
       schema: ${{ steps.classify.outputs.schema }}
@@ -208,7 +218,11 @@ jobs:
     timeout-minutes: 25
     defaults:
       run:
-        shell: bash
+        # NOT (2026-09-06): self-hosted Windows runner'da PATH'teki ilk
+        # "bash", Git Bash değil WSL'nin System32 kabuk saplaması oluyor —
+        # WSL kurulu değilse "Bash/Service/E_UNEXPECTED" ile anında patlar.
+        # Git Bash'i tam yolla zorluyoruz.
+        shell: 'C:\Program Files\Git\bin\bash.exe -e -o pipefail {0}'
 
     steps:
       - name: Checkout
@@ -241,7 +255,11 @@ jobs:
     timeout-minutes: 15
     defaults:
       run:
-        shell: bash
+        # NOT (2026-09-06): self-hosted Windows runner'da PATH'teki ilk
+        # "bash", Git Bash değil WSL'nin System32 kabuk saplaması oluyor —
+        # WSL kurulu değilse "Bash/Service/E_UNEXPECTED" ile anında patlar.
+        # Git Bash'i tam yolla zorluyoruz.
+        shell: 'C:\Program Files\Git\bin\bash.exe -e -o pipefail {0}'
 
     steps:
       - name: Checkout
@@ -316,7 +334,11 @@ jobs:
     timeout-minutes: 20
     defaults:
       run:
-        shell: bash
+        # NOT (2026-09-06): self-hosted Windows runner'da PATH'teki ilk
+        # "bash", Git Bash değil WSL'nin System32 kabuk saplaması oluyor —
+        # WSL kurulu değilse "Bash/Service/E_UNEXPECTED" ile anında patlar.
+        # Git Bash'i tam yolla zorluyoruz.
+        shell: 'C:\Program Files\Git\bin\bash.exe -e -o pipefail {0}'
         working-directory: public_web
 
     steps:
