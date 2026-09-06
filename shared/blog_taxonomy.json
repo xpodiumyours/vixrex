@@ -1,0 +1,56 @@
+{
+  "_aciklama": "Vixrex merkezi blog kütüphanesi için tek konu/amaç sözleşmesi. Sektörler burada kopyalanmaz; shared/business_categories.json tek sektör kaynağıdır.",
+  "topics": [
+    {
+      "id": "google-yerel-gorunurluk",
+      "label": "Google ve yerel görünürlük",
+      "description": "Google Arama, Haritalar ve yerel bulunabilirlik için uygulanabilir rehberler."
+    },
+    {
+      "id": "dijital-vitrin-web",
+      "label": "Dijital vitrin ve web görünümü",
+      "description": "İşletmenin internette anlaşılır, güvenilir ve güncel görünmesi için vitrin rehberleri."
+    },
+    {
+      "id": "urun-hizmet-fiyat",
+      "label": "Ürün, hizmet ve fiyat/katalog",
+      "description": "Ürün, hizmet, fiyat ve katalog bilgisini müşteriye doğru sunma rehberleri."
+    },
+    {
+      "id": "musteri-iletisim-satis",
+      "label": "Müşteri iletişimi, paylaşım ve satış",
+      "description": "WhatsApp, telefon, QR, paylaşım ve satışa dönüşen müşteri iletişimi rehberleri."
+    },
+    {
+      "id": "randevu-isletme-yonetimi",
+      "label": "Randevu ve işletme yönetimi",
+      "description": "Randevu, çalışma saatleri ve günlük işletme düzenine yönelik rehberler."
+    },
+    {
+      "id": "vixrex-kullanimi",
+      "label": "Vixrex kullanımı ve yayınlama",
+      "description": "Vixrex vitrini oluşturma, düzenleme, yayınlama ve doğru kullanma rehberleri."
+    },
+    {
+      "id": "dijital-carsi-baglantilar",
+      "label": "Dijital Çarşı ve işletme bağlantıları",
+      "description": "İşletmeler arası dijital bağlantı ve yerel işbirliği bilgisini taşıyan rehberler."
+    }
+  ],
+  "purposes": [
+    { "id": "gorunurluk-artirma", "label": "Görünürlüğü artırma" },
+    { "id": "musteri-kazanma", "label": "Yeni müşteriye ulaşma" },
+    { "id": "guven-artirma", "label": "Güveni artırma" },
+    { "id": "iletisim-satis", "label": "İletişim ve satışı kolaylaştırma" },
+    { "id": "isletme-yonetimi", "label": "İşletmeyi daha düzenli yönetme" },
+    { "id": "vixrex-kullanimi", "label": "Vixrex'i doğru kullanma" },
+    { "id": "yerel-isbirligi", "label": "Yerel işbirliği kurma" }
+  ],
+  "locationScopes": ["national", "province", "district"],
+  "rules": {
+    "maxTagsPerArticle": 8,
+    "maxTagLength": 40,
+    "maxSectorIdsPerArticle": 19,
+    "maxProvinceCodesPerArticle": 81
+  }
+}

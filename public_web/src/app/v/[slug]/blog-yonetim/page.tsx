@@ -28,6 +28,21 @@ interface Yazi {
   published_at: string | null;
 }
 
+interface VixrexKutuphaneYazisi {
+  id: string;
+  title: string;
+  slug: string;
+  summary: string | null;
+  cover_image_url: string | null;
+  reading_minutes: number | null;
+  primary_topic: string | null;
+  purpose: string | null;
+}
+
+type ImportMode = "linked_excerpt" | "adaptable_draft";
+
+const KUTUPHANE_LIMIT = 20;
+
 const DURUM_ETIKET: Record<string, { metin: string; renk: string }> = {
   draft: { metin: "Taslak", renk: "bg-amber-500/20 text-amber-400" },
   review: { metin: "İnceleme", renk: "bg-blue-500/20 text-blue-400" },
@@ -45,6 +60,10 @@ export default function BlogYonetimPage() {
   const [hata, setHata] = useState<string | null>(null);
   const [yeniBaslik, setYeniBaslik] = useState("");
   const [olusturuyor, setOlusturuyor] = useState(false);
+  const [kutuphaneAcik, setKutuphaneAcik] = useState(false);
+  const [kutuphaneYazilari, setKutuphaneYazilari] = useState<VixrexKutuphaneYazisi[]>([]);
+  const [kutuphaneYukleniyor, setKutuphaneYukleniyor] = useState(false);
+  const [iceAktarilanId, setIceAktarilanId] = useState<string | null>(null);
 
   const yaziListesiniGetir = useCallback(async () => {
     setHata(null);
@@ -76,7 +95,6 @@ export default function BlogYonetimPage() {
         if (res.status === 401) {
           const kuruldu = await sahipOturumuAc();
           if (kuruldu) {
-            // Yeniden dene
             const res2 = await fetch(
               `/api/articles?slug=${encodeURIComponent(slug)}`
             );
@@ -104,11 +122,10 @@ export default function BlogYonetimPage() {
 
   useEffect(() => {
     async function init() {
-      // Önce çerezi kendisi kursun
       await sahipOturumuAc();
       await yaziListesiniGetir();
     }
-    init();
+    void init();
   }, [yaziListesiniGetir]);
 
   async function yaziOlustur() {
@@ -148,6 +165,77 @@ export default function BlogYonetimPage() {
       setHata("Bağlantı kurulamadı.");
     } finally {
       setOlusturuyor(false);
+    }
+  }
+
+  async function kutuphaneyiGetir() {
+    if (kutuphaneYukleniyor) return;
+    setKutuphaneYukleniyor(true);
+    setHata(null);
+    try {
+      const { data, error } = await supabase
+        .from("vixrex_blog_articles")
+        .select(
+          "id,title,slug,summary,cover_image_url,reading_minutes,primary_topic,purpose",
+        )
+        .eq("status", "published")
+        .order("published_at", { ascending: false })
+        .range(0, KUTUPHANE_LIMIT - 1);
+
+      if (error) {
+        setHata("Vixrex kütüphanesi yüklenemedi.");
+        return;
+      }
+      setKutuphaneYazilari((data ?? []) as VixrexKutuphaneYazisi[]);
+    } catch {
+      setHata("Vixrex kütüphanesine bağlanılamadı.");
+    } finally {
+      setKutuphaneYukleniyor(false);
+    }
+  }
+
+  async function kutuphaneAcKapat() {
+    const yeniDurum = !kutuphaneAcik;
+    setKutuphaneAcik(yeniDurum);
+    if (yeniDurum && kutuphaneYazilari.length === 0) {
+      await kutuphaneyiGetir();
+    }
+  }
+
+  async function vixrexYazisiniIceAktar(
+    kaynak: VixrexKutuphaneYazisi,
+    mode: ImportMode,
+  ) {
+    if (iceAktarilanId) return;
+    setIceAktarilanId(kaynak.id);
+    setHata(null);
+
+    const istek = () =>
+      fetch("/api/articles/import-vixrex", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug,
+          sourceArticleId: kaynak.id,
+          mode,
+        }),
+      });
+
+    try {
+      let res = await istek();
+      if (res.status === 401 && (await sahipOturumuAc())) {
+        res = await istek();
+      }
+      const sonuc = await res.json();
+      if (!res.ok) {
+        setHata(sonuc.hata || "Yazı vitrininize eklenemedi.");
+        return;
+      }
+      router.push(`/v/${slug}/blog-yonetim/${sonuc.yaziSlug}`);
+    } catch {
+      setHata("Yazı vitrininize eklenemedi. Bağlantıyı kontrol edin.");
+    } finally {
+      setIceAktarilanId(null);
     }
   }
 
@@ -194,7 +282,6 @@ export default function BlogYonetimPage() {
   return (
     <main className="owner-shell px-4 py-8 sm:px-6">
       <div className="mx-auto flex w-full max-w-[720px] flex-col gap-6">
-        {/* Başlık */}
         <div className="flex items-center justify-between gap-3 rounded-2xl owner-card px-4 py-3">
           <Link
             href={`/v/${slug}`}
@@ -220,7 +307,6 @@ export default function BlogYonetimPage() {
 
         <h1 className="text-2xl font-extrabold text-[var(--owner-text)]">Yazı Yönetimi</h1>
 
-        {/* Hata */}
         {hata && (
           <div
             className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400"
@@ -230,7 +316,6 @@ export default function BlogYonetimPage() {
           </div>
         )}
 
-        {/* Yeni Yazı Oluştur */}
         <div className="rounded-2xl owner-card p-4">
           <h2 className="mb-3 text-sm font-extrabold text-[var(--owner-text)]">
             Yeni Yazı Oluştur
@@ -243,11 +328,11 @@ export default function BlogYonetimPage() {
               placeholder="Yazı başlığı..."
               className="flex-1 rounded-xl border border-[var(--owner-border)] bg-white/5 px-3 py-2.5 text-sm text-[var(--owner-text)] placeholder:text-[var(--owner-muted)] focus:border-[var(--owner-primary)] focus:outline-none"
               onKeyDown={(e) => {
-                if (e.key === "Enter") yaziOlustur();
+                if (e.key === "Enter") void yaziOlustur();
               }}
             />
             <button
-              onClick={yaziOlustur}
+              onClick={() => void yaziOlustur()}
               disabled={olusturuyor || !yeniBaslik.trim()}
               className="shrink-0 rounded-xl bg-[var(--owner-primary)] px-4 py-2.5 text-sm font-extrabold text-[var(--owner-on-primary)] transition hover:brightness-110 disabled:opacity-50"
             >
@@ -256,7 +341,99 @@ export default function BlogYonetimPage() {
           </div>
         </div>
 
-        {/* Yazı Listesi */}
+        <section className="rounded-2xl owner-card p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-sm font-extrabold text-[var(--owner-text)]">
+                Vixrex Kütüphanesinden Yazı Ekle
+              </h2>
+              <p className="mt-1 text-xs text-[var(--owner-muted)]">
+                Yayındaki bir Vixrex rehberini vitrininize taslak olarak alın.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => void kutuphaneAcKapat()}
+              className="owner-button-secondary shrink-0"
+              aria-expanded={kutuphaneAcik}
+            >
+              {kutuphaneAcik ? "Kapat" : "Kütüphaneyi Aç"}
+            </button>
+          </div>
+
+          {kutuphaneAcik ? (
+            <div className="mt-4 space-y-3 border-t border-[var(--owner-border)] pt-4">
+              {kutuphaneYukleniyor ? (
+                <p className="text-sm text-[var(--owner-muted)]" role="status">
+                  Kütüphane yükleniyor…
+                </p>
+              ) : kutuphaneYazilari.length === 0 ? (
+                <p className="text-sm text-[var(--owner-muted)]">
+                  Şu anda yayında Vixrex yazısı bulunmuyor.
+                </p>
+              ) : (
+                kutuphaneYazilari.map((kaynak) => {
+                  const isleniyor = iceAktarilanId === kaynak.id;
+                  return (
+                    <article
+                      key={kaynak.id}
+                      className="rounded-xl border border-[var(--owner-border)] p-3"
+                    >
+                      <div className="flex gap-3">
+                        {kaynak.cover_image_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={kaynak.cover_image_url}
+                            alt=""
+                            className="h-14 w-14 shrink-0 rounded-lg object-cover"
+                          />
+                        ) : null}
+                        <div className="min-w-0 flex-1">
+                          <h3 className="text-sm font-extrabold text-[var(--owner-text)]">
+                            {kaynak.title}
+                          </h3>
+                          {kaynak.summary ? (
+                            <p className="mt-1 line-clamp-2 text-xs text-[var(--owner-muted)]">
+                              {kaynak.summary}
+                            </p>
+                          ) : null}
+                          <div className="mt-2 flex flex-wrap gap-1 text-[10px] font-bold text-[var(--owner-muted)]">
+                            {kaynak.reading_minutes ? <span>{kaynak.reading_minutes} dk</span> : null}
+                            {kaynak.primary_topic ? <span>· {kaynak.primary_topic}</span> : null}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                        <button
+                          type="button"
+                          disabled={Boolean(iceAktarilanId)}
+                          onClick={() => void vixrexYazisiniIceAktar(kaynak, "linked_excerpt")}
+                          className="owner-button-secondary justify-center disabled:opacity-50"
+                        >
+                          {isleniyor ? "Ekleniyor…" : "Kaynak bağlantılı kısa sürüm"}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={Boolean(iceAktarilanId)}
+                          onClick={() => void vixrexYazisiniIceAktar(kaynak, "adaptable_draft")}
+                          className="owner-button-primary justify-center disabled:opacity-50"
+                        >
+                          {isleniyor ? "Ekleniyor…" : "Uyarlanabilir taslak"}
+                        </button>
+                      </div>
+                    </article>
+                  );
+                })
+              )}
+              {kutuphaneYazilari.length >= KUTUPHANE_LIMIT ? (
+                <p className="text-[11px] text-[var(--owner-muted)]">
+                  İlk {KUTUPHANE_LIMIT} yayındaki yazı gösteriliyor. Kütüphane istemciye sınırsız yüklenmez.
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+        </section>
+
         {yukleniyor ? (
           <div className="flex items-center justify-center py-12">
             <div className="h-4 w-4 animate-pulse rounded-full bg-[var(--owner-primary)]" />
@@ -264,8 +441,7 @@ export default function BlogYonetimPage() {
         ) : yazilar.length === 0 ? (
           <div className="rounded-2xl owner-card py-12 text-center">
             <p className="text-sm text-[var(--owner-muted)]">
-              Henüz yazınız yok. Yukarıdaki formu kullanarak ilk yazınızı
-              oluşturun.
+              Henüz yazınız yok. Yukarıdaki seçeneklerden ilk yazınızı oluşturun.
             </p>
           </div>
         ) : (
@@ -328,7 +504,7 @@ export default function BlogYonetimPage() {
                       Gör
                     </Link>
                     <button
-                      onClick={() => yaziSil(yazi.id)}
+                      onClick={() => void yaziSil(yazi.id)}
                       className="rounded-lg border border-red-500/20 px-2.5 py-1.5 text-[10px] font-extrabold text-red-400/60 transition hover:border-red-500/40 hover:text-red-400"
                     >
                       Sil

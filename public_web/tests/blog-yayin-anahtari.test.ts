@@ -1,90 +1,80 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import {
-  BLOG_YAZILARI,
-  blogYayindaMi,
-  yayindakiYazilar,
-  yaziyiBul,
-} from "@/data/blogYazilari";
 
 /**
- * BLOG YAYIN ANAHTARI SÖZLEŞMESİ (2026-08-28).
+ * VIXREX BLOG YAYIN SÖZLEŞMESİ — Katman 1.
  *
- * Casper'ın kararı: blog altyapısı şimdi kurulur ama Keşfet gerçek
- * vitrinlerle dolana kadar YAYINA ÇIKMAZ. Boş ya da üç yazılık blog
- * yokluktan kötüdür — yazıyı okuyan kişi Keşfet'e gidip 9 demo vitrin
- * görürse bir daha dönmez.
- *
- * Bu test o kararı koda bağlar. Taslak bir yazının kazara yayına sızması,
- * bir sayfanın kırık adres bildirmesi ya da site haritasına var olmayan
- * bir adresin girmesi buradan geçemez.
+ * Platform blogu artık kod içi dizi yerine `vixrex_blog_articles` tablosunda.
+ * Bu test canlı DB'yi taklit etmez; migration + public okuma katmanı + route
+ * kaynaklarının aynı güvenlik sözleşmesini koruduğunu kilitler. Gerçek RLS ve
+ * migration zinciri CI'daki Supabase yerel doğrulamasında ayrıca çalışır.
  */
 
 const KOK = resolve(__dirname, "..");
 const oku = (yol: string) => readFileSync(resolve(KOK, yol), "utf8");
 
-describe("blog yayın anahtarı", () => {
-  it("taslak yazılar hiçbir listeye sızmaz", () => {
-    const taslaklar = BLOG_YAZILARI.filter((yazi) => !yazi.yayinda);
-    const yayindakiSluglar = new Set(yayindakiYazilar().map((y) => y.slug));
+const migration = oku(
+  "../supabase/migrations/20260904173500_add_vixrex_blog_articles.sql"
+);
+const kaynak = oku("src/data/blogYazilari.ts");
 
-    for (const taslak of taslaklar) {
-      expect(yayindakiSluglar.has(taslak.slug)).toBe(false);
-      expect(yaziyiBul(taslak.slug)).toBeUndefined();
-    }
-  });
-
-  it("blogYayindaMi yalnız yayındaki yazı varken true döner", () => {
-    expect(blogYayindaMi()).toBe(yayindakiYazilar().length > 0);
-  });
-
-  it("her yazının adresi benzersiz ve geçerli", () => {
-    const sluglar = BLOG_YAZILARI.map((yazi) => yazi.slug);
-    expect(new Set(sluglar).size).toBe(sluglar.length);
-
-    for (const yazi of BLOG_YAZILARI) {
-      // Adres deseni: Türkçe karakter, büyük harf ve boşluk olmaz.
-      expect(yazi.slug).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
-      expect(yazi.baslik.trim().length).toBeGreaterThan(0);
-      expect(yazi.ozet.trim().length).toBeGreaterThan(0);
-      expect(yazi.govde.trim().length).toBeGreaterThan(0);
-      expect(yazi.okumaDakika).toBeGreaterThan(0);
-    }
-  });
-
-  it("liste sayfası boşken notFound çağırıyor", () => {
-    // Kaynak taraması: `yayindakiYazilar` boş dönerse sayfa 404 vermeli.
-    // Bu kontrol kaldırılırsa boş bir blog listesi yayına çıkar.
-    const kaynak = oku("src/app/(site)/blog/page.tsx");
-    expect(kaynak).toMatch(/yazilar\.length === 0\)\s*notFound\(\)/);
-  });
-
-  it("yazı sayfası yalnız yayındaki yazıyı okur", () => {
-    const kaynak = oku("src/app/(site)/blog/[slug]/page.tsx");
-    // `yaziyiBul` taslakları elemektedir; doğrudan BLOG_YAZILARI'na
-    // gitmek o elemeyi atlatır.
-    expect(kaynak).not.toMatch(/BLOG_YAZILARI/);
-    expect(kaynak).toMatch(/yaziyiBul\(slug\)/);
-    expect(kaynak).toMatch(/if \(!yazi\) notFound\(\)/);
-  });
-
-  it("site haritası blog adreslerini yayın anahtarına bağlıyor", () => {
-    const kaynak = oku("src/app/sitemap.xml/route.ts");
-    expect(kaynak).toMatch(/blogYayindaMi\(\)/);
+describe("Vixrex merkezi blog yayın sözleşmesi", () => {
+  it("platform blogu store_articles yerine ayrı merkezi tabloda yaşar", () => {
+    expect(migration).toMatch(/create table if not exists public\.vixrex_blog_articles/i);
+    expect(migration).not.toMatch(/alter table public\.store_articles/i);
+    expect(kaynak).toMatch(/\.from\("vixrex_blog_articles"\)/);
     expect(kaynak).not.toMatch(/BLOG_YAZILARI/);
   });
 
-  it("altbilgi bağlantısı yayın anahtarına bağlı", () => {
-    const kaynak = oku("src/components/site/SiteFooter.tsx");
-    expect(kaynak).toMatch(/blogYayindaMi\(\)/);
+  it("public erişim yalnız published satırlara açıktır", () => {
+    expect(migration).toMatch(/enable row level security/i);
+    expect(migration).toMatch(/to anon, authenticated\s+using \(status = 'published'\)/i);
+
+    const publishedFiltreleri = kaynak.match(/\.eq\("status", "published"\)/g) ?? [];
+    expect(publishedFiltreleri.length).toBeGreaterThanOrEqual(3);
   });
 
-  it("gövdeler ham HTML taşımıyor", () => {
-    // Gövde biçimi düz metin. HTML yazılırsa temizleyiciden geçse bile
-    // paragraflama mantığı sessizce değişir.
-    for (const yazi of BLOG_YAZILARI) {
-      expect(yazi.govde).not.toMatch(/<[a-z][^>]*>/i);
-    }
+  it("mevcut iki Vixrex yazısı migration içinde taslak kalır", () => {
+    expect(migration).toContain("'kuafor-icin-internet-sitesi'");
+    expect(migration).toContain("'isletmemi-googleda-nasil-gosteririm'");
+
+    const taslakKayitlari = migration.match(/\n  'draft',\n  4,/g) ?? [];
+    expect(taslakKayitlari).toHaveLength(2);
+  });
+
+  it("slug ve yayın tarihi veri bütünlüğü DB seviyesinde korunur", () => {
+    expect(migration).toMatch(/slug ~ '\^\[a-z0-9\]/i);
+    expect(migration).toMatch(/status in \('draft', 'published'\)/i);
+    expect(migration).toMatch(/status <> 'published' or published_at is not null/i);
+    expect(migration).toMatch(/unique/i);
+  });
+
+  it("liste sayfası boşken 404 davranışını korur", () => {
+    const liste = oku("src/app/(site)/blog/page.tsx");
+    expect(liste).toMatch(/const yazilar = await yayindakiYazilar\(\)/);
+    expect(liste).toMatch(/yazilar\.length === 0\) notFound\(\)/);
+  });
+
+  it("detay sayfası yalnız merkezi public okuyucuyu kullanır", () => {
+    const detay = oku("src/app/(site)/blog/[slug]/page.tsx");
+    expect(detay).toMatch(/await yaziyiBul\(slug\)/);
+    expect(detay).toMatch(/if \(!yazi\) notFound\(\)/);
+    expect(detay).not.toMatch(/store_articles/);
+    expect(detay).not.toMatch(/BLOG_YAZILARI/);
+  });
+
+  it("sitemap yalnız gerçek yayın listesi doluysa blog URL üretir", () => {
+    const sitemap = oku("src/app/sitemap.xml/route.ts");
+    expect(sitemap).toMatch(/await Promise\.all\(/);
+    expect(sitemap).toMatch(/vixrexBlogYazilari\.length > 0/);
+    expect(sitemap).toMatch(/vixrexBlogYazilari\.map/);
+    expect(sitemap).not.toMatch(/BLOG_YAZILARI/);
+  });
+
+  it("altbilgi async merkezi yayın anahtarını bekler", () => {
+    const footer = oku("src/components/site/SiteFooter.tsx");
+    expect(footer).toMatch(/export async function SiteFooter/);
+    expect(footer).toMatch(/await blogYayindaMi\(\)/);
   });
 });

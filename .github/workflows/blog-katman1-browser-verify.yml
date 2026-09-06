@@ -1,0 +1,54 @@
+name: TEMP — Blog Katman 1 tarayıcı doğrulama
+
+on:
+  push:
+    branches:
+      - feat/blog-omurga-katman-1
+
+permissions:
+  contents: read
+
+jobs:
+  browser-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: public_web/package-lock.json
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Yerel Supabase
+        run: |
+          sed -i '/^# If enabled, seeds the database after migrations during a db reset\.$/{n;s/^enabled = true$/enabled = false/}' supabase/config.toml
+          supabase start
+          PGPASSWORD=postgres psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/blog_katman1_fixture.sql
+          supabase status -o env > /tmp/sb.env
+          grep '^API_URL=' /tmp/sb.env | sed 's/^API_URL=/NEXT_PUBLIC_SUPABASE_URL=/' >> "$GITHUB_ENV"
+          grep '^ANON_KEY=' /tmp/sb.env | sed 's/^ANON_KEY=/NEXT_PUBLIC_SUPABASE_ANON_KEY=/' >> "$GITHUB_ENV"
+      - name: Bağımlılıklar
+        working-directory: public_web
+        run: npm ci
+      - name: Chromium
+        working-directory: public_web
+        run: npx playwright install --with-deps chromium
+      - name: Blog ekran doğrulaması
+        working-directory: public_web
+        env:
+          E2E_PUBLIC_BASE_URL: http://localhost:3000
+        run: npx playwright test e2e/blog-katman1-verify.spec.ts
+      - name: Ekran kanıtları
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: blog-katman1-ekran-kanitlari
+          path: public_web/test-results/blog-*.png
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Supabase kapat
+        if: always()
+        run: supabase stop

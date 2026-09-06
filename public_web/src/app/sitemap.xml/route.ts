@@ -6,16 +6,12 @@ import {
   BUSINESS_CATEGORIES,
   kategoriUrlParcasi,
 } from "@/lib/businessCategories";
-import { blogYayindaMi, yayindakiYazilar } from "@/data/blogYazilari";
+import { yayindakiYazilar } from "@/data/blogYazilari";
+import { BLOG_TOPICS, blogSectorUrl } from "@/lib/blogTaxonomy";
 
 export const revalidate = 300;
 
 async function _getSitemapData() {
-  // is_demo eklendi (#345): demo/örnek vitrinler site haritasından çıkar.
-  // Bunlar gerçek işletme değil, kiralanmayı bekleyen şablonlar; arama
-  // sonuçlarında gerçek müşteri vitrinleriyle yarışmamalılar.
-  // Kapsam kararı: YALNIZ is_demo. Kiralanmış kopyalar (cloned_from_slug
-  // dolu ama is_demo false) gerçek müşterilerin vitrinidir, indekslenir.
   const { data: stores } = await supabase
     .from("stores")
     .select("id, slug, updated_at, is_demo")
@@ -57,7 +53,10 @@ function escapeXml(value: string) {
 
 export async function GET() {
   try {
-    const { stores, products, articles } = await getSitemapData();
+    const [{ stores, products, articles }, vixrexBlogYazilari] = await Promise.all([
+      getSitemapData(),
+      yayindakiYazilar(),
+    ]);
     const baseUrl = getSiteUrl();
     const articleLastModByStore = new Map<string, string>();
     const productsByStoreId = new Map<
@@ -89,11 +88,13 @@ export async function GET() {
         }
       }
     }
-    
-    // 2026-08-26 (#344): kök artık Flutter'a yönlenmiyor, gerçek bir sayfa.
-    // Platform yüzeyleri de site haritasına girer — daha önce yalnız
-    // /v/ içerik URL'leri vardı, platformun kendisi hiç yoktu.
+
     const simdi = new Date().toISOString();
+    const blogKonuIdleri = new Set(
+      vixrexBlogYazilari.map((yazi) => yazi.konu).filter((id): id is string => Boolean(id))
+    );
+    const blogSektorIdleri = new Set(vixrexBlogYazilari.flatMap((yazi) => yazi.sektorler));
+
     let xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`;
 
@@ -105,21 +106,23 @@ export async function GET() {
         oncelik: "0.7",
         siklik: "weekly",
       })),
-      // Yardım sayfası aramadan gelen esnaf için giriş kapısı: "vitrin nasıl
-      // kurulur", "QR menü" gibi sorulara cevap veriyor. Yasal metinlerden
-      // yüksek öncelikli, Keşfet'ten düşük.
       { yol: "/yardim", oncelik: "0.6", siklik: "monthly" },
-      // Kimlik sayfalari: hem ziyaretcinin "bu kim" sorusu hem de
-      // affiliate programlarinin publisher dogrulamasi buradan geciyor.
       { yol: "/hakkimizda", oncelik: "0.5", siklik: "monthly" },
       { yol: "/iletisim", oncelik: "0.5", siklik: "monthly" },
-      // Blog YAYIN ANAHTARINA bağlı: hiç yayında yazı yokken `/blog` 404
-      // veriyor, o yüzden site haritasına da hiçbir şey eklenmez. Var
-      // olmayan adres bildirmek arama motoruna yanlış sinyal verir.
-      ...(blogYayindaMi()
+      ...(vixrexBlogYazilari.length > 0
         ? [
             { yol: "/blog", oncelik: "0.6", siklik: "weekly" },
-            ...yayindakiYazilar().map((yazi) => ({
+            ...BLOG_TOPICS.filter((konu) => blogKonuIdleri.has(konu.id)).map((konu) => ({
+              yol: `/blog/konu/${konu.id}`,
+              oncelik: "0.55",
+              siklik: "weekly",
+            })),
+            ...BUSINESS_CATEGORIES.filter((sektor) => blogSektorIdleri.has(sektor.id)).map((sektor) => ({
+              yol: `/blog/sektor/${blogSectorUrl(sektor.id)}`,
+              oncelik: "0.5",
+              siklik: "weekly",
+            })),
+            ...vixrexBlogYazilari.map((yazi) => ({
               yol: `/blog/${yazi.slug}`,
               oncelik: "0.5",
               siklik: "monthly",
@@ -141,7 +144,6 @@ export async function GET() {
   </url>`;
     }
 
-    // Add stores + blog list pages only when they have published articles
     if (stores) {
       for (const store of stores) {
         const lastMod = store.updated_at ? new Date(store.updated_at).toISOString() : new Date().toISOString();
@@ -181,17 +183,13 @@ export async function GET() {
       }
     }
 
-    // Demo vitrinlerin yazıları da çıkar (#345): makale sorgusu store_slug
-    // üzerinden geliyor, yukarıdaki demo süzgecinden habersiz.
     const yayindakiSluglar = new Set(
       (stores || []).map((store) => String(store.slug || "").trim())
     );
 
     if (articles) {
       for (const article of articles) {
-        if (!yayindakiSluglar.has(String(article.store_slug || "").trim())) {
-          continue;
-        }
+        if (!yayindakiSluglar.has(String(article.store_slug || "").trim())) continue;
         const lastMod = article.updated_at ? new Date(article.updated_at).toISOString() : new Date().toISOString();
         xml += `
   <url>

@@ -4,18 +4,12 @@ import { blogYayindaMi } from "@/data/blogYazilari";
 /**
  * Platform altbilgisi (envanter §2.11) — aynı zamanda #346'nın çözümü.
  *
- * #346: yasal sayfalara sitenin hiçbir yerinden bağlantı yoktu. Sayfalar
- * yayındaydı ama ne kullanıcı ne de arama motoru onlara ulaşabiliyordu.
- *
- * Flutter altbilgisi üç bağlantı taşıyor; web'de ikisi var:
- *   - `/privacy`  → mevcut, statik KVKK metni
- *   - `/terms`    → BÖYLE BİR ROTA YOK. Doğrusu `/legal/terms`
- *                   (src/app/legal/[type], türler: privacy|terms|consent)
- *   - `/data-deletion` → yalnız `/data-deletion/status/[code]` var,
- *                   dizinin kendisi 404. Kırık bağlantı eklemek yerine
- *                   şimdilik dışarıda bırakıldı; o sayfa açılınca eklenir.
+ * Blog bağlantısı merkezi Vixrex blog kaynağındaki gerçek yayın durumuna
+ * bağlıdır. Hiç yayınlanmış yazı yoksa kırık `/blog` bağlantısı gösterilmez.
  */
-export function SiteFooter() {
+export async function SiteFooter() {
+  const blogYayinda = await blogYayindaMi();
+
   return (
     <footer className="bg-lp-bg-editor py-14">
       <div className="mx-auto flex w-full max-w-[1200px] flex-col items-center gap-4 px-5 text-center">
@@ -30,10 +24,7 @@ export function SiteFooter() {
           aria-label="Yardım ve yasal bilgiler"
           className="flex flex-wrap items-center justify-center gap-1"
         >
-          {/* Blog bağlantısı YAYIN ANAHTARINA bağlı: hiç yayında yazı
-              yokken `/blog` 404 verdiği için bağlantı da gösterilmez.
-              Bkz. src/data/blogYazilari.ts */}
-          {blogYayindaMi() ? (
+          {blogYayinda ? (
             <Link
               href="/blog"
               className="px-3 py-2 text-[13px] font-extrabold text-lp-muted transition-colors hover:text-lp-text-alt"
