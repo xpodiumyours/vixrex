@@ -14,7 +14,7 @@ void main() {
       configuredOriginOverride: '',
       baseUriOverride: Uri.parse('https://vixrex-app.vercel.app/'),
     );
-    expect(link, 'https://vixrex-public.vercel.app/api/owner-session');
+    expect(link, 'https://vixrex.com/api/owner-session');
     expect(link.contains('vixrex-app'), isFalse);
   });
 
@@ -23,7 +23,7 @@ void main() {
       'deneme',
       // ignore: invalid_use_of_visible_for_testing_member
     );
-    expect(link.startsWith('https://vixrex-public.vercel.app/v/'), isTrue);
+    expect(link.startsWith('https://vixrex.com/v/'), isTrue);
   });
 
   test('sahip oturumu girişi vitrin adresinde kurulur', () {
@@ -32,7 +32,7 @@ void main() {
       'abc123',
     );
     expect(
-      link.startsWith('https://vixrex-public.vercel.app/api/owner-session'),
+      link.startsWith('https://vixrex.com/api/owner-session'),
       isTrue,
     );
     expect(link.contains('slug=deneme'), isTrue);

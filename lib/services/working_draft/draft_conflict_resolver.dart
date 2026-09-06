@@ -9,7 +9,10 @@ class DraftConflictResolver {
   bool ayniAlan(String a, String b) => a == b;
 
   /// Farklı alanlar: otomatik birleştir — her ikisi de korunur.
-  Map<String, dynamic> birlestir(Map<String, dynamic> yerel, Map<String, dynamic> uzak) {
+  Map<String, dynamic> birlestir(
+    Map<String, dynamic> yerel,
+    Map<String, dynamic> uzak,
+  ) {
     return {...uzak, ...yerel};
   }
 
@@ -19,12 +22,20 @@ class DraftConflictResolver {
     required dynamic yerelDeger,
     required dynamic uzakDeger,
   }) {
-    return DraftConflict(alan: alan, yerelDeger: yerelDeger, uzakDeger: uzakDeger);
+    return DraftConflict(
+      alan: alan,
+      yerelDeger: yerelDeger,
+      uzakDeger: uzakDeger,
+    );
   }
 }
 
 class DraftConflict {
-  const DraftConflict({required this.alan, required this.yerelDeger, required this.uzakDeger});
+  const DraftConflict({
+    required this.alan,
+    required this.yerelDeger,
+    required this.uzakDeger,
+  });
   final String alan;
   final dynamic yerelDeger;
   final dynamic uzakDeger;

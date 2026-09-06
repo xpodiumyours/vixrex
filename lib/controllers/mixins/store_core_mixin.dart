@@ -50,6 +50,14 @@ mixin StoreCoreMixin on ChangeNotifier {
     notifyListeners();
   }
 
+  /// `StoreData` üzerinde mevcut bir yazma yolu mutasyon yaptıktan sonra
+  /// dinleyicileri controller sınırı içinden haberdar eder. Dış katmanların
+  /// ChangeNotifier'ın protected `notifyListeners()` metoduna doğrudan
+  /// erişmesini gerektirmez; yalnız mevcut bildirim davranışını korur.
+  void notifyStoreDataChanged() {
+    notifyListeners();
+  }
+
   void clearCoreErrors() {
     _nameError = null;
     _whatsappError = null;

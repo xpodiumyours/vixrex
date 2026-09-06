@@ -8,13 +8,18 @@ import 'package:vixrex/repositories/vitrin_sahiplik_repository.dart';
 /// Flutter dış tarayıcıyı açmadan önce kendi oturumuyla tamamlar,
 /// sonra kısa ömürlü oturumla Next.js çalışma alanını açar.
 class CanonicalRentalClaimService {
-  const CanonicalRentalClaimService({SupabaseClient? client}) : _client = client;
+  const CanonicalRentalClaimService({SupabaseClient? client})
+    : _client = client;
   final SupabaseClient? _client;
 
-  VitrinSahiplikRepository get _depo => VitrinSahiplikRepository(client: _client);
+  VitrinSahiplikRepository get _depo =>
+      VitrinSahiplikRepository(client: _client);
   SupabaseClient? get _supabase => _depo.istemci;
 
-  Future<Map<String, dynamic>?> claim(String demoSlug, {String akisTuru = 'kiralama'}) async {
+  Future<Map<String, dynamic>?> claim(
+    String demoSlug, {
+    String akisTuru = 'kiralama',
+  }) async {
     final c = _supabase;
     if (c == null) return null;
     try {
@@ -24,7 +29,10 @@ class CanonicalRentalClaimService {
       if (slug.isEmpty) return Map<String, dynamic>.from(res);
       // Çalışma taslağı hazırla — kanonik zincir (akış/konuşma best-effort Dart'ta).
       try {
-        await c.rpc('get_or_create_working_draft', params: {'p_slug': slug, 'p_edit_token': res['edit_token']});
+        await c.rpc(
+          'get_or_create_working_draft',
+          params: {'p_slug': slug, 'p_edit_token': res['edit_token']},
+        );
       } catch (_) {}
       return Map<String, dynamic>.from(res);
     } catch (_) {

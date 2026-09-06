@@ -57,7 +57,7 @@ function supabaseAnon() {
 }
 
 /**
- * Preview ortamında SERVICE_ROLE secret'ı tanımlı değilse eski kod
+ * Preview ortamında service-role secret'ı tanımlı değilse eski kod
  * getSupabaseAdmin() içinde throw ediyor, Next.js HTML 500 dönüyor ve istemci
  * bunu JSON sanıp parse etmeye çalışınca yalnız "Bağlantı kurulamadı" görüyordu.
  *

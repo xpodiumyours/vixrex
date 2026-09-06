@@ -10,8 +10,18 @@ class VixrexNiyetAlan {
   final String beklenenVeriTipi;
   final List<String> esAnlamlar;
   final List<String> ornekIfadeler;
-  const VixrexNiyetAlan({required this.anahtar,required this.etiket,required this.tip,required this.kolon,required this.bolum,required this.beklenenVeriTipi,required this.esAnlamlar,required this.ornekIfadeler,});
+  const VixrexNiyetAlan({
+    required this.anahtar,
+    required this.etiket,
+    required this.tip,
+    required this.kolon,
+    required this.bolum,
+    required this.beklenenVeriTipi,
+    required this.esAnlamlar,
+    required this.ornekIfadeler,
+  });
 }
+
 const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
   VixrexNiyetAlan(
     anahtar: 'isletmeAdi',
@@ -20,8 +30,22 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     kolon: 'name',
     bolum: 'hero',
     beklenenVeriTipi: 'metin (2-60 karakter)',
-    esAnlamlar: ['işletme adı', 'dükkan adı', 'mağaza adı', 'firma adı', 'iş yeri adı', 'şirket adı', 'marka adı', 'isim'],
-    ornekIfadeler: ['İşletme adını \'Aymira Giyim\' yap', 'Dükkan adını değiştir: {deger}', 'Mağazamın adı {deger} olsun', 'İşletme adımı güncelle {deger}'],
+    esAnlamlar: [
+      'işletme adı',
+      'dükkan adı',
+      'mağaza adı',
+      'firma adı',
+      'iş yeri adı',
+      'şirket adı',
+      'marka adı',
+      'isim',
+    ],
+    ornekIfadeler: [
+      'İşletme adını \'Aymira Giyim\' yap',
+      'Dükkan adını değiştir: {deger}',
+      'Mağazamın adı {deger} olsun',
+      'İşletme adımı güncelle {deger}',
+    ],
   ),
   VixrexNiyetAlan(
     anahtar: 'heroRozet',
@@ -30,8 +54,21 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     kolon: 'hero_badge',
     bolum: 'hero',
     beklenenVeriTipi: 'metin (0-60 karakter, kalite)',
-    esAnlamlar: ['rozet', 'hero rozet', 'üst rozet', 'küçük etiket', 'vurgu metni', 'rozet metni', 'badge'],
-    ornekIfadeler: ['Rozeti \'Kadıköy\'ün En İyisi\' yap', 'Hero rozetini {deger} olarak güncelle', 'Üstteki küçük yazıyı {deger} yap', 'Rozet metnini ekle: {deger}'],
+    esAnlamlar: [
+      'rozet',
+      'hero rozet',
+      'üst rozet',
+      'küçük etiket',
+      'vurgu metni',
+      'rozet metni',
+      'badge',
+    ],
+    ornekIfadeler: [
+      'Rozeti \'Kadıköy\'ün En İyisi\' yap',
+      'Hero rozetini {deger} olarak güncelle',
+      'Üstteki küçük yazıyı {deger} yap',
+      'Rozet metnini ekle: {deger}',
+    ],
   ),
   VixrexNiyetAlan(
     anahtar: 'kisaTanitim',
@@ -40,8 +77,21 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     kolon: 'description',
     bolum: 'hero',
     beklenenVeriTipi: 'uzunMetin (0-300 karakter)',
-    esAnlamlar: ['kısa tanıtım', 'tanıtım', 'açıklama', 'özet', 'hakkında kısa', 'işletme açıklaması', 'tanıtım yazısı'],
-    ornekIfadeler: ['Kısa tanıtımı {deger} yap', 'Açıklamayı ekle: {deger}', 'Tanıtım yazısını değiştir {deger}', 'Özet kısmını {deger} olarak güncelle'],
+    esAnlamlar: [
+      'kısa tanıtım',
+      'tanıtım',
+      'açıklama',
+      'özet',
+      'hakkında kısa',
+      'işletme açıklaması',
+      'tanıtım yazısı',
+    ],
+    ornekIfadeler: [
+      'Kısa tanıtımı {deger} yap',
+      'Açıklamayı ekle: {deger}',
+      'Tanıtım yazısını değiştir {deger}',
+      'Özet kısmını {deger} olarak güncelle',
+    ],
   ),
   VixrexNiyetAlan(
     anahtar: 'konumMetni',
@@ -50,8 +100,19 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     kolon: 'hero_location_text',
     bolum: 'hero',
     beklenenVeriTipi: 'metin (0-60 karakter)',
-    esAnlamlar: ['konum metni', 'hero konum', 'üst konum', 'konum yazısı', 'yer metni', 'semt yazısı'],
-    ornekIfadeler: ['Konum metnini \'Kadıköy, İstanbul\' yap', 'Hero konumunu {deger} olarak değiştir', 'Üstteki konum yazısını {deger} yap'],
+    esAnlamlar: [
+      'konum metni',
+      'hero konum',
+      'üst konum',
+      'konum yazısı',
+      'yer metni',
+      'semt yazısı',
+    ],
+    ornekIfadeler: [
+      'Konum metnini \'Kadıköy, İstanbul\' yap',
+      'Hero konumunu {deger} olarak değiştir',
+      'Üstteki konum yazısını {deger} yap',
+    ],
   ),
   VixrexNiyetAlan(
     anahtar: 'kategori',
@@ -59,9 +120,23 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     tip: 'secim',
     kolon: 'kategori',
     bolum: 'hero',
-    beklenenVeriTipi: 'secim (Giyim, Butik, Gıda, Fırın, Kozmetik, Dekorasyon, Elektronik, Kırtasiye, Kafe / Lokanta, Kuaför, Teknik Servis, Danışmanlık, Eğitim, Ev Temizlik, Spor / Fitness, Pet / Veteriner, Sağlık / Yaşam, Oto / Araç, Diğer)',
-    esAnlamlar: ['kategori', 'işletme kategorisi', 'sektör', 'faaliyet alanı', 'iş kolu', 'tür', 'alan'],
-    ornekIfadeler: ['Kategorimi Kuaför yap', 'Sektörümü {deger} olarak değiştir', 'İşletme kategorisini {deger} seç', 'Kategori {deger} olsun'],
+    beklenenVeriTipi:
+        'secim (Giyim, Butik, Gıda, Fırın, Kozmetik, Dekorasyon, Elektronik, Kırtasiye, Kafe / Lokanta, Kuaför, Teknik Servis, Danışmanlık, Eğitim, Ev Temizlik, Spor / Fitness, Pet / Veteriner, Sağlık / Yaşam, Oto / Araç, Diğer)',
+    esAnlamlar: [
+      'kategori',
+      'işletme kategorisi',
+      'sektör',
+      'faaliyet alanı',
+      'iş kolu',
+      'tür',
+      'alan',
+    ],
+    ornekIfadeler: [
+      'Kategorimi Kuaför yap',
+      'Sektörümü {deger} olarak değiştir',
+      'İşletme kategorisini {deger} seç',
+      'Kategori {deger} olsun',
+    ],
   ),
   VixrexNiyetAlan(
     anahtar: 'isletmeTuru',
@@ -70,8 +145,18 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     kolon: 'business_type',
     bolum: 'hero',
     beklenenVeriTipi: 'metin (0-40 karakter)',
-    esAnlamlar: ['işletme türü', 'firma türü', 'iş türü', 'dükkan türü', 'çalışma alanı detayı'],
-    ornekIfadeler: ['İşletme türünü \'Erkek Kuaförü\' yap', 'Türünü {deger} olarak güncelle', 'İşletme türümü değiştir {deger}'],
+    esAnlamlar: [
+      'işletme türü',
+      'firma türü',
+      'iş türü',
+      'dükkan türü',
+      'çalışma alanı detayı',
+    ],
+    ornekIfadeler: [
+      'İşletme türünü \'Erkek Kuaförü\' yap',
+      'Türünü {deger} olarak güncelle',
+      'İşletme türümü değiştir {deger}',
+    ],
   ),
   VixrexNiyetAlan(
     anahtar: 'logo',
@@ -80,8 +165,19 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     kolon: 'logo_url',
     bolum: 'hero',
     beklenenVeriTipi: 'gorsel (https URL, kalite)',
-    esAnlamlar: ['logo', 'marka logosu', 'amblem', 'kurumsal logo', 'işletme logosu'],
-    ornekIfadeler: ['Logoyu {deger} yap', 'Logo ekle: {deger}', 'Logomu değiştir {deger}', 'Amblemi güncelle {deger}'],
+    esAnlamlar: [
+      'logo',
+      'marka logosu',
+      'amblem',
+      'kurumsal logo',
+      'işletme logosu',
+    ],
+    ornekIfadeler: [
+      'Logoyu {deger} yap',
+      'Logo ekle: {deger}',
+      'Logomu değiştir {deger}',
+      'Amblemi güncelle {deger}',
+    ],
   ),
   VixrexNiyetAlan(
     anahtar: 'kapakGorseli',
@@ -90,8 +186,21 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     kolon: 'shelf_image_url',
     bolum: 'hero',
     beklenenVeriTipi: 'gorsel (https URL, kalite)',
-    esAnlamlar: ['kapak görseli', 'kapak fotoğrafı', 'hero görseli', 'üst görsel', 'kapak resmi', 'vitrin fotoğrafı', 'banner görseli'],
-    ornekIfadeler: ['Kapak görselini {deger} yap', 'Kapak fotoğrafını değiştir {deger}', 'Hero görselini ekle {deger}', 'Vitrin fotoğrafını {deger} yap'],
+    esAnlamlar: [
+      'kapak görseli',
+      'kapak fotoğrafı',
+      'hero görseli',
+      'üst görsel',
+      'kapak resmi',
+      'vitrin fotoğrafı',
+      'banner görseli',
+    ],
+    ornekIfadeler: [
+      'Kapak görselini {deger} yap',
+      'Kapak fotoğrafını değiştir {deger}',
+      'Hero görselini ekle {deger}',
+      'Vitrin fotoğrafını {deger} yap',
+    ],
   ),
   VixrexNiyetAlan(
     anahtar: 'whatsapp',
@@ -99,9 +208,23 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     tip: 'telefon',
     kolon: 'whatsapp',
     bolum: 'contact',
-    beklenenVeriTipi: 'telefon (tr_mobil: 05xx xxx xx xx → 905xxxxxxxxx, zorunlu)',
-    esAnlamlar: ['whatsapp', 'whatsapp numarası', 'cep numarası', 'telefon whatsapp', 'iletişim numarası', 'gsm', 'whatsapp hattı'],
-    ornekIfadeler: ['WhatsApp numaramı 0555 123 45 67 yap', 'WhatsApp\'ı {deger} olarak güncelle', 'İletişim numaramı {deger} yap', 'Whatsapp hattımı değiştir {deger}'],
+    beklenenVeriTipi:
+        'telefon (tr_mobil: 05xx xxx xx xx → 905xxxxxxxxx, zorunlu)',
+    esAnlamlar: [
+      'whatsapp',
+      'whatsapp numarası',
+      'cep numarası',
+      'telefon whatsapp',
+      'iletişim numarası',
+      'gsm',
+      'whatsapp hattı',
+    ],
+    ornekIfadeler: [
+      'WhatsApp numaramı 0555 123 45 67 yap',
+      'WhatsApp\'ı {deger} olarak güncelle',
+      'İletişim numaramı {deger} yap',
+      'Whatsapp hattımı değiştir {deger}',
+    ],
   ),
   VixrexNiyetAlan(
     anahtar: 'telefon',
@@ -110,8 +233,19 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     kolon: 'phone',
     bolum: 'contact',
     beklenenVeriTipi: 'telefon (10-13 rakam)',
-    esAnlamlar: ['telefon', 'sabit telefon', 'iş telefonu', 'dükkan telefonu', 'tel', 'arama numarası'],
-    ornekIfadeler: ['Telefonu {deger} yap', 'Sabit telefonumu {deger} olarak ekle', 'İş telefonunu değiştir {deger}'],
+    esAnlamlar: [
+      'telefon',
+      'sabit telefon',
+      'iş telefonu',
+      'dükkan telefonu',
+      'tel',
+      'arama numarası',
+    ],
+    ornekIfadeler: [
+      'Telefonu {deger} yap',
+      'Sabit telefonumu {deger} olarak ekle',
+      'İş telefonunu değiştir {deger}',
+    ],
   ),
   VixrexNiyetAlan(
     anahtar: 'eposta',
@@ -120,8 +254,19 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     kolon: 'email',
     bolum: 'contact',
     beklenenVeriTipi: 'eposta (max 120, ornek@adres.com)',
-    esAnlamlar: ['e-posta', 'eposta', 'mail', 'e-mail', 'elektronik posta', 'mail adresi'],
-    ornekIfadeler: ['E-postamı {deger} yap', 'Mail adresimi {deger} olarak güncelle', 'Epostayı değiştir {deger}'],
+    esAnlamlar: [
+      'e-posta',
+      'eposta',
+      'mail',
+      'e-mail',
+      'elektronik posta',
+      'mail adresi',
+    ],
+    ornekIfadeler: [
+      'E-postamı {deger} yap',
+      'Mail adresimi {deger} olarak güncelle',
+      'Epostayı değiştir {deger}',
+    ],
   ),
   VixrexNiyetAlan(
     anahtar: 'adres',
@@ -129,9 +274,22 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     tip: 'uzunMetin',
     kolon: 'address',
     bolum: 'contact',
-    beklenenVeriTipi: 'uzunMetin (zorunlu, max 200, en az sokak/cadde + numara, AddressValidator)',
-    esAnlamlar: ['adres', 'açık adres', 'dükkan adresi', 'iş yeri adresi', 'konum adresi', 'işletme adresi'],
-    ornekIfadeler: ['Adresimi \'Atatürk Cad. No:24\' yap', 'Açık adresi {deger} olarak değiştir', 'Dükkan adresini güncelle {deger}', 'Adresi {deger} yap'],
+    beklenenVeriTipi:
+        'uzunMetin (zorunlu, max 200, en az sokak/cadde + numara, AddressValidator)',
+    esAnlamlar: [
+      'adres',
+      'açık adres',
+      'dükkan adresi',
+      'iş yeri adresi',
+      'konum adresi',
+      'işletme adresi',
+    ],
+    ornekIfadeler: [
+      'Adresimi \'Atatürk Cad. No:24\' yap',
+      'Açık adresi {deger} olarak değiştir',
+      'Dükkan adresini güncelle {deger}',
+      'Adresi {deger} yap',
+    ],
   ),
   VixrexNiyetAlan(
     anahtar: 'il',
@@ -141,7 +299,11 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     bolum: 'contact',
     beklenenVeriTipi: 'metin (zorunlu, max 60)',
     esAnlamlar: ['il', 'şehir', 'kent', 'bulunduğum il'],
-    ornekIfadeler: ['İli İstanbul yap', 'Şehrimi {deger} olarak değiştir', 'İl {deger} olsun'],
+    ornekIfadeler: [
+      'İli İstanbul yap',
+      'Şehrimi {deger} olarak değiştir',
+      'İl {deger} olsun',
+    ],
   ),
   VixrexNiyetAlan(
     anahtar: 'ilce',
@@ -151,7 +313,11 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     bolum: 'contact',
     beklenenVeriTipi: 'metin (zorunlu, max 60)',
     esAnlamlar: ['ilçe', 'semt ilçesi', 'ilçe adı'],
-    ornekIfadeler: ['İlçeyi Kadıköy yap', 'İlçemi {deger} olarak güncelle', 'İlçe {deger} olsun'],
+    ornekIfadeler: [
+      'İlçeyi Kadıköy yap',
+      'İlçemi {deger} olarak güncelle',
+      'İlçe {deger} olsun',
+    ],
   ),
   VixrexNiyetAlan(
     anahtar: 'mahalle',
@@ -161,7 +327,11 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     bolum: 'contact',
     beklenenVeriTipi: 'metin (max 60, kalite)',
     esAnlamlar: ['mahalle', 'semt', 'bölge', 'mıntıka'],
-    ornekIfadeler: ['Mahalleyi Caddebostan yap', 'Mahallemi {deger} olarak değiştir', 'Semti {deger} yap'],
+    ornekIfadeler: [
+      'Mahalleyi Caddebostan yap',
+      'Mahallemi {deger} olarak değiştir',
+      'Semti {deger} yap',
+    ],
   ),
   VixrexNiyetAlan(
     anahtar: 'haritaEtiketi',
@@ -170,8 +340,16 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     kolon: 'map_label',
     bolum: 'contact',
     beklenenVeriTipi: 'metin (max 120)',
-    esAnlamlar: ['harita etiketi', 'harita notu', 'harita kartı yazısı', 'harita açıklaması'],
-    ornekIfadeler: ['Harita etiketini \'Çarşı içi, otopark var\' yap', 'Harita notunu {deger} olarak güncelle'],
+    esAnlamlar: [
+      'harita etiketi',
+      'harita notu',
+      'harita kartı yazısı',
+      'harita açıklaması',
+    ],
+    ornekIfadeler: [
+      'Harita etiketini \'Çarşı içi, otopark var\' yap',
+      'Harita notunu {deger} olarak güncelle',
+    ],
   ),
   VixrexNiyetAlan(
     anahtar: 'calismaSaatleri',
@@ -180,8 +358,20 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     kolon: 'working_hours',
     bolum: 'contact',
     beklenenVeriTipi: 'metin (max 400, kalite)',
-    esAnlamlar: ['çalışma saatleri', 'açılış saatleri', 'mesai saatleri', 'açık olduğumuz saatler', 'çalışma zamanı', 'saatler'],
-    ornekIfadeler: ['Çalışma saatlerini \'09:00-18:00\' yap', 'Saatleri {deger} olarak değiştir', 'Mesai saatlerimi güncelle {deger}', 'Açılış saatlerini {deger} yap'],
+    esAnlamlar: [
+      'çalışma saatleri',
+      'açılış saatleri',
+      'mesai saatleri',
+      'açık olduğumuz saatler',
+      'çalışma zamanı',
+      'saatler',
+    ],
+    ornekIfadeler: [
+      'Çalışma saatlerini \'09:00-18:00\' yap',
+      'Saatleri {deger} olarak değiştir',
+      'Mesai saatlerimi güncelle {deger}',
+      'Açılış saatlerini {deger} yap',
+    ],
   ),
   VixrexNiyetAlan(
     anahtar: 'instagram',
@@ -190,8 +380,18 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     kolon: 'instagram',
     bolum: 'contact',
     beklenenVeriTipi: 'metin (max 30, @ olmadan)',
-    esAnlamlar: ['instagram', 'insta', 'instagram adı', 'instagram kullanıcı adı', 'ig'],
-    ornekIfadeler: ['Instagramı aymiragiyim yap', 'Insta adımı {deger} olarak güncelle', 'Instagram kullanıcı adımı {deger} yap'],
+    esAnlamlar: [
+      'instagram',
+      'insta',
+      'instagram adı',
+      'instagram kullanıcı adı',
+      'ig',
+    ],
+    ornekIfadeler: [
+      'Instagramı aymiragiyim yap',
+      'Insta adımı {deger} olarak güncelle',
+      'Instagram kullanıcı adımı {deger} yap',
+    ],
   ),
   VixrexNiyetAlan(
     anahtar: 'website',
@@ -200,8 +400,19 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     kolon: 'website',
     bolum: 'contact',
     beklenenVeriTipi: 'url (https://...)',
-    esAnlamlar: ['web sitesi', 'website', 'site', 'internet sitesi', 'web adresi', 'url'],
-    ornekIfadeler: ['Web sitemi https://aymira.com yap', 'Site adresini {deger} olarak ekle', 'Websiteyi {deger} yap'],
+    esAnlamlar: [
+      'web sitesi',
+      'website',
+      'site',
+      'internet sitesi',
+      'web adresi',
+      'url',
+    ],
+    ornekIfadeler: [
+      'Web sitemi https://aymira.com yap',
+      'Site adresini {deger} olarak ekle',
+      'Websiteyi {deger} yap',
+    ],
   ),
   VixrexNiyetAlan(
     anahtar: 'haritaLinki',
@@ -210,8 +421,20 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     kolon: 'google_business_link',
     bolum: 'contact',
     beklenenVeriTipi: 'url (https://..., kalite)',
-    esAnlamlar: ['harita linki', 'google linki', 'harita bağlantısı', 'google işletme linki', 'maps linki', 'konum linki', 'yol tarifi linki'],
-    ornekIfadeler: ['Harita linkini {deger} yap', 'Google linkimi {deger} olarak ekle', 'Maps bağlantısını {deger} yap'],
+    esAnlamlar: [
+      'harita linki',
+      'google linki',
+      'harita bağlantısı',
+      'google işletme linki',
+      'maps linki',
+      'konum linki',
+      'yol tarifi linki',
+    ],
+    ornekIfadeler: [
+      'Harita linkini {deger} yap',
+      'Google linkimi {deger} olarak ekle',
+      'Maps bağlantısını {deger} yap',
+    ],
   ),
   VixrexNiyetAlan(
     anahtar: 'enlem',
@@ -221,7 +444,11 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     bolum: 'contact',
     beklenenVeriTipi: 'sayi (-90..90)',
     esAnlamlar: ['enlem', 'latitude', 'koordinat enlem', 'yatay konum'],
-    ornekIfadeler: ['Enlemi 41.025 yap', 'Latitude {deger} olsun', 'Enlem değerini {deger} yap'],
+    ornekIfadeler: [
+      'Enlemi 41.025 yap',
+      'Latitude {deger} olsun',
+      'Enlem değerini {deger} yap',
+    ],
   ),
   VixrexNiyetAlan(
     anahtar: 'boylam',
@@ -231,7 +458,11 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     bolum: 'contact',
     beklenenVeriTipi: 'sayi (-180..180)',
     esAnlamlar: ['boylam', 'longitude', 'koordinat boylam', 'dikey konum'],
-    ornekIfadeler: ['Boylamı 29.05 yap', 'Longitude {deger} olsun', 'Boylam değerini {deger} yap'],
+    ornekIfadeler: [
+      'Boylamı 29.05 yap',
+      'Longitude {deger} olsun',
+      'Boylam değerini {deger} yap',
+    ],
   ),
   VixrexNiyetAlan(
     anahtar: 'kategoriBolumBaslik',
@@ -240,8 +471,15 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     kolon: 'category_section_title',
     bolum: 'categories',
     beklenenVeriTipi: 'metin (max 60)',
-    esAnlamlar: ['kategori başlığı', 'kategori bölüm başlığı', 'kategoriler başlığı'],
-    ornekIfadeler: ['Kategori başlığını {deger} yap', 'Kategori bölüm başlığını değiştir {deger}'],
+    esAnlamlar: [
+      'kategori başlığı',
+      'kategori bölüm başlığı',
+      'kategoriler başlığı',
+    ],
+    ornekIfadeler: [
+      'Kategori başlığını {deger} yap',
+      'Kategori bölüm başlığını değiştir {deger}',
+    ],
   ),
   VixrexNiyetAlan(
     anahtar: 'urunBolumBaslik',
@@ -250,8 +488,16 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     kolon: 'product_section_title',
     bolum: 'products',
     beklenenVeriTipi: 'metin (max 60)',
-    esAnlamlar: ['ürün başlığı', 'ürün bölüm başlığı', 'ürünler başlığı', 'menü başlığı'],
-    ornekIfadeler: ['Ürün başlığını {deger} yap', 'Ürün bölüm başlığını {deger} olarak güncelle'],
+    esAnlamlar: [
+      'ürün başlığı',
+      'ürün bölüm başlığı',
+      'ürünler başlığı',
+      'menü başlığı',
+    ],
+    ornekIfadeler: [
+      'Ürün başlığını {deger} yap',
+      'Ürün bölüm başlığını {deger} olarak güncelle',
+    ],
   ),
   VixrexNiyetAlan(
     anahtar: 'bantEtiket',
@@ -260,8 +506,17 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     kolon: 'featured_banner_label',
     bolum: 'featured',
     beklenenVeriTipi: 'metin (max 40)',
-    esAnlamlar: ['kampanya etiketi', 'bant etiketi', 'etiket', 'kampanya rozeti', 'öne çıkan etiket'],
-    ornekIfadeler: ['Kampanya etiketini \'Bu haftaya özel\' yap', 'Bant etiketini {deger} olarak değiştir'],
+    esAnlamlar: [
+      'kampanya etiketi',
+      'bant etiketi',
+      'etiket',
+      'kampanya rozeti',
+      'öne çıkan etiket',
+    ],
+    ornekIfadeler: [
+      'Kampanya etiketini \'Bu haftaya özel\' yap',
+      'Bant etiketini {deger} olarak değiştir',
+    ],
   ),
   VixrexNiyetAlan(
     anahtar: 'bantBaslik',
@@ -270,8 +525,16 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     kolon: 'featured_banner_title',
     bolum: 'featured',
     beklenenVeriTipi: 'metin (max 90)',
-    esAnlamlar: ['kampanya başlığı', 'bant başlığı', 'öne çıkan başlık', 'kampanya adı'],
-    ornekIfadeler: ['Kampanya başlığını {deger} yap', 'Bant başlığını değiştir {deger}'],
+    esAnlamlar: [
+      'kampanya başlığı',
+      'bant başlığı',
+      'öne çıkan başlık',
+      'kampanya adı',
+    ],
+    ornekIfadeler: [
+      'Kampanya başlığını {deger} yap',
+      'Bant başlığını değiştir {deger}',
+    ],
   ),
   VixrexNiyetAlan(
     anahtar: 'bantAciklama',
@@ -280,8 +543,16 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     kolon: 'featured_banner_description',
     bolum: 'featured',
     beklenenVeriTipi: 'uzunMetin (max 200)',
-    esAnlamlar: ['kampanya açıklaması', 'bant açıklaması', 'kampanya detayı', 'öne çıkan açıklama'],
-    ornekIfadeler: ['Kampanya açıklamasını {deger} yap', 'Bant açıklamasını değiştir {deger}'],
+    esAnlamlar: [
+      'kampanya açıklaması',
+      'bant açıklaması',
+      'kampanya detayı',
+      'öne çıkan açıklama',
+    ],
+    ornekIfadeler: [
+      'Kampanya açıklamasını {deger} yap',
+      'Bant açıklamasını değiştir {deger}',
+    ],
   ),
   VixrexNiyetAlan(
     anahtar: 'bantGorsel',
@@ -290,8 +561,17 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     kolon: 'featured_banner_image_url',
     bolum: 'featured',
     beklenenVeriTipi: 'gorsel (https URL)',
-    esAnlamlar: ['kampanya görseli', 'bant görseli', 'kampanya fotoğrafı', 'öne çıkan görsel', 'banner resmi'],
-    ornekIfadeler: ['Kampanya görselini {deger} yap', 'Bant görselini değiştir {deger}'],
+    esAnlamlar: [
+      'kampanya görseli',
+      'bant görseli',
+      'kampanya fotoğrafı',
+      'öne çıkan görsel',
+      'banner resmi',
+    ],
+    ornekIfadeler: [
+      'Kampanya görselini {deger} yap',
+      'Bant görselini değiştir {deger}',
+    ],
   ),
   VixrexNiyetAlan(
     anahtar: 'bantFiyat',
@@ -300,8 +580,16 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     kolon: 'featured_banner_price_text',
     bolum: 'featured',
     beklenenVeriTipi: 'metin (max 30)',
-    esAnlamlar: ['kampanya fiyatı', 'bant fiyatı', 'fiyat metni', 'kampanya fiyat yazısı'],
-    ornekIfadeler: ['Kampanya fiyatını \'499 TL\' yap', 'Bant fiyatını {deger} olarak değiştir'],
+    esAnlamlar: [
+      'kampanya fiyatı',
+      'bant fiyatı',
+      'fiyat metni',
+      'kampanya fiyat yazısı',
+    ],
+    ornekIfadeler: [
+      'Kampanya fiyatını \'499 TL\' yap',
+      'Bant fiyatını {deger} olarak değiştir',
+    ],
   ),
   VixrexNiyetAlan(
     anahtar: 'hakkindaUstBaslik',
@@ -310,8 +598,16 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     kolon: 'about_kicker',
     bolum: 'about',
     beklenenVeriTipi: 'metin (max 40)',
-    esAnlamlar: ['hakkımızda üst başlık', 'hakkında üst yazı', 'about kicker', 'üst başlık hakkında'],
-    ornekIfadeler: ['Hakkımızda üst başlığı {deger} yap', 'About kicker\'ı {deger} olarak değiştir'],
+    esAnlamlar: [
+      'hakkımızda üst başlık',
+      'hakkında üst yazı',
+      'about kicker',
+      'üst başlık hakkında',
+    ],
+    ornekIfadeler: [
+      'Hakkımızda üst başlığı {deger} yap',
+      'About kicker\'ı {deger} olarak değiştir',
+    ],
   ),
   VixrexNiyetAlan(
     anahtar: 'hakkindaBaslik',
@@ -320,8 +616,16 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     kolon: 'about_title',
     bolum: 'about',
     beklenenVeriTipi: 'metin (max 90, kalite)',
-    esAnlamlar: ['hakkımızda başlığı', 'hakkında başlık', 'biz kimiz başlığı', 'hakkımızda başlık'],
-    ornekIfadeler: ['Hakkımızda başlığını {deger} yap', 'Hakkında başlığı değiştir {deger}'],
+    esAnlamlar: [
+      'hakkımızda başlığı',
+      'hakkında başlık',
+      'biz kimiz başlığı',
+      'hakkımızda başlık',
+    ],
+    ornekIfadeler: [
+      'Hakkımızda başlığını {deger} yap',
+      'Hakkında başlığı değiştir {deger}',
+    ],
   ),
   VixrexNiyetAlan(
     anahtar: 'hakkindaMetin',
@@ -330,8 +634,20 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     kolon: 'corporate_bio',
     bolum: 'about',
     beklenenVeriTipi: 'uzunMetin (max 1200, kalite)',
-    esAnlamlar: ['hakkımızda yazısı', 'hakkımızda metni', 'hikayemiz', 'biz kimiz yazısı', 'kurumsal yazı', 'hakkında metni', 'işletme hikayesi'],
-    ornekIfadeler: ['Hakkımızda yazısını {deger} yap', 'Hikayemizi ekle: {deger}', 'Hakkımızda metnini değiştir {deger}'],
+    esAnlamlar: [
+      'hakkımızda yazısı',
+      'hakkımızda metni',
+      'hikayemiz',
+      'biz kimiz yazısı',
+      'kurumsal yazı',
+      'hakkında metni',
+      'işletme hikayesi',
+    ],
+    ornekIfadeler: [
+      'Hakkımızda yazısını {deger} yap',
+      'Hikayemizi ekle: {deger}',
+      'Hakkımızda metnini değiştir {deger}',
+    ],
   ),
   VixrexNiyetAlan(
     anahtar: 'hakkindaGorsel',
@@ -340,8 +656,18 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     kolon: 'about_image_url',
     bolum: 'about',
     beklenenVeriTipi: 'gorsel (https URL)',
-    esAnlamlar: ['hakkımızda görseli', 'hakkında görseli', 'hakkımızda fotoğrafı', 'bizim fotoğraf', 'ekip fotoğrafı', 'dükkan fotoğrafı hakkında'],
-    ornekIfadeler: ['Hakkımızda görselini {deger} yap', 'Hakkında fotoğrafını {deger} olarak değiştir'],
+    esAnlamlar: [
+      'hakkımızda görseli',
+      'hakkında görseli',
+      'hakkımızda fotoğrafı',
+      'bizim fotoğraf',
+      'ekip fotoğrafı',
+      'dükkan fotoğrafı hakkında',
+    ],
+    ornekIfadeler: [
+      'Hakkımızda görselini {deger} yap',
+      'Hakkında fotoğrafını {deger} olarak değiştir',
+    ],
   ),
   VixrexNiyetAlan(
     anahtar: 'hakkindaGorselAlt',
@@ -350,8 +676,16 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     kolon: 'about_image_caption',
     bolum: 'about',
     beklenenVeriTipi: 'metin (max 120)',
-    esAnlamlar: ['görsel alt yazısı', 'fotoğraf alt yazısı', 'resim altı yazısı', 'hakkımızda görsel altı'],
-    ornekIfadeler: ['Görsel alt yazısını {deger} yap', 'Fotoğraf altı yazısını {deger} olarak değiştir'],
+    esAnlamlar: [
+      'görsel alt yazısı',
+      'fotoğraf alt yazısı',
+      'resim altı yazısı',
+      'hakkımızda görsel altı',
+    ],
+    ornekIfadeler: [
+      'Görsel alt yazısını {deger} yap',
+      'Fotoğraf altı yazısını {deger} olarak değiştir',
+    ],
   ),
   VixrexNiyetAlan(
     anahtar: 'galeriUstBaslik',
@@ -361,7 +695,10 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     bolum: 'gallery',
     beklenenVeriTipi: 'metin (max 40)',
     esAnlamlar: ['galeri üst başlık', 'galeri kicker', 'galeri üst yazısı'],
-    ornekIfadeler: ['Galeri üst başlığı {deger} yap', 'Galeri kicker\'ı {deger} olarak değiştir'],
+    ornekIfadeler: [
+      'Galeri üst başlığı {deger} yap',
+      'Galeri kicker\'ı {deger} olarak değiştir',
+    ],
   ),
   VixrexNiyetAlan(
     anahtar: 'galeriBaslik',
@@ -370,8 +707,16 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     kolon: 'gallery_section_title',
     bolum: 'gallery',
     beklenenVeriTipi: 'metin (max 90)',
-    esAnlamlar: ['galeri başlığı', 'galeri başlık', 'fotoğraf galerisi başlığı', 'resim galerisi başlığı'],
-    ornekIfadeler: ['Galeri başlığını {deger} yap', 'Galeri başlığını değiştir {deger}'],
+    esAnlamlar: [
+      'galeri başlığı',
+      'galeri başlık',
+      'fotoğraf galerisi başlığı',
+      'resim galerisi başlığı',
+    ],
+    ornekIfadeler: [
+      'Galeri başlığını {deger} yap',
+      'Galeri başlığını değiştir {deger}',
+    ],
   ),
   VixrexNiyetAlan(
     anahtar: 'galeriAksiyonMetni',
@@ -380,8 +725,16 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     kolon: 'gallery_action_label',
     bolum: 'gallery',
     beklenenVeriTipi: 'metin (max 40)',
-    esAnlamlar: ['galeri buton metni', 'galeri buton yazısı', 'galeri düğme metni', 'galeri aksiyon metni'],
-    ornekIfadeler: ['Galeri buton metnini {deger} yap', 'Galeri düğme yazısını {deger} olarak değiştir'],
+    esAnlamlar: [
+      'galeri buton metni',
+      'galeri buton yazısı',
+      'galeri düğme metni',
+      'galeri aksiyon metni',
+    ],
+    ornekIfadeler: [
+      'Galeri buton metnini {deger} yap',
+      'Galeri düğme yazısını {deger} olarak değiştir',
+    ],
   ),
   VixrexNiyetAlan(
     anahtar: 'galeriAksiyonLinki',
@@ -390,8 +743,16 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     kolon: 'gallery_action_href',
     bolum: 'gallery',
     beklenenVeriTipi: 'url (https:// veya #)',
-    esAnlamlar: ['galeri buton linki', 'galeri bağlantısı', 'galeri buton bağlantısı', 'galeri linki'],
-    ornekIfadeler: ['Galeri buton linkini {deger} yap', 'Galeri bağlantısını {deger} olarak değiştir'],
+    esAnlamlar: [
+      'galeri buton linki',
+      'galeri bağlantısı',
+      'galeri buton bağlantısı',
+      'galeri linki',
+    ],
+    ornekIfadeler: [
+      'Galeri buton linkini {deger} yap',
+      'Galeri bağlantısını {deger} olarak değiştir',
+    ],
   ),
   VixrexNiyetAlan(
     anahtar: 'blogUstBaslik',
@@ -401,7 +762,10 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     bolum: 'blog',
     beklenenVeriTipi: 'metin (max 40)',
     esAnlamlar: ['blog üst başlık', 'yazılar üst başlık', 'blog kicker'],
-    ornekIfadeler: ['Blog üst başlığı {deger} yap', 'Blog kicker\'ı {deger} olarak değiştir'],
+    ornekIfadeler: [
+      'Blog üst başlığı {deger} yap',
+      'Blog kicker\'ı {deger} olarak değiştir',
+    ],
   ),
   VixrexNiyetAlan(
     anahtar: 'blogBaslik',
@@ -411,7 +775,10 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     bolum: 'blog',
     beklenenVeriTipi: 'metin (max 90)',
     esAnlamlar: ['blog başlığı', 'yazılar başlığı', 'blog bölüm başlığı'],
-    ornekIfadeler: ['Blog başlığını {deger} yap', 'Blog bölüm başlığını {deger} olarak değiştir'],
+    ornekIfadeler: [
+      'Blog başlığını {deger} yap',
+      'Blog bölüm başlığını {deger} olarak değiştir',
+    ],
   ),
   VixrexNiyetAlan(
     anahtar: 'sssUstBaslik',
@@ -420,8 +787,16 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     kolon: 'faq_section_kicker',
     bolum: 'faq',
     beklenenVeriTipi: 'metin (max 40)',
-    esAnlamlar: ['sss üst başlık', 'sss kicker', 'sorular üst başlık', 'sık sorulan sorular üst'],
-    ornekIfadeler: ['SSS üst başlığı {deger} yap', 'SSS kicker\'ı {deger} olarak değiştir'],
+    esAnlamlar: [
+      'sss üst başlık',
+      'sss kicker',
+      'sorular üst başlık',
+      'sık sorulan sorular üst',
+    ],
+    ornekIfadeler: [
+      'SSS üst başlığı {deger} yap',
+      'SSS kicker\'ı {deger} olarak değiştir',
+    ],
   ),
   VixrexNiyetAlan(
     anahtar: 'sssBaslik',
@@ -430,8 +805,16 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     kolon: 'faq_section_title',
     bolum: 'faq',
     beklenenVeriTipi: 'metin (max 90)',
-    esAnlamlar: ['sss başlığı', 'sss bölüm başlığı', 'sık sorulan sorular başlığı', 'sorular başlığı'],
-    ornekIfadeler: ['SSS başlığını {deger} yap', 'SSS bölüm başlığını {deger} olarak değiştir'],
+    esAnlamlar: [
+      'sss başlığı',
+      'sss bölüm başlığı',
+      'sık sorulan sorular başlığı',
+      'sorular başlığı',
+    ],
+    ornekIfadeler: [
+      'SSS başlığını {deger} yap',
+      'SSS bölüm başlığını {deger} olarak değiştir',
+    ],
   ),
   VixrexNiyetAlan(
     anahtar: 'sssAciklama',
@@ -440,8 +823,16 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     kolon: 'faq_section_description',
     bolum: 'faq',
     beklenenVeriTipi: 'uzunMetin (max 200)',
-    esAnlamlar: ['sss açıklaması', 'sss açıklama', 'sık sorulan sorular açıklaması', 'sorular açıklaması'],
-    ornekIfadeler: ['SSS açıklamasını {deger} yap', 'SSS bölüm açıklamasını {deger} olarak değiştir'],
+    esAnlamlar: [
+      'sss açıklaması',
+      'sss açıklama',
+      'sık sorulan sorular açıklaması',
+      'sorular açıklaması',
+    ],
+    ornekIfadeler: [
+      'SSS açıklamasını {deger} yap',
+      'SSS bölüm açıklamasını {deger} olarak değiştir',
+    ],
   ),
   VixrexNiyetAlan(
     anahtar: 'puanGoster',
@@ -450,8 +841,19 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     kolon: 'show_storefront_rating',
     bolum: 'hero',
     beklenenVeriTipi: 'acikKapali (true/false, açık/kapalı, göster/gizle)',
-    esAnlamlar: ['puan göster', 'değerlendirme puanı', 'puanı göster', 'rating göster', 'yıldız puanı göster'],
-    ornekIfadeler: ['Puanı göster', 'Puanı gizle', 'Değerlendirme puanını aç', 'Rating\'i kapat'],
+    esAnlamlar: [
+      'puan göster',
+      'değerlendirme puanı',
+      'puanı göster',
+      'rating göster',
+      'yıldız puanı göster',
+    ],
+    ornekIfadeler: [
+      'Puanı göster',
+      'Puanı gizle',
+      'Değerlendirme puanını aç',
+      'Rating\'i kapat',
+    ],
   ),
   VixrexNiyetAlan(
     anahtar: 'yolTarifiGoster',
@@ -460,8 +862,20 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     kolon: 'show_directions_link',
     bolum: 'contact',
     beklenenVeriTipi: 'acikKapali (true/false)',
-    esAnlamlar: ['yol tarifi göster', 'yol tarifi butonu', 'haritada yol tarifi', 'navigasyon göster', 'yol tarifi', 'yol tarifini'],
-    ornekIfadeler: ['Yol tarifini göster', 'Yol tarifi butonunu gizle', 'Yol tarifini aç', 'Navigasyonu kapat'],
+    esAnlamlar: [
+      'yol tarifi göster',
+      'yol tarifi butonu',
+      'haritada yol tarifi',
+      'navigasyon göster',
+      'yol tarifi',
+      'yol tarifini',
+    ],
+    ornekIfadeler: [
+      'Yol tarifini göster',
+      'Yol tarifi butonunu gizle',
+      'Yol tarifini aç',
+      'Navigasyonu kapat',
+    ],
   ),
   VixrexNiyetAlan(
     anahtar: 'referansLinki',
@@ -470,8 +884,18 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     kolon: 'references_link',
     bolum: 'about',
     beklenenVeriTipi: 'url (https://...)',
-    esAnlamlar: ['referans linki', 'referans bağlantısı', 'referanslar linki', 'müşteri yorum linki'],
-    ornekIfadeler: ['Referans linkini {deger} yap', 'Referans bağlantısını {deger} olarak değiştir'],
+    esAnlamlar: [
+      'referans linki',
+      'referans bağlantısı',
+      'referanslar linki',
+      'müşteri yorum linki',
+    ],
+    ornekIfadeler: [
+      'Referans linkini {deger} yap',
+      'Referans bağlantısını {deger} olarak değiştir',
+    ],
   ),
 ];
-final Map<String, VixrexNiyetAlan> vixrexNiyetAlanByAnahtar = { for (final a in vixrexNiyetSozlugu) a.anahtar: a, };
+final Map<String, VixrexNiyetAlan> vixrexNiyetAlanByAnahtar = {
+  for (final a in vixrexNiyetSozlugu) a.anahtar: a,
+};

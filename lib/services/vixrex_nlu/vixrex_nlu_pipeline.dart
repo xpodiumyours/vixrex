@@ -1,4 +1,3 @@
-import 'package:vixrex/config/vitrin_alanlari.g.dart';
 import 'package:vixrex/config/vixrex_niyet_sozlugu.g.dart';
 import 'package:vixrex/controllers/store_editor_controller.dart';
 import 'package:vixrex/models/chat_message.dart';
@@ -10,7 +9,13 @@ import 'package:vixrex/services/vixrex_nlu/vixrex_value_extractor.dart';
 import 'package:vixrex/services/vixrex_nlu/vixrex_executor.dart';
 
 /// Faz 1 boru sonucu.
-enum VixrexNluPipelineOutcome { handled, needsClarification, notUnderstood, blockedLegal, needsSpecialFlow }
+enum VixrexNluPipelineOutcome {
+  handled,
+  needsClarification,
+  notUnderstood,
+  blockedLegal,
+  needsSpecialFlow,
+}
 
 class VixrexNluPipelineResult {
   final VixrexNluPipelineOutcome outcome;
@@ -39,11 +44,11 @@ class VixrexNluPipeline {
     VixrexConversationMemoryPort? memory,
     VixrexClarifier? clarifier,
     VixrexExecutor? executor,
-  })  : _intentResolver = intentResolver ?? const VixrexIntentResolver(),
-        _valueExtractor = valueExtractor ?? const VixrexValueExtractor(),
-        _memory = memory ?? const VixrexConversationMemory(),
-        _clarifier = clarifier ?? const VixrexClarifier(),
-        _executor = executor ?? const VixrexExecutor();
+  }) : _intentResolver = intentResolver ?? const VixrexIntentResolver(),
+       _valueExtractor = valueExtractor ?? const VixrexValueExtractor(),
+       _memory = memory ?? const VixrexConversationMemory(),
+       _clarifier = clarifier ?? const VixrexClarifier(),
+       _executor = executor ?? const VixrexExecutor();
 
   final VixrexIntentResolver _intentResolver;
   final VixrexValueExtractor _valueExtractor;
@@ -51,8 +56,24 @@ class VixrexNluPipeline {
   final VixrexClarifier _clarifier;
   final VixrexExecutor _executor;
 
-  static const _evetler = {'evet', 'evet.', 'onayla', 'onay', 'tamam', 'olur', 'kaydet'};
-  static const _hayirlar = {'hayir', 'hayır', 'iptal', 'vazgec', 'vazgeç', 'hayir.', 'hayır.'};
+  static const _evetler = {
+    'evet',
+    'evet.',
+    'onayla',
+    'onay',
+    'tamam',
+    'olur',
+    'kaydet',
+  };
+  static const _hayirlar = {
+    'hayir',
+    'hayır',
+    'iptal',
+    'vazgec',
+    'vazgeç',
+    'hayir.',
+    'hayır.',
+  };
 
   /// Ana giriş – sohbetten çağrılır.
   /// `scope` = ChatbotService._historyKeyFor ile aynı (publicLink base64 veya local).
@@ -62,8 +83,11 @@ class VixrexNluPipeline {
     required String input,
     required StoreEditorController? controller,
     String? scope,
-    required Future<({bool ok, String? hata, Object? normalizedDeger})> Function(VixrexNiyetAlan alan, String hamDeger) onValidate,
-    bool Function(VixrexNiyetAlan alan)? needsSpecialFlow, // il/ilce/kategori listeden seç, gorsel yükle vb.
+    required Future<({bool ok, String? hata, Object? normalizedDeger})>
+    Function(VixrexNiyetAlan alan, String hamDeger)
+    onValidate,
+    bool Function(VixrexNiyetAlan alan)?
+    needsSpecialFlow, // il/ilce/kategori listeden seç, gorsel yükle vb.
   }) async {
     final trimmed = input.trim();
     if (trimmed.isEmpty) {
@@ -96,7 +120,9 @@ class VixrexNluPipeline {
           await _memory.clearPendingSlot(scope: scope);
           return VixrexNluPipelineResult(
             outcome: VixrexNluPipelineOutcome.needsClarification,
-            message: ChatMessage.bot('Tamam, vazgeçtim. Başka nasıl yardımcı olabilirim?'),
+            message: ChatMessage.bot(
+              'Tamam, vazgeçtim. Başka nasıl yardımcı olabilirim?',
+            ),
           );
         }
       }
@@ -119,7 +145,9 @@ class VixrexNluPipeline {
           if (!validated.ok) {
             return VixrexNluPipelineResult(
               outcome: VixrexNluPipelineOutcome.needsClarification,
-              message: ChatMessage.bot(_clarifier.hata(validated.hata ?? 'Geçersiz değer.')),
+              message: ChatMessage.bot(
+                _clarifier.hata(validated.hata ?? 'Geçersiz değer.'),
+              ),
             );
           }
           // Controller yoksa (Next.js tarafı) – sadece doğrula, uygulama çağıran tarafta.
@@ -142,7 +170,10 @@ class VixrexNluPipeline {
           return VixrexNluPipelineResult(
             outcome: VixrexNluPipelineOutcome.handled,
             message: ChatMessage.bot(
-              _clarifier.basari(alanFromPending, (validated.normalizedDeger ?? hamDeger).toString()),
+              _clarifier.basari(
+                alanFromPending,
+                (validated.normalizedDeger ?? hamDeger).toString(),
+              ),
             ),
             appliedAnahtar: alanFromPending.anahtar,
             appliedDeger: validated.normalizedDeger ?? hamDeger,
@@ -180,7 +211,11 @@ class VixrexNluPipeline {
           continue;
         }
         if (controller != null) {
-          final ok = _executor.execute(controller: controller, alan: a, deger: v.normalizedDeger ?? ham);
+          final ok = _executor.execute(
+            controller: controller,
+            alan: a,
+            deger: v.normalizedDeger ?? ham,
+          );
           if (!ok) {
             hatalar.add('${a.etiket} için özel akış gerekli');
             continue;
@@ -192,12 +227,21 @@ class VixrexNluPipeline {
       if (basarili.isEmpty) {
         return VixrexNluPipelineResult(
           outcome: VixrexNluPipelineOutcome.needsClarification,
-          message: ChatMessage.bot(hatalar.isNotEmpty ? hatalar.join('\n') : _clarifier.belirsiz()),
+          message: ChatMessage.bot(
+            hatalar.isNotEmpty ? hatalar.join('\n') : _clarifier.belirsiz(),
+          ),
         );
       }
       if (controller != null) await controller.saveLocally();
       await _memory.clearPendingSlot(scope: scope);
-      final metin = basarili.asMap().entries.map((e) => _clarifier.basari(e.value, basariliDegerler[e.key].toString())).join('\n');
+      final metin = basarili
+          .asMap()
+          .entries
+          .map(
+            (e) =>
+                _clarifier.basari(e.value, basariliDegerler[e.key].toString()),
+          )
+          .join('\n');
       return VixrexNluPipelineResult(
         outcome: VixrexNluPipelineOutcome.handled,
         message: ChatMessage.bot(metin),
@@ -211,7 +255,6 @@ class VixrexNluPipeline {
 
     // 1b) Yasal alanlar bu borudan yasak – mevcut legal akışa yönlendir.
     // Sözlükte yasal alanlar yok, bu dal Faz 1’de ölü – fakat emniyet için kontrol.
-    const yasakAlanlar = {'isletmeAdi': false}; // placeholder, gerçek yasak sözlükte yok
 
     // 2) Özel akış gerektiren alanlar (il/ilce → listeden seç, gorsel → yükle)
     if (needsSpecialFlow != null && needsSpecialFlow(alan)) {
@@ -260,7 +303,9 @@ class VixrexNluPipeline {
       // Faz 1’de deneme sayısını artırmıyoruz, sadece aynı soruyu tekrar sormuyoruz – hatayı göster.
       return VixrexNluPipelineResult(
         outcome: VixrexNluPipelineOutcome.needsClarification,
-        message: ChatMessage.bot(_clarifier.hata(validated.hata ?? 'Geçersiz değer.')),
+        message: ChatMessage.bot(
+          _clarifier.hata(validated.hata ?? 'Geçersiz değer.'),
+        ),
         appliedAnahtar: alan.anahtar,
       );
     }
@@ -298,7 +343,10 @@ class VixrexNluPipeline {
     return VixrexNluPipelineResult(
       outcome: VixrexNluPipelineOutcome.handled,
       message: ChatMessage.bot(
-        _clarifier.basari(alan, (validated.normalizedDeger ?? hamDeger).toString()),
+        _clarifier.basari(
+          alan,
+          (validated.normalizedDeger ?? hamDeger).toString(),
+        ),
       ),
       appliedAnahtar: alan.anahtar,
       appliedDeger: validated.normalizedDeger ?? hamDeger,

@@ -1,3 +1,4 @@
+import { SiteChromeBoundary } from "@/components/site/SiteChromeBoundary";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { organizationJsonLd, safeJsonLdHtml, webSiteJsonLd } from "@/lib/jsonLd";
@@ -7,6 +8,7 @@ import { getSiteUrl } from "@/lib/siteUrl";
  * Platform yüzeyinin düzeni: ana sayfa, Keşfet ve kategori sayfaları.
  *
  * Keşfet sayfası için SiteHeader ve SiteFooter render edilmez.
+ * Ana sayfa kendi üst navigasyonunu taşır; ortak footer görünür.
  * Route grupları adresi değiştirmez: `(site)/page.tsx` yine `/` adresinde yayınlanır.
  */
 export default function SiteLayout({
@@ -28,7 +30,9 @@ export default function SiteLayout({
           __html: safeJsonLdHtml(webSiteJsonLd(siteUrl)),
         }}
       />
-      <main className="flex-1">{children}</main>
+      <SiteChromeBoundary header={<SiteHeader />} footer={<SiteFooter />}>
+        {children}
+      </SiteChromeBoundary>
     </div>
   );
 }
