@@ -15,6 +15,23 @@ describe("F2c boş vitrin tam forma — vixrex.com/app = vixrex-app/home", () =>
     expect(appPage).toContain('slug: "taslak"');
   });
 
+  it("flowState varken ayrı devam kartına düşmez; aynı Flutter-parite creation paneli korunur", () => {
+    // #409 regresyonu: flowState doluyken eski kart VitrinimEditor'ün önüne geçiyordu.
+    expect(appPage).not.toContain("Kurulumun kaldığı yerden devam ediyor");
+    expect(appPage).not.toContain("Devam Ediyor");
+    expect(appPage).not.toContain("showNameForm");
+    expect(appPage).not.toContain("magazaOlustur");
+    expect(appPage).not.toMatch(/flowState\s*\?\s*\(/);
+    expect(appPage).toContain("flowStateCreationDraft(flowState)");
+    expect(appPage).toContain("initialDraft={{ ...flowDraft, ...asistanTaslagi, ...workingDraft, name: yeniAd }}");
+  });
+
+  it("create flowState selected_template değerini yalnız kategori ön dolgusuna çevirir", () => {
+    expect(appPage).toContain('flowState.flow_type !== "create"');
+    expect(appPage).toContain("flowState.selected_template");
+    expect(appPage).toContain("{ kategori: selectedTemplate }");
+  });
+
   it("VitrinimEditor creation modunda sadece lokal güncelleme yapar, owner-draft'a gitmez", () => {
     expect(vitrinEditor).toContain("isCreationMode");
     expect(vitrinEditor).toContain("Taslak güncellendi");
