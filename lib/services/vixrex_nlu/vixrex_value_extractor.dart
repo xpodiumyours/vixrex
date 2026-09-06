@@ -44,8 +44,9 @@ class VixrexValueExtractor {
       // ":" sonrası alan adı tekrarı varsa temizle, yoksa olduğu gibi al.
       final candidate = cleaned.isNotEmpty ? cleaned : colon.trim();
       final withoutTrailingVerb = _stripTrailingVerb(candidate);
-      if (withoutTrailingVerb.trim().isNotEmpty)
+      if (withoutTrailingVerb.trim().isNotEmpty) {
         return withoutTrailingVerb.trim();
+      }
       if (candidate.trim().isNotEmpty) return candidate.trim();
     }
 
@@ -173,8 +174,9 @@ class VixrexValueExtractor {
     if (after.isEmpty) return null;
     if (sep == ':' && after.startsWith('//')) return null;
     final quotedAfter = _extractQuoted(after);
-    if (quotedAfter != null && quotedAfter.trim().isNotEmpty)
+    if (quotedAfter != null && quotedAfter.trim().isNotEmpty) {
       return quotedAfter.trim();
+    }
     final cleaned = _stripFieldMention(after, alan);
     if (cleaned.isNotEmpty) return cleaned;
     return after;
@@ -268,8 +270,9 @@ class VixrexValueExtractor {
     final mLand = RegExp(r'0?\d{3}\s?\d{3}\s?\d{2}\s?\d{2}').firstMatch(input);
     if (mLand != null) {
       final digits = mLand.group(0)!.replaceAll(RegExp(r'[^0-9]'), '');
-      if (digits.length >= 10 && digits.length <= 11)
+      if (digits.length >= 10 && digits.length <= 11) {
         return mLand.group(0)?.trim();
+      }
     }
     return null;
   }
@@ -358,8 +361,9 @@ class VixrexValueExtractor {
       candidate,
     ).replaceAll(RegExp(r'[^a-z0-9]+'), '');
     if (normCand.length < 3) return null;
-    if (RegExp(r'^(yanlis|hatali|bozuk|degistir)$').hasMatch(normCand))
+    if (RegExp(r'^(yanlis|hatali|bozuk|degistir)$').hasMatch(normCand)) {
       return null;
+    }
     return _stripQuotes(candidate);
   }
 
@@ -402,8 +406,9 @@ class VixrexValueExtractor {
       cleaned,
     ).replaceAll(RegExp(r'[^a-z0-9]+'), '');
     if (normCleaned.length < 2) return null;
-    if (RegExp(r'^(yanlis|hatali|bozuk|degistir)$').hasMatch(normCleaned))
+    if (RegExp(r'^(yanlis|hatali|bozuk|degistir)$').hasMatch(normCleaned)) {
       return null;
+    }
     return _stripQuotes(cleaned);
   }
 }

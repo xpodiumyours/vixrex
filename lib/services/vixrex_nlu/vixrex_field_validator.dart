@@ -62,18 +62,20 @@ class VixrexFieldValidator {
       }
       final min = _minFor(alan);
       final max = _maxFor(alan);
-      if (min != null && num < min)
+      if (min != null && num < min) {
         return (
           ok: false,
           hata: '$etiket en az $min olabilir.',
           normalizedDeger: null,
         );
-      if (max != null && num > max)
+      }
+      if (max != null && num > max) {
         return (
           ok: false,
           hata: '$etiket en fazla $max olabilir.',
           normalizedDeger: null,
         );
+      }
       return (ok: true, hata: null, normalizedDeger: num);
     }
 
@@ -100,19 +102,21 @@ class VixrexFieldValidator {
 
     // uzunluk sınırları (vitrin_alanlari.g.dart’tan gelen bilgi sözlükte beklenenVeriTipi’nde ama burada elle)
     final lengthErr = _metinSinirlari(alan, raw);
-    if (lengthErr != null)
+    if (lengthErr != null) {
       return (ok: false, hata: lengthErr, normalizedDeger: null);
+    }
 
     switch (tip) {
       case 'telefon':
         if (alan.anahtar == 'whatsapp') {
           final norm = WhatsAppLinkHelper.normalizeTurkeyMobile(raw);
-          if (norm == null)
+          if (norm == null) {
             return (
               ok: false,
               hata: WhatsAppLinkHelper.invalidNumberMessage,
               normalizedDeger: null,
             );
+          }
           return (ok: true, hata: null, normalizedDeger: norm);
         }
         final digits = raw.replaceAll(RegExp(r'[^0-9]'), '');
@@ -151,12 +155,13 @@ class VixrexFieldValidator {
                 c.label.toLowerCase() == raw.toLowerCase() ||
                 c.id.toLowerCase() == raw.toLowerCase(),
           );
-          if (!exists)
+          if (!exists) {
             return (
               ok: false,
               hata: '$etiket için geçersiz seçim.',
               normalizedDeger: null,
             );
+          }
           // Normalize: label’ı döndür (UI’da label gösterilir)
           final cat = BusinessCategoryConfig.categories.firstWhere(
             (c) =>
@@ -172,8 +177,9 @@ class VixrexFieldValidator {
         // Adres için özel validator (sokak/cadde + numara)
         if (alan.anahtar == 'adres') {
           final hata = AddressValidator.hataMesaji(raw);
-          if (hata != null)
+          if (hata != null) {
             return (ok: false, hata: hata, normalizedDeger: null);
+          }
         }
         return (ok: true, hata: null, normalizedDeger: raw);
       default:
@@ -190,10 +196,12 @@ class VixrexFieldValidator {
     // Zorunlu boş kontrol yukarıda yapıldı.
     final min = _minUzunluk(alan);
     final max = _maxUzunluk(alan);
-    if (min != null && len > 0 && len < min)
+    if (min != null && len > 0 && len < min) {
       return '${alan.etiket} en az $min karakter olmalı.';
-    if (max != null && len > max)
+    }
+    if (max != null && len > max) {
       return '${alan.etiket} en fazla $max karakter olabilir.';
+    }
     return null;
   }
 

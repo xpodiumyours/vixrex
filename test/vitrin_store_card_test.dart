@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vixrex/models/store_data.dart';
-import 'package:vixrex/models/store_product.dart';
 import 'package:vixrex/services/premium_service.dart';
 import 'package:vixrex/widgets/vitrin_store_card.dart';
 
