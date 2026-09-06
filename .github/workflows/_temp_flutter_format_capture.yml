@@ -1,0 +1,51 @@
+name: TEMP Flutter format capture
+
+on:
+  push:
+    branches:
+      - repair/main-baseline-20260905
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.44.4"
+          channel: stable
+          cache: true
+
+      - name: Dependencies
+        run: flutter pub get
+
+      - name: Format with repository CI Dart
+        run: |
+          dart --version
+          dart format lib test
+          git diff --check
+          git diff --name-only -- lib test
+
+      - name: Collect only formatter-changed files
+        run: |
+          mkdir -p _formatter_output
+          git diff --name-only -z -- lib test | while IFS= read -r -d '' f; do
+            mkdir -p "_formatter_output/$(dirname "$f")"
+            cp "$f" "_formatter_output/$f"
+          done
+          git diff --binary -- lib test > _formatter_output/flutter-format.patch
+
+      - name: Upload formatter output
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-format-output
+          path: _formatter_output
+          if-no-files-found: error
+          retention-days: 1
