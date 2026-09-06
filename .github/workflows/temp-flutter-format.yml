@@ -1,0 +1,47 @@
+name: TEMP Flutter formatter
+
+on:
+  push:
+    branches:
+      - repair/main-baseline-20260905
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: repair/main-baseline-20260905
+          fetch-depth: 0
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.44.4"
+          channel: stable
+          cache: true
+
+      - name: Resolve dependencies exactly like CI
+        run: flutter pub get
+
+      - name: Apply official formatter
+        run: dart format lib test
+
+      - name: Commit only formatter changes and rebase onto latest branch
+        run: |
+          if git diff --quiet -- lib test; then
+            echo "No formatter changes remain."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lib test
+          git commit -m "chore: format Flutter baseline"
+          git fetch origin repair/main-baseline-20260905
+          git rebase origin/repair/main-baseline-20260905
+          git push origin HEAD:repair/main-baseline-20260905
