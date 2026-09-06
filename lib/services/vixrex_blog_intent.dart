@@ -98,7 +98,13 @@ VixrexAssistantDomainDecision routeVixrexAssistantDomain(String input) {
   }
 
   final mentionsBlog = text.contains('blog');
-  final mentionsContent = _hasAny(text, ['yazi', 'makale', 'rehber', 'taslak']);
+  final mentionsContent = _hasAny(text, [
+    'yazi',
+    'makale',
+    'rehber',
+    'taslak',
+    'taslag',
+  ]);
   if (!mentionsBlog || !mentionsContent) {
     return const VixrexAssistantDomainDecision(
       domain: VixrexAssistantDomain.storefront,
@@ -107,7 +113,7 @@ VixrexAssistantDomainDecision routeVixrexAssistantDomain(String input) {
 
   final matches = <VixrexBlogIntent>[];
   if (
-      text.contains('taslak') &&
+      _hasAny(text, ['taslak', 'taslag']) &&
       _hasAny(text, ['listele', 'goster', 'neler', 'hangileri'])) {
     matches.add(VixrexBlogIntent.blogTaslaklariniListele);
   }
@@ -116,7 +122,7 @@ VixrexAssistantDomainDecision routeVixrexAssistantDomain(String input) {
   }
   if (
       _hasAny(text, ['duzenle', 'degistir']) &&
-      _hasAny(text, ['yazi', 'taslak', 'makale'])) {
+      _hasAny(text, ['yazi', 'taslak', 'taslag', 'makale'])) {
     matches.add(VixrexBlogIntent.blogTaslakDuzenle);
   }
   if (
