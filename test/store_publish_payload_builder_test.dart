@@ -22,7 +22,7 @@ void main() {
     test('isimden öngörülen vitrin linki üretir, boş isimde boş döner', () {
       expect(
         builder.previewVitrinLink('Aymira Giyim'),
-        'https://vixrex.com/v/aymira-giyim',
+        'https://vixrex-public.vercel.app/v/aymira-giyim',
       );
       expect(builder.previewVitrinLink(''), isEmpty);
       expect(builder.previewVitrinLink('   '), isEmpty);
