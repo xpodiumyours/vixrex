@@ -43,11 +43,16 @@ describe("F5 shell paritesi — Flutter HomeShellScreen = Next ortak AppShell", 
     expect(kesfet).toContain('router.push("/app/vixrex")');
   });
 
-  it("Vitrinim ve Keşfet tek root shell sınırında tutulur", () => {
+  it("yalnız dört ana yüz shell içinde; Profil alt ekranları push ekranıdır", () => {
     expect(appBoundary).toContain('pathname === "/app"');
+    expect(appBoundary).toContain('pathname === "/app/vixrex"');
+    expect(appBoundary).toContain('pathname === "/app/profil"');
     expect(appBoundary).toContain('pathname === "/kesfet"');
     expect(appBoundary).toContain("<AppSidebar />");
     expect(appBoundary).toContain("<AppBottomNav />");
+    expect(appBoundary).not.toContain('pathname.startsWith("/app/")');
+    expect(appBoundary).not.toContain('"/app/ayarlar"');
+    expect(appBoundary).not.toContain('"/app/hesap"');
   });
 
   it("Flutter masaüstü eşiği ve sidebar genişliği korunur", () => {

@@ -6,7 +6,9 @@ import { AppBottomNav, AppSidebar } from "@/components/app/AppSidebar";
 function shellRotasi(pathname: string): boolean {
   return (
     pathname === "/app" ||
-    pathname.startsWith("/app/") ||
+    pathname.startsWith("/app/urunler") ||
+    pathname === "/app/vixrex" ||
+    pathname === "/app/profil" ||
     pathname === "/kesfet" ||
     pathname.startsWith("/kesfet/")
   );
@@ -16,9 +18,8 @@ function shellRotasi(pathname: string): boolean {
  * Flutter HomeShellScreen'in Next.js karşılığı.
  *
  * Vitrinim / Keşfet / Vixrex / Profil aynı uygulama kabuğunun çocuklarıdır.
- * Route dosyaları farklı ağaçlarda olsa bile shell root layout altında tek
- * örnek olarak yaşar; sayfa değişimi ikinci sidebar veya ikinci mobil nav
- * üretmez.
+ * Profil'den açılan Ayarlar/Hesap gibi alt ekranlar Flutter'da Navigator.push
+ * ile shell dışına çıkar; Next.js'te de bu yüzden bu sınırın dışında kalır.
  */
 export function AppShellBoundary({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
