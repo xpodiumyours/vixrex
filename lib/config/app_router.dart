@@ -180,8 +180,6 @@ class AppRouter {
     return launched;
   }
 
-
-
   // Centralized Navigators using GoRouter with standard Navigator fallbacks for isolated testing
   static void navigateToLanding(BuildContext context) {
     try {

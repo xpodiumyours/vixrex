@@ -21,19 +21,21 @@ class VixrexPendingSlot {
   });
 
   Map<String, dynamic> toJson() => {
-        'anahtar': anahtar,
-        'etiket': etiket,
-        'tip': tip,
-        'sorulduAt': sorulduAt.toIso8601String(),
-        'deneme': deneme,
-      };
+    'anahtar': anahtar,
+    'etiket': etiket,
+    'tip': tip,
+    'sorulduAt': sorulduAt.toIso8601String(),
+    'deneme': deneme,
+  };
 
   factory VixrexPendingSlot.fromJson(Map<String, dynamic> json) {
     return VixrexPendingSlot(
       anahtar: json['anahtar'] as String,
       etiket: json['etiket'] as String? ?? json['anahtar'] as String,
       tip: json['tip'] as String? ?? 'metin',
-      sorulduAt: DateTime.tryParse(json['sorulduAt'] as String? ?? '') ?? DateTime.now(),
+      sorulduAt:
+          DateTime.tryParse(json['sorulduAt'] as String? ?? '') ??
+          DateTime.now(),
       deneme: (json['deneme'] as num?)?.toInt() ?? 1,
     );
   }
@@ -55,7 +57,8 @@ class VixrexConversationMemory implements VixrexConversationMemoryPort {
   static const _localScope = 'local';
 
   String _keyFor(String? scope) {
-    final s = (scope == null || scope.trim().isEmpty) ? _localScope : scope.trim();
+    final s =
+        (scope == null || scope.trim().isEmpty) ? _localScope : scope.trim();
     final norm = s.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '_');
     return '$_prefix$norm';
   }

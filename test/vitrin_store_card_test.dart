@@ -290,71 +290,68 @@ void main() {
     },
   );
 
-  testWidgets(
-    '9. Kiralık olmayan kartta ürün sayısı gösteriliyor',
-    (WidgetTester tester) async {
-      testStore.products = [
+  testWidgets('9. Kiralık olmayan kartta ürün sayısı gösteriliyor', (
+    WidgetTester tester,
+  ) async {
+    testStore.products = [
+      Product(id: 'p1', name: 'Ürün 1'),
+      Product(id: 'p2', name: 'Ürün 2'),
+      Product(id: 'p3', name: 'Ürün 3'),
+    ];
+
+    await tester.pumpWidget(
+      buildCard(
+        store: testStore,
+        onFavoritePressed: () {},
+        onWhatsAppPressed: () {},
+      ),
+    );
+
+    expect(find.text('3 ürün'), findsOneWidget);
+  });
+
+  testWidgets('9b. Ürün sayısı 0 ise kartta gösterilmiyor', (
+    WidgetTester tester,
+  ) async {
+    testStore.products = [];
+
+    await tester.pumpWidget(
+      buildCard(
+        store: testStore,
+        onFavoritePressed: () {},
+        onWhatsAppPressed: () {},
+      ),
+    );
+
+    expect(find.textContaining('ürün'), findsNothing);
+  });
+
+  testWidgets('9c. Kiralık kartta ürün sayısı gösterilmiyor', (
+    WidgetTester tester,
+  ) async {
+    final demoStore = StoreData(
+      name: 'Demo Vitrin',
+      kategori: 'Kafe / Lokanta',
+      slug: 'kiralik-kafe',
+      isDemo: true,
+      products: [
         Product(id: 'p1', name: 'Ürün 1'),
         Product(id: 'p2', name: 'Ürün 2'),
-        Product(id: 'p3', name: 'Ürün 3'),
-      ];
+      ],
+    );
 
-      await tester.pumpWidget(
-        buildCard(
-          store: testStore,
-          onFavoritePressed: () {},
-          onWhatsAppPressed: () {},
-        ),
-      );
+    await tester.pumpWidget(
+      buildCard(
+        store: demoStore,
+        onFavoritePressed: () {},
+        onWhatsAppPressed: () {},
+      ),
+    );
 
-      expect(find.text('3 ürün'), findsOneWidget);
-    },
-  );
-
-  testWidgets(
-    '9b. Ürün sayısı 0 ise kartta gösterilmiyor',
-    (WidgetTester tester) async {
-      testStore.products = [];
-
-      await tester.pumpWidget(
-        buildCard(
-          store: testStore,
-          onFavoritePressed: () {},
-          onWhatsAppPressed: () {},
-        ),
-      );
-
-      expect(find.textContaining('ürün'), findsNothing);
-    },
-  );
-
-  testWidgets(
-    '9c. Kiralık kartta ürün sayısı gösterilmiyor',
-    (WidgetTester tester) async {
-      final demoStore = StoreData(
-        name: 'Demo Vitrin',
-        kategori: 'Kafe / Lokanta',
-        slug: 'kiralik-kafe',
-        isDemo: true,
-        products: [
-          Product(id: 'p1', name: 'Ürün 1'),
-          Product(id: 'p2', name: 'Ürün 2'),
-        ],
-      );
-
-      await tester.pumpWidget(
-        buildCard(
-          store: demoStore,
-          onFavoritePressed: () {},
-          onWhatsAppPressed: () {},
-        ),
-      );
-
-      // Kiralık kartlarda fiyat bilgisi var, ürün sayısı yok
-      expect(find.text('2 ürün'), findsNothing);
-      expect(find.text('Aylık 299 TL'), findsOneWidget);
-    },
-  );
+    // Kiralık kartlarda fiyat bilgisi var, ürün sayısı yok
+    expect(find.text('2 ürün'), findsNothing);
+    expect(find.text('Aylık 299 TL'), findsOneWidget);
+  });
 }
 
 /// Testte kullanılmak üzere bugünden N gün + 6 saat sonrasını döndürür
