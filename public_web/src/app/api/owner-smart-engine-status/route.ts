@@ -1,13 +1,22 @@
 import { cookies } from "next/headers";
 import { NextResponse, type NextRequest } from "next/server";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
-import { smartEngineStorefrontServerEnabled } from "@/lib/smartEngineFlagsServer";
+import {
+  smartEngineBlogServerEnabled,
+  smartEngineStorefrontServerEnabled,
+} from "@/lib/smartEngineFlagsServer";
 
 export const dynamic = "force-dynamic";
 
+type SmartEngineDomain = "storefront" | "blog";
+
 export async function GET(request: NextRequest) {
   const slug = request.nextUrl.searchParams.get("slug")?.trim() ?? "";
-  if (!slug) {
+  const domainRaw = request.nextUrl.searchParams.get("domain")?.trim() ?? "storefront";
+  const domain: SmartEngineDomain | null =
+    domainRaw === "storefront" || domainRaw === "blog" ? domainRaw : null;
+
+  if (!slug || !domain) {
     return NextResponse.json({ enabled: false }, { status: 400 });
   }
 
@@ -18,9 +27,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ enabled: false }, { status: 401 });
   }
 
-  const enabled = await smartEngineStorefrontServerEnabled();
+  const enabled =
+    domain === "blog"
+      ? await smartEngineBlogServerEnabled()
+      : await smartEngineStorefrontServerEnabled();
+
   return NextResponse.json(
-    { enabled },
+    { enabled, domain },
     { headers: { "Cache-Control": "no-store" } }
   );
 }
