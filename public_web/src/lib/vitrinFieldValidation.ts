@@ -170,9 +170,10 @@ export function validateField(anahtar: string, hamDeger: unknown): ValidationRes
     }
 
     case "url": {
-      // #anchor yalnız vitrin içindeki açık action-link alanında geçerlidir.
-      // Website/harita/referans linkleri gerçek http(s) URL olmalıdır.
-      const anchorIzinli = alan.anahtar === "galeriAksiyonLinki";
+      // #anchor yalnız şemada "ic_baglanti" olarak işaretlenmiş alanda
+      // geçerlidir. Website/harita/referans linkleri gerçek http(s) URL
+      // olmalıdır. Alan ADINA göre dallanma YOK — kural şemadan okunur.
+      const anchorIzinli = alan.dogrulama === "ic_baglanti";
       if (!guvenliUrlMu(deger, anchorIzinli)) {
         return {
           ok: false,

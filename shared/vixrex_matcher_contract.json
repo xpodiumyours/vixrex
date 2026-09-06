@@ -3,18 +3,106 @@
   "_surum": 1,
   "minInflectedAliasLength": 5,
   "safeSuffixes": [
-    "m", "im", "um", "n", "in", "un", "i", "u",
-    "mi", "mu", "imi", "umu", "me", "ma", "ime", "uma", "ni", "nu", "ini", "unu", "ne", "na", "ine", "una",
-    "min", "mun", "imin", "umun", "nin", "nun", "inin", "unun",
-    "mde", "mda", "mden", "mdan", "imde", "imda", "imden", "imdan", "umde", "umda", "umden", "umdan",
-    "nde", "nda", "nden", "ndan", "inde", "inda", "inden", "indan", "unda", "unde", "undan", "unden"
+    "m",
+    "im",
+    "um",
+    "n",
+    "in",
+    "un",
+    "i",
+    "u",
+    "mi",
+    "mu",
+    "imi",
+    "umu",
+    "me",
+    "ma",
+    "ime",
+    "uma",
+    "ni",
+    "nu",
+    "ini",
+    "unu",
+    "ne",
+    "na",
+    "ine",
+    "una",
+    "min",
+    "mun",
+    "imin",
+    "umun",
+    "nin",
+    "nun",
+    "inin",
+    "unun",
+    "mde",
+    "mda",
+    "mden",
+    "mdan",
+    "imde",
+    "imda",
+    "imden",
+    "imdan",
+    "umde",
+    "umda",
+    "umden",
+    "umdan",
+    "nde",
+    "nda",
+    "nden",
+    "ndan",
+    "inde",
+    "inda",
+    "inden",
+    "indan",
+    "unda",
+    "unde",
+    "undan",
+    "unden",
+    "yi",
+    "yu",
+    "ye",
+    "ya",
+    "yim",
+    "yum",
+    "yin",
+    "yun"
   ],
+  "_kaynastirmaNotu": "Kaynaştırma harfi 'y': Türkçede sesli harfle biten kelime, sesli harfle başlayan ek alırken araya 'y' girer (mahalle+i → mahalleyi, kategori+i → kategoriyi, açıklama+ı → açıklamayı). Bu ekler eklenmeden önce sesli harfle biten alanların hiçbiri çekimli hâlde tanınmıyordu.",
   "exactFormsByField": {
-    "il": ["ili"],
-    "ilce": ["ilceyi", "ilcemi"],
-    "mahalle": ["mahalleyi", "mahallemi"],
-    "logo": ["logoyu", "logomu"],
-    "isletmeTuru": ["turunu", "turumu"],
-    "website": ["sitemi", "siteyi", "websiteyi"]
+    "il": [
+      "ili"
+    ],
+    "ilce": [
+      "ilceyi",
+      "ilcemi"
+    ],
+    "mahalle": [
+      "mahalleyi",
+      "mahallemi",
+      "semti",
+      "semtimi"
+    ],
+    "logo": [
+      "logoyu",
+      "logomu"
+    ],
+    "isletmeTuru": [
+      "turunu",
+      "turumu"
+    ],
+    "website": [
+      "sitemi",
+      "siteyi",
+      "websiteyi"
+    ],
+    "puanGoster": [
+      "puani",
+      "puanlari"
+    ],
+    "kapakGorseli": [
+      "kapagi",
+      "kapagini"
+    ]
   }
 }

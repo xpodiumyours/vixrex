@@ -61,13 +61,28 @@ class VixrexIntentResolver {
     }
   }
 
-  static bool _isSafeInflection(String inputToken, String aliasToken) {
-    if (!inputToken.startsWith(aliasToken) ||
-        inputToken.length <= aliasToken.length) {
+  /// Türkçe ünsüz yumuşaması: sonu k/p/t ile biten kelime sesli harfle
+  /// başlayan ek alınca son harf yumuşar — "başlık" → "başlığı",
+  /// "kapak" → "kapağı". Normalizasyon sonrası karşılıklar: k→g, p→b, t→d.
+  ///
+  /// Next.js `vixrexIntentResolver.ts` ile birebir aynı kural.
+  static const Map<String, String> _yumusama = {'k': 'g', 'p': 'b', 't': 'd'};
+
+  static bool _suffixIzinli(String inputToken, String govde) {
+    if (!inputToken.startsWith(govde) || inputToken.length <= govde.length) {
       return false;
     }
-    final suffix = inputToken.substring(aliasToken.length);
-    return _safeSuffixes.contains(suffix);
+    return _safeSuffixes.contains(inputToken.substring(govde.length));
+  }
+
+  static bool _isSafeInflection(String inputToken, String aliasToken) {
+    if (_suffixIzinli(inputToken, aliasToken)) return true;
+
+    final son = aliasToken.isEmpty ? '' : aliasToken[aliasToken.length - 1];
+    final yumusak = _yumusama[son];
+    if (yumusak == null) return false;
+    final yumusamis = aliasToken.substring(0, aliasToken.length - 1) + yumusak;
+    return _suffixIzinli(inputToken, yumusamis);
   }
 
   static List<_Candidate> _collectFormMatches(
@@ -151,10 +166,16 @@ class VixrexIntentResolver {
     List<_Candidate> candidates,
   ) {
     final sorted = [...candidates]..sort((a, b) {
-      final rank = _classRank(b.matchClass) - _classRank(a.matchClass);
-      if (rank != 0) return rank;
+      // ÖNCE KAPSAM, SONRA EŞLEŞME SINIFI (Next.js ile aynı kural).
+      //
+      // Eskiden sınıf önce geldiği için "Kategori başlığını ... yap"
+      // cümlesinde tek kelimelik `kategori` tam eşleşmesi, iki kelimelik
+      // `kategori başlığı` çekimli eşleşmesini yeniyor ve motor YANLIŞ
+      // ALANI değiştiriyordu.
       final tokens = b.tokenCount - a.tokenCount;
       if (tokens != 0) return tokens;
+      final rank = _classRank(b.matchClass) - _classRank(a.matchClass);
+      if (rank != 0) return rank;
       final length = b.aliasLength - a.aliasLength;
       if (length != 0) return length;
       final start = a.startToken - b.startToken;

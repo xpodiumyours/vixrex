@@ -104,6 +104,8 @@ describe("#261 — sunucu ve istemci sözleşmesi", () => {
     expect(panel).toContain("useFieldRestore");
     expect(panel).toContain("geriAliniyor={fieldRestore.geriAliniyor}");
     expect(panel).toContain("kaydediliyor={actions.kaydediliyor}");
-    expect(input).toContain("disabled={kaydediliyor || geriAliniyor}");
+    // 5.9 sonrası bekleme durumu GPS bundle'ı da kapsıyor:
+    // persistenceSuruyor = kaydediliyor || gpsIsleniyor.
+    expect(input).toContain("disabled={persistenceSuruyor || geriAliniyor}");
   });
 });

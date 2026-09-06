@@ -26,8 +26,11 @@ function between(start: string, end: string): string {
 
 describe("useOwnerActions authoritative smart-engine wiring", () => {
   it("serbest metin çok-alanlı yolu command orchestrator + server-snapshot version kullanır", () => {
+    // Çapa NOTU: `executeSmartEngineCommand({` çağrısı artık paylaşılan bir
+    // yardımcıda da geçiyor, bu yüzden ilk eşleşme yanlış bloğu veriyordu.
+    // Serbest metin yolunu, yalnız o yolda bulunan koşulla yakalıyoruz.
     const block = between(
-      "const commandResult = await executeSmartEngineCommand({",
+      'if (sonuc.outcome !== "handled" || cozulen.length === 0)',
       "const alan = seciliAlan;",
     );
 
@@ -77,9 +80,13 @@ describe("useOwnerActions authoritative smart-engine wiring", () => {
   });
 
   it("manuel seçili alan yolu mevcut owner-draft kanalında kalır", () => {
+    // Çapa NOTU: eski bitiş yorumu refactor sırasında kalktı, başlangıç
+    // çapası da (`const alan = seciliAlan;`) artık görsel yükleme yolunda
+    // ilk kez geçiyordu. Manuel seçili alan yolunu, yalnız orada bulunan
+    // `richTextMotorEnabled` kararıyla yakalıyoruz.
     const selectedBlock = between(
-      "const alan = seciliAlan;",
-      "// Yalnız isteğe bağlı alanlarda gösterilen",
+      "const richTextMotorEnabled =",
+      "const alanAtla = useCallback(",
     );
     expect(selectedBlock).toContain('fetch("/api/owner-draft"');
   });

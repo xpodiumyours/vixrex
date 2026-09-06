@@ -93,16 +93,25 @@ describe("5.7 FieldInputArea execution/accessibility wiring", () => {
   const selection = read("src/app/v/[slug]/hooks/useFieldSelection.ts");
   const css = read("src/app/v/[slug]/ownerStorefrontPolish.css");
 
+  // 5.7 busy state'i yalnız `kaydediliyor` üzerinden tanımlamıştı. 5.9 LOCK 4
+  // GPS location bundle'ı coupled transaction (gerçek persistence) yaptı;
+  // busy yüzeyi bu yüzden `persistenceSuruyor = kaydediliyor || gpsIsleniyor`
+  // üzerinden türüyor. Kural aynı: tek kaynak, keyboard-safe disabled.
   it("duplicate submit ref + gerçek disabled guard kullanır", () => {
     expect(input).toContain("if (gonderRef.current) return;");
-    expect(input).toContain("const gonderEngelli = kaydediliyor || gonderKilitli;");
+    expect(input).toContain(
+      "const persistenceSuruyor = kaydediliyor || gpsIsleniyor;",
+    );
+    expect(input).toContain(
+      "const gonderEngelli = persistenceSuruyor || gonderKilitli;",
+    );
     expect(input).toContain("if (!gonderEngelli) void gonderVeVitriniGoster();");
     expect(input).toContain("disabled={gonderEngelli}");
   });
 
-  it("executing body class yalnız kaydediliyor state'inden türetilir", () => {
+  it("executing body class yalnız gerçek persistence state'inden türetilir", () => {
     expect(input).toContain(
-      'document.body.classList.toggle("vixrex-asistan-isliyor", kaydediliyor)',
+      'document.body.classList.toggle("vixrex-asistan-isliyor", persistenceSuruyor)',
     );
     expect(input).not.toContain('classList.add("vixrex-asistan-isliyor")');
   });
@@ -124,11 +133,11 @@ describe("5.7 FieldInputArea execution/accessibility wiring", () => {
   });
 
   it("canonical düğme executing sırasında keyboard-safe disabled + aria-busy olur", () => {
-    expect(input).toContain("canonicalButton.disabled = kaydediliyor;");
+    expect(input).toContain("canonicalButton.disabled = persistenceSuruyor;");
     expect(input).toContain(
-      'canonicalButton.setAttribute("aria-busy", kaydediliyor ? "true" : "false")',
+      'canonicalButton.setAttribute("aria-busy", persistenceSuruyor ? "true" : "false")',
     );
-    expect(input).toContain("aria-busy={kaydediliyor}");
+    expect(input).toContain("aria-busy={persistenceSuruyor}");
   });
 
   it("reduced-motion spinner'ı durdurur", () => {

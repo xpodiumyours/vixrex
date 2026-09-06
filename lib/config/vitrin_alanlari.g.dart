@@ -383,6 +383,7 @@ const List<VitrinAlani> vitrinAlanlari = [
     etiket: 'Galeri Buton Bağlantısı',
     kolon: 'gallery_action_href',
     bolum: 'gallery',
+    dogrulama: 'ic_baglanti',
   ),
   VitrinAlani(
     anahtar: 'blogUstBaslik',

@@ -500,6 +500,10 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
     neden: "O yazının nereye gideceği — Instagram hesabın veya başka bir sayfan olabilir.",
     kolon: "gallery_action_href",
     bolum: "gallery",
+    // Vitrin içi "#bolum" bağlantısına izin verilen TEK alan. Bu bilgi
+    // doğrulayıcıda alan ADI kontrolü olarak durmaz — şemadan okunur;
+    // aksi halde "yeni alan kod değiştirmeden eklenir" kuralı bozulur.
+    dogrulama: "ic_baglanti",
   },
 
   // ── Blog ──────────────────────────────────────────────────────────────

@@ -59,12 +59,22 @@ const List<String> vixrexMatcherSafeSuffixes = [
   'unde',
   'undan',
   'unden',
+  'yi',
+  'yu',
+  'ye',
+  'ya',
+  'yim',
+  'yum',
+  'yin',
+  'yun',
 ];
 const Map<String, List<String>> vixrexMatcherExactFormsByField = {
   'il': ['ili'],
   'ilce': ['ilceyi', 'ilcemi'],
-  'mahalle': ['mahalleyi', 'mahallemi'],
+  'mahalle': ['mahalleyi', 'mahallemi', 'semti', 'semtimi'],
   'logo': ['logoyu', 'logomu'],
   'isletmeTuru': ['turunu', 'turumu'],
   'website': ['sitemi', 'siteyi', 'websiteyi'],
+  'puanGoster': ['puani', 'puanlari'],
+  'kapakGorseli': ['kapagi', 'kapagini'],
 };

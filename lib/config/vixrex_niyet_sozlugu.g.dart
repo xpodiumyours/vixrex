@@ -62,6 +62,8 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
       'vurgu metni',
       'rozet metni',
       'badge',
+      'üstteki küçük yazı',
+      'üst yazı',
     ],
     ornekIfadeler: [
       'Rozeti \'Kadıköy\'ün En İyisi\' yap',
@@ -218,6 +220,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
       'iletişim numarası',
       'gsm',
       'whatsapp hattı',
+      'iletişim numaram',
     ],
     ornekIfadeler: [
       'WhatsApp numaramı 0555 123 45 67 yap',
@@ -298,7 +301,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
     kolon: 'province_name',
     bolum: 'contact',
     beklenenVeriTipi: 'metin (zorunlu, max 60)',
-    esAnlamlar: ['il', 'şehir', 'kent', 'bulunduğum il'],
+    esAnlamlar: ['il', 'şehir', 'kent', 'bulunduğum il', 'şehrim'],
     ornekIfadeler: [
       'İli İstanbul yap',
       'Şehrimi {deger} olarak değiştir',
@@ -429,6 +432,8 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
       'maps linki',
       'konum linki',
       'yol tarifi linki',
+      'maps bağlantısı',
+      'google maps linki',
     ],
     ornekIfadeler: [
       'Harita linkini {deger} yap',
@@ -663,6 +668,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
       'bizim fotoğraf',
       'ekip fotoğrafı',
       'dükkan fotoğrafı hakkında',
+      'hakkında fotoğrafı',
     ],
     ornekIfadeler: [
       'Hakkımızda görselini {deger} yap',
@@ -681,6 +687,8 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
       'fotoğraf alt yazısı',
       'resim altı yazısı',
       'hakkımızda görsel altı',
+      'fotoğraf altı yazısı',
+      'görsel altı yazı',
     ],
     ornekIfadeler: [
       'Görsel alt yazısını {deger} yap',
@@ -730,6 +738,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
       'galeri buton yazısı',
       'galeri düğme metni',
       'galeri aksiyon metni',
+      'galeri düğme yazısı',
     ],
     ornekIfadeler: [
       'Galeri buton metnini {deger} yap',
@@ -828,6 +837,8 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
       'sss açıklama',
       'sık sorulan sorular açıklaması',
       'sorular açıklaması',
+      'sss bölüm açıklaması',
+      'sıkça sorulanlar açıklaması',
     ],
     ornekIfadeler: [
       'SSS açıklamasını {deger} yap',
@@ -847,6 +858,8 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
       'puanı göster',
       'rating göster',
       'yıldız puanı göster',
+      'rating',
+      'yıldız puanı',
     ],
     ornekIfadeler: [
       'Puanı göster',
@@ -869,6 +882,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
       'navigasyon göster',
       'yol tarifi',
       'yol tarifini',
+      'navigasyon',
     ],
     ornekIfadeler: [
       'Yol tarifini göster',

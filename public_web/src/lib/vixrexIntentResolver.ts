@@ -42,10 +42,33 @@ function classRank(matchClass: VixrexMatchClass): number {
   }
 }
 
+// Türkçe ünsüz yumuşaması: sonu k/p/t ile biten kelime sesli harfle
+// başlayan ek alınca son harf yumuşar — "başlık" → "başlığı",
+// "kapak" → "kapağı". Normalizasyon sonrası karşılıklar: k→g, p→b, t→d.
+//
+// Bu kural olmadan başlık/kapak gibi alanların ÇEKİMLİ hâli hiç
+// tanınmıyordu; esnaf "Galeri üst başlığı ... yap" yazınca motor
+// alanı bulamıyordu (Flutter tarafında aynı kural uygulanır).
+const YUMUSAMA: ReadonlyArray<readonly [string, string]> = [
+  ["k", "g"],
+  ["p", "b"],
+  ["t", "d"],
+];
+
+function suffixIzinli(inputToken: string, govde: string): boolean {
+  if (!inputToken.startsWith(govde) || inputToken.length <= govde.length) return false;
+  return SAFE_SUFFIXES.includes(inputToken.slice(govde.length));
+}
+
 function isSafeInflection(inputToken: string, aliasToken: string): boolean {
-  if (!inputToken.startsWith(aliasToken) || inputToken.length <= aliasToken.length) return false;
-  const suffix = inputToken.slice(aliasToken.length);
-  return SAFE_SUFFIXES.includes(suffix);
+  if (suffixIzinli(inputToken, aliasToken)) return true;
+
+  const son = aliasToken.slice(-1);
+  for (const [sert, yumusak] of YUMUSAMA) {
+    if (son !== sert) continue;
+    if (suffixIzinli(inputToken, aliasToken.slice(0, -1) + yumusak)) return true;
+  }
+  return false;
 }
 
 function collectFormMatches(
@@ -61,12 +84,26 @@ function collectFormMatches(
   const out: Candidate[] = [];
 
   for (let start = 0; start <= inputTokens.length - aliasTokens.length; start += 1) {
+    // Çok kelimeli ifadelerde ek YALNIZ son kelimede olmayabilir:
+    // "Mağazamın adı ..." / "SSS bölüm açıklamasını ...". Baştaki
+    // kelimeler de ya birebir ya da AYNI güvenli ek listesiyle çekimli
+    // eşleşebilir; serbest benzerlik yine yasak.
     let prefixMatches = true;
+    let prefixInflected = false;
     for (let offset = 0; offset < aliasTokens.length - 1; offset += 1) {
-      if (inputTokens[start + offset] !== aliasTokens[offset]) {
-        prefixMatches = false;
-        break;
+      const inputToken = inputTokens[start + offset];
+      const aliasToken = aliasTokens[offset];
+      if (inputToken === aliasToken) continue;
+      if (
+        allowInflected &&
+        aliasToken.length >= CONTRACT.minInflectedAliasLength &&
+        isSafeInflection(inputToken, aliasToken)
+      ) {
+        prefixInflected = true;
+        continue;
       }
+      prefixMatches = false;
+      break;
     }
     if (!prefixMatches) continue;
 
@@ -78,7 +115,13 @@ function collectFormMatches(
       out.push({
         alan,
         matchedAlias: form,
-        matchClass: aliasTokens.length > 1 ? "exact_phrase" : "exact_token",
+        // Baştaki kelimelerden biri çekimliyse bu artık birebir ifade
+        // değildir; sınıf dürüstçe "inflected_safe" kalır.
+        matchClass: prefixInflected
+          ? "inflected_safe"
+          : aliasTokens.length > 1
+            ? "exact_phrase"
+            : "exact_token",
         startToken: start,
         endToken: end,
         aliasLength: normalizedAliasLength,
@@ -121,10 +164,17 @@ function overlaps(a: Candidate, b: Candidate): boolean {
 
 function selectSafeMatches(candidates: Candidate[]): VixrexIntentMatch[] {
   const sorted = [...candidates].sort((a, b) => {
-    const rank = classRank(b.matchClass) - classRank(a.matchClass);
-    if (rank !== 0) return rank;
+    // ÖNCE KAPSAM, SONRA EŞLEŞME SINIFI.
+    //
+    // Eskiden sınıf (exact_token) her şeyin önündeydi; bu yüzden
+    // "Kategori başlığını ... yap" cümlesinde tek kelimelik `kategori`
+    // tam eşleşmesi, iki kelimelik `kategori başlığı` çekimli eşleşmesini
+    // yeniyordu ve motor YANLIŞ ALANI değiştiriyordu. Daha uzun ve daha
+    // kesin ifade her zaman önce gelir; sınıf yalnız eşit kapsamda ayırır.
     const tokens = b.tokenCount - a.tokenCount;
     if (tokens !== 0) return tokens;
+    const rank = classRank(b.matchClass) - classRank(a.matchClass);
+    if (rank !== 0) return rank;
     const length = b.aliasLength - a.aliasLength;
     if (length !== 0) return length;
     const start = a.startToken - b.startToken;

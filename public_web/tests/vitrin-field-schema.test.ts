@@ -175,9 +175,19 @@ describe("alan doğrulama — tek fonksiyon, alan başına dallanma yok", () => 
     expect(validateField("enlem", "sayi degil").ok).toBe(false);
   });
 
-  it("açık/kapalı yalnız boolean kabul eder", () => {
+  it("açık/kapalı boolean + dar esnaf sözlüğü kabul eder, serbest metni reddeder", () => {
+    // Akıllı Motor validator LOCK, madde 4: "Next acikKapali + adres
+    // davranışını ortak sözleşmeye hizala." Flutter zaten "aç/kapat/göster"
+    // gibi esnaf ifadelerini boolean'a çeviriyordu; iki taraf aynı ham
+    // değerde aynı canonical sonucu üretmek zorunda.
     expect(validateField("puanGoster", true).ok).toBe(true);
-    expect(validateField("puanGoster", "evet").ok).toBe(false);
+    expect(validateField("puanGoster", false).ok).toBe(true);
+    expect(validateField("puanGoster", "evet").ok).toBe(true);
+    expect(validateField("puanGoster", "kapat").ok).toBe(true);
+
+    // Sözlük DAR kalır: serbest metin hâlâ reddedilir.
+    expect(validateField("puanGoster", "belki").ok).toBe(false);
+    expect(validateField("puanGoster", "aç kapa").ok).toBe(false);
   });
 });
 
@@ -229,7 +239,11 @@ describe("Commit 8 kabul ölçütü — yeni alan kod değişikliği istemez", (
     // eklendiğinde bu test onu kendiliğinden kapsar.
     for (const f of VITRIN_FIELDS) {
       const ornek =
-        f.tip === "acikKapali"
+        // Validator LOCK madde 6: sunucu sınırı artık Flutter ile aynı adres
+        // kalite kuralını uyguluyor; örnek değer de gerçek bir adres olmalı.
+        f.dogrulama === "adres"
+          ? "Moda Caddesi No 12 Kadıköy"
+          : f.tip === "acikKapali"
           ? true
           : f.tip === "sayi"
           ? 0
