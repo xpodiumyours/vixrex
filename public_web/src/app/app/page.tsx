@@ -39,6 +39,17 @@ interface BootstrapOwnerState {
   reason?: string;
 }
 
+function flowStateCreationDraft(
+  flowState: Record<string, unknown> | null
+): Record<string, unknown> {
+  if (!flowState || flowState.flow_type !== "create") return {};
+  const selectedTemplate =
+    typeof flowState.selected_template === "string"
+      ? flowState.selected_template.trim()
+      : "";
+  return selectedTemplate ? { kategori: selectedTemplate } : {};
+}
+
 export const dynamic = "force-dynamic";
 
 export default function AppPage() {
@@ -51,7 +62,6 @@ export default function AppPage() {
   const [yeniAd, setYeniAd] = useState("");
   const [hata, setHata] = useState("");
   const [flowState, setFlowState] = useState<Record<string, unknown> | null>(null);
-  const [showNameForm, setShowNameForm] = useState(false);
   const [workingDraft, setWorkingDraft] = useState<Record<string, unknown>>({});
 
   // Ana sayfadaki asistanla konuşulduysa cevaplar tarayıcı oturumunda
@@ -166,13 +176,11 @@ export default function AppPage() {
       return;
     }
 
-    // Mağaza yok: akış varsa devam, yoksa ortak karşılama (PR2)
+    // Mağaza yok: flow state varsa da yoksa da aynı Flutter-parite creation paneli açılır.
     setStores([]);
     if (showLoading) setYukleniyor(false);
     return;
   }, [magazaDetayiniGetir]);
-
-
 
   useEffect(() => {
     async function init() {
@@ -225,68 +233,6 @@ export default function AppPage() {
     init();
   }, [router, magazalariGetir]);
 
-  async function magazaOlustur(e: React.FormEvent) {
-    e.preventDefault();
-    setHata("");
-
-    if (!yeniAd.trim()) {
-      setHata("İşletme adı zorunludur.");
-      return;
-    }
-
-    setOlusturuyor(true);
-
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (!session) {
-      setHata("Oturum bulunamadı.");
-      setOlusturuyor(false);
-      return;
-    }
-
-    const res = await fetch("/api/create-store", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${session.access_token}`,
-      },
-      // Ana sayfadaki asistanla konuşan kullanıcı kategori, WhatsApp ve
-      // adresi zaten söylemişti. Onları burada tekrar sormak, "kaldığın
-      // yerden devam edeceğiz" sözünü tutmamak olurdu.
-      body: JSON.stringify({ name: yeniAd.trim(), ...asistanTaslagi }),
-    });
-
-    const sonuc = await res.json();
-    setOlusturuyor(false);
-
-    if (!res.ok) {
-      setHata(sonuc.hata || "Vitrin oluşturulamadı.");
-      return;
-    }
-
-    // Taslak kullanıldı, yerinde bırakma: ikinci bir vitrin kurulmaya
-    // çalışılırsa eski cevaplar sessizce geri gelirdi.
-    taslagiTemizle();
-    setAsistanTaslagi({});
-
-    // Vitrin oluşturuldu — sahip oturumunu aç ve vitrine git.
-    //
-    // Buradaki eski "basitleştirme" çalışmıyordu: `edit_token`'ı doğrudan
-    // `ocode` olarak gönderiyordu. `/api/owner-session` ise
-    // `consume_owner_session` çağırıyor ve TEK KULLANIMLIK KOD bekliyor —
-    // canlıda doğrulandı, `edit_token` kabul etmiyor. Kod bulunamadığı
-    // için çerez hiç kurulmuyordu ve bütün ürün işlemleri 401 alıyordu.
-    if (sonuc.slug) {
-      if (sonuc.yonlendir) {
-        await fetch(sonuc.yonlendir, { redirect: "manual" });
-      } else {
-        await sahipOturumuAc();
-      }
-      router.push(`/v/${sonuc.slug}`);
-    }
-  }
-
   if (yukleniyor) {
     return (
       <main className="owner-shell flex items-center justify-center px-4">
@@ -310,6 +256,8 @@ export default function AppPage() {
     );
   }
 
+  const flowDraft = flowStateCreationDraft(flowState);
+
   return (
     <main className="owner-shell">
       {/* Flutter'daki Vitrinim ekranıyla hizalı: ikinci üst çubuk (Vixrex/Vitrinim +
@@ -320,111 +268,62 @@ export default function AppPage() {
         {hata ? <p className="owner-error mb-6 text-sm" role="alert">{hata}</p> : null}
 
         {stores.length === 0 ? (
-          flowState ? (
-            <section className="owner-card p-5 sm:p-8" aria-labelledby="vitrin-devam-title">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--owner-secondary)]">Devam Ediyor</p>
-                <h2 id="vitrin-devam-title" className="mt-2 text-xl font-bold text-[var(--owner-text)]">
-                  Kurulumun kaldığı yerden devam ediyor
-                </h2>
-                <p className="mt-2 max-w-lg text-sm leading-6 text-[var(--owner-muted)]">
-                  {flowState && typeof flowState === "object" && "current_step" in flowState
-                    ? `Sıradaki adım: ${String((flowState as { current_step?: string }).current_step ?? "devam")}`
-                    : "Önceki adımda bıraktığın yerden devam edebilirsin."}
-                </p>
-                {flowState && typeof flowState === "object" && "selected_template" in flowState && (flowState as { selected_template?: string }).selected_template ? (
-                  <p className="mt-2 text-sm text-[var(--owner-text-alt)]">Seçilen şablon: {(flowState as { selected_template: string }).selected_template}</p>
-                ) : null}
-              </div>
-              <div className="mt-6">
-                <button
-                  type="button"
-                  onClick={() => setShowNameForm(true)}
-                  className="owner-button-primary"
-                >
-                  Devam Et
-                </button>
-              </div>
-              {showNameForm ? (
-                <form onSubmit={magazaOlustur} className="mt-6 space-y-4" aria-busy={olusturuyor}>
-                  <div className="space-y-2">
-                    <label htmlFor="isletme-adi" className="owner-label">İşletme Adı</label>
-                    <input
-                      id="isletme-adi"
-                      type="text"
-                      placeholder="Ör. Aymira Giyim"
-                      value={yeniAd}
-                      onChange={(e) => setYeniAd(e.target.value)}
-                      className="owner-input text-sm"
-                      autoComplete="organization"
-                      required
-                    />
-                  </div>
-                  <button type="submit" disabled={olusturuyor} className="owner-button-primary w-full">
-                    {olusturuyor ? "Vitrin oluşturuluyor…" : "Vitrin Oluştur"}
-                  </button>
-                </form>
-              ) : null}
-            </section>
-          ) : (
-            // Flutter'da bu ekranda "Hazır Vitrin Seç / Bakınıyorum / Aşağıda
-            // formu doldur" kartı yok — doğrudan Vixrex Oluştur ile başlıyor.
-            // Hazır vitrin seçimi Keşfet'te duruyor.
-            <div className="space-y-6">
-              <VitrinimEditor
-                store={{ slug: "taslak", name: yeniAd, is_published: false, products: [], product_categories: [] }}
-                initialDraft={{ ...asistanTaslagi, ...workingDraft, name: yeniAd }}
-                isCreationMode
-                onCreate={async (draft) => {
-                  const ad = String((draft as Record<string, unknown>).name || yeniAd || "").trim();
-                  if (!ad) {
-                    setHata("İşletme adı zorunludur.");
+          // Flutter paritesi: flowState varlığı ayrı bir ekran üretmez. Akıştan
+          // gelen güvenli alanlar yalnız creation draft'ını ön doldurur.
+          <div className="space-y-6">
+            <VitrinimEditor
+              store={{ slug: "taslak", name: yeniAd, is_published: false, products: [], product_categories: [] }}
+              initialDraft={{ ...flowDraft, ...asistanTaslagi, ...workingDraft, name: yeniAd }}
+              isCreationMode
+              onCreate={async (draft) => {
+                const ad = String((draft as Record<string, unknown>).name || yeniAd || "").trim();
+                if (!ad) {
+                  setHata("İşletme adı zorunludur.");
+                  return;
+                }
+                setOlusturuyor(true);
+                setHata("");
+                try {
+                  const { data: { session } } = await supabase.auth.getSession();
+                  if (!session) {
+                    setHata("Oturum bulunamadı.");
                     return;
                   }
-                  setOlusturuyor(true);
-                  setHata("");
-                  try {
-                    const { data: { session } } = await supabase.auth.getSession();
-                    if (!session) {
-                      setHata("Oturum bulunamadı.");
-                      return;
-                    }
-                    const payload: Record<string, unknown> = { name: ad, ...asistanTaslagi };
-                    // VitrinimEditor draft'ı kolon isimleriyle gelir — direkt ekle
-                    for (const [k, v] of Object.entries(draft as Record<string, unknown>)) {
-                      if (v != null && String(v).trim() !== "") payload[k] = v;
-                    }
-                    const res = await fetch("/api/create-store", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
-                      body: JSON.stringify(payload),
-                    });
-                    const sonuc = await res.json();
-                    if (!res.ok) {
-                      setHata(sonuc.hata || "Vitrin oluşturulamadı.");
-                      return;
-                    }
-                    taslagiTemizle();
-                    setAsistanTaslagi({});
-                    if (sonuc.slug) {
-                      if (sonuc.yonlendir) await fetch(sonuc.yonlendir, { redirect: "manual" });
-                      else await sahipOturumuAc();
-                      router.push(`/v/${sonuc.slug}`);
-                    } else {
-                      await magazalariGetir();
-                    }
-                  } finally {
-                    setOlusturuyor(false);
+                  const payload: Record<string, unknown> = { name: ad, ...asistanTaslagi };
+                  // VitrinimEditor draft'ı kolon isimleriyle gelir — direkt ekle
+                  for (const [k, v] of Object.entries(draft as Record<string, unknown>)) {
+                    if (v != null && String(v).trim() !== "") payload[k] = v;
                   }
-                }}
-                onRefresh={async () => {
-                  await magazalariGetir(false);
-                }}
-              />
-              {hata ? <p className="owner-error text-sm" role="alert">{hata}</p> : null}
-              {olusturuyor ? <p className="text-sm text-[var(--owner-muted)]" role="status">Vitrin oluşturuluyor…</p> : null}
-            </div>
-          )
+                  const res = await fetch("/api/create-store", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+                    body: JSON.stringify(payload),
+                  });
+                  const sonuc = await res.json();
+                  if (!res.ok) {
+                    setHata(sonuc.hata || "Vitrin oluşturulamadı.");
+                    return;
+                  }
+                  taslagiTemizle();
+                  setAsistanTaslagi({});
+                  if (sonuc.slug) {
+                    if (sonuc.yonlendir) await fetch(sonuc.yonlendir, { redirect: "manual" });
+                    else await sahipOturumuAc();
+                    router.push(`/v/${sonuc.slug}`);
+                  } else {
+                    await magazalariGetir();
+                  }
+                } finally {
+                  setOlusturuyor(false);
+                }
+              }}
+              onRefresh={async () => {
+                await magazalariGetir(false);
+              }}
+            />
+            {hata ? <p className="owner-error text-sm" role="alert">{hata}</p> : null}
+            {olusturuyor ? <p className="text-sm text-[var(--owner-muted)]" role="status">Vitrin oluşturuluyor…</p> : null}
+          </div>
         ) : (
           <section aria-labelledby="vitrinim-title">
             <h2 id="vitrinim-title" className="sr-only">Vitrinim</h2>
