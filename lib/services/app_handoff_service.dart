@@ -22,11 +22,17 @@ class AppHandoffService {
 
     final uri = Uri.base;
     final fragment = uri.fragment;
+    final handoffZorunlu = uri.queryParameters['app_handoff'] == 'required';
     final handoffVar =
         fragment.contains('access_token=') &&
         fragment.contains('refresh_token=') &&
         fragment.contains('token_type=');
-    if (!handoffVar) return AppHandoffResult.yok;
+
+    if (!handoffVar) {
+      return handoffZorunlu
+          ? AppHandoffResult.basarisiz
+          : AppHandoffResult.yok;
+    }
 
     SupabaseClient? geciciClient;
     try {
@@ -60,7 +66,8 @@ class AppHandoffService {
       return AppHandoffResult.basarisiz;
     } finally {
       // Tokenlar basarili ya da basarisiz denemeden sonra adres cubugunda
-      // tutulmaz. Normal query/path korunur; yalniz fragment temizlenir.
+      // tutulmaz. Query/path korunur; app_handoff=required ise olasi tekrar
+      // yuklemede de anonim hesap acilmasini engellemeye devam eder.
       temizleAppHandoffAdresi();
       await geciciClient?.dispose();
     }
