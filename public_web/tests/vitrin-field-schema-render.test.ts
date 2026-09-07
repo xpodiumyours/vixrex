@@ -77,7 +77,6 @@ describe("F0 — bölüm ve form iskeleti kilidi (Flutter = Next.js)", () => {
   });
 
   it("VitrinimEditor 5 bölüm başlığı Flutter ile birebir", () => {
-    // Flutter: lib/screens/my_vitrin/sections/vitrin_form_section.dart:217
     const flutterBasliklar = ["Kimlik", "İletişim", "Konum ve saatler", "Görseller", "İçerik ve SEO"];
     for (const baslik of flutterBasliklar) {
       expect(flutterFormSource).toContain(`'${baslik}'`);
@@ -86,35 +85,28 @@ describe("F0 — bölüm ve form iskeleti kilidi (Flutter = Next.js)", () => {
   });
 
   it("VitrinimEditor her bölümün zorunlu işareti Flutter ile eşit (ilk 3 bölüm zorunlu)", () => {
-    // Flutter form_accordion isRequired: index <= locationSectionIndex (2)
-    // Next: SECTIONS 5 bölümden ilk 3'ü required:true (Kimlik/İletişim/Konum)
-    // Not: alan seviyesinde de required:true var, o yüzden bölüm başlığına göre sayarız
     const bolumZorunluSayisi = (vitrinEditorSource.match(/title:\s*"(?:Kimlik|İletişim|Konum ve saatler)",\s*\n\s*required:\s*true/g) || []).length;
     expect(bolumZorunluSayisi).toBe(3);
     expect(flutterFormSource).toContain("isRequired: index <= MyVitrinState.locationSectionIndex");
   });
 
-  it("F2 — VitrinimEditor eksik alanlar eklendi (il/ilce/mahalle/logo/enlem/boylam)", () => {
-    // F2: Flutter paritesi için Next’e taşınması kararlaştırılan 6 alan
-    for (const key of ["il", "ilce", "mahalle", "logo", "enlem", "boylam"]) {
+  it("F2 — zorunlu konum alanları ve GPS akışı Next.js Vitrinim'e bağlıdır", () => {
+    // Güncel Flutter Vitrinim il/ilçe/adres/GPS'i doğrudan gösterir.
+    // Logo, mahalle ve ham koordinatları ekranda görünür tutmak artık parite
+    // sözleşmesi değildir; bu alanların veri şemasında bulunması ayrı konudur.
+    for (const key of ["il", "ilce", "adres"]) {
       expect(vitrinEditorSource, `VitrinimEditor ${key} içermeli`).toContain(`key: "${key}"`);
     }
-    // GPS butonu ve reverse-geocode entegrasyonu
     expect(vitrinEditorSource).toContain("konumuAl");
     expect(vitrinEditorSource).toContain("gpsAdresiniCoz");
-    // Logo upload genelleştirildi
-    expect(vitrinEditorSource).toContain('uploadGorsel');
-    // Progress ve missing listte yeni zorunlu alanlar
-    expect(vitrinEditorSource).toContain('count(["adres", "il", "ilce"');
-    expect(vitrinEditorSource).toContain('["il", "İl"]');
+    expect(vitrinEditorSource).toContain("gpsOnerisiniKabulEt");
+    expect(vitrinEditorSource).toContain('const adresTamam = ["adres", "il", "ilce"].every');
   });
 
   it("F2b — VitrinimEditor akordeonda inline (modal kaldırıldı)", () => {
-    // F2b: 4 modal editör tek akordeona taşındı — VitrinimEditor artık inline gömer
     for (const comp of ["AboutEditor inline", "CampaignEditor inline", "FaqEditor inline", "MarketplaceEditor inline", "GalleryEditor inline"]) {
       expect(vitrinEditorSource, comp).toContain(comp);
     }
-    // Ayrı pencere butonları artık yok, doğrudan akordeon içinde
     expect(vitrinEditorSource).not.toContain('setActiveEditor("about")');
     expect(vitrinEditorSource).not.toContain('setActiveEditor("gallery")');
   });

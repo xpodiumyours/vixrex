@@ -78,9 +78,12 @@ describe("Vitrinim Flutter Web paritesi", () => {
     expect(next).toContain("/api/category-images?category=");
   });
 
-  it("F0 sözleşmesindeki Next manuel alanları kaybolmaz", () => {
+  it("ilerleme hesabı Flutter'ın güncel alan toplamını kullanır; eski Next ekstra alanlarını saymaz", () => {
+    const progressStart = next.indexOf("const progress = useMemo");
+    const progressEnd = next.indexOf("const addressCompleted");
+    const progressSource = next.slice(progressStart, progressEnd);
     for (const key of ["logo", "mahalle", "enlem", "boylam"]) {
-      expect(next).toContain(`key: "${key}"`);
+      expect(progressSource).not.toContain(`"${key}"`);
     }
   });
 });
