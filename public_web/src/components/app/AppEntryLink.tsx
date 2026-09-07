@@ -13,13 +13,15 @@ type AppEntryLinkProps = Omit<
 };
 
 const APP_TARGET = `${getAppUrl()}/app`;
+const APP_HANDOFF_REQUIRED_TARGET = `${APP_TARGET}?app_handoff=required`;
 
 /**
  * Public Next.js yüzeyinden tek Flutter Web uygulama kabuğuna geçiş.
  *
  * Kalıcı Supabase oturumu varsa sunucudan tek kullanımlık geçiş bağlantısı alır;
- * anonim/misafir kullanıcıyı doğrudan Flutter'a gönderir. Köprü hata verirse
- * kullanıcıyı ölü uçta bırakmaz, normal uygulama girişine düşer.
+ * anonim/misafir kullanıcıyı doğrudan Flutter'a gönderir. Kalıcı kullanıcıda
+ * köprü hata verirse Flutter'a "hesap geçişi gerekli" işaretiyle gider; böylece
+ * uygulama yanlışlıkla yeni anonim hesap açmaz.
  */
 export function AppEntryLink({ children, ...anchorProps }: AppEntryLinkProps) {
   const [geciliyor, setGeciliyor] = useState(false);
@@ -63,12 +65,14 @@ export function AppEntryLink({ children, ...anchorProps }: AppEntryLinkProps) {
         window.location.assign(result.yonlendir);
         return;
       }
-    } catch {
-      // Güvenli yedek yol aşağıda: kullanıcı uygulamaya yine ulaşır ve gerekirse
-      // Flutter kendi giriş ekranından kalıcı hesabını açar.
-    }
 
-    window.location.assign(APP_TARGET);
+      window.location.assign(APP_HANDOFF_REQUIRED_TARGET);
+      return;
+    } catch {
+      // Kalıcı hesaptan uygulamaya geçerken köprü kurulamadıysa normal misafir
+      // girişine düşürme; Flutter kullanıcıyı tekrar kalıcı girişe yönlendirir.
+      window.location.assign(APP_HANDOFF_REQUIRED_TARGET);
+    }
   }
 
   return (
