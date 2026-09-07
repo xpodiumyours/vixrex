@@ -1,11 +1,11 @@
 "use client";
 
-import { FlutterReferenceOnboarding } from "./FlutterReferenceOnboarding";
+import { LandingAsistanSohbeti } from "./LandingAsistanSohbeti";
 
 /**
- * Telefon mockup'ında ayrı bir onboarding akışı YOK.
- * Flutter Web referansının Next.js karşılığı tek canonical yüzdür:
- * `FlutterReferenceOnboarding`.
+ * Telefon mockup'ı için ayrı onboarding/adım makinesi üretme.
+ * Flutter Web referansına uyarlanan tek Next.js asistan yüzü
+ * `LandingAsistanSohbeti`dir; bu bileşen yalnız telefon kabuğuna bağlar.
  */
 export function LandingApkAssistant({
   initialName = "",
@@ -15,7 +15,7 @@ export function LandingApkAssistant({
   onClose?: () => void;
 }) {
   return (
-    <FlutterReferenceOnboarding
+    <LandingAsistanSohbeti
       initialName={initialName}
       onClose={onClose}
     />
