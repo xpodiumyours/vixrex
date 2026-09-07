@@ -2,18 +2,18 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Çalışma kuralı — ÖNCE SOR (2026-09-03, Casper)
+## Ortak çalışma standardı (2026-09-07)
 
-Bu repoda hiçbir adımı, hiçbir değişikliği Casper'a sormadan yapma —
-küçük görünse bile. "Şunu düzelteyim mi", "bu iki seçenekten hangisi"
-diye sor, cevabı bekle, sonra uygula. Bir düzeltmenin "doğru" göründüğü
-sana değil ona ait bir karar.
+Önce [AGENTS.md](AGENTS.md) ve [çalışma akışını](docs/calisma-standardi.md)
+oku. Kullanıcının 7 Eylül'de istediği güvenli ve verimli çalışma standardı,
+bu dosyadaki eski "her adımda yeniden sor" kuralının yerini alır.
+Yetkilendirilmiş işi uygulama, doğrulama ve teslimat boyunca sürdür;
+yeni ürün kararı veya istek dışı geri döndürülemez işlem için gerekli
+onayı al. Referansı veya akıllı motor davranışını sessizce değiştirme.
 
-Neden: 2026-09-03'te "Çalışma masası" ekranı bitmeden, onaylanmamış bir
-düzeltmeyle akıllı motorun (serbest cümleden alan çıkaran motor) bir
-parçası sessizce devre dışı bırakıldı ve doğrudan main'e alındı — Casper
-canlıda fark etti, saatlerce token yakıldı, sonuç güvensizlik oldu. Bkz.
-`~/.claude/projects/C--Users-Casper/memory/once-sor-onay-bekle.md`.
+Bu dosyanın aşağıdaki mimari notlarını güncel kodla karşılaştır;
+ortak standart dışındaki eski süreç açıklamalarını güncel doğrulama
+kanıtı sayma.
 
 ### Görsel/UI hatalarında: önce canlı doğrula, sonra "düzelttim" de (2026-09-03, Casper)
 
