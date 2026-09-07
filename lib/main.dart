@@ -88,15 +88,18 @@ Future<void> _initializeSupabase() async {
     if (kDebugMode) debugPrint('[OK] Supabase initialized successfully');
 
     // Public Next.js tarafinda kalici hesabi acik olan kullanici Flutter Web'e
-    // geldiyse once o hesap devralinir. Yalniz devralma yoksa eski anonim
-    // oturum guvencesi calisir; boylece yeni gecici hesap asil hesabin onune
-    // gecmez.
-    final handoffDevralindi = await AppHandoffService.devral(
+    // geldiyse once o hesap devralinir. Gecis baglantisi hic yoksa eski anonim
+    // oturum guvencesi calisir. Gecis baglantisi VAR ama basarisizsa anonim
+    // hesap acilmaz; kullanici yanlislikla bos/sahipsiz bir vitrin durumuna
+    // dusurulmez.
+    final handoffSonucu = await AppHandoffService.devral(
       supabaseUrl: supabaseUrl,
       publishableKey: supabasePublishableKey,
     );
-    if (!handoffDevralindi) {
+    if (handoffSonucu == AppHandoffResult.yok) {
       await _oturumuGuvenceyeAl();
+    } else if (handoffSonucu == AppHandoffResult.basarisiz && kDebugMode) {
+      debugPrint('[WARN] Uygulama gecisi basarisiz; anonim oturum acilmadi');
     }
   } catch (error) {
     if (kDebugMode) debugPrint('[FATAL] Supabase initialize failed: $error');
