@@ -10,6 +10,7 @@ import {
 } from "@/lib/businessCategories";
 import { kategoriSablonuGetir } from "@/lib/categoryTemplates";
 import { kategoriVitrinleriniGetir } from "@/lib/explore";
+import { getAppUrl } from "@/lib/siteUrl";
 
 /**
  * Kategori sayfası (#344).
@@ -130,7 +131,7 @@ export default async function KategoriPage({ params }: Props) {
               ))}
             </ul>
             <a
-              href="/app"
+              href={`${getAppUrl()}/app`}
               className="mt-6 inline-flex rounded-2xl bg-lp-primary px-6 py-3.5 text-[14px] font-black text-lp-on-primary transition-transform hover:-translate-y-0.5"
             >
               Bu Şablonla Başla
