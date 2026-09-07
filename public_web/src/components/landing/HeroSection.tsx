@@ -1,6 +1,10 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { KesfetIkonu, OnayIkonu, IleriOkIkonu, StorefrontIkonu, GirisIkonu } from "@/components/site/icons";
 import { getSiteUrl } from "@/lib/siteUrl";
+import { supabase } from "@/lib/supabase";
 import { PhoneMockup } from "./PhoneMockup";
 import type { MockupProfili } from "./mockupProfilleri";
 
@@ -33,6 +37,34 @@ export function HeroSection({
   onStartAssistant: (initialName: string) => void;
   onChatClose?: () => void;
 }) {
+  const [isUserLoggedIn, setIsUserLoggedIn] = useState(false);
+
+  useEffect(() => {
+    let aktif = true;
+
+    void supabase.auth.getSession().then(({ data }) => {
+      if (aktif) setIsUserLoggedIn(Boolean(data.session?.user));
+    });
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (aktif) setIsUserLoggedIn(Boolean(session?.user));
+    });
+
+    return () => {
+      aktif = false;
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
+
+  async function cikisYap() {
+    await Promise.allSettled([
+      fetch("/api/auth/logout", { method: "POST" }),
+      supabase.auth.signOut(),
+    ]);
+    const { data } = await supabase.auth.getSession();
+    setIsUserLoggedIn(Boolean(data.session?.user));
+  }
+
   // Adres ön eki tek kaynaktan gelir; alan adı bağlandığında bu metin de
   // kendiliğinden düzelir (envanter §4, açık madde 5).
   const adresOneki = `${getSiteUrl().replace(/^https?:\/\//, "")}/v/`;
@@ -71,21 +103,44 @@ export function HeroSection({
           >
             <KesfetIkonu boyut={18} />
           </Link>
-          {/* Giriş Yap — Flutter: rounded-[14px], Icons.login_rounded ikonu */}
-          <Link
-            href="/giris"
-            className="hidden items-center gap-2 rounded-[14px] bg-lp-primary px-4 py-3 text-[12px] font-black text-lp-on-primary transition-colors hover:opacity-90 md:flex"
-          >
-            <GirisIkonu boyut={16} />
-            Giriş Yap
-          </Link>
-          <Link
-            href="/giris"
-            className="flex h-10 w-10 items-center justify-center rounded-[14px] bg-lp-primary text-lp-on-primary md:hidden"
-            aria-label="Giriş Yap"
-          >
-            <GirisIkonu boyut={18} />
-          </Link>
+
+          {isUserLoggedIn ? (
+            <>
+              <button
+                type="button"
+                onClick={cikisYap}
+                className="hidden items-center gap-2 rounded-[14px] bg-lp-surface-soft px-4 py-3 text-[13px] font-black text-lp-text transition-colors hover:bg-lp-surface md:flex"
+              >
+                <GirisIkonu boyut={16} className="-scale-x-100" />
+                Çıkış Yap
+              </button>
+              <button
+                type="button"
+                onClick={cikisYap}
+                className="flex h-10 w-10 items-center justify-center rounded-[14px] border border-lp-border bg-lp-surface-soft text-lp-text md:hidden"
+                aria-label="Çıkış Yap"
+              >
+                <GirisIkonu boyut={18} className="-scale-x-100" />
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/giris"
+                className="hidden items-center gap-2 rounded-[14px] bg-lp-primary px-4 py-3 text-[12px] font-black text-lp-on-primary transition-colors hover:opacity-90 md:flex"
+              >
+                <GirisIkonu boyut={16} />
+                Giriş Yap
+              </Link>
+              <Link
+                href="/giris"
+                className="flex h-10 w-10 items-center justify-center rounded-[14px] bg-lp-primary text-lp-on-primary md:hidden"
+                aria-label="Giriş Yap"
+              >
+                <GirisIkonu boyut={18} />
+              </Link>
+            </>
+          )}
         </div>
       </nav>
       {/* Ambient Mesh Glows — Flutter landing_hero_section.dart:65-100 orta noktası */}
