@@ -4,6 +4,7 @@ import * as Sentry from "@sentry/nextjs";
 import { getSiteUrl } from "@/lib/siteUrl";
 import { CookieConsentRoot } from "@/components/cookie-consent/CookieConsentRoot";
 import { RecaptchaProvider } from "@/components/recaptcha/RecaptchaProvider";
+import { AppShellBoundary } from "@/components/app/AppShellBoundary";
 import "./globals.css";
 
 // 2026-08-26 (#344): fontlar globals.css'in en ustundeki Google Fonts
@@ -34,15 +35,11 @@ export const metadata: Metadata = {
   verification: {
     google: "EDYISkto7FZ88bohG5vwlJJgR4UEqRcL8lkV48cu7t0",
   },
-  // Mitgo/Admitad yayinci dogrulamasi (2026-08-29). Panelde reklam alani
-  // olusturulurken isteniyor; etiket ana sayfanin <head> bolumunde
-  // bulunmazsa alan dogrulanmiyor ve basvuru ilerlemiyor.
   other: {
     "mitgo-verification": "7db678d9-bb04-443d-9502-6c60d868823a",
   },
 };
 
-/** Mobil tarayıcı + Flutter APK WebView için tutarlı ölçek */
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
@@ -64,7 +61,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-[#F4F5F8] dark:bg-[#0B0F13] text-[#182028] dark:text-[#F1F5F9]">
         <Sentry.ErrorBoundary fallback={<p>Bir hata oluştu.</p>}>
           <RecaptchaProvider>
-            {children}
+            <AppShellBoundary>{children}</AppShellBoundary>
           </RecaptchaProvider>
         </Sentry.ErrorBoundary>
         <CookieConsentRoot />
