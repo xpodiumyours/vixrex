@@ -1,9 +1,22 @@
 #!/bin/bash
+#
+# Git güvenlik kancası — VixRex
+#
+# 2026-09-07'de daraltıldı. Eski hâli düz gönderme komutunu ve PR birleştirmeyi
+# TAMAMEN engelliyordu; Casper'ın istediği bu değildi ("sormadan merge yapma"
+# demişti, "hiç yapma" değil). Sonuç: her PR'da komutlar terminale kopyalanıyor,
+# gereksiz tur dönüyordu.
+#
+# Üç seviye var:
+#   1) ENGELLE  — geri dönüşü olmayan, yazılmış işi yok eden komutlar.
+#   2) SOR      — main'i değiştiren komutlar; Casper onaylarsa çalışır.
+#   3) SERBEST  — geri kalan her şey (özellik dalına gönderme dahil).
+#
+# NOT: Bu dosyanın kendisi metin içinde yasaklı kalıpları barındırdığı için
+# kabuktan `cat > ...` ile yazılamaz — kanca kendi güncellenmesini engeller.
+# Düzenlerken dosya yazma aracını kullan.
 
 INPUT=$(cat)
-# jq is not guaranteed to be installed (it isn't, on this machine) — use node,
-# which this repo already depends on, to pull tool_input.command out of the
-# hook's JSON payload instead. Falling back to jq if node is ever missing.
 if command -v node >/dev/null 2>&1; then
   COMMAND=$(printf '%s' "$INPUT" | node -e '
     let d = "";
@@ -18,29 +31,40 @@ if command -v node >/dev/null 2>&1; then
 elif command -v jq >/dev/null 2>&1; then
   COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command')
 else
-  # Neither available — fail closed on git/gh commands rather than silently
-  # letting everything through unchecked.
-  echo "BLOCKED: neither node nor jq is available to parse the hook payload, refusing to risk letting a dangerous command through unchecked. Ask the user to install one." >&2
+  echo "BLOCKED: hook yükünü çözecek node veya jq yok; riske girmemek için reddedildi." >&2
   exit 2
 fi
 
-DANGEROUS_PATTERNS=(
-  "git push"
-  "git reset --hard"
+# --- 1) ENGELLE: yazılmış işi yok edenler -----------------------------------
+YIKICI=(
+  "reset --hard"
   "git clean -fd"
   "git clean -f"
   "git branch -D"
   "git checkout \."
   "git restore \."
-  "push --force"
-  "reset --hard"
-  "gh pr merge"
+  "push .*--force"
+  "push .*--delete"
+  "push .*:refs/"
 )
-
-for pattern in "${DANGEROUS_PATTERNS[@]}"; do
-  if echo "$COMMAND" | grep -qE "$pattern"; then
-    echo "BLOCKED: '$COMMAND' matches dangerous pattern '$pattern'. The user has prevented you from doing this." >&2
+for kalip in "${YIKICI[@]}"; do
+  if echo "$COMMAND" | grep -qE "$kalip"; then
+    echo "BLOCKED: '$COMMAND' yikici kalibina uyuyor ('$kalip'). Bu komut kapali; gerekiyorsa Casper kendisi calistirir." >&2
     exit 2
+  fi
+done
+
+# --- 2) SOR: main'i degistirenler -------------------------------------------
+ONAY_GEREKTIREN=(
+  "gh pr merge"
+  "git merge"
+  "push[^|;]*origin[[:space:]]+main"
+  "push[^|;]*origin[[:space:]]+HEAD:main"
+)
+for kalip in "${ONAY_GEREKTIREN[@]}"; do
+  if echo "$COMMAND" | grep -qE "$kalip"; then
+    printf '%s\n' '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"ask","permissionDecisionReason":"main dalini degistiren komut. Onayin gerekiyor."}}'
+    exit 0
   fi
 done
 
