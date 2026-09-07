@@ -25,7 +25,7 @@ const STORE_ID = "11111111-1111-1111-1111-111111111111";
 const SLUG = "deneme-vitrin";
 
 // Geçerli 64 hex char (32 byte) session token for tests
-const TEST_SESSION_TOKEN = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+const TEST_SESSION_TOKEN = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"; // gitleaks:allow
 
 // V-07 (attack-vectors.md, 2026-08-18): gerçek bir sır DEĞİL — .env.local'de
 // duran yerel/test placeholder'ı, ownerSession.ts'in bunu üretimde

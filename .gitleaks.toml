@@ -1,23 +1,35 @@
-title = "vixrex gitleaks yapılandırması"
+# Gitleaks ayarları — VixRex
+#
+# NEDEN VAR (2026-09-07): Secret taraması yalnız çalışma ağacını değil git
+# geçmişini de tarıyor. Geçmişte iki bulgu var ve ikisi de gerçek kimlik
+# bilgisi değil: sözleşme testlerinin "zayıf/örnek anahtar reddediliyor mu"
+# diye sınamak için bilerek yazdığı sahte sabitler.
+#
+# İzin commit'e bağlı verildi. Dosya yolu (`paths`) ile izin vermek DENENDİ
+# ve geri alındı: gitleaks o dizini taramadan tamamen çıkarıyor — ölçüldü,
+# public_web/tests altına konan gerçek görünümlü bir AWS anahtarı hiç
+# yakalanmadı. Aşağıdaki biçim o kör noktayı yaratmaz; adı geçen iki
+# commit dışında her şey taranmaya devam eder.
+#
+# YENİ test sabiti eklerken: satırın sonuna `// gitleaks:allow` yaz. Bu
+# yorum yeni commit'lerde çalışır ve incelemede görünür — buraya commit
+# eklemek gerekmez.
 
-# Varsayılan gitleaks kural setini KORUR, üstüne yalnız bilinen
-# yanlış-pozitifleri ekler — kural setini değiştirmez/zayıflatmaz.
 [extend]
 useDefault = true
 
-[allowlist]
-description = "Gerçek sır olmayan, bilinen yerel/test placeholder değerleri"
-regexes = [
-  # V-07 (attack-vectors.md, 2026-08-18): OWNER_SESSION_SECRET testinde
-  # KASITLI kullanılan bilinen zayıf değer — ownerSession.ts'in bunu
-  # üretimde reddettiğini doğrular (bkz.
-  # public_web/tests/owner-session-cookie-contract.test.ts,
-  # KNOWN_WEAK_TEST_SECRET). Satır içi `// gitleaks:allow` işareti de var
-  # ama bu değer geçmişteki bir commit'in diff'inde işaretsiz haliyle
-  # kaldığı için (tarama commit commit yapılıyor) global allowlist gerekti.
-  '''yerel-test-gizli-anahtari-en-az-32-karakter''',
-  # V-16 (attack-vectors.md, 2026-08-18): RATE_LIMIT_SECRET testinde
-  # kullanılan uydurma değer — gerçek sır değil (bkz.
-  # public_web/tests/rent-demo-security-fingerprint.test.ts).
-  '''test-secret-0123456789''',
-]
+[[allowlists]]
+description = """
+public_web/tests/owner-session-cookie-contract.test.ts — TEST_SESSION_TOKEN:
+64 hex karakterlik sahte oturum jetonu. Owner çerezinin imza doğrulamasını
+sınamak için kasıtlı sabit.
+"""
+commits = ["8316f4259720fb351367f9b1ff95011a7832d75e"]
+
+[[allowlists]]
+description = """
+public_web/tests/rent-demo-security-fingerprint.test.ts — RATE_LIMIT_SECRET
+olarak verilen "test-secret-..." değeri. IP'nin ham dönmediğini sınamak için
+kasıtlı sabit.
+"""
+commits = ["a2bfc037945a1d723e6b4d473d1f700400f8f509"]

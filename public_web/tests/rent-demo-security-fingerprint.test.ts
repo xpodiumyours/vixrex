@@ -12,7 +12,7 @@ describe("fingerprintClient", () => {
   });
 
   it("RATE_LIMIT_SECRET varsa HMAC ile hash'ler — ham IP asla dönmez", () => {
-    vi.stubEnv("RATE_LIMIT_SECRET", "test-secret-0123456789");
+    vi.stubEnv("RATE_LIMIT_SECRET", "test-secret-0123456789"); // gitleaks:allow
     const sonuc = fingerprintClient("1.2.3.4");
     expect(sonuc).not.toBe("1.2.3.4");
     expect(sonuc).toMatch(/^[0-9a-f]{64}$/);
