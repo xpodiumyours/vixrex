@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     return noStoreJson({ hata: "Hesabın e-posta adresi bulunamadı." }, 409);
   }
 
-  const appTarget = `${getAppUrl()}/app`;
+  const appTarget = `${getAppUrl()}/app?app_handoff=required`;
   const { data: linkData, error: linkError } =
     await getSupabaseAdmin().auth.admin.generateLink({
       type: "magiclink",
