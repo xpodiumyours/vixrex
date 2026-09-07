@@ -60,19 +60,21 @@ export function FeaturesSection() {
           {KARTLAR.map((kart) => (
             <article
               key={kart.baslik}
-              className="w-full rounded-[28px] border-[1.2px] border-lp-border/85 bg-lp-surface p-6 shadow-lp-card sm:w-[calc(50%-9px)] lg:w-[calc(25%-14px)]"
+              className="flex w-full items-start gap-[15px] rounded-[28px] border-[1.2px] border-lp-border/85 bg-lp-surface p-6 shadow-lp-card min-[729px]:block min-[729px]:w-[calc(50%-9px)] min-[1089px]:w-[calc(25%-14px)] min-[1089px]:transition-transform min-[1089px]:duration-[220ms] min-[1089px]:ease-out min-[1089px]:hover:-translate-y-[6px] min-[1089px]:hover:scale-[1.01] motion-reduce:transform-none motion-reduce:transition-none"
             >
               <span
-                className={`flex h-[54px] w-[54px] items-center justify-center rounded-[18px] bg-current/15 ${kart.renk}`}
+                className={`flex h-[54px] w-[54px] shrink-0 items-center justify-center rounded-[18px] bg-current/15 ${kart.renk}`}
               >
                 {kart.ikon}
               </span>
-              <h3 className="mt-[18px] text-[22px] font-black leading-[1.15] tracking-[-0.6px] text-lp-text">
-                {kart.baslik}
-              </h3>
-              <p className="mt-2.5 text-[16px] font-semibold leading-[1.6] text-lp-text-alt">
-                {kart.aciklama}
-              </p>
+              <div className="min-w-0 flex-1">
+                <h3 className="text-[22px] font-black leading-[1.15] tracking-[-0.6px] text-lp-text min-[729px]:mt-[18px]">
+                  {kart.baslik}
+                </h3>
+                <p className="mt-2.5 text-[16px] font-semibold leading-[1.6] text-lp-text-alt">
+                  {kart.aciklama}
+                </p>
+              </div>
             </article>
           ))}
         </div>
