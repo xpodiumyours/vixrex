@@ -27,7 +27,9 @@ MANIFEST_REPO_PATH = ".github/parity/contracts.json"
 GATE_PATHS = {
     MANIFEST_REPO_PATH,
     ".github/workflows/parity.yml",
+    ".github/workflows/teslimat.yml",
     ".github/scripts/parity_guard.py",
+    ".github/scripts/parity_delivery_guard.py",
     ".github/scripts/tests/test_parity_guard.py",
     ".github/scripts/changed_surfaces.py",
     ".github/scripts/tests/test_changed_surfaces.py",
