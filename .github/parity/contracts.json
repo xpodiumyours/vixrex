@@ -1,0 +1,72 @@
+{
+  "version": 1,
+  "reference": "Flutter Web",
+  "reference_branch": "main",
+  "reference_commit": "cb0111eadd503106e1477bbae798abdf6af2bbb7",
+  "policy": {
+    "allow_unlisted_differences": false,
+    "implementation_may_edit_oracle": false,
+    "implementation_may_edit_gate": false,
+    "unverified_behavior": "BLOCK"
+  },
+  "contracts": [
+    {
+      "id": "landing-onboarding-welcome",
+      "description": "Landing telefon maketi karşılaması Flutter onboarding karşılama akışını izler.",
+      "target_paths": [
+        "public_web/src/components/landing/LandingApkAssistant.tsx"
+      ],
+      "oracle_git_blobs": {
+        "shared/vixrex_mesajlar.json": "aec7aef2de522268b246f13cd7454ad24c1af631",
+        "test/onboarding_niyet_akis_test.dart": "8bb048ef7e21e147aef93b919384130c0db896e7",
+        "lib/screens/vixrex_onboarding_chat_screen.dart": "eadd2722173b6e3272dfd731a23dad37531afd81"
+      },
+      "oracle_assertions": {
+        "shared/vixrex_mesajlar.json": [
+          "\"id\": \"hazir_vitrin_sec\"",
+          "\"etiket\": \"Hazır Vitrin Seç\"",
+          "\"id\": \"sifirdan_olustur\"",
+          "\"etiket\": \"Sıfırdan Oluştur\"",
+          "\"id\": \"bakiniyorum\"",
+          "\"etiket\": \"Bakınıyorum\""
+        ],
+        "test/onboarding_niyet_akis_test.dart": [
+          "karşılamada üç hızlı seçenek duruyor",
+          "Hazır Vitrin Seç",
+          "Sıfırdan Oluştur",
+          "Bakınıyorum",
+          "Hazır Vitrin Seç niyet sorusunu açar"
+        ],
+        "lib/screens/vixrex_onboarding_chat_screen.dart": [
+          "hazir_vitrin_sec",
+          "sifirdan_olustur",
+          "bakiniyorum"
+        ]
+      },
+      "flutter_tests": [
+        "test/onboarding_niyet_akis_test.dart"
+      ],
+      "browser": {
+        "enabled": true,
+        "route": "/",
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "scope_text": "Hızlı Seçenekler",
+        "button_oracle_paths": [
+          "shared/vixrex_mesajlar.json",
+          "test/onboarding_niyet_akis_test.dart"
+        ],
+        "expected_buttons": [
+          "Hazır Vitrin Seç",
+          "Sıfırdan Oluştur",
+          "Bakınıyorum"
+        ],
+        "forbidden_buttons": [
+          "Evet, Oluşturalım"
+        ]
+      }
+    }
+  ]
+}
