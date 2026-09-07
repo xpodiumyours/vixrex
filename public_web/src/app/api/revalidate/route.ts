@@ -64,8 +64,10 @@ export async function POST(req: NextRequest) {
     const revalidated: string[] = [];
 
     for (const tag of tags) {
-      // Next.js 16: revalidateTag(tag, profile) — profile "max" = hemen yenile
-      revalidateTag(tag, "max");
+      // Next.js 16: expire: 0 etiketi hemen stale yapar; sonraki istek
+      // eski değeri sunmadan kaynağı yeniden doğrular. Flutter değişikliği
+      // sonrası web vitrininin ilk istekte eski cache göstermesini engeller.
+      revalidateTag(tag, { expire: 0 });
       revalidated.push(`tag:${tag}`);
     }
 
