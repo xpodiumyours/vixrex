@@ -1,12 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { guvenliDonusYolu } from "@/lib/guvenliDonus";
 
 export const dynamic = "force-dynamic";
+
+const donusYoluDegisikligiYok = () => () => {};
+const varsayilanDonusYolu = () => "/app";
+
+function mevcutDonusYolu() {
+  const aday = new URLSearchParams(window.location.search).get("next");
+  return guvenliDonusYolu(aday);
+}
 
 /** Flutter auth_screen.dart — Giriş sekmesi */
 export default function GirisPage() {
@@ -16,13 +24,11 @@ export default function GirisPage() {
   const [sifreGoster, setSifreGoster] = useState(false);
   const [hata, setHata] = useState("");
   const [gonderiliyor, setGonderiliyor] = useState(false);
-  const [sonrakiYol, setSonrakiYol] = useState("/app");
-
-  useEffect(() => {
-    const aday = new URLSearchParams(window.location.search).get("next");
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- next parametresi yalnız tarayıcıda okunabilir; mevcut davranış korunur.
-    setSonrakiYol(guvenliDonusYolu(aday));
-  }, []);
+  const sonrakiYol = useSyncExternalStore(
+    donusYoluDegisikligiYok,
+    mevcutDonusYolu,
+    varsayilanDonusYolu,
+  );
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

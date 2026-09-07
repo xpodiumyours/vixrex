@@ -15,8 +15,8 @@ class LocalQueueWorkingDraftAdapter implements WorkingDraftPort {
   LocalQueueWorkingDraftAdapter({
     SupabaseWorkingDraftAdapter? remote,
     SharedPreferences? prefs,
-  })  : _remote = remote ?? const SupabaseWorkingDraftAdapter(),
-        _prefs = prefs;
+  }) : _remote = remote ?? const SupabaseWorkingDraftAdapter(),
+       _prefs = prefs;
 
   final SupabaseWorkingDraftAdapter _remote;
   final SharedPreferences? _prefs;
@@ -27,12 +27,14 @@ class LocalQueueWorkingDraftAdapter implements WorkingDraftPort {
   SharedPreferences? _cachedPrefs;
 
   Future<SharedPreferences> _prefsAsync() async {
-    if (_prefs != null) return _prefs!;
+    if (_prefs != null) return _prefs;
     return _cachedPrefs ??= await SharedPreferences.getInstance();
   }
 
   @override
-  Future<Result<WorkingDraftSnapshot>> yukle({required String sessionToken}) async {
+  Future<Result<WorkingDraftSnapshot>> yukle({
+    required String sessionToken,
+  }) async {
     final remote = await _remote.yukle(sessionToken: sessionToken);
     if (remote.isSuccess) {
       final p = await _prefsAsync();
@@ -45,12 +47,14 @@ class LocalQueueWorkingDraftAdapter implements WorkingDraftPort {
       final raw = p.getString(_kOnbellek);
       if (raw == null) return remote;
       final data = Map<String, dynamic>.from(jsonDecode(raw) as Map);
-      return Result.success(WorkingDraftSnapshot(
-        slug: '',
-        draftData: data,
-        draftVersion: 1,
-        baseLiveVersion: 1,
-      ));
+      return Result.success(
+        WorkingDraftSnapshot(
+          slug: '',
+          draftData: data,
+          draftVersion: 1,
+          baseLiveVersion: 1,
+        ),
+      );
     } catch (_) {
       return remote;
     }
@@ -87,13 +91,23 @@ class LocalQueueWorkingDraftAdapter implements WorkingDraftPort {
   bool _agYok(Failure? f) {
     if (f == null) return false;
     final m = f.message.toUpperCase();
-    return m.contains('NO_CLIENT') || m.contains('NETWORK') || m.contains('SOCKET');
+    return m.contains('NO_CLIENT') ||
+        m.contains('NETWORK') ||
+        m.contains('SOCKET');
   }
 
   Future<void> _kuyrugaEkle(String k, dynamic v, int? vs, String? cid) async {
     final p = await _prefsAsync();
     final list = List<String>.from(p.getStringList(_kKuyruk) ?? const []);
-    list.add(jsonEncode({'k': k, 'v': v, 'vs': vs, 'cid': cid, 'ts': DateTime.now().toIso8601String()}));
+    list.add(
+      jsonEncode({
+        'k': k,
+        'v': v,
+        'vs': vs,
+        'cid': cid,
+        'ts': DateTime.now().toIso8601String(),
+      }),
+    );
     await p.setStringList(_kKuyruk, list);
   }
 
@@ -138,9 +152,11 @@ class LocalQueueWorkingDraftAdapter implements WorkingDraftPort {
   }
 
   @override
-  Future<Result<WorkingDraftPublishResult>> yayinla({required String sessionToken}) =>
-      _remote.yayinla(sessionToken: sessionToken);
+  Future<Result<WorkingDraftPublishResult>> yayinla({
+    required String sessionToken,
+  }) => _remote.yayinla(sessionToken: sessionToken);
 
   @override
-  Stream<int> degisimSinyali({required String slug}) => _remote.degisimSinyali(slug: slug);
+  Stream<int> degisimSinyali({required String slug}) =>
+      _remote.degisimSinyali(slug: slug);
 }

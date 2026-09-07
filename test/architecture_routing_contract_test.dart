@@ -60,37 +60,35 @@ void main() {
       expect(File('api/robots.js').existsSync(), isFalse);
     });
 
-    test('Next.js fallback origins point to active Vercel projects', () {
-      final siteUrl = File('public_web/src/lib/siteUrl.ts').readAsStringSync();
+    test(
+      'Next.js fallback origins point to canonical public and active app hosts',
+      () {
+        final siteUrl =
+            File('public_web/src/lib/siteUrl.ts').readAsStringSync();
 
-      expect(siteUrl, contains('https://vixrex-public.vercel.app'));
-      expect(siteUrl, contains('https://vixrex-app.vercel.app'));
-      expect(siteUrl, isNot(contains('vixrex-two.vercel.app')));
-    });
+        expect(siteUrl, contains('https://vixrex.com'));
+        expect(siteUrl, contains('https://vixrex-app.vercel.app'));
+        expect(siteUrl, isNot(contains('vixrex-two.vercel.app')));
+      },
+    );
 
-    test('project rules keep public web ownership explicit', () {
-      final agentRules = File('AGENTS.md').readAsStringSync();
-      final projectRules = File('VIXREX_RULES.md').readAsStringSync();
+    test('project guide keeps public web ownership explicit', () {
+      final projectGuide = File('CLAUDE.md').readAsStringSync();
 
-      // Eskiden burada AGENTS.md'nin `.agents/skills/ask-matt/SKILL.md`
-      // haritasına da atıf yaptığı doğrulanıyordu. PR #123 (2026-08-11)
-      // zorunlu skill zincirini/haritayı bilerek kaldırdı; bu artık geçerli
-      // bir davranış, test onu bekleyemez. AGENTS.md'nin VIXREX_RULES.md'ye
-      // hâlâ işaret ettiği kontrolü (asıl "sahiplik açık mı" amacı) kalıyor.
-      expect(agentRules, contains('VIXREX_RULES.md'));
+      expect(projectGuide, contains('`lib/` — Flutter app (Web + Android)'));
       expect(
-        projectRules,
-        contains('`lib/`: Flutter Web/Mobil işletme paneli.'),
+        projectGuide,
+        contains('`public_web/` — Next.js (TypeScript, App Router)'),
       );
       expect(
-        projectRules,
-        contains('`public_web/`: Next.js müşteri vitrini (`/v/:slug`).'),
-      );
-      expect(
-        projectRules,
+        projectGuide,
         contains(
-          'Flutter paneli ve Next.js public site birbirinin yerine test edilmiş sayılmaz.',
+          'The two Vercel projects are deployed and verified independently',
         ),
+      );
+      expect(
+        projectGuide,
+        contains('The storefront view is rendered only by Next.js.'),
       );
     });
   });

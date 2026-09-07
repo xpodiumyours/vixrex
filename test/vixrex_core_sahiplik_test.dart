@@ -10,7 +10,7 @@ import 'package:vixrex/services/owner_bootstrap_service.dart';
 import 'package:vixrex/services/store_local_storage_service.dart';
 
 /// VIXREX CORE — kalıcı hesap sahipliği sözleşmesinin nöbetçisi
-/// (migration: 20260826000000_vixrex_core_kalici_hesap_sahipligi.sql).
+/// (migration: 20260826064518_vixrex_core_kalici_hesap_sahipligi.sql).
 ///
 /// Sözleşmenin kendisi Postgres'te; buradaki testler istemci tarafının o
 /// sözleşmeyi doğru okuduğunu ve sözleşmenin kurallarının migration'dan
@@ -238,7 +238,7 @@ void main() {
     final migration =
         File(
           '${Directory.current.path}/supabase/migrations/'
-          '20260826000000_vixrex_core_kalici_hesap_sahipligi.sql',
+          '20260826064518_vixrex_core_kalici_hesap_sahipligi.sql',
         ).readAsStringSync();
 
     test('tek-vitrin kuralı veritabanı garantisiyle duruyor', () {

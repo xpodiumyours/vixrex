@@ -4,7 +4,10 @@ import 'package:vixrex/services/working_draft/working_draft_port.dart';
 /// PR7-C30: yayinlanmamis yerel taslagi kullanici onayiyla buluta aktar.
 /// Catismada secim yaptirir, sessiz ezme yok.
 class LocalDraftMigrationService {
-  const LocalDraftMigrationService({required this.storage, required this.remote});
+  const LocalDraftMigrationService({
+    required this.storage,
+    required this.remote,
+  });
   final StoreLocalStorageService storage;
   final WorkingDraftPort remote;
 

@@ -31,8 +31,7 @@ class ProductConversationLogger {
   }
 
   static String _buildText(int count, String source, String? extra) {
-    final extraSuffix =
-        extra != null && extra.isNotEmpty ? ' — $extra' : '';
+    final extraSuffix = extra != null && extra.isNotEmpty ? ' — $extra' : '';
     switch (source) {
       case 'ocr':
         return 'OCR ile $count ürün vitrine eklendi 📸${extra != null && extra.isNotEmpty ? " ($extra)" : ""}';

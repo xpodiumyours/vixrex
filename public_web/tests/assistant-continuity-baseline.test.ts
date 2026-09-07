@@ -35,7 +35,7 @@ const ownerEntryRouteSource = next("src/app/api/owner-session/route.ts");
 const ownerPageSource = next("src/app/v/[slug]/page.tsx");
 const ownerShellSource = next("src/app/v/[slug]/OwnerWorkspaceShell.tsx");
 const ownerPanelSource = next("src/app/v/[slug]/OwnerAssistantPanel.tsx");
-// Faz G3 (Tek Asistan planı, G3.1): panel içi başlık (avatar 36 + halo)
+// Faz G3 (Tek Asistan planı, G3.1): panel içi başlık (avatar 38 + halo)
 // ChatTopBar bileşenine çıkarıldı — sürekliliği kanıtlayan iki avatar
 // çağrısından biri artık orada.
 const ownerTopBarSource = next(

@@ -29,7 +29,7 @@ void main() {
         baseUriOverride: Uri.parse('https://vixrex-app.vercel.app/editor'),
       );
 
-      expect(link, 'https://vixrex-public.vercel.app/v/test-magaza');
+      expect(link, 'https://vixrex.com/v/test-magaza');
       expect(link.contains('vixrex-app'), isFalse);
     });
 
@@ -40,14 +40,14 @@ void main() {
         baseUriOverride: Uri.parse('about:blank'),
       );
 
-      expect(link, 'https://vixrex-public.vercel.app/v/test-magaza');
+      expect(link, 'https://vixrex.com/v/test-magaza');
     });
 
     test('bare slug linkini /v/ slug olarak onarır', () {
       final repaired = PublicSiteConfig.repairPublicLink(
         'https://vixrex-public.vercel.app/nova-kuafor',
       );
-      expect(repaired, 'https://vixrex-public.vercel.app/v/nova-kuafor');
+      expect(repaired, 'https://vixrex.com/v/nova-kuafor');
     });
 
     test('hash /v/slug ve localhost linklerini canonical üretir', () {
@@ -55,19 +55,19 @@ void main() {
         PublicSiteConfig.repairPublicLink(
           'http://localhost:49692/#/v/nova-kuafor',
         ),
-        'https://vixrex-public.vercel.app/v/nova-kuafor',
+        'https://vixrex.com/v/nova-kuafor',
       );
       expect(
         PublicSiteConfig.repairPublicLink(
           'https://vixrex-public.vercel.app/#/v/nova-kuafor',
         ),
-        'https://vixrex-public.vercel.app/v/nova-kuafor',
+        'https://vixrex.com/v/nova-kuafor',
       );
       expect(
         PublicSiteConfig.repairPublicLink(
           'http://localhost:49692/v/nova-kuafor',
         ),
-        'https://vixrex-public.vercel.app/v/nova-kuafor',
+        'https://vixrex.com/v/nova-kuafor',
       );
     });
 
@@ -82,7 +82,7 @@ void main() {
       );
       expect(
         PublicSiteConfig.buildBookingTrackerLink('nova-kuafor', 'tok123'),
-        'https://vixrex-public.vercel.app/v/nova-kuafor/randevu/tok123',
+        'https://vixrex.com/v/nova-kuafor/randevu/tok123',
       );
     });
 
@@ -91,12 +91,12 @@ void main() {
       // güvenli köprü sayfası /rent-demo'ya taşındı.
       expect(
         PublicSiteConfig.buildRentDemoLink('kiralik-butik'),
-        'https://vixrex-public.vercel.app/rent-demo?slug=kiralik-butik',
+        'https://vixrex.com/rent-demo?slug=kiralik-butik',
       );
       // Boş slug'da bile çökmez, yalnız query'siz temel adrese düşer.
       expect(
         PublicSiteConfig.buildRentDemoLink(''),
-        'https://vixrex-public.vercel.app/rent-demo',
+        'https://vixrex.com/rent-demo',
       );
     });
 
