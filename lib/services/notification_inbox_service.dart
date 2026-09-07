@@ -15,9 +15,9 @@ class NotificationInboxService {
   static const _maxItems = 50;
 
   Future<List<InAppNotification>> list() async {
-    final userId = Supabase.instance.client.auth.currentUser?.id;
-    if (userId == null) return _legacyList();
     try {
+      final userId = Supabase.instance.client.auth.currentUser?.id;
+      if (userId == null) return _legacyList();
       await _migrateLegacy(userId);
       final rows = await Supabase.instance.client
           .from('notification_inbox')
@@ -32,17 +32,17 @@ class NotificationInboxService {
   }
 
   Future<void> add(InAppNotification notification) async {
-    final userId = Supabase.instance.client.auth.currentUser?.id;
-    if (userId != null) {
-      try {
+    try {
+      final userId = Supabase.instance.client.auth.currentUser?.id;
+      if (userId != null) {
         await _migrateLegacy(userId);
         await Supabase.instance.client
             .from('notification_inbox')
             .upsert(_toRow(notification, userId), onConflict: 'user_id,id');
         return;
-      } catch (e) {
-        if (kDebugMode) debugPrint('NotificationInboxService.add: $e');
       }
+    } catch (e) {
+      if (kDebugMode) debugPrint('NotificationInboxService.add: $e');
     }
     await _addLegacy(notification);
   }
@@ -61,12 +61,12 @@ class NotificationInboxService {
 
   Future<void> markAllRead() async {
     final now = DateTime.now().toUtc().toIso8601String();
-    final userId = Supabase.instance.client.auth.currentUser?.id;
-    if (userId == null) {
-      await _markLegacy();
-      return;
-    }
     try {
+      final userId = Supabase.instance.client.auth.currentUser?.id;
+      if (userId == null) {
+        await _markLegacy();
+        return;
+      }
       await Supabase.instance.client
           .from('notification_inbox')
           .update({'read_at': now})

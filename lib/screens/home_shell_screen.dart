@@ -369,17 +369,27 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
     final editorController = _myVitrinKey.currentState?.controller;
     if (editorController == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vitrin henüz yüklenmedi. Lütfen bekleyin.'), duration: Duration(seconds: 2)),
+        const SnackBar(
+          content: Text('Vitrin henüz yüklenmedi. Lütfen bekleyin.'),
+          duration: Duration(seconds: 2),
+        ),
       );
       return;
     }
     final alan = vixrexNiyetAlanByAnahtar[anahtar];
     if (alan != null) {
-      final ok = const VixrexExecutor().execute(controller: editorController, alan: alan, deger: deger);
+      final ok = const VixrexExecutor().execute(
+        controller: editorController,
+        alan: alan,
+        deger: deger,
+      );
       if (ok) {
         editorController.saveLocally();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Kaydedildi: ${alan.etiket}'), duration: const Duration(seconds: 2)),
+          SnackBar(
+            content: Text('Kaydedildi: ${alan.etiket}'),
+            duration: const Duration(seconds: 2),
+          ),
         );
         return;
       }
@@ -387,7 +397,12 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
       if (anahtar == 'il' || anahtar == 'ilce') {
         _vixrexScrollToAction(VixRexAction.scrollToAddress);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('İl/İlçe listeden seçilmeli – adres bölümüne yönlendirildin.'), duration: Duration(seconds: 2)),
+          const SnackBar(
+            content: Text(
+              'İl/İlçe listeden seçilmeli – adres bölümüne yönlendirildin.',
+            ),
+            duration: Duration(seconds: 2),
+          ),
         );
         return;
       }
@@ -408,11 +423,17 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
       }
       editorController.saveLocally();
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Kaydedildi: $anahtar'), duration: const Duration(seconds: 2)),
+        SnackBar(
+          content: Text('Kaydedildi: $anahtar'),
+          duration: const Duration(seconds: 2),
+        ),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Bu alan için panelden devam et: $e'), duration: const Duration(seconds: 2)),
+        SnackBar(
+          content: Text('Bu alan için panelden devam et: $e'),
+          duration: const Duration(seconds: 2),
+        ),
       );
     }
   }

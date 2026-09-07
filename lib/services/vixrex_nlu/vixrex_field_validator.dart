@@ -21,13 +21,35 @@ class VixrexFieldValidator {
     // acikKapali
     if (tip == 'acikKapali') {
       final norm = raw.toLowerCase();
-      if (['açık', 'acik', 'göster', 'goster', 'evet', 'on', 'true', '1'].contains(norm)) {
+      if ([
+        'açık',
+        'acik',
+        'göster',
+        'goster',
+        'evet',
+        'on',
+        'true',
+        '1',
+      ].contains(norm)) {
         return (ok: true, hata: null, normalizedDeger: true);
       }
-      if (['kapalı', 'kapali', 'gizle', 'hayır', 'hayir', 'off', 'false', '0'].contains(norm)) {
+      if ([
+        'kapalı',
+        'kapali',
+        'gizle',
+        'hayır',
+        'hayir',
+        'off',
+        'false',
+        '0',
+      ].contains(norm)) {
         return (ok: true, hata: null, normalizedDeger: false);
       }
-      return (ok: false, hata: '$etiket yalnız açık veya kapalı olabilir.', normalizedDeger: null);
+      return (
+        ok: false,
+        hata: '$etiket yalnız açık veya kapalı olabilir.',
+        normalizedDeger: null,
+      );
     }
 
     // sayi
@@ -40,58 +62,111 @@ class VixrexFieldValidator {
       }
       final min = _minFor(alan);
       final max = _maxFor(alan);
-      if (min != null && num < min) return (ok: false, hata: '$etiket en az $min olabilir.', normalizedDeger: null);
-      if (max != null && num > max) return (ok: false, hata: '$etiket en fazla $max olabilir.', normalizedDeger: null);
+      if (min != null && num < min) {
+        return (
+          ok: false,
+          hata: '$etiket en az $min olabilir.',
+          normalizedDeger: null,
+        );
+      }
+      if (max != null && num > max) {
+        return (
+          ok: false,
+          hata: '$etiket en fazla $max olabilir.',
+          normalizedDeger: null,
+        );
+      }
       return (ok: true, hata: null, normalizedDeger: num);
     }
 
     // metin tabanlı tipler
     if (raw.isEmpty) {
       // Zorunlu alan boş bırakılamaz – Faz 1’de 6 zorunlu için kontrol.
-      final zorunlular = {'isletmeAdi', 'kategori', 'whatsapp', 'adres', 'il', 'ilce'};
+      final zorunlular = {
+        'isletmeAdi',
+        'kategori',
+        'whatsapp',
+        'adres',
+        'il',
+        'ilce',
+      };
       if (zorunlular.contains(alan.anahtar)) {
-        return (ok: false, hata: '$etiket boş bırakılamaz.', normalizedDeger: null);
+        return (
+          ok: false,
+          hata: '$etiket boş bırakılamaz.',
+          normalizedDeger: null,
+        );
       }
       return (ok: true, hata: null, normalizedDeger: null);
     }
 
     // uzunluk sınırları (vitrin_alanlari.g.dart’tan gelen bilgi sözlükte beklenenVeriTipi’nde ama burada elle)
     final lengthErr = _metinSinirlari(alan, raw);
-    if (lengthErr != null) return (ok: false, hata: lengthErr, normalizedDeger: null);
+    if (lengthErr != null) {
+      return (ok: false, hata: lengthErr, normalizedDeger: null);
+    }
 
     switch (tip) {
       case 'telefon':
         if (alan.anahtar == 'whatsapp') {
           final norm = WhatsAppLinkHelper.normalizeTurkeyMobile(raw);
-          if (norm == null) return (ok: false, hata: WhatsAppLinkHelper.invalidNumberMessage, normalizedDeger: null);
+          if (norm == null) {
+            return (
+              ok: false,
+              hata: WhatsAppLinkHelper.invalidNumberMessage,
+              normalizedDeger: null,
+            );
+          }
           return (ok: true, hata: null, normalizedDeger: norm);
         }
         final digits = raw.replaceAll(RegExp(r'[^0-9]'), '');
         if (digits.length < 10 || digits.length > 13) {
-          return (ok: false, hata: '$etiket 10–13 rakam olmalı.', normalizedDeger: null);
+          return (
+            ok: false,
+            hata: '$etiket 10–13 rakam olmalı.',
+            normalizedDeger: null,
+          );
         }
         return (ok: true, hata: null, normalizedDeger: digits);
       case 'eposta':
         if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]{2,}$').hasMatch(raw)) {
-          return (ok: false, hata: '$etiket geçerli bir e-posta olmalı.', normalizedDeger: null);
+          return (
+            ok: false,
+            hata: '$etiket geçerli bir e-posta olmalı.',
+            normalizedDeger: null,
+          );
         }
         return (ok: true, hata: null, normalizedDeger: raw);
       case 'url':
       case 'gorsel':
         if (!_isSafeUrl(raw)) {
-          return (ok: false, hata: '$etiket yalnız http veya https adresi olabilir.', normalizedDeger: null);
+          return (
+            ok: false,
+            hata: '$etiket yalnız http veya https adresi olabilir.',
+            normalizedDeger: null,
+          );
         }
         return (ok: true, hata: null, normalizedDeger: raw);
       case 'secim':
         // Faz 1: kategori için seçenek kontrolü – BusinessCategoryConfig ile eşdeğer.
         if (alan.anahtar == 'kategori') {
           final exists = BusinessCategoryConfig.categories.any(
-            (c) => c.label.toLowerCase() == raw.toLowerCase() || c.id.toLowerCase() == raw.toLowerCase(),
+            (c) =>
+                c.label.toLowerCase() == raw.toLowerCase() ||
+                c.id.toLowerCase() == raw.toLowerCase(),
           );
-          if (!exists) return (ok: false, hata: '$etiket için geçersiz seçim.', normalizedDeger: null);
+          if (!exists) {
+            return (
+              ok: false,
+              hata: '$etiket için geçersiz seçim.',
+              normalizedDeger: null,
+            );
+          }
           // Normalize: label’ı döndür (UI’da label gösterilir)
           final cat = BusinessCategoryConfig.categories.firstWhere(
-            (c) => c.label.toLowerCase() == raw.toLowerCase() || c.id.toLowerCase() == raw.toLowerCase(),
+            (c) =>
+                c.label.toLowerCase() == raw.toLowerCase() ||
+                c.id.toLowerCase() == raw.toLowerCase(),
             orElse: () => BusinessCategoryConfig.categories.first,
           );
           return (ok: true, hata: null, normalizedDeger: cat.label);
@@ -102,11 +177,17 @@ class VixrexFieldValidator {
         // Adres için özel validator (sokak/cadde + numara)
         if (alan.anahtar == 'adres') {
           final hata = AddressValidator.hataMesaji(raw);
-          if (hata != null) return (ok: false, hata: hata, normalizedDeger: null);
+          if (hata != null) {
+            return (ok: false, hata: hata, normalizedDeger: null);
+          }
         }
         return (ok: true, hata: null, normalizedDeger: raw);
       default:
-        return (ok: false, hata: 'Desteklenmeyen alan tipi: $tip', normalizedDeger: null);
+        return (
+          ok: false,
+          hata: 'Desteklenmeyen alan tipi: $tip',
+          normalizedDeger: null,
+        );
     }
   }
 
@@ -115,8 +196,12 @@ class VixrexFieldValidator {
     // Zorunlu boş kontrol yukarıda yapıldı.
     final min = _minUzunluk(alan);
     final max = _maxUzunluk(alan);
-    if (min != null && len > 0 && len < min) return '${alan.etiket} en az $min karakter olmalı.';
-    if (max != null && len > max) return '${alan.etiket} en fazla $max karakter olabilir.';
+    if (min != null && len > 0 && len < min) {
+      return '${alan.etiket} en az $min karakter olmalı.';
+    }
+    if (max != null && len > max) {
+      return '${alan.etiket} en fazla $max karakter olabilir.';
+    }
     return null;
   }
 

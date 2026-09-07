@@ -44,7 +44,9 @@ class VixrexValueExtractor {
       // ":" sonrası alan adı tekrarı varsa temizle, yoksa olduğu gibi al.
       final candidate = cleaned.isNotEmpty ? cleaned : colon.trim();
       final withoutTrailingVerb = _stripTrailingVerb(candidate);
-      if (withoutTrailingVerb.trim().isNotEmpty) return withoutTrailingVerb.trim();
+      if (withoutTrailingVerb.trim().isNotEmpty) {
+        return withoutTrailingVerb.trim();
+      }
       if (candidate.trim().isNotEmpty) return candidate.trim();
     }
 
@@ -53,7 +55,8 @@ class VixrexValueExtractor {
     final between = _extractBetweenFieldAndVerb(raw, alan);
     if (between != null && between.trim().isNotEmpty) {
       final withoutVerb = _stripTrailingVerb(between.trim());
-      final cand = withoutVerb.trim().isNotEmpty ? withoutVerb.trim() : between.trim();
+      final cand =
+          withoutVerb.trim().isNotEmpty ? withoutVerb.trim() : between.trim();
       if (cand.isNotEmpty) return cand;
     }
     final beforeVerb = _extractBeforeVerb(raw);
@@ -150,7 +153,10 @@ class VixrexValueExtractor {
           afterField = alt;
         } else {
           // 2 karakter ileri dene
-          final alt2 = fieldEnd + 2 <= input.length ? input.substring(fieldEnd + 2).trimLeft() : '';
+          final alt2 =
+              fieldEnd + 2 <= input.length
+                  ? input.substring(fieldEnd + 2).trimLeft()
+                  : '';
           if (alt2.startsWith(':') || alt2.startsWith('=')) {
             afterField = alt2;
           } else {
@@ -168,7 +174,9 @@ class VixrexValueExtractor {
     if (after.isEmpty) return null;
     if (sep == ':' && after.startsWith('//')) return null;
     final quotedAfter = _extractQuoted(after);
-    if (quotedAfter != null && quotedAfter.trim().isNotEmpty) return quotedAfter.trim();
+    if (quotedAfter != null && quotedAfter.trim().isNotEmpty) {
+      return quotedAfter.trim();
+    }
     final cleaned = _stripFieldMention(after, alan);
     if (cleaned.isNotEmpty) return cleaned;
     return after;
@@ -207,29 +215,41 @@ class VixrexValueExtractor {
     final sorted = List<String>.from(alan.esAnlamlar)
       ..sort((a, b) => b.length.compareTo(a.length));
     for (final ea in sorted) {
-      final pattern = RegExp(
-        RegExp.escape(ea),
-        caseSensitive: false,
-      );
+      final pattern = RegExp(RegExp.escape(ea), caseSensitive: false);
       out = out.replaceAll(pattern, '');
     }
     // Türkçe ek temizliği: adres->adresimi, işletme adı->adını gibi kalan ekleri at.
     // "Adresimi" içindeki "adres" çıkarılınca "imi" kalır → baştaki ekleri temizle.
-    out = out
-        .replaceAll(RegExp(r"^\s*(adını|adimi|adı|adi|numaramı|numarami|numarası|numarasi|ismi|ismi|imi|ımı|umu|ümü|si|sı|su|sü|yi|yı|yu|yü|nı|ni|nu|nü|mı|mi|mu|mü)\b\s*", caseSensitive: false), '')
-        .replaceAll(RegExp(r"\s*(adını|adimi|adı|adi)\s*$", caseSensitive: false), '')
-        .trim();
+    out =
+        out
+            .replaceAll(
+              RegExp(
+                r"^\s*(adını|adimi|adı|adi|numaramı|numarami|numarası|numarasi|ismi|ismi|imi|ımı|umu|ümü|si|sı|su|sü|yi|yı|yu|yü|nı|ni|nu|nü|mı|mi|mu|mü)\b\s*",
+                caseSensitive: false,
+              ),
+              '',
+            )
+            .replaceAll(
+              RegExp(r"\s*(adını|adimi|adı|adi)\s*$", caseSensitive: false),
+              '',
+            )
+            .trim();
     // Baştaki noktalama ve ekleri temizle
     out = out.replaceAll(RegExp(r"^[\s:=\-–—,]+"), '').trim();
     out = out.replaceAll(RegExp(r"[\s.,;]+$"), '').trim();
     // Alan etiketini de temizle (örn. "İşletme Adı")
-    out = out.replaceAll(
-      RegExp(RegExp.escape(alan.etiket), caseSensitive: false),
-      '',
-    ).trim();
-    out = VixrexNormalizer.normalize(out) == VixrexNormalizer.normalize(alan.etiket)
-        ? ''
-        : out;
+    out =
+        out
+            .replaceAll(
+              RegExp(RegExp.escape(alan.etiket), caseSensitive: false),
+              '',
+            )
+            .trim();
+    out =
+        VixrexNormalizer.normalize(out) ==
+                VixrexNormalizer.normalize(alan.etiket)
+            ? ''
+            : out;
     // Çok kısa kalan ("i", "ı") değersizdir
     if (out.trim().length < 2) return out.trim().isEmpty ? '' : out.trim();
     return out.trim();
@@ -242,13 +262,17 @@ class VixrexValueExtractor {
       if (digits.length >= 10 && digits.length <= 13) return quoted.trim();
     }
     // Mobil 5xx
-    final m = RegExp(r'(\+?90\s?)?0?\s?5\d{2}\s?\d{3}\s?\d{2}\s?\d{2}').firstMatch(input);
+    final m = RegExp(
+      r'(\+?90\s?)?0?\s?5\d{2}\s?\d{3}\s?\d{2}\s?\d{2}',
+    ).firstMatch(input);
     if (m != null) return m.group(0)?.trim();
     // Sabit hat 0212 vb. – 10-11 haneli herhangi bir numara
     final mLand = RegExp(r'0?\d{3}\s?\d{3}\s?\d{2}\s?\d{2}').firstMatch(input);
     if (mLand != null) {
       final digits = mLand.group(0)!.replaceAll(RegExp(r'[^0-9]'), '');
-      if (digits.length >= 10 && digits.length <= 11) return mLand.group(0)?.trim();
+      if (digits.length >= 10 && digits.length <= 11) {
+        return mLand.group(0)?.trim();
+      }
     }
     return null;
   }
@@ -265,13 +289,20 @@ class VixrexValueExtractor {
     }
     if (!hasField) return false;
     // Fiil/yanlış/doğru gibi değersiz kelimeler dışında değer yoksa null.
-    final verbPattern = RegExp(r'\b(yap|olsun|degistir|değiştir|ekle|guncelle|güncelle|ayarla|yaz|yanlis|yanlış|hatali|hatalı|bozuk|degistirmek)\b', caseSensitive: false);
+    final verbPattern = RegExp(
+      r'\b(yap|olsun|degistir|değiştir|ekle|guncelle|güncelle|ayarla|yaz|yanlis|yanlış|hatali|hatalı|bozuk|degistirmek)\b',
+      caseSensitive: false,
+    );
     // Alan adını ve fiili çıkar, kalanı ölç.
     var remainder = norm;
     for (final ea in alan.esAnlamlar) {
       remainder = remainder.replaceAll(VixrexNormalizer.normalize(ea), '');
     }
-    remainder = remainder.replaceAll(verbPattern, '').replaceAll(RegExp(r'[^a-z0-9]+'), '').trim();
+    remainder =
+        remainder
+            .replaceAll(verbPattern, '')
+            .replaceAll(RegExp(r'[^a-z0-9]+'), '')
+            .trim();
     return remainder.length < 3;
   }
 
@@ -299,12 +330,23 @@ class VixrexValueExtractor {
     if (afterField.isEmpty) return null;
     // Baştaki ekleri at: "nı/ni, mı/mi, yı/yi, sını, imi, u/ü" gibi
     afterField = afterField.replaceAll(RegExp(r"^[\s:=\-–—,]+"), '').trim();
-    afterField = afterField.replaceAll(RegExp(r"^(nı|ni|nu|nü|mı|mi|mu|mü|yı|yi|yu|yü|sı|si|su|sü|sını|sini|sunı|adını|adimi|numaramı|numarami|imi|ımı|umu|ümü|yi|yı|u|ü|ı|i)\b\s*", caseSensitive: false), '').trim();
+    afterField =
+        afterField
+            .replaceAll(
+              RegExp(
+                r"^(nı|ni|nu|nü|mı|mi|mu|mü|yı|yi|yu|yü|sı|si|su|sü|sını|sini|sunı|adını|adimi|numaramı|numarami|imi|ımı|umu|ümü|yi|yı|u|ü|ı|i)\b\s*",
+                caseSensitive: false,
+              ),
+              '',
+            )
+            .trim();
     if (afterField.isEmpty) return null;
     // Fiilden öncesini al: " ... yap" → fiile kadar
-    final verbIdx = afterField.toLowerCase().indexOf(RegExp(r'\b(yap|olsun|degistir|değiştir|ekle|guncelle|güncelle|ayarla|yaz)\b').pattern);
     // Basit: fiil var mı?
-    final verbMatch = RegExp(r'\b(yap|olsun|degistir|değiştir|ekle|guncelle|güncelle|ayarla|yaz)\b', caseSensitive: false).firstMatch(afterField);
+    final verbMatch = RegExp(
+      r'\b(yap|olsun|degistir|değiştir|ekle|guncelle|güncelle|ayarla|yaz)\b',
+      caseSensitive: false,
+    ).firstMatch(afterField);
     String candidate;
     if (verbMatch != null) {
       candidate = afterField.substring(0, verbMatch.start).trim();
@@ -315,9 +357,13 @@ class VixrexValueExtractor {
     candidate = candidate.replaceAll(RegExp(r"[\s.,;]+$"), '').trim();
     if (candidate.length < 2) return null;
     // Sadece fiil/yanlış kaldıysa null
-    final normCand = VixrexNormalizer.normalize(candidate).replaceAll(RegExp(r'[^a-z0-9]+'), '');
+    final normCand = VixrexNormalizer.normalize(
+      candidate,
+    ).replaceAll(RegExp(r'[^a-z0-9]+'), '');
     if (normCand.length < 3) return null;
-    if (RegExp(r'^(yanlis|hatali|bozuk|degistir)$').hasMatch(normCand)) return null;
+    if (RegExp(r'^(yanlis|hatali|bozuk|degistir)$').hasMatch(normCand)) {
+      return null;
+    }
     return _stripQuotes(candidate);
   }
 
@@ -343,15 +389,26 @@ class VixrexValueExtractor {
     final after = input.substring(m.end).trim();
     if (after.isEmpty) return null;
     // Baştaki ekleri at: "nı/ni, mı/mi, yi, sını"
-    final cleaned = after
-        .replaceAll(RegExp(r"^[\s:=\-–—,]+"), '')
-        .replaceAll(RegExp(r"^(nı|ni|nu|nü|mı|mi|mu|mü|yı|yi|yu|yü|sı|si|su|sü|sını|sini|sunı|adını|adimi)\b\s*", caseSensitive: false), '')
-        .trim();
+    final cleaned =
+        after
+            .replaceAll(RegExp(r"^[\s:=\-–—,]+"), '')
+            .replaceAll(
+              RegExp(
+                r"^(nı|ni|nu|nü|mı|mi|mu|mü|yı|yi|yu|yü|sı|si|su|sü|sını|sini|sunı|adını|adimi)\b\s*",
+                caseSensitive: false,
+              ),
+              '',
+            )
+            .trim();
     if (cleaned.length < 2) return null;
     // Kalan sadece fiil/yanlış ise değersiz say.
-    final normCleaned = VixrexNormalizer.normalize(cleaned).replaceAll(RegExp(r'[^a-z0-9]+'), '');
+    final normCleaned = VixrexNormalizer.normalize(
+      cleaned,
+    ).replaceAll(RegExp(r'[^a-z0-9]+'), '');
     if (normCleaned.length < 2) return null;
-    if (RegExp(r'^(yanlis|hatali|bozuk|degistir)$').hasMatch(normCleaned)) return null;
+    if (RegExp(r'^(yanlis|hatali|bozuk|degistir)$').hasMatch(normCleaned)) {
+      return null;
+    }
     return _stripQuotes(cleaned);
   }
 }

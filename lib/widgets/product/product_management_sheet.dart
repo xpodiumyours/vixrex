@@ -167,9 +167,10 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
         count: 1,
         source: 'tek_urun',
         scope: widget.storeSlug,
-        extra: product == null
-            ? '${result.name} eklendi'
-            : '${result.name} güncellendi',
+        extra:
+            product == null
+                ? '${result.name} eklendi'
+                : '${result.name} güncellendi',
       ),
     );
   }
@@ -433,10 +434,7 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
     final selected = _selectedProducts;
     final count = selected.length;
     final catName = category.name;
-    final updated = _bulkFieldUpdater.applyCategory(
-      selected,
-      category,
-    );
+    final updated = _bulkFieldUpdater.applyCategory(selected, category);
     await _finishBulkApply({for (final p in updated) p.id: p});
     if (count > 0) {
       unawaited(

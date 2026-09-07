@@ -40,11 +40,11 @@ class VixrexExecutor {
         return true;
       case 'mahalle':
         controller.data.neighborhoodName = (deger as String).trim();
-        controller.notifyListeners();
+        controller.notifyStoreDataChanged();
         return true;
       case 'haritaEtiketi':
         controller.data.mapLabel = (deger as String).trim();
-        controller.notifyListeners();
+        controller.notifyStoreDataChanged();
         return true;
       case 'calismaSaatleri':
         controller.updateWorkingHoursText(deger as String);
@@ -54,7 +54,7 @@ class VixrexExecutor {
         return true;
       case 'hakkindaBaslik':
         controller.data.aboutTitle = (deger as String).trim();
-        controller.notifyListeners();
+        controller.notifyStoreDataChanged();
         return true;
       case 'hakkindaMetin':
         controller.updateCorporateBio(deger as String);
@@ -64,7 +64,7 @@ class VixrexExecutor {
         return true;
       case 'logo':
         controller.data.logoUrl = (deger as String).trim();
-        controller.notifyListeners();
+        controller.notifyStoreDataChanged();
         return true;
       case 'kapakGorseli':
         controller.setCoverUrl(deger as String);
@@ -83,15 +83,15 @@ class VixrexExecutor {
         return true;
       case 'konumMetni':
         controller.data.heroLocationText = (deger as String).trim();
-        controller.notifyListeners();
+        controller.notifyStoreDataChanged();
         return true;
       case 'enlem':
         controller.data.latitude = (deger as num).toDouble();
-        controller.notifyListeners();
+        controller.notifyStoreDataChanged();
         return true;
       case 'boylam':
         controller.data.longitude = (deger as num).toDouble();
-        controller.notifyListeners();
+        controller.notifyStoreDataChanged();
         return true;
       case 'kategoriBolumBaslik':
         controller.updateCategorySectionTitle(deger as String);
@@ -101,43 +101,43 @@ class VixrexExecutor {
         return true;
       case 'bantEtiket':
         controller.data.featuredBannerLabel = (deger as String).trim();
-        controller.notifyListeners();
+        controller.notifyStoreDataChanged();
         return true;
       case 'bantBaslik':
         controller.data.featuredBannerTitle = (deger as String).trim();
-        controller.notifyListeners();
+        controller.notifyStoreDataChanged();
         return true;
       case 'bantAciklama':
         controller.data.featuredBannerDescription = (deger as String).trim();
-        controller.notifyListeners();
+        controller.notifyStoreDataChanged();
         return true;
       case 'bantGorsel':
         controller.data.featuredBannerImageUrl = (deger as String).trim();
-        controller.notifyListeners();
+        controller.notifyStoreDataChanged();
         return true;
       case 'bantFiyat':
         controller.data.featuredBannerPriceText = (deger as String).trim();
-        controller.notifyListeners();
+        controller.notifyStoreDataChanged();
         return true;
       case 'hakkindaUstBaslik':
         controller.data.aboutKicker = (deger as String).trim();
-        controller.notifyListeners();
+        controller.notifyStoreDataChanged();
         return true;
       case 'hakkindaGorsel':
         controller.data.aboutImageUrl = (deger as String).trim();
-        controller.notifyListeners();
+        controller.notifyStoreDataChanged();
         return true;
       case 'hakkindaGorselAlt':
         controller.data.aboutImageCaption = (deger as String).trim();
-        controller.notifyListeners();
+        controller.notifyStoreDataChanged();
         return true;
       case 'galeriUstBaslik':
         controller.data.gallerySectionKicker = (deger as String).trim();
-        controller.notifyListeners();
+        controller.notifyStoreDataChanged();
         return true;
       case 'galeriBaslik':
         controller.data.gallerySectionTitle = (deger as String).trim();
-        controller.notifyListeners();
+        controller.notifyStoreDataChanged();
         return true;
       case 'galeriAksiyonMetni':
         controller.updateGalleryActionLabel(deger as String);
@@ -176,13 +176,8 @@ class VixrexExecutor {
         break;
     }
 
-    // Yasal alanlar bu borudan yasak – çağıran taraf legal akışa yönlendirmeli.
-    const yasak = {
-      'isletmeAdi': false, // bu izinli, örnek – yasak listesi değil
-    };
     // Gerçek yasak: owner_forbidden_draft_keys’teki legal alanlar zaten sözlükte yok,
     // bu yüzden buraya düşmez – ek kontrol gerekmez.
-
     try {
       controller.updateField(anahtar, deger);
       return true;
