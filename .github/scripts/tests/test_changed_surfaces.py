@@ -90,6 +90,8 @@ class ChangedSurfacesTest(unittest.TestCase):
         for path in (
             ".github/workflows/ci.yml",
             ".github/workflows/parity.yml",
+            ".github/workflows/teslimat.yml",
+            ".github/scripts/parity_delivery_guard.py",
             ".github/parity/contracts.json",
             "supabase/migrations/20260811_change.sql",
             "unclassified-runtime-config.yaml",
