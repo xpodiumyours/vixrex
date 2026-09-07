@@ -131,7 +131,7 @@ export function HeroSection({
         />
       </div>
       <div className="relative mx-auto flex w-full max-w-[1200px] flex-col items-center gap-10 md:flex-row md:items-center md:gap-10">
-        <div className="w-full flex-1 md:max-w-[560px]">
+        <div className="w-full flex-1 text-center md:max-w-[560px] md:text-left">
           <p className="inline-block rounded-[30px] border border-lp-secondary/45 bg-lp-primary/[0.18] px-3.5 py-2 text-[11px] font-black tracking-[1px] text-lp-secondary">
             VİXREX ASİSTAN İLE DİJİTAL VİTRİN
           </p>
@@ -171,7 +171,7 @@ export function HeroSection({
                 type="text"
                 name="isletme"
                 placeholder="isletmeniz"
-                className="h-full flex-1 bg-transparent text-[14px] font-bold text-white outline-none placeholder:text-white/30"
+                className="h-full flex-1 bg-transparent text-left text-[14px] font-bold text-white outline-none placeholder:text-white/30"
               />
             </div>
             <button
@@ -183,7 +183,7 @@ export function HeroSection({
             </button>
           </form>
 
-          <ul className="mt-6 flex flex-wrap gap-2.5">
+          <ul className="mt-6 flex flex-wrap justify-center gap-2.5 md:justify-start">
             {GUVEN_ROZETLERI.map((rozet) => (
               <li
                 key={rozet}
