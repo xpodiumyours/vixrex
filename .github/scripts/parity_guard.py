@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """Fail-closed Flutter Web -> Next.js parity guard.
 
-The Flutter side is the reference/oracle for listed parity contracts. An
-implementation PR may change a Next.js target OR the oracle/gate, never both.
-Oracle files are locked by Git blob SHA and required assertions.
+Flutter Web listed parity contracts are the reference/oracle. A normal
+implementation PR may change a Next.js target OR the parity gate, never both;
+it may never change a Next.js target together with its Flutter oracle.
 
-This guard is intentionally independent of browser tooling so it can always run
-first. Browser/Flutter behavior checks live in `.github/workflows/parity.yml`.
+Bootstrap exception: while the base branch does not yet contain the manifest,
+the installation PR may add the gate and repair the target together. That
+exception disappears automatically after this system reaches main.
 """
 
 from __future__ import annotations
@@ -19,9 +20,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-
 ROOT = Path(__file__).resolve().parents[2]
-MANIFEST_PATH = ROOT / ".github" / "parity" / "contracts.json"
 MANIFEST_REPO_PATH = ".github/parity/contracts.json"
 
 GATE_PATHS = {
@@ -31,6 +30,7 @@ GATE_PATHS = {
     ".github/scripts/parity_guard.py",
     ".github/scripts/parity_delivery_guard.py",
     ".github/scripts/tests/test_parity_guard.py",
+    ".github/scripts/tests/test_parity_delivery_guard.py",
     ".github/scripts/changed_surfaces.py",
     ".github/scripts/tests/test_changed_surfaces.py",
     ".github/scripts/teslimat.py",
@@ -63,6 +63,21 @@ def load_manifest(root: Path = ROOT) -> dict[str, Any]:
 
     if data.get("version") != 1:
         raise ParityError("Parite manifesti version=1 olmalı.")
+    if data.get("reference") != "Flutter Web":
+        raise ParityError("Parite referansı tam olarak 'Flutter Web' olmalı.")
+
+    policy = data.get("policy")
+    if not isinstance(policy, dict):
+        raise ParityError("Parite policy alanı zorunlu.")
+    if policy.get("allow_unlisted_differences") is not False:
+        raise ParityError("allow_unlisted_differences=false olmalı.")
+    if policy.get("implementation_may_edit_oracle") is not False:
+        raise ParityError("implementation_may_edit_oracle=false olmalı.")
+    if policy.get("implementation_may_edit_gate") is not False:
+        raise ParityError("implementation_may_edit_gate=false olmalı.")
+    if policy.get("unverified_behavior") != "BLOCK":
+        raise ParityError("unverified_behavior='BLOCK' olmalı.")
+
     contracts = data.get("contracts")
     if not isinstance(contracts, list) or not contracts:
         raise ParityError("Parite manifestinde en az bir contract olmalı.")
@@ -107,8 +122,8 @@ def validate_contract(contract: dict[str, Any], root: Path = ROOT) -> None:
             raise ParityError(
                 f"{contract_id}: Flutter referans kilidi değişti: {repo_path} "
                 f"(beklenen {expected_sha}, mevcut {actual_sha}). "
-                "Next implementation PR'ında referans değiştirilemez. "
-                "Referans değişikliği ayrı PR + manifest kilidi güncellemesi olmalı."
+                "Next implementation PR'ında referans değiştirilemez; "
+                "referans değişikliği ayrı PR + manifest kilidi güncellemesi olmalı."
             )
 
     assertions = contract.get("oracle_assertions", {})
@@ -120,12 +135,21 @@ def validate_contract(contract: dict[str, Any], root: Path = ROOT) -> None:
         if not path.is_file():
             raise ParityError(f"{contract_id}: assertion oracle dosyası yok: {repo_path}")
         text = path.read_text(encoding="utf-8")
+        if not isinstance(required_strings, list) or not required_strings:
+            raise ParityError(f"{contract_id}: {repo_path} assertions boş olamaz.")
         for required in required_strings:
             if required not in text:
                 raise ParityError(
                     f"{contract_id}: Flutter oracle sözleşmesi doğrulanamadı; "
                     f"{repo_path} içinde beklenen ifade yok: {required!r}"
                 )
+
+    flutter_tests = contract.get("flutter_tests", [])
+    if not isinstance(flutter_tests, list) or not flutter_tests:
+        raise ParityError(f"{contract_id}: flutter_tests boş olamaz.")
+    for repo_path in flutter_tests:
+        if not (root / normalize(repo_path)).is_file():
+            raise ParityError(f"{contract_id}: Flutter oracle testi yok: {repo_path}")
 
     browser = contract.get("browser")
     if browser:
@@ -134,6 +158,9 @@ def validate_contract(contract: dict[str, Any], root: Path = ROOT) -> None:
             raise ParityError(f"{contract_id}: browser.expected_buttons boş olamaz.")
         if len(expected) != len(set(expected)):
             raise ParityError(f"{contract_id}: browser.expected_buttons tekrar içeriyor.")
+        if browser.get("enabled") is True:
+            if not browser.get("route") or not browser.get("scope_text"):
+                raise ParityError(f"{contract_id}: browser route/scope_text zorunlu.")
 
         button_oracles = browser.get("button_oracle_paths", [])
         if not isinstance(button_oracles, list) or not button_oracles:
@@ -142,9 +169,7 @@ def validate_contract(contract: dict[str, Any], root: Path = ROOT) -> None:
         for repo_path in button_oracles:
             path = root / normalize(repo_path)
             if not path.is_file():
-                raise ParityError(
-                    f"{contract_id}: button oracle dosyası yok: {repo_path}"
-                )
+                raise ParityError(f"{contract_id}: button oracle dosyası yok: {repo_path}")
             text = path.read_text(encoding="utf-8")
             for label in expected:
                 if label not in text:
@@ -188,8 +213,26 @@ def changed_files(base: str, head: str, root: Path = ROOT) -> list[str]:
     return [normalize(line) for line in result.stdout.splitlines() if line.strip()]
 
 
+def base_has_manifest(base: str, root: Path = ROOT) -> bool:
+    try:
+        result = subprocess.run(
+            ["git", "cat-file", "-e", f"{base}:{MANIFEST_REPO_PATH}"],
+            cwd=root,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except OSError:
+        return False
+    return result.returncode == 0
+
+
 def evaluate_changes(
-    changed: list[str], manifest: dict[str, Any], root: Path = ROOT
+    changed: list[str],
+    manifest: dict[str, Any],
+    root: Path = ROOT,
+    *,
+    enforce_gate_separation: bool = True,
 ) -> tuple[bool, list[str]]:
     changed_set = {normalize(path) for path in changed}
     affected_ids: list[str] = []
@@ -208,7 +251,7 @@ def evaluate_changes(
                     f"{contract_id}: Next hedefi ile Flutter oracle aynı PR'da değiştirilemez: "
                     + ", ".join(oracle_changed_paths)
                 )
-            if gate_changed_paths:
+            if enforce_gate_separation and gate_changed_paths:
                 errors.append(
                     f"{contract_id}: Next hedefi ile parite kapısı/manifesti aynı PR'da "
                     "değiştirilemez: "
@@ -230,8 +273,7 @@ def evaluate_changes(
 def write_github_output(path: str | None, affected: bool, ids: list[str]) -> None:
     if not path:
         return
-    output_path = Path(path)
-    with output_path.open("a", encoding="utf-8") as handle:
+    with Path(path).open("a", encoding="utf-8") as handle:
         handle.write(f"affected={'true' if affected else 'false'}\n")
         handle.write(f"contracts={','.join(ids)}\n")
 
@@ -249,12 +291,20 @@ def main() -> int:
     try:
         manifest = validate_manifest(ROOT)
         changed = changed_files(args.base, args.head, ROOT)
-        affected, ids = evaluate_changes(changed, manifest, ROOT)
+        bootstrap = not base_has_manifest(args.base, ROOT)
+        affected, ids = evaluate_changes(
+            changed,
+            manifest,
+            ROOT,
+            enforce_gate_separation=not bootstrap,
+        )
     except ParityError as exc:
         print(f"::error::Flutter → Next parite kapısı: {exc}", file=sys.stderr)
         return 1
 
     write_github_output(args.github_output, affected, ids)
+    if bootstrap:
+        print("Parite kapısı bootstrap PR'ında; gate+hedef ayrımı bu PR için tek seferlik açık.")
     if affected:
         print("Flutter → Next parite hedefi değişti: " + ", ".join(ids))
     else:
