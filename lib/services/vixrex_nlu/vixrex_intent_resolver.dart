@@ -42,7 +42,7 @@ class VixrexIntentResolver {
         candidates.add((
           alan: alan,
           esAnlam: VixrexNormalizer.normalize(ea),
-          len: VixrexNormalizer.normalize(ea).length
+          len: VixrexNormalizer.normalize(ea).length,
         ));
       }
     }
