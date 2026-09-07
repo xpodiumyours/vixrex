@@ -164,7 +164,7 @@ describe("Vixrex Asistan sürekliliği — korunan mevcut akış", () => {
     );
     expect(ownerPanelSource).toContain("<VixrexAvatar size={28} decorative />");
     expect(ownerTopBarSource).toContain(
-      "<VixrexAvatar size={36} halo decorative />"
+      "<VixrexAvatar size={38} halo decorative />"
     );
     expect(ownerPanelSource).toContain("aria-expanded={acik}");
     expect(ownerPanelSource).not.toContain("🦊");
