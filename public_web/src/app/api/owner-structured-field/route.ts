@@ -18,14 +18,14 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
 export const dynamic = "force-dynamic";
 
-// İzin verilen yapılandırılmış JSONB kolonları
-// Flutter'daki StoreData.galleryItems / marketplaceLinks / faq_items / about_values
-// karşılığı — hepsi stores tablosunda JSONB dizi kolonlar.
+// Flutter StoreData'daki yapılandırılmış JSONB alanların Next.js karşılığı.
+// Dizi alanları yanında section_visibility nesnesi de aynı RPC yolunu kullanır.
 const ALLOWED_COLUMNS = new Set([
   "faq_items",
   "about_values",
   "gallery_items",
   "marketplace_links",
+  "section_visibility",
 ]);
 
 export async function POST(request: NextRequest) {
@@ -54,7 +54,6 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Oturum doğrulaması
   const cookieStore = await cookies();
   const ownerSessionCookie = cookieStore.get(OWNER_SESSION_COOKIE)?.value;
   const ownerSession = verifyOwnerSession(ownerSessionCookie, slug);
@@ -66,7 +65,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Değer JSONB olmalı
+  // Yapılandırılmış alanlar JSONB nesne/dizi olmalıdır.
   if (deger !== null && typeof deger !== "object") {
     return NextResponse.json(
       { hata: "Geçersiz veri formatı." },
