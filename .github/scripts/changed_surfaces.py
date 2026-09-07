@@ -14,8 +14,14 @@ SURFACES = ("flutter", "schema", "public_web")
 
 CI_CONTROL_PATHS = {
     ".github/workflows/ci.yml",
+    ".github/workflows/parity.yml",
     ".github/scripts/changed_surfaces.py",
+    ".github/scripts/parity_guard.py",
+    ".github/scripts/teslimat.py",
     ".github/scripts/tests/test_changed_surfaces.py",
+    ".github/scripts/tests/test_parity_guard.py",
+    ".github/parity/contracts.json",
+    "public_web/e2e/flutter-next-parity.spec.ts",
 }
 
 NEUTRAL_PREFIXES = (
@@ -80,9 +86,20 @@ SCHEMA_DEPENDENCIES = {
     "public_web/package.json",
 }
 
+# Flutter Web'in ürün/akış referansı olduğu ve Next.js tarafının onu birebir
+# izlemesi gereken yüzeyler. Bu yollar değiştiğinde yalnız Next testleri değil,
+# Flutter oracle testleri de zorunlu olarak çalışır.
+PARITY_TARGET_PATHS = {
+    "public_web/src/components/landing/LandingApkAssistant.tsx",
+}
+
 
 def normalize(path: str) -> str:
     return path.replace("\\", "/").removeprefix("./").strip("/")
+
+
+def is_parity_target(path: str) -> bool:
+    return normalize(path) in PARITY_TARGET_PATHS
 
 
 def classify_paths(paths: list[str]) -> dict[str, bool]:
@@ -98,6 +115,13 @@ def classify_paths(paths: list[str]) -> dict[str, bool]:
             return {surface: True for surface in SURFACES}
 
         matched = False
+
+        if is_parity_target(path):
+            # Next.js'in Flutter referansına bağlı yüzeyinde değişiklik varsa
+            # Flutter testlerini atlamak yasak: iki yüzey birlikte ölçülür.
+            result["flutter"] = True
+            result["public_web"] = True
+            matched = True
 
         if path.startswith(FLUTTER_PREFIXES) or path in FLUTTER_FILES:
             result["flutter"] = True
@@ -129,6 +153,10 @@ def classify_paths(paths: list[str]) -> dict[str, bool]:
     return result
 
 
+def parity_affected(paths: list[str]) -> bool:
+    return any(is_parity_target(path) for path in paths)
+
+
 def repository_root() -> Path:
     result = subprocess.run(
         ["git", "rev-parse", "--show-toplevel"],
@@ -155,13 +183,20 @@ def changed_files(base: str, head: str) -> list[str]:
 
 def print_ci_outputs(base: str, head: str) -> int:
     try:
-        affected = classify_paths(changed_files(base, head))
+        paths = changed_files(base, head)
+        affected = classify_paths(paths)
+        parity = parity_affected(paths)
     except (OSError, subprocess.CalledProcessError, ValueError) as exc:
-        print(f"::warning::Yüzey sınıflandırması başarısız; tüm işler çalışacak: {exc}", file=sys.stderr)
+        print(
+            f"::warning::Yüzey sınıflandırması başarısız; tüm işler çalışacak: {exc}",
+            file=sys.stderr,
+        )
         affected = {surface: True for surface in SURFACES}
+        parity = True
 
     for surface in SURFACES:
         print(f"{surface}={'true' if affected[surface] else 'false'}")
+    print(f"parity={'true' if parity else 'false'}")
     return 0
 
 
@@ -176,7 +211,10 @@ def check_vercel(surface: str) -> int:
     try:
         paths = changed_files(base, head)
     except (OSError, subprocess.CalledProcessError, ValueError) as exc:
-        print(f"Yüzey sınıflandırması başarısız; build güvenli biçimde çalışacak: {exc}", file=sys.stderr)
+        print(
+            f"Yüzey sınıflandırması başarısız; build güvenli biçimde çalışacak: {exc}",
+            file=sys.stderr,
+        )
         return 1
 
     exit_code = vercel_ignore_exit(surface, paths)
