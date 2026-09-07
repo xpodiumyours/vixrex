@@ -18,13 +18,18 @@ describe("Flutter ve Next.js tek Vixrex konuşmasını paylaşır", () => {
     }
   });
 
-  it("Keşfet Vixrex düğmesi landing'e gitmez, paneli açar", () => {
-    const sidebar = read("public_web/src/components/kesfet/KesfetYanMenu.tsx");
+  it("Keşfet Vixrex düğmesi landing'e gitmez, Vixrex sekmesini açar", () => {
+    // Vixrex, Keşfet'in üstüne açılan yerel bir panel olmaktan çıkıp ortak
+    // kabuktaki dört ana sekmeden biri oldu — Flutter'daki yerleşimin aynısı.
+    const sidebar = read("public_web/src/components/app/AppSidebar.tsx");
     const explore = read("public_web/src/components/kesfet/KesfetIcerik.tsx");
+    const vixrexSekmesi = read("public_web/src/app/app/vixrex/page.tsx");
 
     expect(sidebar).not.toContain('/#vixrex-hero');
-    expect(sidebar).toContain("onClick={vixrexAc}");
-    expect(explore).toContain("<SharedVixrexAssistant");
+    expect(sidebar).toContain('"/app/vixrex"');
+    expect(explore).not.toContain('/#vixrex-hero');
+    expect(explore).toContain('/app/vixrex');
+    expect(vixrexSekmesi).toContain("<SharedVixrexAssistant");
   });
 
   it("Flutter yerel geçmişi yalnız önbellek olarak tutup uzak geçmişle birleştirir", () => {

@@ -126,16 +126,20 @@ describe("Keşfet eşitlik sözleşmesi", () => {
   });
 
   it("masaüstü Keşfet görünümünde sol gezinme menüsü var", () => {
-    const icerik = readFileSync(
-      resolve(__dirname, "../src/components/kesfet/KesfetIcerik.tsx"),
+    // Gezinme artık Keşfet'e özgü değil: dört ana yüzeyin paylaştığı ortak
+    // kabukta duruyor (Flutter HomeShellScreen karşılığı). Keşfet o kabuğun
+    // içinde bir sekme olduğu için menü yine ekranda.
+    const kabuk = readFileSync(
+      resolve(__dirname, "../src/components/app/AppShellBoundary.tsx"),
       "utf-8"
     );
     const yanMenu = readFileSync(
-      resolve(__dirname, "../src/components/kesfet/KesfetYanMenu.tsx"),
+      resolve(__dirname, "../src/components/app/AppSidebar.tsx"),
       "utf-8"
     );
     expect(webKaynak).toContain("<KesfetIcerik");
-    expect(icerik).toContain("<KesfetYanMenu");
+    expect(kabuk).toContain('pathname === "/kesfet"');
+    expect(kabuk).toContain("<AppSidebar />");
     for (const etiket of ["Vitrinim", "Keşfet", "Vixrex", "Profil"]) {
       expect(yanMenu).toContain(etiket);
     }
@@ -147,7 +151,7 @@ describe("Keşfet eşitlik sözleşmesi", () => {
 
   it("mobil sabit alt menü aynı dört hedefle var — masaüstü gizli kuralı yakalar", () => {
     const yanMenu = readFileSync(
-      resolve(__dirname, "../src/components/kesfet/KesfetYanMenu.tsx"),
+      resolve(__dirname, "../src/components/app/AppSidebar.tsx"),
       "utf-8"
     );
     // Masaüstü menü 901px üstünde görünür
@@ -165,27 +169,28 @@ describe("Keşfet eşitlik sözleşmesi", () => {
     expect(yanMenu).toContain('"/app"');
     expect(yanMenu).toContain('"/kesfet"');
     expect(yanMenu).toContain('"/app/profil"');
-    expect(yanMenu).toContain("vixrexAc");
+    // Vixrex artık sayfa üstüne açılan kutu değil, dördün içinde gerçek sekme.
+    expect(yanMenu).toContain('"/app/vixrex"');
   });
 
   it("mobil alt menü dört butonu da içerir", () => {
     const yanMenu = readFileSync(
-      resolve(__dirname, "../src/components/kesfet/KesfetYanMenu.tsx"),
+      resolve(__dirname, "../src/components/app/AppSidebar.tsx"),
       "utf-8"
     );
-    // MENU dizisi tek kaynak — dört etiket de orada
-    const menuBlok = yanMenu.slice(yanMenu.indexOf("const MENU"));
+    // NAV dizisi tek kaynak — dört etiket de orada
+    const menuBlok = yanMenu.slice(yanMenu.indexOf("const NAV"));
     for (const etiket of ["Vitrinim", "Keşfet", "Vixrex", "Profil"]) {
       expect(menuBlok).toContain(`"${etiket}"`);
     }
     // Mobil nav MENU.map ile üretiliyor — ayrı hardcode menü yok
-    expect(yanMenu).toContain("MENU.map");
+    expect(yanMenu).toContain("NAV.map");
     // Mobil nav fixed class'ı ile mobil boşluk ve maskot offset'i birlikte çalışır
     const icerik = readFileSync(
       resolve(__dirname, "../src/components/kesfet/KesfetIcerik.tsx"),
       "utf-8"
     );
-    expect(icerik).toContain("pb-[72px]");
+    expect(icerik).toContain("pb-[84px]");
     expect(icerik).toContain("min-[901px]:pb-0");
     const mascot = readFileSync(
       resolve(__dirname, "../src/components/landing/MascotFab.tsx"),
