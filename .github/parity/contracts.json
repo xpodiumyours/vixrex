@@ -7,7 +7,18 @@
     "allow_unlisted_differences": false,
     "implementation_may_edit_oracle": false,
     "implementation_may_edit_gate": false,
-    "unverified_behavior": "BLOCK"
+    "unverified_behavior": "BLOCK",
+    "contract_required_prefixes": [
+      "public_web/src/components/landing/",
+      "public_web/src/components/kesfet/",
+      "public_web/src/components/app/",
+      "public_web/src/components/vixrex/",
+      "public_web/src/app/app/",
+      "public_web/src/app/(site)/kesfet/",
+      "public_web/src/app/giris/",
+      "public_web/src/app/kayit/",
+      "public_web/src/app/hesap-bagla/"
+    ]
   },
   "contracts": [
     {
