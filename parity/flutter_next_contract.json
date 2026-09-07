@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "reference": "Flutter Web",
+  "allowlisted_differences": [],
+  "flows": {
+    "onboarding.welcome": {
+      "quick_options": [
+        {
+          "id": "hazir_vitrin_sec",
+          "label": "Hazır Vitrin Seç",
+          "action": "template_intent"
+        },
+        {
+          "id": "sifirdan_olustur",
+          "label": "Sıfırdan Oluştur",
+          "action": "name"
+        },
+        {
+          "id": "bakiniyorum",
+          "label": "Bakınıyorum",
+          "action": "stay_welcome"
+        }
+      ]
+    }
+  }
+}
