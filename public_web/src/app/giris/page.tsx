@@ -20,6 +20,7 @@ export default function GirisPage() {
 
   useEffect(() => {
     const aday = new URLSearchParams(window.location.search).get("next");
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- next parametresi yalnız tarayıcıda okunabilir; mevcut davranış korunur.
     setSonrakiYol(guvenliDonusYolu(aday));
   }, []);
 
