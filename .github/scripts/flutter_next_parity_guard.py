@@ -189,22 +189,28 @@ def verify_contract_against_flutter(errors: list[str]) -> None:
 
 
 def verify_next_contract_wiring(errors: list[str]) -> None:
-    """E2E'nin yanında ucuz fail-fast kontrolü; tek başına parite kanıtı değildir."""
+    """Gerçek E2E'nin yanında ucuz fail-fast kontrolü; tek başına kanıt değildir."""
     apk = (ROOT / "public_web" / "src" / "components" / "landing" / "LandingApkAssistant.tsx").read_text(encoding="utf-8")
-    sohbet = (ROOT / "public_web" / "src" / "components" / "landing" / "LandingAsistanSohbeti.tsx").read_text(encoding="utf-8")
+    mirror = (ROOT / "public_web" / "src" / "components" / "landing" / "FlutterReferenceOnboarding.tsx").read_text(encoding="utf-8")
 
     if "useState" in apk or "Evet, Oluşturalım" in apk:
-        errors.append("LandingApkAssistant bağımsız Next state/UX üretiyor; Flutter referansına delege etmeli")
-    if "<LandingAsistanSohbeti" not in apk:
-        errors.append("LandingApkAssistant tek onboarding uygulamasına delege etmiyor")
+        errors.append("LandingApkAssistant bağımsız Next state/UX üretiyor; canonical Flutter aynasına delege etmeli")
+    if "<FlutterReferenceOnboarding" not in apk:
+        errors.append("LandingApkAssistant canonical FlutterReferenceOnboarding yüzüne delege etmiyor")
 
     for option_id in ("hazir_vitrin_sec", "sifirdan_olustur", "bakiniyorum"):
-        if option_id not in sohbet:
+        if option_id not in mirror:
             errors.append(f"Next onboarding hızlı seçenek id'si eksik: {option_id}")
-    if 'data-testid="landing-onboarding-quick-options"' not in sohbet:
+    if 'data-testid="landing-onboarding-quick-options"' not in mirror:
         errors.append("Next onboarding gerçek-render E2E kökü eksik")
-    if "setBakiniyorumAck(true)" not in sohbet:
+    if "setBakiniyorumAck(true)" not in mirror or 'setSahne("welcome")' not in mirror:
         errors.append("Bakınıyorum Flutter gibi welcome durumunda kalmıyor")
+    if 'setSahne("template_intent")' not in mirror:
+        errors.append("Hazır Vitrin Seç Flutter gibi niyet sorusunu açmıyor")
+    if 'setSahne("name")' not in mirror:
+        errors.append("Sıfırdan Oluştur Flutter gibi işletme adı adımını açmıyor")
+    if "Evet, Oluşturalım" in mirror:
+        errors.append("Flutter'da olmayan 'Evet, Oluşturalım' metni Next canonical akışında bulundu")
 
 
 def run_guard(base: str, head: str) -> list[str]:
