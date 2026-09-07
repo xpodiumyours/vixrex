@@ -24,10 +24,7 @@ class ParityGuardTest(unittest.TestCase):
 
         self.shared = self.root / "shared/vixrex_mesajlar.json"
         self.widget_test = self.root / "test/onboarding_niyet_akis_test.dart"
-        self.target = (
-            self.root
-            / "public_web/src/components/landing/LandingApkAssistant.tsx"
-        )
+        self.target = self.root / "public_web/src/components/landing/LandingApkAssistant.tsx"
 
         labels = "Hazır Vitrin Seç\nSıfırdan Oluştur\nBakınıyorum\n"
         self.shared.write_text(labels, encoding="utf-8")
@@ -42,6 +39,12 @@ class ParityGuardTest(unittest.TestCase):
         manifest = {
             "version": 1,
             "reference": "Flutter Web",
+            "policy": {
+                "allow_unlisted_differences": False,
+                "implementation_may_edit_oracle": False,
+                "implementation_may_edit_gate": False,
+                "unverified_behavior": "BLOCK",
+            },
             "contracts": [
                 {
                     "id": "landing-onboarding-welcome",
@@ -49,12 +52,8 @@ class ParityGuardTest(unittest.TestCase):
                         "public_web/src/components/landing/LandingApkAssistant.tsx"
                     ],
                     "oracle_git_blobs": {
-                        "shared/vixrex_mesajlar.json": parity_guard.git_blob_sha(
-                            self.shared
-                        ),
-                        "test/onboarding_niyet_akis_test.dart": parity_guard.git_blob_sha(
-                            self.widget_test
-                        ),
+                        "shared/vixrex_mesajlar.json": parity_guard.git_blob_sha(self.shared),
+                        "test/onboarding_niyet_akis_test.dart": parity_guard.git_blob_sha(self.widget_test),
                     },
                     "oracle_assertions": {
                         "shared/vixrex_mesajlar.json": [
@@ -68,6 +67,7 @@ class ParityGuardTest(unittest.TestCase):
                             "Bakınıyorum",
                         ],
                     },
+                    "flutter_tests": ["test/onboarding_niyet_akis_test.dart"],
                     "browser": {
                         "enabled": True,
                         "route": "/",
@@ -95,6 +95,14 @@ class ParityGuardTest(unittest.TestCase):
         manifest = parity_guard.validate_manifest(self.root)
         self.assertEqual(manifest["reference"], "Flutter Web")
 
+    def test_policy_cannot_allow_unverified_behavior(self) -> None:
+        path = self.root / ".github/parity/contracts.json"
+        manifest = json.loads(path.read_text(encoding="utf-8"))
+        manifest["policy"]["unverified_behavior"] = "PASS"
+        path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+        with self.assertRaisesRegex(parity_guard.ParityError, "BLOCK"):
+            parity_guard.validate_manifest(self.root)
+
     def test_target_only_change_is_parity_affected(self) -> None:
         manifest = parity_guard.validate_manifest(self.root)
         affected, ids = parity_guard.evaluate_changes(
@@ -107,9 +115,7 @@ class ParityGuardTest(unittest.TestCase):
 
     def test_target_cannot_change_with_gate_in_same_pr(self) -> None:
         manifest = parity_guard.validate_manifest(self.root)
-        with self.assertRaisesRegex(
-            parity_guard.ParityError, "parite kapısı/manifesti"
-        ):
+        with self.assertRaisesRegex(parity_guard.ParityError, "parite kapısı/manifesti"):
             parity_guard.evaluate_changes(
                 [
                     "public_web/src/components/landing/LandingApkAssistant.tsx",
@@ -117,6 +123,34 @@ class ParityGuardTest(unittest.TestCase):
                 ],
                 manifest,
                 self.root,
+            )
+
+    def test_bootstrap_allows_gate_and_target_once(self) -> None:
+        manifest = parity_guard.validate_manifest(self.root)
+        affected, ids = parity_guard.evaluate_changes(
+            [
+                "public_web/src/components/landing/LandingApkAssistant.tsx",
+                ".github/parity/contracts.json",
+            ],
+            manifest,
+            self.root,
+            enforce_gate_separation=False,
+        )
+        self.assertTrue(affected)
+        self.assertEqual(ids, ["landing-onboarding-welcome"])
+
+    def test_bootstrap_still_blocks_target_plus_flutter_oracle(self) -> None:
+        manifest = parity_guard.validate_manifest(self.root)
+        with self.assertRaisesRegex(parity_guard.ParityError, "Flutter oracle"):
+            parity_guard.evaluate_changes(
+                [
+                    "public_web/src/components/landing/LandingApkAssistant.tsx",
+                    "test/onboarding_niyet_akis_test.dart",
+                    ".github/parity/contracts.json",
+                ],
+                manifest,
+                self.root,
+                enforce_gate_separation=False,
             )
 
     def test_oracle_change_requires_manifest_lock_update(self) -> None:
