@@ -32,11 +32,29 @@ class ChangedSurfacesTest(unittest.TestCase):
             {"flutter": True, "schema": False, "public_web": False},
         )
 
-    def test_next_change_only_selects_public_web(self) -> None:
-        affected = changed_surfaces.classify_paths(["public_web/src/app/page.tsx"])
+    def test_generic_next_change_only_selects_public_web(self) -> None:
+        affected = changed_surfaces.classify_paths(
+            ["public_web/src/app/privacy/page.tsx"]
+        )
         self.assertEqual(
             affected,
             {"flutter": False, "schema": False, "public_web": True},
+        )
+
+    def test_parity_next_target_forces_flutter_and_next(self) -> None:
+        path = "public_web/src/components/landing/LandingApkAssistant.tsx"
+        affected = changed_surfaces.classify_paths([path])
+        self.assertEqual(
+            affected,
+            {"flutter": True, "schema": False, "public_web": True},
+        )
+        self.assertTrue(changed_surfaces.parity_affected([path]))
+
+    def test_unrelated_next_is_not_parity_affected(self) -> None:
+        self.assertFalse(
+            changed_surfaces.parity_affected(
+                ["public_web/src/app/privacy/page.tsx"]
+            )
         )
 
     def test_schema_source_selects_next_and_schema_pipeline(self) -> None:
@@ -71,6 +89,8 @@ class ChangedSurfacesTest(unittest.TestCase):
     def test_ci_router_supabase_and_unknown_paths_fail_open(self) -> None:
         for path in (
             ".github/workflows/ci.yml",
+            ".github/workflows/parity.yml",
+            ".github/parity/contracts.json",
             "supabase/migrations/20260811_change.sql",
             "unclassified-runtime-config.yaml",
         ):
