@@ -3,6 +3,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app_handoff_url_stub.dart'
     if (dart.library.js_interop) 'app_handoff_url_web.dart';
 
+enum AppHandoffResult { yok, devralindi, basarisiz }
+
 /// Next.js public web yuzeyinden Flutter Web uygulama kabuguna gelen
 /// tek kullanimlik Supabase oturumunu devralir.
 ///
@@ -12,11 +14,11 @@ import 'app_handoff_url_stub.dart'
 class AppHandoffService {
   const AppHandoffService._();
 
-  static Future<bool> devral({
+  static Future<AppHandoffResult> devral({
     required String supabaseUrl,
     required String publishableKey,
   }) async {
-    if (!kIsWeb) return false;
+    if (!kIsWeb) return AppHandoffResult.yok;
 
     final uri = Uri.base;
     final fragment = uri.fragment;
@@ -24,7 +26,7 @@ class AppHandoffService {
         fragment.contains('access_token=') &&
         fragment.contains('refresh_token=') &&
         fragment.contains('token_type=');
-    if (!handoffVar) return false;
+    if (!handoffVar) return AppHandoffResult.yok;
 
     SupabaseClient? geciciClient;
     try {
@@ -42,7 +44,7 @@ class AppHandoffService {
         storeSession: false,
       );
       final session = response.session;
-      if (session == null) return false;
+      if (session == null) return AppHandoffResult.basarisiz;
 
       await Supabase.instance.client.auth.setSession(
         session.refreshToken,
@@ -50,12 +52,12 @@ class AppHandoffService {
       );
 
       if (kDebugMode) debugPrint('[OK] Web uygulama oturumu devralindi');
-      return true;
+      return AppHandoffResult.devralindi;
     } catch (error) {
       if (kDebugMode) {
         debugPrint('[WARN] Web uygulama oturumu devralinamadi: $error');
       }
-      return false;
+      return AppHandoffResult.basarisiz;
     } finally {
       // Tokenlar basarili ya da basarisiz denemeden sonra adres cubugunda
       // tutulmaz. Normal query/path korunur; yalniz fragment temizlenir.
