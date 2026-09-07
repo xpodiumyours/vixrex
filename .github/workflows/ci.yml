@@ -258,6 +258,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: jq hazırla
+        run: |
+          set -euo pipefail
+          if command -v jq >/dev/null 2>&1; then
+            jq --version
+            exit 0
+          fi
+          kur="/tmp/jq-1.7.1"
+          mkdir -p "$kur"
+          if [ ! -x "$kur/jq.exe" ]; then
+            curl -fsSL -o "$kur/jq.exe" \
+              "https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-windows-amd64.exe"
+          fi
+          echo "$(cygpath -w "$kur")" >> "$GITHUB_PATH"
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -302,6 +317,21 @@ jobs:
           node-version: 24
           cache: npm
           cache-dependency-path: public_web/package-lock.json
+
+      - name: jq hazırla
+        run: |
+          set -euo pipefail
+          if command -v jq >/dev/null 2>&1; then
+            jq --version
+            exit 0
+          fi
+          kur="/tmp/jq-1.7.1"
+          mkdir -p "$kur"
+          if [ ! -x "$kur/jq.exe" ]; then
+            curl -fsSL -o "$kur/jq.exe" \
+              "https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-windows-amd64.exe"
+          fi
+          echo "$(cygpath -w "$kur")" >> "$GITHUB_PATH"
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
