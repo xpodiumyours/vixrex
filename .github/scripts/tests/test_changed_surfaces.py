@@ -41,14 +41,18 @@ class ChangedSurfacesTest(unittest.TestCase):
             {"flutter": False, "schema": False, "public_web": True},
         )
 
-    def test_parity_next_target_forces_flutter_and_next(self) -> None:
-        path = "public_web/src/components/landing/LandingApkAssistant.tsx"
-        affected = changed_surfaces.classify_paths([path])
-        self.assertEqual(
-            affected,
-            {"flutter": True, "schema": False, "public_web": True},
-        )
-        self.assertTrue(changed_surfaces.parity_affected([path]))
+    def test_parity_next_targets_force_flutter_and_next(self) -> None:
+        for path in (
+            "public_web/src/components/landing/LandingApkAssistant.tsx",
+            "public_web/src/components/landing/FlutterReferenceOnboarding.tsx",
+        ):
+            with self.subTest(path=path):
+                affected = changed_surfaces.classify_paths([path])
+                self.assertEqual(
+                    affected,
+                    {"flutter": True, "schema": False, "public_web": True},
+                )
+                self.assertTrue(changed_surfaces.parity_affected([path]))
 
     def test_unrelated_next_is_not_parity_affected(self) -> None:
         self.assertFalse(
