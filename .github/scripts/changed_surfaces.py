@@ -22,6 +22,7 @@ CI_CONTROL_PATHS = {
     ".github/scripts/teslimat.py",
     ".github/scripts/tests/test_changed_surfaces.py",
     ".github/scripts/tests/test_parity_guard.py",
+    ".github/scripts/tests/test_parity_delivery_guard.py",
     ".github/parity/contracts.json",
     "public_web/e2e/flutter-next-parity.spec.ts",
 }
@@ -93,6 +94,7 @@ SCHEMA_DEPENDENCIES = {
 # Flutter oracle testleri de zorunlu olarak çalışır.
 PARITY_TARGET_PATHS = {
     "public_web/src/components/landing/LandingApkAssistant.tsx",
+    "public_web/src/components/landing/FlutterReferenceOnboarding.tsx",
 }
 
 
