@@ -29,9 +29,7 @@ class AppHandoffService {
         fragment.contains('token_type=');
 
     if (!handoffVar) {
-      return handoffZorunlu
-          ? AppHandoffResult.basarisiz
-          : AppHandoffResult.yok;
+      return handoffZorunlu ? AppHandoffResult.basarisiz : AppHandoffResult.yok;
     }
 
     SupabaseClient? geciciClient;
