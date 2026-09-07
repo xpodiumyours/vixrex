@@ -3,43 +3,32 @@ import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 /**
- * WEB İÇ BAĞLANTI SÖZLEŞMESİ.
+ * WEB İÇ BAĞLANTI + TEK UI SAHİPLİĞİ SÖZLEŞMESİ.
  *
- * 2026-09-07 UI sahipliği düzeltmesi:
  * - Next.js müşteri/public yüzeyinin sahibidir (ana sayfa, SEO Keşfet, vitrin).
  * - Flutter Android + Web uygulama kabuğunun sahibidir (Vitrinim, uygulama
  *   Keşfet'i, Vixrex, Profil).
- * - `public_web/src/app/app/*` geçici uyumluluk yüzeyidir; yeni public girişler
- *   bu kopyaya yönlendirilmez.
- *
- * KURAL: normal web içeriği web'de kalır. Ancak kullanıcı uygulama kabuğuna
- * girecekse `getAppUrl()` kullanılır. Mevcut Next `/app` rotasının varlığı bu
- * bağlantıyı tekrar yerel `/app` yapma gerekçesi değildir.
+ * - Public sayfalar Flutter URL'sini kendi başına kurmaz; tek giriş bileşeni
+ *   `AppEntryLink` üzerinden geçer.
+ * - Next -> Flutter kalıcı hesap geçişi access/refresh token'ı URL'ye taşımaz;
+ *   doğrulanmış kullanıcı için tek kullanımlık Supabase magic-link üretir.
  */
 
 const srcDir = resolve(__dirname, "../src");
 const appDir = join(srcDir, "app");
 
-/**
- * Uygulama kabuğuna girmesi gereken public giriş noktaları.
- * Bunlar Next `/app` kopyasına değil Flutter Web'e gider.
- */
 const FLUTTER_ISTISNALARI: { dosya: string; gerekce: string }[] = [
   {
-    dosya: "app/not-found.tsx",
-    gerekce: "Vitrin oluştur CTA'sı public web'den tek Flutter uygulama kabuğuna geçiştir.",
-  },
-  {
-    dosya: "app/(site)/kesfet/[kategori]/page.tsx",
-    gerekce: "Şablonla başlama işlemi SEO sayfasından uygulama kurulum kabuğuna geçiştir.",
-  },
-  {
-    dosya: "components/vixrex/SharedVixrexAssistant.tsx",
-    gerekce: "Sıfırdan vitrin oluştur seçeneği uygulama yönetim kabuğunda devam etmelidir.",
+    dosya: "components/app/AppEntryLink.tsx",
+    gerekce: "Tek uygulama giriş bileşeni Flutter Web uygulama kabuğunun merkezi adres sahibidir.",
   },
 ];
 
-const TEK_UI_GIRIS_DOSYALARI = FLUTTER_ISTISNALARI.map((i) => i.dosya);
+const TEK_UI_GIRIS_DOSYALARI = [
+  "app/not-found.tsx",
+  "app/(site)/kesfet/[kategori]/page.tsx",
+  "components/vixrex/SharedVixrexAssistant.tsx",
+] as const;
 
 function kaynakDosyalari(dizin: string): string[] {
   return readdirSync(dizin).flatMap((girdi) => {
@@ -62,7 +51,6 @@ function webAdresleri(): Set<string> {
 
     const adres = egikCizgileriDuzelt(dosya.slice(appDir.length))
       .replace(/\/page\.tsx$/, "")
-      // (site) gibi route grupları adrese girmez
       .replace(/\/\([^)]+\)/g, "");
 
     if (adres.includes("[")) continue;
@@ -86,7 +74,6 @@ describe("web iç bağlantı sözleşmesi", () => {
       const kaynak = readFileSync(dosya, "utf8");
       if (!kaynak.includes("getAppUrl()")) continue;
 
-      // `${getAppUrl()}/app` → "/app" ; düz `getAppUrl()` → "/"
       for (const eslesme of kaynak.matchAll(/getAppUrl\(\)\}?(\/[a-z0-9/-]*)?/gi)) {
         const hedef = eslesme[1] ?? "/";
         if (adresler.has(hedef)) {
@@ -98,14 +85,40 @@ describe("web iç bağlantı sözleşmesi", () => {
     expect(ihlaller).toEqual([]);
   });
 
-  it("tek uygulama girişleri yerel Next /app kopyasına bağlanmıyor", () => {
+  it("public uygulama girişleri yalnız ortak AppEntryLink'i kullanıyor", () => {
     for (const goreli of TEK_UI_GIRIS_DOSYALARI) {
       const kaynak = readFileSync(join(srcDir, goreli), "utf8");
-      expect(kaynak, `${goreli} getAppUrl() kullanmalı`).toContain("getAppUrl()");
+      expect(kaynak, `${goreli} AppEntryLink kullanmalı`).toContain("AppEntryLink");
+      expect(kaynak, `${goreli} kendi getAppUrl çağrısını taşımamalı`).not.toContain(
+        "getAppUrl()"
+      );
       expect(kaynak, `${goreli} yerel /app href'i içermemeli`).not.toMatch(
         /href=["']\/app(?:[?/#"'])/
       );
     }
+  });
+
+  it("AppEntryLink kalıcı hesabı tek kullanımlık sunucu köprüsüyle taşır", () => {
+    const kaynak = readFileSync(
+      join(srcDir, "components/app/AppEntryLink.tsx"),
+      "utf8"
+    );
+    expect(kaynak).toContain("getAppUrl()");
+    expect(kaynak).toContain('fetch("/api/app-handoff"');
+    expect(kaynak).toContain("session.access_token");
+    expect(kaynak).not.toContain("refresh_token");
+    expect(kaynak).toContain("window.location.assign(APP_TARGET)");
+  });
+
+  it("app-handoff kullanıcıyı doğrular ve mevcut tokenları URL'ye koymaz", () => {
+    const kaynak = readFileSync(join(appDir, "api/app-handoff/route.ts"), "utf8");
+    expect(kaynak).toContain("auth.getUser(bearerToken)");
+    expect(kaynak).toContain("auth.admin.generateLink");
+    expect(kaynak).toContain('type: "magiclink"');
+    expect(kaynak).toContain("linkData.user.id !== user.id");
+    expect(kaynak).toContain("getAppUrl()");
+    expect(kaynak).toContain('"Cache-Control", "private, no-store, max-age=0"');
+    expect(kaynak).not.toContain("refresh_token");
   });
 
   it("istisna listesindeki her satırın gerekçesi var", () => {
