@@ -58,6 +58,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Flutter → Next Parity tamamlandı mı
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: python .github/scripts/parity_delivery_guard.py
+
       - name: Teslimat kararını uygula
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
