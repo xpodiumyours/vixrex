@@ -3,31 +3,43 @@ import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 /**
- * WEB İÇ BAĞLANTI SÖZLEŞMESİ (2026-08-27).
+ * WEB İÇ BAĞLANTI SÖZLEŞMESİ.
  *
- * Next.js 26 Ağustos'ta platformun ana kapısı oldu; Flutter yüzeyi alt
- * adreste kaldı. Ama sayfalar birer birer web'e taşınırken BAĞLANTILAR
- * taranmadı. Sonuç: "Giriş Yap", "Vitrinini Oluştur", "Bu Şablonla Başla"
- * gibi düğmeler kullanıcıyı Flutter uygulamasına atıyordu — oysa hepsinin
- * web karşılığı çoktan hazırdı.
+ * 2026-09-07 UI sahipliği düzeltmesi:
+ * - Next.js müşteri/public yüzeyinin sahibidir (ana sayfa, SEO Keşfet, vitrin).
+ * - Flutter Android + Web uygulama kabuğunun sahibidir (Vitrinim, uygulama
+ *   Keşfet'i, Vixrex, Profil).
+ * - `public_web/src/app/app/*` geçici uyumluluk yüzeyidir; yeni public girişler
+ *   bu kopyaya yönlendirilmez.
  *
- * Bu, huninin tam ortasında delik demek: gelen esnaf kendini başka bir
- * uygulamada buluyor ve çoğu geri dönmüyor. Beş ayrı yerde bulundu; tek
- * tek avlamak yerine sınıf kapatıldı.
- *
- * KURAL: web'de karşılığı olan bir adrese `getAppUrl()` ile gidilemez.
- * Gerçekten Flutter'a gitmesi gereken bir bağlantı olursa
- * FLUTTER_ISTISNALARI listesine gerekçesiyle yazılır.
+ * KURAL: normal web içeriği web'de kalır. Ancak kullanıcı uygulama kabuğuna
+ * girecekse `getAppUrl()` kullanılır. Mevcut Next `/app` rotasının varlığı bu
+ * bağlantıyı tekrar yerel `/app` yapma gerekçesi değildir.
  */
 
 const srcDir = resolve(__dirname, "../src");
 const appDir = join(srcDir, "app");
 
 /**
- * Flutter'a gitmesi MEŞRU olan yerler. Boş olması iyi işaret —
- * dolduruyorsan gerekçeni yaz.
+ * Uygulama kabuğuna girmesi gereken public giriş noktaları.
+ * Bunlar Next `/app` kopyasına değil Flutter Web'e gider.
  */
-const FLUTTER_ISTISNALARI: { dosya: string; gerekce: string }[] = [];
+const FLUTTER_ISTISNALARI: { dosya: string; gerekce: string }[] = [
+  {
+    dosya: "app/not-found.tsx",
+    gerekce: "Vitrin oluştur CTA'sı public web'den tek Flutter uygulama kabuğuna geçiştir.",
+  },
+  {
+    dosya: "app/(site)/kesfet/[kategori]/page.tsx",
+    gerekce: "Şablonla başlama işlemi SEO sayfasından uygulama kurulum kabuğuna geçiştir.",
+  },
+  {
+    dosya: "components/vixrex/SharedVixrexAssistant.tsx",
+    gerekce: "Sıfırdan vitrin oluştur seçeneği uygulama yönetim kabuğunda devam etmelidir.",
+  },
+];
+
+const TEK_UI_GIRIS_DOSYALARI = FLUTTER_ISTISNALARI.map((i) => i.dosya);
 
 function kaynakDosyalari(dizin: string): string[] {
   return readdirSync(dizin).flatMap((girdi) => {
@@ -60,7 +72,7 @@ function webAdresleri(): Set<string> {
 }
 
 describe("web iç bağlantı sözleşmesi", () => {
-  it("web'de karşılığı olan hiçbir adrese Flutter üzerinden gidilmiyor", () => {
+  it("web'de kalması gereken adresler gereksiz yere Flutter'a gönderilmiyor", () => {
     const adresler = webAdresleri();
     const istisnalar = new Set(FLUTTER_ISTISNALARI.map((i) => i.dosya));
     const ihlaller: string[] = [];
@@ -84,6 +96,16 @@ describe("web iç bağlantı sözleşmesi", () => {
     }
 
     expect(ihlaller).toEqual([]);
+  });
+
+  it("tek uygulama girişleri yerel Next /app kopyasına bağlanmıyor", () => {
+    for (const goreli of TEK_UI_GIRIS_DOSYALARI) {
+      const kaynak = readFileSync(join(srcDir, goreli), "utf8");
+      expect(kaynak, `${goreli} getAppUrl() kullanmalı`).toContain("getAppUrl()");
+      expect(kaynak, `${goreli} yerel /app href'i içermemeli`).not.toMatch(
+        /href=["']\/app(?:[?/#"'])/
+      );
+    }
   });
 
   it("istisna listesindeki her satırın gerekçesi var", () => {
