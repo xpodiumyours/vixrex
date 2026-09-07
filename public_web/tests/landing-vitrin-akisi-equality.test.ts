@@ -53,17 +53,19 @@ describe("landing vitrin oluşturma akışı Flutter referansıyla eşit", () =>
     expect(wrapper).toContain("1 - Math.pow(1 - oran, 3)");
     expect(wrapper).not.toContain("scrollIntoView");
     expect(phoneMockup).toContain("<LandingApkAssistant");
-    expect(apkAssistant).toContain("<FlutterReferenceOnboarding");
+    expect(apkAssistant).not.toContain("useState");
+    expect(apkAssistant).toContain("<LandingAsistanSohbeti");
   });
 
-  it("Flutter karşılama sözleşmesini üç seçenek ve aynı aksiyonlarla korur", () => {
+  it("Flutter karşılama sözleşmesini mevcut tek Next asistanında korur", () => {
     const flutterTest = oku("../test/onboarding_niyet_akis_test.dart");
     const flutterController = oku("../lib/controllers/vixrex_onboarding_controller.dart");
     const apkAssistant = oku("src/components/landing/LandingApkAssistant.tsx");
-    const mirror = oku("src/components/landing/FlutterReferenceOnboarding.tsx");
+    const sohbet = oku("src/components/landing/LandingAsistanSohbeti.tsx");
 
     for (const label of ["Hazır Vitrin Seç", "Sıfırdan Oluştur", "Bakınıyorum"]) {
       expect(flutterTest).toContain(`expect(find.text('${label}'), findsOneWidget)`);
+      expect(sohbet).toContain(label);
     }
 
     expect(flutterController).toContain("_step = VixRexOnboardingStep.templateNiyet");
@@ -72,13 +74,10 @@ describe("landing vitrin oluşturma akışı Flutter referansıyla eşit", () =>
     expect(flutterController).toContain("_onBotMessage('Tamam. Hazır olunca buradayım.')");
 
     expect(apkAssistant).not.toContain("useState");
-    expect(apkAssistant).toContain("<FlutterReferenceOnboarding");
-    expect(mirror).toContain('hizliSecenek("hazir_vitrin_sec")');
-    expect(mirror).toContain('hizliSecenek("sifirdan_olustur")');
-    expect(mirror).toContain('hizliSecenek("bakiniyorum")');
-    expect(mirror).toContain('setSahne("template_intent")');
-    expect(mirror).toContain('setSahne("name")');
-    expect(mirror).toContain("setBakiniyorumAck(true)");
-    expect(mirror).not.toContain("Evet, Oluşturalım");
+    expect(apkAssistant).toContain("<LandingAsistanSohbeti");
+    expect(sohbet).toContain('id === "hazir_vitrin_sec"');
+    expect(sohbet).toContain('id === "sifirdan_olustur"');
+    expect(sohbet).toContain('id === "bakiniyorum"');
+    expect(sohbet).not.toContain("Evet, Oluşturalım");
   });
 });
