@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { AppEntryLink } from "@/components/app/AppEntryLink";
 import {
   loadSharedAssistantContext,
   sendSharedAssistantMessage,
   type SharedAssistantContext,
   type SharedAssistantMessage,
 } from "@/lib/assistantConversation";
-import { getAppUrl } from "@/lib/siteUrl";
 import { vixRexHizliSecenekler, vixRexMesajlari } from "@/lib/vixrexMesajlari";
 
 const EMPTY_CONTEXT: SharedAssistantContext = {
@@ -117,9 +117,9 @@ export function SharedVixrexAssistant({ onBrowse }: { onBrowse: () => void }) {
             <Link href="/kesfet?yalniz_kiralik=1" className="flex min-h-11 items-center justify-center rounded-xl bg-lp-primary px-3 text-[12px] font-black text-lp-on-primary">
               {vixRexHizliSecenekler.find((item) => item.id === "hazir_vitrin_sec")?.etiket}
             </Link>
-            <a href={`${getAppUrl()}/app`} className="flex min-h-11 items-center justify-center rounded-xl border border-lp-border bg-lp-surface px-3 text-[12px] font-black text-lp-text-alt">
+            <AppEntryLink className="flex min-h-11 items-center justify-center rounded-xl border border-lp-border bg-lp-surface px-3 text-[12px] font-black text-lp-text-alt">
               {vixRexHizliSecenekler.find((item) => item.id === "sifirdan_olustur")?.etiket}
-            </a>
+            </AppEntryLink>
             <button type="button" onClick={onBrowse} className="min-h-11 rounded-xl border border-lp-border bg-lp-surface px-3 text-[12px] font-black text-lp-text-alt">
               {vixRexHizliSecenekler.find((item) => item.id === "bakiniyorum")?.etiket}
             </button>
