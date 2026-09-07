@@ -1,0 +1,87 @@
+name: Flutter → Next Parity
+
+# Flutter Web, parite kapsamındaki Next.js yüzeyleri için değiştirilemez
+# referanstır. Bu workflow her PR'da vardır; hedef yüzey değişmediyse yalnız
+# kilit/guard doğrulaması yapar, hedef değiştiyse Flutter oracle + gerçek
+# tarayıcı davranışını aynı HEAD SHA üzerinde çalıştırır.
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: parity-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  FLUTTER_VERSION: "3.44.4"
+
+jobs:
+  parity:
+    name: Flutter → Next Parity
+    runs-on: [self-hosted, windows, vixrex]
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Referans kilidi ve değişiklik ayrımı
+        id: guard
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: >-
+          python .github/scripts/parity_guard.py
+          --base "$BASE_SHA"
+          --head "$HEAD_SHA"
+          --github-output "$GITHUB_OUTPUT"
+
+      - name: Parite guard birim testleri
+        run: python -m unittest discover -s .github/scripts/tests -p "test_parity_guard.py"
+
+      - name: Setup Flutter
+        if: steps.guard.outputs.affected == 'true'
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Flutter bağımlılıkları
+        if: steps.guard.outputs.affected == 'true'
+        run: flutter pub get
+
+      - name: Flutter oracle davranış testi
+        if: steps.guard.outputs.affected == 'true'
+        run: flutter test test/onboarding_niyet_akis_test.dart --reporter expanded
+
+      - name: Setup Node.js
+        if: steps.guard.outputs.affected == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: public_web/package-lock.json
+
+      - name: Next.js bağımlılıkları
+        if: steps.guard.outputs.affected == 'true'
+        working-directory: public_web
+        run: npm ci
+
+      - name: Flutter → Next gerçek tarayıcı paritesi
+        if: steps.guard.outputs.affected == 'true'
+        working-directory: public_web
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+        run: npm run e2e:local -- e2e/flutter-next-parity.spec.ts

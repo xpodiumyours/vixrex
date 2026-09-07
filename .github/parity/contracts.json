@@ -1,0 +1,88 @@
+{
+  "version": 1,
+  "reference": "Flutter Web",
+  "reference_branch": "main",
+  "reference_commit": "553d2ce8e070d17ad7e2b86047cd4c310e26c9b7",
+  "policy": {
+    "allow_unlisted_differences": false,
+    "implementation_may_edit_oracle": false,
+    "implementation_may_edit_gate": false,
+    "unverified_behavior": "BLOCK",
+    "contract_required_prefixes": [
+      "public_web/src/components/landing/"
+    ]
+  },
+  "contracts": [
+    {
+      "id": "landing-onboarding-welcome",
+      "description": "Landing telefon maketi karşılaması Flutter onboarding karşılama akışını izler.",
+      "target_paths": [
+        "public_web/src/components/landing/LandingApkAssistant.tsx",
+        "public_web/src/components/landing/FlutterReferenceOnboarding.tsx"
+      ],
+      "oracle_git_blobs": {
+        "shared/vixrex_mesajlar.json": "aec7aef2de522268b246f13cd7454ad24c1af631",
+        "test/onboarding_niyet_akis_test.dart": "8bb048ef7e21e147aef93b919384130c0db896e7",
+        "lib/screens/vixrex_onboarding_chat_screen.dart": "eadd2722173b6e3272dfd731a23dad37531afd81",
+        "lib/controllers/vixrex_onboarding_controller.dart": "bd347e6aed2c9b7c8e7b49c217b954214c8473eb"
+      },
+      "oracle_assertions": {
+        "shared/vixrex_mesajlar.json": [
+          "\"id\": \"hazir_vitrin_sec\"",
+          "\"etiket\": \"Hazır Vitrin Seç\"",
+          "\"id\": \"sifirdan_olustur\"",
+          "\"etiket\": \"Sıfırdan Oluştur\"",
+          "\"id\": \"bakiniyorum\"",
+          "\"etiket\": \"Bakınıyorum\""
+        ],
+        "test/onboarding_niyet_akis_test.dart": [
+          "karşılamada üç hızlı seçenek duruyor",
+          "Hazır Vitrin Seç",
+          "Sıfırdan Oluştur",
+          "Bakınıyorum",
+          "Hazır Vitrin Seç niyet sorusunu açar"
+        ],
+        "lib/screens/vixrex_onboarding_chat_screen.dart": [
+          "hazir_vitrin_sec",
+          "sifirdan_olustur",
+          "bakiniyorum"
+        ],
+        "lib/controllers/vixrex_onboarding_controller.dart": [
+          "void chooseReadyTemplate()",
+          "_step = VixRexOnboardingStep.templateNiyet",
+          "Future<void> chooseScratch()",
+          "_step = VixRexOnboardingStep.name",
+          "void declineWelcome()",
+          "_onUserMessage('Şimdilik bakınıyorum')",
+          "_onBotMessage('Tamam. Hazır olunca buradayım.')",
+          "_step = VixRexOnboardingStep.welcome"
+        ]
+      },
+      "flutter_tests": [
+        "test/onboarding_niyet_akis_test.dart"
+      ],
+      "browser": {
+        "enabled": true,
+        "route": "/",
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "open_button": "Vixrex Asistan'ı aç",
+        "scope_text": "Hızlı Seçenekler",
+        "button_oracle_paths": [
+          "shared/vixrex_mesajlar.json",
+          "test/onboarding_niyet_akis_test.dart"
+        ],
+        "expected_buttons": [
+          "Hazır Vitrin Seç",
+          "Sıfırdan Oluştur",
+          "Bakınıyorum"
+        ],
+        "forbidden_buttons": [
+          "Evet, Oluşturalım"
+        ]
+      }
+    }
+  ]
+}
