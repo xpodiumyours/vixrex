@@ -5,6 +5,9 @@ Flutter Web listed parity contracts are the reference/oracle. A normal
 implementation PR may change a Next.js target OR the parity gate, never both;
 it may never change a Next.js target together with its Flutter oracle.
 
+Shared-product Next.js prefixes are default-deny: every changed file there must
+already belong to a parity contract. Unknown behavior is BLOCK, never guessed.
+
 Bootstrap exception: while the base branch does not yet contain the manifest,
 the installation PR may add the gate and repair the target together. That
 exception disappears automatically after this system reaches main.
@@ -78,6 +81,13 @@ def load_manifest(root: Path = ROOT) -> dict[str, Any]:
     if policy.get("unverified_behavior") != "BLOCK":
         raise ParityError("unverified_behavior='BLOCK' olmalı.")
 
+    required_prefixes = policy.get("contract_required_prefixes")
+    if not isinstance(required_prefixes, list) or not required_prefixes:
+        raise ParityError("contract_required_prefixes boş olamaz.")
+    for prefix in required_prefixes:
+        if not isinstance(prefix, str) or not normalize(prefix).startswith("public_web/"):
+            raise ParityError(f"Geçersiz contract_required_prefix: {prefix!r}")
+
     contracts = data.get("contracts")
     if not isinstance(contracts, list) or not contracts:
         raise ParityError("Parite manifestinde en az bir contract olmalı.")
@@ -91,6 +101,15 @@ def path_matches(path: str, contract: dict[str, Any]) -> bool:
         normalize(p).rstrip("/") + "/" for p in contract.get("target_prefixes", [])
     )
     return normalized in exact or any(normalized.startswith(prefix) for prefix in prefixes)
+
+
+def requires_contract(path: str, manifest: dict[str, Any]) -> bool:
+    normalized = normalize(path)
+    prefixes = tuple(
+        normalize(prefix).rstrip("/") + "/"
+        for prefix in manifest["policy"]["contract_required_prefixes"]
+    )
+    return any(normalized.startswith(prefix) for prefix in prefixes)
 
 
 def oracle_paths(contract: dict[str, Any]) -> set[str]:
@@ -237,6 +256,18 @@ def evaluate_changes(
     changed_set = {normalize(path) for path in changed}
     affected_ids: list[str] = []
     errors: list[str] = []
+
+    # Default-deny: ortak Flutter/Next ürün yüzeyinde contract dışında kalan
+    # bir Next değişikliği yapılırsa ne amaçlandığını tahmin etmeyiz.
+    for path in sorted(changed_set):
+        if not requires_contract(path, manifest):
+            continue
+        if not any(path_matches(path, contract) for contract in manifest["contracts"]):
+            errors.append(
+                "CONTRACT_REQUIRED: Flutter Web referanslı ortak Next yüzeyinde "
+                f"contract olmadan değişiklik yapılamaz: {path}. Önce ayrı bir "
+                "referans/contract PR'ı ile Flutter oracle tanımlanmalı."
+            )
 
     for contract in manifest["contracts"]:
         contract_id = contract["id"]
