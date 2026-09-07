@@ -9,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:vixrex/config/app_router.dart';
 import 'package:vixrex/l10n/app_localizations.dart';
+import 'package:vixrex/services/app_handoff_service.dart';
 import 'package:vixrex/services/push_notification_service.dart';
 import 'package:vixrex/services/sohbet_gecmisi_gocu.dart';
 import 'package:vixrex/theme/app_colors.dart';
@@ -85,7 +86,18 @@ Future<void> _initializeSupabase() async {
       anonKey: supabasePublishableKey,
     );
     if (kDebugMode) debugPrint('[OK] Supabase initialized successfully');
-    await _oturumuGuvenceyeAl();
+
+    // Public Next.js tarafinda kalici hesabi acik olan kullanici Flutter Web'e
+    // geldiyse once o hesap devralinir. Yalniz devralma yoksa eski anonim
+    // oturum guvencesi calisir; boylece yeni gecici hesap asil hesabin onune
+    // gecmez.
+    final handoffDevralindi = await AppHandoffService.devral(
+      supabaseUrl: supabaseUrl,
+      publishableKey: supabasePublishableKey,
+    );
+    if (!handoffDevralindi) {
+      await _oturumuGuvenceyeAl();
+    }
   } catch (error) {
     if (kDebugMode) debugPrint('[FATAL] Supabase initialize failed: $error');
   }
