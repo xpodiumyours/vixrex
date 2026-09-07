@@ -15,10 +15,10 @@
   "contracts": [
     {
       "id": "landing-onboarding-welcome",
-      "description": "Landing telefon maketi karşılaması Flutter onboarding karşılama akışını izler.",
+      "description": "Landing telefon maketi karşılaması Flutter onboarding karşılama akışını izler; ayrı bir Next onboarding adım makinesi kurulmaz.",
       "target_paths": [
         "public_web/src/components/landing/LandingApkAssistant.tsx",
-        "public_web/src/components/landing/FlutterReferenceOnboarding.tsx"
+        "public_web/src/components/landing/LandingAsistanSohbeti.tsx"
       ],
       "oracle_git_blobs": {
         "shared/vixrex_mesajlar.json": "aec7aef2de522268b246f13cd7454ad24c1af631",
