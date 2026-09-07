@@ -10,8 +10,8 @@ import { describe, expect, it } from "vitest";
  *   Keşfet'i, Vixrex, Profil).
  * - Public sayfalar Flutter URL'sini kendi başına kurmaz; tek giriş bileşeni
  *   `AppEntryLink` üzerinden geçer.
- * - Next -> Flutter kalıcı hesap geçişi access/refresh token'ı URL'ye taşımaz;
- *   doğrulanmış kullanıcı için tek kullanımlık Supabase magic-link üretir.
+ * - Next -> Flutter kalıcı hesap geçişi mevcut access/refresh token'ı URL'ye
+ *   taşımaz; doğrulanmış kullanıcı için tek kullanımlık Supabase magic-link üretir.
  */
 
 const srcDir = resolve(__dirname, "../src");
@@ -21,6 +21,10 @@ const FLUTTER_ISTISNALARI: { dosya: string; gerekce: string }[] = [
   {
     dosya: "components/app/AppEntryLink.tsx",
     gerekce: "Tek uygulama giriş bileşeni Flutter Web uygulama kabuğunun merkezi adres sahibidir.",
+  },
+  {
+    dosya: "app/api/app-handoff/route.ts",
+    gerekce: "Doğrulanmış hesabın tek kullanımlık Supabase geçiş bağlantısının sabit Flutter hedefini sunucuda kurar.",
   },
 ];
 
