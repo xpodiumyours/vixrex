@@ -1,0 +1,65 @@
+name: Teslimat
+
+# NEDEN VAR (2026-09-07)
+# Bir ajan PR açıp sohbet turunu bitirince CI daha sonra tamamlanıyor ve PR'a
+# geri dönen kimse kalmıyor — düzeltme açık PR'da unutuluyor, bu sırada başka
+# PR'lar main'e girip onu eskitiyor (#425 tam olarak böyle oldu).
+#
+# Bu iş sohbete bağlı DEĞİLDİR. CI bittiğinde, etiket eklendiğinde ve düzenli
+# aralıklarla kendi kendine uyanır; onaylı PR'ı ya teslim eder ya da neden
+# teslim edilmediğini PR'daki TEK kalıcı durum yorumuna yazar.
+#
+# ÖNEMLİ SINIR: bu depoda GitHub dal koruması KAPALI (özel depo + ücretsiz
+# plan; koruma ve ruleset uçları 403 "Upgrade to GitHub Pro" dönüyor, ölçüldü
+# 2026-09-07). Yani doğrudan main'e push veya elle yanlış merge bu iş
+# tarafından ENGELLENEMEZ. Burası yalnız otomatik teslimatı fail-closed yapar.
+
+on:
+  # CI bittiğinde: teslimat kararı ancak sonuç varken verilebilir.
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+  # Onay etiketi eklendiğinde hemen bak.
+  pull_request_target:
+    types: [labeled, unlabeled, synchronize, ready_for_review]
+  # Emniyet ağı: yukarıdakilerin hiçbiri gelmese bile teslimat unutulmasın.
+  schedule:
+    - cron: "*/20 * * * *"
+  workflow_dispatch:
+
+# Teslimat koşusu İPTAL EDİLMEZ. CI'da cancel-in-progress mantıklı (eski SHA
+# zaten geçersiz), ama teslimatın yarıda kesilmesi PR'ı tam da kaçınmak
+# istediğimiz "sahipsiz" duruma düşürür.
+concurrency:
+  group: teslimat
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  checks: read
+  statuses: read
+  actions: write
+
+jobs:
+  teslim:
+    name: Onaylı PR'ı teslim et
+    # ubuntu-latest kullanılmıyor: Actions kotası tükendiğinde o işler runner
+    # bile atanmadan saniyeler içinde düşüyor (secret taramasının başına gelen
+    # buydu). Teslimat zinciri o hataya duyarlı olamaz.
+    runs-on: [self-hosted, windows, vixrex]
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Teslimat kararını uygula
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: python .github/scripts/teslimat.py
