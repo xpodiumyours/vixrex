@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useEffect, useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { AppShellProvider } from "@/components/app/AppShellContext";
 import { AppBottomNav, AppSidebar } from "@/components/app/AppSidebar";
@@ -45,14 +45,23 @@ function shellRotasi(pathname: string): boolean {
  */
 function KaliciAnaSekmeler({ pathname, children }: { pathname: string; children: ReactNode }) {
   const aktifSekme = anaSekmeAnahtari(pathname);
-  const sekmeGovdeleri = useRef<Partial<Record<AnaSekme, ReactNode>>>({});
   const kaydirmaKonumlari = useRef<Partial<Record<AnaSekme, number>>>({});
   const oncekiSekme = useRef<AnaSekme | null>(null);
 
   // İlk ziyaret edilen ana ekranın React ağacını sakla; geri dönünce yeniden
-  // oluşturmak yerine aynı mounted örneği göster.
-  if (aktifSekme && !sekmeGovdeleri.current[aktifSekme]) {
-    sekmeGovdeleri.current[aktifSekme] = children;
+  // oluşturmak yerine aynı mounted örneği göster. Bu önbellek render sırasında
+  // okunduğu için ref değil state: ref'e render içinde dokunmak React'in
+  // eşzamanlı çalışmasında güvenli değil ve okunan değer eskiyebilir.
+  const [sekmeGovdeleri, setSekmeGovdeleri] = useState<
+    Partial<Record<AnaSekme, ReactNode>>
+  >(() => (aktifSekme ? { [aktifSekme]: children } : {}));
+
+  // Yeni bir ana sekmeye ilk kez girildiğinde önbelleğe ekle. Koşul yalnız
+  // sekme değişiminde sağlandığı için bu güncelleme kendini tetiklemez.
+  if (aktifSekme && !sekmeGovdeleri[aktifSekme]) {
+    setSekmeGovdeleri((onceki) =>
+      onceki[aktifSekme] ? onceki : { ...onceki, [aktifSekme]: children }
+    );
   }
 
   useLayoutEffect(() => {
@@ -73,7 +82,7 @@ function KaliciAnaSekmeler({ pathname, children }: { pathname: string; children:
     oncekiSekme.current = null;
   }, [aktifSekme]);
 
-  const sekmeler = Object.entries(sekmeGovdeleri.current) as Array<[AnaSekme, ReactNode]>;
+  const sekmeler = Object.entries(sekmeGovdeleri) as Array<[AnaSekme, ReactNode]>;
 
   return (
     <>

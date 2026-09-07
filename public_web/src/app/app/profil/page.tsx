@@ -136,7 +136,7 @@ export default function ProfilPage() {
         <div className="h-5" />
         <Link href="/app/ayarlar" className="flex items-center gap-3.5 rounded-2xl border border-lp-border bg-lp-surface p-4 text-lp-muted hover:bg-lp-surface-soft"><AyarIkonu /><span className="flex-1 text-[14px] font-bold text-lp-text">Uygulama Ayarları</span><OkIkonu /></Link>
         <div className="h-2.5" />
-        <Link href="/yardim" className="flex items-center gap-3.5 rounded-2xl border border-lp-border bg-lp-surface p-4 text-lp-muted hover:bg-lp-surface-soft"><YardimIkonu /><span className="flex-1 text-[14px] font-bold text-lp-text">Kullanım Bilgisi &amp; Destek</span><OkIkonu /></Link>
+        <Link href="/yardim" className="flex items-center gap-3.5 rounded-2xl border border-lp-border bg-lp-surface p-4 text-lp-muted hover:bg-lp-surface-soft"><YardimIkonu /><span className="flex-1 text-[14px] font-bold text-lp-text">Kullanım Bilgisi & Destek</span><OkIkonu /></Link>
         <div className="h-2.5" />
         <Link href="/legal/privacy" className="flex items-center gap-3.5 rounded-2xl border border-lp-border bg-lp-surface p-4 text-lp-muted hover:bg-lp-surface-soft"><KalkanIkonu /><span className="flex-1 text-[14px] font-bold text-lp-text">Gizlilik ve Güvenlik politikası</span><OkIkonu /></Link>
       </div>
