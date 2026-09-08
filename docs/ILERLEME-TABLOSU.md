@@ -41,12 +41,12 @@
 
 | Durum | Yaklaşık oran | Ne demek |
 |---|---|---|
-| 🟢 ✓ Kapalı | **~%65** | Görünüm, menü, 46 alan, SEO, güvenlik, tüm işlevler ✓ |
-| 🟡 △ Kısmi | ~%20 | UX akış, durum, tek veri, asistan, erişilebilirlik kısmi |
-| ⚪ ○ Ölçülmedi | ~%10 | Erişilebilirlik detayı + performans (canlı ölçüm gerek) |
-| 🔴 ✗ Eksik | ~%5 | Görsel regresyon, erişilebilirlik kapısı, PR E2E |
+| 🟢 ✓ Kapalı | **~%75** | Görünüm, menü, 46 alan, SEO, güvenlik, tüm işlevler, UX akış ✓ |
+| 🟡 △ Kısmi | ~%15 | Durum, tek veri, asistan, erişilebilirlik kısmi |
+| ⚪ ○ Ölçülmedi | ~%7 | Erişilebilirlik detayı + performans (canlı ölçüm gerek) |
+| 🔴 ✗ Eksik | ~%3 | Görsel regresyon, erişilebilirlik kapısı, PR E2E |
 
-> **Tek cümle:** *Görünüm %100 hazır; tüm işlevler eşit; geriye UX akış + erişilebilirlik + performans ölçümü kaldı.*
+> **Tek cümle:** *Görünüm %100 hazır; tüm işlevler ve UX akışı eşit; geriye durum/veri senkronizasyonu + erişilebilirlik + performans ölçümü kaldı.*
 
 ---
 
