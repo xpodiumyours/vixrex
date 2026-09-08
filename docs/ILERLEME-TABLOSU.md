@@ -17,7 +17,7 @@
 
 | # | Matris | Durum | Not |
 |---|---|---|---|
-| 1 | İşlev matrisi | 🟡 △ Kısmi | Kabuk/yayın/QR ✓; vitrin oluşturma ✓; vitrin düzenleme ✓; keşfet ✓; ürün yönetimi ✓; randevu ✓; asistan ✓; profil/ayarlar/blog/kalanlar kısmi |
+| 1 | İşlev matrisi | 🟡 △ Kısmi | Kabuk/yayın/QR ✓; vitrin oluşturma ✓; vitrin düzenleme ✓; keşfet ✓; ürün yönetimi ✓; randevu ✓; asistan ✓; profil ✓; ayarlar/blog/kalanlar kısmi |
 | 2 | Ekran ve menü matrisi | 🟢 ✓ | Neredeyse tüm karşılıklar var (moderasyon hariç) |
 | 3 | UI görünüm (renk/tema) | 🟢 ✓ | Renkler birebir eşit; birkaç piksel testi `△` |
 | 4 | UX akış matrisi | 🟡 △ | Sekme korunması ✓; global arama kısmi |
