@@ -124,7 +124,7 @@ export default function BookingTrackerClient({ initialAppointment, token }: Book
 
       if (error || !data) throw error || new Error("İptal işlemi gerçekleştirilemedi.");
       
-      setSuccessMessage("Randevunuz başarıyla iptal edilmiştir.");
+      setSuccessMessage("Randevunuz iptal edildi.");
       fetchLatestInfo();
     } catch (err: unknown) {
       console.error("Error cancelling appointment:", err);
@@ -184,14 +184,13 @@ export default function BookingTrackerClient({ initialAppointment, token }: Book
   };
   const datesList = getNext30Days();
 
-  // Helper date formatting
+  // Flutter AppointmentTrackerScreen ile aynı gösterim: gg.AA.yyyy · SS:dd
   const formatDateTR = (dateStr: string) => {
-    try {
-      const d = new Date(dateStr);
-      return d.toLocaleDateString("tr-TR", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
-    } catch {
-      return dateStr;
-    }
+    const d = new Date(dateStr);
+    if (Number.isNaN(d.getTime())) return dateStr;
+    const gun = String(d.getDate()).padStart(2, "0");
+    const ay = String(d.getMonth() + 1).padStart(2, "0");
+    return `${gun}.${ay}.${d.getFullYear()} · ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
   };
 
   const formatDateLabel = (date: Date) => {
@@ -221,28 +220,28 @@ export default function BookingTrackerClient({ initialAppointment, token }: Book
         };
       case "rejected":
         return {
-          title: "Kabul Edilmedi",
+          title: "Onaylanmadı",
           desc: "Randevu talebiniz maalesef kabul edilmedi. Farklı bir saate talep oluşturabilirsiniz.",
           colorClass: "bg-red-500/10 text-red-600 border-red-200 dark:border-red-950",
           iconColor: "text-red-500",
         };
       case "cancelled_by_customer":
         return {
-          title: "İptal Edildi (Sizin tarafınızdan)",
+          title: "İptal Ettiniz",
           desc: "Bu randevu talebini kendi isteğinizle iptal ettiniz.",
           colorClass: "bg-slate-500/10 text-slate-600 border-slate-200 dark:border-slate-800",
           iconColor: "text-slate-500",
         };
       case "cancelled_by_store":
         return {
-          title: "İptal Edildi (İşletme)",
+          title: "İşletme İptal Etti",
           desc: "Bu randevu işletme tarafından iptal edildi. Bilgi almak için işletmeyle iletişime geçebilirsiniz.",
           colorClass: "bg-rose-500/10 text-rose-600 border-rose-200 dark:border-rose-950",
           iconColor: "text-rose-500",
         };
       case "expired":
         return {
-          title: "Süresi Doldu",
+          title: "Zaman Aşımı",
           desc: "İşletme tarafından zamanında onaylanmayan randevu talebinin süresi dolmuştur.",
           colorClass: "bg-slate-500/10 text-slate-600 border-slate-200 dark:border-slate-800",
           iconColor: "text-slate-500",

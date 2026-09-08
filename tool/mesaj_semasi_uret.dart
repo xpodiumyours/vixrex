@@ -41,6 +41,8 @@ void main() {
   final mesajlar = (veri['mesajlar'] as List).cast<Map<String, dynamic>>();
   final hizliSecenekler =
       (veri['hizliSecenekler'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+  final yanitlar =
+      (veri['yanitlar'] as List?)?.cast<Map<String, dynamic>>() ?? [];
 
   String dartString(String s) {
     final kacisli = s
@@ -134,6 +136,60 @@ void main() {
 
   tampon
     ..writeln('')
+    ..writeln('class VixRexYanitHizli {')
+    ..writeln('  final String etiket;')
+    ..writeln('  final String payload;')
+    ..writeln('  final String aksiyon;')
+    ..writeln('')
+    ..writeln('  const VixRexYanitHizli({')
+    ..writeln('    required this.etiket,')
+    ..writeln('    required this.payload,')
+    ..writeln('    required this.aksiyon,')
+    ..writeln('  });')
+    ..writeln('}')
+    ..writeln('')
+    ..writeln('class VixRexYanit {')
+    ..writeln('  final String payload;')
+    ..writeln('  final String mesaj;')
+    ..writeln('  final List<VixRexYanitHizli> hizli;')
+    ..writeln('')
+    ..writeln('  const VixRexYanit({')
+    ..writeln('    required this.payload,')
+    ..writeln('    required this.mesaj,')
+    ..writeln('    required this.hizli,')
+    ..writeln('  });')
+    ..writeln('}')
+    ..writeln('')
+    ..writeln(
+      '/// Yanıt kablolaması (mesaj anahtarı + hızlı yanıt etiket/payload).',
+    )
+    ..writeln(
+      '/// Aksiyon eşlemesi istemcide kalır; burada yalnız sabit içerik var.',
+    )
+    ..writeln('const Map<String, VixRexYanit> vixRexYanitlar = {');
+
+  for (final y in yanitlar) {
+    tampon.writeln("  ${dartString(y['payload'] as String)}: VixRexYanit(");
+    tampon.writeln("    payload: ${dartString(y['payload'] as String)},");
+    tampon.writeln("    mesaj: ${dartString(y['mesaj'] as String)},");
+    tampon.writeln('    hizli: [');
+    for (final h in (y['hizli'] as List).cast<Map<String, dynamic>>()) {
+      tampon.writeln('      VixRexYanitHizli(');
+      tampon.writeln("        etiket: ${dartString(h['etiket'] as String)},");
+      tampon.writeln("        payload: ${dartString(h['payload'] as String)},");
+      tampon.writeln(
+        "        aksiyon: ${dartString((h['aksiyon'] as String?) ?? 'none')},",
+      );
+      tampon.writeln('      ),');
+    }
+    tampon.writeln('    ],');
+    tampon.writeln('  ),');
+  }
+
+  tampon.writeln('};');
+
+  tampon
+    ..writeln('')
     ..writeln('class VixRexAsistanAkisAdimi {')
     ..writeln('  final String id;')
     ..writeln('  final List<String> alanlar;')
@@ -191,4 +247,5 @@ void main() {
   stdout.writeln('  mesaj sayısı  : ${mesajlar.length}');
   stdout.writeln('  akış adımı    : ${akis.length}');
   stdout.writeln('  hızlı seçenek : ${hizliSecenekler.length}');
+  stdout.writeln('  yanıt         : ${yanitlar.length}');
 }

@@ -16,11 +16,6 @@
 
 type Istisna = { metin: string; neden: string };
 
-const DINAMIK_URETIM =
-  "Flutter'da bu metin profil verisinden dinamik üretiliyor (ör. '" +
-  "${profile.links.length} bağlantı'). Sabit yazı olmadığı için çıkarıcı " +
-  "bulamıyor; web'de ise sabit olarak yazılı.";
-
 const ERISEBILIRLIK =
   "Ekran okuyucu etiketi (aria-label), gözle görünen metin değil. Flutter'da " +
   "erişilebilirlik farklı bir mekanizmayla sağlanıyor.";
@@ -51,11 +46,10 @@ const DUGME_ETIKETI =
 export const LANDING_ESITLIK_ISTISNALARI_WEB: Istisna[] = [
   // --- Landing maket sohbeti (PhoneMockup AsistanSohbetIcerigi) ---
 
-  // --- Dinamik üretim ---
-  {
-    metin: "2 bağlantı",
-    neden: DINAMIK_URETIM,
-  },
+  // "2 bağlantı" istisnası SİLİNDİ (2026-09-08 canlı karşılaştırma):
+  // web artık sabit "2 bağlantı" yazmıyor, Flutter'daki gibi profil
+  // verisinden dinamik üretiyor ({profil.eylemSatirlari.length} bağlantı).
+  // Ayrışma ortadan kalktı; bayat istisna kaydı da temizlendi.
 
   // --- Erişilebilirlik ---
   {

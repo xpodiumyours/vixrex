@@ -81,6 +81,26 @@ export async function appendRawSharedAssistantMessage(
 
 export { ensureConversation as ensureSharedAssistantConversation };
 
+/**
+ * Tek-kaynak kuralı (kanonik: Flutter Web): sohbette yalnız katalog damgalı
+ * asistan satırları çizilir. `message_key` taşıyan her satır
+ * `shared/vixrex_mesajlar.json` karşılığına bağlanır; damgasız asistan
+ * satırları katalog-öncesi iç-durum dökümleridir (alan tik listeleri gibi)
+ * ve kullanıcıya gösterilmez. Kullanıcı satırları her zaman geçer.
+ */
+export function isDisplayableAssistantMessage(
+  message: Pick<SharedAssistantMessage, "role" | "message_key">,
+): boolean {
+  if (message.role === "user") return true;
+  return message.message_key !== null && message.message_key !== undefined;
+}
+
+export function selectDisplayableMessages(
+  messages: SharedAssistantMessage[],
+): SharedAssistantMessage[] {
+  return messages.filter(isDisplayableAssistantMessage);
+}
+
 export async function loadSharedAssistantContext(): Promise<SharedAssistantContext> {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) {
@@ -111,7 +131,9 @@ export async function loadSharedAssistantContext(): Promise<SharedAssistantConte
   return {
     authenticated: true,
     conversationId: conversation.id ?? conversationId,
-    messages: Array.isArray(conversation.messages) ? conversation.messages : [],
+    messages: selectDisplayableMessages(
+      Array.isArray(conversation.messages) ? conversation.messages : [],
+    ),
     hasStore: Boolean(bootstrap.store),
     flowState: bootstrap.flow_state ?? null,
   };
