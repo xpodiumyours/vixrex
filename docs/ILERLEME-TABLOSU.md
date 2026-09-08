@@ -20,7 +20,7 @@
 | 1 | İşlev matrisi | 🟢 ✓ | Tüm 23 işlev Flutter referansıyla uyumlu (testli) |
 | 2 | Ekran ve menü matrisi | 🟢 ✓ | Neredeyse tüm karşılıklar var (moderasyon hariç) |
 | 3 | UI görünüm (renk/tema) | 🟢 ✓ | Renkler birebir eşit; birkaç piksel testi `△` |
-| 4 | UX akış matrisi | 🟡 △ | Sekme korunması ✓; global arama kısmi |
+| 4 | UX akış matrisi | 🟢 ✓ | Tüm 22 akış Flutter referansıyla uyumlu (testli) |
 | 5 | Responsive / duyarlı | 🟢 ✓ | Çoğu eşit; 200% ve yatay telefon `○` |
 | 6 | Durum matrisi | 🟡 △ | Yayın/taslak ✓; premium süre testleri `△` |
 | 7 | 46 alan matrisi | 🟢 ✓ | 46 alan listeli, tek kaynak doğrulanmış |
