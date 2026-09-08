@@ -62,7 +62,7 @@ describe("Realtime kanal sözleşmesi (iki istemci aynı)", () => {
 
   it("YANKI: kendi yazdığın değişiklik kendi sekmesinde tazeleme tetiklemez", () => {
     expect(nextSync).toContain("senkronClientId");
-    expect(nextSync).toMatch(/clientId === senkronClientId.*return|return.*clientId === senkronClientId/s);
+    expect(nextSync).toMatch(/clientId === senkronClientId[\s\S]*return|return[\s\S]*clientId === senkronClientId/);
   });
 
   it("Flutter taslak bildirimi callback ile haber verir, veri yazmaz", () => {

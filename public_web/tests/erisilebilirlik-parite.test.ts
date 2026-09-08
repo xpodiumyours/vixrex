@@ -178,7 +178,7 @@ describe("Erişilebilirlik kapıları (Next.js)", () => {
 
   it("dokunma hedefi: girdi/buton >= 48px, alt menü 68px", () => {
     expect(globalsCss).toMatch(/\.owner-input\s*{[^}]*min-height:\s*48px/);
-    expect(globalsCss).toMatch(/owner-button-danger\s*{[^}]*min-height:\s*48px/s);
+    expect(globalsCss).toMatch(/owner-button-danger\s*{[^}]*min-height:\s*48px/);
     expect(sidebar).toContain("h-[68px]");
   });
 
