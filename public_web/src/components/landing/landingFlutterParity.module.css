@@ -1,17 +1,9 @@
 @keyframes phoneSlide {
-  from {
-    opacity: 0;
-    transform: translateX(6%);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+  from { opacity: 0; transform: translateX(6%); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
-.phoneSlide {
-  animation: phoneSlide 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
+.phoneSlide { animation: phoneSlide 520ms cubic-bezier(0.22, 1, 0.36, 1) both; }
 
 @keyframes badgeRightFloat {
   0% { transform: translateY(9.5px); }
@@ -29,13 +21,8 @@
   100% { transform: translateY(-5.9px); }
 }
 
-.badgeRight {
-  animation: badgeRightFloat 16s linear infinite;
-}
-
-.badgeLeft {
-  animation: badgeLeftFloat 16s linear infinite;
-}
+.badgeRight { animation: badgeRightFloat 16s linear infinite; }
+.badgeLeft { animation: badgeLeftFloat 16s linear infinite; }
 
 @keyframes meshOneFloat {
   0% { transform: translate(40px, 0); }
@@ -65,13 +52,21 @@
 .meshTwo { animation: meshTwoFloat 16s linear infinite; }
 .meshThree { animation: meshThreeFloat 16s linear infinite; }
 
+@keyframes mascotBubbleFloat {
+  from { transform: translateY(-4px); }
+  to { transform: translateY(4px); }
+}
+
+.mascotBubble { animation: mascotBubbleFloat 1800ms ease-in-out infinite alternate; }
+
 @media (prefers-reduced-motion: reduce) {
   .phoneSlide,
   .badgeRight,
   .badgeLeft,
   .meshOne,
   .meshTwo,
-  .meshThree {
+  .meshThree,
+  .mascotBubble {
     animation: none !important;
   }
 }
