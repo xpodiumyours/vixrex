@@ -6,6 +6,7 @@ import type { MockupProfili } from "./mockupProfilleri";
 import { PhoneMockupSlaytlari } from "./PhoneMockupSlaytlari";
 import { LandingApkAssistant } from "./LandingApkAssistant";
 import { MaterialRoundIcon } from "./MaterialRoundIcon";
+import styles from "./landingFlutterParity.module.css";
 
 /**
  * Flutter `landing_hero_mockup.dart` + `phone_mockup.dart` karşılığı.
@@ -63,10 +64,7 @@ export function PhoneMockup({
               onClose={onChatClose}
             />
           ) : (
-            <div
-              key={profil.ad}
-              className="h-full motion-safe:animate-[landing-phone-slide_520ms_cubic-bezier(0.22,1,0.36,1)_both]"
-            >
+            <div key={profil.ad} className={`h-full ${styles.phoneSlide}`}>
               <PhoneMockupSlaytlari profiller={profiller} aktif={aktif} />
             </div>
           )}
@@ -84,7 +82,7 @@ export function PhoneMockup({
       <div className="relative h-[640px] w-[320px]">
         {!isChatOpen ? (
           <>
-            <div className="landing-floating-badge-right absolute -right-[14px] top-[100px] z-40 flex items-center gap-2 rounded-[20px] border-[1.2px] border-lp-primary/30 bg-lp-surface/[0.92] px-3 py-[9px] shadow-[0_5px_10px_rgba(0,0,0,0.1)] backdrop-blur-[12px] min-[360px]:-right-[40px]">
+            <div className={`${styles.badgeRight} absolute -right-[14px] top-[100px] z-40 flex items-center gap-2 rounded-[20px] border-[1.2px] border-lp-primary/30 bg-lp-surface/[0.92] px-3 py-[9px] shadow-[0_5px_10px_rgba(0,0,0,0.1)] backdrop-blur-[12px] min-[360px]:-right-[40px]`}>
               <span
                 className="flex h-[27px] w-[27px] items-center justify-center rounded-full"
                 style={{
@@ -99,7 +97,7 @@ export function PhoneMockup({
               </span>
             </div>
 
-            <div className="landing-floating-badge-left absolute -left-[12px] bottom-[120px] z-40 flex items-center gap-2 rounded-[20px] border-[1.2px] border-lp-primary/30 bg-lp-surface/[0.92] px-3 py-[9px] shadow-[0_5px_10px_rgba(0,0,0,0.1)] backdrop-blur-[12px] min-[360px]:-left-[30px]">
+            <div className={`${styles.badgeLeft} absolute -left-[12px] bottom-[120px] z-40 flex items-center gap-2 rounded-[20px] border-[1.2px] border-lp-primary/30 bg-lp-surface/[0.92] px-3 py-[9px] shadow-[0_5px_10px_rgba(0,0,0,0.1)] backdrop-blur-[12px] min-[360px]:-left-[30px]`}>
               <span
                 className="flex h-[27px] w-[27px] items-center justify-center rounded-full"
                 style={{
