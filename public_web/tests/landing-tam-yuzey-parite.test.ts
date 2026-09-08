@@ -28,7 +28,7 @@ describe("landing tam yüzey Flutter referans paritesi", () => {
     expect(card).toContain("size: 26");
     expect(card).toContain("const SizedBox(width: 15)");
     expect(web).toContain("min-[729px]:block");
-    expect(web).toContain("min-[1089px]:w-[calc(25%-13.5px)]");
+    expect(web).toContain("min-[1089px]:w-[calc(25%_-_13.5px)]");
     for (const icon of ["bolt", "contact_phone", "share", "edit_note"]) {
       expect(web).toContain(`ikon: "${icon}"`);
     }
