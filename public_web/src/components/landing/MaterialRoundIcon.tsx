@@ -17,6 +17,7 @@ type LandingMaterialIconName =
   | "contact_phone"
   | "credit_card_off"
   | "devices"
+  | "edit_note"
   | "explore"
   | "face"
   | "face_retouching_natural"
