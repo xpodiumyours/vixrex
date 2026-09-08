@@ -1,95 +1,69 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import {
+  EDITABLE_COLUMNS,
+  FIELD_BY_KEY,
+  SECTION_DOM_ID,
+  fieldsOfSection,
+} from "@/lib/vitrinFieldSchema";
 
-/**
- * Konum/harita, galeri, hakkimizda, KVKK, dil/ceviri parite testi.
- */
+function alan(anahtar: string) {
+  const sonuc = FIELD_BY_KEY.get(anahtar);
+  expect(sonuc, `${anahtar} alanı şemada bulunmalı`).toBeDefined();
+  return sonuc!;
+}
 
-const flutterStoreData = readFileSync(
-  resolve(__dirname, "../../lib/models/store_data.dart"),
-  "utf8",
-);
-const nextSchema = readFileSync(
-  resolve(__dirname, "../src/lib/vitrinFieldSchema.ts"),
-  "utf8",
-);
-
-describe("konum/harita parite", () => {
-  it("Flutter gibi mapLabel icerir", () => {
-    expect(flutterStoreData).toContain("mapLabel");
-    expect(nextSchema).toContain("map_label");
+describe("kalan işlevler — gerçek VitrinField şema davranışı", () => {
+  it("konum/harita alanlarını gerçek kolon, bölüm ve sayı sınırlarıyla çözer", () => {
+    expect(alan("haritaEtiketi")).toMatchObject({
+      kolon: "map_label",
+      bolum: "contact",
+      tip: "metin",
+    });
+    expect(alan("konumMetni")).toMatchObject({
+      kolon: "hero_location_text",
+      bolum: "hero",
+    });
+    expect(alan("enlem")).toMatchObject({ kolon: "latitude", min: -90, max: 90 });
+    expect(alan("boylam")).toMatchObject({ kolon: "longitude", min: -180, max: 180 });
   });
 
-  it("Flutter gibi heroLocationText icerir", () => {
-    expect(flutterStoreData).toContain("heroLocationText");
-    expect(nextSchema).toContain("hero_location_text");
-  });
-});
-
-describe("galeri parite", () => {
-  it("Flutter gibi galleryItems icerir", () => {
-    expect(flutterStoreData).toContain("galleryItems");
-    expect(nextSchema).toContain("gallery");
-  });
-
-  it("Flutter gibi gallerySectionKicker icerir", () => {
-    expect(flutterStoreData).toContain("gallerySectionKicker");
-    expect(nextSchema).toContain("gallery_section_kicker");
-  });
-});
-
-describe("hakkimizda parite", () => {
-  it("Flutter gibi aboutKicker icerir", () => {
-    expect(flutterStoreData).toContain("aboutKicker");
-    expect(nextSchema).toContain("about_kicker");
-  });
-
-  it("Flutter gibi aboutTitle icerir", () => {
-    expect(flutterStoreData).toContain("aboutTitle");
-    expect(nextSchema).toContain("about_title");
-  });
-
-  it("Flutter gibi aboutImageUrl icerir", () => {
-    expect(flutterStoreData).toContain("aboutImageUrl");
-    expect(nextSchema).toContain("about_image_url");
-  });
-});
-
-describe("KVKK/yasal parite", () => {
-  it("Flutter gibi legalConfig icerir", () => {
-    const flutterLegal = readFileSync(
-      resolve(__dirname, "../../lib/config/legal_config.dart"),
-      "utf8",
+  it("galeri alanlarını gerçek gallery bölümünden döndürür", () => {
+    const galeri = fieldsOfSection("gallery");
+    expect(galeri.map((item) => item.kolon)).toEqual(
+      expect.arrayContaining([
+        "gallery_section_kicker",
+        "gallery_section_title",
+        "gallery_action_label",
+        "gallery_action_href",
+      ]),
     );
-    expect(flutterLegal).toContain("LegalConfig");
+    expect(SECTION_DOM_ID.gallery).toBe("galeri");
   });
 
-  it("Next.js KVKK sayfasi vardir", () => {
-    const nextPrivacy = readFileSync(
-      resolve(__dirname, "../src/app/privacy/page.tsx"),
-      "utf8",
+  it("hakkımızda alanlarını gerçek about bölümünden döndürür", () => {
+    const hakkinda = fieldsOfSection("about");
+    expect(hakkinda.map((item) => item.kolon)).toEqual(
+      expect.arrayContaining([
+        "about_kicker",
+        "about_title",
+        "corporate_bio",
+        "about_image_url",
+        "about_image_caption",
+        "references_link",
+      ]),
     );
-    expect(nextPrivacy).toContain("KVKK");
-  });
-});
-
-describe("dil/ceviri parite", () => {
-  it("Flutter gibi ceviri altyapisi vardir", () => {
-    // Flutter'da l10n.yaml ve çeviri dosyali
-    const l10n = readFileSync(
-      resolve(__dirname, "../../l10n.yaml"),
-      "utf8",
-    );
-    expect(l10n).toContain("arb");
+    expect(SECTION_DOM_ID.about).toBe("hakkimizda");
   });
 
-  it("Next.js ceviri altyapisi vardir", () => {
-    // Next.js'de locale destegi
-    const nextLayout = readFileSync(
-      resolve(__dirname, "../src/app/layout.tsx"),
-      "utf8",
-    );
-    expect(nextLayout).toContain("lang");
+  it("kanıtlanan kolonların sunucu yazılabilir listesinden gerçekten geçtiğini doğrular", () => {
+    for (const kolon of [
+      "map_label",
+      "hero_location_text",
+      "gallery_section_kicker",
+      "about_title",
+      "references_link",
+    ]) {
+      expect(EDITABLE_COLUMNS).toContain(kolon);
+    }
   });
 });

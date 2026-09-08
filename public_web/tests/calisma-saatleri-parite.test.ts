@@ -1,37 +1,32 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import workingHoursContract from "../../shared/working_hours_contract.json";
+import { FIELD_BY_KEY } from "@/lib/vitrinFieldSchema";
 
-/**
- * Calisma saatleri parite testi.
- */
+describe("çalışma saatleri — gerçek şema ve ortak sözleşme", () => {
+  it("çalışma saatleri alanını gerçek VitrinField şemasından çözer", () => {
+    const alan = FIELD_BY_KEY.get("calismaSaatleri");
 
-const flutterStoreData = readFileSync(
-  resolve(__dirname, "../../lib/models/store_data.dart"),
-  "utf8",
-);
-const flutterWorkingHours = readFileSync(
-  resolve(__dirname, "../../lib/models/working_hours.dart"),
-  "utf8",
-);
-const nextSchema = readFileSync(
-  resolve(__dirname, "../src/lib/vitrinFieldSchema.ts"),
-  "utf8",
-);
-
-describe("calisma saatleri parite (Flutter referansiyla)", () => {
-  it("Flutter gibi working_hours modelini icerir", () => {
-    expect(flutterStoreData).toContain("working_hours");
-    expect(flutterWorkingHours).toContain("BookingSettings");
+    expect(alan).toMatchObject({
+      anahtar: "calismaSaatleri",
+      kolon: "working_hours",
+      tip: "metin",
+      bolum: "contact",
+      kalite: true,
+      maxUzunluk: 400,
+    });
   });
 
-  it("Flutter gibi calismaSaatleri alanini icerir", () => {
-    expect(nextSchema).toContain("calismaSaatleri");
-  });
+  it("ortak çalışma saati sözleşmesi haftanın yedi gününü çalıştırılabilir veri olarak taşır", () => {
+    const gunler = workingHoursContract.working_hours;
 
-  it("Flutter gibi gunluk calisma saatlerini icerir", () => {
-    expect(flutterWorkingHours).toContain("workingHours");
-    expect(flutterWorkingHours).toContain("lunchBreak");
-    expect(flutterWorkingHours).toContain("09:00");
+    expect(Object.keys(gunler)).toEqual(["1", "2", "3", "4", "5", "6", "7"]);
+    expect(gunler["1"]).toEqual({ start: "09:00", end: "18:00", active: true });
+    expect(gunler["7"]).toEqual({ start: "00:00", end: "00:00", active: false });
+
+    for (const gun of Object.values(gunler)) {
+      expect(gun.start).toMatch(/^\d{2}:\d{2}$/);
+      expect(gun.end).toMatch(/^\d{2}:\d{2}$/);
+      expect(typeof gun.active).toBe("boolean");
+    }
   });
 });

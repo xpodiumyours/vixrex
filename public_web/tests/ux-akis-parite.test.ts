@@ -1,67 +1,122 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import {
+  KESFET_LIMIT,
+  kategoriVitrinleriniGetir,
+  type KesfetVitrini,
+} from "@/lib/explore";
+import { kesfetVitrinleriniFiltrele } from "@/lib/kesfetFiltreleme";
+import type { BusinessTemplateGroup } from "@/lib/businessCategories";
 
-/**
- * UX akis matrisi parite testi.
- */
+const kategoriGruplari = new Map<string, BusinessTemplateGroup>([
+  ["teknik_servis", "hizmet"],
+  ["giyim", "perakende"],
+]);
 
-const flutterRouter = readFileSync(
-  resolve(__dirname, "../../lib/config/app_router.dart"),
-  "utf8",
-);
-const nextLayout = readFileSync(
-  resolve(__dirname, "../src/app/layout.tsx"),
-  "utf8",
-);
+const vitrinler = [
+  {
+    ad: "Teknofix",
+    aciklama: "Aynı gün cihaz onarımı",
+    kategoriEtiketi: "Teknik Servis",
+    kategoriKimligi: "teknik_servis",
+    konum: "Kadıköy, İstanbul",
+    urunAdlari: ["OLED ekran değişimi", "Batarya"],
+    kiralikMi: false,
+  },
+  {
+    ad: "Aymira",
+    aciklama: "Yeni sezon kadın giyim",
+    kategoriEtiketi: "Giyim",
+    kategoriKimligi: "giyim",
+    konum: "Çankaya, Ankara",
+    urunAdlari: ["Keten gömlek"],
+    kiralikMi: true,
+  },
+];
 
-describe("UX akis parite", () => {
-  it("Flutter gibi sekme korunmasi vardir", () => {
-    expect(flutterRouter).toContain("GoRouter");
-    expect(nextLayout).toContain("AppShellBoundary");
+const temelFiltre = {
+  sorgu: "",
+  grup: undefined as BusinessTemplateGroup | undefined,
+  kategoriKimligi: null,
+  sadeceFavoriler: false,
+  favoriAdlari: [] as string[],
+  sadeceKiralik: false,
+};
+
+describe("UX akışı — gerçek Keşfet filtreleme ve veri yardımcıları", () => {
+  it("global arama vitrin, açıklama, kategori, konum ve ürün adını gerçekten tarar", () => {
+    for (const sorgu of ["teknofix", "CİHAZ", "servis", "kadıköy", "ekran"]) {
+      expect(
+        kesfetVitrinleriniFiltrele(
+          vitrinler,
+          { ...temelFiltre, sorgu },
+          kategoriGruplari,
+        ),
+      ).toEqual([vitrinler[0]]);
+    }
   });
 
-  it("Flutter gibi geri butonu davranisi vardir", () => {
-    expect(flutterRouter).toContain("go");
+  it("grup + kategori + favori + yalnız kiralık filtrelerini birlikte uygular", () => {
+    expect(
+      kesfetVitrinleriniFiltrele(
+        vitrinler,
+        {
+          ...temelFiltre,
+          grup: "perakende",
+          kategoriKimligi: "giyim",
+          sadeceFavoriler: true,
+          favoriAdlari: ["Aymira"],
+          sadeceKiralik: true,
+        },
+        kategoriGruplari,
+      ),
+    ).toEqual([vitrinler[1]]);
   });
 
-  it("Flutter gibi modal kapama davranisi vardir", () => {
-    expect(flutterRouter).toContain("Navigator");
+  it("kategori akışı yükleyicinin gerçek sonucunu süzer ve hata kurtarmasını çalıştırır", async () => {
+    const liste: KesfetVitrini[] = [
+      {
+        slug: "a",
+        ad: "A",
+        aciklama: "",
+        kategoriEtiketi: "Giyim",
+        kategoriKimligi: "giyim",
+        kapakUrl: null,
+        konum: "Ankara",
+        kiralikMi: false,
+        acikMi: true,
+        urunSayisi: 0,
+        urunAdlari: [],
+        whatsapp: null,
+        guncellemeZamani: null,
+      },
+      {
+        slug: "b",
+        ad: "B",
+        aciklama: "",
+        kategoriEtiketi: "Teknik Servis",
+        kategoriKimligi: "teknik_servis",
+        kapakUrl: null,
+        konum: "İstanbul",
+        kiralikMi: false,
+        acikMi: true,
+        urunSayisi: 0,
+        urunAdlari: [],
+        whatsapp: null,
+        guncellemeZamani: null,
+      },
+    ];
+
+    await expect(
+      kategoriVitrinleriniGetir("giyim", async () => liste),
+    ).resolves.toEqual([liste[0]]);
+    await expect(
+      kategoriVitrinleriniGetir("giyim", async () => {
+        throw new Error("geçici kesinti");
+      }),
+    ).resolves.toEqual([]);
   });
 
-  it("Flutter gibi form dogrulama vardir", () => {
-    const flutterForm = readFileSync(
-      resolve(__dirname, "../../lib/widgets/editor/common_form_fields.dart"),
-      "utf8",
-    );
-    expect(flutterForm).toContain("errorText");
-  });
-
-  it("Flutter gibi hata kurtarma vardir", () => {
-    expect(flutterRouter).toContain("catch");
-  });
-
-  it("Flutter gibi global arama vardir", () => {
-    const nextSearch = readFileSync(
-      resolve(__dirname, "../src/lib/kesfetFiltreleme.ts"),
-      "utf8",
-    );
-    expect(nextSearch).toContain("filter");
-  });
-
-  it("Flutter gibi filtre/siralama vardir", () => {
-    const nextFilter = readFileSync(
-      resolve(__dirname, "../src/lib/kesfetFiltreleme.ts"),
-      "utf8",
-    );
-    expect(nextFilter).toContain("filter");
-  });
-
-  it("Flutter gibi sayfalama vardir", () => {
-    const nextExplore = readFileSync(
-      resolve(__dirname, "../src/lib/explore.ts"),
-      "utf8",
-    );
-    expect(nextExplore).toContain("limit");
+  it("Keşfet veri katmanının gerçek kayıt sınırını dışa aktarır", () => {
+    expect(KESFET_LIMIT).toBe(50);
   });
 });

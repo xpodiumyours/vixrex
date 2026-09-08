@@ -1,33 +1,35 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { FIELD_BY_KEY } from "@/lib/vitrinFieldSchema";
 
-/**
- * Sosyal medya parite testi.
- */
+function alan(anahtar: string) {
+  const sonuc = FIELD_BY_KEY.get(anahtar);
+  expect(sonuc, `${anahtar} alanı şemada bulunmalı`).toBeDefined();
+  return sonuc!;
+}
 
-const flutterStoreData = readFileSync(
-  resolve(__dirname, "../../lib/models/store_data.dart"),
-  "utf8",
-);
-const nextSchema = readFileSync(
-  resolve(__dirname, "../src/lib/vitrinFieldSchema.ts"),
-  "utf8",
-);
-
-describe("sosyal medya parite (Flutter referansiyla)", () => {
-  it("Flutter gibi instagram alanini icerir", () => {
-    expect(flutterStoreData).toContain("instagram");
-    expect(nextSchema).toContain("instagram");
+describe("sosyal medya / dış bağlantılar — gerçek alan şeması", () => {
+  it("Instagram alanını gerçek kolon ve sınırlarıyla çözer", () => {
+    expect(alan("instagram")).toMatchObject({
+      kolon: "instagram",
+      tip: "metin",
+      bolum: "contact",
+      maxUzunluk: 30,
+    });
   });
 
-  it("Flutter gibi website alanini icerir", () => {
-    expect(flutterStoreData).toContain("website");
-    expect(nextSchema).toContain("website");
+  it("web sitesi alanını URL olarak çözer", () => {
+    expect(alan("website")).toMatchObject({
+      kolon: "website",
+      tip: "url",
+      bolum: "contact",
+    });
   });
 
-  it("Flutter gibi marketplace linklerini icerir", () => {
-    expect(flutterStoreData).toContain("marketplace");
-    expect(nextSchema).toContain("references_link");
+  it("referans / pazar yeri bağlantısını yazılabilir URL kolonu olarak çözer", () => {
+    expect(alan("referansLinki")).toMatchObject({
+      kolon: "references_link",
+      tip: "url",
+      bolum: "about",
+    });
   });
 });

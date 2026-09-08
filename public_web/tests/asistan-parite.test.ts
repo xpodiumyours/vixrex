@@ -1,53 +1,107 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { vixRexMesajlari } from "@/lib/vixrexMesajlari";
+import {
+  ownerChatInitialMessages,
+  parseAssistantHandoff,
+} from "@/lib/assistantHandoff";
+import {
+  vixRexAsistanAdimiForAlan,
+  vixRexAsistanAkisi,
+  vixRexHizliSecenekler,
+  vixRexMesajlari,
+} from "@/lib/vixrexMesajlari";
 import { VITRIN_FIELDS } from "@/lib/vitrinFieldSchema";
 
-/**
- * Asistan / NLU parite testi.
- *
- * Kural: Flutter asistan ile Next.js asistan ayni mesaj sozlugunu
- * kullanir (shared/vixrex_mesajlar.json). Ayni 46 alan niyeti tanir.
- */
-
-const flutterConfig = readFileSync(
-  resolve(__dirname, "../../lib/config/chatbot_config.dart"),
-  "utf8",
-);
-const flutterMessages = JSON.parse(
-  readFileSync(resolve(__dirname, "../../shared/vixrex_mesajlar.json"), "utf8"),
-);
-
-describe("asistan / NLU parite (Flutter referansiyla)", () => {
-  it("Ayni 46 alan niyeti tanir", () => {
-    expect(VITRIN_FIELDS.length).toBe(46);
+describe("asistan / NLU — gerçek katalog ve handoff davranışı", () => {
+  it("46 alan şemasını gerçek modülden yükler ve anahtarları benzersizdir", () => {
+    expect(VITRIN_FIELDS).toHaveLength(46);
+    expect(new Set(VITRIN_FIELDS.map((alan) => alan.anahtar)).size).toBe(46);
   });
 
-  it("Next.js ayni mesaj sozlugunu kullanir", () => {
-    expect(vixRexMesajlari).toBeDefined();
-    expect(Object.keys(vixRexMesajlari).length).toBeGreaterThan(40);
+  it("kurulum alanlarını gerçek mesaj akışında doğru adımlara çözer", () => {
+    expect(vixRexAsistanAdimiForAlan("isletmeAdi")?.id).toBe("name");
+    expect(vixRexAsistanAdimiForAlan("kategori")?.id).toBe("category");
+    expect(vixRexAsistanAdimiForAlan("whatsapp")?.id).toBe("whatsapp");
+    expect(vixRexAsistanAdimiForAlan("olmayan_alan")).toBeNull();
+
+    expect(vixRexAsistanAkisi.slice(0, 6).map((adim) => adim.id)).toEqual([
+      "name",
+      "category",
+      "whatsapp",
+      "location",
+      "legal",
+      "publish",
+    ]);
   });
 
-  it("Flutter ile ayni mesaj anahtarlarini paylasiyor", () => {
-    const reactMessages = readFileSync(
-      resolve(__dirname, "../src/lib/vixrexMesajlari.ts"),
-      "utf8",
+  it("hızlı seçenek ve mesaj kataloğunu gerçek JSON çözümleyicisinden üretir", () => {
+    expect(vixRexHizliSecenekler.map((secenek) => secenek.id)).toEqual([
+      "hazir_vitrin_sec",
+      "sifirdan_olustur",
+      "bakiniyorum",
+    ]);
+    expect(vixRexMesajlari.welcome_baslik).toBeTruthy();
+    expect(vixRexMesajlari.setup_name_baslik).toBeTruthy();
+    expect(vixRexMesajlari.setup_category_baslik).toBeTruthy();
+  });
+
+  it("handoff parser geçerli konuşmayı kabul eder, gizli anahtar içeren veriyi reddeder", () => {
+    const gecerli = parseAssistantHandoff({
+      version: 1,
+      completed_steps: ["name"],
+      next_step: "category",
+      messages: [
+        { role: "assistant", text: "  İşletme adını aldım.  " },
+        { role: "user", text: "Aymira" },
+      ],
+    });
+
+    expect(gecerli).toEqual({
+      version: 1,
+      completed_steps: ["name"],
+      next_step: "category",
+      messages: [
+        { role: "assistant", text: "İşletme adını aldım." },
+        { role: "user", text: "Aymira" },
+      ],
+    });
+
+    expect(
+      parseAssistantHandoff({
+        version: 1,
+        completed_steps: [],
+        next_step: "name",
+        messages: [{ role: "assistant", text: "Devam" }],
+        session_token: "gizli",
+      }),
+    ).toBeNull();
+  });
+
+  it("owner konuşması handoff mesajlarını gerçekten taşır ve sonraki adıma devam eder", () => {
+    const handoff = parseAssistantHandoff({
+      version: 1,
+      completed_steps: ["name"],
+      next_step: "category",
+      messages: [
+        { role: "assistant", text: "Merhaba" },
+        { role: "user", text: "Aymira" },
+      ],
+    });
+    expect(handoff).not.toBeNull();
+
+    const rapor = {
+      yuzde: 25,
+      temelTamam: false,
+      sonrakiAdim: "Eksik alan var",
+    } as Parameters<typeof ownerChatInitialMessages>[0];
+
+    const mesajlar = ownerChatInitialMessages(rapor, handoff);
+    expect(mesajlar.slice(0, 2).map((mesaj) => mesaj.metin)).toEqual([
+      "Merhaba",
+      "Aymira",
+    ]);
+    expect(mesajlar.map((mesaj) => mesaj.metin)).toContain(
+      "İşletme kategorisi adımından kaldığımız yerden devam edelim.",
     );
-    expect(reactMessages).toContain("vixrex_mesajlar");
-    expect(reactMessages).toContain("shared/vixrex_mesajlar.json");
-  });
-
-  it("Flutter gibi netlesme sorusunu yonetir", () => {
-    expect(flutterConfig).toContain("vixRexMesajlari");
-  });
-
-  it("Flutter gibi yanit tablosunu kullanir", () => {
-    expect(flutterMessages.yanitlar.length).toBeGreaterThan(0);
-    const reactConfig = readFileSync(
-      resolve(__dirname, "../src/lib/assistantHandoff.ts"),
-      "utf8",
-    );
-    expect(reactConfig).toContain("hizliCevaplar");
+    expect(mesajlar.at(-1)?.metin).toContain("vitrinde tıkla");
   });
 });
