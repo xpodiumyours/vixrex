@@ -1,0 +1,77 @@
+@keyframes phoneSlide {
+  from {
+    opacity: 0;
+    transform: translateX(6%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.phoneSlide {
+  animation: phoneSlide 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes badgeRightFloat {
+  0% { transform: translateY(9.5px); }
+  20% { transform: translateY(3px); }
+  45% { transform: translateY(-8px); }
+  70% { transform: translateY(-5px); }
+  100% { transform: translateY(9.5px); }
+}
+
+@keyframes badgeLeftFloat {
+  0% { transform: translateY(-5.9px); }
+  15% { transform: translateY(-10px); }
+  40% { transform: translateY(0); }
+  65% { transform: translateY(10px); }
+  100% { transform: translateY(-5.9px); }
+}
+
+.badgeRight {
+  animation: badgeRightFloat 16s linear infinite;
+}
+
+.badgeLeft {
+  animation: badgeLeftFloat 16s linear infinite;
+}
+
+@keyframes meshOneFloat {
+  0% { transform: translate(40px, 0); }
+  25% { transform: translate(0, 30px); }
+  50% { transform: translate(-40px, 0); }
+  75% { transform: translate(0, -30px); }
+  100% { transform: translate(40px, 0); }
+}
+
+@keyframes meshTwoFloat {
+  0% { transform: translate(0, 30px); }
+  25% { transform: translate(40px, 0); }
+  50% { transform: translate(0, -30px); }
+  75% { transform: translate(-40px, 0); }
+  100% { transform: translate(0, 30px); }
+}
+
+@keyframes meshThreeFloat {
+  0% { transform: translate(20px, 0); }
+  25% { transform: translate(0, -20px); }
+  50% { transform: translate(-20px, 0); }
+  75% { transform: translate(0, 20px); }
+  100% { transform: translate(20px, 0); }
+}
+
+.meshOne { animation: meshOneFloat 16s linear infinite; }
+.meshTwo { animation: meshTwoFloat 16s linear infinite; }
+.meshThree { animation: meshThreeFloat 16s linear infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .phoneSlide,
+  .badgeRight,
+  .badgeLeft,
+  .meshOne,
+  .meshTwo,
+  .meshThree {
+    animation: none !important;
+  }
+}
