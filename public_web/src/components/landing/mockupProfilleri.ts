@@ -1,23 +1,28 @@
 import { kategoriSablonHaritasi } from "@/lib/categoryTemplates";
-import { kategoriUrlParcasi } from "@/lib/businessCategories";
 
-/**
- * Hero telefon mockup'ındaki dört örnek profil — envanter §2.3.
- *
- * Adlar Flutter landing'deki tanıtım mockup'ıyla aynı tutuldu (ürün kararı,
- * 2026-08-26): bunlar bir vitrin vaadini gösteren reklam görselleridir.
- *
- * İKİ FARK var, ikisi de bilinçli:
- *   1. Görseller uydurma Unsplash bağlantılarından değil, GERÇEK şablon
- *      kütüphanesinden gelir (category_image_templates). Flutter'da bu
- *      eşleme bozuktu: 20 arayüz anahtarının 11'i veritabanındaki 19
- *      kanonik kimlikle eşleşmiyordu, o kartlar sessizce yedek görsele
- *      düşüyordu. Burada doğrudan kanonik kimlik kullanılıyor.
- *   2. Tıklama `/v/demo-*` demo vitrinine değil, o kategorinin Keşfet
- *      sayfasına gider. Demo vitrinler #345 ile aramadan çıkarılıyor;
- *      ana sayfadan oraya iç bağlantı vermek o bağlantıyı boşa harcardı.
- */
+export type MaterialRoundIconName =
+  | "build_circle"
+  | "calendar_month"
+  | "camera_alt"
+  | "chat_bubble"
+  | "checkroom"
+  | "construction"
+  | "content_cut"
+  | "delivery_dining"
+  | "directions"
+  | "event_available"
+  | "local_dining"
+  | "location_on"
+  | "menu_book"
+  | "phone_android"
+  | "photo_library"
+  | "qr_code_2"
+  | "restaurant_menu"
+  | "shopping_bag"
+  | "spa"
+  | "verified";
 
+/** Hero telefon mockup'ındaki dört örnek profil — Flutter landing_screen.dart referansı. */
 export type MockupProfili = {
   ad: string;
   kategoriSeridi: string;
@@ -25,23 +30,19 @@ export type MockupProfili = {
   kapakUrl: string | null;
   galeriUrlleri: string[];
   hedefUrl: string;
-  /** Uygulamadaki HeroDemoProfile ile aynı metinler */
   aciklama: string;
   durum: string;
-  /**
-   * Rozet metni Flutter'dan ayrı alan olarak alınır (landing_screen.dart
-   * 62/64, 101/103, 140/142, 179/181): rengine göre ternary ile tahmin
-   * etmek kırılgandı — 2026-09-08 canlı karşılaştırmada yanlış etiket
-   * ürettiği görüldü.
-   */
-  /** Üst rozet (ör. "Galeri", "Menü") */
-  uStRozet: { simge: string; renk: string; metin: string };
-  /** Alt rozet (ör. "QR kod", "Yol tarifi") */
-  altRozet: { simge: string; renk: string; metin: string };
-  /** Eylem simgeleri (ör. WhatsApp, Instagram) */
-  eylemler: readonly { simge: string; renk: string }[];
-  /** Eylem satırları (ör. "Günün menüsü / Sıcak yemek ve tatlılar") */
-  eylemSatirlari: readonly { baslik: string; altBaslik: string; renk: string }[];
+  vurguRengi: string;
+  anaSimge: MaterialRoundIconName;
+  uStRozet: { simge: MaterialRoundIconName; renk: string; metin: string };
+  altRozet: { simge: MaterialRoundIconName; renk: string; metin: string };
+  eylemler: readonly { simge: MaterialRoundIconName; renk: string }[];
+  eylemSatirlari: readonly {
+    simge: MaterialRoundIconName;
+    baslik: string;
+    altBaslik: string;
+    renk: string;
+  }[];
 };
 
 const TANIMLAR = [
@@ -49,68 +50,80 @@ const TANIMLAR = [
     ad: "Aymira Giyim",
     serit: "KADIN GİYİM / BUTİK",
     kimlik: "giyim",
+    demoSlug: "demo-aymira-giyim",
     aciklama: "Yeni sezon reyonları ve mağaza fotoğrafları tek vitrinde.",
     durum: "AÇIK",
-    uStRozet: { simge: "🖼️", renk: "#FF5A1F", metin: "Galeri" },
-    altRozet: { simge: "📱", renk: "#FF5A1F", metin: "QR kod" },
+    vurguRengi: "#FF5A1F",
+    anaSimge: "checkroom",
+    uStRozet: { simge: "photo_library", renk: "#FF5A1F", metin: "Galeri" },
+    altRozet: { simge: "qr_code_2", renk: "#FF5A1F", metin: "QR kod" },
     eylemler: [
-      { simge: "💬", renk: "#25D366" },
-      { simge: "📷", renk: "#E1306C" },
+      { simge: "chat_bubble", renk: "#25D366" },
+      { simge: "camera_alt", renk: "#E1306C" },
     ],
     eylemSatirlari: [
-      { baslik: "Vitrin galerisi", altBaslik: "Raf ve reyon fotoğrafları", renk: "#FF5A1F" },
-      { baslik: "Trendyol", altBaslik: "Mağazayı ziyaret edin", renk: "#F27A1A" },
+      { simge: "photo_library", baslik: "Vitrin galerisi", altBaslik: "Raf ve reyon fotoğrafları", renk: "#FF5A1F" },
+      { simge: "shopping_bag", baslik: "Trendyol", altBaslik: "Mağazayı ziyaret edin", renk: "#F27A1A" },
     ],
   },
   {
     ad: "Lezzet Durağı",
     serit: "KAFE / RESTORAN",
     kimlik: "kafe_lokanta",
+    demoSlug: "demo-lezzet-duragi",
     aciklama: "Menü, konum ve WhatsApp sipariş bilgileri tek ekranda.",
     durum: "AÇIK",
-    uStRozet: { simge: "📖", renk: "#EA580C", metin: "Menü" },
-    altRozet: { simge: "📍", renk: "#EA580C", metin: "Yol tarifi" },
+    vurguRengi: "#EA580C",
+    anaSimge: "restaurant_menu",
+    uStRozet: { simge: "menu_book", renk: "#EA580C", metin: "Menü" },
+    altRozet: { simge: "directions", renk: "#EA580C", metin: "Yol tarifi" },
     eylemler: [
-      { simge: "💬", renk: "#25D366" },
-      { simge: "📍", renk: "#EF4444" },
+      { simge: "chat_bubble", renk: "#25D366" },
+      { simge: "location_on", renk: "#EF4444" },
     ],
     eylemSatirlari: [
-      { baslik: "Günün menüsü", altBaslik: "Sıcak yemek ve tatlılar", renk: "#EA580C" },
-      { baslik: "Paket servis", altBaslik: "WhatsApp ile sipariş", renk: "#10B981" },
+      { simge: "local_dining", baslik: "Günün menüsü", altBaslik: "Sıcak yemek ve tatlılar", renk: "#EA580C" },
+      { simge: "delivery_dining", baslik: "Paket servis", altBaslik: "WhatsApp ile sipariş", renk: "#10B981" },
     ],
   },
   {
     ad: "Nova Kuaför",
     serit: "KUAFÖR / GÜZELLİK",
     kimlik: "kuafor",
+    demoSlug: "demo-nova-kuafor",
     aciklama: "Randevu, hizmetler ve sosyal medya bağlantıları hazır.",
     durum: "AÇIK",
-    uStRozet: { simge: "📅", renk: "#DB2777", metin: "Randevu" },
-    altRozet: { simge: "📷", renk: "#DB2777", metin: "Instagram" },
+    vurguRengi: "#DB2777",
+    anaSimge: "content_cut",
+    uStRozet: { simge: "calendar_month", renk: "#DB2777", metin: "Randevu" },
+    altRozet: { simge: "camera_alt", renk: "#DB2777", metin: "Instagram" },
     eylemler: [
-      { simge: "💬", renk: "#25D366" },
-      { simge: "📷", renk: "#E1306C" },
+      { simge: "chat_bubble", renk: "#25D366" },
+      { simge: "camera_alt", renk: "#E1306C" },
     ],
     eylemSatirlari: [
-      { baslik: "Hizmetler", altBaslik: "Kesim, boya ve bakım", renk: "#DB2777" },
-      { baslik: "Randevu al", altBaslik: "WhatsApp ile hızlı iletişim", renk: "#10B981" },
+      { simge: "spa", baslik: "Hizmetler", altBaslik: "Kesim, boya ve bakım", renk: "#DB2777" },
+      { simge: "event_available", baslik: "Randevu al", altBaslik: "WhatsApp ile hızlı iletişim", renk: "#10B981" },
     ],
   },
   {
     ad: "TeknoFix",
     serit: "TELEFON TEKNİK SERVİS",
     kimlik: "teknik_servis",
+    demoSlug: "demo-teknofix",
     aciklama: "Servis talebi, adres ve güvenilir iletişim tek vitrinde.",
     durum: "AÇIK",
-    uStRozet: { simge: "💬", renk: "#2563EB", metin: "WhatsApp" },
-    altRozet: { simge: "📍", renk: "#2563EB", metin: "Konum" },
+    vurguRengi: "#2563EB",
+    anaSimge: "build_circle",
+    uStRozet: { simge: "chat_bubble", renk: "#2563EB", metin: "WhatsApp" },
+    altRozet: { simge: "location_on", renk: "#2563EB", metin: "Konum" },
     eylemler: [
-      { simge: "💬", renk: "#25D366" },
-      { simge: "📱", renk: "#2563EB" },
+      { simge: "chat_bubble", renk: "#25D366" },
+      { simge: "phone_android", renk: "#2563EB" },
     ],
     eylemSatirlari: [
-      { baslik: "Servis kaydı", altBaslik: "Ekran, batarya ve bakım", renk: "#2563EB" },
-      { baslik: "Google yorumları", altBaslik: "Müşteri güveni", renk: "#6366F1" },
+      { simge: "construction", baslik: "Servis kaydı", altBaslik: "Ekran, batarya ve bakım", renk: "#2563EB" },
+      { simge: "verified", baslik: "Google yorumları", altBaslik: "Müşteri güveni", renk: "#6366F1" },
     ],
   },
 ] as const;
@@ -126,9 +139,11 @@ export async function mockupProfilleriniGetir(): Promise<MockupProfili[]> {
       kategoriKimligi: tanim.kimlik,
       kapakUrl: sablon?.kapaklar[0]?.url ?? null,
       galeriUrlleri: (sablon?.galeri ?? []).slice(0, 3).map((g) => g.url),
-      hedefUrl: `/kesfet/${kategoriUrlParcasi(tanim.kimlik)}`,
+      hedefUrl: `/v/${tanim.demoSlug}`,
       aciklama: tanim.aciklama,
       durum: tanim.durum,
+      vurguRengi: tanim.vurguRengi,
+      anaSimge: tanim.anaSimge,
       uStRozet: tanim.uStRozet,
       altRozet: tanim.altRozet,
       eylemler: tanim.eylemler,
