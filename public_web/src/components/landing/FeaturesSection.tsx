@@ -51,7 +51,7 @@ export function FeaturesSection() {
           {KARTLAR.map((kart) => (
             <article
               key={kart.baslik}
-              className="flex w-full items-start rounded-[28px] border-[1.2px] border-lp-border/85 bg-lp-surface p-6 shadow-[0_14px_24px_rgba(0,0,0,0.06)] transition-transform duration-[220ms] ease-out min-[729px]:block min-[729px]:w-[calc(50%-9px)] min-[1089px]:w-[calc(25%-13.5px)] min-[1089px]:hover:-translate-y-1.5 min-[1089px]:hover:scale-[1.01]"
+              className="flex w-full items-start rounded-[28px] border-[1.2px] border-lp-border/85 bg-lp-surface p-6 shadow-[0_14px_24px_rgba(0,0,0,0.06)] transition-transform duration-[220ms] ease-out min-[729px]:block min-[729px]:w-[calc(50%_-_9px)] min-[1089px]:w-[calc(25%_-_13.5px)] min-[1089px]:hover:-translate-y-1.5 min-[1089px]:hover:scale-[1.01]"
             >
               <span
                 className="flex h-[54px] w-[54px] shrink-0 items-center justify-center rounded-[18px]"
