@@ -39,6 +39,8 @@ type FieldSpec = {
   kind?: "text" | "textarea" | "url" | "email" | "tel" | "select";
   required?: boolean;
   options?: readonly string[];
+  icon?: string;
+  iconFilled?: boolean;
 };
 
 const SECTIONS: Array<{ title: string; required?: boolean; fields: FieldSpec[] }> = [
@@ -46,10 +48,10 @@ const SECTIONS: Array<{ title: string; required?: boolean; fields: FieldSpec[] }
     title: "Kimlik",
     required: true,
     fields: [
-      { key: "isletmeAdi", label: "İşletme / Vixrex Adı", placeholder: "Örn: Aymira Butik", required: true },
-      { key: "isletmeTuru", label: "İşletme Türü", placeholder: "Örn: Butik" },
-      { key: "kisaTanitim", label: "Kısa Açıklama", placeholder: "Bugün vitrinde ne var? Kısa bir tanıtım yaz.", kind: "textarea" },
-      { key: "heroRozet", label: "Kapak Rozeti", placeholder: "Örn: Atölye / Mağaza" },
+      { key: "isletmeAdi", label: "İşletme / Vixrex Adı", placeholder: "Örn: Aymira Butik", required: true, icon: "storefront", iconFilled: true },
+      { key: "isletmeTuru", label: "İşletme Türü", placeholder: "Örn: Kadın giyim / butik", icon: "storefront" },
+      { key: "kisaTanitim", label: "Kısa Açıklama", placeholder: "Bugün vitrinde ne var? Kısa bir tanıtım yaz.", kind: "textarea", icon: "notes", iconFilled: true },
+      { key: "heroRozet", label: "Kapak Rozeti", placeholder: "Örn: Atölye / Mağaza", icon: "sell" },
       { key: "logo", label: "Logo", placeholder: "Logo görsel bağlantısı", kind: "url" },
     ],
   },
@@ -57,10 +59,10 @@ const SECTIONS: Array<{ title: string; required?: boolean; fields: FieldSpec[] }
     title: "İletişim",
     required: true,
     fields: [
-      { key: "whatsapp", label: "WhatsApp", placeholder: "05xx xxx xx xx", kind: "tel", required: true },
-      { key: "telefon", label: "Telefon", placeholder: "05xx xxx xx xx", kind: "tel" },
-      { key: "eposta", label: "E-posta", placeholder: "iletisim@isletme.com", kind: "email" },
-      { key: "instagram", label: "Instagram", placeholder: "kullaniciadi" },
+      { key: "whatsapp", label: "WhatsApp Numarası", placeholder: "05xx xxx xx xx", kind: "tel", required: true, icon: "chat_bubble", iconFilled: true },
+      { key: "telefon", label: "Telefon", placeholder: "05xx xxx xx xx (isteğe bağlı)", kind: "tel", icon: "phone", iconFilled: true },
+      { key: "eposta", label: "E-posta", placeholder: "ornek@isletme.com", kind: "email", icon: "email" },
+      { key: "instagram", label: "Instagram", placeholder: "@kullanici_adi veya profil linki", icon: "camera_alt", iconFilled: true },
     ],
   },
   {
@@ -71,9 +73,9 @@ const SECTIONS: Array<{ title: string; required?: boolean; fields: FieldSpec[] }
       { key: "il", label: "İl", placeholder: "Örn: İstanbul", required: true },
       { key: "ilce", label: "İlçe", placeholder: "Örn: Kadıköy", required: true },
       { key: "mahalle", label: "Mahalle", placeholder: "Örn: Caddebostan" },
-      { key: "konumMetni", label: "Vitrin Konum Metni", placeholder: "Örn: Kadıköy, İstanbul" },
-      { key: "haritaEtiketi", label: "Harita Kartı Etiketi", placeholder: "Örn: Çarşı içi" },
-      { key: "calismaSaatleri", label: "Çalışma Saatleri", placeholder: "Pzt–Cmt 09.00–19.00", kind: "textarea" },
+      { key: "konumMetni", label: "Hero Konum Metni", placeholder: "Örn: Kadıköy, İstanbul", icon: "place" },
+      { key: "haritaEtiketi", label: "Harita Kartı Etiketi", placeholder: "Örn: Atatürk Cad. No:24", icon: "map" },
+      { key: "calismaSaatleri", label: "Çalışma Saatleri", placeholder: "Örn: Pzt — Cmt 09:00 - 20:00", kind: "textarea", icon: "schedule", iconFilled: true },
       { key: "enlem", label: "Enlem", placeholder: "41.015", kind: "text" },
       { key: "boylam", label: "Boylam", placeholder: "28.978", kind: "text" },
     ],
@@ -89,25 +91,25 @@ const SECTIONS: Array<{ title: string; required?: boolean; fields: FieldSpec[] }
         options: FIELD_BY_KEY.get("kategori")?.secenekler ?? [],
       },
       { key: "kapakGorseli", label: "Kapak Görseli", placeholder: "Görsel bağlantısı", kind: "url" },
-      { key: "galeriUstBaslik", label: "Galeri Üst Başlığı", placeholder: "Örn: İşlerimizden" },
-      { key: "galeriBaslik", label: "Galeri Başlığı", placeholder: "Örn: Galerimiz" },
-      { key: "galeriAksiyonMetni", label: "Galeri Buton Metni", placeholder: "Örn: Hepsini gör" },
-      { key: "galeriAksiyonLinki", label: "Galeri Buton Bağlantısı", kind: "url", placeholder: "https://" },
+      { key: "galeriUstBaslik", label: "Galeri üst etiketi", placeholder: "Örn: Mağazadan kareler", icon: "label" },
+      { key: "galeriBaslik", label: "Galeri başlığı", placeholder: "Örn: Atmosferi yakından tanı", icon: "title", iconFilled: true },
+      { key: "galeriAksiyonMetni", label: "Galeri Buton Metni", placeholder: "Örn: Kataloğu Gör", icon: "smart_button" },
+      { key: "galeriAksiyonLinki", label: "Galeri Buton Bağlantısı", kind: "url", placeholder: "https://... veya #sayfa-icı", icon: "link", iconFilled: true },
     ],
   },
   {
     title: "İçerik ve SEO",
     fields: [
       { key: "hakkindaMetin", label: "Hakkımızda Yazısı", kind: "textarea", placeholder: "İşletmenizin hikâyesini anlatın" },
-      { key: "kategoriBolumBaslik", label: "Kategori Bölümü Başlığı", placeholder: "Kategoriler" },
-      { key: "urunBolumBaslik", label: "Ürün Bölümü Başlığı", placeholder: "Ürünler" },
-      { key: "blogUstBaslik", label: "Blog Üst Başlığı", placeholder: "Bilgi köşesi" },
-      { key: "blogBaslik", label: "Blog Başlığı", placeholder: "Yazılar" },
+      { key: "kategoriBolumBaslik", label: "Kategori Bölümü Başlığı", placeholder: "Örn: Servis Alanlarımız", icon: "category" },
+      { key: "urunBolumBaslik", label: "Ürün Bölümü Başlığı", placeholder: "Örn: Servis Fiyat Listesi", icon: "inventory_2" },
+      { key: "blogUstBaslik", label: "Blog Üst Başlık", placeholder: "Örn: Teknik rehber", icon: "label" },
+      { key: "blogBaslik", label: "Blog Bölüm Başlığı", placeholder: "Örn: Mağazadan Haberler", icon: "article" },
       { key: "sssUstBaslik", label: "SSS Üst Başlığı", placeholder: "Merak edilenler" },
       { key: "sssBaslik", label: "SSS Bölüm Başlığı", placeholder: "Sıkça sorulan sorular" },
       { key: "sssAciklama", label: "SSS Bölüm Açıklaması", kind: "textarea", placeholder: "Müşterilerinizin sık sorduğu konular" },
-      { key: "haritaLinki", label: "Google İşletme Bağlantısı", kind: "url", placeholder: "https://" },
-      { key: "referansLinki", label: "Referanslar Bağlantısı", kind: "url", placeholder: "https://" },
+      { key: "haritaLinki", label: "Google Yorum Bağlantısı", kind: "url", placeholder: "https://search.google.com/local/writereview?placeid=...", icon: "rate_review", iconFilled: true },
+      { key: "referansLinki", label: "Referanslar Bağlantısı", kind: "url", placeholder: "https://...", icon: "link", iconFilled: true },
     ],
   },
 ];
@@ -395,19 +397,24 @@ export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode 
                         const common = "min-h-12 w-full rounded-xl border border-lp-border bg-lp-bg-light px-4 text-[14px] font-semibold text-lp-text outline-none transition placeholder:text-lp-muted/70 focus:border-lp-secondary focus:ring-2 focus:ring-lp-primary/25";
                         return (
                           <div key={field.key}>
-                            <label htmlFor={id} className="mb-2 block text-[13px] font-bold text-lp-text-alt">{field.label}{field.required ? <span className="text-lp-primary"> *</span> : null}</label>
+                            <label htmlFor={id} className="mb-2 block text-[13px] font-bold text-lp-text-alt">{field.label}{field.required ? <span className="vixrex-required-mark text-lp-primary"> *</span> : null}</label>
                             {field.key === "kapakGorseli" || field.key === "logo" ? (
                               <div className="space-y-3">
                                 {value ? <div className="relative aspect-[16/7] w-full overflow-hidden rounded-2xl border border-lp-border"><Image src={value} alt={`${field.label} önizlemesi`} fill sizes="(max-width: 1024px) 100vw, 540px" className="object-cover" /></div> : null}
                                 <label htmlFor={id} className="flex min-h-12 cursor-pointer items-center justify-center rounded-xl border border-lp-border bg-lp-bg-light px-4 text-[13px] font-black text-lp-secondary hover:border-lp-primary">{uploading ? "Yükleniyor…" : value ? `${field.label} değiştir` : `${field.label} yükle`}</label>
                                 <input id={id} type="file" accept="image/jpeg,image/png,image/webp" disabled={uploading} onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadGorsel(file, field.key); }} className="sr-only" />
                               </div>
-                            ) : field.kind === "textarea" ? (
-                              <textarea id={id} value={value} placeholder={field.placeholder} onChange={(event) => updateLocal(field.key, event.target.value)} onBlur={() => save(field.key)} className={`${common} min-h-24 resize-y py-3`} />
-                            ) : field.kind === "select" ? (
-                              <select id={id} value={value} onChange={(event) => updateLocal(field.key, event.target.value)} onBlur={() => save(field.key)} className={common}><option value="">Seçiniz</option>{field.options?.map((option) => <option key={option} value={option}>{option}</option>)}</select>
                             ) : (
-                              <input id={id} type={field.kind ?? "text"} value={value} placeholder={field.placeholder} onChange={(event) => updateLocal(field.key, event.target.value)} onBlur={() => save(field.key)} className={common} />
+                              <div className="vixrex-app-field-control">
+                                {field.icon ? <span aria-hidden="true" className={`vixrex-app-field-icon${field.iconFilled ? " vixrex-app-field-icon-filled" : ""}`}>{field.icon}</span> : null}
+                                {field.kind === "textarea" ? (
+                                  <textarea id={id} value={value} placeholder={field.placeholder} onChange={(event) => updateLocal(field.key, event.target.value)} onBlur={() => save(field.key)} className={`${common} min-h-24 resize-y py-3`} />
+                                ) : field.kind === "select" ? (
+                                  <select id={id} value={value} onChange={(event) => updateLocal(field.key, event.target.value)} onBlur={() => save(field.key)} className={common}><option value="">Seçiniz</option>{field.options?.map((option) => <option key={option} value={option}>{option}</option>)}</select>
+                                ) : (
+                                  <input id={id} type={field.kind ?? "text"} value={value} placeholder={field.placeholder} onChange={(event) => updateLocal(field.key, event.target.value)} onBlur={() => save(field.key)} className={common} />
+                                )}
+                              </div>
                             )}
                             {savingKey === field.key ? <span className="mt-1 block text-right text-[11px] font-semibold text-lp-secondary">Kaydediliyor…</span> : null}
                           </div>

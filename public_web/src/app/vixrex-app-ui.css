@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:FILL,ROND@0..1,100&icon_names=article,camera_alt,category,chat_bubble,email,inventory_2,label,link,map,notes,phone,place,rate_review,schedule,sell,smart_button,storefront,title&display=block");
+
 /*
  * Vixrex uygulama UI eşitlik sözleşmesi.
  *
@@ -56,6 +58,8 @@
   --vx-app-field-label-weight: 800;
   --vx-app-field-hint-size: 13px;
   --vx-app-field-hint-weight: 600;
+  --vx-app-prefix-icon-width: 48px;
+  --vx-app-prefix-icon-size: 18px;
 
   min-height: 100vh;
   background: var(--vx-app-bg-editor);
@@ -178,4 +182,168 @@
   padding-left: 24px;
   padding-right: 24px;
   padding-bottom: 20px;
+}
+
+/*
+ * Flutter EditorTextField kullandığı main alanların geometri/renk sözleşmesi.
+ * İl/ilçe/adres, kategori, kapak ve sheet tabanlı editörler bu gruba bilerek
+ * dahil değildir; onların Flutter bileşeni ve ölçüleri ayrıdır.
+ */
+.vixrex-app-shell :is(
+  #vitrin-isletmeAdi,
+  #vitrin-isletmeTuru,
+  #vitrin-kisaTanitim,
+  #vitrin-heroRozet,
+  #vitrin-whatsapp,
+  #vitrin-telefon,
+  #vitrin-eposta,
+  #vitrin-instagram,
+  #vitrin-konumMetni,
+  #vitrin-haritaEtiketi,
+  #vitrin-calismaSaatleri,
+  #vitrin-galeriUstBaslik,
+  #vitrin-galeriBaslik,
+  #vitrin-galeriAksiyonMetni,
+  #vitrin-galeriAksiyonLinki,
+  #vitrin-referansLinki,
+  #vitrin-kategoriBolumBaslik,
+  #vitrin-urunBolumBaslik,
+  #vitrin-blogUstBaslik,
+  #vitrin-blogBaslik,
+  #vitrin-haritaLinki
+) {
+  border-color: var(--vx-app-border);
+  border-radius: var(--vx-app-radius-editor-field);
+  background: var(--vx-app-input-bg);
+  padding-left: var(--vx-app-prefix-icon-width);
+  padding-right: var(--vx-app-field-pad-x);
+  padding-top: var(--vx-app-field-pad-y);
+  padding-bottom: var(--vx-app-field-pad-y);
+  color: var(--vx-app-text);
+  font-size: var(--vx-app-field-font-size);
+  font-weight: var(--vx-app-field-font-weight);
+  box-shadow: none;
+}
+
+.vixrex-app-shell :is(
+  #vitrin-isletmeAdi,
+  #vitrin-isletmeTuru,
+  #vitrin-kisaTanitim,
+  #vitrin-heroRozet,
+  #vitrin-whatsapp,
+  #vitrin-telefon,
+  #vitrin-eposta,
+  #vitrin-instagram,
+  #vitrin-konumMetni,
+  #vitrin-haritaEtiketi,
+  #vitrin-calismaSaatleri,
+  #vitrin-galeriUstBaslik,
+  #vitrin-galeriBaslik,
+  #vitrin-galeriAksiyonMetni,
+  #vitrin-galeriAksiyonLinki,
+  #vitrin-referansLinki,
+  #vitrin-kategoriBolumBaslik,
+  #vitrin-urunBolumBaslik,
+  #vitrin-blogUstBaslik,
+  #vitrin-blogBaslik,
+  #vitrin-haritaLinki
+)::placeholder {
+  color: rgba(169, 187, 218, 0.62);
+  font-size: var(--vx-app-field-hint-size);
+  font-weight: var(--vx-app-field-hint-weight);
+}
+
+.vixrex-app-shell :is(
+  #vitrin-isletmeAdi,
+  #vitrin-isletmeTuru,
+  #vitrin-kisaTanitim,
+  #vitrin-heroRozet,
+  #vitrin-whatsapp,
+  #vitrin-telefon,
+  #vitrin-eposta,
+  #vitrin-instagram,
+  #vitrin-konumMetni,
+  #vitrin-haritaEtiketi,
+  #vitrin-calismaSaatleri,
+  #vitrin-galeriUstBaslik,
+  #vitrin-galeriBaslik,
+  #vitrin-galeriAksiyonMetni,
+  #vitrin-galeriAksiyonLinki,
+  #vitrin-referansLinki,
+  #vitrin-kategoriBolumBaslik,
+  #vitrin-urunBolumBaslik,
+  #vitrin-blogUstBaslik,
+  #vitrin-blogBaslik,
+  #vitrin-haritaLinki
+):focus-visible {
+  border-color: var(--vx-app-primary);
+  border-width: 1.4px;
+  outline: none;
+  box-shadow: none;
+}
+
+.vixrex-app-shell :is(
+  label[for="vitrin-isletmeAdi"],
+  label[for="vitrin-isletmeTuru"],
+  label[for="vitrin-kisaTanitim"],
+  label[for="vitrin-heroRozet"],
+  label[for="vitrin-whatsapp"],
+  label[for="vitrin-telefon"],
+  label[for="vitrin-eposta"],
+  label[for="vitrin-instagram"],
+  label[for="vitrin-konumMetni"],
+  label[for="vitrin-haritaEtiketi"],
+  label[for="vitrin-calismaSaatleri"],
+  label[for="vitrin-galeriUstBaslik"],
+  label[for="vitrin-galeriBaslik"],
+  label[for="vitrin-galeriAksiyonMetni"],
+  label[for="vitrin-galeriAksiyonLinki"],
+  label[for="vitrin-referansLinki"],
+  label[for="vitrin-kategoriBolumBaslik"],
+  label[for="vitrin-urunBolumBaslik"],
+  label[for="vitrin-blogUstBaslik"],
+  label[for="vitrin-blogBaslik"],
+  label[for="vitrin-haritaLinki"]
+) {
+  color: var(--vx-app-soft-text);
+  font-size: var(--vx-app-field-label-size);
+  font-weight: var(--vx-app-field-label-weight);
+}
+
+/* Flutter prefixIcon: 18px ikon, varsayılan minimum 48x48 alan. */
+.vixrex-app-field-control {
+  position: relative;
+}
+
+.vixrex-app-field-icon {
+  position: absolute;
+  z-index: 1;
+  inset-inline-start: 0;
+  top: 50%;
+  width: var(--vx-app-prefix-icon-width);
+  transform: translateY(-50%);
+  color: var(--vx-app-muted);
+  font-family: "Material Symbols Outlined";
+  font-size: var(--vx-app-prefix-icon-size);
+  font-style: normal;
+  font-weight: normal;
+  line-height: 1;
+  letter-spacing: normal;
+  text-align: center;
+  text-transform: none;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  font-feature-settings: "liga";
+  font-variation-settings: "FILL" 0, "ROND" 100;
+  pointer-events: none;
+}
+
+.vixrex-app-field-icon-filled {
+  font-variation-settings: "FILL" 1, "ROND" 100;
+}
+
+.vixrex-required-mark {
+  color: var(--vx-app-primary);
+  font-weight: 900;
 }
