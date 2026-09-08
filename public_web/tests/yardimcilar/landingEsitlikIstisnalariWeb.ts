@@ -8,10 +8,6 @@
  * Liste bayatlarsa da test kırılır: burada olup web'de artık bulunmayan
  * bir metin, temizlenmemiş istisna demektir ve gerçek bir ayrışmayı
  * gizleyebilir.
- *
- * Bu dosya, landingEsitlikIstisnalari.ts'nin ayna karşılığıdır.
- * İkisini karıştırma: biri "Flutter'da var, webde yok" (diğer dosya),
- * diğeri "Web'de var, Flutter'da yok" (bu dosya).
  */
 
 type Istisna = { metin: string; neden: string };
@@ -22,35 +18,11 @@ const ERISEBILIRLIK =
 
 const KONUM_WEB_OZEL =
   "Web landing'i konumu tarayıcının `navigator.geolocation` özelliğiyle " +
-  "alıyor; Flutter landing'inde konum adımı YOK — orada konum vitrin " +
-  "düzenleme ekranında `Geolocator` ile toplanıyor (form_location_info). " +
-  "Yani bu dört cümle pencereye özel: aynı karar motoruna aynı " +
-  "`konum_onaylandi` olayı gidiyor, yalnız izin isteme yüzeyi farklı. " +
-  "Flutter landing'ine konum adımı eklenirse bu kayıtlar silinmeli.";
-
-const KATALOG_BICIM =
-  "Bu metin Flutter'da DA var: paylaşılan mesaj kataloğunda (`shared/vixrex_mesajlar.json` → `welcome_aciklama`), oradan `lib/config/vixrex_mesajlar.g.dart` üretiliyor. Gerçek ayrışma değil; çıkarıcı katalogu taramıyor — aynı gerekçe 'Dijital vitrin asistanı' kaydında da yazılı. Web bu satırı ekranda madde işaretiyle gösterdiği için hem tire hem madde hâli kaynakta geçiyor (LandingApkAssistant `apkWelcomeText`); ikisi de biçimlendirme, yeni cümle değil.";
-
-const KATALOG_YEDEK =
-  "Katalog anahtarının yedeği (`vixRexMesajlari.setup_name_* ?? \"...\"`). Ekranda görünen yazı katalogdan gelir; bu literal yalnız katalog boş kalırsa devreye girer. Flutter aynı anahtarı okuduğu için yedeğe ihtiyaç duymuyor, o yüzden orada sabit yazı yok.";
-
-const DOGRULAMA_UYARISI =
-  "Form doğrulama uyarısı. Flutter'da aynı boş-ad durumu asistan akışında " +
-  "farklı bir cümleyle karşılanıyor; landing ekranında sabit yazı olarak " +
-  "geçmiyor.";
-
-const DUGME_ETIKETI =
-  "Flutter'da DA var — `lib/config/chatbot_config.dart:17`, aynı etiket. " +
-  "Çıkarıcı yalnız landing dosyalarını taradığı için göremiyor.";
+  "alıyor; Flutter tarafında aynı konum alanları kendi platform API'siyle " +
+  "toplanıyor. Aynı veri sözleşmesine gidiyor, izin isteme yüzeyi platforma " +
+  "özgü kalıyor.";
 
 export const LANDING_ESITLIK_ISTISNALARI_WEB: Istisna[] = [
-  // --- Landing maket sohbeti (PhoneMockup AsistanSohbetIcerigi) ---
-
-  // "2 bağlantı" istisnası SİLİNDİ (2026-09-08 canlı karşılaştırma):
-  // web artık sabit "2 bağlantı" yazmıyor, Flutter'daki gibi profil
-  // verisinden dinamik üretiyor ({profil.eylemSatirlari.length} bağlantı).
-  // Ayrışma ortadan kalktı; bayat istisna kaydı da temizlendi.
-
   // --- Erişilebilirlik ---
   {
     metin: "Vixrex Asistan'ı aç",
@@ -61,16 +33,12 @@ export const LANDING_ESITLIK_ISTISNALARI_WEB: Istisna[] = [
   {
     metin: "Dijital vitrin asistanı",
     neden:
-      "Bu metin Flutter'da DA var — `lib/screens/vixrex_onboarding_chat_" +
-      "screen.dart:325`, aynı cümle. Gerçek bir ayrışma değil: çıkarıcı " +
-      "yalnız `landing_screen.dart`, `widgets/landing/` ve " +
-      "`chatbot_badge.dart` dosyalarını tarıyor, asistan ekranını değil. " +
-      "Kapsamı asistan ekranını da içerecek şekilde genişletmek ayrı bir " +
-      "iş: o dosyada tek seferde onlarca yeni metin dökülür ve her biri " +
-      "tek tek değerlendirilmeli. Toplu istisnaya yazmamak için burada " +
-      "tek kayıt olarak duruyor.",
+      "Bu metin Flutter'da da `vixrex_onboarding_chat_screen.dart` içinde " +
+      "bulunuyor. Landing metin çıkarıcısı asistan ekranını taramadığı için " +
+      "burada kapsam istisnası olarak tutuluyor.",
   },
-  // --- Konum akışı: web tarayıcı GPS'i, Flutter kendi ekranında ---
+
+  // --- Konum akışı: tarayıcı/platform API farkları ---
   {
     metin: "GPS Taranıyor...",
     neden: KONUM_WEB_OZEL,
@@ -82,9 +50,8 @@ export const LANDING_ESITLIK_ISTISNALARI_WEB: Istisna[] = [
   {
     metin: "Adres verisi © OpenStreetMap katkıcıları",
     neden:
-      "Web, Flutter ile aynı Nominatim adres verisini sunucu vekili üzerinden " +
-      "kullanıyor. Nominatim kullanım politikası web yüzeyinde görünür kaynak " +
-      "göstermeyi gerektirdiği için bu yasal/servis atfı yalnız webde bulunur.",
+      "Web aynı adres çözümleme verisini sunucu vekili üzerinden kullanıyor. " +
+      "Web yüzeyindeki görünür servis atfı platforma özgü yasal sunumdur.",
   },
   {
     metin: "Konum izni alınamadı; il, ilçe ve adresi elle yazabilirsin.",
@@ -93,272 +60,193 @@ export const LANDING_ESITLIK_ISTISNALARI_WEB: Istisna[] = [
   {
     metin: "Örn: Çatalmeşe Mah. 207. Sokak No: 12",
     neden:
-      "Flutter FormLocationInfo hint’i — `location_editor_section.dart:417` " +
-      "aynen bu metin; web placeholder’ı parite için buna eşitlendi.",
+      "Flutter FormLocationInfo hint'i ile aynı metindir; Flutter landing " +
+      "çıkarıcısının taramadığı ortak onboarding yüzeyinden gelir.",
   },
   {
     metin: "Açık Adres (Mahalle, Cadde, Sokak, No)",
     neden:
-      "Flutter label — `location_editor_section.dart:389` aynı metin; " +
-      "web label’ı parite için eklendi, extractor kapsamı dışında.",
+      "Flutter konum formundaki aynı label'ın web karşılığıdır; Flutter landing " +
+      "metin çıkarıcısı konum formu dosyasını kapsamıyor.",
   },
   {
     metin: "Örnek adres",
     neden:
-      "Açık adres sr-only ipucu — Flutter'da hint olarak aynı örnek var " +
-      "ama landing extractor'ında değil; erişilebilirlik için eklendi.",
+      "Ekran okuyucu için kullanılan yardımcı metindir; Flutter'da aynı örnek " +
+      "hint olarak bulunur ancak landing çıkarıcısının kapsamı dışındadır.",
   },
   {
     metin: "Konumu onayla, devam",
     neden:
-      "Flutter primary buton — `vixrex_onboarding_chat_screen.dart:456` " +
-      "aynı metin; web katalog `Adres Ekle` diyordu, parite için Flutter’a hizalandı.",
+      "Flutter VixRex onboarding ekranındaki aynı birincil buton metnidir; " +
+      "landing çıkarıcısı asistan ekranını taramadığı için burada tutulur.",
   },
   {
     metin: "İl seç",
     neden:
-      "Flutter konumEksigi helper — `vixrex_onboarding_controller.dart:307` " +
-      "`İl seç`; web helper’ı parite için eklendi, landing extractor " +
-      "onboarding controller’ı taramıyor.",
+      "Flutter VixRex onboarding controller konum eksikliği metniyle aynıdır; " +
+      "controller landing metin çıkarıcısının kapsamı dışındadır.",
   },
   {
     metin: "İlçe seç",
     neden:
-      "Flutter konumEksigi helper — `vixrex_onboarding_controller.dart:308` " +
-      "`İlçe seç`; aynı gerekçe.",
+      "Flutter VixRex onboarding controller konum eksikliği metniyle aynıdır; " +
+      "controller landing metin çıkarıcısının kapsamı dışındadır.",
   },
   {
     metin: "Açık adresi yaz",
     neden:
-      "Flutter konumEksigi helper — `vixrex_onboarding_controller.dart:311` " +
-      "`Açık adresi yaz`; aynı gerekçe.",
+      "Flutter VixRex onboarding controller konum eksikliği metniyle aynıdır; " +
+      "controller landing metin çıkarıcısının kapsamı dışındadır.",
   },
 
-  // --- Bitiş mesajları (Flutter Web onboarding bitişi) ---
+  // --- Bitiş mesajları ---
   {
     metin: "İşte bu kadar!",
     neden:
-      "Flutter Web onboarding bitiş balonu. Katalog `all_done_baslik` " +
-      "olarak 'Tebrikler!' diyor; Flutter Web ise 'İşte bu kadar!' " +
-      "kullanıyor. Bitiş metni parity'si ayrı değerlendirilmeli.",
+      "Flutter onboarding bitiş yüzeyindeki aynı metindir; Flutter landing " +
+      "çıkarıcısı onboarding ekranını kapsamıyor.",
   },
   {
     metin: "Artık dijitalde varsın. İşletme adına özel vitrinin hazır.",
     neden:
-      "Flutter Web onboarding bitiş açıklaması. Katalog `all_done_aciklama` " +
-      "ile farklı metin içeriyor.",
+      "Flutter onboarding bitiş yüzeyindeki aynı açıklamadır; Flutter landing " +
+      "çıkarıcısı onboarding ekranını kapsamıyor.",
   },
 
-  // --- Hata mesajları (platform-spesifik) ---
+  // --- Hata mesajları: web API/Browser yüzeyi ---
   {
     metin: "Vitrin oluşturulamadı.",
     neden:
-      "Landing publish hata mesajı. Flutter'da bu hata aynı API tarafından " +
-      "döndürülüyor ama landing akışında gösterilmiyor — orada asistan " +
-      "hata mesajını kendi içinde yönetiyor.",
+      "Web create-store API hata yüzeyidir. Flutter aynı başarısızlığı kendi " +
+      "controller hata yüzeyinde işler; kullanıcı akışındaki görev aynıdır.",
   },
   {
     metin: "Bir hata oluştu. Lütfen tekrar dene.",
     neden:
-      "Landing publish catch hata mesajı. Flutter Web'de benzer mesaj " +
-      "var ama landing akışında farklı yüzeyde gösteriliyor.",
+      "Web publish catch hata mesajıdır. Flutter'da hata controller üzerinden " +
+      "sunulduğu için literal landing kaynağında bulunmaz.",
   },
   {
     metin: "Yayın için yasal onayları işaretlemeniz gerekiyor.",
     neden:
-      "Landing yasal onay hata mesajı. Flutter Web'de bu kontrol " +
-      "farklı bir katmanda (asistan controller) yapılıyor, landing'de " +
-      "yok.",
+      "Web yasal yayın kapısı hata mesajıdır. Flutter aynı kapıyı onboarding " +
+      "controller ve LegalConsentSection üzerinden uygular.",
   },
   {
     metin: "[landing-asistan] publish error:",
     neden:
-      "console.error teknik logu, kullanıcıya gösterilmiyor. " +
-      "Flutter'da karşılığı debugPrint ile loglanıyor.",
+      "Kullanıcıya görünmeyen teknik console hata önekidir; Flutter karşılığı " +
+      "debug log mekanizmasıdır.",
   },
 
   // --- Select option metinleri ---
   {
     metin: "İlçe seçiniz",
     neden:
-      "İlçe dropdown boş seçenek metni. Flutter Web'de bu metin " +
-      "dropdown içinde sabit yazılıyor, katalogdan gelmiyor.",
+      "Web select boş seçenek metnidir; Flutter konum seçim yüzeyinde aynı " +
+      "işlev native seçim bileşeni üzerinden sunulur.",
   },
   {
     metin: "Önce il seçiniz",
     neden:
-      "İlçe dropdown devre dışıyken gösterilen metin. Flutter Web'de " +
-      "aynı metin kullanılıyor.",
+      "Web ilçe alanı devre dışı durumu için açıklayıcı select metnidir; " +
+      "platform seçim bileşeni farkıdır.",
   },
   {
     metin: "İl seçiniz",
     neden:
-      "İl dropdown boş seçenek metni. Flutter Web ile aynı.",
+      "Web select boş seçenek metnidir; Flutter konum seçim yüzeyinde aynı " +
+      "işlev native seçim bileşeni üzerinden sunulur.",
   },
 
-
-
-  // --- Karşılama / hızlı seçim buton metinleri ---
+  // --- Karşılama / hızlı seçim metinleri ---
   {
     metin: "Hızlı Seçenekler",
     neden:
-      "Flutter Web onboarding karşılama başlığı. Katalogda " +
-      "karşılığı yok — Flutter Web'de sabit yazılı.",
+      "Flutter VixRex onboarding ekranında aynı başlık bulunur; landing " +
+      "çıkarıcısı asistan ekranını taramadığı için kapsam istisnasıdır.",
   },
   {
     metin: "Hazır Vitrin Seç",
     neden:
-      "Flutter Web karşılama butonu. Katalogda karşılığı yok.",
+      "Flutter VixRex onboarding hızlı seçeneğiyle aynıdır; landing çıkarıcısı " +
+      "asistan ekranını taramadığı için kapsam istisnasıdır.",
   },
   {
     metin: "Sıfırdan Oluştur",
     neden:
-      "Flutter Web karşılama butonu. Katalogda karşılığı yok.",
+      "Flutter VixRex onboarding hızlı seçeneğiyle aynıdır; landing çıkarıcısı " +
+      "asistan ekranını taramadığı için kapsam istisnasıdır.",
   },
   {
     metin: "Detaylı formu aç",
     neden:
-      "Flutter Web bitiş butonu. Katalogda karşılığı yok.",
+      "Web sahip paneli geçiş butonudur. Flutter aynı hedefi HomeShell/vitrin " +
+      "düzenleme navigasyonu üzerinden sunar.",
   },
   {
     metin: "İşini seç",
     neden:
-      "Flutter Web kategori grid başlığı. Katalogda karşılığı yok.",
+      "Flutter VixRex onboarding kategori seçici başlığıyla aynıdır; landing " +
+      "çıkarıcısı asistan ekranını taramadığı için kapsam istisnasıdır.",
   },
 
-  // --- Kategori sunum label farkları (A sınıfı — sunum label) ---
+  // --- Kategori sunum label farkları ---
   {
     metin: "Spor & Fitness",
     neden:
-      "Flutter Web kategori presentation label'ı. Next.js shared JSON " +
-      "'Spor / Fitness' kullanıyor. Sunum label farkı (A sınıfı).",
+      "Kategori sunum label'ı ortak kategori sözlüğündeki alternatif yazımdan " +
+      "gelir; iş kuralı ve kategori kimliği değişmez.",
   },
   {
     metin: "Sağlık / Yaşam",
     neden:
-      "Shared JSON kategori label'ı. Flutter Web 'Sağlık & Yaşam' " +
-      "kullanıyor. Sunum label farkı (A sınıfı).",
+      "Kategori sunum label'ı ortak kategori sözlüğündeki alternatif yazımdan " +
+      "gelir; iş kuralı ve kategori kimliği değişmez.",
   },
   {
     metin: "Sağlık & Yaşam",
     neden:
-      "Flutter Web kategori presentation label'ı. Sunum label farkı.",
+      "Kategori sunum label'ı Flutter presentation karşılığıdır; kategori " +
+      "kimliği aynı kaldığı için yalnız sunum farkıdır.",
   },
   {
     metin: "Oto / Araç",
     neden:
-      "Shared JSON kategori label'ı. Flutter Web 'Oto & Araç Hizmetleri' " +
-      "kullanıyor. Sunum label farkı.",
+      "Kategori sunum label'ı ortak kategori sözlüğündeki alternatif yazımdan " +
+      "gelir; iş kuralı ve kategori kimliği değişmez.",
   },
   {
     metin: "Oto & Araç Hizmetleri",
     neden:
-      "Flutter Web kategori presentation label'ı. Sunum label farkı.",
+      "Kategori sunum label'ı Flutter presentation karşılığıdır; kategori " +
+      "kimliği aynı kaldığı için yalnız sunum farkıdır.",
   },
 
-  // --- Hesap bağlama / Google kimlik bağlama metinleri (Akış 3 paritesi,
-  // 2026-09-03): artık katalogda (shared/vixrex_mesajlar.json `hesap_bagla_*`)
-  // — iki yüzey de aynı anahtarları okuyor, istisnaya gerek kalmadı.
-  // Kayıtlar silindi; metinler bileşende literal olarak geçmiyor.
-
-  // --- Yasal onay link metinleri ---
+  // --- Yasal onay bağlantı metinleri ---
   {
     metin: "Aydınlatma Metni",
     neden:
-      "Yasal onay checkbox link metni. Flutter Web'de aynı metin " +
-      "kullanılıyor ama Flutter landing extractoru bu ekranı kapsamıyor.",
+      "Flutter LegalConsentSection içinde aynı yasal belge bağlantısı bulunur; " +
+      "landing çıkarıcısı o dosyayı kapsamıyor.",
   },
   {
     metin: "Açık Rıza Beyanı",
     neden:
-      "Yasal onay checkbox link metni. Aynı neden.",
+      "Flutter LegalConsentSection içinde aynı yasal belge bağlantısı bulunur; " +
+      "landing çıkarıcısı o dosyayı kapsamıyor.",
   },
   {
     metin: "nı okudum, anladım ve kabul ediyorum.",
     neden:
-      "Yasal onay checkbox açıklama metni parçası. Flutter Web'de " +
-      "aynı metin kullanılıyor ama Flutter landing extractoru bu " +
-      "ekranı kapsamıyor.",
+      "Yasal onay açıklamasının ortak parçasıdır; Flutter yasal bileşeni landing " +
+      "metin çıkarıcısının kapsamı dışındadır.",
   },
   {
     metin: "Vitrinini aç",
     neden:
-      "Flutter Web bitiş butonu. Katalogda `landing_finish_buton` olarak " +
-      "'Hesap Aç ve Vitrini Kur' yazıyor; Flutter Web ise 'Vitrinini aç' " +
-      "kullanıyor.",
-  },
-
-  // --- Faz C1 (Tek Asistan planı, 2026-09-02) → Akış 1 paritesi (2026-09-03):
-  // "Hazır Vitrin Seç" niyet sorusu artık katalogda
-  // (shared/vixrex_mesajlar.json `niyet_*`) — iki yüzey de aynı
-  // anahtarları okuyor, istisnaya gerek kalmadı. Kayıtlar silindi;
-  // soru metinleri bileşende literal olarak geçmiyor.
-
-  // --- Landing'in telefon çizimindeki asistan (LandingApkAssistant, 2026-09-07)
-  // Flutter landing'i çizime dokununca GERÇEK asistan ekranını mockup'ın
-  // içinde açıyor (landing_hero_mockup.dart → VixRexOnboardingChatScreen).
-  // Web aynı yüzeyi kurdu. Aşağıdakiler o yüzeyin kaynağındaki literaller;
-  // hiçbiri ekranda yeni bir cümle değil.
-  {
-    metin: "- Tek Link & QR Kod:",
-    neden: KATALOG_BICIM,
-  },
-  {
-    metin: "• 📱 Tek Link & QR Kod:",
-    neden: KATALOG_BICIM,
-  },
-  {
-    metin: "- WhatsApp Sipariş:",
-    neden: KATALOG_BICIM,
-  },
-  {
-    metin: "• 💬 WhatsApp Sipariş:",
-    neden: KATALOG_BICIM,
-  },
-  {
-    metin: "- Ürün & Galeri:",
-    neden: KATALOG_BICIM,
-  },
-  {
-    metin: "• 🛍️ Ürün & Galeri:",
-    neden: KATALOG_BICIM,
-  },
-  {
-    metin: "- Konum & Adres:",
-    neden: KATALOG_BICIM,
-  },
-  {
-    metin: "• 📍 Konum & Adres:",
-    neden: KATALOG_BICIM,
-  },
-  {
-    metin: "İşletme adınızı girin",
-    neden: KATALOG_YEDEK,
-  },
-  {
-    metin: "Vitrininizde görünecek işletme adını yazın.",
-    neden: KATALOG_YEDEK,
-  },
-  {
-    metin: "İşletme adınız",
-    neden: KATALOG_YEDEK,
-  },
-  {
-    metin: "İşletme adı gerekli.",
-    neden: DOGRULAMA_UYARISI,
-  },
-  {
-    metin: "Evet, Oluşturalım",
-    neden: DUGME_ETIKETI,
-  },
-  {
-    metin: "İşletme adı",
-    neden: ERISEBILIRLIK,
+      "Flutter onboarding bitişinde aynı hedef bulunur; route oluşturma şekli " +
+      "platforma özgü olsa da kullanıcı eylemi aynıdır.",
   },
 ];
-
-// Blog altbilgi bağlantısı (28 Ağustos) buraya İSTİSNA OLARAK GİRMEDİ ve
-// girmemeli: web→Flutter yönündeki çıkarıcı yalnız
-// `public_web/src/components/landing` dizinini tarıyor ve en az 6 karakter
-// + boşluk arıyor. "Blog" ikisini de karşılamıyor, altbilgi de o dizinde
-// değil. Buraya yazılırsa "bayat istisna" kontrolü kırılır — ölçüldü.
