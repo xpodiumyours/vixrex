@@ -37,7 +37,7 @@ describe("landing vitrin oluşturma akışı Flutter referansıyla eşit", () =>
     expect(sohbet).toContain("name: initialName.trim()");
   });
 
-  it("APK mobil açılış hareketini birebir korur: 768px / 560px / 450ms easeOutCubic", () => {
+  it("mobil açılış hareketini korur: 768px / 560px / 450ms easeOutCubic", () => {
     const flutterLanding = oku("../lib/screens/landing_screen.dart");
     const wrapper = oku("src/components/landing/LandingChatWrapper.tsx");
     const phoneMockup = oku("src/components/landing/PhoneMockup.tsx");
@@ -56,18 +56,21 @@ describe("landing vitrin oluşturma akışı Flutter referansıyla eşit", () =>
     expect(apkAssistant).toContain("<LandingAsistanSohbeti");
   });
 
-  it("APK karşılama yüzü yalnız iki hızlı seçenek gösterir ve mevcut motora delege eder", () => {
+  it("mockup karşılama yüzü Flutter gibi gerçek onboarding hızlı seçeneklerini kullanır", () => {
+    const flutterChat = oku("../lib/screens/vixrex_onboarding_chat_screen.dart");
     const apkAssistant = oku("src/components/landing/LandingApkAssistant.tsx");
+    const sohbet = oku("src/components/landing/LandingAsistanSohbeti.tsx");
 
-    expect(apkAssistant).toContain("Dijital vitrin asistanı");
-    expect(apkAssistant).toContain("Kapat");
-    expect(apkAssistant).toContain("Hızlı Seçenekler");
-    expect(apkAssistant).toContain("Evet, Oluşturalım");
-    expect(apkAssistant).toContain("Bakınıyorum");
-    expect(apkAssistant).toContain("vixRexMesajlari.welcome_baslik");
-    expect(apkAssistant).toContain("vixRexMesajlari.welcome_aciklama");
-    expect(apkAssistant).not.toContain("hazir_vitrin_sec");
-    expect(apkAssistant).toContain("validateField(\"isletmeAdi\"");
-    expect(apkAssistant).toContain("<LandingAsistanSohbeti initialName={devamAdi}");
+    expect(flutterChat).toContain("hazir_vitrin_sec");
+    expect(flutterChat).toContain("sifirdan_olustur");
+    expect(flutterChat).toContain("bakiniyorum");
+
+    expect(apkAssistant).toContain("<LandingAsistanSohbeti");
+    expect(apkAssistant).not.toContain('useState<"welcome" | "name" | "chat">');
+    expect(apkAssistant).not.toContain("Evet, Oluşturalım");
+
+    expect(sohbet).toContain('h.id === "hazir_vitrin_sec"');
+    expect(sohbet).toContain('h.id === "sifirdan_olustur"');
+    expect(sohbet).toContain('h.id === "bakiniyorum"');
   });
 });
