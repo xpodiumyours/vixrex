@@ -46,11 +46,11 @@ const DURUM_RENK: Record<string, { metin: string; sinif: string }> = {
   },
   rejected: { metin: "Reddedildi", sinif: "bg-red-500/20 text-red-400" },
   cancelled_by_customer: {
-    metin: "Müşteri İptal",
+    metin: "Müşteri İptal Etti",
     sinif: "bg-white/10 text-[var(--owner-muted)]",
   },
   cancelled_by_store: {
-    metin: "İşletme İptal",
+    metin: "İşletme İptal Etti",
     sinif: "bg-white/10 text-[var(--owner-muted)]",
   },
   expired: { metin: "Süresi Doldu", sinif: "bg-white/10 text-[var(--owner-muted)]" },
@@ -61,18 +61,15 @@ const DURUM_RENK: Record<string, { metin: string; sinif: string }> = {
 };
 
 function formatDateTime(isoStr: string): string {
-  try {
-    const dt = new Date(isoStr);
-    return dt.toLocaleDateString("tr-TR", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  } catch {
-    return isoStr;
-  }
+  // Flutter BookingManagementScreen ile aynı gösterim: gg.AA.yyyy · SS:dd
+  const dt = new Date(isoStr);
+  if (Number.isNaN(dt.getTime())) return isoStr;
+  const gun = String(dt.getDate()).padStart(2, "0");
+  const ay = String(dt.getMonth() + 1).padStart(2, "0");
+  const yil = dt.getFullYear();
+  const saat = String(dt.getHours()).padStart(2, "0");
+  const dakika = String(dt.getMinutes()).padStart(2, "0");
+  return `${gun}.${ay}.${yil} · ${saat}:${dakika}`;
 }
 
 function isToday(isoStr: string): boolean {
