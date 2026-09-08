@@ -6,53 +6,60 @@ import type { ReactNode } from "react";
 import { KesfetIkonu, StorefrontIkonu } from "@/components/site/icons";
 import { useAppShell } from "@/components/app/AppShellContext";
 
-function MaskotIkonu({ boyut = 20 }: { boyut?: number }) {
+function MaskotIkonu({ boyut = 20, opacity = 1 }: { boyut?: number; opacity?: number }) {
   return (
     <img
       src="/images/vixrex_maskot_ikon.png"
       alt=""
       aria-hidden="true"
       className="object-contain"
-      style={{ width: boyut, height: boyut }}
+      style={{ width: boyut, height: boyut, opacity }}
     />
   );
 }
 
-function KisiIkonu() {
+function KisiIkonu({ boyut = 20 }: { boyut?: number }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg width={boyut} height={boyut} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
       <circle cx="12" cy="8" r="3.5" />
       <path d="M5 20c.6-4 3-6 7-6s6.4 2 7 6" />
     </svg>
   );
 }
 
-const NAV = [
+type NavItem = {
+  href: string;
+  label: string;
+  icon: (boyut: number, active: boolean) => ReactNode;
+  match: (p: string) => boolean;
+};
+
+const NAV: NavItem[] = [
   {
     href: "/app",
     label: "Vitrinim",
-    icon: <StorefrontIkonu boyut={20} />,
+    icon: (boyut) => <StorefrontIkonu boyut={boyut} />,
     match: (p: string) => p === "/app" || p.startsWith("/app/urunler"),
   },
   {
     href: "/kesfet",
     label: "Keşfet",
-    icon: <KesfetIkonu boyut={20} />,
+    icon: (boyut) => <KesfetIkonu boyut={boyut} />,
     match: (p: string) => p.startsWith("/kesfet"),
   },
   {
     href: "/app/vixrex",
     label: "Vixrex",
-    icon: <MaskotIkonu boyut={20} />,
+    icon: (boyut, active) => <MaskotIkonu boyut={boyut} opacity={active ? 1 : 0.7} />,
     match: (p: string) => p === "/app/vixrex",
   },
   {
     href: "/app/profil",
     label: "Profil",
-    icon: <KisiIkonu />,
+    icon: (boyut) => <KisiIkonu boyut={boyut} />,
     match: (p: string) => p === "/app/profil",
   },
-] as Array<{ href: string; label: string; icon: ReactNode; match: (p: string) => boolean }>;
+];
 
 export function AppSidebar() {
   const pathname = usePathname();
@@ -66,7 +73,7 @@ export function AppSidebar() {
   }
 
   return (
-    <aside className="hidden h-screen w-[220px] shrink-0 flex-col border-r border-lp-border bg-lp-surface min-[901px]:sticky min-[901px]:top-0 min-[901px]:flex">
+    <aside className="vixrex-app-sidebar hidden h-screen shrink-0 flex-col border-r border-lp-border bg-lp-surface min-[901px]:sticky min-[901px]:top-0 min-[901px]:flex">
       <Link
         href="/"
         aria-label="Vixrex ana sayfa"
@@ -88,7 +95,7 @@ export function AppSidebar() {
             value={globalSearch}
             onChange={(e) => setGlobalSearch(e.target.value)}
             placeholder="Vitrin veya ürün ara"
-            className="h-11 w-full rounded-xl border border-lp-border bg-lp-bg-light pl-10 pr-3 text-[13px] font-semibold text-lp-text placeholder:text-lp-muted focus:border-lp-secondary focus:outline-none focus:ring-2 focus:ring-lp-primary/30"
+            className="vixrex-app-sidebar-search h-11 w-full pl-10 pr-3 text-[13px] font-semibold placeholder:text-lp-muted focus:outline-none"
           />
         </div>
       </form>
@@ -103,13 +110,13 @@ export function AppSidebar() {
               prefetch
               scroll={false}
               aria-current={active ? "page" : undefined}
-              className={`relative my-1 flex min-h-11 items-center gap-3 rounded-xl px-3 text-[13px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
+              className={`relative my-[2px] flex min-h-[42px] items-center gap-3 rounded-xl px-3 text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
                 active
-                  ? "bg-lp-primary/15 text-lp-text before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:rounded-full before:bg-lp-primary"
-                  : "text-lp-muted hover:bg-lp-surface-soft hover:text-lp-text"
+                  ? "vixrex-app-sidebar-item-active font-extrabold text-lp-text before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:rounded-full before:bg-lp-primary"
+                  : "font-semibold text-lp-muted hover:bg-lp-surface-soft hover:text-lp-text"
               }`}
             >
-              <span className={active ? "text-lp-secondary" : "text-current"}>{item.icon}</span>
+              <span className={active ? "text-lp-secondary" : "text-current"}>{item.icon(20, active)}</span>
               {item.label}
             </Link>
           );
@@ -127,10 +134,11 @@ export function AppBottomNav() {
   return (
     <nav
       aria-label="Mobil uygulama menüsü"
-      className="fixed inset-x-0 bottom-0 z-40 flex h-[68px] items-center justify-around border-t border-lp-border bg-lp-bg-editor px-1 pb-[env(safe-area-inset-bottom)] min-[901px]:hidden"
+      className="vixrex-app-bottom-nav fixed inset-x-0 bottom-0 z-40 flex items-center justify-around border-t border-lp-border bg-lp-bg-editor px-1 pb-[env(safe-area-inset-bottom)] min-[901px]:hidden"
     >
       {NAV.map((item) => {
         const active = item.match(pathname);
+        const iconSize = item.label === "Vixrex" ? 24 : 22;
         return (
           <Link
             key={item.label}
@@ -142,10 +150,8 @@ export function AppBottomNav() {
               active ? "font-bold text-lp-secondary" : "font-normal text-lp-muted"
             }`}
           >
-            <span className={`flex min-h-7 min-w-12 items-center justify-center rounded-full px-3 py-1 ${active ? "bg-lp-primary/20 text-lp-secondary" : "text-current"}`}>
-              <span className="scale-110">
-                {item.label === "Vixrex" ? <MaskotIkonu boyut={24} /> : item.icon}
-              </span>
+            <span className={`flex min-h-7 min-w-12 items-center justify-center rounded-full px-3 py-1 ${active ? "vixrex-app-nav-indicator-active text-lp-secondary" : "text-current"}`}>
+              {item.icon(iconSize, active)}
             </span>
             <span>{item.label}</span>
           </Link>

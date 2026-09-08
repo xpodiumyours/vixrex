@@ -126,11 +126,11 @@ export function AppShellBoundary({ children }: { children: ReactNode }) {
 
   return (
     <AppShellProvider>
-      <div className="flex min-h-screen bg-lp-bg-editor text-lp-text">
+      <div className="vixrex-app-shell flex min-h-screen bg-lp-bg-editor text-lp-text">
         <AppSidebar />
         <div className="flex min-h-screen min-w-0 flex-1 flex-col">
           <StatusBar />
-          <div className="min-w-0 flex-1 pb-[68px] min-[901px]:pb-0">
+          <div className="min-w-0 flex-1 pb-[var(--vx-app-bottom-nav-height)] min-[901px]:pb-0">
             <KaliciAnaSekmeler pathname={pathname}>{children}</KaliciAnaSekmeler>
           </div>
           <AppBottomNav />

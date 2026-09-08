@@ -1,0 +1,156 @@
+/*
+ * Vixrex uygulama UI eşitlik sözleşmesi.
+ *
+ * Referans yalnız main dalındaki Flutter kaynaklarıdır:
+ * - lib/theme/app_colors.dart
+ * - lib/theme/app_text_styles.dart
+ * - lib/theme/app_theme.dart
+ * - lib/widgets/shell/shell_sidebar.dart
+ * - lib/widgets/editor/common_form_fields.dart
+ * - lib/screens/my_vitrin_screen.dart
+ *
+ * Bu dosya yalnız `.vixrex-app-shell` altında etkilidir. Landing ve public
+ * vitrin stillerine dokunmaz.
+ */
+.vixrex-app-shell {
+  --vx-app-primary: #147DFF;
+  --vx-app-primary-dark: #0B5FD7;
+  --vx-app-secondary: #57B7FF;
+  --vx-app-on-primary: #06152F;
+  --vx-app-bg-editor: #050B1A;
+  --vx-app-bg-light: #08132D;
+  --vx-app-input-bg: #0D1C38;
+  --vx-app-surface: #0B1730;
+  --vx-app-surface-soft: #112448;
+  --vx-app-text: #F7FBFF;
+  --vx-app-text-alt: #D9E7FF;
+  --vx-app-muted: #A9BBDA;
+  --vx-app-soft-text: #738AB3;
+  --vx-app-border: #294D88;
+  --vx-app-success: #10B981;
+  --vx-app-error: #EF4444;
+
+  --vx-app-radius-control: 12px;
+  --vx-app-radius-editor-field: 14px;
+  --vx-app-radius-card: 16px;
+
+  --vx-app-sidebar-width: 220px;
+  --vx-app-bottom-nav-height: 68px;
+  --vx-app-page-max-width: 1200px;
+  --vx-app-page-pad-x: 16px;
+  --vx-app-page-pad-y: 18px;
+
+  --vx-app-field-pad-x: 14px;
+  --vx-app-field-pad-y: 14px;
+  --vx-app-field-font-size: 14px;
+  --vx-app-field-font-weight: 700;
+  --vx-app-field-label-size: 12px;
+  --vx-app-field-label-weight: 800;
+  --vx-app-field-hint-size: 13px;
+  --vx-app-field-hint-weight: 600;
+
+  min-height: 100vh;
+  background: var(--vx-app-bg-editor);
+  color: var(--vx-app-text);
+  font-family: var(--font-outfit, "Outfit", sans-serif);
+}
+
+@media (min-width: 901px) {
+  .vixrex-app-shell {
+    --vx-app-page-pad-x: 32px;
+    --vx-app-page-pad-y: 28px;
+  }
+}
+
+.vixrex-app-sidebar {
+  width: var(--vx-app-sidebar-width);
+}
+
+.vixrex-app-bottom-nav {
+  height: var(--vx-app-bottom-nav-height);
+}
+
+.vixrex-app-sidebar-item-active {
+  background-color: rgba(20, 125, 255, 0.16);
+}
+
+.vixrex-app-nav-indicator-active {
+  background-color: rgba(20, 125, 255, 0.22);
+}
+
+.vixrex-app-sidebar-search {
+  border: 1px solid var(--vx-app-border);
+  border-radius: var(--vx-app-radius-control);
+  background: var(--vx-app-input-bg);
+  color: var(--vx-app-text);
+}
+
+.vixrex-app-sidebar-search::placeholder {
+  color: var(--vx-app-muted);
+}
+
+.vixrex-app-sidebar-search:focus-visible {
+  border-color: var(--vx-app-secondary);
+  outline: none;
+  box-shadow: none;
+}
+
+/* Vitrinim: Flutter EditorTextField değerleri. */
+.vixrex-app-shell [data-app-tab="vitrinim"] input:not([type]),
+.vixrex-app-shell [data-app-tab="vitrinim"] input[type="text"],
+.vixrex-app-shell [data-app-tab="vitrinim"] input[type="tel"],
+.vixrex-app-shell [data-app-tab="vitrinim"] input[type="email"],
+.vixrex-app-shell [data-app-tab="vitrinim"] input[type="url"],
+.vixrex-app-shell [data-app-tab="vitrinim"] input[type="number"],
+.vixrex-app-shell [data-app-tab="vitrinim"] select,
+.vixrex-app-shell [data-app-tab="vitrinim"] textarea {
+  border-color: var(--vx-app-border);
+  border-radius: var(--vx-app-radius-editor-field);
+  background: var(--vx-app-input-bg);
+  padding-left: var(--vx-app-field-pad-x);
+  padding-right: var(--vx-app-field-pad-x);
+  padding-top: var(--vx-app-field-pad-y);
+  padding-bottom: var(--vx-app-field-pad-y);
+  color: var(--vx-app-text);
+  font-size: var(--vx-app-field-font-size);
+  font-weight: var(--vx-app-field-font-weight);
+}
+
+.vixrex-app-shell [data-app-tab="vitrinim"] input:not([type]),
+.vixrex-app-shell [data-app-tab="vitrinim"] input[type="text"],
+.vixrex-app-shell [data-app-tab="vitrinim"] input[type="tel"],
+.vixrex-app-shell [data-app-tab="vitrinim"] input[type="email"],
+.vixrex-app-shell [data-app-tab="vitrinim"] input[type="url"],
+.vixrex-app-shell [data-app-tab="vitrinim"] input[type="number"],
+.vixrex-app-shell [data-app-tab="vitrinim"] select {
+  min-height: 48px;
+}
+
+.vixrex-app-shell [data-app-tab="vitrinim"] input::placeholder,
+.vixrex-app-shell [data-app-tab="vitrinim"] textarea::placeholder {
+  color: rgba(169, 187, 218, 0.62);
+  font-size: var(--vx-app-field-hint-size);
+  font-weight: var(--vx-app-field-hint-weight);
+}
+
+.vixrex-app-shell [data-app-tab="vitrinim"] input:not([type]):focus-visible,
+.vixrex-app-shell [data-app-tab="vitrinim"] input[type="text"]:focus-visible,
+.vixrex-app-shell [data-app-tab="vitrinim"] input[type="tel"]:focus-visible,
+.vixrex-app-shell [data-app-tab="vitrinim"] input[type="email"]:focus-visible,
+.vixrex-app-shell [data-app-tab="vitrinim"] input[type="url"]:focus-visible,
+.vixrex-app-shell [data-app-tab="vitrinim"] input[type="number"]:focus-visible,
+.vixrex-app-shell [data-app-tab="vitrinim"] select:focus-visible,
+.vixrex-app-shell [data-app-tab="vitrinim"] textarea:focus-visible {
+  border-color: var(--vx-app-primary);
+  border-width: 1.4px;
+  outline: none;
+  box-shadow: none;
+}
+
+.vixrex-app-shell [data-app-tab="vitrinim"] h1 {
+  color: var(--vx-app-text);
+  font-size: 24px;
+  font-weight: 900;
+  line-height: 1.15;
+  letter-spacing: normal;
+}
