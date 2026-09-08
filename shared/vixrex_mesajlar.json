@@ -12,21 +12,21 @@
     { "id": "share", "alanlar": [], "mesaj": "share", "girdi": "eylem", "yerTutucu": null }
   ],
   "intentler": [
-    { "payload": "merhaba", "anahtarKelimeler": ["merhaba", "selam", "nasil", "baslat", "baslayalim", "yardim", "ne yapabilirsin"] },
+    { "payload": "merhaba", "anahtarKelimeler": ["merhaba", "selam", "nasil", "baslat", "baslayalim", "yardim", "ne yapabilirsin", "geri don", "geri"] },
     { "payload": "vixrex_info", "anahtarKelimeler": ["vixrex", "nedir", "ne işe yarar", "nasil calisir", "kurulum", "vitrin"] },
     { "payload": "membership_info", "anahtarKelimeler": ["ucret", "fiyat", "para", "komisyon", "ucretsiz", "odeme", "bedava", "uyelik", "kullanim"] },
     { "payload": "kapak", "anahtarKelimeler": ["kapak", "sablon", "kapak foto", "cover"] },
     { "payload": "fotograf", "anahtarKelimeler": ["fotograf", "resim", "foto", "galeri", "gorsel", "yukle"] },
     { "payload": "aciklama", "anahtarKelimeler": ["aciklama", "hakkinda", "bio", "tanitim yazisi"] },
     { "payload": "urun", "anahtarKelimeler": ["urun", "hizmet", "menu", "katalog", "fiyat listesi"] },
+    { "payload": "xml_upload", "anahtarKelimeler": ["xml", "feed", "toplu urun", "toplu urun yukle", "tedarikci", "tedarik"] },
     { "payload": "qr", "anahtarKelimeler": ["qr", "kod", "link", "paylas", "baglanti", "url"] },
-    { "payload": "randevu", "anahtarKelimeler": ["randevu", "rezervasyon", "saat", "takvim", "musteri kabul"] },
+    { "payload": "randevu", "anahtarKelimeler": ["randevu", "rezervasyon", "saat", "takvim", "musteri kabul", "kategori"] },
     { "payload": "whatsapp", "anahtarKelimeler": ["whatsapp", "telefon", "numara", "iletisim", "mesaj"] },
     { "payload": "adres", "anahtarKelimeler": ["adres", "konum", "harita", "nerede", "yol tarifi", "lokasyon"] },
-    { "payload": "yayinla", "anahtarKelimeler": ["yayinla", "canli", "aktif", "yayinda", "goster", "acik"] },
+    { "payload": "yayinla", "anahtarKelimeler": ["yayinla", "canli", "aktif", "yayinda", "goster", "acik", "yasal", "onay"] },
     { "payload": "ocr_scan", "anahtarKelimeler": ["fatura", "fis", "tara", "etiket", "otomatik", "ocr"] },
     { "payload": "ocr_premium", "anahtarKelimeler": ["premium", "sinirsiz", "ucretli"] },
-    { "payload": "xml_upload", "anahtarKelimeler": ["xml", "feed", "toplu urun", "toplu urun yukle", "tedarikci", "tedarik"] },
     { "payload": "hesap", "anahtarKelimeler": ["hesap", "giris", "uye ol", "kayit", "guvence", "hesabimi", "login"] }
   ],
   "mesajlar": [
@@ -177,5 +177,21 @@
     {"id": "hazir_vitrin_sec", "etiket": "Hazır Vitrin Seç", "ikon": "storefront"},
     {"id": "sifirdan_olustur", "etiket": "Sıfırdan Oluştur", "ikon": "auto_awesome"},
     {"id": "bakiniyorum", "etiket": "Bakınıyorum", "ikon": "visibility"}
+  ],
+  "yanitlar": [
+    {"payload": "kapak", "mesaj": "kapak", "hizli": [{"etiket": "Kapak şablonu seç", "payload": "action_cover", "aksiyon": "openCoverTemplatePicker"}, {"etiket": "Geri Dön", "payload": "merhaba", "aksiyon": "none"}]},
+    {"payload": "fotograf", "mesaj": "fotograf", "hizli": [{"etiket": "Galeriye git", "payload": "action_gallery", "aksiyon": "scrollToGallery"}, {"etiket": "Kapak şablonu seç", "payload": "action_cover", "aksiyon": "openCoverTemplatePicker"}, {"etiket": "Geri Dön", "payload": "merhaba", "aksiyon": "none"}]},
+    {"payload": "aciklama", "mesaj": "aciklama", "hizli": [{"etiket": "Açıklamaya git", "payload": "action_desc", "aksiyon": "scrollToDesc"}, {"etiket": "Geri Dön", "payload": "merhaba", "aksiyon": "none"}]},
+    {"payload": "urun", "mesaj": "urun", "hizli": [{"etiket": "Ürün alanına git", "payload": "action_products", "aksiyon": "scrollToProducts"}, {"etiket": "Fiş ile tara", "payload": "action_ocr", "aksiyon": "openOcrScanner"}, {"etiket": "Geri Dön", "payload": "merhaba", "aksiyon": "none"}]},
+    {"payload": "xml_upload", "mesaj": "xml_upload", "hizli": [{"etiket": "XML linkini paylaş", "payload": "action_xml", "aksiyon": "openXmlUpload"}, {"etiket": "Geri Dön", "payload": "merhaba", "aksiyon": "none"}]},
+    {"payload": "qr_yayinda", "mesaj": "qr_yayinda", "hizli": [{"etiket": "Linki kopyala", "payload": "copy_link", "aksiyon": "copyLink"}, {"etiket": "QR göster", "payload": "show_qr", "aksiyon": "showQr"}, {"etiket": "WhatsApp’ta paylaş", "payload": "share_wa", "aksiyon": "shareWhatsapp"}, {"etiket": "Geri Dön", "payload": "merhaba", "aksiyon": "none"}]},
+    {"payload": "qr_yayinda_degil", "mesaj": "qr_yayinda_degil", "hizli": [{"etiket": "Vitrinime git", "payload": "open_vitrim", "aksiyon": "openVitrim"}, {"etiket": "Geri Dön", "payload": "merhaba", "aksiyon": "none"}]},
+    {"payload": "randevu", "mesaj": "randevu", "hizli": [{"etiket": "Kategoriye git", "payload": "action_category", "aksiyon": "scrollToCategory"}, {"etiket": "Geri Dön", "payload": "merhaba", "aksiyon": "none"}]},
+    {"payload": "whatsapp", "mesaj": "whatsapp", "hizli": [{"etiket": "WhatsApp alanına git", "payload": "action_wa", "aksiyon": "scrollToWhatsapp"}, {"etiket": "Geri Dön", "payload": "merhaba", "aksiyon": "none"}]},
+    {"payload": "adres", "mesaj": "adres", "hizli": [{"etiket": "Adrese git", "payload": "action_address", "aksiyon": "scrollToAddress"}, {"etiket": "Geri Dön", "payload": "merhaba", "aksiyon": "none"}]},
+    {"payload": "yayinla", "mesaj": "yayinla", "hizli": [{"etiket": "Yasal onaylara git", "payload": "action_legal", "aksiyon": "scrollToLegal"}, {"etiket": "Vitrinime git", "payload": "open_vitrim", "aksiyon": "openVitrim"}, {"etiket": "Geri Dön", "payload": "merhaba", "aksiyon": "none"}]},
+    {"payload": "ocr_scan", "mesaj": "ocr_scan", "hizli": [{"etiket": "Fiş/Fatura tara", "payload": "action_ocr", "aksiyon": "openOcrScanner"}, {"etiket": "Raf/Etiket tara", "payload": "action_ocr_shelf", "aksiyon": "openOcrScannerShelf"}, {"etiket": "Nasıl çalışır?", "payload": "ocr_info", "aksiyon": "none"}]},
+    {"payload": "ocr_info", "mesaj": "ocr_info", "hizli": [{"etiket": "Premium Bilgisi", "payload": "ocr_premium", "aksiyon": "none"}, {"etiket": "Geri Dön", "payload": "merhaba", "aksiyon": "none"}]},
+    {"payload": "hesap", "mesaj": "hesap", "hizli": [{"etiket": "Hesabımı güvenceye al", "payload": "action_auth", "aksiyon": "openAuth"}, {"etiket": "Geri Dön", "payload": "merhaba", "aksiyon": "none"}]}
   ]
 }
