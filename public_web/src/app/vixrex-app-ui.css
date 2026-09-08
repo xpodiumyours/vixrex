@@ -10,7 +10,9 @@
  * - lib/screens/my_vitrin_screen.dart
  *
  * Bu dosya yalnız `.vixrex-app-shell` altında etkilidir. Landing ve public
- * vitrin stillerine dokunmaz.
+ * vitrin stillerine dokunmaz. Vitrinim alan tokenları burada kayıtlıdır;
+ * alan tipleri Flutter'da farklı bileşenler kullandığı için component bazlı
+ * eşitleme tamamlanmadan genel form override'ı uygulanmaz.
  */
 .vixrex-app-shell {
   --vx-app-primary: #147DFF;
@@ -27,12 +29,14 @@
   --vx-app-muted: #A9BBDA;
   --vx-app-soft-text: #738AB3;
   --vx-app-border: #294D88;
+  --vx-app-blue-surface: #182E5B;
   --vx-app-success: #10B981;
   --vx-app-error: #EF4444;
 
   --vx-app-radius-control: 12px;
   --vx-app-radius-editor-field: 14px;
   --vx-app-radius-card: 16px;
+  --vx-app-radius-vitrin-form: 22px;
 
   --vx-app-sidebar-width: 220px;
   --vx-app-bottom-nav-height: 68px;
@@ -93,64 +97,4 @@
   border-color: var(--vx-app-secondary);
   outline: none;
   box-shadow: none;
-}
-
-/* Vitrinim: Flutter EditorTextField değerleri. */
-.vixrex-app-shell [data-app-tab="vitrinim"] input:not([type]),
-.vixrex-app-shell [data-app-tab="vitrinim"] input[type="text"],
-.vixrex-app-shell [data-app-tab="vitrinim"] input[type="tel"],
-.vixrex-app-shell [data-app-tab="vitrinim"] input[type="email"],
-.vixrex-app-shell [data-app-tab="vitrinim"] input[type="url"],
-.vixrex-app-shell [data-app-tab="vitrinim"] input[type="number"],
-.vixrex-app-shell [data-app-tab="vitrinim"] select,
-.vixrex-app-shell [data-app-tab="vitrinim"] textarea {
-  border-color: var(--vx-app-border);
-  border-radius: var(--vx-app-radius-editor-field);
-  background: var(--vx-app-input-bg);
-  padding-left: var(--vx-app-field-pad-x);
-  padding-right: var(--vx-app-field-pad-x);
-  padding-top: var(--vx-app-field-pad-y);
-  padding-bottom: var(--vx-app-field-pad-y);
-  color: var(--vx-app-text);
-  font-size: var(--vx-app-field-font-size);
-  font-weight: var(--vx-app-field-font-weight);
-}
-
-.vixrex-app-shell [data-app-tab="vitrinim"] input:not([type]),
-.vixrex-app-shell [data-app-tab="vitrinim"] input[type="text"],
-.vixrex-app-shell [data-app-tab="vitrinim"] input[type="tel"],
-.vixrex-app-shell [data-app-tab="vitrinim"] input[type="email"],
-.vixrex-app-shell [data-app-tab="vitrinim"] input[type="url"],
-.vixrex-app-shell [data-app-tab="vitrinim"] input[type="number"],
-.vixrex-app-shell [data-app-tab="vitrinim"] select {
-  min-height: 48px;
-}
-
-.vixrex-app-shell [data-app-tab="vitrinim"] input::placeholder,
-.vixrex-app-shell [data-app-tab="vitrinim"] textarea::placeholder {
-  color: rgba(169, 187, 218, 0.62);
-  font-size: var(--vx-app-field-hint-size);
-  font-weight: var(--vx-app-field-hint-weight);
-}
-
-.vixrex-app-shell [data-app-tab="vitrinim"] input:not([type]):focus-visible,
-.vixrex-app-shell [data-app-tab="vitrinim"] input[type="text"]:focus-visible,
-.vixrex-app-shell [data-app-tab="vitrinim"] input[type="tel"]:focus-visible,
-.vixrex-app-shell [data-app-tab="vitrinim"] input[type="email"]:focus-visible,
-.vixrex-app-shell [data-app-tab="vitrinim"] input[type="url"]:focus-visible,
-.vixrex-app-shell [data-app-tab="vitrinim"] input[type="number"]:focus-visible,
-.vixrex-app-shell [data-app-tab="vitrinim"] select:focus-visible,
-.vixrex-app-shell [data-app-tab="vitrinim"] textarea:focus-visible {
-  border-color: var(--vx-app-primary);
-  border-width: 1.4px;
-  outline: none;
-  box-shadow: none;
-}
-
-.vixrex-app-shell [data-app-tab="vitrinim"] h1 {
-  color: var(--vx-app-text);
-  font-size: 24px;
-  font-weight: 900;
-  line-height: 1.15;
-  letter-spacing: normal;
 }

@@ -14,6 +14,7 @@ describe("main Flutter referanslı uygulama UI sözleşmesi", () => {
   const appCss = oku("../src/app/vixrex-app-ui.css");
   const appBoundary = oku("../src/components/app/AppShellBoundary.tsx");
   const appNav = oku("../src/components/app/AppSidebar.tsx");
+  const vitrinEditor = oku("../src/components/owner/VitrinimEditor.tsx");
 
   it("uygulama tokenları Flutter AppColors ile aynı değerleri taşır", () => {
     expect(flutterColors).toContain("primary = Color(0xFF147DFF)");
@@ -22,6 +23,7 @@ describe("main Flutter referanslı uygulama UI sözleşmesi", () => {
     expect(flutterColors).toContain("inputBg = Color(0xFF0D1C38)");
     expect(flutterColors).toContain("surface = Color(0xFF0B1730)");
     expect(flutterColors).toContain("border = Color(0xFF294D88)");
+    expect(flutterColors).toContain("blueSurface = Color(0xFF182E5B)");
 
     expect(appCss).toContain("--vx-app-primary: #147DFF");
     expect(appCss).toContain("--vx-app-secondary: #57B7FF");
@@ -29,12 +31,14 @@ describe("main Flutter referanslı uygulama UI sözleşmesi", () => {
     expect(appCss).toContain("--vx-app-input-bg: #0D1C38");
     expect(appCss).toContain("--vx-app-surface: #0B1730");
     expect(appCss).toContain("--vx-app-border: #294D88");
+    expect(appCss).toContain("--vx-app-blue-surface: #182E5B");
   });
 
   it("UI sözleşmesi yalnız uygulama shell'ine scoped kalır", () => {
     expect(appCss).toContain(".vixrex-app-shell");
     expect(appBoundary).toContain("vixrex-app-shell");
     expect(appCss).not.toContain(".vitrin-shell");
+    expect(appCss).not.toContain('[data-app-tab="vitrinim"] input');
   });
 
   it("sidebar ve mobil NavigationBar ölçüleri Flutter ile aynıdır", () => {
@@ -66,21 +70,18 @@ describe("main Flutter referanslı uygulama UI sözleşmesi", () => {
     expect(flutterVitrin).toContain("constraints: const BoxConstraints(maxWidth: 1200)");
     expect(flutterVitrin).toContain("horizontal: isDesktop ? 32 : 16");
     expect(flutterVitrin).toContain("vertical: isDesktop ? 28 : 18");
+    expect(vitrinEditor).toContain("max-w-[1200px]");
+    expect(vitrinEditor).toContain("px-4 py-[18px]");
+    expect(vitrinEditor).toContain("min-[901px]:px-8 min-[901px]:py-7");
     expect(appCss).toContain("--vx-app-page-max-width: 1200px");
-    expect(appCss).toContain("--vx-app-page-pad-x: 16px");
-    expect(appCss).toContain("--vx-app-page-pad-y: 18px");
-    expect(appCss).toContain("--vx-app-page-pad-x: 32px");
-    expect(appCss).toContain("--vx-app-page-pad-y: 28px");
   });
 
-  it("Vitrinim form alanı görsel değerleri Flutter EditorTextField ile aynıdır", () => {
+  it("Vitrinim alan tokenları Flutter EditorTextField referans değerlerini kaydeder", () => {
     expect(flutterFields).toContain("fillColor: AppColors.inputBg");
     expect(flutterFields).toContain("BorderRadius.circular(AppColors.radius14)");
-    expect(flutterFields).toContain("fontSize: 14");
     expect(flutterFields).toContain("fontWeight: FontWeight.w700");
     expect(flutterFields).toContain("horizontal: 14");
     expect(flutterFields).toContain("vertical: 14");
-    expect(flutterFields).toContain("color: AppColors.primary");
     expect(flutterFields).toContain("width: 1.4");
 
     expect(appCss).toContain("--vx-app-input-bg: #0D1C38");
@@ -89,6 +90,5 @@ describe("main Flutter referanslı uygulama UI sözleşmesi", () => {
     expect(appCss).toContain("--vx-app-field-pad-y: 14px");
     expect(appCss).toContain("--vx-app-field-font-size: 14px");
     expect(appCss).toContain("--vx-app-field-font-weight: 700");
-    expect(appCss).toContain("border-width: 1.4px");
   });
 });
