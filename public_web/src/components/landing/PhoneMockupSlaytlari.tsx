@@ -1,18 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import type { MockupProfili } from "./mockupProfilleri";
+import { MaterialRoundIcon } from "./MaterialRoundIcon";
 
-/**
- * Mockup slayt içeriği — envanter §2.3, Flutter phone_mockup.dart iç yapısı.
- *
- * Slayt SIRASI PhoneMockup'ta tutulur (2026-09-08 canlı karşılaştırma
- * düzeltmesi): yüzen rozetler aktif slaydı izlediği için state iki
- * bileşenin ortak atasında yaşar. Burada yalnız çizim var.
- *
- * Flutter ölçüleri (phone_mockup.dart:63-67): çentik için 22px üst boşluk,
- * ardından 156px kapak. Next'te kapak 196px idi ve boşluk yoktu — telefon
- * içeriği Flutter'dan uzundu, alttaki "Vitrin hazır" kartı taşiyordu.
- */
+/** Flutter `lib/widgets/landing/phone_mockup.dart` iç yapısının web karşılığı. */
 export function PhoneMockupSlaytlari({
   profiller,
   aktif,
@@ -24,122 +16,164 @@ export function PhoneMockupSlaytlari({
   if (!profil) return null;
 
   return (
-    <div className="flex h-full flex-col">
-      {/* Kapak + isim/kategori (Flutter: 22px çentik boşluğu + 156px kapak) */}
-      <div className="relative mt-[22px] h-[156px] w-full shrink-0 bg-lp-surface">
+    <div className="flex h-full flex-col bg-lp-surface">
+      <div className="h-[22px] shrink-0 bg-lp-bg-editor" aria-hidden="true" />
+
+      <div className="relative h-[156px] w-full shrink-0 overflow-hidden bg-lp-bg-light">
         {profil.kapakUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={profil.kapakUrl}
             alt=""
-            className="h-full w-full object-cover"
-            loading="eager"
+            fill
+            sizes="309px"
+            className="object-cover"
+            priority
           />
         ) : (
-          <div className="h-full w-full bg-gradient-to-br from-lp-surface to-lp-turquoise-surface" />
+          <div className="absolute inset-0 bg-lp-bg-light" />
         )}
-        {/* Üst rozet — etiket Flutter landing_screen.dart rozet metinlerinden,
-            mockupProfilleri'nde tek kaynak olarak tutulur */}
-        <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-lp-bg-editor/90 px-2 py-1">
-          <span className="text-[10px]">{profil.uStRozet.simge}</span>
-          <span className="text-[9px] font-extrabold text-white">
-            {profil.uStRozet.metin}
-          </span>
-        </div>
-        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-lp-bg-editor to-transparent p-3">
-          <p className="text-[10px] font-extrabold tracking-[1.5px] text-lp-secondary">
-            {profil.kategoriSeridi}
-          </p>
-          <p className="text-[16px] font-black text-white">{profil.ad}</p>
-        </div>
-      </div>
+        <div className="absolute inset-0 bg-gradient-to-b from-black/15 to-black/50" />
 
-      {/* Hakkında bölümü */}
-      <div className="px-3 pt-4">
-        <p className="text-[12px] font-black text-white">Hakkında</p>
-        <p className="mt-1 text-[11px] leading-snug text-white/60">{profil.aciklama}</p>
-      </div>
-
-      {/* Eylem simgeleri */}
-      <div className="flex gap-2 px-3 pt-3">
-        {profil.eylemler.map((eylem, i) => (
-          <div
-            key={i}
-            className="flex h-7 w-7 items-center justify-center rounded-full"
-            style={{ backgroundColor: eylem.renk }}
-          >
-            <span className="text-[11px]">{eylem.simge}</span>
-          </div>
-        ))}
-      </div>
-
-      {/* Eylem satırları */}
-      <div className="flex flex-col gap-2 px-3 pt-3">
-        {profil.eylemSatirlari.map((satir, i) => (
-          <div
-            key={i}
-            className="flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.04] px-2.5 py-2.5"
-          >
-            <div
-              className="flex h-6 w-6 items-center justify-center rounded-lg"
-              style={{ backgroundColor: satir.renk }}
+        <div className="absolute inset-0 flex flex-col px-[14px] pb-[14px] pt-3">
+          <div className="flex items-start">
+            <span
+              className="flex h-10 w-10 items-center justify-center rounded-2xl border"
+              style={{
+                color: profil.vurguRengi,
+                backgroundColor: `${profil.vurguRengi}29`,
+                borderColor: `${profil.vurguRengi}4D`,
+              }}
             >
-              <span className="text-[10px]">{i === 0 ? profil.uStRozet.simge : profil.altRozet.simge}</span>
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[11px] font-bold text-white">{satir.baslik}</p>
-              <p className="text-[10px] text-white/50">{satir.altBaslik}</p>
-            </div>
-            <span className="text-[10px] text-white/40">›</span>
+              <MaterialRoundIcon name={profil.anaSimge} size={22} />
+            </span>
+            <span className="flex-1" />
+            <span className="flex items-center rounded-full border border-white/15 bg-black/30 px-3 py-2">
+              <MaterialRoundIcon
+                name={profil.uStRozet.simge}
+                size={14}
+                className="shrink-0"
+              />
+              <span className="ml-1.5 text-[12px] font-extrabold text-white">
+                {profil.uStRozet.metin}
+              </span>
+            </span>
           </div>
-        ))}
+
+          <div className="mt-1.5 truncate text-[24px] font-black leading-none tracking-[-0.8px] text-white">
+            {profil.ad}
+          </div>
+          <div className="mt-1.5 flex min-w-0 items-center">
+            <span
+              className="min-w-0 truncate text-[12px] font-extrabold"
+              style={{ color: profil.vurguRengi }}
+            >
+              {profil.kategoriSeridi}
+            </span>
+            <span
+              className="mx-2.5 h-1.5 w-1.5 shrink-0 rounded-full"
+              style={{ backgroundColor: profil.altRozet.renk }}
+              aria-hidden="true"
+            />
+            <span className="min-w-0 truncate text-[11px] font-semibold text-white/70">
+              {profil.altRozet.metin}
+            </span>
+          </div>
+        </div>
       </div>
 
-      {/* Vitrin galerisi + fotoğraf şeridi */}
-      <div className="px-3 pt-3">
-        <div className="flex items-center justify-between">
-          <p className="text-[11px] font-black text-white">Vitrin galerisi</p>
-          <span className="rounded-full bg-lp-primary/20 px-2 py-0.5 text-[9px] font-bold text-lp-primary">
-            {profil.galeriUrlleri.length} fotoğraf
+      <div className="flex min-h-0 flex-1 flex-col bg-lp-surface p-[14px]">
+        <p className="text-[13px] font-black text-lp-text">Hakkında</p>
+        <p className="mt-1.5 line-clamp-2 text-[12px] leading-[1.5] text-lp-text-alt">
+          {profil.aciklama}
+        </p>
+
+        <div className="mt-1.5 flex flex-wrap gap-2">
+          {profil.eylemler.map((eylem, index) => (
+            <span
+              key={`${eylem.simge}-${index}`}
+              className="flex items-center rounded-xl p-2"
+              style={{
+                color: eylem.renk,
+                backgroundColor: `${eylem.renk}1A`,
+              }}
+            >
+              <MaterialRoundIcon name={eylem.simge} size={16} />
+            </span>
+          ))}
+        </div>
+
+        <div className="mt-1.5 space-y-1.5">
+          {profil.eylemSatirlari.slice(0, 2).map((satir) => (
+            <div
+              key={satir.baslik}
+              className="flex w-full items-center rounded-[14px] border border-lp-border bg-lp-bg-light px-2.5 py-1.5"
+            >
+              <span
+                className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-[10px]"
+                style={{
+                  color: satir.renk,
+                  backgroundColor: `${satir.renk}24`,
+                }}
+              >
+                <MaterialRoundIcon name={satir.simge} size={16} />
+              </span>
+              <span className="ml-2.5 min-w-0 flex-1">
+                <span className="block truncate text-[12px] font-extrabold text-lp-text">
+                  {satir.baslik}
+                </span>
+                <span className="mt-0.5 block truncate text-[11px] font-semibold text-lp-muted">
+                  {satir.altBaslik}
+                </span>
+              </span>
+              <span className="ml-2 text-[12px] text-lp-muted" aria-hidden="true">›</span>
+            </div>
+          ))}
+        </div>
+
+        {profil.galeriUrlleri.length > 0 ? (
+          <div className="mt-1.5">
+            <div className="flex items-center">
+              <p className="flex-1 text-[13px] font-black text-lp-text">Vitrin galerisi</p>
+              <span
+                className="rounded-full px-2.5 py-1 text-[10px] font-extrabold"
+                style={{
+                  color: profil.vurguRengi,
+                  backgroundColor: `${profil.vurguRengi}24`,
+                }}
+              >
+                {profil.galeriUrlleri.length} fotoğraf
+              </span>
+            </div>
+            <div className="mt-1 flex h-[52px] gap-2">
+              {profil.galeriUrlleri.slice(0, 3).map((url) => (
+                <span key={url} className="relative min-w-0 flex-1 overflow-hidden rounded-xl bg-lp-bg-light">
+                  <Image src={url} alt="" fill sizes="90px" className="object-cover" />
+                </span>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        <span className="flex-1" />
+
+        <div className="flex w-full items-center rounded-[14px] border border-lp-border bg-lp-bg-light px-3 py-2">
+          <span className="min-w-0 flex-1">
+            <span className="block text-[12px] font-black text-lp-text">Vitrin hazır</span>
+            <span className="mt-0.5 block text-[11px] font-semibold text-lp-muted">
+              {profil.eylemSatirlari.length} bağlantı
+            </span>
+          </span>
+          <span
+            className="flex h-8 w-8 items-center justify-center rounded-[10px]"
+            style={{
+              color: profil.vurguRengi,
+              backgroundColor: `${profil.vurguRengi}24`,
+            }}
+          >
+            <MaterialRoundIcon name="qr_code_2" size={18} />
           </span>
         </div>
-        <div className="mt-1.5 flex gap-1.5">
-          {profil.galeriUrlleri.length > 0 ? (
-            profil.galeriUrlleri.map((url) => (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                key={url}
-                src={url}
-                alt=""
-                className="h-[72px] flex-1 rounded-lg object-cover"
-                loading="lazy"
-              />
-            ))
-          ) : (
-            <div className="h-[72px] flex-1 rounded-lg bg-lp-surface" />
-          )}
-        </div>
       </div>
-
-      {/* Vitrin hazır — Flutter phone_mockup.dart:520-580: bgLight zemin,
-          lp-border kenarlık, radius 14, 12×8 padding; sağda 32×32, %14 alfa
-          accent zeminde QR ikonu. "N bağlantı" sayısı profil verisinden
-          gelir (Flutter: profile.links.length) — sabit "2" değil. */}
-      <div className="mx-3 mt-auto flex items-center justify-between rounded-[14px] border border-lp-border bg-lp-bg-light px-3 py-2">
-        <div>
-          <p className="text-[12px] font-black text-lp-text">Vitrin hazır</p>
-          <p className="mt-0.5 text-[11px] font-semibold text-lp-muted">
-            {profil.eylemSatirlari.length} bağlantı
-          </p>
-        </div>
-        <span
-          className="flex h-8 w-8 items-center justify-center rounded-[10px] text-[16px]"
-          style={{ backgroundColor: `${profil.uStRozet.renk}24` }}
-        >
-          🔳
-        </span>
-      </div>
-
     </div>
   );
 }
