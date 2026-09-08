@@ -11,27 +11,31 @@ describe("main Flutter referanslı uygulama UI sözleşmesi", () => {
   const flutterSidebar = oku("../../lib/widgets/shell/shell_sidebar.dart");
   const flutterFields = oku("../../lib/widgets/editor/common_form_fields.dart");
   const flutterVitrin = oku("../../lib/screens/my_vitrin_screen.dart");
+  const globals = oku("../src/app/globals.css");
   const appCss = oku("../src/app/vixrex-app-ui.css");
   const appBoundary = oku("../src/components/app/AppShellBoundary.tsx");
   const appNav = oku("../src/components/app/AppSidebar.tsx");
   const vitrinEditor = oku("../src/components/owner/VitrinimEditor.tsx");
 
-  it("uygulama tokenları Flutter AppColors ile aynı değerleri taşır", () => {
+  it("uygulama shell'i ortak web marka tokenlarını yeniden kopyalamadan kullanır", () => {
     expect(flutterColors).toContain("primary = Color(0xFF147DFF)");
     expect(flutterColors).toContain("secondary = Color(0xFF57B7FF)");
     expect(flutterColors).toContain("bgEditor = Color(0xFF050B1A)");
-    expect(flutterColors).toContain("inputBg = Color(0xFF0D1C38)");
     expect(flutterColors).toContain("surface = Color(0xFF0B1730)");
     expect(flutterColors).toContain("border = Color(0xFF294D88)");
-    expect(flutterColors).toContain("blueSurface = Color(0xFF182E5B)");
 
-    expect(appCss).toContain("--vx-app-primary: #147DFF");
-    expect(appCss).toContain("--vx-app-secondary: #57B7FF");
-    expect(appCss).toContain("--vx-app-bg-editor: #050B1A");
-    expect(appCss).toContain("--vx-app-input-bg: #0D1C38");
-    expect(appCss).toContain("--vx-app-surface: #0B1730");
-    expect(appCss).toContain("--vx-app-border: #294D88");
-    expect(appCss).toContain("--vx-app-blue-surface: #182E5B");
+    expect(globals).toContain("--color-lp-primary: #147DFF");
+    expect(globals).toContain("--color-lp-secondary: #57B7FF");
+    expect(globals).toContain("--color-lp-bg-editor: #050B1A");
+    expect(globals).toContain("--color-lp-surface: #0B1730");
+    expect(globals).toContain("--color-lp-border: #294D88");
+
+    expect(appCss).toContain("--vx-app-primary: var(--color-lp-primary)");
+    expect(appCss).toContain("--vx-app-secondary: var(--color-lp-secondary)");
+    expect(appCss).toContain("--vx-app-bg-editor: var(--color-lp-bg-editor)");
+    expect(appCss).toContain("--vx-app-surface: var(--color-lp-surface)");
+    expect(appCss).toContain("--vx-app-border: var(--color-lp-border)");
+    expect(appCss).not.toContain("--vx-app-primary: #147DFF");
   });
 
   it("UI sözleşmesi yalnız uygulama shell'ine scoped kalır", () => {
@@ -64,6 +68,14 @@ describe("main Flutter referanslı uygulama UI sözleşmesi", () => {
     expect(appCss).toContain("rgba(20, 125, 255, 0.22)");
     expect(appNav).toContain('item.label === "Vixrex" ? 24 : 22');
     expect(appNav).not.toContain("scale-110");
+  });
+
+  it("sidebar arama odağı Flutter InputDecorationTheme 1.5px secondary sınırını izler", () => {
+    expect(flutterTheme).toContain("color: AppColors.focusedBorder");
+    expect(flutterTheme).toContain("width: 1.5");
+    expect(flutterColors).toContain("focusedBorder = secondary");
+    expect(appCss).toContain("border-color: var(--vx-app-secondary)");
+    expect(appCss).toContain("border-width: 1.5px");
   });
 
   it("Vitrinim dış sayfa ölçüleri Flutter ile aynı kalır", () => {
