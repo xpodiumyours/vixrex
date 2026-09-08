@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:FILL,ROND@0..1,100&icon_names=article,camera_alt,category,chat_bubble,email,inventory_2,label,link,map,notes,phone,place,rate_review,schedule,sell,smart_button,storefront,title&display=block");
+@import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:FILL,ROND@0..1,0..100&icon_names=article,camera_alt,category,chat_bubble,email,inventory_2,label,link,map,notes,phone,place,rate_review,schedule,sell,smart_button,storefront,title&display=block");
 
 /*
  * Vixrex uygulama UI eşitlik sözleşmesi.
@@ -335,7 +335,7 @@
   word-wrap: normal;
   direction: ltr;
   font-feature-settings: "liga";
-  font-variation-settings: "FILL" 0, "ROND" 100;
+  font-variation-settings: "FILL" 0, "ROND" 0;
   pointer-events: none;
 }
 
