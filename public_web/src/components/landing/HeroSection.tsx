@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { KesfetIkonu, OnayIkonu, IleriOkIkonu, StorefrontIkonu, GirisIkonu } from "@/components/site/icons";
 import { getSiteUrl } from "@/lib/siteUrl";
 import { PhoneMockup } from "./PhoneMockup";
 import type { MockupProfili } from "./mockupProfilleri";
+import { MaterialRoundIcon } from "./MaterialRoundIcon";
+import styles from "./landingFlutterParity.module.css";
 
-/** Hero — envanter §2.2. Flutter referans: landing_hero_section.dart:613-616 (4 rozet) */
 const GUVEN_ROZETLERI = [
   "SSL Güvenli Koruma",
   "Kredi kartı gerekmez",
@@ -12,14 +12,7 @@ const GUVEN_ROZETLERI = [
   "Link ve QR hazır",
 ] as const;
 
-/**
- * Bilinçli sapma — hareket yok:
- * Uygulamada (landing_hero_section.dart:65-100) üç mesh glow sin/cos ile
- * yavaşça salınıyor. Web'de sabit duruyor: salınımın orta noktası alındı.
- * Sebep: CSS keyframes ile sonsuz hareket görsel regresyon testlerini her
- * koşuda oynatır (playwright --update-snapshots flaky). Sabit glow görsel
- * zenginliği verir, testi stabil tutar.
- */
+/** Flutter `landing_hero_section.dart` referansına göre Next.js hero yüzeyi. */
 export function HeroSection({
   profiller,
   isChatOpen = false,
@@ -33,180 +26,181 @@ export function HeroSection({
   onStartAssistant: (initialName: string) => void;
   onChatClose?: () => void;
 }) {
-  // Adres ön eki tek kaynaktan gelir; alan adı bağlandığında bu metin de
-  // kendiliğinden düzelir (envanter §4, açık madde 5).
   const adresOneki = `${getSiteUrl().replace(/^https?:\/\//, "")}/v/`;
 
   return (
-    <section id="vixrex-hero" className="relative overflow-hidden bg-gradient-to-b from-lp-bg-editor to-lp-bg-light px-6 pb-[50px] pt-0 md:pb-[100px] md:pt-0">
-      {/* Top Nav — Flutter landing_hero_section.dart:189-363 ile parite */}
-      <nav
-        aria-label="Ana gezinme"
-        className="relative mx-auto flex w-full max-w-[1200px] items-center justify-between py-4"
+    <>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/icon?family=Material+Icons+Round&display=block"
+        precedence="default"
+      />
+
+      <section
+        id="vixrex-hero"
+        className="relative overflow-hidden bg-gradient-to-b from-lp-bg-editor to-lp-bg-light pb-[50px] min-[769px]:pb-[100px]"
       >
-        <Link
-          href="/"
-          className="flex items-center gap-2 text-lp-text"
-          aria-label="Vixrex ana sayfa"
+        <nav
+          aria-label="Ana gezinme"
+          className="relative z-20 mx-auto flex w-full items-center justify-between px-5 py-4 min-[769px]:px-10"
         >
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-lp-primary/15 text-lp-primary">
-            <StorefrontIkonu boyut={20} />
-          </span>
-          <span className="text-[20px] font-black tracking-[-0.5px]">Vixrex</span>
-        </Link>
-        <div className="flex items-center gap-2.5">
-          {/* Vitrinleri Keşfet — Flutter: rounded-[14px], border lp-primary/45 */}
           <Link
-            href="/kesfet"
-            className="hidden items-center gap-2 rounded-[14px] border border-lp-primary/45 bg-lp-surface-soft px-4 py-3 text-[12px] font-black text-lp-primary transition-colors hover:bg-lp-surface md:flex"
-            aria-label="Vitrinleri Keşfet"
+            href="/"
+            className="flex items-center gap-2 text-lp-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary"
+            aria-label="Vixrex ana sayfa"
           >
-            <KesfetIkonu boyut={16} />
-            Vitrinleri Keşfet
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-lp-primary/15 text-lp-primary">
+              <MaterialRoundIcon name="storefront" size={20} />
+            </span>
+            <span className="text-[20px] font-black tracking-[-0.5px]">Vixrex</span>
           </Link>
-          <Link
-            href="/kesfet"
-            className="flex h-10 w-10 items-center justify-center rounded-[14px] border border-lp-border bg-lp-surface-soft text-lp-text md:hidden"
-            aria-label="Vitrinleri Keşfet"
-          >
-            <KesfetIkonu boyut={18} />
-          </Link>
-          {/* Giriş Yap — Flutter: rounded-[14px], Icons.login_rounded ikonu */}
-          <Link
-            href="/giris"
-            className="hidden items-center gap-2 rounded-[14px] bg-lp-primary px-4 py-3 text-[12px] font-black text-lp-on-primary transition-colors hover:opacity-90 md:flex"
-          >
-            <GirisIkonu boyut={16} />
-            Giriş Yap
-          </Link>
-          <Link
-            href="/giris"
-            className="flex h-10 w-10 items-center justify-center rounded-[14px] bg-lp-primary text-lp-on-primary md:hidden"
-            aria-label="Giriş Yap"
-          >
-            <GirisIkonu boyut={18} />
-          </Link>
-        </div>
-      </nav>
-      {/* Ambient Mesh Glows — Flutter landing_hero_section.dart:65-100 orta noktası */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 overflow-hidden"
-      >
-        <div
-          aria-hidden="true"
-          className="absolute rounded-full"
-          style={{
-            width: 300,
-            height: 300,
-            top: 100,
-            left: -100,
-            background:
-              "radial-gradient(closest-side, color-mix(in srgb, var(--color-lp-primary) 30%, transparent), transparent)",
-          }}
-        />
-        <div
-          aria-hidden="true"
-          className="absolute rounded-full"
-          style={{
-            width: 400,
-            height: 400,
-            bottom: 50,
-            right: -50,
-            background:
-              "radial-gradient(closest-side, color-mix(in srgb, var(--color-lp-secondary) 25%, transparent), transparent)",
-          }}
-        />
-        <div
-          aria-hidden="true"
-          className="absolute rounded-full"
-          style={{
-            width: 250,
-            height: 250,
-            top: 200,
-            right: 150,
-            background:
-              "radial-gradient(closest-side, color-mix(in srgb, var(--color-lp-pink) 20%, transparent), transparent)",
-          }}
-        />
-      </div>
-      <div className="relative mx-auto flex w-full max-w-[1200px] flex-col items-center gap-10 md:flex-row md:items-center md:gap-10">
-        <div className="w-full flex-1 md:max-w-[560px]">
-          <p className="inline-block rounded-[30px] border border-lp-secondary/45 bg-lp-primary/[0.18] px-3.5 py-2 text-[11px] font-black tracking-[1px] text-lp-secondary">
-            VİXREX ASİSTAN İLE DİJİTAL VİTRİN
-          </p>
 
-          <h1 className="mt-5 text-[36px] font-black leading-[1.15] tracking-[-0.8px] text-lp-text md:text-[48px]">
-            Vitrininiz
-            <br />
-            <span className="text-lp-secondary">Vixrex Asistan</span> ile
-            <br />
-            birkaç dakikada hazır
-          </h1>
-
-          <p className="mt-5 max-w-[560px] text-[16px] font-medium leading-[1.5] text-white/70">
-            İşletme bilgilerini, fotoğraflarını, ürün ve hizmetlerini, adresini
-            ve WhatsApp iletişimini Vixrex Asistan ile konuşarak tek vitrinde
-            topla.
-          </p>
-
-          {/*
-            Kurulum başlangıcı — uygulamadaki iki kutulu yapıyla eşitlenir
-            (landing_hero_section.dart:495-541). Girilen ad yeni bir route'a
-            değil, telefon içindeki mevcut Vixrex Asistan akışına aktarılır.
-          */}
-          <form
-            onSubmit={(event) => {
-              event.preventDefault();
-              const form = new FormData(event.currentTarget);
-              const isletmeAdi = String(form.get("isletme") ?? "");
-              onStartAssistant(isletmeAdi.trim());
-            }}
-            className="mt-8 flex flex-col gap-3 min-[500px]:flex-row min-[500px]:items-center"
-          >
-            <div className="flex h-[52px] flex-1 items-center overflow-hidden rounded-2xl border border-white/[0.12] bg-white/[0.06]">
-              <span className="hidden whitespace-nowrap px-4 text-[14px] font-bold text-white/60 sm:inline">{adresOneki}</span>
-              <span className="px-4 text-[14px] font-bold text-white/60 sm:hidden">/v/</span>
-              <input
-                type="text"
-                name="isletme"
-                placeholder="isletmeniz"
-                className="h-full flex-1 bg-transparent text-[14px] font-bold text-white outline-none placeholder:text-white/30"
-              />
-            </div>
-            <button
-              type="submit"
-              className="flex h-[52px] items-center justify-center gap-2 rounded-2xl bg-lp-primary px-6 text-[15px] font-black text-lp-on-primary transition-transform hover:-translate-y-0.5"
+          <div className="flex items-center gap-2.5">
+            <Link
+              href="/kesfet"
+              className="hidden items-center gap-2 rounded-[14px] border border-lp-primary/45 bg-lp-surface-soft px-4 py-3 text-[12px] font-black text-lp-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary min-[769px]:flex"
             >
-              Ücretsiz Vitrinimi Hazırla
-              <IleriOkIkonu boyut={16} />
-            </button>
-          </form>
+              <MaterialRoundIcon name="explore" size={16} />
+              Vitrinleri Keşfet
+            </Link>
+            <Link
+              href="/kesfet"
+              className="flex h-10 w-10 items-center justify-center rounded-[14px] border border-lp-border bg-lp-surface-soft text-lp-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary min-[769px]:hidden"
+              aria-label="Vitrinleri Keşfet"
+            >
+              <MaterialRoundIcon name="explore" size={18} />
+            </Link>
 
-          <ul className="mt-6 flex flex-wrap gap-2.5">
-            {GUVEN_ROZETLERI.map((rozet) => (
-              <li
-                key={rozet}
-                className="flex items-center gap-1.5 rounded-[20px] border border-white/[0.08] bg-white/[0.06] px-3 py-2 text-[12px] font-bold text-white/70"
-              >
-                <span className="text-lp-mint">
-                  <OnayIkonu boyut={16} />
-                </span>
-                {rozet}
-              </li>
-            ))}
-          </ul>
-        </div>
+            <Link
+              href="/giris"
+              className="hidden items-center gap-2 rounded-[14px] bg-lp-primary px-4 py-3 text-[12px] font-black text-lp-on-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-secondary min-[769px]:flex"
+            >
+              <MaterialRoundIcon name="login" size={16} />
+              Giriş Yap
+            </Link>
+            <Link
+              href="/giris"
+              className="flex h-10 w-10 items-center justify-center rounded-[14px] bg-lp-primary text-lp-on-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-secondary min-[769px]:hidden"
+              aria-label="Giriş Yap"
+            >
+              <MaterialRoundIcon name="login" size={18} />
+            </Link>
+          </div>
+        </nav>
 
-        <div className="flex w-full flex-1 justify-center">
-          <PhoneMockup
-            profiller={profiller}
-            isChatOpen={isChatOpen}
-            initialAssistantName={initialAssistantName}
-            onChatClose={onChatClose}
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div
+            className={`${styles.meshOne} absolute rounded-full`}
+            style={{
+              width: 300,
+              height: 300,
+              top: 100,
+              left: -100,
+              background:
+                "radial-gradient(closest-side, color-mix(in srgb, var(--color-lp-primary) 30%, transparent), transparent)",
+            }}
+          />
+          <div
+            className={`${styles.meshTwo} absolute rounded-full`}
+            style={{
+              width: 400,
+              height: 400,
+              bottom: 50,
+              right: -50,
+              background:
+                "radial-gradient(closest-side, color-mix(in srgb, var(--color-lp-secondary) 25%, transparent), transparent)",
+            }}
+          />
+          <div
+            className={`${styles.meshThree} absolute rounded-full`}
+            style={{
+              width: 250,
+              height: 250,
+              top: 200,
+              right: 150,
+              background:
+                "radial-gradient(closest-side, color-mix(in srgb, var(--color-lp-pink) 20%, transparent), transparent)",
+            }}
           />
         </div>
-      </div>
-    </section>
+
+        <div className="relative z-10 mx-auto w-full max-w-[1200px] px-6 pt-5 min-[769px]:pt-10">
+          <div className="flex flex-col items-center gap-10 min-[769px]:flex-row min-[769px]:items-center">
+            <div className="w-full flex-1 text-center min-[769px]:max-w-[560px] min-[769px]:text-left">
+              <p className="inline-block rounded-[30px] border border-lp-secondary/45 bg-lp-primary/[0.18] px-3.5 py-2 text-[11px] font-black tracking-[1px] text-lp-secondary">
+                VİXREX ASİSTAN İLE DİJİTAL VİTRİN
+              </p>
+
+              <h1 className="mt-[18px] text-[36px] font-black leading-[1.15] tracking-[-0.8px] text-lp-text min-[769px]:text-[48px]">
+                Vitrininiz
+                <br />
+                <span className="text-lp-secondary">Vixrex Asistan</span> ile
+                <br />
+                birkaç dakikada hazır
+              </h1>
+
+              <p className="mx-auto mt-5 max-w-[560px] text-[16px] font-medium leading-[1.5] text-white/70 min-[769px]:mx-0">
+                İşletme bilgilerini, fotoğraflarını, ürün ve hizmetlerini, adresini
+                ve WhatsApp iletişimini Vixrex Asistan ile konuşarak tek vitrinde
+                topla.
+              </p>
+
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  const form = new FormData(event.currentTarget);
+                  const isletmeAdi = String(form.get("isletme") ?? "");
+                  onStartAssistant(isletmeAdi.trim());
+                }}
+                className="mt-8 flex flex-col gap-3 min-[501px]:flex-row min-[501px]:items-center"
+              >
+                <div className="flex h-[52px] flex-1 items-center overflow-hidden rounded-2xl border border-white/[0.12] bg-white/[0.06] text-left">
+                  <span className="hidden whitespace-nowrap px-[14px] text-[14px] font-bold text-white/60 sm:inline">
+                    {adresOneki}
+                  </span>
+                  <span className="px-[14px] text-[14px] font-bold text-white/60 sm:hidden">/v/</span>
+                  <input
+                    type="text"
+                    name="isletme"
+                    placeholder="isletmeniz"
+                    className="h-full min-w-0 flex-1 bg-transparent pr-[14px] text-[14px] font-bold text-white outline-none placeholder:text-white/30"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="flex h-[52px] items-center justify-center gap-2 rounded-2xl bg-lp-primary px-6 text-[15px] font-black text-lp-on-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-secondary"
+                >
+                  Ücretsiz Vitrinimi Hazırla
+                  <MaterialRoundIcon name="arrow_forward" size={16} />
+                </button>
+              </form>
+
+              <ul className="mt-6 flex flex-wrap justify-center gap-2.5 min-[769px]:justify-start">
+                {GUVEN_ROZETLERI.map((rozet) => (
+                  <li
+                    key={rozet}
+                    className="flex items-center gap-1.5 rounded-[20px] border border-white/[0.08] bg-white/[0.06] px-3 py-2 text-[12px] font-bold text-white/70"
+                  >
+                    <span className="text-lp-mint">
+                      <MaterialRoundIcon name="check_circle" size={16} />
+                    </span>
+                    {rozet}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="flex w-full flex-1 justify-center">
+              <PhoneMockup
+                profiller={profiller}
+                isChatOpen={isChatOpen}
+                initialAssistantName={initialAssistantName}
+                onChatClose={onChatClose}
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+    </>
   );
 }
