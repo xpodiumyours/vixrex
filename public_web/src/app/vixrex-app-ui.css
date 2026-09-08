@@ -8,11 +8,13 @@
  * - lib/widgets/shell/shell_sidebar.dart
  * - lib/widgets/editor/common_form_fields.dart
  * - lib/screens/my_vitrin_screen.dart
+ * - lib/screens/my_vitrin/sections/vitrin_form_section.dart
+ * - lib/widgets/editor/vitrin_completion_meter.dart
+ * - lib/widgets/editor/form_accordion_section.dart
  *
  * Bu dosya yalnız `.vixrex-app-shell` altında etkilidir. Landing ve public
- * vitrin stillerine dokunmaz. Vitrinim alan tokenları burada kayıtlıdır;
- * alan tipleri Flutter'da farklı bileşenler kullandığı için component bazlı
- * eşitleme tamamlanmadan genel form override'ı uygulanmaz.
+ * vitrin stillerine dokunmaz. Alan tipleri Flutter'da farklı bileşenler
+ * kullandığı için doğrulanmamış genel form override'ı uygulanmaz.
  */
 .vixrex-app-shell {
   --vx-app-primary: #147DFF;
@@ -97,4 +99,69 @@
   border-color: var(--vx-app-secondary);
   outline: none;
   box-shadow: none;
+}
+
+/* Vitrinim form kabuğu: Flutter VitrinFormSection._cardDecoration. */
+.vixrex-app-shell [aria-labelledby="vitrinim-editor-title"] {
+  border-color: var(--vx-app-border);
+  border-radius: var(--vx-app-radius-vitrin-form);
+  background: var(--vx-app-surface);
+}
+
+/* Flutter VitrinCompletionMeter: 24/20/24/16 padding + blueSurface ayırıcı. */
+.vixrex-app-shell [aria-labelledby="vitrinim-editor-title"] > div:first-child {
+  padding: 20px 24px 16px;
+  border-bottom-color: var(--vx-app-blue-surface);
+}
+
+.vixrex-app-shell #vitrinim-editor-title {
+  color: var(--vx-app-text);
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: normal;
+}
+
+.vixrex-app-shell [aria-labelledby="vitrinim-editor-title"] > div:first-child > div:first-child > span {
+  color: var(--vx-app-secondary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.vixrex-app-shell [aria-labelledby="vitrinim-editor-title"] > div:first-child > p {
+  color: var(--vx-app-muted);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+/* Flutter FormAccordionSection: sadece alt ayırıcı, 24x16 başlık padding. */
+.vixrex-app-shell [aria-labelledby="vitrinim-editor-title"] > div.grid > section {
+  border-right-width: 0 !important;
+  border-bottom-color: var(--vx-app-blue-surface);
+}
+
+.vixrex-app-shell [aria-labelledby="vitrinim-editor-title"] > div.grid > section > button {
+  min-height: 0;
+  gap: 12px;
+  padding: 16px 24px;
+}
+
+.vixrex-app-shell [aria-labelledby="vitrinim-editor-title"] > div.grid > section > button > span:nth-child(2) > span:first-child {
+  color: var(--vx-app-text);
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: normal;
+}
+
+.vixrex-app-shell [aria-labelledby="vitrinim-editor-title"] > div.grid > section > button > span:nth-child(2) > span:last-child {
+  color: var(--vx-app-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Açık bölüm gövdesi: Flutter 24/0/24/20. */
+.vixrex-app-shell [aria-labelledby="vitrinim-editor-title"] > div.grid > section > button + div {
+  padding-left: 24px;
+  padding-right: 24px;
+  padding-bottom: 20px;
 }
