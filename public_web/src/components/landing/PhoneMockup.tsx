@@ -82,7 +82,7 @@ export function PhoneMockup({
       <div className="relative h-[640px] w-[320px]">
         {!isChatOpen ? (
           <>
-            <div className={`${styles.badgeRight} absolute -right-[14px] top-[100px] z-40 flex items-center gap-2 rounded-[20px] border-[1.2px] border-lp-primary/30 bg-lp-surface/[0.92] px-3 py-[9px] shadow-[0_5px_10px_rgba(0,0,0,0.1)] backdrop-blur-[12px] min-[360px]:-right-[40px]`}>
+            <div className={`${styles.badgeRight} absolute -right-[14px] top-[100px] z-40 flex items-center gap-2 rounded-[20px] border-[1.2px] border-lp-primary/30 bg-lp-surface/[0.92] px-3 py-[9px] shadow-[0_5px_10px_rgba(0,0,0,0.1)] backdrop-blur-[12px] min-[408px]:-right-[40px]`}>
               <span
                 className="flex h-[27px] w-[27px] items-center justify-center rounded-full"
                 style={{
@@ -97,7 +97,7 @@ export function PhoneMockup({
               </span>
             </div>
 
-            <div className={`${styles.badgeLeft} absolute -left-[12px] bottom-[120px] z-40 flex items-center gap-2 rounded-[20px] border-[1.2px] border-lp-primary/30 bg-lp-surface/[0.92] px-3 py-[9px] shadow-[0_5px_10px_rgba(0,0,0,0.1)] backdrop-blur-[12px] min-[360px]:-left-[30px]`}>
+            <div className={`${styles.badgeLeft} absolute -left-[12px] bottom-[120px] z-40 flex items-center gap-2 rounded-[20px] border-[1.2px] border-lp-primary/30 bg-lp-surface/[0.92] px-3 py-[9px] shadow-[0_5px_10px_rgba(0,0,0,0.1)] backdrop-blur-[12px] min-[408px]:-left-[30px]`}>
               <span
                 className="flex h-[27px] w-[27px] items-center justify-center rounded-full"
                 style={{
