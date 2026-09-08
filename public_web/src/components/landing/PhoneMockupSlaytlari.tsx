@@ -1,44 +1,32 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import type { MockupProfili } from "./mockupProfilleri";
 
 /**
- * Mockup slayt döngüsü — envanter §2.3, Flutter'da 16 saniyelik denetleyici
- * dört profili 4'er saniye gösteriyor.
+ * Mockup slayt içeriği — envanter §2.3, Flutter phone_mockup.dart iç yapısı.
  *
- * Bu, ana sayfadaki iki istemci adasından biri. Sunucu tarafı ilk slaytı
- * zaten çizmiş durumda; burada yalnız sıra ilerletiliyor.
+ * Slayt SIRASI PhoneMockup'ta tutulur (2026-09-08 canlı karşılaştırma
+ * düzeltmesi): yüzen rozetler aktif slaydı izlediği için state iki
+ * bileşenin ortak atasında yaşar. Burada yalnız çizim var.
  *
- * `prefers-reduced-motion` açıksa döngü HİÇ başlamaz. Bu yalnız
- * erişilebilirlik değil, aynı zamanda görsel regresyon testlerinin
- * çalışabilmesinin ön koşulu: sürekli dönen bir karusel karşısında ekran
- * görüntüsü karşılaştırması hiçbir zaman kararlı olmaz.
+ * Flutter ölçüleri (phone_mockup.dart:63-67): çentik için 22px üst boşluk,
+ * ardından 156px kapak. Next'te kapak 196px idi ve boşluk yoktu — telefon
+ * içeriği Flutter'dan uzundu, alttaki "Vitrin hazır" kartı taşiyordu.
  */
 export function PhoneMockupSlaytlari({
   profiller,
+  aktif,
 }: {
   profiller: MockupProfili[];
+  aktif: number;
 }) {
-  const [aktif, setAktif] = useState(0);
-
-  useEffect(() => {
-    if (profiller.length < 2) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-
-    const zamanlayici = window.setInterval(() => {
-      setAktif((mevcut) => (mevcut + 1) % profiller.length);
-    }, 4000);
-    return () => window.clearInterval(zamanlayici);
-  }, [profiller.length]);
-
   const profil = profiller[aktif] ?? profiller[0];
   if (!profil) return null;
 
   return (
     <div className="flex h-full flex-col">
-      {/* Kapak + isim/kategori (Flutter: 156px kapak) */}
-      <div className="relative h-[196px] w-full shrink-0 bg-lp-surface">
+      {/* Kapak + isim/kategori (Flutter: 22px çentik boşluğu + 156px kapak) */}
+      <div className="relative mt-[22px] h-[156px] w-full shrink-0 bg-lp-surface">
         {profil.kapakUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -50,10 +38,13 @@ export function PhoneMockupSlaytlari({
         ) : (
           <div className="h-full w-full bg-gradient-to-br from-lp-surface to-lp-turquoise-surface" />
         )}
-        {/* Üst rozet */}
+        {/* Üst rozet — etiket Flutter landing_screen.dart rozet metinlerinden,
+            mockupProfilleri'nde tek kaynak olarak tutulur */}
         <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-lp-bg-editor/90 px-2 py-1">
           <span className="text-[10px]">{profil.uStRozet.simge}</span>
-          <span className="text-[9px] font-extrabold text-white">{profil.uStRozet.renk === "#FF5A1F" ? "Galeri" : profil.uStRozet.renk === "#EA580C" ? "Menü" : profil.uStRozet.renk === "#DB2777" ? "Randevu" : "WhatsApp"}</span>
+          <span className="text-[9px] font-extrabold text-white">
+            {profil.uStRozet.metin}
+          </span>
         </div>
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-lp-bg-editor to-transparent p-3">
           <p className="text-[10px] font-extrabold tracking-[1.5px] text-lp-secondary">
@@ -130,27 +121,25 @@ export function PhoneMockupSlaytlari({
         </div>
       </div>
 
-      {/* Vitrin hazır */}
-      <div className="mx-3 mt-auto flex items-center justify-between rounded-xl border border-lp-primary/20 bg-lp-primary/[0.08] px-3 py-3">
+      {/* Vitrin hazır — Flutter phone_mockup.dart:520-580: bgLight zemin,
+          lp-border kenarlık, radius 14, 12×8 padding; sağda 32×32, %14 alfa
+          accent zeminde QR ikonu. "N bağlantı" sayısı profil verisinden
+          gelir (Flutter: profile.links.length) — sabit "2" değil. */}
+      <div className="mx-3 mt-auto flex items-center justify-between rounded-[14px] border border-lp-border bg-lp-bg-light px-3 py-2">
         <div>
-          <p className="text-[10px] font-bold text-white">Vitrin hazır</p>
-          <p className="text-[9px] text-white/50">2 bağlantı</p>
+          <p className="text-[12px] font-black text-lp-text">Vitrin hazır</p>
+          <p className="mt-0.5 text-[11px] font-semibold text-lp-muted">
+            {profil.eylemSatirlari.length} bağlantı
+          </p>
         </div>
-        <span className="text-[16px]">📱</span>
+        <span
+          className="flex h-8 w-8 items-center justify-center rounded-[10px] text-[16px]"
+          style={{ backgroundColor: `${profil.uStRozet.renk}24` }}
+        >
+          🔳
+        </span>
       </div>
 
-      {/* Slayt gösterge noktaları */}
-      <div className="flex justify-center gap-1.5 pb-2 pt-2">
-        {profiller.map((aday, sira) => (
-          <span
-            key={aday.ad}
-            aria-hidden
-            className={`h-1.5 rounded-full transition-all ${
-              sira === aktif ? "w-4 bg-lp-primary" : "w-1.5 bg-lp-border"
-            }`}
-          />
-        ))}
-      </div>
     </div>
   );
 }

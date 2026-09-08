@@ -19,7 +19,7 @@
 |---|---|---|---|
 | 1 | İşlev matrisi | 🟢 ✓ | Tüm 23 işlev Flutter referansıyla uyumlu (testli) |
 | 2 | Ekran ve menü matrisi | 🟢 ✓ | Neredeyse tüm karşılıklar var (moderasyon hariç) |
-| 3 | UI görünüm (renk/tema) | 🟢 ✓ | Renkler birebir eşit; birkaç piksel testi `△` |
+| 3 | UI görünüm (renk/tema) | 🟢 ✓ | Renkler birebir eşit. 2026-09-08 canlı ekran karşılaştırması (Playwright, iki uygulama yan yana) landing telefon mockup'ındaki 5 gerçek ayrışmayı yakaladı ve kapatıldı: yüzen rozetler aktif slaytı izliyor, noktalar telefonun dışında (24×8/8×8), rozet stili koyu zemin+mavi kenarlık, kapak 22px boşluk+156px, "N bağlantı" profilden. Kanıt: `landing-hero-mockup-parite.test.ts` (7 test) |
 | 4 | UX akış matrisi | 🟢 ✓ | Tüm 22 akış Flutter referansıyla uyumlu (testli) |
 | 5 | Responsive / duyarlı | 🟢 ✓ | Çoğu eşit; 200% ve yatay telefon `○` |
 | 6 | Durum matrisi | 🟢 ✓ | Tüm durumlar Flutter referansıyla uyumlu |

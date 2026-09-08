@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import type { MockupProfili } from "./mockupProfilleri";
 import { PhoneMockupSlaytlari } from "./PhoneMockupSlaytlari";
 import { LandingApkAssistant } from "./LandingApkAssistant";
@@ -5,13 +8,20 @@ import { LandingApkAssistant } from "./LandingApkAssistant";
 /**
  * Hero'nun telefon mockup'ı — envanter §2.3.
  *
- * Flutter'daki phone_mockup.dart ile birebir aynı:
+ * Flutter'daki phone_mockup.dart + landing_hero_mockup.dart ile birebir aynı:
  *  - 325×640 sabit boyut (LayoutBuilder ile dikey ölçekleme)
  *  - 40px köşe yuvarlatması
  *  - 2.5px kenarlık, beyaz %18
  *  - 3 katmanlı gölge (mavi parıltı + siyah + mavi glow)
  *  - Dynamic Island notch (96×22)
  *  - Home indicator (110×4)
+ *
+ * 2026-09-08 CANLI KARŞILAŞTIRMA DÜZELTMESİ (Playwright ekran görüntüsü +
+ * iki kaynak kod): yüzen rozetler Next'te hep ilk profilde donuyordu;
+ * Flutter'da (landing_hero_mockup.dart:104-122) rozetler AKTİF slayttan
+ * beslenir. Bu yüzden slayt sırası buraya taşındı — rozetler ve slayt
+ * aynı state'i paylaşır. Slayt noktaları da Flutter'daki gibi telefonun
+ * DIŞINA alındı (orada satır 127-145: mockup Column'unun devamı).
  *
  * Maskot tıklanınca slaytlar yerini APK karşılama yüzüne bırakır;
  * "Evet, Oluşturalım" sonrasında mevcut gerçek kurulum motoruna delege edilir.
@@ -27,28 +37,61 @@ export function PhoneMockup({
   initialAssistantName?: string;
   onChatClose?: () => void;
 }) {
-  const ilk = profiller[0];
-  if (!ilk) return null;
+  const [aktif, setAktif] = useState(0);
+
+  useEffect(() => {
+    if (profiller.length < 2) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const zamanlayici = window.setInterval(() => {
+      setAktif((mevcut) => (mevcut + 1) % profiller.length);
+    }, 4000);
+    return () => window.clearInterval(zamanlayici);
+  }, [profiller.length]);
+
+  const profil = profiller[aktif] ?? profiller[0];
+  if (!profil) return null;
 
   return (
     <div className="relative mx-auto w-[325px] shrink-0">
       {!isChatOpen && (
         <>
-          <div className="absolute -right-6 top-[90px] z-20 flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.92] px-3 py-2 shadow-[0_8px_24px_rgba(0,0,0,0.12)] backdrop-blur-sm">
-            <div className="flex h-[22px] w-[22px] items-center justify-center rounded-full" style={{ backgroundColor: ilk.uStRozet.renk }}>
-              <span className="text-[10px]">{ilk.uStRozet.simge}</span>
+          {/*
+            Yüzen rozetler — Flutter _buildFloatingBadge ölçüleri
+            (landing_hero_mockup.dart:152-198): rounded 20, zemin surface %92,
+            kenarlık primary %28 1.2px, blur 12, gölge siyah %10 (0,5),
+            padding 12×9, simge dairesi 27px (%20 alfa), metin w800 12px.
+            Konum: sağ -40/üst 100, sol -30/alt 120; dar kapsayıcıda -14/-12
+            (isNarrow). Salınım ±10 bilinçli sapma — web'de sabit.
+            Not: web'de simge emoji (kendini renklendirir); Flutter'daki gibi
+            monokrom ikon rengi uygulanmaz, daire zemini %20 alfa ile eşleşir.
+          */}
+          <div className="absolute -right-[14px] top-[100px] z-20 flex items-center gap-2 rounded-[20px] border-[1.2px] border-lp-primary/30 bg-lp-surface/[0.92] px-3 py-[9px] shadow-[0_5px_10px_rgba(0,0,0,0.1)] backdrop-blur-[12px] min-[408px]:-right-[40px]">
+            <div
+              className="flex h-[27px] w-[27px] items-center justify-center rounded-full"
+              style={{ backgroundColor: `${profil.uStRozet.renk}33` }}
+            >
+              <span className="text-[15px]">{profil.uStRozet.simge}</span>
             </div>
-            <span className="text-[11px] font-extrabold text-gray-800">{ilk.uStRozet.renk === "#FF5A1F" ? "Galeri" : ilk.uStRozet.renk === "#EA580C" ? "Menü" : ilk.uStRozet.renk === "#DB2777" ? "Randevu" : "WhatsApp"}</span>
+            <span className="text-[12px] font-extrabold text-lp-text">
+              {profil.uStRozet.metin}
+            </span>
           </div>
-          <div className="absolute -left-6 top-[72px] z-20 flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.92] px-3 py-2 shadow-[0_8px_24px_rgba(0,0,0,0.12)] backdrop-blur-sm">
-            <div className="flex h-[22px] w-[22px] items-center justify-center rounded-full" style={{ backgroundColor: ilk.altRozet.renk }}>
-              <span className="text-[10px]">{ilk.altRozet.simge}</span>
+          <div className="absolute -left-[12px] bottom-[120px] z-20 flex items-center gap-2 rounded-[20px] border-[1.2px] border-lp-primary/30 bg-lp-surface/[0.92] px-3 py-[9px] shadow-[0_5px_10px_rgba(0,0,0,0.1)] backdrop-blur-[12px] min-[408px]:-left-[30px]">
+            <div
+              className="flex h-[27px] w-[27px] items-center justify-center rounded-full"
+              style={{ backgroundColor: `${profil.altRozet.renk}33` }}
+            >
+              <span className="text-[15px]">{profil.altRozet.simge}</span>
             </div>
-            <span className="text-[11px] font-extrabold text-gray-800">{ilk.altRozet.renk === "#FF5A1F" ? "QR kod" : ilk.altRozet.renk === "#EA580C" ? "Yol tarifi" : ilk.altRozet.renk === "#DB2777" ? "Instagram" : "Konum"}</span>
+            <span className="text-[12px] font-extrabold text-lp-text">
+              {profil.altRozet.metin}
+            </span>
           </div>
         </>
       )}
 
+      <div className="relative">
       <div
         className="relative overflow-hidden rounded-[40px] border-[2.5px] border-white/[0.18] bg-[#0A101C] p-[8px]"
         style={{
@@ -74,7 +117,7 @@ export function PhoneMockup({
                 onClose={onChatClose}
               />
             ) : (
-              <PhoneMockupSlaytlari profiller={profiller} />
+              <PhoneMockupSlaytlari profiller={profiller} aktif={aktif} />
             )}
           </div>
 
@@ -83,6 +126,23 @@ export function PhoneMockup({
           </div>
         </div>
       </div>
+      </div>
+
+      {/* Slayt gösterge noktaları — Flutter landing_hero_mockup.dart:127-145:
+          telefonun DIŞINDA, 32px altında; aktif 24×8, pasif 8×8, 260ms. */}
+      {!isChatOpen && (
+        <div className="mt-8 flex items-center justify-center">
+          {profiller.map((aday, sira) => (
+            <span
+              key={aday.ad}
+              aria-hidden
+              className={`mx-1 h-2 rounded-full transition-all duration-[260ms] ${
+                sira === aktif ? "w-6 bg-lp-primary" : "w-2 bg-lp-border"
+              }`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
