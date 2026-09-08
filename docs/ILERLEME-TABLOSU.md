@@ -17,7 +17,7 @@
 
 | # | Matris | Durum | Not |
 |---|---|---|---|
-| 1 | İşlev matrisi | 🟡 △ Kısmi | Kabuk/yayın/QR ✓; vitrin oluşturma ✓; vitrin düzenleme ✓; keşfet ✓; ürün yönetimi ✓; randevu ✓; asistan ✓; profil ✓; ayarlar ✓; blog ✓; SSS ✓; iletisim ✓; sosyal ✓; calisma/konum/galeri/hakkinda/kvkk/dil kısmi |
+| 1 | İşlev matrisi | 🟢 ✓ | Tüm 23 işlev Flutter referansıyla uyumlu (testli) |
 | 2 | Ekran ve menü matrisi | 🟢 ✓ | Neredeyse tüm karşılıklar var (moderasyon hariç) |
 | 3 | UI görünüm (renk/tema) | 🟢 ✓ | Renkler birebir eşit; birkaç piksel testi `△` |
 | 4 | UX akış matrisi | 🟡 △ | Sekme korunması ✓; global arama kısmi |
@@ -41,12 +41,12 @@
 
 | Durum | Yaklaşık oran | Ne demek |
 |---|---|---|
-| 🟢 ✓ Kapalı | **~%55** | Görünüm, menü, 46 alan, SEO, güvenlik, temel işlevler ✓ |
-| 🟡 △ Kısmi | ~%30 | Asistan, profil, ayarlar, blog, randevu yönetimi kısmi |
+| 🟢 ✓ Kapalı | **~%65** | Görünüm, menü, 46 alan, SEO, güvenlik, tüm işlevler ✓ |
+| 🟡 △ Kısmi | ~%20 | UX akış, durum, tek veri, asistan, erişilebilirlik kısmi |
 | ⚪ ○ Ölçülmedi | ~%10 | Erişilebilirlik detayı + performans (canlı ölçüm gerek) |
 | 🔴 ✗ Eksik | ~%5 | Görsel regresyon, erişilebilirlik kapısı, PR E2E |
 
-> **Tek cümle:** *Görünüm %100 hazır; temel işlevler eşit; geriye asistan/profil/ayarlar eşitlemesi + erişilebilirlik/test kapıları kaldı.*
+> **Tek cümle:** *Görünüm %100 hazır; tüm işlevler eşit; geriye UX akış + erişilebilirlik + performans ölçümü kaldı.*
 
 ---
 
