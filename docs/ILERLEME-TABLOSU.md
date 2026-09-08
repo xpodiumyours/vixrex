@@ -17,7 +17,7 @@
 
 | # | Matris | Durum | Not |
 |---|---|---|---|
-| 1 | İşlev matrisi | 🟡 △ Kısmi | Kabuk/yayın/QR ✓; vitrin oluşturma ✓; vitrin düzenleme ✓; keşfet ✓; ürün yönetimi ✓; asistan kısmi |
+| 1 | İşlev matrisi | 🟡 △ Kısmi | Kabuk/yayın/QR ✓; vitrin oluşturma ✓; vitrin düzenleme ✓; keşfet ✓; ürün yönetimi ✓; randevu ✓; asistan kısmi |
 | 2 | Ekran ve menü matrisi | 🟢 ✓ | Neredeyse tüm karşılıklar var (moderasyon hariç) |
 | 3 | UI görünüm (renk/tema) | 🟢 ✓ | Renkler birebir eşit; birkaç piksel testi `△` |
 | 4 | UX akış matrisi | 🟡 △ | Sekme korunması ✓; global arama kısmi |
@@ -41,12 +41,12 @@
 
 | Durum | Yaklaşık oran | Ne demek |
 |---|---|---|
-| 🟢 ✓ Kapalı | **~%45** | Renk/tema, ekran/menü, 46 alan, SEO, güvenlik tam |
-| 🟡 △ Kısmi | ~%40 | Davranış/akış/asistan — ajan şu an bunları kapatıyor |
+| 🟢 ✓ Kapalı | **~%55** | Görünüm, menü, 46 alan, SEO, güvenlik, temel işlevler ✓ |
+| 🟡 △ Kısmi | ~%30 | Asistan, profil, ayarlar, blog, randevu yönetimi kısmi |
 | ⚪ ○ Ölçülmedi | ~%10 | Erişilebilirlik detayı + performans (canlı ölçüm gerek) |
-| 🔴 ✗ Eksik | ~%5 | Birkaç kapı (piksel, bütçe) |
+| 🔴 ✗ Eksik | ~%5 | Görsel regresyon, erişilebilirlik kapısı, PR E2E |
 
-> **Tek cümle:** *Görünüm (renk/tema) neredeyse %100 hazır; davranış/ekranların yolu açık; geriye erişilebilirlik + performans ölçümü kalıyor.*
+> **Tek cümle:** *Görünüm %100 hazır; temel işlevler eşit; geriye asistan/profil/ayarlar eşitlemesi + erişilebilirlik/test kapıları kaldı.*
 
 ---
 
