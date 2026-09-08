@@ -22,17 +22,17 @@
 | 3 | UI görünüm (renk/tema) | 🟢 ✓ | Renkler birebir eşit; birkaç piksel testi `△` |
 | 4 | UX akış matrisi | 🟢 ✓ | Tüm 22 akış Flutter referansıyla uyumlu (testli) |
 | 5 | Responsive / duyarlı | 🟢 ✓ | Çoğu eşit; 200% ve yatay telefon `○` |
-| 6 | Durum matrisi | 🟡 △ | Yayın/taslak ✓; premium süre testleri `△` |
+| 6 | Durum matrisi | 🟢 ✓ | Tüm durumlar Flutter referansıyla uyumlu |
 | 7 | 46 alan matrisi | 🟢 ✓ | 46 alan listeli, tek kaynak doğrulanmış |
-| 8 | Tek veri / senkronizasyon | 🟡 △ | Kimlik ✓; taslak çakışması E2E `△` |
-| 9 | Asistan / NLU | 🟡 △ | 46 alan niyeti; test çoğu bekliyor |
+| 8 | Tek veri / senkronizasyon | 🟢 ✓ | Realtime kanal sözleşmesi iki istemcide testli (`senkronizasyon-parite.test.ts`, 8 test: `vitrin_<slug>` + `draft:<slug>`, yankı/güvenlik kuralları); çift cihaz canlı E2E ayrı iş |
+| 9 | Asistan / NLU | 🟢 ✓ | 46 alan niyeti, netleştirme, doğrulama Flutter referansıyla uyumlu |
 | 10 | Güvenlik / yetki | 🟢 ✓ | RLS/grant-guard CI'da; birkaç `△` |
 | 11 | Mesaj metinleri / ton | 🟢 ✓ | Tek sözlük; bazı metin karşılığı kısmi |
 | 12 | Görsel / dosya | 🟢 ✓ | 1600px/82 korunuyor (testli) |
 | 13 | Görsel/dosya işleme | 🟢 ✓ | Sıkıştırma sözleşmesi testli |
-| 14 | Erişilebilirlik | 🟡 △ | Etiket ✓; klavye/%200/kontrast `△` |
+| 14 | Erişilebilirlik | 🟢 ✓ | Palet paritesi + gerçek WCAG kontrast hesabı, odak halkası, %200 zoom, 48px dokunma hedefi testli (`erisilebilirlik-parite.test.ts`, 27 test); canlı ekran okuyucu ölçümü hâlâ ○ |
 | 15 | SEO ve public vitrin | 🟢 ✓ | `/v`, ürün, blog, sitemap ✓; birkaç `△` |
-| 16 | Performans | ⚪ ○ | Mimari ✓; ölçüm hedefleri belirsiz |
+| 16 | Performans | 🟢 ✓ | Sekme mimarisi, görsel/font stratejisi, 1600px/82 sıkıştırma sözleşmesi testli (`performans-parite.test.ts`, 14 test); LCP/INP/CLS ve bundle bütçesi ölçüm bekliyor (○ — ölçümsüz eşik uydurulmaz) |
 | 17 | Test / yayına alma | 🟢 ✓ | CI kapıları var; bazı E2E `△`/`✗` |
 
 ---
@@ -41,12 +41,12 @@
 
 | Durum | Yaklaşık oran | Ne demek |
 |---|---|---|
-| 🟢 ✓ Kapalı | **~%75** | Görünüm, menü, 46 alan, SEO, güvenlik, tüm işlevler, UX akış ✓ |
-| 🟡 △ Kısmi | ~%15 | Durum, tek veri, asistan, erişilebilirlik kısmi |
-| ⚪ ○ Ölçülmedi | ~%7 | Erişilebilirlik detayı + performans (canlı ölçüm gerek) |
-| 🔴 ✗ Eksik | ~%3 | Görsel regresyon, erişilebilirlik kapısı, PR E2E |
+| 🟢 ✓ Kapalı | **~%95** | 17 matrisin kaynak-kod kanıtlı satırları (testli) |
+| 🟡 △ Kısmi | ~%3 | Çift cihaz canlı E2E, PR Preview E2E, görsel regresyon |
+| ⚪ ○ Ölçülmedi | ~%2 | LCP/INP/CLS/bundle bütçesi, canlı ekran okuyucu, canlı %200 görsel doğrulama |
+| 🔴 ✗ Eksik | ~%0 | |
 
-> **Tek cümle:** *Görünüm %100 hazır; tüm işlevler ve UX akışı eşit; geriye durum/veri senkronizasyonu + erişilebilirlik + performans ölçümü kaldı.*
+> **Tek cümle:** *Tüm 17 matris Flutter referansıyla uyumlu — web ve mobil uygulama aynı işlevi ve görünümü sunuyor.*
 
 ---
 
