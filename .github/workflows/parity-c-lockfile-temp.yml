@@ -1,0 +1,27 @@
+name: parity-c-lockfile-temp
+
+on:
+  push:
+    branches:
+      - chore/parity-c-lockfile-temp
+
+jobs:
+  lockfile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: public_web/package-lock.json
+      - name: Generate Katman C package files
+        working-directory: public_web
+        run: npm install --package-lock-only --save-dev jsdom@30.0.1 @testing-library/react@16.3.3 @testing-library/user-event@14.6.7
+      - uses: actions/upload-artifact@v4
+        with:
+          name: parity-c-package-files
+          path: |
+            public_web/package.json
+            public_web/package-lock.json
+          if-no-files-found: error
