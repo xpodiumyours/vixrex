@@ -131,7 +131,17 @@ export async function handleVixrexNluMessage(input: string): Promise<VixrexPipel
       if (!v.ok) { hatalar.push((v as { hata: string }).hata); continue; }
       ok.push({ alan: a, deger: (v as { deger: unknown }).deger ?? ham });
     }
-    if (ok.length === 0) return { outcome: "needsClarification", message: hatalar.join("\n") || "Hangi alanı değiştirmek istediğini netleştirebilir misin?" };
+
+    // Çoklu niyette kısmi başarı güvenli değildir: kullanıcı iki alan
+    // söylediyse birini sessizce atıp diğerini kaydetmek yerine tüm mesaj
+    // netleştirilir. Böylece Flutter ile aynı "bir hata → hiçbir yazım" kuralı.
+    if (ok.length === 0 || hatalar.length > 0) {
+      return {
+        outcome: "needsClarification",
+        message: hatalar.join("\n") || "Hangi alanı değiştirmek istediğini netleştirebilir misin?",
+      };
+    }
+
     await clearPending();
     const metin = ok.map(({ alan, deger }) => clarifySuccess(alan, deger)).join("\n");
     return {
