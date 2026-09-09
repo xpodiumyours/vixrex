@@ -23,8 +23,10 @@ import { LandingApkAssistant } from "./LandingApkAssistant";
  * aynı state'i paylaşır. Slayt noktaları da Flutter'daki gibi telefonun
  * DIŞINA alındı (orada satır 127-145: mockup Column'unun devamı).
  *
- * Maskot tıklanınca slaytlar yerini APK karşılama yüzüne bırakır;
- * "Evet, Oluşturalım" sonrasında mevcut gerçek kurulum motoruna delege edilir.
+ * Flutter chat açıldığında VixRexOnboardingChatScreen telefon iç ekranına
+ * gömülmez; dış Stack'in üzerinde 10px inset ve 36px radius ile overlay olur.
+ * Web de aynı katman düzenini kullanır; notch/home indicator chat'in üstüne
+ * binmez.
  */
 export function PhoneMockup({
   profiller,
@@ -92,40 +94,42 @@ export function PhoneMockup({
       )}
 
       <div className="relative">
-      <div
-        className="relative overflow-hidden rounded-[40px] border-[2.5px] border-white/[0.18] bg-[#0A101C] p-[8px]"
-        style={{
-          boxShadow: [
-            "0 0 0 1.5px rgba(14, 165, 233, 0.3)",
-            "0 25px 50px rgba(0, 0, 0, 0.55)",
-            "0 16px 36px rgba(14, 165, 233, 0.22)",
-          ].join(", "),
-        }}
-      >
-        <div className="h-[640px] overflow-hidden rounded-[34px] border border-[#25415F] bg-[#050B1A]">
-          <div className="absolute left-1/2 top-[10px] z-10 -translate-x-1/2">
-            <div className="flex h-[22px] w-[96px] items-center justify-between rounded-[20px] bg-black px-[10px] shadow-[0_2px_8px_rgba(0,0,0,0.55)]">
-              <div className="h-[10px] w-[10px] rounded-full border border-white/10 bg-[#0D131F]" />
-              <div className="h-[6px] w-[6px] rounded-full bg-[#0A2540]" />
+        <div
+          className="relative overflow-hidden rounded-[40px] border-[2.5px] border-white/[0.18] bg-[#0A101C] p-[8px]"
+          style={{
+            boxShadow: [
+              "0 0 0 1.5px rgba(14, 165, 233, 0.3)",
+              "0 25px 50px rgba(0, 0, 0, 0.55)",
+              "0 16px 36px rgba(14, 165, 233, 0.22)",
+            ].join(", "),
+          }}
+        >
+          <div className="h-[640px] overflow-hidden rounded-[34px] border border-[#25415F] bg-[#050B1A]">
+            <div className="absolute left-1/2 top-[10px] z-10 -translate-x-1/2">
+              <div className="flex h-[22px] w-[96px] items-center justify-between rounded-[20px] bg-black px-[10px] shadow-[0_2px_8px_rgba(0,0,0,0.55)]">
+                <div className="h-[10px] w-[10px] rounded-full border border-white/10 bg-[#0D131F]" />
+                <div className="h-[6px] w-[6px] rounded-full bg-[#0A2540]" />
+              </div>
+            </div>
+
+            <div className="h-full">
+              <PhoneMockupSlaytlari profiller={profiller} aktif={aktif} />
+            </div>
+
+            <div className="absolute bottom-[8px] left-1/2 z-10 -translate-x-1/2">
+              <div className="h-[4px] w-[110px] rounded-[10px] bg-white/30" />
             </div>
           </div>
-
-          <div className="h-full">
-            {isChatOpen ? (
-              <LandingApkAssistant
-                initialName={initialAssistantName}
-                onClose={onChatClose}
-              />
-            ) : (
-              <PhoneMockupSlaytlari profiller={profiller} aktif={aktif} />
-            )}
-          </div>
-
-          <div className="absolute bottom-[8px] left-1/2 z-10 -translate-x-1/2">
-            <div className="h-[4px] w-[110px] rounded-[10px] bg-white/30" />
-          </div>
         </div>
-      </div>
+
+        {isChatOpen ? (
+          <div className="absolute inset-[10px] z-30 overflow-hidden rounded-[36px]">
+            <LandingApkAssistant
+              initialName={initialAssistantName}
+              onClose={onChatClose}
+            />
+          </div>
+        ) : null}
       </div>
 
       {/* Slayt gösterge noktaları — Flutter landing_hero_mockup.dart:127-145:
