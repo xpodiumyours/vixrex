@@ -1,0 +1,69 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:vixrex/config/vixrex_niyet_sozlugu.g.dart';
+import 'package:vixrex/services/vixrex_nlu/vixrex_field_validator.dart';
+import 'package:vixrex/services/vixrex_nlu/vixrex_intent_resolver.dart';
+import 'package:vixrex/services/vixrex_nlu/vixrex_nlu_pipeline.dart';
+
+void main() {
+  group('Vixrex Assistant 46 alan güvenlik kapısı', () {
+    const resolver = VixrexIntentResolver();
+
+    test('46 alanın her sözlük örneği kendi alanına çözülür', () {
+      expect(vixrexNiyetSozlugu.length, 46);
+      final hatalar = <String>[];
+
+      for (final alan in vixrexNiyetSozlugu) {
+        for (final ornek in alan.ornekIfadeler) {
+          final input = ornek.replaceAll('{deger}', 'Örnek Değer');
+          final bulunan = resolver.resolve(input);
+          if (bulunan?.anahtar != alan.anahtar) {
+            hatalar.add(
+              '${alan.anahtar}: "$input" -> ${bulunan?.anahtar ?? 'null'}',
+            );
+          }
+        }
+      }
+
+      expect(hatalar, isEmpty, reason: hatalar.join('\n'));
+    });
+
+    test('kısa il aliası sıradan kelimenin içinden niyet üretmez', () {
+      final alanlar = resolver.resolveAll(
+        'Ailece müşterilerimize hizmet veriyoruz.',
+      );
+      expect(alanlar.map((a) => a.anahtar), isNot(contains('il')));
+    });
+
+    test('aç/kapat doğal komutları gerçek pipeline sonucunda bool üretir', () async {
+      SharedPreferences.setMockInitialValues({});
+      final pipeline = VixrexNluPipeline();
+
+      Future<({bool ok, String? hata, Object? normalizedDeger})> validate(
+        VixrexNiyetAlan alan,
+        String ham,
+      ) async {
+        final v = VixrexFieldValidator.validate(alan, ham);
+        return (ok: v.ok, hata: v.hata, normalizedDeger: v.normalizedDeger);
+      }
+
+      final ac = await pipeline.handle(
+        input: 'Puanı göster',
+        controller: null,
+        onValidate: validate,
+      );
+      expect(ac.outcome, VixrexNluPipelineOutcome.handled);
+      expect(ac.appliedAnahtar, 'puanGoster');
+      expect(ac.appliedDeger, true);
+
+      final kapat = await pipeline.handle(
+        input: 'Yol tarifi butonunu gizle',
+        controller: null,
+        onValidate: validate,
+      );
+      expect(kapat.outcome, VixrexNluPipelineOutcome.handled);
+      expect(kapat.appliedAnahtar, 'yolTarifiGoster');
+      expect(kapat.appliedDeger, false);
+    });
+  });
+}
