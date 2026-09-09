@@ -29,6 +29,7 @@ class _FakeWriter extends VixrexCanonicalDraftWriter {
   _FakeWriter();
 
   int writeCount = 0;
+  List<Object?>? lastValues;
 
   @override
   Future<VixrexCanonicalWriteResult> write({
@@ -36,6 +37,7 @@ class _FakeWriter extends VixrexCanonicalDraftWriter {
     required List<Object?> degerler,
   }) async {
     writeCount += 1;
+    lastValues = degerler;
     return const VixrexCanonicalWriteResult(
       VixrexCanonicalWriteState.written,
       commandId: '00000000-0000-4000-8000-000000000001',
@@ -43,12 +45,18 @@ class _FakeWriter extends VixrexCanonicalDraftWriter {
   }
 }
 
-VixrexPendingSlot _slot(String anahtar, String etiket, String tip) {
+VixrexPendingSlot _slot(
+  String anahtar,
+  String etiket,
+  String tip, {
+  String? eylem,
+}) {
   return VixrexPendingSlot(
     anahtar: anahtar,
     etiket: etiket,
     tip: tip,
     sorulduAt: DateTime(2026, 9, 10),
+    eylem: eylem,
   );
 }
 
@@ -56,6 +64,9 @@ Future<({bool ok, String? hata, Object? normalizedDeger})> _validate(
   VixrexNiyetAlan alan,
   String hamDeger,
 ) async {
+  if (hamDeger.isEmpty) {
+    return (ok: true, hata: null, normalizedDeger: null);
+  }
   if (alan.tip == 'acikKapali') {
     if (hamDeger == 'true') {
       return (ok: true, hata: null, normalizedDeger: true);
@@ -122,6 +133,44 @@ void main() {
       expect(sonuc.appliedDeger, true);
       expect(memory.clearCount, 1);
       expect(writer.writeCount, 1);
+    });
+
+    test("'onu kaldır' kaldırma onayı bağlamını hafızada korur", () async {
+      final memory = _FakeMemory(_slot('telefon', 'Telefon', 'telefon'));
+      final writer = _FakeWriter();
+      final pipeline = VixrexNluPipeline(memory: memory, canonicalWriter: writer);
+
+      final sonuc = await pipeline.handle(
+        input: 'onu kaldır',
+        controller: null,
+        onValidate: _validate,
+      );
+
+      expect(sonuc.outcome, VixrexNluPipelineOutcome.needsClarification);
+      expect(sonuc.message.text, 'Telefon bilgisini kaldırmamı mı istiyorsun?');
+      expect(memory.slot?.eylem, 'kaldir');
+      expect(writer.writeCount, 0);
+    });
+
+    test("kaldırma onayı beklenirken 'evet' gerçek temizleme değerine dönüşür", () async {
+      final memory = _FakeMemory(
+        _slot('telefon', 'Telefon', 'telefon', eylem: 'kaldir'),
+      );
+      final writer = _FakeWriter();
+      final pipeline = VixrexNluPipeline(memory: memory, canonicalWriter: writer);
+
+      final sonuc = await pipeline.handle(
+        input: 'evet',
+        controller: null,
+        onValidate: _validate,
+      );
+
+      expect(sonuc.outcome, VixrexNluPipelineOutcome.handled);
+      expect(sonuc.appliedAnahtar, 'telefon');
+      expect(sonuc.appliedDeger, isNull);
+      expect(sonuc.message.text, 'Telefon bilgisini kaldırdım.');
+      expect(writer.lastValues, [null]);
+      expect(memory.clearCount, 1);
     });
 
     test('yalnız kapanış saati tam çalışma saati diye kaydedilmez', () async {
