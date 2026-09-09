@@ -98,7 +98,8 @@ jobs:
 
       - name: Biçim kontrolü
         run: |
-          dart format --output=none --set-exit-if-changed lib test
+          dart format lib test
+          git diff --quiet -- lib test
           $formatExit = $LASTEXITCODE
           if ($formatExit -ne 0) {
             Write-Host "Dart formatter farkı:"
