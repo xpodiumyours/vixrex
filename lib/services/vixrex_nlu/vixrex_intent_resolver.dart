@@ -47,10 +47,11 @@ class VixrexIntentResolver {
       final marker = ornek.indexOf('{deger}');
       String? sabit;
       if (marker >= 0) {
-        sabit = ornek
-            .substring(0, marker)
-            .replaceFirst(RegExp(r'[\s:,-]+$'), '')
-            .trim();
+        sabit =
+            ornek
+                .substring(0, marker)
+                .replaceFirst(RegExp(r'[\s:,-]+$'), '')
+                .trim();
       } else if (alan.tip == 'acikKapali') {
         sabit = ornek.trim();
       }
@@ -95,11 +96,7 @@ class VixrexIntentResolver {
 
     for (final c in _adaylariOlustur()) {
       if (seen.contains(c.alan.anahtar)) continue;
-      final eslesme = _niyetEslesmesiBul(
-        normInput,
-        c.ifade,
-        doluAraliklar,
-      );
+      final eslesme = _niyetEslesmesiBul(normInput, c.ifade, doluAraliklar);
       if (eslesme == null) continue;
 
       found.add(c.alan);
