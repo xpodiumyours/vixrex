@@ -45,4 +45,12 @@ describe("Vixrex Assistant 46 alan davranış denetimi", () => {
     expect(kapat.anahtar).toBe("yolTarifiGoster");
     expect(kapat.deger).toBe(false);
   });
+
+  it("çoklu niyette bir alan özel akış isterse diğer alanı kısmi başarı diye döndürmez", async () => {
+    const result = await handleVixrexNluMessage(
+      "Telefonu 0212 123 45 67 yap, ili İstanbul yap"
+    );
+    expect(result.outcome).toBe("needsClarification");
+    expect(result.tumu).toBeUndefined();
+  });
 });
