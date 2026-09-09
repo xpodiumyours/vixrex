@@ -6,6 +6,10 @@ import { resolveVixrexIntent, resolveVixrexIntentsAll } from "./vixrexIntentReso
 import { extractVixrexValue } from "./vixrexValueExtractor";
 import { validateField } from "./vitrinFieldValidation";
 import { vixrexNormalizeDartParity } from "./vixrexNormalizer";
+import {
+  VIXREX_DOGAL_GENEL_SORU,
+  vixrexBaglamsalCevapKarari,
+} from "./vixrexConversationContext";
 
 export type VixrexPipelineOutcome = "handled" | "needsClarification" | "notUnderstood" | "needsSpecialFlow" | "blockedLegal";
 
@@ -84,42 +88,72 @@ function extractPipelineValue(input: string, alan: VixrexNiyetAlan): unknown | n
 
 export async function handleVixrexNluMessage(input: string): Promise<VixrexPipelineResult> {
   const trimmed = input.trim();
-  if (!trimmed) return { outcome: "notUnderstood", message: "Hangi alanı değiştirmek istediğini netleştirebilir misin? Örn: “İşletme adını ... yap”" };
-
-  const norm = vixrexNormalizeDartParity(trimmed);
-  const pending = await loadPending();
-
-  // Evet/hayır pending ile – Faz 1 dar: sadece temizle.
-  if (pending && (norm === "evet" || norm === "hayır" || norm === "hayir" || norm === "iptal")) {
-    await clearPending();
-    if (norm === "evet") return { outcome: "needsClarification", message: "Hangi alanı değiştirmek istediğini netleştirebilir misin?" };
-    return { outcome: "needsClarification", message: "Tamam, vazgeçtim. Başka nasıl yardımcı olabilirim?" };
+  if (!trimmed) {
+    return { outcome: "notUnderstood", message: VIXREX_DOGAL_GENEL_SORU };
   }
 
-  // Pending varken yeni alan yoksa → ham mesajı pending alanın değeri say.
+  const pending = await loadPending();
+
+  // Önceki soru varsa kısa cevabı o bağlamla birlikte değerlendir. Yeni bir
+  // alan açıkça söylenmişse pending'e zorlamayız; normal niyet çözümü devralır.
   if (pending) {
     const alan = VIXREX_NIYET_SOZLUGU.find((a) => a.anahtar === pending.anahtar) ?? null;
     if (alan) {
       const resolved = resolveVixrexIntent(trimmed);
       if (!resolved) {
-        if (needsSpecialFlow(alan.anahtar)) return { outcome: "needsSpecialFlow", message: clarifyAsk(alan), anahtar: alan.anahtar };
-        const pendingDeger = alan.tip === "acikKapali" ? extractPipelineValue(trimmed, alan) : trimmed;
-        if (pendingDeger === null) {
-          return { outcome: "needsClarification", message: clarifyAsk(alan), anahtar: alan.anahtar };
+        const baglam = vixrexBaglamsalCevapKarari(trimmed, {
+          anahtar: alan.anahtar,
+          etiket: alan.etiket,
+          tip: alan.tip,
+        });
+
+        if (baglam.karar === "iptal" || baglam.karar === "ayni_kalsin") {
+          await clearPending();
+          return { outcome: "needsClarification", message: baglam.mesaj };
         }
+
+        if (!baglam.yazma) {
+          return {
+            outcome: "needsClarification",
+            message: baglam.mesaj,
+            anahtar: alan.anahtar,
+          };
+        }
+
+        if (needsSpecialFlow(alan.anahtar)) {
+          return {
+            outcome: "needsSpecialFlow",
+            message: clarifyAsk(alan),
+            anahtar: alan.anahtar,
+          };
+        }
+
+        const pendingDeger = baglam.deger ?? trimmed;
         const v = validateField(alan.anahtar, pendingDeger);
-        if (!v.ok) return { outcome: "needsClarification", message: (v as { hata: string }).hata, anahtar: alan.anahtar };
-        await clearPending();
-        {
-          const kesin = (v as { deger: unknown }).deger ?? pendingDeger;
-          return { outcome: "handled", message: clarifySuccess(alan, kesin), anahtar: alan.anahtar, deger: kesin, tumu: [{ anahtar: alan.anahtar, kolon: alan.kolon, deger: kesin }] };
+        if (!v.ok) {
+          return {
+            outcome: "needsClarification",
+            message: (v as { hata: string }).hata,
+            anahtar: alan.anahtar,
+          };
         }
+        await clearPending();
+        const kesin = (v as { deger: unknown }).deger ?? pendingDeger;
+        return {
+          outcome: "handled",
+          message: clarifySuccess(alan, kesin),
+          anahtar: alan.anahtar,
+          deger: kesin,
+          tumu: [{ anahtar: alan.anahtar, kolon: alan.kolon, deger: kesin }],
+        };
       }
     }
   }
 
   const all = resolveVixrexIntentsAll(trimmed);
-  if (all.length === 0) return { outcome: "notUnderstood", message: "Hangi alanı değiştirmek istediğini netleştirebilir misin? Örn: “İşletme adını ... yap”" };
+  if (all.length === 0) {
+    return { outcome: "notUnderstood", message: VIXREX_DOGAL_GENEL_SORU };
+  }
   if (all.length > 1) {
     const ok: Array<{ alan: VixrexNiyetAlan; deger: unknown }> = [];
     const hatalar: string[] = [];
@@ -138,7 +172,7 @@ export async function handleVixrexNluMessage(input: string): Promise<VixrexPipel
     if (ok.length === 0 || hatalar.length > 0) {
       return {
         outcome: "needsClarification",
-        message: hatalar.join("\n") || "Hangi alanı değiştirmek istediğini netleştirebilir misin?",
+        message: hatalar.join("\n") || VIXREX_DOGAL_GENEL_SORU,
       };
     }
 
