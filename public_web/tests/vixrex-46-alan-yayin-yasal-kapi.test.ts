@@ -23,6 +23,13 @@ const legalGuardMigration = readFileSync(
   ),
   "utf8",
 );
+const legalAuditMigration = readFileSync(
+  resolve(
+    __dirname,
+    "../../supabase/migrations/20260910001500_restore_legal_acceptance_audit.sql",
+  ),
+  "utf8",
+);
 
 function functionSlice(source: string, startMarker: string, endMarker: string): string {
   const start = source.indexOf(startMarker);
@@ -113,6 +120,29 @@ describe("Vixrex Assistant yayın/yasal güvenlik kapısı", () => {
     );
     expect(legalGuardMigration).toContain(
       "d.content_hash = p_store ->> 'publication_consent_hash'",
+    );
+  });
+
+  it("yasal onay geçmişini mevcut legal_acceptance_events tablosuna kaydeder", () => {
+    expect(legalAuditMigration).toContain(
+      "function public.vixrex_record_store_legal_events()",
+    );
+    expect(legalAuditMigration).toContain(
+      "insert into public.legal_acceptance_events",
+    );
+    expect(legalAuditMigration).toContain(
+      "create trigger trg_record_store_legal_events",
+    );
+    for (const eventType of [
+      "privacy_notice_acknowledged",
+      "terms_accepted",
+      "publication_consent_granted",
+      "publication_consent_withdrawn",
+    ]) {
+      expect(legalAuditMigration).toContain(eventType);
+    }
+    expect(legalAuditMigration).toContain(
+      "revoke all on function public.vixrex_record_store_legal_events()",
     );
   });
 });
