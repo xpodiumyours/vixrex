@@ -420,19 +420,78 @@ export function useOwnerActions({
         let tazeTaslak = { ...yerelTaslak };
         const kaydedilen: string[] = [];
         const kaydedilenSatirlar: string[] = [];
-        const basarisizEtiketler: string[] = [];
-        for (const { anahtar, kolon, deger } of cozulen) {
+
+        if (cozulen.length > 1) {
+          // Tek kullanıcı cümlesinden birden fazla alan çıktıysa parçalı kayıt
+          // YASAK: bütün alanlar sunucuda yeniden doğrulanır ve tek Postgres
+          // transaction'ında uygulanır. Bir alan geçersizse hiçbiri yazılmaz.
+          const yanit = await fetch("/api/owner-draft-batch", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              slug,
+              degisiklikler: cozulen.map(({ anahtar, deger }) => ({ anahtar, deger })),
+              clientId: taslakClientId(),
+            }),
+          });
+          const govde = await yanit.json();
+
+          if (!yanit.ok) {
+            mesajEkle("asistan", govde?.hata ?? "Değişiklikler kaydedilemedi.");
+            return;
+          }
+
+          const kesinDegisiklikler = Array.isArray(govde?.degisiklikler)
+            ? (govde.degisiklikler as Array<{
+                anahtar?: unknown;
+                kolon?: unknown;
+                etiket?: unknown;
+                deger?: unknown;
+              }>)
+            : [];
+
+          // Yerel görünümü yalnız sunucunun gerçekten kaydettiğini bildirdiği
+          // normalize sonuçtan güncelle. Pipeline tahmini kayıt kanıtı değildir.
+          for (const item of kesinDegisiklikler) {
+            if (typeof item.anahtar !== "string" || typeof item.kolon !== "string") {
+              continue;
+            }
+            const etiket =
+              typeof item.etiket === "string"
+                ? item.etiket
+                : FIELD_BY_KEY.get(item.anahtar)?.etiket ?? item.anahtar;
+            setAlan(item.kolon, item.deger);
+            tazeTaslak = { ...tazeTaslak, [item.kolon]: item.deger };
+            kaydedilen.push(item.anahtar);
+            kaydedilenSatirlar.push(`Kaydettim: ${etiket} → ${String(item.deger)}`);
+            alaniParlat(item.anahtar);
+          }
+
+          if (kaydedilen.length !== cozulen.length) {
+            // Sunucu başarılı dediği halde sözleşme eksik cevap döndürürse
+            // "hepsi kaydedildi" diye uydurmayız. Yeniden okuma gerçeği getirir.
+            router.refresh();
+            mesajEkle(
+              "asistan",
+              "Kayıt tamamlandı ancak sonuç ayrıntısı doğrulanamadı. Vitrini yeniledim."
+            );
+            return;
+          }
+        } else {
+          // Tek alan için mevcut kanonik yol korunur; davranış değişmez.
+          const { anahtar, kolon, deger } = cozulen[0];
           const alan = FIELD_BY_KEY.get(anahtar);
           const yanit = await fetch("/api/owner-draft", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ slug, anahtar, deger, clientId: taslakClientId() }),
           });
+          const govde = await yanit.json();
           if (!yanit.ok) {
-            basarisizEtiketler.push(alan?.etiket ?? anahtar);
-            continue;
+            mesajEkle("asistan", govde?.hata ?? "Kaydedemedim, tekrar dener misin?");
+            return;
           }
-          setAlan(kolon, deger as string | boolean);
+          setAlan(kolon, deger);
           tazeTaslak = { ...tazeTaslak, [kolon]: deger };
           kaydedilen.push(anahtar);
           kaydedilenSatirlar.push(`Kaydettim: ${alan?.etiket ?? anahtar} → ${String(deger)}`);
@@ -443,22 +502,12 @@ export function useOwnerActions({
           mesajEkle("asistan", "Kaydedemedim, tekrar dener misin?");
           return;
         }
-        // Faz 5 (Çalışma masası / Yön C, 2026-09-03): motor cümleyi kendi
-        // çözüp alanı doldurduğunda düz "Kaydettim: X" balonu yerine onay
-        // kartı çıkar — esnaf "Doğru" ile onaylar ya da "Geri al" ile
-        // hepsini birden canlı hâline döndürür (bkz.
-        // useFieldRestore.coklaCanliyaDondur). Kart metni `sonuc.message`
-        // (pipeline'ın kayıttan ÖNCEKİ tahmini) DEĞİL, yukarıdaki döngüden
-        // dönen gerçek kayıt sonucundan (`kaydedilenSatirlar`) üretilir —
-        // aksi halde kısmen başarısız bir kayıtta esnafa hiç kaydedilmemiş
-        // bir alanı da "kaydettim" diye göstermiş oluruz.
-        const kayitMesaji =
-          basarisizEtiketler.length > 0
-            ? `${kaydedilenSatirlar.join("\n")}\n\nKaydedemedim: ${basarisizEtiketler.join(", ")}`
-            : kaydedilenSatirlar.join("\n");
+
+        // Motorun tahmini değil, gerçek kayıt sonucu gösterilir. Çok alanlı
+        // işlem artık ya tamamen başarılıdır ya da hiçbir alan yazılmamıştır.
         mesajEkle(
           "asistan",
-          kayitMesaji,
+          kaydedilenSatirlar.join("\n"),
           [
             { label: "Doğru", payload: "onay_tamam" },
             { label: "Geri al", payload: `geri_al:${kaydedilen.join(",")}` },
