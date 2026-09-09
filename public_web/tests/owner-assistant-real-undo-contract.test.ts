@@ -9,6 +9,13 @@ const undoMigration = readFileSync(
   ),
   "utf8"
 );
+const commandMigration = readFileSync(
+  resolve(
+    __dirname,
+    "../../supabase/migrations/20260909233000_add_assistant_storefront_command_core.sql"
+  ),
+  "utf8"
+);
 const singleWriteBoundary = readFileSync(
   resolve(
     __dirname,
@@ -29,7 +36,7 @@ const ownerActions = readFileSync(
   "utf8"
 );
 
-describe("Vixrex Assistant gerçek son-işlem undo sözleşmesi", () => {
+describe("Vixrex Assistant command-bazlı gerçek undo sözleşmesi", () => {
   it("önceki taslak değerlerini sunucuda tutar ve tabloyu istemci rollerine kapatır", () => {
     expect(undoMigration).toContain("create table if not exists public.owner_draft_undo_operations");
     expect(undoMigration).toContain("previous_values jsonb not null");
@@ -42,15 +49,18 @@ describe("Vixrex Assistant gerçek son-işlem undo sözleşmesi", () => {
     );
   });
 
-  it("Assistant batch yazımı önceki değerleri aynı transaction içinde tek undo kaydına bağlar", () => {
-    expect(undoMigration).toContain(
-      "create or replace function public.update_working_draft_fields("
+  it("command migration undo kaydını command_id ile birebir bağlar", () => {
+    expect(commandMigration).toContain(
+      "add column if not exists command_id uuid null"
     );
-    expect(undoMigration).toContain("insert into public.owner_draft_undo_operations");
-    expect(undoMigration).toContain("for update;");
+    expect(commandMigration).toContain(
+      "owner_draft_undo_operations_command_unique"
+    );
+    expect(commandMigration).toContain("p_command_id");
+    expect(commandMigration).toContain("command_id = p_command_id");
   });
 
-  it("son migration manuel tek-alan yazımını undo kaydından ayırır", () => {
+  it("son migration manuel tek-alan yazımını Assistant undo kaydından ayırır", () => {
     expect(singleWriteBoundary).toContain(
       "create or replace function public.update_working_draft_field("
     );
@@ -58,42 +68,60 @@ describe("Vixrex Assistant gerçek son-işlem undo sözleşmesi", () => {
     expect(singleWriteBoundary).toContain("draft_version = draft_version + 1");
   });
 
-  it("Assistant serbest mesajı tek alan olsa bile batch yolundan geçer", () => {
+  it("Assistant serbest mesajı tek alan olsa bile command batch yolundan geçer", () => {
     const baslangic = ownerActions.indexOf("if (!seciliAlan) {");
     const bitis = ownerActions.indexOf("const alan = seciliAlan;", baslangic);
     const blok = ownerActions.slice(baslangic, bitis);
     expect(blok).toContain('fetch("/api/owner-draft-batch"');
+    expect(blok).toContain("const commandId = crypto.randomUUID()");
+    expect(blok).toContain('payload: `geri_al:${commandId}`');
     expect(blok).not.toContain('fetch("/api/owner-draft"');
   });
 
-  it("undo yalnız hâlâ aynı Assistant işlem sürümüyse çalışır ve tek kullanımlıdır", () => {
-    expect(undoMigration).toContain(
-      "create or replace function public.undo_latest_working_draft_change("
+  it("exact command undo yalnız aynı sürümde çalışır; eski kart yeni aynı-alan command'ını ezemez", () => {
+    expect(commandMigration).toContain(
+      "create or replace function public.vixrex_undo_storefront_command_core("
     );
-    expect(undoMigration).toContain(
-      "if v_draft_version <> v_expected_draft_version then"
+    expect(commandMigration).toContain("command_id = p_command_id");
+    expect(commandMigration).toContain(
+      "if v_draft_version <> v_undo.expected_draft_version then"
     );
-    expect(undoMigration).toContain("raise exception 'UNDO_STALE'");
-    expect(undoMigration).toContain("and consumed_at is null");
-    expect(undoMigration).toContain("set consumed_at = now()");
+    expect(commandMigration).toContain("raise exception 'UNDO_STALE'");
+    expect(commandMigration).toContain("set consumed_at = now()");
   });
 
-  it("undo API eski değer kabul etmez; owner cookie + alan anahtarlarıyla RPC çağırır", () => {
+  it("aynı undo tekrar tıklanırsa receipt replay edilir, ikinci veri yazımı yapılmaz", () => {
+    const undoStart = commandMigration.indexOf(
+      "create or replace function public.vixrex_undo_storefront_command_core("
+    );
+    const undoBlock = commandMigration.slice(undoStart);
+    const replayCheck = undoBlock.indexOf(
+      "action = 'vixrex_assistant_storefront_command_undo'"
+    );
+    const write = undoBlock.indexOf("update public.store_working_drafts");
+    expect(replayCheck).toBeGreaterThan(-1);
+    expect(write).toBeGreaterThan(replayCheck);
+    expect(undoBlock).toContain("'replayed', true");
+  });
+
+  it("undo API eski değer/alan listesi kabul etmez; yalnız owner cookie + commandId kullanır", () => {
     expect(undoRoute).toContain("verifyOwnerSession(");
     expect(undoRoute).toContain("OWNER_SESSION_COOKIE");
-    expect(undoRoute).toContain("FIELD_BY_KEY.get(anahtar)");
-    expect(undoRoute).toContain('"undo_latest_working_draft_change"');
-    expect(undoRoute).toContain("p_keys: kolonlar");
+    expect(undoRoute).toContain('"undo_working_draft_command"');
+    expect(undoRoute).toContain("p_command_id: commandId");
+    expect(undoRoute).not.toContain("p_keys:");
+    expect(undoRoute).not.toContain("anahtarlar?: unknown");
     expect(undoRoute).not.toContain("previous_values:");
     expect(undoRoute).not.toContain("eskiDeger");
   });
 
-  it("Assistant kartındaki Geri al yeni undo kapısını kullanır; manuel canlıya dön ayrı kalır", () => {
+  it("Assistant Geri al yeni command undo kapısını kullanır; manuel canlıya dön ayrı kalır", () => {
     const cokluBaslangic = restoreHook.indexOf("const coklaCanliyaDondur");
     const returnBaslangic = restoreHook.indexOf("return { geriAliniyor", cokluBaslangic);
     const cokluBlok = restoreHook.slice(cokluBaslangic, returnBaslangic);
 
     expect(cokluBlok).toContain('fetch("/api/owner-draft-undo"');
+    expect(cokluBlok).toContain("commandId,");
     expect(cokluBlok).not.toContain('fetch("/api/owner-draft-restore"');
 
     const tekliBaslangic = restoreHook.indexOf("const canliyaDondur");
