@@ -42,13 +42,15 @@ android {
                 storePassword = storePasswordValue
                 keyAlias = keyAliasValue
                 keyPassword = keyPasswordValue
+                enableV1Signing = true
+                enableV2Signing = true
             }
         }
     }
 
     defaultConfig {
         applicationId = "com.xpodiumyours.vixrex"
-        minSdk = flutter.minSdkVersion
+        minSdk = 24
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
