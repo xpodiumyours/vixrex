@@ -34,6 +34,17 @@ const List<VixRexIntentSemasi> vixRexIntentSemasi = [
     ],
   ),
   VixRexIntentSemasi(
+    payload: 'vitrin_kurulum',
+    anahtarKelimeler: [
+      'sifirdan olustur',
+      'sifirdan',
+      'kendim olustur',
+      'yeni vitrin',
+      'vitrin kur',
+      'vitrin olustur',
+    ],
+  ),
+  VixRexIntentSemasi(
     payload: 'vixrex_info',
     anahtarKelimeler: [
       'vixrex',

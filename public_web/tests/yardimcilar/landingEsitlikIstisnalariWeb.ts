@@ -194,16 +194,12 @@ export const LANDING_ESITLIK_ISTISNALARI_WEB: Istisna[] = [
       "Flutter Web onboarding karşılama başlığı. Katalogda " +
       "karşılığı yok — Flutter Web'de sabit yazılı.",
   },
-  {
-    metin: "Hazır Vitrin Seç",
-    neden:
-      "Flutter Web karşılama butonu. Katalogda karşılığı yok.",
-  },
-  {
-    metin: "Sıfırdan Oluştur",
-    neden:
-      "Flutter Web karşılama butonu. Katalogda karşılığı yok.",
-  },
+  // "Hazır Vitrin Seç" / "Sıfırdan Oluştur" kayıtları 2026-09-09'da silindi.
+  // Gerekçeleri baştan yanlıştı ("katalogda karşılığı yok" deniyordu; oysa
+  // ikisi de shared/vixrex_mesajlar.json → hizliSecenekler içinde). Artık
+  // web'de literal olarak da geçmiyorlar: her yüzey `hizliSecenekEtiketi()`
+  // ile tek kaynaktan okuyor, yani eşitlik karşılaştırmayla değil YAPIYLA
+  // garanti. Kilidi: tests/hizli-secenek-tek-kaynak.test.ts
   {
     metin: "Detaylı formu aç",
     neden:

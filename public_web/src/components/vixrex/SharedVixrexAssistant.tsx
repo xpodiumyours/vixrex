@@ -8,7 +8,7 @@ import {
   type SharedAssistantContext,
   type SharedAssistantMessage,
 } from "@/lib/assistantConversation";
-import { vixRexHizliSecenekler, vixRexMesajlari } from "@/lib/vixrexMesajlari";
+import { vixRexMesajlari, hizliSecenekEtiketi } from "@/lib/vixrexMesajlari";
 
 const EMPTY_CONTEXT: SharedAssistantContext = {
   authenticated: false,
@@ -48,17 +48,21 @@ export function SharedVixrexAssistant({ onBrowse }: { onBrowse: () => void }) {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
-  async function send() {
-    const text = input.trim();
+  // `hazirMetin` verilirse yazı kutusu değil, hızlı seçenek gönderiyor
+  // demektir: seçeneğin ortak katalogdaki etiketi kullanıcı mesajı olarak
+  // konuşmaya düşer ve asistan yerinde cevap verir. Sohbet tabanlı asistanda
+  // hızlı seçeneğin karşılığı budur — kullanıcıyı başka sayfaya atmak değil.
+  async function send(hazirMetin?: string) {
+    const text = (hazirMetin ?? input).trim();
     if (!text || !context.conversationId || sending) return;
     setSending(true);
     setError("");
-    setInput("");
+    if (!hazirMetin) setInput("");
     try {
       const appended = await sendSharedAssistantMessage(context.conversationId, text);
       setMessages((current) => [...current, ...appended]);
     } catch {
-      setInput(text);
+      if (!hazirMetin) setInput(text);
       setError("Mesaj gönderilemedi. Bağlantını kontrol edip tekrar dene.");
     } finally {
       setSending(false);
@@ -114,13 +118,22 @@ export function SharedVixrexAssistant({ onBrowse }: { onBrowse: () => void }) {
         {!context.hasStore ? (
           <div className="mb-3 grid gap-2 sm:grid-cols-3">
             <Link href="/kesfet?yalniz_kiralik=1" className="flex min-h-11 items-center justify-center rounded-xl bg-lp-primary px-3 text-[12px] font-black text-lp-on-primary">
-              {vixRexHizliSecenekler.find((item) => item.id === "hazir_vitrin_sec")?.etiket}
+              {hizliSecenekEtiketi("hazir_vitrin_sec")}
             </Link>
-            <Link href="/app" className="flex min-h-11 items-center justify-center rounded-xl border border-lp-border bg-lp-surface px-3 text-[12px] font-black text-lp-text-alt">
-              {vixRexHizliSecenekler.find((item) => item.id === "sifirdan_olustur")?.etiket}
-            </Link>
+            <button
+              type="button"
+              disabled={sending}
+              onClick={() => {
+                void send(
+                  hizliSecenekEtiketi("sifirdan_olustur")
+                );
+              }}
+              className="flex min-h-11 items-center justify-center rounded-xl border border-lp-border bg-lp-surface px-3 text-[12px] font-black text-lp-text-alt disabled:opacity-60"
+            >
+              {hizliSecenekEtiketi("sifirdan_olustur")}
+            </button>
             <button type="button" onClick={onBrowse} className="min-h-11 rounded-xl border border-lp-border bg-lp-surface px-3 text-[12px] font-black text-lp-text-alt">
-              {vixRexHizliSecenekler.find((item) => item.id === "bakiniyorum")?.etiket}
+              {hizliSecenekEtiketi("bakiniyorum")}
             </button>
           </div>
         ) : null}

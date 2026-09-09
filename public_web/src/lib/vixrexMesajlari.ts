@@ -62,3 +62,22 @@ export const vixRexMesajlari: Record<string, string> = Object.fromEntries(
 
 export const vixRexHizliSecenekler: readonly VixRexHizliSecenek[] =
   katalog.hizliSecenekler;
+
+/**
+ * Hızlı seçenek etiketi — TEK KAYNAK.
+ *
+ * Etiketler `shared/vixrex_mesajlar.json` içinde yaşar; hiçbir ekran bu
+ * yazıları elle yazmaz. Elle yazıldığında kaynak değişse bile o ekran
+ * eskisini göstermeye devam eder — kayıt sayfasında tam bu yüzden
+ * "Bakiniyorum" diye hatalı bir yazı aylarca canlıda durdu.
+ *
+ * `landing-hizli-secenek-tek-kaynak.test.ts` bu dosyanın dışında literal
+ * etiket yazılmasını engeller.
+ */
+export function hizliSecenekEtiketi(id: string): string {
+  const secenek = vixRexHizliSecenekler.find((item) => item.id === id);
+  if (!secenek) {
+    throw new Error(`Hızlı seçenek katalogda yok: ${id}`);
+  }
+  return secenek.etiket;
+}
