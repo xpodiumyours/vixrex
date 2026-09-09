@@ -93,7 +93,6 @@ export function validateField(anahtar: string, hamDeger: unknown): ValidationRes
     return { ok: false, hata: "Bilinmeyen alan." };
   }
 
-  // acikKapali: yalnız boolean
   if (alan.tip === "acikKapali") {
     if (typeof hamDeger !== "boolean") {
       return { ok: false, hata: `${alan.etiket} yalnız açık veya kapalı olabilir.` };
@@ -101,7 +100,6 @@ export function validateField(anahtar: string, hamDeger: unknown): ValidationRes
     return { ok: true, alan, deger: hamDeger };
   }
 
-  // sayi: sayıya çevir, sınırları kontrol et
   if (alan.tip === "sayi") {
     if (hamDeger === null || hamDeger === "") {
       return { ok: true, alan, deger: null };
@@ -119,13 +117,11 @@ export function validateField(anahtar: string, hamDeger: unknown): ValidationRes
     return { ok: true, alan, deger: sayi };
   }
 
-  // Kalan tiplerin hepsi metin tabanlı
   if (typeof hamDeger !== "string" && hamDeger !== null) {
     return { ok: false, hata: `${alan.etiket} metin olmalı.` };
   }
 
   const deger = (hamDeger ?? "").trim();
-
   const sinirHatasi = metinSinirlari(alan, deger);
   if (sinirHatasi) return { ok: false, hata: sinirHatasi };
 
@@ -141,7 +137,7 @@ export function validateField(anahtar: string, hamDeger: unknown): ValidationRes
         if (!normalized) {
           return {
             ok: false,
-            hata: `${alan.etiket} geçerli bir Türkiye cep telefonu olmalı.`,
+            hata: "Geçerli bir Türkiye cep telefonu numarası girin. Örn: 0555 123 45 67",
           };
         }
         return { ok: true, alan, deger: normalized };
@@ -195,7 +191,6 @@ export function validateField(anahtar: string, hamDeger: unknown): ValidationRes
     }
 
     default: {
-      // Şemaya yeni bir tip eklenip burada karşılanmazsa derleme hatası verir.
       const kalan: never = alan.tip;
       return { ok: false, hata: `Desteklenmeyen alan tipi: ${String(kalan)}` };
     }
