@@ -67,7 +67,9 @@ class VixrexCanonicalDraftWriter {
         'update_owned_working_draft_fields',
         params: {'p_changes': changes},
       );
-      return const VixrexCanonicalWriteResult(VixrexCanonicalWriteState.written);
+      return const VixrexCanonicalWriteResult(
+        VixrexCanonicalWriteState.written,
+      );
     } on PostgrestException catch (error) {
       return VixrexCanonicalWriteResult(
         VixrexCanonicalWriteState.failed,
