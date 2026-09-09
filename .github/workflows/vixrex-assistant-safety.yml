@@ -1,0 +1,59 @@
+name: Vixrex Assistant Safety
+
+# Bu workflow yalnız güvenli geliştirme dalındaki Assistant çalışmasını
+# doğrulamak için vardır. Mevcut CI self-hosted Windows runner'da `shell: bash`
+# geçici script yolunu bozduğu için gerçek Next.js testleri hiç başlamıyor.
+# Burada Windows'un doğal kabuğu PowerShell kullanılır; ürün/release davranışı
+# değiştirilmez. Çalışma tamamlanıp ana CI onarıldığında kaldırılabilir.
+
+on:
+  pull_request:
+    paths:
+      - "public_web/**"
+      - ".github/workflows/vixrex-assistant-safety.yml"
+
+concurrency:
+  group: vixrex-assistant-safety-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  public_web:
+    name: Next.js — Assistant güvenlik kapısı
+    runs-on: [self-hosted, windows, vixrex]
+    timeout-minutes: 25
+    defaults:
+      run:
+        shell: pwsh
+        working-directory: public_web
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: public_web/package-lock.json
+
+      - name: Bağımlılıklar
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Tip kontrolü
+        run: npx tsc --noEmit
+
+      - name: Testler
+        run: npm run test
+
+      - name: Production build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
