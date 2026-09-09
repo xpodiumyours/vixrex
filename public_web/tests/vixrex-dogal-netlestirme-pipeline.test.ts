@@ -8,10 +8,15 @@ vi.mock("../src/lib/supabase", () => ({
 
 import { handleVixrexNluMessage } from "../src/lib/vixrexNluPipeline";
 
-function pending(anahtar: string, etiket: string, tip: string) {
+function pending(
+  anahtar: string,
+  etiket: string,
+  tip: string,
+  eylem?: "kaldir",
+) {
   rpcMock.mockImplementation(async (name: string, params?: unknown) => {
     if (name === "get_assistant_pending_slot") {
-      return { data: { anahtar, etiket, tip }, error: null };
+      return { data: { anahtar, etiket, tip, ...(eylem ? { eylem } : {}) }, error: null };
     }
     if (name === "set_assistant_pending_slot") {
       return { data: params ?? null, error: null };
@@ -51,6 +56,29 @@ describe("Vixrex doğal netleştirme gerçek Next pipeline", () => {
     expect(sonuc.outcome).toBe("handled");
     expect(sonuc.anahtar).toBe("puanGoster");
     expect(sonuc.deger).toBe(true);
+  });
+
+  it("'onu kaldır' cevabında kaldırma onayı bağlamını saklar", async () => {
+    pending("telefon", "Telefon", "telefon");
+    const sonuc = await handleVixrexNluMessage("onu kaldır");
+    expect(sonuc.outcome).toBe("needsClarification");
+    expect(sonuc.message).toBe("Telefon bilgisini kaldırmamı mı istiyorsun?");
+    const saveCall = rpcMock.mock.calls.find(
+      ([name, args]) =>
+        name === "set_assistant_pending_slot" &&
+        (args as { p_slot?: { eylem?: string } })?.p_slot?.eylem === "kaldir",
+    );
+    expect(saveCall).toBeTruthy();
+  });
+
+  it("kaldırma onayı beklenirken 'evet' alanı temizleme sonucuna dönüşür", async () => {
+    pending("telefon", "Telefon", "telefon", "kaldir");
+    const sonuc = await handleVixrexNluMessage("evet");
+    expect(sonuc.outcome).toBe("handled");
+    expect(sonuc.anahtar).toBe("telefon");
+    expect(sonuc.deger).toBeNull();
+    expect(sonuc.tumu).toEqual([{ anahtar: "telefon", kolon: "phone", deger: null }]);
+    expect(sonuc.message).toBe("Telefon bilgisini kaldırdım.");
   });
 
   it("çalışma saati beklenirken yalnız kapanış saati verilirse tam saat diye kaydetmez", async () => {
