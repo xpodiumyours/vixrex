@@ -40,7 +40,8 @@ $flutterTests = @(
   "test/vixrex_general_intent_parity_test.dart",
   "test/vixrex_pending_slot_context_test.dart",
   "test/vixrex_executor_temizleme_test.dart",
-  "test/vixrex_46_alan_executor_kapsam_test.dart"
+  "test/vixrex_46_alan_executor_kapsam_test.dart",
+  "test/vixrex_yayin_yasal_kapi_test.dart"
 )
 
 Push-Location $root
@@ -95,7 +96,8 @@ try {
         test/vixrex_general_intent_parity_test.dart `
         test/vixrex_pending_slot_context_test.dart `
         test/vixrex_executor_temizleme_test.dart `
-        test/vixrex_46_alan_executor_kapsam_test.dart
+        test/vixrex_46_alan_executor_kapsam_test.dart `
+        test/vixrex_yayin_yasal_kapi_test.dart
     }
 
     foreach ($test in $flutterTests) {
