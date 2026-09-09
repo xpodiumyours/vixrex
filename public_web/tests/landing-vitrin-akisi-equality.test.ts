@@ -56,18 +56,20 @@ describe("landing vitrin oluşturma akışı Flutter referansıyla eşit", () =>
     expect(apkAssistant).toContain("<LandingAsistanSohbeti");
   });
 
-  it("APK karşılama yüzü yalnız iki hızlı seçenek gösterir ve mevcut motora delege eder", () => {
+  it("APK karşılama yüzü ikinci bir hızlı-seçenek katmanı üretmez; ortak üç seçeneği kullanır", () => {
     const apkAssistant = oku("src/components/landing/LandingApkAssistant.tsx");
+    const sohbet = oku("src/components/landing/LandingAsistanSohbeti.tsx");
+    const katalog = oku("../shared/vixrex_mesajlar.json");
 
-    expect(apkAssistant).toContain("Dijital vitrin asistanı");
-    expect(apkAssistant).toContain("Kapat");
-    expect(apkAssistant).toContain("Hızlı Seçenekler");
-    expect(apkAssistant).toContain("Evet, Oluşturalım");
-    expect(apkAssistant).toContain("Bakınıyorum");
-    expect(apkAssistant).toContain("vixRexMesajlari.welcome_baslik");
-    expect(apkAssistant).toContain("vixRexMesajlari.welcome_aciklama");
-    expect(apkAssistant).not.toContain("hazir_vitrin_sec");
-    expect(apkAssistant).toContain("validateField(\"isletmeAdi\"");
-    expect(apkAssistant).toContain("<LandingAsistanSohbeti initialName={devamAdi}");
+    expect(apkAssistant).toContain("<LandingAsistanSohbeti initialName={initialName}");
+    expect(apkAssistant).not.toContain("Evet, Oluşturalım");
+    expect(apkAssistant).not.toContain("validateField");
+
+    expect(sohbet).toContain('h.id === "hazir_vitrin_sec"');
+    expect(sohbet).toContain('h.id === "sifirdan_olustur"');
+    expect(sohbet).toContain('h.id === "bakiniyorum"');
+    expect(katalog).toContain('"id": "hazir_vitrin_sec"');
+    expect(katalog).toContain('"id": "sifirdan_olustur"');
+    expect(katalog).toContain('"id": "bakiniyorum"');
   });
 });
