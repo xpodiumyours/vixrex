@@ -15,6 +15,13 @@ parçası sessizce devre dışı bırakıldı ve doğrudan main'e alındı — C
 canlıda fark etti, saatlerce token yakıldı, sonuç güvensizlik oldu. Bkz.
 `~/.claude/projects/C--Users-Casper/memory/once-sor-onay-bekle.md`.
 
+### Varsayım + tahmin + yorum yasağı (2026-09-09, Casper)
+
+- **Varsayım yasak.** Emin olmadığın şeyi doğru gibi yazma. Bilmiyorsan "bilmiyorum" de, sor, bekle.
+- **Tahminle iş yapma.** Koda bakmadan "şöyle olmalı" diye düzeltme, dosya ekleme, silme.
+- **Kod içine hiç yorum satırı ekleme.** (`//`, `/* */`, `#`, `<!-- -->`, `--` gibi notlar yasak.) Eski yorumu da değiştirme, silme. Açıklama gerekiyorsa mesaja yaz.
+- **Kanıt ver.** Hangi dosyaya baktıysan tam yol + satır numarası yaz. Bakmadıysan "bakmadım" de.
+
 ### Görsel/UI hatalarında: önce canlı doğrula, sonra "düzelttim" de (2026-09-03, Casper)
 
 Bir UI/görsel hatayı (ekran görüntüsüyle bildirilen, "kutu kaymış",

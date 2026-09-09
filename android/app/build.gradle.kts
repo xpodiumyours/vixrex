@@ -41,6 +41,9 @@ android {
                 storeFile = file(storePath)
                 storePassword = storePasswordValue
                 keyAlias = keyAliasValue
+            // Eski/kati yukleyiciler icin v1 (JAR) imzasi da uretilsin.
+            enableV1Signing = true
+            enableV2Signing = true
                 keyPassword = keyPasswordValue
             }
         }
