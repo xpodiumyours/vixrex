@@ -12,6 +12,8 @@ import type { HazirGorsel } from "../hooks/useOwnerActions";
 // (özgür yazım, NLU motoru cümleden alanı kendi bulur) aynı kutu çalışır.
 
 interface Props {
+  compact?: boolean;
+  trailing?: React.ReactNode;
   seciliAlan: VitrinField | null;
   giris: string;
   girisRef: React.RefObject<HTMLTextAreaElement | null>;
@@ -43,6 +45,8 @@ interface Props {
 }
 
 export function FieldInputArea({
+  compact = false,
+  trailing,
   seciliAlan,
   giris,
   girisRef,
@@ -76,7 +80,7 @@ export function FieldInputArea({
   // zaten panelin tek aç/kapat yüzeyi olduğu için ikinci bir state yolu açmıyoruz.
   // Masaüstü davranışına dokunulmaz.
   const gonderVeVitriniGoster = async () => {
-    const mobil =
+    const mobil = !compact &&
       typeof window !== "undefined" &&
       !window.matchMedia("(min-width: 640px)").matches;
 
@@ -104,7 +108,7 @@ export function FieldInputArea({
   };
 
   return (
-    <div>
+    <div className={compact ? "owner-compact-input" : undefined}>
       {seciliAlan && (
         <p className="mb-2 flex items-center justify-end gap-2 text-[11px] text-slate-400">
           <button
@@ -176,6 +180,7 @@ export function FieldInputArea({
           <p className="mt-2 text-center text-[11px] text-slate-500">
             JPG, PNG veya WebP · en fazla 5 MB
           </p>
+          <div className="flex justify-end">{trailing}</div>
         </div>
       ) : seciliAlan?.anahtar === "il" ? (
         /* İl dropdown — Flutter Web FormLocationInfo karşılığı */
@@ -197,12 +202,14 @@ export function FieldInputArea({
           </select>
           <button
             type="button"
+            aria-label="Gönder"
             onClick={() => void gonderVeVitriniGoster()}
             disabled={kaydediliyor || !mevcutIl}
             className="h-12 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
           >
-            {kaydediliyor ? "…" : "Gönder"}
+            {kaydediliyor ? "…" : compact ? <span aria-hidden="true">↑</span> : "Gönder"}
           </button>
+          {trailing}
         </div>
       ) : seciliAlan?.anahtar === "ilce" ? (
         /* İlçe dropdown — seçili ile göre filtrelenmiş */
@@ -224,12 +231,14 @@ export function FieldInputArea({
           </select>
           <button
             type="button"
+            aria-label="Gönder"
             onClick={() => void gonderVeVitriniGoster()}
             disabled={kaydediliyor || !mevcutIlce}
             className="h-12 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
           >
-            {kaydediliyor ? "…" : "Gönder"}
+            {kaydediliyor ? "…" : compact ? <span aria-hidden="true">↑</span> : "Gönder"}
           </button>
+          {trailing}
         </div>
       ) : seciliAlan?.tip === "secim" && seciliAlan.secenekler ? (
         <div className="flex items-end gap-2">
@@ -248,12 +257,14 @@ export function FieldInputArea({
           </select>
           <button
             type="button"
+            aria-label="Gönder"
             onClick={() => void gonderVeVitriniGoster()}
             disabled={kaydediliyor || !giris}
             className="h-12 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
           >
-            {kaydediliyor ? "…" : "Gönder"}
+            {kaydediliyor ? "…" : compact ? <span aria-hidden="true">↑</span> : "Gönder"}
           </button>
+          {trailing}
         </div>
       ) : (
         <div className="space-y-2">
@@ -288,7 +299,7 @@ export function FieldInputArea({
                * ile uygulanıyor — ham mesaja değil. */
               disabled={kaydediliyor}
               aria-label="Vixrex Asistan'a yaz"
-              placeholder={
+              placeholder={compact ? "Mesajını yaz…" :
                 seciliAlan
                   ? `${seciliAlan.etiket} için yaz…`
                   : "Yaz, ben hallederim. Örn: işletme adım Öz Kardeşler"
@@ -299,12 +310,14 @@ export function FieldInputArea({
             />
             <button
               type="button"
-              onClick={() => void gonderVeVitriniGoster()}
+              aria-label="Gönder"
+            onClick={() => void gonderVeVitriniGoster()}
               disabled={kaydediliyor}
               className="h-12 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
             >
-              {kaydediliyor ? "…" : "Gönder"}
+              {kaydediliyor ? "…" : compact ? <span aria-hidden="true">↑</span> : "Gönder"}
             </button>
+            {trailing}
           </div>
         </div>
       )}

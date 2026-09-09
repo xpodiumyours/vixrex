@@ -65,3 +65,55 @@ body.vixrex-owner-rental-preview #ust-bolum [data-vixrex-editable="heroRozet"] {
     white-space: nowrap;
   }
 }
+
+/* Only the ownership assistant composer; storefront rules stay untouched. */
+[data-owner-assistant="compact"] .owner-compact-input button[aria-label="Gönder"] {
+  width: 32px; min-width: 32px; height: 44px; padding: 0; flex-shrink: 0;
+  border-radius: 50%; background: transparent; color: #bae6fd; font-size: 24px;
+}
+[data-owner-assistant="compact"] .owner-compact-input textarea { min-width: 0; border: 0; background: transparent; }
+[data-owner-assistant="compact"] button:focus-visible { outline: 2px solid #7dd3fc; outline-offset: 2px; }
+[data-owner-assistant="compact"] { padding-bottom: env(safe-area-inset-bottom, 0px); }
+
+/* Compact conversation stays anchored beside the right-hand mascot. */
+[data-owner-assistant="compact"][data-expanded="false"] {
+  left: auto; right: 12px; width: min(360px, calc(100vw - 24px));
+}
+[data-owner-assistant="compact"] .owner-compact-input textarea {
+  flex: 1 1 0%; width: 0; min-width: 0; border-radius: 22px;
+  background: rgba(255,255,255,.06); border: 1px solid rgba(186,230,253,.14);
+  font-size: 14px; padding-left: 14px;
+}
+[data-owner-assistant="compact"] .owner-compact-input > div > div.flex { align-items: center; gap: 4px; }
+[data-owner-assistant="compact"][data-expanded="false"] .vixrex-panel-kaydirici {
+  max-height: 22dvh; font-size: 13px; padding-top: 0; padding-bottom: 6px;
+}
+[data-owner-assistant="compact"][data-expanded="false"] .vixrex-panel-kaydirici > div {
+  margin-left: auto; max-width: 92%;
+}
+[data-owner-assistant="compact"][data-expanded="false"] .vixrex-panel-kaydirici > div > div {
+  padding: 8px 12px; font-size: 13px; line-height: 1.45;
+}
+@media (min-width: 640px) {
+  [data-owner-assistant="compact"][data-expanded="false"] { width: 400px; }
+}
+
+/* Flutter reference: lib/theme/app_colors.dart and widgets/chat/chat_bubble.dart. */
+[data-owner-assistant="compact"] {
+  background: #0B1730; color: #F7FBFF; border-color: #294D88;
+}
+[data-owner-assistant="compact"] .vixrex-panel-kaydirici > div > div,
+[data-owner-assistant="compact"] .vixrex-panel-kaydirici > p {
+  background: #112448; color: #F7FBFF; border-color: #294D88;
+}
+[data-owner-assistant="compact"] .owner-compact-input textarea,
+[data-owner-assistant="compact"] .owner-compact-input select {
+  background: #0D1C38; color: #F7FBFF; border-color: #294D88;
+}
+[data-owner-assistant="compact"] textarea::placeholder,
+[data-owner-assistant="compact"] > div:first-child { color: #A9BBDA; }
+[data-owner-assistant="compact"] .owner-compact-input button[aria-label="Gönder"] { color: #147DFF; }
+[data-owner-assistant="compact"] button:focus-visible { outline-color: #57B7FF; }
+[data-owner-assistant="compact"] button[aria-label="Vixrex Asistan ayrıntıları"] > span {
+  background: #0D1C38; border-color: #147DFF;
+}
