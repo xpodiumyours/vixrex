@@ -24,6 +24,13 @@ export interface VixrexPipelineResult {
   tumu?: Array<{ anahtar: string; kolon: string; deger: unknown }>;
 }
 
+type PendingSlot = {
+  anahtar: string;
+  etiket: string;
+  tip: string;
+  eylem?: "kaldir";
+};
+
 // Adım 4 (2026-09-03): pending slot artık localStorage DEĞİL, kalıcı ve
 // paylaşılan `assistant_conversations.pending_slot` (Furkan, 2026-09-02,
 // "NLU Faz 1-3") — RPC'ler auth.uid() ister. OwnerAssistantPanel panel
@@ -33,17 +40,22 @@ export interface VixrexPipelineResult {
 // yazabiliyoruz. Oturum henüz kurulmadıysa RPC NOT_AUTHENTICATED döner —
 // diğer fire-and-forget yazımlarla aynı desende sessizce yutulur, pending
 // o turda basitçe "yok" sayılır.
-async function loadPending(): Promise<{ anahtar: string; etiket: string; tip: string } | null> {
+async function loadPending(): Promise<PendingSlot | null> {
   try {
     const { data, error } = await supabase.rpc("get_assistant_pending_slot");
     if (error || !data) return null;
-    return data as { anahtar: string; etiket: string; tip: string };
+    return data as PendingSlot;
   } catch { return null; }
 }
-async function savePending(a: VixrexNiyetAlan): Promise<void> {
+async function savePending(a: VixrexNiyetAlan, eylem?: "kaldir"): Promise<void> {
   try {
     await supabase.rpc("set_assistant_pending_slot", {
-      p_slot: { anahtar: a.anahtar, etiket: a.etiket, tip: a.tip },
+      p_slot: {
+        anahtar: a.anahtar,
+        etiket: a.etiket,
+        tip: a.tip,
+        ...(eylem ? { eylem } : {}),
+      },
     });
   } catch { /* sessizce yut — bellek modu korunur */ }
 }
@@ -105,6 +117,7 @@ export async function handleVixrexNluMessage(input: string): Promise<VixrexPipel
           anahtar: alan.anahtar,
           etiket: alan.etiket,
           tip: alan.tip,
+          eylem: pending.eylem,
         });
 
         if (baglam.karar === "iptal" || baglam.karar === "ayni_kalsin") {
@@ -113,6 +126,9 @@ export async function handleVixrexNluMessage(input: string): Promise<VixrexPipel
         }
 
         if (!baglam.yazma) {
+          if (baglam.karar === "kaldirma_onayi" && pending.eylem !== "kaldir") {
+            await savePending(alan, "kaldir");
+          }
           return {
             outcome: "needsClarification",
             message: baglam.mesaj,
@@ -128,7 +144,7 @@ export async function handleVixrexNluMessage(input: string): Promise<VixrexPipel
           };
         }
 
-        const pendingDeger = baglam.deger ?? trimmed;
+        const pendingDeger = baglam.karar === "kaldir" ? null : baglam.deger ?? trimmed;
         const v = validateField(alan.anahtar, pendingDeger);
         if (!v.ok) {
           return {
@@ -138,10 +154,13 @@ export async function handleVixrexNluMessage(input: string): Promise<VixrexPipel
           };
         }
         await clearPending();
-        const kesin = (v as { deger: unknown }).deger ?? pendingDeger;
+        const kesin = (v as { deger: unknown }).deger;
         return {
           outcome: "handled",
-          message: clarifySuccess(alan, kesin),
+          message:
+            baglam.karar === "kaldir"
+              ? `${alan.etiket} bilgisini kaldırdım.`
+              : clarifySuccess(alan, kesin ?? pendingDeger),
           anahtar: alan.anahtar,
           deger: kesin,
           tumu: [{ anahtar: alan.anahtar, kolon: alan.kolon, deger: kesin }],
