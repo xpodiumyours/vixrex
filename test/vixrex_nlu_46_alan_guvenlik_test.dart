@@ -38,6 +38,42 @@ void main() {
       expect(hatalar, isEmpty, reason: hatalar.join('\n'));
     });
 
+    test(
+      'her tek-alan sözlük örneği resolveAll içinde yalnız kendi alanını üretir',
+      () {
+        final hatalar = <String>[];
+
+        for (final alan in vixrexNiyetSozlugu) {
+          for (final ornek in alan.ornekIfadeler) {
+            final input = ornek.replaceAll('{deger}', 'Örnek Değer');
+            final bulunan = resolver
+                .resolveAll(input)
+                .map((a) => a.anahtar)
+                .toList();
+            if (bulunan.length != 1 || bulunan.first != alan.anahtar) {
+              hatalar.add(
+                '${alan.anahtar}: "$input" -> [${bulunan.join(', ')}]',
+              );
+            }
+          }
+        }
+
+        expect(hatalar, isEmpty, reason: hatalar.join('\n'));
+      },
+    );
+
+    test('ayrı metin aralıklarındaki gerçek iki alan korunur', () {
+      final alanlar = resolver
+          .resolveAll(
+            'Telefonu 0212 555 44 33 yap, e-postayı info@denizteknik.com yap',
+          )
+          .map((a) => a.anahtar)
+          .toList();
+
+      expect(alanlar.length, 2);
+      expect(alanlar.toSet(), {'telefon', 'eposta'});
+    });
+
     test('kısa il aliası sıradan kelimenin içinden niyet üretmez', () {
       final alanlar = resolver.resolveAll(
         'Ailece müşterilerimize hizmet veriyoruz.',
