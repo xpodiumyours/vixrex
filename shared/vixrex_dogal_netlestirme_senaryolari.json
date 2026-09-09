@@ -9,6 +9,8 @@
   {"id":"telefon-olur","bekleyen":{"anahtar":"telefon","etiket":"Telefon","tip":"telefon"},"girdi":"olur","karar":"ozel_sor","yazma":false},
   {"id":"telefon-ayni","bekleyen":{"anahtar":"telefon","etiket":"Telefon","tip":"telefon"},"girdi":"aynısı","karar":"ayni_kalsin","yazma":false},
   {"id":"telefon-kaldir","bekleyen":{"anahtar":"telefon","etiket":"Telefon","tip":"telefon"},"girdi":"onu kaldır","karar":"kaldirma_onayi","yazma":false},
+  {"id":"telefon-kaldir-evet","bekleyen":{"anahtar":"telefon","etiket":"Telefon","tip":"telefon","eylem":"kaldir"},"girdi":"evet","karar":"kaldir","yazma":true},
+  {"id":"telefon-kaldir-hayir","bekleyen":{"anahtar":"telefon","etiket":"Telefon","tip":"telefon","eylem":"kaldir"},"girdi":"hayır","karar":"iptal","yazma":false},
   {"id":"telefon-degistir","bekleyen":{"anahtar":"telefon","etiket":"Telefon","tip":"telefon"},"girdi":"değiştir","karar":"ozel_sor","yazma":false},
   {"id":"telefon-deger","bekleyen":{"anahtar":"telefon","etiket":"Telefon","tip":"telefon"},"girdi":"0212 555 44 33","karar":"deger","yazma":true},
 
