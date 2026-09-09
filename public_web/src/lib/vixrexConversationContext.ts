@@ -42,6 +42,34 @@ const DEGER_OLMAYAN_KISA = new Set([
   "degissin",
   "yap",
 ]);
+const OLUMSUZ_ISLEM = new Set([
+  "degistirme",
+  "degismesin",
+  "guncelleme",
+  "guncellenmesin",
+  "silme",
+  "kaldirma",
+  "dokunma",
+  "yapma",
+]);
+
+/**
+ * Kısa ve açık bir "bunu yapma" cümlesini yazma isteği sanmamak için dar
+ * koruma. Uzun/karmaşık cümleleri burada yorumlamayız; onlar sonraki doğal
+ * dil fazının konusu. Böylece yanlış olumlu eşleşmede en fazla işlem durur,
+ * veri yazılmaz.
+ */
+export function vixrexDegisiklikIptaliMi(input: string): boolean {
+  const norm = vixrexNormalizeDartParity(input)
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+  if (!norm) return false;
+  const tokens = norm.split(/\s+/).filter(Boolean);
+  if (tokens.length > 5) return false;
+  const son = tokens.at(-1) ?? "";
+  const sondanBirOnceki = tokens.at(-2) ?? "";
+  return OLUMSUZ_ISLEM.has(son) || (son === "lutfen" && OLUMSUZ_ISLEM.has(sondanBirOnceki));
+}
 
 function alanSorusu(bekleyen: VixrexBekleyenBaglam): string {
   return `${bekleyen.etiket} için ne yazayım?`;
@@ -80,8 +108,16 @@ export function vixrexBaglamsalCevapKarari(
 ): VixrexBaglamSonucu {
   const trimmed = input.trim();
   const norm = vixrexNormalizeDartParity(trimmed);
+  const acikIptal = IPTAL.has(norm) || vixrexDegisiklikIptaliMi(trimmed);
 
   if (!bekleyen) {
+    if (acikIptal) {
+      return {
+        karar: "iptal",
+        yazma: false,
+        mesaj: "Tamam, değişiklik yapmıyorum. Vitrininde başka neyi değiştirmek istersin?",
+      };
+    }
     return { karar: "genel_sor", yazma: false, mesaj: VIXREX_DOGAL_GENEL_SORU };
   }
 
@@ -92,7 +128,7 @@ export function vixrexBaglamsalCevapKarari(
     if (EVET.has(norm)) {
       return { karar: "kaldir", yazma: true, mesaj: "", deger: null };
     }
-    if (HAYIR.has(norm) || IPTAL.has(norm)) {
+    if (HAYIR.has(norm) || acikIptal) {
       return {
         karar: "iptal",
         yazma: false,
@@ -106,7 +142,7 @@ export function vixrexBaglamsalCevapKarari(
     };
   }
 
-  if (IPTAL.has(norm)) {
+  if (acikIptal) {
     return {
       karar: "iptal",
       yazma: false,
