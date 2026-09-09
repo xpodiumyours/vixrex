@@ -7,20 +7,34 @@ interface NiyetAdayi {
   len: number;
 }
 
+interface NiyetEslesmesi {
+  start: number;
+  end: number;
+}
+
 /**
  * Eşleşmenin sıradan bir kelimenin ORTASINDAN başlamasını engeller.
  * Son sınırı katı değildir; Türkçe iyelik/hâl eki sözlük kökünü uzatabilir.
  * Uzun ve bağlamlı sözlük örnekleri kısa eş-anlamlardan önce değerlendirilir.
  */
-function niyetBaslangicindaEslesir(normInput: string, normIfade: string): boolean {
+function niyetEslesmesiBul(
+  normInput: string,
+  normIfade: string,
+  doluAraliklar: ReadonlyArray<NiyetEslesmesi> = [],
+): NiyetEslesmesi | null {
   let from = 0;
   while (from <= normInput.length - normIfade.length) {
     const idx = normInput.indexOf(normIfade, from);
-    if (idx < 0) return false;
-    if (idx === 0 || !/[a-z0-9]/.test(normInput[idx - 1])) return true;
+    if (idx < 0) return null;
+    const startOk = idx === 0 || !/[a-z0-9]/.test(normInput[idx - 1]);
+    const aday = { start: idx, end: idx + normIfade.length };
+    const ortusuyor = doluAraliklar.some(
+      (dolu) => aday.start < dolu.end && aday.end > dolu.start,
+    );
+    if (startOk && !ortusuyor) return aday;
     from = idx + 1;
   }
-  return false;
+  return null;
 }
 
 /**
@@ -70,7 +84,7 @@ export function resolveVixrexIntent(input: string): VixrexNiyetAlan | null {
   const normInput = vixrexNormalizeDartParity(input);
   if (!normInput.trim()) return null;
   for (const c of adaylariOlustur()) {
-    if (niyetBaslangicindaEslesir(normInput, c.normIfade)) return c.alan;
+    if (niyetEslesmesiBul(normInput, c.normIfade)) return c.alan;
   }
   return null;
 }
@@ -79,12 +93,19 @@ export function resolveVixrexIntentsAll(input: string): VixrexNiyetAlan[] {
   const normInput = vixrexNormalizeDartParity(input);
   const found: VixrexNiyetAlan[] = [];
   const seen = new Set<string>();
+  const doluAraliklar: NiyetEslesmesi[] = [];
+
   for (const c of adaylariOlustur()) {
     if (seen.has(c.alan.anahtar)) continue;
-    if (niyetBaslangicindaEslesir(normInput, c.normIfade)) {
-      found.push(c.alan);
-      seen.add(c.alan.anahtar);
-    }
+    const eslesme = niyetEslesmesiBul(normInput, c.normIfade, doluAraliklar);
+    if (!eslesme) continue;
+
+    found.push(c.alan);
+    seen.add(c.alan.anahtar);
+    // Daha uzun adaylar önce işlendiği için bu aralık, aynı konuşma
+    // parçasının içindeki daha kısa/genel aliasların ikinci alan sanılmasını
+    // engeller. Ayrı metin aralığındaki gerçek ikinci alan yine bulunur.
+    doluAraliklar.push(eslesme);
   }
   return found;
 }
