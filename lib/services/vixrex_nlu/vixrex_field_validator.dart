@@ -7,8 +7,9 @@ import 'package:vixrex/utils/whatsapp_link_helper.dart';
 
 /// Flutter Vixrex Assistant alan doğrulayıcısı.
 ///
-/// Zorunlu/min-max uzunluk/seçenek/doğrulama bilgisi elle tutulmaz;
-/// `vitrin_alanlari.g.dart` üzerinden Next.js ile aynı 46-alan şemasından gelir.
+/// Zorunlu/min-max uzunluk, sayısal min-max, seçenek ve doğrulama bilgisi
+/// elle tutulmaz; `vitrin_alanlari.g.dart` üzerinden Next.js ile aynı
+/// 46-alan şemasından gelir.
 class VixrexFieldValidator {
   const VixrexFieldValidator._();
 
@@ -57,9 +58,7 @@ class VixrexFieldValidator {
       );
     }
 
-    // sayi — merkezi şemadaki iki sayısal alanın sınırları parity için burada
-    // aynı anahtarlardan okunur; generated Dart model henüz numeric min/max
-    // taşımadığı için yalnız bu iki kanonik koordinat özel durumdur.
+    // sayi — sınırlar da üretilmiş ortak 46-alan şemasından gelir.
     if (tip == 'sayi') {
       if (raw.isEmpty) return (ok: true, hata: null, normalizedDeger: null);
       final numStr = raw.replaceAll(',', '.');
@@ -67,8 +66,8 @@ class VixrexFieldValidator {
       if (num == null || !num.isFinite) {
         return (ok: false, hata: '$etiket sayı olmalı.', normalizedDeger: null);
       }
-      final min = _minFor(alan);
-      final max = _maxFor(alan);
+      final min = sema?.min;
+      final max = sema?.max;
       if (min != null && num < min) {
         return (
           ok: false,
@@ -180,7 +179,7 @@ class VixrexFieldValidator {
         return (ok: true, hata: null, normalizedDeger: raw);
       case 'metin':
       case 'uzunMetin':
-        if (alan.anahtar == 'adres') {
+        if (sema?.dogrulama == 'adres') {
           final hata = AddressValidator.hataMesaji(raw);
           if (hata != null) {
             return (ok: false, hata: hata, normalizedDeger: null);
@@ -210,18 +209,6 @@ class VixrexFieldValidator {
     if (max != null && len > max) {
       return '${alan.etiket} en fazla $max karakter olabilir.';
     }
-    return null;
-  }
-
-  static double? _minFor(VixrexNiyetAlan alan) {
-    if (alan.anahtar == 'enlem') return -90;
-    if (alan.anahtar == 'boylam') return -180;
-    return null;
-  }
-
-  static double? _maxFor(VixrexNiyetAlan alan) {
-    if (alan.anahtar == 'enlem') return 90;
-    if (alan.anahtar == 'boylam') return 180;
     return null;
   }
 
