@@ -101,3 +101,6 @@ public_web/test-results/
 public_web/playwright-report/
 public_web/blob-report/
 .codex-remote-attachments/
+
+# Yerel test imzasi (2026-09-09) — asla commitlenmez
+android/*.jks

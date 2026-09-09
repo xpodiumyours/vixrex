@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import sharp from "sharp";
 import { describe, expect, it } from "vitest";
@@ -96,6 +96,17 @@ describe("uygulama ikonu — her yüzeyde aynı", () => {
       const bilgi = await sharp(resolve(KOK, yol)).metadata();
       expect(bilgi.hasAlpha, `${yol} saydam değil`).toBe(true);
     }
+  });
+
+  it("tarayıcı sekmesi ikonu (favicon.ico) maskottan üretilmiş", () => {
+    // 2026-09-09: `app/icon.png` eklenmişti ama Next sekmede favicon.ico'yu
+    // sunuyor; eski 25 KB'lık dosya duruyordu ve sekmede maskot GÖRÜNMÜYORDU.
+    // Yeniden üretildi: 16/32/48 px, PNG gömülü ICO.
+    const ico = readFileSync(resolve(KOK, "public_web/src/app/favicon.ico"));
+    expect(ico[0] === 0 && ico[1] === 0 && ico[2] === 1 && ico[3] === 0, "ICO değil").toBe(true);
+    const girisSayisi = ico.readUInt16LE(4);
+    expect(girisSayisi, "16/32/48 olmak üzere üç boyut bekleniyor").toBe(3);
+    expect(ico.length).toBeLessThan(20000); // eski dosya 25 KB'dı
   });
 
   it("Android uyarlanabilir ikon tanımı yerinde", () => {
