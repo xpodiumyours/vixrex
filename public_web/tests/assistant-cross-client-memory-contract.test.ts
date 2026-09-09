@@ -26,11 +26,13 @@ describe("Vixrex Assistant Flutter ↔ Next.js pending hafıza sözleşmesi", ()
     expect(memory).toContain("SharedPreferences.getInstance()");
   });
 
-  it("Flutter ve Next niyet resolver'ları kelime başlangıcı güvenlik sınırını birlikte taşır", () => {
+  it("Flutter ve Next niyet resolver'ları başlangıç + örtüşme güvenlik sınırını birlikte taşır", () => {
     const dartResolver = read("lib/services/vixrex_nlu/vixrex_intent_resolver.dart");
     const nextResolver = read("public_web/src/lib/vixrexIntentResolver.ts");
-    expect(dartResolver).toContain("_niyetBaslangicindaEslesir");
-    expect(nextResolver).toContain("niyetBaslangicindaEslesir");
+    expect(dartResolver).toContain("_niyetEslesmesiBul");
+    expect(nextResolver).toContain("niyetEslesmesiBul");
+    expect(dartResolver).toContain("doluAraliklar");
+    expect(nextResolver).toContain("doluAraliklar");
   });
 
   it("Flutter ve Next pipeline aç/kapat doğal komutunu tip katmanında işler", () => {
