@@ -11,6 +11,9 @@ on:
     paths:
       - "public_web/**"
       - ".github/workflows/vixrex-assistant-safety.yml"
+  push:
+    branches:
+      - "work/vixrex-assistant-reliability-20260909"
 
 concurrency:
   group: vixrex-assistant-safety-${{ github.event.pull_request.number || github.ref }}
