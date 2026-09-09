@@ -38,6 +38,26 @@ describe("Vixrex doğal netleştirme gerçek Next pipeline", () => {
     expect(sonuc.message.toLocaleLowerCase("tr-TR")).not.toContain("hangi alan");
   });
 
+  it("bağlam yokken 'telefonu değiştirme' yazma isteği sayılmaz", async () => {
+    rpcMock.mockResolvedValue({ data: null, error: null });
+    const sonuc = await handleVixrexNluMessage("telefonu değiştirme");
+    expect(sonuc.outcome).toBe("needsClarification");
+    expect(sonuc.tumu).toBeUndefined();
+    expect(sonuc.message).toContain("değişiklik yapmıyorum");
+  });
+
+  it("telefon beklenirken 'değiştirme' işlemi iptal eder ve bekleyen soruyu temizler", async () => {
+    pending("telefon", "Telefon", "telefon");
+    const sonuc = await handleVixrexNluMessage("değiştirme");
+    expect(sonuc.outcome).toBe("needsClarification");
+    expect(sonuc.tumu).toBeUndefined();
+    expect(sonuc.message).toContain("bu değişikliği yapmıyorum");
+    const clearCall = rpcMock.mock.calls.find(
+      ([name, args]) => name === "set_assistant_pending_slot" && (args as { p_slot?: unknown })?.p_slot === null,
+    );
+    expect(clearCall).toBeTruthy();
+  });
+
   it("telefon beklenirken 'evet' cevabını telefon değeri diye yazmaz ve bağlamı silmez", async () => {
     pending("telefon", "Telefon", "telefon");
     const sonuc = await handleVixrexNluMessage("evet");
