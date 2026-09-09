@@ -1,3 +1,4 @@
+import 'package:vixrex/config/business_categories.g.dart';
 import 'package:vixrex/config/business_category_config.dart';
 import 'package:vixrex/config/vitrin_alanlari.g.dart';
 import 'package:vixrex/config/vixrex_niyet_sozlugu.g.dart';
@@ -148,13 +149,12 @@ class VixrexFieldValidator {
         return (ok: true, hata: null, normalizedDeger: raw);
       case 'secim':
         if (alan.anahtar == 'kategori') {
-          final normalized = raw.toLowerCase();
-          final category = BusinessCategoryConfig.categories.where(
-            (c) =>
-                c.label.toLowerCase() == normalized ||
-                c.id.toLowerCase() == normalized ||
-                c.aliases.any((alias) => alias.toLowerCase() == normalized),
-          );
+          final categoryId = resolveBusinessCategoryId(raw);
+          final category = categoryId == null
+              ? const <BusinessCategoryConfig>[]
+              : BusinessCategoryConfig.categories
+                  .where((c) => c.id == categoryId)
+                  .toList();
           if (category.isEmpty ||
               (sema?.secenekler != null &&
                   !sema!.secenekler!.contains(category.first.label))) {
