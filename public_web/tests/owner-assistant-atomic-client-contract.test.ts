@@ -6,6 +6,10 @@ const source = readFileSync(
   resolve(__dirname, "../src/app/v/[slug]/hooks/useOwnerActions.ts"),
   "utf8",
 );
+const batchRoute = readFileSync(
+  resolve(__dirname, "../src/app/api/owner-draft-batch/route.ts"),
+  "utf8",
+);
 
 function serbestMesajBlogu(): string {
   const baslangic = source.indexOf("if (!seciliAlan) {");
@@ -37,6 +41,11 @@ describe("Vixrex Assistant istemci atomik command sözleşmesi", () => {
     expect(blok).toContain("govde.degisiklikler");
     expect(blok).toContain("setAlan(item.kolon, item.deger)");
     expect(blok).toContain("kaydedilen.length !== cozulen.length");
+  });
+
+  it("replay eski command değerlerini güncel veri gibi istemciye geri vermez", () => {
+    expect(batchRoute).toContain("const replayed = sonuc?.replayed === true");
+    expect(batchRoute).toContain("degisiklikler: replayed ? [] : normalizeEdilenler");
   });
 
   it("seçili alan içindeki bonus çıkarımlar da atomik command kullanır", () => {
