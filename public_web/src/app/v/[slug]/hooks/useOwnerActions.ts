@@ -171,6 +171,10 @@ export function temizlenmisSeciliDeger(metin: string, alan: VitrinField): string
  * Bonus, gönderimin ANA sonucunu asla etkilemez: hata olursa sessizce
  * yutulur, "işledim" gibi yanıltıcı bir mesaj da verilmez (bkz.
  * serbestMetinCikarim.ts dosya başı yorumu — dürüstlük kuralı aynı).
+ *
+ * Güvenlik: bonus alanlar da tek kullanıcı cümlesinden çıktığı için parçalı
+ * kayıt YASAK. Tümü batch route üzerinden tek transaction'da doğrulanır ve
+ * yazılır; bir alan geçersizse bonusların hiçbiri uygulanmaz.
  */
 export async function bonusAlanlariCikarVeKaydet(
   metin: string,
@@ -193,20 +197,44 @@ export async function bonusAlanlariCikarVeKaydet(
   if (bulunanlar.length === 0) return;
 
   try {
-    const clientId = taslakClientId();
-    const yanitlar = await Promise.all(
-      bulunanlar.map(({ anahtar, deger }) =>
-        fetch("/api/owner-draft", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ slug, anahtar, deger, clientId }),
-        })
-      )
-    );
-    const basarili = bulunanlar.filter((_, i) => yanitlar[i]?.ok);
-    if (basarili.length === 0) return;
+    const yanit = await fetch("/api/owner-draft-batch", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        slug,
+        degisiklikler: bulunanlar.map(({ anahtar, deger }) => ({ anahtar, deger })),
+        clientId: taslakClientId(),
+      }),
+    });
+    const govde = await yanit.json();
+    if (!yanit.ok) return;
 
-    basarili.forEach(({ kolon, deger }) => setAlan(kolon, deger));
+    const kesinDegisiklikler = Array.isArray(govde?.degisiklikler)
+      ? (govde.degisiklikler as Array<{
+          anahtar?: unknown;
+          kolon?: unknown;
+          etiket?: unknown;
+          deger?: unknown;
+        }>)
+      : [];
+    const basarili: Array<{ etiket: string }> = [];
+
+    for (const item of kesinDegisiklikler) {
+      if (typeof item.anahtar !== "string" || typeof item.kolon !== "string") continue;
+      const alan = FIELD_BY_KEY.get(item.anahtar);
+      if (!alan || alan.kolon !== item.kolon) continue;
+      setAlan(alan.kolon, item.deger);
+      basarili.push({
+        etiket: typeof item.etiket === "string" ? item.etiket : alan.etiket,
+      });
+    }
+
+    if (basarili.length !== bulunanlar.length) {
+      // Sunucu başarılı dediği halde ayrıntı eksikse yerel state tahmin edilmez.
+      routerRefresh();
+      return;
+    }
+
     routerRefresh();
     const liste = basarili.map(({ etiket }) => `✓ ${etiket}`).join("\n");
     mesajEkle("asistan", `Yazdığından ayrıca şunları da anladım:\n${liste}`, undefined, "✨");
@@ -421,81 +449,62 @@ export function useOwnerActions({
         const kaydedilen: string[] = [];
         const kaydedilenSatirlar: string[] = [];
 
-        if (cozulen.length > 1) {
-          // Tek kullanıcı cümlesinden birden fazla alan çıktıysa parçalı kayıt
-          // YASAK: bütün alanlar sunucuda yeniden doğrulanır ve tek Postgres
-          // transaction'ında uygulanır. Bir alan geçersizse hiçbiri yazılmaz.
-          const yanit = await fetch("/api/owner-draft-batch", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              slug,
-              degisiklikler: cozulen.map(({ anahtar, deger }) => ({ anahtar, deger })),
-              clientId: taslakClientId(),
-            }),
-          });
-          const govde = await yanit.json();
+        // Assistant serbest-metin yazımı TEK ALAN olsa bile aynı batch
+        // güvenlik kapısından geçer. Böylece onay kartındaki gerçek undo
+        // yalnız Assistant işlemlerine bağlıdır; manuel /owner-draft yazımı
+        // aynı alanı sonradan değiştirirse draft_version koruması eski kartın
+        // yeni değeri geri almasını engeller.
+        const yanit = await fetch("/api/owner-draft-batch", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            slug,
+            degisiklikler: cozulen.map(({ anahtar, deger }) => ({ anahtar, deger })),
+            clientId: taslakClientId(),
+          }),
+        });
+        const govde = await yanit.json();
 
-          if (!yanit.ok) {
-            mesajEkle("asistan", govde?.hata ?? "Değişiklikler kaydedilemedi.");
-            return;
-          }
+        if (!yanit.ok) {
+          mesajEkle("asistan", govde?.hata ?? "Değişiklikler kaydedilemedi.");
+          return;
+        }
 
-          const kesinDegisiklikler = Array.isArray(govde?.degisiklikler)
-            ? (govde.degisiklikler as Array<{
-                anahtar?: unknown;
-                kolon?: unknown;
-                etiket?: unknown;
-                deger?: unknown;
-              }>)
-            : [];
+        const kesinDegisiklikler = Array.isArray(govde?.degisiklikler)
+          ? (govde.degisiklikler as Array<{
+              anahtar?: unknown;
+              kolon?: unknown;
+              etiket?: unknown;
+              deger?: unknown;
+            }>)
+          : [];
 
-          // Yerel görünümü yalnız sunucunun gerçekten kaydettiğini bildirdiği
-          // normalize sonuçtan güncelle. Pipeline tahmini kayıt kanıtı değildir.
-          for (const item of kesinDegisiklikler) {
-            if (typeof item.anahtar !== "string" || typeof item.kolon !== "string") {
-              continue;
-            }
-            const etiket =
-              typeof item.etiket === "string"
-                ? item.etiket
-                : FIELD_BY_KEY.get(item.anahtar)?.etiket ?? item.anahtar;
-            setAlan(item.kolon, item.deger);
-            tazeTaslak = { ...tazeTaslak, [item.kolon]: item.deger };
-            kaydedilen.push(item.anahtar);
-            kaydedilenSatirlar.push(`Kaydettim: ${etiket} → ${String(item.deger)}`);
-            alaniParlat(item.anahtar);
+        // Yerel görünümü yalnız sunucunun gerçekten kaydettiğini bildirdiği
+        // normalize sonuçtan güncelle. Pipeline tahmini kayıt kanıtı değildir.
+        for (const item of kesinDegisiklikler) {
+          if (typeof item.anahtar !== "string" || typeof item.kolon !== "string") {
+            continue;
           }
+          const etiket =
+            typeof item.etiket === "string"
+              ? item.etiket
+              : FIELD_BY_KEY.get(item.anahtar)?.etiket ?? item.anahtar;
+          setAlan(item.kolon, item.deger);
+          tazeTaslak = { ...tazeTaslak, [item.kolon]: item.deger };
+          kaydedilen.push(item.anahtar);
+          kaydedilenSatirlar.push(`Kaydettim: ${etiket} → ${String(item.deger)}`);
+          alaniParlat(item.anahtar);
+        }
 
-          if (kaydedilen.length !== cozulen.length) {
-            // Sunucu başarılı dediği halde sözleşme eksik cevap döndürürse
-            // "hepsi kaydedildi" diye uydurmayız. Yeniden okuma gerçeği getirir.
-            router.refresh();
-            mesajEkle(
-              "asistan",
-              "Kayıt tamamlandı ancak sonuç ayrıntısı doğrulanamadı. Vitrini yeniledim."
-            );
-            return;
-          }
-        } else {
-          // Tek alan için mevcut kanonik yol korunur; davranış değişmez.
-          const { anahtar, kolon, deger } = cozulen[0];
-          const alan = FIELD_BY_KEY.get(anahtar);
-          const yanit = await fetch("/api/owner-draft", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ slug, anahtar, deger, clientId: taslakClientId() }),
-          });
-          const govde = await yanit.json();
-          if (!yanit.ok) {
-            mesajEkle("asistan", govde?.hata ?? "Kaydedemedim, tekrar dener misin?");
-            return;
-          }
-          setAlan(kolon, deger);
-          tazeTaslak = { ...tazeTaslak, [kolon]: deger };
-          kaydedilen.push(anahtar);
-          kaydedilenSatirlar.push(`Kaydettim: ${alan?.etiket ?? anahtar} → ${String(deger)}`);
-          alaniParlat(anahtar);
+        if (kaydedilen.length !== cozulen.length) {
+          // Sunucu başarılı dediği halde sözleşme eksik cevap döndürürse
+          // "hepsi kaydedildi" diye uydurmayız. Yeniden okuma gerçeği getirir.
+          router.refresh();
+          mesajEkle(
+            "asistan",
+            "Kayıt tamamlandı ancak sonuç ayrıntısı doğrulanamadı. Vitrini yeniledim."
+          );
+          return;
         }
 
         if (kaydedilen.length === 0) {
@@ -503,8 +512,8 @@ export function useOwnerActions({
           return;
         }
 
-        // Motorun tahmini değil, gerçek kayıt sonucu gösterilir. Çok alanlı
-        // işlem artık ya tamamen başarılıdır ya da hiçbir alan yazılmamıştır.
+        // Motorun tahmini değil, gerçek kayıt sonucu gösterilir. İşlem artık
+        // tek alan dahil ya tamamen başarılıdır ya da hiçbir alan yazılmamıştır.
         mesajEkle(
           "asistan",
           kaydedilenSatirlar.join("\n"),
@@ -607,7 +616,7 @@ export function useOwnerActions({
     } finally {
       setKaydediliyor(false);
     }
-  }, [giris, seciliAlan, slug, mesajEkle, setAlan, setGiris, alanaGecVeyaBitir, router, yerelTaslak]);
+  }, [giris, seciliAlan, slug, mesajEkle, setAlan, setGiris, alanaGecVeyaBitir, router, yerelTaslak, alanSec]);
 
   // Yalnız isteğe bağlı alanlarda gösterilen "Boş geç" (ADR 0002, 3. alt-faz).
   // Vitrin İÇERİĞİ yazmaz — /api/owner-draft'tan bağımsız, kendi dar
