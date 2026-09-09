@@ -9,6 +9,7 @@ String kararAdi(VixrexBaglamKarari karar) => switch (karar) {
   VixrexBaglamKarari.ozelSor => 'ozel_sor',
   VixrexBaglamKarari.ayniKalsin => 'ayni_kalsin',
   VixrexBaglamKarari.kaldirmaOnayi => 'kaldirma_onayi',
+  VixrexBaglamKarari.kaldir => 'kaldir',
   VixrexBaglamKarari.iptal => 'iptal',
   VixrexBaglamKarari.boolTrue => 'bool_true',
   VixrexBaglamKarari.boolFalse => 'bool_false',
@@ -36,6 +37,7 @@ void main() {
                 anahtar: bekleyenJson['anahtar'] as String,
                 etiket: bekleyenJson['etiket'] as String,
                 tip: bekleyenJson['tip'] as String,
+                eylem: bekleyenJson['eylem'] as String?,
               );
         final sonuc = vixrexBaglamsalCevapKarari(
           item['girdi'] as String,
