@@ -9,6 +9,7 @@ import { vixrexNormalizeDartParity } from "./vixrexNormalizer";
 import {
   VIXREX_DOGAL_GENEL_SORU,
   vixrexBaglamsalCevapKarari,
+  vixrexDegisiklikIptaliMi,
 } from "./vixrexConversationContext";
 
 export type VixrexPipelineOutcome = "handled" | "needsClarification" | "notUnderstood" | "needsSpecialFlow" | "blockedLegal";
@@ -105,6 +106,28 @@ export async function handleVixrexNluMessage(input: string): Promise<VixrexPipel
   }
 
   const pending = await loadPending();
+
+  // "Telefonu değiştirme" gibi kısa ve açık bir vazgeçme cümlesi alan adı
+  // içerdiği için resolver'a bırakılırsa yeni bir değişiklik isteği sanılabilir.
+  // Önce bu güvenli no-write kapısından geçir; varsa bekleyen soruyu da kapat.
+  if (vixrexDegisiklikIptaliMi(trimmed)) {
+    const pendingAlan = pending
+      ? VIXREX_NIYET_SOZLUGU.find((a) => a.anahtar === pending.anahtar) ?? null
+      : null;
+    const baglam = vixrexBaglamsalCevapKarari(
+      trimmed,
+      pendingAlan
+        ? {
+            anahtar: pendingAlan.anahtar,
+            etiket: pendingAlan.etiket,
+            tip: pendingAlan.tip,
+            eylem: pending?.eylem,
+          }
+        : null,
+    );
+    if (pending) await clearPending();
+    return { outcome: "needsClarification", message: baglam.mesaj };
+  }
 
   // Önceki soru varsa kısa cevabı o bağlamla birlikte değerlendir. Yeni bir
   // alan açıkça söylenmişse pending'e zorlamayız; normal niyet çözümü devralır.
