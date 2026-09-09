@@ -1,0 +1,21 @@
+[
+  {"id":"merhaba","girdi":"Selam, yardımcı olur musun?","payload":"merhaba"},
+  {"id":"vixrex-info","girdi":"Vixrex nedir?","payload":"vixrex_info"},
+  {"id":"uyelik","girdi":"Ücret ve üyelik nasıl?","payload":"membership_info"},
+  {"id":"kurulum","girdi":"Yeni vitrin kurmak istiyorum","payload":"vitrin_kurulum"},
+  {"id":"kapak","girdi":"Kapak şablonu seçmek istiyorum","payload":"kapak"},
+  {"id":"kapak-foto-cakisma","girdi":"Kapak foto seçelim","payload":"kapak"},
+  {"id":"fotograf","girdi":"Galeriye fotoğraf yüklemek istiyorum","payload":"fotograf"},
+  {"id":"aciklama","girdi":"Tanıtım yazısı ve bio nasıl eklenir?","payload":"aciklama"},
+  {"id":"urun","girdi":"Ürün kataloğumu düzenlemek istiyorum","payload":"urun"},
+  {"id":"xml","girdi":"XML ile toplu ürün yüklemek istiyorum","payload":"xml_upload"},
+  {"id":"xml-yukle-cakisma","girdi":"Toplu ürün yükle, XML feed kullanacağım","payload":"xml_upload"},
+  {"id":"qr","girdi":"QR kodumu paylaşmak istiyorum","payload":"qr"},
+  {"id":"randevu","girdi":"Randevu takvimini açmak istiyorum","payload":"randevu"},
+  {"id":"whatsapp","girdi":"WhatsApp iletişim ayarını göster","payload":"whatsapp"},
+  {"id":"adres","girdi":"Haritada yol tarifi nasıl gösterilir?","payload":"adres"},
+  {"id":"yayin","girdi":"Vitrini yayınla ve canlı yap","payload":"yayinla"},
+  {"id":"ocr","girdi":"Fatura OCR ile tara","payload":"ocr_scan"},
+  {"id":"ocr-premium","girdi":"Premium OCR ücretli mi?","payload":"ocr_premium"},
+  {"id":"hesap","girdi":"Hesabımı güvenceye almak istiyorum","payload":"hesap"}
+]
