@@ -9,12 +9,23 @@ const undoMigration = readFileSync(
   ),
   "utf8"
 );
+const singleWriteBoundary = readFileSync(
+  resolve(
+    __dirname,
+    "../../supabase/migrations/20260909224500_keep_single_draft_write_without_assistant_undo.sql"
+  ),
+  "utf8"
+);
 const undoRoute = readFileSync(
   resolve(__dirname, "../src/app/api/owner-draft-undo/route.ts"),
   "utf8"
 );
 const restoreHook = readFileSync(
   resolve(__dirname, "../src/app/v/[slug]/hooks/useFieldRestore.ts"),
+  "utf8"
+);
+const ownerActions = readFileSync(
+  resolve(__dirname, "../src/app/v/[slug]/hooks/useOwnerActions.ts"),
   "utf8"
 );
 
@@ -31,18 +42,31 @@ describe("Vixrex Assistant gerçek son-işlem undo sözleşmesi", () => {
     );
   });
 
-  it("tek ve çok alan yazımı önceki değeri aynı transaction içinde undo kaydına bağlar", () => {
-    expect(undoMigration).toContain(
-      "create or replace function public.update_working_draft_field("
-    );
+  it("Assistant batch yazımı önceki değerleri aynı transaction içinde tek undo kaydına bağlar", () => {
     expect(undoMigration).toContain(
       "create or replace function public.update_working_draft_fields("
     );
-    expect(undoMigration.match(/insert into public\.owner_draft_undo_operations/g)?.length).toBe(2);
+    expect(undoMigration).toContain("insert into public.owner_draft_undo_operations");
     expect(undoMigration).toContain("for update;");
   });
 
-  it("undo yalnız hâlâ en son draft sürümüyse çalışır ve tek kullanımlıdır", () => {
+  it("son migration manuel tek-alan yazımını undo kaydından ayırır", () => {
+    expect(singleWriteBoundary).toContain(
+      "create or replace function public.update_working_draft_field("
+    );
+    expect(singleWriteBoundary).not.toContain("insert into public.owner_draft_undo_operations");
+    expect(singleWriteBoundary).toContain("draft_version = draft_version + 1");
+  });
+
+  it("Assistant serbest mesajı tek alan olsa bile batch yolundan geçer", () => {
+    const baslangic = ownerActions.indexOf("if (!seciliAlan) {");
+    const bitis = ownerActions.indexOf("const alan = seciliAlan;", baslangic);
+    const blok = ownerActions.slice(baslangic, bitis);
+    expect(blok).toContain('fetch("/api/owner-draft-batch"');
+    expect(blok).not.toContain('fetch("/api/owner-draft"');
+  });
+
+  it("undo yalnız hâlâ aynı Assistant işlem sürümüyse çalışır ve tek kullanımlıdır", () => {
     expect(undoMigration).toContain(
       "create or replace function public.undo_latest_working_draft_change("
     );
@@ -64,7 +88,7 @@ describe("Vixrex Assistant gerçek son-işlem undo sözleşmesi", () => {
     expect(undoRoute).not.toContain("eskiDeger");
   });
 
-  it("Assistant kartındaki çoklu Geri al yeni undo kapısını kullanır; manuel canlıya dön ayrı kalır", () => {
+  it("Assistant kartındaki Geri al yeni undo kapısını kullanır; manuel canlıya dön ayrı kalır", () => {
     const cokluBaslangic = restoreHook.indexOf("const coklaCanliyaDondur");
     const returnBaslangic = restoreHook.indexOf("return { geriAliniyor", cokluBaslangic);
     const cokluBlok = restoreHook.slice(cokluBaslangic, returnBaslangic);
