@@ -18,10 +18,10 @@ interface FieldRestoreHook {
   geriAliniyor: boolean;
   canliyaDondur: () => Promise<void>;
   /**
-   * Adı geriye uyum için korunuyor. Assistant "Geri al" artık alan listesi
-   * değil commandId alır; DB yalnız o command'ın kendi undo kaydını açar.
+   * Adı ve string[] imzası büyük OwnerAssistantPanel yüzeyine dokunmamak için
+   * korunuyor. Artık dizi ALANLARI değil tek commandId taşır.
    */
-  coklaCanliyaDondur: (commandId: string) => Promise<void>;
+  coklaCanliyaDondur: (commandTokens: string[]) => Promise<void>;
 }
 
 export function useFieldRestore({
@@ -96,8 +96,16 @@ export function useFieldRestore({
   }, [slug, seciliAlan, mesajEkle, setAlan, setGiris, router]);
 
   const coklaCanliyaDondur = useCallback(
-    async (commandId: string) => {
-      if (!commandId.trim()) return;
+    async (commandTokens: string[]) => {
+      // OwnerAssistantPanel mevcut geri_al: payload'ını virgülden ayırıyor.
+      // Yeni payload tek UUID olduğundan burada tam bir token bekleriz; eski
+      // alan-listesi payload'ı fail-closed olur ve yanlış undo yapmaz.
+      if (commandTokens.length !== 1) {
+        mesajEkle("asistan", "Bu eski geri alma işlemi güvenle uygulanamıyor.");
+        return;
+      }
+      const commandId = commandTokens[0]?.trim() ?? "";
+      if (!commandId) return;
       setGeriAliniyor(true);
 
       try {
