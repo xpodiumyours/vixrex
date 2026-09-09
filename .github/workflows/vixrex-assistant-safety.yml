@@ -1,26 +1,16 @@
 name: Vixrex Assistant Safety
 
-# Bu workflow yalnız güvenli geliştirme dalındaki Assistant çalışmasını
-# doğrulamak için vardır. Ana CI self-hosted Windows runner'da `shell: bash`
-# geçici script yolunu bozabildiği için Assistant'a ait Next.js + Flutter
-# doğrulamaları burada Windows'un doğal PowerShell kabuğuyla bağımsız koşar.
-# Ürün/release davranışı değiştirilmez.
+# Assistant doğrulaması artık HER push/PR'da otomatik çalışmaz.
+# Furkan'ın GitHub Actions kotasını gereksiz tüketmemek için yalnız
+# kilometre taşlarında Actions > Run workflow ile elle çalıştırılır.
+# Günlük geliştirme döngüsü `tool/vixrex_assistant_local_check.ps1` ile
+# yerelde yapılır. Bu workflow son doğrulama kapısıdır; geliştirme döngüsü değil.
 
 on:
-  pull_request:
-    paths:
-      - "public_web/**"
-      - "lib/**"
-      - "test/**"
-      - "shared/**"
-      - "supabase/**"
-      - ".github/workflows/vixrex-assistant-safety.yml"
-  push:
-    branches:
-      - "work/vixrex-assistant-reliability-20260909"
+  workflow_dispatch:
 
 concurrency:
-  group: vixrex-assistant-safety-${{ github.event.pull_request.number || github.ref }}
+  group: vixrex-assistant-safety-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -80,10 +70,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # subosito/flutter-action kendi içinde bash çalıştırıyor. Bu Windows
-      # self-hosted runner'da GitHub'ın C:\... geçici script yolunu /bin/bash
-      # yanlış yorumladığı için ürün koduna ulaşmadan çöküyor. Runner zaten
-      # Vixrex Flutter geliştirme ortamı; kurulu Flutter doğrudan doğrulanır.
       - name: Flutter sürümünü doğrula
         run: |
           $ErrorActionPreference = "Stop"
