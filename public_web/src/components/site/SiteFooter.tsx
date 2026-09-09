@@ -17,7 +17,7 @@ import { blogYayindaMi } from "@/data/blogYazilari";
  */
 export function SiteFooter() {
   return (
-    <footer className="bg-lp-bg-editor py-14">
+    <footer className="bg-lp-bg-editor py-[60px]">
       <div className="mx-auto flex w-full max-w-[1200px] flex-col items-center gap-4 px-5 text-center">
         <p className="text-[16px] font-black tracking-[8px] text-lp-primary/80">
           VIXREX
@@ -28,7 +28,7 @@ export function SiteFooter() {
 
         <nav
           aria-label="Yardım ve yasal bilgiler"
-          className="flex flex-wrap items-center justify-center gap-1"
+          className="flex flex-wrap items-center justify-center gap-2"
         >
           {/* Blog bağlantısı YAYIN ANAHTARINA bağlı: hiç yayında yazı
               yokken `/blog` 404 verdiği için bağlantı da gösterilmez.
