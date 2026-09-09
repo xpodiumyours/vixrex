@@ -84,12 +84,13 @@ class VixrexNluPipeline {
   /// aynı deterministik dönüşüm; validator yine gerçek boolean'a normalize eder.
   String? _extractPipelineValue(String input, VixrexNiyetAlan alan) {
     if (alan.tip == 'acikKapali') {
-      final tokens = VixrexNormalizer.normalize(input)
-          .replaceAll(RegExp(r'[^a-z0-9]+'), ' ')
-          .trim()
-          .split(RegExp(r'\s+'))
-          .where((e) => e.isNotEmpty)
-          .toSet();
+      final tokens =
+          VixrexNormalizer.normalize(input)
+              .replaceAll(RegExp(r'[^a-z0-9]+'), ' ')
+              .trim()
+              .split(RegExp(r'\s+'))
+              .where((e) => e.isNotEmpty)
+              .toSet();
       const negatif = {
         'kapat',
         'kapali',
@@ -139,7 +140,10 @@ class VixrexNluPipeline {
     required List<Object?> degerler,
   }) async {
     if (controller != null) return null;
-    final write = await _canonicalWriter.write(alanlar: alanlar, degerler: degerler);
+    final write = await _canonicalWriter.write(
+      alanlar: alanlar,
+      degerler: degerler,
+    );
     if (write.state == VixrexCanonicalWriteState.failed) {
       return _canonicalWriteFailure(write.error);
     }
