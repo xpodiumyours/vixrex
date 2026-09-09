@@ -152,42 +152,45 @@ export function HeroSection({
 
           {/*
             Kurulum başlangıcı — uygulamadaki iki kutulu yapıyla eşitlenir
-            (landing_hero_section.dart:495-541). Girilen ad yeni bir route'a
-            değil, telefon içindeki mevcut Vixrex Asistan akışına aktarılır.
+            (landing_hero_section.dart:495-541). Flutter kendi form
+            container'ını 500px'de ölçer; web de viewport yerine aynı gerçek
+            alanı container query ile ölçer.
           */}
-          <form
-            onSubmit={(event) => {
-              event.preventDefault();
-              const form = new FormData(event.currentTarget);
-              const isletmeAdi = String(form.get("isletme") ?? "");
-              onStartAssistant(isletmeAdi.trim());
-            }}
-            className="mt-8 flex flex-col gap-3 min-[500px]:flex-row min-[500px]:items-center"
-          >
-            <div className="flex h-[52px] flex-1 items-center overflow-hidden rounded-2xl border border-white/[0.12] bg-white/[0.06]">
-              <span className="hidden whitespace-nowrap px-4 text-[14px] font-bold text-white/60 sm:inline">{adresOneki}</span>
-              <span className="px-4 text-[14px] font-bold text-white/60 sm:hidden">/v/</span>
-              <input
-                type="text"
-                name="isletme"
-                placeholder="isletmeniz"
-                className="h-full flex-1 bg-transparent text-[14px] font-bold text-white outline-none placeholder:text-white/30"
-              />
-            </div>
-            <button
-              type="submit"
-              className="flex h-[52px] items-center justify-center gap-2 rounded-2xl bg-lp-primary px-6 text-[15px] font-black text-lp-on-primary transition-transform hover:-translate-y-0.5"
+          <div className="mt-8 @container">
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                const form = new FormData(event.currentTarget);
+                const isletmeAdi = String(form.get("isletme") ?? "");
+                onStartAssistant(isletmeAdi.trim());
+              }}
+              className="flex flex-col gap-3 @min-[500px]:flex-row @min-[500px]:items-center"
             >
-              Ücretsiz Vitrinimi Hazırla
-              <IleriOkIkonu boyut={16} />
-            </button>
-          </form>
+              <div className="flex h-[52px] flex-1 items-center overflow-hidden rounded-2xl border border-white/[0.12] bg-white/[0.06]">
+                <span className="hidden whitespace-nowrap px-4 text-[14px] font-bold text-white/60 sm:inline">{adresOneki}</span>
+                <span className="px-4 text-[14px] font-bold text-white/60 sm:hidden">/v/</span>
+                <input
+                  type="text"
+                  name="isletme"
+                  placeholder="isletmeniz"
+                  className="h-full flex-1 bg-transparent text-[14px] font-bold text-white outline-none placeholder:text-white/30"
+                />
+              </div>
+              <button
+                type="submit"
+                className="flex h-[52px] items-center justify-center gap-2 rounded-2xl bg-lp-primary px-6 text-[15px] font-black text-lp-on-primary transition-transform hover:-translate-y-0.5"
+              >
+                Ücretsiz Vitrinimi Hazırla
+                <IleriOkIkonu boyut={16} />
+              </button>
+            </form>
+          </div>
 
           <ul className="mt-6 flex flex-wrap gap-2.5">
             {GUVEN_ROZETLERI.map((rozet) => (
               <li
                 key={rozet}
-                className="flex items-center gap-1.5 rounded-[20px] border border-white/[0.08] bg-white/[0.06] px-3 py-2 text-[12px] font-bold text-white/70"
+                className="flex items-center gap-2 rounded-[20px] border border-white/[0.08] bg-white/[0.06] px-3.5 py-2 text-[12px] font-bold text-white/70"
               >
                 <span className="text-lp-mint">
                   <OnayIkonu boyut={16} />
