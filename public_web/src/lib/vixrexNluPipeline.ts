@@ -6,6 +6,7 @@ import { resolveVixrexIntent, resolveVixrexIntentsAll } from "./vixrexIntentReso
 import { extractVixrexValue } from "./vixrexValueExtractor";
 import { validateField } from "./vitrinFieldValidation";
 import { vixrexNormalizeDartParity } from "./vixrexNormalizer";
+import { vixrexGeneralFallback } from "./vixrexGeneralFallback";
 import {
   VIXREX_DOGAL_GENEL_SORU,
   vixrexBaglamsalCevapKarari,
@@ -194,7 +195,14 @@ export async function handleVixrexNluMessage(input: string): Promise<VixrexPipel
 
   const all = resolveVixrexIntentsAll(trimmed);
   if (all.length === 0) {
-    return { outcome: "notUnderstood", message: VIXREX_DOGAL_GENEL_SORU };
+    // Flutter Companion aynı durumda ChatbotService'e düşer. Next.js de aynı
+    // shared/vixrex_mesajlar.json kaynağından yalnız güvenli sabit rehber
+    // cevabını üretir. Outcome notUnderstood kalır: bu dal ASLA alan yazmaz.
+    const genel = vixrexGeneralFallback(trimmed);
+    return {
+      outcome: "notUnderstood",
+      message: genel?.message ?? VIXREX_DOGAL_GENEL_SORU,
+    };
   }
   if (all.length > 1) {
     const ok: Array<{ alan: VixrexNiyetAlan; deger: unknown }> = [];
