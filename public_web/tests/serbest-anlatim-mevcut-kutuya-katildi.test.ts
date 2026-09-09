@@ -45,8 +45,11 @@ describe("useOwnerActions.gonder() — mevcut kutuya bonus çıkarım katıldı"
   });
 
   it("bonus başarısız olursa asıl kayıt/akış hiç etkilenmez — sessizce yutulur", () => {
-    const idx = kaynak.indexOf("async function bonusAlanlariCikarVeKaydet");
-    const fonksiyon = kaynak.slice(idx, idx + 1600);
+    const baslangic = kaynak.indexOf("async function bonusAlanlariCikarVeKaydet");
+    const bitis = kaynak.indexOf("export function useOwnerActions", baslangic);
+    expect(baslangic).toBeGreaterThanOrEqual(0);
+    expect(bitis).toBeGreaterThan(baslangic);
+    const fonksiyon = kaynak.slice(baslangic, bitis);
     expect(fonksiyon).toContain("} catch {");
     expect(fonksiyon).toContain("Bonus bir zenginleştirme");
   });
