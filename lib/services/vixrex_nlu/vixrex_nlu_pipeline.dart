@@ -3,6 +3,7 @@ import 'package:vixrex/controllers/store_editor_controller.dart';
 import 'package:vixrex/models/chat_message.dart';
 import 'package:vixrex/services/vixrex_nlu/vixrex_canonical_draft_writer.dart';
 import 'package:vixrex/services/vixrex_nlu/vixrex_clarifier.dart';
+import 'package:vixrex/services/vixrex_nlu/vixrex_conversation_context.dart';
 import 'package:vixrex/services/vixrex_nlu/vixrex_conversation_memory.dart';
 import 'package:vixrex/services/vixrex_nlu/vixrex_intent_resolver.dart';
 import 'package:vixrex/services/vixrex_nlu/vixrex_normalizer.dart';
@@ -59,25 +60,6 @@ class VixrexNluPipeline {
   final VixrexClarifier _clarifier;
   final VixrexExecutor _executor;
   final VixrexCanonicalDraftWriter _canonicalWriter;
-
-  static const _evetler = {
-    'evet',
-    'evet.',
-    'onayla',
-    'onay',
-    'tamam',
-    'olur',
-    'kaydet',
-  };
-  static const _hayirlar = {
-    'hayir',
-    'hayır',
-    'iptal',
-    'vazgec',
-    'vazgeç',
-    'hayir.',
-    'hayır.',
-  };
 
   /// Aç/kapat alanlarında değer çoğu zaman ayrı bir metin değil komut
   /// fiilidir: "puanı göster", "yol tarifini gizle". Next.js pipeline ile
@@ -164,47 +146,42 @@ class VixrexNluPipeline {
     if (trimmed.isEmpty) {
       return VixrexNluPipelineResult(
         outcome: VixrexNluPipelineOutcome.notUnderstood,
-        message: ChatMessage.bot(_clarifier.belirsiz()),
+        message: ChatMessage.bot(vixrexDogalGenelSoru),
       );
     }
 
-    final norm = VixrexNormalizer.normalize(trimmed);
-
     final pending = await _memory.loadPendingSlot(scope: scope);
     if (pending != null) {
-      if (_evetler.contains(norm) || _hayirlar.contains(norm)) {
-        if (_evetler.contains(norm)) {
-          await _memory.clearPendingSlot(scope: scope);
-          return VixrexNluPipelineResult(
-            outcome: VixrexNluPipelineOutcome.needsClarification,
-            message: ChatMessage.bot(_clarifier.belirsiz()),
-          );
-        } else {
-          await _memory.clearPendingSlot(scope: scope);
-          return VixrexNluPipelineResult(
-            outcome: VixrexNluPipelineOutcome.needsClarification,
-            message: ChatMessage.bot(
-              'Tamam, vazgeçtim. Başka nasıl yardımcı olabilirim?',
-            ),
-          );
-        }
-      }
-
       final alanFromPending = vixrexNiyetAlanByAnahtar[pending.anahtar];
       if (alanFromPending != null) {
         final resolved = _intentResolver.resolve(trimmed);
         if (resolved == null) {
-          final hamDeger =
-              alanFromPending.tip == 'acikKapali'
-                  ? _extractPipelineValue(trimmed, alanFromPending)
-                  : trimmed;
-          if (hamDeger == null || hamDeger.trim().isEmpty) {
+          final baglam = vixrexBaglamsalCevapKarari(
+            trimmed,
+            VixrexBekleyenBaglam(
+              anahtar: alanFromPending.anahtar,
+              etiket: alanFromPending.etiket,
+              tip: alanFromPending.tip,
+            ),
+          );
+
+          if (baglam.karar == VixrexBaglamKarari.iptal ||
+              baglam.karar == VixrexBaglamKarari.ayniKalsin) {
+            await _memory.clearPendingSlot(scope: scope);
             return VixrexNluPipelineResult(
               outcome: VixrexNluPipelineOutcome.needsClarification,
-              message: ChatMessage.bot(_clarifier.sor(alanFromPending)),
+              message: ChatMessage.bot(baglam.mesaj),
+            );
+          }
+
+          if (!baglam.yazma) {
+            return VixrexNluPipelineResult(
+              outcome: VixrexNluPipelineOutcome.needsClarification,
+              message: ChatMessage.bot(baglam.mesaj),
               appliedAnahtar: alanFromPending.anahtar,
             );
           }
+
           if (needsSpecialFlow != null && needsSpecialFlow(alanFromPending)) {
             return VixrexNluPipelineResult(
               outcome: VixrexNluPipelineOutcome.needsSpecialFlow,
@@ -212,6 +189,8 @@ class VixrexNluPipeline {
               appliedAnahtar: alanFromPending.anahtar,
             );
           }
+
+          final hamDeger = baglam.deger?.toString() ?? trimmed;
           final validated = await onValidate(alanFromPending, hamDeger);
           if (!validated.ok) {
             return VixrexNluPipelineResult(
@@ -262,7 +241,7 @@ class VixrexNluPipeline {
     if (tumAlanlar.isEmpty) {
       return VixrexNluPipelineResult(
         outcome: VixrexNluPipelineOutcome.notUnderstood,
-        message: ChatMessage.bot(_clarifier.belirsiz()),
+        message: ChatMessage.bot(vixrexDogalGenelSoru),
       );
     }
 
@@ -296,7 +275,7 @@ class VixrexNluPipeline {
         return VixrexNluPipelineResult(
           outcome: VixrexNluPipelineOutcome.needsClarification,
           message: ChatMessage.bot(
-            hatalar.isNotEmpty ? hatalar.join('\n') : _clarifier.belirsiz(),
+            hatalar.isNotEmpty ? hatalar.join('\n') : vixrexDogalGenelSoru,
           ),
         );
       }
