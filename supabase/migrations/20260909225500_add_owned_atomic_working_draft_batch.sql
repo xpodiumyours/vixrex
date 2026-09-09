@@ -93,6 +93,9 @@ begin
 
   if not found then
     -- Flutter'da ilk düzenleme ise kanonik taslak canlı veriden başlatılır.
+    -- İki cihaz ilk kez aynı anda yazarsa yalnız biri insert kazanır; diğeri
+    -- PK çatışmasında hata vermek yerine mevcut satırı aşağıdaki kilitli
+    -- okumada kullanır.
     insert into public.store_working_drafts (
       store_id,
       draft_data,
@@ -107,7 +110,8 @@ begin
       st.version,
       now()
     from public.stores st
-    where st.id = v_store_id;
+    where st.id = v_store_id
+    on conflict (store_id) do nothing;
 
     select draft_data, draft_version
     into v_draft_data, v_draft_version
