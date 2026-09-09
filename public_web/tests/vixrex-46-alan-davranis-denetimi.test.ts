@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { VIXREX_NIYET_SOZLUGU } from "../src/lib/vixrexNiyetSozlugu";
 import { resolveVixrexIntent, resolveVixrexIntentsAll } from "../src/lib/vixrexIntentResolver";
-import { extractVixrexValue } from "../src/lib/vixrexValueExtractor";
+import { handleVixrexNluMessage } from "../src/lib/vixrexNluPipeline";
 
 /**
  * 46 alanın yalnız sözlükte SAYILMASINI değil, sözlüğün kendi konuşma
  * örneklerinin gerçek resolver tarafından tanınmasını kilitler.
  *
- * Bu test deliberately tek tek seçilmiş birkaç mutlu yol kullanmaz: Vixrex'in
- * kendi `shared/vixrex_niyet_sozlugu.json` kaynağındaki HER alanın HER örneği
+ * Bu test tek tek seçilmiş birkaç mutlu yol kullanmaz: Vixrex'in kendi
+ * `shared/vixrex_niyet_sozlugu.json` kaynağındaki HER alanın HER örneği
  * ürün davranışına sokulur. Yeni alan/örnek eklendiğinde otomatik kapsanır.
  */
 describe("Vixrex Assistant 46 alan davranış denetimi", () => {
@@ -34,13 +34,15 @@ describe("Vixrex Assistant 46 alan davranış denetimi", () => {
     expect(alanlar.map((a) => a.anahtar)).not.toContain("il");
   });
 
-  it("aç/kapat komutları niyetten sonra gerçek değer üretebilir", () => {
-    const ac = resolveVixrexIntent("Puanı göster");
-    expect(ac?.anahtar).toBe("puanGoster");
-    expect(ac ? extractVixrexValue("Puanı göster", ac) : null).not.toBeNull();
+  it("aç/kapat komutları gerçek pipeline sonucunda boolean üretir", async () => {
+    const ac = await handleVixrexNluMessage("Puanı göster");
+    expect(ac.outcome).toBe("handled");
+    expect(ac.anahtar).toBe("puanGoster");
+    expect(ac.deger).toBe(true);
 
-    const kapat = resolveVixrexIntent("Yol tarifi butonunu gizle");
-    expect(kapat?.anahtar).toBe("yolTarifiGoster");
-    expect(kapat ? extractVixrexValue("Yol tarifi butonunu gizle", kapat) : null).not.toBeNull();
+    const kapat = await handleVixrexNluMessage("Yol tarifi butonunu gizle");
+    expect(kapat.outcome).toBe("handled");
+    expect(kapat.anahtar).toBe("yolTarifiGoster");
+    expect(kapat.deger).toBe(false);
   });
 });
