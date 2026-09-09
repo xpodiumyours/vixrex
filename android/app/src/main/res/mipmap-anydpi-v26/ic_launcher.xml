@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Uyarlanabilir uygulama ikonu (Android 8 ve sonrası).
+
+  Bu dosya olmadan Android, mipmap-*/ic_launcher.png'yi olduğu gibi beyaz bir
+  rozet içine koyuyordu — ana ekranda diğer uygulamalar gibi durmuyordu.
+  Burada iki katman var: marka zemini + ortada Vixrex maskotu. Launcher
+  zemini daire/kare/squircle olarak kırpar, maskot güvenli alanda kalır.
+-->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@color/ic_launcher_background" />
+    <foreground android:drawable="@mipmap/ic_launcher_foreground" />
+</adaptive-icon>
