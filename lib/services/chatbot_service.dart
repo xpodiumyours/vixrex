@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vixrex/config/chatbot_config.dart';
 import 'package:vixrex/models/chat_message.dart';
 import 'package:vixrex/repositories/vixrex_conversation_repository.dart';
+import 'package:vixrex/services/vixrex_nlu/vixrex_general_intent_resolver.dart';
 import 'package:vixrex/services/vixrex_profile_snapshot.dart';
 
 /// VixRex chatbot servis katmanı.
@@ -15,6 +16,7 @@ class ChatbotService {
           conversationRepository ?? const VixrexConversationRepository();
 
   final VixrexConversationRepository _conversationRepository;
+  static const _generalIntentResolver = VixrexGeneralIntentResolver();
 
   bool get canSync => _conversationRepository.canSync;
 
@@ -29,19 +31,13 @@ class ChatbotService {
     VixRexProfileSnapshot? snapshot,
     bool hasShared = false,
   ]) {
-    final normalized = _normalize(input);
-
-    // Intent eşleştirme
-    for (final intent in ChatbotConfig.intents) {
-      for (final keyword in intent.keywords) {
-        if (normalized.contains(_normalize(keyword))) {
-          return ChatbotConfig.responseFor(
-            intent.payload,
-            snapshot: snapshot,
-            hasShared: hasShared,
-          );
-        }
-      }
+    final payload = _generalIntentResolver.resolve(input);
+    if (payload != null) {
+      return ChatbotConfig.responseFor(
+        payload,
+        snapshot: snapshot,
+        hasShared: hasShared,
+      );
     }
 
     // Eşleşme bulunamadı
@@ -103,24 +99,6 @@ class ChatbotService {
   Future<void> dismissRecommendation(String recommendationId) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_dismissedRecommendationKey, recommendationId);
-  }
-
-  /// Türkçe karakter normalizasyonu + küçük harf.
-  String _normalize(String text) {
-    return text
-        .toLowerCase()
-        .replaceAll('ı', 'i')
-        .replaceAll('ğ', 'g')
-        .replaceAll('ü', 'u')
-        .replaceAll('ş', 's')
-        .replaceAll('ö', 'o')
-        .replaceAll('ç', 'c')
-        .replaceAll('İ', 'i')
-        .replaceAll('Ğ', 'g')
-        .replaceAll('Ü', 'u')
-        .replaceAll('Ş', 's')
-        .replaceAll('Ö', 'o')
-        .replaceAll('Ç', 'c');
   }
 
   // ── Tek anahtar deseni (Tek Asistan planı, Faz C) ───────────────────────
