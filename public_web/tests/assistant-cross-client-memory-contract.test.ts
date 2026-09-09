@@ -26,6 +26,17 @@ describe("Vixrex Assistant Flutter ↔ Next.js pending hafıza sözleşmesi", ()
     expect(memory).toContain("SharedPreferences.getInstance()");
   });
 
+  it("kaldırma onayı bağlamı iki istemcinin ortak pending_slot JSON'unda taşınır", () => {
+    const memory = read("lib/services/vixrex_nlu/vixrex_conversation_memory.dart");
+    const nextPipeline = read("public_web/src/lib/vixrexNluPipeline.ts");
+
+    expect(memory).toContain("final String? eylem");
+    expect(memory).toContain("if (eylem != null) 'eylem': eylem");
+    expect(memory).toContain("eylem: json['eylem'] as String?");
+    expect(nextPipeline).toContain('eylem?: "kaldir"');
+    expect(nextPipeline).toContain('savePending(alan, "kaldir")');
+  });
+
   it("Flutter ve Next niyet resolver'ları başlangıç + örtüşme güvenlik sınırını birlikte taşır", () => {
     const dartResolver = read("lib/services/vixrex_nlu/vixrex_intent_resolver.dart");
     const nextResolver = read("public_web/src/lib/vixrexIntentResolver.ts");
