@@ -1,0 +1,37 @@
+[
+  {"id":"genel-01","bekleyen":null,"girdi":"bunu düzelt","karar":"genel_sor","yazma":false},
+  {"id":"genel-02","bekleyen":null,"girdi":"anlamadım","karar":"genel_sor","yazma":false},
+  {"id":"genel-03","bekleyen":null,"girdi":"","karar":"genel_sor","yazma":false},
+
+  {"id":"telefon-evet","bekleyen":{"anahtar":"telefon","etiket":"Telefon","tip":"telefon"},"girdi":"evet","karar":"ozel_sor","yazma":false},
+  {"id":"telefon-hayir","bekleyen":{"anahtar":"telefon","etiket":"Telefon","tip":"telefon"},"girdi":"hayır","karar":"ozel_sor","yazma":false},
+  {"id":"telefon-tamam","bekleyen":{"anahtar":"telefon","etiket":"Telefon","tip":"telefon"},"girdi":"tamam","karar":"ozel_sor","yazma":false},
+  {"id":"telefon-olur","bekleyen":{"anahtar":"telefon","etiket":"Telefon","tip":"telefon"},"girdi":"olur","karar":"ozel_sor","yazma":false},
+  {"id":"telefon-ayni","bekleyen":{"anahtar":"telefon","etiket":"Telefon","tip":"telefon"},"girdi":"aynısı","karar":"ayni_kalsin","yazma":false},
+  {"id":"telefon-kaldir","bekleyen":{"anahtar":"telefon","etiket":"Telefon","tip":"telefon"},"girdi":"onu kaldır","karar":"kaldirma_onayi","yazma":false},
+  {"id":"telefon-degistir","bekleyen":{"anahtar":"telefon","etiket":"Telefon","tip":"telefon"},"girdi":"değiştir","karar":"ozel_sor","yazma":false},
+  {"id":"telefon-deger","bekleyen":{"anahtar":"telefon","etiket":"Telefon","tip":"telefon"},"girdi":"0212 555 44 33","karar":"deger","yazma":true},
+
+  {"id":"whatsapp-deger","bekleyen":{"anahtar":"whatsapp","etiket":"WhatsApp Numarası","tip":"telefon"},"girdi":"0532 555 44 33","karar":"deger","yazma":true},
+  {"id":"eposta-deger","bekleyen":{"anahtar":"eposta","etiket":"E-posta","tip":"eposta"},"girdi":"info@denizteknik.com","karar":"deger","yazma":true},
+  {"id":"isim-deger","bekleyen":{"anahtar":"isletmeAdi","etiket":"İşletme Adı","tip":"metin"},"girdi":"Deniz Teknik","karar":"deger","yazma":true},
+  {"id":"isim-iptal","bekleyen":{"anahtar":"isletmeAdi","etiket":"İşletme Adı","tip":"metin"},"girdi":"iptal","karar":"iptal","yazma":false},
+  {"id":"isim-vazgec","bekleyen":{"anahtar":"isletmeAdi","etiket":"İşletme Adı","tip":"metin"},"girdi":"vazgeç","karar":"iptal","yazma":false},
+
+  {"id":"puan-evet","bekleyen":{"anahtar":"puanGoster","etiket":"Değerlendirme Puanını Göster","tip":"acikKapali"},"girdi":"evet","karar":"bool_true","yazma":true},
+  {"id":"puan-hayir","bekleyen":{"anahtar":"puanGoster","etiket":"Değerlendirme Puanını Göster","tip":"acikKapali"},"girdi":"hayır","karar":"bool_false","yazma":true},
+  {"id":"yol-evet","bekleyen":{"anahtar":"yolTarifiGoster","etiket":"Yol Tarifi Butonunu Göster","tip":"acikKapali"},"girdi":"evet","karar":"bool_true","yazma":true},
+  {"id":"yol-hayir","bekleyen":{"anahtar":"yolTarifiGoster","etiket":"Yol Tarifi Butonunu Göster","tip":"acikKapali"},"girdi":"hayır","karar":"bool_false","yazma":true},
+
+  {"id":"saat-aksam-yedi","bekleyen":{"anahtar":"calismaSaatleri","etiket":"Çalışma Saatleri","tip":"metin"},"girdi":"akşam yedi","karar":"saat_eksik","yazma":false},
+  {"id":"saat-tek-saat","bekleyen":{"anahtar":"calismaSaatleri","etiket":"Çalışma Saatleri","tip":"metin"},"girdi":"19:00","karar":"saat_eksik","yazma":false},
+  {"id":"saat-aralik","bekleyen":{"anahtar":"calismaSaatleri","etiket":"Çalışma Saatleri","tip":"metin"},"girdi":"09:00-19:00","karar":"deger","yazma":true},
+  {"id":"saat-aralik-yazi","bekleyen":{"anahtar":"calismaSaatleri","etiket":"Çalışma Saatleri","tip":"metin"},"girdi":"sabah 9 akşam 7","karar":"deger","yazma":true},
+
+  {"id":"adres-ilce","bekleyen":{"anahtar":"adres","etiket":"Açık Adres","tip":"uzunMetin"},"girdi":"Bağcılar","karar":"adres_eksik","yazma":false},
+  {"id":"adres-kisa","bekleyen":{"anahtar":"adres","etiket":"Açık Adres","tip":"uzunMetin"},"girdi":"Kadıköy İstanbul","karar":"adres_eksik","yazma":false},
+  {"id":"adres-tam","bekleyen":{"anahtar":"adres","etiket":"Açık Adres","tip":"uzunMetin"},"girdi":"Yıldız Mahallesi Çınar Sokak No: 12 Bağcılar İstanbul","karar":"deger","yazma":true},
+
+  {"id":"kategori-deger","bekleyen":{"anahtar":"kategori","etiket":"İşletme Kategorisi","tip":"secim"},"girdi":"Kafe / Lokanta","karar":"deger","yazma":true},
+  {"id":"website-deger","bekleyen":{"anahtar":"website","etiket":"Web Sitesi","tip":"url"},"girdi":"https://denizteknik.com","karar":"deger","yazma":true}
+]
