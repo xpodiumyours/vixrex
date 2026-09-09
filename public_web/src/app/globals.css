@@ -236,11 +236,25 @@ body {
   }
 }
 
-/* Typography */
-h1, h2, h3, h4, h5, h6 {
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--text-dark);
+/* Typography
+ *
+ * `@layer base` ZORUNLU: katman dışı yazılan bir eleman kuralı, Tailwind'in
+ * `@layer utilities` içindeki sınıflarını EZER. Bu blok katman dışındayken
+ * sayfadaki `font-black` (900), `tracking-[-0.8px]` ve `text-lp-*` ayarları
+ * hiçbir başlıkta işlemiyordu: her başlık 700 ağırlık, -0.02em aralık ve
+ * `--text-dark` rengiyle çiziliyordu. Flutter aynı başlıkları w900 çizdiği
+ * için iki yüz görünür biçimde ayrışıyordu (2026-09-09 canlı ölçüm:
+ * vixrex.com h1 → hesaplanan 700, beklenen 900).
+ *
+ * Katmana alınınca varsayılan korunur, açık sınıf öne geçer.
+ * Kilidi: tests/baslik-agirligi-katman.test.ts
+ */
+@layer base {
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text-dark);
+  }
 }
 
 /* Micro-Animations & Utilities */
