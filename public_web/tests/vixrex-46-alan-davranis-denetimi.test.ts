@@ -29,6 +29,31 @@ describe("Vixrex Assistant 46 alan davranış denetimi", () => {
     expect(hatalar, hatalar.join("\n")).toEqual([]);
   });
 
+  it("her tek-alan sözlük örneği resolveAll içinde yalnız kendi alanını üretir", () => {
+    const hatalar: string[] = [];
+
+    for (const alan of VIXREX_NIYET_SOZLUGU) {
+      for (const ornek of alan.ornekIfadeler) {
+        const input = ornek.replaceAll("{deger}", "Örnek Değer");
+        const bulunan = resolveVixrexIntentsAll(input).map((a) => a.anahtar);
+        if (bulunan.length !== 1 || bulunan[0] !== alan.anahtar) {
+          hatalar.push(`${alan.anahtar}: ${JSON.stringify(input)} -> [${bulunan.join(", ")}]`);
+        }
+      }
+    }
+
+    expect(hatalar, hatalar.join("\n")).toEqual([]);
+  });
+
+  it("ayrı metin aralıklarındaki gerçek iki alan resolveAll içinde korunur", () => {
+    const alanlar = resolveVixrexIntentsAll(
+      "Telefonu 0212 555 44 33 yap, e-postayı info@denizteknik.com yap",
+    ).map((a) => a.anahtar);
+
+    expect(alanlar).toHaveLength(2);
+    expect(new Set(alanlar)).toEqual(new Set(["telefon", "eposta"]));
+  });
+
   it("kısa alan adı sıradan kelimenin içinden yanlış niyet üretmez", () => {
     const alanlar = resolveVixrexIntentsAll("Ailece müşterilerimize hizmet veriyoruz.");
     expect(alanlar.map((a) => a.anahtar)).not.toContain("il");
