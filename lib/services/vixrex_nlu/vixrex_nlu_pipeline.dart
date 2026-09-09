@@ -162,6 +162,7 @@ class VixrexNluPipeline {
               anahtar: alanFromPending.anahtar,
               etiket: alanFromPending.etiket,
               tip: alanFromPending.tip,
+              eylem: pending.eylem,
             ),
           );
 
@@ -175,6 +176,19 @@ class VixrexNluPipeline {
           }
 
           if (!baglam.yazma) {
+            if (baglam.karar == VixrexBaglamKarari.kaldirmaOnayi &&
+                pending.eylem != 'kaldir') {
+              await _memory.savePendingSlot(
+                VixrexPendingSlot(
+                  anahtar: alanFromPending.anahtar,
+                  etiket: alanFromPending.etiket,
+                  tip: alanFromPending.tip,
+                  sorulduAt: DateTime.now(),
+                  eylem: 'kaldir',
+                ),
+                scope: scope,
+              );
+            }
             return VixrexNluPipelineResult(
               outcome: VixrexNluPipelineOutcome.needsClarification,
               message: ChatMessage.bot(baglam.mesaj),
@@ -190,7 +204,9 @@ class VixrexNluPipeline {
             );
           }
 
-          final hamDeger = baglam.deger?.toString() ?? trimmed;
+          final hamDeger = baglam.karar == VixrexBaglamKarari.kaldir
+              ? ''
+              : baglam.deger?.toString() ?? trimmed;
           final validated = await onValidate(alanFromPending, hamDeger);
           if (!validated.ok) {
             return VixrexNluPipelineResult(
@@ -200,7 +216,9 @@ class VixrexNluPipeline {
               ),
             );
           }
-          final kesinDeger = validated.normalizedDeger ?? hamDeger;
+          final kesinDeger = baglam.karar == VixrexBaglamKarari.kaldir
+              ? null
+              : validated.normalizedDeger ?? hamDeger;
 
           final canonicalFailure = await _writeCanonicalWhenDelegated(
             controller: controller,
@@ -228,7 +246,12 @@ class VixrexNluPipeline {
           return VixrexNluPipelineResult(
             outcome: VixrexNluPipelineOutcome.handled,
             message: ChatMessage.bot(
-              _clarifier.basari(alanFromPending, kesinDeger.toString()),
+              baglam.karar == VixrexBaglamKarari.kaldir
+                  ? '${alanFromPending.etiket} bilgisini kaldırdım.'
+                  : _clarifier.basari(
+                      alanFromPending,
+                      kesinDeger.toString(),
+                    ),
             ),
             appliedAnahtar: alanFromPending.anahtar,
             appliedDeger: kesinDeger,
