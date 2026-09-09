@@ -197,17 +197,23 @@ export async function bonusAlanlariCikarVeKaydet(
   if (bulunanlar.length === 0) return;
 
   try {
+    const commandId = crypto.randomUUID();
     const yanit = await fetch("/api/owner-draft-batch", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         slug,
+        commandId,
         degisiklikler: bulunanlar.map(({ anahtar, deger }) => ({ anahtar, deger })),
         clientId: taslakClientId(),
       }),
     });
     const govde = await yanit.json();
     if (!yanit.ok) return;
+    if (typeof govde?.commandId !== "string" || govde.commandId !== commandId) {
+      routerRefresh();
+      return;
+    }
 
     const kesinDegisiklikler = Array.isArray(govde?.degisiklikler)
       ? (govde.degisiklikler as Array<{
@@ -448,17 +454,17 @@ export function useOwnerActions({
         let tazeTaslak = { ...yerelTaslak };
         const kaydedilen: string[] = [];
         const kaydedilenSatirlar: string[] = [];
+        const commandId = crypto.randomUUID();
 
-        // Assistant serbest-metin yazımı TEK ALAN olsa bile aynı batch
-        // güvenlik kapısından geçer. Böylece onay kartındaki gerçek undo
-        // yalnız Assistant işlemlerine bağlıdır; manuel /owner-draft yazımı
-        // aynı alanı sonradan değiştirirse draft_version koruması eski kartın
-        // yeni değeri geri almasını engeller.
+        // Assistant serbest-metin yazımı TEK ALAN olsa bile aynı command
+        // güvenlik kapısından geçer. Bir kullanıcı mesajı bir commandId alır;
+        // retry aynı ID ile yeniden yazmaz, undo da yalnız bu command'a bağlıdır.
         const yanit = await fetch("/api/owner-draft-batch", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             slug,
+            commandId,
             degisiklikler: cozulen.map(({ anahtar, deger }) => ({ anahtar, deger })),
             clientId: taslakClientId(),
           }),
@@ -467,6 +473,14 @@ export function useOwnerActions({
 
         if (!yanit.ok) {
           mesajEkle("asistan", govde?.hata ?? "Değişiklikler kaydedilemedi.");
+          return;
+        }
+        if (typeof govde?.commandId !== "string" || govde.commandId !== commandId) {
+          router.refresh();
+          mesajEkle(
+            "asistan",
+            "Kayıt tamamlandı ancak işlem kimliği doğrulanamadı. Vitrini yeniledim."
+          );
           return;
         }
 
@@ -512,14 +526,15 @@ export function useOwnerActions({
           return;
         }
 
-        // Motorun tahmini değil, gerçek kayıt sonucu gösterilir. İşlem artık
-        // tek alan dahil ya tamamen başarılıdır ya da hiçbir alan yazılmamıştır.
+        // Motorun tahmini değil, gerçek kayıt sonucu gösterilir. Undo payload'ı
+        // alan adı değil commandId taşır; eski kart yeni aynı-alan command'ını
+        // geri alamaz.
         mesajEkle(
           "asistan",
           kaydedilenSatirlar.join("\n"),
           [
             { label: "Doğru", payload: "onay_tamam" },
-            { label: "Geri al", payload: `geri_al:${kaydedilen.join(",")}` },
+            { label: "Geri al", payload: `geri_al:${commandId}` },
           ],
           "✅"
         );
