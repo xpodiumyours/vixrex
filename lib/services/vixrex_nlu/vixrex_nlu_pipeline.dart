@@ -1,6 +1,7 @@
 import 'package:vixrex/config/vixrex_niyet_sozlugu.g.dart';
 import 'package:vixrex/controllers/store_editor_controller.dart';
 import 'package:vixrex/models/chat_message.dart';
+import 'package:vixrex/services/vixrex_nlu/vixrex_canonical_draft_writer.dart';
 import 'package:vixrex/services/vixrex_nlu/vixrex_clarifier.dart';
 import 'package:vixrex/services/vixrex_nlu/vixrex_conversation_memory.dart';
 import 'package:vixrex/services/vixrex_nlu/vixrex_intent_resolver.dart';
@@ -44,17 +45,20 @@ class VixrexNluPipeline {
     VixrexConversationMemoryPort? memory,
     VixrexClarifier? clarifier,
     VixrexExecutor? executor,
+    VixrexCanonicalDraftWriter? canonicalWriter,
   }) : _intentResolver = intentResolver ?? const VixrexIntentResolver(),
        _valueExtractor = valueExtractor ?? const VixrexValueExtractor(),
        _memory = memory ?? const VixrexConversationMemory(),
        _clarifier = clarifier ?? const VixrexClarifier(),
-       _executor = executor ?? const VixrexExecutor();
+       _executor = executor ?? const VixrexExecutor(),
+       _canonicalWriter = canonicalWriter ?? const VixrexCanonicalDraftWriter();
 
   final VixrexIntentResolver _intentResolver;
   final VixrexValueExtractor _valueExtractor;
   final VixrexConversationMemoryPort _memory;
   final VixrexClarifier _clarifier;
   final VixrexExecutor _executor;
+  final VixrexCanonicalDraftWriter _canonicalWriter;
 
   static const _evetler = {
     'evet',
@@ -111,6 +115,35 @@ class VixrexNluPipeline {
       return null;
     }
     return _valueExtractor.extract(input, alan);
+  }
+
+  VixrexNluPipelineResult _canonicalWriteFailure(String? error) {
+    return VixrexNluPipelineResult(
+      outcome: VixrexNluPipelineOutcome.needsClarification,
+      message: ChatMessage.bot(
+        error == null || error.trim().isEmpty
+            ? 'Kaydedemedim. Bağlantıyı kontrol edip tekrar dene.'
+            : 'Kaydedemedim. Değişiklik uygulanmadı.',
+      ),
+    );
+  }
+
+  /// CompanionChat controller'a doğrudan sahip değildir. Kalıcı hesapta
+  /// `handled` demeden ÖNCE aynı Supabase working draft'a batch yazar.
+  /// Anonim/eski akışta kanonik yazar kullanılamaz ve mevcut yerel callback
+  /// davranışı korunur. Uzak yazım denenip başarısız olursa yerel callback'e
+  /// başarı sonucu dönülmez; iki cihaz arasında sahte başarı oluşmaz.
+  Future<VixrexNluPipelineResult?> _writeCanonicalWhenDelegated({
+    required StoreEditorController? controller,
+    required List<VixrexNiyetAlan> alanlar,
+    required List<Object?> degerler,
+  }) async {
+    if (controller != null) return null;
+    final write = await _canonicalWriter.write(alanlar: alanlar, degerler: degerler);
+    if (write.state == VixrexCanonicalWriteState.failed) {
+      return _canonicalWriteFailure(write.error);
+    }
+    return null;
   }
 
   /// Ana giriş – sohbetten çağrılır.
@@ -184,11 +217,20 @@ class VixrexNluPipeline {
               ),
             );
           }
+          final kesinDeger = validated.normalizedDeger ?? hamDeger;
+
+          final canonicalFailure = await _writeCanonicalWhenDelegated(
+            controller: controller,
+            alanlar: [alanFromPending],
+            degerler: [kesinDeger],
+          );
+          if (canonicalFailure != null) return canonicalFailure;
+
           if (controller != null) {
             final ok = _executor.execute(
               controller: controller,
               alan: alanFromPending,
-              deger: validated.normalizedDeger ?? hamDeger,
+              deger: kesinDeger,
             );
             if (!ok) {
               return VixrexNluPipelineResult(
@@ -203,13 +245,10 @@ class VixrexNluPipeline {
           return VixrexNluPipelineResult(
             outcome: VixrexNluPipelineOutcome.handled,
             message: ChatMessage.bot(
-              _clarifier.basari(
-                alanFromPending,
-                (validated.normalizedDeger ?? hamDeger).toString(),
-              ),
+              _clarifier.basari(alanFromPending, kesinDeger.toString()),
             ),
             appliedAnahtar: alanFromPending.anahtar,
-            appliedDeger: validated.normalizedDeger ?? hamDeger,
+            appliedDeger: kesinDeger,
           );
         }
       }
@@ -242,21 +281,14 @@ class VixrexNluPipeline {
           hatalar.add(v.hata ?? '${a.etiket} geçersiz');
           continue;
         }
-        if (controller != null) {
-          final ok = _executor.execute(
-            controller: controller,
-            alan: a,
-            deger: v.normalizedDeger ?? ham,
-          );
-          if (!ok) {
-            hatalar.add('${a.etiket} için özel akış gerekli');
-            continue;
-          }
-        }
         basarili.add(a);
         basariliDegerler.add(v.normalizedDeger ?? ham);
       }
-      if (basarili.isEmpty) {
+
+      // Bir cümlede birden çok niyet bulunduysa kısmi başarı YASAK. Kullanıcı
+      // iki alan söylediğinde birini sessizce atıp ötekini yazmak atomik
+      // davranış değildir. Tek bir hata varsa hiçbir alan uygulanmaz.
+      if (basarili.isEmpty || hatalar.isNotEmpty) {
         return VixrexNluPipelineResult(
           outcome: VixrexNluPipelineOutcome.needsClarification,
           message: ChatMessage.bot(
@@ -264,7 +296,32 @@ class VixrexNluPipeline {
           ),
         );
       }
-      if (controller != null) await controller.saveLocally();
+
+      final canonicalFailure = await _writeCanonicalWhenDelegated(
+        controller: controller,
+        alanlar: basarili,
+        degerler: basariliDegerler,
+      );
+      if (canonicalFailure != null) return canonicalFailure;
+
+      if (controller != null) {
+        for (var i = 0; i < basarili.length; i++) {
+          final ok = _executor.execute(
+            controller: controller,
+            alan: basarili[i],
+            deger: basariliDegerler[i],
+          );
+          if (!ok) {
+            return VixrexNluPipelineResult(
+              outcome: VixrexNluPipelineOutcome.needsSpecialFlow,
+              message: ChatMessage.bot(_clarifier.sor(basarili[i])),
+              appliedAnahtar: basarili[i].anahtar,
+            );
+          }
+        }
+        await controller.saveLocally();
+      }
+
       await _memory.clearPendingSlot(scope: scope);
       final metin = basarili
           .asMap()
@@ -331,11 +388,19 @@ class VixrexNluPipeline {
       );
     }
 
+    final kesinDeger = validated.normalizedDeger ?? hamDeger;
+    final canonicalFailure = await _writeCanonicalWhenDelegated(
+      controller: controller,
+      alanlar: [alan],
+      degerler: [kesinDeger],
+    );
+    if (canonicalFailure != null) return canonicalFailure;
+
     if (controller != null) {
       final ok = _executor.execute(
         controller: controller,
         alan: alan,
-        deger: validated.normalizedDeger ?? hamDeger,
+        deger: kesinDeger,
       );
       if (!ok) {
         await _memory.savePendingSlot(
@@ -359,14 +424,9 @@ class VixrexNluPipeline {
     await _memory.clearPendingSlot(scope: scope);
     return VixrexNluPipelineResult(
       outcome: VixrexNluPipelineOutcome.handled,
-      message: ChatMessage.bot(
-        _clarifier.basari(
-          alan,
-          (validated.normalizedDeger ?? hamDeger).toString(),
-        ),
-      ),
+      message: ChatMessage.bot(_clarifier.basari(alan, kesinDeger.toString())),
       appliedAnahtar: alan.anahtar,
-      appliedDeger: validated.normalizedDeger ?? hamDeger,
+      appliedDeger: kesinDeger,
     );
   }
 }
