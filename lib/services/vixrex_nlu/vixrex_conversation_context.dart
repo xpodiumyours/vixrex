@@ -4,11 +4,13 @@ class VixrexBekleyenBaglam {
   final String anahtar;
   final String etiket;
   final String tip;
+  final String? eylem;
 
   const VixrexBekleyenBaglam({
     required this.anahtar,
     required this.etiket,
     required this.tip,
+    this.eylem,
   });
 }
 
@@ -17,6 +19,7 @@ enum VixrexBaglamKarari {
   ozelSor,
   ayniKalsin,
   kaldirmaOnayi,
+  kaldir,
   iptal,
   boolTrue,
   boolFalse,
@@ -100,6 +103,30 @@ VixrexBaglamSonucu vixrexBaglamsalCevapKarari(
       karar: VixrexBaglamKarari.genelSor,
       yazma: false,
       mesaj: vixrexDogalGenelSoru,
+    );
+  }
+
+  if (bekleyen.eylem == 'kaldir') {
+    if (_evet.contains(norm)) {
+      return const VixrexBaglamSonucu(
+        karar: VixrexBaglamKarari.kaldir,
+        yazma: true,
+        mesaj: '',
+        deger: '',
+      );
+    }
+    if (_hayir.contains(norm) || _iptal.contains(norm)) {
+      return VixrexBaglamSonucu(
+        karar: VixrexBaglamKarari.iptal,
+        yazma: false,
+        mesaj: 'Tamam, ${bekleyen.etiket} bilgisini kaldırmıyorum.',
+      );
+    }
+    return VixrexBaglamSonucu(
+      karar: VixrexBaglamKarari.kaldirmaOnayi,
+      yazma: false,
+      mesaj:
+          '${bekleyen.etiket} bilgisini kaldırmamı istiyorsan evet, vazgeçtiysen hayır diyebilirsin.',
     );
   }
 
