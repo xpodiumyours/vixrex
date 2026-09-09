@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vixrex/config/vixrex_niyet_sozlugu.g.dart';
+import 'package:vixrex/controllers/store_editor_controller.dart';
+import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/services/vixrex_nlu/vixrex_field_validator.dart';
 import 'package:vixrex/services/vixrex_nlu/vixrex_intent_resolver.dart';
 import 'package:vixrex/services/vixrex_nlu/vixrex_nlu_pipeline.dart';
@@ -8,6 +10,14 @@ import 'package:vixrex/services/vixrex_nlu/vixrex_nlu_pipeline.dart';
 void main() {
   group('Vixrex Assistant 46 alan güvenlik kapısı', () {
     const resolver = VixrexIntentResolver();
+
+    Future<({bool ok, String? hata, Object? normalizedDeger})> validate(
+      VixrexNiyetAlan alan,
+      String ham,
+    ) async {
+      final v = VixrexFieldValidator.validate(alan, ham);
+      return (ok: v.ok, hata: v.hata, normalizedDeger: v.normalizedDeger);
+    }
 
     test('46 alanın her sözlük örneği kendi alanına çözülür', () {
       expect(vixrexNiyetSozlugu.length, 46);
@@ -39,14 +49,6 @@ void main() {
       SharedPreferences.setMockInitialValues({});
       final pipeline = VixrexNluPipeline();
 
-      Future<({bool ok, String? hata, Object? normalizedDeger})> validate(
-        VixrexNiyetAlan alan,
-        String ham,
-      ) async {
-        final v = VixrexFieldValidator.validate(alan, ham);
-        return (ok: v.ok, hata: v.hata, normalizedDeger: v.normalizedDeger);
-      }
-
       final ac = await pipeline.handle(
         input: 'Puanı göster',
         controller: null,
@@ -64,6 +66,23 @@ void main() {
       expect(kapat.outcome, VixrexNluPipelineOutcome.handled);
       expect(kapat.appliedAnahtar, 'yolTarifiGoster');
       expect(kapat.appliedDeger, false);
+    });
+
+    test('çoklu niyette bir alan özel akış isterse diğer alan da kısmi yazılmaz', () async {
+      SharedPreferences.setMockInitialValues({});
+      final pipeline = VixrexNluPipeline();
+      final controller = StoreEditorController(initialData: StoreData());
+      final oncekiTelefon = controller.data.phone;
+
+      final result = await pipeline.handle(
+        input: 'Telefonu 0212 123 45 67 yap, ili İstanbul yap',
+        controller: controller,
+        onValidate: validate,
+        needsSpecialFlow: (alan) => alan.anahtar == 'il',
+      );
+
+      expect(result.outcome, VixrexNluPipelineOutcome.needsClarification);
+      expect(controller.data.phone, oncekiTelefon);
     });
   });
 }
