@@ -110,7 +110,7 @@ export function AppSidebar() {
               prefetch
               scroll={false}
               aria-current={active ? "page" : undefined}
-              className={`relative my-[2px] flex min-h-[42px] items-center gap-3 rounded-xl px-3 text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
+              className={`relative my-[2px] flex min-h-11 items-center gap-3 rounded-xl px-3 text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
                 active
                   ? "vixrex-app-sidebar-item-active font-extrabold text-lp-text before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:rounded-full before:bg-lp-primary"
                   : "font-semibold text-lp-muted hover:bg-lp-surface-soft hover:text-lp-text"
