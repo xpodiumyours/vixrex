@@ -38,6 +38,24 @@ export const metadata: Metadata = {
   },
   other: {
     "mitgo-verification": "7db678d9-bb04-443d-9502-6c60d868823a",
+    // Next.js standart adı (`mobile-web-app-capable`) yazıyor; Apple'ın eski
+    // adını artık yazmıyor. Eski iOS sürümleri yalnız eskisini tanıdığı için
+    // ikisi birden veriliyor — fazlası zararsız, eksiği iPhone'da siteyi
+    // tarayıcı çubuğuyla açtırır.
+    "apple-mobile-web-app-capable": "yes",
+  },
+  // iOS manifest'i ana ekran ikonu için OKUMAZ; ayrıca apple-touch-icon ister.
+  // Bu olmadan iPhone'da ana ekrana eklenen site, sayfanın ekran görüntüsünü
+  // ikon olarak kullanır.
+  icons: {
+    apple: "/apple-icon-180.png",
+  },
+  // iOS'ta tarayıcı çubuğu olmadan, kendi penceresinde açılması için.
+  // (Android bunu manifest'teki `display: standalone` ile yapar.)
+  appleWebApp: {
+    capable: true,
+    title: "Vixrex",
+    statusBarStyle: "black-translucent",
   },
 };
 
