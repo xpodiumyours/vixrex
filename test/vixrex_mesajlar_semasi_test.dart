@@ -9,7 +9,11 @@ import 'package:vixrex/config/vixrex_mesajlar.g.dart';
 /// demektir.
 void main() {
   test('intent ve mesaj sayısı kilitli', () {
-    expect(vixRexIntentSemasi.length, 16);
+    // 2026-09-09: uygulama içi asistanda "Sıfırdan Oluştur" butonu
+    // seçeneğin etiketini konuşmaya düşürüyor; katalogda karşılığı
+    // olmadığı için asistan "anlaşılamadı" diyordu. `vitrin_kurulum`
+    // niyeti eklendi — 16 → 17.
+    expect(vixRexIntentSemasi.length, 17);
     // 2026-08-27: landing asistanı gerçek hâle getirilirken kapanış
     // mesajları eklendi (landing_finish_baslik/aciklama/buton) — 96 → 99.
     // Blog yayınlama sonucu iki yüzeyde ortaklaştırıldı — 99 → 100.

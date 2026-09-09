@@ -28,10 +28,16 @@ export type MockupProfili = {
   /** Uygulamadaki HeroDemoProfile ile aynı metinler */
   aciklama: string;
   durum: string;
+  /**
+   * Rozet metni Flutter'dan ayrı alan olarak alınır (landing_screen.dart
+   * 62/64, 101/103, 140/142, 179/181): rengine göre ternary ile tahmin
+   * etmek kırılgandı — 2026-09-08 canlı karşılaştırmada yanlış etiket
+   * ürettiği görüldü.
+   */
   /** Üst rozet (ör. "Galeri", "Menü") */
-  uStRozet: { simge: string; renk: string };
+  uStRozet: { simge: string; renk: string; metin: string };
   /** Alt rozet (ör. "QR kod", "Yol tarifi") */
-  altRozet: { simge: string; renk: string };
+  altRozet: { simge: string; renk: string; metin: string };
   /** Eylem simgeleri (ör. WhatsApp, Instagram) */
   eylemler: readonly { simge: string; renk: string }[];
   /** Eylem satırları (ör. "Günün menüsü / Sıcak yemek ve tatlılar") */
@@ -45,8 +51,8 @@ const TANIMLAR = [
     kimlik: "giyim",
     aciklama: "Yeni sezon reyonları ve mağaza fotoğrafları tek vitrinde.",
     durum: "AÇIK",
-    uStRozet: { simge: "🖼️", renk: "#FF5A1F" },
-    altRozet: { simge: "📱", renk: "#FF5A1F" },
+    uStRozet: { simge: "🖼️", renk: "#FF5A1F", metin: "Galeri" },
+    altRozet: { simge: "📱", renk: "#FF5A1F", metin: "QR kod" },
     eylemler: [
       { simge: "💬", renk: "#25D366" },
       { simge: "📷", renk: "#E1306C" },
@@ -62,8 +68,8 @@ const TANIMLAR = [
     kimlik: "kafe_lokanta",
     aciklama: "Menü, konum ve WhatsApp sipariş bilgileri tek ekranda.",
     durum: "AÇIK",
-    uStRozet: { simge: "📖", renk: "#EA580C" },
-    altRozet: { simge: "📍", renk: "#EA580C" },
+    uStRozet: { simge: "📖", renk: "#EA580C", metin: "Menü" },
+    altRozet: { simge: "📍", renk: "#EA580C", metin: "Yol tarifi" },
     eylemler: [
       { simge: "💬", renk: "#25D366" },
       { simge: "📍", renk: "#EF4444" },
@@ -79,8 +85,8 @@ const TANIMLAR = [
     kimlik: "kuafor",
     aciklama: "Randevu, hizmetler ve sosyal medya bağlantıları hazır.",
     durum: "AÇIK",
-    uStRozet: { simge: "📅", renk: "#DB2777" },
-    altRozet: { simge: "📷", renk: "#DB2777" },
+    uStRozet: { simge: "📅", renk: "#DB2777", metin: "Randevu" },
+    altRozet: { simge: "📷", renk: "#DB2777", metin: "Instagram" },
     eylemler: [
       { simge: "💬", renk: "#25D366" },
       { simge: "📷", renk: "#E1306C" },
@@ -96,8 +102,8 @@ const TANIMLAR = [
     kimlik: "teknik_servis",
     aciklama: "Servis talebi, adres ve güvenilir iletişim tek vitrinde.",
     durum: "AÇIK",
-    uStRozet: { simge: "💬", renk: "#2563EB" },
-    altRozet: { simge: "📍", renk: "#2563EB" },
+    uStRozet: { simge: "💬", renk: "#2563EB", metin: "WhatsApp" },
+    altRozet: { simge: "📍", renk: "#2563EB", metin: "Konum" },
     eylemler: [
       { simge: "💬", renk: "#25D366" },
       { simge: "📱", renk: "#2563EB" },

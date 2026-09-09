@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/widgets/editor/common_form_fields.dart';
+import 'package:vixrex/config/vitrin_alan_bilgisi.dart';
 
 class FaqEditorSheet extends StatefulWidget {
   final List<StoreFaqItem> items;
@@ -117,30 +118,30 @@ class _FaqEditorSheetState extends State<FaqEditorSheet> {
               ),
               const SizedBox(height: 16),
               EditorTextField(
-                label: 'SSS Üst Başlık',
+                label: vitrinAlanEtiketi('sssUstBaslik'),
                 controller: widget.kickerController,
                 hint: 'Örn: Merak edilenler',
                 icon: Icons.label_outline_rounded,
-                maxLength: 40,
+                maxLength: vitrinAlanMaxUzunluk('sssUstBaslik'),
                 onChanged: widget.onKickerChanged,
               ),
               const SizedBox(height: 12),
               EditorTextField(
-                label: 'SSS Bölüm Başlığı',
+                label: vitrinAlanEtiketi('sssBaslik'),
                 controller: widget.titleController,
                 hint: 'Örn: Sık Sorulan Sorular',
                 icon: Icons.title_rounded,
-                maxLength: 90,
+                maxLength: vitrinAlanMaxUzunluk('sssBaslik'),
                 onChanged: widget.onTitleChanged,
               ),
               const SizedBox(height: 12),
               EditorTextField(
-                label: 'SSS Bölüm Açıklaması',
+                label: vitrinAlanEtiketi('sssAciklama'),
                 controller: widget.descriptionController,
                 hint: 'Bölümün altındaki kısa açıklama',
                 icon: Icons.notes_rounded,
                 maxLines: 3,
-                maxLength: 200,
+                maxLength: vitrinAlanMaxUzunluk('sssAciklama'),
                 onChanged: widget.onDescriptionChanged,
               ),
               const SizedBox(height: 16),

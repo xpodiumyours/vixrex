@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/widgets/editor/common_form_fields.dart';
+import 'package:vixrex/config/vitrin_alan_bilgisi.dart';
 
 class GalleryItem {
   String id;
@@ -130,7 +131,7 @@ class GalleryEditorSection extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         EditorTextField(
-          label: 'Galeri Buton Metni',
+          label: vitrinAlanEtiketi('galeriAksiyonMetni'),
           controller: galleryActionLabelController,
           hint: 'Örn: Kataloğu Gör',
           icon: Icons.smart_button_outlined,
@@ -139,7 +140,7 @@ class GalleryEditorSection extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         EditorTextField(
-          label: 'Galeri Buton Bağlantısı',
+          label: vitrinAlanEtiketi('galeriAksiyonLinki'),
           controller: galleryActionHrefController,
           hint: 'https://... veya #sayfa-icı',
           icon: Icons.link_rounded,

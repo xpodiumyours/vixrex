@@ -16,11 +16,6 @@
 
 type Istisna = { metin: string; neden: string };
 
-const DINAMIK_URETIM =
-  "Flutter'da bu metin profil verisinden dinamik üretiliyor (ör. '" +
-  "${profile.links.length} bağlantı'). Sabit yazı olmadığı için çıkarıcı " +
-  "bulamıyor; web'de ise sabit olarak yazılı.";
-
 const ERISEBILIRLIK =
   "Ekran okuyucu etiketi (aria-label), gözle görünen metin değil. Flutter'da " +
   "erişilebilirlik farklı bir mekanizmayla sağlanıyor.";
@@ -33,29 +28,17 @@ const KONUM_WEB_OZEL =
   "`konum_onaylandi` olayı gidiyor, yalnız izin isteme yüzeyi farklı. " +
   "Flutter landing'ine konum adımı eklenirse bu kayıtlar silinmeli.";
 
-const KATALOG_BICIM =
-  "Bu metin Flutter'da DA var: paylaşılan mesaj kataloğunda (`shared/vixrex_mesajlar.json` → `welcome_aciklama`), oradan `lib/config/vixrex_mesajlar.g.dart` üretiliyor. Gerçek ayrışma değil; çıkarıcı katalogu taramıyor — aynı gerekçe 'Dijital vitrin asistanı' kaydında da yazılı. Web bu satırı ekranda madde işaretiyle gösterdiği için hem tire hem madde hâli kaynakta geçiyor (LandingApkAssistant `apkWelcomeText`); ikisi de biçimlendirme, yeni cümle değil.";
 
-const KATALOG_YEDEK =
-  "Katalog anahtarının yedeği (`vixRexMesajlari.setup_name_* ?? \"...\"`). Ekranda görünen yazı katalogdan gelir; bu literal yalnız katalog boş kalırsa devreye girer. Flutter aynı anahtarı okuduğu için yedeğe ihtiyaç duymuyor, o yüzden orada sabit yazı yok.";
 
-const DOGRULAMA_UYARISI =
-  "Form doğrulama uyarısı. Flutter'da aynı boş-ad durumu asistan akışında " +
-  "farklı bir cümleyle karşılanıyor; landing ekranında sabit yazı olarak " +
-  "geçmiyor.";
 
-const DUGME_ETIKETI =
-  "Flutter'da DA var — `lib/config/chatbot_config.dart:17`, aynı etiket. " +
-  "Çıkarıcı yalnız landing dosyalarını taradığı için göremiyor.";
 
 export const LANDING_ESITLIK_ISTISNALARI_WEB: Istisna[] = [
   // --- Landing maket sohbeti (PhoneMockup AsistanSohbetIcerigi) ---
 
-  // --- Dinamik üretim ---
-  {
-    metin: "2 bağlantı",
-    neden: DINAMIK_URETIM,
-  },
+  // "2 bağlantı" istisnası SİLİNDİ (2026-09-08 canlı karşılaştırma):
+  // web artık sabit "2 bağlantı" yazmıyor, Flutter'daki gibi profil
+  // verisinden dinamik üretiyor ({profil.eylemSatirlari.length} bağlantı).
+  // Ayrışma ortadan kalktı; bayat istisna kaydı da temizlendi.
 
   // --- Erişilebilirlik ---
   {
@@ -211,16 +194,12 @@ export const LANDING_ESITLIK_ISTISNALARI_WEB: Istisna[] = [
       "Flutter Web onboarding karşılama başlığı. Katalogda " +
       "karşılığı yok — Flutter Web'de sabit yazılı.",
   },
-  {
-    metin: "Hazır Vitrin Seç",
-    neden:
-      "Flutter Web karşılama butonu. Katalogda karşılığı yok.",
-  },
-  {
-    metin: "Sıfırdan Oluştur",
-    neden:
-      "Flutter Web karşılama butonu. Katalogda karşılığı yok.",
-  },
+  // "Hazır Vitrin Seç" / "Sıfırdan Oluştur" kayıtları 2026-09-09'da silindi.
+  // Gerekçeleri baştan yanlıştı ("katalogda karşılığı yok" deniyordu; oysa
+  // ikisi de shared/vixrex_mesajlar.json → hizliSecenekler içinde). Artık
+  // web'de literal olarak da geçmiyorlar: her yüzey `hizliSecenekEtiketi()`
+  // ile tek kaynaktan okuyor, yani eşitlik karşılaştırmayla değil YAPIYLA
+  // garanti. Kilidi: tests/hizli-secenek-tek-kaynak.test.ts
   {
     metin: "Detaylı formu aç",
     neden:
@@ -300,67 +279,13 @@ export const LANDING_ESITLIK_ISTISNALARI_WEB: Istisna[] = [
   // anahtarları okuyor, istisnaya gerek kalmadı. Kayıtlar silindi;
   // soru metinleri bileşende literal olarak geçmiyor.
 
-  // --- Landing'in telefon çizimindeki asistan (LandingApkAssistant, 2026-09-07)
-  // Flutter landing'i çizime dokununca GERÇEK asistan ekranını mockup'ın
-  // içinde açıyor (landing_hero_mockup.dart → VixRexOnboardingChatScreen).
-  // Web aynı yüzeyi kurdu. Aşağıdakiler o yüzeyin kaynağındaki literaller;
-  // hiçbiri ekranda yeni bir cümle değil.
-  {
-    metin: "- Tek Link & QR Kod:",
-    neden: KATALOG_BICIM,
-  },
-  {
-    metin: "• 📱 Tek Link & QR Kod:",
-    neden: KATALOG_BICIM,
-  },
-  {
-    metin: "- WhatsApp Sipariş:",
-    neden: KATALOG_BICIM,
-  },
-  {
-    metin: "• 💬 WhatsApp Sipariş:",
-    neden: KATALOG_BICIM,
-  },
-  {
-    metin: "- Ürün & Galeri:",
-    neden: KATALOG_BICIM,
-  },
-  {
-    metin: "• 🛍️ Ürün & Galeri:",
-    neden: KATALOG_BICIM,
-  },
-  {
-    metin: "- Konum & Adres:",
-    neden: KATALOG_BICIM,
-  },
-  {
-    metin: "• 📍 Konum & Adres:",
-    neden: KATALOG_BICIM,
-  },
-  {
-    metin: "İşletme adınızı girin",
-    neden: KATALOG_YEDEK,
-  },
-  {
-    metin: "Vitrininizde görünecek işletme adını yazın.",
-    neden: KATALOG_YEDEK,
-  },
-  {
-    metin: "İşletme adınız",
-    neden: KATALOG_YEDEK,
-  },
-  {
-    metin: "İşletme adı gerekli.",
-    neden: DOGRULAMA_UYARISI,
-  },
-  {
-    metin: "Evet, Oluşturalım",
-    neden: DUGME_ETIKETI,
-  },
-  {
-    metin: "İşletme adı",
-    neden: ERISEBILIRLIK,
-  },
+  // --- Landing telefon çizimindeki asistan (LandingApkAssistant)
+  // 2026-09-07'de web, çizimin içine KENDİ karşılama + hızlı-seçenek
+  // katmanını kurmuştu; buradaki 14 kayıt o ikinci katmanın kaynağındaki
+  // literallerdi. 2026-09-09'da (#454) o katman kaldırıldı ve yüzey doğrudan
+  // ortak LandingAsistanSohbeti motoruna bağlandı — metinler web landing'inde
+  // artık geçmiyor, kayıtlar silindi. İşlev kaybı yok: işletme adı hero
+  // formundan alınıp `initialName` ile ortak motora geçiyor (PhoneMockup).
 ];
 
 // Blog altbilgi bağlantısı (28 Ağustos) buraya İSTİSNA OLARAK GİRMEDİ ve

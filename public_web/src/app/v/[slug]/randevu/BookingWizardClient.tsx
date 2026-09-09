@@ -44,6 +44,7 @@ export default function BookingWizardClient({ store }: BookingWizardClientProps)
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [notes, setNotes] = useState("");
+  const [kvkkOnay, setKvkkOnay] = useState(false);
   
   // Submit state
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -142,6 +143,12 @@ export default function BookingWizardClient({ store }: BookingWizardClientProps)
       (cleanPhone.length === 12 && /^905[0-9]{9}$/.test(cleanPhone));
     if (!isTurkishGsm) {
       setErrorMessage("Lütfen geçerli bir Türk GSM numarası giriniz (örn: 0555 123 45 67).");
+      return;
+    }
+
+    // Flutter sihirbazı ile aynı kapı: KVKK onayı olmadan talep gönderilmez.
+    if (!kvkkOnay) {
+      setErrorMessage("Lütfen tüm zorunlu alanları doldurun ve onay verin.");
       return;
     }
 
@@ -394,8 +401,8 @@ export default function BookingWizardClient({ store }: BookingWizardClientProps)
                 const isDisabled = isFull || isBlocked;
 
                 return (
-                  <button
-                    key={slot.time}
+                    <button
+                      key={slot.time}
                     disabled={isDisabled}
                     onClick={() => {
                       setSelectedSlot(slot);
@@ -480,6 +487,21 @@ export default function BookingWizardClient({ store }: BookingWizardClientProps)
               />
             </div>
           </div>
+
+          {/* Flutter sihirbazı ile aynı kapı: KVKK onayı olmadan talep gönderilmez. */}
+          <label className="flex items-start gap-2.5 text-[11px] font-semibold leading-[1.4] text-[#475569] dark:text-[#CBD5E1]">
+            <input
+              id="kvkk-onay"
+              type="checkbox"
+              checked={kvkkOnay}
+              onChange={(e) => setKvkkOnay(e.target.checked)}
+              className="mt-0.5 h-4 w-4 shrink-0 accent-[#10D8D8]"
+            />
+            <span>
+              Kişisel verilerimin işlenmesini ve isim maskeleme (A*** O***) yöntemiyle
+              public takvimde gösterilmesini kabul ediyorum.
+            </span>
+          </label>
 
           <button
             type="submit"

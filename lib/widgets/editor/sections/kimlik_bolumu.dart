@@ -3,6 +3,7 @@ import 'package:vixrex/controllers/store_editor_controller.dart';
 import 'package:vixrex/screens/my_vitrin/my_vitrin_state.dart';
 import 'package:vixrex/widgets/editor/common_form_fields.dart';
 import 'package:vixrex/widgets/editor/sections/spaced_column.dart';
+import 'package:vixrex/config/vitrin_alan_bilgisi.dart';
 
 /// Kimlik bölümü — ad, işletme türü, kısa açıklama, kapak rozeti.
 ///
@@ -49,7 +50,7 @@ class KimlikBolumu extends StatelessWidget {
           ),
         ),
         EditorTextField(
-          label: 'İşletme Türü',
+          label: vitrinAlanEtiketi('isletmeTuru'),
           controller: businessTypeController,
           hint: 'Örn: Kadın giyim / butik',
           icon: Icons.storefront_outlined,

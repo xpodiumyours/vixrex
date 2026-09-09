@@ -32,14 +32,14 @@ export function BottomCta({
         <h2 className="text-[36px] font-black leading-[1.2]">
           İşletmenizi tek linkte müşterilerinizle buluşturun
         </h2>
-        <p className="mx-auto mt-5 max-w-[640px] text-[18px] leading-[1.5] text-lp-text-alt">
+        <p className="mx-auto mt-6 max-w-[640px] text-[18px] leading-[1.5] text-lp-text-alt">
           Vixrex’ini oluştur; linkini, QR kodunu ve WhatsApp iletişimini
           paylaşmaya başla.
         </p>
         <button
           type="button"
           onClick={onStartAssistant}
-          className="mt-9 inline-flex items-center justify-center rounded-3xl bg-lp-primary px-10 py-6 text-[18px] font-black text-white shadow-lp-panel transition-transform hover:-translate-y-0.5"
+          className="mt-12 inline-flex items-center justify-center rounded-3xl bg-lp-primary px-10 py-6 text-[18px] font-black text-white shadow-lp-panel transition-transform hover:-translate-y-0.5"
         >
           Vixrex Oluştur
         </button>

@@ -11,7 +11,7 @@ import {
   taslagiKaydet,
   type AsistanCevaplari,
 } from "@/lib/landingAsistanAkisi";
-import { vixRexHizliSecenekler, vixRexMesajlari } from "@/lib/vixrexMesajlari";
+import { vixRexMesajlari, hizliSecenekEtiketi } from "@/lib/vixrexMesajlari";
 import { validateField } from "@/lib/vitrinFieldValidation";
 import { PROFILES } from "@/lib/vitrinProfile";
 import { resolveBusinessCategory, kategoriUrlParcasi } from "@/lib/businessCategories";
@@ -498,7 +498,7 @@ export function LandingAsistanSohbeti({
                 void niyetSohbetiKaydet([
                   {
                     role: "user",
-                    text: vixRexHizliSecenekler.find((h) => h.id === "hazir_vitrin_sec")?.etiket ?? "Hazır Vitrin Seç",
+                    text: hizliSecenekEtiketi("hazir_vitrin_sec"),
                   },
                   { role: "assistant", text: `${NIYET_KATEGORI_SORUSU} ${NIYET_KATEGORI_ACIKLAMA}` },
                 ]);
@@ -509,7 +509,7 @@ export function LandingAsistanSohbeti({
                 <path d="M3 10.5 12 4l9 6.5V20H3z" />
                 <path d="M8 20v-6h8v6" />
               </svg>
-              {vixRexHizliSecenekler.find((h) => h.id === "hazir_vitrin_sec")?.etiket ?? "Hazır Vitrin Seç"}
+              {hizliSecenekEtiketi("hazir_vitrin_sec")}
             </button>
             <div className="grid grid-cols-2 gap-2">
               <button
@@ -518,7 +518,7 @@ export function LandingAsistanSohbeti({
                 className="flex items-center justify-center gap-1.5 rounded-xl border border-lp-border bg-lp-surface px-3 py-2.5 text-[11px] font-bold text-lp-text"
               >
                 <span className="text-[12px]">✨</span>
-                {vixRexHizliSecenekler.find((h) => h.id === "sifirdan_olustur")?.etiket ?? "Sıfırdan Oluştur"}
+                {hizliSecenekEtiketi("sifirdan_olustur")}
               </button>
               <button
                 type="button"
@@ -526,7 +526,7 @@ export function LandingAsistanSohbeti({
                 className="flex items-center justify-center gap-1.5 rounded-xl border border-lp-border bg-lp-surface px-3 py-2.5 text-[11px] font-bold text-lp-text"
               >
                 <span className="text-[12px]">👁️</span>
-                {vixRexHizliSecenekler.find((h) => h.id === "bakiniyorum")?.etiket ?? "Bakınıyorum"}
+                {hizliSecenekEtiketi("bakiniyorum")}
               </button>
             </div>
           </div>

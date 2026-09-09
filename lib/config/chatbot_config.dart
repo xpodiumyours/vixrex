@@ -132,6 +132,42 @@ abstract final class ChatbotConfig {
       ChatbotIntent(keywords: i.anahtarKelimeler, payload: i.payload),
   ];
 
+  // ─── Tablodan Yanıt (tek kaynak: shared/vixrex_mesajlar.json → yanitlar)
+  /// Etiket/payload kablolaması şemadan gelir; istemciye özgü aksiyon
+  /// eşlemesi burada kalır. Duruma bağlı dallanma (snapshot, yayın)
+  /// çağıran tarafta yapılır, tabloda değil.
+  static VixRexAction _actionFor(String name) {
+    return VixRexAction.values.firstWhere(
+      (e) => e.name == name,
+      orElse: () => VixRexAction.none,
+    );
+  }
+
+  static ChatMessage _yanitFromTable(
+    String tableKey, {
+    VixRexProfileSnapshot? snapshot,
+    bool hasShared = false,
+  }) {
+    final yanit = vixRexYanitlar[tableKey];
+    if (yanit == null) {
+      return ChatMessage.bot(
+        vixRexMesajlari['anlasilamadi']!,
+        quickReplies: mainMenuReplies(snapshot, hasShared: hasShared),
+      );
+    }
+    return ChatMessage.bot(
+      vixRexMesajlari[yanit.mesaj]!,
+      quickReplies: [
+        for (final h in yanit.hizli)
+          QuickReply(
+            label: h.etiket,
+            payload: h.payload,
+            action: _actionFor(h.aksiyon),
+          ),
+      ],
+    );
+  }
+
   // ─── Intent → Yanıt Tablosu ─────────────────────────────────────────────
   static ChatMessage responseFor(
     String payload, {
@@ -163,194 +199,33 @@ abstract final class ChatbotConfig {
         );
 
       case 'kapak':
-        return ChatMessage.bot(
-          vixRexMesajlari['kapak']!,
-          quickReplies: const [
-            QuickReply(
-              label: 'Kapak şablonu seç',
-              payload: 'action_cover',
-              action: VixRexAction.openCoverTemplatePicker,
-            ),
-            QuickReply(label: 'Geri Dön', payload: 'merhaba'),
-          ],
-        );
-
       case 'fotograf':
-        return ChatMessage.bot(
-          vixRexMesajlari['fotograf']!,
-          quickReplies: const [
-            QuickReply(
-              label: 'Galeriye git',
-              payload: 'action_gallery',
-              action: VixRexAction.scrollToGallery,
-            ),
-            QuickReply(
-              label: 'Kapak şablonu seç',
-              payload: 'action_cover',
-              action: VixRexAction.openCoverTemplatePicker,
-            ),
-            QuickReply(label: 'Geri Dön', payload: 'merhaba'),
-          ],
-        );
-
       case 'aciklama':
-        return ChatMessage.bot(
-          vixRexMesajlari['aciklama']!,
-          quickReplies: const [
-            QuickReply(
-              label: 'Açıklamaya git',
-              payload: 'action_desc',
-              action: VixRexAction.scrollToDesc,
-            ),
-            QuickReply(label: 'Geri Dön', payload: 'merhaba'),
-          ],
-        );
-
       case 'urun':
-        return ChatMessage.bot(
-          vixRexMesajlari['urun']!,
-          quickReplies: const [
-            QuickReply(
-              label: 'Ürün alanına git',
-              payload: 'action_products',
-              action: VixRexAction.scrollToProducts,
-            ),
-            QuickReply(
-              label: 'Fiş ile tara',
-              payload: 'action_ocr',
-              action: VixRexAction.openOcrScanner,
-            ),
-            QuickReply(label: 'Geri Dön', payload: 'merhaba'),
-          ],
-        );
-
       case 'xml_upload':
-        return ChatMessage.bot(
-          vixRexMesajlari['xml_upload']!,
-          quickReplies: const [
-            QuickReply(
-              label: 'XML linkini paylaş',
-              payload: 'action_xml',
-              action: VixRexAction.openXmlUpload,
-            ),
-            QuickReply(label: 'Geri Dön', payload: 'merhaba'),
-          ],
+      case 'randevu':
+      case 'whatsapp':
+      case 'adres':
+      case 'yayinla':
+        return _yanitFromTable(
+          payload,
+          snapshot: snapshot,
+          hasShared: hasShared,
         );
 
       case 'qr':
-        return ChatMessage.bot(
-          snapshot?.isPublished == true
-              ? vixRexMesajlari['qr_yayinda']!
-              : vixRexMesajlari['qr_yayinda_degil']!,
-          quickReplies: [
-            if (snapshot?.isPublished == true) ...const [
-              QuickReply(
-                label: 'Linki kopyala',
-                payload: 'copy_link',
-                action: VixRexAction.copyLink,
-              ),
-              QuickReply(
-                label: 'QR göster',
-                payload: 'show_qr',
-                action: VixRexAction.showQr,
-              ),
-              QuickReply(
-                label: 'WhatsApp’ta paylaş',
-                payload: 'share_wa',
-                action: VixRexAction.shareWhatsapp,
-              ),
-            ] else
-              const QuickReply(
-                label: 'Vitrinime git',
-                payload: 'open_vitrim',
-                action: VixRexAction.openVitrim,
-              ),
-            const QuickReply(label: 'Geri Dön', payload: 'merhaba'),
-          ],
-        );
-
-      case 'randevu':
-        return ChatMessage.bot(
-          vixRexMesajlari['randevu']!,
-          quickReplies: const [
-            QuickReply(
-              label: 'Kategoriye git',
-              payload: 'action_category',
-              action: VixRexAction.scrollToCategory,
-            ),
-            QuickReply(label: 'Geri Dön', payload: 'merhaba'),
-          ],
-        );
-
-      case 'whatsapp':
-        return ChatMessage.bot(
-          vixRexMesajlari['whatsapp']!,
-          quickReplies: const [
-            QuickReply(
-              label: 'WhatsApp alanına git',
-              payload: 'action_wa',
-              action: VixRexAction.scrollToWhatsapp,
-            ),
-            QuickReply(label: 'Geri Dön', payload: 'merhaba'),
-          ],
-        );
-
-      case 'adres':
-        return ChatMessage.bot(
-          vixRexMesajlari['adres']!,
-          quickReplies: const [
-            QuickReply(
-              label: 'Adrese git',
-              payload: 'action_address',
-              action: VixRexAction.scrollToAddress,
-            ),
-            QuickReply(label: 'Geri Dön', payload: 'merhaba'),
-          ],
-        );
-
-      case 'yayinla':
-        return ChatMessage.bot(
-          vixRexMesajlari['yayinla']!,
-          quickReplies: const [
-            QuickReply(
-              label: 'Yasal onaylara git',
-              payload: 'action_legal',
-              action: VixRexAction.scrollToLegal,
-            ),
-            QuickReply(
-              label: 'Vitrinime git',
-              payload: 'open_vitrim',
-              action: VixRexAction.openVitrim,
-            ),
-            QuickReply(label: 'Geri Dön', payload: 'merhaba'),
-          ],
+        return _yanitFromTable(
+          snapshot?.isPublished == true ? 'qr_yayinda' : 'qr_yayinda_degil',
+          snapshot: snapshot,
+          hasShared: hasShared,
         );
 
       case 'ocr_scan':
-        return ChatMessage.bot(
-          vixRexMesajlari['ocr_scan']!,
-          quickReplies: const [
-            QuickReply(
-              label: 'Fiş/Fatura tara',
-              payload: 'action_ocr',
-              action: VixRexAction.openOcrScanner,
-            ),
-            QuickReply(
-              label: 'Raf/Etiket tara',
-              payload: 'action_ocr_shelf',
-              action: VixRexAction.openOcrScannerShelf,
-            ),
-            QuickReply(label: 'Nasıl çalışır?', payload: 'ocr_info'),
-          ],
-        );
-
       case 'ocr_info':
-        return ChatMessage.bot(
-          vixRexMesajlari['ocr_info']!,
-          quickReplies: [
-            const QuickReply(label: 'Premium Bilgisi', payload: 'ocr_premium'),
-            const QuickReply(label: 'Geri Dön', payload: 'merhaba'),
-          ],
+        return _yanitFromTable(
+          payload,
+          snapshot: snapshot,
+          hasShared: hasShared,
         );
 
       case 'ocr_premium':
@@ -360,16 +235,10 @@ abstract final class ChatbotConfig {
         );
 
       case 'hesap':
-        return ChatMessage.bot(
-          vixRexMesajlari['hesap']!,
-          quickReplies: const [
-            QuickReply(
-              label: 'Hesabımı güvenceye al',
-              payload: 'action_auth',
-              action: VixRexAction.openAuth,
-            ),
-            QuickReply(label: 'Geri Dön', payload: 'merhaba'),
-          ],
+        return _yanitFromTable(
+          payload,
+          snapshot: snapshot,
+          hasShared: hasShared,
         );
 
       default:

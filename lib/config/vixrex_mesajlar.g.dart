@@ -29,6 +29,19 @@ const List<VixRexIntentSemasi> vixRexIntentSemasi = [
       'baslayalim',
       'yardim',
       'ne yapabilirsin',
+      'geri don',
+      'geri',
+    ],
+  ),
+  VixRexIntentSemasi(
+    payload: 'vitrin_kurulum',
+    anahtarKelimeler: [
+      'sifirdan olustur',
+      'sifirdan',
+      'kendim olustur',
+      'yeni vitrin',
+      'vitrin kur',
+      'vitrin olustur',
     ],
   ),
   VixRexIntentSemasi(
@@ -80,6 +93,17 @@ const List<VixRexIntentSemasi> vixRexIntentSemasi = [
     anahtarKelimeler: ['urun', 'hizmet', 'menu', 'katalog', 'fiyat listesi'],
   ),
   VixRexIntentSemasi(
+    payload: 'xml_upload',
+    anahtarKelimeler: [
+      'xml',
+      'feed',
+      'toplu urun',
+      'toplu urun yukle',
+      'tedarikci',
+      'tedarik',
+    ],
+  ),
+  VixRexIntentSemasi(
     payload: 'qr',
     anahtarKelimeler: ['qr', 'kod', 'link', 'paylas', 'baglanti', 'url'],
   ),
@@ -91,6 +115,7 @@ const List<VixRexIntentSemasi> vixRexIntentSemasi = [
       'saat',
       'takvim',
       'musteri kabul',
+      'kategori',
     ],
   ),
   VixRexIntentSemasi(
@@ -117,6 +142,8 @@ const List<VixRexIntentSemasi> vixRexIntentSemasi = [
       'yayinda',
       'goster',
       'acik',
+      'yasal',
+      'onay',
     ],
   ),
   VixRexIntentSemasi(
@@ -126,17 +153,6 @@ const List<VixRexIntentSemasi> vixRexIntentSemasi = [
   VixRexIntentSemasi(
     payload: 'ocr_premium',
     anahtarKelimeler: ['premium', 'sinirsiz', 'ucretli'],
-  ),
-  VixRexIntentSemasi(
-    payload: 'xml_upload',
-    anahtarKelimeler: [
-      'xml',
-      'feed',
-      'toplu urun',
-      'toplu urun yukle',
-      'tedarikci',
-      'tedarik',
-    ],
   ),
   VixRexIntentSemasi(
     payload: 'hesap',
@@ -349,6 +365,237 @@ const List<VixRexHizliSecenek> vixRexHizliSecenekler = [
     ikon: 'visibility',
   ),
 ];
+
+class VixRexYanitHizli {
+  final String etiket;
+  final String payload;
+  final String aksiyon;
+
+  const VixRexYanitHizli({
+    required this.etiket,
+    required this.payload,
+    required this.aksiyon,
+  });
+}
+
+class VixRexYanit {
+  final String payload;
+  final String mesaj;
+  final List<VixRexYanitHizli> hizli;
+
+  const VixRexYanit({
+    required this.payload,
+    required this.mesaj,
+    required this.hizli,
+  });
+}
+
+/// Yanıt kablolaması (mesaj anahtarı + hızlı yanıt etiket/payload).
+/// Aksiyon eşlemesi istemcide kalır; burada yalnız sabit içerik var.
+const Map<String, VixRexYanit> vixRexYanitlar = {
+  'kapak': VixRexYanit(
+    payload: 'kapak',
+    mesaj: 'kapak',
+    hizli: [
+      VixRexYanitHizli(
+        etiket: 'Kapak şablonu seç',
+        payload: 'action_cover',
+        aksiyon: 'openCoverTemplatePicker',
+      ),
+      VixRexYanitHizli(etiket: 'Geri Dön', payload: 'merhaba', aksiyon: 'none'),
+    ],
+  ),
+  'fotograf': VixRexYanit(
+    payload: 'fotograf',
+    mesaj: 'fotograf',
+    hizli: [
+      VixRexYanitHizli(
+        etiket: 'Galeriye git',
+        payload: 'action_gallery',
+        aksiyon: 'scrollToGallery',
+      ),
+      VixRexYanitHizli(
+        etiket: 'Kapak şablonu seç',
+        payload: 'action_cover',
+        aksiyon: 'openCoverTemplatePicker',
+      ),
+      VixRexYanitHizli(etiket: 'Geri Dön', payload: 'merhaba', aksiyon: 'none'),
+    ],
+  ),
+  'aciklama': VixRexYanit(
+    payload: 'aciklama',
+    mesaj: 'aciklama',
+    hizli: [
+      VixRexYanitHizli(
+        etiket: 'Açıklamaya git',
+        payload: 'action_desc',
+        aksiyon: 'scrollToDesc',
+      ),
+      VixRexYanitHizli(etiket: 'Geri Dön', payload: 'merhaba', aksiyon: 'none'),
+    ],
+  ),
+  'urun': VixRexYanit(
+    payload: 'urun',
+    mesaj: 'urun',
+    hizli: [
+      VixRexYanitHizli(
+        etiket: 'Ürün alanına git',
+        payload: 'action_products',
+        aksiyon: 'scrollToProducts',
+      ),
+      VixRexYanitHizli(
+        etiket: 'Fiş ile tara',
+        payload: 'action_ocr',
+        aksiyon: 'openOcrScanner',
+      ),
+      VixRexYanitHizli(etiket: 'Geri Dön', payload: 'merhaba', aksiyon: 'none'),
+    ],
+  ),
+  'xml_upload': VixRexYanit(
+    payload: 'xml_upload',
+    mesaj: 'xml_upload',
+    hizli: [
+      VixRexYanitHizli(
+        etiket: 'XML linkini paylaş',
+        payload: 'action_xml',
+        aksiyon: 'openXmlUpload',
+      ),
+      VixRexYanitHizli(etiket: 'Geri Dön', payload: 'merhaba', aksiyon: 'none'),
+    ],
+  ),
+  'qr_yayinda': VixRexYanit(
+    payload: 'qr_yayinda',
+    mesaj: 'qr_yayinda',
+    hizli: [
+      VixRexYanitHizli(
+        etiket: 'Linki kopyala',
+        payload: 'copy_link',
+        aksiyon: 'copyLink',
+      ),
+      VixRexYanitHizli(
+        etiket: 'QR göster',
+        payload: 'show_qr',
+        aksiyon: 'showQr',
+      ),
+      VixRexYanitHizli(
+        etiket: 'WhatsApp’ta paylaş',
+        payload: 'share_wa',
+        aksiyon: 'shareWhatsapp',
+      ),
+      VixRexYanitHizli(etiket: 'Geri Dön', payload: 'merhaba', aksiyon: 'none'),
+    ],
+  ),
+  'qr_yayinda_degil': VixRexYanit(
+    payload: 'qr_yayinda_degil',
+    mesaj: 'qr_yayinda_degil',
+    hizli: [
+      VixRexYanitHizli(
+        etiket: 'Vitrinime git',
+        payload: 'open_vitrim',
+        aksiyon: 'openVitrim',
+      ),
+      VixRexYanitHizli(etiket: 'Geri Dön', payload: 'merhaba', aksiyon: 'none'),
+    ],
+  ),
+  'randevu': VixRexYanit(
+    payload: 'randevu',
+    mesaj: 'randevu',
+    hizli: [
+      VixRexYanitHizli(
+        etiket: 'Kategoriye git',
+        payload: 'action_category',
+        aksiyon: 'scrollToCategory',
+      ),
+      VixRexYanitHizli(etiket: 'Geri Dön', payload: 'merhaba', aksiyon: 'none'),
+    ],
+  ),
+  'whatsapp': VixRexYanit(
+    payload: 'whatsapp',
+    mesaj: 'whatsapp',
+    hizli: [
+      VixRexYanitHizli(
+        etiket: 'WhatsApp alanına git',
+        payload: 'action_wa',
+        aksiyon: 'scrollToWhatsapp',
+      ),
+      VixRexYanitHizli(etiket: 'Geri Dön', payload: 'merhaba', aksiyon: 'none'),
+    ],
+  ),
+  'adres': VixRexYanit(
+    payload: 'adres',
+    mesaj: 'adres',
+    hizli: [
+      VixRexYanitHizli(
+        etiket: 'Adrese git',
+        payload: 'action_address',
+        aksiyon: 'scrollToAddress',
+      ),
+      VixRexYanitHizli(etiket: 'Geri Dön', payload: 'merhaba', aksiyon: 'none'),
+    ],
+  ),
+  'yayinla': VixRexYanit(
+    payload: 'yayinla',
+    mesaj: 'yayinla',
+    hizli: [
+      VixRexYanitHizli(
+        etiket: 'Yasal onaylara git',
+        payload: 'action_legal',
+        aksiyon: 'scrollToLegal',
+      ),
+      VixRexYanitHizli(
+        etiket: 'Vitrinime git',
+        payload: 'open_vitrim',
+        aksiyon: 'openVitrim',
+      ),
+      VixRexYanitHizli(etiket: 'Geri Dön', payload: 'merhaba', aksiyon: 'none'),
+    ],
+  ),
+  'ocr_scan': VixRexYanit(
+    payload: 'ocr_scan',
+    mesaj: 'ocr_scan',
+    hizli: [
+      VixRexYanitHizli(
+        etiket: 'Fiş/Fatura tara',
+        payload: 'action_ocr',
+        aksiyon: 'openOcrScanner',
+      ),
+      VixRexYanitHizli(
+        etiket: 'Raf/Etiket tara',
+        payload: 'action_ocr_shelf',
+        aksiyon: 'openOcrScannerShelf',
+      ),
+      VixRexYanitHizli(
+        etiket: 'Nasıl çalışır?',
+        payload: 'ocr_info',
+        aksiyon: 'none',
+      ),
+    ],
+  ),
+  'ocr_info': VixRexYanit(
+    payload: 'ocr_info',
+    mesaj: 'ocr_info',
+    hizli: [
+      VixRexYanitHizli(
+        etiket: 'Premium Bilgisi',
+        payload: 'ocr_premium',
+        aksiyon: 'none',
+      ),
+      VixRexYanitHizli(etiket: 'Geri Dön', payload: 'merhaba', aksiyon: 'none'),
+    ],
+  ),
+  'hesap': VixRexYanit(
+    payload: 'hesap',
+    mesaj: 'hesap',
+    hizli: [
+      VixRexYanitHizli(
+        etiket: 'Hesabımı güvenceye al',
+        payload: 'action_auth',
+        aksiyon: 'openAuth',
+      ),
+      VixRexYanitHizli(etiket: 'Geri Dön', payload: 'merhaba', aksiyon: 'none'),
+    ],
+  ),
+};
 
 class VixRexAsistanAkisAdimi {
   final String id;

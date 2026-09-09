@@ -48,6 +48,8 @@ function tailwindZincirMi(metin: string): boolean {
     if (
       /^(absolute|relative|fixed|static|sticky|block|inline|hidden|flex|grid|overflow|pointer-events|sr-only|border|rounded|shadow|opacity|z-|inset|top|bottom|left|right|w-|h-|min-|max-|p-|px-|py-|pt-|pb-|pl-|pr-|m-|mx-|my-|mt-|mb-|ml-|mr-|gap-|space-|divide|items-|justify-|self-|content-|place-|order-|col-|row-|font-|text-|leading-|tracking-|whitespace-|break-|line-|align-|bg-|from-|to-|via-|gradient|border-|outline-|ring-|transition|duration|delay|ease|transform|scale-|rotate-|translate-|skew-|origin|cursor-|select-|appearance|resize|fill-|stroke-|accent-|will-change|decoration|backdrop-|caret-|scroll-|snap-|touch-|overscroll-|object-|aspect-|auto-|normal-|asis-|group-|peer-|first-|last-|odd-|even-|hover-|focus-|active-|disabled-|checked-|required-|valid-|invalid-|placeholder-|file-|marker-|selection-|read-only-|empty-|only-|open-|closed-|enabled-|sm:|md:|lg:|xl:|2xl:)/.test(p) ||
       /^\[.+\]$/.test(p) ||
+      // Tailwind v4 konteyner sorgusu: `@container`, `@min-[500px]:flex-row`
+      /^@[\w-]*(\[[^\]]*\])?(:|$)/.test(p) ||
       /^[\w/.-]+$/.test(p)
     ) {
       cssParcaSayisi++;

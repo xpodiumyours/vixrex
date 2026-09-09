@@ -6,6 +6,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { OwnerAuthLayout } from "@/components/owner/OwnerAuthLayout";
 import { guvenliDonusYolu } from "@/lib/guvenliDonus";
+import { hizliSecenekEtiketi } from "@/lib/vixrexMesajlari";
 
 export const dynamic = "force-dynamic";
 
@@ -93,30 +94,35 @@ export default function KayitPage() {
       title="Kayıt Ol"
       description="Vitrinini oluşturmak ve yönetmek için Vixrex hesabını aç."
     >
-      {/* Flutter uyumlu: Hızlı Seçenekler */}
+      {/* Hızlı Seçenekler — etiketler ortak katalogdan gelir (shared/
+          vixrex_mesajlar.json). Elle yazılmaz: eskiden "Bakiniyorum" diye
+          hatalı yazılmıştı ve iki buton birebir aynı işi yapıyordu.
+          Niyetler her yüzeyde aynı; yalnız bu sayfadaki adım farklı —
+          burada hesap henüz yok, o yüzden "Sıfırdan Oluştur" kayıt formunu
+          açar. Diğer ikisi diğer yüzeylerle aynı yere gider. */}
       <div className="my-4 flex flex-col items-center gap-2">
         <div className="text-xs font-medium text-[var(--owner-muted)]">Hızlı Seçenekler</div>
         <div className="flex gap-2 flex-wrap justify-center">
           <button
             type="button"
             className="owner-button-primary flex-1 sm:w-48 text-sm font-medium"
-            onClick={() => router.push("/giris")}
+            onClick={() => router.push("/kesfet?yalniz_kiralik=1")}
           >
-            Hazır Vitrin Seç
+            {hizliSecenekEtiketi("hazir_vitrin_sec")}
           </button>
           <button
             type="button"
             className="owner-button-primary flex-1 sm:w-48 text-sm font-medium"
-            onClick={() => setShowLogin(!showLogin)}
+            onClick={() => setShowLogin(true)}
           >
-            Sıfırdan Oluştur
+            {hizliSecenekEtiketi("sifirdan_olustur")}
           </button>
           <button
             type="button"
             className="owner-button-secondary flex-1 sm:w-48 text-sm font-medium"
-            onClick={() => setShowLogin(!showLogin)}
+            onClick={() => router.push("/kesfet")}
           >
-            Bakiniyorum
+            {hizliSecenekEtiketi("bakiniyorum")}
           </button>
         </div>
       </div>

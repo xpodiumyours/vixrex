@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { hizliSecenekEtiketi } from "@/lib/vixrexMesajlari";
 import { cookies } from "next/headers";
 import { KesfetIcerik } from "@/components/kesfet/KesfetIcerik";
 import { kesfetVitrinleriniGetir } from "@/lib/explore";
@@ -57,7 +58,7 @@ export default async function KesfetPage({ searchParams }: Props) {
       ilkSahipSlug={ilkSahipSlug}
       sadeceKiralik={sadeceKiralik}
       ilkKategoriKimligi={ilkKategoriKimligi}
-      baslik={sadeceKiralik ? "Hazır Vitrin Seç" : "Vixrex'leri Keşfet"}
+      baslik={sadeceKiralik ? hizliSecenekEtiketi("hazir_vitrin_sec") : "Vixrex'leri Keşfet"}
       aciklama={
         sadeceKiralik
           ? "Beğendiğini kirala, kendi vitrinin olsun"

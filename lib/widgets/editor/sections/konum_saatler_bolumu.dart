@@ -7,6 +7,7 @@ import 'package:vixrex/widgets/editor/common_form_fields.dart';
 import 'package:vixrex/widgets/editor/form_location_info.dart';
 import 'package:vixrex/widgets/editor/sections/spaced_column.dart';
 import 'package:vixrex/widgets/editor/working_hours_editor.dart';
+import 'package:vixrex/config/vitrin_alan_bilgisi.dart';
 
 /// Konum ve saatler bölümü — adres, yol tarifi, çalışma saatleri ve
 /// (destekleyen kategorilerde) randevu editörü.
@@ -44,7 +45,7 @@ class KonumSaatlerBolumu extends StatelessWidget {
         ),
         _buildDirectionsToggle(context),
         EditorTextField(
-          label: 'Çalışma Saatleri',
+          label: vitrinAlanEtiketi('calismaSaatleri'),
           controller: workingHoursController,
           hint: 'Örn: Pzt — Cmt 09:00 - 20:00',
           icon: Icons.schedule_rounded,
