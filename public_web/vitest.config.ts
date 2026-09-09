@@ -14,7 +14,7 @@ export default defineConfig({
     // "test is not defined" diye kırılır. İki koşucu, iki klasör:
     //   tests/ → vitest   (npm test)
     //   e2e/   → playwright (npm run e2e)
-    include: ["tests/**/*.test.ts", "src/**/*.test.ts"],
+    include: ["tests/**/*.test.{ts,tsx}", "src/**/*.test.ts"],
     exclude: ["e2e/**", "node_modules/**"],
   },
 });
