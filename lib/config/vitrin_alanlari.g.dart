@@ -168,6 +168,7 @@ const List<VitrinAlani> vitrinAlanlari = [
     bolum: 'contact',
     zorunlu: true,
     maxUzunluk: 200,
+    dogrulama: 'adres',
   ),
   VitrinAlani(
     anahtar: 'il',
