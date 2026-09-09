@@ -57,6 +57,29 @@ const _degerOlmayanKisa = {
   'degissin',
   'yap',
 };
+const _olumsuzIslem = {
+  'degistirme',
+  'degismesin',
+  'guncelleme',
+  'guncellenmesin',
+  'silme',
+  'kaldirma',
+  'dokunma',
+  'yapma',
+};
+
+bool vixrexDegisiklikIptaliMi(String input) {
+  final norm = VixrexNormalizer.normalize(input)
+      .replaceAll(RegExp(r'[^a-z0-9]+'), ' ')
+      .trim();
+  if (norm.isEmpty) return false;
+  final tokens = norm.split(RegExp(r'\s+')).where((e) => e.isNotEmpty).toList();
+  if (tokens.length > 5) return false;
+  final son = tokens.isEmpty ? '' : tokens.last;
+  final onceki = tokens.length < 2 ? '' : tokens[tokens.length - 2];
+  return _olumsuzIslem.contains(son) ||
+      (son == 'lutfen' && _olumsuzIslem.contains(onceki));
+}
 
 String _alanSorusu(VixrexBekleyenBaglam bekleyen) =>
     '${bekleyen.etiket} için ne yazayım?';
@@ -97,8 +120,16 @@ VixrexBaglamSonucu vixrexBaglamsalCevapKarari(
 ) {
   final trimmed = input.trim();
   final norm = VixrexNormalizer.normalize(trimmed);
+  final acikIptal = _iptal.contains(norm) || vixrexDegisiklikIptaliMi(trimmed);
 
   if (bekleyen == null) {
+    if (acikIptal) {
+      return const VixrexBaglamSonucu(
+        karar: VixrexBaglamKarari.iptal,
+        yazma: false,
+        mesaj: 'Tamam, değişiklik yapmıyorum. Vitrininde başka neyi değiştirmek istersin?',
+      );
+    }
     return const VixrexBaglamSonucu(
       karar: VixrexBaglamKarari.genelSor,
       yazma: false,
@@ -115,7 +146,7 @@ VixrexBaglamSonucu vixrexBaglamsalCevapKarari(
         deger: '',
       );
     }
-    if (_hayir.contains(norm) || _iptal.contains(norm)) {
+    if (_hayir.contains(norm) || acikIptal) {
       return VixrexBaglamSonucu(
         karar: VixrexBaglamKarari.iptal,
         yazma: false,
@@ -130,7 +161,7 @@ VixrexBaglamSonucu vixrexBaglamsalCevapKarari(
     );
   }
 
-  if (_iptal.contains(norm)) {
+  if (acikIptal) {
     return const VixrexBaglamSonucu(
       karar: VixrexBaglamKarari.iptal,
       yazma: false,
