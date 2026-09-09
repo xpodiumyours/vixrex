@@ -50,7 +50,9 @@ void main() {
                 .resolveAll(input)
                 .map((a) => a.anahtar)
                 .toList();
-            if (bulunan.length != 1 || bulunan.first != alan.anahtar) {
+            final dogruTekAlan =
+                bulunan.length == 1 && bulunan.first == alan.anahtar;
+            if (!dogruTekAlan) {
               hatalar.add(
                 '${alan.anahtar}: "$input" -> [${bulunan.join(', ')}]',
               );
