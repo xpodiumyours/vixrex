@@ -16,6 +16,13 @@ const publishRoute = readFileSync(
   resolve(__dirname, "../src/app/api/owner-publish/route.ts"),
   "utf8",
 );
+const legalGuardMigration = readFileSync(
+  resolve(
+    __dirname,
+    "../../supabase/migrations/20260910001000_restore_publish_legal_guard.sql",
+  ),
+  "utf8",
+);
 
 function functionSlice(source: string, startMarker: string, endMarker: string): string {
   const start = source.indexOf(startMarker);
@@ -61,13 +68,51 @@ describe("Vixrex Assistant yayın/yasal güvenlik kapısı", () => {
     expect(publishBar).toMatch(/disabled=\{[\s\S]*!yasalOnayli/);
   });
 
-  it("sunucu yayın sırasında yasal onayı DB seviyesinde yeniden denetler", () => {
+  it("sunucu yalnız publish_working_draft RPC'sine delege eder; yasal karar route metnine bırakılmaz", () => {
     expect(publishRoute).toContain('rpc("publish_working_draft"');
-    expect(publishRoute).toContain("PRIVACY_NOTICE_REQUIRED");
-    expect(publishRoute).toContain("TERMS_ACCEPTANCE_REQUIRED");
-    expect(publishRoute).toContain("PUBLICATION_CONSENT_REQUIRED");
-    expect(publishRoute).toContain("PRIVACY_NOTICE_VERSION_INVALID");
-    expect(publishRoute).toContain("TERMS_VERSION_INVALID");
-    expect(publishRoute).toContain("PUBLICATION_CONSENT_VERSION_INVALID");
+  });
+
+  it("gerçek DB yayın kapısı üç yasal onayı yeniden zorunlu tutar", () => {
+    expect(legalGuardMigration).toContain(
+      "create or replace function public.assert_store_publish_ready(p_store jsonb)",
+    );
+    expect(legalGuardMigration).toContain("PRIVACY_NOTICE_REQUIRED");
+    expect(legalGuardMigration).toContain("TERMS_ACCEPTANCE_REQUIRED");
+    expect(legalGuardMigration).toContain("PUBLICATION_CONSENT_REQUIRED");
+  });
+
+  it("eski onayı yeni belgeye taşımaz; aktif sürüm ve hash birebir eşleşir", () => {
+    expect(legalGuardMigration).toContain("from public.legal_documents d");
+    expect(legalGuardMigration).toContain("d.document_type = 'privacy'");
+    expect(legalGuardMigration).toContain("d.document_type = 'terms'");
+    expect(legalGuardMigration).toContain("d.document_type = 'consent'");
+    expect(legalGuardMigration.match(/d\.is_active = true/g)).toHaveLength(3);
+
+    for (const hata of [
+      "PRIVACY_NOTICE_VERSION_INVALID",
+      "TERMS_VERSION_INVALID",
+      "PUBLICATION_CONSENT_VERSION_INVALID",
+    ]) {
+      expect(legalGuardMigration).toContain(hata);
+    }
+
+    expect(legalGuardMigration).toContain(
+      "d.version = p_store ->> 'privacy_notice_version'",
+    );
+    expect(legalGuardMigration).toContain(
+      "d.content_hash = p_store ->> 'privacy_notice_hash'",
+    );
+    expect(legalGuardMigration).toContain(
+      "d.version = p_store ->> 'terms_version'",
+    );
+    expect(legalGuardMigration).toContain(
+      "d.content_hash = p_store ->> 'terms_hash'",
+    );
+    expect(legalGuardMigration).toContain(
+      "d.version = p_store ->> 'publication_consent_version'",
+    );
+    expect(legalGuardMigration).toContain(
+      "d.content_hash = p_store ->> 'publication_consent_hash'",
+    );
   });
 });
