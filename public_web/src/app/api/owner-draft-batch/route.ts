@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { cookies } from "next/headers";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
@@ -6,11 +7,11 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { validateField } from "@/lib/vitrinFieldValidation";
 import { broadcastTaslakGuncellendi } from "@/lib/workingDraftBroadcast";
 
-// Vixrex Assistant çok-alan kayıt kapısı.
+// Vixrex Assistant atomik command kayıt kapısı.
 //
 // Manuel panelin /api/owner-draft tek-alan yolu DEĞİŞMEZ. Bu route yalnız
-// Assistant'ın tek kullanıcı mesajından çıkardığı birden fazla alanı, kullanıcı
-// açıkça onayladıktan sonra, tek Postgres transaction'ında kaydetmek içindir.
+// Assistant'ın tek kullanıcı mesajından çıkardığı alanları tek Postgres
+// transaction'ında kaydeder. Aynı commandId ile güvenli retry idempotenttir.
 //
 // İstemci kolon adı gönderemez: yalnız şemadaki `anahtar` gönderir. Kolon
 // validateField() sonucundaki VITRIN_FIELDS kaydından sunucuda çözülür.
@@ -20,6 +21,7 @@ export const dynamic = "force-dynamic";
 const MAX_BATCH_FIELDS = 20;
 const DRAFT_LIMIT_PER_MINUTE = 60;
 const DRAFT_LIMIT_PER_HOUR = 500;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const HATA_METNI: Record<string, string> = {
   INVALID_SESSION_TOKEN: "Oturumun geçersiz veya süresi dolmuş. Önizlemeyi tekrar aç.",
@@ -28,6 +30,8 @@ const HATA_METNI: Record<string, string> = {
   UNKNOWN_FIELD: "Bilinmeyen alan.",
   INVALID_FIELD_KEY: "Alan adı eksik.",
   INVALID_CHANGES: "Kaydedilecek değişiklik bulunamadı.",
+  INVALID_COMMAND_PRECONDITION: "İşlem kimliği geçersiz.",
+  IDEMPOTENCY_KEY_REUSE: "Bu işlem kimliği farklı bir değişiklik için zaten kullanılmış.",
   TOO_MANY_FIELDS: "Tek işlemde çok fazla alan var.",
   WORKING_DRAFT_NOT_FOUND: "Çalışma taslağı bulunamadı. Önizlemeyi tekrar açın.",
 };
@@ -131,6 +135,7 @@ export async function POST(request: NextRequest) {
     slug?: unknown;
     degisiklikler?: unknown;
     clientId?: unknown;
+    commandId?: unknown;
   };
   try {
     govde = await request.json();
@@ -140,6 +145,14 @@ export async function POST(request: NextRequest) {
 
   const slug = typeof govde.slug === "string" ? govde.slug.trim() : "";
   const clientId = typeof govde.clientId === "string" ? govde.clientId : null;
+  const suppliedCommandId =
+    typeof govde.commandId === "string" ? govde.commandId.trim() : "";
+  if (suppliedCommandId && !UUID_RE.test(suppliedCommandId)) {
+    return NextResponse.json({ hata: "İşlem kimliği geçersiz." }, { status: 422 });
+  }
+  // Eski istemci davranışını kırmamak için commandId yoksa sunucu üretir.
+  // Yeni Assistant istemcisi retry için aynı commandId'yi tekrar göndermelidir.
+  const commandId = suppliedCommandId || randomUUID();
   const hamDegisiklikler = Array.isArray(govde.degisiklikler)
     ? (govde.degisiklikler as HamDegisiklik[])
     : [];
@@ -176,8 +189,8 @@ export async function POST(request: NextRequest) {
     deger: string | number | boolean | null;
   }> = [];
 
-  // Bir alan bile geçersizse RPC HİÇ çağrılmaz. Böylece kullanıcı onayladığı
-  // kartın yalnız bir kısmının kaydedilmesi mümkün olmaz.
+  // Bir alan bile geçersizse RPC HİÇ çağrılmaz. Böylece tek command'ın yalnız
+  // bir kısmının kaydedilmesi mümkün olmaz.
   for (const ham of hamDegisiklikler) {
     const anahtar = typeof ham?.anahtar === "string" ? ham.anahtar.trim() : "";
     if (!anahtar) {
@@ -227,24 +240,36 @@ export async function POST(request: NextRequest) {
     changesByColumn[item.kolon] = item.deger;
   }
 
-  const { data, error } = await supabaseAnon().rpc("update_working_draft_fields", {
+  const { data, error } = await supabaseAnon().rpc("apply_working_draft_command", {
     p_session_token: ownerSession.sessionToken,
+    p_command_id: commandId,
     p_changes: changesByColumn,
   });
 
   if (error) {
     const metin = HATA_METNI[error.message] ?? "Kaydedilemedi. Lütfen tekrar dene.";
-    console.error("[owner-draft-batch] update failed:", error.message);
+    console.error("[owner-draft-batch] command failed:", error.message);
     const durum = error.message === "INVALID_SESSION_TOKEN" ? 401 : 400;
     return NextResponse.json({ hata: metin }, { status: durum });
   }
 
-  // Tek kullanıcı işlemi → tek yayın sinyali. Payload alan/değer taşımaz.
+  // Tek kullanıcı command'ı → tek yayın sinyali. Replay aynı command ise
+  // veri yeniden yazılmaz; broadcast yine de istemcinin gerçeği tazelemesini sağlar.
   broadcastTaslakGuncellendi(slug, clientId);
+
+  const sonuc = data as {
+    draft_version?: number;
+    undo_id?: string;
+    command_id?: string;
+    replayed?: boolean;
+  } | null;
 
   return NextResponse.json({
     tamam: true,
+    commandId: sonuc?.command_id ?? commandId,
+    undoId: sonuc?.undo_id ?? null,
+    replayed: sonuc?.replayed === true,
     degisiklikler: normalizeEdilenler,
-    taslakSurumu: (data as { draft_version?: number } | null)?.draft_version ?? null,
+    taslakSurumu: sonuc?.draft_version ?? null,
   });
 }
