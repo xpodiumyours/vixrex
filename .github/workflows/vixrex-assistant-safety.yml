@@ -97,7 +97,14 @@ jobs:
         run: flutter pub get
 
       - name: Biçim kontrolü
-        run: dart format --output=none --set-exit-if-changed lib test
+        run: |
+          dart format --output=none --set-exit-if-changed lib test
+          $formatExit = $LASTEXITCODE
+          if ($formatExit -ne 0) {
+            Write-Host "Dart formatter farkı:"
+            git diff -- lib test
+            exit $formatExit
+          }
 
       - name: Statik analiz
         run: dart analyze --fatal-infos
