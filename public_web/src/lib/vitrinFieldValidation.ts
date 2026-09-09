@@ -183,7 +183,7 @@ export function validateField(anahtar: string, hamDeger: unknown): ValidationRes
 
     case "metin":
     case "uzunMetin": {
-      if (alan.anahtar === "adres") {
+      if (alan.dogrulama === "adres") {
         const hata = adresHataMesaji(deger);
         if (hata) return { ok: false, hata };
       }
