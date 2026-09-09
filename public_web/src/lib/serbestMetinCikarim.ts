@@ -150,7 +150,7 @@ export function serbestMetindenAlanlariCikar(paragraf: string): SerbestMetinSonu
   const sonuc: SerbestMetinSonuc = {};
 
   const telefonAdayi = paragraf.match(TELEFON_ADAYI_REGEX)?.[0] ?? "";
-  const whatsapp = telefonAdayi ? telefonuNormallestir(telefonAdayI) : null;
+  const whatsapp = telefonAdayi ? telefonuNormallestir(telefonAdayi) : null;
   if (whatsapp) sonuc.whatsapp = whatsapp;
 
   // Gerçek testte "Çarşı teknik servis 0542..." seçili kimlik sorusuna
