@@ -1,42 +1,36 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
-import { describe, expect, it } from "vitest";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { describe, expect, it, vi } from "vitest";
 
-/**
- * Ayarlar parite testi.
- */
+const mocks = vi.hoisted(() => ({ push: vi.fn() }));
 
-const flutterSettings = readFileSync(
-  resolve(__dirname, "../../lib/screens/app_settings_screen.dart"),
-  "utf8",
-);
-const nextSettings = readFileSync(
-  resolve(__dirname, "../src/app/app/ayarlar/page.tsx"),
-  "utf8",
-);
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: mocks.push }),
+}));
+vi.mock("@/lib/supabase", () => ({
+  supabase: {
+    auth: { getSession: vi.fn(), signInAnonymously: vi.fn() },
+    rpc: vi.fn(),
+    from: vi.fn(),
+  },
+}));
 
-describe("ayarlar parite (Flutter referansiyla)", () => {
-  it("Flutter gibi bildirim tercihlerini icerir", () => {
-    expect(flutterSettings).toContain("NotificationPreferencesService");
-    expect(flutterSettings).toContain("bookingPushEnabled");
+import AyarlarPage from "@/app/app/ayarlar/page";
+
+function renderAyarlar() {
+  return renderToStaticMarkup(createElement(AyarlarPage));
+}
+
+describe("ayarlar parite — gerçek render", () => {
+  it("ilk render gerçek yükleme yüzeyini çizer", () => {
+    const html = renderAyarlar();
+
+    expect(html).toContain("owner-shell");
+    expect(html).toContain("owner-card");
+    expect(html).toContain("Yükleniyor…");
   });
 
-  it("Flutter gibi veri indirme (KVKK) sunar", () => {
-    expect(flutterSettings).toContain("_exportingData");
-    expect(nextSettings).toContain("verileriDisaAktar");
-  });
-
-  it("Flutter gibi hesap silme sunar", () => {
-    expect(flutterSettings).toContain("_deletingAccount");
-    expect(nextSettings).toContain("hesap");
-  });
-
-  it("Flutter gibi yasal linkler icerir", () => {
-    expect(flutterSettings).toContain("legal_screen");
-    expect(nextSettings).toContain("Gizlilik");
-  });
-
-  it("Flutter gibi profil yonlendirmesi yapar", () => {
-    expect(nextSettings).toContain("profil");
-  });
+  it.todo(
+    "Profil / Hesap Yönetimi / Verilerimi İndir / Yasal içerikleri useEffect sonrası görünür; Katman C jsdom ile kanıtlanacak",
+  );
 });

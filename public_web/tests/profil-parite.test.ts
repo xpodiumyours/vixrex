@@ -1,45 +1,37 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
-import { describe, expect, it } from "vitest";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { describe, expect, it, vi } from "vitest";
 
-/**
- * Profil parite testi.
- *
- * Kural: Flutter ProfileScreen ile Next.js /app/profil ayni öğeleri gösterir.
- */
+const mocks = vi.hoisted(() => ({ push: vi.fn() }));
 
-const flutterProfile = readFileSync(
-  resolve(__dirname, "../../lib/screens/profile_screen.dart"),
-  "utf8",
-);
-const nextProfile = readFileSync(
-  resolve(__dirname, "../src/app/app/profil/page.tsx"),
-  "utf8",
-);
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: mocks.push }),
+}));
+vi.mock("@/lib/supabase", () => ({
+  supabase: {
+    auth: { getSession: vi.fn(), signInAnonymously: vi.fn() },
+    rpc: vi.fn(),
+    from: vi.fn(),
+  },
+}));
 
-describe("profil parite (Flutter referansiyla)", () => {
-  it("Flutter gibi vitrin linkini gosterir", () => {
-    expect(flutterProfile).toContain("publicLink");
-    expect(nextProfile).toMatch(/storeSlug|store\.slug/);
+import ProfilPage from "@/app/app/profil/page";
+
+function renderProfil() {
+  return renderToStaticMarkup(createElement(ProfilPage));
+}
+
+describe("profil parite — gerçek render", () => {
+  it("ilk render yükleme durumunu erişilebilir şekilde gerçekten çizer", () => {
+    const html = renderProfil();
+
+    expect(html).toContain('role="status"');
+    expect(html).toContain('aria-live="polite"');
+    expect(html).toContain("Yükleniyor…");
+    expect(html).toContain('aria-hidden="true"');
   });
 
-  it("Flutter gibi QR kodu gosterir", () => {
-    expect(flutterProfile).toContain("onShowQr");
-    expect(nextProfile).toContain("VitrinQrSheet");
-  });
-
-  it("Flutter gibi linki kopyalar", () => {
-    expect(flutterProfile).toContain("onCopyLink");
-    expect(nextProfile).toMatch(/copy|kopyala/i);
-  });
-
-  it("Flutter gibi kullanici bilgilerini gosterir", () => {
-    expect(flutterProfile).toContain("AuthService");
-    expect(nextProfile).toContain("user");
-  });
-
-  it("Flutter gibi ayarlara link verir", () => {
-    expect(flutterProfile).toContain("AppSettingsScreen");
-    expect(nextProfile).toContain("ayarlar");
-  });
+  it.todo(
+    "Vitrin Bağlantısı / QR / Ayarlar içerikleri useEffect sonrası görünür; Katman C jsdom etkileşim testiyle kanıtlanacak",
+  );
 });

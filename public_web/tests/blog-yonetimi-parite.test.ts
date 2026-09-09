@@ -1,45 +1,39 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
-import { describe, expect, it } from "vitest";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { describe, expect, it, vi } from "vitest";
 
-/**
- * Blog yonetimi parite testi.
- */
+const mocks = vi.hoisted(() => ({ push: vi.fn() }));
 
-const flutterBlog = readFileSync(
-  resolve(__dirname, "../../lib/screens/blog_editor_screen.dart"),
-  "utf8",
-);
-const nextBlog = readFileSync(
-  resolve(__dirname, "../src/app/v/[slug]/blog-yonetim/page.tsx"),
-  "utf8",
-);
+vi.mock("next/navigation", () => ({
+  useParams: () => ({ slug: "test-vitrin" }),
+  useRouter: () => ({ push: mocks.push }),
+}));
+vi.mock("@/lib/supabase", () => ({
+  supabase: {
+    auth: { getSession: vi.fn(), signInAnonymously: vi.fn() },
+  },
+}));
+vi.mock("@/lib/ownerCookie", () => ({ sahipOturumuAc: vi.fn() }));
 
-describe("blog yonetimi parite (Flutter referansiyla)", () => {
-  it("Flutter gibi blog editor controller kullanir", () => {
-    expect(flutterBlog).toContain("BlogEditorController");
+import BlogYonetimPage from "@/app/v/[slug]/blog-yonetim/page";
+
+function renderBlog() {
+  return renderToStaticMarkup(createElement(BlogYonetimPage));
+}
+
+describe("blog yönetimi parite — gerçek render", () => {
+  it("yönetim yüzeyi ve yeni yazı alanını gerçekten çizer", () => {
+    const html = renderBlog();
+
+    expect(html).toContain("Blog Yönetimi");
+    expect(html).toContain("Yazı Yönetimi");
+    expect(html).toContain("Yeni Yazı Oluştur");
+    expect(html).toContain('placeholder="Yazı başlığı..."');
+    expect(html).toContain(">Oluştur</button>");
+    expect(html).toContain('href="/v/test-vitrin"');
   });
 
-  it("Flutter gibi SEO paneli icerir", () => {
-    expect(flutterBlog).toContain("BlogSeoPanel");
-    expect(flutterBlog).toContain("SeoService");
-  });
-
-  it("Flutter gibi kapak resimi secici icerir", () => {
-    expect(flutterBlog).toContain("BlogCoverPicker");
-    expect(nextBlog).toContain("cover_image_url");
-  });
-
-  it("Flutter gibi yazi durumlarini icerir", () => {
-    expect(nextBlog).toContain("draft");
-    expect(nextBlog).toContain("published");
-    expect(nextBlog).toContain("review");
-  });
-
-  it("Flutter gibi yazi alanlarini icerir", () => {
-    expect(nextBlog).toContain("title");
-    expect(nextBlog).toContain("slug");
-    expect(nextBlog).toContain("summary");
-    expect(nextBlog).toContain("seo_score");
-  });
+  it.todo(
+    "Taslak / İnceleme / Yayında durumları ve SEO puanı yüklü yazı verisi sonrası görünür; etkileşimli veri yükleme katmanında kanıtlanacak",
+  );
 });

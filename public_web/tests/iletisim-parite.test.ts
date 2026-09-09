@@ -1,37 +1,35 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-/**
- * Iletisim bilgileri parite testi.
- */
+import IletisimPage from "@/app/(site)/iletisim/page";
 
-const flutterContact = readFileSync(
-  resolve(__dirname, "../../lib/widgets/editor/form_contact_info.dart"),
-  "utf8",
-);
-const nextContact = readFileSync(
-  resolve(__dirname, "../src/app/(site)/iletisim/page.tsx"),
-  "utf8",
-);
+function renderIletisim() {
+  return renderToStaticMarkup(createElement(IletisimPage));
+}
 
-describe("iletisim bilgileri parite (Flutter referansiyla)", () => {
-  it("Flutter gibi WhatsApp alanini icerir", () => {
-    expect(flutterContact).toContain("whatsapp");
-    expect(flutterContact).toContain("WhatsApp");
+describe("iletişim yüzeyi — gerçek render", () => {
+  it("destek iletişimini ve konu bağlantılarını gerçekten çizer", () => {
+    const html = renderIletisim();
+
+    expect(html).toContain("Bize ulaşın");
+    expect(html).toContain('href="mailto:destek@vixrex.com"');
+    expect(html).toContain("destek@vixrex.com");
+    expect(html).toContain("Vitrin ve hesap desteği");
+    expect(html).toContain('href="/yardim"');
+    expect(html).toContain("Yasal konular ve veri talepleri");
+    expect(html).toContain('href="/privacy"');
   });
 
-  it("Flutter gibi Instagram alanini icerir", () => {
-    expect(flutterContact).toContain("insta");
-    expect(flutterContact).toContain("Instagram");
+  it("yasal bilgi listesini gerçek HTML olarak çizer", () => {
+    const html = renderIletisim();
+
+    expect(html).toContain("<dl");
+    expect(html).toContain("Ticaret unvanı");
+    expect(html).toContain("Faaliyet konusu");
   });
 
-  it("Flutter gibi telefon numarasi alani icerir", () => {
-    expect(flutterContact).toContain("phone");
-  });
-
-  it("Next.js iletişim sayfası ayni bilgileri gosterir", () => {
-    expect(nextContact).toContain("iletisim");
-    expect(nextContact).toContain("destek");
-  });
+  it.todo(
+    "Esnaf WhatsApp / Instagram / telefon alanları bu public destek sayfasında yok; eski parite testi yanlış yüzey eşlemesini yeşil gösteriyordu",
+  );
 });

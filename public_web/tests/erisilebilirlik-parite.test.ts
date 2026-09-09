@@ -1,16 +1,19 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { describe, expect, it } from "vitest";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { describe, expect, it, vi } from "vitest";
 
-/**
- * Erişilebilirlik matrisi parite testi (sözleşme §14).
- *
- * Kanıt kaynakları:
- *  - Flutter paleti: lib/theme/app_colors.dart
- *  - Next paleti:    public_web/src/app/globals.css (.owner-shell değişkenleri)
- *  - Kontrast: WCAG 2.1 göreli parlaklık formülüyle GERÇEK hesap —
- *    uydurma sayı yok; palet değişirse test kırılır (koruyucu kapı).
- */
+const nav = vi.hoisted(() => ({ pathname: "/app" }));
+vi.mock("next/navigation", () => ({
+  usePathname: () => nav.pathname,
+  useRouter: () => ({ push: vi.fn(), prefetch: vi.fn() }),
+}));
+
+import {
+  AppShellProvider,
+} from "@/components/app/AppShellContext";
+import { AppBottomNav, AppSidebar } from "@/components/app/AppSidebar";
 
 const flutterColors = readFileSync(
   resolve(__dirname, "../../lib/theme/app_colors.dart"),
@@ -20,36 +23,26 @@ const globalsCss = readFileSync(
   resolve(__dirname, "../src/app/globals.css"),
   "utf8",
 );
-const layout = readFileSync(
+const layoutSource = readFileSync(
   resolve(__dirname, "../src/app/layout.tsx"),
   "utf8",
 );
-const sidebar = readFileSync(
-  resolve(__dirname, "../src/components/app/AppSidebar.tsx"),
-  "utf8",
-);
 
-// ── Palet çıkarımı ──────────────────────────────────────────────────────────
-
-/** Dart `Color(0xFFRRGGBB)` sabitinden hex alır. */
 function flutterHex(name: string): string {
-  const m = flutterColors.match(
+  const match = flutterColors.match(
     new RegExp(`static const Color ${name} = Color\\(0xFF([0-9A-Fa-f]{6})\\)`),
   );
-  if (!m) throw new Error(`Flutter rengi bulunamadı: ${name}`);
-  return m[1].toUpperCase();
+  if (!match) throw new Error(`Flutter rengi bulunamadı: ${name}`);
+  return match[1].toUpperCase();
 }
 
-/** CSS `--owner-xxx: #RRGGBB;` değişkeninden hex alır. */
 function cssHex(varName: string): string {
-  const m = globalsCss.match(
+  const match = globalsCss.match(
     new RegExp(`--owner-${varName}:\\s*#([0-9A-Fa-f]{6})`),
   );
-  if (!m) throw new Error(`CSS değişkeni bulunamadı: --owner-${varName}`);
-  return m[1].toUpperCase();
+  if (!match) throw new Error(`CSS değişkeni bulunamadı: --owner-${varName}`);
+  return match[1].toUpperCase();
 }
-
-// ── WCAG 2.1 kontrast hesabı ────────────────────────────────────────────────
 
 function kanalLin(hex: string, index: number): number {
   const c = parseInt(hex.slice(index, index + 2), 16) / 255;
@@ -64,17 +57,13 @@ function luminance(hex: string): number {
   );
 }
 
-/** WCAG kontrast oranı (1…21). */
 export function kontrast(on: string, of: string): number {
   const l1 = Math.max(luminance(on), luminance(of));
   const l2 = Math.min(luminance(on), luminance(of));
   return (l1 + 0.05) / (l2 + 0.05);
 }
 
-// ── 1) Paletler birebir aynı (UI matrisi köprüsü) ──────────────────────────
-
 const PALET_ESLESMELERI: Array<[string, string]> = [
-  // [Flutter sabiti, CSS değişkeni]
   ["primary", "primary"],
   ["primaryDark", "primary-dark"],
   ["secondary", "secondary"],
@@ -98,10 +87,7 @@ describe("Erişilebilirlik palet paritesi", () => {
   });
 });
 
-
-// ── 2) Gerçek WCAG kontrast oranları (AA kapısı) ───────────────────────────
-
-describe("WCAG kontrast (gerçek hesap)", () => {
+describe("WCAG kontrast — gerçek hesap", () => {
   const v = {
     bg: cssHex("bg"),
     bgSoft: cssHex("bg-soft"),
@@ -119,22 +105,16 @@ describe("WCAG kontrast (gerçek hesap)", () => {
   it("ana metin zeminde AAA (>= 7)", () => {
     expect(kontrast(v.text, v.bg)).toBeGreaterThanOrEqual(7);
   });
-
   it("etiket metni kart yüzeyinde AA (>= 4.5)", () => {
     expect(kontrast(v.textAlt, v.surface)).toBeGreaterThanOrEqual(4.5);
   });
-
-  it("yardımcı metin form alanında AA (>= 4.5)", () => {
-    // .owner-input zemini --owner-bg-soft, placeholder --owner-muted
+  it("yardımcı metin yüzeylerde AA (>= 4.5)", () => {
     expect(kontrast(v.muted, v.bgSoft)).toBeGreaterThanOrEqual(4.5);
     expect(kontrast(v.muted, v.surface)).toBeGreaterThanOrEqual(4.5);
   });
-
-  it("birincil buton metni en kötü gradyan ucunda AA (>= 4.5)", () => {
-    // Gradyan: primary → primaryDark; en kötü (açık) uç primary.
+  it("birincil buton metni AA (>= 4.5)", () => {
     expect(kontrast(v.onPrimary, v.primary)).toBeGreaterThanOrEqual(4.5);
   });
-
   it("durum renkleri zeminde AA (>= 4.5)", () => {
     expect(kontrast(v.success, v.bg)).toBeGreaterThanOrEqual(4.5);
     expect(kontrast(v.warning, v.bg)).toBeGreaterThanOrEqual(4.5);
@@ -142,59 +122,56 @@ describe("WCAG kontrast (gerçek hesap)", () => {
   });
 });
 
-// ── 3) Sözleşme §14 satırlarının web karşılıkları ──────────────────────────
+function renderNavigasyon() {
+  return renderToStaticMarkup(
+    createElement(
+      AppShellProvider,
+      null,
+      createElement("div", null, createElement(AppSidebar), createElement(AppBottomNav)),
+    ),
+  );
+}
 
-describe("Erişilebilirlik kapıları (Next.js)", () => {
-  it("form etiketleri: .owner-label + sr-only kalıbı mevcut", () => {
-    expect(globalsCss).toContain(".owner-label");
-    const appPage = readFileSync(
-      resolve(__dirname, "../src/app/app/page.tsx"),
-      "utf8",
-    );
-    expect(appPage).toContain("sr-only");
+describe("Erişilebilirlik kapıları — gerçek render + stil sözleşmesi", () => {
+  it("arama alanının gerçek label'ı ve klavye ile bulunabilir id bağlantısı var", () => {
+    const html = renderNavigasyon();
+    expect(html).toContain('<label for="app-shell-search" class="sr-only">Vitrin veya ürün ara</label>');
+    expect(html).toContain('id="app-shell-search"');
   });
 
-  it("hata duyurusu: role=\"alert\" kalıbı ekranlarda var", () => {
-    const bildirimler = readFileSync(
-      resolve(__dirname, "../src/app/app/bildirimler/page.tsx"),
-      "utf8",
-    );
-    expect(bildirimler).toContain('role="alert"');
+  it("dekoratif ikonlar gerçek render'da aria-hidden taşır", () => {
+    const html = renderNavigasyon();
+    expect(html).toContain('aria-hidden="true"');
   });
 
-  it("klavye odağı: focus-visible 3px halka + 2px offset", () => {
+  it("mobil alt menü gerçek render'da 68px ve adlandırılmış nav'dır", () => {
+    const html = renderNavigasyon();
+    expect(html).toContain('aria-label="Mobil uygulama menüsü"');
+    expect(html).toContain("h-[68px]");
+  });
+
+  it("klavye odağı CSS kapısı 3px halka + 2px offset", () => {
     expect(globalsCss).toContain(":focus-visible");
     expect(globalsCss).toContain("outline: 3px solid");
     expect(globalsCss).toContain("outline-offset: 2px");
   });
 
-  it("dekoratif öğeler: aria-hidden kullanılıyor", () => {
-    const profil = readFileSync(
-      resolve(__dirname, "../src/app/app/profil/page.tsx"),
-      "utf8",
-    );
-    expect(profil).toContain("aria-hidden");
-  });
-
-  it("dokunma hedefi: girdi/buton >= 48px, alt menü 68px", () => {
+  it("dokunma hedefi CSS kapısı: girdi/buton >= 48px", () => {
     expect(globalsCss).toMatch(/\.owner-input\s*{[^}]*min-height:\s*48px/);
     expect(globalsCss).toMatch(/owner-button-danger\s*{[^}]*min-height:\s*48px/);
-    expect(sidebar).toContain("h-[68px]");
   });
 
-  it("hareket azaltma: prefers-reduced-motion kuralları var", () => {
+  it("hareket azaltma CSS kuralı var", () => {
     expect(globalsCss).toContain("@media (prefers-reduced-motion: reduce)");
   });
 
-  it("%200 yakınlaştırma engellenmiyor (maximumScale 5)", () => {
-    // iOS'un izin verdiği en yüksek değer; 200% zoom açıkça çalışır.
-    expect(layout).toContain("maximumScale: 5");
-    expect(layout).not.toMatch(/maximumScale:\s*1\b/);
+  it("%200 yakınlaştırma engellenmiyor: maximumScale sayısal olarak >= 2", () => {
+    const match = layoutSource.match(/maximumScale:\s*([0-9.]+)/);
+    expect(match).not.toBeNull();
+    expect(Number(match?.[1])).toBeGreaterThanOrEqual(2);
   });
-});
 
-// ── 4) Dürüstlük notu ───────────────────────────────────────────────────────
-// Sözleşme §14'te "○ Ölçülmedi" satırlar (ekran okuyucu sırası, canlı %200
-// görsel doğrulaması, Flutter Semantics denetimi) bu testle KAPANMAZ —
-// canlı cihaz ölçümü gerektirir. Bu test yalnız kaynak kodun kanıtlayabildiği
-// kapıları kilitler.
+  it.todo(
+    "dinamik hata state'inin role=alert duyurusu Katman C jsdom etkileşim testinde gerçek state değişimiyle kanıtlanacak",
+  );
+});
