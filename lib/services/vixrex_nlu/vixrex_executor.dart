@@ -22,6 +22,36 @@ class VixrexExecutor {
     required Object? deger,
   }) {
     final anahtar = alan.anahtar;
+
+    // Doğal konuşmada "onu kaldır" isteği validator'dan null olarak gelir.
+    // Zorunlu ve aç/kapa alanları bu yoldan temizlenmez. İsteğe bağlı metin
+    // alanlarında mevcut setter'ların boş değer davranışını kullan; sayısal
+    // konum alanları gerçekten nullable olduğu için doğrudan null yapılır.
+    if (deger == null) {
+      const temizlenemez = {
+        'isletmeAdi',
+        'kategori',
+        'whatsapp',
+        'adres',
+        'il',
+        'ilce',
+        'puanGoster',
+        'yolTarifiGoster',
+      };
+      if (temizlenemez.contains(anahtar)) return false;
+      if (anahtar == 'enlem') {
+        controller.data.latitude = null;
+        controller.notifyStoreDataChanged();
+        return true;
+      }
+      if (anahtar == 'boylam') {
+        controller.data.longitude = null;
+        controller.notifyStoreDataChanged();
+        return true;
+      }
+      return execute(controller: controller, alan: alan, deger: '');
+    }
+
     // Özel dallanmalar – StoreContentEditingService.writeField kapsamı dışında olanlar.
     switch (anahtar) {
       case 'kategori':
