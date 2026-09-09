@@ -15,19 +15,43 @@ export interface VixrexGeneralFallbackResult {
   message: string;
 }
 
-function payloadBul(input: string): string | null {
+function kelimeBaslangicindaVarMi(input: string, keyword: string): boolean {
+  let from = 0;
+  while (from <= input.length - keyword.length) {
+    const idx = input.indexOf(keyword, from);
+    if (idx < 0) return false;
+    if (idx === 0 || !/[a-z0-9]/.test(input[idx - 1])) return true;
+    from = idx + 1;
+  }
+  return false;
+}
+
+/**
+ * Genel rehber niyetinde kısa/genel kelime daha uzun ve özgül ifadeyi
+ * ezemez. Örn. "XML ile toplu ürün yükle" hem "yükle" (fotoğraf) hem
+ * "toplu urun" (XML) içerir; en uzun kanıt XML'i seçer.
+ * Eşit uzunlukta eski katalog sırası korunur.
+ */
+export function resolveVixrexGeneralIntent(input: string): string | null {
   const normalized = vixrexNormalizeDartParity(input);
   if (!normalized.trim()) return null;
 
-  // Flutter ChatbotService.respond ile aynı sıra ve aynı contains davranışı.
+  let bestPayload: string | null = null;
+  let bestLength = -1;
+
   for (const intent of vixRexIntentSemasi) {
     for (const keyword of intent.anahtarKelimeler) {
-      if (normalized.includes(vixrexNormalizeDartParity(keyword))) {
-        return intent.payload;
+      const normalizedKeyword = vixrexNormalizeDartParity(keyword).trim();
+      if (!normalizedKeyword) continue;
+      if (!kelimeBaslangicindaVarMi(normalized, normalizedKeyword)) continue;
+      if (normalizedKeyword.length > bestLength) {
+        bestLength = normalizedKeyword.length;
+        bestPayload = intent.payload;
       }
     }
   }
-  return null;
+
+  return bestPayload;
 }
 
 function tabloMesaji(payload: string): string | null {
@@ -37,7 +61,7 @@ function tabloMesaji(payload: string): string | null {
 }
 
 /**
- * 46-alan NLU bir alan komutu bulamadığında Flutter'ın eski ChatbotService
+ * 46-alan NLU bir alan komutu bulamadığında Flutter'ın ChatbotService
  * rehberine denk gelen API/LLM'siz bilgi cevabını üretir.
  *
  * Dinamik snapshot isteyen dallarda tahmin YASAK:
@@ -50,7 +74,7 @@ export function vixrexGeneralFallback(
   input: string,
   context: VixrexGeneralFallbackContext = {},
 ): VixrexGeneralFallbackResult | null {
-  const payload = payloadBul(input);
+  const payload = resolveVixrexGeneralIntent(input);
   if (!payload) return null;
 
   if (payload === "merhaba") return null;
