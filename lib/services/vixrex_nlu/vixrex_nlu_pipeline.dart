@@ -111,11 +111,6 @@ class VixrexNluPipeline {
     );
   }
 
-  /// CompanionChat controller'a doğrudan sahip değildir. Kalıcı hesapta
-  /// `handled` demeden ÖNCE aynı Supabase working draft'a batch yazar.
-  /// Anonim/eski akışta kanonik yazar kullanılamaz ve mevcut yerel callback
-  /// davranışı korunur. Uzak yazım denenip başarısız olursa yerel callback'e
-  /// başarı sonucu dönülmez; iki cihaz arasında sahte başarı oluşmaz.
   Future<VixrexNluPipelineResult?> _writeCanonicalWhenDelegated({
     required StoreEditorController? controller,
     required List<VixrexNiyetAlan> alanlar,
@@ -132,7 +127,6 @@ class VixrexNluPipeline {
     return null;
   }
 
-  /// Ana giriş – sohbetten çağrılır.
   Future<VixrexNluPipelineResult> handle({
     required String input,
     required StoreEditorController? controller,
@@ -151,6 +145,31 @@ class VixrexNluPipeline {
     }
 
     final pending = await _memory.loadPendingSlot(scope: scope);
+
+    if (vixrexDegisiklikIptaliMi(trimmed)) {
+      final pendingAlan = pending == null
+          ? null
+          : vixrexNiyetAlanByAnahtar[pending.anahtar];
+      final baglam = vixrexBaglamsalCevapKarari(
+        trimmed,
+        pendingAlan == null
+            ? null
+            : VixrexBekleyenBaglam(
+                anahtar: pendingAlan.anahtar,
+                etiket: pendingAlan.etiket,
+                tip: pendingAlan.tip,
+                eylem: pending?.eylem,
+              ),
+      );
+      if (pending != null) {
+        await _memory.clearPendingSlot(scope: scope);
+      }
+      return VixrexNluPipelineResult(
+        outcome: VixrexNluPipelineOutcome.needsClarification,
+        message: ChatMessage.bot(baglam.mesaj),
+      );
+    }
+
     if (pending != null) {
       final alanFromPending = vixrexNiyetAlanByAnahtar[pending.anahtar];
       if (alanFromPending != null) {
@@ -291,9 +310,6 @@ class VixrexNluPipeline {
         basariliDegerler.add(v.normalizedDeger ?? ham);
       }
 
-      // Bir cümlede birden çok niyet bulunduysa kısmi başarı YASAK. Kullanıcı
-      // iki alan söylediğinde birini sessizce atıp ötekini yazmak atomik
-      // davranış değildir. Tek bir hata varsa hiçbir alan uygulanmaz.
       if (basarili.isEmpty || hatalar.isNotEmpty) {
         return VixrexNluPipelineResult(
           outcome: VixrexNluPipelineOutcome.needsClarification,
