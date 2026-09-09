@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 
 const { rpcMock } = vi.hoisted(() => ({ rpcMock: vi.fn() }));
@@ -6,11 +8,32 @@ vi.mock("../src/lib/supabase", () => ({
   supabase: { rpc: rpcMock },
 }));
 
-import { vixrexGeneralFallback } from "../src/lib/vixrexGeneralFallback";
+import {
+  resolveVixrexGeneralIntent,
+  vixrexGeneralFallback,
+} from "../src/lib/vixrexGeneralFallback";
 import { vixRexMesajlari } from "../src/lib/vixrexMesajlari";
 import { handleVixrexNluMessage } from "../src/lib/vixrexNluPipeline";
 
+const genelSenaryolar = JSON.parse(
+  readFileSync(
+    resolve(__dirname, "../../shared/vixrex_genel_intent_senaryolari.json"),
+    "utf8",
+  ),
+) as Array<{ id: string; girdi: string; payload: string }>;
+
 describe("Vixrex genel rehber Flutter ↔ Next parity", () => {
+  it("ortak genel-intent kabul kümesinin tamamını doğru çözer", () => {
+    const hatalar: string[] = [];
+    for (const senaryo of genelSenaryolar) {
+      const bulunan = resolveVixrexGeneralIntent(senaryo.girdi);
+      if (bulunan !== senaryo.payload) {
+        hatalar.push(`${senaryo.id}: ${senaryo.girdi} -> ${bulunan ?? "null"}`);
+      }
+    }
+    expect(hatalar, hatalar.join("\n")).toEqual([]);
+  });
+
   it("sabit rehber niyetlerini ortak mesaj kataloğundan üretir", () => {
     expect(vixrexGeneralFallback("Vixrex nedir?")?.message).toBe(
       vixRexMesajlari.vixrex_info,
