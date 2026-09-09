@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:vixrex/widgets/editor/common_form_fields.dart';
+import 'package:vixrex/config/vitrin_alan_bilgisi.dart';
 
 /// Hero konum metni ve harita kartı etiketi — vitrin GÖRÜNÜMÜNÜ inceltmek
 /// için manuel panele eklenen ileri seviye alanlar (PR #70, 2026-08-09).
@@ -34,7 +35,7 @@ class AdvancedLocationFields extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         EditorTextField(
-          label: 'Hero Konum Metni',
+          label: vitrinAlanEtiketi('konumMetni'),
           controller: heroLocationTextController,
           hint: 'Örn: Kadıköy, İstanbul',
           icon: Icons.place_outlined,
@@ -43,7 +44,7 @@ class AdvancedLocationFields extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         EditorTextField(
-          label: 'Harita Kartı Etiketi',
+          label: vitrinAlanEtiketi('haritaEtiketi'),
           controller: mapLabelController,
           hint: 'Örn: Atatürk Cad. No:24',
           icon: Icons.map_outlined,

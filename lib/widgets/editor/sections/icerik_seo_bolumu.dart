@@ -24,6 +24,7 @@ import 'package:vixrex/widgets/editor/sections/spaced_column.dart';
 import 'package:vixrex/widgets/instagram_sync_section.dart';
 import 'package:vixrex/widgets/product/product_management_entry_card.dart';
 import 'package:vixrex/widgets/product/product_management_sheet.dart';
+import 'package:vixrex/config/vitrin_alan_bilgisi.dart';
 
 /// İçerik ve SEO bölümü — Instagram senkron, hakkımızda, ürünler, kampanya,
 /// SSS, blog, vitrin durumu, Google yorum linki, pazaryeri linkleri ve
@@ -93,7 +94,7 @@ class IcerikSeoBolumu extends StatelessWidget {
           onTap: () => _showAboutSheet(context),
         ),
         EditorTextField(
-          label: 'Referanslar Bağlantısı',
+          label: vitrinAlanEtiketi('referansLinki'),
           controller: referencesController,
           hint: 'https://...',
           icon: Icons.link_rounded,
@@ -166,7 +167,7 @@ class IcerikSeoBolumu extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         EditorTextField(
-          label: 'Kategori Bölümü Başlığı',
+          label: vitrinAlanEtiketi('kategoriBolumBaslik'),
           controller: categorySectionTitleController,
           hint: 'Örn: Servis Alanlarımız',
           icon: Icons.category_outlined,
@@ -175,7 +176,7 @@ class IcerikSeoBolumu extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         EditorTextField(
-          label: 'Ürün Bölümü Başlığı',
+          label: vitrinAlanEtiketi('urunBolumBaslik'),
           controller: productSectionTitleController,
           hint: 'Örn: Servis Fiyat Listesi',
           icon: Icons.inventory_2_outlined,
@@ -191,7 +192,7 @@ class IcerikSeoBolumu extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         EditorTextField(
-          label: 'Blog Üst Başlık',
+          label: vitrinAlanEtiketi('blogUstBaslik'),
           controller: blogKickerController,
           hint: 'Örn: Teknik rehber',
           icon: Icons.label_outline_rounded,
@@ -200,7 +201,7 @@ class IcerikSeoBolumu extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         EditorTextField(
-          label: 'Blog Bölüm Başlığı',
+          label: vitrinAlanEtiketi('blogBaslik'),
           controller: blogTitleController,
           hint: 'Örn: Mağazadan Haberler',
           icon: Icons.article_outlined,
