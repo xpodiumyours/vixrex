@@ -2,6 +2,8 @@
   {"id":"genel-01","bekleyen":null,"girdi":"bunu düzelt","karar":"genel_sor","yazma":false},
   {"id":"genel-02","bekleyen":null,"girdi":"anlamadım","karar":"genel_sor","yazma":false},
   {"id":"genel-03","bekleyen":null,"girdi":"","karar":"genel_sor","yazma":false},
+  {"id":"genel-degistirme","bekleyen":null,"girdi":"telefonu değiştirme","karar":"iptal","yazma":false},
+  {"id":"genel-silme-lutfen","bekleyen":null,"girdi":"bunu silme lütfen","karar":"iptal","yazma":false},
 
   {"id":"telefon-evet","bekleyen":{"anahtar":"telefon","etiket":"Telefon","tip":"telefon"},"girdi":"evet","karar":"ozel_sor","yazma":false},
   {"id":"telefon-hayir","bekleyen":{"anahtar":"telefon","etiket":"Telefon","tip":"telefon"},"girdi":"hayır","karar":"ozel_sor","yazma":false},
@@ -12,6 +14,7 @@
   {"id":"telefon-kaldir-evet","bekleyen":{"anahtar":"telefon","etiket":"Telefon","tip":"telefon","eylem":"kaldir"},"girdi":"evet","karar":"kaldir","yazma":true},
   {"id":"telefon-kaldir-hayir","bekleyen":{"anahtar":"telefon","etiket":"Telefon","tip":"telefon","eylem":"kaldir"},"girdi":"hayır","karar":"iptal","yazma":false},
   {"id":"telefon-degistir","bekleyen":{"anahtar":"telefon","etiket":"Telefon","tip":"telefon"},"girdi":"değiştir","karar":"ozel_sor","yazma":false},
+  {"id":"telefon-degistirme","bekleyen":{"anahtar":"telefon","etiket":"Telefon","tip":"telefon"},"girdi":"değiştirme","karar":"iptal","yazma":false},
   {"id":"telefon-deger","bekleyen":{"anahtar":"telefon","etiket":"Telefon","tip":"telefon"},"girdi":"0212 555 44 33","karar":"deger","yazma":true},
 
   {"id":"whatsapp-deger","bekleyen":{"anahtar":"whatsapp","etiket":"WhatsApp Numarası","tip":"telefon"},"girdi":"0532 555 44 33","karar":"deger","yazma":true},
