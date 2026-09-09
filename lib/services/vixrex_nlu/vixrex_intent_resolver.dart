@@ -1,6 +1,13 @@
 import 'package:vixrex/config/vixrex_niyet_sozlugu.g.dart';
 import 'package:vixrex/services/vixrex_nlu/vixrex_normalizer.dart';
 
+class _NiyetEslesmesi {
+  final int start;
+  final int end;
+
+  const _NiyetEslesmesi(this.start, this.end);
+}
+
 /// 46 alan sözlüğü üzerinden eş-anlam + sözlük örneği ile alan bulur.
 /// Deterministik, AI yok, Next.js ile aynı algoritma olmalı.
 class VixrexIntentResolver {
@@ -8,18 +15,27 @@ class VixrexIntentResolver {
 
   /// Türkçe ekler için son sınırı katı değildir; fakat eşleşme sıradan bir
   /// kelimenin ortasından başlayamaz. Uzun/bağlamlı örnekler kısa alias'lardan
-  /// önce değerlendirilir.
-  bool _niyetBaslangicindaEslesir(String normInput, String normIfade) {
+  /// önce değerlendirilir. Daha önce seçilmiş uzun bir niyet aralığının
+  /// içindeki kısa/genel alias ikinci alan sayılmaz.
+  _NiyetEslesmesi? _niyetEslesmesiBul(
+    String normInput,
+    String normIfade, [
+    List<_NiyetEslesmesi> doluAraliklar = const [],
+  ]) {
     var from = 0;
     while (from <= normInput.length - normIfade.length) {
       final idx = normInput.indexOf(normIfade, from);
-      if (idx < 0) return false;
-      if (idx == 0 || !RegExp(r'[a-z0-9]').hasMatch(normInput[idx - 1])) {
-        return true;
-      }
+      if (idx < 0) return null;
+      final startOk =
+          idx == 0 || !RegExp(r'[a-z0-9]').hasMatch(normInput[idx - 1]);
+      final aday = _NiyetEslesmesi(idx, idx + normIfade.length);
+      final ortusuyor = doluAraliklar.any(
+        (dolu) => aday.start < dolu.end && aday.end > dolu.start,
+      );
+      if (startOk && !ortusuyor) return aday;
       from = idx + 1;
     }
-    return false;
+    return null;
   }
 
   /// `{deger}` içeren sözlük örneğinin değerden önceki sabit bölümü gerçek
@@ -66,7 +82,7 @@ class VixrexIntentResolver {
     final normInput = VixrexNormalizer.normalize(input);
     if (normInput.trim().isEmpty) return null;
     for (final c in _adaylariOlustur()) {
-      if (_niyetBaslangicindaEslesir(normInput, c.ifade)) return c.alan;
+      if (_niyetEslesmesiBul(normInput, c.ifade) != null) return c.alan;
     }
     return null;
   }
@@ -75,12 +91,20 @@ class VixrexIntentResolver {
     final normInput = VixrexNormalizer.normalize(input);
     final found = <VixrexNiyetAlan>[];
     final seen = <String>{};
+    final doluAraliklar = <_NiyetEslesmesi>[];
+
     for (final c in _adaylariOlustur()) {
       if (seen.contains(c.alan.anahtar)) continue;
-      if (_niyetBaslangicindaEslesir(normInput, c.ifade)) {
-        found.add(c.alan);
-        seen.add(c.alan.anahtar);
-      }
+      final eslesme = _niyetEslesmesiBul(
+        normInput,
+        c.ifade,
+        doluAraliklar,
+      );
+      if (eslesme == null) continue;
+
+      found.add(c.alan);
+      seen.add(c.alan.anahtar);
+      doluAraliklar.add(eslesme);
     }
     return found;
   }
