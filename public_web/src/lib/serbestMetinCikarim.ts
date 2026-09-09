@@ -89,7 +89,10 @@ function adresCikar(paragraf: string, cikarilacakAltDizgeler: string[]): string 
 // değiştirmeden, yalnız gün/saat bölümünü kayıpsız koruyoruz.
 const CALISMA_GUN_IPUCU_REGEX =
   /\b(her\s+gün|her\s+gun|hafta\s+içi|hafta\s+ici|hafta\s+sonu|pazartesi|salı|sali|çarşamba|carsamba|perşembe|persembe|cuma|cumartesi|pazar|pzt|sal|çar|car|per|cum|cmt|paz)\b/gi;
-const KAPALI_IPUCU_REGEX = /\bkapal[ıi]\b/gi;
+// JavaScript `\b` yalnız ASCII "word" karakterleriyle güvenilir çalışır;
+// Türkçe `ı` kelime karakteri sayılmadığı için `/kapalı\b/` eşleşmez.
+// Son sınırı açıkça boşluk/noktalama/metin sonu olarak tanımlarız.
+const KAPALI_IPUCU_REGEX = /\bkapal[ıi](?=$|[\s.,;:!?])/gi;
 
 function tumSaatAraliklari(metin: string): string[] {
   return Array.from(metin.matchAll(new RegExp(TIME_RANGE_REGEX.source, "g"))).map(
@@ -147,7 +150,7 @@ export function serbestMetindenAlanlariCikar(paragraf: string): SerbestMetinSonu
   const sonuc: SerbestMetinSonuc = {};
 
   const telefonAdayi = paragraf.match(TELEFON_ADAYI_REGEX)?.[0] ?? "";
-  const whatsapp = telefonAdayi ? telefonuNormallestir(telefonAdayi) : null;
+  const whatsapp = telefonAdayi ? telefonuNormallestir(telefonAdayI) : null;
   if (whatsapp) sonuc.whatsapp = whatsapp;
 
   // Gerçek testte "Çarşı teknik servis 0542..." seçili kimlik sorusuna
