@@ -80,12 +80,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          channel: stable
-          cache: true
+      # subosito/flutter-action kendi içinde bash çalıştırıyor. Bu Windows
+      # self-hosted runner'da GitHub'ın C:\... geçici script yolunu /bin/bash
+      # yanlış yorumladığı için ürün koduna ulaşmadan çöküyor. Runner zaten
+      # Vixrex Flutter geliştirme ortamı; kurulu Flutter doğrudan doğrulanır.
+      - name: Flutter sürümünü doğrula
+        run: |
+          $ErrorActionPreference = "Stop"
+          flutter --version
+          $machine = flutter --version --machine | ConvertFrom-Json
+          if ($machine.frameworkVersion -ne $env:FLUTTER_VERSION) {
+            throw "Flutter sürümü $($machine.frameworkVersion); beklenen $env:FLUTTER_VERSION"
+          }
 
       - name: Bağımlılıklar
         run: flutter pub get
