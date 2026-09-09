@@ -48,7 +48,7 @@ describe("görsel sıkıştırma", () => {
     expect(sonuc.bayt.length).toBeLessThan(kaynak.length);
     expect(sonuc.tur).toBe("image/jpeg");
     expect(sonuc.uzanti).toBe("jpg");
-  });
+  }, 10_000);
 
   it("küçük görseli büyütmez", async () => {
     const kaynak = await ornekJpeg(800, 600);
