@@ -18,13 +18,10 @@ interface FieldRestoreHook {
   geriAliniyor: boolean;
   canliyaDondur: () => Promise<void>;
   /**
-   * Adı geriye uyum için korunuyor. Bu fonksiyon artık Assistant'ın onay
-   * kartındaki "Geri al" davranışıdır: alanları CANLI değere döndürmez,
-   * sunucunun aynı transaction'da sakladığı Assistant-öncesi TASLAK
-   * değerlerine atomik olarak döndürür. Arada başka yazım varsa sunucu
-   * draft_version kontrolüyle işlemi reddeder.
+   * Adı geriye uyum için korunuyor. Assistant "Geri al" artık alan listesi
+   * değil commandId alır; DB yalnız o command'ın kendi undo kaydını açar.
    */
-  coklaCanliyaDondur: (anahtarlar: string[]) => Promise<void>;
+  coklaCanliyaDondur: (commandId: string) => Promise<void>;
 }
 
 export function useFieldRestore({
@@ -43,7 +40,7 @@ export function useFieldRestore({
   }, [seciliAlan?.anahtar]);
 
   // Manuel "canlı hâline döndür" işlevi AYNI kalır. Bu, Assistant'ın
-  // son-işlem undo'su değildir ve ayrı kullanıcı niyetidir.
+  // command-bazlı undo'su değildir ve ayrı kullanıcı niyetidir.
   const canliyaDondur = useCallback(async () => {
     if (!seciliAlan) return;
     const alan = seciliAlan;
@@ -99,11 +96,8 @@ export function useFieldRestore({
   }, [slug, seciliAlan, mesajEkle, setAlan, setGiris, router]);
 
   const coklaCanliyaDondur = useCallback(
-    async (anahtarlar: string[]) => {
-      const alanlar = anahtarlar
-        .map((a) => FIELD_BY_KEY.get(a))
-        .filter((a): a is VitrinField => Boolean(a));
-      if (alanlar.length === 0) return;
+    async (commandId: string) => {
+      if (!commandId.trim()) return;
       setGeriAliniyor(true);
 
       try {
@@ -112,7 +106,7 @@ export function useFieldRestore({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             slug,
-            anahtarlar: alanlar.map((alan) => alan.anahtar),
+            commandId,
             clientId: taslakClientId(),
           }),
         });
