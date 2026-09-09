@@ -4,6 +4,7 @@ export interface VixrexBekleyenBaglam {
   anahtar: string;
   etiket: string;
   tip: string;
+  eylem?: "kaldir";
 }
 
 export type VixrexBaglamKarari =
@@ -11,6 +12,7 @@ export type VixrexBaglamKarari =
   | "ozel_sor"
   | "ayni_kalsin"
   | "kaldirma_onayi"
+  | "kaldir"
   | "iptal"
   | "bool_true"
   | "bool_false"
@@ -22,7 +24,7 @@ export interface VixrexBaglamSonucu {
   karar: VixrexBaglamKarari;
   yazma: boolean;
   mesaj: string;
-  deger?: string | boolean;
+  deger?: string | boolean | null;
 }
 
 export const VIXREX_DOGAL_GENEL_SORU = "Vitrininde neyi farklı görmek istersin?";
@@ -81,6 +83,27 @@ export function vixrexBaglamsalCevapKarari(
 
   if (!bekleyen) {
     return { karar: "genel_sor", yazma: false, mesaj: VIXREX_DOGAL_GENEL_SORU };
+  }
+
+  // Bir önceki turda kullanıcı açıkça “onu kaldır” dedi ve Asistan onay
+  // sorduysa, sonraki evet/hayır artık alan değeri değildir; o kaldırma
+  // kararının cevabıdır.
+  if (bekleyen.eylem === "kaldir") {
+    if (EVET.has(norm)) {
+      return { karar: "kaldir", yazma: true, mesaj: "", deger: null };
+    }
+    if (HAYIR.has(norm) || IPTAL.has(norm)) {
+      return {
+        karar: "iptal",
+        yazma: false,
+        mesaj: `Tamam, ${bekleyen.etiket} bilgisini kaldırmıyorum.`,
+      };
+    }
+    return {
+      karar: "kaldirma_onayi",
+      yazma: false,
+      mesaj: `${bekleyen.etiket} bilgisini kaldırmamı istiyorsan evet, vazgeçtiysen hayır diyebilirsin.`,
+    };
   }
 
   if (IPTAL.has(norm)) {
