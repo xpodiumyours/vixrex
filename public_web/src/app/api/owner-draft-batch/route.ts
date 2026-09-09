@@ -263,13 +263,19 @@ export async function POST(request: NextRequest) {
     command_id?: string;
     replayed?: boolean;
   } | null;
+  const replayed = sonuc?.replayed === true;
 
   return NextResponse.json({
     tamam: true,
     commandId: sonuc?.command_id ?? commandId,
     undoId: sonuc?.undo_id ?? null,
-    replayed: sonuc?.replayed === true,
-    degisiklikler: normalizeEdilenler,
+    replayed,
+    // Replay, eski bir command'ın receipt'idir; o değerlerin hâlâ güncel
+    // olduğunu kanıtlamaz. Özellikle command sonradan undo edilmiş veya aynı
+    // alan daha yeni bir command ile değiştirilmiş olabilir. Eski değerleri
+    // istemcinin yerel gerçeği yapma: boş liste, çağıranı router.refresh()
+    // üzerinden kanonik draftı yeniden okumaya zorlar.
+    degisiklikler: replayed ? [] : normalizeEdilenler,
     taslakSurumu: sonuc?.draft_version ?? null,
   });
 }
