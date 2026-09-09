@@ -97,6 +97,40 @@ void main() {
       expect(writer.writeCount, 0);
     });
 
+    test("bağlam yokken 'telefonu değiştirme' yazma isteği sayılmaz", () async {
+      final memory = _FakeMemory(null);
+      final writer = _FakeWriter();
+      final pipeline = VixrexNluPipeline(memory: memory, canonicalWriter: writer);
+
+      final sonuc = await pipeline.handle(
+        input: 'telefonu değiştirme',
+        controller: null,
+        onValidate: _validate,
+      );
+
+      expect(sonuc.outcome, VixrexNluPipelineOutcome.needsClarification);
+      expect(sonuc.message.text, contains('değişiklik yapmıyorum'));
+      expect(writer.writeCount, 0);
+    });
+
+    test("telefon beklenirken 'değiştirme' işlemi iptal eder ve bekleyen soruyu temizler", () async {
+      final memory = _FakeMemory(_slot('telefon', 'Telefon', 'telefon'));
+      final writer = _FakeWriter();
+      final pipeline = VixrexNluPipeline(memory: memory, canonicalWriter: writer);
+
+      final sonuc = await pipeline.handle(
+        input: 'değiştirme',
+        controller: null,
+        onValidate: _validate,
+      );
+
+      expect(sonuc.outcome, VixrexNluPipelineOutcome.needsClarification);
+      expect(sonuc.message.text, contains('bu değişikliği yapmıyorum'));
+      expect(memory.clearCount, 1);
+      expect(memory.slot, isNull);
+      expect(writer.writeCount, 0);
+    });
+
     test("telefon beklenirken 'evet' telefon değeri diye yazılmaz ve bağlam silinmez", () async {
       final memory = _FakeMemory(_slot('telefon', 'Telefon', 'telefon'));
       final writer = _FakeWriter();
