@@ -12,6 +12,7 @@ class VixrexPendingSlot {
   final String tip; // metin/telefon/url/sayi/secim/acikKapali...
   final DateTime sorulduAt;
   final int deneme; // kaç kez soruldu (spam koruması)
+  final String? eylem; // örn. "kaldir" — sonraki kısa cevabın bağlamı
 
   const VixrexPendingSlot({
     required this.anahtar,
@@ -19,6 +20,7 @@ class VixrexPendingSlot {
     required this.tip,
     required this.sorulduAt,
     this.deneme = 1,
+    this.eylem,
   });
 
   Map<String, dynamic> toJson() => {
@@ -27,6 +29,7 @@ class VixrexPendingSlot {
     'tip': tip,
     'sorulduAt': sorulduAt.toIso8601String(),
     'deneme': deneme,
+    if (eylem != null) 'eylem': eylem,
   };
 
   factory VixrexPendingSlot.fromJson(Map<String, dynamic> json) {
@@ -38,6 +41,7 @@ class VixrexPendingSlot {
           DateTime.tryParse(json['sorulduAt'] as String? ?? '') ??
           DateTime.now(),
       deneme: (json['deneme'] as num?)?.toInt() ?? 1,
+      eylem: json['eylem'] as String?,
     );
   }
 }
