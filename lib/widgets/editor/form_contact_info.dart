@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:vixrex/controllers/store_editor_controller.dart';
 import 'package:vixrex/screens/my_vitrin/my_vitrin_state.dart';
 import 'package:vixrex/widgets/editor/common_form_fields.dart';
+import 'package:vixrex/config/vitrin_alan_bilgisi.dart';
 
 class FormContactInfo extends StatelessWidget {
   final StoreEditorController controller;
@@ -25,7 +26,7 @@ class FormContactInfo extends StatelessWidget {
         KeyedSubtree(
           key: state.whatsappKey,
           child: EditorTextField(
-            label: 'WhatsApp Numarası',
+            label: vitrinAlanEtiketi('whatsapp'),
             controller: whatsappController,
             focusNode: state.whatsappFocusNode,
             hint: '05xx xxx xx xx',

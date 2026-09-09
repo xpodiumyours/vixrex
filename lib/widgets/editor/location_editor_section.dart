@@ -3,6 +3,7 @@ import 'package:vixrex/config/turkey_cities_config.dart';
 import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/services/location_service.dart';
 import 'package:vixrex/utils/text_utils.dart';
+import 'package:vixrex/config/vitrin_alan_bilgisi.dart';
 
 class LocationEditorSection extends StatefulWidget {
   final String? selectedProvinceCode;
@@ -238,8 +239,8 @@ class _LocationEditorSectionState extends State<LocationEditorSection> {
         // Dropdown: İl
         Row(
           children: [
-            const Text(
-              'İl',
+            Text(
+              vitrinAlanEtiketi('il'),
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
@@ -312,8 +313,8 @@ class _LocationEditorSectionState extends State<LocationEditorSection> {
         // Dropdown: İlçe
         Row(
           children: [
-            const Text(
-              'İlçe',
+            Text(
+              vitrinAlanEtiketi('ilce'),
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,

@@ -106,7 +106,11 @@ describe("F0 — bölüm ve form iskeleti kilidi (Flutter = Next.js)", () => {
     expect(vitrinEditorSource).toContain('uploadGorsel');
     // Progress ve missing listte yeni zorunlu alanlar
     expect(vitrinEditorSource).toContain('count(["adres", "il", "ilce"');
-    expect(vitrinEditorSource).toContain('["il", "İl"]');
+    // Zorunlu alan adları 2026-09-09'da şemaya bağlandı: eskiden
+    // ["il", "İl"] gibi elle yazılıyordu ve web "SSS Üst Başlığı" derken
+    // Flutter "SSS Üst Başlık" diyordu. Artık ikisi de şemadan okuyor.
+    expect(vitrinEditorSource).toContain('alanEtiketi({ key })');
+    expect(vitrinEditorSource).not.toContain('["il", "İl"]');
   });
 
   it("F2b — VitrinimEditor akordeonda inline (modal kaldırıldı)", () => {

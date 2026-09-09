@@ -32,9 +32,15 @@ interface Props {
   onCreate?: (draft: Draft) => Promise<void>;
 }
 
+function alanEtiketi(field: { key: string; label?: string }): string {
+  return field.label ?? FIELD_BY_KEY.get(field.key)?.etiket ?? field.key;
+}
+
 type FieldSpec = {
   key: string;
-  label: string;
+  /** Şemada karşılığı olmayan alanlar için elle etiket. Şemadaki alanlar
+   *  etiketini `vitrinFieldSchema`'dan alır — iki istemci aynı ismi görsün. */
+  label?: string;
   placeholder?: string;
   kind?: "text" | "textarea" | "url" | "email" | "tel" | "select";
   required?: boolean;
@@ -46,36 +52,36 @@ const SECTIONS: Array<{ title: string; required?: boolean; fields: FieldSpec[] }
     title: "Kimlik",
     required: true,
     fields: [
-      { key: "isletmeAdi", label: "İşletme / Vixrex Adı", placeholder: "Örn: Aymira Butik", required: true },
-      { key: "isletmeTuru", label: "İşletme Türü", placeholder: "Örn: Butik" },
-      { key: "kisaTanitim", label: "Kısa Açıklama", placeholder: "Bugün vitrinde ne var? Kısa bir tanıtım yaz.", kind: "textarea" },
-      { key: "heroRozet", label: "Kapak Rozeti", placeholder: "Örn: Atölye / Mağaza" },
-      { key: "logo", label: "Logo", placeholder: "Logo görsel bağlantısı", kind: "url" },
+      { key: "isletmeAdi", placeholder: "Örn: Aymira Butik", required: true },
+      { key: "isletmeTuru", placeholder: "Örn: Butik" },
+      { key: "kisaTanitim", placeholder: "Bugün vitrinde ne var? Kısa bir tanıtım yaz.", kind: "textarea" },
+      { key: "heroRozet", placeholder: "Örn: Atölye / Mağaza" },
+      { key: "logo", placeholder: "Logo görsel bağlantısı", kind: "url" },
     ],
   },
   {
     title: "İletişim",
     required: true,
     fields: [
-      { key: "whatsapp", label: "WhatsApp", placeholder: "05xx xxx xx xx", kind: "tel", required: true },
-      { key: "telefon", label: "Telefon", placeholder: "05xx xxx xx xx", kind: "tel" },
-      { key: "eposta", label: "E-posta", placeholder: "iletisim@isletme.com", kind: "email" },
-      { key: "instagram", label: "Instagram", placeholder: "kullaniciadi" },
+      { key: "whatsapp", placeholder: "05xx xxx xx xx", kind: "tel", required: true },
+      { key: "telefon", placeholder: "05xx xxx xx xx", kind: "tel" },
+      { key: "eposta", placeholder: "iletisim@isletme.com", kind: "email" },
+      { key: "instagram", placeholder: "kullaniciadi" },
     ],
   },
   {
     title: "Konum ve saatler",
     required: true,
     fields: [
-      { key: "adres", label: "Açık Adres", placeholder: "Mahalle, cadde, bina no", kind: "textarea", required: true },
-      { key: "il", label: "İl", placeholder: "Örn: İstanbul", required: true },
-      { key: "ilce", label: "İlçe", placeholder: "Örn: Kadıköy", required: true },
-      { key: "mahalle", label: "Mahalle", placeholder: "Örn: Caddebostan" },
-      { key: "konumMetni", label: "Vitrin Konum Metni", placeholder: "Örn: Kadıköy, İstanbul" },
-      { key: "haritaEtiketi", label: "Harita Kartı Etiketi", placeholder: "Örn: Çarşı içi" },
-      { key: "calismaSaatleri", label: "Çalışma Saatleri", placeholder: "Pzt–Cmt 09.00–19.00", kind: "textarea" },
-      { key: "enlem", label: "Enlem", placeholder: "41.015", kind: "text" },
-      { key: "boylam", label: "Boylam", placeholder: "28.978", kind: "text" },
+      { key: "adres", placeholder: "Mahalle, cadde, bina no", kind: "textarea", required: true },
+      { key: "il", placeholder: "Örn: İstanbul", required: true },
+      { key: "ilce", placeholder: "Örn: Kadıköy", required: true },
+      { key: "mahalle", placeholder: "Örn: Caddebostan" },
+      { key: "konumMetni", placeholder: "Örn: Kadıköy, İstanbul" },
+      { key: "haritaEtiketi", placeholder: "Örn: Çarşı içi" },
+      { key: "calismaSaatleri", placeholder: "Pzt–Cmt 09.00–19.00", kind: "textarea" },
+      { key: "enlem", placeholder: "41.015", kind: "text" },
+      { key: "boylam", placeholder: "28.978", kind: "text" },
     ],
   },
   {
@@ -83,31 +89,30 @@ const SECTIONS: Array<{ title: string; required?: boolean; fields: FieldSpec[] }
     fields: [
       {
         key: "kategori",
-        label: "İşletme Kategorisi",
         kind: "select",
         required: true,
         options: FIELD_BY_KEY.get("kategori")?.secenekler ?? [],
       },
-      { key: "kapakGorseli", label: "Kapak Görseli", placeholder: "Görsel bağlantısı", kind: "url" },
-      { key: "galeriUstBaslik", label: "Galeri Üst Başlığı", placeholder: "Örn: İşlerimizden" },
-      { key: "galeriBaslik", label: "Galeri Başlığı", placeholder: "Örn: Galerimiz" },
-      { key: "galeriAksiyonMetni", label: "Galeri Buton Metni", placeholder: "Örn: Hepsini gör" },
-      { key: "galeriAksiyonLinki", label: "Galeri Buton Bağlantısı", kind: "url", placeholder: "https://" },
+      { key: "kapakGorseli", placeholder: "Görsel bağlantısı", kind: "url" },
+      { key: "galeriUstBaslik", placeholder: "Örn: İşlerimizden" },
+      { key: "galeriBaslik", placeholder: "Örn: Galerimiz" },
+      { key: "galeriAksiyonMetni", placeholder: "Örn: Hepsini gör" },
+      { key: "galeriAksiyonLinki", kind: "url", placeholder: "https://" },
     ],
   },
   {
     title: "İçerik ve SEO",
     fields: [
-      { key: "hakkindaMetin", label: "Hakkımızda Yazısı", kind: "textarea", placeholder: "İşletmenizin hikâyesini anlatın" },
-      { key: "kategoriBolumBaslik", label: "Kategori Bölümü Başlığı", placeholder: "Kategoriler" },
-      { key: "urunBolumBaslik", label: "Ürün Bölümü Başlığı", placeholder: "Ürünler" },
-      { key: "blogUstBaslik", label: "Blog Üst Başlığı", placeholder: "Bilgi köşesi" },
-      { key: "blogBaslik", label: "Blog Başlığı", placeholder: "Yazılar" },
-      { key: "sssUstBaslik", label: "SSS Üst Başlığı", placeholder: "Merak edilenler" },
-      { key: "sssBaslik", label: "SSS Bölüm Başlığı", placeholder: "Sıkça sorulan sorular" },
-      { key: "sssAciklama", label: "SSS Bölüm Açıklaması", kind: "textarea", placeholder: "Müşterilerinizin sık sorduğu konular" },
-      { key: "haritaLinki", label: "Google İşletme Bağlantısı", kind: "url", placeholder: "https://" },
-      { key: "referansLinki", label: "Referanslar Bağlantısı", kind: "url", placeholder: "https://" },
+      { key: "hakkindaMetin", kind: "textarea", placeholder: "İşletmenizin hikâyesini anlatın" },
+      { key: "kategoriBolumBaslik", placeholder: "Kategoriler" },
+      { key: "urunBolumBaslik", placeholder: "Ürünler" },
+      { key: "blogUstBaslik", placeholder: "Bilgi köşesi" },
+      { key: "blogBaslik", placeholder: "Yazılar" },
+      { key: "sssUstBaslik", placeholder: "Merak edilenler" },
+      { key: "sssBaslik", placeholder: "Sıkça sorulan sorular" },
+      { key: "sssAciklama", kind: "textarea", placeholder: "Müşterilerinizin sık sorduğu konular" },
+      { key: "haritaLinki", kind: "url", placeholder: "https://" },
+      { key: "referansLinki", kind: "url", placeholder: "https://" },
     ],
   },
 ];
@@ -172,14 +177,10 @@ export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode 
     return { counts, done, total, percent: total ? Math.round((done / total) * 100) : 0 };
   }, [draft, store.products]);
 
-  const missing = [
-    ["isletmeAdi", "İşletme adı"],
-    ["kategori", "Kategori"],
-    ["whatsapp", "WhatsApp"],
-    ["adres", "Adres"],
-    ["il", "İl"],
-    ["ilce", "İlçe"],
-  ].filter(([key]) => !filled(valueFor(draft, key))).map(([, label]) => label);
+  // Zorunlu alan adları da şemadan gelir: iki istemci aynı ismi söylesin.
+  const missing = ["isletmeAdi", "kategori", "whatsapp", "adres", "il", "ilce"]
+    .filter((key) => !filled(valueFor(draft, key)))
+    .map((key) => alanEtiketi({ key }));
 
   function updateLocal(key: string, value: string) {
     const column = FIELD_BY_KEY.get(key)?.kolon ?? key;
@@ -395,11 +396,11 @@ export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode 
                         const common = "min-h-12 w-full rounded-xl border border-lp-border bg-lp-bg-light px-4 text-[14px] font-semibold text-lp-text outline-none transition placeholder:text-lp-muted/70 focus:border-lp-secondary focus:ring-2 focus:ring-lp-primary/25";
                         return (
                           <div key={field.key}>
-                            <label htmlFor={id} className="mb-2 block text-[13px] font-bold text-lp-text-alt">{field.label}{field.required ? <span className="text-lp-primary"> *</span> : null}</label>
+                            <label htmlFor={id} className="mb-2 block text-[13px] font-bold text-lp-text-alt">{alanEtiketi(field)}{field.required ? <span className="text-lp-primary"> *</span> : null}</label>
                             {field.key === "kapakGorseli" || field.key === "logo" ? (
                               <div className="space-y-3">
-                                {value ? <div className="relative aspect-[16/7] w-full overflow-hidden rounded-2xl border border-lp-border"><Image src={value} alt={`${field.label} önizlemesi`} fill sizes="(max-width: 1024px) 100vw, 540px" className="object-cover" /></div> : null}
-                                <label htmlFor={id} className="flex min-h-12 cursor-pointer items-center justify-center rounded-xl border border-lp-border bg-lp-bg-light px-4 text-[13px] font-black text-lp-secondary hover:border-lp-primary">{uploading ? "Yükleniyor…" : value ? `${field.label} değiştir` : `${field.label} yükle`}</label>
+                                {value ? <div className="relative aspect-[16/7] w-full overflow-hidden rounded-2xl border border-lp-border"><Image src={value} alt={`${alanEtiketi(field)} önizlemesi`} fill sizes="(max-width: 1024px) 100vw, 540px" className="object-cover" /></div> : null}
+                                <label htmlFor={id} className="flex min-h-12 cursor-pointer items-center justify-center rounded-xl border border-lp-border bg-lp-bg-light px-4 text-[13px] font-black text-lp-secondary hover:border-lp-primary">{uploading ? "Yükleniyor…" : value ? `${alanEtiketi(field)} değiştir` : `${alanEtiketi(field)} yükle`}</label>
                                 <input id={id} type="file" accept="image/jpeg,image/png,image/webp" disabled={uploading} onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadGorsel(file, field.key); }} className="sr-only" />
                               </div>
                             ) : field.kind === "textarea" ? (

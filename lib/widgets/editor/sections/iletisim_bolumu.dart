@@ -3,6 +3,7 @@ import 'package:vixrex/controllers/store_editor_controller.dart';
 import 'package:vixrex/screens/my_vitrin/my_vitrin_state.dart';
 import 'package:vixrex/widgets/editor/common_form_fields.dart';
 import 'package:vixrex/widgets/editor/sections/spaced_column.dart';
+import 'package:vixrex/config/vitrin_alan_bilgisi.dart';
 
 /// İletişim bölümü — WhatsApp, telefon, e-posta, Instagram.
 ///
@@ -33,7 +34,7 @@ class IletisimBolumu extends StatelessWidget {
         KeyedSubtree(
           key: state.whatsappKey,
           child: EditorTextField(
-            label: 'WhatsApp Numarası',
+            label: vitrinAlanEtiketi('whatsapp'),
             controller: whatsappController,
             focusNode: state.whatsappFocusNode,
             hint: '05xx xxx xx xx',
@@ -48,7 +49,7 @@ class IletisimBolumu extends StatelessWidget {
           ),
         ),
         EditorTextField(
-          label: 'Telefon',
+          label: vitrinAlanEtiketi('telefon'),
           controller: phoneController,
           hint: '05xx xxx xx xx (isteğe bağlı)',
           icon: Icons.phone_rounded,
@@ -56,7 +57,7 @@ class IletisimBolumu extends StatelessWidget {
           onChanged: (v) => controller.updatePhone(v),
         ),
         EditorTextField(
-          label: 'E-posta',
+          label: vitrinAlanEtiketi('eposta'),
           controller: emailController,
           hint: 'ornek@isletme.com',
           icon: Icons.email_outlined,
