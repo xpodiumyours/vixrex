@@ -179,7 +179,13 @@ describe("Erişilebilirlik kapıları (Next.js)", () => {
   it("dokunma hedefi: girdi/buton >= 48px, alt menü 68px", () => {
     expect(globalsCss).toMatch(/\.owner-input\s*{[^}]*min-height:\s*48px/);
     expect(globalsCss).toMatch(/owner-button-danger\s*{[^}]*min-height:\s*48px/);
-    expect(sidebar).toContain("h-[68px]");
+    // 2026-09-09: alt menü yüksekliği sabit sınıftan CSS değişkenine
+    // taşındı (--vx-app-bottom-nav-height). Değer aynı (68px), artık
+    // tek yerden geliyor — kontrol de oraya bakıyor.
+    expect(sidebar).toContain("vixrex-app-bottom-nav");
+    expect(
+      readFileSync(resolve(__dirname, "../src/app/vixrex-app-ui.css"), "utf8")
+    ).toContain("--vx-app-bottom-nav-height: 68px");
   });
 
   it("hareket azaltma: prefers-reduced-motion kuralları var", () => {

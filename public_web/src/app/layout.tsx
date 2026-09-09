@@ -6,6 +6,7 @@ import { CookieConsentRoot } from "@/components/cookie-consent/CookieConsentRoot
 import { RecaptchaProvider } from "@/components/recaptcha/RecaptchaProvider";
 import { AppShellBoundary } from "@/components/app/AppShellBoundary";
 import "./globals.css";
+import "./vixrex-app-ui.css";
 
 // 2026-08-26 (#344): fontlar globals.css'in en ustundeki Google Fonts
 // `@import`'undan alinmisti — render'i bloklayan bir ucuncu taraf stil

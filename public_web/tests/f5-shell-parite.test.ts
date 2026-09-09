@@ -9,6 +9,7 @@ describe("Flutter Web ↔ Next.js tek-shell paritesi", () => {
   const appContext = readFileSync(resolve(__dirname, "../src/components/app/AppShellContext.tsx"), "utf-8");
   const appNav = readFileSync(resolve(__dirname, "../src/components/app/AppSidebar.tsx"), "utf-8");
   const appBoundary = readFileSync(resolve(__dirname, "../src/components/app/AppShellBoundary.tsx"), "utf-8");
+  const appUi = readFileSync(resolve(__dirname, "../src/app/vixrex-app-ui.css"), "utf-8");
   const statusBar = readFileSync(resolve(__dirname, "../src/components/kesfet/StatusBar.tsx"), "utf-8");
   const kesfet = readFileSync(resolve(__dirname, "../src/components/kesfet/KesfetIcerik.tsx"), "utf-8");
   const vixrexPage = readFileSync(resolve(__dirname, "../src/app/app/vixrex/page.tsx"), "utf-8");
@@ -39,6 +40,7 @@ describe("Flutter Web ↔ Next.js tek-shell paritesi", () => {
     expect(appBoundary).toContain("<AppSidebar />");
     expect(appBoundary).toContain("<StatusBar />");
     expect(appBoundary).toContain("<AppBottomNav />");
+    expect(appBoundary).toContain("vixrex-app-shell");
     expect(kesfet).not.toContain("<StatusBar");
     expect(vitrinEditor).not.toContain("sticky top-0 z-20");
     expect(statusBar).toContain("Vitrininiz henüz yayınlanmadı");
@@ -68,10 +70,12 @@ describe("Flutter Web ↔ Next.js tek-shell paritesi", () => {
   });
 
   it("masaüstü 220px/>900 ve mobil NavigationBar 68px sözleşmesini korur", () => {
-    expect(appNav).toContain("w-[220px]");
+    expect(appNav).toContain("vixrex-app-sidebar");
+    expect(appNav).toContain("vixrex-app-bottom-nav");
+    expect(appUi).toContain("--vx-app-sidebar-width: 220px");
+    expect(appUi).toContain("--vx-app-bottom-nav-height: 68px");
     expect(appNav).toContain("min-[901px]:flex");
     expect(appNav).toContain("min-[901px]:hidden");
-    expect(appNav).toContain("h-[68px]");
     expect(flutterShell).toContain("size.width > 900");
     expect(flutterTheme).toContain("height: 68");
   });
