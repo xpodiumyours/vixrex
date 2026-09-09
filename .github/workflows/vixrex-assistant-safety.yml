@@ -1,15 +1,19 @@
 name: Vixrex Assistant Safety
 
 # Bu workflow yalnız güvenli geliştirme dalındaki Assistant çalışmasını
-# doğrulamak için vardır. Mevcut CI self-hosted Windows runner'da `shell: bash`
-# geçici script yolunu bozduğu için gerçek Next.js testleri hiç başlamıyor.
-# Burada Windows'un doğal kabuğu PowerShell kullanılır; ürün/release davranışı
-# değiştirilmez. Çalışma tamamlanıp ana CI onarıldığında kaldırılabilir.
+# doğrulamak için vardır. Ana CI self-hosted Windows runner'da `shell: bash`
+# geçici script yolunu bozabildiği için Assistant'a ait Next.js + Flutter
+# doğrulamaları burada Windows'un doğal PowerShell kabuğuyla bağımsız koşar.
+# Ürün/release davranışı değiştirilmez.
 
 on:
   pull_request:
     paths:
       - "public_web/**"
+      - "lib/**"
+      - "test/**"
+      - "shared/**"
+      - "supabase/**"
       - ".github/workflows/vixrex-assistant-safety.yml"
   push:
     branches:
@@ -21,6 +25,9 @@ concurrency:
 
 permissions:
   contents: read
+
+env:
+  FLUTTER_VERSION: "3.44.4"
 
 jobs:
   public_web:
@@ -60,3 +67,34 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+
+  flutter:
+    name: Flutter — Assistant güvenlik kapısı
+    runs-on: [self-hosted, windows, vixrex]
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: pwsh
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Bağımlılıklar
+        run: flutter pub get
+
+      - name: Biçim kontrolü
+        run: dart format --output=none --set-exit-if-changed lib test
+
+      - name: Statik analiz
+        run: dart analyze --fatal-infos
+
+      - name: Testler
+        run: flutter test --reporter expanded
