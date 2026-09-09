@@ -45,44 +45,50 @@ void main() {
       expect(alanlar.map((a) => a.anahtar), isNot(contains('il')));
     });
 
-    test('aç/kapat doğal komutları gerçek pipeline sonucunda bool üretir', () async {
-      SharedPreferences.setMockInitialValues({});
-      final pipeline = VixrexNluPipeline();
+    test(
+      'aç/kapat doğal komutları gerçek pipeline sonucunda bool üretir',
+      () async {
+        SharedPreferences.setMockInitialValues({});
+        final pipeline = VixrexNluPipeline();
 
-      final ac = await pipeline.handle(
-        input: 'Puanı göster',
-        controller: null,
-        onValidate: validate,
-      );
-      expect(ac.outcome, VixrexNluPipelineOutcome.handled);
-      expect(ac.appliedAnahtar, 'puanGoster');
-      expect(ac.appliedDeger, true);
+        final ac = await pipeline.handle(
+          input: 'Puanı göster',
+          controller: null,
+          onValidate: validate,
+        );
+        expect(ac.outcome, VixrexNluPipelineOutcome.handled);
+        expect(ac.appliedAnahtar, 'puanGoster');
+        expect(ac.appliedDeger, true);
 
-      final kapat = await pipeline.handle(
-        input: 'Yol tarifi butonunu gizle',
-        controller: null,
-        onValidate: validate,
-      );
-      expect(kapat.outcome, VixrexNluPipelineOutcome.handled);
-      expect(kapat.appliedAnahtar, 'yolTarifiGoster');
-      expect(kapat.appliedDeger, false);
-    });
+        final kapat = await pipeline.handle(
+          input: 'Yol tarifi butonunu gizle',
+          controller: null,
+          onValidate: validate,
+        );
+        expect(kapat.outcome, VixrexNluPipelineOutcome.handled);
+        expect(kapat.appliedAnahtar, 'yolTarifiGoster');
+        expect(kapat.appliedDeger, false);
+      },
+    );
 
-    test('çoklu niyette bir alan özel akış isterse diğer alan da kısmi yazılmaz', () async {
-      SharedPreferences.setMockInitialValues({});
-      final pipeline = VixrexNluPipeline();
-      final controller = StoreEditorController(initialData: StoreData());
-      final oncekiTelefon = controller.data.phone;
+    test(
+      'çoklu niyette bir alan özel akış isterse diğer alan da kısmi yazılmaz',
+      () async {
+        SharedPreferences.setMockInitialValues({});
+        final pipeline = VixrexNluPipeline();
+        final controller = StoreEditorController(initialData: StoreData());
+        final oncekiTelefon = controller.data.phone;
 
-      final result = await pipeline.handle(
-        input: 'Telefonu 0212 123 45 67 yap, ili İstanbul yap',
-        controller: controller,
-        onValidate: validate,
-        needsSpecialFlow: (alan) => alan.anahtar == 'il',
-      );
+        final result = await pipeline.handle(
+          input: 'Telefonu 0212 123 45 67 yap, ili İstanbul yap',
+          controller: controller,
+          onValidate: validate,
+          needsSpecialFlow: (alan) => alan.anahtar == 'il',
+        );
 
-      expect(result.outcome, VixrexNluPipelineOutcome.needsClarification);
-      expect(controller.data.phone, oncekiTelefon);
-    });
+        expect(result.outcome, VixrexNluPipelineOutcome.needsClarification);
+        expect(controller.data.phone, oncekiTelefon);
+      },
+    );
   });
 }
