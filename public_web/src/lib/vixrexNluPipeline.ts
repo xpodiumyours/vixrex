@@ -54,12 +54,32 @@ function needsSpecialFlow(anahtar: string): boolean {
 }
 
 function clarifyAsk(alan: VixrexNiyetAlan): string {
-  // Faz 1: ipucu varsa sor, yoksa genel.
-  // vitrinFieldSchema’daki ipucu’nu al – burada basitleştir.
   return `${alan.etiket} için ne yazayım?`;
 }
 function clarifySuccess(alan: VixrexNiyetAlan, deger: unknown): string {
   return `Kaydettim: ${alan.etiket} → ${String(deger)}`;
+}
+
+/**
+ * Aç/kapat alanlarında değer, çoğu zaman alan adından ayrı bir "değer"
+ * değil komut fiilidir: "puanı göster", "yol tarifini gizle". Genel metin
+ * ayıklayıcı bu fiilleri değer saymamalı; burada tip bilgisiyle güvenli
+ * boolean'a çevrilir. Negatif sözcükler önce kontrol edilir.
+ */
+function extractPipelineValue(input: string, alan: VixrexNiyetAlan): unknown | null {
+  if (alan.tip === "acikKapali") {
+    const tokens = vixrexNormalizeDartParity(input)
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+    const negatif = new Set(["kapat", "kapali", "gizle", "pasif", "hayir", "off", "false", "0"]);
+    const pozitif = new Set(["ac", "acik", "goster", "aktif", "evet", "on", "true", "1"]);
+    if (tokens.some((t) => negatif.has(t))) return false;
+    if (tokens.some((t) => pozitif.has(t))) return true;
+    return null;
+  }
+  return extractVixrexValue(input, alan);
 }
 
 export async function handleVixrexNluMessage(input: string): Promise<VixrexPipelineResult> {
@@ -83,11 +103,15 @@ export async function handleVixrexNluMessage(input: string): Promise<VixrexPipel
       const resolved = resolveVixrexIntent(trimmed);
       if (!resolved) {
         if (needsSpecialFlow(alan.anahtar)) return { outcome: "needsSpecialFlow", message: clarifyAsk(alan), anahtar: alan.anahtar };
-        const v = validateField(alan.anahtar, trimmed);
+        const pendingDeger = alan.tip === "acikKapali" ? extractPipelineValue(trimmed, alan) : trimmed;
+        if (pendingDeger === null) {
+          return { outcome: "needsClarification", message: clarifyAsk(alan), anahtar: alan.anahtar };
+        }
+        const v = validateField(alan.anahtar, pendingDeger);
         if (!v.ok) return { outcome: "needsClarification", message: (v as { hata: string }).hata, anahtar: alan.anahtar };
         await clearPending();
         {
-          const kesin = (v as { deger: unknown }).deger ?? trimmed;
+          const kesin = (v as { deger: unknown }).deger ?? pendingDeger;
           return { outcome: "handled", message: clarifySuccess(alan, kesin), anahtar: alan.anahtar, deger: kesin, tumu: [{ anahtar: alan.anahtar, kolon: alan.kolon, deger: kesin }] };
         }
       }
@@ -101,8 +125,8 @@ export async function handleVixrexNluMessage(input: string): Promise<VixrexPipel
     const hatalar: string[] = [];
     for (const a of all) {
       if (needsSpecialFlow(a.anahtar)) { hatalar.push(`${a.etiket} için panelden devam et`); continue; }
-      const ham = extractVixrexValue(trimmed, a);
-      if (!ham) { hatalar.push(`${a.etiket} için değer bulunamadı`); continue; }
+      const ham = extractPipelineValue(trimmed, a);
+      if (ham === null || ham === "") { hatalar.push(`${a.etiket} için değer bulunamadı`); continue; }
       const v = validateField(a.anahtar, ham);
       if (!v.ok) { hatalar.push((v as { hata: string }).hata); continue; }
       ok.push({ alan: a, deger: (v as { deger: unknown }).deger ?? ham });
@@ -123,8 +147,8 @@ export async function handleVixrexNluMessage(input: string): Promise<VixrexPipel
     await savePending(alan);
     return { outcome: "needsSpecialFlow", message: clarifyAsk(alan), anahtar: alan.anahtar };
   }
-  const ham = extractVixrexValue(trimmed, alan);
-  if (!ham) {
+  const ham = extractPipelineValue(trimmed, alan);
+  if (ham === null || ham === "") {
     await savePending(alan);
     return { outcome: "needsClarification", message: clarifyAsk(alan), anahtar: alan.anahtar };
   }
