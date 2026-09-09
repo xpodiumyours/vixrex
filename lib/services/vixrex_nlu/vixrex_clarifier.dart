@@ -1,6 +1,7 @@
 import 'package:vixrex/config/vitrin_alanlari.g.dart';
 import 'package:vixrex/config/vixrex_mesajlar.g.dart';
 import 'package:vixrex/config/vixrex_niyet_sozlugu.g.dart';
+import 'package:vixrex/services/vixrex_nlu/vixrex_conversation_context.dart';
 
 /// Netleştirme mesajları – katalogdan, hard-code değil.
 /// shared/vixrex_mesajlar.json’daki netlestirme_* anahtarları kullanılır.
@@ -50,6 +51,6 @@ class VixrexClarifier {
     return _doldur(_mesaj('netlestirme_hata'), {'hata': hataMetni});
   }
 
-  /// Alan bulunamadı → genel netleştirme.
-  String belirsiz() => _mesaj('netlestirme_belirsiz');
+  /// Bağlam yoksa kullanıcıdan sistemin iç alan adını isteme.
+  String belirsiz() => vixrexDogalGenelSoru;
 }
