@@ -26,7 +26,7 @@ import { seciliKimlikTelefonKestirmesiniCikar } from "./ownerSelectedInput";
 export interface SerbestMetinSonuc {
   whatsapp?: string; // "90XXXXXXXXXX"
   kategoriEtiketi?: string;
-  calismaSaatleriMetni?: string; // "09:00 - 20:00"
+  calismaSaatleriMetni?: string;
   ilAdi?: string;
   ilceAdi?: string;
   adres?: string;
@@ -81,6 +81,68 @@ function adresCikar(paragraf: string, cikarilacakAltDizgeler: string[]): string 
   return null;
 }
 
+// Çok günlü saat anlatımı tek bir HH:MM-HH:MM aralığına indirgenemez.
+// Özellikle "hafta içi 09-18, cumartesi 10-16, pazar kapalı" girdisinde
+// eski çıkarıcı yalnız ilk aralığı kaydediyor; ikinci aralıktaki rakamlar da
+// adres tarayıcısına kalıp "cumartesi 10:00-16:00" gibi sahte adres
+// üretebiliyordu. Vitrin alanı bugün metin olduğu için veri modelini
+// değiştirmeden, yalnız gün/saat bölümünü kayıpsız koruyoruz.
+const CALISMA_GUN_IPUCU_REGEX =
+  /\b(her\s+gün|her\s+gun|hafta\s+içi|hafta\s+ici|hafta\s+sonu|pazartesi|salı|sali|çarşamba|carsamba|perşembe|persembe|cuma|cumartesi|pazar|pzt|sal|çar|car|per|cum|cmt|paz)\b/gi;
+const KAPALI_IPUCU_REGEX = /\bkapal[ıi]\b/gi;
+
+function tumSaatAraliklari(metin: string): string[] {
+  return Array.from(metin.matchAll(new RegExp(TIME_RANGE_REGEX.source, "g"))).map(
+    (eslesme) => eslesme[0],
+  );
+}
+
+function zenginCalismaSaatleriMetniCikar(paragraf: string): string | null {
+  const saatler = Array.from(
+    paragraf.matchAll(new RegExp(TIME_RANGE_REGEX.source, "g")),
+  );
+  if (saatler.length === 0) return null;
+
+  const gunler = Array.from(paragraf.matchAll(CALISMA_GUN_IPUCU_REGEX));
+  if (gunler.length === 0) return null;
+
+  const ilkSaatIndex = saatler[0].index ?? 0;
+  const baslangicEslesmesi =
+    [...gunler]
+      .reverse()
+      .find((eslesme) => (eslesme.index ?? Number.MAX_SAFE_INTEGER) <= ilkSaatIndex) ??
+    gunler[0];
+  const baslangic = baslangicEslesmesi.index ?? 0;
+
+  const kapalilar = Array.from(paragraf.matchAll(KAPALI_IPUCU_REGEX)).filter(
+    (eslesme) => (eslesme.index ?? -1) >= baslangic,
+  );
+
+  // Tek aralık + "hafta içi" gibi basit kullanım mevcut davranışta kalır:
+  // geriye yine normalize "09:00 - 19:00" döner. Kayıpsız metin yalnız
+  // gerçekten birden fazla zaman bilgisi olduğunda devreye girer.
+  if (saatler.length === 1 && kapalilar.length === 0) return null;
+
+  let bitis = baslangic;
+  for (const eslesme of saatler) {
+    const index = eslesme.index ?? 0;
+    if (index < baslangic) continue;
+    bitis = Math.max(bitis, index + eslesme[0].length);
+  }
+  for (const eslesme of kapalilar) {
+    const index = eslesme.index ?? 0;
+    bitis = Math.max(bitis, index + eslesme[0].length);
+  }
+  if (bitis <= baslangic) return null;
+
+  return paragraf
+    .slice(baslangic, bitis)
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/[.,;:]+$/g, "")
+    .trim();
+}
+
 export function serbestMetindenAlanlariCikar(paragraf: string): SerbestMetinSonuc {
   const sonuc: SerbestMetinSonuc = {};
 
@@ -103,8 +165,10 @@ export function serbestMetindenAlanlariCikar(paragraf: string): SerbestMetinSonu
   const kategori = resolveBusinessCategory(paragraf);
   if (kategori) sonuc.kategoriEtiketi = kategori.label;
 
+  const zenginSaatler = zenginCalismaSaatleriMetniCikar(paragraf);
   const saatler = findTimeRange(paragraf);
-  if (saatler) sonuc.calismaSaatleriMetni = saatler.raw;
+  if (zenginSaatler) sonuc.calismaSaatleriMetni = zenginSaatler;
+  else if (saatler) sonuc.calismaSaatleriMetni = saatler.raw;
 
   const yer = ilIlceCikar(paragraf);
   if (yer) {
@@ -113,12 +177,12 @@ export function serbestMetindenAlanlariCikar(paragraf: string): SerbestMetinSonu
   }
 
   // Adres taraması, zaten bulunan telefon/saat alt-dizgelerini temizden
-  // sonra yapılır — yoksa "0532 123 45 67" gibi salt rakamlı bir "cümle"
-  // isAddressValid'in rakam koşulunu yanlışlıkla geçebilir. Ham eşleşen
-  // alt-dizgeler kullanılır (saatler.raw değil — o normalize/dolgulu bir
-  // biçim, paragrafta harfiyen geçmeyebilir).
-  const saatAdayi = paragraf.match(TIME_RANGE_REGEX)?.[0] ?? "";
-  const cikarilacaklar = [telefonAdayi, saatAdayi].filter(Boolean);
+  // sonra yapılır — yoksa saat aralıklarının rakamları AddressValidator'ın
+  // "rakam var" koşulunu geçip sahte adres olabilir. Tek aralık değil,
+  // paragraftaki TÜM aralıklar çıkarılır; zengin çok-günlü saat metni de
+  // bütünüyle temizlenir.
+  const saatAdaylari = tumSaatAraliklari(paragraf);
+  const cikarilacaklar = [telefonAdayi, zenginSaatler ?? "", ...saatAdaylari].filter(Boolean);
   const adres = adresCikar(paragraf, cikarilacaklar);
   if (adres) sonuc.adres = adres;
 

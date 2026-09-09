@@ -28,6 +28,26 @@ describe("serbestMetindenAlanlariCikar — karışık gerçekçi paragraflar", (
     expect(sonuc.calismaSaatleriMetni).toBe("09:00 - 19:00");
   });
 
+  it("çok günlü çalışma saatlerini kayıpsız korur ve saat parçasını adres sanmaz", () => {
+    const sonuc = serbestMetindenAlanlariCikar(
+      "Hafta içi 09:00 - 18:00, cumartesi 10:00 - 16:00, pazar kapalı."
+    );
+    expect(sonuc.calismaSaatleriMetni).toBe(
+      "Hafta içi 09:00 - 18:00, cumartesi 10:00 - 16:00, pazar kapalı"
+    );
+    expect(sonuc.adres).toBeUndefined();
+  });
+
+  it("çok günlü saatler gerçek adresle aynı paragraftaysa adresi korur", () => {
+    const sonuc = serbestMetindenAlanlariCikar(
+      "Bahariye Cad. No:12'deyiz. Hafta içi 09:00 - 18:00, cumartesi 10:00 - 16:00, pazar kapalı."
+    );
+    expect(sonuc.calismaSaatleriMetni).toContain("cumartesi 10:00 - 16:00");
+    expect(sonuc.calismaSaatleriMetni).toContain("pazar kapalı");
+    expect(sonuc.adres).toContain("Bahariye Cad");
+    expect(sonuc.adres).toContain("No:12");
+  });
+
   it.each([
     ["0532 123 45 67"],
     ["+90 532 123 45 67"],
