@@ -1,10 +1,13 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
 import 'package:vixrex/config/vixrex_niyet_sozlugu.g.dart';
 
 /// Flutter Vixrex Assistant'ın kanonik çalışma-taslağı yazma sınırı.
 ///
-/// - Kalıcı hesap varsa: aynı `store_working_drafts` kaydına Supabase RPC ile
+/// - Kalıcı hesap varsa: Next.js ile aynı storefront command çekirdeğine
 ///   TEK batch/transaction yazar.
+/// - Her yazım benzersiz commandId taşır; DB receipt/idempotency/undo kaydını
+///   aynı transaction içinde üretir.
 /// - Anonim veya Supabase başlatılmamışsa: `notAvailable`; çağıran mevcut
 ///   yerel davranışı koruyabilir.
 /// - Uzak yazım denenip hata alırsa: `failed`; çağıran başarı mesajı üretmez.
@@ -13,14 +16,20 @@ enum VixrexCanonicalWriteState { written, notAvailable, failed }
 class VixrexCanonicalWriteResult {
   final VixrexCanonicalWriteState state;
   final String? error;
+  final String? commandId;
 
-  const VixrexCanonicalWriteResult(this.state, {this.error});
+  const VixrexCanonicalWriteResult(
+    this.state, {
+    this.error,
+    this.commandId,
+  });
 }
 
 class VixrexCanonicalDraftWriter {
   const VixrexCanonicalDraftWriter({SupabaseClient? client}) : _client = client;
 
   final SupabaseClient? _client;
+  static const _uuid = Uuid();
 
   SupabaseClient? get _resolvedClient {
     if (_client != null) return _client;
@@ -62,13 +71,26 @@ class VixrexCanonicalDraftWriter {
       changes[kolon] = degerler[i];
     }
 
+    final commandId = _uuid.v4();
     try {
-      await client.rpc(
-        'update_owned_working_draft_fields',
-        params: {'p_changes': changes},
+      final raw = await client.rpc(
+        'apply_owned_working_draft_command',
+        params: {
+          'p_command_id': commandId,
+          'p_changes': changes,
+        },
       );
-      return const VixrexCanonicalWriteResult(
+      final returnedCommandId =
+          raw is Map ? raw['command_id']?.toString().trim() : null;
+      if (returnedCommandId != commandId) {
+        return const VixrexCanonicalWriteResult(
+          VixrexCanonicalWriteState.failed,
+          error: 'COMMAND_RECEIPT_MISMATCH',
+        );
+      }
+      return VixrexCanonicalWriteResult(
         VixrexCanonicalWriteState.written,
+        commandId: commandId,
       );
     } on PostgrestException catch (error) {
       return VixrexCanonicalWriteResult(
