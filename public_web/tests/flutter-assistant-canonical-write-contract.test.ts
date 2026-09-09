@@ -10,18 +10,28 @@ const pipeline = readFileSync(
   resolve(__dirname, "../../lib/services/vixrex_nlu/vixrex_nlu_pipeline.dart"),
   "utf8"
 );
-const migration = readFileSync(
+const ownedMigration = readFileSync(
   resolve(
     __dirname,
-    "../../supabase/migrations/20260909225500_add_owned_atomic_working_draft_batch.sql"
+    "../../supabase/migrations/20260909231500_lock_owned_assistant_batch_to_46_fields.sql"
+  ),
+  "utf8"
+);
+const commandMigration = readFileSync(
+  resolve(
+    __dirname,
+    "../../supabase/migrations/20260909233000_add_assistant_storefront_command_core.sql"
   ),
   "utf8"
 );
 
-describe("Flutter Vixrex Assistant kanonik working draft sözleşmesi", () => {
-  it("kalıcı hesapta tek Supabase batch RPC kullanır, alan alan RPC döngüsü kurmaz", () => {
-    expect(writer).toContain("update_owned_working_draft_fields");
+describe("Flutter Vixrex Assistant kanonik command sözleşmesi", () => {
+  it("kalıcı hesapta Next.js ile aynı command core wrapper'ını kullanır", () => {
+    expect(writer).toContain("apply_owned_working_draft_command");
+    expect(writer).toContain("'p_command_id': commandId");
     expect(writer).toContain("'p_changes': changes");
+    expect(writer).toContain("const _uuid = Uuid()");
+    expect(writer).toContain("returnedCommandId != commandId");
     expect(writer).toContain("user.isAnonymous");
     expect(writer).not.toContain("update_working_draft_field'");
   });
@@ -40,17 +50,25 @@ describe("Flutter Vixrex Assistant kanonik working draft sözleşmesi", () => {
     expect(canonicalWrite).toBeGreaterThan(hataKontrol);
   });
 
-  it("Supabase RPC yalnız kalıcı hesabın kendi vitrininin working draft satırına yazar", () => {
-    expect(migration).toContain("v_user_id uuid := auth.uid()");
-    expect(migration).toContain("not public.is_permanent_user()");
-    expect(migration).toContain("where st.user_id = v_user_id");
-    expect(migration).toContain("public.owner_forbidden_draft_keys()");
-    expect(migration).toContain("for update;");
-    expect(migration).toContain("draft_version = draft_version + 1");
-    expect(migration).toContain(
-      "revoke all on function public.update_owned_working_draft_fields(jsonb)"
+  it("authenticated Assistant yazım sınırı canonical 46 alan allowlistiyle fail-closed kalır", () => {
+    expect(ownedMigration).toContain("vixrex_assistant_editable_draft_columns");
+    expect(ownedMigration).toContain(
+      "v_key = any (public.vixrex_assistant_editable_draft_columns())"
     );
-    expect(migration).toContain("grant execute on function public.update_owned_working_draft_fields(jsonb)");
-    expect(migration).toContain("to authenticated");
+    expect(ownedMigration).toContain("where st.user_id = v_user_id");
+    expect(ownedMigration).toContain("public.owner_forbidden_draft_keys()");
+  });
+
+  it("Flutter ve Next yetki sarmalayıcıları aynı kapalı command core'a gider", () => {
+    expect(commandMigration).toContain("public.vixrex_apply_storefront_command_core(");
+    expect(commandMigration).toContain("public.apply_working_draft_command(");
+    expect(commandMigration).toContain("public.apply_owned_working_draft_command(");
+    expect(commandMigration).toContain(
+      "grant execute on function public.apply_owned_working_draft_command(uuid, jsonb)"
+    );
+    expect(commandMigration).toContain("to authenticated");
+    expect(commandMigration).toContain(
+      "revoke all on function public.vixrex_apply_storefront_command_core("
+    );
   });
 });
