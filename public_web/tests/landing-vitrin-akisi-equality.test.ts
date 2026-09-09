@@ -65,9 +65,9 @@ describe("landing vitrin oluşturma akışı Flutter referansıyla eşit", () =>
     expect(apkAssistant).not.toContain("Evet, Oluşturalım");
     expect(apkAssistant).not.toContain("validateField");
 
-    expect(sohbet).toContain('h.id === "hazir_vitrin_sec"');
-    expect(sohbet).toContain('h.id === "sifirdan_olustur"');
-    expect(sohbet).toContain('h.id === "bakiniyorum"');
+    expect(sohbet).toContain('hizliSecenekEtiketi("hazir_vitrin_sec")');
+    expect(sohbet).toContain('hizliSecenekEtiketi("sifirdan_olustur")');
+    expect(sohbet).toContain('hizliSecenekEtiketi("bakiniyorum")');
     expect(katalog).toContain('"id": "hazir_vitrin_sec"');
     expect(katalog).toContain('"id": "sifirdan_olustur"');
     expect(katalog).toContain('"id": "bakiniyorum"');
