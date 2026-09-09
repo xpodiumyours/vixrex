@@ -83,8 +83,9 @@ export interface VitrinField {
    */
   neden?: string;
   /**
-   * Doğrulama kuralının adı (ör. "tr_mobil"). Flutter ve Next.js bu kuralı
-   * kendi doğrulama adapter'larında uygular; şema kuralın ortak adını taşır.
+   * Doğrulama kuralının adı (ör. "tr_mobil", "adres"). Flutter ve Next.js
+   * bu kuralı kendi doğrulama adapter'larında uygular; şema kuralın ortak
+   * adını taşır.
    */
   dogrulama?: string;
   /**
@@ -238,6 +239,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
     bolum: "contact",
     zorunlu: true,
     maxUzunluk: 200,
+    dogrulama: "adres",
   },
   // Faz F (Tek Asistan planı) eklendi: Flutter'ın addressCompleted'ı ve
   // asıl yayın kapısı store_publish_validator.dart adresle BİRLİKTE il/ilçe
