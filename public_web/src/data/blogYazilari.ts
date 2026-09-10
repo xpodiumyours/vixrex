@@ -352,6 +352,23 @@ Bu rehber, Google'da belirli bir sıralama veya belirli sürede indekslenme vaad
 ];
 
 const GUN_MS = 24 * 60 * 60 * 1000;
+const ISO_TARIH_DESENI = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Yalnız gerçek takvim günlerini kabul eder; ör. 2026-02-31 geçersizdir. */
+function isoTarihMs(iso: string | null): number | null {
+  if (!iso || !ISO_TARIH_DESENI.test(iso)) return null;
+  const ms = Date.parse(`${iso}T00:00:00Z`);
+  if (Number.isNaN(ms)) return null;
+  return new Date(ms).toISOString().slice(0, 10) === iso ? ms : null;
+}
+
+function utcGunBaslangici(tarih: Date): number {
+  return Date.UTC(
+    tarih.getUTCFullYear(),
+    tarih.getUTCMonth(),
+    tarih.getUTCDate()
+  );
+}
 
 /**
  * Planın kontrol hedefleri:
@@ -368,12 +385,6 @@ function otomatikKontrolEsigiGun(yazi: BlogYazisi): number | null {
   return 90;
 }
 
-function isoTarihMs(iso: string | null): number | null {
-  if (!iso) return null;
-  const ms = Date.parse(`${iso}T00:00:00Z`);
-  return Number.isNaN(ms) ? null : ms;
-}
-
 export function yaziDurumunuHesapla(
   yazi: BlogYazisi,
   bugun = new Date()
@@ -382,13 +393,14 @@ export function yaziDurumunuHesapla(
   if (!yazi.yayinda || yazi.durum === "taslak") return "taslak";
   if (yazi.durum === "inceleme_gerekli") return "inceleme_gerekli";
 
+  const kontrolMs = isoTarihMs(yazi.sonKontrolTarihi);
+  const bugunMs = utcGunBaslangici(bugun);
+  if (kontrolMs === null || kontrolMs > bugunMs) return "inceleme_gerekli";
+
   const esikGun = otomatikKontrolEsigiGun(yazi);
   if (esikGun === null) return "yayinda";
 
-  const kontrolMs = isoTarihMs(yazi.sonKontrolTarihi);
-  if (kontrolMs === null) return "inceleme_gerekli";
-
-  const gecenGun = Math.floor((bugun.getTime() - kontrolMs) / GUN_MS);
+  const gecenGun = Math.floor((bugunMs - kontrolMs) / GUN_MS);
   return gecenGun > esikGun ? "inceleme_gerekli" : "yayinda";
 }
 
@@ -396,9 +408,15 @@ export function yaziDurumunuHesapla(
  * Yayın anahtarına ek kalite kapısı. İçerik eksikliği yazıyı otomatik
  * düzeltmez; yalnız yanlışlıkla yayına açılmasını engeller.
  */
-export function yaziYayinKalitesiUygun(yazi: BlogYazisi): boolean {
+export function yaziYayinKalitesiUygun(
+  yazi: BlogYazisi,
+  bugun = new Date()
+): boolean {
   if (!yazi.cozduguSoru.trim() || !yazi.yazar.ad.trim()) return false;
-  if (!yazi.sonKontrolTarihi.trim()) return false;
+
+  const bugunMs = utcGunBaslangici(bugun);
+  const kontrolMs = isoTarihMs(yazi.sonKontrolTarihi);
+  if (kontrolMs === null || kontrolMs > bugunMs) return false;
 
   if (
     yazi.kaynaklar.some(
@@ -422,11 +440,25 @@ export function yaziYayinKalitesiUygun(yazi: BlogYazisi): boolean {
     if (!yazi.gorselKullanimHakki?.trim()) return false;
   }
 
-  if (yazi.yayinTarihi) {
-    if (yazi.sonKontrolTarihi < yazi.yayinTarihi) return false;
+  const yayinMs = isoTarihMs(yazi.yayinTarihi);
+  const guncellemeMs = isoTarihMs(yazi.guncellemeTarihi);
 
-    if (yazi.guncellemeTarihi) {
-      if (yazi.guncellemeTarihi < yazi.yayinTarihi) return false;
+  if (yazi.yayinTarihi && yayinMs === null) return false;
+  if (yazi.guncellemeTarihi && guncellemeMs === null) return false;
+  if (yazi.guncellemeTarihi && !yazi.yayinTarihi) return false;
+
+  if (yayinMs !== null) {
+    if (yayinMs > bugunMs || kontrolMs < yayinMs) return false;
+
+    if (guncellemeMs !== null) {
+      if (
+        guncellemeMs < yayinMs ||
+        guncellemeMs > bugunMs ||
+        kontrolMs < guncellemeMs
+      ) {
+        return false;
+      }
+
       if (
         yazi.guncellemeTarihi !== yazi.yayinTarihi &&
         yazi.guncellemeNotlari.length === 0
@@ -434,6 +466,12 @@ export function yaziYayinKalitesiUygun(yazi: BlogYazisi): boolean {
         return false;
       }
     }
+  }
+
+  for (const not of yazi.guncellemeNotlari) {
+    const notMs = isoTarihMs(not.tarih);
+    if (notMs === null || notMs > bugunMs || !not.aciklama.trim()) return false;
+    if (guncellemeMs !== null && notMs > guncellemeMs) return false;
   }
 
   return true;
@@ -469,7 +507,9 @@ export function blogYayindaMi(): boolean {
 /** Süresi dolan veya editörce işaretlenen yazıları tek yerde toplar. */
 export function incelemeGerekenYazilar(bugun = new Date()): BlogYazisi[] {
   return BLOG_YAZILARI.filter(
-    (yazi) => yazi.yayinda && yaziDurumunuHesapla(yazi, bugun) === "inceleme_gerekli"
+    (yazi) =>
+      yazi.yayinda &&
+      yaziDurumunuHesapla(yazi, bugun) === "inceleme_gerekli"
   );
 }
 

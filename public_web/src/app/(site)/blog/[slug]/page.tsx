@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   ilgiliYazilariBul,
+  type YayindakiBlogYazisi,
   yayindakiYazilar,
   yaziyiBul,
 } from "@/data/blogYazilari";
@@ -23,6 +24,60 @@ interface SayfaProps {
 function mutlakUrl(yol: string): string {
   if (/^https?:\/\//i.test(yol)) return yol;
   return buildSiteUrl(yol);
+}
+
+function baglamsalCta(
+  yazi: Pick<YayindakiBlogYazisi, "kategori" | "icerikTuru">
+): { baslik: string; aciklama: string; href: string; etiket: string } {
+  if (yazi.icerikTuru === "urun_guncellemesi") {
+    return {
+      baslik: "Güncellemeyi vitrinde görmek ister misin?",
+      aciklama: "Yayındaki vitrinleri Keşfet sayfasında inceleyebilirsin.",
+      href: "/kesfet",
+      etiket: "Vitrinleri incele",
+    };
+  }
+
+  switch (yazi.kategori) {
+    case "Google ve Keşfedilme":
+      return {
+        baslik: "Dijital vitrinin temelini kontrol et",
+        aciklama:
+          "Vitrin hazırlama ve yayınlama adımlarını Vixrex Yardım sayfasında inceleyebilirsin.",
+        href: "/yardim",
+        etiket: "Yardım rehberlerini aç",
+      };
+    case "Müşteri İletişimi":
+      return {
+        baslik: "İletişim bilgilerini doğru hazırlamak ister misin?",
+        aciklama:
+          "Vixrex Yardım sayfasındaki vitrin hazırlama adımlarını inceleyebilirsin.",
+        href: "/yardim",
+        etiket: "Yardım rehberlerini aç",
+      };
+    case "İşletme Hikâyeleri":
+      return {
+        baslik: "Benzer vitrinleri incele",
+        aciklama: "Yayındaki işletme vitrinlerini Keşfet sayfasında görebilirsin.",
+        href: "/kesfet",
+        etiket: "Vitrinleri keşfet",
+      };
+    case "Vixrex’te Yenilikler":
+      return {
+        baslik: "Vixrex’i vitrinlerde incele",
+        aciklama: "Yayındaki vitrinleri Keşfet sayfasında görebilirsin.",
+        href: "/kesfet",
+        etiket: "Vitrinleri keşfet",
+      };
+    default:
+      return {
+        baslik: "Vitrin örneklerini incele",
+        aciklama:
+          "Rehberde anlatılan yapıların gerçek vitrinlerde nasıl göründüğüne Keşfet sayfasından bakabilirsin.",
+        href: "/kesfet",
+        etiket: "Vitrinleri keşfet",
+      };
+  }
 }
 
 export function generateStaticParams() {
@@ -72,6 +127,7 @@ export default async function BlogYaziPage({ params }: SayfaProps) {
   const anlamliGuncelleme =
     Boolean(yazi.guncellemeTarihi) &&
     yazi.guncellemeTarihi !== yazi.yayinTarihi;
+  const cta = baglamsalCta(yazi);
 
   const blogPosting = {
     "@context": "https://schema.org",
@@ -186,21 +242,35 @@ export default async function BlogYaziPage({ params }: SayfaProps) {
                 </span>
                 {yazi.inceleyen ? <span>İnceleyen: {yazi.inceleyen.ad}</span> : null}
                 <span>
-                  Yayınlandı: <time dateTime={yazi.yayinTarihi}>{tarihiYaz(yazi.yayinTarihi)}</time>
+                  Yayınlandı:{" "}
+                  <time dateTime={yazi.yayinTarihi}>
+                    {tarihiYaz(yazi.yayinTarihi)}
+                  </time>
                 </span>
                 {anlamliGuncelleme ? (
                   <span>
-                    Güncellendi: <time dateTime={yazi.guncellemeTarihi!}>{tarihiYaz(yazi.guncellemeTarihi!)}</time>
+                    Güncellendi:{" "}
+                    <time dateTime={yazi.guncellemeTarihi!}>
+                      {tarihiYaz(yazi.guncellemeTarihi!)}
+                    </time>
                   </span>
                 ) : null}
                 <span>
-                  Son kontrol: <time dateTime={yazi.sonKontrolTarihi}>{tarihiYaz(yazi.sonKontrolTarihi)}</time>
+                  Son kontrol:{" "}
+                  <time dateTime={yazi.sonKontrolTarihi}>
+                    {tarihiYaz(yazi.sonKontrolTarihi)}
+                  </time>
                 </span>
-                {yazi.kaynaklar.length > 0 ? <span>{yazi.kaynaklar.length} kaynak</span> : null}
+                {yazi.kaynaklar.length > 0 ? (
+                  <span>{yazi.kaynaklar.length} kaynak</span>
+                ) : null}
                 <span>{okumaDakika} dk okuma</span>
               </div>
 
-              <aside className="mt-7 border-l-2 border-lp-primary pl-4 sm:pl-5" aria-label="Bu rehberin amacı">
+              <aside
+                className="mt-7 border-l-2 border-lp-primary pl-4 sm:pl-5"
+                aria-label="Bu rehberin amacı"
+              >
                 <p className="text-xs font-black uppercase tracking-[0.16em] text-lp-secondary">
                   Bu rehber hangi soruyu çözüyor?
                 </p>
@@ -250,12 +320,18 @@ export default async function BlogYaziPage({ params }: SayfaProps) {
                 </figure>
               ) : (
                 <div
-                  className="relative mt-8 flex aspect-[16/8] overflow-hidden rounded-[22px] border border-lp-border bg-lp-surface-soft p-6 sm:p-8"
+                  className="relative mt-8 flex aspect-[16/9] overflow-hidden rounded-[22px] border border-lp-border bg-lp-surface-soft p-6 sm:p-8"
                   role="img"
                   aria-label={`${yazi.baslik} için Vixrex editoryal kapak`}
                 >
-                  <span aria-hidden="true" className="absolute right-8 top-7 h-28 w-28 rounded-full border border-lp-primary/25" />
-                  <span aria-hidden="true" className="absolute bottom-8 right-20 h-14 w-14 rounded-full border border-lp-secondary/25" />
+                  <span
+                    aria-hidden="true"
+                    className="absolute right-8 top-7 h-28 w-28 rounded-full border border-lp-primary/25"
+                  />
+                  <span
+                    aria-hidden="true"
+                    className="absolute bottom-8 right-20 h-14 w-14 rounded-full border border-lp-secondary/25"
+                  />
                   <div className="relative z-10 flex w-full flex-col justify-between">
                     <div className="flex items-center justify-between gap-4">
                       <span className="text-xs font-black uppercase tracking-[0.18em] text-lp-secondary">
@@ -269,7 +345,7 @@ export default async function BlogYaziPage({ params }: SayfaProps) {
                       <p className="text-xs font-black uppercase tracking-[0.14em] text-lp-muted">
                         {yazi.kategori}
                       </p>
-                      <p className="mt-3 text-2xl font-black leading-tight tracking-tight text-lp-text sm:text-4xl">
+                      <p className="mt-3 break-words text-2xl font-black leading-tight tracking-tight text-lp-text sm:text-4xl">
                         {yazi.baslik}
                       </p>
                     </div>
@@ -310,8 +386,8 @@ export default async function BlogYaziPage({ params }: SayfaProps) {
                           blok.sirali ? "list-decimal" : "list-disc"
                         }`}
                       >
-                        {blok.maddeler.map((madde) => (
-                          <li key={madde}>{madde}</li>
+                        {blok.maddeler.map((madde, maddeIndex) => (
+                          <li key={`${madde}-${maddeIndex}`}>{madde}</li>
                         ))}
                       </Liste>
                     );
@@ -325,7 +401,10 @@ export default async function BlogYaziPage({ params }: SayfaProps) {
               </div>
 
               {yazi.kaynaklar.length > 0 ? (
-                <section className="mt-12 border-t border-lp-border pt-7" aria-labelledby="kaynaklar">
+                <section
+                  className="mt-12 border-t border-lp-border pt-7"
+                  aria-labelledby="kaynaklar"
+                >
                   <h2 id="kaynaklar" className="text-2xl font-black text-lp-text">
                     Kaynaklar
                   </h2>
@@ -347,14 +426,25 @@ export default async function BlogYaziPage({ params }: SayfaProps) {
               ) : null}
 
               {yazi.guncellemeNotlari.length > 0 ? (
-                <section className="mt-12 border-t border-lp-border pt-7" aria-labelledby="guncelleme-gecmisi">
-                  <h2 id="guncelleme-gecmisi" className="text-2xl font-black text-lp-text">
+                <section
+                  className="mt-12 border-t border-lp-border pt-7"
+                  aria-labelledby="guncelleme-gecmisi"
+                >
+                  <h2
+                    id="guncelleme-gecmisi"
+                    className="text-2xl font-black text-lp-text"
+                  >
                     Güncelleme geçmişi
                   </h2>
                   <div className="mt-4 divide-y divide-lp-border">
                     {yazi.guncellemeNotlari.map((not) => (
-                      <div key={`${not.tarih}-${not.aciklama}`} className="py-4">
-                        <p className="font-black text-lp-text">{tarihiYaz(not.tarih)}</p>
+                      <div
+                        key={`${not.tarih}-${not.aciklama}`}
+                        className="py-4"
+                      >
+                        <p className="font-black text-lp-text">
+                          {tarihiYaz(not.tarih)}
+                        </p>
                         <p className="mt-1 text-sm font-medium leading-6 text-lp-muted">
                           {not.aciklama}
                         </p>
@@ -382,8 +472,14 @@ export default async function BlogYaziPage({ params }: SayfaProps) {
               </section>
 
               {ilgiliYazilar.length > 0 ? (
-                <section className="mt-12 border-t border-lp-border pt-7" aria-labelledby="ilgili-yazilar">
-                  <h2 id="ilgili-yazilar" className="text-2xl font-black text-lp-text">
+                <section
+                  className="mt-12 border-t border-lp-border pt-7"
+                  aria-labelledby="ilgili-yazilar"
+                >
+                  <h2
+                    id="ilgili-yazilar"
+                    className="text-2xl font-black text-lp-text"
+                  >
                     İlgili rehberler
                   </h2>
                   <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -406,17 +502,15 @@ export default async function BlogYaziPage({ params }: SayfaProps) {
               ) : null}
 
               <section className="mt-12 border-t border-lp-border pt-7">
-                <h2 className="text-xl font-black text-lp-text">
-                  Vitrin örneklerini incele
-                </h2>
+                <h2 className="text-xl font-black text-lp-text">{cta.baslik}</h2>
                 <p className="mt-2 text-sm font-medium leading-6 text-lp-muted">
-                  Yayındaki vitrinleri Keşfet sayfasında görebilirsiniz.
+                  {cta.aciklama}
                 </p>
                 <Link
-                  href="/kesfet"
+                  href={cta.href}
                   className="mt-4 inline-flex min-h-11 items-center justify-center rounded-full bg-lp-primary px-6 text-sm font-black text-lp-on-primary outline-none focus-visible:ring-2 focus-visible:ring-lp-secondary focus-visible:ring-offset-2 focus-visible:ring-offset-lp-bg-editor"
                 >
-                  Vitrinleri keşfet
+                  {cta.etiket}
                 </Link>
               </section>
             </article>
