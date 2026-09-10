@@ -13,15 +13,23 @@ class _NiyetEslesmesi {
 class VixrexIntentResolver {
   const VixrexIntentResolver();
 
-  /// Türkçe ekler için son sınırı katı değildir; fakat eşleşme sıradan bir
-  /// kelimenin ortasından başlayamaz. Uzun/bağlamlı örnekler kısa alias'lardan
-  /// önce değerlendirilir. Daha önce seçilmiş uzun bir niyet aralığının
-  /// içindeki kısa/genel alias ikinci alan sayılmaz.
-  _NiyetEslesmesi? _niyetEslesmesiBul(
+  static const String _araIsimEki =
+      r'(?:m|im|um|in|un|min|mun|imin|umun|nin|nun|imiz|umuz|iniz|unuz|imizin|umuzun|inizin|unuzun|larin|lerin)?';
+
+  bool _ortusuyorMu(
+    _NiyetEslesmesi aday,
+    List<_NiyetEslesmesi> doluAraliklar,
+  ) {
+    return doluAraliklar.any(
+      (dolu) => aday.start < dolu.end && aday.end > dolu.start,
+    );
+  }
+
+  _NiyetEslesmesi? _tamIfadeEslesmesiBul(
     String normInput,
-    String normIfade, [
-    List<_NiyetEslesmesi> doluAraliklar = const [],
-  ]) {
+    String normIfade,
+    List<_NiyetEslesmesi> doluAraliklar,
+  ) {
     var from = 0;
     while (from <= normInput.length - normIfade.length) {
       final idx = normInput.indexOf(normIfade, from);
@@ -29,13 +37,68 @@ class VixrexIntentResolver {
       final startOk =
           idx == 0 || !RegExp(r'[a-z0-9]').hasMatch(normInput[idx - 1]);
       final aday = _NiyetEslesmesi(idx, idx + normIfade.length);
-      final ortusuyor = doluAraliklar.any(
-        (dolu) => aday.start < dolu.end && aday.end > dolu.start,
-      );
-      if (startOk && !ortusuyor) return aday;
+      if (startOk && !_ortusuyorMu(aday, doluAraliklar)) return aday;
       from = idx + 1;
     }
     return null;
+  }
+
+  /// Türkçede çok kelimeli isim öbekleri doğal konuşmada ek alır:
+  /// "dükkan adı" -> "dükkanın adı", "ürün başlığı" ->
+  /// "ürünlerin başlığı". Yalnız ara token >=4 karakterse kontrollü ek
+  /// toleransı açılır; `il`, `tel`, `ig` gibi kısa/riskli alias'lar genişlemez.
+  _NiyetEslesmesi? _ekliCokKelimeEslesmesiBul(
+    String normInput,
+    String normIfade,
+    List<_NiyetEslesmesi> doluAraliklar,
+  ) {
+    final tokens = normIfade
+        .split(RegExp(r'\s+'))
+        .where((e) => e.isNotEmpty)
+        .toList();
+    if (tokens.length < 2) return null;
+
+    final body = tokens.asMap().entries.map((entry) {
+      final i = entry.key;
+      final token = entry.value;
+      final kok = RegExp.escape(token);
+      if (i < tokens.length - 1 &&
+          RegExp(r'^[a-z0-9]+$').hasMatch(token) &&
+          token.length >= 4) {
+        return '$kok$_araIsimEki';
+      }
+      return kok;
+    }).join(r'\s+');
+
+    final re = RegExp('(^|[^a-z0-9])($body)');
+    for (final m in re.allMatches(normInput)) {
+      final prefix = m.group(1) ?? '';
+      final matched = m.group(2);
+      if (matched == null) continue;
+      final start = m.start + prefix.length;
+      final aday = _NiyetEslesmesi(start, start + matched.length);
+      if (!_ortusuyorMu(aday, doluAraliklar)) return aday;
+    }
+    return null;
+  }
+
+  /// Önce mevcut düz eşleşme, yalnız o yoksa kontrollü Türkçe iyelik/genitif
+  /// varyasyonu denenir. Böylece eski eşleşme önceliği korunur.
+  _NiyetEslesmesi? _niyetEslesmesiBul(
+    String normInput,
+    String normIfade, [
+    List<_NiyetEslesmesi> doluAraliklar = const [],
+  ]) {
+    return _tamIfadeEslesmesiBul(
+          normInput,
+          normIfade,
+          doluAraliklar,
+        ) ??
+        _ekliCokKelimeEslesmesiBul(
+          normInput,
+          normIfade,
+          doluAraliklar,
+        );
   }
 
   /// `{deger}` içeren sözlük örneğinin değerden önceki sabit bölümü gerçek
