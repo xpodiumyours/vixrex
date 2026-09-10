@@ -33,6 +33,70 @@ type PendingSlot = {
   eylem?: "kaldir";
 };
 
+const ACIK_KAPALI_NEGATIF = new Set([
+  "kapat", "kapali", "gizle", "pasif", "hayir", "off", "false", "0",
+  "gorunmesin", "olmasin", "gosterme",
+]);
+const ACIK_KAPALI_POZITIF = new Set([
+  "ac", "acik", "goster", "aktif", "evet", "on", "true", "1",
+  "gorunsun", "olsun",
+]);
+
+function acikKapaliTokenlari(input: string): string[] {
+  return vixrexNormalizeDartParity(input)
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+}
+
+function acikKapaliDegeri(input: string): boolean | null {
+  const tokens = acikKapaliTokenlari(input);
+  if (tokens.some((t) => ACIK_KAPALI_NEGATIF.has(t))) return false;
+  if (tokens.some((t) => ACIK_KAPALI_POZITIF.has(t))) return true;
+  return null;
+}
+
+/**
+ * Sözlükteki aç/kapat alanlarının ad kısmını kullanır; alan adına özel yeni
+ * regex eklemez. Örn. "puan göster" -> "puan", "navigasyon göster" ->
+ * "navigasyon". Yalnız cümlede açık bir durum sözcüğü varsa devreye girer.
+ */
+function resolveNaturalToggleIntents(input: string): VixrexNiyetAlan[] {
+  if (acikKapaliDegeri(input) === null) return [];
+  const haystack = ` ${vixrexNormalizeDartParity(input).replace(/[^a-z0-9]+/g, " ").trim()} `;
+  const found: VixrexNiyetAlan[] = [];
+
+  for (const alan of VIXREX_NIYET_SOZLUGU) {
+    if (alan.tip !== "acikKapali") continue;
+    let matched = false;
+    for (const ea of alan.esAnlamlar) {
+      let base = vixrexNormalizeDartParity(ea).replace(/[^a-z0-9]+/g, " ").trim();
+      base = base.replace(/\s+goster$/, "").trim();
+      if (!base) continue;
+      if (haystack.includes(` ${base} `)) {
+        matched = true;
+        break;
+      }
+    }
+    if (matched) found.push(alan);
+  }
+  return found;
+}
+
+function mergeIntentLists(...lists: VixrexNiyetAlan[][]): VixrexNiyetAlan[] {
+  const out: VixrexNiyetAlan[] = [];
+  const seen = new Set<string>();
+  for (const list of lists) {
+    for (const alan of list) {
+      if (seen.has(alan.anahtar)) continue;
+      seen.add(alan.anahtar);
+      out.push(alan);
+    }
+  }
+  return out;
+}
+
 // Adım 4 (2026-09-03): pending slot artık localStorage DEĞİL, kalıcı ve
 // paylaşılan `assistant_conversations.pending_slot` (Furkan, 2026-09-02,
 // "NLU Faz 1-3") — RPC'ler auth.uid() ister. OwnerAssistantPanel panel
@@ -80,23 +144,29 @@ function clarifySuccess(alan: VixrexNiyetAlan, deger: unknown): string {
 
 /**
  * Aç/kapat alanlarında değer, çoğu zaman alan adından ayrı bir "değer"
- * değil komut fiilidir: "puanı göster", "yol tarifini gizle". Genel metin
- * ayıklayıcı bu fiilleri değer saymamalı; burada tip bilgisiyle güvenli
- * boolean'a çevrilir. Negatif sözcükler önce kontrol edilir.
+ * değil komut fiilidir: "puanı göster", "yol tarifini gizle".
+ *
+ * İki dar değer-koruma kuralı da burada tutulur:
+ * - `<görsel/url alanı>: https://...` biçiminde URL'nin içindeki alan adı silinmez.
+ * - kampanya açıklamasının başındaki "Seçili" kelimesi "seç" komutu sanılmaz.
  */
 function extractPipelineValue(input: string, alan: VixrexNiyetAlan): unknown | null {
-  if (alan.tip === "acikKapali") {
-    const tokens = vixrexNormalizeDartParity(input)
-      .replace(/[^a-z0-9]+/g, " ")
-      .trim()
-      .split(/\s+/)
-      .filter(Boolean);
-    const negatif = new Set(["kapat", "kapali", "gizle", "pasif", "hayir", "off", "false", "0"]);
-    const pozitif = new Set(["ac", "acik", "goster", "aktif", "evet", "on", "true", "1"]);
-    if (tokens.some((t) => negatif.has(t))) return false;
-    if (tokens.some((t) => pozitif.has(t))) return true;
-    return null;
+  if (alan.tip === "acikKapali") return acikKapaliDegeri(input);
+
+  if (alan.tip === "url" || alan.tip === "gorsel") {
+    const colonUrl = input.match(/^[^:\n]{1,120}:\s*(https?:\/\/\S+)\s*$/iu);
+    if (colonUrl?.[1]) return colonUrl[1].trim();
   }
+
+  if (alan.anahtar === "bantAciklama") {
+    const natural = input.match(/^\s*(?:kampanya|bant)\s+(?:açıklaması|aciklamasi)\s*:?\s+(.+?)\s*$/iu);
+    if (natural?.[1]) {
+      return natural[1]
+        .replace(/\s+(?:yap|olsun)\s*[.!]?\s*$/iu, "")
+        .trim();
+    }
+  }
+
   return extractVixrexValue(input, alan);
 }
 
@@ -135,7 +205,7 @@ export async function handleVixrexNluMessage(input: string): Promise<VixrexPipel
   if (pending) {
     const alan = VIXREX_NIYET_SOZLUGU.find((a) => a.anahtar === pending.anahtar) ?? null;
     if (alan) {
-      const resolved = resolveVixrexIntent(trimmed);
+      const resolved = resolveVixrexIntent(trimmed) ?? resolveNaturalToggleIntents(trimmed)[0] ?? null;
       if (!resolved) {
         const baglam = vixrexBaglamsalCevapKarari(trimmed, {
           anahtar: alan.anahtar,
@@ -193,7 +263,7 @@ export async function handleVixrexNluMessage(input: string): Promise<VixrexPipel
     }
   }
 
-  const all = resolveVixrexIntentsAll(trimmed);
+  const all = mergeIntentLists(resolveVixrexIntentsAll(trimmed), resolveNaturalToggleIntents(trimmed));
   if (all.length === 0) {
     // Flutter Companion aynı durumda ChatbotService'e düşer. Next.js de aynı
     // shared/vixrex_mesajlar.json kaynağından yalnız güvenli sabit rehber
