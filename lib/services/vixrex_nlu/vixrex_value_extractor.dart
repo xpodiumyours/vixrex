@@ -16,6 +16,30 @@ class VixrexValueExtractor {
   static const String _komutFiili =
       r'yap|olsun|degistir|değiştir|ekle|guncelle|güncelle|ayarla|yaz|sec|seç';
 
+  static const List<String> _araIsimEkleri = [
+    'm',
+    'im',
+    'um',
+    'in',
+    'un',
+    'min',
+    'mun',
+    'imin',
+    'umun',
+    'nin',
+    'nun',
+    'imiz',
+    'umuz',
+    'iniz',
+    'unuz',
+    'imizin',
+    'umuzun',
+    'inizin',
+    'unuzun',
+    'larin',
+    'lerin',
+  ];
+
   String? extract(String input, VixrexNiyetAlan alan) {
     final raw = input.trim();
     if (raw.isEmpty) return null;
@@ -166,22 +190,67 @@ class VixrexValueExtractor {
     return t;
   }
 
+  String _esnekHarfPattern(String ch) {
+    switch (ch) {
+      case 'c':
+        return '[cç]';
+      case 'g':
+        return '[gğ]';
+      case 'u':
+        return '[uü]';
+      case 's':
+        return '[sş]';
+      case 'o':
+        return '[oö]';
+      case 'i':
+        return '[iıİI]';
+      default:
+        return RegExp.escape(ch);
+    }
+  }
+
+  String _esnekKelimePattern(String text) {
+    final normalized = VixrexNormalizer.normalize(text);
+    return normalized.runes
+        .map((r) => _esnekHarfPattern(String.fromCharCode(r)))
+        .join();
+  }
+
+  String get _araIsimEkiPattern =>
+      '(?:${_araIsimEkleri.map(_esnekKelimePattern).join('|')})?';
+
+  String _esnekAlanPattern(String ifade) {
+    final tokens = VixrexNormalizer.normalize(
+      ifade,
+    ).trim().split(RegExp(r'\s+')).where((e) => e.isNotEmpty).toList();
+    return tokens.asMap().entries.map((entry) {
+      final i = entry.key;
+      final token = entry.value;
+      final kok = _esnekKelimePattern(token);
+      if (i < tokens.length - 1 &&
+          RegExp(r'^[a-z0-9]+$').hasMatch(token) &&
+          token.length >= 4) {
+        return '$kok$_araIsimEkiPattern';
+      }
+      return kok;
+    }).join(r'\s+');
+  }
+
   RegExpMatch? _bestFieldMatch(String input, VixrexNiyetAlan alan) {
-    final normInput = VixrexNormalizer.normalize(input);
-    String? bestEa;
+    RegExpMatch? best;
     var bestLen = -1;
     for (final ea in alan.esAnlamlar) {
       final n = VixrexNormalizer.normalize(ea);
-      if (normInput.contains(n) && n.length > bestLen) {
-        bestEa = ea;
+      final m = RegExp(
+        _esnekAlanPattern(ea),
+        caseSensitive: false,
+      ).firstMatch(input);
+      if (m != null && n.length > bestLen) {
+        best = m;
         bestLen = n.length;
       }
     }
-    if (bestEa == null) return null;
-    return RegExp(
-      RegExp.escape(bestEa),
-      caseSensitive: false,
-    ).firstMatch(input);
+    return best;
   }
 
   int _fieldMatchEnd(String input, RegExpMatch m) {
@@ -330,7 +399,7 @@ class VixrexValueExtractor {
       ..sort((a, b) => b.length.compareTo(a.length));
     for (final ea in sorted) {
       out = out.replaceAll(
-        RegExp(RegExp.escape(ea), caseSensitive: false),
+        RegExp(_esnekAlanPattern(ea), caseSensitive: false),
         '',
       );
     }
