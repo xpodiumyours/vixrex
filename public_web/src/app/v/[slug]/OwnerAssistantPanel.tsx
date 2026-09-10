@@ -670,17 +670,11 @@ export default function OwnerAssistantPanel({
           );
           setHaritaAcik(yeni && !yapilacakVar);
         }}
-        className={`${acik ? "hidden" : ""} fixed bottom-5 right-5 z-[75] flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-3 text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transition`}
+        className={`${acik ? "hidden" : ""} fixed bottom-5 right-5 z-[75] flex h-14 w-14 items-center justify-center rounded-full bg-[#0B1730] text-[#F7FBFF] shadow-lg transition hover:bg-[#112448] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#57B7FF]`}
         aria-label="Vixrex Asistan"
         aria-expanded={acik}
       >
-        <VixrexAvatar size={28} decorative />
-        <span className="text-sm font-semibold hidden sm:inline">Vixrex Asistan</span>
-        {!rapor.temelTamam && (
-          <span className="ml-1 rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-bold text-slate-900">
-            %{rapor.yuzde}
-          </span>
-        )}
+        <VixrexAvatar size={48} decorative />
       </button>
 
       {acik && (
