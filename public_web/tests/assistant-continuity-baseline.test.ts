@@ -159,10 +159,15 @@ describe("Vixrex Asistan sürekliliği — korunan mevcut akış", () => {
 
     expect(flutterAvatarSource).toContain(canonicalAsset);
     expect(nextMascot.equals(flutterMascot)).toBe(true);
+    // 2026-09-09/10: yol, uygulamanın geri kalanının (kesfet kartı, landing
+    // maskot bileşenleri) zaten kullandığı "/images/…" önekine hizalandı —
+    // aynı görsel dosyanın iki farklı yoldan servis edilmesi kaldırıldı.
     expect(nextAvatarSource).toContain(
-      'src="/vixrex_v_crystal_mascot.png"'
+      'src="/images/vixrex_v_crystal_mascot.png"'
     );
-    expect(ownerPanelSource).toContain("<VixrexAvatar size={28} decorative />");
+    // 2026-09-09/10: "mascot-only" küçültülmüş başlatıcı — pill/metin/rozet
+    // kaldırıldı, tek başına büyütülmüş (48px) maskot ikonu kaldı.
+    expect(ownerPanelSource).toContain("<VixrexAvatar size={48} decorative />");
     expect(ownerTopBarSource).toContain(
       "<VixrexAvatar size={38} halo decorative />"
     );

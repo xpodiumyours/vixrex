@@ -23,7 +23,11 @@ describe("OwnerAssistantPanel — yeni bir ekran elemanı yok", () => {
   });
 
   it("panel açılınca otomatik ilk-alan seçimi eski (2026-08-22'den beri değişmemiş) hâliyle çalışıyor", () => {
-    expect(panel).toContain("if (!acik || seciliAlan) return;");
+    // 2026-09-09/10: "tanışma" karşılama mesajı eklendi (compact draft) —
+    // ilk açılışta hemen alan seçip vurgulamak yerine önce "Biraz
+    // işletmenden bahseder misin?" gösteriliyor; otomatik seçim akışın
+    // kendisi (sıra, koşul) DEĞİŞMEDİ, yalnız tanışma sürerken ertelendi.
+    expect(panel).toContain("if (!acik || seciliAlan || tanisma) return;");
   });
 });
 

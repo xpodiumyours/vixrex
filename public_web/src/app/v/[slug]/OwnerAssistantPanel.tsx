@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { useOwnerDraft } from "./hooks/useOwnerDraft";
 import { useOwnerChat } from "./hooks/useOwnerChat";
 import { useFieldSelection } from "./hooks/useFieldSelection";
@@ -213,6 +213,8 @@ export default function OwnerAssistantPanel({
   const [haritaAcik, setHaritaAcik] = useState(false);
   const [mesajBuyuk, setMesajBuyuk] = useState(false);
   const [mesajTasiyor, setMesajTasiyor] = useState(false);
+  const [mesajYuksekligi, setMesajYuksekligi] = useState<number | null>(null);
+  const tutamakRef = useRef<{ baslangicY: number; baslangicYukseklik: number } | null>(null);
   const [siradaki, setSiradaki] = useState<(() => void) | null>(null);
   const [tanisma, setTanisma] = useState(!assistantHandoff && !flowState);
   const [masaustu, setMasaustu] = useState(false);
@@ -293,7 +295,40 @@ export default function OwnerAssistantPanel({
     for (const child of element.children) observer.observe(child);
     measure();
     return () => observer.disconnect();
-  }, [mesajlar, acik, haritaAcik, mesajBuyuk, akisRef]);
+  }, [mesajlar, acik, haritaAcik, mesajBuyuk, mesajYuksekligi, akisRef]);
+
+  const tutamakBasla = (olay: ReactPointerEvent<HTMLDivElement>) => {
+    const element = akisRef.current;
+    if (!element) return;
+    olay.currentTarget.setPointerCapture(olay.pointerId);
+    tutamakRef.current = {
+      baslangicY: olay.clientY,
+      baslangicYukseklik: element.getBoundingClientRect().height,
+    };
+  };
+
+  const tutamakSurukle = (olay: ReactPointerEvent<HTMLDivElement>) => {
+    const baslangic = tutamakRef.current;
+    if (!baslangic) return;
+    const enAz = 96;
+    const enFazla = Math.max(enAz, Math.round(window.innerHeight * 0.6));
+    const istenen = baslangic.baslangicYukseklik + (baslangic.baslangicY - olay.clientY);
+    setMesajYuksekligi(Math.min(enFazla, Math.max(enAz, Math.round(istenen))));
+  };
+
+  const tutamakBitir = (olay: ReactPointerEvent<HTMLDivElement>) => {
+    tutamakRef.current = null;
+    if (olay.currentTarget.hasPointerCapture(olay.pointerId)) {
+      olay.currentTarget.releasePointerCapture(olay.pointerId);
+    }
+  };
+
+  const mesajStili =
+    mesajYuksekligi !== null
+      ? { height: `${mesajYuksekligi}px`, maxHeight: `${mesajYuksekligi}px` }
+      : mesajBuyuk
+        ? { height: "42dvh", maxHeight: "42dvh" }
+        : undefined;
 
 
   const {
@@ -653,7 +688,7 @@ export default function OwnerAssistantPanel({
     <>
       {/* Sayfada dolaşan rehber — panel açık ve bir alan seçiliyken,
        * hedef alanın üzerinde/yanında görünür (bkz. SpotlightGuide). */}
-      {acik && haritaAcik && (
+      {acik && !(!masaustu && haritaAcik) && (
         <SpotlightGuide
           seciliAlan={seciliAlan}
           geriAliniyor={fieldRestore.geriAliniyor}
@@ -722,7 +757,7 @@ export default function OwnerAssistantPanel({
         // true olur (aşağı bkz. masaustuIlkAcilisRef). Başlık (ChatTopBar) +
         // SIRADA artık `haritaAcik`ten bağımsız, panel açıkken hep çizilir
         // (aşağıda). Mobil davranış hiç değişmedi.
-        <div data-owner-assistant="compact" data-expanded={haritaAcik} className="fixed inset-x-3 bottom-3 z-[75] flex max-h-[min(70dvh,640px)] flex-col overflow-y-auto rounded-3xl border border-sky-200/15 bg-[#101d29] text-slate-100 shadow-2xl sm:inset-x-auto sm:bottom-5 sm:right-5 sm:w-[400px]">
+        <div data-owner-assistant="compact" data-expanded={haritaAcik} className="fixed inset-x-0 bottom-0 z-[75] flex max-h-[min(70dvh,640px)] flex-col overflow-y-auto rounded-t-3xl border border-sky-200/15 bg-[#101d29] text-slate-100 shadow-2xl sm:inset-x-auto sm:bottom-0 sm:right-0 sm:w-[400px]">
           <div className="flex shrink-0 items-center justify-between px-4 pt-2 text-xs text-slate-400">
             <button type="button" className="min-h-9 hover:text-white" onClick={() => setHaritaAcik(!haritaAcik)} aria-expanded={haritaAcik}>{haritaAcik ? "Ayrıntıları kapat" : "Menü · Vitrinini koru"}</button>
             <button type="button" aria-label="Asistanı küçült" className="h-9 w-9" onClick={() => setAcik(false)}>−</button>
@@ -740,7 +775,7 @@ export default function OwnerAssistantPanel({
            * "sihirbaz kalabalığı kalksın" kararı bunlar için hâlâ geçerli). */}
           {haritaAcik && <ChatTopBar
             rapor={rapor}
-            onKapat={() => setHaritaAcik(false)}
+            onKapat={() => (masaustu ? setAcik(false) : setHaritaAcik(false))}
           />}
 
           {haritaAcik && hesapBagliDegil ? <section aria-label="Vitrinini koru"><p className="px-4 pt-3 text-sm text-slate-300">Vitrinin kaybolmasın; hesabına bağlayarak başka cihazlardan da ulaş.</p><HesapBaglaSeridi slug={slug} /></section> : null}
@@ -855,10 +890,22 @@ export default function OwnerAssistantPanel({
            * Kaydırma şeridi ince, koyu panele uyumlu kalmaya devam ediyor
            * (bkz. .vixrex-panel-kaydirici, globals.css). */}
           <div
+            data-message-handle="true"
+            role="separator"
+            aria-orientation="horizontal"
+            aria-label="Mesaj alanını büyüt veya küçült"
+            onPointerDown={tutamakBasla}
+            onPointerMove={tutamakSurukle}
+            onPointerUp={tutamakBitir}
+            onPointerCancel={tutamakBitir}
+            className="flex shrink-0 cursor-row-resize touch-none select-none items-center justify-center py-2"
+          >
+            <span className="h-1 w-10 rounded-full bg-sky-200/40" />
+          </div>
+          <div
             ref={akisRef}
             data-message-expanded={mesajBuyuk}
-            data-message-resizable={mesajTasiyor || mesajBuyuk}
-            style={mesajBuyuk ? { height: "42dvh", maxHeight: "42dvh" } : undefined}
+            style={mesajStili}
             className="vixrex-panel-kaydirici min-h-0 max-h-[32dvh] space-y-2 overflow-y-auto px-3 py-2"
           >
             {tanisma && !seciliAlan ? <p className="rounded-2xl bg-sky-100/5 px-3 py-2 text-sm">Biraz işletmenden bahseder misin?</p> : (haritaAcik ? mesajlar : mesajlar.slice(-1)).map((m) => (
@@ -867,7 +914,7 @@ export default function OwnerAssistantPanel({
           </div>
 
           {!haritaAcik && (mesajTasiyor || mesajBuyuk) && (
-            <button type="button" aria-expanded={mesajBuyuk} onClick={() => setMesajBuyuk(!mesajBuyuk)}>
+            <button type="button" aria-expanded={mesajBuyuk} onClick={() => { setMesajYuksekligi(null); setMesajBuyuk(!mesajBuyuk); }}>
               {mesajBuyuk ? "Mesajı küçült" : "Mesajı büyüt"}
             </button>
           )}
