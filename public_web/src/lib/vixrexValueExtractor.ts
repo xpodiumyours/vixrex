@@ -3,9 +3,43 @@ import { vixrexNormalizeDartParity } from "./vixrexNormalizer";
 import { seciliKimlikTelefonKestirmesiniCikar } from "./ownerSelectedInput";
 
 const KOMUT_FIILI = "yap|olsun|degistir|değiştir|ekle|guncelle|güncelle|ayarla|yaz|sec|seç";
+const ARA_ISIM_EKLERI = [
+  "m", "im", "um", "in", "un", "min", "mun", "imin", "umun", "nin", "nun",
+  "imiz", "umuz", "iniz", "unuz", "imizin", "umuzun", "inizin", "unuzun", "larin", "lerin",
+] as const;
 
 function escapeRegExp(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/** Yalnız alan/komut metninde Türkçe karakter ↔ ASCII toleransı. Slot değeri normalize edilmez. */
+function esnekHarfPattern(ch: string): string {
+  switch (ch) {
+    case "c": return "[cç]";
+    case "g": return "[gğ]";
+    case "u": return "[uü]";
+    case "s": return "[sş]";
+    case "o": return "[oö]";
+    case "i": return "[iıİI]";
+    default: return escapeRegExp(ch);
+  }
+}
+
+function esnekKelimePattern(text: string): string {
+  return [...vixrexNormalizeDartParity(text)].map(esnekHarfPattern).join("");
+}
+
+const ARA_ISIM_EKI_PATTERN = `(?:${ARA_ISIM_EKLERI.map(esnekKelimePattern).join("|")})?`;
+
+function esnekAlanPattern(ifade: string): string {
+  const tokens = vixrexNormalizeDartParity(ifade).trim().split(/\s+/).filter(Boolean);
+  return tokens.map((token, i) => {
+    const kok = esnekKelimePattern(token);
+    if (i < tokens.length - 1 && /^[a-z0-9]+$/.test(token) && token.length >= 4) {
+      return `${kok}${ARA_ISIM_EKI_PATTERN}`;
+    }
+    return kok;
+  }).join("\\s+");
 }
 
 /**
@@ -13,11 +47,7 @@ function escapeRegExp(s: string): string {
  *   "Dükkan adını değiştir: {deger}"
  *   "Hero rozetini {deger} olarak güncelle"
  *   "Mağazamın adı {deger} olsun"
- *
- * Niyet çözücü bu örnekleri zaten kanıt olarak kullanıyordu; değer çözücü
- * kullanmıyordu. Aynı sözlüğü iki aşamada da kullanmak intent/slot ayrımının
- * birbirinden kopmasını engeller. Bu fonksiyon yalnız `{deger}` bulunan açık
- * kalıpları uygular; tahmin üretmez.
+ * Aynı sözlük intent ve slot için gerçek sözleşmedir; tahmin üretilmez.
  */
 function literalPattern(text: string): string {
   let out = "";
@@ -29,11 +59,8 @@ function literalPattern(text: string): string {
       continue;
     }
     bosluk = false;
-    if (ch === "'" || ch === "’") {
-      out += "['’]?";
-    } else {
-      out += escapeRegExp(ch);
-    }
+    if (ch === "'" || ch === "’") out += "['’]?";
+    else out += escapeRegExp(ch);
   }
   return out;
 }
@@ -56,10 +83,9 @@ function extractFromExamples(input: string, alan: VixrexNiyetAlan): string | nul
   return null;
 }
 
-// Dart VixrexValueExtractor ile aynı kural – parity için birebir.
 function extractQuoted(input: string): string | null {
   // Tek tırnak Türkçe özel ad eki de taşıyabilir: 'Kadıköy'ün En İyisi'.
-  // Bu yüzden tek tırnakta ilk açılıştan SON kapanışa kadar alınır.
+  // İlk açılıştan SON kapanışa kadar alınır.
   const patterns = [
     /"([^"]{2,})"/,
     /‘([^’]{2,})’/,
@@ -73,6 +99,7 @@ function extractQuoted(input: string): string | null {
   }
   return null;
 }
+
 function stripQuotes(s: string): string {
   let t = s.trim();
   if (
@@ -81,11 +108,10 @@ function stripQuotes(s: string): string {
     (t.startsWith("‘") && t.endsWith("’")) ||
     (t.startsWith("“") && t.endsWith("”")) ||
     (t.startsWith("`") && t.endsWith("`"))
-  ) {
-    t = t.slice(1, -1).trim();
-  }
+  ) t = t.slice(1, -1).trim();
   return t;
 }
+
 function extractPhone(input: string): string | null {
   const quoted = extractQuoted(input);
   if (quoted) {
@@ -116,9 +142,7 @@ function isFieldOnlyWithoutValue(input: string, alan: VixrexNiyetAlan): boolean 
   return rem.length < 3;
 }
 
-// Eş-anlam sözlüğü kök biçimi tutabilir ("instagram"), esnaf ise doğal
-// Türkçe ekle yazar ("instagramı"). Eşleşmeden hemen sonra boşluksuz gelen
-// Türkçe harfleri alan ekinin devamı sayıp değerin başına sızdırmayız.
+// Eşleşmenin son sözcüğündeki Türkçe hâl/iyelik eki değere sızmasın.
 function esAnlamEslesmeSonu(input: string, m: RegExpMatchArray): number {
   let end = (m.index ?? 0) + m[0].length;
   const devam = input.slice(end).match(/^[a-zA-ZçğıöşüÇĞİÖŞÜ]+/);
@@ -127,18 +151,17 @@ function esAnlamEslesmeSonu(input: string, m: RegExpMatchArray): number {
 }
 
 function bestFieldMatch(input: string, alan: VixrexNiyetAlan): RegExpMatchArray | null {
-  const normInput = vixrexNormalizeDartParity(input);
-  let bestEa: string | null = null;
+  let best: RegExpMatchArray | null = null;
   let bestLen = -1;
   for (const ea of alan.esAnlamlar) {
     const n = vixrexNormalizeDartParity(ea);
-    if (normInput.includes(n) && n.length > bestLen) {
-      bestEa = ea;
+    const m = input.match(new RegExp(esnekAlanPattern(ea), "iu"));
+    if (m && n.length > bestLen) {
+      best = m;
       bestLen = n.length;
     }
   }
-  if (!bestEa) return null;
-  return input.match(new RegExp(escapeRegExp(bestEa), "i"));
+  return best;
 }
 
 /** "Dükkan adını değiştir: Deniz Teknik" gibi fiilin değerden önce geldiği yapı. */
@@ -179,7 +202,7 @@ function extractAfterColon(input: string, alan?: VixrexNiyetAlan): string | null
   if (!alan) return null;
   const m = bestFieldMatch(input, alan);
   if (!m || m.index === undefined) return null;
-  let afterField = input.slice(esAnlamEslesmeSonu(input, m)).trimStart();
+  const afterField = input.slice(esAnlamEslesmeSonu(input, m)).trimStart();
   if (!afterField.startsWith(":") && !afterField.startsWith("=")) return null;
   const sep = afterField[0];
   const after = afterField.slice(1).trim();
@@ -188,25 +211,27 @@ function extractAfterColon(input: string, alan?: VixrexNiyetAlan): string | null
   const q = extractQuoted(after);
   if (q && q.trim()) return q.trim();
   const cleaned = stripFieldMention(after, alan);
-  if (cleaned) return cleaned;
-  return after;
+  return cleaned || after;
 }
+
 function extractBeforeVerb(input: string): string | null {
   const m = input.trim().match(new RegExp(`^(.*)\\b(${KOMUT_FIILI})\\b\\s*[.!]?\\s*$`, "i"));
-  if (m && m[1] && m[1].trim()) return m[1].trim();
-  return null;
+  return m?.[1]?.trim() || null;
 }
+
 function stripTrailingVerb(s: string): string {
   return s.replace(new RegExp(`\\b(${KOMUT_FIILI})\\b\\s*[.!]?\\s*$`, "i"), "").trim();
 }
+
 function isFreeTextTip(tip: string): boolean {
   return ["metin", "uzunMetin", "telefon", "url", "gorsel", "eposta"].includes(tip);
 }
+
 function stripFieldMention(candidate: string, alan: VixrexNiyetAlan): string {
   let out = candidate;
   const sorted = [...alan.esAnlamlar].sort((a, b) => b.length - a.length);
   for (const ea of sorted) {
-    out = out.replace(new RegExp(escapeRegExp(ea), "gi"), "");
+    out = out.replace(new RegExp(esnekAlanPattern(ea), "giu"), "");
   }
   out = out
     .replace(/^\s*(adını|adimi|adı|adi|numaramı|numarami|numarası|numarasi|ismi|imi|ımı|umu|ümü|si|sı|su|sü|yi|yı|yu|yü|nı|ni|nu|nü|mı|mi|mu|mü)\b\s*/i, "")
@@ -222,21 +247,17 @@ function stripFieldMention(candidate: string, alan: VixrexNiyetAlan): string {
   if (out.trim().length < 2) return out.trim().length === 0 ? "" : out.trim();
   return out.trim();
 }
+
 function remainderAfterFieldMention(input: string, alan: VixrexNiyetAlan): string | null {
   const m = bestFieldMatch(input, alan);
   if (!m || m.index === undefined) return null;
   const after = input.slice(esAnlamEslesmeSonu(input, m)).trim();
   if (!after) return null;
-  const cleaned = after
-    .replace(/^[\s:=\-–—,]+/, "")
-    .trim();
+  const cleaned = after.replace(/^[\s:=\-–—,]+/, "").trim();
   if (cleaned.length < 2) return null;
   return stripQuotes(cleaned);
 }
 
-// 2026-09-03: serbest metin alanları bir cümlede başka alana ait bilgiyle
-// karışmasın. Çoklu doğal esnaf cümlesinde virgül/noktalı virgül/"ve" sonrası
-// başka güvenli alan başlıyorsa ilk alanın değeri orada biter.
 const TELEFON_SINIR_REGEX =
   /(\+?90[\s.-]?)?0?[\s.-]?5\d{2}[\s.-]?\d{3}[\s.-]?\d{2}[\s.-]?\d{2}/;
 
@@ -295,8 +316,7 @@ function extractVixrexValueHam(input: string, alan: VixrexNiyetAlan): string | n
   const raw = input.trim();
   if (!raw) return null;
 
-  // Araştırma-temelli kademeli sıra: önce açık sözlük kalıbı, sonra tipe özel
-  // çıkarım, en son daha gevşek eş-anlam tabanlı geri dönüşler.
+  // Kademeli sıra: açık sözlük kalıbı → tipe özel çıkarım → daha gevşek geri dönüşler.
   const kalip = extractFromExamples(raw, alan);
   if (kalip !== null) return kalip;
 
@@ -315,7 +335,7 @@ function extractVixrexValueHam(input: string, alan: VixrexNiyetAlan): string | n
   if (quoted && quoted.trim()) {
     const cleaned = stripFieldMention(quoted.trim(), alan);
     if (cleaned) return cleaned;
-    if (quoted.trim()) return quoted.trim();
+    return quoted.trim();
   }
 
   const fiildenSonra = extractAfterLeadingVerb(raw, alan);
@@ -326,23 +346,24 @@ function extractVixrexValueHam(input: string, alan: VixrexNiyetAlan): string | n
     const cleaned = stripFieldMention(colon.trim(), alan);
     const cand = cleaned || colon.trim();
     const noVerb = stripTrailingVerb(cand);
-    if (noVerb.trim()) return noVerb.trim();
-    if (cand.trim()) return cand.trim();
+    return noVerb.trim() || cand.trim();
   }
+
   const between = extractBetweenFieldAndVerb(raw, alan);
   if (between && between.trim()) {
     const noVerb = stripTrailingVerb(between.trim());
     return noVerb.trim() || between.trim();
   }
+
   const beforeVerb = extractBeforeVerb(raw);
   if (beforeVerb && beforeVerb.trim()) {
     const cand = stripFieldMention(beforeVerb.trim(), alan);
     if (cand.trim()) {
       const noVerb = stripTrailingVerb(cand.trim()).replace(/\s+(?:olarak|diye)$/i, "").trim();
-      if (noVerb) return noVerb;
-      return cand.trim();
+      return noVerb || cand.trim();
     }
   }
+
   if (isFreeTextTip(alan.tip)) {
     const rem = remainderAfterFieldMention(raw, alan);
     if (rem && rem.trim().length >= 2) {
