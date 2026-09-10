@@ -160,6 +160,22 @@ export function BlogKesif({ yazilar }: Props) {
   const aramaNormalize = arama.trim().toLocaleLowerCase("tr-TR");
   const oneCikan = yazilar[0];
 
+  const guncellemeler = yazilar
+    .filter(
+      (yazi) =>
+        yazi.kategori === "Vixrex’te Yenilikler" &&
+        yazi.slug !== oneCikan?.slug
+    )
+    .slice(0, 3);
+
+  const baslangic = yazilar.find(
+    (yazi) =>
+      yazi.kategori === "Dijital Vitrin" &&
+      yazi.icerikTuru === "rehber" &&
+      yazi.slug !== oneCikan?.slug &&
+      !guncellemeler.some((guncelleme) => guncelleme.slug === yazi.slug)
+  );
+
   const sonuclar = useMemo(
     () =>
       yazilar.filter((yazi) => {
@@ -182,24 +198,18 @@ export function BlogKesif({ yazilar }: Props) {
     [aramaNormalize, filtreAktif, kategori, oneCikan, yazilar]
   );
 
+  const ayrikTutulanSluglar = new Set([
+    oneCikan?.slug,
+    baslangic?.slug,
+    ...guncellemeler.map((yazi) => yazi.slug),
+  ]);
+
   const sonRehberler = filtreAktif
     ? sonuclar
-    : sonuclar.filter((yazi) => yazi.icerikTuru === "rehber");
-
-  const guncellemeler = yazilar
-    .filter(
-      (yazi) =>
-        yazi.kategori === "Vixrex’te Yenilikler" &&
-        yazi.slug !== oneCikan?.slug
-    )
-    .slice(0, 3);
-
-  const baslangic = yazilar.find(
-    (yazi) =>
-      yazi.kategori === "Dijital Vitrin" &&
-      yazi.icerikTuru === "rehber" &&
-      yazi.slug !== oneCikan?.slug
-  );
+    : sonuclar.filter(
+        (yazi) =>
+          yazi.icerikTuru === "rehber" && !ayrikTutulanSluglar.has(yazi.slug)
+      );
 
   return (
     <div className="bg-lp-bg-editor px-4 py-10 sm:px-5 sm:py-14">
