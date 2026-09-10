@@ -65,3 +65,191 @@ body.vixrex-owner-rental-preview #ust-bolum [data-vixrex-editable="heroRozet"] {
     white-space: nowrap;
   }
 }
+
+/* Only the ownership assistant composer; storefront rules stay untouched. */
+[data-owner-assistant="compact"] .owner-compact-input button[aria-label="Gönder"] {
+  width: 32px; min-width: 32px; height: 44px; padding: 0; flex-shrink: 0;
+  border-radius: 50%; background: transparent; color: #bae6fd; font-size: 24px;
+}
+[data-owner-assistant="compact"] .owner-compact-input textarea { min-width: 0; border: 0; background: transparent; }
+[data-owner-assistant="compact"] button:focus-visible { outline: 2px solid #7dd3fc; outline-offset: 2px; }
+[data-owner-assistant="compact"] { padding-bottom: env(safe-area-inset-bottom, 0px); }
+
+/* Compact conversation stays anchored beside the right-hand mascot. */
+[data-owner-assistant="compact"][data-expanded="false"] {
+  left: auto; right: 12px; width: min(360px, calc(100vw - 24px));
+}
+[data-owner-assistant="compact"] .owner-compact-input textarea {
+  flex: 1 1 0%; width: 0; min-width: 0; border-radius: 22px;
+  background: rgba(255,255,255,.06); border: 1px solid rgba(186,230,253,.14);
+  font-size: 14px; padding-left: 14px;
+}
+[data-owner-assistant="compact"] .owner-compact-input > div > div.flex { align-items: center; gap: 4px; }
+[data-owner-assistant="compact"][data-expanded="false"] .vixrex-panel-kaydirici {
+  max-height: 22dvh; font-size: 13px; padding-top: 0; padding-bottom: 6px;
+}
+[data-owner-assistant="compact"][data-expanded="false"] .vixrex-panel-kaydirici > div {
+  margin-left: auto; max-width: 92%;
+}
+[data-owner-assistant="compact"][data-expanded="false"] .vixrex-panel-kaydirici > div > div {
+  padding: 8px 12px; font-size: 13px; line-height: 1.45;
+}
+@media (min-width: 640px) {
+  [data-owner-assistant="compact"][data-expanded="false"] { width: 400px; }
+}
+
+/* Flutter reference: lib/theme/app_colors.dart and widgets/chat/chat_bubble.dart. */
+[data-owner-assistant="compact"] {
+  background: #0B1730; color: #F7FBFF; border-color: #294D88;
+}
+[data-owner-assistant="compact"] .vixrex-panel-kaydirici > div > div,
+[data-owner-assistant="compact"] .vixrex-panel-kaydirici > p {
+  background: #112448; color: #F7FBFF; border-color: #294D88;
+}
+[data-owner-assistant="compact"] .owner-compact-input textarea,
+[data-owner-assistant="compact"] .owner-compact-input select {
+  background: #0D1C38; color: #F7FBFF; border-color: #294D88;
+}
+[data-owner-assistant="compact"] textarea::placeholder,
+[data-owner-assistant="compact"] > div:first-child { color: #A9BBDA; }
+[data-owner-assistant="compact"] .owner-compact-input button[aria-label="Gönder"] { color: #147DFF; }
+[data-owner-assistant="compact"] button:focus-visible { outline-color: #57B7FF; }
+[data-owner-assistant="compact"] button[aria-label="Vixrex Asistan ayrıntıları"] > span {
+  background: #0D1C38; border-color: #147DFF;
+}
+
+/* Soft surfaces and compact actions, scoped to the collapsed-details composer. */
+[data-owner-assistant="compact"][data-expanded="false"] {
+  border-color: rgba(87,183,255,.14);
+  border-radius: 26px;
+  box-shadow: 0 12px 40px rgba(5,11,26,.32);
+}
+[data-owner-assistant="compact"][data-expanded="false"] > div:first-child {
+  padding-top: 2px;
+  font-size: 11px;
+}
+[data-owner-assistant="compact"][data-expanded="false"] .vixrex-panel-kaydirici > div {
+  width: fit-content;
+  max-width: 94%;
+}
+[data-owner-assistant="compact"][data-expanded="false"] .vixrex-panel-kaydirici > div > div,
+[data-owner-assistant="compact"][data-expanded="false"] .vixrex-panel-kaydirici > p {
+  border-color: transparent;
+  border-radius: 18px 18px 6px 18px;
+  padding: 10px 14px;
+  font-weight: 400;
+  line-height: 1.6;
+}
+[data-owner-assistant="compact"][data-expanded="false"] > button {
+  align-self: flex-end;
+  width: auto;
+  padding: 0 16px;
+  margin-right: 14px;
+  min-height: 40px;
+  border-radius: 20px;
+  background: rgba(20,125,255,.12);
+  color: #57B7FF;
+  font-size: 13px;
+}
+[data-owner-assistant="compact"][data-expanded="false"] > div.shrink-0 {
+  border-top-color: transparent;
+  padding-top: 4px;
+}
+[data-owner-assistant="compact"][data-expanded="false"] .owner-compact-input textarea {
+  border-color: rgba(87,183,255,.12);
+  border-radius: 24px;
+  font-weight: 400;
+}
+[data-owner-assistant="compact"][data-expanded="false"] .owner-compact-input textarea:focus {
+  border-color: #57B7FF;
+}
+
+/* Floating bubble + composer: details remain available through the mascot. */
+[data-owner-assistant="compact"][data-expanded="false"] {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+[data-owner-assistant="compact"][data-expanded="false"] > div:first-child {
+  display: none;
+}
+[data-owner-assistant="compact"][data-expanded="false"] .vixrex-panel-kaydirici {
+  padding: 0 4px 10px;
+}
+[data-owner-assistant="compact"][data-expanded="false"] .vixrex-panel-kaydirici > div > div,
+[data-owner-assistant="compact"][data-expanded="false"] .vixrex-panel-kaydirici > p {
+  background: #112448;
+  font-size: 14px;
+  box-shadow: 0 4px 18px rgba(5,11,26,.18);
+}
+[data-owner-assistant="compact"][data-expanded="false"] > div.shrink-0 {
+  background: #0B1730;
+  border: 1px solid rgba(87,183,255,.16);
+  border-radius: 30px;
+  padding: 5px 6px 5px 10px;
+  box-shadow: 0 8px 24px rgba(5,11,26,.24);
+}
+[data-owner-assistant="compact"][data-expanded="false"] .owner-compact-input > p {
+  display: none;
+}
+[data-owner-assistant="compact"][data-expanded="false"] .owner-compact-input textarea {
+  background: transparent;
+  border-color: transparent;
+  font-size: 16px;
+}
+
+/* Fine finishing: narrower speech, quiet controls, dark native scrollbars. */
+[data-owner-assistant="compact"] { color-scheme: dark; }
+[data-owner-assistant="compact"][data-expanded="false"] .vixrex-panel-kaydirici > div {
+  max-width: min(300px, 90%);
+}
+[data-owner-assistant="compact"][data-expanded="false"] .vixrex-panel-kaydirici > div > div,
+[data-owner-assistant="compact"][data-expanded="false"] .vixrex-panel-kaydirici > p {
+  background: #0D1C38;
+  border: 1px solid rgba(87,183,255,.12);
+  border-radius: 20px 20px 7px 20px;
+  padding: 12px 16px;
+  color: #D9E7FF;
+  font-weight: 400;
+  line-height: 1.55;
+}
+[data-owner-assistant="compact"][data-expanded="false"] .vixrex-panel-kaydirici > p {
+  width: fit-content; max-width: 90%; margin-left: auto;
+}
+[data-owner-assistant="compact"] .owner-compact-input textarea {
+  scrollbar-width: thin;
+  scrollbar-color: #294D88 transparent;
+  overflow-y: auto;
+  line-height: 24px;
+}
+[data-owner-assistant="compact"] .owner-compact-input textarea::-webkit-scrollbar { width: 3px; }
+[data-owner-assistant="compact"] .owner-compact-input textarea::-webkit-scrollbar-thumb { background: #294D88; border-radius: 8px; }
+[data-owner-assistant="compact"] .owner-compact-input textarea::-webkit-scrollbar-button { display: none; }
+[data-owner-assistant="compact"] .owner-compact-input button[aria-label="Gönder"] {
+  display: flex; align-items: center; justify-content: center;
+  color: #57B7FF;
+}
+[data-owner-assistant="compact"] .owner-compact-input button[aria-label="Gönder"]:hover { background: rgba(20,125,255,.12); }
+
+/* Scrollbars appear only for overflowing content, without a reserved gutter. */
+[data-owner-assistant="compact"],
+[data-owner-assistant="compact"] .vixrex-panel-kaydirici,
+[data-owner-assistant="compact"] .owner-compact-input textarea {
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-gutter: auto;
+}
+[data-owner-assistant="compact"] .owner-compact-input textarea {
+  box-sizing: border-box;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+@media (pointer: fine) {
+  [data-owner-assistant="compact"] .vixrex-panel-kaydirici[data-message-resizable="true"] {
+    resize: vertical;
+    min-height: 80px;
+    max-height: 42dvh;
+  }
+}

@@ -30,7 +30,7 @@ export function VixrexAvatar({
       aria-hidden={decorative || undefined}
     >
       <Image
-        src="/vixrex_v_crystal_mascot.png"
+        src="/images/vixrex_v_crystal_mascot.png"
         alt={decorative ? "" : "Vixrex"}
         width={imageSize}
         height={imageSize}
