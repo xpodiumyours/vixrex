@@ -20,8 +20,6 @@ class VixrexValueExtractor {
     final raw = input.trim();
     if (raw.isEmpty) return null;
 
-    // Niyet çözücü sözlük örneklerini zaten kullanıyor. Değer çözücü de aynı
-    // `{deger}` sözleşmesini kullanır; intent ve slot birbirinden kopmaz.
     final kalip = _extractFromExamples(raw, alan);
     if (kalip != null) return _serbestMetinAdayiniSinirla(kalip, alan);
 
@@ -142,8 +140,6 @@ class VixrexValueExtractor {
   }
 
   String? _extractQuoted(String input) {
-    // Tek tırnakta ilk açılıştan son kapanışa kadar alınır:
-    // 'Kadıköy'ün En İyisi' -> Kadıköy'ün En İyisi
     final patterns = [
       RegExp(r'"([^"]{2,})"'),
       RegExp(r'‘([^’]{2,})’'),
@@ -188,8 +184,6 @@ class VixrexValueExtractor {
     ).firstMatch(input);
   }
 
-  /// "instagram" -> "instagramı", "başlık" -> "başlığını" gibi alan
-  /// eşleşmesinin hemen ardından boşluksuz gelen Türkçe ekleri değer sanma.
   int _fieldMatchEnd(String input, RegExpMatch m) {
     var end = m.end;
     final devam = RegExp(
@@ -230,7 +224,7 @@ class VixrexValueExtractor {
     }
     if (!hasField) return false;
     final verbPattern = RegExp(
-      '\\b(\$_komutFiili|yanlis|yanlış|hatali|hatalı|bozuk|degistirmek)\\b',
+      '\\b($_komutFiili|yanlis|yanlış|hatali|hatalı|bozuk|degistirmek)\\b',
       caseSensitive: false,
     );
     var remainder = norm;
@@ -251,7 +245,7 @@ class VixrexValueExtractor {
     var after = input.substring(_fieldMatchEnd(input, m)).trim();
     after = after.replaceFirst(RegExp(r'^[\s:=\-–—,]+'), '').trim();
     final vm = RegExp(
-      '^(?:\$_komutFiili)(?:\\s+(?:olarak|diye|şöyle|soyle))?\\s*[:=,\\-–—]?\\s*(.+)\$',
+      '^(?:$_komutFiili)(?:\\s+(?:olarak|diye|şöyle|soyle))?\\s*[:=,\\-–—]?\\s*(.+)\$',
       caseSensitive: false,
     ).firstMatch(after);
     final value = vm?.group(1)?.trim();
@@ -269,7 +263,7 @@ class VixrexValueExtractor {
     after = after.replaceFirst(RegExp(r'^[\s:=\-–—,]+'), '').trim();
     if (after.isEmpty) return null;
     final verbMatch = RegExp(
-      '\\b(\$_komutFiili)\\b',
+      '\\b($_komutFiili)\\b',
       caseSensitive: false,
     ).firstMatch(after);
     var candidate =
@@ -311,7 +305,7 @@ class VixrexValueExtractor {
 
   String? _extractBeforeVerb(String input) {
     final m = RegExp(
-      '^(.*)\\b(\$_komutFiili)\\b\\s*[.!]?\\s*\$',
+      '^(.*)\\b($_komutFiili)\\b\\s*[.!]?\\s*\$',
       caseSensitive: false,
     ).firstMatch(input.trim());
     final before = m?.group(1);
@@ -322,7 +316,7 @@ class VixrexValueExtractor {
     return s
         .replaceFirst(
           RegExp(
-            '\\b(\$_komutFiili)\\b\\s*[.!]?\\s*\$',
+            '\\b($_komutFiili)\\b\\s*[.!]?\\s*\$',
             caseSensitive: false,
           ),
           '',
@@ -419,7 +413,7 @@ class VixrexValueExtractor {
       var eslesti = false;
       for (final ea in digerEsAnlamlar) {
         final n = RegExp.escape(VixrexNormalizer.normalize(ea));
-        if (RegExp('[^a-z0-9]\$n([^a-z0-9]|\$)').hasMatch(kuyruk)) {
+        if (RegExp('[^a-z0-9]$n([^a-z0-9]|\$)').hasMatch(kuyruk)) {
           eslesti = true;
           break;
         }
