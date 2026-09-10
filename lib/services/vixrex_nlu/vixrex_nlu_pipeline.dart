@@ -61,42 +61,131 @@ class VixrexNluPipeline {
   final VixrexExecutor _executor;
   final VixrexCanonicalDraftWriter _canonicalWriter;
 
+  static const Set<String> _acikKapaliNegatif = {
+    'kapat',
+    'kapali',
+    'gizle',
+    'pasif',
+    'hayir',
+    'off',
+    'false',
+    '0',
+    'gorunmesin',
+    'olmasin',
+    'gosterme',
+  };
+
+  static const Set<String> _acikKapaliPozitif = {
+    'ac',
+    'acik',
+    'goster',
+    'aktif',
+    'evet',
+    'on',
+    'true',
+    '1',
+    'gorunsun',
+    'olsun',
+  };
+
+  Set<String> _acikKapaliTokenlari(String input) {
+    return VixrexNormalizer.normalize(input)
+        .replaceAll(RegExp(r'[^a-z0-9]+'), ' ')
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((e) => e.isNotEmpty)
+        .toSet();
+  }
+
+  String? _acikKapaliDegeri(String input) {
+    final tokens = _acikKapaliTokenlari(input);
+    if (tokens.any(_acikKapaliNegatif.contains)) return 'false';
+    if (tokens.any(_acikKapaliPozitif.contains)) return 'true';
+    return null;
+  }
+
+  /// Sözlükteki aç/kapat alanlarının ad kısmını kullanır; alan adına özel
+  /// yeni regex eklemez. "puan göster" -> "puan", "navigasyon göster" ->
+  /// "navigasyon". Yalnız açık bir durum sözcüğü varsa devreye girer.
+  List<VixrexNiyetAlan> _resolveNaturalToggleIntents(String input) {
+    if (_acikKapaliDegeri(input) == null) return const [];
+    final haystack =
+        ' ${VixrexNormalizer.normalize(input).replaceAll(RegExp(r'[^a-z0-9]+'), ' ').trim()} ';
+    final found = <VixrexNiyetAlan>[];
+
+    for (final alan in vixrexNiyetSozlugu) {
+      if (alan.tip != 'acikKapali') continue;
+      var matched = false;
+      for (final ea in alan.esAnlamlar) {
+        var base = VixrexNormalizer.normalize(
+          ea,
+        ).replaceAll(RegExp(r'[^a-z0-9]+'), ' ').trim();
+        base = base.replaceFirst(RegExp(r'\s+goster$'), '').trim();
+        if (base.isEmpty) continue;
+        if (haystack.contains(' $base ')) {
+          matched = true;
+          break;
+        }
+      }
+      if (matched) found.add(alan);
+    }
+    return found;
+  }
+
+  List<VixrexNiyetAlan> _mergeIntentLists(
+    List<VixrexNiyetAlan> first,
+    List<VixrexNiyetAlan> second,
+  ) {
+    final out = <VixrexNiyetAlan>[];
+    final seen = <String>{};
+    for (final list in [first, second]) {
+      for (final alan in list) {
+        if (!seen.add(alan.anahtar)) continue;
+        out.add(alan);
+      }
+    }
+    return out;
+  }
+
   /// Aç/kapat alanlarında değer çoğu zaman ayrı bir metin değil komut
   /// fiilidir: "puanı göster", "yol tarifini gizle". Next.js pipeline ile
   /// aynı deterministik dönüşüm; validator yine gerçek boolean'a normalize eder.
+  ///
+  /// İki dar değer-koruma kuralı da burada tutulur:
+  /// - `<görsel/url alanı>: https://...` biçiminde URL'nin içindeki alan adı silinmez.
+  /// - kampanya açıklamasının başındaki "Seçili" kelimesi "seç" komutu sanılmaz.
   String? _extractPipelineValue(String input, VixrexNiyetAlan alan) {
-    if (alan.tip == 'acikKapali') {
-      final tokens =
-          VixrexNormalizer.normalize(input)
-              .replaceAll(RegExp(r'[^a-z0-9]+'), ' ')
-              .trim()
-              .split(RegExp(r'\s+'))
-              .where((e) => e.isNotEmpty)
-              .toSet();
-      const negatif = {
-        'kapat',
-        'kapali',
-        'gizle',
-        'pasif',
-        'hayir',
-        'off',
-        'false',
-        '0',
-      };
-      const pozitif = {
-        'ac',
-        'acik',
-        'goster',
-        'aktif',
-        'evet',
-        'on',
-        'true',
-        '1',
-      };
-      if (tokens.any(negatif.contains)) return 'false';
-      if (tokens.any(pozitif.contains)) return 'true';
-      return null;
+    if (alan.tip == 'acikKapali') return _acikKapaliDegeri(input);
+
+    if (alan.tip == 'url' || alan.tip == 'gorsel') {
+      final colonUrl = RegExp(
+        r'^[^:\n]{1,120}:\s*(https?://\S+)\s*$',
+        caseSensitive: false,
+      ).firstMatch(input);
+      final value = colonUrl?.group(1)?.trim();
+      if (value != null && value.isNotEmpty) return value;
     }
+
+    if (alan.anahtar == 'bantAciklama') {
+      final natural = RegExp(
+        r'^\s*(?:kampanya|bant)\s+(?:açıklaması|aciklamasi)\s*:?\s+(.+?)\s*$',
+        caseSensitive: false,
+      ).firstMatch(input);
+      var value = natural?.group(1)?.trim();
+      if (value != null && value.isNotEmpty) {
+        value = value
+            .replaceFirst(
+              RegExp(
+                r'\s+(?:yap|olsun)\s*[.!]?\s*$',
+                caseSensitive: false,
+              ),
+              '',
+            )
+            .trim();
+        if (value.isNotEmpty) return value;
+      }
+    }
+
     return _valueExtractor.extract(input, alan);
   }
 
@@ -173,7 +262,11 @@ class VixrexNluPipeline {
     if (pending != null) {
       final alanFromPending = vixrexNiyetAlanByAnahtar[pending.anahtar];
       if (alanFromPending != null) {
-        final resolved = _intentResolver.resolve(trimmed);
+        final resolved =
+            _intentResolver.resolve(trimmed) ??
+            (_resolveNaturalToggleIntents(trimmed).isNotEmpty
+                ? _resolveNaturalToggleIntents(trimmed).first
+                : null);
         if (resolved == null) {
           final baglam = vixrexBaglamsalCevapKarari(
             trimmed,
@@ -279,7 +372,10 @@ class VixrexNluPipeline {
       }
     }
 
-    final tumAlanlar = _intentResolver.resolveAll(trimmed);
+    final tumAlanlar = _mergeIntentLists(
+      _intentResolver.resolveAll(trimmed),
+      _resolveNaturalToggleIntents(trimmed),
+    );
     if (tumAlanlar.isEmpty) {
       return VixrexNluPipelineResult(
         outcome: VixrexNluPipelineOutcome.notUnderstood,
