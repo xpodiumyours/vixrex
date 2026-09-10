@@ -12,15 +12,26 @@ interface NiyetEslesmesi {
   end: number;
 }
 
-/**
- * Eşleşmenin sıradan bir kelimenin ORTASINDAN başlamasını engeller.
- * Son sınırı katı değildir; Türkçe iyelik/hâl eki sözlük kökünü uzatabilir.
- * Uzun ve bağlamlı sözlük örnekleri kısa eş-anlamlardan önce değerlendirilir.
- */
-function niyetEslesmesiBul(
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// Türkçede "dükkan adı" doğal konuşmada "dükkanın adı",
+// "ürün başlığı" -> "ürünlerin başlığı" biçimine dönebilir. Yalnız
+// çok kelimeli ifadelerin ARA kelimelerinde ve kök >=4 harfse dar bir
+// iyelik/genitif/plural-genitif listesine izin verilir. "il", "tel", "ig"
+// gibi kısa kökler bu genişlemeye girmez.
+const ARA_ISIM_EKI =
+  "(?:m|im|um|in|un|min|mun|imin|umun|nin|nun|imiz|umuz|iniz|unuz|imizin|umuzun|inizin|unuzun|larin|lerin)?";
+
+function ortusuyorMu(aday: NiyetEslesmesi, dolu: ReadonlyArray<NiyetEslesmesi>): boolean {
+  return dolu.some((d) => aday.start < d.end && aday.end > d.start);
+}
+
+function tamIfadeEslesmesiBul(
   normInput: string,
   normIfade: string,
-  doluAraliklar: ReadonlyArray<NiyetEslesmesi> = [],
+  doluAraliklar: ReadonlyArray<NiyetEslesmesi>,
 ): NiyetEslesmesi | null {
   let from = 0;
   while (from <= normInput.length - normIfade.length) {
@@ -28,23 +39,61 @@ function niyetEslesmesiBul(
     if (idx < 0) return null;
     const startOk = idx === 0 || !/[a-z0-9]/.test(normInput[idx - 1]);
     const aday = { start: idx, end: idx + normIfade.length };
-    const ortusuyor = doluAraliklar.some(
-      (dolu) => aday.start < dolu.end && aday.end > dolu.start,
-    );
-    if (startOk && !ortusuyor) return aday;
+    if (startOk && !ortusuyorMu(aday, doluAraliklar)) return aday;
     from = idx + 1;
   }
   return null;
 }
 
+function ekliCokKelimeEslesmesiBul(
+  normInput: string,
+  normIfade: string,
+  doluAraliklar: ReadonlyArray<NiyetEslesmesi>,
+): NiyetEslesmesi | null {
+  const tokens = normIfade.split(/\s+/).filter(Boolean);
+  if (tokens.length < 2) return null;
+
+  const body = tokens
+    .map((token, i) => {
+      const kok = escapeRegExp(token);
+      if (i < tokens.length - 1 && /^[a-z0-9]+$/.test(token) && token.length >= 4) {
+        return `${kok}${ARA_ISIM_EKI}`;
+      }
+      return kok;
+    })
+    .join("\\s+");
+
+  const re = new RegExp(`(^|[^a-z0-9])(${body})`, "g");
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(normInput)) !== null) {
+    const start = m.index + m[1].length;
+    const aday = { start, end: start + m[2].length };
+    if (!ortusuyorMu(aday, doluAraliklar)) return aday;
+    if (m[0].length === 0) re.lastIndex += 1;
+  }
+  return null;
+}
+
 /**
- * `ornekIfadeler` artık yalnız dokümantasyon değildir.
- * `{deger}` içeren örneklerde değerden ÖNCEKİ sabit konuşma parçası bir
- * niyet kanıtıdır. Böylece sözlükte "Mağazamın adı {deger} olsun" yazıyorsa
- * motor gerçekten "Mağazamın adı ..." cümlesini tanımak zorundadır.
- *
- * Değeri sabit yazılmış örnekleri genel kalıp saymıyoruz; tek istisna değer
- * taşımayan `acikKapali` komutlarıdır ("Puanı gizle", "Navigasyonu kapat").
+ * Eşleşmenin sıradan bir kelimenin ORTASINDAN başlamasını engeller.
+ * Önce bit-identical düz eşleşme denenir; yalnız o yoksa kontrollü Türkçe
+ * iyelik/genitif varyasyonu denenir. Böylece eski davranış önceliğini korur.
+ */
+function niyetEslesmesiBul(
+  normInput: string,
+  normIfade: string,
+  doluAraliklar: ReadonlyArray<NiyetEslesmesi> = [],
+): NiyetEslesmesi | null {
+  return (
+    tamIfadeEslesmesiBul(normInput, normIfade, doluAraliklar) ??
+    ekliCokKelimeEslesmesiBul(normInput, normIfade, doluAraliklar)
+  );
+}
+
+/**
+ * `{deger}` içeren örneklerde değerden ÖNCEKİ sabit konuşma parçası niyet
+ * kanıtıdır. Değeri sabit yazılmış örnekleri genel kalıp saymıyoruz; tek
+ * istisna değer taşımayan `acikKapali` komutlarıdır.
  */
 function ornekNiyetIfadeleri(alan: VixrexNiyetAlan): string[] {
   const ifadeler: string[] = [];
@@ -73,13 +122,10 @@ function adaylariOlustur(): NiyetAdayi[] {
       candidates.push({ alan, normIfade, len: normIfade.length });
     }
   }
-  // Daha bağlamlı/uzun ifade daima kısa ve genel eş-anlamdan önce gelir.
   candidates.sort((a, b) => b.len - a.len);
   return candidates;
 }
 
-// 46 alan sözlüğü üzerinden eş-anlam + sözlük örneği bulur.
-// Dart VixrexIntentResolver ile aynı deterministik algoritma olmalı.
 export function resolveVixrexIntent(input: string): VixrexNiyetAlan | null {
   const normInput = vixrexNormalizeDartParity(input);
   if (!normInput.trim()) return null;
@@ -102,9 +148,6 @@ export function resolveVixrexIntentsAll(input: string): VixrexNiyetAlan[] {
 
     found.push(c.alan);
     seen.add(c.alan.anahtar);
-    // Daha uzun adaylar önce işlendiği için bu aralık, aynı konuşma
-    // parçasının içindeki daha kısa/genel aliasların ikinci alan sanılmasını
-    // engeller. Ayrı metin aralığındaki gerçek ikinci alan yine bulunur.
     doluAraliklar.push(eslesme);
   }
   return found;
