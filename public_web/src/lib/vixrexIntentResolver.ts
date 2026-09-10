@@ -1,21 +1,136 @@
 import { VIXREX_NIYET_SOZLUGU, type VixrexNiyetAlan } from "./vixrexNiyetSozlugu";
 import { vixrexNormalizeDartParity } from "./vixrexNormalizer";
 
-// 46 alan sözlüğü üzerinden esAnlamlar contains ile alan bulur – Dart VixrexIntentResolver ile aynı.
-export function resolveVixrexIntent(input: string): VixrexNiyetAlan | null {
-  const normInput = vixrexNormalizeDartParity(input);
-  if (!normInput.trim()) return null;
-  const candidates: Array<{ alan: VixrexNiyetAlan; normEa: string; len: number }> = [];
+interface NiyetAdayi {
+  alan: VixrexNiyetAlan;
+  normIfade: string;
+  len: number;
+}
+
+interface NiyetEslesmesi {
+  start: number;
+  end: number;
+}
+
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// Türkçede "dükkan adı" doğal konuşmada "dükkanın adı",
+// "ürün başlığı" -> "ürünlerin başlığı" biçimine dönebilir. Yalnız
+// çok kelimeli ifadelerin ARA kelimelerinde ve kök >=4 harfse dar bir
+// iyelik/genitif/plural-genitif listesine izin verilir. "il", "tel", "ig"
+// gibi kısa kökler bu genişlemeye girmez.
+const ARA_ISIM_EKI =
+  "(?:m|im|um|in|un|min|mun|imin|umun|nin|nun|imiz|umuz|iniz|unuz|imizin|umuzun|inizin|unuzun|larin|lerin)?";
+
+function ortusuyorMu(aday: NiyetEslesmesi, dolu: ReadonlyArray<NiyetEslesmesi>): boolean {
+  return dolu.some((d) => aday.start < d.end && aday.end > d.start);
+}
+
+function tamIfadeEslesmesiBul(
+  normInput: string,
+  normIfade: string,
+  doluAraliklar: ReadonlyArray<NiyetEslesmesi>,
+): NiyetEslesmesi | null {
+  let from = 0;
+  while (from <= normInput.length - normIfade.length) {
+    const idx = normInput.indexOf(normIfade, from);
+    if (idx < 0) return null;
+    const startOk = idx === 0 || !/[a-z0-9]/.test(normInput[idx - 1]);
+    const aday = { start: idx, end: idx + normIfade.length };
+    if (startOk && !ortusuyorMu(aday, doluAraliklar)) return aday;
+    from = idx + 1;
+  }
+  return null;
+}
+
+function ekliCokKelimeEslesmesiBul(
+  normInput: string,
+  normIfade: string,
+  doluAraliklar: ReadonlyArray<NiyetEslesmesi>,
+): NiyetEslesmesi | null {
+  const tokens = normIfade.split(/\s+/).filter(Boolean);
+  if (tokens.length < 2) return null;
+
+  const body = tokens
+    .map((token, i) => {
+      const kok = escapeRegExp(token);
+      if (i < tokens.length - 1 && /^[a-z0-9]+$/.test(token) && token.length >= 4) {
+        return `${kok}${ARA_ISIM_EKI}`;
+      }
+      return kok;
+    })
+    .join("\\s+");
+
+  const re = new RegExp(`(^|[^a-z0-9])(${body})`, "g");
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(normInput)) !== null) {
+    const start = m.index + m[1].length;
+    const aday = { start, end: start + m[2].length };
+    if (!ortusuyorMu(aday, doluAraliklar)) return aday;
+    if (m[0].length === 0) re.lastIndex += 1;
+  }
+  return null;
+}
+
+/**
+ * Eşleşmenin sıradan bir kelimenin ORTASINDAN başlamasını engeller.
+ * Önce bit-identical düz eşleşme denenir; yalnız o yoksa kontrollü Türkçe
+ * iyelik/genitif varyasyonu denenir. Böylece eski davranış önceliğini korur.
+ */
+function niyetEslesmesiBul(
+  normInput: string,
+  normIfade: string,
+  doluAraliklar: ReadonlyArray<NiyetEslesmesi> = [],
+): NiyetEslesmesi | null {
+  return (
+    tamIfadeEslesmesiBul(normInput, normIfade, doluAraliklar) ??
+    ekliCokKelimeEslesmesiBul(normInput, normIfade, doluAraliklar)
+  );
+}
+
+/**
+ * `{deger}` içeren örneklerde değerden ÖNCEKİ sabit konuşma parçası niyet
+ * kanıtıdır. Değeri sabit yazılmış örnekleri genel kalıp saymıyoruz; tek
+ * istisna değer taşımayan `acikKapali` komutlarıdır.
+ */
+function ornekNiyetIfadeleri(alan: VixrexNiyetAlan): string[] {
+  const ifadeler: string[] = [];
+  for (const ornek of alan.ornekIfadeler) {
+    const marker = ornek.indexOf("{deger}");
+    let sabit: string | null = null;
+    if (marker >= 0) {
+      sabit = ornek.slice(0, marker).replace(/[\s:,-]+$/g, "").trim();
+    } else if (alan.tip === "acikKapali") {
+      sabit = ornek.trim();
+    }
+    if (sabit) ifadeler.push(sabit);
+  }
+  return ifadeler;
+}
+
+function adaylariOlustur(): NiyetAdayi[] {
+  const candidates: NiyetAdayi[] = [];
   for (const alan of VIXREX_NIYET_SOZLUGU) {
-    for (const ea of alan.esAnlamlar) {
-      const normEa = vixrexNormalizeDartParity(ea);
-      if (!normEa.trim()) continue;
-      candidates.push({ alan, normEa, len: normEa.length });
+    const ifadeler = [...alan.esAnlamlar, ...ornekNiyetIfadeleri(alan)];
+    const seen = new Set<string>();
+    for (const ifade of ifadeler) {
+      const normIfade = vixrexNormalizeDartParity(ifade).trim();
+      if (!normIfade || seen.has(normIfade)) continue;
+      seen.add(normIfade);
+      candidates.push({ alan, normIfade, len: normIfade.length });
     }
   }
   candidates.sort((a, b) => b.len - a.len);
-  for (const c of candidates) {
-    if (normInput.includes(c.normEa)) return c.alan;
+  return candidates;
+}
+
+export function resolveVixrexIntent(input: string): VixrexNiyetAlan | null {
+  const normInput = vixrexNormalizeDartParity(input);
+  if (!normInput.trim()) return null;
+  for (const c of adaylariOlustur()) {
+    if (niyetEslesmesiBul(normInput, c.normIfade)) return c.alan;
   }
   return null;
 }
@@ -24,19 +139,16 @@ export function resolveVixrexIntentsAll(input: string): VixrexNiyetAlan[] {
   const normInput = vixrexNormalizeDartParity(input);
   const found: VixrexNiyetAlan[] = [];
   const seen = new Set<string>();
-  const candidates: Array<{ alan: VixrexNiyetAlan; normEa: string; len: number }> = [];
-  for (const alan of VIXREX_NIYET_SOZLUGU) {
-    for (const ea of alan.esAnlamlar) {
-      candidates.push({ alan, normEa: vixrexNormalizeDartParity(ea), len: vixrexNormalizeDartParity(ea).length });
-    }
-  }
-  candidates.sort((a, b) => b.len - a.len);
-  for (const c of candidates) {
+  const doluAraliklar: NiyetEslesmesi[] = [];
+
+  for (const c of adaylariOlustur()) {
     if (seen.has(c.alan.anahtar)) continue;
-    if (normInput.includes(c.normEa)) {
-      found.push(c.alan);
-      seen.add(c.alan.anahtar);
-    }
+    const eslesme = niyetEslesmesiBul(normInput, c.normIfade, doluAraliklar);
+    if (!eslesme) continue;
+
+    found.push(c.alan);
+    seen.add(c.alan.anahtar);
+    doluAraliklar.push(eslesme);
   }
   return found;
 }

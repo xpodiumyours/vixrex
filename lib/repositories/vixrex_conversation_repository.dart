@@ -37,6 +37,25 @@ class VixrexConversationRepository {
     return Map<String, dynamic>.from(raw);
   }
 
+  /// Next.js `vixrexNluPipeline.ts` ile aynı kanonik pending-slot RPC'si.
+  /// Kalıcı hesap yoksa uzak veri sınırı devre dışıdır; çağıran yerel önbelleğe
+  /// düşer. `null`, kanonik konuşmada bekleyen alan olmadığı anlamına gelir.
+  Future<Map<String, dynamic>?> loadPendingSlot() async {
+    final client = _persistentAccountClient;
+    if (client == null) return null;
+    final raw = await client.rpc('get_assistant_pending_slot');
+    if (raw is! Map) return null;
+    return Map<String, dynamic>.from(raw);
+  }
+
+  /// Pending slotu tek ortak `assistant_conversations.pending_slot` alanına
+  /// yazar. `null` gönderimi slotu temizler; Next.js ile aynı RPC sözleşmesi.
+  Future<void> savePendingSlot(Map<String, dynamic>? slot) async {
+    final client = _persistentAccountClient;
+    if (client == null) return;
+    await client.rpc('set_assistant_pending_slot', params: {'p_slot': slot});
+  }
+
   Future<List<ChatMessage>> loadMessages() async {
     final conversation = await _conversation();
     final rawMessages = conversation?['messages'];

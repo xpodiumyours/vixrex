@@ -1,0 +1,100 @@
+name: Vixrex Assistant Safety
+
+# Assistant doğrulaması artık HER push/PR'da otomatik çalışmaz.
+# Furkan'ın GitHub Actions kotasını gereksiz tüketmemek için yalnız
+# kilometre taşlarında Actions > Run workflow ile elle çalıştırılır.
+# Günlük geliştirme döngüsü `tool/vixrex_assistant_local_check.ps1` ile
+# yerelde yapılır. Bu workflow son doğrulama kapısıdır; geliştirme döngüsü değil.
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: vixrex-assistant-safety-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  FLUTTER_VERSION: "3.44.4"
+
+jobs:
+  public_web:
+    name: Next.js — Assistant güvenlik kapısı
+    runs-on: [self-hosted, windows, vixrex]
+    timeout-minutes: 25
+    defaults:
+      run:
+        shell: pwsh
+        working-directory: public_web
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: public_web/package-lock.json
+
+      - name: Bağımlılıklar
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Tip kontrolü
+        run: npx tsc --noEmit
+
+      - name: Testler
+        run: npm run test
+
+      - name: Production build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+
+  flutter:
+    name: Flutter — Assistant güvenlik kapısı
+    runs-on: [self-hosted, windows, vixrex]
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: pwsh
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Flutter sürümünü doğrula
+        run: |
+          $ErrorActionPreference = "Stop"
+          flutter --version
+          $machine = flutter --version --machine | ConvertFrom-Json
+          if ($machine.frameworkVersion -ne $env:FLUTTER_VERSION) {
+            throw "Flutter sürümü $($machine.frameworkVersion); beklenen $env:FLUTTER_VERSION"
+          }
+
+      - name: Bağımlılıklar
+        run: flutter pub get
+
+      - name: Biçim kontrolü
+        run: |
+          dart format lib test
+          git diff --quiet -- lib test
+          $formatExit = $LASTEXITCODE
+          if ($formatExit -ne 0) {
+            Write-Host "Dart formatter farkı:"
+            git diff -- lib test
+            exit $formatExit
+          }
+
+      - name: Statik analiz
+        run: dart analyze --fatal-infos
+
+      - name: Testler
+        run: flutter test --reporter expanded

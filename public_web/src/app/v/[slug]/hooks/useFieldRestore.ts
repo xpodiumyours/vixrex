@@ -18,13 +18,10 @@ interface FieldRestoreHook {
   geriAliniyor: boolean;
   canliyaDondur: () => Promise<void>;
   /**
-   * Faz 5 (Çalışma masası / Yön C, 2026-09-03): motorun tek cümleden
-   * birden fazla alanı birden doldurduğu durumda, onay kartındaki
-   * "Geri al" hepsini birden canlı hâline döndürür. `canliyaDondur`
-   * yalnız o an SEÇİLİ tek alanı bilir; bu, seçimden bağımsız, anahtar
-   * listesiyle çalışır.
+   * Adı ve string[] imzası büyük OwnerAssistantPanel yüzeyine dokunmamak için
+   * korunuyor. Artık dizi ALANLARI değil tek commandId taşır.
    */
-  coklaCanliyaDondur: (anahtarlar: string[]) => Promise<void>;
+  coklaCanliyaDondur: (commandTokens: string[]) => Promise<void>;
 }
 
 export function useFieldRestore({
@@ -42,6 +39,8 @@ export function useFieldRestore({
     seciliAnahtarRef.current = seciliAlan?.anahtar ?? null;
   }, [seciliAlan?.anahtar]);
 
+  // Manuel "canlı hâline döndür" işlevi AYNI kalır. Bu, Assistant'ın
+  // command-bazlı undo'su değildir ve ayrı kullanıcı niyetidir.
   const canliyaDondur = useCallback(async () => {
     if (!seciliAlan) return;
     const alan = seciliAlan;
@@ -97,50 +96,80 @@ export function useFieldRestore({
   }, [slug, seciliAlan, mesajEkle, setAlan, setGiris, router]);
 
   const coklaCanliyaDondur = useCallback(
-    async (anahtarlar: string[]) => {
-      const alanlar = anahtarlar
-        .map((a) => FIELD_BY_KEY.get(a))
-        .filter((a): a is VitrinField => Boolean(a));
-      if (alanlar.length === 0) return;
+    async (commandTokens: string[]) => {
+      // OwnerAssistantPanel mevcut geri_al: payload'ını virgülden ayırıyor.
+      // Yeni payload tek UUID olduğundan burada tam bir token bekleriz; eski
+      // alan-listesi payload'ı fail-closed olur ve yanlış undo yapmaz.
+      if (commandTokens.length !== 1) {
+        mesajEkle("asistan", "Bu eski geri alma işlemi güvenle uygulanamıyor.");
+        return;
+      }
+      const commandId = commandTokens[0]?.trim() ?? "";
+      if (!commandId) return;
       setGeriAliniyor(true);
 
       try {
-        const sonuclar = await Promise.all(
-          alanlar.map(async (alan) => {
-            const yanit = await fetch("/api/owner-draft-restore", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                slug,
-                anahtar: alan.anahtar,
-                clientId: taslakClientId(),
-              }),
-            });
-            const govde = (await yanit.json()) as { hata?: string; deger?: unknown };
-            return { alan, ok: yanit.ok, govde };
-          })
-        );
+        const yanit = await fetch("/api/owner-draft-undo", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            slug,
+            commandId,
+            clientId: taslakClientId(),
+          }),
+        });
+        const govde = (await yanit.json()) as {
+          hata?: string;
+          degisiklikler?: Array<{
+            anahtar?: unknown;
+            kolon?: unknown;
+            etiket?: unknown;
+            deger?: unknown;
+          }>;
+        };
 
-        for (const { alan, ok, govde } of sonuclar) {
-          if (!ok) continue;
-          setAlan(alan.kolon, govde.deger);
+        if (!yanit.ok) {
+          mesajEkle("asistan", govde.hata ?? "Geri alınamadı, tekrar dener misin?");
+          return;
+        }
+
+        const degisiklikler = Array.isArray(govde.degisiklikler)
+          ? govde.degisiklikler
+          : [];
+        const geriAlinanEtiketler: string[] = [];
+
+        for (const item of degisiklikler) {
+          if (typeof item.anahtar !== "string" || typeof item.kolon !== "string") {
+            continue;
+          }
+          const alan = FIELD_BY_KEY.get(item.anahtar);
+          if (!alan || alan.kolon !== item.kolon) continue;
+
+          setAlan(alan.kolon, item.deger);
+          geriAlinanEtiketler.push(
+            typeof item.etiket === "string" ? item.etiket : alan.etiket
+          );
           if (seciliAnahtarRef.current === alan.anahtar) {
             setGiris(
               alan.tip === "acikKapali" ||
-                govde.deger === null ||
-                govde.deger === undefined
+                item.deger === null ||
+                item.deger === undefined
                 ? ""
-                : String(govde.deger)
+                : String(item.deger)
             );
           }
         }
 
-        const basarili = sonuclar.filter((s) => s.ok).map((s) => s.alan.etiket);
-        if (basarili.length === 0) {
-          mesajEkle("asistan", "Geri alınamadı, tekrar dener misin?");
-          return;
+        if (geriAlinanEtiketler.length === 0) {
+          // Sunucu başarılı dediği halde ayrıntı yoksa yerel state'i tahmin
+          // etmeyiz; server component yeniden okur.
+          mesajEkle("asistan", "Geri alma tamamlandı. Vitrini yeniledim.");
+        } else {
+          mesajEkle(
+            "asistan",
+            `${geriAlinanEtiketler.join(", ")} önceki taslak değerlerine geri alındı.`
+          );
         }
-        mesajEkle("asistan", `${basarili.join(", ")} canlı hâline döndürüldü.`);
         router.refresh();
       } catch {
         mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar dene.");

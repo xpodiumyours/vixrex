@@ -11,6 +11,13 @@ import { supabase } from "@/lib/supabase";
 
 export type Mesaj = OwnerChatMessage;
 
+// Owner panelindeki dinamik Assistant cevapları katalog metni değildir; alan
+// adı/değeri gibi çalışma zamanı verisi taşır. Yine de kullanıcı-facing gerçek
+// konuşma satırıdır ve Flutter/landing aynı konuşmayı gösterebilmelidir.
+// Eski `message_key=null` iç-durum satırlarını görünür yapmadan yalnız yeni
+// owner cevaplarını ayırmak için rezerv operasyonel damga kullanılır.
+const OWNER_RUNTIME_MESSAGE_KEY = "owner_runtime";
+
 export interface OwnerChatHook {
   mesajlar: Mesaj[];
   /** Faz C2: üçüncü argüman opsiyonel — mevcut 30'dan fazla çağrı yeri
@@ -194,7 +201,9 @@ export function useOwnerChat(
             p_conversation_id: cid,
             p_client_message_id: clientId,
             p_role: role,
-            p_message_key: null,
+            // Kullanıcı-facing owner Assistant cevabı artık diğer yüzeylerde
+            // gizlenmez. Kullanıcı satırları katalog damgası taşımaz.
+            p_message_key: role === "assistant" ? OWNER_RUNTIME_MESSAGE_KEY : null,
             p_message_text: trimmed,
             // Faz C2: hizliCevaplar kasıtlı olarak p_catalog_snapshot'a
             // yazılmıyor — column var ve okuma tarafı (get_assistant_

@@ -1,15 +1,20 @@
+import 'package:vixrex/config/business_categories.g.dart';
 import 'package:vixrex/config/business_category_config.dart';
+import 'package:vixrex/config/vitrin_alanlari.g.dart';
 import 'package:vixrex/config/vixrex_niyet_sozlugu.g.dart';
 import 'package:vixrex/utils/address_validator.dart';
 import 'package:vixrex/utils/whatsapp_link_helper.dart';
 
-/// Faz 1: 6 zorunlu + Faz 2 kalite için tip/dogrulama → validateField eşdeğeri.
-/// Tam `public_web/src/lib/vitrinFieldValidation.ts` ile aynı kural olmalı – parity testleri kilitler.
+/// Flutter Vixrex Assistant alan doğrulayıcısı.
+///
+/// Zorunlu/min-max uzunluk, sayısal min-max, seçenek ve doğrulama bilgisi
+/// elle tutulmaz; `vitrin_alanlari.g.dart` üzerinden Next.js ile aynı
+/// 46-alan şemasından gelir.
 class VixrexFieldValidator {
   const VixrexFieldValidator._();
 
   /// `hamDeger`’i alan tipine göre doğrular, normalize eder.
-  /// Dönüş: ok=true + normalizedDeger (kayda gidecek), yoksa ok=false + hata (Türkçe).
+  /// Dönüş: ok=true + normalizedDeger (kayda gidecek), yoksa ok=false + hata.
   static ({bool ok, String? hata, Object? normalizedDeger}) validate(
     VixrexNiyetAlan alan,
     String hamDeger,
@@ -17,6 +22,7 @@ class VixrexFieldValidator {
     final tip = alan.tip;
     final etiket = alan.etiket;
     final raw = hamDeger.trim();
+    final sema = alanAnahtarla[alan.anahtar];
 
     // acikKapali
     if (tip == 'acikKapali') {
@@ -52,7 +58,7 @@ class VixrexFieldValidator {
       );
     }
 
-    // sayi
+    // sayi — sınırlar da üretilmiş ortak 46-alan şemasından gelir.
     if (tip == 'sayi') {
       if (raw.isEmpty) return (ok: true, hata: null, normalizedDeger: null);
       final numStr = raw.replaceAll(',', '.');
@@ -60,8 +66,8 @@ class VixrexFieldValidator {
       if (num == null || !num.isFinite) {
         return (ok: false, hata: '$etiket sayı olmalı.', normalizedDeger: null);
       }
-      final min = _minFor(alan);
-      final max = _maxFor(alan);
+      final min = sema?.min;
+      final max = sema?.max;
       if (min != null && num < min) {
         return (
           ok: false,
@@ -81,16 +87,7 @@ class VixrexFieldValidator {
 
     // metin tabanlı tipler
     if (raw.isEmpty) {
-      // Zorunlu alan boş bırakılamaz – Faz 1’de 6 zorunlu için kontrol.
-      final zorunlular = {
-        'isletmeAdi',
-        'kategori',
-        'whatsapp',
-        'adres',
-        'il',
-        'ilce',
-      };
-      if (zorunlular.contains(alan.anahtar)) {
+      if (sema?.zorunlu == true) {
         return (
           ok: false,
           hata: '$etiket boş bırakılamaz.',
@@ -100,15 +97,14 @@ class VixrexFieldValidator {
       return (ok: true, hata: null, normalizedDeger: null);
     }
 
-    // uzunluk sınırları (vitrin_alanlari.g.dart’tan gelen bilgi sözlükte beklenenVeriTipi’nde ama burada elle)
-    final lengthErr = _metinSinirlari(alan, raw);
+    final lengthErr = _metinSinirlari(alan, raw, sema);
     if (lengthErr != null) {
       return (ok: false, hata: lengthErr, normalizedDeger: null);
     }
 
     switch (tip) {
       case 'telefon':
-        if (alan.anahtar == 'whatsapp') {
+        if (sema?.dogrulama == 'tr_mobil') {
           final norm = WhatsAppLinkHelper.normalizeTurkeyMobile(raw);
           if (norm == null) {
             return (
@@ -139,7 +135,7 @@ class VixrexFieldValidator {
         return (ok: true, hata: null, normalizedDeger: raw);
       case 'url':
       case 'gorsel':
-        if (!_isSafeUrl(raw)) {
+        if (!_isSafeUrl(raw, allowAnchor: sema?.dogrulama == 'ankor_serbest')) {
           return (
             ok: false,
             hata: '$etiket yalnız http veya https adresi olabilir.',
@@ -148,34 +144,36 @@ class VixrexFieldValidator {
         }
         return (ok: true, hata: null, normalizedDeger: raw);
       case 'secim':
-        // Faz 1: kategori için seçenek kontrolü – BusinessCategoryConfig ile eşdeğer.
-        if (alan.anahtar == 'kategori') {
-          final exists = BusinessCategoryConfig.categories.any(
-            (c) =>
-                c.label.toLowerCase() == raw.toLowerCase() ||
-                c.id.toLowerCase() == raw.toLowerCase(),
-          );
-          if (!exists) {
+        if (sema?.dogrulama == 'kategori') {
+          final categoryId = resolveBusinessCategoryId(raw);
+          final category =
+              categoryId == null
+                  ? const <BusinessCategoryConfig>[]
+                  : BusinessCategoryConfig.categories
+                      .where((c) => c.id == categoryId)
+                      .toList();
+          if (category.isEmpty ||
+              (sema?.secenekler != null &&
+                  !sema!.secenekler!.contains(category.first.label))) {
             return (
               ok: false,
               hata: '$etiket için geçersiz seçim.',
               normalizedDeger: null,
             );
           }
-          // Normalize: label’ı döndür (UI’da label gösterilir)
-          final cat = BusinessCategoryConfig.categories.firstWhere(
-            (c) =>
-                c.label.toLowerCase() == raw.toLowerCase() ||
-                c.id.toLowerCase() == raw.toLowerCase(),
-            orElse: () => BusinessCategoryConfig.categories.first,
+          return (ok: true, hata: null, normalizedDeger: category.first.label);
+        }
+        if (sema?.secenekler != null && !sema!.secenekler!.contains(raw)) {
+          return (
+            ok: false,
+            hata: '$etiket için geçersiz seçim.',
+            normalizedDeger: null,
           );
-          return (ok: true, hata: null, normalizedDeger: cat.label);
         }
         return (ok: true, hata: null, normalizedDeger: raw);
       case 'metin':
       case 'uzunMetin':
-        // Adres için özel validator (sokak/cadde + numara)
-        if (alan.anahtar == 'adres') {
+        if (sema?.dogrulama == 'adres') {
           final hata = AddressValidator.hataMesaji(raw);
           if (hata != null) {
             return (ok: false, hata: hata, normalizedDeger: null);
@@ -191,11 +189,14 @@ class VixrexFieldValidator {
     }
   }
 
-  static String? _metinSinirlari(VixrexNiyetAlan alan, String deger) {
+  static String? _metinSinirlari(
+    VixrexNiyetAlan alan,
+    String deger,
+    VitrinAlani? sema,
+  ) {
     final len = deger.length;
-    // Zorunlu boş kontrol yukarıda yapıldı.
-    final min = _minUzunluk(alan);
-    final max = _maxUzunluk(alan);
+    final min = sema?.minUzunluk;
+    final max = sema?.maxUzunluk;
     if (min != null && len > 0 && len < min) {
       return '${alan.etiket} en az $min karakter olmalı.';
     }
@@ -205,107 +206,8 @@ class VixrexFieldValidator {
     return null;
   }
 
-  static int? _minUzunluk(VixrexNiyetAlan alan) {
-    // Faz 1 dar: sadece kritik alanlar – diğerleri sözlükteki beklenenVeriTipi’nden parse edilebilir ama burada sabit.
-    switch (alan.anahtar) {
-      case 'isletmeAdi':
-        return 2;
-      default:
-        return null;
-    }
-  }
-
-  static int? _maxUzunluk(VixrexNiyetAlan alan) {
-    switch (alan.anahtar) {
-      case 'isletmeAdi':
-        return 60;
-      case 'heroRozet':
-        return 60;
-      case 'kisaTanitim':
-        return 300;
-      case 'konumMetni':
-        return 60;
-      case 'isletmeTuru':
-        return 40;
-      case 'adres':
-        return 200;
-      case 'il':
-      case 'ilce':
-      case 'mahalle':
-        return 60;
-      case 'haritaEtiketi':
-        return 120;
-      case 'calismaSaatleri':
-        return 400;
-      case 'instagram':
-        return 30;
-      case 'website':
-      case 'haritaLinki':
-      case 'referansLinki':
-        return 2000;
-      case 'hakkindaUstBaslik':
-        return 40;
-      case 'hakkindaBaslik':
-        return 90;
-      case 'hakkindaMetin':
-        return 1200;
-      case 'hakkindaGorselAlt':
-        return 120;
-      case 'galeriUstBaslik':
-        return 40;
-      case 'galeriBaslik':
-        return 90;
-      case 'galeriAksiyonMetni':
-        return 40;
-      case 'kategoriBolumBaslik':
-      case 'urunBolumBaslik':
-        return 60;
-      case 'bantEtiket':
-        return 40;
-      case 'bantBaslik':
-        return 90;
-      case 'bantAciklama':
-        return 200;
-      case 'bantFiyat':
-        return 30;
-      case 'blogUstBaslik':
-        return 40;
-      case 'blogBaslik':
-        return 90;
-      case 'sssUstBaslik':
-        return 40;
-      case 'sssBaslik':
-        return 90;
-      case 'sssAciklama':
-        return 200;
-      case 'eposta':
-        return 120;
-      case 'kategori':
-        return 40;
-      case 'logo':
-      case 'kapakGorseli':
-      case 'bantGorsel':
-      case 'hakkindaGorsel':
-        return 2000;
-      default:
-        return null;
-    }
-  }
-
-  static double? _minFor(VixrexNiyetAlan alan) {
-    if (alan.anahtar == 'enlem') return -90;
-    if (alan.anahtar == 'boylam') return -180;
-    return null;
-  }
-
-  static double? _maxFor(VixrexNiyetAlan alan) {
-    if (alan.anahtar == 'enlem') return 90;
-    if (alan.anahtar == 'boylam') return 180;
-    return null;
-  }
-
-  static bool _isSafeUrl(String s) {
-    if (s.startsWith('#')) return true;
+  static bool _isSafeUrl(String s, {required bool allowAnchor}) {
+    if (s.startsWith('#')) return allowAnchor;
     final uri = Uri.tryParse(s);
     if (uri == null) return false;
     return uri.scheme == 'http' || uri.scheme == 'https';

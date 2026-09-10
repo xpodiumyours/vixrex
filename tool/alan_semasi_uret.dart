@@ -51,6 +51,8 @@ void main() {
     ..writeln('  final bool kalite;')
     ..writeln('  final int? minUzunluk;')
     ..writeln('  final int? maxUzunluk;')
+    ..writeln('  final num? min;')
+    ..writeln('  final num? max;')
     ..writeln('  final List<String>? secenekler;')
     ..writeln('  final String? ipucu;')
     ..writeln('  final String? dogrulama;')
@@ -66,6 +68,8 @@ void main() {
     ..writeln('    this.kalite = false,')
     ..writeln('    this.minUzunluk,')
     ..writeln('    this.maxUzunluk,')
+    ..writeln('    this.min,')
+    ..writeln('    this.max,')
     ..writeln('    this.secenekler,')
     ..writeln('    this.ipucu,')
     ..writeln('    this.dogrulama,')
@@ -93,6 +97,8 @@ void main() {
     if (a['maxUzunluk'] != null) {
       tampon.writeln("    maxUzunluk: ${a['maxUzunluk']},");
     }
+    if (a['min'] != null) tampon.writeln("    min: ${a['min']},");
+    if (a['max'] != null) tampon.writeln("    max: ${a['max']},");
     if (a['secenekler'] != null) {
       final ler = (a['secenekler'] as List).map(metin).join(', ');
       tampon.writeln('    secenekler: [$ler],');

@@ -104,7 +104,7 @@
         "Diğer"
       ],
       "ipucu": null,
-      "dogrulama": null,
+      "dogrulama": "kategori",
       "bosDegerler": [
         "diger",
         "diğer"
@@ -226,7 +226,7 @@
       "max": null,
       "secenekler": null,
       "ipucu": null,
-      "dogrulama": null,
+      "dogrulama": "adres",
       "bosDegerler": null
     },
     {
@@ -668,7 +668,7 @@
       "max": null,
       "secenekler": null,
       "ipucu": null,
-      "dogrulama": null,
+      "dogrulama": "ankor_serbest",
       "bosDegerler": null
     },
     {

@@ -3,12 +3,8 @@
 // üretir (tool/mesaj_semasi_uret.dart). Bu dosya JSON'u tipli okur;
 // CI sapma kontrolü ikisinin ayrışmasını yakalar.
 //
-// Kapsam: yalnız sabit metin gövdesi. Dinamik olarak birleştirilen
-// mesajlar ve hızlı yanıtların aksiyon bağlantıları burada değil.
-//
-// Henüz hiçbir Next.js ekranı bu kataloğu render etmiyor — tüketici
-// Faz G'nin (OwnerAssistantPanel) işi. Bu dosya yalnız kaynağı okunabilir
-// kılar.
+// Kapsam: sabit metin gövdesi + sabit yanıt kablolaması. Dinamik snapshot
+// mesajları ve istemciye özgü aksiyon uygulaması burada üretilmez.
 import vixrexMesajlariJson from "../../../shared/vixrex_mesajlar.json";
 
 export interface VixRexIntentSemasi {
@@ -35,11 +31,24 @@ export interface VixRexHizliSecenek {
   ikon: string;
 }
 
+export interface VixRexYanitHizli {
+  etiket: string;
+  payload: string;
+  aksiyon: string;
+}
+
+export interface VixRexYanitSemasi {
+  payload: string;
+  mesaj: string;
+  hizli: VixRexYanitHizli[];
+}
+
 interface VixRexMesajKatalogu {
   akis: VixRexAsistanAkisAdimi[];
   intentler: VixRexIntentSemasi[];
   mesajlar: VixRexMesajSemasi[];
   hizliSecenekler: VixRexHizliSecenek[];
+  yanitlar: VixRexYanitSemasi[];
 }
 
 const katalog = vixrexMesajlariJson as VixRexMesajKatalogu;
@@ -58,6 +67,11 @@ export function vixRexAsistanAdimiForAlan(
 
 export const vixRexMesajlari: Record<string, string> = Object.fromEntries(
   katalog.mesajlar.map((m) => [m.anahtar, m.metin]),
+);
+
+/** Flutter ChatbotConfig._yanitFromTable ile aynı sabit kablolama kaynağı. */
+export const vixRexYanitlar: ReadonlyMap<string, VixRexYanitSemasi> = new Map(
+  katalog.yanitlar.map((yanit) => [yanit.payload, yanit]),
 );
 
 export const vixRexHizliSecenekler: readonly VixRexHizliSecenek[] =

@@ -1,10 +1,9 @@
 // Şemadan beslenen tek doğrulayıcı.
 //
-// Alan başına ayrı doğrulayıcı YOKTUR ve yazılmaz. Yeni alan eklendiğinde
-// bu dosya değişmez — yalnız vitrinFieldSchema.ts'e satır eklenir.
-//
-// Plan: implementation_plan.md Commit 8
+// Genel tip/sınır kuralları vitrinFieldSchema.ts'ten gelir. Adres ve kategori
+// gibi ürün-semantik kuralları da Flutter ile aynı ortak kaynaklara bağlanır.
 
+import { resolveBusinessCategory } from "./businessCategories";
 import { FIELD_BY_KEY, type VitrinField } from "./vitrinFieldSchema";
 
 export type FieldValue = string | number | boolean | null;
@@ -14,15 +13,49 @@ export type ValidationResult =
   | { ok: false; hata: string };
 
 const URL_PROTOKOLLERI = ["http:", "https:"];
+const ADRES_YER_BELIRTECLERI = [
+  "cad",
+  "sok",
+  "mah",
+  "bulv",
+  "blv",
+  "apt",
+  "blok",
+  "sit",
+  "plaza",
+  "çarşı",
+  "carsi",
+  "pasaj",
+  "sanayi",
+  "osb",
+  "küme",
+  "kume",
+];
 
-function guvenliUrlMu(deger: string): boolean {
-  if (deger.startsWith("#")) return true; // sayfa içi çapa
+function guvenliUrlMu(deger: string, sayfaIciCapaSerbest: boolean): boolean {
+  if (deger.startsWith("#")) return sayfaIciCapaSerbest;
   try {
     const parsed = new URL(deger);
     return URL_PROTOKOLLERI.includes(parsed.protocol);
   } catch {
     return false;
   }
+}
+
+function adresHataMesaji(deger: string): string | null {
+  if (deger.length < 10) {
+    return "Adres çok kısa. Müşterinin seni bulabilmesi için sokak/cadde ve kapı numarası yaz. Örnek: Atatürk Cad. No:24";
+  }
+
+  const kucuk = deger.toLocaleLowerCase("tr-TR");
+  const rakamVar = /\d/.test(deger);
+  const yerBelirteciVar = ADRES_YER_BELIRTECLERI.some((parca) =>
+    kucuk.includes(parca),
+  );
+  if (!rakamVar && !yerBelirteciVar) {
+    return "Adres eksik görünüyor. Sokak/cadde adı veya kapı numarası ekle. Örnek: Atatürk Cad. No:24";
+  }
+  return null;
 }
 
 function normalizeTurkeyMobile(deger: string): string | null {
@@ -60,7 +93,6 @@ export function validateField(anahtar: string, hamDeger: unknown): ValidationRes
     return { ok: false, hata: "Bilinmeyen alan." };
   }
 
-  // acikKapali: yalnız boolean
   if (alan.tip === "acikKapali") {
     if (typeof hamDeger !== "boolean") {
       return { ok: false, hata: `${alan.etiket} yalnız açık veya kapalı olabilir.` };
@@ -68,7 +100,6 @@ export function validateField(anahtar: string, hamDeger: unknown): ValidationRes
     return { ok: true, alan, deger: hamDeger };
   }
 
-  // sayi: sayıya çevir, sınırları kontrol et
   if (alan.tip === "sayi") {
     if (hamDeger === null || hamDeger === "") {
       return { ok: true, alan, deger: null };
@@ -86,13 +117,11 @@ export function validateField(anahtar: string, hamDeger: unknown): ValidationRes
     return { ok: true, alan, deger: sayi };
   }
 
-  // Kalan tiplerin hepsi metin tabanlı
   if (typeof hamDeger !== "string" && hamDeger !== null) {
     return { ok: false, hata: `${alan.etiket} metin olmalı.` };
   }
 
   const deger = (hamDeger ?? "").trim();
-
   const sinirHatasi = metinSinirlari(alan, deger);
   if (sinirHatasi) return { ok: false, hata: sinirHatasi };
 
@@ -108,7 +137,7 @@ export function validateField(anahtar: string, hamDeger: unknown): ValidationRes
         if (!normalized) {
           return {
             ok: false,
-            hata: `${alan.etiket} geçerli bir Türkiye cep telefonu olmalı.`,
+            hata: "Geçerli bir Türkiye cep telefonu numarası girin. Örn: 0555 123 45 67",
           };
         }
         return { ok: true, alan, deger: normalized };
@@ -128,7 +157,8 @@ export function validateField(anahtar: string, hamDeger: unknown): ValidationRes
 
     case "url":
     case "gorsel": {
-      if (!guvenliUrlMu(deger)) {
+      const capaSerbest = alan.dogrulama === "ankor_serbest";
+      if (!guvenliUrlMu(deger, capaSerbest)) {
         return {
           ok: false,
           hata: `${alan.etiket} yalnız http veya https adresi olabilir.`,
@@ -138,6 +168,13 @@ export function validateField(anahtar: string, hamDeger: unknown): ValidationRes
     }
 
     case "secim": {
+      if (alan.dogrulama === "kategori") {
+        const kategori = resolveBusinessCategory(deger);
+        if (!kategori || (alan.secenekler && !alan.secenekler.includes(kategori.label))) {
+          return { ok: false, hata: `${alan.etiket} için geçersiz seçim.` };
+        }
+        return { ok: true, alan, deger: kategori.label };
+      }
       if (alan.secenekler && !alan.secenekler.includes(deger)) {
         return { ok: false, hata: `${alan.etiket} için geçersiz seçim.` };
       }
@@ -145,11 +182,15 @@ export function validateField(anahtar: string, hamDeger: unknown): ValidationRes
     }
 
     case "metin":
-    case "uzunMetin":
+    case "uzunMetin": {
+      if (alan.dogrulama === "adres") {
+        const hata = adresHataMesaji(deger);
+        if (hata) return { ok: false, hata };
+      }
       return { ok: true, alan, deger };
+    }
 
     default: {
-      // Şemaya yeni bir tip eklenip burada karşılanmazsa derleme hatası verir.
       const kalan: never = alan.tip;
       return { ok: false, hata: `Desteklenmeyen alan tipi: ${String(kalan)}` };
     }
