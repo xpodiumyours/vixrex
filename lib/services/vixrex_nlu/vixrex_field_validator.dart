@@ -135,10 +135,7 @@ class VixrexFieldValidator {
         return (ok: true, hata: null, normalizedDeger: raw);
       case 'url':
       case 'gorsel':
-        if (!_isSafeUrl(
-          raw,
-          allowAnchor: alan.anahtar == 'galeriAksiyonLinki',
-        )) {
+        if (!_isSafeUrl(raw, allowAnchor: sema?.dogrulama == 'ankor_serbest')) {
           return (
             ok: false,
             hata: '$etiket yalnız http veya https adresi olabilir.',
@@ -147,13 +144,14 @@ class VixrexFieldValidator {
         }
         return (ok: true, hata: null, normalizedDeger: raw);
       case 'secim':
-        if (alan.anahtar == 'kategori') {
+        if (sema?.dogrulama == 'kategori') {
           final categoryId = resolveBusinessCategoryId(raw);
-          final category = categoryId == null
-              ? const <BusinessCategoryConfig>[]
-              : BusinessCategoryConfig.categories
-                  .where((c) => c.id == categoryId)
-                  .toList();
+          final category =
+              categoryId == null
+                  ? const <BusinessCategoryConfig>[]
+                  : BusinessCategoryConfig.categories
+                      .where((c) => c.id == categoryId)
+                      .toList();
           if (category.isEmpty ||
               (sema?.secenekler != null &&
                   !sema!.secenekler!.contains(category.first.label))) {
@@ -163,11 +161,7 @@ class VixrexFieldValidator {
               normalizedDeger: null,
             );
           }
-          return (
-            ok: true,
-            hata: null,
-            normalizedDeger: category.first.label,
-          );
+          return (ok: true, hata: null, normalizedDeger: category.first.label);
         }
         if (sema?.secenekler != null && !sema!.secenekler!.contains(raw)) {
           return (

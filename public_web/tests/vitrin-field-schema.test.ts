@@ -241,6 +241,8 @@ describe("Commit 8 kabul ölçütü — yeni alan kod değişikliği istemez", (
           ? "05551234567"
           : f.tip === "secim"
           ? (f.secenekler?.[0] ?? "Örnek")
+          : f.dogrulama === "adres"
+          ? "Atatürk Cad. No:12"
           : "Örnek";
       const r = validateField(f.anahtar, ornek);
       expect(r.ok, `${f.anahtar} (${f.tip}) doğrulanamadı`).toBe(true);

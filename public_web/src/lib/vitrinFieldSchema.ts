@@ -164,6 +164,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
     bolum: "hero",
     maxUzunluk: 40,
     zorunlu: true,
+    dogrulama: "kategori",
     // Tek kaynak vitrinProfile.ts — ayrı liste tutulmaz.
     secenekler: PROFILES.map((p) => p.label),
     // Flutter'ın categoryCompleted getter'ıyla aynı kural (Faz F): "Diğer"
@@ -501,6 +502,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
     neden: "O yazının nereye gideceği — Instagram hesabın veya başka bir sayfan olabilir.",
     kolon: "gallery_action_href",
     bolum: "gallery",
+    dogrulama: "ankor_serbest",
   },
 
   // ── Blog ──────────────────────────────────────────────────────────────

@@ -15,6 +15,9 @@ class VixrexValueExtractor {
 
   static const String _komutFiili =
       r'yap|olsun|degistir|değiştir|ekle|guncelle|güncelle|ayarla|yaz|sec|seç';
+  static const String _trKelimeKarakteri = 'a-zA-ZçğıöşüÇĞİÖŞÜ0-9';
+  static const String _komutFiiliOncesi = '(?<![$_trKelimeKarakteri])';
+  static const String _komutFiiliSonrasi = '(?![$_trKelimeKarakteri])';
 
   static const List<String> _araIsimEkleri = [
     'm',
@@ -91,10 +94,13 @@ class VixrexValueExtractor {
       final candidate = _stripFieldMention(beforeVerb.trim(), alan);
       if (candidate.trim().isNotEmpty) {
         var sonuc = _stripTrailingVerb(candidate.trim());
-        sonuc = sonuc.replaceFirst(
-          RegExp(r'\s+(olarak|diye)$', caseSensitive: false),
-          '',
-        ).trim();
+        sonuc =
+            sonuc
+                .replaceFirst(
+                  RegExp(r'\s+(olarak|diye)$', caseSensitive: false),
+                  '',
+                )
+                .trim();
         if (sonuc.isEmpty) sonuc = candidate.trim();
         return _serbestMetinAdayiniSinirla(sonuc, alan);
       }
@@ -104,10 +110,13 @@ class VixrexValueExtractor {
       final remainder = _remainderAfterFieldMention(raw, alan);
       if (remainder != null && remainder.trim().length >= 2) {
         var cleaned = _stripTrailingVerb(remainder.trim());
-        cleaned = cleaned.replaceFirst(
-          RegExp(r'\s+(olarak|diye)$', caseSensitive: false),
-          '',
-        ).trim();
+        cleaned =
+            cleaned
+                .replaceFirst(
+                  RegExp(r'\s+(olarak|diye)$', caseSensitive: false),
+                  '',
+                )
+                .trim();
         final withoutQuotes = _stripQuotes(
           (cleaned.isNotEmpty ? cleaned : remainder).trim(),
         );
@@ -140,8 +149,10 @@ class VixrexValueExtractor {
       if (marker < 0) continue;
       final once = ornek.substring(0, marker);
       final sonra = ornek.substring(marker + '{deger}'.length);
+      final onceAyiraci = RegExp(r'\s$').hasMatch(once) ? r'\s+' : r'\s*';
+      final sonraAyiraci = RegExp(r'^\s').hasMatch(sonra) ? r'\s+' : r'\s*';
       final pattern = RegExp(
-        '^\\s*${_literalPattern(once)}\\s*(.+?)\\s*${_literalPattern(sonra)}\\s*[.!]?\\s*\$',
+        '^\\s*${_literalPattern(once)}$onceAyiraci(.+?)$sonraAyiraci${_literalPattern(sonra)}\\s*[.!]?\\s*\$',
         caseSensitive: false,
         dotAll: true,
       );
@@ -220,20 +231,25 @@ class VixrexValueExtractor {
       '(?:${_araIsimEkleri.map(_esnekKelimePattern).join('|')})?';
 
   String _esnekAlanPattern(String ifade) {
-    final tokens = VixrexNormalizer.normalize(
-      ifade,
-    ).trim().split(RegExp(r'\s+')).where((e) => e.isNotEmpty).toList();
-    return tokens.asMap().entries.map((entry) {
-      final i = entry.key;
-      final token = entry.value;
-      final kok = _esnekKelimePattern(token);
-      if (i < tokens.length - 1 &&
-          RegExp(r'^[a-z0-9]+$').hasMatch(token) &&
-          token.length >= 4) {
-        return '$kok$_araIsimEkiPattern';
-      }
-      return kok;
-    }).join(r'\s+');
+    final tokens =
+        VixrexNormalizer.normalize(
+          ifade,
+        ).trim().split(RegExp(r'\s+')).where((e) => e.isNotEmpty).toList();
+    return tokens
+        .asMap()
+        .entries
+        .map((entry) {
+          final i = entry.key;
+          final token = entry.value;
+          final kok = _esnekKelimePattern(token);
+          if (i < tokens.length - 1 &&
+              RegExp(r'^[a-z0-9]+$').hasMatch(token) &&
+              token.length >= 4) {
+            return '$kok$_araIsimEkiPattern';
+          }
+          return kok;
+        })
+        .join(r'\s+');
   }
 
   RegExpMatch? _bestFieldMatch(String input, VixrexNiyetAlan alan) {
@@ -314,7 +330,7 @@ class VixrexValueExtractor {
     var after = input.substring(_fieldMatchEnd(input, m)).trim();
     after = after.replaceFirst(RegExp(r'^[\s:=\-–—,]+'), '').trim();
     final vm = RegExp(
-      '^(?:$_komutFiili)(?:\\s+(?:olarak|diye|şöyle|soyle))?\\s*[:=,\\-–—]?\\s*(.+)\$',
+      '^(?:$_komutFiili)$_komutFiiliSonrasi(?:\\s+(?:olarak|diye|şöyle|soyle))?\\s*[:=,\\-–—]?\\s*(.+)\$',
       caseSensitive: false,
     ).firstMatch(after);
     final value = vm?.group(1)?.trim();
@@ -332,17 +348,21 @@ class VixrexValueExtractor {
     after = after.replaceFirst(RegExp(r'^[\s:=\-–—,]+'), '').trim();
     if (after.isEmpty) return null;
     final verbMatch = RegExp(
-      '\\b($_komutFiili)\\b',
+      '$_komutFiiliOncesi($_komutFiili)$_komutFiiliSonrasi',
       caseSensitive: false,
     ).firstMatch(after);
     var candidate =
         verbMatch != null ? after.substring(0, verbMatch.start).trim() : after;
-    candidate = candidate
-        .replaceFirst(RegExp(r'\s+(olarak|diye)$', caseSensitive: false), '')
-        .replaceFirst(RegExp(r'^[\s:=\-–—,]+'), '')
-        .trim()
-        .replaceFirst(RegExp(r'[\s.,;]+$'), '')
-        .trim();
+    candidate =
+        candidate
+            .replaceFirst(
+              RegExp(r'\s+(olarak|diye)$', caseSensitive: false),
+              '',
+            )
+            .replaceFirst(RegExp(r'^[\s:=\-–—,]+'), '')
+            .trim()
+            .replaceFirst(RegExp(r'[\s.,;]+$'), '')
+            .trim();
     if (candidate.length < 2) return null;
     final normCand = VixrexNormalizer.normalize(
       candidate,
@@ -374,7 +394,7 @@ class VixrexValueExtractor {
 
   String? _extractBeforeVerb(String input) {
     final m = RegExp(
-      '^(.*)\\b($_komutFiili)\\b\\s*[.!]?\\s*\$',
+      '^(.*)$_komutFiiliOncesi($_komutFiili)$_komutFiiliSonrasi\\s*[.!]?\\s*\$',
       caseSensitive: false,
     ).firstMatch(input.trim());
     final before = m?.group(1);
@@ -385,7 +405,7 @@ class VixrexValueExtractor {
     return s
         .replaceFirst(
           RegExp(
-            '\\b($_komutFiili)\\b\\s*[.!]?\\s*\$',
+            '$_komutFiiliOncesi($_komutFiili)$_komutFiiliSonrasi\\s*[.!]?\\s*\$',
             caseSensitive: false,
           ),
           '',
@@ -397,34 +417,46 @@ class VixrexValueExtractor {
     var out = candidate;
     final sorted = List<String>.from(alan.esAnlamlar)
       ..sort((a, b) => b.length.compareTo(a.length));
-    for (final ea in sorted) {
-      out = out.replaceAll(
-        RegExp(_esnekAlanPattern(ea), caseSensitive: false),
-        '',
-      );
+    var degisti = true;
+    while (degisti) {
+      degisti = false;
+      for (final ea in sorted) {
+        final yeni = out.replaceFirst(
+          RegExp('^\\s*${_esnekAlanPattern(ea)}', caseSensitive: false),
+          '',
+        );
+        if (yeni != out) {
+          out = yeni;
+          degisti = true;
+        }
+      }
     }
-    out = out
-        .replaceFirst(
-          RegExp(
-            r"^\s*(adını|adimi|adı|adi|numaramı|numarami|numarası|numarasi|ismi|imi|ımı|umu|ümü|si|sı|su|sü|yi|yı|yu|yü|nı|ni|nu|nü|mı|mi|mu|mü)\b\s*",
-            caseSensitive: false,
-          ),
-          '',
-        )
-        .replaceFirst(
-          RegExp(r"\s*(adını|adimi|adı|adi)\s*$", caseSensitive: false),
-          '',
-        )
-        .trim()
-        .replaceFirst(RegExp(r'^[\s:=\-–—,]+'), '')
-        .trim()
-        .replaceFirst(RegExp(r'[\s.,;]+$'), '')
-        .trim()
-        .replaceAll(
-          RegExp(RegExp.escape(alan.etiket), caseSensitive: false),
-          '',
-        )
-        .trim();
+    out =
+        out
+            .replaceFirst(
+              RegExp(
+                r"^\s*(adını|adimi|adı|adi|numaramı|numarami|numarası|numarasi|ismi|imi|ımı|umu|ümü|si|sı|su|sü|yi|yı|yu|yü|nı|ni|nu|nü|mı|mi|mu|mü)\b\s*",
+                caseSensitive: false,
+              ),
+              '',
+            )
+            .replaceFirst(
+              RegExp(r"\s*(adını|adimi|adı|adi)\s*$", caseSensitive: false),
+              '',
+            )
+            .trim()
+            .replaceFirst(RegExp(r'^[\s:=\-–—,]+'), '')
+            .trim()
+            .replaceFirst(RegExp(r'[\s.,;]+$'), '')
+            .trim()
+            .replaceFirst(
+              RegExp(
+                '^\\s*${RegExp.escape(alan.etiket)}\\s*',
+                caseSensitive: false,
+              ),
+              '',
+            )
+            .trim();
     if (VixrexNormalizer.normalize(out) ==
         VixrexNormalizer.normalize(alan.etiket)) {
       return '';
@@ -452,9 +484,10 @@ class VixrexValueExtractor {
     for (final a in vixrexNiyetSozlugu) {
       if (a.anahtar == kendiAnahtar) continue;
       for (final ea in a.esAnlamlar) {
-        final len = VixrexNormalizer.normalize(
-          ea,
-        ).replaceAll(RegExp(r'[^a-z0-9]'), '').length;
+        final len =
+            VixrexNormalizer.normalize(
+              ea,
+            ).replaceAll(RegExp(r'[^a-z0-9]'), '').length;
         if (len > 3) out.add(ea);
       }
     }
@@ -477,8 +510,7 @@ class VixrexValueExtractor {
     final ayracRegex = RegExp(r'[,;]|\bve\b', caseSensitive: false);
     for (final m in ayracRegex.allMatches(aday)) {
       if (m.start >= sinir) break;
-      final kuyruk =
-          ' ${VixrexNormalizer.normalize(aday.substring(m.end))} ';
+      final kuyruk = ' ${VixrexNormalizer.normalize(aday.substring(m.end))} ';
       var eslesti = false;
       for (final ea in digerEsAnlamlar) {
         final n = RegExp.escape(VixrexNormalizer.normalize(ea));
@@ -491,11 +523,12 @@ class VixrexValueExtractor {
     }
 
     if (sinir >= aday.length) return aday;
-    final kesilmis = aday
-        .substring(0, sinir)
-        .trim()
-        .replaceFirst(RegExp(r'[\s.,;]+$'), '')
-        .trim();
+    final kesilmis =
+        aday
+            .substring(0, sinir)
+            .trim()
+            .replaceFirst(RegExp(r'[\s.,;]+$'), '')
+            .trim();
     return kesilmis.length >= 2 ? kesilmis : aday;
   }
 }

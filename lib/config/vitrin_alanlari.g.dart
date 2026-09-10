@@ -110,6 +110,7 @@ const List<VitrinAlani> vitrinAlanlari = [
       'Oto / Araç',
       'Diğer',
     ],
+    dogrulama: 'kategori',
     bosDegerler: ['diger', 'diğer'],
   ),
   VitrinAlani(
@@ -383,6 +384,7 @@ const List<VitrinAlani> vitrinAlanlari = [
     etiket: 'Galeri Buton Bağlantısı',
     kolon: 'gallery_action_href',
     bolum: 'gallery',
+    dogrulama: 'ankor_serbest',
   ),
   VitrinAlani(
     anahtar: 'blogUstBaslik',

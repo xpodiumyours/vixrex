@@ -3,6 +3,9 @@ import { vixrexNormalizeDartParity } from "./vixrexNormalizer";
 import { seciliKimlikTelefonKestirmesiniCikar } from "./ownerSelectedInput";
 
 const KOMUT_FIILI = "yap|olsun|degistir|değiştir|ekle|guncelle|güncelle|ayarla|yaz|sec|seç";
+const TR_KELIME_KARAKTERI = "a-zA-ZçğıöşüÇĞİÖŞÜ0-9";
+const KOMUT_FIILI_ONCESI = `(?<![${TR_KELIME_KARAKTERI}])`;
+const KOMUT_FIILI_SONRASI = `(?![${TR_KELIME_KARAKTERI}])`;
 const ARA_ISIM_EKLERI = [
   "m", "im", "um", "in", "un", "min", "mun", "imin", "umun", "nin", "nun",
   "imiz", "umuz", "iniz", "unuz", "imizin", "umuzun", "inizin", "unuzun", "larin", "lerin",
@@ -167,7 +170,7 @@ function extractAfterLeadingVerb(input: string, alan: VixrexNiyetAlan): string |
   if (!m || m.index === undefined) return null;
   let after = input.slice(esAnlamEslesmeSonu(input, m)).trim();
   after = after.replace(/^[\s:=\-–—,]+/, "").trim();
-  const re = new RegExp(`^(?:${KOMUT_FIILI})\\b(?:\\s+(?:olarak|diye|şöyle|soyle))?\\s*[:=,\-–—]?\\s*(.+)$`, "i");
+  const re = new RegExp(`^(?:${KOMUT_FIILI})${KOMUT_FIILI_SONRASI}(?:\\s+(?:olarak|diye|şöyle|soyle))?\\s*[:=,\-–—]?\\s*(.+)$`, "i");
   const vm = after.match(re);
   if (!vm?.[1]) return null;
   const cand = stripQuotes(vm[1].trim().replace(/[\s.,;]+$/, "").trim());
@@ -180,7 +183,7 @@ function extractBetweenFieldAndVerb(input: string, alan: VixrexNiyetAlan): strin
   let after = input.slice(esAnlamEslesmeSonu(input, m)).trim();
   after = after.replace(/^[\s:=\-–—,]+/, "").trim();
   if (!after) return null;
-  const vm = after.match(new RegExp(`\\b(${KOMUT_FIILI})\\b`, "i"));
+  const vm = after.match(new RegExp(`${KOMUT_FIILI_ONCESI}(${KOMUT_FIILI})${KOMUT_FIILI_SONRASI}`, "i"));
   let cand = vm ? after.slice(0, vm.index).trim() : after;
   cand = cand
     .replace(/\s+(?:olarak|diye)$/i, "")
@@ -212,12 +215,16 @@ function extractAfterColon(input: string, alan?: VixrexNiyetAlan): string | null
 }
 
 function extractBeforeVerb(input: string): string | null {
-  const m = input.trim().match(new RegExp(`^(.*)\\b(${KOMUT_FIILI})\\b\\s*[.!]?\\s*$`, "i"));
+  const m = input.trim().match(
+    new RegExp(`^(.*)${KOMUT_FIILI_ONCESI}(${KOMUT_FIILI})${KOMUT_FIILI_SONRASI}\\s*[.!]?\\s*$`, "i"),
+  );
   return m?.[1]?.trim() || null;
 }
 
 function stripTrailingVerb(s: string): string {
-  return s.replace(new RegExp(`\\b(${KOMUT_FIILI})\\b\\s*[.!]?\\s*$`, "i"), "").trim();
+  return s
+    .replace(new RegExp(`${KOMUT_FIILI_ONCESI}(${KOMUT_FIILI})${KOMUT_FIILI_SONRASI}\\s*[.!]?\\s*$`, "i"), "")
+    .trim();
 }
 
 function isFreeTextTip(tip: string): boolean {
@@ -227,7 +234,17 @@ function isFreeTextTip(tip: string): boolean {
 function stripFieldMention(candidate: string, alan: VixrexNiyetAlan): string {
   let out = candidate;
   const sorted = [...alan.esAnlamlar].sort((a, b) => b.length - a.length);
-  for (const ea of sorted) out = out.replace(new RegExp(esnekAlanPattern(ea), "giu"), "");
+  let degisti = true;
+  while (degisti) {
+    degisti = false;
+    for (const ea of sorted) {
+      const yeni = out.replace(new RegExp(`^\\s*${esnekAlanPattern(ea)}`, "iu"), "");
+      if (yeni !== out) {
+        out = yeni;
+        degisti = true;
+      }
+    }
+  }
   out = out
     .replace(/^\s*(adını|adimi|adı|adi|numaramı|numarami|numarası|numarasi|ismi|imi|ımı|umu|ümü|si|sı|su|sü|yi|yı|yu|yü|nı|ni|nu|nü|mı|mi|mu|mü)\b\s*/i, "")
     .replace(/\s*(adını|adimi|adı|adi)\s*$/i, "")
@@ -236,7 +253,7 @@ function stripFieldMention(candidate: string, alan: VixrexNiyetAlan): string {
     .trim()
     .replace(/[\s.,;]+$/, "")
     .trim()
-    .replace(new RegExp(escapeRegExp(alan.etiket), "gi"), "")
+    .replace(new RegExp(`^\\s*${escapeRegExp(alan.etiket)}\\s*`, "i"), "")
     .trim();
   if (vixrexNormalizeDartParity(out) === vixrexNormalizeDartParity(alan.etiket)) return "";
   if (out.trim().length < 2) return out.trim().length === 0 ? "" : out.trim();

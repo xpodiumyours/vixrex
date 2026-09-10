@@ -81,7 +81,13 @@ describe("Vixrex Assistant yayın/yasal güvenlik kapısı", () => {
 
   it("gerçek DB yayın kapısı üç yasal onayı yeniden zorunlu tutar", () => {
     expect(legalGuardMigration).toContain(
-      "create or replace function public.assert_store_publish_ready(p_store jsonb)",
+      "create or replace function public.assert_store_legal_acceptance_ready(p_store jsonb)",
+    );
+    expect(legalGuardMigration).toContain(
+      "perform public.assert_store_legal_acceptance_ready(v_mevcut)",
+    );
+    expect(legalGuardMigration).toContain(
+      "perform public.assert_store_legal_acceptance_ready(pg_catalog.to_jsonb(new))",
     );
     expect(legalGuardMigration).toContain("PRIVACY_NOTICE_REQUIRED");
     expect(legalGuardMigration).toContain("TERMS_ACCEPTANCE_REQUIRED");

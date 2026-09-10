@@ -157,7 +157,7 @@ export function validateField(anahtar: string, hamDeger: unknown): ValidationRes
 
     case "url":
     case "gorsel": {
-      const capaSerbest = alan.anahtar === "galeriAksiyonLinki";
+      const capaSerbest = alan.dogrulama === "ankor_serbest";
       if (!guvenliUrlMu(deger, capaSerbest)) {
         return {
           ok: false,
@@ -168,7 +168,7 @@ export function validateField(anahtar: string, hamDeger: unknown): ValidationRes
     }
 
     case "secim": {
-      if (alan.anahtar === "kategori") {
+      if (alan.dogrulama === "kategori") {
         const kategori = resolveBusinessCategory(deger);
         if (!kategori || (alan.secenekler && !alan.secenekler.includes(kategori.label))) {
           return { ok: false, hata: `${alan.etiket} için geçersiz seçim.` };

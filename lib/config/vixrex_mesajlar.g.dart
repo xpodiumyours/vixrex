@@ -105,7 +105,15 @@ const List<VixRexIntentSemasi> vixRexIntentSemasi = [
   ),
   VixRexIntentSemasi(
     payload: 'qr',
-    anahtarKelimeler: ['qr', 'kod', 'link', 'paylas', 'baglanti', 'url'],
+    anahtarKelimeler: [
+      'qr',
+      'kod',
+      'kodumu goster',
+      'link',
+      'paylas',
+      'baglanti',
+      'url',
+    ],
   ),
   VixRexIntentSemasi(
     payload: 'randevu',
