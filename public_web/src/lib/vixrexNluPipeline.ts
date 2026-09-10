@@ -162,6 +162,7 @@ function extractPipelineValue(input: string, alan: VixrexNiyetAlan): unknown | n
     const natural = input.match(/^\s*(?:kampanya|bant)\s+(?:açıklaması|aciklamasi)\s*:?\s+(.+?)\s*$/iu);
     if (natural?.[1]) {
       return natural[1]
+        .replace(/^(?:değiştir|degistir|güncelle|guncelle|ekle|ayarla|yaz)\s+/iu, "")
         .replace(/\s+(?:yap|olsun)\s*[.!]?\s*$/iu, "")
         .trim();
     }
