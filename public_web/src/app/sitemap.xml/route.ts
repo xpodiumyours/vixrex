@@ -6,7 +6,11 @@ import {
   BUSINESS_CATEGORIES,
   kategoriUrlParcasi,
 } from "@/lib/businessCategories";
-import { blogYayindaMi, yayindakiYazilar } from "@/data/blogYazilari";
+import {
+  blogSonAnlamliDegisiklikTarihi,
+  blogYayindaMi,
+  yayindakiYazilar,
+} from "@/data/blogYazilari";
 
 export const revalidate = 300;
 
@@ -89,15 +93,21 @@ export async function GET() {
         }
       }
     }
-    
+
     // 2026-08-26 (#344): kök artık Flutter'a yönlenmiyor, gerçek bir sayfa.
     // Platform yüzeyleri de site haritasına girer — daha önce yalnız
     // /v/ içerik URL'leri vardı, platformun kendisi hiç yoktu.
     const simdi = new Date().toISOString();
+    const blogLastMod = blogSonAnlamliDegisiklikTarihi();
     let xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`;
 
-    const platformUrlleri: Array<{ yol: string; oncelik: string; siklik: string }> = [
+    const platformUrlleri: Array<{
+      yol: string;
+      oncelik: string;
+      siklik: string;
+      lastmod?: string;
+    }> = [
       { yol: "/", oncelik: "1.0", siklik: "weekly" },
       { yol: "/kesfet", oncelik: "0.9", siklik: "daily" },
       ...BUSINESS_CATEGORIES.map((kategori) => ({
@@ -118,11 +128,17 @@ export async function GET() {
       // olmayan adres bildirmek arama motoruna yanlış sinyal verir.
       ...(blogYayindaMi()
         ? [
-            { yol: "/blog", oncelik: "0.6", siklik: "weekly" },
+            {
+              yol: "/blog",
+              oncelik: "0.6",
+              siklik: "weekly",
+              ...(blogLastMod ? { lastmod: blogLastMod } : {}),
+            },
             ...yayindakiYazilar().map((yazi) => ({
               yol: `/blog/${yazi.slug}`,
               oncelik: "0.5",
               siklik: "monthly",
+              lastmod: yazi.guncellemeTarihi || yazi.yayinTarihi,
             })),
           ]
         : []),
@@ -132,10 +148,13 @@ export async function GET() {
     ];
 
     for (const platform of platformUrlleri) {
+      const platformLastMod = platform.lastmod
+        ? new Date(`${platform.lastmod}T00:00:00Z`).toISOString()
+        : simdi;
       xml += `
   <url>
     <loc>${escapeXml(`${baseUrl}${platform.yol}`)}</loc>
-    <lastmod>${simdi}</lastmod>
+    <lastmod>${platformLastMod}</lastmod>
     <changefreq>${platform.siklik}</changefreq>
     <priority>${platform.oncelik}</priority>
   </url>`;
