@@ -42,13 +42,6 @@ function esnekAlanPattern(ifade: string): string {
   }).join("\\s+");
 }
 
-/**
- * Türkçe kısa mesajlarda değer çoğu zaman sözlükteki örnek kalıbın ortasındadır:
- *   "Dükkan adını değiştir: {deger}"
- *   "Hero rozetini {deger} olarak güncelle"
- *   "Mağazamın adı {deger} olsun"
- * Aynı sözlük intent ve slot için gerçek sözleşmedir; tahmin üretilmez.
- */
 function literalPattern(text: string): string {
   let out = "";
   let bosluk = false;
@@ -65,14 +58,21 @@ function literalPattern(text: string): string {
   return out;
 }
 
+/**
+ * `{deger}` örnekleri intent yanında slot sözleşmesidir. Kalıp içindeki
+ * boşluk bilerek korunur: "Adresi {deger}" ifadesi "Adresimi ..." başına
+ * kısmi eşleşemez.
+ */
 function extractFromExamples(input: string, alan: VixrexNiyetAlan): string | null {
   for (const ornek of alan.ornekIfadeler) {
     const marker = ornek.indexOf("{deger}");
     if (marker < 0) continue;
     const once = ornek.slice(0, marker);
     const sonra = ornek.slice(marker + "{deger}".length);
+    const onceAyiraci = /\s$/.test(once) ? "\\s+" : "\\s*";
+    const sonraAyiraci = /^\s/.test(sonra) ? "\\s+" : "\\s*";
     const re = new RegExp(
-      `^\\s*${literalPattern(once)}\\s*(.+?)\\s*${literalPattern(sonra)}\\s*[.!]?\\s*$`,
+      `^\\s*${literalPattern(once)}${onceAyiraci}(.+?)${sonraAyiraci}${literalPattern(sonra)}\\s*[.!]?\\s*$`,
       "iu",
     );
     const m = input.match(re);
@@ -84,8 +84,6 @@ function extractFromExamples(input: string, alan: VixrexNiyetAlan): string | nul
 }
 
 function extractQuoted(input: string): string | null {
-  // Tek tırnak Türkçe özel ad eki de taşıyabilir: 'Kadıköy'ün En İyisi'.
-  // İlk açılıştan SON kapanışa kadar alınır.
   const patterns = [
     /"([^"]{2,})"/,
     /‘([^’]{2,})’/,
@@ -142,7 +140,6 @@ function isFieldOnlyWithoutValue(input: string, alan: VixrexNiyetAlan): boolean 
   return rem.length < 3;
 }
 
-// Eşleşmenin son sözcüğündeki Türkçe hâl/iyelik eki değere sızmasın.
 function esAnlamEslesmeSonu(input: string, m: RegExpMatchArray): number {
   let end = (m.index ?? 0) + m[0].length;
   const devam = input.slice(end).match(/^[a-zA-ZçğıöşüÇĞİÖŞÜ]+/);
@@ -164,13 +161,13 @@ function bestFieldMatch(input: string, alan: VixrexNiyetAlan): RegExpMatchArray 
   return best;
 }
 
-/** "Dükkan adını değiştir: Deniz Teknik" gibi fiilin değerden önce geldiği yapı. */
+/** Fiil yalnız TAM sözcükse komuttur; "Yaptığımız" içindeki "Yap" komut değildir. */
 function extractAfterLeadingVerb(input: string, alan: VixrexNiyetAlan): string | null {
   const m = bestFieldMatch(input, alan);
   if (!m || m.index === undefined) return null;
   let after = input.slice(esAnlamEslesmeSonu(input, m)).trim();
   after = after.replace(/^[\s:=\-–—,]+/, "").trim();
-  const re = new RegExp(`^(?:${KOMUT_FIILI})(?:\\s+(?:olarak|diye|şöyle|soyle))?\\s*[:=,\-–—]?\\s*(.+)$`, "i");
+  const re = new RegExp(`^(?:${KOMUT_FIILI})\\b(?:\\s+(?:olarak|diye|şöyle|soyle))?\\s*[:=,\-–—]?\\s*(.+)$`, "i");
   const vm = after.match(re);
   if (!vm?.[1]) return null;
   const cand = stripQuotes(vm[1].trim().replace(/[\s.,;]+$/, "").trim());
@@ -230,9 +227,7 @@ function isFreeTextTip(tip: string): boolean {
 function stripFieldMention(candidate: string, alan: VixrexNiyetAlan): string {
   let out = candidate;
   const sorted = [...alan.esAnlamlar].sort((a, b) => b.length - a.length);
-  for (const ea of sorted) {
-    out = out.replace(new RegExp(esnekAlanPattern(ea), "giu"), "");
-  }
+  for (const ea of sorted) out = out.replace(new RegExp(esnekAlanPattern(ea), "giu"), "");
   out = out
     .replace(/^\s*(adını|adimi|adı|adi|numaramı|numarami|numarası|numarasi|ismi|imi|ımı|umu|ümü|si|sı|su|sü|yi|yı|yu|yü|nı|ni|nu|nü|mı|mi|mu|mü)\b\s*/i, "")
     .replace(/\s*(adını|adimi|adı|adi)\s*$/i, "")
@@ -281,9 +276,7 @@ export function digerAlanaAitIpucuVarMi(metin: string, kendiAnahtar: string): bo
 }
 
 function serbestMetinAdayiniSinirla(aday: string, alan: VixrexNiyetAlan): string {
-  if (!isFreeTextTip(alan.tip) || alan.tip === "telefon" || alan.tip === "url" || alan.tip === "eposta") {
-    return aday;
-  }
+  if (!isFreeTextTip(alan.tip) || alan.tip === "telefon" || alan.tip === "url" || alan.tip === "eposta") return aday;
 
   let sinir = aday.length;
   const tel = aday.match(TELEFON_SINIR_REGEX);
@@ -316,7 +309,6 @@ function extractVixrexValueHam(input: string, alan: VixrexNiyetAlan): string | n
   const raw = input.trim();
   if (!raw) return null;
 
-  // Kademeli sıra: açık sözlük kalıbı → tipe özel çıkarım → daha gevşek geri dönüşler.
   const kalip = extractFromExamples(raw, alan);
   if (kalip !== null) return kalip;
 
