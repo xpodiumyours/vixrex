@@ -176,6 +176,13 @@ class VixrexNluPipeline {
         value = value
             .replaceFirst(
               RegExp(
+                r'^(?:değiştir|degistir|güncelle|guncelle|ekle|ayarla|yaz)\s+',
+                caseSensitive: false,
+              ),
+              '',
+            )
+            .replaceFirst(
+              RegExp(
                 r'\s+(?:yap|olsun)\s*[.!]?\s*$',
                 caseSensitive: false,
               ),
@@ -262,11 +269,10 @@ class VixrexNluPipeline {
     if (pending != null) {
       final alanFromPending = vixrexNiyetAlanByAnahtar[pending.anahtar];
       if (alanFromPending != null) {
+        final naturalToggle = _resolveNaturalToggleIntents(trimmed);
         final resolved =
             _intentResolver.resolve(trimmed) ??
-            (_resolveNaturalToggleIntents(trimmed).isNotEmpty
-                ? _resolveNaturalToggleIntents(trimmed).first
-                : null);
+            (naturalToggle.isNotEmpty ? naturalToggle.first : null);
         if (resolved == null) {
           final baglam = vixrexBaglamsalCevapKarari(
             trimmed,
