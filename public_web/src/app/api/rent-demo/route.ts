@@ -248,9 +248,18 @@ export async function POST(request: Request) {
     return rentErrorPage("Vitrin açılamadı", ERROR_COPY.SERVICE_UNAVAILABLE);
   }
 
+  const internalTestSecret = request.headers.get("x-vixrex-internal-test-secret");
+  const bypassSecret =
+    internalTestSecret &&
+    process.env.RENT_DEMO_BYPASS_SECRET &&
+    internalTestSecret === process.env.RENT_DEMO_BYPASS_SECRET
+      ? internalTestSecret
+      : undefined;
+
   const { data, error } = await admin.rpc("start_demo_trial", {
     p_source_slug: demoSlug,
     p_client_key: clientKey,
+    ...(bypassSecret ? { p_bypass_secret: bypassSecret } : {}),
   });
 
   if (error) {
