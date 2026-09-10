@@ -22,6 +22,9 @@ function Invoke-Checked {
 
 $nextTests = @(
   "tests/vixrex-46-alan-davranis-denetimi.test.ts",
+  "tests/vixrex-127-cumle-deger-kabul.test.ts",
+  "tests/vixrex-esnaf-dili-kabul.test.ts",
+  "tests/vixrex-turkce-morfoloji-parite.test.ts",
   "tests/vixrex-validation-parity.test.ts",
   "tests/vixrex-dogal-netlestirme-kabul.test.ts",
   "tests/vixrex-dogal-netlestirme-pipeline.test.ts",
@@ -34,6 +37,9 @@ $nextTests = @(
 
 $flutterTests = @(
   "test/vixrex_nlu_46_alan_guvenlik_test.dart",
+  "test/vixrex_127_cumle_deger_kabul_test.dart",
+  "test/vixrex_esnaf_dili_kabul_test.dart",
+  "test/vixrex_turkce_morfoloji_parite_test.dart",
   "test/vixrex_validation_parity_test.dart",
   "test/vixrex_dogal_netlestirme_kabul_test.dart",
   "test/vixrex_dogal_netlestirme_pipeline_test.dart",
@@ -90,6 +96,9 @@ try {
         lib/services/vixrex_nlu `
         lib/config/vitrin_alanlari.g.dart `
         test/vixrex_nlu_46_alan_guvenlik_test.dart `
+        test/vixrex_127_cumle_deger_kabul_test.dart `
+        test/vixrex_esnaf_dili_kabul_test.dart `
+        test/vixrex_turkce_morfoloji_parite_test.dart `
         test/vixrex_validation_parity_test.dart `
         test/vixrex_dogal_netlestirme_kabul_test.dart `
         test/vixrex_dogal_netlestirme_pipeline_test.dart `
