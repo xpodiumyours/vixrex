@@ -211,6 +211,8 @@ export default function OwnerAssistantPanel({
   // mobilde harita kapanır; sayfada yalnız sembol ve balon kalır.
   // Masaüstünde yer bol, harita açık durmaya devam eder.
   const [haritaAcik, setHaritaAcik] = useState(false);
+  const [mesajBuyuk, setMesajBuyuk] = useState(false);
+  const [mesajTasiyor, setMesajTasiyor] = useState(false);
   const [siradaki, setSiradaki] = useState<(() => void) | null>(null);
   const [tanisma, setTanisma] = useState(!assistantHandoff && !flowState);
   const [masaustu, setMasaustu] = useState(false);
@@ -281,6 +283,18 @@ export default function OwnerAssistantPanel({
     atlananAlanlar ?? []
   );
   const { mesajlar, mesajEkle, akisRef } = useOwnerChat(rapor, assistantHandoff, { slug });
+
+  useEffect(() => {
+    const element = akisRef.current;
+    if (!element || !acik) return;
+    const measure = () => setMesajTasiyor(element.scrollHeight > element.clientHeight + 2);
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    for (const child of element.children) observer.observe(child);
+    measure();
+    return () => observer.disconnect();
+  }, [mesajlar, acik, haritaAcik, mesajBuyuk, akisRef]);
+
 
   const {
     seciliAlan,
@@ -842,6 +856,9 @@ export default function OwnerAssistantPanel({
            * (bkz. .vixrex-panel-kaydirici, globals.css). */}
           <div
             ref={akisRef}
+            data-message-expanded={mesajBuyuk}
+            data-message-resizable={mesajTasiyor || mesajBuyuk}
+            style={mesajBuyuk ? { height: "42dvh", maxHeight: "42dvh" } : undefined}
             className="vixrex-panel-kaydirici min-h-0 max-h-[32dvh] space-y-2 overflow-y-auto px-3 py-2"
           >
             {tanisma && !seciliAlan ? <p className="rounded-2xl bg-sky-100/5 px-3 py-2 text-sm">Biraz işletmenden bahseder misin?</p> : (haritaAcik ? mesajlar : mesajlar.slice(-1)).map((m) => (
@@ -849,6 +866,11 @@ export default function OwnerAssistantPanel({
             ))}
           </div>
 
+          {!haritaAcik && (mesajTasiyor || mesajBuyuk) && (
+            <button type="button" aria-expanded={mesajBuyuk} onClick={() => setMesajBuyuk(!mesajBuyuk)}>
+              {mesajBuyuk ? "Mesajı küçült" : "Mesajı büyüt"}
+            </button>
+          )}
           {siradaki && <button type="button" className="mx-3 mb-2 min-h-10 rounded-xl bg-sky-200/10 text-sm text-sky-100" onClick={() => { siradaki(); setSiradaki(null); }}>Devam et</button>}
           {actions.kaydediliyor && <p role="status" className="px-4 py-2 text-sm text-sky-200">Düzenleniyor…</p>}
           {/* HEP AÇIK giriş şeridi (Faz 3). Eskiden yazı kutusu yalnız bir

@@ -207,7 +207,7 @@ export function FieldInputArea({
             disabled={kaydediliyor || !mevcutIl}
             className="h-12 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
           >
-            {kaydediliyor ? "…" : compact ? <span aria-hidden="true">↑</span> : "Gönder"}
+            {kaydediliyor ? "…" : compact ? <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5m-6 6 6-6 6 6" /></svg> : "Gönder"}
           </button>
           {trailing}
         </div>
@@ -236,7 +236,7 @@ export function FieldInputArea({
             disabled={kaydediliyor || !mevcutIlce}
             className="h-12 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
           >
-            {kaydediliyor ? "…" : compact ? <span aria-hidden="true">↑</span> : "Gönder"}
+            {kaydediliyor ? "…" : compact ? <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5m-6 6 6-6 6 6" /></svg> : "Gönder"}
           </button>
           {trailing}
         </div>
@@ -262,7 +262,7 @@ export function FieldInputArea({
             disabled={kaydediliyor || !giris}
             className="h-12 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
           >
-            {kaydediliyor ? "…" : compact ? <span aria-hidden="true">↑</span> : "Gönder"}
+            {kaydediliyor ? "…" : compact ? <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5m-6 6 6-6 6 6" /></svg> : "Gönder"}
           </button>
           {trailing}
         </div>
@@ -315,7 +315,7 @@ export function FieldInputArea({
               disabled={kaydediliyor}
               className="h-12 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
             >
-              {kaydediliyor ? "…" : compact ? <span aria-hidden="true">↑</span> : "Gönder"}
+              {kaydediliyor ? "…" : compact ? <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5m-6 6 6-6 6 6" /></svg> : "Gönder"}
             </button>
             {trailing}
           </div>
