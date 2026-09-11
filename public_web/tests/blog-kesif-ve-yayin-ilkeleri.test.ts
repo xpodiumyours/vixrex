@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import type { BlogListeYazisi } from "@/data/blogYazilari";
+import {
+  BLOG_YAZILARI,
+  type BlogListeYazisi,
+} from "@/data/blogYazilari";
 import { blogYazilariniFiltrele } from "@/lib/blogKesif";
 
 const KOK = resolve(__dirname, "..");
@@ -54,6 +57,32 @@ describe("blog keşif ve yayın ilkeleri sözleşmesi", () => {
       "Google ve Keşfedilme",
     );
     expect(sonuc.map((yazi) => yazi.slug)).toEqual(["google-rehberi"]);
+  });
+
+  it("ilgili yazı bağlantıları yalnız mevcut ve farklı sluglara gider", () => {
+    const sluglar = new Set(BLOG_YAZILARI.map((yazi) => yazi.slug));
+
+    for (const yazi of BLOG_YAZILARI) {
+      expect(new Set(yazi.ilgiliYazilar).size).toBe(yazi.ilgiliYazilar.length);
+      expect(yazi.ilgiliYazilar).not.toContain(yazi.slug);
+      for (const ilgiliSlug of yazi.ilgiliYazilar) {
+        expect(sluglar.has(ilgiliSlug)).toBe(true);
+      }
+    }
+  });
+
+  it("haricî platform rehberleri kaynak bağlantısı taşır", () => {
+    const hariciYazilar = BLOG_YAZILARI.filter(
+      (yazi) => yazi.kontrolSinifi === "harici_platform",
+    );
+
+    for (const yazi of hariciYazilar) {
+      expect(yazi.kaynaklar.length).toBeGreaterThan(0);
+      for (const kaynak of yazi.kaynaklar) {
+        expect(kaynak.baslik.trim().length).toBeGreaterThan(0);
+        expect(kaynak.url).toMatch(/^https:\/\//i);
+      }
+    }
   });
 
   it("blogdaki Yayın ilkeleri bağlantısının gerçek sayfası vardır", () => {
