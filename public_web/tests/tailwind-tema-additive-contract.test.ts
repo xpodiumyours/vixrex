@@ -45,7 +45,9 @@ describe("tasarım zemini — ekleyici @theme, next/font ile fontlar", () => {
         anahtar === "--font-outfit" ||
         anahtar === "--font-vitrin-display" ||
         anahtar.startsWith("--color-lp-") ||
-        anahtar.startsWith("--shadow-lp-");
+        anahtar.startsWith("--shadow-lp-") ||
+        anahtar.startsWith("--spacing-lp-") ||
+        anahtar.startsWith("--container-lp");
       expect(izinli, `beklenmeyen tema anahtarı: ${anahtar}`).toBe(true);
     }
   });

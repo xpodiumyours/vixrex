@@ -11,8 +11,8 @@ const ROZETLER = [
 
 export function TrustBand() {
   return (
-    <section className="bg-lp-bg-light px-6 py-14">
-      <div className="mx-auto w-full max-w-[1100px] text-center">
+    <section className="bg-lp-bg-light lp-yan-bosluk py-lp-section">
+      <div className="mx-auto w-full max-w-lp text-center">
         <h2 className="text-[30px] font-black text-lp-text">
           Başlarken sürpriz yok
         </h2>

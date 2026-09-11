@@ -26,10 +26,10 @@ describe("Landing güven bandı paritesi", () => {
   it("başlık ve kabuk ölçüleri Flutter ile aynıdır", () => {
     expect(flutterTrust).toContain("Başlarken sürpriz yok");
     expect(webTrust).toContain("Başlarken sürpriz yok");
-    expect(flutterTrust).toContain("maxWidth: 1100");
-    expect(webTrust).toContain("max-w-[1100px]");
-    expect(flutterTrust).toContain("vertical: 56");
-    expect(webTrust).toContain("py-14");
+    expect(flutterTrust).toContain("maxWidth: AppColors.landingColumn");
+    expect(webTrust).toContain("max-w-lp");
+    expect(flutterTrust).toContain("vertical: AppColors.landingSectionY");
+    expect(webTrust).toContain("py-lp-section");
     expect(flutterTrust).toContain("fontSize: 30");
     expect(webTrust).toContain("text-[30px]");
   });
@@ -70,10 +70,10 @@ describe("Landing üç adım paritesi", () => {
   });
 
   it("kabuk ve başlık ölçüleri Flutter ile aynıdır", () => {
-    expect(flutterSteps).toContain("maxWidth: 1200");
-    expect(webSteps).toContain("max-w-[1200px]");
-    expect(flutterSteps).toContain("vertical: 76");
-    expect(webSteps).toContain("py-[76px]");
+    expect(flutterSteps).toContain("maxWidth: AppColors.landingColumn");
+    expect(webSteps).toContain("max-w-lp");
+    expect(flutterSteps).toContain("vertical: AppColors.landingSectionY");
+    expect(webSteps).toContain("py-lp-section");
     expect(flutterSteps).toContain("fontSize: 36");
     expect(webSteps).toContain("text-[36px]");
     expect(flutterSteps).toContain("height: 56");

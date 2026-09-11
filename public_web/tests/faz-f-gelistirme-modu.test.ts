@@ -58,12 +58,10 @@ describe("Faz F — haftalık özet yalnız sahip oturumuyla okunur", () => {
   });
 });
 
-describe("OwnerAssistantPanel — performans önce, öneriler sonra söylenir", () => {
-  it("haftalikPerformans varsa önce görüntüleme/WhatsApp özeti, sonra yönetim önerileri", () => {
+describe("OwnerAssistantPanel — açılışta kendiliğinden rapor yazmaz", () => {
+  it("haftalık performans ve öneriler sohbet akışına basılmaz", () => {
     const panel = oku("app/v/[slug]/OwnerAssistantPanel.tsx");
-    const idxPerformans = panel.indexOf("Bu hafta ${haftalikPerformans.goruntuleme}");
-    const idxOneriler = panel.indexOf("yonetimOnerileriUret(yerelTaslak");
-    expect(idxPerformans).toBeGreaterThan(-1);
-    expect(idxOneriler).toBeGreaterThan(idxPerformans);
+    expect(panel).not.toContain("Bu hafta ${haftalikPerformans.goruntuleme}");
+    expect(panel).not.toContain("Vitrininde bugün ilgilenmen gereken");
   });
 });

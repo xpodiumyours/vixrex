@@ -39,8 +39,36 @@
   --color-lp-mint: #10B981;
   --color-lp-pink: #8B5CF6;
 
+  --spacing-lp-section: 80px;
+  --container-lp: 1600px;
+  --container-lp-dar: 720px;
+  --spacing-lp-mockup: 640px;
+  --spacing-lp-mockup-kutu: 600px;
+
   --shadow-lp-card: 0 18px 40px -24px rgba(5, 11, 26, 0.75);
   --shadow-lp-panel: 0 30px 60px -30px rgba(20, 125, 255, 0.45);
+}
+
+
+html:has(.vixrex-koyu-yuzey) {
+  color-scheme: dark;
+}
+
+:root {
+  --owner-bar-h: 64px;
+  --owner-rail-w: 460px;
+  --lp-gutter: 24px;
+  --lp-gutter-wide: 48px;
+}
+
+.lp-yan-bosluk {
+  padding-inline: var(--lp-gutter);
+}
+
+@media (min-width: 1024px) {
+  .lp-yan-bosluk {
+    padding-inline: var(--lp-gutter-wide);
+  }
 }
 
 :root {

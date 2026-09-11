@@ -9,8 +9,8 @@ const KANALLAR = [
 
 export function ValueBand() {
   return (
-    <section className="bg-lp-bg-light px-6 py-16">
-      <div className="mx-auto w-full max-w-[1200px]">
+    <section className="bg-lp-bg-light lp-yan-bosluk py-lp-section">
+      <div className="mx-auto w-full max-w-lp">
         <div className="flex flex-col gap-6 md:flex-row md:items-center md:gap-12">
           <div className="md:flex-[5]">
             <h2 className="text-[30px] font-black leading-[1.2] text-lp-text">
