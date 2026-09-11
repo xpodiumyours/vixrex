@@ -69,9 +69,10 @@ const _olumsuzIslem = {
 };
 
 bool vixrexDegisiklikIptaliMi(String input) {
-  final norm = VixrexNormalizer.normalize(input)
-      .replaceAll(RegExp(r'[^a-z0-9]+'), ' ')
-      .trim();
+  final norm =
+      VixrexNormalizer.normalize(
+        input,
+      ).replaceAll(RegExp(r'[^a-z0-9]+'), ' ').trim();
   if (norm.isEmpty) return false;
   final tokens = norm.split(RegExp(r'\s+')).where((e) => e.isNotEmpty).toList();
   if (tokens.length > 5) return false;
@@ -104,7 +105,8 @@ bool _calismaSaatiTamMi(String input) {
 
 bool _adresYeterinceAcikMi(String input) {
   final norm = VixrexNormalizer.normalize(input);
-  final kelimeler = norm.split(RegExp(r'\s+')).where((e) => e.isNotEmpty).toList();
+  final kelimeler =
+      norm.split(RegExp(r'\s+')).where((e) => e.isNotEmpty).toList();
   if (kelimeler.length > 3) return true;
   return RegExp(
     r'\b(mahalle|mah|cadde|cad|sokak|sok|bulvar|blv|no|numara|apartman|apt|site|meydan)\b',
@@ -127,7 +129,8 @@ VixrexBaglamSonucu vixrexBaglamsalCevapKarari(
       return const VixrexBaglamSonucu(
         karar: VixrexBaglamKarari.iptal,
         yazma: false,
-        mesaj: 'Tamam, değişiklik yapmıyorum. Vitrininde başka neyi değiştirmek istersin?',
+        mesaj:
+            'Tamam, değişiklik yapmıyorum. Vitrininde başka neyi değiştirmek istersin?',
       );
     }
     return const VixrexBaglamSonucu(
@@ -165,7 +168,8 @@ VixrexBaglamSonucu vixrexBaglamsalCevapKarari(
     return const VixrexBaglamSonucu(
       karar: VixrexBaglamKarari.iptal,
       yazma: false,
-      mesaj: 'Tamam, bu değişikliği yapmıyorum. Başka neyi değiştirmek istersin?',
+      mesaj:
+          'Tamam, bu değişikliği yapmıyorum. Başka neyi değiştirmek istersin?',
     );
   }
 
@@ -217,7 +221,8 @@ VixrexBaglamSonucu vixrexBaglamsalCevapKarari(
     return const VixrexBaglamSonucu(
       karar: VixrexBaglamKarari.saatEksik,
       yazma: false,
-      mesaj: 'Çalışma saatlerini tamamlamak için kaçta açıp kaçta kapandığınızı yazar mısın?',
+      mesaj:
+          'Çalışma saatlerini tamamlamak için kaçta açıp kaçta kapandığınızı yazar mısın?',
     );
   }
 

@@ -46,10 +46,8 @@ void main() {
         for (final alan in vixrexNiyetSozlugu) {
           for (final ornek in alan.ornekIfadeler) {
             final input = ornek.replaceAll('{deger}', 'Örnek Değer');
-            final bulunan = resolver
-                .resolveAll(input)
-                .map((a) => a.anahtar)
-                .toList();
+            final bulunan =
+                resolver.resolveAll(input).map((a) => a.anahtar).toList();
             final dogruTekAlan =
                 bulunan.length == 1 && bulunan.first == alan.anahtar;
             if (!dogruTekAlan) {
@@ -65,12 +63,13 @@ void main() {
     );
 
     test('ayrı metin aralıklarındaki gerçek iki alan korunur', () {
-      final alanlar = resolver
-          .resolveAll(
-            'Telefonu 0212 555 44 33 yap, e-postayı info@denizteknik.com yap',
-          )
-          .map((a) => a.anahtar)
-          .toList();
+      final alanlar =
+          resolver
+              .resolveAll(
+                'Telefonu 0212 555 44 33 yap, e-postayı info@denizteknik.com yap',
+              )
+              .map((a) => a.anahtar)
+              .toList();
 
       expect(alanlar.length, 2);
       expect(alanlar.toSet(), {'telefon', 'eposta'});

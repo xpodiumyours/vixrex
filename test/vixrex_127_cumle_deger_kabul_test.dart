@@ -61,10 +61,10 @@ void main() {
           final beklenen = gecerliHamDeger(alan.anahtar, alan.tip);
           final input = ornek.replaceAll('{deger}', beklenen);
           final bulunan = resolver.resolve(input);
-          final ham = bulunan == null ? null : extractor.extract(input, bulunan);
-          final dogrulama = ham == null
-              ? null
-              : VixrexFieldValidator.validate(alan, ham);
+          final ham =
+              bulunan == null ? null : extractor.extract(input, bulunan);
+          final dogrulama =
+              ham == null ? null : VixrexFieldValidator.validate(alan, ham);
           if (bulunan?.anahtar != alan.anahtar ||
               ham != beklenen ||
               dogrulama?.ok != true) {

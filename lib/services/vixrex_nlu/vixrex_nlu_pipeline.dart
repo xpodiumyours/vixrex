@@ -117,9 +117,10 @@ class VixrexNluPipeline {
       if (alan.tip != 'acikKapali') continue;
       var matched = false;
       for (final ea in alan.esAnlamlar) {
-        var base = VixrexNormalizer.normalize(
-          ea,
-        ).replaceAll(RegExp(r'[^a-z0-9]+'), ' ').trim();
+        var base =
+            VixrexNormalizer.normalize(
+              ea,
+            ).replaceAll(RegExp(r'[^a-z0-9]+'), ' ').trim();
         base = base.replaceFirst(RegExp(r'\s+goster$'), '').trim();
         if (base.isEmpty) continue;
         if (haystack.contains(' $base ')) {
@@ -173,22 +174,20 @@ class VixrexNluPipeline {
       ).firstMatch(input);
       var value = natural?.group(1)?.trim();
       if (value != null && value.isNotEmpty) {
-        value = value
-            .replaceFirst(
-              RegExp(
-                r'^(?:değiştir|degistir|güncelle|guncelle|ekle|ayarla|yaz)\s+',
-                caseSensitive: false,
-              ),
-              '',
-            )
-            .replaceFirst(
-              RegExp(
-                r'\s+(?:yap|olsun)\s*[.!]?\s*$',
-                caseSensitive: false,
-              ),
-              '',
-            )
-            .trim();
+        value =
+            value
+                .replaceFirst(
+                  RegExp(
+                    r'^(?:değiştir|degistir|güncelle|guncelle|ekle|ayarla|yaz)\s+',
+                    caseSensitive: false,
+                  ),
+                  '',
+                )
+                .replaceFirst(
+                  RegExp(r'\s+(?:yap|olsun)\s*[.!]?\s*$', caseSensitive: false),
+                  '',
+                )
+                .trim();
         if (value.isNotEmpty) return value;
       }
     }
@@ -243,19 +242,18 @@ class VixrexNluPipeline {
     final pending = await _memory.loadPendingSlot(scope: scope);
 
     if (vixrexDegisiklikIptaliMi(trimmed)) {
-      final pendingAlan = pending == null
-          ? null
-          : vixrexNiyetAlanByAnahtar[pending.anahtar];
+      final pendingAlan =
+          pending == null ? null : vixrexNiyetAlanByAnahtar[pending.anahtar];
       final baglam = vixrexBaglamsalCevapKarari(
         trimmed,
         pendingAlan == null
             ? null
             : VixrexBekleyenBaglam(
-                anahtar: pendingAlan.anahtar,
-                etiket: pendingAlan.etiket,
-                tip: pendingAlan.tip,
-                eylem: pending?.eylem,
-              ),
+              anahtar: pendingAlan.anahtar,
+              etiket: pendingAlan.etiket,
+              tip: pendingAlan.tip,
+              eylem: pending?.eylem,
+            ),
       );
       if (pending != null) {
         await _memory.clearPendingSlot(scope: scope);
@@ -322,9 +320,10 @@ class VixrexNluPipeline {
             );
           }
 
-          final hamDeger = baglam.karar == VixrexBaglamKarari.kaldir
-              ? ''
-              : baglam.deger?.toString() ?? trimmed;
+          final hamDeger =
+              baglam.karar == VixrexBaglamKarari.kaldir
+                  ? ''
+                  : baglam.deger?.toString() ?? trimmed;
           final validated = await onValidate(alanFromPending, hamDeger);
           if (!validated.ok) {
             return VixrexNluPipelineResult(
@@ -334,9 +333,10 @@ class VixrexNluPipeline {
               ),
             );
           }
-          final kesinDeger = baglam.karar == VixrexBaglamKarari.kaldir
-              ? null
-              : validated.normalizedDeger ?? hamDeger;
+          final kesinDeger =
+              baglam.karar == VixrexBaglamKarari.kaldir
+                  ? null
+                  : validated.normalizedDeger ?? hamDeger;
 
           final canonicalFailure = await _writeCanonicalWhenDelegated(
             controller: controller,
@@ -366,10 +366,7 @@ class VixrexNluPipeline {
             message: ChatMessage.bot(
               baglam.karar == VixrexBaglamKarari.kaldir
                   ? '${alanFromPending.etiket} bilgisini kaldırdım.'
-                  : _clarifier.basari(
-                      alanFromPending,
-                      kesinDeger.toString(),
-                    ),
+                  : _clarifier.basari(alanFromPending, kesinDeger.toString()),
             ),
             appliedAnahtar: alanFromPending.anahtar,
             appliedDeger: kesinDeger,
