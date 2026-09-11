@@ -174,14 +174,6 @@ interface Props {
   /** Faz E: yönetim modu önerileri için — sayfa server'da zaten hesaplıyor. */
   urunFiyatsizSayisi?: number;
   urunAciklamasizSayisi?: number;
-  /** Faz F: son 7 gün özeti — yalnız yayında olan vitrinde. */
-  haftalikPerformans?: {
-    goruntuleme: number;
-    whatsapp_tiklama: number;
-    telefon_tiklama: number;
-    konum_tiklama: number;
-    en_cok_goruntulenen_urun: string | null;
-  } | null;
 }
 
 export default function OwnerAssistantPanel({
