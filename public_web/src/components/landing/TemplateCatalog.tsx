@@ -21,15 +21,15 @@ export async function TemplateCatalog() {
   const kategoriSayisi = BUSINESS_CATEGORIES.length;
 
   return (
-    <section className="bg-lp-bg-light px-6 py-16">
-      <div className="mx-auto w-full max-w-[1200px]">
+    <section className="bg-lp-bg-light lp-yan-bosluk py-lp-section">
+      <div className="mx-auto w-full max-w-lp">
         <p className="text-center text-[12px] font-black tracking-[1.5px] text-lp-primary">
           HAZIR ŞABLONLAR
         </p>
         <h2 className="mt-3 text-center text-[32px] font-black leading-[1.15] text-lp-text md:text-[38px]">
           İşletme Kategorine Özel Hazır Görseller
         </h2>
-        <p className="mx-auto mt-4 max-w-[720px] text-center text-[16px] leading-[1.5] text-lp-text-alt">
+        <p className="mx-auto mt-4 max-w-lp-dar text-center text-[16px] leading-[1.5] text-lp-text-alt">
           {kategoriSayisi} farklı kategoride profesyonel, telifsiz görsellerle
           vitrinini saniyeler içinde oluştur.
         </p>

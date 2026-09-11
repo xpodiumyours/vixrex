@@ -19,10 +19,10 @@ describe("Landing alt çağrı paritesi", () => {
   });
 
   it("kabuk ve başlık ölçüleri Flutter ile aynıdır", () => {
-    expect(flutterCta).toContain("vertical: 88");
-    expect(webCta).toContain("py-[88px]");
-    expect(flutterCta).toContain("maxWidth: 800");
-    expect(webCta).toContain("max-w-[800px]");
+    expect(flutterCta).toContain("vertical: AppColors.landingSectionY");
+    expect(webCta).toContain("py-lp-section");
+    expect(flutterCta).toContain("maxWidth: AppColors.landingColumnNarrow");
+    expect(webCta).toContain("max-w-lp-dar");
     expect(flutterCta).toContain("fontSize: 36");
     expect(webCta).toContain("text-[36px]");
     expect(flutterCta).toContain("height: 1.2");

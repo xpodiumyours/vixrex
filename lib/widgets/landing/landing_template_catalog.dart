@@ -309,14 +309,21 @@ class _LandingTemplateCatalogState extends State<LandingTemplateCatalog> {
 
   @override
   Widget build(BuildContext context) {
+    final yanBosluk =
+        MediaQuery.of(context).size.width > 1024
+            ? AppColors.landingGutterWide
+            : AppColors.landingGutter;
     return Container(
       width: double.infinity,
       color: AppColors.bgLight,
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1200),
+          constraints: const BoxConstraints(maxWidth: AppColors.landingColumn),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 64),
+            padding: EdgeInsets.symmetric(
+              horizontal: yanBosluk,
+              vertical: AppColors.landingSectionY,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [

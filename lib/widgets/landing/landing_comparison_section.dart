@@ -9,6 +9,10 @@ class LandingComparisonSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final yanBosluk =
+        MediaQuery.of(context).size.width > 1024
+            ? AppColors.landingGutterWide
+            : AppColors.landingGutter;
     const separateSetupItems = [
       (Icons.language_rounded, 'Domain ve hosting'),
       (Icons.tune_rounded, 'Teknik ayarlar'),
@@ -27,10 +31,13 @@ class LandingComparisonSection extends StatelessWidget {
     return Container(
       width: double.infinity,
       color: AppColors.bgEditor,
-      padding: const EdgeInsets.symmetric(vertical: 88, horizontal: 24),
+      padding: EdgeInsets.symmetric(
+        vertical: AppColors.landingSectionY,
+        horizontal: yanBosluk,
+      ),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1200),
+          constraints: const BoxConstraints(maxWidth: AppColors.landingColumn),
           child: Column(
             children: [
               const Text(

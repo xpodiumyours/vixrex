@@ -62,7 +62,7 @@ class LandingHeroMockup extends StatelessWidget {
                     },
                     child: SizedBox(
                       width: 320,
-                      height: 640,
+                      height: AppColors.landingMockupHeight,
                       child: Stack(
                         children: [
                           GestureDetector(

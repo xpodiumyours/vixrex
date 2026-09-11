@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import type { Mesaj } from "../hooks/useOwnerChat";
 
 interface Props {
@@ -17,10 +20,20 @@ interface Props {
 // dile geçti — 14px (text-sm) her iki tarafta eşit, kullanıcı balonundan
 // renk kaldırıldı (gradyan yalnız yayınlama düğmesinde kalır). Ayrım artık
 // köşe yönünden geliyor: bot sol-alt köşesi kırık, kullanıcı sağ-alt.
+const UZUN_MESAJ_SATIRI = 6;
+
 export function ChatBubble({ mesaj, onHizliCevap }: Props) {
   const botMu = mesaj.kimden === "asistan";
   const hizliCevaplar = mesaj.hizliCevaplar ?? [];
   const sistemIkon = mesaj.sistemIkon;
+  const [genisletildi, setGenisletildi] = useState(false);
+  const satirlar = mesaj.metin.split("\n");
+  const uzunMu = satirlar.length > UZUN_MESAJ_SATIRI;
+  const gosterilenMetin =
+    uzunMu && !genisletildi
+      ? satirlar.slice(0, 2).join("\n")
+      : mesaj.metin;
+  const gizliSatirSayisi = satirlar.length - 2;
   return (
     <div className={`max-w-[85%] space-y-1.5 ${botMu ? "" : "ml-auto"}`}>
       {sistemIkon ? (
@@ -31,7 +44,18 @@ export function ChatBubble({ mesaj, onHizliCevap }: Props) {
           <span className="text-base leading-none" aria-hidden="true">
             {sistemIkon}
           </span>
-          <span className="whitespace-pre-line">{mesaj.metin}</span>
+          <span className="whitespace-pre-line">
+            {gosterilenMetin}
+            {uzunMu ? (
+              <button
+                type="button"
+                onClick={() => setGenisletildi((onceki) => !onceki)}
+                className="mt-1.5 block text-[12px] font-bold text-sky-300 hover:text-sky-200"
+              >
+                {genisletildi ? "Daha az göster" : `${gizliSatirSayisi} satır daha göster`}
+              </button>
+            ) : null}
+          </span>
         </div>
       ) : (
         <div
@@ -41,7 +65,16 @@ export function ChatBubble({ mesaj, onHizliCevap }: Props) {
               : "rounded-t-xl rounded-bl-xl rounded-br-[4px] bg-[#0B1120]"
           }`}
         >
-          {mesaj.metin}
+          {gosterilenMetin}
+          {uzunMu ? (
+            <button
+              type="button"
+              onClick={() => setGenisletildi((onceki) => !onceki)}
+              className="mt-1.5 block text-[12px] font-bold text-sky-300 hover:text-sky-200"
+            >
+              {genisletildi ? "Daha az göster" : `${gizliSatirSayisi} satır daha göster`}
+            </button>
+          ) : null}
         </div>
       )}
 

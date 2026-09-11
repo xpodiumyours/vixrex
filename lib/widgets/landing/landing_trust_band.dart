@@ -8,6 +8,10 @@ class LandingTrustBand extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final yanBosluk =
+        MediaQuery.of(context).size.width > 1024
+            ? AppColors.landingGutterWide
+            : AppColors.landingGutter;
     const items = [
       (Icons.credit_card_off_rounded, 'Kredi kartı gerekmez'),
       (Icons.percent_rounded, 'Satıştan komisyon alınmaz'),
@@ -19,10 +23,13 @@ class LandingTrustBand extends StatelessWidget {
     return Container(
       width: double.infinity,
       color: AppColors.bgLight,
-      padding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
+      padding: EdgeInsets.symmetric(
+        vertical: AppColors.landingSectionY,
+        horizontal: yanBosluk,
+      ),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1100),
+          constraints: const BoxConstraints(maxWidth: AppColors.landingColumn),
           child: Column(
             children: [
               const Text(

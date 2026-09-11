@@ -32,6 +32,7 @@ import { otomatikDeger } from "@/lib/otomatikVitrinIcerik";
 import { yonetimOnerileriUret } from "@/lib/yonetimOnerileri";
 import { supabase } from "@/lib/supabase";
 import { ensureAnonymousSession } from "@/lib/assistantConversation";
+import OwnerEditorBar from "./components/OwnerEditorBar";
 
 // Vixrex Asistan — sahip paneli (implementation_plan.md Commit 9;
 // yeniden dizilim Faz G3 (Tek Asistan planı), G3.1).
@@ -198,7 +199,6 @@ export default function OwnerAssistantPanel({
   draftYeniOlusturuldu = false,
   urunFiyatsizSayisi = 0,
   urunAciklamasizSayisi = 0,
-  haftalikPerformans = null,
   flowState = null,
   hesapBagliDegil = false,
   oturumSaniye = null,
@@ -210,6 +210,7 @@ export default function OwnerAssistantPanel({
   // kutucuklarda zaten ne yapılacağı yazıyor". Artık alan seçilince
   // mobilde harita kapanır; sayfada yalnız sembol ve balon kalır.
   // Masaüstünde yer bol, harita açık durmaya devam eder.
+  const [sekme, setSekme] = useState<"sohbet" | "oneriler">("sohbet");
   const [haritaAcik, setHaritaAcik] = useState(false);
   const [masaustu, setMasaustu] = useState(false);
 
@@ -440,13 +441,6 @@ export default function OwnerAssistantPanel({
 
       if (hazirlananEtiketler.length > 0) {
         router.refresh();
-        const liste = hazirlananEtiketler.map((etiket) => `✓ ${etiket}`).join("\n");
-        mesajEkle(
-          "asistan",
-          `Vitrini kategorine göre uyarladım:\n${liste}\n\nŞimdi senden gerçek bilgiler almam gerekiyor: işletme adın, WhatsApp'ın, adresin ve çalışma saatlerin.`,
-          [{ label: "Başlayalım", payload: "ilk_eksik_alana_git" }],
-          "✨"
-        );
       }
     })();
   }, [draftYeniOlusturuldu, yerelTaslak, slug, setAlan, mesajEkle, router]);
@@ -498,37 +492,6 @@ export default function OwnerAssistantPanel({
   // ise kurulum rehberi yerine "bugün ilgilenmen gereken şey" önerisi.
   // Panel her açılışta bir kez söyler (gün takibi yok — kapsam bilerek
   // küçük tutuldu, gerçek ihtiyaç görülürse eklenir).
-  const yonetimOnerisiSoylendiRef = useRef(false);
-  useEffect(() => {
-    if (!acik || !yerelTaslak.is_published || yonetimOnerisiSoylendiRef.current) return;
-    yonetimOnerisiSoylendiRef.current = true;
-
-    // Faz F: performans varsa önce onu söyler.
-    if (haftalikPerformans && haftalikPerformans.goruntuleme > 0) {
-      const satirlar = [
-        `Bu hafta ${haftalikPerformans.goruntuleme} kişi vitrinini gördü.`,
-        haftalikPerformans.whatsapp_tiklama > 0
-          ? `${haftalikPerformans.whatsapp_tiklama} kişi WhatsApp'a geçti.`
-          : null,
-        haftalikPerformans.en_cok_goruntulenen_urun
-          ? `En çok görüntülenen ürün: ${haftalikPerformans.en_cok_goruntulenen_urun}.`
-          : null,
-      ].filter(Boolean);
-      mesajEkle("asistan", satirlar.join(" "), undefined, "📊");
-    }
-
-    const oneriler = yonetimOnerileriUret(yerelTaslak, urunFiyatsizSayisi, urunAciklamasizSayisi);
-    if (oneriler.length === 0) return;
-    const baslik =
-      oneriler.length === 1
-        ? "Vitrininde bugün ilgilenmen gereken bir şey var:"
-        : `Vitrininde bugün ilgilenmen gereken ${oneriler.length} şey var:`;
-    mesajEkle(
-      "asistan",
-      `${baslik}\n${oneriler.map((o, i) => `${i + 1}. ${o.mesaj}`).join("\n")}`
-    );
-  }, [acik, yerelTaslak, urunFiyatsizSayisi, urunAciklamasizSayisi, haftalikPerformans, mesajEkle]);
-
   // Yasal onay üçü birden — aynı desen, aynı yorum: draftData stores
   // satırının tam kopyası, owner_forbidden_draft_keys yalnız YAZMAYI
   // engeller (bkz. accept_store_legal_consent RPC'si, /api/owner-accept-legal).
@@ -634,6 +597,23 @@ export default function OwnerAssistantPanel({
 
   return (
     <>
+      <OwnerEditorBar
+        kaydediliyor={actions.kaydediliyor}
+        panelAcik={acik}
+        yayinlaniyor={actions.yayinlaniyor}
+        yasalOnayli={yasalOnayli}
+        onOnizleme={() => setAcik((onceki) => !onceki)}
+        onAyarlar={() => {
+          setAcik(true);
+          setHaritaAcik((onceki) => !onceki);
+        }}
+        onYayinla={actions.yayinla}
+        onYasalOnayGerek={() => {
+          setAcik(true);
+          setHaritaAcik(false);
+        }}
+      />
+
       {/* Sayfada dolaşan rehber — panel açık ve bir alan seçiliyken,
        * hedef alanın üzerinde/yanında görünür (bkz. SpotlightGuide). */}
       {acik && !(!masaustu && haritaAcik) && (
@@ -667,7 +647,7 @@ export default function OwnerAssistantPanel({
           );
           setHaritaAcik(yeni && !yapilacakVar);
         }}
-        className="fixed bottom-5 right-5 z-[75] flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-3 text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transition"
+        className="fixed bottom-5 right-5 z-[75] flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-3 text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transition lg:hidden"
         aria-label="Vixrex Asistan"
         aria-expanded={acik}
       >
@@ -711,7 +691,7 @@ export default function OwnerAssistantPanel({
         // true olur (aşağı bkz. masaustuIlkAcilisRef). Başlık (ChatTopBar) +
         // SIRADA artık `haritaAcik`ten bağımsız, panel açıkken hep çizilir
         // (aşağıda). Mobil davranış hiç değişmedi.
-        <div className="fixed inset-x-3 bottom-24 z-[75] flex max-h-[calc(100vh-8rem)] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0B1120] shadow-2xl sm:inset-x-auto sm:inset-y-auto sm:top-9 sm:bottom-5 sm:right-5 sm:max-h-none sm:w-[460px]">
+        <div className="fixed inset-x-3 bottom-24 z-[75] flex max-h-[calc(100vh-8rem)] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0B1120] shadow-2xl lg:bg-[#0E1729] sm:inset-x-auto sm:inset-y-auto sm:top-9 sm:bottom-5 sm:right-5 sm:max-h-none sm:w-[460px] lg:bottom-0 lg:right-0 lg:top-[var(--owner-bar-h)] lg:w-[var(--owner-rail-w)] lg:rounded-none lg:border-y-0 lg:border-r-0 lg:shadow-none">
           {/* 2026-09-03 (Casper'ın onayladığı "C" tasarımına sadakat, ikinci
            * tur): tuvalde maskot+"Vixrex Asistan"+%hazır başlığı ve SIRADA
            * listesi panel her açıldığında GÖRÜNÜRDÜ — "☰ Tüm alanlar" gibi
@@ -728,7 +708,112 @@ export default function OwnerAssistantPanel({
             onKapat={() => (masaustu ? setAcik(false) : setHaritaAcik(false))}
           />
 
-          {hesapBagliDegil ? <HesapBaglaSeridi slug={slug} /> : null}
+          <div className="flex shrink-0 gap-1 border-b border-white/10 px-3 pt-2">
+            {(["sohbet", "oneriler"] as const).map((deger) => (
+              <button
+                key={deger}
+                type="button"
+                onClick={() => setSekme(deger)}
+                className={`flex-1 rounded-t-lg px-3 py-2 text-[12px] font-bold transition ${
+                  sekme === deger
+                    ? "border-b-2 border-sky-400 bg-white/[0.04] text-white"
+                    : "border-b-2 border-transparent text-slate-400 hover:text-slate-200"
+                }`}
+              >
+                {deger === "sohbet" ? "Sohbet" : "Öneriler"}
+              </button>
+            ))}
+          </div>
+
+          <div className="shrink-0 space-y-2 px-3 py-3">
+            <div className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[12px] font-bold text-white">Mağaza kurulumu</p>
+                <p className="text-[11px] font-semibold text-slate-400">
+                  {rapor.doluSayisi}/{rapor.toplamSayisi} tamamlandı
+                </p>
+              </div>
+              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-emerald-500 transition-all duration-500"
+                  style={{ width: `${rapor.yuzde}%` }}
+                />
+              </div>
+            </div>
+
+            {seciliAlan ? (
+              <div className="rounded-xl border border-sky-400/30 bg-sky-500/[0.08] px-3 py-2.5">
+                <p className="text-[12px] font-bold text-white">
+                  Seçili alan: {seciliAlan.etiket}
+                </p>
+                {seciliAlan.neden ? (
+                  <p className="mt-1 text-[11px] font-medium leading-snug text-slate-400">
+                    {seciliAlan.neden}
+                  </p>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => setHaritaAcik(true)}
+                  className="mt-2 w-full rounded-lg bg-white/[0.06] px-3 py-1.5 text-[11px] font-bold text-sky-300 transition hover:bg-white/10"
+                >
+                  Alan ayarlarını düzenle →
+                </button>
+              </div>
+            ) : null}
+
+            {eksikTemelSayisi > 0 ? (
+              <button
+                type="button"
+                onClick={() => setHaritaAcik(true)}
+                className="flex w-full items-center gap-3 rounded-xl border border-amber-400/25 bg-amber-500/[0.08] px-3 py-2.5 text-left transition hover:bg-amber-500/[0.14]"
+              >
+                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-amber-400/20 text-[12px] font-black text-amber-300">
+                  !
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[12px] font-bold text-white">
+                    Eksik alanlar ({eksikTemelSayisi})
+                  </span>
+                  <span className="block text-[11px] font-medium text-slate-400">
+                    Mağazanı tamamlamak için {eksikTemelSayisi} alan daha bekliyor.
+                  </span>
+                </span>
+                <span className="shrink-0 text-slate-500">›</span>
+              </button>
+            ) : null}
+          </div>
+
+          {sekme === "oneriler" ? (
+            <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 pb-3">
+              {yonetimOnerileriUret(
+                yerelTaslak,
+                urunFiyatsizSayisi,
+                urunAciklamasizSayisi
+              ).map((oneri, sira) => (
+                <div
+                  key={`${sira}-${oneri.mesaj.slice(0, 24)}`}
+                  className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-[12px] font-medium text-slate-200"
+                >
+                  {oneri.mesaj}
+                </div>
+              ))}
+              {yonetimOnerileriUret(
+                yerelTaslak,
+                urunFiyatsizSayisi,
+                urunAciklamasizSayisi
+              ).length === 0 ? (
+                <p className="px-1 py-6 text-center text-[12px] font-medium text-slate-500">
+                  Şu an bekleyen bir öneri yok.
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+
+          {hesapBagliDegil ? (
+            <div className={haritaAcik ? "" : "lg:hidden"}>
+              <HesapBaglaSeridi slug={slug} />
+            </div>
+          ) : null}
 
           {oturumSaniye !== null && oturumSaniye < 300 ? (
             <p className="border-b border-white/10 px-4 py-2 text-[11px] font-semibold text-amber-400">
@@ -736,13 +821,15 @@ export default function OwnerAssistantPanel({
             </p>
           ) : null}
 
-          <UpNextList
-            yerelTaslak={yerelTaslak}
-            suankiAnahtar={seciliAlan?.anahtar ?? null}
-            atlanmisAlanlar={atlanmisAlanlar}
-            alanSec={alanSec}
-            alanAtla={alanAtlandi}
-          />
+          {haritaAcik && (
+            <UpNextList
+              yerelTaslak={yerelTaslak}
+              suankiAnahtar={seciliAlan?.anahtar ?? null}
+              atlanmisAlanlar={atlanmisAlanlar}
+              alanSec={alanSec}
+              alanAtla={alanAtlandi}
+            />
+          )}
 
           {haritaAcik && (
             <div className="min-h-0 flex-1 overflow-y-auto">
@@ -839,14 +926,16 @@ export default function OwnerAssistantPanel({
            * yüksekliği sabit olduğu için taşıp "kaplama" riski yok.
            * Kaydırma şeridi ince, koyu panele uyumlu kalmaya devam ediyor
            * (bkz. .vixrex-panel-kaydirici, globals.css). */}
-          <div
-            ref={akisRef}
-            className="vixrex-panel-kaydirici min-h-0 flex-1 space-y-2 overflow-y-auto border-t border-white/10 px-4 py-3"
-          >
-            {mesajlar.map((m) => (
-              <ChatBubble key={m.id} mesaj={m} onHizliCevap={handleHizliCevap} />
-            ))}
-          </div>
+          {sekme === "sohbet" ? (
+            <div
+              ref={akisRef}
+              className="vixrex-panel-kaydirici min-h-0 flex-1 space-y-2 overflow-y-auto border-t border-white/10 px-4 py-3"
+            >
+              {mesajlar.map((m) => (
+                <ChatBubble key={m.id} mesaj={m} onHizliCevap={handleHizliCevap} />
+              ))}
+            </div>
+          ) : null}
 
           {/* HEP AÇIK giriş şeridi (Faz 3). Eskiden yazı kutusu yalnız bir
            * alana tıklanınca (SpotlightGuide balonunda) açılıyordu; tıklamayan
@@ -887,7 +976,7 @@ export default function OwnerAssistantPanel({
            * bir bölümün içindeydi — panelin asıl SONUCU ikinci sekmede
            * saklanıyordu. Artık composer'ın hemen altında, harita açık
            * olsun olmasın hep görünen sabit bir şerit. */}
-          <div className="shrink-0 border-t border-white/10 px-4 py-3">
+          <div className={`shrink-0 border-t border-white/10 px-4 py-3 ${haritaAcik ? "" : "lg:hidden"}`}>
             <p className="pb-2 text-[11px] font-semibold text-slate-400">
               {yayinlanmamisDegisiklik
                 ? "Yayınlanmamış değişikliklerin var — hazır olduğunda yayınla."

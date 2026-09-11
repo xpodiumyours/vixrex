@@ -40,11 +40,10 @@ describe("yonetimOnerileriUret — kural motoru", () => {
 describe("OwnerAssistantPanel — yönetim modu yalnız yayınlanmış vitrinde konuşur", () => {
   const panel = oku("app/v/[slug]/OwnerAssistantPanel.tsx");
 
-  it("is_published + panel açıkken, bir kez tetiklenir", () => {
-    expect(panel).toContain(
-      "if (!acik || !yerelTaslak.is_published || yonetimOnerisiSoylendiRef.current) return;"
-    );
-    expect(panel).toContain("yonetimOnerisiSoylendiRef.current = true;");
+  it("öneriler sayfa açılınca sohbete yazılmaz — Öneriler sekmesinde durur", () => {
+    expect(panel).not.toContain("yonetimOnerisiSoylendiRef");
+    expect(panel).toContain('useState<"sohbet" | "oneriler">');
+    expect(panel).toContain("yonetimOnerileriUret(");
   });
 
   it("ürün sayaçları page.tsx'te zaten çekilmiş visibleProducts'tan türetiliyor — yeni sorgu yok", () => {
