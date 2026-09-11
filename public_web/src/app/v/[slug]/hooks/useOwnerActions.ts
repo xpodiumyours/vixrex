@@ -7,6 +7,7 @@ import { taslakClientId } from "@/lib/canliVitrinSenkron";
 import { FIELD_BY_KEY, type VitrinField } from "@/lib/vitrinFieldSchema";
 import { serbestMetindenAlanlariCikar, type SerbestMetinSonuc } from "@/lib/serbestMetinCikarim";
 import { handleVixrexNluMessage } from "@/lib/vixrexNluPipeline";
+import { resolveVixrexIntentsAll } from "@/lib/vixrexIntentResolver";
 import { VIXREX_NIYET_ALAN_BY_ANAHTAR } from "@/lib/vixrexNiyetSozlugu";
 import { extractVixrexValue, digerAlanaAitIpucuVarMi } from "@/lib/vixrexValueExtractor";
 import type { Mesaj } from "./useOwnerChat";
@@ -431,16 +432,24 @@ export function useOwnerActions({
   const gonder = useCallback(async () => {
     const metin = giris.trim();
 
-    if (!seciliAlan) {
-      // Esnaf hicbir yere tiklamadan da yazabilmeli: cumleyi akilli motor
-      // cozer, hangi alan oldugunu 46 alanlik niyet sozlugunden kendi bulur.
-      // (Motor yaziliydi ama hicbir yerden cagrilmiyordu.)
+    let motorSonucu: Awaited<ReturnType<typeof handleVixrexNluMessage>> | null = null;
+    if (metin && seciliAlan && resolveVixrexIntentsAll(metin).length > 0) {
+      try {
+        motorSonucu = await handleVixrexNluMessage(metin);
+      } catch {
+        motorSonucu = null;
+      }
+    }
+    const motorCozdu =
+      motorSonucu?.outcome === "handled" && (motorSonucu.tumu?.length ?? 0) > 0;
+
+    if (!seciliAlan || motorCozdu) {
       if (!metin) return;
       mesajEkle("kullanici", metin);
       setGiris("");
       setKaydediliyor(true);
       try {
-        const sonuc = await handleVixrexNluMessage(metin);
+        const sonuc = motorSonucu ?? (await handleVixrexNluMessage(metin));
         const cozulen = sonuc.tumu ?? [];
 
         if (sonuc.outcome !== "handled" || cozulen.length === 0) {
@@ -571,7 +580,6 @@ export function useOwnerActions({
           `Bu cümlede birden fazla bilgi var gibi görünüyor. "${alan.etiket}" için sadece onu yazar mısın?`
         );
         setGiris("");
-        void bonusAlanlariCikarVeKaydet(metin, "", slug, mesajEkle, setAlan, () => router.refresh());
         return;
       }
       gonderilecek = temiz;

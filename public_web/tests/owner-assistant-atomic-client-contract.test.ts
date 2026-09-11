@@ -12,7 +12,7 @@ const batchRoute = readFileSync(
 );
 
 function serbestMesajBlogu(): string {
-  const baslangic = source.indexOf("if (!seciliAlan) {");
+  const baslangic = source.indexOf("if (!seciliAlan || motorCozdu) {");
   const bitis = source.indexOf("const alan = seciliAlan;", baslangic);
   if (baslangic < 0 || bitis < 0) throw new Error("Serbest mesaj bloğu bulunamadı");
   return source.slice(baslangic, bitis);

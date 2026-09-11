@@ -69,7 +69,7 @@ describe("Vixrex Assistant command-bazlı gerçek undo sözleşmesi", () => {
   });
 
   it("Assistant serbest mesajı tek alan olsa bile command batch yolundan geçer", () => {
-    const baslangic = ownerActions.indexOf("if (!seciliAlan) {");
+    const baslangic = ownerActions.indexOf("if (!seciliAlan || motorCozdu) {");
     const bitis = ownerActions.indexOf("const alan = seciliAlan;", baslangic);
     const blok = ownerActions.slice(baslangic, bitis);
     expect(blok).toContain('fetch("/api/owner-draft-batch"');
