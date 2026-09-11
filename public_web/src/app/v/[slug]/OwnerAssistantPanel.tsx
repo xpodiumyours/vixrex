@@ -442,10 +442,6 @@ export default function OwnerAssistantPanel({
 
       if (hazirlananEtiketler.length > 0) {
         router.refresh();
-        mesajEkle(
-          "asistan",
-          `${hazirlananEtiketler.length} alan kategorine göre dolduruldu.`
-        );
       }
     })();
   }, [draftYeniOlusturuldu, yerelTaslak, slug, setAlan, mesajEkle, router]);

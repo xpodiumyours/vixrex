@@ -85,8 +85,8 @@ describe("ChatBubble hızlı cevap düğmelerini çizer", () => {
 describe("Faz D3/E/F mesajları sistemIkon taşır — sıradan balondan ayrışır", () => {
   const panel = oku("app/v/[slug]/OwnerAssistantPanel.tsx");
 
-  it("D3 otomatik doldurma yaptığı işi tek satırda bildirir — liste dökmez", () => {
-    expect(panel).toContain("alan kategorine göre dolduruldu.");
+  it("D3 otomatik doldurma sohbete hiç yazmaz — kullanıcı işlemi değil", () => {
+    expect(panel).not.toContain("alan kategorine göre dolduruldu.");
     expect(panel).not.toContain('hazirlananEtiketler.map((etiket) => `✓ ${etiket}`)');
   });
 
