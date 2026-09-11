@@ -199,7 +199,6 @@ export default function OwnerAssistantPanel({
   draftYeniOlusturuldu = false,
   urunFiyatsizSayisi = 0,
   urunAciklamasizSayisi = 0,
-  haftalikPerformans = null,
   flowState = null,
   hesapBagliDegil = false,
   oturumSaniye = null,

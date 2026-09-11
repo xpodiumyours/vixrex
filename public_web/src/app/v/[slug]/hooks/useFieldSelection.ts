@@ -163,7 +163,7 @@ export function useFieldSelection({
       );
       sonMesajlananAlanRef.current = anahtar;
     },
-    [yerelTaslak, mesajEkle, vurguyuTemizle, onAlanSecildi, hedefeGit]
+    [yerelTaslak, vurguyuTemizle, onAlanSecildi, hedefeGit]
   );
 
   const alanaGecVeyaBitir = useCallback(
