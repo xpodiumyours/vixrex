@@ -32,6 +32,10 @@ describe("Content-Security-Policy — mevcut", () => {
     expect(configSource).toContain("https://*.supabase.co");
   });
 
+  it("Supabase canlı bağlantısına (websocket) connect-src'ten izin var", () => {
+    expect(configSource).toContain("wss://*.supabase.co");
+  });
+
   it("Google Fonts'a izin var — globals.css'teki @import gerçekten kullanılıyor (Outfit + Instrument Serif)", () => {
     expect(configSource).toContain("https://fonts.googleapis.com");
     expect(configSource).toContain("https://fonts.gstatic.com");

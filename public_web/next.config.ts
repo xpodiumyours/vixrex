@@ -63,7 +63,7 @@ const CSP =
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
   "img-src 'self' data: blob: https://*.supabase.co https://*.cdninstagram.com https://*.gstatic.com https://www.google.com https://www.google-analytics.com https://*.analytics.google.com https://challenges.cloudflare.com https://images.unsplash.com https://api.qrserver.com; " +
   "font-src 'self' data: https://fonts.gstatic.com; " +
-  "connect-src 'self' https://*.supabase.co https://challenges.cloudflare.com https://www.google.com https://www.googleapis.com https://www.google-analytics.com https://*.analytics.google.com; " +
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://challenges.cloudflare.com https://www.google.com https://www.googleapis.com https://www.google-analytics.com https://*.analytics.google.com; " +
   "frame-src 'self' https://challenges.cloudflare.com https://www.google.com https://maps.google.com; " +
   "worker-src 'self'; " +
   "manifest-src 'self'; " +

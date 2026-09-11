@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useOwnerDraft } from "./hooks/useOwnerDraft";
 import { useOwnerChat } from "./hooks/useOwnerChat";
 import { useFieldSelection } from "./hooks/useFieldSelection";
@@ -204,19 +204,13 @@ export default function OwnerAssistantPanel({
   oturumSaniye = null,
   yayinlanmamisDegisiklik = false,
 }: Props & { flowState?: Record<string, unknown> | null }) {
-  const [acik, setAcik] = useState(true);
+  const [acik, setAcik] = useState(() => Boolean(flowState && typeof flowState === "object" && (flowState as { current_step?: string }).current_step));
   // Harita = "Tüm alanlar" paneli. Faz 4 (Casper, 2026-08-22): mobilde
   // panel bütün sayfayı kapatıyordu — "sadece Vixrex maskotu olsun,
   // kutucuklarda zaten ne yapılacağı yazıyor". Artık alan seçilince
   // mobilde harita kapanır; sayfada yalnız sembol ve balon kalır.
   // Masaüstünde yer bol, harita açık durmaya devam eder.
   const [haritaAcik, setHaritaAcik] = useState(false);
-  const [mesajBuyuk, setMesajBuyuk] = useState(false);
-  const [mesajTasiyor, setMesajTasiyor] = useState(false);
-  const [mesajYuksekligi, setMesajYuksekligi] = useState<number | null>(null);
-  const tutamakRef = useRef<{ baslangicY: number; baslangicYukseklik: number } | null>(null);
-  const [siradaki, setSiradaki] = useState<(() => void) | null>(null);
-  const [tanisma, setTanisma] = useState(!assistantHandoff && !flowState);
   const [masaustu, setMasaustu] = useState(false);
 
   useEffect(() => {
@@ -286,51 +280,6 @@ export default function OwnerAssistantPanel({
   );
   const { mesajlar, mesajEkle, akisRef } = useOwnerChat(rapor, assistantHandoff, { slug });
 
-  useEffect(() => {
-    const element = akisRef.current;
-    if (!element || !acik) return;
-    const measure = () => setMesajTasiyor(element.scrollHeight > element.clientHeight + 2);
-    const observer = new ResizeObserver(measure);
-    observer.observe(element);
-    for (const child of element.children) observer.observe(child);
-    measure();
-    return () => observer.disconnect();
-  }, [mesajlar, acik, haritaAcik, mesajBuyuk, mesajYuksekligi, akisRef]);
-
-  const tutamakBasla = (olay: ReactPointerEvent<HTMLDivElement>) => {
-    const element = akisRef.current;
-    if (!element) return;
-    olay.currentTarget.setPointerCapture(olay.pointerId);
-    tutamakRef.current = {
-      baslangicY: olay.clientY,
-      baslangicYukseklik: element.getBoundingClientRect().height,
-    };
-  };
-
-  const tutamakSurukle = (olay: ReactPointerEvent<HTMLDivElement>) => {
-    const baslangic = tutamakRef.current;
-    if (!baslangic) return;
-    const enAz = 96;
-    const enFazla = Math.max(enAz, Math.round(window.innerHeight * 0.6));
-    const istenen = baslangic.baslangicYukseklik + (baslangic.baslangicY - olay.clientY);
-    setMesajYuksekligi(Math.min(enFazla, Math.max(enAz, Math.round(istenen))));
-  };
-
-  const tutamakBitir = (olay: ReactPointerEvent<HTMLDivElement>) => {
-    tutamakRef.current = null;
-    if (olay.currentTarget.hasPointerCapture(olay.pointerId)) {
-      olay.currentTarget.releasePointerCapture(olay.pointerId);
-    }
-  };
-
-  const mesajStili =
-    mesajYuksekligi !== null
-      ? { height: `${mesajYuksekligi}px`, maxHeight: `${mesajYuksekligi}px` }
-      : mesajBuyuk
-        ? { height: "42dvh", maxHeight: "42dvh" }
-        : undefined;
-
-
   const {
     seciliAlan,
     giris,
@@ -360,7 +309,7 @@ export default function OwnerAssistantPanel({
   // sırayı uyguluyor) otomatik seçer. Kullanıcı istediği alana da hâlâ
   // doğrudan tıklayabilir (useFieldSelection'daki global dinleyici).
   useEffect(() => {
-    if (!acik || seciliAlan || tanisma) return;
+    if (!acik || seciliAlan) return;
     const ilkEksik = sonrakiRehberAlan(yerelTaslak, null, atlanmisAlanlar);
     if (ilkEksik) alanSec(ilkEksik.anahtar);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -371,9 +320,6 @@ export default function OwnerAssistantPanel({
   // açıldığındaki otomatik-seçimle (yukarıdaki `acik`/`seciliAlan` efekti)
   // aynı mantığı kullanıcı isteğiyle tekrar tetikler.
   const handleHizliCevap = (payload: string) => {
-    if (payload === "onay_tamam" && siradaki) {
-      siradaki(); setSiradaki(null); return;
-    }
     if (payload === "ilk_eksik_alana_git") {
       const ilkEksik = sonrakiRehberAlan(yerelTaslak, null, atlanmisAlanlar);
       if (ilkEksik) alanSec(ilkEksik.anahtar);
@@ -401,7 +347,7 @@ export default function OwnerAssistantPanel({
     mesajEkle,
     setAlan,
     setGiris,
-    alanaGecVeyaBitir: (...args) => setSiradaki(() => () => alanaGecVeyaBitir(...args)),
+    alanaGecVeyaBitir,
     alanAtlandi,
     alanSec,
   });
@@ -522,6 +468,8 @@ export default function OwnerAssistantPanel({
     landingNiyetIslendiRef.current = true;
     (async () => {
       try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
         const { data, error } = await supabase.rpc("get_assistant_conversation");
         if (error || !data) return;
         const conv = data as {
@@ -719,11 +667,17 @@ export default function OwnerAssistantPanel({
           );
           setHaritaAcik(yeni && !yapilacakVar);
         }}
-        className={`${acik ? "hidden" : ""} fixed bottom-5 right-5 z-[75] flex h-14 w-14 items-center justify-center rounded-full bg-[#0B1730] text-[#F7FBFF] shadow-lg transition hover:bg-[#112448] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#57B7FF]`}
+        className="fixed bottom-5 right-5 z-[75] flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-3 text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transition"
         aria-label="Vixrex Asistan"
         aria-expanded={acik}
       >
-        <VixrexAvatar size={48} decorative />
+        <VixrexAvatar size={28} decorative />
+        <span className="text-sm font-semibold hidden sm:inline">Vixrex Asistan</span>
+        {!rapor.temelTamam && (
+          <span className="ml-1 rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-bold text-slate-900">
+            %{rapor.yuzde}
+          </span>
+        )}
       </button>
 
       {acik && (
@@ -757,11 +711,7 @@ export default function OwnerAssistantPanel({
         // true olur (aşağı bkz. masaustuIlkAcilisRef). Başlık (ChatTopBar) +
         // SIRADA artık `haritaAcik`ten bağımsız, panel açıkken hep çizilir
         // (aşağıda). Mobil davranış hiç değişmedi.
-        <div data-owner-assistant="compact" data-expanded={haritaAcik} className="fixed inset-x-0 bottom-0 z-[75] flex max-h-[min(70dvh,640px)] flex-col overflow-y-auto rounded-t-3xl border border-sky-200/15 bg-[#101d29] text-slate-100 shadow-2xl sm:inset-x-auto sm:bottom-0 sm:right-0 sm:w-[400px]">
-          <div className="flex shrink-0 items-center justify-between px-4 pt-2 text-xs text-slate-400">
-            <button type="button" className="min-h-9 hover:text-white" onClick={() => setHaritaAcik(!haritaAcik)} aria-expanded={haritaAcik}>{haritaAcik ? "Ayrıntıları kapat" : "Menü · Vitrinini koru"}</button>
-            <button type="button" aria-label="Asistanı küçült" className="h-9 w-9" onClick={() => setAcik(false)}>−</button>
-          </div>
+        <div className="fixed inset-x-3 bottom-24 z-[75] flex max-h-[calc(100vh-8rem)] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0B1120] shadow-2xl sm:inset-x-auto sm:inset-y-auto sm:top-9 sm:bottom-5 sm:right-5 sm:max-h-none sm:w-[460px]">
           {/* 2026-09-03 (Casper'ın onayladığı "C" tasarımına sadakat, ikinci
            * tur): tuvalde maskot+"Vixrex Asistan"+%hazır başlığı ve SIRADA
            * listesi panel her açıldığında GÖRÜNÜRDÜ — "☰ Tüm alanlar" gibi
@@ -773,12 +723,12 @@ export default function OwnerAssistantPanel({
            * ayarları, içerik düzenleme kısayolları, yayınla çubuğu)
            * `haritaAcik`'in ardında kalmaya devam ediyor (Faz 2'nin
            * "sihirbaz kalabalığı kalksın" kararı bunlar için hâlâ geçerli). */}
-          {haritaAcik && <ChatTopBar
+          <ChatTopBar
             rapor={rapor}
             onKapat={() => (masaustu ? setAcik(false) : setHaritaAcik(false))}
-          />}
+          />
 
-          {haritaAcik && hesapBagliDegil ? <section aria-label="Vitrinini koru"><p className="px-4 pt-3 text-sm text-slate-300">Vitrinin kaybolmasın; hesabına bağlayarak başka cihazlardan da ulaş.</p><HesapBaglaSeridi slug={slug} /></section> : null}
+          {hesapBagliDegil ? <HesapBaglaSeridi slug={slug} /> : null}
 
           {oturumSaniye !== null && oturumSaniye < 300 ? (
             <p className="border-b border-white/10 px-4 py-2 text-[11px] font-semibold text-amber-400">
@@ -786,13 +736,13 @@ export default function OwnerAssistantPanel({
             </p>
           ) : null}
 
-          {haritaAcik && <UpNextList
+          <UpNextList
             yerelTaslak={yerelTaslak}
             suankiAnahtar={seciliAlan?.anahtar ?? null}
             atlanmisAlanlar={atlanmisAlanlar}
             alanSec={alanSec}
             alanAtla={alanAtlandi}
-          />}
+          />
 
           {haritaAcik && (
             <div className="min-h-0 flex-1 overflow-y-auto">
@@ -890,36 +840,14 @@ export default function OwnerAssistantPanel({
            * Kaydırma şeridi ince, koyu panele uyumlu kalmaya devam ediyor
            * (bkz. .vixrex-panel-kaydirici, globals.css). */}
           <div
-            data-message-handle="true"
-            role="separator"
-            aria-orientation="horizontal"
-            aria-label="Mesaj alanını büyüt veya küçült"
-            onPointerDown={tutamakBasla}
-            onPointerMove={tutamakSurukle}
-            onPointerUp={tutamakBitir}
-            onPointerCancel={tutamakBitir}
-            className="flex shrink-0 cursor-row-resize touch-none select-none items-center justify-center py-2"
-          >
-            <span className="h-1 w-10 rounded-full bg-sky-200/40" />
-          </div>
-          <div
             ref={akisRef}
-            data-message-expanded={mesajBuyuk}
-            style={mesajStili}
-            className="vixrex-panel-kaydirici min-h-0 max-h-[32dvh] space-y-2 overflow-y-auto px-3 py-2"
+            className="vixrex-panel-kaydirici min-h-0 flex-1 space-y-2 overflow-y-auto border-t border-white/10 px-4 py-3"
           >
-            {tanisma && !seciliAlan ? <p className="rounded-2xl bg-sky-100/5 px-3 py-2 text-sm">Biraz işletmenden bahseder misin?</p> : (haritaAcik ? mesajlar : mesajlar.slice(-1)).map((m) => (
-              <ChatBubble key={m.id} mesaj={{ ...m, hizliCevaplar: m.hizliCevaplar?.filter(c => c.payload !== "onay_tamam").map(c => ({ ...c, label: c.payload === "onay_tamam" ? "Devam et" : c.payload.startsWith("geri_al:") ? "Yayındaki hâline döndür" : c.label })) }} onHizliCevap={handleHizliCevap} />
+            {mesajlar.map((m) => (
+              <ChatBubble key={m.id} mesaj={m} onHizliCevap={handleHizliCevap} />
             ))}
           </div>
 
-          {!haritaAcik && (mesajTasiyor || mesajBuyuk) && (
-            <button type="button" aria-expanded={mesajBuyuk} onClick={() => { setMesajYuksekligi(null); setMesajBuyuk(!mesajBuyuk); }}>
-              {mesajBuyuk ? "Mesajı küçült" : "Mesajı büyüt"}
-            </button>
-          )}
-          {siradaki && <button type="button" className="mx-3 mb-2 min-h-10 rounded-xl bg-sky-200/10 text-sm text-sky-100" onClick={() => { siradaki(); setSiradaki(null); }}>Devam et</button>}
-          {actions.kaydediliyor && <p role="status" className="px-4 py-2 text-sm text-sky-200">Düzenleniyor…</p>}
           {/* HEP AÇIK giriş şeridi (Faz 3). Eskiden yazı kutusu yalnız bir
            * alana tıklanınca (SpotlightGuide balonunda) açılıyordu; tıklamayan
            * esnaf "hangi alanı değiştireceğini bilmiyorum" cevabını alıyordu.
@@ -928,10 +856,8 @@ export default function OwnerAssistantPanel({
            * (useOwnerActions.gonder). TEK giriş bileşeni — StepCard'ın da
            * kullandığı FieldInputArea, ikinci bir kopyası değil; görsel/
            * seçim/il-ilçe/GPS için gereken özel kutuları da o çizer. */}
-          <div hidden={actions.kaydediliyor} className="shrink-0 border-t border-white/10 px-3 py-2">
+          <div className="shrink-0 border-t border-white/10 px-3 py-2">
             <FieldInputArea
-              compact
-              trailing={<button type="button" aria-label="Vixrex Asistan ayrıntıları" aria-expanded={haritaAcik} onClick={() => setHaritaAcik(!haritaAcik)} className="h-12 w-12 shrink-0 rounded-full focus-visible:outline focus-visible:outline-sky-300"><VixrexAvatar size={44} decorative /></button>}
               seciliAlan={seciliAlan}
               giris={giris}
               girisRef={girisRef}
@@ -945,7 +871,7 @@ export default function OwnerAssistantPanel({
               gorselYukle={actions.gorselYukle}
               hazirGorselleriAc={actions.hazirGorselleriAc}
               hazirGorselSec={actions.hazirGorselSec}
-              gonder={async () => { if (giris.trim()) setTanisma(false); setSiradaki(null); await actions.gonder(); }}
+              gonder={actions.gonder}
               alanAtla={actions.alanAtla}
               canliyaDondur={fieldRestore.canliyaDondur}
               sonrayaBirak={sonrayaBirak}
@@ -961,7 +887,7 @@ export default function OwnerAssistantPanel({
            * bir bölümün içindeydi — panelin asıl SONUCU ikinci sekmede
            * saklanıyordu. Artık composer'ın hemen altında, harita açık
            * olsun olmasın hep görünen sabit bir şerit. */}
-          <div hidden={!haritaAcik} className="shrink-0 border-t border-white/10 px-4 py-3">
+          <div className="shrink-0 border-t border-white/10 px-4 py-3">
             <p className="pb-2 text-[11px] font-semibold text-slate-400">
               {yayinlanmamisDegisiklik
                 ? "Yayınlanmamış değişikliklerin var — hazır olduğunda yayınla."

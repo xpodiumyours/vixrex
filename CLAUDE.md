@@ -39,6 +39,39 @@ tahmin yürütüp hangi kutudan bahsedildiğini defalarca sordu. Canlı
 doğrulama araçları (Browser pane) zaten mevcut; kullanılmaması gereksiz
 tur ve token'a mal oluyor.
 
+### Ajanlar arası çakışma ve soru disiplini (2026-09-10, Casper)
+
+Bu repoda aynı anda birden fazla AI ajanı (ChatGPT, Kilo, Codex, Claude)
+paralel çalışıyor. Buna göre:
+
+- **Başka bir ajanın zaten yaptığı işi kontrol etmeden tekrar önerme.**
+  Bir şeyi düzeltmeyi/uygulamayı teklif etmeden önce
+  `git log --oneline -5 -- <dosya/alan>` ile o konuda yakın zamanlı bir
+  commit var mı bak. Yoksa zaten yapılmış bir düzeltmeyi sıfırdan "bulgu"
+  gibi sunup üstüne "ben yapayım mı" demiş oluyorsun — başka ajanın işine
+  giriyorsun.
+- **Kendi araçlarınla (dosya okuma, kod arama, web araması) bulabileceğin
+  teknik bir şeyi Casper'a soru olarak yollama.** Önce kendin araştır,
+  sonra SONUCU anlat. Casper'a sorulacak tek şey gerçekten onun kararı
+  olan şeydir (büyük mimari, ürün kuralı, onay gerektiren canlı işlem) —
+  bir paketin kurulu olup olmadığı, bir API'nin nasıl çalıştığı gibi bir
+  şey değil.
+- **Cevabı kısa ve sade tut, kanıtı istenmeden dökme.** Migration sürüm
+  numarası, commit hash'i, satır numarası gibi detaylar sonuç değildir —
+  önce 2-3 cümlelik sade sonuç, detay yalnız sorulursa.
+- **Cevabın sonuna soru/şüphe/uyarı iliştirme.** Bir hatayı kabul
+  ediyorsan sadece kabul et, arkasına savunma ekleme. Kapanışta soru
+  gerekiyorsa gerçekten Casper'ın kararı olmalı ve tek olmalı — kendi
+  araçlarınla cevaplayabileceğin bir şey olmamalı.
+
+Neden: 2026-09-10 oturumunda ChatGPT'nin aynı gün main'e commit'lediği bir
+düzeltme (yasal onay yayın kapısı migration'ı) sıfırdan keşfedilip
+"canlıya uygulayayım mı" diye soruldu — plan defteri okunmadan, git log'a
+bakılmadan. Aynı oturumda bir CLI aracının özelliği araştırılmadan
+doğrudan Casper'a soruldu, cevaplar tablo/hash/satır numarasıyla şişirildi,
+hatayı kabul eden mesajın sonuna yine soru eklendi. Casper: "artık seninle
+çalışmaktan bıkmaya başladım."
+
 ## What this repo is
 
 VixRex — a platform that lets small businesses run a digital storefront (`vitrin`) without writing code. Two independently deployed apps share one Supabase (PostgreSQL) database:
