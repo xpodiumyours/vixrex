@@ -53,7 +53,7 @@ abstract final class AppColors {
   static const double radius40 = 40;
 
   static const double landingSectionY = 80;
-  static const double landingColumn = 1200;
+  static const double landingColumn = 1600;
   static const double landingColumnNarrow = 720;
 
   /// Ana CTA gradient (soldan sağa: Elektrik Mavisi → Neon Turkuaz).
