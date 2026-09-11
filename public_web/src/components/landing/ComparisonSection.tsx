@@ -64,7 +64,7 @@ const VIXREX_ILE = [
 
 export function ComparisonSection() {
   return (
-    <section className="bg-lp-bg-editor px-6 py-lp-section">
+    <section className="bg-lp-bg-editor lp-yan-bosluk py-lp-section">
       <div className="mx-auto w-full max-w-lp">
         <h2 className="text-center text-[38px] font-black tracking-[-0.5px] text-lp-text">
           Dijital vitrinin için gerekenler tek yerde

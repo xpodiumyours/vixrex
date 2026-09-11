@@ -38,7 +38,7 @@ export function HeroSection({
   const adresOneki = `${getSiteUrl().replace(/^https?:\/\//, "")}/v/`;
 
   return (
-    <section id="vixrex-hero" className="relative overflow-hidden bg-gradient-to-b from-lp-bg-editor to-lp-bg-light px-6 pb-lp-section pt-0">
+    <section id="vixrex-hero" className="relative overflow-hidden bg-gradient-to-b from-lp-bg-editor to-lp-bg-light lp-yan-bosluk pb-lp-section pt-0">
       {/* Top Nav — Flutter landing_hero_section.dart:189-363 ile parite */}
       <nav
         aria-label="Ana gezinme"
@@ -201,13 +201,15 @@ export function HeroSection({
           </ul>
         </div>
 
-        <div className="flex w-full justify-center md:w-[400px] md:shrink-0">
-          <PhoneMockup
-            profiller={profiller}
-            isChatOpen={isChatOpen}
-            initialAssistantName={initialAssistantName}
-            onChatClose={onChatClose}
-          />
+        <div className="flex w-full justify-center md:h-lp-mockup-kutu md:w-[400px] md:shrink-0">
+          <div className="md:origin-top md:scale-[0.85]">
+            <PhoneMockup
+              profiller={profiller}
+              isChatOpen={isChatOpen}
+              initialAssistantName={initialAssistantName}
+              onChatClose={onChatClose}
+            />
+          </div>
         </div>
       </div>
     </section>

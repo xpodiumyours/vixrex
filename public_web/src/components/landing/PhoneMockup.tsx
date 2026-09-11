@@ -104,7 +104,7 @@ export function PhoneMockup({
             ].join(", "),
           }}
         >
-          <div className="h-[640px] overflow-hidden rounded-[34px] border border-[#25415F] bg-[#050B1A]">
+          <div className="h-lp-mockup overflow-hidden rounded-[34px] border border-[#25415F] bg-[#050B1A]">
             <div className="absolute left-1/2 top-[10px] z-10 -translate-x-1/2">
               <div className="flex h-[22px] w-[96px] items-center justify-between rounded-[20px] bg-black px-[10px] shadow-[0_2px_8px_rgba(0,0,0,0.55)]">
                 <div className="h-[10px] w-[10px] rounded-full border border-white/10 bg-[#0D131F]" />

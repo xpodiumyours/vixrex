@@ -12,10 +12,19 @@ class LandingFeaturesSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final yanBosluk =
+        MediaQuery.of(context).size.width > 1024
+            ? AppColors.landingGutterWide
+            : AppColors.landingGutter;
     return Container(
       width: double.infinity,
       color: AppColors.bgLight,
-      padding: const EdgeInsets.fromLTRB(24, AppColors.landingSectionY, 24, AppColors.landingSectionY),
+      padding: EdgeInsets.fromLTRB(
+        yanBosluk,
+        AppColors.landingSectionY,
+        yanBosluk,
+        AppColors.landingSectionY,
+      ),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: AppColors.landingColumn),

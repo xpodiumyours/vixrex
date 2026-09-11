@@ -16,9 +16,16 @@ class LandingBottomCta extends StatelessWidget {
   }
 
   Widget _buildBottomCTA(BuildContext context) {
+    final yanBosluk =
+        MediaQuery.of(context).size.width > 1024
+            ? AppColors.landingGutterWide
+            : AppColors.landingGutter;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: AppColors.landingSectionY, horizontal: 24),
+      padding: EdgeInsets.symmetric(
+        vertical: AppColors.landingSectionY,
+        horizontal: yanBosluk,
+      ),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -28,7 +35,9 @@ class LandingBottomCta extends StatelessWidget {
       ),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: AppColors.landingColumnNarrow),
+          constraints: const BoxConstraints(
+            maxWidth: AppColors.landingColumnNarrow,
+          ),
           child: Column(
             children: [
               const Text(

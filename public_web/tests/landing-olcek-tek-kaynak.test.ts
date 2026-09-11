@@ -86,6 +86,16 @@ describe("Landing ölçeği tek kaynaktan gelir", () => {
     expect(dartOlcusu("landingColumnNarrow")).toBe(cssOlcusu("container-lp-dar"));
   });
 
+  it("kenar boşluğu iki istemcide aynı sayıdır", () => {
+    expect(dartOlcusu("landingGutter")).toBe(cssOlcusu("lp-gutter"));
+    expect(dartOlcusu("landingGutterWide")).toBe(cssOlcusu("lp-gutter-wide"));
+  });
+
+  it("mockup ölçüleri iki istemcide aynı sayıdır", () => {
+    expect(dartOlcusu("landingMockupHeight")).toBe(cssOlcusu("spacing-lp-mockup"));
+    expect(dartOlcusu("landingMockupBox")).toBe(cssOlcusu("spacing-lp-mockup-kutu"));
+  });
+
   it.each(BOLUMLER)(
     "$ad bölümü iki istemcide de ölçek token'ını kullanır",
     ({ flutter, web, webSinif }) => {
@@ -99,6 +109,14 @@ describe("Landing ölçeği tek kaynaktan gelir", () => {
     ({ flutter, web }) => {
       expect(oku(flutter)).toContain("AppColors.landingColumn");
       expect(oku(web)).toContain("max-w-lp");
+    },
+  );
+
+  it.each(BOLUMLER)(
+    "$ad bölümü iki istemcide de kenar boşluğu kuralını kullanır",
+    ({ flutter, web }) => {
+      expect(oku(flutter)).toContain("yanBosluk");
+      expect(oku(web)).toContain("lp-yan-bosluk");
     },
   );
 

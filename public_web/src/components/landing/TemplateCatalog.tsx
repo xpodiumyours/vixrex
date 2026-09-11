@@ -21,7 +21,7 @@ export async function TemplateCatalog() {
   const kategoriSayisi = BUSINESS_CATEGORIES.length;
 
   return (
-    <section className="bg-lp-bg-light px-6 py-lp-section">
+    <section className="bg-lp-bg-light lp-yan-bosluk py-lp-section">
       <div className="mx-auto w-full max-w-lp">
         <p className="text-center text-[12px] font-black tracking-[1.5px] text-lp-primary">
           HAZIR ŞABLONLAR

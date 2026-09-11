@@ -105,16 +105,22 @@ class LandingHeroSection extends StatelessWidget {
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final isDesktop = constraints.maxWidth > 768;
+                final yanBosluk =
+                    constraints.maxWidth > 1024
+                        ? AppColors.landingGutterWide
+                        : AppColors.landingGutter;
                 return Column(
                   children: [
                     _buildTopNavBar(context, isDesktop),
                     Center(
                       child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: AppColors.landingColumn),
+                        constraints: const BoxConstraints(
+                          maxWidth: AppColors.landingColumn,
+                        ),
                         child: Padding(
                           padding: EdgeInsets.only(
-                            left: 24,
-                            right: 24,
+                            left: yanBosluk,
+                            right: yanBosluk,
                             top: isDesktop ? 40 : 20,
                             bottom: AppColors.landingSectionY,
                           ),
@@ -133,18 +139,24 @@ class LandingHeroSection extends StatelessWidget {
                                       const SizedBox(width: 40),
                                       SizedBox(
                                         width: 400,
-                                        child: LandingHeroMockup(
-                                          animController: animController,
-                                          activeProfileIndex:
-                                              activeProfileIndex,
-                                          heroDemoProfiles: heroDemoProfiles,
-                                          onNavigateToPreview:
-                                              onNavigateToPreview,
-                                          isMockupChatOpen: isMockupChatOpen,
-                                          onCloseMockupChat: onCloseMockupChat,
-                                          editorController: editorController,
-                                          editorInitialization:
-                                              editorInitialization,
+                                        height: AppColors.landingMockupBox,
+                                        child: FittedBox(
+                                          fit: BoxFit.contain,
+                                          alignment: Alignment.topCenter,
+                                          child: LandingHeroMockup(
+                                            animController: animController,
+                                            activeProfileIndex:
+                                                activeProfileIndex,
+                                            heroDemoProfiles: heroDemoProfiles,
+                                            onNavigateToPreview:
+                                                onNavigateToPreview,
+                                            isMockupChatOpen: isMockupChatOpen,
+                                            onCloseMockupChat:
+                                                onCloseMockupChat,
+                                            editorController: editorController,
+                                            editorInitialization:
+                                                editorInitialization,
+                                          ),
                                         ),
                                       ),
                                     ],

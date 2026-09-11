@@ -55,6 +55,10 @@ abstract final class AppColors {
   static const double landingSectionY = 80;
   static const double landingColumn = 1600;
   static const double landingColumnNarrow = 720;
+  static const double landingGutter = 24;
+  static const double landingGutterWide = 48;
+  static const double landingMockupHeight = 640;
+  static const double landingMockupBox = 600;
 
   /// Ana CTA gradient (soldan sağa: Elektrik Mavisi → Neon Turkuaz).
   static const LinearGradient ctaGradient = LinearGradient(

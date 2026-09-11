@@ -46,7 +46,7 @@ const KARTLAR: Kart[] = [
 
 export function FeaturesSection() {
   return (
-    <section className="bg-lp-bg-light px-6 py-lp-section">
+    <section className="bg-lp-bg-light lp-yan-bosluk py-lp-section">
       <div className="mx-auto w-full max-w-lp">
         <h2 className="text-center text-[38px] font-black leading-[1.1] text-lp-text">
           Dijital vitrinini kolayca hazırla
