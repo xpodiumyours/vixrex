@@ -24,6 +24,16 @@ function escapeRegExp(s: string): string {
 const ARA_ISIM_EKI =
   "(?:m|im|um|in|un|min|mun|imin|umun|nin|nun|imiz|umuz|iniz|unuz|imizin|umuzun|inizin|unuzun|larin|lerin)?";
 
+const KISA_KOK_SINIRI = 3;
+const KISA_KOK_EKI =
+  /^(?:i|u|e|a|in|un|im|um|de|da|den|dan|te|ta|ten|tan|ini|ine|inde|inden|imi|ime|imde|imden|iniz|imiz|ler|lar|leri|lari|lerin|larin|lere|lara|lerde|larda|lerden|lardan)$/;
+
+function kisaKokSonEkiGecerliMi(normInput: string, normIfade: string, end: number): boolean {
+  if (normIfade.length > KISA_KOK_SINIRI || /\s/.test(normIfade)) return true;
+  const kalan = normInput.slice(end).match(/^[a-z0-9]*/)?.[0] ?? "";
+  return kalan === "" || KISA_KOK_EKI.test(kalan);
+}
+
 function ortusuyorMu(aday: NiyetEslesmesi, dolu: ReadonlyArray<NiyetEslesmesi>): boolean {
   return dolu.some((d) => aday.start < d.end && aday.end > d.start);
 }
@@ -39,7 +49,8 @@ function tamIfadeEslesmesiBul(
     if (idx < 0) return null;
     const startOk = idx === 0 || !/[a-z0-9]/.test(normInput[idx - 1]);
     const aday = { start: idx, end: idx + normIfade.length };
-    if (startOk && !ortusuyorMu(aday, doluAraliklar)) return aday;
+    const sonEkOk = kisaKokSonEkiGecerliMi(normInput, normIfade, aday.end);
+    if (startOk && sonEkOk && !ortusuyorMu(aday, doluAraliklar)) return aday;
     from = idx + 1;
   }
   return null;
