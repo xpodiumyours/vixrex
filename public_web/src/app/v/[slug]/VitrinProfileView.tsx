@@ -366,9 +366,9 @@ export default function VitrinProfileView({
     // (galeri başlıkları ekran görüntüsünde kayboldu). Düğme yüksekliği
     // kadar boşluk bırakılır.
     <div
-      className={`min-h-screen bg-[#0B1120] text-[#F8FAFC] font-sans selection:bg-blue-500 selection:text-white${
+      className={`vixrex-koyu-yuzey min-h-screen bg-[#0B1120] text-[#F8FAFC] font-sans selection:bg-blue-500 selection:text-white${
         ownerMode
-          ? " pb-28 lg:pb-0 lg:pt-[var(--owner-bar-h)] lg:pr-[var(--owner-rail-w)]"
+          ? " pb-28 lg:h-[calc(100vh-var(--owner-bar-h))] lg:overflow-y-auto lg:pb-0 lg:pt-[var(--owner-bar-h)] lg:pr-[var(--owner-rail-w)]"
           : ""
       }`}
     >

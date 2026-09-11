@@ -161,15 +161,7 @@ export function useFieldSelection({
           ? ""
           : String(mevcut)
       );
-      if (sonMesajlananAlanRef.current !== anahtar) {
-        sonMesajlananAlanRef.current = anahtar;
-        mesajEkle(
-          "asistan",
-          `"${alan.etiket}" alanını seçtin. Yeni değeri yaz ve gönder.${
-            alan.ipucu ? ` (${alan.ipucu})` : ""
-          }`
-        );
-      }
+      sonMesajlananAlanRef.current = anahtar;
     },
     [yerelTaslak, mesajEkle, vurguyuTemizle, onAlanSecildi, hedefeGit]
   );

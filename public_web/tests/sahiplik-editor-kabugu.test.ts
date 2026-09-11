@@ -49,6 +49,28 @@ describe("sahiplik modu editör kabuğu", () => {
     expect(panel).toContain("yonetimOnerileriUret(");
   });
 
+  it("koyu yüzey bildirimi tek yerde, vitrin kökü onu taşır", () => {
+    expect(globals).toContain("html:has(.vixrex-koyu-yuzey)");
+    expect(globals).toContain("color-scheme: dark;");
+    expect(vitrin).toContain("vixrex-koyu-yuzey min-h-screen");
+  });
+
+  it("masaüstünde tuval kendi kaydırmasını yönetir, sayfa ikinci kez kaymaz", () => {
+    expect(vitrin).toContain("lg:h-[calc(100vh-var(--owner-bar-h))] lg:overflow-y-auto");
+  });
+
+  it("alan seçimi sohbete yazılmaz — kart gösterir", () => {
+    expect(oku("../src/app/v/[slug]/hooks/useFieldSelection.ts")).not.toContain(
+      "alanını seçtin. Yeni değeri yaz"
+    );
+  });
+
+  it("uzun asistan mesajları katlanır", () => {
+    expect(oku("../src/app/v/[slug]/components/ChatBubble.tsx")).toContain(
+      "UZUN_MESAJ_SATIRI"
+    );
+  });
+
   it("panel masaüstünde yüzen kutu değil, yerleşik sütun", () => {
     expect(panel).toContain("lg:top-[var(--owner-bar-h)]");
     expect(panel).toContain("lg:w-[var(--owner-rail-w)]");
