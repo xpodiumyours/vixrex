@@ -169,20 +169,32 @@ export function BolumIskeleti({ bolum, taslak, ownerMode }: Props) {
   if (!ownerMode || !taslak) return null;
   if (seritAlanlari(bolum, taslak).length === 0) return null;
 
+  const oneCikanKenarIsareti = bolum === "featured";
+
   return (
     // Kimlik gerçek bölümle aynı: bölüm gizliyken de rehber "önce bölüme
     // in, sonra alana yaklaş" adımını uygulayabilsin (Faz 3b). Gerçek
     // bölümle iskelet asla birlikte çizilmez, kimlik çakışmaz.
     <section
       id={SECTION_DOM_ID[bolum]}
-      className="max-w-7xl mx-auto px-6 sm:px-8 py-4"
+      className={
+        oneCikanKenarIsareti
+          ? "max-w-7xl mx-auto px-6 sm:px-8 py-4 lg:relative lg:h-0 lg:py-0"
+          : "max-w-7xl mx-auto px-6 sm:px-8 py-4"
+      }
     >
       {/* 2026-09-03: her gizli bölüm için dev kesikli kutu + aynı iki
        * cümlelik açıklama çiziliyordu; vitrin dükkân değil şantiye gibi
        * duruyordu (ekran görüntüsüyle görüldü). Kutu tek satırlık sakin
        * bir şeride indi. Tamamen kaldırmıyoruz: rehberin gizli bölümdeki
        * alana yürüyebilmesi için o alanların sayfada bir yeri olmalı. */}
-      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-2.5">
+      <div
+        className={`rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-2.5 ${
+          oneCikanKenarIsareti
+            ? "lg:absolute lg:bottom-3 lg:right-8 lg:z-20 lg:w-[300px] lg:bg-[#0E1729]/95 lg:px-3 lg:py-2 lg:shadow-lg"
+            : ""
+        }`}
+      >
         <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
           {SECTION_LABELS[bolum]}
           <span className="ml-2 normal-case tracking-normal text-slate-600">

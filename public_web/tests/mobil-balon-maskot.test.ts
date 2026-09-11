@@ -81,7 +81,7 @@ describe("balon klavyeyi biliyor", () => {
   });
 
   it("dibe sabitlenmiş balonda ok çizilmez — yanlış yeri gösterirdi", () => {
-    expect(balon).toContain("const okGorunur = altaSigar || usteSigar");
+    expect(balon).toContain('const okGorunur = balonYeri !== "sabit"');
     expect(balon).toContain("{okGorunur && (");
   });
 });

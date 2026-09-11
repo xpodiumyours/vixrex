@@ -442,7 +442,7 @@ export default function VitrinProfileView({
       {/* ===== HERO ===== */}
       <section
         id="ust-bolum"
-        className={`relative w-full min-h-[380px] sm:min-h-[440px] flex items-end overflow-hidden ${isPreviewMode ? "pt-9 lg:pt-0" : ""} ${ownerMode ? "lg:min-h-[300px]" : ""}`}
+        className={`relative w-full min-h-[380px] sm:min-h-[440px] flex items-end overflow-hidden ${isPreviewMode ? "pt-9 lg:pt-0" : ""} ${ownerMode ? "lg:min-h-[66vh]" : "lg:min-h-[72vh]"}`}
       >
         {/* Kapak yoksa SAHTE FOTOĞRAF BASILMAZ.
             Eskiden burada sabit bir Unsplash adresi vardı: kapak
@@ -455,27 +455,33 @@ export default function VitrinProfileView({
           {...editableProps("kapakGorseli", ownerMode)}
           className={
             heroImage
-              ? "absolute inset-0 bg-cover bg-center"
+              ? "absolute inset-0 bg-cover bg-center blur-[3px] scale-[1.06] lg:blur-none lg:scale-100"
               : "absolute inset-0 bg-gradient-to-br from-[#111C33] via-[#0B1120] to-[#16223D]"
           }
           style={
             heroImage
-              ? {
-                  backgroundImage: `url(${heroImage})`,
-                  filter: "blur(3px)",
-                  transform: "scale(1.06)",
-                }
+              ? { backgroundImage: `url(${heroImage})` }
               : undefined
           }
         >
           {/* Yazının okunması için alt tarafta güçlü karartma. Eskiden üst
               kısım neredeyse şeffaftı, başlık fotoğrafın detayına karışıyor
               ve hiçbiri net görünmüyordu (Casper, 28 Ağustos). */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] via-[#0B1120]/94 to-[#0B1120]/62" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] via-[#0B1120]/94 to-[#0B1120]/62 lg:hidden" />
+          {/* Masaüstünde kapak net kalsın diye karartma tam ekrana değil,
+              yalnız metnin durduğu sol-alt bölgeye uygulanır. Mobildeki
+              28 Ağustos okunurluk koruması yukarıda aynen sürüyor. */}
+          <div
+            className="absolute inset-0 hidden lg:block"
+            style={{
+              background:
+                "linear-gradient(to top, rgba(11,17,32,0.94) 0%, rgba(11,17,32,0.38) 44%, rgba(11,17,32,0) 72%), linear-gradient(to right, rgba(11,17,32,0.93) 0%, rgba(11,17,32,0.68) 34%, rgba(11,17,32,0.12) 62%, rgba(11,17,32,0) 78%)",
+            }}
+          />
         </div>
 
-        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-10 grid md:grid-cols-[1fr_auto] gap-6 items-end">
-          <div className="max-w-2xl">
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-10 grid md:grid-cols-[1fr_auto] gap-6 items-end lg:flex lg:justify-start lg:gap-12">
+          <div className="max-w-2xl lg:w-[min(720px,62vw)] lg:max-w-[720px]">
             {/* Rozet şeridi artık yalnız DURUM taşıyor (açık/kapalı,
                 doğrulanmış). Kategori buradan kimlik satırına taşındı:
                 aynı kelime hem rozette hem altında yazınca sayfa
@@ -580,7 +586,7 @@ export default function VitrinProfileView({
             {description.trim() && (
               <p
                 {...editableProps("kisaTanitim", ownerMode)}
-                className="text-slate-300 text-sm sm:text-base max-w-xl mb-4 leading-relaxed line-clamp-2"
+                className="text-slate-300 text-sm sm:text-base max-w-xl mb-4 leading-relaxed line-clamp-2 lg:line-clamp-4 lg:max-w-2xl"
               >
                 {description}
               </p>
@@ -618,7 +624,7 @@ export default function VitrinProfileView({
           </div>
 
           {heroButonlari.length > 0 && (
-            <div className="flex flex-col sm:flex-row md:flex-col gap-3 min-w-[200px]">
+            <div className="flex flex-col sm:flex-row md:flex-col gap-3 min-w-[200px] lg:w-[260px] lg:min-w-0">
               {heroButonlari.map((buton, index) => (
                 <a
                   key={buton.anahtar}
@@ -659,7 +665,7 @@ export default function VitrinProfileView({
 
       {/* ===== CATEGORIES ===== */}
       {showCategories ? (
-        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-12" id="kategoriler" style={{ scrollMarginTop: "88px" }}>
+        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-12 lg:max-w-none lg:px-[max(2rem,calc((100vw-80rem)/2+2rem))] lg:py-16 lg:bg-[#111C33]/35" id="kategoriler" style={{ scrollMarginTop: "88px" }}>
           <div className="flex items-baseline justify-between mb-5 sm:mb-8">
             <h2 {...editableProps("kategoriBolumBaslik", ownerMode)} className="text-[26px] sm:text-4xl font-extrabold tracking-tight text-white">
               {categorySectionTitle || "Kategoriler"}
@@ -667,7 +673,7 @@ export default function VitrinProfileView({
             <a href="#urunler" className="text-sm font-semibold text-blue-400 hover:text-blue-300 transition">Tümünü gör →</a>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-[repeat(auto-fit,minmax(12rem,1fr))] gap-4">
             {collections.map((cat) => (
               <div
                 key={cat.name}
@@ -962,7 +968,7 @@ export default function VitrinProfileView({
 
       {/* ===== FAQ ===== */}
       {showFaq ? (
-        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-12" id="sss" style={{ scrollMarginTop: "88px" }}>
+        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-12 lg:max-w-none lg:px-[max(2rem,calc((100vw-80rem)/2+2rem))] lg:py-20 lg:bg-[#16223D]/25" id="sss" style={{ scrollMarginTop: "88px" }}>
           <div className="grid lg:grid-cols-[0.9fr_1.1fr] gap-8 items-start">
             <div>
               <p {...editableProps("sssUstBaslik", ownerMode)} className="text-xs font-bold uppercase tracking-[0.18em] text-blue-400 mb-3">
