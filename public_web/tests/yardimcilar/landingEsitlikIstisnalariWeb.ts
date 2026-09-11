@@ -33,6 +33,10 @@ const KONUM_WEB_OZEL =
 
 
 export const LANDING_ESITLIK_ISTISNALARI_WEB: Istisna[] = [
+  ...["İşletmen için pratik rehberler.", "İlk vitrinden günlük müşteri iletişimine, bir sonraki adımın burada.", "Tüm rehberler →"].map((metin) => ({
+    metin,
+    neden: "11 Eylül 2026 kurumsal blog görevi: vixrex.com landing sayfasına yayın anahtarlı blog erişimi eklendi. Flutter kaynakları bu görevin kapsamında değil.",
+  })),
   // --- Landing maket sohbeti (PhoneMockup AsistanSohbetIcerigi) ---
 
   // "2 bağlantı" istisnası SİLİNDİ (2026-09-08 canlı karşılaştırma):

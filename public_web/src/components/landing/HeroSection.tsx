@@ -22,12 +22,14 @@ const GUVEN_ROZETLERI = [
  */
 export function HeroSection({
   profiller,
+  blogErisimi = false,
   isChatOpen = false,
   initialAssistantName = "",
   onStartAssistant,
   onChatClose,
 }: {
   profiller: MockupProfili[];
+  blogErisimi?: boolean;
   isChatOpen?: boolean;
   initialAssistantName?: string;
   onStartAssistant: (initialName: string) => void;
@@ -55,6 +57,7 @@ export function HeroSection({
           <span className="text-[20px] font-black tracking-[-0.5px]">Vixrex</span>
         </Link>
         <div className="flex items-center gap-2.5">
+          {blogErisimi ? <Link href="/blog" className="inline-flex min-h-11 items-center rounded-lg px-2 text-sm font-semibold text-lp-text outline-none hover:text-lp-secondary focus-visible:ring-2 focus-visible:ring-lp-secondary">Blog</Link> : null}
           {/* Vitrinleri Keşfet — Flutter: rounded-[14px], border lp-primary/45 */}
           <Link
             href="/kesfet"

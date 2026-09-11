@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { BlogKapak } from "@/components/blog/BlogKapak";
+import { BlogPaylas } from "@/components/blog/BlogPaylas";
 import {
   ilgiliYazilariBul,
   type YayindakiBlogYazisi,
@@ -91,11 +93,12 @@ export async function generateMetadata({
   const yazi = yaziyiBul(slug);
   if (!yazi) return { title: "Yazı bulunamadı | Vixrex" };
 
-  const kapakUrl = yazi.kapak ? mutlakUrl(yazi.kapak) : undefined;
+  const kapakUrl = yazi.kapak ? mutlakUrl(yazi.kapak) : buildSiteUrl(`/blog/kapak/${yazi.slug}`);
 
   return {
     title: `${yazi.baslik} | Vixrex`,
     description: yazi.ozet,
+    twitter: { card: "summary_large_image", title: yazi.baslik, description: yazi.ozet, images: [kapakUrl] },
     alternates: { canonical: buildSiteUrl(`/blog/${yazi.slug}`) },
     openGraph: {
       title: yazi.baslik,
@@ -121,9 +124,9 @@ export default async function BlogYaziPage({ params }: SayfaProps) {
   const bloklar = govdeyiBloklaraAyir(yazi.govde);
   const icindekiler = icindekileriCikar(yazi.govde);
   const okumaDakika = okumaDakikasiHesapla(yazi.govde);
-  const icindekilerGoster = okumaDakika >= 5 && icindekiler.length >= 2;
+  const icindekilerGoster = icindekiler.length >= 3;
   const ilgiliYazilar = ilgiliYazilariBul(yazi);
-  const kapakUrl = yazi.kapak ? mutlakUrl(yazi.kapak) : null;
+  const kapakUrl = yazi.kapak ? mutlakUrl(yazi.kapak) : buildSiteUrl(`/blog/kapak/${yazi.slug}`);
   const anlamliGuncelleme =
     Boolean(yazi.guncellemeTarihi) &&
     yazi.guncellemeTarihi !== yazi.yayinTarihi;
@@ -194,7 +197,7 @@ export default async function BlogYaziPage({ params }: SayfaProps) {
 
           <div className="mt-4 grid gap-8 lg:grid-cols-[200px_minmax(0,740px)] lg:justify-center lg:gap-12">
             {icindekilerGoster ? (
-              <aside className="hidden self-start border-l border-lp-border pl-5 lg:sticky lg:top-24 lg:block">
+              <aside className="hidden self-start border-l border-lp-border pl-5 lg:sticky lg:top-6 lg:block lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto">
                 <p className="text-sm font-black text-lp-text">Bu yazıda</p>
                 <nav aria-label="Bu yazıda" className="mt-3 space-y-3">
                   {icindekiler.map((madde) => (
@@ -267,6 +270,8 @@ export default async function BlogYaziPage({ params }: SayfaProps) {
                 <span>{okumaDakika} dk okuma</span>
               </div>
 
+              <BlogPaylas baslik={yazi.baslik} />
+
               <aside
                 className="mt-7 border-l-2 border-lp-primary pl-4 sm:pl-5"
                 aria-label="Bu rehberin amacı"
@@ -319,38 +324,7 @@ export default async function BlogYaziPage({ params }: SayfaProps) {
                   ) : null}
                 </figure>
               ) : (
-                <div
-                  className="relative mt-8 flex aspect-[16/9] overflow-hidden rounded-[22px] border border-lp-border bg-lp-surface-soft p-6 sm:p-8"
-                  role="img"
-                  aria-label={`${yazi.baslik} için Vixrex editoryal kapak`}
-                >
-                  <span
-                    aria-hidden="true"
-                    className="absolute right-8 top-7 h-28 w-28 rounded-full border border-lp-primary/25"
-                  />
-                  <span
-                    aria-hidden="true"
-                    className="absolute bottom-8 right-20 h-14 w-14 rounded-full border border-lp-secondary/25"
-                  />
-                  <div className="relative z-10 flex w-full flex-col justify-between">
-                    <div className="flex items-center justify-between gap-4">
-                      <span className="text-xs font-black uppercase tracking-[0.18em] text-lp-secondary">
-                        Vixrex Blog
-                      </span>
-                      <span className="rounded-full border border-lp-border bg-lp-bg-editor/40 px-3 py-1 text-[11px] font-black text-lp-muted">
-                        {yazi.icerikTuru === "rehber" ? "Rehber" : yazi.kategori}
-                      </span>
-                    </div>
-                    <div className="max-w-[80%]">
-                      <p className="text-xs font-black uppercase tracking-[0.14em] text-lp-muted">
-                        {yazi.kategori}
-                      </p>
-                      <p className="mt-3 break-words text-2xl font-black leading-tight tracking-tight text-lp-text sm:text-4xl">
-                        {yazi.baslik}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                <div className="mt-8"><BlogKapak yazi={yazi} /></div>
               )}
 
               <div className="mt-9 text-[17px] font-medium leading-[1.75] text-lp-text sm:text-lg">

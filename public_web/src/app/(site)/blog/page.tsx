@@ -5,7 +5,9 @@ import { type BlogListeYazisi, yayindakiYazilar } from "@/data/blogYazilari";
 import { okumaDakikasiHesapla } from "@/lib/blogIcerik";
 
 export const metadata: Metadata = {
-  title: "Blog | Vixrex",
+  title: "İşletmeler için pratik rehberler | Vixrex Blog",
+  alternates: { canonical: "/blog", types: { "application/rss+xml": "/blog/rss.xml" } },
+  openGraph: { title: "Vixrex Blog — İşletmen için işe yarayan bilgiler", description: "Dijital vitrin, Google ve müşteri iletişimi için pratik işletme rehberleri.", url: "/blog", type: "website", locale: "tr_TR", images: [{ url: "/blog/kapak/blog", width: 1200, height: 630, alt: "Vixrex Blog — işletme rehberleri" }] },
   description:
     "Dijital vitrin, müşteri iletişimi, Google'da keşfedilme ve Vixrex yenilikleri için kaynaklı işletme rehberleri.",
 };
