@@ -39,6 +39,16 @@ describe("sahiplik modu editör kabuğu", () => {
     );
   });
 
+  it("panel hedef düzendeki sekme ve kartlari tasir", () => {
+    expect(panel).toContain('useState<"sohbet" | "oneriler">');
+    expect(panel).toContain("Mağaza kurulumu");
+    expect(panel).toContain("tamamlandı");
+    expect(panel).toContain("Seçili alan: {seciliAlan.etiket}");
+    expect(panel).toContain("Alan ayarlarını düzenle");
+    expect(panel).toContain("Eksik alanlar ({eksikTemelSayisi})");
+    expect(panel).toContain("yonetimOnerileriUret(");
+  });
+
   it("panel masaüstünde yüzen kutu değil, yerleşik sütun", () => {
     expect(panel).toContain("lg:top-[var(--owner-bar-h)]");
     expect(panel).toContain("lg:w-[var(--owner-rail-w)]");

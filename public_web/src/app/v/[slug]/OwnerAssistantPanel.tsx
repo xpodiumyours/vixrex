@@ -211,6 +211,7 @@ export default function OwnerAssistantPanel({
   // kutucuklarda zaten ne yapılacağı yazıyor". Artık alan seçilince
   // mobilde harita kapanır; sayfada yalnız sembol ve balon kalır.
   // Masaüstünde yer bol, harita açık durmaya devam eder.
+  const [sekme, setSekme] = useState<"sohbet" | "oneriler">("sohbet");
   const [haritaAcik, setHaritaAcik] = useState(false);
   const [masaustu, setMasaustu] = useState(false);
 
@@ -746,6 +747,102 @@ export default function OwnerAssistantPanel({
             onKapat={() => (masaustu ? setAcik(false) : setHaritaAcik(false))}
           />
 
+          <div className="flex shrink-0 gap-1 border-b border-white/10 px-3 pt-2">
+            {(["sohbet", "oneriler"] as const).map((deger) => (
+              <button
+                key={deger}
+                type="button"
+                onClick={() => setSekme(deger)}
+                className={`flex-1 rounded-t-lg px-3 py-2 text-[12px] font-bold transition ${
+                  sekme === deger
+                    ? "border-b-2 border-sky-400 bg-white/[0.04] text-white"
+                    : "border-b-2 border-transparent text-slate-400 hover:text-slate-200"
+                }`}
+              >
+                {deger === "sohbet" ? "Sohbet" : "Öneriler"}
+              </button>
+            ))}
+          </div>
+
+          <div className="shrink-0 space-y-2 px-3 py-3">
+            <div className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[12px] font-bold text-white">Mağaza kurulumu</p>
+                <p className="text-[11px] font-semibold text-slate-400">
+                  {rapor.doluSayisi}/{rapor.toplamSayisi} tamamlandı
+                </p>
+              </div>
+              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-emerald-500 transition-all duration-500"
+                  style={{ width: `${rapor.yuzde}%` }}
+                />
+              </div>
+            </div>
+
+            {seciliAlan ? (
+              <div className="rounded-xl border border-sky-400/30 bg-sky-500/[0.08] px-3 py-2.5">
+                <p className="text-[12px] font-bold text-white">
+                  Seçili alan: {seciliAlan.etiket}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setHaritaAcik(true)}
+                  className="mt-2 w-full rounded-lg bg-white/[0.06] px-3 py-1.5 text-[11px] font-bold text-sky-300 transition hover:bg-white/10"
+                >
+                  Alan ayarlarını düzenle →
+                </button>
+              </div>
+            ) : null}
+
+            {eksikTemelSayisi > 0 ? (
+              <button
+                type="button"
+                onClick={() => setHaritaAcik(true)}
+                className="flex w-full items-center gap-3 rounded-xl border border-amber-400/25 bg-amber-500/[0.08] px-3 py-2.5 text-left transition hover:bg-amber-500/[0.14]"
+              >
+                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-amber-400/20 text-[12px] font-black text-amber-300">
+                  !
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[12px] font-bold text-white">
+                    Eksik alanlar ({eksikTemelSayisi})
+                  </span>
+                  <span className="block text-[11px] font-medium text-slate-400">
+                    Mağazanı tamamlamak için {eksikTemelSayisi} alan daha bekliyor.
+                  </span>
+                </span>
+                <span className="shrink-0 text-slate-500">›</span>
+              </button>
+            ) : null}
+          </div>
+
+          {sekme === "oneriler" ? (
+            <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 pb-3">
+              {yonetimOnerileriUret(
+                yerelTaslak,
+                urunFiyatsizSayisi,
+                urunAciklamasizSayisi
+              ).map((oneri, sira) => (
+                <div
+                  key={`${sira}-${oneri.mesaj.slice(0, 24)}`}
+                  className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-[12px] font-medium text-slate-200"
+                >
+                  {oneri.mesaj}
+                </div>
+              ))}
+              {yonetimOnerileriUret(
+                yerelTaslak,
+                urunFiyatsizSayisi,
+                urunAciklamasizSayisi
+              ).length === 0 ? (
+                <p className="px-1 py-6 text-center text-[12px] font-medium text-slate-500">
+                  Şu an bekleyen bir öneri yok.
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+
           {hesapBagliDegil ? <HesapBaglaSeridi slug={slug} /> : null}
 
           {oturumSaniye !== null && oturumSaniye < 300 ? (
@@ -754,13 +851,15 @@ export default function OwnerAssistantPanel({
             </p>
           ) : null}
 
-          <UpNextList
-            yerelTaslak={yerelTaslak}
-            suankiAnahtar={seciliAlan?.anahtar ?? null}
-            atlanmisAlanlar={atlanmisAlanlar}
-            alanSec={alanSec}
-            alanAtla={alanAtlandi}
-          />
+          {haritaAcik && (
+            <UpNextList
+              yerelTaslak={yerelTaslak}
+              suankiAnahtar={seciliAlan?.anahtar ?? null}
+              atlanmisAlanlar={atlanmisAlanlar}
+              alanSec={alanSec}
+              alanAtla={alanAtlandi}
+            />
+          )}
 
           {haritaAcik && (
             <div className="min-h-0 flex-1 overflow-y-auto">
@@ -857,14 +956,16 @@ export default function OwnerAssistantPanel({
            * yüksekliği sabit olduğu için taşıp "kaplama" riski yok.
            * Kaydırma şeridi ince, koyu panele uyumlu kalmaya devam ediyor
            * (bkz. .vixrex-panel-kaydirici, globals.css). */}
-          <div
-            ref={akisRef}
-            className="vixrex-panel-kaydirici min-h-0 flex-1 space-y-2 overflow-y-auto border-t border-white/10 px-4 py-3"
-          >
-            {mesajlar.map((m) => (
-              <ChatBubble key={m.id} mesaj={m} onHizliCevap={handleHizliCevap} />
-            ))}
-          </div>
+          {sekme === "sohbet" ? (
+            <div
+              ref={akisRef}
+              className="vixrex-panel-kaydirici min-h-0 flex-1 space-y-2 overflow-y-auto border-t border-white/10 px-4 py-3"
+            >
+              {mesajlar.map((m) => (
+                <ChatBubble key={m.id} mesaj={m} onHizliCevap={handleHizliCevap} />
+              ))}
+            </div>
+          ) : null}
 
           {/* HEP AÇIK giriş şeridi (Faz 3). Eskiden yazı kutusu yalnız bir
            * alana tıklanınca (SpotlightGuide balonunda) açılıyordu; tıklamayan
