@@ -85,12 +85,12 @@ describe("ChatBubble hızlı cevap düğmelerini çizer", () => {
 describe("Faz D3/E/F mesajları sistemIkon taşır — sıradan balondan ayrışır", () => {
   const panel = oku("app/v/[slug]/OwnerAssistantPanel.tsx");
 
-  it("D3 otomatik doldurma tamamlanınca ✨ ikonu ve hazırlanan alanların işaretli listesiyle söyler", () => {
-    expect(panel).toContain('hazirlananEtiketler.map((etiket) => `✓ ${etiket}`)');
-    expect(panel).toContain('"✨"');
+  it("D3 otomatik doldurma yaptığı işi tek satırda bildirir — liste dökmez", () => {
+    expect(panel).toContain("alan kategorine göre dolduruldu.");
+    expect(panel).not.toContain('hazirlananEtiketler.map((etiket) => `✓ ${etiket}`)');
   });
 
-  it("F haftalık performans özeti 📊 ikonuyla söylenir", () => {
-    expect(panel).toContain('mesajEkle("asistan", satirlar.join(" "), undefined, "📊");');
+  it("haftalık performans özeti sohbete yazılmaz — işlem değil, rapordur", () => {
+    expect(panel).not.toContain('undefined, "📊"');
   });
 });

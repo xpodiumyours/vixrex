@@ -442,12 +442,9 @@ export default function OwnerAssistantPanel({
 
       if (hazirlananEtiketler.length > 0) {
         router.refresh();
-        const liste = hazirlananEtiketler.map((etiket) => `✓ ${etiket}`).join("\n");
         mesajEkle(
           "asistan",
-          `Vitrini kategorine göre uyarladım:\n${liste}\n\nŞimdi senden gerçek bilgiler almam gerekiyor: işletme adın, WhatsApp'ın, adresin ve çalışma saatlerin.`,
-          [{ label: "Başlayalım", payload: "ilk_eksik_alana_git" }],
-          "✨"
+          `${hazirlananEtiketler.length} alan kategorine göre dolduruldu.`
         );
       }
     })();
@@ -500,37 +497,6 @@ export default function OwnerAssistantPanel({
   // ise kurulum rehberi yerine "bugün ilgilenmen gereken şey" önerisi.
   // Panel her açılışta bir kez söyler (gün takibi yok — kapsam bilerek
   // küçük tutuldu, gerçek ihtiyaç görülürse eklenir).
-  const yonetimOnerisiSoylendiRef = useRef(false);
-  useEffect(() => {
-    if (!acik || !yerelTaslak.is_published || yonetimOnerisiSoylendiRef.current) return;
-    yonetimOnerisiSoylendiRef.current = true;
-
-    // Faz F: performans varsa önce onu söyler.
-    if (haftalikPerformans && haftalikPerformans.goruntuleme > 0) {
-      const satirlar = [
-        `Bu hafta ${haftalikPerformans.goruntuleme} kişi vitrinini gördü.`,
-        haftalikPerformans.whatsapp_tiklama > 0
-          ? `${haftalikPerformans.whatsapp_tiklama} kişi WhatsApp'a geçti.`
-          : null,
-        haftalikPerformans.en_cok_goruntulenen_urun
-          ? `En çok görüntülenen ürün: ${haftalikPerformans.en_cok_goruntulenen_urun}.`
-          : null,
-      ].filter(Boolean);
-      mesajEkle("asistan", satirlar.join(" "), undefined, "📊");
-    }
-
-    const oneriler = yonetimOnerileriUret(yerelTaslak, urunFiyatsizSayisi, urunAciklamasizSayisi);
-    if (oneriler.length === 0) return;
-    const baslik =
-      oneriler.length === 1
-        ? "Vitrininde bugün ilgilenmen gereken bir şey var:"
-        : `Vitrininde bugün ilgilenmen gereken ${oneriler.length} şey var:`;
-    mesajEkle(
-      "asistan",
-      `${baslik}\n${oneriler.map((o, i) => `${i + 1}. ${o.mesaj}`).join("\n")}`
-    );
-  }, [acik, yerelTaslak, urunFiyatsizSayisi, urunAciklamasizSayisi, haftalikPerformans, mesajEkle]);
-
   // Yasal onay üçü birden — aynı desen, aynı yorum: draftData stores
   // satırının tam kopyası, owner_forbidden_draft_keys yalnız YAZMAYI
   // engeller (bkz. accept_store_legal_consent RPC'si, /api/owner-accept-legal).
