@@ -730,7 +730,7 @@ export default function OwnerAssistantPanel({
         // true olur (aşağı bkz. masaustuIlkAcilisRef). Başlık (ChatTopBar) +
         // SIRADA artık `haritaAcik`ten bağımsız, panel açıkken hep çizilir
         // (aşağıda). Mobil davranış hiç değişmedi.
-        <div className="fixed inset-x-3 bottom-24 z-[75] flex max-h-[calc(100vh-8rem)] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0B1120] shadow-2xl sm:inset-x-auto sm:inset-y-auto sm:top-9 sm:bottom-5 sm:right-5 sm:max-h-none sm:w-[460px] lg:bottom-0 lg:right-0 lg:top-[var(--owner-bar-h)] lg:w-[var(--owner-rail-w)] lg:rounded-none lg:border-y-0 lg:border-r-0 lg:shadow-none">
+        <div className="fixed inset-x-3 bottom-24 z-[75] flex max-h-[calc(100vh-8rem)] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0B1120] shadow-2xl lg:bg-[#0E1729] sm:inset-x-auto sm:inset-y-auto sm:top-9 sm:bottom-5 sm:right-5 sm:max-h-none sm:w-[460px] lg:bottom-0 lg:right-0 lg:top-[var(--owner-bar-h)] lg:w-[var(--owner-rail-w)] lg:rounded-none lg:border-y-0 lg:border-r-0 lg:shadow-none">
           {/* 2026-09-03 (Casper'ın onayladığı "C" tasarımına sadakat, ikinci
            * tur): tuvalde maskot+"Vixrex Asistan"+%hazır başlığı ve SIRADA
            * listesi panel her açıldığında GÖRÜNÜRDÜ — "☰ Tüm alanlar" gibi
@@ -785,6 +785,11 @@ export default function OwnerAssistantPanel({
                 <p className="text-[12px] font-bold text-white">
                   Seçili alan: {seciliAlan.etiket}
                 </p>
+                {seciliAlan.neden ? (
+                  <p className="mt-1 text-[11px] font-medium leading-snug text-slate-400">
+                    {seciliAlan.neden}
+                  </p>
+                ) : null}
                 <button
                   type="button"
                   onClick={() => setHaritaAcik(true)}
@@ -843,7 +848,11 @@ export default function OwnerAssistantPanel({
             </div>
           ) : null}
 
-          {hesapBagliDegil ? <HesapBaglaSeridi slug={slug} /> : null}
+          {hesapBagliDegil ? (
+            <div className={haritaAcik ? "" : "lg:hidden"}>
+              <HesapBaglaSeridi slug={slug} />
+            </div>
+          ) : null}
 
           {oturumSaniye !== null && oturumSaniye < 300 ? (
             <p className="border-b border-white/10 px-4 py-2 text-[11px] font-semibold text-amber-400">
@@ -1006,7 +1015,7 @@ export default function OwnerAssistantPanel({
            * bir bölümün içindeydi — panelin asıl SONUCU ikinci sekmede
            * saklanıyordu. Artık composer'ın hemen altında, harita açık
            * olsun olmasın hep görünen sabit bir şerit. */}
-          <div className="shrink-0 border-t border-white/10 px-4 py-3">
+          <div className={`shrink-0 border-t border-white/10 px-4 py-3 ${haritaAcik ? "" : "lg:hidden"}`}>
             <p className="pb-2 text-[11px] font-semibold text-slate-400">
               {yayinlanmamisDegisiklik
                 ? "Yayınlanmamış değişikliklerin var — hazır olduğunda yayınla."

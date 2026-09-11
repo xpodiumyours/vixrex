@@ -442,7 +442,7 @@ export default function VitrinProfileView({
       {/* ===== HERO ===== */}
       <section
         id="ust-bolum"
-        className={`relative w-full min-h-[380px] sm:min-h-[440px] flex items-end overflow-hidden ${isPreviewMode ? "pt-9 lg:pt-0" : ""}`}
+        className={`relative w-full min-h-[380px] sm:min-h-[440px] flex items-end overflow-hidden ${isPreviewMode ? "pt-9 lg:pt-0" : ""} ${ownerMode ? "lg:min-h-[300px]" : ""}`}
       >
         {/* Kapak yoksa SAHTE FOTOĞRAF BASILMAZ.
             Eskiden burada sabit bir Unsplash adresi vardı: kapak
