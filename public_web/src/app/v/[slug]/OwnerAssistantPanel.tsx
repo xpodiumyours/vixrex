@@ -468,6 +468,8 @@ export default function OwnerAssistantPanel({
     landingNiyetIslendiRef.current = true;
     (async () => {
       try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
         const { data, error } = await supabase.rpc("get_assistant_conversation");
         if (error || !data) return;
         const conv = data as {
