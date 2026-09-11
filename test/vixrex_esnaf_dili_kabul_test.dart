@@ -51,11 +51,11 @@ Future<({bool ok, String? hata, Object? normalizedDeger})> _validate(
 }
 
 void main() {
-  final raw = jsonDecode(
-    File('shared/vixrex_esnaf_dili_kabul.json').readAsStringSync(),
-  ) as Map<String, dynamic>;
-  final senaryolar = (raw['senaryolar'] as List<dynamic>)
-      .cast<Map<String, dynamic>>();
+  final raw =
+      jsonDecode(File('shared/vixrex_esnaf_dili_kabul.json').readAsStringSync())
+          as Map<String, dynamic>;
+  final senaryolar =
+      (raw['senaryolar'] as List<dynamic>).cast<Map<String, dynamic>>();
 
   group('Araştırma temelli esnaf dili — Flutter gerçek pipeline', () {
     test('ortak kabul kümesi 46 alanın tamamını kapsar', () {
@@ -76,13 +76,14 @@ void main() {
           input: s['cumle'] as String,
           controller: null,
           onValidate: _validate,
-          needsSpecialFlow: (alan) =>
-              alan.anahtar == 'il' || alan.anahtar == 'ilce',
+          needsSpecialFlow:
+              (alan) => alan.anahtar == 'il' || alan.anahtar == 'ilce',
         );
 
-        final beklenenOutcome = s['outcome'] == 'handled'
-            ? VixrexNluPipelineOutcome.handled
-            : VixrexNluPipelineOutcome.needsSpecialFlow;
+        final beklenenOutcome =
+            s['outcome'] == 'handled'
+                ? VixrexNluPipelineOutcome.handled
+                : VixrexNluPipelineOutcome.needsSpecialFlow;
         expect(sonuc.outcome, beklenenOutcome);
         expect(sonuc.appliedAnahtar, s['anahtar']);
 

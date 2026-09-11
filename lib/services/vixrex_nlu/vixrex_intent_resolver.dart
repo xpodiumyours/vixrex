@@ -16,10 +16,22 @@ class VixrexIntentResolver {
   static const String _araIsimEki =
       r'(?:m|im|um|in|un|min|mun|imin|umun|nin|nun|imiz|umuz|iniz|unuz|imizin|umuzun|inizin|unuzun|larin|lerin)?';
 
-  bool _ortusuyorMu(
-    _NiyetEslesmesi aday,
-    List<_NiyetEslesmesi> doluAraliklar,
-  ) {
+  static const int _kisaKokSiniri = 3;
+
+  static final RegExp _kisaKokEki = RegExp(
+    r'^(?:i|u|e|a|in|un|im|um|de|da|den|dan|te|ta|ten|tan|ini|ine|inde|inden|imi|ime|imde|imden|iniz|imiz|ler|lar|leri|lari|lerin|larin|lere|lara|lerde|larda|lerden|lardan)$',
+  );
+
+  bool _kisaKokSonEkiGecerliMi(String normInput, String normIfade, int end) {
+    if (normIfade.length > _kisaKokSiniri || normIfade.contains(' ')) {
+      return true;
+    }
+    final kalan = RegExp(r'^[a-z0-9]*').firstMatch(normInput.substring(end));
+    final metin = kalan?.group(0) ?? '';
+    return metin.isEmpty || _kisaKokEki.hasMatch(metin);
+  }
+
+  bool _ortusuyorMu(_NiyetEslesmesi aday, List<_NiyetEslesmesi> doluAraliklar) {
     return doluAraliklar.any(
       (dolu) => aday.start < dolu.end && aday.end > dolu.start,
     );
@@ -37,7 +49,8 @@ class VixrexIntentResolver {
       final startOk =
           idx == 0 || !RegExp(r'[a-z0-9]').hasMatch(normInput[idx - 1]);
       final aday = _NiyetEslesmesi(idx, idx + normIfade.length);
-      if (startOk && !_ortusuyorMu(aday, doluAraliklar)) return aday;
+      final sonEkOk = _kisaKokSonEkiGecerliMi(normInput, normIfade, aday.end);
+      if (startOk && sonEkOk && !_ortusuyorMu(aday, doluAraliklar)) return aday;
       from = idx + 1;
     }
     return null;
@@ -52,23 +65,25 @@ class VixrexIntentResolver {
     String normIfade,
     List<_NiyetEslesmesi> doluAraliklar,
   ) {
-    final tokens = normIfade
-        .split(RegExp(r'\s+'))
-        .where((e) => e.isNotEmpty)
-        .toList();
+    final tokens =
+        normIfade.split(RegExp(r'\s+')).where((e) => e.isNotEmpty).toList();
     if (tokens.length < 2) return null;
 
-    final body = tokens.asMap().entries.map((entry) {
-      final i = entry.key;
-      final token = entry.value;
-      final kok = RegExp.escape(token);
-      if (i < tokens.length - 1 &&
-          RegExp(r'^[a-z0-9]+$').hasMatch(token) &&
-          token.length >= 4) {
-        return '$kok$_araIsimEki';
-      }
-      return kok;
-    }).join(r'\s+');
+    final body = tokens
+        .asMap()
+        .entries
+        .map((entry) {
+          final i = entry.key;
+          final token = entry.value;
+          final kok = RegExp.escape(token);
+          if (i < tokens.length - 1 &&
+              RegExp(r'^[a-z0-9]+$').hasMatch(token) &&
+              token.length >= 4) {
+            return '$kok$_araIsimEki';
+          }
+          return kok;
+        })
+        .join(r'\s+');
 
     final re = RegExp('(^|[^a-z0-9])($body)');
     for (final m in re.allMatches(normInput)) {
@@ -89,16 +104,8 @@ class VixrexIntentResolver {
     String normIfade, [
     List<_NiyetEslesmesi> doluAraliklar = const [],
   ]) {
-    return _tamIfadeEslesmesiBul(
-          normInput,
-          normIfade,
-          doluAraliklar,
-        ) ??
-        _ekliCokKelimeEslesmesiBul(
-          normInput,
-          normIfade,
-          doluAraliklar,
-        );
+    return _tamIfadeEslesmesiBul(normInput, normIfade, doluAraliklar) ??
+        _ekliCokKelimeEslesmesiBul(normInput, normIfade, doluAraliklar);
   }
 
   /// `{deger}` içeren sözlük örneğinin değerden önceki sabit bölümü gerçek

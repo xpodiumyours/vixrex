@@ -77,7 +77,9 @@ void main() {
         if (ozelAkis.contains(alan.anahtar)) {
           ozel += 1;
           if (uygulandi) {
-            hatalar.add('${alan.anahtar}: özel akış olması gerekirken doğrudan yazıldı');
+            hatalar.add(
+              '${alan.anahtar}: özel akış olması gerekirken doğrudan yazıldı',
+            );
           }
         } else {
           dogrudan += 1;

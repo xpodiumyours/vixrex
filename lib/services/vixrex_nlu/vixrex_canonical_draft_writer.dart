@@ -18,11 +18,7 @@ class VixrexCanonicalWriteResult {
   final String? error;
   final String? commandId;
 
-  const VixrexCanonicalWriteResult(
-    this.state, {
-    this.error,
-    this.commandId,
-  });
+  const VixrexCanonicalWriteResult(this.state, {this.error, this.commandId});
 }
 
 class VixrexCanonicalDraftWriter {
@@ -75,10 +71,7 @@ class VixrexCanonicalDraftWriter {
     try {
       final raw = await client.rpc(
         'apply_owned_working_draft_command',
-        params: {
-          'p_command_id': commandId,
-          'p_changes': changes,
-        },
+        params: {'p_command_id': commandId, 'p_changes': changes},
       );
       final returnedCommandId =
           raw is Map ? raw['command_id']?.toString().trim() : null;

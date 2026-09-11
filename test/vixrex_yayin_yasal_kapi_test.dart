@@ -40,66 +40,86 @@ Future<({bool ok, String? hata, Object? normalizedDeger})> _validate(
 
 void main() {
   group('Vixrex Flutter yayın ve yasal onay güvenlik kapısı', () {
-    test('serbest doğal dil yasal onay veya yayın işlemini çalıştırmaz', () async {
-      final writer = _NoWriteWriter();
-      final pipeline = VixrexNluPipeline(
-        memory: _EmptyMemory(),
-        canonicalWriter: writer,
-      );
+    test(
+      'serbest doğal dil yasal onay veya yayın işlemini çalıştırmaz',
+      () async {
+        final writer = _NoWriteWriter();
+        final pipeline = VixrexNluPipeline(
+          memory: _EmptyMemory(),
+          canonicalWriter: writer,
+        );
 
-      for (final metin in [
-        'Vitrini yayınla',
-        'Şartları kabul ediyorum',
-        'Yasal onayı ver ve yayınla',
-      ]) {
-        final sonuc = await pipeline.handle(
-          input: metin,
-          controller: null,
-          onValidate: _validate,
+        for (final metin in [
+          'Vitrini yayınla',
+          'Şartları kabul ediyorum',
+          'Yasal onayı ver ve yayınla',
+        ]) {
+          final sonuc = await pipeline.handle(
+            input: metin,
+            controller: null,
+            onValidate: _validate,
+          );
+          expect(
+            sonuc.outcome,
+            isNot(VixrexNluPipelineOutcome.handled),
+            reason: metin,
+          );
+        }
+
+        expect(writer.writeCount, 0);
+      },
+    );
+
+    test(
+      'legal ekranı gerçek kullanıcı onaylarını ve hazır olma kapısını kullanır',
+      () {
+        final screen =
+            File(
+              'lib/screens/vixrex_onboarding_chat_screen.dart',
+            ).readAsStringSync();
+
+        expect(screen, contains('LegalConsentSection('));
+        expect(
+          screen,
+          contains(
+            'onPrivacyChanged: _controller.setPrivacyNoticeAcknowledged',
+          ),
         );
         expect(
-          sonuc.outcome,
-          isNot(VixrexNluPipelineOutcome.handled),
-          reason: metin,
+          screen,
+          contains('onTermsChanged: _controller.setTermsAccepted'),
         );
-      }
+        expect(
+          screen,
+          contains(
+            'onPublicationChanged: _controller.setPublicationConsentAccepted',
+          ),
+        );
+        expect(screen, contains('busy || !_controller.isLegalPublishReady'));
+        expect(screen, contains(': _onboarding.acceptLegalAndPublish'));
+      },
+    );
 
-      expect(writer.writeCount, 0);
-    });
+    test(
+      'controller yayın çağrısından önce legal readiness kontrolünü yapar',
+      () {
+        final source =
+            File(
+              'lib/controllers/vixrex_onboarding_controller.dart',
+            ).readAsStringSync();
+        final methodStart = source.indexOf(
+          'Future<void> acceptLegalAndPublish()',
+        );
+        final readiness = source.indexOf(
+          'if (!_editor.isLegalPublishReady)',
+          methodStart,
+        );
+        final publish = source.indexOf('await _editor.publish()', methodStart);
 
-    test('legal ekranı gerçek kullanıcı onaylarını ve hazır olma kapısını kullanır', () {
-      final screen = File(
-        'lib/screens/vixrex_onboarding_chat_screen.dart',
-      ).readAsStringSync();
-
-      expect(screen, contains('LegalConsentSection('));
-      expect(
-        screen,
-        contains('onPrivacyChanged: _controller.setPrivacyNoticeAcknowledged'),
-      );
-      expect(screen, contains('onTermsChanged: _controller.setTermsAccepted'));
-      expect(
-        screen,
-        contains('onPublicationChanged: _controller.setPublicationConsentAccepted'),
-      );
-      expect(screen, contains('busy || !_controller.isLegalPublishReady'));
-      expect(screen, contains(': _onboarding.acceptLegalAndPublish'));
-    });
-
-    test('controller yayın çağrısından önce legal readiness kontrolünü yapar', () {
-      final source = File(
-        'lib/controllers/vixrex_onboarding_controller.dart',
-      ).readAsStringSync();
-      final methodStart = source.indexOf('Future<void> acceptLegalAndPublish()');
-      final readiness = source.indexOf(
-        'if (!_editor.isLegalPublishReady)',
-        methodStart,
-      );
-      final publish = source.indexOf('await _editor.publish()', methodStart);
-
-      expect(methodStart, greaterThanOrEqualTo(0));
-      expect(readiness, greaterThan(methodStart));
-      expect(publish, greaterThan(readiness));
-    });
+        expect(methodStart, greaterThanOrEqualTo(0));
+        expect(readiness, greaterThan(methodStart));
+        expect(publish, greaterThan(readiness));
+      },
+    );
   });
 }

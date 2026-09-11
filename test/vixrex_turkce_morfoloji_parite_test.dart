@@ -7,10 +7,26 @@ void main() {
   const extractor = VixrexValueExtractor();
 
   final cases = <({String input, String anahtar, String deger})>[
-    (input: 'Dükkanın adı Aymira Giyim', anahtar: 'isletmeAdi', deger: 'Aymira Giyim'),
-    (input: 'Dükkanımın adı Aymira Giyim', anahtar: 'isletmeAdi', deger: 'Aymira Giyim'),
-    (input: 'Ürünlerin başlığı Ürünlerimiz', anahtar: 'urunBolumBaslik', deger: 'Ürünlerimiz'),
-    (input: 'Galerinin başlığı Yaptığımız İşler', anahtar: 'galeriBaslik', deger: 'Yaptığımız İşler'),
+    (
+      input: 'Dükkanın adı Aymira Giyim',
+      anahtar: 'isletmeAdi',
+      deger: 'Aymira Giyim',
+    ),
+    (
+      input: 'Dükkanımın adı Aymira Giyim',
+      anahtar: 'isletmeAdi',
+      deger: 'Aymira Giyim',
+    ),
+    (
+      input: 'Ürünlerin başlığı Ürünlerimiz',
+      anahtar: 'urunBolumBaslik',
+      deger: 'Ürünlerimiz',
+    ),
+    (
+      input: 'Galerinin başlığı Yaptığımız İşler',
+      anahtar: 'galeriBaslik',
+      deger: 'Yaptığımız İşler',
+    ),
   ];
 
   group('Türkçe iyelik/genitif — Flutter', () {

@@ -7,10 +7,14 @@ import 'package:vixrex/services/vixrex_nlu/vixrex_general_intent_resolver.dart';
 void main() {
   group('Vixrex genel intent Flutter ↔ Next parity', () {
     const resolver = VixrexGeneralIntentResolver();
-    final senaryolar = (jsonDecode(
-      File('shared/vixrex_genel_intent_senaryolari.json').readAsStringSync(),
-    ) as List<dynamic>)
-        .cast<Map<String, dynamic>>();
+    final senaryolar =
+        (jsonDecode(
+                  File(
+                    'shared/vixrex_genel_intent_senaryolari.json',
+                  ).readAsStringSync(),
+                )
+                as List<dynamic>)
+            .cast<Map<String, dynamic>>();
 
     test('ortak genel-intent kabul kümesinin tamamını doğru çözer', () {
       final hatalar = <String>[];

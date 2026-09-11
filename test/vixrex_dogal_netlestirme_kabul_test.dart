@@ -19,9 +19,13 @@ String kararAdi(VixrexBaglamKarari karar) => switch (karar) {
 };
 
 void main() {
-  final raw = jsonDecode(
-    File('shared/vixrex_dogal_netlestirme_senaryolari.json').readAsStringSync(),
-  ) as List<dynamic>;
+  final raw =
+      jsonDecode(
+            File(
+              'shared/vixrex_dogal_netlestirme_senaryolari.json',
+            ).readAsStringSync(),
+          )
+          as List<dynamic>;
 
   group('Vixrex doğal netleştirme bağımsız kabul kümesi', () {
     test('en az 20 konuşma senaryosu içerir', () {
@@ -31,14 +35,15 @@ void main() {
     for (final item in raw.cast<Map<String, dynamic>>()) {
       test('${item['id']}: Flutter aynı bağlam kararını verir', () {
         final bekleyenJson = item['bekleyen'] as Map<String, dynamic>?;
-        final bekleyen = bekleyenJson == null
-            ? null
-            : VixrexBekleyenBaglam(
-                anahtar: bekleyenJson['anahtar'] as String,
-                etiket: bekleyenJson['etiket'] as String,
-                tip: bekleyenJson['tip'] as String,
-                eylem: bekleyenJson['eylem'] as String?,
-              );
+        final bekleyen =
+            bekleyenJson == null
+                ? null
+                : VixrexBekleyenBaglam(
+                  anahtar: bekleyenJson['anahtar'] as String,
+                  etiket: bekleyenJson['etiket'] as String,
+                  tip: bekleyenJson['tip'] as String,
+                  eylem: bekleyenJson['eylem'] as String?,
+                );
         final sonuc = vixrexBaglamsalCevapKarari(
           item['girdi'] as String,
           bekleyen,
