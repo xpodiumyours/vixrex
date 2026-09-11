@@ -27,10 +27,10 @@ class LandingComparisonSection extends StatelessWidget {
     return Container(
       width: double.infinity,
       color: AppColors.bgEditor,
-      padding: const EdgeInsets.symmetric(vertical: 88, horizontal: 24),
+      padding: const EdgeInsets.symmetric(vertical: AppColors.landingSectionY, horizontal: 24),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1200),
+          constraints: const BoxConstraints(maxWidth: AppColors.landingColumn),
           child: Column(
             children: [
               const Text(

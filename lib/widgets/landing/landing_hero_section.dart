@@ -110,13 +110,13 @@ class LandingHeroSection extends StatelessWidget {
                     _buildTopNavBar(context, isDesktop),
                     Center(
                       child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 1200),
+                        constraints: const BoxConstraints(maxWidth: AppColors.landingColumn),
                         child: Padding(
                           padding: EdgeInsets.only(
                             left: 24,
                             right: 24,
                             top: isDesktop ? 40 : 20,
-                            bottom: isDesktop ? 100 : 50,
+                            bottom: AppColors.landingSectionY,
                           ),
                           child:
                               isDesktop
@@ -125,15 +125,14 @@ class LandingHeroSection extends StatelessWidget {
                                         CrossAxisAlignment.center,
                                     children: [
                                       Expanded(
-                                        flex: 5,
                                         child: _buildHeroContent(
                                           context: context,
                                           isDesktop: true,
                                         ),
                                       ),
                                       const SizedBox(width: 40),
-                                      Expanded(
-                                        flex: 5,
+                                      SizedBox(
+                                        width: 400,
                                         child: LandingHeroMockup(
                                           animController: animController,
                                           activeProfileIndex:

@@ -26,9 +26,9 @@ export function BottomCta({
   return (
     <section
       id="basla"
-      className="bg-gradient-to-br from-lp-bg-editor via-lp-turquoise-surface to-lp-primary px-6 py-[88px]"
+      className="bg-gradient-to-br from-lp-bg-editor via-lp-turquoise-surface to-lp-primary px-6 py-lp-section"
     >
-      <div className="mx-auto w-full max-w-[800px] text-center">
+      <div className="mx-auto w-full max-w-lp-dar text-center">
         <h2 className="text-[36px] font-black leading-[1.2]">
           İşletmenizi tek linkte müşterilerinizle buluşturun
         </h2>

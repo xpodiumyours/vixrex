@@ -15,10 +15,10 @@ class LandingFeaturesSection extends StatelessWidget {
     return Container(
       width: double.infinity,
       color: AppColors.bgLight,
-      padding: const EdgeInsets.fromLTRB(24, 48, 24, 72),
+      padding: const EdgeInsets.fromLTRB(24, AppColors.landingSectionY, 24, AppColors.landingSectionY),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1200),
+          constraints: const BoxConstraints(maxWidth: AppColors.landingColumn),
           child: Column(
             children: [
               const Text(

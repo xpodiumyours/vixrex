@@ -9,10 +9,10 @@ class LandingValueBand extends StatelessWidget {
     return Container(
       width: double.infinity,
       color: AppColors.bgLight,
-      padding: const EdgeInsets.symmetric(vertical: 64, horizontal: 24),
+      padding: const EdgeInsets.symmetric(vertical: AppColors.landingSectionY, horizontal: 24),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1200),
+          constraints: const BoxConstraints(maxWidth: AppColors.landingColumn),
           child: LayoutBuilder(
             builder: (context, constraints) {
               final isDesktop = constraints.maxWidth > 820;

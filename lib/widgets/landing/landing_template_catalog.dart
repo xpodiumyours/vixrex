@@ -314,9 +314,9 @@ class _LandingTemplateCatalogState extends State<LandingTemplateCatalog> {
       color: AppColors.bgLight,
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1200),
+          constraints: const BoxConstraints(maxWidth: AppColors.landingColumn),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 64),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: AppColors.landingSectionY),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [

@@ -64,12 +64,12 @@ const VIXREX_ILE = [
 
 export function ComparisonSection() {
   return (
-    <section className="bg-lp-bg-editor px-6 py-[88px]">
-      <div className="mx-auto w-full max-w-[1200px]">
+    <section className="bg-lp-bg-editor px-6 py-lp-section">
+      <div className="mx-auto w-full max-w-lp">
         <h2 className="text-center text-[38px] font-black tracking-[-0.5px] text-lp-text">
           Dijital vitrinin için gerekenler tek yerde
         </h2>
-        <p className="mx-auto mt-4 max-w-[720px] text-center text-[16px] leading-[1.5] text-lp-muted">
+        <p className="mx-auto mt-4 max-w-lp-dar text-center text-[16px] leading-[1.5] text-lp-muted">
           Araçları ve kurulumları ayrı ayrı yönetmek yerine işletme bilgilerini Vixrex’e ekle, paylaşmaya başla.
         </p>
 

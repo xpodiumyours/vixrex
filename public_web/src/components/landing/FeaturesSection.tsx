@@ -46,12 +46,12 @@ const KARTLAR: Kart[] = [
 
 export function FeaturesSection() {
   return (
-    <section className="bg-lp-bg-light px-6 pb-[72px] pt-12">
-      <div className="mx-auto w-full max-w-[1200px]">
+    <section className="bg-lp-bg-light px-6 py-lp-section">
+      <div className="mx-auto w-full max-w-lp">
         <h2 className="text-center text-[38px] font-black leading-[1.1] text-lp-text">
           Dijital vitrinini kolayca hazırla
         </h2>
-        <p className="mx-auto mt-5 max-w-[720px] text-center text-[18px] leading-[1.5] text-lp-text-alt">
+        <p className="mx-auto mt-5 max-w-lp-dar text-center text-[18px] leading-[1.5] text-lp-text-alt">
           Müşterinin ihtiyaç duyduğu bilgileri tek vitrinde topla, panelden
           yönet, istediğin yerde paylaş.
         </p>

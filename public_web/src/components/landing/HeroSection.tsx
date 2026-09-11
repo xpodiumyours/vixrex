@@ -38,11 +38,11 @@ export function HeroSection({
   const adresOneki = `${getSiteUrl().replace(/^https?:\/\//, "")}/v/`;
 
   return (
-    <section id="vixrex-hero" className="relative overflow-hidden bg-gradient-to-b from-lp-bg-editor to-lp-bg-light px-6 pb-[50px] pt-0 md:pb-[100px] md:pt-0">
+    <section id="vixrex-hero" className="relative overflow-hidden bg-gradient-to-b from-lp-bg-editor to-lp-bg-light px-6 pb-lp-section pt-0">
       {/* Top Nav — Flutter landing_hero_section.dart:189-363 ile parite */}
       <nav
         aria-label="Ana gezinme"
-        className="relative mx-auto flex w-full max-w-[1200px] items-center justify-between py-4"
+        className="relative mx-auto flex w-full max-w-lp items-center justify-between py-4"
       >
         <Link
           href="/"
@@ -130,8 +130,8 @@ export function HeroSection({
           }}
         />
       </div>
-      <div className="relative mx-auto flex w-full max-w-[1200px] flex-col items-center gap-10 md:flex-row md:items-center md:gap-10">
-        <div className="w-full flex-1 md:max-w-[560px]">
+      <div className="relative mx-auto mt-5 flex w-full max-w-lp flex-col items-center gap-10 md:mt-10 md:flex-row md:items-center md:gap-10">
+        <div className="w-full flex-1">
           <p className="inline-block rounded-[30px] border border-lp-secondary/45 bg-lp-primary/[0.18] px-3.5 py-2 text-[11px] font-black tracking-[1px] text-lp-secondary">
             VİXREX ASİSTAN İLE DİJİTAL VİTRİN
           </p>
@@ -201,7 +201,7 @@ export function HeroSection({
           </ul>
         </div>
 
-        <div className="flex w-full flex-1 justify-center">
+        <div className="flex w-full justify-center md:w-[400px] md:shrink-0">
           <PhoneMockup
             profiller={profiller}
             isChatOpen={isChatOpen}

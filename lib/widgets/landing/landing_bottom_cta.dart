@@ -18,7 +18,7 @@ class LandingBottomCta extends StatelessWidget {
   Widget _buildBottomCTA(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 88, horizontal: 24),
+      padding: const EdgeInsets.symmetric(vertical: AppColors.landingSectionY, horizontal: 24),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -28,7 +28,7 @@ class LandingBottomCta extends StatelessWidget {
       ),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 800),
+          constraints: const BoxConstraints(maxWidth: AppColors.landingColumnNarrow),
           child: Column(
             children: [
               const Text(
