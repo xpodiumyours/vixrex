@@ -19,7 +19,7 @@ const ADIMLAR = [
 
 export function StepsSection() {
   return (
-    <section className="bg-lp-bg-light lp-yan-bosluk py-lp-section">
+    <section id="nasil-calisir" className="bg-lp-bg-light lp-yan-bosluk py-lp-section">
       <div className="mx-auto w-full max-w-lp">
         <h2 className="text-center text-[36px] font-black text-lp-text">
           Üç adımda dijital vitrinin hazır
