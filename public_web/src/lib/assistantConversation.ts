@@ -74,8 +74,10 @@ export async function appendRawSharedAssistantMessage(
 ): Promise<void> {
   try {
     await appendMessage(conversationId, role, text, messageKey);
-  } catch {
-    // Anonim oturum reddedilirse veya ağ hatası olursa sessizce yut.
+  } catch (e) {
+    // Anonim oturum reddedilirse veya ağ hatası olursa akışı bloklama,
+    // ama cerrahi 2026-09-11 (Risk 4): kaybı görünür kıl — Sentry/log'da iz kalsın.
+    console.warn("[vixrex-assistant] kopru yazilamadi", e);
   }
 }
 

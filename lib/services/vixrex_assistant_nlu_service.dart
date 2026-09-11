@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vixrex/config/business_category_config.dart';
+import 'package:vixrex/config/vixrex_mesajlar.g.dart';
 import 'package:vixrex/services/vixrex_assistant_nlu_types.dart';
 
 /// Supabase Edge Function üzerinden gerçek OpenAI alan önerisi alır.
@@ -28,21 +29,21 @@ class VixRexAssistantNluService {
         },
       );
       if (response.status != 200) {
-        return const VixRexNluRemoteResult.unavailable();
+        return VixRexNluRemoteResult.unavailable();
       }
 
       final data = response.data;
       if (data is! Map<String, dynamic>) {
-        return const VixRexNluRemoteResult.unavailable();
+        return VixRexNluRemoteResult.unavailable();
       }
       final proposal = data['proposal'];
       if (proposal is! Map<String, dynamic>) {
-        return const VixRexNluRemoteResult.unavailable();
+        return VixRexNluRemoteResult.unavailable();
       }
 
       final reply = proposal['reply'];
       if (reply is! String || reply.trim().isEmpty) {
-        return const VixRexNluRemoteResult.unavailable();
+        return VixRexNluRemoteResult.unavailable();
       }
       final fieldName = proposal['field'];
       final value = proposal['value'];
@@ -56,7 +57,7 @@ class VixRexAssistantNluService {
         value: value is String && value.trim().isNotEmpty ? value.trim() : null,
       );
     } catch (_) {
-      return const VixRexNluRemoteResult.unavailable();
+      return VixRexNluRemoteResult.unavailable();
     }
   }
 
@@ -83,11 +84,23 @@ class VixRexNluRemoteResult {
     required this.reply,
     required this.field,
     required this.value,
-  }) : isAvailable = true;
+    this.isAvailable = true,
+  });
 
-  const VixRexNluRemoteResult.unavailable()
-    : reply = 'Asistan şu an yanıt veremiyor. Lütfen biraz sonra tekrar dene.',
-      field = null,
-      value = null,
-      isAvailable = false;
+  /// Cerrahi 2026-09-11 (Risk 1): erişim-yok cümlesi katalogdan
+  /// (nlu_kisa_erisim_yok), görsel aynı. const değil — katalog okur.
+  factory VixRexNluRemoteResult.unavailable() {
+    return VixRexNluRemoteResult(
+      reply:
+          vixRexMesajlari['nlu_kisa_erisim_yok'] ??
+          'Asistan şu an yanıt veremiyor. Lütfen biraz sonra tekrar dene.',
+      field: null,
+      value: null,
+      isAvailable: false,
+    );
+  }
+
+  static String get erisimYokMesaji =>
+      vixRexMesajlari['nlu_kisa_erisim_yok'] ??
+      'Asistan şu an yanıt veremiyor. Lütfen biraz sonra tekrar dene.';
 }

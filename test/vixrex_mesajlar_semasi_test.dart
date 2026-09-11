@@ -25,7 +25,10 @@ void main() {
     // Akış 3 paritesi (2026-09-03): yayın-sonrası hesap bağlama paneli iki
     // yüzeyde de katalogdan konuşsun diye hesap_bagla_baslik/aciklama/
     // buton/yukleniyor/hata eklendi — 112 → 117.
+    // Cerrahi 2026-09-11 (Risk 1): NLU kısa onay/iptal/erişim-yok cümleleri
+    // katalog dışından okunuyordu — aynı metinle kataloğa taşındı
+    // (nlu_kisa_onay_basari/iptal/erisim_yok) — 117 → 120.
     // Sayı kilidi bilerek duruyor: katalog sessizce büyümesin.
-    expect(vixRexMesajlari.length, 117);
+    expect(vixRexMesajlari.length, 120);
   });
 }

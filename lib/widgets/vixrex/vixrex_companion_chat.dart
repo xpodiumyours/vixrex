@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:vixrex/config/vixrex_mesajlar.g.dart';
 import 'package:vixrex/models/chat_message.dart';
 import 'package:vixrex/config/chatbot_config.dart';
 import 'package:vixrex/services/chatbot_service.dart';
@@ -288,9 +289,22 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
             final mapped = _mapAnahtarToLegacyField(anahtarlar.first);
             if (mapped != null) {
               widget.onSaveField(mapped, degerler.first.toString());
-              bot = ChatMessage.bot('Kaydettim ✅ ${result.message.text}');
+              // Cerrahi 2026-09-11 (Risk 1): kısa onay katalogdan, görsel aynı.
+              final kisaOnay =
+                  vixRexMesajlari['nlu_kisa_onay_basari'] ?? 'Kaydettim ✅';
+              bot = ChatMessage.bot('$kisaOnay ${result.message.text}');
             } else {
-              bot = result.message;
+              // Cerrahi 2026-09-11 (Risk 2): kaydetmeden başarılı gösterme.
+              // onUpdateField yoksa 41 alan yazılamazdı ama başarı mesajı
+              // çıkıyordu. Katalogdan dürüst soruya düş, kaybı logla.
+              debugPrint(
+                '[vixrex-assistant] onUpdateField yok, yazılamadı: '
+                '${anahtarlar.first}',
+              );
+              bot = ChatMessage.bot(
+                vixRexMesajlari['netlestirme_belirsiz'] ??
+                    result.message.text,
+              );
             }
           } else {
             bot = result.message;
@@ -375,20 +389,48 @@ class _VixRexCompanionChatState extends State<VixRexCompanionChat> {
     if (reply.payload.startsWith(_nluConfirmPrefix)) {
       final rest = reply.payload.substring(_nluConfirmPrefix.length);
       final sepIndex = rest.indexOf(':');
-      if (sepIndex != -1) {
-        final fieldName = rest.substring(0, sepIndex);
-        final value = rest.substring(sepIndex + 1);
-        final field = VixRexNluField.values.firstWhere(
-          (f) => f.name == fieldName,
-          orElse: () => VixRexNluField.storeName,
+      if (sepIndex == -1) {
+        // Cerrahi 2026-09-11 (Risk 3): bozuk onay sessizce yutulmasın.
+        debugPrint('[vixrex-assistant] bozuk onay payload: ${reply.payload}');
+        _appendBotAck(
+          vixRexMesajlari['netlestirme_belirsiz'] ??
+              'Hangi alanı değiştirmek istediğini netleştirebilir misin?',
         );
-        widget.onSaveField(field, value);
-        _appendBotAck('Kaydettim ✅');
+        return;
       }
+      final fieldName = rest.substring(0, sepIndex);
+      final value = rest.substring(sepIndex + 1);
+      VixRexNluField? field;
+      try {
+        field = VixRexNluField.values.firstWhere((f) => f.name == fieldName);
+      } catch (_) {
+        field = null;
+      }
+      if (field == null) {
+        // Cerrahi 2026-09-11 (Risk 3): bilinmeyen alan storeName'e
+        // sessizce yazılıyordu. Artık yazma, katalogdan sor, logla.
+        debugPrint(
+          '[vixrex-assistant] bilinmeyen alan, yazılmadı: $fieldName',
+        );
+        _appendBotAck(
+          vixRexMesajlari['netlestirme_belirsiz'] ??
+              'Hangi alanı değiştirmek istediğini netleştirebilir misin?',
+        );
+        return;
+      }
+      widget.onSaveField(field, value);
+      // Cerrahi 2026-09-11 (Risk 1): kısa onay katalogdan, görsel aynı.
+      _appendBotAck(
+        vixRexMesajlari['nlu_kisa_onay_basari'] ?? 'Kaydettim ✅',
+      );
       return;
     }
     if (reply.payload == _nluCancelPayload) {
-      _appendBotAck('Tamam, kaydetmedim. Başka nasıl yardımcı olabilirim?');
+      // Cerrahi 2026-09-11 (Risk 1): iptal cümlesi katalogdan, görsel aynı.
+      _appendBotAck(
+        vixRexMesajlari['nlu_kisa_onay_iptal'] ??
+            'Tamam, kaydetmedim. Başka nasıl yardımcı olabilirim?',
+      );
       return;
     }
     if (reply.action != VixRexAction.none) {

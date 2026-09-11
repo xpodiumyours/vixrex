@@ -721,6 +721,18 @@
     {
       "anahtar": "netlestirme_belirsiz",
       "metin": "Hangi alanı değiştirmek istediğini netleştirebilir misin? Örn: “İşletme adını ... yap” veya “WhatsApp numaram ...”"
+    },
+    {
+      "anahtar": "nlu_kisa_onay_basari",
+      "metin": "Kaydettim ✅"
+    },
+    {
+      "anahtar": "nlu_kisa_onay_iptal",
+      "metin": "Tamam, kaydetmedim. Başka nasıl yardımcı olabilirim?"
+    },
+    {
+      "anahtar": "nlu_kisa_erisim_yok",
+      "metin": "Asistan şu an yanıt veremiyor. Lütfen biraz sonra tekrar dene."
     }
   ],
   "hizliSecenekler": [

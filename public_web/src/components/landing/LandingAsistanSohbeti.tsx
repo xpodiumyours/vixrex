@@ -76,8 +76,10 @@ async function niyetSohbetiKaydet(
         mesaj.messageKey ?? null,
       );
     }
-  } catch {
+  } catch (e) {
     // Konuşma köprüsü opsiyonel bir zenginleştirme — akışı hiç bloklamaz.
+    // Cerrahi 2026-09-11 (Risk 4): kaybı logla.
+    console.warn("[vixrex-assistant] niyet koprusu atlandi", e);
   }
 }
 

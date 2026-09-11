@@ -111,7 +111,10 @@ async function loadPending(): Promise<PendingSlot | null> {
     const { data, error } = await supabase.rpc("get_assistant_pending_slot");
     if (error || !data) return null;
     return data as PendingSlot;
-  } catch { return null; }
+  } catch (e) {
+    console.warn("[vixrex-assistant] pending okunamadi", e);
+    return null;
+  }
 }
 async function savePending(a: VixrexNiyetAlan, eylem?: "kaldir"): Promise<void> {
   try {
@@ -123,12 +126,16 @@ async function savePending(a: VixrexNiyetAlan, eylem?: "kaldir"): Promise<void> 
         ...(eylem ? { eylem } : {}),
       },
     });
-  } catch { /* sessizce yut — bellek modu korunur */ }
+  } catch (e) {
+    console.warn("[vixrex-assistant] pending yazilamadi", e);
+  }
 }
 async function clearPending(): Promise<void> {
   try {
     await supabase.rpc("set_assistant_pending_slot", { p_slot: null });
-  } catch { /* sessizce yut */ }
+  } catch (e) {
+    console.warn("[vixrex-assistant] pending temizlenemedi", e);
+  }
 }
 
 function needsSpecialFlow(anahtar: string): boolean {
