@@ -278,27 +278,36 @@ export async function handleVixrexNluMessage(input: string): Promise<VixrexPipel
   if (all.length > 1) {
     const ok: Array<{ alan: VixrexNiyetAlan; deger: unknown }> = [];
     const hatalar: string[] = [];
+    const degersizAlanlar: VixrexNiyetAlan[] = [];
+    let ozelAkisVar = false;
     for (const a of all) {
-      if (needsSpecialFlow(a.anahtar)) { hatalar.push(`${a.etiket} için panelden devam et`); continue; }
+      if (needsSpecialFlow(a.anahtar)) { ozelAkisVar = true; hatalar.push(`${a.etiket} için panelden devam et`); continue; }
       const ham = extractPipelineValue(trimmed, a);
-      if (ham === null || ham === "") { hatalar.push(`${a.etiket} için değer bulunamadı`); continue; }
+      if (ham === null || ham === "") { degersizAlanlar.push(a); continue; }
       const v = validateField(a.anahtar, ham);
-      if (!v.ok) { hatalar.push((v as { hata: string }).hata); continue; }
+      if (!v.ok) { degersizAlanlar.push(a); hatalar.push((v as { hata: string }).hata); continue; }
       ok.push({ alan: a, deger: (v as { deger: unknown }).deger ?? ham });
     }
 
     // Çoklu niyette kısmi başarı güvenli değildir: kullanıcı iki alan
     // söylediyse birini sessizce atıp diğerini kaydetmek yerine tüm mesaj
     // netleştirilir. Böylece Flutter ile aynı "bir hata → hiçbir yazım" kuralı.
-    if (ok.length === 0 || hatalar.length > 0) {
+    if (ok.length === 0 || ozelAkisVar) {
+      const tumu = hatalar.length > 0
+        ? hatalar
+        : degersizAlanlar.map((a) => `${a.etiket} için değer bulunamadı`);
       return {
         outcome: "needsClarification",
-        message: hatalar.join("\n") || VIXREX_DOGAL_GENEL_SORU,
+        message: tumu.join("\n") || VIXREX_DOGAL_GENEL_SORU,
       };
     }
 
     await clearPending();
-    const metin = ok.map(({ alan, deger }) => clarifySuccess(alan, deger)).join("\n");
+    const basarilar = ok.map(({ alan, deger }) => clarifySuccess(alan, deger));
+    const anlasilmayan = degersizAlanlar.map(
+      (a) => `"${a.etiket}" için bir değer bulamadım, onu ayrıca yazar mısın?`,
+    );
+    const metin = [...basarilar, ...anlasilmayan].join("\n");
     return {
       outcome: "handled",
       message: metin,
