@@ -60,28 +60,28 @@ export default function BlogYayinIlkeleriPage() {
           <section>
             <h2 className="text-2xl font-black tracking-tight">Güncellik</h2>
             <p className="mt-3">
-              Haricî platform rehberleri en geç 60 günde, genel rehberler 90
-              günde yeniden kontrol için işaretlenir. Vixrex ürün içerikleri ürün
-              değiştiğinde yeniden gözden geçirilir. Süresi dolan içerik inceleme
-              listesine düşer.
+              Son kontrolden sonra haricî platform rehberlerinde 60 gün, genel
+              rehberlerde 90 gün aşıldığında içerik yeniden inceleme için
+              işaretlenir. Vixrex ürün içerikleri ürün değişikliklerinde yeniden
+              gözden geçirilir.
             </p>
           </section>
 
           <section>
             <h2 className="text-2xl font-black tracking-tight">Yayın güvenliği</h2>
             <p className="mt-3">
-              Taslak ve arşiv içerikler blog listesine, sitemap'e veya RSS'e
-              girmez. Yayın için tarih, içerik türüne göre doğrulama alanları ve
-              mevcut kalite kontrollerinin geçmesi gerekir.
+              Normal yayın akışında taslak ve arşiv içerikler blog listesine,
+              sitemap'e veya RSS'e girmez. Yayın için tarih, içerik türüne göre
+              doğrulama alanları ve mevcut kalite kontrollerinin geçmesi gerekir.
             </p>
           </section>
 
           <section>
             <h2 className="text-2xl font-black tracking-tight">Görseller</h2>
             <p className="mt-3">
-              Haricî bir kapak görseli kullanıldığında alternatif metin, kaynak
-              ve kullanım hakkı bilgileri birlikte tutulur. Bu bilgiler yoksa
-              görsel yayın kalite kontrolünden geçmez.
+              Bir kapak görseli kullanıldığında alternatif metin, kaynak ve
+              kullanım hakkı bilgileri birlikte tutulur. Bu bilgiler yoksa görsel
+              yayın kalite kontrolünden geçmez.
             </p>
           </section>
 
