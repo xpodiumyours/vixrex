@@ -1,0 +1,331 @@
+name: Masaustu finalize temp
+on:
+  push:
+    branches: [fix/masaustu-vitrin-duzeni]
+permissions:
+  contents: write
+jobs:
+  finalize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      BASE_SHA: eb14f17c4d9be5d2d6b62d7665ad67c8ea9165ce
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: public_web/package-lock.json
+
+      - name: VitrinProfileView dosyasını base'den geri kur ve yalnız 1-6 değişikliklerini uygula
+        shell: python
+        run: |
+          from pathlib import Path
+          import subprocess
+
+          path = Path('public_web/src/app/v/[slug]/VitrinProfileView.tsx')
+          base = subprocess.check_output(
+              ['git', 'show', f"{Path.cwd().joinpath('.').as_posix() and '${{ env.BASE_SHA }}'}:{path.as_posix()}"],
+              text=True,
+              encoding='utf-8'
+          )
+
+          def one(old, new, label):
+              global base
+              count = base.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: beklenen 1 eşleşme, bulunan {count}')
+              base = base.replace(old, new, 1)
+
+          one(
+              'className={`relative w-full min-h-[380px] sm:min-h-[440px] flex items-end overflow-hidden ${isPreviewMode ? "pt-9 lg:pt-0" : ""} ${ownerMode ? "lg:min-h-[300px]" : ""}`}',
+              'className={`relative w-full min-h-[380px] sm:min-h-[440px] flex items-end overflow-hidden ${isPreviewMode ? "pt-9 lg:pt-0" : ""} ${ownerMode ? "lg:min-h-[66vh]" : "lg:min-h-[72vh]"}`}',
+              'hero yükseklik'
+          )
+          one(
+              '? "absolute inset-0 bg-cover bg-center"',
+              '? "absolute inset-0 bg-cover bg-center blur-[3px] scale-[1.06] lg:blur-none lg:scale-100"',
+              'hero görsel sınıfı'
+          )
+          one(
+              '''style={
+            heroImage
+              ? {
+                  backgroundImage: `url(${heroImage})`,
+                  filter: "blur(3px)",
+                  transform: "scale(1.06)",
+                }
+              : undefined
+          }''',
+              '''style={
+            heroImage
+              ? { backgroundImage: `url(${heroImage})` }
+              : undefined
+          }''',
+              'hero inline filtre'
+          )
+          one(
+              '''{/* Yazının okunması için alt tarafta güçlü karartma. Eskiden üst
+              kısım neredeyse şeffaftı, başlık fotoğrafın detayına karışıyor
+              ve hiçbiri net görünmüyordu (Casper, 28 Ağustos). */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] via-[#0B1120]/94 to-[#0B1120]/62" />''',
+              '''{/* Mobilde 28 Ağustos'taki okunurluk koruması aynen sürer.
+              Masaüstünde kapak net; karartma yalnız metnin bulunduğu sol-alt
+              bölgede yoğunlaşır ve fotoğrafın geri kalanını açık bırakır. */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] via-[#0B1120]/94 to-[#0B1120]/62 lg:hidden" />
+          <div
+            className="absolute inset-0 hidden lg:block"
+            style={{
+              background:
+                "linear-gradient(to top, rgba(11,17,32,0.94) 0%, rgba(11,17,32,0.38) 44%, rgba(11,17,32,0) 72%), linear-gradient(to right, rgba(11,17,32,0.93) 0%, rgba(11,17,32,0.68) 34%, rgba(11,17,32,0.12) 62%, rgba(11,17,32,0) 78%)",
+            }}
+          />''',
+              'hero masaüstü karartma'
+          )
+          one(
+              'className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-10 grid md:grid-cols-[1fr_auto] gap-6 items-end"',
+              'className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-10 grid md:grid-cols-[1fr_auto] gap-6 items-end lg:flex lg:justify-start lg:gap-12"',
+              'hero yerleşim'
+          )
+          one(
+              '<div className="max-w-2xl">',
+              '<div className="max-w-2xl lg:w-[min(720px,62vw)] lg:max-w-[720px]">',
+              'hero metin genişliği'
+          )
+          one(
+              'className="text-slate-300 text-sm sm:text-base max-w-xl mb-4 leading-relaxed line-clamp-2"',
+              'className="text-slate-300 text-sm sm:text-base max-w-xl mb-4 leading-relaxed line-clamp-2 lg:line-clamp-4 lg:max-w-2xl"',
+              'açıklama satırı'
+          )
+          one(
+              'className="flex flex-col sm:flex-row md:flex-col gap-3 min-w-[200px]"',
+              'className="flex flex-col sm:flex-row md:flex-col gap-3 min-w-[200px] lg:w-[260px] lg:min-w-0"',
+              'hero düğmeleri'
+          )
+          one(
+              'className="max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-12" id="kategoriler"',
+              'className="max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-12 lg:max-w-none lg:px-[max(2rem,calc((100vw-80rem)/2+2rem))] lg:py-16 lg:bg-[#111C33]/35" id="kategoriler"',
+              'kategori bölüm zemini'
+          )
+          one(
+              'className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"',
+              'className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-[repeat(auto-fit,minmax(12rem,1fr))] gap-4"',
+              'kategori responsive grid'
+          )
+          one(
+              'className="max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-12" id="sss"',
+              'className="max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-12 lg:max-w-none lg:px-[max(2rem,calc((100vw-80rem)/2+2rem))] lg:py-20 lg:bg-[#16223D]/25" id="sss"',
+              'sss bölüm zemini'
+          )
+          one(
+              'className="grid lg:grid-cols-[0.9fr_1.1fr] gap-8 items-start"',
+              'className="grid lg:grid-cols-[0.72fr_1.28fr] gap-8 items-start"',
+              'sss iç düzen'
+          )
+
+          path.write_text(base, encoding='utf-8')
+
+      - name: Diff kapsamı kontrolü
+        run: |
+          git diff --check
+          git diff -- public_web/src/app/v/'[slug]'/VitrinProfileView.tsx
+
+      - name: Bağımlılıklar
+        working-directory: public_web
+        run: npm ci
+
+      - name: Test
+        working-directory: public_web
+        run: npm run test
+
+      - name: Lint
+        working-directory: public_web
+        run: npm run lint
+
+      - name: Build
+        working-directory: public_web
+        run: npm run build
+
+      - name: Chromium
+        working-directory: public_web
+        run: npx playwright install --with-deps chromium
+
+      - name: Önce/sonra görsel çalışma alanlarını hazırla
+        shell: bash
+        run: |
+          set -euo pipefail
+          git worktree add /tmp/vixrex-before "$BASE_SHA"
+          mkdir -p /tmp/vixrex-before/public_web/src/app/__visual
+          mkdir -p public_web/src/app/__visual
+          cat > /tmp/visual-page.tsx <<'EOF'
+          import VitrinProfileView from "../v/[slug]/VitrinProfileView";
+          import OwnerAssistantPanel from "../v/[slug]/OwnerAssistantPanel";
+
+          export const dynamic = "force-dynamic";
+
+          const temel = {
+            storeName: "Vixrex Örnek Mağaza",
+            storeSlug: "vixrex-ornek-magaza",
+            kategori: "Giyim",
+            businessType: null,
+            status: "Açık",
+            isClosed: false,
+            logoUrl: null,
+            heroImage: "/images/vixrex_mascot.webp",
+            heroBadge: "Yerel işletme",
+            isBusinessVerified: true,
+            description: "Mahallenize yakın, seçili ürünleri ve güncel hizmetleri tek vitrinde sunan örnek işletme açıklaması. Bu metin masaüstünde daha fazla satır görünürlüğünü ve rehber balonunun konumunu doğrulamak için yeterince uzundur.",
+            corporateBio: null,
+            address: "Bağdat Caddesi, Kadıköy / İstanbul",
+            phone: "+90 555 111 22 33",
+            phoneUrl: "tel:+905551112233",
+            email: "ornek@vixrex.com",
+            featuredBanner: null,
+            aboutSection: { kicker: "Biz kimiz?", title: "Hakkımızda", body: "Yerel müşterilerimize düzenli ve anlaşılır bir dijital vitrin sunuyoruz.", imageUrl: "", imageCaption: "", values: [] },
+            gallerySection: null,
+            faqItems: [{ id: "1", question: "Nasıl ulaşırım?", answer: "İletişim bölümünden yol tarifi alabilirsiniz." }],
+            showStorefrontRating: true,
+            ratingScore: 4.8,
+            reviewCount: 126,
+            workingHoursToday: "09:00–20:00",
+            workingHoursWeek: [],
+            googleBusinessLink: null,
+            publicUrl: "https://www.vixrex.com/v/vixrex-ornek-magaza",
+            whatsappUrl: "https://wa.me/905551112233",
+            instagramUrl: null,
+            websiteUrl: "https://www.vixrex.com",
+            mapsUrl: "https://maps.google.com",
+            mapsEmbedUrl: null,
+            referencesUrl: null,
+            isBookingEnabled: false,
+            profile: { id: "giyim", label: "Giyim", family: "product" as const, sectionTitle: "Ürünler", ctaLabel: "Ürün Sor", primaryActions: ["whatsapp", "maps"] },
+            productCount: 6,
+            sectionVisibility: null,
+            heroLocationText: "Kadıköy, İstanbul",
+            mapLabel: "Mağaza konumu",
+            provinceName: "İstanbul",
+            districtName: "Kadıköy",
+            neighborhoodName: null,
+            categorySectionTitle: null,
+            productSectionTitle: null,
+            galleryActionLabel: null,
+            galleryActionHref: null,
+            blogSectionKicker: null,
+            blogSectionTitle: null,
+            faqSectionKicker: null,
+            faqSectionTitle: null,
+            faqSectionDescription: null,
+            galleryItems: [],
+            marketplaceLinks: [],
+            articles: [],
+          };
+
+          export default async function VisualPage({ searchParams }: { searchParams: Promise<{ owner?: string; cats?: string }> }) {
+            const q = await searchParams;
+            const owner = q.owner === "1";
+            const count = Math.max(2, Math.min(5, Number(q.cats || 3)));
+            const collections = Array.from({ length: count }, (_, i) => ({ name: ["Elbise", "Ayakkabı", "Aksesuar", "Çanta", "Yeni Sezon"][i], count: i + 2 }));
+            const draftData = {
+              name: temel.storeName,
+              category: temel.kategori,
+              description: temel.description,
+              address: temel.address,
+              phone: temel.phone,
+              whatsapp: "905551112233",
+              province_name: "İstanbul",
+              district_name: "Kadıköy",
+              hero_image_url: temel.heroImage,
+              hero_location_text: temel.heroLocationText,
+              is_published: false,
+            };
+            return <>
+              <VitrinProfileView
+                {...temel}
+                collections={collections}
+                catalog={<div className="grid grid-cols-3 gap-4"><div className="h-40 rounded-2xl border border-blue-500/15 bg-slate-900/60"/><div className="h-40 rounded-2xl border border-blue-500/15 bg-slate-900/60"/><div className="h-40 rounded-2xl border border-blue-500/15 bg-slate-900/60"/></div>}
+                ownerMode={owner}
+                ownerDraft={owner ? draftData : undefined}
+              />
+              {owner ? <OwnerAssistantPanel slug={temel.storeSlug} draftData={draftData} flowState={{ current_step: "editing" }} campaignBanner={null} /> : null}
+            </>;
+          }
+          EOF
+          cp /tmp/visual-page.tsx /tmp/vixrex-before/public_web/src/app/__visual/page.tsx
+          cp /tmp/visual-page.tsx public_web/src/app/__visual/page.tsx
+          ln -s "$GITHUB_WORKSPACE/public_web/node_modules" /tmp/vixrex-before/public_web/node_modules
+
+      - name: Görselleri al ve kategori 2/3/4/5 doğrula
+        shell: bash
+        working-directory: public_web
+        run: |
+          set -euo pipefail
+          mkdir -p "$GITHUB_WORKSPACE/screenshots"
+          cat > /tmp/capture.cjs <<'EOF'
+          const { chromium } = require(process.env.PW_MODULE);
+          const fs = require('fs');
+          (async () => {
+            const browser = await chromium.launch({headless:true});
+            const page = await browser.newPage({viewport:{width:1920,height:1080}});
+            const base = process.env.BASE_URL;
+            const prefix = process.env.PREFIX;
+            await page.goto(`${base}/__visual?cats=3`, {waitUntil:'networkidle'});
+            await page.screenshot({path:`${process.env.OUT}/${prefix}-musteri-1920x1080.png`, fullPage:false});
+            await page.goto(`${base}/__visual?owner=1&cats=3`, {waitUntil:'networkidle'});
+            const target = page.locator('[data-vixrex-editable="kisaTanitim"]');
+            if (await target.count()) { await target.first().click({force:true}); await page.waitForTimeout(700); }
+            await page.screenshot({path:`${process.env.OUT}/${prefix}-sahiplik-1920x1080.png`, fullPage:false});
+            const counts = {};
+            for (const n of [2,3,4,5]) {
+              await page.goto(`${base}/__visual?cats=${n}`, {waitUntil:'networkidle'});
+              const info = await page.locator('#kategoriler > div.grid').evaluate((el) => ({
+                columns: getComputedStyle(el).gridTemplateColumns.split(' ').filter(Boolean).length,
+                cards: el.children.length,
+              }));
+              counts[n] = info;
+              if (prefix === 'sonra' && (info.cards !== n || info.columns !== n)) throw new Error(`kategori ${n}: ${JSON.stringify(info)}`);
+            }
+            fs.writeFileSync(`${process.env.OUT}/${prefix}-kategori-dogrulama.json`, JSON.stringify(counts,null,2));
+            await browser.close();
+          })().catch(e => { console.error(e); process.exit(1); });
+          EOF
+
+          export PW_MODULE="$GITHUB_WORKSPACE/public_web/node_modules/@playwright/test"
+          export OUT="$GITHUB_WORKSPACE/screenshots"
+
+          (cd /tmp/vixrex-before/public_web && npm run dev -- --hostname 127.0.0.1 --port 3000 > /tmp/before.log 2>&1 & echo $! > /tmp/before.pid)
+          for i in $(seq 1 60); do curl -fsS http://127.0.0.1:3000/__visual >/dev/null && break; sleep 1; done
+          BASE_URL=http://127.0.0.1:3000 PREFIX=once node /tmp/capture.cjs
+          kill $(cat /tmp/before.pid) || true
+
+          (npm run dev -- --hostname 127.0.0.1 --port 3001 > /tmp/after.log 2>&1 & echo $! > /tmp/after.pid)
+          for i in $(seq 1 60); do curl -fsS http://127.0.0.1:3001/__visual >/dev/null && break; sleep 1; done
+          BASE_URL=http://127.0.0.1:3001 PREFIX=sonra node /tmp/capture.cjs
+          kill $(cat /tmp/after.pid) || true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: masaustu-vitrin-once-sonra
+          path: screenshots/
+          if-no-files-found: error
+
+      - name: Geçici dosyaları temizle, kaynak düzeltmesini push et
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf public_web/src/app/__visual
+          git rm .github/workflows/masaustu-finalize-temp.yml
+          git add -- public_web/src/app/v/'[slug]'/VitrinProfileView.tsx
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix: masaüstü vitrin diffini dokuz maddeyle sınırla'
+          git push
