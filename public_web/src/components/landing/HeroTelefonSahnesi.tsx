@@ -1,33 +1,56 @@
 "use client";
 
+import { InstagramIkonu, WhatsAppIkonu } from "./MarkaIkonlari";
 import { PhoneMockup } from "./PhoneMockup";
 import type { MockupProfili } from "./mockupProfilleri";
 
 type CamKart = {
-  simge: string;
+  simge?: string;
+  Ikon?: (props: { className?: string }) => React.ReactElement;
   baslik: string;
   alt: string;
+  renk: string;
 };
 
 const SOL_KARTLAR: CamKart[] = [
-  { simge: "💬", baslik: "WhatsApp", alt: "ile kolay ulaşım" },
-  { simge: "📅", baslik: "Randevu", alt: "Randevuları topla" },
-  { simge: "🌐", baslik: "Tek Link", alt: "Her yerde paylaş" },
+  {
+    Ikon: WhatsAppIkonu,
+    baslik: "WhatsApp",
+    alt: "Tek tıkla iletişim",
+    renk: "bg-[#25D366] text-white",
+  },
+  {
+    Ikon: InstagramIkonu,
+    baslik: "Instagram",
+    alt: "Sosyal medyada sizi keşfetsinler",
+    renk: "bg-gradient-to-br from-[#F58529] via-[#DD2A7B] to-[#8134AF] text-white",
+  },
 ];
 
 const SAG_KARTLAR: CamKart[] = [
-  { simge: "📷", baslik: "Sosyal Medya", alt: "Profilleri ekle" },
-  { simge: "📍", baslik: "Google İşletme", alt: "Daha fazla müşteri" },
-  { simge: "🔳", baslik: "QR Kod", alt: "Dükkanda kullan" },
+  {
+    simge: "📅",
+    baslik: "Randevu",
+    alt: "Kolay randevu oluşturun",
+    renk: "bg-[#FF4D6D]/25",
+  },
+  {
+    simge: "🌐",
+    baslik: "Link ve QR",
+    alt: "Paylaşması kolay",
+    renk: "bg-lp-primary/30",
+  },
 ];
 
 function CamKartGorunumu({ kart }: { kart: CamKart }) {
   return (
-    <div className="flex items-center gap-2.5 rounded-[20px] border border-white/[0.12] bg-white/[0.07] px-3.5 py-2.5 shadow-[0_8px_24px_rgba(0,0,0,0.35)] backdrop-blur-[12px]">
-      <span className="flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-full bg-lp-primary/25 text-[17px]">
-        {kart.simge}
+    <div className="flex w-[178px] items-center gap-2.5 rounded-[20px] border border-white/[0.12] bg-white/[0.07] px-3.5 py-2.5 shadow-[0_8px_24px_rgba(0,0,0,0.35)] backdrop-blur-[12px]">
+      <span
+        className={`flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-full text-[17px] ${kart.renk}`}
+      >
+        {kart.Ikon ? <kart.Ikon className="h-[17px] w-[17px]" /> : kart.simge}
       </span>
-      <span className="leading-tight">
+      <span className="min-w-0 leading-tight">
         <span className="block text-[12px] font-extrabold text-white">
           {kart.baslik}
         </span>
@@ -35,6 +58,45 @@ function CamKartGorunumu({ kart }: { kart: CamKart }) {
           {kart.alt}
         </span>
       </span>
+    </div>
+  );
+}
+
+function ElYazisiNot({ metin, yon }: { metin: string; yon: "sol" | "sag" }) {
+  const solTaraf = yon === "sol";
+  return (
+    <div
+      aria-hidden="true"
+      className={`hidden w-[168px] md:block ${solTaraf ? "text-left" : "text-right"}`}
+    >
+      <p
+        className={`text-[15px] font-bold italic leading-snug text-white/80 ${
+          solTaraf ? "-rotate-3" : "rotate-3"
+        }`}
+      >
+        {metin}
+      </p>
+      <svg
+        viewBox="0 0 120 58"
+        fill="none"
+        className={`mt-1.5 h-[50px] w-[108px] text-white/40 ${
+          solTaraf ? "" : "ml-auto -scale-x-100"
+        }`}
+      >
+        <path
+          d="M8 8 C 52 12, 88 26, 104 48"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+        />
+        <path
+          d="M94 36 L 106 50 L 88 52"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
     </div>
   );
 }
@@ -51,38 +113,58 @@ export function HeroTelefonSahnesi({
   onChatClose?: () => void;
 }) {
   return (
-    <div className="flex w-full justify-center md:h-lp-mockup-kutu md:w-[540px] md:shrink-0">
-      <div className="relative md:w-[540px]">
+    <div className="flex w-full justify-center md:h-lp-mockup-kutu md:w-[648px] md:shrink-0">
+      <div className="relative md:w-[648px]">
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 hidden md:block"
         >
           <div
             aria-hidden="true"
-            className="absolute left-1/2 top-1/2 h-[420px] w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full"
+            className="absolute left-1/2 top-1/2 h-[540px] w-[540px] -translate-x-1/2 -translate-y-1/2 rounded-full"
             style={{
               background:
-                "radial-gradient(closest-side, color-mix(in srgb, var(--color-lp-primary) 35%, transparent), transparent)",
+                "radial-gradient(closest-side, color-mix(in srgb, var(--color-lp-primary) 62%, transparent), color-mix(in srgb, var(--color-lp-primary) 18%, transparent) 62%, transparent)",
             }}
+          />
+          <div
+            aria-hidden="true"
+            className="absolute left-1/2 top-1/2 h-[380px] w-[380px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[40px]"
+            style={{
+              background:
+                "radial-gradient(closest-side, color-mix(in srgb, var(--color-lp-primary) 85%, transparent), transparent)",
+            }}
+          />
+          <div
+            aria-hidden="true"
+            className="absolute left-1/2 top-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-lp-primary/45 shadow-[0_0_60px_12px_color-mix(in_srgb,var(--color-lp-primary)_30%,transparent)]"
+          />
+          <div
+            aria-hidden="true"
+            className="absolute left-1/2 top-1/2 h-[610px] w-[610px] -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-lp-primary/25"
           />
         </div>
 
-        <div className="absolute left-0 top-[8%] z-20 hidden w-[168px] flex-col gap-4 md:flex">
-          {SOL_KARTLAR.map((kart) => (
-            <CamKartGorunumu key={kart.baslik} kart={kart} />
-          ))}
+        <div className="absolute left-0 top-[4%] z-20 hidden flex-col items-start gap-3 md:flex">
+          <CamKartGorunumu kart={SOL_KARTLAR[0]} />
+          <ElYazisiNot metin="Tüm bilgileriniz tek vitrinde" yon="sol" />
+          <CamKartGorunumu kart={SOL_KARTLAR[1]} />
         </div>
-        <div className="absolute right-0 top-[12%] z-20 hidden w-[168px] flex-col gap-4 md:flex">
-          {SAG_KARTLAR.map((kart) => (
-            <CamKartGorunumu key={kart.baslik} kart={kart} />
-          ))}
+
+        <div className="absolute right-0 top-[6%] z-20 hidden flex-col items-end gap-3 md:flex">
+          <CamKartGorunumu kart={SAG_KARTLAR[0]} />
+          <ElYazisiNot
+            metin="İşletmenizi daha fazla kişiye ulaştırın"
+            yon="sag"
+          />
+          <CamKartGorunumu kart={SAG_KARTLAR[1]} />
         </div>
 
         <div
           className={`relative z-10 mx-auto w-[325px] transition-transform duration-500 motion-reduce:transition-none motion-reduce:rotate-0 ${
             isChatOpen
-              ? "md:rotate-0 md:scale-[0.85]"
-              : "md:rotate-[8deg] md:scale-[0.85]"
+              ? "md:rotate-0 md:scale-[0.80]"
+              : "md:rotate-[8deg] md:scale-[0.80]"
           }`}
         >
           <div className="md:origin-top">
@@ -94,30 +176,6 @@ export function HeroTelefonSahnesi({
             />
           </div>
         </div>
-
-        {!isChatOpen && (
-          <div aria-hidden="true" className="absolute -bottom-2 right-0 z-20 hidden w-[228px] md:block">
-            <div className="rounded-[20px] border border-white/[0.12] bg-[#0B1426]/95 p-3.5 shadow-[0_12px_32px_rgba(0,0,0,0.5)]">
-              <p className="text-[12px] font-extrabold text-white">
-                Vixrex Asistan
-              </p>
-              <p className="mt-1 text-[12px] font-medium leading-snug text-white/70">
-                Merhaba! Vitrininle ilgili sana nasıl yardımcı olabilirim?
-              </p>
-              <div className="mt-2.5 flex items-center gap-2 rounded-xl bg-white/[0.07] px-3 py-2.5">
-                <span className="flex-1 text-[12px] font-semibold text-white/35">
-                  Bir mesaj yazın...
-                </span>
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-lp-primary text-[13px] text-white">
-                  ➤
-                </span>
-              </div>
-            </div>
-            <p className="mt-2 -rotate-6 text-right text-[13px] font-bold italic text-white/75">
-              Vixrex Asistan her zaman yanınızda 💙
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );

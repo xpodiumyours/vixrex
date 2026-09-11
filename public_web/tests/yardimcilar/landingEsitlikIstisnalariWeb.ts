@@ -320,35 +320,19 @@ export const LANDING_ESITLIK_ISTISNALARI_WEB: Istisna[] = [
     neden: HERO_REFERANS_DEKOR,
   },
   {
-    metin: "ile kolay ulaşım",
+    metin: "Tek tıkla iletişim",
     neden: HERO_REFERANS_DEKOR,
   },
   {
-    metin: "Randevuları topla",
+    metin: "Kolay randevu oluşturun",
     neden: HERO_REFERANS_DEKOR,
   },
   {
-    metin: "Her yerde paylaş",
+    metin: "Paylaşması kolay",
     neden: HERO_REFERANS_DEKOR,
   },
   {
-    metin: "Daha fazla müşteri",
-    neden: HERO_REFERANS_DEKOR,
-  },
-  {
-    metin: "Dükkanda kullan",
-    neden: HERO_REFERANS_DEKOR,
-  },
-  {
-    metin: "Merhaba! Vitrininle ilgili sana nasıl yardımcı olabilirim?",
-    neden: HERO_REFERANS_DEKOR,
-  },
-  {
-    metin: "Bir mesaj yazın...",
-    neden: HERO_REFERANS_DEKOR,
-  },
-  {
-    metin: "Vixrex Asistan her zaman yanınızda 💙",
+    metin: "İşletmenizi daha fazla kişiye ulaştırın",
     neden: HERO_REFERANS_DEKOR,
   },
 ];

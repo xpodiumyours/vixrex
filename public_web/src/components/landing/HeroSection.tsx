@@ -67,12 +67,6 @@ export function HeroSection({
           >
             Nasıl Çalışır?
           </Link>
-          <Link
-            href="/kesfet"
-            className="text-[14px] font-bold text-white/70 transition-colors hover:text-white"
-          >
-            Vitrinleri Keşfet
-          </Link>
         </div>
         <div className="flex items-center gap-2.5">
           {/* Vitrinleri Keşfet — Flutter: rounded-[14px], border lp-primary/45 */}
@@ -233,7 +227,7 @@ export function HeroSection({
           </ul>
         </div>
 
-        <div className="flex w-full justify-center">
+        <div className="flex w-full justify-center md:flex-1">
           <HeroTelefonSahnesi
             profiller={profiller}
             isChatOpen={isChatOpen}
