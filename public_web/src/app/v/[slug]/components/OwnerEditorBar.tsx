@@ -3,12 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 
 export interface OwnerEditorBarProps {
-  yuzde: number;
   kaydediliyor: boolean;
   panelAcik: boolean;
   yayinlaniyor: boolean;
   yasalOnayli: boolean;
-  yayinlanmamisDegisiklik: boolean;
   onOnizleme: () => void;
   onAyarlar: () => void;
   onYayinla: () => void;
@@ -16,12 +14,10 @@ export interface OwnerEditorBarProps {
 }
 
 export default function OwnerEditorBar({
-  yuzde,
   kaydediliyor,
   panelAcik,
   yayinlaniyor,
   yasalOnayli,
-  yayinlanmamisDegisiklik,
   onOnizleme,
   onAyarlar,
   onYayinla,
@@ -46,9 +42,7 @@ export default function OwnerEditorBar({
     ? "Kaydediliyor…"
     : sonKayit
       ? `Taslak kaydedildi ${sonKayit}`
-      : yayinlanmamisDegisiklik
-        ? "Yayınlanmamış değişiklik var"
-        : "Vitrin yayındaki hâliyle aynı";
+      : "Taslak hazır";
 
   return (
     <header
@@ -79,10 +73,6 @@ export default function OwnerEditorBar({
             }`}
           />
           {durumMetni}
-        </span>
-
-        <span className="rounded-full border border-white/10 px-3 py-1.5 text-[11px] font-semibold text-slate-300">
-          %{yuzde} hazır
         </span>
 
         <button

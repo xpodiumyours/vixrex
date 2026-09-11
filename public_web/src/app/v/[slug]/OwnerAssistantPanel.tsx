@@ -636,12 +636,10 @@ export default function OwnerAssistantPanel({
   return (
     <>
       <OwnerEditorBar
-        yuzde={rapor.yuzde}
         kaydediliyor={actions.kaydediliyor}
         panelAcik={acik}
         yayinlaniyor={actions.yayinlaniyor}
         yasalOnayli={yasalOnayli}
-        yayinlanmamisDegisiklik={yayinlanmamisDegisiklik}
         onOnizleme={() => setAcik((onceki) => !onceki)}
         onAyarlar={() => {
           setAcik(true);

@@ -183,7 +183,7 @@ export function ChatTopBar({ rapor, onKapat }: Props) {
               <p className="truncate text-[15px] font-black tracking-[-0.01em] text-white">
                 Vixrex Asistan
               </p>
-              <span className="hidden shrink-0 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2 py-0.5 text-[9px] font-bold text-emerald-300 sm:inline">
+              <span className="hidden shrink-0 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2 py-0.5 text-[9px] font-bold text-emerald-300 sm:inline lg:hidden">
                 Sahiplik modu
               </span>
             </div>
@@ -214,7 +214,7 @@ export function ChatTopBar({ rapor, onKapat }: Props) {
           <button
             type="button"
             onClick={kapat}
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-white/10 bg-white/[0.045] text-slate-300 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70"
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-white/10 bg-white/[0.045] text-slate-300 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 lg:hidden"
             aria-label="Asistanı kapat"
           >
             <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">

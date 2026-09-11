@@ -24,13 +24,19 @@ describe("sahiplik modu editör kabuğu", () => {
 
   it("çubuk panelin kendi durumundan besleniyor, ikinci durum sistemi yok", () => {
     expect(panel).toContain("<OwnerEditorBar");
-    expect(panel).toContain("yuzde={rapor.yuzde}");
     expect(panel).toContain("kaydediliyor={actions.kaydediliyor}");
     expect(panel).toContain("onYayinla={actions.yayinla}");
   });
 
   it("yasal onay yoksa çubuk yayınlamaz, paneli açar", () => {
     expect(bar).toContain("yasalOnayli ? onYayinla : onYasalOnayGerek");
+  });
+
+  it("masaüstünde bilgi iki yerde tekrarlanmaz", () => {
+    expect(bar).not.toContain("%{yuzde}");
+    expect(oku("../src/app/v/[slug]/components/ChatTopBar.tsx")).toContain(
+      "focus-visible:ring-sky-400/70 lg:hidden"
+    );
   });
 
   it("panel masaüstünde yüzen kutu değil, yerleşik sütun", () => {
