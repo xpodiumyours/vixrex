@@ -381,25 +381,6 @@ async function getOwnerCatalog(sessionToken: string): Promise<OwnerCatalogData |
   };
 }
 
-export interface HaftalikPerformans {
-  goruntuleme: number;
-  whatsapp_tiklama: number;
-  telefon_tiklama: number;
-  konum_tiklama: number;
-  en_cok_goruntulenen_urun: string | null;
-}
-
-/** Faz F (Tek Asistan planı): son 7 gün özeti — yalnız sahip oturumuyla. */
-async function getHaftalikPerformans(
-  sessionToken: string
-): Promise<HaftalikPerformans | null> {
-  const { data, error } = await supabase.rpc("get_haftalik_performans", {
-    p_session_token: sessionToken,
-  });
-  if (error || !data) return null;
-  return data as unknown as HaftalikPerformans;
-}
-
 export async function generateMetadata(props: PageProps): Promise<Metadata> {
   const params = await props.params;
   const ownerToken = (await cookies()).get(OWNER_SESSION_COOKIE)?.value;
@@ -476,7 +457,6 @@ export default async function StorePage(props: PageProps) {
   let ownerCatalog: OwnerCatalogData | null = null;
   let ownerTemplatePreview = false;
   let sessionExpiresAt: number | null = null;
-  let haftalikPerformans: HaftalikPerformans | null = null;
 
   if (isOwnerMode && ownerSession && ownerSessionCookie) {
     // RPC'ye çerez değil, paketin içinden çıkarılan gerçek token gider.
@@ -488,10 +468,6 @@ export default async function StorePage(props: PageProps) {
     } else {
       ownerCatalog = await getOwnerCatalog(ownerSession.sessionToken);
 
-      // Faz F: yalnız yayında olan vitrin için — sorgu boşuna gitmesin.
-      if (draft.draft_data?.is_published) {
-        haftalikPerformans = await getHaftalikPerformans(ownerSession.sessionToken);
-      }
       if (ownerSession) {
         try {
           const payloadPart = ownerSessionCookie.split(".")[0];
@@ -911,7 +887,6 @@ export default async function StorePage(props: PageProps) {
           sessionExpiresAt={sessionExpiresAt}
           assistantHandoff={assistantHandoff}
           isDemo={Boolean(store.is_demo)}
-          haftalikPerformans={haftalikPerformans}
         />
       ) : null}
     </>
