@@ -51,6 +51,8 @@
 
 
 :root {
+  --owner-bar-h: 64px;
+  --owner-rail-w: 460px;
   --lp-gutter: 24px;
   --lp-gutter-wide: 48px;
 }

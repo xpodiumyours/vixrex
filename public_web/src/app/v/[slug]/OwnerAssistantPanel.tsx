@@ -32,6 +32,7 @@ import { otomatikDeger } from "@/lib/otomatikVitrinIcerik";
 import { yonetimOnerileriUret } from "@/lib/yonetimOnerileri";
 import { supabase } from "@/lib/supabase";
 import { ensureAnonymousSession } from "@/lib/assistantConversation";
+import OwnerEditorBar from "./components/OwnerEditorBar";
 
 // Vixrex Asistan — sahip paneli (implementation_plan.md Commit 9;
 // yeniden dizilim Faz G3 (Tek Asistan planı), G3.1).
@@ -634,6 +635,25 @@ export default function OwnerAssistantPanel({
 
   return (
     <>
+      <OwnerEditorBar
+        yuzde={rapor.yuzde}
+        kaydediliyor={actions.kaydediliyor}
+        panelAcik={acik}
+        yayinlaniyor={actions.yayinlaniyor}
+        yasalOnayli={yasalOnayli}
+        yayinlanmamisDegisiklik={yayinlanmamisDegisiklik}
+        onOnizleme={() => setAcik((onceki) => !onceki)}
+        onAyarlar={() => {
+          setAcik(true);
+          setHaritaAcik((onceki) => !onceki);
+        }}
+        onYayinla={actions.yayinla}
+        onYasalOnayGerek={() => {
+          setAcik(true);
+          setHaritaAcik(false);
+        }}
+      />
+
       {/* Sayfada dolaşan rehber — panel açık ve bir alan seçiliyken,
        * hedef alanın üzerinde/yanında görünür (bkz. SpotlightGuide). */}
       {acik && !(!masaustu && haritaAcik) && (
@@ -667,7 +687,7 @@ export default function OwnerAssistantPanel({
           );
           setHaritaAcik(yeni && !yapilacakVar);
         }}
-        className="fixed bottom-5 right-5 z-[75] flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-3 text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transition"
+        className="fixed bottom-5 right-5 z-[75] flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-3 text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transition lg:hidden"
         aria-label="Vixrex Asistan"
         aria-expanded={acik}
       >
@@ -711,7 +731,7 @@ export default function OwnerAssistantPanel({
         // true olur (aşağı bkz. masaustuIlkAcilisRef). Başlık (ChatTopBar) +
         // SIRADA artık `haritaAcik`ten bağımsız, panel açıkken hep çizilir
         // (aşağıda). Mobil davranış hiç değişmedi.
-        <div className="fixed inset-x-3 bottom-24 z-[75] flex max-h-[calc(100vh-8rem)] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0B1120] shadow-2xl sm:inset-x-auto sm:inset-y-auto sm:top-9 sm:bottom-5 sm:right-5 sm:max-h-none sm:w-[460px]">
+        <div className="fixed inset-x-3 bottom-24 z-[75] flex max-h-[calc(100vh-8rem)] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0B1120] shadow-2xl sm:inset-x-auto sm:inset-y-auto sm:top-9 sm:bottom-5 sm:right-5 sm:max-h-none sm:w-[460px] lg:bottom-0 lg:right-0 lg:top-[var(--owner-bar-h)] lg:w-[var(--owner-rail-w)] lg:rounded-none lg:border-y-0 lg:border-r-0 lg:shadow-none">
           {/* 2026-09-03 (Casper'ın onayladığı "C" tasarımına sadakat, ikinci
            * tur): tuvalde maskot+"Vixrex Asistan"+%hazır başlığı ve SIRADA
            * listesi panel her açıldığında GÖRÜNÜRDÜ — "☰ Tüm alanlar" gibi

@@ -367,18 +367,22 @@ export default function VitrinProfileView({
     // kadar boşluk bırakılır.
     <div
       className={`min-h-screen bg-[#0B1120] text-[#F8FAFC] font-sans selection:bg-blue-500 selection:text-white${
-        ownerMode ? " pb-28" : ""
+        ownerMode
+          ? " pb-28 lg:pb-0 lg:pt-[var(--owner-bar-h)] lg:pr-[var(--owner-rail-w)]"
+          : ""
       }`}
     >
       {!ownerMode && !isPreviewMode && <VitrinViewTracker storeSlug={storeSlug} />}
       {isPreviewMode && (
-        <div className="fixed top-0 left-0 right-0 z-[60] h-9 bg-amber-500 text-[#0B1120] text-xs sm:text-sm font-bold flex items-center justify-center gap-2">
+        <div className="fixed top-0 left-0 right-0 z-[60] h-9 bg-amber-500 text-[#0B1120] text-xs sm:text-sm font-bold flex items-center justify-center gap-2 lg:hidden">
           Taslak önizleme — bu vitrin henüz yayında değil, müşteriler göremez.
         </div>
       )}
       {/* ===== NAVBAR ===== */}
       <nav
         className={`fixed left-0 right-0 z-50 h-[68px] bg-[#0B1120]/92 backdrop-blur-xl border-b border-blue-500/15 px-5 sm:px-8 flex items-center justify-between transition-all duration-300 ${
+          ownerMode ? "lg:right-[var(--owner-rail-w)] lg:top-[var(--owner-bar-h)]" : ""
+        } ${
           isPreviewMode ? "top-9" : "top-0"
         } ${
           kimlikGorunur
@@ -438,7 +442,7 @@ export default function VitrinProfileView({
       {/* ===== HERO ===== */}
       <section
         id="ust-bolum"
-        className={`relative w-full min-h-[380px] sm:min-h-[440px] flex items-end overflow-hidden ${isPreviewMode ? "pt-9" : ""}`}
+        className={`relative w-full min-h-[380px] sm:min-h-[440px] flex items-end overflow-hidden ${isPreviewMode ? "pt-9 lg:pt-0" : ""}`}
       >
         {/* Kapak yoksa SAHTE FOTOĞRAF BASILMAZ.
             Eskiden burada sabit bir Unsplash adresi vardı: kapak
