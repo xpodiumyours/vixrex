@@ -419,7 +419,6 @@ export default function VitrinProfileView({
           </span>
         </a>
 
-
         {/* Ust seritteki tek eylem WhatsApp. Ekranin ortasinda yuzen
             yesil balon kaldirildi: dokuz ekran goruntusunun sekizinde
             bir fiyatin ya da cumlenin uzerinde duruyordu. Isini bu
@@ -442,7 +441,7 @@ export default function VitrinProfileView({
       {/* ===== HERO ===== */}
       <section
         id="ust-bolum"
-        className={`relative w-full min-h-[380px] sm:min-h-[440px] flex items-end overflow-hidden ${isPreviewMode ? "pt-9 lg:pt-0" : ""} ${ownerMode ? "lg:min-h-[300px]" : ""}`}
+        className={`relative w-full min-h-[380px] sm:min-h-[440px] flex items-end overflow-hidden ${isPreviewMode ? "pt-9 lg:pt-0" : ""} ${ownerMode ? "lg:min-h-[66vh]" : "lg:min-h-[72vh]"}`}
       >
         {/* Kapak yoksa SAHTE FOTOĞRAF BASILMAZ.
             Eskiden burada sabit bir Unsplash adresi vardı: kapak
@@ -455,27 +454,30 @@ export default function VitrinProfileView({
           {...editableProps("kapakGorseli", ownerMode)}
           className={
             heroImage
-              ? "absolute inset-0 bg-cover bg-center"
+              ? "absolute inset-0 bg-cover bg-center blur-[3px] scale-[1.06] lg:blur-none lg:scale-100"
               : "absolute inset-0 bg-gradient-to-br from-[#111C33] via-[#0B1120] to-[#16223D]"
           }
           style={
             heroImage
-              ? {
-                  backgroundImage: `url(${heroImage})`,
-                  filter: "blur(3px)",
-                  transform: "scale(1.06)",
-                }
+              ? { backgroundImage: `url(${heroImage})` }
               : undefined
           }
         >
-          {/* Yazının okunması için alt tarafta güçlü karartma. Eskiden üst
-              kısım neredeyse şeffaftı, başlık fotoğrafın detayına karışıyor
-              ve hiçbiri net görünmüyordu (Casper, 28 Ağustos). */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] via-[#0B1120]/94 to-[#0B1120]/62" />
+          {/* Mobilde 28 Ağustos'taki okunurluk koruması aynen sürer.
+              Masaüstünde kapak net; karartma yalnız metnin bulunduğu sol-alt
+              bölgede yoğunlaşır ve fotoğrafın geri kalanını açık bırakır. */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] via-[#0B1120]/94 to-[#0B1120]/62 lg:hidden" />
+          <div
+            className="absolute inset-0 hidden lg:block"
+            style={{
+              background:
+                "linear-gradient(to top, rgba(11,17,32,0.94) 0%, rgba(11,17,32,0.38) 44%, rgba(11,17,32,0) 72%), linear-gradient(to right, rgba(11,17,32,0.93) 0%, rgba(11,17,32,0.68) 34%, rgba(11,17,32,0.12) 62%, rgba(11,17,32,0) 78%)",
+            }}
+          />
         </div>
 
-        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-10 grid md:grid-cols-[1fr_auto] gap-6 items-end">
-          <div className="max-w-2xl">
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-10 grid md:grid-cols-[1fr_auto] gap-6 items-end lg:flex lg:justify-start lg:gap-12">
+          <div className="max-w-2xl lg:w-[min(720px,62vw)] lg:max-w-[720px]">
             {/* Rozet şeridi artık yalnız DURUM taşıyor (açık/kapalı,
                 doğrulanmış). Kategori buradan kimlik satırına taşındı:
                 aynı kelime hem rozette hem altında yazınca sayfa
@@ -580,7 +582,7 @@ export default function VitrinProfileView({
             {description.trim() && (
               <p
                 {...editableProps("kisaTanitim", ownerMode)}
-                className="text-slate-300 text-sm sm:text-base max-w-xl mb-4 leading-relaxed line-clamp-2"
+                className="text-slate-300 text-sm sm:text-base max-w-xl mb-4 leading-relaxed line-clamp-2 lg:line-clamp-4 lg:max-w-2xl"
               >
                 {description}
               </p>
@@ -618,7 +620,7 @@ export default function VitrinProfileView({
           </div>
 
           {heroButonlari.length > 0 && (
-            <div className="flex flex-col sm:flex-row md:flex-col gap-3 min-w-[200px]">
+            <div className="flex flex-col sm:flex-row md:flex-col gap-3 min-w-[200px] lg:w-[260px] lg:min-w-0">
               {heroButonlari.map((buton, index) => (
                 <a
                   key={buton.anahtar}
@@ -659,7 +661,7 @@ export default function VitrinProfileView({
 
       {/* ===== CATEGORIES ===== */}
       {showCategories ? (
-        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-12" id="kategoriler" style={{ scrollMarginTop: "88px" }}>
+        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-12 lg:max-w-none lg:px-[max(2rem,calc((100vw-80rem)/2+2rem))] lg:py-16 lg:bg-[#111C33]/35" id="kategoriler" style={{ scrollMarginTop: "88px" }}>
           <div className="flex items-baseline justify-between mb-5 sm:mb-8">
             <h2 {...editableProps("kategoriBolumBaslik", ownerMode)} className="text-[26px] sm:text-4xl font-extrabold tracking-tight text-white">
               {categorySectionTitle || "Kategoriler"}
@@ -667,7 +669,7 @@ export default function VitrinProfileView({
             <a href="#urunler" className="text-sm font-semibold text-blue-400 hover:text-blue-300 transition">Tümünü gör →</a>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-[repeat(auto-fit,minmax(12rem,1fr))] gap-4">
             {collections.map((cat) => (
               <div
                 key={cat.name}
@@ -877,9 +879,6 @@ export default function VitrinProfileView({
               </h2>
             </div>
             {galleryActionLabel && galleryActionHref ? (
-              // Tek elemanda iki alan birden işaretlenemez (issue #215):
-              // görünen asıl metin galeriAksiyonMetni — href (galeriAksiyonLinki)
-              // panelin "Tüm alanlar" listesinden düzenlenmeye devam eder.
               <a
                 href={galleryActionHref}
                 {...editableProps("galeriAksiyonMetni", ownerMode)}
@@ -962,8 +961,8 @@ export default function VitrinProfileView({
 
       {/* ===== FAQ ===== */}
       {showFaq ? (
-        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-12" id="sss" style={{ scrollMarginTop: "88px" }}>
-          <div className="grid lg:grid-cols-[0.9fr_1.1fr] gap-8 items-start">
+        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-12 lg:max-w-none lg:px-[max(2rem,calc((100vw-80rem)/2+2rem))] lg:py-20 lg:bg-[#16223D]/25" id="sss" style={{ scrollMarginTop: "88px" }}>
+          <div className="grid lg:grid-cols-[0.72fr_1.28fr] gap-8 items-start">
             <div>
               <p {...editableProps("sssUstBaslik", ownerMode)} className="text-xs font-bold uppercase tracking-[0.18em] text-blue-400 mb-3">
                 {faqSectionKicker || "SSS"}
@@ -1000,7 +999,6 @@ export default function VitrinProfileView({
       {showContact ? (
       <div className="max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-12" id="iletisim" style={{ scrollMarginTop: "88px" }}>
         <div className="grid md:grid-cols-2 gap-6">
-          {/* Left Contact Panel */}
           <div className="relative overflow-hidden rounded-3xl bg-slate-900/60 border border-blue-500/15 backdrop-blur-xl p-8">
             <div className="flex items-center gap-3 text-lg font-bold text-white mb-6">
               <div className="w-9 h-9 rounded-xl bg-blue-500/15 border border-blue-500/20 flex items-center justify-center text-lg"><VitrinIkon ad="konum" className="h-5 w-5 text-blue-300" /></div>
@@ -1013,10 +1011,6 @@ export default function VitrinProfileView({
                   <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0"><VitrinIkon ad="ev" className="h-5 w-5 text-blue-300" /></div>
                   <div>
                     <h4 className="text-sm font-bold text-white">Adres</h4>
-                    {/* İki alan tek satırda: mapLabel varsa o görünür (tıklama
-                        haritaEtiketi'ni açar), yoksa adres görünür. Kullanıcı
-                        kararı 2026-08-17: bu satır haritaEtiketi'ni düzenler;
-                        adres kısayolu hero'daki adres satırına taşındı. */}
                     <p
                       {...editableProps("haritaEtiketi", ownerMode)}
                       className="text-xs text-slate-300 leading-relaxed mt-0.5"
@@ -1030,17 +1024,9 @@ export default function VitrinProfileView({
               {hasPhone && (
                 <div className="flex items-start gap-4 pb-4 border-b border-blue-500/10">
                   <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0"><VitrinIkon ad="telefon" className="h-5 w-5 text-blue-300" /></div>
-                  <div
-                    {...editableProps("telefon", ownerMode)}
-                  >
+                  <div {...editableProps("telefon", ownerMode)}>
                     <h4 className="text-sm font-bold text-white">Telefon</h4>
-                    <TrackedPhoneLink
-                      href={phoneUrl!}
-                      storeSlug={storeSlug}
-                      clickLocation="storefront_contact"
-                      trackingEnabled={!ownerMode && !isPreviewMode}
-                      className="text-xs font-semibold text-blue-400 hover:text-blue-300"
-                    >
+                    <TrackedPhoneLink href={phoneUrl!} storeSlug={storeSlug} clickLocation="storefront_contact" trackingEnabled={!ownerMode && !isPreviewMode} className="text-xs font-semibold text-blue-400 hover:text-blue-300">
                       {displayPhone}
                     </TrackedPhoneLink>
                   </div>
@@ -1052,16 +1038,7 @@ export default function VitrinProfileView({
                   <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0"><VitrinIkon ad="mesaj" className="h-5 w-5 text-blue-300" /></div>
                   <div>
                     <h4 className="text-sm font-bold text-white">WhatsApp</h4>
-                    <TrackedWhatsAppLink
-                      href={whatsappUrl}
-                      storeSlug={storeSlug}
-                      clickLocation="storefront_contact"
-                      trackingEnabled={!ownerMode && !isPreviewMode}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      {...editableProps("whatsapp", ownerMode)}
-                      className="text-xs font-semibold text-blue-400 hover:text-blue-300"
-                    >
+                    <TrackedWhatsAppLink href={whatsappUrl} storeSlug={storeSlug} clickLocation="storefront_contact" trackingEnabled={!ownerMode && !isPreviewMode} target="_blank" rel="noopener noreferrer" {...editableProps("whatsapp", ownerMode)} className="text-xs font-semibold text-blue-400 hover:text-blue-300">
                       WhatsApp&apos;tan İletişime Geç
                     </TrackedWhatsAppLink>
                   </div>
@@ -1071,13 +1048,9 @@ export default function VitrinProfileView({
               {displayEmail && (
                 <div className="flex items-start gap-4 pb-4 border-b border-blue-500/10">
                   <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0"><VitrinIkon ad="zarf" className="h-5 w-5 text-blue-300" /></div>
-                  <div
-                    {...editableProps("eposta", ownerMode)}
-                  >
+                  <div {...editableProps("eposta", ownerMode)}>
                     <h4 className="text-sm font-bold text-white">E-posta</h4>
-                    <a href={`mailto:${displayEmail}`} className="text-xs font-semibold text-blue-400 hover:text-blue-300">
-                      {displayEmail}
-                    </a>
+                    <a href={`mailto:${displayEmail}`} className="text-xs font-semibold text-blue-400 hover:text-blue-300">{displayEmail}</a>
                   </div>
                 </div>
               )}
@@ -1085,13 +1058,9 @@ export default function VitrinProfileView({
               {websiteUrl && (
                 <div className="flex items-start gap-4 pb-4 border-b border-blue-500/10">
                   <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0"><VitrinIkon ad="kure" className="h-5 w-5 text-blue-300" /></div>
-                  <div
-                    {...editableProps("website", ownerMode)}
-                  >
+                  <div {...editableProps("website", ownerMode)}>
                     <h4 className="text-sm font-bold text-white">Web Sitesi</h4>
-                    <a href={websiteUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-blue-400 hover:text-blue-300">
-                      {websiteUrl.replace(/^https?:\/\//i, "")}
-                    </a>
+                    <a href={websiteUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-blue-400 hover:text-blue-300">{websiteUrl.replace(/^https?:\/\//i, "")}</a>
                   </div>
                 </div>
               )}
@@ -1101,37 +1070,15 @@ export default function VitrinProfileView({
                   <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0"><VitrinIkon ad="saat" className="h-5 w-5 text-blue-300" /></div>
                   <div>
                     <h4 className="text-sm font-bold text-white">Çalışma Saatleri</h4>
-                    <p
-                      {...editableProps("calismaSaatleri", ownerMode)}
-                      className="text-xs text-slate-300 mt-0.5"
-                    >
-                      {workingHoursToday}
-                    </p>
+                    <p {...editableProps("calismaSaatleri", ownerMode)} className="text-xs text-slate-300 mt-0.5">{workingHoursToday}</p>
                     {workingHoursWeek.length > 0 && (
                       <details className="mt-2">
-                        <summary className="cursor-pointer list-none inline-flex items-center gap-1 text-xs font-semibold text-blue-400 hover:text-blue-300">
-                          Haftalık saatleri gör
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                            <path d="m6 9 6 6 6-6" />
-                          </svg>
-                        </summary>
+                        <summary className="cursor-pointer list-none inline-flex items-center gap-1 text-xs font-semibold text-blue-400 hover:text-blue-300">Haftalık saatleri gör<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="m6 9 6 6 6-6" /></svg></summary>
                         <div className="mt-3 grid grid-cols-[auto_1fr] gap-x-6 gap-y-1">
                           {workingHoursWeek.map((gun) => (
                             <div key={gun.day} className="contents">
-                              <span
-                                className={`text-xs ${gun.isToday ? "font-bold text-white" : "text-slate-400"}`}
-                              >
-                                {gun.day}
-                              </span>
-                              <span
-                                className={`text-xs text-right tabular-nums ${
-                                  gun.hours === "Kapalı"
-                                    ? "text-red-400/80"
-                                    : "text-slate-300"
-                                } ${gun.isToday ? "font-bold" : ""}`}
-                              >
-                                {gun.hours}
-                              </span>
+                              <span className={`text-xs ${gun.isToday ? "font-bold text-white" : "text-slate-400"}`}>{gun.day}</span>
+                              <span className={`text-xs text-right tabular-nums ${gun.hours === "Kapalı" ? "text-red-400/80" : "text-slate-300"} ${gun.isToday ? "font-bold" : ""}`}>{gun.hours}</span>
                             </div>
                           ))}
                         </div>
@@ -1152,17 +1099,7 @@ export default function VitrinProfileView({
                         const rawLower = String(link.url ?? "").trim().toLowerCase();
                         const hasDangerousScheme = /^(javascript|data|vbscript):/i.test(rawLower);
                         if (!href || hasDangerousScheme) return null;
-                        return (
-                          <a
-                            key={link.id || link.url || link.platform}
-                            href={href}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="block text-xs font-semibold text-blue-400 hover:text-blue-300"
-                          >
-                            {link.platform}
-                          </a>
-                        );
+                        return <a key={link.id || link.url || link.platform} href={href} target="_blank" rel="noopener noreferrer" className="block text-xs font-semibold text-blue-400 hover:text-blue-300">{link.platform}</a>;
                       })}
                     </div>
                   </div>
@@ -1172,79 +1109,28 @@ export default function VitrinProfileView({
               {googleBusinessLink && (
                 <div className="flex items-start gap-4 pb-4 border-b border-blue-500/10">
                   <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0"><VitrinIkon ad="bina" className="h-5 w-5 text-blue-300" /></div>
-                  <div>
-                    <h4 className="text-sm font-bold text-white">Google İşletme Profili</h4>
-                    <a href={googleBusinessLink} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-blue-400 hover:text-blue-300">
-                      {googleBusinessLink.replace(/^https?:\/\//i, "")}
-                    </a>
-                  </div>
+                  <div><h4 className="text-sm font-bold text-white">Google İşletme Profili</h4><a href={googleBusinessLink} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-blue-400 hover:text-blue-300">{googleBusinessLink.replace(/^https?:\/\//i, "")}</a></div>
                 </div>
               )}
 
               {referencesUrl && (
                 <div className="flex items-start gap-4">
                   <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0"><VitrinIkon ad="rehber" className="h-5 w-5 text-blue-300" /></div>
-                  <div>
-                    <h4 className="text-sm font-bold text-white">Referanslar</h4>
-                    <a
-                      href={referencesUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      {...editableProps("referansLinki", ownerMode)}
-                      className="text-xs font-semibold text-blue-400 hover:text-blue-300"
-                    >
-                      {referencesUrl.replace(/^https?:\/\//i, "")}
-                    </a>
-                  </div>
+                  <div><h4 className="text-sm font-bold text-white">Referanslar</h4><a href={referencesUrl} target="_blank" rel="noopener noreferrer" {...editableProps("referansLinki", ownerMode)} className="text-xs font-semibold text-blue-400 hover:text-blue-300">{referencesUrl.replace(/^https?:\/\//i, "")}</a></div>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Right Map Panel */}
           {(mapsEmbedUrl || mapsUrl) && (
           <div className="relative overflow-hidden rounded-3xl bg-slate-900/60 border border-blue-500/15 backdrop-blur-xl p-8 flex flex-col justify-between">
-            <div className="flex items-center gap-3 text-lg font-bold text-white mb-4">
-              <div className="w-9 h-9 rounded-xl bg-blue-500/15 border border-blue-500/20 flex items-center justify-center text-lg"><VitrinIkon ad="harita" className="h-5 w-5 text-blue-300" /></div>
-              Harita & Navigasyon
-            </div>
-
+            <div className="flex items-center gap-3 text-lg font-bold text-white mb-4"><div className="w-9 h-9 rounded-xl bg-blue-500/15 border border-blue-500/20 flex items-center justify-center text-lg"><VitrinIkon ad="harita" className="h-5 w-5 text-blue-300" /></div>Harita & Navigasyon</div>
             <div className="h-60 rounded-2xl overflow-hidden border border-blue-500/15 mb-4 relative">
-              {mapsEmbedUrl ? (
-                <iframe
-                  src={mapsEmbedUrl}
-                  width="100%"
-                  height="100%"
-                  style={{ border: 0, filter: "invert(90%) hue-rotate(180deg) contrast(0.85)" }}
-                  allowFullScreen
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-slate-800/60 text-slate-400 text-sm">
-                  <VitrinIkon ad="harita" className="mr-1 inline h-4 w-4 align-[-3px]" /> Konum bilgisi bulunamadı
-                </div>
-              )}
+              {mapsEmbedUrl ? <iframe src={mapsEmbedUrl} width="100%" height="100%" style={{ border: 0, filter: "invert(90%) hue-rotate(180deg) contrast(0.85)" }} allowFullScreen loading="lazy" referrerPolicy="no-referrer-when-downgrade" /> : <div className="w-full h-full flex items-center justify-center bg-slate-800/60 text-slate-400 text-sm"><VitrinIkon ad="harita" className="mr-1 inline h-4 w-4 align-[-3px]" /> Konum bilgisi bulunamadı</div>}
             </div>
-
             <div className="flex gap-3">
-              {mapsUrl && (
-                <TrackedDirectionsLink
-                  href={mapsUrl}
-                  storeSlug={storeSlug}
-                  clickLocation="storefront_contact"
-                  trackingEnabled={!ownerMode && !isPreviewMode}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  {...editableProps("haritaLinki", ownerMode)}
-                  className="flex-1 py-3 px-4 rounded-xl text-xs font-bold text-center bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md hover:shadow-blue-500/30 transition"
-                >
-                  <VitrinIkon ad="harita" className="mr-1 inline h-4 w-4 align-[-3px]" /> Yol Tarifi Al
-                </TrackedDirectionsLink>
-              )}
-              <a href={vcardHref} download={`${storeSlug}.vcf`} className="flex-1 py-3 px-4 rounded-xl text-xs font-bold text-center bg-white/5 border border-blue-500/20 text-white hover:bg-white/10 transition">
-                <VitrinIkon ad="cihaz" className="mr-1 inline h-4 w-4 align-[-3px]" /> Rehbere Ekle
-              </a>
+              {mapsUrl && <TrackedDirectionsLink href={mapsUrl} storeSlug={storeSlug} clickLocation="storefront_contact" trackingEnabled={!ownerMode && !isPreviewMode} target="_blank" rel="noopener noreferrer" {...editableProps("haritaLinki", ownerMode)} className="flex-1 py-3 px-4 rounded-xl text-xs font-bold text-center bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md hover:shadow-blue-500/30 transition"><VitrinIkon ad="harita" className="mr-1 inline h-4 w-4 align-[-3px]" /> Yol Tarifi Al</TrackedDirectionsLink>}
+              <a href={vcardHref} download={`${storeSlug}.vcf`} className="flex-1 py-3 px-4 rounded-xl text-xs font-bold text-center bg-white/5 border border-blue-500/20 text-white hover:bg-white/10 transition"><VitrinIkon ad="cihaz" className="mr-1 inline h-4 w-4 align-[-3px]" /> Rehbere Ekle</a>
             </div>
           </div>
           )}
@@ -1255,161 +1141,50 @@ export default function VitrinProfileView({
         <BolumIskeleti bolum="contact" taslak={ownerDraft} ownerMode={ownerMode} />
       )}
 
-      {/* ===== SHARE & QR SECTION =====
-          Sahip modunda (ownerMode) gösterilmez: taslak henüz yayında
-          değil, paylaşılacak bir şey yok — WhatsApp/Instagram/SMS
-          butonları düzenleme kancası da değil, gerçek dış linkler. Sahip
-          bunlara tıklarsa kendi WhatsApp'ına/Instagram'ına atılır, kafa
-          karıştırır (Casper, 2026-08-14 canlı ekran görüntüsü). Yayından
-          sonra normal ziyaretçi modunda tekrar görünür. */}
       {!ownerMode && (
       <div id="paylas" style={{ scrollMarginTop: "88px" }} className="max-w-7xl mx-auto px-6 sm:px-8 mb-16">
         <div className="relative overflow-hidden rounded-3xl bg-slate-900/60 border border-blue-500/15 backdrop-blur-xl p-8 sm:p-10">
-          <div className="flex items-center gap-3 mb-5 sm:mb-8">
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 flex items-center justify-center text-white shadow-lg shadow-blue-500/25">
-              <VitrinIkon ad="baglanti" className="h-5 w-5 text-blue-300" />
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-white">Vitrini Paylaş</h3>
-              <p className="text-xs text-slate-400 font-medium">Tek link, her yerde kolay paylaşım</p>
-            </div>
-          </div>
-
+          <div className="flex items-center gap-3 mb-5 sm:mb-8"><div className="w-11 h-11 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 flex items-center justify-center text-white shadow-lg shadow-blue-500/25"><VitrinIkon ad="baglanti" className="h-5 w-5 text-blue-300" /></div><div><h3 className="text-xl font-bold text-white">Vitrini Paylaş</h3><p className="text-xs text-slate-400 font-medium">Tek link, her yerde kolay paylaşım</p></div></div>
           <div className="grid min-w-0 lg:grid-cols-[auto_1fr] gap-8 items-center">
-            {/* QR Code */}
-            <div className="relative p-1 rounded-3xl bg-gradient-to-r from-blue-500/25 to-cyan-500/15 mx-auto">
-              <div className="bg-white p-5 rounded-2xl relative text-center">
-                <Image
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(publicUrl)}`}
-                  alt="QR Code"
-                  width={160}
-                  height={160}
-                  className="rounded-lg block"
-                />
-                <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-[#0B1120] border border-blue-500/30 text-blue-400 text-[11px] font-bold px-4 py-1 rounded-full whitespace-nowrap shadow-lg">
-                  Tara ve ziyaret et
-                </span>
-              </div>
-            </div>
-
-            {/* Share Links & URL Box */}
+            <div className="relative p-1 rounded-3xl bg-gradient-to-r from-blue-500/25 to-cyan-500/15 mx-auto"><div className="bg-white p-5 rounded-2xl relative text-center"><Image src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(publicUrl)}`} alt="QR Code" width={160} height={160} className="rounded-lg block" /><span className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-[#0B1120] border border-blue-500/30 text-blue-400 text-[11px] font-bold px-4 py-1 rounded-full whitespace-nowrap shadow-lg">Tara ve ziyaret et</span></div></div>
             <div className="space-y-5 min-w-0">
-              <div className="bg-slate-800/80 border border-blue-500/20 rounded-2xl p-4 flex items-center justify-between gap-4">
-                <span className="font-mono text-sm text-slate-300 truncate min-w-0 flex-1">{formattedUrlDisplay}</span>
-                <button
-                  onClick={handleCopyUrl}
-                  className="px-4 py-2 rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-400 text-xs font-bold hover:bg-blue-500/25 transition shrink-0"
-                >
-                  {copied ? "Kopyalandı!" : "Kopyala"}
-                </button>
-              </div>
-
+              <div className="bg-slate-800/80 border border-blue-500/20 rounded-2xl p-4 flex items-center justify-between gap-4"><span className="font-mono text-sm text-slate-300 truncate min-w-0 flex-1">{formattedUrlDisplay}</span><button onClick={handleCopyUrl} className="px-4 py-2 rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-400 text-xs font-bold hover:bg-blue-500/25 transition shrink-0">{copied ? "Kopyalandı!" : "Kopyala"}</button></div>
               <div className="h-px bg-gradient-to-r from-transparent via-blue-500/20 to-transparent" />
-
               <div className="text-xs font-bold uppercase tracking-wider text-slate-400">Sosyal Medyada Paylaş</div>
-
               <div className="grid min-w-0 grid-cols-2 sm:grid-cols-4 gap-3">
-                <a href={`https://api.whatsapp.com/send?text=${encodeURIComponent(publicUrl)}`} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-slate-800/60 border border-emerald-500/30 hover:border-emerald-500/60 hover:shadow-[0_8px_24px_rgba(34,197,94,0.15)] transition group">
-                  <WhatsAppIcon size={24} className="text-[#22C55E] group-hover:scale-110 transition duration-300" />
-                  <span className="text-xs font-bold text-slate-300 group-hover:text-white">WhatsApp</span>
-                </a>
-                <a href={instagramUrl || "#"} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-slate-800/60 border border-pink-500/30 hover:border-pink-500/60 hover:shadow-[0_8px_24px_rgba(236,72,153,0.15)] transition group">
-                  <InstagramIcon size={24} className="text-[#EC4899] group-hover:scale-110 transition duration-300" />
-                  <span className="text-xs font-bold text-slate-300 group-hover:text-white">Instagram</span>
-                </a>
-                <a href={`sms:?body=${encodeURIComponent(publicUrl)}`} className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-slate-800/60 border border-blue-500/30 hover:border-blue-500/60 transition group">
-                  <MessageIcon size={24} className="text-[#60A5FA] group-hover:scale-110 transition duration-300" />
-                  <span className="text-xs font-bold text-slate-300 group-hover:text-white">Mesaj</span>
-                </a>
-                <button onClick={handleCopyUrl} className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-slate-800/60 border border-amber-500/30 hover:border-amber-500/60 hover:shadow-[0_8px_24px_rgba(245,158,11,0.15)] transition group">
-                  <LinkIcon size={24} className="text-[#F59E0B] group-hover:scale-110 transition duration-300" />
-                  <span className="text-xs font-bold text-slate-300 group-hover:text-white">Link</span>
-                </button>
+                <a href={`https://api.whatsapp.com/send?text=${encodeURIComponent(publicUrl)}`} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-slate-800/60 border border-emerald-500/30 hover:border-emerald-500/60 hover:shadow-[0_8px_24px_rgba(34,197,94,0.15)] transition group"><WhatsAppIcon size={24} className="text-[#22C55E] group-hover:scale-110 transition duration-300" /><span className="text-xs font-bold text-slate-300 group-hover:text-white">WhatsApp</span></a>
+                <a href={instagramUrl || "#"} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-slate-800/60 border border-pink-500/30 hover:border-pink-500/60 hover:shadow-[0_8px_24px_rgba(236,72,153,0.15)] transition group"><InstagramIcon size={24} className="text-[#EC4899] group-hover:scale-110 transition duration-300" /><span className="text-xs font-bold text-slate-300 group-hover:text-white">Instagram</span></a>
+                <a href={`sms:?body=${encodeURIComponent(publicUrl)}`} className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-slate-800/60 border border-blue-500/30 hover:border-blue-500/60 transition group"><MessageIcon size={24} className="text-[#60A5FA] group-hover:scale-110 transition duration-300" /><span className="text-xs font-bold text-slate-300 group-hover:text-white">Mesaj</span></a>
+                <button onClick={handleCopyUrl} className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-slate-800/60 border border-amber-500/30 hover:border-amber-500/60 hover:shadow-[0_8px_24px_rgba(245,158,11,0.15)] transition group"><LinkIcon size={24} className="text-[#F59E0B] group-hover:scale-110 transition duration-300" /><span className="text-xs font-bold text-slate-300 group-hover:text-white">Link</span></button>
               </div>
             </div>
           </div>
-
-          <div className="mt-8 text-center text-xs font-medium text-slate-400">
-            <strong className="text-blue-500 font-extrabold tracking-widest">VIXREX</strong> ile oluşturuldu
-          </div>
+          <div className="mt-8 text-center text-xs font-medium text-slate-400"><strong className="text-blue-500 font-extrabold tracking-widest">VIXREX</strong> ile oluşturuldu</div>
         </div>
       </div>
       )}
 
-      {/* ===== KİRALA — yalnız hazır demo vitrinlerde =====
-          Hedef HTML'de bu bölüm vardı, gerçek vitrinde yoktu. İş modelinin
-          giriş kapısı burası: esnaf Google'dan hazır bir vitrine düşüyor,
-          beğeniyor, buradan kiralıyor.
-          Para ödeyen esnafın kendi vitrininde ÇIKMAZ — isDemo şartı bunun
-          içindir. */}
       {isDemo && (
-        <section
-          id="kirala" style={{ scrollMarginTop: "88px" }}
-          className="border-t border-blue-500/15 bg-gradient-to-b from-blue-950/30 to-transparent py-14"
-        >
+        <section id="kirala" style={{ scrollMarginTop: "88px" }} className="border-t border-blue-500/15 bg-gradient-to-b from-blue-950/30 to-transparent py-14">
           <div className="max-w-4xl mx-auto px-6 sm:px-8 text-center">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-400">
-              Kiralık vitrin standardı
-            </p>
-            <h2 className="mt-3 text-[26px] sm:text-4xl font-extrabold text-white">
-              Bu hazır {profile.label.toLowerCase()} vitrinini işletmenize göre
-              kişiselleştirin
-            </h2>
-            <p className="mt-3 text-sm text-slate-300 leading-relaxed">
-              Kiraladığınızda bu vitrin sizin olur: adınız, ürünleriniz,
-              fotoğraflarınız. Vixrex Asistan ile yazıya tıklayıp
-              değiştirirsiniz — kod bilmeniz gerekmez.
-            </p>
-
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-400">Kiralık vitrin standardı</p>
+            <h2 className="mt-3 text-[26px] sm:text-4xl font-extrabold text-white">Bu hazır {profile.label.toLowerCase()} vitrinini işletmenize göre kişiselleştirin</h2>
+            <p className="mt-3 text-sm text-slate-300 leading-relaxed">Kiraladığınızda bu vitrin sizin olur: adınız, ürünleriniz, fotoğraflarınız. Vixrex Asistan ile yazıya tıklayıp değiştirirsiniz — kod bilmeniz gerekmez.</p>
             <ul className="mt-6 grid gap-3 sm:grid-cols-3 text-left">
-              {[
-                `${profile.label} sektörüne özel hazır içerik ve görseller`,
-                "Her yazıyı, fotoğrafı ve bölümü değiştirme imkânı",
-                "İşletmenize özel paylaşım linki ve QR kod",
-              ].map((madde) => (
-                <li
-                  key={madde}
-                  className="rounded-xl border border-blue-500/15 bg-white/[0.03] px-4 py-3 text-xs leading-relaxed text-slate-300"
-                >
-                  {madde}
-                </li>
-              ))}
+              {[`${profile.label} sektörüne özel hazır içerik ve görseller`, "Her yazıyı, fotoğrafı ve bölümü değiştirme imkânı", "İşletmenize özel paylaşım linki ve QR kod"].map((madde) => <li key={madde} className="rounded-xl border border-blue-500/15 bg-white/[0.03] px-4 py-3 text-xs leading-relaxed text-slate-300">{madde}</li>)}
             </ul>
-
-            {/* Fiyat modeli (spec 2026-08-17): 14 gün ücretsiz deneme,
-                sonra aylık 299 TL. Ödeme tahsilatı (PayTR) ayrı bir
-                PR'dadır — bu bant fiyatı dürüstçe gösterir, kirala
-                akışının kendisi değişmez. Vitrindeki ürün fiyatları
-                örnek içeriktir, kira bedeli değildir. */}
             <div className="mt-8 inline-flex flex-col items-center rounded-2xl border border-blue-500/25 bg-[#0B1120] px-8 py-6">
-              <span className="text-3xl font-extrabold tracking-tight text-white">
-                Aylık 299 TL
-              </span>
-              <span className="mt-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                İlk 14 gün ücretsiz deneme
-              </span>
-              <a
-                href={`/rent-demo?slug=${encodeURIComponent(storeSlug)}`}
-                className="mt-4 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-3 text-sm font-bold text-white shadow-lg shadow-blue-500/25 transition hover:shadow-blue-500/40"
-              >
-                Bu vitrini kirala
-              </a>
-              <span className="mt-3 text-[11px] text-slate-400">
-                Hemen dene, kod bilmene gerek yok · Vitrindeki fiyatlar
-                örnek ürün fiyatlarıdır
-              </span>
+              <span className="text-3xl font-extrabold tracking-tight text-white">Aylık 299 TL</span>
+              <span className="mt-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400">İlk 14 gün ücretsiz deneme</span>
+              <a href={`/rent-demo?slug=${encodeURIComponent(storeSlug)}`} className="mt-4 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-3 text-sm font-bold text-white shadow-lg shadow-blue-500/25 transition hover:shadow-blue-500/40">Bu vitrini kirala</a>
+              <span className="mt-3 text-[11px] text-slate-400">Hemen dene, kod bilmene gerek yok · Vitrindeki fiyatlar örnek ürün fiyatlarıdır</span>
             </div>
           </div>
         </section>
       )}
 
-      {/* ===== FLOATING WHATSAPP (mobil) ===== */}
-
-      {/* ===== FOOTER ===== */}
       <footer className="border-t border-blue-500/15 py-10 text-center">
-        <div className="text-xl font-extrabold tracking-widest bg-gradient-to-r from-blue-500 to-blue-400 bg-clip-text text-transparent mb-2">
-          VIXREX
-        </div>
+        <div className="text-xl font-extrabold tracking-widest bg-gradient-to-r from-blue-500 to-blue-400 bg-clip-text text-transparent mb-2">VIXREX</div>
         <p className="text-xs text-slate-400">Bu vitrin Vixrex ile oluşturuldu · Dijital vitrinlerin yeni nesli</p>
       </footer>
     </div>
