@@ -6,7 +6,7 @@
   {"id":"whatsapp-gecersiz","anahtar":"whatsapp","girdi":"0212 555 44 33","ok":false,"hata":"Geçerli bir Türkiye cep telefonu numarası girin. Örn: 0555 123 45 67"},
   {"id":"telefon-gecerli","anahtar":"telefon","girdi":"0212 555 44 33","ok":true,"deger":"02125554433"},
   {"id":"telefon-temizle","anahtar":"telefon","girdi":"","ok":true,"deger":null},
-  {"id":"eposta-gecersiz","anahtar":"eposta","girdi":"deniz@","ok":false,"hata":"E-posta geçerli bir e-posta olmalı."},
+  {"id":"eposta-gecersiz","anahtar":"eposta","girdi":"deniz@","ok":false,"hata":"E-posta Adresi geçerli bir e-posta olmalı."},
   {"id":"eposta-gecerli","anahtar":"eposta","girdi":"info@denizteknik.com","ok":true,"deger":"info@denizteknik.com"},
   {"id":"adres-cok-kisa","anahtar":"adres","girdi":"Bağcılar","ok":false,"hata":"Adres çok kısa. Müşterinin seni bulabilmesi için sokak/cadde ve kapı numarası yaz. Örnek: Atatürk Cad. No:24"},
   {"id":"adres-eksik","anahtar":"adres","girdi":"Merkez İstanbul","ok":false,"hata":"Adres eksik görünüyor. Sokak/cadde adı veya kapı numarası ekle. Örnek: Atatürk Cad. No:24"},
@@ -15,7 +15,7 @@
   {"id":"kategori-alias","anahtar":"kategori","girdi":"telefon servis","ok":true,"deger":"Teknik Servis"},
   {"id":"kategori-gecersiz","anahtar":"kategori","girdi":"Mars Dükkanı","ok":false,"hata":"İşletme Kategorisi için geçersiz seçim."},
   {"id":"website-gecerli","anahtar":"website","girdi":"https://denizteknik.com","ok":true,"deger":"https://denizteknik.com"},
-  {"id":"website-capa-yasak","anahtar":"website","girdi":"#iletisim","ok":false,"hata":"Web Sitesi yalnız http veya https adresi olabilir."},
+  {"id":"website-capa-yasak","anahtar":"website","girdi":"#iletisim","ok":false,"hata":"İnternet Sitesi yalnız http veya https adresi olabilir."},
   {"id":"galeri-capa-serbest","anahtar":"galeriAksiyonLinki","girdi":"#urunler","ok":true,"deger":"#urunler"},
   {"id":"logo-capa-yasak","anahtar":"logo","girdi":"#logo","ok":false,"hata":"Logo yalnız http veya https adresi olabilir."},
   {"id":"enlem-alt-sinir","anahtar":"enlem","girdi":"-90","ok":true,"deger":-90},
@@ -23,5 +23,5 @@
   {"id":"boylam-ust-sinir","anahtar":"boylam","girdi":"180","ok":true,"deger":180},
   {"id":"boylam-tasiyor","anahtar":"boylam","girdi":"181","ok":false,"hata":"Konum — Boylam en fazla 180 olabilir."},
   {"id":"aciklama-temizle","anahtar":"kisaTanitim","girdi":"","ok":true,"deger":null},
-  {"id":"hero-rozet-max","anahtar":"heroRozet","girdi":"1234567890123456789012345678901234567890123456789012345678901","ok":false,"hata":"Hero Rozet Metni en fazla 60 karakter olabilir."}
+  {"id":"hero-rozet-max","anahtar":"heroRozet","girdi":"1234567890123456789012345678901234567890123456789012345678901","ok":false,"hata":"Üstteki Küçük Yazı en fazla 60 karakter olabilir."}
 ]

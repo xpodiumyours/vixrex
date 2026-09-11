@@ -49,7 +49,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
   ),
   VixrexNiyetAlan(
     anahtar: 'heroRozet',
-    etiket: 'Hero Rozet Metni',
+    etiket: 'Üstteki Küçük Yazı',
     tip: 'metin',
     kolon: 'hero_badge',
     bolum: 'hero',
@@ -62,6 +62,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
       'vurgu metni',
       'rozet metni',
       'badge',
+      'üstteki küçük yazı',
     ],
     ornekIfadeler: [
       'Rozeti \'Kadıköy\'ün En İyisi\' yap',
@@ -72,7 +73,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
   ),
   VixrexNiyetAlan(
     anahtar: 'kisaTanitim',
-    etiket: 'Kısa Tanıtım',
+    etiket: 'İşletme Tanıtımı',
     tip: 'uzunMetin',
     kolon: 'description',
     bolum: 'hero',
@@ -85,6 +86,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
       'hakkında kısa',
       'işletme açıklaması',
       'tanıtım yazısı',
+      'işletme tanıtımı',
     ],
     ornekIfadeler: [
       'Kısa tanıtımı {deger} yap',
@@ -95,7 +97,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
   ),
   VixrexNiyetAlan(
     anahtar: 'konumMetni',
-    etiket: 'Hero Konum Metni',
+    etiket: 'Üstteki Yer Yazısı',
     tip: 'metin',
     kolon: 'hero_location_text',
     bolum: 'hero',
@@ -107,6 +109,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
       'konum yazısı',
       'yer metni',
       'semt yazısı',
+      'üstteki yer yazısı',
     ],
     ornekIfadeler: [
       'Konum metnini \'Kadıköy, İstanbul\' yap',
@@ -140,7 +143,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
   ),
   VixrexNiyetAlan(
     anahtar: 'isletmeTuru',
-    etiket: 'İşletme Türü',
+    etiket: 'Alt Hizmet Tanımı',
     tip: 'metin',
     kolon: 'business_type',
     bolum: 'hero',
@@ -151,6 +154,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
       'iş türü',
       'dükkan türü',
       'çalışma alanı detayı',
+      'alt hizmet tanımı',
     ],
     ornekIfadeler: [
       'İşletme türünü \'Erkek Kuaförü\' yap',
@@ -181,7 +185,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
   ),
   VixrexNiyetAlan(
     anahtar: 'kapakGorseli',
-    etiket: 'Kapak / Hero Görseli',
+    etiket: 'Üstteki Büyük Fotoğraf',
     tip: 'gorsel',
     kolon: 'shelf_image_url',
     bolum: 'hero',
@@ -194,6 +198,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
       'kapak resmi',
       'vitrin fotoğrafı',
       'banner görseli',
+      'üstteki büyük fotoğraf',
     ],
     ornekIfadeler: [
       'Kapak görselini {deger} yap',
@@ -204,7 +209,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
   ),
   VixrexNiyetAlan(
     anahtar: 'whatsapp',
-    etiket: 'WhatsApp Numarası',
+    etiket: 'WhatsApp Hattı',
     tip: 'telefon',
     kolon: 'whatsapp',
     bolum: 'contact',
@@ -228,7 +233,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
   ),
   VixrexNiyetAlan(
     anahtar: 'telefon',
-    etiket: 'Telefon',
+    etiket: 'Arama Numarası',
     tip: 'telefon',
     kolon: 'phone',
     bolum: 'contact',
@@ -249,7 +254,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
   ),
   VixrexNiyetAlan(
     anahtar: 'eposta',
-    etiket: 'E-posta',
+    etiket: 'E-posta Adresi',
     tip: 'eposta',
     kolon: 'email',
     bolum: 'contact',
@@ -261,6 +266,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
       'e-mail',
       'elektronik posta',
       'mail adresi',
+      'e-posta adresi',
     ],
     ornekIfadeler: [
       'E-postamı {deger} yap',
@@ -270,7 +276,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
   ),
   VixrexNiyetAlan(
     anahtar: 'adres',
-    etiket: 'Açık Adres',
+    etiket: 'İşletme Adresi',
     tip: 'uzunMetin',
     kolon: 'address',
     bolum: 'contact',
@@ -293,7 +299,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
   ),
   VixrexNiyetAlan(
     anahtar: 'il',
-    etiket: 'İl',
+    etiket: 'Şehir',
     tip: 'metin',
     kolon: 'province_name',
     bolum: 'contact',
@@ -335,7 +341,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
   ),
   VixrexNiyetAlan(
     anahtar: 'haritaEtiketi',
-    etiket: 'Harita Kartı Etiketi',
+    etiket: 'Haritadaki Kısa Not',
     tip: 'metin',
     kolon: 'map_label',
     bolum: 'contact',
@@ -345,6 +351,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
       'harita notu',
       'harita kartı yazısı',
       'harita açıklaması',
+      'haritadaki kısa not',
     ],
     ornekIfadeler: [
       'Harita etiketini \'Çarşı içi, otopark var\' yap',
@@ -353,7 +360,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
   ),
   VixrexNiyetAlan(
     anahtar: 'calismaSaatleri',
-    etiket: 'Çalışma Saatleri',
+    etiket: 'Açılış Saatleri',
     tip: 'metin',
     kolon: 'working_hours',
     bolum: 'contact',
@@ -375,7 +382,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
   ),
   VixrexNiyetAlan(
     anahtar: 'instagram',
-    etiket: 'Instagram Kullanıcı Adı',
+    etiket: 'Instagram Adı',
     tip: 'metin',
     kolon: 'instagram',
     bolum: 'contact',
@@ -395,7 +402,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
   ),
   VixrexNiyetAlan(
     anahtar: 'website',
-    etiket: 'Web Sitesi',
+    etiket: 'İnternet Sitesi',
     tip: 'url',
     kolon: 'website',
     bolum: 'contact',
@@ -416,7 +423,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
   ),
   VixrexNiyetAlan(
     anahtar: 'haritaLinki',
-    etiket: 'Google İşletme / Harita Bağlantısı',
+    etiket: 'Harita Bağlantısı',
     tip: 'url',
     kolon: 'google_business_link',
     bolum: 'contact',
@@ -466,7 +473,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
   ),
   VixrexNiyetAlan(
     anahtar: 'kategoriBolumBaslik',
-    etiket: 'Kategori Bölümü Başlığı',
+    etiket: 'Vitrin Gruplarının Başlığı',
     tip: 'metin',
     kolon: 'category_section_title',
     bolum: 'categories',
@@ -475,6 +482,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
       'kategori başlığı',
       'kategori bölüm başlığı',
       'kategoriler başlığı',
+      'vitrin gruplarının başlığı',
     ],
     ornekIfadeler: [
       'Kategori başlığını {deger} yap',
@@ -483,7 +491,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
   ),
   VixrexNiyetAlan(
     anahtar: 'urunBolumBaslik',
-    etiket: 'Ürün Bölümü Başlığı',
+    etiket: 'Ürünlerin Başlığı',
     tip: 'metin',
     kolon: 'product_section_title',
     bolum: 'products',
@@ -501,7 +509,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
   ),
   VixrexNiyetAlan(
     anahtar: 'bantEtiket',
-    etiket: 'Kampanya Etiketi',
+    etiket: 'Fırsat Etiketi',
     tip: 'metin',
     kolon: 'featured_banner_label',
     bolum: 'featured',
@@ -511,6 +519,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
       'bant etiketi',
       'etiket',
       'kampanya rozeti',
+      'fırsat etiketi',
       'öne çıkan etiket',
     ],
     ornekIfadeler: [
@@ -520,7 +529,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
   ),
   VixrexNiyetAlan(
     anahtar: 'bantBaslik',
-    etiket: 'Kampanya Başlığı',
+    etiket: 'Fırsat Başlığı',
     tip: 'metin',
     kolon: 'featured_banner_title',
     bolum: 'featured',
@@ -530,6 +539,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
       'bant başlığı',
       'öne çıkan başlık',
       'kampanya adı',
+      'fırsat başlığı',
     ],
     ornekIfadeler: [
       'Kampanya başlığını {deger} yap',
@@ -538,7 +548,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
   ),
   VixrexNiyetAlan(
     anahtar: 'bantAciklama',
-    etiket: 'Kampanya Açıklaması',
+    etiket: 'Fırsat Açıklaması',
     tip: 'uzunMetin',
     kolon: 'featured_banner_description',
     bolum: 'featured',
@@ -548,6 +558,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
       'bant açıklaması',
       'kampanya detayı',
       'öne çıkan açıklama',
+      'fırsat açıklaması',
     ],
     ornekIfadeler: [
       'Kampanya açıklamasını {deger} yap',
@@ -556,7 +567,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
   ),
   VixrexNiyetAlan(
     anahtar: 'bantGorsel',
-    etiket: 'Kampanya Görseli',
+    etiket: 'Fırsat Fotoğrafı',
     tip: 'gorsel',
     kolon: 'featured_banner_image_url',
     bolum: 'featured',
@@ -567,6 +578,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
       'kampanya fotoğrafı',
       'öne çıkan görsel',
       'banner resmi',
+      'fırsat fotoğrafı',
     ],
     ornekIfadeler: [
       'Kampanya görselini {deger} yap',
@@ -575,7 +587,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
   ),
   VixrexNiyetAlan(
     anahtar: 'bantFiyat',
-    etiket: 'Kampanya Fiyat Metni',
+    etiket: 'Fırsat Fiyatı',
     tip: 'metin',
     kolon: 'featured_banner_price_text',
     bolum: 'featured',
@@ -585,6 +597,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
       'bant fiyatı',
       'fiyat metni',
       'kampanya fiyat yazısı',
+      'fırsat fiyatı',
     ],
     ornekIfadeler: [
       'Kampanya fiyatını \'499 TL\' yap',
@@ -593,7 +606,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
   ),
   VixrexNiyetAlan(
     anahtar: 'hakkindaUstBaslik',
-    etiket: 'Hakkımızda Üst Başlık',
+    etiket: 'Hakkımızda Küçük Başlık',
     tip: 'metin',
     kolon: 'about_kicker',
     bolum: 'about',
@@ -603,6 +616,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
       'hakkında üst yazı',
       'about kicker',
       'üst başlık hakkında',
+      'hakkımızda küçük başlık',
     ],
     ornekIfadeler: [
       'Hakkımızda üst başlığı {deger} yap',
@@ -611,7 +625,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
   ),
   VixrexNiyetAlan(
     anahtar: 'hakkindaBaslik',
-    etiket: 'Hakkımızda Başlığı',
+    etiket: 'Hakkımızda Büyük Başlık',
     tip: 'metin',
     kolon: 'about_title',
     bolum: 'about',
@@ -621,6 +635,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
       'hakkında başlık',
       'biz kimiz başlığı',
       'hakkımızda başlık',
+      'hakkımızda büyük başlık',
     ],
     ornekIfadeler: [
       'Hakkımızda başlığını {deger} yap',
@@ -629,7 +644,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
   ),
   VixrexNiyetAlan(
     anahtar: 'hakkindaMetin',
-    etiket: 'Hakkımızda Yazısı',
+    etiket: 'İşletme Hikayesi',
     tip: 'uzunMetin',
     kolon: 'corporate_bio',
     bolum: 'about',
@@ -651,7 +666,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
   ),
   VixrexNiyetAlan(
     anahtar: 'hakkindaGorsel',
-    etiket: 'Hakkımızda Görseli',
+    etiket: 'İşletme Fotoğrafı',
     tip: 'gorsel',
     kolon: 'about_image_url',
     bolum: 'about',
@@ -663,6 +678,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
       'bizim fotoğraf',
       'ekip fotoğrafı',
       'dükkan fotoğrafı hakkında',
+      'işletme fotoğrafı',
     ],
     ornekIfadeler: [
       'Hakkımızda görselini {deger} yap',
@@ -671,7 +687,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
   ),
   VixrexNiyetAlan(
     anahtar: 'hakkindaGorselAlt',
-    etiket: 'Görsel Alt Yazısı',
+    etiket: 'Fotoğraf Alt Yazısı',
     tip: 'metin',
     kolon: 'about_image_caption',
     bolum: 'about',
@@ -689,12 +705,12 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
   ),
   VixrexNiyetAlan(
     anahtar: 'galeriUstBaslik',
-    etiket: 'Galeri Üst Başlık',
+    etiket: 'Galeri Küçük Başlık',
     tip: 'metin',
     kolon: 'gallery_section_kicker',
     bolum: 'gallery',
     beklenenVeriTipi: 'metin (max 40)',
-    esAnlamlar: ['galeri üst başlık', 'galeri kicker', 'galeri üst yazısı'],
+    esAnlamlar: ['galeri üst başlık', 'galeri kicker', 'galeri küçük başlık'],
     ornekIfadeler: [
       'Galeri üst başlığı {deger} yap',
       'Galeri kicker\'ı {deger} olarak değiştir',
@@ -702,7 +718,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
   ),
   VixrexNiyetAlan(
     anahtar: 'galeriBaslik',
-    etiket: 'Galeri Başlığı',
+    etiket: 'Galeri Büyük Başlık',
     tip: 'metin',
     kolon: 'gallery_section_title',
     bolum: 'gallery',
@@ -712,6 +728,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
       'galeri başlık',
       'fotoğraf galerisi başlığı',
       'resim galerisi başlığı',
+      'galeri büyük başlık',
     ],
     ornekIfadeler: [
       'Galeri başlığını {deger} yap',
@@ -720,7 +737,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
   ),
   VixrexNiyetAlan(
     anahtar: 'galeriAksiyonMetni',
-    etiket: 'Galeri Buton Metni',
+    etiket: 'Galeri Düğmesinin Yazısı',
     tip: 'metin',
     kolon: 'gallery_action_label',
     bolum: 'gallery',
@@ -730,6 +747,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
       'galeri buton yazısı',
       'galeri düğme metni',
       'galeri aksiyon metni',
+      'galeri düğmesinin yazısı',
     ],
     ornekIfadeler: [
       'Galeri buton metnini {deger} yap',
@@ -738,7 +756,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
   ),
   VixrexNiyetAlan(
     anahtar: 'galeriAksiyonLinki',
-    etiket: 'Galeri Buton Bağlantısı',
+    etiket: 'Galeri Düğmesinin Bağlantısı',
     tip: 'url',
     kolon: 'gallery_action_href',
     bolum: 'gallery',
@@ -748,6 +766,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
       'galeri bağlantısı',
       'galeri buton bağlantısı',
       'galeri linki',
+      'galeri düğmesinin bağlantısı',
     ],
     ornekIfadeler: [
       'Galeri buton linkini {deger} yap',
@@ -756,12 +775,12 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
   ),
   VixrexNiyetAlan(
     anahtar: 'blogUstBaslik',
-    etiket: 'Blog Üst Başlık',
+    etiket: 'Yazılar Küçük Başlık',
     tip: 'metin',
     kolon: 'blog_section_kicker',
     bolum: 'blog',
     beklenenVeriTipi: 'metin (max 40)',
-    esAnlamlar: ['blog üst başlık', 'yazılar üst başlık', 'blog kicker'],
+    esAnlamlar: ['blog üst başlık', 'yazılar üst başlık', 'yazılar küçük başlık'],
     ornekIfadeler: [
       'Blog üst başlığı {deger} yap',
       'Blog kicker\'ı {deger} olarak değiştir',
@@ -769,7 +788,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
   ),
   VixrexNiyetAlan(
     anahtar: 'blogBaslik',
-    etiket: 'Blog Bölüm Başlığı',
+    etiket: 'Yazıların Başlığı',
     tip: 'metin',
     kolon: 'blog_section_title',
     bolum: 'blog',
@@ -782,7 +801,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
   ),
   VixrexNiyetAlan(
     anahtar: 'sssUstBaslik',
-    etiket: 'SSS Üst Başlık',
+    etiket: 'Sorular Küçük Başlık',
     tip: 'metin',
     kolon: 'faq_section_kicker',
     bolum: 'faq',
@@ -792,6 +811,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
       'sss kicker',
       'sorular üst başlık',
       'sık sorulan sorular üst',
+      'sorular küçük başlık',
     ],
     ornekIfadeler: [
       'SSS üst başlığı {deger} yap',
@@ -800,7 +820,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
   ),
   VixrexNiyetAlan(
     anahtar: 'sssBaslik',
-    etiket: 'SSS Bölüm Başlığı',
+    etiket: 'Soruların Başlığı',
     tip: 'metin',
     kolon: 'faq_section_title',
     bolum: 'faq',
@@ -818,7 +838,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
   ),
   VixrexNiyetAlan(
     anahtar: 'sssAciklama',
-    etiket: 'SSS Bölüm Açıklaması',
+    etiket: 'Soruların Açıklaması',
     tip: 'uzunMetin',
     kolon: 'faq_section_description',
     bolum: 'faq',
@@ -836,7 +856,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
   ),
   VixrexNiyetAlan(
     anahtar: 'puanGoster',
-    etiket: 'Değerlendirme Puanını Göster',
+    etiket: 'Puan Görünsün',
     tip: 'acikKapali',
     kolon: 'show_storefront_rating',
     bolum: 'hero',
@@ -847,6 +867,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
       'puanı göster',
       'rating göster',
       'yıldız puanı göster',
+      'puan görünsün',
     ],
     ornekIfadeler: [
       'Puanı göster',
@@ -857,7 +878,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
   ),
   VixrexNiyetAlan(
     anahtar: 'yolTarifiGoster',
-    etiket: 'Yol Tarifi Butonunu Göster',
+    etiket: 'Yol Tarifi Düğmesi',
     tip: 'acikKapali',
     kolon: 'show_directions_link',
     bolum: 'contact',
@@ -869,6 +890,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
       'navigasyon göster',
       'yol tarifi',
       'yol tarifini',
+      'yol tarifi düğmesi',
     ],
     ornekIfadeler: [
       'Yol tarifini göster',
@@ -879,7 +901,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
   ),
   VixrexNiyetAlan(
     anahtar: 'referansLinki',
-    etiket: 'Referanslar Bağlantısı',
+    etiket: 'Referans Bağlantısı',
     tip: 'url',
     kolon: 'references_link',
     bolum: 'about',

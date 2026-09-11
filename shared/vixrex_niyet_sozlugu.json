@@ -10,7 +10,16 @@
       "kolon": "name",
       "bolum": "hero",
       "beklenenVeriTipi": "metin (2-60 karakter)",
-      "esAnlamlar": ["işletme adı", "dükkan adı", "mağaza adı", "firma adı", "iş yeri adı", "şirket adı", "marka adı", "isim"],
+      "esAnlamlar": [
+        "işletme adı",
+        "dükkan adı",
+        "mağaza adı",
+        "firma adı",
+        "iş yeri adı",
+        "şirket adı",
+        "marka adı",
+        "isim"
+      ],
       "ornekIfadeler": [
         "İşletme adını 'Aymira Giyim' yap",
         "Dükkan adını değiştir: {deger}",
@@ -20,12 +29,21 @@
     },
     {
       "anahtar": "heroRozet",
-      "etiket": "Hero Rozet Metni",
+      "etiket": "Üstteki Küçük Yazı",
       "tip": "metin",
       "kolon": "hero_badge",
       "bolum": "hero",
       "beklenenVeriTipi": "metin (0-60 karakter, kalite)",
-      "esAnlamlar": ["rozet", "hero rozet", "üst rozet", "küçük etiket", "vurgu metni", "rozet metni", "badge"],
+      "esAnlamlar": [
+        "rozet",
+        "hero rozet",
+        "üst rozet",
+        "küçük etiket",
+        "vurgu metni",
+        "rozet metni",
+        "badge",
+        "üstteki küçük yazı"
+      ],
       "ornekIfadeler": [
         "Rozeti 'Kadıköy'ün En İyisi' yap",
         "Hero rozetini {deger} olarak güncelle",
@@ -35,12 +53,21 @@
     },
     {
       "anahtar": "kisaTanitim",
-      "etiket": "Kısa Tanıtım",
+      "etiket": "İşletme Tanıtımı",
       "tip": "uzunMetin",
       "kolon": "description",
       "bolum": "hero",
       "beklenenVeriTipi": "uzunMetin (0-300 karakter)",
-      "esAnlamlar": ["kısa tanıtım", "tanıtım", "açıklama", "özet", "hakkında kısa", "işletme açıklaması", "tanıtım yazısı"],
+      "esAnlamlar": [
+        "kısa tanıtım",
+        "tanıtım",
+        "açıklama",
+        "özet",
+        "hakkında kısa",
+        "işletme açıklaması",
+        "tanıtım yazısı",
+        "işletme tanıtımı"
+      ],
       "ornekIfadeler": [
         "Kısa tanıtımı {deger} yap",
         "Açıklamayı ekle: {deger}",
@@ -50,12 +77,20 @@
     },
     {
       "anahtar": "konumMetni",
-      "etiket": "Hero Konum Metni",
+      "etiket": "Üstteki Yer Yazısı",
       "tip": "metin",
       "kolon": "hero_location_text",
       "bolum": "hero",
       "beklenenVeriTipi": "metin (0-60 karakter)",
-      "esAnlamlar": ["konum metni", "hero konum", "üst konum", "konum yazısı", "yer metni", "semt yazısı"],
+      "esAnlamlar": [
+        "konum metni",
+        "hero konum",
+        "üst konum",
+        "konum yazısı",
+        "yer metni",
+        "semt yazısı",
+        "üstteki yer yazısı"
+      ],
       "ornekIfadeler": [
         "Konum metnini 'Kadıköy, İstanbul' yap",
         "Hero konumunu {deger} olarak değiştir",
@@ -69,7 +104,15 @@
       "kolon": "kategori",
       "bolum": "hero",
       "beklenenVeriTipi": "secim (Giyim, Butik, Gıda, Fırın, Kozmetik, Dekorasyon, Elektronik, Kırtasiye, Kafe / Lokanta, Kuaför, Teknik Servis, Danışmanlık, Eğitim, Ev Temizlik, Spor / Fitness, Pet / Veteriner, Sağlık / Yaşam, Oto / Araç, Diğer)",
-      "esAnlamlar": ["kategori", "işletme kategorisi", "sektör", "faaliyet alanı", "iş kolu", "tür", "alan"],
+      "esAnlamlar": [
+        "kategori",
+        "işletme kategorisi",
+        "sektör",
+        "faaliyet alanı",
+        "iş kolu",
+        "tür",
+        "alan"
+      ],
       "ornekIfadeler": [
         "Kategorimi Kuaför yap",
         "Sektörümü {deger} olarak değiştir",
@@ -79,12 +122,19 @@
     },
     {
       "anahtar": "isletmeTuru",
-      "etiket": "İşletme Türü",
+      "etiket": "Alt Hizmet Tanımı",
       "tip": "metin",
       "kolon": "business_type",
       "bolum": "hero",
       "beklenenVeriTipi": "metin (0-40 karakter)",
-      "esAnlamlar": ["işletme türü", "firma türü", "iş türü", "dükkan türü", "çalışma alanı detayı"],
+      "esAnlamlar": [
+        "işletme türü",
+        "firma türü",
+        "iş türü",
+        "dükkan türü",
+        "çalışma alanı detayı",
+        "alt hizmet tanımı"
+      ],
       "ornekIfadeler": [
         "İşletme türünü 'Erkek Kuaförü' yap",
         "Türünü {deger} olarak güncelle",
@@ -98,7 +148,13 @@
       "kolon": "logo_url",
       "bolum": "hero",
       "beklenenVeriTipi": "gorsel (https URL, kalite)",
-      "esAnlamlar": ["logo", "marka logosu", "amblem", "kurumsal logo", "işletme logosu"],
+      "esAnlamlar": [
+        "logo",
+        "marka logosu",
+        "amblem",
+        "kurumsal logo",
+        "işletme logosu"
+      ],
       "ornekIfadeler": [
         "Logoyu {deger} yap",
         "Logo ekle: {deger}",
@@ -108,12 +164,21 @@
     },
     {
       "anahtar": "kapakGorseli",
-      "etiket": "Kapak / Hero Görseli",
+      "etiket": "Üstteki Büyük Fotoğraf",
       "tip": "gorsel",
       "kolon": "shelf_image_url",
       "bolum": "hero",
       "beklenenVeriTipi": "gorsel (https URL, kalite)",
-      "esAnlamlar": ["kapak görseli", "kapak fotoğrafı", "hero görseli", "üst görsel", "kapak resmi", "vitrin fotoğrafı", "banner görseli"],
+      "esAnlamlar": [
+        "kapak görseli",
+        "kapak fotoğrafı",
+        "hero görseli",
+        "üst görsel",
+        "kapak resmi",
+        "vitrin fotoğrafı",
+        "banner görseli",
+        "üstteki büyük fotoğraf"
+      ],
       "ornekIfadeler": [
         "Kapak görselini {deger} yap",
         "Kapak fotoğrafını değiştir {deger}",
@@ -123,12 +188,20 @@
     },
     {
       "anahtar": "whatsapp",
-      "etiket": "WhatsApp Numarası",
+      "etiket": "WhatsApp Hattı",
       "tip": "telefon",
       "kolon": "whatsapp",
       "bolum": "contact",
       "beklenenVeriTipi": "telefon (tr_mobil: 05xx xxx xx xx → 905xxxxxxxxx, zorunlu)",
-      "esAnlamlar": ["whatsapp", "whatsapp numarası", "cep numarası", "telefon whatsapp", "iletişim numarası", "gsm", "whatsapp hattı"],
+      "esAnlamlar": [
+        "whatsapp",
+        "whatsapp numarası",
+        "cep numarası",
+        "telefon whatsapp",
+        "iletişim numarası",
+        "gsm",
+        "whatsapp hattı"
+      ],
       "ornekIfadeler": [
         "WhatsApp numaramı 0555 123 45 67 yap",
         "WhatsApp'ı {deger} olarak güncelle",
@@ -138,12 +211,19 @@
     },
     {
       "anahtar": "telefon",
-      "etiket": "Telefon",
+      "etiket": "Arama Numarası",
       "tip": "telefon",
       "kolon": "phone",
       "bolum": "contact",
       "beklenenVeriTipi": "telefon (10-13 rakam)",
-      "esAnlamlar": ["telefon", "sabit telefon", "iş telefonu", "dükkan telefonu", "tel", "arama numarası"],
+      "esAnlamlar": [
+        "telefon",
+        "sabit telefon",
+        "iş telefonu",
+        "dükkan telefonu",
+        "tel",
+        "arama numarası"
+      ],
       "ornekIfadeler": [
         "Telefonu {deger} yap",
         "Sabit telefonumu {deger} olarak ekle",
@@ -152,12 +232,20 @@
     },
     {
       "anahtar": "eposta",
-      "etiket": "E-posta",
+      "etiket": "E-posta Adresi",
       "tip": "eposta",
       "kolon": "email",
       "bolum": "contact",
       "beklenenVeriTipi": "eposta (max 120, ornek@adres.com)",
-      "esAnlamlar": ["e-posta", "eposta", "mail", "e-mail", "elektronik posta", "mail adresi"],
+      "esAnlamlar": [
+        "e-posta",
+        "eposta",
+        "mail",
+        "e-mail",
+        "elektronik posta",
+        "mail adresi",
+        "e-posta adresi"
+      ],
       "ornekIfadeler": [
         "E-postamı {deger} yap",
         "Mail adresimi {deger} olarak güncelle",
@@ -166,12 +254,19 @@
     },
     {
       "anahtar": "adres",
-      "etiket": "Açık Adres",
+      "etiket": "İşletme Adresi",
       "tip": "uzunMetin",
       "kolon": "address",
       "bolum": "contact",
       "beklenenVeriTipi": "uzunMetin (zorunlu, max 200, en az sokak/cadde + numara, AddressValidator)",
-      "esAnlamlar": ["adres", "açık adres", "dükkan adresi", "iş yeri adresi", "konum adresi", "işletme adresi"],
+      "esAnlamlar": [
+        "adres",
+        "açık adres",
+        "dükkan adresi",
+        "iş yeri adresi",
+        "konum adresi",
+        "işletme adresi"
+      ],
       "ornekIfadeler": [
         "Adresimi 'Atatürk Cad. No:24' yap",
         "Açık adresi {deger} olarak değiştir",
@@ -181,12 +276,17 @@
     },
     {
       "anahtar": "il",
-      "etiket": "İl",
+      "etiket": "Şehir",
       "tip": "metin",
       "kolon": "province_name",
       "bolum": "contact",
       "beklenenVeriTipi": "metin (zorunlu, max 60)",
-      "esAnlamlar": ["il", "şehir", "kent", "bulunduğum il"],
+      "esAnlamlar": [
+        "il",
+        "şehir",
+        "kent",
+        "bulunduğum il"
+      ],
       "ornekIfadeler": [
         "İli İstanbul yap",
         "Şehrimi {deger} olarak değiştir",
@@ -200,7 +300,11 @@
       "kolon": "district_name",
       "bolum": "contact",
       "beklenenVeriTipi": "metin (zorunlu, max 60)",
-      "esAnlamlar": ["ilçe", "semt ilçesi", "ilçe adı"],
+      "esAnlamlar": [
+        "ilçe",
+        "semt ilçesi",
+        "ilçe adı"
+      ],
       "ornekIfadeler": [
         "İlçeyi Kadıköy yap",
         "İlçemi {deger} olarak güncelle",
@@ -214,7 +318,12 @@
       "kolon": "neighborhood_name",
       "bolum": "contact",
       "beklenenVeriTipi": "metin (max 60, kalite)",
-      "esAnlamlar": ["mahalle", "semt", "bölge", "mıntıka"],
+      "esAnlamlar": [
+        "mahalle",
+        "semt",
+        "bölge",
+        "mıntıka"
+      ],
       "ornekIfadeler": [
         "Mahalleyi Caddebostan yap",
         "Mahallemi {deger} olarak değiştir",
@@ -223,12 +332,18 @@
     },
     {
       "anahtar": "haritaEtiketi",
-      "etiket": "Harita Kartı Etiketi",
+      "etiket": "Haritadaki Kısa Not",
       "tip": "metin",
       "kolon": "map_label",
       "bolum": "contact",
       "beklenenVeriTipi": "metin (max 120)",
-      "esAnlamlar": ["harita etiketi", "harita notu", "harita kartı yazısı", "harita açıklaması"],
+      "esAnlamlar": [
+        "harita etiketi",
+        "harita notu",
+        "harita kartı yazısı",
+        "harita açıklaması",
+        "haritadaki kısa not"
+      ],
       "ornekIfadeler": [
         "Harita etiketini 'Çarşı içi, otopark var' yap",
         "Harita notunu {deger} olarak güncelle"
@@ -236,12 +351,19 @@
     },
     {
       "anahtar": "calismaSaatleri",
-      "etiket": "Çalışma Saatleri",
+      "etiket": "Açılış Saatleri",
       "tip": "metin",
       "kolon": "working_hours",
       "bolum": "contact",
       "beklenenVeriTipi": "metin (max 400, kalite)",
-      "esAnlamlar": ["çalışma saatleri", "açılış saatleri", "mesai saatleri", "açık olduğumuz saatler", "çalışma zamanı", "saatler"],
+      "esAnlamlar": [
+        "çalışma saatleri",
+        "açılış saatleri",
+        "mesai saatleri",
+        "açık olduğumuz saatler",
+        "çalışma zamanı",
+        "saatler"
+      ],
       "ornekIfadeler": [
         "Çalışma saatlerini '09:00-18:00' yap",
         "Saatleri {deger} olarak değiştir",
@@ -251,12 +373,18 @@
     },
     {
       "anahtar": "instagram",
-      "etiket": "Instagram Kullanıcı Adı",
+      "etiket": "Instagram Adı",
       "tip": "metin",
       "kolon": "instagram",
       "bolum": "contact",
       "beklenenVeriTipi": "metin (max 30, @ olmadan)",
-      "esAnlamlar": ["instagram", "insta", "instagram adı", "instagram kullanıcı adı", "ig"],
+      "esAnlamlar": [
+        "instagram",
+        "insta",
+        "instagram adı",
+        "instagram kullanıcı adı",
+        "ig"
+      ],
       "ornekIfadeler": [
         "Instagramı aymiragiyim yap",
         "Insta adımı {deger} olarak güncelle",
@@ -265,12 +393,19 @@
     },
     {
       "anahtar": "website",
-      "etiket": "Web Sitesi",
+      "etiket": "İnternet Sitesi",
       "tip": "url",
       "kolon": "website",
       "bolum": "contact",
       "beklenenVeriTipi": "url (https://...)",
-      "esAnlamlar": ["web sitesi", "website", "site", "internet sitesi", "web adresi", "url"],
+      "esAnlamlar": [
+        "web sitesi",
+        "website",
+        "site",
+        "internet sitesi",
+        "web adresi",
+        "url"
+      ],
       "ornekIfadeler": [
         "Web sitemi https://aymira.com yap",
         "Site adresini {deger} olarak ekle",
@@ -279,12 +414,20 @@
     },
     {
       "anahtar": "haritaLinki",
-      "etiket": "Google İşletme / Harita Bağlantısı",
+      "etiket": "Harita Bağlantısı",
       "tip": "url",
       "kolon": "google_business_link",
       "bolum": "contact",
       "beklenenVeriTipi": "url (https://..., kalite)",
-      "esAnlamlar": ["harita linki", "google linki", "harita bağlantısı", "google işletme linki", "maps linki", "konum linki", "yol tarifi linki"],
+      "esAnlamlar": [
+        "harita linki",
+        "google linki",
+        "harita bağlantısı",
+        "google işletme linki",
+        "maps linki",
+        "konum linki",
+        "yol tarifi linki"
+      ],
       "ornekIfadeler": [
         "Harita linkini {deger} yap",
         "Google linkimi {deger} olarak ekle",
@@ -298,7 +441,12 @@
       "kolon": "latitude",
       "bolum": "contact",
       "beklenenVeriTipi": "sayi (-90..90)",
-      "esAnlamlar": ["enlem", "latitude", "koordinat enlem", "yatay konum"],
+      "esAnlamlar": [
+        "enlem",
+        "latitude",
+        "koordinat enlem",
+        "yatay konum"
+      ],
       "ornekIfadeler": [
         "Enlemi 41.025 yap",
         "Latitude {deger} olsun",
@@ -312,7 +460,12 @@
       "kolon": "longitude",
       "bolum": "contact",
       "beklenenVeriTipi": "sayi (-180..180)",
-      "esAnlamlar": ["boylam", "longitude", "koordinat boylam", "dikey konum"],
+      "esAnlamlar": [
+        "boylam",
+        "longitude",
+        "koordinat boylam",
+        "dikey konum"
+      ],
       "ornekIfadeler": [
         "Boylamı 29.05 yap",
         "Longitude {deger} olsun",
@@ -321,12 +474,17 @@
     },
     {
       "anahtar": "kategoriBolumBaslik",
-      "etiket": "Kategori Bölümü Başlığı",
+      "etiket": "Vitrin Gruplarının Başlığı",
       "tip": "metin",
       "kolon": "category_section_title",
       "bolum": "categories",
       "beklenenVeriTipi": "metin (max 60)",
-      "esAnlamlar": ["kategori başlığı", "kategori bölüm başlığı", "kategoriler başlığı"],
+      "esAnlamlar": [
+        "kategori başlığı",
+        "kategori bölüm başlığı",
+        "kategoriler başlığı",
+        "vitrin gruplarının başlığı"
+      ],
       "ornekIfadeler": [
         "Kategori başlığını {deger} yap",
         "Kategori bölüm başlığını değiştir {deger}"
@@ -334,12 +492,17 @@
     },
     {
       "anahtar": "urunBolumBaslik",
-      "etiket": "Ürün Bölümü Başlığı",
+      "etiket": "Ürünlerin Başlığı",
       "tip": "metin",
       "kolon": "product_section_title",
       "bolum": "products",
       "beklenenVeriTipi": "metin (max 60)",
-      "esAnlamlar": ["ürün başlığı", "ürün bölüm başlığı", "ürünler başlığı", "menü başlığı"],
+      "esAnlamlar": [
+        "ürün başlığı",
+        "ürün bölüm başlığı",
+        "ürünler başlığı",
+        "menü başlığı"
+      ],
       "ornekIfadeler": [
         "Ürün başlığını {deger} yap",
         "Ürün bölüm başlığını {deger} olarak güncelle"
@@ -347,12 +510,19 @@
     },
     {
       "anahtar": "bantEtiket",
-      "etiket": "Kampanya Etiketi",
+      "etiket": "Fırsat Etiketi",
       "tip": "metin",
       "kolon": "featured_banner_label",
       "bolum": "featured",
       "beklenenVeriTipi": "metin (max 40)",
-      "esAnlamlar": ["kampanya etiketi", "bant etiketi", "etiket", "kampanya rozeti", "öne çıkan etiket"],
+      "esAnlamlar": [
+        "kampanya etiketi",
+        "bant etiketi",
+        "etiket",
+        "kampanya rozeti",
+        "öne çıkan etiket",
+        "fırsat etiketi"
+      ],
       "ornekIfadeler": [
         "Kampanya etiketini 'Bu haftaya özel' yap",
         "Bant etiketini {deger} olarak değiştir"
@@ -360,12 +530,18 @@
     },
     {
       "anahtar": "bantBaslik",
-      "etiket": "Kampanya Başlığı",
+      "etiket": "Fırsat Başlığı",
       "tip": "metin",
       "kolon": "featured_banner_title",
       "bolum": "featured",
       "beklenenVeriTipi": "metin (max 90)",
-      "esAnlamlar": ["kampanya başlığı", "bant başlığı", "öne çıkan başlık", "kampanya adı"],
+      "esAnlamlar": [
+        "kampanya başlığı",
+        "bant başlığı",
+        "öne çıkan başlık",
+        "kampanya adı",
+        "fırsat başlığı"
+      ],
       "ornekIfadeler": [
         "Kampanya başlığını {deger} yap",
         "Bant başlığını değiştir {deger}"
@@ -373,12 +549,18 @@
     },
     {
       "anahtar": "bantAciklama",
-      "etiket": "Kampanya Açıklaması",
+      "etiket": "Fırsat Açıklaması",
       "tip": "uzunMetin",
       "kolon": "featured_banner_description",
       "bolum": "featured",
       "beklenenVeriTipi": "uzunMetin (max 200)",
-      "esAnlamlar": ["kampanya açıklaması", "bant açıklaması", "kampanya detayı", "öne çıkan açıklama"],
+      "esAnlamlar": [
+        "kampanya açıklaması",
+        "bant açıklaması",
+        "kampanya detayı",
+        "öne çıkan açıklama",
+        "fırsat açıklaması"
+      ],
       "ornekIfadeler": [
         "Kampanya açıklamasını {deger} yap",
         "Bant açıklamasını değiştir {deger}"
@@ -386,12 +568,19 @@
     },
     {
       "anahtar": "bantGorsel",
-      "etiket": "Kampanya Görseli",
+      "etiket": "Fırsat Fotoğrafı",
       "tip": "gorsel",
       "kolon": "featured_banner_image_url",
       "bolum": "featured",
       "beklenenVeriTipi": "gorsel (https URL)",
-      "esAnlamlar": ["kampanya görseli", "bant görseli", "kampanya fotoğrafı", "öne çıkan görsel", "banner resmi"],
+      "esAnlamlar": [
+        "kampanya görseli",
+        "bant görseli",
+        "kampanya fotoğrafı",
+        "öne çıkan görsel",
+        "banner resmi",
+        "fırsat fotoğrafı"
+      ],
       "ornekIfadeler": [
         "Kampanya görselini {deger} yap",
         "Bant görselini değiştir {deger}"
@@ -399,12 +588,18 @@
     },
     {
       "anahtar": "bantFiyat",
-      "etiket": "Kampanya Fiyat Metni",
+      "etiket": "Fırsat Fiyatı",
       "tip": "metin",
       "kolon": "featured_banner_price_text",
       "bolum": "featured",
       "beklenenVeriTipi": "metin (max 30)",
-      "esAnlamlar": ["kampanya fiyatı", "bant fiyatı", "fiyat metni", "kampanya fiyat yazısı"],
+      "esAnlamlar": [
+        "kampanya fiyatı",
+        "bant fiyatı",
+        "fiyat metni",
+        "kampanya fiyat yazısı",
+        "fırsat fiyatı"
+      ],
       "ornekIfadeler": [
         "Kampanya fiyatını '499 TL' yap",
         "Bant fiyatını {deger} olarak değiştir"
@@ -412,12 +607,18 @@
     },
     {
       "anahtar": "hakkindaUstBaslik",
-      "etiket": "Hakkımızda Üst Başlık",
+      "etiket": "Hakkımızda Küçük Başlık",
       "tip": "metin",
       "kolon": "about_kicker",
       "bolum": "about",
       "beklenenVeriTipi": "metin (max 40)",
-      "esAnlamlar": ["hakkımızda üst başlık", "hakkında üst yazı", "about kicker", "üst başlık hakkında"],
+      "esAnlamlar": [
+        "hakkımızda üst başlık",
+        "hakkında üst yazı",
+        "about kicker",
+        "üst başlık hakkında",
+        "hakkımızda küçük başlık"
+      ],
       "ornekIfadeler": [
         "Hakkımızda üst başlığı {deger} yap",
         "About kicker'ı {deger} olarak değiştir"
@@ -425,12 +626,18 @@
     },
     {
       "anahtar": "hakkindaBaslik",
-      "etiket": "Hakkımızda Başlığı",
+      "etiket": "Hakkımızda Büyük Başlık",
       "tip": "metin",
       "kolon": "about_title",
       "bolum": "about",
       "beklenenVeriTipi": "metin (max 90, kalite)",
-      "esAnlamlar": ["hakkımızda başlığı", "hakkında başlık", "biz kimiz başlığı", "hakkımızda başlık"],
+      "esAnlamlar": [
+        "hakkımızda başlığı",
+        "hakkında başlık",
+        "biz kimiz başlığı",
+        "hakkımızda başlık",
+        "hakkımızda büyük başlık"
+      ],
       "ornekIfadeler": [
         "Hakkımızda başlığını {deger} yap",
         "Hakkında başlığı değiştir {deger}"
@@ -438,12 +645,20 @@
     },
     {
       "anahtar": "hakkindaMetin",
-      "etiket": "Hakkımızda Yazısı",
+      "etiket": "İşletme Hikayesi",
       "tip": "uzunMetin",
       "kolon": "corporate_bio",
       "bolum": "about",
       "beklenenVeriTipi": "uzunMetin (max 1200, kalite)",
-      "esAnlamlar": ["hakkımızda yazısı", "hakkımızda metni", "hikayemiz", "biz kimiz yazısı", "kurumsal yazı", "hakkında metni", "işletme hikayesi"],
+      "esAnlamlar": [
+        "hakkımızda yazısı",
+        "hakkımızda metni",
+        "hikayemiz",
+        "biz kimiz yazısı",
+        "kurumsal yazı",
+        "hakkında metni",
+        "işletme hikayesi"
+      ],
       "ornekIfadeler": [
         "Hakkımızda yazısını {deger} yap",
         "Hikayemizi ekle: {deger}",
@@ -452,12 +667,20 @@
     },
     {
       "anahtar": "hakkindaGorsel",
-      "etiket": "Hakkımızda Görseli",
+      "etiket": "İşletme Fotoğrafı",
       "tip": "gorsel",
       "kolon": "about_image_url",
       "bolum": "about",
       "beklenenVeriTipi": "gorsel (https URL)",
-      "esAnlamlar": ["hakkımızda görseli", "hakkında görseli", "hakkımızda fotoğrafı", "bizim fotoğraf", "ekip fotoğrafı", "dükkan fotoğrafı hakkında"],
+      "esAnlamlar": [
+        "hakkımızda görseli",
+        "hakkında görseli",
+        "hakkımızda fotoğrafı",
+        "bizim fotoğraf",
+        "ekip fotoğrafı",
+        "dükkan fotoğrafı hakkında",
+        "işletme fotoğrafı"
+      ],
       "ornekIfadeler": [
         "Hakkımızda görselini {deger} yap",
         "Hakkında fotoğrafını {deger} olarak değiştir"
@@ -465,12 +688,17 @@
     },
     {
       "anahtar": "hakkindaGorselAlt",
-      "etiket": "Görsel Alt Yazısı",
+      "etiket": "Fotoğraf Alt Yazısı",
       "tip": "metin",
       "kolon": "about_image_caption",
       "bolum": "about",
       "beklenenVeriTipi": "metin (max 120)",
-      "esAnlamlar": ["görsel alt yazısı", "fotoğraf alt yazısı", "resim altı yazısı", "hakkımızda görsel altı"],
+      "esAnlamlar": [
+        "görsel alt yazısı",
+        "fotoğraf alt yazısı",
+        "resim altı yazısı",
+        "hakkımızda görsel altı"
+      ],
       "ornekIfadeler": [
         "Görsel alt yazısını {deger} yap",
         "Fotoğraf altı yazısını {deger} olarak değiştir"
@@ -478,12 +706,16 @@
     },
     {
       "anahtar": "galeriUstBaslik",
-      "etiket": "Galeri Üst Başlık",
+      "etiket": "Galeri Küçük Başlık",
       "tip": "metin",
       "kolon": "gallery_section_kicker",
       "bolum": "gallery",
       "beklenenVeriTipi": "metin (max 40)",
-      "esAnlamlar": ["galeri üst başlık", "galeri kicker", "galeri üst yazısı"],
+      "esAnlamlar": [
+        "galeri üst başlık",
+        "galeri kicker",
+        "galeri küçük başlık"
+      ],
       "ornekIfadeler": [
         "Galeri üst başlığı {deger} yap",
         "Galeri kicker'ı {deger} olarak değiştir"
@@ -491,12 +723,18 @@
     },
     {
       "anahtar": "galeriBaslik",
-      "etiket": "Galeri Başlığı",
+      "etiket": "Galeri Büyük Başlık",
       "tip": "metin",
       "kolon": "gallery_section_title",
       "bolum": "gallery",
       "beklenenVeriTipi": "metin (max 90)",
-      "esAnlamlar": ["galeri başlığı", "galeri başlık", "fotoğraf galerisi başlığı", "resim galerisi başlığı"],
+      "esAnlamlar": [
+        "galeri başlığı",
+        "galeri başlık",
+        "fotoğraf galerisi başlığı",
+        "resim galerisi başlığı",
+        "galeri büyük başlık"
+      ],
       "ornekIfadeler": [
         "Galeri başlığını {deger} yap",
         "Galeri başlığını değiştir {deger}"
@@ -504,12 +742,18 @@
     },
     {
       "anahtar": "galeriAksiyonMetni",
-      "etiket": "Galeri Buton Metni",
+      "etiket": "Galeri Düğmesinin Yazısı",
       "tip": "metin",
       "kolon": "gallery_action_label",
       "bolum": "gallery",
       "beklenenVeriTipi": "metin (max 40)",
-      "esAnlamlar": ["galeri buton metni", "galeri buton yazısı", "galeri düğme metni", "galeri aksiyon metni"],
+      "esAnlamlar": [
+        "galeri buton metni",
+        "galeri buton yazısı",
+        "galeri düğme metni",
+        "galeri aksiyon metni",
+        "galeri düğmesinin yazısı"
+      ],
       "ornekIfadeler": [
         "Galeri buton metnini {deger} yap",
         "Galeri düğme yazısını {deger} olarak değiştir"
@@ -517,12 +761,18 @@
     },
     {
       "anahtar": "galeriAksiyonLinki",
-      "etiket": "Galeri Buton Bağlantısı",
+      "etiket": "Galeri Düğmesinin Bağlantısı",
       "tip": "url",
       "kolon": "gallery_action_href",
       "bolum": "gallery",
       "beklenenVeriTipi": "url (https:// veya #)",
-      "esAnlamlar": ["galeri buton linki", "galeri bağlantısı", "galeri buton bağlantısı", "galeri linki"],
+      "esAnlamlar": [
+        "galeri buton linki",
+        "galeri bağlantısı",
+        "galeri buton bağlantısı",
+        "galeri linki",
+        "galeri düğmesinin bağlantısı"
+      ],
       "ornekIfadeler": [
         "Galeri buton linkini {deger} yap",
         "Galeri bağlantısını {deger} olarak değiştir"
@@ -530,12 +780,16 @@
     },
     {
       "anahtar": "blogUstBaslik",
-      "etiket": "Blog Üst Başlık",
+      "etiket": "Yazılar Küçük Başlık",
       "tip": "metin",
       "kolon": "blog_section_kicker",
       "bolum": "blog",
       "beklenenVeriTipi": "metin (max 40)",
-      "esAnlamlar": ["blog üst başlık", "yazılar üst başlık", "blog kicker"],
+      "esAnlamlar": [
+        "blog üst başlık",
+        "yazılar üst başlık",
+        "yazılar küçük başlık"
+      ],
       "ornekIfadeler": [
         "Blog üst başlığı {deger} yap",
         "Blog kicker'ı {deger} olarak değiştir"
@@ -543,12 +797,16 @@
     },
     {
       "anahtar": "blogBaslik",
-      "etiket": "Blog Bölüm Başlığı",
+      "etiket": "Yazıların Başlığı",
       "tip": "metin",
       "kolon": "blog_section_title",
       "bolum": "blog",
       "beklenenVeriTipi": "metin (max 90)",
-      "esAnlamlar": ["blog başlığı", "yazılar başlığı", "blog bölüm başlığı"],
+      "esAnlamlar": [
+        "blog başlığı",
+        "yazılar başlığı",
+        "blog bölüm başlığı"
+      ],
       "ornekIfadeler": [
         "Blog başlığını {deger} yap",
         "Blog bölüm başlığını {deger} olarak değiştir"
@@ -556,12 +814,18 @@
     },
     {
       "anahtar": "sssUstBaslik",
-      "etiket": "SSS Üst Başlık",
+      "etiket": "Sorular Küçük Başlık",
       "tip": "metin",
       "kolon": "faq_section_kicker",
       "bolum": "faq",
       "beklenenVeriTipi": "metin (max 40)",
-      "esAnlamlar": ["sss üst başlık", "sss kicker", "sorular üst başlık", "sık sorulan sorular üst"],
+      "esAnlamlar": [
+        "sss üst başlık",
+        "sss kicker",
+        "sorular üst başlık",
+        "sık sorulan sorular üst",
+        "sorular küçük başlık"
+      ],
       "ornekIfadeler": [
         "SSS üst başlığı {deger} yap",
         "SSS kicker'ı {deger} olarak değiştir"
@@ -569,12 +833,17 @@
     },
     {
       "anahtar": "sssBaslik",
-      "etiket": "SSS Bölüm Başlığı",
+      "etiket": "Soruların Başlığı",
       "tip": "metin",
       "kolon": "faq_section_title",
       "bolum": "faq",
       "beklenenVeriTipi": "metin (max 90)",
-      "esAnlamlar": ["sss başlığı", "sss bölüm başlığı", "sık sorulan sorular başlığı", "sorular başlığı"],
+      "esAnlamlar": [
+        "sss başlığı",
+        "sss bölüm başlığı",
+        "sık sorulan sorular başlığı",
+        "sorular başlığı"
+      ],
       "ornekIfadeler": [
         "SSS başlığını {deger} yap",
         "SSS bölüm başlığını {deger} olarak değiştir"
@@ -582,12 +851,17 @@
     },
     {
       "anahtar": "sssAciklama",
-      "etiket": "SSS Bölüm Açıklaması",
+      "etiket": "Soruların Açıklaması",
       "tip": "uzunMetin",
       "kolon": "faq_section_description",
       "bolum": "faq",
       "beklenenVeriTipi": "uzunMetin (max 200)",
-      "esAnlamlar": ["sss açıklaması", "sss açıklama", "sık sorulan sorular açıklaması", "sorular açıklaması"],
+      "esAnlamlar": [
+        "sss açıklaması",
+        "sss açıklama",
+        "sık sorulan sorular açıklaması",
+        "sorular açıklaması"
+      ],
       "ornekIfadeler": [
         "SSS açıklamasını {deger} yap",
         "SSS bölüm açıklamasını {deger} olarak değiştir"
@@ -595,12 +869,19 @@
     },
     {
       "anahtar": "puanGoster",
-      "etiket": "Değerlendirme Puanını Göster",
+      "etiket": "Puan Görünsün",
       "tip": "acikKapali",
       "kolon": "show_storefront_rating",
       "bolum": "hero",
       "beklenenVeriTipi": "acikKapali (true/false, açık/kapalı, göster/gizle)",
-      "esAnlamlar": ["puan göster", "değerlendirme puanı", "puanı göster", "rating göster", "yıldız puanı göster"],
+      "esAnlamlar": [
+        "puan göster",
+        "değerlendirme puanı",
+        "puanı göster",
+        "rating göster",
+        "yıldız puanı göster",
+        "puan görünsün"
+      ],
       "ornekIfadeler": [
         "Puanı göster",
         "Puanı gizle",
@@ -610,12 +891,20 @@
     },
     {
       "anahtar": "yolTarifiGoster",
-      "etiket": "Yol Tarifi Butonunu Göster",
+      "etiket": "Yol Tarifi Düğmesi",
       "tip": "acikKapali",
       "kolon": "show_directions_link",
       "bolum": "contact",
       "beklenenVeriTipi": "acikKapali (true/false)",
-      "esAnlamlar": ["yol tarifi göster", "yol tarifi butonu", "haritada yol tarifi", "navigasyon göster", "yol tarifi", "yol tarifini"],
+      "esAnlamlar": [
+        "yol tarifi göster",
+        "yol tarifi butonu",
+        "haritada yol tarifi",
+        "navigasyon göster",
+        "yol tarifi",
+        "yol tarifini",
+        "yol tarifi düğmesi"
+      ],
       "ornekIfadeler": [
         "Yol tarifini göster",
         "Yol tarifi butonunu gizle",
@@ -625,12 +914,17 @@
     },
     {
       "anahtar": "referansLinki",
-      "etiket": "Referanslar Bağlantısı",
+      "etiket": "Referans Bağlantısı",
       "tip": "url",
       "kolon": "references_link",
       "bolum": "about",
       "beklenenVeriTipi": "url (https://...)",
-      "esAnlamlar": ["referans linki", "referans bağlantısı", "referanslar linki", "müşteri yorum linki"],
+      "esAnlamlar": [
+        "referans linki",
+        "referans bağlantısı",
+        "referanslar linki",
+        "müşteri yorum linki"
+      ],
       "ornekIfadeler": [
         "Referans linkini {deger} yap",
         "Referans bağlantısını {deger} olarak değiştir"

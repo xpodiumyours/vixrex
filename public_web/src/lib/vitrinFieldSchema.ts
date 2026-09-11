@@ -126,7 +126,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   {
     anahtar: "heroRozet",
     tip: "metin",
-    etiket: "Hero Rozet Metni",
+    etiket: "Üstteki Küçük Yazı",
     neden: "Adının yanında duran küçük vurgu — seni benzer işletmelerden ayıran cümle.",
     kolon: "hero_badge",
     bolum: "hero",
@@ -138,7 +138,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   {
     anahtar: "kisaTanitim",
     tip: "uzunMetin",
-    etiket: "Kısa Tanıtım",
+    etiket: "İşletme Tanıtımı",
     neden: "Sayfaya giren kişi iki saniyede ne yaptığını anlar. Boş kalırsa vitrin sessiz görünür.",
     kolon: "description",
     bolum: "hero",
@@ -148,7 +148,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   {
     anahtar: "konumMetni",
     tip: "metin",
-    etiket: "Hero Konum Metni",
+    etiket: "Üstteki Yer Yazısı",
     neden: "Üstte duran \"neredeyim\" bilgisi. Yakındaki müşteri seni görünce güvenir.",
     kolon: "hero_location_text",
     bolum: "hero",
@@ -175,7 +175,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   {
     anahtar: "isletmeTuru",
     tip: "metin",
-    etiket: "İşletme Türü",
+    etiket: "Alt Hizmet Tanımı",
     neden: "Kategorinin altındaki ince tanım — \"Kuaför\" yerine \"Erkek kuaförü\" gibi.",
     kolon: "business_type",
     bolum: "hero",
@@ -193,7 +193,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   {
     anahtar: "kapakGorseli",
     tip: "gorsel",
-    etiket: "Kapak / Hero Görseli",
+    etiket: "Üstteki Büyük Fotoğraf",
     neden: "Sayfanın en üstündeki büyük görsel. İlk izlenimin yarısı budur.",
     kolon: "shelf_image_url",
     bolum: "hero",
@@ -207,7 +207,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   {
     anahtar: "whatsapp",
     tip: "telefon",
-    etiket: "WhatsApp Numarası",
+    etiket: "WhatsApp Hattı",
     neden: "Müşterinin sana ulaşmasının en kısa yolu. Tek dokunuşla sohbet açılır.",
     kolon: "whatsapp",
     bolum: "contact",
@@ -217,7 +217,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   {
     anahtar: "telefon",
     tip: "telefon",
-    etiket: "Telefon",
+    etiket: "Arama Numarası",
     neden: "Arayarak ulaşmak isteyenler için. WhatsApp kullanmayan müşteri de var.",
     kolon: "phone",
     bolum: "contact",
@@ -225,7 +225,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   {
     anahtar: "eposta",
     tip: "eposta",
-    etiket: "E-posta",
+    etiket: "E-posta Adresi",
     neden: "Kurumsal iş ve teklif isteyenler buradan yazar.",
     kolon: "email",
     bolum: "contact",
@@ -234,7 +234,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   {
     anahtar: "adres",
     tip: "uzunMetin",
-    etiket: "Açık Adres",
+    etiket: "İşletme Adresi",
     neden: "Müşteri kapına gelebilsin diye. Haritada işaretlenen yer de burasıdır.",
     kolon: "address",
     bolum: "contact",
@@ -250,7 +250,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   {
     anahtar: "il",
     tip: "metin",
-    etiket: "İl",
+    etiket: "Şehir",
     neden: "Yayın için gerekli. Bulunduğun ilin aramalarında çıkmanı sağlar.",
     kolon: "province_name",
     bolum: "contact",
@@ -283,7 +283,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   {
     anahtar: "haritaEtiketi",
     tip: "metin",
-    etiket: "Harita Kartı Etiketi",
+    etiket: "Haritadaki Kısa Not",
     neden: "Harita kartının üstünde duran kısa not. Örn: Çarşı içi, otopark var.",
     kolon: "map_label",
     bolum: "contact",
@@ -292,7 +292,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   {
     anahtar: "calismaSaatleri",
     tip: "metin",
-    etiket: "Çalışma Saatleri",
+    etiket: "Açılış Saatleri",
     neden: "Müşteri boşuna gelmesin. Açık/kapalı rozeti de buradan hesaplanır.",
     kolon: "working_hours",
     bolum: "contact",
@@ -302,7 +302,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   {
     anahtar: "instagram",
     tip: "metin",
-    etiket: "Instagram Kullanıcı Adı",
+    etiket: "Instagram Adı",
     neden: "Instagram hesabın vitrine bağlanır, müşteri işlerini oradan da görür.",
     kolon: "instagram",
     bolum: "contact",
@@ -312,7 +312,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   {
     anahtar: "website",
     tip: "url",
-    etiket: "Web Sitesi",
+    etiket: "İnternet Sitesi",
     neden: "Ayrı bir siten varsa buraya koy, ziyaretçi kaybolmaz.",
     kolon: "website",
     bolum: "contact",
@@ -320,7 +320,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   {
     anahtar: "haritaLinki",
     tip: "url",
-    etiket: "Google İşletme / Harita Bağlantısı",
+    etiket: "Harita Bağlantısı",
     neden: "Google İşletme kaydın — yol tarifi ve yorumlar oraya bağlanır.",
     kolon: "google_business_link",
     bolum: "contact",
@@ -351,7 +351,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   {
     anahtar: "kategoriBolumBaslik",
     tip: "metin",
-    etiket: "Kategori Bölümü Başlığı",
+    etiket: "Vitrin Gruplarının Başlığı",
     neden: "Ürün gruplarının üstündeki başlık. \"Kategoriler\" yerine kendi cümleni yazabilirsin.",
     kolon: "category_section_title",
     bolum: "categories",
@@ -361,7 +361,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   {
     anahtar: "urunBolumBaslik",
     tip: "metin",
-    etiket: "Ürün Bölümü Başlığı",
+    etiket: "Ürünlerin Başlığı",
     neden: "Ürün listesinin üstündeki başlık. \"Ürünler\" yerine \"Menümüz\" gibi yazabilirsin.",
     kolon: "product_section_title",
     bolum: "products",
@@ -373,7 +373,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   {
     anahtar: "bantEtiket",
     tip: "metin",
-    etiket: "Kampanya Etiketi",
+    etiket: "Fırsat Etiketi",
     neden: "Kampanya kutusunun köşesindeki küçük etiket. Örn: Bu haftaya özel.",
     kolon: "featured_banner_label",
     bolum: "featured",
@@ -382,7 +382,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   {
     anahtar: "bantBaslik",
     tip: "metin",
-    etiket: "Kampanya Başlığı",
+    etiket: "Fırsat Başlığı",
     neden: "Öne çıkarmak istediğin teklifin başlığı. Sayfanın en dikkat çeken yeri.",
     kolon: "featured_banner_title",
     bolum: "featured",
@@ -391,7 +391,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   {
     anahtar: "bantAciklama",
     tip: "uzunMetin",
-    etiket: "Kampanya Açıklaması",
+    etiket: "Fırsat Açıklaması",
     neden: "Kampanyanın ne olduğunu bir iki cümleyle anlatır.",
     kolon: "featured_banner_description",
     bolum: "featured",
@@ -400,7 +400,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   {
     anahtar: "bantGorsel",
     tip: "gorsel",
-    etiket: "Kampanya Görseli",
+    etiket: "Fırsat Fotoğrafı",
     neden: "Kampanyanın yanındaki fotoğraf. Görselli kampanya daha çok tıklanır.",
     kolon: "featured_banner_image_url",
     bolum: "featured",
@@ -408,7 +408,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   {
     anahtar: "bantFiyat",
     tip: "metin",
-    etiket: "Kampanya Fiyat Metni",
+    etiket: "Fırsat Fiyatı",
     neden: "Fiyatı yazarsan müşteri sormadan karar verir. Örn: 499 TL'den başlayan.",
     kolon: "featured_banner_price_text",
     bolum: "featured",
@@ -419,7 +419,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   {
     anahtar: "hakkindaUstBaslik",
     tip: "metin",
-    etiket: "Hakkımızda Üst Başlık",
+    etiket: "Hakkımızda Küçük Başlık",
     neden: "Hakkında bölümünün üstündeki küçük yazı. Örn: Biz kimiz.",
     kolon: "about_kicker",
     bolum: "about",
@@ -428,7 +428,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   {
     anahtar: "hakkindaBaslik",
     tip: "metin",
-    etiket: "Hakkımızda Başlığı",
+    etiket: "Hakkımızda Büyük Başlık",
     neden: "\"Hakkımızda\" yerine kendi cümlen — örn. Kadıköy'ün 12 yıllık teknik servisi.",
     kolon: "about_title",
     bolum: "about",
@@ -439,7 +439,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   {
     anahtar: "hakkindaMetin",
     tip: "uzunMetin",
-    etiket: "Hakkımızda Yazısı",
+    etiket: "İşletme Hikayesi",
     neden: "Hikâyeni anlattığın yer. Güven buradan doğar; şablon vitrinden ayıran şey budur.",
     kolon: "corporate_bio",
     bolum: "about",
@@ -449,7 +449,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   {
     anahtar: "hakkindaGorsel",
     tip: "gorsel",
-    etiket: "Hakkımızda Görseli",
+    etiket: "İşletme Fotoğrafı",
     neden: "Dükkânın veya ekibin fotoğrafı. Gerçek bir yer olduğunu gösterir.",
     kolon: "about_image_url",
     bolum: "about",
@@ -457,7 +457,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   {
     anahtar: "hakkindaGorselAlt",
     tip: "metin",
-    etiket: "Görsel Alt Yazısı",
+    etiket: "Fotoğraf Alt Yazısı",
     neden: "Fotoğrafın altındaki kısa yazı. Örn: Atölyemiz, 2019.",
     kolon: "about_image_caption",
     bolum: "about",
@@ -468,7 +468,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   {
     anahtar: "galeriUstBaslik",
     tip: "metin",
-    etiket: "Galeri Üst Başlık",
+    etiket: "Galeri Küçük Başlık",
     neden: "Galerinin üstündeki küçük yazı. Örn: İşlerimizden.",
     kolon: "gallery_section_kicker",
     bolum: "gallery",
@@ -478,7 +478,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   {
     anahtar: "galeriBaslik",
     tip: "metin",
-    etiket: "Galeri Başlığı",
+    etiket: "Galeri Büyük Başlık",
     neden: "\"Galeri\" yerine kendi başlığın — örn. Önce ve sonra.",
     kolon: "gallery_section_title",
     bolum: "gallery",
@@ -488,7 +488,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   {
     anahtar: "galeriAksiyonMetni",
     tip: "metin",
-    etiket: "Galeri Buton Metni",
+    etiket: "Galeri Düğmesinin Yazısı",
     neden: "Galerinin yanındaki bağlantı yazısı. Örn: Hepsini gör.",
     kolon: "gallery_action_label",
     bolum: "gallery",
@@ -498,7 +498,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   {
     anahtar: "galeriAksiyonLinki",
     tip: "url",
-    etiket: "Galeri Buton Bağlantısı",
+    etiket: "Galeri Düğmesinin Bağlantısı",
     neden: "O yazının nereye gideceği — Instagram hesabın veya başka bir sayfan olabilir.",
     kolon: "gallery_action_href",
     bolum: "gallery",
@@ -509,7 +509,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   {
     anahtar: "blogUstBaslik",
     tip: "metin",
-    etiket: "Blog Üst Başlık",
+    etiket: "Yazılar Küçük Başlık",
     neden: "Yazıların üstündeki küçük yazı. Örn: Bilgi köşesi.",
     kolon: "blog_section_kicker",
     bolum: "blog",
@@ -519,7 +519,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   {
     anahtar: "blogBaslik",
     tip: "metin",
-    etiket: "Blog Bölüm Başlığı",
+    etiket: "Yazıların Başlığı",
     neden: "\"Yazılar\" yerine kendi başlığın. Yazı yazmak Google'da görünmeni artırır.",
     kolon: "blog_section_title",
     bolum: "blog",
@@ -531,7 +531,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   {
     anahtar: "sssUstBaslik",
     tip: "metin",
-    etiket: "SSS Üst Başlık",
+    etiket: "Sorular Küçük Başlık",
     neden: "Soru bölümünün üstündeki küçük yazı. Örn: Merak edilenler.",
     kolon: "faq_section_kicker",
     bolum: "faq",
@@ -541,7 +541,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   {
     anahtar: "sssBaslik",
     tip: "metin",
-    etiket: "SSS Bölüm Başlığı",
+    etiket: "Soruların Başlığı",
     neden: "\"Sıkça sorulan sorular\" yerine kendi cümlen.",
     kolon: "faq_section_title",
     bolum: "faq",
@@ -551,7 +551,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   {
     anahtar: "sssAciklama",
     tip: "uzunMetin",
-    etiket: "SSS Bölüm Açıklaması",
+    etiket: "Soruların Açıklaması",
     neden: "Bölümün altındaki açıklama. Müşterinin en çok sorduklarını burada topla.",
     kolon: "faq_section_description",
     bolum: "faq",
@@ -563,7 +563,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   {
     anahtar: "puanGoster",
     tip: "acikKapali",
-    etiket: "Değerlendirme Puanını Göster",
+    etiket: "Puan Görünsün",
     neden: "Değerlendirme puanın varsa üstte görünür. İstemezsen kapalı kalır.",
     kolon: "show_storefront_rating",
     bolum: "hero",
@@ -571,7 +571,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   {
     anahtar: "yolTarifiGoster",
     tip: "acikKapali",
-    etiket: "Yol Tarifi Butonunu Göster",
+    etiket: "Yol Tarifi Düğmesi",
     neden: "Açarsan müşteri tek dokunuşla yol tarifi alır.",
     kolon: "show_directions_link",
     bolum: "contact",
@@ -579,7 +579,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   {
     anahtar: "referansLinki",
     tip: "url",
-    etiket: "Referanslar Bağlantısı",
+    etiket: "Referans Bağlantısı",
     neden: "Çalıştığın firmalar veya işlerin varsa bağlantısını buraya koy.",
     kolon: "references_link",
     bolum: "about",

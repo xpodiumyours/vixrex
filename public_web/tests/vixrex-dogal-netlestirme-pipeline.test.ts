@@ -47,7 +47,7 @@ describe("Vixrex doğal netleştirme gerçek Next pipeline", () => {
   });
 
   it("telefon beklenirken 'değiştirme' işlemi iptal eder ve bekleyen soruyu temizler", async () => {
-    pending("telefon", "Telefon", "telefon");
+    pending("telefon", "Arama Numarası", "telefon");
     const sonuc = await handleVixrexNluMessage("değiştirme");
     expect(sonuc.outcome).toBe("needsClarification");
     expect(sonuc.tumu).toBeUndefined();
@@ -59,11 +59,11 @@ describe("Vixrex doğal netleştirme gerçek Next pipeline", () => {
   });
 
   it("telefon beklenirken 'evet' cevabını telefon değeri diye yazmaz ve bağlamı silmez", async () => {
-    pending("telefon", "Telefon", "telefon");
+    pending("telefon", "Arama Numarası", "telefon");
     const sonuc = await handleVixrexNluMessage("evet");
     expect(sonuc.outcome).toBe("needsClarification");
     expect(sonuc.anahtar).toBe("telefon");
-    expect(sonuc.message).toBe("Telefon için ne yazayım?");
+    expect(sonuc.message).toBe("Arama Numarası için ne yazayım?");
     const clearCalls = rpcMock.mock.calls.filter(
       ([name, args]) => name === "set_assistant_pending_slot" && (args as { p_slot?: unknown })?.p_slot === null,
     );
@@ -71,7 +71,7 @@ describe("Vixrex doğal netleştirme gerçek Next pipeline", () => {
   });
 
   it("aç/kapa sorusunda 'evet' cevabını önceki soruyla birlikte true olarak çözer", async () => {
-    pending("puanGoster", "Değerlendirme Puanını Göster", "acikKapali");
+    pending("puanGoster", "Puan Görünsün", "acikKapali");
     const sonuc = await handleVixrexNluMessage("evet");
     expect(sonuc.outcome).toBe("handled");
     expect(sonuc.anahtar).toBe("puanGoster");
@@ -79,10 +79,10 @@ describe("Vixrex doğal netleştirme gerçek Next pipeline", () => {
   });
 
   it("'onu kaldır' cevabında kaldırma onayı bağlamını saklar", async () => {
-    pending("telefon", "Telefon", "telefon");
+    pending("telefon", "Arama Numarası", "telefon");
     const sonuc = await handleVixrexNluMessage("onu kaldır");
     expect(sonuc.outcome).toBe("needsClarification");
-    expect(sonuc.message).toBe("Telefon bilgisini kaldırmamı mı istiyorsun?");
+    expect(sonuc.message).toBe("Arama Numarası bilgisini kaldırmamı mı istiyorsun?");
     const saveCall = rpcMock.mock.calls.find(
       ([name, args]) =>
         name === "set_assistant_pending_slot" &&
@@ -92,17 +92,17 @@ describe("Vixrex doğal netleştirme gerçek Next pipeline", () => {
   });
 
   it("kaldırma onayı beklenirken 'evet' alanı temizleme sonucuna dönüşür", async () => {
-    pending("telefon", "Telefon", "telefon", "kaldir");
+    pending("telefon", "Arama Numarası", "telefon", "kaldir");
     const sonuc = await handleVixrexNluMessage("evet");
     expect(sonuc.outcome).toBe("handled");
     expect(sonuc.anahtar).toBe("telefon");
     expect(sonuc.deger).toBeNull();
     expect(sonuc.tumu).toEqual([{ anahtar: "telefon", kolon: "phone", deger: null }]);
-    expect(sonuc.message).toBe("Telefon bilgisini kaldırdım.");
+    expect(sonuc.message).toBe("Arama Numarası bilgisini kaldırdım.");
   });
 
   it("çalışma saati beklenirken yalnız kapanış saati verilirse tam saat diye kaydetmez", async () => {
-    pending("calismaSaatleri", "Çalışma Saatleri", "metin");
+    pending("calismaSaatleri", "Açılış Saatleri", "metin");
     const sonuc = await handleVixrexNluMessage("akşam yedi");
     expect(sonuc.outcome).toBe("needsClarification");
     expect(sonuc.message).toContain("kaçta açıp kaçta kapandığınızı");
@@ -110,7 +110,7 @@ describe("Vixrex doğal netleştirme gerçek Next pipeline", () => {
   });
 
   it("açık adres beklenirken yalnız ilçe verilirse tam adres diye kaydetmez", async () => {
-    pending("adres", "Açık Adres", "uzunMetin");
+    pending("adres", "İşletme Adresi", "uzunMetin");
     const sonuc = await handleVixrexNluMessage("Bağcılar");
     expect(sonuc.outcome).toBe("needsClarification");
     expect(sonuc.message).toBe("Açık adresi biraz daha ayrıntılı yazar mısın?");
