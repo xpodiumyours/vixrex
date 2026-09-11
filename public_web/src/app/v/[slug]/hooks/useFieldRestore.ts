@@ -129,6 +129,12 @@ export function useFieldRestore({
         };
 
         if (!yanit.ok) {
+          // Cerrahi 2026-09-11 (Risk 6): geri al kilidi sessiz kalmasın —
+          // kullanıcıya sunucu metni gösterilir (görsel aynı), kayıp loglanır.
+          console.warn("[vixrex-assistant] geri alma uygulanamadi", {
+            commandId,
+            hata: govde.hata ?? null,
+          });
           mesajEkle("asistan", govde.hata ?? "Geri alınamadı, tekrar dener misin?");
           return;
         }

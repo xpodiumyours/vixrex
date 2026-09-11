@@ -110,9 +110,10 @@ export function useOwnerChat(
           return prev;
         });
         sayacRef.current = Math.max(sayacRef.current, mapped.length);
-      } catch {
-        // Migration eksikse sessizce bellek modunda kal
-      } finally {
+        } catch (e) {
+          // Cerrahi 2026-09-11 (Risk 4): bellek modunda kal ama kaybı logla.
+          console.warn("[vixrex-assistant] konusma senkron atlandi", e);
+        } finally {
         pollActiveRef.current = false;
       }
     },
@@ -214,8 +215,9 @@ export function useOwnerChat(
             // düğmesinin kaybolmaması) doğrularsa buraya taşınabilir.
             p_catalog_snapshot: null,
           });
-        } catch {
-          // Anonim veya migration eksikse sessizce yut — bellek modu korunur
+        } catch (e) {
+          // Anonim veya migration eksikse bellek modu korunur, ama logla (Risk 4).
+          console.warn("[vixrex-assistant] mesaj kalici yazilamadi", e);
         }
       };
 
