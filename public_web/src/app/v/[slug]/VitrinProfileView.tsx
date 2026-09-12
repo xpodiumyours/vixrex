@@ -442,7 +442,7 @@ export default function VitrinProfileView({
       {/* ===== HERO ===== */}
       <section
         id="ust-bolum"
-        className={`relative w-full min-h-[380px] sm:min-h-[440px] flex items-end overflow-hidden ${isPreviewMode ? "pt-9 lg:pt-0" : ""} ${ownerMode ? "lg:min-h-[300px]" : ""}`}
+        className={`relative w-full min-h-[380px] sm:min-h-[440px] flex items-end overflow-hidden ${isPreviewMode ? "pt-9 lg:pt-0" : ""} lg:min-h-[560px]`}
       >
         {/* Kapak yoksa SAHTE FOTOĞRAF BASILMAZ.
             Eskiden burada sabit bir Unsplash adresi vardı: kapak
@@ -455,27 +455,33 @@ export default function VitrinProfileView({
           {...editableProps("kapakGorseli", ownerMode)}
           className={
             heroImage
-              ? "absolute inset-0 bg-cover bg-center"
+              ? "absolute inset-0 bg-cover bg-center blur-[3px] scale-[1.06] lg:blur-none lg:scale-100"
               : "absolute inset-0 bg-gradient-to-br from-[#111C33] via-[#0B1120] to-[#16223D]"
           }
           style={
             heroImage
-              ? {
-                  backgroundImage: `url(${heroImage})`,
-                  filter: "blur(3px)",
-                  transform: "scale(1.06)",
-                }
+              ? { backgroundImage: `url(${heroImage})` }
               : undefined
           }
         >
           {/* Yazının okunması için alt tarafta güçlü karartma. Eskiden üst
               kısım neredeyse şeffaftı, başlık fotoğrafın detayına karışıyor
               ve hiçbiri net görünmüyordu (Casper, 28 Ağustos). */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] via-[#0B1120]/94 to-[#0B1120]/62" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] via-[#0B1120]/94 to-[#0B1120]/62 lg:hidden" />
+          {/* Masaüstünde kapak net kalsın diye karartma tam ekrana değil,
+              yalnız metnin durduğu sol-alt bölgeye uygulanır. Mobildeki
+              28 Ağustos okunurluk koruması yukarıda aynen sürüyor. */}
+          <div
+            className="absolute inset-0 hidden lg:block"
+            style={{
+              background:
+                "linear-gradient(to top, rgba(11,17,32,0.94) 0%, rgba(11,17,32,0.38) 44%, rgba(11,17,32,0) 72%), linear-gradient(to right, rgba(11,17,32,0.93) 0%, rgba(11,17,32,0.68) 34%, rgba(11,17,32,0.12) 62%, rgba(11,17,32,0) 78%)",
+            }}
+          />
         </div>
 
-        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-10 grid md:grid-cols-[1fr_auto] gap-6 items-end">
-          <div className="max-w-2xl">
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-10 grid md:grid-cols-[1fr_auto] gap-6 items-end lg:px-12 lg:flex lg:justify-start lg:gap-12">
+          <div className="max-w-2xl lg:w-[min(720px,62vw)] lg:max-w-[720px]">
             {/* Rozet şeridi artık yalnız DURUM taşıyor (açık/kapalı,
                 doğrulanmış). Kategori buradan kimlik satırına taşındı:
                 aynı kelime hem rozette hem altında yazınca sayfa
@@ -580,7 +586,7 @@ export default function VitrinProfileView({
             {description.trim() && (
               <p
                 {...editableProps("kisaTanitim", ownerMode)}
-                className="text-slate-300 text-sm sm:text-base max-w-xl mb-4 leading-relaxed line-clamp-2"
+                className="text-slate-300 text-sm sm:text-base max-w-xl mb-4 leading-relaxed line-clamp-2 lg:line-clamp-4 lg:max-w-2xl"
               >
                 {description}
               </p>
@@ -618,7 +624,7 @@ export default function VitrinProfileView({
           </div>
 
           {heroButonlari.length > 0 && (
-            <div className="flex flex-col sm:flex-row md:flex-col gap-3 min-w-[200px]">
+            <div className="flex flex-col sm:flex-row md:flex-col gap-3 min-w-[200px] lg:w-[260px] lg:min-w-0">
               {heroButonlari.map((buton, index) => (
                 <a
                   key={buton.anahtar}
@@ -659,50 +665,52 @@ export default function VitrinProfileView({
 
       {/* ===== CATEGORIES ===== */}
       {showCategories ? (
-        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-12" id="kategoriler" style={{ scrollMarginTop: "88px" }}>
-          <div className="flex items-baseline justify-between mb-5 sm:mb-8">
-            <h2 {...editableProps("kategoriBolumBaslik", ownerMode)} className="text-[26px] sm:text-4xl font-extrabold tracking-tight text-white">
-              {categorySectionTitle || "Kategoriler"}
-            </h2>
-            <a href="#urunler" className="text-sm font-semibold text-blue-400 hover:text-blue-300 transition">Tümünü gör →</a>
-          </div>
+        <section className="w-full lg:bg-[#111C33]/35" id="kategoriler" style={{ scrollMarginTop: "88px" }}>
+          <div className="max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-12 lg:px-12 lg:py-16">
+            <div className="flex items-baseline justify-between mb-5 sm:mb-8">
+              <h2 {...editableProps("kategoriBolumBaslik", ownerMode)} className="text-[26px] sm:text-4xl font-extrabold tracking-tight text-white">
+                {categorySectionTitle || "Kategoriler"}
+              </h2>
+              <a href="#urunler" className="text-sm font-semibold text-blue-400 hover:text-blue-300 transition">Tümünü gör →</a>
+            </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {collections.map((cat) => (
-              <div
-                key={cat.name}
-                className="group relative h-44 rounded-2xl overflow-hidden cursor-pointer border border-blue-500/15 hover:border-blue-500/30 transition shadow-lg"
-              >
-                {/* Aynı kural: görseli olmayan kategoriye yabancı bir
-                    fotoğraf konmaz. Kendi kapağı varsa o kullanılır,
-                    yoksa sade zemin — ad zaten üstünde yazıyor. */}
-                {cat.imageUrl || heroImage ? (
-                  <Image
-                    src={cat.imageUrl || heroImage}
-                    alt={cat.name}
-                    fill
-                    className="object-cover transition duration-500 group-hover:scale-105"
-                  />
-                ) : (
-                  <div className="absolute inset-0 bg-gradient-to-br from-[#16223D] to-[#0B1120]" />
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] via-[#0B1120]/45 to-transparent" />
-                {/* Ad ve sayi ayri ayri `absolute` iken uzun kategori adi
-                    ikinci satira sarip rozetin altina giriyordu (mobilde
-                    "Telefon Ekran & Batarya D" diye kesiliyordu). Tek satir
-                    icinde: ad daralir ve iki satira sigar, rozet sabit kalir. */}
-                <div className="absolute inset-x-0 bottom-0 z-10 p-3.5">
-                  <span className="mb-1.5 inline-block whitespace-nowrap rounded-full bg-black/55 px-2.5 py-0.5 text-[11px] font-semibold text-slate-200 backdrop-blur-md">
-                    {cat.count} ürün
-                  </span>
-                  <p className="text-[15px] font-bold leading-tight text-white line-clamp-2">
-                    {cat.name}
-                  </p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-[repeat(auto-fill,minmax(12rem,1fr))] gap-4">
+              {collections.map((cat) => (
+                <div
+                  key={cat.name}
+                  className="group relative h-44 rounded-2xl overflow-hidden cursor-pointer border border-blue-500/15 hover:border-blue-500/30 transition shadow-lg"
+                >
+                  {/* Aynı kural: görseli olmayan kategoriye yabancı bir
+                      fotoğraf konmaz. Kendi kapağı varsa o kullanılır,
+                      yoksa sade zemin — ad zaten üstünde yazıyor. */}
+                  {cat.imageUrl || heroImage ? (
+                    <Image
+                      src={cat.imageUrl || heroImage}
+                      alt={cat.name}
+                      fill
+                      className="object-cover transition duration-500 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 bg-gradient-to-br from-[#16223D] to-[#0B1120]" />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] via-[#0B1120]/45 to-transparent" />
+                  {/* Ad ve sayi ayri ayri `absolute` iken uzun kategori adi
+                      ikinci satira sarip rozetin altina giriyordu (mobilde
+                      "Telefon Ekran & Batarya D" diye kesiliyordu). Tek satir
+                      icinde: ad daralir ve iki satira sigar, rozet sabit kalir. */}
+                  <div className="absolute inset-x-0 bottom-0 z-10 p-3.5">
+                    <span className="mb-1.5 inline-block whitespace-nowrap rounded-full bg-black/55 px-2.5 py-0.5 text-[11px] font-semibold text-slate-200 backdrop-blur-md">
+                      {cat.count} ürün
+                    </span>
+                    <p className="text-[15px] font-bold leading-tight text-white line-clamp-2">
+                      {cat.name}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+            <BolumEksikleri bolum="categories" taslak={ownerDraft} ownerMode={ownerMode} />
           </div>
-          <BolumEksikleri bolum="categories" taslak={ownerDraft} ownerMode={ownerMode} />
         </section>
       ) : (
         <BolumIskeleti bolum="categories" taslak={ownerDraft} ownerMode={ownerMode} />
@@ -710,7 +718,7 @@ export default function VitrinProfileView({
 
       {/* ===== FEATURED BANNER ===== */}
       {showFeaturedBanner ? (
-        <div id="one-cikan" style={{ scrollMarginTop: "88px" }} className="max-w-7xl mx-auto px-6 sm:px-8 mb-12">
+        <div id="one-cikan" style={{ scrollMarginTop: "88px" }} className="max-w-7xl mx-auto px-6 sm:px-8 mb-12 lg:px-12">
           <div
             className={`relative overflow-hidden rounded-3xl border border-blue-500/15 bg-gradient-to-r from-blue-500/10 via-cyan-500/5 to-transparent p-8 sm:p-11 ${
               featuredImageUrl ? "grid md:grid-cols-2 gap-8 items-center" : ""
@@ -770,7 +778,7 @@ export default function VitrinProfileView({
 
       {/* ===== PRODUCTS ===== */}
       {showProducts ? (
-        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-8" id="urunler" style={{ scrollMarginTop: "88px" }}>
+        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-8 lg:px-12" id="urunler" style={{ scrollMarginTop: "88px" }}>
           <div className="flex items-baseline justify-between mb-5 sm:mb-8">
             <h2 {...editableProps("urunBolumBaslik", ownerMode)} className="text-[26px] sm:text-4xl font-extrabold tracking-tight text-white">
               {productSectionTitle || "Tüm Ürünler"}
@@ -789,7 +797,7 @@ export default function VitrinProfileView({
 
       {/* ===== ABOUT ===== */}
       {showAbout ? (
-        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-12" id="hakkimizda" style={{ scrollMarginTop: "88px" }}>
+        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-12 lg:px-12" id="hakkimizda" style={{ scrollMarginTop: "88px" }}>
           <div className={`grid gap-10 items-start ${aboutImageUrl ? "md:grid-cols-2" : ""}`}>
             {aboutImageUrl && (
               <div {...editableProps("hakkindaGorsel", ownerMode)} className="relative min-h-[280px] rounded-3xl overflow-hidden border border-blue-500/15">
@@ -858,7 +866,7 @@ export default function VitrinProfileView({
 
       {/* ===== GALLERY ===== */}
       {showGallery ? (
-        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-12" id="galeri" style={{ scrollMarginTop: "88px" }}>
+        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-12 lg:px-12" id="galeri" style={{ scrollMarginTop: "88px" }}>
           <div className="flex items-baseline justify-between mb-8 gap-4">
             <div>
               {galleryKicker && (
@@ -923,7 +931,7 @@ export default function VitrinProfileView({
 
       {/* ===== ARTICLES ===== */}
       {showArticles ? (
-        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-12" id="blog" style={{ scrollMarginTop: "88px" }}>
+        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-12 lg:px-12" id="blog" style={{ scrollMarginTop: "88px" }}>
           <div className="flex items-baseline justify-between mb-5 sm:mb-8">
             <div>
               {blogSectionKicker && (
@@ -962,35 +970,37 @@ export default function VitrinProfileView({
 
       {/* ===== FAQ ===== */}
       {showFaq ? (
-        <section className="max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-12" id="sss" style={{ scrollMarginTop: "88px" }}>
-          <div className="grid lg:grid-cols-[0.9fr_1.1fr] gap-8 items-start">
-            <div>
-              <p {...editableProps("sssUstBaslik", ownerMode)} className="text-xs font-bold uppercase tracking-[0.18em] text-blue-400 mb-3">
-                {faqSectionKicker || "SSS"}
-              </p>
-              <h2 {...editableProps("sssBaslik", ownerMode)} className="text-[26px] sm:text-4xl font-extrabold tracking-tight text-white mb-3">
-                {faqSectionTitle || "Sıkça sorulan sorular"}
-              </h2>
-              <p {...editableProps("sssAciklama", ownerMode)} className="text-sm text-slate-400 leading-relaxed">
-                {faqSectionDescription || "Sipariş, stok ve mağaza ziyareti hakkında merak edilenler."}
-              </p>
+        <section className="w-full lg:bg-[#16223D]/25" id="sss" style={{ scrollMarginTop: "88px" }}>
+          <div className="max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-12 lg:px-12 lg:py-20">
+            <div className="grid lg:grid-cols-[0.9fr_1.1fr] gap-8 items-start">
+              <div>
+                <p {...editableProps("sssUstBaslik", ownerMode)} className="text-xs font-bold uppercase tracking-[0.18em] text-blue-400 mb-3">
+                  {faqSectionKicker || "SSS"}
+                </p>
+                <h2 {...editableProps("sssBaslik", ownerMode)} className="text-[26px] sm:text-4xl font-extrabold tracking-tight text-white mb-3">
+                  {faqSectionTitle || "Sıkça sorulan sorular"}
+                </h2>
+                <p {...editableProps("sssAciklama", ownerMode)} className="text-sm text-slate-400 leading-relaxed">
+                  {faqSectionDescription || "Sipariş, stok ve mağaza ziyareti hakkında merak edilenler."}
+                </p>
+              </div>
+              <div className="space-y-3">
+                {visibleFaqItems.map((item, index) => (
+                  <details
+                    key={item.id || item.question}
+                    open={index === 0}
+                    className="rounded-2xl border border-blue-500/15 bg-slate-900/60 px-5 py-4"
+                  >
+                    <summary className="cursor-pointer list-none text-sm font-bold text-white pr-6 relative after:content-['+'] after:absolute after:right-0 after:top-0 after:text-blue-400">
+                      {item.question}
+                    </summary>
+                    <p className="mt-3 text-sm text-slate-300 leading-relaxed">{item.answer}</p>
+                  </details>
+                ))}
+              </div>
             </div>
-            <div className="space-y-3">
-              {visibleFaqItems.map((item, index) => (
-                <details
-                  key={item.id || item.question}
-                  open={index === 0}
-                  className="rounded-2xl border border-blue-500/15 bg-slate-900/60 px-5 py-4"
-                >
-                  <summary className="cursor-pointer list-none text-sm font-bold text-white pr-6 relative after:content-['+'] after:absolute after:right-0 after:top-0 after:text-blue-400">
-                    {item.question}
-                  </summary>
-                  <p className="mt-3 text-sm text-slate-300 leading-relaxed">{item.answer}</p>
-                </details>
-              ))}
-            </div>
+            <BolumEksikleri bolum="faq" taslak={ownerDraft} ownerMode={ownerMode} />
           </div>
-          <BolumEksikleri bolum="faq" taslak={ownerDraft} ownerMode={ownerMode} />
         </section>
       ) : (
         <BolumIskeleti bolum="faq" taslak={ownerDraft} ownerMode={ownerMode} />
@@ -998,7 +1008,7 @@ export default function VitrinProfileView({
 
       {/* ===== CONTACT & LOCATION ===== */}
       {showContact ? (
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-12" id="iletisim" style={{ scrollMarginTop: "88px" }}>
+      <div className="max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-12 lg:px-12" id="iletisim" style={{ scrollMarginTop: "88px" }}>
         <div className="grid md:grid-cols-2 gap-6">
           {/* Left Contact Panel */}
           <div className="relative overflow-hidden rounded-3xl bg-slate-900/60 border border-blue-500/15 backdrop-blur-xl p-8">
@@ -1263,7 +1273,7 @@ export default function VitrinProfileView({
           karıştırır (Casper, 2026-08-14 canlı ekran görüntüsü). Yayından
           sonra normal ziyaretçi modunda tekrar görünür. */}
       {!ownerMode && (
-      <div id="paylas" style={{ scrollMarginTop: "88px" }} className="max-w-7xl mx-auto px-6 sm:px-8 mb-16">
+      <div id="paylas" style={{ scrollMarginTop: "88px" }} className="max-w-7xl mx-auto px-6 sm:px-8 mb-16 lg:px-12">
         <div className="relative overflow-hidden rounded-3xl bg-slate-900/60 border border-blue-500/15 backdrop-blur-xl p-8 sm:p-10">
           <div className="flex items-center gap-3 mb-5 sm:mb-8">
             <div className="w-11 h-11 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 flex items-center justify-center text-white shadow-lg shadow-blue-500/25">

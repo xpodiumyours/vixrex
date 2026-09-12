@@ -225,18 +225,10 @@ export function SpotlightGuide(props: Props) {
   const onem = alanOnemi(seciliAlan);
   const bilgi = ONEM_METNI[onem];
   const balonGenislik = Math.min(340, viewport.w - 32);
-  const balonSol = Math.min(
-    Math.max(rect.left, 16),
-    viewport.w - balonGenislik - 16,
-  );
 
-  // Balonun yeri GÖRÜNEN banda göre seçilir (Faz 4).
-  //
-  // Bant = klavyenin üstünde kalan gerçek alan. Sırayla denenir:
-  //   1. hedefin altına sığıyor mu,
-  //   2. üstüne sığıyor mu,
-  //   3. hiçbiri olmuyorsa bandın dibine sabitlenir — klavye açıkken
-  //      küçük ekranlarda tek çıkar yol budur, balon yine de tam görünür.
+  // Mobilde mevcut alt/üst sırası korunur. Geniş ekranda ise hedefin
+  // yanında yeterli yer varsa balon önce sağa/sola alınır; açıklama gibi
+  // yatay metinlerin üstünü kapatmak yerine masaüstünün boş alanı kullanılır.
   const BOSLUK = 18;
   const bandUst = viewport.ust;
   const bandAlt = viewport.ust + viewport.h;
@@ -247,17 +239,45 @@ export function SpotlightGuide(props: Props) {
 
   const altaSigar = rect.top + rect.height + BOSLUK + yukseklik <= bandAlt - 8;
   const usteSigar = rect.top - BOSLUK - yukseklik >= bandUst + 8;
+  const genisEkran = viewport.w >= 1024;
+  const sagaSigar =
+    genisEkran && rect.left + rect.width + BOSLUK + balonGenislik <= viewport.w - 16;
+  const solaSigar = genisEkran && rect.left - BOSLUK - balonGenislik >= 16;
 
+  type BalonYeri = "sag" | "sol" | "alt" | "ust" | "sabit";
+  let balonYeri: BalonYeri;
+  if (sagaSigar) balonYeri = "sag";
+  else if (solaSigar) balonYeri = "sol";
+  else if (altaSigar) balonYeri = "alt";
+  else if (usteSigar) balonYeri = "ust";
+  else balonYeri = "sabit";
+
+  let balonSol: number;
   let balonUst: number;
-  if (altaSigar) balonUst = rect.top + rect.height + BOSLUK;
-  else if (usteSigar) balonUst = rect.top - BOSLUK - yukseklik;
-  else balonUst = bandAlt - 8 - yukseklik;
-  balonUst = Math.max(bandUst + 8, balonUst);
+  if (balonYeri === "sag" || balonYeri === "sol") {
+    balonSol =
+      balonYeri === "sag"
+        ? rect.left + rect.width + BOSLUK
+        : rect.left - BOSLUK - balonGenislik;
+    balonUst = rect.top + rect.height / 2 - yukseklik / 2;
+    balonUst = Math.min(
+      Math.max(balonUst, bandUst + 8),
+      Math.max(bandUst + 8, bandAlt - 8 - yukseklik),
+    );
+  } else {
+    balonSol = Math.min(
+      Math.max(rect.left, 16),
+      viewport.w - balonGenislik - 16,
+    );
+    if (balonYeri === "alt") balonUst = rect.top + rect.height + BOSLUK;
+    else if (balonYeri === "ust") balonUst = rect.top - BOSLUK - yukseklik;
+    else balonUst = bandAlt - 8 - yukseklik;
+    balonUst = Math.max(bandUst + 8, balonUst);
+  }
 
-  // Ok yalnız balon gerçekten hedefe komşuysa çizilir; dibe sabitlenmiş
-  // balonda ok yanlış yeri gösterir, hiç çizmemek daha dürüst.
-  const okYukari = altaSigar;
-  const okGorunur = altaSigar || usteSigar;
+  // Ok yalnız balon gerçekten hedefe komşuysa çizilir.
+  const okGorunur = balonYeri !== "sabit";
+  const yatayOk = balonYeri === "sag" || balonYeri === "sol";
 
   return (
     <div className="pointer-events-none fixed inset-0 z-[80]" aria-hidden={false}>
@@ -318,16 +338,29 @@ export function SpotlightGuide(props: Props) {
         {okGorunur && (
           <div
             className={`absolute h-3 w-3 rotate-45 border border-blue-400/30 bg-[#0B1120] ${
-              okYukari
+              balonYeri === "alt"
                 ? "-top-1.5 border-b-0 border-r-0"
-                : "-bottom-1.5 border-t-0 border-l-0"
+                : balonYeri === "ust"
+                  ? "-bottom-1.5 border-t-0 border-l-0"
+                  : balonYeri === "sag"
+                    ? "-left-1.5 border-r-0 border-t-0"
+                    : "-right-1.5 border-l-0 border-b-0"
             }`}
-            style={{
-              left: Math.min(
-                Math.max(rect.left - balonSol + rect.width / 2 - 6, 12),
-                balonGenislik - 24,
-              ),
-            }}
+            style={
+              yatayOk
+                ? {
+                    top: Math.min(
+                      Math.max(rect.top - balonUst + rect.height / 2 - 6, 12),
+                      Math.max(12, yukseklik - 24),
+                    ),
+                  }
+                : {
+                    left: Math.min(
+                      Math.max(rect.left - balonSol + rect.width / 2 - 6, 12),
+                      balonGenislik - 24,
+                    ),
+                  }
+            }
           />
         )}
 

@@ -720,9 +720,9 @@ export default function OwnerAssistantPanel({
           <div className="shrink-0 space-y-2 px-3 py-3">
             <div className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5">
               <div className="flex items-center justify-between gap-2">
-                <p className="text-[12px] font-bold text-white">Mağaza kurulumu</p>
+                <p className="text-[12px] font-bold text-white">Vitrindeki tüm bilgiler</p>
                 <p className="text-[11px] font-semibold text-slate-400">
-                  {rapor.doluSayisi}/{rapor.toplamSayisi} tamamlandı
+                  {rapor.doluSayisi}/{rapor.toplamSayisi} bilgi dolu
                 </p>
               </div>
               <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
@@ -764,10 +764,10 @@ export default function OwnerAssistantPanel({
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-[12px] font-bold text-white">
-                    Eksik alanlar ({eksikTemelSayisi})
+                    Yayın için {eksikTemelSayisi} gerekli bilgi eksik
                   </span>
                   <span className="block text-[11px] font-medium text-slate-400">
-                    Mağazanı tamamlamak için {eksikTemelSayisi} alan daha bekliyor.
+                    Bu bilgileri tamamladığında vitrini yayınlayabilirsin.
                   </span>
                 </span>
                 <span className="shrink-0 text-slate-500">›</span>

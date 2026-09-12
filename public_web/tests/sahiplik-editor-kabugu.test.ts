@@ -41,11 +41,11 @@ describe("sahiplik modu editör kabuğu", () => {
 
   it("panel hedef düzendeki sekme ve kartlari tasir", () => {
     expect(panel).toContain('useState<"sohbet" | "oneriler">');
-    expect(panel).toContain("Mağaza kurulumu");
-    expect(panel).toContain("tamamlandı");
+    expect(panel).toContain("Vitrindeki tüm bilgiler");
+    expect(panel).toContain("bilgi dolu");
     expect(panel).toContain("Seçili alan: {seciliAlan.etiket}");
     expect(panel).toContain("Alan ayarlarını düzenle");
-    expect(panel).toContain("Eksik alanlar ({eksikTemelSayisi})");
+    expect(panel).toContain("Yayın için {eksikTemelSayisi} gerekli bilgi eksik");
     expect(panel).toContain("yonetimOnerileriUret(");
   });
 

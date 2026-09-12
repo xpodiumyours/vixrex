@@ -20,8 +20,7 @@ const ERISEBILIRLIK =
   "Ekran okuyucu etiketi (aria-label), gözle görünen metin değil. Flutter'da " +
   "erişilebilirlik farklı bir mekanizmayla sağlanıyor.";
 
-const KONUM_WEB_OZEL =
-  "Web landing'i konumu tarayıcının `navigator.geolocation` özelliğiyle " +
+const KONUM_WEB_OZEL =  "Web landing'i konumu tarayıcının `navigator.geolocation` özelliğiyle " +
   "alıyor; Flutter landing'inde konum adımı YOK — orada konum vitrin " +
   "düzenleme ekranında `Geolocator` ile toplanıyor (form_location_info). " +
   "Yani bu dört cümle pencereye özel: aynı karar motoruna aynı " +
@@ -31,6 +30,12 @@ const KONUM_WEB_OZEL =
 
 
 
+
+const HERO_REFERANS_DEKOR =
+  "Web hero referans tasarıma geçirildi: telefon çevresindeki cam kartlar, " +
+  "nav bağlantıları ve alt özellik satırı yalnız webde var. Flutter landing " +
+  "kendi hero düzenini koruyor; bunlar pazarlama süsü, işlevsel metin değil. " +
+  "Flutter aynı hero'yu alırsa bu kayıtlar silinmeli.";
 
 export const LANDING_ESITLIK_ISTISNALARI_WEB: Istisna[] = [
   ...["İşletmen için pratik rehberler.", "İlk vitrinden günlük müşteri iletişimine, bir sonraki adımın burada.", "Tüm rehberler →"].map((metin) => ({
@@ -290,6 +295,50 @@ export const LANDING_ESITLIK_ISTISNALARI_WEB: Istisna[] = [
   // ortak LandingAsistanSohbeti motoruna bağlandı — metinler web landing'inde
   // artık geçmiyor, kayıtlar silindi. İşlev kaybı yok: işletme adı hero
   // formundan alınıp `initialName` ile ortak motora geçiyor (PhoneMockup).
+  {
+    metin: "Hızlı Kurulum",
+    neden: HERO_REFERANS_DEKOR,
+  },
+  {
+    metin: "Dakikalar içinde hazır",
+    neden: HERO_REFERANS_DEKOR,
+  },
+  {
+    metin: "Tüm İşletmeler İçin",
+    neden: HERO_REFERANS_DEKOR,
+  },
+  {
+    metin: "Küçük, orta, büyük fark etmez",
+    neden: HERO_REFERANS_DEKOR,
+  },
+  {
+    metin: "Müşterine Daha Yakın",
+    neden: HERO_REFERANS_DEKOR,
+  },
+  {
+    metin: "Neden Vixrex?",
+    neden: HERO_REFERANS_DEKOR,
+  },
+  {
+    metin: "Nasıl Çalışır?",
+    neden: HERO_REFERANS_DEKOR,
+  },
+  {
+    metin: "Tek tıkla iletişim",
+    neden: HERO_REFERANS_DEKOR,
+  },
+  {
+    metin: "Kolay randevu oluşturun",
+    neden: HERO_REFERANS_DEKOR,
+  },
+  {
+    metin: "Paylaşması kolay",
+    neden: HERO_REFERANS_DEKOR,
+  },
+  {
+    metin: "İşletmenizi daha fazla kişiye ulaştırın",
+    neden: HERO_REFERANS_DEKOR,
+  },
 ];
 
 // Blog altbilgi bağlantısı (28 Ağustos) buraya İSTİSNA OLARAK GİRMEDİ ve

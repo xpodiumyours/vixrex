@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { KesfetIkonu, OnayIkonu, IleriOkIkonu, StorefrontIkonu, GirisIkonu } from "@/components/site/icons";
 import { getSiteUrl } from "@/lib/siteUrl";
-import { PhoneMockup } from "./PhoneMockup";
+import { HeroTelefonSahnesi } from "./HeroTelefonSahnesi";
 import type { MockupProfili } from "./mockupProfilleri";
 
 /** Hero — envanter §2.2. Flutter referans: landing_hero_section.dart:613-616 (4 rozet) */
@@ -56,6 +56,20 @@ export function HeroSection({
           </span>
           <span className="text-[20px] font-black tracking-[-0.5px]">Vixrex</span>
         </Link>
+        <div className="hidden items-center gap-8 lg:flex">
+          <Link
+            href="#neden-vixrex"
+            className="text-[14px] font-bold text-white/70 transition-colors hover:text-white"
+          >
+            Neden Vixrex?
+          </Link>
+          <Link
+            href="#nasil-calisir"
+            className="text-[14px] font-bold text-white/70 transition-colors hover:text-white"
+          >
+            Nasıl Çalışır?
+          </Link>
+        </div>
         <div className="flex items-center gap-2.5">
           {blogErisimi ? <Link href="/blog" className="inline-flex min-h-11 items-center rounded-lg px-2 text-sm font-semibold text-lp-text outline-none hover:text-lp-secondary focus-visible:ring-2 focus-visible:ring-lp-secondary">Blog</Link> : null}
           {/* Vitrinleri Keşfet — Flutter: rounded-[14px], border lp-primary/45 */}
@@ -132,6 +146,18 @@ export function HeroSection({
               "radial-gradient(closest-side, color-mix(in srgb, var(--color-lp-pink) 20%, transparent), transparent)",
           }}
         />
+        <div
+          aria-hidden="true"
+          className="absolute hidden rounded-full md:block"
+          style={{
+            width: 560,
+            height: 560,
+            top: 40,
+            right: -80,
+            background:
+              "radial-gradient(closest-side, color-mix(in srgb, var(--color-lp-primary) 22%, transparent), transparent)",
+          }}
+        />
       </div>
       <div className="relative mx-auto mt-5 flex w-full max-w-lp flex-col items-center gap-10 md:mt-10 md:flex-row md:items-center md:gap-10">
         <div className="w-full flex-1">
@@ -204,16 +230,35 @@ export function HeroSection({
           </ul>
         </div>
 
-        <div className="flex w-full justify-center md:h-lp-mockup-kutu md:w-[400px] md:shrink-0">
-          <div className="md:origin-top md:scale-[0.85]">
-            <PhoneMockup
-              profiller={profiller}
-              isChatOpen={isChatOpen}
-              initialAssistantName={initialAssistantName}
-              onChatClose={onChatClose}
-            />
-          </div>
+        <div className="flex w-full justify-center md:flex-1">
+          <HeroTelefonSahnesi
+            profiller={profiller}
+            isChatOpen={isChatOpen}
+            initialAssistantName={initialAssistantName}
+            onChatClose={onChatClose}
+          />
         </div>
+      </div>
+      <div className="relative mx-auto mt-12 grid w-full max-w-lp grid-cols-1 gap-6 sm:grid-cols-3">
+        {[
+          { simge: "⚡", baslik: "Hızlı Kurulum", alt: "Dakikalar içinde hazır" },
+          { simge: "👥", baslik: "Tüm İşletmeler İçin", alt: "Küçük, orta, büyük fark etmez" },
+          { simge: "💙", baslik: "Müşterine Daha Yakın", alt: "Tek link ile her yerde" },
+        ].map((ozellik) => (
+          <div key={ozellik.baslik} className="flex items-center gap-3.5">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-lp-primary/15 text-[20px] text-lp-primary">
+              {ozellik.simge}
+            </span>
+            <span>
+              <span className="block text-[14px] font-extrabold text-white">
+                {ozellik.baslik}
+              </span>
+              <span className="block text-[12px] font-semibold text-white/60">
+                {ozellik.alt}
+              </span>
+            </span>
+          </div>
+        ))}
       </div>
     </section>
   );
