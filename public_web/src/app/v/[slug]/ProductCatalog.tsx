@@ -285,9 +285,9 @@ export default function ProductCatalog({
                 type="button"
                 onClick={() => setLocationProductId(showLocation ? null : productKey)}
                 className="absolute right-2.5 top-2.5 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-slate-950/75 text-white shadow-lg backdrop-blur-md transition hover:border-blue-400/40 hover:bg-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
-                aria-label={`${product.name} ürün konumunu göster`}
+                aria-label={`${product.name} ürün konumu veya hizmet bölgesini göster`}
                 aria-expanded={showLocation}
-                title="Ürün konumu"
+                title="Ürün konumu / hizmet bölgesi"
               >
                 <MapPinIcon className="h-4 w-4" aria-hidden="true" />
               </button>
@@ -298,10 +298,10 @@ export default function ProductCatalog({
                     <MapPinIcon className="mt-0.5 h-4 w-4 shrink-0 text-blue-400" aria-hidden="true" />
                     <div className="min-w-0">
                       <p className="text-[10px] font-extrabold uppercase tracking-wider text-blue-300">
-                        Ürün konumu
+                        Ürün konumu / hizmet bölgesi
                       </p>
                       <p className="mt-1 break-words text-xs font-semibold leading-5 text-slate-200">
-                        {location || "Bu ürün için konum bilgisi eklenmemiş."}
+                        {location || "Bu ürün için konum veya hizmet bölgesi eklenmemiş."}
                       </p>
                       {locationMapUrl ? (
                         <a
@@ -311,7 +311,7 @@ export default function ProductCatalog({
                           onClick={(event) => event.stopPropagation()}
                           className="mt-2 inline-flex text-[11px] font-extrabold text-blue-400 hover:text-blue-300"
                         >
-                          Haritada göster →
+                          Haritada ara →
                         </a>
                       ) : null}
                     </div>
@@ -415,7 +415,9 @@ export default function ProductCatalog({
                 <div className="mt-5 flex items-start gap-2 rounded-xl border border-blue-500/15 bg-blue-500/5 p-3">
                   <MapPinIcon className="mt-0.5 h-4 w-4 shrink-0 text-blue-400" aria-hidden="true" />
                   <div>
-                    <p className="text-[10px] font-extrabold uppercase tracking-wider text-blue-300">Ürün konumu</p>
+                    <p className="text-[10px] font-extrabold uppercase tracking-wider text-blue-300">
+                      Ürün konumu / hizmet bölgesi
+                    </p>
                     <p className="mt-1 text-xs font-semibold leading-5 text-slate-200">
                       {quickView.product.fulfillmentRegion}
                     </p>
@@ -426,7 +428,7 @@ export default function ProductCatalog({
                         rel="noopener noreferrer"
                         className="mt-2 inline-flex text-xs font-extrabold text-blue-400 hover:text-blue-300"
                       >
-                        Haritada göster →
+                        Haritada ara →
                       </a>
                     ) : null}
                   </div>
