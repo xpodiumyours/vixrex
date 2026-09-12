@@ -45,6 +45,12 @@ function productImageOnly(product: CatalogProduct): string | null {
   return resolved === "/vixrex_v_crystal_mascot.png" ? null : resolved;
 }
 
+function productLocationMapUrl(location: string): string | null {
+  const normalized = location.trim();
+  if (!normalized) return null;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(normalized)}`;
+}
+
 function stockTone(stockStatus: string | undefined) {
   const value = String(stockStatus || "").toLocaleLowerCase("tr-TR");
   if (value.includes("tükendi")) {
@@ -218,6 +224,7 @@ export default function ProductCatalog({
           const stockStatus = String(product.stockStatus || "").trim();
           const tone = stockTone(stockStatus);
           const location = String(product.fulfillmentRegion || "").trim();
+          const locationMapUrl = productLocationMapUrl(location);
           const productKey = product.id || productUrl;
           const showLocation = locationProductId === productKey;
 
@@ -296,6 +303,17 @@ export default function ProductCatalog({
                       <p className="mt-1 break-words text-xs font-semibold leading-5 text-slate-200">
                         {location || "Bu ürün için konum bilgisi eklenmemiş."}
                       </p>
+                      {locationMapUrl ? (
+                        <a
+                          href={locationMapUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(event) => event.stopPropagation()}
+                          className="mt-2 inline-flex text-[11px] font-extrabold text-blue-400 hover:text-blue-300"
+                        >
+                          Haritada göster →
+                        </a>
+                      ) : null}
                     </div>
                   </div>
                 </div>
@@ -401,6 +419,16 @@ export default function ProductCatalog({
                     <p className="mt-1 text-xs font-semibold leading-5 text-slate-200">
                       {quickView.product.fulfillmentRegion}
                     </p>
+                    {productLocationMapUrl(quickView.product.fulfillmentRegion) ? (
+                      <a
+                        href={productLocationMapUrl(quickView.product.fulfillmentRegion) || undefined}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-2 inline-flex text-xs font-extrabold text-blue-400 hover:text-blue-300"
+                      >
+                        Haritada göster →
+                      </a>
+                    ) : null}
                   </div>
                 </div>
               ) : null}
