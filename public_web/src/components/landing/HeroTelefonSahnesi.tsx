@@ -1,12 +1,16 @@
 "use client";
 
-import { InstagramIkonu, WhatsAppIkonu } from "./MarkaIkonlari";
+import {
+  BaglantiIkonu,
+  InstagramIkonu,
+  RandevuIkonu,
+  WhatsAppIkonu,
+} from "./MarkaIkonlari";
 import { PhoneMockup } from "./PhoneMockup";
 import type { MockupProfili } from "./mockupProfilleri";
 
 type CamKart = {
-  simge?: string;
-  Ikon?: (props: { className?: string }) => React.ReactElement;
+  Ikon: (props: { className?: string }) => React.ReactElement;
   baslik: string;
   alt: string;
   renk: string;
@@ -29,16 +33,16 @@ const SOL_KARTLAR: CamKart[] = [
 
 const SAG_KARTLAR: CamKart[] = [
   {
-    simge: "📅",
+    Ikon: RandevuIkonu,
     baslik: "Randevu",
     alt: "Kolay randevu oluşturun",
-    renk: "bg-[#FF4D6D]/25",
+    renk: "bg-[#FF2D78] text-white",
   },
   {
-    simge: "🌐",
+    Ikon: BaglantiIkonu,
     baslik: "Link ve QR",
     alt: "Paylaşması kolay",
-    renk: "bg-lp-primary/30",
+    renk: "bg-lp-primary text-white",
   },
 ];
 
@@ -48,7 +52,7 @@ function CamKartGorunumu({ kart }: { kart: CamKart }) {
       <span
         className={`flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-full text-[17px] ${kart.renk}`}
       >
-        {kart.Ikon ? <kart.Ikon className="h-[17px] w-[17px]" /> : kart.simge}
+        <kart.Ikon className="h-[17px] w-[17px]" />
       </span>
       <span className="min-w-0 leading-tight">
         <span className="block text-[12px] font-extrabold text-white">
