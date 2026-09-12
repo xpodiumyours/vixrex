@@ -5,7 +5,9 @@ import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { MapPinIcon } from "@/lib/vitrinBrandIcons";
 import {
+  getProductImages,
   getProductUrlSlug,
+  isLikelyUiScreenshotUrl,
   isPublicCatalogProduct,
   resolveCatalogImage,
   type ProductItem,
@@ -36,7 +38,7 @@ interface ProductCatalogProps {
 
 interface QuickViewSelection {
   product: CatalogProduct;
-  image: string | null;
+  images: string[];
   productUrl: string;
 }
 
@@ -47,6 +49,18 @@ function productImageOnly(product: CatalogProduct): string | null {
   // resolveCatalogImage görselsiz/OCR ürünlerde eski davranış olarak maskot döndürüyor.
   // Yeni ürün kartında logo/maskot ürün fotoğrafı gibi gösterilmez.
   return resolved === "/vixrex_v_crystal_mascot.png" ? null : resolved;
+}
+
+function productImagesOnly(product: CatalogProduct): string[] {
+  const primary = productImageOnly(product);
+  if (!primary) return [];
+
+  return Array.from(
+    new Set([
+      primary,
+      ...getProductImages(product).filter((url) => !isLikelyUiScreenshotUrl(url)),
+    ]),
+  ).slice(0, 4);
 }
 
 function productLocationMapUrl(location: string): string | null {
@@ -135,6 +149,7 @@ export default function ProductCatalog({
 }: ProductCatalogProps) {
   const searchParams = useSearchParams();
   const [quickView, setQuickView] = useState<QuickViewSelection | null>(null);
+  const [quickImageIndex, setQuickImageIndex] = useState(0);
   const [locationProductId, setLocationProductId] = useState<string | null>(null);
 
   const currentPage = Math.max(1, parseInt(searchParams.get("page") || "1", 10) || 1);
@@ -147,6 +162,12 @@ export default function ProductCatalog({
     document.body.style.overflow = "hidden";
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") setQuickView(null);
+      if (event.key === "ArrowLeft") {
+        setQuickImageIndex((current) => Math.max(0, current - 1));
+      }
+      if (event.key === "ArrowRight") {
+        setQuickImageIndex((current) => Math.min(quickView.images.length - 1, current + 1));
+      }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => {
@@ -203,6 +224,7 @@ export default function ProductCatalog({
   const quickWhatsappUrl = quickView
     ? productWhatsappUrl(whatsappBaseUrl, storeName, quickView.product.name)
     : null;
+  const quickImage = quickView?.images[quickImageIndex] || null;
 
   return (
     <section>
@@ -242,6 +264,7 @@ export default function ProductCatalog({
           const globalIndex = from + index;
           const productUrl = `/v/${storeSlug}/urun/${getProductUrlSlug(product, globalIndex)}`;
           const image = productImageOnly(product);
+          const quickImages = productImagesOnly(product);
           const category = String(product.category || "").trim();
           const stockStatus = String(product.stockStatus || "").trim();
           const tone = stockTone(stockStatus);
@@ -261,7 +284,8 @@ export default function ProductCatalog({
                   if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
                   event.preventDefault();
                   setLocationProductId(null);
-                  setQuickView({ product, image, productUrl });
+                  setQuickImageIndex(0);
+                  setQuickView({ product, images: quickImages, productUrl });
                 }}
                 className="block min-w-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
                 aria-label={`${product.name} ürününü hızlı incele`}
@@ -420,11 +444,59 @@ export default function ProductCatalog({
             aria-labelledby="product-quick-view-title"
           >
             <div className="relative aspect-[4/3] bg-slate-950 sm:aspect-auto sm:min-h-[520px]">
-              <CatalogProductImage src={quickView.image} alt={quickView.product.name} />
+              <CatalogProductImage src={quickImage} alt={quickView.product.name} />
+
+              {quickView.images.length > 1 ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setQuickImageIndex((current) => Math.max(0, current - 1))}
+                    disabled={quickImageIndex === 0}
+                    className="absolute left-3 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-slate-950/75 text-xl font-bold text-white backdrop-blur-md transition hover:bg-slate-900 disabled:cursor-default disabled:opacity-30"
+                    aria-label="Önceki ürün fotoğrafı"
+                  >
+                    ‹
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setQuickImageIndex((current) => Math.min(quickView.images.length - 1, current + 1))}
+                    disabled={quickImageIndex === quickView.images.length - 1}
+                    className="absolute right-3 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-slate-950/75 text-xl font-bold text-white backdrop-blur-md transition hover:bg-slate-900 disabled:cursor-default disabled:opacity-30"
+                    aria-label="Sonraki ürün fotoğrafı"
+                  >
+                    ›
+                  </button>
+                  <div className="absolute bottom-3 left-3 right-3 z-20 flex justify-center gap-2">
+                    {quickView.images.map((imageUrl, imageIndex) => (
+                      <button
+                        key={`${imageUrl}-${imageIndex}`}
+                        type="button"
+                        onClick={() => setQuickImageIndex(imageIndex)}
+                        className={`relative h-12 w-12 overflow-hidden rounded-lg border bg-slate-950/80 transition ${
+                          imageIndex === quickImageIndex
+                            ? "border-blue-400 ring-2 ring-blue-400/20"
+                            : "border-white/15 opacity-75 hover:opacity-100"
+                        }`}
+                        aria-label={`${imageIndex + 1}. ürün fotoğrafını göster`}
+                        aria-current={imageIndex === quickImageIndex ? "true" : undefined}
+                      >
+                        <Image
+                          src={imageUrl}
+                          alt=""
+                          fill
+                          sizes="48px"
+                          className="object-cover"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </>
+              ) : null}
+
               <button
                 type="button"
                 onClick={() => setQuickView(null)}
-                className="absolute right-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-slate-950/75 text-xl font-medium text-white backdrop-blur-md hover:bg-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+                className="absolute right-4 top-4 z-30 flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-slate-950/75 text-xl font-medium text-white backdrop-blur-md hover:bg-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
                 aria-label="Hızlı ürün görünümünü kapat"
               >
                 ×
