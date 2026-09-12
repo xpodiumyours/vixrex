@@ -13,3 +13,33 @@ export function InstagramIkonu({ className }: { className?: string }) {
     </svg>
   );
 }
+
+export function RandevuIkonu({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className={className}>
+      <path d="M7 1a1 1 0 0 1 1 1v1h8V2a1 1 0 1 1 2 0v1h1a3 3 0 0 1 3 3v2H2V6a3 3 0 0 1 3-3h1V2a1 1 0 0 1 1-1Z" />
+      <path
+        fillRule="evenodd"
+        d="M2 10h20v8a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3v-8Zm5 3.25a1.25 1.25 0 1 0 0 2.5 1.25 1.25 0 0 0 0-2.5Zm5 0a1.25 1.25 0 1 0 0 2.5 1.25 1.25 0 0 0 0-2.5Zm5 0a1.25 1.25 0 1 0 0 2.5 1.25 1.25 0 0 0 0-2.5Z"
+      />
+    </svg>
+  );
+}
+
+export function BaglantiIkonu({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2.1}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className={className}
+    >
+      <path d="M10.5 13.5a4.5 4.5 0 0 0 6.79.49l2.7-2.7a4.5 4.5 0 0 0-6.36-6.37l-1.55 1.54" />
+      <path d="M13.5 10.5a4.5 4.5 0 0 0-6.79-.49l-2.7 2.7a4.5 4.5 0 0 0 6.36 6.37l1.54-1.54" />
+    </svg>
+  );
+}
