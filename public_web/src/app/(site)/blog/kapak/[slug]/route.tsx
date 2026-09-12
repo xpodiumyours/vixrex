@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { yaziyiBul } from "@/data/blogYazilari";
+import { blogYayindaMi, yaziyiBul } from "@/data/blogYazilari";
 
 export const revalidate = 3600;
 
@@ -7,6 +7,10 @@ export async function GET(
   _istek: Request,
   { params }: { params: Promise<{ slug: string }> },
 ) {
+  if (!blogYayindaMi()) {
+    return new Response("Bulunamadı", { status: 404 });
+  }
+
   const { slug } = await params;
   const genelKapak = slug === "blog";
   const yazi = genelKapak ? undefined : yaziyiBul(slug);
