@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { blogYayindaMi } from "@/data/blogYazilari";
+import { BlogRehberleri } from "@/components/landing/BlogRehberleri";
 import { ComparisonSection } from "@/components/landing/ComparisonSection";
 import { FeaturesSection } from "@/components/landing/FeaturesSection";
 import { LandingChatWrapper } from "@/components/landing/LandingChatWrapper";
@@ -43,13 +45,14 @@ export default async function HomePage() {
 
   return (
     <>
-      <LandingChatWrapper profiller={profiller}>
+      <LandingChatWrapper profiller={profiller} blogErisimi={blogYayindaMi()}>
         <ValueBand />
         <FeaturesSection />
         <ComparisonSection />
         <TrustBand />
         <StepsSection />
         <TemplateCatalog />
+        <BlogRehberleri />
       </LandingChatWrapper>
     </>
   );
