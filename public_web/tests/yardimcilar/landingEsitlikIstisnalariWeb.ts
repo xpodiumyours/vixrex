@@ -37,7 +37,20 @@ const HERO_REFERANS_DEKOR =
   "kendi hero düzenini koruyor; bunlar pazarlama süsü, işlevsel metin değil. " +
   "Flutter aynı hero'yu alırsa bu kayıtlar silinmeli.";
 
+const BLOG_REHBERLERI_DEKOR =
+  "11 Eylül 2026 kurumsal blog görevi: vixrex.com landing sayfasına yayın " +
+  "anahtarlı blog erişimi eklendi. Flutter kaynakları bu görevin kapsamında " +
+  "değil; blog landing metinleri yalnız web yüzeyinde bulunuyor.";
+
 export const LANDING_ESITLIK_ISTISNALARI_WEB: Istisna[] = [
+  ...[
+    "İşletmen için pratik rehberler.",
+    "Dijital vitrin, keşfedilme ve müşteri iletişimi için doğrudan uygulayabileceğin içerikler.",
+    "Tüm rehberler →",
+  ].map((metin) => ({
+    metin,
+    neden: BLOG_REHBERLERI_DEKOR,
+  })),
   // --- Landing maket sohbeti (PhoneMockup AsistanSohbetIcerigi) ---
 
   // "2 bağlantı" istisnası SİLİNDİ (2026-09-08 canlı karşılaştırma):
@@ -238,7 +251,7 @@ export const LANDING_ESITLIK_ISTISNALARI_WEB: Istisna[] = [
     metin: "Oto / Araç",
     neden:
       "Shared JSON kategori label'ı. Flutter Web 'Oto & Araç Hizmetleri' " +
-      "kullanıyor. Sunum label farkı.",
+      "kullanıyor. Sunum label farkı (A sınıfı).",
   },
   {
     metin: "Oto & Araç Hizmetleri",

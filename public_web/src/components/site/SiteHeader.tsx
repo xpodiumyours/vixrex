@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { blogYayindaMi } from "@/data/blogYazilari";
 import { KesfetIkonu, StorefrontIkonu } from "./icons";
 
 /**
@@ -33,6 +34,7 @@ export function SiteHeader() {
         </Link>
 
         <div className="flex items-center gap-2.5">
+          {blogYayindaMi() ? <Link href="/blog" className="inline-flex min-h-11 items-center rounded-lg px-2 text-sm font-semibold text-lp-text outline-none hover:text-lp-secondary focus-visible:ring-2 focus-visible:ring-lp-secondary">Blog</Link> : null}
           <Link
             href="/kesfet"
             className="hidden items-center gap-2 rounded-full border border-lp-primary/45 bg-lp-surface-soft px-4 py-3 text-[12px] font-black text-lp-primary transition-colors hover:bg-lp-surface md:flex"

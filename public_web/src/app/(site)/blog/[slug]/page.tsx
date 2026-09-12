@@ -1,25 +1,85 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { yayindakiYazilar, yaziyiBul } from "@/data/blogYazilari";
-import { govdeyiBicimlendir, tarihiYaz } from "@/lib/blogIcerik";
+import { BlogKapak } from "@/components/blog/BlogKapak";
+import { BlogPaylas } from "@/components/blog/BlogPaylas";
+import {
+  ilgiliYazilariBul,
+  type YayindakiBlogYazisi,
+  yayindakiYazilar,
+  yaziyiBul,
+} from "@/data/blogYazilari";
+import {
+  govdeyiBloklaraAyir,
+  icindekileriCikar,
+  okumaDakikasiHesapla,
+  tarihiYaz,
+} from "@/lib/blogIcerik";
 import { safeJsonLdHtml } from "@/lib/jsonLd";
 import { buildSiteUrl, getSiteUrl } from "@/lib/siteUrl";
 
-/**
- * Tek blog yazısı.
- *
- * Örnek alınan dosya: `app/v/[slug]/yazilar/[articleSlug]/page.tsx` —
- * BlogPosting + BreadcrumbList JSON-LD ve gövde biçimlendirme deseni
- * oradan geliyor. JSON-LD kaçışı YALNIZ `safeJsonLdHtml` üzerinden;
- * `json-ld-xss` testi bunu koruyor.
- *
- * Taslak yazılar buradan da görünmez: `yaziyiBul` yalnız yayındakilere
- * bakar, `generateStaticParams` de yalnız onları üretir.
- */
-
 interface SayfaProps {
   params: Promise<{ slug: string }>;
+}
+
+function mutlakUrl(yol: string): string {
+  if (/^https?:\/\//i.test(yol)) return yol;
+  return buildSiteUrl(yol);
+}
+
+function baglamsalCta(
+  yazi: Pick<YayindakiBlogYazisi, "kategori" | "icerikTuru">
+): { baslik: string; aciklama: string; href: string; etiket: string } {
+  if (yazi.icerikTuru === "urun_guncellemesi") {
+    return {
+      baslik: "Güncellemeyi vitrinde görmek ister misin?",
+      aciklama: "Yayındaki vitrinleri Keşfet sayfasında inceleyebilirsin.",
+      href: "/kesfet",
+      etiket: "Vitrinleri incele",
+    };
+  }
+
+  switch (yazi.kategori) {
+    case "Google ve Keşfedilme":
+      return {
+        baslik: "Dijital vitrinin temelini kontrol et",
+        aciklama:
+          "Vitrin hazırlama ve yayınlama adımlarını Vixrex Yardım sayfasında inceleyebilirsin.",
+        href: "/yardim",
+        etiket: "Yardım rehberlerini aç",
+      };
+    case "Müşteri İletişimi":
+      return {
+        baslik: "İletişim bilgilerini doğru hazırlamak ister misin?",
+        aciklama:
+          "Vixrex Yardım sayfasındaki vitrin hazırlama adımlarını inceleyebilirsin.",
+        href: "/yardim",
+        etiket: "Yardım rehberlerini aç",
+      };
+    case "İşletme Hikâyeleri":
+      return {
+        baslik: "Benzer vitrinleri incele",
+        aciklama: "Yayındaki işletme vitrinlerini Keşfet sayfasında görebilirsin.",
+        href: "/kesfet",
+        etiket: "Vitrinleri keşfet",
+      };
+    case "Vixrex’te Yenilikler":
+      return {
+        baslik: "Vixrex’i vitrinlerde incele",
+        aciklama: "Yayındaki vitrinleri Keşfet sayfasında görebilirsin.",
+        href: "/kesfet",
+        etiket: "Vitrinleri keşfet",
+      };
+    default:
+      return {
+        baslik: "Vitrin örneklerini incele",
+        aciklama:
+          "Rehberde anlatılan yapıların gerçek vitrinlerde nasıl göründüğüne Keşfet sayfasından bakabilirsin.",
+        href: "/kesfet",
+        etiket: "Vitrinleri keşfet",
+      };
+  }
 }
 
 export function generateStaticParams() {
@@ -33,9 +93,12 @@ export async function generateMetadata({
   const yazi = yaziyiBul(slug);
   if (!yazi) return { title: "Yazı bulunamadı | Vixrex" };
 
+  const kapakUrl = yazi.kapak ? mutlakUrl(yazi.kapak) : buildSiteUrl(`/blog/kapak/${yazi.slug}`);
+
   return {
     title: `${yazi.baslik} | Vixrex`,
     description: yazi.ozet,
+    twitter: { card: "summary_large_image", title: yazi.baslik, description: yazi.ozet, images: [kapakUrl] },
     alternates: { canonical: buildSiteUrl(`/blog/${yazi.slug}`) },
     openGraph: {
       title: yazi.baslik,
@@ -43,7 +106,10 @@ export async function generateMetadata({
       url: buildSiteUrl(`/blog/${yazi.slug}`),
       type: "article",
       publishedTime: yazi.yayinTarihi,
-      modifiedTime: yazi.guncellemeTarihi,
+      modifiedTime: yazi.guncellemeTarihi || yazi.yayinTarihi,
+      images: kapakUrl
+        ? [{ url: kapakUrl, alt: yazi.kapakAlt || yazi.baslik }]
+        : undefined,
     },
   };
 }
@@ -55,7 +121,16 @@ export default async function BlogYaziPage({ params }: SayfaProps) {
 
   const siteUrl = getSiteUrl();
   const yaziUrl = buildSiteUrl(`/blog/${yazi.slug}`);
-  const govdeHtml = govdeyiBicimlendir(yazi.govde);
+  const bloklar = govdeyiBloklaraAyir(yazi.govde);
+  const icindekiler = icindekileriCikar(yazi.govde);
+  const okumaDakika = okumaDakikasiHesapla(yazi.govde);
+  const icindekilerGoster = icindekiler.length >= 3;
+  const ilgiliYazilar = ilgiliYazilariBul(yazi);
+  const kapakUrl = yazi.kapak ? mutlakUrl(yazi.kapak) : buildSiteUrl(`/blog/kapak/${yazi.slug}`);
+  const anlamliGuncelleme =
+    Boolean(yazi.guncellemeTarihi) &&
+    yazi.guncellemeTarihi !== yazi.yayinTarihi;
+  const cta = baglamsalCta(yazi);
 
   const blogPosting = {
     "@context": "https://schema.org",
@@ -64,13 +139,19 @@ export default async function BlogYaziPage({ params }: SayfaProps) {
     headline: yazi.baslik,
     description: yazi.ozet,
     datePublished: yazi.yayinTarihi,
-    dateModified: yazi.guncellemeTarihi,
-    author: { "@type": "Organization", name: "Vixrex" },
+    dateModified: yazi.guncellemeTarihi || yazi.yayinTarihi,
+    author: {
+      "@type": yazi.yazar.tur === "kisi" ? "Person" : "Organization",
+      name: yazi.yazar.ad,
+      ...(yazi.yazar.url ? { url: mutlakUrl(yazi.yazar.url) } : {}),
+    },
     publisher: {
       "@type": "Organization",
       name: "Vixrex",
+      url: siteUrl,
       logo: { "@type": "ImageObject", url: buildSiteUrl("/favicon.png") },
     },
+    ...(kapakUrl ? { image: [kapakUrl] } : {}),
   };
 
   const izYolu = {
@@ -99,43 +180,315 @@ export default async function BlogYaziPage({ params }: SayfaProps) {
         dangerouslySetInnerHTML={{ __html: safeJsonLdHtml(izYolu) }}
       />
 
-      <div className="bg-lp-bg-light px-5 py-12 sm:py-16">
-        <div className="mx-auto w-full max-w-3xl">
-          <Link
-            href="/blog"
-            className="text-xs font-extrabold text-lp-muted transition-colors hover:text-lp-text-alt"
-          >
-            ← Tüm yazılar
-          </Link>
-
-          <article className="mt-4 overflow-hidden rounded-[28px] border border-lp-border bg-lp-bg-editor px-6 py-8 shadow-[0_24px_70px_rgba(14,32,58,0.12)] sm:px-10 sm:py-12">
-            <h1 className="text-3xl font-black leading-tight tracking-tight text-lp-text sm:text-4xl">
-              {yazi.baslik}
-            </h1>
-            <p className="mt-3 text-xs font-bold text-lp-muted">
-              {tarihiYaz(yazi.yayinTarihi)} · {yazi.okumaDakika} dk okuma
-            </p>
-
-            <div
-              className="mt-6 text-sm font-medium leading-7 text-lp-text sm:text-base"
-              dangerouslySetInnerHTML={{ __html: govdeHtml }}
-            />
-          </article>
-
-          <section className="mt-6 rounded-2xl border border-lp-border bg-white px-6 py-6 text-center shadow-sm sm:px-8">
-            <p className="text-sm font-black text-lp-text sm:text-base">
-              Kendi vitrinini görmek ister misin?
-            </p>
-            <p className="mt-2 text-sm font-medium leading-6 text-lp-muted">
-              Hazır vitrinlere göz at, beğendiğini kendine uyarla.
-            </p>
+      <div className="bg-lp-bg-editor px-4 py-10 sm:px-5 sm:py-14">
+        <div className="mx-auto w-full max-w-[1180px]">
+          <nav aria-label="İz yolu" className="text-sm font-bold text-lp-muted">
             <Link
-              href="/kesfet"
-              className="mt-4 inline-flex min-h-11 items-center justify-center rounded-full bg-lp-primary px-6 text-sm font-black text-white transition-opacity hover:opacity-90"
+              href="/blog"
+              className="inline-flex min-h-11 items-center text-lp-secondary outline-none hover:text-lp-text focus-visible:ring-2 focus-visible:ring-lp-secondary"
             >
-              Keşfet&apos;e bak
+              ← Blog
             </Link>
-          </section>
+            <span aria-hidden="true" className="mx-2">
+              /
+            </span>
+            <span>{yazi.kategori}</span>
+          </nav>
+
+          <div className="mt-4 grid gap-8 lg:grid-cols-[200px_minmax(0,740px)] lg:justify-center lg:gap-12">
+            {icindekilerGoster ? (
+              <aside className="hidden self-start border-l border-lp-border pl-5 lg:sticky lg:top-6 lg:block lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto">
+                <p className="text-sm font-black text-lp-text">Bu yazıda</p>
+                <nav aria-label="Bu yazıda" className="mt-3 space-y-3">
+                  {icindekiler.map((madde) => (
+                    <a
+                      key={`${madde.id}-${madde.seviye}`}
+                      href={`#${madde.id}`}
+                      className={`block text-sm font-semibold leading-5 text-lp-muted outline-none hover:text-lp-secondary focus-visible:ring-2 focus-visible:ring-lp-secondary ${
+                        madde.seviye === 3 ? "pl-3" : ""
+                      }`}
+                    >
+                      {madde.baslik}
+                    </a>
+                  ))}
+                </nav>
+              </aside>
+            ) : (
+              <div className="hidden lg:block" aria-hidden="true" />
+            )}
+
+            <article className="min-w-0">
+              <p className="text-xs font-black text-lp-secondary">
+                {yazi.kategori}
+                {yazi.icerikTuru === "rehber" ? " · Rehber" : ""}
+              </p>
+              <h1 className="mt-3 break-words text-4xl font-black leading-[1.08] tracking-[-0.035em] text-lp-text sm:text-5xl">
+                {yazi.baslik}
+              </h1>
+              <p className="mt-5 text-lg font-medium leading-8 text-lp-muted sm:text-xl">
+                {yazi.ozet}
+              </p>
+
+              <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm font-bold leading-6 text-lp-muted">
+                <span>
+                  Yazar:{" "}
+                  {yazi.yazar.url ? (
+                    <Link
+                      href={yazi.yazar.url}
+                      className="text-lp-secondary underline decoration-lp-border underline-offset-4 outline-none hover:text-lp-text focus-visible:ring-2 focus-visible:ring-lp-secondary"
+                    >
+                      {yazi.yazar.ad}
+                    </Link>
+                  ) : (
+                    yazi.yazar.ad
+                  )}
+                </span>
+                {yazi.inceleyen ? <span>İnceleyen: {yazi.inceleyen.ad}</span> : null}
+                <span>
+                  Yayınlandı:{" "}
+                  <time dateTime={yazi.yayinTarihi}>
+                    {tarihiYaz(yazi.yayinTarihi)}
+                  </time>
+                </span>
+                {anlamliGuncelleme ? (
+                  <span>
+                    Güncellendi:{" "}
+                    <time dateTime={yazi.guncellemeTarihi!}>
+                      {tarihiYaz(yazi.guncellemeTarihi!)}
+                    </time>
+                  </span>
+                ) : null}
+                <span>
+                  Son kontrol:{" "}
+                  <time dateTime={yazi.sonKontrolTarihi}>
+                    {tarihiYaz(yazi.sonKontrolTarihi)}
+                  </time>
+                </span>
+                {yazi.kaynaklar.length > 0 ? (
+                  <span>{yazi.kaynaklar.length} kaynak</span>
+                ) : null}
+                <span>{okumaDakika} dk okuma</span>
+              </div>
+
+              <BlogPaylas baslik={yazi.baslik} />
+
+              <aside
+                className="mt-7 border-l-2 border-lp-primary pl-4 sm:pl-5"
+                aria-label="Bu rehberin amacı"
+              >
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-lp-secondary">
+                  Bu rehber hangi soruyu çözüyor?
+                </p>
+                <p className="mt-2 text-base font-semibold leading-7 text-lp-text">
+                  {yazi.cozduguSoru}
+                </p>
+              </aside>
+
+              {icindekilerGoster ? (
+                <details className="mt-7 rounded-[16px] border border-lp-border bg-lp-surface px-4 py-3 lg:hidden">
+                  <summary className="min-h-11 cursor-pointer py-3 font-black text-lp-text">
+                    Bu yazıda
+                  </summary>
+                  <nav aria-label="Bu yazıda mobil" className="pb-3">
+                    {icindekiler.map((madde) => (
+                      <a
+                        key={`mobil-${madde.id}-${madde.seviye}`}
+                        href={`#${madde.id}`}
+                        className={`block min-h-11 py-2 text-sm font-semibold leading-6 text-lp-muted ${
+                          madde.seviye === 3 ? "pl-4" : ""
+                        }`}
+                      >
+                        {madde.baslik}
+                      </a>
+                    ))}
+                  </nav>
+                </details>
+              ) : null}
+
+              {yazi.kapak ? (
+                <figure className="mt-8">
+                  <div className="relative aspect-[16/9] overflow-hidden rounded-[22px] border border-lp-border bg-lp-surface-soft">
+                    <Image
+                      src={yazi.kapak}
+                      alt={yazi.kapakAlt || yazi.baslik}
+                      fill
+                      preload
+                      sizes="(max-width: 768px) 100vw, 740px"
+                      className="object-cover"
+                    />
+                  </div>
+                  {yazi.gorselKaynagi ? (
+                    <figcaption className="mt-2 text-xs font-medium leading-5 text-lp-muted">
+                      Görsel kaynağı: {yazi.gorselKaynagi}
+                    </figcaption>
+                  ) : null}
+                </figure>
+              ) : (
+                <div className="mt-8"><BlogKapak yazi={yazi} /></div>
+              )}
+
+              <div className="mt-9 text-[17px] font-medium leading-[1.75] text-lp-text sm:text-lg">
+                {bloklar.map((blok, index) => {
+                  if (blok.tur === "h2") {
+                    return (
+                      <h2
+                        key={`${blok.id}-${index}`}
+                        id={blok.id}
+                        className="scroll-mt-24 pt-8 text-3xl font-black leading-tight tracking-tight text-lp-text"
+                      >
+                        {blok.metin}
+                      </h2>
+                    );
+                  }
+                  if (blok.tur === "h3") {
+                    return (
+                      <h3
+                        key={`${blok.id}-${index}`}
+                        id={blok.id}
+                        className="scroll-mt-24 pt-6 text-2xl font-black leading-tight text-lp-text"
+                      >
+                        {blok.metin}
+                      </h3>
+                    );
+                  }
+                  if (blok.tur === "liste") {
+                    const Liste = blok.sirali ? "ol" : "ul";
+                    return (
+                      <Liste
+                        key={`liste-${index}`}
+                        className={`my-5 space-y-2 pl-6 ${
+                          blok.sirali ? "list-decimal" : "list-disc"
+                        }`}
+                      >
+                        {blok.maddeler.map((madde, maddeIndex) => (
+                          <li key={`${madde}-${maddeIndex}`}>{madde}</li>
+                        ))}
+                      </Liste>
+                    );
+                  }
+                  return (
+                    <p key={`p-${index}`} className="mt-5">
+                      {blok.metin}
+                    </p>
+                  );
+                })}
+              </div>
+
+              {yazi.kaynaklar.length > 0 ? (
+                <section
+                  className="mt-12 border-t border-lp-border pt-7"
+                  aria-labelledby="kaynaklar"
+                >
+                  <h2 id="kaynaklar" className="text-2xl font-black text-lp-text">
+                    Kaynaklar
+                  </h2>
+                  <ul className="mt-4 space-y-3">
+                    {yazi.kaynaklar.map((kaynak) => (
+                      <li key={kaynak.url}>
+                        <a
+                          href={kaynak.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-bold leading-6 text-lp-secondary underline decoration-lp-border underline-offset-4 outline-none hover:text-lp-text focus-visible:ring-2 focus-visible:ring-lp-secondary"
+                        >
+                          {kaynak.baslik}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ) : null}
+
+              {yazi.guncellemeNotlari.length > 0 ? (
+                <section
+                  className="mt-12 border-t border-lp-border pt-7"
+                  aria-labelledby="guncelleme-gecmisi"
+                >
+                  <h2
+                    id="guncelleme-gecmisi"
+                    className="text-2xl font-black text-lp-text"
+                  >
+                    Güncelleme geçmişi
+                  </h2>
+                  <div className="mt-4 divide-y divide-lp-border">
+                    {yazi.guncellemeNotlari.map((not) => (
+                      <div
+                        key={`${not.tarih}-${not.aciklama}`}
+                        className="py-4"
+                      >
+                        <p className="font-black text-lp-text">
+                          {tarihiYaz(not.tarih)}
+                        </p>
+                        <p className="mt-1 text-sm font-medium leading-6 text-lp-muted">
+                          {not.aciklama}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              ) : null}
+
+              <section className="mt-12 rounded-[18px] border border-lp-border bg-lp-surface px-5 py-5 sm:flex sm:items-center sm:justify-between sm:gap-6">
+                <div>
+                  <h2 className="text-base font-black text-lp-text">
+                    Bu bilgi yanlış veya eski mi?
+                  </h2>
+                  <p className="mt-1 text-sm font-medium leading-6 text-lp-muted">
+                    Düzeltme bildirimini iletişim sayfasından iletebilirsiniz.
+                  </p>
+                </div>
+                <Link
+                  href="/iletisim"
+                  className="mt-4 inline-flex min-h-11 items-center rounded-full font-black text-lp-secondary outline-none focus-visible:ring-2 focus-visible:ring-lp-secondary sm:mt-0"
+                >
+                  Düzeltme bildir →
+                </Link>
+              </section>
+
+              {ilgiliYazilar.length > 0 ? (
+                <section
+                  className="mt-12 border-t border-lp-border pt-7"
+                  aria-labelledby="ilgili-yazilar"
+                >
+                  <h2
+                    id="ilgili-yazilar"
+                    className="text-2xl font-black text-lp-text"
+                  >
+                    İlgili rehberler
+                  </h2>
+                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                    {ilgiliYazilar.map((ilgili) => (
+                      <Link
+                        key={ilgili.slug}
+                        href={`/blog/${ilgili.slug}`}
+                        className="rounded-[16px] border border-lp-border bg-lp-surface px-5 py-5 outline-none hover:border-lp-primary focus-visible:ring-2 focus-visible:ring-lp-secondary"
+                      >
+                        <span className="text-xs font-black text-lp-secondary">
+                          {ilgili.kategori}
+                        </span>
+                        <span className="mt-2 block font-black leading-6 text-lp-text">
+                          {ilgili.baslik}
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                </section>
+              ) : null}
+
+              <section className="mt-12 border-t border-lp-border pt-7">
+                <h2 className="text-xl font-black text-lp-text">{cta.baslik}</h2>
+                <p className="mt-2 text-sm font-medium leading-6 text-lp-muted">
+                  {cta.aciklama}
+                </p>
+                <Link
+                  href={cta.href}
+                  className="mt-4 inline-flex min-h-11 items-center justify-center rounded-full bg-lp-primary px-6 text-sm font-black text-lp-on-primary outline-none focus-visible:ring-2 focus-visible:ring-lp-secondary focus-visible:ring-offset-2 focus-visible:ring-offset-lp-bg-editor"
+                >
+                  {cta.etiket}
+                </Link>
+              </section>
+            </article>
+          </div>
         </div>
       </div>
     </>

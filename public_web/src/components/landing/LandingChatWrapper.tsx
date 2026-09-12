@@ -18,9 +18,11 @@ import type { MockupProfili } from "./mockupProfilleri";
 export function LandingChatWrapper({
   children,
   profiller,
+  blogErisimi = false,
 }: {
   children: ReactNode;
   profiller: MockupProfili[];
+  blogErisimi?: boolean;
 }) {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [initialAssistantName, setInitialAssistantName] = useState("");
@@ -88,6 +90,7 @@ export function LandingChatWrapper({
     <>
       <HeroSection
         profiller={profiller}
+        blogErisimi={blogErisimi}
         isChatOpen={isChatOpen}
         initialAssistantName={initialAssistantName}
         onStartAssistant={handleStartAssistant}
