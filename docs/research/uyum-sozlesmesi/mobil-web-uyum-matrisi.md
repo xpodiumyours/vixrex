@@ -31,9 +31,17 @@ olması **ayrışma değil, doğru tasarımdır.**
 ayrışamaz. İkisini de kullanan esnaf aynı ürünü kullandığını anlamalı.
 Sınır şu:
 
+Üç seçenek vardır, iki değil. Proje üçüncüsünü zaten kullanıyor:
+**platforma özgü ama kilitli** — masaüstü kenar çubuğu 220px, mobil alt
+çubuk 68px; ikisi farklı, ikisi de sabit, ikisi de testli
+(`f5-shell-parite.test.ts`). Bu ne eşitliktir ne serbestlik.
+
 | Yüzey öğesi | Kural | Gerekçe |
 |---|---|---|
-| Yerleşim, gezinme, ekran sayısı, bileşen türü | **Serbest** | Telefon ve masaüstü farklı araçlar |
+| Bileşen türü (açılır liste ↔ alt sayfa) | **Serbest** | Aynı işi platformun kendi aracıyla yapar |
+| Yerleşim ve ölçüler | **Platforma özgü ama KİLİTLİ** | Her platformun kendi değeri sabit; keyfî değişmez |
+| Gezinme — üst düzey bölümler ve sırası | **Eşit** | `f5-shell-parite.test.ts` dört sekmeyi iki tarafta aynı sırada kilitliyor |
+| Ekran/adım sayısı | **Eşit** | Aşağıdaki "adım sayısı" kuralının aynısı; ayrı yazmak çelişkiydi |
 | Aynı kavramın adı | **Eşit** | "Kısa tanıtım" bir yerde "Hakkında" olamaz |
 | Bir işin adım sayısı ve sırası | **Eşit** | Webde 3 adımda yayınlanan mobilde 6 adım olmaz |
 | Hangi alan düzenlenebilir (yetki) | **Eşit** | Alan bir istemcide sessizce kaybolmaz |
@@ -74,9 +82,17 @@ Geçişe başlamadan önceki ölçülmüş durum. Ölçüm dalı: `main@6c9d2912
 bakıyor mu) → sonra `landing_screen.dart`/`widgets/landing/` ise sınıf 1,
 `lib/screens/`|`lib/widgets/` ise sınıf 3, diğer `lib/` yolları sınıf 2.
 
-> **Düzeltme (aynı gün):** İlk ölçümde `lib/` dizesi arandı ve bu, webin
+> **Düzeltme 1 (aynı gün):** İlk ölçümde `lib/` dizesi arandı ve bu, webin
 > kendi `src/lib/` yollarını da yakaladı — sonuç 122 çıktı, gerçeği 58.
 > Yük iki kattan fazla abartılmıştı. Ölçüt artık `.dart`.
+>
+> **Düzeltme 2 (aynı gün):** Yüzey satırında "yerleşim, gezinme, ekran
+> sayısı, bileşen türü serbest" yazılmıştı. Dayanağı yoktu ve üçü
+> yanlıştı: `f5-shell-parite.test.ts` main'de dört ana sekmeyi iki
+> istemcide **aynı sırada** kilitliyor, kabuk/alt ekran ayrımını ve
+> 220px/68px ölçülerini sabitliyor. Yani gezinme sözleşmedir, serbest
+> değil. Genel tasarım sezgisiyle yazılmış, projenin kendi kararına
+> bakılmamıştı.
 
 | Sınıf | Adet | Karar |
 |---|---|---|
