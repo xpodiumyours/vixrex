@@ -166,7 +166,7 @@ export default function ProductCatalog({
       )}
 
       <div
-        className="grid grid-cols-2 md:grid-cols-3"
+        className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
         style={{ gap: "var(--v-card-gap, 0.75rem)" }}
       >
         {paginatedProducts.map((product, index) => {
