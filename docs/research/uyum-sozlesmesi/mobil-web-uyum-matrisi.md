@@ -25,13 +25,33 @@ aynı `shared/*.json` dosyalarından aynı alanları, aynı mesajları, aynı
 kuralları okuduğu sürece uyum bozulmaz. Telefonda alt sekme, webde yan menü
 olması **ayrışma değil, doğru tasarımdır.**
 
+### Ama yüzeyde serbest olan tek şey YERLEŞİMDİR
+
+"Yüzeyde eşitlik aranmaz" fazla gevşek bir cümle; iki istemci keyfî
+ayrışamaz. İkisini de kullanan esnaf aynı ürünü kullandığını anlamalı.
+Sınır şu:
+
+| Yüzey öğesi | Kural | Gerekçe |
+|---|---|---|
+| Yerleşim, gezinme, ekran sayısı, bileşen türü | **Serbest** | Telefon ve masaüstü farklı araçlar |
+| Aynı kavramın adı | **Eşit** | "Kısa tanıtım" bir yerde "Hakkında" olamaz |
+| Bir işin adım sayısı ve sırası | **Eşit** | Webde 3 adımda yayınlanan mobilde 6 adım olmaz |
+| Hangi alan düzenlenebilir (yetki) | **Eşit** | Alan bir istemcide sessizce kaybolmaz |
+| Aynı girdiye aynı sonuç ve uyarı metni | **Eşit** | Doğrulama davranışı iş kuralıdır |
+| Marka rengi, logo, ton | **Eşit** | `#147DFF` her iki istemcide aynı |
+
+**Ölçüm (2026-09-12):** Bugün yüzey sınıfındaki 22 testin çoğu zaten
+**metin** kilitliyor, ikisi (`ui-parity-contract`, `vitrinim-ui-parite`)
+**marka rengi** kilitliyor. Yani mevcut testler bu sınırla büyük ölçüde
+uyumlu — atılacak olan, yalnız saf yerleşim iddiaları.
+
 ## Üç katman
 
 | Katman | İçerik | Eşitlik | Nasıl kilitlenir |
 |---|---|---|---|
 | **1 — Ortak kaynak** | `shared/*.json` (10 dosya) + Supabase şeması/RPC | **Zorunlu** | Üretim tazeliği (CI `schema-drift`) |
 | **2 — İş kuralları** | yayın kapısı, 46 alan, çalışma saati, konum, asistan davranışı | **Zorunlu** | Sözleşme testleri — kaynağı katman 1 olmalı, dart dosyası değil |
-| **3 — Yüzey** | ekran, menü, düzen, görünüm, gezinme | **ARANMAZ** | Her istemci kendi testiyle; eşitlik iddiası yok |
+| **3 — Yüzey** | ekran, menü, düzen, görünüm, gezinme | **Sınırlı** — aşağıdaki tabloya bak | Metin/renk/adım eşitliği kilitli; yerleşim serbest |
 
 ---
 
@@ -43,22 +63,26 @@ Geçişe başlamadan önceki ölçülmüş durum. Ölçüm dalı: `main@6c9d2912
 | Ölçüm | Değer |
 |---|---|
 | Toplam test dosyası | **188** |
-| Flutter dart dosyası okuyan test | **122** (%65) |
+| Flutter `.dart` dosyası okuyan test | **58** (%31) |
 | Testler | 1531 geçti · 7 kırık · 3 todo — kırıkların ikisi de `fark-tespiti-randevu-*`, bu geçişle ilgisiz |
 | `shared/*.json` | 10 dosya |
 | Ortak kaynak tazeliği | **Taze** — üç üretici koşuldu, `dart format` sonrası fark yok |
 | Flutter ekran dosyası | 24 (`lib/screens/`) |
 | Flutter landing bileşeni | 14 (`lib/widgets/landing/`) |
 
-**Dart okuyan 120 testin sınıflandırması** (ölçüm: `landing_screen.dart` veya
-`widgets/landing/` okuyan → sınıf 1; `lib/screens/` veya `lib/widgets/`
-okuyan → sınıf 3; diğer `lib/` yolları → sınıf 2):
+**Sınıflandırma ölçütü:** dosyada `.dart` geçiyor mu (Flutter'a gerçekten
+bakıyor mu) → sonra `landing_screen.dart`/`widgets/landing/` ise sınıf 1,
+`lib/screens/`|`lib/widgets/` ise sınıf 3, diğer `lib/` yolları sınıf 2.
+
+> **Düzeltme (aynı gün):** İlk ölçümde `lib/` dizesi arandı ve bu, webin
+> kendi `src/lib/` yollarını da yakaladı — sonuç 122 çıktı, gerçeği 58.
+> Yük iki kattan fazla abartılmıştı. Ölçüt artık `.dart`.
 
 | Sınıf | Adet | Karar |
 |---|---|---|
 | 1 — Flutter Web ile ölecek | **11** | Tanıtım sayfası kalkınca silinir |
-| 2 — İş kuralı | **89** | Kalır, kaynağı `shared/`'a taşınır |
-| 3 — Yüzey | **22** | "Parite" iddiasından çıkar |
+| 2 — İş kuralı | **25** | Kalır, kaynağı `shared/`'a taşınır |
+| 3 — Yüzey | **22** | Çoğu metin/renk kilitliyor — **kalır**; yalnız saf yerleşim iddiaları çıkar |
 
 ---
 
@@ -66,8 +90,8 @@ okuyan → sınıf 3; diğer `lib/` yolları → sınıf 2):
 
 | # | Uyum alanı | Katman | Tek kaynak | Bugünkü kilit | Durum |
 |---|---|---|---|---|---|
-| 1 | Vitrin alanları (46 alan) | 1 | `shared/vitrin_alanlari.json` → `vitrin_alanlari.g.dart` + TS | CI `schema-drift` işi; üretim tazeliği 12 Eylül'de doğrulandı | `✓` — `business-categories.test.ts` |
-| 2 | İşletme kategorileri | 1 | `shared/business_categories.json` | CI `schema-drift`; CLAUDE.md'de doğru desen örneği olarak geçiyor | `✓` — `business-categories.test.ts` |
+| 1 | Vitrin alanları (46 alan) | 1 | `shared/vitrin_alanlari.json` → `vitrin_alanlari.g.dart` + TS | CI `schema-drift` işi — üretim tazeliği 12 Eylül'de doğrulandı. Vitest tarafında iki istemci eşitliğini kanıtlayan test **yok** | `△` |
+| 2 | İşletme kategorileri | 1 | `shared/business_categories.json` | CI `schema-drift`. `business-categories.test.ts` yalnız `src/lib/`'den içe aktarıyor, **Flutter tarafına hiç bakmıyor** — tek istemci doğrulaması | `△` |
 | 3 | Mesaj kataloğu | 1 | `shared/vixrex_mesajlar.json` → `vixrex_mesajlar.g.dart` | Üretim tazeliği var; iki istemcide kullanım eşliği kilitli değil | `△` |
 | 4 | Çalışma saati sözleşmesi | 1 | `shared/working_hours_contract.json` | `calisma-saatleri-parite.test.ts` — ama `lib/models/working_hours.dart` okuyor, ortak kaynağı değil | `△` |
 | 5 | Niyet sözlüğü / asistan dili | 1 | `shared/vixrex_niyet_sozlugu.json` + 4 senaryo dosyası | `asistan-parite.test.ts` dart config okuyor | `△` |
@@ -82,8 +106,8 @@ okuyan → sınıf 3; diğer `lib/` yolları → sınıf 2):
 
 | Durum | Adet |
 |---|---|
-| `✓` kod + kilitleyen test | 2 |
-| `△` kısmi | 6 |
+| `✓` kod + kilitleyen test | 0 |
+| `△` kısmi | 8 |
 | `✗` yok | 1 |
 | `İstisna` | 2 |
 
@@ -91,11 +115,12 @@ okuyan → sınıf 3; diğer `lib/` yolları → sınıf 2):
 
 ## Geçiş sırası
 
-1. **87 iş kuralı testinin kaynağını `shared/`'a taşı.** Asıl mühendislik
+1. **25 iş kuralı testinin kaynağını `shared/`'a taşı.** Asıl mühendislik
    burada. Bu yapılmadan Flutter Web kaldırılırsa iş kuralları sessizce
    ayrışır — matrisin var olma sebebi bu.
-2. **22 yüzey testini "parite" iddiasından çıkar.** Mobil kendi testine sahip
-   olur, eşitlik aranmaz.
+2. **22 yüzey testini tek tek ayır.** Metin, renk, adım sayısı ve yetki
+   kilitleyenler **kalır** — yukarıdaki yüzey sınırı tablosu gereği. Yalnız
+   saf yerleşim iddiaları (piksel, genişlik, sıralama içi düzen) çıkar.
 3. **11 landing testini sil.** Flutter tanıtım sayfası yayından kalktığı gün.
    Tek satır iş, en sona bırakılabilir.
 

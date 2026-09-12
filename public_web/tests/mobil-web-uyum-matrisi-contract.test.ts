@@ -86,7 +86,7 @@ function dartOkuyanlariSinifla(): Record<string, number> {
   const sayim = { "1": 0, "2": 0, "3": 0 };
   for (const ad of testDosyalari()) {
     const icerik = readFileSync(resolve(TEST_KLASORU, ad), "utf-8");
-    if (!icerik.includes("lib/")) continue;
+    if (!icerik.includes(".dart")) continue;
     if (/landing_screen\.dart|widgets\/landing\//.test(icerik)) sayim["1"] += 1;
     else if (/lib\/(screens|widgets)\//.test(icerik)) sayim["3"] += 1;
     else sayim["2"] += 1;
