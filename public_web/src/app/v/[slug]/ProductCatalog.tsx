@@ -22,8 +22,12 @@ interface CategoryItem {
 
 interface ProductCatalogProps {
   storeSlug: string;
+  storeName: string;
   products: CatalogProduct[];
   categoryMap: CategoryItem[];
+  whatsappBaseUrl?: string | null;
+  storeLocationText?: string | null;
+  storeMapsUrl?: string | null;
   /** Mevcut çağrı sözleşmesini kırmamak için korunur. Yeni kart ürün görseli yoksa mağaza görselini ürünmüş gibi kullanmaz. */
   fallbackImage?: string | null;
   /** Mevcut çağrı sözleşmesini kırmamak için korunur. */
@@ -49,6 +53,16 @@ function productLocationMapUrl(location: string): string | null {
   const normalized = location.trim();
   if (!normalized) return null;
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(normalized)}`;
+}
+
+function productWhatsappUrl(
+  baseUrl: string | null | undefined,
+  storeName: string,
+  productName: string,
+): string | null {
+  if (!baseUrl) return null;
+  const message = `Merhaba, ${storeName} vitrininizdeki "${productName}" ürünü hakkında bilgi almak istiyorum.`;
+  return `${baseUrl}?text=${encodeURIComponent(message)}`;
 }
 
 function stockTone(stockStatus: string | undefined) {
@@ -112,8 +126,12 @@ function CatalogProductImage({ src, alt }: { src: string | null; alt: string }) 
  */
 export default function ProductCatalog({
   storeSlug,
+  storeName,
   products,
   categoryMap,
+  whatsappBaseUrl = null,
+  storeLocationText = null,
+  storeMapsUrl = null,
 }: ProductCatalogProps) {
   const searchParams = useSearchParams();
   const [quickView, setQuickView] = useState<QuickViewSelection | null>(null);
@@ -182,6 +200,10 @@ export default function ProductCatalog({
     [storeSlug, currentQuery],
   );
 
+  const quickWhatsappUrl = quickView
+    ? productWhatsappUrl(whatsappBaseUrl, storeName, quickView.product.name)
+    : null;
+
   return (
     <section>
       {categoryMap.length > 1 && (
@@ -223,8 +245,8 @@ export default function ProductCatalog({
           const category = String(product.category || "").trim();
           const stockStatus = String(product.stockStatus || "").trim();
           const tone = stockTone(stockStatus);
-          const location = String(product.fulfillmentRegion || "").trim();
-          const locationMapUrl = productLocationMapUrl(location);
+          const fulfillmentRegion = String(product.fulfillmentRegion || "").trim();
+          const fulfillmentMapUrl = productLocationMapUrl(fulfillmentRegion);
           const productKey = product.id || productUrl;
           const showLocation = locationProductId === productKey;
 
@@ -285,34 +307,66 @@ export default function ProductCatalog({
                 type="button"
                 onClick={() => setLocationProductId(showLocation ? null : productKey)}
                 className="absolute right-2.5 top-2.5 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-slate-950/75 text-white shadow-lg backdrop-blur-md transition hover:border-blue-400/40 hover:bg-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
-                aria-label={`${product.name} ürün konumu veya hizmet bölgesini göster`}
+                aria-label={`${product.name} konum bilgilerini göster`}
                 aria-expanded={showLocation}
-                title="Ürün konumu / hizmet bölgesi"
+                title="Konum bilgileri"
               >
                 <MapPinIcon className="h-4 w-4" aria-hidden="true" />
               </button>
 
               {showLocation ? (
-                <div className="absolute right-2.5 top-13 z-30 w-[min(220px,calc(100%-20px))] rounded-xl border border-blue-500/20 bg-slate-950/95 p-3 text-left shadow-2xl backdrop-blur-xl">
+                <div className="absolute right-2.5 top-13 z-30 w-[min(240px,calc(100%-20px))] rounded-xl border border-blue-500/20 bg-slate-950/95 p-3 text-left shadow-2xl backdrop-blur-xl">
                   <div className="flex items-start gap-2">
                     <MapPinIcon className="mt-0.5 h-4 w-4 shrink-0 text-blue-400" aria-hidden="true" />
-                    <div className="min-w-0">
-                      <p className="text-[10px] font-extrabold uppercase tracking-wider text-blue-300">
-                        Ürün konumu / hizmet bölgesi
-                      </p>
-                      <p className="mt-1 break-words text-xs font-semibold leading-5 text-slate-200">
-                        {location || "Bu ürün için konum veya hizmet bölgesi eklenmemiş."}
-                      </p>
-                      {locationMapUrl ? (
-                        <a
-                          href={locationMapUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(event) => event.stopPropagation()}
-                          className="mt-2 inline-flex text-[11px] font-extrabold text-blue-400 hover:text-blue-300"
-                        >
-                          Haritada ara →
-                        </a>
+                    <div className="min-w-0 flex-1">
+                      {fulfillmentRegion ? (
+                        <div>
+                          <p className="text-[10px] font-extrabold uppercase tracking-wider text-blue-300">
+                            Teslim / hizmet bölgesi
+                          </p>
+                          <p className="mt-1 break-words text-xs font-semibold leading-5 text-slate-200">
+                            {fulfillmentRegion}
+                          </p>
+                          {fulfillmentMapUrl ? (
+                            <a
+                              href={fulfillmentMapUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(event) => event.stopPropagation()}
+                              className="mt-1.5 inline-flex text-[11px] font-extrabold text-blue-400 hover:text-blue-300"
+                            >
+                              Haritada ara →
+                            </a>
+                          ) : null}
+                        </div>
+                      ) : null}
+
+                      {storeLocationText ? (
+                        <div className={fulfillmentRegion ? "mt-3 border-t border-white/10 pt-3" : ""}>
+                          <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+                            İşletme konumu
+                          </p>
+                          <p className="mt-1 break-words text-xs font-semibold leading-5 text-slate-200">
+                            {storeLocationText}
+                          </p>
+                          {storeMapsUrl ? (
+                            <a
+                              href={storeMapsUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(event) => event.stopPropagation()}
+                              className="mt-1.5 inline-flex text-[11px] font-extrabold text-blue-400 hover:text-blue-300"
+                            >
+                              Yol tarifi →
+                            </a>
+                          ) : null}
+                        </div>
+                      ) : null}
+
+                      {!fulfillmentRegion && !storeLocationText ? (
+                        <p className="text-xs font-semibold leading-5 text-slate-300">
+                          Bu ürün için konum bilgisi eklenmemiş.
+                        </p>
                       ) : null}
                     </div>
                   </div>
@@ -411,27 +465,60 @@ export default function ProductCatalog({
                 );
               })() : null}
 
-              {quickView.product.fulfillmentRegion ? (
-                <div className="mt-5 flex items-start gap-2 rounded-xl border border-blue-500/15 bg-blue-500/5 p-3">
-                  <MapPinIcon className="mt-0.5 h-4 w-4 shrink-0 text-blue-400" aria-hidden="true" />
-                  <div>
-                    <p className="text-[10px] font-extrabold uppercase tracking-wider text-blue-300">
-                      Ürün konumu / hizmet bölgesi
-                    </p>
-                    <p className="mt-1 text-xs font-semibold leading-5 text-slate-200">
-                      {quickView.product.fulfillmentRegion}
-                    </p>
-                    {productLocationMapUrl(quickView.product.fulfillmentRegion) ? (
-                      <a
-                        href={productLocationMapUrl(quickView.product.fulfillmentRegion) || undefined}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-2 inline-flex text-xs font-extrabold text-blue-400 hover:text-blue-300"
-                      >
-                        Haritada ara →
-                      </a>
-                    ) : null}
-                  </div>
+              <div className="mt-5 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">İşletme</p>
+                <p className="mt-1 text-sm font-extrabold text-white">{storeName}</p>
+              </div>
+
+              {(quickView.product.fulfillmentRegion || storeLocationText) ? (
+                <div className="mt-3 rounded-xl border border-blue-500/15 bg-blue-500/5 p-3">
+                  {quickView.product.fulfillmentRegion ? (
+                    <div className="flex items-start gap-2">
+                      <MapPinIcon className="mt-0.5 h-4 w-4 shrink-0 text-blue-400" aria-hidden="true" />
+                      <div>
+                        <p className="text-[10px] font-extrabold uppercase tracking-wider text-blue-300">
+                          Teslim / hizmet bölgesi
+                        </p>
+                        <p className="mt-1 text-xs font-semibold leading-5 text-slate-200">
+                          {quickView.product.fulfillmentRegion}
+                        </p>
+                        {productLocationMapUrl(quickView.product.fulfillmentRegion) ? (
+                          <a
+                            href={productLocationMapUrl(quickView.product.fulfillmentRegion) || undefined}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-1.5 inline-flex text-xs font-extrabold text-blue-400 hover:text-blue-300"
+                          >
+                            Haritada ara →
+                          </a>
+                        ) : null}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {storeLocationText ? (
+                    <div className={`flex items-start gap-2 ${quickView.product.fulfillmentRegion ? "mt-3 border-t border-white/10 pt-3" : ""}`}>
+                      <MapPinIcon className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+                      <div>
+                        <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+                          İşletme konumu
+                        </p>
+                        <p className="mt-1 text-xs font-semibold leading-5 text-slate-200">
+                          {storeLocationText}
+                        </p>
+                        {storeMapsUrl ? (
+                          <a
+                            href={storeMapsUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-1.5 inline-flex text-xs font-extrabold text-blue-400 hover:text-blue-300"
+                          >
+                            Yol tarifi →
+                          </a>
+                        ) : null}
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               ) : null}
 
@@ -441,10 +528,24 @@ export default function ProductCatalog({
                 </p>
               ) : null}
 
-              <div className="mt-7 sm:mt-auto sm:pt-7">
+              <div className="mt-7 grid gap-2 sm:mt-auto sm:pt-7">
+                {quickWhatsappUrl ? (
+                  <a
+                    href={quickWhatsappUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex min-h-12 items-center justify-center rounded-xl bg-emerald-600 px-5 text-sm font-extrabold text-white shadow-lg shadow-emerald-900/20 transition hover:bg-emerald-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500"
+                  >
+                    WhatsApp'tan ürün hakkında bilgi al
+                  </a>
+                ) : null}
                 <a
                   href={quickView.productUrl}
-                  className="flex min-h-12 items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-5 text-sm font-extrabold text-white shadow-lg shadow-blue-500/20 transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+                  className={`flex min-h-12 items-center justify-center rounded-xl px-5 text-sm font-extrabold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 ${
+                    quickWhatsappUrl
+                      ? "border border-white/10 bg-slate-900 text-slate-200 hover:border-blue-500/30 hover:text-white"
+                      : "bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg shadow-blue-500/20 hover:brightness-110"
+                  }`}
                 >
                   Tüm detayları görüntüle
                 </a>

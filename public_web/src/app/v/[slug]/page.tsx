@@ -638,6 +638,13 @@ export default async function StorePage(props: PageProps) {
     store.corporate_bio ||
     vitrinCopy.defaultBio(store.name);
   const displayAddress = normalizeAddressDisplay(store.address);
+  const compactStoreLocation =
+    displayAddress ||
+    [store.neighborhood_name, store.district_name, store.province_name]
+      .map((value) => String(value || "").trim())
+      .filter(Boolean)
+      .join(", ") ||
+    null;
 
   const categoryLower = (store.kategori || "").toLowerCase();
   let businessType = "LocalBusiness";
@@ -808,8 +815,12 @@ export default async function StorePage(props: PageProps) {
         catalog={
           <ProductCatalog
             storeSlug={store.slug}
+            storeName={store.name}
             products={visibleProducts}
             categoryMap={(categories || []).map((c) => ({ id: c.id, name: c.name }))}
+            whatsappBaseUrl={waBaseUrl}
+            storeLocationText={compactStoreLocation}
+            storeMapsUrl={mapsUrl}
             fallbackImage={store.logo_url || "/vixrex_v_crystal_mascot.png"}
             storeInitial={store.name?.trim()?.[0]?.toUpperCase() || "V"}
           />
@@ -876,8 +887,12 @@ export default async function StorePage(props: PageProps) {
           catalog={
             <ProductCatalog
               storeSlug={store.slug}
+              storeName={store.name}
               products={visibleProducts}
               categoryMap={(categories || []).map((c) => ({ id: c.id, name: c.name }))}
+              whatsappBaseUrl={waBaseUrl}
+              storeLocationText={compactStoreLocation}
+              storeMapsUrl={mapsUrl}
               fallbackImage={store.logo_url || "/vixrex_v_crystal_mascot.png"}
               storeInitial={store.name?.trim()?.[0]?.toUpperCase() || "V"}
             />
