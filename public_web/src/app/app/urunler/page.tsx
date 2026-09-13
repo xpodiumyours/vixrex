@@ -4,17 +4,45 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { OwnerProductManager, type OwnerProduct, type OwnerProductCategory } from "@/components/owner/OwnerProductManager";
+import {
+  OwnerProductManager,
+  type OwnerProductCategory,
+} from "@/components/owner/OwnerProductManager";
+import OwnerRichProductDetails, {
+  type RichOwnerProduct,
+} from "@/components/owner/OwnerRichProductDetails";
 
 interface Store {
   id: string;
   slug: string;
   name: string;
-  products: OwnerProduct[];
+  products: RichOwnerProduct[];
   product_categories: OwnerProductCategory[];
 }
 
 export const dynamic = "force-dynamic";
+
+const OWNER_PRODUCT_SELECT = [
+  "id",
+  "slug",
+  "name",
+  "description",
+  "price_text",
+  "price_amount",
+  "image_urls",
+  "category_id",
+  "stock_status",
+  "stock_quantity",
+  "old_price_amount",
+  "badge_tag",
+  "fulfillment_region",
+  "brand",
+  "barcode",
+  "vat_rate",
+  "metadata",
+  "variants",
+  "product_categories(name)",
+].join(",");
 
 export default function UrunlerPage() {
   const router = useRouter();
@@ -40,7 +68,9 @@ export default function UrunlerPage() {
     }
     const { data, error } = await supabase
       .from("stores")
-      .select("id, slug, name, products(id, slug, name, description, price_text, image_urls, category_id, stock_status, old_price_amount, badge_tag, fulfillment_region, product_categories(name)), product_categories(id, name)")
+      .select(
+        `id, slug, name, products(${OWNER_PRODUCT_SELECT}), product_categories(id, name)`,
+      )
       .eq("slug", slug)
       .maybeSingle();
     if (error || !data) {
@@ -91,7 +121,17 @@ export default function UrunlerPage() {
           </div>
           <Link href="/app" className="owner-button-secondary">← Pano</Link>
         </div>
-        <OwnerProductManager storeSlug={store.slug} products={store.products ?? []} categories={store.product_categories ?? []} onRefresh={yukle} />
+        <OwnerProductManager
+          storeSlug={store.slug}
+          products={store.products ?? []}
+          categories={store.product_categories ?? []}
+          onRefresh={yukle}
+        />
+        <OwnerRichProductDetails
+          storeSlug={store.slug}
+          products={store.products ?? []}
+          onRefresh={yukle}
+        />
       </div>
     </div>
   );
