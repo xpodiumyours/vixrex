@@ -103,11 +103,19 @@ function metadataForTemplate(value: unknown, templateKey: string): ProductMetada
   };
 }
 
-function variantsForTemplate(value: unknown, templateKey: string): ProductVariant[] {
+function variantsForTemplate(
+  value: unknown,
+  templateKey: string,
+  productImageUrls: string[],
+): ProductVariant[] {
   const template = productTemplateByKey(templateKey);
   if (!template || template.itemKind === "service") return [];
 
-  const variants = normalizeProductVariants(value);
+  const availableImages = new Set(productImageUrls);
+  const variants = normalizeProductVariants(value).map((variant) => ({
+    ...variant,
+    imageUrls: variant.imageUrls?.filter((url) => availableImages.has(url)),
+  }));
   const allowedKeys = new Set(
     productAttributesForTemplate(templateKey)
       .filter((definition) => definition.variantEligible)
@@ -115,7 +123,7 @@ function variantsForTemplate(value: unknown, templateKey: string): ProductVarian
   );
 
   // Generic/bilinmeyen fiziksel şemada varyant anlamı tahmin edilmez;
-  // mevcut/import edilmiş veri sessizce silinmez.
+  // mevcut/import edilmiş seçenekler korunur. Fotoğraflar yine ürün galerisinden gelir.
   if (allowedKeys.size === 0) return variants;
 
   return variants
@@ -173,7 +181,11 @@ export async function POST(request: NextRequest) {
   const isService = template.itemKind === "service";
   const metadata = metadataForTemplate(govde.metadata, templateKey);
   if (!metadata) return NextResponse.json({ hata: "Ürün detayları kategori tipiyle uyuşmuyor." }, { status: 422 });
-  const variants = variantsForTemplate(govde.variants, templateKey);
+  const variants = variantsForTemplate(
+    govde.variants,
+    templateKey,
+    imageValidation.imageUrls,
+  );
 
   const priceText = typeof govde.priceText === "string" ? govde.priceText.trim() : "";
   const stockQuantity = isService ? null : cleanNonNegativeInt(govde.stockQuantity);
@@ -244,7 +256,11 @@ export async function PATCH(request: NextRequest) {
   const variantInput = Object.prototype.hasOwnProperty.call(govde, "variants")
     ? govde.variants
     : current.variants;
-  const variants = variantsForTemplate(variantInput, templateKey);
+  const variants = variantsForTemplate(
+    variantInput,
+    templateKey,
+    imageValidation.imageUrls,
+  );
 
   const priceText = typeof govde.priceText === "string" ? govde.priceText.trim() : "";
   const stockQuantity = isService
