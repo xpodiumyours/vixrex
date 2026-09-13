@@ -33,7 +33,14 @@ export interface WhatsAppClickContext {
 }
 
 function ownerPreviewActive(): boolean {
-  return typeof document !== "undefined" && Boolean(document.querySelector("[data-vixrex-editable]"));
+  return (
+    typeof document !== "undefined" &&
+    Boolean(
+      document.querySelector(
+        "[data-vixrex-editable], [data-vixrex-owner-preview]",
+      ),
+    )
+  );
 }
 
 export function trackWhatsAppClick(
