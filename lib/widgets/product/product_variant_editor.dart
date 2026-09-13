@@ -16,7 +16,10 @@ Future<List<ProductVariantData>> sanitizeProductVariantsForTemplate(
       .where((definition) => definition.variantEligible)
       .map((definition) => definition.key)
       .toSet();
-  if (allowedKeys.isEmpty) return const [];
+
+  // Generic/bilinmeyen fiziksel şemada Vixrex varyant anlamı tahmin etmez.
+  // Mevcut/import edilmiş veriyi sessizce silmek yerine olduğu gibi korur.
+  if (allowedKeys.isEmpty) return List<ProductVariantData>.of(variants);
 
   final result = <ProductVariantData>[];
   for (final variant in variants) {
@@ -160,6 +163,7 @@ class _ProductVariantEditorState extends State<ProductVariantEditor> {
   ) {
     final variant = widget.variants[index];
     return Container(
+      key: ValueKey('variant-card-${variant.id}'),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -193,7 +197,7 @@ class _ProductVariantEditorState extends State<ProductVariantEditor> {
             (definition) => Padding(
               padding: const EdgeInsets.only(top: 10),
               child: TextFormField(
-                key: ValueKey('variant-$index-${definition.key}'),
+                key: ValueKey('variant-${variant.id}-${definition.key}'),
                 initialValue: variant.options[definition.key] ?? '',
                 enabled: widget.enabled,
                 decoration: InputDecoration(labelText: definition.label),
@@ -204,15 +208,16 @@ class _ProductVariantEditorState extends State<ProductVariantEditor> {
           ),
           const SizedBox(height: 10),
           TextFormField(
-            key: ValueKey('variant-$index-sku'),
+            key: ValueKey('variant-${variant.id}-sku'),
             initialValue: variant.sku ?? '',
             enabled: widget.enabled,
             decoration: const InputDecoration(labelText: 'Varyant SKU'),
-            onChanged: (raw) => _updateVariant(index, sku: _clean(raw), setSku: true),
+            onChanged: (raw) =>
+                _updateVariant(index, sku: _clean(raw), setSku: true),
           ),
           const SizedBox(height: 10),
           TextFormField(
-            key: ValueKey('variant-$index-barcode'),
+            key: ValueKey('variant-${variant.id}-barcode'),
             initialValue: variant.barcode ?? '',
             enabled: widget.enabled,
             decoration: const InputDecoration(labelText: 'Varyant barkodu'),
@@ -224,10 +229,11 @@ class _ProductVariantEditorState extends State<ProductVariantEditor> {
             children: [
               Expanded(
                 child: TextFormField(
-                  key: ValueKey('variant-$index-price'),
+                  key: ValueKey('variant-${variant.id}-price'),
                   initialValue: variant.priceAmount?.toString() ?? '',
                   enabled: widget.enabled,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
                   decoration: const InputDecoration(
                     labelText: 'Varyant fiyatı',
                     hintText: 'Boşsa ana fiyat',
@@ -242,7 +248,7 @@ class _ProductVariantEditorState extends State<ProductVariantEditor> {
               const SizedBox(width: 10),
               Expanded(
                 child: TextFormField(
-                  key: ValueKey('variant-$index-stock'),
+                  key: ValueKey('variant-${variant.id}-stock'),
                   initialValue: variant.stockQuantity?.toString() ?? '',
                   enabled: widget.enabled,
                   keyboardType: TextInputType.number,
