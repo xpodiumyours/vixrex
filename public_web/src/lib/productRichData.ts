@@ -1,3 +1,5 @@
+import schemaJson from "../../../shared/product_attribute_schema.json";
+
 export type ProductProfileKey =
   | "general_product"
   | "apparel"
@@ -43,16 +45,49 @@ export interface ProductVariantData {
   imageUrls?: string[];
 }
 
-const PROFILE_KEYS = new Set<ProductProfileKey>([
-  "general_product",
-  "apparel",
-  "electronics",
-  "beauty",
-  "food",
-  "home",
-  "auto_part",
-  "service",
-]);
+export interface ProductAttributeDefinition {
+  label: string;
+  type: string;
+  storage: string;
+  maxLength?: number;
+  min?: number;
+  max?: number;
+  options?: string[];
+  variantEligible?: boolean;
+}
+
+export interface ProductProfileDefinition {
+  key: ProductProfileKey;
+  label: string;
+  itemKind: "product" | "service";
+  fields: string[];
+}
+
+export const PRODUCT_ATTRIBUTE_SCHEMA = schemaJson as {
+  version: 1;
+  description: string;
+  profiles: ProductProfileDefinition[];
+  fields: Record<string, ProductAttributeDefinition>;
+};
+
+const PROFILE_KEYS = new Set(
+  PRODUCT_ATTRIBUTE_SCHEMA.profiles.map((profile) => profile.key),
+);
+const METADATA_ATTRIBUTE_KEYS = new Set(
+  Object.entries(PRODUCT_ATTRIBUTE_SCHEMA.fields)
+    .filter(([, definition]) => definition.storage.startsWith("metadata.attributes."))
+    .map(([key]) => key),
+);
+
+export function isProductProfileKey(value: unknown): value is ProductProfileKey {
+  return typeof value === "string" && PROFILE_KEYS.has(value as ProductProfileKey);
+}
+
+export function getProductProfileDefinition(
+  key: ProductProfileKey | undefined,
+): ProductProfileDefinition | undefined {
+  return PRODUCT_ATTRIBUTE_SCHEMA.profiles.find((profile) => profile.key === key);
+}
 
 function objectOrEmpty(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -75,9 +110,8 @@ export function normalizeProductMetadata(value: unknown): ProductRichMetadata {
   const raw = objectOrEmpty(value);
   const metadata: ProductRichMetadata = { schemaVersion: 1 };
 
-  const profileKey = optionalText(raw.profileKey);
-  if (profileKey && PROFILE_KEYS.has(profileKey as ProductProfileKey)) {
-    metadata.profileKey = profileKey as ProductProfileKey;
+  if (isProductProfileKey(raw.profileKey)) {
+    metadata.profileKey = raw.profileKey;
   }
 
   const identifiersRaw = objectOrEmpty(raw.identifiers);
@@ -88,6 +122,7 @@ export function normalizeProductMetadata(value: unknown): ProductRichMetadata {
   const attributesRaw = objectOrEmpty(raw.attributes);
   const attributes: Record<string, RichAttributeValue> = {};
   for (const [key, item] of Object.entries(attributesRaw)) {
+    if (!METADATA_ATTRIBUTE_KEYS.has(key)) continue;
     if (typeof item === "string") {
       const text = item.trim();
       if (text) attributes[key] = text;
@@ -137,6 +172,10 @@ export function normalizeProductVariants(value: unknown): ProductVariantData[] {
       const optionsRaw = objectOrEmpty(raw.options);
       const options = Object.fromEntries(
         Object.entries(optionsRaw)
+          .filter(([key]) => {
+            const definition = PRODUCT_ATTRIBUTE_SCHEMA.fields[key];
+            return definition?.variantEligible === true;
+          })
           .map(([key, item]) => [key, String(item ?? "").trim()] as const)
           .filter(([, item]) => Boolean(item)),
       );
