@@ -9,6 +9,11 @@ import {
   normalizeExternalUrl,
   normalizeWhatsappDigits,
 } from "@/lib/products";
+import {
+  buildProductDetailFacts,
+  buildVariantOptionFacts,
+} from "@/lib/productCardPresentation";
+import { normalizeProductMetadata } from "@/lib/productRichData";
 import type { RichProductItem } from "@/lib/richProductItem";
 import { buildSiteUrl, getSiteUrl } from "@/lib/siteUrl";
 import { safeJsonLdHtml } from "@/lib/jsonLd";
@@ -162,6 +167,8 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
   if (!data) return { robots: { index: false, follow: false } };
 
   const { store, product, productSlug } = data;
+  const metadata = normalizeProductMetadata(product.metadata);
+  const isService = metadata.itemKind === "service";
 
   if (store.is_demo) {
     return { robots: { index: false, follow: true } };
@@ -171,7 +178,7 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
   const description =
     product.seoDescription ||
     product.description ||
-    `${store.name} vitrindeki ${product.name} için detay ve iletişim bilgileri.`;
+    `${store.name} vitrindeki ${product.name} ${isService ? "hizmeti" : "ürünü"} için detay ve iletişim bilgileri.`;
   const image =
     getProductImages(product)[0] || store.shelf_image_url || store.logo_url || "";
   const canonicalPath = `/v/${store.slug}/urun/${productSlug}`;
@@ -211,13 +218,16 @@ export default async function ProductDetailPage(props: PageProps) {
   if (!data) notFound();
 
   const { store, product, productSlug } = data;
+  const metadata = normalizeProductMetadata(product.metadata);
+  const isService = metadata.itemKind === "service";
   const siteUrl = getSiteUrl();
   const publicUrl = buildSiteUrl(`/v/${store.slug}/urun/${productSlug}`);
   const storeUrl = `/v/${store.slug}`;
   const phoneDigits = normalizeWhatsappDigits(store.whatsapp);
+  const itemLabel = isService ? "hizmet" : "ürün";
   const whatsappUrl = phoneDigits
     ? `https://wa.me/${phoneDigits}?text=${encodeURIComponent(
-        `Merhaba, ${store.name} vitrininizdeki '${product.name}' hakkında bilgi almak istiyorum.`
+        `Merhaba, ${store.name} vitrininizdeki '${product.name}' ${itemLabel}i hakkında bilgi almak istiyorum.`
       )}`
     : null;
   const instagramValue = String(store.instagram || "").trim();
@@ -237,8 +247,9 @@ export default async function ProductDetailPage(props: PageProps) {
     product.description ||
     store.description ||
     store.corporate_bio ||
-    `${store.name} vitrindeki ${product.name} için detay ve iletişim bilgileri.`;
+    `${store.name} vitrindeki ${product.name} ${itemLabel}i için detay ve iletişim bilgileri.`;
   const isInStock =
+    !isService &&
     (product.stockQuantity == null || product.stockQuantity > 0) &&
     !String(product.stockStatus || "")
       .toLocaleLowerCase("tr-TR")
@@ -249,37 +260,78 @@ export default async function ProductDetailPage(props: PageProps) {
       : product.price?.match(/\d/)
         ? product.price.replace(/[^0-9.,]/g, "").replace(",", ".")
         : undefined;
+  const detailFacts = buildProductDetailFacts({
+    brand: product.brand,
+    barcode: product.barcode,
+    metadata: product.metadata,
+  }).filter((fact) => fact.key !== "brand");
+  const variantFacts = isService
+    ? []
+    : buildVariantOptionFacts(product.variants, metadata.templateKey);
 
-  const productJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Product",
-    "@id": `${publicUrl}#product`,
-    name: product.name,
-    description: productDescription,
-    image: images.length > 0 ? images : undefined,
-    brand: product.brand
-      ? {
-          "@type": "Brand",
-          name: product.brand,
-        }
-      : undefined,
-    gtin: product.barcode || undefined,
-    category: product.category || undefined,
-    url: publicUrl,
-    offers: {
-      "@type": "Offer",
-      availability: isInStock
-        ? "https://schema.org/InStock"
-        : "https://schema.org/OutOfStock",
-      priceCurrency: product.currency || "TRY",
-      price: structuredPrice,
-      url: publicUrl,
-      seller: {
-        "@type": "LocalBusiness",
-        name: store.name,
-      },
-    },
-  };
+  const structuredData = isService
+    ? {
+        "@context": "https://schema.org",
+        "@type": "Service",
+        "@id": `${publicUrl}#service`,
+        name: product.name,
+        description: productDescription,
+        image: images.length > 0 ? images : undefined,
+        serviceType: metadata.service?.serviceType || product.category || undefined,
+        areaServed: product.fulfillmentRegion || undefined,
+        url: publicUrl,
+        provider: {
+          "@type": "LocalBusiness",
+          name: store.name,
+          url: buildSiteUrl(`/v/${store.slug}`),
+        },
+        offers: structuredPrice
+          ? {
+              "@type": "Offer",
+              priceCurrency: product.currency || "TRY",
+              price: structuredPrice,
+              url: publicUrl,
+              seller: {
+                "@type": "LocalBusiness",
+                name: store.name,
+              },
+            }
+          : undefined,
+      }
+    : {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        "@id": `${publicUrl}#product`,
+        name: product.name,
+        description: productDescription,
+        image: images.length > 0 ? images : undefined,
+        brand: product.brand
+          ? {
+              "@type": "Brand",
+              name: product.brand,
+            }
+          : undefined,
+        gtin: product.barcode || undefined,
+        sku: metadata.identifiers?.sku || undefined,
+        mpn: metadata.identifiers?.mpn || undefined,
+        category: product.category || undefined,
+        url: publicUrl,
+        offers: structuredPrice
+          ? {
+              "@type": "Offer",
+              availability: isInStock
+                ? "https://schema.org/InStock"
+                : "https://schema.org/OutOfStock",
+              priceCurrency: product.currency || "TRY",
+              price: structuredPrice,
+              url: publicUrl,
+              seller: {
+                "@type": "LocalBusiness",
+                name: store.name,
+              },
+            }
+          : undefined,
+      };
 
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
@@ -311,7 +363,7 @@ export default async function ProductDetailPage(props: PageProps) {
       <ProductViewTracker storeSlug={store.slug} productSlug={productSlug} />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: safeJsonLdHtml(productJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLdHtml(structuredData) }}
       />
       <script
         type="application/ld+json"
@@ -341,7 +393,7 @@ export default async function ProductDetailPage(props: PageProps) {
               </div>
             ) : (
               <div className="flex aspect-[4/5] items-center justify-center rounded-[20px] bg-[#1c1f27] text-sm font-bold text-white/40">
-                Ürün görseli bekleniyor
+                {isService ? "Hizmet görseli bekleniyor" : "Ürün görseli bekleniyor"}
               </div>
             )}
             {images.length > 1 && (
@@ -368,7 +420,7 @@ export default async function ProductDetailPage(props: PageProps) {
               <h1 className="font-vitrin-display mt-4 text-[clamp(1.9rem,4vw,2.6rem)] font-normal leading-tight text-white">
                 {product.name}
               </h1>
-              {product.brand && (
+              {!isService && product.brand && (
                 <p className="mt-2 text-xs font-bold uppercase tracking-wide text-white/45">
                   {product.brand}
                 </p>
@@ -378,25 +430,65 @@ export default async function ProductDetailPage(props: PageProps) {
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className={`grid gap-3 ${isService ? "grid-cols-1" : "grid-cols-2"}`}>
               <div className="rounded-2xl border border-white/8 bg-[#1c1f27] p-4">
                 <div className="text-[11px] font-bold text-white/40">Fiyat</div>
                 <div className="mt-1 text-lg font-extrabold text-[#E8A87C]">
                   {product.price || "Fiyat sorun"}
                 </div>
               </div>
-              <div className="rounded-2xl border border-white/8 bg-[#1c1f27] p-4">
-                <div className="text-[11px] font-bold text-white/40">Stok</div>
-                <div className="mt-1 text-lg font-extrabold text-emerald-200">
-                  {product.stockStatus || "Bilgi alın"}
-                </div>
-                {product.stockQuantity != null && (
-                  <div className="mt-1 text-[11px] font-bold text-white/40">
-                    {product.stockQuantity} adet
+              {!isService && (
+                <div className="rounded-2xl border border-white/8 bg-[#1c1f27] p-4">
+                  <div className="text-[11px] font-bold text-white/40">Stok</div>
+                  <div className="mt-1 text-lg font-extrabold text-emerald-200">
+                    {product.stockStatus || "Bilgi alın"}
                   </div>
-                )}
-              </div>
+                  {product.stockQuantity != null && (
+                    <div className="mt-1 text-[11px] font-bold text-white/40">
+                      {product.stockQuantity} adet
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
+
+            {detailFacts.length > 0 && (
+              <section className="rounded-2xl border border-white/8 bg-[#1c1f27] p-4">
+                <h2 className="text-xs font-extrabold text-white/75">
+                  {isService ? "Hizmet bilgileri" : "Ürün bilgileri"}
+                </h2>
+                <dl className="mt-3 grid gap-x-4 gap-y-3 sm:grid-cols-2 lg:grid-cols-1">
+                  {detailFacts.map((fact) => (
+                    <div key={fact.key} className="min-w-0">
+                      <dt className="text-[10px] font-bold uppercase tracking-wide text-white/35">
+                        {fact.label}
+                      </dt>
+                      <dd className="mt-1 break-words text-sm font-semibold text-white/80">
+                        {fact.value}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </section>
+            )}
+
+            {variantFacts.length > 0 && (
+              <section className="rounded-2xl border border-white/8 bg-[#1c1f27] p-4">
+                <h2 className="text-xs font-extrabold text-white/75">Seçenekler</h2>
+                <dl className="mt-3 grid gap-x-4 gap-y-3 sm:grid-cols-2 lg:grid-cols-1">
+                  {variantFacts.map((fact) => (
+                    <div key={fact.key} className="min-w-0">
+                      <dt className="text-[10px] font-bold uppercase tracking-wide text-white/35">
+                        {fact.label}
+                      </dt>
+                      <dd className="mt-1 break-words text-sm font-semibold text-white/80">
+                        {fact.value}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </section>
+            )}
 
             <div className="grid gap-2.5">
               {whatsappUrl && (
@@ -407,7 +499,7 @@ export default async function ProductDetailPage(props: PageProps) {
                   clickLocation="product_detail"
                   className="rounded-full bg-[#25D366] px-5 py-3.5 text-center text-sm font-extrabold text-[#04140a]"
                 >
-                  WhatsApp’tan ürün sor
+                  {isService ? "WhatsApp’tan hizmet hakkında bilgi al" : "WhatsApp’tan ürün sor"}
                 </TrackedWhatsAppLink>
               )}
               {instagramUrl && (
