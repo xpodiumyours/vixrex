@@ -4,6 +4,8 @@ export interface ProductItem {
   name: string;
   description?: string;
   price?: string;
+  priceAmount?: number | null;
+  currency?: string;
   oldPriceAmount?: number | null;
   badgeTag?: string | null;
   fulfillmentRegion?: string | null;
@@ -12,6 +14,13 @@ export interface ProductItem {
   categoryId?: string;
   category?: string;
   stockStatus?: string;
+  stockQuantity?: number | null;
+  brand?: string | null;
+  barcode?: string | null;
+  metadata?: unknown;
+  variants?: unknown;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
   isVisible?: boolean;
   source?: string;
   sourceMediaId?: string;
