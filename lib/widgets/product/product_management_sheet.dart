@@ -5,6 +5,7 @@ import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/screens/bulk_product_upload_screen.dart';
 import 'package:vixrex/screens/product_category_management_screen.dart';
 import 'package:vixrex/services/bulk_product_field_update_service.dart';
+import 'package:vixrex/services/product_category_sync_service.dart';
 import 'package:vixrex/services/product_conversation_logger.dart';
 import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/widgets/product/bulk_product_field_update_sheet.dart';
@@ -51,6 +52,7 @@ class ProductManagementSheet extends StatefulWidget {
 class _ProductManagementSheetState extends State<ProductManagementSheet> {
   late List<Product> _products;
   late List<ProductCategory> _categories;
+  final List<ProductCategoryDeletion> _pendingCategoryDeletions = [];
   final _searchController = TextEditingController();
   String _selectedCategoryId = '';
 
@@ -127,7 +129,40 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
     for (var index = 0; index < _categories.length; index++) {
       _categories[index].sortOrder = index;
     }
-    return widget.onCatalogChanged(List.of(_products), List.of(_categories));
+
+    var products = List<Product>.of(_products);
+    var categories = List<ProductCategory>.of(_categories);
+
+    // Kategori silme, ürün taşımayla birlikte tek DB işlemi olmalıdır.
+    // Normal kategori create/rename/type senkronu controller'daki ortak
+    // syncCatalogToRemote yolunda yapılır. Burada yalnız silme varsa önce
+    // explicit delete+replacement sözleşmesini çalıştırıyoruz.
+    if (_pendingCategoryDeletions.isNotEmpty &&
+        widget.storeId.trim().isNotEmpty &&
+        widget.editToken.trim().isNotEmpty) {
+      try {
+        final categoryResult = await ProductCategorySyncService().sync(
+          storeId: widget.storeId,
+          editToken: widget.editToken,
+          categories: categories,
+          products: products,
+          deletions: List.of(_pendingCategoryDeletions),
+        );
+        products = categoryResult.products;
+        categories = categoryResult.categories;
+        _pendingCategoryDeletions.clear();
+        if (mounted) {
+          setState(() {
+            _products = List.of(products);
+            _categories = List.of(categories);
+          });
+        }
+      } catch (_) {
+        return false;
+      }
+    }
+
+    return widget.onCatalogChanged(products, categories);
   }
 
   Future<void> _openEditor([Product? product]) async {
@@ -190,6 +225,7 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
     setState(() {
       _categories = List.of(result.categories);
       _products = List.of(result.products);
+      _pendingCategoryDeletions.addAll(result.deletions);
       if (!_categories.any((item) => item.id == _selectedCategoryId)) {
         _selectedCategoryId = '';
       }
@@ -215,8 +251,17 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
       categoryId: product.categoryId,
       category: product.category,
       stockStatus: product.stockStatus,
+      stockQuantity: product.stockQuantity,
       isVisible: true,
       slug: null,
+      brand: product.brand,
+      barcode: product.barcode,
+      sku: product.sku,
+      richMetadata: product.richMetadata,
+      variants: List.of(product.variants),
+      oldPriceAmount: product.oldPriceAmount,
+      badgeTag: product.badgeTag,
+      fulfillmentLocation: product.fulfillmentLocation,
     );
     setState(() {
       final index = _products.indexOf(product);
