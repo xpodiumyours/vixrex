@@ -1,9 +1,12 @@
+import type { ProductRichMetadata, ProductVariantData } from "@/lib/productRichData";
+
 export interface ProductItem {
   id?: string;
   slug?: string;
   name: string;
   description?: string;
   price?: string;
+  priceAmount?: number | null;
   oldPriceAmount?: number | null;
   badgeTag?: string | null;
   fulfillmentRegion?: string | null;
@@ -12,11 +15,17 @@ export interface ProductItem {
   categoryId?: string;
   category?: string;
   stockStatus?: string;
+  stockQuantity?: number | null;
   isVisible?: boolean;
   source?: string;
   sourceMediaId?: string;
   sourcePermalink?: string;
   importedAt?: string;
+  brand?: string | null;
+  barcode?: string | null;
+  vatRate?: number | null;
+  metadata?: ProductRichMetadata;
+  variants?: ProductVariantData[];
 }
 
 export function getProductImages(product: ProductItem): string[] {
