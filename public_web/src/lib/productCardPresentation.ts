@@ -1,4 +1,8 @@
-import { productAttributesForSurface } from "./productAttributeSchema";
+import {
+  productAttributesForSurface,
+  productAttributesForTemplate,
+  productTemplateByKey,
+} from "./productAttributeSchema";
 import {
   normalizeProductMetadata,
   normalizeProductVariants,
@@ -183,6 +187,32 @@ export function buildProductDetailFacts(args: {
   return facts;
 }
 
+export function productVariantsForTemplate(
+  value: unknown,
+  templateKey?: string | null,
+): ProductVariant[] {
+  const variants = normalizeProductVariants(value);
+  const template = productTemplateByKey(templateKey);
+  if (template?.itemKind === "service") return [];
+
+  const variantDefinitions = productAttributesForTemplate(templateKey).filter(
+    (definition) => definition.variantEligible,
+  );
+  if (variantDefinitions.length === 0) return variants;
+
+  const allowedKeys = new Set(variantDefinitions.map((definition) => definition.key));
+  return variants
+    .map((variant) => ({
+      ...variant,
+      options: Object.fromEntries(
+        Object.entries(variant.options).filter(
+          ([key, optionValue]) => allowedKeys.has(key) && optionValue.trim().length > 0,
+        ),
+      ),
+    }))
+    .filter((variant) => Object.keys(variant.options).length > 0);
+}
+
 export function buildVariantOptionFacts(value: unknown, templateKey?: string | null): ProductQuickFact[] {
   return buildVariantOptionGroups(value, templateKey).map((group) => ({
     key: `variant:${group.key}`,
@@ -195,9 +225,11 @@ export function buildVariantOptionGroups(
   value: unknown,
   templateKey?: string | null,
 ): ProductVariantOptionGroup[] {
-  const variants = normalizeProductVariants(value);
+  const variants = productVariantsForTemplate(value, templateKey);
   const valuesByKey = new Map<string, Set<string>>();
-  const definitions = productAttributesForSurface(templateKey, "detail");
+  const definitions = productAttributesForTemplate(templateKey).filter(
+    (definition) => definition.variantEligible,
+  );
   const definitionByKey = new Map(definitions.map((definition) => [definition.key, definition]));
 
   for (const variant of variants) {
@@ -218,8 +250,9 @@ export function buildVariantOptionGroups(
 export function findMatchingVariant(
   value: unknown,
   selectedOptions: Record<string, string>,
+  templateKey?: string | null,
 ): ProductVariant | null {
-  const variants = normalizeProductVariants(value);
+  const variants = productVariantsForTemplate(value, templateKey);
   const selectedEntries = Object.entries(selectedOptions).filter(([, optionValue]) => optionValue);
   if (!selectedEntries.length) return variants[0] ?? null;
   return (
@@ -234,8 +267,9 @@ export function variantOptionIsAvailable(
   selectedOptions: Record<string, string>,
   optionKey: string,
   optionValue: string,
+  templateKey?: string | null,
 ): boolean {
-  const variants = normalizeProductVariants(value);
+  const variants = productVariantsForTemplate(value, templateKey);
   return variants.some((variant) => {
     if (variant.options[optionKey] !== optionValue) return false;
     return Object.entries(selectedOptions).every(([key, selectedValue]) => {
@@ -245,11 +279,11 @@ export function variantOptionIsAvailable(
   });
 }
 
-export function productVariantCount(value: unknown): number {
-  return normalizeProductVariants(value).length;
+export function productVariantCount(value: unknown, templateKey?: string | null): number {
+  return productVariantsForTemplate(value, templateKey).length;
 }
 
-export function productVariantLabel(value: unknown): string | null {
-  const count = productVariantCount(value);
+export function productVariantLabel(value: unknown, templateKey?: string | null): string | null {
+  const count = productVariantCount(value, templateKey);
   return count > 1 ? `${count} seçenek` : null;
 }
