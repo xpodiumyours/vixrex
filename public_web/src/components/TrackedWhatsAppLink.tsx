@@ -32,12 +32,16 @@ export interface WhatsAppClickContext {
   productSlug?: string;
 }
 
+function ownerPreviewActive(): boolean {
+  return typeof document !== "undefined" && Boolean(document.querySelector("[data-vixrex-editable]"));
+}
+
 export function trackWhatsAppClick(
   gtag: GtagCommand | undefined,
   context: WhatsAppClickContext,
 ): void {
   const storeSlug = context.storeSlug.trim();
-  if (!storeSlug) return;
+  if (!storeSlug || ownerPreviewActive()) return;
   const productSlug = context.productSlug?.trim() || "";
 
   if (gtag) {
@@ -49,8 +53,6 @@ export function trackWhatsAppClick(
     gtag("event", WHATSAPP_CLICK_EVENT, parameters);
   }
 
-  // Faz F (Tek Asistan planı, 2026-09-02): GA'nın yanına çift yazım —
-  // ürün bağlamı varsa aynı mevcut engagement RPC'sine ürün slug'ı da gider.
   supabase
     .rpc("record_vitrin_engagement", {
       p_store_slug: storeSlug,
