@@ -71,7 +71,7 @@ class Product {
         .map((value) => value.trim())
         .where((value) => value.isNotEmpty)
         .toSet()
-        .take(4)
+        .take(10)
         .toList();
   }
 
