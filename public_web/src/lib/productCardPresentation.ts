@@ -167,9 +167,11 @@ export function buildProductDetailFacts(args: {
   return facts;
 }
 
-export function buildVariantOptionFacts(value: unknown): ProductQuickFact[] {
+export function buildVariantOptionFacts(value: unknown, templateKey?: string | null): ProductQuickFact[] {
   const variants = normalizeProductVariants(value);
   const valuesByKey = new Map<string, Set<string>>();
+  const definitions = productAttributesForSurface(templateKey, "detail");
+  const definitionByKey = new Map(definitions.map((definition) => [definition.key, definition]));
 
   for (const variant of variants) {
     for (const [key, optionValue] of Object.entries(variant.options)) {
@@ -181,7 +183,7 @@ export function buildVariantOptionFacts(value: unknown): ProductQuickFact[] {
 
   return Array.from(valuesByKey.entries()).map(([key, values]) => ({
     key: `variant:${key}`,
-    label: key,
+    label: definitionByKey.get(key)?.label || key,
     value: Array.from(values).join(", "),
   }));
 }
