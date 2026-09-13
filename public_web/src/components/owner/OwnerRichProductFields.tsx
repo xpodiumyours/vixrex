@@ -140,10 +140,21 @@ function displayInputValue(value: ReturnType<typeof attributeValue>) {
   return String(value);
 }
 
+function variantId() {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return `variant-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
 export function OwnerRichProductFields({ templateKey, value, onChange, disabled = false }: Props) {
   const template = productTemplateByKey(templateKey) || productTemplateByKey("generic");
   const definitions = useMemo(() => productAttributesForTemplate(templateKey), [templateKey]);
   const allowedKeys = useMemo(() => new Set(definitions.map((item) => item.key)), [definitions]);
+  const variantDefinitions = useMemo(
+    () => definitions.filter((definition) => definition.variantEligible),
+    [definitions],
+  );
 
   useEffect(() => {
     if (!template) return;
@@ -162,7 +173,11 @@ export function OwnerRichProductFields({ templateKey, value, onChange, disabled 
       metadata.itemKind !== next.itemKind ||
       filteredAttributes.length !== (metadata.attributes || []).length
     ) {
-      onChange({ ...value, metadata: next });
+      onChange({
+        ...value,
+        metadata: next,
+        variants: template.itemKind === "service" ? [] : value.variants,
+      });
     }
   }, [allowedKeys, onChange, template, value]);
 
@@ -182,6 +197,43 @@ export function OwnerRichProductFields({ templateKey, value, onChange, disabled 
     onChange({
       ...value,
       metadata: withAttributeValue(value.metadata, definition, parseInputValue(definition, raw)),
+    });
+  }
+
+  function addVariant() {
+    if (isService || variantDefinitions.length === 0) return;
+    const options: Record<string, string> = {};
+    for (const definition of variantDefinitions) {
+      const base = attributeValue(value.metadata, definition.key);
+      if (typeof base === "string" && base.trim()) options[definition.key] = base.trim();
+    }
+    onChange({
+      ...value,
+      variants: [...value.variants, { id: variantId(), options }],
+    });
+  }
+
+  function updateVariant(index: number, patch: Partial<ProductVariant>) {
+    const variants = value.variants.map((variant, variantIndex) =>
+      variantIndex === index ? { ...variant, ...patch } : variant,
+    );
+    onChange({ ...value, variants });
+  }
+
+  function updateVariantOption(index: number, key: string, raw: string) {
+    const variant = value.variants[index];
+    if (!variant) return;
+    const options = { ...variant.options };
+    const clean = raw.trim();
+    if (clean) options[key] = clean;
+    else delete options[key];
+    updateVariant(index, { options });
+  }
+
+  function removeVariant(index: number) {
+    onChange({
+      ...value,
+      variants: value.variants.filter((_, variantIndex) => variantIndex !== index),
     });
   }
 
@@ -262,10 +314,112 @@ export function OwnerRichProductFields({ templateKey, value, onChange, disabled 
         })}
       </div>
 
-      {value.variants.length > 0 ? (
-        <p className="mt-4 rounded-xl border border-[var(--owner-border)] px-3 py-2 text-xs text-[var(--owner-muted)]">
-          Bu üründe {value.variants.length} kayıtlı varyant var. Bu form mevcut varyantları korur; varyant editörü ayrı adımda açılacak.
-        </p>
+      {!isService && variantDefinitions.length > 0 ? (
+        <section className="mt-5 border-t border-[var(--owner-border)] pt-5">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-black text-[var(--owner-text)]">Varyantlar</h3>
+              <p className="mt-1 text-xs leading-5 text-[var(--owner-muted)]">
+                Renk, beden, RAM veya depolama gibi seçenekleri gerçek stok ve fiyatla bağla.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={addVariant}
+              className="owner-button-secondary shrink-0"
+              disabled={disabled}
+            >
+              + Varyant ekle
+            </button>
+          </div>
+
+          {value.variants.length === 0 ? (
+            <p className="mt-4 rounded-xl border border-dashed border-[var(--owner-border)] px-3 py-3 text-xs text-[var(--owner-muted)]">
+              Varyant yok. Tek seçenekli ürünlerde eklemen gerekmez.
+            </p>
+          ) : (
+            <div className="mt-4 space-y-3">
+              {value.variants.map((variant, index) => (
+                <div key={variant.id} className="rounded-xl border border-[var(--owner-border)] bg-[var(--owner-bg)] p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-xs font-black text-[var(--owner-text)]">Varyant {index + 1}</p>
+                    <button
+                      type="button"
+                      onClick={() => removeVariant(index)}
+                      className="text-xs font-bold text-red-400 hover:text-red-300"
+                    >
+                      Sil
+                    </button>
+                  </div>
+
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    {variantDefinitions.map((definition) => (
+                      <label key={definition.key} className="space-y-1.5">
+                        <span className="owner-label">{definition.label}</span>
+                        <input
+                          className="owner-input"
+                          value={variant.options[definition.key] || ""}
+                          onChange={(e) => updateVariantOption(index, definition.key, e.target.value)}
+                          placeholder={`Örn. ${definition.key === "size" ? "M" : definition.key === "color" ? "Siyah" : "değer"}`}
+                        />
+                      </label>
+                    ))}
+                    <label className="space-y-1.5">
+                      <span className="owner-label">Varyant SKU</span>
+                      <input
+                        className="owner-input"
+                        value={variant.sku || ""}
+                        onChange={(e) => updateVariant(index, { sku: e.target.value.trim() || undefined })}
+                      />
+                    </label>
+                    <label className="space-y-1.5">
+                      <span className="owner-label">Varyant barkodu</span>
+                      <input
+                        className="owner-input"
+                        value={variant.barcode || ""}
+                        onChange={(e) => updateVariant(index, { barcode: e.target.value.trim() || undefined })}
+                      />
+                    </label>
+                    <label className="space-y-1.5">
+                      <span className="owner-label">Varyant fiyatı</span>
+                      <input
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        className="owner-input"
+                        value={variant.priceAmount ?? ""}
+                        onChange={(e) => {
+                          const raw = e.target.value.trim();
+                          const parsed = Number(raw);
+                          updateVariant(index, {
+                            priceAmount: raw && Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined,
+                          });
+                        }}
+                        placeholder="Boşsa ana fiyat"
+                      />
+                    </label>
+                    <label className="space-y-1.5">
+                      <span className="owner-label">Varyant stok adedi</span>
+                      <input
+                        type="number"
+                        min={0}
+                        step={1}
+                        className="owner-input"
+                        value={variant.stockQuantity ?? ""}
+                        onChange={(e) => {
+                          const raw = e.target.value.replace(/[^0-9]/g, "");
+                          updateVariant(index, {
+                            stockQuantity: raw ? Number(raw) : undefined,
+                          });
+                        }}
+                      />
+                    </label>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
       ) : null}
     </fieldset>
   );
