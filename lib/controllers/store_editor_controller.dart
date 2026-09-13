@@ -15,6 +15,7 @@ import 'package:vixrex/services/store_shelf_upload_service.dart';
 import 'package:vixrex/services/legal_document_service.dart';
 import 'package:vixrex/services/product_service.dart';
 import 'package:vixrex/services/product_catalog_sync_service.dart';
+import 'package:vixrex/services/product_category_sync_service.dart';
 import 'package:vixrex/services/store_legal_stamping_service.dart';
 import 'package:vixrex/services/store_content_editing_service.dart';
 import 'package:vixrex/services/store_draft_persistence_service.dart';
@@ -49,6 +50,7 @@ class StoreEditorController extends ChangeNotifier
   final SupabaseClient? supabaseClient;
   late final OwnerPreviewService _ownerPreviewService;
   late final ProductCatalogSyncService _catalogSyncService;
+  late final ProductCategorySyncService _categorySyncService;
   late final StoreLegalStampingService _legalStampingService;
   late final StoreRealtimeSyncService _realtimeSync;
   final StoreContentEditingService _contentEditingService;
@@ -72,6 +74,7 @@ class StoreEditorController extends ChangeNotifier
     ProductService? productService,
     OwnerPreviewService? ownerPreviewService,
     ProductCatalogSyncService? catalogSyncService,
+    ProductCategorySyncService? categorySyncService,
     StoreLegalStampingService? legalStampingService,
     StoreRealtimeSyncService? realtimeSync,
     StoreContentEditingService? contentEditingService,
@@ -103,6 +106,8 @@ class StoreEditorController extends ChangeNotifier
     _catalogSyncService =
         catalogSyncService ??
         ProductCatalogSyncService(productService: this.productService);
+    _categorySyncService =
+        categorySyncService ?? ProductCategorySyncService(client: supabaseClient);
     _legalStampingService =
         legalStampingService ??
         StoreLegalStampingService(
@@ -725,11 +730,9 @@ class StoreEditorController extends ChangeNotifier
     ).hasMatch(value.trim());
   }
 
-  /// Panel/OCR/bulk: yerel katalogu `products` tablosuna yazar (JSON sync değil).
-  ///
-  /// Diff/CRUD mantığı [ProductCatalogSyncService.syncCatalog]'da; burada
-  /// yalnız yayın hazırlığı (edit token, mağaza id) ve yerel `_data`
-  /// senkronu kalır.
+  /// Panel/OCR/bulk: önce kategori sözleşmesini, sonra aynı Product CORE
+  /// üzerindeki ürünleri yazar. Böylece yerel kategori kimlikleri ürün
+  /// kaydına sızmaz; Flutter ve Next.js aynı Supabase kategorilerini kullanır.
   Future<Result<void>> syncCatalogToRemote({
     required List<Product> products,
     required List<ProductCategory> categories,
@@ -749,19 +752,36 @@ class StoreEditorController extends ChangeNotifier
       );
     }
 
-    // Diff'ten önce atanır, hata durumunda geri alınmaz — bilinen tuhaflık,
-    // orijinal davranış korunuyor.
-    _data.productCategories = List.of(categories);
+    var syncedCategories = List<ProductCategory>.of(categories);
+    var syncedProducts = List<Product>.of(products);
+    if (categories.isNotEmpty) {
+      try {
+        final categoryResult = await _categorySyncService.sync(
+          storeId: storeId,
+          editToken: editToken,
+          categories: categories,
+          products: products,
+        );
+        syncedCategories = categoryResult.categories;
+        syncedProducts = categoryResult.products;
+      } catch (e) {
+        if (kDebugMode) debugPrint('syncCatalogToRemote category sync: $e');
+        return Result.failure(
+          Failure('Ürün kategorileri kaydedilemedi, lütfen tekrar deneyin.'),
+        );
+      }
+    }
 
     final result = await _catalogSyncService.syncCatalog(
       storeId: storeId,
       editToken: editToken,
-      products: products,
+      products: syncedProducts,
     );
     if (result.isFailure) {
       return Result.failure(result.failure!);
     }
 
+    _data.productCategories = syncedCategories;
     _data.products = result.data!;
     await saveLocally();
     notifyListeners();
