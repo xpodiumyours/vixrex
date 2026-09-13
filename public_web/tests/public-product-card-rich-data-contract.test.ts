@@ -14,6 +14,10 @@ const quickViewSource = readFileSync(
   resolve(__dirname, "../src/components/ProductQuickView.tsx"),
   "utf-8",
 );
+const quickViewBaseSource = readFileSync(
+  resolve(__dirname, "../src/components/ProductQuickViewBase.tsx"),
+  "utf-8",
+);
 
 describe("public ürün kartı zengin veri hattı", () => {
   it("aynı products sorgusundan zengin alanları okur", () => {
@@ -48,13 +52,21 @@ describe("public ürün kartı zengin veri hattı", () => {
   });
 
   it("hızlı inceleme gerçek zengin veriyi ve seçili varyantı kullanır", () => {
-    expect(quickViewSource).toContain("buildProductQuickFacts");
-    expect(quickViewSource).toContain("buildVariantOptionGroups");
-    expect(quickViewSource).toContain("productVariantsForTemplate");
+    expect(quickViewBaseSource).toContain("buildProductQuickFacts");
+    expect(quickViewBaseSource).toContain("buildVariantOptionGroups");
+    expect(quickViewBaseSource).toContain("productVariantsForTemplate");
+    expect(quickViewBaseSource).toContain("findMatchingVariant");
+    expect(quickViewBaseSource).toContain("selectedStockQuantity");
+    expect(quickViewBaseSource).toContain("selectedVariant?.priceAmount");
+    expect(quickViewBaseSource).toContain("Seçenek: ${selectedVariantText}");
+  });
+
+  it("hızlı inceleme seçili varyantı tam detay sayfasına taşır", () => {
     expect(quickViewSource).toContain("findMatchingVariant");
-    expect(quickViewSource).toContain("selectedStockQuantity");
-    expect(quickViewSource).toContain("selectedVariant?.priceAmount");
-    expect(quickViewSource).toContain("Seçenek: ${selectedVariantText}");
+    expect(quickViewSource).toContain("?variant=${encodeURIComponent(selectedVariant.id)}");
+    expect(quickViewSource).toContain('clickLocation: "product_quick_view"');
+    expect(quickViewSource).toContain("trackWhatsAppClick");
+    expect(quickViewSource).toContain("trackDirectionsClick");
   });
 
   it("hizmet kartına fiziksel ürün sinyali taşımaz", () => {
@@ -66,7 +78,7 @@ describe("public ürün kartı zengin veri hattı", () => {
   });
 
   it("rakip sitelerdeki doğrulanmamış güven sinyallerini taklit etmez", () => {
-    const combined = `${catalogSource}\n${quickViewSource}`;
+    const combined = `${catalogSource}\n${quickViewSource}\n${quickViewBaseSource}`;
     expect(combined).not.toContain("Kargo Bedava");
     expect(combined).not.toContain("Hızlı Teslimat");
     expect(combined).not.toContain("Ürün puanı");
