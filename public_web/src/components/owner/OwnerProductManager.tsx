@@ -9,6 +9,10 @@ import {
   productQueueFlush,
   productQueueCount,
 } from "@/lib/productQueue";
+import {
+  MAX_PRODUCT_IMAGES,
+  MIN_PRODUCT_IMAGES,
+} from "@/lib/productImagePolicy";
 
 export interface OwnerProductCategory {
   id: string;
@@ -470,9 +474,9 @@ function ProductForm({ product, categories, busy, storeSlug, onCancel, onSave }:
 
   async function handleFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
-    const remaining = 4 - imageUrls.length;
+    const remaining = MAX_PRODUCT_IMAGES - imageUrls.length;
     if (remaining <= 0) {
-      setValidation("Bir ürüne en fazla 4 görsel eklenebilir.");
+      setValidation(`Bir ürüne en fazla ${MAX_PRODUCT_IMAGES} fotoğraf eklenebilir.`);
       return;
     }
     setUploading(true);
@@ -500,7 +504,9 @@ function ProductForm({ product, categories, busy, storeSlug, onCancel, onSave }:
         setValidation("Bağlantı kurulamadı.");
       }
     }
-    if (newUrls.length > 0) setImageUrls((prev) => [...prev, ...newUrls].slice(0, 4));
+    if (newUrls.length > 0) {
+      setImageUrls((prev) => [...prev, ...newUrls].slice(0, MAX_PRODUCT_IMAGES));
+    }
     setUploading(false);
   }
 
@@ -520,7 +526,8 @@ function ProductForm({ product, categories, busy, storeSlug, onCancel, onSave }:
     const cleanName = name.trim();
     if (!cleanName) { setValidation("Ürün adı zorunludur."); return; }
     if (categories.length > 0 && !categoryId) { setValidation("Ürün kategorisi zorunludur."); return; }
-    if (imageUrls.length > 4) { setValidation("Bir ürüne en fazla 4 görsel eklenebilir."); return; }
+    if (imageUrls.length < MIN_PRODUCT_IMAGES) { setValidation(`Bir ürün için en az ${MIN_PRODUCT_IMAGES} fotoğraf zorunludur.`); return; }
+    if (imageUrls.length > MAX_PRODUCT_IMAGES) { setValidation(`Bir ürüne en fazla ${MAX_PRODUCT_IMAGES} fotoğraf eklenebilir.`); return; }
     if (imageUrls.some((url) => !/^https?:\/\//i.test(url))) { setValidation("Görsel bağlantıları http:// veya https:// ile başlamalıdır."); return; }
     const oldPriceAmount = oldPriceText.trim() ? parseAmount(oldPriceText) : null;
     if (oldPriceText.trim() && oldPriceAmount == null) { setValidation("Eski fiyat sayı olmalı."); return; }
@@ -553,8 +560,8 @@ function ProductForm({ product, categories, busy, storeSlug, onCancel, onSave }:
       {/* Görseller — Flutter'daki _buildImages karşılığı */}
       <div className="mt-4">
         <div className="flex items-center justify-between">
-          <span className="text-sm font-bold text-[var(--owner-text)]">Ürün görselleri</span>
-          <span className="text-xs text-[var(--owner-muted)]">{imageUrls.length}/4</span>
+          <span className="text-sm font-bold text-[var(--owner-text)]">Ürün görselleri *</span>
+          <span className="text-xs text-[var(--owner-muted)]">{imageUrls.length}/{MAX_PRODUCT_IMAGES}</span>
         </div>
         <div className="mt-2 flex gap-2 overflow-x-auto pb-2">
           {imageUrls.map((url, idx) => (
@@ -567,7 +574,7 @@ function ProductForm({ product, categories, busy, storeSlug, onCancel, onSave }:
               </div>
             </div>
           ))}
-          {imageUrls.length < 4 && (
+          {imageUrls.length < MAX_PRODUCT_IMAGES && (
             <label className={`flex h-24 w-24 shrink-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-[var(--owner-border)] bg-[var(--owner-bg-soft)] text-xs text-[var(--owner-muted)] hover:bg-[var(--owner-bg)] ${uploading ? "pointer-events-none opacity-50" : ""}`}>
               <span className="text-lg">{uploading ? "…" : "+"}</span>
               <span className="text-[10px]">{uploading ? "Yükleniyor" : "Görsel ekle"}</span>
@@ -575,11 +582,11 @@ function ProductForm({ product, categories, busy, storeSlug, onCancel, onSave }:
             </label>
           )}
         </div>
-        <p className="mt-1 text-[11px] text-[var(--owner-muted)]">İlk görsel ürün kapağıdır. Oklarla sıralayabilirsiniz. JPG/PNG/WebP, en fazla 5 MB.</p>
+        <p className="mt-1 text-[11px] text-[var(--owner-muted)]">En az {MIN_PRODUCT_IMAGES}, en fazla {MAX_PRODUCT_IMAGES} fotoğraf. İlk fotoğraf ürün kapağıdır. JPG/PNG/WebP, en fazla 5 MB.</p>
         {/* URL ile ekleme için yedek alan — doğrudan link de yapıştılabilir */}
         <textarea
           value={imageUrls.join("\n")}
-          onChange={(e) => setImageUrls(e.target.value.split(/\r?\n/).map((u) => u.trim()).filter(Boolean).slice(0, 4))}
+          onChange={(e) => setImageUrls(e.target.value.split(/\r?\n/).map((u) => u.trim()).filter(Boolean).slice(0, MAX_PRODUCT_IMAGES))}
           placeholder="Veya her satıra bir https:// bağlantısı yapıştır"
           rows={2}
           className="owner-input mt-2 min-h-16 resize-y text-xs"
