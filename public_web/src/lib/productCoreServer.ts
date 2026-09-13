@@ -139,12 +139,23 @@ export async function createCoreProduct(args: {
 
   const created = data?.created !== false;
   if (created && args.rich) {
-    await writeRichProductFields({
-      admin: args.admin,
-      storeId: args.storeId,
-      productId: id,
-      rich: args.rich,
-    });
+    try {
+      await writeRichProductFields({
+        admin: args.admin,
+        storeId: args.storeId,
+        productId: id,
+        rich: args.rich,
+      });
+    } catch (richError) {
+      const { error: rollbackError } = await args.admin.rpc("delete_store_product", {
+        p_product_id: id,
+        p_edit_token: args.editToken,
+      });
+      if (rollbackError) {
+        console.error("[product-core] rich create rollback failed:", rollbackError.message);
+      }
+      throw richError;
+    }
   }
   return { id, slug, created };
 }
@@ -183,8 +194,6 @@ export async function updateCoreProduct(args: {
     p_clear_fulfillment_region: !args.fulfillmentRegion,
   };
 
-  // Eski istemciler price_amount göndermez. Bu durumda mevcut sayısal fiyatı
-  // koru; yalnız alan açıkça gönderildiğinde yaz veya temizle.
   if (args.priceAmount !== undefined) {
     rpcParams.p_price_amount = args.priceAmount;
     rpcParams.p_clear_price_amount = args.priceAmount === null;
