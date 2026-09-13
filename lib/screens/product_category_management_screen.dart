@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/services/product_attribute_schema_service.dart';
+import 'package:vixrex/services/product_category_sync_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/widgets/common/app_card.dart';
 import 'package:vixrex/widgets/common/app_screen_scaffold.dart';
@@ -8,10 +10,12 @@ class ProductCategoryManagementResult {
   const ProductCategoryManagementResult({
     required this.categories,
     required this.products,
+    this.deletions = const [],
   });
 
   final List<ProductCategory> categories;
   final List<Product> products;
+  final List<ProductCategoryDeletion> deletions;
 }
 
 class ProductCategoryManagementScreen extends StatefulWidget {
@@ -33,6 +37,15 @@ class _ProductCategoryManagementScreenState
     extends State<ProductCategoryManagementScreen> {
   late final List<ProductCategory> _categories;
   late final List<Product> _products;
+  final List<ProductCategoryDeletion> _deletions = [];
+  List<ProductAttributeTemplate> _templates = const [
+    ProductAttributeTemplate(
+      key: 'generic',
+      label: 'Genel ürün',
+      itemKind: 'physical',
+      attributes: [],
+    ),
+  ];
 
   @override
   void initState() {
@@ -44,63 +57,109 @@ class _ProductCategoryManagementScreenState
                 id: item.id,
                 name: item.name,
                 sortOrder: item.sortOrder,
+                productTemplateKey: item.productTemplateKey,
               ),
             )
             .toList();
     _products = widget.products.map((item) => item.copyWith()).toList();
+    _loadTemplates();
+  }
+
+  Future<void> _loadTemplates() async {
+    try {
+      final schema = await const ProductAttributeSchemaService().load();
+      if (!mounted || schema.templates.isEmpty) return;
+      setState(() => _templates = schema.templates);
+    } catch (_) {
+      // Shared şema yüklenemezse mevcut generic davranış korunur.
+    }
   }
 
   Future<void> _addCategory() async {
-    final name = await _showNameDialog(title: 'Yeni Kategori');
-    if (name == null || !mounted) return;
+    final draft = await _showCategoryDialog(title: 'Yeni Kategori');
+    if (draft == null || !mounted) return;
     setState(() {
       _categories.add(
         ProductCategory(
           id: 'category-${DateTime.now().microsecondsSinceEpoch}',
-          name: name,
+          name: draft.name,
           sortOrder: _categories.length,
+          productTemplateKey: draft.templateKey,
         ),
       );
     });
   }
 
-  Future<void> _renameCategory(ProductCategory category) async {
-    final name = await _showNameDialog(
-      title: 'Kategoriyi Yeniden Adlandır',
-      initialValue: category.name,
+  Future<void> _editCategory(ProductCategory category) async {
+    final draft = await _showCategoryDialog(
+      title: 'Kategoriyi Düzenle',
+      initialName: category.name,
+      initialTemplateKey: category.productTemplateKey,
       excludedId: category.id,
     );
-    if (name == null || !mounted) return;
+    if (draft == null || !mounted) return;
     setState(() {
-      category.name = name;
+      category.name = draft.name;
+      category.productTemplateKey = draft.templateKey;
       for (final product in _products) {
-        if (product.categoryId == category.id) product.category = name;
+        if (product.categoryId == category.id) product.category = draft.name;
       }
     });
   }
 
-  Future<String?> _showNameDialog({
+  Future<_CategoryDraft?> _showCategoryDialog({
     required String title,
-    String initialValue = '',
+    String initialName = '',
+    String initialTemplateKey = 'generic',
     String? excludedId,
   }) async {
-    final controller = TextEditingController(text: initialValue);
+    final controller = TextEditingController(text: initialName);
+    var templateKey = _templates.any((item) => item.key == initialTemplateKey)
+        ? initialTemplateKey
+        : 'generic';
     String? error;
-    final result = await showDialog<String>(
+    final result = await showDialog<_CategoryDraft>(
       context: context,
       builder:
           (dialogContext) => StatefulBuilder(
             builder:
                 (context, setDialogState) => AlertDialog(
                   title: Text(title),
-                  content: TextField(
-                    controller: controller,
-                    autofocus: true,
-                    maxLength: 40,
-                    decoration: InputDecoration(
-                      labelText: 'Kategori adı',
-                      errorText: error,
-                    ),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextField(
+                        controller: controller,
+                        autofocus: true,
+                        maxLength: 40,
+                        decoration: InputDecoration(
+                          labelText: 'Kategori adı',
+                          errorText: error,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        value: templateKey,
+                        decoration: const InputDecoration(
+                          labelText: 'Ürün tipi',
+                          helperText:
+                              'Bu seçim, ürün eklerken hangi bilgilerin isteneceğini belirler.',
+                        ),
+                        items:
+                            _templates
+                                .map(
+                                  (template) => DropdownMenuItem(
+                                    value: template.key,
+                                    child: Text(template.label),
+                                  ),
+                                )
+                                .toList(),
+                        onChanged:
+                            (value) => setDialogState(
+                              () => templateKey = value ?? 'generic',
+                            ),
+                      ),
+                    ],
                   ),
                   actions: [
                     TextButton(
@@ -128,7 +187,13 @@ class _ProductCategoryManagementScreenState
                           );
                           return;
                         }
-                        Navigator.pop(dialogContext, value);
+                        Navigator.pop(
+                          dialogContext,
+                          _CategoryDraft(
+                            name: value,
+                            templateKey: templateKey,
+                          ),
+                        );
                       },
                       child: const Text('Kaydet'),
                     ),
@@ -214,6 +279,12 @@ class _ProductCategoryManagementScreenState
         product.categoryId = replacement.id;
         product.category = replacement.name;
       }
+      _deletions.add(
+        ProductCategoryDeletion(
+          categoryId: category.id,
+          replacementCategoryId: replacement.id,
+        ),
+      );
       _categories.removeWhere((item) => item.id == category.id);
       _syncSortOrder();
     });
@@ -232,6 +303,7 @@ class _ProductCategoryManagementScreenState
       ProductCategoryManagementResult(
         categories: _categories,
         products: _products,
+        deletions: _deletions,
       ),
     );
   }
@@ -240,6 +312,13 @@ class _ProductCategoryManagementScreenState
     ScaffoldMessenger.of(context)
       ..clearSnackBars()
       ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  String _templateLabel(String key) {
+    for (final template in _templates) {
+      if (template.key == key) return template.label;
+    }
+    return 'Genel ürün';
   }
 
   @override
@@ -303,7 +382,7 @@ class _ProductCategoryManagementScreenState
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  '$count ürün',
+                                  '$count ürün · ${_templateLabel(category.productTemplateKey)}',
                                   style: const TextStyle(
                                     color: AppColors.mutedText,
                                     fontSize: 13,
@@ -314,14 +393,14 @@ class _ProductCategoryManagementScreenState
                           ),
                           PopupMenuButton<String>(
                             onSelected: (value) {
-                              if (value == 'rename') _renameCategory(category);
+                              if (value == 'edit') _editCategory(category);
                               if (value == 'delete') _deleteCategory(category);
                             },
                             itemBuilder:
                                 (_) => const [
                                   PopupMenuItem(
-                                    value: 'rename',
-                                    child: Text('Yeniden adlandır'),
+                                    value: 'edit',
+                                    child: Text('Düzenle'),
                                   ),
                                   PopupMenuItem(
                                     value: 'delete',
@@ -337,4 +416,11 @@ class _ProductCategoryManagementScreenState
               ),
     );
   }
+}
+
+class _CategoryDraft {
+  const _CategoryDraft({required this.name, required this.templateKey});
+
+  final String name;
+  final String templateKey;
 }
