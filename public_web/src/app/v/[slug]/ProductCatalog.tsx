@@ -88,7 +88,15 @@ function stockTone(stockStatus: string | undefined) {
   };
 }
 
-function CatalogProductImage({ src, alt }: { src: string | null; alt: string }) {
+function CatalogProductImage({
+  src,
+  alt,
+  emptyLabel = "Ürün görseli yok",
+}: {
+  src: string | null;
+  alt: string;
+  emptyLabel?: string;
+}) {
   const [prevSrc, setPrevSrc] = useState(src);
   const [imgSrc, setImgSrc] = useState<string | null>(src);
   const [hasError, setHasError] = useState(false);
@@ -102,7 +110,7 @@ function CatalogProductImage({ src, alt }: { src: string | null; alt: string }) 
   if (!imgSrc || hasError) {
     return (
       <div className="flex h-full flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 px-4 text-center">
-        <span className="text-xs font-extrabold text-slate-400">Ürün görseli yok</span>
+        <span className="text-xs font-extrabold text-slate-400">{emptyLabel}</span>
         <span className="mt-1 text-[10px] font-medium text-slate-600">
           Fotoğraf eklendiğinde burada gösterilir
         </span>
@@ -260,7 +268,11 @@ export default function ProductCatalog({
                 aria-label={`${product.name} ${isService ? "hizmetini" : "ürününü"} hızlı incele`}
               >
                 <div className="relative aspect-[4/5] w-full overflow-hidden bg-slate-950 v-product-media">
-                  <CatalogProductImage src={image} alt={product.name} />
+                  <CatalogProductImage
+                    src={image}
+                    alt={product.name}
+                    emptyLabel={isService ? "Hizmet görseli yok" : "Ürün görseli yok"}
+                  />
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0B1120]/45 via-transparent to-transparent" />
                   {product.badgeTag ? (
                     <span className="absolute left-2.5 top-2.5 z-10 max-w-[70%] truncate rounded-lg bg-gradient-to-r from-blue-600 to-cyan-600 px-2.5 py-1 text-[10px] font-extrabold text-white shadow-md">
@@ -328,7 +340,7 @@ export default function ProductCatalog({
               </button>
 
               {showLocation ? (
-                <div className="absolute right-2.5 top-13 z-30 w-[min(240px,calc(100%-20px))] rounded-xl border border-blue-500/20 bg-slate-950/95 p-3 text-left shadow-2xl backdrop-blur-xl">
+                <div className="absolute right-2.5 top-[3.25rem] z-30 w-[min(240px,calc(100%_-_20px))] rounded-xl border border-blue-500/20 bg-slate-950/95 p-3 text-left shadow-2xl backdrop-blur-xl">
                   <div className="flex items-start gap-2">
                     <MapPinIcon className="mt-0.5 h-4 w-4 shrink-0 text-blue-400" aria-hidden="true" />
                     <div className="min-w-0 flex-1">
