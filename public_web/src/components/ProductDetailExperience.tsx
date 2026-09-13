@@ -51,6 +51,24 @@ function stockTone(status?: string | null) {
   return "text-emerald-300";
 }
 
+function whatsappWithVariantSelection(
+  url: string | null,
+  selectedVariantText: string,
+): string | null {
+  if (!url || !selectedVariantText) return url;
+  try {
+    const parsed = new URL(url);
+    const current = parsed.searchParams.get("text") || "";
+    parsed.searchParams.set(
+      "text",
+      `${current}${current ? "\n" : ""}Seçenek: ${selectedVariantText}`,
+    );
+    return parsed.toString();
+  } catch {
+    return url;
+  }
+}
+
 export default function ProductDetailExperience({
   product,
   images,
@@ -70,6 +88,10 @@ export default function ProductDetailExperience({
   const groups = useMemo(
     () => buildVariantOptionGroups(product.variants, metadata.templateKey),
     [product.variants, metadata.templateKey],
+  );
+  const variantKeys = useMemo(
+    () => new Set(groups.map((group) => group.key)),
+    [groups],
   );
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>(
     variants[0] ? { ...variants[0].options } : {},
@@ -114,6 +136,18 @@ export default function ProductDetailExperience({
   const fulfillmentRegion = String(product.fulfillmentRegion || "").trim();
   const productMapUrl = mapsSearchUrl(fulfillmentRegion);
   const storeMapUrl = mapsSearchUrl(storeAddress);
+  const visibleDetailFacts = detailFacts.filter((fact) => !variantKeys.has(fact.key));
+  const selectedVariantText = groups
+    .map((group) => {
+      const value = selectedOptions[group.key];
+      return value ? `${group.label}: ${value}` : null;
+    })
+    .filter((value): value is string => Boolean(value))
+    .join(", ");
+  const selectedWhatsappUrl = whatsappWithVariantSelection(
+    whatsappUrl,
+    selectedVariantText,
+  );
 
   return (
     <main className="min-h-screen bg-[#0c0d10] px-4 py-6 text-[#f4f1ea] sm:px-6 sm:py-10">
@@ -304,9 +338,9 @@ export default function ProductDetailExperience({
             ) : null}
 
             <div className="mt-6 grid gap-2 sm:grid-cols-2">
-              {whatsappUrl ? (
+              {selectedWhatsappUrl ? (
                 <TrackedWhatsAppLink
-                  href={whatsappUrl}
+                  href={selectedWhatsappUrl}
                   storeSlug={storeSlug}
                   productSlug={productSlug}
                   clickLocation="product_detail"
@@ -335,7 +369,7 @@ export default function ProductDetailExperience({
           </aside>
         </div>
 
-        {detailFacts.length > 0 ? (
+        {visibleDetailFacts.length > 0 ? (
           <section className="mt-6 overflow-hidden rounded-[24px] border border-white/8 bg-[#15171c]">
             <div className="border-b border-white/8 px-5 py-4 sm:px-6">
               <h2 className="text-lg font-extrabold text-white">
@@ -346,7 +380,7 @@ export default function ProductDetailExperience({
               </p>
             </div>
             <dl>
-              {detailFacts.map((fact) => (
+              {visibleDetailFacts.map((fact) => (
                 <div
                   key={fact.key}
                   className="grid border-b border-white/8 last:border-b-0 sm:grid-cols-[220px_minmax(0,1fr)]"
