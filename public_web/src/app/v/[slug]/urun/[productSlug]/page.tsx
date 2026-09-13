@@ -10,10 +10,15 @@ import {
   normalizeWhatsappDigits,
   type ProductItem,
 } from "@/lib/products";
+import {
+  normalizeProductMetadata,
+  normalizeProductVariants,
+} from "@/lib/productRichData";
 import { buildSiteUrl, getSiteUrl } from "@/lib/siteUrl";
 import { safeJsonLdHtml } from "@/lib/jsonLd";
 import { TrackedWhatsAppLink } from "@/components/TrackedWhatsAppLink";
 import ProductViewTracker from "@/components/ProductViewTracker";
+import ProductRichDetails from "./ProductRichDetails";
 
 export const revalidate = 300;
 
@@ -50,12 +55,18 @@ interface ProductRow {
   badge_tag?: string | null;
   fulfillment_region?: string | null;
   currency: string;
+  stock_quantity?: number | null;
   stock_status: string | null;
   image_urls: string[];
   category_id: string | null;
   is_visible: boolean;
   is_active: boolean;
   source_type: string;
+  brand?: string | null;
+  barcode?: string | null;
+  vat_rate?: number | null;
+  metadata?: unknown;
+  variants?: unknown;
 }
 
 interface CategoryRow {
@@ -79,7 +90,7 @@ async function _getProductData(slug: string, productSlug: string) {
     const { data: productRow } = await supabase
       .from("products")
       .select(
-        "id,name,slug,description,price_text,price_amount,old_price_amount,badge_tag,fulfillment_region,currency,stock_status,image_urls,category_id,is_visible,is_active,source_type"
+        "id,name,slug,description,price_text,price_amount,old_price_amount,badge_tag,fulfillment_region,currency,stock_quantity,stock_status,image_urls,category_id,is_visible,is_active,source_type,brand,barcode,vat_rate,metadata,variants"
       )
       .eq("store_id", store.id)
       .eq("slug", productSlug)
@@ -107,6 +118,7 @@ async function _getProductData(slug: string, productSlug: string) {
           (productRow.price_amount != null
             ? `${productRow.price_amount} ${productRow.currency}`
             : undefined),
+        priceAmount: productRow.price_amount ?? null,
         oldPriceAmount: productRow.old_price_amount ?? null,
         badgeTag: productRow.badge_tag ?? null,
         fulfillmentRegion: productRow.fulfillment_region ?? null,
@@ -114,9 +126,15 @@ async function _getProductData(slug: string, productSlug: string) {
           ? productRow.image_urls
           : [],
         category: categoryName || undefined,
+        stockQuantity: productRow.stock_quantity ?? null,
         stockStatus: productRow.stock_status || undefined,
         isVisible: productRow.is_visible,
         source: productRow.source_type,
+        brand: productRow.brand?.trim() || null,
+        barcode: productRow.barcode?.trim() || null,
+        vatRate: productRow.vat_rate ?? null,
+        metadata: normalizeProductMetadata(productRow.metadata),
+        variants: normalizeProductVariants(productRow.variants),
       };
 
       return {
@@ -147,8 +165,6 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
 
   const { store, product, productSlug } = data;
 
-  // #345: demo vitrinin ürün sayfası da indekslenmez. Vitrin sayfası
-  // `follow: true` ile geçildiği için tarayıcı buraya ulaşabilir.
   if (store.is_demo) {
     return { robots: { index: false, follow: true } };
   }
@@ -226,34 +242,62 @@ export default async function ProductDetailPage(props: PageProps) {
   const isInStock = !String(product.stockStatus || "")
     .toLocaleLowerCase("tr-TR")
     .includes("tükendi");
+  const isService = product.metadata?.profileKey === "service";
 
-  const productJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Product",
-    "@id": `${publicUrl}#product`,
-    name: product.name,
-    description: productDescription,
-    image: images.length > 0 ? images : undefined,
-    brand: {
-      "@type": "Brand",
-      name: store.name,
-    },
-    category: product.category || undefined,
-    url: publicUrl,
-    offers: {
-      "@type": "Offer",
-      availability: isInStock
-        ? "https://schema.org/InStock"
-        : "https://schema.org/OutOfStock",
-      priceCurrency: "TRY",
-      price: product.price?.match(/\d/) ? product.price.replace(/[^0-9.,]/g, "").replace(",", ".") : undefined,
-      url: publicUrl,
-      seller: {
-        "@type": "LocalBusiness",
-        name: store.name,
-      },
-    },
-  };
+  const structuredData = isService
+    ? {
+        "@context": "https://schema.org",
+        "@type": "Service",
+        "@id": `${publicUrl}#service`,
+        name: product.name,
+        description: productDescription,
+        image: images.length > 0 ? images : undefined,
+        url: publicUrl,
+        serviceType: product.metadata?.service?.type || product.category || undefined,
+        areaServed: product.fulfillmentRegion || undefined,
+        provider: {
+          "@type": "LocalBusiness",
+          name: store.name,
+        },
+        offers:
+          product.priceAmount != null
+            ? {
+                "@type": "Offer",
+                priceCurrency: "TRY",
+                price: product.priceAmount,
+                url: publicUrl,
+              }
+            : undefined,
+      }
+    : {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        "@id": `${publicUrl}#product`,
+        name: product.name,
+        description: productDescription,
+        image: images.length > 0 ? images : undefined,
+        brand: product.brand
+          ? {
+              "@type": "Brand",
+              name: product.brand,
+            }
+          : undefined,
+        category: product.category || undefined,
+        url: publicUrl,
+        offers: {
+          "@type": "Offer",
+          availability: isInStock
+            ? "https://schema.org/InStock"
+            : "https://schema.org/OutOfStock",
+          priceCurrency: "TRY",
+          price: product.priceAmount ?? undefined,
+          url: publicUrl,
+          seller: {
+            "@type": "LocalBusiness",
+            name: store.name,
+          },
+        },
+      };
 
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
@@ -285,7 +329,7 @@ export default async function ProductDetailPage(props: PageProps) {
       <ProductViewTracker storeSlug={store.slug} productSlug={productSlug} />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: safeJsonLdHtml(productJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLdHtml(structuredData) }}
       />
       <script
         type="application/ld+json"
@@ -342,6 +386,9 @@ export default async function ProductDetailPage(props: PageProps) {
               <h1 className="font-vitrin-display mt-4 text-[clamp(1.9rem,4vw,2.6rem)] font-normal leading-tight text-white">
                 {product.name}
               </h1>
+              {product.brand ? (
+                <p className="mt-2 text-xs font-bold text-white/45">Marka: {product.brand}</p>
+              ) : null}
               <p className="mt-4 whitespace-pre-wrap text-sm font-medium leading-relaxed text-white/70">
                 {productDescription}
               </p>
@@ -393,6 +440,14 @@ export default async function ProductDetailPage(props: PageProps) {
             </div>
           </aside>
         </section>
+
+        <ProductRichDetails
+          brand={product.brand}
+          barcode={product.barcode}
+          stockQuantity={product.stockQuantity}
+          metadata={product.metadata}
+          variants={product.variants}
+        />
       </main>
     </>
   );
