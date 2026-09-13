@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 import ProductQuickView from "@/components/ProductQuickView";
+import { TrackedDirectionsLink } from "@/components/TrackedContactLink";
 import { MapPinIcon } from "@/lib/vitrinBrandIcons";
 import {
   getProductImages,
@@ -31,6 +32,7 @@ interface ProductCatalogProps {
   whatsappBaseUrl?: string | null;
   storeLocationText?: string | null;
   storeMapsUrl?: string | null;
+  trackingEnabled?: boolean;
   /** Mevcut çağrı sözleşmesini kırmamak için korunur. Yeni kart ürün görseli yoksa mağaza görselini ürünmüş gibi kullanmaz. */
   fallbackImage?: string | null;
   /** Mevcut çağrı sözleşmesini kırmamak için korunur. */
@@ -41,6 +43,7 @@ interface QuickViewSelection {
   product: CatalogProduct;
   images: string[];
   productUrl: string;
+  productSlug: string;
 }
 
 const PAGE_SIZE = 24;
@@ -143,6 +146,7 @@ export default function ProductCatalog({
   whatsappBaseUrl = null,
   storeLocationText = null,
   storeMapsUrl = null,
+  trackingEnabled = true,
 }: ProductCatalogProps) {
   const searchParams = useSearchParams();
   const [quickView, setQuickView] = useState<QuickViewSelection | null>(null);
@@ -234,7 +238,8 @@ export default function ProductCatalog({
       >
         {paginatedProducts.map((product, index) => {
           const globalIndex = from + index;
-          const productUrl = `/v/${storeSlug}/urun/${getProductUrlSlug(product, globalIndex)}`;
+          const productSlug = getProductUrlSlug(product, globalIndex);
+          const productUrl = `/v/${storeSlug}/urun/${productSlug}`;
           const image = productImageOnly(product);
           const quickImages = productImagesOnly(product);
           const category = String(product.category || "").trim();
@@ -262,7 +267,7 @@ export default function ProductCatalog({
                   if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
                   event.preventDefault();
                   setLocationProductId(null);
-                  setQuickView({ product, images: quickImages, productUrl });
+                  setQuickView({ product, images: quickImages, productUrl, productSlug });
                 }}
                 className="block min-w-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
                 aria-label={`${product.name} ${isService ? "hizmetini" : "ürününü"} hızlı incele`}
@@ -353,15 +358,19 @@ export default function ProductCatalog({
                             {fulfillmentRegion}
                           </p>
                           {fulfillmentMapUrl ? (
-                            <a
+                            <TrackedDirectionsLink
                               href={fulfillmentMapUrl}
                               target="_blank"
                               rel="noopener noreferrer"
+                              storeSlug={storeSlug}
+                              clickLocation="product_card"
+                              productSlug={productSlug}
+                              trackingEnabled={trackingEnabled}
                               onClick={(event) => event.stopPropagation()}
                               className="mt-1.5 inline-flex text-[11px] font-extrabold text-blue-400 hover:text-blue-300"
                             >
                               Haritada ara →
-                            </a>
+                            </TrackedDirectionsLink>
                           ) : null}
                         </div>
                       ) : null}
@@ -375,15 +384,19 @@ export default function ProductCatalog({
                             {storeLocationText}
                           </p>
                           {storeMapsUrl ? (
-                            <a
+                            <TrackedDirectionsLink
                               href={storeMapsUrl}
                               target="_blank"
                               rel="noopener noreferrer"
+                              storeSlug={storeSlug}
+                              clickLocation="product_card"
+                              productSlug={productSlug}
+                              trackingEnabled={trackingEnabled}
                               onClick={(event) => event.stopPropagation()}
                               className="mt-1.5 inline-flex text-[11px] font-extrabold text-blue-400 hover:text-blue-300"
                             >
                               Yol tarifi →
-                            </a>
+                            </TrackedDirectionsLink>
                           ) : null}
                         </div>
                       ) : null}
@@ -435,10 +448,13 @@ export default function ProductCatalog({
           product={quickView.product}
           images={quickView.images}
           productUrl={quickView.productUrl}
+          productSlug={quickView.productSlug}
+          storeSlug={storeSlug}
           storeName={storeName}
           whatsappBaseUrl={whatsappBaseUrl}
           storeLocationText={storeLocationText}
           storeMapsUrl={storeMapsUrl}
+          trackingEnabled={trackingEnabled}
           onClose={() => setQuickView(null)}
         />
       ) : null}
