@@ -158,9 +158,10 @@ class _ProductRichFieldsEditorState extends State<ProductRichFieldsEditor> {
             : definition.label;
 
     if (definition.valueType == 'boolean') {
+      final selected = current == 'true' || current == 'false' ? current : null;
       return DropdownButtonFormField<String>(
         key: ValueKey('${template.key}-${definition.key}'),
-        value: current.isEmpty ? null : current,
+        value: selected,
         decoration: InputDecoration(labelText: label),
         items: const [
           DropdownMenuItem(value: 'true', child: Text('Evet')),
@@ -179,9 +180,10 @@ class _ProductRichFieldsEditorState extends State<ProductRichFieldsEditor> {
     }
 
     if (definition.options.isNotEmpty) {
+      final selected = definition.options.contains(current) ? current : null;
       return DropdownButtonFormField<String>(
         key: ValueKey('${template.key}-${definition.key}'),
-        value: current.isEmpty ? null : current,
+        value: selected,
         decoration: InputDecoration(labelText: label),
         items:
             definition.options
