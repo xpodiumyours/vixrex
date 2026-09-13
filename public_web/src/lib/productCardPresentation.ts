@@ -145,12 +145,24 @@ export function buildProductDetailFacts(args: {
   const metadata = normalizeProductMetadata(args.metadata);
   const facts: ProductQuickFact[] = [];
 
+  if (metadata.itemKind === "service") {
+    facts.push(...serviceFacts(metadata, true));
+    facts.push(
+      ...metadataAttributeFacts({
+        metadata,
+        surface: "detail",
+        existingKeys: new Set(facts.map((fact) => fact.key)),
+      }),
+    );
+    return facts;
+  }
+
   const brand = String(args.brand || "").trim();
   const barcode = String(args.barcode || "").trim();
-  if (brand && metadata.itemKind !== "service") {
+  if (brand) {
     facts.push({ key: "brand", label: "Marka", value: brand });
   }
-  if (barcode && metadata.itemKind !== "service") {
+  if (barcode) {
     facts.push({ key: "barcode", label: "Barkod / GTIN", value: barcode });
   }
   if (metadata.identifiers?.sku) {
@@ -158,9 +170,6 @@ export function buildProductDetailFacts(args: {
   }
   if (metadata.identifiers?.mpn) {
     facts.push({ key: "mpn", label: "Üretici parça kodu / MPN", value: metadata.identifiers.mpn });
-  }
-  if (metadata.itemKind === "service") {
-    facts.push(...serviceFacts(metadata, true));
   }
 
   facts.push(
