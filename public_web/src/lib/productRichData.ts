@@ -160,7 +160,7 @@ export function normalizeProductVariants(value: unknown): ProductVariant[] {
       normalized.stockQuantity = variant.stockQuantity;
     }
     normalized.stockStatus = cleanString(variant.stockStatus);
-    normalized.imageUrls = cleanStringArray(variant.imageUrls, 4);
+    normalized.imageUrls = cleanStringArray(variant.imageUrls, 10);
     variants.push(normalized);
   }
   return variants;
