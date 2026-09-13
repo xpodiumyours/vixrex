@@ -1,9 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vixrex/models/product_rich_data.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/widgets/product/product_editor_sheet.dart';
+import 'package:vixrex/widgets/product/product_variant_editor.dart';
 
 void main() {
+  test('varyant görsellerini ürün galerisiyle sınırlar', () async {
+    final variants = await sanitizeProductVariantsForTemplate(
+      'fashion',
+      const [
+        ProductVariantData(
+          id: 'black-m',
+          options: {'color': 'Siyah', 'size': 'M'},
+          imageUrls: [
+            'https://cdn.example.com/product-1.webp',
+            'https://other.example.com/not-in-gallery.webp',
+          ],
+        ),
+      ],
+      availableImageUrls: {'https://cdn.example.com/product-1.webp'},
+    );
+
+    expect(variants, hasLength(1));
+    expect(
+      variants.single.imageUrls,
+      ['https://cdn.example.com/product-1.webp'],
+    );
+  });
+
   testWidgets('giyim kategorisi ortak şemadaki ürün ve varyant alanlarını gösterir', (
     tester,
   ) async {
