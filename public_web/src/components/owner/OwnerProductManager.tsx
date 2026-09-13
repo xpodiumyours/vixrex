@@ -583,7 +583,7 @@ function ProductForm({ product, categories, busy, storeSlug, onCancel, onSave }:
         <div className="mt-2 flex gap-2 overflow-x-auto pb-2">
           {imageUrls.map((url, idx) => (
             <div key={`${url}-${idx}`} className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl border border-[var(--owner-border)] bg-[var(--owner-bg-soft)]">
-              <Image src={url} alt={`görsel ${idx + 1}`} fill unoptimized sizes="96px" className="object-cover" />
+              {url ? <Image src={url} alt={`görsel ${idx + 1}`} fill unoptimized sizes="96px" className="object-cover" /> : null}
               <button type="button" onClick={() => setImageUrls((p) => p.filter((_, i) => i !== idx))} className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-[10px] text-white">✕</button>
               <div className="absolute bottom-1 left-1 right-1 flex justify-between gap-1">
                 <button type="button" onClick={() => moveImage(idx, -1)} disabled={idx === 0} className="flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-[10px] text-white disabled:opacity-30">‹</button>
@@ -620,7 +620,15 @@ function ProductForm({ product, categories, busy, storeSlug, onCancel, onSave }:
         {resolvedCategorySelect(categories, categoryId, setCategoryId, busy)}
       </div>
 
-      {categoryId ? <OwnerRichProductFields templateKey={templateKey} value={rich} onChange={setRich} disabled={busy} /> : null}
+      {categoryId ? (
+        <OwnerRichProductFields
+          templateKey={templateKey}
+          value={rich}
+          onChange={setRich}
+          imageUrls={imageUrls}
+          disabled={busy}
+        />
+      ) : null}
 
       {validation ? <p className="owner-error mt-4 text-sm" role="alert">{validation}</p> : null}
       <div className="mt-5 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
