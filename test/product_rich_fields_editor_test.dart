@@ -4,7 +4,7 @@ import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/widgets/product/product_editor_sheet.dart';
 
 void main() {
-  testWidgets('giyim kategorisi ortak şemadaki ürün alanlarını gösterir', (
+  testWidgets('giyim kategorisi ortak şemadaki ürün ve varyant alanlarını gösterir', (
     tester,
   ) async {
     final category = ProductCategory(
@@ -30,9 +30,20 @@ void main() {
     expect(find.text('Beden · önerilen'), findsOneWidget);
     expect(find.text('Materyal · önerilen'), findsOneWidget);
     expect(find.text('Stok adedi'), findsOneWidget);
+    expect(find.text('Varyantlar'), findsOneWidget);
+    expect(find.text('Varyant ekle'), findsOneWidget);
+
+    await tester.ensureVisible(find.text('Varyant ekle'));
+    await tester.tap(find.text('Varyant ekle'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Varyant 1'), findsOneWidget);
+    expect(find.text('Varyant SKU'), findsOneWidget);
+    expect(find.text('Varyant barkodu'), findsOneWidget);
+    expect(find.text('Varyant fiyatı'), findsOneWidget);
   });
 
-  testWidgets('hizmet kategorisi stok yerine hizmet alanlarını gösterir', (
+  testWidgets('hizmet kategorisi stok ve varyant yerine hizmet alanlarını gösterir', (
     tester,
   ) async {
     final category = ProductCategory(
@@ -58,5 +69,7 @@ void main() {
     expect(find.text('Hizmet yeri · önerilen'), findsOneWidget);
     expect(find.text('Stok adedi'), findsNothing);
     expect(find.text('Stok durumu'), findsNothing);
+    expect(find.text('Varyantlar'), findsNothing);
+    expect(find.text('Varyant ekle'), findsNothing);
   });
 }
