@@ -246,11 +246,14 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
             ? widget.product!.id
             : DateTime.now().microsecondsSinceEpoch.toString();
     final uploadedUrls = <String>[];
+    final imageReferenceMap = <String, String>{};
     try {
       for (var index = 0; index < _images.length; index++) {
         final draft = _images[index];
         if (draft.url.trim().isNotEmpty) {
-          uploadedUrls.add(draft.url.trim());
+          final url = draft.url.trim();
+          uploadedUrls.add(url);
+          imageReferenceMap[draft.reference] = url;
           continue;
         }
         final bytes = draft.bytes;
@@ -263,6 +266,7 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
           contentType: draft.contentType,
         );
         uploadedUrls.add(url);
+        imageReferenceMap[draft.reference] = url;
         draft.url = url;
         draft.bytes = null;
       }
@@ -277,9 +281,34 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
         selectedCategory,
       );
       final isService = selectedCategory.productTemplateKey == 'service';
+      final uploadedSet = uploadedUrls.toSet();
+      final variantsWithResolvedImages =
+          _variants.map((variant) {
+            final seen = <String>{};
+            final resolvedImages = <String>[];
+            for (final reference in variant.imageUrls) {
+              final resolved = imageReferenceMap[reference] ?? reference.trim();
+              if (resolved.isNotEmpty &&
+                  uploadedSet.contains(resolved) &&
+                  seen.add(resolved)) {
+                resolvedImages.add(resolved);
+              }
+            }
+            return ProductVariantData(
+              id: variant.id,
+              options: variant.options,
+              sku: variant.sku,
+              barcode: variant.barcode,
+              priceAmount: variant.priceAmount,
+              stockQuantity: variant.stockQuantity,
+              stockStatus: variant.stockStatus,
+              imageUrls: resolvedImages,
+            );
+          }).toList();
       final variants = await sanitizeProductVariantsForTemplate(
         selectedCategory.productTemplateKey,
-        _variants,
+        variantsWithResolvedImages,
+        availableImageUrls: uploadedSet,
       );
       final result = Product(
         id: productId,
@@ -430,7 +459,7 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
                       stockQuantity: _stockQuantity,
                       metadata: _richMetadata,
                     ),
-                    variantCount: 0,
+                    variantCount: _variants.length,
                     enabled: !_isSaving,
                     onChanged: (next) {
                       setState(() {
@@ -446,6 +475,19 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
                     key: ValueKey('variants-${selectedCategory.productTemplateKey}'),
                     templateKey: selectedCategory.productTemplateKey,
                     variants: _variants,
+                    imageChoices:
+                        _images
+                            .map(
+                              (image) => ProductVariantImageChoice(
+                                reference: image.reference,
+                                url:
+                                    image.url.trim().isEmpty
+                                        ? null
+                                        : image.url.trim(),
+                                bytes: image.bytes,
+                              ),
+                            )
+                            .toList(),
                     enabled: !_isSaving,
                     onChanged: (next) => setState(() => _variants = next),
                   ),
@@ -653,12 +695,22 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
 
 class _ProductImageDraft {
   _ProductImageDraft({
-    this.url = '',
+    String url = '',
     this.bytes,
     this.extension = 'jpg',
     this.contentType = 'image/jpeg',
-  });
+    String? reference,
+  }) : url = url,
+       reference =
+           reference ??
+           (url.trim().isNotEmpty ? url.trim() : _newReference());
 
+  static int _referenceSequence = 0;
+
+  static String _newReference() =>
+      'draft-${DateTime.now().microsecondsSinceEpoch}-${_referenceSequence++}';
+
+  final String reference;
   String url;
   Uint8List? bytes;
   final String extension;
