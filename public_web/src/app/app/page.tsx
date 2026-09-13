@@ -43,6 +43,7 @@ export const dynamic = "force-dynamic";
 
 export default function AppPage() {
   const router = useRouter();
+  // Oturum yalnız yönlendirme için okunuyor; ekranda gösterilmiyor.
   const [, setUser] = useState<User | null>(null);
   const [stores, setStores] = useState<Store[]>([]);
   const [yukleniyor, setYukleniyor] = useState(true);
@@ -52,6 +53,10 @@ export default function AppPage() {
   const [flowState, setFlowState] = useState<Record<string, unknown> | null>(null);
   const [showNameForm, setShowNameForm] = useState(false);
   const [workingDraft, setWorkingDraft] = useState<Record<string, unknown>>({});
+
+  // Ana sayfadaki asistanla konuşulduysa cevaplar tarayıcı oturumunda
+  // duruyor. Vitrin kurulurken doğrudan kullanılır; kullanıcıya aynı
+  // soruları ikinci kez sormayız.
   const [asistanTaslagi, setAsistanTaslagi] = useState<AsistanCevaplari>({});
 
   const magazaDetayiniGetir = useCallback(async function magazaDetayiniGetir(
@@ -79,11 +84,11 @@ export default function AppPage() {
     const [productsResult, categoriesResult] = await Promise.all([
       supabase
         .from("products")
-        .select("id, slug, name, description, price_text, price_amount, currency, image_urls, category_id, stock_status, stock_quantity, brand, barcode, metadata, variants, seo_title, seo_description, old_price_amount, badge_tag, fulfillment_region, product_categories(name,product_template_key)")
+        .select("id, slug, name, description, price_text, image_urls, category_id, stock_status, product_categories(name)")
         .eq("store_id", storeId),
       supabase
         .from("product_categories")
-        .select("id, name, product_template_key")
+        .select("id, name")
         .eq("store_id", storeId),
     ]);
 
@@ -119,6 +124,9 @@ export default function AppPage() {
         "[app/bootstrap] birleşik bootstrap kullanılamadı; güvenli yedek yol kullanılıyor.",
         durumHatasi.code
       );
+      // Yeni birleşik RPC canlı şemada geçici olarak bozulursa kullanıcıyı
+      // "vitrinin yok" ekranına düşürme. Kalıcı sahiplik RPC'sinden slug'ı
+      // alıp aynı RLS korumalı tablolardan vitrini doğrudan yükle.
       const eskiBootstrap = await supabase.rpc("bootstrap_owner_state");
       if (eskiBootstrap.error) {
         setHata("Vitrin bilgileri yüklenemedi. Lütfen sayfayı yenileyip tekrar dene.");
@@ -131,10 +139,12 @@ export default function AppPage() {
     }
 
     const sonuc = (durum ?? {}) as Record<string, unknown>;
+    // PR3-C12: yeni bootstrap (store + flow_state + conversation) — paralel başlangıç kaldırıldı
     const yeniStore = (sonuc as { store?: Store | null }).store;
     const yeniFlow = (sonuc as { flow_state?: Record<string, unknown> | null }).flow_state ?? null;
     const yeniWorkingDraft = (sonuc as { working_draft?: { draft_data?: Record<string, unknown> } | null }).working_draft;
     setFlowState(yeniFlow);
+    // Yeni ve eski bootstrap sonuçlarını tek slug yolunda birleştir.
     const eskiSonuc = sonuc as BootstrapOwnerState;
     const slug =
       yeniStore && typeof yeniStore === "object" && (yeniStore as Store).slug
@@ -156,15 +166,24 @@ export default function AppPage() {
       return;
     }
 
+    // Mağaza yok: akış varsa devam, yoksa ortak karşılama (PR2)
     setStores([]);
     if (showLoading) setYukleniyor(false);
+    return;
   }, [magazaDetayiniGetir]);
+
+
 
   useEffect(() => {
     async function init() {
       let {
         data: { session },
       } = await supabase.auth.getSession();
+      // Flutter web ile parite: Vitrinim anonimken manuel panele açılmalı,
+      // Google login'e zorlamamalı. Yoksa Keşfet alt menüdeki Vitrinim
+      // tıklaması /giris'e düşüyordu (mobil eşitlik sonrası raporlandı).
+      // Mevcut /app akışı korunur — yalnız oturum yoksa Flutter'daki
+      // _oturumuGuvenceyeAl gibi anonim oturum denenir, başarısızsa /giris'e düşer.
       if (!session) {
         try {
           const { data: anonData } = await supabase.auth.signInAnonymously();
@@ -181,15 +200,26 @@ export default function AppPage() {
       }
       setUser(session.user);
 
+      // PR3-C11: hesap sonrası yerel landing başlangıcını tek active conversation'a aktar
       await importLandingFlowStateIfNeeded();
 
+      // Asistan taslağı varsa vitrin adını doldur — kullanıcı formu boş
+      // görmesin, konuştuğu şeyin kaybolmadığını görsün.
       const taslak = taslagiOku();
       if (Object.keys(taslak).length > 0) {
         setAsistanTaslagi(taslak);
         if (taslak.name) setYeniAd(taslak.name);
       }
 
+      // Sahip çerezi kısa ömürlü. Panoya her dönüşte yeniden kuruluyor —
+      // yoksa kullanıcı ikinci ziyaretinde ürün ekleyemez/silemez, her
+      // çağrı 401 döner. Vitrini olmayan hesapta sessizce başarısız olur,
+      // kurulum akışı zaten ayrı.
       await sahipOturumuAc();
+
+      // Düzenleyiciyi ancak sahip çerezi kurulmayı denedikten sonra aç.
+      // Böylece ilk alan değişikliği, sayfa daha yeni görünür olmuşken 401
+      // ile düşmez.
       await magazalariGetir();
     }
     init();
@@ -221,93 +251,290 @@ export default function AppPage() {
         "Content-Type": "application/json",
         Authorization: `Bearer ${session.access_token}`,
       },
+      // Ana sayfadaki asistanla konuşan kullanıcı kategori, WhatsApp ve
+      // adresi zaten söylemişti. Onları burada tekrar sormak, "kaldığın
+      // yerden devam edeceğiz" sözünü tutmamak olurdu.
       body: JSON.stringify({ name: yeniAd.trim(), ...asistanTaslagi }),
     });
 
     const sonuc = await res.json();
+    setOlusturuyor(false);
+
     if (!res.ok) {
-      setHata(sonuc?.error || sonuc?.message || "Vitrin oluşturulamadı.");
-      setOlusturuyor(false);
+      setHata(sonuc.hata || "Vitrin oluşturulamadı.");
       return;
     }
 
+    // Taslak kullanıldı, yerinde bırakma: ikinci bir vitrin kurulmaya
+    // çalışılırsa eski cevaplar sessizce geri gelirdi.
     taslagiTemizle();
     setAsistanTaslagi({});
-    setYeniAd("");
-    setShowNameForm(false);
-    await sahipOturumuAc();
-    await magazalariGetir(false);
-    setOlusturuyor(false);
+
+    // Vitrin oluşturuldu — sahip oturumunu aç ve vitrine git.
+    //
+    // Buradaki eski "basitleştirme" çalışmıyordu: `edit_token`'ı doğrudan
+    // `ocode` olarak gönderiyordu. `/api/owner-session` ise
+    // `consume_owner_session` çağırıyor ve TEK KULLANIMLIK KOD bekliyor —
+    // canlıda doğrulandı, `edit_token` kabul etmiyor. Kod bulunamadığı
+    // için çerez hiç kurulmuyordu ve bütün ürün işlemleri 401 alıyordu.
+    if (sonuc.slug) {
+      if (sonuc.yonlendir) {
+        await fetch(sonuc.yonlendir, { redirect: "manual" });
+      } else {
+        await sahipOturumuAc();
+      }
+      router.push(`/v/${sonuc.slug}`);
+    }
   }
 
   if (yukleniyor) {
     return (
-      <main className="owner-shell min-h-screen p-5 sm:p-8">
-        <div className="mx-auto max-w-[1120px] animate-pulse space-y-5">
-          <div className="h-10 w-56 rounded-xl bg-white/10" />
-          <div className="h-36 rounded-3xl bg-white/5" />
+      <main className="owner-shell flex items-center justify-center px-4">
+        <div className="owner-card flex items-center gap-3 px-5 py-4" role="status" aria-live="polite">
+          <span className="h-3 w-3 animate-pulse rounded-full bg-[var(--owner-primary)]" aria-hidden="true" />
+          <span className="text-sm text-[var(--owner-muted)]">Vitrinin yükleniyor…</span>
         </div>
       </main>
     );
   }
 
-  if (stores.length === 0) {
+  if (stores.length > 0) {
     return (
-      <main className="owner-shell min-h-screen px-4 py-10 sm:px-6">
-        <div className="mx-auto max-w-xl owner-card p-6 sm:p-8">
-          <h1 className="text-2xl font-black text-[var(--owner-text)]">Vitrinini oluştur</h1>
-          <p className="mt-2 text-sm leading-6 text-[var(--owner-muted)]">
-            Tek vitrin hesabını oluşturup düzenlemeye devam et.
-          </p>
-          {hata ? <p className="owner-error mt-4 text-sm">{hata}</p> : null}
-          {!showNameForm ? (
-            <button type="button" className="owner-button-primary mt-5" onClick={() => setShowNameForm(true)}>
-              Devam Et
-            </button>
-          ) : (
-            <form onSubmit={magazaOlustur} className="mt-5 space-y-4">
-              <label className="block space-y-2">
-                <span className="owner-label">İşletme adı</span>
-                <input className="owner-input" value={yeniAd} onChange={(e) => setYeniAd(e.target.value)} maxLength={80} autoFocus />
-              </label>
-              <button className="owner-button-primary w-full" disabled={olusturuyor}>{olusturuyor ? "Oluşturuluyor…" : "Vitrini Oluştur"}</button>
-            </form>
-          )}
-        </div>
-      </main>
+      <VitrinimEditor
+        store={stores[0]}
+        initialDraft={workingDraft}
+        onRefresh={async () => {
+          await magazalariGetir(false);
+        }}
+      />
     );
   }
-
-  const store = stores[0];
 
   return (
-    <main className="owner-shell min-h-screen px-4 py-6 sm:px-6 sm:py-8">
-      <div className="mx-auto max-w-[1120px]">
-        {hata ? <p className="owner-error mb-4 text-sm">{hata}</p> : null}
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-black text-[var(--owner-text)]">Vitrinim</h1>
-            <p className="mt-1 text-sm text-[var(--owner-muted)]">{store.name}</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <OwnerNotificationLink />
-            <Link href={`/v/${store.slug}`} target="_blank" className="owner-button-secondary">Vitrini Gör</Link>
-          </div>
-        </div>
+    <main className="owner-shell">
+      {/* Flutter'daki Vitrinim ekranıyla hizalı: ikinci üst çubuk (Vixrex/Vitrinim +
+          Profil·Ayarlar·Çıkış) ve "Vitrinini yönet" başlığı yok. Gezinme soldaki
+          AppSidebar'da; Profil/Ayarlar/Çıkış /app/profil altında. Ekranın en
+          üstündeki tek şerit VitrinimEditor'ün yayın durumu çubuğudur. */}
+      <div className="w-full">
+        {hata ? <p className="owner-error mb-6 text-sm" role="alert">{hata}</p> : null}
 
-        <OwnerDashboardMetrics storeSlug={store.slug} />
-        <VitrinimEditor
-          store={store as never}
-          flowState={flowState}
-          workingDraft={workingDraft}
-          onRefresh={() => magazalariGetir(false)}
-        />
-        <OwnerProductManager
-          storeSlug={store.slug}
-          products={store.products ?? []}
-          categories={store.product_categories ?? []}
-          onRefresh={() => magazalariGetir(false)}
-        />
+        {stores.length === 0 ? (
+          flowState ? (
+            <section className="owner-card p-5 sm:p-8" aria-labelledby="vitrin-devam-title">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--owner-secondary)]">Devam Ediyor</p>
+                <h2 id="vitrin-devam-title" className="mt-2 text-xl font-bold text-[var(--owner-text)]">
+                  Kurulumun kaldığı yerden devam ediyor
+                </h2>
+                <p className="mt-2 max-w-lg text-sm leading-6 text-[var(--owner-muted)]">
+                  {flowState && typeof flowState === "object" && "current_step" in flowState
+                    ? `Sıradaki adım: ${String((flowState as { current_step?: string }).current_step ?? "devam")}`
+                    : "Önceki adımda bıraktığın yerden devam edebilirsin."}
+                </p>
+                {flowState && typeof flowState === "object" && "selected_template" in flowState && (flowState as { selected_template?: string }).selected_template ? (
+                  <p className="mt-2 text-sm text-[var(--owner-text-alt)]">Seçilen şablon: {(flowState as { selected_template: string }).selected_template}</p>
+                ) : null}
+              </div>
+              <div className="mt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowNameForm(true)}
+                  className="owner-button-primary"
+                >
+                  Devam Et
+                </button>
+              </div>
+              {showNameForm ? (
+                <form onSubmit={magazaOlustur} className="mt-6 space-y-4" aria-busy={olusturuyor}>
+                  <div className="space-y-2">
+                    <label htmlFor="isletme-adi" className="owner-label">İşletme Adı</label>
+                    <input
+                      id="isletme-adi"
+                      type="text"
+                      placeholder="Ör. Aymira Giyim"
+                      value={yeniAd}
+                      onChange={(e) => setYeniAd(e.target.value)}
+                      className="owner-input text-sm"
+                      autoComplete="organization"
+                      required
+                    />
+                  </div>
+                  <button type="submit" disabled={olusturuyor} className="owner-button-primary w-full">
+                    {olusturuyor ? "Vitrin oluşturuluyor…" : "Vitrin Oluştur"}
+                  </button>
+                </form>
+              ) : null}
+            </section>
+          ) : (
+            // Flutter'da bu ekranda "Hazır Vitrin Seç / Bakınıyorum / Aşağıda
+            // formu doldur" kartı yok — doğrudan Vixrex Oluştur ile başlıyor.
+            // Hazır vitrin seçimi Keşfet'te duruyor.
+            <div className="space-y-6">
+              <VitrinimEditor
+                store={{ slug: "taslak", name: yeniAd, is_published: false, products: [], product_categories: [] }}
+                initialDraft={{ ...asistanTaslagi, ...workingDraft, name: yeniAd }}
+                isCreationMode
+                onCreate={async (draft) => {
+                  const ad = String((draft as Record<string, unknown>).name || yeniAd || "").trim();
+                  if (!ad) {
+                    setHata("İşletme adı zorunludur.");
+                    return;
+                  }
+                  setOlusturuyor(true);
+                  setHata("");
+                  try {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    if (!session) {
+                      setHata("Oturum bulunamadı.");
+                      return;
+                    }
+                    const payload: Record<string, unknown> = { name: ad, ...asistanTaslagi };
+                    // VitrinimEditor draft'ı kolon isimleriyle gelir — direkt ekle
+                    for (const [k, v] of Object.entries(draft as Record<string, unknown>)) {
+                      if (v != null && String(v).trim() !== "") payload[k] = v;
+                    }
+                    const res = await fetch("/api/create-store", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+                      body: JSON.stringify(payload),
+                    });
+                    const sonuc = await res.json();
+                    if (!res.ok) {
+                      setHata(sonuc.hata || "Vitrin oluşturulamadı.");
+                      return;
+                    }
+                    taslagiTemizle();
+                    setAsistanTaslagi({});
+                    if (sonuc.slug) {
+                      if (sonuc.yonlendir) await fetch(sonuc.yonlendir, { redirect: "manual" });
+                      else await sahipOturumuAc();
+                      router.push(`/v/${sonuc.slug}`);
+                    } else {
+                      await magazalariGetir();
+                    }
+                  } finally {
+                    setOlusturuyor(false);
+                  }
+                }}
+                onRefresh={async () => {
+                  await magazalariGetir(false);
+                }}
+              />
+              {hata ? <p className="owner-error text-sm" role="alert">{hata}</p> : null}
+              {olusturuyor ? <p className="text-sm text-[var(--owner-muted)]" role="status">Vitrin oluşturuluyor…</p> : null}
+            </div>
+          )
+        ) : (
+          <section aria-labelledby="vitrinim-title">
+            <h2 id="vitrinim-title" className="sr-only">Vitrinim</h2>
+            <div className="grid gap-4">
+              <Link
+                href={`/v/${stores[0].slug}`}
+                className="owner-card owner-link group block p-5 no-underline transition hover:border-[var(--owner-primary)] sm:p-6"
+              >
+                <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <h3 className="truncate text-lg font-bold text-[var(--owner-text)] group-hover:text-[var(--owner-secondary)]">
+                        {stores[0].name}
+                      </h3>
+                      <span
+                        className={`rounded-full border px-2.5 py-1 text-xs font-bold ${
+                          stores[0].is_published
+                            ? "border-[var(--owner-success)]/40 bg-[var(--owner-success)]/10 text-[var(--owner-success)]"
+                            : "border-[var(--owner-warning)]/40 bg-[var(--owner-warning)]/10 text-[var(--owner-warning)]"
+                        }`}
+                      >
+                        {stores[0].is_published ? "Yayında" : "Taslak"}
+                      </span>
+                    </div>
+                    <p className="mt-2 truncate text-xs text-[var(--owner-muted)]">
+                      /v/{stores[0].slug}
+                    </p>
+                    {stores[0].kategori ? (
+                      <p className="mt-2 text-sm text-[var(--owner-text-alt)]">{stores[0].kategori}</p>
+                    ) : null}
+                  </div>
+                  <span className="owner-button-primary inline-flex shrink-0 items-center justify-center sm:min-w-40">
+                    Vitrini Yönet
+                  </span>
+                </div>
+              </Link>
+              <OwnerDashboardMetrics />
+            </div>
+            <OwnerProductManager
+              storeSlug={stores[0].slug}
+              products={stores[0].products ?? []}
+              categories={stores[0].product_categories ?? []}
+              onRefresh={async () => {
+                await magazalariGetir(false);
+              }}
+            />
+
+            {/* Yönetim bağlantıları */}
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              <Link
+                href={`/v/${stores[0].slug}/blog-yonetim`}
+                className="owner-card owner-link group flex items-center gap-3 p-4 no-underline transition hover:border-[var(--owner-primary)]"
+              >
+                <span className="text-2xl">📝</span>
+                <div>
+                  <p className="text-sm font-bold text-[var(--owner-text)] group-hover:text-[var(--owner-secondary)]">
+                    Blog Yönetimi
+                  </p>
+                  <p className="text-xs text-[var(--owner-muted)]">
+                    Yazılarını düzenle ve yeni yazı oluştur
+                  </p>
+                </div>
+              </Link>
+              <Link
+                href={`/v/${stores[0].slug}/randevu-yonetim`}
+                className="owner-card owner-link group flex items-center gap-3 p-4 no-underline transition hover:border-[var(--owner-primary)]"
+              >
+                <span className="text-[var(--owner-secondary)]" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="5" width="18" height="16" rx="3" /><path d="M8 3v4M16 3v4M3 10h18" /></svg></span>
+                <div>
+                  <p className="text-sm font-bold text-[var(--owner-text)] group-hover:text-[var(--owner-secondary)]">
+                    Randevu Yönetimi
+                  </p>
+                  <p className="text-xs text-[var(--owner-muted)]">
+                    Bekleyen randevuları onayla veya reddet
+                  </p>
+                </div>
+              </Link>
+              <OwnerNotificationLink />
+              <Link
+                href="/app/hesap"
+                className="owner-card owner-link group flex items-center gap-3 p-4 no-underline transition hover:border-[var(--owner-primary)]"
+              >
+                <span className="text-[var(--owner-secondary)]" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="3.2" /><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z" /></svg></span>
+                <div>
+                  <p className="text-sm font-bold text-[var(--owner-text)] group-hover:text-[var(--owner-secondary)]">
+                    Hesap
+                  </p>
+                  <p className="text-xs text-[var(--owner-muted)]">
+                    Profil, ayarlar ve hesap yönetimi
+                  </p>
+                </div>
+              </Link>
+              <Link
+                href="/yardim"
+                className="owner-card owner-link group flex items-center gap-3 p-4 no-underline transition hover:border-[var(--owner-primary)]"
+              >
+                <span className="text-2xl" aria-hidden="true">❓</span>
+                <div>
+                  <p className="text-sm font-bold text-[var(--owner-text)] group-hover:text-[var(--owner-secondary)]">
+                    Yardım ve Destek
+                  </p>
+                  <p className="text-xs text-[var(--owner-muted)]">
+                    Kullanım bilgileri ve sık sorulan sorular
+                  </p>
+                </div>
+              </Link>
+
+            </div>
+          </section>
+        )}
       </div>
     </main>
   );
