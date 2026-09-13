@@ -9,10 +9,11 @@ import { MapPinIcon } from "@/lib/vitrinBrandIcons";
 import {
   buildVariantOptionGroups,
   findMatchingVariant,
+  productVariantsForTemplate,
   variantOptionIsAvailable,
   type ProductQuickFact,
 } from "@/lib/productCardPresentation";
-import { normalizeProductMetadata, normalizeProductVariants } from "@/lib/productRichData";
+import { normalizeProductMetadata } from "@/lib/productRichData";
 
 interface ProductDetailExperienceProps {
   product: RichProductItem;
@@ -84,7 +85,10 @@ export default function ProductDetailExperience({
 }: ProductDetailExperienceProps) {
   const metadata = useMemo(() => normalizeProductMetadata(product.metadata), [product.metadata]);
   const isService = metadata.itemKind === "service";
-  const variants = useMemo(() => normalizeProductVariants(product.variants), [product.variants]);
+  const variants = useMemo(
+    () => productVariantsForTemplate(product.variants, metadata.templateKey),
+    [product.variants, metadata.templateKey],
+  );
   const groups = useMemo(
     () => buildVariantOptionGroups(product.variants, metadata.templateKey),
     [product.variants, metadata.templateKey],
@@ -97,8 +101,8 @@ export default function ProductDetailExperience({
     variants[0] ? { ...variants[0].options } : {},
   );
   const selectedVariant = useMemo(
-    () => findMatchingVariant(product.variants, selectedOptions),
-    [product.variants, selectedOptions],
+    () => findMatchingVariant(product.variants, selectedOptions, metadata.templateKey),
+    [product.variants, selectedOptions, metadata.templateKey],
   );
   const gallery = useMemo(
     () => Array.from(new Set([...(selectedVariant?.imageUrls || []), ...images])).slice(0, 10),
@@ -107,7 +111,17 @@ export default function ProductDetailExperience({
   const [imageIndex, setImageIndex] = useState(0);
 
   const selectOption = (key: string, value: string) => {
-    if (!variantOptionIsAvailable(product.variants, selectedOptions, key, value)) return;
+    if (
+      !variantOptionIsAvailable(
+        product.variants,
+        selectedOptions,
+        key,
+        value,
+        metadata.templateKey,
+      )
+    ) {
+      return;
+    }
     const preferred = variants.find(
       (variant) =>
         variant.options[key] === value &&
@@ -237,6 +251,7 @@ export default function ProductDetailExperience({
                           selectedOptions,
                           group.key,
                           value,
+                          metadata.templateKey,
                         );
                         return (
                           <button
