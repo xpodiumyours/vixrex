@@ -37,6 +37,18 @@ interface SchemaDefinition {
 const schema = JSON.parse(
   readFileSync(resolve(__dirname, "../../shared/product_attribute_schema.json"), "utf-8"),
 ) as SchemaDefinition;
+const ownerManagerSource = readFileSync(
+  resolve(__dirname, "../src/components/owner/OwnerProductManager.tsx"),
+  "utf-8",
+);
+const ownerRichSource = readFileSync(
+  resolve(__dirname, "../src/components/owner/OwnerRichProductFields.tsx"),
+  "utf-8",
+);
+const productRouteSource = readFileSync(
+  resolve(__dirname, "../src/app/api/products/route.ts"),
+  "utf-8",
+);
 
 describe("zengin ürün şeması — sözleşme", () => {
   it("fiziksel ürün ve hizmet ayrımını taşır", () => {
@@ -119,5 +131,14 @@ describe("zengin ürün verisi — güvenli okuma", () => {
       priceAmount: 499,
       stockQuantity: 3,
     });
+  });
+
+  it("varyant fotoğrafını ayrı medya kaynağına dönüştürmez", () => {
+    expect(ownerManagerSource).toContain("imageUrls={imageUrls}");
+    expect(ownerRichSource).toContain("availableImages.has(url)");
+    expect(ownerRichSource).toContain("Varyant fotoğrafları");
+    expect(productRouteSource).toContain("productImageUrls: string[]");
+    expect(productRouteSource).toContain("availableImages.has(url)");
+    expect(productRouteSource).toContain("imageValidation.imageUrls");
   });
 });
