@@ -54,6 +54,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
+    - shared/product_attribute_schema.json
 
   # Tek yazı tipi: Outfit.
   #
