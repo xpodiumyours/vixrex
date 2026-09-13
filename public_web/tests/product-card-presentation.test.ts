@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildProductDetailFacts,
   buildProductQuickFacts,
   buildVariantOptionGroups,
   findMatchingVariant,
@@ -52,6 +53,29 @@ describe("ürün kartı veri sunumu", () => {
       { key: "priceMode", label: "Fiyat biçimi", value: "Başlangıç fiyatı" },
       { key: "durationMinutes", label: "Tahmini süre", value: "45 dk" },
       { key: "serviceLocation", label: "Hizmet yeri", value: "Müşteri adresinde" },
+    ]);
+  });
+
+  it("hizmet detayında eski ürün marka barkod SKU ve MPN alanlarını göstermez", () => {
+    const facts = buildProductDetailFacts({
+      brand: "Eski Marka",
+      barcode: "8690000000000",
+      metadata: {
+        itemKind: "service",
+        templateKey: "service",
+        identifiers: { sku: "OLD-SKU", mpn: "OLD-MPN" },
+        service: {
+          serviceType: "Kurulum",
+          priceMode: "fixed",
+          serviceLocation: "business",
+        },
+      },
+    });
+
+    expect(facts).toEqual([
+      { key: "serviceType", label: "Hizmet türü", value: "Kurulum" },
+      { key: "priceMode", label: "Fiyat biçimi", value: "Sabit fiyat" },
+      { key: "serviceLocation", label: "Hizmet yeri", value: "İşletmede" },
     ]);
   });
 
