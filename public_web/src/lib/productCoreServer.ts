@@ -139,12 +139,23 @@ export async function createCoreProduct(args: {
 
   const created = data?.created !== false;
   if (created && args.rich) {
-    await writeRichProductFields({
-      admin: args.admin,
-      storeId: args.storeId,
-      productId: id,
-      rich: args.rich,
-    });
+    try {
+      await writeRichProductFields({
+        admin: args.admin,
+        storeId: args.storeId,
+        productId: id,
+        rich: args.rich,
+      });
+    } catch (richError) {
+      const { error: rollbackError } = await args.admin.rpc("delete_store_product", {
+        p_product_id: id,
+        p_edit_token: args.editToken,
+      });
+      if (rollbackError) {
+        console.error("[product-core] rich create rollback failed:", rollbackError.message);
+      }
+      throw richError;
+    }
   }
   return { id, slug, created };
 }
