@@ -8,8 +8,13 @@ import {
   buildProductQuickFacts,
   buildVariantOptionGroups,
   findMatchingVariant,
+  variantOptionIsAvailable,
 } from "@/lib/productCardPresentation";
-import { normalizeProductVariants, productIsService } from "@/lib/productRichData";
+import {
+  normalizeProductMetadata,
+  normalizeProductVariants,
+  productIsService,
+} from "@/lib/productRichData";
 
 interface ProductQuickViewProps {
   product: RichProductItem;
@@ -68,11 +73,18 @@ export default function ProductQuickView({
   storeMapsUrl = null,
   onClose,
 }: ProductQuickViewProps) {
+  const metadata = useMemo(
+    () => normalizeProductMetadata(product.metadata),
+    [product.metadata],
+  );
   const isService = productIsService(product.metadata);
-  const variants = useMemo(() => normalizeProductVariants(product.variants), [product.variants]);
+  const variants = useMemo(
+    () => normalizeProductVariants(product.variants),
+    [product.variants],
+  );
   const variantGroups = useMemo(
-    () => buildVariantOptionGroups(product.variants, (product.metadata as { templateKey?: string } | null)?.templateKey),
-    [product.variants, product.metadata],
+    () => buildVariantOptionGroups(product.variants, metadata.templateKey),
+    [product.variants, metadata.templateKey],
   );
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const [imageIndex, setImageIndex] = useState(0);
@@ -106,7 +118,9 @@ export default function ProductQuickView({
         setImageIndex((current) => Math.max(0, current - 1));
       }
       if (event.key === "ArrowRight") {
-        setImageIndex((current) => Math.min(displayImages.length - 1, current + 1));
+        setImageIndex((current) =>
+          Math.min(Math.max(0, displayImages.length - 1), current + 1),
+        );
       }
     };
     window.addEventListener("keydown", onKeyDown);
@@ -117,6 +131,7 @@ export default function ProductQuickView({
   }, [displayImages.length, onClose]);
 
   const selectOption = (key: string, value: string) => {
+    if (!variantOptionIsAvailable(product.variants, selectedOptions, key, value)) return;
     const preferred = variants.find(
       (variant) =>
         variant.options[key] === value &&
@@ -135,8 +150,12 @@ export default function ProductQuickView({
     limit: 5,
   }).filter((fact) => fact.key !== "brand");
 
-  const selectedStockStatus = selectedVariant?.stockStatus || product.stockStatus || undefined;
-  const selectedStockQuantity = selectedVariant?.stockQuantity ?? product.stockQuantity ?? null;
+  const selectedStockQuantity =
+    selectedVariant?.stockQuantity ?? product.stockQuantity ?? null;
+  const selectedStockStatus =
+    selectedStockQuantity === 0
+      ? "Tükendi"
+      : selectedVariant?.stockStatus || product.stockStatus || undefined;
   const displayedPrice =
     selectedVariant?.priceAmount != null
       ? formatVariantPrice(selectedVariant.priceAmount, product.currency)
@@ -179,7 +198,7 @@ export default function ProductQuickView({
               />
             ) : (
               <div className="flex h-full items-center justify-center text-sm font-bold text-slate-500">
-                Ürün görseli yok
+                {isService ? "Hizmet görseli yok" : "Ürün görseli yok"}
               </div>
             )}
           </div>
@@ -198,7 +217,9 @@ export default function ProductQuickView({
               <button
                 type="button"
                 onClick={() =>
-                  setImageIndex((current) => Math.min(displayImages.length - 1, current + 1))
+                  setImageIndex((current) =>
+                    Math.min(displayImages.length - 1, current + 1),
+                  )
                 }
                 disabled={imageIndex === displayImages.length - 1}
                 className="absolute right-5 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-slate-950/80 text-xl font-bold text-white backdrop-blur disabled:opacity-30"
@@ -273,17 +294,27 @@ export default function ProductQuickView({
                   <div className="flex flex-wrap gap-2">
                     {group.values.map((value) => {
                       const selected = selectedOptions[group.key] === value;
+                      const available = variantOptionIsAvailable(
+                        product.variants,
+                        selectedOptions,
+                        group.key,
+                        value,
+                      );
                       return (
                         <button
                           key={value}
                           type="button"
                           onClick={() => selectOption(group.key, value)}
+                          disabled={!available}
                           className={`min-h-10 rounded-xl border px-3 text-xs font-extrabold transition ${
                             selected
                               ? "border-blue-400 bg-blue-500/20 text-white ring-2 ring-blue-400/15"
-                              : "border-white/10 bg-white/[0.03] text-slate-300 hover:border-blue-500/35"
+                              : available
+                                ? "border-white/10 bg-white/[0.03] text-slate-300 hover:border-blue-500/35"
+                                : "cursor-not-allowed border-white/5 bg-white/[0.02] text-slate-600 line-through"
                           }`}
                           aria-pressed={selected}
+                          aria-disabled={!available}
                         >
                           {value}
                         </button>
@@ -402,7 +433,7 @@ export default function ProductQuickView({
                   : "bg-gradient-to-r from-blue-600 to-cyan-500 text-white"
               }`}
             >
-              Tüm ürün detayları
+              {isService ? "Tüm hizmet detayları" : "Tüm ürün detayları"}
             </a>
           </div>
         </div>
