@@ -1,5 +1,6 @@
 import 'package:vixrex/config/vitrin_alanlari.g.dart';
 import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/services/product_image_policy.dart';
 import 'package:vixrex/services/store_publish_legal_validator.dart';
 import 'package:vixrex/services/store_publish_links_validator.dart';
 import 'package:vixrex/services/store_publish_payload_builder.dart';
@@ -71,9 +72,8 @@ class StorePublishValidator {
       if (product.category.trim().isEmpty) {
         return 'Eklenen tüm ürünlerin kategorisi zorunludur.';
       }
-      if (product.displayImageUrls.length > 4) {
-        return 'Bir ürüne en fazla 4 görsel eklenebilir.';
-      }
+      final imageError = ProductImagePolicy.validate(product.displayImageUrls);
+      if (imageError != null) return imageError;
     }
     return null;
   }
