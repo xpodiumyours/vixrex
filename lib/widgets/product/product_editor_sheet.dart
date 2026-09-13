@@ -2,7 +2,9 @@ import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:vixrex/models/product_rich_data.dart';
 import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/services/product_category_metadata_service.dart';
 import 'package:vixrex/services/product_image_policy.dart';
 import 'package:vixrex/services/store_publish_service.dart';
 import 'package:vixrex/services/store_shelf_upload_service.dart';
@@ -181,6 +183,7 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
       _showMessage('Ürün kategorisi zorunludur.');
       return;
     }
+    final selectedCategory = category.first;
 
     setState(() => _isSaving = true);
     final productId =
@@ -214,6 +217,10 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
           widget.product?.slug?.trim().isNotEmpty == true
               ? widget.product!.slug!
               : builder.generateSlug('$name-$productId');
+      final richMetadata = alignProductMetadataToCategory(
+        widget.product?.richMetadata ?? const ProductRichMetadata(),
+        selectedCategory,
+      );
       final result = Product(
         id: productId,
         name: name,
@@ -221,15 +228,21 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
         description: _descriptionController.text.trim(),
         imagePath: uploadedUrls.isEmpty ? null : uploadedUrls.first,
         imageUrls: uploadedUrls,
-        categoryId: category.first.id,
-        category: category.first.name,
+        categoryId: selectedCategory.id,
+        category: selectedCategory.name,
         stockStatus: _stockStatus,
-        isVisible: true,
+        isVisible: widget.product?.isVisible ?? true,
         slug: slug,
         source: widget.product?.source,
         sourceMediaId: widget.product?.sourceMediaId,
         sourcePermalink: widget.product?.sourcePermalink,
         importedAt: widget.product?.importedAt,
+        brand: widget.product?.brand,
+        barcode: widget.product?.barcode,
+        sku: widget.product?.sku,
+        stockQuantity: widget.product?.stockQuantity,
+        richMetadata: richMetadata,
+        variants: widget.product?.variants,
         oldPriceAmount: _parseAmount(_oldPriceController.text),
         badgeTag:
             _badgeTagController.text.trim().isEmpty
