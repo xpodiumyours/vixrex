@@ -234,7 +234,7 @@ async function _buildStoreDataBundle(
         supabase
           .from("products")
           .select(
-            "id,name,slug,description,price_text,price_amount,old_price_amount,badge_tag,fulfillment_region,currency,stock_status,image_urls,category_id,is_visible,is_active,source_type,sort_order"
+            "id,name,slug,description,price_text,price_amount,old_price_amount,badge_tag,fulfillment_region,currency,stock_status,stock_quantity,brand,barcode,metadata,variants,image_urls,category_id,is_visible,is_active,source_type,sort_order"
           )
           .eq("store_id", storeId)
           .eq("is_active", true)
@@ -263,6 +263,8 @@ async function _buildStoreDataBundle(
           (p.price_amount != null
             ? `${p.price_amount} ${p.currency}`
             : undefined),
+        priceAmount: (p.price_amount as number | null) ?? null,
+        currency: (p.currency as string) || "TRY",
         oldPriceAmount: (p.old_price_amount as number | null) ?? null,
         badgeTag: (p.badge_tag as string | null) ?? null,
         fulfillmentRegion: (p.fulfillment_region as string | null) ?? null,
@@ -272,6 +274,11 @@ async function _buildStoreDataBundle(
           (p.category_id ? categoryMap.get(p.category_id as string) : undefined) ||
           undefined,
         stockStatus: (p.stock_status as string) || undefined,
+        stockQuantity: (p.stock_quantity as number | null) ?? null,
+        brand: (p.brand as string | null) ?? null,
+        barcode: (p.barcode as string | null) ?? null,
+        metadata: p.metadata,
+        variants: p.variants,
         isVisible: p.is_visible as boolean,
         source: p.source_type as string,
       }))
