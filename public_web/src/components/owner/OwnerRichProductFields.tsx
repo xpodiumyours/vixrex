@@ -153,14 +153,18 @@ function alignVariantsToDefinitions(
   variants: ProductVariant[],
   variantDefinitions: ProductAttributeDefinition[],
   isService: boolean,
-  imageUrls: string[],
+  imageUrls: string[] | null,
 ): ProductVariant[] {
   if (isService) return [];
-  const availableImages = new Set(imageUrls);
-  const withValidImages = variants.map((variant) => ({
-    ...variant,
-    imageUrls: variant.imageUrls?.filter((url) => availableImages.has(url)),
-  }));
+  const withValidImages = imageUrls == null
+    ? variants
+    : variants.map((variant) => {
+        const availableImages = new Set(imageUrls);
+        return {
+          ...variant,
+          imageUrls: variant.imageUrls?.filter((url) => availableImages.has(url)),
+        };
+      });
   if (variantDefinitions.length === 0) return withValidImages;
   const allowed = new Set(variantDefinitions.map((definition) => definition.key));
   return withValidImages
@@ -179,7 +183,7 @@ export function OwnerRichProductFields({
   templateKey,
   value,
   onChange,
-  imageUrls = [],
+  imageUrls,
   disabled = false,
 }: Props) {
   const template = productTemplateByKey(templateKey) || productTemplateByKey("generic");
@@ -190,7 +194,9 @@ export function OwnerRichProductFields({
     [definitions],
   );
   const cleanImageUrls = useMemo(
-    () => Array.from(new Set(imageUrls.map((url) => url.trim()).filter(Boolean))),
+    () => imageUrls == null
+      ? null
+      : Array.from(new Set(imageUrls.map((url) => url.trim()).filter(Boolean))),
     [imageUrls],
   );
 
@@ -482,7 +488,7 @@ export function OwnerRichProductFields({
                     </label>
                   </div>
 
-                  {cleanImageUrls.length > 0 ? (
+                  {cleanImageUrls && cleanImageUrls.length > 0 ? (
                     <div className="mt-3">
                       <p className="owner-label">Varyant fotoğrafları</p>
                       <p className="mt-1 text-[10px] text-[var(--owner-muted)]">
