@@ -60,7 +60,7 @@ function productImagesOnly(product: CatalogProduct): string[] {
       primary,
       ...getProductImages(product).filter((url) => !isLikelyUiScreenshotUrl(url)),
     ]),
-  ).slice(0, 4);
+  ).slice(0, 10);
 }
 
 function productLocationMapUrl(location: string): string | null {
