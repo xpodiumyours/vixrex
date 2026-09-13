@@ -55,15 +55,16 @@ function rich(body: Record<string, unknown>) {
     "variants",
   ].some((key) => hasOwn(body, key));
   if (!hasRichPayload) return undefined;
+  if (!hasOwn(body, "metadata")) {
+    throw new ApiError("Zengin ürün bilgileri için ürün tipi zorunludur.", 422);
+  }
 
   const rawMetadata = body.metadata;
-  if (rawMetadata != null && (typeof rawMetadata !== "object" || Array.isArray(rawMetadata))) {
+  if (rawMetadata == null || typeof rawMetadata !== "object" || Array.isArray(rawMetadata)) {
     throw new ApiError("Ürün detayları geçersiz.", 422);
   }
-  const profileKey = rawMetadata && typeof rawMetadata === "object"
-    ? (rawMetadata as Record<string, unknown>).profileKey
-    : undefined;
-  if (profileKey != null && !isProductProfileKey(profileKey)) {
+  const profileKey = (rawMetadata as Record<string, unknown>).profileKey;
+  if (!isProductProfileKey(profileKey)) {
     throw new ApiError("Ürün tipi geçersiz.", 422);
   }
   if (body.variants != null && !Array.isArray(body.variants)) {
@@ -71,9 +72,12 @@ function rich(body: Record<string, unknown>) {
   }
 
   const metadata = normalizeProductMetadata(rawMetadata);
-  const variants = normalizeProductVariants(body.variants);
+  if (!metadata.profileKey) {
+    throw new ApiError("Ürün tipi geçersiz.", 422);
+  }
+  const variants = normalizeProductVariants(body.variants, metadata.profileKey);
   if (Array.isArray(body.variants) && variants.length !== body.variants.length) {
-    throw new ApiError("Ürün seçeneklerinden biri eksik veya geçersiz.", 422);
+    throw new ApiError("Ürün seçeneklerinden biri seçilen ürün tipiyle uyumsuz.", 422);
   }
   if (JSON.stringify(metadata).length > 20000 || JSON.stringify(variants).length > 50000) {
     throw new ApiError("Ürün detayları izin verilen boyutu aşıyor.", 422);
