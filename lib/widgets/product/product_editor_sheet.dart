@@ -90,6 +90,12 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
     final category = _selectedCategory;
     if (category != null) {
       _richMetadata = alignProductMetadataToCategory(_richMetadata, category);
+      if (category.productTemplateKey == 'service') {
+        _brand = null;
+        _barcode = null;
+        _stockQuantity = null;
+        _variants = const [];
+      }
     }
   }
 
@@ -158,6 +164,8 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
       if (category != null) {
         _richMetadata = alignProductMetadataToCategory(_richMetadata, category!);
         if (category!.productTemplateKey == 'service') {
+          _brand = null;
+          _barcode = null;
           _stockQuantity = null;
           _variants = const [];
         }
@@ -289,7 +297,7 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
         sourceMediaId: widget.product?.sourceMediaId,
         sourcePermalink: widget.product?.sourcePermalink,
         importedAt: widget.product?.importedAt,
-        brand: _brand,
+        brand: isService ? null : _brand,
         barcode: isService ? null : _barcode,
         sku: richMetadata.sku,
         stockQuantity: isService ? null : _stockQuantity,
