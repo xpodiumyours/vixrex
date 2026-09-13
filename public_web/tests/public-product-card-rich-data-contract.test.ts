@@ -61,6 +61,7 @@ describe("public ürün kartı zengin veri hattı", () => {
     expect(catalogSource).toContain('const isService = metadata.itemKind === "service"');
     expect(catalogSource).toContain('brand = isService ? ""');
     expect(catalogSource).toContain('stockStatus = isService ? ""');
+    expect(catalogSource).toContain('emptyLabel={isService ? "Hizmet görseli yok" : "Ürün görseli yok"}');
     expect(catalogSource).toContain("Hizmet");
   });
 
