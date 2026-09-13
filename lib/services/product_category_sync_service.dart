@@ -1,6 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:vixrex/models/product_rich_data.dart';
 import 'package:vixrex/models/store_product.dart';
+import 'package:vixrex/services/product_category_metadata_service.dart';
 
 class ProductCategoryDeletion {
   const ProductCategoryDeletion({
@@ -39,7 +39,11 @@ class ProductCategorySyncService {
           .eq('is_active', true)
           .order('sort_order');
       return (response as List)
-          .map((row) => ProductCategory.fromJson(Map<String, dynamic>.from(row as Map)))
+          .map(
+            (row) => ProductCategory.fromJson(
+              Map<String, dynamic>.from(row as Map),
+            ),
+          )
           .toList();
     } catch (_) {
       final response = await _supabase
@@ -49,7 +53,11 @@ class ProductCategorySyncService {
           .eq('is_active', true)
           .order('sort_order');
       return (response as List)
-          .map((row) => ProductCategory.fromJson(Map<String, dynamic>.from(row as Map)))
+          .map(
+            (row) => ProductCategory.fromJson(
+              Map<String, dynamic>.from(row as Map),
+            ),
+          )
           .toList();
     }
   }
@@ -73,9 +81,10 @@ class ProductCategorySyncService {
 
     for (var index = 0; index < categories.length; index++) {
       final category = categories[index];
-      final templateKey = category.productTemplateKey.trim().isEmpty
-          ? 'generic'
-          : category.productTemplateKey.trim();
+      final templateKey =
+          category.productTemplateKey.trim().isEmpty
+              ? 'generic'
+              : category.productTemplateKey.trim();
       final oldId = category.id;
       String remoteId = oldId;
 
@@ -126,30 +135,24 @@ class ProductCategorySyncService {
       final next = product.copyWith();
       final mapped = idMap[product.categoryId];
       if (mapped != null) next.categoryId = mapped;
-      final matches = syncedCategories.where((item) => item.id == next.categoryId);
+      final matches = syncedCategories.where(
+        (item) => item.id == next.categoryId,
+      );
       if (matches.isNotEmpty) {
         final category = matches.first;
         next.category = category.name;
-        final current = next.richMetadata;
-        final currentTemplate = current.templateKey?.trim() ?? '';
-        if (currentTemplate.isEmpty || currentTemplate == 'generic') {
-          next.richMetadata = ProductRichMetadata(
-            schemaVersion: current.schemaVersion,
-            itemKind: category.productTemplateKey == 'service' ? 'service' : 'physical',
-            templateKey: category.productTemplateKey,
-            sku: current.sku,
-            mpn: current.mpn,
-            attributes: current.attributes,
-            service: current.service,
-          );
-        }
+        next.richMetadata = alignProductMetadataToCategory(
+          next.richMetadata,
+          category,
+        );
       }
       return next;
     }).toList();
 
     for (final deletion in deletions) {
       if (!_isUuid(deletion.categoryId)) continue;
-      final replacementId = idMap[deletion.replacementCategoryId] ?? deletion.replacementCategoryId;
+      final replacementId =
+          idMap[deletion.replacementCategoryId] ?? deletion.replacementCategoryId;
       if (!_isUuid(replacementId)) continue;
       final result = await _supabase.rpc(
         'delete_store_category_v2',
