@@ -2,8 +2,16 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
-const source = readFileSync(
+const routeSource = readFileSync(
   resolve(__dirname, "../src/app/v/[slug]/urun/[productSlug]/page.tsx"),
+  "utf8",
+);
+const source = readFileSync(
+  resolve(__dirname, "../src/app/v/[slug]/urun/[productSlug]/PublicProductDetailPage.tsx"),
+  "utf8",
+);
+const ownerSource = readFileSync(
+  resolve(__dirname, "../src/app/v/[slug]/urun/[productSlug]/OwnerProductDetailPreview.tsx"),
   "utf8",
 );
 const experienceSource = readFileSync(
@@ -76,6 +84,16 @@ describe("ürün detay — zengin veri okuma sözleşmesi", () => {
     expect(experienceSource).toContain("trackDirectionsClick");
     expect(experienceSource).toContain('clickLocation: "product_detail"');
     expect(experienceSource).toContain("productSlug: props.productSlug");
+  });
+
+  it("yayınlanmamış sahip ürün detayını public RLS'yi gevşetmeden açar", () => {
+    expect(routeSource).toContain("OwnerProductDetailPreview");
+    expect(routeSource).toContain("PublicProductDetailPage");
+    expect(ownerSource).toContain("verifyOwnerSession");
+    expect(ownerSource).toContain('supabase.rpc("get_working_draft_for_session"');
+    expect(ownerSource).toContain('supabase.rpc("get_owner_catalog_for_session"');
+    expect(ownerSource).toContain('data-vixrex-owner-preview="true"');
+    expect(ownerSource).not.toContain("getSupabaseAdmin");
   });
 
   it("hizmeti Product olarak işaretlemez ve fiziksel ürün alanlarını istemciye taşımaz", () => {
