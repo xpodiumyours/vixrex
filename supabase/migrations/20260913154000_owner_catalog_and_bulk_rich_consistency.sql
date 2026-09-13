@@ -101,6 +101,7 @@ as $$
 declare
   v_product jsonb;
   v_result jsonb;
+  v_category_result jsonb;
   v_success_count integer := 0;
   v_error_count integer := 0;
   v_errors jsonb := '[]'::jsonb;
@@ -111,6 +112,7 @@ declare
   v_price_amount numeric;
   v_image_urls jsonb;
   v_category_id uuid;
+  v_category_name text;
   v_template_key text;
   v_item_kind text;
   v_metadata jsonb;
@@ -118,6 +120,11 @@ declare
   v_external_product_id text;
   v_is_visible boolean;
   v_sort_order integer;
+  v_brand text;
+  v_barcode text;
+  v_sku text;
+  v_stock_quantity integer;
+  v_stock_status text;
 begin
   if not public._check_store_authorization(p_store_id, p_edit_token) then
     raise exception 'UNAUTHORIZED';
@@ -138,15 +145,25 @@ begin
       v_price_amount := null;
       v_image_urls := coalesce(v_product->'image_urls', '[]'::jsonb);
       v_category_id := null;
+      v_category_name := pg_catalog.btrim(coalesce(v_product->>'category_name', ''));
       v_template_key := 'generic';
       v_item_kind := 'physical';
       v_source_type := coalesce(nullif(pg_catalog.btrim(v_product->>'source_type'), ''), 'bulk_import');
       v_external_product_id := nullif(pg_catalog.btrim(coalesce(v_product->>'external_product_id', '')), '');
       v_is_visible := coalesce((v_product->>'isVisible')::boolean, true);
       v_sort_order := coalesce((v_product->>'sort_order')::integer, 0);
+      v_brand := nullif(pg_catalog.btrim(coalesce(v_product->>'brand', '')), '');
+      v_barcode := nullif(pg_catalog.btrim(coalesce(v_product->>'barcode', '')), '');
+      v_sku := nullif(pg_catalog.btrim(coalesce(v_product->>'sku', '')), '');
+      v_stock_quantity := null;
+      v_stock_status := nullif(pg_catalog.btrim(coalesce(v_product->>'stock_status', '')), '');
 
       if v_name = '' then
         raise exception 'EMPTY_NAME';
+      end if;
+
+      if pg_catalog.jsonb_typeof(v_image_urls) <> 'array' then
+        raise exception 'PRODUCT_IMAGES_INVALID';
       end if;
 
       if pg_catalog.btrim(v_price_text) <> '' then
@@ -161,15 +178,48 @@ begin
         )::numeric;
       end if;
 
+      if nullif(pg_catalog.btrim(coalesce(v_product->>'stock_quantity', '')), '') is not null then
+        v_stock_quantity := (v_product->>'stock_quantity')::integer;
+        if v_stock_quantity < 0 then
+          raise exception 'PRODUCT_STOCK_INVALID';
+        end if;
+      end if;
+
       if nullif(pg_catalog.btrim(coalesce(v_product->>'category_id', '')), '') is not null then
         select pc.id, pc.product_template_key
           into v_category_id, v_template_key
         from public.product_categories as pc
         where pc.id = (v_product->>'category_id')::uuid
-          and pc.store_id = p_store_id;
+          and pc.store_id = p_store_id
+          and pc.is_active = true;
 
         if v_category_id is null then
           raise exception 'CATEGORY_NOT_IN_SAME_STORE';
+        end if;
+      elsif v_category_name <> '' then
+        select pc.id, pc.product_template_key
+          into v_category_id, v_template_key
+        from public.product_categories as pc
+        where pc.store_id = p_store_id
+          and pc.is_active = true
+          and pg_catalog.lower(pc.name) = pg_catalog.lower(v_category_name)
+        order by pc.sort_order, pc.id
+        limit 1;
+
+        if v_category_id is null then
+          v_category_result := public.upsert_store_category_v2(
+            p_store_id => p_store_id,
+            p_edit_token => p_edit_token,
+            p_name => v_category_name,
+            p_template_key => 'generic',
+            p_slug => null,
+            p_sort_order => 0
+          );
+          v_category_id := (v_category_result->>'id')::uuid;
+          v_template_key := coalesce(
+            nullif(pg_catalog.btrim(v_category_result->>'product_template_key'), ''),
+            'generic'
+          );
         end if;
       end if;
 
@@ -181,6 +231,11 @@ begin
         'templateKey', v_template_key,
         'attributes', '[]'::jsonb
       );
+      if v_item_kind = 'physical' and v_sku is not null then
+        v_metadata := v_metadata || pg_catalog.jsonb_build_object(
+          'identifiers', pg_catalog.jsonb_build_object('sku', v_sku)
+        );
+      end if;
 
       v_result := public.create_store_product_v3(
         p_store_id => p_store_id,
@@ -195,8 +250,10 @@ begin
         p_external_product_id => v_external_product_id,
         p_is_visible => v_is_visible,
         p_sort_order => v_sort_order,
-        p_stock_quantity => null,
-        p_stock_status => null,
+        p_brand => case when v_item_kind = 'service' then null else v_brand end,
+        p_barcode => case when v_item_kind = 'service' then null else v_barcode end,
+        p_stock_quantity => case when v_item_kind = 'service' then null else v_stock_quantity end,
+        p_stock_status => case when v_item_kind = 'service' then null else v_stock_status end,
         p_metadata => v_metadata,
         p_variants => '[]'::jsonb
       );
