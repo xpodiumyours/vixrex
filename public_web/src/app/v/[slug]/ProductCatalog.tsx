@@ -10,12 +10,15 @@ import {
   isLikelyUiScreenshotUrl,
   isPublicCatalogProduct,
   resolveCatalogImage,
-  type ProductItem,
 } from "@/lib/products";
+import type { RichProductItem } from "@/lib/richProductItem";
+import {
+  buildProductQuickFacts,
+  productVariantLabel,
+} from "@/lib/productCardPresentation";
+import { productIsService } from "@/lib/productRichData";
 
-interface CatalogProduct extends ProductItem {
-  categoryId?: string;
-}
+type CatalogProduct = RichProductItem;
 
 interface CategoryItem {
   id: string;
@@ -185,7 +188,8 @@ export default function ProductCatalog({
         const matchName = product.name.toLowerCase().includes(q);
         const matchDesc = product.description?.toLowerCase().includes(q) || false;
         const matchCat = product.category?.toLowerCase().includes(q) || false;
-        if (!matchName && !matchDesc && !matchCat) return false;
+        const matchBrand = product.brand?.toLowerCase().includes(q) || false;
+        if (!matchName && !matchDesc && !matchCat && !matchBrand) return false;
       }
       return true;
     });
@@ -225,6 +229,15 @@ export default function ProductCatalog({
     ? productWhatsappUrl(whatsappBaseUrl, storeName, quickView.product.name)
     : null;
   const quickImage = quickView?.images[quickImageIndex] || null;
+  const quickFacts = quickView
+    ? buildProductQuickFacts({
+        brand: quickView.product.brand,
+        metadata: quickView.product.metadata,
+        limit: 4,
+      })
+    : [];
+  const quickVariantLabel = quickView ? productVariantLabel(quickView.product.variants) : null;
+  const quickIsService = quickView ? productIsService(quickView.product.metadata) : false;
 
   return (
     <section>
@@ -266,8 +279,10 @@ export default function ProductCatalog({
           const image = productImageOnly(product);
           const quickImages = productImagesOnly(product);
           const category = String(product.category || "").trim();
+          const brand = String(product.brand || "").trim();
           const stockStatus = String(product.stockStatus || "").trim();
           const tone = stockTone(stockStatus);
+          const variantLabel = productVariantLabel(product.variants);
           const fulfillmentRegion = String(product.fulfillmentRegion || "").trim();
           const fulfillmentMapUrl = productLocationMapUrl(fulfillmentRegion);
           const productKey = product.id || productUrl;
@@ -305,6 +320,11 @@ export default function ProductCatalog({
                 </div>
 
                 <div className="px-3.5 py-3.5">
+                  {brand ? (
+                    <p className="mb-1 truncate text-[9px] font-extrabold uppercase tracking-[0.12em] text-slate-500 sm:text-[10px]">
+                      {brand}
+                    </p>
+                  ) : null}
                   <h3 className="line-clamp-2 min-h-[2.5em] text-xs font-extrabold leading-snug text-white sm:text-sm">
                     {product.name}
                   </h3>
@@ -318,10 +338,19 @@ export default function ProductCatalog({
                       </span>
                     ) : null}
                   </div>
-                  {stockStatus ? (
-                    <div className={`mt-2 flex items-center gap-2 text-[10px] font-bold sm:text-[11px] ${tone.text}`}>
-                      <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${tone.dot}`} />
-                      <span className="truncate">{stockStatus}</span>
+                  {(stockStatus || variantLabel) ? (
+                    <div className="mt-2 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                      {stockStatus ? (
+                        <span className={`inline-flex min-w-0 items-center gap-2 text-[10px] font-bold sm:text-[11px] ${tone.text}`}>
+                          <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${tone.dot}`} />
+                          <span className="truncate">{stockStatus}</span>
+                        </span>
+                      ) : null}
+                      {variantLabel ? (
+                        <span className="rounded-md border border-white/10 bg-white/[0.04] px-1.5 py-0.5 text-[9px] font-bold text-slate-400 sm:text-[10px]">
+                          {variantLabel}
+                        </span>
+                      ) : null}
                     </div>
                   ) : null}
                 </div>
@@ -466,13 +495,13 @@ export default function ProductCatalog({
                   >
                     ›
                   </button>
-                  <div className="absolute bottom-3 left-3 right-3 z-20 flex justify-center gap-2">
+                  <div className="absolute bottom-3 left-3 right-3 z-20 flex justify-center gap-2 overflow-x-auto pb-1">
                     {quickView.images.map((imageUrl, imageIndex) => (
                       <button
                         key={`${imageUrl}-${imageIndex}`}
                         type="button"
                         onClick={() => setQuickImageIndex(imageIndex)}
-                        className={`relative h-12 w-12 overflow-hidden rounded-lg border bg-slate-950/80 transition ${
+                        className={`relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border bg-slate-950/80 transition ${
                           imageIndex === quickImageIndex
                             ? "border-blue-400 ring-2 ring-blue-400/20"
                             : "border-white/15 opacity-75 hover:opacity-100"
@@ -527,15 +556,44 @@ export default function ProductCatalog({
                 ) : null}
               </div>
 
-              {quickView.product.stockStatus ? (() => {
-                const quickTone = stockTone(quickView.product.stockStatus);
-                return (
-                  <div className={`mt-3 flex items-center gap-2 text-xs font-bold ${quickTone.text}`}>
-                    <span className={`h-1.5 w-1.5 rounded-full ${quickTone.dot}`} />
-                    {quickView.product.stockStatus}
-                  </div>
-                );
-              })() : null}
+              {(quickView.product.stockStatus || quickView.product.stockQuantity != null || quickVariantLabel) ? (
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  {quickView.product.stockStatus ? (() => {
+                    const quickTone = stockTone(quickView.product.stockStatus);
+                    return (
+                      <span className={`inline-flex items-center gap-2 text-xs font-bold ${quickTone.text}`}>
+                        <span className={`h-1.5 w-1.5 rounded-full ${quickTone.dot}`} />
+                        {quickView.product.stockStatus}
+                      </span>
+                    );
+                  })() : null}
+                  {quickView.product.stockQuantity != null ? (
+                    <span className="rounded-md border border-white/10 bg-white/[0.04] px-2 py-1 text-[11px] font-bold text-slate-400">
+                      {quickView.product.stockQuantity} adet
+                    </span>
+                  ) : null}
+                  {quickVariantLabel ? (
+                    <span className="rounded-md border border-blue-500/20 bg-blue-500/10 px-2 py-1 text-[11px] font-bold text-blue-300">
+                      {quickVariantLabel}
+                    </span>
+                  ) : null}
+                </div>
+              ) : null}
+
+              {quickFacts.length > 0 ? (
+                <div className="mt-5 grid grid-cols-2 gap-2">
+                  {quickFacts.map((fact) => (
+                    <div key={fact.key} className="rounded-xl border border-white/8 bg-white/[0.03] p-3">
+                      <p className="text-[9px] font-extrabold uppercase tracking-wider text-slate-500">
+                        {fact.label}
+                      </p>
+                      <p className="mt-1 break-words text-xs font-bold leading-5 text-slate-200">
+                        {fact.value}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
 
               <div className="mt-5 rounded-xl border border-white/10 bg-white/[0.03] p-3">
                 <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">İşletme</p>
@@ -608,7 +666,9 @@ export default function ProductCatalog({
                     rel="noopener noreferrer"
                     className="flex min-h-12 items-center justify-center rounded-xl bg-emerald-600 px-5 text-sm font-extrabold text-white shadow-lg shadow-emerald-900/20 transition hover:bg-emerald-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500"
                   >
-                    WhatsApp'tan ürün hakkında bilgi al
+                    {quickIsService
+                      ? "WhatsApp'tan hizmet hakkında bilgi al"
+                      : "WhatsApp'tan ürün hakkında bilgi al"}
                   </a>
                 ) : null}
                 <a
