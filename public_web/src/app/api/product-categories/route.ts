@@ -12,6 +12,65 @@ function templateKeyFrom(value: unknown) {
   return PRODUCT_TEMPLATE_BY_KEY.has(key) ? key : null;
 }
 
+async function ownerStore(slug: string) {
+  const cookieStore = await cookies();
+  const ownerSession = verifyOwnerSession(cookieStore.get(OWNER_SESSION_COOKIE)?.value, slug);
+  if (!ownerSession) return null;
+  const admin = getSupabaseAdmin();
+  const { data: store } = await admin
+    .from("stores")
+    .select("id, edit_token")
+    .eq("id", ownerSession.storeId)
+    .single();
+  if (!store?.id) return null;
+  return { admin, store };
+}
+
+export async function GET(request: NextRequest) {
+  const slug = request.nextUrl.searchParams.get("slug")?.trim() || "";
+  if (!slug) return NextResponse.json({ hata: "Vitrin zorunludur." }, { status: 422 });
+
+  const owned = await ownerStore(slug);
+  if (!owned) return NextResponse.json({ hata: "Oturumun geçersiz." }, { status: 401 });
+  const { admin, store } = owned;
+
+  const rich = await admin
+    .from("product_categories")
+    .select("id,name,sort_order,product_template_key")
+    .eq("store_id", store.id)
+    .eq("is_active", true)
+    .order("sort_order");
+
+  if (!rich.error) {
+    return NextResponse.json({
+      tamam: true,
+      categories: (rich.data || []).map((item) => ({
+        ...item,
+        product_template_key: templateKeyFrom(item.product_template_key) || "generic",
+      })),
+    });
+  }
+
+  // Migration henüz uygulanmamış preview ortamlarında mevcut kategori ekranı
+  // çalışmaya devam eder; isimden ürün tipi tahmini yapılmaz, generic döner.
+  const legacy = await admin
+    .from("product_categories")
+    .select("id,name,sort_order")
+    .eq("store_id", store.id)
+    .eq("is_active", true)
+    .order("sort_order");
+  if (legacy.error) {
+    return NextResponse.json({ hata: "Kategoriler yüklenemedi." }, { status: 500 });
+  }
+  return NextResponse.json({
+    tamam: true,
+    categories: (legacy.data || []).map((item) => ({
+      ...item,
+      product_template_key: "generic",
+    })),
+  });
+}
+
 export async function POST(request: NextRequest) {
   let govde: Record<string, unknown>;
   try { govde = await request.json(); } catch { return NextResponse.json({ hata: "Geçersiz istek." }, { status: 400 }); }
@@ -22,13 +81,9 @@ export async function POST(request: NextRequest) {
   if (!templateKey) return NextResponse.json({ hata: "Ürün tipi geçersiz." }, { status: 422 });
   if (name.length > 40) return NextResponse.json({ hata: "Kategori adı en fazla 40 karakter." }, { status: 422 });
 
-  const cookieStore = await cookies();
-  const ownerSession = verifyOwnerSession(cookieStore.get(OWNER_SESSION_COOKIE)?.value, slug);
-  if (!ownerSession) return NextResponse.json({ hata: "Oturumun geçersiz." }, { status: 401 });
-
-  const admin = getSupabaseAdmin();
-  const { data: store } = await admin.from("stores").select("id, edit_token").eq("id", ownerSession.storeId).single();
-  if (!store?.edit_token) return NextResponse.json({ hata: "Vitrin bulunamadı." }, { status: 404 });
+  const owned = await ownerStore(slug);
+  if (!owned?.store.edit_token) return NextResponse.json({ hata: "Oturumun geçersiz." }, { status: 401 });
+  const { admin, store } = owned;
 
   const { data: existing } = await admin.from("product_categories").select("id").eq("store_id", store.id).ilike("name", name).maybeSingle();
   if (existing) return NextResponse.json({ hata: "Bu kategori zaten mevcut." }, { status: 409 });
@@ -51,13 +106,9 @@ export async function PATCH(request: NextRequest) {
   const slug = typeof govde.slug === "string" ? govde.slug.trim() : "";
   if (!slug) return NextResponse.json({ hata: "Vitrin zorunludur." }, { status: 422 });
 
-  const cookieStore = await cookies();
-  const ownerSession = verifyOwnerSession(cookieStore.get(OWNER_SESSION_COOKIE)?.value, slug);
-  if (!ownerSession) return NextResponse.json({ hata: "Oturumun geçersiz." }, { status: 401 });
-
-  const admin = getSupabaseAdmin();
-  const { data: store } = await admin.from("stores").select("id, edit_token").eq("id", ownerSession.storeId).single();
-  if (!store?.id || !store.edit_token) return NextResponse.json({ hata: "Vitrin bulunamadı." }, { status: 404 });
+  const owned = await ownerStore(slug);
+  if (!owned?.store.edit_token) return NextResponse.json({ hata: "Oturumun geçersiz." }, { status: 401 });
+  const { admin, store } = owned;
 
   if (Array.isArray(govde.categoryIds)) {
     const ids = (govde.categoryIds as unknown[]).filter((v) => typeof v === "string" && (v as string).trim()).map((v) => (v as string).trim());
@@ -107,13 +158,9 @@ export async function DELETE(request: NextRequest) {
   const replacementId = typeof govde.replacementId === "string" ? govde.replacementId.trim() : "";
   if (!slug || !categoryId) return NextResponse.json({ hata: "Vitrin ve kategori zorunludur." }, { status: 422 });
 
-  const cookieStore = await cookies();
-  const ownerSession = verifyOwnerSession(cookieStore.get(OWNER_SESSION_COOKIE)?.value, slug);
-  if (!ownerSession) return NextResponse.json({ hata: "Oturumun geçersiz." }, { status: 401 });
-
-  const admin = getSupabaseAdmin();
-  const { data: store } = await admin.from("stores").select("id").eq("id", ownerSession.storeId).single();
-  if (!store?.id) return NextResponse.json({ hata: "Vitrin bulunamadı." }, { status: 404 });
+  const owned = await ownerStore(slug);
+  if (!owned) return NextResponse.json({ hata: "Oturumun geçersiz." }, { status: 401 });
+  const { admin, store } = owned;
 
   const { data: all } = await admin.from("product_categories").select("id").eq("store_id", store.id);
   if (!all || all.length <= 1) return NextResponse.json({ hata: "En az bir kategori kalmalı." }, { status: 422 });
