@@ -13,7 +13,10 @@ import {
   type ProductMetadata,
   type ProductVariant,
 } from "@/lib/productRichData";
-import { productTemplateByKey } from "@/lib/productAttributeSchema";
+import {
+  productAttributesForTemplate,
+  productTemplateByKey,
+} from "@/lib/productAttributeSchema";
 
 export const dynamic = "force-dynamic";
 
@@ -80,12 +83,51 @@ function metadataForTemplate(value: unknown, templateKey: string): ProductMetada
   if (!template) return null;
   const normalized = normalizeProductMetadata(value);
   if (normalized.templateKey && normalized.templateKey !== templateKey) return null;
+
+  if (template.itemKind === "service") {
+    return {
+      schemaVersion: normalized.schemaVersion ?? 1,
+      itemKind: "service",
+      templateKey,
+      service: normalized.service,
+      attributes: [],
+    };
+  }
+
   return {
     ...normalized,
     schemaVersion: normalized.schemaVersion ?? 1,
-    itemKind: template.itemKind,
+    itemKind: "physical",
     templateKey,
+    service: undefined,
   };
+}
+
+function variantsForTemplate(value: unknown, templateKey: string): ProductVariant[] {
+  const template = productTemplateByKey(templateKey);
+  if (!template || template.itemKind === "service") return [];
+
+  const variants = normalizeProductVariants(value);
+  const allowedKeys = new Set(
+    productAttributesForTemplate(templateKey)
+      .filter((definition) => definition.variantEligible)
+      .map((definition) => definition.key),
+  );
+
+  // Generic/bilinmeyen fiziksel şemada varyant anlamı tahmin edilmez;
+  // mevcut/import edilmiş veri sessizce silinmez.
+  if (allowedKeys.size === 0) return variants;
+
+  return variants
+    .map((variant) => ({
+      ...variant,
+      options: Object.fromEntries(
+        Object.entries(variant.options).filter(
+          ([key, optionValue]) => allowedKeys.has(key) && optionValue.trim().length > 0,
+        ),
+      ),
+    }))
+    .filter((variant) => Object.keys(variant.options).length > 0);
 }
 
 export async function GET(request: NextRequest) {
@@ -126,12 +168,15 @@ export async function POST(request: NextRequest) {
   const categoryId = cleanString(govde.categoryId) || "";
   const templateKey = await categoryTemplateKey(owned.admin, owned.store.id, categoryId);
   if (!templateKey) return NextResponse.json({ hata: "Kategori bu vitrine ait değil veya ürün tipi geçersiz." }, { status: 422 });
+  const template = productTemplateByKey(templateKey);
+  if (!template) return NextResponse.json({ hata: "Ürün tipi geçersiz." }, { status: 422 });
+  const isService = template.itemKind === "service";
   const metadata = metadataForTemplate(govde.metadata, templateKey);
   if (!metadata) return NextResponse.json({ hata: "Ürün detayları kategori tipiyle uyuşmuyor." }, { status: 422 });
-  const variants = normalizeProductVariants(govde.variants);
+  const variants = variantsForTemplate(govde.variants, templateKey);
 
   const priceText = typeof govde.priceText === "string" ? govde.priceText.trim() : "";
-  const stockQuantity = cleanNonNegativeInt(govde.stockQuantity);
+  const stockQuantity = isService ? null : cleanNonNegativeInt(govde.stockQuantity);
   try {
     const result = await createRichCoreProduct({
       admin: owned.admin,
@@ -148,10 +193,10 @@ export async function POST(request: NextRequest) {
       oldPriceAmount: cleanAmount(govde.oldPriceAmount),
       badgeTag: cleanString(govde.badgeTag),
       fulfillmentRegion: cleanString(govde.fulfillmentRegion),
-      brand: cleanString(govde.brand),
-      barcode: cleanString(govde.barcode),
+      brand: isService ? null : cleanString(govde.brand),
+      barcode: isService ? null : cleanString(govde.barcode),
       stockQuantity,
-      stockStatus: cleanString(govde.stockStatus) || "Mevcut",
+      stockStatus: isService ? null : cleanString(govde.stockStatus) || "Mevcut",
       metadata,
       variants,
     });
@@ -189,15 +234,35 @@ export async function PATCH(request: NextRequest) {
   const categoryId = cleanString(govde.categoryId) || cleanString(current.category_id) || "";
   const templateKey = await categoryTemplateKey(owned.admin, owned.store.id, categoryId);
   if (!templateKey) return NextResponse.json({ hata: "Kategori bu vitrine ait değil veya ürün tipi geçersiz." }, { status: 422 });
+  const template = productTemplateByKey(templateKey);
+  if (!template) return NextResponse.json({ hata: "Ürün tipi geçersiz." }, { status: 422 });
+  const isService = template.itemKind === "service";
 
   const metadataInput = Object.prototype.hasOwnProperty.call(govde, "metadata") ? govde.metadata : current.metadata;
   const metadata = metadataForTemplate(metadataInput, templateKey);
   if (!metadata) return NextResponse.json({ hata: "Ürün detayları kategori tipiyle uyuşmuyor." }, { status: 422 });
-  const variants: ProductVariant[] = Object.prototype.hasOwnProperty.call(govde, "variants")
-    ? normalizeProductVariants(govde.variants)
-    : normalizeProductVariants(current.variants);
+  const variantInput = Object.prototype.hasOwnProperty.call(govde, "variants")
+    ? govde.variants
+    : current.variants;
+  const variants = variantsForTemplate(variantInput, templateKey);
 
   const priceText = typeof govde.priceText === "string" ? govde.priceText.trim() : "";
+  const stockQuantity = isService
+    ? null
+    : Object.prototype.hasOwnProperty.call(govde, "stockQuantity")
+      ? cleanNonNegativeInt(govde.stockQuantity)
+      : cleanNonNegativeInt(current.stock_quantity);
+  const brand = isService
+    ? null
+    : Object.prototype.hasOwnProperty.call(govde, "brand")
+      ? cleanString(govde.brand)
+      : cleanString(current.brand);
+  const barcode = isService
+    ? null
+    : Object.prototype.hasOwnProperty.call(govde, "barcode")
+      ? cleanString(govde.barcode)
+      : cleanString(current.barcode);
+
   try {
     await updateRichCoreProduct({
       admin: owned.admin,
@@ -209,13 +274,13 @@ export async function PATCH(request: NextRequest) {
       priceAmount: cleanAmount(govde.priceAmount) ?? amountFromPriceText(priceText) ?? cleanAmount(current.price_amount),
       imageUrls: imageValidation.imageUrls,
       categoryId,
-      stockStatus: cleanString(govde.stockStatus) || "Mevcut",
-      stockQuantity: Object.prototype.hasOwnProperty.call(govde, "stockQuantity") ? cleanNonNegativeInt(govde.stockQuantity) : cleanNonNegativeInt(current.stock_quantity),
+      stockStatus: isService ? "" : cleanString(govde.stockStatus) || "Mevcut",
+      stockQuantity,
       oldPriceAmount: cleanAmount(govde.oldPriceAmount),
       badgeTag: cleanString(govde.badgeTag),
       fulfillmentRegion: cleanString(govde.fulfillmentRegion),
-      brand: Object.prototype.hasOwnProperty.call(govde, "brand") ? cleanString(govde.brand) : cleanString(current.brand),
-      barcode: Object.prototype.hasOwnProperty.call(govde, "barcode") ? cleanString(govde.barcode) : cleanString(current.barcode),
+      brand,
+      barcode,
       metadata,
       variants,
     });
