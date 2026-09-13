@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:vixrex/core/result.dart';
 import 'package:vixrex/models/created_product.dart';
+import 'package:vixrex/models/product_rich_data.dart';
 import 'package:vixrex/models/store_product.dart';
 import 'package:vixrex/repositories/product_repository.dart';
 import 'package:vixrex/repositories/supabase_product_repository.dart';
@@ -8,7 +9,6 @@ import 'package:vixrex/services/product_image_policy.dart';
 import 'package:vixrex/utils/failure.dart';
 
 /// Ürün CRUD işlemleri için servis katmanı.
-/// Repository ile controller arasındaki köprüdür.
 class ProductService {
   ProductRepository? _repository;
 
@@ -16,7 +16,6 @@ class ProductService {
 
   ProductRepository get _repo => _repository ??= SupabaseProductRepository();
 
-  /// Mağazanın tüm ürünlerini getirir.
   Future<List<Product>> fetchProducts(String storeId) async {
     try {
       return await _repo.getProductsByStoreId(storeId);
@@ -26,7 +25,6 @@ class ProductService {
     }
   }
 
-  /// Mağazanın görünür ürünlerini getirir.
   Future<List<Product>> fetchVisibleProducts(String storeId) async {
     try {
       return await _repo.getVisibleProductsByStoreId(storeId);
@@ -36,7 +34,6 @@ class ProductService {
     }
   }
 
-  /// Yeni ürün ekler.
   Future<Result<CreatedProduct>> addProduct({
     required String storeId,
     required String editToken,
@@ -53,15 +50,19 @@ class ProductService {
     String? externalProductId,
     bool isVisible = true,
     int sortOrder = 0,
+    String? brand,
+    String? barcode,
+    int? stockQuantity,
+    String? stockStatus,
+    ProductRichMetadata? metadata,
+    List<ProductVariantData> variants = const [],
   }) async {
     final imageError = ProductImagePolicy.validate(imageUrls);
-    if (imageError != null) {
-      return Result.failure(Failure(imageError));
-    }
+    if (imageError != null) return Result.failure(Failure(imageError));
     final normalizedImageUrls = ProductImagePolicy.normalize(imageUrls);
 
     try {
-      final created = await _repo.createProduct(
+      final created = await _repo.createRichProduct(
         storeId: storeId,
         editToken: editToken,
         name: name,
@@ -77,6 +78,12 @@ class ProductService {
         externalProductId: externalProductId,
         isVisible: isVisible,
         sortOrder: sortOrder,
+        brand: brand,
+        barcode: barcode,
+        stockQuantity: stockQuantity,
+        stockStatus: stockStatus,
+        metadata: metadata,
+        variants: variants,
       );
       return Result.success(created);
     } catch (e) {
@@ -86,7 +93,6 @@ class ProductService {
     }
   }
 
-  /// Ürün günceller.
   Future<Result<void>> updateProduct({
     required String productId,
     String? editToken,
@@ -103,6 +109,10 @@ class ProductService {
     int? sortOrder,
     int? stockQuantity,
     String? stockStatus,
+    String? brand,
+    String? barcode,
+    ProductRichMetadata? metadata,
+    List<ProductVariantData>? variants,
     bool clearCategory = false,
     bool clearPriceAmount = false,
     bool clearOldPriceAmount = false,
@@ -110,18 +120,20 @@ class ProductService {
     bool clearFulfillmentRegion = false,
     bool clearStockQuantity = false,
     bool clearStockStatus = false,
+    bool clearBrand = false,
+    bool clearBarcode = false,
+    bool clearMetadata = false,
+    bool clearVariants = false,
   }) async {
     List<String>? normalizedImageUrls;
     if (imageUrls != null) {
       final imageError = ProductImagePolicy.validate(imageUrls);
-      if (imageError != null) {
-        return Result.failure(Failure(imageError));
-      }
+      if (imageError != null) return Result.failure(Failure(imageError));
       normalizedImageUrls = ProductImagePolicy.normalize(imageUrls);
     }
 
     try {
-      await _repo.updateProduct(
+      await _repo.updateRichProduct(
         productId: productId,
         editToken: editToken,
         name: name,
@@ -137,6 +149,10 @@ class ProductService {
         sortOrder: sortOrder,
         stockQuantity: stockQuantity,
         stockStatus: stockStatus,
+        brand: brand,
+        barcode: barcode,
+        metadata: metadata,
+        variants: variants,
         clearCategory: clearCategory,
         clearPriceAmount: clearPriceAmount,
         clearOldPriceAmount: clearOldPriceAmount,
@@ -144,6 +160,10 @@ class ProductService {
         clearFulfillmentRegion: clearFulfillmentRegion,
         clearStockQuantity: clearStockQuantity,
         clearStockStatus: clearStockStatus,
+        clearBrand: clearBrand,
+        clearBarcode: clearBarcode,
+        clearMetadata: clearMetadata,
+        clearVariants: clearVariants,
       );
       return const Result.success(null);
     } catch (e) {
@@ -153,7 +173,6 @@ class ProductService {
     }
   }
 
-  /// Ürün siler.
   Future<Result<void>> deleteProduct(
     String productId, {
     String? editToken,
@@ -168,7 +187,6 @@ class ProductService {
     }
   }
 
-  /// Ürün sırasını günceller.
   Future<Result<void>> reorderProducts(
     String storeId,
     String editToken,
@@ -194,6 +212,19 @@ class ProductService {
     }
     if (msg.contains('CATEGORY_NOT_IN_SAME_STORE')) {
       return 'Kategori bu mağazaya ait değil.';
+    }
+    if (msg.contains('PRODUCT_TEMPLATE_MISMATCH')) {
+      return 'Ürün detayları seçilen kategori tipiyle uyuşmuyor.';
+    }
+    if (msg.contains('PRODUCT_METADATA_INVALID') ||
+        msg.contains('PRODUCT_VARIANTS_INVALID')) {
+      return 'Ürün detayları geçersiz.';
+    }
+    if (msg.contains('PRODUCT_IMAGES_MIN_3')) {
+      return 'Bir ürün için en az 3 fotoğraf zorunludur.';
+    }
+    if (msg.contains('PRODUCT_IMAGES_MAX_10')) {
+      return 'Bir ürüne en fazla 10 fotoğraf eklenebilir.';
     }
     return 'İşlem başarısız oldu.';
   }
