@@ -43,6 +43,7 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
   late final TextEditingController _badgeTagController;
   late final TextEditingController _fulfillmentController;
   late final TextEditingController _descriptionController;
+  late final List<String> _initialImageUrls;
   late final List<_ProductImageDraft> _images;
   late String _categoryId;
   late String _stockStatus;
@@ -72,10 +73,11 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
     _descriptionController = TextEditingController(
       text: product?.description ?? '',
     );
+    _initialImageUrls = List<String>.of(
+      product?.displayImageUrls ?? const <String>[],
+    );
     _images =
-        (product?.displayImageUrls ?? const <String>[])
-            .map((url) => _ProductImageDraft(url: url))
-            .toList();
+        _initialImageUrls.map((url) => _ProductImageDraft(url: url)).toList();
     _categoryId = _resolveInitialCategoryId(product);
     _stockStatus =
         _stockOptions.contains(product?.stockStatus)
@@ -120,6 +122,21 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
 
   bool get _isServiceProduct =>
       (_selectedCategory?.productTemplateKey.trim() ?? '') == 'service';
+
+  bool get _imageListChanged {
+    if (widget.product == null) return true;
+    if (_images.any((image) => image.bytes != null)) return true;
+    final current =
+        _images
+            .map((image) => image.url.trim())
+            .where((url) => url.isNotEmpty)
+            .toList();
+    if (current.length != _initialImageUrls.length) return true;
+    for (var index = 0; index < current.length; index++) {
+      if (current[index] != _initialImageUrls[index]) return true;
+    }
+    return false;
+  }
 
   @override
   void dispose() {
@@ -189,17 +206,24 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
     var rejected = 0;
     final additions = <_ProductImageDraft>[];
     for (final file in result.files.take(remaining)) {
+      final bytes = file.bytes;
+      if (bytes == null ||
+          file.size > ProductImagePolicy.maxSourceBytes ||
+          bytes.length > ProductImagePolicy.maxSourceBytes) {
+        rejected++;
+        continue;
+      }
       final validation = GalleryImageFileValidator.validate(
-        bytes: file.bytes,
+        bytes: bytes,
         reportedSize: file.size,
       );
-      if (!validation.isValid || file.bytes == null) {
+      if (!validation.isValid) {
         rejected++;
         continue;
       }
       additions.add(
         _ProductImageDraft(
-          bytes: file.bytes,
+          bytes: bytes,
           extension: validation.fileInfo!.extension,
           contentType: validation.fileInfo!.contentType,
         ),
@@ -208,7 +232,7 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
     setState(() => _images.addAll(additions));
     if (rejected > 0) {
       _showMessage(
-        '$rejected görsel eklenemedi. JPG, PNG veya WEBP, en fazla 15 MB.',
+        '$rejected görsel eklenemedi. JPG, PNG veya WEBP, en fazla ${ProductImagePolicy.maxSourceMegabytes} MB.',
       );
     }
   }
@@ -228,9 +252,16 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
       _showMessage('Ürün adı zorunludur.');
       return;
     }
-    if (_images.length < ProductImagePolicy.minImages) {
+    final mustMeetImagePolicy = widget.product == null || _imageListChanged;
+    if (mustMeetImagePolicy && _images.length < ProductImagePolicy.minImages) {
       _showMessage(
         'Bir ürün için en az ${ProductImagePolicy.minImages} fotoğraf zorunludur.',
+      );
+      return;
+    }
+    if (mustMeetImagePolicy && _images.length > ProductImagePolicy.maxImages) {
+      _showMessage(
+        'Bir ürüne en fazla ${ProductImagePolicy.maxImages} fotoğraf eklenebilir.',
       );
       return;
     }
@@ -561,6 +592,10 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
   }
 
   Widget _buildImages() {
+    final legacyImagesKept =
+        widget.product != null &&
+        _initialImageUrls.length < ProductImagePolicy.minImages &&
+        !_imageListChanged;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -597,9 +632,16 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
           ),
         ),
         const SizedBox(height: 6),
-        const Text(
-          'En az 3, en fazla 10 fotoğraf. İlk fotoğraf ürün kapağıdır.',
-          style: TextStyle(color: AppColors.mutedText, fontSize: 11),
+        Text(
+          legacyImagesKept
+              ? 'Mevcut fotoğraflar korunur. Fotoğraf listesini değiştirirsen en az ${ProductImagePolicy.minImages}, en fazla ${ProductImagePolicy.maxImages} fotoğraf gerekir.'
+              : 'En az ${ProductImagePolicy.minImages}, en fazla ${ProductImagePolicy.maxImages} fotoğraf. İlk fotoğraf ürün kapağıdır.',
+          style: const TextStyle(color: AppColors.mutedText, fontSize: 11),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          'JPG, PNG veya WEBP; fotoğraf başına en fazla ${ProductImagePolicy.maxSourceMegabytes} MB.',
+          style: const TextStyle(color: AppColors.mutedText, fontSize: 11),
         ),
       ],
     );
