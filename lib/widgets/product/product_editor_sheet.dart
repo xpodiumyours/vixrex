@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/services/product_image_policy.dart';
 import 'package:vixrex/services/store_publish_service.dart';
 import 'package:vixrex/services/store_shelf_upload_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
@@ -25,7 +26,7 @@ class ProductEditorSheet extends StatefulWidget {
 }
 
 class _ProductEditorSheetState extends State<ProductEditorSheet> {
-  static const int _maxImages = 4;
+  static const int _maxImages = ProductImagePolicy.maxImages;
   static final _stockOptions = [
     StockStatus.available.label,
     StockStatus.lowStock.label,
@@ -117,7 +118,7 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
   Future<void> _pickImages() async {
     final remaining = _maxImages - _images.length;
     if (remaining <= 0) {
-      _showMessage('Bir ürüne en fazla $_maxImages görsel eklenebilir.');
+      _showMessage('Bir ürüne en fazla $_maxImages fotoğraf eklenebilir.');
       return;
     }
     final result = await FilePicker.platform.pickFiles(
@@ -167,6 +168,12 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
       _showMessage('Ürün adı zorunludur.');
+      return;
+    }
+    if (_images.length < ProductImagePolicy.minImages) {
+      _showMessage(
+        'Bir ürün için en az ${ProductImagePolicy.minImages} fotoğraf zorunludur.',
+      );
       return;
     }
     final category = widget.categories.where((item) => item.id == _categoryId);
@@ -426,7 +433,7 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
           children: [
             const Expanded(
               child: Text(
-                'Ürün görselleri',
+                'Ürün görselleri *',
                 style: TextStyle(
                   color: AppColors.darkText,
                   fontWeight: FontWeight.w800,
@@ -456,7 +463,7 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
         ),
         const SizedBox(height: 6),
         const Text(
-          'İlk görsel ürün kapağıdır. Oklarla sıralayabilirsiniz.',
+          'En az 3, en fazla 10 fotoğraf. İlk fotoğraf ürün kapağıdır.',
           style: TextStyle(color: AppColors.mutedText, fontSize: 11),
         ),
       ],
