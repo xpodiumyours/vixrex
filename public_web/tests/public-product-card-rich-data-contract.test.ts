@@ -18,6 +18,21 @@ const quickViewBaseSource = readFileSync(
   resolve(__dirname, "../src/components/ProductQuickViewBase.tsx"),
   "utf-8",
 );
+const batchRouteSource = readFileSync(
+  resolve(__dirname, "../src/app/api/products/batch/route.ts"),
+  "utf-8",
+);
+const bulkUploadSource = readFileSync(
+  resolve(__dirname, "../src/components/owner/BulkProductUpload.tsx"),
+  "utf-8",
+);
+const parityMigrationSource = readFileSync(
+  resolve(
+    __dirname,
+    "../../supabase/migrations/20260913154000_owner_catalog_and_bulk_rich_consistency.sql",
+  ),
+  "utf-8",
+);
 
 describe("public ürün kartı zengin veri hattı", () => {
   it("aynı products sorgusundan zengin alanları okur", () => {
@@ -67,6 +82,35 @@ describe("public ürün kartı zengin veri hattı", () => {
     expect(quickViewSource).toContain('clickLocation: "product_quick_view"');
     expect(quickViewSource).toContain("trackWhatsAppClick");
     expect(quickViewSource).toContain("trackDirectionsClick");
+  });
+
+  it("owner katalogu yayınlı vitrinle aynı zengin Product CORE alanlarını taşır", () => {
+    expect(parityMigrationSource).toContain("public.get_owner_catalog_for_session");
+    expect(parityMigrationSource).toContain("'product_template_key', c.product_template_key");
+    expect(parityMigrationSource).toContain("'stock_quantity', p.stock_quantity");
+    expect(parityMigrationSource).toContain("'metadata', p.metadata");
+    expect(parityMigrationSource).toContain("'variants', p.variants");
+    expect(parityMigrationSource).toContain(
+      "pg_catalog.encode(pg_catalog.sha256(v_token::bytea), 'hex')",
+    );
+  });
+
+  it("toplu yükleme kategori ve stok verisini aynı Product CORE yazımına taşır", () => {
+    expect(bulkUploadSource).toContain("MIN_PRODUCT_IMAGES");
+    expect(bulkUploadSource).toContain("collectImageUrls");
+    expect(bulkUploadSource).toContain("category_name: product.category || null");
+    expect(bulkUploadSource).toContain("stock_status: product.stockStatus");
+    expect(batchRouteSource).toContain("category_name: cleanString(p.category_name)");
+    expect(batchRouteSource).toContain("stock_status: cleanString(p.stock_status)");
+    expect(parityMigrationSource).toContain("public.create_store_product_v3(");
+  });
+
+  it("bilinmeyen toplu kategoriye tip uydurmaz, generic açar", () => {
+    expect(parityMigrationSource).toContain("public.upsert_store_category_v2(");
+    expect(parityMigrationSource).toContain("p_template_key => 'generic'");
+    expect(parityMigrationSource).toContain(
+      "case when v_template_key = 'service' then 'service' else 'physical' end",
+    );
   });
 
   it("hizmet kartına fiziksel ürün sinyali taşımaz", () => {
