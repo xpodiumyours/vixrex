@@ -8,11 +8,11 @@ import {
   buildProductQuickFacts,
   buildVariantOptionGroups,
   findMatchingVariant,
+  productVariantsForTemplate,
   variantOptionIsAvailable,
 } from "@/lib/productCardPresentation";
 import {
   normalizeProductMetadata,
-  normalizeProductVariants,
   productIsService,
 } from "@/lib/productRichData";
 
@@ -81,8 +81,8 @@ export default function ProductQuickView({
   );
   const isService = productIsService(product.metadata);
   const variants = useMemo(
-    () => normalizeProductVariants(product.variants),
-    [product.variants],
+    () => productVariantsForTemplate(product.variants, metadata.templateKey),
+    [product.variants, metadata.templateKey],
   );
   const variantGroups = useMemo(
     () => buildVariantOptionGroups(product.variants, metadata.templateKey),
@@ -102,8 +102,8 @@ export default function ProductQuickView({
   }, [product.id, variants]);
 
   const selectedVariant = useMemo(
-    () => findMatchingVariant(product.variants, selectedOptions),
-    [product.variants, selectedOptions],
+    () => findMatchingVariant(product.variants, selectedOptions, metadata.templateKey),
+    [product.variants, selectedOptions, metadata.templateKey],
   );
 
   const displayImages = useMemo(() => {
@@ -137,7 +137,17 @@ export default function ProductQuickView({
   }, [displayImages.length, onClose]);
 
   const selectOption = (key: string, value: string) => {
-    if (!variantOptionIsAvailable(product.variants, selectedOptions, key, value)) return;
+    if (
+      !variantOptionIsAvailable(
+        product.variants,
+        selectedOptions,
+        key,
+        value,
+        metadata.templateKey,
+      )
+    ) {
+      return;
+    }
     const preferred = variants.find(
       (variant) =>
         variant.options[key] === value &&
@@ -313,6 +323,7 @@ export default function ProductQuickView({
                         selectedOptions,
                         group.key,
                         value,
+                        metadata.templateKey,
                       );
                       return (
                         <button
