@@ -6,7 +6,6 @@ import { supabase } from "@/lib/supabase";
 import { ziyaretAnahtariniOkuyaUret } from "@/lib/vitrinZiyaretAnahtari";
 
 export const PHONE_CLICK_EVENT = "phone_click";
-
 export const DIRECTIONS_CLICK_EVENT = "directions_click";
 
 export interface ContactClickContext {
@@ -15,13 +14,17 @@ export interface ContactClickContext {
   productSlug?: string;
 }
 
+function ownerPreviewActive(): boolean {
+  return typeof document !== "undefined" && Boolean(document.querySelector("[data-vixrex-editable]"));
+}
+
 function trackContactEvent(
   eventName: string,
   gtag: GtagCommand | undefined,
   context: ContactClickContext,
 ): void {
   const storeSlug = context.storeSlug.trim();
-  if (!storeSlug) return;
+  if (!storeSlug || ownerPreviewActive()) return;
   const productSlug = context.productSlug?.trim() || "";
 
   if (gtag) {
@@ -33,8 +36,6 @@ function trackContactEvent(
     gtag("event", eventName, parameters);
   }
 
-  // Faz F: mevcut Vixrex engagement hattını kullanır; ürün bağlamı varsa
-  // aynı olay kaydına ürün slug'ı da eklenir.
   supabase
     .rpc("record_vitrin_engagement", {
       p_store_slug: storeSlug,
