@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useMemo } from "react";
 import {
   productAttributesForTemplate,
@@ -44,6 +45,7 @@ interface Props {
   templateKey: string;
   value: RichProductDraft;
   onChange: (value: RichProductDraft) => void;
+  imageUrls?: string[];
   disabled?: boolean;
 }
 
@@ -151,11 +153,17 @@ function alignVariantsToDefinitions(
   variants: ProductVariant[],
   variantDefinitions: ProductAttributeDefinition[],
   isService: boolean,
+  imageUrls: string[],
 ): ProductVariant[] {
   if (isService) return [];
-  if (variantDefinitions.length === 0) return variants;
+  const availableImages = new Set(imageUrls);
+  const withValidImages = variants.map((variant) => ({
+    ...variant,
+    imageUrls: variant.imageUrls?.filter((url) => availableImages.has(url)),
+  }));
+  if (variantDefinitions.length === 0) return withValidImages;
   const allowed = new Set(variantDefinitions.map((definition) => definition.key));
-  return variants
+  return withValidImages
     .map((variant) => ({
       ...variant,
       options: Object.fromEntries(
@@ -167,13 +175,23 @@ function alignVariantsToDefinitions(
     .filter((variant) => Object.keys(variant.options).length > 0);
 }
 
-export function OwnerRichProductFields({ templateKey, value, onChange, disabled = false }: Props) {
+export function OwnerRichProductFields({
+  templateKey,
+  value,
+  onChange,
+  imageUrls = [],
+  disabled = false,
+}: Props) {
   const template = productTemplateByKey(templateKey) || productTemplateByKey("generic");
   const definitions = useMemo(() => productAttributesForTemplate(templateKey), [templateKey]);
   const allowedKeys = useMemo(() => new Set(definitions.map((item) => item.key)), [definitions]);
   const variantDefinitions = useMemo(
     () => definitions.filter((definition) => definition.variantEligible),
     [definitions],
+  );
+  const cleanImageUrls = useMemo(
+    () => Array.from(new Set(imageUrls.map((url) => url.trim()).filter(Boolean))),
+    [imageUrls],
   );
 
   useEffect(() => {
@@ -196,6 +214,7 @@ export function OwnerRichProductFields({ templateKey, value, onChange, disabled 
       value.variants,
       variantDefinitions,
       isService,
+      cleanImageUrls,
     );
     const variantsChanged = JSON.stringify(nextVariants) !== JSON.stringify(value.variants);
     const draftFieldsChanged =
@@ -217,7 +236,7 @@ export function OwnerRichProductFields({ templateKey, value, onChange, disabled 
         variants: nextVariants,
       });
     }
-  }, [allowedKeys, onChange, template, value, variantDefinitions]);
+  }, [allowedKeys, cleanImageUrls, onChange, template, value, variantDefinitions]);
 
   if (!template) return null;
 
@@ -266,6 +285,15 @@ export function OwnerRichProductFields({ templateKey, value, onChange, disabled 
     if (clean) options[key] = clean;
     else delete options[key];
     updateVariant(index, { options });
+  }
+
+  function toggleVariantImage(index: number, imageUrl: string) {
+    const variant = value.variants[index];
+    if (!variant) return;
+    const selected = new Set(variant.imageUrls || []);
+    if (selected.has(imageUrl)) selected.delete(imageUrl);
+    else selected.add(imageUrl);
+    updateVariant(index, { imageUrls: Array.from(selected) });
   }
 
   function removeVariant(index: number) {
@@ -453,6 +481,37 @@ export function OwnerRichProductFields({ templateKey, value, onChange, disabled 
                       />
                     </label>
                   </div>
+
+                  {cleanImageUrls.length > 0 ? (
+                    <div className="mt-3">
+                      <p className="owner-label">Varyant fotoğrafları</p>
+                      <p className="mt-1 text-[10px] text-[var(--owner-muted)]">
+                        Bu varyant seçilince önce bu fotoğraflar gösterilir.
+                      </p>
+                      <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
+                        {cleanImageUrls.map((imageUrl, imageIndex) => {
+                          const selected = variant.imageUrls?.includes(imageUrl) ?? false;
+                          return (
+                            <button
+                              key={imageUrl}
+                              type="button"
+                              onClick={() => toggleVariantImage(index, imageUrl)}
+                              disabled={disabled}
+                              className={`relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border-2 transition ${
+                                selected
+                                  ? "border-blue-500 ring-2 ring-blue-500/15"
+                                  : "border-[var(--owner-border)] opacity-65 hover:opacity-100"
+                              }`}
+                              aria-pressed={selected}
+                              aria-label={`${imageIndex + 1}. ürün fotoğrafını bu varyanta ${selected ? "kaldır" : "bağla"}`}
+                            >
+                              <Image src={imageUrl} alt="" fill unoptimized sizes="56px" className="object-cover" />
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               ))}
             </div>
