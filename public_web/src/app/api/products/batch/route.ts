@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { cookies } from "next/headers";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { validateProductImageUrls } from "@/lib/productImagePolicy";
 
 /**
  * Toplu ürün oluşturma API'si.
@@ -49,6 +50,21 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ hata: "Tek seferde en fazla 100 ürün yüklenebilir." }, { status: 422 });
   }
 
+  const normalizedProducts: Array<ProductBatchItem & { image_urls: string[] }> = [];
+  for (let index = 0; index < govde.products.length; index++) {
+    const item = govde.products[index] as ProductBatchItem;
+    const imageValidation = validateProductImageUrls(item?.image_urls);
+    if (!imageValidation.ok) {
+      return NextResponse.json(
+        {
+          hata: `${index + 1}. ürün: ${imageValidation.error ?? "Ürün fotoğrafları geçersiz."}`,
+        },
+        { status: 422 }
+      );
+    }
+    normalizedProducts.push({ ...item, image_urls: imageValidation.imageUrls });
+  }
+
   // Oturum doğrulaması
   const cookieStore = await cookies();
   const ownerSessionCookie = cookieStore.get(OWNER_SESSION_COOKIE)?.value;
@@ -74,12 +90,12 @@ export async function POST(request: NextRequest) {
   }
 
   // Ürünleri batch_create_products RPC'sine gönder
-  const products = govde.products.map((p: ProductBatchItem, index: number) => ({
+  const products = normalizedProducts.map((p, index) => ({
     name: (p.name || "").trim(),
     description: (p.description || "").trim(),
     price_text: (p.price_text || "").trim(),
     category_id: (p.category_id || "").trim() || null,
-    image_urls: Array.isArray(p.image_urls) ? p.image_urls : [],
+    image_urls: p.image_urls,
     source_type: (p.source_type || "bulk_import").trim(),
     sort_order: typeof p.sort_order === "number" ? p.sort_order : index,
     isVisible: p.isVisible !== false,
