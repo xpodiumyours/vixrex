@@ -387,6 +387,7 @@ export function OwnerProductManager({
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filteredProducts.map((product) => {
             const image = product.image_urls?.find((url) => url.trim());
+            const isService = product.product_categories?.product_template_key === "service";
             return (
               <article key={product.id} className="owner-card overflow-hidden">
                 <div className="relative aspect-[4/3] bg-[var(--owner-bg-soft)]">
@@ -395,7 +396,11 @@ export function OwnerProductManager({
                 <div className="p-4">
                   <div className="flex items-start justify-between gap-3">
                     <h3 className="line-clamp-2 font-bold text-[var(--owner-text)]">{product.name}</h3>
-                    <span className="shrink-0 rounded-full border border-[var(--owner-border)] px-2 py-1 text-[11px] text-[var(--owner-text-alt)]">{product.stock_status || "Mevcut"}</span>
+                    {!isService ? (
+                      <span className="shrink-0 rounded-full border border-[var(--owner-border)] px-2 py-1 text-[11px] text-[var(--owner-text-alt)]">{product.stock_status || "Mevcut"}</span>
+                    ) : (
+                      <span className="shrink-0 rounded-full border border-[var(--owner-border)] px-2 py-1 text-[11px] text-[var(--owner-text-alt)]">Hizmet</span>
+                    )}
                   </div>
                   <p className="mt-2 text-sm font-bold text-[var(--owner-secondary)]">{product.price_text?.trim() || "Fiyat belirtilmedi"}</p>
                   <div className="mt-1 flex flex-wrap gap-1.5">
@@ -483,6 +488,7 @@ function ProductForm({ product, categories, busy, storeSlug, onCancel, onSave }:
     product?.product_categories?.product_template_key ||
     rich.metadata.templateKey ||
     "generic";
+  const isService = templateKey === "service";
 
   async function handleFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
@@ -542,7 +548,7 @@ function ProductForm({ product, categories, busy, storeSlug, onCancel, onSave }:
     const oldPriceAmount = oldPriceText.trim() ? parseAmount(oldPriceText) : null;
     if (oldPriceText.trim() && oldPriceAmount == null) { setValidation("Eski fiyat sayı olmalı."); return; }
     if (badgeTag.trim().length > 20) { setValidation("Rozet en fazla 20 karakter."); return; }
-    if (rich.stockQuantity.trim() && (!/^\d+$/.test(rich.stockQuantity) || Number(rich.stockQuantity) < 0)) { setValidation("Stok adedi 0 veya daha büyük tam sayı olmalı."); return; }
+    if (!isService && rich.stockQuantity.trim() && (!/^\d+$/.test(rich.stockQuantity) || Number(rich.stockQuantity) < 0)) { setValidation("Stok adedi 0 veya daha büyük tam sayı olmalı."); return; }
 
     setValidation("");
     void onSave({
@@ -551,7 +557,7 @@ function ProductForm({ product, categories, busy, storeSlug, onCancel, onSave }:
       description: description.trim(),
       imageUrls,
       categoryId,
-      stockStatus,
+      stockStatus: isService ? "" : stockStatus,
       oldPriceAmount,
       badgeTag: badgeTag.trim() || null,
       fulfillmentRegion: fulfillmentRegion.trim() || null,
@@ -603,7 +609,9 @@ function ProductForm({ product, categories, busy, storeSlug, onCancel, onSave }:
         <label className="space-y-2"><span className="owner-label">Eski fiyat (üstü çizili)</span><input className="owner-input" value={oldPriceText} onChange={(e) => setOldPriceText(e.target.value)} maxLength={30} placeholder="Ör. 799" disabled={busy} /></label>
         <label className="space-y-2"><span className="owner-label">Rozet</span><input className="owner-input" value={badgeTag} onChange={(e) => setBadgeTag(e.target.value)} maxLength={20} placeholder="Örn. Yeni, -31%" disabled={busy} /></label>
         <label className="space-y-2"><span className="owner-label">Teslim bölgesi</span><input className="owner-input" value={fulfillmentRegion} onChange={(e) => setFulfillmentRegion(e.target.value)} maxLength={80} placeholder="Örn. İstanbul içi" disabled={busy} /></label>
-        <label className="space-y-2"><span className="owner-label">Stok durumu</span><select className="owner-input" value={stockStatus} onChange={(e) => setStockStatus(e.target.value)} disabled={busy}>{STOCK_OPTIONS.map((s) => <option key={s}>{s}</option>)}</select></label>
+        {!isService ? (
+          <label className="space-y-2"><span className="owner-label">Stok durumu</span><select className="owner-input" value={stockStatus} onChange={(e) => setStockStatus(e.target.value)} disabled={busy}>{STOCK_OPTIONS.map((s) => <option key={s}>{s}</option>)}</select></label>
+        ) : null}
         <label className="space-y-2 sm:col-span-2">
           <span className="owner-label">Kısa açıklama</span>
           <textarea className="owner-input min-h-28 resize-y" value={description} onChange={(e) => setDescription(e.target.value)} maxLength={500} disabled={busy} />
