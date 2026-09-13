@@ -6,7 +6,7 @@ create or replace function public.get_owner_catalog_for_session(p_session_token 
 returns jsonb
 language plpgsql
 security definer
-set search_path = 'pg_catalog', 'public', 'extensions'
+set search_path = 'pg_catalog', 'public'
 as $$
 declare
   v_token text := pg_catalog.btrim(coalesce(p_session_token, ''));
@@ -18,7 +18,7 @@ begin
     raise exception 'INVALID_SESSION_TOKEN';
   end if;
 
-  v_token_hash := extensions.encode(extensions.sha256(v_token::bytea), 'hex');
+  v_token_hash := pg_catalog.encode(pg_catalog.sha256(v_token::bytea), 'hex');
 
   select s.store_id, st.is_demo
     into v_store_id, v_is_demo
