@@ -51,6 +51,13 @@ interface ProductRow {
   fulfillment_region?: string | null;
   currency: string;
   stock_status: string | null;
+  stock_quantity: number | null;
+  brand: string | null;
+  barcode: string | null;
+  metadata: unknown;
+  variants: unknown;
+  seo_title: string | null;
+  seo_description: string | null;
   image_urls: string[];
   category_id: string | null;
   is_visible: boolean;
@@ -79,7 +86,7 @@ async function _getProductData(slug: string, productSlug: string) {
     const { data: productRow } = await supabase
       .from("products")
       .select(
-        "id,name,slug,description,price_text,price_amount,old_price_amount,badge_tag,fulfillment_region,currency,stock_status,image_urls,category_id,is_visible,is_active,source_type"
+        "id,name,slug,description,price_text,price_amount,old_price_amount,badge_tag,fulfillment_region,currency,stock_status,stock_quantity,brand,barcode,metadata,variants,seo_title,seo_description,image_urls,category_id,is_visible,is_active,source_type"
       )
       .eq("store_id", store.id)
       .eq("slug", productSlug)
@@ -107,6 +114,8 @@ async function _getProductData(slug: string, productSlug: string) {
           (productRow.price_amount != null
             ? `${productRow.price_amount} ${productRow.currency}`
             : undefined),
+        priceAmount: productRow.price_amount,
+        currency: productRow.currency,
         oldPriceAmount: productRow.old_price_amount ?? null,
         badgeTag: productRow.badge_tag ?? null,
         fulfillmentRegion: productRow.fulfillment_region ?? null,
@@ -115,6 +124,13 @@ async function _getProductData(slug: string, productSlug: string) {
           : [],
         category: categoryName || undefined,
         stockStatus: productRow.stock_status || undefined,
+        stockQuantity: productRow.stock_quantity,
+        brand: productRow.brand,
+        barcode: productRow.barcode,
+        metadata: productRow.metadata,
+        variants: productRow.variants,
+        seoTitle: productRow.seo_title,
+        seoDescription: productRow.seo_description,
         isVisible: productRow.is_visible,
         source: productRow.source_type,
       };
@@ -153,8 +169,9 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
     return { robots: { index: false, follow: true } };
   }
 
-  const title = `${product.name} - ${store.name} | Vixrex`;
+  const title = product.seoTitle || `${product.name} - ${store.name} | Vixrex`;
   const description =
+    product.seoDescription ||
     product.description ||
     `${store.name} vitrindeki ${product.name} için detay ve iletişim bilgileri.`;
   const image =
@@ -223,9 +240,17 @@ export default async function ProductDetailPage(props: PageProps) {
     store.description ||
     store.corporate_bio ||
     `${store.name} vitrindeki ${product.name} için detay ve iletişim bilgileri.`;
-  const isInStock = !String(product.stockStatus || "")
-    .toLocaleLowerCase("tr-TR")
-    .includes("tükendi");
+  const isInStock =
+    (product.stockQuantity == null || product.stockQuantity > 0) &&
+    !String(product.stockStatus || "")
+      .toLocaleLowerCase("tr-TR")
+      .includes("tükendi");
+  const structuredPrice =
+    product.priceAmount != null
+      ? String(product.priceAmount)
+      : product.price?.match(/\d/)
+        ? product.price.replace(/[^0-9.,]/g, "").replace(",", ".")
+        : undefined;
 
   const productJsonLd = {
     "@context": "https://schema.org",
@@ -234,10 +259,13 @@ export default async function ProductDetailPage(props: PageProps) {
     name: product.name,
     description: productDescription,
     image: images.length > 0 ? images : undefined,
-    brand: {
-      "@type": "Brand",
-      name: store.name,
-    },
+    brand: product.brand
+      ? {
+          "@type": "Brand",
+          name: product.brand,
+        }
+      : undefined,
+    gtin: product.barcode || undefined,
     category: product.category || undefined,
     url: publicUrl,
     offers: {
@@ -245,8 +273,8 @@ export default async function ProductDetailPage(props: PageProps) {
       availability: isInStock
         ? "https://schema.org/InStock"
         : "https://schema.org/OutOfStock",
-      priceCurrency: "TRY",
-      price: product.price?.match(/\d/) ? product.price.replace(/[^0-9.,]/g, "").replace(",", ".") : undefined,
+      priceCurrency: product.currency || "TRY",
+      price: structuredPrice,
       url: publicUrl,
       seller: {
         "@type": "LocalBusiness",
@@ -342,6 +370,11 @@ export default async function ProductDetailPage(props: PageProps) {
               <h1 className="font-vitrin-display mt-4 text-[clamp(1.9rem,4vw,2.6rem)] font-normal leading-tight text-white">
                 {product.name}
               </h1>
+              {product.brand && (
+                <p className="mt-2 text-xs font-bold uppercase tracking-wide text-white/45">
+                  {product.brand}
+                </p>
+              )}
               <p className="mt-4 whitespace-pre-wrap text-sm font-medium leading-relaxed text-white/70">
                 {productDescription}
               </p>
@@ -359,6 +392,11 @@ export default async function ProductDetailPage(props: PageProps) {
                 <div className="mt-1 text-lg font-extrabold text-emerald-200">
                   {product.stockStatus || "Bilgi alın"}
                 </div>
+                {product.stockQuantity != null && (
+                  <div className="mt-1 text-[11px] font-bold text-white/40">
+                    {product.stockQuantity} adet
+                  </div>
+                )}
               </div>
             </div>
 
