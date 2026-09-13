@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { ProductMetadata, ProductVariant } from "@/lib/productRichData";
 
 export interface CoreProductRow {
   id: string;
@@ -103,6 +104,61 @@ export async function createCoreProduct(args: {
   return { id, slug, created: data?.created !== false };
 }
 
+export async function createRichCoreProduct(args: {
+  admin: SupabaseClient;
+  storeId: string;
+  editToken: string;
+  name: string;
+  description: string;
+  priceText: string;
+  priceAmount?: number | null;
+  imageUrls: string[];
+  categoryId: string;
+  sourceType: string;
+  externalProductId: string;
+  oldPriceAmount?: number | null;
+  badgeTag?: string | null;
+  fulfillmentRegion?: string | null;
+  brand?: string | null;
+  barcode?: string | null;
+  stockQuantity?: number | null;
+  stockStatus?: string | null;
+  metadata: ProductMetadata;
+  variants: ProductVariant[];
+}): Promise<CreatedCoreProduct> {
+  const { data, error } = await args.admin.rpc("create_store_product_v3", {
+    p_store_id: args.storeId,
+    p_edit_token: args.editToken,
+    p_name: args.name,
+    p_description: args.description,
+    p_price_text: args.priceText,
+    p_price_amount: args.priceAmount ?? null,
+    p_image_urls: args.imageUrls,
+    p_category_id: args.categoryId || null,
+    p_source_type: args.sourceType,
+    p_external_product_id: args.externalProductId || null,
+    p_is_visible: true,
+    p_sort_order: 0,
+    p_old_price_amount: args.oldPriceAmount ?? null,
+    p_badge_tag: args.badgeTag ?? null,
+    p_fulfillment_region: args.fulfillmentRegion ?? null,
+    p_brand: args.brand ?? null,
+    p_barcode: args.barcode ?? null,
+    p_stock_quantity: args.stockQuantity ?? null,
+    p_stock_status: args.stockStatus ?? null,
+    p_metadata: args.metadata,
+    p_variants: args.variants,
+  });
+
+  if (error) rpcError(error, "PRODUCT_CORE_CREATE_FAILED");
+  const id = String(data?.id || "").trim();
+  const slug = String(data?.slug || "").trim();
+  if (!id || !slug || data?.success !== true) {
+    throw new Error("PRODUCT_CORE_CREATE_FAILED");
+  }
+  return { id, slug, created: data?.created !== false };
+}
+
 export async function updateCoreProduct(args: {
   admin: SupabaseClient;
   productId: string;
@@ -139,11 +195,62 @@ export async function updateCoreProduct(args: {
   }
 }
 
-/**
- * Server-side Product CORE cleanup used only after the store edit token has
- * been verified. Keeping this write here prevents API routes from maintaining
- * a second product-storage implementation.
- */
+export async function updateRichCoreProduct(args: {
+  admin: SupabaseClient;
+  productId: string;
+  editToken: string;
+  name: string;
+  description: string;
+  priceText: string;
+  priceAmount?: number | null;
+  imageUrls: string[];
+  categoryId: string;
+  stockStatus: string;
+  stockQuantity?: number | null;
+  oldPriceAmount?: number | null;
+  badgeTag?: string | null;
+  fulfillmentRegion?: string | null;
+  brand?: string | null;
+  barcode?: string | null;
+  metadata: ProductMetadata;
+  variants: ProductVariant[];
+}) {
+  const { data, error } = await args.admin.rpc("update_store_product_v2", {
+    p_product_id: args.productId,
+    p_edit_token: args.editToken,
+    p_name: args.name,
+    p_description: args.description,
+    p_price_text: args.priceText,
+    p_price_amount: args.priceAmount ?? null,
+    p_image_urls: args.imageUrls,
+    p_category_id: args.categoryId || null,
+    p_stock_quantity: args.stockQuantity ?? null,
+    p_stock_status: args.stockStatus,
+    p_old_price_amount: args.oldPriceAmount ?? null,
+    p_badge_tag: args.badgeTag ?? null,
+    p_fulfillment_region: args.fulfillmentRegion ?? null,
+    p_brand: args.brand ?? null,
+    p_barcode: args.barcode ?? null,
+    p_metadata: args.metadata,
+    p_variants: args.variants,
+    p_clear_category: !args.categoryId,
+    p_clear_price_amount: args.priceAmount == null,
+    p_clear_stock_quantity: args.stockQuantity == null,
+    p_clear_stock_status: !args.stockStatus,
+    p_clear_old_price_amount: args.oldPriceAmount == null,
+    p_clear_badge_tag: !args.badgeTag,
+    p_clear_fulfillment_region: !args.fulfillmentRegion,
+    p_clear_brand: !args.brand,
+    p_clear_barcode: !args.barcode,
+    p_clear_metadata: false,
+    p_clear_variants: false,
+  });
+
+  if (error || data?.success !== true) {
+    rpcError(error, "PRODUCT_CORE_UPDATE_FAILED");
+  }
+}
+
 export async function deleteCoreProductsBySource(args: {
   admin: SupabaseClient;
   storeId: string;
