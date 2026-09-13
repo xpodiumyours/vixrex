@@ -1,3 +1,5 @@
+import 'package:vixrex/models/product_rich_data.dart';
+
 enum StockStatus {
   available('Mevcut'),
   soldOut('Tükendi'),
@@ -31,7 +33,11 @@ class Product {
   String? sourcePermalink;
   String? importedAt;
   String? brand;
+  String? barcode;
   String? sku;
+  int? stockQuantity;
+  ProductRichMetadata richMetadata;
+  List<ProductVariantData> variants;
   double? oldPriceAmount;
   String? badgeTag;
   String? fulfillmentLocation;
@@ -53,11 +59,17 @@ class Product {
     this.sourcePermalink,
     this.importedAt,
     this.brand,
+    this.barcode,
     this.sku,
+    this.stockQuantity,
+    ProductRichMetadata? richMetadata,
+    List<ProductVariantData>? variants,
     this.oldPriceAmount,
     this.badgeTag,
     this.fulfillmentLocation,
-  }) : imageUrls = _normalizeImageUrls(imageUrls, imagePath);
+  }) : imageUrls = _normalizeImageUrls(imageUrls, imagePath),
+       richMetadata = richMetadata ?? const ProductRichMetadata(),
+       variants = variants ?? <ProductVariantData>[];
 
   static List<String> _normalizeImageUrls(
     List<String>? imageUrls,
@@ -80,6 +92,14 @@ class Product {
 
   String? get primaryImageUrl =>
       displayImageUrls.isEmpty ? null : displayImageUrls.first;
+
+  bool get hasRichMetadata =>
+      richMetadata.itemKind == 'service' ||
+      (richMetadata.templateKey?.trim().isNotEmpty ?? false) ||
+      (richMetadata.sku?.trim().isNotEmpty ?? false) ||
+      (richMetadata.mpn?.trim().isNotEmpty ?? false) ||
+      richMetadata.attributes.isNotEmpty ||
+      richMetadata.service != null;
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{
@@ -107,8 +127,16 @@ class Product {
     putOptional('sourceMediaId', sourceMediaId);
     putOptional('sourcePermalink', sourcePermalink);
     putOptional('importedAt', importedAt);
+    putOptional('brand', brand);
+    putOptional('barcode', barcode);
+    putOptional('sku', sku);
     putOptional('badgeTag', badgeTag);
     putOptional('fulfillmentLocation', fulfillmentLocation);
+    if (stockQuantity != null) json['stockQuantity'] = stockQuantity;
+    if (hasRichMetadata) json['metadata'] = richMetadata.toJson();
+    if (variants.isNotEmpty) {
+      json['variants'] = variants.map((variant) => variant.toJson()).toList();
+    }
     if (oldPriceAmount != null) {
       json['oldPriceAmount'] = oldPriceAmount;
     }
@@ -116,69 +144,95 @@ class Product {
     return json;
   }
 
-  factory Product.fromJson(Map<String, dynamic> json) => Product(
-    id: (json['id'] ?? '').toString(),
-    name: (json['name'] ?? '').toString(),
-    price: (json['price'] ?? '').toString(),
-    description: (json['description'] ?? '').toString(),
-    imagePath: (json['imagePath'] ?? json['image_path']) as String?,
-    imageUrls:
-        ((json['imageUrls'] ?? json['image_urls']) as List?)
-            ?.map((item) => item.toString())
-            .toList(),
-    categoryId: (json['categoryId'] ?? json['category_id'] ?? '').toString(),
-    category: (json['category'] ?? 'Tümü').toString(),
-    stockStatus:
-        (json['stockStatus'] ??
-                json['stock_status'] ??
-                StockStatus.available.label)
-            .toString(),
-    isVisible: (json['isVisible'] ?? json['is_visible'] ?? true) as bool,
-    oldPriceAmount:
-        (json['oldPriceAmount'] ?? json['old_price_amount']) != null
-            ? double.tryParse(
-              (json['oldPriceAmount'] ?? json['old_price_amount']).toString(),
-            )
-            : null,
-    badgeTag: (json['badgeTag'] ?? json['badge_tag']) as String?,
-    fulfillmentLocation:
-        (json['fulfillmentLocation'] ?? json['fulfillment_region'] ?? '')
-                .toString()
-                .trim()
-                .isEmpty
+  factory Product.fromJson(Map<String, dynamic> json) {
+    final metadata = ProductRichMetadata.fromJson(json['metadata']);
+    final topLevelSku =
+        (json['sku'] ?? '').toString().trim().isEmpty
             ? null
-            : (json['fulfillmentLocation'] ?? json['fulfillment_region'])
-                .toString(),
-    slug:
-        (json['slug'] ?? '').toString().trim().isEmpty
-            ? null
-            : json['slug'].toString(),
-    source:
-        (json['source'] ?? '').toString().trim().isEmpty
-            ? null
-            : json['source'].toString(),
-    sourceMediaId:
-        (json['sourceMediaId'] ?? json['source_media_id'] ?? '')
-                .toString()
-                .trim()
-                .isEmpty
-            ? null
-            : (json['sourceMediaId'] ?? json['source_media_id']).toString(),
-    sourcePermalink:
-        (json['sourcePermalink'] ?? json['source_permalink'] ?? '')
-                .toString()
-                .trim()
-                .isEmpty
-            ? null
-            : (json['sourcePermalink'] ?? json['source_permalink']).toString(),
-    importedAt:
-        (json['importedAt'] ?? json['imported_at'] ?? '')
-                .toString()
-                .trim()
-                .isEmpty
-            ? null
-            : (json['importedAt'] ?? json['imported_at']).toString(),
-  );
+            : json['sku'].toString().trim();
+    return Product(
+      id: (json['id'] ?? '').toString(),
+      name: (json['name'] ?? '').toString(),
+      price: (json['price'] ?? json['price_text'] ?? '').toString(),
+      description: (json['description'] ?? '').toString(),
+      imagePath: (json['imagePath'] ?? json['image_path']) as String?,
+      imageUrls:
+          ((json['imageUrls'] ?? json['image_urls']) as List?)
+              ?.map((item) => item.toString())
+              .toList(),
+      categoryId: (json['categoryId'] ?? json['category_id'] ?? '').toString(),
+      category: (json['category'] ?? 'Tümü').toString(),
+      stockStatus:
+          (json['stockStatus'] ??
+                  json['stock_status'] ??
+                  StockStatus.available.label)
+              .toString(),
+      isVisible: (json['isVisible'] ?? json['is_visible'] ?? true) as bool,
+      brand:
+          (json['brand'] ?? '').toString().trim().isEmpty
+              ? null
+              : json['brand'].toString().trim(),
+      barcode:
+          (json['barcode'] ?? '').toString().trim().isEmpty
+              ? null
+              : json['barcode'].toString().trim(),
+      sku: topLevelSku ?? metadata.sku,
+      stockQuantity:
+          (json['stockQuantity'] ?? json['stock_quantity']) is num
+              ? ((json['stockQuantity'] ?? json['stock_quantity']) as num)
+                  .toInt()
+              : null,
+      richMetadata: metadata,
+      variants: parseProductVariants(json['variants']),
+      oldPriceAmount:
+          (json['oldPriceAmount'] ?? json['old_price_amount']) != null
+              ? double.tryParse(
+                (json['oldPriceAmount'] ?? json['old_price_amount']).toString(),
+              )
+              : null,
+      badgeTag: (json['badgeTag'] ?? json['badge_tag']) as String?,
+      fulfillmentLocation:
+          (json['fulfillmentLocation'] ?? json['fulfillment_region'] ?? '')
+                  .toString()
+                  .trim()
+                  .isEmpty
+              ? null
+              : (json['fulfillmentLocation'] ?? json['fulfillment_region'])
+                  .toString(),
+      slug:
+          (json['slug'] ?? '').toString().trim().isEmpty
+              ? null
+              : json['slug'].toString(),
+      source:
+          (json['source'] ?? json['source_type'] ?? '')
+                  .toString()
+                  .trim()
+                  .isEmpty
+              ? null
+              : (json['source'] ?? json['source_type']).toString(),
+      sourceMediaId:
+          (json['sourceMediaId'] ?? json['source_media_id'] ?? '')
+                  .toString()
+                  .trim()
+                  .isEmpty
+              ? null
+              : (json['sourceMediaId'] ?? json['source_media_id']).toString(),
+      sourcePermalink:
+          (json['sourcePermalink'] ?? json['source_permalink'] ?? '')
+                  .toString()
+                  .trim()
+                  .isEmpty
+              ? null
+              : (json['sourcePermalink'] ?? json['source_permalink']).toString(),
+      importedAt:
+          (json['importedAt'] ?? json['imported_at'] ?? '')
+                  .toString()
+                  .trim()
+                  .isEmpty
+              ? null
+              : (json['importedAt'] ?? json['imported_at']).toString(),
+    );
+  }
 
   Product copyWith({
     String? id,
@@ -196,6 +250,12 @@ class Product {
     String? sourceMediaId,
     String? sourcePermalink,
     String? importedAt,
+    String? brand,
+    String? barcode,
+    String? sku,
+    int? stockQuantity,
+    ProductRichMetadata? richMetadata,
+    List<ProductVariantData>? variants,
     double? oldPriceAmount,
     String? badgeTag,
     String? fulfillmentLocation,
@@ -216,6 +276,12 @@ class Product {
       sourceMediaId: sourceMediaId ?? this.sourceMediaId,
       sourcePermalink: sourcePermalink ?? this.sourcePermalink,
       importedAt: importedAt ?? this.importedAt,
+      brand: brand ?? this.brand,
+      barcode: barcode ?? this.barcode,
+      sku: sku ?? this.sku,
+      stockQuantity: stockQuantity ?? this.stockQuantity,
+      richMetadata: richMetadata ?? this.richMetadata,
+      variants: variants ?? List.of(this.variants),
       oldPriceAmount: oldPriceAmount ?? this.oldPriceAmount,
       badgeTag: badgeTag ?? this.badgeTag,
       fulfillmentLocation: fulfillmentLocation ?? this.fulfillmentLocation,
@@ -227,20 +293,32 @@ class ProductCategory {
   String id;
   String name;
   int sortOrder;
+  String productTemplateKey;
 
-  ProductCategory({required this.id, required this.name, this.sortOrder = 0});
+  ProductCategory({
+    required this.id,
+    required this.name,
+    this.sortOrder = 0,
+    this.productTemplateKey = 'generic',
+  });
 
   Map<String, dynamic> toJson() => {
     'id': id,
     'name': name,
     'sortOrder': sortOrder,
+    'productTemplateKey': productTemplateKey,
   };
 
   factory ProductCategory.fromJson(Map<String, dynamic> json) {
+    final templateKey =
+        (json['productTemplateKey'] ?? json['product_template_key'] ?? 'generic')
+            .toString()
+            .trim();
     return ProductCategory(
       id: (json['id'] ?? '').toString(),
       name: (json['name'] ?? '').toString(),
       sortOrder: (json['sortOrder'] ?? json['sort_order'] ?? 0) as int,
+      productTemplateKey: templateKey.isEmpty ? 'generic' : templateKey,
     );
   }
 }
