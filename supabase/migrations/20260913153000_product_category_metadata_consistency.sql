@@ -1,6 +1,7 @@
 -- Kategori tipi ve products.metadata aynı hakikati taşımalıdır.
 -- Kategori adı üzerinden tahmin yapılmaz; yalnız product_template_key kullanılır.
 -- Bu migration önceki rich-product fonksiyonlarını aynı imzayla güçlendirir.
+-- Hizmet <-> fiziksel ürün dönüşümünde eski tipe ait alanlar bırakılmaz.
 
 create or replace function public.update_store_category_v2(
   p_category_id uuid,
@@ -59,22 +60,38 @@ begin
 
   if v_effective_template_key is distinct from v_current_template_key then
     update public.products as p
-    set metadata = pg_catalog.jsonb_set(
-      pg_catalog.jsonb_set(
-        coalesce(p.metadata, '{}'::jsonb),
-        '{templateKey}',
-        pg_catalog.to_jsonb(v_effective_template_key),
-        true
-      ),
-      '{itemKind}',
-      pg_catalog.to_jsonb(
-        case
-          when v_effective_template_key = 'service' then 'service'::text
-          else 'physical'::text
-        end
-      ),
-      true
-    )
+    set
+      metadata = case
+        when v_effective_template_key = 'service' then
+          pg_catalog.jsonb_set(
+            pg_catalog.jsonb_set(
+              (coalesce(p.metadata, '{}'::jsonb) - 'identifiers' - 'attributes'),
+              '{templateKey}',
+              pg_catalog.to_jsonb(v_effective_template_key),
+              true
+            ),
+            '{itemKind}',
+            pg_catalog.to_jsonb('service'::text),
+            true
+          )
+        else
+          pg_catalog.jsonb_set(
+            pg_catalog.jsonb_set(
+              (coalesce(p.metadata, '{}'::jsonb) - 'service'),
+              '{templateKey}',
+              pg_catalog.to_jsonb(v_effective_template_key),
+              true
+            ),
+            '{itemKind}',
+            pg_catalog.to_jsonb('physical'::text),
+            true
+          )
+      end,
+      brand = case when v_effective_template_key = 'service' then null else p.brand end,
+      barcode = case when v_effective_template_key = 'service' then null else p.barcode end,
+      stock_quantity = case when v_effective_template_key = 'service' then null else p.stock_quantity end,
+      stock_status = case when v_effective_template_key = 'service' then null else p.stock_status end,
+      variants = case when v_effective_template_key = 'service' then '[]'::jsonb else p.variants end
     where p.store_id = v_store_id
       and p.category_id = p_category_id;
   end if;
@@ -147,22 +164,37 @@ begin
   update public.products as p
   set
     category_id = p_replacement_id,
-    metadata = pg_catalog.jsonb_set(
-      pg_catalog.jsonb_set(
-        coalesce(p.metadata, '{}'::jsonb),
-        '{templateKey}',
-        pg_catalog.to_jsonb(v_replacement_template_key),
-        true
-      ),
-      '{itemKind}',
-      pg_catalog.to_jsonb(
-        case
-          when v_replacement_template_key = 'service' then 'service'::text
-          else 'physical'::text
-        end
-      ),
-      true
-    )
+    metadata = case
+      when v_replacement_template_key = 'service' then
+        pg_catalog.jsonb_set(
+          pg_catalog.jsonb_set(
+            (coalesce(p.metadata, '{}'::jsonb) - 'identifiers' - 'attributes'),
+            '{templateKey}',
+            pg_catalog.to_jsonb(v_replacement_template_key),
+            true
+          ),
+          '{itemKind}',
+          pg_catalog.to_jsonb('service'::text),
+          true
+        )
+      else
+        pg_catalog.jsonb_set(
+          pg_catalog.jsonb_set(
+            (coalesce(p.metadata, '{}'::jsonb) - 'service'),
+            '{templateKey}',
+            pg_catalog.to_jsonb(v_replacement_template_key),
+            true
+          ),
+          '{itemKind}',
+          pg_catalog.to_jsonb('physical'::text),
+          true
+        )
+    end,
+    brand = case when v_replacement_template_key = 'service' then null else p.brand end,
+    barcode = case when v_replacement_template_key = 'service' then null else p.barcode end,
+    stock_quantity = case when v_replacement_template_key = 'service' then null else p.stock_quantity end,
+    stock_status = case when v_replacement_template_key = 'service' then null else p.stock_status end,
+    variants = case when v_replacement_template_key = 'service' then '[]'::jsonb else p.variants end
   where p.store_id = v_store_id
     and p.category_id = p_category_id;
 
