@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ hata: "Ürün bulunamadı." }, { status: 404 });
   }
 
+  const metadata = normalizeProductMetadata(product.metadata);
   return NextResponse.json({
     id: product.id,
     slug: product.slug,
@@ -43,7 +44,7 @@ export async function GET(request: NextRequest) {
     stockQuantity: product.stock_quantity == null ? null : Number(product.stock_quantity),
     stockStatus: typeof product.stock_status === "string" ? product.stock_status : null,
     vatRate: product.vat_rate == null ? null : Number(product.vat_rate),
-    metadata: normalizeProductMetadata(product.metadata),
-    variants: normalizeProductVariants(product.variants),
+    metadata,
+    variants: normalizeProductVariants(product.variants, metadata.profileKey),
   });
 }
