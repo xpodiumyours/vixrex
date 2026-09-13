@@ -38,10 +38,12 @@ function productWhatsappUrl(
   storeName: string,
   productName: string,
   isService: boolean,
+  selectedVariantText: string,
 ): string | null {
   if (!baseUrl) return null;
   const noun = isService ? "hizmeti" : "ürünü";
-  const message = `Merhaba, ${storeName} vitrininizdeki "${productName}" ${noun} hakkında bilgi almak istiyorum.`;
+  const optionLine = selectedVariantText ? `\nSeçenek: ${selectedVariantText}` : "";
+  const message = `Merhaba, ${storeName} vitrininizdeki "${productName}" ${noun} hakkında bilgi almak istiyorum.${optionLine}`;
   const separator = baseUrl.includes("?") ? "&" : "?";
   return `${baseUrl}${separator}text=${encodeURIComponent(message)}`;
 }
@@ -85,6 +87,10 @@ export default function ProductQuickView({
   const variantGroups = useMemo(
     () => buildVariantOptionGroups(product.variants, metadata.templateKey),
     [product.variants, metadata.templateKey],
+  );
+  const variantKeys = useMemo(
+    () => new Set(variantGroups.map((group) => group.key)),
+    [variantGroups],
   );
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const [imageIndex, setImageIndex] = useState(0);
@@ -147,8 +153,8 @@ export default function ProductQuickView({
   const quickFacts = buildProductQuickFacts({
     brand: product.brand,
     metadata: product.metadata,
-    limit: 5,
-  }).filter((fact) => fact.key !== "brand");
+    limit: 8,
+  }).filter((fact) => fact.key !== "brand" && !variantKeys.has(fact.key));
 
   const selectedStockQuantity =
     selectedVariant?.stockQuantity ?? product.stockQuantity ?? null;
@@ -163,11 +169,19 @@ export default function ProductQuickView({
   const brand = String(product.brand || "").trim();
   const fulfillmentRegion = String(product.fulfillmentRegion || "").trim();
   const fulfillmentMapUrl = productLocationMapUrl(fulfillmentRegion);
+  const selectedVariantText = variantGroups
+    .map((group) => {
+      const value = selectedOptions[group.key];
+      return value ? `${group.label}: ${value}` : null;
+    })
+    .filter((value): value is string => Boolean(value))
+    .join(", ");
   const whatsappUrl = productWhatsappUrl(
     whatsappBaseUrl,
     storeName,
     product.name,
     isService,
+    selectedVariantText,
   );
   const currentImage = displayImages[imageIndex] || null;
 
