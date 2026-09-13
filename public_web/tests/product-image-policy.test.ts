@@ -5,19 +5,16 @@ import {
   validateProductImageUrls,
 } from "../src/lib/productImagePolicy";
 
-const images = [
-  "https://example.com/1.jpg",
-  "https://example.com/2.jpg",
-  "https://example.com/3.jpg",
-  "https://example.com/4.jpg",
-];
+const images = Array.from({ length: 11 }, (_, index) =>
+  `https://example.com/${index + 1}.jpg`,
+);
 
 describe("product image policy", () => {
-  it("en az 3, en fazla 4 fotoğraf kabul eder", () => {
+  it("en az 3, en fazla 10 fotoğraf kabul eder", () => {
     expect(MIN_PRODUCT_IMAGES).toBe(3);
-    expect(MAX_PRODUCT_IMAGES).toBe(4);
+    expect(MAX_PRODUCT_IMAGES).toBe(10);
     expect(validateProductImageUrls(images.slice(0, 3)).ok).toBe(true);
-    expect(validateProductImageUrls(images).ok).toBe(true);
+    expect(validateProductImageUrls(images.slice(0, 10)).ok).toBe(true);
   });
 
   it("0-2 fotoğrafı reddeder", () => {
@@ -26,10 +23,8 @@ describe("product image policy", () => {
     expect(validateProductImageUrls(images.slice(0, 2)).ok).toBe(false);
   });
 
-  it("4'ten fazla fotoğrafı reddeder", () => {
-    expect(
-      validateProductImageUrls([...images, "https://example.com/5.jpg"]).ok,
-    ).toBe(false);
+  it("10'dan fazla fotoğrafı reddeder", () => {
+    expect(validateProductImageUrls(images).ok).toBe(false);
   });
 
   it("tekrarlı URL'leri tek fotoğraf sayar", () => {
