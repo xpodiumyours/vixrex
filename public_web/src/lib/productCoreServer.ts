@@ -1,4 +1,6 @@
+import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { ProductRichMetadata, ProductVariantData } from "@/lib/productRichData";
 
 export interface CoreProductRow {
   id: string;
@@ -19,8 +21,47 @@ export interface CreatedCoreProduct {
   created: boolean;
 }
 
+export interface RichProductWriteFields {
+  brand?: string | null;
+  barcode?: string | null;
+  vatRate?: number | null;
+  stockQuantity?: number | null;
+  stockStatus?: string | null;
+  metadata?: ProductRichMetadata;
+  variants?: ProductVariantData[];
+}
+
 function rpcError(error: { message?: string } | null, fallback: string) {
   throw new Error(error?.message || fallback);
+}
+
+async function writeRichProductFields(args: {
+  admin: SupabaseClient;
+  storeId: string;
+  productId: string;
+  rich: RichProductWriteFields;
+}) {
+  const payload = {
+    brand: args.rich.brand?.trim() || null,
+    barcode: args.rich.barcode?.trim() || null,
+    vat_rate: args.rich.vatRate ?? null,
+    stock_quantity: args.rich.stockQuantity ?? null,
+    stock_status: args.rich.stockStatus?.trim() || null,
+    metadata: args.rich.metadata ?? {},
+    variants: args.rich.variants ?? [],
+  };
+
+  const { data, error } = await args.admin
+    .from("products")
+    .update(payload)
+    .eq("id", args.productId)
+    .eq("store_id", args.storeId)
+    .select("id")
+    .maybeSingle();
+
+  if (error || !data?.id) {
+    rpcError(error, "PRODUCT_RICH_WRITE_FAILED");
+  }
 }
 
 export async function findCoreProductByExternalId(args: {
@@ -70,6 +111,7 @@ export async function createCoreProduct(args: {
   name: string;
   description: string;
   priceText: string;
+  priceAmount?: number | null;
   imageUrls: string[];
   categoryId: string;
   sourceType: string;
@@ -77,6 +119,7 @@ export async function createCoreProduct(args: {
   oldPriceAmount?: number | null;
   badgeTag?: string | null;
   fulfillmentRegion?: string | null;
+  rich?: RichProductWriteFields;
 }): Promise<CreatedCoreProduct> {
   const { data, error } = await args.admin.rpc("create_store_product_v2", {
     p_store_id: args.storeId,
@@ -84,6 +127,7 @@ export async function createCoreProduct(args: {
     p_name: args.name,
     p_description: args.description,
     p_price_text: args.priceText,
+    p_price_amount: args.priceAmount ?? null,
     p_image_urls: args.imageUrls,
     p_category_id: args.categoryId,
     p_source_type: args.sourceType,
@@ -100,7 +144,17 @@ export async function createCoreProduct(args: {
     throw new Error("PRODUCT_CORE_CREATE_FAILED");
   }
 
-  return { id, slug, created: data?.created !== false };
+  const created = data?.created !== false;
+  if (created && args.rich) {
+    await writeRichProductFields({
+      admin: args.admin,
+      storeId: args.storeId,
+      productId: id,
+      rich: args.rich,
+    });
+  }
+
+  return { id, slug, created };
 }
 
 export async function updateCoreProduct(args: {
@@ -110,12 +164,15 @@ export async function updateCoreProduct(args: {
   name: string;
   description: string;
   priceText: string;
+  priceAmount?: number | null;
   imageUrls: string[];
   categoryId: string;
   stockStatus: string;
   oldPriceAmount?: number | null;
   badgeTag?: string | null;
   fulfillmentRegion?: string | null;
+  storeId?: string;
+  rich?: RichProductWriteFields;
 }) {
   const { data, error } = await args.admin.rpc("update_store_product", {
     p_product_id: args.productId,
@@ -123,12 +180,14 @@ export async function updateCoreProduct(args: {
     p_name: args.name,
     p_description: args.description,
     p_price_text: args.priceText,
+    p_price_amount: args.priceAmount ?? null,
     p_image_urls: args.imageUrls,
     p_category_id: args.categoryId,
     p_stock_status: args.stockStatus,
     p_old_price_amount: args.oldPriceAmount ?? null,
     p_badge_tag: args.badgeTag ?? null,
     p_fulfillment_region: args.fulfillmentRegion ?? null,
+    p_clear_price_amount: args.priceAmount == null,
     p_clear_old_price_amount: args.oldPriceAmount == null,
     p_clear_badge_tag: !args.badgeTag,
     p_clear_fulfillment_region: !args.fulfillmentRegion,
@@ -136,6 +195,16 @@ export async function updateCoreProduct(args: {
 
   if (error || data?.success !== true) {
     rpcError(error, "PRODUCT_CORE_UPDATE_FAILED");
+  }
+
+  if (args.rich) {
+    if (!args.storeId) throw new Error("PRODUCT_RICH_STORE_REQUIRED");
+    await writeRichProductFields({
+      admin: args.admin,
+      storeId: args.storeId,
+      productId: args.productId,
+      rich: args.rich,
+    });
   }
 }
 
