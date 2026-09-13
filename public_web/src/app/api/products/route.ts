@@ -6,7 +6,10 @@ import {
   createRichCoreProduct,
   updateRichCoreProduct,
 } from "@/lib/productCoreServer";
-import { validateProductImageUrls } from "@/lib/productImagePolicy";
+import {
+  normalizeProductImageUrls,
+  validateProductImageUrls,
+} from "@/lib/productImagePolicy";
 import {
   normalizeProductMetadata,
   normalizeProductVariants,
@@ -45,6 +48,10 @@ function amountFromPriceText(value: unknown): number | null {
   }
   const amount = Number(cleaned);
   return Number.isFinite(amount) && amount >= 0 ? amount : null;
+}
+
+function sameStringList(left: string[], right: string[]) {
+  return left.length === right.length && left.every((value, index) => value === right[index]);
 }
 
 async function ownerContext(slug: string) {
@@ -227,21 +234,30 @@ export async function PATCH(request: NextRequest) {
   const slug = cleanString(govde.slug) || "";
   if (!productId || !slug) return NextResponse.json({ hata: "Ürün ID ve vitrin zorunludur." }, { status: 422 });
 
-  const imageValidation = validateProductImageUrls(govde.imageUrls);
-  if (!imageValidation.ok) {
-    return NextResponse.json({ hata: imageValidation.error ?? "Ürün fotoğrafları geçersiz." }, { status: 422 });
-  }
-
   const owned = await ownerContext(slug);
   if (!owned) return NextResponse.json({ hata: "Oturumun geçersiz veya süresi dolmuş." }, { status: 401 });
 
   const { data: current } = await owned.admin
     .from("products")
-    .select("category_id,metadata,variants,brand,barcode,stock_quantity,price_amount")
+    .select("category_id,metadata,variants,brand,barcode,stock_quantity,price_amount,image_urls")
     .eq("id", productId)
     .eq("store_id", owned.store.id)
     .maybeSingle();
   if (!current) return NextResponse.json({ hata: "Ürün bulunamadı." }, { status: 404 });
+
+  const currentImageUrls = normalizeProductImageUrls(current.image_urls);
+  const requestedImageUrls = Object.prototype.hasOwnProperty.call(govde, "imageUrls")
+    ? normalizeProductImageUrls(govde.imageUrls)
+    : currentImageUrls;
+  const imageListChanged = !sameStringList(requestedImageUrls, currentImageUrls);
+  let imageUrls = currentImageUrls;
+  if (imageListChanged) {
+    const imageValidation = validateProductImageUrls(govde.imageUrls);
+    if (!imageValidation.ok) {
+      return NextResponse.json({ hata: imageValidation.error ?? "Ürün fotoğrafları geçersiz." }, { status: 422 });
+    }
+    imageUrls = imageValidation.imageUrls;
+  }
 
   const categoryId = cleanString(govde.categoryId) || cleanString(current.category_id) || "";
   const templateKey = await categoryTemplateKey(owned.admin, owned.store.id, categoryId);
@@ -259,7 +275,7 @@ export async function PATCH(request: NextRequest) {
   const variants = variantsForTemplate(
     variantInput,
     templateKey,
-    imageValidation.imageUrls,
+    imageUrls,
   );
 
   const priceText = typeof govde.priceText === "string" ? govde.priceText.trim() : "";
@@ -288,7 +304,7 @@ export async function PATCH(request: NextRequest) {
       description: typeof govde.description === "string" ? govde.description.trim() : "",
       priceText,
       priceAmount: cleanAmount(govde.priceAmount) ?? amountFromPriceText(priceText) ?? cleanAmount(current.price_amount),
-      imageUrls: imageValidation.imageUrls,
+      imageUrls,
       categoryId,
       stockStatus: isService ? "" : cleanString(govde.stockStatus) || "Mevcut",
       stockQuantity,
