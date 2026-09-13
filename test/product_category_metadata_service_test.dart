@@ -5,7 +5,7 @@ import 'package:vixrex/services/bulk_product_field_update_service.dart';
 import 'package:vixrex/services/product_category_metadata_service.dart';
 
 void main() {
-  test('kategori tipi metadata templateKey ve itemKind değerini hizalar', () {
+  test('hizmet kategorisi fiziksel ürün metadata kalıntılarını temizler', () {
     final current = ProductRichMetadata(
       templateKey: 'fashion',
       itemKind: 'physical',
@@ -25,12 +25,12 @@ void main() {
 
     expect(aligned.templateKey, 'service');
     expect(aligned.itemKind, 'service');
-    expect(aligned.sku, 'SKU-1');
-    expect(aligned.mpn, 'MPN-1');
-    expect(aligned.attributes.single.key, 'color');
+    expect(aligned.sku, isNull);
+    expect(aligned.mpn, isNull);
+    expect(aligned.attributes, isEmpty);
   });
 
-  test('toplu kategori değişimi ürün metadata tipini de değiştirir', () {
+  test('toplu kategori değişimi hizmete geçerken fiziksel metadata bırakmaz', () {
     final product = Product(
       id: 'p1',
       name: 'Telefon',
@@ -57,6 +57,31 @@ void main() {
     expect(updated.single.category, 'Hizmetler');
     expect(updated.single.richMetadata.templateKey, 'service');
     expect(updated.single.richMetadata.itemKind, 'service');
-    expect(updated.single.richMetadata.sku, 'T-1');
+    expect(updated.single.richMetadata.sku, isNull);
+  });
+
+  test('fiziksel ürün şablonları arasında ortak fiziksel metadata korunur', () {
+    const current = ProductRichMetadata(
+      templateKey: 'fashion',
+      itemKind: 'physical',
+      sku: 'SKU-2',
+      mpn: 'MPN-2',
+      attributes: [
+        ProductAttributeValue(key: 'color', label: 'Renk', value: 'Siyah'),
+      ],
+    );
+    final target = ProductCategory(
+      id: 'electronics',
+      name: 'Elektronik',
+      productTemplateKey: 'electronics',
+    );
+
+    final aligned = alignProductMetadataToCategory(current, target);
+
+    expect(aligned.itemKind, 'physical');
+    expect(aligned.templateKey, 'electronics');
+    expect(aligned.sku, 'SKU-2');
+    expect(aligned.mpn, 'MPN-2');
+    expect(aligned.service, isNull);
   });
 }
