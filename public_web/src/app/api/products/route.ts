@@ -17,6 +17,10 @@ class ApiError extends Error {
   }
 }
 
+function hasOwn(body: Record<string, unknown>, key: string) {
+  return Object.prototype.hasOwnProperty.call(body, key);
+}
+
 function text(value: unknown, max: number, label: string): string | null {
   if (value == null || value === "") return null;
   if (typeof value !== "string") throw new ApiError(`${label} geçersiz.`, 422);
@@ -42,6 +46,16 @@ function num(
 }
 
 function rich(body: Record<string, unknown>) {
+  const hasRichPayload = [
+    "brand",
+    "barcode",
+    "vatRate",
+    "stockQuantity",
+    "metadata",
+    "variants",
+  ].some((key) => hasOwn(body, key));
+  if (!hasRichPayload) return undefined;
+
   const rawMetadata = body.metadata;
   if (rawMetadata != null && (typeof rawMetadata !== "object" || Array.isArray(rawMetadata))) {
     throw new ApiError("Ürün detayları geçersiz.", 422);
@@ -148,6 +162,9 @@ export async function PATCH(request: NextRequest) {
     if (!productId || !slug) throw new ApiError("Ürün ID ve vitrin zorunludur.", 422);
     const { admin, store } = await ownerStore(slug);
     const richFields = rich(body);
+    const priceAmount = hasOwn(body, "priceAmount")
+      ? num(body.priceAmount, "Fiyat")
+      : undefined;
     await updateCoreProduct({
       admin,
       productId,
@@ -156,10 +173,10 @@ export async function PATCH(request: NextRequest) {
       name: text(body.name, 80, "Ürün adı") ?? "",
       description: text(body.description, 500, "Açıklama") ?? "",
       priceText: text(body.priceText, 30, "Fiyat") ?? "",
-      priceAmount: num(body.priceAmount, "Fiyat"),
+      priceAmount,
       imageUrls: Array.isArray(body.imageUrls) ? body.imageUrls.map(String).slice(0, 4) : [],
       categoryId: typeof body.categoryId === "string" ? body.categoryId : "",
-      stockStatus: richFields.stockStatus,
+      stockStatus: text(body.stockStatus, 40, "Stok durumu") ?? "Mevcut",
       oldPriceAmount: num(body.oldPriceAmount, "Eski fiyat"),
       badgeTag: text(body.badgeTag, 20, "Rozet"),
       fulfillmentRegion: text(body.fulfillmentRegion, 80, "Teslim bölgesi"),
