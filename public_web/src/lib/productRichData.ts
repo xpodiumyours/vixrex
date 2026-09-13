@@ -73,11 +73,6 @@ export const PRODUCT_ATTRIBUTE_SCHEMA = schemaJson as {
 const PROFILE_KEYS = new Set(
   PRODUCT_ATTRIBUTE_SCHEMA.profiles.map((profile) => profile.key),
 );
-const METADATA_ATTRIBUTE_KEYS = new Set(
-  Object.entries(PRODUCT_ATTRIBUTE_SCHEMA.fields)
-    .filter(([, definition]) => definition.storage.startsWith("metadata.attributes."))
-    .map(([key]) => key),
-);
 
 export function isProductProfileKey(value: unknown): value is ProductProfileKey {
   return typeof value === "string" && PROFILE_KEYS.has(value as ProductProfileKey);
@@ -95,9 +90,11 @@ function objectOrEmpty(value: unknown): Record<string, unknown> {
     : {};
 }
 
-function optionalText(value: unknown): string | undefined {
-  const text = String(value ?? "").trim();
-  return text || undefined;
+function optionalText(value: unknown, maxLength?: number): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const text = value.trim();
+  if (!text || (maxLength != null && text.length > maxLength)) return undefined;
+  return text;
 }
 
 function optionalFiniteNumber(value: unknown): number | null | undefined {
@@ -106,94 +103,142 @@ function optionalFiniteNumber(value: unknown): number | null | undefined {
   return undefined;
 }
 
+function normalizeFieldValue(
+  definition: ProductAttributeDefinition,
+  value: unknown,
+): RichAttributeValue | undefined {
+  if (definition.type === "boolean") {
+    return typeof value === "boolean" ? value : undefined;
+  }
+  if (definition.type === "number") {
+    if (typeof value !== "number" || !Number.isFinite(value)) return undefined;
+    if (definition.min != null && value < definition.min) return undefined;
+    if (definition.max != null && value > definition.max) return undefined;
+    return value;
+  }
+  if (definition.type === "select") {
+    const text = optionalText(value, definition.maxLength);
+    if (!text || !(definition.options ?? []).includes(text)) return undefined;
+    return text;
+  }
+  return optionalText(value, definition.maxLength);
+}
+
 export function normalizeProductMetadata(value: unknown): ProductRichMetadata {
   const raw = objectOrEmpty(value);
   const metadata: ProductRichMetadata = { schemaVersion: 1 };
 
-  if (isProductProfileKey(raw.profileKey)) {
-    metadata.profileKey = raw.profileKey;
-  }
+  if (!isProductProfileKey(raw.profileKey)) return metadata;
+  metadata.profileKey = raw.profileKey;
+
+  const profile = getProductProfileDefinition(metadata.profileKey);
+  const allowedFields = new Set(profile?.fields ?? []);
 
   const identifiersRaw = objectOrEmpty(raw.identifiers);
-  const sku = optionalText(identifiersRaw.sku);
-  const mpn = optionalText(identifiersRaw.mpn);
+  const sku = allowedFields.has("sku") ? optionalText(identifiersRaw.sku, 80) : undefined;
+  const mpn = allowedFields.has("mpn") ? optionalText(identifiersRaw.mpn, 80) : undefined;
   if (sku || mpn) metadata.identifiers = { sku, mpn };
 
   const attributesRaw = objectOrEmpty(raw.attributes);
   const attributes: Record<string, RichAttributeValue> = {};
   for (const [key, item] of Object.entries(attributesRaw)) {
-    if (!METADATA_ATTRIBUTE_KEYS.has(key)) continue;
-    if (typeof item === "string") {
-      const text = item.trim();
-      if (text) attributes[key] = text;
-    } else if (typeof item === "number" && Number.isFinite(item)) {
-      attributes[key] = item;
-    } else if (typeof item === "boolean" || item === null) {
-      attributes[key] = item;
-    } else if (Array.isArray(item)) {
-      const values = item.map((v) => String(v).trim()).filter(Boolean);
-      if (values.length) attributes[key] = values;
+    if (!allowedFields.has(key)) continue;
+    const definition = PRODUCT_ATTRIBUTE_SCHEMA.fields[key];
+    if (!definition?.storage.startsWith("metadata.attributes.")) continue;
+    const normalized = normalizeFieldValue(definition, item);
+    if (normalized !== undefined && normalized !== null && normalized !== "") {
+      attributes[key] = normalized;
     }
   }
   if (Object.keys(attributes).length) metadata.attributes = attributes;
 
-  const serviceRaw = objectOrEmpty(raw.service);
-  const service: ProductServiceData = {};
-  const type = optionalText(serviceRaw.type);
-  const includes = optionalText(serviceRaw.includes);
-  const durationMinutes = optionalFiniteNumber(serviceRaw.durationMinutes);
-  const priceType = optionalText(serviceRaw.priceType);
-  const location = optionalText(serviceRaw.location);
-  if (type) service.type = type;
-  if (includes) service.includes = includes;
-  if (typeof durationMinutes === "number" && durationMinutes > 0) {
-    service.durationMinutes = durationMinutes;
+  if (profile?.itemKind === "service") {
+    const serviceRaw = objectOrEmpty(raw.service);
+    const service: ProductServiceData = {};
+    for (const fieldKey of profile.fields) {
+      const definition = PRODUCT_ATTRIBUTE_SCHEMA.fields[fieldKey];
+      if (!definition?.storage.startsWith("metadata.service.")) continue;
+      const serviceKey = definition.storage.split(".").at(-1);
+      if (!serviceKey) continue;
+      const normalized = normalizeFieldValue(definition, serviceRaw[serviceKey]);
+      if (normalized === undefined || normalized === null || normalized === "") continue;
+      if (serviceKey === "type" && typeof normalized === "string") service.type = normalized;
+      if (serviceKey === "priceType" && typeof normalized === "string") {
+        service.priceType = normalized as ProductServiceData["priceType"];
+      }
+      if (serviceKey === "durationMinutes" && typeof normalized === "number") {
+        service.durationMinutes = normalized;
+      }
+      if (serviceKey === "location" && typeof normalized === "string") {
+        service.location = normalized as ProductServiceData["location"];
+      }
+      if (serviceKey === "appointmentRequired" && typeof normalized === "boolean") {
+        service.appointmentRequired = normalized;
+      }
+      if (serviceKey === "includes" && typeof normalized === "string") {
+        service.includes = normalized;
+      }
+    }
+    if (Object.keys(service).length) metadata.service = service;
   }
-  if (["fixed", "starting_from", "ask"].includes(priceType || "")) {
-    service.priceType = priceType as ProductServiceData["priceType"];
-  }
-  if (["business", "on_site", "remote"].includes(location || "")) {
-    service.location = location as ProductServiceData["location"];
-  }
-  if (typeof serviceRaw.appointmentRequired === "boolean") {
-    service.appointmentRequired = serviceRaw.appointmentRequired;
-  }
-  if (Object.keys(service).length) metadata.service = service;
 
   return metadata;
 }
 
-export function normalizeProductVariants(value: unknown): ProductVariantData[] {
+export function normalizeProductVariants(
+  value: unknown,
+  profileKey?: ProductProfileKey,
+): ProductVariantData[] {
   if (!Array.isArray(value)) return [];
 
+  const profile = getProductProfileDefinition(profileKey);
+  const allowedVariantKeys = new Set(
+    (profile?.fields ?? Object.keys(PRODUCT_ATTRIBUTE_SCHEMA.fields)).filter(
+      (key) => PRODUCT_ATTRIBUTE_SCHEMA.fields[key]?.variantEligible === true,
+    ),
+  );
+
   return value
+    .slice(0, 20)
     .map((rawVariant, index): ProductVariantData | null => {
       const raw = objectOrEmpty(rawVariant);
       const optionsRaw = objectOrEmpty(raw.options);
       const options = Object.fromEntries(
         Object.entries(optionsRaw)
-          .filter(([key]) => {
-            const definition = PRODUCT_ATTRIBUTE_SCHEMA.fields[key];
-            return definition?.variantEligible === true;
+          .filter(([key]) => allowedVariantKeys.has(key))
+          .map(([key, item]) => {
+            const maxLength = PRODUCT_ATTRIBUTE_SCHEMA.fields[key]?.maxLength;
+            return [key, optionalText(item, maxLength) ?? ""] as const;
           })
-          .map(([key, item]) => [key, String(item ?? "").trim()] as const)
           .filter(([, item]) => Boolean(item)),
       );
       if (!Object.keys(options).length) return null;
 
-      const id = optionalText(raw.id) || `variant-${index + 1}`;
+      const id = optionalText(raw.id, 100) || `variant-${index + 1}`;
       const imageUrls = Array.isArray(raw.imageUrls)
-        ? raw.imageUrls.map((item) => String(item).trim()).filter(Boolean).slice(0, 4)
+        ? raw.imageUrls
+            .filter((item): item is string => typeof item === "string")
+            .map((item) => item.trim())
+            .filter((item) => /^https?:\/\//i.test(item))
+            .slice(0, 4)
         : undefined;
+      const priceAmount = optionalFiniteNumber(raw.priceAmount);
+      const stockQuantity = optionalFiniteNumber(raw.stockQuantity);
 
       return {
         id,
         options,
-        sku: optionalText(raw.sku),
-        gtin: optionalText(raw.gtin),
-        priceAmount: optionalFiniteNumber(raw.priceAmount),
-        stockQuantity: optionalFiniteNumber(raw.stockQuantity),
-        stockStatus: optionalText(raw.stockStatus) ?? null,
+        sku: optionalText(raw.sku, 80),
+        gtin: optionalText(raw.gtin, 32),
+        priceAmount:
+          typeof priceAmount === "number" && priceAmount >= 0 ? priceAmount : null,
+        stockQuantity:
+          typeof stockQuantity === "number" &&
+          Number.isInteger(stockQuantity) &&
+          stockQuantity >= 0
+            ? stockQuantity
+            : null,
+        stockStatus: optionalText(raw.stockStatus, 40) ?? null,
         imageUrls,
       };
     })
