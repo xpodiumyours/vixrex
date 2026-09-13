@@ -26,7 +26,7 @@ export function getProductImages(product: ProductItem): string[] {
         .map((value) => String(value || "").trim())
         .filter(Boolean)
     )
-  ).slice(0, 4);
+  ).slice(0, 10);
 }
 
 /** Taslak / test ürün adları — müşteri vitrininde gizlenmeli */
