@@ -132,8 +132,7 @@ class ProductRichMetadata {
           json['schemaVersion'] is num
               ? (json['schemaVersion'] as num).toInt()
               : 1,
-      itemKind:
-          json['itemKind'] == 'service' ? 'service' : 'physical',
+      itemKind: json['itemKind'] == 'service' ? 'service' : 'physical',
       templateKey: _cleanString(json['templateKey']),
       sku: _cleanString(identifiers['sku']),
       mpn: _cleanString(identifiers['mpn']),
@@ -205,7 +204,7 @@ class ProductVariantData {
       stockQuantity:
           stock is num && stock >= 0 ? stock.toInt() : null,
       stockStatus: _cleanString(json['stockStatus']),
-      imageUrls: _cleanStringList(json['imageUrls']).take(4).toList(),
+      imageUrls: _cleanStringList(json['imageUrls']).take(10).toList(),
     );
   }
 
