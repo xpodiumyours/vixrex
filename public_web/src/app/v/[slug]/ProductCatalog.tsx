@@ -14,7 +14,7 @@ import {
 } from "@/lib/products";
 import type { RichProductItem } from "@/lib/richProductItem";
 import { productVariantLabel } from "@/lib/productCardPresentation";
-import { productIsService } from "@/lib/productRichData";
+import { normalizeProductMetadata } from "@/lib/productRichData";
 
 type CatalogProduct = RichProductItem;
 
@@ -230,11 +230,14 @@ export default function ProductCatalog({
           const image = productImageOnly(product);
           const quickImages = productImagesOnly(product);
           const category = String(product.category || "").trim();
-          const isService = productIsService(product.metadata);
+          const metadata = normalizeProductMetadata(product.metadata);
+          const isService = metadata.itemKind === "service";
           const brand = isService ? "" : String(product.brand || "").trim();
           const stockStatus = isService ? "" : String(product.stockStatus || "").trim();
           const tone = stockTone(stockStatus);
-          const variantLabel = isService ? null : productVariantLabel(product.variants);
+          const variantLabel = isService
+            ? null
+            : productVariantLabel(product.variants, metadata.templateKey);
           const fulfillmentRegion = String(product.fulfillmentRegion || "").trim();
           const fulfillmentMapUrl = productLocationMapUrl(fulfillmentRegion);
           const productKey = product.id || productUrl;
