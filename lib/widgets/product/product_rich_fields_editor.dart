@@ -117,7 +117,10 @@ class _ProductRichFieldsEditorState extends State<ProductRichFieldsEditor> {
               decoration: const InputDecoration(labelText: 'Stok adedi'),
               onChanged: (raw) {
                 final cleaned = raw.replaceAll(RegExp(r'[^0-9]'), '');
-                _emit(stockQuantity: cleaned.isEmpty ? null : int.tryParse(cleaned));
+                _emit(
+                  stockQuantity: cleaned.isEmpty ? null : int.tryParse(cleaned),
+                  setStockQuantity: true,
+                );
               },
             ),
           ],
@@ -451,7 +454,7 @@ class _ProductRichFieldsEditorState extends State<ProductRichFieldsEditor> {
     String? barcode,
     bool setBarcode = false,
     int? stockQuantity,
-    bool setStockQuantity = true,
+    bool setStockQuantity = false,
     ProductRichMetadata? metadata,
   }) {
     widget.onChanged(
