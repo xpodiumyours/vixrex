@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   buildProductQuickFacts,
+  buildVariantOptionGroups,
+  findMatchingVariant,
   productVariantCount,
   productVariantLabel,
+  variantOptionIsAvailable,
 } from "../src/lib/productCardPresentation";
 
 describe("ürün kartı veri sunumu", () => {
@@ -78,5 +81,52 @@ describe("ürün kartı veri sunumu", () => {
     expect(productVariantCount(variants)).toBe(2);
     expect(productVariantLabel(variants)).toBe("2 seçenek");
     expect(productVariantLabel([{ id: "v1", options: { color: "Siyah" } }])).toBeNull();
+  });
+
+  it("varyant seçeneklerini kategori etiketleriyle gruplar ve tam kombinasyonu bulur", () => {
+    const variants = [
+      {
+        id: "black-m",
+        options: { color: "Siyah", size: "M" },
+        priceAmount: 749,
+        stockQuantity: 4,
+      },
+      {
+        id: "black-l",
+        options: { color: "Siyah", size: "L" },
+        priceAmount: 779,
+        stockQuantity: 2,
+      },
+      {
+        id: "white-m",
+        options: { color: "Beyaz", size: "M" },
+        priceAmount: 759,
+        stockQuantity: 0,
+      },
+    ];
+
+    expect(buildVariantOptionGroups(variants, "fashion")).toEqual([
+      { key: "color", label: "Renk", values: ["Siyah", "Beyaz"] },
+      { key: "size", label: "Beden", values: ["M", "L"] },
+    ]);
+    expect(findMatchingVariant(variants, { color: "Siyah", size: "L" })?.id).toBe(
+      "black-l",
+    );
+    expect(findMatchingVariant(variants, { color: "Beyaz", size: "L" })).toBeNull();
+  });
+
+  it("mevcut seçimle var olmayan varyant seçeneğini kullanılabilir saymaz", () => {
+    const variants = [
+      { id: "black-m", options: { color: "Siyah", size: "M" } },
+      { id: "black-l", options: { color: "Siyah", size: "L" } },
+      { id: "white-m", options: { color: "Beyaz", size: "M" } },
+    ];
+
+    expect(
+      variantOptionIsAvailable(variants, { color: "Beyaz", size: "M" }, "size", "L"),
+    ).toBe(false);
+    expect(
+      variantOptionIsAvailable(variants, { color: "Siyah", size: "M" }, "size", "L"),
+    ).toBe(true);
   });
 });
