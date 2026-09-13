@@ -34,7 +34,23 @@ describe("ürün detay — zengin veri okuma sözleşmesi", () => {
     expect(source).toContain("priceCurrency: product.currency || \"TRY\"");
   });
 
-  it("stok adedi sıfırsa ürünü stokta saymaz", () => {
+  it("stok adedi sıfırsa fiziksel ürünü stokta saymaz", () => {
     expect(source).toContain("product.stockQuantity == null || product.stockQuantity > 0");
+    expect(source).toContain("!isService");
+  });
+
+  it("kategoriye ait gerçek detayları ve varyant seçeneklerini sunum katmanından alır", () => {
+    expect(source).toContain("buildProductDetailFacts");
+    expect(source).toContain("buildVariantOptionFacts");
+    expect(source).toContain("metadata.templateKey");
+  });
+
+  it("hizmeti Product olarak işaretlemez ve stok kartını gizler", () => {
+    expect(source).toContain('"@type": "Service"');
+    expect(source).toContain('"@type": "Product"');
+    expect(source).toContain('serviceType: metadata.service?.serviceType');
+    expect(source).toContain("areaServed: product.fulfillmentRegion");
+    expect(source).toContain("!isService && (");
+    expect(source).toContain("WhatsApp’tan hizmet hakkında bilgi al");
   });
 });
