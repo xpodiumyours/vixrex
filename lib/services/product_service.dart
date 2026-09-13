@@ -4,6 +4,7 @@ import 'package:vixrex/models/created_product.dart';
 import 'package:vixrex/models/store_product.dart';
 import 'package:vixrex/repositories/product_repository.dart';
 import 'package:vixrex/repositories/supabase_product_repository.dart';
+import 'package:vixrex/services/product_image_policy.dart';
 import 'package:vixrex/utils/failure.dart';
 
 /// Ürün CRUD işlemleri için servis katmanı.
@@ -53,6 +54,12 @@ class ProductService {
     bool isVisible = true,
     int sortOrder = 0,
   }) async {
+    final imageError = ProductImagePolicy.validate(imageUrls);
+    if (imageError != null) {
+      return Result.failure(Failure(imageError));
+    }
+    final normalizedImageUrls = ProductImagePolicy.normalize(imageUrls);
+
     try {
       final created = await _repo.createProduct(
         storeId: storeId,
@@ -64,7 +71,7 @@ class ProductService {
         oldPriceAmount: oldPriceAmount,
         badgeTag: badgeTag,
         fulfillmentRegion: fulfillmentRegion,
-        imageUrls: imageUrls,
+        imageUrls: normalizedImageUrls,
         categoryId: categoryId,
         sourceType: sourceType,
         externalProductId: externalProductId,
@@ -104,6 +111,15 @@ class ProductService {
     bool clearStockQuantity = false,
     bool clearStockStatus = false,
   }) async {
+    List<String>? normalizedImageUrls;
+    if (imageUrls != null) {
+      final imageError = ProductImagePolicy.validate(imageUrls);
+      if (imageError != null) {
+        return Result.failure(Failure(imageError));
+      }
+      normalizedImageUrls = ProductImagePolicy.normalize(imageUrls);
+    }
+
     try {
       await _repo.updateProduct(
         productId: productId,
@@ -115,7 +131,7 @@ class ProductService {
         oldPriceAmount: oldPriceAmount,
         badgeTag: badgeTag,
         fulfillmentRegion: fulfillmentRegion,
-        imageUrls: imageUrls,
+        imageUrls: normalizedImageUrls,
         categoryId: categoryId,
         isVisible: isVisible,
         sortOrder: sortOrder,
