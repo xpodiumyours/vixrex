@@ -133,10 +133,10 @@ describe("ürün kartı veri sunumu", () => {
       { key: "color", label: "Renk", values: ["Siyah", "Beyaz"] },
       { key: "size", label: "Beden", values: ["M", "L"] },
     ]);
-    expect(findMatchingVariant(variants, { color: "Siyah", size: "L" })?.id).toBe(
+    expect(findMatchingVariant(variants, { color: "Siyah", size: "L" }, "fashion")?.id).toBe(
       "black-l",
     );
-    expect(findMatchingVariant(variants, { color: "Beyaz", size: "L" })).toBeNull();
+    expect(findMatchingVariant(variants, { color: "Beyaz", size: "L" }, "fashion")).toBeNull();
   });
 
   it("mevcut seçimle var olmayan varyant seçeneğini kullanılabilir saymaz", () => {
@@ -147,10 +147,38 @@ describe("ürün kartı veri sunumu", () => {
     ];
 
     expect(
-      variantOptionIsAvailable(variants, { color: "Beyaz", size: "M" }, "size", "L"),
+      variantOptionIsAvailable(
+        variants,
+        { color: "Beyaz", size: "M" },
+        "size",
+        "L",
+        "fashion",
+      ),
     ).toBe(false);
     expect(
-      variantOptionIsAvailable(variants, { color: "Siyah", size: "M" }, "size", "L"),
+      variantOptionIsAvailable(
+        variants,
+        { color: "Siyah", size: "M" },
+        "size",
+        "L",
+        "fashion",
+      ),
     ).toBe(true);
+  });
+
+  it("kategori değişince eski kategoriye ait varyantları müşteriye taşımaz", () => {
+    const variants = [
+      { id: "mixed", options: { size: "M", ram: "8 GB" } },
+      { id: "fashion-only", options: { size: "L" } },
+      { id: "electronics", options: { ram: "16 GB", storageCapacity: "256 GB" } },
+    ];
+
+    expect(buildVariantOptionGroups(variants, "electronics")).toEqual([
+      { key: "ram", label: "RAM", values: ["8 GB", "16 GB"] },
+      { key: "storageCapacity", label: "Depolama kapasitesi", values: ["256 GB"] },
+    ]);
+    expect(productVariantCount(variants, "electronics")).toBe(2);
+    expect(productVariantLabel(variants, "electronics")).toBe("2 seçenek");
+    expect(findMatchingVariant(variants, { size: "L" }, "electronics")).toBeNull();
   });
 });
