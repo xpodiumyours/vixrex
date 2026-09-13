@@ -1,0 +1,112 @@
+{
+  "version": 1,
+  "itemKinds": ["physical", "service"],
+  "requirements": ["optional", "recommended"],
+  "valueTypes": ["text", "number", "boolean", "single", "multi"],
+  "commonPhysicalAttributes": [
+    {"key":"brand","label":"Marka","valueType":"text","requirement":"recommended","storage":"core.brand","display":["quick","detail"]},
+    {"key":"barcode","label":"Barkod / GTIN","valueType":"text","requirement":"optional","storage":"core.barcode","display":["detail"]},
+    {"key":"sku","label":"Stok kodu / SKU","valueType":"text","requirement":"optional","storage":"metadata.identifiers.sku","display":["detail"]},
+    {"key":"mpn","label":"Üretici parça kodu / MPN","valueType":"text","requirement":"optional","storage":"metadata.identifiers.mpn","display":["detail"]},
+    {"key":"condition","label":"Ürün durumu","valueType":"single","requirement":"optional","storage":"metadata.attributes","options":["new","used","refurbished"],"display":["quick","detail"]}
+  ],
+  "commonServiceAttributes": [
+    {"key":"serviceType","label":"Hizmet türü","valueType":"text","requirement":"recommended","storage":"metadata.service.serviceType","display":["quick","detail"]},
+    {"key":"priceMode","label":"Fiyat biçimi","valueType":"single","requirement":"recommended","storage":"metadata.service.priceMode","options":["fixed","starting_from","ask"],"display":["quick","detail"]},
+    {"key":"durationMinutes","label":"Tahmini süre (dakika)","valueType":"number","requirement":"optional","storage":"metadata.service.durationMinutes","display":["quick","detail"]},
+    {"key":"serviceLocation","label":"Hizmet yeri","valueType":"single","requirement":"recommended","storage":"metadata.service.serviceLocation","options":["business","customer","remote"],"display":["quick","detail"]},
+    {"key":"appointmentRequired","label":"Randevu gerekli","valueType":"boolean","requirement":"optional","storage":"metadata.service.appointmentRequired","display":["detail"]},
+    {"key":"included","label":"Hizmete dahil olanlar","valueType":"multi","requirement":"optional","storage":"metadata.service.included","display":["detail"]}
+  ],
+  "templates": [
+    {
+      "key":"generic",
+      "label":"Genel ürün",
+      "itemKind":"physical",
+      "attributes":[]
+    },
+    {
+      "key":"fashion",
+      "label":"Giyim ve moda",
+      "itemKind":"physical",
+      "attributes":[
+        {"key":"color","label":"Renk","valueType":"single","requirement":"recommended","storage":"metadata.attributes","variantEligible":true,"display":["quick","detail"]},
+        {"key":"size","label":"Beden","valueType":"single","requirement":"recommended","storage":"metadata.attributes","variantEligible":true,"display":["quick","detail"]},
+        {"key":"material","label":"Materyal","valueType":"text","requirement":"recommended","storage":"metadata.attributes","display":["quick","detail"]},
+        {"key":"pattern","label":"Desen","valueType":"text","requirement":"optional","storage":"metadata.attributes","variantEligible":true,"display":["detail"]},
+        {"key":"sizeSystem","label":"Beden sistemi","valueType":"text","requirement":"optional","storage":"metadata.attributes","display":["detail"]}
+      ]
+    },
+    {
+      "key":"electronics",
+      "label":"Elektronik",
+      "itemKind":"physical",
+      "attributes":[
+        {"key":"model","label":"Model","valueType":"text","requirement":"recommended","storage":"metadata.attributes","display":["quick","detail"]},
+        {"key":"color","label":"Renk","valueType":"single","requirement":"optional","storage":"metadata.attributes","variantEligible":true,"display":["quick","detail"]},
+        {"key":"ram","label":"RAM","valueType":"text","requirement":"optional","storage":"metadata.attributes","variantEligible":true,"display":["quick","detail"]},
+        {"key":"storageCapacity","label":"Depolama kapasitesi","valueType":"text","requirement":"optional","storage":"metadata.attributes","variantEligible":true,"display":["quick","detail"]},
+        {"key":"compatibility","label":"Uyumluluk","valueType":"multi","requirement":"optional","storage":"metadata.attributes","display":["detail"]},
+        {"key":"warranty","label":"Garanti bilgisi","valueType":"text","requirement":"optional","storage":"metadata.attributes","display":["detail"]}
+      ]
+    },
+    {
+      "key":"beauty",
+      "label":"Kozmetik ve bakım",
+      "itemKind":"physical",
+      "attributes":[
+        {"key":"shade","label":"Renk / ton","valueType":"single","requirement":"optional","storage":"metadata.attributes","variantEligible":true,"display":["quick","detail"]},
+        {"key":"netQuantity","label":"Net miktar","valueType":"text","requirement":"recommended","storage":"metadata.attributes","display":["quick","detail"]},
+        {"key":"usageType","label":"Kullanım alanı","valueType":"text","requirement":"optional","storage":"metadata.attributes","display":["detail"]},
+        {"key":"skinHairType","label":"Cilt / saç tipi","valueType":"multi","requirement":"optional","storage":"metadata.attributes","display":["detail"]},
+        {"key":"ingredients","label":"İçerik","valueType":"multi","requirement":"optional","storage":"metadata.attributes","display":["detail"]},
+        {"key":"warnings","label":"Uyarılar","valueType":"multi","requirement":"optional","storage":"metadata.attributes","display":["detail"]}
+      ]
+    },
+    {
+      "key":"food",
+      "label":"Gıda ve içecek",
+      "itemKind":"physical",
+      "attributes":[
+        {"key":"netQuantity","label":"Net miktar","valueType":"text","requirement":"recommended","storage":"metadata.attributes","display":["quick","detail"]},
+        {"key":"ingredients","label":"İçindekiler","valueType":"multi","requirement":"optional","storage":"metadata.attributes","display":["detail"]},
+        {"key":"allergens","label":"Alerjen bilgisi","valueType":"multi","requirement":"optional","storage":"metadata.attributes","display":["quick","detail"]},
+        {"key":"storageInstructions","label":"Saklama koşulları","valueType":"text","requirement":"optional","storage":"metadata.attributes","display":["detail"]},
+        {"key":"origin","label":"Menşei","valueType":"text","requirement":"optional","storage":"metadata.attributes","display":["detail"]}
+      ]
+    },
+    {
+      "key":"home",
+      "label":"Ev, mobilya ve dekorasyon",
+      "itemKind":"physical",
+      "attributes":[
+        {"key":"material","label":"Materyal","valueType":"text","requirement":"recommended","storage":"metadata.attributes","display":["quick","detail"]},
+        {"key":"color","label":"Renk","valueType":"single","requirement":"optional","storage":"metadata.attributes","variantEligible":true,"display":["quick","detail"]},
+        {"key":"width","label":"Genişlik","valueType":"text","requirement":"optional","storage":"metadata.attributes","display":["detail"]},
+        {"key":"height","label":"Yükseklik","valueType":"text","requirement":"optional","storage":"metadata.attributes","display":["detail"]},
+        {"key":"depth","label":"Derinlik","valueType":"text","requirement":"optional","storage":"metadata.attributes","display":["detail"]},
+        {"key":"weight","label":"Ağırlık","valueType":"text","requirement":"optional","storage":"metadata.attributes","display":["detail"]},
+        {"key":"assembly","label":"Montaj bilgisi","valueType":"text","requirement":"optional","storage":"metadata.attributes","display":["detail"]}
+      ]
+    },
+    {
+      "key":"automotive",
+      "label":"Oto ve yedek parça",
+      "itemKind":"physical",
+      "attributes":[
+        {"key":"partNumber","label":"Parça / model kodu","valueType":"text","requirement":"recommended","storage":"metadata.attributes","display":["quick","detail"]},
+        {"key":"oemNumber","label":"OEM numarası","valueType":"text","requirement":"optional","storage":"metadata.attributes","display":["detail"]},
+        {"key":"compatibleMake","label":"Uyumlu marka","valueType":"multi","requirement":"recommended","storage":"metadata.attributes","display":["detail"]},
+        {"key":"compatibleModel","label":"Uyumlu model","valueType":"multi","requirement":"recommended","storage":"metadata.attributes","display":["detail"]},
+        {"key":"compatibleYear","label":"Uyumlu yıl","valueType":"multi","requirement":"optional","storage":"metadata.attributes","display":["detail"]},
+        {"key":"position","label":"Parça konumu / tarafı","valueType":"text","requirement":"optional","storage":"metadata.attributes","display":["detail"]}
+      ]
+    },
+    {
+      "key":"service",
+      "label":"Hizmet",
+      "itemKind":"service",
+      "attributes":[]
+    }
+  ]
+}
