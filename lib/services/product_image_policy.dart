@@ -2,7 +2,7 @@ class ProductImagePolicy {
   const ProductImagePolicy._();
 
   static const int minImages = 3;
-  static const int maxImages = 4;
+  static const int maxImages = 10;
 
   static List<String> normalize(List<String> imageUrls) {
     return imageUrls
