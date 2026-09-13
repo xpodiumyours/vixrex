@@ -208,6 +208,7 @@ class XmlProductUploadService {
     final category = _findField(fields, _categoryAliases);
     final stockRaw = _findField(fields, _stockAliases);
     final stockStatus = _normalizeStockStatus(stockRaw);
+    final stockQuantity = _normalizeStockQuantity(stockRaw);
     final imageUrls = _findImageUrls(fields);
     final brand = _findField(fields, _brandAliases);
     final sku = _findField(fields, _skuAliases);
@@ -221,6 +222,7 @@ class XmlProductUploadService {
       imageUrls: imageUrls,
       category: category.isNotEmpty ? category : 'Genel',
       stockStatus: stockStatus,
+      stockQuantity: stockQuantity,
       isVisible: true,
       source: 'xml_import',
       brand: brand.isNotEmpty ? brand : null,
@@ -231,11 +233,10 @@ class XmlProductUploadService {
   }
 
   String _findField(Map<String, String> fields, Set<String> aliases) {
-    for (final alias in aliases) {
-      for (final entry in fields.entries) {
-        if (_normalizeTagName(entry.key) == alias) {
-          return entry.value;
-        }
+    final normalizedAliases = aliases.map(_normalizeTagName).toSet();
+    for (final entry in fields.entries) {
+      if (normalizedAliases.contains(_normalizeTagName(entry.key))) {
+        return entry.value;
       }
     }
     return '';
@@ -243,20 +244,28 @@ class XmlProductUploadService {
 
   List<String> _findImageUrls(Map<String, String> fields) {
     final urls = <String>[];
+    final normalizedAliases = _imageUrlAliases.map(_normalizeTagName).toSet();
+    final numberedImageField = RegExp(
+      r'^(gorsel|image|foto|fotograf|resim)(url)?\d+$',
+    );
 
-    for (final alias in _imageUrlAliases) {
-      for (final entry in fields.entries) {
-        if (_normalizeTagName(entry.key) == alias) {
-          final rawUrl = entry.value.trim();
-          final url = rawUrl.startsWith('//') ? 'https:$rawUrl' : rawUrl;
-          if (url.startsWith('http://') || url.startsWith('https://')) {
-            urls.add(url);
-          }
-        }
+    for (final entry in fields.entries) {
+      final normalizedKey = _normalizeTagName(entry.key);
+      if (!normalizedAliases.contains(normalizedKey) &&
+          !numberedImageField.hasMatch(normalizedKey)) {
+        continue;
       }
+
+      final rawUrl = entry.value.trim();
+      final url = rawUrl.startsWith('//') ? 'https:$rawUrl' : rawUrl;
+      if ((url.startsWith('http://') || url.startsWith('https://')) &&
+          !urls.contains(url)) {
+        urls.add(url);
+      }
+      if (urls.length >= ProductImagePolicy.maxImages) break;
     }
 
-    return urls.toSet().take(ProductImagePolicy.maxImages).toList();
+    return urls;
   }
 
   String _normalizeTagName(String value) {
@@ -267,7 +276,7 @@ class XmlProductUploadService {
         .replaceAll(RegExp(r'[çc]'), 'c')
         .replaceAll(RegExp(r'[şs]'), 's')
         .replaceAll(RegExp(r'[ğg]'), 'g')
-        .replaceAll(RegExp(r'[iiî]'), 'i')
+        .replaceAll(RegExp(r'[ıiî]'), 'i')
         .replaceAll(RegExp(r'[^a-z0-9]'), '')
         .trim();
   }
@@ -325,6 +334,12 @@ class XmlProductUploadService {
       return StockStatus.lowStock.label;
     }
     return StockStatus.available.label;
+  }
+
+  int? _normalizeStockQuantity(String raw) {
+    final trimmed = raw.trim();
+    if (!RegExp(r'^\d+$').hasMatch(trimmed)) return null;
+    return int.tryParse(trimmed);
   }
 
   static const _nameAliases = {
@@ -438,15 +453,6 @@ class XmlProductUploadService {
     'görsel',
     'img',
     'src',
-    'gorsel1',
-    'gorsel2',
-    'gorsel3',
-    'image1',
-    'image2',
-    'foto1',
-    'foto2',
-    'resim1',
-    'resim2',
   };
 
   static const _brandAliases = {
