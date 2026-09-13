@@ -1,235 +1,190 @@
-import { NextResponse, type NextRequest } from "next/server";
 import { cookies } from "next/headers";
+import { NextResponse, type NextRequest } from "next/server";
+import { createCoreProduct, updateCoreProduct } from "@/lib/productCoreServer";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
-import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import {
-  createCoreProduct,
-  updateCoreProduct,
-} from "@/lib/productCoreServer";
-
-/**
- * Ürün CRUD API'si — owner session ile korunuyor.
- *
- * POST: Yeni ürün oluştur
- * PATCH: Ürün güncelle
- * DELETE: Ürün sil
- *
- * Zincir:
- *   HttpOnly sahip çerezi doğrulanır
- *   → Supabase admin client ile RPC çağrılır
- *   → Sonuç döndürülür
- */
+  isProductProfileKey,
+  normalizeProductMetadata,
+  normalizeProductVariants,
+} from "@/lib/productRichData";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
 export const dynamic = "force-dynamic";
 
-export async function POST(request: NextRequest) {
-  let govde: Record<string, unknown>;
-  try {
-    govde = await request.json();
-  } catch {
-    return NextResponse.json({ hata: "Geçersiz istek." }, { status: 400 });
+class ApiError extends Error {
+  constructor(message: string, readonly status: number) {
+    super(message);
+  }
+}
+
+function text(value: unknown, max: number, label: string): string | null {
+  if (value == null || value === "") return null;
+  if (typeof value !== "string") throw new ApiError(`${label} geçersiz.`, 422);
+  const normalized = value.trim();
+  if (normalized.length > max) throw new ApiError(`${label} çok uzun.`, 422);
+  return normalized || null;
+}
+
+function num(
+  value: unknown,
+  label: string,
+  min = 0,
+  max?: number,
+  integer = false,
+): number | null {
+  if (value == null || value === "") return null;
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    throw new ApiError(`${label} geçersiz.`, 422);
+  }
+  if (integer && !Number.isInteger(value)) throw new ApiError(`${label} tam sayı olmalı.`, 422);
+  if (value < min || (max != null && value > max)) throw new ApiError(`${label} aralık dışında.`, 422);
+  return value;
+}
+
+function rich(body: Record<string, unknown>) {
+  const rawMetadata = body.metadata;
+  if (rawMetadata != null && (typeof rawMetadata !== "object" || Array.isArray(rawMetadata))) {
+    throw new ApiError("Ürün detayları geçersiz.", 422);
+  }
+  const profileKey = rawMetadata && typeof rawMetadata === "object"
+    ? (rawMetadata as Record<string, unknown>).profileKey
+    : undefined;
+  if (profileKey != null && !isProductProfileKey(profileKey)) {
+    throw new ApiError("Ürün tipi geçersiz.", 422);
+  }
+  if (body.variants != null && !Array.isArray(body.variants)) {
+    throw new ApiError("Ürün seçenekleri geçersiz.", 422);
   }
 
-  const slug = typeof govde.slug === "string" ? govde.slug.trim() : "";
-  const name = typeof govde.name === "string" ? govde.name.trim() : "";
-  if (!slug || !name) {
-    return NextResponse.json(
-      { hata: "Vitrin ve ürün adı zorunludur." },
-      { status: 422 }
-    );
+  const metadata = normalizeProductMetadata(rawMetadata);
+  const variants = normalizeProductVariants(body.variants);
+  if (Array.isArray(body.variants) && variants.length !== body.variants.length) {
+    throw new ApiError("Ürün seçeneklerinden biri eksik veya geçersiz.", 422);
+  }
+  if (JSON.stringify(metadata).length > 20000 || JSON.stringify(variants).length > 50000) {
+    throw new ApiError("Ürün detayları izin verilen boyutu aşıyor.", 422);
   }
 
-  // Oturum doğrulaması
-  const cookieStore = await cookies();
-  const ownerSessionCookie = cookieStore.get(OWNER_SESSION_COOKIE)?.value;
-  const ownerSession = verifyOwnerSession(ownerSessionCookie, slug);
-  if (!ownerSession) {
-    return NextResponse.json(
-      { hata: "Oturumun geçersiz veya süresi dolmuş." },
-      { status: 401 }
-    );
-  }
+  return {
+    brand: text(body.brand, 120, "Marka"),
+    barcode: text(body.barcode, 32, "Barkod / GTIN"),
+    vatRate: num(body.vatRate, "KDV oranı", 0, 100, true),
+    stockQuantity: num(body.stockQuantity, "Stok adedi", 0, undefined, true),
+    stockStatus: text(body.stockStatus, 40, "Stok durumu") ?? "Mevcut",
+    metadata,
+    variants,
+  };
+}
+
+async function ownerStore(slug: string) {
+  const ownerSession = verifyOwnerSession(
+    (await cookies()).get(OWNER_SESSION_COOKIE)?.value,
+    slug,
+  );
+  if (!ownerSession) throw new ApiError("Oturumun geçersiz veya süresi dolmuş.", 401);
 
   const admin = getSupabaseAdmin();
-
-  // edit_token'ı owner session'dan al — store'un edit_token'ını bul
-  // Basitleştirme: owner session store_id taşıyor, onu kullanarak store'u bul
   const { data: store } = await admin
     .from("stores")
     .select("id, edit_token")
     .eq("id", ownerSession.storeId)
     .single();
+  if (!store?.edit_token) throw new ApiError("Vitrin bulunamadı.", 404);
+  return { admin, store };
+}
 
-  if (!store?.edit_token) {
-    return NextResponse.json(
-      { hata: "Vitrin bulunamadı." },
-      { status: 404 }
-    );
+function fail(error: unknown, fallback: string) {
+  if (error instanceof ApiError) {
+    return NextResponse.json({ hata: error.message }, { status: error.status });
   }
+  console.error(`[products] ${fallback}:`, error);
+  return NextResponse.json({ hata: fallback }, { status: 500 });
+}
 
+async function bodyOf(request: NextRequest) {
   try {
-    const oldPriceAmount =
-      typeof govde.oldPriceAmount === "number" && Number.isFinite(govde.oldPriceAmount) ? govde.oldPriceAmount : null;
+    return (await request.json()) as Record<string, unknown>;
+  } catch {
+    throw new ApiError("Geçersiz istek.", 400);
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await bodyOf(request);
+    const slug = text(body.slug, 160, "Vitrin") ?? "";
+    const name = text(body.name, 80, "Ürün adı") ?? "";
+    if (!slug || !name) throw new ApiError("Vitrin ve ürün adı zorunludur.", 422);
+    const { admin, store } = await ownerStore(slug);
+    const richFields = rich(body);
     const result = await createCoreProduct({
       admin,
       storeId: store.id,
       editToken: store.edit_token,
       name,
-      description: typeof govde.description === "string" ? govde.description : "",
-      priceText: typeof govde.priceText === "string" ? govde.priceText : "",
-      imageUrls: Array.isArray(govde.imageUrls) ? govde.imageUrls : [],
-      categoryId: typeof govde.categoryId === "string" ? govde.categoryId : "",
+      description: text(body.description, 500, "Açıklama") ?? "",
+      priceText: text(body.priceText, 30, "Fiyat") ?? "",
+      priceAmount: num(body.priceAmount, "Fiyat"),
+      imageUrls: Array.isArray(body.imageUrls) ? body.imageUrls.map(String).slice(0, 4) : [],
+      categoryId: typeof body.categoryId === "string" ? body.categoryId : "",
       sourceType: "manual",
       externalProductId: "",
-      oldPriceAmount,
-      badgeTag: typeof govde.badgeTag === "string" ? govde.badgeTag.trim() || null : null,
-      fulfillmentRegion: typeof govde.fulfillmentRegion === "string" ? govde.fulfillmentRegion.trim() || null : null,
+      oldPriceAmount: num(body.oldPriceAmount, "Eski fiyat"),
+      badgeTag: text(body.badgeTag, 20, "Rozet"),
+      fulfillmentRegion: text(body.fulfillmentRegion, 80, "Teslim bölgesi"),
+      rich: richFields,
     });
-
     return NextResponse.json({ tamam: true, id: result.id, slug: result.slug });
-  } catch (err) {
-    console.error("[products] create failed:", err);
-    return NextResponse.json(
-      { hata: "Ürün oluşturulamadı." },
-      { status: 500 }
-    );
+  } catch (error) {
+    return fail(error, "Ürün oluşturulamadı.");
   }
 }
 
 export async function PATCH(request: NextRequest) {
-  let govde: Record<string, unknown>;
   try {
-    govde = await request.json();
-  } catch {
-    return NextResponse.json({ hata: "Geçersiz istek." }, { status: 400 });
-  }
-
-  const productId = typeof govde.productId === "string" ? govde.productId.trim() : "";
-  const slug = typeof govde.slug === "string" ? govde.slug.trim() : "";
-  if (!productId || !slug) {
-    return NextResponse.json(
-      { hata: "Ürün ID ve vitrin zorunludur." },
-      { status: 422 }
-    );
-  }
-
-  // Oturum doğrulaması
-  const cookieStore = await cookies();
-  const ownerSessionCookie = cookieStore.get(OWNER_SESSION_COOKIE)?.value;
-  const ownerSession = verifyOwnerSession(ownerSessionCookie, slug);
-  if (!ownerSession) {
-    return NextResponse.json(
-      { hata: "Oturumun geçersiz veya süresi dolmuş." },
-      { status: 401 }
-    );
-  }
-
-  const admin = getSupabaseAdmin();
-
-  const { data: store } = await admin
-    .from("stores")
-    .select("id, edit_token")
-    .eq("id", ownerSession.storeId)
-    .single();
-
-  if (!store?.edit_token) {
-    return NextResponse.json(
-      { hata: "Vitrin bulunamadı." },
-      { status: 404 }
-    );
-  }
-
-  try {
+    const body = await bodyOf(request);
+    const productId = text(body.productId, 80, "Ürün ID") ?? "";
+    const slug = text(body.slug, 160, "Vitrin") ?? "";
+    if (!productId || !slug) throw new ApiError("Ürün ID ve vitrin zorunludur.", 422);
+    const { admin, store } = await ownerStore(slug);
+    const richFields = rich(body);
     await updateCoreProduct({
       admin,
       productId,
+      storeId: store.id,
       editToken: store.edit_token,
-      name: typeof govde.name === "string" ? govde.name : "",
-      description: typeof govde.description === "string" ? govde.description : "",
-      priceText: typeof govde.priceText === "string" ? govde.priceText : "",
-      imageUrls: Array.isArray(govde.imageUrls) ? govde.imageUrls : [],
-      categoryId: typeof govde.categoryId === "string" ? govde.categoryId : "",
-      stockStatus: typeof govde.stockStatus === "string" ? govde.stockStatus : "Mevcut",
-      oldPriceAmount:
-        typeof govde.oldPriceAmount === "number" && Number.isFinite(govde.oldPriceAmount) ? govde.oldPriceAmount : null,
-      badgeTag: typeof govde.badgeTag === "string" ? govde.badgeTag.trim() || null : null,
-      fulfillmentRegion:
-        typeof govde.fulfillmentRegion === "string" ? govde.fulfillmentRegion.trim() || null : null,
+      name: text(body.name, 80, "Ürün adı") ?? "",
+      description: text(body.description, 500, "Açıklama") ?? "",
+      priceText: text(body.priceText, 30, "Fiyat") ?? "",
+      priceAmount: num(body.priceAmount, "Fiyat"),
+      imageUrls: Array.isArray(body.imageUrls) ? body.imageUrls.map(String).slice(0, 4) : [],
+      categoryId: typeof body.categoryId === "string" ? body.categoryId : "",
+      stockStatus: richFields.stockStatus,
+      oldPriceAmount: num(body.oldPriceAmount, "Eski fiyat"),
+      badgeTag: text(body.badgeTag, 20, "Rozet"),
+      fulfillmentRegion: text(body.fulfillmentRegion, 80, "Teslim bölgesi"),
+      rich: richFields,
     });
-
     return NextResponse.json({ tamam: true });
-  } catch (err) {
-    console.error("[products] update failed:", err);
-    return NextResponse.json(
-      { hata: "Ürün güncellenemedi." },
-      { status: 500 }
-    );
+  } catch (error) {
+    return fail(error, "Ürün güncellenemedi.");
   }
 }
 
 export async function DELETE(request: NextRequest) {
-  let govde: Record<string, unknown>;
   try {
-    govde = await request.json();
-  } catch {
-    return NextResponse.json({ hata: "Geçersiz istek." }, { status: 400 });
-  }
-
-  const productId = typeof govde.productId === "string" ? govde.productId.trim() : "";
-  const slug = typeof govde.slug === "string" ? govde.slug.trim() : "";
-  if (!productId || !slug) {
-    return NextResponse.json(
-      { hata: "Ürün ID ve vitrin zorunludur." },
-      { status: 422 }
-    );
-  }
-
-  // Oturum doğrulaması
-  const cookieStore = await cookies();
-  const ownerSessionCookie = cookieStore.get(OWNER_SESSION_COOKIE)?.value;
-  const ownerSession = verifyOwnerSession(ownerSessionCookie, slug);
-  if (!ownerSession) {
-    return NextResponse.json(
-      { hata: "Oturumun geçersiz veya süresi dolmuş." },
-      { status: 401 }
-    );
-  }
-
-  const admin = getSupabaseAdmin();
-
-  const { data: store } = await admin
-    .from("stores")
-    .select("id, edit_token")
-    .eq("id", ownerSession.storeId)
-    .single();
-
-  if (!store?.edit_token) {
-    return NextResponse.json(
-      { hata: "Vitrin bulunamadı." },
-      { status: 404 }
-    );
-  }
-
-  try {
+    const body = await bodyOf(request);
+    const productId = text(body.productId, 80, "Ürün ID") ?? "";
+    const slug = text(body.slug, 160, "Vitrin") ?? "";
+    if (!productId || !slug) throw new ApiError("Ürün ID ve vitrin zorunludur.", 422);
+    const { admin, store } = await ownerStore(slug);
     const { error } = await admin.rpc("delete_store_product", {
       p_product_id: productId,
       p_edit_token: store.edit_token,
     });
-
-    if (error) {
-      console.error("[products] delete failed:", error.message);
-      return NextResponse.json(
-        { hata: "Ürün silinemedi." },
-        { status: 500 }
-      );
-    }
-
+    if (error) throw error;
     return NextResponse.json({ tamam: true });
-  } catch (err) {
-    console.error("[products] delete failed:", err);
-    return NextResponse.json(
-      { hata: "Ürün silinemedi." },
-      { status: 500 }
-    );
+  } catch (error) {
+    return fail(error, "Ürün silinemedi.");
   }
 }
