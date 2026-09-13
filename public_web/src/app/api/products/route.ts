@@ -6,6 +6,7 @@ import {
   createCoreProduct,
   updateCoreProduct,
 } from "@/lib/productCoreServer";
+import { validateProductImageUrls } from "@/lib/productImagePolicy";
 
 /**
  * Ürün CRUD API'si — owner session ile korunuyor.
@@ -35,6 +36,14 @@ export async function POST(request: NextRequest) {
   if (!slug || !name) {
     return NextResponse.json(
       { hata: "Vitrin ve ürün adı zorunludur." },
+      { status: 422 }
+    );
+  }
+
+  const imageValidation = validateProductImageUrls(govde.imageUrls);
+  if (!imageValidation.ok) {
+    return NextResponse.json(
+      { hata: imageValidation.error ?? "Ürün fotoğrafları geçersiz." },
       { status: 422 }
     );
   }
@@ -77,7 +86,7 @@ export async function POST(request: NextRequest) {
       name,
       description: typeof govde.description === "string" ? govde.description : "",
       priceText: typeof govde.priceText === "string" ? govde.priceText : "",
-      imageUrls: Array.isArray(govde.imageUrls) ? govde.imageUrls : [],
+      imageUrls: imageValidation.imageUrls,
       categoryId: typeof govde.categoryId === "string" ? govde.categoryId : "",
       sourceType: "manual",
       externalProductId: "",
@@ -109,6 +118,14 @@ export async function PATCH(request: NextRequest) {
   if (!productId || !slug) {
     return NextResponse.json(
       { hata: "Ürün ID ve vitrin zorunludur." },
+      { status: 422 }
+    );
+  }
+
+  const imageValidation = validateProductImageUrls(govde.imageUrls);
+  if (!imageValidation.ok) {
+    return NextResponse.json(
+      { hata: imageValidation.error ?? "Ürün fotoğrafları geçersiz." },
       { status: 422 }
     );
   }
@@ -147,7 +164,7 @@ export async function PATCH(request: NextRequest) {
       name: typeof govde.name === "string" ? govde.name : "",
       description: typeof govde.description === "string" ? govde.description : "",
       priceText: typeof govde.priceText === "string" ? govde.priceText : "",
-      imageUrls: Array.isArray(govde.imageUrls) ? govde.imageUrls : [],
+      imageUrls: imageValidation.imageUrls,
       categoryId: typeof govde.categoryId === "string" ? govde.categoryId : "",
       stockStatus: typeof govde.stockStatus === "string" ? govde.stockStatus : "Mevcut",
       oldPriceAmount:
