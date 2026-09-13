@@ -27,4 +27,11 @@ describe("zengin ürün yazma güvenlik sözleşmesi", () => {
     expect(route).toContain("stockQuantity");
     expect(route).toContain("vatRate");
   });
+
+  it("eski basit ürün formu zengin alanları veya sayısal fiyatı sessizce temizlemez", () => {
+    expect(route).toContain("if (!hasRichPayload) return undefined");
+    expect(route).toContain('hasOwn(body, "priceAmount")');
+    expect(core).toContain("if (args.priceAmount !== undefined)");
+    expect(core).toContain("args.priceAmount === null");
+  });
 });
