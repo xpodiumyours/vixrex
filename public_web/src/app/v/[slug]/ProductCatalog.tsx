@@ -12,6 +12,7 @@ import {
   resolveCatalogImage,
   type ProductItem,
 } from "@/lib/products";
+import QuickProductRichFacts from "./QuickProductRichFacts";
 
 interface CatalogProduct extends ProductItem {
   categoryId?: string;
@@ -46,8 +47,6 @@ const PAGE_SIZE = 24;
 
 function productImageOnly(product: CatalogProduct): string | null {
   const resolved = resolveCatalogImage(product, null);
-  // resolveCatalogImage görselsiz/OCR ürünlerde eski davranış olarak maskot döndürüyor.
-  // Yeni ürün kartında logo/maskot ürün fotoğrafı gibi gösterilmez.
   return resolved === "/vixrex_v_crystal_mascot.png" ? null : resolved;
 }
 
@@ -133,11 +132,6 @@ function CatalogProductImage({ src, alt }: { src: string | null; alt: string }) 
   );
 }
 
-/**
- * Vitrin ürün kataloğu.
- * Kart normal tıklamada vitrinden çıkmadan hızlı inceleme açar.
- * Gerçek ürün URL'si href olarak korunur: yeni sekme/ctrl-cmd tıklama ve SEO akışı bozulmaz.
- */
 export default function ProductCatalog({
   storeSlug,
   storeName,
@@ -225,6 +219,7 @@ export default function ProductCatalog({
     ? productWhatsappUrl(whatsappBaseUrl, storeName, quickView.product.name)
     : null;
   const quickImage = quickView?.images[quickImageIndex] || null;
+  const quickProductSlug = quickView?.productUrl.split("/").filter(Boolean).at(-1) || "";
 
   return (
     <section>
@@ -536,6 +531,10 @@ export default function ProductCatalog({
                   </div>
                 );
               })() : null}
+
+              {quickProductSlug ? (
+                <QuickProductRichFacts storeSlug={storeSlug} productSlug={quickProductSlug} />
+              ) : null}
 
               <div className="mt-5 rounded-xl border border-white/10 bg-white/[0.03] p-3">
                 <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">İşletme</p>
