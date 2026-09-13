@@ -59,9 +59,7 @@ async function writeRichProductFields(args: {
     .select("id")
     .maybeSingle();
 
-  if (error || !data?.id) {
-    rpcError(error, "PRODUCT_RICH_WRITE_FAILED");
-  }
+  if (error || !data?.id) rpcError(error, "PRODUCT_RICH_WRITE_FAILED");
 }
 
 export async function findCoreProductByExternalId(args: {
@@ -95,12 +93,9 @@ export async function upsertCoreCategory(args: {
     p_edit_token: args.editToken,
     p_name: args.name,
   });
-
   if (error) rpcError(error, "PRODUCT_CATEGORY_WRITE_FAILED");
   const id = String(data?.id || "").trim();
-  if (!id || data?.success !== true) {
-    throw new Error("PRODUCT_CATEGORY_WRITE_FAILED");
-  }
+  if (!id || data?.success !== true) throw new Error("PRODUCT_CATEGORY_WRITE_FAILED");
   return id;
 }
 
@@ -140,9 +135,7 @@ export async function createCoreProduct(args: {
   if (error) rpcError(error, "PRODUCT_CORE_CREATE_FAILED");
   const id = String(data?.id || "").trim();
   const slug = String(data?.slug || "").trim();
-  if (!id || !slug || data?.success !== true) {
-    throw new Error("PRODUCT_CORE_CREATE_FAILED");
-  }
+  if (!id || !slug || data?.success !== true) throw new Error("PRODUCT_CORE_CREATE_FAILED");
 
   const created = data?.created !== false;
   if (created && args.rich) {
@@ -153,7 +146,6 @@ export async function createCoreProduct(args: {
       rich: args.rich,
     });
   }
-
   return { id, slug, created };
 }
 
@@ -174,28 +166,30 @@ export async function updateCoreProduct(args: {
   storeId?: string;
   rich?: RichProductWriteFields;
 }) {
-  const { data, error } = await args.admin.rpc("update_store_product", {
+  const rpcParams: Record<string, unknown> = {
     p_product_id: args.productId,
     p_edit_token: args.editToken,
     p_name: args.name,
     p_description: args.description,
     p_price_text: args.priceText,
-    p_price_amount: args.priceAmount ?? null,
     p_image_urls: args.imageUrls,
     p_category_id: args.categoryId,
     p_stock_status: args.stockStatus,
     p_old_price_amount: args.oldPriceAmount ?? null,
     p_badge_tag: args.badgeTag ?? null,
     p_fulfillment_region: args.fulfillmentRegion ?? null,
-    p_clear_price_amount: args.priceAmount == null,
     p_clear_old_price_amount: args.oldPriceAmount == null,
     p_clear_badge_tag: !args.badgeTag,
     p_clear_fulfillment_region: !args.fulfillmentRegion,
-  });
+  };
 
-  if (error || data?.success !== true) {
-    rpcError(error, "PRODUCT_CORE_UPDATE_FAILED");
+  if (args.priceAmount !== undefined) {
+    rpcParams.p_price_amount = args.priceAmount;
+    rpcParams.p_clear_price_amount = args.priceAmount === null;
   }
+
+  const { data, error } = await args.admin.rpc("update_store_product", rpcParams);
+  if (error || data?.success !== true) rpcError(error, "PRODUCT_CORE_UPDATE_FAILED");
 
   if (args.rich) {
     if (!args.storeId) throw new Error("PRODUCT_RICH_STORE_REQUIRED");
@@ -208,11 +202,6 @@ export async function updateCoreProduct(args: {
   }
 }
 
-/**
- * Server-side Product CORE cleanup used only after the store edit token has
- * been verified. Keeping this write here prevents API routes from maintaining
- * a second product-storage implementation.
- */
 export async function deleteCoreProductsBySource(args: {
   admin: SupabaseClient;
   storeId: string;
@@ -223,6 +212,5 @@ export async function deleteCoreProductsBySource(args: {
     .delete()
     .eq("store_id", args.storeId)
     .eq("source_type", args.sourceType);
-
   if (error) rpcError(error, "PRODUCT_CORE_DELETE_FAILED");
 }
