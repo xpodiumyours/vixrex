@@ -3,12 +3,19 @@ import {
   normalizeProductMetadata,
   normalizeProductVariants,
   type ProductAttributeValue,
+  type ProductVariant,
 } from "./productRichData";
 
 export interface ProductQuickFact {
   key: string;
   label: string;
   value: string;
+}
+
+export interface ProductVariantOptionGroup {
+  key: string;
+  label: string;
+  values: string[];
 }
 
 function formatAttributeValue(value: ProductAttributeValue["value"], unit?: string) {
@@ -168,6 +175,17 @@ export function buildProductDetailFacts(args: {
 }
 
 export function buildVariantOptionFacts(value: unknown, templateKey?: string | null): ProductQuickFact[] {
+  return buildVariantOptionGroups(value, templateKey).map((group) => ({
+    key: `variant:${group.key}`,
+    label: group.label,
+    value: group.values.join(", "),
+  }));
+}
+
+export function buildVariantOptionGroups(
+  value: unknown,
+  templateKey?: string | null,
+): ProductVariantOptionGroup[] {
   const variants = normalizeProductVariants(value);
   const valuesByKey = new Map<string, Set<string>>();
   const definitions = productAttributesForSurface(templateKey, "detail");
@@ -182,10 +200,40 @@ export function buildVariantOptionFacts(value: unknown, templateKey?: string | n
   }
 
   return Array.from(valuesByKey.entries()).map(([key, values]) => ({
-    key: `variant:${key}`,
+    key,
     label: definitionByKey.get(key)?.label || key,
-    value: Array.from(values).join(", "),
+    values: Array.from(values),
   }));
+}
+
+export function findMatchingVariant(
+  value: unknown,
+  selectedOptions: Record<string, string>,
+): ProductVariant | null {
+  const variants = normalizeProductVariants(value);
+  const selectedEntries = Object.entries(selectedOptions).filter(([, optionValue]) => optionValue);
+  if (!selectedEntries.length) return variants[0] ?? null;
+  return (
+    variants.find((variant) =>
+      selectedEntries.every(([key, optionValue]) => variant.options[key] === optionValue),
+    ) ?? null
+  );
+}
+
+export function variantOptionIsAvailable(
+  value: unknown,
+  selectedOptions: Record<string, string>,
+  optionKey: string,
+  optionValue: string,
+): boolean {
+  const variants = normalizeProductVariants(value);
+  return variants.some((variant) => {
+    if (variant.options[optionKey] !== optionValue) return false;
+    return Object.entries(selectedOptions).every(([key, selectedValue]) => {
+      if (!selectedValue || key === optionKey) return true;
+      return variant.options[key] === selectedValue;
+    });
+  });
 }
 
 export function productVariantCount(value: unknown): number {
