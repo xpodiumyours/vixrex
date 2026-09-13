@@ -3,7 +3,7 @@
 --
 -- 1) product_categories: kategori adına bakarak tahmin yapmak yerine açık bir
 --    şablon anahtarı taşır. Mevcut kategoriler 'generic' kalır.
--- 2) products: yeni ürünlerde 3–4 fotoğraf zorunludur. Legacy ürünler sırf
+-- 2) products: yeni ürünlerde 3–10 fotoğraf zorunludur. Legacy ürünler sırf
 --    başka alanları düzenleniyor diye bloklanmaz; görsel listesi değişirse yeni
 --    kalite kuralına uyması gerekir.
 
@@ -33,8 +33,8 @@ begin
   if image_count < 3 then
     raise exception 'PRODUCT_IMAGES_MIN_3';
   end if;
-  if image_count > 4 then
-    raise exception 'PRODUCT_IMAGES_MAX_4';
+  if image_count > 10 then
+    raise exception 'PRODUCT_IMAGES_MAX_10';
   end if;
 
   return new;
