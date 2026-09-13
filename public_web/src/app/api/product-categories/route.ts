@@ -2,16 +2,24 @@ import { NextResponse, type NextRequest } from "next/server";
 import { cookies } from "next/headers";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { PRODUCT_TEMPLATE_BY_KEY } from "@/lib/productAttributeSchema";
 
 export const dynamic = "force-dynamic";
 
-// POST: yeni kategori oluştur { slug, name }
+function templateKeyFrom(value: unknown) {
+  const key = typeof value === "string" ? value.trim() : "";
+  if (!key) return "generic";
+  return PRODUCT_TEMPLATE_BY_KEY.has(key) ? key : null;
+}
+
 export async function POST(request: NextRequest) {
   let govde: Record<string, unknown>;
   try { govde = await request.json(); } catch { return NextResponse.json({ hata: "Geçersiz istek." }, { status: 400 }); }
   const slug = typeof govde.slug === "string" ? govde.slug.trim() : "";
   const name = typeof govde.name === "string" ? govde.name.trim() : "";
+  const templateKey = templateKeyFrom(govde.templateKey);
   if (!slug || !name) return NextResponse.json({ hata: "Vitrin ve kategori adı zorunludur." }, { status: 422 });
+  if (!templateKey) return NextResponse.json({ hata: "Ürün tipi geçersiz." }, { status: 422 });
   if (name.length > 40) return NextResponse.json({ hata: "Kategori adı en fazla 40 karakter." }, { status: 422 });
 
   const cookieStore = await cookies();
@@ -22,24 +30,21 @@ export async function POST(request: NextRequest) {
   const { data: store } = await admin.from("stores").select("id, edit_token").eq("id", ownerSession.storeId).single();
   if (!store?.edit_token) return NextResponse.json({ hata: "Vitrin bulunamadı." }, { status: 404 });
 
-  // duplicate check
   const { data: existing } = await admin.from("product_categories").select("id").eq("store_id", store.id).ilike("name", name).maybeSingle();
   if (existing) return NextResponse.json({ hata: "Bu kategori zaten mevcut." }, { status: 409 });
 
-  const { data, error } = await admin.rpc("upsert_store_category", {
+  const { data, error } = await admin.rpc("upsert_store_category_v2", {
     p_store_id: store.id,
     p_edit_token: store.edit_token,
     p_name: name,
+    p_template_key: templateKey,
   });
   if (error || !data?.id) {
     return NextResponse.json({ hata: "Kategori oluşturulamadı." }, { status: 500 });
   }
-  return NextResponse.json({ tamam: true, id: data.id, name });
+  return NextResponse.json({ tamam: true, id: data.id, name, product_template_key: templateKey });
 }
 
-// PATCH: yeniden adlandır veya sırala
-// body: { slug, categoryId, name }  -> rename
-// body: { slug, categoryIds: string[] } -> reorder
 export async function PATCH(request: NextRequest) {
   let govde: Record<string, unknown>;
   try { govde = await request.json(); } catch { return NextResponse.json({ hata: "Geçersiz istek." }, { status: 400 }); }
@@ -52,32 +57,48 @@ export async function PATCH(request: NextRequest) {
 
   const admin = getSupabaseAdmin();
   const { data: store } = await admin.from("stores").select("id, edit_token").eq("id", ownerSession.storeId).single();
-  if (!store?.id) return NextResponse.json({ hata: "Vitrin bulunamadı." }, { status: 404 });
+  if (!store?.id || !store.edit_token) return NextResponse.json({ hata: "Vitrin bulunamadı." }, { status: 404 });
 
-  // Reorder branch
   if (Array.isArray(govde.categoryIds)) {
     const ids = (govde.categoryIds as unknown[]).filter((v) => typeof v === "string" && (v as string).trim()).map((v) => (v as string).trim());
     for (let i = 0; i < ids.length; i++) {
-      const { error } = await admin.from("product_categories").update({ sort_order: i }).eq("id", ids[i]).eq("store_id", store.id);
+      const { error } = await admin.rpc("update_store_category_v2", {
+        p_category_id: ids[i],
+        p_edit_token: store.edit_token,
+        p_sort_order: i,
+      });
       if (error) return NextResponse.json({ hata: "Sıralama güncellenemedi." }, { status: 500 });
     }
     return NextResponse.json({ tamam: true });
   }
 
   const categoryId = typeof govde.categoryId === "string" ? govde.categoryId.trim() : "";
-  const name = typeof govde.name === "string" ? govde.name.trim() : "";
-  if (!categoryId || !name) return NextResponse.json({ hata: "Kategori ID ve adı zorunludur." }, { status: 422 });
-  if (name.length > 40) return NextResponse.json({ hata: "Kategori adı en fazla 40 karakter." }, { status: 422 });
+  const hasName = typeof govde.name === "string";
+  const name = hasName ? (govde.name as string).trim() : "";
+  const hasTemplateKey = typeof govde.templateKey === "string";
+  const templateKey = hasTemplateKey ? templateKeyFrom(govde.templateKey) : undefined;
+  if (!categoryId || (!hasName && !hasTemplateKey)) {
+    return NextResponse.json({ hata: "Kategori ve değişiklik zorunludur." }, { status: 422 });
+  }
+  if (hasName && !name) return NextResponse.json({ hata: "Kategori adı zorunludur." }, { status: 422 });
+  if (hasName && name.length > 40) return NextResponse.json({ hata: "Kategori adı en fazla 40 karakter." }, { status: 422 });
+  if (hasTemplateKey && !templateKey) return NextResponse.json({ hata: "Ürün tipi geçersiz." }, { status: 422 });
 
-  const { data: dup } = await admin.from("product_categories").select("id").eq("store_id", store.id).ilike("name", name).neq("id", categoryId).maybeSingle();
-  if (dup) return NextResponse.json({ hata: "Bu kategori zaten mevcut." }, { status: 409 });
+  if (hasName) {
+    const { data: dup } = await admin.from("product_categories").select("id").eq("store_id", store.id).ilike("name", name).neq("id", categoryId).maybeSingle();
+    if (dup) return NextResponse.json({ hata: "Bu kategori zaten mevcut." }, { status: 409 });
+  }
 
-  const { error } = await admin.from("product_categories").update({ name }).eq("id", categoryId).eq("store_id", store.id);
+  const { error } = await admin.rpc("update_store_category_v2", {
+    p_category_id: categoryId,
+    p_edit_token: store.edit_token,
+    ...(hasName ? { p_name: name } : {}),
+    ...(hasTemplateKey ? { p_template_key: templateKey } : {}),
+  });
   if (error) return NextResponse.json({ hata: "Kategori güncellenemedi." }, { status: 500 });
   return NextResponse.json({ tamam: true });
 }
 
-// DELETE: { slug, categoryId, replacementId }
 export async function DELETE(request: NextRequest) {
   let govde: Record<string, unknown>;
   try { govde = await request.json(); } catch { return NextResponse.json({ hata: "Geçersiz istek." }, { status: 400 }); }
