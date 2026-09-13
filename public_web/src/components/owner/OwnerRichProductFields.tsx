@@ -147,6 +147,26 @@ function variantId() {
   return `variant-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+function alignVariantsToDefinitions(
+  variants: ProductVariant[],
+  variantDefinitions: ProductAttributeDefinition[],
+  isService: boolean,
+): ProductVariant[] {
+  if (isService) return [];
+  if (variantDefinitions.length === 0) return variants;
+  const allowed = new Set(variantDefinitions.map((definition) => definition.key));
+  return variants
+    .map((variant) => ({
+      ...variant,
+      options: Object.fromEntries(
+        Object.entries(variant.options).filter(
+          ([key, optionValue]) => allowed.has(key) && optionValue.trim().length > 0,
+        ),
+      ),
+    }))
+    .filter((variant) => Object.keys(variant.options).length > 0);
+}
+
 export function OwnerRichProductFields({ templateKey, value, onChange, disabled = false }: Props) {
   const template = productTemplateByKey(templateKey) || productTemplateByKey("generic");
   const definitions = useMemo(() => productAttributesForTemplate(templateKey), [templateKey]);
@@ -158,28 +178,46 @@ export function OwnerRichProductFields({ templateKey, value, onChange, disabled 
 
   useEffect(() => {
     if (!template) return;
+    const isService = template.itemKind === "service";
     const metadata = normalizeProductMetadata(value.metadata);
-    const filteredAttributes = (metadata.attributes || []).filter((item) => allowedKeys.has(item.key));
+    const filteredAttributes = isService
+      ? []
+      : (metadata.attributes || []).filter((item) => allowedKeys.has(item.key));
     const next: ProductMetadata = {
       ...metadata,
       schemaVersion: 1,
       itemKind: template.itemKind,
       templateKey: template.key,
+      identifiers: isService ? undefined : metadata.identifiers,
       attributes: filteredAttributes,
-      ...(template.itemKind === "service" ? {} : { service: undefined }),
+      service: isService ? metadata.service : undefined,
     };
-    if (
+    const nextVariants = alignVariantsToDefinitions(
+      value.variants,
+      variantDefinitions,
+      isService,
+    );
+    const variantsChanged = JSON.stringify(nextVariants) !== JSON.stringify(value.variants);
+    const draftFieldsChanged =
+      isService && Boolean(value.brand || value.barcode || value.stockQuantity);
+    const metadataChanged =
       metadata.templateKey !== next.templateKey ||
       metadata.itemKind !== next.itemKind ||
-      filteredAttributes.length !== (metadata.attributes || []).length
-    ) {
+      JSON.stringify(metadata.identifiers || null) !== JSON.stringify(next.identifiers || null) ||
+      filteredAttributes.length !== (metadata.attributes || []).length ||
+      Boolean(metadata.service) !== Boolean(next.service);
+
+    if (metadataChanged || variantsChanged || draftFieldsChanged) {
       onChange({
         ...value,
+        brand: isService ? "" : value.brand,
+        barcode: isService ? "" : value.barcode,
+        stockQuantity: isService ? "" : value.stockQuantity,
         metadata: next,
-        variants: template.itemKind === "service" ? [] : value.variants,
+        variants: nextVariants,
       });
     }
-  }, [allowedKeys, onChange, template, value]);
+  }, [allowedKeys, onChange, template, value, variantDefinitions]);
 
   if (!template) return null;
 
