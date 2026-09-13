@@ -6,6 +6,10 @@ const source = readFileSync(
   resolve(__dirname, "../src/app/v/[slug]/urun/[productSlug]/page.tsx"),
   "utf8",
 );
+const experienceSource = readFileSync(
+  resolve(__dirname, "../src/components/ProductDetailExperience.tsx"),
+  "utf8",
+);
 
 describe("ürün detay — zengin veri okuma sözleşmesi", () => {
   it("mevcut products çekirdeğindeki zengin kolonları okur", () => {
@@ -39,18 +43,31 @@ describe("ürün detay — zengin veri okuma sözleşmesi", () => {
     expect(source).toContain("!isService");
   });
 
-  it("kategoriye ait gerçek detayları ve varyant seçeneklerini sunum katmanından alır", () => {
+  it("kategoriye ait gerçek detayları serverdan interaktif detay bileşenine taşır", () => {
     expect(source).toContain("buildProductDetailFacts");
-    expect(source).toContain("buildVariantOptionFacts");
-    expect(source).toContain("metadata.templateKey");
+    expect(source).toContain("ProductDetailExperience");
+    expect(source).toContain("detailFacts={detailFacts}");
+    expect(experienceSource).toContain("buildVariantOptionGroups");
+    expect(experienceSource).toContain("productVariantsForTemplate");
+    expect(experienceSource).toContain("findMatchingVariant");
+    expect(experienceSource).toContain("metadata.templateKey");
   });
 
-  it("hizmeti Product olarak işaretlemez ve stok kartını gizler", () => {
+  it("seçili varyant fiyat stok görsel ve WhatsApp bilgisini birlikte değiştirir", () => {
+    expect(experienceSource).toContain("selectedVariant?.priceAmount");
+    expect(experienceSource).toContain("selectedVariant?.stockQuantity");
+    expect(experienceSource).toContain("selectedVariant?.imageUrls");
+    expect(experienceSource).toContain("selectedWhatsappUrl");
+    expect(experienceSource).toContain("Seçenek: ${selectedVariantText}");
+  });
+
+  it("hizmeti Product olarak işaretlemez ve fiziksel ürün alanlarını istemciye taşımaz", () => {
     expect(source).toContain('"@type": "Service"');
     expect(source).toContain('"@type": "Product"');
-    expect(source).toContain('serviceType: metadata.service?.serviceType');
+    expect(source).toContain("serviceType: metadata.service?.serviceType");
     expect(source).toContain("areaServed: product.fulfillmentRegion");
-    expect(source).toContain("!isService && (");
-    expect(source).toContain("WhatsApp’tan hizmet hakkında bilgi al");
+    expect(experienceSource).toContain("!isService && groups.length > 0");
+    expect(experienceSource).toContain("!isService && (stockStatus || stockQuantity != null)");
+    expect(experienceSource).toContain("WhatsApp’tan hizmeti sor");
   });
 });
