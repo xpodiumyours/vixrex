@@ -16,7 +16,10 @@ import {
 } from "@/lib/productQueue";
 import {
   MAX_PRODUCT_IMAGES,
+  MAX_PRODUCT_IMAGE_SOURCE_BYTES,
+  MAX_PRODUCT_IMAGE_SOURCE_MEGABYTES,
   MIN_PRODUCT_IMAGES,
+  normalizeProductImageUrls,
 } from "@/lib/productImagePolicy";
 
 export interface OwnerProductCategory {
@@ -74,6 +77,10 @@ function parseAmount(raw: string): number | null {
   }
   const v = Number(cleaned);
   return Number.isFinite(v) ? v : null;
+}
+
+function sameStringList(left: string[], right: string[]) {
+  return left.length === right.length && left.every((value, index) => value === right[index]);
 }
 
 export function OwnerProductManager({
@@ -463,13 +470,17 @@ interface ProductFormProps {
 }
 
 function ProductForm({ product, categories, busy, storeSlug, onCancel, onSave }: ProductFormProps) {
+  const initialImageUrls = useMemo(
+    () => normalizeProductImageUrls(product?.image_urls).slice(0, MAX_PRODUCT_IMAGES),
+    [product],
+  );
   const [name, setName] = useState(product?.name || "");
   const [priceText, setPriceText] = useState(product?.price_text || "");
   const [oldPriceText, setOldPriceText] = useState(product?.old_price_amount != null ? String(product.old_price_amount) : "");
   const [badgeTag, setBadgeTag] = useState(product?.badge_tag || "");
   const [fulfillmentRegion, setFulfillmentRegion] = useState(product?.fulfillment_region || "");
   const [description, setDescription] = useState(product?.description || "");
-  const [imageUrls, setImageUrls] = useState<string[]>(() => (product?.image_urls || []).filter((u) => u.trim()).slice(0, MAX_PRODUCT_IMAGES));
+  const [imageUrls, setImageUrls] = useState<string[]>(() => initialImageUrls);
   const [rich, setRich] = useState<RichProductDraft>(() => createRichProductDraft(product));
   const [categoryId, setCategoryId] = useState(() => {
     const explicit = product?.category_id?.trim() ?? "";
@@ -489,6 +500,10 @@ function ProductForm({ product, categories, busy, storeSlug, onCancel, onSave }:
     rich.metadata.templateKey ||
     "generic";
   const isService = templateKey === "service";
+  const imageListChanged = !sameStringList(imageUrls, initialImageUrls);
+  const legacyImagesKept = Boolean(
+    product && initialImageUrls.length < MIN_PRODUCT_IMAGES && !imageListChanged,
+  );
 
   async function handleFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
@@ -502,8 +517,8 @@ function ProductForm({ product, categories, busy, storeSlug, onCancel, onSave }:
     const toUpload = Array.from(files).slice(0, remaining);
     const newUrls: string[] = [];
     for (const file of toUpload) {
-      if (file.size > 5 * 1024 * 1024) {
-        setValidation(`${file.name} çok büyük. En fazla 5 MB.`);
+      if (file.size > MAX_PRODUCT_IMAGE_SOURCE_BYTES) {
+        setValidation(`${file.name} çok büyük. En fazla ${MAX_PRODUCT_IMAGE_SOURCE_MEGABYTES} MB.`);
         continue;
       }
       const form = new FormData();
@@ -542,9 +557,10 @@ function ProductForm({ product, categories, busy, storeSlug, onCancel, onSave }:
     const cleanName = name.trim();
     if (!cleanName) { setValidation("Ürün adı zorunludur."); return; }
     if (categories.length > 0 && !categoryId) { setValidation("Ürün kategorisi zorunludur."); return; }
-    if (imageUrls.length < MIN_PRODUCT_IMAGES) { setValidation(`Bir ürün için en az ${MIN_PRODUCT_IMAGES} fotoğraf zorunludur.`); return; }
-    if (imageUrls.length > MAX_PRODUCT_IMAGES) { setValidation(`Bir ürüne en fazla ${MAX_PRODUCT_IMAGES} fotoğraf eklenebilir.`); return; }
-    if (imageUrls.some((url) => !/^https?:\/\//i.test(url))) { setValidation("Görsel bağlantıları http:// veya https:// ile başlamalıdır."); return; }
+    const mustMeetImagePolicy = !product || imageListChanged;
+    if (mustMeetImagePolicy && imageUrls.length < MIN_PRODUCT_IMAGES) { setValidation(`Bir ürün için en az ${MIN_PRODUCT_IMAGES} fotoğraf zorunludur.`); return; }
+    if (mustMeetImagePolicy && imageUrls.length > MAX_PRODUCT_IMAGES) { setValidation(`Bir ürüne en fazla ${MAX_PRODUCT_IMAGES} fotoğraf eklenebilir.`); return; }
+    if (mustMeetImagePolicy && imageUrls.some((url) => !/^https?:\/\//i.test(url))) { setValidation("Görsel bağlantıları http:// veya https:// ile başlamalıdır."); return; }
     const oldPriceAmount = oldPriceText.trim() ? parseAmount(oldPriceText) : null;
     if (oldPriceText.trim() && oldPriceAmount == null) { setValidation("Eski fiyat sayı olmalı."); return; }
     if (badgeTag.trim().length > 20) { setValidation("Rozet en fazla 20 karakter."); return; }
@@ -599,7 +615,12 @@ function ProductForm({ product, categories, busy, storeSlug, onCancel, onSave }:
             </label>
           )}
         </div>
-        <p className="mt-1 text-[11px] text-[var(--owner-muted)]">En az {MIN_PRODUCT_IMAGES}, en fazla {MAX_PRODUCT_IMAGES} fotoğraf. İlk fotoğraf ürün kapağıdır. JPG/PNG/WebP, en fazla 5 MB.</p>
+        <p className="mt-1 text-[11px] text-[var(--owner-muted)]">
+          {legacyImagesKept
+            ? `Mevcut fotoğraflar korunur. Fotoğraf listesini değiştirirsen en az ${MIN_PRODUCT_IMAGES}, en fazla ${MAX_PRODUCT_IMAGES} fotoğraf gerekir.`
+            : `En az ${MIN_PRODUCT_IMAGES}, en fazla ${MAX_PRODUCT_IMAGES} fotoğraf. İlk fotoğraf ürün kapağıdır.`}
+          {` JPG/PNG/WebP, en fazla ${MAX_PRODUCT_IMAGE_SOURCE_MEGABYTES} MB.`}
+        </p>
         <textarea value={imageUrls.join("\n")} onChange={(e) => setImageUrls(e.target.value.split(/\r?\n/).map((u) => u.trim()).filter(Boolean).slice(0, MAX_PRODUCT_IMAGES))} placeholder="Veya her satıra bir https:// bağlantısı yapıştır" rows={2} className="owner-input mt-2 min-h-16 resize-y text-xs" disabled={busy || uploading} />
       </div>
 
