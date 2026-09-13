@@ -1,12 +1,27 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:vixrex/models/product_rich_data.dart';
 import 'package:vixrex/services/product_attribute_schema_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
 
+class ProductVariantImageChoice {
+  const ProductVariantImageChoice({
+    required this.reference,
+    this.url,
+    this.bytes,
+  });
+
+  final String reference;
+  final String? url;
+  final Uint8List? bytes;
+}
+
 Future<List<ProductVariantData>> sanitizeProductVariantsForTemplate(
   String templateKey,
-  List<ProductVariantData> variants,
-) async {
+  List<ProductVariantData> variants, {
+  Set<String>? availableImageUrls,
+}) async {
   final schema = await const ProductAttributeSchemaService().load();
   final template = schema.templateByKey(templateKey);
   if (template.isService) return const [];
@@ -17,9 +32,38 @@ Future<List<ProductVariantData>> sanitizeProductVariantsForTemplate(
       .map((definition) => definition.key)
       .toSet();
 
+  List<String> cleanImages(ProductVariantData variant) {
+    final seen = <String>{};
+    return variant.imageUrls
+        .map((url) => url.trim())
+        .where(
+          (url) =>
+              url.isNotEmpty &&
+              seen.add(url) &&
+              (availableImageUrls == null || availableImageUrls.contains(url)),
+        )
+        .take(10)
+        .toList();
+  }
+
   // Generic/bilinmeyen fiziksel şemada Vixrex varyant anlamı tahmin etmez.
-  // Mevcut/import edilmiş veriyi sessizce silmek yerine olduğu gibi korur.
-  if (allowedKeys.isEmpty) return List<ProductVariantData>.of(variants);
+  // Mevcut/import edilmiş seçenekleri korur; verilen galeri varsa görselleri ona sınırlar.
+  if (allowedKeys.isEmpty) {
+    return variants
+        .map(
+          (variant) => ProductVariantData(
+            id: variant.id,
+            options: variant.options,
+            sku: variant.sku,
+            barcode: variant.barcode,
+            priceAmount: variant.priceAmount,
+            stockQuantity: variant.stockQuantity,
+            stockStatus: variant.stockStatus,
+            imageUrls: cleanImages(variant),
+          ),
+        )
+        .toList();
+  }
 
   final result = <ProductVariantData>[];
   for (final variant in variants) {
@@ -41,7 +85,7 @@ Future<List<ProductVariantData>> sanitizeProductVariantsForTemplate(
         priceAmount: variant.priceAmount,
         stockQuantity: variant.stockQuantity,
         stockStatus: variant.stockStatus,
-        imageUrls: variant.imageUrls,
+        imageUrls: cleanImages(variant),
       ),
     );
   }
@@ -54,12 +98,14 @@ class ProductVariantEditor extends StatefulWidget {
     required this.templateKey,
     required this.variants,
     required this.onChanged,
+    this.imageChoices = const [],
     this.enabled = true,
   });
 
   final String templateKey;
   final List<ProductVariantData> variants;
   final ValueChanged<List<ProductVariantData>> onChanged;
+  final List<ProductVariantImageChoice> imageChoices;
   final bool enabled;
 
   @override
@@ -266,9 +312,82 @@ class _ProductVariantEditorState extends State<ProductVariantEditor> {
               ),
             ],
           ),
+          if (widget.imageChoices.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            const Text(
+              'Varyant fotoğrafları',
+              style: TextStyle(
+                color: AppColors.darkText,
+                fontWeight: FontWeight.w800,
+                fontSize: 11,
+              ),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'Bu varyant seçilince önce seçtiğiniz ürün fotoğrafları gösterilir.',
+              style: TextStyle(color: AppColors.mutedText, fontSize: 10),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 58,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: widget.imageChoices.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                itemBuilder: (context, imageIndex) {
+                  final choice = widget.imageChoices[imageIndex];
+                  final selected = variant.imageUrls.contains(choice.reference);
+                  return InkWell(
+                    key: ValueKey(
+                      'variant-${variant.id}-image-${choice.reference}',
+                    ),
+                    onTap:
+                        widget.enabled
+                            ? () => _toggleVariantImage(index, choice.reference)
+                            : null,
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      width: 54,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color:
+                              selected ? AppColors.primary : AppColors.border,
+                          width: selected ? 2 : 1,
+                        ),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: _buildImageChoice(choice),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
         ],
       ),
     );
+  }
+
+  Widget _buildImageChoice(ProductVariantImageChoice choice) {
+    final bytes = choice.bytes;
+    if (bytes != null) {
+      return Image.memory(bytes, fit: BoxFit.cover);
+    }
+    final url = choice.url?.trim() ?? '';
+    if (url.isNotEmpty) {
+      return Image.network(
+        url,
+        fit: BoxFit.cover,
+        errorBuilder:
+            (_, __, ___) => const Center(
+              child: Icon(Icons.broken_image_outlined, size: 18),
+            ),
+      );
+    }
+    return const Center(child: Icon(Icons.image_outlined, size: 18));
   }
 
   void _addVariant() {
@@ -295,6 +414,20 @@ class _ProductVariantEditorState extends State<ProductVariantEditor> {
       options[key] = value;
     }
     _replace(index, _copyVariant(variant, options: options));
+  }
+
+  void _toggleVariantImage(int index, String reference) {
+    final variant = widget.variants[index];
+    final images = List<String>.of(variant.imageUrls);
+    if (images.contains(reference)) {
+      images.remove(reference);
+    } else if (images.length < 10) {
+      images.add(reference);
+    }
+    _replace(
+      index,
+      _copyVariant(variant, imageUrls: images, setImageUrls: true),
+    );
   }
 
   void _updateVariant(
@@ -342,6 +475,8 @@ class _ProductVariantEditorState extends State<ProductVariantEditor> {
     bool setPriceAmount = false,
     int? stockQuantity,
     bool setStockQuantity = false,
+    List<String>? imageUrls,
+    bool setImageUrls = false,
   }) {
     return ProductVariantData(
       id: source.id,
@@ -352,7 +487,7 @@ class _ProductVariantEditorState extends State<ProductVariantEditor> {
       stockQuantity:
           setStockQuantity ? stockQuantity : source.stockQuantity,
       stockStatus: source.stockStatus,
-      imageUrls: source.imageUrls,
+      imageUrls: setImageUrls ? imageUrls ?? const [] : source.imageUrls,
     );
   }
 
