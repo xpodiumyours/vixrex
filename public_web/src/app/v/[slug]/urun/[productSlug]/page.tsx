@@ -8,8 +8,8 @@ import {
   getProductImages,
   normalizeExternalUrl,
   normalizeWhatsappDigits,
-  type ProductItem,
 } from "@/lib/products";
+import type { RichProductItem } from "@/lib/richProductItem";
 import { buildSiteUrl, getSiteUrl } from "@/lib/siteUrl";
 import { safeJsonLdHtml } from "@/lib/jsonLd";
 import { TrackedWhatsAppLink } from "@/components/TrackedWhatsAppLink";
@@ -104,7 +104,7 @@ async function _getProductData(slug: string, productSlug: string) {
         categoryName = cat?.name || "";
       }
 
-      const product: ProductItem = {
+      const product: RichProductItem = {
         id: productRow.id,
         slug: productRow.slug,
         name: productRow.name,
@@ -163,8 +163,6 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
 
   const { store, product, productSlug } = data;
 
-  // #345: demo vitrinin ürün sayfası da indekslenmez. Vitrin sayfası
-  // `follow: true` ile geçildiği için tarayıcı buraya ulaşabilir.
   if (store.is_demo) {
     return { robots: { index: false, follow: true } };
   }
