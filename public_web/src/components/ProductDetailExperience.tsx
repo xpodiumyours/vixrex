@@ -9,6 +9,7 @@ import { MapPinIcon } from "@/lib/vitrinBrandIcons";
 import {
   buildVariantOptionGroups,
   findMatchingVariant,
+  variantOptionIsAvailable,
   type ProductQuickFact,
 } from "@/lib/productCardPresentation";
 import { normalizeProductMetadata, normalizeProductVariants } from "@/lib/productRichData";
@@ -78,13 +79,13 @@ export default function ProductDetailExperience({
     [product.variants, selectedOptions],
   );
   const gallery = useMemo(
-    () =>
-      Array.from(new Set([...(selectedVariant?.imageUrls || []), ...images])).slice(0, 10),
+    () => Array.from(new Set([...(selectedVariant?.imageUrls || []), ...images])).slice(0, 10),
     [images, selectedVariant],
   );
   const [imageIndex, setImageIndex] = useState(0);
 
   const selectOption = (key: string, value: string) => {
+    if (!variantOptionIsAvailable(product.variants, selectedOptions, key, value)) return;
     const preferred = variants.find(
       (variant) =>
         variant.options[key] === value &&
@@ -105,8 +106,11 @@ export default function ProductDetailExperience({
     selectedVariant?.priceAmount != null
       ? formatVariantPrice(selectedVariant.priceAmount, product.currency)
       : product.price || "Fiyat sorun";
-  const stockStatus = selectedVariant?.stockStatus || product.stockStatus || undefined;
   const stockQuantity = selectedVariant?.stockQuantity ?? product.stockQuantity ?? null;
+  const stockStatus =
+    stockQuantity === 0
+      ? "Tükendi"
+      : selectedVariant?.stockStatus || product.stockStatus || undefined;
   const fulfillmentRegion = String(product.fulfillmentRegion || "").trim();
   const productMapUrl = mapsSearchUrl(fulfillmentRegion);
   const storeMapUrl = mapsSearchUrl(storeAddress);
@@ -194,17 +198,27 @@ export default function ProductDetailExperience({
                     <div className="flex flex-wrap gap-2">
                       {group.values.map((value) => {
                         const selected = selectedOptions[group.key] === value;
+                        const available = variantOptionIsAvailable(
+                          product.variants,
+                          selectedOptions,
+                          group.key,
+                          value,
+                        );
                         return (
                           <button
                             key={value}
                             type="button"
                             onClick={() => selectOption(group.key, value)}
+                            disabled={!available}
                             className={`min-h-10 rounded-xl border px-3 text-xs font-extrabold transition ${
                               selected
                                 ? "border-blue-400 bg-blue-500/20 text-white ring-2 ring-blue-400/15"
-                                : "border-white/10 bg-white/[0.03] text-white/65 hover:border-blue-500/35"
+                                : available
+                                  ? "border-white/10 bg-white/[0.03] text-white/65 hover:border-blue-500/35"
+                                  : "cursor-not-allowed border-white/5 bg-white/[0.02] text-white/20 line-through"
                             }`}
                             aria-pressed={selected}
+                            aria-disabled={!available}
                           >
                             {value}
                           </button>
