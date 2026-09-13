@@ -23,10 +23,28 @@ interface ProductBatchItem {
   description?: string;
   price_text?: string;
   category_id?: string;
+  category_name?: string;
   image_urls?: string[];
   source_type?: string;
   sort_order?: number;
   isVisible?: boolean;
+  stock_status?: string;
+  stock_quantity?: number;
+  brand?: string;
+  barcode?: string;
+  sku?: string;
+}
+
+function cleanString(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed || null;
+}
+
+function cleanStockQuantity(value: unknown): number | null {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0
+    ? value
+    : null;
 }
 
 export async function POST(request: NextRequest) {
@@ -59,26 +77,23 @@ export async function POST(request: NextRequest) {
         {
           hata: `${index + 1}. ürün: ${imageValidation.error ?? "Ürün fotoğrafları geçersiz."}`,
         },
-        { status: 422 }
+        { status: 422 },
       );
     }
     normalizedProducts.push({ ...item, image_urls: imageValidation.imageUrls });
   }
 
-  // Oturum doğrulaması
   const cookieStore = await cookies();
   const ownerSessionCookie = cookieStore.get(OWNER_SESSION_COOKIE)?.value;
   const ownerSession = verifyOwnerSession(ownerSessionCookie, slug);
   if (!ownerSession) {
     return NextResponse.json(
       { hata: "Oturumun geçersiz veya süresi dolmuş." },
-      { status: 401 }
+      { status: 401 },
     );
   }
 
   const admin = getSupabaseAdmin();
-
-  // Store bilgilerini bul
   const { data: store } = await admin
     .from("stores")
     .select("id, edit_token")
@@ -89,16 +104,21 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ hata: "Vitrin bulunamadı." }, { status: 404 });
   }
 
-  // Ürünleri batch_create_products RPC'sine gönder
   const products = normalizedProducts.map((p, index) => ({
     name: (p.name || "").trim(),
     description: (p.description || "").trim(),
     price_text: (p.price_text || "").trim(),
-    category_id: (p.category_id || "").trim() || null,
+    category_id: cleanString(p.category_id),
+    category_name: cleanString(p.category_name),
     image_urls: p.image_urls,
     source_type: (p.source_type || "bulk_import").trim(),
     sort_order: typeof p.sort_order === "number" ? p.sort_order : index,
     isVisible: p.isVisible !== false,
+    stock_status: cleanString(p.stock_status),
+    stock_quantity: cleanStockQuantity(p.stock_quantity),
+    brand: cleanString(p.brand),
+    barcode: cleanString(p.barcode),
+    sku: cleanString(p.sku),
   }));
 
   try {
@@ -112,7 +132,7 @@ export async function POST(request: NextRequest) {
       console.error("[products/batch] RPC failed:", error.message);
       return NextResponse.json(
         { hata: "Toplu ekleme başarısız oldu. Lütfen tekrar dene." },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -135,7 +155,7 @@ export async function POST(request: NextRequest) {
     console.error("[products/batch] failed:", err);
     return NextResponse.json(
       { hata: "Toplu ekleme başarısız oldu." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
