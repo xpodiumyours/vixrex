@@ -10,6 +10,10 @@ const experienceSource = readFileSync(
   resolve(__dirname, "../src/components/ProductDetailExperience.tsx"),
   "utf8",
 );
+const experienceBaseSource = readFileSync(
+  resolve(__dirname, "../src/components/ProductDetailExperienceBase.tsx"),
+  "utf8",
+);
 
 describe("ürün detay — zengin veri okuma sözleşmesi", () => {
   it("mevcut products çekirdeğindeki zengin kolonları okur", () => {
@@ -47,18 +51,31 @@ describe("ürün detay — zengin veri okuma sözleşmesi", () => {
     expect(source).toContain("buildProductDetailFacts");
     expect(source).toContain("ProductDetailExperience");
     expect(source).toContain("detailFacts={detailFacts}");
-    expect(experienceSource).toContain("buildVariantOptionGroups");
-    expect(experienceSource).toContain("productVariantsForTemplate");
-    expect(experienceSource).toContain("findMatchingVariant");
-    expect(experienceSource).toContain("metadata.templateKey");
+    expect(experienceBaseSource).toContain("buildVariantOptionGroups");
+    expect(experienceBaseSource).toContain("productVariantsForTemplate");
+    expect(experienceBaseSource).toContain("findMatchingVariant");
+    expect(experienceBaseSource).toContain("metadata.templateKey");
   });
 
   it("seçili varyant fiyat stok görsel ve WhatsApp bilgisini birlikte değiştirir", () => {
-    expect(experienceSource).toContain("selectedVariant?.priceAmount");
-    expect(experienceSource).toContain("selectedVariant?.stockQuantity");
-    expect(experienceSource).toContain("selectedVariant?.imageUrls");
-    expect(experienceSource).toContain("selectedWhatsappUrl");
-    expect(experienceSource).toContain("Seçenek: ${selectedVariantText}");
+    expect(experienceBaseSource).toContain("selectedVariant?.priceAmount");
+    expect(experienceBaseSource).toContain("selectedVariant?.stockQuantity");
+    expect(experienceBaseSource).toContain("selectedVariant?.imageUrls");
+    expect(experienceBaseSource).toContain("selectedWhatsappUrl");
+    expect(experienceBaseSource).toContain("Seçenek: ${selectedVariantText}");
+  });
+
+  it("hızlı incelemeden gelen varyant seçimini ilk detay seçimi olarak açar", () => {
+    expect(experienceSource).toContain('searchParams.get("variant")');
+    expect(experienceSource).toContain("normalizeProductVariants");
+    expect(experienceSource).toContain("variants.findIndex");
+    expect(experienceSource).toContain("[selected, ...variants.filter");
+  });
+
+  it("ürün konumu/yol tarifi tıklamasını Vixrex ölçümüne ürün bağlamıyla taşır", () => {
+    expect(experienceSource).toContain("trackDirectionsClick");
+    expect(experienceSource).toContain('clickLocation: "product_detail"');
+    expect(experienceSource).toContain("productSlug: props.productSlug");
   });
 
   it("hizmeti Product olarak işaretlemez ve fiziksel ürün alanlarını istemciye taşımaz", () => {
@@ -66,8 +83,8 @@ describe("ürün detay — zengin veri okuma sözleşmesi", () => {
     expect(source).toContain('"@type": "Product"');
     expect(source).toContain("serviceType: metadata.service?.serviceType");
     expect(source).toContain("areaServed: product.fulfillmentRegion");
-    expect(experienceSource).toContain("!isService && groups.length > 0");
-    expect(experienceSource).toContain("!isService && (stockStatus || stockQuantity != null)");
-    expect(experienceSource).toContain("WhatsApp’tan hizmeti sor");
+    expect(experienceBaseSource).toContain("!isService && groups.length > 0");
+    expect(experienceBaseSource).toContain("!isService && (stockStatus || stockQuantity != null)");
+    expect(experienceBaseSource).toContain("WhatsApp’tan hizmeti sor");
   });
 });
