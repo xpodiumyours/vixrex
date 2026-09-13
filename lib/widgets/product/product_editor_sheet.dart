@@ -11,6 +11,7 @@ import 'package:vixrex/services/store_shelf_upload_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/utils/gallery_image_file_validator.dart';
 import 'package:vixrex/widgets/product/product_rich_fields_editor.dart';
+import 'package:vixrex/widgets/product/product_variant_editor.dart';
 
 class ProductEditorSheet extends StatefulWidget {
   const ProductEditorSheet({
@@ -158,6 +159,7 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
         _richMetadata = alignProductMetadataToCategory(_richMetadata, category!);
         if (category!.productTemplateKey == 'service') {
           _stockQuantity = null;
+          _variants = const [];
         }
       }
     });
@@ -267,6 +269,10 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
         selectedCategory,
       );
       final isService = selectedCategory.productTemplateKey == 'service';
+      final variants = await sanitizeProductVariantsForTemplate(
+        selectedCategory.productTemplateKey,
+        _variants,
+      );
       final result = Product(
         id: productId,
         name: name,
@@ -288,7 +294,7 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
         sku: richMetadata.sku,
         stockQuantity: isService ? null : _stockQuantity,
         richMetadata: richMetadata,
-        variants: _variants,
+        variants: variants,
         oldPriceAmount: _parseAmount(_oldPriceController.text),
         badgeTag:
             _badgeTagController.text.trim().isEmpty
@@ -416,7 +422,7 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
                       stockQuantity: _stockQuantity,
                       metadata: _richMetadata,
                     ),
-                    variantCount: _variants.length,
+                    variantCount: 0,
                     enabled: !_isSaving,
                     onChanged: (next) {
                       setState(() {
@@ -426,6 +432,14 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
                         _richMetadata = next.metadata;
                       });
                     },
+                  ),
+                if (selectedCategory != null && !_isServiceProduct)
+                  ProductVariantEditor(
+                    key: ValueKey('variants-${selectedCategory.productTemplateKey}'),
+                    templateKey: selectedCategory.productTemplateKey,
+                    variants: _variants,
+                    enabled: !_isSaving,
+                    onChanged: (next) => setState(() => _variants = next),
                   ),
                 const SizedBox(height: 16),
                 ElevatedButton.icon(
@@ -470,11 +484,6 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
       );
     }
 
-    // #247: eksik/çok kısa açıklama, ürün sayısı arttıkça SEO ve müşteri
-    // güveni açısından bir kalite riski — bu yumuşak (bloklamayan) uyarı,
-    // kaydetmeyi engellemeden esnafı bilgilendirir. ValueListenableBuilder
-    // kullanılıyor çünkü TextEditingController zaten bir ValueNotifier —
-    // ayrı bir state/setState açmaya gerek yok.
     return ValueListenableBuilder<TextEditingValue>(
       valueListenable: controller,
       builder: (context, value, _) {
@@ -495,9 +504,6 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
     );
   }
 
-  /// Boşsa uyarı yok (zorunlu alan değil) — yalnız doldurulmuş ama çok kısa
-  /// bırakılmışsa uyarır. Eşik (40 karakter) kesin bir kural değil, kaba bir
-  /// "bir cümleden az" sezgisi.
   String? _descriptionHelper(String text) {
     final trimmed = text.trim();
     if (trimmed.isEmpty || trimmed.length >= 40) return null;
