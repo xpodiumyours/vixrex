@@ -9,6 +9,8 @@ export const WHATSAPP_CLICK_EVENT = "whatsapp_click";
 export type WhatsAppClickLocation =
   | "storefront_hero"
   | "storefront_contact"
+  | "product_card"
+  | "product_quick_view"
   | "product_detail"
   | "storefront_floating";
 
@@ -36,24 +38,25 @@ export function trackWhatsAppClick(
 ): void {
   const storeSlug = context.storeSlug.trim();
   if (!storeSlug) return;
+  const productSlug = context.productSlug?.trim() || "";
 
   if (gtag) {
     const parameters: Record<string, string> = {
       store_slug: storeSlug,
       click_location: context.clickLocation,
     };
-    const productSlug = context.productSlug?.trim();
     if (productSlug) parameters.product_slug = productSlug;
     gtag("event", WHATSAPP_CLICK_EVENT, parameters);
   }
 
   // Faz F (Tek Asistan planı, 2026-09-02): GA'nın yanına çift yazım —
-  // asistan bunu okuyabilsin diye Supabase'e de düşer.
+  // ürün bağlamı varsa aynı mevcut engagement RPC'sine ürün slug'ı da gider.
   supabase
     .rpc("record_vitrin_engagement", {
       p_store_slug: storeSlug,
       p_event_type: "whatsapp_click",
       p_session_key: ziyaretAnahtariniOkuyaUret(),
+      p_product_slug: productSlug || null,
     })
     .then(() => {});
 }
