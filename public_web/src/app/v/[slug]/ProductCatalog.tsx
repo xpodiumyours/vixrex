@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import ProductQuickView from "@/components/ProductQuickView";
 import { MapPinIcon } from "@/lib/vitrinBrandIcons";
 import {
   getProductImages,
@@ -12,10 +13,7 @@ import {
   resolveCatalogImage,
 } from "@/lib/products";
 import type { RichProductItem } from "@/lib/richProductItem";
-import {
-  buildProductQuickFacts,
-  productVariantLabel,
-} from "@/lib/productCardPresentation";
+import { productVariantLabel } from "@/lib/productCardPresentation";
 import { productIsService } from "@/lib/productRichData";
 
 type CatalogProduct = RichProductItem;
@@ -49,8 +47,6 @@ const PAGE_SIZE = 24;
 
 function productImageOnly(product: CatalogProduct): string | null {
   const resolved = resolveCatalogImage(product, null);
-  // resolveCatalogImage görselsiz/OCR ürünlerde eski davranış olarak maskot döndürüyor.
-  // Yeni ürün kartında logo/maskot ürün fotoğrafı gibi gösterilmez.
   return resolved === "/vixrex_v_crystal_mascot.png" ? null : resolved;
 }
 
@@ -70,16 +66,6 @@ function productLocationMapUrl(location: string): string | null {
   const normalized = location.trim();
   if (!normalized) return null;
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(normalized)}`;
-}
-
-function productWhatsappUrl(
-  baseUrl: string | null | undefined,
-  storeName: string,
-  productName: string,
-): string | null {
-  if (!baseUrl) return null;
-  const message = `Merhaba, ${storeName} vitrininizdeki "${productName}" ürünü hakkında bilgi almak istiyorum.`;
-  return `${baseUrl}?text=${encodeURIComponent(message)}`;
 }
 
 function stockTone(stockStatus: string | undefined) {
@@ -137,9 +123,9 @@ function CatalogProductImage({ src, alt }: { src: string | null; alt: string }) 
 }
 
 /**
- * Vitrin ürün kataloğu.
- * Kart normal tıklamada vitrinden çıkmadan hızlı inceleme açar.
- * Gerçek ürün URL'si href olarak korunur: yeni sekme/ctrl-cmd tıklama ve SEO akışı bozulmaz.
+ * Public vitrin ürün kataloğu.
+ * Kart hızlı tarama için kısa kalır; normal tıklama kategori-duyarlı hızlı
+ * incelemeyi açar. Gerçek ürün URL'si href olarak korunur.
  */
 export default function ProductCatalog({
   storeSlug,
@@ -152,32 +138,11 @@ export default function ProductCatalog({
 }: ProductCatalogProps) {
   const searchParams = useSearchParams();
   const [quickView, setQuickView] = useState<QuickViewSelection | null>(null);
-  const [quickImageIndex, setQuickImageIndex] = useState(0);
   const [locationProductId, setLocationProductId] = useState<string | null>(null);
 
   const currentPage = Math.max(1, parseInt(searchParams.get("page") || "1", 10) || 1);
   const currentCategory = searchParams.get("category") || "";
   const currentQuery = searchParams.get("q") || "";
-
-  useEffect(() => {
-    if (!quickView) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setQuickView(null);
-      if (event.key === "ArrowLeft") {
-        setQuickImageIndex((current) => Math.max(0, current - 1));
-      }
-      if (event.key === "ArrowRight") {
-        setQuickImageIndex((current) => Math.min(quickView.images.length - 1, current + 1));
-      }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", onKeyDown);
-    };
-  }, [quickView]);
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
@@ -225,20 +190,6 @@ export default function ProductCatalog({
     [storeSlug, currentQuery],
   );
 
-  const quickWhatsappUrl = quickView
-    ? productWhatsappUrl(whatsappBaseUrl, storeName, quickView.product.name)
-    : null;
-  const quickImage = quickView?.images[quickImageIndex] || null;
-  const quickFacts = quickView
-    ? buildProductQuickFacts({
-        brand: quickView.product.brand,
-        metadata: quickView.product.metadata,
-        limit: 4,
-      })
-    : [];
-  const quickVariantLabel = quickView ? productVariantLabel(quickView.product.variants) : null;
-  const quickIsService = quickView ? productIsService(quickView.product.metadata) : false;
-
   return (
     <section>
       {categoryMap.length > 1 && (
@@ -279,10 +230,11 @@ export default function ProductCatalog({
           const image = productImageOnly(product);
           const quickImages = productImagesOnly(product);
           const category = String(product.category || "").trim();
-          const brand = String(product.brand || "").trim();
-          const stockStatus = String(product.stockStatus || "").trim();
+          const isService = productIsService(product.metadata);
+          const brand = isService ? "" : String(product.brand || "").trim();
+          const stockStatus = isService ? "" : String(product.stockStatus || "").trim();
           const tone = stockTone(stockStatus);
-          const variantLabel = productVariantLabel(product.variants);
+          const variantLabel = isService ? null : productVariantLabel(product.variants);
           const fulfillmentRegion = String(product.fulfillmentRegion || "").trim();
           const fulfillmentMapUrl = productLocationMapUrl(fulfillmentRegion);
           const productKey = product.id || productUrl;
@@ -299,11 +251,10 @@ export default function ProductCatalog({
                   if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
                   event.preventDefault();
                   setLocationProductId(null);
-                  setQuickImageIndex(0);
                   setQuickView({ product, images: quickImages, productUrl });
                 }}
                 className="block min-w-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
-                aria-label={`${product.name} ürününü hızlı incele`}
+                aria-label={`${product.name} ${isService ? "hizmetini" : "ürününü"} hızlı incele`}
               >
                 <div className="relative aspect-[4/5] w-full overflow-hidden bg-slate-950 v-product-media">
                   <CatalogProductImage src={image} alt={product.name} />
@@ -338,21 +289,27 @@ export default function ProductCatalog({
                       </span>
                     ) : null}
                   </div>
-                  {(stockStatus || variantLabel) ? (
-                    <div className="mt-2 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                      {stockStatus ? (
-                        <span className={`inline-flex min-w-0 items-center gap-2 text-[10px] font-bold sm:text-[11px] ${tone.text}`}>
-                          <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${tone.dot}`} />
-                          <span className="truncate">{stockStatus}</span>
-                        </span>
-                      ) : null}
-                      {variantLabel ? (
-                        <span className="rounded-md border border-white/10 bg-white/[0.04] px-1.5 py-0.5 text-[9px] font-bold text-slate-400 sm:text-[10px]">
-                          {variantLabel}
-                        </span>
-                      ) : null}
-                    </div>
-                  ) : null}
+                  <div className="mt-2 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                    {!isService && stockStatus ? (
+                      <span className={`inline-flex min-w-0 items-center gap-2 text-[10px] font-bold sm:text-[11px] ${tone.text}`}>
+                        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${tone.dot}`} />
+                        <span className="truncate">{stockStatus}</span>
+                      </span>
+                    ) : null}
+                    {!isService && variantLabel ? (
+                      <span className="rounded-md border border-white/10 bg-white/[0.04] px-1.5 py-0.5 text-[9px] font-bold text-slate-400 sm:text-[10px]">
+                        {variantLabel}
+                      </span>
+                    ) : null}
+                    {isService ? (
+                      <span className="rounded-md border border-cyan-500/20 bg-cyan-500/10 px-1.5 py-0.5 text-[9px] font-bold text-cyan-300 sm:text-[10px]">
+                        Hizmet
+                      </span>
+                    ) : null}
+                    <span className="ml-auto text-[9px] font-extrabold text-blue-400 sm:text-[10px]">
+                      Hızlı incele →
+                    </span>
+                  </div>
                 </div>
               </a>
 
@@ -375,7 +332,7 @@ export default function ProductCatalog({
                       {fulfillmentRegion ? (
                         <div>
                           <p className="text-[10px] font-extrabold uppercase tracking-wider text-blue-300">
-                            Teslim / hizmet bölgesi
+                            {isService ? "Hizmet bölgesi" : "Ürün konumu / teslim bölgesi"}
                           </p>
                           <p className="mt-1 break-words text-xs font-semibold leading-5 text-slate-200">
                             {fulfillmentRegion}
@@ -418,7 +375,7 @@ export default function ProductCatalog({
 
                       {!fulfillmentRegion && !storeLocationText ? (
                         <p className="text-xs font-semibold leading-5 text-slate-300">
-                          Bu ürün için konum bilgisi eklenmemiş.
+                          Bu {isService ? "hizmet" : "ürün"} için konum bilgisi eklenmemiş.
                         </p>
                       ) : null}
                     </div>
@@ -459,232 +416,16 @@ export default function ProductCatalog({
       )}
 
       {quickView ? (
-        <div
-          className="fixed inset-0 z-[90] flex items-end justify-center bg-slate-950/75 p-0 backdrop-blur-md sm:items-center sm:p-5"
-          role="presentation"
-          onMouseDown={(event) => {
-            if (event.currentTarget === event.target) setQuickView(null);
-          }}
-        >
-          <div
-            className="grid max-h-[94vh] w-full max-w-4xl overflow-y-auto rounded-t-[26px] border border-white/10 bg-[#0B1120] shadow-[0_30px_90px_rgba(0,0,0,0.55)] sm:max-h-[90vh] sm:grid-cols-[0.95fr_1.05fr] sm:overflow-hidden sm:rounded-[26px]"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="product-quick-view-title"
-          >
-            <div className="relative aspect-[4/3] bg-slate-950 sm:aspect-auto sm:min-h-[520px]">
-              <CatalogProductImage src={quickImage} alt={quickView.product.name} />
-
-              {quickView.images.length > 1 ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => setQuickImageIndex((current) => Math.max(0, current - 1))}
-                    disabled={quickImageIndex === 0}
-                    className="absolute left-3 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-slate-950/75 text-xl font-bold text-white backdrop-blur-md transition hover:bg-slate-900 disabled:cursor-default disabled:opacity-30"
-                    aria-label="Önceki ürün fotoğrafı"
-                  >
-                    ‹
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setQuickImageIndex((current) => Math.min(quickView.images.length - 1, current + 1))}
-                    disabled={quickImageIndex === quickView.images.length - 1}
-                    className="absolute right-3 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-slate-950/75 text-xl font-bold text-white backdrop-blur-md transition hover:bg-slate-900 disabled:cursor-default disabled:opacity-30"
-                    aria-label="Sonraki ürün fotoğrafı"
-                  >
-                    ›
-                  </button>
-                  <div className="absolute bottom-3 left-3 right-3 z-20 flex justify-center gap-2 overflow-x-auto pb-1">
-                    {quickView.images.map((imageUrl, imageIndex) => (
-                      <button
-                        key={`${imageUrl}-${imageIndex}`}
-                        type="button"
-                        onClick={() => setQuickImageIndex(imageIndex)}
-                        className={`relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border bg-slate-950/80 transition ${
-                          imageIndex === quickImageIndex
-                            ? "border-blue-400 ring-2 ring-blue-400/20"
-                            : "border-white/15 opacity-75 hover:opacity-100"
-                        }`}
-                        aria-label={`${imageIndex + 1}. ürün fotoğrafını göster`}
-                        aria-current={imageIndex === quickImageIndex ? "true" : undefined}
-                      >
-                        <Image
-                          src={imageUrl}
-                          alt=""
-                          fill
-                          sizes="48px"
-                          className="object-cover"
-                        />
-                      </button>
-                    ))}
-                  </div>
-                </>
-              ) : null}
-
-              <button
-                type="button"
-                onClick={() => setQuickView(null)}
-                className="absolute right-4 top-4 z-30 flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-slate-950/75 text-xl font-medium text-white backdrop-blur-md hover:bg-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
-                aria-label="Hızlı ürün görünümünü kapat"
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="flex min-h-0 flex-col p-5 sm:p-8">
-              {quickView.product.category ? (
-                <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-blue-300">
-                  {quickView.product.category}
-                </p>
-              ) : null}
-              <h2
-                id="product-quick-view-title"
-                className="mt-2 text-2xl font-black leading-tight tracking-tight text-white sm:text-3xl"
-              >
-                {quickView.product.name}
-              </h2>
-
-              <div className="mt-3 flex items-baseline gap-3">
-                <p className="text-xl font-black text-blue-400 sm:text-2xl">
-                  {quickView.product.price || "Fiyat sorun"}
-                </p>
-                {quickView.product.oldPriceAmount ? (
-                  <span className="text-sm font-medium text-slate-500 line-through">
-                    {quickView.product.oldPriceAmount} TL
-                  </span>
-                ) : null}
-              </div>
-
-              {(quickView.product.stockStatus || quickView.product.stockQuantity != null || quickVariantLabel) ? (
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  {quickView.product.stockStatus ? (() => {
-                    const quickTone = stockTone(quickView.product.stockStatus);
-                    return (
-                      <span className={`inline-flex items-center gap-2 text-xs font-bold ${quickTone.text}`}>
-                        <span className={`h-1.5 w-1.5 rounded-full ${quickTone.dot}`} />
-                        {quickView.product.stockStatus}
-                      </span>
-                    );
-                  })() : null}
-                  {quickView.product.stockQuantity != null ? (
-                    <span className="rounded-md border border-white/10 bg-white/[0.04] px-2 py-1 text-[11px] font-bold text-slate-400">
-                      {quickView.product.stockQuantity} adet
-                    </span>
-                  ) : null}
-                  {quickVariantLabel ? (
-                    <span className="rounded-md border border-blue-500/20 bg-blue-500/10 px-2 py-1 text-[11px] font-bold text-blue-300">
-                      {quickVariantLabel}
-                    </span>
-                  ) : null}
-                </div>
-              ) : null}
-
-              {quickFacts.length > 0 ? (
-                <div className="mt-5 grid grid-cols-2 gap-2">
-                  {quickFacts.map((fact) => (
-                    <div key={fact.key} className="rounded-xl border border-white/8 bg-white/[0.03] p-3">
-                      <p className="text-[9px] font-extrabold uppercase tracking-wider text-slate-500">
-                        {fact.label}
-                      </p>
-                      <p className="mt-1 break-words text-xs font-bold leading-5 text-slate-200">
-                        {fact.value}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              ) : null}
-
-              <div className="mt-5 rounded-xl border border-white/10 bg-white/[0.03] p-3">
-                <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">İşletme</p>
-                <p className="mt-1 text-sm font-extrabold text-white">{storeName}</p>
-              </div>
-
-              {(quickView.product.fulfillmentRegion || storeLocationText) ? (
-                <div className="mt-3 rounded-xl border border-blue-500/15 bg-blue-500/5 p-3">
-                  {quickView.product.fulfillmentRegion ? (
-                    <div className="flex items-start gap-2">
-                      <MapPinIcon className="mt-0.5 h-4 w-4 shrink-0 text-blue-400" aria-hidden="true" />
-                      <div>
-                        <p className="text-[10px] font-extrabold uppercase tracking-wider text-blue-300">
-                          Teslim / hizmet bölgesi
-                        </p>
-                        <p className="mt-1 text-xs font-semibold leading-5 text-slate-200">
-                          {quickView.product.fulfillmentRegion}
-                        </p>
-                        {productLocationMapUrl(quickView.product.fulfillmentRegion) ? (
-                          <a
-                            href={productLocationMapUrl(quickView.product.fulfillmentRegion) || undefined}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="mt-1.5 inline-flex text-xs font-extrabold text-blue-400 hover:text-blue-300"
-                          >
-                            Haritada ara →
-                          </a>
-                        ) : null}
-                      </div>
-                    </div>
-                  ) : null}
-
-                  {storeLocationText ? (
-                    <div className={`flex items-start gap-2 ${quickView.product.fulfillmentRegion ? "mt-3 border-t border-white/10 pt-3" : ""}`}>
-                      <MapPinIcon className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
-                      <div>
-                        <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
-                          İşletme konumu
-                        </p>
-                        <p className="mt-1 text-xs font-semibold leading-5 text-slate-200">
-                          {storeLocationText}
-                        </p>
-                        {storeMapsUrl ? (
-                          <a
-                            href={storeMapsUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="mt-1.5 inline-flex text-xs font-extrabold text-blue-400 hover:text-blue-300"
-                          >
-                            Yol tarifi →
-                          </a>
-                        ) : null}
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-              ) : null}
-
-              {quickView.product.description ? (
-                <p className="mt-5 text-sm leading-6 text-slate-300">
-                  {quickView.product.description}
-                </p>
-              ) : null}
-
-              <div className="mt-7 grid gap-2 sm:mt-auto sm:pt-7">
-                {quickWhatsappUrl ? (
-                  <a
-                    href={quickWhatsappUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex min-h-12 items-center justify-center rounded-xl bg-emerald-600 px-5 text-sm font-extrabold text-white shadow-lg shadow-emerald-900/20 transition hover:bg-emerald-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500"
-                  >
-                    {quickIsService
-                      ? "WhatsApp'tan hizmet hakkında bilgi al"
-                      : "WhatsApp'tan ürün hakkında bilgi al"}
-                  </a>
-                ) : null}
-                <a
-                  href={quickView.productUrl}
-                  className={`flex min-h-12 items-center justify-center rounded-xl px-5 text-sm font-extrabold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 ${
-                    quickWhatsappUrl
-                      ? "border border-white/10 bg-slate-900 text-slate-200 hover:border-blue-500/30 hover:text-white"
-                      : "bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg shadow-blue-500/20 hover:brightness-110"
-                  }`}
-                >
-                  Tüm detayları görüntüle
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
+        <ProductQuickView
+          product={quickView.product}
+          images={quickView.images}
+          productUrl={quickView.productUrl}
+          storeName={storeName}
+          whatsappBaseUrl={whatsappBaseUrl}
+          storeLocationText={storeLocationText}
+          storeMapsUrl={storeMapsUrl}
+          onClose={() => setQuickView(null)}
+        />
       ) : null}
     </section>
   );
