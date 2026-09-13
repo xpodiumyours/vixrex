@@ -10,6 +10,7 @@ import 'package:vixrex/services/store_publish_service.dart';
 import 'package:vixrex/services/store_shelf_upload_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/utils/gallery_image_file_validator.dart';
+import 'package:vixrex/widgets/product/product_rich_fields_editor.dart';
 
 class ProductEditorSheet extends StatefulWidget {
   const ProductEditorSheet({
@@ -44,6 +45,11 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
   late final List<_ProductImageDraft> _images;
   late String _categoryId;
   late String _stockStatus;
+  String? _brand;
+  String? _barcode;
+  int? _stockQuantity;
+  late ProductRichMetadata _richMetadata;
+  late List<ProductVariantData> _variants;
   bool _isSaving = false;
 
   @override
@@ -74,6 +80,16 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
         _stockOptions.contains(product?.stockStatus)
             ? product!.stockStatus
             : _stockOptions.first;
+    _brand = product?.brand;
+    _barcode = product?.barcode;
+    _stockQuantity = product?.stockQuantity;
+    _richMetadata = product?.richMetadata ?? const ProductRichMetadata();
+    _variants = List<ProductVariantData>.of(product?.variants ?? const []);
+
+    final category = _selectedCategory;
+    if (category != null) {
+      _richMetadata = alignProductMetadataToCategory(_richMetadata, category);
+    }
   }
 
   String _resolveInitialCategoryId(Product? product) {
@@ -87,6 +103,16 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
     }
     return widget.categories.isEmpty ? '' : widget.categories.first.id;
   }
+
+  ProductCategory? get _selectedCategory {
+    for (final category in widget.categories) {
+      if (category.id == _categoryId) return category;
+    }
+    return null;
+  }
+
+  bool get _isServiceProduct =>
+      (_selectedCategory?.productTemplateKey.trim() ?? '') == 'service';
 
   @override
   void dispose() {
@@ -115,6 +141,26 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
       cleaned = cleaned.replaceAll(',', '.');
     }
     return double.tryParse(cleaned);
+  }
+
+  void _selectProductCategory(String? value) {
+    final nextId = value ?? '';
+    ProductCategory? category;
+    for (final item in widget.categories) {
+      if (item.id == nextId) {
+        category = item;
+        break;
+      }
+    }
+    setState(() {
+      _categoryId = nextId;
+      if (category != null) {
+        _richMetadata = alignProductMetadataToCategory(_richMetadata, category!);
+        if (category!.productTemplateKey == 'service') {
+          _stockQuantity = null;
+        }
+      }
+    });
   }
 
   Future<void> _pickImages() async {
@@ -178,12 +224,11 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
       );
       return;
     }
-    final category = widget.categories.where((item) => item.id == _categoryId);
-    if (category.isEmpty) {
+    final selectedCategory = _selectedCategory;
+    if (selectedCategory == null) {
       _showMessage('Ürün kategorisi zorunludur.');
       return;
     }
-    final selectedCategory = category.first;
 
     setState(() => _isSaving = true);
     final productId =
@@ -218,9 +263,10 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
               ? widget.product!.slug!
               : builder.generateSlug('$name-$productId');
       final richMetadata = alignProductMetadataToCategory(
-        widget.product?.richMetadata ?? const ProductRichMetadata(),
+        _richMetadata,
         selectedCategory,
       );
+      final isService = selectedCategory.productTemplateKey == 'service';
       final result = Product(
         id: productId,
         name: name,
@@ -230,19 +276,19 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
         imageUrls: uploadedUrls,
         categoryId: selectedCategory.id,
         category: selectedCategory.name,
-        stockStatus: _stockStatus,
+        stockStatus: isService ? '' : _stockStatus,
         isVisible: widget.product?.isVisible ?? true,
         slug: slug,
         source: widget.product?.source,
         sourceMediaId: widget.product?.sourceMediaId,
         sourcePermalink: widget.product?.sourcePermalink,
         importedAt: widget.product?.importedAt,
-        brand: widget.product?.brand,
-        barcode: widget.product?.barcode,
-        sku: widget.product?.sku,
-        stockQuantity: widget.product?.stockQuantity,
+        brand: _brand,
+        barcode: isService ? null : _barcode,
+        sku: richMetadata.sku,
+        stockQuantity: isService ? null : _stockQuantity,
         richMetadata: richMetadata,
-        variants: widget.product?.variants,
+        variants: _variants,
         oldPriceAmount: _parseAmount(_oldPriceController.text),
         badgeTag:
             _badgeTagController.text.trim().isEmpty
@@ -272,6 +318,7 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final selectedCategory = _selectedCategory;
     return PopScope(
       canPop: !_isSaving,
       child: SafeArea(
@@ -332,35 +379,54 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
                             ),
                           )
                           .toList(),
-                  onChanged:
-                      _isSaving
-                          ? null
-                          : (value) =>
-                              setState(() => _categoryId = value ?? ''),
+                  onChanged: _isSaving ? null : _selectProductCategory,
                 ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  value: _stockStatus,
-                  dropdownColor: AppColors.surfaceSoft,
-                  decoration: const InputDecoration(labelText: 'Stok durumu'),
-                  items:
-                      _stockOptions
-                          .map(
-                            (status) => DropdownMenuItem(
-                              value: status,
-                              child: Text(status),
+                if (!_isServiceProduct) ...[
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    value: _stockStatus,
+                    dropdownColor: AppColors.surfaceSoft,
+                    decoration: const InputDecoration(labelText: 'Stok durumu'),
+                    items:
+                        _stockOptions
+                            .map(
+                              (status) => DropdownMenuItem(
+                                value: status,
+                                child: Text(status),
+                              ),
+                            )
+                            .toList(),
+                    onChanged:
+                        _isSaving
+                            ? null
+                            : (value) => setState(
+                              () =>
+                                  _stockStatus =
+                                      value ?? StockStatus.available.label,
                             ),
-                          )
-                          .toList(),
-                  onChanged:
-                      _isSaving
-                          ? null
-                          : (value) => setState(
-                            () =>
-                                _stockStatus =
-                                    value ?? StockStatus.available.label,
-                          ),
-                ),
+                  ),
+                ],
+                if (selectedCategory != null)
+                  ProductRichFieldsEditor(
+                    key: ValueKey('rich-${selectedCategory.productTemplateKey}'),
+                    templateKey: selectedCategory.productTemplateKey,
+                    value: ProductRichEditorValue(
+                      brand: _brand,
+                      barcode: _barcode,
+                      stockQuantity: _stockQuantity,
+                      metadata: _richMetadata,
+                    ),
+                    variantCount: _variants.length,
+                    enabled: !_isSaving,
+                    onChanged: (next) {
+                      setState(() {
+                        _brand = next.brand;
+                        _barcode = next.barcode;
+                        _stockQuantity = next.stockQuantity;
+                        _richMetadata = next.metadata;
+                      });
+                    },
+                  ),
                 const SizedBox(height: 16),
                 ElevatedButton.icon(
                   onPressed: _isSaving ? null : _save,
