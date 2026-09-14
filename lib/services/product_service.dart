@@ -223,8 +223,8 @@ class ProductService {
     if (msg.contains('PRODUCT_IMAGES_MIN_3')) {
       return 'Bir ürün için en az 3 fotoğraf zorunludur.';
     }
-    if (msg.contains('PRODUCT_IMAGES_MAX_10')) {
-      return 'Bir ürüne en fazla 10 fotoğraf eklenebilir.';
+    if (msg.contains('PRODUCT_IMAGES_MAX_11')) {
+      return 'Bir ürüne en fazla 11 fotoğraf eklenebilir.';
     }
     return 'İşlem başarısız oldu.';
   }
