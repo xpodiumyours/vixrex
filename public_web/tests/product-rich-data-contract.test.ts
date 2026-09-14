@@ -107,6 +107,15 @@ describe("zengin ürün şeması — sözleşme", () => {
     expect(productRouteSource).toContain('hasOwn(govde, "oldPriceAmount")');
     expect(productRouteSource).toContain("current.old_price_amount");
   });
+
+  it("API belirsiz veya çakışan varyant setlerini reddeder", () => {
+    expect(productRouteSource).toContain("function validateVariantSet");
+    expect(productRouteSource).toContain("ids.has(variant.id)");
+    expect(productRouteSource).toContain("combinations.has(signature)");
+    expect(productRouteSource).toContain("skus.has(sku)");
+    expect(productRouteSource).toContain("barcodes.has(barcode)");
+    expect(productRouteSource).toContain("Ürün ve varyant barkodları benzersiz olmalıdır.");
+  });
 });
 
 describe("zengin ürün verisi — güvenli okuma", () => {
