@@ -2,10 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vixrex/models/product_rich_data.dart';
 import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/services/product_image_policy.dart';
 import 'package:vixrex/widgets/product/product_editor_sheet.dart';
 import 'package:vixrex/widgets/product/product_variant_editor.dart';
 
 void main() {
+  test('yeni Flutter ürün metadata varsayılanı ortak şema v2 olur', () {
+    expect(const ProductRichMetadata().schemaVersion, 2);
+    expect(ProductRichMetadata.fromJson({}).schemaVersion, 2);
+    expect(ProductRichMetadata.fromJson({'schemaVersion': 1}).schemaVersion, 1);
+  });
+
   test('varyant görsellerini ürün galerisiyle sınırlar', () async {
     final variants = await sanitizeProductVariantsForTemplate(
       'fashion',
@@ -27,6 +34,28 @@ void main() {
       variants.single.imageUrls,
       ['https://cdn.example.com/product-1.webp'],
     );
+  });
+
+  test('varyant galerisi ortak 11 görsel sınırını kullanır', () async {
+    final images = List.generate(
+      ProductImagePolicy.maxImages + 1,
+      (index) => 'https://cdn.example.com/product-$index.webp',
+    );
+    final variants = await sanitizeProductVariantsForTemplate(
+      'fashion',
+      [
+        ProductVariantData(
+          id: 'black-m',
+          options: const {'color': 'Siyah', 'size': 'M'},
+          imageUrls: images,
+        ),
+      ],
+      availableImageUrls: images.toSet(),
+    );
+
+    expect(variants, hasLength(1));
+    expect(variants.single.imageUrls, hasLength(ProductImagePolicy.maxImages));
+    expect(ProductImagePolicy.maxImages, 11);
   });
 
   testWidgets('giyim kategorisi ortak şemadaki ürün, KDV ve varyant alanlarını gösterir', (
