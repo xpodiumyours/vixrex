@@ -68,7 +68,22 @@ class _ProductRichFieldsEditorState extends State<ProductRichFieldsEditor> {
         if (schema == null) {
           return const SizedBox.shrink();
         }
-        final template = schema.templateByKey(widget.templateKey);
+        final template = schema.templateByKeyOrNull(widget.templateKey);
+        if (template == null) {
+          return Container(
+            margin: const EdgeInsets.only(top: 16),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceSoft,
+              borderRadius: BorderRadius.circular(AppColors.radius16),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: const Text(
+              'Ürün kategori şablonu doğrulanamadı. Kategori ayarını kontrol edin; Vixrex farklı bir kategori tahmin etmez.',
+              style: TextStyle(color: AppColors.error, fontSize: 12, height: 1.4),
+            ),
+          );
+        }
         final definitions = schema.attributesForTemplate(template.key);
         return _buildFields(schema, template, definitions);
       },

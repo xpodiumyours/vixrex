@@ -125,6 +125,37 @@ void main() {
     });
   }
 
+  testWidgets('bilinmeyen kategori şablonunu generic ürüne çevirmeden durdurur', (
+    tester,
+  ) async {
+    final category = ProductCategory(
+      id: 'unknown-1',
+      name: 'Tanımsız kategori',
+      productTemplateKey: 'unknown-template',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProductEditorSheet(
+            categories: [category],
+            storeSlug: 'ornek-vitrin',
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Ürün kategori şablonu doğrulanamadı. Kategori ayarını kontrol edin; Vixrex farklı bir kategori tahmin etmez.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Marka · önerilen'), findsNothing);
+    expect(find.text('KDV oranı (%) · önerilen'), findsNothing);
+  });
+
   testWidgets('hizmet kategorisi stok ve varyant yerine hizmet alanlarını gösterir', (
     tester,
   ) async {

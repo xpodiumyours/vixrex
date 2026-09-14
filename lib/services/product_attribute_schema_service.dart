@@ -92,21 +92,27 @@ class ProductAttributeSchema {
   final List<ProductAttributeDefinition> commonServiceAttributes;
   final List<ProductAttributeTemplate> templates;
 
-  ProductAttributeTemplate templateByKey(String? key) {
+  ProductAttributeTemplate? templateByKeyOrNull(String? key) {
     final normalized = (key ?? '').trim();
+    final lookupKey = normalized.isEmpty ? 'generic' : normalized;
     for (final template in templates) {
-      if (template.key == normalized) return template;
+      if (template.key == lookupKey) return template;
     }
-    return templates.firstWhere(
-      (template) => template.key == 'generic',
-      orElse:
-          () => const ProductAttributeTemplate(
-            key: 'generic',
-            label: 'Genel ürün',
-            itemKind: 'physical',
-            attributes: [],
-          ),
-    );
+    return null;
+  }
+
+  ProductAttributeTemplate templateByKey(String? key) {
+    return templateByKeyOrNull(key) ??
+        templates.firstWhere(
+          (template) => template.key == 'generic',
+          orElse:
+              () => const ProductAttributeTemplate(
+                key: 'generic',
+                label: 'Genel ürün',
+                itemKind: 'physical',
+                attributes: [],
+              ),
+        );
   }
 
   List<ProductAttributeDefinition> attributesForTemplate(String? key) {
