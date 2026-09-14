@@ -95,7 +95,7 @@ class ProductRichMetadata {
   final ProductServiceMetadata? service;
 
   const ProductRichMetadata({
-    this.schemaVersion = 1,
+    this.schemaVersion = 2,
     this.itemKind = 'physical',
     this.templateKey,
     this.sku,
@@ -131,7 +131,7 @@ class ProductRichMetadata {
       schemaVersion:
           json['schemaVersion'] is num
               ? (json['schemaVersion'] as num).toInt()
-              : 1,
+              : 2,
       itemKind: json['itemKind'] == 'service' ? 'service' : 'physical',
       templateKey: _cleanString(json['templateKey']),
       sku: _cleanString(identifiers['sku']),
