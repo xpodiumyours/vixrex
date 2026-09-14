@@ -20,7 +20,7 @@ security definer
 set search_path = ''
 as $$
 declare
-  v_slug text := pg_catalog.btrim(pg_catalog.coalesce(p_slug, ''));
+  v_slug text := pg_catalog.btrim(coalesce(p_slug, ''));
   v_store_id uuid;
 begin
   if v_slug = '' then
