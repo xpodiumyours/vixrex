@@ -234,14 +234,6 @@ class StoreEditorController extends ChangeNotifier
       }
 
       // Buluttaki sürüm yerelden yeniyse onu al.
-      //
-      // Esnaf vitrinini tarayıcıdaki Vixrex Asistan ile düzenleyebiliyor;
-      // o düzenleme doğrudan buluta yazılıyor. Burası yalnız yerel kopyayı
-      // okuduğu için uygulama eski hâli göstermeye devam ediyordu — aynı
-      // Vixrex'in iki farklı şey söylemesi gibi.
-      //
-      // Zaman damgası karşılaştırılır: uygulamada yapılıp henüz
-      // yayınlanmamış düzenleme varsa (yerel daha yeni) EZİLMEZ.
       if (_publishedInfo != null) {
         await _pullFromCloudIfNewer();
         _canliDinlemeyiBaslat();
@@ -256,7 +248,6 @@ class StoreEditorController extends ChangeNotifier
           supabaseClient: _resolveClient(),
         );
       }
-      // Onaylı kutular için version damgasını arka planda doldur
       await _stampAcceptedLegalDocuments();
     } catch (e) {
       if (kDebugMode) debugPrint('StoreEditorController.initialize failed: $e');
@@ -266,17 +257,6 @@ class StoreEditorController extends ChangeNotifier
   }
 
   /// Yayındaki vitrini CANLI dinlemeye başlar.
-  ///
-  /// Esnaf vitrinini tarayıcıdaki Vixrex Asistan ile de düzenleyebiliyor.
-  /// Açılıştaki tek seferlik senkron yetmiyordu: uygulama açıkken tarayıcıda
-  /// yayınlanan değişiklikten habersiz kalıyordu.
-  ///
-  /// Yalnız YAYINLANMIŞ veri dinlenir. Yayınlanmamış taslaklar kasten
-  /// ayrıdır — iki taraf birbirinin yarım işini görmez.
-  ///
-  /// Gerçek kanal yönetimi `StoreRealtimeSyncService`'te (Faz 3, controller
-  /// parçalama, birebir taşındı); burada yalnız `_data`/`notifyListeners`
-  /// ve dış bildirim state'i (`hasPendingExternalDraft`) kalıyor.
   void _canliDinlemeyiBaslat() {
     final slug = _publishedInfo?.slug.trim() ?? '';
     if (slug.isEmpty) return;
@@ -305,13 +285,9 @@ class StoreEditorController extends ChangeNotifier
   bool _hasPendingExternalDraft = false;
   String? _lastExternalDraftEtiket;
 
-  /// Vixrex Asistan tarafından taslakta düzenleme yapıldı mı?
   bool get hasPendingExternalDraft => _hasPendingExternalDraft;
-
-  /// Son güncellenen alanın Türkçe etiketi (bildirim metni için).
   String? get lastExternalDraftEtiket => _lastExternalDraftEtiket;
 
-  /// Taslak bildirimini okundu olarak işaretle.
   void clearPendingExternalDraft() {
     if (!_hasPendingExternalDraft) return;
     _hasPendingExternalDraft = false;
@@ -319,7 +295,6 @@ class StoreEditorController extends ChangeNotifier
     if (!_isDisposed) notifyListeners();
   }
 
-  /// Yayındaki vitrini buluttan çeker; bulut daha yeniyse yerele yazar.
   Future<void> _pullFromCloudIfNewer() async {
     final slug = _publishedInfo?.slug.trim() ?? '';
     if (slug.isEmpty) return;
@@ -344,10 +319,6 @@ class StoreEditorController extends ChangeNotifier
     }
   }
 
-  // --- Delegated Methods (UI Compatibility) ---
-  /// Hazır şablon kapak URL'sini hem editör state'ine hem StoreData.shelfImageUrl'e yazar.
-  /// Kapak değişikliği TASLAK kalır — canlıya geçmek için kullanıcının
-  /// açıkça "Yayınla" butonuna basması gerekir.
   @override
   void setCoverUrl(String url) {
     final trimmed = url.trim();
@@ -359,15 +330,10 @@ class StoreEditorController extends ChangeNotifier
   }
 
   void setName(String name) => updateField('isletmeAdi', name);
-
   void updateName(String name) => setName(name);
 
-  /// Kategori seçimi: özellik paketini sessiz uygular (randevu vb.).
   void selectCategory(String kategori) {
     _data.kategori = kategori;
-    // Public chip / profil ile senkron: business_type default 'Butik' kalmasın.
-    // Kullanıcı İşletme Türü'nü elle değiştirdiyse artık üzerine yazma —
-    // yalnız hâlâ otomatik öneriye bağlıysa kategoriye göre güncelle.
     if (!_businessTypeManuallySet) {
       final config = BusinessCategoryConfig.fromCategoryLabel(kategori);
       _data.businessType = config.label;
@@ -376,8 +342,6 @@ class StoreEditorController extends ChangeNotifier
     notifyListeners();
   }
 
-  /// İşletme Türü alanının elle düzenlenmesi. Bundan sonra kategori
-  /// değişse bile bu alanın üzerine otomatik yazılmaz.
   void updateBusinessType(String value) {
     _data.businessType = value;
     _businessTypeManuallySet = true;
@@ -392,17 +356,11 @@ class StoreEditorController extends ChangeNotifier
     _data.bookingSettings!.isEnabled = supportsBooking;
   }
 
-  void setDescription(String description) =>
-      updateField('kisaTanitim', description);
-
+  void setDescription(String description) => updateField('kisaTanitim', description);
   void updateWhatsapp(String w) => updateField('whatsapp', w);
-
   void updatePhone(String value) => updateField('telefon', value);
-
   void updateEmail(String value) => updateField('eposta', value);
-
   void updateHeroBadge(String value) => updateField('heroRozet', value);
-
   void updateCorporateBio(String value) => updateField('hakkindaMetin', value);
 
   void updateAboutSection({
@@ -432,44 +390,25 @@ class StoreEditorController extends ChangeNotifier
         _data.aboutValues.any((v) => v.title.trim().isNotEmpty);
   }
 
-  void updateGallerySectionMeta({
-    required String kicker,
-    required String title,
-  }) => _guncelle(
-    (d) => _contentEditingService.writeGallerySectionMeta(
-      d,
-      kicker: kicker,
-      title: title,
-    ),
-  );
+  void updateGallerySectionMeta({required String kicker, required String title}) =>
+      _guncelle(
+        (d) => _contentEditingService.writeGallerySectionMeta(
+          d,
+          kicker: kicker,
+          title: title,
+        ),
+      );
 
-  void updateCategorySectionTitle(String value) =>
-      updateField('kategoriBolumBaslik', value);
-
-  void updateProductSectionTitle(String value) =>
-      updateField('urunBolumBaslik', value);
-
-  void updateGalleryActionLabel(String value) =>
-      updateField('galeriAksiyonMetni', value);
-
-  void updateGalleryActionHref(String value) =>
-      updateField('galeriAksiyonLinki', value);
-
-  void updateBlogSectionKicker(String value) =>
-      updateField('blogUstBaslik', value);
-
+  void updateCategorySectionTitle(String value) => updateField('kategoriBolumBaslik', value);
+  void updateProductSectionTitle(String value) => updateField('urunBolumBaslik', value);
+  void updateGalleryActionLabel(String value) => updateField('galeriAksiyonMetni', value);
+  void updateGalleryActionHref(String value) => updateField('galeriAksiyonLinki', value);
+  void updateBlogSectionKicker(String value) => updateField('blogUstBaslik', value);
   void updateBlogSectionTitle(String value) => updateField('blogBaslik', value);
-
-  void updateFaqSectionKicker(String value) =>
-      updateField('sssUstBaslik', value);
-
+  void updateFaqSectionKicker(String value) => updateField('sssUstBaslik', value);
   void updateFaqSectionTitle(String value) => updateField('sssBaslik', value);
+  void updateFaqSectionDescription(String value) => updateField('sssAciklama', value);
 
-  void updateFaqSectionDescription(String value) =>
-      updateField('sssAciklama', value);
-
-  /// Anahtar yoksa/true ise bölüm görünür (veri doluluğuna göre otomatik);
-  /// yalnız kapatılan bölümler haritaya `false` olarak yazılır.
   void updateSectionVisibility(String key, bool visible) {
     if (visible) {
       _data.sectionVisibility.remove(key);
@@ -479,11 +418,8 @@ class StoreEditorController extends ChangeNotifier
     notifyListeners();
   }
 
-  void updateShowStorefrontRating(bool value) =>
-      updateField('puanGoster', value);
-
-  void updateShowDirectionsLink(bool value) =>
-      updateField('yolTarifiGoster', value);
+  void updateShowStorefrontRating(bool value) => updateField('puanGoster', value);
+  void updateShowDirectionsLink(bool value) => updateField('yolTarifiGoster', value);
 
   void updateFeaturedCampaign({
     required String label,
@@ -510,15 +446,10 @@ class StoreEditorController extends ChangeNotifier
         _data.featuredBannerLabel.trim().isNotEmpty;
   }
 
-  void updateFaqItems(List<StoreFaqItem> items) =>
-      _guncelle((d) => d.faqItems = List.of(items));
-
-  void updateWorkingHoursText(String value) =>
-      updateField('calismaSaatleri', value);
-
+  void updateFaqItems(List<StoreFaqItem> items) => _guncelle((d) => d.faqItems = List.of(items));
+  void updateWorkingHoursText(String value) => updateField('calismaSaatleri', value);
   void updateInstagram(String value) => updateField('instagram', value);
 
-  /// Instagram OAuth sonrası kullanıcı adını forma ve (yayındaysa) Supabase'e yazar.
   Future<Result<void>> applyConnectedInstagramUsername(String username) async {
     final cleaned = username.trim().replaceFirst('@', '');
     if (cleaned.isEmpty) return const Result.success(null);
@@ -526,9 +457,7 @@ class StoreEditorController extends ChangeNotifier
     updateInstagram(handle);
 
     final info = _publishedInfo;
-    if (info == null ||
-        info.slug.trim().isEmpty ||
-        info.editToken.trim().isEmpty) {
+    if (info == null || info.slug.trim().isEmpty || info.editToken.trim().isEmpty) {
       return const Result.success(null);
     }
 
@@ -537,20 +466,13 @@ class StoreEditorController extends ChangeNotifier
       editToken: info.editToken,
       patch: {'instagram': handle},
     );
-    if (result.isSuccess) {
-      await saveLocally();
-    }
+    if (result.isSuccess) await saveLocally();
     return result;
   }
 
   void updateWebsite(String value) => updateField('website', value);
-
-  /// Şemada karşılığı yok (operasyonel alan, vitrin içeriği değil) —
-  /// `updateField`'a taşınmadı, `_guncelle` doğrudan kullanılıyor.
   void selectStatus(String status) => _guncelle((d) => d.status = status);
-
   void updateGoogleBusinessLink(String v) => updateField('haritaLinki', v);
-
   void updateReferencesLink(String v) => updateField('referansLinki', v);
 
   void addMarketplaceLink(MarketplaceLink link) {
@@ -581,7 +503,6 @@ class StoreEditorController extends ChangeNotifier
     notifyListeners();
   }
 
-  /// WorkingHoursEditor in-place mutasyon sonrası UI yenileme.
   void refreshBookingEditor() => notifyListeners();
 
   void _ensureBookingSettings() {
@@ -649,7 +570,6 @@ class StoreEditorController extends ChangeNotifier
     notifyListeners();
   }
 
-  /// Kullanıcı "Belgeleri Tekrar Yükle" dediğinde loading + error state ile yükler.
   Future<void> reloadLegalDocuments() async {
     setLoadingLegalDocuments(true);
     setLegalDocumentsError(null);
@@ -660,11 +580,6 @@ class StoreEditorController extends ChangeNotifier
     }
   }
 
-  /// Aktif yasal belgelerden version/hash damgala (hash DB'de boş olabilir).
-  /// API başarısız olsa bile bilinen aktif sürümlerle boşluk doldurulur.
-  /// Gerçek iş `StoreLegalStampingService`'te (Faz 2, controller parçalama,
-  /// birebir taşındı); burada yalnız hata gösterme kararı (`reportError`)
-  /// ve `notifyListeners` kalıyor.
   Future<void> _stampAcceptedLegalDocuments({bool reportError = false}) async {
     final result = await _legalStampingService.stamp(_data);
     if (result.isSuccess) {
@@ -686,12 +601,7 @@ class StoreEditorController extends ChangeNotifier
     if (client == null) return false;
 
     try {
-      final row =
-          await client
-              .from('stores')
-              .select('id')
-              .eq('slug', slug)
-              .maybeSingle();
+      final row = await client.from('stores').select('id').eq('slug', slug).maybeSingle();
       final id = (row?['id'] ?? '').toString().trim();
       if (id.isEmpty || !_isUuid(id)) return false;
       _data.id = id;
@@ -719,37 +629,25 @@ class StoreEditorController extends ChangeNotifier
     }
   }
 
-  // Store-identity/hydration kodu (yukarıda) hâlâ bunu kullanıyor; katalog
-  // CRUD'unun kendi kopyası ProductCatalogSyncService içinde — iki ayrı
-  // sorumluluk için küçük, stateless bir regex kontrolünü paylaşmak yerine
-  // birebir kopyalamak, gereksiz bir modüller-arası bağımlılık kurmaktan
-  // daha ucuz.
   bool _isUuid(String value) {
     return RegExp(
       r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
     ).hasMatch(value.trim());
   }
 
-  /// Panel/OCR/bulk: önce kategori sözleşmesini, sonra aynı Product CORE
-  /// üzerindeki ürünleri yazar. Böylece yerel kategori kimlikleri ürün
-  /// kaydına sızmaz; Flutter ve Next.js aynı Supabase kategorilerini kullanır.
   Future<Result<void>> syncCatalogToRemote({
     required List<Product> products,
     required List<ProductCategory> categories,
   }) async {
     final editToken = _publishedInfo?.editToken.trim() ?? '';
     if (editToken.isEmpty) {
-      return Result.failure(
-        Failure('Ürünleri kaydetmek için önce vitrini yayınlayın.'),
-      );
+      return Result.failure(Failure('Ürünleri kaydetmek için önce vitrini yayınlayın.'));
     }
 
     final ready = await ensureRemoteStoreId();
     final storeId = _data.id?.trim() ?? '';
     if (!ready || storeId.isEmpty) {
-      return Result.failure(
-        Failure('Mağaza kimliği bulunamadı. Yayınlayıp tekrar deneyin.'),
-      );
+      return Result.failure(Failure('Mağaza kimliği bulunamadı. Yayınlayıp tekrar deneyin.'));
     }
 
     var syncedCategories = List<ProductCategory>.of(categories);
@@ -766,9 +664,7 @@ class StoreEditorController extends ChangeNotifier
         syncedProducts = categoryResult.products;
       } catch (e) {
         if (kDebugMode) debugPrint('syncCatalogToRemote category sync: $e');
-        return Result.failure(
-          Failure('Ürün kategorileri kaydedilemedi, lütfen tekrar deneyin.'),
-        );
+        return Result.failure(Failure('Ürün kategorileri kaydedilemedi, lütfen tekrar deneyin.'));
       }
     }
 
@@ -777,9 +673,7 @@ class StoreEditorController extends ChangeNotifier
       editToken: editToken,
       products: syncedProducts,
     );
-    if (result.isFailure) {
-      return Result.failure(result.failure!);
-    }
+    if (result.isFailure) return Result.failure(result.failure!);
 
     _data.productCategories = syncedCategories;
     _data.products = result.data!;
@@ -789,8 +683,6 @@ class StoreEditorController extends ChangeNotifier
     return const Result.success(null);
   }
 
-  /// Yeni ürün ekler (ilişkisel `products` tablosuna senkronize eder).
-  /// Yayınlı vitrinde uzak yazma başarısızsa yerel listeye eklemez.
   Future<Result<void>> addProduct(Product p) async {
     final editToken = _publishedInfo?.editToken.trim() ?? '';
 
@@ -798,9 +690,7 @@ class StoreEditorController extends ChangeNotifier
       final ready = await ensureRemoteStoreId();
       final storeId = _data.id?.trim() ?? '';
       if (!ready || storeId.isEmpty) {
-        return Result.failure(
-          Failure('Mağaza hazır değil. Ürün müşteri vitrine yazılamadı.'),
-        );
+        return Result.failure(Failure('Mağaza hazır değil. Ürün müşteri vitrine yazılamadı.'));
       }
 
       final result = await _catalogSyncService.addProduct(
@@ -809,9 +699,7 @@ class StoreEditorController extends ChangeNotifier
         product: p,
         sortOrder: _data.products.length,
       );
-      if (result.isFailure) {
-        return Result.failure(result.failure!);
-      }
+      if (result.isFailure) return Result.failure(result.failure!);
     }
 
     _data.products.add(p);
@@ -821,11 +709,8 @@ class StoreEditorController extends ChangeNotifier
     return const Result.success(null);
   }
 
-  /// Ürün siler (ilişkisel `products` tablosu). Kalıcı; geri alınamaz.
   Future<Result<void>> removeProduct(int i) async {
-    if (i < 0 || i >= _data.products.length) {
-      return const Result.success(null);
-    }
+    if (i < 0 || i >= _data.products.length) return const Result.success(null);
     final product = _data.products[i];
     final editToken = _publishedInfo?.editToken.trim() ?? '';
 
@@ -833,9 +718,7 @@ class StoreEditorController extends ChangeNotifier
       productId: product.id,
       editToken: editToken,
     );
-    if (deleted.isFailure) {
-      return Result.failure(deleted.failure!);
-    }
+    if (deleted.isFailure) return Result.failure(deleted.failure!);
     _data.products.removeAt(i);
     await saveLocally();
     notifyListeners();
@@ -843,20 +726,14 @@ class StoreEditorController extends ChangeNotifier
     return const Result.success(null);
   }
 
-  /// Kimlik ile kalıcı ürün siler. Geri alınamaz.
   Future<Result<void>> removeProductById(String productId) async {
     final index = _data.products.indexWhere((p) => p.id == productId);
-    if (index < 0) {
-      return Result.failure(Failure('Ürün bulunamadı.'));
-    }
+    if (index < 0) return Result.failure(Failure('Ürün bulunamadı.'));
     return removeProduct(index);
   }
 
-  /// Ürün günceller (ilişkisel `products` tablosu).
   Future<Result<void>> updateProduct(int i, Product p) async {
-    if (i < 0 || i >= _data.products.length) {
-      return const Result.success(null);
-    }
+    if (i < 0 || i >= _data.products.length) return const Result.success(null);
     final editToken = _publishedInfo?.editToken.trim() ?? '';
     final storeId = _data.id?.trim() ?? '';
 
@@ -865,9 +742,7 @@ class StoreEditorController extends ChangeNotifier
         editToken: editToken,
         product: p,
       );
-      if (updated.isFailure) {
-        return Result.failure(updated.failure!);
-      }
+      if (updated.isFailure) return Result.failure(updated.failure!);
     }
 
     _data.products[i] = p;
@@ -877,16 +752,12 @@ class StoreEditorController extends ChangeNotifier
     return const Result.success(null);
   }
 
-  /// İçe aktarılan ürün günceller (ilişkisel `products` tablosu).
   Future<Result<void>> updateProductImported(Product product) async {
     final index = _data.products.indexWhere((p) => p.id == product.id);
-    if (index >= 0) {
-      return updateProduct(index, product);
-    }
+    if (index >= 0) return updateProduct(index, product);
     return addProduct(product);
   }
 
-  /// Public vitrin sayfasının ISR cache'ini yeniler.
   void _revalidateStoreCache() {
     final slug = _publishedInfo?.slug ?? _data.slug;
     if (slug.trim().isEmpty) return;
@@ -912,21 +783,6 @@ class StoreEditorController extends ChangeNotifier
     );
   }
 
-  /// Vitrini siler.
-  ///
-  /// SORUN (2026-08-07): Eskiden önce buluttaki kaydı silmeye çalışıyordu
-  /// ve slug yoksa hata fırlatıp YEREL VERİYİ HİÇ TEMİZLEMİYORDU. Hiç
-  /// yayınlanmamış ya da bulutta zaten silinmiş bir vitrin uygulamadan
-  /// asla silinemiyordu; karşılama ekranı sonsuza kadar "Kayıtlı
-  /// Vitrinimi Düzenle" diyordu. Casper: "vitrin yok ortada, vitrini sil
-  /// diyorum ama silinmiyor".
-  ///
-  /// KURAL
-  /// - Bulutta karşılığı yoksa (slug boş): yerel temizlenir, bitti.
-  /// - Bulut silme başarılıysa: yerel temizlenir.
-  /// - Bulut silme başarısızsa: yerel KORUNUR ve hata söylenir. Çünkü
-  ///   yerel kayıtta düzenleme anahtarı var; onu silersek esnaf buluttaki
-  ///   vitrinini bir daha silemez.
   Future<void> deleteVitrin() async {
     setLoading(true);
     try {
@@ -937,9 +793,7 @@ class StoreEditorController extends ChangeNotifier
           slug: slug,
           editToken: _publishedInfo?.editToken,
         );
-        if (result.isFailure) {
-          throw result.failure!.message;
-        }
+        if (result.isFailure) throw result.failure!.message;
       }
 
       await storage.clearVitrinData();
@@ -966,7 +820,6 @@ class StoreEditorController extends ChangeNotifier
     if (isPublishing) return null;
     setPublishing(true);
     try {
-      // Kutular işaretli olsa bile version damgası yoksa yayın reddedilir
       await _stampAcceptedLegalDocuments();
       await uploadMedia(
         storeData: _data,
@@ -993,15 +846,10 @@ class StoreEditorController extends ChangeNotifier
             editToken: publishResult.editToken,
           );
           _data.slug = publishResult.slug;
+          // Product CORE, public publish başlamadan önce StorePublishService
+          // içinde tamamlandı. Burada ikinci kez ürün/kategori yazmıyoruz.
           await ensureRemoteStoreId();
-          if (_data.products.isNotEmpty) {
-            await syncCatalogToRemote(
-              products: List.of(_data.products),
-              categories: List.of(_data.productCategories),
-            );
-          }
           await saveLocally();
-          // Next.js cache'ini yenile
           SeoService().revalidateStore(publishResult.slug);
           notifyListeners();
           return publicLink;
@@ -1015,30 +863,13 @@ class StoreEditorController extends ChangeNotifier
     }
   }
 
-  /// Gerçek depolama I/O'su `StoreDraftPersistenceService`'te (Faz 7,
-  /// controller parçalama, birebir taşındı); galeri senkronu editör medya
-  /// state'ine (mixin) bağlı olduğu için burada kalıyor.
   Future<void> saveLocally() async {
     _syncEditorGalleryIntoStoreData();
     await _draftPersistence.persist(_data, _publishedInfo);
   }
 
-  /// Yayın öncesi taslak için cihaza özel edit token. Aynı token daha sonra
-  /// yayınlanırken de kullanılır — böylece taslak satırı yeni bir satıra
-  /// değil, doğrudan yayınlanan satıra dönüşür.
-  Future<String> ensureDraftEditToken() =>
-      _draftPersistence.ensureDraftEditToken();
+  Future<String> ensureDraftEditToken() => _draftPersistence.ensureDraftEditToken();
 
-  /// Tek sahip önizleme girişi (implementation_plan.md §5.1/5.2, Commit 5/6):
-  /// taslak/yayın ayrımını çağırandan saklar.
-  ///
-  /// - Önizleme tıklamasında editör verisini yerel olarak senkronlar.
-  /// - Yayın öncesi taslak vitrini güvenli şekilde kaydeder.
-  /// - Yayınlanmış vitrin için çalışma taslağını garantiler (ilk açılışta
-  ///   canlı veriden üretilir, sonraki açılışlarda korunur — Commit 6) ve
-  ///   canlı kayıt güncellendiyse çakışmayı algılar.
-  /// - Her iki durumda Next.js sahip giriş adresini (`/api/owner-session`)
-  ///   döndürür; kalıcı `edit_token` asla URL'ye yazılmaz (koruma #7).
   Future<OwnerPreviewLink> openOwnerPreview({
     AssistantHandoffV1? assistantHandoff,
   }) async {
@@ -1051,13 +882,9 @@ class StoreEditorController extends ChangeNotifier
     _data.slug = result.slug;
     await saveLocally();
     notifyListeners();
-    return OwnerPreviewLink(
-      result.url,
-      versionConflict: result.versionConflict,
-    );
+    return OwnerPreviewLink(result.url, versionConflict: result.versionConflict);
   }
 
-  /// Editör galeri etiketlerini StoreData'ya yazar (yerel kayıt / yayın).
   void _syncEditorGalleryIntoStoreData() {
     _data.galleryItems =
         activeGalleryItems.map((item) {
@@ -1075,9 +902,6 @@ class StoreEditorController extends ChangeNotifier
     clearLocationErrors();
   }
 
-  /// Sorgu mantığı `StorePublishedInfoLookupService`'te (Faz 9, controller
-  /// parçalama, birebir taşındı); burada yalnız `_publishedInfo`/
-  /// `saveLocally` kararı kalıyor.
   Future<void> _fetchPublishedInfoFromSupabase() async {
     final client = _resolveClient();
     if (client == null) return;
