@@ -58,6 +58,23 @@ describe("Faz F — haftalık özet yalnız sahip oturumuyla okunur", () => {
   });
 });
 
+describe("Faz F — engagement ham tablosu Data API'ye kapalı", () => {
+  const guvenlikMigrasyonu = readFileSync(
+    resolve(__dirname, "../../supabase/migrations/20260914114015_secure_vitrin_engagement_events.sql"),
+    "utf8"
+  );
+
+  it("RLS açılır ve PUBLIC/anon/authenticated doğrudan tablo yetkileri kaldırılır", () => {
+    expect(guvenlikMigrasyonu).toContain(
+      "alter table public.vitrin_engagement_events enable row level security;"
+    );
+    expect(guvenlikMigrasyonu).toContain(
+      "revoke all privileges on table public.vitrin_engagement_events"
+    );
+    expect(guvenlikMigrasyonu).toContain("from public, anon, authenticated;");
+  });
+});
+
 describe("OwnerAssistantPanel — açılışta kendiliğinden rapor yazmaz", () => {
   it("haftalık performans ve öneriler sohbet akışına basılmaz", () => {
     const panel = oku("app/v/[slug]/OwnerAssistantPanel.tsx");
