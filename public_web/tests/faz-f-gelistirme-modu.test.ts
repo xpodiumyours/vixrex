@@ -18,8 +18,8 @@ describe("Faz F — tıklamalar artık Supabase'e de yazılıyor (GA'nın yanın
     expect(kaynak).toContain("p_event_type: eventName");
   });
 
-  it("ürün görüntüleme izleyicisi ürün detay sayfasına eklendi", () => {
-    const sayfa = oku("app/v/[slug]/urun/[productSlug]/page.tsx");
+  it("ürün görüntüleme izleyicisi public ürün detay sayfasına eklendi", () => {
+    const sayfa = oku("app/v/[slug]/urun/[productSlug]/PublicProductDetailPage.tsx");
     expect(sayfa).toContain("<ProductViewTracker storeSlug={store.slug} productSlug={productSlug} />");
     const tracker = oku("components/ProductViewTracker.tsx");
     expect(tracker).toContain('p_event_type: "product_view"');
