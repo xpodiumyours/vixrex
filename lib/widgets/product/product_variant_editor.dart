@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:vixrex/models/product_rich_data.dart';
 import 'package:vixrex/services/product_attribute_schema_service.dart';
+import 'package:vixrex/services/product_image_policy.dart';
 import 'package:vixrex/theme/app_colors.dart';
 
 class ProductVariantImageChoice {
@@ -42,7 +43,7 @@ Future<List<ProductVariantData>> sanitizeProductVariantsForTemplate(
               seen.add(url) &&
               (availableImageUrls == null || availableImageUrls.contains(url)),
         )
-        .take(10)
+        .take(ProductImagePolicy.maxImages)
         .toList();
   }
 
@@ -421,7 +422,7 @@ class _ProductVariantEditorState extends State<ProductVariantEditor> {
     final images = List<String>.of(variant.imageUrls);
     if (images.contains(reference)) {
       images.remove(reference);
-    } else if (images.length < 10) {
+    } else if (images.length < ProductImagePolicy.maxImages) {
       images.add(reference);
     }
     _replace(
