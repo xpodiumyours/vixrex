@@ -39,12 +39,7 @@ void main() {
 
   test('tekrarlı URL tek fotoğraf sayılır', () {
     expect(
-      ProductImagePolicy.validate([
-        images[0],
-        images[0],
-        images[1],
-        images[2],
-      ]),
+      ProductImagePolicy.validate([images[0], images[0], images[1], images[2]]),
       isNull,
     );
     expect(

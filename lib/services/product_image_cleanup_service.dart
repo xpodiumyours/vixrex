@@ -84,11 +84,12 @@ class ProductImageCleanupService {
 
   Future<ProductImageSnapshot?> snapshot(String productId) async {
     try {
-      final row = await _supabase
-          .from('products')
-          .select('store_id,image_urls')
-          .eq('id', productId)
-          .maybeSingle();
+      final row =
+          await _supabase
+              .from('products')
+              .select('store_id,image_urls')
+              .eq('id', productId)
+              .maybeSingle();
       if (row == null) return null;
       final storeId = row['store_id']?.toString().trim() ?? '';
       if (storeId.isEmpty) return null;
@@ -108,11 +109,12 @@ class ProductImageCleanupService {
   }) async {
     if (storeId.trim().isEmpty || candidateUrls.isEmpty) return 0;
     try {
-      final store = await _supabase
-          .from('stores')
-          .select('slug')
-          .eq('id', storeId)
-          .maybeSingle();
+      final store =
+          await _supabase
+              .from('stores')
+              .select('slug')
+              .eq('id', storeId)
+              .maybeSingle();
       final storeSlug = store?['slug']?.toString().trim() ?? '';
       if (storeSlug.isEmpty) return 0;
 

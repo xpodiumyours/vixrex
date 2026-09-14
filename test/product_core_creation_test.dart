@@ -10,7 +10,7 @@ const _testImages = [
   'https://example.com/3.jpg',
 ];
 
-class _CoreOwnedSlugRepository implements ProductRepository {
+class _CoreOwnedSlugRepository extends ProductRepository {
   String? receivedName;
 
   @override

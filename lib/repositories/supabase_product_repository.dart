@@ -342,7 +342,8 @@ class SupabaseProductRepository implements ProductRepository {
     final imageUrls =
         (row['image_urls'] as List?)?.map((e) => e.toString()).toList() ?? [];
     final metadata = ProductRichMetadata.fromJson(row['metadata']);
-    final externalProductId = row['external_product_id']?.toString().trim() ?? '';
+    final externalProductId =
+        row['external_product_id']?.toString().trim() ?? '';
 
     return Product(
       id: row['id'].toString(),

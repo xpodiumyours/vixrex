@@ -54,9 +54,8 @@ class ProductCategorySyncService {
           .order('sort_order');
       return (response as List)
           .map(
-            (row) => ProductCategory.fromJson(
-              Map<String, dynamic>.from(row as Map),
-            ),
+            (row) =>
+                ProductCategory.fromJson(Map<String, dynamic>.from(row as Map)),
           )
           .toList();
     } catch (_) {
@@ -68,9 +67,8 @@ class ProductCategorySyncService {
           .order('sort_order');
       return (response as List)
           .map(
-            (row) => ProductCategory.fromJson(
-              Map<String, dynamic>.from(row as Map),
-            ),
+            (row) =>
+                ProductCategory.fromJson(Map<String, dynamic>.from(row as Map)),
           )
           .toList();
     }
@@ -153,7 +151,8 @@ class ProductCategorySyncService {
       binding.category.sortOrder = binding.sortOrder;
       binding.category.productTemplateKey = binding.templateKey;
     }
-    final syncedCategories = bindings.map((binding) => binding.category).toList();
+    final syncedCategories =
+        bindings.map((binding) => binding.category).toList();
 
     for (final product in products) {
       final mapped = idMap[product.categoryId];
@@ -175,7 +174,8 @@ class ProductCategorySyncService {
       final categoryId = idMap[deletion.categoryId] ?? deletion.categoryId;
       if (!_isUuid(categoryId)) continue;
       final replacementId =
-          idMap[deletion.replacementCategoryId] ?? deletion.replacementCategoryId;
+          idMap[deletion.replacementCategoryId] ??
+          deletion.replacementCategoryId;
       if (!_isUuid(replacementId)) continue;
       final result = await _supabase.rpc(
         'delete_store_category_v2',

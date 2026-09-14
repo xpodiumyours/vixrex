@@ -138,7 +138,9 @@ class ProductCatalogSyncService {
     try {
       metadata = await _metadataForWrite(product.richMetadata);
     } catch (e) {
-      if (kDebugMode) debugPrint('ProductCatalogSyncService.addProduct metadata: $e');
+      if (kDebugMode) {
+        debugPrint('ProductCatalogSyncService.addProduct metadata: $e');
+      }
       return Result.failure(Failure('Ürün kategori detayları geçersiz.'));
     }
 
@@ -198,7 +200,9 @@ class ProductCatalogSyncService {
     try {
       metadata = await _metadataForWrite(product.richMetadata);
     } catch (e) {
-      if (kDebugMode) debugPrint('ProductCatalogSyncService.updateProduct metadata: $e');
+      if (kDebugMode) {
+        debugPrint('ProductCatalogSyncService.updateProduct metadata: $e');
+      }
       return Result.failure(Failure('Ürün kategori detayları geçersiz.'));
     }
     final updated = await _productService.updateProduct(
@@ -260,9 +264,7 @@ class ProductCatalogSyncService {
     return const Result.success(null);
   }
 
-  Future<ProductRichMetadata> _metadataForWrite(
-    ProductRichMetadata metadata,
-  ) {
+  Future<ProductRichMetadata> _metadataForWrite(ProductRichMetadata metadata) {
     return sanitizeProductMetadataForWrite(metadata);
   }
 

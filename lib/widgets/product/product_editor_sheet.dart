@@ -169,8 +169,8 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
     setState(() {
       _categoryId = nextId;
       if (category != null) {
-        _richMetadata = alignProductMetadataToCategory(_richMetadata, category!);
-        if (category!.productTemplateKey == 'service') {
+        _richMetadata = alignProductMetadataToCategory(_richMetadata, category);
+        if (category.productTemplateKey == 'service') {
           _brand = null;
           _barcode = null;
           _stockQuantity = null;
@@ -475,7 +475,9 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
                 ],
                 if (selectedCategory != null)
                   ProductRichFieldsEditor(
-                    key: ValueKey('rich-${selectedCategory.productTemplateKey}'),
+                    key: ValueKey(
+                      'rich-${selectedCategory.productTemplateKey}',
+                    ),
                     templateKey: selectedCategory.productTemplateKey,
                     value: ProductRichEditorValue(
                       brand: _brand,
@@ -496,7 +498,9 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
                   ),
                 if (selectedCategory != null && !_isServiceProduct)
                   ProductVariantEditor(
-                    key: ValueKey('variants-${selectedCategory.productTemplateKey}'),
+                    key: ValueKey(
+                      'variants-${selectedCategory.productTemplateKey}',
+                    ),
                     templateKey: selectedCategory.productTemplateKey,
                     variants: _variants,
                     imageChoices:
@@ -737,8 +741,7 @@ class _ProductImageDraft {
     String? reference,
   }) : url = url,
        reference =
-           reference ??
-           (url.trim().isNotEmpty ? url.trim() : _newReference());
+           reference ?? (url.trim().isNotEmpty ? url.trim() : _newReference());
 
   static int _referenceSequence = 0;
 

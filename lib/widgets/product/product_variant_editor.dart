@@ -27,11 +27,12 @@ Future<List<ProductVariantData>> sanitizeProductVariantsForTemplate(
   final template = schema.templateByKey(templateKey);
   if (template.isService) return const [];
 
-  final allowedKeys = schema
-      .attributesForTemplate(template.key)
-      .where((definition) => definition.variantEligible)
-      .map((definition) => definition.key)
-      .toSet();
+  final allowedKeys =
+      schema
+          .attributesForTemplate(template.key)
+          .where((definition) => definition.variantEligible)
+          .map((definition) => definition.key)
+          .toSet();
 
   List<String> cleanImages(ProductVariantData variant) {
     final seen = <String>{};
@@ -130,10 +131,11 @@ class _ProductVariantEditorState extends State<ProductVariantEditor> {
         final template = schema.templateByKey(widget.templateKey);
         if (template.isService) return const SizedBox.shrink();
 
-        final definitions = schema
-            .attributesForTemplate(template.key)
-            .where((definition) => definition.variantEligible)
-            .toList();
+        final definitions =
+            schema
+                .attributesForTemplate(template.key)
+                .where((definition) => definition.variantEligible)
+                .toList();
         if (definitions.isEmpty) return const SizedBox.shrink();
 
         return Container(
@@ -248,8 +250,7 @@ class _ProductVariantEditorState extends State<ProductVariantEditor> {
                 initialValue: variant.options[definition.key] ?? '',
                 enabled: widget.enabled,
                 decoration: InputDecoration(labelText: definition.label),
-                onChanged: (raw) =>
-                    _updateOption(index, definition.key, raw),
+                onChanged: (raw) => _updateOption(index, definition.key, raw),
               ),
             ),
           ),
@@ -259,8 +260,8 @@ class _ProductVariantEditorState extends State<ProductVariantEditor> {
             initialValue: variant.sku ?? '',
             enabled: widget.enabled,
             decoration: const InputDecoration(labelText: 'Varyant SKU'),
-            onChanged: (raw) =>
-                _updateVariant(index, sku: _clean(raw), setSku: true),
+            onChanged:
+                (raw) => _updateVariant(index, sku: _clean(raw), setSku: true),
           ),
           const SizedBox(height: 10),
           TextFormField(
@@ -268,8 +269,12 @@ class _ProductVariantEditorState extends State<ProductVariantEditor> {
             initialValue: variant.barcode ?? '',
             enabled: widget.enabled,
             decoration: const InputDecoration(labelText: 'Varyant barkodu'),
-            onChanged: (raw) =>
-                _updateVariant(index, barcode: _clean(raw), setBarcode: true),
+            onChanged:
+                (raw) => _updateVariant(
+                  index,
+                  barcode: _clean(raw),
+                  setBarcode: true,
+                ),
           ),
           const SizedBox(height: 10),
           Row(
@@ -279,17 +284,19 @@ class _ProductVariantEditorState extends State<ProductVariantEditor> {
                   key: ValueKey('variant-${variant.id}-price'),
                   initialValue: variant.priceAmount?.toString() ?? '',
                   enabled: widget.enabled,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   decoration: const InputDecoration(
                     labelText: 'Varyant fiyatı',
                     hintText: 'Boşsa ana fiyat',
                   ),
-                  onChanged: (raw) => _updateVariant(
-                    index,
-                    priceAmount: _parseAmount(raw),
-                    setPriceAmount: true,
-                  ),
+                  onChanged:
+                      (raw) => _updateVariant(
+                        index,
+                        priceAmount: _parseAmount(raw),
+                        setPriceAmount: true,
+                      ),
                 ),
               ),
               const SizedBox(width: 10),
@@ -485,8 +492,7 @@ class _ProductVariantEditorState extends State<ProductVariantEditor> {
       sku: setSku ? sku : source.sku,
       barcode: setBarcode ? barcode : source.barcode,
       priceAmount: setPriceAmount ? priceAmount : source.priceAmount,
-      stockQuantity:
-          setStockQuantity ? stockQuantity : source.stockQuantity,
+      stockQuantity: setStockQuantity ? stockQuantity : source.stockQuantity,
       stockStatus: source.stockStatus,
       imageUrls: setImageUrls ? imageUrls ?? const [] : source.imageUrls,
     );

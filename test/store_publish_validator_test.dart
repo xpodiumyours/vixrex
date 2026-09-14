@@ -166,18 +166,21 @@ void main() {
       expect(validator.validateStore(data), contains('en az 3 fotoğraf'));
     });
 
-    test('legacy remote product with unchanged old gallery does not block republish', () {
-      final data = validStore(
-        products: [
-          Product(
-            id: '11111111-1111-1111-1111-111111111111',
-            name: 'Eski Ürün',
-            imageUrls: const ['https://example.com/legacy.jpg'],
-          ),
-        ],
-      );
-      expect(validator.validateStore(data), isNull);
-    });
+    test(
+      'legacy remote product with unchanged old gallery does not block republish',
+      () {
+        final data = validStore(
+          products: [
+            Product(
+              id: '11111111-1111-1111-1111-111111111111',
+              name: 'Eski Ürün',
+              imageUrls: const ['https://example.com/legacy.jpg'],
+            ),
+          ],
+        );
+        expect(validator.validateStore(data), isNull);
+      },
+    );
 
     test('whitespace-only name treated as empty', () {
       final data = validStore();

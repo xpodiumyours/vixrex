@@ -120,6 +120,7 @@ class FakeStoreShelfUploadService extends Fake
     String path, {
     String fileExtension = 'jpg',
     String contentType = 'image/jpeg',
+    int minShortEdge = 0,
   }) async {
     return 'https://dummy.co/cover.jpg';
   }

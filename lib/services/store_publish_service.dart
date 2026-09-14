@@ -284,8 +284,7 @@ class StorePublishService {
     }
 
     try {
-      var storeId =
-          _isUuid(data.id?.trim() ?? '') ? data.id!.trim() : null;
+      var storeId = _isUuid(data.id?.trim() ?? '') ? data.id!.trim() : null;
       storeId ??= await _storeIdForEditToken(client, slug, editToken);
 
       if (storeId == null) {
@@ -374,23 +373,21 @@ class StorePublishService {
   ) async {
     final value = await client.rpc(
       'get_store_id_for_edit_token',
-      params: {
-        'p_slug': slug.trim(),
-        'p_edit_token': editToken.trim(),
-      },
+      params: {'p_slug': slug.trim(), 'p_edit_token': editToken.trim()},
     );
     final id = value?.toString().trim() ?? '';
     return _isUuid(id) ? id : null;
   }
 
   bool _isDraftSlugConflict(PostgrestException error) {
-    final text = [
-      error.message,
-      error.code,
-      error.details?.toString(),
-      error.hint,
-      error.toString(),
-    ].whereType<String>().join(' ').toLowerCase();
+    final text =
+        [
+          error.message,
+          error.code,
+          error.details?.toString(),
+          error.hint,
+          error.toString(),
+        ].whereType<String>().join(' ').toLowerCase();
     return text.contains('store_already_published') ||
         text.contains('edit_token_mismatch_or_published') ||
         text.contains('duplicate key') ||

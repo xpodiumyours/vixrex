@@ -284,8 +284,9 @@ class IcerikSeoBolumu extends StatelessWidget {
                 // İlk public yayında StorePublishService aynı veriyi önce
                 // görünmeyen draft store'a Product CORE olarak stage eder.
                 controller.data.products = List<Product>.of(products);
-                controller.data.productCategories =
-                    List<ProductCategory>.of(categories);
+                controller.data.productCategories = List<ProductCategory>.of(
+                  categories,
+                );
                 await controller.saveLocally();
                 controller.notifyStoreDataChanged();
                 return true;

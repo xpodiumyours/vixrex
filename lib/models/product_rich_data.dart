@@ -79,8 +79,7 @@ class ProductServiceMetadata {
     if (priceMode != null) 'priceMode': priceMode,
     if (durationMinutes != null) 'durationMinutes': durationMinutes,
     if (serviceLocation != null) 'serviceLocation': serviceLocation,
-    if (appointmentRequired != null)
-      'appointmentRequired': appointmentRequired,
+    if (appointmentRequired != null) 'appointmentRequired': appointmentRequired,
     if (included.isNotEmpty) 'included': included,
   };
 }
@@ -151,10 +150,7 @@ class ProductRichMetadata {
     'itemKind': itemKind,
     if (templateKey != null) 'templateKey': templateKey,
     if (sku != null || mpn != null)
-      'identifiers': {
-        if (sku != null) 'sku': sku,
-        if (mpn != null) 'mpn': mpn,
-      },
+      'identifiers': {if (sku != null) 'sku': sku, if (mpn != null) 'mpn': mpn},
     if (attributes.isNotEmpty)
       'attributes': attributes.map((item) => item.toJson()).toList(),
     if (service != null) 'service': service!.toJson(),
@@ -199,10 +195,8 @@ class ProductVariantData {
       options: options,
       sku: _cleanString(json['sku']),
       barcode: _cleanString(json['barcode']),
-      priceAmount:
-          price is num && price >= 0 ? price.toDouble() : null,
-      stockQuantity:
-          stock is num && stock >= 0 ? stock.toInt() : null,
+      priceAmount: price is num && price >= 0 ? price.toDouble() : null,
+      stockQuantity: stock is num && stock >= 0 ? stock.toInt() : null,
       stockStatus: _cleanString(json['stockStatus']),
       imageUrls: _cleanStringList(json['imageUrls']).take(11).toList(),
     );
@@ -225,7 +219,9 @@ List<ProductVariantData> parseProductVariants(Object? raw) {
   final variants = <ProductVariantData>[];
   for (final item in raw.take(100)) {
     if (item is! Map) continue;
-    final variant = ProductVariantData.fromJson(Map<String, dynamic>.from(item));
+    final variant = ProductVariantData.fromJson(
+      Map<String, dynamic>.from(item),
+    );
     if (variant.id.isEmpty || variant.options.isEmpty) continue;
     variants.add(variant);
   }

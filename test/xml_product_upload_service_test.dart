@@ -7,24 +7,29 @@ void main() {
   group('XmlProductUploadService.parse', () {
     const service = XmlProductUploadService();
 
-    test('örnek tedarikçi XML dosyasındaki 5 ürünü zengin alanlarıyla okur', () {
-      final xml = File('test/test_feed.xml').readAsStringSync();
+    test(
+      'örnek tedarikçi XML dosyasındaki 5 ürünü zengin alanlarıyla okur',
+      () {
+        final xml = File('test/test_feed.xml').readAsStringSync();
 
-      final result = service.parse(xml);
+        final result = service.parse(xml);
 
-      expect(result.isSuccess, isTrue);
-      expect(result.validCount, 5);
-      expect(result.errorCount, 0);
-      expect(result.products.first.brand, 'ModaMarka');
-      expect(result.products.first.sku, 'TM-1001');
-      expect(result.products.first.category, 'Giyim');
-      expect(result.products.first.stockQuantity, 150);
-      expect(result.products.last.sku, 'TM-1005');
-      expect(result.products.last.stockQuantity, 25);
-    });
+        expect(result.isSuccess, isTrue);
+        expect(result.validCount, 5);
+        expect(result.errorCount, 0);
+        expect(result.products.first.brand, 'ModaMarka');
+        expect(result.products.first.sku, 'TM-1001');
+        expect(result.products.first.category, 'Giyim');
+        expect(result.products.first.stockQuantity, 150);
+        expect(result.products.last.sku, 'TM-1005');
+        expect(result.products.last.stockQuantity, 25);
+      },
+    );
 
-    test('numaralı görselleri tanır, protokolü düzeltir ve 11 görselde sınırlar', () {
-      const xml = '''
+    test(
+      'numaralı görselleri tanır, protokolü düzeltir ve 11 görselde sınırlar',
+      () {
+        const xml = '''
         <products>
           <product>
             <name>Galeri Ürünü</name>
@@ -44,14 +49,18 @@ void main() {
         </products>
       ''';
 
-      final result = service.parse(xml);
-      final product = result.products.single;
+        final result = service.parse(xml);
+        final product = result.products.single;
 
-      expect(product.imageUrls, hasLength(11));
-      expect(product.imageUrls.first, 'https://cdn.example.com/1.jpg');
-      expect(product.imageUrls.last, 'https://cdn.example.com/11.jpg');
-      expect(product.imageUrls, isNot(contains('https://cdn.example.com/12.jpg')));
-    });
+        expect(product.imageUrls, hasLength(11));
+        expect(product.imageUrls.first, 'https://cdn.example.com/1.jpg');
+        expect(product.imageUrls.last, 'https://cdn.example.com/11.jpg');
+        expect(
+          product.imageUrls,
+          isNot(contains('https://cdn.example.com/12.jpg')),
+        );
+      },
+    );
 
     test('metin stok ifadesinden adet uydurmaz', () {
       const xml = '''

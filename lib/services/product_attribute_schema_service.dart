@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 class ProductAttributeDefinition {
@@ -140,7 +141,9 @@ class ProductAttributeSchema {
       commonPhysicalAttributes: parseDefinitions(
         json['commonPhysicalAttributes'],
       ),
-      commonServiceAttributes: parseDefinitions(json['commonServiceAttributes']),
+      commonServiceAttributes: parseDefinitions(
+        json['commonServiceAttributes'],
+      ),
       templates:
           (json['templates'] as List? ?? const [])
               .whereType<Map>()
@@ -158,14 +161,23 @@ class ProductAttributeSchema {
 class ProductAttributeSchemaService {
   const ProductAttributeSchemaService();
 
+  /// Yalnızca testler için: şema yüklemeden sabit bir şema döndürür.
+  static ProductAttributeSchema? debugSchemaOverride;
+
   static Future<ProductAttributeSchema>? _cached;
 
   Future<ProductAttributeSchema> load() {
+    final override = debugSchemaOverride;
+    if (override != null) {
+      return SynchronousFuture<ProductAttributeSchema>(override);
+    }
     return _cached ??= _load();
   }
 
   Future<ProductAttributeSchema> _load() async {
-    final source = await rootBundle.loadString('shared/product_attribute_schema.json');
+    final source = await rootBundle.loadString(
+      'shared/product_attribute_schema.json',
+    );
     final decoded = jsonDecode(source);
     if (decoded is! Map) {
       throw const FormatException('Ürün alan şeması geçersiz.');

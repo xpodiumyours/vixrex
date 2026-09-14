@@ -53,6 +53,16 @@ class ImageOptimizationService {
     final sourceType = _sourceType(fileExtension, contentType);
 
     try {
+      // WebP yeniden kodlanmadan korunur; kısa kenar kontrolü istenmediyse
+      // ölçü okumaya gerek yoktur (testler ve hız için önce geçilir).
+      if (sourceType == _ImageSourceType.webp && minShortEdge <= 0) {
+        return OptimizedImage(
+          bytes: bytes,
+          extension: 'webp',
+          contentType: 'image/webp',
+        );
+      }
+
       final dimensions = await _readDimensions(bytes);
       if (minShortEdge > 0 &&
           (dimensions.width < dimensions.height

@@ -47,11 +47,7 @@ void main() {
     final shared = managed('magaza', 'new', 'shared.webp');
     final unused = managed('magaza', 'urun-1', 'unused.webp');
     final removable = service.unreferencedManagedPaths(
-      candidateUrls: [
-        shared,
-        unused,
-        'https://cdn.example.com/external.webp',
-      ],
+      candidateUrls: [shared, unused, 'https://cdn.example.com/external.webp'],
       referencedUrls: [shared],
       storeSlug: 'magaza',
       supabaseUrl: supabaseUrl,

@@ -243,13 +243,7 @@ class BulkProductUploadService {
     'adet',
   };
   static const _brandAliases = {'marka', 'brand', 'uretici', 'manufacturer'};
-  static const _barcodeAliases = {
-    'barkod',
-    'barcode',
-    'gtin',
-    'ean',
-    'upc',
-  };
+  static const _barcodeAliases = {'barkod', 'barcode', 'gtin', 'ean', 'upc'};
   static const _skuAliases = {
     'sku',
     'stokkodu',
