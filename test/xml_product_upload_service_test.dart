@@ -23,7 +23,7 @@ void main() {
       expect(result.products.last.stockQuantity, 25);
     });
 
-    test('numaralı görselleri tanır, protokolü düzeltir ve 10 görselde sınırlar', () {
+    test('numaralı görselleri tanır, protokolü düzeltir ve 11 görselde sınırlar', () {
       const xml = '''
         <products>
           <product>
@@ -39,6 +39,7 @@ void main() {
             <image9>https://cdn.example.com/9.jpg</image9>
             <image10>https://cdn.example.com/10.jpg</image10>
             <image11>https://cdn.example.com/11.jpg</image11>
+            <image12>https://cdn.example.com/12.jpg</image12>
           </product>
         </products>
       ''';
@@ -46,10 +47,10 @@ void main() {
       final result = service.parse(xml);
       final product = result.products.single;
 
-      expect(product.imageUrls, hasLength(10));
+      expect(product.imageUrls, hasLength(11));
       expect(product.imageUrls.first, 'https://cdn.example.com/1.jpg');
-      expect(product.imageUrls.last, 'https://cdn.example.com/10.jpg');
-      expect(product.imageUrls, isNot(contains('https://cdn.example.com/11.jpg')));
+      expect(product.imageUrls.last, 'https://cdn.example.com/11.jpg');
+      expect(product.imageUrls, isNot(contains('https://cdn.example.com/12.jpg')));
     });
 
     test('metin stok ifadesinden adet uydurmaz', () {
