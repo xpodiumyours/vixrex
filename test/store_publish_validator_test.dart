@@ -2,6 +2,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vixrex/services/store_publish_service.dart';
 import 'package:vixrex/models/store_data.dart';
 
+const _validProductImages = [
+  'https://example.com/product-1.jpg',
+  'https://example.com/product-2.jpg',
+  'https://example.com/product-3.jpg',
+];
+
 // Helper: geçerli bir mağaza verisi oluşturur.
 StoreData validStore({List<Product>? products}) {
   return StoreData(
@@ -132,12 +138,44 @@ void main() {
     });
 
     test('product with empty name returns error', () {
-      final data = validStore(products: [Product(id: 'p1', name: '')]);
+      final data = validStore(
+        products: [Product(id: 'p1', name: '', imageUrls: _validProductImages)],
+      );
       expect(validator.validateStore(data), contains('ürün'));
     });
 
-    test('product with valid name passes', () {
-      final data = validStore(products: [Product(id: 'p1', name: 'Gömlek')]);
+    test('new product with valid name and 3 photos passes', () {
+      final data = validStore(
+        products: [
+          Product(id: 'p1', name: 'Gömlek', imageUrls: _validProductImages),
+        ],
+      );
+      expect(validator.validateStore(data), isNull);
+    });
+
+    test('new local product with fewer than 3 photos is rejected', () {
+      final data = validStore(
+        products: [
+          Product(
+            id: 'local-new-product',
+            name: 'Gömlek',
+            imageUrls: _validProductImages.take(2).toList(),
+          ),
+        ],
+      );
+      expect(validator.validateStore(data), contains('en az 3 fotoğraf'));
+    });
+
+    test('legacy remote product with unchanged old gallery does not block republish', () {
+      final data = validStore(
+        products: [
+          Product(
+            id: '11111111-1111-1111-1111-111111111111',
+            name: 'Eski Ürün',
+            imageUrls: const ['https://example.com/legacy.jpg'],
+          ),
+        ],
+      );
       expect(validator.validateStore(data), isNull);
     });
 
