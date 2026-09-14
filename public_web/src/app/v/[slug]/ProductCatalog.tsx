@@ -6,6 +6,7 @@ import { useCallback, useMemo, useState } from "react";
 import ProductQuickView from "@/components/ProductQuickView";
 import { TrackedDirectionsLink } from "@/components/TrackedContactLink";
 import { MapPinIcon } from "@/lib/vitrinBrandIcons";
+import { MAX_PRODUCT_IMAGES } from "@/lib/productImagePolicy";
 import {
   getProductImages,
   getProductUrlSlug,
@@ -62,7 +63,7 @@ function productImagesOnly(product: CatalogProduct): string[] {
       primary,
       ...getProductImages(product).filter((url) => !isLikelyUiScreenshotUrl(url)),
     ]),
-  ).slice(0, 10);
+  ).slice(0, MAX_PRODUCT_IMAGES);
 }
 
 function productLocationMapUrl(location: string): string | null {
