@@ -25,14 +25,12 @@ class ProductCategorySyncResult {
 class _SyncedCategoryBinding {
   const _SyncedCategoryBinding({
     required this.category,
-    required this.oldId,
     required this.remoteId,
     required this.sortOrder,
     required this.templateKey,
   });
 
   final ProductCategory category;
-  final String oldId;
   final String remoteId;
   final int sortOrder;
   final String templateKey;
@@ -140,7 +138,6 @@ class ProductCategorySyncService {
       bindings.add(
         _SyncedCategoryBinding(
           category: category,
-          oldId: oldId,
           remoteId: remoteId,
           sortOrder: index,
           templateKey: templateKey,
