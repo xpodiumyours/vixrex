@@ -47,6 +47,46 @@ function sameStringList(left: string[], right: string[]) {
   return left.length === right.length && left.every((value, index) => value === right[index]);
 }
 
+function variantSignature(variant: ProductVariant): string {
+  return Object.entries(variant.options)
+    .sort(([left], [right]) => left.localeCompare(right, "tr"))
+    .map(([key, value]) => `${key.toLocaleLowerCase("tr-TR")}=${value.trim().toLocaleLowerCase("tr-TR")}`)
+    .join("|");
+}
+
+function validateVariantSet(variants: ProductVariant[], parentBarcode: string | null): string | null {
+  const ids = new Set<string>();
+  const combinations = new Set<string>();
+  const skus = new Set<string>();
+  const barcodes = new Set<string>();
+  if (parentBarcode) barcodes.add(parentBarcode);
+
+  for (const variant of variants) {
+    if (ids.has(variant.id)) return "Aynı varyant kimliği birden fazla kez kullanılamaz.";
+    ids.add(variant.id);
+
+    const signature = variantSignature(variant);
+    if (combinations.has(signature)) {
+      return "Aynı ürün seçeneği kombinasyonu birden fazla kez eklenemez.";
+    }
+    combinations.add(signature);
+
+    const sku = cleanString(variant.sku)?.toLocaleLowerCase("tr-TR") || null;
+    if (sku) {
+      if (skus.has(sku)) return "Aynı varyant SKU değeri birden fazla kez kullanılamaz.";
+      skus.add(sku);
+    }
+
+    const barcode = cleanString(variant.barcode);
+    if (barcode) {
+      if (barcodes.has(barcode)) return "Ürün ve varyant barkodları benzersiz olmalıdır.";
+      barcodes.add(barcode);
+    }
+  }
+
+  return null;
+}
+
 async function ownerContext(slug: string) {
   const cookieStore = await cookies();
   const ownerSession = verifyOwnerSession(cookieStore.get(OWNER_SESSION_COOKIE)?.value, slug);
@@ -187,6 +227,9 @@ export async function POST(request: NextRequest) {
   const metadata = metadataForTemplate(govde.metadata, templateKey);
   if (!metadata) return NextResponse.json({ hata: "Ürün detayları kategori tipiyle uyuşmuyor." }, { status: 422 });
   const variants = variantsForTemplate(govde.variants, templateKey, imageValidation.imageUrls);
+  const barcode = isService ? null : cleanString(govde.barcode);
+  const variantError = validateVariantSet(variants, barcode);
+  if (variantError) return NextResponse.json({ hata: variantError }, { status: 422 });
 
   const priceText = typeof govde.priceText === "string" ? govde.priceText.trim() : "";
   const stockQuantity = isService ? null : cleanNonNegativeInt(govde.stockQuantity);
@@ -207,7 +250,7 @@ export async function POST(request: NextRequest) {
       badgeTag: cleanString(govde.badgeTag),
       fulfillmentRegion: cleanString(govde.fulfillmentRegion),
       brand: isService ? null : cleanString(govde.brand),
-      barcode: isService ? null : cleanString(govde.barcode),
+      barcode,
       stockQuantity,
       stockStatus: isService ? null : cleanString(govde.stockStatus) || "Mevcut",
       metadata,
@@ -310,6 +353,8 @@ export async function PATCH(request: NextRequest) {
   const fulfillmentRegion = hasOwn(govde, "fulfillmentRegion")
     ? cleanString(govde.fulfillmentRegion)
     : cleanString(current.fulfillment_region);
+  const variantError = validateVariantSet(variants, barcode);
+  if (variantError) return NextResponse.json({ hata: variantError }, { status: 422 });
 
   try {
     await updateRichCoreProduct({
