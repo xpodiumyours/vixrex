@@ -10,6 +10,7 @@ import {
   normalizeProductImageUrls,
   validateProductImageUrls,
 } from "@/lib/productImagePolicy";
+import { cleanupUnreferencedProductImages } from "@/lib/productImageCleanup";
 import {
   normalizeProductMetadata,
   normalizeProductVariants,
@@ -377,6 +378,15 @@ export async function PATCH(request: NextRequest) {
       metadata,
       variants,
     });
+    const removedImageUrls = currentImageUrls.filter((url) => !imageUrls.includes(url));
+    if (removedImageUrls.length > 0) {
+      await cleanupUnreferencedProductImages({
+        admin: owned.admin,
+        storeId: owned.store.id,
+        storeSlug: slug,
+        candidateUrls: removedImageUrls,
+      });
+    }
     return NextResponse.json({ tamam: true });
   } catch (err) {
     console.error("[products] update failed:", err);
@@ -395,12 +405,33 @@ export async function DELETE(request: NextRequest) {
   const owned = await ownerContext(slug);
   if (!owned) return NextResponse.json({ hata: "Oturumun geçersiz veya süresi dolmuş." }, { status: 401 });
 
+  let deletedImageUrls: string[] = [];
+  const { data: currentProduct, error: imageReadError } = await owned.admin
+    .from("products")
+    .select("image_urls")
+    .eq("id", productId)
+    .eq("store_id", owned.store.id)
+    .maybeSingle();
+  if (imageReadError) {
+    console.error("[products] delete image read failed:", imageReadError.message);
+  } else if (currentProduct) {
+    deletedImageUrls = normalizeProductImageUrls(currentProduct.image_urls);
+  }
+
   try {
     const { error } = await owned.admin.rpc("delete_store_product", {
       p_product_id: productId,
       p_edit_token: owned.store.edit_token,
     });
     if (error) return NextResponse.json({ hata: "Ürün silinemedi." }, { status: 500 });
+    if (deletedImageUrls.length > 0) {
+      await cleanupUnreferencedProductImages({
+        admin: owned.admin,
+        storeId: owned.store.id,
+        storeSlug: slug,
+        candidateUrls: deletedImageUrls,
+      });
+    }
     return NextResponse.json({ tamam: true });
   } catch (err) {
     console.error("[products] delete failed:", err);
