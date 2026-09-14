@@ -360,7 +360,6 @@ class IcerikSeoBolumu extends StatelessWidget {
     controller.updateFeaturedCampaign(
       label: result['label'] ?? '',
       title: result['title'] ?? '',
-      body: (result['body'] as String?) ?? '',
       description: result['description'] ?? '',
       priceText: result['priceText'] ?? '',
       imageUrl: result['imageUrl'] ?? '',
