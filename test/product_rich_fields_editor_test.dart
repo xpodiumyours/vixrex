@@ -29,7 +29,7 @@ void main() {
     );
   });
 
-  testWidgets('giyim kategorisi ortak şemadaki ürün ve varyant alanlarını gösterir', (
+  testWidgets('giyim kategorisi ortak şemadaki ürün, KDV ve varyant alanlarını gösterir', (
     tester,
   ) async {
     final category = ProductCategory(
@@ -51,6 +51,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Marka · önerilen'), findsOneWidget);
+    expect(find.text('KDV oranı (%) · önerilen'), findsOneWidget);
     expect(find.text('Renk · önerilen'), findsOneWidget);
     expect(find.text('Beden · önerilen'), findsOneWidget);
     expect(find.text('Materyal · önerilen'), findsOneWidget);
@@ -67,6 +68,62 @@ void main() {
     expect(find.text('Varyant barkodu'), findsOneWidget);
     expect(find.text('Varyant fiyatı'), findsOneWidget);
   });
+
+  final physicalCases = <({String key, String name, List<String> labels})>[
+    (
+      key: 'electronics',
+      name: 'Elektronik',
+      labels: ['Model · önerilen', 'RAM', 'Depolama kapasitesi'],
+    ),
+    (
+      key: 'beauty',
+      name: 'Kozmetik',
+      labels: ['Renk / ton', 'Net miktar · önerilen', 'İçerik'],
+    ),
+    (
+      key: 'food',
+      name: 'Gıda',
+      labels: ['Net miktar · önerilen', 'İçindekiler', 'Alerjen bilgisi'],
+    ),
+    (
+      key: 'home',
+      name: 'Ev',
+      labels: ['Materyal · önerilen', 'Genişlik', 'Yükseklik', 'Derinlik'],
+    ),
+    (
+      key: 'automotive',
+      name: 'Otomotiv',
+      labels: ['Parça / model kodu · önerilen', 'Uyumlu marka · önerilen', 'Uyumlu model · önerilen'],
+    ),
+  ];
+
+  for (final testCase in physicalCases) {
+    testWidgets('${testCase.name} kategorisi kendi ürün alanlarını açar', (tester) async {
+      final category = ProductCategory(
+        id: '${testCase.key}-1',
+        name: testCase.name,
+        productTemplateKey: testCase.key,
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: ProductEditorSheet(
+              categories: [category],
+              storeSlug: 'ornek-vitrin',
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('KDV oranı (%) · önerilen'), findsOneWidget);
+      expect(find.text('Stok adedi'), findsOneWidget);
+      for (final label in testCase.labels) {
+        expect(find.text(label), findsOneWidget, reason: '${testCase.key}: $label');
+      }
+    });
+  }
 
   testWidgets('hizmet kategorisi stok ve varyant yerine hizmet alanlarını gösterir', (
     tester,
@@ -92,6 +149,7 @@ void main() {
     expect(find.text('Hizmet türü · önerilen'), findsOneWidget);
     expect(find.text('Fiyat biçimi · önerilen'), findsOneWidget);
     expect(find.text('Hizmet yeri · önerilen'), findsOneWidget);
+    expect(find.text('KDV oranı (%) · önerilen'), findsNothing);
     expect(find.text('Stok adedi'), findsNothing);
     expect(find.text('Stok durumu'), findsNothing);
     expect(find.text('Varyantlar'), findsNothing);
