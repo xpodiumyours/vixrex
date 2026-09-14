@@ -70,6 +70,11 @@ describe("public ürün kartı zengin veri hattı", () => {
     expect(catalogSource).toContain("Hızlı incele →");
   });
 
+  it("kart stok adedi sıfırsa hızlı görünüm ve detay gibi Tükendi gösterir", () => {
+    expect(catalogSource).toContain("product.stockQuantity === 0");
+    expect(catalogSource).toContain('? "Tükendi"');
+  });
+
   it("hızlı inceleme gerçek zengin veriyi ve seçili varyantı kullanır", () => {
     expect(quickViewBaseSource).toContain("buildProductQuickFacts");
     expect(quickViewBaseSource).toContain("buildVariantOptionGroups");
@@ -136,7 +141,7 @@ describe("public ürün kartı zengin veri hattı", () => {
   it("hizmet kartına fiziksel ürün sinyali taşımaz", () => {
     expect(catalogSource).toContain('const isService = metadata.itemKind === "service"');
     expect(catalogSource).toContain('brand = isService ? ""');
-    expect(catalogSource).toContain('stockStatus = isService ? ""');
+    expect(catalogSource).toContain("const stockStatus = isService");
     expect(catalogSource).toContain('emptyLabel={isService ? "Hizmet görseli yok" : "Ürün görseli yok"}');
     expect(catalogSource).toContain("Hizmet");
   });
