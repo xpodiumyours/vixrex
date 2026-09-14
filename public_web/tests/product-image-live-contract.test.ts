@@ -34,6 +34,10 @@ const flutterBulkSource = readFileSync(
   resolve(__dirname, "../../lib/services/bulk_product_upload_service.dart"),
   "utf-8",
 );
+const flutterVariantEditorSource = readFileSync(
+  resolve(__dirname, "../../lib/widgets/product/product_variant_editor.dart"),
+  "utf-8",
+);
 
 describe("ürün fotoğrafı canlı sözleşmesi", () => {
   it("Web, Flutter modeli, servis ve veritabanı 3-11 sınırında eşittir", () => {
@@ -60,8 +64,11 @@ describe("ürün fotoğrafı canlı sözleşmesi", () => {
     expect(flutterBulkSource).not.toContain("take(10)");
   });
 
-  it("varyant görselleri ortak fotoğraf sınırını kullanır", () => {
+  it("varyant görselleri Web ve Flutter'da ortak fotoğraf sınırını kullanır", () => {
     expect(productRichDataSource).toContain("MAX_PRODUCT_IMAGES");
     expect(productRichDataSource).toContain("cleanStringArray(variant.imageUrls, MAX_PRODUCT_IMAGES)");
+    expect(flutterVariantEditorSource).toContain("ProductImagePolicy.maxImages");
+    expect(flutterVariantEditorSource).not.toContain(".take(10)");
+    expect(flutterVariantEditorSource).not.toContain("images.length < 10");
   });
 });
