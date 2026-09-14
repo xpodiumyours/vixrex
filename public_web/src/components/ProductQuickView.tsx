@@ -57,7 +57,12 @@ function isMapsUrl(href: string): boolean {
   }
 }
 
-export default function ProductQuickView({
+export default function ProductQuickView(props: ProductQuickViewProps) {
+  const sessionKey = props.product.id || props.productUrl;
+  return <ProductQuickViewSession key={sessionKey} {...props} />;
+}
+
+function ProductQuickViewSession({
   product,
   images,
   productUrl,
@@ -84,10 +89,6 @@ export default function ProductQuickView({
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>(
     variants[0] ? { ...variants[0].options } : {},
   );
-
-  useEffect(() => {
-    setSelectedOptions(variants[0] ? { ...variants[0].options } : {});
-  }, [product.id, variants]);
 
   useEffect(() => {
     returnFocusRef.current = document.activeElement instanceof HTMLElement
