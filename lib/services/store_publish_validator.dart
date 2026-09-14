@@ -72,9 +72,39 @@ class StorePublishValidator {
       if (product.category.trim().isEmpty) {
         return 'Eklenen tüm ürünlerin kategorisi zorunludur.';
       }
-      final imageError = ProductImagePolicy.validate(product.displayImageUrls);
+      final imageError = _validateProductImages(product);
       if (imageError != null) return imageError;
     }
     return null;
+  }
+
+  String? _validateProductImages(Product product) {
+    final images = ProductImagePolicy.normalize(product.displayImageUrls);
+
+    // Yeni ürün ve değiştirilen galeri ProductService/DB kapısında 3-11
+    // sözleşmesine tabidir. UUID sahibi eski ürünler ise bu kural gelmeden
+    // önce 0-2 fotoğrafla kaydedilmiş olabilir. Yalnız mağazayı tekrar
+    // yayınlamak bu eski ürünü değiştirmediği halde vitrini kilitlememeli.
+    if (_isRemoteProductId(product.id) &&
+        images.length < ProductImagePolicy.minImages) {
+      if (images.length > ProductImagePolicy.maxImages) {
+        return 'Bir ürüne en fazla ${ProductImagePolicy.maxImages} fotoğraf eklenebilir.';
+      }
+      final invalid = images.any(
+        (url) => !(url.startsWith('http://') || url.startsWith('https://')),
+      );
+      if (invalid) {
+        return 'Ürün fotoğrafı bağlantıları http:// veya https:// ile başlamalıdır.';
+      }
+      return null;
+    }
+
+    return ProductImagePolicy.validate(images);
+  }
+
+  bool _isRemoteProductId(String value) {
+    return RegExp(
+      r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
+    ).hasMatch(value.trim());
   }
 }
