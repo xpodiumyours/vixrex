@@ -84,6 +84,17 @@ describe("zengin ürün şeması — sözleşme", () => {
   it("belirsiz kategori adlarını otomatik ürün tipine çevirecek mapping içermez", () => {
     expect((schema as unknown as { categoryMappings?: unknown }).categoryMappings).toBeUndefined();
   });
+
+  it("owner ve API metadata sürümünü ortak şemadan yazar", () => {
+    expect(ownerRichSource).toContain("schemaVersion: PRODUCT_ATTRIBUTE_SCHEMA.version");
+    expect(ownerRichSource).not.toContain('productTemplateByKey(templateKey) || productTemplateByKey("generic")');
+    expect(productRouteSource).toContain("schemaVersion: PRODUCT_ATTRIBUTE_SCHEMA.version");
+  });
+
+  it("API fiziksel metadata alanlarını seçilen kategori şemasıyla sınırlar", () => {
+    expect(productRouteSource).toContain('definition.storage === "metadata.attributes"');
+    expect(productRouteSource).toContain("allowedAttributeKeys.has(item.key)");
+  });
 });
 
 describe("zengin ürün verisi — güvenli okuma", () => {

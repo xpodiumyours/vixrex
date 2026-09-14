@@ -17,6 +17,7 @@ import {
   type ProductVariant,
 } from "@/lib/productRichData";
 import {
+  PRODUCT_ATTRIBUTE_SCHEMA,
   productAttributesForTemplate,
   productTemplateByKey,
 } from "@/lib/productAttributeSchema";
@@ -81,7 +82,7 @@ function metadataForTemplate(value: unknown, templateKey: string): ProductMetada
 
   if (template.itemKind === "service") {
     return {
-      schemaVersion: normalized.schemaVersion ?? 1,
+      schemaVersion: PRODUCT_ATTRIBUTE_SCHEMA.version,
       itemKind: "service",
       templateKey,
       service: normalized.service,
@@ -89,11 +90,18 @@ function metadataForTemplate(value: unknown, templateKey: string): ProductMetada
     };
   }
 
+  const allowedAttributeKeys = new Set(
+    productAttributesForTemplate(templateKey)
+      .filter((definition) => definition.storage === "metadata.attributes")
+      .map((definition) => definition.key),
+  );
+
   return {
     ...normalized,
-    schemaVersion: normalized.schemaVersion ?? 1,
+    schemaVersion: PRODUCT_ATTRIBUTE_SCHEMA.version,
     itemKind: "physical",
     templateKey,
+    attributes: (normalized.attributes || []).filter((item) => allowedAttributeKeys.has(item.key)),
     service: undefined,
   };
 }

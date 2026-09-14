@@ -6,6 +6,15 @@ import {
   productTemplateByKey,
 } from "../src/lib/productAttributeSchema";
 
+const CATEGORY_FIELD_CASES: Array<[string, string[]]> = [
+  ["fashion", ["color", "size", "material"]],
+  ["electronics", ["model", "ram", "storageCapacity"]],
+  ["beauty", ["shade", "netQuantity", "ingredients"]],
+  ["food", ["netQuantity", "ingredients", "allergens"]],
+  ["home", ["material", "width", "height", "depth"]],
+  ["automotive", ["partNumber", "compatibleMake", "compatibleModel"]],
+];
+
 describe("ürün özellik şeması — runtime adapter", () => {
   it("shared şemayı tek kaynak olarak sürüm 2 ile okur", () => {
     expect(PRODUCT_ATTRIBUTE_SCHEMA.version).toBe(2);
@@ -31,19 +40,15 @@ describe("ürün özellik şeması — runtime adapter", () => {
     expect(keys).toContain("color");
   });
 
-  it.each([
-    ["fashion", ["color", "size", "material"]],
-    ["electronics", ["model", "ram", "storageCapacity"]],
-    ["beauty", ["shade", "netQuantity", "ingredients"]],
-    ["food", ["netQuantity", "ingredients", "allergens"]],
-    ["home", ["material", "width", "height", "depth"]],
-    ["automotive", ["partNumber", "compatibleMake", "compatibleModel"]],
-  ])("%s kategorisinin ayırt edici ürün alanlarını korur", (templateKey, requiredKeys) => {
-    const keys = productAttributesForTemplate(templateKey).map((field) => field.key);
-    for (const key of requiredKeys) expect(keys).toContain(key);
-  });
+  it.each(CATEGORY_FIELD_CASES)(
+    "%s kategorisinin ayırt edici ürün alanlarını korur",
+    (templateKey, requiredKeys) => {
+      const keys = productAttributesForTemplate(templateKey).map((field) => field.key);
+      for (const key of requiredKeys) expect(keys).toContain(key);
+    },
+  );
 
-  it("hizmet şablonuna fiziksel barkod/marka/stok alanlarını karıştırmaz", () => {
+  it("hizmet şablonuna fiziksel barkod/marka/KDV alanlarını karıştırmaz", () => {
     const keys = productAttributesForTemplate("service").map((field) => field.key);
     expect(keys).toContain("serviceType");
     expect(keys).toContain("priceMode");
