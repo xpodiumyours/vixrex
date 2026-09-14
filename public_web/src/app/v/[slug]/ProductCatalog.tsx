@@ -247,7 +247,11 @@ export default function ProductCatalog({
           const metadata = normalizeProductMetadata(product.metadata);
           const isService = metadata.itemKind === "service";
           const brand = isService ? "" : String(product.brand || "").trim();
-          const stockStatus = isService ? "" : String(product.stockStatus || "").trim();
+          const stockStatus = isService
+            ? ""
+            : product.stockQuantity === 0
+              ? "Tükendi"
+              : String(product.stockStatus || "").trim();
           const tone = stockTone(stockStatus);
           const variantLabel = isService
             ? null
