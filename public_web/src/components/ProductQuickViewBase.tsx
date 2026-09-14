@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import type { RichProductItem } from "@/lib/richProductItem";
 import { MapPinIcon } from "@/lib/vitrinBrandIcons";
+import { MAX_PRODUCT_IMAGES } from "@/lib/productImagePolicy";
 import {
   buildProductQuickFacts,
   buildVariantOptionGroups,
@@ -108,7 +109,7 @@ export default function ProductQuickView({
 
   const displayImages = useMemo(() => {
     const variantImages = selectedVariant?.imageUrls || [];
-    return Array.from(new Set([...variantImages, ...images])).slice(0, 10);
+    return Array.from(new Set([...variantImages, ...images])).slice(0, MAX_PRODUCT_IMAGES);
   }, [images, selectedVariant]);
 
   useEffect(() => {
