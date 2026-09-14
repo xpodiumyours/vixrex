@@ -31,7 +31,7 @@ describe("safeJsonLdHtml", () => {
 describe("Tüm JSON-LD scriptleri safeJsonLdHtml kullanıyor", () => {
   const dosyalar = [
     "../src/app/v/[slug]/page.tsx",
-    "../src/app/v/[slug]/urun/[productSlug]/page.tsx",
+    "../src/app/v/[slug]/urun/[productSlug]/PublicProductDetailPage.tsx",
     "../src/app/v/[slug]/yazilar/page.tsx",
     "../src/app/v/[slug]/yazilar/[articleSlug]/page.tsx",
   ];

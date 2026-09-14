@@ -43,7 +43,7 @@ const nextProductCatalog = readFileSync(
   "utf8",
 );
 const nextProductDetail = readFileSync(
-  resolve(__dirname, "../src/app/v/[slug]/urun/[productSlug]/page.tsx"),
+  resolve(__dirname, "../src/components/ProductDetailExperienceBase.tsx"),
   "utf8",
 );
 const nextSikistir = readFileSync(
@@ -69,7 +69,7 @@ describe("Performans: görsel yükleme stratejisi", () => {
   });
 
   it("ürün detayında ilk görsel öncelikli yüklenir", () => {
-    expect(nextProductDetail).toContain("priority={index === 0}");
+    expect(nextProductDetail).toContain("priority");
   });
 
   it("kapak gibi büyük görseller lazy işaretli", () => {

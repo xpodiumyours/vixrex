@@ -15,6 +15,8 @@ vi.mock("@/lib/supabaseAdmin", () => ({
 }));
 
 vi.mock("@/lib/productCoreServer", () => ({
+  createRichCoreProduct: vi.fn(),
+  updateRichCoreProduct: vi.fn(),
   createCoreProduct: vi.fn(),
   updateCoreProduct: vi.fn(),
 }));

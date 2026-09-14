@@ -211,13 +211,13 @@ export async function POST(request: NextRequest) {
   const name = cleanString(govde.name) || "";
   if (!slug || !name) return NextResponse.json({ hata: "Vitrin ve ürün adı zorunludur." }, { status: 422 });
 
+  const owned = await ownerContext(slug);
+  if (!owned) return NextResponse.json({ hata: "Oturumun geçersiz veya süresi dolmuş." }, { status: 401 });
+
   const imageValidation = validateProductImageUrls(govde.imageUrls);
   if (!imageValidation.ok) {
     return NextResponse.json({ hata: imageValidation.error ?? "Ürün fotoğrafları geçersiz." }, { status: 422 });
   }
-
-  const owned = await ownerContext(slug);
-  if (!owned) return NextResponse.json({ hata: "Oturumun geçersiz veya süresi dolmuş." }, { status: 401 });
 
   const categoryId = cleanString(govde.categoryId) || "";
   const templateKey = await categoryTemplateKey(owned.admin, owned.store.id, categoryId);

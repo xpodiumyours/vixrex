@@ -20,7 +20,7 @@ const vitrin = yorumsuz(
 );
 const urun = yorumsuz(
   readFileSync(
-    resolve(__dirname, "../src/app/v/[slug]/urun/[productSlug]/page.tsx"),
+    resolve(__dirname, "../src/app/v/[slug]/urun/[productSlug]/PublicProductDetailPage.tsx"),
     "utf-8"
   )
 );

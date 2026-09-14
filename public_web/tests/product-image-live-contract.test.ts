@@ -26,8 +26,8 @@ const flutterProductServiceSource = readFileSync(
   resolve(__dirname, "../../lib/services/product_service.dart"),
   "utf-8",
 );
-const flutterProductModelSource = readFileSync(
-  resolve(__dirname, "../../lib/models/store_product.dart"),
+const flutterProductVariantSource = readFileSync(
+  resolve(__dirname, "../../lib/models/product_rich_data.dart"),
   "utf-8",
 );
 const flutterBulkSource = readFileSync(
@@ -48,8 +48,8 @@ describe("ürün fotoğrafı canlı sözleşmesi", () => {
     expect(flutterProductServiceSource).toContain("PRODUCT_IMAGES_MAX_11");
     expect(flutterProductServiceSource).toContain("Bir ürüne en fazla 11 fotoğraf eklenebilir.");
     expect(flutterProductServiceSource).not.toContain("PRODUCT_IMAGES_MAX_10");
-    expect(flutterProductModelSource).toContain(".take(11)");
-    expect(flutterProductModelSource).not.toContain(".take(10)");
+    expect(flutterProductVariantSource).toContain(".take(11)");
+    expect(flutterProductVariantSource).not.toContain(".take(10)");
     expect(migrationSource).toContain("if image_count < 3 then");
     expect(migrationSource).toContain("if image_count > 11 then");
     expect(migrationSource).toContain("PRODUCT_IMAGES_MAX_11");
@@ -59,7 +59,7 @@ describe("ürün fotoğrafı canlı sözleşmesi", () => {
   it("Web ve Flutter toplu yükleme ortak fotoğraf sınırını kullanır", () => {
     expect(bulkUploadSource).toContain("MAX_PRODUCT_IMAGES");
     expect(bulkUploadSource).toContain("MIN_PRODUCT_IMAGES");
-    expect(bulkUploadSource).not.toContain("slice(0, 10)");
+    expect(bulkUploadSource).toContain("slice(0, MAX_PRODUCT_IMAGES)");
     expect(flutterBulkSource).toContain("ProductImagePolicy.validate(imageUrls)");
     expect(flutterBulkSource).not.toContain("take(10)");
   });
