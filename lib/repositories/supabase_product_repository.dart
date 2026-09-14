@@ -341,6 +341,8 @@ class SupabaseProductRepository implements ProductRepository {
   Product _rowToProduct(Map<String, dynamic> row, String categoryName) {
     final imageUrls =
         (row['image_urls'] as List?)?.map((e) => e.toString()).toList() ?? [];
+    final metadata = ProductRichMetadata.fromJson(row['metadata']);
+    final externalProductId = row['external_product_id']?.toString().trim() ?? '';
 
     return Product(
       id: row['id'].toString(),
@@ -358,6 +360,7 @@ class SupabaseProductRepository implements ProductRepository {
       isVisible: row['is_visible'] as bool? ?? true,
       slug: row['slug']?.toString(),
       source: row['source_type']?.toString(),
+      sourceMediaId: externalProductId.isEmpty ? null : externalProductId,
       brand:
           row['brand']?.toString().trim().isNotEmpty == true
               ? row['brand'].toString().trim()
@@ -366,7 +369,8 @@ class SupabaseProductRepository implements ProductRepository {
           row['barcode']?.toString().trim().isNotEmpty == true
               ? row['barcode'].toString().trim()
               : null,
-      richMetadata: ProductRichMetadata.fromJson(row['metadata']),
+      sku: metadata.sku,
+      richMetadata: metadata,
       variants: parseProductVariants(row['variants']),
       oldPriceAmount:
           row['old_price_amount'] != null
