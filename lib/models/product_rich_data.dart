@@ -204,7 +204,7 @@ class ProductVariantData {
       stockQuantity:
           stock is num && stock >= 0 ? stock.toInt() : null,
       stockStatus: _cleanString(json['stockStatus']),
-      imageUrls: _cleanStringList(json['imageUrls']).take(10).toList(),
+      imageUrls: _cleanStringList(json['imageUrls']).take(11).toList(),
     );
   }
 
