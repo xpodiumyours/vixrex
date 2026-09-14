@@ -6,27 +6,24 @@ void main() {
   group('ProductImagePolicy live-ready quality gates', () {
     test('requires at least 1200px on the source short edge', () {
       expect(ProductImagePolicy.minSourceShortEdge, 1200);
-      expect(ProductImagePolicy.validateDimensions(width: 1200, height: 1600), isNull);
-      expect(ProductImagePolicy.validateDimensions(width: 1600, height: 1200), isNull);
+      expect(ProductImagePolicy.validateDimensions(1200, 1600), isNull);
+      expect(ProductImagePolicy.validateDimensions(1600, 1200), isNull);
       expect(
-        ProductImagePolicy.validateDimensions(width: 1199, height: 1600),
-        isNotNull,
+        ProductImagePolicy.validateDimensions(1199, 1600),
+        'Kısa kenar en az 1200 px olmalıdır.',
       );
       expect(
-        ProductImagePolicy.validateDimensions(width: 1600, height: 1199),
-        isNotNull,
+        ProductImagePolicy.validateDimensions(1600, 1199),
+        'Kısa kenar en az 1200 px olmalıdır.',
       );
-      expect(
-        ProductImagePolicy.validateDimensions(width: 0, height: 1600),
-        isNotNull,
-      );
+      expect(ProductImagePolicy.validateDimensions(0, 1600), isNotNull);
     });
 
     test('keeps the product image count policy at 3 to 10', () {
       expect(ProductImagePolicy.minImages, 3);
       expect(ProductImagePolicy.maxImages, 10);
       expect(
-        ProductImagePolicy.validateImageUrls(<String>[
+        ProductImagePolicy.validate(<String>[
           'https://example.com/1.jpg',
           'https://example.com/2.jpg',
           'https://example.com/3.jpg',
@@ -34,7 +31,7 @@ void main() {
         isNull,
       );
       expect(
-        ProductImagePolicy.validateImageUrls(<String>[
+        ProductImagePolicy.validate(<String>[
           'https://example.com/1.jpg',
           'https://example.com/2.jpg',
         ]),

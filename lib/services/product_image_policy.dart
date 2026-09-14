@@ -20,7 +20,7 @@ class ProductImagePolicy {
       return 'Ürün fotoğrafının ölçüleri okunamadı.';
     }
     if ((width < height ? width : height) < minSourceShortEdge) {
-      return 'Ürün fotoğrafının kısa kenarı en az $minSourceShortEdge px olmalıdır.';
+      return 'Kısa kenar en az $minSourceShortEdge px olmalıdır.';
     }
     return null;
   }

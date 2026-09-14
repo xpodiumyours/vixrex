@@ -60,7 +60,7 @@ class ImageOptimizationService {
                   : dimensions.height) <
               minShortEdge) {
         throw ImageOptimizationException(
-          'Ürün fotoğrafının kısa kenarı en az $minShortEdge px olmalıdır.',
+          'Kısa kenar en az $minShortEdge px olmalıdır.',
         );
       }
 
