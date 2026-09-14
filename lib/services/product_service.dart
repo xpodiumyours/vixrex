@@ -24,6 +24,14 @@ class ProductService {
   ProductImageCleanupService get _imageCleanup =>
       _imageCleanupService ??= const ProductImageCleanupService();
 
+  bool _sameImages(List<String> left, List<String> right) {
+    if (left.length != right.length) return false;
+    for (var index = 0; index < left.length; index++) {
+      if (left[index] != right[index]) return false;
+    }
+    return true;
+  }
+
   Future<List<Product>> fetchProducts(String storeId) async {
     try {
       return await _repo.getProductsByStoreId(storeId);
@@ -134,14 +142,22 @@ class ProductService {
     bool clearVariants = false,
   }) async {
     List<String>? normalizedImageUrls;
+    ProductImageSnapshot? previousImages;
     if (imageUrls != null) {
-      final imageError = ProductImagePolicy.validate(imageUrls);
-      if (imageError != null) return Result.failure(Failure(imageError));
       normalizedImageUrls = ProductImagePolicy.normalize(imageUrls);
+      previousImages = await _imageCleanup.snapshot(productId);
+      final previousNormalized =
+          previousImages == null
+              ? null
+              : ProductImagePolicy.normalize(previousImages.imageUrls);
+      final imageListChanged =
+          previousNormalized == null ||
+          !_sameImages(normalizedImageUrls, previousNormalized);
+      if (imageListChanged) {
+        final imageError = ProductImagePolicy.validate(normalizedImageUrls);
+        if (imageError != null) return Result.failure(Failure(imageError));
+      }
     }
-
-    final previousImages =
-        normalizedImageUrls == null ? null : await _imageCleanup.snapshot(productId);
 
     try {
       await _repo.updateRichProduct(
