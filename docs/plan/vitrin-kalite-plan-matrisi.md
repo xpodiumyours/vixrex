@@ -71,6 +71,37 @@ gelmez. Kanıtı olmayan hücre `✗` kalır.
   gösteriliyordu. 12 Eylül temizliğinden sonra 9 şablon kaldı, ama alan duruyor.
   Ya gerçek yoruma bağlanır ya kapatılır.
 
+## Kademeli görünüm — hangi katman ne zaman
+
+Eşikler Casper'ın 27 Ağustos kararıdır (ödül kişiye değil **ağa** verilir).
+Trendyol eşlemesi bu belgenin önerisidir.
+
+| Katman | Eşik | Açılan blok | Trendyol karşılığı |
+|---|---|---|---|
+| 1 | 1 vitrin | Vitrin + ürün sayfası | Ürün detay sayfası |
+| 2 | 3 vitrin | "Yakındaki işletmeler" | Ürünün diğer satıcıları |
+| 3 | 5 vitrin | `/ag/<yer>` çarşı + ortak harita | Kategori/liste sayfası |
+| 4 | 10 vitrin | Google'a açık bölgesel sayfa | Mağaza sayfası |
+| 5 | 20 vitrin | Keşfet'te ayrı alan | Ana sayfa şeridi |
+
+**Uygulama biçimi:** beş ayrı tasarım yapılmaz. Tek sayfa yapılır, bloklar
+eşik aşıldıkça görünür olur. Desen depoda zaten var:
+`BlogRehberleri.tsx:8` — içerik yoksa bölüm kendini gizler.
+
+### Kural: her katman kendi başına tamamlanmış görünmeli
+
+Tek başına vitrin açan esnaf "eksik bir Trendyol" değil **tamamlanmış bir
+vitrin** görmeli. Komşu yoksa "Yakındaki işletmeler (0)" yazılmaz — blok
+hiç çizilmez.
+
+Casper'ın kendi uyarısı: *"sıfır üyeyle ağ sayfası boş görünür ve fikri
+öldürür."* Bunun canlı örneği bugünkü ürün sayfasındaki **"Stok: Bilgi
+alın"**dır — veri yokken kurulmuş kutu.
+
+**Sıra zorunludur:** katman 1 tamamlanmadan katman 2'ye geçilmez. Bugün
+yayında 1 gerçek vitrin var; katman 2 üç vitrin istiyor. Katman 1 eksikken
+çarşı sayfası kurmak boş kutu üretmekten başka şey olmaz.
+
 ## Sapmayı önleyen kural
 
 Bu matrise satır eklemeden veya bir hücreyi `✓` yapmadan önce:

@@ -10,7 +10,8 @@
     "test": "vitest run",
     "e2e": "playwright test",
     "e2e:local": "playwright test --config=playwright.local.config.ts",
-    "e2e:ui": "playwright test --ui"
+    "e2e:ui": "playwright test --ui",
+    "e2e:video": "playwright test --config=playwright.video.config.ts"
   },
   "dependencies": {
     "@sentry/nextjs": "^10.70.0",
