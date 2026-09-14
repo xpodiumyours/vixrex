@@ -104,3 +104,27 @@ public_web/blob-report/
 
 # Yerel test imzasi (2026-09-09) — asla commitlenmez
 android/*.jks
+
+# Ajan calisma alanlari — depo kopyalari ve ajan yerel ayarlari (2026-09-15)
+.codex-worktrees/
+.claude/worktrees/
+.claude/launch.json
+.claude/settings.local.json
+.claude/settings.local.json.*
+.freebuff/
+.opencode/
+.cursor/
+.obsidian/
+*.yedek-*
+
+# Yerel calisma ciktilari — kaynak degil, uretilmis sonuc
+board.json
+build_output.txt
+resp.txt
+test-sonuc/
+public_web/test-sonuc/
+public_web/design-qa/
+public_web/.bak-gecici.cjs
+.pytest_cache/
+.scratch/*
+!.scratch/parity-audit/
