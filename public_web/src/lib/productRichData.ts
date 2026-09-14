@@ -1,3 +1,5 @@
+import { MAX_PRODUCT_IMAGES } from "@/lib/productImagePolicy";
+
 export type ProductItemKind = "physical" | "service";
 export type ProductPriceMode = "fixed" | "starting_from" | "ask";
 export type ProductServiceLocation = "business" | "customer" | "remote";
@@ -160,7 +162,7 @@ export function normalizeProductVariants(value: unknown): ProductVariant[] {
       normalized.stockQuantity = variant.stockQuantity;
     }
     normalized.stockStatus = cleanString(variant.stockStatus);
-    normalized.imageUrls = cleanStringArray(variant.imageUrls, 10);
+    normalized.imageUrls = cleanStringArray(variant.imageUrls, MAX_PRODUCT_IMAGES);
     variants.push(normalized);
   }
   return variants;
