@@ -8,7 +8,7 @@ import {
   validateProductImageUrls,
 } from "../src/lib/productImagePolicy";
 
-const managedImages = Array.from({ length: 11 }, (_, index) =>
+const managedImages = Array.from({ length: 12 }, (_, index) =>
   `https://example.supabase.co/storage/v1/object/public/shelf-images/magaza/products/urun/${index + 1}.jpg`,
 );
 const externalImages = Array.from({ length: 3 }, (_, index) =>
@@ -16,11 +16,11 @@ const externalImages = Array.from({ length: 3 }, (_, index) =>
 );
 
 describe("product image policy", () => {
-  it("en az 3, en fazla 10 yönetilen owner fotoğrafı kabul eder", () => {
+  it("en az 3, en fazla 11 yönetilen owner fotoğrafı kabul eder", () => {
     expect(MIN_PRODUCT_IMAGES).toBe(3);
-    expect(MAX_PRODUCT_IMAGES).toBe(10);
+    expect(MAX_PRODUCT_IMAGES).toBe(11);
     expect(validateProductImageUrls(managedImages.slice(0, 3)).ok).toBe(true);
-    expect(validateProductImageUrls(managedImages.slice(0, 10)).ok).toBe(true);
+    expect(validateProductImageUrls(managedImages.slice(0, 11)).ok).toBe(true);
   });
 
   it("0-2 fotoğrafı reddeder", () => {
@@ -29,7 +29,7 @@ describe("product image policy", () => {
     expect(validateProductImageUrls(managedImages.slice(0, 2)).ok).toBe(false);
   });
 
-  it("10'dan fazla fotoğrafı reddeder", () => {
+  it("11'den fazla fotoğrafı reddeder", () => {
     expect(validateProductImageUrls(managedImages).ok).toBe(false);
   });
 
