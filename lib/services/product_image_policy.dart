@@ -2,7 +2,7 @@ class ProductImagePolicy {
   const ProductImagePolicy._();
 
   static const int minImages = 3;
-  static const int maxImages = 10;
+  static const int maxImages = 11;
   static const int maxSourceMegabytes = 5;
   static const int maxSourceBytes = maxSourceMegabytes * 1024 * 1024;
   static const int minSourceShortEdge = 1200;
