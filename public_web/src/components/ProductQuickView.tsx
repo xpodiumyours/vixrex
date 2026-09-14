@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type MouseEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import ProductQuickViewBase from "./ProductQuickViewBase";
 import { trackDirectionsClick } from "./TrackedContactLink";
 import { trackWhatsAppClick } from "./TrackedWhatsAppLink";
@@ -25,6 +25,15 @@ interface ProductQuickViewProps {
   trackingEnabled?: boolean;
   onClose: () => void;
 }
+
+const FOCUSABLE_SELECTOR = [
+  'a[href]',
+  'button:not([disabled])',
+  'input:not([disabled])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])',
+].join(",");
 
 function ownerPreviewActive(): boolean {
   return typeof document !== "undefined" && Boolean(document.querySelector("[data-vixrex-editable]"));
@@ -61,6 +70,8 @@ export default function ProductQuickView({
   trackingEnabled = true,
   onClose,
 }: ProductQuickViewProps) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const returnFocusRef = useRef<HTMLElement | null>(null);
   const metadata = useMemo(() => normalizeProductMetadata(product.metadata), [product.metadata]);
   const variants = useMemo(
     () => productVariantsForTemplate(product.variants, metadata.templateKey),
@@ -77,6 +88,46 @@ export default function ProductQuickView({
   useEffect(() => {
     setSelectedOptions(variants[0] ? { ...variants[0].options } : {});
   }, [product.id, variants]);
+
+  useEffect(() => {
+    returnFocusRef.current = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
+    const dialog = rootRef.current?.querySelector<HTMLElement>('[role="dialog"]');
+    const title = dialog?.querySelector<HTMLElement>("#product-quick-view-title");
+    if (title) {
+      title.setAttribute("tabindex", "-1");
+      title.focus();
+    } else {
+      dialog?.focus();
+    }
+
+    const trapFocus = (event: KeyboardEvent) => {
+      if (event.key !== "Tab" || !dialog) return;
+      const focusable = Array.from(dialog.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR))
+        .filter((element) => !element.hasAttribute("disabled") && element.getAttribute("aria-hidden") !== "true");
+      if (focusable.length === 0) {
+        event.preventDefault();
+        title?.focus();
+        return;
+      }
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", trapFocus);
+    return () => {
+      document.removeEventListener("keydown", trapFocus);
+      returnFocusRef.current?.focus();
+    };
+  }, []);
 
   const selectedVariant = useMemo(
     () => findMatchingVariant(product.variants, selectedOptions, metadata.templateKey),
@@ -137,7 +188,7 @@ export default function ProductQuickView({
   }
 
   return (
-    <div onClickCapture={handleClickCapture}>
+    <div ref={rootRef} onClickCapture={handleClickCapture}>
       <ProductQuickViewBase
         product={product}
         images={images}
