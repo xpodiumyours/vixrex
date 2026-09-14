@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useEffect, useMemo } from "react";
 import {
+  PRODUCT_ATTRIBUTE_SCHEMA,
   productAttributesForTemplate,
   productTemplateByKey,
   type ProductAttributeDefinition,
@@ -186,7 +187,7 @@ export function OwnerRichProductFields({
   imageUrls,
   disabled = false,
 }: Props) {
-  const template = productTemplateByKey(templateKey) || productTemplateByKey("generic");
+  const template = productTemplateByKey(templateKey);
   const definitions = useMemo(() => productAttributesForTemplate(templateKey), [templateKey]);
   const allowedKeys = useMemo(() => new Set(definitions.map((item) => item.key)), [definitions]);
   const variantDefinitions = useMemo(
@@ -209,7 +210,7 @@ export function OwnerRichProductFields({
       : (metadata.attributes || []).filter((item) => allowedKeys.has(item.key));
     const next: ProductMetadata = {
       ...metadata,
-      schemaVersion: 1,
+      schemaVersion: PRODUCT_ATTRIBUTE_SCHEMA.version,
       itemKind: template.itemKind,
       templateKey: template.key,
       identifiers: isService ? undefined : metadata.identifiers,
@@ -226,6 +227,7 @@ export function OwnerRichProductFields({
     const draftFieldsChanged =
       isService && Boolean(value.brand || value.barcode || value.stockQuantity);
     const metadataChanged =
+      metadata.schemaVersion !== next.schemaVersion ||
       metadata.templateKey !== next.templateKey ||
       metadata.itemKind !== next.itemKind ||
       JSON.stringify(metadata.identifiers || null) !== JSON.stringify(next.identifiers || null) ||
@@ -244,7 +246,16 @@ export function OwnerRichProductFields({
     }
   }, [allowedKeys, cleanImageUrls, onChange, template, value, variantDefinitions]);
 
-  if (!template) return null;
+  if (!template) {
+    return (
+      <div
+        role="alert"
+        className="mt-5 rounded-2xl border border-red-500/30 bg-red-500/5 p-4 text-sm text-red-300"
+      >
+        Ürün kategori şablonu doğrulanamadı. Kategori ayarını kontrol edin; Vixrex farklı bir kategori tahmin etmez.
+      </div>
+    );
+  }
 
   const isService = template.itemKind === "service";
 
