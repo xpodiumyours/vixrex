@@ -18,6 +18,10 @@ const quickViewBaseSource = readFileSync(
   resolve(__dirname, "../src/components/ProductQuickViewBase.tsx"),
   "utf-8",
 );
+const detailBaseSource = readFileSync(
+  resolve(__dirname, "../src/components/ProductDetailExperienceBase.tsx"),
+  "utf-8",
+);
 const batchRouteSource = readFileSync(
   resolve(__dirname, "../src/app/api/products/batch/route.ts"),
   "utf-8",
@@ -82,6 +86,22 @@ describe("public ürün kartı zengin veri hattı", () => {
     expect(quickViewSource).toContain('clickLocation: "product_quick_view"');
     expect(quickViewSource).toContain("trackWhatsAppClick");
     expect(quickViewSource).toContain("trackDirectionsClick");
+  });
+
+  it("hızlı inceleme klavye odağını modal içinde tutar ve geri döndürür", () => {
+    expect(quickViewBaseSource).toContain('role="dialog"');
+    expect(quickViewBaseSource).toContain('aria-modal="true"');
+    expect(quickViewSource).toContain("FOCUSABLE_SELECTOR");
+    expect(quickViewSource).toContain('event.key !== "Tab"');
+    expect(quickViewSource).toContain("returnFocusRef.current?.focus()");
+    expect(quickViewSource).toContain('title.setAttribute("tabindex", "-1")');
+  });
+
+  it("hızlı görünüm ve detay galerisi ortak ürün fotoğraf sınırını kullanır", () => {
+    expect(quickViewBaseSource).toContain("MAX_PRODUCT_IMAGES");
+    expect(detailBaseSource).toContain("MAX_PRODUCT_IMAGES");
+    expect(quickViewBaseSource).not.toContain("slice(0, 10)");
+    expect(detailBaseSource).not.toContain("slice(0, 10)");
   });
 
   it("owner katalogu yayınlı vitrinle aynı zengin Product CORE alanlarını taşır", () => {
