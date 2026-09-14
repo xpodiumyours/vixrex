@@ -22,6 +22,22 @@ class ProductCategorySyncResult {
   final List<Product> products;
 }
 
+class _SyncedCategoryBinding {
+  const _SyncedCategoryBinding({
+    required this.category,
+    required this.oldId,
+    required this.remoteId,
+    required this.sortOrder,
+    required this.templateKey,
+  });
+
+  final ProductCategory category;
+  final String oldId;
+  final String remoteId;
+  final int sortOrder;
+  final String templateKey;
+}
+
 class ProductCategorySyncService {
   ProductCategorySyncService({SupabaseClient? client}) : _client = client;
 
@@ -77,7 +93,7 @@ class ProductCategorySyncService {
     }
 
     final idMap = <String, String>{};
-    final syncedCategories = <ProductCategory>[];
+    final bindings = <_SyncedCategoryBinding>[];
 
     for (var index = 0; index < categories.length; index++) {
       final category = categories[index];
@@ -121,43 +137,53 @@ class ProductCategorySyncService {
       }
 
       idMap[oldId] = remoteId;
-      syncedCategories.add(
-        ProductCategory(
-          id: remoteId,
-          name: category.name,
+      bindings.add(
+        _SyncedCategoryBinding(
+          category: category,
+          oldId: oldId,
+          remoteId: remoteId,
           sortOrder: index,
-          productTemplateKey: templateKey,
+          templateKey: templateKey,
         ),
       );
     }
 
-    final syncedProducts = products.map((product) {
-      final next = product.copyWith();
+    // Bütün kategori RPC'leri başarılı olduktan sonra aynı nesnelere canonical
+    // kimlikleri geri yaz. Böylece açık Flutter editör ekranı geçici local id
+    // ile kalıp sonraki kayıtta aynı kategoriyi/ürünü yeniden oluşturmaya çalışmaz.
+    for (final binding in bindings) {
+      binding.category.id = binding.remoteId;
+      binding.category.sortOrder = binding.sortOrder;
+      binding.category.productTemplateKey = binding.templateKey;
+    }
+    final syncedCategories = bindings.map((binding) => binding.category).toList();
+
+    for (final product in products) {
       final mapped = idMap[product.categoryId];
-      if (mapped != null) next.categoryId = mapped;
+      if (mapped != null) product.categoryId = mapped;
       final matches = syncedCategories.where(
-        (item) => item.id == next.categoryId,
+        (item) => item.id == product.categoryId,
       );
       if (matches.isNotEmpty) {
         final category = matches.first;
-        next.category = category.name;
-        next.richMetadata = alignProductMetadataToCategory(
-          next.richMetadata,
+        product.category = category.name;
+        product.richMetadata = alignProductMetadataToCategory(
+          product.richMetadata,
           category,
         );
       }
-      return next;
-    }).toList();
+    }
 
     for (final deletion in deletions) {
-      if (!_isUuid(deletion.categoryId)) continue;
+      final categoryId = idMap[deletion.categoryId] ?? deletion.categoryId;
+      if (!_isUuid(categoryId)) continue;
       final replacementId =
           idMap[deletion.replacementCategoryId] ?? deletion.replacementCategoryId;
       if (!_isUuid(replacementId)) continue;
       final result = await _supabase.rpc(
         'delete_store_category_v2',
         params: {
-          'p_category_id': deletion.categoryId,
+          'p_category_id': categoryId,
           'p_replacement_id': replacementId,
           'p_edit_token': editToken,
         },
@@ -169,7 +195,7 @@ class ProductCategorySyncService {
 
     return ProductCategorySyncResult(
       categories: syncedCategories,
-      products: syncedProducts,
+      products: products,
     );
   }
 
