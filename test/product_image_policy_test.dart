@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vixrex/models/store_product.dart';
 import 'package:vixrex/services/product_image_policy.dart';
 
 void main() {
@@ -12,6 +13,18 @@ void main() {
     expect(ProductImagePolicy.maxImages, 11);
     expect(ProductImagePolicy.validate(images.take(3).toList()), isNull);
     expect(ProductImagePolicy.validate(images.take(11).toList()), isNull);
+  });
+
+  test('Flutter Product modeli 11. fotoğrafı sessizce atmaz', () {
+    final product = Product(
+      id: 'product-11-images',
+      name: 'Galeri Ürünü',
+      imageUrls: images.take(11).toList(),
+    );
+
+    expect(product.imageUrls, hasLength(11));
+    expect(product.displayImageUrls, hasLength(11));
+    expect(product.displayImageUrls.last, images[10]);
   });
 
   test('ürün görsel politikası 0-2 fotoğrafı reddeder', () {
