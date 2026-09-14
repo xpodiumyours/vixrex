@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:vixrex/models/product_rich_data.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/screens/bulk_product_upload_screen.dart';
 import 'package:vixrex/screens/product_category_management_screen.dart';
@@ -179,6 +180,8 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
           ),
     );
     if (result == null || !mounted) return;
+
+    final previousProducts = List<Product>.of(_products);
     setState(() {
       final index = _products.indexWhere((item) => item.id == result.id);
       if (index < 0) {
@@ -187,16 +190,21 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
         _products[index] = result;
       }
     });
+
     final saved = await _persist();
     if (!mounted) return;
-    widget.showMessage(
-      saved
-          ? (product == null ? 'Ürün kaydedildi.' : 'Ürün güncellendi.')
-          : (product == null
-              ? 'Ürün taslağa eklendi, vitrin yayınlandığında senkronlanacak.'
-              : 'Ürün güncellendi (uzak kayıt başarısız, tekrar deneyin).'),
-    );
-    // Faz6 parity: tek ürün ekle/düzenle de ortak sohbete düşsün
+    if (!saved) {
+      setState(() => _products = previousProducts);
+      widget.showMessage(
+        product == null
+            ? 'Ürün kaydedilemedi. Değişiklik geri alındı.'
+            : 'Ürün güncellenemedi. Değişiklik geri alındı.',
+      );
+      return;
+    }
+
+    widget.showMessage(product == null ? 'Ürün kaydedildi.' : 'Ürün güncellendi.');
+    // Faz6 parity: yalnız gerçekten kaydedilen tek ürün işlemi ortak sohbete düşer.
     unawaited(
       ProductConversationLogger.log(
         count: 1,
@@ -235,12 +243,35 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
     widget.showMessage(
       saved
           ? 'Ürün kategorileri güncellendi.'
-          : 'Kategoriler kaydedildi (uzak kayıt başarısız, tekrar deneyin).',
+          : 'Kategoriler kaydedilemedi. Lütfen tekrar deneyin.',
     );
   }
 
   Future<void> _duplicate(Product product) async {
     final now = DateTime.now().microsecondsSinceEpoch.toString();
+    final duplicateMetadata = ProductRichMetadata(
+      schemaVersion: product.richMetadata.schemaVersion,
+      itemKind: product.richMetadata.itemKind,
+      templateKey: product.richMetadata.templateKey,
+      sku: null,
+      mpn: product.richMetadata.mpn,
+      attributes: List.of(product.richMetadata.attributes),
+      service: product.richMetadata.service,
+    );
+    final duplicateVariants =
+        product.variants.asMap().entries.map((entry) {
+          final variant = entry.value;
+          return ProductVariantData(
+            id: '${variant.id}-$now-${entry.key + 1}',
+            options: Map<String, String>.of(variant.options),
+            sku: null,
+            barcode: null,
+            priceAmount: variant.priceAmount,
+            stockQuantity: variant.stockQuantity,
+            stockStatus: variant.stockStatus,
+            imageUrls: List<String>.of(variant.imageUrls),
+          );
+        }).toList();
     final copy = Product(
       id: now,
       name: '${product.name} (Kopya)',
@@ -255,19 +286,26 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
       isVisible: true,
       slug: null,
       brand: product.brand,
-      barcode: product.barcode,
-      sku: product.sku,
-      richMetadata: product.richMetadata,
-      variants: List.of(product.variants),
+      barcode: null,
+      sku: null,
+      richMetadata: duplicateMetadata,
+      variants: duplicateVariants,
       oldPriceAmount: product.oldPriceAmount,
       badgeTag: product.badgeTag,
       fulfillmentLocation: product.fulfillmentLocation,
     );
+    final previousProducts = List<Product>.of(_products);
     setState(() {
       final index = _products.indexOf(product);
       _products.insert(index < 0 ? 0 : index + 1, copy);
     });
-    await _persist();
+    final saved = await _persist();
+    if (!mounted) return;
+    if (!saved) {
+      setState(() => _products = previousProducts);
+      widget.showMessage('Ürün kopyalanamadı. Değişiklik geri alındı.');
+      return;
+    }
     widget.showMessage('Ürün kopyalandı.');
     unawaited(
       ProductConversationLogger.log(
@@ -330,6 +368,7 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
       return;
     }
 
+    final previousProducts = List<Product>.of(_products);
     var improved = 0;
     setState(() {
       for (var i = 0; i < _products.length; i++) {
@@ -347,7 +386,13 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
       return;
     }
 
-    await _persist();
+    final saved = await _persist();
+    if (!mounted) return;
+    if (!saved) {
+      setState(() => _products = previousProducts);
+      widget.showMessage('Ürün başlıkları kaydedilemedi. Değişiklik geri alındı.');
+      return;
+    }
     widget.showMessage('$improved ürün başlığı iyileştirildi.');
     unawaited(
       ProductConversationLogger.log(
@@ -409,10 +454,11 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
   List<Product> get _selectedProducts =>
       _products.where((p) => _selectedIds.contains(p.id)).toList();
 
-  Future<void> _finishBulkApply(
+  Future<bool> _finishBulkApply(
     Map<String, Product> byId, {
     int skippedCount = 0,
   }) async {
+    final previousProducts = List<Product>.of(_products);
     setState(() {
       for (var i = 0; i < _products.length; i++) {
         final replacement = byId[_products[i].id];
@@ -422,16 +468,20 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
       _selectedIds.clear();
     });
     final saved = await _persist();
-    if (!mounted) return;
+    if (!mounted) return saved;
+    if (!saved) {
+      setState(() => _products = previousProducts);
+    }
     final base =
         saved
             ? 'Seçili ürünler güncellendi.'
-            : 'Ürünler güncellendi (uzak kayıt başarısız, tekrar deneyin).';
+            : 'Ürünler kaydedilemedi. Değişiklik geri alındı.';
     widget.showMessage(
       skippedCount > 0
           ? '$base $skippedCount ürünün fiyatı sayı olarak okunamadığı için atlandı.'
           : base,
     );
+    return saved;
   }
 
   Future<void> _applyBulkPrice(PriceAdjustMode mode, double value) async {
@@ -441,10 +491,10 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
       mode: mode,
       value: value,
     );
-    await _finishBulkApply({
+    final saved = await _finishBulkApply({
       for (final p in result.updated) p.id: p,
     }, skippedCount: result.skipped.length);
-    if (count > 0) {
+    if (saved && count > 0) {
       unawaited(
         ProductConversationLogger.log(
           count: result.updated.length,
@@ -462,8 +512,8 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
       _selectedProducts,
       stockStatus,
     );
-    await _finishBulkApply({for (final p in updated) p.id: p});
-    if (count > 0) {
+    final saved = await _finishBulkApply({for (final p in updated) p.id: p});
+    if (saved && count > 0) {
       unawaited(
         ProductConversationLogger.log(
           count: count,
@@ -480,8 +530,8 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
     final count = selected.length;
     final catName = category.name;
     final updated = _bulkFieldUpdater.applyCategory(selected, category);
-    await _finishBulkApply({for (final p in updated) p.id: p});
-    if (count > 0) {
+    final saved = await _finishBulkApply({for (final p in updated) p.id: p});
+    if (saved && count > 0) {
       unawaited(
         ProductConversationLogger.log(
           count: count,
@@ -499,8 +549,8 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
       _selectedProducts,
       isVisible,
     );
-    await _finishBulkApply({for (final p in updated) p.id: p});
-    if (count > 0) {
+    final saved = await _finishBulkApply({for (final p in updated) p.id: p});
+    if (saved && count > 0) {
       unawaited(
         ProductConversationLogger.log(
           count: count,
@@ -513,12 +563,19 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
   }
 
   Future<void> _reorderProducts(int oldIndex, int newIndex) async {
+    final previousProducts = List<Product>.of(_products);
     setState(() {
       if (newIndex > oldIndex) newIndex--;
       final item = _products.removeAt(oldIndex);
       _products.insert(newIndex, item);
     });
-    await _persist();
+    final saved = await _persist();
+    if (!mounted) return;
+    if (!saved) {
+      setState(() => _products = previousProducts);
+      widget.showMessage('Ürün sırası kaydedilemedi. Değişiklik geri alındı.');
+      return;
+    }
     unawaited(
       ProductConversationLogger.log(
         count: _products.length,
@@ -785,10 +842,15 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
       editToken: widget.editToken,
       storeSlug: widget.storeSlug,
       onSaved: (products) async {
+        final previousProducts = List<Product>.of(_products);
         setState(() {
           _products.insertAll(0, products);
         });
-        await _persist();
+        final saved = await _persist();
+        if (!saved && mounted) {
+          setState(() => _products = previousProducts);
+        }
+        return saved;
       },
     );
     if (result == true && mounted) {
