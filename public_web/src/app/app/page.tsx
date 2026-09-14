@@ -84,11 +84,11 @@ export default function AppPage() {
     const [productsResult, categoriesResult] = await Promise.all([
       supabase
         .from("products")
-        .select("id, slug, name, description, price_text, image_urls, category_id, stock_status, product_categories(name)")
+        .select("id, slug, name, description, price_text, price_amount, old_price_amount, badge_tag, fulfillment_region, currency, image_urls, category_id, stock_status, stock_quantity, brand, barcode, metadata, variants, product_categories(name,product_template_key)")
         .eq("store_id", storeId),
       supabase
         .from("product_categories")
-        .select("id, name")
+        .select("id, name, product_template_key")
         .eq("store_id", storeId),
     ]);
 
