@@ -26,6 +26,8 @@ void main() {
     expect(product.brand, 'Örnek Marka');
     expect(product.barcode, '8690000000005');
     expect(product.sku, 'KG-1');
+    expect(product.richMetadata.schemaVersion, 2);
+    expect(product.richMetadata.sku, 'KG-1');
     expect(product.stockQuantity, 10);
     expect(product.stockStatus, 'Mevcut');
   });
