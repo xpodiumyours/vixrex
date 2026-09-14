@@ -8,6 +8,7 @@ import {
   normalizeWhatsappDigits,
 } from "@/lib/products";
 import { buildProductDetailFacts } from "@/lib/productCardPresentation";
+import { MAX_PRODUCT_IMAGES } from "@/lib/productImagePolicy";
 import { normalizeProductMetadata } from "@/lib/productRichData";
 import type { RichProductItem } from "@/lib/richProductItem";
 import { supabase } from "@/lib/supabase";
@@ -42,7 +43,7 @@ function imageUrls(value: unknown): string[] {
     .filter((item): item is string => typeof item === "string")
     .map((item) => item.trim())
     .filter(Boolean)
-    .slice(0, 10);
+    .slice(0, MAX_PRODUCT_IMAGES);
 }
 
 async function loadOwnerProductDetail(slug: string, productSlug: string) {
