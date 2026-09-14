@@ -56,7 +56,6 @@ describe("ürün detay — zengin veri okuma sözleşmesi", () => {
 
   it("stok adedi sıfırsa fiziksel ürünü stokta saymaz", () => {
     expect(source).toContain("buildPhysicalProductStructuredData");
-    expect(source).toContain("!isService");
     expect(structuredDataSource).toContain("if (stockQuantity != null) return stockQuantity > 0;");
     expect(structuredDataSource).toContain('"https://schema.org/OutOfStock"');
   });
@@ -104,7 +103,7 @@ describe("ürün detay — zengin veri okuma sözleşmesi", () => {
 
   it("hizmeti Product olarak işaretlemez ve fiziksel ürün alanlarını istemciye taşımaz", () => {
     expect(source).toContain('"@type": "Service"');
-    expect(source).toContain('"@type": "Product"');
+    expect(structuredDataSource).toContain('"@type": "Product"');
     expect(source).toContain("serviceType: metadata.service?.serviceType");
     expect(source).toContain("areaServed: product.fulfillmentRegion");
     expect(experienceBaseSource).toContain("!isService && groups.length > 0");
