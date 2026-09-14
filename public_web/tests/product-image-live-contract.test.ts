@@ -22,6 +22,10 @@ const flutterPolicySource = readFileSync(
   resolve(__dirname, "../../lib/services/product_image_policy.dart"),
   "utf-8",
 );
+const flutterProductServiceSource = readFileSync(
+  resolve(__dirname, "../../lib/services/product_service.dart"),
+  "utf-8",
+);
 
 describe("ürün fotoğrafı canlı sözleşmesi", () => {
   it("Web, Flutter ve veritabanı 3-11 sınırında eşittir", () => {
@@ -29,6 +33,9 @@ describe("ürün fotoğrafı canlı sözleşmesi", () => {
     expect(MAX_PRODUCT_IMAGES).toBe(11);
     expect(flutterPolicySource).toContain("static const int minImages = 3;");
     expect(flutterPolicySource).toContain("static const int maxImages = 11;");
+    expect(flutterProductServiceSource).toContain("PRODUCT_IMAGES_MAX_11");
+    expect(flutterProductServiceSource).toContain("Bir ürüne en fazla 11 fotoğraf eklenebilir.");
+    expect(flutterProductServiceSource).not.toContain("PRODUCT_IMAGES_MAX_10");
     expect(migrationSource).toContain("if image_count < 3 then");
     expect(migrationSource).toContain("if image_count > 11 then");
     expect(migrationSource).toContain("PRODUCT_IMAGES_MAX_11");
