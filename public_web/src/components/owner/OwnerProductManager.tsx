@@ -79,7 +79,7 @@ function sameStringList(left: string[], right: string[]) {
 
 export function OwnerProductManager({
   storeSlug,
-  products,
+ products,
   categories,
   onRefresh,
 }: OwnerProductManagerProps) {
@@ -196,24 +196,10 @@ export function OwnerProductManager({
     });
   }, [products, filterText, filterCategory]);
 
-  async function openEditProduct(product: OwnerProduct) {
-    setBusy(true);
+  function openEditProduct(product: OwnerProduct) {
     setError("");
-    try {
-      const response = await fetch(
-        `/api/products?slug=${encodeURIComponent(storeSlug)}&productId=${encodeURIComponent(product.id)}`,
-        { cache: "no-store" },
-      );
-      const payload = await response.json().catch(() => null);
-      if (!response.ok || !payload?.product) {
-        throw new Error(responseError(payload, "Ürün bilgileri yüklenemedi."));
-      }
-      setEditing(payload.product as OwnerProduct);
-    } catch (editError) {
-      setError(editError instanceof Error ? editError.message : "Ürün bilgileri yüklenemedi.");
-    } finally {
-      setBusy(false);
-    }
+    setSuccess("");
+    setEditing(product);
   }
 
   async function saveProduct(form: ProductFormValue) {
@@ -409,7 +395,7 @@ export function OwnerProductManager({
                   </div>
                   <p className="mt-1 text-xs text-[var(--owner-muted)]">{product.product_categories?.name || "Kategorisiz"}</p>
                   <div className="mt-4 grid grid-cols-3 gap-2">
-                    <button type="button" className="owner-button-secondary text-xs" onClick={() => void openEditProduct(product)} disabled={busy}>✏️</button>
+                    <button type="button" className="owner-button-secondary text-xs" onClick={() => openEditProduct(product)} disabled={busy}>✏️</button>
                     <button type="button" className="owner-button-danger text-xs" onClick={() => setDeleting(product)} disabled={busy}>🗑️</button>
                     <div className="flex gap-0.5">
                       <button type="button" className="owner-button-secondary flex-1 text-xs" onClick={() => moveProduct(products.indexOf(product), "up")} disabled={busy || !!filterText || !!filterCategory || products.indexOf(product) === 0} title={filterText || filterCategory ? "Filtre varken sıralama kapalı" : "Yukarı taşı"}>↑</button>
