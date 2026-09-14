@@ -22,6 +22,10 @@ const experienceBaseSource = readFileSync(
   resolve(__dirname, "../src/components/ProductDetailExperienceBase.tsx"),
   "utf8",
 );
+const structuredDataSource = readFileSync(
+  resolve(__dirname, "../src/lib/productStructuredData.ts"),
+  "utf8",
+);
 
 describe("ürün detay — zengin veri okuma sözleşmesi", () => {
   it("mevcut products çekirdeğindeki zengin kolonları okur", () => {
@@ -51,8 +55,10 @@ describe("ürün detay — zengin veri okuma sözleşmesi", () => {
   });
 
   it("stok adedi sıfırsa fiziksel ürünü stokta saymaz", () => {
-    expect(source).toContain("product.stockQuantity == null || product.stockQuantity > 0");
+    expect(source).toContain("buildPhysicalProductStructuredData");
     expect(source).toContain("!isService");
+    expect(structuredDataSource).toContain("if (stockQuantity != null) return stockQuantity > 0;");
+    expect(structuredDataSource).toContain('"https://schema.org/OutOfStock"');
   });
 
   it("kategoriye ait gerçek detayları serverdan interaktif detay bileşenine taşır", () => {
