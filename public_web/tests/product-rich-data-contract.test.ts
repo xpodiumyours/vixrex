@@ -95,6 +95,18 @@ describe("zengin ürün şeması — sözleşme", () => {
     expect(productRouteSource).toContain('definition.storage === "metadata.attributes"');
     expect(productRouteSource).toContain("allowedAttributeKeys.has(item.key)");
   });
+
+  it("PATCH gönderilmeyen mevcut ürün alanlarını sessizce boşaltmaz", () => {
+    expect(productRouteSource).toContain('function hasOwn(value: Record<string, unknown>, key: string)');
+    expect(productRouteSource).toContain('hasOwn(govde, "description")');
+    expect(productRouteSource).toContain("current.description");
+    expect(productRouteSource).toContain('hasOwn(govde, "priceText")');
+    expect(productRouteSource).toContain("current.price_text");
+    expect(productRouteSource).toContain('hasOwn(govde, "stockStatus")');
+    expect(productRouteSource).toContain("current.stock_status");
+    expect(productRouteSource).toContain('hasOwn(govde, "oldPriceAmount")');
+    expect(productRouteSource).toContain("current.old_price_amount");
+  });
 });
 
 describe("zengin ürün verisi — güvenli okuma", () => {
