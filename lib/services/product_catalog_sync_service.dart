@@ -14,6 +14,11 @@ class ProductCatalogSyncService {
 
   final ProductService _productService;
 
+  String? _externalProductId(Product product) {
+    final value = product.sourceMediaId?.trim() ?? '';
+    return value.isEmpty ? null : value;
+  }
+
   Future<Result<List<Product>>> syncCatalog({
     required String storeId,
     required String editToken,
@@ -74,6 +79,7 @@ class ProductCatalogSyncService {
           }
           if (categoryUuid != null) product.categoryId = categoryUuid;
           product.richMetadata = metadata;
+          product.sku ??= metadata.sku;
           nextProducts.add(product);
         } else {
           final created = await _productService.addProduct(
@@ -89,6 +95,7 @@ class ProductCatalogSyncService {
             imageUrls: product.displayImageUrls,
             categoryId: categoryUuid,
             sourceType: product.source ?? 'manual',
+            externalProductId: _externalProductId(product),
             isVisible: true,
             sortOrder: i,
             brand: product.brand,
@@ -107,6 +114,7 @@ class ProductCatalogSyncService {
           product.slug = created.data!.slug;
           product.categoryId = categoryUuid ?? '';
           product.richMetadata = metadata;
+          product.sku ??= metadata.sku;
           nextProducts.add(product);
         }
       }
@@ -150,6 +158,7 @@ class ProductCatalogSyncService {
               ? product.categoryId
               : null,
       sourceType: product.source ?? 'manual',
+      externalProductId: _externalProductId(product),
       isVisible: true,
       sortOrder: sortOrder,
       brand: product.brand,
@@ -171,6 +180,7 @@ class ProductCatalogSyncService {
     product.id = result.data!.id;
     product.slug = result.data!.slug;
     product.richMetadata = metadata;
+    product.sku ??= metadata.sku;
     return const Result.success(null);
   }
 
@@ -227,6 +237,7 @@ class ProductCatalogSyncService {
       );
     }
     product.richMetadata = metadata;
+    product.sku ??= metadata.sku;
     return const Result.success(null);
   }
 
