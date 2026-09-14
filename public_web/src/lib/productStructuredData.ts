@@ -38,6 +38,41 @@ function productIsInStock(stockStatus?: string | null, stockQuantity?: number | 
 }
 
 /**
+ * Google/GS1 için yalnız doğrulanabilen GTIN değerini döndürür. Vixrex'teki
+ * barkod alanı daha geniş kalır; yerel/özel barkodlar ürün verisinden silinmez,
+ * yalnız GTIN olarak structured data'ya yazılmaz.
+ */
+export function normalizeGoogleGtin(value: string | null | undefined): string | undefined {
+  const digits = String(value || "").replace(/[\s-]+/g, "");
+  if (!/^(?:\d{8}|\d{12}|\d{13}|\d{14})$/.test(digits)) return undefined;
+  if (
+    digits.startsWith("02") ||
+    digits.startsWith("04") ||
+    digits.startsWith("2") ||
+    digits.startsWith("98") ||
+    digits.startsWith("99")
+  ) {
+    return undefined;
+  }
+
+  const checkDigit = Number(digits[digits.length - 1]);
+  let sum = 0;
+  let weight = 3;
+  for (let index = digits.length - 2; index >= 0; index -= 1) {
+    sum += Number(digits[index]) * weight;
+    weight = weight === 3 ? 1 : 3;
+  }
+  const expected = (10 - (sum % 10)) % 10;
+  return expected === checkDigit ? digits : undefined;
+}
+
+function structuredGtin(value: string | null | undefined): Record<string, string> {
+  const gtin = normalizeGoogleGtin(value);
+  if (!gtin) return {};
+  return { [`gtin${gtin.length}`]: gtin };
+}
+
+/**
  * Vixrex fiyat metinleri Türkçe binlik ayırıcıyı destekler: 1.299 TL => 1299.
  * Ondalık örnekleri de korunur: 1299,90 => 1299.90; 1.299,90 => 1299.90.
  */
@@ -103,7 +138,7 @@ export function buildPhysicalProductStructuredData(args: {
       ...common,
       "@type": "Product",
       "@id": `${productUrl}#product`,
-      gtin: product.barcode || undefined,
+      ...structuredGtin(product.barcode),
       sku: metadata.identifiers?.sku || undefined,
       mpn: metadata.identifiers?.mpn || undefined,
       offers: offer({
@@ -156,7 +191,7 @@ export function buildPhysicalProductStructuredData(args: {
       image: variantImages.length > 0 ? variantImages : undefined,
       url: variantUrl,
       sku: variant.sku || undefined,
-      gtin: variant.barcode || undefined,
+      ...structuredGtin(variant.barcode),
       ...recognized,
       additionalProperty: additionalProperty.length ? additionalProperty : undefined,
       offers: offer({
