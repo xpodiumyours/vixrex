@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:vixrex/core/result.dart';
+import 'package:vixrex/models/product_rich_data.dart';
 import 'package:vixrex/models/store_product.dart';
+import 'package:vixrex/services/product_category_metadata_service.dart';
 import 'package:vixrex/services/product_service.dart';
 import 'package:vixrex/utils/failure.dart';
 import 'package:vixrex/utils/product_price_parser.dart';
@@ -31,6 +33,7 @@ class ProductCatalogSyncService {
         final categoryUuid =
             rawCatId.isNotEmpty && _isUuid(rawCatId) ? rawCatId : null;
         final priceAmount = parseProductPriceAmount(product.price);
+        final metadata = await _metadataForWrite(product.richMetadata);
 
         if (_isUuid(product.id) && remoteIds.contains(product.id)) {
           final updated = await _productService.updateProduct(
@@ -51,7 +54,7 @@ class ProductCatalogSyncService {
             stockStatus: product.stockStatus,
             brand: product.brand,
             barcode: product.barcode,
-            metadata: product.richMetadata,
+            metadata: metadata,
             variants: product.variants,
             clearCategory: categoryUuid == null,
             clearPriceAmount: priceAmount == null,
@@ -70,6 +73,7 @@ class ProductCatalogSyncService {
             );
           }
           if (categoryUuid != null) product.categoryId = categoryUuid;
+          product.richMetadata = metadata;
           nextProducts.add(product);
         } else {
           final created = await _productService.addProduct(
@@ -91,7 +95,7 @@ class ProductCatalogSyncService {
             barcode: product.barcode,
             stockQuantity: product.stockQuantity,
             stockStatus: product.stockStatus,
-            metadata: product.richMetadata,
+            metadata: metadata,
             variants: product.variants,
           );
           if (created.isFailure || created.data == null) {
@@ -102,6 +106,7 @@ class ProductCatalogSyncService {
           product.id = created.data!.id;
           product.slug = created.data!.slug;
           product.categoryId = categoryUuid ?? '';
+          product.richMetadata = metadata;
           nextProducts.add(product);
         }
       }
@@ -121,6 +126,14 @@ class ProductCatalogSyncService {
     required Product product,
     required int sortOrder,
   }) async {
+    ProductRichMetadata metadata;
+    try {
+      metadata = await _metadataForWrite(product.richMetadata);
+    } catch (e) {
+      if (kDebugMode) debugPrint('ProductCatalogSyncService.addProduct metadata: $e');
+      return Result.failure(Failure('Ürün kategori detayları geçersiz.'));
+    }
+
     final result = await _productService.addProduct(
       storeId: storeId,
       editToken: editToken,
@@ -143,7 +156,7 @@ class ProductCatalogSyncService {
       barcode: product.barcode,
       stockQuantity: product.stockQuantity,
       stockStatus: product.stockStatus,
-      metadata: product.richMetadata,
+      metadata: metadata,
       variants: product.variants,
     );
 
@@ -157,6 +170,7 @@ class ProductCatalogSyncService {
     }
     product.id = result.data!.id;
     product.slug = result.data!.slug;
+    product.richMetadata = metadata;
     return const Result.success(null);
   }
 
@@ -170,6 +184,13 @@ class ProductCatalogSyncService {
             ? product.categoryId
             : null;
     final priceAmount = parseProductPriceAmount(product.price);
+    ProductRichMetadata metadata;
+    try {
+      metadata = await _metadataForWrite(product.richMetadata);
+    } catch (e) {
+      if (kDebugMode) debugPrint('ProductCatalogSyncService.updateProduct metadata: $e');
+      return Result.failure(Failure('Ürün kategori detayları geçersiz.'));
+    }
     final updated = await _productService.updateProduct(
       productId: product.id,
       editToken: editToken,
@@ -187,7 +208,7 @@ class ProductCatalogSyncService {
       stockStatus: product.stockStatus,
       brand: product.brand,
       barcode: product.barcode,
-      metadata: product.richMetadata,
+      metadata: metadata,
       variants: product.variants,
       clearCategory: categoryId == null,
       clearPriceAmount: priceAmount == null,
@@ -205,6 +226,7 @@ class ProductCatalogSyncService {
         Failure(updated.failure?.message ?? 'Ürün güncellenemedi.'),
       );
     }
+    product.richMetadata = metadata;
     return const Result.success(null);
   }
 
@@ -225,6 +247,12 @@ class ProductCatalogSyncService {
       );
     }
     return const Result.success(null);
+  }
+
+  Future<ProductRichMetadata> _metadataForWrite(
+    ProductRichMetadata metadata,
+  ) {
+    return sanitizeProductMetadataForWrite(metadata);
   }
 
   bool _isUuid(String value) {

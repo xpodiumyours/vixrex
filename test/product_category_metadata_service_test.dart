@@ -5,6 +5,8 @@ import 'package:vixrex/services/bulk_product_field_update_service.dart';
 import 'package:vixrex/services/product_category_metadata_service.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   test('hizmet kategorisi fiziksel ürün metadata kalıntılarını temizler', () {
     final current = ProductRichMetadata(
       templateKey: 'fashion',
@@ -60,7 +62,7 @@ void main() {
     expect(updated.single.richMetadata.sku, isNull);
   });
 
-  test('fiziksel ürün şablonları arasında ortak fiziksel metadata korunur', () {
+  test('fiziksel ürün şablonları arasında form verisini geçici olarak korur', () {
     const current = ProductRichMetadata(
       templateKey: 'fashion',
       itemKind: 'physical',
@@ -68,6 +70,7 @@ void main() {
       mpn: 'MPN-2',
       attributes: [
         ProductAttributeValue(key: 'color', label: 'Renk', value: 'Siyah'),
+        ProductAttributeValue(key: 'size', label: 'Beden', value: 'M'),
       ],
     );
     final target = ProductCategory(
@@ -82,6 +85,46 @@ void main() {
     expect(aligned.templateKey, 'electronics');
     expect(aligned.sku, 'SKU-2');
     expect(aligned.mpn, 'MPN-2');
+    expect(aligned.attributes.map((item) => item.key), containsAll(['color', 'size']));
     expect(aligned.service, isNull);
+  });
+
+  test('DB yazma kapısı yalnız aktif fiziksel kategori alanlarını geçirir', () async {
+    const current = ProductRichMetadata(
+      schemaVersion: 1,
+      templateKey: 'electronics',
+      itemKind: 'physical',
+      sku: 'SKU-3',
+      mpn: 'MPN-3',
+      attributes: [
+        ProductAttributeValue(key: 'color', label: 'Renk', value: 'Siyah'),
+        ProductAttributeValue(key: 'size', label: 'Beden', value: 'M'),
+        ProductAttributeValue(key: 'ram', label: 'RAM', value: '16 GB'),
+        ProductAttributeValue(key: 'vatRate', label: 'KDV oranı (%)', value: '20'),
+      ],
+    );
+
+    final sanitized = await sanitizeProductMetadataForWrite(current);
+    final keys = sanitized.attributes.map((item) => item.key).toSet();
+
+    expect(sanitized.schemaVersion, 2);
+    expect(sanitized.templateKey, 'electronics');
+    expect(sanitized.itemKind, 'physical');
+    expect(sanitized.sku, 'SKU-3');
+    expect(sanitized.mpn, 'MPN-3');
+    expect(keys, containsAll(['color', 'ram', 'vatRate']));
+    expect(keys, isNot(contains('size')));
+  });
+
+  test('DB yazma kapısı bilinmeyen kategori şablonunu reddeder', () async {
+    const current = ProductRichMetadata(
+      templateKey: 'unknown-template',
+      itemKind: 'physical',
+    );
+
+    await expectLater(
+      sanitizeProductMetadataForWrite(current),
+      throwsA(isA<FormatException>()),
+    );
   });
 }
