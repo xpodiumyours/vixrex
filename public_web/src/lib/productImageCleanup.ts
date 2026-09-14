@@ -43,18 +43,37 @@ export function managedProductStoragePath(
   }
 }
 
+export function unreferencedManagedProductStoragePaths(args: {
+  candidateUrls: string[];
+  referencedUrls: string[];
+  storeSlug: string;
+  supabaseUrl?: string;
+}): string[] {
+  const candidatePaths = new Set<string>();
+  for (const url of normalizeProductImageUrls(args.candidateUrls)) {
+    const path = managedProductStoragePath(url, args.storeSlug, args.supabaseUrl);
+    if (path) candidatePaths.add(path);
+  }
+
+  const referencedPaths = new Set<string>();
+  for (const url of normalizeProductImageUrls(args.referencedUrls)) {
+    const path = managedProductStoragePath(url, args.storeSlug, args.supabaseUrl);
+    if (path) referencedPaths.add(path);
+  }
+
+  return Array.from(candidatePaths).filter((path) => !referencedPaths.has(path));
+}
+
 export async function cleanupUnreferencedProductImages(args: {
   admin: SupabaseClient;
   storeId: string;
   storeSlug: string;
   candidateUrls: string[];
 }): Promise<number> {
-  const candidatePaths = new Set<string>();
-  for (const url of normalizeProductImageUrls(args.candidateUrls)) {
-    const path = managedProductStoragePath(url, args.storeSlug);
-    if (path) candidatePaths.add(path);
-  }
-  if (candidatePaths.size === 0) return 0;
+  const managedCandidates = args.candidateUrls.filter(
+    (url) => managedProductStoragePath(url, args.storeSlug) !== null,
+  );
+  if (managedCandidates.length === 0) return 0;
 
   try {
     const { data, error } = await args.admin
@@ -66,20 +85,14 @@ export async function cleanupUnreferencedProductImages(args: {
       return 0;
     }
 
-    const referencedPaths = new Set<string>();
-    for (const row of data || []) {
-      const imageUrls = normalizeProductImageUrls(
-        (row as { image_urls?: unknown }).image_urls,
-      );
-      for (const url of imageUrls) {
-        const path = managedProductStoragePath(url, args.storeSlug);
-        if (path) referencedPaths.add(path);
-      }
-    }
-
-    const removable = Array.from(candidatePaths).filter(
-      (path) => !referencedPaths.has(path),
+    const referencedUrls = (data || []).flatMap((row) =>
+      normalizeProductImageUrls((row as { image_urls?: unknown }).image_urls),
     );
+    const removable = unreferencedManagedProductStoragePaths({
+      candidateUrls: managedCandidates,
+      referencedUrls,
+      storeSlug: args.storeSlug,
+    });
     if (removable.length === 0) return 0;
 
     const { error: removeError } = await args.admin.storage
