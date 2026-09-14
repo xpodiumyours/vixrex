@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { TrackedWhatsAppLink } from "@/components/TrackedWhatsAppLink";
 import type { RichProductItem } from "@/lib/richProductItem";
 import { MapPinIcon } from "@/lib/vitrinBrandIcons";
+import { MAX_PRODUCT_IMAGES } from "@/lib/productImagePolicy";
 import {
   buildVariantOptionGroups,
   findMatchingVariant,
@@ -105,7 +106,7 @@ export default function ProductDetailExperience({
     [product.variants, selectedOptions, metadata.templateKey],
   );
   const gallery = useMemo(
-    () => Array.from(new Set([...(selectedVariant?.imageUrls || []), ...images])).slice(0, 10),
+    () => Array.from(new Set([...(selectedVariant?.imageUrls || []), ...images])).slice(0, MAX_PRODUCT_IMAGES),
     [images, selectedVariant],
   );
   const [imageIndex, setImageIndex] = useState(0);
