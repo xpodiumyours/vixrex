@@ -90,8 +90,15 @@ export function OwnerProductManager({
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [queuedCount, setQueuedCount] = useState(0);
-  const [resolvedCategories, setResolvedCategories] = useState<OwnerProductCategory[]>(
-    () => categories.map((category) => ({ ...category, product_template_key: category.product_template_key || "generic" })),
+  const [fetchedTemplateKeys, setFetchedTemplateKeys] = useState<Record<string, string>>({});
+
+  const resolvedCategories = useMemo(
+    () => categories.map((category) => ({
+      ...category,
+      product_template_key:
+        category.product_template_key || fetchedTemplateKeys[category.id] || "generic",
+    })),
+    [categories, fetchedTemplateKeys],
   );
 
   const loadCategoryTemplates = useCallback(async () => {
@@ -99,30 +106,21 @@ export function OwnerProductManager({
       const response = await fetch(`/api/product-categories?slug=${encodeURIComponent(storeSlug)}`, { cache: "no-store" });
       const payload = await response.json().catch(() => null);
       if (!response.ok || !Array.isArray(payload?.categories)) return;
-      setResolvedCategories(
-        payload.categories.map((category: OwnerProductCategory) => ({
-          id: String(category.id || ""),
-          name: String(category.name || ""),
-          product_template_key: category.product_template_key || "generic",
-        })),
-      );
+      const nextTemplateKeys: Record<string, string> = {};
+      for (const category of payload.categories as OwnerProductCategory[]) {
+        const id = String(category.id || "").trim();
+        if (!id) continue;
+        nextTemplateKeys[id] = category.product_template_key || "generic";
+      }
+      setFetchedTemplateKeys(nextTemplateKeys);
     } catch {
       // Parent'tan gelen kategori listesi güvenli fallback olarak kalır.
     }
   }, [storeSlug]);
 
   useEffect(() => {
-    setResolvedCategories((current) =>
-      categories.map((category) => ({
-        ...category,
-        product_template_key:
-          category.product_template_key ||
-          current.find((item) => item.id === category.id)?.product_template_key ||
-          "generic",
-      })),
-    );
     void loadCategoryTemplates();
-  }, [categories, loadCategoryTemplates]);
+  }, [loadCategoryTemplates]);
 
   const refreshAll = useCallback(async () => {
     await onRefresh();
