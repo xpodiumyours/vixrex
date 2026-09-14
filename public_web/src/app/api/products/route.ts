@@ -39,6 +39,10 @@ function cleanAmount(value: unknown): number | null {
   return typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : null;
 }
 
+function hasOwn(value: Record<string, unknown>, key: string): boolean {
+  return Object.prototype.hasOwnProperty.call(value, key);
+}
+
 function sameStringList(left: string[], right: string[]) {
   return left.length === right.length && left.every((value, index) => value === right[index]);
 }
@@ -229,14 +233,14 @@ export async function PATCH(request: NextRequest) {
 
   const { data: current } = await owned.admin
     .from("products")
-    .select("category_id,metadata,variants,brand,barcode,stock_quantity,price_amount,image_urls")
+    .select("name,description,price_text,price_amount,category_id,metadata,variants,brand,barcode,stock_quantity,stock_status,image_urls,old_price_amount,badge_tag,fulfillment_region")
     .eq("id", productId)
     .eq("store_id", owned.store.id)
     .maybeSingle();
   if (!current) return NextResponse.json({ hata: "Ürün bulunamadı." }, { status: 404 });
 
   const currentImageUrls = normalizeProductImageUrls(current.image_urls);
-  const requestedImageUrls = Object.prototype.hasOwnProperty.call(govde, "imageUrls")
+  const requestedImageUrls = hasOwn(govde, "imageUrls")
     ? normalizeProductImageUrls(govde.imageUrls)
     : currentImageUrls;
   const imageListChanged = !sameStringList(requestedImageUrls, currentImageUrls);
@@ -249,52 +253,80 @@ export async function PATCH(request: NextRequest) {
     imageUrls = imageValidation.imageUrls;
   }
 
-  const categoryId = cleanString(govde.categoryId) || cleanString(current.category_id) || "";
+  const categoryId = hasOwn(govde, "categoryId")
+    ? cleanString(govde.categoryId) || ""
+    : cleanString(current.category_id) || "";
   const templateKey = await categoryTemplateKey(owned.admin, owned.store.id, categoryId);
   if (!templateKey) return NextResponse.json({ hata: "Kategori bu vitrine ait değil veya ürün tipi geçersiz." }, { status: 422 });
   const template = productTemplateByKey(templateKey);
   if (!template) return NextResponse.json({ hata: "Ürün tipi geçersiz." }, { status: 422 });
   const isService = template.itemKind === "service";
 
-  const metadataInput = Object.prototype.hasOwnProperty.call(govde, "metadata") ? govde.metadata : current.metadata;
+  const metadataInput = hasOwn(govde, "metadata") ? govde.metadata : current.metadata;
   const metadata = metadataForTemplate(metadataInput, templateKey);
   if (!metadata) return NextResponse.json({ hata: "Ürün detayları kategori tipiyle uyuşmuyor." }, { status: 422 });
-  const variantInput = Object.prototype.hasOwnProperty.call(govde, "variants") ? govde.variants : current.variants;
+  const variantInput = hasOwn(govde, "variants") ? govde.variants : current.variants;
   const variants = variantsForTemplate(variantInput, templateKey, imageUrls);
 
-  const priceText = typeof govde.priceText === "string" ? govde.priceText.trim() : "";
+  const name = hasOwn(govde, "name") ? cleanString(govde.name) || "" : cleanString(current.name) || "";
+  if (!name) return NextResponse.json({ hata: "Ürün adı zorunludur." }, { status: 422 });
+  const description = hasOwn(govde, "description")
+    ? typeof govde.description === "string" ? govde.description.trim() : ""
+    : typeof current.description === "string" ? current.description.trim() : "";
+  const priceText = hasOwn(govde, "priceText")
+    ? typeof govde.priceText === "string" ? govde.priceText.trim() : ""
+    : typeof current.price_text === "string" ? current.price_text.trim() : "";
+  const priceAmount = hasOwn(govde, "priceAmount")
+    ? cleanAmount(govde.priceAmount)
+    : hasOwn(govde, "priceText")
+      ? parseProductPriceNumber(priceText)
+      : cleanAmount(current.price_amount);
   const stockQuantity = isService
     ? null
-    : Object.prototype.hasOwnProperty.call(govde, "stockQuantity")
+    : hasOwn(govde, "stockQuantity")
       ? cleanNonNegativeInt(govde.stockQuantity)
       : cleanNonNegativeInt(current.stock_quantity);
+  const stockStatus = isService
+    ? ""
+    : hasOwn(govde, "stockStatus")
+      ? cleanString(govde.stockStatus) || "Mevcut"
+      : cleanString(current.stock_status) || "Mevcut";
   const brand = isService
     ? null
-    : Object.prototype.hasOwnProperty.call(govde, "brand")
+    : hasOwn(govde, "brand")
       ? cleanString(govde.brand)
       : cleanString(current.brand);
   const barcode = isService
     ? null
-    : Object.prototype.hasOwnProperty.call(govde, "barcode")
+    : hasOwn(govde, "barcode")
       ? cleanString(govde.barcode)
       : cleanString(current.barcode);
+  const oldPriceAmount = hasOwn(govde, "oldPriceAmount")
+    ? cleanAmount(govde.oldPriceAmount)
+    : cleanAmount(current.old_price_amount);
+  const badgeTag = hasOwn(govde, "badgeTag")
+    ? cleanString(govde.badgeTag)
+    : cleanString(current.badge_tag);
+  const fulfillmentRegion = hasOwn(govde, "fulfillmentRegion")
+    ? cleanString(govde.fulfillmentRegion)
+    : cleanString(current.fulfillment_region);
 
   try {
     await updateRichCoreProduct({
       admin: owned.admin,
       productId,
       editToken: owned.store.edit_token,
-      name: typeof govde.name === "string" ? govde.name.trim() : "",
-      description: typeof govde.description === "string" ? govde.description.trim() : "",
+      name,
+      description,
       priceText,
-      priceAmount: cleanAmount(govde.priceAmount) ?? parseProductPriceNumber(priceText) ?? cleanAmount(current.price_amount),
+      priceAmount,
       imageUrls,
       categoryId,
-      stockStatus: isService ? "" : cleanString(govde.stockStatus) || "Mevcut",
+      stockStatus,
       stockQuantity,
-      oldPriceAmount: cleanAmount(govde.oldPriceAmount),
-      badgeTag: cleanString(govde.badgeTag),
-      fulfillmentRegion: cleanString(govde.fulfillmentRegion),
+      oldPriceAmount,
+      badgeTag,
+      fulfillmentRegion,
       brand,
       barcode,
       metadata,
