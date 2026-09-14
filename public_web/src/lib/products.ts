@@ -1,3 +1,5 @@
+import { MAX_PRODUCT_IMAGES } from "@/lib/productImagePolicy";
+
 export interface ProductItem {
   id?: string;
   slug?: string;
@@ -26,7 +28,7 @@ export function getProductImages(product: ProductItem): string[] {
         .map((value) => String(value || "").trim())
         .filter(Boolean)
     )
-  ).slice(0, 10);
+  ).slice(0, MAX_PRODUCT_IMAGES);
 }
 
 /** Taslak / test ürün adları — müşteri vitrininde gizlenmeli */
