@@ -19,9 +19,9 @@ void main() {
       expect(ProductImagePolicy.validateDimensions(0, 1600), isNotNull);
     });
 
-    test('keeps the product image count policy at 3 to 10', () {
+    test('keeps the product image count policy at 3 to 11', () {
       expect(ProductImagePolicy.minImages, 3);
-      expect(ProductImagePolicy.maxImages, 10);
+      expect(ProductImagePolicy.maxImages, 11);
       expect(
         ProductImagePolicy.validate(<String>[
           'https://example.com/1.jpg',
@@ -31,10 +31,28 @@ void main() {
         isNull,
       );
       expect(
+        ProductImagePolicy.validate(
+          List<String>.generate(
+            11,
+            (index) => 'https://example.com/${index + 1}.jpg',
+          ),
+        ),
+        isNull,
+      );
+      expect(
         ProductImagePolicy.validate(<String>[
           'https://example.com/1.jpg',
           'https://example.com/2.jpg',
         ]),
+        isNotNull,
+      );
+      expect(
+        ProductImagePolicy.validate(
+          List<String>.generate(
+            12,
+            (index) => 'https://example.com/${index + 1}.jpg',
+          ),
+        ),
         isNotNull,
       );
     });
