@@ -93,14 +93,10 @@ export default function ProductQuickView({
     () => new Set(variantGroups.map((group) => group.key)),
     [variantGroups],
   );
-  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>(
+    variants[0] ? { ...variants[0].options } : {},
+  );
   const [imageIndex, setImageIndex] = useState(0);
-
-  useEffect(() => {
-    const first = variants[0];
-    setSelectedOptions(first ? { ...first.options } : {});
-    setImageIndex(0);
-  }, [product.id, variants]);
 
   const selectedVariant = useMemo(
     () => findMatchingVariant(product.variants, selectedOptions, metadata.templateKey),
@@ -111,10 +107,6 @@ export default function ProductQuickView({
     const variantImages = selectedVariant?.imageUrls || [];
     return Array.from(new Set([...variantImages, ...images])).slice(0, MAX_PRODUCT_IMAGES);
   }, [images, selectedVariant]);
-
-  useEffect(() => {
-    setImageIndex(0);
-  }, [selectedVariant?.id]);
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -158,7 +150,10 @@ export default function ProductQuickView({
     );
     const fallback = variants.find((variant) => variant.options[key] === value);
     const next = preferred || fallback;
-    if (next) setSelectedOptions({ ...next.options });
+    if (next) {
+      setSelectedOptions({ ...next.options });
+      setImageIndex(0);
+    }
   };
 
   const quickFacts = buildProductQuickFacts({
