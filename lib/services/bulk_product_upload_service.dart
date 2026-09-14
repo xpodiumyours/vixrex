@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:excel/excel.dart';
 import 'package:uuid/uuid.dart';
+import 'package:vixrex/models/product_rich_data.dart';
 import 'package:vixrex/models/store_product.dart';
 import 'package:vixrex/services/product_image_policy.dart';
 
@@ -309,6 +310,7 @@ class BulkProductUploadService {
     final brand = _cellValue(values, columnMap['brand'] ?? -1);
     final barcode = _cellValue(values, columnMap['barcode'] ?? -1);
     final sku = _cellValue(values, columnMap['sku'] ?? -1);
+    final skuValue = sku.isNotEmpty ? sku : null;
 
     final product = Product(
       id: 'bulk_${const Uuid().v4()}',
@@ -324,7 +326,12 @@ class BulkProductUploadService {
       source: 'bulk_import',
       brand: brand.isNotEmpty ? brand : null,
       barcode: barcode.isNotEmpty ? barcode : null,
-      sku: sku.isNotEmpty ? sku : null,
+      sku: skuValue,
+      richMetadata: ProductRichMetadata(
+        schemaVersion: 2,
+        itemKind: 'physical',
+        sku: skuValue,
+      ),
     );
 
     return _RowParseResult(product: product);
