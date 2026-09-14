@@ -5,16 +5,24 @@ import 'package:vixrex/models/product_rich_data.dart';
 import 'package:vixrex/models/store_product.dart';
 import 'package:vixrex/repositories/product_repository.dart';
 import 'package:vixrex/repositories/supabase_product_repository.dart';
+import 'package:vixrex/services/product_image_cleanup_service.dart';
 import 'package:vixrex/services/product_image_policy.dart';
 import 'package:vixrex/utils/failure.dart';
 
 /// Ürün CRUD işlemleri için servis katmanı.
 class ProductService {
   ProductRepository? _repository;
+  ProductImageCleanupService? _imageCleanupService;
 
-  ProductService({ProductRepository? repository}) : _repository = repository;
+  ProductService({
+    ProductRepository? repository,
+    ProductImageCleanupService? imageCleanupService,
+  }) : _repository = repository,
+       _imageCleanupService = imageCleanupService;
 
   ProductRepository get _repo => _repository ??= SupabaseProductRepository();
+  ProductImageCleanupService get _imageCleanup =>
+      _imageCleanupService ??= const ProductImageCleanupService();
 
   Future<List<Product>> fetchProducts(String storeId) async {
     try {
@@ -132,6 +140,9 @@ class ProductService {
       normalizedImageUrls = ProductImagePolicy.normalize(imageUrls);
     }
 
+    final previousImages =
+        normalizedImageUrls == null ? null : await _imageCleanup.snapshot(productId);
+
     try {
       await _repo.updateRichProduct(
         productId: productId,
@@ -165,6 +176,19 @@ class ProductService {
         clearMetadata: clearMetadata,
         clearVariants: clearVariants,
       );
+      if (previousImages != null && normalizedImageUrls != null) {
+        final retained = normalizedImageUrls.toSet();
+        final removed =
+            previousImages.imageUrls
+                .where((url) => !retained.contains(url))
+                .toList();
+        if (removed.isNotEmpty) {
+          await _imageCleanup.cleanupUnreferenced(
+            storeId: previousImages.storeId,
+            candidateUrls: removed,
+          );
+        }
+      }
       return const Result.success(null);
     } catch (e) {
       final msg = _mapError(e);
@@ -177,8 +201,15 @@ class ProductService {
     String productId, {
     String? editToken,
   }) async {
+    final previousImages = await _imageCleanup.snapshot(productId);
     try {
       await _repo.deleteProduct(productId, editToken: editToken);
+      if (previousImages != null && previousImages.imageUrls.isNotEmpty) {
+        await _imageCleanup.cleanupUnreferenced(
+          storeId: previousImages.storeId,
+          candidateUrls: previousImages.imageUrls,
+        );
+      }
       return const Result.success(null);
     } catch (e) {
       final msg = _mapError(e);
