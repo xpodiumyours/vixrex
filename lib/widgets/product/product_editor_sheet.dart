@@ -10,6 +10,7 @@ import 'package:vixrex/services/store_publish_service.dart';
 import 'package:vixrex/services/store_shelf_upload_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/utils/gallery_image_file_validator.dart';
+import 'package:vixrex/utils/product_price_parser.dart';
 import 'package:vixrex/widgets/product/product_rich_fields_editor.dart';
 import 'package:vixrex/widgets/product/product_variant_editor.dart';
 
@@ -154,17 +155,6 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
       return value.toStringAsFixed(0);
     }
     return value.toStringAsFixed(2);
-  }
-
-  double? _parseAmount(String raw) {
-    var cleaned = raw.trim().replaceAll(RegExp(r'[^\d,.]'), '');
-    if (cleaned.isEmpty) return null;
-    if (cleaned.contains(',') && cleaned.contains('.')) {
-      cleaned = cleaned.replaceAll('.', '').replaceAll(',', '.');
-    } else if (cleaned.contains(',')) {
-      cleaned = cleaned.replaceAll(',', '.');
-    }
-    return double.tryParse(cleaned);
   }
 
   void _selectProductCategory(String? value) {
@@ -363,7 +353,7 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
         stockQuantity: isService ? null : _stockQuantity,
         richMetadata: richMetadata,
         variants: variants,
-        oldPriceAmount: _parseAmount(_oldPriceController.text),
+        oldPriceAmount: parseProductPriceAmount(_oldPriceController.text),
         badgeTag:
             _badgeTagController.text.trim().isEmpty
                 ? null
@@ -375,10 +365,13 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
       );
       if (!mounted) return;
       Navigator.of(context).pop(result);
-    } catch (_) {
+    } catch (error) {
       if (!mounted) return;
+      final message = error.toString();
       _showMessage(
-        'Ürün görselleri yüklenemedi. Form korundu, tekrar deneyebilirsiniz.',
+        message.contains('Kısa kenar en az')
+            ? message.replaceFirst('Exception: ', '')
+            : 'Ürün görselleri yüklenemedi. Form korundu, tekrar deneyebilirsiniz.',
       );
       setState(() => _isSaving = false);
     }
@@ -640,7 +633,7 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
         ),
         const SizedBox(height: 3),
         Text(
-          'JPG, PNG veya WEBP; fotoğraf başına en fazla ${ProductImagePolicy.maxSourceMegabytes} MB.',
+          'JPG, PNG veya WEBP; fotoğraf başına en fazla ${ProductImagePolicy.maxSourceMegabytes} MB. Kaynak görselin kısa kenarı en az ${ProductImagePolicy.minSourceShortEdge} px olmalıdır.',
           style: const TextStyle(color: AppColors.mutedText, fontSize: 11),
         ),
       ],

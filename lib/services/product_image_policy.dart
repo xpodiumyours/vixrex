@@ -5,6 +5,7 @@ class ProductImagePolicy {
   static const int maxImages = 10;
   static const int maxSourceMegabytes = 5;
   static const int maxSourceBytes = maxSourceMegabytes * 1024 * 1024;
+  static const int minSourceShortEdge = 1200;
 
   static List<String> normalize(List<String> imageUrls) {
     return imageUrls
@@ -12,6 +13,16 @@ class ProductImagePolicy {
         .where((value) => value.isNotEmpty)
         .toSet()
         .toList();
+  }
+
+  static String? validateDimensions(int width, int height) {
+    if (width <= 0 || height <= 0) {
+      return 'Ürün fotoğrafının ölçüleri okunamadı.';
+    }
+    if ((width < height ? width : height) < minSourceShortEdge) {
+      return 'Ürün fotoğrafının kısa kenarı en az $minSourceShortEdge px olmalıdır.';
+    }
+    return null;
   }
 
   static String? validate(List<String> imageUrls) {

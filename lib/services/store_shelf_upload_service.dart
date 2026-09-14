@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vixrex/services/image_optimization_service.dart';
+import 'package:vixrex/services/product_image_policy.dart';
 
 class StoreShelfUploadService {
   const StoreShelfUploadService({
@@ -8,31 +9,23 @@ class StoreShelfUploadService {
   });
 
   static const String _bucketName = 'shelf-images';
-
-  /// Depoya yazılan nesnelerin önbellek süresi: 1 yıl.
-  ///
-  /// Dosya adı zaman damgalı, içerik hiç değişmiyor. Varsayılan bir saatlik
-  /// önbellek tekrar eden ziyaretlerde boşuna trafik harcıyordu — ücretsiz
-  /// planda aylık 5 GB sınırı var (28 Ağustos 2026 ölçümü).
-  /// Web tarafındaki karşılığı: `public_web/src/lib/gorselSikistir.ts`
   static const String _onbellekSaniye = '31536000';
 
   final ImageOptimizationService imageOptimizationService;
 
-  /// Storage'a görsel yükler ve public URL döner.
-  ///
-  /// Path formatı: `{safeSlug}/{timestamp}.{extension}`
   Future<String> uploadShelfImage(
     Uint8List bytes,
     String slug, {
     String fileExtension = 'jpg',
     String contentType = 'image/jpeg',
+    int minShortEdge = 0,
   }) async {
     final safeSlug = sanitizeSlug(slug);
     final optimizedImage = await imageOptimizationService.optimize(
       bytes,
       fileExtension: sanitizeExtension(fileExtension),
       contentType: contentType,
+      minShortEdge: minShortEdge,
     );
     final path =
         '$safeSlug/${DateTime.now().millisecondsSinceEpoch}.'
@@ -57,7 +50,6 @@ class StoreShelfUploadService {
     }
   }
 
-  /// Galeri görseli yükler. Slug içine `/gallery` alt dizini eklenir.
   Future<String> uploadGalleryImage(
     Uint8List bytes,
     String slug, {
@@ -84,13 +76,10 @@ class StoreShelfUploadService {
       '${sanitizeSlug(slug)}/products/${sanitizeSlug(productId)}',
       fileExtension: fileExtension,
       contentType: contentType,
+      minShortEdge: ProductImagePolicy.minSourceShortEdge,
     );
   }
 
-  /// Slug'ı güvenli hale getirir: başındaki/sonundaki slash'ları temizler.
-  /// Boş string gelirse `'magazaniz'` döner.
-  ///
-  /// Test edilebilmesi için public API olarak açıktır.
   @visibleForTesting
   String sanitizeSlug(String slug) {
     final cleaned = slug.trim().replaceAll(RegExp(r'^/+|/+$'), '');
@@ -115,9 +104,6 @@ class StoreShelfUploadService {
         .replaceAll(RegExp(r'^-+|-+$'), '');
   }
 
-  /// Uzantıyı normalleştirir: `.jpeg` → `jpg`, geçersiz → `jpg`.
-  ///
-  /// Test edilebilmesi için public API olarak açıktır.
   @visibleForTesting
   String sanitizeExtension(String extension) {
     final cleaned = extension.trim().toLowerCase().replaceAll('.', '');

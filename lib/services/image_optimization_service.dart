@@ -42,6 +42,7 @@ class ImageOptimizationService {
     Uint8List bytes, {
     required String fileExtension,
     required String contentType,
+    int minShortEdge = 0,
   }) async {
     if (bytes.isEmpty) {
       throw const ImageOptimizationException(
@@ -50,16 +51,27 @@ class ImageOptimizationService {
     }
 
     final sourceType = _sourceType(fileExtension, contentType);
-    if (sourceType == _ImageSourceType.webp) {
-      return OptimizedImage(
-        bytes: bytes,
-        extension: 'webp',
-        contentType: 'image/webp',
-      );
-    }
 
     try {
       final dimensions = await _readDimensions(bytes);
+      if (minShortEdge > 0 &&
+          (dimensions.width < dimensions.height
+                  ? dimensions.width
+                  : dimensions.height) <
+              minShortEdge) {
+        throw ImageOptimizationException(
+          'Ürün fotoğrafının kısa kenarı en az $minShortEdge px olmalıdır.',
+        );
+      }
+
+      if (sourceType == _ImageSourceType.webp) {
+        return OptimizedImage(
+          bytes: bytes,
+          extension: 'webp',
+          contentType: 'image/webp',
+        );
+      }
+
       final target = targetSizeForDimensions(
         dimensions.width,
         dimensions.height,

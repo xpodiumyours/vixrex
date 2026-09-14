@@ -39,41 +39,60 @@ export type SikistirilmisGorsel = {
   uzanti: string;
 };
 
+export type GorselSikistirmaSecenekleri = {
+  /** 0 ise kalite eşiği uygulanmaz. Ürün yükleme yolu 1200 px geçirir. */
+  minShortEdge?: number;
+};
+
 /**
  * Görseli en fazla 1600 px uzun kenara indirir ve yeniden kodlar.
  *
  * WebP girdisi olduğu gibi geçer — Flutter da öyle yapıyor; WebP zaten
- * sıkıştırılmış geliyor ve yeniden kodlamak kaliteyi boşuna düşürür.
+ * sıkıştırılmış geliyor ve yeniden kodlamak kaliteyi boşuna düşürür. Ürün
+ * görsellerinde kaynak çözünürlük kontrolü yeniden kodlamadan önce yapılır.
  *
  * @param tur `gercekTur()` ile BAYTLARDAN doğrulanmış MIME türü. İstemcinin
  *   söylediği content-type buraya verilmemeli.
  */
 export async function gorseliSikistir(
   bayt: Uint8Array,
-  tur: string
+  tur: string,
+  secenekler: GorselSikistirmaSecenekleri = {},
 ): Promise<SikistirilmisGorsel> {
   if (bayt.length === 0) {
     throw new GorselSikistirmaHatasi("Görsel okunamadı.");
   }
 
-  if (tur === "image/webp") {
-    return { bayt, tur, uzanti: "webp" };
-  }
-
-  const pngMi = tur === "image/png";
-
   try {
     const kaynak = Buffer.from(bayt);
+    const minShortEdge = Math.max(0, Math.floor(secenekler.minShortEdge ?? 0));
+    if (minShortEdge > 0) {
+      const metadata = await sharp(kaynak, { failOn: "none" }).metadata();
+      const width = metadata.width ?? 0;
+      const height = metadata.height ?? 0;
+      if (width <= 0 || height <= 0) {
+        throw new GorselSikistirmaHatasi("Ürün fotoğrafının ölçüleri okunamadı.");
+      }
+      if (Math.min(width, height) < minShortEdge) {
+        throw new GorselSikistirmaHatasi(
+          `Ürün fotoğrafının kısa kenarı en az ${minShortEdge} px olmalıdır.`,
+        );
+      }
+    }
+
+    if (tur === "image/webp") {
+      return { bayt, tur, uzanti: "webp" };
+    }
+
+    const pngMi = tur === "image/png";
     const ilk = await kodla(kaynak, pngMi, UZUN_KENAR, KALITE);
 
-    // Flutter'daki ikinci deneme: 1 MB'ı aşarsa daha sert sıkıştır.
-    // PNG'de ayrıca uzun kenar 1200'e iner (fotoğrafik PNG çok şişiyor).
     if (ilk.length > TERCIH_EDILEN_EN_FAZLA_BAYT) {
       const ikinci = await kodla(
         kaynak,
         pngMi,
         pngMi ? YEDEK_UZUN_KENAR : UZUN_KENAR,
-        YEDEK_KALITE
+        YEDEK_KALITE,
       );
       if (ikinci.length > 0 && ikinci.length < ilk.length) {
         return sonuc(ikinci, pngMi);
@@ -84,8 +103,6 @@ export async function gorseliSikistir(
       throw new GorselSikistirmaHatasi("Görsel işlenemedi.");
     }
 
-    // Sıkıştırma kaynaktan büyük çıkarsa kaynağı koru — küçük ve zaten
-    // optimize edilmiş görsellerde olabiliyor.
     if (ilk.length >= bayt.length) {
       return { bayt, tur, uzanti: pngMi ? "png" : "jpg" };
     }
@@ -94,7 +111,7 @@ export async function gorseliSikistir(
   } catch (hata) {
     if (hata instanceof GorselSikistirmaHatasi) throw hata;
     throw new GorselSikistirmaHatasi(
-      "Görsel işlenemedi. JPG, PNG veya WebP olarak tekrar dene."
+      "Görsel işlenemedi. JPG, PNG veya WebP olarak tekrar dene.",
     );
   }
 }
@@ -103,13 +120,12 @@ async function kodla(
   kaynak: Buffer,
   pngMi: boolean,
   uzunKenar: number,
-  kalite: number
+  kalite: number,
 ): Promise<Buffer> {
   const boru = sharp(kaynak, { failOn: "none" }).rotate().resize({
     width: uzunKenar,
     height: uzunKenar,
     fit: "inside",
-    // Küçük görsel büyütülmez — Flutter da olduğu gibi bırakıyor.
     withoutEnlargement: true,
   });
 

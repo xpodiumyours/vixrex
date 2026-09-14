@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { cookies } from "next/headers";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
-import { validateProductImageUrls } from "@/lib/productImagePolicy";
+import { validateExternalProductImageUrls } from "@/lib/productImagePolicy";
 
 /**
  * Toplu ürün oluşturma API'si.
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
   const normalizedProducts: Array<ProductBatchItem & { image_urls: string[] }> = [];
   for (let index = 0; index < govde.products.length; index++) {
     const item = govde.products[index] as ProductBatchItem;
-    const imageValidation = validateProductImageUrls(item?.image_urls);
+    const imageValidation = validateExternalProductImageUrls(item?.image_urls);
     if (!imageValidation.ok) {
       return NextResponse.json(
         {

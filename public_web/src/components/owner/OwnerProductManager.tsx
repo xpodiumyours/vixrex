@@ -19,8 +19,10 @@ import {
   MAX_PRODUCT_IMAGE_SOURCE_BYTES,
   MAX_PRODUCT_IMAGE_SOURCE_MEGABYTES,
   MIN_PRODUCT_IMAGES,
+  MIN_PRODUCT_IMAGE_SOURCE_SHORT_EDGE,
   normalizeProductImageUrls,
 } from "@/lib/productImagePolicy";
+import { parseProductPriceNumber } from "@/lib/productPrice";
 
 export interface OwnerProductCategory {
   id: string;
@@ -68,15 +70,7 @@ function responseError(payload: unknown, fallback: string) {
 }
 
 function parseAmount(raw: string): number | null {
-  let cleaned = raw.trim().replaceAll(/[^0-9.,]/g, "");
-  if (!cleaned) return null;
-  if (cleaned.includes(",") && cleaned.includes(".")) {
-    cleaned = cleaned.replaceAll(".", "").replaceAll(",", ".");
-  } else if (cleaned.includes(",")) {
-    cleaned = cleaned.replaceAll(",", ".");
-  }
-  const v = Number(cleaned);
-  return Number.isFinite(v) ? v : null;
+  return parseProductPriceNumber(raw);
 }
 
 function sameStringList(left: string[], right: string[]) {
@@ -619,9 +613,8 @@ function ProductForm({ product, categories, busy, storeSlug, onCancel, onSave }:
           {legacyImagesKept
             ? `Mevcut fotoğraflar korunur. Fotoğraf listesini değiştirirsen en az ${MIN_PRODUCT_IMAGES}, en fazla ${MAX_PRODUCT_IMAGES} fotoğraf gerekir.`
             : `En az ${MIN_PRODUCT_IMAGES}, en fazla ${MAX_PRODUCT_IMAGES} fotoğraf. İlk fotoğraf ürün kapağıdır.`}
-          {` JPG/PNG/WebP, en fazla ${MAX_PRODUCT_IMAGE_SOURCE_MEGABYTES} MB.`}
+          {` JPG/PNG/WebP, en fazla ${MAX_PRODUCT_IMAGE_SOURCE_MEGABYTES} MB. Kaynak görselin kısa kenarı en az ${MIN_PRODUCT_IMAGE_SOURCE_SHORT_EDGE} px olmalıdır.`}
         </p>
-        <textarea value={imageUrls.join("\n")} onChange={(e) => setImageUrls(e.target.value.split(/\r?\n/).map((u) => u.trim()).filter(Boolean).slice(0, MAX_PRODUCT_IMAGES))} placeholder="Veya her satıra bir https:// bağlantısı yapıştır" rows={2} className="owner-input mt-2 min-h-16 resize-y text-xs" disabled={busy || uploading} />
       </div>
 
       <div className="mt-5 grid gap-4 sm:grid-cols-2">

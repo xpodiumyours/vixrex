@@ -3,6 +3,7 @@ import 'package:vixrex/core/result.dart';
 import 'package:vixrex/models/store_product.dart';
 import 'package:vixrex/services/product_service.dart';
 import 'package:vixrex/utils/failure.dart';
+import 'package:vixrex/utils/product_price_parser.dart';
 
 /// Yerel ürün kataloğunu aynı Supabase Product CORE ile eşler.
 class ProductCatalogSyncService {
@@ -29,6 +30,7 @@ class ProductCatalogSyncService {
         final rawCatId = product.categoryId.trim();
         final categoryUuid =
             rawCatId.isNotEmpty && _isUuid(rawCatId) ? rawCatId : null;
+        final priceAmount = parseProductPriceAmount(product.price);
 
         if (_isUuid(product.id) && remoteIds.contains(product.id)) {
           final updated = await _productService.updateProduct(
@@ -37,7 +39,7 @@ class ProductCatalogSyncService {
             name: name,
             description: product.description,
             priceText: product.price,
-            priceAmount: _parsePriceAmount(product.price),
+            priceAmount: priceAmount,
             oldPriceAmount: product.oldPriceAmount,
             badgeTag: product.badgeTag,
             fulfillmentRegion: product.fulfillmentLocation,
@@ -52,7 +54,7 @@ class ProductCatalogSyncService {
             metadata: product.richMetadata,
             variants: product.variants,
             clearCategory: categoryUuid == null,
-            clearPriceAmount: _parsePriceAmount(product.price) == null,
+            clearPriceAmount: priceAmount == null,
             clearOldPriceAmount: product.oldPriceAmount == null,
             clearBadgeTag: product.badgeTag?.trim().isNotEmpty != true,
             clearFulfillmentRegion:
@@ -76,7 +78,7 @@ class ProductCatalogSyncService {
             name: name,
             description: product.description,
             priceText: product.price,
-            priceAmount: _parsePriceAmount(product.price),
+            priceAmount: priceAmount,
             oldPriceAmount: product.oldPriceAmount,
             badgeTag: product.badgeTag,
             fulfillmentRegion: product.fulfillmentLocation,
@@ -125,7 +127,7 @@ class ProductCatalogSyncService {
       name: product.name,
       description: product.description,
       priceText: product.price,
-      priceAmount: _parsePriceAmount(product.price),
+      priceAmount: parseProductPriceAmount(product.price),
       oldPriceAmount: product.oldPriceAmount,
       badgeTag: product.badgeTag,
       fulfillmentRegion: product.fulfillmentLocation,
@@ -167,13 +169,14 @@ class ProductCatalogSyncService {
         product.categoryId.isNotEmpty && _isUuid(product.categoryId)
             ? product.categoryId
             : null;
+    final priceAmount = parseProductPriceAmount(product.price);
     final updated = await _productService.updateProduct(
       productId: product.id,
       editToken: editToken,
       name: product.name,
       description: product.description,
       priceText: product.price,
-      priceAmount: _parsePriceAmount(product.price),
+      priceAmount: priceAmount,
       oldPriceAmount: product.oldPriceAmount,
       badgeTag: product.badgeTag,
       fulfillmentRegion: product.fulfillmentLocation,
@@ -187,7 +190,7 @@ class ProductCatalogSyncService {
       metadata: product.richMetadata,
       variants: product.variants,
       clearCategory: categoryId == null,
-      clearPriceAmount: _parsePriceAmount(product.price) == null,
+      clearPriceAmount: priceAmount == null,
       clearOldPriceAmount: product.oldPriceAmount == null,
       clearBadgeTag: product.badgeTag?.trim().isNotEmpty != true,
       clearFulfillmentRegion:
@@ -228,16 +231,5 @@ class ProductCatalogSyncService {
     return RegExp(
       r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
     ).hasMatch(value.trim());
-  }
-
-  double? _parsePriceAmount(String raw) {
-    var cleaned = raw.trim().replaceAll(RegExp(r'[^\d,.]'), '');
-    if (cleaned.isEmpty) return null;
-    if (cleaned.contains(',') && cleaned.contains('.')) {
-      cleaned = cleaned.replaceAll('.', '').replaceAll(',', '.');
-    } else if (cleaned.contains(',')) {
-      cleaned = cleaned.replaceAll(',', '.');
-    }
-    return double.tryParse(cleaned);
   }
 }

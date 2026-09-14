@@ -9,6 +9,10 @@ import {
 } from "@/lib/products";
 import { buildProductDetailFacts } from "@/lib/productCardPresentation";
 import { normalizeProductMetadata } from "@/lib/productRichData";
+import {
+  buildPhysicalProductStructuredData,
+  parseProductPriceAmount,
+} from "@/lib/productStructuredData";
 import type { RichProductItem } from "@/lib/richProductItem";
 import { buildSiteUrl, getSiteUrl } from "@/lib/siteUrl";
 import { safeJsonLdHtml } from "@/lib/jsonLd";
@@ -236,18 +240,10 @@ export default async function ProductDetailPage(props: PageProps) {
     store.description ||
     store.corporate_bio ||
     `${store.name} vitrindeki ${product.name} ${itemAccusative} için detay ve iletişim bilgileri.`;
-  const isInStock =
-    !isService &&
-    (product.stockQuantity == null || product.stockQuantity > 0) &&
-    !String(product.stockStatus || "")
-      .toLocaleLowerCase("tr-TR")
-      .includes("tükendi");
   const structuredPrice =
     product.priceAmount != null
       ? String(product.priceAmount)
-      : product.price?.match(/\d/)
-        ? product.price.replace(/[^0-9.,]/g, "").replace(",", ".")
-        : undefined;
+      : parseProductPriceAmount(product.price);
   const detailFacts = buildProductDetailFacts({
     brand: product.brand,
     barcode: product.barcode,
@@ -280,32 +276,13 @@ export default async function ProductDetailPage(props: PageProps) {
             }
           : undefined,
       }
-    : {
-        "@context": "https://schema.org",
-        "@type": "Product",
-        "@id": `${publicUrl}#product`,
-        name: product.name,
+    : buildPhysicalProductStructuredData({
+        product,
+        productUrl: publicUrl,
+        storeName: store.name,
         description: productDescription,
-        image: images.length > 0 ? images : undefined,
-        brand: product.brand ? { "@type": "Brand", name: product.brand } : undefined,
-        gtin: product.barcode || undefined,
-        sku: metadata.identifiers?.sku || undefined,
-        mpn: metadata.identifiers?.mpn || undefined,
-        category: product.category || undefined,
-        url: publicUrl,
-        offers: structuredPrice
-          ? {
-              "@type": "Offer",
-              availability: isInStock
-                ? "https://schema.org/InStock"
-                : "https://schema.org/OutOfStock",
-              priceCurrency: product.currency || "TRY",
-              price: structuredPrice,
-              url: publicUrl,
-              seller: { "@type": "LocalBusiness", name: store.name },
-            }
-          : undefined,
-      };
+        images,
+      });
 
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",

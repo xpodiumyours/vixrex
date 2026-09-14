@@ -20,6 +20,7 @@ import {
   productAttributesForTemplate,
   productTemplateByKey,
 } from "@/lib/productAttributeSchema";
+import { parseProductPriceNumber } from "@/lib/productPrice";
 
 export const dynamic = "force-dynamic";
 
@@ -35,19 +36,6 @@ function cleanNonNegativeInt(value: unknown): number | null {
 
 function cleanAmount(value: unknown): number | null {
   return typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : null;
-}
-
-function amountFromPriceText(value: unknown): number | null {
-  if (typeof value !== "string") return null;
-  let cleaned = value.trim().replaceAll(/[^0-9.,]/g, "");
-  if (!cleaned) return null;
-  if (cleaned.includes(",") && cleaned.includes(".")) {
-    cleaned = cleaned.replaceAll(".", "").replaceAll(",", ".");
-  } else if (cleaned.includes(",")) {
-    cleaned = cleaned.replaceAll(",", ".");
-  }
-  const amount = Number(cleaned);
-  return Number.isFinite(amount) && amount >= 0 ? amount : null;
 }
 
 function sameStringList(left: string[], right: string[]) {
@@ -129,8 +117,6 @@ function variantsForTemplate(
       .map((definition) => definition.key),
   );
 
-  // Generic/bilinmeyen fiziksel şemada varyant anlamı tahmin edilmez;
-  // mevcut/import edilmiş seçenekler korunur. Fotoğraflar yine ürün galerisinden gelir.
   if (allowedKeys.size === 0) return variants;
 
   return variants
@@ -188,11 +174,7 @@ export async function POST(request: NextRequest) {
   const isService = template.itemKind === "service";
   const metadata = metadataForTemplate(govde.metadata, templateKey);
   if (!metadata) return NextResponse.json({ hata: "Ürün detayları kategori tipiyle uyuşmuyor." }, { status: 422 });
-  const variants = variantsForTemplate(
-    govde.variants,
-    templateKey,
-    imageValidation.imageUrls,
-  );
+  const variants = variantsForTemplate(govde.variants, templateKey, imageValidation.imageUrls);
 
   const priceText = typeof govde.priceText === "string" ? govde.priceText.trim() : "";
   const stockQuantity = isService ? null : cleanNonNegativeInt(govde.stockQuantity);
@@ -204,7 +186,7 @@ export async function POST(request: NextRequest) {
       name,
       description: typeof govde.description === "string" ? govde.description.trim() : "",
       priceText,
-      priceAmount: cleanAmount(govde.priceAmount) ?? amountFromPriceText(priceText),
+      priceAmount: cleanAmount(govde.priceAmount) ?? parseProductPriceNumber(priceText),
       imageUrls: imageValidation.imageUrls,
       categoryId,
       sourceType: "manual",
@@ -269,14 +251,8 @@ export async function PATCH(request: NextRequest) {
   const metadataInput = Object.prototype.hasOwnProperty.call(govde, "metadata") ? govde.metadata : current.metadata;
   const metadata = metadataForTemplate(metadataInput, templateKey);
   if (!metadata) return NextResponse.json({ hata: "Ürün detayları kategori tipiyle uyuşmuyor." }, { status: 422 });
-  const variantInput = Object.prototype.hasOwnProperty.call(govde, "variants")
-    ? govde.variants
-    : current.variants;
-  const variants = variantsForTemplate(
-    variantInput,
-    templateKey,
-    imageUrls,
-  );
+  const variantInput = Object.prototype.hasOwnProperty.call(govde, "variants") ? govde.variants : current.variants;
+  const variants = variantsForTemplate(variantInput, templateKey, imageUrls);
 
   const priceText = typeof govde.priceText === "string" ? govde.priceText.trim() : "";
   const stockQuantity = isService
@@ -303,7 +279,7 @@ export async function PATCH(request: NextRequest) {
       name: typeof govde.name === "string" ? govde.name.trim() : "",
       description: typeof govde.description === "string" ? govde.description.trim() : "",
       priceText,
-      priceAmount: cleanAmount(govde.priceAmount) ?? amountFromPriceText(priceText) ?? cleanAmount(current.price_amount),
+      priceAmount: cleanAmount(govde.priceAmount) ?? parseProductPriceNumber(priceText) ?? cleanAmount(current.price_amount),
       imageUrls,
       categoryId,
       stockStatus: isService ? "" : cleanString(govde.stockStatus) || "Mevcut",
