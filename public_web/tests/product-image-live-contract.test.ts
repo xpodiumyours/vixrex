@@ -26,9 +26,17 @@ const flutterProductServiceSource = readFileSync(
   resolve(__dirname, "../../lib/services/product_service.dart"),
   "utf-8",
 );
+const flutterProductModelSource = readFileSync(
+  resolve(__dirname, "../../lib/models/store_product.dart"),
+  "utf-8",
+);
+const flutterBulkSource = readFileSync(
+  resolve(__dirname, "../../lib/services/bulk_product_upload_service.dart"),
+  "utf-8",
+);
 
 describe("ürün fotoğrafı canlı sözleşmesi", () => {
-  it("Web, Flutter ve veritabanı 3-11 sınırında eşittir", () => {
+  it("Web, Flutter modeli, servis ve veritabanı 3-11 sınırında eşittir", () => {
     expect(MIN_PRODUCT_IMAGES).toBe(3);
     expect(MAX_PRODUCT_IMAGES).toBe(11);
     expect(flutterPolicySource).toContain("static const int minImages = 3;");
@@ -36,16 +44,20 @@ describe("ürün fotoğrafı canlı sözleşmesi", () => {
     expect(flutterProductServiceSource).toContain("PRODUCT_IMAGES_MAX_11");
     expect(flutterProductServiceSource).toContain("Bir ürüne en fazla 11 fotoğraf eklenebilir.");
     expect(flutterProductServiceSource).not.toContain("PRODUCT_IMAGES_MAX_10");
+    expect(flutterProductModelSource).toContain(".take(11)");
+    expect(flutterProductModelSource).not.toContain(".take(10)");
     expect(migrationSource).toContain("if image_count < 3 then");
     expect(migrationSource).toContain("if image_count > 11 then");
     expect(migrationSource).toContain("PRODUCT_IMAGES_MAX_11");
     expect(migrationSource).not.toContain("PRODUCT_IMAGES_MAX_10");
   });
 
-  it("toplu yükleme ortak fotoğraf sınırını kullanır", () => {
+  it("Web ve Flutter toplu yükleme ortak fotoğraf sınırını kullanır", () => {
     expect(bulkUploadSource).toContain("MAX_PRODUCT_IMAGES");
     expect(bulkUploadSource).toContain("MIN_PRODUCT_IMAGES");
     expect(bulkUploadSource).not.toContain("slice(0, 10)");
+    expect(flutterBulkSource).toContain("ProductImagePolicy.validate(imageUrls)");
+    expect(flutterBulkSource).not.toContain("take(10)");
   });
 
   it("varyant görselleri ortak fotoğraf sınırını kullanır", () => {
