@@ -37,6 +37,13 @@ async function ornekJpeg(genislik: number, yukseklik: number) {
 }
 
 describe("görsel sıkıştırma", () => {
+  it("ürün fotoğrafında küçük WebP kaynağını reddeder ve yeterli kaynağı korur", async () => {
+    const small = await sharp({ create: { width: 1200, height: 1199, channels: 3, background: "white" } }).webp().toBuffer();
+    await expect(gorseliSikistir(small, "image/webp", { minShortEdge: 1200 })).rejects.toThrow(/1200/);
+    const enough = await sharp({ create: { width: 1200, height: 1200, channels: 3, background: "white" } }).webp().toBuffer();
+    const result = await gorseliSikistir(enough, "image/webp", { minShortEdge: 1200 });
+    expect(Buffer.from(result.bayt).equals(enough)).toBe(true);
+  });
   it("1600 pikselden büyük görseli küçültür", async () => {
     const kaynak = await ornekJpeg(3000, 2000);
     const sonuc = await gorseliSikistir(new Uint8Array(kaynak), "image/jpeg");

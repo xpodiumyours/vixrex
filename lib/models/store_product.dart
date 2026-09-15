@@ -27,6 +27,7 @@ class Product {
   String category;
   String stockStatus; // 'Mevcut', 'Tükendi', 'Son birkaç adet'
   bool isVisible;
+  int imagePublishMinimum;
   String? slug;
   String? source;
   String? sourceMediaId;
@@ -53,6 +54,7 @@ class Product {
     this.category = 'Tümü',
     this.stockStatus = 'Mevcut',
     this.isVisible = true,
+    this.imagePublishMinimum = 3,
     this.slug,
     this.source,
     this.sourceMediaId,
@@ -112,6 +114,7 @@ class Product {
       'category': category,
       'stockStatus': stockStatus,
       'isVisible': isVisible,
+      'imagePublishMinimum': imagePublishMinimum,
     };
 
     void putOptional(String key, String? value) {
@@ -167,6 +170,9 @@ class Product {
                   StockStatus.available.label)
               .toString(),
       isVisible: (json['isVisible'] ?? json['is_visible'] ?? true) as bool,
+      imagePublishMinimum:
+          (json['imagePublishMinimum'] ?? json['image_publish_minimum'] ?? 0)
+              as int,
       brand:
           (json['brand'] ?? '').toString().trim().isEmpty
               ? null
@@ -271,6 +277,7 @@ class Product {
       category: category ?? this.category,
       stockStatus: stockStatus ?? this.stockStatus,
       isVisible: isVisible ?? this.isVisible,
+      imagePublishMinimum: imagePublishMinimum,
       slug: slug ?? this.slug,
       source: source ?? this.source,
       sourceMediaId: sourceMediaId ?? this.sourceMediaId,

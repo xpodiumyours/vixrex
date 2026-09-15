@@ -868,6 +868,7 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
         if (!saved && mounted) {
           setState(() => _products = previousProducts);
         }
+        return saved;
       },
     );
     if (result == true && mounted) {
@@ -964,6 +965,19 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(fontWeight: FontWeight.w800),
                 ),
+                if (!product.isVisible ||
+                    product.displayImageUrls.length <
+                        product.imagePublishMinimum)
+                  Text(
+                    product.displayImageUrls.length <
+                            product.imagePublishMinimum
+                        ? 'Taslak · Yayın için en az 3 fotoğraf ekle'
+                        : 'Vitrinde gizli',
+                    style: const TextStyle(
+                      color: AppColors.mutedText,
+                      fontSize: 11,
+                    ),
+                  ),
                 const SizedBox(height: 3),
                 Text(
                   '${product.category} • ${product.price.trim().isEmpty ? 'Fiyat belirtilmedi' : product.price}',

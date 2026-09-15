@@ -4,6 +4,7 @@ import 'package:vixrex/services/store_publish_legal_validator.dart';
 import 'package:vixrex/services/store_publish_links_validator.dart';
 import 'package:vixrex/services/store_publish_payload_builder.dart';
 import 'package:vixrex/utils/whatsapp_link_helper.dart';
+import 'package:vixrex/services/product_image_policy.dart';
 
 class StorePublishValidator {
   final StorePublishLegalValidator legalValidator;
@@ -71,8 +72,8 @@ class StorePublishValidator {
       if (product.category.trim().isEmpty) {
         return 'Eklenen tüm ürünlerin kategorisi zorunludur.';
       }
-      if (product.displayImageUrls.length > 4) {
-        return 'Bir ürüne en fazla 4 görsel eklenebilir.';
+      if (product.displayImageUrls.length > ProductImagePolicy.maxImages) {
+        return 'Bir ürüne en fazla ${ProductImagePolicy.maxImages} görsel eklenebilir.';
       }
     }
     return null;

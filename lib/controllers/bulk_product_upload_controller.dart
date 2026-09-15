@@ -94,11 +94,12 @@ class BulkProductUploadController extends ChangeNotifier {
 
   /// Listedeki ürünleri geri çağrım fonksiyonuna aktar.
   Future<bool> saveProducts({
-    required Future<void> Function(List<Product> products) onSave,
+    required Future<bool> Function(List<Product> products) onSave,
   }) async {
     if (_isSaving || !hasProducts) return false;
 
     _isSaving = true;
+    _state = BulkUploadState.saving;
     _errorMessage = null;
     notifyListeners();
 
@@ -110,12 +111,22 @@ class BulkProductUploadController extends ChangeNotifier {
           }).toList();
       if (toSave.isEmpty) {
         _errorMessage = 'Eklenecek ürün yok.';
+        _state = BulkUploadState.review;
         _isSaving = false;
         notifyListeners();
         return false;
       }
 
-      await onSave(toSave);
+      final persisted = await onSave(toSave);
+      if (!persisted) {
+        _errorMessage =
+            'Ürünler kataloğa kaydedilemedi. Liste korunuyor; düzeltip tekrar deneyin.';
+        _state = BulkUploadState.review;
+        _isSaving = false;
+        notifyListeners();
+        return false;
+      }
+
       _savedCount = toSave.length;
       _state = BulkUploadState.saved;
       _isSaving = false;
@@ -123,6 +134,7 @@ class BulkProductUploadController extends ChangeNotifier {
       return true;
     } catch (e) {
       _errorMessage = 'Ürünler kaydedilemedi: $e';
+      _state = BulkUploadState.review;
       _isSaving = false;
       notifyListeners();
       return false;

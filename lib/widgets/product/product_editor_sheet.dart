@@ -243,12 +243,6 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
       return;
     }
     final mustMeetImagePolicy = widget.product == null || _imageListChanged;
-    if (mustMeetImagePolicy && _images.length < ProductImagePolicy.minImages) {
-      _showMessage(
-        'Bir ürün için en az ${ProductImagePolicy.minImages} fotoğraf zorunludur.',
-      );
-      return;
-    }
     if (mustMeetImagePolicy && _images.length > ProductImagePolicy.maxImages) {
       _showMessage(
         'Bir ürüne en fazla ${ProductImagePolicy.maxImages} fotoğraf eklenebilir.',
@@ -341,7 +335,16 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
         categoryId: selectedCategory.id,
         category: selectedCategory.name,
         stockStatus: isService ? '' : _stockStatus,
-        isVisible: widget.product?.isVisible ?? true,
+        isVisible:
+            uploadedUrls.length >=
+                (widget.product?.imagePublishMinimum ??
+                    ProductImagePolicy.minImages) &&
+            (widget.product?.isVisible != false ||
+                (widget.product!.imagePublishMinimum > 0 &&
+                    _initialImageUrls.length <
+                        widget.product!.imagePublishMinimum)),
+        imagePublishMinimum:
+            widget.product?.imagePublishMinimum ?? ProductImagePolicy.minImages,
         slug: slug,
         source: widget.product?.source,
         sourceMediaId: widget.product?.sourceMediaId,
@@ -589,10 +592,7 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
   }
 
   Widget _buildImages() {
-    final legacyImagesKept =
-        widget.product != null &&
-        _initialImageUrls.length < ProductImagePolicy.minImages &&
-        !_imageListChanged;
+    final legacyImagesKept = widget.product?.imagePublishMinimum == 0;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -631,8 +631,8 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
         const SizedBox(height: 6),
         Text(
           legacyImagesKept
-              ? 'Mevcut fotoğraflar korunur. Fotoğraf listesini değiştirirsen en az ${ProductImagePolicy.minImages}, en fazla ${ProductImagePolicy.maxImages} fotoğraf gerekir.'
-              : 'En az ${ProductImagePolicy.minImages}, en fazla ${ProductImagePolicy.maxImages} fotoğraf. İlk fotoğraf ürün kapağıdır.',
+              ? 'Mevcut ürünün fotoğraf sayısı korunur. En fazla ${ProductImagePolicy.maxImages} fotoğraf ekleyebilirsin.'
+              : 'En az ${ProductImagePolicy.minImages} fotoğrafla vitrinde görünür; eksik fotoğrafla taslak kaydedilir. En fazla ${ProductImagePolicy.maxImages} fotoğraf. İlk fotoğraf ürün kapağıdır.',
           style: const TextStyle(color: AppColors.mutedText, fontSize: 11),
         ),
         const SizedBox(height: 3),

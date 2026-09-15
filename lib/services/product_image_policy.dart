@@ -38,9 +38,13 @@ class ProductImagePolicy {
     if (normalized.length > maxImages) {
       return 'Bir ürüne en fazla $maxImages fotoğraf eklenebilir.';
     }
-    final invalid = normalized.any(
-      (url) => !(url.startsWith('http://') || url.startsWith('https://')),
-    );
+    final invalid = normalized.any((url) {
+      final uri = Uri.tryParse(url);
+      return uri == null ||
+          uri.host.isEmpty ||
+          !['http', 'https'].contains(uri.scheme.toLowerCase()) ||
+          RegExp(r'\s').hasMatch(url);
+    });
     if (invalid) {
       return 'Ürün fotoğrafı bağlantıları http:// veya https:// ile başlamalıdır.';
     }

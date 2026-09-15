@@ -8,6 +8,7 @@ import {
 } from "@/lib/productCoreServer";
 import {
   normalizeProductImageUrls,
+  MIN_PRODUCT_IMAGES,
   validateProductImageUrls,
 } from "@/lib/productImagePolicy";
 import {
@@ -188,7 +189,7 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await owned.admin
     .from("products")
-    .select("id,slug,name,description,price_text,price_amount,currency,image_urls,category_id,stock_status,stock_quantity,brand,barcode,metadata,variants,old_price_amount,badge_tag,fulfillment_region,product_categories(name,product_template_key)")
+    .select("id,slug,name,description,price_text,price_amount,currency,image_urls,is_visible,image_publish_minimum,category_id,stock_status,stock_quantity,brand,barcode,metadata,variants,old_price_amount,badge_tag,fulfillment_region,product_categories(name,product_template_key)")
     .eq("id", productId)
     .eq("store_id", owned.store.id)
     .maybeSingle();
@@ -207,7 +208,7 @@ export async function POST(request: NextRequest) {
   const owned = await ownerContext(slug);
   if (!owned) return NextResponse.json({ hata: "Oturumun geçersiz veya süresi dolmuş." }, { status: 401 });
 
-  const imageValidation = validateProductImageUrls(govde.imageUrls);
+  const imageValidation = validateProductImageUrls(govde.imageUrls, { forDraft: true });
   if (!imageValidation.ok) {
     return NextResponse.json({ hata: imageValidation.error ?? "Ürün fotoğrafları geçersiz." }, { status: 422 });
   }
@@ -250,7 +251,7 @@ export async function POST(request: NextRequest) {
       metadata,
       variants,
     });
-    return NextResponse.json({ tamam: true, id: result.id, slug: result.slug });
+    return NextResponse.json({ tamam: true, id: result.id, slug: result.slug, taslak: imageValidation.imageUrls.length < MIN_PRODUCT_IMAGES });
   } catch (err) {
     console.error("[products] create failed:", err);
     return NextResponse.json({ hata: "Ürün oluşturulamadı." }, { status: 500 });
@@ -270,7 +271,7 @@ export async function PATCH(request: NextRequest) {
 
   const { data: current } = await owned.admin
     .from("products")
-    .select("name,description,price_text,price_amount,category_id,metadata,variants,brand,barcode,stock_quantity,stock_status,image_urls,old_price_amount,badge_tag,fulfillment_region")
+    .select("name,description,price_text,price_amount,category_id,metadata,variants,brand,barcode,stock_quantity,stock_status,image_urls,is_visible,image_publish_minimum,old_price_amount,badge_tag,fulfillment_region")
     .eq("id", productId)
     .eq("store_id", owned.store.id)
     .maybeSingle();
@@ -283,7 +284,7 @@ export async function PATCH(request: NextRequest) {
   const imageListChanged = !sameStringList(requestedImageUrls, currentImageUrls);
   let imageUrls = currentImageUrls;
   if (imageListChanged) {
-    const imageValidation = validateProductImageUrls(govde.imageUrls);
+    const imageValidation = validateProductImageUrls(govde.imageUrls, { forDraft: true, existingUrls: currentImageUrls });
     if (!imageValidation.ok) {
       return NextResponse.json({ hata: imageValidation.error ?? "Ürün fotoğrafları geçersiz." }, { status: 422 });
     }
@@ -303,7 +304,7 @@ export async function PATCH(request: NextRequest) {
   const metadata = metadataForTemplate(metadataInput, templateKey);
   if (!metadata) return NextResponse.json({ hata: "Ürün detayları kategori tipiyle uyuşmuyor." }, { status: 422 });
   const variantInput = hasOwn(govde, "variants") ? govde.variants : current.variants;
-  const variants = variantsForTemplate(variantInput, templateKey, imageUrls);
+  const variants = isService ? normalizeProductVariants(current.variants) : variantsForTemplate(variantInput, templateKey, imageUrls);
 
   const name = hasOwn(govde, "name") ? cleanString(govde.name) || "" : cleanString(current.name) || "";
   if (!name) return NextResponse.json({ hata: "Ürün adı zorunludur." }, { status: 422 });
@@ -319,22 +320,22 @@ export async function PATCH(request: NextRequest) {
       ? parseProductPriceNumber(priceText)
       : cleanAmount(current.price_amount);
   const stockQuantity = isService
-    ? null
+    ? cleanNonNegativeInt(current.stock_quantity)
     : hasOwn(govde, "stockQuantity")
       ? cleanNonNegativeInt(govde.stockQuantity)
       : cleanNonNegativeInt(current.stock_quantity);
   const stockStatus = isService
-    ? ""
+    ? cleanString(current.stock_status) || ""
     : hasOwn(govde, "stockStatus")
       ? cleanString(govde.stockStatus) || "Mevcut"
       : cleanString(current.stock_status) || "Mevcut";
   const brand = isService
-    ? null
+    ? cleanString(current.brand)
     : hasOwn(govde, "brand")
       ? cleanString(govde.brand)
       : cleanString(current.brand);
   const barcode = isService
-    ? null
+    ? cleanString(current.barcode)
     : hasOwn(govde, "barcode")
       ? cleanString(govde.barcode)
       : cleanString(current.barcode);
@@ -350,6 +351,9 @@ export async function PATCH(request: NextRequest) {
   const variantError = validateVariantSet(variants, barcode);
   if (variantError) return NextResponse.json({ hata: variantError }, { status: 422 });
 
+  const imageMinimum = Number(current.image_publish_minimum ?? 0);
+  const wasImageDraft = current.is_visible === false && imageMinimum > 0 && currentImageUrls.length < imageMinimum;
+  const isVisible = imageUrls.length >= imageMinimum && (current.is_visible !== false || wasImageDraft);
   try {
     await updateRichCoreProduct({
       admin: owned.admin,
@@ -370,8 +374,9 @@ export async function PATCH(request: NextRequest) {
       barcode,
       metadata,
       variants,
+      isVisible,
     });
-    return NextResponse.json({ tamam: true });
+    return NextResponse.json({ tamam: true, taslak: imageMinimum > 0 && imageUrls.length < imageMinimum });
   } catch (err) {
     console.error("[products] update failed:", err);
     return NextResponse.json({ hata: "Ürün güncellenemedi." }, { status: 500 });
