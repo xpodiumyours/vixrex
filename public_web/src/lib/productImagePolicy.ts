@@ -120,9 +120,43 @@ export function validateProductImageUrls(value: unknown): ProductImageValidation
 }
 
 /**
- * XML/toplu entegrasyonları mevcut tedarikçi CDN görsellerini korur. Owner'ın
- * manuel kalite kapısı bu uyumluluk istisnasından etkilenmez.
+ * Yayına gidecek XML/toplu ürünlerde dış tedarikçi CDN görsellerine izin verir;
+ * yayın kalite kapısı minimum fotoğraf sayısını burada da korur.
  */
 export function validateExternalProductImageUrls(value: unknown): ProductImageValidationResult {
   return validateCountAndUrls(value, { httpsOnly: false });
+}
+
+/**
+ * İçe aktarma aşaması yayın kapısı değildir. Eski/görselsiz ürünleri veya
+ * henüz galerisi tamamlanmamış taslakları kilitlemeden yalnız veri biçimini,
+ * URL şemasını ve 11 görsel üst sınırını doğrular.
+ */
+export function validateExternalProductImageUrlsForImport(
+  value: unknown,
+): ProductImageValidationResult {
+  if (value !== undefined && value !== null && !Array.isArray(value)) {
+    return {
+      ok: false,
+      imageUrls: [],
+      error: "Ürün fotoğrafları liste biçiminde olmalıdır.",
+    };
+  }
+
+  const imageUrls = normalizeProductImageUrls(value);
+  if (imageUrls.length > MAX_PRODUCT_IMAGES) {
+    return {
+      ok: false,
+      imageUrls,
+      error: `Bir ürüne en fazla ${MAX_PRODUCT_IMAGES} fotoğraf eklenebilir.`,
+    };
+  }
+  if (imageUrls.some((url) => !/^https?:\/\//i.test(url))) {
+    return {
+      ok: false,
+      imageUrls,
+      error: "Ürün fotoğrafı bağlantıları http:// veya https:// ile başlamalıdır.",
+    };
+  }
+  return { ok: true, imageUrls };
 }
