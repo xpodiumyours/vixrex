@@ -4,6 +4,46 @@
 > Kaynak dal: `work/product-live-ready-20260914` (PR #489) — **merge edilmedi,
 > referans olarak duruyor, silinmeyecek.**
 
+## GÜNCEL DURUM (2026-09-15, son güncelleme)
+
+**Kod main'de ve doğrulandı. Canlıya ÇIKMADI.**
+
+main'in birleşmiş hâli yerelde baştan koşuldu:
+
+| Kapı | Sonuç |
+|---|---|
+| `flutter analyze` | temiz |
+| `flutter test` | 737 test geçti |
+| `tsc --noEmit` | temiz |
+| `vitest run` | 1513 test geçti |
+| `eslint` | 0 hata (3 uyarı, önceden vardı) |
+| `next build` | başarılı |
+
+**Canlı neden güncel değil:** Vercel ücretsiz plan derleme kotası doldu.
+`vixrex-public` projesinde üretime çıkan tek dağıtım commit `263bd237` — yani
+yalnız #491 (ölü kod temizliği). #492, #493, #494, #495 main'de ama canlıda
+DEĞİL. Ürün kartı bu yüzden eski görünüyor.
+
+**Yapılacak tek şey:** Vercel panelinde `vixrex-public` → Deployments →
+`vixrex-public-q0lzzdzpq` (mesajı "feat(urun): Flutter tarafini zengin urun
+modeline esitle") → **Promote to Production**. Bu derleme READY durumda ve beş
+fazın tamamını içeriyor; yeni derleme gerektirmez, kota yemez. Alternatif:
+kota sıfırlanınca main'e bir commit atmak.
+
+**Canlı doğrulama tuzağı:** sayfada `Hızlı` kelimesiyle arama YAPMA — "Hızlı
+Teknik" adlı vitrine denk gelip yanlış olumlu veriyor. `ProductQuickView`
+veya `Barkod` gibi yalnız yeni kodda geçen bir ize bak.
+
+**CI durumu:** Beş PR main'e inerken şu üç iş HİÇ koşmadı — Flutter analiz/test,
+şema sapma kontrolü, GRANT güvenlik bekçisi. Koşan ve geçen dört kapı:
+Değişiklik yüzeyi, Secret sızıntı taraması, Supabase auth kontrolü, Vercel
+derlemesi. Üç işin koşmama sebebi `subosito/flutter-action`'ın self-hosted
+Windows runner'da düşmesiydi; PR #497 bunu runner'da kurulu Flutter 3.44.4'e
+bağlıyor. #497 inince bu üç kapı ilk kez gerçekten koşacak ve beş PR geriye
+dönük doğrulanmış olacak.
+
+---
+
 ## Karar: dal referans, main gerçeklik
 
 Dev dal 100 dosya, +13.966/−3.368, 11 migration. Tek parça merge edilmedi;
