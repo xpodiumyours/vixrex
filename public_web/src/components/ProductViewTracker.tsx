@@ -4,13 +4,18 @@ import { useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { ziyaretAnahtariniOkuyaUret } from "@/lib/vitrinZiyaretAnahtari";
 
-/**
- * Faz F (Tek Asistan planı, 2026-09-02) — ürün detay sayfası görüntülemesini
- * `record_vitrin_engagement`'a yazar. VitrinViewTracker'ın (mağaza sayfası
- * görüntülemesi) ürün karşılığı — aynı ziyaretçi anahtarını kullanır.
- * Bugüne kadar ürün görüntüleme hiçbir yerde (ne GA'da ne Supabase'de)
- * izlenmiyordu.
- */
+function ownerPreviewActive(): boolean {
+  return (
+    typeof document !== "undefined" &&
+    Boolean(
+      document.querySelector(
+        "[data-vixrex-editable], [data-vixrex-owner-preview]",
+      ),
+    )
+  );
+}
+
+/** Ürün detay görüntülemesini aynı Vixrex engagement hattına yazar. */
 export default function ProductViewTracker({
   storeSlug,
   productSlug,
@@ -21,7 +26,14 @@ export default function ProductViewTracker({
   const firedRef = useRef(false);
 
   useEffect(() => {
-    if (firedRef.current || !storeSlug || !productSlug) return;
+    if (
+      firedRef.current ||
+      !storeSlug ||
+      !productSlug ||
+      ownerPreviewActive()
+    ) {
+      return;
+    }
     firedRef.current = true;
 
     supabase

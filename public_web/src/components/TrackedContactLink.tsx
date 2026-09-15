@@ -6,12 +6,23 @@ import { supabase } from "@/lib/supabase";
 import { ziyaretAnahtariniOkuyaUret } from "@/lib/vitrinZiyaretAnahtari";
 
 export const PHONE_CLICK_EVENT = "phone_click";
-
 export const DIRECTIONS_CLICK_EVENT = "directions_click";
 
 export interface ContactClickContext {
   storeSlug: string;
   clickLocation: WhatsAppClickLocation;
+  productSlug?: string;
+}
+
+function ownerPreviewActive(): boolean {
+  return (
+    typeof document !== "undefined" &&
+    Boolean(
+      document.querySelector(
+        "[data-vixrex-editable], [data-vixrex-owner-preview]",
+      ),
+    )
+  );
 }
 
 function trackContactEvent(
@@ -20,23 +31,24 @@ function trackContactEvent(
   context: ContactClickContext,
 ): void {
   const storeSlug = context.storeSlug.trim();
-  if (!storeSlug) return;
+  if (!storeSlug || ownerPreviewActive()) return;
+  const productSlug = context.productSlug?.trim() || "";
 
   if (gtag) {
-    gtag("event", eventName, {
+    const parameters: Record<string, string> = {
       store_slug: storeSlug,
       click_location: context.clickLocation,
-    });
+    };
+    if (productSlug) parameters.product_slug = productSlug;
+    gtag("event", eventName, parameters);
   }
 
-  // Faz F (Tek Asistan planı, 2026-09-02): GA'nın yanına çift yazım —
-  // eventName zaten record_vitrin_engagement'ın event_type'ıyla eşleşiyor
-  // (phone_click / directions_click).
   supabase
     .rpc("record_vitrin_engagement", {
       p_store_slug: storeSlug,
       p_event_type: eventName,
       p_session_key: ziyaretAnahtariniOkuyaUret(),
+      p_product_slug: productSlug || null,
     })
     .then(() => {});
 }
@@ -64,6 +76,7 @@ interface TrackedContactLinkProps
 export function TrackedPhoneLink({
   storeSlug,
   clickLocation,
+  productSlug,
   trackingEnabled = true,
   onClick,
   ...anchorProps
@@ -75,6 +88,7 @@ export function TrackedPhoneLink({
     trackPhoneClick(window.gtag, {
       storeSlug,
       clickLocation,
+      productSlug,
     });
   }
 
@@ -84,6 +98,7 @@ export function TrackedPhoneLink({
 export function TrackedDirectionsLink({
   storeSlug,
   clickLocation,
+  productSlug,
   trackingEnabled = true,
   onClick,
   ...anchorProps
@@ -95,6 +110,7 @@ export function TrackedDirectionsLink({
     trackDirectionsClick(window.gtag, {
       storeSlug,
       clickLocation,
+      productSlug,
     });
   }
 

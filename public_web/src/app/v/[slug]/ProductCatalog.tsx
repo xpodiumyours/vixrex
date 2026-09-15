@@ -1,18 +1,24 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
+import ProductQuickView from "@/components/ProductQuickView";
+import { TrackedDirectionsLink } from "@/components/TrackedContactLink";
+import { MapPinIcon } from "@/lib/vitrinBrandIcons";
+import { MAX_PRODUCT_IMAGES } from "@/lib/productImagePolicy";
 import {
+  getProductImages,
   getProductUrlSlug,
+  isLikelyUiScreenshotUrl,
   isPublicCatalogProduct,
   resolveCatalogImage,
-  type ProductItem,
 } from "@/lib/products";
+import type { RichProductItem } from "@/lib/richProductItem";
+import { productVariantLabel } from "@/lib/productCardPresentation";
+import { normalizeProductMetadata } from "@/lib/productRichData";
 
-interface CatalogProduct extends ProductItem {
-  categoryId?: string;
-}
+type CatalogProduct = RichProductItem;
 
 interface CategoryItem {
   id: string;
@@ -21,30 +27,84 @@ interface CategoryItem {
 
 interface ProductCatalogProps {
   storeSlug: string;
+  storeName: string;
   products: CatalogProduct[];
   categoryMap: CategoryItem[];
+  whatsappBaseUrl?: string | null;
+  storeLocationText?: string | null;
+  storeMapsUrl?: string | null;
+  trackingEnabled?: boolean;
+  /** Mevcut çağrı sözleşmesini kırmamak için korunur. Yeni kart ürün görseli yoksa mağaza görselini ürünmüş gibi kullanmaz. */
   fallbackImage?: string | null;
+  /** Mevcut çağrı sözleşmesini kırmamak için korunur. */
   storeInitial?: string;
+}
+
+interface QuickViewSelection {
+  product: CatalogProduct;
+  images: string[];
+  productUrl: string;
+  productSlug: string;
 }
 
 const PAGE_SIZE = 24;
 
+function productImageOnly(product: CatalogProduct): string | null {
+  const resolved = resolveCatalogImage(product, null);
+  return resolved === "/vixrex_v_crystal_mascot.png" ? null : resolved;
+}
+
+function productImagesOnly(product: CatalogProduct): string[] {
+  const primary = productImageOnly(product);
+  if (!primary) return [];
+
+  return Array.from(
+    new Set([
+      primary,
+      ...getProductImages(product).filter((url) => !isLikelyUiScreenshotUrl(url)),
+    ]),
+  ).slice(0, MAX_PRODUCT_IMAGES);
+}
+
+function productLocationMapUrl(location: string): string | null {
+  const normalized = location.trim();
+  if (!normalized) return null;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(normalized)}`;
+}
+
+function stockTone(stockStatus: string | undefined) {
+  const value = String(stockStatus || "").toLocaleLowerCase("tr-TR");
+  if (value.includes("tükendi")) {
+    return {
+      dot: "bg-red-500 shadow-[0_0_0_4px_rgba(239,68,68,0.10)]",
+      text: "text-red-300",
+    };
+  }
+  if (value.includes("son") || value.includes("az") || value.includes("sınırl")) {
+    return {
+      dot: "bg-amber-500 shadow-[0_0_0_4px_rgba(245,158,11,0.10)]",
+      text: "text-amber-300",
+    };
+  }
+  return {
+    dot: "bg-emerald-500 shadow-[0_0_0_4px_rgba(34,197,94,0.10)]",
+    text: "text-emerald-300",
+  };
+}
+
 function CatalogProductImage({
   src,
   alt,
-  storeInitial,
+  emptyLabel = "Ürün görseli yok",
 }: {
   src: string | null;
   alt: string;
-  storeInitial: string;
+  emptyLabel?: string;
 }) {
   const [prevSrc, setPrevSrc] = useState(src);
   const [imgSrc, setImgSrc] = useState<string | null>(src);
   const [hasError, setHasError] = useState(false);
 
-  // "src" değişince yerel durumu render sırasında sıfırlar (React'ın
-  // önerdiği desen) — effect içinde setState çağırıp basamaklı render'a
-  // yol açmaz.
   if (src !== prevSrc) {
     setPrevSrc(src);
     setImgSrc(src);
@@ -53,12 +113,10 @@ function CatalogProductImage({
 
   if (!imgSrc || hasError) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-1.5 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 px-2 text-center">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-blue-500/20 bg-blue-500/10 text-blue-400 font-extrabold text-lg">
-          {storeInitial}
-        </div>
-        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-          Görsel Hazırlanıyor
+      <div className="flex h-full flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 px-4 text-center">
+        <span className="text-xs font-extrabold text-slate-400">{emptyLabel}</span>
+        <span className="mt-1 text-[10px] font-medium text-slate-600">
+          Fotoğraf eklendiğinde burada gösterilir
         </span>
       </div>
     );
@@ -71,20 +129,29 @@ function CatalogProductImage({
       fill
       sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
       onError={() => setHasError(true)}
-      className="object-cover object-center transition duration-500 group-hover:scale-[1.04]"
+      className="object-cover object-center transition duration-500 group-hover:scale-[1.035]"
     />
   );
 }
 
-/** Keşfet VitrinStoreCard diline yakın ürün kartı */
+/**
+ * Public vitrin ürün kataloğu.
+ * Kart hızlı tarama için kısa kalır; normal tıklama kategori-duyarlı hızlı
+ * incelemeyi açar. Gerçek ürün URL'si href olarak korunur.
+ */
 export default function ProductCatalog({
   storeSlug,
+  storeName,
   products,
   categoryMap,
-  fallbackImage = null,
-  storeInitial = "V",
+  whatsappBaseUrl = null,
+  storeLocationText = null,
+  storeMapsUrl = null,
+  trackingEnabled = true,
 }: ProductCatalogProps) {
   const searchParams = useSearchParams();
+  const [quickView, setQuickView] = useState<QuickViewSelection | null>(null);
+  const [locationProductId, setLocationProductId] = useState<string | null>(null);
 
   const currentPage = Math.max(1, parseInt(searchParams.get("page") || "1", 10) || 1);
   const currentCategory = searchParams.get("category") || "";
@@ -99,7 +166,8 @@ export default function ProductCatalog({
         const matchName = product.name.toLowerCase().includes(q);
         const matchDesc = product.description?.toLowerCase().includes(q) || false;
         const matchCat = product.category?.toLowerCase().includes(q) || false;
-        if (!matchName && !matchDesc && !matchCat) return false;
+        const matchBrand = product.brand?.toLowerCase().includes(q) || false;
+        if (!matchName && !matchDesc && !matchCat && !matchBrand) return false;
       }
       return true;
     });
@@ -141,10 +209,10 @@ export default function ProductCatalog({
         <div className="mb-8 flex items-center gap-2.5 overflow-x-auto pb-2 pr-6 scrollbar-none">
           <a
             href={buildCategoryUrl("")}
-            className={`inline-flex items-center justify-center shrink-0 px-5 py-2.5 rounded-xl text-xs sm:text-sm transition duration-200 ${
+            className={`inline-flex shrink-0 items-center justify-center rounded-xl px-5 py-2.5 text-xs transition duration-200 sm:text-sm ${
               currentCategory === ""
-                ? "bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 text-white font-extrabold shadow-lg shadow-blue-500/25 border border-blue-400/40"
-                : "bg-slate-900/60 border border-blue-500/15 backdrop-blur-xl text-slate-300 font-semibold hover:text-white hover:border-blue-500/30"
+                ? "border border-blue-400/40 bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 font-extrabold text-white shadow-lg shadow-blue-500/25"
+                : "border border-blue-500/15 bg-slate-900/60 font-semibold text-slate-300 backdrop-blur-xl hover:border-blue-500/30 hover:text-white"
             }`}
           >
             Tümü
@@ -153,10 +221,10 @@ export default function ProductCatalog({
             <a
               key={cat.id}
               href={buildCategoryUrl(cat.id)}
-              className={`inline-flex items-center justify-center shrink-0 px-5 py-2.5 rounded-xl text-xs sm:text-sm transition duration-200 ${
+              className={`inline-flex shrink-0 items-center justify-center rounded-xl px-5 py-2.5 text-xs transition duration-200 sm:text-sm ${
                 currentCategory === cat.id
-                  ? "bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 text-white font-extrabold shadow-lg shadow-blue-500/25 border border-blue-400/40"
-                  : "bg-slate-900/60 border border-blue-500/15 backdrop-blur-xl text-slate-300 font-semibold hover:text-white hover:border-blue-500/30"
+                  ? "border border-blue-400/40 bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 font-extrabold text-white shadow-lg shadow-blue-500/25"
+                  : "border border-blue-500/15 bg-slate-900/60 font-semibold text-slate-300 backdrop-blur-xl hover:border-blue-500/30 hover:text-white"
               }`}
             >
               {cat.name}
@@ -171,54 +239,183 @@ export default function ProductCatalog({
       >
         {paginatedProducts.map((product, index) => {
           const globalIndex = from + index;
-          const productUrl = `/v/${storeSlug}/urun/${getProductUrlSlug(product, globalIndex)}`;
-          const image = resolveCatalogImage(product, fallbackImage);
+          const productSlug = getProductUrlSlug(product, globalIndex);
+          const productUrl = `/v/${storeSlug}/urun/${productSlug}`;
+          const image = productImageOnly(product);
+          const quickImages = productImagesOnly(product);
           const category = String(product.category || "").trim();
+          const metadata = normalizeProductMetadata(product.metadata);
+          const isService = metadata.itemKind === "service";
+          const brand = isService ? "" : String(product.brand || "").trim();
+          const stockStatus = isService
+            ? ""
+            : product.stockQuantity === 0
+              ? "Tükendi"
+              : String(product.stockStatus || "").trim();
+          const tone = stockTone(stockStatus);
+          const variantLabel = isService
+            ? null
+            : productVariantLabel(product.variants, metadata.templateKey);
+          const fulfillmentRegion = String(product.fulfillmentRegion || "").trim();
+          const fulfillmentMapUrl = productLocationMapUrl(fulfillmentRegion);
+          const productKey = product.id || productUrl;
+          const showLocation = locationProductId === productKey;
 
           return (
-            <a
+            <article
               key={product.id || `${product.name}-${index}`}
-              href={productUrl}
-              className="group min-w-0 overflow-hidden rounded-2xl border border-blue-500/15 bg-slate-900/70 shadow-lg shadow-black/40 backdrop-blur-xl transition duration-300 hover:-translate-y-1 hover:border-blue-500/35 hover:shadow-blue-500/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+              className="group relative min-w-0 overflow-hidden rounded-[22px] border border-blue-500/15 bg-slate-900/75 shadow-[0_14px_32px_rgba(0,0,0,0.24)] backdrop-blur-xl transition duration-300 hover:-translate-y-1 hover:border-blue-500/35 hover:shadow-[0_18px_44px_rgba(0,0,0,0.34)]"
             >
-              <div className="relative w-full aspect-[4/5] v-product-media overflow-hidden bg-slate-950">
-                <CatalogProductImage
-                  src={image}
-                  alt={product.name}
-                  storeInitial={storeInitial}
-                />
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0B1120]/80 via-transparent to-transparent" />
-                {product.badgeTag ? (
-                  <span className="absolute left-2.5 top-2.5 z-10 max-w-[75%] truncate rounded-lg bg-gradient-to-r from-blue-600 to-cyan-600 px-2.5 py-1 text-[10px] font-extrabold text-white shadow-md">
-                    {product.badgeTag}
-                  </span>
-                ) : category && category.toLowerCase() !== "tümü" ? (
-                  <span className="absolute left-2.5 top-2.5 z-10 max-w-[75%] truncate rounded-lg border border-blue-500/25 bg-slate-950/80 px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-wider text-blue-300 backdrop-blur-md shadow-sm">
-                    {category}
-                  </span>
-                ) : null}
-              </div>
-              <div className="space-y-1.5 px-3.5 py-3">
-                <h3 className="line-clamp-2 min-h-[2.5em] text-xs sm:text-sm font-extrabold leading-snug text-white">
-                  {product.name}
-                </h3>
-                <div className="flex items-baseline gap-2">
-                  <p className="truncate text-xs sm:text-sm font-extrabold text-blue-400">
-                    {product.price || "Fiyat sorun"}
-                  </p>
-                  {product.oldPriceAmount ? (
-                    <span className="text-[11px] font-medium text-slate-500 line-through">
-                      {product.oldPriceAmount} TL
+              <a
+                href={productUrl}
+                onClick={(event) => {
+                  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                  event.preventDefault();
+                  setLocationProductId(null);
+                  setQuickView({ product, images: quickImages, productUrl, productSlug });
+                }}
+                className="block min-w-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+                aria-label={`${product.name} ${isService ? "hizmetini" : "ürününü"} hızlı incele`}
+              >
+                <div className="relative aspect-[4/5] w-full overflow-hidden bg-slate-950 v-product-media">
+                  <CatalogProductImage
+                    src={image}
+                    alt={product.name}
+                    emptyLabel={isService ? "Hizmet görseli yok" : "Ürün görseli yok"}
+                  />
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0B1120]/45 via-transparent to-transparent" />
+                  {product.badgeTag ? (
+                    <span className="absolute left-2.5 top-2.5 z-10 max-w-[70%] truncate rounded-lg bg-gradient-to-r from-blue-600 to-cyan-600 px-2.5 py-1 text-[10px] font-extrabold text-white shadow-md">
+                      {product.badgeTag}
+                    </span>
+                  ) : category && category.toLocaleLowerCase("tr-TR") !== "tümü" ? (
+                    <span className="absolute left-2.5 top-2.5 z-10 max-w-[70%] truncate rounded-lg border border-blue-500/25 bg-slate-950/80 px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-wider text-blue-300 shadow-sm backdrop-blur-md">
+                      {category}
                     </span>
                   ) : null}
                 </div>
-                {product.fulfillmentRegion ? (
-                  <p className="truncate text-[11px] text-slate-500">
-                    {product.fulfillmentRegion}
-                  </p>
-                ) : null}
-              </div>
-            </a>
+
+                <div className="px-3.5 py-3.5">
+                  {brand ? (
+                    <p className="mb-1 truncate text-[9px] font-extrabold uppercase tracking-[0.12em] text-slate-500 sm:text-[10px]">
+                      {brand}
+                    </p>
+                  ) : null}
+                  <h3 className="line-clamp-2 min-h-[2.5em] text-xs font-extrabold leading-snug text-white sm:text-sm">
+                    {product.name}
+                  </h3>
+                  <div className="mt-2.5 flex min-w-0 items-baseline gap-2">
+                    <p className="truncate text-xs font-extrabold text-blue-400 sm:text-sm">
+                      {product.price || "Fiyat sorun"}
+                    </p>
+                    {product.oldPriceAmount ? (
+                      <span className="shrink-0 text-[10px] font-medium text-slate-500 line-through sm:text-[11px]">
+                        {product.oldPriceAmount} TL
+                      </span>
+                    ) : null}
+                  </div>
+                  <div className="mt-2 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                    {!isService && stockStatus ? (
+                      <span className={`inline-flex min-w-0 items-center gap-2 text-[10px] font-bold sm:text-[11px] ${tone.text}`}>
+                        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${tone.dot}`} />
+                        <span className="truncate">{stockStatus}</span>
+                      </span>
+                    ) : null}
+                    {!isService && variantLabel ? (
+                      <span className="rounded-md border border-white/10 bg-white/[0.04] px-1.5 py-0.5 text-[9px] font-bold text-slate-400 sm:text-[10px]">
+                        {variantLabel}
+                      </span>
+                    ) : null}
+                    {isService ? (
+                      <span className="rounded-md border border-cyan-500/20 bg-cyan-500/10 px-1.5 py-0.5 text-[9px] font-bold text-cyan-300 sm:text-[10px]">
+                        Hizmet
+                      </span>
+                    ) : null}
+                    <span className="ml-auto text-[9px] font-extrabold text-blue-400 sm:text-[10px]">
+                      Hızlı incele →
+                    </span>
+                  </div>
+                </div>
+              </a>
+
+              <button
+                type="button"
+                onClick={() => setLocationProductId(showLocation ? null : productKey)}
+                className="absolute right-2.5 top-2.5 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-slate-950/75 text-white shadow-lg backdrop-blur-md transition hover:border-blue-400/40 hover:bg-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+                aria-label={`${product.name} konum bilgilerini göster`}
+                aria-expanded={showLocation}
+                title="Konum bilgileri"
+              >
+                <MapPinIcon className="h-4 w-4" aria-hidden="true" />
+              </button>
+
+              {showLocation ? (
+                <div className="absolute right-2.5 top-[3.25rem] z-30 w-[min(240px,calc(100%_-_20px))] rounded-xl border border-blue-500/20 bg-slate-950/95 p-3 text-left shadow-2xl backdrop-blur-xl">
+                  <div className="flex items-start gap-2">
+                    <MapPinIcon className="mt-0.5 h-4 w-4 shrink-0 text-blue-400" aria-hidden="true" />
+                    <div className="min-w-0 flex-1">
+                      {fulfillmentRegion ? (
+                        <div>
+                          <p className="text-[10px] font-extrabold uppercase tracking-wider text-blue-300">
+                            {isService ? "Hizmet bölgesi" : "Ürün konumu / teslim bölgesi"}
+                          </p>
+                          <p className="mt-1 break-words text-xs font-semibold leading-5 text-slate-200">
+                            {fulfillmentRegion}
+                          </p>
+                          {fulfillmentMapUrl ? (
+                            <TrackedDirectionsLink
+                              href={fulfillmentMapUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              storeSlug={storeSlug}
+                              clickLocation="product_card"
+                              productSlug={productSlug}
+                              trackingEnabled={trackingEnabled}
+                              onClick={(event) => event.stopPropagation()}
+                              className="mt-1.5 inline-flex text-[11px] font-extrabold text-blue-400 hover:text-blue-300"
+                            >
+                              Haritada ara →
+                            </TrackedDirectionsLink>
+                          ) : null}
+                        </div>
+                      ) : null}
+
+                      {storeLocationText ? (
+                        <div className={fulfillmentRegion ? "mt-3 border-t border-white/10 pt-3" : ""}>
+                          <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+                            İşletme konumu
+                          </p>
+                          <p className="mt-1 break-words text-xs font-semibold leading-5 text-slate-200">
+                            {storeLocationText}
+                          </p>
+                          {storeMapsUrl ? (
+                            <TrackedDirectionsLink
+                              href={storeMapsUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              storeSlug={storeSlug}
+                              clickLocation="product_card"
+                              productSlug={productSlug}
+                              trackingEnabled={trackingEnabled}
+                              onClick={(event) => event.stopPropagation()}
+                              className="mt-1.5 inline-flex text-[11px] font-extrabold text-blue-400 hover:text-blue-300"
+                            >
+                              Yol tarifi →
+                            </TrackedDirectionsLink>
+                          ) : null}
+                        </div>
+                      ) : null}
+
+                      {!fulfillmentRegion && !storeLocationText ? (
+                        <p className="text-xs font-semibold leading-5 text-slate-300">
+                          Bu {isService ? "hizmet" : "ürün"} için konum bilgisi eklenmemiş.
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+            </article>
           );
         })}
       </div>
@@ -250,6 +447,22 @@ export default function ProductCatalog({
           )}
         </div>
       )}
+
+      {quickView ? (
+        <ProductQuickView
+          product={quickView.product}
+          images={quickView.images}
+          productUrl={quickView.productUrl}
+          productSlug={quickView.productSlug}
+          storeSlug={storeSlug}
+          storeName={storeName}
+          whatsappBaseUrl={whatsappBaseUrl}
+          storeLocationText={storeLocationText}
+          storeMapsUrl={storeMapsUrl}
+          trackingEnabled={trackingEnabled}
+          onClose={() => setQuickView(null)}
+        />
+      ) : null}
     </section>
   );
 }
