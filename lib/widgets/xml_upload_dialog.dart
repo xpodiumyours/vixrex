@@ -5,7 +5,7 @@ import 'package:vixrex/services/product_conversation_logger.dart';
 import 'package:vixrex/services/xml_product_upload_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
 
-typedef OnXmlProductsUploaded = Future<void> Function();
+typedef OnXmlProductsUploaded = FutureOr<void> Function();
 
 /// XML ile toplu ürün yükleme dialogu.
 /// Kullanıcı XML linkini yapıştırır, sistem Product CORE batch upsert uygular.
