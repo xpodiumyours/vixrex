@@ -3,9 +3,9 @@ import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/services/product_batch_import_service.dart';
 import 'package:vixrex/services/product_category_sync_service.dart';
 
-/// Toplu Excel/CSV importunu StoreEditorController'ın mevcut uzak/yerel
-/// durum zincirine bağlar. Batch RPC tek yazma noktasıdır; başarılı yazımdan
-/// sonra aynı Product CORE tekrar okunup açık editör durumu güncellenir.
+/// Toplu ürün girişlerini StoreEditorController'ın mevcut uzak/yerel durum
+/// zincirine bağlar. Uzak yazımdan sonra aynı Product CORE tekrar okunur;
+/// açık editörde geçici local kimlik bırakılmaz.
 extension StoreEditorProductBatchExtension on StoreEditorController {
   Future<ProductBatchImportResult> importProductBatch(
     List<Product> products,
@@ -34,14 +34,22 @@ extension StoreEditorProductBatchExtension on StoreEditorController {
     );
     if (!result.isSuccess) return result;
 
-    // Batch yazımı bittiğinde ekranda geçici local kimlik bırakma. Aynı DB
-    // gerçeğini tekrar oku ve StoreData listelerini yerinde güncelle; böylece
-    // ProductManagementSheet'e verilmiş liste referansları da canonical id/slug
-    // değerlerini görür. Okuma geçici olarak boş dönerse mevcut yerel listeyi
-    // silme; bir sonraki normal yükleme tekrar uzak gerçeği çeker.
+    await refreshProductCatalogFromRemote();
+    return result;
+  }
+
+  /// XML gibi yazmayı kendi içinde tamamlayan girişlerden sonra açık editörü
+  /// yeniden Product CORE gerçeğiyle hizalar. Bu metot yalnız okuma + yerel
+  /// cache yenilemesi yapar; ikinci kez ürün yazmaz.
+  Future<void> refreshProductCatalogFromRemote() async {
+    final ready = await ensureRemoteStoreId();
+    final storeId = data.id?.trim() ?? '';
+    if (!ready || storeId.isEmpty) return;
+
     final remoteProducts = await productService.fetchProducts(storeId);
-    if (remoteProducts.isNotEmpty ||
-        (result.total == 0 && result.errors == 0)) {
+    if (remoteProducts.isNotEmpty) {
+      // Listeyi yerinde değiştir: ProductManagementSheet'e daha önce verilmiş
+      // referanslar da canonical DB id/slug değerlerini görsün.
       data.products
         ..clear()
         ..addAll(remoteProducts);
@@ -57,12 +65,11 @@ extension StoreEditorProductBatchExtension on StoreEditorController {
           ..addAll(remoteCategories);
       }
     } catch (_) {
-      // Ürün yazımı başarılıysa kategori listesini geçici okuma hatası yüzünden
-      // başarısız göstermiyoruz. Mevcut kategori listesi korunur.
+      // Ürün okuması başarılıysa kategori listesini geçici okuma hatası yüzünden
+      // silme. Mevcut kategori listesi korunur.
     }
 
     await saveLocally();
     notifyStoreDataChanged();
-    return result;
   }
 }
