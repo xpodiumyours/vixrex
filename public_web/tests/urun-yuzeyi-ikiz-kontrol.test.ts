@@ -23,11 +23,17 @@ describe("ürün yüzeyi ikiz kontrolü", () => {
   });
 
   it("sahip sayfasinda erken donusten sonra erisilemez dal kalmaz", () => {
-    expect(sahipSayfasi).toContain("if (stores.length > 0) {");
+    expect(sahipSayfasi).toMatch(/if\s*\(\s*stores\.length\s*>\s*0\s*\)/);
     expect(kacKez(sahipSayfasi, "stores[0]")).toBe(1);
   });
 
   it("esnaf ürün yönetimi tek yüzeyden açılır", () => {
     expect(kacKez(sahipSayfasi, "<OwnerProductManager")).toBe(0);
+  });
+
+  it("sahip sayfası kullanmadığı bir bileşeni içe aktarmaz", () => {
+    expect(sahipSayfasi).not.toMatch(/import\s*\{\s*OwnerProductManager/);
+    expect(sahipSayfasi).not.toContain("OwnerDashboardMetrics");
+    expect(sahipSayfasi).not.toContain("OwnerNotificationLink");
   });
 });

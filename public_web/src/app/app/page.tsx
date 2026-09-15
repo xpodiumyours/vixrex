@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { sahipOturumuAc } from "@/lib/ownerCookie";
 import type { User } from "@supabase/supabase-js";
@@ -12,13 +11,10 @@ import {
   type AsistanCevaplari,
 } from "@/lib/landingAsistanAkisi";
 import { importLandingFlowStateIfNeeded } from "@/lib/ownerFlowImport";
-import {
-  OwnerProductManager,
-  type OwnerProduct,
-  type OwnerProductCategory,
+import type {
+  OwnerProduct,
+  OwnerProductCategory,
 } from "@/components/owner/OwnerProductManager";
-import { OwnerDashboardMetrics } from "@/components/owner/OwnerDashboardMetrics";
-import { OwnerNotificationLink } from "@/components/owner/OwnerNotificationLink";
 import { VitrinimEditor } from "@/components/owner/VitrinimEditor";
 import { PUBLIC_STORE_SELECT } from "@/lib/publicStoreSelect";
 
@@ -319,8 +315,7 @@ export default function AppPage() {
       <div className="w-full">
         {hata ? <p className="owner-error mb-6 text-sm" role="alert">{hata}</p> : null}
 
-        {(
-          flowState ? (
+        {flowState ? (
             <section className="owner-card p-5 sm:p-8" aria-labelledby="vitrin-devam-title">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--owner-secondary)]">Devam Ediyor</p>
@@ -424,8 +419,7 @@ export default function AppPage() {
               {hata ? <p className="owner-error text-sm" role="alert">{hata}</p> : null}
               {olusturuyor ? <p className="text-sm text-[var(--owner-muted)]" role="status">Vitrin oluşturuluyor…</p> : null}
             </div>
-          )
-        )}
+          )}
       </div>
     </main>
   );
