@@ -1,7 +1,7 @@
 import 'package:http/http.dart' as http;
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import 'package:vixrex/models/store_product.dart';
+import 'package:vixrex/services/product_batch_import_service.dart';
 import 'package:vixrex/services/product_image_policy.dart';
 import 'package:vixrex/utils/product_price_parser.dart';
 
@@ -42,100 +42,43 @@ class XmlProductUploadService {
     }
   }
 
-  /// XML ürünlerini batch Product CORE üzerinden upsert eder.
+  /// XML ürünlerini de Excel/CSV ile aynı ProductBatchImportService üzerinden
+  /// yazar. Böylece external id -> barkod -> SKU upsert ve dört sayaç tek
+  /// istemci sözleşmesinden geçer.
   Future<XmlUploadResult> saveToSupabase({
     required List<Product> products,
     required String storeId,
     required String editToken,
   }) async {
-    try {
-      final productsJson = products.map(_toBatchPayload).toList();
-      final result = await Supabase.instance.client.rpc(
-        'batch_create_products',
-        params: {
-          'p_store_id': storeId,
-          'p_edit_token': editToken,
-          'p_products': productsJson,
-        },
+    final result = await ProductBatchImportService().save(
+      products: products,
+      storeId: storeId,
+      editToken: editToken,
+      defaultSourceType: 'xml_import',
+    );
+
+    if (!result.isSuccess) {
+      return XmlUploadResult.failure(
+        result.errorMessage ?? 'XML ürünleri kaydedilemedi.',
       );
-
-      if (result is Map && result['success'] == true) {
-        final errorDetails = <XmlUploadErrorDetail>[];
-        final rawDetails = result['error_details'];
-        if (rawDetails is List) {
-          for (final raw in rawDetails) {
-            if (raw is! Map) continue;
-            errorDetails.add(
-              XmlUploadErrorDetail(
-                index: _asInt(raw['index']),
-                error: raw['error']?.toString() ?? 'Ürün kaydedilemedi.',
-              ),
-            );
-          }
-        }
-        return XmlUploadResult.success(
-          total: _asInt(result['total']),
-          inserted: _asInt(result['inserted']),
-          updated: _asInt(result['updated']),
-          unchanged: _asInt(result['unchanged']),
-          errors: _asInt(result['errors']),
-          errorDetails: errorDetails,
-        );
-      }
-
-      return XmlUploadResult.failure('Kaydetme hatası: $result');
-    } catch (e) {
-      return XmlUploadResult.failure('Supabase hatası: $e');
-    }
-  }
-
-  Map<String, dynamic> _toBatchPayload(Product product) {
-    final payload = <String, dynamic>{
-      'name': product.name.trim(),
-      'source_type': 'xml_import',
-    };
-
-    void putString(String key, String? value) {
-      final clean = value?.trim() ?? '';
-      if (clean.isNotEmpty) payload[key] = clean;
     }
 
-    putString('external_product_id', product.sourceMediaId);
-    putString('description', product.description);
-    putString('price_text', product.price);
-    if (product.displayImageUrls.isNotEmpty) {
-      payload['image_urls'] = product.displayImageUrls;
-    }
-    final category = product.category.trim();
-    if (category.isNotEmpty && category.toLowerCase() != 'tümü') {
-      payload['category_name'] = category;
-    }
-    if (product.stockQuantity != null) {
-      payload['stock_quantity'] = product.stockQuantity;
-    }
-    putString('stock_status', product.stockStatus);
-    putString('brand', product.brand);
-    putString('barcode', product.barcode);
-    putString('sku', product.sku);
-    if (product.hasRichMetadata) {
-      payload['metadata'] = product.richMetadata.toJson();
-    }
-    if (product.variants.isNotEmpty) {
-      payload['variants'] =
-          product.variants.map((variant) => variant.toJson()).toList();
-    }
-    if (product.oldPriceAmount != null) {
-      payload['old_price_amount'] = product.oldPriceAmount;
-    }
-    putString('badge_tag', product.badgeTag);
-    putString('fulfillment_region', product.fulfillmentLocation);
-    return payload;
-  }
-
-  int _asInt(dynamic value) {
-    if (value is int) return value;
-    if (value is num) return value.toInt();
-    return int.tryParse(value?.toString() ?? '') ?? 0;
+    return XmlUploadResult.success(
+      total: result.total,
+      inserted: result.inserted,
+      updated: result.updated,
+      unchanged: result.unchanged,
+      errors: result.errors,
+      errorDetails:
+          result.errorDetails
+              .map(
+                (detail) => XmlUploadErrorDetail(
+                  index: detail.index,
+                  error: detail.error,
+                ),
+              )
+              .toList(),
+    );
   }
 
   XmlParseResult parse(String xmlContent) {
