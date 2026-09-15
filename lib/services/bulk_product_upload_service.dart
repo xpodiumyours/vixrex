@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 import 'package:vixrex/models/product_rich_data.dart';
 import 'package:vixrex/models/store_product.dart';
 import 'package:vixrex/services/product_image_policy.dart';
+import 'package:vixrex/utils/product_price_parser.dart';
 
 /// Excel (.xlsx) ve CSV dosyalarından toplu ürün çıkarma servisi.
 class BulkProductUploadService {
@@ -371,37 +372,12 @@ class BulkProductUploadService {
   }
 
   String _normalizePrice(String raw) {
-    if (raw.isEmpty) return '';
-    var normalized =
-        raw
-            .replaceAll(RegExp(r'\b(TL|TRY|₺|tl|try)\b'), '')
-            .replaceAll(RegExp(r'\s+'), ' ')
-            .trim();
-
-    if (normalized.isEmpty) return '';
-
-    final lastComma = normalized.lastIndexOf(',');
-    final lastDot = normalized.lastIndexOf('.');
-
-    if (lastComma != -1 && lastDot != -1) {
-      final decimalSep = lastComma > lastDot ? ',' : '.';
-      final thousandsSep = decimalSep == ',' ? '.' : ',';
-      normalized = normalized.replaceAll(thousandsSep, '');
-      if (decimalSep == ',') normalized = normalized.replaceAll(',', '.');
-    } else if (lastComma != -1) {
-      final parts = normalized.split(',');
-      if (parts.length == 2 && parts.last.length <= 2) {
-        normalized = normalized.replaceAll(',', '.');
-      } else {
-        normalized = normalized.replaceAll(',', '');
-      }
-    }
-
-    final number = num.tryParse(normalized);
-    if (number == null) return raw.trim();
-    return number % 1 == 0
-        ? number.toInt().toString()
-        : number.toStringAsFixed(2);
+    if (raw.trim().isEmpty) return '';
+    final amount = parseProductPriceAmount(raw);
+    if (amount == null) return raw.trim();
+    return amount % 1 == 0
+        ? amount.toInt().toString()
+        : amount.toStringAsFixed(2);
   }
 
   String _normalizeStockStatus(String raw, int? stockQuantity) {
