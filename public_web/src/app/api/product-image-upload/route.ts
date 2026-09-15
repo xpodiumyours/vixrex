@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 import { fingerprintClient, getClientIp } from "@/lib/rentDemoSecurity";
+import { MIN_PRODUCT_IMAGE_SOURCE_SHORT_EDGE } from "@/lib/productImagePolicy";
 import {
   GorselSikistirmaHatasi,
   gorseliSikistir,
@@ -97,7 +98,7 @@ export async function POST(request: NextRequest) {
 
   let sikistirilmis: SikistirilmisGorsel;
   try {
-    sikistirilmis = await gorseliSikistir(bayt, tur);
+    sikistirilmis = await gorseliSikistir(bayt, tur, { minShortEdge: MIN_PRODUCT_IMAGE_SOURCE_SHORT_EDGE });
   } catch (hata) {
     const mesaj = hata instanceof GorselSikistirmaHatasi ? hata.message : "Görsel işlenemedi.";
     return NextResponse.json({ hata: mesaj }, { status: 422 });

@@ -45,7 +45,7 @@ export function validateProductImageDimensions(
 
 function validateCountAndUrls(
   value: unknown,
-  options: { httpsOnly: boolean },
+  options: { httpsOnly: boolean; minImages?: number },
 ): ProductImageValidationResult {
   if (!Array.isArray(value)) {
     return {
@@ -56,7 +56,7 @@ function validateCountAndUrls(
   }
 
   const imageUrls = normalizeProductImageUrls(value);
-  if (imageUrls.length < MIN_PRODUCT_IMAGES) {
+  if (imageUrls.length < (options.minImages ?? MIN_PRODUCT_IMAGES)) {
     return {
       ok: false,
       imageUrls,
@@ -70,8 +70,12 @@ function validateCountAndUrls(
       error: `Bir ürüne en fazla ${MAX_PRODUCT_IMAGES} fotoğraf eklenebilir.`,
     };
   }
-  const urlPattern = options.httpsOnly ? /^https:\/\//i : /^https?:\/\//i;
-  if (imageUrls.some((url) => !urlPattern.test(url))) {
+  if (imageUrls.some((url) => {
+    try {
+      const parsed = new URL(url);
+      return !parsed.hostname || /\s/.test(url) || (options.httpsOnly ? parsed.protocol !== "https:" : !["http:", "https:"].includes(parsed.protocol));
+    } catch { return true; }
+  })) {
     return {
       ok: false,
       imageUrls,
@@ -106,10 +110,10 @@ function managedProductImageUrl(url: string): boolean {
  * geçmiş olmalı. Böylece 5 MB, gerçek dosya türü ve 1200 px kalite denetimi
  * URL yapıştırılarak atlanamaz.
  */
-export function validateProductImageUrls(value: unknown): ProductImageValidationResult {
-  const base = validateCountAndUrls(value, { httpsOnly: true });
+export function validateProductImageUrls(value: unknown, options: { forDraft?: boolean; existingUrls?: string[] } = {}): ProductImageValidationResult {
+  const base = validateCountAndUrls(value, { httpsOnly: !options.forDraft, minImages: options.forDraft ? 0 : MIN_PRODUCT_IMAGES });
   if (!base.ok) return base;
-  if (base.imageUrls.some((url) => !managedProductImageUrl(url))) {
+  if (base.imageUrls.some((url) => !options.existingUrls?.includes(url) && !managedProductImageUrl(url))) {
     return {
       ok: false,
       imageUrls: base.imageUrls,

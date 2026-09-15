@@ -214,8 +214,10 @@ export async function updateRichCoreProduct(args: {
   barcode?: string | null;
   metadata: ProductMetadata;
   variants: ProductVariant[];
+  isVisible?: boolean;
 }) {
   const { data, error } = await args.admin.rpc("update_store_product_v2", {
+    ...(args.isVisible === undefined ? {} : { p_is_visible: args.isVisible }),
     p_product_id: args.productId,
     p_edit_token: args.editToken,
     p_name: args.name,

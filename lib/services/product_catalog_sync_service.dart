@@ -53,7 +53,9 @@ class ProductCatalogSyncService {
             fulfillmentRegion: product.fulfillmentLocation,
             imageUrls: product.displayImageUrls,
             categoryId: categoryUuid,
-            isVisible: true,
+            isVisible:
+                product.isVisible &&
+                product.displayImageUrls.length >= product.imagePublishMinimum,
             sortOrder: i,
             stockQuantity: product.stockQuantity,
             stockStatus: product.stockStatus,
@@ -96,7 +98,9 @@ class ProductCatalogSyncService {
             categoryId: categoryUuid,
             sourceType: product.source ?? 'manual',
             externalProductId: _externalProductId(product),
-            isVisible: true,
+            isVisible:
+                product.isVisible &&
+                product.displayImageUrls.length >= product.imagePublishMinimum,
             sortOrder: i,
             brand: product.brand,
             barcode: product.barcode,
@@ -161,7 +165,9 @@ class ProductCatalogSyncService {
               : null,
       sourceType: product.source ?? 'manual',
       externalProductId: _externalProductId(product),
-      isVisible: true,
+      isVisible:
+          product.isVisible &&
+          product.displayImageUrls.length >= product.imagePublishMinimum,
       sortOrder: sortOrder,
       brand: product.brand,
       barcode: product.barcode,
@@ -217,7 +223,9 @@ class ProductCatalogSyncService {
       fulfillmentRegion: product.fulfillmentLocation,
       imageUrls: product.displayImageUrls,
       categoryId: categoryId,
-      isVisible: true,
+      isVisible:
+          product.isVisible &&
+          product.displayImageUrls.length >= product.imagePublishMinimum,
       stockQuantity: product.stockQuantity,
       stockStatus: product.stockStatus,
       brand: product.brand,

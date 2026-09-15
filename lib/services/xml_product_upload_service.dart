@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:uuid/uuid.dart';
+import 'package:vixrex/services/product_image_policy.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vixrex/models/store_product.dart';
@@ -23,7 +25,7 @@ class XmlProductUploadService {
         );
       }
 
-      final xmlContent = String.fromCharCodes(response.bodyBytes);
+      final xmlContent = utf8.decode(response.bodyBytes);
 
       // 2. Parse et
       final parseResult = parse(xmlContent);
@@ -32,7 +34,12 @@ class XmlProductUploadService {
       }
 
       if (parseResult.products.isEmpty) {
-        return XmlUploadResult.failure('XML dosyasında ürün bulunamadı.');
+        return XmlUploadResult.success(
+          total: parseResult.errors.length,
+          inserted: 0,
+          errors: parseResult.errors.length,
+          errorDetails: parseResult.errors,
+        );
       }
 
       // 3. Supabase'e kaydet
@@ -42,7 +49,7 @@ class XmlProductUploadService {
         editToken: editToken,
       );
 
-      return saveResult;
+      return parseResult.mergeSaveResult(saveResult);
     } catch (e) {
       return XmlUploadResult.failure('İşlem hatası: $e');
     }
@@ -64,9 +71,16 @@ class XmlProductUploadService {
                   'slug': p.slug ?? '',
                   'description': p.description,
                   'price_text': p.price,
-                  'image_urls': p.imageUrls.isNotEmpty ? p.imageUrls : [''],
+                  'image_urls': p.imageUrls,
+                  'category_name': p.category,
+                  'stock_status': p.stockStatus,
+                  'stock_quantity': p.stockQuantity,
+                  'barcode': p.barcode,
                   'source_type': 'xml_import',
                   'isVisible': p.isVisible,
+                  'metadata': p.richMetadata.toJson(),
+                  'variants':
+                      p.variants.map((variant) => variant.toJson()).toList(),
                   if (p.brand != null) 'brand': p.brand,
                   if (p.sku != null) 'sku': p.sku,
                 },
@@ -88,6 +102,14 @@ class XmlProductUploadService {
           total: result['total'] ?? 0,
           inserted: result['inserted'] ?? 0,
           errors: result['errors'] ?? 0,
+          errorDetails: [
+            for (final detail in (result['error_details'] as List? ?? []))
+              if (detail is Map && detail['index'] is num)
+                XmlParseError(
+                  row: (detail['index'] as num).toInt(),
+                  message: detail['error']?.toString() ?? 'Ürün kaydedilemedi.',
+                ),
+          ],
         );
       }
 
@@ -221,14 +243,28 @@ class XmlProductUploadService {
     final description = _findField(fields, _descAliases);
     final category = _findField(fields, _categoryAliases);
     final stockRaw = _findField(fields, _stockAliases);
-    final stockStatus = _normalizeStockStatus(stockRaw);
+    final quantityRaw = _findField(fields, _stockQuantityAliases);
+    final stockQuantity = _normalizeStockQuantity(
+      quantityRaw.isEmpty ? stockRaw : quantityRaw,
+    );
+    final stockStatus =
+        stockQuantity == 0
+            ? StockStatus.soldOut.label
+            : _normalizeStockStatus(stockRaw);
 
     // Görsel URL'lerini bul (birden fazla olabilir)
     final imageUrls = _findImageUrls(fields);
+    final imageError = ProductImagePolicy.validate(imageUrls);
+    if (imageError != null) {
+      return _XmlParseResult(
+        error: XmlParseError(row: rowIndex, message: imageError),
+      );
+    }
 
     // Marka ve SKU
     final brand = _findField(fields, _brandAliases);
     final sku = _findField(fields, _skuAliases);
+    final barcode = _findField(fields, _barcodeAliases);
 
     final product = Product(
       id: 'xml_${const Uuid().v4()}',
@@ -239,6 +275,8 @@ class XmlProductUploadService {
       imageUrls: imageUrls,
       category: category.isNotEmpty ? category : 'Genel',
       stockStatus: stockStatus,
+      stockQuantity: stockQuantity,
+      barcode: barcode.isEmpty ? null : barcode,
       isVisible: true,
       source: 'xml_import',
       brand: brand.isNotEmpty ? brand : null,
@@ -250,7 +288,8 @@ class XmlProductUploadService {
 
   /// Alan eşleme tablosunda değeri bulur.
   String _findField(Map<String, String> fields, Set<String> aliases) {
-    for (final alias in aliases) {
+    final normalizedAliases = aliases.map(_normalizeTagName).toSet();
+    for (final alias in normalizedAliases) {
       for (final entry in fields.entries) {
         if (_normalizeTagName(entry.key) == alias) {
           return entry.value;
@@ -263,20 +302,26 @@ class XmlProductUploadService {
   /// Görsel URL'lerini bulur.
   List<String> _findImageUrls(Map<String, String> fields) {
     final urls = <String>[];
+    final normalizedAliases = _imageUrlAliases.map(_normalizeTagName).toSet();
+    final numberedImageField = RegExp(
+      r'^(gorsel|image|foto|fotograf|resim)(url)?\d+$',
+    );
 
-    for (final alias in _imageUrlAliases) {
-      for (final entry in fields.entries) {
-        if (_normalizeTagName(entry.key) == alias) {
-          final url = entry.value.trim();
-          if (url.isNotEmpty &&
-              (url.startsWith('http') || url.startsWith('//'))) {
-            urls.add(url);
-          }
-        }
+    for (final entry in fields.entries) {
+      final normalizedKey = _normalizeTagName(entry.key);
+      if (!normalizedAliases.contains(normalizedKey) &&
+          !numberedImageField.hasMatch(normalizedKey)) {
+        continue;
+      }
+
+      final rawUrl = entry.value.trim();
+      final url = rawUrl.startsWith('//') ? 'https:$rawUrl' : rawUrl;
+      if (url.isNotEmpty && !urls.contains(url)) {
+        urls.add(url);
       }
     }
 
-    return urls.take(4).toList(); // Maksimum 4 görsel
+    return urls; // Maksimum 4 görsel
   }
 
   /// Tag adını normalize eder.
@@ -288,7 +333,7 @@ class XmlProductUploadService {
         .replaceAll(RegExp(r'[çc]'), 'c')
         .replaceAll(RegExp(r'[şs]'), 's')
         .replaceAll(RegExp(r'[ğg]'), 'g')
-        .replaceAll(RegExp(r'[iiî]'), 'i')
+        .replaceAll(RegExp(r'[ıiî]'), 'i')
         .replaceAll(RegExp(r'[^a-z0-9]'), '')
         .trim();
   }
@@ -323,6 +368,9 @@ class XmlProductUploadService {
       }
     }
 
+    if (RegExp(r'^\d{1,3}(?:\.\d{3})+$').hasMatch(normalized)) {
+      normalized = normalized.replaceAll('.', '');
+    }
     final number = num.tryParse(normalized);
     if (number == null) return raw.trim();
     return number % 1 == 0
@@ -351,6 +399,21 @@ class XmlProductUploadService {
   }
 
   // ─── ALIAS TABLOLARI ─────────────────────────────────────────
+
+  int? _normalizeStockQuantity(String raw) {
+    final trimmed = raw.trim();
+    if (!RegExp(r'^\d+$').hasMatch(trimmed)) return null;
+    return int.tryParse(trimmed);
+  }
+
+  static const _stockQuantityAliases = {
+    'stokadedi',
+    'stokmiktari',
+    'stockquantity',
+    'quantity',
+    'adet',
+  };
+  static const _barcodeAliases = {'barkod', 'barcode', 'gtin', 'ean', 'upc'};
 
   static const _nameAliases = {
     'urunadi',
@@ -521,6 +584,31 @@ class XmlParseResult {
 
   int get validCount => products.length;
   int get errorCount => errors.length;
+
+  XmlUploadResult mergeSaveResult(XmlUploadResult saved) {
+    if (!saved.isSuccess) return saved;
+    final rejectedRows = errors.map((error) => error.row).toSet();
+    final sourceRows = [
+      for (var row = 1; row <= products.length + errors.length; row++)
+        if (!rejectedRows.contains(row)) row,
+    ];
+    return XmlUploadResult.success(
+      total: saved.total + errors.length,
+      inserted: saved.inserted,
+      errors: saved.errors + errors.length,
+      errorDetails: [
+        ...errors,
+        for (final error in saved.errorDetails)
+          XmlParseError(
+            row:
+                error.row > 0 && error.row <= sourceRows.length
+                    ? sourceRows[error.row - 1]
+                    : error.row,
+            message: error.message,
+          ),
+      ]..sort((left, right) => left.row.compareTo(right.row)),
+    );
+  }
 }
 
 class XmlParseError {
@@ -548,6 +636,7 @@ class XmlUploadResult {
   final int total;
   final int inserted;
   final int errors;
+  final List<XmlParseError> errorDetails;
 
   const XmlUploadResult._({
     required this.isSuccess,
@@ -555,17 +644,20 @@ class XmlUploadResult {
     this.total = 0,
     this.inserted = 0,
     this.errors = 0,
+    this.errorDetails = const [],
   });
 
   factory XmlUploadResult.success({
     required int total,
     required int inserted,
     required int errors,
+    List<XmlParseError> errorDetails = const [],
   }) => XmlUploadResult._(
     isSuccess: true,
     total: total,
     inserted: inserted,
     errors: errors,
+    errorDetails: errorDetails,
   );
 
   factory XmlUploadResult.failure(String message) =>

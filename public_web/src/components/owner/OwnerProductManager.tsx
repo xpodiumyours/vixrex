@@ -39,6 +39,8 @@ export interface OwnerProduct {
   price_amount?: number | null;
   currency?: string | null;
   image_urls: string[] | null;
+  is_visible?: boolean;
+  image_publish_minimum?: number;
   category_id: string | null;
   stock_status: string | null;
   stock_quantity?: number | null;
@@ -258,7 +260,7 @@ export function OwnerProductManager({
 
       await refreshAll();
       setEditing(null);
-      setSuccess(isNew ? "Ürün kaydedildi." : "Ürün güncellendi.");
+      setSuccess(payload?.taslak ? "Ürün taslak olarak kaydedildi. Vitrinde görünmesi için en az 3 fotoğraf ekle." : isNew ? "Ürün kaydedildi." : "Ürün güncellendi.");
     } catch (saveError) {
       const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
       const isNetworkError = saveError instanceof TypeError && String(saveError.message).includes("fetch");
@@ -394,6 +396,7 @@ export function OwnerProductManager({
                   {image ? <Image src={image} alt={`${product.name} ürün görseli`} fill unoptimized sizes="(min-width: 1024px) 300px, (min-width: 640px) 45vw, 100vw" className="object-cover" /> : <div className="flex h-full items-center justify-center text-sm text-[var(--owner-muted)]">Görsel eklenmedi</div>}
                 </div>
                 <div className="p-4">
+                  {product.is_visible === false && <p className="mb-2 text-xs text-[var(--owner-muted)]">{normalizeProductImageUrls(product.image_urls).length < (product.image_publish_minimum ?? 0) ? "Taslak · Yayın için en az 3 fotoğraf ekle" : "Vitrinde gizli"}</p>}
                   <div className="flex items-start justify-between gap-3">
                     <h3 className="line-clamp-2 font-bold text-[var(--owner-text)]">{product.name}</h3>
                     {!isService ? (
@@ -410,8 +413,8 @@ export function OwnerProductManager({
                   </div>
                   <p className="mt-1 text-xs text-[var(--owner-muted)]">{product.product_categories?.name || "Kategorisiz"}</p>
                   <div className="mt-4 grid grid-cols-3 gap-2">
-                    <button type="button" className="owner-button-secondary text-xs" onClick={() => openEditProduct(product)} disabled={busy}>✏️</button>
-                    <button type="button" className="owner-button-danger text-xs" onClick={() => setDeleting(product)} disabled={busy}>🗑️</button>
+                    <button type="button" className="owner-button-secondary text-xs" aria-label={`${product.name} ürününü düzenle`} onClick={() => openEditProduct(product)} disabled={busy}>✏️</button>
+                    <button type="button" className="owner-button-danger text-xs" aria-label={`${product.name} ürününü sil`} onClick={() => setDeleting(product)} disabled={busy}>🗑️</button>
                     <div className="flex gap-0.5">
                       <button type="button" className="owner-button-secondary flex-1 text-xs" onClick={() => moveProduct(products.indexOf(product), "up")} disabled={busy || !!filterText || !!filterCategory || products.indexOf(product) === 0} title={filterText || filterCategory ? "Filtre varken sıralama kapalı" : "Yukarı taşı"}>↑</button>
                       <button type="button" className="owner-button-secondary flex-1 text-xs" onClick={() => moveProduct(products.indexOf(product), "down")} disabled={busy || !!filterText || !!filterCategory || products.indexOf(product) === products.length - 1} title={filterText || filterCategory ? "Filtre varken sıralama kapalı" : "Aşağı taşı"}>↓</button>
@@ -495,7 +498,7 @@ function ProductForm({ product, categories, busy, storeSlug, onCancel, onSave }:
   const isService = templateKey === "service";
   const imageListChanged = !sameStringList(imageUrls, initialImageUrls);
   const legacyImagesKept = Boolean(
-    product && initialImageUrls.length < MIN_PRODUCT_IMAGES && !imageListChanged,
+    product && product.image_publish_minimum === 0,
   );
 
   async function handleFiles(files: FileList | null) {
@@ -551,7 +554,6 @@ function ProductForm({ product, categories, busy, storeSlug, onCancel, onSave }:
     if (!cleanName) { setValidation("Ürün adı zorunludur."); return; }
     if (categories.length > 0 && !categoryId) { setValidation("Ürün kategorisi zorunludur."); return; }
     const mustMeetImagePolicy = !product || imageListChanged;
-    if (mustMeetImagePolicy && imageUrls.length < MIN_PRODUCT_IMAGES) { setValidation(`Bir ürün için en az ${MIN_PRODUCT_IMAGES} fotoğraf zorunludur.`); return; }
     if (mustMeetImagePolicy && imageUrls.length > MAX_PRODUCT_IMAGES) { setValidation(`Bir ürüne en fazla ${MAX_PRODUCT_IMAGES} fotoğraf eklenebilir.`); return; }
     if (mustMeetImagePolicy && imageUrls.some((url) => !/^https?:\/\//i.test(url))) { setValidation("Görsel bağlantıları http:// veya https:// ile başlamalıdır."); return; }
     const oldPriceAmount = oldPriceText.trim() ? parseAmount(oldPriceText) : null;
@@ -610,8 +612,8 @@ function ProductForm({ product, categories, busy, storeSlug, onCancel, onSave }:
         </div>
         <p className="mt-1 text-[11px] text-[var(--owner-muted)]">
           {legacyImagesKept
-            ? `Mevcut fotoğraflar korunur. Fotoğraf listesini değiştirirsen en az ${MIN_PRODUCT_IMAGES}, en fazla ${MAX_PRODUCT_IMAGES} fotoğraf gerekir.`
-            : `En az ${MIN_PRODUCT_IMAGES}, en fazla ${MAX_PRODUCT_IMAGES} fotoğraf. İlk fotoğraf ürün kapağıdır.`}
+            ? `Mevcut ürünün fotoğraf sayısı korunur. En fazla ${MAX_PRODUCT_IMAGES} fotoğraf ekleyebilirsin.`
+            : `En az ${MIN_PRODUCT_IMAGES} fotoğrafla vitrinde görünür; eksik fotoğrafla taslak kaydedilir. En fazla ${MAX_PRODUCT_IMAGES} fotoğraf. İlk fotoğraf ürün kapağıdır.`}
           {` JPG/PNG/WebP, en fazla ${MAX_PRODUCT_IMAGE_SOURCE_MEGABYTES} MB. Kaynak görselin kısa kenarı en az ${MIN_PRODUCT_IMAGE_SOURCE_SHORT_EDGE} px olmalıdır.`}
         </p>
       </div>

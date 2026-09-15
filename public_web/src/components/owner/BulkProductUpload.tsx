@@ -1,26 +1,35 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
+import { MAX_PRODUCT_IMAGES } from "@/lib/productImagePolicy";
 
 // ─── Türler ─────────────────────────────────────────────────────────────────
 
-interface ParsedProduct {
+export interface ParsedProduct {
   name: string;
   description: string;
   price_text: string;
   category: string;
   stockStatus: string;
+  stockQuantity: number | null;
+  brand: string;
+  barcode: string;
+  sku: string;
   imageUrls: string[];
   _raw: Record<string, string>;
   _rowIndex: number;
 }
 
-interface ColumnMapping {
+export interface ColumnMapping {
   name: number | null;
   description: number | null;
   price_text: number | null;
   category: number | null;
   stockStatus: number | null;
+  stockQuantity: number | null;
+  brand: number | null;
+  barcode: number | null;
+  sku: number | null;
   imageUrls: number | null;
 }
 
@@ -55,6 +64,10 @@ const CATEGORY_ALIASES = new Set([
 const STOCK_ALIASES = new Set([
   "stok", "stock", "stokdurumu", "stockstatus", "stokdurum",
 ]);
+const QUANTITY_ALIASES = new Set(["stokadedi", "stokmiktari", "stockquantity", "quantity", "adet"]);
+const BRAND_ALIASES = new Set(["marka", "brand", "uretici", "manufacturer"]);
+const BARCODE_ALIASES = new Set(["barkod", "barcode", "gtin", "ean", "upc", "kod"]);
+const SKU_ALIASES = new Set(["sku", "stokkodu", "urunkodu", "productcode", "code"]);
 const IMAGE_ALIASES = new Set([
   "gorselurl", "gorsel", "imageurl", "image", "foto", "resim", "kapak", "cover",
 ]);
@@ -67,9 +80,17 @@ function normalizeHeader(h: string): string {
     .replace(/[çc]/g, "c")
     .replace(/[şs]/g, "s")
     .replace(/[ğg]/g, "g")
-    .replace(/[iiî]/g, "i")
+    .replace(/[ıiî]/g, "i")
     .replace(/[^a-z0-9]/g, "")
     .trim();
+}
+
+function isImageHeader(header: string): boolean {
+  const normalized = normalizeHeader(header);
+  return (
+    IMAGE_ALIASES.has(normalized) ||
+    /^(gorsel|image|foto|fotograf|resim|kapak|cover)(url)?\d+$/.test(normalized)
+  );
 }
 
 function normalizePrice(raw: string): string {
@@ -97,6 +118,7 @@ function normalizePrice(raw: string): string {
     }
   }
 
+  if (/^\d{1,3}(?:\.\d{3})+$/.test(normalized)) normalized = normalized.replaceAll(".", "");
   const num = Number(normalized);
   if (isNaN(num)) return raw.trim();
   return num % 1 === 0 ? String(num) : num.toFixed(2);
@@ -104,22 +126,99 @@ function normalizePrice(raw: string): string {
 
 function normalizeStock(raw: string): string {
   const lower = raw.toLowerCase();
-  if (lower.includes("tükendi") || lower.includes("yok") || lower === "0") return "Tükendi";
-  if (lower.includes("son") || lower.includes("az") || lower.includes("limit")) return "Son birkaç adet";
+  if (lower.includes("tükendi") || lower.includes("yok") || lower.includes("out of stock") || lower.includes("sold out") || lower === "0") return "Tükendi";
+  if (lower.includes("son") || lower.includes("az") || lower.includes("limit") || lower.includes("low")) return "Son birkaç adet";
   return "Mevcut";
 }
 
 // ─── Ana Bileşen ────────────────────────────────────────────────────────────
+
+function collectImageUrls(
+  values: string[],
+  headers: string[],
+  mappedIndex: number | null,
+): string[] {
+  if (mappedIndex === null) return [];
+  const indexes = new Set<number>([mappedIndex]);
+  headers.forEach((header, index) => {
+    if (isImageHeader(header)) indexes.add(index);
+  });
+
+  const urls: string[] = [];
+  for (const index of indexes) {
+    const cell = String(values[index] ?? "").trim();
+    if (!cell) continue;
+    for (const raw of cell.split(/\s*\|\s*|\r?\n/)) {
+      const trimmed = raw.trim();
+      if (!trimmed) continue;
+      const url = trimmed.startsWith("//") ? `https:${trimmed}` : trimmed;
+      if (!urls.includes(url)) urls.push(url);
+    }
+  }
+  return urls;
+}
+
+export function parseRows(
+  rows: string[][],
+  headers: string[],
+  mapping: ColumnMapping,
+): { products: ParsedProduct[]; errors: string[] } {
+  const products: ParsedProduct[] = [];
+  const errors: string[] = [];
+
+  for (let i = 1; i < rows.length; i++) {
+    const values = rows[i].map((value) => String(value ?? "").trim());
+    const name = mapping.name !== null ? (values[mapping.name] ?? "") : "";
+    if (!name.trim()) {
+      errors.push(`Satır ${i + 1}: Ürün adı boş, atlandı.`);
+      continue;
+    }
+
+    const imageUrls = collectImageUrls(values, headers, mapping.imageUrls);
+    if (imageUrls.length > MAX_PRODUCT_IMAGES || imageUrls.some((url) => {
+      try {
+        const parsed = new URL(url);
+        return !["http:", "https:"].includes(parsed.protocol) || !parsed.hostname || /\s/.test(url);
+      } catch {
+        return true;
+      }
+    })) {
+      errors.push(`Satır ${i + 1}: En fazla ${MAX_PRODUCT_IMAGES} geçerli http:// veya https:// görsel bağlantısı kullanılabilir, satır atlandı.`);
+      continue;
+    }
+    const priceRaw = mapping.price_text !== null ? (values[mapping.price_text] ?? "") : "";
+    const explicitQuantity = mapping.stockQuantity !== null ? values[mapping.stockQuantity] ?? "" : "";
+    const quantityRaw = explicitQuantity || (mapping.stockStatus !== null ? values[mapping.stockStatus] ?? "" : "");
+    const stockQuantity = /^\d+$/.test(quantityRaw) ? Number(quantityRaw) : null;
+    products.push({
+      name: name.trim(),
+      description: mapping.description !== null ? (values[mapping.description] ?? "").trim() : "",
+      price_text: normalizePrice(priceRaw),
+      category: mapping.category !== null ? (values[mapping.category] ?? "").trim() : "",
+      stockStatus: stockQuantity === 0 ? "Tükendi" : mapping.stockStatus !== null ? normalizeStock(values[mapping.stockStatus] ?? "") : "Mevcut",
+      stockQuantity,
+      brand: mapping.brand !== null ? values[mapping.brand] ?? "" : "",
+      barcode: mapping.barcode !== null ? values[mapping.barcode] ?? "" : "",
+      sku: mapping.sku !== null ? values[mapping.sku] ?? "" : "",
+      imageUrls,
+      _raw: Object.fromEntries(headers.map((header, index) => [header, values[index] ?? ""])),
+      _rowIndex: i + 1,
+    });
+  }
+
+  return { products, errors };
+}
 
 export default function BulkProductUpload({
   storeSlug,
   onUploaded,
 }: BulkProductUploadProps) {
   const [step, setStep] = useState<"pick" | "map" | "review" | "saving" | "done">("pick");
+  const [sourceRows, setSourceRows] = useState<string[][]>([]);
   const [headers, setHeaders] = useState<string[]>([]);
   const [mapping, setMapping] = useState<ColumnMapping>({
     name: null, description: null, price_text: null,
-    category: null, stockStatus: null, imageUrls: null,
+    category: null, stockStatus: null, imageUrls: null, stockQuantity: null, brand: null, barcode: null, sku: null,
   });
   const [parsedProducts, setParsedProducts] = useState<ParsedProduct[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
@@ -193,20 +292,25 @@ export default function BulkProductUpload({
 
       const headerRow = rows[0].map((h) => String(h ?? ""));
       setHeaders(headerRow);
+      setSourceRows(rows);
 
       // Otomatik sütun eşleme
       const autoMap: ColumnMapping = {
         name: null, description: null, price_text: null,
-        category: null, stockStatus: null, imageUrls: null,
+        category: null, stockStatus: null, imageUrls: null, stockQuantity: null, brand: null, barcode: null, sku: null,
       };
       headerRow.forEach((h, i) => {
         const n = normalizeHeader(h);
+        if (QUANTITY_ALIASES.has(n) && autoMap.stockQuantity === null) autoMap.stockQuantity = i;
+        if (BRAND_ALIASES.has(n) && autoMap.brand === null) autoMap.brand = i;
+        if (BARCODE_ALIASES.has(n) && autoMap.barcode === null) autoMap.barcode = i;
+        if (SKU_ALIASES.has(n) && autoMap.sku === null) autoMap.sku = i;
         if (NAME_ALIASES.has(n) && autoMap.name === null) autoMap.name = i;
         else if (PRICE_ALIASES.has(n) && autoMap.price_text === null) autoMap.price_text = i;
         else if (DESC_ALIASES.has(n) && autoMap.description === null) autoMap.description = i;
         else if (CATEGORY_ALIASES.has(n) && autoMap.category === null) autoMap.category = i;
         else if (STOCK_ALIASES.has(n) && autoMap.stockStatus === null) autoMap.stockStatus = i;
-        else if (IMAGE_ALIASES.has(n) && autoMap.imageUrls === null) autoMap.imageUrls = i;
+        else if (isImageHeader(h) && autoMap.imageUrls === null) autoMap.imageUrls = i;
       });
 
       if (autoMap.name === null) {
@@ -217,39 +321,10 @@ export default function BulkProductUpload({
       setMapping(autoMap);
 
       // Veri satırlarını ayrıştır
-      const products: ParsedProduct[] = [];
-      const parseErrors: string[] = [];
-      for (let i = 1; i < rows.length; i++) {
-        const vals = rows[i].map((v) => String(v ?? "").trim());
-        const name = autoMap.name !== null ? (vals[autoMap.name] ?? "") : "";
-        if (!name.trim()) {
-          parseErrors.push(`Satır ${i + 1}: Ürün adı boş, atlandı.`);
-          continue;
-        }
-        const priceRaw = autoMap.price_text !== null ? (vals[autoMap.price_text] ?? "") : "";
-        const imageUrlRaw = autoMap.imageUrls !== null ? (vals[autoMap.imageUrls] ?? "") : "";
-
-        products.push({
-          name: name.trim(),
-          description: autoMap.description !== null ? (vals[autoMap.description] ?? "").trim() : "",
-          price_text: normalizePrice(priceRaw),
-          category: autoMap.category !== null ? (vals[autoMap.category] ?? "").trim() : "",
-          stockStatus: autoMap.stockStatus !== null ? normalizeStock(vals[autoMap.stockStatus] ?? "") : "Mevcut",
-          imageUrls: imageUrlRaw.trim() ? [imageUrlRaw.trim()] : [],
-          _raw: Object.fromEntries(headerRow.map((h, j) => [h, vals[j] ?? ""])),
-          _rowIndex: i + 1,
-        });
-      }
-
-      if (products.length === 0) {
-        setErrors(["Dosyada geçerli ürün bulunamadı.", ...parseErrors]);
-        return;
-      }
-
-      setParsedProducts(products);
-      if (parseErrors.length > 0) {
-        setErrors(parseErrors.slice(0, 10)); // İlk 10 hatayı göster
-      }
+      // İlk 10 hatayı göster
+      const parsed = parseRows(rows, headerRow, autoMap);
+      setParsedProducts(parsed.products);
+      setErrors(parsed.errors.slice(0, 10));
       setStep("map");
     } catch {
       setErrors(["Dosya işlenirken hata oluştu."]);
@@ -267,6 +342,10 @@ export default function BulkProductUpload({
   function reParseWithMapping() {
     if (headers.length === 0) return;
     // Header zaten parse edildi, mapping değişikliği review adımında ürünleri filtreler
+    const parsed = parseRows(sourceRows, headers, mapping);
+    setParsedProducts(parsed.products);
+    setErrors(parsed.errors.slice(0, 10));
+    if (parsed.products.length === 0) return;
     setStep("review");
   }
 
@@ -288,6 +367,12 @@ export default function BulkProductUpload({
             name: p.name,
             description: p.description,
             price_text: p.price_text,
+            category_name: p.category || null,
+            stock_status: p.stockStatus,
+            stock_quantity: p.stockQuantity,
+            brand: p.brand || null,
+            barcode: p.barcode || null,
+            sku: p.sku || null,
             image_urls: p.imageUrls,
             source_type: "bulk_import",
             sort_order: i,
@@ -305,10 +390,18 @@ export default function BulkProductUpload({
       }
 
       const result = payload as BatchResult;
-      setBatchResult(result);
+      setBatchResult({
+        ...result,
+        hataDetaylari: result.hataDetaylari.map((detail) => ({
+          ...detail,
+          index: detail.index ? parsedProducts[detail.index - 1]?._rowIndex ?? detail.index : undefined,
+        })),
+      });
       setStep("done");
       if (result.eklenen > 0) {
-        await onUploaded();
+        await onUploaded().catch(() => {
+          setErrors(["Ürünler kaydedildi; liste yenilenemedi. Sayfayı yenileyin."]);
+        });
       }
     } catch (err) {
       setErrors([err instanceof Error ? err.message : "Kaydetme başarısız oldu."]);
@@ -323,7 +416,8 @@ export default function BulkProductUpload({
   function reset() {
     setStep("pick");
     setHeaders([]);
-    setMapping({ name: null, description: null, price_text: null, category: null, stockStatus: null, imageUrls: null });
+    setSourceRows([]);
+    setMapping({ name: null, description: null, price_text: null, category: null, stockStatus: null, imageUrls: null, stockQuantity: null, brand: null, barcode: null, sku: null });
     setParsedProducts([]);
     setErrors([]);
     setBatchResult(null);
@@ -402,7 +496,7 @@ export default function BulkProductUpload({
             type="button"
             className="owner-button-secondary mt-3 text-xs"
             onClick={() => {
-              const csv = "Ürün Adı,Fiyat,Açıklama,Kategori,Stok Durumu,Görsel URL\nÖrnek Ürün 1,125.50,Günlük kullanım için uygun,Genel,Mevcut,\nÖrnek Ürün 2,\"1,250.00\",Özel tasarım elbise,Elbise,Mevcut,https://ornek.com/gorsel.jpg\nÖrnek Ürün 3,,Kampanyalı fiyat,Genel,Tükendi,";
+              const csv = "Ürün Adı,Fiyat,Açıklama,Kategori,Stok Durumu,Stok Adedi,Marka,Barkod,SKU,Görsel URL 1,Görsel URL 2,Görsel URL 3\nÖrnek Ürün,125.50,Günlük kullanım için uygun,Genel,Mevcut,12,Örnek Marka,8690000000005,ORNEK-1,https://ornek.com/urun-a.jpg,https://ornek.com/urun-b.jpg,https://ornek.com/urun-c.jpg";
               const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
               const url = URL.createObjectURL(blob);
               const a = document.createElement("a");
@@ -431,6 +525,10 @@ export default function BulkProductUpload({
               ["description", "Açıklama", false],
               ["category", "Kategori", false],
               ["stockStatus", "Stok Durumu", false],
+              ["stockQuantity", "Stok Adedi", false],
+              ["brand", "Marka", false],
+              ["barcode", "Barkod", false],
+              ["sku", "SKU", false],
               ["imageUrls", "Görsel URL", false],
             ] as const).map(([field, label, required]) => (
               <div key={field}>

@@ -19,7 +19,7 @@ import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/theme/app_text_styles.dart';
 import 'package:vixrex/widgets/xml_upload_dialog.dart';
 
-typedef OnBulkProductsSaved = Future<void> Function(List<Product> products);
+typedef OnBulkProductsSaved = Future<bool> Function(List<Product> products);
 
 /// Toplu ürün yükleme ekranı.
 /// Excel/CSV dosyasından ürünleri parse eder, kullanıcıya sunar, onay sonrası kaydeder.

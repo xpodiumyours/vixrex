@@ -4,6 +4,8 @@ import 'dart:typed_data';
 import 'package:excel/excel.dart';
 import 'package:uuid/uuid.dart';
 import 'package:vixrex/models/store_product.dart';
+import 'package:vixrex/models/product_rich_data.dart';
+import 'package:vixrex/services/product_image_policy.dart';
 
 /// Excel (.xlsx) ve CSV dosyalarından toplu ürün çıkarma servisi.
 class BulkProductUploadService {
@@ -163,8 +165,21 @@ class BulkProductUploadService {
       if (_descAliases.contains(normalized)) map['description'] ??= i;
       if (_categoryAliases.contains(normalized)) map['category'] ??= i;
       if (_stockAliases.contains(normalized)) map['stockStatus'] ??= i;
+      if (_stockQuantityAliases.contains(normalized)) {
+        map['stockQuantity'] ??= i;
+      }
+      if (_brandAliases.contains(normalized)) map['brand'] ??= i;
       if (_barcodeAliases.contains(normalized)) map['barcode'] ??= i;
-      if (_imageUrlAliases.contains(normalized)) map['imageUrl'] ??= i;
+      if (_skuAliases.contains(normalized)) map['sku'] ??= i;
+
+      if (_imageUrlAliases.contains(normalized)) {
+        map['image1'] ??= i;
+      }
+      final numberedImage = _numberedImageHeader.firstMatch(normalized);
+      if (numberedImage != null) {
+        final number = int.tryParse(numberedImage.group(3) ?? '');
+        if (number != null && number > 0) map['image$number'] ??= i;
+      }
     }
     return map;
   }
@@ -177,10 +192,14 @@ class BulkProductUploadService {
         .replaceAll(RegExp(r'[çc]'), 'c')
         .replaceAll(RegExp(r'[şs]'), 's')
         .replaceAll(RegExp(r'[ğg]'), 'g')
-        .replaceAll(RegExp(r'[iiî]'), 'i')
+        .replaceAll(RegExp(r'[ıiî]'), 'i')
         .replaceAll(RegExp(r'[^a-z0-9]'), '')
         .trim();
   }
+
+  static final _numberedImageHeader = RegExp(
+    r'^(gorsel|image|foto|fotograf|resim|kapak|cover)(url)?(\d+)$',
+  );
 
   static const _nameAliases = {
     'urunadi',
@@ -237,13 +256,28 @@ class BulkProductUploadService {
     'stokdurum',
     'stok ',
   };
+  static const _stockQuantityAliases = {
+    'stokadedi',
+    'stokmiktari',
+    'stockquantity',
+    'quantity',
+    'adet',
+  };
+  static const _brandAliases = {'marka', 'brand', 'uretici', 'manufacturer'};
   static const _barcodeAliases = {
     'barkod',
     'barcode',
-    'sku',
+    'gtin',
+    'ean',
+    'upc',
     'kod',
+  };
+  static const _skuAliases = {
+    'sku',
+    'stokkodu',
+    'urunkodu',
+    'productcode',
     'code',
-    'barkod ',
   };
   static const _imageUrlAliases = {
     'gorselurl',
@@ -251,7 +285,7 @@ class BulkProductUploadService {
     'imageurl',
     'image',
     'foto',
-    'fotoğraf',
+    'fotograf',
     'resim',
     'kapak',
     'cover',
@@ -276,32 +310,85 @@ class BulkProductUploadService {
       );
     }
 
+    final imageUrls = _collectImageUrls(values, columnMap);
+    final imageError = ProductImagePolicy.validate(imageUrls);
+    if (imageError != null) {
+      return _RowParseResult(
+        error: BulkParseError(row: rowIndex, message: imageError),
+      );
+    }
+
     final priceRaw = _cellValue(values, columnMap['price'] ?? -1);
     final price = _normalizePrice(priceRaw);
-
     final description = _cellValue(values, columnMap['description'] ?? -1);
     final category = _cellValue(values, columnMap['category'] ?? -1);
     final stockRaw = _cellValue(values, columnMap['stockStatus'] ?? -1);
-    final stockStatus = _normalizeStockStatus(stockRaw);
-
-    final imageUrlRaw = _cellValue(values, columnMap['imageUrl'] ?? -1);
-    final imageUrl = imageUrlRaw.trim();
-    final imageUrls = imageUrl.isNotEmpty ? [imageUrl] : <String>[];
+    final explicitStockQuantity = _cellValue(
+      values,
+      columnMap['stockQuantity'] ?? -1,
+    );
+    final stockQuantity = _normalizeStockQuantity(
+      explicitStockQuantity.isNotEmpty ? explicitStockQuantity : stockRaw,
+    );
+    final stockStatus = _normalizeStockStatus(stockRaw, stockQuantity);
+    final brand = _cellValue(values, columnMap['brand'] ?? -1);
+    final barcode = _cellValue(values, columnMap['barcode'] ?? -1);
+    final sku = _cellValue(values, columnMap['sku'] ?? -1);
+    final skuValue = sku.isNotEmpty ? sku : null;
 
     final product = Product(
       id: 'bulk_${const Uuid().v4()}',
       name: name,
       price: price,
       description: description,
-      imagePath: imageUrl.isNotEmpty ? imageUrl : null,
+      imagePath: imageUrls.isEmpty ? null : imageUrls.first,
       imageUrls: imageUrls,
       category: category.isNotEmpty ? category : 'Genel',
       stockStatus: stockStatus,
+      stockQuantity: stockQuantity,
       isVisible: true,
       source: 'bulk_import',
+      brand: brand.isNotEmpty ? brand : null,
+      barcode: barcode.isNotEmpty ? barcode : null,
+      sku: skuValue,
+      richMetadata: ProductRichMetadata(
+        schemaVersion: 2,
+        itemKind: 'physical',
+        sku: skuValue,
+      ),
     );
 
     return _RowParseResult(product: product);
+  }
+
+  List<String> _collectImageUrls(
+    List<String> values,
+    Map<String, int> columnMap,
+  ) {
+    final imageEntries =
+        columnMap.entries
+            .where((entry) => entry.key.startsWith('image'))
+            .toList()
+          ..sort((a, b) {
+            final left = int.tryParse(a.key.substring(5)) ?? 0;
+            final right = int.tryParse(b.key.substring(5)) ?? 0;
+            return left.compareTo(right);
+          });
+
+    final urls = <String>[];
+    for (final entry in imageEntries) {
+      final cell = _cellValue(values, entry.value);
+      if (cell.isEmpty) continue;
+      for (final raw in cell.split(RegExp(r'\s*\|\s*|\r?\n'))) {
+        final trimmed = raw.trim();
+        if (trimmed.isEmpty) continue;
+        final url = trimmed.startsWith('//') ? 'https:$trimmed' : trimmed;
+        if (!urls.contains(url)) {
+          urls.add(url);
+        }
+      }
+    }
+    return urls;
   }
 
   String _cellValue(List<String> values, int index) {
@@ -342,6 +429,9 @@ class BulkProductUploadService {
       }
     }
 
+    if (RegExp(r'^\d{1,3}(?:\.\d{3})+$').hasMatch(normalized)) {
+      normalized = normalized.replaceAll('.', '');
+    }
     final number = num.tryParse(normalized);
     if (number == null) return raw.trim();
     return number % 1 == 0
@@ -350,32 +440,43 @@ class BulkProductUploadService {
   }
 
   /// Stok durumunu normalize eder.
-  String _normalizeStockStatus(String raw) {
-    final lower = raw.toLowerCase();
-    if (lower.contains('tükendi') ||
+  String _normalizeStockStatus(String raw, int? stockQuantity) {
+    if (stockQuantity == 0) return StockStatus.soldOut.label;
+    final lower = raw.toLowerCase().trim();
+    if (lower == '0' ||
+        lower.contains('tükendi') ||
         lower.contains('yok') ||
-        lower.contains('0')) {
+        lower.contains('out of stock') ||
+        lower.contains('sold out')) {
       return StockStatus.soldOut.label;
     }
     if (lower.contains('son') ||
         lower.contains('az') ||
-        lower.contains('limit')) {
+        lower.contains('limit') ||
+        lower.contains('low')) {
       return StockStatus.lowStock.label;
     }
     return StockStatus.available.label;
   }
 
+  int? _normalizeStockQuantity(String raw) {
+    final trimmed = raw.trim();
+    if (!RegExp(r'^\d+$').hasMatch(trimmed)) return null;
+    return int.tryParse(trimmed);
+  }
+
   /// Örnek CSV şablonu üretir.
   Uint8List generateTemplateCsv() {
     final buffer = StringBuffer();
-    buffer.writeln('Ürün Adı,Fiyat,Açıklama,Kategori,Stok Durumu,Görsel URL');
     buffer.writeln(
-      'Örnek Ürün 1,125.50,Günlük kullanım için uygun,Genel,Mevcut,',
+      'Ürün Adı,Fiyat,Açıklama,Kategori,Stok Durumu,Stok Adedi,Marka,Barkod,SKU,Görsel URL 1,Görsel URL 2,Görsel URL 3',
     );
     buffer.writeln(
-      'Örnek Ürün 2,"1,250.00",Özel tasarım elbise,Elbise,Mevcut,https://ornek.com/gorsel.jpg',
+      'Örnek Ürün 1,125.50,Günlük kullanım için uygun,Genel,Mevcut,12,Örnek Marka,8690000000005,ORNEK-1,https://ornek.com/urun1-a.jpg,https://ornek.com/urun1-b.jpg,https://ornek.com/urun1-c.jpg',
     );
-    buffer.writeln('Örnek Ürün 3,,Kampanyalı fiyat,Genel,Tükendi,');
+    buffer.writeln(
+      'Örnek Ürün 2,"1,250.00",Özel tasarım elbise,Elbise,Mevcut,4,Örnek Marka,,ELBISE-2,https://ornek.com/urun2-a.jpg,https://ornek.com/urun2-b.jpg,https://ornek.com/urun2-c.jpg',
+    );
     return Uint8List.fromList(utf8.encode(buffer.toString()));
   }
 }

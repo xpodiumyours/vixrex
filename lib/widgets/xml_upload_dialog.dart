@@ -76,12 +76,13 @@ class _XmlUploadDialogState extends State<XmlUploadDialog> {
       editToken: widget.editToken,
     );
 
+    if (!mounted) return;
     setState(() {
       _isLoading = false;
       _result = result;
     });
 
-    if (result.isSuccess && mounted) {
+    if (result.isSuccess && result.inserted > 0) {
       // Faz 4: ortak konuşmaya log — Next.js poll ile görür
       unawaited(
         ProductConversationLogger.log(
@@ -102,6 +103,7 @@ class _XmlUploadDialogState extends State<XmlUploadDialog> {
         'XML ile Ürün Yükle',
         style: TextStyle(fontWeight: FontWeight.bold),
       ),
+      scrollable: true,
       content: SizedBox(
         width: 400,
         child: Column(
@@ -153,6 +155,17 @@ class _XmlUploadDialogState extends State<XmlUploadDialog> {
                   ),
                 ),
               ),
+              for (final detail in _result!.errorDetails)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    detail.toString(),
+                    style: const TextStyle(
+                      color: AppColors.error,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
             ],
           ],
         ),

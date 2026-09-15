@@ -359,6 +359,7 @@ class SupabaseProductRepository implements ProductRepository {
               ? (row['stock_quantity'] as num).toInt()
               : null,
       isVisible: row['is_visible'] as bool? ?? true,
+      imagePublishMinimum: (row['image_publish_minimum'] as num?)?.toInt() ?? 0,
       slug: row['slug']?.toString(),
       source: row['source_type']?.toString(),
       sourceMediaId: externalProductId.isEmpty ? null : externalProductId,
