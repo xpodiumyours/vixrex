@@ -4,6 +4,7 @@ import 'package:vixrex/config/app_router.dart';
 import 'package:vixrex/config/instagram_sync_config.dart';
 import 'package:vixrex/controllers/ocr_controller.dart';
 import 'package:vixrex/controllers/store_editor_controller.dart';
+import 'package:vixrex/controllers/store_editor_product_batch_extension.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/screens/my_vitrin/my_vitrin_state.dart';
 import 'package:vixrex/screens/ocr_scanner_screen.dart';
@@ -276,6 +277,7 @@ class IcerikSeoBolumu extends StatelessWidget {
             storeId: controller.data.id?.trim() ?? '',
             editToken: controller.publishedInfo?.editToken.trim() ?? '',
             showMessage: (msg) => state.showSnackBar(ctx, msg),
+            onBatchImport: controller.importProductBatch,
             onCatalogChanged: (products, categories) async {
               final publishedToken =
                   controller.publishedInfo?.editToken.trim() ?? '';
