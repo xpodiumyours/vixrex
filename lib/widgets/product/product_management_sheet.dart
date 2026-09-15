@@ -23,6 +23,7 @@ typedef ProductCatalogChanged =
 
 typedef ProductBatchImported =
     Future<ProductBatchImportResult> Function(List<Product> products);
+typedef ProductCatalogRefresh = Future<void> Function();
 
 class ProductManagementSheet extends StatefulWidget {
   const ProductManagementSheet({
@@ -35,6 +36,7 @@ class ProductManagementSheet extends StatefulWidget {
     required this.showMessage,
     required this.onCatalogChanged,
     this.onBatchImport,
+    this.onCatalogRefresh,
     required this.onProductDelete,
     required this.onOcrTap,
   });
@@ -47,6 +49,7 @@ class ProductManagementSheet extends StatefulWidget {
   final ValueChanged<String> showMessage;
   final ProductCatalogChanged onCatalogChanged;
   final ProductBatchImported? onBatchImport;
+  final ProductCatalogRefresh? onCatalogRefresh;
 
   /// Seçilen ürünü kalıcı siler. Başarılıysa true.
   final Future<bool> Function(Product product) onProductDelete;
@@ -212,7 +215,6 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
     widget.showMessage(
       product == null ? 'Ürün kaydedildi.' : 'Ürün güncellendi.',
     );
-    // Faz6 parity: yalnız gerçekten kaydedilen tek ürün işlemi ortak sohbete düşer.
     unawaited(
       ProductConversationLogger.log(
         count: 1,
@@ -865,6 +867,7 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
       storeId: widget.storeId,
       editToken: widget.editToken,
       storeSlug: widget.storeSlug,
+      onCatalogRefresh: widget.onCatalogRefresh,
       onSaved: (products) async {
         final canUseRemoteBatch =
             widget.storeId.trim().isNotEmpty &&
@@ -875,9 +878,6 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
           final batchResult = await widget.onBatchImport!(products);
           if (batchResult.isSuccess && mounted) {
             setState(() {
-              // Controller başarılı batch sonrasında bu iki listeyi yerinde
-              // canonical DB sonucu ile günceller. Geçici local kimlikleri
-              // ekranda tutmuyoruz.
               _products = List<Product>.of(widget.products);
               _categories = List<ProductCategory>.of(widget.categories);
               _ensureCategories();
@@ -922,8 +922,14 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
       storeId: widget.storeId,
       editToken: widget.editToken,
       storeSlug: widget.storeSlug,
-      onUploaded: () {
-        if (mounted) setState(() {});
+      onUploaded: () async {
+        await widget.onCatalogRefresh?.call();
+        if (!mounted) return;
+        setState(() {
+          _products = List<Product>.of(widget.products);
+          _categories = List<ProductCategory>.of(widget.categories);
+          _ensureCategories();
+        });
       },
     );
   }
