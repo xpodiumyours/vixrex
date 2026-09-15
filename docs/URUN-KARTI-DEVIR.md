@@ -30,7 +30,7 @@ Yeni delta için kapılar yeniden koşmadan "tamamlandı" denmez.
 - Bu daldan main'e tek parça merge yapılmayacak; doğrulanan fazlar küçük PR'lar
   halinde alınacak.
 
-## Şu an #489'da kodlanan ama henüz tamamlanmış sayılmayan delta
+## Şu an #489'da kodlanan delta
 
 1. `StorePublishValidator` eski 4 görsel sınırından ortak 11 görsel politikasına
    bağlandı; 11 kabul / 12 red / geçersiz URL testleri eklendi.
@@ -49,10 +49,6 @@ Yeni delta için kapılar yeniden koşmadan "tamamlandı" denmez.
    `external_product_id -> barkod/GTIN -> SKU` olacak şekilde upsert davranışına
    çevrildi. Mevcut üründe yalnız dolu/gelen alanlar güncelleniyor; boş alanlar
    mevcut veriyi silmiyor; otomatik ürün silme yok.
-
-**Önemli:** Yukarıdaki maddeler şu anda yalnız kodlanmış durumdadır. Dev DB
-provası, CI, migration/RLS/GRANT güvenliği ve uçtan uca kanıt tamamlanmadan
-"doğrulandı" veya "tamamlandı" sayılmaz.
 
 ## Canlı `batch_create_products` için geri dönüş kaynağı
 
@@ -78,23 +74,69 @@ Yeniden XML/Excel yükleme **atlama değil upsert** davranışıdır:
 Kimlik birden fazla mevcut ürüne eşleşirse yanlış ürünü rastgele güncellemek
 yerine satır hata verir (`PRODUCT_IDENTITY_AMBIGUOUS_*`).
 
-## Dev prova durumu
+## vixrex-dev ürün-alt-sistemi provası — KANITLANDI
 
-Ayrı Supabase projesi mevcut: `vixrex-dev`.
+Production'a DDL uygulanmadı. Ayrı `vixrex-dev` projesinde mevcut test verileri
+silinmeden, yalnız ürün alt sistemi için additive prova iskeleti kuruldu ve
+Product CORE + hedef batch RPC orada çalıştırıldı.
 
-Kontrol sonucu dev proje şu anda güncel Product CORE migration zincirine sahip
-**değil**: `create_store_product_v3`, `update_store_product_v2` ve
-`batch_create_products` yok. Bu nedenle yalnız yeni batch migration'ı dev'e
-uygulamak doğru prova olmaz.
+Bu prova **112 migration'ın tamamının sıfırdan kurulumu değildir**. Tam migration
+zinciri provası CI/local Supabase kapısında ayrıca geçmek zorundadır.
 
-Sıradaki DB işi:
+DB üzerinde alınan gerçek sonuçlar:
 
-1. vixrex-dev üzerinde güncel migration zincirini güvenli biçimde sıfırdan kur,
-2. snapshot → Product CORE → batch upsert sırasını doğrula,
-3. aynı ürünü iki kez yükleyerek ilk sefer `inserted`, ikinci sefer fiyat/stok
-   değişmişse `updated`, değişmemişse `unchanged` kanıtı al,
-4. hatalı tek satırın diğer geçerli satırları durdurmadığını doğrula,
-5. production'a DDL uygulama.
+| Senaryo | Sonuç |
+|---|---|
+| İlk yükleme: external id + fiyat + stok + marka + barkod + SKU + 2 görsel | `inserted=1, updated=0, unchanged=0, errors=0` |
+| Aynı external id, yalnız fiyat 100→125.50 ve stok 5→9 | `updated=1, inserted=0, unchanged=0, errors=0` |
+| Aynı veri üçüncü kez | `unchanged=1, updated=0, inserted=0, errors=0` |
+| Barkod kimlikli + yalnız SKU kimlikli iki yeni ürün | `inserted=2, errors=0` |
+| Aynı barkod/SKU ile fiyat-stok değişikliği | `updated=2, errors=0` |
+| İlk satır hatalı ad, ikinci satır geçerli | hatalı satır `PRODUCT_NAME_REQUIRED`, geçerli satır `inserted=1` |
+| 12 görsel + 11 görsel iki satır | 12 görsel satırı `PRODUCT_IMAGES_MAX_11`, 11 görsel satırı `inserted=1` |
+| metadata + varyant güncellemesi | metadata içindeki mevcut SKU korundu, yeni attribute ve varyant DB'de okundu |
+| sonraki import metadata/varyant göndermedi | `unchanged=1`; mevcut metadata/varyant silinmedi |
+
+Ayrıca fiyat/stok-only ikinci yükleme sonrasında DB'den yeniden okundu:
+- esnaf açıklaması korundu,
+- 2 mevcut görsel korundu,
+- marka/barkod korundu,
+- `metadata.identifiers.sku` korundu,
+- fiyat ve stok gerçekten değişti,
+- ürün slug'ı değişmedi.
+
+### Prova sırasında bulunan gerçek hata
+
+İlk update denemesi şu DB hatasını verdi:
+
+`function pg_catalog.jsonb_object_length(jsonb) does not exist`
+
+Bu hata canlıya gitmeden `vixrex-dev` provasının içinde yakalandı. Henüz production'a
+uygulanmamış hedef migration içinde düzeltildi; yeni bir "yama migration" eklenmedi.
+Boş metadata kontrolü artık doğrudan `jsonb <> '{}'::jsonb` ile yapılıyor.
+Düzeltme commit'i: `c16c629`.
+
+## GRANT/RLS prova durumu
+
+CI'daki mevcut `GRANT güvenlik bekçisi`, fonksiyonların `EXECUTE` yetkisini değil,
+`anon/authenticated` rollerinin public tablolarda tehlikeli
+`TRUNCATE / MAINTAIN / REFERENCES / TRIGGER` yetkilerini denetler.
+
+`vixrex-dev` ürün prova tabloları ilk oluşturulduğunda Supabase varsayılan
+ayrıcalıkları nedeniyle bu dört yetki görüldü. Production'daki mevcut products ve
+product_categories ACL'leri referans alınarak dev prova tablolarında bu tehlikeli
+yetkiler geri çekildi ve aynı sorgu tekrar çalıştırıldı:
+
+`dangerous_count = 0`
+
+Bu, **dev ürün-alt-sistemi için manuel GRANT kanıtıdır**; CI'daki tam sıfırdan
+migration zinciri koşusunun yerine geçmez.
+
+`batch_create_products`, `create_store_product_v3` ve `update_store_product_v2`
+fonksiyonlarının `anon/authenticated` EXECUTE yetkisi vardır; her fonksiyon kendi
+`SECURITY DEFINER` gövdesinde edit-token/owner yetkilendirmesi yapar. Bu fonksiyon
+ACL sözleşmesi ayrıca regression testi/incelemesi gerektirir; mevcut GRANT bekçisi
+bunu otomatik kontrol etmiyor.
 
 ## CI kapıları — hâlâ tamamlanmadı
 
@@ -104,11 +146,11 @@ Aşağıdaki kapılar gerçekten koşup yeşil olmadan #489 main'e giremez:
 - şema sapma kontrolü,
 - GRANT güvenlik bekçisi,
 - Next typecheck/lint/test/build,
-- migration provası,
+- tam migration zinciri provası,
 - ürün regresyonları.
 
-Özellikle batch RPC `SECURITY DEFINER` ve istemci rolleriyle çalıştığı için
-EXECUTE izinları GRANT bekçisiyle doğrulanmadan güvenli kabul edilmez.
+Son kontrol anında #489'un son commit CI koşusu **queued** durumundaydı; yeşil
+kabul edilmedi.
 
 ## Daha önce main'e alınan ürün fazları
 
@@ -137,14 +179,15 @@ Minimum 3 görsel yalnız uygun yayın kalite kapısında uygulanacak. Canlı es
 
 ### A — Toplu yükleme / Product CORE
 
-Henüz tamamlanmadı. Kalanlar:
+DB batch upsert davranışı `vixrex-dev` üzerinde kanıtlandı. A fazının tamamlanması
+için hâlâ gerekenler:
 
-- Flutter Excel/CSV payload'larını aynı kimlik/upsert sözleşmesine bağla,
-- XML payload'ında `external_product_id`/barkod/SKU zincirini doğrula,
-- metadata/varyant/fiyat alanlarının gerçek DB write-read paritesini kanıtla,
-- UI'nın yeni dört sayaç sonucunu doğru göstermesini sağla,
+- Flutter Excel/CSV payload'larını aynı batch kimlik/upsert sözleşmesine bağla,
+- XML parser/payload'ında `external_product_id`/barkod/SKU alanlarını ayrı taşı,
+- Flutter/XML UI'nın yeni dört sayaç sonucunu doğru göstermesini sağla,
 - false-success regresyon testlerini ekle,
-- vixrex-dev uçtan uca prova.
+- Next typecheck/lint/test/build ve Flutter analyze/test çalıştır,
+- tam migration zincirini sıfırdan çalıştıran CI kapılarını gerçekten geçir.
 
 ### B — Görsel kalite + yayın kapısı
 
