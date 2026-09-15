@@ -4,13 +4,19 @@
 > Kaynak dal: `work/product-live-ready-20260914` (PR #489) — **merge edilmedi,
 > referans olarak duruyor, silinmeyecek.**
 
-## GÜNCEL DURUM (2026-09-15, son güncelleme)
+## GÜNCEL DURUM — doğrulanmış gerçeklik
 
-**Kod main'de ve doğrulandı. Canlıya ÇIKMADI.**
+### 1. Kod / main
 
-main'in birleşmiş hâli yerelde baştan koşuldu:
+Ürün kartı fazları #491–#495 `main` içinde. Güncel `main` başı
+`1304624820f98b9e1455dc488c1fe8f0525492fb` (`chore: urun karti calismasini
+uretime al`). Bu commit **boş commit**: önceki `a4e1c8bc...` ile karşılaştırmada
+değişen dosya yok. Dolayısıyla bu commit ürün kodunu değiştirmedi veya geri
+almadı; yalnız yeni dağıtım/CI tetiklemiş oldu.
 
-| Kapı | Sonuç |
+Birleşmiş ürün kodu daha önce yerelde baştan koşturuldu:
+
+| Kapı | Yerel sonuç |
 |---|---|
 | `flutter analyze` | temiz |
 | `flutter test` | 737 test geçti |
@@ -19,28 +25,65 @@ main'in birleşmiş hâli yerelde baştan koşuldu:
 | `eslint` | 0 hata (3 uyarı, önceden vardı) |
 | `next build` | başarılı |
 
-**Canlı neden güncel değil:** Vercel ücretsiz plan derleme kotası doldu.
-`vixrex-public` projesinde üretime çıkan tek dağıtım commit `263bd237` — yani
-yalnız #491 (ölü kod temizliği). #492, #493, #494, #495 main'de ama canlıda
-DEĞİL. Ürün kartı bu yüzden eski görünüyor.
+Bu tablo **yerel doğrulamadır; CI doğrulaması değildir.**
 
-**Yapılacak tek şey:** Vercel panelinde `vixrex-public` → Deployments →
-`vixrex-public-q0lzzdzpq` (mesajı "feat(urun): Flutter tarafini zengin urun
-modeline esitle") → **Promote to Production**. Bu derleme READY durumda ve beş
-fazın tamamını içeriyor; yeni derleme gerektirmez, kota yemez. Alternatif:
-kota sıfırlanınca main'e bir commit atmak.
+### 2. Vercel / production durumu
 
-**Canlı doğrulama tuzağı:** sayfada `Hızlı` kelimesiyle arama YAPMA — "Hızlı
-Teknik" adlı vitrine denk gelip yanlış olumlu veriyor. `ProductQuickView`
-veya `Barkod` gibi yalnız yeni kodda geçen bir ize bak.
+Önceki durumda `vixrex-public` üretimi `263bd237` (#491) üzerindeydi ve
+#492–#495 production'a çıkmamıştı. Daha sonra `main`e boş commit
+`1304624820...` atıldı. GitHub üzerindeki Vercel kontrolleri bu commit için
+hem `vixrex-public` hem `vixrex-app` tarafında **SUCCESS** durumda.
 
-**CI durumu:** Beş PR main'e inerken şu üç iş HİÇ koşmadı — Flutter analiz/test,
-şema sapma kontrolü, GRANT güvenlik bekçisi. Koşan ve geçen dört kapı:
-Değişiklik yüzeyi, Secret sızıntı taraması, Supabase auth kontrolü, Vercel
-derlemesi. Üç işin koşmama sebebi `subosito/flutter-action`'ın self-hosted
-Windows runner'da düşmesiydi; PR #497 bunu runner'da kurulu Flutter 3.44.4'e
-bağlıyor. #497 inince bu üç kapı ilk kez gerçekten koşacak ve beş PR geriye
-dönük doğrulanmış olacak.
+Ancak yalnız bu check sonucu production aliasının gerçekten bu commit'e
+bağlandığını kanıtlamaz. Bağlı Vercel erişiminde deployment listesi 403 verdiği
+için production aliası bağımsız olarak doğrulanamadı. Bu nedenle bu belgede
+şu iki cümleden hiçbiri kanıt olmadan kullanılmayacak:
+
+- “#492–#495 kesinlikle hâlâ production'da değil.”
+- “#492–#495 kesinlikle production'a çıktı.”
+
+**Yapılacak doğrulama:** Vercel panelinde production deployment/aliasın commit
+`1304624820...` veya #492–#495'i içeren eşdeğer build üzerinde olduğu görülmeli.
+Eski `vixrex-public-q0lzzdzpq` Preview'ını promote etme talimatı artık tek
+geçerli yol olarak yazılmayacak; çünkü son boş commit sonrasında yeni Vercel
+check'leri başarılı oldu.
+
+### 3. CI — PR #497 ve gerçek kapı durumu
+
+PR #497 açık ve merge edilmedi. Değiştirdiği **tek dosya** `.github/workflows/ci.yml`.
+Yaptığı iş yalnız iki self-hosted Windows job'ında `subosito/flutter-action`
+yerine runner'da kurulu Flutter 3.44.4'ü kullanmak:
+
+- `Flutter — analiz ve testler`
+- `Şema üretim hattı — sapma kontrolü`
+
+**PR #497 GRANT güvenlik bekçisini değiştirmiyor.** GRANT işi `ubuntu-latest`
+üzerinde ayrı çalışıyor.
+
+PR #497 head `452fbb1e...` için CI run `34922636949` son gözlemde:
+
+| İş | Durum |
+|---|---|
+| Supabase auth security config check | başarılı |
+| Değişiklik yüzeyi | başarılı |
+| Secret sızıntı taraması | başarılı |
+| Flutter — analiz ve testler | queued |
+| Şema üretim hattı — sapma kontrolü | queued |
+| Next.js — lint, tip, test, build | queued |
+| Supabase yerel doğrulama — GRANT güvenlik bekçisi | **failure** |
+| Next.js E2E | skipped |
+
+GRANT işinin logu GitHub'dan alınamadığı için failure'ın gerçek bir GRANT
+ihali mi, `ubuntu-latest`/kota/altyapı sorunu mu olduğu **doğrulanamadı**.
+Bu ayrım çözülmeden “üç kapı doğrulandı” denmeyecek.
+
+**Doğru sıra:**
+1. Self-hosted runner çalışır hale gelir; queued Flutter/şema (ve bekleyen diğer
+   runner işleri) gerçekten koşar.
+2. GRANT failure'ın nedeni ayrı incelenir ve yeşile dönmeden güvenlik kapısı
+   geçmiş sayılmaz.
+3. #497 güncel `main`e karşı yeniden CI görmeden merge edilmez.
+4. Bundan sonra ürün fazlarına devam edilir.
 
 ---
 
@@ -50,7 +93,7 @@ Dev dal 100 dosya, +13.966/−3.368, 11 migration. Tek parça merge edilmedi;
 içinden fazlar tek tek alındı. Sebep: dalda canlıyı kıran dört davranış vardı
 (aşağıda) ve o dalda CI hiç gerçekten koşmamıştı.
 
-## main'e inen ve CANLIDA olan (2026-09-15)
+## main'e inen ürün fazları (production durumu ayrıca doğrulanır)
 
 | PR | Ne |
 |---|---|
@@ -60,11 +103,15 @@ içinden fazlar tek tek alındı. Sebep: dalda canlıyı kıran dört davranış
 | #494 | Kategori şablonları esnaf yönetiminde |
 | #495 | Flutter tarafı zengin ürün modeline eşitlendi |
 
-Canlıya uygulanan migration: `20260915010000_product_rich_core_minimal`.
-Doğrulandı: şablon kolonu var, 38 kategori `generic`, dört yeni fonksiyon
-canlıda, görsel tetikleyicisi **kurulmadı**, 68 ürün yerinde ve yayında.
+Repo migration dosyası:
+`supabase/migrations/20260915010000_product_rich_core_minimal.sql`.
+Canlı Supabase migration geçmişinde aynı ad `product_rich_core_minimal` olarak
+uygulanmış durumda (canlı kayıt sürümü `20260915022230`). Bu iki kimlik ayrı
+kaynaklardan geldiği için biri diğerinin yerine yazılmayacak.
 
-Zengin alanlar canlıda henüz boş; esnaf doldurduğu an kartta ve detayda görünür.
+Doğrulanan canlı DB durumu: ürün çekirdeği migration'ı mevcut. Görsel
+zorunluluğunun tehlikeli DB tetikleyicisi bu güvenli çekirdeğin parçası olarak
+alınmadı.
 
 ## Bilerek ALINMAYAN dört davranış — geri getirilmemeli
 
@@ -77,71 +124,83 @@ Zengin alanlar canlıda henüz boş; esnaf doldurduğu an kartta ve detayda gör
 3. **`metadata.templateKey` dolu eski ürünün kalıcı 422 alması** — düzenlenemez
    hale geliyordu.
 4. **En az 3 görsel kuralının veritabanı tetikleyicisinde olması.**
-   Canlıdaki 68 ürünün TAMAMI 1–2 görselli; tetikleyici kurulursa esnaf mevcut
-   ürününün fotoğrafını değiştiremez. Kural kaybolmadı: Flutter'da
-   `ProductImagePolicy.validateForPublish` olarak duruyor, yayın kapısına
-   bağlanmayı bekliyor. Üst sınır 11 zaten uygulanıyor.
+   Canlıdaki mevcut ürünleri kilitleme riski nedeniyle DB tetikleyicisi olarak
+   alınmadı. Kural Flutter'da `ProductImagePolicy.validateForPublish` olarak
+   yayın kapısına bağlanmayı bekliyor. Üst sınır 11 korunuyor.
 
-## Kalan iki adım
+## Sıradaki ürün işleri — sıra değiştirilmeyecek
 
-**A — Toplu yükleme (Excel/CSV/XML yeni alanları taşısın)**
+### 0 — Önce CI gerçekliğini kapat
 
-Daldan alınacaklar:
+- PR #497'nin self-hosted Flutter/şema işleri gerçekten koşacak.
+- GRANT güvenlik bekçisi failure nedeni doğrulanacak ve yeşil olacak.
+- Production alias bağımsız doğrulanacak.
+
+Bu üçü tamamlanmadan yeni ürün fazı `main`e merge edilmeyecek.
+
+### A — Toplu yükleme (Excel/CSV/XML yeni alanları taşısın)
+
+Daldan referans alınacak yüzeyler:
 `public_web/src/app/api/products/batch/route.ts`,
 `public_web/src/components/owner/BulkProductUpload.tsx`,
 `lib/services/bulk_product_upload_service.dart`,
 `lib/services/xml_product_upload_service.dart`,
 `lib/screens/bulk_product_upload_screen.dart`,
 `lib/controllers/bulk_product_upload_controller.dart`,
-`lib/widgets/xml_upload_dialog.dart`
+`lib/widgets/xml_upload_dialog.dart`.
 
-Dikkat: `batch/route.ts` daldaki halinde tek kötü satır yüzünden 100'lük
-yüklemenin tamamını 422 ile iptal ediyor; satır atlanacak şekilde düzeltilmeli.
-Ayrıca `product_management_sheet.dart` içindeki `_openBulkUpload` çağrısı bu
-fazda mevcut imzaya uyarlandı; toplu yükleme ekranı gelince `onSaved` geri
-dönüş tipi tekrar `Future<bool>` olacak.
+Daldaki kod olduğu gibi alınmayacak. Özellikle `batch/route.ts` içindeki tek
+hatalı satırın tüm 100'lük yüklemeyi 422 ile kesen davranışı Vixrex'e taşınmaz;
+satır bazlı hata/başarı davranışı güncel `main` sözleşmesine göre doğrulanır.
+`product_management_sheet.dart` içindeki `_openBulkUpload` bağlantısı da güncel
+imzaya göre bağlanır; eski dalın imzası körlemesine geri getirilmez.
 
-**B — Görsel kalite + yayın kapısı**
+### B — Görsel kalite + yayın kapısı
 
-Daldan alınacaklar: `lib/services/store_publish_validator.dart`,
+Daldan referans alınacak yüzeyler:
+`lib/services/store_publish_validator.dart`,
 `lib/services/store_publish_service.dart`,
 `lib/services/image_optimization_service.dart`,
 `lib/services/store_shelf_upload_service.dart`,
 `public_web/src/lib/productImageCleanup.ts`,
 `public_web/src/lib/gorselSikistir.ts`,
-`public_web/src/app/api/product-image-upload/route.ts`
+`public_web/src/app/api/product-image-upload/route.ts`.
 
-Kurallar: en az 3 görsel YALNIZ yayın kapısında uygulanacak, veritabanı
-tetikleyicisi olarak DEĞİL. Görsel temizlik servisi dosya siliyor; yalnız
-başka üründe kullanılmayan ve Vixrex yükleme yolundan gelmiş görseller
-silinmeli, dış CDN ve mağaza görselleri silinmemeli. Bu fazın kabul kanıtı
-silmenin YAPILMADIĞI durumları göstermektir.
+Kurallar: en az 3 görsel **yalnız yayın kapısında** uygulanacak, DB tetikleyicisi
+olarak değil. Görsel temizlik yalnız Vixrex ürün yükleme yolundan gelen ve başka
+üründe kullanılmayan dosyaya dokunabilir. Dış CDN, başka ürün ve mağaza görseli
+silinmez. Kabul kanıtı hem silinen hem **silinmeyen** durumları kapsar.
 
-## Nasıl çalışılır
+### C — Ürün şeması sapma kapısı
 
-Her faz için `origin/main`'den ayrı worktree aç, daldan yalnız o fazın
-dosyalarını `git checkout work/product-live-ready-20260914 -- <yollar>` ile al,
-eksik bağımlılıkları tip kontrolü/analiz söyleyene kadar ekle, kapıları koş,
-kendi PR'ını aç. Ana klasörde (`C:\Projects\vixrex`) çalışma; orada başka ajan
-olabilir.
+`shared/product_attribute_schema.json` Flutter ve Next.js için ortak kaynak
+olarak korunacak. Sayısal sınırlar/enum etiketleri gibi elle kopyalanan
+parçaların sapmasını yakalayan CI kontrolü ürün şeması için kurulacak. Yeni
+ürün alanı/şablonu bu kapıdan önce eklenmeyecek.
+
+## Çalışma yöntemi
+
+Her faz güncel `origin/main`den ayrı branch/worktree ile açılır. Eski ürün dalı
+merge edilmez; yalnız doğrulanmış parça referans alınır. Her PR tek amaçlıdır.
 
 Kapılar: `public_web` içinde `npm run typecheck`, `npx vitest run`,
-`npm run lint`, `npm run build`; kökte `flutter analyze`, `flutter test`.
-Son ölçüm: 1513 web testi, 737 Flutter testi yeşil.
+`npm run lint`, `npm run build`; Flutter tarafında `flutter analyze`,
+`flutter test`; migration/yetki değişiyorsa GRANT güvenlik bekçisi ve canlı
+Supabase doğrulaması ayrıca gerekir.
 
-## Bilinen altyapı sorunları
+## Bilinen altyapı gerçekleri
 
-- CI'daki **Flutter — analiz ve testler** ve **Şema üretim hattı** işleri
-  self-hosted runner'da "Setup Flutter" adımında düşüyor. Kod sorunu değil.
-- Runner daha önce Git Bash yerine WSL bash kullanıyordu; `C:\vixrex-runner\.env`
-  dosyasına doğru PATH yazılarak düzeltildi. Yeniden başlatılırken eski oturum
-  çakışması verirse birkaç dakika sonra kendiliğinden bağlanır.
-- `supabase_schema.sql` kök dosyası 2026-08-16'dan beri güncellenmedi;
-  veritabanı gerçeği `supabase/migrations/` ve canlı Supabase'dir.
+- Flutter ve şema drift işleri self-hosted Windows runner kullanıyor.
+- GRANT güvenlik bekçisi `ubuntu-latest` kullanıyor; #497 kapsamı dışında.
+- `supabase_schema.sql` kök snapshot'ı veritabanı hakikati değildir;
+  `supabase/migrations/` ve canlı Supabase esas alınır.
+- Vercel check `success` ile production alias doğrulaması aynı şey değildir.
 
-## Tek veri kaynağı — açık borç
+## Değişmez koruma kuralları
 
-`shared/product_attribute_schema.json` iki taraftan da okunuyor (doğru), ama
-sayısal sınırlar ve enum etiketleri hâlâ elle kopyalanmış. Diğer ortak
-şemalarda olan "JSON'dan üret → sapma var mı" CI kapısı ürün şeması için
-kurulmadı. Yeni şablon veya alan eklenmeden önce bu kapı kurulmalı.
+- Çalışan Product CORE paralel ikinci ürün sistemiyle değiştirilmeyecek.
+- `main` tek kod hakikati; canlı DB tek veri hakikati.
+- Eski `work/product-live-ready-20260914` dalı topluca merge edilmeyecek.
+- Sessiz veri silen dört davranış geri getirilmeyecek.
+- Bir kapı queued/skipped/failure iken “CI doğruladı” yazılmayacak.
+- Production alias görülmeden “canlıya çıktı” yazılmayacak.
