@@ -93,4 +93,20 @@ void main() {
     expect(result.errorCount, 1);
     expect(result.errors.single.message, contains('http:// veya https://'));
   });
+
+  test('Türkçe binlik ve ondalık fiyat yazımını ortak kuralla okur', () {
+    final result = service.parse(
+      _csvBytes(
+        'Ürün Adı,Fiyat\n'
+        'Binlik Fiyat,1.234 TL\n'
+        'Ondalıklı Fiyat,"1.234,56 TL"\n',
+      ),
+      fileName: 'urunler.csv',
+    );
+
+    expect(result.isSuccess, isTrue);
+    expect(result.validCount, 2);
+    expect(result.products[0].price, '1234');
+    expect(result.products[1].price, '1234.56');
+  });
 }
