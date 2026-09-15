@@ -6,6 +6,7 @@ import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/screens/bulk_product_upload_screen.dart';
 import 'package:vixrex/screens/product_category_management_screen.dart';
 import 'package:vixrex/services/bulk_product_field_update_service.dart';
+import 'package:vixrex/services/product_batch_import_service.dart';
 import 'package:vixrex/services/product_category_sync_service.dart';
 import 'package:vixrex/services/product_conversation_logger.dart';
 import 'package:vixrex/theme/app_colors.dart';
@@ -20,6 +21,9 @@ typedef ProductCatalogChanged =
       List<ProductCategory> categories,
     );
 
+typedef ProductBatchImported =
+    Future<ProductBatchImportResult> Function(List<Product> products);
+
 class ProductManagementSheet extends StatefulWidget {
   const ProductManagementSheet({
     super.key,
@@ -30,6 +34,7 @@ class ProductManagementSheet extends StatefulWidget {
     required this.editToken,
     required this.showMessage,
     required this.onCatalogChanged,
+    this.onBatchImport,
     required this.onProductDelete,
     required this.onOcrTap,
   });
@@ -41,6 +46,7 @@ class ProductManagementSheet extends StatefulWidget {
   final String editToken;
   final ValueChanged<String> showMessage;
   final ProductCatalogChanged onCatalogChanged;
+  final ProductBatchImported? onBatchImport;
 
   /// Seçilen ürünü kalıcı siler. Başarılıysa true.
   final Future<bool> Function(Product product) onProductDelete;
@@ -860,14 +866,45 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
       editToken: widget.editToken,
       storeSlug: widget.storeSlug,
       onSaved: (products) async {
+        final canUseRemoteBatch =
+            widget.storeId.trim().isNotEmpty &&
+            widget.editToken.trim().isNotEmpty &&
+            widget.onBatchImport != null;
+
+        if (canUseRemoteBatch) {
+          final batchResult = await widget.onBatchImport!(products);
+          if (batchResult.isSuccess && mounted) {
+            setState(() {
+              // Controller başarılı batch sonrasında bu iki listeyi yerinde
+              // canonical DB sonucu ile günceller. Geçici local kimlikleri
+              // ekranda tutmuyoruz.
+              _products = List<Product>.of(widget.products);
+              _categories = List<ProductCategory>.of(widget.categories);
+              _ensureCategories();
+            });
+          }
+          return batchResult;
+        }
+
+        // Yayın öncesi eski yerel taslak akışı korunur. Burada uzak batch RPC
+        // yoktur; ürünler StoreData taslağına yazılır ve ilk yayında CORE'a
+        // stage edilir.
         final previousProducts = List<Product>.of(_products);
         setState(() {
           _products.insertAll(0, products);
         });
         final saved = await _persist();
-        if (!saved && mounted) {
-          setState(() => _products = previousProducts);
+        if (!saved) {
+          if (mounted) setState(() => _products = previousProducts);
+          return ProductBatchImportResult.failure(
+            'Toplu ürünler taslağa kaydedilemedi.',
+          );
         }
+        return ProductBatchImportResult(
+          isSuccess: true,
+          total: products.length,
+          inserted: products.length,
+        );
       },
     );
     if (result == true && mounted) {
