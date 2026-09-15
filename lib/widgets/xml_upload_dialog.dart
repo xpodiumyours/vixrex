@@ -5,13 +5,15 @@ import 'package:vixrex/services/product_conversation_logger.dart';
 import 'package:vixrex/services/xml_product_upload_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
 
+typedef OnXmlProductsUploaded = Future<void> Function();
+
 /// XML ile toplu ürün yükleme dialogu.
-/// Kullanıcı XML linkini yapıştırır, sistem otomatik yükler.
+/// Kullanıcı XML linkini yapıştırır, sistem Product CORE batch upsert uygular.
 class XmlUploadDialog extends StatefulWidget {
   final String storeId;
   final String editToken;
   final String storeSlug;
-  final VoidCallback? onUploaded;
+  final OnXmlProductsUploaded? onUploaded;
 
   const XmlUploadDialog({
     super.key,
@@ -26,7 +28,7 @@ class XmlUploadDialog extends StatefulWidget {
     required String storeId,
     required String editToken,
     String storeSlug = '',
-    VoidCallback? onUploaded,
+    OnXmlProductsUploaded? onUploaded,
   }) {
     return showDialog(
       context: context,
@@ -75,27 +77,41 @@ class _XmlUploadDialogState extends State<XmlUploadDialog> {
       storeId: widget.storeId,
       editToken: widget.editToken,
     );
+    if (!mounted) return;
 
     setState(() {
       _isLoading = false;
       _result = result;
     });
 
-    if (result.isSuccess && mounted) {
-      // Faz 4: ortak konuşmaya log — Next.js poll ile görür
-      unawaited(
-        ProductConversationLogger.log(
-          count: result.inserted,
-          source: 'xml',
-          scope: widget.storeSlug.isNotEmpty ? widget.storeSlug : null,
-        ),
-      );
-      widget.onUploaded?.call();
+    final accepted = result.changed + result.unchanged;
+    if (result.isSuccess && accepted > 0) {
+      if (result.changed > 0) {
+        unawaited(
+          ProductConversationLogger.log(
+            count: result.changed,
+            source: 'xml',
+            scope: widget.storeSlug.isNotEmpty ? widget.storeSlug : null,
+            extra:
+                '${result.inserted} eklendi, ${result.updated} güncellendi',
+          ),
+        );
+      }
+      await widget.onUploaded?.call();
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final result = _result;
+    final completeFailure =
+        result != null &&
+        result.isSuccess &&
+        result.changed == 0 &&
+        result.unchanged == 0 &&
+        result.errors > 0;
+    final visualSuccess = result?.isSuccess == true && !completeFailure;
+
     return AlertDialog(
       backgroundColor: AppColors.surface,
       title: const Text(
@@ -109,7 +125,7 @@ class _XmlUploadDialogState extends State<XmlUploadDialog> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Text(
-              'Tedarikçinizin XML linkini yapıştırın. Sistem otomatik olarak ürünleri vitrine ekleyecek.',
+              'Tedarikçinizin XML linkini yapıştırın. Ürünler mevcut Product CORE üzerinden eklenir veya eşleşen kayıtlar güncellenir.',
               style: TextStyle(color: AppColors.mutedText, fontSize: 13),
             ),
             const SizedBox(height: 16),
@@ -132,23 +148,25 @@ class _XmlUploadDialogState extends State<XmlUploadDialog> {
                 style: const TextStyle(color: AppColors.error, fontSize: 12),
               ),
             ],
-            if (_result != null) ...[
+            if (result != null) ...[
               const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color:
-                      _result!.isSuccess
+                      visualSuccess
                           ? Colors.green.withOpacity(0.1)
                           : AppColors.error.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  _result!.isSuccess
-                      ? '${_result!.inserted} ürün eklendi. ${_result!.errors > 0 ? '${_result!.errors} hata.' : ''}'
-                      : _result!.errorMessage!,
+                  !result.isSuccess
+                      ? result.errorMessage ?? 'XML ürünleri kaydedilemedi.'
+                      : completeFailure
+                      ? 'Hiçbir ürün kaydedilemedi · ${result.errors} hatalı'
+                      : '${result.inserted} eklendi · ${result.updated} güncellendi · ${result.unchanged} değişmedi · ${result.errors} hatalı',
                   style: TextStyle(
-                    color: _result!.isSuccess ? Colors.green : AppColors.error,
+                    color: visualSuccess ? Colors.green : AppColors.error,
                     fontSize: 13,
                   ),
                 ),
