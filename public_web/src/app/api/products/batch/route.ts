@@ -5,7 +5,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { validateExternalProductImageUrlsForImport } from "@/lib/productImagePolicy";
 
 /**
- * Toplu ürün oluşturma API'si.
+ * Toplu ürün oluşturma/güncelleme API'si.
  *
  * Bir satırın bozuk olması bütün partiyi iptal etmez. Geçerli satırlar aynı
  * batch Product CORE yoluna gönderilir, satır hataları kendi gerçek sıra
@@ -22,6 +22,7 @@ interface ProductBatchItem {
   category_name?: unknown;
   image_urls?: unknown;
   source_type?: unknown;
+  external_product_id?: unknown;
   sort_order?: unknown;
   isVisible?: unknown;
   stock_status?: unknown;
@@ -146,11 +147,12 @@ export async function POST(request: NextRequest) {
         category_name: cleanString(item.category_name),
         image_urls: imageValidation.imageUrls,
         source_type: cleanString(item.source_type) ?? "bulk_import",
+        external_product_id: cleanString(item.external_product_id),
         sort_order:
           typeof item.sort_order === "number" && Number.isInteger(item.sort_order)
             ? item.sort_order
-            : index,
-        isVisible: item.isVisible !== false,
+            : undefined,
+        isVisible: typeof item.isVisible === "boolean" ? item.isVisible : undefined,
         stock_status: cleanString(item.stock_status),
         stock_quantity: stockQuantity.value,
         brand: cleanString(item.brand),
@@ -165,6 +167,8 @@ export async function POST(request: NextRequest) {
       tamam: true,
       toplam: govde.products.length,
       eklenen: 0,
+      guncellenen: 0,
+      degismeyen: 0,
       hatali: rowErrors.length,
       hataDetaylari: rowErrors,
     });
@@ -189,6 +193,8 @@ export async function POST(request: NextRequest) {
       success?: boolean;
       total?: number;
       inserted?: number;
+      updated?: number;
+      unchanged?: number;
       errors?: number;
       error_details?: BatchErrorDetail[];
     };
@@ -220,6 +226,8 @@ export async function POST(request: NextRequest) {
       tamam: true,
       toplam: govde.products.length,
       eklenen: result?.inserted ?? 0,
+      guncellenen: result?.updated ?? 0,
+      degismeyen: result?.unchanged ?? 0,
       hatali: rowErrors.length + rpcErrorCount,
       hataDetaylari: [...rowErrors, ...mappedRpcErrors],
     });
