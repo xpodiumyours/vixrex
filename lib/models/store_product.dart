@@ -222,7 +222,8 @@ class Product {
                   .trim()
                   .isEmpty
               ? null
-              : (json['sourcePermalink'] ?? json['source_permalink']).toString(),
+              : (json['sourcePermalink'] ?? json['source_permalink'])
+                  .toString(),
       importedAt:
           (json['importedAt'] ?? json['imported_at'] ?? '')
                   .toString()
@@ -310,7 +311,9 @@ class ProductCategory {
 
   factory ProductCategory.fromJson(Map<String, dynamic> json) {
     final templateKey =
-        (json['productTemplateKey'] ?? json['product_template_key'] ?? 'generic')
+        (json['productTemplateKey'] ??
+                json['product_template_key'] ??
+                'generic')
             .toString()
             .trim();
     return ProductCategory(

@@ -391,7 +391,7 @@ jobs:
         run: npm run lint
 
       - name: Tip kontrolü
-        run: npx tsc --noEmit
+        run: npm run typecheck
 
       - name: Testler
         run: npm run test

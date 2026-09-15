@@ -40,7 +40,7 @@ export default function UrunlerPage() {
     }
     const { data, error } = await supabase
       .from("stores")
-      .select("id, slug, name, products(id, slug, name, description, price_text, price_amount, currency, image_urls, category_id, stock_status, stock_quantity, brand, barcode, metadata, variants, seo_title, seo_description, old_price_amount, badge_tag, fulfillment_region, product_categories(name,product_template_key)), product_categories(id, name, product_template_key)")
+      .select("id, slug, name, products(id, slug, name, description, price_text, image_urls, category_id, stock_status, old_price_amount, badge_tag, fulfillment_region, product_categories(name)), product_categories(id, name)")
       .eq("slug", slug)
       .maybeSingle();
     if (error || !data) {

@@ -6,7 +6,7 @@ import 'package:vixrex/repositories/product_repository.dart';
 import 'package:vixrex/services/product_service.dart';
 import 'package:vixrex/services/store_local_storage_service.dart';
 
-class _FakeProductRepository implements ProductRepository {
+class _FakeProductRepository extends ProductRepository {
   final List<Product> remote = [];
   final List<String> createdNames = [];
   final List<String> deletedIds = [];
@@ -148,9 +148,17 @@ class _MemoryStorage extends StoreLocalStorageService {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   late _FakeProductRepository repo;
   late _MemoryStorage storage;
   late StoreEditorController controller;
+
+  const images = [
+    'https://cdn.example.com/a.jpg',
+    'https://cdn.example.com/b.jpg',
+    'https://cdn.example.com/c.jpg',
+  ];
 
   setUp(() {
     repo = _FakeProductRepository();
@@ -195,7 +203,9 @@ void main() {
     await controller.initialize(null);
 
     final result = await controller.syncCatalogToRemote(
-      products: [Product(id: 'local-1', name: 'Kazak', price: '100')],
+      products: [
+        Product(id: 'local-1', name: 'Kazak', price: '100', imageUrls: images),
+      ],
       categories: const [],
     );
 
@@ -228,7 +238,7 @@ void main() {
     await controller.initialize(null);
 
     final result = await controller.syncCatalogToRemote(
-      products: [Product(id: 'local-1', name: 'Yeni')],
+      products: [Product(id: 'local-1', name: 'Yeni', imageUrls: images)],
       categories: const [],
     );
 
@@ -265,6 +275,7 @@ void main() {
           id: 'local-1',
           name: 'Kazak',
           price: '549 TL',
+          imageUrls: images,
           oldPriceAmount: 799,
           badgeTag: '-31%',
           fulfillmentLocation: 'Çekmeköy',

@@ -25,11 +25,16 @@ class ProductImagePolicy {
     return null;
   }
 
-  static String? validate(List<String> imageUrls) {
+  static String? validateForPublish(List<String> imageUrls) {
     final normalized = normalize(imageUrls);
     if (normalized.length < minImages) {
       return 'Bir ürün için en az $minImages fotoğraf zorunludur.';
     }
+    return validate(imageUrls);
+  }
+
+  static String? validate(List<String> imageUrls) {
+    final normalized = normalize(imageUrls);
     if (normalized.length > maxImages) {
       return 'Bir ürüne en fazla $maxImages fotoğraf eklenebilir.';
     }

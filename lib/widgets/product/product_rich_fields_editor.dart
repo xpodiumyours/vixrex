@@ -34,7 +34,8 @@ class ProductRichFieldsEditor extends StatefulWidget {
   final bool enabled;
 
   @override
-  State<ProductRichFieldsEditor> createState() => _ProductRichFieldsEditorState();
+  State<ProductRichFieldsEditor> createState() =>
+      _ProductRichFieldsEditorState();
 }
 
 class _ProductRichFieldsEditorState extends State<ProductRichFieldsEditor> {
@@ -80,7 +81,11 @@ class _ProductRichFieldsEditorState extends State<ProductRichFieldsEditor> {
             ),
             child: const Text(
               'Ürün kategori şablonu doğrulanamadı. Kategori ayarını kontrol edin; Vixrex farklı bir kategori tahmin etmez.',
-              style: TextStyle(color: AppColors.error, fontSize: 12, height: 1.4),
+              style: TextStyle(
+                color: AppColors.error,
+                fontSize: 12,
+                height: 1.4,
+              ),
             ),
           );
         }
@@ -184,12 +189,8 @@ class _ProductRichFieldsEditorState extends State<ProductRichFieldsEditor> {
         ],
         onChanged:
             widget.enabled
-                ? (value) => _writeDefinition(
-                  schema,
-                  template,
-                  definition,
-                  value,
-                )
+                ? (value) =>
+                    _writeDefinition(schema, template, definition, value)
                 : null,
       );
     }
@@ -211,12 +212,8 @@ class _ProductRichFieldsEditorState extends State<ProductRichFieldsEditor> {
                 .toList(),
         onChanged:
             widget.enabled
-                ? (value) => _writeDefinition(
-                  schema,
-                  template,
-                  definition,
-                  value,
-                )
+                ? (value) =>
+                    _writeDefinition(schema, template, definition, value)
                 : null,
       );
     }
@@ -235,17 +232,10 @@ class _ProductRichFieldsEditorState extends State<ProductRichFieldsEditor> {
           decoration: InputDecoration(
             labelText: label,
             hintText:
-                definition.valueType == 'multi'
-                    ? 'Virgülle ayırın'
-                    : null,
+                definition.valueType == 'multi' ? 'Virgülle ayırın' : null,
           ),
           onChanged:
-              (raw) => _writeDefinition(
-                schema,
-                template,
-                definition,
-                raw,
-              ),
+              (raw) => _writeDefinition(schema, template, definition, raw),
         ),
         if (definition.variantEligible)
           const Padding(
@@ -326,9 +316,8 @@ class _ProductRichFieldsEditorState extends State<ProductRichFieldsEditor> {
     } else if (definition.storage.startsWith('metadata.service.')) {
       next = _withServiceValue(base, definition, parsed);
     } else {
-      final attributes = base.attributes
-          .where((item) => item.key != definition.key)
-          .toList();
+      final attributes =
+          base.attributes.where((item) => item.key != definition.key).toList();
       if (_hasValue(parsed)) {
         attributes.add(
           ProductAttributeValue(
@@ -348,7 +337,10 @@ class _ProductRichFieldsEditorState extends State<ProductRichFieldsEditor> {
     ProductAttributeTemplate template,
   ) {
     final allowed =
-        schema.attributesForTemplate(template.key).map((item) => item.key).toSet();
+        schema
+            .attributesForTemplate(template.key)
+            .map((item) => item.key)
+            .toSet();
     final current = widget.value.metadata;
     return ProductRichMetadata(
       schemaVersion: schema.version,
@@ -357,7 +349,9 @@ class _ProductRichFieldsEditorState extends State<ProductRichFieldsEditor> {
       sku: current.sku,
       mpn: current.mpn,
       attributes:
-          current.attributes.where((item) => allowed.contains(item.key)).toList(),
+          current.attributes
+              .where((item) => allowed.contains(item.key))
+              .toList(),
       service: template.isService ? current.service : null,
     );
   }

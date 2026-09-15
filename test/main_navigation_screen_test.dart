@@ -262,7 +262,7 @@ void main() {
   });
 }
 
-class _NoopProductRepository implements ProductRepository {
+class _NoopProductRepository extends ProductRepository {
   @override
   Future<CreatedProduct> createProduct({
     required String storeId,

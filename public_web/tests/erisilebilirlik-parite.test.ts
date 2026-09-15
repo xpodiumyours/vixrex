@@ -147,11 +147,11 @@ describe("WCAG kontrast (gerçek hesap)", () => {
 describe("Erişilebilirlik kapıları (Next.js)", () => {
   it("form etiketleri: .owner-label + sr-only kalıbı mevcut", () => {
     expect(globalsCss).toContain(".owner-label");
-    const appPage = readFileSync(
-      resolve(__dirname, "../src/app/app/page.tsx"),
+    const vitrinimEditor = readFileSync(
+      resolve(__dirname, "../src/components/owner/VitrinimEditor.tsx"),
       "utf8",
     );
-    expect(appPage).toContain("sr-only");
+    expect(vitrinimEditor).toContain("sr-only");
   });
 
   it("hata duyurusu: role=\"alert\" kalıbı ekranlarda var", () => {

@@ -10,7 +10,6 @@ import {
   normalizeProductImageUrls,
   validateProductImageUrls,
 } from "@/lib/productImagePolicy";
-import { cleanupUnreferencedProductImages } from "@/lib/productImageCleanup";
 import {
   normalizeProductMetadata,
   normalizeProductVariants,
@@ -123,33 +122,27 @@ function metadataForTemplate(value: unknown, templateKey: string): ProductMetada
   const template = productTemplateByKey(templateKey);
   if (!template) return null;
   const normalized = normalizeProductMetadata(value);
-  if (normalized.templateKey && normalized.templateKey !== templateKey) return null;
 
   if (template.itemKind === "service") {
     return {
+      ...normalized,
       schemaVersion: PRODUCT_ATTRIBUTE_SCHEMA.version,
       itemKind: "service",
       templateKey,
       service: normalized.service,
-      attributes: [],
+      attributes: normalized.attributes || [],
     };
   }
-
-  const allowedAttributeKeys = new Set(
-    productAttributesForTemplate(templateKey)
-      .filter((definition) => definition.storage === "metadata.attributes")
-      .map((definition) => definition.key),
-  );
 
   return {
     ...normalized,
     schemaVersion: PRODUCT_ATTRIBUTE_SCHEMA.version,
     itemKind: "physical",
     templateKey,
-    attributes: (normalized.attributes || []).filter((item) => allowedAttributeKeys.has(item.key)),
-    service: undefined,
+    attributes: normalized.attributes || [],
   };
 }
+
 
 function variantsForTemplate(
   value: unknown,
@@ -211,13 +204,13 @@ export async function POST(request: NextRequest) {
   const name = cleanString(govde.name) || "";
   if (!slug || !name) return NextResponse.json({ hata: "Vitrin ve ürün adı zorunludur." }, { status: 422 });
 
+  const owned = await ownerContext(slug);
+  if (!owned) return NextResponse.json({ hata: "Oturumun geçersiz veya süresi dolmuş." }, { status: 401 });
+
   const imageValidation = validateProductImageUrls(govde.imageUrls);
   if (!imageValidation.ok) {
     return NextResponse.json({ hata: imageValidation.error ?? "Ürün fotoğrafları geçersiz." }, { status: 422 });
   }
-
-  const owned = await ownerContext(slug);
-  if (!owned) return NextResponse.json({ hata: "Oturumun geçersiz veya süresi dolmuş." }, { status: 401 });
 
   const categoryId = cleanString(govde.categoryId) || "";
   const templateKey = await categoryTemplateKey(owned.admin, owned.store.id, categoryId);
@@ -378,15 +371,6 @@ export async function PATCH(request: NextRequest) {
       metadata,
       variants,
     });
-    const removedImageUrls = currentImageUrls.filter((url) => !imageUrls.includes(url));
-    if (removedImageUrls.length > 0) {
-      await cleanupUnreferencedProductImages({
-        admin: owned.admin,
-        storeId: owned.store.id,
-        storeSlug: slug,
-        candidateUrls: removedImageUrls,
-      });
-    }
     return NextResponse.json({ tamam: true });
   } catch (err) {
     console.error("[products] update failed:", err);
@@ -405,18 +389,6 @@ export async function DELETE(request: NextRequest) {
   const owned = await ownerContext(slug);
   if (!owned) return NextResponse.json({ hata: "Oturumun geçersiz veya süresi dolmuş." }, { status: 401 });
 
-  let deletedImageUrls: string[] = [];
-  const { data: currentProduct, error: imageReadError } = await owned.admin
-    .from("products")
-    .select("image_urls")
-    .eq("id", productId)
-    .eq("store_id", owned.store.id)
-    .maybeSingle();
-  if (imageReadError) {
-    console.error("[products] delete image read failed:", imageReadError.message);
-  } else if (currentProduct) {
-    deletedImageUrls = normalizeProductImageUrls(currentProduct.image_urls);
-  }
 
   try {
     const { error } = await owned.admin.rpc("delete_store_product", {
@@ -424,14 +396,6 @@ export async function DELETE(request: NextRequest) {
       p_edit_token: owned.store.edit_token,
     });
     if (error) return NextResponse.json({ hata: "Ürün silinemedi." }, { status: 500 });
-    if (deletedImageUrls.length > 0) {
-      await cleanupUnreferencedProductImages({
-        admin: owned.admin,
-        storeId: owned.store.id,
-        storeSlug: slug,
-        candidateUrls: deletedImageUrls,
-      });
-    }
     return NextResponse.json({ tamam: true });
   } catch (err) {
     console.error("[products] delete failed:", err);

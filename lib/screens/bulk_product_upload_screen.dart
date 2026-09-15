@@ -19,7 +19,7 @@ import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/theme/app_text_styles.dart';
 import 'package:vixrex/widgets/xml_upload_dialog.dart';
 
-typedef OnBulkProductsSaved = Future<bool> Function(List<Product> products);
+typedef OnBulkProductsSaved = Future<void> Function(List<Product> products);
 
 /// Toplu ürün yükleme ekranı.
 /// Excel/CSV dosyasından ürünleri parse eder, kullanıcıya sunar, onay sonrası kaydeder.
@@ -95,7 +95,9 @@ class _BulkProductUploadScreenState extends State<BulkProductUploadScreen> {
   }
 
   Future<void> _save() async {
-    final saved = await _controller.saveProducts(onSave: widget.onSaved);
+    final saved = await _controller.saveProducts(
+      onSave: (products) async => widget.onSaved(products),
+    );
     if (saved && mounted) {
       final count = _controller.savedCount;
       _showMessage('$count ürün başarıyla eklendi.');

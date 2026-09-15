@@ -1,3 +1,16 @@
+-- Zengin urun cekirdegi - asgari ve additive.
+-- Bu dosya work/product-live-ready-20260914 dalindaki
+-- 20260913143000 ve 20260913151000 migration'larindan YALNIZ gerekli parcayi alir.
+-- Bilincli olarak DISARIDA birakilanlar:
+--   * enforce_product_image_count tetikleyicisi (en az 3 gorsel kurali)
+--     Canlidaki 68 urunun tamami 1-2 gorselli; bu tetikleyici uygulanirsa
+--     fotograf duzenlemesi kirilir. Kendi fazinda, yayin kapisinda ele alinacak.
+--   * kategori 'service' sablonuna tasininca marka/barkod/stok alanlarini
+--     null'layan mantik. Onaylanmis bir urun karari degil.
+
+alter table public.product_categories
+  add column if not exists product_template_key text not null default 'generic';
+
 -- Rich Product CORE v3 — additive, backward-compatible database contract.
 -- Existing create_store_product_v2 / update_store_product stay callable.
 -- New rich clients use v3/v2 below and write into the same products table.

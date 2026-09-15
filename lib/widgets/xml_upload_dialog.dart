@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:vixrex/services/product_conversation_logger.dart';
-import 'package:vixrex/services/product_image_policy.dart';
 import 'package:vixrex/services/xml_product_upload_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
 
@@ -83,6 +82,7 @@ class _XmlUploadDialogState extends State<XmlUploadDialog> {
     });
 
     if (result.isSuccess && mounted) {
+      // Faz 4: ortak konuşmaya log — Next.js poll ile görür
       unawaited(
         ProductConversationLogger.log(
           count: result.inserted,
@@ -109,13 +109,8 @@ class _XmlUploadDialogState extends State<XmlUploadDialog> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Text(
-              'Tedarikçinizin XML linkini yapıştırın. Sistem ürün adı, fiyat, kategori, stok, marka ve görselleri okuyabildiği ölçüde aynı Vixrex ürün kaydına aktarır.',
+              'Tedarikçinizin XML linkini yapıştırın. Sistem otomatik olarak ürünleri vitrine ekleyecek.',
               style: TextStyle(color: AppColors.mutedText, fontSize: 13),
-            ),
-            const SizedBox(height: 6),
-            const Text(
-              'Her yeni ürün için en az ${ProductImagePolicy.minImages}, en fazla ${ProductImagePolicy.maxImages} fotoğraf gerekir. Bu kurala uymayan ürünler eklenmez ve hata sayısında gösterilir.',
-              style: TextStyle(color: AppColors.mutedText, fontSize: 12),
             ),
             const SizedBox(height: 16),
             TextField(

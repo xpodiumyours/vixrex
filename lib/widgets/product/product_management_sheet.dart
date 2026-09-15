@@ -203,7 +203,9 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
       return;
     }
 
-    widget.showMessage(product == null ? 'Ürün kaydedildi.' : 'Ürün güncellendi.');
+    widget.showMessage(
+      product == null ? 'Ürün kaydedildi.' : 'Ürün güncellendi.',
+    );
     // Faz6 parity: yalnız gerçekten kaydedilen tek ürün işlemi ortak sohbete düşer.
     unawaited(
       ProductConversationLogger.log(
@@ -230,6 +232,12 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
       ),
     );
     if (result == null || !mounted) return;
+    final previousCategories = List<ProductCategory>.of(_categories);
+    final previousProducts = List<Product>.of(_products);
+    final previousDeletions = List<ProductCategoryDeletion>.of(
+      _pendingCategoryDeletions,
+    );
+    final previousSelectedCategoryId = _selectedCategoryId;
     setState(() {
       _categories = List.of(result.categories);
       _products = List.of(result.products);
@@ -240,11 +248,19 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
     });
     final saved = await _persist();
     if (!mounted) return;
-    widget.showMessage(
-      saved
-          ? 'Ürün kategorileri güncellendi.'
-          : 'Kategoriler kaydedilemedi. Lütfen tekrar deneyin.',
-    );
+    if (!saved) {
+      setState(() {
+        _categories = previousCategories;
+        _products = previousProducts;
+        _pendingCategoryDeletions
+          ..clear()
+          ..addAll(previousDeletions);
+        _selectedCategoryId = previousSelectedCategoryId;
+      });
+      widget.showMessage('Kategoriler kaydedilemedi. Değişiklik geri alındı.');
+      return;
+    }
+    widget.showMessage('Ürün kategorileri güncellendi.');
   }
 
   Future<void> _duplicate(Product product) async {
@@ -390,7 +406,9 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
     if (!mounted) return;
     if (!saved) {
       setState(() => _products = previousProducts);
-      widget.showMessage('Ürün başlıkları kaydedilemedi. Değişiklik geri alındı.');
+      widget.showMessage(
+        'Ürün başlıkları kaydedilemedi. Değişiklik geri alındı.',
+      );
       return;
     }
     widget.showMessage('$improved ürün başlığı iyileştirildi.');
@@ -850,7 +868,6 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
         if (!saved && mounted) {
           setState(() => _products = previousProducts);
         }
-        return saved;
       },
     );
     if (result == true && mounted) {

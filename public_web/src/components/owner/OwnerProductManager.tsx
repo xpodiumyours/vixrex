@@ -77,6 +77,29 @@ function sameStringList(left: string[], right: string[]) {
   return left.length === right.length && left.every((value, index) => value === right[index]);
 }
 
+async function fetchCategoryTemplateKeys(
+  storeSlug: string,
+): Promise<Record<string, string> | null> {
+  try {
+    const response = await fetch(
+      `/api/product-categories?slug=${encodeURIComponent(storeSlug)}`,
+      { cache: "no-store" },
+    );
+    const payload = await response.json().catch(() => null);
+    if (!response.ok || !Array.isArray(payload?.categories)) return null;
+    const nextTemplateKeys: Record<string, string> = {};
+    for (const category of payload.categories as OwnerProductCategory[]) {
+      const id = String(category.id || "").trim();
+      if (!id) continue;
+      nextTemplateKeys[id] = category.product_template_key || "generic";
+    }
+    return nextTemplateKeys;
+  } catch {
+    // Parent'tan gelen kategori listesi güvenli fallback olarak kalır.
+    return null;
+  }
+}
+
 export function OwnerProductManager({
   storeSlug,
  products,
@@ -101,31 +124,23 @@ export function OwnerProductManager({
     [categories, fetchedTemplateKeys],
   );
 
-  const loadCategoryTemplates = useCallback(async () => {
-    try {
-      const response = await fetch(`/api/product-categories?slug=${encodeURIComponent(storeSlug)}`, { cache: "no-store" });
-      const payload = await response.json().catch(() => null);
-      if (!response.ok || !Array.isArray(payload?.categories)) return;
-      const nextTemplateKeys: Record<string, string> = {};
-      for (const category of payload.categories as OwnerProductCategory[]) {
-        const id = String(category.id || "").trim();
-        if (!id) continue;
-        nextTemplateKeys[id] = category.product_template_key || "generic";
-      }
-      setFetchedTemplateKeys(nextTemplateKeys);
-    } catch {
-      // Parent'tan gelen kategori listesi güvenli fallback olarak kalır.
-    }
-  }, [storeSlug]);
-
   useEffect(() => {
-    void loadCategoryTemplates();
-  }, [loadCategoryTemplates]);
+    let cancelled = false;
+    const load = async () => {
+      const keys = await fetchCategoryTemplateKeys(storeSlug);
+      if (!cancelled && keys) setFetchedTemplateKeys(keys);
+    };
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [storeSlug]);
 
   const refreshAll = useCallback(async () => {
     await onRefresh();
-    await loadCategoryTemplates();
-  }, [loadCategoryTemplates, onRefresh]);
+    const keys = await fetchCategoryTemplateKeys(storeSlug);
+    if (keys) setFetchedTemplateKeys(keys);
+  }, [storeSlug, onRefresh]);
 
   useEffect(() => {
     const syncQueued = () => setQueuedCount(productQueueCount(storeSlug));

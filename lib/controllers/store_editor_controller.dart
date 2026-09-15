@@ -107,7 +107,8 @@ class StoreEditorController extends ChangeNotifier
         catalogSyncService ??
         ProductCatalogSyncService(productService: this.productService);
     _categorySyncService =
-        categorySyncService ?? ProductCategorySyncService(client: supabaseClient);
+        categorySyncService ??
+        ProductCategorySyncService(client: supabaseClient);
     _legalStampingService =
         legalStampingService ??
         StoreLegalStampingService(
@@ -356,7 +357,8 @@ class StoreEditorController extends ChangeNotifier
     _data.bookingSettings!.isEnabled = supportsBooking;
   }
 
-  void setDescription(String description) => updateField('kisaTanitim', description);
+  void setDescription(String description) =>
+      updateField('kisaTanitim', description);
   void updateWhatsapp(String w) => updateField('whatsapp', w);
   void updatePhone(String value) => updateField('telefon', value);
   void updateEmail(String value) => updateField('eposta', value);
@@ -390,24 +392,33 @@ class StoreEditorController extends ChangeNotifier
         _data.aboutValues.any((v) => v.title.trim().isNotEmpty);
   }
 
-  void updateGallerySectionMeta({required String kicker, required String title}) =>
-      _guncelle(
-        (d) => _contentEditingService.writeGallerySectionMeta(
-          d,
-          kicker: kicker,
-          title: title,
-        ),
-      );
+  void updateGallerySectionMeta({
+    required String kicker,
+    required String title,
+  }) => _guncelle(
+    (d) => _contentEditingService.writeGallerySectionMeta(
+      d,
+      kicker: kicker,
+      title: title,
+    ),
+  );
 
-  void updateCategorySectionTitle(String value) => updateField('kategoriBolumBaslik', value);
-  void updateProductSectionTitle(String value) => updateField('urunBolumBaslik', value);
-  void updateGalleryActionLabel(String value) => updateField('galeriAksiyonMetni', value);
-  void updateGalleryActionHref(String value) => updateField('galeriAksiyonLinki', value);
-  void updateBlogSectionKicker(String value) => updateField('blogUstBaslik', value);
+  void updateCategorySectionTitle(String value) =>
+      updateField('kategoriBolumBaslik', value);
+  void updateProductSectionTitle(String value) =>
+      updateField('urunBolumBaslik', value);
+  void updateGalleryActionLabel(String value) =>
+      updateField('galeriAksiyonMetni', value);
+  void updateGalleryActionHref(String value) =>
+      updateField('galeriAksiyonLinki', value);
+  void updateBlogSectionKicker(String value) =>
+      updateField('blogUstBaslik', value);
   void updateBlogSectionTitle(String value) => updateField('blogBaslik', value);
-  void updateFaqSectionKicker(String value) => updateField('sssUstBaslik', value);
+  void updateFaqSectionKicker(String value) =>
+      updateField('sssUstBaslik', value);
   void updateFaqSectionTitle(String value) => updateField('sssBaslik', value);
-  void updateFaqSectionDescription(String value) => updateField('sssAciklama', value);
+  void updateFaqSectionDescription(String value) =>
+      updateField('sssAciklama', value);
 
   void updateSectionVisibility(String key, bool visible) {
     if (visible) {
@@ -418,8 +429,10 @@ class StoreEditorController extends ChangeNotifier
     notifyListeners();
   }
 
-  void updateShowStorefrontRating(bool value) => updateField('puanGoster', value);
-  void updateShowDirectionsLink(bool value) => updateField('yolTarifiGoster', value);
+  void updateShowStorefrontRating(bool value) =>
+      updateField('puanGoster', value);
+  void updateShowDirectionsLink(bool value) =>
+      updateField('yolTarifiGoster', value);
 
   void updateFeaturedCampaign({
     required String label,
@@ -446,8 +459,10 @@ class StoreEditorController extends ChangeNotifier
         _data.featuredBannerLabel.trim().isNotEmpty;
   }
 
-  void updateFaqItems(List<StoreFaqItem> items) => _guncelle((d) => d.faqItems = List.of(items));
-  void updateWorkingHoursText(String value) => updateField('calismaSaatleri', value);
+  void updateFaqItems(List<StoreFaqItem> items) =>
+      _guncelle((d) => d.faqItems = List.of(items));
+  void updateWorkingHoursText(String value) =>
+      updateField('calismaSaatleri', value);
   void updateInstagram(String value) => updateField('instagram', value);
 
   Future<Result<void>> applyConnectedInstagramUsername(String username) async {
@@ -457,7 +472,9 @@ class StoreEditorController extends ChangeNotifier
     updateInstagram(handle);
 
     final info = _publishedInfo;
-    if (info == null || info.slug.trim().isEmpty || info.editToken.trim().isEmpty) {
+    if (info == null ||
+        info.slug.trim().isEmpty ||
+        info.editToken.trim().isEmpty) {
       return const Result.success(null);
     }
 
@@ -601,7 +618,12 @@ class StoreEditorController extends ChangeNotifier
     if (client == null) return false;
 
     try {
-      final row = await client.from('stores').select('id').eq('slug', slug).maybeSingle();
+      final row =
+          await client
+              .from('stores')
+              .select('id')
+              .eq('slug', slug)
+              .maybeSingle();
       final id = (row?['id'] ?? '').toString().trim();
       if (id.isEmpty || !_isUuid(id)) return false;
       _data.id = id;
@@ -641,13 +663,17 @@ class StoreEditorController extends ChangeNotifier
   }) async {
     final editToken = _publishedInfo?.editToken.trim() ?? '';
     if (editToken.isEmpty) {
-      return Result.failure(Failure('Ürünleri kaydetmek için önce vitrini yayınlayın.'));
+      return Result.failure(
+        Failure('Ürünleri kaydetmek için önce vitrini yayınlayın.'),
+      );
     }
 
     final ready = await ensureRemoteStoreId();
     final storeId = _data.id?.trim() ?? '';
     if (!ready || storeId.isEmpty) {
-      return Result.failure(Failure('Mağaza kimliği bulunamadı. Yayınlayıp tekrar deneyin.'));
+      return Result.failure(
+        Failure('Mağaza kimliği bulunamadı. Yayınlayıp tekrar deneyin.'),
+      );
     }
 
     var syncedCategories = List<ProductCategory>.of(categories);
@@ -664,7 +690,9 @@ class StoreEditorController extends ChangeNotifier
         syncedProducts = categoryResult.products;
       } catch (e) {
         if (kDebugMode) debugPrint('syncCatalogToRemote category sync: $e');
-        return Result.failure(Failure('Ürün kategorileri kaydedilemedi, lütfen tekrar deneyin.'));
+        return Result.failure(
+          Failure('Ürün kategorileri kaydedilemedi, lütfen tekrar deneyin.'),
+        );
       }
     }
 
@@ -690,7 +718,9 @@ class StoreEditorController extends ChangeNotifier
       final ready = await ensureRemoteStoreId();
       final storeId = _data.id?.trim() ?? '';
       if (!ready || storeId.isEmpty) {
-        return Result.failure(Failure('Mağaza hazır değil. Ürün müşteri vitrine yazılamadı.'));
+        return Result.failure(
+          Failure('Mağaza hazır değil. Ürün müşteri vitrine yazılamadı.'),
+        );
       }
 
       final result = await _catalogSyncService.addProduct(
@@ -868,7 +898,8 @@ class StoreEditorController extends ChangeNotifier
     await _draftPersistence.persist(_data, _publishedInfo);
   }
 
-  Future<String> ensureDraftEditToken() => _draftPersistence.ensureDraftEditToken();
+  Future<String> ensureDraftEditToken() =>
+      _draftPersistence.ensureDraftEditToken();
 
   Future<OwnerPreviewLink> openOwnerPreview({
     AssistantHandoffV1? assistantHandoff,
@@ -882,7 +913,10 @@ class StoreEditorController extends ChangeNotifier
     _data.slug = result.slug;
     await saveLocally();
     notifyListeners();
-    return OwnerPreviewLink(result.url, versionConflict: result.versionConflict);
+    return OwnerPreviewLink(
+      result.url,
+      versionConflict: result.versionConflict,
+    );
   }
 
   void _syncEditorGalleryIntoStoreData() {

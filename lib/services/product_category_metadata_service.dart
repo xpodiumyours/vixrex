@@ -22,10 +22,10 @@ ProductRichMetadata alignProductMetadataToCategory(
     schemaVersion: current.schemaVersion,
     itemKind: isService ? 'service' : 'physical',
     templateKey: templateKey,
-    sku: isService ? null : current.sku,
-    mpn: isService ? null : current.mpn,
-    attributes: isService ? const [] : current.attributes,
-    service: isService ? current.service : null,
+    sku: current.sku,
+    mpn: current.mpn,
+    attributes: current.attributes,
+    service: current.service,
   );
 }
 
@@ -46,16 +46,13 @@ Future<ProductRichMetadata> sanitizeProductMetadataForWrite(
       schemaVersion: schema.version,
       itemKind: 'service',
       templateKey: template.key,
+      sku: current.sku,
+      mpn: current.mpn,
+      attributes: current.attributes,
       service: current.service,
     );
   }
 
-  final allowedAttributeKeys =
-      schema
-          .attributesForTemplate(template.key)
-          .where((definition) => definition.storage == 'metadata.attributes')
-          .map((definition) => definition.key)
-          .toSet();
 
   return ProductRichMetadata(
     schemaVersion: schema.version,
@@ -63,9 +60,6 @@ Future<ProductRichMetadata> sanitizeProductMetadataForWrite(
     templateKey: template.key,
     sku: current.sku,
     mpn: current.mpn,
-    attributes:
-        current.attributes
-            .where((item) => allowedAttributeKeys.contains(item.key))
-            .toList(),
+    attributes: current.attributes,
   );
 }

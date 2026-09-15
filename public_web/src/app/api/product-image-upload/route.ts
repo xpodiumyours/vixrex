@@ -4,19 +4,18 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 import { fingerprintClient, getClientIp } from "@/lib/rentDemoSecurity";
 import {
-  MAX_PRODUCT_IMAGE_SOURCE_BYTES,
-  MAX_PRODUCT_IMAGE_SOURCE_MEGABYTES,
-  MIN_PRODUCT_IMAGE_SOURCE_SHORT_EDGE,
-} from "@/lib/productImagePolicy";
-import {
   GorselSikistirmaHatasi,
   gorseliSikistir,
   ONBELLEK_SANIYE,
   type SikistirilmisGorsel,
 } from "@/lib/gorselSikistir";
 
+// Ürün görseli yükleme — Flutter'daki StoreShelfUploadService.uploadProductImage
+// karşılığı (maks 5 MB, JPG/PNG/WebP, bayttan tür doğrulama, sharp ile 1600px).
+
 export const dynamic = "force-dynamic";
 
+const MAX_BAYT = 5 * 1024 * 1024;
 const LIMIT_PER_STORE = 30;
 const WINDOW_SECONDS = 3600;
 
@@ -70,6 +69,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ hata: `Çok fazla yükleme. ${limit.retry_after_seconds} sn sonra dene.` }, { status: 429 });
   }
 
+  // IP bazlı günlük limit (owner-upload ile aynı desen, ikinci tablo yok)
   const clientIp = getClientIp(request);
   const clientKey = fingerprintClient(clientIp);
   const { data: ipRows } = await admin.rpc("consume_assistant_request", {
@@ -82,12 +82,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ hata: `Çok fazla yükleme. ${ipLimit.retry_after_seconds} sn sonra dene.` }, { status: 429 });
   }
 
-  if (dosya.size > MAX_PRODUCT_IMAGE_SOURCE_BYTES) {
-    return NextResponse.json({ hata: `Dosya çok büyük. En fazla ${MAX_PRODUCT_IMAGE_SOURCE_MEGABYTES} MB.` }, { status: 413 });
+  if (dosya.size > MAX_BAYT) {
+    return NextResponse.json({ hata: "Dosya çok büyük. En fazla 5 MB." }, { status: 413 });
   }
   const bayt = new Uint8Array(await dosya.arrayBuffer());
-  if (bayt.length > MAX_PRODUCT_IMAGE_SOURCE_BYTES) {
-    return NextResponse.json({ hata: `Dosya çok büyük. En fazla ${MAX_PRODUCT_IMAGE_SOURCE_MEGABYTES} MB.` }, { status: 413 });
+  if (bayt.length > MAX_BAYT) {
+    return NextResponse.json({ hata: "Dosya çok büyük. En fazla 5 MB." }, { status: 413 });
   }
   const tur = gercekTur(bayt);
   const uzanti = tur ? IZINLI_TURLER.get(tur) : null;
@@ -97,9 +97,7 @@ export async function POST(request: NextRequest) {
 
   let sikistirilmis: SikistirilmisGorsel;
   try {
-    sikistirilmis = await gorseliSikistir(bayt, tur, {
-      minShortEdge: MIN_PRODUCT_IMAGE_SOURCE_SHORT_EDGE,
-    });
+    sikistirilmis = await gorseliSikistir(bayt, tur);
   } catch (hata) {
     const mesaj = hata instanceof GorselSikistirmaHatasi ? hata.message : "Görsel işlenemedi.";
     return NextResponse.json({ hata: mesaj }, { status: 422 });

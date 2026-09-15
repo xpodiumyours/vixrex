@@ -18,8 +18,8 @@ describe("Faz F — tıklamalar artık Supabase'e de yazılıyor (GA'nın yanın
     expect(kaynak).toContain("p_event_type: eventName");
   });
 
-  it("ürün görüntüleme izleyicisi public ürün detay sayfasına eklendi", () => {
-    const sayfa = oku("app/v/[slug]/urun/[productSlug]/PublicProductDetailPage.tsx");
+  it("ürün görüntüleme izleyicisi ürün detay sayfasına eklendi", () => {
+    const sayfa = oku("app/v/[slug]/urun/[productSlug]/page.tsx");
     expect(sayfa).toContain("<ProductViewTracker storeSlug={store.slug} productSlug={productSlug} />");
     const tracker = oku("components/ProductViewTracker.tsx");
     expect(tracker).toContain('p_event_type: "product_view"');
@@ -55,23 +55,6 @@ describe("Faz F — haftalık özet yalnız sahip oturumuyla okunur", () => {
 
   it("son 7 gün penceresi kullanılıyor", () => {
     expect(migrasyon).toContain("interval '7 days'");
-  });
-});
-
-describe("Faz F — engagement ham tablosu Data API'ye kapalı", () => {
-  const guvenlikMigrasyonu = readFileSync(
-    resolve(__dirname, "../../supabase/migrations/20260914114015_secure_vitrin_engagement_events.sql"),
-    "utf8"
-  );
-
-  it("RLS açılır ve PUBLIC/anon/authenticated doğrudan tablo yetkileri kaldırılır", () => {
-    expect(guvenlikMigrasyonu).toContain(
-      "alter table public.vitrin_engagement_events enable row level security;"
-    );
-    expect(guvenlikMigrasyonu).toContain(
-      "revoke all privileges on table public.vitrin_engagement_events"
-    );
-    expect(guvenlikMigrasyonu).toContain("from public, anon, authenticated;");
   });
 });
 

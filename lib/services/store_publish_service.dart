@@ -5,16 +5,11 @@ export 'package:vixrex/services/store_publish_links_validator.dart';
 export 'package:vixrex/services/store_publish_slug_generator.dart';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/services/store_publish_validator.dart';
+import 'package:vixrex/services/store_publish_payload_builder.dart';
 import 'package:vixrex/core/result.dart';
 import 'package:vixrex/core/supabase_error_mapper.dart';
-import 'package:vixrex/models/store_data.dart';
-import 'package:vixrex/repositories/supabase_product_repository.dart';
-import 'package:vixrex/services/product_catalog_sync_service.dart';
-import 'package:vixrex/services/product_category_sync_service.dart';
-import 'package:vixrex/services/product_image_cleanup_service.dart';
-import 'package:vixrex/services/product_service.dart';
-import 'package:vixrex/services/store_publish_payload_builder.dart';
-import 'package:vixrex/services/store_publish_validator.dart';
 import 'package:vixrex/utils/failure.dart';
 
 class StorePublishService {
@@ -81,26 +76,6 @@ class StorePublishService {
 
       if (editToken.trim().isEmpty && client.auth.currentUser == null) {
         return Result.failure(Failure('Yayın için edit token gerekli.'));
-      }
-
-      // Ürünlü mağazada public yayın son adım olmalıdır. İlk yayında
-      // save_store_draft_with_token her koşulda is_published=false tutar;
-      // Product CORE o görünmeyen satıra yazılır. Katalog tamamen
-      // senkronlanmadan aşağıdaki public publish adımlarına geçilmez.
-      if (data.products.isNotEmpty) {
-        final catalogStage = await _stageCatalogBeforePublish(
-          client: client,
-          data: data,
-          preferredSlug: slug,
-          editToken: editToken,
-        );
-        if (catalogStage.isFailure || catalogStage.data == null) {
-          return Result.failure(
-            catalogStage.failure ??
-                Failure('Ürün kataloğu yayın öncesi hazırlanamadı.'),
-          );
-        }
-        slug = catalogStage.data!.slug;
       }
 
       // edit_token yazma yetkisi için kullanılır; hiçbir zaman REST ile
@@ -270,137 +245,6 @@ class StorePublishService {
     } catch (error) {
       return Result.failure(SupabaseErrorMapper.map(error));
     }
-  }
-
-  Future<Result<_CatalogStageResult>> _stageCatalogBeforePublish({
-    required SupabaseClient client,
-    required StoreData data,
-    required String preferredSlug,
-    required String editToken,
-  }) async {
-    var slug = preferredSlug.trim();
-    if (slug.isEmpty) {
-      slug = payloadBuilder.generateSlug(data.name);
-    }
-
-    try {
-      var storeId =
-          _isUuid(data.id?.trim() ?? '') ? data.id!.trim() : null;
-      storeId ??= await _storeIdForEditToken(client, slug, editToken);
-
-      if (storeId == null) {
-        try {
-          await _saveCatalogDraft(client, data, slug, editToken);
-        } on PostgrestException catch (error) {
-          if (!_isDraftSlugConflict(error)) rethrow;
-          slug = _allocateUniqueSlug(slug);
-          await _saveCatalogDraft(client, data, slug, editToken);
-        }
-
-        storeId = await _storeIdForEditToken(client, slug, editToken);
-        if (storeId == null) {
-          return Result.failure(
-            Failure('Ürün kataloğu için mağaza kimliği doğrulanamadı.'),
-          );
-        }
-      }
-
-      data.id = storeId;
-      data.slug = slug;
-
-      var products = List<Product>.of(data.products);
-      var categories = List<ProductCategory>.of(data.productCategories);
-
-      if (categories.isNotEmpty) {
-        final categoryService = ProductCategorySyncService(client: client);
-        final categoryResult = await categoryService.sync(
-          storeId: storeId,
-          editToken: editToken,
-          categories: categories,
-          products: products,
-        );
-        categories = categoryResult.categories;
-        products = categoryResult.products;
-      }
-
-      final productService = ProductService(
-        repository: SupabaseProductRepository(client: client),
-        imageCleanupService: ProductImageCleanupService(client: client),
-      );
-      final catalogService = ProductCatalogSyncService(
-        productService: productService,
-      );
-      final catalogResult = await catalogService.syncCatalog(
-        storeId: storeId,
-        editToken: editToken,
-        products: products,
-      );
-      if (catalogResult.isFailure || catalogResult.data == null) {
-        return Result.failure(
-          catalogResult.failure ?? Failure('Ürün kataloğu kaydedilemedi.'),
-        );
-      }
-
-      data.productCategories = categories;
-      data.products = catalogResult.data!;
-      return Result.success(_CatalogStageResult(slug: slug, storeId: storeId));
-    } on PostgrestException catch (error) {
-      return Result.failure(SupabaseErrorMapper.map(error));
-    } catch (error) {
-      return Result.failure(SupabaseErrorMapper.map(error));
-    }
-  }
-
-  Future<void> _saveCatalogDraft(
-    SupabaseClient client,
-    StoreData data,
-    String slug,
-    String editToken,
-  ) async {
-    await client.rpc(
-      'save_store_draft_with_token',
-      params: {
-        'p_slug': slug,
-        'p_edit_token': editToken.trim(),
-        'p_store': payloadBuilder.toStoreUpdateMap(data),
-      },
-    );
-  }
-
-  Future<String?> _storeIdForEditToken(
-    SupabaseClient client,
-    String slug,
-    String editToken,
-  ) async {
-    final value = await client.rpc(
-      'get_store_id_for_edit_token',
-      params: {
-        'p_slug': slug.trim(),
-        'p_edit_token': editToken.trim(),
-      },
-    );
-    final id = value?.toString().trim() ?? '';
-    return _isUuid(id) ? id : null;
-  }
-
-  bool _isDraftSlugConflict(PostgrestException error) {
-    final text = [
-      error.message,
-      error.code,
-      error.details?.toString(),
-      error.hint,
-      error.toString(),
-    ].whereType<String>().join(' ').toLowerCase();
-    return text.contains('store_already_published') ||
-        text.contains('edit_token_mismatch_or_published') ||
-        text.contains('duplicate key') ||
-        text.contains('23505');
-  }
-
-  bool _isUuid(String value) {
-    return RegExp(
-      r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
-    ).hasMatch(value.trim());
   }
 
   /// Yayın öncesi taslak kaydeder (Next.js taslak önizlemesi için).
@@ -591,13 +435,6 @@ class StorePublishService {
     final suffix = stamp.length > 6 ? stamp.substring(stamp.length - 6) : stamp;
     return '$cleaned-$suffix';
   }
-}
-
-class _CatalogStageResult {
-  const _CatalogStageResult({required this.slug, required this.storeId});
-
-  final String slug;
-  final String storeId;
 }
 
 class StorePublishResult {

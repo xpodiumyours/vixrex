@@ -113,10 +113,11 @@ class _ProductCategoryManagementScreenState
     String initialTemplateKey = 'generic',
     String? excludedId,
   }) async {
-    final controller = TextEditingController(text: initialName);
-    var templateKey = _templates.any((item) => item.key == initialTemplateKey)
-        ? initialTemplateKey
-        : 'generic';
+    var name = initialName;
+    var templateKey =
+        _templates.any((item) => item.key == initialTemplateKey)
+            ? initialTemplateKey
+            : 'generic';
     String? error;
     final result = await showDialog<_CategoryDraft>(
       context: context,
@@ -128,14 +129,15 @@ class _ProductCategoryManagementScreenState
                   content: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      TextField(
-                        controller: controller,
+                      TextFormField(
+                        initialValue: initialName,
                         autofocus: true,
                         maxLength: 40,
                         decoration: InputDecoration(
                           labelText: 'Kategori adı',
                           errorText: error,
                         ),
+                        onChanged: (value) => name = value,
                       ),
                       const SizedBox(height: 12),
                       DropdownButtonFormField<String>(
@@ -168,7 +170,7 @@ class _ProductCategoryManagementScreenState
                     ),
                     FilledButton(
                       onPressed: () {
-                        final value = controller.text.trim();
+                        final value = name.trim();
                         if (value.isEmpty) {
                           setDialogState(
                             () => error = 'Kategori adı zorunludur.',
@@ -189,10 +191,7 @@ class _ProductCategoryManagementScreenState
                         }
                         Navigator.pop(
                           dialogContext,
-                          _CategoryDraft(
-                            name: value,
-                            templateKey: templateKey,
-                          ),
+                          _CategoryDraft(name: value, templateKey: templateKey),
                         );
                       },
                       child: const Text('Kaydet'),
@@ -201,7 +200,6 @@ class _ProductCategoryManagementScreenState
                 ),
           ),
     );
-    controller.dispose();
     return result;
   }
 

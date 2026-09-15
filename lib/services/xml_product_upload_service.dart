@@ -2,7 +2,6 @@ import 'package:uuid/uuid.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vixrex/models/store_product.dart';
-import 'package:vixrex/services/product_image_policy.dart';
 
 /// XML feed dosyalarından ürün çıkarma servisi.
 /// Herhangi bir XML formatını otomatik olarak parse eder.
@@ -16,6 +15,7 @@ class XmlProductUploadService {
     required String editToken,
   }) async {
     try {
+      // 1. XML'i indir
       final response = await http.get(Uri.parse(xmlUrl));
       if (response.statusCode != 200) {
         return XmlUploadResult.failure(
@@ -24,6 +24,8 @@ class XmlProductUploadService {
       }
 
       final xmlContent = String.fromCharCodes(response.bodyBytes);
+
+      // 2. Parse et
       final parseResult = parse(xmlContent);
       if (!parseResult.isSuccess) {
         return XmlUploadResult.failure(parseResult.errorMessage!);
@@ -33,23 +35,27 @@ class XmlProductUploadService {
         return XmlUploadResult.failure('XML dosyasında ürün bulunamadı.');
       }
 
-      return saveToSupabase(
+      // 3. Supabase'e kaydet
+      final saveResult = await saveToSupabase(
         products: parseResult.products,
         storeId: storeId,
         editToken: editToken,
       );
+
+      return saveResult;
     } catch (e) {
       return XmlUploadResult.failure('İşlem hatası: $e');
     }
   }
 
-  /// Ürünleri aynı batch Product CORE sözleşmesi üzerinden kaydeder.
+  /// Ürünleri Supabase'e toplu olarak kaydeder.
   Future<XmlUploadResult> saveToSupabase({
     required List<Product> products,
     required String storeId,
     required String editToken,
   }) async {
     try {
+      // Ürünleri JSON formatına çevir
       final productsJson =
           products
               .map(
@@ -58,20 +64,16 @@ class XmlProductUploadService {
                   'slug': p.slug ?? '',
                   'description': p.description,
                   'price_text': p.price,
-                  'image_urls': p.imageUrls,
-                  'category_name': p.category,
-                  'stock_status': p.stockStatus,
+                  'image_urls': p.imageUrls.isNotEmpty ? p.imageUrls : [''],
                   'source_type': 'xml_import',
                   'isVisible': p.isVisible,
                   if (p.brand != null) 'brand': p.brand,
-                  if (p.barcode != null) 'barcode': p.barcode,
                   if (p.sku != null) 'sku': p.sku,
-                  if (p.stockQuantity != null)
-                    'stock_quantity': p.stockQuantity,
                 },
               )
               .toList();
 
+      // Batch RPC'yi çağır
       final result = await Supabase.instance.client.rpc(
         'batch_create_products',
         params: {
@@ -98,6 +100,7 @@ class XmlProductUploadService {
   /// XML string'inden ürün listesi oluşturur.
   XmlParseResult parse(String xmlContent) {
     try {
+      // XML elementlerini çıkar
       final productElements = _extractProductElements(xmlContent);
 
       if (productElements.isEmpty) {
@@ -125,8 +128,11 @@ class XmlProductUploadService {
     }
   }
 
+  /// XML içeriğinden ürün elementlerini çıkarır.
   List<Map<String, String>> _extractProductElements(String xml) {
     final products = <Map<String, String>>[];
+
+    // Ürün elementlerini bul (farklı etiket isimlerini destekler)
     final productTags = [
       'product',
       'urun',
@@ -156,10 +162,11 @@ class XmlProductUploadService {
             products.add(fields);
           }
         }
-        break;
+        break; // İlk eşleşen tag'ı kullan
       }
     }
 
+    // Hiç eşleşme yoksa, tüm XML'i bir element olarak işle
     if (products.isEmpty) {
       final fields = _extractFields(xml);
       if (fields.isNotEmpty) {
@@ -170,8 +177,11 @@ class XmlProductUploadService {
     return products;
   }
 
+  /// Bir element içinden alan değerlerini çıkarır.
   Map<String, String> _extractFields(String elementContent) {
     final fields = <String, String>{};
+
+    // Tüm XML tag'lerini eşle
     final tagRegex = RegExp(r'<([^/>]+)>([^<]*)</\1>', caseSensitive: false);
     final matches = tagRegex.allMatches(elementContent);
 
@@ -187,10 +197,12 @@ class XmlProductUploadService {
     return fields;
   }
 
+  /// Element'i Product'a çevirir.
   _XmlParseResult _elementToProduct(
     Map<String, String> fields, {
     required int rowIndex,
   }) {
+    // Ürün adını bul
     final name = _findField(fields, _nameAliases);
 
     if (name.isEmpty) {
@@ -202,14 +214,19 @@ class XmlProductUploadService {
       );
     }
 
+    // Diğer alanları bul
     final priceRaw = _findField(fields, _priceAliases);
     final price = _normalizePrice(priceRaw);
+
     final description = _findField(fields, _descAliases);
     final category = _findField(fields, _categoryAliases);
     final stockRaw = _findField(fields, _stockAliases);
     final stockStatus = _normalizeStockStatus(stockRaw);
-    final stockQuantity = _normalizeStockQuantity(stockRaw);
+
+    // Görsel URL'lerini bul (birden fazla olabilir)
     final imageUrls = _findImageUrls(fields);
+
+    // Marka ve SKU
     final brand = _findField(fields, _brandAliases);
     final sku = _findField(fields, _skuAliases);
 
@@ -222,7 +239,6 @@ class XmlProductUploadService {
       imageUrls: imageUrls,
       category: category.isNotEmpty ? category : 'Genel',
       stockStatus: stockStatus,
-      stockQuantity: stockQuantity,
       isVisible: true,
       source: 'xml_import',
       brand: brand.isNotEmpty ? brand : null,
@@ -232,42 +248,38 @@ class XmlProductUploadService {
     return _XmlParseResult(product: product);
   }
 
+  /// Alan eşleme tablosunda değeri bulur.
   String _findField(Map<String, String> fields, Set<String> aliases) {
-    final normalizedAliases = aliases.map(_normalizeTagName).toSet();
-    for (final entry in fields.entries) {
-      if (normalizedAliases.contains(_normalizeTagName(entry.key))) {
-        return entry.value;
+    for (final alias in aliases) {
+      for (final entry in fields.entries) {
+        if (_normalizeTagName(entry.key) == alias) {
+          return entry.value;
+        }
       }
     }
     return '';
   }
 
+  /// Görsel URL'lerini bulur.
   List<String> _findImageUrls(Map<String, String> fields) {
     final urls = <String>[];
-    final normalizedAliases = _imageUrlAliases.map(_normalizeTagName).toSet();
-    final numberedImageField = RegExp(
-      r'^(gorsel|image|foto|fotograf|resim)(url)?\d+$',
-    );
 
-    for (final entry in fields.entries) {
-      final normalizedKey = _normalizeTagName(entry.key);
-      if (!normalizedAliases.contains(normalizedKey) &&
-          !numberedImageField.hasMatch(normalizedKey)) {
-        continue;
+    for (final alias in _imageUrlAliases) {
+      for (final entry in fields.entries) {
+        if (_normalizeTagName(entry.key) == alias) {
+          final url = entry.value.trim();
+          if (url.isNotEmpty &&
+              (url.startsWith('http') || url.startsWith('//'))) {
+            urls.add(url);
+          }
+        }
       }
-
-      final rawUrl = entry.value.trim();
-      final url = rawUrl.startsWith('//') ? 'https:$rawUrl' : rawUrl;
-      if ((url.startsWith('http://') || url.startsWith('https://')) &&
-          !urls.contains(url)) {
-        urls.add(url);
-      }
-      if (urls.length >= ProductImagePolicy.maxImages) break;
     }
 
-    return urls;
+    return urls.take(4).toList(); // Maksimum 4 görsel
   }
 
+  /// Tag adını normalize eder.
   String _normalizeTagName(String value) {
     return value
         .toLowerCase()
@@ -276,11 +288,12 @@ class XmlProductUploadService {
         .replaceAll(RegExp(r'[çc]'), 'c')
         .replaceAll(RegExp(r'[şs]'), 's')
         .replaceAll(RegExp(r'[ğg]'), 'g')
-        .replaceAll(RegExp(r'[ıiî]'), 'i')
+        .replaceAll(RegExp(r'[iiî]'), 'i')
         .replaceAll(RegExp(r'[^a-z0-9]'), '')
         .trim();
   }
 
+  /// Fiyat string'ini normalize eder.
   String _normalizePrice(String raw) {
     if (raw.isEmpty) return '';
     var normalized =
@@ -317,6 +330,7 @@ class XmlProductUploadService {
         : number.toStringAsFixed(2);
   }
 
+  /// Stok durumunu normalize eder.
   String _normalizeStockStatus(String raw) {
     final lower = raw.toLowerCase();
     if (lower == '0' ||
@@ -336,11 +350,7 @@ class XmlProductUploadService {
     return StockStatus.available.label;
   }
 
-  int? _normalizeStockQuantity(String raw) {
-    final trimmed = raw.trim();
-    if (!RegExp(r'^\d+$').hasMatch(trimmed)) return null;
-    return int.tryParse(trimmed);
-  }
+  // ─── ALIAS TABLOLARI ─────────────────────────────────────────
 
   static const _nameAliases = {
     'urunadi',
@@ -453,6 +463,15 @@ class XmlProductUploadService {
     'görsel',
     'img',
     'src',
+    'gorsel1',
+    'gorsel2',
+    'gorsel3',
+    'image1',
+    'image2',
+    'foto1',
+    'foto2',
+    'resim1',
+    'resim2',
   };
 
   static const _brandAliases = {
@@ -476,6 +495,8 @@ class XmlProductUploadService {
     'urun kodu',
   };
 }
+
+// ─── SONUÇ MODELLERİ ────────────────────────────────────────────
 
 class XmlParseResult {
   final bool isSuccess;
@@ -518,6 +539,8 @@ class _XmlParseResult {
 
   const _XmlParseResult({this.product, this.error});
 }
+
+// ─── YÜKLEME SONUÇ MODELLERİ ────────────────────────────────────
 
 class XmlUploadResult {
   final bool isSuccess;
