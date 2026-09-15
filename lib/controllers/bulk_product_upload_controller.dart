@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:vixrex/models/store_product.dart';
 import 'package:vixrex/services/bulk_product_upload_service.dart';
+import 'package:vixrex/services/product_batch_import_service.dart';
 
 /// Toplu ürün yükleme akışının state yönetimi.
 class BulkProductUploadController extends ChangeNotifier {
@@ -9,35 +10,32 @@ class BulkProductUploadController extends ChangeNotifier {
   BulkProductUploadController({BulkProductUploadService? uploadService})
     : _uploadService = uploadService ?? const BulkProductUploadService();
 
-  // ─── State ─────────────────────────────────────────────────────
   BulkUploadState _state = BulkUploadState.initial;
   BulkParseResult? _parseResult;
+  ProductBatchImportResult? _saveResult;
   String? _errorMessage;
   bool _isSaving = false;
   int _savedCount = 0;
 
-  // ─── Getters ───────────────────────────────────────────────────
   BulkUploadState get state => _state;
   BulkParseResult? get parseResult => _parseResult;
+  ProductBatchImportResult? get saveResult => _saveResult;
   String? get errorMessage => _errorMessage;
   bool get isSaving => _isSaving;
   int get savedCount => _savedCount;
   List<Product> get products => _parseResult?.products ?? [];
   bool get hasProducts => products.isNotEmpty;
 
-  // ─── Dosya Seçimi ve Parse ────────────────────────────────────
-
-  /// Seçilen dosyayı parse et.
   Future<void> parseFile(Uint8List bytes, {required String fileName}) async {
     _state = BulkUploadState.parsing;
     _errorMessage = null;
     _parseResult = null;
+    _saveResult = null;
     notifyListeners();
 
     try {
       final result = _uploadService.parse(bytes, fileName: fileName);
       _parseResult = result;
-
       if (!result.isSuccess) {
         _errorMessage = result.errorMessage;
         _state = BulkUploadState.error;
@@ -51,13 +49,9 @@ class BulkProductUploadController extends ChangeNotifier {
       _errorMessage = 'Dosya işlenirken hata oluştu: $e';
       _state = BulkUploadState.error;
     }
-
     notifyListeners();
   }
 
-  // ─── Ürün Düzenleme ───────────────────────────────────────────
-
-  /// Tek bir ürünü güncelle.
   void updateProduct(int index, Product updated) {
     if (_parseResult == null ||
         index < 0 ||
@@ -68,7 +62,6 @@ class BulkProductUploadController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Ürünü listeden kaldır.
   void removeProduct(int index) {
     if (_parseResult == null ||
         index < 0 ||
@@ -83,40 +76,49 @@ class BulkProductUploadController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Tümünü listeden kaldır.
   void clearAllProducts() {
     _parseResult?.products.clear();
     _state = BulkUploadState.review;
     notifyListeners();
   }
 
-  // ─── Kaydetme ──────────────────────────────────────────────────
-
-  /// Listedeki ürünleri geri çağrım fonksiyonuna aktar.
+  /// Ürünleri gerçek batch Product CORE kaydına aktarır. Callback sonucu
+  /// inserted/updated/unchanged/errors sayaçlarını taşır; liste uzunluğu başarı
+  /// sayısı gibi kullanılmaz.
   Future<bool> saveProducts({
-    required Future<void> Function(List<Product> products) onSave,
+    required Future<ProductBatchImportResult> Function(List<Product> products)
+    onSave,
   }) async {
     if (_isSaving || !hasProducts) return false;
 
     _isSaving = true;
     _errorMessage = null;
+    _saveResult = null;
     notifyListeners();
 
     try {
-      final toSave =
-          products.map((p) {
-            p.isVisible = true;
-            return p;
-          }).toList();
-      if (toSave.isEmpty) {
-        _errorMessage = 'Eklenecek ürün yok.';
+      final toSave = List<Product>.of(products);
+      final result = await onSave(toSave);
+      _saveResult = result;
+
+      if (!result.isSuccess) {
+        _errorMessage = result.errorMessage ?? 'Ürünler kaydedilemedi.';
         _isSaving = false;
         notifyListeners();
         return false;
       }
 
-      await onSave(toSave);
-      _savedCount = toSave.length;
+      _savedCount = result.changed;
+      if (result.total > 0 &&
+          result.errors >= result.total &&
+          result.changed == 0 &&
+          result.unchanged == 0) {
+        _errorMessage = 'Hiçbir ürün kaydedilemedi. Satır hatalarını kontrol edin.';
+        _isSaving = false;
+        notifyListeners();
+        return false;
+      }
+
       _state = BulkUploadState.saved;
       _isSaving = false;
       notifyListeners();
@@ -129,11 +131,10 @@ class BulkProductUploadController extends ChangeNotifier {
     }
   }
 
-  // ─── Sıfırlama ─────────────────────────────────────────────────
-
   void reset() {
     _state = BulkUploadState.initial;
     _parseResult = null;
+    _saveResult = null;
     _errorMessage = null;
     _isSaving = false;
     _savedCount = 0;
