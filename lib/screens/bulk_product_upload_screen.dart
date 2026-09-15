@@ -15,14 +15,17 @@ import 'package:vixrex/screens/bulk_product_upload/widgets/bulk_upload_error_vie
 import 'package:vixrex/screens/bulk_product_upload/widgets/bulk_upload_review_view.dart';
 import 'package:vixrex/screens/bulk_product_upload/widgets/bulk_product_edit_sheet.dart';
 import 'package:vixrex/services/bulk_product_upload_service.dart';
+import 'package:vixrex/services/product_batch_import_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/theme/app_text_styles.dart';
 import 'package:vixrex/widgets/xml_upload_dialog.dart';
 
-typedef OnBulkProductsSaved = Future<void> Function(List<Product> products);
+typedef OnBulkProductsSaved =
+    Future<ProductBatchImportResult> Function(List<Product> products);
 
 /// Toplu ürün yükleme ekranı.
-/// Excel/CSV dosyasından ürünleri parse eder, kullanıcıya sunar, onay sonrası kaydeder.
+/// Excel/CSV dosyasından ürünleri parse eder, kullanıcıya sunar ve Product CORE
+/// batch upsert sonucunu gerçek sayaçlarıyla raporlar.
 class BulkProductUploadScreen extends StatefulWidget {
   final OnBulkProductsSaved onSaved;
   final List<ProductCategory> categories;
@@ -96,20 +99,27 @@ class _BulkProductUploadScreenState extends State<BulkProductUploadScreen> {
 
   Future<void> _save() async {
     final saved = await _controller.saveProducts(
-      onSave: (products) async => widget.onSaved(products),
+      onSave: widget.onSaved,
     );
     if (saved && mounted) {
-      final count = _controller.savedCount;
-      _showMessage('$count ürün başarıyla eklendi.');
-      // Faz 4: ortak konuşmaya log — Next.js 15sn poll ile görür
-      unawaited(
-        ProductConversationLogger.log(
-          count: count,
-          source: 'bulk',
-          scope: widget.storeSlug.isNotEmpty ? widget.storeSlug : null,
-        ),
-      );
-      Navigator.of(context).pop(true);
+      final result = _controller.saveResult;
+      if (result != null) {
+        _showMessage(
+          '${result.inserted} eklendi · ${result.updated} güncellendi · '
+          '${result.unchanged} değişmedi · ${result.errors} hatalı',
+        );
+        if (result.changed > 0) {
+          unawaited(
+            ProductConversationLogger.log(
+              count: result.changed,
+              source: 'bulk',
+              scope: widget.storeSlug.isNotEmpty ? widget.storeSlug : null,
+              extra:
+                  '${result.inserted} eklendi, ${result.updated} güncellendi',
+            ),
+          );
+        }
+      }
     } else if (_controller.errorMessage != null && mounted) {
       _showMessage(_controller.errorMessage!);
     }
@@ -217,8 +227,6 @@ class _BulkProductUploadScreenState extends State<BulkProductUploadScreen> {
     }
   }
 
-  // ─── BAŞLANGIÇ EKRANI ──────────────────────────────────────────
-
   Widget _buildInitialView() {
     return BulkUploadInitialView(
       onPickFile: _pickFile,
@@ -227,13 +235,9 @@ class _BulkProductUploadScreenState extends State<BulkProductUploadScreen> {
     );
   }
 
-  // ─── PARSE EKRANI ──────────────────────────────────────────────
-
   Widget _buildParsingView() {
     return const BulkUploadParsingView();
   }
-
-  // ─── KAYDETME EKRANI ───────────────────────────────────────────
 
   Widget _buildSavingView() {
     return const BulkUploadSavingView();
@@ -249,8 +253,6 @@ class _BulkProductUploadScreenState extends State<BulkProductUploadScreen> {
     );
   }
 
-  // ─── KAYIT BAŞARILI ────────────────────────────────────────────
-
   Widget _buildSavedView() {
     return BulkUploadSavedView(
       savedCount: _controller.savedCount,
@@ -265,8 +267,6 @@ class _BulkProductUploadScreenState extends State<BulkProductUploadScreen> {
       onDismiss: () => Navigator.of(context).pop(true),
     );
   }
-
-  // ─── HATA EKRANI ───────────────────────────────────────────────
 
   Widget _buildErrorView() {
     return BulkUploadErrorView(
@@ -295,8 +295,6 @@ class _BulkProductUploadScreenState extends State<BulkProductUploadScreen> {
     }
   }
 
-  // ─── ALT BUTONLAR ──────────────────────────────────────────────
-
   Widget _buildBottomActions() {
     final products = _controller.products;
     return Row(
@@ -319,7 +317,7 @@ class _BulkProductUploadScreenState extends State<BulkProductUploadScreen> {
             onPressed: products.isNotEmpty ? _save : null,
             icon: const Icon(Icons.check_rounded, size: 18),
             label: Text(
-              '${products.length} Ürünü Ekle',
+              '${products.length} Ürünü İşle',
               style: const TextStyle(fontWeight: FontWeight.w900),
             ),
             style: ElevatedButton.styleFrom(
@@ -406,7 +404,7 @@ class _BulkProductUploadScreenState extends State<BulkProductUploadScreen> {
           files: [XFile.fromData(bytes, mimeType: 'text/csv', name: fileName)],
           subject: 'Vixrex ürün CSV şablonu',
           text:
-              'Ürün Adı, Fiyat, Açıklama, Kategori, Stok Durumu sütunlarını doldurun.',
+              'Harici Ürün ID, Ürün Adı, Fiyat, Kategori, Stok, Marka, Barkod ve SKU alanlarını doldurun.',
         ),
       );
       if (result.status == ShareResultStatus.unavailable) {
