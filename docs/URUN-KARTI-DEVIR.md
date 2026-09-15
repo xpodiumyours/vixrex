@@ -4,6 +4,37 @@
 > Kaynak dal: `work/product-live-ready-20260914` (PR #489) — **merge edilmedi,
 > referans olarak duruyor, silinmeyecek.**
 
+## İLERLEME KAYDI — 2026-09-15
+
+### PR #500 — Flutter toplu yükleme zengin alan eşitliği
+
+Dal: `work/product-bulk-rich-flutter-20260915` — güncel `main`
+`1304624820f98b9e1455dc488c1fe8f0525492fb` üzerinden açıldı.
+
+Kapsam yalnız iki dosya:
+- `lib/services/bulk_product_upload_service.dart`
+- `test/bulk_product_upload_rich_parity_test.dart`
+
+#489'dan kurtarılan gelişmeler: Excel/CSV içe aktarmada marka, barkod/GTIN,
+SKU, stok adedi, çoklu görsel ve rich metadata v2.
+
+#489'dan aynen ALINMAYAN / düzeltilen davranışlar:
+- Minimum 3 görsel içe aktarma sırasında zorunlu yapılmadı; bu kural yalnız
+  yayın kapısına aittir.
+- Görselsiz satır `imageUrls.first` nedeniyle çökmeyecek; `imagePath` null kalır.
+- Geçersiz görsel adresi sessizce atılmayacak; satır hatası olarak döner.
+- `Stok=10`, içinde `0` bulunduğu için yanlışlıkla `Tükendi` sayılmayacak.
+- SKU barkod alanına yazılmayacak.
+
+Eklenen hedef testler bu davranışları kapsıyor. PR açıldıktan sonraki ilk durum:
+GitHub CI run `34930679144` queued; Vercel iki proje için günlük build-rate-limit
+nedeniyle failure gösteriyor. Bu nedenle #500 **henüz merge hazır değil** ve
+CI/test sonucu görülmeden main'e indirilmeyecek.
+
+Sonraki toplu-yükleme alt parçaları #500 merge edildikten sonra yeni `main`
+üzerinden açılacak. Önceden ayrı branch/PR açılmayacak; bu sırada yalnız fark
+incelemesi yapılabilir.
+
 ## GÜNCEL DURUM — doğrulanmış gerçeklik
 
 ### 1. Kod / main
