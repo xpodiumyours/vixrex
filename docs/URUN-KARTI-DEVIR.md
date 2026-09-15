@@ -2,15 +2,15 @@
 
 > 2026-09-15. İşi devralan ajan buradan devam eder.
 > Kaynak dal: `work/product-live-ready-20260914` (PR #489) — **merge edilmedi,
-> referans olarak duruyor, silinmeyecek.**
+> kanonik geliştirme dalı olarak duruyor, silinmeyecek.**
 
 ## GÜNCEL DURUM (2026-09-15, son güncelleme)
 
-**Kod main'de ve doğrulandı. Canlıya ÇIKMADI.**
+**#489 tamamlanmadı. Main'e merge edilmedi. Canlıya alınmadı.**
 
-main'in birleşmiş hâli yerelde baştan koşuldu:
+Main'de daha önce birleşen ürün kartı fazları yerel olarak doğrulanmıştı:
 
-| Kapı | Sonuç |
+| Kapı | Son bilinen sonuç |
 |---|---|
 | `flutter analyze` | temiz |
 | `flutter test` | 737 test geçti |
@@ -19,38 +19,98 @@ main'in birleşmiş hâli yerelde baştan koşuldu:
 | `eslint` | 0 hata (3 uyarı, önceden vardı) |
 | `next build` | başarılı |
 
-**Canlı neden güncel değil:** Vercel ücretsiz plan derleme kotası doldu.
-`vixrex-public` projesinde üretime çıkan tek dağıtım commit `263bd237` — yani
-yalnız #491 (ölü kod temizliği). #492, #493, #494, #495 main'de ama canlıda
-DEĞİL. Ürün kartı bu yüzden eski görünüyor.
+Bu sonuçlar #489'un bugünkü yeni batch/upsert değişikliklerini **kanıtlamaz**.
+Yeni delta için kapılar yeniden koşmadan "tamamlandı" denmez.
 
-**Yapılacak tek şey:** Vercel panelinde `vixrex-public` → Deployments →
-`vixrex-public-q0lzzdzpq` (mesajı "feat(urun): Flutter tarafini zengin urun
-modeline esitle") → **Promote to Production**. Bu derleme READY durumda ve beş
-fazın tamamını içeriyor; yeni derleme gerektirmez, kota yemez. Alternatif:
-kota sıfırlanınca main'e bir commit atmak.
+## Kanonik gerçeklik
 
-**Canlı doğrulama tuzağı:** sayfada `Hızlı` kelimesiyle arama YAPMA — "Hızlı
-Teknik" adlı vitrine denk gelip yanlış olumlu veriyor. `ProductQuickView`
-veya `Barkod` gibi yalnız yeni kodda geçen bir ize bak.
+- `main`: çalışan ürün sistemi ve daha önce birleşen #491–#495 fazları.
+- `work/product-live-ready-20260914` / PR #489: yalnız devam eden ürün geliştirmesi.
+- #497/#499/#500/#501/#502/#503 kapalıdır; bağımsız merge edilmeyecek.
+- Bu daldan main'e tek parça merge yapılmayacak; doğrulanan fazlar küçük PR'lar
+  halinde alınacak.
 
-**CI durumu:** Beş PR main'e inerken şu üç iş HİÇ koşmadı — Flutter analiz/test,
-şema sapma kontrolü, GRANT güvenlik bekçisi. Koşan ve geçen dört kapı:
-Değişiklik yüzeyi, Secret sızıntı taraması, Supabase auth kontrolü, Vercel
-derlemesi. Üç işin koşmama sebebi `subosito/flutter-action`'ın self-hosted
-Windows runner'da düşmesiydi; PR #497 bunu runner'da kurulu Flutter 3.44.4'e
-bağlıyor. #497 inince bu üç kapı ilk kez gerçekten koşacak ve beş PR geriye
-dönük doğrulanmış olacak.
+## Şu an #489'da kodlanan ama henüz tamamlanmış sayılmayan delta
 
----
+1. `StorePublishValidator` eski 4 görsel sınırından ortak 11 görsel politikasına
+   bağlandı; 11 kabul / 12 red / geçersiz URL testleri eklendi.
+2. Toplu içe aktarma için yayın kapısından ayrı görsel doğrulaması eklendi:
+   0–2 görselli taslak içe aktarılabilir, 11 üst sınırı korunur.
+3. Next.js batch API tek kötü satır yüzünden bütün partiyi düşürmeyecek şekilde
+   satır bazlı hataya ayrıldı.
+4. Batch API `external_product_id`, barkod ve SKU kimlik verisini Product CORE
+   yoluna taşıyacak şekilde genişletildi.
+5. Batch sonucunda `eklenen / güncellenen / değişmeyen / hatalı` sayaçları
+   ayrıldı.
+6. Canlıdaki mevcut `batch_create_products(uuid,text,jsonb)` fonksiyonunun birebir
+   geri dönüş kaynağı repo içine
+   `20260915109000_snapshot_live_batch_create_products.sql` olarak kaydedildi.
+7. Hedef batch migration'ı kimlik önceliği
+   `external_product_id -> barkod/GTIN -> SKU` olacak şekilde upsert davranışına
+   çevrildi. Mevcut üründe yalnız dolu/gelen alanlar güncelleniyor; boş alanlar
+   mevcut veriyi silmiyor; otomatik ürün silme yok.
 
-## Karar: dal referans, main gerçeklik
+**Önemli:** Yukarıdaki maddeler şu anda yalnız kodlanmış durumdadır. Dev DB
+provası, CI, migration/RLS/GRANT güvenliği ve uçtan uca kanıt tamamlanmadan
+"doğrulandı" veya "tamamlandı" sayılmaz.
 
-Dev dal 100 dosya, +13.966/−3.368, 11 migration. Tek parça merge edilmedi;
-içinden fazlar tek tek alındı. Sebep: dalda canlıyı kıran dört davranış vardı
-(aşağıda) ve o dalda CI hiç gerçekten koşmamıştı.
+## Canlı `batch_create_products` için geri dönüş kaynağı
 
-## main'e inen ve CANLIDA olan (2026-09-15)
+15 Eylül kontrolünde production Supabase'teki `batch_create_products` sürümünün
+repodaki migration geçmişinde birebir kaydı olmadığı doğrulandı. Bu nedenle
+hedef migration uygulanmadan önce canlı fonksiyon gövdesi ve mevcut EXECUTE
+izinleri snapshot migration olarak repoya alındı.
+
+Snapshot hedef davranış değildir; rollback kaynağıdır. Hedef migration daha
+sonra aynı imzayı `create or replace` eder.
+
+## Upsert kararı
+
+Yeniden XML/Excel yükleme **atlama değil upsert** davranışıdır:
+
+1. Kimlik sırası: `external_product_id` → yoksa barkod/GTIN → yoksa SKU.
+2. Ürün adı/slug kimlik değildir.
+3. Eşleşen üründe yalnız dolu/gelen alan güncellenir; boş veya gelmeyen alan
+   mevcut esnaf verisini silmez.
+4. Sonuç dört ayrı sayaç verir: eklendi / güncellendi / değişmedi / hatalı.
+5. Feed'den düşen ürün otomatik silinmez.
+
+Kimlik birden fazla mevcut ürüne eşleşirse yanlış ürünü rastgele güncellemek
+yerine satır hata verir (`PRODUCT_IDENTITY_AMBIGUOUS_*`).
+
+## Dev prova durumu
+
+Ayrı Supabase projesi mevcut: `vixrex-dev`.
+
+Kontrol sonucu dev proje şu anda güncel Product CORE migration zincirine sahip
+**değil**: `create_store_product_v3`, `update_store_product_v2` ve
+`batch_create_products` yok. Bu nedenle yalnız yeni batch migration'ı dev'e
+uygulamak doğru prova olmaz.
+
+Sıradaki DB işi:
+
+1. vixrex-dev üzerinde güncel migration zincirini güvenli biçimde sıfırdan kur,
+2. snapshot → Product CORE → batch upsert sırasını doğrula,
+3. aynı ürünü iki kez yükleyerek ilk sefer `inserted`, ikinci sefer fiyat/stok
+   değişmişse `updated`, değişmemişse `unchanged` kanıtı al,
+4. hatalı tek satırın diğer geçerli satırları durdurmadığını doğrula,
+5. production'a DDL uygulama.
+
+## CI kapıları — hâlâ tamamlanmadı
+
+Aşağıdaki kapılar gerçekten koşup yeşil olmadan #489 main'e giremez:
+
+- Flutter analiz/test,
+- şema sapma kontrolü,
+- GRANT güvenlik bekçisi,
+- Next typecheck/lint/test/build,
+- migration provası,
+- ürün regresyonları.
+
+Özellikle batch RPC `SECURITY DEFINER` ve istemci rolleriyle çalıştığı için
+EXECUTE izinları GRANT bekçisiyle doğrulanmadan güvenli kabul edilmez.
+
+## Daha önce main'e alınan ürün fazları
 
 | PR | Ne |
 |---|---|
@@ -60,88 +120,44 @@ içinden fazlar tek tek alındı. Sebep: dalda canlıyı kıran dört davranış
 | #494 | Kategori şablonları esnaf yönetiminde |
 | #495 | Flutter tarafı zengin ürün modeline eşitlendi |
 
-Canlıya uygulanan migration: `20260915010000_product_rich_core_minimal`.
-Doğrulandı: şablon kolonu var, 38 kategori `generic`, dört yeni fonksiyon
-canlıda, görsel tetikleyicisi **kurulmadı**, 68 ürün yerinde ve yayında.
+Canlıya uygulanan temel zengin ürün migration'ı:
+`20260915010000_product_rich_core_minimal`.
 
-Zengin alanlar canlıda henüz boş; esnaf doldurduğu an kartta ve detayda görünür.
+## Bilerek geri getirilmemesi gereken davranışlar
 
-## Bilerek ALINMAYAN dört davranış — geri getirilmemeli
+1. Kategori `service` olunca marka/barkod/stok/özellik silinmesi.
+2. Şablon dışı kalan ürün özelliklerinin düzenlemede silinmesi.
+3. Eski `metadata.templateKey` yüzünden ürünün kalıcı 422 ile kilitlenmesi.
+4. En az 3 görsel kuralının DB trigger olarak uygulanması.
 
-1. **Kategori `service` şablonuna geçince marka/barkod/stok/özellik silinmesi.**
-   Kullanıcı verisini sessizce siliyor, onaylanmış bir ürün kararı değil.
-   Hem `api/products/route.ts` hem `product_category_metadata_service.dart`
-   tarafında kaldırıldı. Bunu şart koşan üç Flutter testi gerçek davranışa
-   göre düzeltildi.
-2. **Şablon dışı kalan ürün özelliklerinin düzenlemede silinmesi.**
-3. **`metadata.templateKey` dolu eski ürünün kalıcı 422 alması** — düzenlenemez
-   hale geliyordu.
-4. **En az 3 görsel kuralının veritabanı tetikleyicisinde olması.**
-   Canlıdaki 68 ürünün TAMAMI 1–2 görselli; tetikleyici kurulursa esnaf mevcut
-   ürününün fotoğrafını değiştiremez. Kural kaybolmadı: Flutter'da
-   `ProductImagePolicy.validateForPublish` olarak duruyor, yayın kapısına
-   bağlanmayı bekliyor. Üst sınır 11 zaten uygulanıyor.
+Minimum 3 görsel yalnız uygun yayın kalite kapısında uygulanacak. Canlı eski
+ürünler 0–2 görsel nedeniyle düzenlenemez hâle getirilmeyecek.
 
-## Kalan iki adım
+## Kalan fazlar
 
-**A — Toplu yükleme (Excel/CSV/XML yeni alanları taşısın)**
+### A — Toplu yükleme / Product CORE
 
-Daldan alınacaklar:
-`public_web/src/app/api/products/batch/route.ts`,
-`public_web/src/components/owner/BulkProductUpload.tsx`,
-`lib/services/bulk_product_upload_service.dart`,
-`lib/services/xml_product_upload_service.dart`,
-`lib/screens/bulk_product_upload_screen.dart`,
-`lib/controllers/bulk_product_upload_controller.dart`,
-`lib/widgets/xml_upload_dialog.dart`
+Henüz tamamlanmadı. Kalanlar:
 
-Dikkat: `batch/route.ts` daldaki halinde tek kötü satır yüzünden 100'lük
-yüklemenin tamamını 422 ile iptal ediyor; satır atlanacak şekilde düzeltilmeli.
-Ayrıca `product_management_sheet.dart` içindeki `_openBulkUpload` çağrısı bu
-fazda mevcut imzaya uyarlandı; toplu yükleme ekranı gelince `onSaved` geri
-dönüş tipi tekrar `Future<bool>` olacak.
+- Flutter Excel/CSV payload'larını aynı kimlik/upsert sözleşmesine bağla,
+- XML payload'ında `external_product_id`/barkod/SKU zincirini doğrula,
+- metadata/varyant/fiyat alanlarının gerçek DB write-read paritesini kanıtla,
+- UI'nın yeni dört sayaç sonucunu doğru göstermesini sağla,
+- false-success regresyon testlerini ekle,
+- vixrex-dev uçtan uca prova.
 
-**B — Görsel kalite + yayın kapısı**
+### B — Görsel kalite + yayın kapısı
 
-Daldan alınacaklar: `lib/services/store_publish_validator.dart`,
-`lib/services/store_publish_service.dart`,
-`lib/services/image_optimization_service.dart`,
-`lib/services/store_shelf_upload_service.dart`,
-`public_web/src/lib/productImageCleanup.ts`,
-`public_web/src/lib/gorselSikistir.ts`,
-`public_web/src/app/api/product-image-upload/route.ts`
+A fazı doğrulanmadan tamamlanmış sayılmaz. Kurallar:
 
-Kurallar: en az 3 görsel YALNIZ yayın kapısında uygulanacak, veritabanı
-tetikleyicisi olarak DEĞİL. Görsel temizlik servisi dosya siliyor; yalnız
-başka üründe kullanılmayan ve Vixrex yükleme yolundan gelmiş görseller
-silinmeli, dış CDN ve mağaza görselleri silinmemeli. Bu fazın kabul kanıtı
-silmenin YAPILMADIĞI durumları göstermektir.
-
-## Nasıl çalışılır
-
-Her faz için `origin/main`'den ayrı worktree aç, daldan yalnız o fazın
-dosyalarını `git checkout work/product-live-ready-20260914 -- <yollar>` ile al,
-eksik bağımlılıkları tip kontrolü/analiz söyleyene kadar ekle, kapıları koş,
-kendi PR'ını aç. Ana klasörde (`C:\Projects\vixrex`) çalışma; orada başka ajan
-olabilir.
-
-Kapılar: `public_web` içinde `npm run typecheck`, `npx vitest run`,
-`npm run lint`, `npm run build`; kökte `flutter analyze`, `flutter test`.
-Son ölçüm: 1513 web testi, 737 Flutter testi yeşil.
-
-## Bilinen altyapı sorunları
-
-- CI'daki **Flutter — analiz ve testler** ve **Şema üretim hattı** işleri
-  self-hosted runner'da "Setup Flutter" adımında düşüyor. Kod sorunu değil.
-- Runner daha önce Git Bash yerine WSL bash kullanıyordu; `C:\vixrex-runner\.env`
-  dosyasına doğru PATH yazılarak düzeltildi. Yeniden başlatılırken eski oturum
-  çakışması verirse birkaç dakika sonra kendiliğinden bağlanır.
-- `supabase_schema.sql` kök dosyası 2026-08-16'dan beri güncellenmedi;
-  veritabanı gerçeği `supabase/migrations/` ve canlı Supabase'dir.
+- min-3 yalnız yayın kapısında, DB trigger değil,
+- maksimum 11 ortak politika,
+- yalnız Vixrex'e ait ve başka üründe kullanılmayan ürün dosyası silinebilir,
+- dış CDN / başka vitrin görselleri asla silinmez,
+- kabul testi özellikle "silinmedi" durumlarını kanıtlar.
 
 ## Tek veri kaynağı — açık borç
 
-`shared/product_attribute_schema.json` iki taraftan da okunuyor (doğru), ama
-sayısal sınırlar ve enum etiketleri hâlâ elle kopyalanmış. Diğer ortak
-şemalarda olan "JSON'dan üret → sapma var mı" CI kapısı ürün şeması için
-kurulmadı. Yeni şablon veya alan eklenmeden önce bu kapı kurulmalı.
+`shared/product_attribute_schema.json` Flutter ve Next.js tarafından ortak
+okunuyor; ancak sayısal sınırlar ve enum etiketleri hâlâ elle kopyalanmış.
+Ürün şeması için JSON'dan üretim + drift CI kapısı henüz kurulmadı.
