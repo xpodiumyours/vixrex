@@ -408,10 +408,10 @@ begin
       -- Metadata güncellemesi alan bazlı merge edilir. Dosyada olmayan mevcut
       -- identifiers/özellikler korunur; SKU yalnız geldiyse değiştirilir.
       v_update_metadata := null;
-      if pg_catalog.jsonb_object_length(v_input_metadata) > 0 or v_sku is not null then
+      if v_input_metadata <> '{}'::jsonb or v_sku is not null then
         v_update_metadata := coalesce(v_current.metadata, '{}'::jsonb);
 
-        if pg_catalog.jsonb_object_length(v_input_metadata) > 0 then
+        if v_input_metadata <> '{}'::jsonb then
           v_identifiers := case
             when pg_catalog.jsonb_typeof(v_update_metadata->'identifiers') = 'object'
               then v_update_metadata->'identifiers'
@@ -426,7 +426,7 @@ begin
           v_update_metadata :=
             (v_update_metadata - 'identifiers') || (v_input_metadata - 'identifiers');
 
-          if pg_catalog.jsonb_object_length(v_identifiers || v_input_identifiers) > 0 then
+          if (v_identifiers || v_input_identifiers) <> '{}'::jsonb then
             v_update_metadata := pg_catalog.jsonb_set(
               v_update_metadata,
               '{identifiers}',
