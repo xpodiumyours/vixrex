@@ -808,6 +808,9 @@ export default async function StorePage(props: PageProps) {
         catalog={
           <ProductCatalog
             storeSlug={store.slug}
+            storeName={store.name}
+            whatsappBaseUrl={waBaseUrl}
+            storeMapsUrl={mapsUrl}
             products={visibleProducts}
             categoryMap={(categories || []).map((c) => ({ id: c.id, name: c.name }))}
             fallbackImage={store.logo_url || "/vixrex_v_crystal_mascot.png"}
