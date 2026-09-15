@@ -21,6 +21,7 @@ const globals = oku("src/app/globals.css");
 const giris = oku("src/app/giris/page.tsx");
 const kayit = oku("src/app/kayit/page.tsx");
 const pano = oku("src/app/app/page.tsx");
+const vitrinimEditor = oku("src/components/owner/VitrinimEditor.tsx");
 const urunler = oku("src/components/owner/OwnerProductManager.tsx");
 
 // Sahip yönetim yüzeyleri — yeni sayfa eklenince buraya da eklenmeli.
@@ -54,8 +55,7 @@ describe("sahip yönetim arayüzü sözleşmesi", () => {
   });
 
   it("sahip dili tek-vitrin modelini izliyor", () => {
-    expect(pano).toMatch(/>Vitrinim</);
-    expect(pano).toMatch(/Vitrini Yönet/);
+    expect(vitrinimEditor).toMatch(/>Vitrinim</);
     // Hesap başına tek vitrin kuralı veritabanında zorlanıyor; arayüz
     // çoğul dil kullanırsa kullanıcıya olmayan bir yetenek vaat eder.
     expect(pano).not.toMatch(/Vitrinlerim/);

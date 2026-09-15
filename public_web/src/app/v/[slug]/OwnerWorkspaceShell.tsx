@@ -81,7 +81,6 @@ export interface OwnerWorkspaceShellProps {
   galleryItems: VitrinGalleryItem[];
   marketplaceLinks: VitrinMarketplaceLink[];
   articles: VitrinArticleTeaser[];
-  catalog: React.ReactNode;
   isPreviewMode?: boolean;
   draft?: WorkingDraftData | null;
   sessionExpiresAt?: number | null;
