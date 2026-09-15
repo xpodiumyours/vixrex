@@ -135,10 +135,20 @@ class ProductBatchImportService {
     if (product.displayImageUrls.isNotEmpty) {
       payload['image_urls'] = product.displayImageUrls;
     }
-    final category = product.category.trim();
-    if (category.isNotEmpty && category.toLowerCase() != 'tümü') {
-      payload['category_name'] = category;
+
+    final categoryId = product.categoryId.trim();
+    if (_isUuid(categoryId)) {
+      // Mevcut Vixrex kategorisinin template kimliğini koru. Yalnız yerel/geçici
+      // id varsa isim üzerinden DB'deki kategoriye bağlanılır veya generic olarak
+      // yeni kategori oluşturulur.
+      payload['category_id'] = categoryId;
+    } else {
+      final category = product.category.trim();
+      if (category.isNotEmpty && category.toLowerCase() != 'tümü') {
+        payload['category_name'] = category;
+      }
     }
+
     if (product.stockQuantity != null) {
       payload['stock_quantity'] = product.stockQuantity;
     }
@@ -159,6 +169,12 @@ class ProductBatchImportService {
     putString('badge_tag', product.badgeTag);
     putString('fulfillment_region', product.fulfillmentLocation);
     return payload;
+  }
+
+  bool _isUuid(String value) {
+    return RegExp(
+      r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
+    ).hasMatch(value);
   }
 
   int _asInt(dynamic value) {
