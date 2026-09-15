@@ -28,6 +28,7 @@ typedef OnBulkProductsSaved =
 /// batch upsert sonucunu gerçek sayaçlarıyla raporlar.
 class BulkProductUploadScreen extends StatefulWidget {
   final OnBulkProductsSaved onSaved;
+  final Future<void> Function()? onCatalogRefresh;
   final List<ProductCategory> categories;
   final String storeId;
   final String editToken;
@@ -36,6 +37,7 @@ class BulkProductUploadScreen extends StatefulWidget {
   const BulkProductUploadScreen({
     super.key,
     required this.onSaved,
+    this.onCatalogRefresh,
     this.categories = const [],
     this.storeId = '',
     this.editToken = '',
@@ -45,6 +47,7 @@ class BulkProductUploadScreen extends StatefulWidget {
   static Future<bool?> show({
     required BuildContext context,
     required OnBulkProductsSaved onSaved,
+    Future<void> Function()? onCatalogRefresh,
     List<ProductCategory> categories = const [],
     String storeId = '',
     String editToken = '',
@@ -58,6 +61,7 @@ class BulkProductUploadScreen extends StatefulWidget {
       builder:
           (_) => BulkProductUploadScreen(
             onSaved: onSaved,
+            onCatalogRefresh: onCatalogRefresh,
             categories: categories,
             storeId: storeId,
             editToken: editToken,
@@ -433,7 +437,8 @@ class _BulkProductUploadScreenState extends State<BulkProductUploadScreen> {
       storeId: widget.storeId,
       editToken: widget.editToken,
       storeSlug: widget.storeSlug,
-      onUploaded: () {
+      onUploaded: () async {
+        await widget.onCatalogRefresh?.call();
         if (mounted) setState(() {});
       },
     );
