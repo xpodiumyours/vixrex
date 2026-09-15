@@ -278,6 +278,7 @@ class IcerikSeoBolumu extends StatelessWidget {
             editToken: controller.publishedInfo?.editToken.trim() ?? '',
             showMessage: (msg) => state.showSnackBar(ctx, msg),
             onBatchImport: controller.importProductBatch,
+            onCatalogRefresh: controller.refreshProductCatalogFromRemote,
             onCatalogChanged: (products, categories) async {
               final publishedToken =
                   controller.publishedInfo?.editToken.trim() ?? '';
