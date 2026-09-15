@@ -19,7 +19,7 @@ import 'package:vixrex/widgets/onboarding/kategori_secici.dart';
 /// karşılığında sohbetin kendisi test edilir: karşılama hapına dokununca
 /// niyet sorusu (ızgara + serbest metin + geri) çiziliyor, kategori
 /// seçimi ön-filtreli Keşfet'i açıyor.
-class _BosDepo implements ProductRepository {
+class _BosDepo extends ProductRepository {
   @override
   Future<CreatedProduct> createProduct({
     required String storeId,

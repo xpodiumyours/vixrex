@@ -1,4 +1,5 @@
 import 'package:vixrex/models/store_product.dart';
+import 'package:vixrex/services/product_category_metadata_service.dart';
 
 /// #262: var olan ürünlerde TOPLU alan değişikliği (fiyat/stok/kategori/
 /// görünürlük). `bulk_product_upload_service.dart`in aksine bu servis yeni
@@ -112,7 +113,14 @@ class BulkProductFieldUpdateService {
   ) {
     return products
         .map(
-          (p) => p.copyWith(categoryId: category.id, category: category.name),
+          (p) => p.copyWith(
+            categoryId: category.id,
+            category: category.name,
+            richMetadata: alignProductMetadataToCategory(
+              p.richMetadata,
+              category,
+            ),
+          ),
         )
         .toList();
   }
