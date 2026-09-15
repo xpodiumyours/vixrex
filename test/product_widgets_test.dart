@@ -127,4 +127,59 @@ void main() {
     expect(textOfFieldLabeled('Kısa açıklama'), 'Yazlık keten gömlek');
     expect(find.text('Ürünü Düzenle'), findsOneWidget);
   });
+
+  testWidgets('kategori kaydı başarısız olursa panel eski hâline döner', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1000, 900);
+    addTearDown(tester.view.resetPhysicalSize);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final messages = <String>[];
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProductManagementSheet(
+            products: [product],
+            categories: [category],
+            storeSlug: 'ornek-vitrin',
+            storeId: 'test-store',
+            editToken: 'test-edit-token',
+            showMessage: messages.add,
+            onCatalogChanged: (_, __) async => false,
+            onProductDelete: (_) async => true,
+            onOcrTap: () {},
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Kategoriler'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Kategori Ekle'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.ancestor(
+        of: find.text('Kategori adı'),
+        matching: find.byType(TextField),
+      ),
+      'Ayakkabı',
+    );
+    await tester.tap(find.widgetWithText(FilledButton, 'Kaydet'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Ayakkabı'), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(TextButton, 'Kaydet'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Ayakkabı'), findsNothing);
+    expect(
+      messages,
+      contains('Kategoriler kaydedilemedi. Değişiklik geri alındı.'),
+    );
+  });
 }

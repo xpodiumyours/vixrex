@@ -2,11 +2,17 @@ import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:vixrex/models/product_rich_data.dart';
 import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/services/product_category_metadata_service.dart';
+import 'package:vixrex/services/product_image_policy.dart';
 import 'package:vixrex/services/store_publish_service.dart';
 import 'package:vixrex/services/store_shelf_upload_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/utils/gallery_image_file_validator.dart';
+import 'package:vixrex/utils/product_price_parser.dart';
+import 'package:vixrex/widgets/product/product_rich_fields_editor.dart';
+import 'package:vixrex/widgets/product/product_variant_editor.dart';
 
 class ProductEditorSheet extends StatefulWidget {
   const ProductEditorSheet({
@@ -25,7 +31,7 @@ class ProductEditorSheet extends StatefulWidget {
 }
 
 class _ProductEditorSheetState extends State<ProductEditorSheet> {
-  static const int _maxImages = 4;
+  static const int _maxImages = ProductImagePolicy.maxImages;
   static final _stockOptions = [
     StockStatus.available.label,
     StockStatus.lowStock.label,
@@ -38,9 +44,15 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
   late final TextEditingController _badgeTagController;
   late final TextEditingController _fulfillmentController;
   late final TextEditingController _descriptionController;
+  late final List<String> _initialImageUrls;
   late final List<_ProductImageDraft> _images;
   late String _categoryId;
   late String _stockStatus;
+  String? _brand;
+  String? _barcode;
+  int? _stockQuantity;
+  late ProductRichMetadata _richMetadata;
+  late List<ProductVariantData> _variants;
   bool _isSaving = false;
 
   @override
@@ -62,15 +74,32 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
     _descriptionController = TextEditingController(
       text: product?.description ?? '',
     );
+    _initialImageUrls = List<String>.of(
+      product?.displayImageUrls ?? const <String>[],
+    );
     _images =
-        (product?.displayImageUrls ?? const <String>[])
-            .map((url) => _ProductImageDraft(url: url))
-            .toList();
+        _initialImageUrls.map((url) => _ProductImageDraft(url: url)).toList();
     _categoryId = _resolveInitialCategoryId(product);
     _stockStatus =
         _stockOptions.contains(product?.stockStatus)
             ? product!.stockStatus
             : _stockOptions.first;
+    _brand = product?.brand;
+    _barcode = product?.barcode;
+    _stockQuantity = product?.stockQuantity;
+    _richMetadata = product?.richMetadata ?? const ProductRichMetadata();
+    _variants = List<ProductVariantData>.of(product?.variants ?? const []);
+
+    final category = _selectedCategory;
+    if (category != null) {
+      _richMetadata = alignProductMetadataToCategory(_richMetadata, category);
+      if (category.productTemplateKey == 'service') {
+        _brand = null;
+        _barcode = null;
+        _stockQuantity = null;
+        _variants = const [];
+      }
+    }
   }
 
   String _resolveInitialCategoryId(Product? product) {
@@ -83,6 +112,31 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
       if (category.name.trim().toLowerCase() == label) return category.id;
     }
     return widget.categories.isEmpty ? '' : widget.categories.first.id;
+  }
+
+  ProductCategory? get _selectedCategory {
+    for (final category in widget.categories) {
+      if (category.id == _categoryId) return category;
+    }
+    return null;
+  }
+
+  bool get _isServiceProduct =>
+      (_selectedCategory?.productTemplateKey.trim() ?? '') == 'service';
+
+  bool get _imageListChanged {
+    if (widget.product == null) return true;
+    if (_images.any((image) => image.bytes != null)) return true;
+    final current =
+        _images
+            .map((image) => image.url.trim())
+            .where((url) => url.isNotEmpty)
+            .toList();
+    if (current.length != _initialImageUrls.length) return true;
+    for (var index = 0; index < current.length; index++) {
+      if (current[index] != _initialImageUrls[index]) return true;
+    }
+    return false;
   }
 
   @override
@@ -103,21 +157,33 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
     return value.toStringAsFixed(2);
   }
 
-  double? _parseAmount(String raw) {
-    var cleaned = raw.trim().replaceAll(RegExp(r'[^\d,.]'), '');
-    if (cleaned.isEmpty) return null;
-    if (cleaned.contains(',') && cleaned.contains('.')) {
-      cleaned = cleaned.replaceAll('.', '').replaceAll(',', '.');
-    } else if (cleaned.contains(',')) {
-      cleaned = cleaned.replaceAll(',', '.');
+  void _selectProductCategory(String? value) {
+    final nextId = value ?? '';
+    ProductCategory? category;
+    for (final item in widget.categories) {
+      if (item.id == nextId) {
+        category = item;
+        break;
+      }
     }
-    return double.tryParse(cleaned);
+    setState(() {
+      _categoryId = nextId;
+      if (category != null) {
+        _richMetadata = alignProductMetadataToCategory(_richMetadata, category);
+        if (category.productTemplateKey == 'service') {
+          _brand = null;
+          _barcode = null;
+          _stockQuantity = null;
+          _variants = const [];
+        }
+      }
+    });
   }
 
   Future<void> _pickImages() async {
     final remaining = _maxImages - _images.length;
     if (remaining <= 0) {
-      _showMessage('Bir ürüne en fazla $_maxImages görsel eklenebilir.');
+      _showMessage('Bir ürüne en fazla $_maxImages fotoğraf eklenebilir.');
       return;
     }
     final result = await FilePicker.platform.pickFiles(
@@ -130,17 +196,24 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
     var rejected = 0;
     final additions = <_ProductImageDraft>[];
     for (final file in result.files.take(remaining)) {
+      final bytes = file.bytes;
+      if (bytes == null ||
+          file.size > ProductImagePolicy.maxSourceBytes ||
+          bytes.length > ProductImagePolicy.maxSourceBytes) {
+        rejected++;
+        continue;
+      }
       final validation = GalleryImageFileValidator.validate(
-        bytes: file.bytes,
+        bytes: bytes,
         reportedSize: file.size,
       );
-      if (!validation.isValid || file.bytes == null) {
+      if (!validation.isValid) {
         rejected++;
         continue;
       }
       additions.add(
         _ProductImageDraft(
-          bytes: file.bytes,
+          bytes: bytes,
           extension: validation.fileInfo!.extension,
           contentType: validation.fileInfo!.contentType,
         ),
@@ -149,7 +222,7 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
     setState(() => _images.addAll(additions));
     if (rejected > 0) {
       _showMessage(
-        '$rejected görsel eklenemedi. JPG, PNG veya WEBP, en fazla 15 MB.',
+        '$rejected görsel eklenemedi. JPG, PNG veya WEBP, en fazla ${ProductImagePolicy.maxSourceMegabytes} MB.',
       );
     }
   }
@@ -169,8 +242,21 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
       _showMessage('Ürün adı zorunludur.');
       return;
     }
-    final category = widget.categories.where((item) => item.id == _categoryId);
-    if (category.isEmpty) {
+    final mustMeetImagePolicy = widget.product == null || _imageListChanged;
+    if (mustMeetImagePolicy && _images.length < ProductImagePolicy.minImages) {
+      _showMessage(
+        'Bir ürün için en az ${ProductImagePolicy.minImages} fotoğraf zorunludur.',
+      );
+      return;
+    }
+    if (mustMeetImagePolicy && _images.length > ProductImagePolicy.maxImages) {
+      _showMessage(
+        'Bir ürüne en fazla ${ProductImagePolicy.maxImages} fotoğraf eklenebilir.',
+      );
+      return;
+    }
+    final selectedCategory = _selectedCategory;
+    if (selectedCategory == null) {
       _showMessage('Ürün kategorisi zorunludur.');
       return;
     }
@@ -181,11 +267,14 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
             ? widget.product!.id
             : DateTime.now().microsecondsSinceEpoch.toString();
     final uploadedUrls = <String>[];
+    final imageReferenceMap = <String, String>{};
     try {
       for (var index = 0; index < _images.length; index++) {
         final draft = _images[index];
         if (draft.url.trim().isNotEmpty) {
-          uploadedUrls.add(draft.url.trim());
+          final url = draft.url.trim();
+          uploadedUrls.add(url);
+          imageReferenceMap[draft.reference] = url;
           continue;
         }
         final bytes = draft.bytes;
@@ -198,6 +287,7 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
           contentType: draft.contentType,
         );
         uploadedUrls.add(url);
+        imageReferenceMap[draft.reference] = url;
         draft.url = url;
         draft.bytes = null;
       }
@@ -207,6 +297,40 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
           widget.product?.slug?.trim().isNotEmpty == true
               ? widget.product!.slug!
               : builder.generateSlug('$name-$productId');
+      final richMetadata = alignProductMetadataToCategory(
+        _richMetadata,
+        selectedCategory,
+      );
+      final isService = selectedCategory.productTemplateKey == 'service';
+      final uploadedSet = uploadedUrls.toSet();
+      final variantsWithResolvedImages =
+          _variants.map((variant) {
+            final seen = <String>{};
+            final resolvedImages = <String>[];
+            for (final reference in variant.imageUrls) {
+              final resolved = imageReferenceMap[reference] ?? reference.trim();
+              if (resolved.isNotEmpty &&
+                  uploadedSet.contains(resolved) &&
+                  seen.add(resolved)) {
+                resolvedImages.add(resolved);
+              }
+            }
+            return ProductVariantData(
+              id: variant.id,
+              options: variant.options,
+              sku: variant.sku,
+              barcode: variant.barcode,
+              priceAmount: variant.priceAmount,
+              stockQuantity: variant.stockQuantity,
+              stockStatus: variant.stockStatus,
+              imageUrls: resolvedImages,
+            );
+          }).toList();
+      final variants = await sanitizeProductVariantsForTemplate(
+        selectedCategory.productTemplateKey,
+        variantsWithResolvedImages,
+        availableImageUrls: uploadedSet,
+      );
       final result = Product(
         id: productId,
         name: name,
@@ -214,16 +338,22 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
         description: _descriptionController.text.trim(),
         imagePath: uploadedUrls.isEmpty ? null : uploadedUrls.first,
         imageUrls: uploadedUrls,
-        categoryId: category.first.id,
-        category: category.first.name,
-        stockStatus: _stockStatus,
-        isVisible: true,
+        categoryId: selectedCategory.id,
+        category: selectedCategory.name,
+        stockStatus: isService ? '' : _stockStatus,
+        isVisible: widget.product?.isVisible ?? true,
         slug: slug,
         source: widget.product?.source,
         sourceMediaId: widget.product?.sourceMediaId,
         sourcePermalink: widget.product?.sourcePermalink,
         importedAt: widget.product?.importedAt,
-        oldPriceAmount: _parseAmount(_oldPriceController.text),
+        brand: isService ? null : _brand,
+        barcode: isService ? null : _barcode,
+        sku: richMetadata.sku,
+        stockQuantity: isService ? null : _stockQuantity,
+        richMetadata: richMetadata,
+        variants: variants,
+        oldPriceAmount: parseProductPriceAmount(_oldPriceController.text),
         badgeTag:
             _badgeTagController.text.trim().isEmpty
                 ? null
@@ -235,10 +365,13 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
       );
       if (!mounted) return;
       Navigator.of(context).pop(result);
-    } catch (_) {
+    } catch (error) {
       if (!mounted) return;
+      final message = error.toString();
       _showMessage(
-        'Ürün görselleri yüklenemedi. Form korundu, tekrar deneyebilirsiniz.',
+        message.contains('Kısa kenar en az')
+            ? message.replaceFirst('Exception: ', '')
+            : 'Ürün görselleri yüklenemedi. Form korundu, tekrar deneyebilirsiniz.',
       );
       setState(() => _isSaving = false);
     }
@@ -252,6 +385,7 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final selectedCategory = _selectedCategory;
     return PopScope(
       canPop: !_isSaving,
       child: SafeArea(
@@ -312,35 +446,79 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
                             ),
                           )
                           .toList(),
-                  onChanged:
-                      _isSaving
-                          ? null
-                          : (value) =>
-                              setState(() => _categoryId = value ?? ''),
+                  onChanged: _isSaving ? null : _selectProductCategory,
                 ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  value: _stockStatus,
-                  dropdownColor: AppColors.surfaceSoft,
-                  decoration: const InputDecoration(labelText: 'Stok durumu'),
-                  items:
-                      _stockOptions
-                          .map(
-                            (status) => DropdownMenuItem(
-                              value: status,
-                              child: Text(status),
+                if (!_isServiceProduct) ...[
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    value: _stockStatus,
+                    dropdownColor: AppColors.surfaceSoft,
+                    decoration: const InputDecoration(labelText: 'Stok durumu'),
+                    items:
+                        _stockOptions
+                            .map(
+                              (status) => DropdownMenuItem(
+                                value: status,
+                                child: Text(status),
+                              ),
+                            )
+                            .toList(),
+                    onChanged:
+                        _isSaving
+                            ? null
+                            : (value) => setState(
+                              () =>
+                                  _stockStatus =
+                                      value ?? StockStatus.available.label,
                             ),
-                          )
-                          .toList(),
-                  onChanged:
-                      _isSaving
-                          ? null
-                          : (value) => setState(
-                            () =>
-                                _stockStatus =
-                                    value ?? StockStatus.available.label,
-                          ),
-                ),
+                  ),
+                ],
+                if (selectedCategory != null)
+                  ProductRichFieldsEditor(
+                    key: ValueKey(
+                      'rich-${selectedCategory.productTemplateKey}',
+                    ),
+                    templateKey: selectedCategory.productTemplateKey,
+                    value: ProductRichEditorValue(
+                      brand: _brand,
+                      barcode: _barcode,
+                      stockQuantity: _stockQuantity,
+                      metadata: _richMetadata,
+                    ),
+                    variantCount: _variants.length,
+                    enabled: !_isSaving,
+                    onChanged: (next) {
+                      setState(() {
+                        _brand = next.brand;
+                        _barcode = next.barcode;
+                        _stockQuantity = next.stockQuantity;
+                        _richMetadata = next.metadata;
+                      });
+                    },
+                  ),
+                if (selectedCategory != null && !_isServiceProduct)
+                  ProductVariantEditor(
+                    key: ValueKey(
+                      'variants-${selectedCategory.productTemplateKey}',
+                    ),
+                    templateKey: selectedCategory.productTemplateKey,
+                    variants: _variants,
+                    imageChoices:
+                        _images
+                            .map(
+                              (image) => ProductVariantImageChoice(
+                                reference: image.reference,
+                                url:
+                                    image.url.trim().isEmpty
+                                        ? null
+                                        : image.url.trim(),
+                                bytes: image.bytes,
+                              ),
+                            )
+                            .toList(),
+                    enabled: !_isSaving,
+                    onChanged: (next) => setState(() => _variants = next),
+                  ),
                 const SizedBox(height: 16),
                 ElevatedButton.icon(
                   onPressed: _isSaving ? null : _save,
@@ -384,11 +562,6 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
       );
     }
 
-    // #247: eksik/çok kısa açıklama, ürün sayısı arttıkça SEO ve müşteri
-    // güveni açısından bir kalite riski — bu yumuşak (bloklamayan) uyarı,
-    // kaydetmeyi engellemeden esnafı bilgilendirir. ValueListenableBuilder
-    // kullanılıyor çünkü TextEditingController zaten bir ValueNotifier —
-    // ayrı bir state/setState açmaya gerek yok.
     return ValueListenableBuilder<TextEditingValue>(
       valueListenable: controller,
       builder: (context, value, _) {
@@ -409,9 +582,6 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
     );
   }
 
-  /// Boşsa uyarı yok (zorunlu alan değil) — yalnız doldurulmuş ama çok kısa
-  /// bırakılmışsa uyarır. Eşik (40 karakter) kesin bir kural değil, kaba bir
-  /// "bir cümleden az" sezgisi.
   String? _descriptionHelper(String text) {
     final trimmed = text.trim();
     if (trimmed.isEmpty || trimmed.length >= 40) return null;
@@ -419,6 +589,10 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
   }
 
   Widget _buildImages() {
+    final legacyImagesKept =
+        widget.product != null &&
+        _initialImageUrls.length < ProductImagePolicy.minImages &&
+        !_imageListChanged;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -426,7 +600,7 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
           children: [
             const Expanded(
               child: Text(
-                'Ürün görselleri',
+                'Ürün görselleri *',
                 style: TextStyle(
                   color: AppColors.darkText,
                   fontWeight: FontWeight.w800,
@@ -455,9 +629,16 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
           ),
         ),
         const SizedBox(height: 6),
-        const Text(
-          'İlk görsel ürün kapağıdır. Oklarla sıralayabilirsiniz.',
-          style: TextStyle(color: AppColors.mutedText, fontSize: 11),
+        Text(
+          legacyImagesKept
+              ? 'Mevcut fotoğraflar korunur. Fotoğraf listesini değiştirirsen en az ${ProductImagePolicy.minImages}, en fazla ${ProductImagePolicy.maxImages} fotoğraf gerekir.'
+              : 'En az ${ProductImagePolicy.minImages}, en fazla ${ProductImagePolicy.maxImages} fotoğraf. İlk fotoğraf ürün kapağıdır.',
+          style: const TextStyle(color: AppColors.mutedText, fontSize: 11),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          'JPG, PNG veya WEBP; fotoğraf başına en fazla ${ProductImagePolicy.maxSourceMegabytes} MB. Kaynak görselin kısa kenarı en az ${ProductImagePolicy.minSourceShortEdge} px olmalıdır.',
+          style: const TextStyle(color: AppColors.mutedText, fontSize: 11),
         ),
       ],
     );
@@ -553,12 +734,21 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
 
 class _ProductImageDraft {
   _ProductImageDraft({
-    this.url = '',
+    String url = '',
     this.bytes,
     this.extension = 'jpg',
     this.contentType = 'image/jpeg',
-  });
+    String? reference,
+  }) : url = url,
+       reference =
+           reference ?? (url.trim().isNotEmpty ? url.trim() : _newReference());
 
+  static int _referenceSequence = 0;
+
+  static String _newReference() =>
+      'draft-${DateTime.now().microsecondsSinceEpoch}-${_referenceSequence++}';
+
+  final String reference;
   String url;
   Uint8List? bytes;
   final String extension;

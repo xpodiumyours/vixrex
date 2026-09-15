@@ -4,7 +4,13 @@ import 'package:vixrex/models/store_product.dart';
 import 'package:vixrex/repositories/product_repository.dart';
 import 'package:vixrex/services/product_service.dart';
 
-class _CoreOwnedSlugRepository implements ProductRepository {
+const _testImages = [
+  'https://example.com/1.jpg',
+  'https://example.com/2.jpg',
+  'https://example.com/3.jpg',
+];
+
+class _CoreOwnedSlugRepository extends ProductRepository {
   String? receivedName;
 
   @override
@@ -87,6 +93,7 @@ void main() {
       storeId: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
       editToken: 'edit-token-12345678901234567890',
       name: 'Çanta & Aksesuar',
+      imageUrls: _testImages,
     );
 
     expect(result.isSuccess, isTrue);

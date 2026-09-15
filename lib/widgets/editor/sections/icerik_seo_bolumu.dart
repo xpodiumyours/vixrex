@@ -277,6 +277,21 @@ class IcerikSeoBolumu extends StatelessWidget {
             editToken: controller.publishedInfo?.editToken.trim() ?? '',
             showMessage: (msg) => state.showSnackBar(ctx, msg),
             onCatalogChanged: (products, categories) async {
+              final publishedToken =
+                  controller.publishedInfo?.editToken.trim() ?? '';
+              if (publishedToken.isEmpty) {
+                // Yayın öncesi eski akışı koru: ürünler taslakta kaybolmaz.
+                // İlk public yayında StorePublishService aynı veriyi önce
+                // görünmeyen draft store'a Product CORE olarak stage eder.
+                controller.data.products = List<Product>.of(products);
+                controller.data.productCategories = List<ProductCategory>.of(
+                  categories,
+                );
+                await controller.saveLocally();
+                controller.notifyStoreDataChanged();
+                return true;
+              }
+
               final sync = await controller.syncCatalogToRemote(
                 products: products,
                 categories: categories,
@@ -291,6 +306,17 @@ class IcerikSeoBolumu extends StatelessWidget {
               return sync.isSuccess;
             },
             onProductDelete: (product) async {
+              final publishedToken =
+                  controller.publishedInfo?.editToken.trim() ?? '';
+              if (publishedToken.isEmpty) {
+                controller.data.products.removeWhere(
+                  (item) => item.id == product.id,
+                );
+                await controller.saveLocally();
+                controller.notifyStoreDataChanged();
+                return true;
+              }
+
               final result = await controller.removeProductById(product.id);
               if (result.isFailure && ctx.mounted) {
                 state.showSnackBar(

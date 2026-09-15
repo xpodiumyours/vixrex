@@ -1,35 +1,24 @@
 import 'package:flutter/foundation.dart';
 import 'package:vixrex/core/result.dart';
+import 'package:vixrex/models/product_rich_data.dart';
 import 'package:vixrex/models/store_product.dart';
+import 'package:vixrex/services/product_category_metadata_service.dart';
 import 'package:vixrex/services/product_service.dart';
 import 'package:vixrex/utils/failure.dart';
+import 'package:vixrex/utils/product_price_parser.dart';
 
-/// `StoreEditorController`'ın sahip olduğu ürün kataloğu diff/CRUD mantığı.
-///
-/// [ProductService] tek-satır uzak yazma yapar (add/update/delete); bu
-/// modül liste seviyesinde reconciliation'ı (hangisi yeni, hangisi mevcut,
-/// UUID/fiyat ayrıştırma) sahiplenir. Controller-state'e hiç dokunmaz —
-/// yalnız değer alır, [Result] döner; yerel `_data` mutasyonu, kaydetme ve
-/// bildirim çağıranın (controller'ın) sorumluluğunda kalır.
-///
-/// 2026-08-12: `store_editor_controller.dart`'tan (1388 satır, AGENTS.md'nin
-/// 400 satır sınırının çok üstünde) birebir taşındı — Faz 1. Davranış
-/// kasıtlı olarak değiştirilmedi; bilinen tuhaflıklar (bkz. aşağıdaki yorum
-/// satırları) burada da aynen korunuyor, düzeltme ayrı bir iştir.
+/// Yerel ürün kataloğunu aynı Supabase Product CORE ile eşler.
 class ProductCatalogSyncService {
   const ProductCatalogSyncService({required ProductService productService})
     : _productService = productService;
 
   final ProductService _productService;
 
-  /// Yerel [products] listesini (gerçek kaynak) [storeId] için uzak
-  /// `products` tablosuyla eşler: uzakta karşılığı olmayanları oluşturur,
-  /// olanları günceller. Uzakta olup [products]'ta olmayan satırları ASLA
-  /// silmez — kalıcı silme yalnız [deleteProduct] ile, açık kullanıcı
-  /// eylemiyle olur (canlı veri koruması).
-  ///
-  /// Döndürdüğü liste sunucudan gelen id/slug/categoryId ile güncellenmiş
-  /// üründür; çağıran bunu `_data.products`'a yazmalıdır.
+  String? _externalProductId(Product product) {
+    final value = product.sourceMediaId?.trim() ?? '';
+    return value.isEmpty ? null : value;
+  }
+
   Future<Result<List<Product>>> syncCatalog({
     required String storeId,
     required String editToken,
@@ -43,13 +32,13 @@ class ProductCatalogSyncService {
       for (var i = 0; i < products.length; i++) {
         final product = products[i];
         final name = product.name.trim();
-        // Boş isimli satır atlanır ama i (sortOrder) ilerlemeye devam eder —
-        // orijinal davranış, değiştirilmedi.
         if (name.isEmpty) continue;
 
         final rawCatId = product.categoryId.trim();
         final categoryUuid =
             rawCatId.isNotEmpty && _isUuid(rawCatId) ? rawCatId : null;
+        final priceAmount = parseProductPriceAmount(product.price);
+        final metadata = await _metadataForWrite(product.richMetadata);
 
         if (_isUuid(product.id) && remoteIds.contains(product.id)) {
           final updated = await _productService.updateProduct(
@@ -58,35 +47,39 @@ class ProductCatalogSyncService {
             name: name,
             description: product.description,
             priceText: product.price,
-            priceAmount: _parsePriceAmount(product.price),
+            priceAmount: priceAmount,
             oldPriceAmount: product.oldPriceAmount,
             badgeTag: product.badgeTag,
             fulfillmentRegion: product.fulfillmentLocation,
-            clearOldPriceAmount: product.oldPriceAmount == null,
-            clearBadgeTag:
-                product.badgeTag == null || product.badgeTag!.trim().isEmpty,
-            clearFulfillmentRegion:
-                product.fulfillmentLocation == null ||
-                product.fulfillmentLocation!.trim().isEmpty,
             imageUrls: product.displayImageUrls,
             categoryId: categoryUuid,
-            clearCategory: categoryUuid == null || categoryUuid.isEmpty,
             isVisible: true,
-            stockStatus: product.stockStatus,
             sortOrder: i,
+            stockQuantity: product.stockQuantity,
+            stockStatus: product.stockStatus,
+            brand: product.brand,
+            barcode: product.barcode,
+            metadata: metadata,
+            variants: product.variants,
+            clearCategory: categoryUuid == null,
+            clearPriceAmount: priceAmount == null,
+            clearOldPriceAmount: product.oldPriceAmount == null,
+            clearBadgeTag: product.badgeTag?.trim().isNotEmpty != true,
+            clearFulfillmentRegion:
+                product.fulfillmentLocation?.trim().isNotEmpty != true,
+            clearStockQuantity: product.stockQuantity == null,
+            clearStockStatus: product.stockStatus.trim().isEmpty,
+            clearBrand: product.brand?.trim().isNotEmpty != true,
+            clearBarcode: product.barcode?.trim().isNotEmpty != true,
           );
           if (updated.isFailure) {
             return Result.failure(
               Failure(updated.failure?.message ?? 'Ürün güncellenemedi.'),
             );
           }
-          // Kategori mapping'i UUID formatındaysa uygula,
-          // aksi takdirde ürünün mevcut kategorisini koru.
-          // Sadece categoryUuid (remote'daki UUID) varsa üzerine yazılır,
-          // aksi takdirde product.categoryId'ye (key formatındaysa) dokunulmaz.
-          if (categoryUuid != null) {
-            product.categoryId = categoryUuid;
-          }
+          if (categoryUuid != null) product.categoryId = categoryUuid;
+          product.richMetadata = metadata;
+          product.sku ??= metadata.sku;
           nextProducts.add(product);
         } else {
           final created = await _productService.addProduct(
@@ -95,15 +88,22 @@ class ProductCatalogSyncService {
             name: name,
             description: product.description,
             priceText: product.price,
-            priceAmount: _parsePriceAmount(product.price),
+            priceAmount: priceAmount,
             oldPriceAmount: product.oldPriceAmount,
             badgeTag: product.badgeTag,
             fulfillmentRegion: product.fulfillmentLocation,
             imageUrls: product.displayImageUrls,
             categoryId: categoryUuid,
             sourceType: product.source ?? 'manual',
+            externalProductId: _externalProductId(product),
             isVisible: true,
             sortOrder: i,
+            brand: product.brand,
+            barcode: product.barcode,
+            stockQuantity: product.stockQuantity,
+            stockStatus: product.stockStatus,
+            metadata: metadata,
+            variants: product.variants,
           );
           if (created.isFailure || created.data == null) {
             return Result.failure(
@@ -113,37 +113,44 @@ class ProductCatalogSyncService {
           product.id = created.data!.id;
           product.slug = created.data!.slug;
           product.categoryId = categoryUuid ?? '';
+          product.richMetadata = metadata;
+          product.sku ??= metadata.sku;
           nextProducts.add(product);
         }
       }
 
       return Result.success(nextProducts);
     } catch (e) {
-      if (kDebugMode) {
-        debugPrint('ProductCatalogSyncService.syncCatalog: $e');
-      }
+      if (kDebugMode) debugPrint('ProductCatalogSyncService.syncCatalog: $e');
       return Result.failure(
         Failure('Ürünler kaydedilemedi, lütfen tekrar deneyin.'),
       );
     }
   }
 
-  /// Tek bir yeni ürünü uzağa yazar; başarılıysa [product]'ı sunucudan gelen
-  /// id/slug ile YERİNDE mutasyona uğratır (çağıran aynı örneği kullanmaya
-  /// devam eder — orijinal controller davranışı).
   Future<Result<void>> addProduct({
     required String storeId,
     required String editToken,
     required Product product,
     required int sortOrder,
   }) async {
+    ProductRichMetadata metadata;
+    try {
+      metadata = await _metadataForWrite(product.richMetadata);
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('ProductCatalogSyncService.addProduct metadata: $e');
+      }
+      return Result.failure(Failure('Ürün kategori detayları geçersiz.'));
+    }
+
     final result = await _productService.addProduct(
       storeId: storeId,
       editToken: editToken,
       name: product.name,
       description: product.description,
       priceText: product.price,
-      priceAmount: _parsePriceAmount(product.price),
+      priceAmount: parseProductPriceAmount(product.price),
       oldPriceAmount: product.oldPriceAmount,
       badgeTag: product.badgeTag,
       fulfillmentRegion: product.fulfillmentLocation,
@@ -153,8 +160,15 @@ class ProductCatalogSyncService {
               ? product.categoryId
               : null,
       sourceType: product.source ?? 'manual',
+      externalProductId: _externalProductId(product),
       isVisible: true,
       sortOrder: sortOrder,
+      brand: product.brand,
+      barcode: product.barcode,
+      stockQuantity: product.stockQuantity,
+      stockStatus: product.stockStatus,
+      metadata: metadata,
+      variants: product.variants,
     );
 
     if (result.isFailure ||
@@ -167,18 +181,29 @@ class ProductCatalogSyncService {
     }
     product.id = result.data!.id;
     product.slug = result.data!.slug;
+    product.richMetadata = metadata;
+    product.sku ??= metadata.sku;
     return const Result.success(null);
   }
 
-  /// Mevcut bir ürünü uzakta günceller. [product.id] gerçek bir uzak UUID
-  /// değilse (henüz senkronlanmamışsa) sessizce başarı döner — orijinal
-  /// controller'daki `_isUuid` kapısıyla aynı davranış.
   Future<Result<void>> updateProduct({
     required String editToken,
     required Product product,
   }) async {
-    if (!_isUuid(product.id)) {
-      return const Result.success(null);
+    if (!_isUuid(product.id)) return const Result.success(null);
+    final categoryId =
+        product.categoryId.isNotEmpty && _isUuid(product.categoryId)
+            ? product.categoryId
+            : null;
+    final priceAmount = parseProductPriceAmount(product.price);
+    ProductRichMetadata metadata;
+    try {
+      metadata = await _metadataForWrite(product.richMetadata);
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('ProductCatalogSyncService.updateProduct metadata: $e');
+      }
+      return Result.failure(Failure('Ürün kategori detayları geçersiz.'));
     }
     final updated = await _productService.updateProduct(
       productId: product.id,
@@ -186,35 +211,40 @@ class ProductCatalogSyncService {
       name: product.name,
       description: product.description,
       priceText: product.price,
-      priceAmount: _parsePriceAmount(product.price),
+      priceAmount: priceAmount,
       oldPriceAmount: product.oldPriceAmount,
       badgeTag: product.badgeTag,
       fulfillmentRegion: product.fulfillmentLocation,
-      clearOldPriceAmount: product.oldPriceAmount == null,
-      clearBadgeTag:
-          product.badgeTag == null || product.badgeTag!.trim().isEmpty,
-      clearFulfillmentRegion:
-          product.fulfillmentLocation == null ||
-          product.fulfillmentLocation!.trim().isEmpty,
       imageUrls: product.displayImageUrls,
-      categoryId:
-          product.categoryId.isNotEmpty && _isUuid(product.categoryId)
-              ? product.categoryId
-              : null,
+      categoryId: categoryId,
       isVisible: true,
+      stockQuantity: product.stockQuantity,
       stockStatus: product.stockStatus,
+      brand: product.brand,
+      barcode: product.barcode,
+      metadata: metadata,
+      variants: product.variants,
+      clearCategory: categoryId == null,
+      clearPriceAmount: priceAmount == null,
+      clearOldPriceAmount: product.oldPriceAmount == null,
+      clearBadgeTag: product.badgeTag?.trim().isNotEmpty != true,
+      clearFulfillmentRegion:
+          product.fulfillmentLocation?.trim().isNotEmpty != true,
+      clearStockQuantity: product.stockQuantity == null,
+      clearStockStatus: product.stockStatus.trim().isEmpty,
+      clearBrand: product.brand?.trim().isNotEmpty != true,
+      clearBarcode: product.barcode?.trim().isNotEmpty != true,
     );
     if (updated.isFailure) {
       return Result.failure(
         Failure(updated.failure?.message ?? 'Ürün güncellenemedi.'),
       );
     }
+    product.richMetadata = metadata;
+    product.sku ??= metadata.sku;
     return const Result.success(null);
   }
 
-  /// Uzakta kalıcı ürün siler. [productId] gerçek bir UUID değilse veya
-  /// [editToken] boşsa sessizce başarı döner (henüz hiç senkronlanmamış bir
-  /// ürünün uzakta zaten karşılığı yoktur) — orijinal davranış.
   Future<Result<void>> deleteProduct({
     required String productId,
     required String editToken,
@@ -234,20 +264,13 @@ class ProductCatalogSyncService {
     return const Result.success(null);
   }
 
+  Future<ProductRichMetadata> _metadataForWrite(ProductRichMetadata metadata) {
+    return sanitizeProductMetadataForWrite(metadata);
+  }
+
   bool _isUuid(String value) {
     return RegExp(
       r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
     ).hasMatch(value.trim());
-  }
-
-  double? _parsePriceAmount(String raw) {
-    var cleaned = raw.trim().replaceAll(RegExp(r'[^\d,.]'), '');
-    if (cleaned.isEmpty) return null;
-    if (cleaned.contains(',') && cleaned.contains('.')) {
-      cleaned = cleaned.replaceAll('.', '').replaceAll(',', '.');
-    } else if (cleaned.contains(',')) {
-      cleaned = cleaned.replaceAll(',', '.');
-    }
-    return double.tryParse(cleaned);
   }
 }
