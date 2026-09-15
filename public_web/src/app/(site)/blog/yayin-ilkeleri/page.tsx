@@ -71,7 +71,7 @@ export default function BlogYayinIlkeleriPage() {
             <h2 className="text-2xl font-black tracking-tight">Yayın güvenliği</h2>
             <p className="mt-3">
               Normal yayın akışında taslak ve arşiv içerikler blog listesine,
-              sitemap'e veya RSS'e girmez. Yayın için tarih, içerik türüne göre
+              sitemap&apos;e veya RSS&apos;e girmez. Yayın için tarih, içerik türüne göre
               doğrulama alanları ve mevcut kalite kontrollerinin geçmesi gerekir.
             </p>
           </section>

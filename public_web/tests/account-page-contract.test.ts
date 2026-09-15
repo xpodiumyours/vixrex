@@ -4,12 +4,12 @@ import { describe, expect, it } from "vitest";
 
 const accountPath = resolve(__dirname, "../src/app/app/hesap/page.tsx");
 const dashboard = readFileSync(
-  resolve(__dirname, "../src/app/app/page.tsx"),
+  resolve(__dirname, "../src/app/app/ayarlar/page.tsx"),
   "utf8"
 );
 
 describe("hesap ve vitrin silme kullanıcı sözleşmesi", () => {
-  it("hesap ekranına panodan ulaşılır", () => {
+  it("hesap ekranına ayarlardan ulaşılır", () => {
     expect(dashboard).toContain('href="/app/hesap"');
     expect(dashboard).toContain("Hesap");
   });

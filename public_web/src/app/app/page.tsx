@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { sahipOturumuAc } from "@/lib/ownerCookie";
 import type { User } from "@supabase/supabase-js";
@@ -12,13 +11,10 @@ import {
   type AsistanCevaplari,
 } from "@/lib/landingAsistanAkisi";
 import { importLandingFlowStateIfNeeded } from "@/lib/ownerFlowImport";
-import {
-  OwnerProductManager,
-  type OwnerProduct,
-  type OwnerProductCategory,
+import type {
+  OwnerProduct,
+  OwnerProductCategory,
 } from "@/components/owner/OwnerProductManager";
-import { OwnerDashboardMetrics } from "@/components/owner/OwnerDashboardMetrics";
-import { OwnerNotificationLink } from "@/components/owner/OwnerNotificationLink";
 import { VitrinimEditor } from "@/components/owner/VitrinimEditor";
 import { PUBLIC_STORE_SELECT } from "@/lib/publicStoreSelect";
 
@@ -319,8 +315,7 @@ export default function AppPage() {
       <div className="w-full">
         {hata ? <p className="owner-error mb-6 text-sm" role="alert">{hata}</p> : null}
 
-        {stores.length === 0 ? (
-          flowState ? (
+        {flowState ? (
             <section className="owner-card p-5 sm:p-8" aria-labelledby="vitrin-devam-title">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--owner-secondary)]">Devam Ediyor</p>
@@ -424,117 +419,7 @@ export default function AppPage() {
               {hata ? <p className="owner-error text-sm" role="alert">{hata}</p> : null}
               {olusturuyor ? <p className="text-sm text-[var(--owner-muted)]" role="status">Vitrin oluşturuluyor…</p> : null}
             </div>
-          )
-        ) : (
-          <section aria-labelledby="vitrinim-title">
-            <h2 id="vitrinim-title" className="sr-only">Vitrinim</h2>
-            <div className="grid gap-4">
-              <Link
-                href={`/v/${stores[0].slug}`}
-                className="owner-card owner-link group block p-5 no-underline transition hover:border-[var(--owner-primary)] sm:p-6"
-              >
-                <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-3">
-                      <h3 className="truncate text-lg font-bold text-[var(--owner-text)] group-hover:text-[var(--owner-secondary)]">
-                        {stores[0].name}
-                      </h3>
-                      <span
-                        className={`rounded-full border px-2.5 py-1 text-xs font-bold ${
-                          stores[0].is_published
-                            ? "border-[var(--owner-success)]/40 bg-[var(--owner-success)]/10 text-[var(--owner-success)]"
-                            : "border-[var(--owner-warning)]/40 bg-[var(--owner-warning)]/10 text-[var(--owner-warning)]"
-                        }`}
-                      >
-                        {stores[0].is_published ? "Yayında" : "Taslak"}
-                      </span>
-                    </div>
-                    <p className="mt-2 truncate text-xs text-[var(--owner-muted)]">
-                      /v/{stores[0].slug}
-                    </p>
-                    {stores[0].kategori ? (
-                      <p className="mt-2 text-sm text-[var(--owner-text-alt)]">{stores[0].kategori}</p>
-                    ) : null}
-                  </div>
-                  <span className="owner-button-primary inline-flex shrink-0 items-center justify-center sm:min-w-40">
-                    Vitrini Yönet
-                  </span>
-                </div>
-              </Link>
-              <OwnerDashboardMetrics />
-            </div>
-            <OwnerProductManager
-              storeSlug={stores[0].slug}
-              products={stores[0].products ?? []}
-              categories={stores[0].product_categories ?? []}
-              onRefresh={async () => {
-                await magazalariGetir(false);
-              }}
-            />
-
-            {/* Yönetim bağlantıları */}
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              <Link
-                href={`/v/${stores[0].slug}/blog-yonetim`}
-                className="owner-card owner-link group flex items-center gap-3 p-4 no-underline transition hover:border-[var(--owner-primary)]"
-              >
-                <span className="text-2xl">📝</span>
-                <div>
-                  <p className="text-sm font-bold text-[var(--owner-text)] group-hover:text-[var(--owner-secondary)]">
-                    Blog Yönetimi
-                  </p>
-                  <p className="text-xs text-[var(--owner-muted)]">
-                    Yazılarını düzenle ve yeni yazı oluştur
-                  </p>
-                </div>
-              </Link>
-              <Link
-                href={`/v/${stores[0].slug}/randevu-yonetim`}
-                className="owner-card owner-link group flex items-center gap-3 p-4 no-underline transition hover:border-[var(--owner-primary)]"
-              >
-                <span className="text-[var(--owner-secondary)]" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="5" width="18" height="16" rx="3" /><path d="M8 3v4M16 3v4M3 10h18" /></svg></span>
-                <div>
-                  <p className="text-sm font-bold text-[var(--owner-text)] group-hover:text-[var(--owner-secondary)]">
-                    Randevu Yönetimi
-                  </p>
-                  <p className="text-xs text-[var(--owner-muted)]">
-                    Bekleyen randevuları onayla veya reddet
-                  </p>
-                </div>
-              </Link>
-              <OwnerNotificationLink />
-              <Link
-                href="/app/hesap"
-                className="owner-card owner-link group flex items-center gap-3 p-4 no-underline transition hover:border-[var(--owner-primary)]"
-              >
-                <span className="text-[var(--owner-secondary)]" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="3.2" /><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z" /></svg></span>
-                <div>
-                  <p className="text-sm font-bold text-[var(--owner-text)] group-hover:text-[var(--owner-secondary)]">
-                    Hesap
-                  </p>
-                  <p className="text-xs text-[var(--owner-muted)]">
-                    Profil, ayarlar ve hesap yönetimi
-                  </p>
-                </div>
-              </Link>
-              <Link
-                href="/yardim"
-                className="owner-card owner-link group flex items-center gap-3 p-4 no-underline transition hover:border-[var(--owner-primary)]"
-              >
-                <span className="text-2xl" aria-hidden="true">❓</span>
-                <div>
-                  <p className="text-sm font-bold text-[var(--owner-text)] group-hover:text-[var(--owner-secondary)]">
-                    Yardım ve Destek
-                  </p>
-                  <p className="text-xs text-[var(--owner-muted)]">
-                    Kullanım bilgileri ve sık sorulan sorular
-                  </p>
-                </div>
-              </Link>
-
-            </div>
-          </section>
-        )}
+          )}
       </div>
     </main>
   );

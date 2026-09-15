@@ -873,15 +873,6 @@ export default async function StorePage(props: PageProps) {
           galleryItems={gallerySection.items}
           marketplaceLinks={marketplaceLinks}
           articles={articles}
-          catalog={
-            <ProductCatalog
-              storeSlug={store.slug}
-              products={visibleProducts}
-              categoryMap={(categories || []).map((c) => ({ id: c.id, name: c.name }))}
-              fallbackImage={store.logo_url || "/vixrex_v_crystal_mascot.png"}
-              storeInitial={store.name?.trim()?.[0]?.toUpperCase() || "V"}
-            />
-          }
           isPreviewMode={true}
           draft={draft}
           sessionExpiresAt={sessionExpiresAt}
