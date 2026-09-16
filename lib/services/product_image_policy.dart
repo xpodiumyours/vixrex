@@ -1,11 +1,15 @@
+import 'package:vixrex/config/product_image_policy.g.dart';
+
 class ProductImagePolicy {
   const ProductImagePolicy._();
 
-  static const int minImages = 3;
-  static const int maxImages = 11;
-  static const int maxSourceMegabytes = 5;
-  static const int maxSourceBytes = maxSourceMegabytes * 1024 * 1024;
-  static const int minSourceShortEdge = 1200;
+  static const int minImages = ProductImagePolicyValues.minImages;
+  static const int maxImages = ProductImagePolicyValues.maxImages;
+  static const int maxSourceMegabytes =
+      ProductImagePolicyValues.maxSourceMegabytes;
+  static const int maxSourceBytes = ProductImagePolicyValues.maxSourceBytes;
+  static const int minSourceShortEdge =
+      ProductImagePolicyValues.minSourceShortEdge;
 
   static List<String> normalize(List<String> imageUrls) {
     return imageUrls

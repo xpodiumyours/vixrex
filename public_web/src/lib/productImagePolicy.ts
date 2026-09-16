@@ -1,8 +1,32 @@
-export const MIN_PRODUCT_IMAGES = 3;
-export const MAX_PRODUCT_IMAGES = 11;
-export const MAX_PRODUCT_IMAGE_SOURCE_MEGABYTES = 5;
+import policyJson from "../../../shared/product_image_policy.json";
+
+type ProductImagePolicyValues = {
+  minImages: number;
+  maxImages: number;
+  maxSourceMegabytes: number;
+  minSourceShortEdge: number;
+};
+
+const POLICY_VALUES = policyJson as ProductImagePolicyValues;
+
+function readPositiveNumber(value: unknown, name: string): number {
+  if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) {
+    throw new Error(`product_image_policy.json: "${name}" pozitif sayi olmali.`);
+  }
+  return Math.floor(value);
+}
+
+export const MIN_PRODUCT_IMAGES = readPositiveNumber(POLICY_VALUES.minImages, "minImages");
+export const MAX_PRODUCT_IMAGES = readPositiveNumber(POLICY_VALUES.maxImages, "maxImages");
+export const MAX_PRODUCT_IMAGE_SOURCE_MEGABYTES = readPositiveNumber(
+  POLICY_VALUES.maxSourceMegabytes,
+  "maxSourceMegabytes",
+);
 export const MAX_PRODUCT_IMAGE_SOURCE_BYTES = MAX_PRODUCT_IMAGE_SOURCE_MEGABYTES * 1024 * 1024;
-export const MIN_PRODUCT_IMAGE_SOURCE_SHORT_EDGE = 1200;
+export const MIN_PRODUCT_IMAGE_SOURCE_SHORT_EDGE = readPositiveNumber(
+  POLICY_VALUES.minSourceShortEdge,
+  "minSourceShortEdge",
+);
 
 export interface ProductImageValidationResult {
   ok: boolean;
