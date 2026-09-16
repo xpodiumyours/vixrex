@@ -8,8 +8,8 @@ import {
   getProductImages,
   normalizeExternalUrl,
   normalizeWhatsappDigits,
+  type ProductItem,
 } from "@/lib/products";
-import type { RichProductItem } from "@/lib/richProductItem";
 import { buildSiteUrl, getSiteUrl } from "@/lib/siteUrl";
 import { safeJsonLdHtml } from "@/lib/jsonLd";
 import { TrackedWhatsAppLink } from "@/components/TrackedWhatsAppLink";
@@ -56,7 +56,6 @@ interface ProductRow {
   is_visible: boolean;
   is_active: boolean;
   source_type: string;
-  metadata?: unknown;
 }
 
 interface CategoryRow {
@@ -80,7 +79,7 @@ async function _getProductData(slug: string, productSlug: string) {
     const { data: productRow } = await supabase
       .from("products")
       .select(
-        "id,name,slug,description,price_text,price_amount,old_price_amount,badge_tag,fulfillment_region,currency,stock_status,image_urls,category_id,is_visible,is_active,source_type,metadata"
+        "id,name,slug,description,price_text,price_amount,old_price_amount,badge_tag,fulfillment_region,currency,stock_status,image_urls,category_id,is_visible,is_active,source_type"
       )
       .eq("store_id", store.id)
       .eq("slug", productSlug)
@@ -98,7 +97,7 @@ async function _getProductData(slug: string, productSlug: string) {
         categoryName = cat?.name || "";
       }
 
-      const product: RichProductItem = {
+      const product: ProductItem = {
         id: productRow.id,
         slug: productRow.slug,
         name: productRow.name,
@@ -118,7 +117,6 @@ async function _getProductData(slug: string, productSlug: string) {
         stockStatus: productRow.stock_status || undefined,
         isVisible: productRow.is_visible,
         source: productRow.source_type,
-        metadata: productRow.metadata,
       };
 
       return {
