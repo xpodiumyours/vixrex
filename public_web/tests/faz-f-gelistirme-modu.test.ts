@@ -6,16 +6,18 @@ const oku = (yol: string) =>
   readFileSync(resolve(__dirname, `../src/${yol}`), "utf8");
 
 describe("Faz F — tıklamalar artık Supabase'e de yazılıyor (GA'nın yanına)", () => {
-  it("WhatsApp tıklaması record_vitrin_engagement çağırır", () => {
+  it("WhatsApp tıklaması yüzeyiyle birlikte v2 engagement RPC'yi çağırır", () => {
     const kaynak = oku("components/TrackedWhatsAppLink.tsx");
-    expect(kaynak).toContain('.rpc("record_vitrin_engagement"');
+    expect(kaynak).toContain('.rpc("record_vitrin_engagement_v2"');
     expect(kaynak).toContain('p_event_type: "whatsapp_click"');
+    expect(kaynak).toContain("p_surface: context.clickLocation");
   });
 
-  it("telefon/konum tıklaması aynı RPC'yi eventName ile çağırır", () => {
+  it("telefon/konum tıklaması aynı v2 RPC'yi eventName ile çağırır", () => {
     const kaynak = oku("components/TrackedContactLink.tsx");
-    expect(kaynak).toContain('.rpc("record_vitrin_engagement"');
+    expect(kaynak).toContain('.rpc("record_vitrin_engagement_v2"');
     expect(kaynak).toContain("p_event_type: eventName");
+    expect(kaynak).toContain("p_surface: context.clickLocation");
   });
 
   it("ürün görüntüleme izleyicisi ürün detay sayfasına eklendi", () => {
@@ -23,6 +25,8 @@ describe("Faz F — tıklamalar artık Supabase'e de yazılıyor (GA'nın yanın
     expect(sayfa).toContain("<ProductViewTracker storeSlug={store.slug} productSlug={productSlug} />");
     const tracker = oku("components/ProductViewTracker.tsx");
     expect(tracker).toContain('p_event_type: "product_view"');
+    expect(tracker).toContain('p_surface: "product_detail"');
+    expect(tracker).toContain('.rpc("record_vitrin_view"');
   });
 
   it("hepsi aynı ziyaretçi anahtarını paylaşır — üç ayrı localStorage anahtarı yok", () => {
