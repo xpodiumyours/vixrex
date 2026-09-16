@@ -304,8 +304,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: npm
-          cache-dependency-path: public_web/package-lock.json
+          # NEDEN (2026-09-16): self-hosted runner'da 'Post Setup Node.js'
+          # adimi onbellegi yuklerken 14-16 dakika harcayip isi zaman asimina
+          # ugratiyordu. Paketler bu makinede zaten kalici; onbellek gereksiz.
+          # ubuntu-latest'te kosan public_web_e2e'de onbellek korundu.
 
       - name: Setup Flutter
         shell: bash
@@ -389,8 +391,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: npm
-          cache-dependency-path: public_web/package-lock.json
+          # NEDEN (2026-09-16): self-hosted runner'da 'Post Setup Node.js'
+          # adimi onbellegi yuklerken 14-16 dakika harcayip isi zaman asimina
+          # ugratiyordu. Paketler bu makinede zaten kalici; onbellek gereksiz.
+          # ubuntu-latest'te kosan public_web_e2e'de onbellek korundu.
 
       - name: Bağımlılıklar
         run: npm ci
