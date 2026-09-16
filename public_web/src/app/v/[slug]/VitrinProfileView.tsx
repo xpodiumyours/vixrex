@@ -145,6 +145,7 @@ export interface VitrinProfileViewProps {
   profile: VitrinCategoryProfile;
   collections: VitrinCollection[];
   productCount: number;
+  isServiceStore?: boolean;
   sectionVisibility: Record<string, boolean> | null;
   heroLocationText: string | null;
   mapLabel: string | null;
@@ -218,6 +219,7 @@ export default function VitrinProfileView({
   profile,
   collections,
   productCount,
+  isServiceStore = false,
   sectionVisibility,
   heroLocationText,
   mapLabel,
@@ -781,9 +783,9 @@ export default function VitrinProfileView({
         <section className="max-w-7xl mx-auto px-6 sm:px-8 py-8 lg:px-12" id="urunler" style={{ scrollMarginTop: "88px" }}>
           <div className="flex items-baseline justify-between mb-5 sm:mb-8">
             <h2 {...editableProps("urunBolumBaslik", ownerMode)} className="text-[26px] sm:text-4xl font-extrabold tracking-tight text-white">
-              {productSectionTitle || "Tüm Ürünler"}
+              {productSectionTitle || (isServiceStore ? "Tüm Hizmetler" : "Tüm Ürünler")}
             </h2>
-            <span className="text-sm font-semibold text-slate-400">{productCount} Ürün Listeleniyor</span>
+            <span className="text-sm font-semibold text-slate-400">{productCount} {isServiceStore ? "Hizmet" : "Ürün"} Listeleniyor</span>
           </div>
 
           <Suspense fallback={<div className="h-64 flex items-center justify-center text-slate-400">Ürünler yükleniyor...</div>}>

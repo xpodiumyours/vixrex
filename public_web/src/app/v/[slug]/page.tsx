@@ -28,6 +28,7 @@ import VitrinProfileView from "./VitrinProfileView";
 import OwnerWorkspaceShell, { WorkingDraftData } from "./OwnerWorkspaceShell";
 import { parseAssistantHandoff } from "@/lib/assistantHandoff";
 import { resolveVitrinProfile } from "@/lib/vitrinProfile";
+import { normalizeProductMetadata } from "@/lib/productRichData";
 import {
   PUBLIC_STORE_SELECT,
   PUBLIC_STORE_SELECT_WITH_VERIFICATION,
@@ -234,7 +235,7 @@ async function _buildStoreDataBundle(
         supabase
           .from("products")
           .select(
-            "id,name,slug,description,price_text,price_amount,old_price_amount,badge_tag,fulfillment_region,currency,stock_status,image_urls,category_id,is_visible,is_active,source_type,sort_order"
+            "id,name,slug,description,price_text,price_amount,old_price_amount,badge_tag,fulfillment_region,currency,stock_status,image_urls,category_id,is_visible,is_active,source_type,sort_order,metadata"
           )
           .eq("store_id", storeId)
           .eq("is_active", true)
@@ -274,6 +275,7 @@ async function _buildStoreDataBundle(
         stockStatus: (p.stock_status as string) || undefined,
         isVisible: p.is_visible as boolean,
         source: p.source_type as string,
+        metadata: p.metadata,
       }))
       .filter((p: ProductItem) => isPublicCatalogProduct(p));
 
@@ -623,6 +625,13 @@ export default async function StorePage(props: PageProps) {
       : store.address
         ? `https://maps.google.com/maps?q=${encodeURIComponent(store.address)}&output=embed`
         : null;
+  // Hizmet vitrini mi? Tum gorunur kayitlar hizmet sablonundaysa arayuzde
+  // "urun" degil "hizmet" dili kullanilir. Yeni sorgu yok; cekilmis veriden.
+  const isServiceStore =
+    visibleProducts.length > 0 &&
+    visibleProducts.every(
+      (p) => normalizeProductMetadata(p.metadata).itemKind === "service"
+    );
   const rawCollections = deriveCollections(visibleProducts);
   const collections = rawCollections.map((col) => {
     const firstProduct = visibleProducts.find(
@@ -787,6 +796,7 @@ export default async function StorePage(props: PageProps) {
         profile={vitrinProfile}
         collections={collections}
         productCount={visibleProducts.length}
+        isServiceStore={isServiceStore}
         sectionVisibility={store.section_visibility}
         heroLocationText={store.hero_location_text}
         mapLabel={store.map_label}
@@ -869,6 +879,7 @@ export default async function StorePage(props: PageProps) {
           profile={vitrinProfile}
           collections={collections}
           productCount={visibleProducts.length}
+          isServiceStore={isServiceStore}
           // Faz E (Tek Asistan planı): yönetim modu için ucuz sayaçlar —
           // yeni sorgu yok, zaten çekilmiş visibleProducts'tan türetiliyor.
           urunFiyatsizSayisi={visibleProducts.filter((p) => !p.price).length}

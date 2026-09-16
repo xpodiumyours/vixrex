@@ -168,7 +168,7 @@ export function VitrinKarti({
         </div>
 
         <div className="flex flex-[3] flex-col p-3">
-          <p className="truncate text-[9px] font-black uppercase tracking-[0.6px] text-lp-primary">
+          <p className="line-clamp-2 text-[9px] font-black uppercase leading-[1.25] tracking-[0.6px] text-lp-primary">
             {vitrin.kategoriEtiketi}
           </p>
           <h3 className="mt-1 truncate text-[15px] font-black leading-[1.15] text-lp-text">

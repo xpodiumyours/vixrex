@@ -50,6 +50,18 @@
 
 ---
 
+## ⚠️ Bilinen eşitlik farkları (açık, kapanmadı)
+
+Kapanmamış farklar buraya yazılır. Bir fark kapatıldığında satır silinir ve
+yukarıdaki ilgili matris satırına kanıt eklenir.
+
+| Tarih | Nerede | Fark | Karar |
+|---|---|---|---|
+| 2026-09-16 | Keşfet vitrin kartı — kategori rozeti | Web iki satıra sarıyor (`VitrinKarti.tsx`, `line-clamp-2`), Flutter tek satırda kesiyor (`lib/widgets/vitrin_store_card.dart:282`, `maxLines: 1`). PR #508 web tarafını düzeltti, Flutter'a bilerek dokunulmadı. | Casper: "sonraki profesyonel görünüm turuna bıraksın." Tek satırlık düzeltme: `maxLines: 1` → `2`. |
+| 2026-09-16 | Keşfet vitrin kartı — sayı yazısı | Flutter kartta `'N ürün'` sabit (`vitrin_store_card.dart:341`), hizmet vitrininde de "ürün" diyor. Web'de kartta bu yazı yok; ayrım vitrin sayfasında (`N Hizmet Listeleniyor`, PR #508). | Aynı tura bırakıldı. Flutter'da `product_rich_data.dart:106` `isService` zaten var, bağlamak yeter. |
+
+---
+
 ## ✍️ Güncelleme talimatı (ajanlar için)
 1. Bir matris satırını kapattığında, yukarıdaki ilgili satırın Durum hücresini `△` → `✓` yap (ve `○`/`✗` → kapat).
 2. Alt satıra (Not) kısa kanıt yaz: PR # veya test adı.
