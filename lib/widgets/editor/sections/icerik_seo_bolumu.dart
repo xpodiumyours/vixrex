@@ -270,6 +270,7 @@ class IcerikSeoBolumu extends StatelessWidget {
       ),
       builder:
           (_) => ProductManagementSheet(
+            storeKategori: controller.data.kategori,
             products: controller.data.products,
             categories: controller.data.productCategories,
             storeSlug: slug,

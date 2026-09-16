@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:vixrex/config/business_category_config.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/services/product_attribute_schema_service.dart';
 import 'package:vixrex/services/product_category_sync_service.dart';
@@ -23,10 +24,16 @@ class ProductCategoryManagementScreen extends StatefulWidget {
     super.key,
     required this.categories,
     required this.products,
+    this.storeKategori = '',
   });
 
   final List<ProductCategory> categories;
   final List<Product> products;
+
+  /// Magazanin isletme kategorisi (ornek: 'Giyim'). Yeni acilan urun
+  /// kategorisinin varsayilan alan sablonu bundan turetilir. Bos birakilirsa
+  /// onceki davranis korunur ve 'generic' kullanilir.
+  final String storeKategori;
 
   @override
   State<ProductCategoryManagementScreen> createState() =>
@@ -75,8 +82,16 @@ class _ProductCategoryManagementScreenState
     }
   }
 
+  String get _varsayilanSablonAnahtari =>
+      BusinessCategoryConfig.productTemplateKeyForCategory(
+        widget.storeKategori,
+      );
+
   Future<void> _addCategory() async {
-    final draft = await _showCategoryDialog(title: 'Yeni Kategori');
+    final draft = await _showCategoryDialog(
+      title: 'Yeni Kategori',
+      initialTemplateKey: _varsayilanSablonAnahtari,
+    );
     if (draft == null || !mounted) return;
     setState(() {
       _categories.add(

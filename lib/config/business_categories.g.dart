@@ -7,12 +7,14 @@ class BusinessCategoryCore {
   final int order;
   final String label;
   final List<String> aliases;
+  final String productTemplateKey;
 
   const BusinessCategoryCore({
     required this.id,
     required this.order,
     required this.label,
     required this.aliases,
+    required this.productTemplateKey,
   });
 }
 
@@ -22,114 +24,133 @@ const List<BusinessCategoryCore> businessCategories = [
     order: 1,
     label: 'Giyim',
     aliases: ['giyim', 'Giyim & Butik'],
+    productTemplateKey: 'fashion',
   ),
   BusinessCategoryCore(
     id: 'butik',
     order: 2,
     label: 'Butik',
     aliases: ['butik'],
+    productTemplateKey: 'fashion',
   ),
   BusinessCategoryCore(
     id: 'gida',
     order: 3,
     label: 'Gıda',
     aliases: ['gida', 'Gıda & Fırın'],
+    productTemplateKey: 'food',
   ),
   BusinessCategoryCore(
     id: 'firin',
     order: 4,
     label: 'Fırın',
     aliases: ['firin'],
+    productTemplateKey: 'food',
   ),
   BusinessCategoryCore(
     id: 'kozmetik',
     order: 5,
     label: 'Kozmetik',
     aliases: ['kozmetik'],
+    productTemplateKey: 'beauty',
   ),
   BusinessCategoryCore(
     id: 'dekorasyon',
     order: 6,
     label: 'Dekorasyon',
     aliases: ['dekorasyon'],
+    productTemplateKey: 'home',
   ),
   BusinessCategoryCore(
     id: 'elektronik',
     order: 7,
     label: 'Elektronik',
     aliases: ['elektronik'],
+    productTemplateKey: 'electronics',
   ),
   BusinessCategoryCore(
     id: 'kirtasiye',
     order: 8,
     label: 'Kırtasiye',
     aliases: ['kirtasiye'],
+    productTemplateKey: 'generic',
   ),
   BusinessCategoryCore(
     id: 'kafe_lokanta',
     order: 9,
     label: 'Kafe / Lokanta',
     aliases: ['kafe', 'restoran', 'lokanta'],
+    productTemplateKey: 'food',
   ),
   BusinessCategoryCore(
     id: 'kuafor',
     order: 10,
     label: 'Kuaför',
     aliases: ['kuafor', 'güzellik', 'guzellik'],
+    productTemplateKey: 'service',
   ),
   BusinessCategoryCore(
     id: 'teknik_servis',
     order: 11,
     label: 'Teknik Servis',
     aliases: ['teknik', 'servis'],
+    productTemplateKey: 'service',
   ),
   BusinessCategoryCore(
     id: 'hizmet_danismanlik',
     order: 12,
     label: 'Danışmanlık',
     aliases: ['Hizmet & Danışmanlık', 'danismanlik', 'hizmet'],
+    productTemplateKey: 'service',
   ),
   BusinessCategoryCore(
     id: 'egitim_ders',
     order: 13,
     label: 'Eğitim',
     aliases: ['Eğitim & Ders', 'egitim', 'ders'],
+    productTemplateKey: 'service',
   ),
   BusinessCategoryCore(
     id: 'ev_temizlik',
     order: 14,
     label: 'Ev Temizlik',
     aliases: ['Ev & Temizlik', 'temizlik'],
+    productTemplateKey: 'service',
   ),
   BusinessCategoryCore(
     id: 'spor_fitness',
     order: 15,
     label: 'Spor / Fitness',
     aliases: ['Spor & Fitness', 'spor', 'fitness'],
+    productTemplateKey: 'service',
   ),
   BusinessCategoryCore(
     id: 'pet_shop_veteriner',
     order: 16,
     label: 'Pet / Veteriner',
     aliases: ['Pet Shop & Veteriner', 'pet', 'veteriner', 'evcil hayvan'],
+    productTemplateKey: 'generic',
   ),
   BusinessCategoryCore(
     id: 'saglik_yasam',
     order: 17,
     label: 'Sağlık / Yaşam',
     aliases: ['Sağlık & Yaşam', 'saglik', 'yaşam'],
+    productTemplateKey: 'service',
   ),
   BusinessCategoryCore(
     id: 'oto_arac',
     order: 18,
     label: 'Oto / Araç',
     aliases: ['Oto & Araç Hizmetleri', 'oto', 'araç', 'arac', 'araba'],
+    productTemplateKey: 'automotive',
   ),
   BusinessCategoryCore(
     id: 'diger',
     order: 19,
     label: 'Diğer',
     aliases: ['diger'],
+    productTemplateKey: 'generic',
   ),
 ];
 

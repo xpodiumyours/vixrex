@@ -59,12 +59,14 @@ void main() {
         ..writeln('  final int order;')
         ..writeln('  final String label;')
         ..writeln('  final List<String> aliases;')
+        ..writeln('  final String productTemplateKey;')
         ..writeln()
         ..writeln('  const BusinessCategoryCore({')
         ..writeln('    required this.id,')
         ..writeln('    required this.order,')
         ..writeln('    required this.label,')
         ..writeln('    required this.aliases,')
+        ..writeln('    required this.productTemplateKey,')
         ..writeln('  });')
         ..writeln('}')
         ..writeln()
@@ -81,6 +83,10 @@ void main() {
       ..writeln('    order: ${category['order']},')
       ..writeln('    label: ${quote(category['label'] as String)},')
       ..writeln('    aliases: [$aliases],')
+      ..writeln(
+        '    productTemplateKey: '
+        '${quote(category['productTemplateKey'] as String)},',
+      )
       ..writeln('  ),');
   }
 
