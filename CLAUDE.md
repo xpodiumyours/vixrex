@@ -15,6 +15,46 @@ parçası sessizce devre dışı bırakıldı ve doğrudan main'e alındı — C
 canlıda fark etti, saatlerce token yakıldı, sonuç güvensizlik oldu. Bkz.
 `~/.claude/projects/C--Users-Casper/memory/once-sor-onay-bekle.md`.
 
+### Geliştirme zinciri — YUKARIDAN AŞAĞI (2026-09-16, Casper)
+
+Bir özellik **girdiden çıktıya** doğru kurulur. Sıra atlanamaz, tersten gidilemez:
+
+```
+Kategori / kural tanımı
+  → esnaf formu (girdi)
+    → doğrulama
+      → Supabase kayıt modeli
+        → sahip düzenleme
+          → yayın kapısı
+            → public detay
+              → ürün kartı (görünüm)
+```
+
+Bir halka yoksa, altındaki halka **"tamamlandı" sayılamaz.**
+
+**Dört yasak:**
+
+1. **Kaynağı olmayan veri ekranda tasarlanmaz.**
+2. **Kaydetme yolu olmayan alan public'e çıkarılmaz.**
+3. **Test edilmeyen zincir main'e girmez.**
+4. **Preview'da doğrulanmayan main production'a çıkmaz.**
+
+**Bir adım önermeden önce üç soruyu geç:**
+
+1. Bu adım zincirin hangi halkası? Halka değilse listeye girmez.
+2. Bu kuralı bugünkü veri kaç kayıtla geçiyor? Sıfırsa o kural değil, bariyer.
+3. Bu adımın gerektirdiği içeriği kim üretecek? Cevap "ben elimle" ise adım yanlıştır.
+
+**"Bitti" tanımı değişti:** yeşil test yetmez. Bitti demek, **gerçek kullanıcının
+gerçek yolundan bir kez baştan sona çalıştırıldı ve ekran görüldü** demektir.
+
+**Neden:** 2026-09-16'da ürün kartı işi tersten kuruldu — önce tüketicinin gördüğü
+okuma tarafı (#492), sonra esnafın bilgiyi gireceği alanlar (#493), en son kategori
+şablonları (#494). Sonuç: kart hazırdı ama gösterilecek veri yoktu. Boşluğu kapatmak
+için elle sahte ürün verisi dolduruldu ve rotaya bağlı olmayan bir sayfaya tasarım
+çizildi. İkisi de çöpe gitti. Casper'ın ifadesi: *"çalışmayan sistemde neyin
+düzenini kuracağız"*.
+
 ### Varsayım + tahmin + yorum yasağı (2026-09-09, Casper)
 
 - **Varsayım yasak.** Emin olmadığın şeyi doğru gibi yazma. Bilmiyorsan "bilmiyorum" de, sor, bekle.

@@ -16,6 +16,12 @@ satir eklenir ve mumkunse `.claude/hooks/` altinda bir kanca ile olculur.
    tam yolunu ve satirini yaz; bakmadiysan "bakmadim" de. (2026-09-09)
 3. **Kendi araclarinla bulabilecegini Casper'a sorma.** Once arastir,
    sonra sonucu anlat. (2026-09-10)
+3b. **Zinciri tersten kurma.** Bir ozellik girdiden ciktiya dogru kurulur:
+   kategori/kural -> esnaf formu -> dogrulama -> Supabase kayit -> sahip
+   duzenleme -> yayin kapisi -> public detay -> urun karti. Bir halka
+   yoksa altindaki halka "tamamlandi" sayilmaz. Kaynagi olmayan veri
+   ekranda tasarlanmaz; kaydetme yolu olmayan alan public'e cikarilmaz.
+   Ayrinti: `CLAUDE.md` > "Gelistirme zinciri". (2026-09-16)
 
 ## Yazarken
 
@@ -33,6 +39,9 @@ satir eklenir ve mumkunse `.claude/hooks/` altinda bir kanca ile olculur.
    olabilir.
 
 ## Bitirdim demeden once
+
+0. **"Bitti" = gercek kullanicinin gercek yolundan bir kez bastan sona
+   calistirildi ve ekran goruldu.** Yesil test yetmez. (2026-09-16)
 
 9. **Yesil test calisiyor demek degil.** Gercek ciktiyi calistir, ekrani
    ac. Gorsel/UI hatasinda canli dogrula; goremiyorsan "goremedim" de,
