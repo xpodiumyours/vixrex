@@ -61,11 +61,12 @@ export function trackWhatsAppClick(
   }
 
   supabase
-    .rpc("record_vitrin_engagement", {
+    .rpc("record_vitrin_engagement_v2", {
       p_store_slug: storeSlug,
       p_event_type: "whatsapp_click",
       p_session_key: ziyaretAnahtariniOkuyaUret(),
       p_product_slug: productSlug || null,
+      p_surface: context.clickLocation,
     })
     .then(() => {});
 }

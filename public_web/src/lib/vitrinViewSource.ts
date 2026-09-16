@@ -9,7 +9,8 @@ export type VitrinViewSource =
   | "whatsapp"
   | "twitter"
   | "tiktok"
-  | "diger_site";
+  | "diger_site"
+  | "kesfet";
 
 const SOCIAL_HOST_PATTERNS: Array<[RegExp, VitrinViewSource]> = [
   [/^(.+\.)?google\.[a-z.]+$|^g\.co$/, "google"],
@@ -32,7 +33,7 @@ export function resolveVitrinViewSource({
   currentHostname,
 }: SourceInput): VitrinViewSource {
   const src = srcParam?.trim().toLowerCase();
-  if (src === "qr" || src === "share") return src;
+  if (src === "qr" || src === "share" || src === "kesfet") return src;
 
   const trimmedReferrer = referrer.trim();
   if (!trimmedReferrer) return "direct";

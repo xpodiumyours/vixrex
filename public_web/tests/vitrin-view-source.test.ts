@@ -61,8 +61,13 @@ describe("resolveVitrinViewSource", () => {
     expect(resolve("share", "https://wa.me/90555")).toBe("share");
   });
 
-  it("src values other than qr/share are ignored (old behavior kept)", () => {
+  it("?src=kesfet records the proven Vixrex explore source", () => {
+    expect(resolve("kesfet", `https://${HOST}/kesfet`)).toBe("kesfet");
+  });
+
+  it("untrusted src values stay ignored", () => {
     expect(resolve("facebook", "https://eksisozluk.com/")).toBe("diger_site");
+    expect(resolve("uydurma", `https://${HOST}/kesfet`)).toBe("direct");
   });
 
   it("wa.me and chat.whatsapp.com resolve as whatsapp", () => {

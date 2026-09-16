@@ -15,7 +15,6 @@ function ownerPreviewActive(): boolean {
   );
 }
 
-/** Ürün detay görüntülemesini aynı Vixrex engagement hattına yazar. */
 export default function ProductViewTracker({
   storeSlug,
   productSlug,
@@ -37,14 +36,15 @@ export default function ProductViewTracker({
     firedRef.current = true;
 
     supabase
-      .rpc("record_vitrin_engagement", {
+      .rpc("record_vitrin_engagement_v2", {
         p_store_slug: storeSlug,
         p_event_type: "product_view",
         p_session_key: ziyaretAnahtariniOkuyaUret(),
         p_product_slug: productSlug,
+        p_surface: "product_detail",
       })
       .then(({ error }) => {
-        if (error) console.error("record_vitrin_engagement failed:", error);
+        if (error) console.error("record_vitrin_engagement_v2 failed:", error);
       });
   }, [storeSlug, productSlug]);
 
