@@ -42,8 +42,10 @@ const nextProductCatalog = readFileSync(
   resolve(__dirname, "../src/app/v/[slug]/ProductCatalog.tsx"),
   "utf8",
 );
-const nextProductDetail = readFileSync(
-  resolve(__dirname, "../src/app/v/[slug]/urun/[productSlug]/page.tsx"),
+// Ürün detayının görsel alanı artık sayfanın içinde değil, paylaşılan
+// deneyim bileşeninde çiziliyor. Ölçüm dosya adına değil davranışa bakar.
+const nextProductDetailExperience = readFileSync(
+  resolve(__dirname, "../src/components/ProductDetailExperienceBase.tsx"),
   "utf8",
 );
 const nextSikistir = readFileSync(
@@ -69,7 +71,8 @@ describe("Performans: görsel yükleme stratejisi", () => {
   });
 
   it("ürün detayında ilk görsel öncelikli yüklenir", () => {
-    expect(nextProductDetail).toContain("priority={index === 0}");
+    // Ana görsel next/image ile ve priority ile yükleniyor (LCP).
+    expect(nextProductDetailExperience).toMatch(/<Image[\s\S]*?priority/);
   });
 
   it("kapak gibi büyük görseller lazy işaretli", () => {
