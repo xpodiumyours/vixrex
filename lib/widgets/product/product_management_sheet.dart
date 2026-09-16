@@ -32,6 +32,7 @@ class ProductManagementSheet extends StatefulWidget {
     required this.onCatalogChanged,
     required this.onProductDelete,
     required this.onOcrTap,
+    this.storeKategori = '',
   });
 
   final List<Product> products;
@@ -45,6 +46,10 @@ class ProductManagementSheet extends StatefulWidget {
   /// Seçilen ürünü kalıcı siler. Başarılıysa true.
   final Future<bool> Function(Product product) onProductDelete;
   final VoidCallback onOcrTap;
+
+  /// Magazanin isletme kategorisi. Yeni urun kategorisi acilirken varsayilan
+  /// alan sablonu bundan turetilir; bos ise onceki 'generic' davranisi kalir.
+  final String storeKategori;
 
   @override
   State<ProductManagementSheet> createState() => _ProductManagementSheetState();
@@ -228,6 +233,7 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
             (_) => ProductCategoryManagementScreen(
               categories: _categories,
               products: _products,
+              storeKategori: widget.storeKategori,
             ),
       ),
     );

@@ -72,6 +72,21 @@ doğrudan Casper'a soruldu, cevaplar tablo/hash/satır numarasıyla şişirildi,
 hatayı kabul eden mesajın sonuna yine soru eklendi. Casper: "artık seninle
 çalışmaktan bıkmaya başladım."
 
+### Token ekonomisi (2026-09-16, Casper)
+
+Claude'un tokenı en kıt kaynak. Bitince koordinasyon, doğrulama ve merge
+sorumluluğu duruyor — yani proje duruyor. Yavaş ajan, duran projeden iyidir.
+
+- Arama, tarama, envanter, ölçüm, raporlama ve **kodun kendisi** -> ajana ver.
+- Claude'da kalan: hedefi yazmak, ajanın raporunu doğrulamak, riskli tek
+  noktayı **tek komutla** ölçmek, commit/merge/sıra takibi.
+- Görev yazmadan önce dosya adı doğrulamak için komut çalıştırma. Ajan bulur.
+- Ölçüm yalnız bir **karar** ona bağlıysa yapılır.
+- Her yeni faz -> yeni oturum. Şişmiş bağlam her cevabı pahalılaştırır.
+- Uzun rapor yazma; sonuç tek satır, detay istenirse gelir.
+
+Genel çalışma tarzı (bu depoya özel olmayan kısım): C:\Users\Casper\.claude\CLAUDE.md
+
 ## What this repo is
 
 VixRex — a platform that lets small businesses run a digital storefront (`vitrin`) without writing code. Two independently deployed apps share one Supabase (PostgreSQL) database:
