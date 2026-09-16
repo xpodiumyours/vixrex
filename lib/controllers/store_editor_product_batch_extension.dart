@@ -27,11 +27,7 @@ extension StoreEditorProductBatchExtension on StoreEditorController {
 
     final result = await ProductBatchImportService(
       client: supabaseClient,
-    ).save(
-      products: products,
-      storeId: storeId,
-      editToken: editToken,
-    );
+    ).save(products: products, storeId: storeId, editToken: editToken);
     if (!result.isSuccess) return result;
 
     await refreshProductCatalogFromRemote();

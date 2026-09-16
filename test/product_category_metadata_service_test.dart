@@ -32,37 +32,34 @@ void main() {
     expect(aligned.attributes, isNotEmpty);
   });
 
-  test(
-    'toplu kategori değişimi hizmete geçerken fiziksel metadata korur',
-    () {
-      final product = Product(
-        id: 'p1',
-        name: 'Telefon',
-        categoryId: 'old',
-        category: 'Eski',
-        richMetadata: const ProductRichMetadata(
-          templateKey: 'electronics',
-          itemKind: 'physical',
-          sku: 'T-1',
-        ),
-      );
-      final target = ProductCategory(
-        id: 'new',
-        name: 'Hizmetler',
-        productTemplateKey: 'service',
-      );
+  test('toplu kategori değişimi hizmete geçerken fiziksel metadata korur', () {
+    final product = Product(
+      id: 'p1',
+      name: 'Telefon',
+      categoryId: 'old',
+      category: 'Eski',
+      richMetadata: const ProductRichMetadata(
+        templateKey: 'electronics',
+        itemKind: 'physical',
+        sku: 'T-1',
+      ),
+    );
+    final target = ProductCategory(
+      id: 'new',
+      name: 'Hizmetler',
+      productTemplateKey: 'service',
+    );
 
-      final updated = const BulkProductFieldUpdateService().applyCategory([
-        product,
-      ], target);
+    final updated = const BulkProductFieldUpdateService().applyCategory([
+      product,
+    ], target);
 
-      expect(updated.single.categoryId, 'new');
-      expect(updated.single.category, 'Hizmetler');
-      expect(updated.single.richMetadata.templateKey, 'service');
-      expect(updated.single.richMetadata.itemKind, 'service');
-      expect(updated.single.richMetadata.sku, isNotNull);
-    },
-  );
+    expect(updated.single.categoryId, 'new');
+    expect(updated.single.category, 'Hizmetler');
+    expect(updated.single.richMetadata.templateKey, 'service');
+    expect(updated.single.richMetadata.itemKind, 'service');
+    expect(updated.single.richMetadata.sku, isNotNull);
+  });
 
   test(
     'fiziksel ürün şablonları arasında form verisini geçici olarak korur',
@@ -97,39 +94,36 @@ void main() {
     },
   );
 
-  test(
-    'DB yazma kapısı esnafın girdiği alanları silmeden geçirir',
-    () async {
-      const current = ProductRichMetadata(
-        schemaVersion: 1,
-        templateKey: 'electronics',
-        itemKind: 'physical',
-        sku: 'SKU-3',
-        mpn: 'MPN-3',
-        attributes: [
-          ProductAttributeValue(key: 'color', label: 'Renk', value: 'Siyah'),
-          ProductAttributeValue(key: 'size', label: 'Beden', value: 'M'),
-          ProductAttributeValue(key: 'ram', label: 'RAM', value: '16 GB'),
-          ProductAttributeValue(
-            key: 'vatRate',
-            label: 'KDV oranı (%)',
-            value: '20',
-          ),
-        ],
-      );
+  test('DB yazma kapısı esnafın girdiği alanları silmeden geçirir', () async {
+    const current = ProductRichMetadata(
+      schemaVersion: 1,
+      templateKey: 'electronics',
+      itemKind: 'physical',
+      sku: 'SKU-3',
+      mpn: 'MPN-3',
+      attributes: [
+        ProductAttributeValue(key: 'color', label: 'Renk', value: 'Siyah'),
+        ProductAttributeValue(key: 'size', label: 'Beden', value: 'M'),
+        ProductAttributeValue(key: 'ram', label: 'RAM', value: '16 GB'),
+        ProductAttributeValue(
+          key: 'vatRate',
+          label: 'KDV oranı (%)',
+          value: '20',
+        ),
+      ],
+    );
 
-      final sanitized = await sanitizeProductMetadataForWrite(current);
-      final keys = sanitized.attributes.map((item) => item.key).toSet();
+    final sanitized = await sanitizeProductMetadataForWrite(current);
+    final keys = sanitized.attributes.map((item) => item.key).toSet();
 
-      expect(sanitized.schemaVersion, 2);
-      expect(sanitized.templateKey, 'electronics');
-      expect(sanitized.itemKind, 'physical');
-      expect(sanitized.sku, 'SKU-3');
-      expect(sanitized.mpn, 'MPN-3');
-      expect(keys, containsAll(['color', 'ram', 'vatRate']));
-      expect(keys, contains('size'));
-    },
-  );
+    expect(sanitized.schemaVersion, 2);
+    expect(sanitized.templateKey, 'electronics');
+    expect(sanitized.itemKind, 'physical');
+    expect(sanitized.sku, 'SKU-3');
+    expect(sanitized.mpn, 'MPN-3');
+    expect(keys, containsAll(['color', 'ram', 'vatRate']));
+    expect(keys, contains('size'));
+  });
 
   test('DB yazma kapısı bilinmeyen kategori şablonunu reddeder', () async {
     const current = ProductRichMetadata(

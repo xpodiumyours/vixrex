@@ -65,11 +65,14 @@ void main() {
     });
 
     test('12 görselli XML satırını reddeder, 11 üst sınırını korur', () {
-      final images = List.generate(
-        12,
-        (index) => '<image${index + 1}>https://cdn.example.com/${index + 1}.jpg</image${index + 1}>',
-      ).join();
-      final xml = '<products><product><id>IMG-12</id><name>Çok Görselli</name>$images</product></products>';
+      final images =
+          List.generate(
+            12,
+            (index) =>
+                '<image${index + 1}>https://cdn.example.com/${index + 1}.jpg</image${index + 1}>',
+          ).join();
+      final xml =
+          '<products><product><id>IMG-12</id><name>Çok Görselli</name>$images</product></products>';
 
       final result = service.parse(xml);
 

@@ -91,10 +91,7 @@ class XmlProductUploadService {
       final products = <Product>[];
       final errors = <XmlParseError>[];
       for (var i = 0; i < productElements.length; i++) {
-        final result = _elementToProduct(
-          productElements[i],
-          rowIndex: i + 1,
-        );
+        final result = _elementToProduct(productElements[i], rowIndex: i + 1);
         if (result.product != null) products.add(result.product!);
         if (result.error != null) errors.add(result.error!);
       }
@@ -294,45 +291,126 @@ class XmlProductUploadService {
   }
 
   static const _nameAliases = {
-    'urunadi', 'urunad', 'urun', 'adi', 'ad', 'name', 'urunname',
-    'baslik', 'title', 'product', 'productname', 'isim', 'mahsul', 'mal',
-    'kalem', 'stokadi', 'stokname', 'urununadi',
+    'urunadi',
+    'urunad',
+    'urun',
+    'adi',
+    'ad',
+    'name',
+    'urunname',
+    'baslik',
+    'title',
+    'product',
+    'productname',
+    'isim',
+    'mahsul',
+    'mal',
+    'kalem',
+    'stokadi',
+    'stokname',
+    'urununadi',
   };
   static const _priceAliases = {
-    'fiyat', 'price', 'fiyatitl', 'satisfiyati', 'satis', 'tutar', 'amount',
-    'saleprice', 'alisfiyati', 'listprice', 'fiyatidr', 'fiyati', 'fiyatinfo',
+    'fiyat',
+    'price',
+    'fiyatitl',
+    'satisfiyati',
+    'satis',
+    'tutar',
+    'amount',
+    'saleprice',
+    'alisfiyati',
+    'listprice',
+    'fiyatidr',
+    'fiyati',
+    'fiyatinfo',
   };
   static const _descAliases = {
-    'aciklama', 'description', 'detay', 'detail', 'not', 'note', 'ozet',
-    'summary', 'urunaciklama', 'urunaciklamasi',
+    'aciklama',
+    'description',
+    'detay',
+    'detail',
+    'not',
+    'note',
+    'ozet',
+    'summary',
+    'urunaciklama',
+    'urunaciklamasi',
   };
   static const _categoryAliases = {
-    'kategori', 'category', 'kat', 'grup', 'group', 'turu', 'type',
-    'kategoriadi', 'kategoriismi',
+    'kategori',
+    'category',
+    'kat',
+    'grup',
+    'group',
+    'turu',
+    'type',
+    'kategoriadi',
+    'kategoriismi',
   };
   static const _stockStatusAliases = {
-    'stokdurumu', 'stockstatus', 'stokdurum', 'availability',
+    'stokdurumu',
+    'stockstatus',
+    'stokdurum',
+    'availability',
   };
   static const _stockQuantityAliases = {
-    'stok', 'stock', 'stokmiktari', 'stockquantity', 'stokadedi', 'adet',
-    'quantity', 'miktar',
+    'stok',
+    'stock',
+    'stokmiktari',
+    'stockquantity',
+    'stokadedi',
+    'adet',
+    'quantity',
+    'miktar',
   };
   static const _externalIdAliases = {
-    'externalproductid', 'externalid', 'productid', 'urunid', 'itemid',
-    'recordid', 'id',
+    'externalproductid',
+    'externalid',
+    'productid',
+    'urunid',
+    'itemid',
+    'recordid',
+    'id',
   };
   static const _imageUrlAliases = {
-    'gorselurl', 'gorsel', 'imageurl', 'image', 'foto', 'fotograf', 'resim',
-    'kapak', 'cover', 'fotourl', 'resimurl', 'gorseladresi', 'img', 'src',
+    'gorselurl',
+    'gorsel',
+    'imageurl',
+    'image',
+    'foto',
+    'fotograf',
+    'resim',
+    'kapak',
+    'cover',
+    'fotourl',
+    'resimurl',
+    'gorseladresi',
+    'img',
+    'src',
   };
   static const _brandAliases = {
-    'brand', 'marka', 'markaadi', 'uretici', 'manufacturer',
+    'brand',
+    'marka',
+    'markaadi',
+    'uretici',
+    'manufacturer',
   };
   static const _barcodeAliases = {
-    'barkod', 'barcode', 'gtin', 'ean', 'ean13', 'upc',
+    'barkod',
+    'barcode',
+    'gtin',
+    'ean',
+    'ean13',
+    'upc',
   };
   static const _skuAliases = {
-    'sku', 'stokkodu', 'kod', 'code', 'productcode', 'urunkodu',
+    'sku',
+    'stokkodu',
+    'kod',
+    'code',
+    'productcode',
+    'urunkodu',
   };
 }
 

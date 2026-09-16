@@ -92,8 +92,7 @@ class _XmlUploadDialogState extends State<XmlUploadDialog> {
             count: result.changed,
             source: 'xml',
             scope: widget.storeSlug.isNotEmpty ? widget.storeSlug : null,
-            extra:
-                '${result.inserted} eklendi, ${result.updated} güncellendi',
+            extra: '${result.inserted} eklendi, ${result.updated} güncellendi',
           ),
         );
       }

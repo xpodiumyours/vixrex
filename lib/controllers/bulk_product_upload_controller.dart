@@ -113,7 +113,8 @@ class BulkProductUploadController extends ChangeNotifier {
           result.errors >= result.total &&
           result.changed == 0 &&
           result.unchanged == 0) {
-        _errorMessage = 'Hiçbir ürün kaydedilemedi. Satır hatalarını kontrol edin.';
+        _errorMessage =
+            'Hiçbir ürün kaydedilemedi. Satır hatalarını kontrol edin.';
         _isSaving = false;
         notifyListeners();
         return false;

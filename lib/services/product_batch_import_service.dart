@@ -62,10 +62,8 @@ class ProductBatchImportService {
       final payload =
           products
               .map(
-                (product) => _toPayload(
-                  product,
-                  defaultSourceType: defaultSourceType,
-                ),
+                (product) =>
+                    _toPayload(product, defaultSourceType: defaultSourceType),
               )
               .toList();
 

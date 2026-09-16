@@ -202,9 +202,7 @@ class BulkProductUploadService {
       product: Product(
         id: 'bulk_${const Uuid().v4()}',
         name: name,
-        price: _normalizePrice(
-          _cellValue(values, columnMap['price'] ?? -1),
-        ),
+        price: _normalizePrice(_cellValue(values, columnMap['price'] ?? -1)),
         description: _cellValue(values, columnMap['description'] ?? -1),
         imagePath: imageUrls.isNotEmpty ? imageUrls.first : null,
         imageUrls: imageUrls,
@@ -226,7 +224,9 @@ class BulkProductUploadService {
     Map<String, int> columnMap,
   ) {
     final imageEntries =
-        columnMap.entries.where((entry) => entry.key.startsWith('image')).toList()
+        columnMap.entries
+            .where((entry) => entry.key.startsWith('image'))
+            .toList()
           ..sort((left, right) {
             final leftIndex = int.tryParse(left.key.substring(5)) ?? 0;
             final rightIndex = int.tryParse(right.key.substring(5)) ?? 0;
@@ -319,41 +319,99 @@ class BulkProductUploadService {
   );
 
   static const _nameAliases = {
-    'urunadi', 'urunad', 'urun', 'adi', 'ad', 'name', 'urunname', 'baslik',
-    'title', 'product', 'productname', 'urunadii',
+    'urunadi',
+    'urunad',
+    'urun',
+    'adi',
+    'ad',
+    'name',
+    'urunname',
+    'baslik',
+    'title',
+    'product',
+    'productname',
+    'urunadii',
   };
   static const _externalIdAliases = {
-    'hariciurunid', 'externalproductid', 'externalid', 'productid', 'urunid',
-    'itemid', 'recordid',
+    'hariciurunid',
+    'externalproductid',
+    'externalid',
+    'productid',
+    'urunid',
+    'itemid',
+    'recordid',
   };
   static const _priceAliases = {
-    'fiyat', 'price', 'fiyatitl', 'satisfiyati', 'satis', 'tutar', 'amount',
+    'fiyat',
+    'price',
+    'fiyatitl',
+    'satisfiyati',
+    'satis',
+    'tutar',
+    'amount',
     'saleprice',
   };
   static const _descAliases = {
-    'aciklama', 'description', 'detay', 'detail', 'not', 'note', 'ozet',
+    'aciklama',
+    'description',
+    'detay',
+    'detail',
+    'not',
+    'note',
+    'ozet',
     'summary',
   };
   static const _categoryAliases = {
-    'kategori', 'category', 'kat', 'grup', 'group', 'turu', 'type',
+    'kategori',
+    'category',
+    'kat',
+    'grup',
+    'group',
+    'turu',
+    'type',
   };
   static const _stockStatusAliases = {
-    'stokdurumu', 'stockstatus', 'stokdurum', 'availability',
+    'stokdurumu',
+    'stockstatus',
+    'stokdurum',
+    'availability',
   };
   static const _stockQuantityAliases = {
-    'stok', 'stock', 'stokadedi', 'stokmiktari', 'stockquantity', 'quantity',
-    'adet', 'miktar',
+    'stok',
+    'stock',
+    'stokadedi',
+    'stokmiktari',
+    'stockquantity',
+    'quantity',
+    'adet',
+    'miktar',
   };
   static const _brandAliases = {'marka', 'brand', 'uretici', 'manufacturer'};
   static const _barcodeAliases = {
-    'barkod', 'barcode', 'gtin', 'ean', 'ean13', 'upc',
+    'barkod',
+    'barcode',
+    'gtin',
+    'ean',
+    'ean13',
+    'upc',
   };
   static const _skuAliases = {
-    'sku', 'stokkodu', 'urunkodu', 'productcode', 'code',
+    'sku',
+    'stokkodu',
+    'urunkodu',
+    'productcode',
+    'code',
   };
   static const _imageUrlAliases = {
-    'gorselurl', 'gorsel', 'imageurl', 'image', 'foto', 'fotograf', 'resim',
-    'kapak', 'cover',
+    'gorselurl',
+    'gorsel',
+    'imageurl',
+    'image',
+    'foto',
+    'fotograf',
+    'resim',
+    'kapak',
+    'cover',
   };
 }
 

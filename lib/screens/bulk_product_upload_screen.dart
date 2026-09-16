@@ -102,9 +102,7 @@ class _BulkProductUploadScreenState extends State<BulkProductUploadScreen> {
   }
 
   Future<void> _save() async {
-    final saved = await _controller.saveProducts(
-      onSave: widget.onSaved,
-    );
+    final saved = await _controller.saveProducts(onSave: widget.onSaved);
     if (saved && mounted) {
       final result = _controller.saveResult;
       if (result != null) {
