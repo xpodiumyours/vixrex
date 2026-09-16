@@ -6,7 +6,7 @@ import type { RichProductItem } from "@/lib/richProductItem";
 import { MapPinIcon } from "@/lib/vitrinBrandIcons";
 import { MAX_PRODUCT_IMAGES } from "@/lib/productImagePolicy";
 import {
-  buildProductQuickFacts,
+  buildProductDetailFacts,
   buildVariantOptionGroups,
   findMatchingVariant,
   productVariantsForTemplate,
@@ -156,10 +156,14 @@ export default function ProductQuickView({
     }
   };
 
-  const quickFacts = buildProductQuickFacts({
+  // Ayri bir urun detay sayfasi yok: esnafin girdigi kategori alanlarinin
+  // tamami bu kartta gorunur. buildProductQuickFacts yalniz "hizli" yuzeyine
+  // isaretli alanlari aliyordu; giyimde desen/beden sistemi, gidada
+  // icindekiler/saklama/mensei hicbir yerde gorunmuyordu.
+  const quickFacts = buildProductDetailFacts({
     brand: product.brand,
+    barcode: product.barcode,
     metadata: product.metadata,
-    limit: 8,
   }).filter((fact) => fact.key !== "brand" && !variantKeys.has(fact.key));
 
   const selectedStockQuantity =
@@ -363,18 +367,24 @@ export default function ProductQuickView({
           ) : null}
 
           {quickFacts.length > 0 ? (
-            <div className="mt-5 grid grid-cols-2 gap-2">
+            // Ozellikler ince satir listesi olarak cizilir: etiket solda, deger
+            // sagda. Onceki iki sutunlu kutu duzeni tek sayida bilgide yaninda
+            // bos hucre birakiyordu.
+            <dl className="mt-5 flex flex-col">
               {quickFacts.map((fact) => (
-                <div key={fact.key} className="rounded-xl border border-white/8 bg-white/[0.03] p-3">
-                  <p className="text-[9px] font-extrabold uppercase tracking-wider text-slate-500">
+                <div
+                  key={fact.key}
+                  className="flex items-baseline justify-between gap-4 border-b border-white/8 py-2 last:border-b-0"
+                >
+                  <dt className="shrink-0 text-[11px] font-semibold text-slate-500">
                     {fact.label}
-                  </p>
-                  <p className="mt-1 break-words text-xs font-bold leading-5 text-slate-200">
+                  </dt>
+                  <dd className="min-w-0 break-words text-right text-xs font-bold leading-5 text-slate-200">
                     {fact.value}
-                  </p>
+                  </dd>
                 </div>
               ))}
-            </div>
+            </dl>
           ) : null}
 
           {(fulfillmentRegion || storeLocationText) ? (

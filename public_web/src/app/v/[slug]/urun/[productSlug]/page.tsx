@@ -12,6 +12,7 @@ import {
 } from "@/lib/products";
 import { buildSiteUrl, getSiteUrl } from "@/lib/siteUrl";
 import { safeJsonLdHtml } from "@/lib/jsonLd";
+import { productAttributeSchemaFields } from "@/lib/productStructuredData";
 import { TrackedWhatsAppLink } from "@/components/TrackedWhatsAppLink";
 import ProductViewTracker from "@/components/ProductViewTracker";
 
@@ -56,6 +57,7 @@ interface ProductRow {
   is_visible: boolean;
   is_active: boolean;
   source_type: string;
+  metadata?: unknown;
 }
 
 interface CategoryRow {
@@ -79,7 +81,7 @@ async function _getProductData(slug: string, productSlug: string) {
     const { data: productRow } = await supabase
       .from("products")
       .select(
-        "id,name,slug,description,price_text,price_amount,old_price_amount,badge_tag,fulfillment_region,currency,stock_status,image_urls,category_id,is_visible,is_active,source_type"
+        "id,name,slug,description,price_text,price_amount,old_price_amount,badge_tag,fulfillment_region,currency,stock_status,image_urls,category_id,is_visible,is_active,source_type,metadata"
       )
       .eq("store_id", store.id)
       .eq("slug", productSlug)
@@ -123,6 +125,8 @@ async function _getProductData(slug: string, productSlug: string) {
         store,
         product,
         productSlug: productRow.slug,
+        // Yalniz arama motoru ciktisi icin; ekran duzeni bunu kullanmaz.
+        productMetadata: productRow.metadata ?? null,
       };
     }
   }
@@ -227,11 +231,17 @@ export default async function ProductDetailPage(props: PageProps) {
     .toLocaleLowerCase("tr-TR")
     .includes("tükendi");
 
+  // Esnafin girdigi kategori alanlari arama motoruna da gitsin. Ekranda
+  // hicbir sey degismez; bu yalniz sayfanin gorunmeyen veri etiketidir.
+  const attributeSchema = productAttributeSchemaFields(data.productMetadata);
+
   const productJsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
     "@id": `${publicUrl}#product`,
     name: product.name,
+    ...attributeSchema.recognized,
+    additionalProperty: attributeSchema.additionalProperty,
     description: productDescription,
     image: images.length > 0 ? images : undefined,
     brand: {
