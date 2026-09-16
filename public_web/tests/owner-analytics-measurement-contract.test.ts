@@ -11,6 +11,10 @@ const migration = read(
 const whatsapp = read("public_web/src/components/TrackedWhatsAppLink.tsx");
 const contact = read("public_web/src/components/TrackedContactLink.tsx");
 const productView = read("public_web/src/components/ProductViewTracker.tsx");
+const kesfetLayout = read("public_web/src/app/(site)/kesfet/layout.tsx");
+const kesfetMarker = read(
+  "public_web/src/components/kesfet/KesfetVitrinSourceMarker.tsx",
+);
 
 describe("owner analytics measurement contract", () => {
   it("locks direct engagement table access behind RLS", () => {
@@ -41,8 +45,15 @@ describe("owner analytics measurement contract", () => {
     expect(productView).toContain('p_surface: "product_detail"');
   });
 
+  it("records a store visit before deriving product-detail conversion source", () => {
+    expect(productView).toContain('.rpc("record_vitrin_view"');
+    expect(productView).toContain("detectVitrinViewSource()");
+  });
+
   it("extends the visit source contract only with the proven kesfet source", () => {
     expect(migration).toContain("'diger_site', 'kesfet'");
     expect(migration).not.toContain("'dijital_carsi'");
+    expect(kesfetLayout).toContain("<KesfetVitrinSourceMarker />");
+    expect(kesfetMarker).toContain('kaydetVitrinKaynakHandoff("kesfet", path)');
   });
 });

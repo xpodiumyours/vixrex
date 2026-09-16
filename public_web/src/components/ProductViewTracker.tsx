@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
+import { detectVitrinViewSource } from "@/components/VitrinViewTracker";
 import { ziyaretAnahtariniOkuyaUret } from "@/lib/vitrinZiyaretAnahtari";
 
 function ownerPreviewActive(): boolean {
@@ -35,17 +36,32 @@ export default function ProductViewTracker({
     }
     firedRef.current = true;
 
-    supabase
-      .rpc("record_vitrin_engagement_v2", {
+    const sessionKey = ziyaretAnahtariniOkuyaUret();
+
+    void Promise.all([
+      supabase.rpc("record_vitrin_view", {
+        p_store_slug: storeSlug,
+        p_session_key: sessionKey,
+        p_source: detectVitrinViewSource(),
+      }),
+      supabase.rpc("record_vitrin_engagement_v2", {
         p_store_slug: storeSlug,
         p_event_type: "product_view",
-        p_session_key: ziyaretAnahtariniOkuyaUret(),
+        p_session_key: sessionKey,
         p_product_slug: productSlug,
         p_surface: "product_detail",
-      })
-      .then(({ error }) => {
-        if (error) console.error("record_vitrin_engagement_v2 failed:", error);
-      });
+      }),
+    ]).then(([viewResult, engagementResult]) => {
+      if (viewResult.error) {
+        console.error("record_vitrin_view failed:", viewResult.error);
+      }
+      if (engagementResult.error) {
+        console.error(
+          "record_vitrin_engagement_v2 failed:",
+          engagementResult.error,
+        );
+      }
+    });
   }, [storeSlug, productSlug]);
 
   return null;
