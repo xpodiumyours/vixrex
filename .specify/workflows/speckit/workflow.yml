@@ -1,23 +1,13 @@
 schema_version: "1.0"
 workflow:
   id: "vixrex-sdd"
-  name: "Vixrex zorunlu gelişim zinciri"
-  version: "2.0.0"
+  name: "Vixrex ortak gelişim zinciri"
+  version: "2.1.0"
   author: "Vixrex"
-  description: "Anayasa → Specify → Clarify → Plan → Checklist → Tasks → Analyze → Implement → Converge → Review"
+  description: "Kullanılan araçtan bağımsız Vixrex geliştirme akışı"
 
 requires:
   speckit_version: ">=0.8.5"
-  integrations:
-    any:
-      - "generic"
-      - "copilot"
-      - "codex"
-      - "claude"
-      - "gemini"
-      - "kilo"
-      - "cursor"
-      - "opencode"
 
 inputs:
   spec:
@@ -27,12 +17,12 @@ inputs:
   integration:
     type: string
     default: "auto"
-    prompt: "Kullanılan araç; auto mevcut aracı seçer"
+    prompt: "Mevcut aracı otomatik kullan"
 
 steps:
   - id: constitution
     type: gate
-    message: "Vixrex Anayasası okundu ve bu işin değişmez sınırları çıkarıldı mı?"
+    message: "Vixrex Anayasası okundu ve sınırlar çıkarıldı mı?"
     options: [approve, reject]
     on_reject: abort
 
@@ -86,12 +76,12 @@ steps:
 
   - id: convergence-gate
     type: gate
-    message: "Converge eksik bulduysa görevler eklendi ve Implement → Converge döngüsü sonuç YAKINSADI olana kadar tekrarlandı mı?"
+    message: "Eksik varsa Implement → Converge döngüsü YAKINSADI sonucuna ulaştı mı?"
     options: [approve, reject]
     on_reject: abort
 
   - id: review
     type: gate
-    message: "Üreticiden bağımsız inceleme tamamlandı, PR ve geri alma yolu hazır mı?"
+    message: "Bağımsız inceleme, PR ve geri alma yolu hazır mı?"
     options: [approve, reject]
     on_reject: abort
