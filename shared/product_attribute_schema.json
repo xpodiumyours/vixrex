@@ -24,6 +24,7 @@
       "requirement": "required",
       "storage": "core.brand",
       "display": [
+        "card",
         "quick",
         "detail"
       ]
@@ -115,6 +116,7 @@
         "ask"
       ],
       "display": [
+        "card",
         "quick",
         "detail"
       ]
@@ -126,6 +128,7 @@
       "requirement": "optional",
       "storage": "metadata.service.durationMinutes",
       "display": [
+        "card",
         "quick",
         "detail"
       ]
@@ -142,6 +145,7 @@
         "remote"
       ],
       "display": [
+        "card",
         "quick",
         "detail"
       ]
@@ -187,6 +191,7 @@
           "storage": "metadata.attributes",
           "variantEligible": true,
           "display": [
+            "card",
             "quick",
             "detail"
           ]
@@ -199,6 +204,7 @@
           "storage": "metadata.attributes",
           "variantEligible": true,
           "display": [
+            "card",
             "quick",
             "detail"
           ]
@@ -261,6 +267,7 @@
           "storage": "metadata.attributes",
           "variantEligible": true,
           "display": [
+            "card",
             "quick",
             "detail"
           ]
@@ -335,6 +342,7 @@
           "requirement": "required",
           "storage": "metadata.attributes",
           "display": [
+            "card",
             "quick",
             "detail"
           ]
@@ -393,6 +401,7 @@
           "requirement": "required",
           "storage": "metadata.attributes",
           "display": [
+            "card",
             "quick",
             "detail"
           ]
@@ -464,6 +473,7 @@
           "storage": "metadata.attributes",
           "variantEligible": true,
           "display": [
+            "card",
             "quick",
             "detail"
           ]

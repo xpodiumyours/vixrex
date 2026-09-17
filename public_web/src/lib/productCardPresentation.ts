@@ -91,7 +91,7 @@ function serviceFacts(metadata: ReturnType<typeof normalizeProductMetadata>, det
 
 function metadataAttributeFacts(args: {
   metadata: ReturnType<typeof normalizeProductMetadata>;
-  surface: "quick" | "detail";
+  surface: "card" | "quick" | "detail";
   existingKeys: Set<string>;
 }) {
   const definitions = productAttributesForSurface(args.metadata.templateKey, args.surface);
@@ -286,4 +286,65 @@ export function productVariantCount(value: unknown, templateKey?: string | null)
 export function productVariantLabel(value: unknown, templateKey?: string | null): string | null {
   const count = productVariantCount(value, templateKey);
   return count > 1 ? `${count} seçenek` : null;
+}
+
+export interface ProductCardFacts {
+  /** Kartın en üstünde, ürün adının üzerinde gösterilir. */
+  marka: string | null;
+  /** Adın altında küçük etiketler halinde gösterilir. */
+  ozellikler: ProductQuickFact[];
+}
+
+export function buildProductCardFacts(args: {
+  brand?: string | null;
+  metadata?: unknown;
+  limit?: number;
+}): ProductCardFacts {
+  const metadata = normalizeProductMetadata(args.metadata);
+  const limit = Math.max(0, args.limit ?? 3);
+  const kartAlanlari = new Set(
+    productAttributesForSurface(metadata.templateKey, "card").map((definition) => definition.key),
+  );
+
+  const marka =
+    metadata.itemKind !== "service" && kartAlanlari.has("brand")
+      ? String(args.brand || "").trim() || null
+      : null;
+
+  const ozellikler: ProductQuickFact[] = [];
+
+  if (metadata.itemKind === "service") {
+    const service = metadata.service;
+    if (service?.durationMinutes && kartAlanlari.has("durationMinutes")) {
+      ozellikler.push({
+        key: "durationMinutes",
+        label: "Süre",
+        value: `${service.durationMinutes} dk`,
+      });
+    }
+    if (service?.priceMode && kartAlanlari.has("priceMode")) {
+      ozellikler.push({
+        key: "priceMode",
+        label: "Fiyat biçimi",
+        value: PRICE_MODE_LABELS[service.priceMode],
+      });
+    }
+    if (service?.serviceLocation && kartAlanlari.has("serviceLocation")) {
+      ozellikler.push({
+        key: "serviceLocation",
+        label: "Hizmet yeri",
+        value: SERVICE_LOCATION_LABELS[service.serviceLocation],
+      });
+    }
+  } else {
+    ozellikler.push(
+      ...metadataAttributeFacts({
+        metadata,
+        surface: "card",
+        existingKeys: new Set(["brand"]),
+      }),
+    );
+  }
+
+  return { marka, ozellikler: ozellikler.slice(0, limit) };
 }

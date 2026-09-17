@@ -15,7 +15,7 @@ import {
   resolveCatalogImage,
 } from "@/lib/products";
 import type { RichProductItem } from "@/lib/richProductItem";
-import { productVariantLabel } from "@/lib/productCardPresentation";
+import { buildProductCardFacts, productVariantLabel } from "@/lib/productCardPresentation";
 import { normalizeProductMetadata } from "@/lib/productRichData";
 
 type CatalogProduct = RichProductItem;
@@ -256,6 +256,10 @@ export default function ProductCatalog({
           const variantLabel = isService
             ? null
             : productVariantLabel(product.variants, metadata.templateKey);
+          const kartOzellikleri = buildProductCardFacts({
+            brand: product.brand,
+            metadata: product.metadata,
+          }).ozellikler;
           const fulfillmentRegion = String(product.fulfillmentRegion || "").trim();
           const fulfillmentMapUrl = productLocationMapUrl(fulfillmentRegion);
           const productKey = product.id || productUrl;
@@ -304,6 +308,11 @@ export default function ProductCatalog({
                   <h3 className="line-clamp-2 min-h-[2.5em] text-xs font-extrabold leading-snug text-white sm:text-sm">
                     {product.name}
                   </h3>
+                  {kartOzellikleri.length > 0 ? (
+                    <p className="mt-1 truncate text-[10px] font-semibold text-slate-400 sm:text-[11px]">
+                      {kartOzellikleri.map((ozellik) => ozellik.value).join(" · ")}
+                    </p>
+                  ) : null}
                   <div className="mt-2.5 flex min-w-0 items-baseline gap-2">
                     <p className="truncate text-xs font-extrabold text-blue-400 sm:text-sm">
                       {product.price || "Fiyat sorun"}
