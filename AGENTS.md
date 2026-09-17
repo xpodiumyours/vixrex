@@ -16,12 +16,18 @@ satir eklenir ve mumkunse `.claude/hooks/` altinda bir kanca ile olculur.
    tam yolunu ve satirini yaz; bakmadiysan "bakmadim" de. (2026-09-09)
 3. **Kendi araclarinla bulabilecegini Casper'a sorma.** Once arastir,
    sonra sonucu anlat. (2026-09-10)
-3b. **Zinciri tersten kurma.** Bir ozellik girdiden ciktiya dogru kurulur:
-   kategori/kural -> esnaf formu -> dogrulama -> Supabase kayit -> sahip
-   duzenleme -> yayin kapisi -> public detay -> urun karti. Bir halka
-   yoksa altindaki halka "tamamlandi" sayilmaz. Kaynagi olmayan veri
-   ekranda tasarlanmaz; kaydetme yolu olmayan alan public'e cikarilmaz.
-   Ayrinti: `CLAUDE.md` > "Gelistirme zinciri". (2026-09-16)
+3b. **Zinciri tersten kurma.** Bir is girdiden ciktiya dogru kurulur ve
+   halka atlanmaz. Zincirin tanimi, "bitti" tanimi ve tasarim ilkeleri
+   tek yerdedir: `.specify/memory/constitution.md`. Burada tekrarlanmaz.
+   Celisme olursa sira: anayasa -> bu dosya -> `CLAUDE.md`. (2026-09-16)
+
+3c. **Ise baslamadan once baglami oku.** Aktif is nedir, son commitler ne
+   yapti, acik PR var mi. Bunlari okumadan oneri yapma; Casper'a durumu
+   tekrar anlattirma. (2026-09-17)
+3d. **Ayni seyi iki kez tarama.** Bu oturumda veya kayitta zaten olculmus
+   bir seyi yeniden arama. Olcum yalniz bir karar ona bagliysa yapilir;
+   gorev yazmadan once dosya adi dogrulamak icin komut kosturma.
+   (2026-09-17)
 
 ## Yazarken
 
@@ -34,9 +40,17 @@ satir eklenir ve mumkunse `.claude/hooks/` altinda bir kanca ile olculur.
    `git log --oneline -5 -- <dosya>` ile yakin commit var mi bak.
    Kendi yazdigini sonra "hata buldum" diye raporlama. (2026-09-10)
 7. **Ayni klasorde iki ajan calistirma.** Is sessizce silinir.
-   (2026-08-26)
+   (2026-08-26) Her isin tek sahibi vardir; ikinci ajan ayri dal ve ayri
+   calisma klasoru (worktree) kullanir.
 8. **Dal acarken tabani uzaktan al**, yerel ana daldan alma; yerel kirli
    olabilir.
+8b. **Flutter paneline (`lib/`) izinsiz dokunma.** Casper icin en kilitli,
+   en iyi calisan yer orasi. Hedef tek yuz Next.js olmasi bu izni
+   vermez; "nasilsa kalkacak" diyip orayi kirmak yasak. Gorunum farki
+   varsa duzeltme `public_web/` tarafinda yapilir. (2026-09-07 karari)
+8c. **Yarim is birakip yenisine gecme.** Acik is ikiden fazlaysa yeni is
+   acilmaz. Kapatmak tamamlamak degildir; bir is bitmeden digerine
+   gecilmez. (2026-09-16)
 
 ## Bitirdim demeden once
 
@@ -63,3 +77,10 @@ satir eklenir ve mumkunse `.claude/hooks/` altinda bir kanca ile olculur.
 15. **Test adresini hep yaz.** Hangi adrese bakilacagi yazilmazsa yanlis
     surum test ediliyor.
 16. **Cevap kisa olacak.** Kanit istenmeden dokulmez.
+17. **Duz Turkce yaz.** Casper yazilimci degil, teknik terim ve Ingilizce
+    bilmiyor. Bir terim kullanmak zorundaysan yanina tek cumlelik Turkce
+    karsiligini yaz. Dosya adi, bilesen adi, kod numarasi verme; ne ise
+    yaradigini anlat. "Ozet su" diye basla, madde madde devam et.
+18. **Bilmiyorsan bilmiyorum de.** "Kontrol edeyim" demek serbest.
+    Oldugundan iyi gostermek guven kaybettirir; gecmiste boyle yaralar
+    var.

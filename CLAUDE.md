@@ -15,38 +15,20 @@ parçası sessizce devre dışı bırakıldı ve doğrudan main'e alındı — C
 canlıda fark etti, saatlerce token yakıldı, sonuç güvensizlik oldu. Bkz.
 `~/.claude/projects/C--Users-Casper/memory/once-sor-onay-bekle.md`.
 
-### Geliştirme zinciri — YUKARIDAN AŞAĞI (2026-09-16, Casper)
+### Geliştirme zinciri — TEK KAYNAK: `.specify/memory/constitution.md`
 
-Bir özellik **girdiden çıktıya** doğru kurulur. Sıra atlanamaz, tersten gidilemez:
+Zincir, "bitti" tanımı ve tasarım ilkeleri **yalnız anayasada** tanımlıdır
+(`.specify/memory/constitution.md`). Burada tekrarlanmaz — iki kopya
+kaçınılmaz olarak birbirinden ayrışır.
 
-```
-Kategori / kural tanımı
-  → esnaf formu (girdi)
-    → doğrulama
-      → Supabase kayıt modeli
-        → sahip düzenleme
-          → yayın kapısı
-            → public detay
-              → ürün kartı (görünüm)
-```
+Anayasa her iş türü için geçerli dokuz halka tanımlar. Vitrin işlerinde
+bunların karşılığı:
 
-Bir halka yoksa, altındaki halka **"tamamlandı" sayılamaz.**
+kategori/kural tanımı → esnaf formu → doğrulama → Supabase kayıt modeli →
+yetki → sahip düzenleme ve yayın kapısı → panel ve web → public detay ve
+ürün kartı → geri alma
 
-**Dört yasak:**
-
-1. **Kaynağı olmayan veri ekranda tasarlanmaz.**
-2. **Kaydetme yolu olmayan alan public'e çıkarılmaz.**
-3. **Test edilmeyen zincir main'e girmez.**
-4. **Preview'da doğrulanmayan main production'a çıkmaz.**
-
-**Bir adım önermeden önce üç soruyu geç:**
-
-1. Bu adım zincirin hangi halkası? Halka değilse listeye girmez.
-2. Bu kuralı bugünkü veri kaç kayıtla geçiyor? Sıfırsa o kural değil, bariyer.
-3. Bu adımın gerektirdiği içeriği kim üretecek? Cevap "ben elimle" ise adım yanlıştır.
-
-**"Bitti" tanımı değişti:** yeşil test yetmez. Bitti demek, **gerçek kullanıcının
-gerçek yolundan bir kez baştan sona çalıştırıldı ve ekran görüldü** demektir.
+Çelişme olursa sıra: anayasa → `AGENTS.md` → bu dosya.
 
 **Neden:** 2026-09-16'da ürün kartı işi tersten kuruldu — önce tüketicinin gördüğü
 okuma tarafı (#492), sonra esnafın bilgiyi gireceği alanlar (#493), en son kategori
@@ -201,7 +183,7 @@ CI's `schema-drift` job re-runs this and fails the PR if the generated files don
 
 Path-classified: a `changes` job (`.github/scripts/changed_surfaces.py`) decides which of `flutter` / `schema` / `public_web` actually need to run; an unrecognized path conservatively runs everything. Jobs: `secret-tarama` (gitleaks), `auth-config-check` (Supabase leaked-password-protection config), `grant-guard` (spins up a local Supabase from the full migration chain and asserts `anon`/`authenticated` never hold TRUNCATE/MAINTAIN/REFERENCES/TRIGGER on any table — those are invisible to RLS), `flutter` (format/analyze/test), `schema-drift`, `public_web` (lint/typecheck/test/build), `public_web_e2e` (main-only, live site).
 
-Note: `README.md`'s "Test ve Kalite Kapıları" table still describes a PR-scope/file-size/Supabase-access-ratchet gate (`verify_pr_scope.py` etc.) — those scripts and their CI job were deliberately removed (PR #394, 2026-08-31) along with `AGENTS.md`/`VIXREX_RULES.md`/`CONTEXT.md`/`docs/` and other agent-governance files, at the repo owner's explicit request, because prior agent sessions had been fabricating "user decided X" provenance in those files. Treat README as stale on that specific table; the `ci.yml` jobs listed above are the actual current gates. Don't recreate root-level rules/governance docs unilaterally — rediscover context from code + README, and build any new persistent docs together with the user rather than asserting them.
+Note: `README.md`'s "Test ve Kalite Kapıları" table still describes a PR-scope/file-size/Supabase-access-ratchet gate (`verify_pr_scope.py` etc.) — those scripts and their CI job were deliberately removed (PR #394, 2026-08-31) along with `VIXREX_RULES.md`/`CONTEXT.md`/`docs/` and other agent-governance files, at the repo owner's explicit request, because prior agent sessions had been fabricating "user decided X" provenance in those files. Treat README as stale on that specific table; the `ci.yml` jobs listed above are the actual current gates. Don't recreate root-level rules/governance docs unilaterally — rediscover context from code + README, and build any new persistent docs together with the user rather than asserting them.
 
 ## Environment variables
 
