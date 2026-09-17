@@ -1,59 +1,16 @@
-# Vixrex değişiklik incelemesi
+# Yayın akışı (dal → main → push → yayın)
 
-## Kullanıcı sonucu
+Sıra: dalda çalış → main'e al → push'la → Vercel yayına alır.
+Main'e almak yayına almak değildir — site ancak push sonrası değişir.
 
-Bu değişiklik bitince kullanıcı ne yapabilecek veya neyi doğru görecek?
+## Bu iş ne yapıyor
 
-## İş kaydı
+<!-- 2-3 cümle: ne değişti, neden -->
 
-- `specs/<iş-kimliği>/`:
-- İş türü: özellik / değişiklik / hata
-- Bağımsız inceleyen:
-- Önizleme adresi:
+## Kontrol listesi
 
-## Keşif özeti
-
-Yeni özellik ve davranış değişikliğinde doldurulur; kaynağı `kesif.md`.
-
-- Gelişim nereden başladı:
-- Nerede bitti:
-- Ne gözükecek:
-- Nasıl gözükecek:
-- Esnafa katkısı:
-- Vixrex'e katkısı:
-- Tüketiciye katkısı:
-
-## Yeni özellik veya davranış değişikliği
-
-Uygulanmıyorsa bu bölüm boş bırakılır.
-
-- [ ] Anayasa
-- [ ] Keşif yazıldı ve Furkan onayladı
-- [ ] Specify
-- [ ] Plan
-- [ ] Tasks
-- [ ] Implement
-- [ ] Converge
-- [ ] Eksik çıktıysa Implement ve Converge tekrarlandı
-- [ ] Review / PR
-
-Açılan kalite kapıları ve kanıtları (yoksa boş bırakılır):
-
-## Hata düzeltmesi
-
-Uygulanmıyorsa bu bölüm boş bırakılır.
-
-- [ ] Hata yeniden görüldü
-- [ ] Gerçek sebep kanıtlandı
-- [ ] En küçük doğru düzeltme uygulandı
-- [ ] Asıl hata ve etkilenen yol tekrar denendi
-- [ ] Eksik çıktıysa Implement ve Converge tekrarlandı
-- [ ] Review / PR
-
-## Teslimat ve yayın
-
-- [ ] Seçilen iş türünün ortak kontrolleri geçti
-- [ ] Gerçek kullanıcı yolu önizlemede doğrulandı
-- [ ] Güvenlik ve veri erişimi gerekiyorsa doğrulandı
-- [ ] Geri alma yolu hazır
-- [ ] Canlı yayın ayrıca onaylanacak; bu PR kendiliğinden yayın yapmayacak
+- [ ] İş ayrı dalda yapıldı, main'e doğrudan commit yok
+- [ ] Dal, güncel `main` üzerine alındı (merge/rebase)
+- [ ] İlgili testler geçti (`flutter test` / `public_web` vitest)
+- [ ] Push sonrası Vercel deploy'u izlendi
+- [ ] Canlıda doğrulandı (ilgili sayfa açılıp bakıldı)

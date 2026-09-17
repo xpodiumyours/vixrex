@@ -1,27 +1,13 @@
-@AGENTS.md
-
 # CLAUDE.md
 
-Ortak gelişim kuralları yukarıdaki `AGENTS.md` dosyasından gelir ve bütün
-araçlar için aynıdır. Bu dosya yalnız Claude oturumlarına özel ekleri tutar;
-ortak süreci daraltamaz veya genişletemez. Çelişme olursa sıra:
-`.specify/memory/constitution.md` → `DEVELOPMENT.md` → `AGENTS.md` → bu dosya.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Çalışma kuralı — ONAY ÖNCE ALINIR (2026-09-03, Casper; 2026-09-17'de güncellendi)
+## Çalışma kuralı — ÖNCE SOR (2026-09-03, Casper)
 
-Ürün koduna, veritabanına veya yayın ayarına dokunmadan önce Keşif kaydı
-yazılır ve onayı alınır: `specs/<iş>/kesif.md` içinde `ONAY: alındı`. Onay
-yoksa uygulama başlamaz.
-
-Onay verildikten sonra aynı iş için dosya, test, dal, araç veya yöntem tekrar
-sorulmaz; teknik seçimi üretici yapar ve kanıtlar. Ekranı, akışı, görünümü,
-ürün kuralını, maliyeti, hukuki sonucu, veri güvenliğini veya canlı sistemi
-ayrıca değiştiren bir karar çıkarsa tek sade soruyla açık onay alınır.
-
-Bu maddenin eski hâli "hiçbir adımı sormadan yapma" diyordu; yeni Anayasa'nın
-yedinci ilkesiyle çeliştiği için onay noktası tek yere, Keşif'e taşındı.
-Koruma gevşemedi: onaysız uygulama artık kayıtla ve merkezi kontrolle
-engelleniyor.
+Bu repoda hiçbir adımı, hiçbir değişikliği Casper'a sormadan yapma —
+küçük görünse bile. "Şunu düzelteyim mi", "bu iki seçenekten hangisi"
+diye sor, cevabı bekle, sonra uygula. Bir düzeltmenin "doğru" göründüğü
+sana değil ona ait bir karar.
 
 Neden: 2026-09-03'te "Çalışma masası" ekranı bitmeden, onaylanmamış bir
 düzeltmeyle akıllı motorun (serbest cümleden alan çıkaran motor) bir
@@ -175,7 +161,7 @@ CI's `schema-drift` job re-runs this and fails the PR if the generated files don
 
 Path-classified: a `changes` job (`.github/scripts/changed_surfaces.py`) decides which of `flutter` / `schema` / `public_web` actually need to run; an unrecognized path conservatively runs everything. Jobs: `secret-tarama` (gitleaks), `auth-config-check` (Supabase leaked-password-protection config), `grant-guard` (spins up a local Supabase from the full migration chain and asserts `anon`/`authenticated` never hold TRUNCATE/MAINTAIN/REFERENCES/TRIGGER on any table — those are invisible to RLS), `flutter` (format/analyze/test), `schema-drift`, `public_web` (lint/typecheck/test/build), `public_web_e2e` (main-only, live site).
 
-Note: `README.md`'s "Test ve Kalite Kapıları" table still describes a PR-scope/file-size/Supabase-access-ratchet gate (`verify_pr_scope.py` etc.) — those scripts and their CI job were deliberately removed (PR #394, 2026-08-31) along with `VIXREX_RULES.md`/`CONTEXT.md`/`docs/` and other agent-governance files, at the repo owner's explicit request, because prior agent sessions had been fabricating "user decided X" provenance in those files. `AGENTS.md` was rebuilt on 2026-09-17 as the tool-agnostic shared rulebook and is now the source this file imports. Treat README as stale on that specific table; the `ci.yml` jobs listed above are the actual current gates. Don't recreate root-level rules/governance docs unilaterally — rediscover context from code + README, and build any new persistent docs together with the user rather than asserting them.
+Note: `README.md`'s "Test ve Kalite Kapıları" table still describes a PR-scope/file-size/Supabase-access-ratchet gate (`verify_pr_scope.py` etc.) — those scripts and their CI job were deliberately removed (PR #394, 2026-08-31) along with `AGENTS.md`/`VIXREX_RULES.md`/`CONTEXT.md`/`docs/` and other agent-governance files, at the repo owner's explicit request, because prior agent sessions had been fabricating "user decided X" provenance in those files. Treat README as stale on that specific table; the `ci.yml` jobs listed above are the actual current gates. Don't recreate root-level rules/governance docs unilaterally — rediscover context from code + README, and build any new persistent docs together with the user rather than asserting them.
 
 ## Environment variables
 
