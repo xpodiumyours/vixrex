@@ -1,65 +1,76 @@
 # Vixrex Gelişim Sistemi
 
-Bu sistem bir ajana özel değildir. Vixrex'te çalışan bütün insanlar ve yapay
-zekâ araçları aynı kayıtları, aynı sırayı ve aynı GitHub kapısını kullanır.
+Bu sistem bir ajana veya araca özel değildir. Vixrex'te çalışan herkes aynı
+Anayasa'yı, aynı kayıt biçimini ve aynı GitHub kapısını kullanır. Araçlara özel
+komut dosyaları ortak kural değildir ve başka bir aracın çalışmasını
+engelleyemez.
 
-Kaynak: GitHub Spec Kit. Resmî çekirdek akış Specify → Plan → Tasks →
-Implement → Converge'dir. Vixrex, geçmişte yaşanan belirsizlik, eksik yüzey,
-sahte başarı ve yarım teslimat sorunları nedeniyle Clarify, Checklist, Analyze
-ve Review aşamalarını her değişiklikte zorunlu tutar.
+Kaynak: GitHub Spec Kit. Yeni özelliklerin çekirdek yolu Specify → Plan →
+Tasks → Implement → Converge'dir. Clarify, Checklist ve Analyze ihtiyaç
+duyulan kalite kapılarıdır. Vixrex'te yeni özellik ve davranış değişiklikleri
+için bu kapılar birlikte kullanılır.
 
-## Her değişiklikte zorunlu sıra
+## 1. Yeni özellik veya davranış değişikliği
+
+Zorunlu sıra:
 
 1. **Anayasa** — Değişmez ürün ve güvenlik ilkelerini oku.
 2. **Specify** — Ne yapılacağını, kullanıcı sonucunu ve kabul koşullarını yaz.
 3. **Clarify** — Belirsizlikleri araştır; yalnız gerçek sahip kararlarını sor.
 4. **Plan** — Mevcut sistemi ölç ve bütün etkilenen yüzeylerle çözümü kur.
-5. **Checklist** — Gereksinimlerin eksiksiz, ölçülebilir ve çelişkisiz olduğunu
-   bağımsız olarak kontrol et.
+5. **Checklist** — Gereksinimlerin eksiksiz ve ölçülebilir olduğunu kontrol et.
 6. **Tasks** — İşleri bağımlılık sırasına koy.
-7. **Analyze** — Anayasa, istek, plan ve görevler arasındaki çelişkileri bul.
-8. **Implement** — Yalnız onaylı kayıtları uygula.
-9. **Converge** — Kod ile kayıtları karşılaştır; eksikleri görevlere ekle.
-10. **Tekrar** — Eksik varsa Implement ve Converge aşamalarını yakınsayana kadar
-    tekrarla.
-11. **Review / PR** — Üreticiden bağımsız inceleme yap; ortak kontroller
-    geçmeden teslim etme.
+7. **Analyze** — Anayasa, istek, plan ve görev çelişkilerini bul.
+8. **Implement** — Onaylanan sonucu uygula.
+9. **Converge** — Uygulama ile kayıtları karşılaştır ve eksikleri bul.
+10. **Tekrar** — Eksik varsa Implement ↔ Converge döngüsünü sürdür.
+11. **Review / PR** — Bağımsız inceleme ve ortak kontrollerden geçir.
 
-## Tek kayıt yeri
+Kayıtlar `specs/<iş-kimliği>/` altında tutulur: `spec.md`, `plan.md`,
+`tasks.md`, `checklists/requirements.md`, `analysis.md`,
+`convergence.md`, `review.md` ve `zincir.md`.
 
-Her iş `specs/<iş-kimliği>/` altında şu dosyaları taşır:
+## 2. Hata düzeltmesi
 
-- `spec.md`: görünür sonuç, kapsam ve kabul koşulları
-- `plan.md`: bugünkü durum, çözüm, güvenlik, geri alma ve doğrulama
-- `tasks.md`: bağımlılık sırasındaki görevler
-- `checklists/requirements.md`: gereksinim kalite kontrolü
-- `analysis.md`: plan ve görev çelişkileri
-- `convergence.md`: uygulama sonrası eksikler ve tekrar sonuçları
-- `review.md`: bağımsız inceleme ve teslim kararı
-- `zincir.md`: bütün aşamaların tamamlanma ve kanıt kaydı
+Hata düzeltmesi gereksiz belge üretmez. Zorunlu sıra:
 
-Bunların dışındaki sohbet, kişisel hafıza veya ajana özel dosya tamamlanma kanıtı
-değildir.
+1. Anayasa sınırlarını kontrol et.
+2. Hatayı yeniden gör ve kanıtını kaydet.
+3. Görünen belirtiyi değil gerçek sebebi bul.
+4. Düzeltme görevlerini bağımlılık sırasına koy.
+5. En küçük doğru düzeltmeyi uygula.
+6. Asıl hatayı ve etkilenen yolu tekrar dene.
+7. Eksik varsa Implement ↔ Converge döngüsünü tekrarla.
+8. Bağımsız inceleme ve PR.
 
-## Merkezi kapı
+Kayıtlar aynı iş klasöründe `root-cause.md`, `tasks.md`,
+`convergence.md`, `review.md` ve `zincir.md` dosyalarıdır. Düzeltme yeni
+kullanıcı sonucu, veri yapısı, güvenlik kuralı, ekran akışı veya yayın davranışı
+doğuruyorsa tam zincire geçirilir.
 
-GitHub, değişen ürün dosyalarıyla birlikte tek bir iş kaydı arar. Eksik aşama,
-açık görev, çözülmemiş belirsizlik, çelişki, yakınsamamış uygulama veya başarısız
-inceleme varsa teslimatı durdurur. Bu kontrol hangi aracın kod yazdığına bakmaz.
+## 3. Yeni fikir veya araştırma
 
-Dal koruması hesap planı nedeniyle kapalı olduğu sürece doğrudan ana dala yazım
-sunucu tarafından kesin engellenemez. Bu açık, otomatik canlı yayın kapalı
-tutularak sınırlandırılır; kırmızı kontrol taşıyan ana dal canlıya çıkarılamaz.
+Önce mevcut ürün ve kanıtlar araştırılır. Sonuç “yapalım”, “yapmayalım” veya
+“karar için şu bilgi eksik” olarak kaydedilir. Karar verilmeden ürün kodu,
+veritabanı veya yayın ayarı değiştirilmez. Araştırma kayıtları yalnız
+`specs/<iş-kimliği>/` altında kalır; uygulama kararı verilirse yeni özellik
+yolu başlatılır.
 
-## Yayın
+## Ortak GitHub kapısı
 
-Ana dala alma ile canlı yayın ayrı işlemlerdir. İki Vixrex sitesinde Git
-kaynaklı otomatik yayın kapalıdır. Canlı yayın ancak:
+`zincir.md` dosyasının ilk bölümünde tam olarak bir iş türü bulunur:
 
-- gelişim zinciri yeşil,
-- ürün kontrolleri yeşil,
-- önizleme gerçek kullanıcı yolunda doğrulanmış,
-- geri alma yolu hazır,
-- Furkan canlı yayın kararını vermiş
+- `İŞ TÜRÜ: özellik`
+- `İŞ TÜRÜ: değişiklik`
+- `İŞ TÜRÜ: hata`
 
-ise ayrıca başlatılır.
+GitHub kapısı seçilen iş türünün kayıtlarını kontrol eder. Kullanılan insan,
+model, firma veya editöre bakmaz. Çözülmemiş belirsizlik, açık görev,
+yakınsamamış uygulama veya hazır olmayan inceleme teslimatı durdurur.
+
+## Yayın ayrı bir karardır
+
+Ana dala alma canlı yayın değildir. Git kaynaklı otomatik yayın kapalı tutulur.
+Canlı yayın ancak gelişim ve ürün kontrolleri yeşil, önizleme gerçek kullanıcı
+yolunda doğrulanmış, geri alma yolu hazır ve Furkan açıkça yayın kararı vermişse
+ayrıca başlatılır.

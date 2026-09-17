@@ -15,9 +15,11 @@ veya zorunlu kapısı değildir. Çelişme olursa sıra: bu dosya →
 Her iş girdiden çıktıya doğru kurulur. Sıra: kural → girdi → doğrulama →
 saklama → yetki → geçiş kapısı → etkilenen yüzeyler → çıktı → geri alma.
 
-Bu zincir her iş türü için geçerlidir: yeni özellik, hata düzeltme,
-altyapı, güvenlik, içerik, ayar. "Bu iş farklı" demek geçerli değildir.
-Bir halka o işe uymuyorsa gerekçesi tek cümleyle yazılır.
+Yeni özellik ve davranış değişiklikleri tam zinciri izler. Hata düzeltmeleri
+önce hatayı yeniden görür, gerçek sebebi bulur, en küçük doğru düzeltmeyi yapar
+ve asıl hatayı tekrar dener. Yeni fikirler uygulamadan önce araştırılır ve
+karara bağlanır. Bir hata yeni kullanıcı sonucu, veri yapısı, güvenlik kuralı,
+ekran akışı veya yayın davranışı doğuruyorsa tam zincire geçer.
 
 Kaynağı olmayan çıktı üretilmez. Saklanamayan bilgi gösterilmez. Bir
 halka eksikse altındaki halka tamamlanmış sayılmaz.
@@ -130,15 +132,24 @@ yazılı değilse özellik yarımdır.
 ### IX. Ortak gelişim omurgası
 
 Her VixRex işi, üreticinin insan veya yapay zekâ olmasına ve kullanılan araca
-bakılmadan aynı sırayı izler:
+bakılmadan ortak sistemden geçer. Araçlara özel dosyalar yalnız kullanım
+kolaylığı sağlar; kural kaynağı olamaz ve başka bir aracın çalışmasını
+engelleyemez.
+
+Yeni özellik ve davranış değişikliğinin yolu:
 
 Anayasa → Specify → Clarify → Plan → Checklist → Tasks → Analyze → Implement
 → Converge → eksik varsa Implement ve Converge tekrarı → Review / PR.
 
-Her aşamanın kalıcı kanıtı `specs/<iş-kimliği>/` altında tutulur. Sohbet
-mesajı, kişisel hafıza veya ajana özel dosya ortak kanıt değildir. GitHub'daki
-merkezi kontrol eksik aşama, açık görev, çözülmemiş belirsizlik, çelişki,
-yakınsamamış uygulama veya başarısız inceleme bulunduğunda teslimatı durdurur.
+Hata düzeltmesinin yolu:
+
+Anayasa → hatayı tekrar gör → gerçek sebebi bul → Tasks → Implement →
+Converge → eksik varsa tekrar → Review / PR.
+
+Yeni fikir önce araştırılır; uygulama kararı verilmeden ürün kodu değiştirilmez.
+Her aşamanın kalıcı kanıtı `specs/<iş-kimliği>/` altında tutulur. GitHub'daki
+merkezi kontrol seçilen iş türünün eksik kaydını, açık görevini, yakınsamamış
+uygulamasını veya başarısız incelemesini gördüğünde teslimatı durdurur.
 
 Kod, belge, canlı yüzey ve yetkili araçlarla bulunabilen bilgi Furkan'a
 sorulmaz. Teknik seçimi üretici yapar ve kanıtlar. Yalnız birbirini dışlayan
@@ -178,4 +189,4 @@ değişiklik önermektir. Bu belgeyi veya otomatik kontrolleri kaldırma
 Her ilke geçmişte yaşanmış somut bir aksaklığa dayanır. Dayanağı olmayan
 madde eklenmez.
 
-**Version**: 2.0.0 | **Ratified**: 2026-09-17 | **Last Amended**: 2026-09-17
+**Version**: 2.1.0 | **Ratified**: 2026-09-17 | **Last Amended**: 2026-09-17
