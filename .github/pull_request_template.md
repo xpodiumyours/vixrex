@@ -1,16 +1,33 @@
-# Yayın akışı (dal → main → push → yayın)
+# Vixrex değişiklik incelemesi
 
-Sıra: dalda çalış → main'e al → push'la → Vercel yayına alır.
-Main'e almak yayına almak değildir — site ancak push sonrası değişir.
+## Kullanıcı sonucu
 
-## Bu iş ne yapıyor
+Bu değişiklik bitince kullanıcı ne yapabilecek veya neyi doğru görecek?
 
-<!-- 2-3 cümle: ne değişti, neden -->
+## İş kaydı
 
-## Kontrol listesi
+- `specs/<iş-kimliği>/`:
+- Bağımsız inceleyen:
+- Önizleme adresi:
 
-- [ ] İş ayrı dalda yapıldı, main'e doğrudan commit yok
-- [ ] Dal, güncel `main` üzerine alındı (merge/rebase)
-- [ ] İlgili testler geçti (`flutter test` / `public_web` vitest)
-- [ ] Push sonrası Vercel deploy'u izlendi
-- [ ] Canlıda doğrulandı (ilgili sayfa açılıp bakıldı)
+## Zorunlu zincir
+
+- [ ] Anayasa
+- [ ] Specify
+- [ ] Clarify
+- [ ] Plan
+- [ ] Checklist
+- [ ] Tasks
+- [ ] Analyze
+- [ ] Implement
+- [ ] Converge
+- [ ] Eksik çıktıysa Implement ve Converge tekrarlandı
+- [ ] Review / PR
+
+## Teslimat
+
+- [ ] Bütün ortak kontroller geçti
+- [ ] Gerçek kullanıcı yolu önizlemede doğrulandı
+- [ ] Güvenlik ve veri erişimi doğrulandı
+- [ ] Geri alma yolu hazır
+- [ ] Canlı yayın ayrıca onaylanacak; bu PR kendiliğinden yayın yapmayacak

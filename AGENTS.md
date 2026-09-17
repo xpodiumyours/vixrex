@@ -1,56 +1,52 @@
-# AGENTS.md — VixRex ajan kontrol listesi
+# AGENTS.md — Vixrex ortak gelişim kuralları
 
-Bu dosya bu depoda calisan **her** ajan icindir (Claude, ChatGPT/Codex,
-Kilo, Freebuff, Cursor). Depo bilgisi degil, **kural** dosyasidir.
-Mimari, komutlar ve ortam degiskenleri icin: `CLAUDE.md`.
+Bu dosya Vixrex deposunda çalışan insan veya yapay zekâ ayrımı olmadan bütün
+üreticiler için geçerlidir. Hiçbir araç, model veya firma için ayrı gelişim
+yolu yoktur.
 
-Kural: buradaki her satir gecmiste yasanmis somut bir aksiliga dayanir.
-Dayanagi olmayan satir eklenmez. Yeni bir aksilik yasandiginda buraya bir
-satir eklenir ve mumkunse `.claude/hooks/` altinda bir kanca ile olculur.
+## Zorunlu gelişim zinciri
 
-## Durmadan once
+Her yeni özellik, hata düzeltmesi, güvenlik, veri, içerik, tasarım, altyapı
+ve ayar değişikliği `DEVELOPMENT.md` içindeki zinciri eksiksiz izler:
 
-1. **Sormadan uygulama.** Kucuk gorunse bile. (2026-09-03: onaylanmamis
-   bir duzeltme akilli motoru sessizce bozdu, canliya indi.)
-2. **Tahminle is yapma.** Koda bakmadan duzeltme yazma. Baktigin dosyanin
-   tam yolunu ve satirini yaz; bakmadiysan "bakmadim" de. (2026-09-09)
-3. **Kendi araclarinla bulabilecegini Casper'a sorma.** Once arastir,
-   sonra sonucu anlat. (2026-09-10)
+Anayasa → Specify → Clarify → Plan → Checklist → Tasks → Analyze →
+Implement → Converge → gerekirse Implement/Converge tekrarı → Review/PR.
 
-## Yazarken
+Bir aşama atlandıysa kod hazır sayılmaz. Zincirin kayıtları
+`specs/<iş-kimliği>/` altında tutulur. Ortak GitHub kontrolü bu kayıtlar
+olmadan teslimata izin vermez.
 
-4. **Kod icine yorum satiri ekleme.** Aciklama mesaja yazilir.
-   Olculur: `.claude/hooks/yorum-satiri.sh` (2026-09-09)
-5. **Anahtari/jetonu dosyaya gomme.** Ortam degiskeni kullan. Alanin
-   ADINA guvenme, degerin sekline bak.
-   Olculur: `.claude/hooks/anahtar-sizintisi.sh` (2026-08-19 sizintisi)
-6. **Baska ajanin isine girme.** Bir duzeltme teklif etmeden once
-   `git log --oneline -5 -- <dosya>` ile yakin commit var mi bak.
-   Kendi yazdigini sonra "hata buldum" diye raporlama. (2026-09-10)
-7. **Ayni klasorde iki ajan calistirma.** Is sessizce silinir.
-   (2026-08-26)
-8. **Dal acarken tabani uzaktan al**, yerel ana daldan alma; yerel kirli
-   olabilir.
+## Çalışma biçimi
 
-## Bitirdim demeden once
+1. Furkan doğal Türkçeyle sonucu söyler; teknik kapsamı ve dosyaları üretici
+   araştırır.
+2. Kod, belge, canlı yüzey veya yetkili araçla bulunabilen bilgi Furkan'a
+   sorulmaz.
+3. Yalnız para, hukuk, görünüm, içerik, veri kaybı, gizlilik, canlı işlem veya
+   iki farklı ürün sonucu için tek sade soru sorulur.
+4. Tahminle değişiklik yapılmaz. Mevcut davranış ve etkilenen bütün yüzeyler
+   önce ölçülür.
+5. Aynı bilgi iki yerde elle tutulmaz. Flutter, Next.js ve Supabase aynı
+   Vixrex çekirdeğini kullanır.
+6. Başka bir işin değişiklikleri silinmez veya sahiplenilmez.
+7. Aynı çalışma klasöründe iki üretici çalışmaz.
+8. Flutter paneline açık ürün kararı olmadan dokunulmaz.
+9. Test sonucu tek başına başarı değildir; gerçek kullanıcı yolu görülür.
+10. Üreten kişi veya ajan kendi işinin son incelemesini yapmış sayılmaz.
+11. Dal, ana dal, yayın ve canlı doğrulama ayrı durumlar olarak bildirilir.
+12. Ana dala alınan değişiklik otomatik yayımlanmaz. Canlı yayın ayrı bir
+    sahip kararı ve ayrı doğrulama adımıdır.
 
-9. **Yesil test calisiyor demek degil.** Gercek ciktiyi calistir, ekrani
-   ac. Gorsel/UI hatasinda canli dogrula; goremiyorsan "goremedim" de,
-   tahminle "duzelttim" deme. (2026-09-03)
-10. **Olcmeden degistirme.** Esik/ayar degistirmeden once gercekte ne
-    urettigini olc.
-11. **Ajan kendi isini denetlemez.** Ureten ayri, dogrulayan ayri.
-12. **Agir kapilar elde:** testler, tip kontrolu, lint, uretim derlemesi.
-    Bunlar kancaya konmadi cunku tek dosya lint'i bile 50 saniye suruyor
-    (2026-09-12 olcumu). Merge oncesi `kapilar` ile kosulur.
+## Tamamlanma
 
-## Rapor verirken
+Bir iş yalnız şu koşullarda tamamdır:
 
-13. **Dal, ana dal ve canli ayri seylerdir.** "Gonderdim" demek canlida
-    duzeldi demek degil. Hangisinden bahsettigini acikca yaz.
-    Olculur: `.claude/hooks/dal-durumu.sh`
-14. **Taslak/WIP/deneme commit ana dala inmez.** Onaydan once farki oku.
-    (2026-09-10)
-15. **Test adresini hep yaz.** Hangi adrese bakilacagi yazilmazsa yanlis
-    surum test ediliyor.
-16. **Cevap kisa olacak.** Kanit istenmeden dokulmez.
+- Anayasa ve bütün gelişim aşamaları kayıtlıdır.
+- Belirsizlikler çözülmüştür.
+- Plan ile görevler arasında çelişki yoktur.
+- Bütün görevler tamamlanmıştır.
+- Uygulama ile yakınsama, eksik kalmayana kadar tekrarlanmıştır.
+- İlgili kontroller ve üretim derlemeleri geçmiştir.
+- Gerçek kullanıcı yolu doğrulanmıştır.
+- Güvenlik, geri alma, hata izleme ve destek yolu kaydedilmiştir.
+- Bağımsız inceleme ve PR sonucu hazırdır.

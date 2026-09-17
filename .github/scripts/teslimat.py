@@ -58,6 +58,7 @@ DURUM_ISARETI = "<!-- vixrex-teslimat-durumu -->"
 # koşmamışsa (PENDING kalıyorsa) teslimat beklemeye alınır — "koşmadı" asla
 # "geçti" sayılmaz.
 ZORUNLU_KAPILAR = (
+    "Gelişim zinciri",
     "Secret sızıntı taraması",
     "Değişiklik yüzeyi",
     "Next.js — lint, tip, test, build",

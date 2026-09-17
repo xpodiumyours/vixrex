@@ -1,5 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "git": {
+    "deploymentEnabled": false
+  },
   "ignoreCommand": "python ../.github/scripts/changed_surfaces.py --vercel-surface public_web",
   "framework": "nextjs",
   "buildCommand": "npm run build",
