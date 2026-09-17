@@ -1,0 +1,51 @@
+id: "vixrex-zincir"
+extends: "speckit"
+priority: 10
+enabled: true
+edits:
+  - insert_before: specify
+    step:
+      id: zincir-kesfi
+      type: prompt
+      integration: "{{ inputs.integration }}"
+      message: |
+        Vixrex Anayasasi (.specify/memory/constitution.md) I. ilkesi geregi:
+        plan yazilmadan once zincirin BUGUNKU hali kodda ve canli veride
+        olculur, tahmin edilmez.
+
+        Su istek icin dokuz halkanin her birini tek tek olc ve kanitla yaz:
+        "{{ inputs.spec }}"
+
+        Halkalar: kural -> girdi -> dogrulama -> saklama -> yetki ->
+        gecis kapisi -> etkilenen yuzeyler -> cikti -> geri alma.
+
+        Her halka icin yaz: var / eksik / gerekmez + KANIT (dosya yolu,
+        tablo adi, kayit sayisi). "Gerekmez" yazdiysan tek cumlelik
+        gerekce ekle. Tahmin yasak; bakmadiysan "bakmadim" yaz.
+
+        Sonunda tek cumle: bu is zincirin hangi halkasindan baslamali ve
+        neden. Sade Turkce yaz, dosya adi yerine ne ise yaradigini anlat.
+
+  - insert_before: specify
+    step:
+      id: zincir-onayi
+      type: gate
+      message: "Zincir olcumu dogru mu? Isin baslayacagi halka onaylaniyor mu?"
+      options: [approve, reject]
+      on_reject: abort
+
+  - insert_after: implement
+    step:
+      id: converge
+      command: speckit.converge
+      integration: "{{ inputs.integration }}"
+      input:
+        args: "{{ inputs.spec }}"
+
+  - insert_after: implement
+    step:
+      id: canli-dogrulama
+      type: gate
+      message: "Canlida gozle goruldu mu? Test adresi yazildi mi? Geri alma yolu kayitli mi?"
+      options: [approve, reject]
+      on_reject: abort
