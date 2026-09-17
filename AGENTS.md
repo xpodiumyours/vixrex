@@ -11,8 +11,9 @@ genişletemez veya başka bir aracı engelleyemez.
 1. **Yeni özellik veya davranış değişikliği:** önce Keşif yazılır — bugünkü
    çalışan hâl gerçek dosya yollarıyla ölçülür; işin nereden başlayıp nerede
    biteceği, ne ve nasıl gözükeceği, esnafa, Vixrex'e ve tüketiciye ne
-   katacağı yazılır ve Furkan onaylar. Sonra `DEVELOPMENT.md` içindeki tam
-   gelişim zinciri izlenir.
+   katacağı yazılır ve Furkan onaylar. Sonra çekirdek yol izlenir:
+   Specify → Plan → Tasks → Implement → Converge. Kalite kapıları işin riskine
+   göre açılır; `DEVELOPMENT.md` hangi kapının ne zaman açılacağını söyler.
 2. **Hata düzeltmesi:** hata yeniden görülür, gerçek sebep bulunur, en küçük
    doğru düzeltme yapılır, aynı hata tekrar denenir ve incelemeye gönderilir.
 3. **Yeni fikir veya araştırma:** önce kanıt toplanır ve “yapalım mı?” kararı
@@ -45,8 +46,10 @@ zincirine geçer.
 
 ## Kayıt ve tamamlanma
 
-Yeni özellik ve davranış değişikliği `specs/<iş-kimliği>/` altında tam kayıt
-tutar; ilk belge `kesif.md` olur. Kayıtlarda geçmeyen bir ürün dosyası
+Yeni özellik ve davranış değişikliği `specs/<iş-kimliği>/` altında beş kayıt
+tutar: `kesif.md`, `spec.md`, `plan.md`, `tasks.md`, `zincir.md`. İlk belge
+`kesif.md` olur. Hata düzeltmesi üç kayıt tutar. Bağımlılık ve üretilen dosya
+güncellemeleri kayıt gerektirmez. Kayıtlarda geçmeyen bir ürün dosyası
 değiştirilemez — merkezi kontrol bunu ölçer. Hata düzeltmesi aynı yerde kısa
 hata kaydı tutar. Yalnız araştırılan fikir ürün kodunu değiştirmez.
 

@@ -1,7 +1,6 @@
 # Zincir durumu
 
-İş türü tam olarak bir satırdır ve merkezi kontrol onu arar.
-Aşama satırları da birebir aşağıdaki yazımla olmalıdır.
+Aşama ve kapanış satırları birebir bu yazımla olmalıdır.
 
 ## Yeni özellik veya davranış değişikliği
 
@@ -10,11 +9,8 @@ Aşama satırları da birebir aşağıdaki yazımla olmalıdır.
 - [ ] Anayasa
 - [ ] Keşif
 - [ ] Specify
-- [ ] Clarify
 - [ ] Plan
-- [ ] Checklist
 - [ ] Tasks
-- [ ] Analyze
 - [ ] Implement
 - [ ] Converge
 - [ ] Review / PR
@@ -28,15 +24,22 @@ Davranış değişikliğinde tek fark ilk satırdır: İŞ TÜRÜ: değişiklik
 - [ ] Anayasa
 - [ ] Hata tekrarlandı
 - [ ] Sebep bulundu
-- [ ] Tasks
 - [ ] Implement
 - [ ] Converge
 - [ ] Review / PR
 
-## Her iki yolda da yazılır
+## Kapanış (her iki yolda da)
+
+Açılmayan kapı yazılmaz. Açılan her kapının kanıtı doldurulur.
+Kapı adları: veri, görsel, güvenlik, eşitlik, clarify, checklist, analyze.
+
+KAPILAR: yok
+KANIT veri: <göç canlıda uygulandı, nasıl doğrulandı>
+KANIT görsel: <gerçek tarayıcıda görülen adres>
+
+YAKINSAMA: tamam
+İNCELEME: hazır
 
 Implement ve Converge tekrar sayısı: <sayı>
-
-Belirsizlik sonucu: <çözülen belirsizlik veya "belirsizlik yok">
 
 Canlı yayın: kapalı

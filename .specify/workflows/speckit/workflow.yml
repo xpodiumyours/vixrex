@@ -2,9 +2,9 @@ schema_version: "1.0"
 workflow:
   id: "vixrex-sdd"
   name: "Vixrex ortak gelişim zinciri"
-  version: "2.2.0"
+  version: "2.3.0"
   author: "Vixrex"
-  description: "Kullanılan araçtan bağımsız Vixrex geliştirme akışı"
+  description: "Vixrex çekirdek yolu; kalite kapıları işin riskine göre ayrıca açılır"
 
 requires:
   speckit_version: ">=0.8.5"
@@ -38,32 +38,14 @@ steps:
     input:
       args: "{{ inputs.spec }}"
 
-  - id: clarify
-    command: speckit.clarify
-    integration: "{{ inputs.integration }}"
-    input:
-      args: "{{ inputs.spec }}"
-
   - id: plan
     command: speckit.plan
     integration: "{{ inputs.integration }}"
     input:
       args: "{{ inputs.spec }}"
 
-  - id: checklist
-    command: speckit.checklist
-    integration: "{{ inputs.integration }}"
-    input:
-      args: "{{ inputs.spec }}"
-
   - id: tasks
     command: speckit.tasks
-    integration: "{{ inputs.integration }}"
-    input:
-      args: "{{ inputs.spec }}"
-
-  - id: analyze
-    command: speckit.analyze
     integration: "{{ inputs.integration }}"
     input:
       args: "{{ inputs.spec }}"

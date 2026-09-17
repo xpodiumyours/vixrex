@@ -10,28 +10,19 @@ FULL_REQUIRED = (
     "spec.md",
     "plan.md",
     "tasks.md",
-    "checklists/requirements.md",
-    "analysis.md",
-    "convergence.md",
-    "review.md",
     "zincir.md",
 )
 BUG_REQUIRED = (
     "root-cause.md",
     "tasks.md",
-    "convergence.md",
-    "review.md",
     "zincir.md",
 )
 FULL_STAGES = (
     "Anayasa",
     "Keşif",
     "Specify",
-    "Clarify",
     "Plan",
-    "Checklist",
     "Tasks",
-    "Analyze",
     "Implement",
     "Converge",
     "Review / PR",
@@ -40,7 +31,6 @@ BUG_STAGES = (
     "Anayasa",
     "Hata tekrarlandı",
     "Sebep bulundu",
-    "Tasks",
     "Implement",
     "Converge",
     "Review / PR",
@@ -54,6 +44,7 @@ KESIF_MARKERS = (
     "ESNAF:",
     "VIXREX:",
     "TÜKETİCİ:",
+    "KORUNACAK:",
     "KAPSAM DIŞI:",
     "KARAR SORUSU:",
 )
@@ -66,10 +57,18 @@ PLACEHOLDERS = (
     "TBD",
 )
 TYPE_PATTERN = re.compile(
-    r"^İŞ TÜRÜ:\s*(özellik|değişiklik|hata)\s*$",
+    r"^İŞ TÜRÜ:[ \\t]*(özellik|değişiklik|hata)[ \\t]*$",
     flags=re.MULTILINE | re.IGNORECASE,
 )
-MEASURED_PATTERN = re.compile(r"^ÖLÇÜLDÜ:\s*(.+)$", flags=re.MULTILINE)
+MEASURED_PATTERN = re.compile(r"^ÖLÇÜLDÜ:[ \t]*(.+)$", flags=re.MULTILINE)
+KANIT_PATTERN = re.compile(r"^KANIT[ \t]+([^:\n]+):[ \t]*(.*)$", flags=re.MULTILINE)
+BAKIM_DOSYALARI = (
+    "package.json",
+    "package-lock.json",
+    "pubspec.lock",
+    "yarn.lock",
+    ".g.dart",
+)
 KAYIT_DISI = (
     ".g.dart",
     ".lock",
@@ -79,6 +78,7 @@ KAYIT_DISI_KLASOR = (
     "-snapshots/",
     "__snapshots__/",
 )
+VERI_KLASORU = "supabase/migrations/"
 
 
 def run(*args: str) -> str:
@@ -124,6 +124,10 @@ def path_exists(token: str) -> bool:
     return False
 
 
+def bakim_degisikligi(paths: list[str]) -> bool:
+    return all(path.endswith(BAKIM_DOSYALARI) for path in paths)
+
+
 def kayit_disi(path: str) -> bool:
     if path.endswith(KAYIT_DISI):
         return True
@@ -131,11 +135,10 @@ def kayit_disi(path: str) -> bool:
 
 
 def mentioned(path: str, text: str) -> bool:
-    parts = path.split("/")
-    for index in range(len(parts), 0, -1):
-        if "/".join(parts[:index]) in text:
-            return True
-    return False
+    if path in text:
+        return True
+    parent = "/".join(path.split("/")[:-1])
+    return parent.count("/") >= 1 and parent in text
 
 
 def records_text(work: Path) -> str:
@@ -143,6 +146,20 @@ def records_text(work: Path) -> str:
         item.read_text(encoding="utf-8")
         for item in sorted(work.rglob("*.md"))
     )
+
+
+def kapi_kanitlari(chain: str) -> dict[str, str]:
+    return {
+        ad.strip().lower(): kanit.strip()
+        for ad, kanit in KANIT_PATTERN.findall(chain)
+    }
+
+
+def acilan_kapilar(chain: str) -> list[str]:
+    ham = marker_value(chain, "KAPILAR:")
+    if not ham or ham.lower() == "yok":
+        return []
+    return [parca.strip().lower() for parca in ham.split(",") if parca.strip()]
 
 
 def main() -> int:
@@ -155,6 +172,10 @@ def main() -> int:
     outside_specs = [path for path in changed if not path.startswith("specs/")]
     if not outside_specs:
         print("Yalnız araştırma veya iş kayıtları değişti; ürün kodu etkilenmedi.")
+        return 0
+
+    if bakim_degisikligi(outside_specs):
+        print("Bakım değişikliği (bağımlılık ve üretilen dosyalar); iş kaydı gerekmez.")
         return 0
 
     spec_dirs = sorted(
@@ -207,10 +228,9 @@ def main() -> int:
         if placeholder.lower() in combined.lower():
             errors.append(f"Çözülmemiş taslak veya belirsizlik: {placeholder}")
 
-    for relative in ("tasks.md",):
-        content = (work / relative).read_text(encoding="utf-8")
-        if re.search(r"^- \[ \]", content, flags=re.MULTILINE):
-            errors.append(f"Tamamlanmamış görev: {(work / relative).as_posix()}")
+    tasks_path = work / "tasks.md"
+    if re.search(r"^- \[ \]", tasks_path.read_text(encoding="utf-8"), flags=re.MULTILINE):
+        errors.append(f"Tamamlanmamış görev: {tasks_path.as_posix()}")
 
     if is_bug:
         cause = (work / "root-cause.md").read_text(encoding="utf-8")
@@ -240,6 +260,16 @@ def main() -> int:
                 "Keşif onaylanmadan uygulama gelemez: kesif.md içinde 'ONAY: alındı' yazmalı."
             )
 
+    kapilar = acilan_kapilar(chain)
+    kanitlar = kapi_kanitlari(chain)
+    if any(path.startswith(VERI_KLASORU) for path in outside_specs) and "veri" not in kapilar:
+        errors.append(
+            "Veritabanı değişti: zincir.md içinde 'KAPILAR: veri' açılmalı ve kanıtı yazılmalı."
+        )
+    for kapi in kapilar:
+        if not kanitlar.get(kapi):
+            errors.append(f"Açılan kapının kanıtı boş: KANIT {kapi}:")
+
     kayitlar = records_text(work)
     for path in outside_specs:
         if kayit_disi(path):
@@ -247,27 +277,16 @@ def main() -> int:
         if not mentioned(path, kayitlar):
             errors.append(f"Kayıtta geçmeyen değişiklik: {path}")
 
-    checklist_path = work / "checklists/requirements.md"
-    if not is_bug:
-        checklist = checklist_path.read_text(encoding="utf-8")
-        if re.search(r"^- \[ \]", checklist, flags=re.MULTILINE):
-            errors.append(f"Tamamlanmamış madde: {checklist_path.as_posix()}")
-
-        analysis = (work / "analysis.md").read_text(encoding="utf-8")
-        if "ÇELİŞKİ: YOK" not in analysis:
-            errors.append("Analyze sonucu temiz değil.")
-
-    convergence = (work / "convergence.md").read_text(encoding="utf-8")
-    review = (work / "review.md").read_text(encoding="utf-8")
-    if "SONUÇ: YAKINSADI" not in convergence:
-        errors.append("Implement ve Converge döngüsü tamamlanmamış.")
-    if "SONUÇ: İNCELEMEYE HAZIR" not in review:
-        errors.append("Bağımsız inceleme sonucu hazır değil.")
+    if marker_value(chain, "YAKINSAMA:").lower() != "tamam":
+        errors.append("zincir.md içinde 'YAKINSAMA: tamam' yazmalı.")
+    if marker_value(chain, "İNCELEME:").lower() != "hazır":
+        errors.append("zincir.md içinde 'İNCELEME: hazır' yazmalı.")
 
     if errors:
         return fail(errors)
 
-    print(f"Gelişim zinciri tamam: {work.as_posix()} ({work_type})")
+    acik = ", ".join(kapilar) if kapilar else "yok"
+    print(f"Gelişim zinciri tamam: {work.as_posix()} ({work_type}) | açılan kapılar: {acik}")
     return 0
 
 

@@ -36,6 +36,12 @@ ESNAF: <esnafın eline ne geçer>
 VIXREX: <Vixrex'e ne katar>
 TÜKETİCİ: <vitrini gezen kişiye ne katar>
 
+## Ne korunacak
+
+Bugün çalışan ve bu işten sonra da aynı çalışması gereken davranış yazılır.
+
+KORUNACAK: <bozulmayacak davranış ve nasıl doğrulanacağı>
+
 ## Etkilenen yüzeyler
 
 YÜZEYLER: <Flutter paneli / Next.js vitrin / veritabanı / otomatik kontroller>

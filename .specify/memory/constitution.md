@@ -141,8 +141,13 @@ engelleyemez.
 
 Yeni özellik ve davranış değişikliğinin yolu:
 
-Anayasa → Keşif → Specify → Clarify → Plan → Checklist → Tasks → Analyze →
-Implement → Converge → eksik varsa Implement ve Converge tekrarı → Review / PR.
+Anayasa → Keşif → Specify → Plan → Tasks → Implement → Converge → eksik varsa
+Implement ve Converge tekrarı → Review / PR.
+
+Bu çekirdek yoldur ve her işte yürür. Clarify, Checklist, Analyze ile veri,
+görsel, güvenlik ve eşitlik kanıtları gerektiğinde açılan kalite kapılarıdır;
+işin riski hangi kapıyı gerektiriyorsa o açılır ve kanıtı yazılır. Kapı
+açılmadan geçilen risk yoktur, riski olmayan işe kapı takılmaz.
 
 Keşif Vixrex'in kendi halkasıdır: Furkan doğal Türkçeyle isteğini söyler,
 üretici bugünkü hâli gerçek dosya yollarıyla ölçer, işin sınırlarını ve üç
@@ -198,7 +203,12 @@ değişiklik önermektir. Bu belgeyi veya otomatik kontrolleri kaldırma
 Her ilke geçmişte yaşanmış somut bir aksaklığa dayanır. Dayanağı olmayan
 madde eklenmez.
 
-**Version**: 2.2.0 | **Ratified**: 2026-09-17 | **Last Amended**: 2026-09-17
+**Version**: 2.3.0 | **Ratified**: 2026-09-17 | **Last Amended**: 2026-09-17
+
+2.3.0 (2026-09-17, Furkan'ın isteğiyle): Zincir resmî Spec Kit çekirdeğine
+indirildi. Sebep: dokuz belge her işte zorunluydu; bir paket güncellemesi bile
+kapıdan geçemiyordu, kapının gerçek ölçümleri ise yalnız üç belgede duruyordu.
+Clarify, Checklist ve Analyze resmî belgede de isteğe bağlı kalite kapısıdır.
 
 2.2.0 (2026-09-17, Furkan'ın isteğiyle): Keşif halkası eklendi. Sebep: kapı
 yalnız belgelerin varlığını ölçüyordu; doğal dilde söylenen isteğin nereden

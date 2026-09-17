@@ -30,15 +30,14 @@ Uygulanmıyorsa bu bölüm boş bırakılır.
 - [ ] Anayasa
 - [ ] Keşif yazıldı ve Furkan onayladı
 - [ ] Specify
-- [ ] Clarify
 - [ ] Plan
-- [ ] Checklist
 - [ ] Tasks
-- [ ] Analyze
 - [ ] Implement
 - [ ] Converge
 - [ ] Eksik çıktıysa Implement ve Converge tekrarlandı
 - [ ] Review / PR
+
+Açılan kalite kapıları ve kanıtları (yoksa boş bırakılır):
 
 ## Hata düzeltmesi
 
