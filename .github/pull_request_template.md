@@ -11,11 +11,24 @@ Bu değişiklik bitince kullanıcı ne yapabilecek veya neyi doğru görecek?
 - Bağımsız inceleyen:
 - Önizleme adresi:
 
+## Keşif özeti
+
+Yeni özellik ve davranış değişikliğinde doldurulur; kaynağı `kesif.md`.
+
+- Gelişim nereden başladı:
+- Nerede bitti:
+- Ne gözükecek:
+- Nasıl gözükecek:
+- Esnafa katkısı:
+- Vixrex'e katkısı:
+- Tüketiciye katkısı:
+
 ## Yeni özellik veya davranış değişikliği
 
 Uygulanmıyorsa bu bölüm boş bırakılır.
 
 - [ ] Anayasa
+- [ ] Keşif yazıldı ve Furkan onayladı
 - [ ] Specify
 - [ ] Clarify
 - [ ] Plan

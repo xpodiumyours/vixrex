@@ -8,8 +8,11 @@ genişletemez veya başka bir aracı engelleyemez.
 
 ## Önce iş türünü belirle
 
-1. **Yeni özellik veya davranış değişikliği:** `DEVELOPMENT.md` içindeki tam
-   gelişim zincirini izler.
+1. **Yeni özellik veya davranış değişikliği:** önce Keşif yazılır — bugünkü
+   çalışan hâl gerçek dosya yollarıyla ölçülür; işin nereden başlayıp nerede
+   biteceği, ne ve nasıl gözükeceği, esnafa, Vixrex'e ve tüketiciye ne
+   katacağı yazılır ve Furkan onaylar. Sonra `DEVELOPMENT.md` içindeki tam
+   gelişim zinciri izlenir.
 2. **Hata düzeltmesi:** hata yeniden görülür, gerçek sebep bulunur, en küçük
    doğru düzeltme yapılır, aynı hata tekrar denenir ve incelemeye gönderilir.
 3. **Yeni fikir veya araştırma:** önce kanıt toplanır ve “yapalım mı?” kararı
@@ -22,7 +25,7 @@ zincirine geçer.
 ## Ortak çalışma biçimi
 
 1. Furkan doğal Türkçeyle sonucu söyler; teknik kapsamı ve dosyaları üretici
-   araştırır.
+   araştırır ve Keşif kaydında yazılı hâle getirir.
 2. Kod, belge, canlı yüzey veya yetkili araçla bulunabilen bilgi Furkan'a
    sorulmaz.
 3. Yalnız para, hukuk, görünüm, içerik, veri kaybı, gizlilik, canlı işlem veya
@@ -43,8 +46,9 @@ zincirine geçer.
 ## Kayıt ve tamamlanma
 
 Yeni özellik ve davranış değişikliği `specs/<iş-kimliği>/` altında tam kayıt
-tutar. Hata düzeltmesi aynı yerde kısa hata kaydı tutar. Yalnız araştırılan
-fikir ürün kodunu değiştirmez.
+tutar; ilk belge `kesif.md` olur. Kayıtlarda geçmeyen bir ürün dosyası
+değiştirilemez — merkezi kontrol bunu ölçer. Hata düzeltmesi aynı yerde kısa
+hata kaydı tutar. Yalnız araştırılan fikir ürün kodunu değiştirmez.
 
 Bir iş ancak seçilen yolun kayıtları tamamlandığında, ilgili kontroller
 geçtiğinde, gerçek davranış doğrulandığında, geri alma yolu hazır olduğunda ve

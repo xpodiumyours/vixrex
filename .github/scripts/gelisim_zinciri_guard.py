@@ -6,6 +6,7 @@ import subprocess
 from pathlib import Path
 
 FULL_REQUIRED = (
+    "kesif.md",
     "spec.md",
     "plan.md",
     "tasks.md",
@@ -24,6 +25,7 @@ BUG_REQUIRED = (
 )
 FULL_STAGES = (
     "Anayasa",
+    "Keşif",
     "Specify",
     "Clarify",
     "Plan",
@@ -43,6 +45,18 @@ BUG_STAGES = (
     "Converge",
     "Review / PR",
 )
+KESIF_MARKERS = (
+    "İSTEK:",
+    "BAŞLANGIÇ:",
+    "BİTİŞ:",
+    "GÖRÜNEN:",
+    "GÖRÜNÜM:",
+    "ESNAF:",
+    "VIXREX:",
+    "TÜKETİCİ:",
+    "KAPSAM DIŞI:",
+    "KARAR SORUSU:",
+)
 PLACEHOLDERS = (
     "[FEATURE",
     "[DATE]",
@@ -54,6 +68,16 @@ PLACEHOLDERS = (
 TYPE_PATTERN = re.compile(
     r"^İŞ TÜRÜ:\s*(özellik|değişiklik|hata)\s*$",
     flags=re.MULTILINE | re.IGNORECASE,
+)
+MEASURED_PATTERN = re.compile(r"^ÖLÇÜLDÜ:\s*(.+)$", flags=re.MULTILINE)
+KAYIT_DISI = (
+    ".g.dart",
+    ".lock",
+    "package-lock.json",
+)
+KAYIT_DISI_KLASOR = (
+    "-snapshots/",
+    "__snapshots__/",
 )
 
 
@@ -73,6 +97,52 @@ def changed_paths(base: str, head: str) -> list[str]:
         for line in run("git", "diff", "--name-only", f"{base}...{head}").splitlines()
         if line
     ]
+
+
+def marker_value(text: str, marker: str) -> str:
+    for line in text.splitlines():
+        stripped = line.strip().lstrip("-* ").strip()
+        if stripped.startswith(marker):
+            return stripped[len(marker):].strip(" *`")
+    return ""
+
+
+def measured_paths(text: str) -> list[str]:
+    bulunan = []
+    for raw in MEASURED_PATTERN.findall(text):
+        token = raw.strip().split(" ")[0].strip("`,;*")
+        if token:
+            bulunan.append(token)
+    return bulunan
+
+
+def path_exists(token: str) -> bool:
+    if Path(token).exists():
+        return True
+    if ":" in token:
+        return Path(token.split(":")[0]).exists()
+    return False
+
+
+def kayit_disi(path: str) -> bool:
+    if path.endswith(KAYIT_DISI):
+        return True
+    return any(mark in path for mark in KAYIT_DISI_KLASOR)
+
+
+def mentioned(path: str, text: str) -> bool:
+    parts = path.split("/")
+    for index in range(len(parts), 0, -1):
+        if "/".join(parts[:index]) in text:
+            return True
+    return False
+
+
+def records_text(work: Path) -> str:
+    return "\n".join(
+        item.read_text(encoding="utf-8")
+        for item in sorted(work.rglob("*.md"))
+    )
 
 
 def main() -> int:
@@ -141,6 +211,41 @@ def main() -> int:
         content = (work / relative).read_text(encoding="utf-8")
         if re.search(r"^- \[ \]", content, flags=re.MULTILINE):
             errors.append(f"Tamamlanmamış görev: {(work / relative).as_posix()}")
+
+    if is_bug:
+        cause = (work / "root-cause.md").read_text(encoding="utf-8")
+        olculen = measured_paths(cause)
+        if not olculen:
+            errors.append(
+                "root-cause.md içinde en az bir 'ÖLÇÜLDÜ: <dosya yolu> — <bulgu>' satırı olmalı."
+            )
+        for token in olculen:
+            if not path_exists(token):
+                errors.append(f"Kanıt olarak gösterilen yol depoda yok: {token}")
+    else:
+        kesif = (work / "kesif.md").read_text(encoding="utf-8")
+        for marker in KESIF_MARKERS:
+            if not marker_value(kesif, marker):
+                errors.append(f"Keşif kaydında boş veya eksik satır: {marker}")
+        olculen = measured_paths(kesif)
+        if len(olculen) < 2:
+            errors.append(
+                "kesif.md bugünkü hâli ölçmeli: en az iki 'ÖLÇÜLDÜ: <dosya yolu> — <bulgu>' satırı."
+            )
+        for token in olculen:
+            if not path_exists(token):
+                errors.append(f"Keşifte gösterilen yol depoda yok: {token}")
+        if marker_value(kesif, "ONAY:").lower() != "alındı":
+            errors.append(
+                "Keşif onaylanmadan uygulama gelemez: kesif.md içinde 'ONAY: alındı' yazmalı."
+            )
+
+    kayitlar = records_text(work)
+    for path in outside_specs:
+        if kayit_disi(path):
+            continue
+        if not mentioned(path, kayitlar):
+            errors.append(f"Kayıtta geçmeyen değişiklik: {path}")
 
     checklist_path = work / "checklists/requirements.md"
     if not is_bug:

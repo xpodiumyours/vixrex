@@ -2,7 +2,7 @@ schema_version: "1.0"
 workflow:
   id: "vixrex-sdd"
   name: "Vixrex ortak gelişim zinciri"
-  version: "2.1.0"
+  version: "2.2.0"
   author: "Vixrex"
   description: "Kullanılan araçtan bağımsız Vixrex geliştirme akışı"
 
@@ -23,6 +23,12 @@ steps:
   - id: constitution
     type: gate
     message: "Vixrex Anayasası okundu ve sınırlar çıkarıldı mı?"
+    options: [approve, reject]
+    on_reject: abort
+
+  - id: kesif
+    type: gate
+    message: "Keşif yazıldı mı: bugün ne var (ölçülmüş dosya yollarıyla), gelişim nereden başlar, nerede biter, ne ve nasıl gözükecek, esnafa/Vixrex'e/tüketiciye ne katar? Furkan onayladı mı?"
     options: [approve, reject]
     on_reject: abort
 

@@ -15,9 +15,12 @@ veya zorunlu kapısı değildir. Çelişme olursa sıra: bu dosya →
 Her iş girdiden çıktıya doğru kurulur. Sıra: kural → girdi → doğrulama →
 saklama → yetki → geçiş kapısı → etkilenen yüzeyler → çıktı → geri alma.
 
-Yeni özellik ve davranış değişiklikleri tam zinciri izler. Hata düzeltmeleri
-önce hatayı yeniden görür, gerçek sebebi bulur, en küçük doğru düzeltmeyi yapar
-ve asıl hatayı tekrar dener. Yeni fikirler uygulamadan önce araştırılır ve
+Yeni özellik ve davranış değişiklikleri tam zinciri izler ve her zaman
+Keşif ile başlar: bugünkü çalışan hâl ölçülür, işin nereden başlayıp nerede
+biteceği, ne ve nasıl gözükeceği, esnafa, Vixrex'e ve tüketiciye ne katacağı
+yazılır ve Furkan onaylar. Keşif onaylanmadan Specify başlamaz. Hata
+düzeltmeleri önce hatayı yeniden görür, gerçek sebebi bulur, en küçük doğru
+düzeltmeyi yapar ve asıl hatayı tekrar dener. Yeni fikirler uygulamadan önce araştırılır ve
 karara bağlanır. Bir hata yeni kullanıcı sonucu, veri yapısı, güvenlik kuralı,
 ekran akışı veya yayın davranışı doğuruyorsa tam zincire geçer.
 
@@ -138,8 +141,14 @@ engelleyemez.
 
 Yeni özellik ve davranış değişikliğinin yolu:
 
-Anayasa → Specify → Clarify → Plan → Checklist → Tasks → Analyze → Implement
-→ Converge → eksik varsa Implement ve Converge tekrarı → Review / PR.
+Anayasa → Keşif → Specify → Clarify → Plan → Checklist → Tasks → Analyze →
+Implement → Converge → eksik varsa Implement ve Converge tekrarı → Review / PR.
+
+Keşif Vixrex'in kendi halkasıdır: Furkan doğal Türkçeyle isteğini söyler,
+üretici bugünkü hâli gerçek dosya yollarıyla ölçer, işin sınırlarını ve üç
+tarafa kazancını yazar. Merkezi kontrol keşifte gösterilen yolların depoda
+gerçekten bulunduğunu ve değişen her ürün dosyasının kayıtlarda geçtiğini
+doğrular; kayıtta geçmeyen değişiklik teslim edilemez.
 
 Hata düzeltmesinin yolu:
 
@@ -189,4 +198,9 @@ değişiklik önermektir. Bu belgeyi veya otomatik kontrolleri kaldırma
 Her ilke geçmişte yaşanmış somut bir aksaklığa dayanır. Dayanağı olmayan
 madde eklenmez.
 
-**Version**: 2.1.0 | **Ratified**: 2026-09-17 | **Last Amended**: 2026-09-17
+**Version**: 2.2.0 | **Ratified**: 2026-09-17 | **Last Amended**: 2026-09-17
+
+2.2.0 (2026-09-17, Furkan'ın isteğiyle): Keşif halkası eklendi. Sebep: kapı
+yalnız belgelerin varlığını ölçüyordu; doğal dilde söylenen isteğin nereden
+başlayıp nerede biteceği, ne gözükeceği ve kime ne katacağı hiçbir yerde
+yazılı değildi.
