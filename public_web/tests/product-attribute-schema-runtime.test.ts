@@ -16,8 +16,8 @@ const CATEGORY_FIELD_CASES: Array<[string, string[]]> = [
 ];
 
 describe("ürün özellik şeması — runtime adapter", () => {
-  it("shared şemayı tek kaynak olarak sürüm 2 ile okur", () => {
-    expect(PRODUCT_ATTRIBUTE_SCHEMA.version).toBe(2);
+  it("shared şemayı tek kaynak olarak sürüm 3 ile okur", () => {
+    expect(PRODUCT_ATTRIBUTE_SCHEMA.version).toBe(3);
     expect(PRODUCT_ATTRIBUTE_SCHEMA.templates.map((item) => item.key)).toEqual([
       "generic",
       "fashion",

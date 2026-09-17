@@ -23,6 +23,7 @@ import {
   normalizeProductImageUrls,
 } from "@/lib/productImagePolicy";
 import { parseProductPriceNumber } from "@/lib/productPrice";
+import { eksikZorunluAlanlar, eksikZorunluAlanMesaji } from "@/lib/productRequiredFields";
 
 export interface OwnerProductCategory {
   id: string;
@@ -560,6 +561,9 @@ function ProductForm({ product, categories, busy, storeSlug, onCancel, onSave }:
     if (oldPriceText.trim() && oldPriceAmount == null) { setValidation("Eski fiyat sayı olmalı."); return; }
     if (badgeTag.trim().length > 20) { setValidation("Rozet en fazla 20 karakter."); return; }
     if (!isService && rich.stockQuantity.trim() && (!/^\d+$/.test(rich.stockQuantity) || Number(rich.stockQuantity) < 0)) { setValidation("Stok adedi 0 veya daha büyük tam sayı olmalı."); return; }
+    const eksikler = eksikZorunluAlanlar({ templateKey, brand: rich.brand, metadata: rich.metadata });
+    const eksikMesaji = eksikZorunluAlanMesaji(eksikler);
+    if (eksikMesaji) { setValidation(eksikMesaji); return; }
 
     setValidation("");
     void onSave({

@@ -1,7 +1,7 @@
 import schemaJson from "../../../shared/product_attribute_schema.json";
 
 export type ProductItemKind = "physical" | "service";
-export type ProductAttributeRequirement = "optional" | "recommended";
+export type ProductAttributeRequirement = "optional" | "recommended" | "required";
 export type ProductAttributeValueType = "text" | "number" | "boolean" | "single" | "multi";
 export type ProductAttributeSurface = "card" | "quick" | "detail";
 
@@ -61,5 +61,12 @@ export function productAttributesForSurface(
 ) {
   return productAttributesForTemplate(templateKey).filter((attribute) =>
     attribute.display.includes(surface),
+  );
+}
+
+/** Bu şablonda doldurulması zorunlu olan alanlar. */
+export function requiredProductAttributes(templateKey: string | null | undefined) {
+  return productAttributesForTemplate(templateKey).filter(
+    (attribute) => attribute.requirement === "required",
   );
 }

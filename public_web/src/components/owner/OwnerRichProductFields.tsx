@@ -349,7 +349,13 @@ export function OwnerRichProductFields({
             : definition.storage === "core.barcode"
               ? value.barcode
               : displayInputValue(attributeValue(value.metadata, definition.key));
-          const label = `${definition.label}${definition.requirement === "recommended" ? " · önerilen" : ""}`;
+          const label = `${definition.label}${
+            definition.requirement === "required"
+              ? " *"
+              : definition.requirement === "recommended"
+                ? " · önerilen"
+                : ""
+          }`;
 
           if (definition.valueType === "boolean") {
             return (

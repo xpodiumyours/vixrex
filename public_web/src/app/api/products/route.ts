@@ -22,6 +22,7 @@ import {
   productTemplateByKey,
 } from "@/lib/productAttributeSchema";
 import { parseProductPriceNumber } from "@/lib/productPrice";
+import { eksikZorunluAlanlar, eksikZorunluAlanMesaji } from "@/lib/productRequiredFields";
 
 export const dynamic = "force-dynamic";
 
@@ -227,6 +228,14 @@ export async function POST(request: NextRequest) {
 
   const priceText = typeof govde.priceText === "string" ? govde.priceText.trim() : "";
   const stockQuantity = isService ? null : cleanNonNegativeInt(govde.stockQuantity);
+  const eksikMesaji = eksikZorunluAlanMesaji(
+    eksikZorunluAlanlar({
+      templateKey,
+      brand: isService ? null : cleanString(govde.brand),
+      metadata,
+    }),
+  );
+  if (eksikMesaji) return NextResponse.json({ hata: eksikMesaji }, { status: 422 });
   try {
     const result = await createRichCoreProduct({
       admin: owned.admin,
@@ -349,6 +358,11 @@ export async function PATCH(request: NextRequest) {
     : cleanString(current.fulfillment_region);
   const variantError = validateVariantSet(variants, barcode);
   if (variantError) return NextResponse.json({ hata: variantError }, { status: 422 });
+
+  const eksikMesaji = eksikZorunluAlanMesaji(
+    eksikZorunluAlanlar({ templateKey, brand, metadata }),
+  );
+  if (eksikMesaji) return NextResponse.json({ hata: eksikMesaji }, { status: 422 });
 
   try {
     await updateRichCoreProduct({
