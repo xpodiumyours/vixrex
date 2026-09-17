@@ -790,6 +790,23 @@
           ]
         },
         {
+          "key": "hairLength",
+          "label": "Sac boyu",
+          "valueType": "single",
+          "requirement": "optional",
+          "storage": "metadata.attributes",
+          "options": [
+            "kisa",
+            "orta",
+            "uzun"
+          ],
+          "variantEligible": true,
+          "display": [
+            "quick",
+            "detail"
+          ]
+        },
+        {
           "key": "durationMinutes",
           "label": "Tahmini sure (dakika)",
           "valueType": "number",
@@ -837,6 +854,17 @@
           "storage": "metadata.attributes",
           "display": [
             "quick",
+            "detail"
+          ]
+        },
+        {
+          "key": "deviceModelVariant",
+          "label": "Cihaz modeli (secenek)",
+          "valueType": "text",
+          "requirement": "optional",
+          "storage": "metadata.attributes",
+          "variantEligible": true,
+          "display": [
             "detail"
           ]
         },

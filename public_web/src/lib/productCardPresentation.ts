@@ -193,7 +193,7 @@ export function productVariantsForTemplate(
 ): ProductVariant[] {
   const variants = normalizeProductVariants(value);
   const template = productTemplateByKey(templateKey);
-  if (template?.itemKind === "service") return [];
+  if (!template) return [];
 
   const variantDefinitions = productAttributesForTemplate(templateKey).filter(
     (definition) => definition.variantEligible,

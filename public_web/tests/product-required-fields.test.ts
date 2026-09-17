@@ -3,7 +3,10 @@ import {
   eksikZorunluAlanlar,
   eksikZorunluAlanMesaji,
 } from "../src/lib/productRequiredFields";
-import { requiredProductAttributes } from "../src/lib/productAttributeSchema";
+import {
+  productAttributesForTemplate,
+  requiredProductAttributes,
+} from "../src/lib/productAttributeSchema";
 
 describe("zorunlu ürün detayları", () => {
   it("giyimde marka, renk, beden, cinsiyet ve kalıp zorunludur", () => {
@@ -144,5 +147,26 @@ describe("zorunlu ürün detayları", () => {
         { key: "size", label: "Beden" },
       ]),
     ).toBe("Şu alanlar zorunludur: Renk, Beden.");
+  });
+});
+
+describe("hizmette varyant", () => {
+  it("kuaförde saç boyu varyant olarak kullanılabilir", () => {
+    const boy = productAttributesForTemplate("service").find((alan) => alan.key === "hairLength");
+    expect(boy?.variantEligible).toBe(true);
+    expect(boy?.options).toEqual(["kisa", "orta", "uzun"]);
+  });
+
+  it("marka boşsa mağaza adı sayesinde eksik sayılmaz", () => {
+    const magazasiz = eksikZorunluAlanlar({ templateKey: "generic", brand: "", metadata: {} });
+    expect(magazasiz.map((eksik) => eksik.key)).toEqual(["brand"]);
+
+    const magazali = eksikZorunluAlanlar({
+      templateKey: "generic",
+      brand: "",
+      metadata: {},
+      storeName: "Atmosfer Butik",
+    });
+    expect(magazali).toEqual([]);
   });
 });

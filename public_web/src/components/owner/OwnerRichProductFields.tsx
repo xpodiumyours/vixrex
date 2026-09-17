@@ -156,7 +156,7 @@ function alignVariantsToDefinitions(
   isService: boolean,
   imageUrls: string[] | null,
 ): ProductVariant[] {
-  if (isService) return [];
+  if (isService && variantDefinitions.length === 0) return [];
   const withValidImages = imageUrls == null
     ? variants
     : variants.map((variant) => {
@@ -375,6 +375,9 @@ export function OwnerRichProductFields({
                 onChange={(e) => setDefinition(definition, e.target.value)}
                 placeholder={definition.valueType === "multi" ? "Virgülle ayır: örn. montaj, kontrol" : undefined}
               />
+              {definition.autoFill === "storeName" && !current.trim() ? (
+                <span className="block text-[10px] text-[var(--owner-muted)]">Boş bırakırsan mağazanın adı yazılır.</span>
+              ) : null}
               {definition.variantEligible ? (
                 <span className="block text-[10px] text-[var(--owner-muted)]">Bu özellik varyant oluşturmak için kullanılabilir.</span>
               ) : null}
@@ -419,7 +422,7 @@ export function OwnerRichProductFields({
         </details>
       ) : null}
 
-      {!isService && variantDefinitions.length > 0 ? (
+      {variantDefinitions.length > 0 ? (
         <section className="mt-5 border-t border-[var(--owner-border)] pt-5">
           <div className="flex items-start justify-between gap-3">
             <div>

@@ -168,7 +168,7 @@ function variantsForTemplate(
   productImageUrls: string[],
 ): ProductVariant[] {
   const template = productTemplateByKey(templateKey);
-  if (!template || template.itemKind === "service") return [];
+  if (!template) return [];
 
   const availableImages = new Set(productImageUrls);
   const variants = normalizeProductVariants(value).map((variant) => ({

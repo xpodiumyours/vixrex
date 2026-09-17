@@ -635,7 +635,15 @@ function ProductForm({ product, categories, busy, storeSlug, storeName, onCancel
       <div className="mt-5 grid gap-4 sm:grid-cols-2">
         <label className="space-y-2 sm:col-span-2"><span className="owner-label">Ürün adı *</span><input className="owner-input" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} disabled={busy} /></label>
         <label className="space-y-2"><span className="owner-label">Fiyat</span><input className="owner-input" value={priceText} onChange={(e) => setPriceText(e.target.value)} maxLength={30} placeholder="Ör. 499 TL" disabled={busy} /></label>
-        <label className="space-y-2"><span className="owner-label">Eski fiyat (üstü çizili)</span><input className="owner-input" value={oldPriceText} onChange={(e) => setOldPriceText(e.target.value)} maxLength={30} placeholder="Ör. 799" disabled={busy} /></label>
+        <label className="space-y-2">
+          <span className="owner-label">Eski fiyat (üstü çizili)</span>
+          <input className="owner-input" value={oldPriceText} onChange={(e) => setOldPriceText(e.target.value)} maxLength={30} placeholder="Ör. 799" disabled={busy} />
+          {oldPriceText.trim() ? (
+            <span className="block text-[11px] leading-4 text-amber-400">
+              Yasal uyarı: üstü çizili fiyat, indirimden önceki dönemde gerçekten uyguladığın en düşük fiyat olmalı. İspat yükü sende.
+            </span>
+          ) : null}
+        </label>
         <label className="space-y-2"><span className="owner-label">Rozet</span><input className="owner-input" value={badgeTag} onChange={(e) => setBadgeTag(e.target.value)} maxLength={20} placeholder="Örn. Yeni, -31%" disabled={busy} /></label>
         <label className="space-y-2"><span className="owner-label">Teslim bölgesi</span><input className="owner-input" value={fulfillmentRegion} onChange={(e) => setFulfillmentRegion(e.target.value)} maxLength={80} placeholder="Örn. İstanbul içi" disabled={busy} /></label>
         {!isService ? (
