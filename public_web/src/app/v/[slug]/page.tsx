@@ -235,7 +235,7 @@ async function _buildStoreDataBundle(
         supabase
           .from("products")
           .select(
-            "id,name,slug,description,price_text,price_amount,old_price_amount,badge_tag,fulfillment_region,currency,stock_status,image_urls,category_id,is_visible,is_active,source_type,sort_order,metadata"
+            "id,name,slug,description,price_text,price_amount,old_price_amount,badge_tag,fulfillment_region,currency,stock_status,stock_quantity,brand,barcode,variants,image_urls,category_id,is_visible,is_active,source_type,sort_order,metadata"
           )
           .eq("store_id", storeId)
           .eq("is_active", true)
@@ -264,6 +264,12 @@ async function _buildStoreDataBundle(
           (p.price_amount != null
             ? `${p.price_amount} ${p.currency}`
             : undefined),
+        priceAmount: (p.price_amount as number | null) ?? null,
+        currency: (p.currency as string) || undefined,
+        stockQuantity: (p.stock_quantity as number | null) ?? null,
+        brand: (p.brand as string | null) ?? null,
+        barcode: (p.barcode as string | null) ?? null,
+        variants: p.variants,
         oldPriceAmount: (p.old_price_amount as number | null) ?? null,
         badgeTag: (p.badge_tag as string | null) ?? null,
         fulfillmentRegion: (p.fulfillment_region as string | null) ?? null,
@@ -820,6 +826,7 @@ export default async function StorePage(props: PageProps) {
             storeSlug={store.slug}
             storeName={store.name}
             whatsappBaseUrl={waBaseUrl}
+            storeLocationText={displayAddress}
             storeMapsUrl={mapsUrl}
             products={visibleProducts}
             categoryMap={(categories || []).map((c) => ({ id: c.id, name: c.name }))}

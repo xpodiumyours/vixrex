@@ -228,11 +228,16 @@ export default function ProductDetailExperience({
               </p>
             ) : null}
 
-            <div className="mt-5 flex flex-wrap items-baseline gap-3">
+            <div className="mt-5 flex flex-wrap items-center gap-3">
               <span className="text-2xl font-extrabold text-[#E8A87C]">{displayedPrice}</span>
               {product.oldPriceAmount ? (
                 <span className="text-sm font-medium text-white/30 line-through">
                   {product.oldPriceAmount} TL
+                </span>
+              ) : null}
+              {product.badgeTag ? (
+                <span className="rounded-lg bg-gradient-to-r from-blue-600 to-cyan-600 px-2.5 py-1 text-[10px] font-extrabold text-white shadow-md">
+                  {product.badgeTag}
                 </span>
               ) : null}
             </div>
@@ -301,13 +306,12 @@ export default function ProductDetailExperience({
               </p>
             ) : null}
 
-            {(fulfillmentRegion || storeAddress) ? (
-              <div className="mt-6 rounded-2xl border border-blue-500/20 bg-gradient-to-br from-blue-500/10 to-cyan-500/5 p-4">
-                <div className="flex items-start gap-3">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-500/15">
-                    <MapPinIcon className="h-4 w-4 text-blue-300" aria-hidden="true" />
-                  </div>
-                  <div className="min-w-0 flex-1">
+            <div className="mt-6 rounded-2xl border border-blue-500/20 bg-gradient-to-br from-blue-500/10 to-cyan-500/5 p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-500/15">
+                  <MapPinIcon className="h-4 w-4 text-blue-300" aria-hidden="true" />
+                </div>
+                <div className="min-w-0 flex-1">
                     {fulfillmentRegion ? (
                       <div>
                         <p className="text-[10px] font-extrabold uppercase tracking-wider text-blue-300">
@@ -348,10 +352,14 @@ export default function ProductDetailExperience({
                         ) : null}
                       </div>
                     ) : null}
+                    {!fulfillmentRegion && !storeAddress ? (
+                      <p className="text-xs font-semibold leading-5 text-white/60">
+                        Bu {isService ? "hizmet" : "ürün"} için konum bilgisi eklenmemiş.
+                      </p>
+                    ) : null}
                   </div>
                 </div>
               </div>
-            ) : null}
 
             <div className="mt-6 grid gap-2 sm:grid-cols-2">
               {selectedWhatsappUrl ? (
