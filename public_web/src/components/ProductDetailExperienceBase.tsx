@@ -1,5 +1,6 @@
 "use client";
 
+import { eskiFiyatYazisi } from "@/lib/productCardPresentation";
 import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
@@ -230,9 +231,9 @@ export default function ProductDetailExperience({
 
             <div className="mt-5 flex flex-wrap items-baseline gap-3">
               <span className="text-2xl font-extrabold text-[#E8A87C]">{displayedPrice}</span>
-              {product.oldPriceAmount ? (
+              {eskiFiyatYazisi(product.oldPriceAmount) ? (
                 <span className="text-sm font-medium text-white/30 line-through">
-                  {product.oldPriceAmount} TL
+                  {eskiFiyatYazisi(product.oldPriceAmount)}
                 </span>
               ) : null}
             </div>

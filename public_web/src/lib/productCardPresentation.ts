@@ -348,3 +348,40 @@ export function buildProductCardFacts(args: {
 
   return { marka, ozellikler: ozellikler.slice(0, limit) };
 }
+
+const TUTAR_BICIMI = new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 2 });
+
+/** Eski fiyati guncel fiyatla ayni yazimda gosterir: 1800 -> "1.800 TL". */
+export function eskiFiyatYazisi(oldPriceAmount: unknown): string | null {
+  const tutar = typeof oldPriceAmount === "number" ? oldPriceAmount : Number(oldPriceAmount);
+  if (!Number.isFinite(tutar) || tutar <= 0) return null;
+  return `${TUTAR_BICIMI.format(tutar)} TL`;
+}
+
+/**
+ * Indirim orani. Profesyonel platformlarda bu oran esnafin elle yazdigi bir
+ * metin degil, iki fiyattan hesaplanan bir degerdir.
+ */
+export function indirimOrani(args: {
+  priceAmount?: number | null;
+  oldPriceAmount?: number | null;
+}): number | null {
+  const guncel = typeof args.priceAmount === "number" ? args.priceAmount : Number(args.priceAmount);
+  const eski = typeof args.oldPriceAmount === "number" ? args.oldPriceAmount : Number(args.oldPriceAmount);
+  if (!Number.isFinite(guncel) || !Number.isFinite(eski)) return null;
+  if (guncel <= 0 || eski <= 0 || eski <= guncel) return null;
+  const oran = Math.round(((eski - guncel) / eski) * 100);
+  return oran >= 1 && oran <= 99 ? oran : null;
+}
+
+/** Kartin kose rozeti: esnaf kendi rozetini yazdiysa ona dokunulmaz. */
+export function kartRozeti(args: {
+  badgeTag?: string | null;
+  priceAmount?: number | null;
+  oldPriceAmount?: number | null;
+}): string | null {
+  const elleYazilan = String(args.badgeTag || "").trim();
+  if (elleYazilan) return elleYazilan;
+  const oran = indirimOrani(args);
+  return oran === null ? null : `%${oran} indirim`;
+}

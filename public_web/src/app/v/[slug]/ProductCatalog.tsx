@@ -15,7 +15,12 @@ import {
   resolveCatalogImage,
 } from "@/lib/products";
 import type { RichProductItem } from "@/lib/richProductItem";
-import { buildProductCardFacts, productVariantLabel } from "@/lib/productCardPresentation";
+import {
+  buildProductCardFacts,
+  eskiFiyatYazisi,
+  kartRozeti,
+  productVariantLabel,
+} from "@/lib/productCardPresentation";
 import { normalizeProductMetadata } from "@/lib/productRichData";
 
 type CatalogProduct = RichProductItem;
@@ -260,6 +265,12 @@ export default function ProductCatalog({
             brand: product.brand,
             metadata: product.metadata,
           }).ozellikler;
+          const rozet = kartRozeti({
+            badgeTag: product.badgeTag,
+            priceAmount: product.priceAmount,
+            oldPriceAmount: product.oldPriceAmount,
+          });
+          const eskiFiyat = eskiFiyatYazisi(product.oldPriceAmount);
           const fulfillmentRegion = String(product.fulfillmentRegion || "").trim();
           const fulfillmentMapUrl = productLocationMapUrl(fulfillmentRegion);
           const productKey = product.id || productUrl;
@@ -288,9 +299,9 @@ export default function ProductCatalog({
                     emptyLabel={isService ? "Hizmet görseli yok" : "Ürün görseli yok"}
                   />
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0B1120]/45 via-transparent to-transparent" />
-                  {product.badgeTag ? (
+                  {rozet ? (
                     <span className="absolute left-2.5 top-2.5 z-10 max-w-[70%] truncate rounded-lg bg-gradient-to-r from-blue-600 to-cyan-600 px-2.5 py-1 text-[10px] font-extrabold text-white shadow-md">
-                      {product.badgeTag}
+                      {rozet}
                     </span>
                   ) : category && category.toLocaleLowerCase("tr-TR") !== "tümü" ? (
                     <span className="absolute left-2.5 top-2.5 z-10 max-w-[70%] truncate rounded-lg border border-blue-500/25 bg-slate-950/80 px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-wider text-blue-300 shadow-sm backdrop-blur-md">
@@ -317,9 +328,9 @@ export default function ProductCatalog({
                     <p className="truncate text-xs font-extrabold text-blue-400 sm:text-sm">
                       {product.price || "Fiyat sorun"}
                     </p>
-                    {product.oldPriceAmount ? (
+                    {eskiFiyat ? (
                       <span className="shrink-0 text-[10px] font-medium text-slate-500 line-through sm:text-[11px]">
-                        {product.oldPriceAmount} TL
+                        {eskiFiyat}
                       </span>
                     ) : null}
                   </div>

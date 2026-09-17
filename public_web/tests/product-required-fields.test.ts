@@ -80,6 +80,35 @@ describe("zorunlu ürün detayları", () => {
     expect(eksikler.map((eksik) => eksik.key)).toEqual(["brand", "vatRate"]);
   });
 
+  it("renk ve beden varyanttan girilmişse tekrar sormaz", () => {
+    const eksikler = eksikZorunluAlanlar({
+      templateKey: "fashion",
+      brand: "Aymira",
+      metadata: {
+        templateKey: "fashion",
+        attributes: [
+          { key: "vatRate", label: "KDV oranı (%)", value: "10" },
+          { key: "material", label: "Materyal", value: "Pamuk" },
+        ],
+      },
+      variants: [
+        { id: "v1", options: { color: "Siyah", size: "M" } },
+        { id: "v2", options: { color: "Beyaz", size: "L" } },
+      ],
+    });
+    expect(eksikler).toEqual([]);
+  });
+
+  it("varyant sadece varyant olabilen alani karsilar, markayi karsilamaz", () => {
+    const eksikler = eksikZorunluAlanlar({
+      templateKey: "fashion",
+      brand: "",
+      metadata: { templateKey: "fashion" },
+      variants: [{ id: "v1", options: { color: "Siyah", size: "M" } }],
+    });
+    expect(eksikler.map((eksik) => eksik.key)).toEqual(["brand", "vatRate", "material"]);
+  });
+
   it("esnafa okunur tek cümle üretir", () => {
     expect(eksikZorunluAlanMesaji([])).toBeNull();
     expect(eksikZorunluAlanMesaji([{ key: "color", label: "Renk" }])).toBe("Renk alanı zorunludur.");

@@ -233,6 +233,7 @@ export async function POST(request: NextRequest) {
       templateKey,
       brand: isService ? null : cleanString(govde.brand),
       metadata,
+      variants,
     }),
   );
   if (eksikMesaji) return NextResponse.json({ hata: eksikMesaji }, { status: 422 });
@@ -360,7 +361,7 @@ export async function PATCH(request: NextRequest) {
   if (variantError) return NextResponse.json({ hata: variantError }, { status: 422 });
 
   const eksikMesaji = eksikZorunluAlanMesaji(
-    eksikZorunluAlanlar({ templateKey, brand, metadata }),
+    eksikZorunluAlanlar({ templateKey, brand, metadata, variants }),
   );
   if (eksikMesaji) return NextResponse.json({ hata: eksikMesaji }, { status: 422 });
 

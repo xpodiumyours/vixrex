@@ -1,5 +1,6 @@
 "use client";
 
+import { eskiFiyatYazisi } from "@/lib/productCardPresentation";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import type { RichProductItem } from "@/lib/richProductItem";
@@ -301,9 +302,9 @@ export default function ProductQuickView({
 
           <div className="mt-4 flex flex-wrap items-baseline gap-3">
             <p className="text-2xl font-black text-blue-400">{displayedPrice}</p>
-            {product.oldPriceAmount ? (
+            {eskiFiyatYazisi(product.oldPriceAmount) ? (
               <span className="text-sm font-medium text-slate-500 line-through">
-                {product.oldPriceAmount} TL
+                {eskiFiyatYazisi(product.oldPriceAmount)}
               </span>
             ) : null}
           </div>

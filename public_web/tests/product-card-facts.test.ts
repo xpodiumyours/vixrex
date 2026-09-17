@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { buildProductCardFacts } from "../src/lib/productCardPresentation";
+import {
+  buildProductCardFacts,
+  eskiFiyatYazisi,
+  indirimOrani,
+  kartRozeti,
+} from "../src/lib/productCardPresentation";
 
 describe("ürün kartında gösterilen bilgiler", () => {
   it("giyim kartında marka, renk ve beden gösterir", () => {
@@ -86,5 +91,36 @@ describe("ürün kartında gösterilen bilgiler", () => {
       limit: 2,
     });
     expect(kart.ozellikler).toHaveLength(2);
+  });
+});
+
+describe("kart fiyat ve indirim gösterimi", () => {
+  it("indirim oranını iki fiyattan kendisi hesaplar", () => {
+    expect(indirimOrani({ priceAmount: 899, oldPriceAmount: 1299 })).toBe(31);
+    expect(indirimOrani({ priceAmount: 500, oldPriceAmount: 1000 })).toBe(50);
+  });
+
+  it("indirim yoksa oran üretmez", () => {
+    expect(indirimOrani({ priceAmount: 1000, oldPriceAmount: 1000 })).toBeNull();
+    expect(indirimOrani({ priceAmount: 1200, oldPriceAmount: 1000 })).toBeNull();
+    expect(indirimOrani({ priceAmount: 100, oldPriceAmount: null })).toBeNull();
+  });
+
+  it("esnaf kendi rozetini yazdıysa ona dokunmaz", () => {
+    expect(
+      kartRozeti({ badgeTag: "Yeni Sezon", priceAmount: 899, oldPriceAmount: 1299 }),
+    ).toBe("Yeni Sezon");
+  });
+
+  it("rozet boşsa indirimi kendisi yazar", () => {
+    expect(kartRozeti({ badgeTag: "", priceAmount: 899, oldPriceAmount: 1299 })).toBe("%31 indirim");
+    expect(kartRozeti({ badgeTag: null, priceAmount: 899, oldPriceAmount: null })).toBeNull();
+  });
+
+  it("eski fiyatı güncel fiyatla aynı yazımda gösterir", () => {
+    expect(eskiFiyatYazisi(1800)).toBe("1.800 TL");
+    expect(eskiFiyatYazisi(499)).toBe("499 TL");
+    expect(eskiFiyatYazisi(0)).toBeNull();
+    expect(eskiFiyatYazisi(null)).toBeNull();
   });
 });
