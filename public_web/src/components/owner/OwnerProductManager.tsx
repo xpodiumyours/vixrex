@@ -56,6 +56,7 @@ interface OwnerProductManagerProps {
   storeSlug: string;
   products: OwnerProduct[];
   categories: OwnerProductCategory[];
+  varsayilanUrunTipi?: string;
   onRefresh: () => Promise<void>;
 }
 
@@ -102,8 +103,9 @@ async function fetchCategoryTemplateKeys(
 
 export function OwnerProductManager({
   storeSlug,
- products,
+  products,
   categories,
+  varsayilanUrunTipi = "generic",
   onRefresh,
 }: OwnerProductManagerProps) {
   const [editing, setEditing] = useState<OwnerProduct | "new" | null>(null);
@@ -351,7 +353,7 @@ export function OwnerProductManager({
       {queuedCount > 0 ? <p className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm font-bold text-amber-600" role="status">{queuedCount} ürün işlemi kuyrukta — bağlantı gelince otomatik gönderilecek (vitrin metin kuyruğundan ayrı).</p> : null}
       {success ? <p className="mb-4 rounded-xl border border-[var(--owner-success)]/40 bg-[var(--owner-success)]/10 p-3 text-sm text-[var(--owner-success)]" role="status">{success}</p> : null}
 
-      <OwnerCategoryManager storeSlug={storeSlug} categories={categoriesWithCount} onRefresh={refreshAll} />
+      <OwnerCategoryManager storeSlug={storeSlug} categories={categoriesWithCount} varsayilanUrunTipi={varsayilanUrunTipi} onRefresh={refreshAll} />
 
       <div className="mt-4 flex flex-col gap-2 sm:flex-row">
         <input value={filterText} onChange={(e) => setFilterText(e.target.value)} placeholder="Ürün ara — ad, açıklama, fiyat, rozet" className="owner-input flex-1 text-sm" />

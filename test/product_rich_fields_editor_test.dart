@@ -49,7 +49,7 @@ void main() {
     ]);
   });
 
-  test('varyant galerisi ortak 11 görsel sınırını kullanır', () async {
+  test('varyant galerisi ortak görsel sınırını kullanır', () async {
     final images = List.generate(
       ProductImagePolicy.maxImages + 1,
       (index) => 'https://cdn.example.com/product-$index.webp',
@@ -64,7 +64,7 @@ void main() {
 
     expect(variants, hasLength(1));
     expect(variants.single.imageUrls, hasLength(ProductImagePolicy.maxImages));
-    expect(ProductImagePolicy.maxImages, 11);
+    expect(ProductImagePolicy.maxImages, 10);
   });
 
   testWidgets(
