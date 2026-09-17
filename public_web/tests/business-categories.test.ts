@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import {
+  AKTIF_BUSINESS_CATEGORIES,
   BUSINESS_CATEGORIES,
   resolveBusinessCategory,
   validateBusinessCategoryContract,
@@ -51,7 +54,53 @@ describe("ortak kategori core", () => {
     );
     const categoryField = VITRIN_FIELDS.find((field) => field.anahtar === "kategori");
     expect(categoryField?.secenekler).toEqual(
-      BUSINESS_CATEGORIES.map((category) => category.label),
+      AKTIF_BUSINESS_CATEGORIES.map((category) => category.label),
     );
+  });
+});
+
+describe("aktif kategori süzgeci", () => {
+  const oku = (yol: string) => readFileSync(resolve(__dirname, yol), "utf-8");
+
+  it("19 kaydın hepsi yerinde durur, 6'sı aktiftir", () => {
+    expect(BUSINESS_CATEGORIES).toHaveLength(19);
+    expect(BUSINESS_CATEGORIES.every((k) => typeof k.aktif === "boolean")).toBe(true);
+    expect(AKTIF_BUSINESS_CATEGORIES.map((k) => k.id)).toEqual([
+      "giyim",
+      "butik",
+      "gida",
+      "kafe_lokanta",
+      "kuafor",
+      "teknik_servis",
+    ]);
+  });
+
+  it("pasif kategori silinmez: adresi, alias'ı ve sırası korunur", () => {
+    expect(resolveBusinessCategory("Oto & Araç Hizmetleri")?.id).toBe("oto_arac");
+    expect(resolveBusinessCategory("Sağlık & Yaşam")?.id).toBe("saglik_yasam");
+    expect(resolveBusinessCategory("kırtasiye")?.id).toBe("kirtasiye");
+    expect(BUSINESS_CATEGORIES.map((k) => k.order)).toEqual(
+      Array.from({ length: 19 }, (_, i) => i + 1),
+    );
+  });
+
+  it("görünen yüzeyler yalnız aktif listeyi çizer", () => {
+    for (const yol of [
+      "../src/components/kesfet/KategoriSeridi.tsx",
+      "../src/components/landing/TemplateCatalog.tsx",
+    ]) {
+      const kaynak = oku(yol);
+      expect(kaynak).toContain("AKTIF_BUSINESS_CATEGORIES.map");
+      expect(/[^_]BUSINESS_CATEGORIES\.map/.test(kaynak)).toBe(false);
+    }
+  });
+
+  it("kategori sayfaları ve site haritası 19 kaydın hepsini üretmeye devam eder", () => {
+    for (const yol of [
+      "../src/app/(site)/kesfet/[kategori]/page.tsx",
+      "../src/app/sitemap.xml/route.ts",
+    ]) {
+      expect(/[^_]BUSINESS_CATEGORIES\.map/.test(oku(yol))).toBe(true);
+    }
   });
 });

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import {
-  BUSINESS_CATEGORIES,
+  AKTIF_BUSINESS_CATEGORIES,
   kategoriUrlParcasi,
 } from "@/lib/businessCategories";
 
@@ -20,7 +20,7 @@ import {
 export function KategoriSeridi({ aktifKimlik }: { aktifKimlik?: string }) {
   return (
     <nav aria-label="Kategoriler" className="flex flex-wrap gap-2">
-      {BUSINESS_CATEGORIES.map((kategori) => {
+      {AKTIF_BUSINESS_CATEGORIES.map((kategori) => {
         const aktif = kategori.id === aktifKimlik;
         return (
           <Link
