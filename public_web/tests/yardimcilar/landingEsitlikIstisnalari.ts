@@ -13,9 +13,9 @@
 type Istisna = { metin: string; neden: string };
 
 const KATALOG_ETIKETI =
-  "Flutter kataloğunun şablon kataloğu (landing_template_category.dart) " +
-  "kendi etiketlerini kullanır; bunlar shared/business_categories.json'daki " +
-  "19 kanonik etiketten farklı olabilir (ör. 'Butik & Giyim' vs 'Giyim').";
+  "Flutter şablon kataloğu (landing_template_category.dart) artık kanonik " +
+  "kimlikleri kullanıyor; etiket webde başka bir bölümde geçtiği için " +
+  "çıkarıcı eşleştiremiyor.";
 
 const ALT_SAYFA =
   "Flutter kataloğu bir alt sayfa (bottom sheet) açıyor. Webde onun yerine " +
@@ -23,15 +23,6 @@ const ALT_SAYFA =
   "göremez, isin amaci taranabilir yüzey üretmek.";
 
 export const LANDING_ESITLIK_ISTISNALARI: Istisna[] = [
-  { metin: "Butik & Giyim", neden: KATALOG_ETIKETI },
-  { metin: "Kuaför & Güzellik", neden: KATALOG_ETIKETI },
-  { metin: "Kafe & Restoran", neden: KATALOG_ETIKETI },
-  { metin: "Oto Kuaför", neden: KATALOG_ETIKETI },
-  { metin: "Market & Bakkal", neden: KATALOG_ETIKETI },
-  { metin: "Pastane & Tatlıcı", neden: KATALOG_ETIKETI },
-  { metin: "Mobilya & Dekorasyon", neden: KATALOG_ETIKETI },
-  { metin: "Spor Salonu", neden: KATALOG_ETIKETI },
-  { metin: "Diş Kliniği", neden: KATALOG_ETIKETI },
   { metin: "Teknik Servis", neden: KATALOG_ETIKETI },
 
 
@@ -73,11 +64,12 @@ export const LANDING_ESITLIK_ISTISNALARI: Istisna[] = [
   },
   {
     metin:
-      "12 farklı kategoride profesyonel, telifsiz görsellerle vitrinini saniyeler içinde oluştur.",
+      "6 farklı kategoride profesyonel, telifsiz görsellerle vitrinini saniyeler içinde oluştur.",
     neden:
-      "Sayı Flutter'da tutarsız: metin 12 diyor, katalog 20 kart çiziyor, " +
-      "veritabanında 19 kanonik kategori var. Web sayıyı tek kaynaktan " +
-      "(BUSINESS_CATEGORIES.length) basıyor.",
+      "İki taraf da 6 diyor; web sayıyı tek kaynaktan " +
+      "(AKTIF_BUSINESS_CATEGORIES.length) basarken Flutter sabit yazıyor. " +
+      "Çıkarıcı web'deki şablon ifadesini düz metne çeviremediği için " +
+      "eşleşmiyor. Sayı, landing-katalog-parite testiyle kilitli.",
   },
   {
     metin: "Sıradaki adım: Kategorini seç",
