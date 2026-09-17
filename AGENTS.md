@@ -28,6 +28,14 @@ satir eklenir ve mumkunse `.claude/hooks/` altinda bir kanca ile olculur.
    bir seyi yeniden arama. Olcum yalniz bir karar ona bagliysa yapilir;
    gorev yazmadan once dosya adi dogrulamak icin komut kosturma.
    (2026-09-17)
+3e. **Giris kapisi karti doldurulmadan is baslamaz.** Her is, once
+   `.specify/templates/overrides/giris-kapisi-karti.md` doldurulerek acilir. Kart,
+   anayasanin I. ve VII. ilkelerinin kagithalidir; karttaki ekran listesi
+   isin siniridir, disina cikmak gerekirse dur ve Casper'a sor. Iki soru
+   cevaplanmadan karta "hazir" yazilmaz: bu is hangi halkadan basliyor,
+   ve etkilenen yuzeyler hangileri. (2026-09-17: urun karti isinde
+   "etkilenen yuzeyler" halkasi atlandigi icin kategoriye ozel alanlar
+   detay sayfasi yerine liste penceresine cizildi.)
 
 ## Yazarken
 
