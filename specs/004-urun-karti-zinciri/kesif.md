@@ -52,5 +52,5 @@ KAPSAM DIŞI: Ürün alan şablonu ve kategori türetme, products tablosunun yap
 
 ## Karar
 
-KARAR SORUSU: Ürün kartına tıklandığında ne olsun — detay sayfası mı açılsın, yoksa hızlı bakış penceresi kalsın ve detay sayfası yalnız arama motorları için mi dursun?
+KARAR SORUSU: yok — karta tıklayınca hızlı bakış açılır; ayrı sayfa açılmaz. Furkan'ın kararı, 2026-09-17.
 ONAY: bekliyor

@@ -3,17 +3,23 @@
 Ölçüm sırasında çıkan on bir eksik. Her biri hangi halkada olduğu, kanıtı ve
 hangi iş türüne girdiğiyle yazıldı. Hiçbiri henüz düzeltilmedi.
 
-## 1. Detay sayfası var, kimse ulaşamıyor
+## 1. Karta tıklayınca hızlı bakış açılması — bulgu değil, karar
 
-Halka: public detay. Kart ürün adresini taşıyor ama tıklama iptal edilip hızlı
-bakış açılıyor. Detaya yalnız ctrl ile tıklayarak, site haritasından veya
-adresi elle yazarak ulaşılıyor. İş türü: karar sonrası değişiklik.
+Halka: public detay. Kart ürün adresini taşır ama tıklamada hızlı bakış açılır.
+Bu davranış kartın kendi kurulum commit'iyle (761ed8c6) birlikte gelmiştir ve
+Furkan'ın kararıdır: ayrı sayfa açılmaz. Bulgu listesinden çıkarıldı.
 
-## 2. Ters gelişimin kanıtı commit mesajında duruyor
+Karardan doğan teknik sonuç: ürün detay adresi yalnız arama motorlarının
+kullandığı adres olarak kalır. Arama motoru ürün zengin sonucu için ürünün
+kendi adresini ister; hızlı bakış penceresindeki içerik sayfanın ilk halinde
+bulunmadığı için o yolla görünmez. Yani detay adresi kaldırılmaz, ziyaretçiye
+de gösterilmez.
+
+## 2. Commit mesajı ile kod arasındaki fark — düzeltme değil, kayıt
 
 Halka: karar. 37a5d40 numaralı commit "ayrı bir ürün detay sayfası olmadığı
-için kart artık tam listeyi gösterir" diyor; oysa detay rotası o sırada da
-vardı. Karar, yanlış bir ölçüme dayanmış. İş türü: kayıt, düzeltme değil.
+için kart artık tam listeyi gösterir" diyor; rota o sırada vardı ama ziyaretçiye
+kapalıydı. Cümle kodla değil kararla uyumlu. Düzeltme gerekmiyor.
 
 ## 3. Ölü ikinci detay uygulaması
 
