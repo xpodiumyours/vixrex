@@ -7,7 +7,7 @@ import {
 } from "../src/lib/productCardPresentation";
 
 describe("ürün kartında gösterilen bilgiler", () => {
-  it("giyim kartında marka, renk ve beden gösterir", () => {
+  it("giyim kartında marka ve renk gösterir, beden göstermez", () => {
     const kart = buildProductCardFacts({
       brand: "Aymira",
       metadata: {
@@ -21,7 +21,7 @@ describe("ürün kartında gösterilen bilgiler", () => {
       },
     });
     expect(kart.marka).toBe("Aymira");
-    expect(kart.ozellikler.map((alan) => alan.value)).toEqual(["Siyah", "M"]);
+    expect(kart.ozellikler.map((alan) => alan.value)).toEqual(["Siyah"]);
   });
 
   it("materyal gibi karta açılmamış alanı kartta göstermez", () => {
@@ -36,7 +36,7 @@ describe("ürün kartında gösterilen bilgiler", () => {
     expect(kart.ozellikler).toEqual([]);
   });
 
-  it("gıda kartında net miktarı gösterir", () => {
+  it("paketli gıda kartında net miktar, birim fiyat ve menşei gösterir", () => {
     const kart = buildProductCardFacts({
       brand: "Doğal Market",
       metadata: {
@@ -44,12 +44,17 @@ describe("ürün kartında gösterilen bilgiler", () => {
         templateKey: "food",
         attributes: [
           { key: "netQuantity", label: "Net miktar", value: "500 g" },
+          { key: "unitPrice", label: "Birim fiyat", value: "120 TL/kg" },
           { key: "origin", label: "Menşei", value: "Türkiye" },
         ],
       },
     });
     expect(kart.marka).toBe("Doğal Market");
-    expect(kart.ozellikler.map((alan) => alan.value)).toEqual(["500 g"]);
+    expect(kart.ozellikler.map((alan) => alan.value)).toEqual([
+      "500 g",
+      "120 TL/kg",
+      "Türkiye",
+    ]);
   });
 
   it("hizmet kartında süre, fiyat biçimi ve yer gösterir; marka göstermez", () => {
@@ -72,6 +77,22 @@ describe("ürün kartında gösterilen bilgiler", () => {
       "Sabit fiyat",
       "İşletmede",
     ]);
+  });
+
+  it("kafe tabağı kartında porsiyon ve hazırlama süresi gösterir, marka göstermez", () => {
+    const kart = buildProductCardFacts({
+      brand: "Gosterilmemeli",
+      metadata: {
+        itemKind: "physical",
+        templateKey: "cafe_restaurant",
+        attributes: [
+          { key: "portion", label: "Porsiyon", value: "1 dilim" },
+          { key: "prepMinutes", label: "Hazırlama süresi (dakika)", value: 15 },
+        ],
+      },
+    });
+    expect(kart.marka).toBeNull();
+    expect(kart.ozellikler.map((alan) => alan.value)).toEqual(["1 dilim", "15"]);
   });
 
   it("boş üründe kartta fazladan satır açmaz", () => {

@@ -19,6 +19,8 @@ export function eksikZorunluAlanlar(args: {
   brand?: string | null;
   metadata?: unknown;
   variants?: unknown;
+  /** Marka bos birakilirsa bunun yazilacagini bildigimiz icin sormuyoruz. */
+  storeName?: string | null;
 }): EksikZorunluAlan[] {
   const metadata = normalizeProductMetadata(args.metadata);
   const service = (metadata.service ?? {}) as Record<string, unknown>;
@@ -35,6 +37,9 @@ export function eksikZorunluAlanlar(args: {
       value = metadata.attributes?.find((item) => item.key === definition.key)?.value;
     }
     if (doluMu(value)) continue;
+
+    // Otomatik doldurulacak alani esnafa sormuyoruz.
+    if (definition.autoFill === "storeName" && doluMu(args.storeName)) continue;
 
     // Renk/beden gibi alanlar varyanttan da girilebiliyor; orada doluysa
     // esnafa ikinci kez sordurmuyoruz.

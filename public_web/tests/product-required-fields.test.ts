@@ -6,13 +6,13 @@ import {
 import { requiredProductAttributes } from "../src/lib/productAttributeSchema";
 
 describe("zorunlu ürün detayları", () => {
-  it("giyimde marka, KDV, renk, beden ve materyal zorunludur", () => {
+  it("giyimde marka, renk, beden, cinsiyet ve kalıp zorunludur", () => {
     expect(requiredProductAttributes("fashion").map((alan) => alan.key)).toEqual([
       "brand",
-      "vatRate",
       "color",
       "size",
-      "material",
+      "gender",
+      "fit",
     ]);
   });
 
@@ -20,10 +20,10 @@ describe("zorunlu ürün detayları", () => {
     const eksikler = eksikZorunluAlanlar({ templateKey: "fashion", brand: "", metadata: {} });
     expect(eksikler.map((eksik) => eksik.key)).toEqual([
       "brand",
-      "vatRate",
       "color",
       "size",
-      "material",
+      "gender",
+      "fit",
     ]);
   });
 
@@ -34,10 +34,10 @@ describe("zorunlu ürün detayları", () => {
       metadata: {
         templateKey: "fashion",
         attributes: [
-          { key: "vatRate", label: "KDV oranı (%)", value: "10" },
           { key: "color", label: "Renk", value: "Siyah" },
           { key: "size", label: "Beden", value: "M" },
-          { key: "material", label: "Materyal", value: "Pamuk" },
+          { key: "gender", label: "Cinsiyet", value: "kadin" },
+          { key: "fit", label: "Kalıp / kesim", value: "normal" },
         ],
       },
     });
@@ -52,14 +52,15 @@ describe("zorunlu ürün detayları", () => {
     });
     expect(eksikler.map((eksik) => eksik.key)).toContain("brand");
     expect(eksikler.map((eksik) => eksik.key)).toContain("netQuantity");
+    expect(eksikler.map((eksik) => eksik.key)).toContain("unitPrice");
   });
 
   it("hizmette marka değil, hizmet alanları zorunludur", () => {
     const eksikler = eksikZorunluAlanlar({ templateKey: "service", brand: null, metadata: {} });
     expect(eksikler.map((eksik) => eksik.key)).toEqual([
-      "serviceType",
       "priceMode",
       "serviceLocation",
+      "serviceType",
     ]);
   });
 
@@ -75,9 +76,34 @@ describe("zorunlu ürün detayları", () => {
     expect(eksikler).toEqual([]);
   });
 
-  it("genel şablonda yalnız marka ve KDV zorunludur", () => {
+  it("genel şablonda yalnız marka zorunludur", () => {
     const eksikler = eksikZorunluAlanlar({ templateKey: "generic", brand: null, metadata: {} });
-    expect(eksikler.map((eksik) => eksik.key)).toEqual(["brand", "vatRate"]);
+    expect(eksikler.map((eksik) => eksik.key)).toEqual(["brand"]);
+  });
+
+  it("kafe tabağında marka sorulmaz, porsiyon ve alerjen sorulur", () => {
+    const eksikler = eksikZorunluAlanlar({
+      templateKey: "cafe_restaurant",
+      brand: null,
+      metadata: {},
+    });
+    expect(eksikler.map((eksik) => eksik.key)).toEqual([
+      "portion",
+      "allergens",
+      "mainIngredients",
+      "containsAlcoholPork",
+    ]);
+  });
+
+  it("teknik serviste cihaz, garanti ve parça bilgisi zorunludur", () => {
+    const eksikler = eksikZorunluAlanlar({
+      templateKey: "technical_service",
+      brand: null,
+      metadata: {},
+    });
+    expect(eksikler.map((eksik) => eksik.key)).toContain("deviceBrandModel");
+    expect(eksikler.map((eksik) => eksik.key)).toContain("warrantyMonths");
+    expect(eksikler.map((eksik) => eksik.key)).toContain("partsIncluded");
   });
 
   it("renk ve beden varyanttan girilmişse tekrar sormaz", () => {
@@ -87,8 +113,8 @@ describe("zorunlu ürün detayları", () => {
       metadata: {
         templateKey: "fashion",
         attributes: [
-          { key: "vatRate", label: "KDV oranı (%)", value: "10" },
-          { key: "material", label: "Materyal", value: "Pamuk" },
+          { key: "gender", label: "Cinsiyet", value: "kadin" },
+          { key: "fit", label: "Kalıp / kesim", value: "normal" },
         ],
       },
       variants: [
@@ -106,7 +132,7 @@ describe("zorunlu ürün detayları", () => {
       metadata: { templateKey: "fashion" },
       variants: [{ id: "v1", options: { color: "Siyah", size: "M" } }],
     });
-    expect(eksikler.map((eksik) => eksik.key)).toEqual(["brand", "vatRate", "material"]);
+    expect(eksikler.map((eksik) => eksik.key)).toEqual(["brand", "gender", "fit"]);
   });
 
   it("esnafa okunur tek cümle üretir", () => {

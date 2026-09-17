@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "itemKinds": [
     "physical",
     "service"
@@ -23,19 +23,10 @@
       "valueType": "text",
       "requirement": "required",
       "storage": "core.brand",
+      "autoFill": "storeName",
       "display": [
         "card",
         "quick",
-        "detail"
-      ]
-    },
-    {
-      "key": "barcode",
-      "label": "Barkod / GTIN",
-      "valueType": "text",
-      "requirement": "optional",
-      "storage": "core.barcode",
-      "display": [
         "detail"
       ]
     },
@@ -50,18 +41,30 @@
       ]
     },
     {
+      "key": "barcode",
+      "label": "Barkod / GTIN",
+      "valueType": "text",
+      "requirement": "optional",
+      "storage": "core.barcode",
+      "advanced": true,
+      "display": [
+        "detail"
+      ]
+    },
+    {
       "key": "mpn",
-      "label": "Üretici parça kodu / MPN",
+      "label": "Uretici parca kodu / MPN",
       "valueType": "text",
       "requirement": "optional",
       "storage": "metadata.identifiers.mpn",
+      "advanced": true,
       "display": [
         "detail"
       ]
     },
     {
       "key": "condition",
-      "label": "Ürün durumu",
+      "label": "Urun durumu",
       "valueType": "single",
       "requirement": "optional",
       "storage": "metadata.attributes",
@@ -70,6 +73,7 @@
         "used",
         "refurbished"
       ],
+      "advanced": true,
       "display": [
         "quick",
         "detail"
@@ -77,9 +81,9 @@
     },
     {
       "key": "vatRate",
-      "label": "KDV oranı (%)",
+      "label": "KDV orani (%)",
       "valueType": "single",
-      "requirement": "required",
+      "requirement": "optional",
       "storage": "metadata.attributes",
       "options": [
         "0",
@@ -87,6 +91,7 @@
         "10",
         "20"
       ],
+      "advanced": true,
       "display": [
         "detail"
       ]
@@ -94,39 +99,18 @@
   ],
   "commonServiceAttributes": [
     {
-      "key": "serviceType",
-      "label": "Hizmet türü",
-      "valueType": "text",
-      "requirement": "required",
-      "storage": "metadata.service.serviceType",
-      "display": [
-        "quick",
-        "detail"
-      ]
-    },
-    {
       "key": "priceMode",
-      "label": "Fiyat biçimi",
+      "label": "Fiyat bicimi",
       "valueType": "single",
       "requirement": "required",
       "storage": "metadata.service.priceMode",
       "options": [
         "fixed",
         "starting_from",
-        "ask"
+        "ask",
+        "free",
+        "hidden"
       ],
-      "display": [
-        "card",
-        "quick",
-        "detail"
-      ]
-    },
-    {
-      "key": "durationMinutes",
-      "label": "Tahmini süre (dakika)",
-      "valueType": "number",
-      "requirement": "optional",
-      "storage": "metadata.service.durationMinutes",
       "display": [
         "card",
         "quick",
@@ -204,7 +188,39 @@
           "storage": "metadata.attributes",
           "variantEligible": true,
           "display": [
-            "card",
+            "quick",
+            "detail"
+          ]
+        },
+        {
+          "key": "gender",
+          "label": "Cinsiyet",
+          "valueType": "single",
+          "requirement": "required",
+          "storage": "metadata.attributes",
+          "options": [
+            "kadin",
+            "erkek",
+            "unisex",
+            "cocuk"
+          ],
+          "display": [
+            "quick",
+            "detail"
+          ]
+        },
+        {
+          "key": "fit",
+          "label": "Kalip / kesim",
+          "valueType": "single",
+          "requirement": "required",
+          "storage": "metadata.attributes",
+          "options": [
+            "dar",
+            "normal",
+            "bol"
+          ],
+          "display": [
             "quick",
             "detail"
           ]
@@ -213,10 +229,30 @@
           "key": "material",
           "label": "Materyal",
           "valueType": "text",
-          "requirement": "required",
+          "requirement": "optional",
           "storage": "metadata.attributes",
           "display": [
             "quick",
+            "detail"
+          ]
+        },
+        {
+          "key": "fiberComposition",
+          "label": "Elyaf bilesimi",
+          "valueType": "text",
+          "requirement": "optional",
+          "storage": "metadata.attributes",
+          "display": [
+            "detail"
+          ]
+        },
+        {
+          "key": "measurements",
+          "label": "Olcu tablosu",
+          "valueType": "text",
+          "requirement": "optional",
+          "storage": "metadata.attributes",
+          "display": [
             "detail"
           ]
         },
@@ -227,16 +263,6 @@
           "requirement": "optional",
           "storage": "metadata.attributes",
           "variantEligible": true,
-          "display": [
-            "detail"
-          ]
-        },
-        {
-          "key": "sizeSystem",
-          "label": "Beden sistemi",
-          "valueType": "text",
-          "requirement": "optional",
-          "storage": "metadata.attributes",
           "display": [
             "detail"
           ]
@@ -391,7 +417,7 @@
     },
     {
       "key": "food",
-      "label": "Gıda ve içecek",
+      "label": "Paketli gida",
       "itemKind": "physical",
       "attributes": [
         {
@@ -407,8 +433,52 @@
           ]
         },
         {
+          "key": "unitPrice",
+          "label": "Birim fiyat",
+          "valueType": "text",
+          "requirement": "required",
+          "storage": "metadata.attributes",
+          "display": [
+            "card",
+            "quick",
+            "detail"
+          ]
+        },
+        {
+          "key": "allergens",
+          "label": "Alerjen bilgisi",
+          "valueType": "multi",
+          "requirement": "required",
+          "storage": "metadata.attributes",
+          "display": [
+            "quick",
+            "detail"
+          ]
+        },
+        {
+          "key": "origin",
+          "label": "Mensei",
+          "valueType": "text",
+          "requirement": "required",
+          "storage": "metadata.attributes",
+          "display": [
+            "card",
+            "detail"
+          ]
+        },
+        {
+          "key": "nutrition",
+          "label": "Beslenme bildirimi (100 g/ml)",
+          "valueType": "text",
+          "requirement": "required",
+          "storage": "metadata.attributes",
+          "display": [
+            "detail"
+          ]
+        },
+        {
           "key": "ingredients",
-          "label": "İçindekiler",
+          "label": "Icindekiler",
           "valueType": "multi",
           "requirement": "optional",
           "storage": "metadata.attributes",
@@ -417,8 +487,99 @@
           ]
         },
         {
+          "key": "storageInstructions",
+          "label": "Saklama kosullari",
+          "valueType": "text",
+          "requirement": "optional",
+          "storage": "metadata.attributes",
+          "display": [
+            "detail"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "cafe_restaurant",
+      "label": "Kafe / Lokanta",
+      "itemKind": "physical",
+      "attributes": [
+        {
+          "key": "portion",
+          "label": "Porsiyon",
+          "valueType": "text",
+          "requirement": "required",
+          "storage": "metadata.attributes",
+          "display": [
+            "card",
+            "quick",
+            "detail"
+          ]
+        },
+        {
           "key": "allergens",
           "label": "Alerjen bilgisi",
+          "valueType": "multi",
+          "requirement": "required",
+          "storage": "metadata.attributes",
+          "display": [
+            "card",
+            "quick",
+            "detail"
+          ]
+        },
+        {
+          "key": "mainIngredients",
+          "label": "Temel bilesenler",
+          "valueType": "multi",
+          "requirement": "required",
+          "storage": "metadata.attributes",
+          "display": [
+            "quick",
+            "detail"
+          ]
+        },
+        {
+          "key": "containsAlcoholPork",
+          "label": "Alkol / domuz turevi icerir",
+          "valueType": "single",
+          "requirement": "required",
+          "storage": "metadata.attributes",
+          "options": [
+            "yok",
+            "alkol",
+            "domuz",
+            "ikisi_de"
+          ],
+          "display": [
+            "quick",
+            "detail"
+          ]
+        },
+        {
+          "key": "prepMinutes",
+          "label": "Hazirlama suresi (dakika)",
+          "valueType": "number",
+          "requirement": "optional",
+          "storage": "metadata.attributes",
+          "display": [
+            "card",
+            "detail"
+          ]
+        },
+        {
+          "key": "calories",
+          "label": "Porsiyon basina kalori (kcal)",
+          "valueType": "number",
+          "requirement": "optional",
+          "storage": "metadata.attributes",
+          "display": [
+            "quick",
+            "detail"
+          ]
+        },
+        {
+          "key": "dietTags",
+          "label": "Beslenme isaretleri",
           "valueType": "multi",
           "requirement": "optional",
           "storage": "metadata.attributes",
@@ -428,25 +589,28 @@
           ]
         },
         {
-          "key": "storageInstructions",
-          "label": "Saklama koşulları",
-          "valueType": "text",
+          "key": "spiceLevel",
+          "label": "Aci seviyesi",
+          "valueType": "single",
           "requirement": "optional",
           "storage": "metadata.attributes",
-          "display": [
-            "detail"
-          ]
-        },
-        {
-          "key": "origin",
-          "label": "Menşei",
-          "valueType": "text",
-          "requirement": "optional",
-          "storage": "metadata.attributes",
+          "options": [
+            "yok",
+            "az",
+            "orta",
+            "cok"
+          ],
           "display": [
             "detail"
           ]
         }
+      ],
+      "excludeCommon": [
+        "brand",
+        "barcode",
+        "sku",
+        "mpn",
+        "condition"
       ]
     },
     {
@@ -602,7 +766,145 @@
       "key": "service",
       "label": "Hizmet",
       "itemKind": "service",
-      "attributes": []
+      "attributes": [
+        {
+          "key": "serviceType",
+          "label": "Hizmet turu",
+          "valueType": "single",
+          "requirement": "required",
+          "storage": "metadata.service.serviceType",
+          "options": [
+            "Sac kesimi",
+            "Sac boyama",
+            "Sac bakimi",
+            "Makyaj",
+            "Tirnak bakimi",
+            "Cilt bakimi",
+            "Epilasyon",
+            "Masaj",
+            "Diger"
+          ],
+          "display": [
+            "quick",
+            "detail"
+          ]
+        },
+        {
+          "key": "durationMinutes",
+          "label": "Tahmini sure (dakika)",
+          "valueType": "number",
+          "requirement": "optional",
+          "storage": "metadata.service.durationMinutes",
+          "display": [
+            "card",
+            "quick",
+            "detail"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "technical_service",
+      "label": "Teknik servis",
+      "itemKind": "service",
+      "attributes": [
+        {
+          "key": "serviceType",
+          "label": "Hizmet turu",
+          "valueType": "single",
+          "requirement": "required",
+          "storage": "metadata.service.serviceType",
+          "options": [
+            "Ekran degisimi",
+            "Batarya degisimi",
+            "Anakart onarimi",
+            "Yazilim / kurulum",
+            "Veri kurtarma",
+            "Periyodik bakim",
+            "Ariza tespiti",
+            "Diger"
+          ],
+          "display": [
+            "quick",
+            "detail"
+          ]
+        },
+        {
+          "key": "deviceBrandModel",
+          "label": "Cihaz marka / model",
+          "valueType": "text",
+          "requirement": "required",
+          "storage": "metadata.attributes",
+          "display": [
+            "quick",
+            "detail"
+          ]
+        },
+        {
+          "key": "warrantyMonths",
+          "label": "Garanti suresi (ay)",
+          "valueType": "number",
+          "requirement": "required",
+          "storage": "metadata.attributes",
+          "display": [
+            "card",
+            "quick",
+            "detail"
+          ]
+        },
+        {
+          "key": "partsIncluded",
+          "label": "Parca fiyata dahil mi",
+          "valueType": "single",
+          "requirement": "required",
+          "storage": "metadata.attributes",
+          "options": [
+            "dahil",
+            "haric",
+            "duruma_gore"
+          ],
+          "display": [
+            "quick",
+            "detail"
+          ]
+        },
+        {
+          "key": "deliveryDays",
+          "label": "Teslim suresi (gun)",
+          "valueType": "number",
+          "requirement": "optional",
+          "storage": "metadata.attributes",
+          "display": [
+            "card",
+            "quick",
+            "detail"
+          ]
+        },
+        {
+          "key": "diagnosisFee",
+          "label": "Ariza tespit ucreti",
+          "valueType": "text",
+          "requirement": "optional",
+          "storage": "metadata.attributes",
+          "display": [
+            "detail"
+          ]
+        },
+        {
+          "key": "partType",
+          "label": "Parca tipi",
+          "valueType": "single",
+          "requirement": "optional",
+          "storage": "metadata.attributes",
+          "options": [
+            "orijinal",
+            "muadil"
+          ],
+          "display": [
+            "detail"
+          ]
+        }
+      ]
     }
   ]
 }

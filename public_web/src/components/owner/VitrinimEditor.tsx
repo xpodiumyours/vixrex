@@ -426,7 +426,7 @@ export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode 
                           <div className="space-y-4"><h3 className="text-[13px] font-black text-lp-text">Pazar yeri bağlantıları</h3><MarketplaceEditor inline slug={store.slug} links={marketplaceLinks} onClose={() => { void onRefresh(); }} /></div>
                           <Link href={`/v/${store.slug}/blog-yonetim`} className={`${editorButtonClass} flex items-center justify-center`}>Blog yönetimi</Link>
                           <p className="mb-3 text-[12px] font-bold text-lp-muted">Ürünler ve kategoriler</p>
-                          <OwnerProductManager storeSlug={store.slug} products={store.products ?? []} categories={store.product_categories ?? []} varsayilanUrunTipi={isletmeUrunSablonu(store.kategori, store.business_type)} onRefresh={onRefresh} />
+                          <OwnerProductManager storeSlug={store.slug} products={store.products ?? []} categories={store.product_categories ?? []} varsayilanUrunTipi={isletmeUrunSablonu(store.kategori, store.business_type)} storeName={store.name} onRefresh={onRefresh} />
                         </div>
                       ) : null}
                       {section.title === "Konum ve saatler" ? <button type="button" onClick={() => void konumuAl()} disabled={locating} className={`${editorButtonClass} w-full`}>{locating ? "Konum alınıyor…" : "📍 Konumumu al (GPS)"}</button> : null}

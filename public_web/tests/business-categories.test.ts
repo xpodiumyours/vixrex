@@ -53,7 +53,7 @@ describe("ortak kategori core", () => {
     }
     expect(isletmeUrunSablonu("giyim")).toBe("fashion");
     expect(isletmeUrunSablonu("Kuaför")).toBe("service");
-    expect(isletmeUrunSablonu("kafe_lokanta")).toBe("food");
+    expect(isletmeUrunSablonu("kafe_lokanta")).toBe("cafe_restaurant");
   });
 
   it("çözülemeyen işletme kategorisi genel şablona düşer", () => {

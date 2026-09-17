@@ -94,7 +94,7 @@ export default function UrunlerPage() {
           </div>
           <Link href="/app" className="owner-button-secondary">← Pano</Link>
         </div>
-        <OwnerProductManager storeSlug={store.slug} products={store.products ?? []} categories={store.product_categories ?? []} varsayilanUrunTipi={isletmeUrunSablonu(store.kategori, store.business_type)} onRefresh={yukle} />
+        <OwnerProductManager storeSlug={store.slug} products={store.products ?? []} categories={store.product_categories ?? []} varsayilanUrunTipi={isletmeUrunSablonu(store.kategori, store.business_type)} storeName={store.name} onRefresh={yukle} />
       </div>
     </div>
   );

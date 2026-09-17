@@ -58,6 +58,7 @@ interface OwnerProductManagerProps {
   products: OwnerProduct[];
   categories: OwnerProductCategory[];
   varsayilanUrunTipi?: string;
+  storeName?: string | null;
   onRefresh: () => Promise<void>;
 }
 
@@ -107,6 +108,7 @@ export function OwnerProductManager({
   products,
   categories,
   varsayilanUrunTipi = "generic",
+  storeName,
   onRefresh,
 }: OwnerProductManagerProps) {
   const [editing, setEditing] = useState<OwnerProduct | "new" | null>(null);
@@ -376,6 +378,7 @@ export function OwnerProductManager({
           categories={resolvedCategories}
           busy={busy}
           storeSlug={storeSlug}
+          storeName={storeName}
           onCancel={() => setEditing(null)}
           onSave={saveProduct}
         />
@@ -461,11 +464,12 @@ interface ProductFormProps {
   categories: OwnerProductCategory[];
   busy: boolean;
   storeSlug: string;
+  storeName?: string | null;
   onCancel: () => void;
   onSave: (value: ProductFormValue) => Promise<void>;
 }
 
-function ProductForm({ product, categories, busy, storeSlug, onCancel, onSave }: ProductFormProps) {
+function ProductForm({ product, categories, busy, storeSlug, storeName, onCancel, onSave }: ProductFormProps) {
   const initialImageUrls = useMemo(
     () => normalizeProductImageUrls(product?.image_urls).slice(0, MAX_PRODUCT_IMAGES),
     [product],
@@ -561,7 +565,13 @@ function ProductForm({ product, categories, busy, storeSlug, onCancel, onSave }:
     if (oldPriceText.trim() && oldPriceAmount == null) { setValidation("Eski fiyat sayı olmalı."); return; }
     if (badgeTag.trim().length > 20) { setValidation("Rozet en fazla 20 karakter."); return; }
     if (!isService && rich.stockQuantity.trim() && (!/^\d+$/.test(rich.stockQuantity) || Number(rich.stockQuantity) < 0)) { setValidation("Stok adedi 0 veya daha büyük tam sayı olmalı."); return; }
-    const eksikler = eksikZorunluAlanlar({ templateKey, brand: rich.brand, metadata: rich.metadata, variants: rich.variants });
+    const eksikler = eksikZorunluAlanlar({
+      templateKey,
+      brand: rich.brand,
+      metadata: rich.metadata,
+      variants: rich.variants,
+      storeName,
+    });
     const eksikMesaji = eksikZorunluAlanMesaji(eksikler);
     if (eksikMesaji) { setValidation(eksikMesaji); return; }
 

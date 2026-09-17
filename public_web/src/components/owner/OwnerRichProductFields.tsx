@@ -320,30 +320,10 @@ export function OwnerRichProductFields({
     });
   }
 
-  return (
-    <fieldset className="mt-5 rounded-2xl border border-[var(--owner-border)] bg-[var(--owner-bg-soft)] p-4 sm:p-5" disabled={disabled}>
-      <legend className="px-2 text-sm font-black text-[var(--owner-text)]">Ürün detayları</legend>
-      <p className="mb-4 text-xs leading-5 text-[var(--owner-muted)]">
-        {template.label} için ilgili bilgiler gösteriliyor. Bilmediğin alanı boş bırakabilirsin; Vixrex değer uydurmaz.
-      </p>
+  const temelAlanlar = definitions.filter((definition) => !definition.advanced);
+  const gelismisAlanlar = definitions.filter((definition) => definition.advanced);
 
-      {!isService ? (
-        <label className="mb-4 block space-y-2">
-          <span className="owner-label">Stok adedi</span>
-          <input
-            type="number"
-            min={0}
-            step={1}
-            className="owner-input"
-            value={value.stockQuantity}
-            onChange={(e) => onChange({ ...value, stockQuantity: e.target.value.replace(/[^0-9]/g, "") })}
-            placeholder="Örn. 12"
-          />
-        </label>
-      ) : null}
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        {definitions.map((definition) => {
+  const alanKutusu = (definition: ProductAttributeDefinition) => {
           const current = definition.storage === "core.brand"
             ? value.brand
             : definition.storage === "core.barcode"
@@ -400,8 +380,44 @@ export function OwnerRichProductFields({
               ) : null}
             </label>
           );
-        })}
+          };
+
+  return (
+    <fieldset className="mt-5 rounded-2xl border border-[var(--owner-border)] bg-[var(--owner-bg-soft)] p-4 sm:p-5" disabled={disabled}>
+      <legend className="px-2 text-sm font-black text-[var(--owner-text)]">Ürün detayları</legend>
+      <p className="mb-4 text-xs leading-5 text-[var(--owner-muted)]">
+        {template.label} için ilgili bilgiler gösteriliyor. Bilmediğin alanı boş bırakabilirsin; Vixrex değer uydurmaz.
+      </p>
+
+      {!isService ? (
+        <label className="mb-4 block space-y-2">
+          <span className="owner-label">Stok adedi</span>
+          <input
+            type="number"
+            min={0}
+            step={1}
+            className="owner-input"
+            value={value.stockQuantity}
+            onChange={(e) => onChange({ ...value, stockQuantity: e.target.value.replace(/[^0-9]/g, "") })}
+            placeholder="Örn. 12"
+          />
+        </label>
+      ) : null}
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        {temelAlanlar.map((definition) => alanKutusu(definition))}
       </div>
+
+      {gelismisAlanlar.length > 0 ? (
+        <details className="mt-4 rounded-xl border border-[var(--owner-border)] bg-[var(--owner-bg-soft)] p-3">
+          <summary className="cursor-pointer text-xs font-bold text-[var(--owner-text-alt)]">
+            Gelişmiş bilgiler (isteğe bağlı)
+          </summary>
+          <div className="mt-3 grid gap-4 sm:grid-cols-2">
+            {gelismisAlanlar.map((definition) => alanKutusu(definition))}
+          </div>
+        </details>
+      ) : null}
 
       {!isService && variantDefinitions.length > 0 ? (
         <section className="mt-5 border-t border-[var(--owner-border)] pt-5">
