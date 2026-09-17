@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, type MouseEvent } from "react";
 import { useAppShellSearch } from "@/components/app/AppShellContext";
 import {
+  AKTIF_BUSINESS_CATEGORIES,
   BUSINESS_CATEGORIES,
   kategoriUrlParcasi,
   type BusinessTemplateGroup,
@@ -19,7 +20,10 @@ const FAVORI_ANAHTARI = "favorite_stores";
 const KATEGORI_GRUPLARI = new Map(
   BUSINESS_CATEGORIES.map((kategori) => [kategori.id, kategori.templateGroup])
 );
-const GRUPLAR: Array<{
+const AKTIF_GRUPLAR = new Set(
+  AKTIF_BUSINESS_CATEGORIES.map((kategori) => kategori.templateGroup)
+);
+const TUM_GRUPLAR: Array<{
   deger: BusinessTemplateGroup;
   etiket: string;
 }> = [
@@ -28,6 +32,7 @@ const GRUPLAR: Array<{
   { deger: "gida", etiket: "Gıda" },
   { deger: "diger", etiket: "Diğer" },
 ];
+const GRUPLAR = TUM_GRUPLAR.filter((grup) => AKTIF_GRUPLAR.has(grup.deger));
 
 type PanoOzeti = {
   slug?: string;
@@ -112,8 +117,10 @@ export function KesfetIcerik({
   const kategoriler = useMemo(
     () =>
       grup
-        ? BUSINESS_CATEGORIES.filter((kategori) => kategori.templateGroup === grup)
-        : BUSINESS_CATEGORIES,
+        ? AKTIF_BUSINESS_CATEGORIES.filter(
+            (kategori) => kategori.templateGroup === grup
+          )
+        : AKTIF_BUSINESS_CATEGORIES,
     [grup]
   );
 

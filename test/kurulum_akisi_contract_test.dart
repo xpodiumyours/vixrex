@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -172,30 +173,28 @@ void main() {
     late final String kategoriler = read(
       'lib/widgets/landing/landing_template_category.dart',
     );
+    late final List<Map<String, dynamic>> kanonik =
+        ((jsonDecode(read('shared/business_categories.json'))
+                    as Map<String, dynamic>)['categories']
+                as List<dynamic>)
+            .cast<Map<String, dynamic>>();
 
-    test('19 kategori kutusunun hepsi duruyor', () {
-      for (final anahtar in [
-        'butik_giyim',
-        'kuafor_guzellik',
-        'kafe_restoran',
-        'teknik_servis',
-        'butik',
-        'kozmetik',
-        'elektronik',
-        'kirtasiye',
-        'pet_shop_veteriner',
-        'hizmet_danismanlik',
-        'egitim_ders',
-        'ev_temizlik',
-      ]) {
-        expect(kategoriler, contains(anahtar), reason: '$anahtar silinmiş');
+    test('katalog yalnız aktif kategorileri taşır', () {
+      for (final kategori in kanonik) {
+        expect(
+          kategoriler.contains("'${kategori['id']}'"),
+          kategori['aktif'] == true,
+          reason:
+              '${kategori['id']} kutusu aktif durumuyla uyuşmuyor '
+              '(shared/business_categories.json tek kaynak)',
+        );
       }
     });
 
-    test('kutu sayısı azalmamış', () {
-      final adet = RegExp('TemplateCategory\\(').allMatches(kategoriler).length;
-      // 20 kutu + sınıfın kendi kurucusu = 21
-      expect(adet, greaterThanOrEqualTo(21));
+    test('kutu sayısı aktif kategori sayısıyla aynı', () {
+      final adet = RegExp(r'TemplateCategory\(').allMatches(kategoriler).length;
+      final aktif = kanonik.where((k) => k['aktif'] == true).length;
+      expect(adet, aktif + 1);
     });
   });
 }

@@ -5,7 +5,7 @@ import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/widgets/landing/landing_template_category.dart';
 import 'package:vixrex/widgets/landing/landing_template_card.dart';
 
-/// Landing ekranında 12 kategoriyi gösteren şablon kataloğu.
+/// Landing ekranında 6 kategoriyi gösteren şablon kataloğu.
 /// Kullanıcı kategoriye tıklayıp "Bu şablonla başla" dediğinde
 /// auth -> vitrin formu akışına yönlendirir.
 class LandingTemplateCatalog extends StatefulWidget {
@@ -361,7 +361,7 @@ class _LandingTemplateCatalogState extends State<LandingTemplateCatalog> {
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 20),
                   child: Text(
-                    '12 farklı kategoride profesyonel, telifsiz görsellerle vitrinini saniyeler içinde oluştur.',
+                    '6 farklı kategoride profesyonel, telifsiz görsellerle vitrinini saniyeler içinde oluştur.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: AppColors.mutedText,

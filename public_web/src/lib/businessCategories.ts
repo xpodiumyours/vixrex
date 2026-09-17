@@ -6,6 +6,7 @@ export interface BusinessCategoryCore {
   label: string;
   templateGroup: BusinessTemplateGroup;
   aliases: string[];
+  aktif?: boolean;
 }
 
 export type BusinessTemplateGroup = "perakende" | "hizmet" | "gida" | "diger";
@@ -57,6 +58,10 @@ export function validateBusinessCategoryContract(
 export const BUSINESS_CATEGORIES =
   categoryContract.categories as BusinessCategoryCore[];
 validateBusinessCategoryContract(BUSINESS_CATEGORIES);
+
+export const AKTIF_BUSINESS_CATEGORIES = BUSINESS_CATEGORIES.filter(
+  (category) => category.aktif === true,
+);
 
 const BY_ID = new Map(BUSINESS_CATEGORIES.map((category) => [category.id, category]));
 const TERMS = new Map<string, string>();
