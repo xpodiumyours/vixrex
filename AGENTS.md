@@ -1,22 +1,25 @@
 # AGENTS.md — Vixrex ortak gelişim kuralları
 
-Bu dosya Vixrex deposunda çalışan insan veya yapay zekâ ayrımı olmadan bütün
-üreticiler için geçerlidir. Hiçbir araç, model veya firma için ayrı gelişim
-yolu yoktur.
+Bu dosya Vixrex deposunda çalışan bütün insanlar ve yapay zekâ araçları için
+geçerlidir. Kuralın kaynağı kullanılan araç değil, Vixrex gelişim sistemidir.
+Hiçbir araç için ayrı zorunluluk, yasak veya teslim yolu kurulamaz. Araçlara
+özel dosyalar yalnız kullanım kolaylığı sağlayabilir; ortak süreci daraltamaz,
+genişletemez veya başka bir aracı engelleyemez.
 
-## Zorunlu gelişim zinciri
+## Önce iş türünü belirle
 
-Her yeni özellik, hata düzeltmesi, güvenlik, veri, içerik, tasarım, altyapı
-ve ayar değişikliği `DEVELOPMENT.md` içindeki zinciri eksiksiz izler:
+1. **Yeni özellik veya davranış değişikliği:** `DEVELOPMENT.md` içindeki tam
+   gelişim zincirini izler.
+2. **Hata düzeltmesi:** hata yeniden görülür, gerçek sebep bulunur, en küçük
+   doğru düzeltme yapılır, aynı hata tekrar denenir ve incelemeye gönderilir.
+3. **Yeni fikir veya araştırma:** önce kanıt toplanır ve “yapalım mı?” kararı
+   verilir. Karar verilmeden ürün kodu değiştirilmez.
 
-Anayasa → Specify → Clarify → Plan → Checklist → Tasks → Analyze →
-Implement → Converge → gerekirse Implement/Converge tekrarı → Review/PR.
+Bir hata düzeltmesi yeni kullanıcı sonucu, veri yapısı, güvenlik kuralı, ekran
+akışı veya yayın davranışı oluşturuyorsa artık “hata” değildir; tam gelişim
+zincirine geçer.
 
-Bir aşama atlandıysa kod hazır sayılmaz. Zincirin kayıtları
-`specs/<iş-kimliği>/` altında tutulur. Ortak GitHub kontrolü bu kayıtlar
-olmadan teslimata izin vermez.
-
-## Çalışma biçimi
+## Ortak çalışma biçimi
 
 1. Furkan doğal Türkçeyle sonucu söyler; teknik kapsamı ve dosyaları üretici
    araştırır.
@@ -24,29 +27,25 @@ olmadan teslimata izin vermez.
    sorulmaz.
 3. Yalnız para, hukuk, görünüm, içerik, veri kaybı, gizlilik, canlı işlem veya
    iki farklı ürün sonucu için tek sade soru sorulur.
-4. Tahminle değişiklik yapılmaz. Mevcut davranış ve etkilenen bütün yüzeyler
-   önce ölçülür.
+4. Tahminle değişiklik yapılmaz. Mevcut davranış ve etkilenen yüzeyler önce
+   ölçülür.
 5. Aynı bilgi iki yerde elle tutulmaz. Flutter, Next.js ve Supabase aynı
    Vixrex çekirdeğini kullanır.
 6. Başka bir işin değişiklikleri silinmez veya sahiplenilmez.
 7. Aynı çalışma klasöründe iki üretici çalışmaz.
 8. Flutter paneline açık ürün kararı olmadan dokunulmaz.
 9. Test sonucu tek başına başarı değildir; gerçek kullanıcı yolu görülür.
-10. Üreten kişi veya ajan kendi işinin son incelemesini yapmış sayılmaz.
+10. Üreten kişi veya araç kendi işinin son incelemesini yapmış sayılmaz.
 11. Dal, ana dal, yayın ve canlı doğrulama ayrı durumlar olarak bildirilir.
 12. Ana dala alınan değişiklik otomatik yayımlanmaz. Canlı yayın ayrı bir
     sahip kararı ve ayrı doğrulama adımıdır.
 
-## Tamamlanma
+## Kayıt ve tamamlanma
 
-Bir iş yalnız şu koşullarda tamamdır:
+Yeni özellik ve davranış değişikliği `specs/<iş-kimliği>/` altında tam kayıt
+tutar. Hata düzeltmesi aynı yerde kısa hata kaydı tutar. Yalnız araştırılan
+fikir ürün kodunu değiştirmez.
 
-- Anayasa ve bütün gelişim aşamaları kayıtlıdır.
-- Belirsizlikler çözülmüştür.
-- Plan ile görevler arasında çelişki yoktur.
-- Bütün görevler tamamlanmıştır.
-- Uygulama ile yakınsama, eksik kalmayana kadar tekrarlanmıştır.
-- İlgili kontroller ve üretim derlemeleri geçmiştir.
-- Gerçek kullanıcı yolu doğrulanmıştır.
-- Güvenlik, geri alma, hata izleme ve destek yolu kaydedilmiştir.
-- Bağımsız inceleme ve PR sonucu hazırdır.
+Bir iş ancak seçilen yolun kayıtları tamamlandığında, ilgili kontroller
+geçtiğinde, gerçek davranış doğrulandığında, geri alma yolu hazır olduğunda ve
+bağımsız inceleme tamamlandığında hazır sayılır.
