@@ -45,6 +45,16 @@ describe("kiralık vitrin ürün sözleşmesi", () => {
     expect(source).toContain("'serviceLocation', 'business'");
   });
 
+  it("eski tek görseli güncel üç görsel kapısına taşır ve eksik kaydı reddeder", () => {
+    expect(source).toContain("jsonb_array_length(p.image_urls) between 1 and 2");
+    expect(source).toContain("'?auto=format&fit=crop&w=1200&h=1500&q=82&crop=center'");
+    expect(source).toContain("'?auto=format&fit=crop&w=1200&h=1500&q=82&crop=faces'");
+    expect(source).toContain("'?auto=format&fit=crop&w=1200&h=1500&q=82&crop=entropy'");
+    expect(source).toContain("raise exception 'KIRALIK_PRODUCT_CATEGORY_REQUIRED'");
+    expect(source).toContain("raise exception 'KIRALIK_PRODUCT_IMAGES_REQUIRED'");
+    expect(source).toContain("raise exception 'KIRALIK_PRODUCT_METADATA_REQUIRED'");
+  });
+
   it("yeni kiralamada kategori ürün şablonunu kaynak vitrinden aynen kopyalar", () => {
     const categoryInsert = source.slice(
       source.indexOf("insert into public.product_categories"),
