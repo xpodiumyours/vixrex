@@ -259,7 +259,6 @@ export default function ProductCatalog({
           const cardFacts = buildProductCardFacts({
             brand: product.brand,
             metadata,
-            limit: 2,
           });
           const fulfillmentRegion = String(product.fulfillmentRegion || "").trim();
           const fulfillmentMapUrl = productLocationMapUrl(fulfillmentRegion);
