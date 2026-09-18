@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildProductCardFacts,
   buildProductDetailFacts,
   buildProductQuickFacts,
   buildVariantOptionGroups,
@@ -30,6 +31,26 @@ describe("ürün kartı veri sunumu", () => {
       { key: "color", label: "Renk", value: "Siyah" },
       { key: "size", label: "Beden", value: "M" },
       { key: "material", label: "Materyal", value: "Pamuk" },
+    ]);
+  });
+
+  it("kartta tekrar eden alanları çıkarıp yeni sözleşmeden iki kısa bilgi gösterir", () => {
+    expect(
+      buildProductCardFacts({
+        brand: "Kartta zaten ayrı",
+        metadata: {
+          itemKind: "service",
+          templateKey: "service",
+          service: {
+            serviceType: "Ekran değişimi",
+            priceMode: "starting_from",
+            serviceLocation: "business",
+          },
+        },
+      }),
+    ).toEqual([
+      { key: "priceMode", label: "Fiyat biçimi", value: "Başlangıç fiyatı" },
+      { key: "serviceLocation", label: "Hizmet yeri", value: "İşletmede" },
     ]);
   });
 
