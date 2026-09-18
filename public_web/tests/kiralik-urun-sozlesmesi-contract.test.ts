@@ -71,7 +71,7 @@ describe("kiralık vitrin ürün sözleşmesi", () => {
     expect(source.match(/^commit;$/gm)).toHaveLength(1);
     expect(source.match(/^notify pgrst, 'reload schema';$/gm)).toHaveLength(1);
     expect(source.match(/^do \$\$$/gm)).toHaveLength(1);
-    expect(source.match(/^\$\$;$/gm)).toHaveLength(1);
+    expect(source.match(/^\$\$;$/gm)).toHaveLength(2);
     expect(source.match(/^create or replace function public\.clone_demo_store_as_draft\($/gm)).toHaveLength(1);
     expect(source.trimEnd().endsWith("notify pgrst, 'reload schema';")).toBe(true);
   });
