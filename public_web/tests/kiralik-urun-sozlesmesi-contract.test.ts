@@ -73,6 +73,8 @@ describe("kiralık vitrin ürün sözleşmesi", () => {
     expect(source.match(/^do \$\$$/gm)).toHaveLength(1);
     expect(source.match(/^\$\$;$/gm)).toHaveLength(2);
     expect(source.match(/^create or replace function public\.clone_demo_store_as_draft\($/gm)).toHaveLength(1);
+    expect(source.match(/^with hedef\(slug\) as \($/gm)).toHaveLength(3);
+    expect(source).not.toContain("regexp_replace(p.image_urls");
     expect(source.trimEnd().endsWith("notify pgrst, 'reload schema';")).toBe(true);
   });
 });
