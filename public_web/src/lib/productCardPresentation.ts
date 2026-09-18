@@ -144,16 +144,12 @@ export function buildProductQuickFacts(args: {
 export function buildProductCardFacts(args: {
   brand?: string | null;
   metadata?: unknown;
-  limit?: number;
 }): ProductQuickFact[] {
-  const limit = Math.max(0, args.limit ?? 2);
   return buildProductQuickFacts({
     brand: args.brand,
     metadata: args.metadata,
-    limit: 8,
-  })
-    .filter((fact) => fact.key !== "brand" && fact.key !== "serviceType")
-    .slice(0, limit);
+    limit: 100,
+  }).filter((fact) => fact.key !== "brand" && fact.key !== "serviceType");
 }
 
 export function buildProductDetailFacts(args: {
