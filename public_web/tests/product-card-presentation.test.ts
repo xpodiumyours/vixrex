@@ -54,6 +54,27 @@ describe("ürün kartı veri sunumu", () => {
     ]);
   });
 
+  it("kartta iki alan sınırı uygulamaz; doldurulmuş hızlı alanların tamamını gösterir", () => {
+    expect(
+      buildProductCardFacts({
+        metadata: {
+          itemKind: "service",
+          templateKey: "service",
+          service: {
+            serviceType: "Ekran değişimi",
+            priceMode: "fixed",
+            durationMinutes: 45,
+            serviceLocation: "business",
+          },
+        },
+      }),
+    ).toEqual([
+      { key: "priceMode", label: "Fiyat biçimi", value: "Sabit fiyat" },
+      { key: "durationMinutes", label: "Tahmini süre", value: "45 dk" },
+      { key: "serviceLocation", label: "Hizmet yeri", value: "İşletmede" },
+    ]);
+  });
+
   it("hizmet kaydında ürün alanı uydurmaz; hizmet verisini Türkçe sunar", () => {
     const facts = buildProductQuickFacts({
       brand: "Gösterilmemeli",
