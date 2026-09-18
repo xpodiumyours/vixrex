@@ -46,6 +46,40 @@ with hedef(slug) as (
 kaynak as (
   select
     p.id,
+    split_part(p.image_urls->>0, '?', 1) as temel_gorsel
+  from public.products as p
+  join public.stores as s on s.id = p.store_id
+  join hedef on hedef.slug = s.slug
+  where s.is_demo = true
+    and jsonb_typeof(p.image_urls) = 'array'
+    and jsonb_array_length(p.image_urls) between 1 and 2
+    and nullif(btrim(p.image_urls->>0), '') is not null
+)
+update public.products as p
+set image_urls = jsonb_build_array(
+      kaynak.temel_gorsel || '?auto=format&fit=crop&w=1200&h=1500&q=82&crop=center',
+      kaynak.temel_gorsel || '?auto=format&fit=crop&w=1200&h=1500&q=82&crop=faces',
+      kaynak.temel_gorsel || '?auto=format&fit=crop&w=1200&h=1500&q=82&crop=entropy'
+    ),
+    updated_at = now()
+from kaynak
+where kaynak.id = p.id;
+
+with hedef(slug) as (
+  values
+    ('demo-aymira-giyim'),
+    ('demo-lezzet-duragi'),
+    ('demo-nova-kuafor'),
+    ('demo-teknofix'),
+    ('kiralik-butik'),
+    ('kiralik-gida'),
+    ('kiralik-kafe'),
+    ('kiralik-kuafor'),
+    ('kiralik-teknik')
+),
+kaynak as (
+  select
+    p.id,
     regexp_replace(p.image_urls->>0, '\\?.*    ('demo-lezzet-duragi'),
     ('demo-nova-kuafor'),
     ('demo-teknofix'),
