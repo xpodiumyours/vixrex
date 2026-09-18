@@ -14,6 +14,7 @@ import { buildSiteUrl, getSiteUrl } from "@/lib/siteUrl";
 import { safeJsonLdHtml } from "@/lib/jsonLd";
 import { productAttributeSchemaFields } from "@/lib/productStructuredData";
 import { TrackedWhatsAppLink } from "@/components/TrackedWhatsAppLink";
+import { MapPinIcon } from "@/lib/vitrinBrandIcons";
 import ProductViewTracker from "@/components/ProductViewTracker";
 
 export const revalidate = 300;
@@ -230,6 +231,14 @@ export default async function ProductDetailPage(props: PageProps) {
   const isInStock = !String(product.stockStatus || "")
     .toLocaleLowerCase("tr-TR")
     .includes("tükendi");
+  const fulfillmentRegion = String(product.fulfillmentRegion || "").trim();
+  const storeAddressText = String(store.address || "").trim();
+  const fulfillmentMapUrl = fulfillmentRegion
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fulfillmentRegion)}`
+    : null;
+  const storeMapUrl = storeAddressText
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(storeAddressText)}`
+    : null;
 
   // Esnafin girdigi kategori alanlari arama motoruna da gitsin. Ekranda
   // hicbir sey degismez; bu yalniz sayfanin gorunmeyen veri etiketidir.
@@ -349,6 +358,11 @@ export default async function ProductDetailPage(props: PageProps) {
                   {product.category}
                 </span>
               )}
+              {product.badgeTag && (
+                <span className="ml-2 rounded-lg bg-gradient-to-r from-blue-600 to-cyan-600 px-2.5 py-1 text-[10px] font-extrabold text-white shadow-md">
+                  {product.badgeTag}
+                </span>
+              )}
               <h1 className="font-vitrin-display mt-4 text-[clamp(1.9rem,4vw,2.6rem)] font-normal leading-tight text-white">
                 {product.name}
               </h1>
@@ -363,11 +377,71 @@ export default async function ProductDetailPage(props: PageProps) {
                 <div className="mt-1 text-lg font-extrabold text-[#E8A87C]">
                   {product.price || "Fiyat sorun"}
                 </div>
+                {product.oldPriceAmount ? (
+                  <div className="mt-1 text-xs font-medium text-white/30 line-through">
+                    {product.oldPriceAmount} TL
+                  </div>
+                ) : null}
               </div>
               <div className="rounded-2xl border border-white/8 bg-[#1c1f27] p-4">
                 <div className="text-[11px] font-bold text-white/40">Stok</div>
                 <div className="mt-1 text-lg font-extrabold text-emerald-200">
                   {product.stockStatus || "Bilgi alın"}
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-blue-500/20 bg-gradient-to-br from-blue-500/10 to-cyan-500/5 p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-500/15">
+                  <MapPinIcon className="h-4 w-4 text-blue-300" aria-hidden="true" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  {fulfillmentRegion ? (
+                    <div>
+                      <p className="text-[10px] font-extrabold uppercase tracking-wider text-blue-300">
+                        Ürün konumu / teslim bölgesi
+                      </p>
+                      <p className="mt-1 text-xs font-semibold leading-5 text-white/75">
+                        {fulfillmentRegion}
+                      </p>
+                      {fulfillmentMapUrl ? (
+                        <a
+                          href={fulfillmentMapUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-1.5 inline-flex text-xs font-extrabold text-blue-400"
+                        >
+                          Haritada ara →
+                        </a>
+                      ) : null}
+                    </div>
+                  ) : null}
+                  {storeAddressText ? (
+                    <div className={fulfillmentRegion ? "mt-3 border-t border-white/10 pt-3" : ""}>
+                      <p className="text-[10px] font-extrabold uppercase tracking-wider text-white/35">
+                        İşletme konumu
+                      </p>
+                      <p className="mt-1 text-xs font-semibold leading-5 text-white/75">
+                        {storeAddressText}
+                      </p>
+                      {storeMapUrl ? (
+                        <a
+                          href={storeMapUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-1.5 inline-flex text-xs font-extrabold text-blue-400"
+                        >
+                          Yol tarifi →
+                        </a>
+                      ) : null}
+                    </div>
+                  ) : null}
+                  {!fulfillmentRegion && !storeAddressText ? (
+                    <p className="text-xs font-semibold leading-5 text-white/60">
+                      Bu ürün için konum bilgisi eklenmemiş.
+                    </p>
+                  ) : null}
                 </div>
               </div>
             </div>
