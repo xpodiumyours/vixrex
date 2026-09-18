@@ -34,7 +34,7 @@ describe("ürün kartı veri sunumu", () => {
     ]);
   });
 
-  it("kartta tekrar eden alanları çıkarıp yeni sözleşmeden iki kısa bilgi gösterir", () => {
+  it("kartta marka tekrarını çıkarıp hizmet türünü ve hızlı alanları korur", () => {
     expect(
       buildProductCardFacts({
         brand: "Kartta zaten ayrı",
@@ -49,6 +49,7 @@ describe("ürün kartı veri sunumu", () => {
         },
       }),
     ).toEqual([
+      { key: "serviceType", label: "Hizmet türü", value: "Ekran değişimi" },
       { key: "priceMode", label: "Fiyat biçimi", value: "Başlangıç fiyatı" },
       { key: "serviceLocation", label: "Hizmet yeri", value: "İşletmede" },
     ]);
@@ -69,6 +70,7 @@ describe("ürün kartı veri sunumu", () => {
         },
       }),
     ).toEqual([
+      { key: "serviceType", label: "Hizmet türü", value: "Ekran değişimi" },
       { key: "priceMode", label: "Fiyat biçimi", value: "Sabit fiyat" },
       { key: "durationMinutes", label: "Tahmini süre", value: "45 dk" },
       { key: "serviceLocation", label: "Hizmet yeri", value: "İşletmede" },
