@@ -15,7 +15,7 @@ import {
   resolveCatalogImage,
 } from "@/lib/products";
 import type { RichProductItem } from "@/lib/richProductItem";
-import { productVariantLabel } from "@/lib/productCardPresentation";
+import { buildProductCardFacts, productVariantLabel } from "@/lib/productCardPresentation";
 import { normalizeProductMetadata } from "@/lib/productRichData";
 
 type CatalogProduct = RichProductItem;
@@ -256,6 +256,11 @@ export default function ProductCatalog({
           const variantLabel = isService
             ? null
             : productVariantLabel(product.variants, metadata.templateKey);
+          const cardFacts = buildProductCardFacts({
+            brand: product.brand,
+            metadata,
+            limit: 2,
+          });
           const fulfillmentRegion = String(product.fulfillmentRegion || "").trim();
           const fulfillmentMapUrl = productLocationMapUrl(fulfillmentRegion);
           const productKey = product.id || productUrl;
@@ -304,6 +309,23 @@ export default function ProductCatalog({
                   <h3 className="line-clamp-2 min-h-[2.5em] text-xs font-extrabold leading-snug text-white sm:text-sm">
                     {product.name}
                   </h3>
+                  {cardFacts.length ? (
+                    <dl className="mt-2 grid min-w-0 grid-cols-1 gap-1 sm:grid-cols-2">
+                      {cardFacts.map((fact) => (
+                        <div
+                          key={fact.key}
+                          className="min-w-0 rounded-lg border border-white/[0.07] bg-white/[0.035] px-2 py-1.5"
+                        >
+                          <dt className="truncate text-[8px] font-bold uppercase tracking-wide text-slate-500 sm:text-[9px]">
+                            {fact.label}
+                          </dt>
+                          <dd className="truncate text-[10px] font-bold text-slate-200 sm:text-[11px]">
+                            {fact.value}
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                  ) : null}
                   <div className="mt-2.5 flex min-w-0 items-baseline gap-2">
                     <p className="truncate text-xs font-extrabold text-blue-400 sm:text-sm">
                       {product.price || "Fiyat sorun"}
