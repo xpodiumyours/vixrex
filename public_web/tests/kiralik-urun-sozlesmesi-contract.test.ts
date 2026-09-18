@@ -45,9 +45,8 @@ describe("kiralık vitrin ürün sözleşmesi", () => {
     expect(source).toContain("'serviceLocation', 'business'");
   });
 
-  it("eski tek görseli güncel üç görsel kapısına taşır ve eksik kaydı reddeder", () => {
+  it("eski görselleri kaybetmeden üçlü sete tamamlar ve eksik kaydı reddeder", () => {
     expect(source).toContain("jsonb_array_length(p.image_urls) between 1 and 2");
-    expect(source).toContain("'?auto=format&fit=crop&w=1200&h=1500&q=82&crop=center'");
     expect(source).toContain("'?auto=format&fit=crop&w=1200&h=1500&q=82&crop=faces'");
     expect(source).toContain("'?auto=format&fit=crop&w=1200&h=1500&q=82&crop=entropy'");
     expect(source).toContain("raise exception 'KIRALIK_PRODUCT_CATEGORY_REQUIRED'");
@@ -65,5 +64,15 @@ describe("kiralık vitrin ürün sözleşmesi", () => {
     expect(categoryInsert).toContain("k.product_template_key");
     expect(source).toContain("where slug = pg_catalog.btrim(p_source_slug)");
     expect(source).toContain("and is_demo = true");
+  });
+
+  it("tek transaction, tek fonksiyon ve geçerli dollar quote gövdesi taşır", () => {
+    expect(source.match(/^begin;$/gm)).toHaveLength(1);
+    expect(source.match(/^commit;$/gm)).toHaveLength(1);
+    expect(source.match(/^notify pgrst, 'reload schema';$/gm)).toHaveLength(1);
+    expect(source.match(/^do \$\$$/gm)).toHaveLength(1);
+    expect(source.match(/^\$\$;$/gm)).toHaveLength(1);
+    expect(source.match(/^create or replace function public\.clone_demo_store_as_draft\($/gm)).toHaveLength(1);
+    expect(source.trimEnd().endsWith("notify pgrst, 'reload schema';")).toBe(true);
   });
 });
