@@ -77,7 +77,12 @@
       "display": [
         "quick",
         "detail"
-      ]
+      ],
+      "optionLabels": {
+        "new": "Yeni",
+        "used": "Kullanılmış",
+        "refurbished": "Yenilenmiş"
+      }
     },
     {
       "key": "vatRate",
@@ -115,7 +120,14 @@
         "card",
         "quick",
         "detail"
-      ]
+      ],
+      "optionLabels": {
+        "fixed": "Sabit fiyat",
+        "starting_from": "Başlangıç fiyatı",
+        "ask": "Fiyat sor",
+        "free": "Ücretsiz",
+        "hidden": "Fiyatı gösterme"
+      }
     },
     {
       "key": "serviceLocation",
@@ -132,7 +144,12 @@
         "card",
         "quick",
         "detail"
-      ]
+      ],
+      "optionLabels": {
+        "business": "İşletmede",
+        "customer": "Müşteri adresinde",
+        "remote": "Uzaktan"
+      }
     },
     {
       "key": "appointmentRequired",
@@ -207,7 +224,13 @@
           "display": [
             "quick",
             "detail"
-          ]
+          ],
+          "optionLabels": {
+            "kadin": "Kadın",
+            "erkek": "Erkek",
+            "unisex": "Unisex",
+            "cocuk": "Çocuk"
+          }
         },
         {
           "key": "fit",
@@ -223,7 +246,12 @@
           "display": [
             "quick",
             "detail"
-          ]
+          ],
+          "optionLabels": {
+            "dar": "Dar kesim",
+            "normal": "Normal kesim",
+            "bol": "Bol / oversize"
+          }
         },
         {
           "key": "material",
@@ -553,7 +581,13 @@
           "display": [
             "quick",
             "detail"
-          ]
+          ],
+          "optionLabels": {
+            "yok": "İçermez",
+            "alkol": "Alkol içerir",
+            "domuz": "Domuz türevi içerir",
+            "ikisi_de": "Alkol ve domuz türevi içerir"
+          }
         },
         {
           "key": "prepMinutes",
@@ -602,7 +636,13 @@
           ],
           "display": [
             "detail"
-          ]
+          ],
+          "optionLabels": {
+            "yok": "Acısız",
+            "az": "Az acı",
+            "orta": "Orta acı",
+            "cok": "Çok acı"
+          }
         }
       ],
       "excludeCommon": [
@@ -774,15 +814,15 @@
           "requirement": "required",
           "storage": "metadata.service.serviceType",
           "options": [
-            "Sac kesimi",
-            "Sac boyama",
-            "Sac bakimi",
+            "Saç kesimi",
+            "Saç boyama",
+            "Saç bakımı",
             "Makyaj",
-            "Tirnak bakimi",
-            "Cilt bakimi",
+            "Tırnak bakımı",
+            "Cilt bakımı",
             "Epilasyon",
             "Masaj",
-            "Diger"
+            "Diğer"
           ],
           "display": [
             "quick",
@@ -804,7 +844,12 @@
           "display": [
             "quick",
             "detail"
-          ]
+          ],
+          "optionLabels": {
+            "kisa": "Kısa",
+            "orta": "Orta",
+            "uzun": "Uzun"
+          }
         },
         {
           "key": "durationMinutes",
@@ -832,14 +877,14 @@
           "requirement": "required",
           "storage": "metadata.service.serviceType",
           "options": [
-            "Ekran degisimi",
-            "Batarya degisimi",
-            "Anakart onarimi",
-            "Yazilim / kurulum",
+            "Ekran değişimi",
+            "Batarya değişimi",
+            "Anakart onarımı",
+            "Yazılım / kurulum",
             "Veri kurtarma",
-            "Periyodik bakim",
-            "Ariza tespiti",
-            "Diger"
+            "Periyodik bakım",
+            "Arıza tespiti",
+            "Diğer"
           ],
           "display": [
             "quick",
@@ -894,7 +939,12 @@
           "display": [
             "quick",
             "detail"
-          ]
+          ],
+          "optionLabels": {
+            "dahil": "Parça fiyata dahil",
+            "haric": "Parça ayrıca ücretli",
+            "duruma_gore": "Duruma göre değişir"
+          }
         },
         {
           "key": "deliveryDays",
@@ -930,7 +980,11 @@
           ],
           "display": [
             "detail"
-          ]
+          ],
+          "optionLabels": {
+            "orijinal": "Orijinal parça",
+            "muadil": "Muadil parça"
+          }
         }
       ]
     }

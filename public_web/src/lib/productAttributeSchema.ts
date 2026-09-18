@@ -12,6 +12,8 @@ export interface ProductAttributeDefinition {
   requirement: ProductAttributeRequirement;
   storage: string;
   options?: string[];
+  /** Kod degerlerin esnafa ve musteriye gosterilen karsiligi. */
+  optionLabels?: Record<string, string>;
   variantEligible?: boolean;
   /** Formda "Gelismis" bolumunde gizlenir. */
   advanced?: boolean;

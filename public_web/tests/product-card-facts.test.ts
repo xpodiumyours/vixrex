@@ -145,3 +145,32 @@ describe("kart fiyat ve indirim gösterimi", () => {
     expect(eskiFiyatYazisi(null)).toBeNull();
   });
 });
+
+describe("kod değerleri okunur yazıya çevrilir", () => {
+  it("kalıp ve cinsiyet kodunu değil karşılığını gösterir", () => {
+    const kart = buildProductCardFacts({
+      brand: null,
+      metadata: {
+        itemKind: "physical",
+        templateKey: "fashion",
+        attributes: [{ key: "color", label: "Renk", value: "Siyah" }],
+      },
+    });
+    expect(kart.ozellikler.map((alan) => alan.value)).toEqual(["Siyah"]);
+  });
+
+  it("kafe tabağında alkol kodu okunur yazıya döner", () => {
+    const kart = buildProductCardFacts({
+      brand: null,
+      metadata: {
+        itemKind: "physical",
+        templateKey: "cafe_restaurant",
+        attributes: [
+          { key: "portion", label: "Porsiyon", value: "1 dilim" },
+          { key: "allergens", label: "Alerjen bilgisi", value: ["gluten", "süt"] },
+        ],
+      },
+    });
+    expect(kart.ozellikler.map((alan) => alan.value)).toEqual(["1 dilim", "gluten, süt"]);
+  });
+});

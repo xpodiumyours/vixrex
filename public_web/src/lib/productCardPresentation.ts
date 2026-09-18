@@ -103,10 +103,15 @@ function metadataAttributeFacts(args: {
     const definition = definitionByKey.get(attribute.key);
     if (!definition) continue;
     const rawValue = formatAttributeValue(attribute.value, attribute.unit);
+    const okunur = Array.isArray(attribute.value)
+      ? attribute.value
+          .map((item) => definition.optionLabels?.[String(item)] ?? String(item))
+          .join(", ")
+      : definition.optionLabels?.[rawValue] ?? CONDITION_LABELS[rawValue] ?? rawValue;
     facts.push({
       key: attribute.key,
       label: attribute.label || definition.label,
-      value: attribute.key === "condition" ? CONDITION_LABELS[rawValue] || rawValue : rawValue,
+      value: okunur,
     });
   }
   return facts;

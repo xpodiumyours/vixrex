@@ -357,7 +357,7 @@ export function OwnerRichProductFields({
                 <select className="owner-input" value={current} onChange={(e) => setDefinition(definition, e.target.value)}>
                   <option value="">Belirtilmedi</option>
                   {definition.options.map((option) => (
-                    <option key={option} value={option}>{OPTION_LABELS[option] || option}</option>
+                    <option key={option} value={option}>{definition.optionLabels?.[option] || OPTION_LABELS[option] || option}</option>
                   ))}
                 </select>
               </label>
