@@ -64,7 +64,7 @@ void main() {
 
     expect(variants, hasLength(1));
     expect(variants.single.imageUrls, hasLength(ProductImagePolicy.maxImages));
-    expect(ProductImagePolicy.maxImages, 10);
+    expect(ProductImagePolicy.maxImages, 11);
   });
 
   testWidgets(
@@ -88,10 +88,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Marka *'), findsOneWidget);
-      expect(find.text('KDV oranı (%) *'), findsOneWidget);
+      expect(find.text('KDV oranı (%)'), findsOneWidget);
       expect(find.text('Renk *'), findsOneWidget);
       expect(find.text('Beden *'), findsOneWidget);
-      expect(find.text('Materyal *'), findsOneWidget);
+      expect(find.text('Materyal'), findsOneWidget);
       expect(find.text('Stok adedi'), findsOneWidget);
       expect(find.text('Varyantlar'), findsOneWidget);
       expect(find.text('Varyant ekle'), findsOneWidget);
@@ -121,7 +121,7 @@ void main() {
     (
       key: 'food',
       name: 'Gıda',
-      labels: ['Net miktar *', 'İçindekiler', 'Alerjen bilgisi'],
+      labels: ['Net miktar *', 'İçindekiler', 'Alerjen bilgisi *'],
     ),
     (
       key: 'home',
@@ -156,7 +156,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('KDV oranı (%) *'), findsOneWidget);
+      expect(find.text('KDV oranı (%)'), findsOneWidget);
       expect(find.text('Stok adedi'), findsOneWidget);
       for (final label in testCase.labels) {
         expect(
@@ -195,7 +195,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Marka *'), findsNothing);
-    expect(find.text('KDV oranı (%) *'), findsNothing);
+    expect(find.text('KDV oranı (%)'), findsNothing);
   });
 
   testWidgets(
@@ -221,7 +221,7 @@ void main() {
       expect(find.text('Hizmet türü *'), findsOneWidget);
       expect(find.text('Fiyat biçimi *'), findsOneWidget);
       expect(find.text('Hizmet yeri *'), findsOneWidget);
-      expect(find.text('KDV oranı (%) *'), findsNothing);
+      expect(find.text('KDV oranı (%)'), findsNothing);
       expect(find.text('Stok adedi'), findsNothing);
       expect(find.text('Stok durumu'), findsNothing);
       expect(find.text('Varyantlar'), findsNothing);

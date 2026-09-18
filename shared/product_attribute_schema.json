@@ -53,7 +53,7 @@
     },
     {
       "key": "mpn",
-      "label": "Uretici parca kodu / MPN",
+      "label": "Üretici parça kodu / MPN",
       "valueType": "text",
       "requirement": "optional",
       "storage": "metadata.identifiers.mpn",
@@ -64,7 +64,7 @@
     },
     {
       "key": "condition",
-      "label": "Urun durumu",
+      "label": "Ürün durumu",
       "valueType": "single",
       "requirement": "optional",
       "storage": "metadata.attributes",
@@ -81,7 +81,7 @@
     },
     {
       "key": "vatRate",
-      "label": "KDV orani (%)",
+      "label": "KDV oranı (%)",
       "valueType": "single",
       "requirement": "optional",
       "storage": "metadata.attributes",
@@ -100,7 +100,7 @@
   "commonServiceAttributes": [
     {
       "key": "priceMode",
-      "label": "Fiyat bicimi",
+      "label": "Fiyat biçimi",
       "valueType": "single",
       "requirement": "required",
       "storage": "metadata.service.priceMode",
@@ -211,7 +211,7 @@
         },
         {
           "key": "fit",
-          "label": "Kalip / kesim",
+          "label": "Kalıp / kesim",
           "valueType": "single",
           "requirement": "required",
           "storage": "metadata.attributes",
@@ -238,7 +238,7 @@
         },
         {
           "key": "fiberComposition",
-          "label": "Elyaf bilesimi",
+          "label": "Elyaf bileşimi",
           "valueType": "text",
           "requirement": "optional",
           "storage": "metadata.attributes",
@@ -248,7 +248,7 @@
         },
         {
           "key": "measurements",
-          "label": "Olcu tablosu",
+          "label": "Ölçü tablosu",
           "valueType": "text",
           "requirement": "optional",
           "storage": "metadata.attributes",
@@ -417,7 +417,7 @@
     },
     {
       "key": "food",
-      "label": "Paketli gida",
+      "label": "Paketli gıda",
       "itemKind": "physical",
       "attributes": [
         {
@@ -457,7 +457,7 @@
         },
         {
           "key": "origin",
-          "label": "Mensei",
+          "label": "Menşei",
           "valueType": "text",
           "requirement": "required",
           "storage": "metadata.attributes",
@@ -478,7 +478,7 @@
         },
         {
           "key": "ingredients",
-          "label": "Icindekiler",
+          "label": "İçindekiler",
           "valueType": "multi",
           "requirement": "optional",
           "storage": "metadata.attributes",
@@ -488,7 +488,7 @@
         },
         {
           "key": "storageInstructions",
-          "label": "Saklama kosullari",
+          "label": "Saklama koşulları",
           "valueType": "text",
           "requirement": "optional",
           "storage": "metadata.attributes",
@@ -529,7 +529,7 @@
         },
         {
           "key": "mainIngredients",
-          "label": "Temel bilesenler",
+          "label": "Temel bileşenler",
           "valueType": "multi",
           "requirement": "required",
           "storage": "metadata.attributes",
@@ -540,7 +540,7 @@
         },
         {
           "key": "containsAlcoholPork",
-          "label": "Alkol / domuz turevi icerir",
+          "label": "Alkol / domuz türevi içerir",
           "valueType": "single",
           "requirement": "required",
           "storage": "metadata.attributes",
@@ -557,7 +557,7 @@
         },
         {
           "key": "prepMinutes",
-          "label": "Hazirlama suresi (dakika)",
+          "label": "Hazırlama süresi (dakika)",
           "valueType": "number",
           "requirement": "optional",
           "storage": "metadata.attributes",
@@ -568,7 +568,7 @@
         },
         {
           "key": "calories",
-          "label": "Porsiyon basina kalori (kcal)",
+          "label": "Porsiyon başına kalori (kcal)",
           "valueType": "number",
           "requirement": "optional",
           "storage": "metadata.attributes",
@@ -579,7 +579,7 @@
         },
         {
           "key": "dietTags",
-          "label": "Beslenme isaretleri",
+          "label": "Beslenme işaretleri",
           "valueType": "multi",
           "requirement": "optional",
           "storage": "metadata.attributes",
@@ -590,7 +590,7 @@
         },
         {
           "key": "spiceLevel",
-          "label": "Aci seviyesi",
+          "label": "Acı seviyesi",
           "valueType": "single",
           "requirement": "optional",
           "storage": "metadata.attributes",
@@ -769,7 +769,7 @@
       "attributes": [
         {
           "key": "serviceType",
-          "label": "Hizmet turu",
+          "label": "Hizmet türü",
           "valueType": "single",
           "requirement": "required",
           "storage": "metadata.service.serviceType",
@@ -791,7 +791,7 @@
         },
         {
           "key": "hairLength",
-          "label": "Sac boyu",
+          "label": "Saç boyu",
           "valueType": "single",
           "requirement": "optional",
           "storage": "metadata.attributes",
@@ -808,7 +808,7 @@
         },
         {
           "key": "durationMinutes",
-          "label": "Tahmini sure (dakika)",
+          "label": "Tahmini süre (dakika)",
           "valueType": "number",
           "requirement": "optional",
           "storage": "metadata.service.durationMinutes",
@@ -827,7 +827,7 @@
       "attributes": [
         {
           "key": "serviceType",
-          "label": "Hizmet turu",
+          "label": "Hizmet türü",
           "valueType": "single",
           "requirement": "required",
           "storage": "metadata.service.serviceType",
@@ -859,7 +859,7 @@
         },
         {
           "key": "deviceModelVariant",
-          "label": "Cihaz modeli (secenek)",
+          "label": "Cihaz modeli (seçenek)",
           "valueType": "text",
           "requirement": "optional",
           "storage": "metadata.attributes",
@@ -870,7 +870,7 @@
         },
         {
           "key": "warrantyMonths",
-          "label": "Garanti suresi (ay)",
+          "label": "Garanti süresi (ay)",
           "valueType": "number",
           "requirement": "required",
           "storage": "metadata.attributes",
@@ -882,7 +882,7 @@
         },
         {
           "key": "partsIncluded",
-          "label": "Parca fiyata dahil mi",
+          "label": "Parça fiyata dahil mi",
           "valueType": "single",
           "requirement": "required",
           "storage": "metadata.attributes",
@@ -898,7 +898,7 @@
         },
         {
           "key": "deliveryDays",
-          "label": "Teslim suresi (gun)",
+          "label": "Teslim süresi (gün)",
           "valueType": "number",
           "requirement": "optional",
           "storage": "metadata.attributes",
@@ -910,7 +910,7 @@
         },
         {
           "key": "diagnosisFee",
-          "label": "Ariza tespit ucreti",
+          "label": "Arıza tespit ücreti",
           "valueType": "text",
           "requirement": "optional",
           "storage": "metadata.attributes",
@@ -920,7 +920,7 @@
         },
         {
           "key": "partType",
-          "label": "Parca tipi",
+          "label": "Parça tipi",
           "valueType": "single",
           "requirement": "optional",
           "storage": "metadata.attributes",
