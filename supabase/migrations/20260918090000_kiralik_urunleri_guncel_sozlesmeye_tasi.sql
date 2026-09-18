@@ -13,13 +13,23 @@ with hedef(slug, sablon) as (
     ('kiralik-teknik', 'service')
 )
 update public.product_categories as pc
-set product_template_key = hedef.sablon,
+set product_template_key = case
+      when hedef.slug in ('demo-teknofix', 'kiralik-teknik')
+        and lower(pc.name) like '%aksesuar%'
+        then 'electronics'
+      else hedef.sablon
+    end,
     updated_at = now()
 from public.stores as s
 join hedef on hedef.slug = s.slug
 where pc.store_id = s.id
   and s.is_demo = true
-  and pc.product_template_key is distinct from hedef.sablon;
+  and pc.product_template_key is distinct from case
+    when hedef.slug in ('demo-teknofix', 'kiralik-teknik')
+      and lower(pc.name) like '%aksesuar%'
+      then 'electronics'
+    else hedef.sablon
+  end;
 
 with hedef(slug) as (
   values
