@@ -112,13 +112,11 @@ function metadataAttributeFacts(args: {
   return facts;
 }
 
-export function buildProductQuickFacts(args: {
+function collectProductQuickFacts(args: {
   brand?: string | null;
   metadata?: unknown;
-  limit?: number;
 }): ProductQuickFact[] {
   const metadata = normalizeProductMetadata(args.metadata);
-  const limit = Math.max(0, args.limit ?? 4);
   const facts: ProductQuickFact[] = [];
 
   const brand = String(args.brand || "").trim();
@@ -138,18 +136,23 @@ export function buildProductQuickFacts(args: {
     }),
   );
 
-  return facts.slice(0, limit);
+  return facts;
+}
+
+export function buildProductQuickFacts(args: {
+  brand?: string | null;
+  metadata?: unknown;
+  limit?: number;
+}): ProductQuickFact[] {
+  const limit = Math.max(0, args.limit ?? 4);
+  return collectProductQuickFacts(args).slice(0, limit);
 }
 
 export function buildProductCardFacts(args: {
   brand?: string | null;
   metadata?: unknown;
 }): ProductQuickFact[] {
-  return buildProductQuickFacts({
-    brand: args.brand,
-    metadata: args.metadata,
-    limit: 100,
-  }).filter((fact) => fact.key !== "brand" && fact.key !== "serviceType");
+  return collectProductQuickFacts(args).filter((fact) => fact.key !== "brand");
 }
 
 export function buildProductDetailFacts(args: {
