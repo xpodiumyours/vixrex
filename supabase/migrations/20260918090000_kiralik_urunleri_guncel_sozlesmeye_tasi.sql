@@ -276,9 +276,12 @@ begin
     where s.slug = any (v_hedef_slugs)
       and s.is_demo = true
       and (
-        p.metadata->>'schemaVersion' <> '2'
+        p.metadata->>'schemaVersion' is distinct from '2'
         or p.metadata->>'templateKey' is distinct from pc.product_template_key
-        or p.metadata->>'itemKind' is null
+        or p.metadata->>'itemKind' is distinct from case
+          when pc.product_template_key = 'service' then 'service'
+          else 'physical'
+        end
       )
   ) then
     raise exception 'KIRALIK_PRODUCT_METADATA_REQUIRED';
