@@ -232,10 +232,11 @@ begin
     join public.stores as s on s.id = p.store_id
     where s.slug = any (v_hedef_slugs)
       and s.is_demo = true
-      and (
-        jsonb_typeof(p.image_urls) is distinct from 'array'
-        or jsonb_array_length(p.image_urls) < 3
-      )
+      and case
+        when jsonb_typeof(p.image_urls) = 'array'
+          then jsonb_array_length(p.image_urls) < 3
+        else true
+      end
   ) then
     raise exception 'KIRALIK_PRODUCT_IMAGES_REQUIRED';
   end if;
