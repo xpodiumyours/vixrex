@@ -85,18 +85,6 @@ with hedef(slug) as (
 kaynak as (
   select
     p.id,
-    regexp_replace(p.image_urls->>0, '\\?.*    ('demo-lezzet-duragi'),
-    ('demo-nova-kuafor'),
-    ('demo-teknofix'),
-    ('kiralik-butik'),
-    ('kiralik-gida'),
-    ('kiralik-kafe'),
-    ('kiralik-kuafor'),
-    ('kiralik-teknik')
-),
-kaynak as (
-  select
-    p.id,
     coalesce(p.metadata, '{}'::jsonb) as metadata,
     pc.product_template_key,
     case
