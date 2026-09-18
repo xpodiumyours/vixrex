@@ -34,7 +34,8 @@ describe("kiralık vitrin ürün sözleşmesi", () => {
   });
 
   it("kategori, fiziksel ürün ve hizmet metadata sözleşmesini v2'ye taşır", () => {
-    expect(source).toContain("set product_template_key = hedef.sablon");
+    expect(source).toContain("set product_template_key = case");
+    expect(source).toContain("then 'electronics'");
     expect(source).toContain("'schemaVersion', 2");
     expect(source).toContain("'itemKind', 'physical'");
     expect(source).toContain("'itemKind', 'service'");
