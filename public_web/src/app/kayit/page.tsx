@@ -1,22 +1,29 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { supabase } from "@/lib/supabase";
 import { OwnerAuthLayout } from "@/components/owner/OwnerAuthLayout";
 import { guvenliDonusYolu } from "@/lib/guvenliDonus";
 
 export const dynamic = "force-dynamic";
 
+const donusYoluDegisikligiYok = () => () => {};
+const varsayilanDonusYolu = () => "/app";
+
+function mevcutDonusYolu() {
+  const aday = new URLSearchParams(window.location.search).get("next");
+  return guvenliDonusYolu(aday);
+}
+
 export default function KayitPage() {
   const [hata, setHata] = useState("");
   const [gonderiliyor, setGonderiliyor] = useState(false);
-  const [sonrakiYol, setSonrakiYol] = useState("/app");
-
-  useEffect(() => {
-    const aday = new URLSearchParams(window.location.search).get("next");
-    setSonrakiYol(guvenliDonusYolu(aday));
-  }, []);
+  const sonrakiYol = useSyncExternalStore(
+    donusYoluDegisikligiYok,
+    mevcutDonusYolu,
+    varsayilanDonusYolu,
+  );
 
   async function googleIleDevamEt() {
     setHata("");
