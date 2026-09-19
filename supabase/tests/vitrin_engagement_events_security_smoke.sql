@@ -1,5 +1,3 @@
-begin;
-
 do $$
 declare
   v_rls_enabled boolean;
@@ -60,5 +58,3 @@ begin
   end if;
 end;
 $$;
-
-rollback;
