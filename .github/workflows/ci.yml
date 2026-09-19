@@ -138,6 +138,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Yüzey yönlendiricisi testleri
+        run: python .github/scripts/tests/test_changed_surfaces.py
+
       - name: Yüzeyleri sınıflandır
         id: classify
         env:
