@@ -46,7 +46,7 @@ void main() {
     );
     expect(
       BusinessCategoryConfig.productTemplateKeyForCategory('Kafe / Lokanta'),
-      'food',
+      'cafe_restaurant',
     );
   });
 
