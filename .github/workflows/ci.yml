@@ -193,29 +193,13 @@ jobs:
 
       - name: GRANT güvenlik bekçisi — TRUNCATE/MAINTAIN/REFERENCES/TRIGGER
         run: |
-          PGPASSWORD=postgres psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -v ON_ERROR_STOP=1 <<'SQL'
-          do $$
-          declare
-            v_count integer;
-            v_detay text;
-          begin
-            select count(*), string_agg(format('%s: %s -> %s', grantee.rolname, c.relname, a.privilege_type), ', ')
-            into v_count, v_detay
-            from pg_class c
-            cross join lateral aclexplode(c.relacl) a
-            join pg_roles grantee on grantee.oid = a.grantee
-            where c.relnamespace = 'public'::regnamespace
-              and c.relkind in ('r', 'p')
-              and grantee.rolname in ('anon', 'authenticated')
-              and a.privilege_type in ('TRUNCATE', 'MAINTAIN', 'REFERENCES', 'TRIGGER');
+          PGPASSWORD=postgres psql -h 127.0.0.1 -p 54322 -U postgres -d postgres \
+            -v ON_ERROR_STOP=1 -f supabase/tests/grant_guard_smoke.sql
 
-            if v_count > 0 then
-              raise exception 'GRANT güvenlik bekçisi: % kayıt bulundu — anon/authenticated bir veya daha fazla tabloda TRUNCATE/MAINTAIN/REFERENCES/TRIGGER yetkisine sahip (bu yetkiler PostgREST tarafından hiç kullanılmaz, TRUNCATE RLS''ten muaftır). Detay: %', v_count, v_detay;
-            end if;
-
-            raise notice 'GRANT güvenlik bekçisi: temiz, % tablo tarandı.', (select count(*) from pg_class where relnamespace='public'::regnamespace and relkind in ('r','p'));
-          end $$;
-          SQL
+      - name: Engagement tablosu erişim sözleşmesi
+        run: |
+          PGPASSWORD=postgres psql -h 127.0.0.1 -p 54322 -U postgres -d postgres \
+            -v ON_ERROR_STOP=1 -f supabase/tests/vitrin_engagement_events_security_smoke.sql
 
       - name: Yerel Supabase'i durdur
         if: always()
