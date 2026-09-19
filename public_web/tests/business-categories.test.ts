@@ -4,9 +4,11 @@ import { resolve } from "node:path";
 import {
   AKTIF_BUSINESS_CATEGORIES,
   BUSINESS_CATEGORIES,
+  isletmeUrunSablonu,
   resolveBusinessCategory,
   validateBusinessCategoryContract,
 } from "../src/lib/businessCategories";
+import { productTemplateByKey } from "../src/lib/productAttributeSchema";
 import { VITRIN_FIELDS } from "../src/lib/vitrinFieldSchema";
 import { PROFILES } from "../src/lib/vitrinProfile";
 
@@ -39,10 +41,32 @@ describe("ortak kategori core", () => {
   it("normalize edilmiş alias çakışmasını reddeder", () => {
     expect(() =>
       validateBusinessCategoryContract([
-        { id: "bir", order: 1, label: "Bir", templateGroup: "diger", aliases: ["Çakışma"] },
-        { id: "iki", order: 2, label: "İki", templateGroup: "diger", aliases: ["cakisma"] },
+        { id: "bir", order: 1, label: "Bir", templateGroup: "diger", productTemplateKey: "generic", aliases: ["Çakışma"] },
+        { id: "iki", order: 2, label: "İki", templateGroup: "diger", productTemplateKey: "generic", aliases: ["cakisma"] },
       ]),
     ).toThrow(/alias.*çakış/i);
+  });
+
+  it("her kategori geçerli bir ürün şablonuna bağlıdır", () => {
+    for (const category of BUSINESS_CATEGORIES) {
+      expect(productTemplateByKey(category.productTemplateKey)).not.toBeNull();
+    }
+    expect(isletmeUrunSablonu("giyim")).toBe("fashion");
+    expect(isletmeUrunSablonu("Kuaför")).toBe("service");
+    expect(isletmeUrunSablonu("kafe_lokanta")).toBe("cafe_restaurant");
+  });
+
+  it("çözülemeyen işletme kategorisi genel şablona düşer", () => {
+    expect(isletmeUrunSablonu("", "")).toBe("generic");
+    expect(isletmeUrunSablonu("bilinmeyen-zirva-9000")).toBe("generic");
+  });
+
+  it("geçersiz ürün şablonu taşıyan kategoriyi reddeder", () => {
+    expect(() =>
+      validateBusinessCategoryContract([
+        { id: "bir", order: 1, label: "Bir", templateGroup: "diger", productTemplateKey: "olmayan_sablon", aliases: [] },
+      ]),
+    ).toThrow(/sözleşmesi geçersiz/i);
   });
 
   it("Next adapter ve alan şeması bütün canonical kategorileri kapsar", () => {

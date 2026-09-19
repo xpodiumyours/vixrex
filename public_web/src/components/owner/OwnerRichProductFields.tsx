@@ -156,7 +156,7 @@ function alignVariantsToDefinitions(
   isService: boolean,
   imageUrls: string[] | null,
 ): ProductVariant[] {
-  if (isService) return [];
+  if (isService && variantDefinitions.length === 0) return [];
   const withValidImages = imageUrls == null
     ? variants
     : variants.map((variant) => {
@@ -320,6 +320,71 @@ export function OwnerRichProductFields({
     });
   }
 
+  const temelAlanlar = definitions.filter((definition) => !definition.advanced);
+  const gelismisAlanlar = definitions.filter((definition) => definition.advanced);
+
+  const alanKutusu = (definition: ProductAttributeDefinition) => {
+          const current = definition.storage === "core.brand"
+            ? value.brand
+            : definition.storage === "core.barcode"
+              ? value.barcode
+              : displayInputValue(attributeValue(value.metadata, definition.key));
+          const label = `${definition.label}${
+            definition.requirement === "required"
+              ? " *"
+              : definition.requirement === "recommended"
+                ? " · önerilen"
+                : ""
+          }`;
+
+          if (definition.valueType === "boolean") {
+            return (
+              <label key={definition.key} className="space-y-2">
+                <span className="owner-label">{label}</span>
+                <select className="owner-input" value={current} onChange={(e) => setDefinition(definition, e.target.value)}>
+                  <option value="">Belirtilmedi</option>
+                  <option value="true">Evet</option>
+                  <option value="false">Hayır</option>
+                </select>
+              </label>
+            );
+          }
+
+          if (definition.options?.length) {
+            return (
+              <label key={definition.key} className="space-y-2">
+                <span className="owner-label">{label}</span>
+                <select className="owner-input" value={current} onChange={(e) => setDefinition(definition, e.target.value)}>
+                  <option value="">Belirtilmedi</option>
+                  {definition.options.map((option) => (
+                    <option key={option} value={option}>{definition.optionLabels?.[option] || OPTION_LABELS[option] || option}</option>
+                  ))}
+                </select>
+              </label>
+            );
+          }
+
+          return (
+            <label key={definition.key} className={`space-y-2 ${definition.valueType === "multi" ? "sm:col-span-2" : ""}`}>
+              <span className="owner-label">{label}</span>
+              <input
+                type={definition.valueType === "number" ? "number" : "text"}
+                min={definition.valueType === "number" ? 0 : undefined}
+                className="owner-input"
+                value={current}
+                onChange={(e) => setDefinition(definition, e.target.value)}
+                placeholder={definition.valueType === "multi" ? "Virgülle ayır: örn. montaj, kontrol" : undefined}
+              />
+              {definition.autoFill === "storeName" && !current.trim() ? (
+                <span className="block text-[10px] text-[var(--owner-muted)]">Boş bırakırsan mağazanın adı yazılır.</span>
+              ) : null}
+              {definition.variantEligible ? (
+                <span className="block text-[10px] text-[var(--owner-muted)]">Bu özellik varyant oluşturmak için kullanılabilir.</span>
+              ) : null}
+            </label>
+          );
+          };
+
   return (
     <fieldset className="mt-5 rounded-2xl border border-[var(--owner-border)] bg-[var(--owner-bg-soft)] p-4 sm:p-5" disabled={disabled}>
       <legend className="px-2 text-sm font-black text-[var(--owner-text)]">Ürün detayları</legend>
@@ -343,61 +408,21 @@ export function OwnerRichProductFields({
       ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2">
-        {definitions.map((definition) => {
-          const current = definition.storage === "core.brand"
-            ? value.brand
-            : definition.storage === "core.barcode"
-              ? value.barcode
-              : displayInputValue(attributeValue(value.metadata, definition.key));
-          const label = `${definition.label}${definition.requirement === "recommended" ? " · önerilen" : ""}`;
-
-          if (definition.valueType === "boolean") {
-            return (
-              <label key={definition.key} className="space-y-2">
-                <span className="owner-label">{label}</span>
-                <select className="owner-input" value={current} onChange={(e) => setDefinition(definition, e.target.value)}>
-                  <option value="">Belirtilmedi</option>
-                  <option value="true">Evet</option>
-                  <option value="false">Hayır</option>
-                </select>
-              </label>
-            );
-          }
-
-          if (definition.options?.length) {
-            return (
-              <label key={definition.key} className="space-y-2">
-                <span className="owner-label">{label}</span>
-                <select className="owner-input" value={current} onChange={(e) => setDefinition(definition, e.target.value)}>
-                  <option value="">Belirtilmedi</option>
-                  {definition.options.map((option) => (
-                    <option key={option} value={option}>{OPTION_LABELS[option] || option}</option>
-                  ))}
-                </select>
-              </label>
-            );
-          }
-
-          return (
-            <label key={definition.key} className={`space-y-2 ${definition.valueType === "multi" ? "sm:col-span-2" : ""}`}>
-              <span className="owner-label">{label}</span>
-              <input
-                type={definition.valueType === "number" ? "number" : "text"}
-                min={definition.valueType === "number" ? 0 : undefined}
-                className="owner-input"
-                value={current}
-                onChange={(e) => setDefinition(definition, e.target.value)}
-                placeholder={definition.valueType === "multi" ? "Virgülle ayır: örn. montaj, kontrol" : undefined}
-              />
-              {definition.variantEligible ? (
-                <span className="block text-[10px] text-[var(--owner-muted)]">Bu özellik varyant oluşturmak için kullanılabilir.</span>
-              ) : null}
-            </label>
-          );
-        })}
+        {temelAlanlar.map((definition) => alanKutusu(definition))}
       </div>
 
-      {!isService && variantDefinitions.length > 0 ? (
+      {gelismisAlanlar.length > 0 ? (
+        <details className="mt-4 rounded-xl border border-[var(--owner-border)] bg-[var(--owner-bg-soft)] p-3">
+          <summary className="cursor-pointer text-xs font-bold text-[var(--owner-text-alt)]">
+            Gelişmiş bilgiler (isteğe bağlı)
+          </summary>
+          <div className="mt-3 grid gap-4 sm:grid-cols-2">
+            {gelismisAlanlar.map((definition) => alanKutusu(definition))}
+          </div>
+        </details>
+      ) : null}
+
+      {variantDefinitions.length > 0 ? (
         <section className="mt-5 border-t border-[var(--owner-border)] pt-5">
           <div className="flex items-start justify-between gap-3">
             <div>

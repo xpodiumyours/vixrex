@@ -23,6 +23,7 @@ import {
   normalizeProductImageUrls,
 } from "@/lib/productImagePolicy";
 import { parseProductPriceNumber } from "@/lib/productPrice";
+import { eksikZorunluAlanlar, eksikZorunluAlanMesaji } from "@/lib/productRequiredFields";
 
 export interface OwnerProductCategory {
   id: string;
@@ -56,6 +57,8 @@ interface OwnerProductManagerProps {
   storeSlug: string;
   products: OwnerProduct[];
   categories: OwnerProductCategory[];
+  varsayilanUrunTipi?: string;
+  storeName?: string | null;
   onRefresh: () => Promise<void>;
 }
 
@@ -102,8 +105,10 @@ async function fetchCategoryTemplateKeys(
 
 export function OwnerProductManager({
   storeSlug,
- products,
+  products,
   categories,
+  varsayilanUrunTipi = "generic",
+  storeName,
   onRefresh,
 }: OwnerProductManagerProps) {
   const [editing, setEditing] = useState<OwnerProduct | "new" | null>(null);
@@ -351,7 +356,7 @@ export function OwnerProductManager({
       {queuedCount > 0 ? <p className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm font-bold text-amber-600" role="status">{queuedCount} ürün işlemi kuyrukta — bağlantı gelince otomatik gönderilecek (vitrin metin kuyruğundan ayrı).</p> : null}
       {success ? <p className="mb-4 rounded-xl border border-[var(--owner-success)]/40 bg-[var(--owner-success)]/10 p-3 text-sm text-[var(--owner-success)]" role="status">{success}</p> : null}
 
-      <OwnerCategoryManager storeSlug={storeSlug} categories={categoriesWithCount} onRefresh={refreshAll} />
+      <OwnerCategoryManager storeSlug={storeSlug} categories={categoriesWithCount} varsayilanUrunTipi={varsayilanUrunTipi} onRefresh={refreshAll} />
 
       <div className="mt-4 flex flex-col gap-2 sm:flex-row">
         <input value={filterText} onChange={(e) => setFilterText(e.target.value)} placeholder="Ürün ara — ad, açıklama, fiyat, rozet" className="owner-input flex-1 text-sm" />
@@ -373,6 +378,7 @@ export function OwnerProductManager({
           categories={resolvedCategories}
           busy={busy}
           storeSlug={storeSlug}
+          storeName={storeName}
           onCancel={() => setEditing(null)}
           onSave={saveProduct}
         />
@@ -458,11 +464,12 @@ interface ProductFormProps {
   categories: OwnerProductCategory[];
   busy: boolean;
   storeSlug: string;
+  storeName?: string | null;
   onCancel: () => void;
   onSave: (value: ProductFormValue) => Promise<void>;
 }
 
-function ProductForm({ product, categories, busy, storeSlug, onCancel, onSave }: ProductFormProps) {
+function ProductForm({ product, categories, busy, storeSlug, storeName, onCancel, onSave }: ProductFormProps) {
   const initialImageUrls = useMemo(
     () => normalizeProductImageUrls(product?.image_urls).slice(0, MAX_PRODUCT_IMAGES),
     [product],
@@ -558,6 +565,15 @@ function ProductForm({ product, categories, busy, storeSlug, onCancel, onSave }:
     if (oldPriceText.trim() && oldPriceAmount == null) { setValidation("Eski fiyat sayı olmalı."); return; }
     if (badgeTag.trim().length > 20) { setValidation("Rozet en fazla 20 karakter."); return; }
     if (!isService && rich.stockQuantity.trim() && (!/^\d+$/.test(rich.stockQuantity) || Number(rich.stockQuantity) < 0)) { setValidation("Stok adedi 0 veya daha büyük tam sayı olmalı."); return; }
+    const eksikler = eksikZorunluAlanlar({
+      templateKey,
+      brand: rich.brand,
+      metadata: rich.metadata,
+      variants: rich.variants,
+      storeName,
+    });
+    const eksikMesaji = eksikZorunluAlanMesaji(eksikler);
+    if (eksikMesaji) { setValidation(eksikMesaji); return; }
 
     setValidation("");
     void onSave({
@@ -619,7 +635,15 @@ function ProductForm({ product, categories, busy, storeSlug, onCancel, onSave }:
       <div className="mt-5 grid gap-4 sm:grid-cols-2">
         <label className="space-y-2 sm:col-span-2"><span className="owner-label">Ürün adı *</span><input className="owner-input" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} disabled={busy} /></label>
         <label className="space-y-2"><span className="owner-label">Fiyat</span><input className="owner-input" value={priceText} onChange={(e) => setPriceText(e.target.value)} maxLength={30} placeholder="Ör. 499 TL" disabled={busy} /></label>
-        <label className="space-y-2"><span className="owner-label">Eski fiyat (üstü çizili)</span><input className="owner-input" value={oldPriceText} onChange={(e) => setOldPriceText(e.target.value)} maxLength={30} placeholder="Ör. 799" disabled={busy} /></label>
+        <label className="space-y-2">
+          <span className="owner-label">Eski fiyat (üstü çizili)</span>
+          <input className="owner-input" value={oldPriceText} onChange={(e) => setOldPriceText(e.target.value)} maxLength={30} placeholder="Ör. 799" disabled={busy} />
+          {oldPriceText.trim() ? (
+            <span className="block text-[11px] leading-4 text-amber-400">
+              Yasal uyarı: üstü çizili fiyat, indirimden önceki dönemde gerçekten uyguladığın en düşük fiyat olmalı. İspat yükü sende.
+            </span>
+          ) : null}
+        </label>
         <label className="space-y-2"><span className="owner-label">Rozet</span><input className="owner-input" value={badgeTag} onChange={(e) => setBadgeTag(e.target.value)} maxLength={20} placeholder="Örn. Yeni, -31%" disabled={busy} /></label>
         <label className="space-y-2"><span className="owner-label">Teslim bölgesi</span><input className="owner-input" value={fulfillmentRegion} onChange={(e) => setFulfillmentRegion(e.target.value)} maxLength={80} placeholder="Örn. İstanbul içi" disabled={busy} /></label>
         {!isService ? (

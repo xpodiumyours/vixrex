@@ -1,0 +1,9 @@
+{
+  "_aciklama": "TEK KAYNAK: Urun fotografi sayilari ve kaynak kalite sinirlari. Flutter ve Next.js bu dosyadan uretilen degerleri okur; sayilar baska dosyada elle yazilmaz.",
+  "_kaynak": "shared/product_image_policy.json",
+  "_ureten": "tool/fotograf_kurali_uret.dart -> lib/config/product_image_policy.g.dart",
+  "minImages": 3,
+  "maxImages": 11,
+  "maxSourceMegabytes": 5,
+  "minSourceShortEdge": 1200
+}

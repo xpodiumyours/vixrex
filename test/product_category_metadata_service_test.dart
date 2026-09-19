@@ -116,7 +116,7 @@ void main() {
     final sanitized = await sanitizeProductMetadataForWrite(current);
     final keys = sanitized.attributes.map((item) => item.key).toSet();
 
-    expect(sanitized.schemaVersion, 2);
+    expect(sanitized.schemaVersion, 4);
     expect(sanitized.templateKey, 'electronics');
     expect(sanitized.itemKind, 'physical');
     expect(sanitized.sku, 'SKU-3');

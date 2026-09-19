@@ -22,6 +22,7 @@ import {
   productTemplateByKey,
 } from "@/lib/productAttributeSchema";
 import { parseProductPriceNumber } from "@/lib/productPrice";
+import { eksikZorunluAlanlar, eksikZorunluAlanMesaji } from "@/lib/productRequiredFields";
 
 export const dynamic = "force-dynamic";
 
@@ -94,7 +95,7 @@ async function ownerContext(slug: string) {
   const admin = getSupabaseAdmin();
   const { data: store } = await admin
     .from("stores")
-    .select("id, edit_token")
+    .select("id, edit_token, name")
     .eq("id", ownerSession.storeId)
     .single();
   if (!store?.id || !store.edit_token) return null;
@@ -116,6 +117,23 @@ async function categoryTemplateKey(
   if (rich.error || !rich.data) return null;
   const key = cleanString(rich.data.product_template_key) || "generic";
   return productTemplateByKey(key) ? key : null;
+}
+
+/**
+ * Marka zorunlu ama esnafin markasi olmayabilir (butik, ev yapimi uretim).
+ * Profesyonel platformlarin yaptigi gibi bos birakilirsa magaza adi yazilir.
+ */
+function markaVeyaMagazaAdi(
+  ham: unknown,
+  templateKey: string,
+  storeName: unknown,
+): string | null {
+  const girilen = cleanString(ham);
+  if (girilen) return girilen;
+  const otomatik = productAttributesForTemplate(templateKey).some(
+    (attribute) => attribute.key === "brand" && attribute.autoFill === "storeName",
+  );
+  return otomatik ? cleanString(storeName) : null;
 }
 
 function metadataForTemplate(value: unknown, templateKey: string): ProductMetadata | null {
@@ -150,7 +168,7 @@ function variantsForTemplate(
   productImageUrls: string[],
 ): ProductVariant[] {
   const template = productTemplateByKey(templateKey);
-  if (!template || template.itemKind === "service") return [];
+  if (!template) return [];
 
   const availableImages = new Set(productImageUrls);
   const variants = normalizeProductVariants(value).map((variant) => ({
@@ -222,11 +240,23 @@ export async function POST(request: NextRequest) {
   if (!metadata) return NextResponse.json({ hata: "Ürün detayları kategori tipiyle uyuşmuyor." }, { status: 422 });
   const variants = variantsForTemplate(govde.variants, templateKey, imageValidation.imageUrls);
   const barcode = isService ? null : cleanString(govde.barcode);
+  const brand = isService
+    ? null
+    : markaVeyaMagazaAdi(govde.brand, templateKey, owned.store.name);
   const variantError = validateVariantSet(variants, barcode);
   if (variantError) return NextResponse.json({ hata: variantError }, { status: 422 });
 
   const priceText = typeof govde.priceText === "string" ? govde.priceText.trim() : "";
   const stockQuantity = isService ? null : cleanNonNegativeInt(govde.stockQuantity);
+  const eksikMesaji = eksikZorunluAlanMesaji(
+    eksikZorunluAlanlar({
+      templateKey,
+      brand,
+      metadata,
+      variants,
+    }),
+  );
+  if (eksikMesaji) return NextResponse.json({ hata: eksikMesaji }, { status: 422 });
   try {
     const result = await createRichCoreProduct({
       admin: owned.admin,
@@ -243,7 +273,7 @@ export async function POST(request: NextRequest) {
       oldPriceAmount: cleanAmount(govde.oldPriceAmount),
       badgeTag: cleanString(govde.badgeTag),
       fulfillmentRegion: cleanString(govde.fulfillmentRegion),
-      brand: isService ? null : cleanString(govde.brand),
+      brand,
       barcode,
       stockQuantity,
       stockStatus: isService ? null : cleanString(govde.stockStatus) || "Mevcut",
@@ -330,9 +360,11 @@ export async function PATCH(request: NextRequest) {
       : cleanString(current.stock_status) || "Mevcut";
   const brand = isService
     ? null
-    : hasOwn(govde, "brand")
-      ? cleanString(govde.brand)
-      : cleanString(current.brand);
+    : markaVeyaMagazaAdi(
+        hasOwn(govde, "brand") ? govde.brand : current.brand,
+        templateKey,
+        owned.store.name,
+      );
   const barcode = isService
     ? null
     : hasOwn(govde, "barcode")
@@ -349,6 +381,11 @@ export async function PATCH(request: NextRequest) {
     : cleanString(current.fulfillment_region);
   const variantError = validateVariantSet(variants, barcode);
   if (variantError) return NextResponse.json({ hata: variantError }, { status: 422 });
+
+  const eksikMesaji = eksikZorunluAlanMesaji(
+    eksikZorunluAlanlar({ templateKey, brand, metadata, variants }),
+  );
+  if (eksikMesaji) return NextResponse.json({ hata: eksikMesaji }, { status: 422 });
 
   try {
     await updateRichCoreProduct({

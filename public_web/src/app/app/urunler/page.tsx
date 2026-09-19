@@ -5,11 +5,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { OwnerProductManager, type OwnerProduct, type OwnerProductCategory } from "@/components/owner/OwnerProductManager";
+import { isletmeUrunSablonu } from "@/lib/businessCategories";
 
 interface Store {
   id: string;
   slug: string;
   name: string;
+  kategori: string | null;
+  business_type: string | null;
   products: OwnerProduct[];
   product_categories: OwnerProductCategory[];
 }
@@ -40,7 +43,7 @@ export default function UrunlerPage() {
     }
     const { data, error } = await supabase
       .from("stores")
-      .select("id, slug, name, products(id, slug, name, description, price_text, image_urls, category_id, stock_status, old_price_amount, badge_tag, fulfillment_region, product_categories(name)), product_categories(id, name)")
+      .select("id, slug, name, kategori, business_type, products(id, slug, name, description, price_text, price_amount, currency, image_urls, category_id, stock_status, stock_quantity, brand, barcode, metadata, variants, old_price_amount, badge_tag, fulfillment_region, product_categories(name, product_template_key)), product_categories(id, name, product_template_key)")
       .eq("slug", slug)
       .maybeSingle();
     if (error || !data) {
@@ -91,7 +94,7 @@ export default function UrunlerPage() {
           </div>
           <Link href="/app" className="owner-button-secondary">← Pano</Link>
         </div>
-        <OwnerProductManager storeSlug={store.slug} products={store.products ?? []} categories={store.product_categories ?? []} onRefresh={yukle} />
+        <OwnerProductManager storeSlug={store.slug} products={store.products ?? []} categories={store.product_categories ?? []} varsayilanUrunTipi={isletmeUrunSablonu(store.kategori, store.business_type)} storeName={store.name} onRefresh={yukle} />
       </div>
     </div>
   );

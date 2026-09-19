@@ -49,7 +49,7 @@ void main() {
     ]);
   });
 
-  test('varyant galerisi ortak 11 görsel sınırını kullanır', () async {
+  test('varyant galerisi ortak görsel sınırını kullanır', () async {
     final images = List.generate(
       ProductImagePolicy.maxImages + 1,
       (index) => 'https://cdn.example.com/product-$index.webp',
@@ -87,11 +87,11 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Marka · önerilen'), findsOneWidget);
-      expect(find.text('KDV oranı (%) · önerilen'), findsOneWidget);
-      expect(find.text('Renk · önerilen'), findsOneWidget);
-      expect(find.text('Beden · önerilen'), findsOneWidget);
-      expect(find.text('Materyal · önerilen'), findsOneWidget);
+      expect(find.text('Marka *'), findsOneWidget);
+      expect(find.text('KDV oranı (%)'), findsOneWidget);
+      expect(find.text('Renk *'), findsOneWidget);
+      expect(find.text('Beden *'), findsOneWidget);
+      expect(find.text('Materyal'), findsOneWidget);
       expect(find.text('Stok adedi'), findsOneWidget);
       expect(find.text('Varyantlar'), findsOneWidget);
       expect(find.text('Varyant ekle'), findsOneWidget);
@@ -111,31 +111,27 @@ void main() {
     (
       key: 'electronics',
       name: 'Elektronik',
-      labels: ['Model · önerilen', 'RAM', 'Depolama kapasitesi'],
+      labels: ['Model *', 'RAM', 'Depolama kapasitesi'],
     ),
     (
       key: 'beauty',
       name: 'Kozmetik',
-      labels: ['Renk / ton', 'Net miktar · önerilen', 'İçerik'],
+      labels: ['Renk / ton', 'Net miktar *', 'İçerik'],
     ),
     (
       key: 'food',
       name: 'Gıda',
-      labels: ['Net miktar · önerilen', 'İçindekiler', 'Alerjen bilgisi'],
+      labels: ['Net miktar *', 'İçindekiler', 'Alerjen bilgisi *'],
     ),
     (
       key: 'home',
       name: 'Ev',
-      labels: ['Materyal · önerilen', 'Genişlik', 'Yükseklik', 'Derinlik'],
+      labels: ['Materyal *', 'Genişlik', 'Yükseklik', 'Derinlik'],
     ),
     (
       key: 'automotive',
       name: 'Otomotiv',
-      labels: [
-        'Parça / model kodu · önerilen',
-        'Uyumlu marka · önerilen',
-        'Uyumlu model · önerilen',
-      ],
+      labels: ['Parça / model kodu *', 'Uyumlu marka *', 'Uyumlu model *'],
     ),
   ];
 
@@ -160,7 +156,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('KDV oranı (%) · önerilen'), findsOneWidget);
+      expect(find.text('KDV oranı (%)'), findsOneWidget);
       expect(find.text('Stok adedi'), findsOneWidget);
       for (final label in testCase.labels) {
         expect(
@@ -198,8 +194,8 @@ void main() {
       ),
       findsOneWidget,
     );
-    expect(find.text('Marka · önerilen'), findsNothing);
-    expect(find.text('KDV oranı (%) · önerilen'), findsNothing);
+    expect(find.text('Marka *'), findsNothing);
+    expect(find.text('KDV oranı (%)'), findsNothing);
   });
 
   testWidgets(
@@ -222,10 +218,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Hizmet türü · önerilen'), findsOneWidget);
-      expect(find.text('Fiyat biçimi · önerilen'), findsOneWidget);
-      expect(find.text('Hizmet yeri · önerilen'), findsOneWidget);
-      expect(find.text('KDV oranı (%) · önerilen'), findsNothing);
+      expect(find.text('Hizmet türü *'), findsOneWidget);
+      expect(find.text('Fiyat biçimi *'), findsOneWidget);
+      expect(find.text('Hizmet yeri *'), findsOneWidget);
+      expect(find.text('KDV oranı (%)'), findsNothing);
       expect(find.text('Stok adedi'), findsNothing);
       expect(find.text('Stok durumu'), findsNothing);
       expect(find.text('Varyantlar'), findsNothing);

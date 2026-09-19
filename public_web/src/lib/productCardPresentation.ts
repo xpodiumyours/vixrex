@@ -91,7 +91,7 @@ function serviceFacts(metadata: ReturnType<typeof normalizeProductMetadata>, det
 
 function metadataAttributeFacts(args: {
   metadata: ReturnType<typeof normalizeProductMetadata>;
-  surface: "quick" | "detail";
+  surface: "card" | "quick" | "detail";
   existingKeys: Set<string>;
 }) {
   const definitions = productAttributesForSurface(args.metadata.templateKey, args.surface);
@@ -103,10 +103,15 @@ function metadataAttributeFacts(args: {
     const definition = definitionByKey.get(attribute.key);
     if (!definition) continue;
     const rawValue = formatAttributeValue(attribute.value, attribute.unit);
+    const okunur = Array.isArray(attribute.value)
+      ? attribute.value
+          .map((item) => definition.optionLabels?.[String(item)] ?? String(item))
+          .join(", ")
+      : definition.optionLabels?.[rawValue] ?? CONDITION_LABELS[rawValue] ?? rawValue;
     facts.push({
       key: attribute.key,
       label: attribute.label || definition.label,
-      value: attribute.key === "condition" ? CONDITION_LABELS[rawValue] || rawValue : rawValue,
+      value: okunur,
     });
   }
   return facts;
@@ -193,7 +198,7 @@ export function productVariantsForTemplate(
 ): ProductVariant[] {
   const variants = normalizeProductVariants(value);
   const template = productTemplateByKey(templateKey);
-  if (template?.itemKind === "service") return [];
+  if (!template) return [];
 
   const variantDefinitions = productAttributesForTemplate(templateKey).filter(
     (definition) => definition.variantEligible,
@@ -286,4 +291,102 @@ export function productVariantCount(value: unknown, templateKey?: string | null)
 export function productVariantLabel(value: unknown, templateKey?: string | null): string | null {
   const count = productVariantCount(value, templateKey);
   return count > 1 ? `${count} seçenek` : null;
+}
+
+export interface ProductCardFacts {
+  /** Kartın en üstünde, ürün adının üzerinde gösterilir. */
+  marka: string | null;
+  /** Adın altında küçük etiketler halinde gösterilir. */
+  ozellikler: ProductQuickFact[];
+}
+
+export function buildProductCardFacts(args: {
+  brand?: string | null;
+  metadata?: unknown;
+  limit?: number;
+}): ProductCardFacts {
+  const metadata = normalizeProductMetadata(args.metadata);
+  const limit = Math.max(0, args.limit ?? 3);
+  const kartAlanlari = new Set(
+    productAttributesForSurface(metadata.templateKey, "card").map((definition) => definition.key),
+  );
+
+  const marka =
+    metadata.itemKind !== "service" && kartAlanlari.has("brand")
+      ? String(args.brand || "").trim() || null
+      : null;
+
+  const ozellikler: ProductQuickFact[] = [];
+
+  if (metadata.itemKind === "service") {
+    const service = metadata.service;
+    if (service?.durationMinutes && kartAlanlari.has("durationMinutes")) {
+      ozellikler.push({
+        key: "durationMinutes",
+        label: "Süre",
+        value: `${service.durationMinutes} dk`,
+      });
+    }
+    if (service?.priceMode && kartAlanlari.has("priceMode")) {
+      ozellikler.push({
+        key: "priceMode",
+        label: "Fiyat biçimi",
+        value: PRICE_MODE_LABELS[service.priceMode],
+      });
+    }
+    if (service?.serviceLocation && kartAlanlari.has("serviceLocation")) {
+      ozellikler.push({
+        key: "serviceLocation",
+        label: "Hizmet yeri",
+        value: SERVICE_LOCATION_LABELS[service.serviceLocation],
+      });
+    }
+  } else {
+    ozellikler.push(
+      ...metadataAttributeFacts({
+        metadata,
+        surface: "card",
+        existingKeys: new Set(["brand"]),
+      }),
+    );
+  }
+
+  return { marka, ozellikler: ozellikler.slice(0, limit) };
+}
+
+const TUTAR_BICIMI = new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 2 });
+
+/** Eski fiyati guncel fiyatla ayni yazimda gosterir: 1800 -> "1.800 TL". */
+export function eskiFiyatYazisi(oldPriceAmount: unknown): string | null {
+  const tutar = typeof oldPriceAmount === "number" ? oldPriceAmount : Number(oldPriceAmount);
+  if (!Number.isFinite(tutar) || tutar <= 0) return null;
+  return `${TUTAR_BICIMI.format(tutar)} TL`;
+}
+
+/**
+ * Indirim orani. Profesyonel platformlarda bu oran esnafin elle yazdigi bir
+ * metin degil, iki fiyattan hesaplanan bir degerdir.
+ */
+export function indirimOrani(args: {
+  priceAmount?: number | null;
+  oldPriceAmount?: number | null;
+}): number | null {
+  const guncel = typeof args.priceAmount === "number" ? args.priceAmount : Number(args.priceAmount);
+  const eski = typeof args.oldPriceAmount === "number" ? args.oldPriceAmount : Number(args.oldPriceAmount);
+  if (!Number.isFinite(guncel) || !Number.isFinite(eski)) return null;
+  if (guncel <= 0 || eski <= 0 || eski <= guncel) return null;
+  const oran = Math.round(((eski - guncel) / eski) * 100);
+  return oran >= 1 && oran <= 99 ? oran : null;
+}
+
+/** Kartin kose rozeti: esnaf kendi rozetini yazdiysa ona dokunulmaz. */
+export function kartRozeti(args: {
+  badgeTag?: string | null;
+  priceAmount?: number | null;
+  oldPriceAmount?: number | null;
+}): string | null {
+  const elleYazilan = String(args.badgeTag || "").trim();
+  if (elleYazilan) return elleYazilan;
+  const oran = indirimOrani(args);
+  return oran === null ? null : `%${oran} indirim`;
 }

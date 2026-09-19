@@ -1,23 +1,236 @@
 {
   "categories": [
-    { "id": "giyim", "order": 1, "label": "Giyim", "templateGroup": "perakende", "productTemplateKey": "fashion", "aktif": true, "aliases": ["giyim", "Giyim & Butik"] },
-    { "id": "butik", "order": 2, "label": "Butik", "templateGroup": "perakende", "productTemplateKey": "fashion", "aktif": true, "aliases": ["butik"] },
-    { "id": "gida", "order": 3, "label": "Gıda", "templateGroup": "gida", "productTemplateKey": "food", "aktif": true, "aliases": ["gida", "Gıda & Fırın"] },
-    { "id": "firin", "order": 4, "label": "Fırın", "templateGroup": "gida", "productTemplateKey": "food", "aktif": false, "aliases": ["firin"] },
-    { "id": "kozmetik", "order": 5, "label": "Kozmetik", "templateGroup": "perakende", "productTemplateKey": "beauty", "aktif": false, "aliases": ["kozmetik"] },
-    { "id": "dekorasyon", "order": 6, "label": "Dekorasyon", "templateGroup": "perakende", "productTemplateKey": "home", "aktif": false, "aliases": ["dekorasyon"] },
-    { "id": "elektronik", "order": 7, "label": "Elektronik", "templateGroup": "perakende", "productTemplateKey": "electronics", "aktif": false, "aliases": ["elektronik"] },
-    { "id": "kirtasiye", "order": 8, "label": "Kırtasiye", "templateGroup": "perakende", "productTemplateKey": "generic", "aktif": false, "aliases": ["kirtasiye"] },
-    { "id": "kafe_lokanta", "order": 9, "label": "Kafe / Lokanta", "templateGroup": "gida", "productTemplateKey": "food", "aktif": true, "aliases": ["kafe", "restoran", "lokanta"] },
-    { "id": "kuafor", "order": 10, "label": "Kuaför", "templateGroup": "hizmet", "productTemplateKey": "service", "aktif": true, "aliases": ["kuafor", "güzellik", "guzellik"] },
-    { "id": "teknik_servis", "order": 11, "label": "Teknik Servis", "templateGroup": "hizmet", "productTemplateKey": "service", "aktif": true, "aliases": ["teknik", "servis"] },
-    { "id": "hizmet_danismanlik", "order": 12, "label": "Danışmanlık", "templateGroup": "hizmet", "productTemplateKey": "service", "aktif": false, "aliases": ["Hizmet & Danışmanlık", "danismanlik", "hizmet"] },
-    { "id": "egitim_ders", "order": 13, "label": "Eğitim", "templateGroup": "hizmet", "productTemplateKey": "service", "aktif": false, "aliases": ["Eğitim & Ders", "egitim", "ders"] },
-    { "id": "ev_temizlik", "order": 14, "label": "Ev Temizlik", "templateGroup": "hizmet", "productTemplateKey": "service", "aktif": false, "aliases": ["Ev & Temizlik", "temizlik"] },
-    { "id": "spor_fitness", "order": 15, "label": "Spor / Fitness", "templateGroup": "hizmet", "productTemplateKey": "service", "aktif": false, "aliases": ["Spor & Fitness", "spor", "fitness"] },
-    { "id": "pet_shop_veteriner", "order": 16, "label": "Pet / Veteriner", "templateGroup": "perakende", "productTemplateKey": "generic", "aktif": false, "aliases": ["Pet Shop & Veteriner", "pet", "veteriner", "evcil hayvan"] },
-    { "id": "saglik_yasam", "order": 17, "label": "Sağlık / Yaşam", "templateGroup": "hizmet", "productTemplateKey": "service", "aktif": false, "aliases": ["Sağlık & Yaşam", "saglik", "yaşam"] },
-    { "id": "oto_arac", "order": 18, "label": "Oto / Araç", "templateGroup": "hizmet", "productTemplateKey": "automotive", "aktif": false, "aliases": ["Oto & Araç Hizmetleri", "oto", "araç", "arac", "araba"] },
-    { "id": "diger", "order": 19, "label": "Diğer", "templateGroup": "diger", "productTemplateKey": "generic", "aktif": false, "aliases": ["diger"] }
+    {
+      "id": "giyim",
+      "order": 1,
+      "label": "Giyim",
+      "templateGroup": "perakende",
+      "productTemplateKey": "fashion",
+      "aktif": true,
+      "aliases": [
+        "giyim",
+        "Giyim & Butik"
+      ]
+    },
+    {
+      "id": "butik",
+      "order": 2,
+      "label": "Butik",
+      "templateGroup": "perakende",
+      "productTemplateKey": "fashion",
+      "aktif": true,
+      "aliases": [
+        "butik"
+      ]
+    },
+    {
+      "id": "gida",
+      "order": 3,
+      "label": "Gıda",
+      "templateGroup": "gida",
+      "productTemplateKey": "food",
+      "aktif": true,
+      "aliases": [
+        "gida",
+        "Gıda & Fırın"
+      ]
+    },
+    {
+      "id": "firin",
+      "order": 4,
+      "label": "Fırın",
+      "templateGroup": "gida",
+      "productTemplateKey": "cafe_restaurant",
+      "aktif": false,
+      "aliases": [
+        "firin"
+      ]
+    },
+    {
+      "id": "kozmetik",
+      "order": 5,
+      "label": "Kozmetik",
+      "templateGroup": "perakende",
+      "productTemplateKey": "beauty",
+      "aktif": false,
+      "aliases": [
+        "kozmetik"
+      ]
+    },
+    {
+      "id": "dekorasyon",
+      "order": 6,
+      "label": "Dekorasyon",
+      "templateGroup": "perakende",
+      "productTemplateKey": "home",
+      "aktif": false,
+      "aliases": [
+        "dekorasyon"
+      ]
+    },
+    {
+      "id": "elektronik",
+      "order": 7,
+      "label": "Elektronik",
+      "templateGroup": "perakende",
+      "productTemplateKey": "electronics",
+      "aktif": false,
+      "aliases": [
+        "elektronik"
+      ]
+    },
+    {
+      "id": "kirtasiye",
+      "order": 8,
+      "label": "Kırtasiye",
+      "templateGroup": "perakende",
+      "productTemplateKey": "generic",
+      "aktif": false,
+      "aliases": [
+        "kirtasiye"
+      ]
+    },
+    {
+      "id": "kafe_lokanta",
+      "order": 9,
+      "label": "Kafe / Lokanta",
+      "templateGroup": "gida",
+      "productTemplateKey": "cafe_restaurant",
+      "aktif": true,
+      "aliases": [
+        "kafe",
+        "restoran",
+        "lokanta"
+      ]
+    },
+    {
+      "id": "kuafor",
+      "order": 10,
+      "label": "Kuaför",
+      "templateGroup": "hizmet",
+      "productTemplateKey": "service",
+      "aktif": true,
+      "aliases": [
+        "kuafor",
+        "güzellik",
+        "guzellik"
+      ]
+    },
+    {
+      "id": "teknik_servis",
+      "order": 11,
+      "label": "Teknik Servis",
+      "templateGroup": "hizmet",
+      "productTemplateKey": "technical_service",
+      "aktif": true,
+      "aliases": [
+        "teknik",
+        "servis"
+      ]
+    },
+    {
+      "id": "hizmet_danismanlik",
+      "order": 12,
+      "label": "Danışmanlık",
+      "templateGroup": "hizmet",
+      "productTemplateKey": "service",
+      "aktif": false,
+      "aliases": [
+        "Hizmet & Danışmanlık",
+        "danismanlik",
+        "hizmet"
+      ]
+    },
+    {
+      "id": "egitim_ders",
+      "order": 13,
+      "label": "Eğitim",
+      "templateGroup": "hizmet",
+      "productTemplateKey": "service",
+      "aktif": false,
+      "aliases": [
+        "Eğitim & Ders",
+        "egitim",
+        "ders"
+      ]
+    },
+    {
+      "id": "ev_temizlik",
+      "order": 14,
+      "label": "Ev Temizlik",
+      "templateGroup": "hizmet",
+      "productTemplateKey": "service",
+      "aktif": false,
+      "aliases": [
+        "Ev & Temizlik",
+        "temizlik"
+      ]
+    },
+    {
+      "id": "spor_fitness",
+      "order": 15,
+      "label": "Spor / Fitness",
+      "templateGroup": "hizmet",
+      "productTemplateKey": "service",
+      "aktif": false,
+      "aliases": [
+        "Spor & Fitness",
+        "spor",
+        "fitness"
+      ]
+    },
+    {
+      "id": "pet_shop_veteriner",
+      "order": 16,
+      "label": "Pet / Veteriner",
+      "templateGroup": "perakende",
+      "productTemplateKey": "generic",
+      "aktif": false,
+      "aliases": [
+        "Pet Shop & Veteriner",
+        "pet",
+        "veteriner",
+        "evcil hayvan"
+      ]
+    },
+    {
+      "id": "saglik_yasam",
+      "order": 17,
+      "label": "Sağlık / Yaşam",
+      "templateGroup": "hizmet",
+      "productTemplateKey": "service",
+      "aktif": false,
+      "aliases": [
+        "Sağlık & Yaşam",
+        "saglik",
+        "yaşam"
+      ]
+    },
+    {
+      "id": "oto_arac",
+      "order": 18,
+      "label": "Oto / Araç",
+      "templateGroup": "hizmet",
+      "productTemplateKey": "automotive",
+      "aktif": false,
+      "aliases": [
+        "Oto & Araç Hizmetleri",
+        "oto",
+        "araç",
+        "arac",
+        "araba"
+      ]
+    },
+    {
+      "id": "diger",
+      "order": 19,
+      "label": "Diğer",
+      "templateGroup": "diger",
+      "productTemplateKey": "generic",
+      "aktif": false,
+      "aliases": [
+        "diger"
+      ]
+    }
   ]
 }
