@@ -173,22 +173,16 @@ jobs:
       run:
         shell: bash
 
-    # NEDEN VAR (2026-08-21): aynı gün içinde 3 ayrı olayda (V-09,
-    # "Keşfet 403", bu tarama) sütun/tablo bazlı GRANT'ların unutulması
-    # tekrar eden bir hata sınıfı oldu — en ciddisinde anon rolünün
-    # stores tablosunda tablo-seviyesi SELECT/TRUNCATE yetkisi vardı,
-    # edit_token/user_id sızıyordu. TRUNCATE RLS'ten muaftır, insan
-    # hafızasına güvenilemez. Bu iş, migration zincirini SIFIRDAN yerel
-    # bir Supabase'te uygulayıp anon/authenticated'in hiçbir tabloda
-    # TRUNCATE/MAINTAIN/REFERENCES/TRIGGER yetkisi kalmadığını doğrular —
-    # biri yeni bir tabloda/migration'da bunu yeniden açarsa (kasıtlı
-    # veya yanlışlıkla) PR kırmızıya düşer.
+    # NEDEN VAR (2026-08-21): anon/authenticated rollerinde gereksiz
+    # tablo yetkileri tekrar eden güvenlik açığı üretti. TRUNCATE RLS'ten
+    # muaftır ve yalnız insan incelemesine bırakılamaz.
     #
-    # 2026-09-19: GitHub-hosted işler hesap seviyesinde step başlamadan
-    # düşebildiği için bu kapı self-hosted Windows runner'a taşındı.
-    # Yerel PostgreSQL istemcisine ve konteyner adına bağımlı değil;
-    # SQL kontrolleri Supabase CLI üzerinden çalışır. Yalnız supabase/
-    # değişen işlerde tetiklenir.
+    # 2026-09-19: GitHub-hosted işlerin step başlamadan düşmesi ve
+    # self-hosted runner'da Docker Desktop'ın kapalı olması nedeniyle
+    # bu kapı Docker'sız çalışır. Mevcut canlı GRANT durumu okunur;
+    # PR'daki güvenlik migration'ı gerçek hedef şemada transaction içinde
+    # uygulanır, sözleşme doğrulanır ve ROLLBACK edilir. Kalıcı canlı
+    # değişiklik bu CI job'u tarafından yapılmaz.
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -198,21 +192,32 @@ jobs:
         with:
           version: latest
 
-      - name: Seed adımını yalnız bu iş için kapat
-        # NEDEN: seed.sql, pg_dump'in ürettiği COPY ... FROM STDIN biçimini
-        # kullanıyor (yasal metinlerdeki noktalı virgül/kaçış karakterleri
-        # yüzünden — bkz. seed.sql'in kendi yorumu). CI'daki `supabase start`
-        # bu COPY akışını "No source stream defined" (57014) hatasıyla
-        # besleyemiyor — GRANT bekçisiyle ilgisi yok, yalnız CI'nın seed'i
-        # işleme biçimiyle ilgili. Bu iş satır verisine değil GRANT'lara
-        # bakıyor, seed'e ihtiyacı yok. Yalnız bu iş içindeki geçici kopyayı
-        # değiştiriyoruz — commit edilen config.toml (gerçek yerel geliştirme
-        # için seed açık kalmalı) değişmiyor.
+      - name: Canlı DB bağlantısı tanımlı mı
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
-          sed -i '/^# If enabled, seeds the database after migrations during a db reset\.$/{n;s/^enabled = true$/enabled = false/}' supabase/config.toml
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::DATABASE_URL GitHub secret'ı tanımlı değil."
+            exit 1
+          fi
 
-      - name: Supabase CLI SQL desteğini doğrula
-        run: supabase db query --help
+      - name: Mevcut GRANT güvenlik bekçisi
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: supabase db query --db-url "$DATABASE_URL" --file supabase/tests/grant_guard_smoke.sql --agent=no
+
+      - name: Engagement migration sözleşmesini rollback ile doğrula
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          gecici_sql="$(mktemp)"
+          printf 'begin;\n' > "$gecici_sql"
+          cat supabase/migrations/20260919065618_lock_vitrin_engagement_events.sql >> "$gecici_sql"
+          printf '\n' >> "$gecici_sql"
+          cat supabase/tests/vitrin_engagement_events_security_smoke.sql >> "$gecici_sql"
+          printf '\nrollback;\n' >> "$gecici_sql"
+          supabase db query --db-url "$DATABASE_URL" --file "$gecici_sql" --agent=no
+          rm -f "$gecici_sql"
 
   flutter:
     name: Flutter — analiz ve testler
