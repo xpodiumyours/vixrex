@@ -12,11 +12,6 @@ abstract class AuthRepository {
   /// Aktif oturum olup olmadığını kontrol eder.
   bool get hasActiveSession;
 
-  /// Email ve şifre ile kayıt olur.
-  Future<AuthResponse> signUp(String email, String password);
-
-  /// Email ve şifre ile giriş yapar.
-  Future<AuthResponse> signIn(String email, String password);
 
   /// Çıkış yapar.
   Future<void> signOut();
