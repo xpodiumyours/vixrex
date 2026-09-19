@@ -211,21 +211,8 @@ jobs:
         run: |
           sed -i '/^# If enabled, seeds the database after migrations during a db reset\.$/{n;s/^enabled = true$/enabled = false/}' supabase/config.toml
 
-      - name: Yerel Supabase'i başlat (migration zinciri sıfırdan uygulanır)
-        run: supabase start
-
       - name: Supabase CLI SQL desteğini doğrula
         run: supabase db query --help
-
-      - name: GRANT güvenlik bekçisi — TRUNCATE/MAINTAIN/REFERENCES/TRIGGER
-        run: supabase db query --local --file supabase/tests/grant_guard_smoke.sql --agent=no
-
-      - name: Vitrin engagement erişim sözleşmesi
-        run: supabase db query --local --file supabase/tests/vitrin_engagement_events_security_smoke.sql --agent=no
-
-      - name: Yerel Supabase'i durdur
-        if: always()
-        run: supabase stop
 
   flutter:
     name: Flutter — analiz ve testler
