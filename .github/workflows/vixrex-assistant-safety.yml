@@ -22,7 +22,7 @@ env:
 jobs:
   public_web:
     name: Next.js — Assistant güvenlik kapısı
-    runs-on: [self-hosted, windows, vixrex]
+    runs-on: ubuntu-latest
     timeout-minutes: 25
     defaults:
       run:
@@ -60,7 +60,7 @@ jobs:
 
   flutter:
     name: Flutter — Assistant güvenlik kapısı
-    runs-on: [self-hosted, windows, vixrex]
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     defaults:
       run:
