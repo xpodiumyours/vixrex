@@ -12,7 +12,6 @@ abstract class AuthRepository {
   /// Aktif oturum olup olmadığını kontrol eder.
   bool get hasActiveSession;
 
-
   /// Çıkış yapar.
   Future<void> signOut();
 
