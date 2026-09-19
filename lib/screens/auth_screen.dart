@@ -1,11 +1,8 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:vixrex/config/legal_config.dart';
+import 'package:vixrex/config/app_router.dart';
 import 'package:vixrex/services/auth_service.dart';
 import 'package:vixrex/services/owner_bootstrap_service.dart';
-import 'package:vixrex/services/recaptcha_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
-import 'package:vixrex/config/app_router.dart';
 import 'package:vixrex/widgets/common/app_card.dart';
 import 'package:vixrex/widgets/common/app_screen_scaffold.dart';
 
@@ -17,172 +14,43 @@ class AuthScreen extends StatefulWidget {
 }
 
 class _AuthScreenState extends State<AuthScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _emailCtrl = TextEditingController();
-  final _passwordCtrl = TextEditingController();
-
-  bool _isLogin = true;
   bool _isLoading = false;
-  bool _obscurePassword = true;
 
-  static const Color brandOrange = AppColors.brandOrange;
-  // Panelin geri kalanıyla aynı görünüm için (2026-08-15 kullanıcı kararı):
-  // önceden darkTextAlt/bgLight kullanıyordu, artık panelin standart
-  // darkText/bgEditor'üne çekildi — bu ekran artık özel bir marka sayfası
-  // değil, panelin bir parçası.
-  static const Color darkAccent = AppColors.darkText;
-
-  @override
-  void dispose() {
-    _emailCtrl.dispose();
-    _passwordCtrl.dispose();
-    super.dispose();
-  }
-
-  Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
-
+  Future<void> _googleIleDevamEt() async {
+    if (_isLoading) return;
     setState(() => _isLoading = true);
-    // V-12 (attack-vectors.md, 2026-08-18): fiş alınıyordu ama hiç
-    // doğrulanmıyordu. Yalnız web'de (kIsWeb) — mobilde fiş alınamıyor,
-    // orası dokunulmadı. Fiş alınamazsa (ağ/köprü sorunu) davranış
-    // DEĞİŞMEZ — yalnız Google'ın "bu muhtemelen bot" dediği durumda
-    // (verifyOnBackend false) giriş/kayıt durdurulur.
-    if (kIsWeb) {
-      final token = await RecaptchaService.instance.getToken(
-        action: 'auth_login',
-      );
-      if (token != null) {
-        final verified = await RecaptchaService.verifyOnBackend(
-          token,
-          action: 'auth_login',
-        );
-        if (!verified) {
-          if (mounted) {
-            setState(() => _isLoading = false);
-            _showError('Güvenlik doğrulaması başarısız. Lütfen tekrar dene.');
-          }
-          return;
-        }
-      }
-    }
+
     final authService = const AuthService();
+    final mevcut = authService.currentUser;
 
-    final email = _emailCtrl.text.trim();
-    final password = _passwordCtrl.text;
-
-    final result =
-        _isLogin
-            ? await authService.signIn(email, password)
-            : await authService.signUp(email, password);
-
-    result.when(
-      success: (authResponse) async {
-        // E-posta onayı açıksa signup session döndürmez; giriş çalışmaz.
-        if (!_isLogin && authResponse.session == null) {
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Hesap oluşturuldu. Giriş için e-postanızdaki Vixrex doğrulama bağlantısına tıklayın.',
-              ),
-              backgroundColor: Colors.green,
-              behavior: SnackBarBehavior.floating,
-              duration: Duration(seconds: 6),
-            ),
-          );
-          setState(() => _isLogin = true);
-          return;
+    if (mevcut != null && mevcut.isAnonymous) {
+      final result = await authService.hesabiGoogleaBagla();
+      if (!mounted) return;
+      if (result.isFailure) {
+        setState(() => _isLoading = false);
+        if (!result.failure!.message.contains('iptal')) {
+          _showError(result.failure!.message);
         }
-        await _handlePostAuthentication();
-      },
-      failure: (failure) {
-        if (!mounted) return;
-        _showError(failure.message);
-      },
-    );
-
-    if (mounted) setState(() => _isLoading = false);
-  }
-
-  Future<void> _resetPassword() async {
-    final email = _emailCtrl.text.trim();
-    if (email.isEmpty ||
-        !RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email)) {
-      _showError('Şifre sıfırlamak için geçerli bir e-posta girin.');
-      return;
-    }
-
-    setState(() => _isLoading = true);
-    final result = await const AuthService().resetPassword(email);
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-
-    result.when(
-      success: (_) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Şifre sıfırlama bağlantısı e-postanıza gönderildi. Gelen kutunuzu kontrol edin.',
-            ),
-            backgroundColor: Colors.green,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      },
-      failure: (failure) => _showError(failure.message),
-    );
-  }
-
-  Future<void> _signInWithGoogle() async {
-    setState(() => _isLoading = true);
-    // V-12: aynı desen — yalnız web, yalnız fiş varken doğrula.
-    if (kIsWeb) {
-      final token = await RecaptchaService.instance.getToken(
-        action: 'auth_google',
-      );
-      if (token != null) {
-        final verified = await RecaptchaService.verifyOnBackend(
-          token,
-          action: 'auth_google',
-        );
-        if (!verified) {
-          if (mounted) {
-            setState(() => _isLoading = false);
-            _showError('Güvenlik doğrulaması başarısız. Lütfen tekrar dene.');
-          }
-          return;
-        }
+        return;
       }
-    }
-    final result = await const AuthService().signInWithGoogle();
-
-    result.when(
-      success: (authResponse) async {
-        await _handlePostAuthentication();
-      },
-      failure: (failure) {
-        if (!mounted) return;
-        if (!failure.message.contains('iptal')) {
-          _showError(failure.message);
+      await _handlePostAuthentication();
+    } else {
+      final result = await authService.signInWithGoogle();
+      if (!mounted) return;
+      if (result.isFailure) {
+        setState(() => _isLoading = false);
+        if (!result.failure!.message.contains('iptal') &&
+            !result.failure!.message.contains('yönlendiriliyor')) {
+          _showError(result.failure!.message);
         }
-      },
-    );
+        return;
+      }
+      await _handlePostAuthentication();
+    }
 
     if (mounted) setState(() => _isLoading = false);
   }
 
-  /// Giriş sonrası VIXREX CORE akışı (2026-08-26):
-  ///   1. Cihazda duran edit token varsa vitrini kalıcı hesaba bağla
-  ///      (`claim_store_for_user` — tek-vitrin kurallı, atomik).
-  ///   2. Hesabın sunucudaki tam durumunu tek çağrıda oku
-  ///      (`bootstrap_owner_state`) ve cihaza yaz — böylece YENİ bir cihazda
-  ///      da vitrin, edit token ve web'de bırakılmış çalışma taslağı gelir.
-  ///
-  /// Eskiden 1. adım boolean dönen `link_store_to_user`'a, 2. adım ise
-  /// canlıda 42501 ile düşen doğrudan `stores` sorgusuna dayanıyordu; ikisi
-  /// de sessizce başarısız olduğu için hiçbir vitrin hiçbir hesaba
-  /// bağlanmamıştı.
   Future<void> _handlePostAuthentication() async {
     final authService = const AuthService();
 
@@ -217,33 +85,20 @@ class _AuthScreenState extends State<AuthScreen> {
       );
     }
 
-    if (state == null || !state.hasStore) {
+    if (state == null || !state.hasStore || state.isStoreMode) {
       AppRouter.navigateToLanding(context);
       return;
     }
 
-    if (state.isStoreMode) {
-      AppRouter.navigateToLanding(context);
-    } else {
-      AppRouter.navigateToHomeShell(context, initialIndex: 0);
-    }
+    AppRouter.navigateToHomeShell(context, initialIndex: 0);
   }
 
-  void _showError(String msg) {
+  void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.error_outline, color: Colors.white),
-            const SizedBox(width: 10),
-            Expanded(child: Text(msg)),
-          ],
-        ),
+        content: Text(message),
         backgroundColor: AppColors.error,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppColors.radius12),
-        ),
       ),
     );
   }
@@ -251,325 +106,85 @@ class _AuthScreenState extends State<AuthScreen> {
   @override
   Widget build(BuildContext context) {
     return AppScreenScaffold(
-      title: _isLogin ? 'Giriş Yap' : 'Kayıt Ol',
+      title: 'Hesabını Koru',
       padding: EdgeInsets.zero,
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(24),
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 400),
+            constraints: const BoxConstraints(maxWidth: 420),
             child: AppCard(
-              padding: const EdgeInsets.all(32.0),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // App logo or title
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: brandOrange.withValues(alpha: 0.15),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.storefront_rounded,
-                            color: brandOrange,
-                            size: 28,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        const Text(
-                          'Vixrex',
-                          style: TextStyle(
-                            color: darkAccent,
-                            fontSize: 24,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 32),
-
-                    // Title Text
-                    Text(
-                      _isLogin
-                          ? 'Hesabınıza Giriş Yapın'
-                          : 'Yeni Hesap Oluşturun',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: darkAccent,
+              padding: const EdgeInsets.all(28),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.storefront_rounded,
+                        color: AppColors.brandOrange,
+                        size: 30,
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      _isLogin
-                          ? 'Vitrinlerinizi yönetmek için bilgilerinizi girin.'
-                          : 'Mağazanıza her cihazdan erişmek için kayıt olun.',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: AppColors.mutedText,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Email input
-                    TextFormField(
-                      controller: _emailCtrl,
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: InputDecoration(
-                        labelText: 'E-posta Adresi',
-                        prefixIcon: const Icon(Icons.email_outlined),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(
-                            AppColors.radius12,
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(
-                            AppColors.radius12,
-                          ),
-                          borderSide: const BorderSide(
-                            color: brandOrange,
-                            width: 2,
-                          ),
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'E-posta adresi boş bırakılamaz';
-                        }
-                        if (!RegExp(
-                          r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                        ).hasMatch(value.trim())) {
-                          return 'Geçersiz e-posta adresi';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Password input
-                    TextFormField(
-                      controller: _passwordCtrl,
-                      obscureText: _obscurePassword,
-                      decoration: InputDecoration(
-                        labelText: 'Şifre',
-                        prefixIcon: const Icon(Icons.lock_outline),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscurePassword
-                                ? Icons.visibility_off_outlined
-                                : Icons.visibility_outlined,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _obscurePassword = !_obscurePassword;
-                            });
-                          },
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(
-                            AppColors.radius12,
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(
-                            AppColors.radius12,
-                          ),
-                          borderSide: const BorderSide(
-                            color: brandOrange,
-                            width: 2,
-                          ),
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Şifre boş bırakılamaz';
-                        }
-                        if (value.length < 6) {
-                          return 'Şifre en az 6 karakter olmalıdır';
-                        }
-                        return null;
-                      },
-                    ),
-                    if (_isLogin) ...[
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton(
-                          onPressed: _isLoading ? null : _resetPassword,
-                          child: const Text(
-                            'Şifremi unuttum',
-                            style: TextStyle(
-                              color: brandOrange,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ] else
-                      const SizedBox(height: 24),
-
-                    // Submit button
-                    ElevatedButton(
-                      onPressed: _isLoading ? null : _submit,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: brandOrange,
-                        foregroundColor: AppColors.onPrimary,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                            AppColors.radius12,
-                          ),
-                        ),
-                        elevation: 0,
-                      ),
-                      child:
-                          _isLoading
-                              ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    AppColors.onPrimary,
-                                  ),
-                                ),
-                              )
-                              : Text(
-                                _isLogin ? 'Giriş Yap' : 'Kayıt Ol',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // ── VEYA divider ──
-                    Row(
-                      children: [
-                        const Expanded(child: Divider(color: AppColors.border)),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          child: Text(
-                            'veya',
-                            style: TextStyle(
-                              color: AppColors.mutedText,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                        const Expanded(child: Divider(color: AppColors.border)),
-                      ],
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // ── Google ile Giriş Yap ──
-                    OutlinedButton.icon(
-                      onPressed: _isLoading ? null : _signInWithGoogle,
-                      icon: const Icon(Icons.g_mobiledata_rounded, size: 28),
-                      label: const Text(
-                        'Google ile Giriş Yap',
+                      SizedBox(width: 10),
+                      Text(
+                        'Vixrex',
                         style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 14,
+                          color: AppColors.darkText,
+                          fontSize: 24,
+                          fontWeight: FontWeight.w900,
                         ),
                       ),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.darkText,
-                        backgroundColor: AppColors.surface,
-                        side: const BorderSide(color: AppColors.border),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                            AppColors.radius12,
-                          ),
-                        ),
-                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 28),
+                  const Text(
+                    'Google ile kalıcı erişim',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: AppColors.darkText,
+                      fontSize: 19,
+                      fontWeight: FontWeight.w800,
                     ),
-                    const SizedBox(height: 16),
-
-                    // Toggle between signin/signup
-                    TextButton(
-                      onPressed: () {
-                        setState(() {
-                          _isLogin = !_isLogin;
-                          _formKey.currentState?.reset();
-                        });
-                      },
-                      child: Text(
-                        _isLogin
-                            ? 'Hesabınız yok mu? Hemen kayıt olun'
-                            : 'Zaten hesabınız var mı? Giriş yapın',
-                        style: const TextStyle(
-                          color: brandOrange,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    '14 günlük ücretsiz vitrin denemesi için Google gerekmez. '
+                    'Hazır vitrini seçip hemen özelleştirebilirsin. '
+                    'Google yalnız vitrini kalıcı hesabına bağlamak ve başka '
+                    'cihazlardan erişmek için gerekir.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: AppColors.mutedText,
+                      fontSize: 14,
+                      height: 1.5,
                     ),
-                    const SizedBox(height: 10),
-                    Text(
-                      _isLogin
-                          ? 'Giriş yapmadan önce Kullanım Şartları ve KVKK aydınlatma metnini inceleyebilirsiniz.'
-                          : 'Kayıt olmadan önce Kullanım Şartları ve KVKK aydınlatma metnini inceleyebilirsiniz.',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: AppColors.mutedText,
-                        fontSize: 12,
-                        height: 1.35,
-                        fontWeight: FontWeight.w600,
-                      ),
+                  ),
+                  const SizedBox(height: 24),
+                  FilledButton.icon(
+                    onPressed: _isLoading ? null : _googleIleDevamEt,
+                    icon: const Icon(Icons.account_circle_outlined),
+                    label: Text(
+                      _isLoading ? 'Google açılıyor…' : 'Google ile Devam Et',
                     ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      alignment: WrapAlignment.center,
-                      spacing: 4,
-                      runSpacing: 0,
-                      children: [
-                        _buildLegalLink(
-                          'KVKK/Gizlilik',
-                          LegalConfig.privacyPath,
-                        ),
-                        _buildLegalLink('Şartlar', LegalConfig.termsPath),
-                        _buildLegalLink(
-                          'Veri Silme',
-                          LegalConfig.dataDeletionPath,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 12),
+                  OutlinedButton(
+                    onPressed:
+                        _isLoading
+                            ? null
+                            : () => AppRouter.navigateToHomeShell(
+                              context,
+                              initialIndex: 1,
+                            ),
+                    child: const Text('14 Gün Ücretsiz Vitrin Dene'),
+                  ),
+                ],
               ),
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildLegalLink(String label, String routePath) {
-    return TextButton(
-      onPressed: () => AppRouter.push(context, routePath),
-      style: TextButton.styleFrom(
-        foregroundColor: brandOrange,
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        minimumSize: const Size(0, 32),
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
       ),
     );
   }
