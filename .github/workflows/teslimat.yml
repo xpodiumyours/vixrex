@@ -48,7 +48,7 @@ jobs:
     # ubuntu-latest kullanılmıyor: Actions kotası tükendiğinde o işler runner
     # bile atanmadan saniyeler içinde düşüyor (secret taramasının başına gelen
     # buydu). Teslimat zinciri o hataya duyarlı olamaz.
-    runs-on: [self-hosted, windows, vixrex]
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:
       run:
