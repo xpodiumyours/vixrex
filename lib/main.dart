@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -21,7 +22,6 @@ Future<void> main() async {
     usePathUrlStrategy();
   }
   SystemChrome.setSystemUIOverlayStyle(_systemUiOverlayStyle);
-  _setupGlobalErrorHandler();
   await _initializeSupabase();
   _initializeOneSignal();
   // Tek Asistan planı, Faz C: eski sohbet geçmişi anahtarlarını tek v3
@@ -33,6 +33,7 @@ Future<void> main() async {
     options.tracesSampleRate = 0.2;
   });
 
+  _setupGlobalErrorHandler();
   runApp(const VixRexApp());
 }
 
@@ -50,6 +51,12 @@ const SystemUiOverlayStyle _systemUiOverlayStyle = SystemUiOverlayStyle(
 void _setupGlobalErrorHandler() {
   FlutterError.onError = (FlutterErrorDetails details) {
     FlutterError.presentError(details);
+    unawaited(
+      Sentry.captureException(
+        details.exception,
+        stackTrace: details.stack,
+      ),
+    );
     if (kDebugMode) {
       debugPrint(
         '[GlobalError] Captured Flutter Error: ${details.exceptionAsString()}',
@@ -57,6 +64,7 @@ void _setupGlobalErrorHandler() {
     }
   };
   PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
+    unawaited(Sentry.captureException(error, stackTrace: stack));
     if (kDebugMode) {
       debugPrint('[GlobalError] Captured Platform/Async Error: $error');
     }
