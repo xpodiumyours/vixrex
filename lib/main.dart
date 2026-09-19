@@ -52,10 +52,7 @@ void _setupGlobalErrorHandler() {
   FlutterError.onError = (FlutterErrorDetails details) {
     FlutterError.presentError(details);
     unawaited(
-      Sentry.captureException(
-        details.exception,
-        stackTrace: details.stack,
-      ),
+      Sentry.captureException(details.exception, stackTrace: details.stack),
     );
     if (kDebugMode) {
       debugPrint(
