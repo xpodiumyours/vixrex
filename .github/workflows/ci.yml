@@ -40,7 +40,7 @@ jobs:
     # arıyor (404). Onun yerine resmi sürüm ikilisi doğrudan indirilip
     # çalıştırılıyor. İndirme runner'da /tmp altında kalıcı, sonraki
     # koşularda yeniden indirilmiyor.
-    runs-on: [self-hosted, windows, vixrex]
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     defaults:
       run:
@@ -61,30 +61,20 @@ jobs:
           set -euo pipefail
           kur="/tmp/gitleaks-${GITLEAKS_SURUM}"
           mkdir -p "$kur"
-          if [ ! -x "$kur/gitleaks.exe" ]; then
-            paket="gitleaks_${GITLEAKS_SURUM}_windows_x64.zip"
+          if [ ! -x "$kur/gitleaks" ]; then
+            paket="gitleaks_${GITLEAKS_SURUM}_linux_x64.tar.gz"
             curl -fsSL -o "$kur/$paket"               "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_SURUM}/${paket}"
-            # Git Bash'in GNU tar'ı zip açamıyor; Windows'un kendi arşivleyicisi
-            # kullanılıyor. Yollar cygpath ile Windows biçimine çevriliyor —
-            # ters bölü kaçışıyla uğraşmamak için tam yollar ayrı değişkende.
-            zipw="$(cygpath -w "$kur/$paket")"
-            dizinw="$(cygpath -w "$kur")"
-            powershell -NoProfile -Command               "Expand-Archive -Path '$zipw' -DestinationPath '$dizinw' -Force"
+            tar -xzf "$kur/$paket" -C "$kur"
           fi
-          "$kur/gitleaks.exe" version
-          "$kur/gitleaks.exe" git . -c .gitleaks.toml --redact --no-banner
+          "$kur/gitleaks" version
+          "$kur/gitleaks" git . -c .gitleaks.toml --redact --no-banner
 
   auth-config-check:
     name: Supabase auth security config check
-    runs-on: [self-hosted, windows, vixrex]
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     defaults:
       run:
-        # NOT (2026-09-06): self-hosted Windows runner'da PATH'teki ilk
-        # "bash", Git Bash değil WSL'nin System32 kabuk saplaması olabiliyor.
-        # Çözüm burada değil, runner'ı başlatan PowerShell'in PATH'inde —
-        # Git\bin System32'den önce gelecek şekilde run.cmd başlatılıyor.
-        # (Tam yol vermek "Second path fragment..." runner hatasına çarpıyor.)
         shell: bash
 
     steps:
@@ -132,15 +122,10 @@ jobs:
 
   changes:
     name: Değişiklik yüzeyi
-    runs-on: [self-hosted, windows, vixrex]
+    runs-on: ubuntu-latest
     timeout-minutes: 5
     defaults:
       run:
-        # NOT (2026-09-06): self-hosted Windows runner'da PATH'teki ilk
-        # "bash", Git Bash değil WSL'nin System32 kabuk saplaması olabiliyor.
-        # Çözüm burada değil, runner'ı başlatan PowerShell'in PATH'inde —
-        # Git\bin System32'den önce gelecek şekilde run.cmd başlatılıyor.
-        # (Tam yol vermek "Second path fragment..." runner hatasına çarpıyor.)
         shell: bash
     outputs:
       flutter: ${{ steps.classify.outputs.flutter }}
@@ -181,9 +166,6 @@ jobs:
     # biri yeni bir tabloda/migration'da bunu yeniden açarsa (kasıtlı
     # veya yanlışlıkla) PR kırmızıya düşer.
     #
-    # NOT (2026-09-06): self-hosted pilot'a henüz taşınmadı — Docker +
-    # psql gerektiriyor, ayrı bir doğrulama adımı ister. Şimdilik
-    # ubuntu-latest'te kalıyor, yalnız supabase/ değişen PR'larda tetiklenir.
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -243,15 +225,10 @@ jobs:
     name: Flutter — analiz ve testler
     needs: changes
     if: needs.changes.outputs.flutter == 'true'
-    runs-on: [self-hosted, windows, vixrex]
+    runs-on: ubuntu-latest
     timeout-minutes: 25
     defaults:
       run:
-        # NOT (2026-09-06): self-hosted Windows runner'da PATH'teki ilk
-        # "bash", Git Bash değil WSL'nin System32 kabuk saplaması olabiliyor.
-        # Çözüm burada değil, runner'ı başlatan PowerShell'in PATH'inde —
-        # Git\bin System32'den önce gelecek şekilde run.cmd başlatılıyor.
-        # (Tam yol vermek "Second path fragment..." runner hatasına çarpıyor.)
         shell: bash
 
     steps:
@@ -259,15 +236,11 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Flutter
-        shell: bash
-        run: |
-          echo "C:/flutter/bin" >> "$GITHUB_PATH"
-          kurulu=$(/c/flutter/bin/flutter --version | head -1 | cut -d' ' -f2)
-          if [ "$kurulu" != "${{ env.FLUTTER_VERSION }}" ]; then
-            echo "Runner Flutter $kurulu, beklenen ${{ env.FLUTTER_VERSION }}"
-            exit 1
-          fi
-          echo "Flutter $kurulu"
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
 
       - name: Bağımlılıklar
         run: flutter pub get
@@ -285,15 +258,10 @@ jobs:
     name: Şema üretim hattı — sapma kontrolü
     needs: changes
     if: needs.changes.outputs.schema == 'true'
-    runs-on: [self-hosted, windows, vixrex]
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:
       run:
-        # NOT (2026-09-06): self-hosted Windows runner'da PATH'teki ilk
-        # "bash", Git Bash değil WSL'nin System32 kabuk saplaması olabiliyor.
-        # Çözüm burada değil, runner'ı başlatan PowerShell'in PATH'inde —
-        # Git\bin System32'den önce gelecek şekilde run.cmd başlatılıyor.
-        # (Tam yol vermek "Second path fragment..." runner hatasına çarpıyor.)
         shell: bash
 
     steps:
@@ -304,21 +272,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          # NEDEN (2026-09-16): self-hosted runner'da 'Post Setup Node.js'
-          # adimi onbellegi yuklerken 14-16 dakika harcayip isi zaman asimina
-          # ugratiyordu. Paketler bu makinede zaten kalici; onbellek gereksiz.
-          # ubuntu-latest'te kosan public_web_e2e'de onbellek korundu.
 
       - name: Setup Flutter
-        shell: bash
-        run: |
-          echo "C:/flutter/bin" >> "$GITHUB_PATH"
-          kurulu=$(/c/flutter/bin/flutter --version | head -1 | cut -d' ' -f2)
-          if [ "$kurulu" != "${{ env.FLUTTER_VERSION }}" ]; then
-            echo "Runner Flutter $kurulu, beklenen ${{ env.FLUTTER_VERSION }}"
-            exit 1
-          fi
-          echo "Flutter $kurulu"
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
 
       - name: Next.js bağımlılıkları
         working-directory: public_web
@@ -371,15 +331,10 @@ jobs:
     name: Next.js — lint, tip, test, build
     needs: changes
     if: needs.changes.outputs.public_web == 'true'
-    runs-on: [self-hosted, windows, vixrex]
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     defaults:
       run:
-        # NOT (2026-09-06): self-hosted Windows runner'da PATH'teki ilk
-        # "bash", Git Bash değil WSL'nin System32 kabuk saplaması olabiliyor.
-        # Çözüm burada değil, runner'ı başlatan PowerShell'in PATH'inde —
-        # Git\bin System32'den önce gelecek şekilde run.cmd başlatılıyor.
-        # (Tam yol vermek "Second path fragment..." runner hatasına çarpıyor.)
         shell: bash
         working-directory: public_web
 
@@ -391,10 +346,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          # NEDEN (2026-09-16): self-hosted runner'da 'Post Setup Node.js'
-          # adimi onbellegi yuklerken 14-16 dakika harcayip isi zaman asimina
-          # ugratiyordu. Paketler bu makinede zaten kalici; onbellek gereksiz.
-          # ubuntu-latest'te kosan public_web_e2e'de onbellek korundu.
+          cache: npm
+          cache-dependency-path: public_web/package-lock.json
 
       - name: Bağımlılıklar
         run: npm ci
@@ -433,9 +386,6 @@ jobs:
       run:
         working-directory: public_web
 
-    # NOT (2026-09-06): self-hosted pilot'a henüz taşınmadı — Playwright
-    # `--with-deps` apt-get kullanıyor, Windows'ta karşılığı yok. Ayrı ele
-    # alınacak. Zaten yalnız main push'ında (PR'da değil) çalışıyor.
     steps:
       - name: Checkout
         uses: actions/checkout@v4
