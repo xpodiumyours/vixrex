@@ -1,6 +1,6 @@
 "use client";
 
-import { eskiFiyatYazisi } from "@/lib/productCardPresentation";
+import { eskiFiyatYazisi, kartRozeti } from "@/lib/productCardPresentation";
 import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
@@ -144,6 +144,11 @@ export default function ProductDetailExperience({
     selectedVariant?.priceAmount != null
       ? formatVariantPrice(selectedVariant.priceAmount, product.currency)
       : product.price || "Fiyat sorun";
+  const rozet = kartRozeti({
+    badgeTag: product.badgeTag,
+    priceAmount: product.priceAmount,
+    oldPriceAmount: product.oldPriceAmount,
+  });
   const stockQuantity = selectedVariant?.stockQuantity ?? product.stockQuantity ?? null;
   const stockStatus =
     stockQuantity === 0
@@ -229,11 +234,16 @@ export default function ProductDetailExperience({
               </p>
             ) : null}
 
-            <div className="mt-5 flex flex-wrap items-baseline gap-3">
+            <div className="mt-5 flex flex-wrap items-center gap-3">
               <span className="text-2xl font-extrabold text-[#E8A87C]">{displayedPrice}</span>
               {eskiFiyatYazisi(product.oldPriceAmount) ? (
                 <span className="text-sm font-medium text-white/30 line-through">
                   {eskiFiyatYazisi(product.oldPriceAmount)}
+                </span>
+              ) : null}
+              {rozet ? (
+                <span className="rounded-lg bg-gradient-to-r from-blue-600 to-cyan-600 px-2.5 py-1 text-[10px] font-extrabold text-white shadow-md">
+                  {rozet}
                 </span>
               ) : null}
             </div>

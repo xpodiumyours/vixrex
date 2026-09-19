@@ -174,3 +174,15 @@ describe("kod değerleri okunur yazıya çevrilir", () => {
     expect(kart.ozellikler.map((alan) => alan.value)).toEqual(["1 dilim", "gluten, süt"]);
   });
 });
+
+describe("üç yüzey aynı rozeti gösterir", () => {
+  it("aynı ürün kartta, hızlı bakışta ve detayda aynı rozeti üretir", () => {
+    const urun = { badgeTag: null, priceAmount: 450, oldPriceAmount: 550 };
+    expect(kartRozeti(urun)).toBe("%18 indirim");
+    expect(kartRozeti({ ...urun, badgeTag: "Trend" })).toBe("Trend");
+  });
+
+  it("indirimi olmayan üründe üç yüzeyde de rozet yok", () => {
+    expect(kartRozeti({ badgeTag: "", priceAmount: 150, oldPriceAmount: null })).toBeNull();
+  });
+});

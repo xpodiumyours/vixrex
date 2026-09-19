@@ -1,6 +1,6 @@
 "use client";
 
-import { eskiFiyatYazisi } from "@/lib/productCardPresentation";
+import { eskiFiyatYazisi, kartRozeti } from "@/lib/productCardPresentation";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import type { RichProductItem } from "@/lib/richProductItem";
@@ -178,6 +178,11 @@ export default function ProductQuickView({
       ? formatVariantPrice(selectedVariant.priceAmount, product.currency)
       : product.price || "Fiyat sorun";
   const brand = String(product.brand || "").trim();
+  const rozet = kartRozeti({
+    badgeTag: product.badgeTag,
+    priceAmount: product.priceAmount,
+    oldPriceAmount: product.oldPriceAmount,
+  });
   const fulfillmentRegion = String(product.fulfillmentRegion || "").trim();
   const fulfillmentMapUrl = productLocationMapUrl(fulfillmentRegion);
   const selectedVariantText = variantGroups
@@ -307,9 +312,9 @@ export default function ProductQuickView({
                 {eskiFiyatYazisi(product.oldPriceAmount)}
               </span>
             ) : null}
-            {product.badgeTag ? (
+            {rozet ? (
               <span className="rounded-lg bg-gradient-to-r from-blue-600 to-cyan-600 px-2.5 py-1 text-[10px] font-extrabold text-white shadow-md">
-                {product.badgeTag}
+                {rozet}
               </span>
             ) : null}
           </div>
