@@ -59,7 +59,9 @@ DURUM_ISARETI = "<!-- vixrex-teslimat-durumu -->"
 # "geçti" sayılmaz.
 ZORUNLU_KAPILAR = (
     "Secret sızıntı taraması",
+    "Supabase auth security config check",
     "Değişiklik yüzeyi",
+    "Supabase yerel doğrulama — GRANT güvenlik bekçisi",
     "Next.js — lint, tip, test, build",
     "Flutter — analiz ve testler",
     "Şema üretim hattı — sapma kontrolü",
