@@ -184,9 +184,10 @@ jobs:
     # biri yeni bir tabloda/migration'da bunu yeniden açarsa (kasıtlı
     # veya yanlışlıkla) PR kırmızıya düşer.
     #
-    # NOT (2026-09-06): self-hosted pilot'a henüz taşınmadı — Docker +
-    # psql gerektiriyor, ayrı bir doğrulama adımı ister. Şimdilik
-    # ubuntu-latest'te kalıyor, yalnız supabase/ değişen PR'larda tetiklenir.
+    # 2026-09-19: GitHub-hosted işler hesap seviyesinde step başlamadan
+    # düşebildiği için bu kapı self-hosted Windows runner'a taşındı.
+    # Yerel PostgreSQL istemcisine bağımlı değil; Supabase'in Docker
+    # konteynerindeki psql kullanılır. Yalnız supabase/ değişen işlerde tetiklenir.
     steps:
       - name: Checkout
         uses: actions/checkout@v4
