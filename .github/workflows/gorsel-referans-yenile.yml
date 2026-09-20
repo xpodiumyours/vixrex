@@ -1,0 +1,56 @@
+name: Görsel referansları yenile
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "gorsel-referans/**"
+
+permissions:
+  contents: write
+
+jobs:
+  yenile:
+    name: Linux görsel referanslarını canlıdan üret
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: public_web
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: public_web/package-lock.json
+
+      - name: Bağımlılıklar
+        run: npm ci
+
+      - name: Chromium kurulumu
+        run: npx playwright install --with-deps chromium
+
+      - name: Görsel referansları yeniden üret
+        run: npx playwright test e2e/visual-regression.spec.ts --update-snapshots
+        env:
+          E2E_PUBLIC_BASE_URL: ${{ vars.E2E_PUBLIC_BASE_URL || 'https://vixrex-public.vercel.app' }}
+
+      - name: Değişen referansları dala yaz
+        working-directory: .
+        run: |
+          if [ -z "$(git status --porcelain public_web/e2e/visual-regression.spec.ts-snapshots)" ]; then
+            echo "Referanslar zaten güncel, commit üretilmedi."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public_web/e2e/visual-regression.spec.ts-snapshots
+          git commit -m "test(e2e): Linux gorsel referanslarini canlidan yenile"
+          git push origin HEAD:${{ github.ref_name }}
