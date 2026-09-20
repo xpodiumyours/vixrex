@@ -18,11 +18,17 @@ describe("main Flutter referanslı uygulama UI sözleşmesi", () => {
   const vitrinEditor = oku("../src/components/owner/VitrinimEditor.tsx");
 
   it("uygulama shell'i ortak web marka tokenlarını yeniden kopyalamadan kullanır", () => {
-    expect(flutterColors).toContain("primary = Color(0xFF147DFF)");
-    expect(flutterColors).toContain("secondary = Color(0xFF57B7FF)");
-    expect(flutterColors).toContain("bgEditor = Color(0xFF050B1A)");
-    expect(flutterColors).toContain("surface = Color(0xFF0B1730)");
-    expect(flutterColors).toContain("border = Color(0xFF294D88)");
+    const uretilenRenkler = oku("../../lib/theme/renkler.g.dart");
+    expect(flutterColors).toContain("primary = OrtakRenkler.lpPrimary");
+    expect(flutterColors).toContain("secondary = OrtakRenkler.lpSecondary");
+    expect(flutterColors).toContain("bgEditor = OrtakRenkler.lpBgEditor");
+    expect(flutterColors).toContain("surface = OrtakRenkler.lpSurface");
+    expect(flutterColors).toContain("border = OrtakRenkler.lpBorder");
+    expect(uretilenRenkler).toContain("lpPrimary = Color(0xFF147DFF)");
+    expect(uretilenRenkler).toContain("lpSecondary = Color(0xFF57B7FF)");
+    expect(uretilenRenkler).toContain("lpBgEditor = Color(0xFF050B1A)");
+    expect(uretilenRenkler).toContain("lpSurface = Color(0xFF0B1730)");
+    expect(uretilenRenkler).toContain("lpBorder = Color(0xFF294D88)");
 
     expect(globals).toContain("--color-lp-primary: #147DFF");
     expect(globals).toContain("--color-lp-secondary: #57B7FF");

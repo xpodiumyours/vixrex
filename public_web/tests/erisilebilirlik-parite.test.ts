@@ -16,6 +16,10 @@ const flutterColors = readFileSync(
   resolve(__dirname, "../../lib/theme/app_colors.dart"),
   "utf8",
 );
+const uretilenRenkler = readFileSync(
+  resolve(__dirname, "../../lib/theme/renkler.g.dart"),
+  "utf8",
+);
 const globalsCss = readFileSync(
   resolve(__dirname, "../src/app/globals.css"),
   "utf8",
@@ -33,11 +37,24 @@ const sidebar = readFileSync(
 
 /** Dart `Color(0xFFRRGGBB)` sabitinden hex alır. */
 function flutterHex(name: string): string {
-  const m = flutterColors.match(
+  const dogrudan = flutterColors.match(
     new RegExp(`static const Color ${name} = Color\\(0xFF([0-9A-Fa-f]{6})\\)`),
   );
-  if (!m) throw new Error(`Flutter rengi bulunamadı: ${name}`);
-  return m[1].toUpperCase();
+  if (dogrudan) return dogrudan[1].toUpperCase();
+
+  const ortak = flutterColors.match(
+    new RegExp(`static const Color ${name} = OrtakRenkler\\.([A-Za-z0-9_]+);`),
+  );
+  if (ortak) {
+    const uretilen = uretilenRenkler.match(
+      new RegExp(
+        `static const Color ${ortak[1]} = Color\\(0xFF([0-9A-Fa-f]{6})\\)`,
+      ),
+    );
+    if (uretilen) return uretilen[1].toUpperCase();
+  }
+
+  throw new Error(`Flutter rengi bulunamadı: ${name}`);
 }
 
 /** CSS `--owner-xxx: #RRGGBB;` değişkeninden hex alır. */
