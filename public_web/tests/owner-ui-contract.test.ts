@@ -55,8 +55,10 @@ describe("sahip yönetim arayüzü sözleşmesi", () => {
       expect(kaynak).not.toMatch(/signInWithPassword|resetPasswordForEmail|type="password"/);
     }
 
-    expect(pano).toMatch(/<label htmlFor=/);
-    expect(pano).toMatch(/aria-busy=/);
+    // /app artık ayrı tek-alan formu göstermiyor; manuel form VitrinimEditor,
+    // ürün işlemlerinin yoğunluk durumu ise OwnerProductManager içindedir.
+    expect(vitrinimEditor).toMatch(/<label htmlFor=/);
+    expect(urunler).toMatch(/aria-busy=/);
     expect(pano).toMatch(/role="alert"/);
   });
 
