@@ -56,6 +56,8 @@ const HATA_METNI: Record<string, string> = {
   STORE_ADDRESS_REQUIRED: "Yayınlamak için açık adresini doldur.",
   STORE_PROVINCE_REQUIRED: "Yayınlamak için il bilgisini doldur.",
   STORE_DISTRICT_REQUIRED: "Yayınlamak için ilçe bilgisini doldur.",
+  PRODUCT_IMAGE_REQUIRED:
+    "Yayınlamak için görünür her ürüne en az bir fotoğraf ekle.",
 };
 
 const DURUM_MAP: Record<string, number> = {
@@ -75,6 +77,7 @@ const DURUM_MAP: Record<string, number> = {
   STORE_ADDRESS_REQUIRED: 422,
   STORE_PROVINCE_REQUIRED: 422,
   STORE_DISTRICT_REQUIRED: 422,
+  PRODUCT_IMAGE_REQUIRED: 422,
 };
 
 function supabaseAnon() {
