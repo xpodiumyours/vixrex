@@ -58,8 +58,14 @@ describe("landing asistanı kayıt sonrası devamlılık", () => {
     );
     expect(kayitSayfasi).not.toContain("taslagiTemizle");
     expect(sahipSayfasi).toContain("const taslak = taslagiOku()");
+    // Ayrı eski isim formu kaldırıldı. Landing cevapları creation-mode
+    // VitrinimEditor draft'ına katılır ve create-store payload'ına taşınır.
     expect(sahipSayfasi).toContain(
-      "body: JSON.stringify({ name: yeniAd.trim(), ...asistanTaslagi })",
+      "const payload: Record<string, unknown> = { name: ad, ...asistanTaslagi }",
     );
+    expect(sahipSayfasi).toContain(
+      "for (const [k, v] of Object.entries(draft as Record<string, unknown>))",
+    );
+    expect(sahipSayfasi).toContain("body: JSON.stringify(payload)");
   });
 });
