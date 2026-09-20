@@ -46,12 +46,18 @@ describe("sahip yönetim arayüzü sözleşmesi", () => {
     expect(globals).toMatch(/\.vitrin-shell\s*\{/);
   });
 
-  it("yönetim formları etiket, meşgul durumu ve hata gösteriyor", () => {
-    for (const kaynak of [giris, kayit, pano]) {
-      expect(kaynak).toMatch(/<label htmlFor=/);
-      expect(kaynak).toMatch(/aria-busy=/);
+  it("Google-only auth ve yönetim formu erişilebilirlik sözleşmesini koruyor", () => {
+    for (const kaynak of [giris, kayit]) {
+      expect(kaynak).toContain('provider: "google"');
+      expect(kaynak).toContain("14 Gün Ücretsiz");
+      expect(kaynak).toMatch(/disabled={gonderiliyor}/);
       expect(kaynak).toMatch(/role="alert"/);
+      expect(kaynak).not.toMatch(/signInWithPassword|resetPasswordForEmail|type="password"/);
     }
+
+    expect(pano).toMatch(/<label htmlFor=/);
+    expect(pano).toMatch(/aria-busy=/);
+    expect(pano).toMatch(/role="alert"/);
   });
 
   it("sahip dili tek-vitrin modelini izliyor", () => {

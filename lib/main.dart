@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -15,25 +14,30 @@ import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/theme/app_theme.dart';
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  // Path URL strategy: /app panel; müşteri /v/* Next.js'e yönlendirilir (PublicSiteRedirectScreen).
-  if (kIsWeb) {
-    usePathUrlStrategy();
-  }
-  SystemChrome.setSystemUIOverlayStyle(_systemUiOverlayStyle);
-  _setupGlobalErrorHandler();
-  await _initializeSupabase();
-  _initializeOneSignal();
-  // Tek Asistan planı, Faz C: eski sohbet geçmişi anahtarlarını tek v3
-  // desenine bir kez taşır. Sessiz başarısızlık — bir kapı değil, temizlik.
-  await SohbetGecmisiGocu.calistir();
-
-  await SentryFlutter.init((options) {
-    options.dsn = const String.fromEnvironment('SENTRY_DSN');
-    options.tracesSampleRate = 0.2;
-  });
-
-  runApp(const VixRexApp());
+  await SentryFlutter.init(
+    (options) {
+      options.dsn = const String.fromEnvironment('SENTRY_DSN');
+      const release = String.fromEnvironment('SENTRY_RELEASE');
+      const environment = String.fromEnvironment('SENTRY_ENVIRONMENT');
+      if (release.isNotEmpty) options.release = release;
+      if (environment.isNotEmpty) options.environment = environment;
+      options.tracesSampleRate = 0.2;
+    },
+    appRunner: () async {
+      WidgetsFlutterBinding.ensureInitialized();
+      // Path URL strategy: /app panel; müşteri /v/* Next.js'e yönlendirilir (PublicSiteRedirectScreen).
+      if (kIsWeb) {
+        usePathUrlStrategy();
+      }
+      SystemChrome.setSystemUIOverlayStyle(_systemUiOverlayStyle);
+      await _initializeSupabase();
+      _initializeOneSignal();
+      // Tek Asistan planı, Faz C: eski sohbet geçmişi anahtarlarını tek v3
+      // desenine bir kez taşır. Sessiz başarısızlık — bir kapı değil, temizlik.
+      await SohbetGecmisiGocu.calistir();
+      runApp(const VixRexApp());
+    },
+  );
 }
 
 const SystemUiOverlayStyle _systemUiOverlayStyle = SystemUiOverlayStyle(
@@ -46,23 +50,6 @@ const SystemUiOverlayStyle _systemUiOverlayStyle = SystemUiOverlayStyle(
   systemStatusBarContrastEnforced: false,
   systemNavigationBarContrastEnforced: false,
 );
-
-void _setupGlobalErrorHandler() {
-  FlutterError.onError = (FlutterErrorDetails details) {
-    FlutterError.presentError(details);
-    if (kDebugMode) {
-      debugPrint(
-        '[GlobalError] Captured Flutter Error: ${details.exceptionAsString()}',
-      );
-    }
-  };
-  PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
-    if (kDebugMode) {
-      debugPrint('[GlobalError] Captured Platform/Async Error: $error');
-    }
-    return true;
-  };
-}
 
 Future<void> _initializeSupabase() async {
   const supabaseUrl = String.fromEnvironment('SUPABASE_URL');

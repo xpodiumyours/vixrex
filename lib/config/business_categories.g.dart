@@ -45,7 +45,7 @@ const List<BusinessCategoryCore> businessCategories = [
     order: 4,
     label: 'Fırın',
     aliases: ['firin'],
-    productTemplateKey: 'food',
+    productTemplateKey: 'cafe_restaurant',
   ),
   BusinessCategoryCore(
     id: 'kozmetik',
@@ -80,7 +80,7 @@ const List<BusinessCategoryCore> businessCategories = [
     order: 9,
     label: 'Kafe / Lokanta',
     aliases: ['kafe', 'restoran', 'lokanta'],
-    productTemplateKey: 'food',
+    productTemplateKey: 'cafe_restaurant',
   ),
   BusinessCategoryCore(
     id: 'kuafor',
@@ -94,7 +94,7 @@ const List<BusinessCategoryCore> businessCategories = [
     order: 11,
     label: 'Teknik Servis',
     aliases: ['teknik', 'servis'],
-    productTemplateKey: 'service',
+    productTemplateKey: 'technical_service',
   ),
   BusinessCategoryCore(
     id: 'hizmet_danismanlik',

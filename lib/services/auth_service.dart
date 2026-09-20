@@ -38,40 +38,6 @@ class AuthService {
   /// Returns whether a user session is active.
   bool get hasActiveSession => currentUser != null;
 
-  /// Sign up with email and password.
-  Future<Result<AuthResponse>> signUp(String email, String password) async {
-    try {
-      final res = await Supabase.instance.client.auth.signUp(
-        email: email,
-        password: password,
-      );
-      final userId = res.user?.id;
-      if (userId != null) {
-        await PushNotificationService.instance.loginUser(userId);
-      }
-      return Result.success(res);
-    } catch (e, s) {
-      return Result.failure(SupabaseErrorMapper.map(e, s));
-    }
-  }
-
-  /// Sign in with email and password.
-  Future<Result<AuthResponse>> signIn(String email, String password) async {
-    try {
-      final res = await Supabase.instance.client.auth.signInWithPassword(
-        email: email,
-        password: password,
-      );
-      final userId = res.user?.id;
-      if (userId != null) {
-        await PushNotificationService.instance.loginUser(userId);
-      }
-      return Result.success(res);
-    } catch (e, s) {
-      return Result.failure(SupabaseErrorMapper.map(e, s));
-    }
-  }
-
   /// Sign in with Google using native ID token authentication.
   /// Anonim hesabı Google'a bağlar. AYNI hesap kalır, veri taşınmaz.
   ///
@@ -233,28 +199,6 @@ class AuthService {
     try {
       await Supabase.instance.client.rpc('delete_user_account');
       await signOut();
-      return const Result.success(null);
-    } catch (e, s) {
-      return Result.failure(SupabaseErrorMapper.map(e, s));
-    }
-  }
-
-  /// Sends a password-reset email via Supabase Auth.
-  Future<Result<void>> resetPassword(String email) async {
-    final trimmed = email.trim();
-    if (trimmed.isEmpty) {
-      return Result.failure(Failure('E-posta adresi zorunludur'));
-    }
-
-    try {
-      // V-14 (attack-vectors.md, 2026-08-18): eskiden köke (publicSiteUrl)
-      // yönlendiriyordu — orada işleyen bir sayfa yoktu, link ölü uçtu.
-      // Artık şifre belirleme formunu gösteren gerçek sayfaya gidiyor
-      // (public_web/src/app/sifre-sifirla/page.tsx).
-      await Supabase.instance.client.auth.resetPasswordForEmail(
-        trimmed,
-        redirectTo: '${LegalConfig.publicSiteUrl}/sifre-sifirla',
-      );
       return const Result.success(null);
     } catch (e, s) {
       return Result.failure(SupabaseErrorMapper.map(e, s));

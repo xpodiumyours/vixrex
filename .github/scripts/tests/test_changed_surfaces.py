@@ -48,6 +48,18 @@ class ChangedSurfacesTest(unittest.TestCase):
             {"flutter": False, "schema": True, "public_web": True},
         )
 
+    def test_generated_schema_outputs_select_schema_pipeline(self) -> None:
+        cases = {
+            "lib/config/business_categories.g.dart": {"flutter": True, "schema": True, "public_web": False},
+            "lib/config/vixrex_mesajlar.g.dart": {"flutter": True, "schema": True, "public_web": False},
+            "public_web/src/lib/businessCategories.ts": {"flutter": False, "schema": True, "public_web": True},
+            "public_web/src/lib/vixrexMesajlari.ts": {"flutter": False, "schema": True, "public_web": True},
+            "public_web/src/lib/productAttributeSchema.ts": {"flutter": False, "schema": True, "public_web": True},
+        }
+        for path, expected in cases.items():
+            with self.subTest(path=path):
+                self.assertEqual(changed_surfaces.classify_paths([path]), expected)
+
     def test_dependency_files_select_their_surface_and_schema_pipeline(self) -> None:
         affected = changed_surfaces.classify_paths(
             ["pubspec.lock", "public_web/package-lock.json"]

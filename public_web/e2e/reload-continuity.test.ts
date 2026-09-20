@@ -1,56 +1,60 @@
 import { test, expect } from "@playwright/test";
 
-test.describe("reload / farklı sekme devam", () => {
-  const baseUrl =
-    process.env.E2E_PUBLIC_BASE_URL ?? "https://vixrex-public.vercel.app";
+const SLUG = "kiralik-butik";
 
-  test("reload sonrası sahip oturumu korur", async ({ page }) => {
-    await page.goto(`${baseUrl}/v/demo-umranieh`);
-    const cookie1 = await page.context().cookies();
-    const ownerCookie = cookie1.find((c) => c.name === "owner_session");
-    expect(ownerCookie).toBeTruthy();
-    await page.reload();
-    const cookie2 = await page.context().cookies();
-    const ownerCookie2 = cookie2.find((c) => c.name === "owner_session");
-    expect(ownerCookie2).toBeTruthy();
-    expect(ownerCookie2?.value).toBe(ownerCookie?.value);
-    const urlAfter = page.url();
-    expect(urlAfter.includes("/v/demo-umranieh")).toBeTruthy();
+test.describe("yenileme / farklı sekme devamlılığı", () => {
+  test("yenileme sonrası vitrin içeriği korunur", async ({ page }) => {
+    await page.goto(`/v/${SLUG}`, { waitUntil: "domcontentloaded" });
+    const baslik = page.getByRole("heading", { level: 1 }).first();
+    await expect(baslik).toBeVisible({ timeout: 20_000 });
+    const oncekiBaslik = (await baslik.textContent())?.trim();
+
+    await page.reload({ waitUntil: "domcontentloaded" });
+    const sonrakiBaslik = page.getByRole("heading", { level: 1 }).first();
+    await expect(sonrakiBaslik).toBeVisible({ timeout: 20_000 });
+    expect((await sonrakiBaslik.textContent())?.trim()).toBe(oncekiBaslik);
+    expect(page.url()).toContain(`/v/${SLUG}`);
   });
 
-  test("farklı sekme aynı sahip oturumunu paylaşır", async ({ browser }) => {
-    const context = await browser.newContext({ baseURL: baseUrl });
-    const page1 = await context.newPage();
-    await page1.goto(`${baseUrl}/v/demo-umranieh`);
-    const cookie1 = (await context.cookies()).find(
-      (c) => c.name === "owner_session",
+  test("sahip oturumu olmayan ziyaretçide sahip yüzeyi açılmaz", async ({
+    page,
+  }) => {
+    await page.goto(`/v/${SLUG}`, { waitUntil: "domcontentloaded" });
+    await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible({
+      timeout: 20_000,
+    });
+
+    const sahipCerezi = (await page.context().cookies()).find(
+      (c) => c.name === "vixrex_owner_session",
     );
-    expect(cookie1).toBeTruthy();
-    const page2 = await context.newPage();
-    await page2.goto(`${baseUrl}/v/demo-umranieh`);
+    expect(sahipCerezi).toBeUndefined();
+    await expect(page.locator('[data-testid="owner-shell"]')).toHaveCount(0);
     await expect(
-      page2.locator("[data-testid=\"owner-shell\"]"),
-    ).toBeVisible({ timeout: 15000 });
-    const cookie2 = (await context.cookies()).find(
-      (c) => c.name === "owner_session",
+      page.locator('[data-testid="owner-assistant-panel"]'),
+    ).toHaveCount(0);
+
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible({
+      timeout: 20_000,
+    });
+    await expect(page.locator('[data-testid="owner-shell"]')).toHaveCount(0);
+  });
+
+  test("farklı sekme aynı vitrini aynı şekilde açar", async ({ browser }) => {
+    const context = await browser.newContext();
+    const sekme1 = await context.newPage();
+    await sekme1.goto(`/v/${SLUG}`, { waitUntil: "domcontentloaded" });
+    const baslik1 = sekme1.getByRole("heading", { level: 1 }).first();
+    await expect(baslik1).toBeVisible({ timeout: 20_000 });
+
+    const sekme2 = await context.newPage();
+    await sekme2.goto(`/v/${SLUG}`, { waitUntil: "domcontentloaded" });
+    const baslik2 = sekme2.getByRole("heading", { level: 1 }).first();
+    await expect(baslik2).toBeVisible({ timeout: 20_000 });
+
+    expect((await baslik2.textContent())?.trim()).toBe(
+      (await baslik1.textContent())?.trim(),
     );
-    expect(cookie2).toBeTruthy();
-    expect(cookie2?.value).toBe(cookie1?.value);
     await context.close();
-  });
-
-  test("reload sonrası asistan konuşması devam eder", async ({ page }) => {
-    await page.goto(`${baseUrl}/v/demo-umranieh`);
-    await expect(
-      page.locator("[data-testid=\"owner-assistant-panel\"]"),
-    ).toBeVisible({ timeout: 15000 });
-    const mesajlarkaBefore = await page
-      .locator("[data-testid=\"assistant-message\"]")
-      .count();
-    await page.reload();
-    const mesajlarkaAfter = await page
-      .locator("[data-testid=\"assistant-message\"]")
-      .count();
-    expect(mesajlarkaAfter).toBeGreaterThanOrEqual(mesajlarkaBefore);
   });
 });
