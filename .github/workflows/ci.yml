@@ -360,3 +360,39 @@ jobs:
           # Varsayılan: https://vixrex-public.vercel.app (production).
           # Preview'a karşı koşmak için E2E_PUBLIC_BASE_URL ayarlanabilir.
           E2E_PUBLIC_BASE_URL: ${{ vars.E2E_PUBLIC_BASE_URL || 'https://vixrex-public.vercel.app' }}
+
+  public_web_e2e_onizleme:
+    name: Next.js — E2E (PR kodu, gerçek tarayıcı)
+    needs: changes
+    if: needs.changes.outputs.public_web == 'true' && github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: public_web
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: public_web/package-lock.json
+
+      - name: Bağımlılıklar
+        run: npm ci
+
+      - name: Chromium kurulumu
+        run: npx playwright install --with-deps chromium
+
+      - name: E2E (PR kodu — görsel regresyon hariç)
+        run: npx playwright test --grep-invert "görsel regresyon"
+        env:
+          E2E_PUBLIC_BASE_URL: http://localhost:3000
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
