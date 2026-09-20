@@ -1,3 +1,5 @@
+import { PREMIUM_ILE_YAYINLA } from "@/lib/fiyatlandirma";
+
 interface Props {
   yayinlaniyor: boolean;
   silmeOnayi: boolean;
@@ -44,7 +46,7 @@ export function PublishBar({
     : !yasalOnayli
     ? "Yayınla — önce yasal onay gerekiyor"
     : premiumGerekli
-    ? "Premium ile yayınla — aylık 299 TL"
+    ? PREMIUM_ILE_YAYINLA
     : temelTamam
     ? "Yayınla"
     : `Yayınla — ${eksikTemelSayisi} zorunlu alan eksik`;

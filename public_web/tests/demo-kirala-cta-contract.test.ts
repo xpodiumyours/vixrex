@@ -1,6 +1,7 @@
 import { readFileSync } from "fs";
 import { resolve } from "path";
 import { describe, expect, it } from "vitest";
+import { AYLIK_PREMIUM_BEDEL } from "@/lib/fiyatlandirma";
 
 const viewSource = readFileSync(
   resolve(__dirname, "../src/app/v/[slug]/VitrinProfileView.tsx"),
@@ -37,8 +38,9 @@ describe("demo vitrin 'Bu vitrini kirala' CTA — Aylık 299 TL, 14 gün deneme,
     expect(ctaBlock).not.toContain("+ KDV");
   });
 
-  it("dürüst fiyat bilgisi var: 'Aylık 299 TL' + 'İlk 14 gün ücretsiz deneme'", () => {
-    expect(ctaBlock).toContain("Aylık 299 TL");
+  it("dürüst fiyat bilgisi var: tek kaynaktan gelen aylık bedel + 'İlk 14 gün ücretsiz deneme'", () => {
+    expect(AYLIK_PREMIUM_BEDEL).toBe("Aylık 299 TL");
+    expect(ctaBlock).toContain("{AYLIK_PREMIUM_BEDEL}");
     expect(ctaBlock).toContain("İlk 14 gün ücretsiz deneme");
   });
 

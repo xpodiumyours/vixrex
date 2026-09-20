@@ -6,6 +6,7 @@ import {
   verifyOwnerSession,
 } from "@/lib/ownerSession";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { ODEME_ACIKLAMASI } from "@/lib/fiyatlandirma";
 import {
   paytrCreateLinkPayload,
   paytrEnv,
@@ -100,7 +101,7 @@ export async function POST(request: NextRequest) {
     merchantPass: env.merchantPass,
     merchantOid,
     linkName: "VixRex Premium — Aylık",
-    linkDescription: "Aylık 299 TL · Kiralık vitrininizi yayınlamak için premium üyelik.",
+    linkDescription: ODEME_ACIKLAMASI,
     // Esnaf kirala akışında ad/soyad/e-posta vermiyor (hesap açmıyor);
     // PayTR link sayfası ödemeyi alır. Gerçek alıcı bilgisi istenirse
     // ayrı karar + form gerekir — şimdilik sabit değerler (DOĞRULANACAK).

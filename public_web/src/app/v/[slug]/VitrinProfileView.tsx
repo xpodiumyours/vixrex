@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { VitrinIkon } from "./components/VitrinIkon";
+import { AYLIK_PREMIUM_BEDEL } from "@/lib/fiyatlandirma";
 
 /** Eylem butonunun arkasındaki şema alanı.
  *
@@ -1395,7 +1396,7 @@ export default function VitrinProfileView({
                 örnek içeriktir, kira bedeli değildir. */}
             <div className="mt-8 inline-flex flex-col items-center rounded-2xl border border-blue-500/25 bg-[#0B1120] px-8 py-6">
               <span className="text-3xl font-extrabold tracking-tight text-white">
-                Aylık 299 TL
+                {AYLIK_PREMIUM_BEDEL}
               </span>
               <span className="mt-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
                 İlk 14 gün ücretsiz deneme

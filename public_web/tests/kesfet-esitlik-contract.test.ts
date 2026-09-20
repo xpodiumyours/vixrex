@@ -1,6 +1,7 @@
 import { readFileSync } from "fs";
 import { resolve } from "path";
 import { describe, expect, it } from "vitest";
+import { AYLIK_PREMIUM_BEDEL } from "@/lib/fiyatlandirma";
 
 /**
  * Keşfet eşitlik sözleşmesi (#344, 2026-08-27).
@@ -58,14 +59,15 @@ describe("Keşfet eşitlik sözleşmesi", () => {
       resolve(__dirname, "../src/components/kesfet/VitrinKarti.tsx"),
       "utf-8"
     );
-    expect(kart).toContain("Aylık 299 TL");
+    expect(AYLIK_PREMIUM_BEDEL).toBe("Aylık 299 TL");
+    expect(kart).toContain("{AYLIK_PREMIUM_BEDEL}");
     expect(kart).toContain("14 gün ücretsiz dene");
     // Flutter: VitrinStoreCard içinde aynı metinler
     const flutterKart = readFileSync(
       resolve(__dirname, "../../lib/widgets/vitrin_store_card.dart"),
       "utf-8"
     );
-    expect(flutterKart).toContain("Aylık 299 TL");
+    expect(flutterKart).toContain("aylikPremiumBedel");
     expect(flutterKart).toContain("14 gün ücretsiz dene");
   });
 

@@ -27,16 +27,22 @@
 
 import { createHmac } from "node:crypto";
 
+import {
+  AYLIK_PREMIUM_KURUS,
+  ODEME_SEPET_BASLIGI,
+  ODEME_SEPET_TUTARI,
+} from "./fiyatlandirma";
+
 /** Aylık premium bedeli — kuruş (299 TL = 29900). Sunucu tarafı tek
  *  doğruluk kaynağı; kiralama bandındaki metin yalnız gösterimdir. */
-export const PAYTR_AYLIK_PREMIUM_KRUS = 29900;
+export const PAYTR_AYLIK_PREMIUM_KRUS = AYLIK_PREMIUM_KURUS;
 /** Link API Create uç noktası. */
 export const PAYTR_LINK_API_URL = "https://www.paytr.com/odeme/api/link-api/create";
 
 /** Create isteği için ödeme sepeti — imzanın parçası, birebir aynı
  *  dize üretilmelidir. PayTR biçimi: [["ad","tutar","adet"], ...]. */
 export function paytrUserBasket(): string {
-  return JSON.stringify([["VixRex Premium — Aylık", "299.00", 1]]);
+  return JSON.stringify([[ODEME_SEPET_BASLIGI, ODEME_SEPET_TUTARI, 1]]);
 }
 
 export interface PaytrCreateLinkInput {
