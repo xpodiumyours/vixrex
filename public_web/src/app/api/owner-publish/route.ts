@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@supabase/supabase-js";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
+import { YAYIN_KAPISI_UYARISI } from "@/lib/fiyatlandirma";
 
 // Sahip çalışma taslağını canlı vitrine yayınlar (implementation_plan.md Faz 11).
 //
@@ -46,7 +47,7 @@ const HATA_METNI: Record<string, string> = {
   PUBLICATION_CONSENT_VERSION_INVALID:
     "Sözleşme metinleri güncellenmiş. Onay kutusunu tekrar işaretleyip yeniden dene.",
   PREMIUM_REQUIRED:
-    "Bu hazır vitrin yalnız premium üyelikle yayınlanır. Aylık 299 TL ile devam et.",
+    YAYIN_KAPISI_UYARISI,
   STORE_NAME_REQUIRED: "Yayınlamak için işletme adını doldur.",
   STORE_CATEGORY_REQUIRED: "Yayınlamak için işletme kategorisini seç.",
   STORE_WHATSAPP_REQUIRED: "Yayınlamak için WhatsApp numaranı doldur.",

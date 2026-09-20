@@ -278,6 +278,19 @@ jobs:
             exit 1
           fi
 
+      - name: JSON'dan Dart üret (fiyatlandırma)
+        run: dart run tool/fiyatlandirma_uret.dart
+
+      - name: Üretilen Dart dosyasını biçimlendir (fiyatlandırma)
+        run: dart format lib/config/fiyatlandirma.g.dart
+
+      - name: Sapma var mı kontrol et (fiyatlandırma)
+        run: |
+          if ! git diff --exit-code -- shared/fiyatlandirma.json lib/config/fiyatlandirma.g.dart; then
+            echo "::error::Fiyat çıktısı ortak JSON ile uyuşmuyor. tool/fiyatlandirma_uret.dart'ı tekrar çalıştır ve değişiklikleri commit et."
+            exit 1
+          fi
+
   public_web:
     name: Next.js — lint, tip, test, build
     needs: changes

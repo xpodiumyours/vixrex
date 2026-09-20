@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:vixrex/config/fiyatlandirma.g.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/services/premium_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
@@ -49,7 +50,7 @@ class VitrinStoreCard extends StatelessWidget {
   String? get _ownPremiumLabel {
     final status = premiumStatus;
     if (status == null) return null;
-    if (!status.isPremium) return 'Premium değil · Aylık 299 TL ile yayınla';
+    if (!status.isPremium) return premiumDegilRozet;
     final expiry = status.premiumExpiresAt;
     if (expiry == null) return 'Premium aktif';
     final days = expiry.difference(DateTime.now()).inDays;
@@ -356,7 +357,7 @@ class VitrinStoreCard extends StatelessWidget {
                         child: Row(
                           children: [
                             const Text(
-                              'Aylık 299 TL',
+                              aylikPremiumBedel,
                               style: TextStyle(
                                 color: Color(0xFFF59E0B),
                                 fontSize: 12,
