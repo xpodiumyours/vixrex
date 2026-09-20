@@ -8,6 +8,8 @@ alter table public.premium_orders alter column merchant_oid drop not null;
 alter table public.premium_orders
   add constraint premium_orders_callback_id_key unique (callback_id);
 
+drop function if exists public.create_premium_order(uuid, text, integer, text);
+
 create or replace function public.create_premium_order(
   p_store_id uuid,
   p_callback_id text,
