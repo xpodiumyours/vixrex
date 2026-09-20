@@ -6,7 +6,6 @@ import {
   verifyOwnerSession,
 } from "@/lib/ownerSession";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
-import { ODEME_ACIKLAMASI } from "@/lib/fiyatlandirma";
 import {
   paytrCreateLinkPayload,
   paytrEnv,
@@ -23,10 +22,11 @@ import {
 //   → create_premium_order RPC (bekleyen sipariş, service_role)
 //   → PayTR Link API Create (imzalı) → { link } döner
 //
-// merchant_oid benzersiz üretilir (vx_ + uuid) — premium_orders'taki
-// unique kısıtı aynı siparişin iki kez açılmasını engeller. Ödeme yalnız
-// /api/paytr/callback üzerinden (imza doğrulanmış) işlenir; bu rota yalnız
-// linki üretir, premium YAZMAZ.
+// callback_id benzersiz üretilir (vx_ + uuid) — premium_orders'taki unique
+// kısıtı aynı siparişin iki kez açılmasını engeller. merchant_oid'i PayTR
+// kendisi üretir (bkz. lib/paytr.ts); sipariş eşleştirmesi callback_id
+// iledir. Ödeme yalnız /api/paytr/callback üzerinden (imza doğrulanmış)
+// işlenir; bu rota yalnız linki üretir, premium YAZMAZ.
 //
 // Loglama yalnız hata mesajı; oturum tokenı ve sipariş içeriği loglanmaz.
 
@@ -77,13 +77,13 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const merchantOid = `vx_${randomUUID().replace(/-/g, "")}`;
+  const callbackId = `vx_${randomUUID().replace(/-/g, "")}`;
 
   const { error: siparisHatasi } = await getSupabaseAdmin().rpc(
     "create_premium_order",
     {
       p_store_id: ownerSession.storeId,
-      p_merchant_oid: merchantOid,
+      p_callback_id: callbackId,
       p_amount_kurus: PAYTR_AYLIK_PREMIUM_KRUS,
       p_currency: "TRY",
     }
@@ -98,18 +98,10 @@ export async function POST(request: NextRequest) {
   const payload = paytrCreateLinkPayload({
     merchantId: env.merchantId,
     merchantKey: env.merchantKey,
-    merchantPass: env.merchantPass,
-    merchantOid,
-    linkName: "VixRex Premium — Aylık",
-    linkDescription: ODEME_ACIKLAMASI,
-    // Esnaf kirala akışında ad/soyad/e-posta vermiyor (hesap açmıyor);
-    // PayTR link sayfası ödemeyi alır. Gerçek alıcı bilgisi istenirse
-    // ayrı karar + form gerekir — şimdilik sabit değerler (DOĞRULANACAK).
-    buyerName: "VixRex",
-    buyerSurname: "Premium",
-    buyerMail: "",
-    buyerGsm: "",
-    userIp: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "127.0.0.1",
+    merchantSalt: env.merchantSalt,
+    name: "VixRex Premium — Aylık",
+    callbackId,
+    callbackLink: `${request.nextUrl.origin}/api/paytr/callback`,
   });
 
   let paytrYanit: Response;
@@ -145,5 +137,5 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  return NextResponse.json({ tamam: true, link: paytrBody.link, merchantOid });
+  return NextResponse.json({ tamam: true, link: paytrBody.link });
 }
