@@ -37,6 +37,15 @@ describe("Dilim 1 hero kimlik alanları", () => {
     expect(viewSource).not.toContain("4.9 (128 değerlendirme)");
   });
 
+  it("masaüstü hero ortak yükseklik standardını ve sıkı kategori aralığını korur", () => {
+    expect(viewSource).toContain(
+      "lg:min-h-[420px] xl:min-h-[440px] 2xl:min-h-[460px]"
+    );
+    expect(viewSource).not.toContain("lg:min-h-[560px]");
+    expect(viewSource).toContain("lg:px-12 lg:py-10");
+    expect(viewSource).not.toContain("lg:px-12 lg:py-16");
+  });
+
   it("yalnız doğrulanmış işletmede güven rozeti gösterir", () => {
     expect(pageSource).toContain("business_verified_at");
     expect(pageSource).toContain("PUBLIC_STORE_SELECT_WITH_VERIFICATION");

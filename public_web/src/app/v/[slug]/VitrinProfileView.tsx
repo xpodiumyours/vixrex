@@ -442,7 +442,7 @@ export default function VitrinProfileView({
       {/* ===== HERO ===== */}
       <section
         id="ust-bolum"
-        className={`relative w-full min-h-[380px] sm:min-h-[440px] flex items-end overflow-hidden ${isPreviewMode ? "pt-9 lg:pt-0" : ""} lg:min-h-[560px]`}
+        className={`relative w-full min-h-[380px] sm:min-h-[440px] flex items-end overflow-hidden ${isPreviewMode ? "pt-9 lg:pt-0" : ""} lg:min-h-[420px] xl:min-h-[440px] 2xl:min-h-[460px]`}
       >
         {/* Kapak yoksa SAHTE FOTOĞRAF BASILMAZ.
             Eskiden burada sabit bir Unsplash adresi vardı: kapak
@@ -665,7 +665,7 @@ export default function VitrinProfileView({
       {/* ===== CATEGORIES ===== */}
       {showCategories ? (
         <section className="w-full lg:bg-[#111C33]/35" id="kategoriler" style={{ scrollMarginTop: "88px" }}>
-          <div className="max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-12 lg:px-12 lg:py-16">
+          <div className="max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-12 lg:px-12 lg:py-10">
             <div className="flex items-baseline justify-between mb-5 sm:mb-8">
               <h2 {...editableProps("kategoriBolumBaslik", ownerMode)} className="text-[26px] sm:text-4xl font-extrabold tracking-tight text-white">
                 {categorySectionTitle || "Kategoriler"}
