@@ -11,6 +11,7 @@ import { ChatTopBar } from "./components/ChatTopBar";
 import { HesapBaglaSeridi } from "./components/HesapBaglaSeridi";
 import { UpNextList } from "./components/UpNextList";
 import { SectionProgressList } from "./components/SectionProgressList";
+import { ConceptProgressList } from "./components/ConceptProgressList";
 import { SectionVisibilityToggle } from "./components/SectionVisibilityToggle";
 import { BookingSettingsPanel } from "./components/BookingSettingsPanel";
 import { AboutEditor } from "./components/AboutEditor";
@@ -27,7 +28,7 @@ import type { AssistantHandoffV1 } from "@/lib/assistantHandoff";
 import { taslakClientId } from "@/lib/canliVitrinSenkron";
 import { useRouter } from "next/navigation";
 import { gpsAdresiniCoz } from "@/lib/konumCozumleme";
-import { VITRIN_FIELDS } from "@/lib/vitrinFieldSchema";
+import { VITRIN_FIELDS, type VitrinConcept } from "@/lib/vitrinFieldSchema";
 import { otomatikDeger } from "@/lib/otomatikVitrinIcerik";
 import { yonetimOnerileriUret } from "@/lib/yonetimOnerileri";
 import { supabase } from "@/lib/supabase";
@@ -136,6 +137,7 @@ export default function OwnerAssistantPanel({
   // Masaüstünde yer bol, harita açık durmaya devam eder.
   const [sekme, setSekme] = useState<"sohbet" | "alanlar" | "eksikler">("sohbet");
   const [haritaAcik, setHaritaAcik] = useState(false);
+  const [seciliKavram, setSeciliKavram] = useState<VitrinConcept | null>(null);
   // Mobil hedef (2026-09-21): mesaj kutusu her zaman altta görünür;
   // yalnız sohbet geçmişi yukarı çekildiğinde büyüyen çekmece açılır.
   // Masaüstü panel state'i bundan tamamen ayrıdır.
@@ -313,6 +315,12 @@ export default function OwnerAssistantPanel({
     alanaGecVeyaBitir,
     alanAtlandi,
     alanSec,
+    kavramSec: (kavram) => {
+      setSeciliKavram(kavram);
+      setAcik(true);
+      setHaritaAcik(true);
+      if (masaustu) setSekme("alanlar");
+    },
   });
 
   const fieldRestore = useFieldRestore({
@@ -734,6 +742,7 @@ export default function OwnerAssistantPanel({
                   alanSec={alanSec}
                   alanAtla={alanAtlandi}
                 />
+                <ConceptProgressList key={seciliKavram ?? "kavramlar"} yerelTaslak={yerelTaslak} alanSec={alanSec} aktifKavram={seciliKavram} />
                 <SectionProgressList yerelTaslak={yerelTaslak} alanSec={alanSec} />
                 <SectionVisibilityToggle
                   slug={slug}
@@ -892,6 +901,7 @@ export default function OwnerAssistantPanel({
                       </div>
                     ) : null}
 
+                    <ConceptProgressList key={seciliKavram ?? "kavramlar"} yerelTaslak={yerelTaslak} alanSec={alanSec} aktifKavram={seciliKavram} />
                     <SectionProgressList yerelTaslak={yerelTaslak} alanSec={alanSec} />
 
                     <SectionVisibilityToggle

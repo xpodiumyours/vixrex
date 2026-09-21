@@ -46,9 +46,47 @@ export type VitrinSection =
   | "blog"
   | "faq";
 
+export type VitrinConcept =
+  | "isletmem"
+  | "ilkGorunumum"
+  | "banaUlasin"
+  | "konumum"
+  | "calismaSaatlerim"
+  | "digerHesaplarim"
+  | "urunHizmet"
+  | "kampanyam"
+  | "biziTaniyin"
+  | "galerim"
+  | "yazilarim"
+  | "sss";
+
+export interface VitrinConceptMeta {
+  id: VitrinConcept;
+  etiket: string;
+  aciklama: string;
+  soru: string;
+  esAnlamlar: readonly string[];
+}
+
+export const VITRIN_CONCEPTS: readonly VitrinConceptMeta[] = [
+  { id: "isletmem", etiket: "İşletmem", aciklama: "İşletme adı, kategori ve işletme türü", soru: "İşletme adı, kategori veya işletme türünden hangisini değiştirelim?", esAnlamlar: ["işletme bilgilerim", "dükkan bilgilerim", "mağaza bilgilerim", "firma bilgilerim", "işletmem"] },
+  { id: "ilkGorunumum", etiket: "İlk görünümüm", aciklama: "Vitrinin üst bölümü, tanıtımı ve ana görselleri", soru: "Tanıtım yazısı, logo, kapak görseli veya üst görünümden hangisini düzenleyelim?", esAnlamlar: ["ilk görünümüm", "vitrin görünümü", "üst görünüm", "logo ve kapak", "vitrinin üstü"] },
+  { id: "banaUlasin", etiket: "Bana ulaşın", aciklama: "WhatsApp, telefon ve e-posta", soru: "WhatsApp, telefon veya e-posta bilgilerinden hangisini değiştirelim?", esAnlamlar: ["iletişim bilgilerim", "iletişim bilgileri", "bana ulaşın", "ulaşım bilgilerim"] },
+  { id: "konumum", etiket: "Konumum", aciklama: "Adres, ilçe, mahalle ve harita bilgileri", soru: "Adres, il/ilçe, mahalle veya harita bilgilerinden hangisini değiştirelim?", esAnlamlar: ["konum bilgilerim", "adres ve konum", "yer bilgilerim", "harita bilgilerim", "konumum"] },
+  { id: "calismaSaatlerim", etiket: "Çalışma saatlerim", aciklama: "İşletmenin açık olduğu gün ve saatler", soru: "Çalışma saatlerini nasıl değiştirelim?", esAnlamlar: ["çalışma saatlerim", "açılış saatlerim", "mesai saatlerim", "çalışma zamanım"] },
+  { id: "digerHesaplarim", etiket: "Diğer hesaplarım", aciklama: "Instagram ve harici web sitesi", soru: "Instagram hesabını mı, web sitesini mi değiştirelim?", esAnlamlar: ["diğer hesaplarım", "sosyal hesaplarım", "instagram ve web sitesi", "internet hesaplarım"] },
+  { id: "urunHizmet", etiket: "Ürünlerim / hizmetlerim", aciklama: "Ürün veya hizmet bölümlerinin vitrin başlıkları", soru: "Ürün/hizmet bölümünün hangi başlığını değiştirelim?", esAnlamlar: ["ürün ve hizmet bölümüm", "ürünlerim ve hizmetlerim", "ürün hizmet bölümü", "katalog görünümü"] },
+  { id: "kampanyam", etiket: "Kampanyam", aciklama: "Kampanya etiketi, başlığı, açıklaması, görseli ve fiyat metni", soru: "Kampanyanın başlığı, açıklaması, görseli, etiketi veya fiyat metninden hangisini değiştirelim?", esAnlamlar: ["kampanyamı düzenle", "kampanya bilgilerim", "kampanyam", "öne çıkan kampanyam"] },
+  { id: "biziTaniyin", etiket: "Bizi tanıyın", aciklama: "Hakkımızda metni, görseli ve referans bağlantısı", soru: "Hakkımızda başlığı, metni, görseli veya referans bağlantısından hangisini değiştirelim?", esAnlamlar: ["bizi tanıyın", "hakkımızda bölümü", "işletme hikayem", "hakkımızda bilgilerim"] },
+  { id: "galerim", etiket: "Galerim", aciklama: "Galeri başlıkları ve galeri eylemi", soru: "Galerinin başlığını mı, buton yazısını mı, bağlantısını mı değiştirelim?", esAnlamlar: ["galerimi düzenle", "galeri bilgilerim", "galerim", "fotoğraf galerim"] },
+  { id: "yazilarim", etiket: "Yazılarım", aciklama: "Vitrindeki yazılar bölümünün sunumu", soru: "Yazılar bölümünün üst başlığını mı, ana başlığını mı değiştirelim?", esAnlamlar: ["yazılarımı düzenle", "blog görünümü", "yazılar bölümüm", "yazılarım"] },
+  { id: "sss", etiket: "Sık sorulanlar", aciklama: "Sık sorulan sorular bölümünün sunumu", soru: "Sık sorulanlar bölümünün başlığını mı, üst yazısını mı, açıklamasını mı değiştirelim?", esAnlamlar: ["sık sorulanlar", "sıkça sorulan sorular", "sss bölümüm", "sorular bölümü"] },
+];
+
 export interface VitrinField {
   /** Komutlarda kullanılan sabit ad. Yayına çıktıktan sonra değişmez. */
   anahtar: string;
+  kavram: VitrinConcept;
   tip: VitrinFieldType;
   /** Kullanıcıya gösterilen Türkçe ad. Asistan bunu konuşur. */
   etiket: string;
@@ -114,6 +152,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   // ── Hero / işletme kimliği ────────────────────────────────────────────
   {
     anahtar: "isletmeAdi",
+    kavram: "isletmem",
     tip: "metin",
     etiket: "İşletme Adı",
     neden: "Müşterinin ilk gördüğü isim. Google aramalarında ve paylaşımlarda da bu çıkar.",
@@ -125,6 +164,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   },
   {
     anahtar: "heroRozet",
+    kavram: "ilkGorunumum",
     tip: "metin",
     etiket: "Hero Rozet Metni",
     neden: "Adının yanında duran küçük vurgu — seni benzer işletmelerden ayıran cümle.",
@@ -137,6 +177,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   },
   {
     anahtar: "kisaTanitim",
+    kavram: "ilkGorunumum",
     tip: "uzunMetin",
     etiket: "Kısa Tanıtım",
     neden: "Sayfaya giren kişi iki saniyede ne yaptığını anlar. Boş kalırsa vitrin sessiz görünür.",
@@ -147,6 +188,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   },
   {
     anahtar: "konumMetni",
+    kavram: "konumum",
     tip: "metin",
     etiket: "Hero Konum Metni",
     neden: "Üstte duran \"neredeyim\" bilgisi. Yakındaki müşteri seni görünce güvenir.",
@@ -157,6 +199,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   },
   {
     anahtar: "kategori",
+    kavram: "isletmem",
     tip: "secim",
     etiket: "İşletme Kategorisi",
     neden: "Vitrinin renkleri, butonları ve hazır görselleri buna göre gelir. Boşken hiçbiri çalışmaz.",
@@ -174,6 +217,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   },
   {
     anahtar: "isletmeTuru",
+    kavram: "isletmem",
     tip: "metin",
     etiket: "İşletme Türü",
     neden: "Kategorinin altındaki ince tanım — \"Kuaför\" yerine \"Erkek kuaförü\" gibi.",
@@ -183,6 +227,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   },
   {
     anahtar: "logo",
+    kavram: "ilkGorunumum",
     tip: "gorsel",
     etiket: "Logo",
     neden: "Küçük de olsa bir logo, vitrini şablon değil gerçek bir işletme gibi gösterir.",
@@ -192,6 +237,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   },
   {
     anahtar: "kapakGorseli",
+    kavram: "ilkGorunumum",
     tip: "gorsel",
     etiket: "Kapak / Hero Görseli",
     neden: "Sayfanın en üstündeki büyük görsel. İlk izlenimin yarısı budur.",
@@ -206,6 +252,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   // ── İletişim ──────────────────────────────────────────────────────────
   {
     anahtar: "whatsapp",
+    kavram: "banaUlasin",
     tip: "telefon",
     etiket: "WhatsApp Numarası",
     neden: "Müşterinin sana ulaşmasının en kısa yolu. Tek dokunuşla sohbet açılır.",
@@ -216,6 +263,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   },
   {
     anahtar: "telefon",
+    kavram: "banaUlasin",
     tip: "telefon",
     etiket: "Telefon",
     neden: "Arayarak ulaşmak isteyenler için. WhatsApp kullanmayan müşteri de var.",
@@ -224,6 +272,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   },
   {
     anahtar: "eposta",
+    kavram: "banaUlasin",
     tip: "eposta",
     etiket: "E-posta",
     neden: "Kurumsal iş ve teklif isteyenler buradan yazar.",
@@ -233,6 +282,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   },
   {
     anahtar: "adres",
+    kavram: "konumum",
     tip: "uzunMetin",
     etiket: "Açık Adres",
     neden: "Müşteri kapına gelebilsin diye. Haritada işaretlenen yer de burasıdır.",
@@ -249,6 +299,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   // (province_name/district_name) DB'de zaten var, migration gerekmedi.
   {
     anahtar: "il",
+    kavram: "konumum",
     tip: "metin",
     etiket: "İl",
     neden: "Yayın için gerekli. Bulunduğun ilin aramalarında çıkmanı sağlar.",
@@ -259,6 +310,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   },
   {
     anahtar: "ilce",
+    kavram: "konumum",
     tip: "metin",
     etiket: "İlçe",
     neden: "Yayın için gerekli. \"Kadıköy kuaför\" gibi aramalarda seni öne çıkarır.",
@@ -271,6 +323,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   // il/ilçe zaten yayın kapısını karşılıyor, bu yalnız kaliteyi artırır.
   {
     anahtar: "mahalle",
+    kavram: "konumum",
     tip: "metin",
     etiket: "Mahalle",
     neden: "En yerel arama sinyali — yakınındaki müşteri seni daha kolay bulur.",
@@ -282,6 +335,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   },
   {
     anahtar: "haritaEtiketi",
+    kavram: "konumum",
     tip: "metin",
     etiket: "Harita Kartı Etiketi",
     neden: "Harita kartının üstünde duran kısa not. Örn: Çarşı içi, otopark var.",
@@ -291,6 +345,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   },
   {
     anahtar: "calismaSaatleri",
+    kavram: "calismaSaatlerim",
     tip: "metin",
     etiket: "Çalışma Saatleri",
     neden: "Müşteri boşuna gelmesin. Açık/kapalı rozeti de buradan hesaplanır.",
@@ -301,6 +356,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   },
   {
     anahtar: "instagram",
+    kavram: "digerHesaplarim",
     tip: "metin",
     etiket: "Instagram Kullanıcı Adı",
     neden: "Instagram hesabın vitrine bağlanır, müşteri işlerini oradan da görür.",
@@ -311,6 +367,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   },
   {
     anahtar: "website",
+    kavram: "digerHesaplarim",
     tip: "url",
     etiket: "Web Sitesi",
     neden: "Ayrı bir siten varsa buraya koy, ziyaretçi kaybolmaz.",
@@ -319,6 +376,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   },
   {
     anahtar: "haritaLinki",
+    kavram: "konumum",
     tip: "url",
     etiket: "Google İşletme / Harita Bağlantısı",
     neden: "Google İşletme kaydın — yol tarifi ve yorumlar oraya bağlanır.",
@@ -328,6 +386,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   },
   {
     anahtar: "enlem",
+    kavram: "konumum",
     tip: "sayi",
     etiket: "Konum — Enlem",
     neden: "Haritadaki iğnenin tam yeri. Adres tam bulunamıyorsa bunu düzeltir.",
@@ -338,6 +397,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   },
   {
     anahtar: "boylam",
+    kavram: "konumum",
     tip: "sayi",
     etiket: "Konum — Boylam",
     neden: "Enlemle birlikte çalışır; ikisi olmadan harita tam oturmaz.",
@@ -350,6 +410,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   // ── Katalog bölüm başlıkları ──────────────────────────────────────────
   {
     anahtar: "kategoriBolumBaslik",
+    kavram: "urunHizmet",
     tip: "metin",
     etiket: "Kategori Bölümü Başlığı",
     neden: "Ürün gruplarının üstündeki başlık. \"Kategoriler\" yerine kendi cümleni yazabilirsin.",
@@ -360,6 +421,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   },
   {
     anahtar: "urunBolumBaslik",
+    kavram: "urunHizmet",
     tip: "metin",
     etiket: "Ürün Bölümü Başlığı",
     neden: "Ürün listesinin üstündeki başlık. \"Ürünler\" yerine \"Menümüz\" gibi yazabilirsin.",
@@ -372,6 +434,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   // ── Öne çıkan kampanya bandı ──────────────────────────────────────────
   {
     anahtar: "bantEtiket",
+    kavram: "kampanyam",
     tip: "metin",
     etiket: "Kampanya Etiketi",
     neden: "Kampanya kutusunun köşesindeki küçük etiket. Örn: Bu haftaya özel.",
@@ -381,6 +444,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   },
   {
     anahtar: "bantBaslik",
+    kavram: "kampanyam",
     tip: "metin",
     etiket: "Kampanya Başlığı",
     neden: "Öne çıkarmak istediğin teklifin başlığı. Sayfanın en dikkat çeken yeri.",
@@ -390,6 +454,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   },
   {
     anahtar: "bantAciklama",
+    kavram: "kampanyam",
     tip: "uzunMetin",
     etiket: "Kampanya Açıklaması",
     neden: "Kampanyanın ne olduğunu bir iki cümleyle anlatır.",
@@ -399,6 +464,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   },
   {
     anahtar: "bantGorsel",
+    kavram: "kampanyam",
     tip: "gorsel",
     etiket: "Kampanya Görseli",
     neden: "Kampanyanın yanındaki fotoğraf. Görselli kampanya daha çok tıklanır.",
@@ -407,6 +473,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   },
   {
     anahtar: "bantFiyat",
+    kavram: "kampanyam",
     tip: "metin",
     etiket: "Kampanya Fiyat Metni",
     neden: "Fiyatı yazarsan müşteri sormadan karar verir. Örn: 499 TL'den başlayan.",
@@ -418,6 +485,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   // ── Hakkımızda ────────────────────────────────────────────────────────
   {
     anahtar: "hakkindaUstBaslik",
+    kavram: "biziTaniyin",
     tip: "metin",
     etiket: "Hakkımızda Üst Başlık",
     neden: "Hakkında bölümünün üstündeki küçük yazı. Örn: Biz kimiz.",
@@ -427,6 +495,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   },
   {
     anahtar: "hakkindaBaslik",
+    kavram: "biziTaniyin",
     tip: "metin",
     etiket: "Hakkımızda Başlığı",
     neden: "\"Hakkımızda\" yerine kendi cümlen — örn. Kadıköy'ün 12 yıllık teknik servisi.",
@@ -438,6 +507,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   },
   {
     anahtar: "hakkindaMetin",
+    kavram: "biziTaniyin",
     tip: "uzunMetin",
     etiket: "Hakkımızda Yazısı",
     neden: "Hikâyeni anlattığın yer. Güven buradan doğar; şablon vitrinden ayıran şey budur.",
@@ -448,6 +518,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   },
   {
     anahtar: "hakkindaGorsel",
+    kavram: "biziTaniyin",
     tip: "gorsel",
     etiket: "Hakkımızda Görseli",
     neden: "Dükkânın veya ekibin fotoğrafı. Gerçek bir yer olduğunu gösterir.",
@@ -456,6 +527,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   },
   {
     anahtar: "hakkindaGorselAlt",
+    kavram: "biziTaniyin",
     tip: "metin",
     etiket: "Görsel Alt Yazısı",
     neden: "Fotoğrafın altındaki kısa yazı. Örn: Atölyemiz, 2019.",
@@ -467,6 +539,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   // ── Galeri ────────────────────────────────────────────────────────────
   {
     anahtar: "galeriUstBaslik",
+    kavram: "galerim",
     tip: "metin",
     etiket: "Galeri Üst Başlık",
     neden: "Galerinin üstündeki küçük yazı. Örn: İşlerimizden.",
@@ -477,6 +550,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   },
   {
     anahtar: "galeriBaslik",
+    kavram: "galerim",
     tip: "metin",
     etiket: "Galeri Başlığı",
     neden: "\"Galeri\" yerine kendi başlığın — örn. Önce ve sonra.",
@@ -487,6 +561,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   },
   {
     anahtar: "galeriAksiyonMetni",
+    kavram: "galerim",
     tip: "metin",
     etiket: "Galeri Buton Metni",
     neden: "Galerinin yanındaki bağlantı yazısı. Örn: Hepsini gör.",
@@ -497,6 +572,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   },
   {
     anahtar: "galeriAksiyonLinki",
+    kavram: "galerim",
     tip: "url",
     etiket: "Galeri Buton Bağlantısı",
     neden: "O yazının nereye gideceği — Instagram hesabın veya başka bir sayfan olabilir.",
@@ -508,6 +584,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   // ── Blog ──────────────────────────────────────────────────────────────
   {
     anahtar: "blogUstBaslik",
+    kavram: "yazilarim",
     tip: "metin",
     etiket: "Blog Üst Başlık",
     neden: "Yazıların üstündeki küçük yazı. Örn: Bilgi köşesi.",
@@ -518,6 +595,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   },
   {
     anahtar: "blogBaslik",
+    kavram: "yazilarim",
     tip: "metin",
     etiket: "Blog Bölüm Başlığı",
     neden: "\"Yazılar\" yerine kendi başlığın. Yazı yazmak Google'da görünmeni artırır.",
@@ -530,6 +608,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   // ── SSS ───────────────────────────────────────────────────────────────
   {
     anahtar: "sssUstBaslik",
+    kavram: "sss",
     tip: "metin",
     etiket: "SSS Üst Başlık",
     neden: "Soru bölümünün üstündeki küçük yazı. Örn: Merak edilenler.",
@@ -540,6 +619,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   },
   {
     anahtar: "sssBaslik",
+    kavram: "sss",
     tip: "metin",
     etiket: "SSS Bölüm Başlığı",
     neden: "\"Sıkça sorulan sorular\" yerine kendi cümlen.",
@@ -550,6 +630,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   },
   {
     anahtar: "sssAciklama",
+    kavram: "sss",
     tip: "uzunMetin",
     etiket: "SSS Bölüm Açıklaması",
     neden: "Bölümün altındaki açıklama. Müşterinin en çok sorduklarını burada topla.",
@@ -562,6 +643,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   // ── Görünürlük ────────────────────────────────────────────────────────
   {
     anahtar: "puanGoster",
+    kavram: "ilkGorunumum",
     tip: "acikKapali",
     etiket: "Değerlendirme Puanını Göster",
     neden: "Değerlendirme puanın varsa üstte görünür. İstemezsen kapalı kalır.",
@@ -570,6 +652,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   },
   {
     anahtar: "yolTarifiGoster",
+    kavram: "konumum",
     tip: "acikKapali",
     etiket: "Yol Tarifi Butonunu Göster",
     neden: "Açarsan müşteri tek dokunuşla yol tarifi alır.",
@@ -578,6 +661,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   },
   {
     anahtar: "referansLinki",
+    kavram: "biziTaniyin",
     tip: "url",
     etiket: "Referanslar Bağlantısı",
     neden: "Çalıştığın firmalar veya işlerin varsa bağlantısını buraya koy.",
@@ -587,6 +671,10 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
 ] as const;
 
 /** anahtar → alan. Komut işleyicisi bunu kullanır. */
+export function fieldsOfConcept(kavram: VitrinConcept): readonly VitrinField[] {
+  return VITRIN_FIELDS.filter((alan) => alan.kavram === kavram);
+}
+
 export const FIELD_BY_KEY: ReadonlyMap<string, VitrinField> = new Map(
   VITRIN_FIELDS.map((f) => [f.anahtar, f]),
 );

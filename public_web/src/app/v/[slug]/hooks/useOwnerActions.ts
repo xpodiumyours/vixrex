@@ -4,7 +4,8 @@ import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { resolveVitrinProfile } from "@/lib/vitrinProfile";
 import { taslakClientId } from "@/lib/canliVitrinSenkron";
-import { FIELD_BY_KEY, type VitrinField } from "@/lib/vitrinFieldSchema";
+import { FIELD_BY_KEY, type VitrinConcept, type VitrinField } from "@/lib/vitrinFieldSchema";
+import { resolveVitrinConceptIntent, vitrinConceptPrompt } from "@/lib/vitrinConceptIntent";
 import { serbestMetindenAlanlariCikar, type SerbestMetinSonuc } from "@/lib/serbestMetinCikarim";
 import { handleVixrexNluMessage } from "@/lib/vixrexNluPipeline";
 import { resolveVixrexIntentsAll } from "@/lib/vixrexIntentResolver";
@@ -63,6 +64,7 @@ interface Deps {
   /** Akıllı motor alanı anladı ama değeri eksikse o alanı seçili yapar —
    * esnaf devamında yalnız değeri yazsın. */
   alanSec?: (anahtar: string) => void;
+  kavramSec?: (kavram: VitrinConcept) => void;
   /** Kayıt (veya boş geçme) başarılı olunca çağrılır: sırada başka alan
    * varsa oraya geçer. */
   alanaGecVeyaBitir: (
@@ -261,6 +263,7 @@ export function useOwnerActions({
   alanaGecVeyaBitir,
   alanAtlandi,
   alanSec,
+  kavramSec,
 }: Deps): OwnerActionsHook {
   const router = useRouter();
   const [kaydediliyor, setKaydediliyor] = useState(false);
@@ -431,6 +434,15 @@ export function useOwnerActions({
 
   const gonder = useCallback(async () => {
     const metin = giris.trim();
+    const kavramNiyeti = metin ? resolveVitrinConceptIntent(metin) : null;
+
+    if (kavramNiyeti) {
+      mesajEkle("kullanici", metin);
+      setGiris("");
+      kavramSec?.(kavramNiyeti.id);
+      mesajEkle("asistan", vitrinConceptPrompt(kavramNiyeti));
+      return;
+    }
 
     let motorSonucu: Awaited<ReturnType<typeof handleVixrexNluMessage>> | null = null;
     if (metin && seciliAlan && resolveVixrexIntentsAll(metin).length > 0) {
@@ -639,7 +651,7 @@ export function useOwnerActions({
     } finally {
       setKaydediliyor(false);
     }
-  }, [giris, seciliAlan, slug, mesajEkle, setAlan, setGiris, alanaGecVeyaBitir, router, yerelTaslak, alanSec]);
+  }, [giris, seciliAlan, slug, mesajEkle, setAlan, setGiris, alanaGecVeyaBitir, router, yerelTaslak, alanSec, kavramSec]);
 
   // Yalnız isteğe bağlı alanlarda gösterilen "Boş geç" (ADR 0002, 3. alt-faz).
   // Vitrin İÇERİĞİ yazmaz — /api/owner-draft'tan bağımsız, kendi dar
