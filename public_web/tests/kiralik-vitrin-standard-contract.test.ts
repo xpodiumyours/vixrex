@@ -26,6 +26,10 @@ describe("kiralık vitrin ortak standardı", () => {
     expect(migration).toContain("COMMIT;");
   });
 
+  it("içerik standardını yayın durumuna bağlamaz", () => {
+    expect(migration).not.toContain("AND is_demo = true AND is_published = true");
+  });
+
   it("üç boş demo için gerçek kategori ve ürün tablolarını doldurur", () => {
     expect(migration).toContain("INSERT INTO public.product_categories");
     expect(migration).toContain("INSERT INTO public.products");
