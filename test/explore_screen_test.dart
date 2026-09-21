@@ -75,6 +75,7 @@ void main() {
     expect(find.text('Vitrin, ürün veya il/ilçe ara'), findsOneWidget);
     expect(find.text('Tümü'), findsAtLeastNWidgets(1));
     expect(find.text('Giyim'), findsAtLeastNWidgets(1));
+    expect(find.text('Perakende'), findsNothing);
   });
 
   testWidgets('ExploreScreen search and filters work correctly', (
@@ -144,7 +145,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
-    final favoriteFilter = find.textContaining('Favorilerim');
+    final favoriteFilter = find.byTooltip('Favorilerim');
     expect(favoriteFilter, findsOneWidget);
 
     await tester.tap(favoriteFilter);

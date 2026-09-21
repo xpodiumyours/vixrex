@@ -58,15 +58,6 @@ class ExploreScreenState extends State<ExploreScreen> {
   // inputBg, darkText, mutedText, softText). Bu ekran paletin ikinci bir
   // kopyasını tutuyordu; artık doğrudan AppColors kullanılıyor.
 
-  // Template group labels for the top-level filter
-  static const List<String> _templateGroupLabels = [
-    'Tümü',
-    'Perakende',
-    'Hizmet',
-    'Gıda',
-    'Diğer',
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -293,49 +284,7 @@ class ExploreScreenState extends State<ExploreScreen> {
           body: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppColors.spacing24,
-                  0,
-                  AppColors.spacing24,
-                  AppColors.spacing12,
-                ),
-                child: Text(
-                  widget.onlyRentalTemplates
-                      ? 'Beğendiğini kirala, kendi vitrinin olsun'
-                      : 'Yayındaki tüm Vixrex vitrinlerini inceleyin',
-                  style: AppTextStyles.caption,
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppColors.spacing24,
-                  0,
-                  AppColors.spacing24,
-                  AppColors.spacing12,
-                ),
-                child: TextField(
-                  controller: _searchController,
-                  // fillColor / border / hintStyle verilmiyor —
-                  // inputDecorationTheme'den geliyor.
-                  decoration: InputDecoration(
-                    hintText: 'Vitrin, ürün veya il/ilçe ara',
-                    prefixIcon: const Icon(Icons.search_rounded, size: 18),
-                    suffixIcon:
-                        _searchController.text.isNotEmpty
-                            ? IconButton(
-                              icon: const Icon(Icons.close_rounded, size: 16),
-                              onPressed: () {
-                                _searchController.clear();
-                                _controller.setSearchQuery('');
-                              },
-                            )
-                            : null,
-                  ),
-                ),
-              ),
-              _buildTemplateGroupFilterBar(),
-              _buildFilterBar(),
+              _buildPremiumExploreControls(),
               if (_controller.loadErrorMessage != null)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(
@@ -390,80 +339,164 @@ class ExploreScreenState extends State<ExploreScreen> {
     );
   }
 
-  /// Şablon grubu filtre çubuğu — 4 ana grup
-  Widget _buildTemplateGroupFilterBar() {
-    return SizedBox(
-      height: 52,
+  Widget _buildPremiumExploreControls() {
+    final subtitle =
+        widget.onlyRentalTemplates
+            ? 'Beğendiğini kirala, kendi vitrinin olsun'
+            : 'Yayındaki tüm Vixrex vitrinlerini inceleyin';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppColors.spacing24,
+            0,
+            AppColors.spacing24,
+            AppColors.spacing12,
+          ),
+          child: Text(subtitle, style: AppTextStyles.caption),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppColors.spacing24,
+            0,
+            AppColors.spacing24,
+            AppColors.spacing8,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Vitrin, ürün veya il/ilçe ara',
+                    prefixIcon: const Icon(Icons.search_rounded, size: 18),
+                    suffixIcon:
+                        _searchController.text.isNotEmpty
+                            ? IconButton(
+                              icon: const Icon(Icons.close_rounded, size: 16),
+                              onPressed: () {
+                                _searchController.clear();
+                                _controller.setSearchQuery('');
+                              },
+                            )
+                            : null,
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppColors.spacing8),
+              Tooltip(
+                message: 'Favorilerim',
+                child: Semantics(
+                  button: true,
+                  toggled: _controller.onlyFavorites,
+                  label: 'Favorilerim',
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color:
+                          _controller.onlyFavorites
+                              ? AppColors.primary.withValues(alpha: 0.12)
+                              : AppColors.surface,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color:
+                            _controller.onlyFavorites
+                                ? AppColors.primary
+                                : AppColors.border,
+                      ),
+                    ),
+                    child: IconButton(
+                      padding: EdgeInsets.zero,
+                      onPressed:
+                          () => _controller.setOnlyFavorites(
+                            !_controller.onlyFavorites,
+                          ),
+                      icon: Icon(
+                        _controller.onlyFavorites
+                            ? Icons.favorite_rounded
+                            : Icons.favorite_border_rounded,
+                        size: 18,
+                        color:
+                            _controller.onlyFavorites
+                                ? AppColors.error
+                                : AppColors.mutedText,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        _buildCategoryFilterBar(),
+      ],
+    );
+  }
+
+  Widget _buildCategoryFilterBar() {
+    return Container(
+      height: 48,
+      decoration: const BoxDecoration(
+        border: Border(
+          top: BorderSide(color: AppColors.border),
+          bottom: BorderSide(color: AppColors.border),
+        ),
+      ),
       child: ListView(
         physics: const BouncingScrollPhysics(),
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppColors.spacing20,
-          vertical: AppColors.spacing4,
-        ),
-        children:
-            _templateGroupLabels.map((group) {
-              final isSelected = _controller.selectedTemplateGroup == group;
-              return Padding(
-                padding: const EdgeInsets.only(right: AppColors.spacing8),
-                child: ChoiceChip(
-                  selected: isSelected,
-                  label: Text(group),
-                  onSelected: (val) {
-                    if (val) _controller.setTemplateGroup(group);
-                  },
-                ),
-              );
-            }).toList(),
+        padding: const EdgeInsets.symmetric(horizontal: AppColors.spacing20),
+        children: [
+          _buildCategoryTab(
+            label: 'Tümü',
+            selected: _controller.selectedCategory == 'Tümü',
+            onTap: () => _controller.setCategory('Tümü'),
+          ),
+          ..._controller.filteredCategories.map((category) {
+            final categoryLabel = category.label;
+            return _buildCategoryTab(
+              label: categoryLabel,
+              selected: _controller.selectedCategory == categoryLabel,
+              onTap: () => _controller.setCategory(categoryLabel),
+            );
+          }),
+        ],
       ),
     );
   }
 
-  /// Kategori filtre çubuğu — templateGroup'a göre filtrelenmiş kategoriler
-  Widget _buildFilterBar() {
-    return SizedBox(
-      height: 52,
-      child: ListView(
-        physics: const BouncingScrollPhysics(),
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppColors.spacing20,
-          vertical: AppColors.spacing4,
-        ),
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(right: AppColors.spacing8),
-            child: FilterChip(
-              selected: _controller.onlyFavorites,
-              onSelected: _controller.setOnlyFavorites,
-              avatar: Icon(
-                _controller.onlyFavorites
-                    ? Icons.favorite_rounded
-                    : Icons.favorite_border_rounded,
-                size: 14,
-                color:
-                    _controller.onlyFavorites
-                        ? AppColors.onPrimary
-                        : AppColors.error,
+  Widget _buildCategoryTab({
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(right: AppColors.spacing24),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(4),
+        child: Container(
+          alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(horizontal: 2),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: selected ? AppColors.primary : Colors.transparent,
+                width: 2,
               ),
-              label: const Text('Favorilerim'),
             ),
           ),
-          ..._controller.filteredCategories.map((category) {
-            final categoryLabel = category.label;
-            final isSelected = _controller.selectedCategory == categoryLabel;
-            return Padding(
-              padding: const EdgeInsets.only(right: AppColors.spacing8),
-              child: ChoiceChip(
-                selected: isSelected,
-                label: Text(categoryLabel),
-                onSelected: (val) {
-                  if (val) _controller.setCategory(categoryLabel);
-                },
-              ),
-            );
-          }),
-        ],
+          child: Text(
+            label,
+            style: AppTextStyles.caption.copyWith(
+              color: selected ? AppColors.darkText : AppColors.mutedText,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
       ),
     );
   }

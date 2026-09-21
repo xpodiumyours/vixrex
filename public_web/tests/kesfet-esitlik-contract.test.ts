@@ -21,6 +21,10 @@ describe("Keşfet eşitlik sözleşmesi", () => {
     resolve(__dirname, "../../lib/screens/explore_screen.dart"),
     "utf-8"
   );
+  const webIcerik = readFileSync(
+    resolve(__dirname, "../src/components/kesfet/KesfetIcerik.tsx"),
+    "utf-8"
+  );
 
   it("başlık her iki tarafta aynı", () => {
     // Flutter: `"Vixrex'leri Keşfet"` (onlyRentalTemplates=false)
@@ -52,6 +56,17 @@ describe("Keşfet eşitlik sözleşmesi", () => {
         "olarak yalnız webde duruyor — arama motorundan gelen ziyaretçi " +
         "kiralama fikrini oradan öğreniyor."
     ).toContain("Beğendiğin hazır vitrini");
+  });
+
+  it("premium üst alan Web ve Flutter'da aynı sade yapıyı korur", () => {
+    expect(webIcerik).toContain('aria-label="Favorilerim"');
+    expect(flutterKaynak).toContain("message: 'Favorilerim'");
+    for (const kaynak of [webIcerik, flutterKaynak]) {
+      expect(kaynak).toContain("Vitrin, ürün veya il/ilçe ara");
+      expect(kaynak).not.toContain("Perakende");
+    }
+    expect(webIcerik).toContain('aria-label="Vitrin kategorileri"');
+    expect(flutterKaynak).toContain("_buildCategoryFilterBar");
   });
 
   it("kiralık fiyat vaadi her iki tarafta aynı", () => {
