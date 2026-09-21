@@ -57,11 +57,11 @@ describe("mobil sahiplik asistanı — compact composer + çekmece", () => {
     expect(panel).toContain("lg:w-[var(--owner-rail-w)]");
   });
 
-  it("mobil geçmişte büyük yönetim kartları gizlenir, sohbet görünür kalır", () => {
-    expect(panel).toContain('!masaustu && !haritaAcik ? "hidden" : "flex"');
-    expect(panel).toContain('!masaustu && !haritaAcik ? "hidden" : "block"');
-    expect(panel).toContain('sekme === "sohbet" || (!masaustu && mobilGecmisAcik)');
-    expect(panel).toContain("{(masaustu || haritaAcik) ? (");
+  it("mobil geçmiş masaüstü yönetim yüzünden yapısal olarak ayrıdır", () => {
+    expect(panel).toContain("!masaustu && mobilGecmisAcik && !haritaAcik");
+    expect(panel).toContain("!masaustu && haritaAcik");
+    expect(panel).toContain("{masaustu ? (");
+    expect(panel).toContain('data-vixrex-desktop-tabs="true"');
   });
 
   it("genişletilmiş mobil başlıkta canonical maskot sağdadır", () => {
@@ -108,5 +108,15 @@ describe("mobil spotlight klavyeyi biliyor", () => {
   it("dibe sabitlenmiş balonda ok çizilmez", () => {
     expect(balon).toContain('const okGorunur = balonYeri !== "sabit"');
     expect(balon).toContain("{okGorunur && (");
+  });
+});
+
+
+describe("masaüstü düzeni mobil compact yüzü bozmaz", () => {
+  it("telefon dock'u hâlâ yalnız sm altında ve maskot trailing sağdadır", () => {
+    expect(panel).toContain('data-vixrex-mobile-dock="true"');
+    expect(panel).toContain("sm:hidden");
+    expect(panel).toContain("trailing={");
+    expect(panel).toContain("<VixrexAvatar size={44} decorative />");
   });
 });

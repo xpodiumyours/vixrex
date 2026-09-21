@@ -11,8 +11,8 @@ interface Props {
 
 // Sahiplik sayfasındaki Vixrex Asistan kabuğunun tek başlığı.
 // Mobilde bu başlık yalnız çekmece yukarı açıldığında görünür; günlük
-// kullanım yüzeyi alttaki compact composer'dır. Maskot mobilde SAĞDA,
-// masaüstünde mevcut soldaki konumunda kalır.
+// kullanım yüzeyi alttaki compact composer'dır. Maskot telefonda ve
+// masaüstü sağ sütunda SAĞDA kalır; tabletin mevcut yüzen paneli korunur.
 export function ChatTopBar({ rapor, onKapat }: Props) {
   const mobilTutamakRef = useRef<number | null>(null);
   const asama = rapor.yuzde < 34 ? 1 : rapor.yuzde < 67 ? 2 : 3;
@@ -53,7 +53,7 @@ export function ChatTopBar({ rapor, onKapat }: Props) {
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="order-4 relative shrink-0 sm:order-1">
+          <div className="order-4 relative shrink-0 sm:order-1 lg:order-4">
             <VixrexAvatar size={38} halo decorative />
             <span
               className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-[#111b2d] bg-emerald-400"
@@ -61,7 +61,7 @@ export function ChatTopBar({ rapor, onKapat }: Props) {
             />
           </div>
 
-          <div className="order-1 min-w-0 flex-1 sm:order-2">
+          <div className="order-1 min-w-0 flex-1 sm:order-2 lg:order-1">
             <div className="flex min-w-0 items-center gap-2">
               <p className="truncate text-[15px] font-black tracking-[-0.01em] text-white">
                 Vixrex Asistan
@@ -71,11 +71,12 @@ export function ChatTopBar({ rapor, onKapat }: Props) {
               </span>
             </div>
             <p className="mt-0.5 min-w-0 truncate text-[11px] font-medium text-slate-400">
-              Sohbet geçmişi
+              <span className="lg:hidden">Sohbet geçmişi</span>
+              <span className="hidden lg:inline">Vitrinini düzenle</span>
             </p>
           </div>
 
-          <div className="order-2 shrink-0 rounded-xl border border-white/10 bg-white/[0.045] px-2.5 py-1.5 text-right sm:order-3 lg:hidden">
+          <div className="order-2 shrink-0 rounded-xl border border-white/10 bg-white/[0.045] px-2.5 py-1.5 text-right sm:order-3 lg:order-2">
             <p className="text-[12px] font-black leading-none text-sky-300">Aşama {asama}/3</p>
             <p className="mt-1 text-[9px] font-semibold leading-none text-slate-500">
               {rapor.doluSayisi}/{rapor.toplamSayisi} alan
@@ -140,7 +141,7 @@ export function ChatTopBar({ rapor, onKapat }: Props) {
           }
         }
 
-        @media (min-width: 640px) {
+        @media (min-width: 640px) and (max-width: 1023px) {
           .vixrex-owner-assistant-shell {
             left: auto !important;
             right: 1rem !important;
