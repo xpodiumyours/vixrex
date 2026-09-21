@@ -11,7 +11,7 @@ import { EXPLORE_STORE_SELECT } from "@/lib/publicStoreSelect";
  * - Aynı tablo: stores
  * - Aynı filtre: is_published = true
  * - Aynı sıralama: updated_at DESC
- * - Aynı limit: 50
+ * - Aynı limit: 100
  * - Aynı ürün sorgusu: products WHERE store_id IN (...) AND is_active=true AND is_visible=true
  */
 
@@ -30,8 +30,8 @@ describe("kesfet listeleme parite (Flutter referansiyla)", () => {
     expect(flutterRepository).toMatch(/order\('updated_at'\s*,\s*ascending:\s*false\)/);
   });
 
-  it("Flutter gibi 50 kayit limiti koyar", () => {
-    expect(flutterRepository).toContain(".limit(50)");
+  it("Flutter gibi 100 kayit limiti koyar", () => {
+    expect(flutterRepository).toContain(".limit(100)");
   });
 
   it("Flutter gibi aktif ve gorunur urunleri ceker", () => {

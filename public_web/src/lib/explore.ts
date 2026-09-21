@@ -7,7 +7,7 @@ import { resolveBusinessCategory } from "./businessCategories";
  * Keşfet dizininin veri katmanı.
  *
  * Flutter'daki karşılığı `lib/repositories/explore_repository.dart:21-76`.
- * Sorgu bilerek birebir aynı tutuldu (yayında + en son güncellenen 50):
+ * Sorgu bilerek birebir aynı tutuldu (yayında + en son güncellenen 100):
  * iki istemci aynı listeyi göstermezse "uygulamada gördüğüm vitrin sitede
  * yok" şikâyeti kaçınılmaz olur.
  *
@@ -16,7 +16,7 @@ import { resolveBusinessCategory } from "./businessCategories";
  * pratikte `is_demo`'ya iniyor (2026-08-26 doğrulaması).
  */
 
-export const KESFET_LIMIT = 50;
+export const KESFET_LIMIT = 100;
 
 export type KesfetVitrini = {
   slug: string;
