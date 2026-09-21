@@ -3,8 +3,8 @@
 // Vitrindeki bir öğeye şu etiketleri koyar:
 //   data-vixrex-editable="<anahtar>"            → hangi alan
 //   data-vixrex-label="<Türkçe ad>"             → kullanıcıya ne denecek
-//   data-vixrex-onem="<temel|kalite|istege-bagli>" → alan önemi (CSS renk kaynağı)
-//   data-vixrex-bolum="<hero|contact|...|blog|faq|about>" → bölüm (CSS renk kaynağı)
+//   data-vixrex-onem="<temel|kalite|istege-bagli>" → alan önemi (rehber/panel sınıflandırması)
+//   data-vixrex-bolum="<hero|contact|...|blog|faq|about>" → bölüm (rehber/panel sınıflandırması)
 //
 // Değerler vitrinFieldSchema.ts'ten gelir; elle yazılmaz. Yeni alan
 // eklendiğinde bu dosya değişmez.
