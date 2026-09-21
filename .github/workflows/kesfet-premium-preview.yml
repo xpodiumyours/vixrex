@@ -1,0 +1,185 @@
+name: Keşfet premium üst alan görsel önizleme
+
+on:
+  push:
+    branches:
+      - preview/kesfet-premium-ust-alan
+
+permissions:
+  contents: read
+
+env:
+  FLUTTER_VERSION: "3.44.4"
+
+jobs:
+  screenshots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Seed adımını bu görsel testte kapat
+        run: |
+          sed -i '/^# If enabled, seeds the database after migrations during a db reset\.$/{n;s/^enabled = true$/enabled = false/}' supabase/config.toml
+
+      - name: Yerel Supabase'i başlat
+        run: supabase start
+
+      - name: Yerel Supabase değişkenlerini hazırla
+        shell: bash
+        run: |
+          eval "$(supabase status -o env)"
+          LOCAL_URL="${API_URL:-${SUPABASE_URL:-http://127.0.0.1:54321}}"
+          LOCAL_KEY="${ANON_KEY:-${PUBLISHABLE_KEY:-${SUPABASE_ANON_KEY:-}}}"
+          test -n "$LOCAL_URL"
+          test -n "$LOCAL_KEY"
+          echo "LOCAL_SUPABASE_URL=$LOCAL_URL" >> "$GITHUB_ENV"
+          echo "LOCAL_SUPABASE_KEY=$LOCAL_KEY" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_SUPABASE_URL=$LOCAL_URL" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$LOCAL_KEY" >> "$GITHUB_ENV"
+          echo "SUPABASE_URL=$LOCAL_URL" >> "$GITHUB_ENV"
+          echo "SUPABASE_PUBLISHABLE_KEY=$LOCAL_KEY" >> "$GITHUB_ENV"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: public_web/package-lock.json
+
+      - name: Next.js bağımlılıkları
+        working-directory: public_web
+        run: npm ci
+
+      - name: Chromium kurulumu
+        working-directory: public_web
+        run: npx playwright install --with-deps chromium
+
+      - name: Next.js önizlemeyi başlat
+        working-directory: public_web
+        run: |
+          npm run dev > /tmp/vixrex-next-preview.log 2>&1 &
+          for i in $(seq 1 120); do
+            if curl -fsS http://127.0.0.1:3000/kesfet >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/vixrex-next-preview.log
+          exit 1
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Flutter bağımlılıkları
+        run: flutter pub get
+
+      - name: Flutter web build
+        run: |
+          flutter build web --release             --base-href="/"             --pwa-strategy=none             --dart-define=SUPABASE_URL="$LOCAL_SUPABASE_URL"             --dart-define=SUPABASE_PUBLISHABLE_KEY="$LOCAL_SUPABASE_KEY"             --dart-define=PUBLIC_SITE_URL="http://127.0.0.1:3000"             --dart-define=INSTAGRAM_SYNC_ENABLED=false
+
+      - name: Flutter SPA sunucusunu başlat
+        run: |
+          cat > /tmp/flutter-spa-server.mjs <<'NODE'
+          import http from 'node:http';
+          import fs from 'node:fs';
+          import path from 'node:path';
+          import { fileURLToPath } from 'node:url';
+
+          const root = path.resolve('build/web');
+          const types = new Map([
+            ['.html','text/html; charset=utf-8'],
+            ['.js','text/javascript; charset=utf-8'],
+            ['.css','text/css; charset=utf-8'],
+            ['.json','application/json; charset=utf-8'],
+            ['.png','image/png'],
+            ['.jpg','image/jpeg'],
+            ['.jpeg','image/jpeg'],
+            ['.svg','image/svg+xml'],
+            ['.wasm','application/wasm'],
+            ['.woff2','font/woff2'],
+          ]);
+
+          http.createServer((req,res)=>{
+            const u = new URL(req.url,'http://127.0.0.1');
+            let rel = decodeURIComponent(u.pathname).replace(/^\/+/, '');
+            let file = path.resolve(root, rel || 'index.html');
+            if (!file.startsWith(root) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) {
+              file = path.join(root,'index.html');
+            }
+            const ext = path.extname(file).toLowerCase();
+            res.writeHead(200, {'Content-Type': types.get(ext) || 'application/octet-stream', 'Cache-Control':'no-store'});
+            fs.createReadStream(file).pipe(res);
+          }).listen(4173,'127.0.0.1');
+          NODE
+          node /tmp/flutter-spa-server.mjs > /tmp/flutter-preview.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:4173/home >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/flutter-preview.log
+          exit 1
+
+      - name: Web ve Flutter ekran görüntülerini al
+        working-directory: public_web
+        run: |
+          mkdir -p preview-screenshots
+          node <<'NODE'
+          const { chromium } = require('playwright');
+
+          async function snap(page, url, file, wait=2600) {
+            await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+            await page.waitForTimeout(wait);
+            await page.screenshot({ path: 'preview-screenshots/' + file, fullPage: true });
+          }
+
+          (async () => {
+            const browser = await chromium.launch();
+
+            const desktop = await browser.newContext({
+              viewport: { width: 1440, height: 1000 },
+              deviceScaleFactor: 1,
+            });
+            const d = await desktop.newPage();
+            await snap(d, 'http://127.0.0.1:3000/kesfet', '01-web-desktop.png');
+            await snap(d, 'http://127.0.0.1:4173/home', '03-flutter-desktop.png', 4500);
+
+            const mobile = await browser.newContext({
+              viewport: { width: 390, height: 844 },
+              deviceScaleFactor: 1,
+              isMobile: true,
+            });
+            const m = await mobile.newPage();
+            await snap(m, 'http://127.0.0.1:3000/kesfet', '02-web-mobile.png');
+            await snap(m, 'http://127.0.0.1:4173/home', '04-flutter-mobile.png', 4500);
+
+            await browser.close();
+          })().catch((error) => {
+            console.error(error);
+            process.exit(1);
+          });
+          NODE
+
+      - name: Görselleri artifact olarak yükle
+        uses: actions/upload-artifact@v4
+        with:
+          name: kesfet-premium-ust-alan-preview
+          path: public_web/preview-screenshots/*.png
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Yerel Supabase'i durdur
+        if: always()
+        run: supabase stop
