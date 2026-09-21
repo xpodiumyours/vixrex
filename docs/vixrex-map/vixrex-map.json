@@ -6218,5 +6218,44 @@
       "blogBaslik",
       "sssBaslik"
     ]
+  },
+  "live_status_model": {
+    "version": 1,
+    "checked_at": "2026-09-21",
+    "main_commit_at_check": "7e187d087874b4e6c758cfcd911163c2d17d3e6a",
+    "main_alignment_at_check": "matched",
+    "default_node_status": {
+      "code": "verified_if_evidence_present",
+      "tests": "not_claimed_without_run_evidence",
+      "live": "unverified_until_live_evidence_exists"
+    },
+    "status_meanings": {
+      "verified": "Somut kanıt mevcut.",
+      "unverified": "Bu harita üretiminde canlı çalışma kanıtlanmadı; bozuk anlamına gelmez.",
+      "warning": "Harita tarama commitinden sapma veya dikkat gerektiren durum var."
+    },
+    "safety_rules": [
+      "Kod dosyasının bulunması canlıda çalıştığını kanıtlamaz.",
+      "Test dosyasının bulunması testin son koşuda geçtiğini kanıtlamaz.",
+      "Canlı doğrulandı etiketi yalnız canlı kanıt kaynağı varsa kullanılabilir."
+    ],
+    "deployment_guard": {
+      "docs_branch_deploys": false,
+      "checked_files": [
+        "vercel.json",
+        "public_web/vercel.json"
+      ],
+      "reason": "Vercel deploymentEnabled yalnız main ve verify-* dallarını açıyor; docs/vixrex-system-map bu desenlere girmez."
+    },
+    "github_actions_guard": {
+      "docs_branch_push_ci": false,
+      "checked_file": ".github/workflows/ci.yml",
+      "reason": "CI push tetikleyicisi yalnız main dalında; pull_request ayrı tetiktir."
+    },
+    "live_refresh": {
+      "source": "GitHub public commits API",
+      "behavior": "Harita açıldığında main SHA yeniden okunur ve scan_commit ile karşılaştırılır.",
+      "secrets_required": false
+    }
   }
 }

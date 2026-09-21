@@ -2,6 +2,19 @@
 
 Salt-okuma kaynak: `main@7e187d087874` — 21 Eylül 2026.
 
+## Canlı durum katmanı
+
+Bu harita artık **kodda var**, **test sonucu doğrulandı** ve **canlıda doğrulandı** kavramlarını birbirine karıştırmaz.
+
+- **Yeşil:** Somut kanıt var. Örneğin düğümün kod kanıtı mevcut veya harita açıldığı anda GitHub `main` SHA tarama commit'iyle eşleşiyor.
+- **Sarı:** Bu harita üretiminde test/canlı kanıt toplanmadı. Bu durum **bozuk** demek değildir; yalnız doğrulanmamış demektir.
+- **Kırmızı:** Harita tarama commitinden sapmışsa veya açık bir uyumsuzluk kaydedilmişse kullanılır.
+- Harita açıldığında GitHub'ın public commits API'sinden `main` SHA yeniden okunur. Harita eskiyse üst durum çubuğu bunu anında gösterir; hiçbir anahtar veya gizli bilgi kullanılmaz.
+- Her sistem düğümünde gelen ve giden bağlantılar görünür. Böylece örneğin `Vixrex Asistan → çalışma taslağı → yayın → public vitrin` zinciri kart detayından izlenebilir.
+- `docs/vixrex-system-map` dalı Vercel dağıtımı başlatmaz; `vercel.json` ve `public_web/vercel.json` yalnız `main` ve `verify-*` dallarını dağıtıma açar. GitHub CI push tetikleyicisi de yalnız `main` için açıktır.
+
+> Güvenlik kuralı: Kod dosyasının bulunması canlıda çalıştığını; test dosyasının bulunması son testin geçtiğini kanıtlamaz. `Canlı doğrulandı` ancak canlı kanıt kaynağı kaydedildiğinde kullanılmalıdır.
+
 ## Bu sürüm neyi çözüyor?
 
 Bir alan seçildiğinde artık yalnız **46 alan** düğümünü görmüyorsun. Alanın ortak kayıt hattı ile alana özel gerçek etkileri ayrı gösteriliyor.
