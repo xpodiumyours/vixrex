@@ -1,6 +1,7 @@
 -- Kiralık vitrinlerde doğrulanmış kalite farklarını tek seferde kapatır.
--- İçerik bakımı yayın durumundan bağımsızdır: temiz yerel DB'de yasal belge
--- seed'i yoksa landing demoları taslak kalabilir; migration onları yayınlamaz.
+-- İçerik bakımı yayın/demo bayrağından bağımsızdır: temiz yerel DB'de yasal belge
+-- seed'i yoksa landing demoları taslak ve is_demo=false kalabilir. Güvenlik kimliği
+-- sabit slug + seed adı + user_id IS NULL eşleşmesidir; yayın/sahiplik değiştirilmez.
 -- Kapsam: yalnız kiralik-teknik + demo-lezzet-duragi + demo-nova-kuafor
 -- + demo-aymira-giyim. Asistan, owner paneli ve kiralama motoru değişmez.
 BEGIN;
@@ -9,9 +10,16 @@ DO $$
 DECLARE v_count integer;
 BEGIN
   SELECT count(*) INTO v_count
-  FROM public.stores
-  WHERE slug IN ('kiralik-teknik','demo-lezzet-duragi','demo-nova-kuafor','demo-aymira-giyim')
-    AND is_demo = true;
+  FROM public.stores s
+  JOIN (VALUES
+    ('kiralik-teknik','Hızlı Teknik'),
+    ('demo-lezzet-duragi','Lezzet Durağı'),
+    ('demo-nova-kuafor','Nova Kuaför'),
+    ('demo-aymira-giyim','Aymira Giyim')
+  ) AS expected(slug,name)
+    ON expected.slug = s.slug
+   AND expected.name = s.name
+  WHERE s.user_id IS NULL;
   IF v_count <> 4 THEN
     RAISE EXCEPTION 'KIRALIK_STANDARD_PREFLIGHT_FAILED: expected 4 stores, found %', v_count;
   END IF;
@@ -42,7 +50,7 @@ UPDATE public.stores SET
   ]'::jsonb,
   blog_section_kicker = 'Teknik Rehber',
   blog_section_title = 'Cihaz Bakımı ve Onarım Bilgileri'
-WHERE slug = 'kiralik-teknik' AND is_demo = true;
+WHERE slug = 'kiralik-teknik' AND user_id IS NULL;
 
 -- Lezzet Durağı: çalışma saati + Hakkımızda + SSS + bölüm başlıkları.
 UPDATE public.stores SET
@@ -72,7 +80,7 @@ Menü günlük üretime göre yenilenir. Amaç müşterinin menüyü, fiyatı, k
   ]'::jsonb,
   blog_section_kicker = 'Mutfak Rehberi',
   blog_section_title = 'Menü ve Lezzet Notları'
-WHERE slug = 'demo-lezzet-duragi' AND is_demo = true;
+WHERE slug = 'demo-lezzet-duragi' AND user_id IS NULL;
 
 -- Nova Kuaför: çalışma saati + Hakkımızda + SSS + 5 görsellik galeri.
 UPDATE public.stores SET
@@ -111,7 +119,7 @@ Hizmet öncesinde beklenti, saç yapısı ve işlem süresi konuşulur; müşter
     {"id":"gallery-2","imageUrl":"https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?auto=format&fit=crop&w=800&q=80","title":"Özel gün makyajı"},
     {"id":"gallery-3","imageUrl":"https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?auto=format&fit=crop&w=800&q=80","title":"Bakım sonrası görünüm"}
   ]'::jsonb
-WHERE slug = 'demo-nova-kuafor' AND is_demo = true;
+WHERE slug = 'demo-nova-kuafor' AND user_id IS NULL;
 
 -- Aymira Giyim: çalışma saati + Hakkımızda + SSS + bölüm başlıkları.
 UPDATE public.stores SET
@@ -141,7 +149,7 @@ Vitrin müşterinin ürün tipini, fiyatı, görselleri ve mağazaya ulaşma yol
   ]'::jsonb,
   blog_section_kicker = 'Stil Rehberi',
   blog_section_title = 'Kombin ve Ürün Rehberi'
-WHERE slug = 'demo-aymira-giyim' AND is_demo = true;
+WHERE slug = 'demo-aymira-giyim' AND user_id IS NULL;
 
 ALTER TABLE public.stores ENABLE TRIGGER protect_landing_demo_stores;
 

@@ -26,8 +26,14 @@ describe("kiralık vitrin ortak standardı", () => {
     expect(migration).toContain("COMMIT;");
   });
 
-  it("içerik standardını yayın durumuna bağlamaz", () => {
-    expect(migration).not.toContain("AND is_demo = true AND is_published = true");
+  it("içerik standardını yayın veya demo bayrağına bağlamaz", () => {
+    expect(migration).not.toContain("AND is_published = true");
+    expect(migration).not.toContain("AND is_demo = true");
+    expect(migration).toContain("WHERE s.user_id IS NULL");
+    expect(migration).toContain("('kiralik-teknik','Hızlı Teknik')");
+    expect(migration).toContain("('demo-lezzet-duragi','Lezzet Durağı')");
+    expect(migration).toContain("('demo-nova-kuafor','Nova Kuaför')");
+    expect(migration).toContain("('demo-aymira-giyim','Aymira Giyim')");
   });
 
   it("üç boş demo için gerçek kategori ve ürün tablolarını doldurur", () => {
