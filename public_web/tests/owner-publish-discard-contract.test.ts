@@ -22,19 +22,19 @@ const acceptLegalSource = readFileSync(
 // OwnerAssistantPanel 730→128 satıra bölündü (2026-08-10); yayınla/vazgeç
 // düğmeleri PublishBar bileşeninde, fetch çağrıları ve sonuç mesajları
 // useOwnerActions hook'unda. Sözleşme aynı, kaynak üç dosyanın birleşimi.
-const panelSource =
-  readFileSync(
-    resolve(__dirname, "../src/app/v/[slug]/OwnerAssistantPanel.tsx"),
-    "utf-8"
-  ) +
-  readFileSync(
-    resolve(__dirname, "../src/app/v/[slug]/components/PublishBar.tsx"),
-    "utf-8"
-  ) +
-  readFileSync(
-    resolve(__dirname, "../src/app/v/[slug]/hooks/useOwnerActions.ts"),
-    "utf-8"
-  );
+const ownerPanelSource = readFileSync(
+  resolve(__dirname, "../src/app/v/[slug]/OwnerAssistantPanel.tsx"),
+  "utf-8"
+);
+const publishBarSource = readFileSync(
+  resolve(__dirname, "../src/app/v/[slug]/components/PublishBar.tsx"),
+  "utf-8"
+);
+const ownerActionsSource = readFileSync(
+  resolve(__dirname, "../src/app/v/[slug]/hooks/useOwnerActions.ts"),
+  "utf-8"
+);
+const panelSource = ownerPanelSource + publishBarSource + ownerActionsSource;
 
 describe("owner-publish ucu — güvenlik sözleşmesi", () => {
   it("oturum yalnız çerezden okunur, istek gövdesinden token kabul edilmez", () => {
@@ -151,9 +151,18 @@ describe("panel — yayınla / vazgeç sözleşmesi", () => {
     );
   });
 
-  it("yasal onay verilmeden Yayınla düğmesi kilitli kalır", () => {
+  it("yasal onay verilmeden PublishBar yayın eylemini kilitli tutar", () => {
     expect(panelSource).toContain("/api/owner-accept-legal");
-    expect(panelSource).toContain("yasalOnayli");
-    expect(panelSource).toContain("disabled={\n          yayinlaniyor || !yasalOnayli");
+    expect(publishBarSource).toContain("yasalOnayli");
+    expect(publishBarSource).toMatch(
+      /disabled=\{\s*yayinlaniyor \|\| !yasalOnayli \|\|/
+    );
+  });
+
+  it("masaüstünde ikinci yayın düğmesi gizlense de güvenlik kontrolleri korunur", () => {
+    expect(ownerPanelSource).toContain("showPublishButton={false}");
+    expect(publishBarSource).toContain("showPublishButton = true");
+    expect(publishBarSource).toContain("Değişiklikleri bırak");
+    expect(publishBarSource).toContain("Aydınlatma Metni");
   });
 });

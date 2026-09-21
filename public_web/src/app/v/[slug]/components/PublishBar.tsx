@@ -21,6 +21,9 @@ interface Props {
   yasalOnayli: boolean;
   onayVeriliyor: boolean;
   onayVer: () => Promise<void>;
+  /** Masaüstünde yayın ana eylemi üst editör çubuğundadır. Eksikler sekmesi
+   * yalnız yasal onay + taslağı bırakma kontrollerini gösterebilir. */
+  showPublishButton?: boolean;
 }
 
 export function PublishBar({
@@ -37,6 +40,7 @@ export function PublishBar({
   yasalOnayli,
   onayVeriliyor,
   onayVer,
+  showPublishButton = true,
 }: Props) {
   // Kiralık şablon vitrin + aktif premium yoksa yayın premium ister.
   // Düğme yalan söylemez: ne gerekiyorsa onu yazar (Faz G3 ilkesi).
@@ -120,25 +124,27 @@ export function PublishBar({
           </span>
         </label>
       )}
-      <button
-        type="button"
-        onClick={() => void yayinla()}
-        disabled={
-          yayinlaniyor || !yasalOnayli || (!premiumGerekli && !temelTamam)
-        }
-        title={
-          !yasalOnayli
-            ? "Yayınlamadan önce yukarıdaki onay kutusunu işaretle."
-            : temelTamam || premiumGerekli
-            ? premiumGerekli
-              ? "Bu hazır vitrin premium üyelikle yayınlanır."
-              : undefined
-            : `Yayınlamadan önce ${eksikTemelSayisi} zorunlu alanı doldur.`
-        }
-        className="w-full rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
-      >
-        {yayinEtiketi}
-      </button>
+      {showPublishButton ? (
+        <button
+          type="button"
+          onClick={() => void yayinla()}
+          disabled={
+            yayinlaniyor || !yasalOnayli || (!premiumGerekli && !temelTamam)
+          }
+          title={
+            !yasalOnayli
+              ? "Yayınlamadan önce yukarıdaki onay kutusunu işaretle."
+              : temelTamam || premiumGerekli
+              ? premiumGerekli
+                ? "Bu hazır vitrin premium üyelikle yayınlanır."
+                : undefined
+              : `Yayınlamadan önce ${eksikTemelSayisi} zorunlu alanı doldur.`
+          }
+          className="w-full rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+        >
+          {yayinEtiketi}
+        </button>
+        ) : null}
       {/* "Değişiklikleri bırak" TEK TIKLA silmez: önce onay istenir.
           Bu düğme kullanıcının saatlerce yaptığı işi silebilir. */}
       {silmeOnayi ? (
