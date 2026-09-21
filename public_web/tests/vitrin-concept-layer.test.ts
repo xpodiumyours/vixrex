@@ -46,8 +46,11 @@ describe("Vixrex esnaf kavram katmanı", () => {
 
   it("geniş esnaf cümlesini kavrama yönlendirir ama alan komutunu ele geçirmez", () => {
     expect(resolveVitrinConceptIntent("İletişim bilgilerimi düzenlemek istiyorum")?.id).toBe("banaUlasin");
+    expect(resolveVitrinConceptIntent("İşletme bilgilerimi güncellemek istiyorum")?.id).toBe("isletmem");
     expect(resolveVitrinConceptIntent("Konumumu değiştireceğim")?.id).toBe("konumum");
     expect(resolveVitrinConceptIntent("Kampanyamı düzenle")?.id).toBe("kampanyam");
+    expect(resolveVitrinConceptIntent("Galerimi düzenlemek istiyorum")?.id).toBe("galerim");
+    expect(resolveVitrinConceptIntent("Sık sorulanları düzenle")?.id).toBe("sss");
     expect(resolveVitrinConceptIntent("WhatsApp numaramı 0555 123 45 67 yap")).toBeNull();
     expect(resolveVitrinConceptIntent("Kampanya başlığını Hafta Sonu Fırsatı yap")).toBeNull();
   });

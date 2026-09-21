@@ -5,10 +5,46 @@ import {
 } from "./vitrinFieldSchema";
 import { vixrexNormalizeDartParity } from "./vixrexNormalizer";
 
+const KAVRAM_SON_EKLERI = new Set([
+  "", "i", "u", "a", "e", "ni", "nu", "na", "ne",
+  "de", "da", "den", "dan", "le", "la",
+]);
+
+function sonTokenEslesir(girdi: string, kok: string): boolean {
+  if (girdi === kok) return true;
+  if (!girdi.startsWith(kok)) return false;
+  return KAVRAM_SON_EKLERI.has(girdi.slice(kok.length));
+}
+
 function ifadeVarMi(input: string, ifade: string): boolean {
-  const metin = ` ${vixrexNormalizeDartParity(input).replace(/[^a-z0-9]+/g, " ").trim()} `;
-  const aranan = ` ${vixrexNormalizeDartParity(ifade).replace(/[^a-z0-9]+/g, " ").trim()} `;
-  return aranan.trim().length > 0 && metin.includes(aranan);
+  const metin = vixrexNormalizeDartParity(input)
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  const aranan = vixrexNormalizeDartParity(ifade)
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  if (aranan.length === 0 || aranan.length > metin.length) return false;
+
+  for (let baslangic = 0; baslangic <= metin.length - aranan.length; baslangic += 1) {
+    let uyuyor = true;
+    for (let i = 0; i < aranan.length; i += 1) {
+      const son = i === aranan.length - 1;
+      const eslesti = son
+        ? sonTokenEslesir(metin[baslangic + i], aranan[i])
+        : metin[baslangic + i] === aranan[i];
+      if (!eslesti) {
+        uyuyor = false;
+        break;
+      }
+    }
+    if (uyuyor) return true;
+  }
+  return false;
 }
 
 export function resolveVitrinConceptIntent(input: string): VitrinConceptMeta | null {
