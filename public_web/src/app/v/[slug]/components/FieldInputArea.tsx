@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { VitrinField } from "@/lib/vitrinFieldSchema";
 import { alanOnemi } from "@/lib/vitrinReadiness";
 import { ImagePickerPanel } from "./ImagePickerPanel";
@@ -12,6 +13,8 @@ import type { HazirGorsel } from "../hooks/useOwnerActions";
 // (özgür yazım, NLU motoru cümleden alanı kendi bulur) aynı kutu çalışır.
 
 interface Props {
+  compact?: boolean;
+  trailing?: ReactNode;
   seciliAlan: VitrinField | null;
   giris: string;
   girisRef: React.RefObject<HTMLTextAreaElement | null>;
@@ -43,6 +46,8 @@ interface Props {
 }
 
 export function FieldInputArea({
+  compact = false,
+  trailing,
   seciliAlan,
   giris,
   girisRef,
@@ -71,12 +76,12 @@ export function FieldInputArea({
 
   const kaliteMi = seciliAlan ? alanOnemi(seciliAlan) === "kalite" : false;
 
-  // Mobilde Gönder'e basıldığı anda asistan sheet'i geri çekilir; kayıt/NLU
-  // çalışırken kullanıcı vitrini görmeye devam eder. Canonical Vixrex düğmesi
-  // zaten panelin tek aç/kapat yüzeyi olduğu için ikinci bir state yolu açmıyoruz.
-  // Masaüstü davranışına dokunulmaz.
+  // Normal detay görünümünde eski mobil davranış korunur. Compact mobil
+  // composer ise kapanmaz: mesaj kutusu sürekli görünür, kayıt sürerken küçük
+  // gönder düğmesi kendi loading durumunu gösterir. Masaüstü etkilenmez.
   const gonderVeVitriniGoster = async () => {
     const mobil =
+      !compact &&
       typeof window !== "undefined" &&
       !window.matchMedia("(min-width: 640px)").matches;
 
@@ -102,6 +107,57 @@ export function FieldInputArea({
       }
     }
   };
+
+  if (compact) {
+    return (
+      <div data-vixrex-mobile-composer="true" className="flex items-center gap-2">
+        <div className="flex h-11 min-w-0 flex-1 items-center overflow-hidden rounded-xl border border-sky-200/20 bg-slate-900/70 pl-3 pr-1 focus-within:border-blue-500/60">
+          <textarea
+            ref={girisRef}
+            value={giris}
+            onChange={(e) => setGiris(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                if (!kaydediliyor) void gonderVeVitriniGoster();
+              }
+            }}
+            rows={1}
+            disabled={kaydediliyor}
+            aria-label="Vixrex Asistan'a yaz"
+            placeholder="Mesajını yaz…"
+            className="h-10 min-w-0 flex-1 resize-none bg-transparent py-2.5 text-sm text-white outline-none placeholder:text-slate-500"
+          />
+          <button
+            type="button"
+            aria-label="Gönder"
+            onClick={() => void gonderVeVitriniGoster()}
+            disabled={kaydediliyor}
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-[10px] border border-blue-400/30 bg-blue-600 text-white shadow-[0_6px_14px_rgba(37,99,235,0.22)] transition hover:bg-blue-500 disabled:opacity-50"
+          >
+            {kaydediliyor ? (
+              <span className="text-[11px] font-bold">…</span>
+            ) : (
+              <svg
+                viewBox="0 0 24 24"
+                className="h-[15px] w-[15px]"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.1"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M4 12h13" />
+                <path d="M12 6l6 6-6 6" />
+              </svg>
+            )}
+          </button>
+        </div>
+        {trailing}
+      </div>
+    );
+  }
 
   return (
     <div>
