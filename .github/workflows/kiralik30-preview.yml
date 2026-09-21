@@ -1,0 +1,134 @@
+name: Kiralık 30 görsel önizleme
+
+on:
+  push:
+    branches:
+      - preview/kiralik30-gorsel
+
+permissions:
+  contents: read
+
+jobs:
+  preview-screenshots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Seed adımını yalnız bu görsel testte kapat
+        run: |
+          sed -i '/^# If enabled, seeds the database after migrations during a db reset\.$/{n;s/^enabled = true$/enabled = false/}' supabase/config.toml
+
+      - name: Yerel Supabase'i başlat
+        run: supabase start
+
+      - name: Yerel Supabase değişkenlerini hazırla
+        shell: bash
+        run: |
+          eval "$(supabase status -o env)"
+          LOCAL_URL="${API_URL:-${SUPABASE_URL:-http://127.0.0.1:54321}}"
+          LOCAL_KEY="${ANON_KEY:-${PUBLISHABLE_KEY:-${SUPABASE_ANON_KEY:-}}}"
+          test -n "$LOCAL_URL"
+          test -n "$LOCAL_KEY"
+          echo "NEXT_PUBLIC_SUPABASE_URL=$LOCAL_URL" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$LOCAL_KEY" >> "$GITHUB_ENV"
+          echo "SUPABASE_URL=$LOCAL_URL" >> "$GITHUB_ENV"
+          echo "SUPABASE_PUBLISHABLE_KEY=$LOCAL_KEY" >> "$GITHUB_ENV"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: public_web/package-lock.json
+
+      - name: Bağımlılıkları kur
+        working-directory: public_web
+        run: npm ci
+
+      - name: Chromium kurulumu
+        working-directory: public_web
+        run: npx playwright install --with-deps chromium
+
+      - name: Next.js önizlemeyi başlat
+        working-directory: public_web
+        run: |
+          npm run dev > /tmp/vixrex-preview.log 2>&1 &
+          for i in $(seq 1 120); do
+            if curl -fsS http://127.0.0.1:3000/kesfet >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/vixrex-preview.log
+          exit 1
+
+      - name: Ekran görüntülerini al
+        working-directory: public_web
+        run: |
+          mkdir -p preview-screenshots
+          node <<'NODE'
+          const { chromium } = require('playwright');
+
+          async function snap(page, path, file) {
+            await page.goto('http://127.0.0.1:3000' + path, {
+              waitUntil: 'domcontentloaded',
+              timeout: 60000,
+            });
+            await page.waitForTimeout(2500);
+            await page.screenshot({
+              path: 'preview-screenshots/' + file,
+              fullPage: true,
+            });
+          }
+
+          (async () => {
+            const browser = await chromium.launch();
+
+            const desktop = await browser.newContext({
+              viewport: { width: 1440, height: 1100 },
+              deviceScaleFactor: 1,
+            });
+            const page = await desktop.newPage();
+
+            await snap(page, '/kesfet', '01-kesfet-desktop.png');
+            await snap(page, '/kesfet?yalniz_kiralik=1', '02-kesfet-kiralik-desktop.png');
+            await snap(page, '/v/kiralik-giyim-erkek', '04-giyim-erkek.png');
+            await snap(page, '/v/kiralik-butik-gunluk', '05-butik-gunluk.png');
+            await snap(page, '/v/kiralik-gida-sarkuteri', '06-gida-sarkuteri.png');
+            await snap(page, '/v/kiralik-kafe-pastane', '07-kafe-pastane.png');
+            await snap(page, '/v/kiralik-kuafor-berber', '08-kuafor-berber.png');
+            await snap(page, '/v/kiralik-teknik-bilgisayar', '09-teknik-bilgisayar.png');
+
+            const mobile = await browser.newContext({
+              viewport: { width: 390, height: 844 },
+              deviceScaleFactor: 1,
+              isMobile: true,
+            });
+            const mobilePage = await mobile.newPage();
+            await snap(mobilePage, '/kesfet?yalniz_kiralik=1', '03-kesfet-kiralik-mobile.png');
+
+            await browser.close();
+          })().catch((error) => {
+            console.error(error);
+            process.exit(1);
+          });
+          NODE
+
+      - name: Görselleri artifact olarak yükle
+        uses: actions/upload-artifact@v4
+        with:
+          name: kiralik30-preview-screenshots
+          path: public_web/preview-screenshots/*.png
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Yerel Supabase'i durdur
+        if: always()
+        run: supabase stop
