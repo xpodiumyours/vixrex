@@ -1,0 +1,115 @@
+name: Keşfet Flutter üst alan görsel önizleme v2
+
+on:
+  push:
+    branches:
+      - preview/kesfet-premium-ust-alan-v2
+
+permissions:
+  contents: read
+
+env:
+  FLUTTER_VERSION: "3.44.4"
+
+jobs:
+  screenshots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Yerel Supabase
+        run: |
+          sed -i '/^# If enabled, seeds the database after migrations during a db reset\.$/{n;s/^enabled = true$/enabled = false/}' supabase/config.toml
+          supabase start
+          eval "$(supabase status -o env)"
+          LOCAL_URL="${API_URL:-${SUPABASE_URL:-http://127.0.0.1:54321}}"
+          LOCAL_KEY="${ANON_KEY:-${PUBLISHABLE_KEY:-${SUPABASE_ANON_KEY:-}}}"
+          echo "LOCAL_SUPABASE_URL=$LOCAL_URL" >> "$GITHUB_ENV"
+          echo "LOCAL_SUPABASE_KEY=$LOCAL_KEY" >> "$GITHUB_ENV"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: public_web/package-lock.json
+
+      - name: Playwright
+        working-directory: public_web
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Flutter build
+        run: |
+          flutter pub get
+          flutter build web --release \
+            --base-href="/" \
+            --pwa-strategy=none \
+            --dart-define=SUPABASE_URL="$LOCAL_SUPABASE_URL" \
+            --dart-define=SUPABASE_PUBLISHABLE_KEY="$LOCAL_SUPABASE_KEY" \
+            --dart-define=PUBLIC_SITE_URL="http://127.0.0.1:3000"
+
+      - name: Flutter SPA
+        run: |
+          cat > /tmp/spa.mjs <<'NODE'
+          import http from 'node:http';
+          import fs from 'node:fs';
+          import path from 'node:path';
+          const root=path.resolve('build/web');
+          const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json','.png':'image/png','.svg':'image/svg+xml','.wasm':'application/wasm','.woff2':'font/woff2'};
+          http.createServer((req,res)=>{
+            const u=new URL(req.url,'http://127.0.0.1');
+            let f=path.resolve(root,decodeURIComponent(u.pathname).replace(/^\\/+/, '')||'index.html');
+            if(!f.startsWith(root)||!fs.existsSync(f)||fs.statSync(f).isDirectory()) f=path.join(root,'index.html');
+            res.writeHead(200,{'Content-Type':types[path.extname(f)]||'application/octet-stream','Cache-Control':'no-store'});
+            fs.createReadStream(f).pipe(res);
+          }).listen(4173,'127.0.0.1');
+          NODE
+          node /tmp/spa.mjs >/tmp/flutter.log 2>&1 &
+          for i in $(seq 1 60); do curl -fsS http://127.0.0.1:4173/home >/dev/null && exit 0; sleep 1; done
+          cat /tmp/flutter.log
+          exit 1
+
+      - name: Screenshots
+        working-directory: public_web
+        run: |
+          mkdir -p preview-screenshots
+          node <<'NODE'
+          const { chromium } = require('playwright');
+          (async()=>{
+            const browser=await chromium.launch();
+            for (const [name,width,height,mobile] of [
+              ['03-flutter-desktop.png',1440,1000,false],
+              ['04-flutter-mobile.png',390,844,true],
+            ]) {
+              const c=await browser.newContext({viewport:{width,height},deviceScaleFactor:1,isMobile:mobile});
+              const p=await c.newPage();
+              await p.goto('http://127.0.0.1:4173/home',{waitUntil:'domcontentloaded',timeout:60000});
+              await p.waitForTimeout(4500);
+              await p.screenshot({path:'preview-screenshots/'+name,fullPage:true});
+              await c.close();
+            }
+            await browser.close();
+          })().catch(e=>{console.error(e);process.exit(1)});
+          NODE
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kesfet-premium-flutter-preview-v2
+          path: public_web/preview-screenshots/*.png
+          if-no-files-found: error
+          retention-days: 1
+
+      - if: always()
+        run: supabase stop
