@@ -2,7 +2,8 @@
 //
 // vitrinProfile.ts'teki her kategorinin `primaryActions` ve `ctaLabel`'ı
 // burada tüketilir: kuaförde randevu (WhatsApp) ve yol tarifi, giyimde
-// whatsapp, yol tarifi ve web sitesi. Veri hazırdı, kullanılmıyordu.
+// whatsapp ve yol tarifi. İşletmenin kendi dış web sitesi artık public
+// vitrinde CTA olarak gösterilmez; Vixrex vitrini işletmenin web yüzeyidir.
 //
 // SAF FONKSİYON: React, fetch, tarayıcı nesnesi yok. Girdi → liste.
 //
@@ -28,7 +29,6 @@ export interface HeroActionVeri {
   phoneUrl: string | null;
   whatsappNumarasi: string | null;
   mapsUrl: string | null;
-  websiteUrl: string | null;
 }
 
 function waLinki(numara: string, mesaj?: string): string {
@@ -88,14 +88,9 @@ export function heroActions(
         disKapi: true,
       });
     } else if (aksiyon === "website") {
-      if (!veri.websiteUrl) continue;
-      if (butonlar.some((b) => b.anahtar === "website")) continue;
-      butonlar.push({
-        anahtar: "website",
-        etiket: "Web Sitesi",
-        href: veri.websiteUrl,
-        disKapi: true,
-      });
+      // Vixrex vitrini işletmenin web yüzeyidir. Profilde eski/veri uyumluluğu
+      // için "website" aksiyonu kalsa bile ziyaretçiyi dış siteye çıkarmayız.
+      continue;
     }
   }
 
