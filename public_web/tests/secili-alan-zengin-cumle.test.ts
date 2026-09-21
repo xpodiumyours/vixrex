@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { temizlenmisSeciliDeger } from "@/app/v/[slug]/hooks/useOwnerActions";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { FIELD_BY_KEY } from "@/lib/vitrinFieldSchema";
 
 // 2026-09-03 (Casper canlıda buldu, kiralık-kafe vitrini): "İşletme Adı"
@@ -33,6 +35,27 @@ describe("temizlenmisSeciliDeger — seçili kutu zengin cümleyi doğru ayırı
     const uzunMetin =
       "Ürünlerimizi elle üretiyoruz, kalite kontrolünden geçirdikten sonra özenle paketliyoruz.";
     expect(temizlenmisSeciliDeger(uzunMetin, hakkindaMetin)).toBe(uzunMetin);
+  });
+
+  it("seçili İşletme Adı yokken preview paragrafı adı kirletmez", () => {
+    const cumle =
+      "Merhaba, Kadıköy’de bir kuaförüm var. WhatsApp numaram 0532 123 45 67. " +
+      "Hafta içi 09:00–19:00 arası açığız. Bahariye Cad. No:12’de hizmet veriyoruz.";
+    expect(temizlenmisSeciliDeger(cumle, isletmeAdi)).toBeNull();
+  });
+
+  it("seçili alan bulunamadığında güvenli bonus alanlar kaybolmadan batch yoluna gider", () => {
+    const kaynak = readFileSync(
+      resolve(__dirname, "../src/app/v/[slug]/hooks/useOwnerActions.ts"),
+      "utf8"
+    );
+    const baslangic = kaynak.indexOf("if (temiz === null)");
+    const bitis = kaynak.indexOf("gonderilecek = temiz", baslangic);
+    const blok = kaynak.slice(baslangic, bitis);
+    expect(blok).toContain("await bonusAlanlariCikarVeKaydet");
+    expect(blok).toContain("setKaydediliyor(true)");
+    expect(blok).toContain("setKaydediliyor(false)");
+    expect(blok).not.toContain('fetch("/api/owner-draft"');
   });
 
   it("gerçekten ayrıştırılamayan karışık cümlede null döner (abstain — ham metin yazılmaz)", () => {

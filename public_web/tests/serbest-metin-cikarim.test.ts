@@ -19,6 +19,21 @@ describe("serbestMetindenAlanlariCikar — karışık gerçekçi paragraflar", (
     expect(sonuc.adres).toContain("No:12");
   });
 
+  it("gerçek preview cümlesinden 6 güvenli alanı birlikte çıkarır", () => {
+    const sonuc = serbestMetindenAlanlariCikar(
+      "Merhaba, Kadıköy’de bir kuaförüm var. WhatsApp numaram 0532 123 45 67. " +
+        "Hafta içi 09:00–19:00 arası açığız. Bahariye Cad. No:12’de hizmet veriyoruz."
+    );
+    expect(sonuc.whatsapp).toBe("905321234567");
+    expect(sonuc.kategoriEtiketi).toBe("Kuaför");
+    expect(sonuc.calismaSaatleriMetni).toBe("09:00 - 19:00");
+    expect(sonuc.ilAdi).toBe("İstanbul");
+    expect(sonuc.ilceAdi).toBe("Kadıköy");
+    expect(sonuc.adres).toContain("Bahariye Cad");
+    expect(sonuc.adres).toContain("No:12");
+    expect(Object.keys(sonuc)).toHaveLength(6);
+  });
+
   it("telefon yoksa yalnız o alan boş kalır, geri kalanı yine çıkar", () => {
     const sonuc = serbestMetindenAlanlariCikar(
       "Kadıköy'de bir kuaförüm var, hafta içi 09:00 - 19:00 arası açığız."

@@ -583,15 +583,28 @@ export function useOwnerActions({
     } else {
       const temiz = temizlenmisSeciliDeger(metin, alan);
       if (temiz === null) {
-        // Cümlede başka bir alana ait ipucu var ama seçili alanın kendi
-        // değerini güvenle ayıramadık — ham metni YAZMAYIZ, dürüstçe
-        // sorarız. Bonus yine de diğer alanları ayrıca doğru kaydeder.
+        // Seçili alanın kendi değeri yoksa ham metni o alana ASLA yazma.
+        // Ama aynı cümlede güvenle çıkarılan diğer bilgiler kaybolmamalı:
+        // mevcut serbest-metin çıkarıcısı + atomik batch yoluyla kaydet.
         mesajEkle("kullanici", metin);
+        setGiris("");
+        setKaydediliyor(true);
+        try {
+          await bonusAlanlariCikarVeKaydet(
+            metin,
+            alan.kolon,
+            slug,
+            mesajEkle,
+            setAlan,
+            () => router.refresh()
+          );
+        } finally {
+          setKaydediliyor(false);
+        }
         mesajEkle(
           "asistan",
-          `Bu cümlede birden fazla bilgi var gibi görünüyor. "${alan.etiket}" için sadece onu yazar mısın?`
+          `"${alan.etiket}" bilgisini bu cümlede bulamadım. Onu ayrıca yazar mısın?`
         );
-        setGiris("");
         return;
       }
       gonderilecek = temiz;
