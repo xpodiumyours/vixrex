@@ -2,56 +2,81 @@ import { readFileSync } from "fs";
 import { resolve } from "path";
 import { describe, expect, it } from "vitest";
 
-// Faz 4 (2026-08-22) — Casper, gerçek cihazda test etti:
-// "mobilde herhangi bir yeri değiştirmek istediğimizde yine Vixrex
-// asistanın sohbet paneli bütün sayfayı kapatıyor."
-//
-// Kararı: ayrı bir alt şerit İCAT EDİLMESİN. "Sadece Vixrex'in maskot
-// simgesi olsun, kutucuklarda zaten ne yapılması gerektiği yazıyor —
-// kutuları ve Vixrex maskotunu mobile uyumlu yapamıyor muyuz?"
-//
-// Yani tek kutu, tek mantık: panel çekilir, balon ve sembol kalır; balon
-// klavyeyi bilerek konumlanır.
-
 const oku = (p: string) => readFileSync(resolve(__dirname, p), "utf8");
 const panel = oku("../src/app/v/[slug]/OwnerAssistantPanel.tsx");
+const input = oku("../src/app/v/[slug]/components/FieldInputArea.tsx");
+const top = oku("../src/app/v/[slug]/components/ChatTopBar.tsx");
 const balon = oku("../src/app/v/[slug]/components/SpotlightGuide.tsx");
 
-describe("mobilde panel sayfayı kapatmaz", () => {
-  it("alan seçilince mobilde harita kapanır", () => {
-    expect(panel).toContain("setHaritaAcik(false)");
+describe("mobil sahiplik asistanı — compact composer + çekmece", () => {
+  it("varsayılan mobil yüz mesaj kutusudur; maskot SAĞDA trailing olarak gelir", () => {
+    expect(panel).toContain('data-vixrex-mobile-dock="true"');
+    expect(panel).toContain("<FieldInputArea\n            compact");
+    expect(panel).toContain('trailing={');
+    expect(panel).toContain("<VixrexAvatar size={44} decorative />");
+    expect(panel).toContain('aria-label="Sohbet geçmişini aç"');
+
+    const bas = panel.indexOf('data-vixrex-mobile-dock="true"');
+    const bitis = panel.indexOf('data-vixrex-mobile-details=', bas);
+    const dock = panel.slice(bas, bitis);
+    expect(dock).not.toContain("rapor.");
+    expect(dock).not.toContain("eksikTemelSayisi");
+  });
+
+  it("compact composer tek satır mesaj alanı ve küçük 36px gönder düğmesi kullanır", () => {
+    expect(input).toContain("if (compact) {");
+    expect(input).toContain('placeholder="Mesajını yaz…"');
+    expect(input).toContain('className="grid h-9 w-9');
+    expect(input).toContain('<path d="M4 12h13" />');
+    expect(input).toContain('<path d="M12 6l6 6-6 6" />');
+    expect(input).toContain("{trailing}");
+  });
+
+  it("compact composer gönderince eski launcher'ı kapatmaya çalışmaz", () => {
+    expect(input).toContain("!compact &&");
+  });
+
+  it("yukarı sürükleme sohbet geçmişini açar", () => {
+    expect(panel).toContain("mobilTutamakBasla");
+    expect(panel).toContain("mobilTutamakBitir");
+    expect(panel).toContain("if (fark > 28)");
+    expect(panel).toContain("mobilGecmisiAc();");
+    expect(panel).toContain("setMobilGecmisAcik(true)");
+  });
+
+  it("aşağı sürükleme geçmişi compact composer'a döndürür", () => {
+    expect(top).toContain("olay.clientY - baslangic > 28");
+    expect(top).toContain("onKapat()");
+    expect(top).toContain('aria-label="Sohbet geçmişini küçültmek için aşağı çek"');
+  });
+
+  it("mobil geçmiş ayrı state'tir; masaüstü acik davranışı korunur", () => {
+    expect(panel).toContain("mobilGecmisAcik");
+    expect(panel).toContain("(masaustu ? acik : mobilGecmisAcik || haritaAcik)");
+    expect(panel).toContain("vixrex-owner-assistant-shell fixed");
+    expect(panel).toContain("lg:w-[var(--owner-rail-w)]");
+  });
+
+  it("mobil geçmişte büyük yönetim kartları gizlenir, sohbet görünür kalır", () => {
+    expect(panel).toContain('!masaustu && !haritaAcik ? "hidden" : "flex"');
+    expect(panel).toContain('!masaustu && !haritaAcik ? "hidden" : "block"');
+    expect(panel).toContain('sekme === "sohbet" || (!masaustu && mobilGecmisAcik)');
+    expect(panel).toContain("{(masaustu || haritaAcik) ? (");
+  });
+
+  it("genişletilmiş mobil başlıkta canonical maskot sağdadır", () => {
+    expect(top).toContain("order-4 relative shrink-0 sm:order-1");
+    expect(top).toContain("<VixrexAvatar size={38} halo decorative />");
+  });
+
+  it("alan seçimi mobilde büyük geçmiş panelini zorla açmaz", () => {
+    expect(panel).toContain("setMobilGecmisAcik(false)");
     expect(panel).toContain('window.matchMedia("(min-width: 640px)")');
-  });
-
-  it("panel kabı asistan açıkken çizilir — sohbet+giriş şeridi harita kapalıyken de görünür (Faz 3, 2026-09-03)", () => {
-    // Eskiden panelin tamamı (başlık, SIRADA, bölümler, sohbet, giriş
-    // kutusu) tek blok hâlinde yalnız `haritaAcik`e bağlıydı. Casper'ın
-    // "alt şerit hep görünür" kararıyla (Çalışma masası / Yön C, Faz 3)
-    // sohbet+giriş artık aynı kaptan ayrılmıyor: kap `acik`te açılır, üst
-    // içerik (ChatTopBar/SIRADA/bölümler/PublishBar) hâlâ yalnız
-    // `haritaAcik`te — ☰ hâlâ sihirbaz kalabalığını gizli tutar.
-    expect(panel).toContain("{acik && (");
-    expect(panel).toContain("{haritaAcik && (");
-    expect(panel).not.toContain("{acik && haritaAcik && (");
-  });
-
-  it("mobilde harita açıkken balon gizlenir — üst üste binmez", () => {
-    expect(panel).toContain("{acik && !(!masaustu && haritaAcik) && (");
-  });
-
-  it("haritaya dönüş yolu balondaki düğmede", () => {
-    expect(panel).toContain("onHaritaAc={() => setHaritaAcik(true)}");
-    expect(balon).toContain('aria-label="Tüm alanlar"');
-  });
-
-  it("masaüstünde harita kapanmaz — yer bol", () => {
-    // Kapatma düğmesi masaüstünde asistanı, mobilde yalnız haritayı kapatır.
-    expect(panel).toContain("masaustu ? setAcik(false) : setHaritaAcik(false)");
   });
 });
 
-describe("balon klavyeyi biliyor", () => {
-  it("pencere değil GÖRÜNEN alan ölçülür", () => {
+describe("mobil spotlight klavyeyi biliyor", () => {
+  it("pencere değil görünen alan ölçülür", () => {
     expect(balon).toContain("window.visualViewport");
     expect(balon).toContain("gv?.offsetTop");
   });
@@ -65,6 +90,11 @@ describe("balon klavyeyi biliyor", () => {
     );
   });
 
+  it("yüksekliği tahmin etmez, gerçek boyunu ölçer", () => {
+    expect(balon).toContain("balonRef");
+    expect(balon).toContain("setBalonYukseklik");
+  });
+
   it("altına/üstüne sığmıyorsa görünen bandın dibine sabitlenir", () => {
     expect(balon).toContain("const altaSigar");
     expect(balon).toContain("const usteSigar");
@@ -75,33 +105,8 @@ describe("balon klavyeyi biliyor", () => {
     expect(balon).toContain("balonUst = Math.max(bandUst + 8, balonUst)");
   });
 
-  it("yüksekliği tahmin etmez, gerçek boyunu ölçer", () => {
-    expect(balon).toContain("balonRef");
-    expect(balon).toContain("setBalonYukseklik");
-  });
-
-  it("dibe sabitlenmiş balonda ok çizilmez — yanlış yeri gösterirdi", () => {
+  it("dibe sabitlenmiş balonda ok çizilmez", () => {
     expect(balon).toContain('const okGorunur = balonYeri !== "sabit"');
     expect(balon).toContain("{okGorunur && (");
-  });
-});
-
-describe("maskot rehberi başlatır, haritayı değil", () => {
-  it("Vixrex düğmesi haritayı AÇMAZ (masaüstünde de) — Faz A, Tek Asistan planı", () => {
-    // Casper, 2026-08-22: "mobilde asistan maskota tıklayınca yine sayfa
-    // kapanıyor". Düğme haritayı da açıyordu, harita mobilde tam ekran.
-    // Faz A (2026-09-02): masaüstünde de artık otomatik açmıyor —
-    // SpotlightGuide varsayılan yol, harita yalnız ☰ ile elle açılır.
-    expect(panel).toContain("setHaritaAcik(yeni && !yapilacakVar)");
-    expect(panel).not.toContain("setHaritaAcik(yeni);");
-  });
-
-  it("doldurulacak alan kalmadıysa harita açılır", () => {
-    // Yoksa asistan açılıyor ama ekranda hiçbir şey görünmüyor gibi olur.
-    expect(panel).toContain("setHaritaAcik(yeni && !yapilacakVar)");
-  });
-
-  it("aktif akışta masaüstünde artık otomatik harita açılmıyor", () => {
-    expect(panel).not.toContain("setHaritaAcik(isDesktop)");
   });
 });

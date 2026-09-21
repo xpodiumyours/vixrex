@@ -34,9 +34,9 @@ describe("sahiplik modu editör kabuğu", () => {
 
   it("masaüstünde bilgi iki yerde tekrarlanmaz", () => {
     expect(bar).not.toContain("%{yuzde}");
-    expect(oku("../src/app/v/[slug]/components/ChatTopBar.tsx")).toContain(
-      "focus-visible:ring-sky-400/70 lg:hidden"
-    );
+    const top = oku("../src/app/v/[slug]/components/ChatTopBar.tsx");
+    expect(top).toContain("lg:hidden");
+    expect(top).toContain("hidden items-center gap-2 sm:flex lg:hidden");
   });
 
   it("panel hedef düzendeki sekme ve kartlari tasir", () => {
@@ -77,8 +77,10 @@ describe("sahiplik modu editör kabuğu", () => {
     expect(panel).toContain("lg:rounded-none");
   });
 
-  it("yüzen maskot düğmesi masaüstünde gizlenir", () => {
-    expect(panel).toContain("transition lg:hidden");
+  it("mobil compact composer masaüstünde çizilmez", () => {
+    expect(panel).toContain('data-vixrex-mobile-dock="true"');
+    expect(panel).toContain("sm:hidden");
+    expect(panel).toContain("!masaustu && !haritaAcik");
   });
 
   it("vitrin tuvali çubuk ve sütun payını alır", () => {

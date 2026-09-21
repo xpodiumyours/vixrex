@@ -162,11 +162,11 @@ describe("Vixrex Asistan sürekliliği — korunan mevcut akış", () => {
     expect(nextAvatarSource).toContain(
       'src="/images/vixrex_v_crystal_mascot.png"'
     );
-    expect(ownerPanelSource).toContain("<VixrexAvatar size={28} decorative />");
+    expect(ownerPanelSource).toContain("<VixrexAvatar size={44} decorative />");
     expect(ownerTopBarSource).toContain(
       "<VixrexAvatar size={38} halo decorative />"
     );
-    expect(ownerPanelSource).toContain("aria-expanded={acik}");
+    expect(ownerPanelSource).toContain('aria-label="Sohbet geçmişini aç"');
     expect(ownerPanelSource).not.toContain("🦊");
     expect(nextAvatarSource).toContain('alt={decorative ? "" : "Vixrex"}');
   });
