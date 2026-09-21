@@ -193,11 +193,10 @@ export default function OwnerAssistantPanel({
     }
   }
 
-  // Panel açıkken vitrindeki TÜM doldurulabilir yerler sürekli hafif ışıklı
-  // dursun (Vixrex Asistan rehberli tamamlama, ADR 0002) — yalnız o an
-  // seçili olan değil. Sınıf `body`'ye eklenir, gerçek stil globals.css'te
-  // `[data-vixrex-editable]` üzerinden çalışır — bu öznitelik yalnız sahip
-  // modunda DOM'a girdiği için müşteri görünümü hiç etkilenmez.
+  // Panel açık/kapalı durumunu body sınıfında tut. Bu sınıf artık vitrindeki
+  // bütün düzenlenebilir alanları topluca ışıklandırmaz; masaüstü/tablet
+  // kabuğundaki panel davranışları için korunur. Tuval vurgusu yalnız hover
+  // ve seçili tek alan üzerinden globals.css'te yönetilir.
   useEffect(() => {
     document.body.classList.toggle("vixrex-asistan-acik", acik);
     return () => document.body.classList.remove("vixrex-asistan-acik");

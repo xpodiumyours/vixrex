@@ -63,6 +63,18 @@ describe("sahiplik modu editör kabuğu", () => {
     expect(vitrin).toContain("lg:h-[calc(100vh-var(--owner-bar-h))] lg:overflow-y-auto");
   });
 
+  it("tuval vurgusu sürekli glow yerine hover + tek seçim modeli kullanır", () => {
+    expect(globals).toContain("outline: 1px solid transparent;");
+    expect(globals).toContain("@media (hover: hover) and (pointer: fine)");
+    expect(globals).toContain("outline: 2px solid rgba(56, 160, 228, 0.95) !important;");
+    expect(globals).toContain("box-shadow: none !important;");
+    expect(globals).not.toContain("outline: 2px dashed transparent;");
+    expect(globals).not.toContain("--vrx-glow");
+    expect(globals).not.toContain(
+      'body.vixrex-asistan-acik [data-vixrex-editable][data-vixrex-onem="temel"]',
+    );
+  });
+
   it("alan seçimi sohbete yazılmaz — kart gösterir", () => {
     expect(oku("../src/app/v/[slug]/hooks/useFieldSelection.ts")).not.toContain(
       "alanını seçtin. Yeni değeri yaz"
