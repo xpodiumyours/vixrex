@@ -10,7 +10,6 @@ const doluVeri: HeroActionVeri = {
   phoneUrl: "tel:+905551234567",
   whatsappNumarasi: "905551234567",
   mapsUrl: "https://www.google.com/maps/search/?api=1&query=41,29",
-  websiteUrl: "https://teknofix.com",
 };
 
 const kuafor = PROFILES.find((p) => p.id === "kuafor")!;
@@ -36,14 +35,12 @@ describe("heroActions — kategori profiline göre butonlar", () => {
     expect(butonlar.filter((b) => b.anahtar === "whatsapp")).toHaveLength(1);
   });
 
-  it("giyim + tüm veri → WhatsApp yazısı 'WhatsApp' ve 'Web Sitesi' butonu çıkar", () => {
+  it("giyim profilinde website aksiyonu olsa bile public Web Sitesi butonu çıkmaz", () => {
     const butonlar = heroActions(giyim, doluVeri);
     const whatsapp = butonlar.find((b) => b.anahtar === "whatsapp");
     expect(whatsapp?.etiket).toBe("WhatsApp");
     expect(whatsapp?.href).not.toContain("?text=");
-    const website = butonlar.find((b) => b.anahtar === "website");
-    expect(website?.etiket).toBe("Web Sitesi");
-    expect(website?.href).toBe("https://teknofix.com");
+    expect(butonlar.some((b) => b.anahtar === "website")).toBe(false);
   });
 
   it("whatsappNumarasi null → WhatsApp butonu hiç dönmez", () => {
@@ -56,7 +53,6 @@ describe("heroActions — kategori profiline göre butonlar", () => {
       phoneUrl: null,
       whatsappNumarasi: null,
       mapsUrl: null,
-      websiteUrl: null,
     });
     expect(butonlar).toHaveLength(0);
   });
@@ -81,9 +77,14 @@ describe("heroActions — kategori profiline göre butonlar", () => {
     expect(butonlar.some((b) => b.anahtar === "maps")).toBe(false);
   });
 
-  it("websiteUrl null → Web Sitesi butonu çıkmaz", () => {
-    const butonlar = heroActions(giyim, { ...doluVeri, websiteUrl: null });
-    expect(butonlar.some((b) => b.anahtar === "website")).toBe(false);
+  it("19 kategorinin hiçbirinde Web Sitesi CTA'sı üretilmez", () => {
+    for (const p of PROFILES) {
+      const butonlar = heroActions(p, doluVeri);
+      expect(
+        butonlar.some((b) => b.anahtar === "website"),
+        p.id,
+      ).toBe(false);
+    }
   });
 
   it("istisna: whatsapp yoksa booking kendi WhatsApp butonunu üretir", () => {

@@ -18,14 +18,12 @@ const EYLEM_ALANI: Record<string, string> = {
   telefon: "telefon",
   whatsapp: "whatsapp",
   maps: "adres",
-  website: "website",
 };
 import Link from "next/link";
 import { Suspense, type ReactNode, useEffect, useState } from "react";
 import type { VitrinCategoryProfile } from "@/lib/vitrinProfile";
 import { normalizeAddressDisplay } from "@/lib/vitrinCopy";
 import {
-  GlobeIcon,
   InstagramIcon,
   LinkIcon,
   MapPinIcon,
@@ -350,7 +348,6 @@ export default function VitrinProfileView({
     phoneUrl: phoneUrl ?? null,
     whatsappNumarasi: whatsappUrl?.match(/wa\.me\/([0-9]+)/)?.[1] ?? null,
     mapsUrl: mapsUrl ?? null,
-    websiteUrl: websiteUrl ?? null,
   });
 
   const handleCopyUrl = () => {
@@ -656,7 +653,6 @@ export default function VitrinProfileView({
                   )}
                   {buton.anahtar === "whatsapp" && <WhatsAppIcon size={18} />}
                   {buton.anahtar === "maps" && <MapPinIcon size={18} />}
-                  {buton.anahtar === "website" && <GlobeIcon size={18} />}
                   {buton.etiket}
                 </a>
               ))}
@@ -1095,7 +1091,7 @@ export default function VitrinProfileView({
                 </div>
               )}
 
-              {websiteUrl && (
+              {ownerMode && websiteUrl && (
                 <div className="flex items-start gap-4 pb-4 border-b border-blue-500/10">
                   <div className="w-10 h-10 rounded-xl bg-slate-800 border border-blue-500/15 flex items-center justify-center text-lg shrink-0"><VitrinIkon ad="kure" className="h-5 w-5 text-blue-300" /></div>
                   <div
