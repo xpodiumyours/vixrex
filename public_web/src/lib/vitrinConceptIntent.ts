@@ -16,6 +16,18 @@ function sonTokenEslesir(girdi: string, kok: string): boolean {
   return KAVRAM_SON_EKLERI.has(girdi.slice(kok.length));
 }
 
+const DUZENLEME_EYLEM_KOKLERI = [
+  "duzenl", "degistir", "guncell", "ayarla", "goster", "ekle", "duzelt", "yenile", "bak",
+] as const;
+
+function duzenlemeEylemiVarMi(tokenlar: readonly string[]): boolean {
+  return tokenlar.some(
+    (token) =>
+      token === "ac" ||
+      DUZENLEME_EYLEM_KOKLERI.some((kok) => token.startsWith(kok)),
+  );
+}
+
 function ifadeVarMi(input: string, ifade: string): boolean {
   const metin = vixrexNormalizeDartParity(input)
     .replace(/[^a-z0-9]+/g, " ")
@@ -29,6 +41,9 @@ function ifadeVarMi(input: string, ifade: string): boolean {
     .filter(Boolean);
 
   if (aranan.length === 0 || aranan.length > metin.length) return false;
+  if (aranan.length === 1 && metin.length > 1 && !duzenlemeEylemiVarMi(metin)) {
+    return false;
+  }
 
   for (let baslangic = 0; baslangic <= metin.length - aranan.length; baslangic += 1) {
     let uyuyor = true;

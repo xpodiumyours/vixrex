@@ -51,6 +51,8 @@ describe("Vixrex esnaf kavram katmanı", () => {
     expect(resolveVitrinConceptIntent("Kampanyamı düzenle")?.id).toBe("kampanyam");
     expect(resolveVitrinConceptIntent("Galerimi düzenlemek istiyorum")?.id).toBe("galerim");
     expect(resolveVitrinConceptIntent("Sık sorulanları düzenle")?.id).toBe("sss");
+    expect(resolveVitrinConceptIntent("Kampanyam çok güzel olmuş")).toBeNull();
+    expect(resolveVitrinConceptIntent("İşletmem bugün kapalı")).toBeNull();
     expect(resolveVitrinConceptIntent("WhatsApp numaramı 0555 123 45 67 yap")).toBeNull();
     expect(resolveVitrinConceptIntent("Kampanya başlığını Hafta Sonu Fırsatı yap")).toBeNull();
   });
@@ -73,9 +75,18 @@ describe("Vixrex esnaf kavram katmanı", () => {
     );
     expect(kavramPaneli).toContain("VITRIN_CONCEPTS.map");
     expect(kavramPaneli).toContain("fieldsOfConcept");
+    expect(kavramPaneli).not.toContain("doluSayisi}/{alanlar.length}");
+    expect(kavramPaneli).toContain('"Hazır"');
     expect(gelismis).toContain("Gelişmiş · Tüm alanlar");
     expect(gelismis).toContain("VITRIN_FIELDS.filter");
     expect(gelismis).toContain("SECTION_ORDER.map");
+  });
+
+  it("ayrı içerik sistemlerini 46 alan kapsamıymış gibi göstermez", () => {
+    for (const id of ["urunHizmet", "galerim", "yazilarim", "sss"] as const) {
+      const kavram = VITRIN_CONCEPTS.find((item) => item.id === id);
+      expect(kavram?.aciklama).toContain("değil");
+    }
   });
 
   it("kavram konuşması batch veya tek alan API çağrısı yapmadan önce kesilir", () => {

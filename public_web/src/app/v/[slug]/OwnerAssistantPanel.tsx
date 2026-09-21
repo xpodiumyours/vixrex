@@ -742,7 +742,7 @@ export default function OwnerAssistantPanel({
                   alanSec={alanSec}
                   alanAtla={alanAtlandi}
                 />
-                <ConceptProgressList key={seciliKavram ?? "kavramlar"} yerelTaslak={yerelTaslak} alanSec={alanSec} aktifKavram={seciliKavram} />
+                <ConceptProgressList yerelTaslak={yerelTaslak} alanSec={alanSec} acikKavram={seciliKavram} kavramDegistir={setSeciliKavram} />
                 <SectionProgressList yerelTaslak={yerelTaslak} alanSec={alanSec} />
                 <SectionVisibilityToggle
                   slug={slug}
@@ -901,7 +901,7 @@ export default function OwnerAssistantPanel({
                       </div>
                     ) : null}
 
-                    <ConceptProgressList key={seciliKavram ?? "kavramlar"} yerelTaslak={yerelTaslak} alanSec={alanSec} aktifKavram={seciliKavram} />
+                    <ConceptProgressList yerelTaslak={yerelTaslak} alanSec={alanSec} acikKavram={seciliKavram} kavramDegistir={setSeciliKavram} />
                     <SectionProgressList yerelTaslak={yerelTaslak} alanSec={alanSec} />
 
                     <SectionVisibilityToggle

@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import {
   VITRIN_CONCEPTS,
   fieldsOfConcept,
@@ -11,15 +10,16 @@ import { doluMu } from "@/lib/vitrinReadiness";
 interface Props {
   yerelTaslak: Record<string, unknown>;
   alanSec: (anahtar: string) => void;
-  aktifKavram?: VitrinConcept | null;
+  acikKavram: VitrinConcept | null;
+  kavramDegistir: (kavram: VitrinConcept | null) => void;
 }
 
 export function ConceptProgressList({
   yerelTaslak,
   alanSec,
-  aktifKavram = null,
+  acikKavram,
+  kavramDegistir,
 }: Props) {
-  const [acikKavram, setAcikKavram] = useState<VitrinConcept | null>(aktifKavram);
 
   return (
     <div className="border-b border-white/10 px-4 py-3">
@@ -48,17 +48,15 @@ export function ConceptProgressList({
               ? `${eksikZorunlu} zorunlu eksik`
               : eksikKalite > 0
                 ? `${eksikKalite} kalite önerisi`
-                : doluSayisi === alanlar.length
-                  ? "Tamam"
-                  : doluSayisi > 0
-                    ? `${doluSayisi}/${alanlar.length} bilgi`
-                    : "İsteğe bağlı";
+                : doluSayisi > 0
+                  ? "Hazır"
+                  : "İsteğe bağlı";
 
           return (
             <div key={kavram.id} className="rounded-lg border border-white/10">
               <button
                 type="button"
-                onClick={() => setAcikKavram(acik ? null : kavram.id)}
+                onClick={() => kavramDegistir(acik ? null : kavram.id)}
                 className="flex w-full items-center gap-3 px-3 py-2 text-left"
               >
                 <span className="min-w-0 flex-1">
