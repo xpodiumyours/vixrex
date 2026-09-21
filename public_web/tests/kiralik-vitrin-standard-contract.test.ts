@@ -3,7 +3,7 @@ import { readFileSync } from "fs";
 import { resolve } from "path";
 
 const migration = readFileSync(
-  resolve(__dirname, "../../supabase/migrations/20260921213000_kiralik_vitrin_standardini_tamamla.sql"),
+  resolve(__dirname, "../../supabase/migrations/20260921184712_kiralik_vitrin_standardini_tamamla.sql"),
   "utf-8",
 );
 
