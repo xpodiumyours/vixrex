@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:vixrex/models/detected_product.dart';
+import 'package:vixrex/models/invoice_product_draft.dart';
+import 'package:vixrex/services/invoice_catalog/invoice_draft_decision_engine.dart';
 import 'package:vixrex/theme/app_colors.dart';
 
 /// OCR sonuç listesi widget'ı.
@@ -8,6 +10,7 @@ class OcrResultList extends StatelessWidget {
   final Function(int index) onApprove;
   final Function(int index) onReject;
   final Function(int index)? onEdit;
+  final List<InvoiceProductDraft> invoiceDrafts;
 
   const OcrResultList({
     super.key,
@@ -15,6 +18,7 @@ class OcrResultList extends StatelessWidget {
     required this.onApprove,
     required this.onReject,
     this.onEdit,
+    this.invoiceDrafts = const [],
   });
 
   @override
@@ -116,7 +120,9 @@ class OcrResultList extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      product.formattedPrice,
+                      product.isInvoiceSource && product.price == null
+                          ? 'Satış fiyatı girilmedi'
+                          : product.formattedPrice,
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
@@ -136,6 +142,32 @@ class OcrResultList extends StatelessWidget {
                     ),
                   ],
                 ),
+                if (product.isInvoiceSource) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    _invoiceSummary(product),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      height: 1.35,
+                      color: AppColors.mutedText,
+                    ),
+                  ),
+                  if (product.issues.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      _issueSummary(product.issues),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.error,
+                      ),
+                    ),
+                  ],
+                  if (index < invoiceDrafts.length) ...[
+                    const SizedBox(height: 6),
+                    _buildInvoiceDecision(invoiceDrafts[index]),
+                  ],
+                ],
               ],
             ),
           ),
@@ -165,6 +197,96 @@ class OcrResultList extends StatelessWidget {
       ),
     );
   }
+
+  String _invoiceSummary(DetectedProduct product) {
+    final parts = <String>[];
+    final sku = product.sku?.trim();
+    final barcode = product.barcode?.trim();
+    final variant = product.variant?.trim();
+    final size = product.size?.trim();
+
+    if (sku != null && sku.isNotEmpty) parts.add('Model: $sku');
+    if (barcode != null && barcode.isNotEmpty) parts.add('Barkod: $barcode');
+    if (variant != null && variant.isNotEmpty) parts.add('Varyant: $variant');
+    if (size != null && size.isNotEmpty) parts.add('Beden: $size');
+    if (product.documentQuantity != null) {
+      parts.add('Adet: ${product.documentQuantity}');
+    }
+    if (product.purchaseUnitPrice != null) {
+      parts.add('Alış: ${product.purchaseUnitPrice!.toStringAsFixed(2)} TL');
+    }
+    if (product.lineTotal != null) {
+      parts.add('Tutar: ${product.lineTotal!.toStringAsFixed(2)} TL');
+    }
+    return parts.join(' · ');
+  }
+
+  String _issueSummary(List<String> issues) {
+    final labels = <String>[];
+    for (final issue in issues) {
+      switch (issue) {
+        case 'INVALID_BARCODE_CHECK_DIGIT':
+          labels.add('Barkod doğrulanamadı');
+          break;
+        case 'QUANTITY_MISSING':
+          labels.add('Adet okunamadı');
+          break;
+        case 'PURCHASE_PRICE_MISSING':
+          labels.add('Alış fiyatı okunamadı');
+          break;
+        case 'LINE_TOTAL_MISSING':
+          labels.add('Satır toplamı okunamadı');
+          break;
+        case 'ARITHMETIC_MISMATCH':
+          labels.add('Adet × alış fiyatı toplamla uyuşmuyor');
+          break;
+        default:
+          labels.add('Kontrol gerekli');
+          break;
+      }
+    }
+    return labels.toSet().join(' · ');
+  }
+
+  Widget _buildInvoiceDecision(InvoiceProductDraft draft) {
+    final result = const InvoiceDraftDecisionEngine().evaluate(draft);
+    final label = switch (result.decision) {
+      AutomationDecision.stopNoGuess => 'DUR — ürün tahmin edilmedi',
+      AutomationDecision.askMissing => 'SOR — eksik kanıt var',
+      AutomationDecision.autoPrepareDraft => 'TASLAK HAZIRLANABİLİR',
+      AutomationDecision.readyForPublish => 'YAYINA HAZIR',
+    };
+    final detail =
+        result.questions.isNotEmpty
+            ? result.questions.first
+            : result.warnings.isNotEmpty
+            ? result.warnings.first
+            : '';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
+            color: AppColors.primary,
+          ),
+        ),
+        if (detail.isNotEmpty)
+          Text(
+            detail,
+            style: const TextStyle(
+              fontSize: 10,
+              height: 1.35,
+              color: AppColors.mutedText,
+            ),
+          ),
+      ],
+    );
+  }
+
 
   Color _getConfidenceColor(double confidence) {
     if (confidence >= 0.85) return AppColors.success;

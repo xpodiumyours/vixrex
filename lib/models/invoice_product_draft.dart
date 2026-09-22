@@ -9,6 +9,7 @@ enum EvidenceSourceType {
   officialCatalog,
   verifiedGtinRegistry,
   merchantUpload,
+  vixrexProductDatabase,
   webDiscovery,
   aiDerived,
 }
@@ -47,6 +48,7 @@ extension EvidenceSourceTypeWire on EvidenceSourceType {
     EvidenceSourceType.officialCatalog => 'official_catalog',
     EvidenceSourceType.verifiedGtinRegistry => 'verified_gtin_registry',
     EvidenceSourceType.merchantUpload => 'merchant_upload',
+    EvidenceSourceType.vixrexProductDatabase => 'vixrex_product_database',
     EvidenceSourceType.webDiscovery => 'web_discovery',
     EvidenceSourceType.aiDerived => 'ai_derived',
   };
@@ -211,6 +213,62 @@ class InvoiceProductDraft {
       imageCandidates
           .where((item) => item.selected && item.isExternal)
           .toList(growable: false);
+
+  InvoiceProductDraft copyWith({
+    EvidenceValue<String>? supplierName,
+    EvidenceValue<String>? rawName,
+    EvidenceValue<String>? normalizedName,
+    EvidenceValue<String>? gtinBarcode,
+    EvidenceValue<String>? manufacturerSku,
+    EvidenceValue<String>? supplierSku,
+    EvidenceValue<String>? modelCode,
+    EvidenceValue<String>? brand,
+    EvidenceValue<String>? variant,
+    EvidenceValue<String>? size,
+    EvidenceValue<num>? quantity,
+    EvidenceValue<num>? purchaseUnitPrice,
+    EvidenceValue<num>? purchaseLineTotal,
+    EvidenceValue<String>? currency,
+    EvidenceValue<String>? canonicalProductId,
+    EvidenceValue<String>? canonicalProductUrl,
+    List<InvoiceImageCandidate>? imageCandidates,
+    EvidenceStrength? supplierIdentityStrength,
+    EvidenceStrength? productIdentityStrength,
+    RightsStatus? rightsStatus,
+    bool? merchantApproved,
+    double? salePrice,
+    bool? isVisible,
+  }) {
+    return InvoiceProductDraft(
+      id: id,
+      rawSourceLine: rawSourceLine,
+      supplierName: supplierName ?? this.supplierName,
+      rawName: rawName ?? this.rawName,
+      normalizedName: normalizedName ?? this.normalizedName,
+      gtinBarcode: gtinBarcode ?? this.gtinBarcode,
+      manufacturerSku: manufacturerSku ?? this.manufacturerSku,
+      supplierSku: supplierSku ?? this.supplierSku,
+      modelCode: modelCode ?? this.modelCode,
+      brand: brand ?? this.brand,
+      variant: variant ?? this.variant,
+      size: size ?? this.size,
+      quantity: quantity ?? this.quantity,
+      purchaseUnitPrice: purchaseUnitPrice ?? this.purchaseUnitPrice,
+      purchaseLineTotal: purchaseLineTotal ?? this.purchaseLineTotal,
+      currency: currency ?? this.currency,
+      canonicalProductId: canonicalProductId ?? this.canonicalProductId,
+      canonicalProductUrl: canonicalProductUrl ?? this.canonicalProductUrl,
+      imageCandidates: imageCandidates ?? this.imageCandidates,
+      supplierIdentityStrength:
+          supplierIdentityStrength ?? this.supplierIdentityStrength,
+      productIdentityStrength:
+          productIdentityStrength ?? this.productIdentityStrength,
+      rightsStatus: rightsStatus ?? this.rightsStatus,
+      merchantApproved: merchantApproved ?? this.merchantApproved,
+      salePrice: salePrice ?? this.salePrice,
+      isVisible: isVisible ?? this.isVisible,
+    );
+  }
 
   Map<String, dynamic> toJson() => {
     'id': id,

@@ -32,6 +32,7 @@ class ProductManagementSheet extends StatefulWidget {
     required this.onCatalogChanged,
     required this.onProductDelete,
     required this.onOcrTap,
+    this.onInvoiceTap,
     this.storeKategori = '',
   });
 
@@ -46,6 +47,7 @@ class ProductManagementSheet extends StatefulWidget {
   /// Seçilen ürünü kalıcı siler. Başarılıysa true.
   final Future<bool> Function(Product product) onProductDelete;
   final VoidCallback onOcrTap;
+  final VoidCallback? onInvoiceTap;
 
   /// Magazanin isletme kategorisi. Yeni urun kategorisi acilirken varsayilan
   /// alan sablonu bundan turetilir; bos ise onceki 'generic' davranisi kalir.
@@ -640,6 +642,7 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
                 SizedBox(height: spacing14),
                 VixRexCatalogAssistantSection(
                   onOcrTap: widget.onOcrTap,
+                  onInvoiceTap: widget.onInvoiceTap,
                   onSuggestionTap: _applyVixRexTitleSuggestions,
                 ),
                 SizedBox(height: spacing14),

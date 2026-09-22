@@ -30,6 +30,7 @@
     "official_catalog",
     "verified_gtin_registry",
     "merchant_upload",
+    "vixrex_product_database",
     "web_discovery",
     "ai_derived"
   ],

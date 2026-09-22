@@ -15,8 +15,12 @@ class OcrImagePreprocessor {
 
   /// Senkron ön işleme (isolate içinde çalışır).
   static Uint8List _preprocessSync(Uint8List imageBytes) {
-    final image = img.decodeImage(imageBytes);
-    if (image == null) return imageBytes;
+    final decoded = img.decodeImage(imageBytes);
+    if (decoded == null) return imageBytes;
+
+    // Kamera/galeri EXIF yönünü piksele uygula; OCR dosya metadata'sına
+    // güvenmek zorunda kalmasın.
+    final image = img.bakeOrientation(decoded);
 
     // 1. Görseli küçült (hız için)
     img.Image resized = image;
@@ -45,6 +49,29 @@ class OcrImagePreprocessor {
 
     // JPEG kalitesi 90 (kalite + hız dengesi)
     return Uint8List.fromList(img.encodeJpg(sharpened, quality: 90));
+  }
+
+  /// Fatura OCR için yerel yön denemeleri. Ağ/API çağrısı yoktur.
+  Future<Uint8List> rotateClockwise90(Uint8List imageBytes) async {
+    return compute(_rotateClockwise90Sync, imageBytes);
+  }
+
+  Future<Uint8List> rotateCounterClockwise90(Uint8List imageBytes) async {
+    return compute(_rotateCounterClockwise90Sync, imageBytes);
+  }
+
+  static Uint8List _rotateClockwise90Sync(Uint8List imageBytes) {
+    final decoded = img.decodeImage(imageBytes);
+    if (decoded == null) return imageBytes;
+    final rotated = img.copyRotate(decoded, angle: 90);
+    return Uint8List.fromList(img.encodeJpg(rotated, quality: 90));
+  }
+
+  static Uint8List _rotateCounterClockwise90Sync(Uint8List imageBytes) {
+    final decoded = img.decodeImage(imageBytes);
+    if (decoded == null) return imageBytes;
+    final rotated = img.copyRotate(decoded, angle: 270);
+    return Uint8List.fromList(img.encodeJpg(rotated, quality: 90));
   }
 
   /// Fiyat etiketleri için renk filtresi.
