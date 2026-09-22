@@ -380,3 +380,28 @@ Her fazdan önce:
 Ağır tam kapılar yalnız kilometre taşlarında çalıştırılır.
 
 PR/merge/deploy ayrı işlemlerdir. Bu dalın geliştirilmesi bunlardan hiçbirini otomatik olarak yapmaz.
+
+## 10. Sapma kilidi ve görünür ilerleme
+
+Bu bölüm planın çalışma sözleşmesidir.
+
+- Faz sırası kullanıcı onayı olmadan değiştirilmez.
+- Bir faz sırasında sonraki fazın işi uygulanmaz.
+- Yeni fikir veya ihtiyaç çıkarsa doğrudan kodlanmaz; `DURUM.md` içindeki “Park alanı”na yazılır.
+- Kilitli hedefi, veri sözleşmesini veya “Yapılmayacaklar” bölümünü değiştiren iş kapsam değişikliğidir ve kullanıcı onayı gerektirir.
+- Her geliştirme adımı tek bir ölçülebilir hedef taşır. Aynı adımda ilgisiz refactor, tasarım yenileme veya başka ürün borcu kapatma yapılmaz.
+- Her adım başlamadan önce “önce” durumu ölçülür; bittikten sonra aynı ölçüm tekrar yapılır.
+- Her tamamlanan adımda aynı commit içinde `DURUM.md` güncellenir. Kod değişip durum defteri güncellenmeden adım tamam sayılmaz.
+- Deneme commitleri biriktirilmez. Bir adım için doğrulanmış tek teslim commit'i hedeflenir.
+- Bir test yeşil diye faz tamam sayılmaz. Fazın kendi kabul maddesi ayrıca kanıtlanır.
+- PR, merge, preview/deploy ve canlı migration bu planın geliştirme adımlarından ayrı kapılardır.
+
+Her adım sonunda kullanıcıya aynı beş başlıkla rapor verilir:
+
+1. **Neyi geliştirdik**
+2. **Neyi değiştirdik**
+3. **Ne elde ettik**
+4. **Neye dokunmadık**
+5. **Kanıt / test durumu**
+
+Bu beş başlığın karşılığı `docs/fatura-katalog/DURUM.md` içinde kalıcı olarak tutulur.
