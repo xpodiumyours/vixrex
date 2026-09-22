@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:vixrex/models/detected_product.dart';
 import 'package:vixrex/models/ocr_catalog_result.dart';
+import 'package:vixrex/models/product_rich_data.dart';
 import 'package:vixrex/models/store_product.dart';
+import 'package:vixrex/services/ocr/invoice_row_parser.dart';
 import 'package:vixrex/services/ocr/ocr_service.dart';
 import 'package:vixrex/services/ocr/ocr_feedback_service.dart';
 import 'package:vixrex/services/product_conversation_logger.dart';
@@ -83,15 +85,22 @@ class OcrController extends ChangeNotifier {
   void updateProduct(int index, DetectedProduct updated) {
     if (_result == null) return;
     if (index < 0 || index >= _result!.products.length) return;
+    if (updated.isInvoiceSource) {
+      updated.issues = InvoiceRowParser.validateProduct(updated);
+    }
     _result!.products[index] = updated;
     notifyListeners();
   }
 
   /// Tümünü onayla.
+  ///
+  /// Faturada doğrulama sorunu olan satırlar toplu onaya dahil edilmez;
+  /// esnaf o satırı ayrıca kontrol eder.
   void approveAll() {
     if (_result == null) return;
     for (final product in _result!.products) {
-      product.isApproved = true;
+      product.isApproved =
+          !product.isInvoiceSource || product.issues.isEmpty;
     }
     notifyListeners();
   }
@@ -150,13 +159,18 @@ class OcrController extends ChangeNotifier {
               )
               .toList();
 
-      await const OcrFeedbackService().saveFeedback(
-        rawOcrText: _result!.rawText,
-        parsedProducts: parsedList,
-        correctedProducts: feedbackList,
-        scanMode: _scanMode,
-        imageHash: 'hash_${_result!.rawText.hashCode.abs()}',
-      );
+      // Fatura metni firma/tedarikçi/ticari fiyat gibi özel bilgiler
+      // içerebilir. Açık bir saklama politikası kurulana kadar fatura OCR
+      // ham metni feedback veri setine yazılmaz.
+      if (_scanMode != 'invoice') {
+        await const OcrFeedbackService().saveFeedback(
+          rawOcrText: _result!.rawText,
+          parsedProducts: parsedList,
+          correctedProducts: feedbackList,
+          scanMode: _scanMode,
+          imageHash: 'hash_${_result!.rawText.hashCode.abs()}',
+        );
+      }
 
       // 2. Ürünleri editör kontrolcüsüne ekle (uzak yazma başarısızsa yerelde yok)
       final editor = _editorController;
@@ -201,19 +215,57 @@ class OcrController extends ChangeNotifier {
   }
 
   /// DetectedProduct'ı Product'a çevir.
+  ///
+  /// Fatura alış fiyatı müşteriye gösterilecek satış fiyatı DEĞİLDİR.
+  /// Bu nedenle purchaseUnitPrice burada Product.price alanına asla yazılmaz.
   Product _convertToProduct(DetectedProduct detected) {
-    // Benzersiz ID: timestamp + random + name hash
     final timestamp = DateTime.now().microsecondsSinceEpoch;
     final random = (timestamp * 7 + detected.name.hashCode).abs();
+    final id = 'ocr_${timestamp}_$random';
+
+    final options = <String, String>{};
+    final variant = detected.variant?.trim();
+    final size = detected.size?.trim();
+    if (variant != null && variant.isNotEmpty) options['color'] = variant;
+    if (size != null && size.isNotEmpty) options['size'] = size;
+
+    final variants =
+        options.isEmpty
+            ? <ProductVariantData>[]
+            : <ProductVariantData>[
+              ProductVariantData(
+                id: '$id-variant-1',
+                options: options,
+                sku: detected.sku,
+                barcode: detected.barcode,
+                priceAmount: detected.price,
+                stockQuantity:
+                    detected.isInvoiceSource
+                        ? detected.documentQuantity
+                        : detected.quantity,
+                stockStatus: StockStatus.available.label,
+              ),
+            ];
+
     return Product(
-      id: 'ocr_${timestamp}_$random',
+      id: id,
       name: detected.name,
+      // Yalnız esnafın girdiği/var olan satış fiyatı kullanılır.
       price: detected.price?.toStringAsFixed(2) ?? '',
       description: detected.description ?? '',
       category: detected.category,
       stockStatus: StockStatus.available.label,
-      isVisible: true,
-      source: 'ocr',
+      // Faturadan gelen ürün doğrudan müşteriye açılmaz; önce esnaf satış
+      // fiyatını ve şüpheli alanları kontrol eder.
+      isVisible: !detected.isInvoiceSource,
+      source: detected.source,
+      barcode: detected.barcode,
+      sku: detected.sku,
+      stockQuantity:
+          detected.isInvoiceSource
+              ? detected.documentQuantity
+              : detected.quantity,
+      variants: variants,
     );
   }
 

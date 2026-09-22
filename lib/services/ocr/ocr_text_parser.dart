@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:vixrex/models/ocr_line.dart';
 import 'package:vixrex/models/ocr_text_result.dart';
-import 'package:vixrex/services/ocr/synthetic_receipt_generator.dart';
+import 'package:vixrex/models/ocr_token.dart';
 
 /// OCR ile metin ayrıştırma servisi.
 ///
@@ -20,8 +20,11 @@ class OcrTextParser {
     List<int> imageBytes, {
     String scanMode = 'receipt',
   }) async {
+    // Web'de sahte/sentetik OCR sonucu üretmek gerçek belge akışını
+    // olduğundan başarılı gösteriyordu. Gerçek web OCR bağlanana kadar
+    // uydurma ürün üretmek yerine boş sonuç dön.
     if (kIsWeb) {
-      return _generateWebSimulatedOcrResult(scanMode);
+      return OcrTextResult.empty();
     }
 
     final tempFile = await _saveTempFile(imageBytes);
@@ -36,6 +39,7 @@ class OcrTextParser {
       try {
         final recognizedText = await textRecognizer.processImage(inputImage);
         final lines = <OcrLine>[];
+        final tokens = <OcrToken>[];
 
         for (
           var blockIndex = 0;
@@ -56,10 +60,33 @@ class OcrTextParser {
                 lineIndex: lineIndex,
               ),
             );
+
+            for (
+              var elementIndex = 0;
+              elementIndex < line.elements.length;
+              elementIndex++
+            ) {
+              final element = line.elements[elementIndex];
+              final elementText = element.text.trim();
+              if (elementText.isEmpty) continue;
+              tokens.add(
+                OcrToken(
+                  text: elementText,
+                  boundingBox: element.boundingBox,
+                  blockIndex: blockIndex,
+                  lineIndex: lineIndex,
+                  elementIndex: elementIndex,
+                ),
+              );
+            }
           }
         }
 
-        return OcrTextResult(rawText: recognizedText.text.trim(), lines: lines);
+        return OcrTextResult(
+          rawText: recognizedText.text.trim(),
+          lines: lines,
+          tokens: tokens,
+        );
       } finally {
         await textRecognizer.close();
       }
@@ -273,37 +300,6 @@ class OcrTextParser {
     }
   }
 
-  OcrTextResult _generateWebSimulatedOcrResult(String scanMode) {
-    final generator = SyntheticReceiptGenerator();
-    final rawText =
-        scanMode == 'shelf_label'
-            ? generator.generateShelfLabelText()
-            : scanMode == 'invoice'
-            ? generator.generateInvoiceText()
-            : generator.generateReceiptText();
-
-    final rawLines = rawText.split('\n');
-    final lines = <OcrLine>[];
-    for (var i = 0; i < rawLines.length; i++) {
-      final text = rawLines[i].trim();
-      if (text.isEmpty) continue;
-      lines.add(
-        OcrLine(
-          text: text,
-          boundingBox: Rect.fromLTWH(10, i * 30.0, 300, 20),
-          blockIndex:
-              scanMode == 'shelf_label'
-                  ? i ~/ 4
-                  : scanMode == 'invoice'
-                  ? 0
-                  : 0,
-          lineIndex: i,
-        ),
-      );
-    }
-
-    return OcrTextResult(rawText: rawText, lines: lines);
-  }
 }
 
 class ReceiptLayout {

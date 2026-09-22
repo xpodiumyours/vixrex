@@ -61,12 +61,17 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
                 segments: const [
                   ButtonSegment<String>(
                     value: 'receipt',
-                    label: Text('Fiş/Fatura Modu'),
+                    label: Text('Fiş'),
                     icon: Icon(Icons.receipt_long_rounded),
                   ),
                   ButtonSegment<String>(
+                    value: 'invoice',
+                    label: Text('Fatura'),
+                    icon: Icon(Icons.description_outlined),
+                  ),
+                  ButtonSegment<String>(
                     value: 'shelf_label',
-                    label: Text('Raf/Etiket Modu'),
+                    label: Text('Raf/Etiket'),
                     icon: Icon(Icons.label_outline_rounded),
                   ),
                 ],
@@ -223,7 +228,9 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
             ),
           ),
           child: Text(
-            '$approved Ürünü Vitrine Ekle',
+            widget.ocrController.scanMode == 'invoice'
+                ? '$approved Taslak Ürünü Hazırla'
+                : '$approved Ürünü Vitrine Ekle',
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
         ),
@@ -242,6 +249,24 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
       text: product.price?.toStringAsFixed(2) ?? '',
     );
 
+    final modelController = TextEditingController(text: product.sku ?? '');
+    final barcodeController = TextEditingController(
+      text: product.barcode ?? '',
+    );
+    final variantController = TextEditingController(
+      text: product.variant ?? '',
+    );
+    final sizeController = TextEditingController(text: product.size ?? '');
+    final quantityController = TextEditingController(
+      text: product.documentQuantity?.toString() ?? '',
+    );
+    final purchaseController = TextEditingController(
+      text: product.purchaseUnitPrice?.toStringAsFixed(2) ?? '',
+    );
+    final lineTotalController = TextEditingController(
+      text: product.lineTotal?.toStringAsFixed(2) ?? '',
+    );
+
     showDialog(
       context: context,
       builder:
@@ -251,30 +276,113 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
               'Ürünü Düzenle',
               style: TextStyle(color: AppColors.darkText),
             ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Ürün Adı',
-                    labelStyle: TextStyle(color: AppColors.mutedText),
-                  ),
-                  style: const TextStyle(color: AppColors.darkText),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: nameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Ürün Adı',
+                        labelStyle: TextStyle(color: AppColors.mutedText),
+                      ),
+                      style: const TextStyle(color: AppColors.darkText),
+                    ),
+                    if (product.isInvoiceSource) ...[
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: modelController,
+                        decoration: const InputDecoration(
+                          labelText: 'Model / SKU',
+                          labelStyle: TextStyle(color: AppColors.mutedText),
+                        ),
+                        style: const TextStyle(color: AppColors.darkText),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: barcodeController,
+                        decoration: const InputDecoration(
+                          labelText: 'Barkod',
+                          labelStyle: TextStyle(color: AppColors.mutedText),
+                        ),
+                        style: const TextStyle(color: AppColors.darkText),
+                        keyboardType: TextInputType.number,
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: variantController,
+                        decoration: const InputDecoration(
+                          labelText: 'Varyant / Renk',
+                          labelStyle: TextStyle(color: AppColors.mutedText),
+                        ),
+                        style: const TextStyle(color: AppColors.darkText),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: sizeController,
+                        decoration: const InputDecoration(
+                          labelText: 'Beden',
+                          labelStyle: TextStyle(color: AppColors.mutedText),
+                        ),
+                        style: const TextStyle(color: AppColors.darkText),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: quantityController,
+                        decoration: const InputDecoration(
+                          labelText: 'Adet',
+                          labelStyle: TextStyle(color: AppColors.mutedText),
+                        ),
+                        style: const TextStyle(color: AppColors.darkText),
+                        keyboardType: TextInputType.number,
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: purchaseController,
+                        decoration: const InputDecoration(
+                          labelText: 'Alış fiyatı (faturadaki)',
+                          labelStyle: TextStyle(color: AppColors.mutedText),
+                        ),
+                        style: const TextStyle(color: AppColors.darkText),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: lineTotalController,
+                        decoration: const InputDecoration(
+                          labelText: 'Satır toplamı',
+                          labelStyle: TextStyle(color: AppColors.mutedText),
+                        ),
+                        style: const TextStyle(color: AppColors.darkText),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: priceController,
+                      decoration: InputDecoration(
+                        labelText:
+                            product.isInvoiceSource
+                                ? 'Satış Fiyatı (₺)'
+                                : 'Fiyat (₺)',
+                        labelStyle: const TextStyle(
+                          color: AppColors.mutedText,
+                        ),
+                      ),
+                      style: const TextStyle(color: AppColors.darkText),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: priceController,
-                  decoration: const InputDecoration(
-                    labelText: 'Fiyat (₺)',
-                    labelStyle: TextStyle(color: AppColors.mutedText),
-                  ),
-                  style: const TextStyle(color: AppColors.darkText),
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                ),
-              ],
+              ),
             ),
             actions: [
               TextButton(
@@ -283,10 +391,29 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
               ),
               ElevatedButton(
                 onPressed: () {
-                  final updated = product;
-                  updated.name = nameController.text;
-                  updated.price = double.tryParse(priceController.text);
-                  widget.ocrController.updateProduct(index, updated);
+                  product.name = nameController.text.trim();
+                  product.price = _parseDecimal(priceController.text);
+
+                  if (product.isInvoiceSource) {
+                    product.sku = _cleanOptional(modelController.text);
+                    product.barcode = _cleanOptional(barcodeController.text);
+                    product.variant = _cleanOptional(variantController.text);
+                    product.size = _cleanOptional(sizeController.text);
+                    product.documentQuantity = int.tryParse(
+                      quantityController.text.trim(),
+                    );
+                    if (product.documentQuantity != null) {
+                      product.quantity = product.documentQuantity!;
+                    }
+                    product.purchaseUnitPrice = _parseDecimal(
+                      purchaseController.text,
+                    );
+                    product.lineTotal = _parseDecimal(
+                      lineTotalController.text,
+                    );
+                  }
+
+                  widget.ocrController.updateProduct(index, product);
                   Navigator.pop(ctx);
                 },
                 child: const Text('Kaydet'),
@@ -294,6 +421,20 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
             ],
           ),
     );
+  }
+
+  String? _cleanOptional(String value) {
+    final clean = value.trim();
+    return clean.isEmpty ? null : clean;
+  }
+
+  double? _parseDecimal(String value) {
+    var clean = value.trim().replaceAll(RegExp(r'[^0-9,.-]'), '');
+    if (clean.isEmpty) return null;
+    if (clean.contains(',')) {
+      clean = clean.replaceAll('.', '').replaceAll(',', '.');
+    }
+    return double.tryParse(clean);
   }
 
   Future<void> _saveProducts() async {
@@ -310,8 +451,12 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Ürünler vitrine eklendi!'),
+        SnackBar(
+          content: Text(
+            widget.ocrController.scanMode == 'invoice'
+                ? 'Taslak ürünler hazırlandı.'
+                : 'Ürünler vitrine eklendi!',
+          ),
           backgroundColor: AppColors.success,
         ),
       );
