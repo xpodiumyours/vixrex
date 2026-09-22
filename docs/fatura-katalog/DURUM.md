@@ -13,9 +13,9 @@ Bu dosya kullanıcıya çalışma dalında ne değiştiğini görünür tutar.
 | Alan | Durum |
 |---|---|
 | Ana hedef | Faturadan güvenilir ve izinli dijital ürün kataloğu |
-| Aktif teknik adım | Ortak kanıt/izin sözleşmesi + Vixrex uyumlu üretici standardı |
+| Aktif teknik adım | InvoiceProductDraft + güçlü/kısmi/zayıf iz karar motoru |
 | Ana davranış | Güçlü iz → hazırla; kısmi iz → sor; zayıf iz → tahmin etme |
-| İlk uçtan uca kanıt | Tek uyumlu üreticide gerçek fatura → dijital ürün → izin → taslak kart |
+| İlk uçtan uca kanıt | Karar omurgası kodda; sırada gerçek OCR satırını bu omurgaya bağlamak var |
 | Üretici havuzu | Ertelendi; çalışan kanıttan sonra |
 | Main değişikliği | Yok |
 | Canlı Supabase değişikliği | Yok |
@@ -79,3 +79,25 @@ Bu branch için repo yapılandırmasına göre:
 - Vercel genel branch deployment kapalıdır; yalnız `main` ve özel `verify-*` branch'leri açıktır.
 
 Bu nedenle bu çalışma dalındaki normal commit PR/CI/APK/Vercel preview tetiklemez. PR, merge, deploy ve canlı migration ayrı kullanıcı onayı gerektirir.
+
+
+### Kontrol noktası — gerçek karar omurgası
+
+**Neyi geliştirdik**  
+Plan ilk kez production kod yüzeyine taşındı. `InvoiceProductDraft` modeli ve `InvoiceDraftDecisionEngine` eklendi.
+
+**Neyi değiştirdik**  
+Yeni taslak model; alan bazlı kaynak/güven bilgisi; ürün/tedarikçi iz gücü; kullanım izni durumu; esnaf onayı ve satış fiyatını birbirinden ayrı taşıyor. Karar motoru üç ana davranışı kodda uyguluyor: güçlü iz → taslak hazırla, kısmi iz → eksik bilgiyi sor, zayıf iz → tahmin etme.
+
+**Ne elde ettik**  
+Faturadan çıkan veri artık doğrudan müşteriye açık Product olmak zorunda değil. Güçlü ürün bile izin/satış fiyatı/esnaf onayı tamamlanmadan yayınlanamaz. Alış fiyatı için ayrı alan bulunduğundan satış fiyatına otomatik dönüşmez.
+
+**Neye dokunmadık**  
+Mevcut OCR parser, OCR ekranı, Product CORE yazma yolu, Supabase şeması ve canlı vitrin davranışı değiştirilmedi. Bu nedenle mevcut çalışan Vixrex etkilenmez.
+
+**Kanıt / test durumu**  
+Dört dar sözleşme testi eklendi: güçlü+izinsiz, zayıf iz, kısmi iz ve tamamen hazır ürün. Bu branch normal push'ta CI çalıştırmadığı için henüz GitHub runner sonucu yok; PR/CI yalnız kullanıcı onayıyla ayrı kapıda çalıştırılacak.
+
+## Sıradaki tek teknik iş — güncel
+
+Mevcut OCR/UBL satırından `InvoiceProductDraft` üretmek için tek yönlü adapter eklemek. İlk bağlantıda hiçbir ürün Product CORE'a yazılmayacak; yalnız güçlü/kısmi/zayıf karar sonucu gösterilecek. Böylece gerçek fatura üzerinde gözle görülen ilk ürün akışı oluşacak.
