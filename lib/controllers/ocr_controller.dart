@@ -99,8 +99,7 @@ class OcrController extends ChangeNotifier {
   void approveAll() {
     if (_result == null) return;
     for (final product in _result!.products) {
-      product.isApproved =
-          !product.isInvoiceSource || product.issues.isEmpty;
+      product.isApproved = !product.isInvoiceSource || product.issues.isEmpty;
     }
     notifyListeners();
   }

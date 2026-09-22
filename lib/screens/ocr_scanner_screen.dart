@@ -371,9 +371,7 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
                             product.isInvoiceSource
                                 ? 'Satış Fiyatı (₺)'
                                 : 'Fiyat (₺)',
-                        labelStyle: const TextStyle(
-                          color: AppColors.mutedText,
-                        ),
+                        labelStyle: const TextStyle(color: AppColors.mutedText),
                       ),
                       style: const TextStyle(color: AppColors.darkText),
                       keyboardType: const TextInputType.numberWithOptions(
@@ -408,9 +406,7 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
                     product.purchaseUnitPrice = _parseDecimal(
                       purchaseController.text,
                     );
-                    product.lineTotal = _parseDecimal(
-                      lineTotalController.text,
-                    );
+                    product.lineTotal = _parseDecimal(lineTotalController.text);
                   }
 
                   widget.ocrController.updateProduct(index, product);
