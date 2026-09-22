@@ -119,19 +119,43 @@ Alış fiyatı müşteri ürün kartının satış fiyatı alanına otomatik kop
 
 ## 6. Tamamlama fazları
 
-### Faz 0 — Referans ve regresyon kilidi
+### Faz 0 — Ölçüm motoru ve başlangıç çizgisi
 
-Amaç: mevcut çalışan Product CORE ve vitrin davranışını bozmadan ölçüm tabanı oluşturmak.
+Amaç: ürünü geliştirmeden önce her sonraki değişikliğin gerçekten daha iyi mi daha kötü mü olduğunu aynı cetvelle ölçebilmek.
 
-Yapılacak:
-- mevcut OCR testlerini envanterle,
-- ürün batch yazma testlerini envanterle,
-- mevcut ürün modelinin alanlarını kontrat testiyle kilitle,
-- gerçek örnek faturanın beklenen 13 satır / 75 adet / 6.034,00 TL sonucunu fixture olarak ekle,
-- barkod/model/beden/renk/miktar/fiyat beklenenlerini ayrı doğrula.
+Sıra:
+1. Önce bağımsız ölçüm motoru kurulur.
+2. Referans faturanın doğru cevabı motora verilir.
+3. Motorun kendisi doğru ve bozuk örneklerle sınanır.
+4. Sonra mevcut Vixrex çıktısı motora bağlanır.
+5. Faz 1'e geçmeden mevcut Vixrex'in başlangıç raporu üretilir.
+
+Ölçüm motoru şunları ayrı ayrı gösterecek:
+- kaç ürün satırı eşleşti,
+- kaç ürün eksik/fazla,
+- model doğruluğu,
+- barkod doğruluğu,
+- ürün adı doğruluğu,
+- renk/varyant doğruluğu,
+- beden doğruluğu,
+- adet doğruluğu,
+- birim alış fiyatı doğruluğu,
+- satır toplamı doğruluğu,
+- toplam adet farkı,
+- toplam tutar farkı,
+- genel alan doğruluğu.
+
+Referans fatura:
+- 13 ürün satırı,
+- 75 toplam adet,
+- 6.034,00 TL toplam,
+- her satırın model/barkod/ad/renk/beden/adet/fiyat/toplam değeri sabit gerçek kabul edilir.
 
 Kabul:
-- hiçbir production kod davranışı değişmeden yeni fixture testleri mevcut açığı gösterecek.
+- kusursuz örnek motorda %100 üretmeli,
+- eksik barkod, yanlış adet, eksik ürün ve fazla ürün birbirinden ayrı görünmeli,
+- mevcut Vixrex aynı motordan geçirilip başlangıç raporu çıkarılmalı,
+- production OCR, UI, DB ve Product CORE davranışı bu fazda değiştirilmemeli.
 
 ### Faz 1 — Fatura satırı veri modeli
 
