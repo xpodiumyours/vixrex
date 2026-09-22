@@ -81,9 +81,7 @@ class OcrService {
     }
   }
 
-  Future<Result<OcrCatalogResult>> _analyzeInvoice(
-    Uint8List imageBytes,
-  ) async {
+  Future<Result<OcrCatalogResult>> _analyzeInvoice(Uint8List imageBytes) async {
     // Yerel ve ücretsiz yol: önce görüntüyü okunaklı hale getir, ardından
     // cihazdaki ML Kit ile kelime konumlarını çıkar.
     final preprocessed = await _preprocessor.preprocess(imageBytes);
@@ -99,8 +97,9 @@ class OcrService {
         best = clockwiseAttempt;
       }
 
-      final counterClockwise =
-          await _preprocessor.rotateCounterClockwise90(preprocessed);
+      final counterClockwise = await _preprocessor.rotateCounterClockwise90(
+        preprocessed,
+      );
       final counterAttempt = await _invoiceAttempt(counterClockwise);
       if (_invoiceAttemptScore(counterAttempt) > _invoiceAttemptScore(best)) {
         best = counterAttempt;
@@ -138,11 +137,12 @@ class OcrService {
   bool _isStrongInvoiceAttempt(_InvoiceAttempt attempt) {
     if (attempt.products.isEmpty) return false;
     if (attempt.products.length >= 3 && attempt.confidence >= 0.72) return true;
-    return attempt.products.length >= 1 && attempt.confidence >= 0.88;
+    return attempt.products.isNotEmpty && attempt.confidence >= 0.88;
   }
 
   double _invoiceAttemptScore(_InvoiceAttempt attempt) {
-    final validRows = attempt.products.where((product) => product.issues.isEmpty).length;
+    final validRows =
+        attempt.products.where((product) => product.issues.isEmpty).length;
     return attempt.products.length * 10 + validRows * 3 + attempt.confidence;
   }
 

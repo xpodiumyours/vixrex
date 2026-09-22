@@ -8,45 +8,48 @@ import 'package:vixrex/services/ocr/invoice_row_parser.dart';
 void main() {
   const parser = InvoiceRowParser();
 
-  test('fatura satırında görülen alanları ayırır ve alış fiyatını satış fiyatı yapmaz', () {
-    final result = OcrTextResult(
-      rawText:
-          'ABC100 ORNEK PAMUKLU URUN 2900000000018 750 SIYAH L '
-          '2 ad 137,00 TL 274,00 TL',
-      lines: const [],
-      tokens: [
-        token('ABC100', 10, 0),
-        token('ORNEK', 90, 1),
-        token('PAMUKLU', 150, 2),
-        token('URUN', 230, 3),
-        token('2900000000018', 430, 4),
-        token('750', 560, 5),
-        token('SIYAH', 600, 6),
-        token('L', 680, 7),
-        token('2', 730, 8),
-        token('ad', 755, 9),
-        token('137,00', 810, 10),
-        token('TL', 890, 11),
-        token('274,00', 930, 12),
-        token('TL', 1000, 13),
-      ],
-    );
+  test(
+    'fatura satırında görülen alanları ayırır ve alış fiyatını satış fiyatı yapmaz',
+    () {
+      final result = OcrTextResult(
+        rawText:
+            'ABC100 ORNEK PAMUKLU URUN 2900000000018 750 SIYAH L '
+            '2 ad 137,00 TL 274,00 TL',
+        lines: const [],
+        tokens: [
+          token('ABC100', 10, 0),
+          token('ORNEK', 90, 1),
+          token('PAMUKLU', 150, 2),
+          token('URUN', 230, 3),
+          token('2900000000018', 430, 4),
+          token('750', 560, 5),
+          token('SIYAH', 600, 6),
+          token('L', 680, 7),
+          token('2', 730, 8),
+          token('ad', 755, 9),
+          token('137,00', 810, 10),
+          token('TL', 890, 11),
+          token('274,00', 930, 12),
+          token('TL', 1000, 13),
+        ],
+      );
 
-    final products = parser.parse(result);
+      final products = parser.parse(result);
 
-    expect(products, hasLength(1));
-    final product = products.single;
-    expect(product.sku, 'ABC100');
-    expect(product.barcode, '2900000000018');
-    expect(product.name, 'ORNEK PAMUKLU URUN');
-    expect(product.variant, 'SIYAH');
-    expect(product.size, 'L');
-    expect(product.documentQuantity, 2);
-    expect(product.purchaseUnitPrice, 137);
-    expect(product.lineTotal, 274);
-    expect(product.price, isNull);
-    expect(product.issues, isEmpty);
-  });
+      expect(products, hasLength(1));
+      final product = products.single;
+      expect(product.sku, 'ABC100');
+      expect(product.barcode, '2900000000018');
+      expect(product.name, 'ORNEK PAMUKLU URUN');
+      expect(product.variant, 'SIYAH');
+      expect(product.size, 'L');
+      expect(product.documentQuantity, 2);
+      expect(product.purchaseUnitPrice, 137);
+      expect(product.lineTotal, 274);
+      expect(product.price, isNull);
+      expect(product.issues, isEmpty);
+    },
+  );
 
   test('OCR model ve adı tek parçada birleştirse de ayırır', () {
     final result = OcrTextResult(
@@ -133,12 +136,7 @@ void main() {
   });
 }
 
-OcrToken token(
-  String text,
-  double x,
-  int element, {
-  int line = 0,
-}) {
+OcrToken token(String text, double x, int element, {int line = 0}) {
   return OcrToken(
     text: text,
     boundingBox: Rect.fromLTWH(x, line * 30.0, 60, 18),

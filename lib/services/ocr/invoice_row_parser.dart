@@ -28,9 +28,7 @@ class InvoiceRowParser {
     final recognitionProducts = _parseRows(
       _groupByRecognitionLine(result.tokens),
     );
-    final visualProducts = _parseRows(
-      _groupByVisualRow(result.tokens),
-    );
+    final visualProducts = _parseRows(_groupByVisualRow(result.tokens));
 
     final selected =
         visualProducts.length > recognitionProducts.length
@@ -69,8 +67,7 @@ class InvoiceRowParser {
             .toList()
           ..sort();
 
-    final medianHeight =
-        heights.isEmpty ? 12.0 : heights[heights.length ~/ 2];
+    final medianHeight = heights.isEmpty ? 12.0 : heights[heights.length ~/ 2];
     final tolerance = math.max(8.0, medianHeight * 0.85);
 
     final rows = <List<OcrToken>>[];
@@ -131,8 +128,7 @@ class InvoiceRowParser {
             : <OcrToken>[];
 
     final modelIndex = _findModelIndex(left);
-    var model =
-        modelIndex >= 0 ? _cleanText(left[modelIndex].text, 80) : null;
+    var model = modelIndex >= 0 ? _cleanText(left[modelIndex].text, 80) : null;
 
     final nameParts = <String>[];
 
@@ -194,9 +190,7 @@ class InvoiceRowParser {
             ? beforeDetail.length
             : variantEnd;
 
-    final variant = _joinVariantTokens(
-      beforeDetail.sublist(0, safeVariantEnd),
-    );
+    final variant = _joinVariantTokens(beforeDetail.sublist(0, safeVariantEnd));
 
     final issues = _validationIssues(
       barcode: barcode,
@@ -297,8 +291,7 @@ class InvoiceRowParser {
         if (value != null) return _IndexedInt(i, value);
       }
 
-      if (RegExp(r'^\d{1,6}$').hasMatch(current) &&
-          i + 1 < tokens.length) {
+      if (RegExp(r'^\d{1,6}$').hasMatch(current) && i + 1 < tokens.length) {
         final next = _normalizeCompact(tokens[i + 1].text);
         if (RegExp(r'^(?:AD|ADET|PCS)$').hasMatch(next)) {
           final value = int.tryParse(current);
@@ -374,10 +367,11 @@ class InvoiceRowParser {
     if (match == null) return null;
 
     final model = _cleanText(match.group(1) ?? '', 80);
-    final name = (match.group(2) ?? '')
-        .replaceAll(RegExp(r'[_|:;]+'), ' ')
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim();
+    final name =
+        (match.group(2) ?? '')
+            .replaceAll(RegExp(r'[_|:;]+'), ' ')
+            .replaceAll(RegExp(r'\s+'), ' ')
+            .trim();
 
     if (model == null || name.length < 2) return null;
     return _MergedModelName(model, name);
@@ -404,19 +398,14 @@ class InvoiceRowParser {
     final clean = values.where((value) => value.trim().isNotEmpty).toList();
     if (clean.isEmpty) return null;
 
-    return clean
-        .join(' ')
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim();
+    return clean.join(' ').replaceAll(RegExp(r'\s+'), ' ').trim();
   }
 
   String? _cleanText(String value, int maxLength) {
     final clean = value.trim().replaceAll(RegExp(r'\s+'), ' ');
     if (clean.isEmpty) return null;
 
-    return clean.length <= maxLength
-        ? clean
-        : clean.substring(0, maxLength);
+    return clean.length <= maxLength ? clean : clean.substring(0, maxLength);
   }
 
   String? _barcodeDigits(String value) {
@@ -450,9 +439,7 @@ class InvoiceRowParser {
 
     if (!RegExp(r'\d').hasMatch(upper)) return false;
 
-    return upper.contains(',') ||
-        upper.contains('TL') ||
-        upper.contains('₺');
+    return upper.contains(',') || upper.contains('TL') || upper.contains('₺');
   }
 
   double? _parseMoney(String value) {
@@ -480,8 +467,7 @@ class InvoiceRowParser {
   bool _isSize(String value) {
     final normalized = _normalizeCompact(value);
 
-    if (RegExp(r'^(XS|S|M|L|XL|XXL|XXXL|XXXXL)$')
-        .hasMatch(normalized)) {
+    if (RegExp(r'^(XS|S|M|L|XL|XXL|XXXL|XXXXL)$').hasMatch(normalized)) {
       return true;
     }
 
@@ -551,10 +537,7 @@ class InvoiceRowParser {
   double _rowCenterY(List<OcrToken> row) {
     if (row.isEmpty) return 0;
 
-    return row.fold<double>(
-          0,
-          (sum, token) => sum + token.centerY,
-        ) /
+    return row.fold<double>(0, (sum, token) => sum + token.centerY) /
         row.length;
   }
 }
