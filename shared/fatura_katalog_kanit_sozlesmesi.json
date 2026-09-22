@@ -1,0 +1,124 @@
+{
+  "version": 1,
+  "goal": "Turk kucuk esnafinin faturadan guvenilir ve izinli dijital urun kataloguna gecisini otomatiklestirmek",
+  "core_rule": "strong_trace_auto_prepare_partial_trace_ask_weak_trace_no_guess",
+  "evidence_strength": [
+    "strong",
+    "partial",
+    "weak"
+  ],
+  "automation_decisions": [
+    "auto_prepare_draft",
+    "ask_missing",
+    "stop_no_guess",
+    "ready_for_publish"
+  ],
+  "rights_status": [
+    "verified_supplier_permission",
+    "verified_feed_terms",
+    "merchant_owned_media",
+    "merchant_attestation",
+    "unknown",
+    "denied"
+  ],
+  "source_types": [
+    "invoice",
+    "ubl_tr_xml",
+    "supplier_xml",
+    "supplier_api",
+    "official_product_page",
+    "official_catalog",
+    "verified_gtin_registry",
+    "merchant_upload",
+    "web_discovery",
+    "ai_derived"
+  ],
+  "identity_evidence": {
+    "supplier": [
+      "legal_name",
+      "tax_or_trade_identifier",
+      "official_domain",
+      "verified_brand_owner",
+      "gtin_company_owner",
+      "official_supplier_feed"
+    ],
+    "product": [
+      "gtin_barcode",
+      "manufacturer_sku",
+      "supplier_sku",
+      "model_code",
+      "exact_official_product_match",
+      "merchant_or_supplier_confirmation"
+    ]
+  },
+  "field_provenance_required": [
+    "value",
+    "source_type",
+    "source_reference",
+    "evidence_strength",
+    "verified_at"
+  ],
+  "invoice_product_draft_required_concepts": [
+    "raw_source_line",
+    "supplier_identity",
+    "raw_name",
+    "normalized_name",
+    "gtin_barcode",
+    "manufacturer_sku",
+    "supplier_sku",
+    "model_code",
+    "brand",
+    "variant",
+    "size",
+    "quantity",
+    "purchase_unit_price",
+    "purchase_line_total",
+    "currency",
+    "field_provenance",
+    "canonical_product_match",
+    "image_candidates",
+    "rights_status",
+    "automation_decision",
+    "merchant_approval",
+    "sale_price",
+    "visibility"
+  ],
+  "rules": [
+    {
+      "id": "no_guess_on_weak_product_identity",
+      "when": "product_identity_strength=weak",
+      "decision": "stop_no_guess"
+    },
+    {
+      "id": "ask_on_partial_identity",
+      "when": "supplier_or_product_identity_strength=partial",
+      "decision": "ask_missing"
+    },
+    {
+      "id": "strong_identity_can_prepare_draft",
+      "when": "supplier_identity_strength=strong AND product_identity_strength=strong",
+      "decision": "auto_prepare_draft"
+    },
+    {
+      "id": "external_media_requires_rights_basis",
+      "when": "external_media_selected AND rights_status IN [unknown,denied]",
+      "decision": "ask_missing_or_block_media"
+    },
+    {
+      "id": "purchase_price_is_not_sale_price",
+      "when": "invoice_purchase_price_present",
+      "decision": "keep_sale_price_separate"
+    },
+    {
+      "id": "merchant_approval_required_for_publish",
+      "when": "merchant_approval!=approved",
+      "decision": "keep_not_public"
+    }
+  ],
+  "first_proof": {
+    "strategy": "one_compatible_manufacturer_end_to_end_before_pool",
+    "candidate": "Tutku / Seher Mensucat",
+    "hardcoded_manufacturer_parser_allowed": false,
+    "manufacturer_pool_deferred": true
+  }
+}
