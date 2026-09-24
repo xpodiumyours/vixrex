@@ -72,6 +72,45 @@ doğrudan Casper'a soruldu, cevaplar tablo/hash/satır numarasıyla şişirildi,
 hatayı kabul eden mesajın sonuna yine soru eklendi. Casper: "artık seninle
 çalışmaktan bıkmaya başladım."
 
+### CERRAHİ İŞLEM DÜZENİ — her değişiklikte, istisnasız (2026-09-24, Casper)
+
+Casper: "her işlem için böyle çalışacağız." Aşağıdaki 6 adım bir öneri değil,
+bu depodaki her kod değişikliğinin zorunlu sırası. Adım atlanamaz.
+
+**1. Önce tespit — dokunmadan önce.** Nereye, neden, ne kadar dokunacağını
+   yaz: dosya, satır, ne değişecek. Yanına "dokunmayacağım" listesini de yaz.
+   Onay al, sonra başla. Kapsam onaydan sonra büyütülemez.
+
+**2. Sadece onaylanan satırlar.** Yol üstünde başka bir hata görsen bile
+   dokunma; ayrıca söyle. Hiçbir şey "geri getirilmez", hiçbir bölüm
+   eklenmez/kaldırılmaz.
+
+**3. Yayılma alanını ölç.** Dokunduğun dosya/bileşen başka nerelerde
+   kullanılıyor — hepsini bul ve yaz. "Başka yeri kırmadım" cümlesi ancak bu
+   ölçümle kurulabilir.
+
+**4. Kapıları koş.** Testler, tip kontrolü, lint, üretim derlemesi. Gerçek
+   çıktıyı yaz (kaç test geçti), "yeşil" deyip geçme.
+
+**5. GÖRSEL KANIT — jargonsuz.** Görünen her değişiklikte öncesi/sonrası
+   resmini Casper'a gönder. Kod okuyarak "böyle görünecek" demek yasak.
+   Gerçek panele girilemiyorsa (giriş gerekiyorsa) bunu açıkça söyle ve
+   sitenin kendi derlenmiş stil dosyasıyla izole kopyasını çizip göster —
+   ama "gerçek ekran değil" diye belirt.
+
+**6. Dal / ana dal / canlı ayrımı + geri alma.** Değişikliğin şu an nerede
+   olduğunu üç kelimeyle söyle, test adresini yaz, geri alma komutunu ver.
+
+Anlatım kuralı: teknik terim kullanma. Kullanmak zorundaysan yanına tek
+cümlelik Türkçe karşılığını yaz. Yarım anlatma — Casper'ın projeye hâkimiyeti
+senin anlatımına bağlı.
+
+Neden: 2026-09-24'te panelin Hakkımızda/SSS/Kampanya/Pazaryeri/Galeri
+kutuları "beyaz zemin üstünde beyaz yazı" olduğu için görünmez hale gelmişti;
+sebebi, 1 Eylül'de bu kutular açılır pencereden panele gömülürken zemin
+renginin beyaz bırakılmasıydı. Casper'ın sorusu şuydu: "başka bir yeri
+kırmadığına nasıl emin olacaksın?" Cevabı üreten şey bu 6 adım oldu.
+
 ### Token ekonomisi (2026-09-16, Casper)
 
 Claude'un tokenı en kıt kaynak. Bitince koordinasyon, doğrulama ve merge
