@@ -1,0 +1,24 @@
+import { chromium } from '@playwright/test';
+const dir = 'C:/Users/Casper/AppData/Local/Temp/claude/C--Projects-vixrex/4e55bd78-e44c-4f52-a8d6-e11becd3a0ce/scratchpad';
+const HOST = 'https://vixrex-public-ndt76d20q-xpodiumyours-projects.vercel.app';
+const CODE = process.argv[2];
+const b = await chromium.launch();
+const ctx = await b.newContext({ viewport:{width:430,height:950}, extraHTTPHeaders:{
+  'x-vercel-protection-bypass':'i1QOkjniMfGRAmvqHKOfZG9L4tQ7VCLy','x-vercel-set-bypass-cookie':'true' }});
+const p = await ctx.newPage();
+await p.goto(HOST+'/api/owner-session?slug=deneme-kart-testi&ocode='+CODE,{waitUntil:'domcontentloaded',timeout:60000});
+await p.waitForTimeout(3000);
+const k = p.getByRole('button',{name:/Tümünü kabul et/i});
+if (await k.first().isVisible().catch(()=>false)) await k.first().click();
+await p.waitForTimeout(1000);
+const hizli = p.getByText(/Hızlı incele/).first();
+await hizli.scrollIntoViewIfNeeded({timeout:20000});
+await hizli.click({ timeout: 15000 });
+await p.waitForTimeout(2500);
+await p.screenshot({path: dir+'/kart-hizli-incele.png'});
+const t = await p.locator('body').innerText().catch(()=>'');
+const i = t.indexOf('Elit Erkek');
+console.log('--- HIZLI INCELE ---');
+console.log(t.slice(Math.max(0,i-120), i+600).replace(/\n{2,}/g,'\n'));
+console.log('ARAMA -> Beden:',/[Bb]eden/.test(t),'| Siyah:',/Siyah/.test(t),'| pamuk:',/pamuk/.test(t),'| Erkek:',/Erkek/.test(t));
+await b.close();

@@ -22,6 +22,11 @@ export interface ProductVariantOptionGroup {
   values: string[];
 }
 
+export function productPhotoCountBadge(imageCount: number): string | null {
+  if (imageCount <= 1) return null;
+  return `1/${imageCount}`;
+}
+
 function formatAttributeValue(value: ProductAttributeValue["value"], unit?: string) {
   const formatted = Array.isArray(value)
     ? value.join(", ")

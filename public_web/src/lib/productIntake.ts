@@ -4,7 +4,7 @@ import {
   MIN_PRODUCT_IMAGES,
   normalizeProductImageUrls,
   validateExternalProductImageUrls,
-  validateProductImageUrls,
+  validateProductImageUrlsAllowingFewerImages,
 } from "@/lib/productImagePolicy";
 import {
   normalizeProductMetadata,
@@ -207,19 +207,24 @@ export async function urunGirdisiniHazirla(args: {
   const toplu = args.gorselPolitikasi === "toplu";
   const imageValidation = toplu
     ? validateExternalProductImageUrls(govde.imageUrls)
-    : validateProductImageUrls(govde.imageUrls);
+    : validateProductImageUrlsAllowingFewerImages(govde.imageUrls);
 
   let gorselEksigi: string | null = null;
   let imageUrls = imageValidation.imageUrls;
 
+  const fotografSayisi = normalizeProductImageUrls(govde.imageUrls).length;
+
   if (!imageValidation.ok) {
-    const sayi = normalizeProductImageUrls(govde.imageUrls).length;
-    const yalnizcaAzFotograf = toplu && sayi < MIN_PRODUCT_IMAGES && sayi <= MAX_PRODUCT_IMAGES;
+    const yalnizcaAzFotograf =
+      toplu && fotografSayisi < MIN_PRODUCT_IMAGES && fotografSayisi <= MAX_PRODUCT_IMAGES;
     if (!yalnizcaAzFotograf) {
       return { durum: "reddedildi", sebep: imageValidation.error ?? "Ürün fotoğrafları geçersiz." };
     }
-    gorselEksigi = `Ürün için en az ${MIN_PRODUCT_IMAGES} fotoğraf gerekiyor; şu an ${sayi} tane var.`;
     imageUrls = normalizeProductImageUrls(govde.imageUrls);
+  }
+
+  if (fotografSayisi < MIN_PRODUCT_IMAGES) {
+    gorselEksigi = `Ürün için en az ${MIN_PRODUCT_IMAGES} fotoğraf gerekiyor; şu an ${fotografSayisi} tane var.`;
   }
 
   const categoryId = cleanString(govde.categoryId) || "";

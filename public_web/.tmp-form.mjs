@@ -1,0 +1,16 @@
+import { chromium } from '@playwright/test';
+const dir = 'C:/Users/Casper/AppData/Local/Temp/claude/C--Projects-vixrex/4e55bd78-e44c-4f52-a8d6-e11becd3a0ce/scratchpad';
+const b = await chromium.launch();
+const p = await b.newPage({ viewport: { width: 430, height: 950 } });
+p.on('response', r => { const u = r.url(); if (u.includes('/api/')) console.log('ISTEK:', r.status(), u.replace('http://localhost:3000','')); });
+await p.goto('http://localhost:3000/api/owner-session?slug=deneme-kart-testi&ocode=e02e30807d0cc1a8a8cf04e1fbac77ec', { waitUntil: 'domcontentloaded', timeout: 60000 });
+await p.waitForTimeout(3000);
+console.log('OTURUM SONRASI ADRES:', p.url());
+const k = p.getByRole('button', { name: /Tümünü kabul et/i });
+if (await k.first().isVisible().catch(()=>false)) await k.first().click();
+await p.waitForTimeout(1500);
+await p.screenshot({ path: dir + '/sahip-paneli.png' });
+const t = await p.locator('body').innerText().catch(()=>'');
+console.log('--- EKRAN (ilk 600) ---');
+console.log(t.slice(0,600));
+await b.close();

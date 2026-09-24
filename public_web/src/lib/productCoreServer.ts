@@ -216,6 +216,7 @@ export async function updateRichCoreProduct(args: {
   barcode?: string | null;
   metadata: ProductMetadata;
   variants: ProductVariant[];
+  isVisible?: boolean;
 }) {
   const { data, error } = await args.admin.rpc("update_store_product_v2", {
     p_product_id: args.productId,
@@ -226,6 +227,7 @@ export async function updateRichCoreProduct(args: {
     p_price_amount: args.priceAmount ?? null,
     p_image_urls: args.imageUrls,
     p_category_id: args.categoryId || null,
+    p_is_visible: args.isVisible ?? null,
     p_stock_quantity: args.stockQuantity ?? null,
     p_stock_status: args.stockStatus,
     p_old_price_amount: args.oldPriceAmount ?? null,
