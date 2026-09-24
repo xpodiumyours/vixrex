@@ -31,7 +31,7 @@ interface ProductDetailExperienceProps {
   storeAddress?: string | null;
 }
 
-function formatVariantPrice(amount: number, currency?: string) {
+export function formatVariantPrice(amount: number, currency?: string) {
   return new Intl.NumberFormat("tr-TR", {
     style: "currency",
     currency: currency || "TRY",
@@ -45,7 +45,7 @@ function mapsSearchUrl(value: string | null | undefined) {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(clean)}`;
 }
 
-function stockTone(status?: string | null) {
+export function stockTone(status?: string | null) {
   const value = String(status || "").toLocaleLowerCase("tr-TR");
   if (value.includes("tükendi")) return "text-red-300";
   if (value.includes("son") || value.includes("az") || value.includes("sınırl")) {
@@ -54,7 +54,7 @@ function stockTone(status?: string | null) {
   return "text-emerald-300";
 }
 
-function whatsappWithVariantSelection(
+export function whatsappWithVariantSelection(
   url: string | null,
   selectedVariantText: string,
 ): string | null {
