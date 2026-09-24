@@ -79,60 +79,42 @@ export async function POST(request: NextRequest) {
   const owned = await ownerContext(slug);
   if (!owned) return NextResponse.json({ hata: "Oturumun geçersiz veya süresi dolmuş." }, { status: 401 });
 
-  const imageValidation = validateProductImageUrls(govde.imageUrls);
-  if (!imageValidation.ok) {
-    return NextResponse.json({ hata: imageValidation.error ?? "Ürün fotoğrafları geçersiz." }, { status: 422 });
+  const hazirlik = await urunGirdisiniHazirla({
+    admin: owned.admin,
+    storeId: owned.store.id,
+    storeName: owned.store.name,
+    govde,
+    gorselPolitikasi: "sahip",
+  });
+  if (hazirlik.durum === "reddedildi") {
+    return NextResponse.json({ hata: hazirlik.sebep }, { status: 422 });
+  }
+  if (hazirlik.durum === "taslak") {
+    return NextResponse.json({ hata: hazirlik.eksik }, { status: 422 });
   }
 
-  const categoryId = cleanString(govde.categoryId) || "";
-  const templateKey = await categoryTemplateKey(owned.admin, owned.store.id, categoryId);
-  if (!templateKey) return NextResponse.json({ hata: "Kategori bu vitrine ait değil veya ürün tipi geçersiz." }, { status: 422 });
-  const template = productTemplateByKey(templateKey);
-  if (!template) return NextResponse.json({ hata: "Ürün tipi geçersiz." }, { status: 422 });
-  const isService = template.itemKind === "service";
-  const metadata = metadataForTemplate(govde.metadata, templateKey);
-  if (!metadata) return NextResponse.json({ hata: "Ürün detayları kategori tipiyle uyuşmuyor." }, { status: 422 });
-  const variants = variantsForTemplate(govde.variants, templateKey, imageValidation.imageUrls);
-  const barcode = isService ? null : cleanString(govde.barcode);
-  const brand = isService
-    ? null
-    : markaVeyaMagazaAdi(govde.brand, templateKey, owned.store.name);
-  const variantError = validateVariantSet(variants, barcode);
-  if (variantError) return NextResponse.json({ hata: variantError }, { status: 422 });
-
-  const priceText = typeof govde.priceText === "string" ? govde.priceText.trim() : "";
-  const stockQuantity = isService ? null : cleanNonNegativeInt(govde.stockQuantity);
-  const eksikMesaji = eksikZorunluAlanMesaji(
-    eksikZorunluAlanlar({
-      templateKey,
-      brand,
-      metadata,
-      variants,
-    }),
-  );
-  if (eksikMesaji) return NextResponse.json({ hata: eksikMesaji }, { status: 422 });
   try {
     const result = await createRichCoreProduct({
       admin: owned.admin,
       storeId: owned.store.id,
       editToken: owned.store.edit_token,
-      name,
-      description: typeof govde.description === "string" ? govde.description.trim() : "",
-      priceText,
-      priceAmount: cleanAmount(govde.priceAmount) ?? parseProductPriceNumber(priceText),
-      imageUrls: imageValidation.imageUrls,
-      categoryId,
+      name: hazirlik.girdi.name,
+      description: hazirlik.girdi.description,
+      priceText: hazirlik.girdi.priceText,
+      priceAmount: hazirlik.girdi.priceAmount,
+      imageUrls: hazirlik.girdi.imageUrls,
+      categoryId: hazirlik.girdi.categoryId,
       sourceType: "manual",
       externalProductId: "",
       oldPriceAmount: cleanAmount(govde.oldPriceAmount),
       badgeTag: cleanString(govde.badgeTag),
       fulfillmentRegion: cleanString(govde.fulfillmentRegion),
-      brand,
-      barcode,
-      stockQuantity,
-      stockStatus: isService ? null : cleanString(govde.stockStatus) || "Mevcut",
-      metadata,
-      variants,
+      brand: hazirlik.girdi.brand,
+      barcode: hazirlik.girdi.barcode,
+      stockQuantity: hazirlik.girdi.stockQuantity,
+      stockStatus: hazirlik.girdi.stockStatus,
+      metadata: hazirlik.girdi.metadata,
+      variants: hazirlik.girdi.variants,
     });
     return NextResponse.json({ tamam: true, id: result.id, slug: result.slug });
   } catch (err) {

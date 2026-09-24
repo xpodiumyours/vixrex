@@ -13,6 +13,7 @@ import { urunGirdisiniHazirla } from "@/lib/productIntake";
  */
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 300;
 
 interface ProductBatchItem {
   name?: string;
@@ -88,6 +89,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ hata: "Vitrin bulunamadı." }, { status: 404 });
   }
 
+  const sablonOnbellegi = new Map<string, string | null>();
   const sonuclar: SatirSonucu[] = [];
   let yayinda = 0;
   let taslak = 0;
@@ -115,6 +117,7 @@ export async function POST(request: NextRequest) {
       storeName: store.name,
       govde: satirGovdesi,
       gorselPolitikasi: "toplu",
+      sablonOnbellegi,
     });
 
     if (hazirlik.durum === "reddedildi") {

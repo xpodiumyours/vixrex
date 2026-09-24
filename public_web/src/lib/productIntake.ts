@@ -197,6 +197,7 @@ export async function urunGirdisiniHazirla(args: {
   storeName: unknown;
   govde: Record<string, unknown>;
   gorselPolitikasi?: "sahip" | "toplu";
+  sablonOnbellegi?: Map<string, string | null>;
 }): Promise<UrunGirdiSonucu> {
   const { admin, storeId, storeName, govde } = args;
 
@@ -222,7 +223,11 @@ export async function urunGirdisiniHazirla(args: {
   }
 
   const categoryId = cleanString(govde.categoryId) || "";
-  const templateKey = await categoryTemplateKey(admin, storeId, categoryId);
+  const onbellek = args.sablonOnbellegi;
+  const templateKey = onbellek?.has(categoryId)
+    ? onbellek.get(categoryId) ?? null
+    : await categoryTemplateKey(admin, storeId, categoryId);
+  if (onbellek && !onbellek.has(categoryId)) onbellek.set(categoryId, templateKey);
   if (!templateKey) {
     return { durum: "reddedildi", sebep: "Kategori bu vitrine ait değil veya ürün tipi geçersiz." };
   }
