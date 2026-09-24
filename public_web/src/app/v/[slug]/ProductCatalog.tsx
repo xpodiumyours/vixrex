@@ -19,6 +19,7 @@ import {
   buildProductCardFacts,
   eskiFiyatYazisi,
   kartRozeti,
+  productPhotoCountBadge,
   productVariantLabel,
 } from "@/lib/productCardPresentation";
 import { normalizeProductMetadata } from "@/lib/productRichData";
@@ -248,6 +249,7 @@ export default function ProductCatalog({
           const productUrl = `/v/${storeSlug}/urun/${productSlug}`;
           const image = productImageOnly(product);
           const quickImages = productImagesOnly(product);
+          const photoCountBadge = productPhotoCountBadge(quickImages.length);
           const category = String(product.category || "").trim();
           const metadata = normalizeProductMetadata(product.metadata);
           const isService = metadata.itemKind === "service";
@@ -307,6 +309,11 @@ export default function ProductCatalog({
                   ) : category && category.toLocaleLowerCase("tr-TR") !== "tümü" ? (
                     <span className="absolute left-2.5 top-2.5 z-10 max-w-[70%] truncate rounded-lg border border-blue-500/25 bg-slate-950/80 px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-wider text-blue-300 shadow-sm backdrop-blur-md">
                       {category}
+                    </span>
+                  ) : null}
+                  {photoCountBadge ? (
+                    <span className="absolute bottom-2.5 right-2.5 z-10 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm">
+                      {photoCountBadge}
                     </span>
                   ) : null}
                 </div>

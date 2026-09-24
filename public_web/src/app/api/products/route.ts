@@ -7,8 +7,9 @@ import {
   updateRichCoreProduct,
 } from "@/lib/productCoreServer";
 import {
+  MIN_PRODUCT_IMAGES,
   normalizeProductImageUrls,
-  validateProductImageUrls,
+  validateProductImageUrlsAllowingFewerImages,
 } from "@/lib/productImagePolicy";
 import { productTemplateByKey } from "@/lib/productAttributeSchema";
 import { parseProductPriceNumber } from "@/lib/productPrice";
@@ -79,10 +80,11 @@ export async function POST(request: NextRequest) {
   const owned = await ownerContext(slug);
   if (!owned) return NextResponse.json({ hata: "Oturumun geçersiz veya süresi dolmuş." }, { status: 401 });
 
-  const imageValidation = validateProductImageUrls(govde.imageUrls);
+  const imageValidation = validateProductImageUrlsAllowingFewerImages(govde.imageUrls);
   if (!imageValidation.ok) {
     return NextResponse.json({ hata: imageValidation.error ?? "Ürün fotoğrafları geçersiz." }, { status: 422 });
   }
+  const eksikFotografSayisi = Math.max(0, MIN_PRODUCT_IMAGES - imageValidation.imageUrls.length);
 
   const categoryId = cleanString(govde.categoryId) || "";
   const templateKey = await categoryTemplateKey(owned.admin, owned.store.id, categoryId);
@@ -133,8 +135,15 @@ export async function POST(request: NextRequest) {
       stockStatus: isService ? null : cleanString(govde.stockStatus) || "Mevcut",
       metadata,
       variants,
+      isVisible: eksikFotografSayisi === 0,
     });
-    return NextResponse.json({ tamam: true, id: result.id, slug: result.slug });
+    return NextResponse.json({
+      tamam: true,
+      id: result.id,
+      slug: result.slug,
+      taslak: eksikFotografSayisi > 0,
+      eksikFotografSayisi,
+    });
   } catch (err) {
     console.error("[products] create failed:", err);
     return NextResponse.json({ hata: "Ürün oluşturulamadı." }, { status: 500 });
@@ -166,13 +175,16 @@ export async function PATCH(request: NextRequest) {
     : currentImageUrls;
   const imageListChanged = !sameStringList(requestedImageUrls, currentImageUrls);
   let imageUrls = currentImageUrls;
+  let gorunurlukYenidenHesaplanacak = false;
   if (imageListChanged) {
-    const imageValidation = validateProductImageUrls(govde.imageUrls);
+    const imageValidation = validateProductImageUrlsAllowingFewerImages(govde.imageUrls);
     if (!imageValidation.ok) {
       return NextResponse.json({ hata: imageValidation.error ?? "Ürün fotoğrafları geçersiz." }, { status: 422 });
     }
     imageUrls = imageValidation.imageUrls;
+    gorunurlukYenidenHesaplanacak = true;
   }
+  const eksikFotografSayisi = Math.max(0, MIN_PRODUCT_IMAGES - imageUrls.length);
 
   const categoryId = hasOwn(govde, "categoryId")
     ? cleanString(govde.categoryId) || ""
@@ -261,8 +273,13 @@ export async function PATCH(request: NextRequest) {
       barcode,
       metadata,
       variants,
+      isVisible: gorunurlukYenidenHesaplanacak ? eksikFotografSayisi === 0 : undefined,
     });
-    return NextResponse.json({ tamam: true });
+    return NextResponse.json({
+      tamam: true,
+      taslak: eksikFotografSayisi > 0,
+      eksikFotografSayisi,
+    });
   } catch (err) {
     console.error("[products] update failed:", err);
     return NextResponse.json({ hata: "Ürün güncellenemedi." }, { status: 500 });
