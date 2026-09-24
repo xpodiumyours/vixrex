@@ -22,6 +22,11 @@ export interface ProductVariantOptionGroup {
   values: string[];
 }
 
+export function productPhotoCountBadge(imageCount: number): string | null {
+  if (imageCount <= 1) return null;
+  return `1/${imageCount}`;
+}
+
 function formatAttributeValue(value: ProductAttributeValue["value"], unit?: string) {
   const formatted = Array.isArray(value)
     ? value.join(", ")
@@ -303,6 +308,7 @@ export interface ProductCardFacts {
 export function buildProductCardFacts(args: {
   brand?: string | null;
   metadata?: unknown;
+  variants?: unknown;
   limit?: number;
 }): ProductCardFacts {
   const metadata = normalizeProductMetadata(args.metadata);
@@ -349,6 +355,15 @@ export function buildProductCardFacts(args: {
         existingKeys: new Set(["brand"]),
       }),
     );
+  }
+
+  if (metadata.itemKind !== "service") {
+    const mevcutAnahtarlar = new Set(ozellikler.map((ozellik) => ozellik.key));
+    for (const varyantAlani of buildVariantOptionFacts(args.variants, metadata.templateKey)) {
+      const temelAnahtar = varyantAlani.key.replace("variant:", "");
+      if (mevcutAnahtarlar.has(temelAnahtar)) continue;
+      ozellikler.unshift(varyantAlani);
+    }
   }
 
   return { marka, ozellikler: ozellikler.slice(0, limit) };

@@ -51,6 +51,7 @@ export interface OwnerProduct {
   old_price_amount?: number | null;
   badge_tag?: string | null;
   fulfillment_region?: string | null;
+  is_visible?: boolean | null;
 }
 
 interface OwnerProductManagerProps {
@@ -263,7 +264,24 @@ export function OwnerProductManager({
 
       await refreshAll();
       setEditing(null);
-      setSuccess(isNew ? "Ürün kaydedildi." : "Ürün güncellendi.");
+      const taslak = Boolean(payload && typeof payload === "object" && (payload as { taslak?: unknown }).taslak);
+      const eksikFotografSayisi =
+        payload && typeof payload === "object" && typeof (payload as { eksikFotografSayisi?: unknown }).eksikFotografSayisi === "number"
+          ? (payload as { eksikFotografSayisi: number }).eksikFotografSayisi
+          : 0;
+      if (isNew) {
+        setSuccess(
+          taslak
+            ? `Ürün taslak olarak kaydedildi — ${eksikFotografSayisi} fotoğraf eksik, tamamlanana kadar vitrinde görünmeyecek.`
+            : "Ürün kaydedildi.",
+        );
+      } else {
+        setSuccess(
+          taslak
+            ? `Ürün güncellendi — ${eksikFotografSayisi} fotoğraf eksik, profesyonel görünüm için tamamla.`
+            : "Ürün güncellendi.",
+        );
+      }
     } catch (saveError) {
       const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
       const isNetworkError = saveError instanceof TypeError && String(saveError.message).includes("fetch");
@@ -398,6 +416,9 @@ export function OwnerProductManager({
               <article key={product.id} className="owner-card overflow-hidden">
                 <div className="relative aspect-[4/3] bg-[var(--owner-bg-soft)]">
                   {image ? <Image src={image} alt={`${product.name} ürün görseli`} fill unoptimized sizes="(min-width: 1024px) 300px, (min-width: 640px) 45vw, 100vw" className="object-cover" /> : <div className="flex h-full items-center justify-center text-sm text-[var(--owner-muted)]">Görsel eklenmedi</div>}
+                  {product.is_visible === false ? (
+                    <span className="absolute left-2 top-2 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-black">Taslak — vitrinde görünmüyor</span>
+                  ) : null}
                 </div>
                 <div className="p-4">
                   <div className="flex items-start justify-between gap-3">
@@ -558,7 +579,6 @@ function ProductForm({ product, categories, busy, storeSlug, storeName, onCancel
     if (!cleanName) { setValidation("Ürün adı zorunludur."); return; }
     if (categories.length > 0 && !categoryId) { setValidation("Ürün kategorisi zorunludur."); return; }
     const mustMeetImagePolicy = !product || imageListChanged;
-    if (mustMeetImagePolicy && imageUrls.length < MIN_PRODUCT_IMAGES) { setValidation(`Bir ürün için en az ${MIN_PRODUCT_IMAGES} fotoğraf zorunludur.`); return; }
     if (mustMeetImagePolicy && imageUrls.length > MAX_PRODUCT_IMAGES) { setValidation(`Bir ürüne en fazla ${MAX_PRODUCT_IMAGES} fotoğraf eklenebilir.`); return; }
     if (mustMeetImagePolicy && imageUrls.some((url) => !/^https?:\/\//i.test(url))) { setValidation("Görsel bağlantıları http:// veya https:// ile başlamalıdır."); return; }
     const oldPriceAmount = oldPriceText.trim() ? parseAmount(oldPriceText) : null;
@@ -630,6 +650,11 @@ function ProductForm({ product, categories, busy, storeSlug, storeName, onCancel
             : `En az ${MIN_PRODUCT_IMAGES}, en fazla ${MAX_PRODUCT_IMAGES} fotoğraf. İlk fotoğraf ürün kapağıdır.`}
           {` JPG/PNG/WebP, en fazla ${MAX_PRODUCT_IMAGE_SOURCE_MEGABYTES} MB. Kaynak görselin kısa kenarı en az ${MIN_PRODUCT_IMAGE_SOURCE_SHORT_EDGE} px olmalıdır.`}
         </p>
+        {!legacyImagesKept && imageUrls.length < MIN_PRODUCT_IMAGES ? (
+          <p className="mt-1 text-[11px] font-bold text-amber-500" role="status">
+            {`${MIN_PRODUCT_IMAGES} fotoğraf gerekiyor, ${imageUrls.length} tane var. Eksik olsa da kaydedebilirsin.`}
+          </p>
+        ) : null}
       </div>
 
       <div className="mt-5 grid gap-4 sm:grid-cols-2">

@@ -150,7 +150,7 @@ function variantId() {
   return `variant-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-function alignVariantsToDefinitions(
+export function alignVariantsToDefinitions(
   variants: ProductVariant[],
   variantDefinitions: ProductAttributeDefinition[],
   isService: boolean,
@@ -168,16 +168,14 @@ function alignVariantsToDefinitions(
       });
   if (variantDefinitions.length === 0) return withValidImages;
   const allowed = new Set(variantDefinitions.map((definition) => definition.key));
-  return withValidImages
-    .map((variant) => ({
-      ...variant,
-      options: Object.fromEntries(
-        Object.entries(variant.options).filter(
-          ([key, optionValue]) => allowed.has(key) && optionValue.trim().length > 0,
-        ),
+  return withValidImages.map((variant) => ({
+    ...variant,
+    options: Object.fromEntries(
+      Object.entries(variant.options).filter(
+        ([key, optionValue]) => allowed.has(key) && optionValue.trim().length > 0,
       ),
-    }))
-    .filter((variant) => Object.keys(variant.options).length > 0);
+    ),
+  }));
 }
 
 export function OwnerRichProductFields({

@@ -47,7 +47,7 @@ export function validateProductImageDimensions(
 
 function validateCountAndUrls(
   value: unknown,
-  options: { httpsOnly: boolean },
+  options: { httpsOnly: boolean; ignoreMinCount?: boolean },
 ): ProductImageValidationResult {
   if (!Array.isArray(value)) {
     return {
@@ -58,7 +58,7 @@ function validateCountAndUrls(
   }
 
   const imageUrls = normalizeProductImageUrls(value);
-  if (imageUrls.length < MIN_PRODUCT_IMAGES) {
+  if (!options.ignoreMinCount && imageUrls.length < MIN_PRODUCT_IMAGES) {
     return {
       ok: false,
       imageUrls,
@@ -127,4 +127,19 @@ export function validateProductImageUrls(value: unknown): ProductImageValidation
  */
 export function validateExternalProductImageUrls(value: unknown): ProductImageValidationResult {
   return validateCountAndUrls(value, { httpsOnly: false });
+}
+
+export function validateProductImageUrlsAllowingFewerImages(
+  value: unknown,
+): ProductImageValidationResult {
+  const base = validateCountAndUrls(value, { httpsOnly: true, ignoreMinCount: true });
+  if (!base.ok) return base;
+  if (base.imageUrls.some((url) => !managedProductImageUrl(url))) {
+    return {
+      ok: false,
+      imageUrls: base.imageUrls,
+      error: "Ürün fotoğraflarını Görsel ekle alanından yükleyin; dış bağlantı kullanılamaz.",
+    };
+  }
+  return base;
 }
