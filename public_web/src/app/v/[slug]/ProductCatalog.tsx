@@ -264,6 +264,7 @@ export default function ProductCatalog({
           const kartOzellikleri = buildProductCardFacts({
             brand: product.brand,
             metadata: product.metadata,
+            variants: isService ? undefined : product.variants,
           }).ozellikler;
           const rozet = kartRozeti({
             badgeTag: product.badgeTag,
