@@ -10,35 +10,22 @@ import {
   normalizeProductImageUrls,
   validateProductImageUrls,
 } from "@/lib/productImagePolicy";
-import {
-  normalizeProductMetadata,
-  normalizeProductVariants,
-  type ProductMetadata,
-  type ProductVariant,
-} from "@/lib/productRichData";
-import {
-  PRODUCT_ATTRIBUTE_SCHEMA,
-  productAttributesForTemplate,
-  productTemplateByKey,
-} from "@/lib/productAttributeSchema";
+import { productTemplateByKey } from "@/lib/productAttributeSchema";
 import { parseProductPriceNumber } from "@/lib/productPrice";
 import { eksikZorunluAlanlar, eksikZorunluAlanMesaji } from "@/lib/productRequiredFields";
+import {
+  categoryTemplateKey,
+  cleanAmount,
+  cleanNonNegativeInt,
+  cleanString,
+  markaVeyaMagazaAdi,
+  metadataForTemplate,
+  urunGirdisiniHazirla,
+  validateVariantSet,
+  variantsForTemplate,
+} from "@/lib/productIntake";
 
 export const dynamic = "force-dynamic";
-
-function cleanString(value: unknown): string | null {
-  if (typeof value !== "string") return null;
-  const trimmed = value.trim();
-  return trimmed || null;
-}
-
-function cleanNonNegativeInt(value: unknown): number | null {
-  return typeof value === "number" && Number.isInteger(value) && value >= 0 ? value : null;
-}
-
-function cleanAmount(value: unknown): number | null {
-  return typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : null;
-}
 
 function hasOwn(value: Record<string, unknown>, key: string): boolean {
   return Object.prototype.hasOwnProperty.call(value, key);
@@ -46,46 +33,6 @@ function hasOwn(value: Record<string, unknown>, key: string): boolean {
 
 function sameStringList(left: string[], right: string[]) {
   return left.length === right.length && left.every((value, index) => value === right[index]);
-}
-
-function variantSignature(variant: ProductVariant): string {
-  return Object.entries(variant.options)
-    .sort(([left], [right]) => left.localeCompare(right, "tr"))
-    .map(([key, value]) => `${key.toLocaleLowerCase("tr-TR")}=${value.trim().toLocaleLowerCase("tr-TR")}`)
-    .join("|");
-}
-
-function validateVariantSet(variants: ProductVariant[], parentBarcode: string | null): string | null {
-  const ids = new Set<string>();
-  const combinations = new Set<string>();
-  const skus = new Set<string>();
-  const barcodes = new Set<string>();
-  if (parentBarcode) barcodes.add(parentBarcode);
-
-  for (const variant of variants) {
-    if (ids.has(variant.id)) return "Aynı varyant kimliği birden fazla kez kullanılamaz.";
-    ids.add(variant.id);
-
-    const signature = variantSignature(variant);
-    if (combinations.has(signature)) {
-      return "Aynı ürün seçeneği kombinasyonu birden fazla kez eklenemez.";
-    }
-    combinations.add(signature);
-
-    const sku = cleanString(variant.sku)?.toLocaleLowerCase("tr-TR") || null;
-    if (sku) {
-      if (skus.has(sku)) return "Aynı varyant SKU değeri birden fazla kez kullanılamaz.";
-      skus.add(sku);
-    }
-
-    const barcode = cleanString(variant.barcode);
-    if (barcode) {
-      if (barcodes.has(barcode)) return "Ürün ve varyant barkodları benzersiz olmalıdır.";
-      barcodes.add(barcode);
-    }
-  }
-
-  return null;
 }
 
 async function ownerContext(slug: string) {
@@ -100,99 +47,6 @@ async function ownerContext(slug: string) {
     .single();
   if (!store?.id || !store.edit_token) return null;
   return { admin, store };
-}
-
-async function categoryTemplateKey(
-  admin: ReturnType<typeof getSupabaseAdmin>,
-  storeId: string,
-  categoryId: string,
-) {
-  if (!categoryId) return "generic";
-  const rich = await admin
-    .from("product_categories")
-    .select("id,product_template_key")
-    .eq("id", categoryId)
-    .eq("store_id", storeId)
-    .maybeSingle();
-  if (rich.error || !rich.data) return null;
-  const key = cleanString(rich.data.product_template_key) || "generic";
-  return productTemplateByKey(key) ? key : null;
-}
-
-/**
- * Marka zorunlu ama esnafin markasi olmayabilir (butik, ev yapimi uretim).
- * Profesyonel platformlarin yaptigi gibi bos birakilirsa magaza adi yazilir.
- */
-function markaVeyaMagazaAdi(
-  ham: unknown,
-  templateKey: string,
-  storeName: unknown,
-): string | null {
-  const girilen = cleanString(ham);
-  if (girilen) return girilen;
-  const otomatik = productAttributesForTemplate(templateKey).some(
-    (attribute) => attribute.key === "brand" && attribute.autoFill === "storeName",
-  );
-  return otomatik ? cleanString(storeName) : null;
-}
-
-function metadataForTemplate(value: unknown, templateKey: string): ProductMetadata | null {
-  const template = productTemplateByKey(templateKey);
-  if (!template) return null;
-  const normalized = normalizeProductMetadata(value);
-
-  if (template.itemKind === "service") {
-    return {
-      ...normalized,
-      schemaVersion: PRODUCT_ATTRIBUTE_SCHEMA.version,
-      itemKind: "service",
-      templateKey,
-      service: normalized.service,
-      attributes: normalized.attributes || [],
-    };
-  }
-
-  return {
-    ...normalized,
-    schemaVersion: PRODUCT_ATTRIBUTE_SCHEMA.version,
-    itemKind: "physical",
-    templateKey,
-    attributes: normalized.attributes || [],
-  };
-}
-
-
-function variantsForTemplate(
-  value: unknown,
-  templateKey: string,
-  productImageUrls: string[],
-): ProductVariant[] {
-  const template = productTemplateByKey(templateKey);
-  if (!template) return [];
-
-  const availableImages = new Set(productImageUrls);
-  const variants = normalizeProductVariants(value).map((variant) => ({
-    ...variant,
-    imageUrls: variant.imageUrls?.filter((url) => availableImages.has(url)),
-  }));
-  const allowedKeys = new Set(
-    productAttributesForTemplate(templateKey)
-      .filter((definition) => definition.variantEligible)
-      .map((definition) => definition.key),
-  );
-
-  if (allowedKeys.size === 0) return variants;
-
-  return variants
-    .map((variant) => ({
-      ...variant,
-      options: Object.fromEntries(
-        Object.entries(variant.options).filter(
-          ([key, optionValue]) => allowedKeys.has(key) && optionValue.trim().length > 0,
-        ),
-      ),
-    }))
-    .filter((variant) => Object.keys(variant.options).length > 0);
 }
 
 export async function GET(request: NextRequest) {
