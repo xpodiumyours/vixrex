@@ -35,7 +35,7 @@ function productLocationMapUrl(location: string): string | null {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(normalized)}`;
 }
 
-function productWhatsappUrl(
+export function productWhatsappUrl(
   baseUrl: string | null | undefined,
   storeName: string,
   productName: string,
@@ -50,7 +50,7 @@ function productWhatsappUrl(
   return `${baseUrl}${separator}text=${encodeURIComponent(message)}`;
 }
 
-function stockTone(stockStatus: string | undefined) {
+export function stockTone(stockStatus: string | undefined) {
   const value = String(stockStatus || "").toLocaleLowerCase("tr-TR");
   if (value.includes("tükendi")) return "text-red-300";
   if (value.includes("son") || value.includes("az") || value.includes("sınırl")) {
@@ -59,7 +59,7 @@ function stockTone(stockStatus: string | undefined) {
   return "text-emerald-300";
 }
 
-function formatVariantPrice(amount: number, currency?: string) {
+export function formatVariantPrice(amount: number, currency?: string) {
   return new Intl.NumberFormat("tr-TR", {
     style: "currency",
     currency: currency || "TRY",
