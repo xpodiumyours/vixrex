@@ -10,12 +10,6 @@ import { urunGirdisiniHazirla } from "@/lib/productIntake";
  *
  * POST: Birden fazla ürünü tek seferde oluşturur.
  *
- * Zincir:
- *   HttpOnly sahip çerezi doğrulanır
- *   → store id + edit_token bulunur
- *   → her satır tekli üründeki kalite zincirinden geçer
- *   → eksik satır reddedilmez, görünmez taslak olarak kurulur
- *   → satır bazlı sonuç döndürülür
  */
 
 export const dynamic = "force-dynamic";

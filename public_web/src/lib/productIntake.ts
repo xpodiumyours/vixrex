@@ -191,12 +191,6 @@ export type UrunGirdiSonucu =
   | { durum: "taslak"; girdi: HazirUrunGirdisi; eksik: string }
   | { durum: "reddedildi"; sebep: string };
 
-/**
- * Tekli ve toplu urun kapilarinin ortak kalite zinciri: kategori sablonu,
- * sablona uygun ozellikler, beden/renk varyantlari, gorsel politikasi ve
- * eksik zorunlu alan kontrolu. Toplu yolda eksik satir reddedilmez, taslak
- * olarak doner; sebebi cagirana bildirilir.
- */
 export async function urunGirdisiniHazirla(args: {
   admin: YonetimIstemcisi;
   storeId: string;
