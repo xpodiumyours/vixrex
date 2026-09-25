@@ -104,7 +104,7 @@ FROM (
          to_jsonb(
            ARRAY(
              SELECT t.u
-             FROM unnest(h.havuz) AS t(u)
+             FROM unnest(h2.havuz) AS t(u)
              WHERE NOT t.u = ANY(ARRAY(
                SELECT x.v
                FROM jsonb_array_elements_text(p2.image_urls) WITH ORDINALITY AS x(v, ord)
