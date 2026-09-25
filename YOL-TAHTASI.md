@@ -17,7 +17,7 @@ kapısına çalışan sistem gösterilerek izin istenir.
 | Kol | Durum |
 |---|---|
 | Esnaf yolculuğu | 6 / 8 hazır |
-| Ürün havuzu | 7 / 55 firma, 4.253 ürün |
+| Ürün havuzu | 16 / 55 firma, 8.594 ürün (commit'lendi, itildi) |
 | Fatura zinciri | 4.5 / 5 halka |
 | Firma izni | 0 / 6 hazır |
 
@@ -26,7 +26,7 @@ kapısına çalışan sistem gösterilerek izin istenir.
 | İş | Kim | Durum |
 |---|---|---|
 | Firma havuzu (55 firma) | Casper | bitti |
-| Ürün havuzu toplayıcı | Freebuff | 7 firma bitti, sürüyor |
+| Ürün havuzu toplayıcı | Freebuff + Claude | **bitti (bu tur)** — 16/55 otomatik toplanabiliyor, kalan 39 ölçülmüş bir sınır (kapı kapalı/kod yok/platform tanınmadı) |
 | Kod eşleştirme | Claude | bitti |
 | Yayın kapısı (fiyat + onay) | Claude | bitti |
 | Fatura okuma — kod eşleştirmesi (fotoğrafı KİM okursa okusun) | Claude | **bitti** — `/api/fatura-eslestir` |
