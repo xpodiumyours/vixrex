@@ -8,13 +8,21 @@
 -- sahibi olmayan (user_id IS NULL) 30 vitrin. Gercek musteri vitrinlerine HIC dokunulmaz.
 --
 -- Davranis:
---   - Zaten birbirinden farkli puana sahip 5 vitrin (kiralik-butik,
---     kiralik-kafe, kiralik-kuafor, kiralik-teknik, kiralik-gida)
---     KORUNUR; yalniz puan bandi acilir.
+--   - Korunan 5 vitrin (kiralik-butik, kiralik-kafe, kiralik-kuafor,
+--     kiralik-teknik, kiralik-gida) bugunku puanini AYNEN korur; yalniz
+--     puan bandi acilir. 2026-09-25 canli olcumu: kiralik-kuafor 4.9/187,
+--     kiralik-kafe 4.8/214, kiralik-gida 4.8/156, kiralik-teknik 4.7/93 ve
+--     kiralik-butik 4.9/128 — yani kiralik-butik hala 26 vitrinlik ayni
+--     puan grubunun icinde. Bu yuzden korunan ciftlerin hepsi 25 vitrine
+--     yazilan degerlerden ayridir; koruma listesi "tek puanli" degil
+--     "puanina dokunulmayacak" listesidir.
 --   - Kalan 25 vitrine deterministik, birbirinden farkli ve gercekci
 --     (puan 4.5-4.9, yorum 39-203) degerler yazilir. Rastgele yok;
 --     taze ortamda ayni sonuc uretilir.
 --   - show_storefront_rating 30 vitrinde acilir.
+--
+-- Canli on olcumu (2026-09-25, salt okuma): 26 vitrin 4.9/128 ayni;
+-- 4 vitrin tekil; show_storefront_rating 0/30 acik; tekrar eden cift 1 grup.
 --
 -- Guard: ayni (puan, yorum) ikilisini tasiyan iki kiralik vitrin kalirsa
 -- veya 30 vitrinin biri eksikse migration duser.
