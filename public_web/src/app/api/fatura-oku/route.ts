@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 import { fingerprintClient, getClientIp } from "@/lib/rentDemoSecurity";
+import { ureticiUrunuBul } from "@/lib/ureticiKatalog";
 
 // Fatura fotoğrafını okuyup ürün satırlarını döner.
 //
@@ -149,7 +150,41 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ tamam: true, ...(govde as Record<string, unknown>) });
+    // Faturadaki kodu üretici kataloğuna bağla: resmî ad, açıklama ve
+    // üreticinin kendi fotoğrafları buradan gelir. Eşleşme yoksa satır
+    // faturadaki hâliyle kalır — ad veya görsel tahmin edilmez.
+    const zenginlestirilmis = satirlar.map((ham) => {
+      const satir = (ham ?? {}) as Record<string, unknown>;
+      const eslesme = ureticiUrunuBul({
+        model: typeof satir.model === "string" ? satir.model : null,
+        barkod: typeof satir.barkod === "string" ? satir.barkod : null,
+      });
+
+      if (!eslesme) return { ...satir, katalog: null };
+
+      return {
+        ...satir,
+        katalog: {
+          firma: eslesme.firma.ad,
+          dayanak: eslesme.dayanak,
+          izinDurumu: eslesme.firma.izinDurumu,
+          resmiAd: eslesme.urun.ad,
+          marka: eslesme.urun.marka,
+          aciklama: eslesme.urun.aciklama,
+          gorseller: eslesme.urun.gorseller,
+          kaynak: eslesme.urun.kaynak,
+        },
+      };
+    });
+
+    const eslesen = zenginlestirilmis.filter((satir) => satir.katalog !== null).length;
+
+    return NextResponse.json({
+      tamam: true,
+      ...(govde as Record<string, unknown>),
+      satirlar: zenginlestirilmis,
+      katalogEslesmesi: eslesen,
+    });
   } catch (err) {
     console.error("[fatura-oku] failed:", err instanceof Error ? err.message : "unknown");
     return NextResponse.json({ hata: "Fatura şu an okunamadı. Tekrar dene." }, { status: 500 });

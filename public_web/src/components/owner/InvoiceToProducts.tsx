@@ -18,6 +18,19 @@ export interface FaturaSatiri {
   alisBirimFiyat: number | null;
   satirToplam: number | null;
   guven: number;
+  /** Üretici kataloğundan gelen resmî bilgi. Eşleşme yoksa null. */
+  katalog: KatalogBilgisi | null;
+}
+
+export interface KatalogBilgisi {
+  firma: string;
+  dayanak: "kod" | "barkod";
+  izinDurumu: "yok" | "bekliyor" | "var";
+  resmiAd: string;
+  marka: string;
+  aciklama: string;
+  gorseller: string[];
+  kaynak: string;
 }
 
 interface FaturaOkumaSonucu {
@@ -25,6 +38,7 @@ interface FaturaOkumaSonucu {
   belgeToplami: number | null;
   belgeAdedi: number | null;
   tedarikci: string;
+  katalogEslesmesi?: number;
 }
 
 interface SatirDurumu extends FaturaSatiri {
@@ -201,12 +215,16 @@ export default function InvoiceToProducts({
           slug: storeSlug,
           products: gonderilecek.map(({ satir, sira }) => {
             const satisFiyati = fiyatSayisi(satir.satisFiyati);
+            const katalog = satir.katalog;
             return {
-              name: satir.ad,
-              description: faturaAciklamasi(satir),
+              name: katalog?.resmiAd || satir.ad,
+              description: katalog?.aciklama || faturaAciklamasi(satir),
               priceText: `${satisFiyati} TL`,
               categoryId: satir.kategoriId,
-              imageUrls: [],
+              // Üreticinin kendi yayınladığı fotoğraflar. Eşleşme yoksa boş
+              // kalır ve ürün taslak olarak kaydedilir.
+              imageUrls: katalog?.gorseller ?? [],
+              brand: katalog?.marka || undefined,
               barcode: satir.barkod || undefined,
               stockQuantity: satir.adet ?? undefined,
               sourceType: "invoice",
@@ -358,6 +376,8 @@ export default function InvoiceToProducts({
   // ─── 3. Ürünler (yazma sırasında kilitli hâliyle aynı ekran) ───
 
   const yaziliyor = adim === "yaziliyor";
+  const eslesenSayisi = satirlar.filter((satir) => satir.katalog !== null).length;
+  const izinBekleyen = satirlar.some((satir) => satir.katalog?.izinDurumu !== "var");
 
   return (
     <div className="fatura-akis">
@@ -376,6 +396,22 @@ export default function InvoiceToProducts({
         Faturadaki rakamlar <strong>alış fiyatıdır</strong>. Satış fiyatını sen belirle,
         kartı onayla.
       </p>
+
+      {eslesenSayisi > 0 && (
+        <p className="fatura-aciklama">
+          <strong>
+            {eslesenSayisi} / {satirlar.length}
+          </strong>{" "}
+          ürün üretici kataloğunda bulundu; resmî ad, açıklama ve fotoğrafları hazır.
+          {izinBekleyen && (
+            <>
+              {" "}
+              <strong>Üretici izni henüz alınmadı</strong> — yayına almadan önce izin
+              gerekir.
+            </>
+          )}
+        </p>
+      )}
 
       {hata && <p className="fatura-hata">{hata}</p>}
 
@@ -429,8 +465,31 @@ export default function InvoiceToProducts({
               className={dusukGuven ? "fatura-kart fatura-kart-suphe" : "fatura-kart"}
             >
               {dusukGuven && <span className="fatura-rozet">Kontrol et</span>}
+
+              {satir.katalog && satir.katalog.gorseller.length > 0 ? (
+                <img
+                  className="fatura-kart-gorsel"
+                  src={satir.katalog.gorseller[0]}
+                  alt={satir.katalog.resmiAd}
+                  loading="lazy"
+                />
+              ) : (
+                <div className="fatura-kart-gorselsiz">Fotoğraf yok</div>
+              )}
+
               {satir.model && <div className="fatura-model">{satir.model}</div>}
-              <div className="fatura-ad">{satir.ad}</div>
+              <div className="fatura-ad">{satir.katalog?.resmiAd || satir.ad}</div>
+
+              {satir.katalog ? (
+                <div className="fatura-eslesme">
+                  {satir.katalog.firma} · {satir.katalog.gorseller.length} fotoğraf
+                  {satir.katalog.dayanak === "barkod" ? " · barkod" : " · ürün kodu"}
+                </div>
+              ) : (
+                <div className="fatura-eslesme fatura-eslesme-yok">
+                  Üretici kataloğunda bulunamadı — taslak kalacak
+                </div>
+              )}
 
               <div className="fatura-cipler">
                 {satir.beden && <span>{satir.beden}</span>}
