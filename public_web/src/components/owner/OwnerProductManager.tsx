@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useState, useCallback, useMemo, useEffect } from "react";
 import BulkProductUpload from "./BulkProductUpload";
+import InvoiceToProducts from "./InvoiceToProducts";
 import { OwnerCategoryManager } from "./OwnerCategoryManager";
 import {
   OwnerRichProductFields,
@@ -115,6 +116,7 @@ export function OwnerProductManager({
   const [editing, setEditing] = useState<OwnerProduct | "new" | null>(null);
   const [deleting, setDeleting] = useState<OwnerProduct | null>(null);
   const [showBulkUpload, setShowBulkUpload] = useState(false);
+  const [showInvoice, setShowInvoice] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -366,6 +368,7 @@ export function OwnerProductManager({
         </div>
         <div className="flex shrink-0 gap-2">
           <button type="button" className="owner-button-secondary" onClick={() => { setError(""); setSuccess(""); setShowBulkUpload(!showBulkUpload); setEditing(null); }} disabled={busy}>📄 Toplu Yükle</button>
+          <button type="button" className="owner-button-secondary" onClick={() => { setError(""); setSuccess(""); setShowInvoice(!showInvoice); setShowBulkUpload(false); setEditing(null); }} disabled={busy}>🧾 Faturadan Ekle</button>
           <button type="button" className="owner-button-primary" onClick={() => { setError(""); setSuccess(""); setShowBulkUpload(false); setEditing("new"); }} disabled={busy}>+ Ürün Ekle</button>
         </div>
       </div>
@@ -384,6 +387,15 @@ export function OwnerProductManager({
         </select>
         {(filterText || filterCategory) && <span className="self-center text-xs text-[var(--owner-muted)]">{filteredProducts.length}/{products.length}</span>}
       </div>
+
+      {showInvoice && !editing && (
+        <InvoiceToProducts
+          storeSlug={storeSlug}
+          categories={resolvedCategories}
+          onUploaded={async () => { await refreshAll(); }}
+          onClose={() => setShowInvoice(false)}
+        />
+      )}
 
       {showBulkUpload && !editing && (
         <BulkProductUpload storeSlug={storeSlug} categories={resolvedCategories} onUploaded={async () => { await refreshAll(); setShowBulkUpload(false); setSuccess("Ürünler toplu olarak eklendi."); }} />
