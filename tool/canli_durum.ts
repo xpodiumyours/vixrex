@@ -77,7 +77,7 @@ async function main() {
       const demoDisi = rows.filter((s) => s.is_demo !== true);
       const yayinda = rows.filter((s) => s.is_published === true);
       console.log("Toplam vitrin:", stores.total ?? rows.length);
-      console.log("Sablon/demo:", demo.length, "(kiralanabilir ornekler)");
+      console.log("Kiralik vitrin:", demo.length, "(kiralik vitrin — kiralanabilir hazir sablonlar)");
       console.log("Gercek musteri vitrini:", demoDisi.length, "(is_demo=false)");
       console.log("Yayinda:", yayinda.length);
     } else {
