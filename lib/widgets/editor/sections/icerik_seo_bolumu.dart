@@ -329,9 +329,7 @@ class IcerikSeoBolumu extends StatelessWidget {
               return result.isSuccess;
             },
             onOcrTap: () {
-              // Alt paneli kapat, sonra root navigator'dan OCR ekranını aç
               Navigator.of(ctx).pop();
-              // Root navigator'u kullanarak navigasyon yap
               Navigator.of(ctx, rootNavigator: true).push(
                 MaterialPageRoute(
                   builder:
@@ -340,6 +338,21 @@ class IcerikSeoBolumu extends StatelessWidget {
                           ocrService: const OcrService(),
                           editorController: controller,
                         ),
+                      ),
+                ),
+              );
+            },
+            onInvoiceTap: () {
+              Navigator.of(ctx).pop();
+              final invoiceController = OcrController(
+                ocrService: const OcrService(),
+                editorController: controller,
+              )..scanMode = 'invoice';
+              Navigator.of(ctx, rootNavigator: true).push(
+                MaterialPageRoute(
+                  builder:
+                      (_) => OcrScannerScreen(
+                        ocrController: invoiceController,
                       ),
                 ),
               );

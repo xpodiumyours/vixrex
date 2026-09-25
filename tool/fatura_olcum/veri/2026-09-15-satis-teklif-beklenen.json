@@ -1,0 +1,21 @@
+{
+  "invoice_id": "2026-09-15-satis-teklif",
+  "expected_product_count": 13,
+  "expected_quantity": 75,
+  "expected_total": 6034.0,
+  "products": [
+    {"model":"ELT1302","name":"Elit Erkek Elastan Sıfır Yaka Uzun Kol","barcode":"8681128321677","variant":"Siyah","size":"L","qty":2,"buy":137.0,"total":274.0},
+    {"model":"ELT1303","name":"Elit Erkek Elastan V Yaka","barcode":"8681128321974","variant":"Siyah","size":"L","qty":3,"buy":115.0,"total":345.0},
+    {"model":"ELT1306","name":"Elit Erkek Thermal Alt","barcode":"8681128332550","variant":"Siyah","size":"L","qty":1,"buy":175.0,"total":175.0},
+    {"model":"ELT2203","name":"Elit Bayan Elastan Uzun Kol","barcode":"8681128326917","variant":"Siyah","size":"M","qty":6,"buy":124.0,"total":744.0},
+    {"model":"ELT2204","name":"Elit Bayan Elastan Balık Yaka","barcode":"8681128344164","variant":"Beyaz","size":"M","qty":1,"buy":81.0,"total":81.0},
+    {"model":"TEC0135","name":"Tut Çocuk Thermal Alt","barcode":"8680508957796","variant":"Siyah","size":"11–13 Yaş","qty":1,"buy":81.0,"total":81.0},
+    {"model":"TER0101","name":"Tut Erkek Penye Atlet","barcode":"8680508918131","variant":"Beyaz","size":"4","qty":18,"buy":63.5,"total":1143.0},
+    {"model":"TER0114","name":"Tut Erkek Likralı Boxer","barcode":"8680508921971","variant":"Siyah","size":"L","qty":17,"buy":63.5,"total":1079.5},
+    {"model":"TER0117","name":"Tut Erkek Penye Düz Boxer","barcode":"8680508923388","variant":"Siyah","size":"XL","qty":13,"buy":63.5,"total":825.5},
+    {"model":"TER0117","name":"Tut Erkek Penye Düz Boxer","barcode":"8681128335230","variant":"Siyah","size":"XXXL","qty":6,"buy":69.0,"total":414.0},
+    {"model":"TER0125","name":"Tut Erkek Thermal Alt","barcode":"8681128300931","variant":"Siyah","size":"M","qty":2,"buy":135.0,"total":270.0},
+    {"model":"TER0126","name":"Tut Erkek Thermal Fanila","barcode":"8681128304748","variant":"Siyah","size":"M","qty":3,"buy":148.0,"total":444.0},
+    {"model":"TKC0835","name":"Tut Kız Thermal Tayt","barcode":"8680508957901","variant":"Siyah","size":"8–10 Yaş","qty":2,"buy":79.0,"total":158.0}
+  ]
+}
