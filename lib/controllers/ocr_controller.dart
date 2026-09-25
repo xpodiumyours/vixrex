@@ -7,6 +7,7 @@ import 'package:vixrex/models/product_rich_data.dart';
 import 'package:vixrex/models/invoice_product_draft.dart';
 import 'package:vixrex/services/invoice_catalog/invoice_draft_decision_engine.dart';
 import 'package:vixrex/models/store_product.dart';
+import 'package:vixrex/services/invoice_catalog/catalog_invoice_trace_resolver.dart';
 import 'package:vixrex/services/ocr/invoice_row_parser.dart';
 import 'package:vixrex/services/ocr/ocr_service.dart';
 import 'package:vixrex/services/ocr/ocr_feedback_service.dart';
@@ -54,10 +55,19 @@ class OcrController extends ChangeNotifier {
     );
 
     result.when(
-      success: (catalog) {
+      success: (catalog) async {
         _result = catalog;
         _isProcessing = false;
         notifyListeners();
+
+        // Fatura satırları çıktıysa gerçek üretici kataloğuyla eşleştir.
+        // Yerel bulanık eşleştirici (InvoiceDraftTraceResolver) kanıtı hiç
+        // "strong" yapamaz; yayın kapısı ancak burası bulursa gerçekten
+        // açılır. Ağ yoksa/başarısızsa satırlar zayıf haliyle kalır —
+        // hiçbir şey tahmin edilmez.
+        if (catalog.invoiceDrafts.isNotEmpty) {
+          await _kataloglaEslestir();
+        }
       },
       failure: (failure) {
         _errorMessage = failure.message;
@@ -65,6 +75,35 @@ class OcrController extends ChangeNotifier {
         notifyListeners();
       },
     );
+  }
+
+  /// Fatura taslaklarını gerçek üretici kataloğuyla günceller.
+  ///
+  /// Mağaza yayınlanmamışsa (slug/editToken yoksa) sessizce atlar —
+  /// eşleştirme olmadan da satırlar görünür kalır, yalnız zayıf iz taşır.
+  Future<void> _kataloglaEslestir() async {
+    final yayinBilgisi = _editorController?.publishedInfo;
+    final slug = yayinBilgisi?.slug.trim() ?? '';
+    final editToken = yayinBilgisi?.editToken.trim() ?? '';
+    if (slug.isEmpty || editToken.isEmpty) return;
+
+    final mevcut = _result;
+    if (mevcut == null || mevcut.invoiceDrafts.isEmpty) return;
+
+    final resolver = CatalogInvoiceTraceResolver(
+      storeSlug: slug,
+      editToken: editToken,
+    );
+    final guncellenmis = await resolver.resolve(mevcut.invoiceDrafts);
+
+    _result = OcrCatalogResult(
+      rawText: mevcut.rawText,
+      products: mevcut.products,
+      invoiceDrafts: guncellenmis,
+      confidence: mevcut.confidence,
+      analyzedAt: mevcut.analyzedAt,
+    );
+    notifyListeners();
   }
 
   /// Ürünü onayla.
