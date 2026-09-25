@@ -1,6 +1,6 @@
 # Vixrex Yol Tahtası
 
-Son ölçüm: 2026-09-26. **Bu dosya tek gerçek kaynaktır.** Casper, Claude,
+Son ölçüm: 2026-09-26 (güncellendi — fatura/rastgele-dogrulama dalı). **Bu dosya tek gerçek kaynaktır.** Casper, Claude,
 Freebuff ve Gemini aynı tahtaya bakar. İş bitince satırın durumu burada
 güncellenir — başka yerde değil.
 
@@ -18,7 +18,7 @@ kapısına çalışan sistem gösterilerek izin istenir.
 |---|---|
 | Esnaf yolculuğu | 6 / 8 hazır |
 | Ürün havuzu | 7 / 55 firma, 4.253 ürün |
-| Fatura zinciri | 4 / 5 halka |
+| Fatura zinciri | 4.5 / 5 halka |
 | Firma izni | 0 / 6 hazır |
 
 ## A · Fatura zinciri
@@ -29,8 +29,10 @@ kapısına çalışan sistem gösterilerek izin istenir.
 | Ürün havuzu toplayıcı | Freebuff | 7 firma bitti, sürüyor |
 | Kod eşleştirme | Claude | bitti |
 | Yayın kapısı (fiyat + onay) | Claude | bitti |
-| **Fatura okuma** | Claude | **karar bekliyor** |
-| Gerçek faturayla deneme | Claude | yapılmadı |
+| Fatura okuma — kod eşleştirmesi (fotoğrafı KİM okursa okusun) | Claude | **bitti** — `/api/fatura-eslestir` |
+| Fatura okuma — telefonun kendi OCR'ının kataloğa bağlanması | Claude | **bitti** — `CatalogInvoiceTraceResolver`, eski hep-zayıf bug kanıtla düzeltildi |
+| Fatura okuma — kamera/fotoğraftan yazı çıkarma (ML Kit, cihaz üstü) | — | **doğrulanamadı — fiziksel telefon gerekiyor** |
+| Gerçek faturayla deneme | Claude | Sunucu tarafı 11/11 rastgele faturayla doğrulandı (yapay zekâ YOK — düz kod eşleştirme). Kamera adımı hâlâ bekliyor. |
 
 ## B · Firma izni — hiçbiri yok
 
@@ -89,3 +91,27 @@ Her ajan kendi worktree'sinde çalışır. Dosya sahipliği:
 - Bir ajan diğerinin alanına girecekse önce bu dosyaya yazar.
 
 `lib/` (Flutter) izinsiz açılmaz. Ana dala hiçbir şey Casper onayı olmadan inmez.
+
+
+## 2026-09-26 ek notu — ne gerçekten doğrulandı, ne doğrulanmadı
+
+Bu dalda (`fatura/rastgele-dogrulama`, `C:\Projectsixrex-dogrula`) yapılanlar:
+
+1. **Sunucu tarafı genelleşme kanıtı** — Casper'ın tek gerçek faturası (13 satır)
+   dışında, aynı katalogdan tohumlanmış rastgelelikle üretilmiş 4 farklı "sahte
+   fatura" gerçek `/api/products/batch` uç noktasından geçirildi. 11/11 test
+   geçti. **Yapay zekâ kullanılmadı** — düz kod/barkod araması.
+2. **`/api/fatura-eslestir` eklendi** — fotoğrafı kim okursa okusun (telefon,
+   Başak, ileride tarayıcı), satırları TEK yerde kataloğa bağlayan uç nokta.
+   Hem tarayıcı (çerez) hem Flutter (edit_token) çağırabiliyor. 9/9 test.
+3. **Flutter'daki asıl bug bulundu ve düzeltildi** —
+   `invoice_ocr_draft_adapter.dart:69` tedarikçi kanıtını HER ZAMAN "zayıf"
+   yazıyordu, karar motoru bu yüzden kapıyı hiç açmıyordu. Yeni
+   `CatalogInvoiceTraceResolver` gerçek katalog sonucuyla kanıtı yükseltiyor.
+   Gerçek sunucu yanıtı simüle edilerek kanıtlandı: `canPublish` artık
+   gerçekten `true` dönüyor (eskiden asla dönemezdi). 755/755 Flutter testi.
+
+**Doğrulanmayan tek şey:** telefonun kamerasının GERÇEK bir kağıt faturayı
+doğru okuyup okumadığı. Bu adım fiziksel bir cihaz gerektiriyor, bu ortamda
+test edilemez. Zincirin geri kalanı (eşleştirme, kanıt, yayın kapısı) artık
+kanıtlı biçimde çalışıyor — kalan tek soru "kamera metni doğru çıkarıyor mu."
