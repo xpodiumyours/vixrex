@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import { cookies } from "next/headers";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
@@ -446,8 +446,20 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
   };
 }
 
+const LEGACY_STORE_SLUGS: Record<string, string> = {
+  "demo-aymira-giyim": "kiralik-aymira-giyim",
+  "demo-lezzet-duragi": "kiralik-lezzet-duragi",
+  "demo-nova-kuafor": "kiralik-nova-kuafor",
+  "demo-teknofix": "kiralik-teknofix",
+};
+
 export default async function StorePage(props: PageProps) {
   const params = await props.params;
+
+  const legacySlug = LEGACY_STORE_SLUGS[params.slug];
+  if (legacySlug) {
+    permanentRedirect(`/v/${legacySlug}`);
+  }
 
   const cookieStore = await cookies();
   // DİKKAT: bu çerezin TAMAMI (imzalı paket), oturum tokenının kendisi DEĞİL.
