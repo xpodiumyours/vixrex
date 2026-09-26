@@ -19,7 +19,8 @@ describe("Vitrin Ölçer sahip yüzeyi", () => {
 
   it("yorum moderasyonu sahip RPC'sine gider", () => {
     expect(metrics).toContain('supabase.rpc("set_product_comment_status"');
-    expect(metrics).toContain('p_status: "hidden"');
+    expect(metrics).toContain('p_status: yeniDurum');
+    expect(metrics).toContain('mevcutDurum === "hidden" ? "published" : "hidden"');
   });
 
   it("şema deploy sırası geçici farklıysa mevcut pano çalışmaya devam eder", () => {
