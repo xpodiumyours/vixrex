@@ -308,6 +308,10 @@ declare
   v_liked boolean;
   v_count bigint;
 begin
+  if v_user_id is null then
+    raise exception 'AUTH_REQUIRED';
+  end if;
+
   if pg_catalog.length(pg_catalog.btrim(coalesce(p_session_key, ''))) >= 16 then
     v_session_actor_key := 's:' || encode(
       sha256(pg_catalog.btrim(p_session_key)::bytea),
@@ -383,9 +387,10 @@ begin
 end;
 $$;
 
-revoke all on function public.toggle_product_like(text,text,text) from public;
+revoke all on function public.toggle_product_like(text,text,text)
+  from public, anon;
 grant execute on function public.toggle_product_like(text,text,text)
-  to anon, authenticated;
+  to authenticated;
 
 create or replace function public.get_product_social_state(
   p_store_slug text,

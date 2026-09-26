@@ -89,6 +89,14 @@ export default function ProductCommercePanel({
 
   async function toggleLike() {
     if (busy) return;
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session || session.user.is_anonymous) {
+      setMessage("Beğenmek için Google ile giriş yapmalısın.");
+      return;
+    }
+
     const sessionKey = ziyaretAnahtariniOkuyaUret();
     setBusy(true);
     setMessage("");

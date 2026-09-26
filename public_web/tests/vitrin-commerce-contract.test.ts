@@ -24,6 +24,11 @@ describe("Vitrin Ölçer müşteri etkileşim sözleşmesi", () => {
     expect(panel).not.toMatch(/\.from\(["']vitrin_product_/);
   });
 
+  it("beğeni de yorum gibi kalıcı hesap ister", () => {
+    expect(panel).toContain("Beğenmek için Google ile giriş yapmalısın.");
+    expect(panel).toContain("session.user.is_anonymous");
+  });
+
   it("yorum kalıcı hesap kapısını istemcide de gösterir", () => {
     expect(panel).toContain("session.user.is_anonymous");
     expect(panel).toContain("Google ile giriş yap");

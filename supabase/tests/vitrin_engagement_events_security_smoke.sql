@@ -86,12 +86,20 @@ begin
      or has_table_privilege('authenticated', 'public.vitrin_product_comments', 'SELECT') then
     raise exception 'sosyal tablolar dogrudan okunabiliyor';
   end if;
-  if not has_function_privilege(
+  if has_function_privilege(
     'anon',
     'public.toggle_product_like(text,text,text)',
     'EXECUTE'
   ) then
-    raise exception 'anon toggle_product_like execute kayboldu';
+    raise exception 'anon urun begenebiliyor';
+  end if;
+
+  if not has_function_privilege(
+    'authenticated',
+    'public.toggle_product_like(text,text,text)',
+    'EXECUTE'
+  ) then
+    raise exception 'authenticated urun begenemiyor';
   end if;
 
   if has_function_privilege(
