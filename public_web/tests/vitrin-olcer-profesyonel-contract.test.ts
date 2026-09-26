@@ -29,6 +29,16 @@ describe("Vitrin Ölçer profesyonel sözleşmesi", () => {
     expect(migration).not.toMatch(/author_name[^\n]*email/i);
   });
 
+  it("anonim beğeni aynı tarayıcıda hesap girişinden sonra çift sayılmaz", () => {
+    expect(migration).toContain("v_session_actor_key");
+    expect(migration).toContain("coalesce(v_session_actor_key, v_actor_key)");
+  });
+
+  it("yorum sahibine yalnız silme yetkisi işareti döner, user_id public JSON'a çıkmaz", () => {
+    expect(migration).toContain("'can_delete', q.can_delete");
+    expect(migration).not.toContain("'user_id', q.user_id");
+  });
+
   it("kötüye kullanım için event ve yorum hız sınırları vardır", () => {
     expect(migration).toContain("interval '1 minute'");
     expect(migration).toContain(">= 120");

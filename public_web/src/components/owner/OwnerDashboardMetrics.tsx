@@ -237,7 +237,10 @@ export function OwnerDashboardMetrics() {
                   <article key={item.id} className="rounded-lg border border-lp-border bg-lp-surface p-3">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="truncate text-[11px] font-black text-lp-secondary">{item.product_name} · {item.author_name}</p>
+                        <p className="truncate text-[11px] font-black text-lp-secondary">
+                          {item.product_name} · {item.author_name}
+                          {item.status === "hidden" ? " · gizli" : ""}
+                        </p>
                         <p className="mt-1 break-words text-[12px] font-semibold leading-5 text-lp-text">{item.body}</p>
                       </div>
                       <button

@@ -304,9 +304,17 @@ declare
   v_product_id uuid;
   v_actor_key text := public.vitrin_actor_key(p_session_key);
   v_user_id uuid := case when public.is_permanent_user() then auth.uid() else null end;
+  v_session_actor_key text;
   v_liked boolean;
   v_count bigint;
 begin
+  if pg_catalog.length(pg_catalog.btrim(coalesce(p_session_key, ''))) >= 16 then
+    v_session_actor_key := 's:' || encode(
+      sha256(pg_catalog.btrim(p_session_key)::bytea),
+      'hex'
+    );
+  end if;
+
   if v_actor_key is null then
     raise exception 'INVALID_VISITOR';
   end if;
@@ -338,10 +346,18 @@ begin
 
   if exists (
     select 1 from public.vitrin_product_likes
-    where product_id = v_product_id and actor_key = v_actor_key
+    where product_id = v_product_id
+      and actor_key in (
+        v_actor_key,
+        coalesce(v_session_actor_key, v_actor_key)
+      )
   ) then
     delete from public.vitrin_product_likes
-    where product_id = v_product_id and actor_key = v_actor_key;
+    where product_id = v_product_id
+      and actor_key in (
+        v_actor_key,
+        coalesce(v_session_actor_key, v_actor_key)
+      );
     v_liked := false;
     perform public.record_vitrin_engagement_v2(
       p_store_slug, 'product_unlike', p_session_key, p_product_slug, null, '{}'::jsonb
@@ -384,7 +400,15 @@ as $$
 declare
   v_product_id uuid;
   v_actor_key text := public.vitrin_actor_key(p_session_key);
+  v_session_actor_key text;
+  v_user_id uuid := auth.uid();
 begin
+  if pg_catalog.length(pg_catalog.btrim(coalesce(p_session_key, ''))) >= 16 then
+    v_session_actor_key := 's:' || encode(
+      sha256(pg_catalog.btrim(p_session_key)::bytea),
+      'hex'
+    );
+  end if;
   select p.id into v_product_id
   from public.stores s
   join public.products p on p.store_id = s.id
@@ -407,7 +431,11 @@ begin
     'liked', (
       v_actor_key is not null and exists (
         select 1 from public.vitrin_product_likes l
-        where l.product_id = v_product_id and l.actor_key = v_actor_key
+        where l.product_id = v_product_id
+          and l.actor_key in (
+            v_actor_key,
+            coalesce(v_session_actor_key, v_actor_key)
+          )
       )
     ),
     'comment_count', (
@@ -419,10 +447,16 @@ begin
         'id', q.id,
         'author_name', q.author_name,
         'body', q.body,
-        'created_at', q.created_at
+        'created_at', q.created_at,
+        'can_delete', q.can_delete
       ) order by q.created_at desc)
       from (
-        select c.id, c.author_name, c.body, c.created_at
+        select
+          c.id,
+          c.author_name,
+          c.body,
+          c.created_at,
+          (v_user_id is not null and c.user_id = v_user_id) as can_delete
         from public.vitrin_product_comments c
         where c.product_id = v_product_id
           and c.status = 'published'

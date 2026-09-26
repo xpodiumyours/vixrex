@@ -12,6 +12,7 @@ type SocialComment = {
   author_name: string;
   body: string;
   created_at: string;
+  can_delete?: boolean;
 };
 
 type SocialState = {
@@ -155,6 +156,28 @@ export default function ProductCommercePanel({
     }
   }
 
+  async function deleteComment(commentId: string) {
+    if (busy) return;
+    setBusy(true);
+    setMessage("");
+    try {
+      const { error } = await supabase.rpc("delete_my_product_comment", {
+        p_comment_id: commentId,
+      });
+      if (error) throw error;
+      setSocial((current) => ({
+        ...current,
+        comment_count: Math.max(0, current.comment_count - 1),
+        comments: current.comments.filter((item) => item.id !== commentId),
+      }));
+      setMessage("Yorumun silindi.");
+    } catch {
+      setMessage("Yorum silinemedi.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function addCart() {
     if (!cartEnabled || stockQuantity === 0) return;
     const variantKey = selectedVariantId?.trim() || selectedVariantText.trim() || "standart";
@@ -243,8 +266,22 @@ export default function ProductCommercePanel({
           <div className="mt-3 max-h-52 space-y-2 overflow-y-auto pr-1">
             {social.comments.map((item) => (
               <article key={item.id} className="rounded-xl border border-white/8 bg-slate-950/55 px-3 py-2.5">
-                <div className="text-[11px] font-extrabold text-white/55">{item.author_name}</div>
-                <p className="mt-1 whitespace-pre-wrap break-words text-xs leading-5 text-white/80">{item.body}</p>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-[11px] font-extrabold text-white/55">{item.author_name}</div>
+                    <p className="mt-1 whitespace-pre-wrap break-words text-xs leading-5 text-white/80">{item.body}</p>
+                  </div>
+                  {item.can_delete ? (
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => void deleteComment(item.id)}
+                      className="shrink-0 text-[10px] font-extrabold text-red-300 disabled:opacity-50"
+                    >
+                      Sil
+                    </button>
+                  ) : null}
+                </div>
               </article>
             ))}
           </div>
