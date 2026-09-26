@@ -141,8 +141,15 @@ export default function ProductCommercePanel({
       }));
       setComment("");
       setMessage("Yorumun yayınlandı.");
-    } catch {
-      setMessage("Yorum şu anda kaydedilemedi.");
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error || "");
+      if (detail.includes("COMMENT_RATE_LIMIT")) {
+        setMessage("Çok kısa sürede fazla yorum gönderdin. Biraz sonra tekrar dene.");
+      } else if (detail.includes("DUPLICATE_COMMENT")) {
+        setMessage("Aynı yorumu kısa süre içinde tekrar gönderemezsin.");
+      } else {
+        setMessage("Yorum şu anda kaydedilemedi.");
+      }
     } finally {
       setBusy(false);
     }

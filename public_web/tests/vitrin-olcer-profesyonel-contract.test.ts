@@ -29,11 +29,21 @@ describe("Vitrin Ölçer profesyonel sözleşmesi", () => {
     expect(migration).not.toMatch(/author_name[^\n]*email/i);
   });
 
+  it("kötüye kullanım için event ve yorum hız sınırları vardır", () => {
+    expect(migration).toContain("interval '1 minute'");
+    expect(migration).toContain(">= 120");
+    expect(migration).toContain("COMMENT_RATE_LIMIT");
+    expect(migration).toContain("DUPLICATE_COMMENT");
+  });
+
   it("sahip özeti auth uid ile kendi vitrinini bulur", () => {
     expect(migration).toContain("create or replace function public.get_vitrin_olcer_summary");
     expect(migration).toContain("s.user_id = v_user_id");
     expect(migration).toContain("'conversion_percent'");
     expect(migration).toContain("'traffic_sources'");
     expect(migration).toContain("'top_products'");
+    expect(migration).toContain("'period_start'");
+    expect(migration).toContain("'period_end'");
+    expect(migration).toContain("count(distinct coalesce(");
   });
 });

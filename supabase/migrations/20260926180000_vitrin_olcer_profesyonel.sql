@@ -230,6 +230,16 @@ begin
     return;
   end if;
 
+  if (
+    select count(*)
+    from public.vitrin_engagement_events e
+    where e.store_id = v_store_id
+      and e.session_key = v_actor_key
+      and e.created_at >= now() - interval '1 minute'
+  ) >= 120 then
+    return;
+  end if;
+
   insert into public.vitrin_engagement_events (
     store_id,
     event_type,
@@ -313,6 +323,17 @@ begin
 
   if v_product_id is null then
     raise exception 'PRODUCT_NOT_FOUND';
+  end if;
+
+  if (
+    select count(*)
+    from public.vitrin_engagement_events e
+    where e.store_id = v_store_id
+      and e.session_key = v_actor_key
+      and e.event_type in ('product_like', 'product_unlike')
+      and e.created_at >= now() - interval '1 minute'
+  ) >= 20 then
+    raise exception 'RATE_LIMITED';
   end if;
 
   if exists (
@@ -456,6 +477,28 @@ begin
 
   if v_product_id is null then
     raise exception 'PRODUCT_NOT_FOUND';
+  end if;
+
+  if (
+    select count(*)
+    from public.vitrin_product_comments c
+    where c.user_id = v_user_id
+      and c.created_at >= now() - interval '10 minutes'
+      and c.status <> 'deleted'
+  ) >= 5 then
+    raise exception 'COMMENT_RATE_LIMIT';
+  end if;
+
+  if exists (
+    select 1
+    from public.vitrin_product_comments c
+    where c.user_id = v_user_id
+      and c.product_id = v_product_id
+      and c.body = v_body
+      and c.created_at >= now() - interval '10 minutes'
+      and c.status <> 'deleted'
+  ) then
+    raise exception 'DUPLICATE_COMMENT';
   end if;
 
   v_author_name := pg_catalog.btrim(coalesce(
@@ -606,6 +649,8 @@ begin
 
   return jsonb_build_object(
     'days', v_days,
+    'period_start', v_start,
+    'period_end', now(),
     'unique_visitors', coalesce(v_visitors, 0),
     'store_views', (
       select count(*) from public.vitrin_views vv
@@ -616,12 +661,16 @@ begin
       where e.store_id = v_store_id and e.event_type = 'product_view' and e.created_at >= v_start
     ),
     'likes', (
-      select count(*) from public.vitrin_product_likes l
-      where l.store_id = v_store_id
+      select count(*) from public.vitrin_engagement_events e
+      where e.store_id = v_store_id
+        and e.event_type = 'product_like'
+        and e.created_at >= v_start
     ),
     'comments', (
-      select count(*) from public.vitrin_product_comments c
-      where c.store_id = v_store_id and c.status = 'published'
+      select count(*) from public.vitrin_engagement_events e
+      where e.store_id = v_store_id
+        and e.event_type = 'comment_create'
+        and e.created_at >= v_start
     ),
     'cart_adds', (
       select count(*) from public.vitrin_engagement_events e
@@ -663,12 +712,19 @@ begin
           count(*) filter (
             where e.event_type = 'product_view' and e.created_at >= v_start
           ) as views,
-          (select count(*) from public.vitrin_product_likes l where l.product_id = p.id) as likes,
-          (select count(*) from public.vitrin_product_comments c where c.product_id = p.id and c.status = 'published') as comments,
+          count(*) filter (
+            where e.event_type = 'product_like' and e.created_at >= v_start
+          ) as likes,
+          count(*) filter (
+            where e.event_type = 'comment_create' and e.created_at >= v_start
+          ) as comments,
           count(*) filter (
             where e.event_type = 'cart_add' and e.created_at >= v_start
           ) as cart_adds,
-          count(*) filter (
+          count(distinct coalesce(
+            nullif(e.metadata ->> 'order_key', ''),
+            e.id::text
+          )) filter (
             where e.event_type = 'cart_whatsapp_order' and e.created_at >= v_start
           ) as orders
         from public.products p

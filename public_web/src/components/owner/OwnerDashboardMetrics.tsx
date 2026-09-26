@@ -30,6 +30,8 @@ type RecentComment = {
 
 type OlcerOzeti = {
   days: number;
+  period_start?: string;
+  period_end?: string;
   unique_visitors: number;
   store_views: number;
   product_views: number;
@@ -117,13 +119,14 @@ export function OwnerDashboardMetrics() {
     };
   }, []);
 
-  async function yorumuGizle(id: string) {
+  async function yorumDurumunuDegistir(id: string, mevcutDurum: string) {
     if (yorumIslemi) return;
+    const yeniDurum = mevcutDurum === "hidden" ? "published" : "hidden";
     setYorumIslemi(id);
     try {
       const { error } = await supabase.rpc("set_product_comment_status", {
         p_comment_id: id,
-        p_status: "hidden",
+        p_status: yeniDurum,
       });
       if (error) throw error;
       setOzet((current) => {
@@ -132,13 +135,14 @@ export function OwnerDashboardMetrics() {
           ...current,
           olcer: {
             ...current.olcer,
-            recent_comments: current.olcer.recent_comments.filter((item) => item.id !== id),
-            comments: Math.max(0, current.olcer.comments - 1),
+            recent_comments: current.olcer.recent_comments.map((item) =>
+              item.id === id ? { ...item, status: yeniDurum } : item,
+            ),
           },
         };
       });
     } catch {
-      setHata("Yorum gizlenemedi.");
+      setHata("Yorum durumu değiştirilemedi.");
     } finally {
       setYorumIslemi(null);
     }
@@ -158,6 +162,7 @@ export function OwnerDashboardMetrics() {
           <h2 id="vitrin-olcer-title" className="mt-1 text-[18px] font-black text-lp-text">Müşteri hareketleri</h2>
           <p className="mt-1 text-[12px] font-semibold text-lp-muted">
             Ham ziyaretçi kimliği gösterilmez; yalnız işletme performans özeti görünür.
+            {olcer ? ` Son ${olcer.days} gün aynı dönem üzerinden hesaplanır.` : ""}
           </p>
         </div>
         <div className="rounded-full border border-lp-border bg-lp-bg-light px-3 py-1.5 text-[11px] font-black text-lp-muted">
@@ -238,10 +243,10 @@ export function OwnerDashboardMetrics() {
                       <button
                         type="button"
                         disabled={yorumIslemi === item.id}
-                        onClick={() => void yorumuGizle(item.id)}
+                        onClick={() => void yorumDurumunuDegistir(item.id, item.status)}
                         className="shrink-0 rounded-lg border border-lp-border px-2.5 py-1.5 text-[10px] font-black text-red-300 disabled:opacity-50"
                       >
-                        Gizle
+                        {item.status === "hidden" ? "Göster" : "Gizle"}
                       </button>
                     </div>
                   </article>
