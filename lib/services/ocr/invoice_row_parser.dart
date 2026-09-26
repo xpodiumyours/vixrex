@@ -225,10 +225,7 @@ class InvoiceRowParser {
     );
   }
 
-  DetectedProduct? _parseRowWithoutBarcode(
-    List<OcrToken> input,
-    int index,
-  ) {
+  DetectedProduct? _parseRowWithoutBarcode(List<OcrToken> input, int index) {
     final row = List<OcrToken>.from(input)
       ..sort((a, b) => a.centerX.compareTo(b.centerX));
     final money = _findMoney(row);
@@ -329,7 +326,9 @@ class InvoiceRowParser {
         hasVariant: false,
         hasSize: false,
         hasQuantity: quantity != null,
-        hasPurchasePrice: purchaseUnitPrice != null,
+        // Bu noktada purchaseUnitPrice her zaman dolu: money boşsa satır
+        // zaten null dönüyor. Kontrol analiz uyarısı üretiyordu.
+        hasPurchasePrice: true,
         hasLineTotal: lineTotal != null,
         issues: issues,
       ),

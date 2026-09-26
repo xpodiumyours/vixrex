@@ -351,9 +351,7 @@ class IcerikSeoBolumu extends StatelessWidget {
               Navigator.of(ctx, rootNavigator: true).push(
                 MaterialPageRoute(
                   builder:
-                      (_) => OcrScannerScreen(
-                        ocrController: invoiceController,
-                      ),
+                      (_) => OcrScannerScreen(ocrController: invoiceController),
                 ),
               );
             },

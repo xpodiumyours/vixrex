@@ -287,7 +287,6 @@ class OcrResultList extends StatelessWidget {
     );
   }
 
-
   Color _getConfidenceColor(double confidence) {
     if (confidence >= 0.85) return AppColors.success;
     if (confidence >= 0.60) return const Color(0xFFF59E0B); // Amber/warning

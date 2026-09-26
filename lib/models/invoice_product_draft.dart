@@ -209,10 +209,9 @@ class InvoiceProductDraft {
 
   bool get hasPositiveSalePrice => salePrice != null && salePrice! > 0;
 
-  List<InvoiceImageCandidate> get selectedExternalImages =>
-      imageCandidates
-          .where((item) => item.selected && item.isExternal)
-          .toList(growable: false);
+  List<InvoiceImageCandidate> get selectedExternalImages => imageCandidates
+      .where((item) => item.selected && item.isExternal)
+      .toList(growable: false);
 
   InvoiceProductDraft copyWith({
     EvidenceValue<String>? supplierName,
@@ -277,8 +276,7 @@ class InvoiceProductDraft {
     if (rawName != null) 'raw_name': rawName!.toJson(),
     if (normalizedName != null) 'normalized_name': normalizedName!.toJson(),
     if (gtinBarcode != null) 'gtin_barcode': gtinBarcode!.toJson(),
-    if (manufacturerSku != null)
-      'manufacturer_sku': manufacturerSku!.toJson(),
+    if (manufacturerSku != null) 'manufacturer_sku': manufacturerSku!.toJson(),
     if (supplierSku != null) 'supplier_sku': supplierSku!.toJson(),
     if (modelCode != null) 'model_code': modelCode!.toJson(),
     if (brand != null) 'brand': brand!.toJson(),
@@ -294,8 +292,9 @@ class InvoiceProductDraft {
       'canonical_product_id': canonicalProductId!.toJson(),
     if (canonicalProductUrl != null)
       'canonical_product_url': canonicalProductUrl!.toJson(),
-    'image_candidates':
-        imageCandidates.map((item) => item.toJson()).toList(growable: false),
+    'image_candidates': imageCandidates
+        .map((item) => item.toJson())
+        .toList(growable: false),
     'supplier_identity_strength': supplierIdentityStrength.wireValue,
     'product_identity_strength': productIdentityStrength.wireValue,
     'rights_status': rightsStatus.wireValue,
