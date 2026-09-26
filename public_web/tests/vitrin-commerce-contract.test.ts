@@ -29,6 +29,13 @@ describe("Vitrin Ölçer müşteri etkileşim sözleşmesi", () => {
     expect(panel).toContain("Google ile giriş yap");
   });
 
+  it("WhatsApp sekmesini ölçüm ağ çağrılarını beklemeden kullanıcı tıklaması içinde açar", () => {
+    const openIndex = dock.indexOf('link.click()');
+    const trackingIndex = dock.indexOf('void Promise.all');
+    expect(openIndex).toBeGreaterThan(-1);
+    expect(trackingIndex).toBeGreaterThan(openIndex);
+  });
+
   it("sepet WhatsApp geçişini ayrı dönüşüm olayı olarak ölçer", () => {
     expect(dock).toContain('eventType: "cart_whatsapp_order"');
     expect(dock).toContain("order_key: orderKey");

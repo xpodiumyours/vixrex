@@ -72,37 +72,45 @@ export default function VitrinCartDock({
     });
   }
 
-  async function order() {
+  function order() {
     const url = buildWhatsappOrderUrl(whatsappBaseUrl, storeName, items);
     if (!url) {
       setMessage("Bu vitrinde WhatsApp sipariş bağlantısı hazır değil.");
       return;
     }
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.click();
+
     const orderKey =
       typeof crypto !== "undefined" && "randomUUID" in crypto
         ? crypto.randomUUID()
         : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
-    for (const item of items) {
-      await recordVitrinEngagement({
+    void Promise.all([
+      ...items.map((item) =>
+        recordVitrinEngagement({
+          storeSlug,
+          eventType: "cart_whatsapp_order",
+          productSlug: item.productSlug,
+          quantity: item.quantity,
+          metadata: {
+            order_key: orderKey,
+            variant: item.variantText || null,
+            item_count: items.length,
+          },
+        }),
+      ),
+      recordVitrinEngagement({
         storeSlug,
-        eventType: "cart_whatsapp_order",
-        productSlug: item.productSlug,
-        quantity: item.quantity,
-        metadata: {
-          order_key: orderKey,
-          variant: item.variantText || null,
-          item_count: items.length,
-        },
-      });
-    }
-    await recordVitrinEngagement({
-      storeSlug,
-      eventType: "whatsapp_click",
-      quantity: totalQuantity,
-      metadata: { surface: "cart", order_key: orderKey },
-    });
-    window.open(url, "_blank", "noopener,noreferrer");
+        eventType: "whatsapp_click",
+        quantity: totalQuantity,
+        metadata: { surface: "cart", order_key: orderKey },
+      }),
+    ]);
   }
 
   return (
@@ -149,7 +157,7 @@ export default function VitrinCartDock({
 
             <button
               type="button"
-              onClick={() => void order()}
+              onClick={order}
               className="mt-5 min-h-12 w-full rounded-xl bg-[#25D366] px-5 text-sm font-black text-[#04140a]"
             >
               WhatsApp’tan siparişi gönder
