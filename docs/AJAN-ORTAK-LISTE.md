@@ -15,21 +15,15 @@
 > Not: en alta ekleyin, araya girmeyin — iki ajan aynı anda yazarsa çakışma
 > en aza insin.
 
-## Bekleyen tek elle iş
+## Fatura okuyucu — AÇIK (2026-09-26)
 
-**`OPENROUTER_API_KEY` canlı (production) ortamda YOK.** Fatura okuma bu
-anahtara bağlı. Anahtar olmadan "Faturadan Ekle" düğmesi hiç gösterilmez —
-yani hiçbir şey bozulmaz, özellik sadece kapalı durur.
+`OPENROUTER_API_KEY` canlı (production) ortama eklendi. Fatura okuma açık.
 
-Açmak için: Vercel → vixrex-public → Settings → Environment Variables →
-`OPENROUTER_API_KEY` satırını **Production** ortamına da ekle. Değer:
-`ayarlar.json` içindeki `openrouter_key`.
+Kontrol: `curl https://vixrex.com/api/fatura-okuyucu-durumu` → `{"hazir":true}`
 
-Bunu bir ajan yapamaz: bu makinedeki güvenlik kuralı, canlı ortama gizli
-anahtar yazılmasını engelliyor. Kasıtlıdır.
-
-Kontrol: `curl https://vixrex.com/api/fatura-okuyucu-durumu`
-→ `{"hazir":true}` görünce açılmıştır.
+Anahtar biterse/iptal olursa cevap `{"hazir":false}` olur ve "Faturadan Ekle"
+düğmesi kendiliğinden gizlenir — kimse hata görmez. Bakiye:
+openrouter.ai/settings/credits (fatura başına ~7 kuruş).
 
 ## Yapılanlar
 
