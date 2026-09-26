@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildWhatsappOrderUrl,
+  cartStateIsFresh,
   cartTotalQuantity,
   mergeCartItem,
   type VitrinCartItem,
@@ -60,6 +61,12 @@ describe("Vitrin sepeti", () => {
     );
     expect(sonuc[0].priceText).toBe("499 TL");
     expect(sonuc[0].maxQuantity).toBe(5);
+  });
+
+  it("24 saati geçen sepeti eski kabul eder", () => {
+    const now = Date.parse("2026-09-26T18:00:00.000Z");
+    expect(cartStateIsFresh("2026-09-26T17:00:00.000Z", now)).toBe(true);
+    expect(cartStateIsFresh("2026-09-25T16:00:00.000Z", now)).toBe(false);
   });
 
   it("toplam adedi satır sayısından değil miktarlardan hesaplar", () => {

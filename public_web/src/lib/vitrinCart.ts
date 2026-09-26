@@ -89,15 +89,23 @@ function emptyState(): VitrinCartState {
   return { version: 1, items: [], updatedAt: new Date(0).toISOString() };
 }
 
+export function cartStateIsFresh(
+  updatedAt: string | null | undefined,
+  nowMs = Date.now(),
+): boolean {
+  if (!updatedAt) return false;
+  const updatedAtMs = Date.parse(updatedAt);
+  if (!Number.isFinite(updatedAtMs)) return false;
+  return nowMs - updatedAtMs <= CART_TTL_MS;
+}
+
 export function readVitrinCart(storeSlug: string): VitrinCartState {
   if (typeof window === "undefined") return emptyState();
   try {
     const raw = window.localStorage.getItem(storageKey(storeSlug));
     if (!raw) return emptyState();
     const parsed = JSON.parse(raw) as Partial<VitrinCartState>;
-    const updatedAtMs =
-      typeof parsed.updatedAt === "string" ? Date.parse(parsed.updatedAt) : Number.NaN;
-    if (!Number.isFinite(updatedAtMs) || Date.now() - updatedAtMs > CART_TTL_MS) {
+    if (!cartStateIsFresh(parsed.updatedAt)) {
       window.localStorage.removeItem(storageKey(storeSlug));
       return emptyState();
     }

@@ -262,7 +262,7 @@ $$;
 revoke all on function public.record_vitrin_engagement_v2(text,text,text,text,integer,jsonb)
   from public;
 grant execute on function public.record_vitrin_engagement_v2(text,text,text,text,integer,jsonb)
-  to anon, authenticated;
+  to anon, authenticated, service_role;
 
 create or replace function public.record_vitrin_engagement(
   p_store_slug text,
@@ -570,7 +570,8 @@ begin
     'id', v_id,
     'author_name', v_author_name,
     'body', v_body,
-    'created_at', now()
+    'created_at', now(),
+    'can_delete', true
   );
 end;
 $$;

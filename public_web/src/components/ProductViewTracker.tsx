@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { supabase } from "@/lib/supabase";
 import { ziyaretAnahtariniOkuyaUret } from "@/lib/vitrinZiyaretAnahtari";
 
 function ownerPreviewActive(): boolean {
@@ -36,16 +35,19 @@ export default function ProductViewTracker({
     }
     firedRef.current = true;
 
-    supabase
-      .rpc("record_vitrin_engagement", {
-        p_store_slug: storeSlug,
-        p_event_type: "product_view",
-        p_session_key: ziyaretAnahtariniOkuyaUret(),
-        p_product_slug: productSlug,
-      })
-      .then(({ error }) => {
-        if (error) console.error("record_vitrin_engagement failed:", error);
-      });
+    void fetch("/api/vitrin-engagement", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        storeSlug,
+        productSlug,
+        sessionKey: ziyaretAnahtariniOkuyaUret(),
+        eventType: "product_view",
+      }),
+      keepalive: true,
+    }).catch(() => {
+      // Pasif ölçüm hatası ürün sayfasını etkilemez.
+    });
   }, [storeSlug, productSlug]);
 
   return null;

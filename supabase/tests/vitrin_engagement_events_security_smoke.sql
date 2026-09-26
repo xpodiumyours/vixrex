@@ -65,6 +65,30 @@ begin
   end if;
 
   if not has_function_privilege(
+    'service_role',
+    'public.record_vitrin_engagement_v2(text,text,text,text,integer,jsonb)',
+    'EXECUTE'
+  ) then
+    raise exception 'service_role engagement v2 execute kayboldu';
+  end if;
+
+  if has_function_privilege(
+    'anon',
+    'public.record_vitrin_view_web(text,text,text,text,text)',
+    'EXECUTE'
+  ) then
+    raise exception 'anon web ziyaret sunucu kapisini bypass edebiliyor';
+  end if;
+
+  if not has_function_privilege(
+    'service_role',
+    'public.record_vitrin_view_web(text,text,text,text,text)',
+    'EXECUTE'
+  ) then
+    raise exception 'service_role web ziyaret kapisina erisemiyor';
+  end if;
+
+  if not has_function_privilege(
     'authenticated',
     'public.get_vitrin_olcer_summary(integer)',
     'EXECUTE'
