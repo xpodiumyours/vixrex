@@ -37,7 +37,11 @@ const BIRIM_KELIMELERI = new Set(["AD", "ADET", "AD.", "ADET."]);
 /** "137,00" veya "1.234,50" biçimindeki fiyat belirtecini sayıya çevirir. */
 function fiyatMi(token: string): number | null {
   const temiz = token.replace(/^[₺$]/, "").replace(/TL\.?$/i, "");
-  if (!/^\d{1,3}(\.\d{3})*,\d{2}$/.test(temiz)) return null;
+  // Gerçek faturada birim fiyat 4 ondalıkla yazılabiliyor ("137,0000"),
+  // satır tutarı 2 ondalıkla ("274,00"). İkisi de fiyattır; yalnız 2
+  // ondalık kabul edilirse birim fiyat ada karışır ve satır tutarı
+  // alış fiyatı sanılır.
+  if (!/^\d{1,3}(\.\d{3})*,\d{2,4}$/.test(temiz)) return null;
   const sayi = Number(temiz.replace(/\./g, "").replace(",", "."));
   return Number.isFinite(sayi) ? sayi : null;
 }
@@ -201,4 +205,115 @@ export function hamMetniSatirlaraAyir(metin: string): HamFaturaSatiri[] {
     if (ayiklanan) sonuc.push(ayiklanan);
   }
   return sonuc;
+}
+
+/** Belgenin kendi yazdığı toplamlar — satırlardan HESAPLANMAZ, okunur. */
+export interface BelgeOzeti {
+  /** Belgede yazan toplam adet. Bulunamazsa null. */
+  adet: number | null;
+  /** Belgede yazan toplam tutar (TL). Bulunamazsa null. */
+  toplam: number | null;
+}
+
+/** "6.034,00" → 6034 ; "137,0000" → 137 */
+function trSayi(ham: string): number | null {
+  const sayi = Number(ham.replace(/\./g, "").replace(",", "."));
+  return Number.isFinite(sayi) ? sayi : null;
+}
+
+/**
+ * Belgenin alt toplam satırını okur: "Toplam: 75 ad 6.034,00 TL".
+ *
+ * Bu satır ürün satırı değildir ama BELGE GERÇEĞİdir: okunan satırların
+ * doğru olup olmadığını yalnız buna karşı ölçebiliriz. Bu yüzden ürün
+ * satırlarını eleyen filtreden ÖNCE, ham metinden okunur.
+ */
+export function belgeOzetiniAyikla(metin: string): BelgeOzeti {
+  let adet: number | null = null;
+  let toplam: number | null = null;
+
+  for (const satir of metin.split(/\r?\n/)) {
+    const temiz = satir.trim();
+    if (!/^(ara\s+)?toplam\b/i.test(temiz)) continue;
+
+    const adetEslesme = temiz.match(/(\d+)\s*(?:ad|adet)\b/i);
+    if (adetEslesme && adet === null) adet = Number(adetEslesme[1]);
+
+    // Satırdaki SON para değeri toplam tutardır (önce adet, sonra tutar).
+    const tutarlar = [...temiz.matchAll(/(\d{1,3}(?:\.\d{3})*|\d+),(\d{2})\b/g)];
+    if (tutarlar.length > 0 && toplam === null) {
+      toplam = trSayi(`${tutarlar[tutarlar.length - 1][1]},${tutarlar[tutarlar.length - 1][2]}`);
+    }
+  }
+
+  return { adet, toplam };
+}
+
+export interface BelgeUyumu {
+  uyumlu: boolean;
+  /** Uyumsuzsa esnafa gösterilecek, jargonsuz sebep. */
+  sebep: string | null;
+  okunanAdet: number;
+  okunanToplam: number;
+  belgeAdedi: number | null;
+  belgeToplami: number | null;
+}
+
+/**
+ * Okunan satırları belgenin kendi toplamıyla karşılaştırır.
+ *
+ * Tutmuyorsa AKIŞ DURUR — eksik/yanlış okunmuş satırla ürün kartı üretmek,
+ * esnafa yanlış stok ve yanlış alış fiyatı yazmak demektir. Tahminle
+ * düzeltme yapılmaz.
+ *
+ * Belge toplamı hiç okunamadıysa karşılaştırma yapılamaz; bu da uyumsuzluk
+ * sayılır — ölçemediğimiz şeyi "doğru" diye geçiremeyiz.
+ */
+export function belgeGercegiUyuyorMu(
+  satirlar: HamFaturaSatiri[],
+  ozet: BelgeOzeti,
+): BelgeUyumu {
+  const okunanAdet = satirlar.reduce((t, s) => t + (s.adet ?? 0), 0);
+  const okunanToplam = satirlar.reduce((t, s) => t + (s.satirToplam ?? 0), 0);
+
+  const temel = {
+    okunanAdet,
+    okunanToplam,
+    belgeAdedi: ozet.adet,
+    belgeToplami: ozet.toplam,
+  };
+
+  if (ozet.adet === null && ozet.toplam === null) {
+    return { ...temel, uyumlu: false, sebep: "Belgenin toplam satırı okunamadı." };
+  }
+
+  const eksikler: string[] = [];
+  if (ozet.adet !== null && ozet.adet !== okunanAdet) {
+    eksikler.push(`adet ${okunanAdet} okundu, belgede ${ozet.adet} yazıyor`);
+  }
+  // Kuruş yuvarlamasına tolerans; bunun ötesi gerçek uyumsuzluktur.
+  if (ozet.toplam !== null && Math.abs(ozet.toplam - okunanToplam) > 0.05) {
+    eksikler.push(
+      `tutar ${okunanToplam.toFixed(2)} TL okundu, belgede ${ozet.toplam.toFixed(2)} TL yazıyor`,
+    );
+  }
+
+  if (eksikler.length === 0) return { ...temel, uyumlu: true, sebep: null };
+
+  return {
+    ...temel,
+    uyumlu: false,
+    sebep: `Fatura tam okunamadı (${eksikler.join("; ")}).`,
+  };
+}
+
+/**
+ * Eşleştirmeye girebilecek satırlar: kodu ya da barkodu olanlar.
+ *
+ * Başlık ("Model", "Barkod"), tarih ve form bilgisi satırları da metinden
+ * çıkar; bunlar ürün değildir. Süzgeç tek yerde durur ki uç noktalar ile
+ * testler aynı sayıyı ölçsün.
+ */
+export function urunSatirlari(satirlar: HamFaturaSatiri[]): HamFaturaSatiri[] {
+  return satirlar.filter((satir) => satir.model || satir.barkod);
 }

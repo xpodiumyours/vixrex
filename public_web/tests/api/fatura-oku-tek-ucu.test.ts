@@ -73,7 +73,12 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
         return new Response(
           JSON.stringify({
             tamam: true,
-            yazi: "ELT1302 Elit Erkek Elastan Sıfır Yaka Uzun Kol 8681128321677 Siyah L 2 ad 137,00 TL 274,00 TL",
+            // Gerçek belgede olduğu gibi alt toplam satırı da var; olmazsa
+            // belge gerçeği kapısı (haklı olarak) okumayı kabul etmez.
+            yazi: [
+              "ELT1302 Elit Erkek Elastan Sıfır Yaka Uzun Kol 8681128321677 Siyah L 2 ad 137,00 TL 274,00 TL",
+              "Toplam: 2 ad 274,00 TL",
+            ].join(String.fromCharCode(10)),
             model: "stepfun/step-3.7-flash:free",
           }),
           { status: 200 },
@@ -128,5 +133,43 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     mocks.rpc.mockResolvedValue({ data: { allowed: false, retry_after_seconds: 30 }, error: null });
     const cevap = await faturaOku(istek());
     expect(cevap.status).toBe(429);
+  });
+
+  it("belge toplamı satırlarla tutmuyorsa akış durur ve tekrar denenir", async () => {
+    // Gerçek ölçüm: okuyucu bazı adet/fiyatları yanlış okuyabiliyor. Böyle
+    // bir okumadan ürün kartı üretmek, esnafa yanlış stok ve yanlış maliyet
+    // yazmak demektir. Kapı durdurur, tahminle düzeltmez.
+    const okuma = vi.fn(async () =>
+      new Response(
+        JSON.stringify({
+          tamam: true,
+          yazi: [
+            "ELT1302 Elit Erkek Elastan Sıfır Yaka Uzun Kol 8681128321677 Siyah L 2 ad 137,00 TL 274,00 TL",
+            "Toplam: 75 ad 6.034,00 TL",
+          ].join(String.fromCharCode(10)),
+        }),
+        { status: 200 },
+      ),
+    );
+    vi.stubGlobal("fetch", okuma);
+
+    const cevap = await faturaOku(istek());
+    const govde = await cevap.json();
+
+    expect(cevap.status).toBe(422);
+    expect(govde.hata).toContain("tam okunamadı");
+    expect(govde.belgeAdedi).toBe(75);
+    expect(govde.okunanAdet).toBe(2);
+    // Yarım okuma bir kez olabilir; ısrarla olmaz — üç kez denenir.
+    expect(okuma).toHaveBeenCalledTimes(3);
+  });
+
+  it("belge toplamı tutuyorsa belge gerçeği cevapta döner", async () => {
+    const cevap = await faturaOku(istek());
+    const govde = await cevap.json();
+
+    expect(cevap.status).toBe(200);
+    expect(govde.belgeAdedi).toBe(2);
+    expect(govde.belgeToplami).toBe(274);
   });
 });
