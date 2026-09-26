@@ -23,7 +23,7 @@ export default function PrivacyPage() {
         <li><strong>Hesap bilgileri:</strong> E-posta adresi, şifre (şifrelenmiş)</li>
         <li><strong>İşletme bilgileri:</strong> Ad, adres, telefon, sosyal medya linkleri, ürünler, fotoğraflar</li>
         <li><strong>Randevu verileri:</strong> Müşteri adı, telefonu, notları, randevu saati</li>
-        <li><strong>Kullanım verileri:</strong> IP adresi, cihaz bilgisi, görüntülenme kayıtları</li>
+        <li><strong>Kullanım verileri:</strong> cihaz/tarayıcı bilgisi ve görüntülenme kayıtları. Web vitrin ölçümünde IP adresi ham olarak saklanmaz; kötüye kullanım kontrolü için tek yönlü teknik özet (hash) üretilir.</li>
         <li><strong>Vitrin etkileşim verileri:</strong> ürün görüntüleme, beğeni, yorum, sepete ekleme ve WhatsApp sipariş geçişi. İşletme sahibine ham ziyaretçi kimliği gösterilmez.</li>
         <li><strong>Sepet verisi:</strong> ürün, varyant ve adet bilgisi sipariş WhatsApp&apos;a aktarılana kadar tarayıcınızda yerel olarak tutulabilir.</li>
       </ul>

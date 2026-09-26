@@ -798,6 +798,94 @@ $$;
 revoke all on function public.get_vitrin_olcer_summary(integer) from public;
 grant execute on function public.get_vitrin_olcer_summary(integer) to authenticated;
 
+
+create or replace function public.record_vitrin_view_web(
+  p_store_slug text,
+  p_session_key text,
+  p_source text,
+  p_request_fingerprint text,
+  p_user_agent text default null
+)
+returns void
+language plpgsql
+security definer
+set search_path = pg_catalog, public
+as $
+declare
+  v_store_id uuid;
+  v_store_slug text;
+  v_session_key text := pg_catalog.btrim(coalesce(p_session_key, ''));
+  v_source text := lower(pg_catalog.btrim(coalesce(p_source, 'unknown')));
+  v_fingerprint text := pg_catalog.btrim(coalesce(p_request_fingerprint, ''));
+  v_user_agent text := pg_catalog.left(pg_catalog.btrim(coalesce(p_user_agent, '')), 300);
+  v_viewed_date date := (now() at time zone 'Europe/Istanbul')::date;
+begin
+  if pg_catalog.length(v_session_key) < 16
+     or pg_catalog.length(v_fingerprint) < 32 then
+    return;
+  end if;
+
+  if v_source not in (
+    'direct', 'qr', 'share', 'unknown',
+    'google', 'instagram', 'facebook', 'whatsapp', 'twitter', 'tiktok',
+    'diger_site'
+  ) then
+    v_source := 'unknown';
+  end if;
+
+  select s.id, s.slug
+    into v_store_id, v_store_slug
+  from public.stores s
+  where s.slug = pg_catalog.btrim(coalesce(p_store_slug, ''))
+    and s.is_published = true
+  limit 1;
+
+  if v_store_id is null then
+    return;
+  end if;
+
+  -- Aynı teknik kaynaktan günde 50 farklı oturumdan fazlasını vitrin
+  -- ziyaretine çevirmeyiz. Normal NAT/ofis trafiğini bozmayacak kadar geniş,
+  -- session reset botlarını şişirmeyecek kadar sınırlı bir eşiktir.
+  if (
+    select count(*)
+    from public.vitrin_views vv
+    where vv.store_id = v_store_id
+      and vv.viewer_ip = v_fingerprint
+      and vv.viewed_date = v_viewed_date
+  ) >= 50 then
+    return;
+  end if;
+
+  insert into public.vitrin_views (
+    store_id,
+    store_slug,
+    session_key,
+    source,
+    viewed_date,
+    viewer_ip,
+    user_agent
+  ) values (
+    v_store_id,
+    v_store_slug,
+    v_session_key,
+    v_source,
+    v_viewed_date,
+    v_fingerprint,
+    nullif(v_user_agent, '')
+  )
+  on conflict (store_id, session_key, viewed_date) do nothing;
+end;
+$;
+
+revoke all on function public.record_vitrin_view_web(text,text,text,text,text)
+  from public, anon, authenticated;
+grant execute on function public.record_vitrin_view_web(text,text,text,text,text)
+  to service_role;
+
+comment on function public.record_vitrin_view_web(text,text,text,text,text) is
+  'Web vitrin ziyaretini sunucu kapısından kaydeder. viewer_ip alanına ham IP değil SHA-256 teknik parmak izi yazılır.';
+
 notify pgrst, 'reload schema';
 
 commit;

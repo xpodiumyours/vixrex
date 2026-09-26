@@ -14,6 +14,13 @@ describe("Vitrin Ölçer profesyonel sözleşmesi", () => {
     expect(migration).toContain("public.vitrin_product_comments");
   });
 
+  it("web ziyaretini service-role sunucu kapısına ve hashli teknik parmak izine bağlar", () => {
+    expect(migration).toContain("record_vitrin_view_web");
+    expect(migration).toContain("to service_role");
+    expect(migration).toContain("vv.viewer_ip = v_fingerprint");
+    expect(migration).toContain(">= 50");
+  });
+
   it("ham ziyaretçi anahtarını yeni olaylarda SHA-256 aktör anahtarına çevirir", () => {
     expect(migration).toContain("sha256(v_session::bytea)");
     expect(migration).toContain("v_actor_key text := public.vitrin_actor_key");
