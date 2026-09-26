@@ -1,6 +1,6 @@
 # Vixrex Yol Tahtası
 
-Son ölçüm: 2026-09-26 (güncellendi — fatura/rastgele-dogrulama dalı). **Bu dosya tek gerçek kaynaktır.** Casper, Claude,
+Son ölçüm: 2026-09-26, 03:45 (fatura/rastgele-dogrulama dalı, commit bbd1605a). **Bu dosya tek gerçek kaynaktır.** Casper, Claude,
 Freebuff ve Gemini aynı tahtaya bakar. İş bitince satırın durumu burada
 güncellenir — başka yerde değil.
 
@@ -29,10 +29,10 @@ kapısına çalışan sistem gösterilerek izin istenir.
 | Ürün havuzu toplayıcı | Freebuff + Claude | **bitti (bu tur)** — 16/55 otomatik toplanabiliyor, kalan 39 ölçülmüş bir sınır (kapı kapalı/kod yok/platform tanınmadı) |
 | Kod eşleştirme | Claude | bitti |
 | Yayın kapısı (fiyat + onay) | Claude | bitti |
-| Fatura okuma — kod eşleştirmesi (fotoğrafı KİM okursa okusun) | Claude | **bitti** — `/api/fatura-eslestir` |
-| Fatura okuma — telefonun kendi OCR'ının kataloğa bağlanması | Claude | **bitti** — `CatalogInvoiceTraceResolver`, eski hep-zayıf bug kanıtla düzeltildi |
-| Fatura okuma — kamera/fotoğraftan yazı çıkarma (ML Kit, cihaz üstü) | — | **doğrulanamadı — fiziksel telefon gerekiyor** |
-| Gerçek faturayla deneme | Claude | Sunucu tarafı 11/11 rastgele faturayla doğrulandı (yapay zekâ YOK — düz kod eşleştirme). Kamera adımı hâlâ bekliyor. |
+| Fatura okuma — TEK okuma ucu (telefon + web aynı uç) | Claude | **bitti** — `/api/fatura-oku` → Kilo (ücretsiz, anahtarsız) → deterministik satır ayırma → katalog |
+| Fatura okuma — mimari düzeltme (iki ayrı beyin → bir beyin) | Claude | **bitti** — eski OpenAI ucu (anahtarsız, hiç çalışmıyordu) silindi; telefon artık kendi yerel OCR zincirini değil, aynı sunucu ucunu kullanıyor |
+| Fatura okuma — gerçek fotoğrafla kamera testi | — | **doğrulanamadı — fiziksel telefon gerekiyor** (okuma motorunun kendisi canlı test edildi, gerçek kağıt fatura fotoğrafıyla değil) |
+| Gerçek faturayla deneme | Claude | Sunucu tarafı 1704 testle doğrulandı (yapay zekâ olmadan: düz kod eşleştirme). Ayrıca Kilo'nun görüntü okuma yeteneği gerçek bir istekle canlı denendi — 10 ürün kodu doğru okundu. Kamera adımı hâlâ bekliyor. |
 
 ## B · Firma izni — hiçbiri yok
 
