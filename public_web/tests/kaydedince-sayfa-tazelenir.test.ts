@@ -52,7 +52,9 @@ describe("kaydetme sayfayı tazeler", () => {
     // İkisi birlikte olmalı: setAlan anında tepki verir (panel), refresh
     // sunucudan doğrulanmış hâli getirir (sayfa). Biri silinirse ya panel
     // ya sayfa geride kalır.
-    const govde = callbackGovdesi(actionsSource, "gonder");
+    // (2026-09-25) Alan kayıt yolu gonder'den kaydetSeciliAlana'a ayrıldı
+    // (döngü kırıcı); sözleşme yeni yerde ölçülür.
+    const govde = callbackGovdesi(actionsSource, "kaydetSeciliAlana");
     expect(govde).toContain("setAlan(alan.kolon, gonderilecek)");
     expect(govde).toContain("router.refresh()");
   });
@@ -60,7 +62,7 @@ describe("kaydetme sayfayı tazeler", () => {
   it("kaydedilen alan sayfada kısa süre parlatılır", () => {
     expect(actionsSource).toContain("function alaniParlat");
     expect(actionsSource).toContain('const PARLAMA_SINIFI = "vixrex-degisti"');
-    for (const ad of ["gonder", "gorselYukle", "hazirGorselSec"]) {
+    for (const ad of ["kaydetSeciliAlana", "gorselYukle", "hazirGorselSec"]) {
       expect(callbackGovdesi(actionsSource, ad)).toContain(
         "alaniParlat(alan.anahtar)",
       );

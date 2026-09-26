@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { resolveVitrinProfile } from "@/lib/vitrinProfile";
 import { taslakClientId } from "@/lib/canliVitrinSenkron";
@@ -177,6 +177,13 @@ export function temizlenmisSeciliDeger(metin: string, alan: VitrinField): string
  * kayıt YASAK. Tümü batch route üzerinden tek transaction'da doğrulanır ve
  * yazılır; bir alan geçersizse bonusların hiçbiri uygulanmaz.
  */
+// Döngü kırıcı (2026-09-25): asistan motoru aynı alana yazılan aynı
+// değeri iki kez "işlemedi" derse artık sessizce soruyu tekrarlamak
+// yerine alan kayıt yolunu dener; o da başarısızsa hatayı SOHBETE
+// gerçek mesajla yazar. Arka plan: esnaf aynı adı tekrar tekrar
+// yazıp sonsuz soru döngüsüne giriyordu; hata ekrana hiç çıkmıyordu.
+const DONGU_KIRICI_ESIK = 2;
+
 export async function bonusAlanlariCikarVeKaydet(
   metin: string,
   cevaplananKolon: string,
@@ -210,9 +217,15 @@ export async function bonusAlanlariCikarVeKaydet(
       }),
     });
     const govde = await yanit.json();
-    if (!yanit.ok) return;
+    // Sessiz yutma yasağı (2026-09-25): bonus kayıt başarısızsa esnaf
+    // nedenini SOHBETTE görsün — sessiz return bırakılmaz.
+    if (!yanit.ok) {
+      mesajEkle("asistan", govde?.hata ?? "Ek alanlar kaydedilemedi.");
+      return;
+    }
     if (typeof govde?.commandId !== "string" || govde.commandId !== commandId) {
       routerRefresh();
+      mesajEkle("asistan", "Ek alanlar kaydedildi ancak doğrulanamadı; vitrini yeniledim.");
       return;
     }
 
@@ -246,7 +259,8 @@ export async function bonusAlanlariCikarVeKaydet(
     const liste = basarili.map(({ etiket }) => `✓ ${etiket}`).join("\n");
     mesajEkle("asistan", `Yazdığından ayrıca şunları da anladım:\n${liste}`, undefined, "✨");
   } catch {
-    // Bonus bir zenginleştirme — başarısız olursa asıl kaydı etkilemez.
+    // Bonus bir zenginleştirme — asıl kaydı etkilemez ama esnaf haberdar edilir.
+    mesajEkle("asistan", "Yazdığından çıkardığım ek alanlar kaydedilemedi; bağlantıyı kontrol et.");
   }
 }
 
@@ -264,6 +278,8 @@ export function useOwnerActions({
 }: Deps): OwnerActionsHook {
   const router = useRouter();
   const [kaydediliyor, setKaydediliyor] = useState(false);
+  // Döngü kırıcı hafızası: son reddedilen (alan, girdi) ve kaç kez.
+  const sonReddedilenRef = useRef<{ anahtar: string; metin: string; adet: number } | null>(null);
   const [yayinlaniyor, setYayinlaniyor] = useState(false);
   const [silmeOnayi, setSilmeOnayi] = useState(false);
   const [onayVeriliyor, setOnayVeriliyor] = useState(false);
@@ -429,6 +445,98 @@ export function useOwnerActions({
     [seciliAlan, slug, mesajEkle, setAlan, alanaGecVeyaBitir, _setHazirGorseller, router, yerelTaslak]
   );
 
+  // Alan kayıt yolu — döngü kırıcı da buraya düşer. Hata mesajları SOHBETE
+  // gerçek metinle yazılır (sessiz yutma yasağı, 2026-09-25).
+  const kaydetSeciliAlana = useCallback(async (hamMetin: string) => {
+    const alan = seciliAlan;
+    if (!alan) {
+      mesajEkle("asistan", "Önce vitrinde düzenlenecek bir yere tıkla.");
+      return;
+    }
+    const metin = hamMetin.trim();
+
+    // Zengin cümle ayrıştırması (2026-09-03, bkz. temizlenmisSeciliDeger
+    // yorumu): kısa girdilerde ve aç/kapa alanlarda davranış AYNI kalır —
+    // ayrıştırma yalnız 15+ karakterlik metinlerde denenir (bonus'un
+    // tetiklenme eşiğiyle aynı, aşağıda).
+    let gonderilecek: string | boolean;
+    if (alan.tip === "acikKapali") {
+      gonderilecek = ["evet", "aç", "açık", "göster", "true"].includes(metin.toLowerCase());
+    } else if (metin.length < 15) {
+      gonderilecek = metin;
+    } else {
+      const temiz = temizlenmisSeciliDeger(metin, alan);
+      if (temiz === null) {
+        // Cümlede başka bir alana ait ipucu var ama seçili alanın kendi
+        // değerini güvenle ayıramadık — ham metni YAZMAYIZ, dürüstçe
+        // sorarız. Bonus yine de diğer alanları ayrıca doğru kaydeder.
+        mesajEkle("kullanici", metin);
+        mesajEkle(
+          "asistan",
+          `Bu cümlede birden fazla bilgi var gibi görünüyor. "${alan.etiket}" için sadece onu yazar mısın?`
+        );
+        setGiris("");
+        return;
+      }
+      gonderilecek = temiz;
+    }
+
+    mesajEkle("kullanici", metin || "(boş bırak)");
+    setKaydediliyor(true);
+
+    try {
+      const yanit = await fetch("/api/owner-draft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug,
+          anahtar: alan.anahtar,
+          deger: gonderilecek,
+          clientId: taslakClientId(),
+        }),
+      });
+      const govde = await yanit.json();
+
+      if (!yanit.ok) {
+        mesajEkle("asistan", govde?.hata ?? "Kaydedilemedi.");
+        return;
+      }
+
+      mesajEkle(
+        "asistan",
+        `${alan.etiket} güncellendi. Müşteriler yayınlayana kadar göremez.`
+      );
+      setGiris("");
+      setAlan(alan.kolon, gonderilecek);
+      const tazeTaslak = { ...yerelTaslak, [alan.kolon]: gonderilecek };
+      // Sayfa sunucuda çizildiği için yeni değer ancak yeniden
+      // okununca vitrine yansır — yoksa esnaf kaydeder, sayfada
+      // eski yazı durmaya devam ederdi (Faz 2).
+      router.refresh();
+      alaniParlat(alan.anahtar);
+      alanaGecVeyaBitir(alan.anahtar, tazeTaslak);
+
+      // "Esnaf 46 alanı tek tek dolaşmasın" (2026-09-02) — bu KUTUYA
+      // (ör. "İşletme adın?") normalden uzun bir cümle yazılırsa, arka
+      // planda diğer alanları da doldurmayı dener. Yeni bir ekran
+      // elemanı yok — yalnız zaten var olan bu giriş kutusu akıllanıyor.
+      if (typeof gonderilecek === "string" && metin.length >= 15) {
+        void bonusAlanlariCikarVeKaydet(
+          metin,
+          alan.kolon,
+          slug,
+          mesajEkle,
+          setAlan,
+          () => router.refresh()
+        );
+      }
+    } catch {
+      mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar dene.");
+    } finally {
+      setKaydediliyor(false);
+    }
+  }, [seciliAlan, slug, mesajEkle, setAlan, setGiris, alanaGecVeyaBitir, router, yerelTaslak]);
+
   const gonder = useCallback(async () => {
     const metin = giris.trim();
 
@@ -457,6 +565,49 @@ export function useOwnerActions({
           // Motor alani anladi ama degeri eksikse o alani secili hale getir:
           // esnaf devaminda sadece degeri yazsin, alani tekrar tarif etmesin.
           if (sonuc.anahtar) alanSec?.(sonuc.anahtar);
+
+          // Döngü kırıcı (2026-09-25, 2. tur): motor aynı girdiyi ikinci kez
+          // işlemediyse soruyu tekrarlamak yerine mümkün olan her kayıt yolunu
+          // DENER, olmuyorsa GERÇEK nedeni sohbete yazar. İki yol:
+          //  a) Alan seçiliyse → değeri o alana doğrudan kaydet.
+          //  b) Alan seçili değilse → serbest metinden whatsapp/adres/saat
+          //     gibi alanları çıkarıp toplu kaydet (bonus yolunun aynısı).
+          const reddedilen = sonReddedilenRef.current;
+          const anahtar = seciliAlan?.anahtar ?? sonuc.anahtar ?? "";
+          if (metin) {
+            if (reddedilen && reddedilen.anahtar === anahtar && reddedilen.metin === metin) {
+              reddedilen.adet += 1;
+            } else {
+              sonReddedilenRef.current = { anahtar, metin, adet: 1 };
+            }
+            if (sonReddedilenRef.current && sonReddedilenRef.current.adet >= DONGU_KIRICI_ESIK) {
+              sonReddedilenRef.current = null;
+              if (seciliAlan) {
+                mesajEkle(
+                  "asistan",
+                  "Aynı yazıyı ikinci kez işleyemedim — seçili alana doğrudan kaydetmeyi deniyorum."
+                );
+                await kaydetSeciliAlana(metin);
+              } else {
+                mesajEkle(
+                  "asistan",
+                  "Aynı yazıyı ikinci kez işleyemedim — içinden tanıdığım bilgileri kaydetmeyi deniyorum."
+                );
+                await bonusAlanlariCikarVeKaydet(
+                  metin,
+                  "",
+                  slug,
+                  mesajEkle,
+                  setAlan,
+                  () => router.refresh()
+                );
+                mesajEkle(
+                  "asistan",
+                  "İşletme adı için lütfen vitrindeki İŞLETME ADI yazısına tıkla, sonra sadece adı yaz."
+                );
+              }
+            }
+          }
           return;
         }
 
@@ -557,89 +708,9 @@ export function useOwnerActions({
       return;
     }
 
-    const alan = seciliAlan;
+    await kaydetSeciliAlana(metin);
+  }, [giris, seciliAlan, slug, mesajEkle, setAlan, setGiris, alanaGecVeyaBitir, router, yerelTaslak, alanSec, sonReddedilenRef, kaydetSeciliAlana]);
 
-    // Zengin cümle ayrıştırması (2026-09-03, bkz. temizlenmisSeciliDeger
-    // yorumu): kısa girdilerde ve aç/kapa alanlarda davranış AYNI kalır —
-    // ayrıştırma yalnız 15+ karakterlik metinlerde denenir (bonus'un
-    // tetiklenme eşiğiyle aynı, aşağıda).
-    let gonderilecek: string | boolean;
-    if (alan.tip === "acikKapali") {
-      gonderilecek = ["evet", "aç", "açık", "göster", "true"].includes(metin.toLowerCase());
-    } else if (metin.length < 15) {
-      gonderilecek = metin;
-    } else {
-      const temiz = temizlenmisSeciliDeger(metin, alan);
-      if (temiz === null) {
-        // Cümlede başka bir alana ait ipucu var ama seçili alanın kendi
-        // değerini güvenle ayıramadık — ham metni YAZMAYIZ, dürüstçe
-        // sorarız. Bonus yine de diğer alanları ayrıca doğru kaydeder.
-        mesajEkle("kullanici", metin);
-        mesajEkle(
-          "asistan",
-          `Bu cümlede birden fazla bilgi var gibi görünüyor. "${alan.etiket}" için sadece onu yazar mısın?`
-        );
-        setGiris("");
-        return;
-      }
-      gonderilecek = temiz;
-    }
-
-    mesajEkle("kullanici", metin || "(boş bırak)");
-    setKaydediliyor(true);
-
-    try {
-      const yanit = await fetch("/api/owner-draft", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          slug,
-          anahtar: alan.anahtar,
-          deger: gonderilecek,
-          clientId: taslakClientId(),
-        }),
-      });
-      const govde = await yanit.json();
-
-      if (!yanit.ok) {
-        mesajEkle("asistan", govde?.hata ?? "Kaydedilemedi.");
-        return;
-      }
-
-      mesajEkle(
-        "asistan",
-        `${alan.etiket} güncellendi. Müşteriler yayınlayana kadar göremez.`
-      );
-      setGiris("");
-      setAlan(alan.kolon, gonderilecek);
-      const tazeTaslak = { ...yerelTaslak, [alan.kolon]: gonderilecek };
-      // Sayfa sunucuda çizildiği için yeni değer ancak yeniden
-      // okununca vitrine yansır — yoksa esnaf kaydeder, sayfada
-      // eski yazı durmaya devam ederdi (Faz 2).
-      router.refresh();
-      alaniParlat(alan.anahtar);
-      alanaGecVeyaBitir(alan.anahtar, tazeTaslak);
-
-      // "Esnaf 46 alanı tek tek dolaşmasın" (2026-09-02) — bu KUTUYA
-      // (ör. "İşletme adın?") normalden uzun bir cümle yazılırsa, arka
-      // planda diğer alanları da doldurmayı dener. Yeni bir ekran
-      // elemanı yok — yalnız zaten var olan bu giriş kutusu akıllanıyor.
-      if (typeof gonderilecek === "string" && metin.length >= 15) {
-        void bonusAlanlariCikarVeKaydet(
-          metin,
-          alan.kolon,
-          slug,
-          mesajEkle,
-          setAlan,
-          () => router.refresh()
-        );
-      }
-    } catch {
-      mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar dene.");
-    } finally {
-      setKaydediliyor(false);
-    }
-  }, [giris, seciliAlan, slug, mesajEkle, setAlan, setGiris, alanaGecVeyaBitir, router, yerelTaslak, alanSec]);
 
   // Yalnız isteğe bağlı alanlarda gösterilen "Boş geç" (ADR 0002, 3. alt-faz).
   // Vitrin İÇERİĞİ yazmaz — /api/owner-draft'tan bağımsız, kendi dar
