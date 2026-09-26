@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import seherHam from "@/data/uretici-katalog-seher.json";
+import seherHam from "../../data/katalog/uretici-katalog-seher-mensucat.json";
 import type { UreticiUrunu } from "@/lib/ureticiKatalog";
 
 // Rastgele faturaların GERÇEK /api/products/batch uç noktasından geçtiğinde

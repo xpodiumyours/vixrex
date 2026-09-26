@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import seherHam from "@/data/uretici-katalog-seher.json";
+import seherHam from "../../data/katalog/uretici-katalog-seher-mensucat.json";
 import type { UreticiUrunu } from "@/lib/ureticiKatalog";
 
 // /api/fatura-eslestir — fotoğrafı KİM okumuş olursa olsun (telefon, Başak,
@@ -83,7 +83,7 @@ describe("/api/fatura-eslestir — OCR kaynağından bağımsız katalog eşleş
     expect(cevap.status).toBe(200);
   });
 
-  it("gerçek katalog kodları HTTP üzerinden eşleşir ve resmî ad/fotoğraf döner", async () => {
+  it("gerçek katalog kodları HTTP üzerinden eşleşir; resmî ad döner, izinsiz fotoğraf dönmez", async () => {
     const cevap = await faturaEslestir(
       istek([
         { model: "ELT1302", ad: "elastan sıfır yaka", barkod: "", adet: 2, alisBirimFiyat: 137, guven: 0.9 },
@@ -95,7 +95,10 @@ describe("/api/fatura-eslestir — OCR kaynağından bağımsız katalog eşleş
     expect(cevap.status).toBe(200);
     expect(govde.katalogEslesmesi).toBe(2);
     expect(govde.satirlar[0].katalog.resmiAd).toContain("ELT1302");
-    expect(govde.satirlar[0].katalog.gorseller.length).toBeGreaterThan(0);
+    // İzin kapısı: Seher'in görsel izni henüz "var" değil. Resmî ad ve marka
+    // gelir, fotoğraf GELMEZ. İzin "var" olunca bu alan kendiliğinden dolar.
+    expect(govde.satirlar[0].katalog.izinDurumu).not.toBe("var");
+    expect(govde.satirlar[0].katalog.gorseller).toHaveLength(0);
     expect(govde.satirlar[1].katalog.marka).toBeTruthy();
   });
 
