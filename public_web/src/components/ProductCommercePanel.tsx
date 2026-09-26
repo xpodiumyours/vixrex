@@ -57,16 +57,11 @@ export default function ProductCommercePanel({
   const [comment, setComment] = useState("");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
-  const [sessionKey, setSessionKey] = useState("");
-  const [loginNext, setLoginNext] = useState(`/v/${storeSlug}/urun/${productSlug}`);
 
   useEffect(() => {
     if (!enabled) return;
 
     const key = ziyaretAnahtariniOkuyaUret();
-    setSessionKey(key);
-    setLoginNext(`${window.location.pathname}${window.location.search}`);
-
     let active = true;
     async function load() {
       const { data, error } = await supabase.rpc("get_product_social_state", {
@@ -92,7 +87,8 @@ export default function ProductCommercePanel({
   if (!enabled) return null;
 
   async function toggleLike() {
-    if (!sessionKey || busy) return;
+    if (busy) return;
+    const sessionKey = ziyaretAnahtariniOkuyaUret();
     setBusy(true);
     setMessage("");
     try {
@@ -116,6 +112,7 @@ export default function ProductCommercePanel({
   }
 
   async function submitComment() {
+    const sessionKey = ziyaretAnahtariniOkuyaUret();
     const body = comment.trim();
     if (body.length < 3 || busy) return;
     setBusy(true);
@@ -228,7 +225,7 @@ export default function ProductCommercePanel({
 
         {message.includes("Google") ? (
           <Link
-            href={`/giris?next=${encodeURIComponent(loginNext)}`}
+            href={`/giris?next=${encodeURIComponent(`/v/${storeSlug}/urun/${productSlug}`)}`}
             className="mt-2 inline-flex text-xs font-extrabold text-blue-300 underline"
           >
             Google ile giriş yap
