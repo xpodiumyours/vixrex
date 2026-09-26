@@ -15,7 +15,9 @@ import { safeJsonLdHtml } from "@/lib/jsonLd";
 import { productAttributeSchemaFields } from "@/lib/productStructuredData";
 import { TrackedWhatsAppLink } from "@/components/TrackedWhatsAppLink";
 import { MapPinIcon } from "@/lib/vitrinBrandIcons";
-import ProductViewTracker from "@/components/ProductViewTracker";\nimport ProductCommercePanel from "@/components/ProductCommercePanel";\nimport VitrinCartDock from "@/components/VitrinCartDock";
+import ProductViewTracker from "@/components/ProductViewTracker";
+import ProductCommercePanel from "@/components/ProductCommercePanel";
+import VitrinCartDock from "@/components/VitrinCartDock";
 
 export const revalidate = 300;
 
@@ -482,7 +484,6 @@ export default async function ProductDetailPage(props: PageProps) {
 
             <ProductCommercePanel
               storeSlug={store.slug}
-              storeName={store.name}
               productSlug={productSlug}
               productName={product.name}
               imageUrl={images[0] || null}

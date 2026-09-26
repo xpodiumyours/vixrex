@@ -3,7 +3,8 @@
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
-import ProductQuickView from "@/components/ProductQuickView";\nimport VitrinCartDock from "@/components/VitrinCartDock";
+import ProductQuickView from "@/components/ProductQuickView";
+import VitrinCartDock from "@/components/VitrinCartDock";
 import { TrackedDirectionsLink } from "@/components/TrackedContactLink";
 import { MapPinIcon } from "@/lib/vitrinBrandIcons";
 import { MAX_PRODUCT_IMAGES } from "@/lib/productImagePolicy";

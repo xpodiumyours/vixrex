@@ -19,10 +19,6 @@ interface VitrinCartDockProps {
   trackingEnabled?: boolean;
 }
 
-function ownerPreviewActive(): boolean {
-  return typeof document !== "undefined" && Boolean(document.querySelector("[data-vixrex-editable]"));
-}
-
 export default function VitrinCartDock({
   storeSlug,
   storeName,
@@ -31,14 +27,10 @@ export default function VitrinCartDock({
 }: VitrinCartDockProps) {
   const [items, setItems] = useState<VitrinCartItem[]>([]);
   const [open, setOpen] = useState(false);
-  const [hidden, setHidden] = useState(false);
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    if (!trackingEnabled || ownerPreviewActive()) {
-      setHidden(true);
-      return;
-    }
+    if (!trackingEnabled) return;
     const refresh = () => setItems(readVitrinCart(storeSlug).items);
     refresh();
     const listener = (event: Event) => {
@@ -54,7 +46,7 @@ export default function VitrinCartDock({
   }, [storeSlug, trackingEnabled]);
 
   const totalQuantity = useMemo(() => cartTotalQuantity(items), [items]);
-  if (hidden || items.length === 0) return null;
+  if (!trackingEnabled || items.length === 0) return null;
 
   async function changeQuantity(item: VitrinCartItem, quantity: number) {
     const next = setVitrinCartQuantity(storeSlug, item.productSlug, item.variantKey, quantity);

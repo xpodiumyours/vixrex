@@ -23,7 +23,6 @@ type SocialState = {
 
 interface ProductCommercePanelProps {
   storeSlug: string;
-  storeName: string;
   productSlug: string;
   productName: string;
   imageUrl?: string | null;
@@ -33,15 +32,11 @@ interface ProductCommercePanelProps {
   stockQuantity?: number | null;
   cartEnabled?: boolean;
   cartDisabledReason?: string;
-}
-
-function ownerPreviewActive(): boolean {
-  return typeof document !== "undefined" && Boolean(document.querySelector("[data-vixrex-editable]"));
+  enabled?: boolean;
 }
 
 export default function ProductCommercePanel({
   storeSlug,
-  storeName,
   productSlug,
   productName,
   imageUrl = null,
@@ -51,8 +46,8 @@ export default function ProductCommercePanel({
   stockQuantity = null,
   cartEnabled = true,
   cartDisabledReason = "",
+  enabled = true,
 }: ProductCommercePanelProps) {
-  const [hidden, setHidden] = useState(false);
   const [social, setSocial] = useState<SocialState>({
     like_count: 0,
     liked: false,
@@ -66,10 +61,7 @@ export default function ProductCommercePanel({
   const [loginNext, setLoginNext] = useState(`/v/${storeSlug}/urun/${productSlug}`);
 
   useEffect(() => {
-    if (ownerPreviewActive()) {
-      setHidden(true);
-      return;
-    }
+    if (!enabled) return;
 
     const key = ziyaretAnahtariniOkuyaUret();
     setSessionKey(key);
@@ -95,9 +87,9 @@ export default function ProductCommercePanel({
     return () => {
       active = false;
     };
-  }, [productSlug, storeSlug]);
+  }, [enabled, productSlug, storeSlug]);
 
-  if (hidden) return null;
+  if (!enabled) return null;
 
   async function toggleLike() {
     if (!sessionKey || busy) return;

@@ -26,6 +26,7 @@ interface ProductQuickViewProps {
   storeName: string;
   storeSlug: string;
   productSlug: string;
+  commerceEnabled?: boolean;
   whatsappBaseUrl?: string | null;
   storeLocationText?: string | null;
   storeMapsUrl?: string | null;
@@ -77,6 +78,7 @@ export default function ProductQuickView({
   storeName,
   storeSlug,
   productSlug,
+  commerceEnabled = true,
   whatsappBaseUrl = null,
   storeLocationText = null,
   storeMapsUrl = null,
@@ -489,7 +491,6 @@ export default function ProductQuickView({
 
           <ProductCommercePanel
             storeSlug={storeSlug}
-            storeName={storeName}
             productSlug={productSlug}
             productName={product.name}
             imageUrl={currentImage}
@@ -498,6 +499,7 @@ export default function ProductQuickView({
             selectedVariantId={selectedVariant?.id ?? null}
             stockQuantity={selectedStockQuantity}
             cartEnabled={!isService && selectedStockQuantity !== 0}
+            enabled={commerceEnabled}
             cartDisabledReason={isService ? "Hizmetler sipariş sepetine eklenmez; WhatsApp üzerinden bilgi alabilirsin." : ""}
           />
         </div>
