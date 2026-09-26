@@ -62,13 +62,13 @@ describe("tasarım zemini — ekleyici @theme, next/font ile fontlar", () => {
 
   it("Google Fonts @import kaldırıldı, fontlar next/font'tan gelir", () => {
     expect(globals).not.toContain("fonts.googleapis.com");
-    expect(layout).toContain('from "next/font/google"');
+    expect(layout).toContain('from "next/font/local"');
     expect(layout).toContain("--font-outfit-src");
   });
 
   it("Outfit w900 dahil yükleniyor — landing başlıkları Black", () => {
     const outfitBlok = layout.slice(
-      layout.indexOf("const outfit = Outfit("),
+      layout.indexOf("const outfit = localFont("),
       layout.indexOf("const instrumentSerif")
     );
     expect(outfitBlok).toContain('"900"');
