@@ -481,6 +481,20 @@ export default function ProductQuickView({
               {isService ? "Tüm hizmet detayları" : "Tüm ürün detayları"}
             </a>
           </div>
+
+          <ProductCommercePanel
+            storeSlug={storeSlug}
+            storeName={storeName}
+            productSlug={productSlug}
+            productName={product.name}
+            imageUrl={currentImage}
+            priceText={displayedPrice}
+            selectedVariantText={selectedVariantText}
+            selectedVariantId={selectedVariant?.id ?? null}
+            stockQuantity={selectedStockQuantity}
+            cartEnabled={!isService && selectedStockQuantity !== 0}
+            cartDisabledReason={isService ? "Hizmetler sipariş sepetine eklenmez; WhatsApp üzerinden bilgi alabilirsin." : ""}
+          />
         </div>
       </div>
     </div>

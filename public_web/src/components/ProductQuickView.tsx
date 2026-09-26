@@ -199,6 +199,8 @@ function ProductQuickViewSession({
         images={images}
         productUrl={detailUrl}
         storeName={storeName}
+        storeSlug={storeSlug}
+        productSlug={productSlug}
         whatsappBaseUrl={whatsappBaseUrl}
         storeLocationText={storeLocationText}
         storeMapsUrl={storeMapsUrl}
