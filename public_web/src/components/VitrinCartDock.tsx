@@ -149,7 +149,20 @@ export default function VitrinCartDock({
                   <div className="mt-3 flex items-center gap-2">
                     <button type="button" onClick={() => void changeQuantity(item, Math.max(1, item.quantity - 1))} className="h-9 w-9 rounded-lg border border-white/10" aria-label="Adedi azalt">−</button>
                     <span className="min-w-10 text-center text-sm font-black">{item.quantity}</span>
-                    <button type="button" onClick={() => void changeQuantity(item, item.quantity + 1)} className="h-9 w-9 rounded-lg border border-white/10" aria-label="Adedi artır">+</button>
+                    <button
+                      type="button"
+                      onClick={() => void changeQuantity(item, item.quantity + 1)}
+                      disabled={item.maxQuantity != null && item.quantity >= item.maxQuantity}
+                      className="h-9 w-9 rounded-lg border border-white/10 disabled:cursor-not-allowed disabled:opacity-35"
+                      aria-label="Adedi artır"
+                    >
+                      +
+                    </button>
+                    {item.maxQuantity != null ? (
+                      <span className="ml-2 text-[10px] font-semibold text-white/35">
+                        Stok sınırı: {item.maxQuantity}
+                      </span>
+                    ) : null}
                   </div>
                 </article>
               ))}

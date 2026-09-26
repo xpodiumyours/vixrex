@@ -41,6 +41,12 @@ describe("Vitrin Ölçer müşteri etkileşim sözleşmesi", () => {
     expect(trackingIndex).toBeGreaterThan(openIndex);
   });
 
+  it("sepet ürünü stok tavanıyla birlikte saklar ve UI stok üstüne çıkmaz", () => {
+    expect(panel).toContain("maxQuantity: stockQuantity");
+    expect(dock).toContain("item.quantity >= item.maxQuantity");
+    expect(dock).toContain("Stok sınırı");
+  });
+
   it("sepet WhatsApp geçişini ayrı dönüşüm olayı olarak ölçer", () => {
     expect(dock).toContain('eventType: "cart_whatsapp_order"');
     expect(dock).toContain("order_key: orderKey");

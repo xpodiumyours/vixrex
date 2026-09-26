@@ -498,9 +498,19 @@ export default function ProductQuickView({
             selectedVariantText={selectedVariantText}
             selectedVariantId={selectedVariant?.id ?? null}
             stockQuantity={selectedStockQuantity}
-            cartEnabled={!isService && selectedStockQuantity !== 0}
+            cartEnabled={
+              !isService &&
+              selectedStockQuantity !== 0 &&
+              !String(selectedStockStatus || "").toLocaleLowerCase("tr-TR").includes("tükendi")
+            }
             enabled={commerceEnabled}
-            cartDisabledReason={isService ? "Hizmetler sipariş sepetine eklenmez; WhatsApp üzerinden bilgi alabilirsin." : ""}
+            cartDisabledReason={
+              isService
+                ? "Hizmetler sipariş sepetine eklenmez; WhatsApp üzerinden bilgi alabilirsin."
+                : String(selectedStockStatus || "").toLocaleLowerCase("tr-TR").includes("tükendi")
+                  ? "Bu seçenek şu anda stokta görünmüyor."
+                  : ""
+            }
           />
         </div>
       </div>
