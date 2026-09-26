@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeAll } from "vitest";
+import { describe, expect, it } from "vitest";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { ureticiUrunuBul, katalogOzeti, type UreticiUrunu } from "@/lib/ureticiKatalog";
 import seherHam from "@/data/uretici-katalog-seher.json";

@@ -7,7 +7,7 @@ import 'package:vixrex/models/product_rich_data.dart';
 import 'package:vixrex/models/invoice_product_draft.dart';
 import 'package:vixrex/services/invoice_catalog/invoice_draft_decision_engine.dart';
 import 'package:vixrex/models/store_product.dart';
-import 'package:vixrex/services/invoice_catalog/catalog_invoice_trace_resolver.dart';
+import 'package:vixrex/services/invoice_catalog/fatura_oku_servisi.dart';
 import 'package:vixrex/services/ocr/invoice_row_parser.dart';
 import 'package:vixrex/services/ocr/ocr_service.dart';
 import 'package:vixrex/services/ocr/ocr_feedback_service.dart';
@@ -44,10 +44,25 @@ class OcrController extends ChangeNotifier {
   bool get hasResult => _result != null;
 
   /// Görüntüyü analiz et.
+  ///
+  /// Fatura modu (`_scanMode == 'invoice'`) KASITLI OLARAK cihaz üstü OCR
+  /// kullanmaz — fotoğraf doğrudan Vixrex'in TEK okuma ucuna
+  /// (`/api/fatura-oku`) gider. Telefon ve web AYNI bu uçtan geçer; iki
+  /// ayrı "okuma beyni" (yerel ML Kit zinciri + ayrı bir web zinciri) bir
+  /// daha kurulmaz (2026-09-26 mimari düzeltmesi).
+  ///
+  /// Fiş/raf modları (`receipt`/`shelf_label`) bu değişiklikten etkilenmez,
+  /// hâlâ cihaz üstü [_ocrService] kullanır — onlar üretici kataloğuyla
+  /// hiç ilişkili değil.
   Future<void> analyzeImage(Uint8List imageBytes) async {
     _isProcessing = true;
     _errorMessage = null;
     notifyListeners();
+
+    if (_scanMode == 'invoice') {
+      await _faturaFotografiniOku(imageBytes);
+      return;
+    }
 
     final result = await _ocrService.analyzeImage(
       imageBytes,
@@ -55,19 +70,10 @@ class OcrController extends ChangeNotifier {
     );
 
     result.when(
-      success: (catalog) async {
+      success: (catalog) {
         _result = catalog;
         _isProcessing = false;
         notifyListeners();
-
-        // Fatura satırları çıktıysa gerçek üretici kataloğuyla eşleştir.
-        // Yerel bulanık eşleştirici (InvoiceDraftTraceResolver) kanıtı hiç
-        // "strong" yapamaz; yayın kapısı ancak burası bulursa gerçekten
-        // açılır. Ağ yoksa/başarısızsa satırlar zayıf haliyle kalır —
-        // hiçbir şey tahmin edilmez.
-        if (catalog.invoiceDrafts.isNotEmpty) {
-          await _kataloglaEslestir();
-        }
       },
       failure: (failure) {
         _errorMessage = failure.message;
@@ -77,33 +83,36 @@ class OcrController extends ChangeNotifier {
     );
   }
 
-  /// Fatura taslaklarını gerçek üretici kataloğuyla günceller.
-  ///
-  /// Mağaza yayınlanmamışsa (slug/editToken yoksa) sessizce atlar —
-  /// eşleştirme olmadan da satırlar görünür kalır, yalnız zayıf iz taşır.
-  Future<void> _kataloglaEslestir() async {
+  Future<void> _faturaFotografiniOku(Uint8List imageBytes) async {
     final yayinBilgisi = _editorController?.publishedInfo;
     final slug = yayinBilgisi?.slug.trim() ?? '';
     final editToken = yayinBilgisi?.editToken.trim() ?? '';
-    if (slug.isEmpty || editToken.isEmpty) return;
+    if (slug.isEmpty || editToken.isEmpty) {
+      _errorMessage = 'Fatura okumak için önce vitrinini yayınlaman gerekiyor.';
+      _isProcessing = false;
+      notifyListeners();
+      return;
+    }
 
-    final mevcut = _result;
-    if (mevcut == null || mevcut.invoiceDrafts.isEmpty) return;
-
-    final resolver = CatalogInvoiceTraceResolver(
+    const servis = FaturaOkuServisi();
+    final result = await servis.oku(
+      imageBytes: imageBytes,
       storeSlug: slug,
       editToken: editToken,
     );
-    final guncellenmis = await resolver.resolve(mevcut.invoiceDrafts);
 
-    _result = OcrCatalogResult(
-      rawText: mevcut.rawText,
-      products: mevcut.products,
-      invoiceDrafts: guncellenmis,
-      confidence: mevcut.confidence,
-      analyzedAt: mevcut.analyzedAt,
+    result.when(
+      success: (catalog) {
+        _result = catalog;
+        _isProcessing = false;
+        notifyListeners();
+      },
+      failure: (failure) {
+        _errorMessage = failure.message;
+        _isProcessing = false;
+        notifyListeners();
+      },
     );
-    notifyListeners();
   }
 
   /// Ürünü onayla.

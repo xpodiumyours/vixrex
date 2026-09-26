@@ -2,17 +2,28 @@ import { NextResponse, type NextRequest } from "next/server";
 import { cookies } from "next/headers";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
+import { verifyStoreEditToken } from "@/lib/instagramServer";
 import { fingerprintClient, getClientIp } from "@/lib/rentDemoSecurity";
-import { ureticiUrunuBul } from "@/lib/ureticiKatalog";
+import { hamMetniSatirlaraAyir } from "@/lib/faturaSatirAyikla";
+import { faturaSatirlariniEslestir } from "@/lib/faturaEslestir";
 
-// Fatura fotoğrafını okuyup ürün satırlarını döner.
+// Vixrex'in TEK fatura okuma ucu.
 //
-// Bu uç nokta HİÇBİR ürün oluşturmaz ve hiçbir şey yayınlamaz. Yalnız okur.
-// Ürün kartına dönüşüm, esnaf satış fiyatını girip onayladıktan sonra
-// /api/products/batch üzerinden olur.
+// Telefon kamerası VE web'den yüklenen fotoğraf AYNI bu uçtan geçer — iki
+// ayrı "okuma beyni" olmaz (bkz. 2026-09-26 mimari düzeltmesi: önceden web
+// tarafı ayrı bir OpenAI zinciri kullanıyordu, anahtar yoktu, hiç çalışmadı).
+//
+// Zincir: görüntü → vixrex-fatura-goru (Kilo, ücretsiz, anahtarsız) → ham
+// metin → faturaSatirAyikla.ts (deterministik satır ayırma) →
+// faturaEslestir.ts (gerçek üretici kataloğu). Hiçbir aşama ürün oluşturmaz
+// veya yayınlamaz — o /api/products/batch üzerinden, esnaf onayıyla olur.
+//
+// Kimlik doğrulama: tarayıcı çerezle (verifyOwnerSession), Flutter
+// store edit_token ile (verifyStoreEditToken) — /api/fatura-eslestir ile
+// aynı desen, ikisi de bu tek ucu çağırabilir.
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 120;
+export const maxDuration = 60;
 
 const MAKS_BAYT = 5 * 1024 * 1024;
 const VITRIN_BASINA_LIMIT = 20;
@@ -51,6 +62,7 @@ export async function POST(request: NextRequest) {
 
   const slug = String(form.get("slug") ?? "").trim();
   const dosya = form.get("dosya");
+  const editTokenGovde = String(form.get("editToken") ?? "").trim();
 
   if (!slug) {
     return NextResponse.json({ hata: "Vitrin belirtilmedi." }, { status: 400 });
@@ -59,19 +71,29 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ hata: "Fatura fotoğrafı bulunamadı." }, { status: 400 });
   }
 
+  // İki giriş yolu: tarayıcı çerezle, Flutter kendi edit_token'ıyla
+  // (/api/fatura-eslestir ile birebir aynı desen).
   const cookieStore = await cookies();
-  const ownerSession = verifyOwnerSession(cookieStore.get(OWNER_SESSION_COOKIE)?.value, slug);
-  if (!ownerSession) {
-    return NextResponse.json(
-      { hata: "Oturumun geçersiz veya süresi dolmuş." },
-      { status: 401 },
-    );
+  const cerezliOturum = verifyOwnerSession(cookieStore.get(OWNER_SESSION_COOKIE)?.value, slug);
+
+  let ownerSlug: string;
+  if (cerezliOturum) {
+    ownerSlug = cerezliOturum.slug;
+  } else if (editTokenGovde) {
+    try {
+      const store = await verifyStoreEditToken(slug, editTokenGovde);
+      ownerSlug = store.slug;
+    } catch {
+      return NextResponse.json({ hata: "Oturumun geçersiz veya süresi dolmuş." }, { status: 401 });
+    }
+  } else {
+    return NextResponse.json({ hata: "Oturumun geçersiz veya süresi dolmuş." }, { status: 401 });
   }
 
   const admin = getSupabaseAdmin();
 
   const { data: limitRows } = await admin.rpc("consume_assistant_request", {
-    p_client_key: `fatura_oku:${ownerSession.slug}`,
+    p_client_key: `fatura_oku:${ownerSlug}`,
     p_max_requests: VITRIN_BASINA_LIMIT,
     p_window_seconds: PENCERE_SANIYE,
   });
@@ -121,7 +143,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const cevap = await fetch(`${supabaseUrl}/functions/v1/vixrex-fatura-oku`, {
+    const cevap = await fetch(`${supabaseUrl}/functions/v1/vixrex-fatura-goru`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${serviceRoleKey}`,
@@ -139,51 +161,32 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ hata: mesaj }, { status: cevap.ok ? 502 : cevap.status });
     }
 
-    const satirlar = Array.isArray((govde as { satirlar?: unknown }).satirlar)
-      ? (govde as { satirlar: unknown[] }).satirlar
-      : [];
+    const yazi = typeof (govde as { yazi?: unknown }).yazi === "string" ? (govde as { yazi: string }).yazi : "";
+    if (!yazi.trim()) {
+      return NextResponse.json(
+        { hata: "Bu fotoğrafta yazı bulunamadı. Daha net bir fotoğraf dene." },
+        { status: 422 },
+      );
+    }
 
-    if (satirlar.length === 0) {
+    const hamSatirlar = hamMetniSatirlaraAyir(yazi).filter((satir) => satir.model || satir.barkod);
+    if (hamSatirlar.length === 0) {
       return NextResponse.json(
         { hata: "Bu fotoğrafta ürün satırı bulunamadı. Daha net bir fotoğraf dene." },
         { status: 422 },
       );
     }
 
-    // Faturadaki kodu üretici kataloğuna bağla: resmî ad, açıklama ve
-    // üreticinin kendi fotoğrafları buradan gelir. Eşleşme yoksa satır
-    // faturadaki hâliyle kalır — ad veya görsel tahmin edilmez.
-    const zenginlestirilmis = satirlar.map((ham) => {
-      const satir = (ham ?? {}) as Record<string, unknown>;
-      const eslesme = ureticiUrunuBul({
-        model: typeof satir.model === "string" ? satir.model : null,
-        barkod: typeof satir.barkod === "string" ? satir.barkod : null,
-      });
-
-      if (!eslesme) return { ...satir, katalog: null };
-
-      return {
-        ...satir,
-        katalog: {
-          firma: eslesme.firma.ad,
-          dayanak: eslesme.dayanak,
-          izinDurumu: eslesme.firma.izinDurumu,
-          resmiAd: eslesme.urun.ad,
-          marka: eslesme.urun.marka,
-          aciklama: eslesme.urun.aciklama,
-          gorseller: eslesme.urun.gorseller,
-          kaynak: eslesme.urun.kaynak,
-        },
-      };
-    });
-
-    const eslesen = zenginlestirilmis.filter((satir) => satir.katalog !== null).length;
+    const satirlar = faturaSatirlariniEslestir(hamSatirlar);
+    const eslesenSayisi = satirlar.filter((satir) => satir.katalog !== null).length;
 
     return NextResponse.json({
       tamam: true,
-      ...(govde as Record<string, unknown>),
-      satirlar: zenginlestirilmis,
-      katalogEslesmesi: eslesen,
+      satirlar,
+      belgeToplami: null,
+      belgeAdedi: null,
+      tedarikci: "",
+      katalogEslesmesi: eslesenSayisi,
     });
   } catch (err) {
     console.error("[fatura-oku] failed:", err instanceof Error ? err.message : "unknown");
