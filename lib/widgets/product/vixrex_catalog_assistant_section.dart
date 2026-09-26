@@ -3,11 +3,13 @@ import 'package:vixrex/theme/app_colors.dart';
 
 class VixRexCatalogAssistantSection extends StatelessWidget {
   final VoidCallback onOcrTap;
+  final VoidCallback? onInvoiceTap;
   final VoidCallback? onSuggestionTap;
 
   const VixRexCatalogAssistantSection({
     super.key,
     required this.onOcrTap,
+    this.onInvoiceTap,
     this.onSuggestionTap,
   });
 
@@ -81,8 +83,8 @@ class VixRexCatalogAssistantSection extends StatelessWidget {
                 _buildActionTile(
                   icon: Icons.document_scanner_rounded,
                   title: 'Faturadan çıkar',
-                  desc: 'Faturadan ürünleri algıla',
-                  onTap: onOcrTap,
+                  desc: 'Faturayı güvenli taslak kataloğa çevir',
+                  onTap: onInvoiceTap ?? onOcrTap,
                 ),
                 const SizedBox(width: 10),
                 _buildActionTile(

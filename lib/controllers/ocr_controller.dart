@@ -3,7 +3,12 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:vixrex/models/detected_product.dart';
 import 'package:vixrex/models/ocr_catalog_result.dart';
+import 'package:vixrex/models/product_rich_data.dart';
+import 'package:vixrex/models/invoice_product_draft.dart';
+import 'package:vixrex/services/invoice_catalog/invoice_draft_decision_engine.dart';
 import 'package:vixrex/models/store_product.dart';
+import 'package:vixrex/services/invoice_catalog/fatura_oku_servisi.dart';
+import 'package:vixrex/services/ocr/invoice_row_parser.dart';
 import 'package:vixrex/services/ocr/ocr_service.dart';
 import 'package:vixrex/services/ocr/ocr_feedback_service.dart';
 import 'package:vixrex/services/product_conversation_logger.dart';
@@ -39,10 +44,25 @@ class OcrController extends ChangeNotifier {
   bool get hasResult => _result != null;
 
   /// Görüntüyü analiz et.
+  ///
+  /// Fatura modu (`_scanMode == 'invoice'`) KASITLI OLARAK cihaz üstü OCR
+  /// kullanmaz — fotoğraf doğrudan Vixrex'in TEK okuma ucuna
+  /// (`/api/fatura-oku`) gider. Telefon ve web AYNI bu uçtan geçer; iki
+  /// ayrı "okuma beyni" (yerel ML Kit zinciri + ayrı bir web zinciri) bir
+  /// daha kurulmaz (2026-09-26 mimari düzeltmesi).
+  ///
+  /// Fiş/raf modları (`receipt`/`shelf_label`) bu değişiklikten etkilenmez,
+  /// hâlâ cihaz üstü [_ocrService] kullanır — onlar üretici kataloğuyla
+  /// hiç ilişkili değil.
   Future<void> analyzeImage(Uint8List imageBytes) async {
     _isProcessing = true;
     _errorMessage = null;
     notifyListeners();
+
+    if (_scanMode == 'invoice') {
+      await _faturaFotografiniOku(imageBytes);
+      return;
+    }
 
     final result = await _ocrService.analyzeImage(
       imageBytes,
@@ -63,11 +83,64 @@ class OcrController extends ChangeNotifier {
     );
   }
 
+  Future<void> _faturaFotografiniOku(Uint8List imageBytes) async {
+    final yayinBilgisi = _editorController?.publishedInfo;
+    final slug = yayinBilgisi?.slug.trim() ?? '';
+    final editToken = yayinBilgisi?.editToken.trim() ?? '';
+    if (slug.isEmpty || editToken.isEmpty) {
+      _errorMessage = 'Fatura okumak için önce vitrinini yayınlaman gerekiyor.';
+      _isProcessing = false;
+      notifyListeners();
+      return;
+    }
+
+    const servis = FaturaOkuServisi();
+    final result = await servis.oku(
+      imageBytes: imageBytes,
+      storeSlug: slug,
+      editToken: editToken,
+    );
+
+    result.when(
+      success: (catalog) {
+        _result = catalog;
+        _isProcessing = false;
+        notifyListeners();
+      },
+      failure: (failure) {
+        _errorMessage = failure.message;
+        _isProcessing = false;
+        notifyListeners();
+      },
+    );
+  }
+
   /// Ürünü onayla.
   void approveProduct(int index) {
     if (_result == null) return;
     if (index < 0 || index >= _result!.products.length) return;
-    _result!.products[index].isApproved = true;
+    final product = _result!.products[index];
+
+    if (product.isInvoiceSource) {
+      if (index >= _result!.invoiceDrafts.length) {
+        _errorMessage = 'Fatura kanıt taslağı bulunamadı.';
+        notifyListeners();
+        return;
+      }
+      final decision = const InvoiceDraftDecisionEngine().evaluate(
+        _result!.invoiceDrafts[index],
+      );
+      if (!decision.canPrepareDraft) {
+        _errorMessage =
+            decision.questions.isNotEmpty
+                ? decision.questions.first
+                : 'Bu ürün henüz güvenilir dijital ürünle doğrulanmadı.';
+        notifyListeners();
+        return;
+      }
+    }
+
+    product.isApproved = true;
     notifyListeners();
   }
 
@@ -83,15 +156,33 @@ class OcrController extends ChangeNotifier {
   void updateProduct(int index, DetectedProduct updated) {
     if (_result == null) return;
     if (index < 0 || index >= _result!.products.length) return;
+    if (updated.isInvoiceSource) {
+      updated.issues = InvoiceRowParser.validateProduct(updated);
+    }
     _result!.products[index] = updated;
     notifyListeners();
   }
 
   /// Tümünü onayla.
+  ///
+  /// Faturada doğrulama sorunu olan satırlar toplu onaya dahil edilmez;
+  /// esnaf o satırı ayrıca kontrol eder.
   void approveAll() {
     if (_result == null) return;
-    for (final product in _result!.products) {
-      product.isApproved = true;
+    for (var index = 0; index < _result!.products.length; index++) {
+      final product = _result!.products[index];
+      if (!product.isInvoiceSource) {
+        product.isApproved = true;
+        continue;
+      }
+      if (product.issues.isNotEmpty || index >= _result!.invoiceDrafts.length) {
+        product.isApproved = false;
+        continue;
+      }
+      final decision = const InvoiceDraftDecisionEngine().evaluate(
+        _result!.invoiceDrafts[index],
+      );
+      product.isApproved = decision.canPrepareDraft;
     }
     notifyListeners();
   }
@@ -150,13 +241,18 @@ class OcrController extends ChangeNotifier {
               )
               .toList();
 
-      await const OcrFeedbackService().saveFeedback(
-        rawOcrText: _result!.rawText,
-        parsedProducts: parsedList,
-        correctedProducts: feedbackList,
-        scanMode: _scanMode,
-        imageHash: 'hash_${_result!.rawText.hashCode.abs()}',
-      );
+      // Fatura metni firma/tedarikçi/ticari fiyat gibi özel bilgiler
+      // içerebilir. Açık bir saklama politikası kurulana kadar fatura OCR
+      // ham metni feedback veri setine yazılmaz.
+      if (_scanMode != 'invoice') {
+        await const OcrFeedbackService().saveFeedback(
+          rawOcrText: _result!.rawText,
+          parsedProducts: parsedList,
+          correctedProducts: feedbackList,
+          scanMode: _scanMode,
+          imageHash: 'hash_${_result!.rawText.hashCode.abs()}',
+        );
+      }
 
       // 2. Ürünleri editör kontrolcüsüne ekle (uzak yazma başarısızsa yerelde yok)
       final editor = _editorController;
@@ -169,7 +265,16 @@ class OcrController extends ChangeNotifier {
 
       var savedCount = 0;
       for (final product in validProducts) {
-        final result = await editor.addProduct(_convertToProduct(product));
+        final sourceIndex = _result!.products.indexOf(product);
+        final invoiceDraft =
+            product.isInvoiceSource &&
+                    sourceIndex >= 0 &&
+                    sourceIndex < _result!.invoiceDrafts.length
+                ? _result!.invoiceDrafts[sourceIndex]
+                : null;
+        final result = await editor.addProduct(
+          _convertToProduct(product, invoiceDraft: invoiceDraft),
+        );
         if (result.isFailure) {
           final detail =
               result.failure?.message ?? 'Ürün müşteri vitrine yazılamadı.';
@@ -201,19 +306,72 @@ class OcrController extends ChangeNotifier {
   }
 
   /// DetectedProduct'ı Product'a çevir.
-  Product _convertToProduct(DetectedProduct detected) {
-    // Benzersiz ID: timestamp + random + name hash
+  ///
+  /// Fatura alış fiyatı müşteriye gösterilecek satış fiyatı DEĞİLDİR.
+  /// Bu nedenle purchaseUnitPrice burada Product.price alanına asla yazılmaz.
+  Product _convertToProduct(
+    DetectedProduct detected, {
+    InvoiceProductDraft? invoiceDraft,
+  }) {
     final timestamp = DateTime.now().microsecondsSinceEpoch;
     final random = (timestamp * 7 + detected.name.hashCode).abs();
+    final id = 'ocr_${timestamp}_$random';
+
+    final options = <String, String>{};
+    final variant = detected.variant?.trim();
+    final size = detected.size?.trim();
+    if (variant != null && variant.isNotEmpty) options['color'] = variant;
+    if (size != null && size.isNotEmpty) options['size'] = size;
+
+    final variants =
+        options.isEmpty
+            ? <ProductVariantData>[]
+            : <ProductVariantData>[
+              ProductVariantData(
+                id: '$id-variant-1',
+                options: options,
+                sku: detected.sku,
+                barcode: detected.barcode,
+                priceAmount: detected.price,
+                stockQuantity:
+                    detected.isInvoiceSource
+                        ? detected.documentQuantity
+                        : detected.quantity,
+                stockStatus: StockStatus.available.label,
+              ),
+            ];
+
+    final normalizedName =
+        invoiceDraft?.normalizedName?.value?.trim() ?? detected.name.trim();
+    final usableImages =
+        invoiceDraft?.imageCandidates
+            .where((item) => item.selected && item.canUse)
+            .map((item) => item.url)
+            .toList(growable: false) ??
+        const <String>[];
+
     return Product(
-      id: 'ocr_${timestamp}_$random',
-      name: detected.name,
-      price: detected.price?.toStringAsFixed(2) ?? '',
+      id: id,
+      name: normalizedName.isEmpty ? detected.name : normalizedName,
+      price:
+          invoiceDraft?.salePrice?.toStringAsFixed(2) ??
+          detected.price?.toStringAsFixed(2) ??
+          '',
       description: detected.description ?? '',
+      imageUrls: usableImages,
       category: detected.category,
       stockStatus: StockStatus.available.label,
-      isVisible: true,
-      source: 'ocr',
+      // Faturadan gelen ürün doğrudan müşteriye açılmaz; önce esnaf satış
+      // fiyatını ve şüpheli alanları kontrol eder.
+      isVisible: !detected.isInvoiceSource,
+      source: detected.source,
+      barcode: detected.barcode,
+      sku: detected.sku,
+      stockQuantity:
+          detected.isInvoiceSource
+              ? detected.documentQuantity
+              : detected.quantity,
+      variants: variants,
     );
   }
 

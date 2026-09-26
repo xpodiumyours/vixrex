@@ -4,6 +4,7 @@ import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { createRichCoreProduct } from "@/lib/productCoreServer";
 import { urunGirdisiniHazirla } from "@/lib/productIntake";
+import { izinsizUreticiGorseli } from "@/lib/ureticiKatalog";
 
 /**
  * Toplu ürün oluşturma API'si.
@@ -14,6 +15,39 @@ import { urunGirdisiniHazirla } from "@/lib/productIntake";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
+
+/** Fatura fotoğrafından gelen satırların kaynak etiketi. */
+export const FATURA_KAYNAGI = "invoice";
+
+function pozitifSayi(value: unknown): number | null {
+  const sayi =
+    typeof value === "number"
+      ? value
+      : typeof value === "string"
+        ? Number(value.trim().replace(",", "."))
+        : NaN;
+  return Number.isFinite(sayi) && sayi > 0 ? sayi : null;
+}
+
+function faturaKapisiSebebi(args: {
+  hazirlik: { durum: string; eksik?: string };
+  faturaKaynakli: boolean;
+  satisFiyatiGirildi: boolean;
+  esnafOnayladi: boolean;
+  izinsizGorselVar: boolean;
+}): string {
+  if (args.hazirlik.durum === "taslak" && args.hazirlik.eksik) return args.hazirlik.eksik;
+  if (args.faturaKaynakli && !args.satisFiyatiGirildi) {
+    return "Satış fiyatı girilmedi; ürün taslak kaldı.";
+  }
+  if (args.faturaKaynakli && !args.esnafOnayladi) {
+    return "Ürün onaylanmadı; ürün taslak kaldı.";
+  }
+  if (args.izinsizGorselVar) {
+    return "Üreticinin fotoğraf kullanım izni yok; kendi fotoğrafınızı ekleyin.";
+  }
+  return "Görünürlük kapalı istendi.";
+}
 
 interface ProductBatchItem {
   name?: string;
@@ -36,6 +70,10 @@ interface ProductBatchItem {
   metadata?: unknown;
   variants?: unknown;
   externalProductId?: string;
+  /** Faturadan gelen satırlarda esnafın açık yayın onayı. */
+  ownerApproved?: boolean;
+  /** Faturadaki birim alış fiyatı. Karta yazılmaz, müşteriye gösterilmez. */
+  purchasePriceAmount?: unknown;
 }
 
 interface SatirSonucu {
@@ -126,7 +164,33 @@ export async function POST(request: NextRequest) {
       continue;
     }
 
-    const gorunur = hazirlik.durum === "hazir" && ham.isVisible !== false;
+    const kaynak = (ham.sourceType || ham.source_type || "bulk_import").trim();
+
+    // Faturadan gelen satır, fotoğrafı ve zorunlu alanları tam olsa bile
+    // kendiliğinden yayına çıkmaz: esnaf satış fiyatını girmeli ve kartı
+    // açıkça onaylamalı. Fatura alış fiyatı satış fiyatı yerine geçmez.
+    const faturaKaynakli = kaynak === FATURA_KAYNAGI;
+    const satisFiyatiGirildi =
+      typeof hazirlik.girdi.priceAmount === "number" && hazirlik.girdi.priceAmount > 0;
+    const esnafOnayladi = ham.ownerApproved === true;
+
+    // İzin kapısı — sunucuda, tarayıcıdan atlanamaz. Üreticinin yazılı izni
+    // yoksa onun fotoğrafı ürün kartına hiç yazılmaz; ürün de yayına çıkmaz.
+    // Esnaf kendi fotoğrafını eklerse kart normal şekilde yayınlanır.
+    const izinsizGorselVar = hazirlik.girdi.imageUrls.some(izinsizUreticiGorseli);
+    if (izinsizGorselVar) {
+      hazirlik.girdi.imageUrls = hazirlik.girdi.imageUrls.filter(
+        (adres) => !izinsizUreticiGorseli(adres),
+      );
+    }
+
+    const faturaKapisi = !faturaKaynakli || (satisFiyatiGirildi && esnafOnayladi);
+
+    const gorunur =
+      hazirlik.durum === "hazir" &&
+      ham.isVisible !== false &&
+      faturaKapisi &&
+      !izinsizGorselVar;
 
     try {
       const olusan = await createRichCoreProduct({
@@ -139,7 +203,7 @@ export async function POST(request: NextRequest) {
         priceAmount: hazirlik.girdi.priceAmount,
         imageUrls: hazirlik.girdi.imageUrls,
         categoryId: hazirlik.girdi.categoryId,
-        sourceType: (ham.sourceType || ham.source_type || "bulk_import").trim(),
+        sourceType: kaynak,
         externalProductId: ham.externalProductId || "",
         brand: hazirlik.girdi.brand,
         barcode: hazirlik.girdi.barcode,
@@ -155,6 +219,22 @@ export async function POST(request: NextRequest) {
             : index,
       });
 
+      // Alış fiyatı ürün kartına DEĞİL, kilitli kendi tablosuna yazılır.
+      // products tablosunda anon'un tablo düzeyinde okuma yetkisi olduğu için
+      // oraya konulan her kolon müşteriye de açılırdı (2026-09-26 ölçümü).
+      const alisFiyati = pozitifSayi(ham.purchasePriceAmount);
+      if (alisFiyati !== null) {
+        const { error: alisHatasi } = await admin
+          .from("product_purchase_prices")
+          .upsert(
+            { product_id: olusan.id, store_id: store.id, amount: alisFiyati, updated_at: new Date().toISOString() },
+            { onConflict: "product_id" },
+          );
+        if (alisHatasi) {
+          console.error("[products/batch] alis fiyati yazilamadi:", alisHatasi.message);
+        }
+      }
+
       if (gorunur) {
         yayinda += 1;
         sonuclar.push({ sira: index, ad, durum: "yayinda", id: olusan.id });
@@ -165,7 +245,13 @@ export async function POST(request: NextRequest) {
           ad,
           durum: "taslak",
           id: olusan.id,
-          sebep: hazirlik.durum === "taslak" ? hazirlik.eksik : "Görünürlük kapalı istendi.",
+          sebep: faturaKapisiSebebi({
+            hazirlik,
+            faturaKaynakli,
+            satisFiyatiGirildi,
+            esnafOnayladi,
+            izinsizGorselVar,
+          }),
         });
       }
     } catch (err) {
