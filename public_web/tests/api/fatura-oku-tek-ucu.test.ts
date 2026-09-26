@@ -59,6 +59,34 @@ function istek(args: { slug?: string; editToken?: string; dosyaVarMi?: boolean }
 
 process.env.SUPABASE_URL = "https://proje.supabase.co";
 process.env.SUPABASE_SERVICE_ROLE_KEY = "service-role-test-anahtari";
+process.env.OPENROUTER_API_KEY = "test-okuyucu-anahtari";
+
+/** Okuyucunun döndüğü yapılandırılmış cevabı taklit eder. */
+function okuyucuCevabi(govde: unknown) {
+  return new Response(
+    JSON.stringify({
+      choices: [{ message: { content: JSON.stringify(govde) } }],
+      usage: { cost: 0.0016 },
+    }),
+    { status: 200 },
+  );
+}
+
+const TEK_SATIR = {
+  satirlar: [
+    {
+      model: "ELT1302",
+      barkod: "8681128321677",
+      varyant: "Siyah",
+      beden: "L",
+      adet: 2,
+      birim_fiyat: 137,
+      tutar: 274,
+    },
+  ],
+  toplam_adet: 2,
+  toplam_tutar: 274,
+};
 
 describe("/api/fatura-oku — tek okuma ucu", () => {
   beforeEach(() => {
@@ -69,25 +97,13 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async (url: string) => {
-        expect(url).toContain("/functions/v1/vixrex-fatura-goru");
-        return new Response(
-          JSON.stringify({
-            tamam: true,
-            // Gerçek belgede olduğu gibi alt toplam satırı da var; olmazsa
-            // belge gerçeği kapısı (haklı olarak) okumayı kabul etmez.
-            yazi: [
-              "ELT1302 Elit Erkek Elastan Sıfır Yaka Uzun Kol 8681128321677 Siyah L 2 ad 137,00 TL 274,00 TL",
-              "Toplam: 2 ad 274,00 TL",
-            ].join(String.fromCharCode(10)),
-            model: "stepfun/step-3.7-flash:free",
-          }),
-          { status: 200 },
-        );
+        expect(url).toContain("openrouter.ai");
+        return okuyucuCevabi(TEK_SATIR);
       }),
     );
   });
 
-  it("görüntüyü vixrex-fatura-goru'ya gönderir, satırı ayırır, katalogla eşleştirir", async () => {
+  it("fotoğrafı okuyucuya gönderir, satırı ayırır, katalogla eşleştirir", async () => {
     const cevap = await faturaOku(istek());
     const govde = await cevap.json();
 
@@ -140,16 +156,7 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     // bir okumadan ürün kartı üretmek, esnafa yanlış stok ve yanlış maliyet
     // yazmak demektir. Kapı durdurur, tahminle düzeltmez.
     const okuma = vi.fn(async () =>
-      new Response(
-        JSON.stringify({
-          tamam: true,
-          yazi: [
-            "ELT1302 Elit Erkek Elastan Sıfır Yaka Uzun Kol 8681128321677 Siyah L 2 ad 137,00 TL 274,00 TL",
-            "Toplam: 75 ad 6.034,00 TL",
-          ].join(String.fromCharCode(10)),
-        }),
-        { status: 200 },
-      ),
+      okuyucuCevabi({ ...TEK_SATIR, toplam_adet: 75, toplam_tutar: 6034 }),
     );
     vi.stubGlobal("fetch", okuma);
 

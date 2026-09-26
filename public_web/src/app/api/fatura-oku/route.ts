@@ -4,14 +4,9 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 import { verifyStoreEditToken } from "@/lib/instagramServer";
 import { fingerprintClient, getClientIp } from "@/lib/rentDemoSecurity";
-import {
-  belgeGercegiUyuyorMu,
-  belgeOzetiniAyikla,
-  hamMetniSatirlaraAyir,
-  tedarikciAdiniAyikla,
-  urunSatirlari,
-} from "@/lib/faturaSatirAyikla";
-import { faturaSatirlariniEslestir } from "@/lib/faturaEslestir";
+import { belgeGercegiUyuyorMu } from "@/lib/faturaSatirAyikla";
+import { faturaSatirlariniEslestir, type HamFaturaSatiri } from "@/lib/faturaEslestir";
+import { faturayiOku, type GoruSatiri } from "@/lib/faturaGoru";
 
 // Vixrex'in TEK fatura okuma ucu.
 //
@@ -142,53 +137,43 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!supabaseUrl || !serviceRoleKey) {
+  // Okuma tek yerde: src/lib/faturaGoru.ts. Anahtar yoksa hiç denenmez.
+  if (!process.env.OPENROUTER_API_KEY) {
     return NextResponse.json({ hata: "Fatura okuyucu hazır değil." }, { status: 503 });
   }
 
   // Yarım okuma bir kere olabilir; ısrarla olmaz. Belge kendi toplamını
-  // tutturana kadar en fazla DENEME_SINIRI kez tekrar okunur. Tutmazsa
-  // akış durur — eksik okunmuş satırdan ürün kartı üretilmez.
+  // tutturana kadar en fazla DENEME_SINIRI kez okunur. Tutmazsa akış durur —
+  // eksik okunmuş satırdan ürün kartı üretilmez.
   const DENEME_SINIRI = 3;
   const goruntu = `data:${tur};base64,${base64Cevir(bayt)}`;
 
   try {
     let sonUyum: ReturnType<typeof belgeGercegiUyuyorMu> | null = null;
-    let sonSatirlar: ReturnType<typeof urunSatirlari> = [];
+    let sonSatirlar: HamFaturaSatiri[] = [];
     let sonOzet = { adet: null as number | null, toplam: null as number | null };
     let sonTedarikci = "";
 
     for (let deneme = 1; deneme <= DENEME_SINIRI; deneme++) {
-      const cevap = await fetch(`${supabaseUrl}/functions/v1/vixrex-fatura-goru`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${serviceRoleKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ goruntu }),
-      });
+      const okuma = await faturayiOku(goruntu);
 
-      const govde = await cevap.json().catch(() => null);
-      if (!cevap.ok || !govde || typeof govde !== "object") {
-        const mesaj =
-          govde && typeof govde === "object" && typeof (govde as { hata?: unknown }).hata === "string"
-            ? (govde as { hata: string }).hata
-            : "Fatura şu an okunamadı. Tekrar dene.";
-        return NextResponse.json({ hata: mesaj }, { status: cevap.ok ? 502 : cevap.status });
-      }
+      const hamSatirlar: HamFaturaSatiri[] = okuma.satirlar
+        .filter((satir: GoruSatiri) => satir.model || satir.barkod)
+        .map((satir: GoruSatiri) => ({
+          model: satir.model,
+          ad: "",
+          barkod: satir.barkod,
+          varyant: satir.varyant,
+          beden: satir.beden,
+          adet: satir.adet,
+          alisBirimFiyat: satir.birimFiyat,
+          satirToplam: satir.tutar,
+          // Güven, satırın kendi kanıtından gelir: kod/barkod/adet/fiyat.
+          guven:
+            [satir.model, satir.barkod, satir.beden, satir.adet !== null, satir.birimFiyat !== null]
+              .filter(Boolean).length / 5,
+        }));
 
-      const yazi =
-        typeof (govde as { yazi?: unknown }).yazi === "string" ? (govde as { yazi: string }).yazi : "";
-      if (!yazi.trim()) {
-        return NextResponse.json(
-          { hata: "Bu fotoğrafta yazı bulunamadı. Daha net bir fotoğraf dene." },
-          { status: 422 },
-        );
-      }
-
-      const hamSatirlar = urunSatirlari(hamMetniSatirlaraAyir(yazi));
       if (hamSatirlar.length === 0) {
         return NextResponse.json(
           { hata: "Bu fotoğrafta ürün satırı bulunamadı. Daha net bir fotoğraf dene." },
@@ -196,8 +181,8 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      sonTedarikci = tedarikciAdiniAyikla(yazi);
-      sonOzet = belgeOzetiniAyikla(yazi);
+      sonTedarikci = okuma.tedarikci;
+      sonOzet = { adet: okuma.belgeAdedi, toplam: okuma.belgeToplami };
       sonSatirlar = hamSatirlar;
       sonUyum = belgeGercegiUyuyorMu(hamSatirlar, sonOzet);
       if (sonUyum.uyumlu) break;
@@ -207,8 +192,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Belge gerçeği kapısı: tutmadıysa ürün üretilmez. Esnafa neyin
-    // tutmadığı açıkça söylenir; sessizce yanlış stok/fiyat yazılmaz.
+    // Belge gerçeği kapısı: tutmadıysa ürün üretilmez. Esnafa neyin tutmadığı
+    // açıkça söylenir; sessizce yanlış stok/fiyat yazılmaz.
     if (!sonUyum || !sonUyum.uyumlu) {
       return NextResponse.json(
         {
@@ -234,7 +219,22 @@ export async function POST(request: NextRequest) {
       katalogEslesmesi: eslesenSayisi,
     });
   } catch (err) {
-    console.error("[fatura-oku] failed:", err instanceof Error ? err.message : "unknown");
+    const kod = err instanceof Error ? err.message : "unknown";
+    console.error("[fatura-oku] failed:", kod);
+
+    // Bakiye bitmesi "tekrar dene" ile geçiştirilmez; esnaf boşuna uğraşmasın.
+    if (kod === "OKUYUCU_BAKIYE_BITTI") {
+      return NextResponse.json(
+        { hata: "Fatura okuyucu şu an kullanılamıyor. Biz ilgileniyoruz." },
+        { status: 503 },
+      );
+    }
+    if (kod === "FOTOGRAFTA_YAZI_YOK") {
+      return NextResponse.json(
+        { hata: "Bu fotoğrafta yazı bulunamadı. Daha net bir fotoğraf dene." },
+        { status: 422 },
+      );
+    }
     return NextResponse.json({ hata: "Fatura şu an okunamadı. Tekrar dene." }, { status: 500 });
   }
 }
