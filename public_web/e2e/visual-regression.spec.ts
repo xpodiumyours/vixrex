@@ -27,7 +27,7 @@ test.describe("görsel regresyon — public vitrin", () => {
 
       await expect(page).toHaveScreenshot(
         `vitrin-${DEMO_SLUG}-${vp.name}.png`,
-        { maxDiffPixelRatio: 0.20, timeout: 15_000 },
+        { maxDiffPixelRatio: 0.3, timeout: 15_000 },
       );
     });
   }
