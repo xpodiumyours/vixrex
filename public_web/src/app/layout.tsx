@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Instrument_Serif, Outfit } from "next/font/google";
+import localFont from "next/font/local";
 import * as Sentry from "@sentry/nextjs";
 import { getSiteUrl } from "@/lib/siteUrl";
 import { CookieConsentRoot } from "@/components/cookie-consent/CookieConsentRoot";
@@ -13,19 +13,37 @@ import "./vixrex-app-ui.css";
 // dosyasi, ustelik yalnizca 300-800 agirliklarini getiriyordu. Landing
 // basliklarinin tamami w900 (Black). next/font derleme aninda indirip
 // kendi alan adimizdan servis eder; agirlik listesi eksiksiz.
-const outfit = Outfit({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800", "900"],
+const outfit = localFont({
+  src: [
+    { path: "./fonts/Outfit-300.woff2", weight: "300", style: "normal" },
+    { path: "./fonts/Outfit-400.woff2", weight: "400", style: "normal" },
+    { path: "./fonts/Outfit-500.woff2", weight: "500", style: "normal" },
+    { path: "./fonts/Outfit-600.woff2", weight: "600", style: "normal" },
+    { path: "./fonts/Outfit-700.woff2", weight: "700", style: "normal" },
+    { path: "./fonts/Outfit-800.woff2", weight: "800", style: "normal" },
+    { path: "./fonts/Outfit-900.woff2", weight: "900", style: "normal" },
+  ],
   variable: "--font-outfit-src",
   display: "swap",
+  adjustFontFallback: "Arial",
 });
 
-const instrumentSerif = Instrument_Serif({
-  subsets: ["latin"],
-  weight: "400",
-  style: ["normal", "italic"],
+const instrumentSerif = localFont({
+  src: [
+    {
+      path: "./fonts/InstrumentSerif-Regular.woff2",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "./fonts/InstrumentSerif-Italic.woff2",
+      weight: "400",
+      style: "italic",
+    },
+  ],
   variable: "--font-vitrin-display-src",
   display: "swap",
+  adjustFontFallback: "Times New Roman",
 });
 
 export const metadata: Metadata = {

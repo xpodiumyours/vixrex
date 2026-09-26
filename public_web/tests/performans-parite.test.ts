@@ -87,7 +87,7 @@ describe("Performans: görsel yükleme stratejisi", () => {
 
 describe("Performans: font stratejisi (render engelleme yok)", () => {
   it("fontlar next/font ile derlemede gelir (self-hosted)", () => {
-    expect(nextLayout).toContain("next/font/google");
+    expect(nextLayout).toContain("next/font/local");
     expect(nextLayout).toContain("Outfit");
   });
 
