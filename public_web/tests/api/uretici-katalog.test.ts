@@ -1,4 +1,4 @@
-import { readdirSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
@@ -161,5 +161,29 @@ describe("görsel izin kapısı", () => {
     expect(eslesme!.urun.kod).toBe("ELT1302");
     expect(eslesme!.urun.ad).toContain("Elit");
     expect(eslesme!.urun.kaynak).toContain("sehermensucat.com");
+  });
+});
+
+describe("izin tek kaynaktan gelir", () => {
+  it("çalışma anındaki izin, firmalar.json ile birebir aynıdır", () => {
+    // İzin iki ayrı yerde tutulursa biri güncellenir, diğeri unutulur ve
+    // izinsiz fotoğraf yayına sızar. Bu test o ayrışmayı yakalar.
+    const firmalar: Array<{ anahtar: string; izin: string }> = JSON.parse(
+      readFileSync("scripts/katalog/firmalar.json", "utf8"),
+    );
+    const kaynak = new Map(firmalar.map((f) => [f.anahtar, f.izin]));
+
+    const ozet = katalogOzeti();
+    expect(ozet.length).toBeGreaterThan(0);
+
+    for (const firma of ozet) {
+      expect(kaynak.get(firma.anahtar)).toBe(firma.izin);
+    }
+  });
+
+  it("bugün hiçbir firmanın görsel izni yoktur", () => {
+    // İlk izin alındığında bu test kırılır — kırılması iyi haberdir, o gün
+    // beklenen sayı buraya yazılır.
+    expect(katalogOzeti().filter((f) => f.izin === "var")).toHaveLength(0);
   });
 });

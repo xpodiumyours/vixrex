@@ -101,7 +101,13 @@ describe("rastgele fatura genelleme — tek örnekle sınırlı değil", () => {
   it("katalog dolu, ölçülebilir büyüklükte", () => {
     const ozet = katalogOzeti();
     expect(ozet.length).toBeGreaterThan(0);
-    expect(ozet[0].urun).toBeGreaterThan(200);
+
+    // Sıraya güvenilmez (liste üretilir ve alfabetiktir); firma anahtarıyla
+    // aranır. Bu test havuzun gerçekten dolu olduğunu ölçer.
+    const seher = ozet.find((f) => f.anahtar === "seher-mensucat");
+    expect(seher).toBeDefined();
+    expect(seher!.urun).toBeGreaterThan(200);
+    expect(ozet.reduce((t, f) => t + f.urun, 0)).toBeGreaterThan(1000);
   });
 
   it.each([

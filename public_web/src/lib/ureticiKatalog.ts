@@ -42,30 +42,50 @@ export interface UreticiFirmasi {
 }
 
 /**
- * Havuzdaki firmalar — İZİN LİSTESİ BURASIDIR.
+ * Havuzdaki firmalar — İZİN LİSTESİ TEK KAYNAKTAN GELİR.
  *
- * Bir firmaya yazılı izin alındığında yalnız buradaki `izinDurumu` "var"
- * yapılır; fotoğrafları o zaman kullanılmaya başlar. Katalog dosyası eksikse
- * firma eşleştirmeye girmez.
+ * Görsel/veri kullanım izni yalnız `scripts/katalog/firmalar.json` içinde
+ * tutulur; oradan `data/katalog/_firmalar.json` üretilir (üreteç:
+ * `scripts/katalog/izin-listesi-uret.mjs`). Buraya elle firma yazılmaz —
+ * yazılırsa izin iki yerde tutulur ve biri unutulup izinsiz fotoğraf sızar.
+ *
+ * Bir firmaya yazılı izin alındığında `firmalar.json` içinde `izin` alanı
+ * "var" yapılır ve üreteç yeniden koşulur.
  */
-const URETICILER: UreticiFirmasi[] = [
-  { anahtar: "seher-mensucat", ad: "Seher Mensucat", alan: "sehermensucat.com", izinDurumu: "bekliyor" },
-  { anahtar: "toptan-ic-giyim-pazari", ad: "Toptan İç Giyim Pazarı", alan: "toptanicgiyimpazari.com", izinDurumu: "yok" },
-  { anahtar: "iste-canta", ad: "İşte Çanta", alan: "istecanta.com", izinDurumu: "yok" },
-  { anahtar: "santral-gida", ad: "Santral Gıda", alan: "santralgida.com", izinDurumu: "yok" },
-  { anahtar: "alireis-toptan-gida", ad: "Alireis Toptan Gıda", alan: "alireis.com", izinDurumu: "yok" },
-  { anahtar: "berrak-icgiyim", ad: "Berrak İçGiyim", alan: "berrakicgiyim.com.tr", izinDurumu: "yok" },
-  { anahtar: "erdem-icgiyim", ad: "Erdem İçGiyim", alan: "erdemicgiyim.com", izinDurumu: "yok" },
-  { anahtar: "kinzi-toptan", ad: "Kinzi Toptan", alan: "kinzitoptan.com", izinDurumu: "yok" },
-  { anahtar: "koza-icgiyim", ad: "Koza İçGiyim", alan: "kozaicgiyim.com", izinDurumu: "yok" },
-  { anahtar: "sec-salca-konserve", ad: "Seç Salça Konserve", alan: "secsalca.com.tr", izinDurumu: "yok" },
-  { anahtar: "kaya-zeytin-salih-kaya-gida", ad: "Kaya Zeytin (Salih Kaya Gıda)", alan: "kayazeytin.com.tr", izinDurumu: "yok" },
-  { anahtar: "kul-gida", ad: "Kul Gıda", alan: "kulgida.com", izinDurumu: "yok" },
-  { anahtar: "aycenk-gida", ad: "Aycenk Gıda", alan: "aycenk.com", izinDurumu: "yok" },
-  { anahtar: "voltaj", ad: "Voltaj", alan: "voltaj.com.tr", izinDurumu: "yok" },
-  { anahtar: "saphori", ad: "Saphori", alan: "saphori.com", izinDurumu: "yok" },
-  { anahtar: "emek-toptan", ad: "Emek Toptan", alan: "emektoptan.com", izinDurumu: "yok" },
-];
+function firmalariYukle(): UreticiFirmasi[] {
+  const yol = path.join(katalogKlasoru(), "_firmalar.json");
+  try {
+    const icerik: unknown = JSON.parse(readFileSync(yol, "utf8"));
+    if (!Array.isArray(icerik)) throw new Error("liste bekleniyordu");
+    return icerik.map((ham) => {
+      const firma = ham as Partial<UreticiFirmasi>;
+      // Tanınmayan izin değeri asla "var" sayılmaz; güvenli tarafa düşülür.
+      const izinDurumu: IzinDurumu =
+        firma.izinDurumu === "var" || firma.izinDurumu === "bekliyor" ? firma.izinDurumu : "yok";
+      return {
+        anahtar: String(firma.anahtar ?? ""),
+        ad: String(firma.ad ?? ""),
+        alan: String(firma.alan ?? ""),
+        izinDurumu,
+      };
+    });
+  } catch (hata) {
+    // Liste okunamazsa hiçbir firma eşleştirmeye girmez. Bu bilinçli: izin
+    // bilgisi olmadan eşleşme kurmak, izinsiz görseli yayına açma riskidir.
+    console.error(
+      `[ureticiKatalog] izin listesi okunamadi (${yol}):`,
+      hata instanceof Error ? hata.message : "bilinmeyen hata",
+    );
+    return [];
+  }
+}
+
+let ureticilerOnbellek: UreticiFirmasi[] | null = null;
+
+function ureticiler(): UreticiFirmasi[] {
+  if (!ureticilerOnbellek) ureticilerOnbellek = firmalariYukle();
+  return ureticilerOnbellek;
+}
 
 const DOSYA_DUZENI = /^uretici-katalog-(.+)\.json$/;
 
@@ -133,7 +153,7 @@ function dizinler(): Dizin[] {
   // Dosya adı ile firma anahtarı tutmazsa koca bir katalog sessizce
   // eşleştirme dışı kalır. Bu yüzden açıkça uyarılır.
   const taninmayan = [...kataloglar.keys()].filter(
-    (anahtar) => !URETICILER.some((firma) => firma.anahtar === anahtar),
+    (anahtar) => !ureticiler().some((firma) => firma.anahtar === anahtar),
   );
   if (taninmayan.length > 0) {
     console.error(
@@ -141,7 +161,7 @@ function dizinler(): Dizin[] {
     );
   }
 
-  dizinlerOnbellek = URETICILER.map((firma) => {
+  dizinlerOnbellek = ureticiler().map((firma) => {
     const katalog = kataloglar.get(firma.anahtar) ?? [];
     const koda = new Map<string, UreticiUrunu>();
     const barkoda = new Map<string, UreticiUrunu>();
@@ -237,4 +257,42 @@ export function katalogOzeti(): Array<{
     urun: dizin.koda.size,
     izin: dizin.firma.izinDurumu,
   }));
+}
+
+let izinsizGorsellerOnbellek: Set<string> | null = null;
+
+/**
+ * İzni olmayan firmaların katalogdaki bütün fotoğraf adresleri.
+ *
+ * `gorselKapisi` eşleştirme sırasında fotoğrafı zaten boşaltır; bu küme ikinci
+ * ve asıl savunmadır: tarayıcıdan gelen istek, adresi başka yoldan öğrenip
+ * doğrudan yayın ucuna gönderse bile sunucu onu tanır ve durdurur.
+ */
+function izinsizGorseller(): Set<string> {
+  if (izinsizGorsellerOnbellek) return izinsizGorsellerOnbellek;
+
+  const kume = new Set<string>();
+  const kataloglar = kataloglariYukle();
+
+  for (const firma of ureticiler()) {
+    if (firma.izinDurumu === "var") continue;
+    for (const urun of kataloglar.get(firma.anahtar) ?? []) {
+      for (const adres of urun.gorseller ?? []) {
+        const temiz = adres.trim();
+        if (temiz) kume.add(temiz);
+      }
+    }
+  }
+
+  izinsizGorsellerOnbellek = kume;
+  return kume;
+}
+
+/**
+ * Bu fotoğraf adresi, görsel izni olmayan bir üreticinin kataloğundan mı?
+ *
+ * Esnafın kendi çektiği fotoğraf bu kümede olmadığı için serbestçe geçer.
+ */
+export function izinsizUreticiGorseli(adres: unknown): boolean {
+  return typeof adres === "string" && izinsizGorseller().has(adres.trim());
 }

@@ -13,6 +13,7 @@
  */
 
 import { writeFile } from "node:fs/promises";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
@@ -24,6 +25,27 @@ const XLSX = require("xlsx");
 
 const BURASI = path.dirname(fileURLToPath(import.meta.url));
 const CIKTI = path.join(BURASI, "firmalar.json");
+
+/**
+ * Daha önce verilmiş izinleri okur. İzin firma başına elle alınan bir haktır;
+ * Excel'den yeniden üretim onu silmemeli. Hem anahtar hem site adresiyle
+ * eşleşebilsin diye ikisi de anahtar olarak konur.
+ */
+function izinleriOku() {
+  const harita = new Map();
+  if (!existsSync(CIKTI)) return harita;
+  try {
+    for (const firma of JSON.parse(readFileSync(CIKTI, "utf8"))) {
+      if (!firma?.izin) continue;
+      if (firma.anahtar) harita.set(firma.anahtar, firma.izin);
+      if (firma.site) harita.set(firma.site, firma.izin);
+    }
+  } catch (hata) {
+    // Bozuk dosya yüzünden izinleri sessizce sıfırlamak en kötüsü olur.
+    console.error(`UYARI: mevcut firmalar.json okunamadı, izinler korunamıyor: ${hata.message}`);
+  }
+  return harita;
+}
 
 const VARSAYILAN_EXCEL =
   "C:/Users/Casper/Desktop/Tekstil-Gida-Firma-Havuzu.xlsx";
@@ -69,6 +91,7 @@ export function firmalariUret(excelYolu) {
 
   const kullanilan = new Set();
   const firmalar = [];
+  const oncekiIzinler = izinleriOku();
 
   for (const satir of hamlar) {
     const ad = String(satir[SUTUNLAR.ad]).trim();
@@ -88,7 +111,9 @@ export function firmalariUret(excelYolu) {
       // Platform taranınca otomatik tespit edilir; boş bırakılır.
       platform: "",
       // Görsel kullanım izni. "yok" | "bekliyor" | "var"
-      izin: site === "sehermensucat.com" ? "bekliyor" : "yok",
+      // Daha önce alınmış izin ASLA silinmez: mevcut firmalar.json'daki değer
+      // korunur. Yoksa Excel'den yeniden üretim, alınan izinleri sıfırlar.
+      izin: oncekiIzinler.get(anahtar) ?? oncekiIzinler.get(site) ?? "yok",
     });
   }
 

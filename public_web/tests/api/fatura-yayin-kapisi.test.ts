@@ -26,6 +26,16 @@ import { POST as topluUrunEkle } from "@/app/api/products/batch/route";
 
 const STORE = { id: "store-1", edit_token: "token-1", name: "Deneme Butik" };
 
+import seherKatalog from "../../data/katalog/uretici-katalog-seher-mensucat.json";
+
+/**
+ * Gerçek katalogdan alınmış, izni OLMAYAN bir üretici fotoğrafı.
+ * Seher'in izni "bekliyor" — yani bu adres yayına çıkamamalı.
+ */
+const IZINSIZ_URETICI_FOTOGRAFLARI = (seherKatalog as Array<{ gorseller: string[] }>)
+  .find((urun) => urun.gorseller.length >= 3)!
+  .gorseller.slice(0, 3);
+
 const FOTOGRAFLAR = [
   "https://tedarikci.example.com/1.jpg",
   "https://tedarikci.example.com/2.jpg",
@@ -172,6 +182,46 @@ describe("faturadan gelen ürünün yayın kapısı", () => {
     );
 
     expect(mocks.update).toHaveBeenCalledWith({ purchase_price_amount: 137 });
+  });
+
+  it("izinsiz üretici fotoğrafı gönderilirse ürün taslak kalır", async () => {
+    // Tarayıcı kapıyı atlayıp doğrudan üretici adresini gönderse bile sunucu
+    // tanır: Seher'in izni "bekliyor", fotoğrafı yayına çıkamaz.
+    const cevap = await topluUrunEkle(
+      istek([
+        faturaSatiri({ ownerApproved: true, imageUrls: IZINSIZ_URETICI_FOTOGRAFLARI }),
+      ]),
+    );
+    const govde = await cevap.json();
+
+    expect(mocks.createProduct.mock.calls[0][0].isVisible).toBe(false);
+    expect(govde.yayinda).toBe(0);
+    expect(govde.satirlar[0].sebep).toContain("izni yok");
+  });
+
+  it("izinsiz üretici fotoğrafı ürün kartına hiç yazılmaz", async () => {
+    await topluUrunEkle(
+      istek([
+        faturaSatiri({ ownerApproved: true, imageUrls: IZINSIZ_URETICI_FOTOGRAFLARI }),
+      ]),
+    );
+
+    const yazilan: string[] = mocks.createProduct.mock.calls[0][0].imageUrls;
+    for (const adres of IZINSIZ_URETICI_FOTOGRAFLARI) {
+      expect(yazilan).not.toContain(adres);
+    }
+  });
+
+  it("esnaf kendi fotoğrafını koyarsa aynı ürün yayına çıkar", async () => {
+    // İzin kuralı esnafı kilitlemez: kendi çektiği fotoğrafla sistem uçtan
+    // uca çalışır. Kilitlenen yalnız izinsiz ÜRETİCİ fotoğrafıdır.
+    const cevap = await topluUrunEkle(
+      istek([faturaSatiri({ ownerApproved: true, imageUrls: FOTOGRAFLAR })]),
+    );
+    const govde = await cevap.json();
+
+    expect(mocks.createProduct.mock.calls[0][0].isVisible).toBe(true);
+    expect(govde.yayinda).toBe(1);
   });
 
   it("Excel/XML gibi fatura dışı kaynaklar eski davranışını korur", async () => {

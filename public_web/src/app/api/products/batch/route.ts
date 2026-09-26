@@ -4,6 +4,7 @@ import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { createRichCoreProduct } from "@/lib/productCoreServer";
 import { urunGirdisiniHazirla } from "@/lib/productIntake";
+import { izinsizUreticiGorseli } from "@/lib/ureticiKatalog";
 
 /**
  * Toplu ürün oluşturma API'si.
@@ -33,6 +34,7 @@ function faturaKapisiSebebi(args: {
   faturaKaynakli: boolean;
   satisFiyatiGirildi: boolean;
   esnafOnayladi: boolean;
+  izinsizGorselVar: boolean;
 }): string {
   if (args.hazirlik.durum === "taslak" && args.hazirlik.eksik) return args.hazirlik.eksik;
   if (args.faturaKaynakli && !args.satisFiyatiGirildi) {
@@ -40,6 +42,9 @@ function faturaKapisiSebebi(args: {
   }
   if (args.faturaKaynakli && !args.esnafOnayladi) {
     return "Ürün onaylanmadı; ürün taslak kaldı.";
+  }
+  if (args.izinsizGorselVar) {
+    return "Üreticinin fotoğraf kullanım izni yok; kendi fotoğrafınızı ekleyin.";
   }
   return "Görünürlük kapalı istendi.";
 }
@@ -168,10 +173,24 @@ export async function POST(request: NextRequest) {
     const satisFiyatiGirildi =
       typeof hazirlik.girdi.priceAmount === "number" && hazirlik.girdi.priceAmount > 0;
     const esnafOnayladi = ham.ownerApproved === true;
+
+    // İzin kapısı — sunucuda, tarayıcıdan atlanamaz. Üreticinin yazılı izni
+    // yoksa onun fotoğrafı ürün kartına hiç yazılmaz; ürün de yayına çıkmaz.
+    // Esnaf kendi fotoğrafını eklerse kart normal şekilde yayınlanır.
+    const izinsizGorselVar = hazirlik.girdi.imageUrls.some(izinsizUreticiGorseli);
+    if (izinsizGorselVar) {
+      hazirlik.girdi.imageUrls = hazirlik.girdi.imageUrls.filter(
+        (adres) => !izinsizUreticiGorseli(adres),
+      );
+    }
+
     const faturaKapisi = !faturaKaynakli || (satisFiyatiGirildi && esnafOnayladi);
 
     const gorunur =
-      hazirlik.durum === "hazir" && ham.isVisible !== false && faturaKapisi;
+      hazirlik.durum === "hazir" &&
+      ham.isVisible !== false &&
+      faturaKapisi &&
+      !izinsizGorselVar;
 
     try {
       const olusan = await createRichCoreProduct({
@@ -229,6 +248,7 @@ export async function POST(request: NextRequest) {
             faturaKaynakli,
             satisFiyatiGirildi,
             esnafOnayladi,
+            izinsizGorselVar,
           }),
         });
       }
