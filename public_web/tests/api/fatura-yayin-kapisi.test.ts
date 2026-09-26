@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   verifyOwner: vi.fn(() => ({ storeId: "store-1" })),
   createProduct: vi.fn(),
   update: vi.fn(),
+  upsert: vi.fn(),
 }));
 vi.mock("next/headers", () => ({ cookies: vi.fn(async () => ({ get: mocks.get })) }));
 vi.mock("@/lib/supabaseAdmin", () => ({ getSupabaseAdmin: mocks.admin }));
@@ -50,6 +51,10 @@ function adminMock() {
       query.eq.mockReturnValue(query);
       query.single.mockResolvedValue({ data: STORE, error: null });
       return query;
+    }
+    if (tablo === "product_purchase_prices") {
+      mocks.upsert.mockResolvedValue({ error: null });
+      return { upsert: mocks.upsert };
     }
     if (tablo === "products") {
       const query = {
@@ -176,12 +181,19 @@ describe("faturadan gelen ürünün yayın kapısı", () => {
     expect(yazilan.priceAmount).toBe(199);
   });
 
-  it("alış fiyatı karta değil, ayrı kolona yazılır", async () => {
+  it("alış fiyatı karta değil, kilitli tabloya yazılır", async () => {
+    // products tablosunda anon'un tablo düzeyinde okuma yetkisi var; oraya
+    // yazılan her alan müşteriye de açılırdı. Bu yüzden ayrı tablo.
     await topluUrunEkle(
       istek([faturaSatiri({ ownerApproved: true, purchasePriceAmount: 137 })]),
     );
 
-    expect(mocks.update).toHaveBeenCalledWith({ purchase_price_amount: 137 });
+    expect(mocks.upsert).toHaveBeenCalledTimes(1);
+    const [kayit, secenek] = mocks.upsert.mock.calls[0];
+    expect(kayit).toMatchObject({ product_id: "urun-1", store_id: "store-1", amount: 137 });
+    expect(secenek).toMatchObject({ onConflict: "product_id" });
+    // Ürün kartına hiçbir şekilde yazılmadı.
+    expect(mocks.update).not.toHaveBeenCalled();
   });
 
   it("izinsiz üretici fotoğrafı gönderilirse ürün taslak kalır", async () => {

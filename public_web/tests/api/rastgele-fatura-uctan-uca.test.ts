@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   verifyOwner: vi.fn(() => ({ storeId: "store-1" })),
   createProduct: vi.fn(),
   update: vi.fn(),
+  upsert: vi.fn(),
 }));
 vi.mock("next/headers", () => ({ cookies: vi.fn(async () => ({ get: mocks.get })) }));
 vi.mock("@/lib/supabaseAdmin", () => ({ getSupabaseAdmin: mocks.admin }));
@@ -36,6 +37,11 @@ function adminMock() {
       query.eq.mockReturnValue(query);
       query.single.mockResolvedValue({ data: STORE, error: null });
       return query;
+    }
+    if (tablo === "product_purchase_prices") {
+      // Alış fiyatı kilitli kendi tablosuna yazılır, ürün kartına değil.
+      mocks.upsert.mockResolvedValue({ error: null });
+      return { upsert: mocks.upsert };
     }
     if (tablo === "products") {
       const query = { select: vi.fn(), eq: vi.fn(), maybeSingle: vi.fn(), update: mocks.update };

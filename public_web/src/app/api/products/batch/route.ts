@@ -219,15 +219,17 @@ export async function POST(request: NextRequest) {
             : index,
       });
 
-      // Alış fiyatı ürün kartına değil, yalnız esnafın kendi kaydına yazılır.
-      // Herkese açık vitrin sorgusu bu kolonu seçmez, müşteriye gösterilmez.
+      // Alış fiyatı ürün kartına DEĞİL, kilitli kendi tablosuna yazılır.
+      // products tablosunda anon'un tablo düzeyinde okuma yetkisi olduğu için
+      // oraya konulan her kolon müşteriye de açılırdı (2026-09-26 ölçümü).
       const alisFiyati = pozitifSayi(ham.purchasePriceAmount);
       if (alisFiyati !== null) {
         const { error: alisHatasi } = await admin
-          .from("products")
-          .update({ purchase_price_amount: alisFiyati })
-          .eq("id", olusan.id)
-          .eq("store_id", store.id);
+          .from("product_purchase_prices")
+          .upsert(
+            { product_id: olusan.id, store_id: store.id, amount: alisFiyati, updated_at: new Date().toISOString() },
+            { onConflict: "product_id" },
+          );
         if (alisHatasi) {
           console.error("[products/batch] alis fiyati yazilamadi:", alisHatasi.message);
         }
