@@ -109,3 +109,5 @@ public_web/blob-report/
 
 # Yerel test imzasi (2026-09-09) — asla commitlenmez
 android/*.jks
+
+.claude/.olcum/

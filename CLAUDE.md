@@ -98,7 +98,14 @@ bu depodaki her kod değişikliğinin zorunlu sırası. Adım atlanamaz.
    sitenin kendi derlenmiş stil dosyasıyla izole kopyasını çizip göster —
    ama "gerçek ekran değil" diye belirt.
 
-**6. Dal / ana dal / canlı ayrımı + geri alma.** Değişikliğin şu an nerede
+**6. ÖNİZLEMEDE UÇTAN UCA TEST — ana dala inmeden önce (2026-09-24, Casper).**
+   Her iş önce kendi dalında önizleme adresine çıkar; orada **gerçek
+   tarayıcıda, gerçek akışta** baştan sona denenir (giriş, form, kayıt,
+   görünen sonuç). Ekran görüntüsü alınır. Ancak bu testten sonra ana dala
+   inilir, sonra canlı doğrulanır. Yerel testler, tip kontrolü ve derleme
+   bu adımın yerini tutmaz — onlar ekranı hiç açmıyor.
+
+**7. Dal / ana dal / canlı ayrımı + geri alma.** Değişikliğin şu an nerede
    olduğunu üç kelimeyle söyle, test adresini yaz, geri alma komutunu ver.
 
 Anlatım kuralı: teknik terim kullanma. Kullanmak zorundaysan yanına tek

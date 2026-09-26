@@ -1,310 +1,215 @@
 # VixRex
 
-> **Küçük işletmeler için dijital vitrin ve müşteri yönetim platformu.**
+Küçük işletmeler için dijital vitrin ve müşteri yönetim platformu.
 
-VixRex, küçük işletmelerin kod bilmeden dijital bir vitrin sahibi olmasını sağlar. İki ayrı, birbirinden bağımsız yayınlanan uygulamadan oluşur ve ikisi de aynı Supabase (PostgreSQL) veritabanını paylaşır.
+VixRex; işletme bilgilerini, ürün ve hizmetleri, iletişim kanallarını ve randevuları bir vitrin etrafında toplar. Flutter uygulaması ve Next.js web uygulaması aynı Supabase altyapısını kullanır.
 
----
+**Web sitesi:** [www.vixrex.com](https://www.vixrex.com)
 
-## 🏗️ Sistem Mimarisi
+> Belge kontrolü: 23 Eylül 2026. Bu README, incelenen yerel kaynak kodu ve yapılandırmaları açıklar; belirli bir dalın canlıya yayımlandığını veya tüm özelliklerin canlıda doğrulandığını göstermez. Alan adı, dağıtım durumu ve veritabanına uygulanmış migration'lar ayrı doğrulanır.
 
+## Proje haritası
+
+| Konum | Sorumluluk |
+| --- | --- |
+| [lib/](lib/) | Flutter uygulaması: işletme yönetimi, vitrin ve ürün düzenleme, OCR ve toplu işlemler |
+| [public_web/](public_web/) | Next.js: tanıtım, Keşfet, müşteri vitrinleri, web yönetim ekranları, asistan ve sunucu API'leri |
+| [shared/](shared/) | İki uygulamanın paylaştığı şemalar, mesajlar ve kurallar |
+| [supabase/migrations/](supabase/migrations/) | Sürümlü veritabanı değişiklikleri, RPC'ler ve erişim politikaları |
+| [supabase/functions/](supabase/functions/) | Supabase Edge Function'ları |
+| [tool/](tool/) | Ortak kaynaklardan dosya üreten ve geliştirmeyi destekleyen araçlar |
+| [test/](test/) ve [integration_test/](integration_test/) | Flutter testleri |
+| [public_web/tests/](public_web/tests/) ve [public_web/e2e/](public_web/e2e/) | Web birim/sözleşme testleri ve tarayıcı senaryoları |
+| [.github/workflows/ci.yml](.github/workflows/ci.yml) | Otomatik kalite kontrolleri |
+
+### Uygulamalar arasındaki ilişki
+
+```text
+Flutter yönetim uygulaması ─────────────┐
+                                      ├── Supabase: hesaplar, vitrinler,
+Next.js yönetim ekranları ve API'leri ─┘   çalışma taslakları, ürünler, dosyalar
+                                                   │
+                                      Next.js müşteri vitrini
+                                      /v/:slug ve ürün sayfaları
 ```
-vixrex/
-├── lib/               # Flutter — işletme sahibinin yönetim paneli (Web + Android)
-├── public_web/        # Next.js — platformun herkese açık yüzü: ana sayfa, Keşfet,
-│                      #   kategori sayfaları, vitrinler (/v/:slug) ve sahip modunda
-│                      #   "Vixrex Asistan" düzenleme paneli
-├── shared/             # Vitrin alan şeması + mesaj katalogu — Flutter ve Next.js'in ortak tek kaynağı
-└── supabase/           # PostgreSQL migration'ları, RLS politikaları, Edge Function'lar
-```
 
-- **Flutter panel** (`lib/`) → Vercel projesi: `vixrex-app`
-- **Next.js platform** (`public_web/`) → Vercel projesi: `vixrex-public`
+Flutter ve Next.js ayrı derlenir ve ayrı dağıtılır. Web tarafı yalnız herkese açık vitrinlerden oluşmaz; `/app` altında işletme yönetimi de bulunur. Bir yüzeydeki özelliğin varlığı diğer yüzeyde aynı davranışın bulunduğunu kanıtlamaz.
 
-İki Vercel projesi **ayrı yayınlanır ve ayrı doğrulanır** — birinin deploy olması diğerinin çalıştığı anlamına gelmez.
+### Web adresleri
 
-### Next.js platformun ana kapısıdır (2026-08-26)
+Aşağıdaki yollar [public_web/src/app/](public_web/src/app/) içinde tanımlıdır. Yönetim, sahiplik ve içerik yayın durumu kontrolleri ilgili sayfalarda/API'lerde uygulanır.
 
-Kök adres artık uygulamaya yönlendirmiyor; gerçek bir sayfa. Arama motorunun
-okuduğu her yüzey `public_web`'te üretilir:
-
-| Adres | İçerik |
-| :--- | :--- |
-| `/` | Ana sayfa (tanıtım) |
-| `/kesfet` | Yayındaki vitrinlerin dizini |
-| `/kesfet/:kategori` | 19 kanonik kategori sayfası (adresler tireli: `kafe-lokanta`) |
-| `/v/:slug` | Vitrin |
+| Yol | İşlev |
+| --- | --- |
+| `/` | Tanıtım ve asistanla başlangıç |
+| `/kesfet`, `/kesfet/:kategori` | Vitrin keşfi ve kategoriler |
+| `/giris`, `/kayit`, `/hesap-bagla` | Hesap ve giriş akışlarının sayfaları |
+| `/app` | İşletmenin vitrin yönetimi |
+| `/app/urunler`, `/app/vixrex` | Ürün yönetimi ve asistan |
+| `/app/hesap`, `/app/profil`, `/app/ayarlar`, `/app/bildirimler` | Hesap ve yönetim ekranları |
+| `/v/:slug` | Müşterinin gördüğü vitrin ve yetkili sahip deneyimi |
+| `/v/:slug/urun/:productSlug` | Ürün detayı |
+| `/v/:slug/randevu`, `/v/:slug/randevu/:token` | Randevu ve takip |
+| `/v/:slug/randevu-yonetim` | İşletmenin randevu yönetimi |
+| `/v/:slug/yazilar`, `/v/:slug/blog-yonetim` | İşletmenin yazıları ve yazı yönetimi |
+| `/blog`, `/blog/:slug` | Kurumsal Vixrex blogu; içerikler yayın koşullarına bağlıdır |
+| `/hakkimizda`, `/iletisim`, `/yardim` | Kurumsal ve destek sayfaları |
 | `/sitemap.xml`, `/robots.txt` | Arama motoru altyapısı |
 
-Flutter yüzeyi (`vixrex-app`) `X-Robots-Tag: noindex` ile aramadan çıkarılmıştır —
-aynı içeriğin iki adreste indekslenmesini önler.
+Kurumsal blogun kaynağı [blogYazilari.ts](public_web/src/data/blogYazilari.ts); işletme vitrininin yazıları ise ayrı `store_articles` verisidir. Bunlar aynı içerik sistemi değildir.
 
-`(site)` route grubu ana sayfayı ve Keşfet'i ortak başlık/altbilgiyle sarar.
-Bu layout kök layout'a **konmaz**: kök layout `/v/:slug` vitrinlerini de sarıyor,
-oraya başlık eklemek canlı vitrinleri bozar.
+### Asistan, taslak ve yayınlama
 
-### Vitrin görünümü yalnız Next.js'te çizilir
+Ana sayfa asistanı yalnız sabit bir reklam maketi değildir. [LandingAsistanSohbeti.tsx](public_web/src/components/landing/LandingAsistanSohbeti.tsx) kullanıcı girdisini işler ve `/api/create-store` üzerinden vitrin oluşturma akışına katılır.
 
-Müşterinin gördüğü `/v/:slug` sayfası ve sahibin önizlemesi **tek bir yerden**, `public_web`'teki gerçek şablondan gelir. Flutter bu sayfayı kendi başına bir daha çizmez; yalnız veriyi düzenler, Supabase'e yazar ve Next.js linkini açar.
+Başlangıç ve yayınlama için temel kaynak zinciri:
 
-### Düzenlemenin iki kapısı
+1. Ana sayfa asistanı → [create-store API](public_web/src/app/api/create-store/route.ts).
+2. Oluşturma akışı → `get_or_create_working_draft` ile çalışma taslağı.
+3. Web yönetimi → [uygulama giriş sayfası](public_web/src/app/app/page.tsx), sahip oturumu ve düzenleme bileşenleri.
+4. Yayın isteği → [owner-publish API](public_web/src/app/api/owner-publish/route.ts) → `publish_working_draft` RPC.
+5. Müşteri görünümü → `/v/:slug`.
 
-Bir vitrin alanı iki yoldan düzenlenebilir:
+Taslağın kaydedilmesi, vitrinin yayımlanmasıyla aynı işlem değildir. Yetki, doğrulama ve yasal onay kontrolleri API/RPC zincirinde değerlendirilir. Sahip oturumu kodu [ownerSession.ts](public_web/src/lib/ownerSession.ts) içinde bulunur.
 
-1. **Flutter manuel panel** — büyük form, toplu işlem (OCR/Excel), çevrimdışı çalışma.
-2. **"Vixrex Asistan"** (`public_web`, sahip modu) — vitrinin üzerinde bir alana tıklayınca açılan sohbet/düzenleme paneli (`OwnerWorkspaceShell`, `OwnerAssistantPanel`). Form doldurmak yerine "tıkla, değiştir" deneyimi.
+### Ürün sistemi ve önceki harita
 
-İkisi de aynı alan şemasına (`shared/vitrin_alanlari.json`) ve aynı doğrulamaya bakar, aynı taslağa yazar.
+15 Eylül 2026 tarihli `docs/urun-sistemi-haritasi.md`, Git geçmişinde `f5d1b8f3` commit'inde ve `yedek/durum-raporu-20260916` dalında bulunur. Bu README hazırlanırken açık olan dalda dosya mevcut değildi. Önceki harita, o tarihteki durum ile sonraki geliştirme planlarını birlikte içerir; güncel özellik listesi olarak doğrudan kullanılmamalıdır.
 
-### Ana sayfadaki asistan sohbeti bir makettir
+Geçmiş haritayı çalışma dosyalarını değiştirmeden okumak için:
 
-Ana sayfada telefon mockup'ının içinde açılan Vixrex Asistan sohbeti **sabit
-reklam metnidir** — kullanıcı yazamaz, hiçbir sunucuya bağlı değildir ve
-bağlanmayacaktır. Web'de gerçek asistan yalnız sahip panelindedir.
+```sh
+git show f5d1b8f3:docs/urun-sistemi-haritasi.md
+```
 
-Bu kural 2026-08-26'da kondu: o gün ölçüldüğünde iki yüzeyde toplam **dokuz
-ayrı "Vixrex Asistan" parçası** vardı (Flutter'da 6, web'de 3). Maketi
-"çalışmıyor" sanıp motora bağlamak dördüncü bir web asistanı doğururdu.
-Tam metin: `VIXREX_RULES.md` §1.
+Güncel kodda ürün sisteminin başlıca girişleri:
 
-### Vitrin kalıcı hesaba bağlıdır (2026-08-26)
+| Alan | Kaynak |
+| --- | --- |
+| Flutter ürün işlemleri | [ProductController](lib/controllers/product_controller.dart) → [ProductService](lib/services/product_service.dart) → [SupabaseProductRepository](lib/repositories/supabase_product_repository.dart) |
+| Web ürün işlemleri | [OwnerProductManager](public_web/src/components/owner/OwnerProductManager.tsx) → [ürün API'si](public_web/src/app/api/products/route.ts) → [productCoreServer](public_web/src/lib/productCoreServer.ts) |
+| Toplu aktarım | Flutter [bulk_product_upload_service.dart](lib/services/bulk_product_upload_service.dart); web [BulkProductUpload.tsx](public_web/src/components/owner/BulkProductUpload.tsx) |
+| XML ve OCR | Flutter [xml_product_upload_service.dart](lib/services/xml_product_upload_service.dart) ve [OCR servisleri](lib/services/ocr/) |
+| Ürün öznitelikleri | [product_attribute_schema.json](shared/product_attribute_schema.json) |
+| Görsel kuralları | [product_image_policy.json](shared/product_image_policy.json) ve web [productImagePolicy.ts](public_web/src/lib/productImagePolicy.ts) |
+| Müşteri sunumu | [ProductCatalog](public_web/src/app/v/[slug]/ProductCatalog.tsx), [ProductQuickView](public_web/src/components/ProductQuickView.tsx), [productStructuredData](public_web/src/lib/productStructuredData.ts) |
 
-- **Hesap başına tek vitrin.** Veritabanı seviyesinde kısmi unique index ile
-  zorlanır; ikinci kiralama `ALREADY_OWNS_STORE` döner — bu bir hata değil,
-  kuralın çalıştığının işaretidir.
-- **Yeni cihazda açılış** `bootstrap_owner_state()` ile yapılır; kullanıcı
-  aynı hesapla girdiğinde vitrini kod/link istenmeden gelir.
-- Demo vitrin kiralandığında klon **sahipli doğar** (`rent_demo_for_account`),
-  düzenleme anahtarı bir yıllıktır.
+Eski haritadaki sabit dört görsel sınırı güncel ortak dosyayı yansıtmaz: incelenen `product_image_policy.json` içinde üst sınır 11'dir. Bu, canlı veritabanındaki sınırın doğrulandığı anlamına gelmez. Öznitelik, varyant ve ürün yapılandırılmış veri kodları da depoda mevcuttur; eski haritanın “yok” veya “plan” ifadeleri güncel kodla karşılaştırılmalıdır.
 
-Bu iş öncesinde canlıda vitrinlerin **hiçbirinde** `user_id` dolu değildi;
-sahiplenme hiç çalışmamıştı.
+## Ortak kaynaklar ve üretim yönü
 
----
+Her ortak dosyanın üretim yönü aynı değildir. Özellikle vitrin alanları için asıl kaynak JSON değil, TypeScript şemasıdır:
 
-## 🚀 Öne Çıkan Özellikler
+```text
+public_web/src/lib/vitrinFieldSchema.ts
+  → tool/sema_disa_aktar.ts
+  → shared/vitrin_alanlari.json
+  → tool/alan_semasi_uret.dart
+  → lib/config/vitrin_alanlari.g.dart
+```
 
-- 🏪 **Dijital vitrin editörü** — işletme bilgileri, logo/kapak görselleri, sosyal medya bağlantıları, tema.
-- 💬 **Vixrex Asistan (tıkla-düzenle panel)** — herkese açık vitrin sayfasının üzerinde, sahip modunda açılan düzenleme paneli; ayrı bir form ekranı değildir.
-- 🏷️ **Kiralık vitrin + premium abonelik** — hazır bir şablon 14 gün ücretsiz denenip kiralanabilir; süre dolduğunda 3 gün içinde yenilenmezse vitrin taslağa döner. Ödeme PayTR üzerinden alınır.
-- 📸 **OCR ile toplu ürün yükleme** — menü/broşür/liste görsellerinden metin tanıma (Google ML Kit) ile ürün kartı oluşturma; ücretsiz kullanıcı için günlük limitlidir.
-- 📊 **Excel ile toplu veri aktarımı** — ürün/stok listelerini tek seferde sisteme aktarma.
-- 📅 **Randevu ve booking yönetimi** — hizmet bazlı takvim, onay/iptal, müşteri için takip bağlantısı (`/v/:slug/randevu/:token`).
-- 🔍 **Keşfet** — yayınlanmış vitrinlerin dizini. Flutter'da arama/filtre/favori ile; web'de ayrıca taranabilir bir dizin ve 19 kategori sayfası olarak (`/kesfet`, `/kesfet/:kategori`). Kategori süzgeçleri düz bağlantıdır: JavaScript'e bağlı süzgeç kategorileri arama motorundan gizler.
-- 🔐 **Kalıcı hesap sahipliği** — vitrin hesaba bağlanır, hesap başına tek vitrin kuralı vardır, yeni cihazda aynı hesapla girildiğinde vitrin kendiliğinden gelir.
-- 🆕 **"Hazır Vitrin Seç" onboarding** — sıfırdan kurmak yerine Keşfet'teki kiralık şablonlardan birini seçip kiralayarak başlama yolu.
-- 📝 **Blog / duyuru yönetimi** — işletmenin kendi vitrininde yazı paylaşması.
-- 📷 **Instagram'dan ürün aktarma** — kod tamamlanmış durumda ama **varsayılan olarak kapalı** (`INSTAGRAM_SYNC_ENABLED=false`); Meta App Review süreci henüz tamamlanmadı.
-- ✅ **Yasal onay akışı** — gizlilik/şartlar/yayın izni onayı hem Flutter panelinden hem Vixrex Asistan üzerinden verilebilir.
+| Konu | Asıl kaynak | Kullanım / üretim |
+| --- | --- | --- |
+| Vitrin alanları | [vitrinFieldSchema.ts](public_web/src/lib/vitrinFieldSchema.ts) | JSON'a aktarım, ardından Flutter üretimi |
+| İşletme kategorileri | [business_categories.json](shared/business_categories.json) | Web okur; Flutter için `tool/business_categories_uret.dart` |
+| Mesajlar | [vixrex_mesajlar.json](shared/vixrex_mesajlar.json) | Flutter için `tool/mesaj_semasi_uret.dart` |
+| Premium fiyatı | [fiyatlandirma.json](shared/fiyatlandirma.json) | Web `fiyatlandirma.ts`; Flutter için `tool/fiyatlandirma_uret.dart` |
+| Ortak renkler | [renkler.json](shared/renkler.json) | `tool/renk_uret.dart` → Flutter renkleri ve web `--color-lp-*` değerleri |
+| Çalışma saatleri | [working_hours_contract.json](shared/working_hours_contract.json) | Ortak sözleşme |
+| Ürün alanları ve görseller | [product_attribute_schema.json](shared/product_attribute_schema.json), [product_image_policy.json](shared/product_image_policy.json) | Ürün şeması ve görsel politikası |
 
----
+Üretilen dosyalar yerine asıl kaynak düzenlenir ve ilgili üretici çalıştırılır. CI'ın hangi çıktıları denetlediği `schema-drift` işinde tanımlıdır; tüm `shared/` dosyalarının aynı üreticiyle işlendiği varsayılmaz.
 
-## 🛠️ Teknoloji Yığını
-
-### Flutter panel (`lib/`)
-
-| Alan | Paket / sürüm |
-| :--- | :--- |
-| SDK | Dart `^3.7.2`, Flutter 3.x |
-| Veritabanı & Auth | `supabase_flutter ^2.12.4` |
-| Yönlendirme | `go_router ^14.3.0` |
-| OCR | `google_mlkit_text_recognition 0.15.1` |
-| Excel / dosya | `excel ^4.0.0`, `file_picker`, `image_picker`, `flutter_image_compress` |
-| Google girişi | `google_sign_in ^6.2.2` |
-| reCAPTCHA v3 | `recaptcha_v3` (site anahtarı `web/index.html` içinde, dart-define değil) |
-| Push bildirim | `onesignal_flutter ^5.2.0` |
-| Hata izleme | `sentry_flutter 9.3.0` |
-
-### Next.js vitrin (`public_web/`)
-
-- **Framework:** Next.js (TypeScript, App Router)
-- **Veri katmanı:** `@supabase/supabase-js`
-- **Stil:** Tailwind CSS
-- **Ödeme:** PayTR (kiralık vitrin/premium akışı)
-
-### Ortak (`shared/`, `supabase/`)
-
-- `shared/vitrin_alanlari.json` — düzenlenebilir vitrin alanlarının tek kaynağı; Flutter (`lib/config/vitrin_alanlari.g.dart`) ve Next.js (`vitrinFieldSchema.ts`) buradan üretilir/senkronize edilir. CI'da sapma kontrolü var.
-- `supabase/migrations/` — sürümlü SQL migration'lar; canlı şema yalnız bu dosyalardan değişir.
-
----
-
-## 💻 Yerel Geliştirme Ortamı
+## Yerel geliştirme
 
 ### Gereksinimler
 
-- [Flutter SDK](https://docs.flutter.dev/get-started/install) `>= 3.7.2`
-- [Node.js](https://nodejs.org/) `>= 18.x` (`public_web` için)
+- Flutter: CI'da kullanılan sürüm **3.44.4**. Dart SDK koşulu [pubspec.yaml](pubspec.yaml) içinde `^3.7.2` olarak tanımlıdır; bu bir Flutter sürümü değildir.
+- Node.js: CI ile aynı ortam için **24**. Depodaki Next.js **16.2.11**, React **19.2.4**; bağımlılıklar [package.json](public_web/package.json) ve kilit dosyasındadır.
+- İlgili geliştirme ortamına ait Supabase yapılandırması.
 
-### Flutter paneli
+Yerel sunucu adresi, kullanılan veritabanının da yerel olduğu anlamına gelmez. Veri yazan denemelerden önce ortam dosyalarının hangi Supabase projesini hedeflediği kontrol edilir.
 
-Ortam değişkenleri `--dart-define` ile geçer. Yerelde git'e alınmayan `dart_defines.local.json` gerekir (`dart_defines.example.json` örnektir).
+### Yapılandırma
 
-```powershell
-.\dev.ps1          # Flutter :5000 + Next.js :3000 birlikte
-.\run.ps1          # Yalnız Flutter Web
+- Flutter: [dart_defines.example.json](dart_defines.example.json) örneğinden git'e alınmayan `dart_defines.local.json` hazırlanır.
+- Next.js: [public_web/.env.example](public_web/.env.example) örneğinden git'e alınmayan `public_web/.env.local` hazırlanır.
+- Supabase URL'si ve publishable anahtarı temel bağlantı ayarlarıdır. Web yapılandırmasında `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` adları da kullanılır; eşleme ve öncelik için [next.config.ts](public_web/next.config.ts) ve [supabase.ts](public_web/src/lib/supabase.ts) birlikte incelenir.
+- Sahip oturumu, oran sınırlama, yeniden doğrulama ve bot kontrolleri için ayrı sunucu ayarları bulunur. Cron/bildirim için `CRON_SECRET`, `ONESIGNAL_APP_ID`, `ONESIGNAL_REST_API_KEY`; kiralama test muafiyeti için `RENT_DEMO_BYPASS_SECRET` örnekte açıklanmıştır.
+- Ödeme ve harici servisler kendi yapılandırmalarına bağlıdır. Örnek ortam dosyası bir başlangıç şablonudur; bütün servislerin hazır olduğunu göstermez.
+- Service-role anahtarı ve sunucu sırları istemciye açılmaz, `NEXT_PUBLIC_` öneki almaz ve depoya kaydedilmez. Supabase Edge Function sırları web ortamından ayrı yapılandırılır.
+
+### Next.js
+
+```sh
+cd public_web
+npm ci
+npm run dev
 ```
 
-```bash
+Adres: **http://localhost:3000**. Web yönetimi: **http://localhost:3000/app**.
+
+### Flutter
+
+```sh
 flutter pub get
-dart format lib test     # CI'da ayrı bir kapı — atlanırsa PR kırmızı düşer
-dart analyze
-flutter test
 flutter build web --release --dart-define-from-file=dart_defines.local.json
 ```
 
-### Next.js vitrini
+Windows'ta `./run.ps1` Flutter Web'i, `./dev.ps1` Flutter ve Next.js'i birlikte başlatır. Flutter panel adresi **http://localhost:5000/app** olur. `dev.ps1`, yerel Flutter yapılandırmasındaki `PUBLIC_SITE_URL` değerini `http://localhost:3000` olarak günceller.
 
-```bash
-cd public_web
-npm install
-npm run dev      # http://localhost:3000
+## Doğrulama ve kalite kontrolleri
+
+Gerçek otomasyon kaynağı [.github/workflows/ci.yml](.github/workflows/ci.yml) dosyasıdır. [.github/scripts/changed_surfaces.py](.github/scripts/changed_surfaces.py), değişen dosyalara göre Flutter, ortak şema ve web işlerini seçer.
+
+| Kontrol | Kapsam |
+| --- | --- |
+| `secret-tarama` | Gitleaks ile sır taraması |
+| `auth-config-check` | Hesap/giriş politikası sözleşmesi |
+| `changes` | Değişiklik sınıflandırması ve ilgili Python testleri |
+| `grant-guard` | Veritabanı izin kontrolleri |
+| `flutter` | Biçim, analiz, Flutter testleri |
+| `schema-drift` | Tanımlı üreticiler ve üretilen dosyaların güncelliği |
+| `public_web` | Lint, tip kontrolü, birim testleri, üretim derlemesi |
+| `public_web_e2e` | İlgili `main` değişikliklerinde canlı hedefe tarayıcı testleri |
+| `public_web_e2e_onizleme` | İlgili PR değişikliklerinde yerel PR derlemesine tarayıcı testleri; görsel regresyon hariç |
+
+Web kontrolleri (`public_web/` içinde):
+
+```sh
 npm run lint
-npm run build
+npm run typecheck
 npm run test
-npm run e2e:local   # E2E'yi yerel derlemeye karşı koşar
+npm run build
+npm run e2e:local
 ```
 
----
+Flutter kontrolleri (depo kökünde):
 
-## ✅ Test ve Kalite Kapıları
-
-Bu depoda PR'ı **gerçekten durduran** kapılar var. Bunları bilmeden çalışmak
-en sık zaman kaybı sebebidir.
-
-| Kapı | Ne yapar | Nerede |
-| :--- | :--- | :--- |
-| Kapsam kontrolü | 12 dosya / 600 satırı aşan PR, açıklamada `Kapsam-Onay:` satırı yoksa CI'yı kırar | `.github/scripts/verify_pr_scope.py` |
-| Supabase erişim bekçisi | `lib/repositories/` dışında `Supabase.instance` kullanan dosya sayısını dondurur | `.github/scripts/verify_supabase_erisim_ratchet.py` |
-| Biçim kapısı | `dart format --output=none --set-exit-if-changed lib test` | `.github/workflows/ci.yml` |
-| Şema üretim hattı | `shared/*.json` → üretici → `.g.dart` tazeliğini `git diff --exit-code` ile kanıtlar | `.github/workflows/ci.yml` |
-| Sızıntı taraması, GRANT bekçisi | Sır ve veritabanı izin kontrolü | `.github/workflows/ci.yml` |
-
-**E2E yalnız `main`'e push'ta koşar, PR'da atlanır.** Yani yeşil bir PR, gerçek
-tarayıcıda çalıştığının kanıtı değildir — merge sonrası `main` koşumuna bakın.
-
-**Görsel regresyon temelleri işletim sistemine bağlıdır:**
-`*-chromium-linux.png` ve `*-chromium-win32.png` ayrı tutulur. CI Linux'ta
-koştuğu için Windows'ta üretilen temel CI'yı yeşile çevirmez; Linux temeli
-Docker'daki Playwright kabıyla üretilir. Testler canlı siteye baktığından
-(`E2E_PUBLIC_BASE_URL` verilmezse), temel üretmeden önce Vercel dağıtımının
-bitmesi gerekir.
-
-**Testin yeşil olması ekranın çalıştığı anlamına gelmez.** 2026-08-26'da 671
-birim testi yeşilken gerçek tarayıcıda üç kullanıcı engeli bulundu: çerez
-bildirimi asistan düğmesini kapatıyordu, bir bağlantı 404 veriyordu, bir düğme
-hiçbir şey yapmıyordu. Kullanıcı akışını değiştiren işlerde gerçek tarayıcı
-kontrolü şarttır.
-
----
-
-## 🧱 Bilinen Mimari Borç
-
-Yeni gelen kişinin **yanlış deseni çoğaltmaması** için; issue listesi değildir.
-
-- **Fiyat tek kaynakta değil.** "299 TL" on ayrı dosyada elle yazılı (Flutter,
-  web ve ödeme kodunda). Fiyat değişirse hepsini tek tek bulmak gerekir.
-- **Renkler elle kopyalanmış.** `lib/theme/app_colors.dart` 38 renk tanımlıyor;
-  `public_web/src/app/globals.css` bunların bir kısmını `--color-lp-*` adıyla
-  elle taşımış. Hiçbir test ikisini bağlamıyor.
-- **Flutter ↔ web metin eşitliği tek yönlü.** `landing-esitlik-contract.test.ts`
-  web geride kalırsa yakalar, Flutter geride kalırsa yakalamaz.
-- **Keşfet sayfasının iki taraf arasındaki eşitliğine hiç bakılmadı.**
-
-**Doğru desen ise aynı depoda mevcut:** kategoriler
-`shared/business_categories.json` tek kaynağından gelir — Flutter kodu ondan
-üretilir, web doğrudan okur, CI her koşumda tazeliği kanıtlar. Yeni ortak
-veri eklerken bu deseni izleyin, elle kopyalamayın.
-
----
-
-## ⚙️ Çevre Değişkenleri
-
-### Flutter (`--dart-define`)
-
-Kod içinde `String.fromEnvironment` / `bool.fromEnvironment` ile okunan tüm değişkenler:
-
-| Değişken | Zorunlu mu | Açıklama |
-| :--- | :--- | :--- |
-| `SUPABASE_URL` | **Evet** | Supabase proje adresi (`vercel-build.sh` eksikse build'i durdurur) |
-| `SUPABASE_PUBLISHABLE_KEY` | **Evet** | Supabase publishable/anon anahtarı |
-| `PUBLIC_SITE_URL` | Hayır | `public_web` adresi (varsayılan: `https://vixrex-public.vercel.app`) |
-| `ONESIGNAL_APP_ID` | Hayır | Push bildirim |
-| `SENTRY_DSN` | Hayır | Hata izleme |
-| `GOOGLE_WEB_CLIENT_ID` / `GOOGLE_IOS_CLIENT_ID` | Hayır | Google ile giriş |
-| `REVALIDATION_SECRET` | Hayır | Next.js ISR revalidate çağrısı için ortak sır |
-| `INSTAGRAM_SYNC_ENABLED` | Hayır | `true`/`false` — Instagram içe aktarmayı açar (varsayılan `false`) |
-| `LEGAL_DATA_CONTROLLER_TITLE`, `LEGAL_DATA_CONTROLLER_ADDRESS`, `LEGAL_MERSIS_NUMBER`, `LEGAL_TAX_NUMBER`, `LEGAL_PRIVACY_EMAIL` | Hayır | Gizlilik/KVKK metinlerindeki veri sorumlusu bilgileri (varsayılanları kodda var) |
-
-### Next.js (`public_web/.env.local`)
-
-`.env.example` dosyasındaki gerçek liste:
-
-```env
-# Supabase
-SUPABASE_URL=
-SUPABASE_PUBLISHABLE_KEY=
-SUPABASE_SERVICE_ROLE_KEY=       # yalnız sunucu tarafı, NEXT_PUBLIC_ ÖNEKİ ASLA ALMAZ
-
-# Sunucu-yalnız sırlar
-REVALIDATION_SECRET=
-TURNSTILE_SECRET_KEY=
-RECAPTCHA_SECRET_KEY=
-OWNER_SESSION_SECRET=            # sahip önizleme çerezini imzalar, en az 32 karakter
-RATE_LIMIT_SECRET=               # "vitrini kirala" oran sınırlaması, üretimde MUTLAKA ayarlanmalı
-
-# Herkese açık
-NEXT_PUBLIC_SITE_URL=https://vixrex.app
-NEXT_PUBLIC_APP_URL=https://app.vixrex.app
-NEXT_PUBLIC_GA_ID=
-NEXT_PUBLIC_RECAPTCHA_SITE_KEY=
-
-# Instagram API (senkron varsayılan kapalı)
-INSTAGRAM_CLIENT_ID=
-INSTAGRAM_CLIENT_SECRET=
-INSTAGRAM_REDIRECT_URI=
-INSTAGRAM_SCOPES=
-INSTAGRAM_STATE_SECRET=
-INSTAGRAM_TOKEN_ENCRYPTION_KEY=
-INSTAGRAM_ALLOWED_ORIGINS=
+```sh
+dart format --output=none --set-exit-if-changed lib test
+dart analyze --fatal-infos
+flutter test --reporter expanded
 ```
 
-Not: `supabase.ts` `NEXT_PUBLIC_SUPABASE_URL`/`NEXT_PUBLIC_SUPABASE_ANON_KEY`'i de yedek olarak okur, ama önce `SUPABASE_URL`/`SUPABASE_PUBLISHABLE_KEY`'e bakar — bu ikisi asıl kaynaktır.
+`e2e:local` hedefi **http://localhost:3000** adresidir. Standart `npm run e2e`, `E2E_PUBLIC_BASE_URL` verilmezse **https://vixrex-public.vercel.app** adresini hedefler; ayrıntılar [Playwright yapılandırmasında](public_web/playwright.config.ts) bulunur. Görsel karşılaştırma dosyaları işletim sistemine bağlıdır.
 
----
+Bir kontrolün burada listelenmesi çalıştırıldığı anlamına gelmez. Test sonucu, tarayıcıda gözlenen davranış ve canlı dağıtım sonucu ayrı raporlanır.
 
-## 🌐 Yayınlama (Deployment)
+## Yayınlama
 
-Proje **Vercel** üzerinde iki ayrı proje olarak yayınlanır:
+- Flutter yapılandırması: [vercel.json](vercel.json), [vercel-build.sh](vercel-build.sh).
+- Next.js yapılandırması: [public_web/vercel.json](public_web/vercel.json).
+- İki yapılandırma değişiklik kapsamını ayrı değerlendirir. `main` ve ilgili `verify-*` dal desenleri için dağıtım izinleri dosyalarda tanımlıdır.
+- Veritabanı değişiklikleri [supabase/migrations/](supabase/migrations/) altında sürümlenir. Bir migration'ın depoda bulunması canlıya uygulandığının kanıtı değildir.
+- Yerel değişiklik, commit, uzak dala gönderim, ana dala birleştirme ve canlı yayın ayrı adımlardır. README düzenlemek bunları gerçekleştirmez.
 
-1. **`vixrex-app`** — Flutter Web release derlemesi (`vercel-build.sh`).
-2. **`vixrex-public`** — `public_web` dizinindeki Next.js uygulaması. `/api/health` üzerinden uygulama, veritabanı bağlantısı ve PayTR yapılandırmasının durumu kontrol edilebilir.
+## Çalışma rehberi
 
-Veritabanı şeması `supabase/migrations/` altındaki sürümlü SQL dosyalarıyla değişir; canlı Dashboard'dan elle değiştirilmez.
+Ajan kuralları için [AGENTS.md](AGENTS.md), ek çalışma notları için [CLAUDE.md](CLAUDE.md), katkı süreci için [CONTRIBUTING.md](CONTRIBUTING.md), güvenlik bildirimi için [SECURITY.md](SECURITY.md) okunur. Mimari açıklamalar eskiyebileceğinden, değiştirilecek akış ilgili kaynak kodu ve mevcut yapılandırmalar üzerinden doğrulanır.
 
----
+README güncellenirken bağlantıların varlığı, komutların paket betikleriyle eşleşmesi, ortak kaynakların üretim yönü ve CI koşulları kontrol edilir. Eski planlar veya geçmiş ölçümler güncel canlı durum gibi sunulmaz.
 
-## 🧭 Vixrex'te Çalışmaya Başlarken
+## Lisans
 
-Yeni geliştirici veya ajan için sıra:
-
-1. **`VIXREX_RULES.md`** — değişmez mimari kurallar, kanıt seviyeleri, yetki
-   sınırları. **Kural kaynağı burasıdır**; bu README kural üretmez, kurala
-   yönlendirir.
-2. **`AGENTS.md`** — ajan çalışma akışı ve PR disiplini.
-3. **`CONTEXT.md`** — ürün hedefi ve güncel durum notları.
-4. Bu README — mimari rehber ve kurulum.
-
-Sonra: değiştireceğin akışı **koddan takip et** (giriş noktası → controller →
-service/repository → Supabase → ekran). README ile kod çelişirse **kodu esas
-al** ve README'deki tutarsızlığı bildir.
-
-Aynı anda birden fazla ajan çalıştırılıyorsa **her biri ayrı çalışma alanında**
-olmalı: aynı klasörde dal değiştiren iki ajan birbirinin kaydedilmemiş işini
-siler. Bu 2026-08-26'da yaşandı.
-
----
-
-## 📄 Lisans
-
-Bu proje özel mülkiyete tabidir. Tüm hakları saklıdır.
+Bu proje özel mülkiyete tabidir. Tüm hakları saklıdır. Bkz. [LICENSE](LICENSE).
