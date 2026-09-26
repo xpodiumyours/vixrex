@@ -1,0 +1,497 @@
+[
+  {
+    "anahtar": "ak-tekstil",
+    "ad": "Ak-Tekstil",
+    "sektor": "Tekstil",
+    "altKategori": "Baskılı tişört imalatı",
+    "site": "tisortimalati.com",
+    "platform": "",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "berrak-icgiyim",
+    "ad": "Berrak İçGiyim",
+    "sektor": "Tekstil",
+    "altKategori": "İç giyim / bikini",
+    "site": "berrakicgiyim.com.tr",
+    "platform": "",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "beyaz-nevresim",
+    "ad": "Beyaz Nevresim",
+    "sektor": "Tekstil",
+    "altKategori": "Nevresim / kurumsal tekstil",
+    "site": "beyaznevresim.com",
+    "platform": "",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "donella-ic-giyim",
+    "ad": "Donella İç Giyim",
+    "sektor": "Tekstil",
+    "altKategori": "İç giyim",
+    "site": "donella.com.tr",
+    "platform": "",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "gulteks",
+    "ad": "GÜLTEKS",
+    "sektor": "Tekstil",
+    "altKategori": "Kapitone / dokuma kumaş",
+    "site": "gul-tekstil.com",
+    "platform": "",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "kazee",
+    "ad": "Kazee",
+    "sektor": "Tekstil",
+    "altKategori": "Toptan kadın giyim (wholesale)",
+    "site": "kazeeofficial.com",
+    "platform": "",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "kinzi-toptan",
+    "ad": "Kinzi Toptan",
+    "sektor": "Tekstil",
+    "altKategori": "Toptan kadın giyim",
+    "site": "kinzitoptan.com",
+    "platform": "",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "merter-giyim",
+    "ad": "Merter Giyim",
+    "sektor": "Tekstil",
+    "altKategori": "Toptan kadın giyim",
+    "site": "mertergiyim.com",
+    "platform": "",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "merterium-toptan",
+    "ad": "Merterium (Toptan)",
+    "sektor": "Tekstil",
+    "altKategori": "Toptan triko / kadın giyim",
+    "site": "toptan.merterium.com",
+    "platform": "",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "nevresimtoptan-com",
+    "ad": "NevresimToptan.com",
+    "sektor": "Tekstil",
+    "altKategori": "Kurumsal nevresim",
+    "site": "nevresimtoptan.com",
+    "platform": "",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "toptan-ic-giyim-pazari",
+    "ad": "Toptan İç Giyim Pazarı",
+    "sektor": "Tekstil",
+    "altKategori": "İç giyim",
+    "site": "toptanicgiyimpazari.com",
+    "platform": "woocommerce",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "toptanceyiz",
+    "ad": "ToptanÇeyiz",
+    "sektor": "Tekstil",
+    "altKategori": "Çeyiz / ev tekstili",
+    "site": "toptanceyiz.com.tr",
+    "platform": "",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "ozsa-ozen-is",
+    "ad": "Özsa Özen-İş",
+    "sektor": "Tekstil",
+    "altKategori": "Ev/otel/hastane tekstili + şantiye",
+    "site": "ozsaozenis.com.tr",
+    "platform": "",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "istanbul-toptan-ic-giyim-tozcu",
+    "ad": "İstanbul Toptan İç Giyim (Tozcu)",
+    "sektor": "Tekstil",
+    "altKategori": "Toptan iç giyim",
+    "site": "istanbultoptanicgiyim.com",
+    "platform": "",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "iste-canta",
+    "ad": "İşte Çanta",
+    "sektor": "Tekstil",
+    "altKategori": "Bez çanta",
+    "site": "istecanta.com",
+    "platform": "shopify",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "beds-and-covers-sdn",
+    "ad": "Beds and Covers (SDN)",
+    "sektor": "Tekstil",
+    "altKategori": "Yatak örtüsü / perde",
+    "site": "bedsandcovers.com.tr",
+    "platform": "",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "erdem-icgiyim",
+    "ad": "Erdem İçGiyim",
+    "sektor": "Tekstil",
+    "altKategori": "İç giyim / pijama",
+    "site": "erdemicgiyim.com",
+    "platform": "",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "forema-tekstil",
+    "ad": "Forema Tekstil",
+    "sektor": "Tekstil",
+    "altKategori": "Toptan tişört / forma",
+    "site": "forematekstil.com",
+    "platform": "",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "gungoren-tisort-meteks",
+    "ad": "Güngören Tişört (Meteks)",
+    "sektor": "Tekstil",
+    "altKategori": "Baskılı tişört / imalat",
+    "site": "gungorentisort.com",
+    "platform": "",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "koza-icgiyim",
+    "ad": "Koza İçGiyim",
+    "sektor": "Tekstil",
+    "altKategori": "İç giyim / pijama",
+    "site": "kozaicgiyim.com",
+    "platform": "",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "lila-tekstil-orme",
+    "ad": "Lila Tekstil Örme",
+    "sektor": "Tekstil",
+    "altKategori": "Penye örme kumaş",
+    "site": "lilaorme.com.tr",
+    "platform": "",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "maviyelken-home",
+    "ad": "Maviyelken Home",
+    "sektor": "Tekstil",
+    "altKategori": "Ev tekstili nevresim",
+    "site": "maviyelkenhome.com",
+    "platform": "",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "seher-mensucat",
+    "ad": "Seher Mensucat",
+    "sektor": "Tekstil",
+    "altKategori": "İç giyim üretimi (entegre) — Tutku/Seher markaları",
+    "site": "sehermensucat.com",
+    "platform": "",
+    "izin": "bekliyor"
+  },
+  {
+    "anahtar": "topshow",
+    "ad": "Topshow",
+    "sektor": "Tekstil",
+    "altKategori": "Toptan kadın giyim",
+    "site": "topshowtr.com",
+    "platform": "",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "towelconcept",
+    "ad": "TowelConcept",
+    "sektor": "Tekstil",
+    "altKategori": "Havlu / bornoz",
+    "site": "towelconcept.com",
+    "platform": "",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "voltaj",
+    "ad": "Voltaj",
+    "sektor": "Tekstil",
+    "altKategori": "Toptan giyim (erkek/kadın)",
+    "site": "voltaj.com.tr",
+    "platform": "",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "yasin-orme",
+    "ad": "Yasin Örme",
+    "sektor": "Tekstil",
+    "altKategori": "Penye örme kumaş",
+    "site": "yasinorme.com",
+    "platform": "",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "zeynep-giyim",
+    "ad": "Zeynep Giyim",
+    "sektor": "Tekstil",
+    "altKategori": "Toptan pijama / ev giyim",
+    "site": "zeynep.com.tr",
+    "platform": "",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "onlukcum",
+    "ad": "Önlükçüm",
+    "sektor": "Tekstil",
+    "altKategori": "İş elbisesi / önlük",
+    "site": "onlukcum.com",
+    "platform": "",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "ismont",
+    "ad": "İşmont",
+    "sektor": "Tekstil",
+    "altKategori": "İş elbisesi",
+    "site": "ismont.com.tr",
+    "platform": "",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "alya-is-elbiseleri",
+    "ad": "Alya İş Elbiseleri",
+    "sektor": "Tekstil",
+    "altKategori": "İş elbisesi",
+    "site": "iselbiseciniz.com",
+    "platform": "",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "berdan-tekstil",
+    "ad": "Berdan Tekstil",
+    "sektor": "Tekstil",
+    "altKategori": "İş elbisesi",
+    "site": "berdantekstil.com.tr",
+    "platform": "",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "karasoy-kumascilik",
+    "ad": "Karasoy Kumaşçılık",
+    "sektor": "Tekstil",
+    "altKategori": "Penye kumaş (hammadde toptan)",
+    "site": "karasoykumas.com",
+    "platform": "",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "kazimoglu-ceyiz",
+    "ad": "Kazımoğlu Çeyiz",
+    "sektor": "Tekstil",
+    "altKategori": "Çeyiz / ev tekstili",
+    "site": "kazimogluceyiz.com",
+    "platform": "",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "turkiye-textil",
+    "ad": "Turkiye Textil",
+    "sektor": "Tekstil",
+    "altKategori": "Örme kumaş",
+    "site": "turkiyetextil.com",
+    "platform": "",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "ozsen-triko-anisse",
+    "ad": "Özşen Triko (Anisse)",
+    "sektor": "Tekstil",
+    "altKategori": "Triko / pijama / ev giyim",
+    "site": "anisse.com.tr",
+    "platform": "",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "ilya-tekstil",
+    "ad": "İlya Tekstil",
+    "sektor": "Tekstil",
+    "altKategori": "Perde / kumaş",
+    "site": "ilyatekstil.com",
+    "platform": "woocommerce",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "alireis-toptan-gida",
+    "ad": "Alireis Toptan Gıda",
+    "sektor": "Gıda",
+    "altKategori": "Toptan gıda (çok markalı)",
+    "site": "alireis.com",
+    "platform": "woocommerce",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "aycenk-gida",
+    "ad": "Aycenk Gıda",
+    "sektor": "Gıda",
+    "altKategori": "Toptan gıda (çok markalı)",
+    "site": "aycenk.com",
+    "platform": "woocommerce",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "goldfresh-mutfak",
+    "ad": "Goldfresh Mutfak",
+    "sektor": "Gıda",
+    "altKategori": "Dondurulmuş gıda üretimi",
+    "site": "goldfreshmutfak.com",
+    "platform": "shopify",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "saphori",
+    "ad": "Saphori",
+    "sektor": "Gıda",
+    "altKategori": "Şurup / konsantre üretimi",
+    "site": "saphori.com",
+    "platform": "",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "5-mutlu-gida",
+    "ad": "5 Mutlu Gıda",
+    "sektor": "Gıda",
+    "altKategori": "Gıda + temizlik toptan",
+    "site": "5mutlu.com",
+    "platform": "",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "emir-toptan-gida-askin-group",
+    "ad": "Emir Toptan Gıda (Aşkın Group)",
+    "sektor": "Gıda",
+    "altKategori": "Dondurulmuş / şarküteri toptan",
+    "site": "emirtoptangida.com",
+    "platform": "woocommerce",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "santral-gida",
+    "ad": "Santral Gıda",
+    "sektor": "Gıda",
+    "altKategori": "Toptan gıda (çok markalı)",
+    "site": "santralgida.com",
+    "platform": "woocommerce",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "omrum-toplu-tuketim",
+    "ad": "Ömrüm Toplu Tüketim",
+    "sektor": "Gıda",
+    "altKategori": "Toplu tüketim / toptan",
+    "site": "omrum.com.tr",
+    "platform": "",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "basar-ticaret-nisastaci",
+    "ad": "Başar Ticaret (Nişastacı)",
+    "sektor": "Gıda",
+    "altKategori": "Nişasta üretimi",
+    "site": "nisastaci.com",
+    "platform": "",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "bool-tuketim",
+    "ad": "Bool Tüketim",
+    "sektor": "Gıda",
+    "altKategori": "Toptan tüketim",
+    "site": "bool.com.tr",
+    "platform": "",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "demir-gida-pazarlama",
+    "ad": "Demir Gıda Pazarlama",
+    "sektor": "Gıda",
+    "altKategori": "Kühne distribütörü (turşu/sirke/sos)",
+    "site": "demirgidapazarlama.com",
+    "platform": "",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "emek-toptan",
+    "ad": "Emek Toptan",
+    "sektor": "Gıda",
+    "altKategori": "Toptan gıda",
+    "site": "emektoptan.com",
+    "platform": "",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "kaya-zeytin-salih-kaya-gida",
+    "ad": "Kaya Zeytin (Salih Kaya Gıda)",
+    "sektor": "Gıda",
+    "altKategori": "Zeytin",
+    "site": "kayazeytin.com.tr",
+    "platform": "",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "kul-gida",
+    "ad": "Kul Gıda",
+    "sektor": "Gıda",
+    "altKategori": "Baharat",
+    "site": "kulgida.com",
+    "platform": "woocommerce",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "makro-plus-gida",
+    "ad": "Makro Plus Gıda",
+    "sektor": "Gıda",
+    "altKategori": "Meyve / sebze toptan",
+    "site": "makroplusgida.com",
+    "platform": "",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "sec-salca-konserve",
+    "ad": "Seç Salça Konserve",
+    "sektor": "Gıda",
+    "altKategori": "Salça / konserve üretimi",
+    "site": "secsalca.com.tr",
+    "platform": "woocommerce",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "turkmen-gida",
+    "ad": "Türkmen Gıda",
+    "sektor": "Gıda",
+    "altKategori": "Kuru gıda toptan",
+    "site": "turkmengida.com.tr",
+    "platform": "woocommerce",
+    "izin": "yok"
+  },
+  {
+    "anahtar": "turkmenzade-toptan-gida",
+    "ad": "Türkmenzade Toptan Gıda",
+    "sektor": "Gıda",
+    "altKategori": "Toptan gıda",
+    "site": "turkmenzade.com.tr",
+    "platform": "",
+    "izin": "yok"
+  }
+]
