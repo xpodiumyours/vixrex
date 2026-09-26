@@ -30,3 +30,5 @@ openrouter.ai/settings/credits (fatura başına ~7 kuruş).
 | Tarih | Ajan | İş | PR |
 |---|---|---|---|
 | 2026-09-26 | Claude Code | Faturadan gerçek vitrin ürününe tek sistem: 2 fatura dalı birleşti, okuyucu gpt-5.6-luna'ya geçti (gerçek faturada 13/13 doğru), belge gerçeği kapısı, izin tek kaynağa bağlandı, alış fiyatı kilitli tabloya alındı, tedarikçi sınırlama, ürün havuzu 16 firma / 8.594 ürün | [#560](https://github.com/xpodiumyours/vixrex/pull/560) |
+| 2026-09-26 | Buffy (Freebuff) | Asistan panelinde sessiz hata yutma kapandı — hatalar sohbete yazılıyor, döngü kırıcı eklendi (25 Eylül'de mahsur kalmış fix ana dala taşındı) | [#564](https://github.com/xpodiumyours/vixrex/pull/564) |
+| 2026-09-26 | Buffy (Freebuff) | Dal süpürmesi: 70+ dal tarandı, mahsur kalan tek gerçek fix #564'tü. `fix/vitrin-gorsel-duzeltme`'deki 2 SQL ana dala alınmadı (Unsplash adresleri "görseller kendi depomuzda" kararına aykırı, eski kimliklerle canlıda 0 satır buluyor) — fikri Faz 2 fotoğraf kimliği işine kanıt olarak taşındı | — |
