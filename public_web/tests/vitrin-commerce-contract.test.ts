@@ -4,11 +4,18 @@ import { resolve } from "node:path";
 
 const panel = readFileSync(resolve(__dirname, "../src/components/ProductCommercePanel.tsx"), "utf8");
 const dock = readFileSync(resolve(__dirname, "../src/components/VitrinCartDock.tsx"), "utf8");
+const quick = readFileSync(resolve(__dirname, "../src/components/ProductQuickView.tsx"), "utf8");
+const quickBase = readFileSync(resolve(__dirname, "../src/components/ProductQuickViewBase.tsx"), "utf8");
+const storePage = readFileSync(resolve(__dirname, "../src/app/v/[slug]/page.tsx"), "utf8");
 
 describe("Vitrin Ölçer müşteri etkileşim sözleşmesi", () => {
   it("sahip önizlemesinde beğeni, yorum ve sepet üretmez", () => {
-    expect(panel).toContain("ownerPreviewActive");
-    expect(dock).toContain("ownerPreviewActive");
+    expect(panel).toContain("enabled?: boolean");
+    expect(panel).toContain("if (!enabled) return null");
+    expect(dock).toContain("if (!trackingEnabled || items.length === 0) return null");
+    expect(quick).toContain("commerceEnabled={trackingEnabled}");
+    expect(quickBase).toContain("enabled={commerceEnabled}");
+    expect(storePage).toContain("trackingEnabled={!isOwnerMode}");
   });
 
   it("beğeni ve yorum doğrudan tabloya değil RPC'ye gider", () => {

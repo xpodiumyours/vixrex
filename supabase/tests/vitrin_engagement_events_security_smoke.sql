@@ -86,5 +86,36 @@ begin
      or has_table_privilege('authenticated', 'public.vitrin_product_comments', 'SELECT') then
     raise exception 'sosyal tablolar dogrudan okunabiliyor';
   end if;
+  if not has_function_privilege(
+    'anon',
+    'public.toggle_product_like(text,text,text)',
+    'EXECUTE'
+  ) then
+    raise exception 'anon toggle_product_like execute kayboldu';
+  end if;
+
+  if has_function_privilege(
+    'anon',
+    'public.create_product_comment(text,text,text,text)',
+    'EXECUTE'
+  ) then
+    raise exception 'anon yorum yazabiliyor';
+  end if;
+
+  if not has_function_privilege(
+    'authenticated',
+    'public.create_product_comment(text,text,text,text)',
+    'EXECUTE'
+  ) then
+    raise exception 'authenticated yorum yazamiyor';
+  end if;
+
+  if has_function_privilege(
+    'anon',
+    'public.set_product_comment_status(uuid,text)',
+    'EXECUTE'
+  ) then
+    raise exception 'anon yorum moderasyonu yapabiliyor';
+  end if;
 end;
-$;
+$$;
