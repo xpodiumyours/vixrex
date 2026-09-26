@@ -29,10 +29,14 @@ describe("/api/fatura-okuyucu-durumu", () => {
   });
 
   it("anahtarın hiçbir parçasını dışarı vermez", async () => {
-    process.env.OPENROUTER_API_KEY = "sk-or-cok-gizli-deger-123456";
+    // Sahte değer bilerek gerçek anahtar biçiminde YAZILMAZ; yoksa depo
+    // tarayıcısı (gitleaks) bunu gerçek sızıntı sanıp CI'ı kırıyor.
+    const sahteAnahtar = "DENEME_OKUYUCU_DEGERI_9f3c";
+    process.env.OPENROUTER_API_KEY = sahteAnahtar;
+
     const ham = await (await okuyucuDurumu()).text();
-    expect(ham).not.toContain("sk-or");
-    expect(ham).not.toContain("gizli");
+    expect(ham).not.toContain(sahteAnahtar);
+    expect(ham).not.toContain("DENEME_OKUYUCU");
     expect(ham).toBe(JSON.stringify({ hazir: true }));
   });
 });
