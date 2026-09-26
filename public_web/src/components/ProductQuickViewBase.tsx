@@ -17,12 +17,15 @@ import {
   normalizeProductMetadata,
   productIsService,
 } from "@/lib/productRichData";
+import ProductCommercePanel from "@/components/ProductCommercePanel";
 
 interface ProductQuickViewProps {
   product: RichProductItem;
   images: string[];
   productUrl: string;
   storeName: string;
+  storeSlug: string;
+  productSlug: string;
   whatsappBaseUrl?: string | null;
   storeLocationText?: string | null;
   storeMapsUrl?: string | null;
@@ -72,6 +75,8 @@ export default function ProductQuickView({
   images,
   productUrl,
   storeName,
+  storeSlug,
+  productSlug,
   whatsappBaseUrl = null,
   storeLocationText = null,
   storeMapsUrl = null,

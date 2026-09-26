@@ -86,20 +86,29 @@ export default function VitrinCartDock({
       setMessage("Bu vitrinde WhatsApp sipariş bağlantısı hazır değil.");
       return;
     }
-    await recordVitrinEngagement({
-      storeSlug,
-      eventType: "cart_whatsapp_order",
-      quantity: totalQuantity,
-      metadata: {
-        item_count: items.length,
-        product_slugs: items.map((item) => item.productSlug).slice(0, 20),
-      },
-    });
+    const orderKey =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+    for (const item of items) {
+      await recordVitrinEngagement({
+        storeSlug,
+        eventType: "cart_whatsapp_order",
+        productSlug: item.productSlug,
+        quantity: item.quantity,
+        metadata: {
+          order_key: orderKey,
+          variant: item.variantText || null,
+          item_count: items.length,
+        },
+      });
+    }
     await recordVitrinEngagement({
       storeSlug,
       eventType: "whatsapp_click",
       quantity: totalQuantity,
-      metadata: { surface: "cart" },
+      metadata: { surface: "cart", order_key: orderKey },
     });
     window.open(url, "_blank", "noopener,noreferrer");
   }

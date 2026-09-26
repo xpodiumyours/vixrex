@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { ziyaretAnahtariniOkuyaUret } from "@/lib/vitrinZiyaretAnahtari";
 import { addToVitrinCart } from "@/lib/vitrinCart";
@@ -62,23 +62,25 @@ export default function ProductCommercePanel({
   const [comment, setComment] = useState("");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
-  const sessionKey = useMemo(
-    () => (typeof window === "undefined" ? "" : ziyaretAnahtariniOkuyaUret()),
-    [],
-  );
+  const [sessionKey, setSessionKey] = useState("");
+  const [loginNext, setLoginNext] = useState(`/v/${storeSlug}/urun/${productSlug}`);
 
   useEffect(() => {
     if (ownerPreviewActive()) {
       setHidden(true);
       return;
     }
+
+    const key = ziyaretAnahtariniOkuyaUret();
+    setSessionKey(key);
+    setLoginNext(`${window.location.pathname}${window.location.search}`);
+
     let active = true;
     async function load() {
-      if (!sessionKey) return;
       const { data, error } = await supabase.rpc("get_product_social_state", {
         p_store_slug: storeSlug,
         p_product_slug: productSlug,
-        p_session_key: sessionKey,
+        p_session_key: key,
       });
       if (!active || error || !data) return;
       const value = data as Partial<SocialState>;
@@ -93,7 +95,7 @@ export default function ProductCommercePanel({
     return () => {
       active = false;
     };
-  }, [productSlug, sessionKey, storeSlug]);
+  }, [productSlug, storeSlug]);
 
   if (hidden) return null;
 
@@ -182,10 +184,6 @@ export default function ProductCommercePanel({
     setMessage("Sepete eklendi.");
   }
 
-  const next = typeof window === "undefined"
-    ? `/v/${storeSlug}/urun/${productSlug}`
-    : `${window.location.pathname}${window.location.search}`;
-
   return (
     <section className="mt-5 rounded-2xl border border-white/10 bg-white/[0.03] p-4" aria-label="Ürün etkileşimleri">
       <div className="grid gap-2 sm:grid-cols-2">
@@ -238,7 +236,7 @@ export default function ProductCommercePanel({
 
         {message.includes("Google") ? (
           <Link
-            href={`/giris?next=${encodeURIComponent(next)}`}
+            href={`/giris?next=${encodeURIComponent(loginNext)}`}
             className="mt-2 inline-flex text-xs font-extrabold text-blue-300 underline"
           >
             Google ile giriş yap

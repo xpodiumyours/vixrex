@@ -595,7 +595,10 @@ begin
   where vv.store_id = v_store_id
     and vv.viewed_date >= v_start_date;
 
-  select count(*) into v_orders
+  select count(distinct coalesce(
+    nullif(e.metadata ->> 'order_key', ''),
+    e.id::text
+  )) into v_orders
   from public.vitrin_engagement_events e
   where e.store_id = v_store_id
     and e.event_type = 'cart_whatsapp_order'

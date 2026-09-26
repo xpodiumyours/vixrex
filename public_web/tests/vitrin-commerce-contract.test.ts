@@ -24,6 +24,8 @@ describe("Vitrin Ölçer müşteri etkileşim sözleşmesi", () => {
 
   it("sepet WhatsApp geçişini ayrı dönüşüm olayı olarak ölçer", () => {
     expect(dock).toContain('eventType: "cart_whatsapp_order"');
+    expect(dock).toContain("order_key: orderKey");
+    expect(dock).toContain("productSlug: item.productSlug");
     expect(dock).toContain('eventType: "whatsapp_click"');
   });
 });
