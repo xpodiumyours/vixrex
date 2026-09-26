@@ -210,20 +210,36 @@ export interface KatalogEslesmesi {
 export function ureticiUrunuBul(args: {
   model?: string | null;
   barkod?: string | null;
+  /**
+   * Faturadaki tedarikçinin firma anahtarı. Verilirse o firmanın kataloğu
+   * ÖNCE aranır: bir fatura tek tedarikçiden gelir, aynı kod başka firmada
+   * da varsa doğru olan faturayı kesendir.
+   */
+  firmaAnahtari?: string | null;
 }): KatalogEslesmesi | null {
   const barkod = normalizeBarkod(args.barkod ?? "");
   const model = normalizeKod(args.model ?? "");
 
+  // Tedarikçi biliniyorsa onun kataloğu listenin başına alınır; diğerleri
+  // yine aranır (tedarikçi yanlış okunmuş olabilir) ama sonra.
+  const siraliDizinler = (() => {
+    const hepsi = dizinler();
+    if (!args.firmaAnahtari) return hepsi;
+    const oncelikli = hepsi.filter((d) => d.firma.anahtar === args.firmaAnahtari);
+    if (oncelikli.length === 0) return hepsi;
+    return [...oncelikli, ...hepsi.filter((d) => d.firma.anahtar !== args.firmaAnahtari)];
+  })();
+
   const eslesme = (() => {
     if (barkod.length >= 8) {
-      for (const dizin of dizinler()) {
+      for (const dizin of siraliDizinler) {
         const urun = dizin.barkoda.get(barkod);
         if (urun) return { dizin, urun, dayanak: "barkod" as const };
       }
     }
 
     if (model.length >= 4) {
-      for (const dizin of dizinler()) {
+      for (const dizin of siraliDizinler) {
         const urun = dizin.koda.get(model);
         if (urun) return { dizin, urun, dayanak: "kod" as const };
       }
@@ -295,4 +311,33 @@ function izinsizGorseller(): Set<string> {
  */
 export function izinsizUreticiGorseli(adres: unknown): boolean {
   return typeof adres === "string" && izinsizGorseller().has(adres.trim());
+}
+
+/**
+ * Faturadaki tedarikçi adını havuzdaki firmayla eşler.
+ *
+ * Ad birebir yazılmaz (kısaltma, büyük/küçük harf, "A.Ş." eki). Bu yüzden
+ * harf-rakam dışı her şey atılarak karşılaştırılır; ayrıca firma adının
+ * ayırt edici ilk kelimesi de aranır. Emin olunamayan ad eşlenmez —
+ * yanlış firmaya kilitlemek, hiç kilitlememekten kötüdür.
+ */
+export function firmaAnahtariniCoz(tedarikciAdi: string): string | null {
+  const sade = (deger: string) =>
+    deger
+      .toLocaleUpperCase("tr-TR")
+      .replace(/[^A-ZÇĞİÖŞÜ0-9]/g, "");
+
+  const aranan = sade(tedarikciAdi);
+  if (aranan.length < 3) return null;
+
+  for (const firma of ureticiler()) {
+    const firmaSade = sade(firma.ad);
+    if (!firmaSade) continue;
+    if (aranan.includes(firmaSade) || firmaSade.includes(aranan)) return firma.anahtar;
+
+    const alanSade = sade(firma.alan.replace(/\.(com|net|org)(\.tr)?$/i, ""));
+    if (alanSade.length >= 4 && aranan.includes(alanSade)) return firma.anahtar;
+  }
+
+  return null;
 }

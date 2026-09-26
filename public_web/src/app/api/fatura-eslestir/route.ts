@@ -49,7 +49,7 @@ function satirTemizle(ham: unknown): HamFaturaSatiri | null {
 }
 
 export async function POST(request: NextRequest) {
-  let govde: { slug?: unknown; satirlar?: unknown; editToken?: unknown };
+  let govde: { slug?: unknown; satirlar?: unknown; editToken?: unknown; tedarikci?: unknown };
   try {
     govde = await request.json();
   } catch {
@@ -121,7 +121,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ hata: "Geçerli satır bulunamadı." }, { status: 422 });
   }
 
-  const eslesenSatirlar = faturaSatirlariniEslestir(temizSatirlar);
+  // Tedarikçi adı isteğe bağlıdır: fotoğrafı kim okursa okusun (telefon,
+  // Başak, tarayıcı) biliyorsa gönderir; bilmiyorsa firma dağılımına bakılır.
+  const tedarikci = typeof govde.tedarikci === "string" ? govde.tedarikci.trim() : "";
+  const eslesenSatirlar = faturaSatirlariniEslestir(temizSatirlar, tedarikci);
   const eslesenSayisi = eslesenSatirlar.filter((s) => s.katalog !== null).length;
 
   return NextResponse.json({

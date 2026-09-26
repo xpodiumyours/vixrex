@@ -317,3 +317,50 @@ export function belgeGercegiUyuyorMu(
 export function urunSatirlari(satirlar: HamFaturaSatiri[]): HamFaturaSatiri[] {
   return satirlar.filter((satir) => satir.model || satir.barkod);
 }
+
+/**
+ * Belgedeki tedarikçi/firma adını okur.
+ *
+ * Her belgede yazmaz — ölçülen gerçek fatura örneğinde "İrsaliye Firma :"
+ * alanı boştu. Bu yüzden bulunamaması hata değildir; bulunamazsa
+ * eşleştirme tüm kataloglarda arar ve firma dağılımına bakar.
+ */
+const SATIR_AYIRACI = new RegExp(String.raw`?
+`);
+
+export function tedarikciAdiniAyikla(metin: string): string {
+  // Türkçe "İ" harfi düzenli ifadelerde büyük/küçük eşleşmesini bozuyor.
+  // Bu yüzden etiket, harf dışı her şey atılarak karşılaştırılır.
+  const ETIKETLER = new Set([
+    "IRSALIYEFIRMA",
+    "FIRMA",
+    "FIRMAADI",
+    "FIRMAUNVANI",
+    "UNVAN",
+    "TEDARIKCI",
+    "SATICI",
+  ]);
+
+  const sadelestir = (deger: string) =>
+    deger
+      .toLocaleUpperCase("tr-TR")
+      .replace(/[İIı]/g, "I")
+      .replace(/Ç/g, "C")
+      .replace(/Ğ/g, "G")
+      .replace(/Ö/g, "O")
+      .replace(/Ş/g, "S")
+      .replace(/Ü/g, "U")
+      .replace(/[^A-Z]/g, "");
+
+  for (const satir of metin.split(SATIR_AYIRACI)) {
+    const ayrac = satir.indexOf(":");
+    if (ayrac < 0) continue;
+
+    const etiket = sadelestir(satir.slice(0, ayrac));
+    if (!ETIKETLER.has(etiket)) continue;
+
+    const ad = satir.slice(ayrac + 1).trim();
+    if (ad) return ad;
+  }
+  return "";
+}

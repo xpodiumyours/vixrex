@@ -8,6 +8,7 @@ import {
   belgeGercegiUyuyorMu,
   belgeOzetiniAyikla,
   hamMetniSatirlaraAyir,
+  tedarikciAdiniAyikla,
   urunSatirlari,
 } from "@/lib/faturaSatirAyikla";
 import { faturaSatirlariniEslestir } from "@/lib/faturaEslestir";
@@ -157,6 +158,7 @@ export async function POST(request: NextRequest) {
     let sonUyum: ReturnType<typeof belgeGercegiUyuyorMu> | null = null;
     let sonSatirlar: ReturnType<typeof urunSatirlari> = [];
     let sonOzet = { adet: null as number | null, toplam: null as number | null };
+    let sonTedarikci = "";
 
     for (let deneme = 1; deneme <= DENEME_SINIRI; deneme++) {
       const cevap = await fetch(`${supabaseUrl}/functions/v1/vixrex-fatura-goru`, {
@@ -194,6 +196,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      sonTedarikci = tedarikciAdiniAyikla(yazi);
       sonOzet = belgeOzetiniAyikla(yazi);
       sonSatirlar = hamSatirlar;
       sonUyum = belgeGercegiUyuyorMu(hamSatirlar, sonOzet);
@@ -219,7 +222,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const satirlar = faturaSatirlariniEslestir(sonSatirlar);
+    const satirlar = faturaSatirlariniEslestir(sonSatirlar, sonTedarikci);
     const eslesenSayisi = satirlar.filter((satir) => satir.katalog !== null).length;
 
     return NextResponse.json({
@@ -227,7 +230,7 @@ export async function POST(request: NextRequest) {
       satirlar,
       belgeToplami: sonOzet.toplam,
       belgeAdedi: sonOzet.adet,
-      tedarikci: "",
+      tedarikci: sonTedarikci,
       katalogEslesmesi: eslesenSayisi,
     });
   } catch (err) {
