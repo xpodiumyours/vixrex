@@ -9,7 +9,7 @@ export default function PrivacyPage() {
   return (
     <main style={{ maxWidth: 720, margin: '0 auto', padding: '40px 20px', color: '#EDEDED', fontFamily: 'system-ui' }}>
       <h1>Gizlilik Politikası</h1>
-      <p>Son güncelleme: 21 Ağustos 2026</p>
+      <p>Son güncelleme: 26 Eylül 2026</p>
 
       <h2>1. Veri Sorumlusu</h2>
       <p>
@@ -24,6 +24,8 @@ export default function PrivacyPage() {
         <li><strong>İşletme bilgileri:</strong> Ad, adres, telefon, sosyal medya linkleri, ürünler, fotoğraflar</li>
         <li><strong>Randevu verileri:</strong> Müşteri adı, telefonu, notları, randevu saati</li>
         <li><strong>Kullanım verileri:</strong> IP adresi, cihaz bilgisi, görüntülenme kayıtları</li>
+        <li><strong>Vitrin etkileşim verileri:</strong> ürün görüntüleme, beğeni, yorum, sepete ekleme ve WhatsApp sipariş geçişi. İşletme sahibine ham ziyaretçi kimliği gösterilmez.</li>
+        <li><strong>Sepet verisi:</strong> ürün, varyant ve adet bilgisi sipariş WhatsApp'a aktarılana kadar tarayıcınızda yerel olarak tutulabilir.</li>
       </ul>
 
       <h2>3. Verilerin Kullanım Amacı</h2>
@@ -31,6 +33,7 @@ export default function PrivacyPage() {
         <li>Hizmetin sağlanması ve işletilmesi</li>
         <li>Randevu yönetimi ve müşteri iletişimi</li>
         <li>SEO ve arama motoru görünürlüğü</li>
+        <li>Vitrin sahibine toplulaştırılmış performans ölçümleri sunulması</li>
         <li>Yasal yükümlülüklerin yerine getirilmesi</li>
       </ul>
 

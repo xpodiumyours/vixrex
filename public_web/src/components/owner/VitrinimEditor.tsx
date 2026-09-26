@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { OnayIkonu, StorefrontIkonu } from "@/components/site/icons";
 import { useAppShell } from "@/components/app/AppShellContext";
-import { VitrinPaylasimKarti } from "@/components/owner/VitrinPaylasimKarti";
+import { VitrinPaylasimKarti } from "@/components/owner/VitrinPaylasimKarti";\nimport { OwnerDashboardMetrics } from "@/components/owner/OwnerDashboardMetrics";
 import { FIELD_BY_KEY } from "@/lib/vitrinFieldSchema";
 import { safeParseJson } from "@/lib/products";
 import { gpsAdresiniCoz } from "@/lib/konumCozumleme";
@@ -358,6 +358,8 @@ export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode 
         <p className="mb-4 text-[13px] font-semibold leading-[1.4] text-lp-muted">
           {store.is_published ? "Düzenledikten sonra kaydet, linkin ve QR kodun güncellenir." : "Ad, WhatsApp ve konumunu gir — vitrin hazır. Diğer detayları sonra ekleyebilirsin."}
         </p>
+
+        {store.is_published && !isCreationMode ? <OwnerDashboardMetrics /> : null}
 
         <VitrinPaylasimKarti
           slug={store.slug}
