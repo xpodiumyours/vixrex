@@ -5,6 +5,7 @@ export interface VitrinCartItem {
   variantText: string;
   priceText: string;
   imageUrl: string | null;
+  maxQuantity: number | null;
   quantity: number;
 }
 
@@ -16,15 +17,27 @@ export interface VitrinCartState {
 
 export const VITRIN_CART_EVENT = "vixrex-cart-changed";
 const CART_PREFIX = "vixrex_cart:";
+const CART_TTL_MS = 24 * 60 * 60 * 1000;
 
 function cleanText(value: unknown, max = 180): string {
   return String(value ?? "").trim().slice(0, max);
 }
 
-function clampQuantity(value: unknown): number {
+function normalizeMaxQuantity(value: unknown): number | null {
+  if (value === null || value === undefined || value === "") return null;
   const parsed = Number(value);
-  if (!Number.isFinite(parsed)) return 1;
-  return Math.max(1, Math.min(999, Math.round(parsed)));
+  if (!Number.isFinite(parsed)) return null;
+  return Math.max(0, Math.min(999, Math.round(parsed)));
+}
+
+function clampQuantity(value: unknown, maxQuantity: number | null = null): number {
+  const parsed = Number(value);
+  const normalized = Number.isFinite(parsed)
+    ? Math.max(1, Math.min(999, Math.round(parsed)))
+    : 1;
+  return maxQuantity == null
+    ? normalized
+    : Math.min(normalized, Math.max(1, maxQuantity));
 }
 
 export function cartItemKey(item: Pick<VitrinCartItem, "productSlug" | "variantKey">) {
@@ -32,6 +45,7 @@ export function cartItemKey(item: Pick<VitrinCartItem, "productSlug" | "variantK
 }
 
 export function normalizeCartItem(item: VitrinCartItem): VitrinCartItem {
+  const maxQuantity = normalizeMaxQuantity(item.maxQuantity);
   return {
     productSlug: cleanText(item.productSlug, 120),
     productName: cleanText(item.productName, 180),
@@ -39,7 +53,8 @@ export function normalizeCartItem(item: VitrinCartItem): VitrinCartItem {
     variantText: cleanText(item.variantText, 180),
     priceText: cleanText(item.priceText, 80),
     imageUrl: item.imageUrl ? cleanText(item.imageUrl, 500) : null,
-    quantity: clampQuantity(item.quantity),
+    maxQuantity,
+    quantity: clampQuantity(item.quantity, maxQuantity),
   };
 }
 
@@ -54,7 +69,14 @@ export function mergeCartItem(
 
   return items.map((item, itemIndex) =>
     itemIndex === index
-      ? { ...item, quantity: clampQuantity(item.quantity + normalized.quantity) }
+      ? {
+          ...item,
+          ...normalized,
+          quantity: clampQuantity(
+            item.quantity + normalized.quantity,
+            normalized.maxQuantity,
+          ),
+        }
       : item,
   );
 }
@@ -73,10 +95,17 @@ export function readVitrinCart(storeSlug: string): VitrinCartState {
     const raw = window.localStorage.getItem(storageKey(storeSlug));
     if (!raw) return emptyState();
     const parsed = JSON.parse(raw) as Partial<VitrinCartState>;
+    const updatedAtMs =
+      typeof parsed.updatedAt === "string" ? Date.parse(parsed.updatedAt) : Number.NaN;
+    if (!Number.isFinite(updatedAtMs) || Date.now() - updatedAtMs > CART_TTL_MS) {
+      window.localStorage.removeItem(storageKey(storeSlug));
+      return emptyState();
+    }
+
     const items = Array.isArray(parsed.items)
       ? parsed.items
           .map((item) => normalizeCartItem(item as VitrinCartItem))
-          .filter((item) => item.productSlug && item.productName)
+          .filter((item) => item.productSlug && item.productName && item.maxQuantity !== 0)
       : [];
     return {
       version: 1,
@@ -121,7 +150,9 @@ export function setVitrinCartQuantity(
   const key = cartItemKey({ productSlug, variantKey });
   const current = readVitrinCart(storeSlug);
   const items = current.items.map((item) =>
-    cartItemKey(item) === key ? { ...item, quantity: clampQuantity(quantity) } : item,
+    cartItemKey(item) === key
+      ? { ...item, quantity: clampQuantity(quantity, item.maxQuantity) }
+      : item,
   );
   writeVitrinCart(storeSlug, items);
   return items;
@@ -144,7 +175,10 @@ export function clearVitrinCart(storeSlug: string) {
 }
 
 export function cartTotalQuantity(items: VitrinCartItem[]) {
-  return items.reduce((sum, item) => sum + clampQuantity(item.quantity), 0);
+  return items.reduce(
+    (sum, item) => sum + clampQuantity(item.quantity, item.maxQuantity),
+    0,
+  );
 }
 
 export function buildWhatsappOrderUrl(

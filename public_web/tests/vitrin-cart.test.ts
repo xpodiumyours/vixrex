@@ -13,6 +13,7 @@ const temel: VitrinCartItem = {
   variantText: "Beden: M, Renk: Siyah",
   priceText: "499 TL",
   imageUrl: null,
+  maxQuantity: 10,
   quantity: 1,
 };
 
@@ -42,6 +43,23 @@ describe("Vitrin sepeti", () => {
     expect(text).toContain("2 × Siyah Tişört");
     expect(text).toContain("Beden: M, Renk: Siyah");
     expect(text).toContain("Toplam ürün adedi: 2");
+  });
+
+  it("stok tavanının üzerinde adet oluşturmaz", () => {
+    const sonuc = mergeCartItem(
+      [{ ...temel, quantity: 4, maxQuantity: 5 }],
+      { ...temel, quantity: 4, maxQuantity: 5 },
+    );
+    expect(sonuc[0].quantity).toBe(5);
+  });
+
+  it("aynı ürün tekrar eklenince güncel fiyat ve stok anlık görüntüsünü kullanır", () => {
+    const sonuc = mergeCartItem(
+      [{ ...temel, priceText: "399 TL", maxQuantity: 8 }],
+      { ...temel, priceText: "499 TL", maxQuantity: 5 },
+    );
+    expect(sonuc[0].priceText).toBe("499 TL");
+    expect(sonuc[0].maxQuantity).toBe(5);
   });
 
   it("toplam adedi satır sayısından değil miktarlardan hesaplar", () => {

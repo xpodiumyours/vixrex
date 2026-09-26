@@ -196,6 +196,7 @@ export default function ProductCommercePanel({
       variantText: selectedVariantText.trim(),
       priceText: String(priceText || "").trim(),
       imageUrl,
+      maxQuantity: stockQuantity,
       quantity: 1,
     });
     await recordVitrinEngagement({
