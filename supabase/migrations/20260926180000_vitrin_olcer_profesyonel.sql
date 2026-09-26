@@ -816,7 +816,7 @@ returns void
 language plpgsql
 security definer
 set search_path = pg_catalog, public
-as $
+as $$
 declare
   v_store_id uuid;
   v_store_slug text;
@@ -882,7 +882,7 @@ begin
   )
   on conflict (store_id, session_key, viewed_date) do nothing;
 end;
-$;
+$$;
 
 revoke all on function public.record_vitrin_view_web(text,text,text,text,text)
   from public, anon, authenticated;
