@@ -16,6 +16,8 @@ import { productAttributeSchemaFields } from "@/lib/productStructuredData";
 import { TrackedWhatsAppLink } from "@/components/TrackedWhatsAppLink";
 import { MapPinIcon } from "@/lib/vitrinBrandIcons";
 import ProductViewTracker from "@/components/ProductViewTracker";
+import ProductCommercePanel from "@/components/ProductCommercePanel";
+import VitrinCartDock from "@/components/VitrinCartDock";
 
 export const revalidate = 300;
 
@@ -53,6 +55,8 @@ interface ProductRow {
   fulfillment_region?: string | null;
   currency: string;
   stock_status: string | null;
+  stock_quantity: number | null;
+  variants: unknown;
   image_urls: string[];
   category_id: string | null;
   is_visible: boolean;
@@ -82,7 +86,7 @@ async function _getProductData(slug: string, productSlug: string) {
     const { data: productRow } = await supabase
       .from("products")
       .select(
-        "id,name,slug,description,price_text,price_amount,old_price_amount,badge_tag,fulfillment_region,currency,stock_status,image_urls,category_id,is_visible,is_active,source_type,metadata"
+        "id,name,slug,description,price_text,price_amount,old_price_amount,badge_tag,fulfillment_region,currency,stock_status,stock_quantity,variants,image_urls,category_id,is_visible,is_active,source_type,metadata"
       )
       .eq("store_id", store.id)
       .eq("slug", productSlug)
@@ -128,6 +132,8 @@ async function _getProductData(slug: string, productSlug: string) {
         productSlug: productRow.slug,
         // Yalniz arama motoru ciktisi icin; ekran duzeni bunu kullanmaz.
         productMetadata: productRow.metadata ?? null,
+        hasVariants: Array.isArray(productRow.variants) && productRow.variants.length > 0,
+        stockQuantity: productRow.stock_quantity,
       };
     }
   }
@@ -200,7 +206,7 @@ export default async function ProductDetailPage(props: PageProps) {
   const data = await getProductData(params.slug, params.productSlug);
   if (!data) notFound();
 
-  const { store, product, productSlug } = data;
+  const { store, product, productSlug, hasVariants, stockQuantity } = data;
   const siteUrl = getSiteUrl();
   const publicUrl = buildSiteUrl(`/v/${store.slug}/urun/${productSlug}`);
   const storeUrl = `/v/${store.slug}`;
@@ -475,9 +481,30 @@ export default async function ProductDetailPage(props: PageProps) {
                 </Link>
               )}
             </div>
+
+            <ProductCommercePanel
+              storeSlug={store.slug}
+              productSlug={productSlug}
+              productName={product.name}
+              imageUrl={images[0] || null}
+              priceText={product.price || null}
+              stockQuantity={stockQuantity}
+              cartEnabled={!hasVariants && isInStock}
+              cartDisabledReason={
+                hasVariants
+                  ? "Bu ürünün seçenekli siparişi için vitrine dönüp Hızlı İncele ekranından beden/renk seç."
+                  : ""
+              }
+            />
           </aside>
         </section>
       </main>
+
+      <VitrinCartDock
+        storeSlug={store.slug}
+        storeName={store.name}
+        whatsappBaseUrl={whatsappUrl}
+      />
     </>
   );
 }
