@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "e2e": "playwright test",
+    "e2e:blog": "playwright test --project=blog",
     "e2e:local": "playwright test --config=playwright.local.config.ts",
     "e2e:ui": "playwright test --ui"
   },

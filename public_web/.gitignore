@@ -44,6 +44,5 @@ next-env.d.ts
 .vercel
 .env*
 
-/blog-test-report/
-/blog-test-results/
+/test-results/
 test-sonuc/

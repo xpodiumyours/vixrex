@@ -1,12 +1,61 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const canliHedef = "https://vixrex-public.vercel.app";
 const yerelHedef = "http://localhost:3000";
-const baseURL = process.env.E2E_PUBLIC_BASE_URL ?? "https://vixrex-public.vercel.app";
+const blogHedef = "http://127.0.0.1:3107";
+const baseURL = process.env.E2E_PUBLIC_BASE_URL ?? canliHedef;
 const yerelKosum = baseURL.startsWith("http://localhost");
+
+const siteSunucusu = {
+  command: "npm run build && npm run start",
+  url: yerelHedef,
+  reuseExistingServer: !process.env.CI,
+  timeout: 300_000,
+};
+
+const blogSunucusu = {
+  command: "npm run dev -- --webpack --hostname 127.0.0.1 --port 3107",
+  url: `${blogHedef}/blog`,
+  reuseExistingServer: !process.env.CI,
+  timeout: 120_000,
+  env: { BLOG_ONIZLEME: "1", NEXT_PUBLIC_SITE_URL: blogHedef },
+};
+
+const chromiumProjesi = {
+  name: "chromium",
+  testIgnore: /blog\.spec\.ts/,
+  use: {
+    ...devices["Desktop Chrome"],
+    launchOptions: {
+      executablePath:
+        process.platform === "win32"
+          ? "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+          : undefined,
+    },
+  },
+};
+
+const mobileProjesi = {
+  name: "mobile",
+  testMatch: /mobile-emulation\.spec\.ts/,
+  use: {
+    ...devices["Pixel 7"],
+  },
+};
+
+const blogProjesi = {
+  name: "blog",
+  testMatch: /blog\.spec\.ts/,
+  fullyParallel: false,
+  timeout: 60_000,
+  use: {
+    browserName: "chromium" as const,
+    baseURL: blogHedef,
+  },
+};
 
 export default defineConfig({
   testDir: "./e2e",
-  testIgnore: "blog.spec.ts",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
@@ -20,33 +69,8 @@ export default defineConfig({
     contextOptions: { reducedMotion: "reduce" },
   },
 
-  webServer: yerelKosum
-    ? {
-        command: "npm run build && npm run start",
-        url: yerelHedef,
-        reuseExistingServer: !process.env.CI,
-        timeout: 300_000,
-      }
-    : undefined,
-  projects: [
-    {
-      name: "chromium",
-      use: {
-        ...devices["Desktop Chrome"],
-        launchOptions: {
-          executablePath:
-            process.platform === "win32"
-              ? "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
-              : undefined,
-        },
-      },
-    },
-    {
-      name: "mobile",
-      use: {
-        ...devices["Pixel 7"],
-      },
-      testMatch: /mobile-emulation\.spec\.ts/,
-    },
-  ],
+  webServer: yerelKosum ? [siteSunucusu, blogSunucusu] : undefined,
+  projects: yerelKosum
+    ? [chromiumProjesi, mobileProjesi, blogProjesi]
+    : [chromiumProjesi, mobileProjesi],
 });
