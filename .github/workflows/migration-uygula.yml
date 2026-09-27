@@ -4,10 +4,17 @@ name: Migration Uygula
 # Canli veritabanina (Supabase) migration uygulamak icin depoda bir yol yoktu:
 # ajanlarin makinesinde canli anahtar olmadigi icin zincir duruyordu
 # ("Canliya cikis yolu kapali", YOL-TAHTASI risk 4). Bu is, depodaki tek bir
-# migration dosyasini yalniz elle tetiklendiginde canliya uygular.
+# migration dosyasini canliya uygular.
+#
+# NASIL TETIKLENIR
+# 1) Elle: Actions > Migration Uygula > Run workflow (dosya adi sorulur).
+# 2) Etiketle: git push origin migration-uygula/<dosya adi>
+#    ornek: git tag migration-uygula/20260926180000_vitrin_olcer_profesyonel.sql
+#    Etiket yolu, ajanlarin workflow tetikleme yetkisi olmadigi icin eklendi
+#    (olculdu 2026-09-27: dispatch API'si 403 donuyor).
 #
 # KORUMALAR
-# - Yalniz workflow_dispatch; baska olay tetikleyemez.
+# - Push yalnizca migration-uygula/* etiketinde calisir.
 # - Dosya adi kaliba uymali ve supabase/migrations/ altinda var olmali.
 # - ON_ERROR_STOP=1: ilk hatada is kirmizi biter. Dosya kendi begin/commit
 #   blogunu tasir; hata halinde hicbir degisiklik kalmaz.
@@ -25,6 +32,9 @@ on:
         required: false
         default: false
         type: boolean
+  push:
+    tags:
+      - "migration-uygula/*"
 
 permissions:
   contents: read
@@ -42,16 +52,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Dosya adini dogrula
+      - name: Dosya adini belirle ve dogrula
         env:
-          AD: ${{ inputs.dosya }}
+          AD_GIRDI: ${{ inputs.dosya }}
+          ETIKET: ${{ github.ref_name }}
         run: |
           set -euo pipefail
+          if [ -n "$AD_GIRDI" ]; then
+            AD="$AD_GIRDI"
+          else
+            AD="${ETIKET#migration-uygula/}"
+          fi
           case "$AD" in
             [0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]_*.sql) ;;
             *) echo "Gecersiz dosya adi: $AD"; exit 1 ;;
           esac
           test -f "supabase/migrations/$AD"
+          echo "AD=$AD" >> "$GITHUB_ENV"
           echo "Dosya dogrulandi: supabase/migrations/$AD"
 
       - name: Install PostgreSQL 17 client
@@ -68,7 +85,6 @@ jobs:
       - name: Uygula
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          AD: ${{ inputs.dosya }}
           KURU: ${{ inputs.kuru_kosu }}
         run: |
           set -euo pipefail
