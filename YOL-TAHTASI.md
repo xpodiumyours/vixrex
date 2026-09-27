@@ -1,6 +1,6 @@
 # Vixrex Yol Tahtası
 
-Son ölçüm: 2026-09-26, 03:45 (fatura/rastgele-dogrulama dalı, commit bbd1605a). **Bu dosya tek gerçek kaynaktır.** Casper, Claude,
+Son ölçüm: 2026-09-27, 09:50 (ana dal; #563 Vitrin Ölçer ve 4 açık PR birleşti, Vitrin Ölçer migration'ı canlıya uygulandı). **Bu dosya tek gerçek kaynaktır.** Casper, Claude,
 Freebuff ve Gemini aynı tahtaya bakar. İş bitince satırın durumu burada
 güncellenir — başka yerde değil.
 
@@ -54,7 +54,7 @@ kapısına çalışan sistem gösterilerek izin istenir.
 | Telefonda kullanım (ana ekrana ekle) | — | çalışıyor |
 | Uygulama dağıtımı (indirme linki yok) | Claude | yok |
 | Ürün fotoğrafı sorunu (182 ürün / 21 foto) | Freebuff | karar bekliyor |
-| Kırık migration zinciri | Freebuff | kırık |
+| Kırık migration zinciri | Freebuff | **düzeldi (bu tur)** — canlıya uygulama yolu açıldı (`migration-uygula` işi); zincir yerel Supabase'de sıfırdan yeşil |
 
 ## D · Canlıya çıkış
 
@@ -80,7 +80,10 @@ kapısına çalışan sistem gösterilerek izin istenir.
 2. **Fatura okumanın doğruluğu hiç ölçülmedi.** Gerçek fotoğrafla denenmedi.
 3. **Barkod nadir.** 4.253 ürünün yalnız 258'inde gerçek barkod var; eşleşme
    çoğunlukla ürün koduna bağlı.
-4. **Canlıya çıkış yolu kapalı.** Migration zincirinde kod hatası var.
+4. **Canlıya çıkış yolu açıldı (27 Eylül).** Migration uygulama işi eklendi
+   (`migration-uygula`: Actions'tan veya `migration-uygula/<dosya adı>`
+   etiketiyle). Vitrin Ölçer migration'ı bu yolla canlıda uygulandı ve canlı
+   API'den doğrulandı. Kalan risk: migration'lar hâlâ tek tek tetikleniyor.
 
 ## Çakışmama kuralı
 
@@ -115,3 +118,26 @@ Bu dalda (`fatura/rastgele-dogrulama`, `C:\Projectsixrex-dogrula`) yapılanlar:
 doğru okuyup okumadığı. Bu adım fiziksel bir cihaz gerektiriyor, bu ortamda
 test edilemez. Zincirin geri kalanı (eşleştirme, kanıt, yayın kapısı) artık
 kanıtlı biçimde çalışıyor — kalan tek soru "kamera metni doğru çıkarıyor mu."
+
+
+## 2026-09-27 ek notu — vitrin ölçüm katmanı canlıya çıktı
+
+Ölçülenler (hepsi canlıya karşı):
+
+1. **Canlı veritabanı gerçekten gerideydi.** `vitrin_product_likes` tablosu ve
+   `get_product_social_state` / `get_vitrin_olcer_summary` fonksiyonları canlıda
+   yoktu (`PGRST205` / `PGRST202`) — yani #563'ün etkileşim katmanı canlıda
+   ölüydü; kod main'deydi, veritabanı nesneleri yoktu.
+2. **Canlıya uygulama yolu yoktu.** Ajan makinelerinde canlı veritabanı
+   anahtarı yok, ajanın workflow tetikleme yetkisi de yok (dispatch API'si 403).
+   Bu tur `migration-uygula` işi eklendi: Actions düğmesi veya
+   `git push origin migration-uygula/<dosya adı>` etiketi ile tek dosya,
+   `ON_ERROR_STOP=1` ve kendi `begin/commit` bloğu içinde uygulanıyor.
+3. **Uygulandı ve doğrulandı.** `20260926180000_vitrin_olcer_profesyonel.sql`
+   canlı koşuda `COMMIT` etti; ardından canlı API'den:
+   `get_product_social_state('kiralik-aymira-giyim','keten-midi-elbise')` →
+   HTTP 200 `{"liked":false,"like_count":0,"comment_count":0,"comments":[]}`.
+   Yeni tablolar anon'a kapalı (401) — tasarım gereği yalnız dar RPC'ler açık.
+
+**Doğrulanmayan:** beğeni/yorum/sepet akışının gerçek tarayıcıda uçtan uca
+yürünmesi (ekran görülmedi) ve gerçek kullanıcı oturumuyla sahip panosu.
