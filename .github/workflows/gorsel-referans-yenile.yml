@@ -38,7 +38,11 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Görsel referansları yeniden üret
-        run: npx playwright test e2e/visual-regression.spec.ts --update-snapshots
+        # =all: %30 tolerans içinde kalan gerçek değişiklikler de yazılsın.
+        # Düz --update-snapshots yalnız "başarısız" karşılaştırmaları yazar;
+        # tolerans içindeki sayfa değişimleri referansta bayat kalır
+        # (2026-09-28 randevu 404→wizard dersi).
+        run: npx playwright test e2e/visual-regression.spec.ts --update-snapshots=all
         env:
           E2E_PUBLIC_BASE_URL: ${{ vars.E2E_PUBLIC_BASE_URL || 'https://vixrex-public.vercel.app' }}
 
