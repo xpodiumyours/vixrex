@@ -87,6 +87,11 @@ jobs:
             *) echo "Bilinmeyen etiket: $ETIKET"; exit 1 ;;
           esac
 
+          # Ayni etiket iki kez itilemez (GitHub reddeder). Tekrar kosulari icin
+          # etiket sonuna #ek eklenebilir: migration-uygula-toplu/<dosya>#tekrar
+          AD="${AD%%#*}"
+          BAS="${BAS%%#*}"
+
           KALIP='[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]_*.sql'
 
           if [ "$MOD" = "tek" ]; then
@@ -132,19 +137,30 @@ jobs:
             psql "$DATABASE_URL" -Atc "select ad || ':' || sha256 from public.uygulanan_migrationlar" 2>/dev/null || true
           }
 
+          # NOT: psql -c, psql degiskenlerini yerine koymaz (canlida olculdu:
+          # "syntax error at or near \":\""); bu yuzden kayit SQL'i gecici
+          # dosyaya yazilip -f ile calistirilir.
           kaydet() {
             yol="$1"
             ad="$(basename "$yol")"
             ozet="$(sha256sum "$yol" | awk '{print $1}')"
-            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q \
-              -v a="$ad" -v s="$ozet" -v u="${GITHUB_ACTOR:-bilinmiyor}" -v c="${GITHUB_RUN_ID:-yerel}" \
-              -c "insert into public.uygulanan_migrationlar (ad, sha256, uygulayan, calisma_id)
-                  values (:'a', :'s', :'u', :'c')
-                  on conflict (ad) do update
-                    set sha256 = excluded.sha256,
-                        uygulama_zamani = now(),
-                        uygulayan = excluded.uygulayan,
-                        calisma_id = excluded.calisma_id;"
+            sql="$(mktemp)"
+            printf '%s\n' \
+              "insert into public.uygulanan_migrationlar (ad, sha256, uygulayan, calisma_id)" \
+              "values (:'a', :'s', :'u', :'c')" \
+              "on conflict (ad) do update" \
+              "  set sha256 = excluded.sha256," \
+              "      uygulama_zamani = now()," \
+              "      uygulayan = excluded.uygulayan," \
+              "      calisma_id = excluded.calisma_id;" > "$sql"
+            if psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q \
+                -v a="$ad" -v s="$ozet" -v u="${GITHUB_ACTOR:-bilinmiyor}" -v c="${GITHUB_RUN_ID:-yerel}" \
+                -f "$sql"; then
+              rm -f "$sql"
+              return 0
+            fi
+            rm -f "$sql"
+            return 1
           }
 
           if [ "$MOD" = "toplu" ]; then
