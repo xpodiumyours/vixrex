@@ -14,7 +14,7 @@ test.describe("vitrin düzenleme E2E", () => {
 
     // Flutter web yükleme biraz zaman alır
     const status = response?.status() ?? 0;
-    expect([200, 302, 404]).toContain(status);
+    expect(status).toBe(200);
   });
 
   test("admin paneli 404 durumunda hata gösterir", async ({ page }) => {
@@ -47,9 +47,31 @@ test.describe("public vitrin düzenleme sonrası doğrulama", () => {
     await page.setViewportSize({ width: 375, height: 812 });
     await page.goto(`/v/${demoSlug}`, { waitUntil: "domcontentloaded" });
 
-    // Dikey scroll overflow kontrolü
-    const bodyHeight = await page.evaluate(() => document.body.scrollHeight);
-    expect(bodyHeight).toBeGreaterThan(0);
+    // Yatay taşma kontrolü — taşan öğeler test mesajında listelenir
+    const olcum = await page.evaluate(() => {
+      const tasanlar: string[] = [];
+      for (const el of Array.from(document.querySelectorAll("*"))) {
+        const r = el.getBoundingClientRect();
+        if (r.width > 0 && r.right > window.innerWidth + 1) {
+          const ad = el.tagName.toLowerCase();
+          const sinif =
+            typeof el.className === "string" && el.className.trim().length > 0
+              ? "." + el.className.trim().split(/\s+/).slice(0, 2).join(".")
+              : "";
+          tasanlar.push(ad + sinif);
+          if (tasanlar.length >= 5) break;
+        }
+      }
+      return {
+        genislik: document.documentElement.scrollWidth,
+        ekran: window.innerWidth,
+        tasanlar,
+      };
+    });
+    expect(
+      olcum.genislik,
+      `taşan öğeler: ${olcum.tasanlar.join(" | ")}`,
+    ).toBeLessThanOrEqual(olcum.ekran);
 
     // Heading görünür olmalı
     const heading = page.getByRole("heading", { level: 1 }).first();

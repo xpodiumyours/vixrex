@@ -25,7 +25,7 @@ test.describe("vitrin görsel yükleme (CSP kontratı)", () => {
       }
     });
 
-    await page.goto(`/v/${DEMO_SLUG}`, { waitUntil: "networkidle" });
+    await page.goto(`/v/${DEMO_SLUG}`, { waitUntil: "domcontentloaded" });
 
     // Sayfada en az bir Unsplash görseli olmalı (demo vitrin dolu).
     const unsplashImgs = page.locator('img[src*="unsplash"]');
@@ -71,7 +71,7 @@ test.describe("public vitrin görüntüleme", () => {
   });
 
   test("vitrin sayfasında ürün kartları görünür", async ({ page }) => {
-    await page.goto(`/v/${DEMO_SLUG}`, { waitUntil: "networkidle" });
+    await page.goto(`/v/${DEMO_SLUG}`, { waitUntil: "domcontentloaded" });
 
     const heading = page.getByRole("heading", { level: 1 });
     await expect(heading).toBeVisible({ timeout: 20_000 });
@@ -82,7 +82,7 @@ test.describe("public vitrin görüntüleme", () => {
   });
 
   test("vitrin sayfasında WhatsApp butonu görünür", async ({ page }) => {
-    await page.goto(`/v/${DEMO_SLUG}`, { waitUntil: "networkidle" });
+    await page.goto(`/v/${DEMO_SLUG}`, { waitUntil: "domcontentloaded" });
 
     const whatsappLink = page.locator('a[href*="wa.me"], a[href*="whatsapp"]');
     await expect(whatsappLink.first()).toBeVisible({ timeout: 10_000 });
@@ -114,35 +114,48 @@ test.describe("public vitrin görüntüleme", () => {
 });
 
 test.describe("ürün detay sayfası", () => {
-  test("ürün sayfası 200 veya 404 döner", async ({ page }) => {
-    const response = await page.goto(`/v/${DEMO_SLUG}/urun/test-urun`, {
-      waitUntil: "domcontentloaded",
-    });
+  test("ürün sayfası 200 döner ve ürün başlığı görünür", async ({ page }) => {
+    const response = await page.goto(
+      `/v/${DEMO_SLUG}/urun/bambu-pijama`,
+      { waitUntil: "domcontentloaded" },
+    );
 
-    const status = response?.status() ?? 0;
-    expect([200, 404]).toContain(status);
+    expect(response?.status()).toBe(200);
+    await expect(
+      page.getByRole("heading", { level: 1 }).first(),
+    ).toBeVisible({ timeout: 20_000 });
   });
 });
 
 test.describe("randevu sayfası", () => {
-  test("randevu sayfası 200, 307 veya 404 döner", async ({ page }) => {
+  test("randevu kapalı vitrinde 404, açık vitrinde sayfa açılır", async ({
+    page,
+  }) => {
     const response = await page.goto(`/v/${DEMO_SLUG}/randevu`, {
       waitUntil: "domcontentloaded",
     });
 
     const status = response?.status() ?? 0;
-    expect([200, 307, 404]).toContain(status);
+    expect([200, 404]).toContain(status);
+    if (status === 404) {
+      await expect(page.getByText(/bulunamad/i).first()).toBeVisible({
+        timeout: 10_000,
+      });
+    } else {
+      await expect(page.locator("h1").first()).toBeVisible({ timeout: 10_000 });
+    }
   });
 });
 
 test.describe("yazılar sayfası", () => {
-  test("yazılar sayfası 200 veya 404 döner", async ({ page }) => {
+  test("yazılar sayfası 200 döner", async ({ page }) => {
     const response = await page.goto(`/v/${DEMO_SLUG}/yazilar`, {
       waitUntil: "domcontentloaded",
     });
 
-    const status = response?.status() ?? 0;
-    expect([200, 404]).toContain(status);
+    expect(response?.status()).toBe(200);
+    const govde = await page.locator("body").innerText();
+    expect(govde.trim().length).toBeGreaterThan(0);
   });
 });
 
