@@ -17,12 +17,16 @@ import {
   normalizeProductMetadata,
   productIsService,
 } from "@/lib/productRichData";
+import ProductCommercePanel from "@/components/ProductCommercePanel";
 
 interface ProductQuickViewProps {
   product: RichProductItem;
   images: string[];
   productUrl: string;
   storeName: string;
+  storeSlug: string;
+  productSlug: string;
+  commerceEnabled?: boolean;
   whatsappBaseUrl?: string | null;
   storeLocationText?: string | null;
   storeMapsUrl?: string | null;
@@ -72,6 +76,9 @@ export default function ProductQuickView({
   images,
   productUrl,
   storeName,
+  storeSlug,
+  productSlug,
+  commerceEnabled = true,
   whatsappBaseUrl = null,
   storeLocationText = null,
   storeMapsUrl = null,
@@ -481,6 +488,30 @@ export default function ProductQuickView({
               {isService ? "Tüm hizmet detayları" : "Tüm ürün detayları"}
             </a>
           </div>
+
+          <ProductCommercePanel
+            storeSlug={storeSlug}
+            productSlug={productSlug}
+            productName={product.name}
+            imageUrl={currentImage}
+            priceText={displayedPrice}
+            selectedVariantText={selectedVariantText}
+            selectedVariantId={selectedVariant?.id ?? null}
+            stockQuantity={selectedStockQuantity}
+            cartEnabled={
+              !isService &&
+              selectedStockQuantity !== 0 &&
+              !String(selectedStockStatus || "").toLocaleLowerCase("tr-TR").includes("tükendi")
+            }
+            enabled={commerceEnabled}
+            cartDisabledReason={
+              isService
+                ? "Hizmetler sipariş sepetine eklenmez; WhatsApp üzerinden bilgi alabilirsin."
+                : String(selectedStockStatus || "").toLocaleLowerCase("tr-TR").includes("tükendi")
+                  ? "Bu seçenek şu anda stokta görünmüyor."
+                  : ""
+            }
+          />
         </div>
       </div>
     </div>

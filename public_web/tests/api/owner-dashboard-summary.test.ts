@@ -103,6 +103,12 @@ describe("pano ölçüm rotası yetki sözleşmesi", () => {
           error: null,
         });
       }
+      if (ad === "get_vitrin_olcer_summary") {
+        return Promise.resolve({
+          data: { unique_visitors: 5, cart_adds: 2, whatsapp_orders: 1 },
+          error: null,
+        });
+      }
       return Promise.resolve({
         data: { is_premium: false, premium_expires_at: null },
         error: null,
@@ -116,5 +122,38 @@ describe("pano ölçüm rotası yetki sözleşmesi", () => {
     expect(yanit.status).toBe(200);
     expect(JSON.stringify(govde)).not.toContain("gizli-anahtar");
     expect(govde.bugunkuZiyaret).toBe(7);
+    expect(govde.olcer.unique_visitors).toBe(5);
+  });
+
+  it("Vitrin Ölçer RPC'si geçici olarak yoksa mevcut pano 500'e düşmez", async () => {
+    mockKullaniciRpc.mockClear();
+    mockYoneticiRpc.mockClear();
+    mockGetUser.mockResolvedValue({
+      data: { user: { id: "u1", is_anonymous: false } },
+      error: null,
+    });
+    mockKullaniciRpc.mockImplementation((ad: string) => {
+      if (ad === "bootstrap_owner_state") {
+        return Promise.resolve({
+          data: { has_store: true, slug: "deneme", edit_token: "gizli-anahtar" },
+          error: null,
+        });
+      }
+      if (ad === "get_vitrin_olcer_summary") {
+        return Promise.resolve({ data: null, error: { message: "function not found" } });
+      }
+      return Promise.resolve({
+        data: { is_premium: false, premium_expires_at: null },
+        error: null,
+      });
+    });
+    mockYoneticiRpc.mockResolvedValue({ data: 7, error: null });
+
+    const yanit = await GET(istek("jeton"));
+    const govde = await yanit.json();
+
+    expect(yanit.status).toBe(200);
+    expect(govde.bugunkuZiyaret).toBe(7);
+    expect(govde.olcer).toBeNull();
   });
 });

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { supabase } from "@/lib/supabase";
 import {
   resolveVitrinViewSource,
   type VitrinViewSource,
@@ -38,8 +37,9 @@ interface VitrinViewTrackerProps {
 }
 
 /**
- * Gerçek vitrin ziyaretini `record_vitrin_view` RPC'siyle `vitrin_views`e
- * kaydeder (#255). Bu bileşen SAHİP/ÖNİZLEME modunda MOUNT EDİLMEMELİDİR —
+ * Gerçek web vitrin ziyaretini sunucu tarafındaki /api/vitrin-view kapısından
+ * geçirip `vitrin_views`e kaydeder. Bilinen bot/crawler User-Agent'ları sunucu
+ * tarafında elenir; ham IP veritabanına yazılmaz. Bu bileşen SAHİP/ÖNİZLEME modunda MOUNT EDİLMEMELİDİR —
  * çağıran taraf (`VitrinProfileView`) `!ownerMode && !isPreviewMode` şartını
  * `TrackedWhatsAppLink`ile aynı desende sağlar.
  *
@@ -67,15 +67,18 @@ export default function VitrinViewTracker({ storeSlug }: VitrinViewTrackerProps)
     const sessionKey = ziyaretAnahtariniOkuyaUret();
     const source = detectSource();
 
-    supabase
-      .rpc("record_vitrin_view", {
-        p_store_slug: storeSlug,
-        p_session_key: sessionKey,
-        p_source: source,
-      })
-      .then(({ error }) => {
-        if (error) console.error("record_vitrin_view failed:", error);
-      });
+    void fetch("/api/vitrin-view", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        storeSlug,
+        sessionKey,
+        source,
+      }),
+      keepalive: true,
+    }).catch(() => {
+      // Ölçüm hatası vitrini etkilemez.
+    });
   }, [storeSlug]);
 
   return null;
