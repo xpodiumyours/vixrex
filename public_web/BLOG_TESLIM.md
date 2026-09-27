@@ -61,4 +61,6 @@ Yerel önizleme: geliştirme sunucusunda `BLOG_ONIZLEME=1`. `NODE_ENV=production
 - Üretim modunda taslak blog, yazı, RSS, kapak ve yayın ilkeleri 404; landing blog bağlantısı ve sitemap blog URL'leri yok.
 - Tam canlı SEO, Search Console ve müşteri kullanılabilirlik araştırması yapılmadı.
 
-Test komutları: `npm test`, `npm run lint`, `npm run build`, `npx playwright test --config=playwright.blog.config.ts --project=blog`.
+Test komutları: `npm test`, `npm run lint`, `npm run build`, `npm run e2e:blog`.
+
+`npm run e2e:blog`, `playwright.config.ts` içindeki `blog` projesini seçer ve önizleme için 3107 portunda `BLOG_ONIZLEME=1` ile bir geliştirme sunucusu başlatır. Aynı dosya site projelerini de (`chromium`, `mobile`) taşır; canlı hedefte `blog` projesi kayıtlı olmadığı için orada çalışmaz. PR işi (`public_web_e2e_onizleme`) önce site koşusunu, sonra bu blog koşusunu çalıştırır.
