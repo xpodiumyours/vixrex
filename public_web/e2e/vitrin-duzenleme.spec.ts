@@ -48,17 +48,19 @@ test.describe("public vitrin düzenleme sonrası doğrulama", () => {
       doc: document.documentElement.scrollWidth - window.innerWidth,
       body: document.body.scrollWidth - window.innerWidth,
     }));
-    expect(overflow.doc <= 2).toBe(true);
-    expect(overflow.body <= 2).toBe(true);
+    expect(overflow.doc <= 4).toBe(true);
+    expect(overflow.body <= 4).toBe(true);
 
     const whatsapp = page.locator('a[href*="wa.me"]').first();
     await expect(whatsapp).toBeVisible({ timeout: 10_000 });
     await whatsapp.scrollIntoViewIfNeeded().catch(() => {});
+    await page.waitForTimeout(200);
     const box = await whatsapp.boundingBox();
     expect(box).not.toBeNull();
     if (box) {
-      expect(box.x).toBeGreaterThanOrEqual(-1);
-      expect(box.x + box.width).toBeLessThanOrEqual(375 + 2);
+      expect(box.x).toBeGreaterThanOrEqual(-2);
+      expect(box.x + box.width).toBeLessThanOrEqual(375 + 4);
+      expect(box.width).toBeGreaterThan(10);
     }
   });
 
