@@ -126,18 +126,14 @@ test.describe("ürün detay sayfası", () => {
 });
 
 test.describe("randevu sayfası", () => {
-  test("randevu sayfası durumla uyumlu içerik gösterir (200 ise wizard, 404 ise not-found)", async ({ page }) => {
+  test("randevu sayfası 200 döner ve wizard içeriği gösterir", async ({ page }) => {
     const response = await page.goto(`/v/${DEMO_SLUG}/randevu`, {
       waitUntil: "domcontentloaded",
     });
 
     const status = response?.status() ?? 0;
-    if (status === 404) {
-      await expect(page.getByText(/bulunamad|not found|404|randevu/i).first()).toBeVisible({ timeout: 10_000 });
-    } else {
-      expect(status).toBe(200);
-      await expect(page.getByText(/randevu|rezervasyon|online/i).first()).toBeVisible({ timeout: 15_000 });
-    }
+    expect(status, `randevu sayfası canlıda 200 döner — 404 kabul edilmez (audit: randevu 200/307/404 esnekliği)`).toBe(200);
+    await expect(page.getByText(/randevu|rezervasyon|online/i).first()).toBeVisible({ timeout: 15_000 });
   });
 
   test("bilinmeyen vitrin randevusu 404 döner", async ({ page }) => {
