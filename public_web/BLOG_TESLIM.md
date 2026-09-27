@@ -63,4 +63,4 @@ Yerel önizleme: geliştirme sunucusunda `BLOG_ONIZLEME=1`. `NODE_ENV=production
 
 Test komutları: `npm test`, `npm run lint`, `npm run build`, `npm run e2e:blog`.
 
-`npm run e2e:blog`, `playwright.config.ts` içindeki `blog` projesini seçer ve önizleme için 3107 portunda `BLOG_ONIZLEME=1` ile bir geliştirme sunucusu başlatır. Aynı dosya site projelerini de (`chromium`, `mobile`) taşır; canlı hedefte `blog` projesi kayıtlı olmadığı için orada çalışmaz. PR işi (`public_web_e2e_onizleme`) önce site koşusunu, sonra bu blog koşusunu çalıştırır.
+`npm run e2e:blog`, `playwright.config.ts` içindeki `blog` projesini seçer; aynı dosya site projelerini de (`chromium`, `mobile`) taşır. Yerel hedefte config iki sunucu başlatır: site koşusu için üretim derlemesi (3000) ve blog önizlemesi için `BLOG_ONIZLEME=1` ile geliştirme sunucusu (3107) — Next 16 geliştirme çıktısını `.next/dev` altında tuttuğu için ikisi aynı anda çalışabilir. Canlı hedefte `blog` projesi kayıtlı değildir ve `npm run e2e:blog` orada açıkça hata verir. PR işi (`public_web_e2e_onizleme`) site ve blog koşularını aynı işte çalıştırır.

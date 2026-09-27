@@ -6,19 +6,6 @@ const blogHedef = "http://127.0.0.1:3107";
 const baseURL = process.env.E2E_PUBLIC_BASE_URL ?? canliHedef;
 const yerelKosum = baseURL.startsWith("http://localhost");
 
-const komutArgumanlari = process.argv.slice(2);
-const istenenProjeler = komutArgumanlari.flatMap((arguman, sira) => {
-  if (arguman === "--project") {
-    const sonraki = komutArgumanlari[sira + 1];
-    return sonraki ? [sonraki] : [];
-  }
-  return arguman.startsWith("--project=")
-    ? [arguman.slice("--project=".length)]
-    : [];
-});
-const blogOnizlemeKosum =
-  istenenProjeler.length > 0 && istenenProjeler.every((ad) => ad === "blog");
-
 const siteSunucusu = {
   command: "npm run build && npm run start",
   url: yerelHedef,
@@ -34,28 +21,27 @@ const blogSunucusu = {
   env: { BLOG_ONIZLEME: "1", NEXT_PUBLIC_SITE_URL: blogHedef },
 };
 
-const siteProjeleri = [
-  {
-    name: "chromium",
-    testIgnore: /blog\.spec\.ts/,
-    use: {
-      ...devices["Desktop Chrome"],
-      launchOptions: {
-        executablePath:
-          process.platform === "win32"
-            ? "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
-            : undefined,
-      },
+const chromiumProjesi = {
+  name: "chromium",
+  testIgnore: /blog\.spec\.ts/,
+  use: {
+    ...devices["Desktop Chrome"],
+    launchOptions: {
+      executablePath:
+        process.platform === "win32"
+          ? "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+          : undefined,
     },
   },
-  {
-    name: "mobile",
-    testMatch: /mobile-emulation\.spec\.ts/,
-    use: {
-      ...devices["Pixel 7"],
-    },
+};
+
+const mobileProjesi = {
+  name: "mobile",
+  testMatch: /mobile-emulation\.spec\.ts/,
+  use: {
+    ...devices["Pixel 7"],
   },
-];
+};
 
 const blogProjesi = {
   name: "blog",
@@ -83,8 +69,8 @@ export default defineConfig({
     contextOptions: { reducedMotion: "reduce" },
   },
 
-  webServer: yerelKosum
-    ? [blogOnizlemeKosum ? blogSunucusu : siteSunucusu]
-    : undefined,
-  projects: blogOnizlemeKosum && yerelKosum ? [blogProjesi] : siteProjeleri,
+  webServer: yerelKosum ? [siteSunucusu, blogSunucusu] : undefined,
+  projects: yerelKosum
+    ? [chromiumProjesi, mobileProjesi, blogProjesi]
+    : [chromiumProjesi, mobileProjesi],
 });
