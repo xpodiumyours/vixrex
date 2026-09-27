@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <main style={{ maxWidth: 720, margin: '0 auto', padding: '40px 20px', color: '#EDEDED', fontFamily: 'system-ui' }}>
+    <main style={{ maxWidth: 720, margin: '0 auto', padding: '40px 20px', color: '#EDEDED' }}>
       <h1>Gizlilik Politikası</h1>
       <p>Son güncelleme: 26 Eylül 2026</p>
 
