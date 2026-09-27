@@ -1,8 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { cookies } from "next/headers";
 import { revalidateTag } from "next/cache";
-import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
+import { sahipDogrula } from "@/lib/ownerGuard";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { blogSeoAnalizi, blogYayinEngelleri, type BlogSeoInput } from "@/lib/blogSeo";
+import { blogSlugUret } from "@/lib/blogSlug";
 
 /**
  * Blog yazı CRUD API'si — owner session ile korunuyor.
@@ -13,6 +14,10 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
  *
  * Flutter'daki ArticleService ile aynı Supabase tablosunu kullanır.
  * RLS: store_articles tablosunda owner kontrolü store_slug üzerinden yapılır.
+ *
+ * SEO puanı ve öneriler SUNUCUDA hesaplanır; istemciden gelen seoScore /
+ * seoErrors yok sayılır. Aksi hâlde puanı tarayıcı belirler ve saklanan
+ * "standart" hiçbir şeyi ölçmez.
  */
 
 export const dynamic = "force-dynamic";
@@ -28,7 +33,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const auth = await verifyOwner(slug);
+  const auth = await sahipDogrula(slug);
   if (!auth.ok) {
     return NextResponse.json({ hata: auth.error }, { status: 401 });
   }
@@ -78,25 +83,26 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({ tamam: true, yaziListesi: data ?? [] });
 }
 
-function generateArticleSlug(title: string): string {
-  return title
-    .toLowerCase()
-    .replace(/[çğıöşü]/g, (c) =>
-      ({ ç: "c", ğ: "g", ı: "i", ö: "o", ş: "s", ü: "u" }[c] ?? c)
-    )
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "")
-    .slice(0, 60);
-}
+const SEO_ALANLARI =
+  "title, summary, content, cover_image_url, target_topic, target_city";
 
-async function verifyOwner(slug: string): Promise<{ ok: boolean; error?: string }> {
-  const cookieStore = await cookies();
-  const ownerSessionCookie = cookieStore.get(OWNER_SESSION_COOKIE)?.value;
-  const ownerSession = verifyOwnerSession(ownerSessionCookie, slug);
-  if (!ownerSession) {
-    return { ok: false, error: "Oturumun geçersiz veya süresi dolmuş." };
-  }
-  return { ok: true };
+function seoGirdisi(alanlar: {
+  title?: unknown;
+  summary?: unknown;
+  content?: unknown;
+  cover_image_url?: unknown;
+  target_topic?: unknown;
+  target_city?: unknown;
+}): BlogSeoInput {
+  const metin = (deger: unknown) => (typeof deger === "string" ? deger : "");
+  return {
+    title: metin(alanlar.title),
+    summary: metin(alanlar.summary),
+    content: metin(alanlar.content),
+    topic: metin(alanlar.target_topic),
+    city: metin(alanlar.target_city),
+    hasCover: metin(alanlar.cover_image_url).length > 0,
+  };
 }
 
 export async function POST(request: NextRequest) {
@@ -118,7 +124,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const auth = await verifyOwner(slug);
+  const auth = await sahipDogrula(slug);
   if (!auth.ok) {
     return NextResponse.json({ hata: auth.error }, { status: 401 });
   }
@@ -126,7 +132,7 @@ export async function POST(request: NextRequest) {
   const admin = getSupabaseAdmin();
 
   // Slug çakışmasını önle
-  let articleSlug = generateArticleSlug(title);
+  let articleSlug = blogSlugUret(title);
   const { data: existing } = await admin
     .from("store_articles")
     .select("id")
@@ -137,17 +143,28 @@ export async function POST(request: NextRequest) {
     articleSlug = `${articleSlug}-${Date.now().toString(36)}`;
   }
 
-  const payload = {
-    store_slug: slug,
+  const alanlar = {
     title,
     summary: typeof govde.summary === "string" ? govde.summary.trim() : "",
     content: typeof govde.content === "string" ? govde.content.trim() : "",
-    cover_image_url: typeof govde.coverImageUrl === "string" ? govde.coverImageUrl.trim() : null,
-    article_type: typeof govde.articleType === "string" ? govde.articleType : "standard",
+    cover_image_url:
+      typeof govde.coverImageUrl === "string" ? govde.coverImageUrl.trim() : "",
     target_topic: typeof govde.targetTopic === "string" ? govde.targetTopic.trim() : "",
     target_city: typeof govde.targetCity === "string" ? govde.targetCity.trim() : "",
-    seo_score: typeof govde.seoScore === "number" ? govde.seoScore : 0,
-    seo_errors: Array.isArray(govde.seoErrors) ? govde.seoErrors : [],
+  };
+  const analiz = blogSeoAnalizi(seoGirdisi(alanlar));
+
+  const payload = {
+    store_slug: slug,
+    title,
+    summary: alanlar.summary,
+    content: alanlar.content,
+    cover_image_url: alanlar.cover_image_url || null,
+    article_type: typeof govde.articleType === "string" ? govde.articleType : "standard",
+    target_topic: alanlar.target_topic,
+    target_city: alanlar.target_city,
+    seo_score: analiz.score,
+    seo_errors: analiz.recommendations,
     status: "draft",
     slug: articleSlug,
   };
@@ -185,7 +202,7 @@ export async function PATCH(request: NextRequest) {
     );
   }
 
-  const auth = await verifyOwner(slug);
+  const auth = await sahipDogrula(slug);
   if (!auth.ok) {
     return NextResponse.json({ hata: auth.error }, { status: 401 });
   }
@@ -200,8 +217,6 @@ export async function PATCH(request: NextRequest) {
   if (typeof govde.articleType === "string") updatePayload.article_type = govde.articleType;
   if (typeof govde.targetTopic === "string") updatePayload.target_topic = govde.targetTopic.trim();
   if (typeof govde.targetCity === "string") updatePayload.target_city = govde.targetCity.trim();
-  if (typeof govde.seoScore === "number") updatePayload.seo_score = govde.seoScore;
-  if (Array.isArray(govde.seoErrors)) updatePayload.seo_errors = govde.seoErrors;
   if (typeof govde.status === "string") {
     const status = govde.status.trim();
     if (status !== "draft" && status !== "published") {
@@ -217,28 +232,45 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ hata: "Güncellenecek alan belirtilmedi." }, { status: 422 });
   }
 
+  const { data: mevcut, error: okumaHatasi } = await admin
+    .from("store_articles")
+    .select(SEO_ALANLARI)
+    .eq("id", articleId)
+    .eq("store_slug", slug)
+    .maybeSingle();
+  if (okumaHatasi) {
+    console.error("[articles] score read failed:", okumaHatasi.message);
+    return NextResponse.json({ hata: "Yazı doğrulanamadı." }, { status: 500 });
+  }
+  if (!mevcut) {
+    return NextResponse.json({ hata: "Yazı bulunamadı." }, { status: 404 });
+  }
+
+  const birlestir = (alan: keyof typeof mevcut) =>
+    typeof updatePayload[alan] === "string"
+      ? (updatePayload[alan] as string)
+      : ((mevcut[alan] ?? "") as string);
+  const girdi = seoGirdisi({
+    title: birlestir("title"),
+    summary: birlestir("summary"),
+    content: birlestir("content"),
+    cover_image_url: birlestir("cover_image_url"),
+    target_topic: birlestir("target_topic"),
+    target_city: birlestir("target_city"),
+  });
+  const analiz = blogSeoAnalizi(girdi);
+  updatePayload.seo_score = analiz.score;
+  updatePayload.seo_errors = analiz.recommendations;
+
   if (updatePayload.status === "published") {
-    const { data: mevcut, error: okumaHatasi } = await admin
-      .from("store_articles")
-      .select("title, summary, content")
-      .eq("id", articleId)
-      .eq("store_slug", slug)
-      .maybeSingle();
-    if (okumaHatasi) {
-      console.error("[articles] publish validation failed:", okumaHatasi.message);
-      return NextResponse.json({ hata: "Yazı doğrulanamadı." }, { status: 500 });
-    }
-    if (!mevcut) {
-      return NextResponse.json({ hata: "Yazı bulunamadı." }, { status: 404 });
-    }
-    const yayinAlanlari = ["title", "summary", "content"] as const;
-    const eksikAlanVar = yayinAlanlari.some((alan) => {
-      const deger = updatePayload[alan] ?? mevcut[alan];
-      return typeof deger !== "string" || deger.trim().length === 0;
-    });
-    if (eksikAlanVar) {
+    const engeller = blogYayinEngelleri(girdi);
+    if (engeller.length) {
       return NextResponse.json(
-        { hata: "Başlık, özet ve içerik yayın için zorunludur." },
+        {
+          hata: `Yayın standardı tamamlanmadı. ${engeller.join(" ")}`,
+          engeller,
+          seoScore: analiz.score,
+        },
         { status: 422 }
       );
     }
@@ -287,7 +319,7 @@ export async function DELETE(request: NextRequest) {
     );
   }
 
-  const auth = await verifyOwner(slug);
+  const auth = await sahipDogrula(slug);
   if (!auth.ok) {
     return NextResponse.json({ hata: auth.error }, { status: 401 });
   }
