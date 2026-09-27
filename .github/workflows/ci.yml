@@ -422,3 +422,33 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+
+  public_web_blog_onizleme:
+    name: Next.js — Blog E2E (PR önizlemesi, gerçek tarayıcı)
+    needs: changes
+    if: needs.changes.outputs.public_web == 'true' && github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: public_web
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: public_web/package-lock.json
+
+      - name: Bağımlılıklar
+        run: npm ci
+
+      - name: Chromium kurulumu
+        run: npx playwright install --with-deps chromium
+
+      - name: Blog E2E (yayın dışı önizleme)
+        run: npx playwright test --config=playwright.blog.config.ts --project=blog
