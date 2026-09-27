@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, type MouseEvent } from "react";
+import { useMemo, type MouseEvent, type ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
 import ProductDetailExperienceBase from "./ProductDetailExperienceBase";
 import { trackDirectionsClick } from "./TrackedContactLink";
@@ -20,6 +20,7 @@ interface ProductDetailExperienceProps {
   instagramUrl?: string | null;
   sourceUrl?: string | null;
   storeAddress?: string | null;
+  commercePanel?: ReactNode;
 }
 
 function isMapsUrl(href: string): boolean {

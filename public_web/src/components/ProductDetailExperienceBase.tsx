@@ -3,7 +3,7 @@
 import { eskiFiyatYazisi, kartRozeti } from "@/lib/productCardPresentation";
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { TrackedWhatsAppLink } from "@/components/TrackedWhatsAppLink";
 import type { RichProductItem } from "@/lib/richProductItem";
 import { MapPinIcon } from "@/lib/vitrinBrandIcons";
@@ -29,6 +29,7 @@ interface ProductDetailExperienceProps {
   instagramUrl?: string | null;
   sourceUrl?: string | null;
   storeAddress?: string | null;
+  commercePanel?: ReactNode;
 }
 
 export function formatVariantPrice(amount: number, currency?: string) {
@@ -84,6 +85,7 @@ export default function ProductDetailExperience({
   instagramUrl = null,
   sourceUrl = null,
   storeAddress = null,
+  commercePanel = null,
 }: ProductDetailExperienceProps) {
   const metadata = useMemo(() => normalizeProductMetadata(product.metadata), [product.metadata]);
   const isService = metadata.itemKind === "service";
@@ -392,6 +394,10 @@ export default function ProductDetailExperience({
               >
                 Kaynak paylaşımı
               </Link>
+            ) : null}
+
+            {commercePanel ? (
+              <div className="mt-6 border-t border-white/10 pt-5">{commercePanel}</div>
             ) : null}
           </aside>
         </div>

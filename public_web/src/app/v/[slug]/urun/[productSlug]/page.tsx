@@ -17,6 +17,8 @@ import type { RichProductItem } from "@/lib/richProductItem";
 import { buildSiteUrl, getSiteUrl } from "@/lib/siteUrl";
 import { safeJsonLdHtml } from "@/lib/jsonLd";
 import ProductDetailExperience from "@/components/ProductDetailExperience";
+import ProductCommercePanel from "@/components/ProductCommercePanel";
+import VitrinCartDock from "@/components/VitrinCartDock";
 import ProductViewTracker from "@/components/ProductViewTracker";
 
 export const revalidate = 300;
@@ -249,6 +251,11 @@ export default async function ProductDetailPage(props: PageProps) {
     barcode: product.barcode,
     metadata: product.metadata,
   }).filter((fact) => fact.key !== "brand");
+  const hasVariants = Array.isArray(product.variants) && product.variants.length > 0;
+  const stockQuantity = product.stockQuantity ?? null;
+  const isInStock = !String(product.stockStatus || "")
+    .toLocaleLowerCase("tr-TR")
+    .includes("tükendi");
 
   const structuredData = isService
     ? {
@@ -322,6 +329,28 @@ export default async function ProductDetailPage(props: PageProps) {
         instagramUrl={instagramUrl}
         sourceUrl={sourceUrl}
         storeAddress={store.address || null}
+        commercePanel={
+          <ProductCommercePanel
+            storeSlug={store.slug}
+            productSlug={productSlug}
+            productName={product.name}
+            imageUrl={images[0] || null}
+            priceText={product.price || null}
+            stockQuantity={stockQuantity}
+            cartEnabled={!hasVariants && isInStock}
+            cartDisabledReason={
+              hasVariants
+                ? "Bu ürünün seçenekli siparişi için Hızlı İncele ekranından beden/renk seç."
+                : ""
+            }
+          />
+        }
+      />
+
+      <VitrinCartDock
+        storeSlug={store.slug}
+        storeName={store.name}
+        whatsappBaseUrl={whatsappUrl}
       />
     </>
   );
