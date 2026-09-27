@@ -41,7 +41,6 @@ function HataSayfasi({ mesaj }: { mesaj: string }) {
         minHeight: "100vh",
         background: "#0B1120",
         color: "#fff",
-        fontFamily: "system-ui, -apple-system, sans-serif",
       }}
     >
       <div style={{ maxWidth: 420, padding: 24, textAlign: "center" }}>
@@ -61,7 +60,6 @@ function BekleniyorSayfasi() {
         minHeight: "100vh",
         background: "#0B1120",
         color: "#fff",
-        fontFamily: "system-ui, -apple-system, sans-serif",
       }}
     >
       <p style={{ color: "rgba(255,255,255,0.7)" }}>Vitrin hazırlanıyor…</p>
@@ -78,7 +76,6 @@ function MevcutVitrinSayfasi({ slug }: { slug: string }) {
         minHeight: "100vh",
         background: "#0B1120",
         color: "#fff",
-        fontFamily: "system-ui, -apple-system, sans-serif",
       }}
     >
       <div style={{ maxWidth: 420, padding: 24, textAlign: "center" }}>
@@ -240,7 +237,6 @@ function RentDemoIcerik() {
         minHeight: "100vh",
         background: "#0B1120",
         color: "#fff",
-        fontFamily: "system-ui, -apple-system, sans-serif",
       }}
     >
       <div style={{ maxWidth: 420, padding: 24, textAlign: "center" }}>

@@ -67,7 +67,6 @@ export default async function LegalTypePage({ params }: Params) {
         margin: "0 auto",
         padding: "40px 20px",
         color: "#EDEDED",
-        fontFamily: "system-ui",
       }}
     >
       <h1>{belge.title || BASLIK[type]}</h1>

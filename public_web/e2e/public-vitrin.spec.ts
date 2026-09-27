@@ -17,7 +17,7 @@ test.describe("vitrin görsel yükleme (CSP kontratı)", () => {
       }
     });
 
-    await page.goto(`/v/${DEMO_SLUG}`, { waitUntil: "networkidle" });
+    await page.goto(`/v/${DEMO_SLUG}`, { waitUntil: "domcontentloaded" });
 
     const unsplashImgs = page.locator('img[src*="unsplash"]');
     const count = await unsplashImgs.count();
@@ -59,7 +59,7 @@ test.describe("public vitrin görüntüleme", () => {
   });
 
   test("vitrin sayfasında ürün kartları görünür", async ({ page }) => {
-    await page.goto(`/v/${DEMO_SLUG}`, { waitUntil: "networkidle" });
+    await page.goto(`/v/${DEMO_SLUG}`, { waitUntil: "domcontentloaded" });
 
     const heading = page.getByRole("heading", { level: 1 });
     await expect(heading).toBeVisible({ timeout: 20_000 });
@@ -69,7 +69,7 @@ test.describe("public vitrin görüntüleme", () => {
   });
 
   test("vitrin sayfasında WhatsApp butonu görünür", async ({ page }) => {
-    await page.goto(`/v/${DEMO_SLUG}`, { waitUntil: "networkidle" });
+    await page.goto(`/v/${DEMO_SLUG}`, { waitUntil: "domcontentloaded" });
 
     const whatsappLink = page.locator('a[href*="wa.me"], a[href*="whatsapp"]');
     await expect(whatsappLink.first()).toBeVisible({ timeout: 10_000 });
@@ -147,29 +147,25 @@ test.describe("randevu sayfası", () => {
 });
 
 test.describe("yazılar sayfası", () => {
-  test("yazılar listesi durumla uyumlu içerik gösterir", async ({ page }) => {
+  test("yazılar listesi 200 döner ve içerik gösterir", async ({ page }) => {
     const response = await page.goto(`/v/${DEMO_SLUG}/yazilar`, {
       waitUntil: "domcontentloaded",
     });
 
     const status = response?.status() ?? 0;
-    if (status === 404) {
-      await expect(page.getByText(/bulunamad|not found|yaz.*yok|henüz yazı/i).first()).toBeVisible({ timeout: 10_000 });
-    } else {
-      expect(status).toBe(200);
+    expect(status, `yazılar sayfası canlıda 200 döner — 404 kabul edilmez (audit: yazılar 200/404 esnekliği)`).toBe(200);
+    await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible({ timeout: 15_000 });
+    const articleLink = page.locator('a[href*="/yazilar/"]').first();
+    const bosMetin = page.getByText(/yazı bulunamadı|henüz yazı/i).first();
+    await expect(articleLink.or(bosMetin)).toBeVisible({ timeout: 10_000 });
+    const count = await page.locator('a[href*="/yazilar/"]').count();
+    if (count > 0) {
+      const href = await page.locator('a[href*="/yazilar/"]').first().getAttribute("href");
+      expect(href).toBeTruthy();
+      const detail = await page.goto(href!, { waitUntil: "domcontentloaded" });
+      expect(detail?.status()).toBe(200);
       await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible({ timeout: 15_000 });
-      const articleLink = page.locator('a[href*="/yazilar/"]').first();
-      const bosMetin = page.getByText(/yazı bulunamadı|henüz yazı/i).first();
-      await expect(articleLink.or(bosMetin)).toBeVisible({ timeout: 10_000 });
-      const count = await page.locator('a[href*="/yazilar/"]').count();
-      if (count > 0) {
-        const href = await page.locator('a[href*="/yazilar/"]').first().getAttribute("href");
-        expect(href).toBeTruthy();
-        const detail = await page.goto(href!, { waitUntil: "domcontentloaded" });
-        expect(detail?.status()).toBe(200);
-        await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible({ timeout: 15_000 });
-        await expect(page.locator('script[type="application/ld+json"]').first()).toBeAttached({ timeout: 10_000 });
-      }
+      await expect(page.locator('script[type="application/ld+json"]').first()).toBeAttached({ timeout: 10_000 });
     }
   });
 
