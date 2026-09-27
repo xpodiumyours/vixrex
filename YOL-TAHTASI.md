@@ -80,10 +80,13 @@ kapısına çalışan sistem gösterilerek izin istenir.
 2. **Fatura okumanın doğruluğu hiç ölçülmedi.** Gerçek fotoğrafla denenmedi.
 3. **Barkod nadir.** 4.253 ürünün yalnız 258'inde gerçek barkod var; eşleşme
    çoğunlukla ürün koduna bağlı.
-4. **Canlıya çıkış yolu açıldı (27 Eylül).** Migration uygulama işi eklendi
-   (`migration-uygula`: Actions'tan veya `migration-uygula/<dosya adı>`
-   etiketiyle). Vitrin Ölçer migration'ı bu yolla canlıda uygulandı ve canlı
-   API'den doğrulandı. Kalan risk: migration'lar hâlâ tek tek tetikleniyor.
+4. **Canlıya çıkış yolu açıldı (27 Eylül).** İki mod var: tek dosya
+   (`migration-uygula/<dosya adı>`) ve toplu
+   (`migration-uygula-toplu/<başlangıç dosyası>`) — toplu mod, kayıt
+   tablosunda (`public.uygulanan_migrationlar`, sha256'lı) kayıtlı olanları
+   atlar, kayıtsızları sırayla uygular; yarım kalan koşu aynı etiketle
+   kaldığı yerden devam eder. Vitrin Ölçer migration'ı canlıda uygulandı ve
+   canlı API'den doğrulandı.
 
 ## Çakışmama kuralı
 
@@ -141,3 +144,17 @@ kanıtlı biçimde çalışıyor — kalan tek soru "kamera metni doğru çıkar
 
 **Doğrulanmayan:** beğeni/yorum/sepet akışının gerçek tarayıcıda uçtan uca
 yürünmesi (ekran görülmedi) ve gerçek kullanıcı oturumuyla sahip panosu.
+
+## 2026-09-27 ek notu 2 — toplu migration modu
+
+4. **Toplu mod eklendi ve canlıda sınandı.** `migration-uygula-toplu/<dosya>`
+   etiketi, verilen dosyadan itibaren kayıtsız migration'ları sırayla uygular;
+   kayıt `public.uygulanan_migrationlar` tablosunda (`ad`, `sha256`,
+   `uygulayan`, `calisma_id`). Canlı kanıt: ilk koşu (36312545718)
+   `uygulanan=1`, ikinci koşu (36312615616) `atlandi (kayitli)` →
+   "Yeni migration yok - canli zaten guncel." Kayıtlı dosyanın içeriği
+   sonradan değişirse koşu uyarı verir.
+5. **Canlıda ölçülen hata düzeltildi.** `psql -c` psql değişkenlerini yerine
+   koymuyor (koşu 36312023523: `syntax error at or near ":"`); kayıt SQL'i
+   artık geçici dosyaya yazılıp `-f` ile çalıştırılıyor. Aynı etiket iki kez
+   itilemediği için etiket sonuna `#ek` eklenebiliyor.
