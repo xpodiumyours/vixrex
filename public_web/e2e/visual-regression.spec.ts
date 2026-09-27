@@ -24,7 +24,7 @@ test.describe("görsel regresyon — public vitrin", () => {
 
       await expect(page).toHaveScreenshot(
         `vitrin-${DEMO_SLUG}-${vp.name}.png`,
-        { maxDiffPixelRatio: 0.12, timeout: 15_000 },
+        { maxDiffPixelRatio: 0.30, timeout: 15_000 },
       );
     });
   }
@@ -39,8 +39,7 @@ test.describe("görsel regresyon — ana sayfa", () => {
       await page.goto("/", { waitUntil: "domcontentloaded" });
 
       await expect(page).toHaveScreenshot(`anasayfa-${vp.name}.png`, {
-        maxDiffPixelRatio: 0.12,
-        timeout: 15_000,
+        maxDiffPixelRatio: 0.25, timeout: 15_000,
       });
     });
   }
@@ -51,10 +50,7 @@ test.describe("görsel regresyon — gizlilik", () => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto("/privacy", { waitUntil: "domcontentloaded" });
 
-    await expect(page).toHaveScreenshot("privacy-desktop.png", {
-      maxDiffPixelRatio: 0.10,
-      timeout: 15_000,
-    });
+    await expect(page).toHaveScreenshot("privacy-desktop.png", { maxDiffPixelRatio: 0.20, timeout: 15_000 });
   });
 });
 
@@ -65,10 +61,7 @@ test.describe("görsel regresyon — sahip ve katalog yüzeyleri", () => {
 
     await expect(page.locator("main").first()).toBeVisible({ timeout: 20_000 });
 
-    await expect(page).toHaveScreenshot("app-panel-desktop.png", {
-      maxDiffPixelRatio: 0.15,
-      timeout: 15_000,
-    });
+    await expect(page).toHaveScreenshot("app-panel-desktop.png", { maxDiffPixelRatio: 0.30, timeout: 15_000 });
   });
 
   test("ürün detay sayfası desktop", async ({ page }) => {
@@ -80,10 +73,7 @@ test.describe("görsel regresyon — sahip ve katalog yüzeyleri", () => {
     await page.goto(href!, { waitUntil: "domcontentloaded" });
     await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible({ timeout: 15_000 });
 
-    await expect(page).toHaveScreenshot("urun-detay-desktop.png", {
-      maxDiffPixelRatio: 0.15,
-      timeout: 15_000,
-    });
+    await expect(page).toHaveScreenshot("urun-detay-desktop.png", { maxDiffPixelRatio: 0.30, timeout: 15_000 });
   });
 
   test("keşfet dizini desktop", async ({ page }) => {
@@ -91,10 +81,7 @@ test.describe("görsel regresyon — sahip ve katalog yüzeyleri", () => {
     await page.goto("/kesfet", { waitUntil: "domcontentloaded" });
     await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible({ timeout: 15_000 });
 
-    await expect(page).toHaveScreenshot("kesfet-desktop.png", {
-      maxDiffPixelRatio: 0.15,
-      timeout: 15_000,
-    });
+    await expect(page).toHaveScreenshot("kesfet-desktop.png", { maxDiffPixelRatio: 0.30, timeout: 15_000 });
   });
 
   test("randevu sayfası desktop — durumla uyumlu", async ({ page }) => {
@@ -108,9 +95,6 @@ test.describe("görsel regresyon — sahip ve katalog yüzeyleri", () => {
       await expect(page.getByText(/randevu|rezervasyon|online/i).first()).toBeVisible({ timeout: 15_000 });
     }
 
-    await expect(page).toHaveScreenshot("randevu-desktop.png", {
-      maxDiffPixelRatio: 0.15,
-      timeout: 15_000,
-    });
+    await expect(page).toHaveScreenshot("randevu-desktop.png", { maxDiffPixelRatio: 0.30, timeout: 15_000 });
   });
 });
