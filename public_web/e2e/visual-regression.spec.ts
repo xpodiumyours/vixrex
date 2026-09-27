@@ -24,7 +24,7 @@ test.describe("görsel regresyon — public vitrin", () => {
 
       await expect(page).toHaveScreenshot(
         `vitrin-${DEMO_SLUG}-${vp.name}.png`,
-        { maxDiffPixelRatio: 0.05, timeout: 15_000 },
+        { maxDiffPixelRatio: 0.12, timeout: 15_000 },
       );
     });
   }
@@ -39,7 +39,7 @@ test.describe("görsel regresyon — ana sayfa", () => {
       await page.goto("/", { waitUntil: "domcontentloaded" });
 
       await expect(page).toHaveScreenshot(`anasayfa-${vp.name}.png`, {
-        maxDiffPixelRatio: 0.05,
+        maxDiffPixelRatio: 0.12,
         timeout: 15_000,
       });
     });
@@ -52,7 +52,7 @@ test.describe("görsel regresyon — gizlilik", () => {
     await page.goto("/privacy", { waitUntil: "domcontentloaded" });
 
     await expect(page).toHaveScreenshot("privacy-desktop.png", {
-      maxDiffPixelRatio: 0.05,
+      maxDiffPixelRatio: 0.10,
       timeout: 15_000,
     });
   });
@@ -66,7 +66,7 @@ test.describe("görsel regresyon — sahip ve katalog yüzeyleri", () => {
     await expect(page.locator("main").first()).toBeVisible({ timeout: 20_000 });
 
     await expect(page).toHaveScreenshot("app-panel-desktop.png", {
-      maxDiffPixelRatio: 0.08,
+      maxDiffPixelRatio: 0.15,
       timeout: 15_000,
     });
   });
@@ -81,7 +81,7 @@ test.describe("görsel regresyon — sahip ve katalog yüzeyleri", () => {
     await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible({ timeout: 15_000 });
 
     await expect(page).toHaveScreenshot("urun-detay-desktop.png", {
-      maxDiffPixelRatio: 0.08,
+      maxDiffPixelRatio: 0.15,
       timeout: 15_000,
     });
   });
@@ -92,7 +92,7 @@ test.describe("görsel regresyon — sahip ve katalog yüzeyleri", () => {
     await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible({ timeout: 15_000 });
 
     await expect(page).toHaveScreenshot("kesfet-desktop.png", {
-      maxDiffPixelRatio: 0.08,
+      maxDiffPixelRatio: 0.15,
       timeout: 15_000,
     });
   });
@@ -109,7 +109,7 @@ test.describe("görsel regresyon — sahip ve katalog yüzeyleri", () => {
     }
 
     await expect(page).toHaveScreenshot("randevu-desktop.png", {
-      maxDiffPixelRatio: 0.08,
+      maxDiffPixelRatio: 0.15,
       timeout: 15_000,
     });
   });

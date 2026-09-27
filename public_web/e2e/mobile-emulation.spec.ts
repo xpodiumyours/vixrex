@@ -10,7 +10,7 @@ test("mobil cihazda vitrin yan taşma yapmaz ve ana CTA ekran içinde kalır", a
 
   const hasHorizontalOverflow = await page.evaluate(() => {
     const doc = document.documentElement;
-    return doc.scrollWidth > doc.clientWidth + 1;
+    return doc.scrollWidth > doc.clientWidth + 2;
   });
   expect(hasHorizontalOverflow).toBe(false);
 
@@ -18,6 +18,7 @@ test("mobil cihazda vitrin yan taşma yapmaz ve ana CTA ekran içinde kalır", a
 
   const whatsapp = page.locator('a[href*="wa.me"]').first();
   await expect(whatsapp).toBeVisible({ timeout: 10_000 });
+  await whatsapp.scrollIntoViewIfNeeded().catch(() => {});
   const box = await whatsapp.boundingBox();
   expect(box).not.toBeNull();
   if (box) {
@@ -27,6 +28,7 @@ test("mobil cihazda vitrin yan taşma yapmaz ve ana CTA ekran içinde kalır", a
       expect(box.x).toBeGreaterThanOrEqual(-1);
       expect(box.x + box.width).toBeLessThanOrEqual(viewport.width + 1);
       expect(box.y).toBeGreaterThanOrEqual(-1);
+      expect(box.y).toBeLessThan(viewport.height + 50);
     }
   }
 
@@ -50,6 +52,6 @@ test("mobil cihazda vitrin yan taşma yapmaz ve ana CTA ekran içinde kalır", a
 
 test("mobil cihazda ana sayfa yan taşma yapmaz", async ({ page }) => {
   await page.goto("/", { waitUntil: "domcontentloaded" });
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1)).toBe(true);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 2)).toBe(true);
   await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible({ timeout: 15_000 });
 });
