@@ -1,0 +1,83 @@
+name: Migration Uygula
+
+# NEDEN VAR (2026-09-27)
+# Canli veritabanina (Supabase) migration uygulamak icin depoda bir yol yoktu:
+# ajanlarin makinesinde canli anahtar olmadigi icin zincir duruyordu
+# ("Canliya cikis yolu kapali", YOL-TAHTASI risk 4). Bu is, depodaki tek bir
+# migration dosyasini yalniz elle tetiklendiginde canliya uygular.
+#
+# KORUMALAR
+# - Yalniz workflow_dispatch; baska olay tetikleyemez.
+# - Dosya adi kaliba uymali ve supabase/migrations/ altinda var olmali.
+# - ON_ERROR_STOP=1: ilk hatada is kirmizi biter. Dosya kendi begin/commit
+#   blogunu tasir; hata halinde hicbir degisiklik kalmaz.
+# - Baglanti adresi yalnizca DATABASE_URL sirrindan gelir; depoya yazilmaz.
+
+on:
+  workflow_dispatch:
+    inputs:
+      dosya:
+        description: "Uygulanacak dosya adi (orn. 20260926180000_vitrin_olcer_profesyonel.sql)"
+        required: true
+        type: string
+      kuru_kosu:
+        description: "Yalniz baglantiyi dogrula, SQL uygulama"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  uygula:
+    name: Canliya uygula
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Dosya adini dogrula
+        env:
+          AD: ${{ inputs.dosya }}
+        run: |
+          set -euo pipefail
+          case "$AD" in
+            [0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]_*.sql) ;;
+            *) echo "Gecersiz dosya adi: $AD"; exit 1 ;;
+          esac
+          test -f "supabase/migrations/$AD"
+          echo "Dosya dogrulandi: supabase/migrations/$AD"
+
+      - name: Install PostgreSQL 17 client
+        # Sunucu PostgreSQL 17.6; Ubuntu varsayilan paketi (16) uyumsuz.
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl ca-certificates
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc --fail https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client-17
+
+      - name: Uygula
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          AD: ${{ inputs.dosya }}
+          KURU: ${{ inputs.kuru_kosu }}
+        run: |
+          set -euo pipefail
+          export PATH="/usr/lib/postgresql/17/bin:$PATH"
+          psql --version
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "select current_database() as veritabani, current_user as kullanici;"
+          if [ "$KURU" = "true" ]; then
+            echo "Kuru kosu tamam: SQL uygulanmadi."
+            exit 0
+          fi
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "supabase/migrations/$AD"
+          echo "Uygulandi: $AD"
