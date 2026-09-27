@@ -17,17 +17,25 @@ Ayrıntılı demo içerik ölçümü: `node .scratch/demo-icerik-olcum.cjs`
 | Ölçülen | Değer |
 |---|---|
 | Keşfet'te kiralık duran vitrin (`is_published`, `is_demo`) | **30** (30'unun tamamı `is_demo`; 5 gerçek müşteri vitrini henüz yayında değil) |
-| Aktif demo ürün | **182** (hepsi 3+ fotoğraf) |
-| Özelliği/hizmeti dolu ürün | 164 → **182** (aşağıdaki düzeltmeden sonra) |
-| Özelliği boş ürün | **18** — üçü de şu vitrinlerde: Aymira Giyim (6), Lezzet Durağı (6), Nova Kuaför (6) |
-| Boşluğun sebebi | Bu üç vitrinin **9 ürün kategorisi** `product_template_key = generic`; kart satırı yalnız `metadata.templateKey` ile geliyor (`public_web/src/lib/productCardPresentation.ts:102`) |
-| Puan bandı açık vitrin | **0 / 30** (üç vitrin aynı 4.9/128) |
+| Aktif demo ürün | **182** |
+| Özelliği/hizmeti dolu ürün | **182 / 182** (canlıya uygulandı 2026-09-25; öncesi 164) |
+| Özelliği boş ürün | **0** (uygulama öncesi 18: Aymira 6, Lezzet Durağı 6, Nova Kuaför 6) |
+| Boşluğun sebebi (artık kapalı) | Bu üç vitrinin **9 ürün kategorisi** `product_template_key = generic` idi; kart satırı yalnız `metadata.templateKey` ile geliyor (`public_web/src/lib/productCardPresentation.ts:102`) |
+| Puan bandı açık vitrin | **30 / 30** (uygulama öncesi 0/30) |
+| Puan tekrarı | **0 tekrar** — 30 vitrinin 30'u tekil (uygulama öncesi 26 vitrin aynı 4.9/128) |
+| **Vitrin başına farklı ürün fotoğrafı** | **3** — bir vitrindeki 6 ürünün tamamı **aynı 3 görseli** paylaşıyor (`farkli_foto_seti = 1`); üç vitrinde görseller `category-templates/diger/` genel havuzundan. **Kiralanabilir kalite için açık iş — aşağıya bak.** |
 
 **Düzeltme (2026-09-25, `supabase/migrations/20260925100000_kiralik_vitrin_urun_ozniteliklerini_tamamla.sql`):** kiralık vitrinlerin `generic` kategorileri ortak listedeki şablonla doldurulur (`shared/business_categories.json`: Giyim→fashion, Gıda→food, Kafe/Lokanta→cafe_restaurant, Kuaför→service, Butik→fashion, Teknik Servis→technical_service); ardından ürünlerin `metadata.templateKey`, `attributes`/`service` ve marka alanları dolar.
 
 **Yerel doğrulama (2026-09-25, gerçek Postgres):** `supabase db reset` sonrası iki migration sırayla koştu → 9 kategori şablonu düzeldi, 144 ürünün alanları doldu, **boş ürün 0**, **generic kategori 0**, guard'lar geçti. Puan migration'ı (`20260925110000_kiralik_vitrin_puanlari.sql`) → **30/30 bant açık**, **30 farklı puan çifti**, tekrar eden çift 0. Görsel kanıt: yerel önizlemede Aymira Giyim kartlarında özellik satırı ("Siyah") ve hero'da "4.6 (74 değerlendirme)" görünüyor.
 
-**Canlıya uygulama (2026-09-25):** henüz **uygulanmadı** — ölçüm yolu kapalı (`exec_sql` RPC yok, CLI oturumu yok). Dosyalar hazır; uygulandıktan sonra ölçüm aynı komutla tekrarlanır.
+**Canlı okuma/yazma yolu (2026-09-25):** `supabase db query --linked` (Management API) açıldı; proje bağlı (`chfulefxczbgurtgavtp`, CLI oturumu var).
+
+**Canlı kuru koşu (2026-09-25, `supabase db query --linked --file .scratch/kuru-kosu-kiralik-vitrin.sql`):** iki migration tek işlemde koştu, sonunda `ROLLBACK` — sonuç `kiralik_vitrin 30 | generic_kategori 0 | icerik_bos_urun 0 | bant_acik 30 | ayni_puan_cifti 0 | bant_kapali 0`.
+
+**CANLIYA UYGULANDI (2026-09-25):** ikisi de `supabase db query --linked --file <migration>` ile canlıya koştu (guard'lar geçti). Uygulama sonrası canlı ölçüm: `kiralik_vitrin 30 | yayında 30 | aktif_urun 182 | generic_kategori 0 | icerik_bos_urun 0 | bant_acik 30 | bant_kapali 0 | ayni_puan_cifti 0`. Canlı vitrinde doğrulandı: `demo-aymira-giyim` hero'da **4.6 (74 değerlendirme)** ve 6 kartın hepsinde özellik satırı (**Siyah**); `demo-lezzet-duragi` kartlarında **1 porsiyon · gluten, süt ürünü · 15**; biçim mevcut canlı içerikle aynı (`kiralik-kafe`: `250 ml · 5`).
+
+**Açık kalan en görünür kusur — ürün fotoğrafları (2026-09-25 canlı ölçümü):** "182/182 üründe 3+ fotoğraf" ölçümü **sayı olarak** doğru ama içerik olarak boş: her vitrinde 6 ürünün tamamı **tek bir 3'lü görsel dizisini** paylaşıyor (`farkli_foto_seti = 1`), yani vitrin başına toplam **3 farklı URL**. Örneğin `demo-aymira-giyim`'de "Keten Midi Elbise" (keten elbise) kartı ile "Omuz Çantası" kartı **aynı** `category-templates/diger/gallery-3-b752fa.jpg` görselini gösteriyor; üç vitrinde tüm görseller `diger` havuzundan, yani giyim vitrininde market reyonu fotoğrafı çıkıyor. Ölçüm: `.scratch/canli-foto-cesitliligi.sql`, `.scratch/canli-foto-tekil-url.sql` (salt okuma).
 
 ---
 
@@ -64,7 +72,7 @@ Sebebi **veri**, kod değil: 38 ürünün 32'sinde özellik verisi boş. Dolu ol
 2. **32 ürünün özellikleri** — kartın "profesyonel" görünmesini sağlayan asıl iş.
 3. **38 ürünün fotoğrafı** — hepsi tek fotoğraflı.
 4. **Ürün detay sayfası** — özellik bölümü yok; `feat/zengin-urun-detay-sayfasi` dalı (1 commit, birleşmemiş) bu iş için duruyor.
-5. **Ölçülmeyi bekleyen:** vitrinde puan tekrarı (GOREV'de "4.9 / 128 yorum dört vitrinde aynı" yazıyor). Canlı vitrin ve hızlı bakış yüzeylerinde puan **görünmedi**; hangi yüzeyde olduğu ölçülmedi.
+5. **Puan tekrarı (2026-09-25 ölçüldü):** GOREV'deki "4.9 / 128 dört vitrinde aynı" notu eksikti — canlı ölçüm **26 vitrinin** aynı 4.9/128 taşıdığını gösterdi; yalnız 4 vitrin tekil. Puan yüzeyi yazılı (`page.tsx:573-577`) ve bant 30 vitrinin hiçbirinde açık değil; migration hazır.
 
 ---
 
@@ -77,7 +85,7 @@ Sebebi **veri**, kod değil: 38 ürünün 32'sinde özellik verisi boş. Dolu ol
 | 2 | 182 ürünün **0**'ında boş özellik kalıyor (ölçüm betiği aynı tabloyu üretiyor) |
 | 3 | 182 ürünün **0**'ı tek fotoğraflı (her üründe en az 3 fotoğraf) — canlıda **tamamlandı** (182/182) |
 | 4 | Detay sayfasında özellik bölümü + birden çok fotoğraf |
-| 5 | Puanın hangi yüzeyde olduğu yazılı (`page.tsx:573-577`); aynı puandan kurtulmuş — migration hazır, canlıya uygulanmayı bekliyor |
+| 5 | Puanın hangi yüzeyde olduğu yazılı (`page.tsx:573-577`); canlı kuru koşu tekrar eden çifti 1 → **0** indiriyor ve bandı 0/30 → **30/30** açıyor — onay bekliyor |
 
 ---
 

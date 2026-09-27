@@ -65,16 +65,23 @@ Once OLC, sonra yaz:
 Bilinen kirikliklar (Casper'in listesi):
 - Rozetlerde kategori adi tasiyor: "BILGISAYAR & LA...", "ORGANIK SEBZE ..."
 - Hizmet vitrinlerinde "6 Urun Listeleniyor" yaziyor; "hizmet" demeli.
-- Her urunde tek fotograf var — **canlida bitti (2026-09-25)**: 182/182 urunde 3+ fotograf.
-- Urun kartlarinda ozellik satiri — 2026-09-25: 182 urunun 164'unde dolu, **18'i bos**.
-  Bos olanlar uc vitrinde (demo-aymira-giyim, demo-lezzet-duragi, demo-nova-kuafor) ve sebebi
-  veri: o vitrinlerin 9 urun kategorisi `product_template_key='generic'` oldugu icin
-  kart satiri uretilemiyor. Duzeltme: supabase/migrations/20260925100000_kiralik_vitrin_urun_ozniteliklerini_tamamla.sql (Bolum 0).
-- Bos uc vitrin — **artik bos degil (2026-09-25)**: her birinde 6 urun, logo, telefon, il,
-  SSS ve galeri var; kalan tek eksik kategori sablonuydu, o da ayni migration'da kapatiliyor.
-- Dort vitrinde puan birebir ayni: **4 vitrin 4.9 / 128** (kiralik-butik, demo-lezzet-duragi,
-  demo-nova-kuafor, demo-teknofix). Ayrica puan bandi 30 vitrinin hicbirinde acik degil
-  (`show_storefront_rating = false`). Duzeltme: supabase/migrations/20260925110000_kiralik_vitrin_puanlari.sql.
+- Her urunde tek fotograf var — **KAPANDI ama icerik bos cikti (2026-09-25 canli olcumu)**.
+  DiKKAT: "182/182 urunde 3+ fotograf" sayisi dogru, icerik degil — her vitrinde 6 urunun
+  TAMAMI ayni 3'lu gorsel dizisini paylasir (vitrin basina yalniz 3 farkli URL,
+  `farkli_foto_seti = 1`). Uc vitrinde gorseller `category-templates/diger/` genel havuzundan;
+  yani giyim vitrininde market reyonu fotografi gorunur. Kiralanabilir kalite icin ACIK IS.
+- Urun kartlarinda ozellik satiri — **KAPANDI (2026-09-25 canliya uygulandi)**: 182/182 dolu.
+  Oncesi 164 dolu / 18 bos'tu; bos olanlar uc vitrindeydi (demo-aymira-giyim, demo-lezzet-duragi,
+  demo-nova-kuafor) ve sebebi o vitrinlerin 9 urun kategorisinin `product_template_key='generic'`
+  olmasiydi. Uygulanan: supabase/migrations/20260925100000_kiralik_vitrin_urun_ozniteliklerini_tamamla.sql.
+- Bos uc vitrin — **artik bos degil ve kart satiri canlida gorunuyor (2026-09-25)**:
+  her birinde 6 urun, logo, telefon, il, SSS ve galeri var.
+- Puan tekrari: **2026-09-25 canli olcumu 26 vitrinin 4.9 / 128 tasidigini gosterdi**
+  (demo-* dortlu dahil); yalniz 4 vitrin tekil: kiralik-kuafor 4.9/187, kiralik-kafe 4.8/214,
+  kiralik-gida 4.8/156, kiralik-teknik 4.7/93. Ayrica puan bandi 30 vitrinin hicbirinde acik degil
+  (`show_storefront_rating = false`). **KAPANDI (2026-09-25 canliya uygulandi)**: 30 vitrinin
+  30'u tekil puan cifti tasiyor, bant **30/30 acik**, `kiralik-butik` 4.9/128 olarak korundu.
+  Uygulanan: supabase/migrations/20260925110000_kiralik_vitrin_puanlari.sql.
 - Icerik, ADIM 2'de calisir hale gelen esnaf formundan GECIRILEREK girilir; dogrudan SQL ile degil.
 
 ## KAPILAR
