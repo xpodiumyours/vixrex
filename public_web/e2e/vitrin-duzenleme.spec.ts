@@ -41,6 +41,8 @@ test.describe("public vitrin düzenleme sonrası doğrulama", () => {
     await page.setViewportSize({ width: 375, height: 812 });
     await page.goto(`/v/${demoSlug}`, { waitUntil: "domcontentloaded" });
 
+    // Yatay taşma: main'deki 24px pratik eşik aşağıdaki overflow kontrolünde
+    // (canlıda bilinen 23px taşma — gerçek düzeltme ayrı Ürün işi, #580).
     const heading = page.getByRole("heading", { level: 1 }).first();
     await expect(heading).toBeVisible({ timeout: 20_000 });
 

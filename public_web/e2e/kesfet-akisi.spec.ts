@@ -95,7 +95,10 @@ test.describe("Keşfet dizini", () => {
     await page.goto("/kesfet", { waitUntil: "domcontentloaded" });
 
     await page.locator('a[href^="/v/"]').first().click();
-    await page.waitForURL("**/v/**", { timeout: 15_000 });
+    await page.waitForURL("**/v/**", {
+      timeout: 15_000,
+      waitUntil: "domcontentloaded",
+    });
     expect(page.url()).toContain("/v/");
   });
 });

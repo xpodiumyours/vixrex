@@ -380,6 +380,7 @@ export default function VitrinProfileView({
       )}
       {/* ===== NAVBAR ===== */}
       <nav
+        inert={!kimlikGorunur}
         className={`fixed left-0 right-0 z-50 h-[68px] bg-[#0B1120]/92 backdrop-blur-xl border-b border-blue-500/15 px-5 sm:px-8 flex items-center justify-between transition-all duration-300 ${
           ownerMode ? "lg:right-[var(--owner-rail-w)] lg:top-[var(--owner-bar-h)]" : ""
         } ${
@@ -704,7 +705,7 @@ export default function VitrinProfileView({
       {showCategories ? (
         <section className="w-full lg:bg-[#111C33]/35" id="kategoriler" style={{ scrollMarginTop: "88px" }}>
           <div className="max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-12 lg:px-12 lg:py-10">
-            <div className="flex items-baseline justify-between mb-5 sm:mb-8">
+            <div className="flex flex-wrap items-baseline justify-between mb-5 sm:mb-8">
               <h2 {...editableProps("kategoriBolumBaslik", ownerMode)} className="text-[26px] sm:text-4xl lg:text-[30px] font-extrabold tracking-tight text-white">
                 {categorySectionTitle || "Kategoriler"}
               </h2>
@@ -904,7 +905,7 @@ export default function VitrinProfileView({
       {/* ===== GALLERY ===== */}
       {showGallery ? (
         <section className="max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-12 lg:px-12" id="galeri" style={{ scrollMarginTop: "88px" }}>
-          <div className="flex items-baseline justify-between mb-8 gap-4">
+          <div className="flex flex-wrap items-baseline justify-between mb-8 gap-4">
             <div>
               {galleryKicker && (
                 <p
