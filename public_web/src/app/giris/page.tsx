@@ -92,6 +92,13 @@ export default function GirisPage() {
           <p className="mt-2 text-center text-[13px] text-[var(--owner-muted)]">
             Vitrinlerinizi yönetmek için bilgilerinizi girin.
           </p>
+          <p className="mt-3 text-center text-[13px] text-[var(--owner-muted)]">
+            Misafir verin varsa önce{" "}
+            <Link href="/hesap-bagla" className="owner-link font-bold">
+              bağla
+            </Link>
+            .
+          </p>
 
           <form
             onSubmit={handleSubmit}

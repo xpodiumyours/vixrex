@@ -42,7 +42,7 @@ type FieldSpec = {
    *  etiketini `vitrinFieldSchema`'dan alır — iki istemci aynı ismi görsün. */
   label?: string;
   placeholder?: string;
-  kind?: "text" | "textarea" | "url" | "email" | "tel" | "select";
+  kind?: "text" | "textarea" | "url" | "email" | "tel" | "select" | "toggle";
   required?: boolean;
   options?: readonly string[];
 };
@@ -57,6 +57,7 @@ const SECTIONS: Array<{ title: string; required?: boolean; fields: FieldSpec[] }
       { key: "kisaTanitim", placeholder: "Bugün vitrinde ne var? Kısa bir tanıtım yaz.", kind: "textarea" },
       { key: "heroRozet", placeholder: "Örn: Atölye / Mağaza" },
       { key: "logo", placeholder: "Logo görsel bağlantısı", kind: "url" },
+      { key: "puanGoster", kind: "toggle" },
     ],
   },
   {
@@ -67,6 +68,7 @@ const SECTIONS: Array<{ title: string; required?: boolean; fields: FieldSpec[] }
       { key: "telefon", placeholder: "05xx xxx xx xx", kind: "tel" },
       { key: "eposta", placeholder: "iletisim@isletme.com", kind: "email" },
       { key: "instagram", placeholder: "kullaniciadi" },
+      { key: "website", kind: "url", placeholder: "https://" },
     ],
   },
   {
@@ -80,6 +82,7 @@ const SECTIONS: Array<{ title: string; required?: boolean; fields: FieldSpec[] }
       { key: "konumMetni", placeholder: "Örn: Kadıköy, İstanbul" },
       { key: "haritaEtiketi", placeholder: "Örn: Çarşı içi" },
       { key: "calismaSaatleri", placeholder: "Pzt–Cmt 09.00–19.00", kind: "textarea" },
+      { key: "yolTarifiGoster", kind: "toggle" },
       { key: "enlem", placeholder: "41.015", kind: "text" },
       { key: "boylam", placeholder: "28.978", kind: "text" },
     ],
@@ -103,7 +106,16 @@ const SECTIONS: Array<{ title: string; required?: boolean; fields: FieldSpec[] }
   {
     title: "İçerik ve SEO",
     fields: [
+      { key: "hakkindaUstBaslik", placeholder: "Örn: Biz kimiz" },
+      { key: "hakkindaBaslik", placeholder: "Örn: Kadıköy'ün 12 yıllık servisi" },
       { key: "hakkindaMetin", kind: "textarea", placeholder: "İşletmenizin hikâyesini anlatın" },
+      { key: "hakkindaGorsel", kind: "url", placeholder: "Görsel bağlantısı" },
+      { key: "hakkindaGorselAlt", placeholder: "Örn: Atölyemiz, 2019" },
+      { key: "bantEtiket", placeholder: "Örn: Bu haftaya özel" },
+      { key: "bantBaslik", placeholder: "Örn: Sezon indirimi" },
+      { key: "bantAciklama", kind: "textarea", placeholder: "Kampanyayı bir iki cümleyle anlatın" },
+      { key: "bantGorsel", kind: "url", placeholder: "Görsel bağlantısı" },
+      { key: "bantFiyat", placeholder: "Örn: 499 TL'den başlayan" },
       { key: "kategoriBolumBaslik", placeholder: "Kategoriler" },
       { key: "urunBolumBaslik", placeholder: "Ürünler" },
       { key: "blogUstBaslik", placeholder: "Bilgi köşesi" },
@@ -123,7 +135,13 @@ function valueFor(draft: Draft, key: string): string {
   return typeof value === "string" || typeof value === "number" ? String(value) : "";
 }
 
+function boolFor(draft: Draft, key: string): boolean {
+  const column = FIELD_BY_KEY.get(key)?.kolon ?? key;
+  return draft[column] === true;
+}
+
 function filled(value: unknown): boolean {
+  if (typeof value === "boolean") return true;
   if (Array.isArray(value)) return value.length > 0;
   return typeof value === "string" ? value.trim().length > 0 : Boolean(value);
 }
@@ -160,16 +178,16 @@ export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode 
       return filled(draft[column]);
     }).length;
     const counts = [
-      { done: count(["isletmeAdi", "kategori", "isletmeTuru", "kisaTanitim", "heroRozet", "logo"]), total: 6 },
-      { done: count(["whatsapp", "telefon", "eposta", "instagram"]), total: 4 },
-      { done: count(["adres", "il", "ilce", "mahalle", "konumMetni", "haritaEtiketi", "calismaSaatleri", "enlem", "boylam"]), total: 9 },
+      { done: count(["isletmeAdi", "kategori", "isletmeTuru", "kisaTanitim", "heroRozet", "logo", "puanGoster"]), total: 7 },
+      { done: count(["whatsapp", "telefon", "eposta", "instagram", "website"]), total: 5 },
+      { done: count(["adres", "il", "ilce", "mahalle", "konumMetni", "haritaEtiketi", "calismaSaatleri", "yolTarifiGoster", "enlem", "boylam"]), total: 10 },
       { done: count(["kapakGorseli", "gallery_items", "galeriUstBaslik", "galeriBaslik", "galeriAksiyonMetni", "galeriAksiyonLinki"]), total: 6 },
       {
         done:
-          count(["hakkindaMetin", "featured_banner_title", "faq_items", "blogUstBaslik", "blogBaslik", "haritaLinki", "marketplace_links", "referansLinki", "kategoriBolumBaslik", "urunBolumBaslik"])
+          count(["hakkindaUstBaslik", "hakkindaBaslik", "hakkindaMetin", "hakkindaGorsel", "hakkindaGorselAlt", "bantEtiket", "bantBaslik", "bantAciklama", "bantGorsel", "bantFiyat", "faq_items", "blogUstBaslik", "blogBaslik", "haritaLinki", "marketplace_links", "referansLinki", "kategoriBolumBaslik", "urunBolumBaslik"])
           + (store.products?.length ? 1 : 0)
           + 1,
-        total: 12,
+        total: 20,
       },
     ];
     const done = counts.reduce((sum, item) => sum + item.done, 0);
@@ -187,6 +205,11 @@ export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode 
     setDraft((current) => ({ ...current, [column]: value }));
   }
 
+  function updateBool(key: string, value: boolean) {
+    const column = FIELD_BY_KEY.get(key)?.kolon ?? key;
+    setDraft((current) => ({ ...current, [column]: value }));
+  }
+
   async function save(key: string) {
     if (isCreationMode) {
       setMessage("Taslak güncellendi — yayınlayınca kaydedilecek.");
@@ -199,6 +222,29 @@ export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode 
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ slug: store.slug, anahtar: key, deger: valueFor(draft, key) || null, clientId: null }),
+      });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body?.hata ?? "Kaydedilemedi.");
+      setMessage("Değişiklik kaydedildi.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Değişiklik kaydedilemedi.");
+    } finally {
+      setSavingKey(null);
+    }
+  }
+
+  async function saveBool(key: string, value: boolean) {
+    if (isCreationMode) {
+      setMessage("Taslak güncellendi — yayınlayınca kaydedilecek.");
+      return;
+    }
+    setSavingKey(key);
+    setMessage("");
+    try {
+      const response = await fetch("/api/owner-draft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug: store.slug, anahtar: key, deger: value, clientId: null }),
       });
       const body = await response.json();
       if (!response.ok) throw new Error(body?.hata ?? "Kaydedilemedi.");
@@ -407,6 +453,11 @@ export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode 
                               <textarea id={id} value={value} placeholder={field.placeholder} onChange={(event) => updateLocal(field.key, event.target.value)} onBlur={() => save(field.key)} className={`${common} min-h-24 resize-y py-3`} />
                             ) : field.kind === "select" ? (
                               <select id={id} value={value} onChange={(event) => updateLocal(field.key, event.target.value)} onBlur={() => save(field.key)} className={common}><option value="">Seçiniz</option>{field.options?.map((option) => <option key={option} value={option}>{option}</option>)}</select>
+                            ) : field.kind === "toggle" ? (
+                              <label htmlFor={id} className="flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border border-lp-border bg-lp-bg-light px-4">
+                                <input id={id} type="checkbox" checked={boolFor(draft, field.key)} onChange={(event) => { updateBool(field.key, event.target.checked); void saveBool(field.key, event.target.checked); }} className="h-5 w-5 shrink-0 accent-[#147DFF]" />
+                                <span className="text-[14px] font-semibold text-lp-text">{boolFor(draft, field.key) ? "Açık" : "Kapalı"}</span>
+                              </label>
                             ) : (
                               <input id={id} type={field.kind ?? "text"} value={value} placeholder={field.placeholder} onChange={(event) => updateLocal(field.key, event.target.value)} onBlur={() => save(field.key)} className={common} />
                             )}

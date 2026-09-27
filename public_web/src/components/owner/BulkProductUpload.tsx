@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
+import { isLikelyUiScreenshotUrl } from "@/lib/products";
 
 // ─── Türler ─────────────────────────────────────────────────────────────────
 
@@ -109,10 +110,20 @@ function normalizeStock(raw: string): string {
   return "Mevcut";
 }
 
+// Toplu yolun görsel kapısı (tek ürün yolundaki managed shelf-images
+// kuralına yaklaşır): dış bağlantı serbest kalır ama izinsiz görsel
+// (UI ekran görüntüsü, eklenti/data URI, http(s) olmayan) süzülür.
+function gorselIzinliMi(raw: string): boolean {
+  const url = raw.trim();
+  if (!url) return false;
+  return !isLikelyUiScreenshotUrl(url);
+}
+
 // ─── Ana Bileşen ────────────────────────────────────────────────────────────
 
 export default function BulkProductUpload({
   storeSlug,
+  categories = [],
   onUploaded,
 }: BulkProductUploadProps) {
   const [step, setStep] = useState<"pick" | "map" | "review" | "saving" | "done">("pick");
@@ -235,7 +246,7 @@ export default function BulkProductUpload({
           price_text: normalizePrice(priceRaw),
           category: autoMap.category !== null ? (vals[autoMap.category] ?? "").trim() : "",
           stockStatus: autoMap.stockStatus !== null ? normalizeStock(vals[autoMap.stockStatus] ?? "") : "Mevcut",
-          imageUrls: imageUrlRaw.trim() ? [imageUrlRaw.trim()] : [],
+          imageUrls: imageUrlRaw.trim() && gorselIzinliMi(imageUrlRaw) ? [imageUrlRaw.trim()] : [],
           _raw: Object.fromEntries(headerRow.map((h, j) => [h, vals[j] ?? ""])),
           _rowIndex: i + 1,
         });
@@ -272,6 +283,17 @@ export default function BulkProductUpload({
 
   // ─── Toplu Kaydetme ─────────────────────────────────────────────
 
+  // Dosyadaki kategori adını vitrinin kategori kimliğine çevirir.
+  // Eşleşme yoksa tanımsız döner — sunucu kategori_id'yi boş sayar.
+  function kategoriIdBul(ad: string): string | undefined {
+    const norm = ad.trim().toLocaleLowerCase("tr-TR");
+    if (!norm) return undefined;
+    const eslesme = categories.find(
+      (k) => k.name.trim().toLocaleLowerCase("tr-TR") === norm
+    );
+    return eslesme ? eslesme.id : undefined;
+  }
+
   async function saveAll() {
     if (parsedProducts.length === 0 || busy) return;
     setBusy(true);
@@ -288,7 +310,8 @@ export default function BulkProductUpload({
             name: p.name,
             description: p.description,
             price_text: p.price_text,
-            image_urls: p.imageUrls,
+            category_id: kategoriIdBul(p.category),
+            image_urls: p.imageUrls.filter(gorselIzinliMi),
             source_type: "bulk_import",
             sort_order: i,
           })),

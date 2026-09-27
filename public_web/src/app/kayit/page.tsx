@@ -94,8 +94,15 @@ export default function KayitPage() {
       title="Kayıt Ol"
       description="Vitrinini oluşturmak ve yönetmek için Vixrex hesabını aç."
     >
+      <p className="mb-4 text-center text-sm text-[var(--owner-muted)]">
+        Misafir verin varsa önce{" "}
+        <Link href="/hesap-bagla" className="owner-link font-bold">
+          bağla
+        </Link>
+        .
+      </p>
       {/* Hızlı Seçenekler — etiketler ortak katalogdan gelir (shared/
-          vixrex_mesajlar.json). Elle yazılmaz: eskiden "Bakiniyorum" diye
+           vixrex_mesajlar.json). Elle yazılmaz: eskiden "Bakiniyorum" diye
           hatalı yazılmıştı ve iki buton birebir aynı işi yapıyordu.
           Niyetler her yüzeyde aynı; yalnız bu sayfadaki adım farklı —
           burada hesap henüz yok, o yüzden "Sıfırdan Oluştur" kayıt formunu
