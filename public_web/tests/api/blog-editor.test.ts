@@ -21,9 +21,13 @@ const ARTICLE = {
   id: "article-1",
   store_slug: "deneme-vitrin",
   slug: "istanbulda-sac-bakimi",
-  title: "İstanbul'da Saç Bakımı",
-  summary: "Saç bakımına dair kısa özet.",
-  content: "Yazının düzenlenebilir tam içeriği.",
+  title: "İstanbul'da saç bakımı için kapsamlı rehber",
+  summary:
+    "İstanbul'da saç bakımı yaptırmadan önce bilmeniz gereken temel noktaları bu rehberde topladık.",
+  content: `İstanbul saç bakımı ${"faydalı içerik ".repeat(300)}`,
+  cover_image_url: "https://ornek.test/kapak.png",
+  target_topic: "saç bakımı",
+  target_city: "İstanbul",
 };
 
 function queryMock() {
@@ -91,5 +95,40 @@ describe("blog editörü API sözleşmesi", () => {
 
     expect(response.status).toBe(422);
     expect(query.update).not.toHaveBeenCalled();
+  });
+
+  it("yapısal standardı tutmayan yazıyı yayınlamaz ve eksikleri sayar", async () => {
+    const query = queryMock();
+    query.maybeSingle.mockResolvedValueOnce({
+      data: {
+        ...ARTICLE,
+        title: "Kısa başlık",
+        summary: "Çok kısa özet.",
+      },
+      error: null,
+    });
+    mocks.admin.mockReturnValue({ from: vi.fn(() => query) });
+
+    const response = await patchArticle(patchRequest({ status: "published" }));
+    const govde = await response.json();
+
+    expect(response.status).toBe(422);
+    expect(govde.hata).toContain("Yayın standardı tamamlanmadı");
+    expect(govde.engeller).toHaveLength(2);
+    expect(query.update).not.toHaveBeenCalled();
+  });
+
+  it("saklanan puanı istemciden değil alanlardan hesaplar", async () => {
+    const query = queryMock();
+    mocks.admin.mockReturnValue({ from: vi.fn(() => query) });
+
+    const response = await patchArticle(
+      patchRequest({ status: "draft", seoScore: 100, seoErrors: [] })
+    );
+
+    expect(response.status).toBe(200);
+    const guncelleme = query.update.mock.calls[0][0];
+    expect(guncelleme.seo_score).toBe(95);
+    expect(guncelleme.seo_score).not.toBe(100);
   });
 });

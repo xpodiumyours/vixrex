@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { blogSeoAnalizi } from "@/lib/blogSeo";
+import { blogSeoAnalizi, blogYayinEngelleri } from "@/lib/blogSeo";
 import { sahipOturumuAc } from "@/lib/ownerCookie";
 import { vixRexMesajlari } from "@/lib/vixrexMesajlari";
 
@@ -82,18 +82,20 @@ export default function BlogEditorPage() {
     void init();
   }, [yaziGetir]);
 
-  const seo = useMemo(
-    () =>
-      blogSeoAnalizi({
-        title: yazi?.title ?? "",
-        summary: yazi?.summary ?? "",
-        content: yazi?.content ?? "",
-        topic: yazi?.target_topic ?? "",
-        city: yazi?.target_city ?? "",
-        hasCover: Boolean(yazi?.cover_image_url),
-      }),
+  const seoGirdisi = useMemo(
+    () => ({
+      title: yazi?.title ?? "",
+      summary: yazi?.summary ?? "",
+      content: yazi?.content ?? "",
+      topic: yazi?.target_topic ?? "",
+      city: yazi?.target_city ?? "",
+      hasCover: Boolean(yazi?.cover_image_url),
+    }),
     [yazi]
   );
+
+  const seo = useMemo(() => blogSeoAnalizi(seoGirdisi), [seoGirdisi]);
+  const engeller = useMemo(() => blogYayinEngelleri(seoGirdisi), [seoGirdisi]);
 
   function alanGuncelle(alan: keyof YaziFormu, deger: string) {
     setYazi((onceki) => (onceki ? { ...onceki, [alan]: deger } : onceki));
@@ -128,8 +130,8 @@ export default function BlogEditorPage() {
 
   async function kaydet(status: "draft" | "published") {
     if (!yazi) return;
-    if (!yazi.title.trim() || !yazi.summary.trim() || !yazi.content.trim()) {
-      setHata("Başlık, özet ve içerik zorunludur.");
+    if (status === "published" && engeller.length) {
+      setHata(`Yayın standardı tamamlanmadı. ${engeller.join(" ")}`);
       return;
     }
     setKaydediyor(true);
@@ -211,7 +213,7 @@ export default function BlogEditorPage() {
           <div className="sm:col-span-2"><label className="owner-label" htmlFor="target-city">Hedef Şehir (Yerel SEO)</label><input id="target-city" className="owner-input mt-2" value={yazi.target_city} onChange={(event) => alanGuncelle("target_city", event.target.value)} /></div>
         </section>
 
-        <section className="owner-card p-5"><div className="flex items-center justify-between gap-3"><h2 className="font-extrabold text-[var(--owner-text)]">SEO Puanı</h2><strong className="text-2xl text-[var(--owner-primary)]">{seo.score} / 100</strong></div>{seo.recommendations.length ? <ul className="mt-3 space-y-1 text-sm text-[var(--owner-muted)]">{seo.recommendations.map((onerme) => <li key={onerme}>• {onerme}</li>)}</ul> : <p className="mt-3 text-sm text-[var(--owner-success)]">Yazı arama görünürlüğü için hazır.</p>}</section>
+        <section className="owner-card p-5"><div className="flex items-center justify-between gap-3"><h2 className="font-extrabold text-[var(--owner-text)]">SEO Puanı</h2><strong className="text-2xl text-[var(--owner-primary)]">{seo.score} / 100</strong></div><p className="mt-2 text-xs text-[var(--owner-muted)]">Yayın standardı: başlık 30-60 karakter, özet 80-160 karakter, içerik en az 300 kelime. Bu üçü tamamlanmadan yayın açılmaz.</p>{engeller.length ? <ul className="mt-3 space-y-1 text-sm text-red-400">{engeller.map((engel) => <li key={engel}>• {engel}</li>)}</ul> : <p className="mt-3 text-sm text-[var(--owner-success)]">Yayın standardı tamam.</p>}{seo.recommendations.length ? <ul className="mt-3 space-y-1 text-sm text-[var(--owner-muted)]">{seo.recommendations.map((onerme) => <li key={onerme}>• {onerme}</li>)}</ul> : null}</section>
       </form>
     </main>
   );

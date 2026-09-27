@@ -28,6 +28,18 @@ interface Yazi {
   published_at: string | null;
 }
 
+interface AsistanKonusu {
+  konu: string;
+  baslik: string;
+  gerekce: string;
+}
+
+interface TazelenecekYazi {
+  slug: string;
+  title: string;
+  gun: number;
+}
+
 const DURUM_ETIKET: Record<string, { metin: string; renk: string }> = {
   draft: { metin: "Taslak", renk: "bg-amber-500/20 text-amber-400" },
   review: { metin: "İnceleme", renk: "bg-blue-500/20 text-blue-400" },
@@ -45,6 +57,9 @@ export default function BlogYonetimPage() {
   const [hata, setHata] = useState<string | null>(null);
   const [yeniBaslik, setYeniBaslik] = useState("");
   const [olusturuyor, setOlusturuyor] = useState(false);
+  const [konular, setKonular] = useState<AsistanKonusu[]>([]);
+  const [tazeleme, setTazeleme] = useState<TazelenecekYazi[]>([]);
+  const [asistanIsliyor, setAsistanIsliyor] = useState<string | null>(null);
 
   const yaziListesiniGetir = useCallback(async () => {
     setHata(null);
@@ -102,14 +117,51 @@ export default function BlogYonetimPage() {
     }
   }, [slug, router]);
 
+  const asistanOnerileriGetir = useCallback(async () => {
+    try {
+      const res = await fetch(
+        `/api/articles/assistant?slug=${encodeURIComponent(slug)}`
+      );
+      if (!res.ok) return;
+      const sonuc = await res.json();
+      setKonular(sonuc.konular ?? []);
+      setTazeleme(sonuc.tazeleme ?? []);
+    } catch {
+      return;
+    }
+  }, [slug]);
+
   useEffect(() => {
     async function init() {
       // Önce çerezi kendisi kursun
       await sahipOturumuAc();
       await yaziListesiniGetir();
+      await asistanOnerileriGetir();
     }
     init();
-  }, [yaziListesiniGetir]);
+  }, [asistanOnerileriGetir, yaziListesiniGetir]);
+
+  async function asistanlaOlustur(konu: string) {
+    setAsistanIsliyor(konu);
+    setHata(null);
+    try {
+      const res = await fetch("/api/articles/assistant", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug, konu }),
+      });
+      const sonuc = await res.json();
+      if (!res.ok) {
+        setHata(sonuc.hata || "Asistan taslağı hazırlanamadı.");
+        return;
+      }
+      router.push(`/v/${slug}/blog-yonetim/${sonuc.slug}`);
+    } catch {
+      setHata("Bağlantı kurulamadı.");
+    } finally {
+      setAsistanIsliyor(null);
+    }
+  }
 
   async function yaziOlustur() {
     if (!yeniBaslik.trim()) return;
@@ -255,6 +307,67 @@ export default function BlogYonetimPage() {
             </button>
           </div>
         </div>
+
+        {konular.length > 0 || tazeleme.length > 0 ? (
+          <div className="rounded-2xl owner-card p-4">
+            <h2 className="mb-1 text-sm font-extrabold text-[var(--owner-text)]">
+              VixRex Asistanı
+            </h2>
+            <p className="mb-3 text-xs text-[var(--owner-muted)]">
+              Konu seçin; asistan SEO standardına uygun bir taslak hazırlar.
+              Taslak yayına hazır iskelet olarak açılır, siz düzenleyip
+              yayınlarsınız.
+            </p>
+            <div className="flex flex-col gap-2">
+              {konular.map((aday) => (
+                <button
+                  key={aday.konu}
+                  type="button"
+                  onClick={() => asistanlaOlustur(aday.konu)}
+                  disabled={asistanIsliyor !== null}
+                  className="flex flex-col items-start gap-1 rounded-xl border border-[var(--owner-border)] px-3 py-2.5 text-left transition hover:border-[var(--owner-primary)] disabled:opacity-50"
+                >
+                  <span className="text-xs font-extrabold text-[var(--owner-text)]">
+                    {aday.baslik}
+                  </span>
+                  <span className="text-[10px] text-[var(--owner-muted)]">
+                    {aday.gerekce}
+                  </span>
+                  <span className="text-[10px] font-extrabold text-[var(--owner-primary)]">
+                    {asistanIsliyor === aday.konu
+                      ? "Hazırlanıyor…"
+                      : "Asistanla oluştur"}
+                  </span>
+                </button>
+              ))}
+            </div>
+            {tazeleme.length > 0 ? (
+              <div className="mt-4 border-t border-[var(--owner-border)] pt-3">
+                <h3 className="text-xs font-extrabold text-[var(--owner-text)]">
+                  Güncellenmesi gereken yazılar
+                </h3>
+                <ul className="mt-2 space-y-1">
+                  {tazeleme.map((yazi) => (
+                    <li
+                      key={yazi.slug}
+                      className="flex items-center justify-between gap-2 text-xs text-[var(--owner-muted)]"
+                    >
+                      <span className="min-w-0 flex-1 truncate">
+                        {yazi.title} · {yazi.gun} gün önce güncellendi
+                      </span>
+                      <Link
+                        href={`/v/${slug}/blog-yonetim/${yazi.slug}`}
+                        className="shrink-0 font-extrabold text-[var(--owner-secondary)]"
+                      >
+                        Tazele
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
 
         {/* Yazı Listesi */}
         {yukleniyor ? (
