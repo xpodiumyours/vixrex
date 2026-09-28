@@ -1,0 +1,184 @@
+{
+  "schema_version": 1,
+  "observed_at": "2026-09-28T12:40:44.947Z",
+  "source_commit": {
+    "sha": "f02498b9c96bb9ad1468e05eb82e5be1d28a0b97",
+    "short": "f02498b9",
+    "committed_at": "2026-09-28T02:07:49Z"
+  },
+  "sources": {
+    "github_main": {
+      "status": "healthy",
+      "detail": "main accessible; f02498b9"
+    },
+    "github_ci": {
+      "status": "broken",
+      "detail": "CI run 1893 completed/failure",
+      "url": "https://github.com/xpodiumyours/vixrex/actions/runs/36368609840"
+    },
+    "vercel_public": {
+      "status": "broken",
+      "detail": "commit status failure: build-rate-limit"
+    },
+    "vercel_app": {
+      "status": "broken",
+      "detail": "commit status failure: build-rate-limit"
+    },
+    "supabase_production": {
+      "status": "healthy",
+      "detail": "Vixrex Project ACTIVE_HEALTHY",
+      "project_ref": "chfulefxczbgurtgavtp"
+    },
+    "runtime_health": {
+      "status": "partial",
+      "http_status": 503,
+      "application": "ok",
+      "database": "ok",
+      "paytr": "unconfigured",
+      "checked_at": "2026-09-28T12:40:44.947Z"
+    }
+  },
+  "measurements": {
+    "stores": 40,
+    "products": 253,
+    "product_categories": 123,
+    "store_working_drafts": 10,
+    "vitrin_views": 3483
+  },
+  "nodes": {
+    "vixrex": {
+      "code": "healthy",
+      "preview": "broken",
+      "live": "partial",
+      "data": "healthy",
+      "e2e": "broken"
+    },
+    "giris": {
+      "code": "unknown",
+      "preview": "unknown",
+      "live": "unknown",
+      "data": "unknown",
+      "e2e": "unknown"
+    },
+    "vitrin-olustur": {
+      "code": "unknown",
+      "preview": "unknown",
+      "live": "unknown",
+      "data": "unknown",
+      "e2e": "unknown"
+    },
+    "api-create-store": {
+      "code": "unknown",
+      "preview": "unknown",
+      "live": "unknown",
+      "data": "unknown",
+      "e2e": "unknown"
+    },
+    "rpc-get-draft": {
+      "code": "unknown",
+      "preview": "unknown",
+      "live": "unknown",
+      "data": "unknown",
+      "e2e": "unknown"
+    },
+    "vitrin-duzenle": {
+      "code": "unknown",
+      "preview": "unknown",
+      "live": "unknown",
+      "data": "unknown",
+      "e2e": "unknown"
+    },
+    "owner-workspace": {
+      "code": "unknown",
+      "preview": "unknown",
+      "live": "unknown",
+      "data": "unknown",
+      "e2e": "unknown"
+    },
+    "working-draft": {
+      "code": "unknown",
+      "preview": "unknown",
+      "live": "unknown",
+      "data": "healthy",
+      "e2e": "unknown"
+    },
+    "urunler": {
+      "code": "unknown",
+      "preview": "unknown",
+      "live": "unknown",
+      "data": "healthy",
+      "e2e": "unknown"
+    },
+    "yayinla": {
+      "code": "unknown",
+      "preview": "unknown",
+      "live": "unknown",
+      "data": "unknown",
+      "e2e": "unknown"
+    },
+    "api-owner-publish": {
+      "code": "unknown",
+      "preview": "unknown",
+      "live": "unknown",
+      "data": "unknown",
+      "e2e": "unknown"
+    },
+    "rpc-publish-draft": {
+      "code": "unknown",
+      "preview": "unknown",
+      "live": "unknown",
+      "data": "unknown",
+      "e2e": "unknown"
+    },
+    "public-vitrin": {
+      "code": "unknown",
+      "preview": "unknown",
+      "live": "partial",
+      "data": "healthy",
+      "e2e": "unknown"
+    },
+    "health-api": {
+      "code": "unknown",
+      "preview": "unknown",
+      "live": "partial",
+      "data": "healthy",
+      "e2e": "unknown"
+    },
+    "browser-e2e": {
+      "code": "unknown",
+      "preview": "unknown",
+      "live": "unknown",
+      "data": "unknown",
+      "e2e": "broken"
+    },
+    "supabase-production": {
+      "code": "unknown",
+      "preview": "unknown",
+      "live": "healthy",
+      "data": "healthy",
+      "e2e": "unknown"
+    },
+    "github-main-ci": {
+      "code": "healthy",
+      "preview": "unknown",
+      "live": "unknown",
+      "data": "unknown",
+      "e2e": "broken"
+    },
+    "vercel-public": {
+      "code": "unknown",
+      "preview": "broken",
+      "live": "unknown",
+      "data": "unknown",
+      "e2e": "unknown"
+    },
+    "vercel-app": {
+      "code": "unknown",
+      "preview": "broken",
+      "live": "unknown",
+      "data": "unknown",
+      "e2e": "unknown"
+    }
+  },
+  "evidence_policy": "unknown stays unknown until measured; no inferred green"
+}
