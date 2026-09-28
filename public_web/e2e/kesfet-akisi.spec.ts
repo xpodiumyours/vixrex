@@ -17,7 +17,8 @@ test.describe("ana sayfa", () => {
     page,
   }) => {
     const response = await page.goto("/", { waitUntil: "domcontentloaded" });
-    expect(response?.ok()).toBeTruthy();
+    // Audit (30): ok() 3xx'i de geçerdi — ana sayfa kesin 200 + içerik iddiası.
+    expect(response?.status(), "ana sayfa canlıda kesin 200 döner").toBe(200);
 
     const html = await page.content();
     expect(html).toContain("birkaç dakikada hazır");
@@ -52,7 +53,8 @@ test.describe("Keşfet dizini", () => {
     const response = await page.goto("/kesfet", {
       waitUntil: "domcontentloaded",
     });
-    expect(response?.ok()).toBeTruthy();
+    // Audit (30): kesin 200 — keşfet dizini boş da olsa 404/3xx geçmez.
+    expect(response?.status(), "keşfet sayfası canlıda kesin 200 döner").toBe(200);
 
     const html = await page.content();
     expect(html).toContain("Keşfet");
@@ -71,24 +73,43 @@ test.describe("Keşfet dizini", () => {
     expect(hedef).toBeTruthy();
 
     const response = await page.goto(hedef!, { waitUntil: "domcontentloaded" });
-    expect(response?.ok()).toBeTruthy();
+    // Audit (30): kategori sayfası kesin 200 — boş kategori de 200 dönmeli.
+    expect(response?.status(), "kategori sayfası kesin 200 döner").toBe(200);
     await expect(page.locator("h1")).toBeVisible();
   });
 
-  test("kiralık kart güvenli köprüye ve fiyat vaadine bağlıdır", async ({
+  test("kiralık kart diyalog + native form POST akışını sunar", async ({
     page,
   }) => {
     await page.goto("/kesfet", { waitUntil: "domcontentloaded" });
 
-    const kiralaLinki = page.locator('a[href^="/rent-demo?slug="]');
-    const adet = await kiralaLinki.count();
+    const kiralaButonu = page.getByRole("button", { name: "Kirala" });
+    const adet = await kiralaButonu.count();
     // Kiralık şablon yoksa iddia edilecek bir şey de yok; ama varsa
-    // fiyat vaadi ve köprü mutlaka doğru olmalı.
+    // fiyat vaadi, Kirala diyaloğu ve native form POST mutlaka doğru olmalı.
+    // Gerçek: "Kirala" ayrı sayfaya (/rent-demo?slug=) gitmez — useKesfetKirala
+    // Keşfet içi <dialog> açar, misafir yolunda gizli form POST eder.
     if (adet > 0) {
       const html = await page.content();
       expect(html).toContain("Aylık 299 TL");
-      expect(html).not.toContain("/api/rent-demo");
+      expect(html).toContain('action="/api/rent-demo"');
+
+      await kiralaButonu.first().click();
+      await expect(page.locator("dialog").first()).toBeVisible();
     }
+  });
+
+  test("rent-demo sayfası native form POST köprüsünü içerir", async ({
+    page,
+  }) => {
+    await page.goto("/rent-demo?slug=ornek-vitrin", {
+      waitUntil: "domcontentloaded",
+    });
+
+    const html = await page.content();
+    expect(html).toContain("Vitrin hazırlanıyor");
+    expect(html).toContain('action="/api/rent-demo"');
+    expect(html).toContain('name="slug"');
   });
 
   test("vitrin kartına tıklamak vitrin sayfasını açar", async ({ page }) => {

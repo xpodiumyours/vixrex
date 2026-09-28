@@ -215,6 +215,7 @@ export default function VitrinProfileView({
   mapsUrl,
   mapsEmbedUrl,
   referencesUrl,
+  isBookingEnabled = false,
   profile,
   collections,
   productCount,
@@ -348,6 +349,9 @@ export default function VitrinProfileView({
     phoneUrl: phoneUrl ?? null,
     whatsappNumarasi: whatsappUrl?.match(/wa\.me\/([0-9]+)/)?.[1] ?? null,
     mapsUrl: mapsUrl ?? null,
+    // Randevu Sistemi açıksa sihirbaz linki hero'dan gider; kapalıyken
+    // sayfa zaten 404 (randevu/page.tsx) — ölü buton basılmaz.
+    bookingUrl: isBookingEnabled ? `/v/${storeSlug}/randevu` : null,
   });
 
   const handleCopyUrl = () => {
@@ -654,6 +658,12 @@ export default function VitrinProfileView({
                     {buton.anahtar === "whatsapp" && (
                       <WhatsAppIcon size={16} className="shrink-0 text-[#25D366]" />
                     )}
+                    {buton.anahtar === "randevu" && (
+                      <svg className="h-4 w-4 shrink-0 text-blue-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                        <rect x="3" y="4.5" width="18" height="16" rx="2.5" />
+                        <path d="M3 9.5h18M8 2.5v4M16 2.5v4" />
+                      </svg>
+                    )}
                     {buton.anahtar === "maps" && <MapPinIcon size={16} />}
                     {buton.etiket}
                   </a>
@@ -691,6 +701,12 @@ export default function VitrinProfileView({
                     </svg>
                   )}
                   {buton.anahtar === "whatsapp" && <WhatsAppIcon size={18} />}
+                  {buton.anahtar === "randevu" && (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                      <rect x="3" y="4.5" width="18" height="16" rx="2.5" />
+                      <path d="M3 9.5h18M8 2.5v4M16 2.5v4" />
+                    </svg>
+                  )}
                   {buton.anahtar === "maps" && <MapPinIcon size={18} />}
                   {buton.etiket}
                 </a>

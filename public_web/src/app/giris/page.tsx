@@ -47,6 +47,14 @@ export default function GirisPage() {
         Hazır vitrini seçip hemen özelleştirebilirsin. Google yalnız vitrini kalıcı hesabına bağlamak için gerekir.
       </div>
 
+      <p className="mt-3 text-center text-[13px] text-[var(--owner-muted)]">
+        Misafir verin varsa önce{" "}
+        <Link href="/hesap-bagla" className="owner-link font-bold">
+          bağla
+        </Link>
+        .
+      </p>
+
       {hata ? (
         <p role="alert" className="mt-4 rounded-xl border border-[var(--owner-error)]/40 bg-[var(--owner-error)]/10 px-3 py-2.5 text-[13px] font-semibold text-[#FCA5A5]">
           {hata}

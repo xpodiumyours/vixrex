@@ -9,10 +9,16 @@
 //
 // KURALLAR (sırayla):
 //  1. Telefon evrenseldir ve her zaman ilk sıradadır; primaryActions'a bakmaz.
-//  2. primaryActions sırayla gezilir; "booking" tek başına buton üretmez,
-//     yalnız WhatsApp butonunun yazısını ctaLabel yapar (istisna: whatsapp
-//     yoksa booking kendi WhatsApp butonunu üretir). Hazır mesaj
-//     profile.waMesaji'dır; tanımlı değilse mesajsız düz wa.me linki gider.
+//  1.5 Randevu: sahibi "Randevu Sistemi"ni açtıysa (bookingUrl) iç sihirbaz
+//     (/v/<slug>/randevu — #584'ten beri TEK randevu kapısı) ikinci sıradan
+//     tek buton olarak çıkar; kategoriden bağımsızdır, dış kapı değildir.
+//     bookingUrl yoksa çıkmaz. Bu buton #584'e kadar eksikti: sihirbaz
+//     yayındaydı ama vitrin görünümünden giden link yoktu.
+//  2. primaryActions sırayla gezilir; "booking" WhatsApp'tan AYRI ikinci bir
+//     WhatsApp butonu üretmez, yalnız WhatsApp butonunun yazısını ctaLabel
+//     yapar (istisna: whatsapp yoksa booking kendi WhatsApp butonunu üretir).
+//     Hazır mesaj profile.waMesaji'dır; tanımlı değilse mesajsız düz wa.me
+//     linki gider.
 //  3. Verisi olmayan buton çıkmaz — ölü buton üretmek yasak.
 //  4. Aynı anahtardan iki buton dönmez.
 
@@ -29,6 +35,8 @@ export interface HeroActionVeri {
   phoneUrl: string | null;
   whatsappNumarasi: string | null;
   mapsUrl: string | null;
+  /** Mağaza "Randevu Sistemi" açıksa `/v/<slug>/randevu`; yoksa null/eksik. */
+  bookingUrl?: string | null;
 }
 
 function waLinki(numara: string, mesaj?: string): string {
@@ -49,6 +57,16 @@ export function heroActions(
       anahtar: "telefon",
       etiket: "Hemen Ara",
       href: veri.phoneUrl,
+      disKapi: false,
+    });
+  }
+
+  // 1.5 Randevu — mağaza düzeyi: sahibi açtıysa her kategoride görünür.
+  if (veri.bookingUrl) {
+    butonlar.push({
+      anahtar: "randevu",
+      etiket: "Randevu Al",
+      href: veri.bookingUrl,
       disKapi: false,
     });
   }

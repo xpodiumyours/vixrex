@@ -89,7 +89,7 @@ export function MascotFab({
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/images/vixrex_v_crystal_mascot.png"
+          src="/images/vixrex_v_crystal_mascot.webp"
           alt=""
           width={60}
           height={60}

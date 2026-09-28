@@ -351,7 +351,7 @@ export function LandingAsistanSohbeti({
           <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-lp-primary/20">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/images/vixrex_v_crystal_mascot.png"
+              src="/images/vixrex_v_crystal_mascot.webp"
               alt=""
               width={20}
               height={20}
@@ -778,7 +778,7 @@ function Balon({ children, gecmis = false }: { children: React.ReactNode; gecmis
       <div className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-lp-primary/20">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/images/vixrex_v_crystal_mascot.png"
+          src="/images/vixrex_v_crystal_mascot.webp"
           alt=""
           width={20}
           height={20}

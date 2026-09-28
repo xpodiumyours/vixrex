@@ -843,7 +843,7 @@ export default async function StorePage(props: PageProps) {
             trackingEnabled={!isOwnerMode}
             products={visibleProducts}
             categoryMap={(categories || []).map((c) => ({ id: c.id, name: c.name }))}
-            fallbackImage={store.logo_url || "/vixrex_v_crystal_mascot.png"}
+            fallbackImage={store.logo_url || "/images/vixrex_v_crystal_mascot.webp"}
             storeInitial={store.name?.trim()?.[0]?.toUpperCase() || "V"}
           />
         }

@@ -100,7 +100,7 @@ function RentDemoIcerik() {
   const searchParams = useSearchParams();
   const demoSlug = (searchParams.get("slug") ?? "").trim();
   const hesapliAkis = searchParams.get("hesap") === "1";
-  const { executeRecaptcha, isReady } = useRecaptcha();
+  const { executeRecaptcha, isReady, hazirla } = useRecaptcha();
   const [durum, setDurum] = useState<Durum>("kontrolEdiliyor");
   const [token, setToken] = useState<string | null>(null);
   const [hataMesaji, setHataMesaji] = useState("");
@@ -111,6 +111,10 @@ function RentDemoIcerik() {
   useEffect(() => {
     if (!demoSlug || denendiRef.current) return;
     let iptalEdildi = false;
+
+    // Bu sayfa reCAPTCHA'yı gerçekten kullanır: betiği önden başlat
+    // (audit: lazy provider — başka sayfalarda betik hiç yüklenmez).
+    hazirla();
 
     async function kiralamayiBaslat() {
       const { data, error } = await supabase.auth.getSession();
@@ -209,7 +213,7 @@ function RentDemoIcerik() {
     return () => {
       iptalEdildi = true;
     };
-  }, [demoSlug, hesapliAkis, isReady, executeRecaptcha]);
+  }, [demoSlug, hesapliAkis, isReady, executeRecaptcha, hazirla]);
 
   useEffect(() => {
     if (durum === "gonderiliyor" && token && formRef.current) {

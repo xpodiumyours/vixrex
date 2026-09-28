@@ -183,6 +183,14 @@ export function VitrinKarti({
             </svg>
             <span className="truncate">{vitrin.konum}</span>
           </p>
+          {typeof vitrin.puan === "number" ? (
+            <p className="mt-1 flex items-center gap-1 text-[10px] font-bold text-lp-text">
+              <svg className="shrink-0 text-amber-500" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="m12 2 3 6 6.5 1-4.7 4.6 1.1 6.4L12 17l-5.9 3 1.1-6.4L2.5 9 9 8z" />
+              </svg>
+              <span>{vitrin.puan.toFixed(1)}</span>
+            </p>
+          ) : null}
 
           {!vitrin.kiralikMi && vitrin.urunSayisi > 0 ? (
             <p className="mt-2 text-[10px] font-semibold text-lp-muted">{vitrin.urunSayisi} ürün</p>
@@ -316,7 +324,7 @@ export function VitrinKarti({
           <div className="flex items-start gap-3">
             <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-lp-primary/60 bg-lp-surface-soft" aria-hidden="true">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/images/vixrex_v_crystal_mascot.png" alt="" className="h-9 w-9 object-contain" />
+              <img src="/images/vixrex_v_crystal_mascot.webp" alt="" className="h-9 w-9 object-contain" />
             </span>
             <div className="min-w-0">
               <h2 id={`kirala-baslik-${vitrin.slug}`} className="truncate text-[14px] font-black">Vixrex</h2>
