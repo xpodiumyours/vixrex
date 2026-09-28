@@ -3,8 +3,10 @@ import { heroActions, type HeroActionVeri } from "../src/lib/vitrinHeroActions";
 import { PROFILES, type VitrinCategoryProfile } from "../src/lib/vitrinProfile";
 
 // Vitrin hero butonları kategori profiline göre üretilir (vitrinHeroActions).
-// Kurallar: telefon evrensel ve ilk sırada; whatsapp/booking/ctaLabel
-// etkileşimi; verisi olmayan buton çıkmaz; aynı anahtar iki kez dönmez.
+// Kurallar: telefon evrensel ve ilk sırada; bookingUrl varsa "Randevu Al"
+// iç sihirbaz butonu telefondan hemen sonra (mağaza düzeyi, kategoriden
+// bağımsız); whatsapp/booking/ctaLabel etkileşimi; verisi olmayan buton
+// çıkmaz; aynı anahtar iki kez dönmez.
 
 const doluVeri: HeroActionVeri = {
   phoneUrl: "tel:+905551234567",
@@ -30,9 +32,37 @@ describe("heroActions — kategori profiline göre butonlar", () => {
     expect(butonlar.some((b) => b.anahtar === "website")).toBe(false);
   });
 
-  it("kuaför profilinde tek WhatsApp butonu vardır (booking ayrı buton üretmez)", () => {
+  it("kuaför profilinde tek WhatsApp butonu vardır (booking ikinci WhatsApp üretmez)", () => {
     const butonlar = heroActions(kuafor, doluVeri);
     expect(butonlar.filter((b) => b.anahtar === "whatsapp")).toHaveLength(1);
+  });
+
+  it("bookingUrl yoksa randevu butonu çıkmaz — kuaför dâhil (ölü buton yasak)", () => {
+    const butonlar = heroActions(kuafor, doluVeri);
+    expect(butonlar.some((b) => b.anahtar === "randevu")).toBe(false);
+  });
+
+  it("bookingUrl verilince 'Randevu Al' iç butonu telefondan hemen sonra çıkar", () => {
+    const butonlar = heroActions(kuafor, {
+      ...doluVeri,
+      bookingUrl: "/v/kuafor-ayse/randevu",
+    });
+    const randevu = butonlar.find((b) => b.anahtar === "randevu");
+    expect(randevu?.etiket).toBe("Randevu Al");
+    expect(randevu?.href).toBe("/v/kuafor-ayse/randevu");
+    expect(randevu?.disKapi).toBe(false);
+    expect(butonlar.map((b) => b.anahtar).slice(0, 2)).toEqual([
+      "telefon",
+      "randevu",
+    ]);
+  });
+
+  it("bookingUrl ürün kategorisinde de buton üretir — randevu mağaza düzeyindedir", () => {
+    const butonlar = heroActions(giyim, {
+      ...doluVeri,
+      bookingUrl: "/v/edefter-butik/randevu",
+    });
+    expect(butonlar.some((b) => b.anahtar === "randevu")).toBe(true);
   });
 
   it("giyim profilinde website aksiyonu olsa bile public Web Sitesi butonu çıkmaz", () => {

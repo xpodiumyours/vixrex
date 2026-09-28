@@ -183,6 +183,14 @@ export function VitrinKarti({
             </svg>
             <span className="truncate">{vitrin.konum}</span>
           </p>
+          {typeof vitrin.puan === "number" ? (
+            <p className="mt-1 flex items-center gap-1 text-[10px] font-bold text-lp-text">
+              <svg className="shrink-0 text-amber-500" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="m12 2 3 6 6.5 1-4.7 4.6 1.1 6.4L12 17l-5.9 3 1.1-6.4L2.5 9 9 8z" />
+              </svg>
+              <span>{vitrin.puan.toFixed(1)}</span>
+            </p>
+          ) : null}
 
           {!vitrin.kiralikMi && vitrin.urunSayisi > 0 ? (
             <p className="mt-2 text-[10px] font-semibold text-lp-muted">{vitrin.urunSayisi} ürün</p>

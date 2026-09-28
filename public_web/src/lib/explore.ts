@@ -32,6 +32,7 @@ export type KesfetVitrini = {
   urunAdlari: string[];
   whatsapp: string | null;
   guncellemeZamani: string | null;
+  puan: number | null;
 };
 
 type StoreSatiri = {
@@ -50,6 +51,7 @@ type StoreSatiri = {
   is_demo: boolean | null;
   whatsapp: string | null;
   updated_at: string | null;
+  rating_score: number | null;
 };
 
 function konumMetni(satir: StoreSatiri): string {
@@ -132,6 +134,7 @@ async function _kesfetGetir(): Promise<KesfetVitrini[]> {
       urunAdlari: urunAdlari.get(satir.id) ?? [],
       whatsapp: satir.whatsapp?.trim() || null,
       guncellemeZamani: satir.updated_at,
+      puan: typeof satir.rating_score === "number" ? satir.rating_score : null,
     };
   });
 }

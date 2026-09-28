@@ -47,6 +47,14 @@ export default function KayitPage() {
         Kiralık vitrini 14 gün ücretsiz kullanabilir, beğendiğinde Google ile kalıcı hesabına bağlayabilirsin.
       </div>
 
+      <p className="mt-3 text-center text-[13px] text-[var(--owner-muted)]">
+        Misafir verin varsa önce{" "}
+        <Link href="/hesap-bagla" className="owner-link font-bold">
+          bağla
+        </Link>
+        .
+      </p>
+
       {hata ? <p className="owner-error mt-4 text-sm" role="alert">{hata}</p> : null}
 
       <button
