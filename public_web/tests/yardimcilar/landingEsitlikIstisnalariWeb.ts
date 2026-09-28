@@ -16,6 +16,11 @@
 
 type Istisna = { metin: string; neden: string };
 
+const PASIF_KATEGORI_ETIKETI =
+  "Pasif kategorinin gösterim etiketi. Kategori shared/business_categories.json " +
+  "içinde `aktif: false` olduğu için ekranda çizilmiyor; etiket ve simge " +
+  "eşlemesi kategori yeniden açılırsa hazır olsun diye kaynakta bırakıldı.";
+
 const ERISEBILIRLIK =
   "Ekran okuyucu etiketi (aria-label), gözle görünen metin değil. Flutter'da " +
   "erişilebilirlik farklı bir mekanizmayla sağlanıyor.";
@@ -347,6 +352,18 @@ export const LANDING_ESITLIK_ISTISNALARI_WEB: Istisna[] = [
   {
     metin: "İşletmenizi daha fazla kişiye ulaştırın",
     neden: HERO_REFERANS_DEKOR,
+  },
+  {
+    metin: "Hizmet & Danışmanlık",
+    neden: PASIF_KATEGORI_ETIKETI,
+  },
+  {
+    metin: "Eğitim & Ders",
+    neden: PASIF_KATEGORI_ETIKETI,
+  },
+  {
+    metin: "Ev & Temizlik",
+    neden: PASIF_KATEGORI_ETIKETI,
   },
 ];
 

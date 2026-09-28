@@ -10,6 +10,40 @@ const VARIANT_SCHEMA_PROPERTIES: Record<string, { property: string; field: strin
   pattern: { property: "https://schema.org/pattern", field: "pattern" },
 };
 
+/**
+ * Urunun kendi ozelliklerini (renk, beden, materyal, desen ve kategoriye ozel
+ * diger alanlar) schema.org alanlarina cevirir. Varyant yolundaki esleme ile
+ * ayni tabloyu kullanir; varyanti olmayan urunlerde de arama motoru bu
+ * bilgileri gorebilsin diye ayri bir giris noktasi.
+ */
+export function productAttributeSchemaFields(metadataInput: unknown) {
+  const metadata = normalizeProductMetadata(metadataInput);
+  const recognized: Record<string, string> = {};
+  const additionalProperty: Array<Record<string, string>> = [];
+
+  for (const attribute of metadata.attributes || []) {
+    const value = Array.isArray(attribute.value)
+      ? attribute.value.join(", ")
+      : String(attribute.value ?? "").trim();
+    if (!value) continue;
+
+    const mapped = VARIANT_SCHEMA_PROPERTIES[attribute.key];
+    if (mapped) recognized[mapped.field] = value;
+    else {
+      additionalProperty.push({
+        "@type": "PropertyValue",
+        name: attribute.label || attribute.key,
+        value,
+      });
+    }
+  }
+
+  return {
+    recognized,
+    additionalProperty: additionalProperty.length ? additionalProperty : undefined,
+  };
+}
+
 const CONDITION_URLS: Record<string, string> = {
   new: "https://schema.org/NewCondition",
   used: "https://schema.org/UsedCondition",

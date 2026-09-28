@@ -233,4 +233,20 @@ describe("dolu vitrin — alanlar dolduktan sonra da düzeltilebilir", () => {
     expect(html).not.toContain("data-vixrex-");
     expect(html).not.toContain("Bu bölüme eklenebilir");
   });
+
+  it("website verisi dolu olsa bile ziyaretçiye Web Sitesi linki gösterilmez", () => {
+    const html = ciz({ ...DOLU_EKSTRA, websiteUrl: "https://dis-site.example" });
+    expect(html).not.toContain("Web Sitesi");
+    expect(html).not.toContain("https://dis-site.example");
+  });
+
+  it("website alanı sahip modunda düzenlenebilir kalır", () => {
+    const html = ciz({
+      ...DOLU_EKSTRA,
+      websiteUrl: "https://dis-site.example",
+      ownerMode: true,
+      ownerDraft: DOLU_TASLAK,
+    });
+    expect(html).toContain('data-vixrex-editable="website"');
+  });
 });

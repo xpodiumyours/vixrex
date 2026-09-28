@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:vixrex/theme/renkler.g.dart';
 
 /// Vixrex uygulamasının merkezi renk paleti.
 ///
@@ -7,26 +8,26 @@ import 'package:flutter/material.dart';
 abstract final class AppColors {
   // ── Marka renkleri ──────────────────────────────────────────────────────
   /// Ana marka rengi (Elektrik Mavisi).
-  static const Color primary = Color(0xFF147DFF);
+  static const Color primary = OrtakRenkler.lpPrimary;
 
   /// Basılı/yoğun marka aksiyonu.
   static const Color primaryDark = Color(0xFF0B5FD7);
 
   /// Vurgu, odak halkası ve küçük parıltılar için açık mavi.
-  static const Color secondary = Color(0xFF57B7FF);
+  static const Color secondary = OrtakRenkler.lpSecondary;
   static const Color brandGlow = Color(0xFF28E3FF);
-  static const Color onPrimary = Color(0xFF06152F);
+  static const Color onPrimary = OrtakRenkler.lpOnPrimary;
 
   /// Geriye uyumluluk için eski ad; yeni kod [primary] kullanmalıdır.
   static const Color brandOrange = primary;
 
   /// Landing ekranının da kullandığı ortak marka yüzeyleri.
   static const Color landingBrandOrange = primary;
-  static const Color landingDarkAccent = Color(0xFF08132D);
-  static const Color landingLightBg = Color(0xFF050B1A);
-  static const Color landingMint = Color(0xFF10B981);
+  static const Color landingDarkAccent = OrtakRenkler.lpBgLight;
+  static const Color landingLightBg = OrtakRenkler.lpBgEditor;
+  static const Color landingMint = OrtakRenkler.lpMint;
   static const Color landingBlueAccent = secondary;
-  static const Color landingPinkAccent = Color(0xFF8B5CF6);
+  static const Color landingPinkAccent = OrtakRenkler.lpPink;
 
   /// Genel boşluk ve yuvarlaklık sabitleri.
   static const double spacing4 = 4;
@@ -69,34 +70,34 @@ abstract final class AppColors {
 
   // ── Uygulama yüzeyleri ─────────────────────────────────────────────────
   /// En koyu uygulama zemini.
-  static const Color bgEditor = Color(0xFF050B1A);
+  static const Color bgEditor = OrtakRenkler.lpBgEditor;
 
   /// Normal sayfa zemini.
-  static const Color bgLight = Color(0xFF08132D);
+  static const Color bgLight = OrtakRenkler.lpBgLight;
 
   /// Form alanı zemini.
   static const Color inputBg = Color(0xFF0D1C38);
 
   /// Kart ve modal zemini.
-  static const Color surface = Color(0xFF0B1730);
-  static const Color surfaceSoft = Color(0xFF112448);
-  static const Color turquoiseSurface = Color(0xFF102B59);
+  static const Color surface = OrtakRenkler.lpSurface;
+  static const Color surfaceSoft = OrtakRenkler.lpSurfaceSoft;
+  static const Color turquoiseSurface = OrtakRenkler.lpTurquoiseSurface;
   static const Color blueSurface = Color(0xFF182E5B);
 
   // ── Metin Renkleri (Siber Işıklar) ────────────────────────────────────────
   /// Başlık ve ana içerik metni.
-  static const Color darkText = Color(0xFFF7FBFF);
-  static const Color darkTextAlt = Color(0xFFD9E7FF);
+  static const Color darkText = OrtakRenkler.lpText;
+  static const Color darkTextAlt = OrtakRenkler.lpTextAlt;
 
   /// İkincil / yardımcı metin (Yardımcı Gri).
-  static const Color mutedText = Color(0xFFA9BBDA);
+  static const Color mutedText = OrtakRenkler.lpMuted;
 
   /// Orta ton metin.
   static const Color softText = Color(0xFF738AB3);
 
   // ── Kenarlık & Gölge (Mat Siber Çizgiler) ───────────────────────────────────
   /// Standart kenarlık.
-  static const Color border = Color(0xFF294D88);
+  static const Color border = OrtakRenkler.lpBorder;
 
   /// Odaklanmış kenarlık (Elektrik Mavisi).
   static const Color focusedBorder = secondary;

@@ -172,10 +172,11 @@ class _ProductRichFieldsEditorState extends State<ProductRichFieldsEditor> {
     ProductAttributeDefinition definition,
   ) {
     final current = _displayValue(_readValue(widget.value, definition));
-    final label =
-        definition.requirement == 'recommended'
-            ? '${definition.label} · önerilen'
-            : definition.label;
+    final label = switch (definition.requirement) {
+      'required' => '${definition.label} *',
+      'recommended' => '${definition.label} · önerilen',
+      _ => definition.label,
+    };
 
     if (definition.valueType == 'boolean') {
       final selected = current == 'true' || current == 'false' ? current : null;

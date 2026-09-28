@@ -32,11 +32,21 @@ const DEMO_SLUGS = [
   "demo-teknofix",
 ];
 
+const KIRALIK_SLUGLARI = [
+  "kiralik-aymira-giyim",
+  "kiralik-lezzet-duragi",
+  "kiralik-nova-kuafor",
+  "kiralik-teknofix",
+];
+
 describe("landing demo vitrin sözleşmesi", () => {
-  it("dört demo karşılama ekranından hâlâ erişilebilir", () => {
+  it("dört vitrin karşılama ekranından hâlâ erişilebilir", () => {
     const landingSource = readFileSync(landingPath, "utf-8");
-    for (const slug of DEMO_SLUGS) {
+    for (const slug of KIRALIK_SLUGLARI) {
       expect(landingSource, `${slug} karşılama ekranından düşmüş`).toContain(slug);
+    }
+    for (const slug of DEMO_SLUGS) {
+      expect(landingSource, `${slug} eski adres karşılama ekranında kalmış`).not.toContain(slug);
     }
   });
 

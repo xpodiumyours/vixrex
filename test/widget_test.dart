@@ -320,12 +320,12 @@ void main() {
     );
     await tester.pump();
 
-    await tester.tap(find.text('Butik & Giyim').first);
+    await tester.tap(find.text('Butik').first);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Bu Şablonla Başla'));
     await tester.pumpAndSettle();
 
-    expect(selectedCategoryKey, 'butik_giyim');
+    expect(selectedCategoryKey, 'butik');
   });
 
   testWidgets('Vitrinim yayınlanmış vitrini aynı sayfada düzenletir', (

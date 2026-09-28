@@ -1,15 +1,7 @@
 import { expect, test } from "@playwright/test";
 
-/**
- * Public vitrin görüntüleme E2E testleri.
- * Canlı demo vitrine bağlı.
- */
 const DEMO_SLUG = "kiralik-butik";
 
-// 2026-08-17: CSP img-src allowlist'e Unsplash/QR eklenmediği için tüm vitrin
-// görselleri sessizce engelleniyordu (kök neden #193). Bu test, görsellerin
-// gerçekten yüklendiğini doğrular — CSP bozulursa naturalWidth 0 kalır ve
-// kırmızıya düşer. (Vitrin sayfasında görsel yükleme kontratı.)
 test.describe("vitrin görsel yükleme (CSP kontratı)", () => {
   test("Unsplash görselleri yüklenir — CSP img-src allowlist bozuk değil", async ({
     page,
@@ -25,15 +17,12 @@ test.describe("vitrin görsel yükleme (CSP kontratı)", () => {
       }
     });
 
-    await page.goto(`/v/${DEMO_SLUG}`, { waitUntil: "networkidle" });
+    await page.goto(`/v/${DEMO_SLUG}`, { waitUntil: "domcontentloaded" });
 
-    // Sayfada en az bir Unsplash görseli olmalı (demo vitrin dolu).
     const unsplashImgs = page.locator('img[src*="unsplash"]');
     const count = await unsplashImgs.count();
     expect(count).toBeGreaterThan(0);
 
-    // Görseller gerçekten yüklenmiş olmalı (naturalWidth > 0).
-    // Lazy-load yüzünden görünür alana scroll edip bekliyoruz.
     for (let i = 0; i < count; i++) {
       const img = unsplashImgs.nth(i);
       await img.scrollIntoViewIfNeeded().catch(() => {});
@@ -46,7 +35,6 @@ test.describe("vitrin görsel yükleme (CSP kontratı)", () => {
         .map((img) => (img as HTMLImageElement).src)
     );
 
-    // CSP ihlali kaydı da sıfır olmalı (görsel engellenmesi konsola düşer).
     const cspImageViolations = cspViolations.filter((v) =>
       v.includes("img-src")
     );
@@ -63,7 +51,7 @@ test.describe("public vitrin görüntüleme", () => {
       waitUntil: "domcontentloaded",
     });
 
-    expect(response?.ok()).toBeTruthy();
+    expect(response?.status()).toBe(200);
 
     const heading = page.getByRole("heading", { level: 1 });
     await expect(heading).toBeVisible({ timeout: 20_000 });
@@ -71,18 +59,17 @@ test.describe("public vitrin görüntüleme", () => {
   });
 
   test("vitrin sayfasında ürün kartları görünür", async ({ page }) => {
-    await page.goto(`/v/${DEMO_SLUG}`, { waitUntil: "networkidle" });
+    await page.goto(`/v/${DEMO_SLUG}`, { waitUntil: "domcontentloaded" });
 
     const heading = page.getByRole("heading", { level: 1 });
     await expect(heading).toBeVisible({ timeout: 20_000 });
 
-    // En az bir ürün kartı olmalı (demo vitrin dolu)
     const cards = page.locator('[class*="card"], [class*="product"], article');
     await expect(cards.first()).toBeVisible({ timeout: 10_000 });
   });
 
   test("vitrin sayfasında WhatsApp butonu görünür", async ({ page }) => {
-    await page.goto(`/v/${DEMO_SLUG}`, { waitUntil: "networkidle" });
+    await page.goto(`/v/${DEMO_SLUG}`, { waitUntil: "domcontentloaded" });
 
     const whatsappLink = page.locator('a[href*="wa.me"], a[href*="whatsapp"]');
     await expect(whatsappLink.first()).toBeVisible({ timeout: 10_000 });
@@ -91,14 +78,14 @@ test.describe("public vitrin görüntüleme", () => {
     expect(href).toContain("wa.me/");
   });
 
-  test("unknown slug 404 veya not-found gösterir", async ({ page }) => {
+  test("unknown slug 404 ve not-found gösterir", async ({ page }) => {
     const response = await page.goto(
       "/v/__vixrex-e2e-missing-slug-xyz__",
       { waitUntil: "domcontentloaded" },
     );
 
-    const status = response?.status() ?? 0;
-    expect(status).toBe(404);
+    expect(response?.status()).toBe(404);
+    await expect(page.getByText(/bulunamad|not found|404/i).first()).toBeVisible({ timeout: 10_000 });
   });
 
   test("vitrin SEO meta tag'leri mevcut", async ({ page }) => {
@@ -114,35 +101,75 @@ test.describe("public vitrin görüntüleme", () => {
 });
 
 test.describe("ürün detay sayfası", () => {
-  test("ürün sayfası 200 veya 404 döner", async ({ page }) => {
-    const response = await page.goto(`/v/${DEMO_SLUG}/urun/test-urun`, {
+  test("demo vitrindeki gerçek ürün 200 döner ve ürün başlığı + fiyat sinyali görünür", async ({ page }) => {
+    await page.goto(`/v/${DEMO_SLUG}`, { waitUntil: "domcontentloaded" });
+    const urunLink = page.locator('a[href*="/urun/"]').first();
+    await expect(urunLink).toBeVisible({ timeout: 20_000 });
+    const href = await urunLink.getAttribute("href");
+    expect(href).toMatch(/\/v\/.+\/urun\/.+/);
+
+    const response = await page.goto(href!, { waitUntil: "domcontentloaded" });
+    expect(response?.status()).toBe(200);
+    await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator('text=/fiyat|whatsapp|sepete|stok/i').first()).toBeVisible({ timeout: 10_000 });
+    const hasJsonLd = await page.locator('script[type="application/ld+json"]').count();
+    expect(hasJsonLd).toBeGreaterThan(0);
+  });
+
+  test("bilinmeyen ürün 404 döner", async ({ page }) => {
+    const response = await page.goto(`/v/${DEMO_SLUG}/urun/__e2e-unknown-urun-xyz__`, {
       waitUntil: "domcontentloaded",
     });
-
-    const status = response?.status() ?? 0;
-    expect([200, 404]).toContain(status);
+    expect(response?.status()).toBe(404);
+    await expect(page.getByText(/bulunamad|not found|404/i).first()).toBeVisible({ timeout: 10_000 });
   });
 });
 
 test.describe("randevu sayfası", () => {
-  test("randevu sayfası 200, 307 veya 404 döner", async ({ page }) => {
+  test("randevu sayfası 200 döner ve wizard içeriği gösterir", async ({ page }) => {
     const response = await page.goto(`/v/${DEMO_SLUG}/randevu`, {
       waitUntil: "domcontentloaded",
     });
 
     const status = response?.status() ?? 0;
-    expect([200, 307, 404]).toContain(status);
+    expect(status, `randevu sayfası canlıda 200 döner — 404 kabul edilmez (audit: randevu 200/307/404 esnekliği)`).toBe(200);
+    await expect(page.getByText(/randevu|rezervasyon|online/i).first()).toBeVisible({ timeout: 15_000 });
+  });
+
+  test("bilinmeyen vitrin randevusu 404 döner", async ({ page }) => {
+    const response = await page.goto("/v/__e2e-missing-slug__/randevu", { waitUntil: "domcontentloaded" });
+    expect(response?.status()).toBe(404);
   });
 });
 
 test.describe("yazılar sayfası", () => {
-  test("yazılar sayfası 200 veya 404 döner", async ({ page }) => {
+  test("yazılar listesi 200 döner ve içerik gösterir", async ({ page }) => {
     const response = await page.goto(`/v/${DEMO_SLUG}/yazilar`, {
       waitUntil: "domcontentloaded",
     });
 
     const status = response?.status() ?? 0;
-    expect([200, 404]).toContain(status);
+    expect(status, `yazılar sayfası canlıda 200 döner — 404 kabul edilmez (audit: yazılar 200/404 esnekliği)`).toBe(200);
+    await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible({ timeout: 15_000 });
+    const articleLink = page.locator('a[href*="/yazilar/"]').first();
+    const bosMetin = page.getByText(/yazı bulunamadı|henüz yazı/i).first();
+    await expect(articleLink.or(bosMetin)).toBeVisible({ timeout: 10_000 });
+    const count = await page.locator('a[href*="/yazilar/"]').count();
+    if (count > 0) {
+      const href = await page.locator('a[href*="/yazilar/"]').first().getAttribute("href");
+      expect(href).toBeTruthy();
+      const detail = await page.goto(href!, { waitUntil: "domcontentloaded" });
+      expect(detail?.status()).toBe(200);
+      await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible({ timeout: 15_000 });
+      await expect(page.locator('script[type="application/ld+json"]').first()).toBeAttached({ timeout: 10_000 });
+    }
+  });
+
+  test("bilinmeyen yazı 404 döner", async ({ page }) => {
+    const response = await page.goto(`/v/${DEMO_SLUG}/yazilar/__e2e-unknown-yazi__`, {
+      waitUntil: "domcontentloaded",
+    });
+    expect(response?.status()).toBe(404);
   });
 });
 
@@ -152,7 +179,7 @@ test.describe("gizlilik politikası", () => {
       waitUntil: "domcontentloaded",
     });
 
-    expect(response?.ok()).toBeTruthy();
+    expect(response?.status()).toBe(200);
     await expect(
       page.getByText(/gizlilik|privacy|kişisel veri/i).first(),
     ).toBeVisible({ timeout: 15_000 });

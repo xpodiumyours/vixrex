@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BUSINESS_CATEGORIES, kategoriUrlParcasi } from "@/lib/businessCategories";
+import { AKTIF_BUSINESS_CATEGORIES, kategoriUrlParcasi } from "@/lib/businessCategories";
 import { kategoriSablonHaritasi } from "@/lib/categoryTemplates";
 
 /**
@@ -18,7 +18,7 @@ import { kategoriSablonHaritasi } from "@/lib/categoryTemplates";
  */
 export async function TemplateCatalog() {
   const sablonlar = await kategoriSablonHaritasi();
-  const kategoriSayisi = BUSINESS_CATEGORIES.length;
+  const kategoriSayisi = AKTIF_BUSINESS_CATEGORIES.length;
 
   return (
     <section className="bg-lp-bg-light lp-yan-bosluk py-lp-section">
@@ -35,7 +35,7 @@ export async function TemplateCatalog() {
         </p>
 
         <ul className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-          {BUSINESS_CATEGORIES.map((kategori) => {
+          {AKTIF_BUSINESS_CATEGORIES.map((kategori) => {
             const sablon = sablonlar.get(kategori.id);
             const kapak = sablon?.kapaklar[0]?.url ?? null;
             return (

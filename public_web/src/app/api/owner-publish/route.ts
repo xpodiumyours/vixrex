@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@supabase/supabase-js";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
+import { YAYIN_KAPISI_UYARISI } from "@/lib/fiyatlandirma";
 
 // Sahip çalışma taslağını canlı vitrine yayınlar (implementation_plan.md Faz 11).
 //
@@ -46,7 +47,7 @@ const HATA_METNI: Record<string, string> = {
   PUBLICATION_CONSENT_VERSION_INVALID:
     "Sözleşme metinleri güncellenmiş. Onay kutusunu tekrar işaretleyip yeniden dene.",
   PREMIUM_REQUIRED:
-    "Bu hazır vitrin yalnız premium üyelikle yayınlanır. Aylık 299 TL ile devam et.",
+    YAYIN_KAPISI_UYARISI,
   STORE_NAME_REQUIRED: "Yayınlamak için işletme adını doldur.",
   STORE_CATEGORY_REQUIRED: "Yayınlamak için işletme kategorisini seç.",
   STORE_WHATSAPP_REQUIRED: "Yayınlamak için WhatsApp numaranı doldur.",
@@ -55,6 +56,8 @@ const HATA_METNI: Record<string, string> = {
   STORE_ADDRESS_REQUIRED: "Yayınlamak için açık adresini doldur.",
   STORE_PROVINCE_REQUIRED: "Yayınlamak için il bilgisini doldur.",
   STORE_DISTRICT_REQUIRED: "Yayınlamak için ilçe bilgisini doldur.",
+  PRODUCT_IMAGE_REQUIRED:
+    "Yayınlamak için görünür her ürüne en az bir fotoğraf ekle.",
 };
 
 const DURUM_MAP: Record<string, number> = {
@@ -74,6 +77,7 @@ const DURUM_MAP: Record<string, number> = {
   STORE_ADDRESS_REQUIRED: 422,
   STORE_PROVINCE_REQUIRED: 422,
   STORE_DISTRICT_REQUIRED: 422,
+  PRODUCT_IMAGE_REQUIRED: 422,
 };
 
 function supabaseAnon() {

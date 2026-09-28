@@ -143,9 +143,9 @@ export function GalleryEditor({ slug, items, onClose, inline = false }: Props) {
                   value={draft.imageUrl}
                   onChange={(e) => guncelle(i, "imageUrl", e.target.value)}
                   placeholder="https://..."
-                  className={`flex-1 rounded-lg border px-3 py-2 text-sm focus:outline-none focus:border-blue-500/50 ${inline ? "bg-white border-lp-border text-lp-text placeholder:text-lp-muted" : "bg-white/5 border-white/10 text-white placeholder:text-white/30"}`}
+                  className={`flex-1 rounded-lg border px-3 py-2 text-sm focus:outline-none focus:border-blue-500/50 ${inline ? "bg-lp-bg-light border-lp-border text-lp-text placeholder:text-lp-muted" : "bg-white/5 border-white/10 text-white placeholder:text-white/30"}`}
                 />
-                <label className={`flex cursor-pointer items-center justify-center rounded-lg border border-dashed px-3 text-xs font-semibold ${inline ? "border-lp-border bg-white text-lp-muted hover:bg-lp-surface-soft" : "border-white/20 bg-white/5 text-white/60 hover:bg-white/10"} ${yukleniyorIndex === i ? "pointer-events-none opacity-50" : ""}`}>
+                <label className={`flex cursor-pointer items-center justify-center rounded-lg border border-dashed px-3 text-xs font-semibold ${inline ? "border-lp-border bg-lp-bg-light text-lp-muted hover:bg-lp-surface-soft" : "border-white/20 bg-white/5 text-white/60 hover:bg-white/10"} ${yukleniyorIndex === i ? "pointer-events-none opacity-50" : ""}`}>
                   {yukleniyorIndex === i ? "…" : "📷"}
                   <input
                     type="file"
@@ -165,7 +165,7 @@ export function GalleryEditor({ slug, items, onClose, inline = false }: Props) {
                 onChange={(e) => guncelle(i, "title", e.target.value)}
                 placeholder="Etiket (ör. Mağaza vitrini) — isteğe bağlı"
                 maxLength={40}
-                className={`w-full rounded-lg border px-3 py-1.5 text-xs focus:outline-none focus:border-blue-500/50 ${inline ? "bg-white border-lp-border text-lp-text placeholder:text-lp-muted" : "bg-white/5 border-white/10 text-white placeholder:text-white/30"}`}
+                className={`w-full rounded-lg border px-3 py-1.5 text-xs focus:outline-none focus:border-blue-500/50 ${inline ? "bg-lp-bg-light border-lp-border text-lp-text placeholder:text-lp-muted" : "bg-white/5 border-white/10 text-white placeholder:text-white/30"}`}
               />
             </div>
           ))}
@@ -189,7 +189,7 @@ export function GalleryEditor({ slug, items, onClose, inline = false }: Props) {
   );
 
   if (inline) {
-    return <div className="w-full overflow-hidden rounded-xl border border-lp-border bg-white shadow-sm">{content}</div>;
+    return <div className="w-full overflow-hidden rounded-xl border border-lp-border bg-lp-surface shadow-sm">{content}</div>;
   }
 
   return (

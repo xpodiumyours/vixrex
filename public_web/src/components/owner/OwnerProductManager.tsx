@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useState, useCallback, useMemo, useEffect } from "react";
 import BulkProductUpload from "./BulkProductUpload";
+import InvoiceToProducts from "./InvoiceToProducts";
 import { OwnerCategoryManager } from "./OwnerCategoryManager";
 import {
   OwnerRichProductFields,
@@ -23,6 +24,7 @@ import {
   normalizeProductImageUrls,
 } from "@/lib/productImagePolicy";
 import { parseProductPriceNumber } from "@/lib/productPrice";
+import { eksikZorunluAlanlar, eksikZorunluAlanMesaji } from "@/lib/productRequiredFields";
 
 export interface OwnerProductCategory {
   id: string;
@@ -50,12 +52,15 @@ export interface OwnerProduct {
   old_price_amount?: number | null;
   badge_tag?: string | null;
   fulfillment_region?: string | null;
+  is_visible?: boolean | null;
 }
 
 interface OwnerProductManagerProps {
   storeSlug: string;
   products: OwnerProduct[];
   categories: OwnerProductCategory[];
+  varsayilanUrunTipi?: string;
+  storeName?: string | null;
   onRefresh: () => Promise<void>;
 }
 
@@ -102,13 +107,19 @@ async function fetchCategoryTemplateKeys(
 
 export function OwnerProductManager({
   storeSlug,
- products,
+  products,
   categories,
+  varsayilanUrunTipi = "generic",
+  storeName,
   onRefresh,
 }: OwnerProductManagerProps) {
   const [editing, setEditing] = useState<OwnerProduct | "new" | null>(null);
   const [deleting, setDeleting] = useState<OwnerProduct | null>(null);
   const [showBulkUpload, setShowBulkUpload] = useState(false);
+  const [showInvoice, setShowInvoice] = useState(false);
+  // Okuyucu anahtarı tanımlı değilse "Faturadan Ekle" hiç gösterilmez —
+  // esnaf çalışmayacak bir düğmeye basıp hata görmesin.
+  const [faturaOkuyucuHazir, setFaturaOkuyucuHazir] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -123,6 +134,24 @@ export function OwnerProductManager({
     })),
     [categories, fetchedTemplateKeys],
   );
+
+  useEffect(() => {
+    let cancelled = false;
+    const sor = async () => {
+      try {
+        const cevap = await fetch("/api/fatura-okuyucu-durumu", { cache: "no-store" });
+        if (!cevap.ok) return;
+        const govde = (await cevap.json()) as { hazir?: unknown };
+        if (!cancelled) setFaturaOkuyucuHazir(govde.hazir === true);
+      } catch {
+        // Sorulamadıysa düğme kapalı kalır; yanlış umut vermekten iyidir.
+      }
+    };
+    void sor();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -258,7 +287,24 @@ export function OwnerProductManager({
 
       await refreshAll();
       setEditing(null);
-      setSuccess(isNew ? "Ürün kaydedildi." : "Ürün güncellendi.");
+      const taslak = Boolean(payload && typeof payload === "object" && (payload as { taslak?: unknown }).taslak);
+      const eksikFotografSayisi =
+        payload && typeof payload === "object" && typeof (payload as { eksikFotografSayisi?: unknown }).eksikFotografSayisi === "number"
+          ? (payload as { eksikFotografSayisi: number }).eksikFotografSayisi
+          : 0;
+      if (isNew) {
+        setSuccess(
+          taslak
+            ? `Ürün taslak olarak kaydedildi — ${eksikFotografSayisi} fotoğraf eksik, tamamlanana kadar vitrinde görünmeyecek.`
+            : "Ürün kaydedildi.",
+        );
+      } else {
+        setSuccess(
+          taslak
+            ? `Ürün güncellendi — ${eksikFotografSayisi} fotoğraf eksik, profesyonel görünüm için tamamla.`
+            : "Ürün güncellendi.",
+        );
+      }
     } catch (saveError) {
       const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
       const isNetworkError = saveError instanceof TypeError && String(saveError.message).includes("fetch");
@@ -343,6 +389,9 @@ export function OwnerProductManager({
         </div>
         <div className="flex shrink-0 gap-2">
           <button type="button" className="owner-button-secondary" onClick={() => { setError(""); setSuccess(""); setShowBulkUpload(!showBulkUpload); setEditing(null); }} disabled={busy}>📄 Toplu Yükle</button>
+          {faturaOkuyucuHazir && (
+            <button type="button" className="owner-button-secondary" onClick={() => { setError(""); setSuccess(""); setShowInvoice(!showInvoice); setShowBulkUpload(false); setEditing(null); }} disabled={busy}>🧾 Faturadan Ekle</button>
+          )}
           <button type="button" className="owner-button-primary" onClick={() => { setError(""); setSuccess(""); setShowBulkUpload(false); setEditing("new"); }} disabled={busy}>+ Ürün Ekle</button>
         </div>
       </div>
@@ -351,7 +400,7 @@ export function OwnerProductManager({
       {queuedCount > 0 ? <p className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm font-bold text-amber-600" role="status">{queuedCount} ürün işlemi kuyrukta — bağlantı gelince otomatik gönderilecek (vitrin metin kuyruğundan ayrı).</p> : null}
       {success ? <p className="mb-4 rounded-xl border border-[var(--owner-success)]/40 bg-[var(--owner-success)]/10 p-3 text-sm text-[var(--owner-success)]" role="status">{success}</p> : null}
 
-      <OwnerCategoryManager storeSlug={storeSlug} categories={categoriesWithCount} onRefresh={refreshAll} />
+      <OwnerCategoryManager storeSlug={storeSlug} categories={categoriesWithCount} varsayilanUrunTipi={varsayilanUrunTipi} onRefresh={refreshAll} />
 
       <div className="mt-4 flex flex-col gap-2 sm:flex-row">
         <input value={filterText} onChange={(e) => setFilterText(e.target.value)} placeholder="Ürün ara — ad, açıklama, fiyat, rozet" className="owner-input flex-1 text-sm" />
@@ -361,6 +410,15 @@ export function OwnerProductManager({
         </select>
         {(filterText || filterCategory) && <span className="self-center text-xs text-[var(--owner-muted)]">{filteredProducts.length}/{products.length}</span>}
       </div>
+
+      {showInvoice && !editing && (
+        <InvoiceToProducts
+          storeSlug={storeSlug}
+          categories={resolvedCategories}
+          onUploaded={async () => { await refreshAll(); }}
+          onClose={() => setShowInvoice(false)}
+        />
+      )}
 
       {showBulkUpload && !editing && (
         <BulkProductUpload storeSlug={storeSlug} categories={resolvedCategories} onUploaded={async () => { await refreshAll(); setShowBulkUpload(false); setSuccess("Ürünler toplu olarak eklendi."); }} />
@@ -373,6 +431,7 @@ export function OwnerProductManager({
           categories={resolvedCategories}
           busy={busy}
           storeSlug={storeSlug}
+          storeName={storeName}
           onCancel={() => setEditing(null)}
           onSave={saveProduct}
         />
@@ -392,6 +451,9 @@ export function OwnerProductManager({
               <article key={product.id} className="owner-card overflow-hidden">
                 <div className="relative aspect-[4/3] bg-[var(--owner-bg-soft)]">
                   {image ? <Image src={image} alt={`${product.name} ürün görseli`} fill unoptimized sizes="(min-width: 1024px) 300px, (min-width: 640px) 45vw, 100vw" className="object-cover" /> : <div className="flex h-full items-center justify-center text-sm text-[var(--owner-muted)]">Görsel eklenmedi</div>}
+                  {product.is_visible === false ? (
+                    <span className="absolute left-2 top-2 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-black">Taslak — vitrinde görünmüyor</span>
+                  ) : null}
                 </div>
                 <div className="p-4">
                   <div className="flex items-start justify-between gap-3">
@@ -458,11 +520,12 @@ interface ProductFormProps {
   categories: OwnerProductCategory[];
   busy: boolean;
   storeSlug: string;
+  storeName?: string | null;
   onCancel: () => void;
   onSave: (value: ProductFormValue) => Promise<void>;
 }
 
-function ProductForm({ product, categories, busy, storeSlug, onCancel, onSave }: ProductFormProps) {
+function ProductForm({ product, categories, busy, storeSlug, storeName, onCancel, onSave }: ProductFormProps) {
   const initialImageUrls = useMemo(
     () => normalizeProductImageUrls(product?.image_urls).slice(0, MAX_PRODUCT_IMAGES),
     [product],
@@ -551,13 +614,21 @@ function ProductForm({ product, categories, busy, storeSlug, onCancel, onSave }:
     if (!cleanName) { setValidation("Ürün adı zorunludur."); return; }
     if (categories.length > 0 && !categoryId) { setValidation("Ürün kategorisi zorunludur."); return; }
     const mustMeetImagePolicy = !product || imageListChanged;
-    if (mustMeetImagePolicy && imageUrls.length < MIN_PRODUCT_IMAGES) { setValidation(`Bir ürün için en az ${MIN_PRODUCT_IMAGES} fotoğraf zorunludur.`); return; }
     if (mustMeetImagePolicy && imageUrls.length > MAX_PRODUCT_IMAGES) { setValidation(`Bir ürüne en fazla ${MAX_PRODUCT_IMAGES} fotoğraf eklenebilir.`); return; }
     if (mustMeetImagePolicy && imageUrls.some((url) => !/^https?:\/\//i.test(url))) { setValidation("Görsel bağlantıları http:// veya https:// ile başlamalıdır."); return; }
     const oldPriceAmount = oldPriceText.trim() ? parseAmount(oldPriceText) : null;
     if (oldPriceText.trim() && oldPriceAmount == null) { setValidation("Eski fiyat sayı olmalı."); return; }
     if (badgeTag.trim().length > 20) { setValidation("Rozet en fazla 20 karakter."); return; }
     if (!isService && rich.stockQuantity.trim() && (!/^\d+$/.test(rich.stockQuantity) || Number(rich.stockQuantity) < 0)) { setValidation("Stok adedi 0 veya daha büyük tam sayı olmalı."); return; }
+    const eksikler = eksikZorunluAlanlar({
+      templateKey,
+      brand: rich.brand,
+      metadata: rich.metadata,
+      variants: rich.variants,
+      storeName,
+    });
+    const eksikMesaji = eksikZorunluAlanMesaji(eksikler);
+    if (eksikMesaji) { setValidation(eksikMesaji); return; }
 
     setValidation("");
     void onSave({
@@ -614,12 +685,25 @@ function ProductForm({ product, categories, busy, storeSlug, onCancel, onSave }:
             : `En az ${MIN_PRODUCT_IMAGES}, en fazla ${MAX_PRODUCT_IMAGES} fotoğraf. İlk fotoğraf ürün kapağıdır.`}
           {` JPG/PNG/WebP, en fazla ${MAX_PRODUCT_IMAGE_SOURCE_MEGABYTES} MB. Kaynak görselin kısa kenarı en az ${MIN_PRODUCT_IMAGE_SOURCE_SHORT_EDGE} px olmalıdır.`}
         </p>
+        {!legacyImagesKept && imageUrls.length < MIN_PRODUCT_IMAGES ? (
+          <p className="mt-1 text-[11px] font-bold text-amber-500" role="status">
+            {`${MIN_PRODUCT_IMAGES} fotoğraf gerekiyor, ${imageUrls.length} tane var. Eksik olsa da kaydedebilirsin.`}
+          </p>
+        ) : null}
       </div>
 
       <div className="mt-5 grid gap-4 sm:grid-cols-2">
         <label className="space-y-2 sm:col-span-2"><span className="owner-label">Ürün adı *</span><input className="owner-input" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} disabled={busy} /></label>
         <label className="space-y-2"><span className="owner-label">Fiyat</span><input className="owner-input" value={priceText} onChange={(e) => setPriceText(e.target.value)} maxLength={30} placeholder="Ör. 499 TL" disabled={busy} /></label>
-        <label className="space-y-2"><span className="owner-label">Eski fiyat (üstü çizili)</span><input className="owner-input" value={oldPriceText} onChange={(e) => setOldPriceText(e.target.value)} maxLength={30} placeholder="Ör. 799" disabled={busy} /></label>
+        <label className="space-y-2">
+          <span className="owner-label">Eski fiyat (üstü çizili)</span>
+          <input className="owner-input" value={oldPriceText} onChange={(e) => setOldPriceText(e.target.value)} maxLength={30} placeholder="Ör. 799" disabled={busy} />
+          {oldPriceText.trim() ? (
+            <span className="block text-[11px] leading-4 text-amber-400">
+              Yasal uyarı: üstü çizili fiyat, indirimden önceki dönemde gerçekten uyguladığın en düşük fiyat olmalı. İspat yükü sende.
+            </span>
+          ) : null}
+        </label>
         <label className="space-y-2"><span className="owner-label">Rozet</span><input className="owner-input" value={badgeTag} onChange={(e) => setBadgeTag(e.target.value)} maxLength={20} placeholder="Örn. Yeni, -31%" disabled={busy} /></label>
         <label className="space-y-2"><span className="owner-label">Teslim bölgesi</span><input className="owner-input" value={fulfillmentRegion} onChange={(e) => setFulfillmentRegion(e.target.value)} maxLength={80} placeholder="Örn. İstanbul içi" disabled={busy} /></label>
         {!isService ? (

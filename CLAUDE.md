@@ -72,6 +72,60 @@ doğrudan Casper'a soruldu, cevaplar tablo/hash/satır numarasıyla şişirildi,
 hatayı kabul eden mesajın sonuna yine soru eklendi. Casper: "artık seninle
 çalışmaktan bıkmaya başladım."
 
+### CERRAHİ İŞLEM DÜZENİ — her değişiklikte, istisnasız (2026-09-24, Casper)
+
+Casper: "her işlem için böyle çalışacağız." Aşağıdaki 6 adım bir öneri değil,
+bu depodaki her kod değişikliğinin zorunlu sırası. Adım atlanamaz.
+
+**1. Önce tespit — dokunmadan önce.** Nereye, neden, ne kadar dokunacağını
+   yaz: dosya, satır, ne değişecek. Yanına "dokunmayacağım" listesini de yaz.
+   Onay al, sonra başla. Kapsam onaydan sonra büyütülemez.
+
+**2. Sadece onaylanan satırlar.** Yol üstünde başka bir hata görsen bile
+   dokunma; ayrıca söyle. Hiçbir şey "geri getirilmez", hiçbir bölüm
+   eklenmez/kaldırılmaz.
+
+**3. Yayılma alanını ölç.** Dokunduğun dosya/bileşen başka nerelerde
+   kullanılıyor — hepsini bul ve yaz. "Başka yeri kırmadım" cümlesi ancak bu
+   ölçümle kurulabilir.
+
+**4. Kapıları koş.** Testler, tip kontrolü, lint, üretim derlemesi. Gerçek
+   çıktıyı yaz (kaç test geçti), "yeşil" deyip geçme.
+
+**5. GÖRSEL KANIT — jargonsuz.** Görünen her değişiklikte öncesi/sonrası
+   resmini Casper'a gönder. Kod okuyarak "böyle görünecek" demek yasak.
+   Gerçek panele girilemiyorsa (giriş gerekiyorsa) bunu açıkça söyle ve
+   sitenin kendi derlenmiş stil dosyasıyla izole kopyasını çizip göster —
+   ama "gerçek ekran değil" diye belirt.
+
+**6. Dal / ana dal / canlı ayrımı + geri alma.** Değişikliğin şu an nerede
+   olduğunu üç kelimeyle söyle, test adresini yaz, geri alma komutunu ver.
+
+Anlatım kuralı: teknik terim kullanma. Kullanmak zorundaysan yanına tek
+cümlelik Türkçe karşılığını yaz. Yarım anlatma — Casper'ın projeye hâkimiyeti
+senin anlatımına bağlı.
+
+Neden: 2026-09-24'te panelin Hakkımızda/SSS/Kampanya/Pazaryeri/Galeri
+kutuları "beyaz zemin üstünde beyaz yazı" olduğu için görünmez hale gelmişti;
+sebebi, 1 Eylül'de bu kutular açılır pencereden panele gömülürken zemin
+renginin beyaz bırakılmasıydı. Casper'ın sorusu şuydu: "başka bir yeri
+kırmadığına nasıl emin olacaksın?" Cevabı üreten şey bu 6 adım oldu.
+
+### Token ekonomisi (2026-09-16, Casper)
+
+Claude'un tokenı en kıt kaynak. Bitince koordinasyon, doğrulama ve merge
+sorumluluğu duruyor — yani proje duruyor. Yavaş ajan, duran projeden iyidir.
+
+- Arama, tarama, envanter, ölçüm, raporlama ve **kodun kendisi** -> ajana ver.
+- Claude'da kalan: hedefi yazmak, ajanın raporunu doğrulamak, riskli tek
+  noktayı **tek komutla** ölçmek, commit/merge/sıra takibi.
+- Görev yazmadan önce dosya adı doğrulamak için komut çalıştırma. Ajan bulur.
+- Ölçüm yalnız bir **karar** ona bağlıysa yapılır.
+- Her yeni faz -> yeni oturum. Şişmiş bağlam her cevabı pahalılaştırır.
+- Uzun rapor yazma; sonuç tek satır, detay istenirse gelir.
+
+Genel çalışma tarzı (bu depoya özel olmayan kısım): C:\Users\Casper\.claude\CLAUDE.md
+
 ## What this repo is
 
 VixRex — a platform that lets small businesses run a digital storefront (`vitrin`) without writing code. Two independently deployed apps share one Supabase (PostgreSQL) database:
@@ -127,9 +181,10 @@ npm run test          # vitest run — tests/**/*.test.ts and src/**/*.test.ts
 npx vitest run tests/some-file.test.ts   # single file
 npm run build
 npm run e2e:local     # Playwright against a local build
+npm run e2e:blog      # Playwright — blog preview suite (dev sunucusu, BLOG_ONIZLEME=1)
 ```
 
-Playwright specs live in `public_web/e2e/*.spec.ts` (not `tests/` — vitest is configured to exclude `e2e/`). **Full E2E only runs in CI on push to `main`**, not on PRs — a green PR is not proof the real browser flow works, check the post-merge `main` run. Visual-regression baselines are OS-specific (`*-chromium-linux.png` vs `*-chromium-win32.png`); CI runs Linux, so a Windows-generated baseline won't turn CI green.
+Playwright specs live in `public_web/e2e/*.spec.ts` (not `tests/` — vitest is configured to exclude `e2e/`). A single config (`playwright.config.ts`) holds three projects: `chromium`, `mobile` and `blog`. `blog` covers the unpublished blog preview, which only renders in development mode (`BLOG_ONIZLEME=1`), so it needs a dev server on port 3107 and is registered only when the target is local — against the live site that project does not exist, so `npm run e2e:blog` there fails loudly instead of skipping silently. Next 16 keeps dev artifacts in `.next/dev` (and `next build` preserves `cache`, `dev`, `lock`), so the production build on port 3000 and the blog dev server can run at the same time. The PR job (`public_web_e2e_onizleme`) runs the site suite and the blog suite against the PR's own build; the `main` job (`public_web_e2e`) hits the live site, so it never runs `blog`. A green PR is still not proof the live flow works — check the post-merge `main` run. Visual-regression baselines are OS-specific (`*-chromium-linux.png` vs `*-chromium-win32.png`); CI runs Linux, so a Windows-generated baseline won't turn CI green.
 
 ### Schema generation (must be re-run after editing `shared/*.json`)
 
@@ -144,7 +199,7 @@ CI's `schema-drift` job re-runs this and fails the PR if the generated files don
 
 ## CI (`.github/workflows/ci.yml`)
 
-Path-classified: a `changes` job (`.github/scripts/changed_surfaces.py`) decides which of `flutter` / `schema` / `public_web` actually need to run; an unrecognized path conservatively runs everything. Jobs: `secret-tarama` (gitleaks), `auth-config-check` (Supabase leaked-password-protection config), `grant-guard` (spins up a local Supabase from the full migration chain and asserts `anon`/`authenticated` never hold TRUNCATE/MAINTAIN/REFERENCES/TRIGGER on any table — those are invisible to RLS), `flutter` (format/analyze/test), `schema-drift`, `public_web` (lint/typecheck/test/build), `public_web_e2e` (main-only, live site).
+Path-classified: a `changes` job (`.github/scripts/changed_surfaces.py`) decides which of `flutter` / `schema` / `public_web` actually need to run; an unrecognized path conservatively runs everything. Jobs: `secret-tarama` (gitleaks), `auth-config-check` (Supabase leaked-password-protection config), `grant-guard` (spins up a local Supabase from the full migration chain and asserts `anon`/`authenticated` never hold TRUNCATE/MAINTAIN/REFERENCES/TRIGGER on any table — those are invisible to RLS), `flutter` (format/analyze/test), `schema-drift`, `public_web` (lint/typecheck/test/build), `public_web_e2e` (main-only, live site, görsel regresyon dahil), `public_web_e2e_onizleme` (PR kodu, kendi derlemesi, görsel regresyon hariç — site ve blog önizleme koşuları aynı işte).
 
 Note: `README.md`'s "Test ve Kalite Kapıları" table still describes a PR-scope/file-size/Supabase-access-ratchet gate (`verify_pr_scope.py` etc.) — those scripts and their CI job were deliberately removed (PR #394, 2026-08-31) along with `AGENTS.md`/`VIXREX_RULES.md`/`CONTEXT.md`/`docs/` and other agent-governance files, at the repo owner's explicit request, because prior agent sessions had been fabricating "user decided X" provenance in those files. Treat README as stale on that specific table; the `ci.yml` jobs listed above are the actual current gates. Don't recreate root-level rules/governance docs unilaterally — rediscover context from code + README, and build any new persistent docs together with the user rather than asserting them.
 

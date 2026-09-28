@@ -13,6 +13,8 @@ type PremiumSonucu = {
   premium_expires_at?: string | null;
 };
 
+type VitrinOlcerSonucu = Record<string, unknown>;
+
 function hataYaniti(mesaj: string, durum: number) {
   return NextResponse.json({ hata: mesaj }, { status: durum });
 }
@@ -76,7 +78,7 @@ export async function GET(request: NextRequest) {
     return hataYaniti("Vitrin bulunamadı.", 404);
   }
 
-  const [ziyaretYaniti, premiumYaniti] = await Promise.all([
+  const [ziyaretYaniti, premiumYaniti, olcerYaniti] = await Promise.all([
     getSupabaseAdmin().rpc("get_today_vitrin_view_count", {
       p_slug: slug,
       p_edit_token: editToken,
@@ -85,6 +87,7 @@ export async function GET(request: NextRequest) {
       p_slug: slug,
       p_edit_token: editToken,
     }),
+    supabaseUser.rpc("get_vitrin_olcer_summary", { p_days: 7 }),
   ]);
 
   if (ziyaretYaniti.error || premiumYaniti.error) {
@@ -95,8 +98,16 @@ export async function GET(request: NextRequest) {
     return hataYaniti("Pano bilgileri alınamadı.", 500);
   }
 
+  if (olcerYaniti.error) {
+    console.warn("[owner-dashboard/summary] Vitrin Ölçer henüz hazır değil:", olcerYaniti.error.message);
+  }
+
   const ziyaretSayisi = Number(ziyaretYaniti.data);
   const premium = (premiumYaniti.data ?? {}) as PremiumSonucu;
+  const olcer =
+    !olcerYaniti.error && olcerYaniti.data && typeof olcerYaniti.data === "object"
+      ? (olcerYaniti.data as VitrinOlcerSonucu)
+      : null;
 
   return NextResponse.json({
     tamam: true,
@@ -105,5 +116,6 @@ export async function GET(request: NextRequest) {
       Number.isFinite(ziyaretSayisi) && ziyaretSayisi >= 0 ? ziyaretSayisi : 0,
     premiumAktif: premium.is_premium === true,
     premiumBitis: premium.premium_expires_at ?? null,
+    olcer,
   });
 }

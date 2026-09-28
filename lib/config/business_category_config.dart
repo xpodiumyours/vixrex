@@ -706,6 +706,19 @@ class BusinessCategoryConfig {
     'oto_arac',
   };
 
+  /// Magazanin isletme kategorisinden urun alan sablonunu turetir.
+  /// Kategori adindan tahmin yapilmaz; yalniz shared/business_categories.json
+  /// icinde acikca kayitli productTemplateKey degeri kullanilir.
+  /// Eslesme yoksa mevcut davranis korunur: 'generic'.
+  static String productTemplateKeyForCategory(String? kategori) {
+    final trimmed = kategori?.trim() ?? '';
+    if (trimmed.isEmpty) return 'generic';
+    final id = resolveBusinessCategoryId(trimmed);
+    if (id == null) return 'generic';
+    final key = businessCategoryById[id]?.productTemplateKey.trim() ?? '';
+    return key.isEmpty ? 'generic' : key;
+  }
+
   static bool supportsBookingPackage(String? kategori) {
     final trimmed = kategori?.trim() ?? '';
     if (trimmed.isEmpty) return false;

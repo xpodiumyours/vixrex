@@ -1,0 +1,19 @@
+{
+  "_not": "Flutter paneli ile Next.js landing yüzeyinin ORTAK renklerinin tek kaynağı. tool/renk_uret.dart hem lib/theme/renkler.g.dart dosyasını üretir hem public_web/src/app/globals.css içindeki --color-lp-* satırlarını bu değerlerle yazar. Canlı vitrin sayfalarının kendi paleti (#38A0E4 ailesi) bilinçli olarak ayrıdır ve buraya girmez.",
+  "renkler": [
+    { "anahtar": "primary", "hex": "#147DFF", "cssDegisken": "--color-lp-primary", "dartAdi": "lpPrimary" },
+    { "anahtar": "secondary", "hex": "#57B7FF", "cssDegisken": "--color-lp-secondary", "dartAdi": "lpSecondary" },
+    { "anahtar": "onPrimary", "hex": "#06152F", "cssDegisken": "--color-lp-on-primary", "dartAdi": "lpOnPrimary" },
+    { "anahtar": "bgEditor", "hex": "#050B1A", "cssDegisken": "--color-lp-bg-editor", "dartAdi": "lpBgEditor" },
+    { "anahtar": "bgLight", "hex": "#08132D", "cssDegisken": "--color-lp-bg-light", "dartAdi": "lpBgLight" },
+    { "anahtar": "surface", "hex": "#0B1730", "cssDegisken": "--color-lp-surface", "dartAdi": "lpSurface" },
+    { "anahtar": "surfaceSoft", "hex": "#112448", "cssDegisken": "--color-lp-surface-soft", "dartAdi": "lpSurfaceSoft" },
+    { "anahtar": "turquoiseSurface", "hex": "#102B59", "cssDegisken": "--color-lp-turquoise-surface", "dartAdi": "lpTurquoiseSurface" },
+    { "anahtar": "text", "hex": "#F7FBFF", "cssDegisken": "--color-lp-text", "dartAdi": "lpText" },
+    { "anahtar": "textAlt", "hex": "#D9E7FF", "cssDegisken": "--color-lp-text-alt", "dartAdi": "lpTextAlt" },
+    { "anahtar": "muted", "hex": "#A9BBDA", "cssDegisken": "--color-lp-muted", "dartAdi": "lpMuted" },
+    { "anahtar": "border", "hex": "#294D88", "cssDegisken": "--color-lp-border", "dartAdi": "lpBorder" },
+    { "anahtar": "mint", "hex": "#10B981", "cssDegisken": "--color-lp-mint", "dartAdi": "lpMint" },
+    { "anahtar": "pink", "hex": "#8B5CF6", "cssDegisken": "--color-lp-pink", "dartAdi": "lpPink" }
+  ]
+}

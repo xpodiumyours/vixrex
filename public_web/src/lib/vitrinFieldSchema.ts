@@ -22,7 +22,7 @@
 // `anahtar` yayına çıktıktan sonra DEĞİŞTİRİLMEZ: asistan komutları ve
 // kayıtlı taslaklar ona bağlıdır. Yeni alan eklenir, eski anahtar silinmez.
 
-import { PROFILES } from "./vitrinProfile";
+import { AKTIF_BUSINESS_CATEGORIES } from "./businessCategories";
 
 export type VitrinFieldType =
   | "metin"
@@ -165,8 +165,8 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
     maxUzunluk: 40,
     zorunlu: true,
     dogrulama: "kategori",
-    // Tek kaynak vitrinProfile.ts — ayrı liste tutulmaz.
-    secenekler: PROFILES.map((p) => p.label),
+    // Tek kaynak businessCategories.ts — ayrı liste tutulmaz.
+    secenekler: AKTIF_BUSINESS_CATEGORIES.map((k) => k.label),
     // Flutter'ın categoryCompleted getter'ıyla aynı kural (Faz F): "Diğer"
     // teknik olarak dolu ama kategoriye bağlı hiçbir şey (butonlar, hazır
     // görseller) çalışmadığı için işlevsel olarak eksik sayılır.

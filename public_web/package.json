@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "e2e": "playwright test",
+    "e2e:blog": "playwright test --project=blog",
     "e2e:local": "playwright test --config=playwright.local.config.ts",
     "e2e:ui": "playwright test --ui"
   },
@@ -22,8 +23,8 @@
     "react-dom": "19.2.4",
     "sanitize-html": "^2.17.7",
     "server-only": "^0.0.1",
-    "sharp": "^0.35.3",
-    "xlsx": "^0.18.5"
+    "sharp": "^0.35.4",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",

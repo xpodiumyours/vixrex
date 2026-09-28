@@ -53,7 +53,6 @@ Future<ProductRichMetadata> sanitizeProductMetadataForWrite(
     );
   }
 
-
   return ProductRichMetadata(
     schemaVersion: schema.version,
     itemKind: 'physical',

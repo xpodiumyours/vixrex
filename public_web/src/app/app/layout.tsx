@@ -1,6 +1,8 @@
-// Sahip paneli — arama motoruna kapalı (W4 · madde 19).
-export const metadata = {
-  robots: { index: false, follow: false },
+import type { Metadata } from "next";
+
+// Sahip paneli arama motorlarına kapalı — giriş gerektiren iç ekran (audit: SEO).
+export const metadata: Metadata = {
+  robots: "noindex, nofollow",
 };
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {

@@ -1,113 +1,992 @@
 {
-  "version": 2,
-  "itemKinds": ["physical", "service"],
-  "requirements": ["optional", "recommended"],
-  "valueTypes": ["text", "number", "boolean", "single", "multi"],
+  "version": 4,
+  "itemKinds": [
+    "physical",
+    "service"
+  ],
+  "requirements": [
+    "optional",
+    "recommended",
+    "required"
+  ],
+  "valueTypes": [
+    "text",
+    "number",
+    "boolean",
+    "single",
+    "multi"
+  ],
   "commonPhysicalAttributes": [
-    {"key":"brand","label":"Marka","valueType":"text","requirement":"recommended","storage":"core.brand","display":["quick","detail"]},
-    {"key":"barcode","label":"Barkod / GTIN","valueType":"text","requirement":"optional","storage":"core.barcode","display":["detail"]},
-    {"key":"sku","label":"Stok kodu / SKU","valueType":"text","requirement":"optional","storage":"metadata.identifiers.sku","display":["detail"]},
-    {"key":"mpn","label":"Üretici parça kodu / MPN","valueType":"text","requirement":"optional","storage":"metadata.identifiers.mpn","display":["detail"]},
-    {"key":"condition","label":"Ürün durumu","valueType":"single","requirement":"optional","storage":"metadata.attributes","options":["new","used","refurbished"],"display":["quick","detail"]},
-    {"key":"vatRate","label":"KDV oranı (%)","valueType":"single","requirement":"recommended","storage":"metadata.attributes","options":["0","1","10","20"],"display":["detail"]}
+    {
+      "key": "brand",
+      "label": "Marka",
+      "valueType": "text",
+      "requirement": "required",
+      "storage": "core.brand",
+      "autoFill": "storeName",
+      "display": [
+        "card",
+        "quick",
+        "detail"
+      ]
+    },
+    {
+      "key": "sku",
+      "label": "Stok kodu / SKU",
+      "valueType": "text",
+      "requirement": "optional",
+      "storage": "metadata.identifiers.sku",
+      "display": [
+        "detail"
+      ]
+    },
+    {
+      "key": "barcode",
+      "label": "Barkod / GTIN",
+      "valueType": "text",
+      "requirement": "optional",
+      "storage": "core.barcode",
+      "advanced": true,
+      "display": [
+        "detail"
+      ]
+    },
+    {
+      "key": "mpn",
+      "label": "Üretici parça kodu / MPN",
+      "valueType": "text",
+      "requirement": "optional",
+      "storage": "metadata.identifiers.mpn",
+      "advanced": true,
+      "display": [
+        "detail"
+      ]
+    },
+    {
+      "key": "condition",
+      "label": "Ürün durumu",
+      "valueType": "single",
+      "requirement": "optional",
+      "storage": "metadata.attributes",
+      "options": [
+        "new",
+        "used",
+        "refurbished"
+      ],
+      "advanced": true,
+      "display": [
+        "quick",
+        "detail"
+      ],
+      "optionLabels": {
+        "new": "Yeni",
+        "used": "Kullanılmış",
+        "refurbished": "Yenilenmiş"
+      }
+    },
+    {
+      "key": "vatRate",
+      "label": "KDV oranı (%)",
+      "valueType": "single",
+      "requirement": "optional",
+      "storage": "metadata.attributes",
+      "options": [
+        "0",
+        "1",
+        "10",
+        "20"
+      ],
+      "advanced": true,
+      "display": [
+        "detail"
+      ]
+    }
   ],
   "commonServiceAttributes": [
-    {"key":"serviceType","label":"Hizmet türü","valueType":"text","requirement":"recommended","storage":"metadata.service.serviceType","display":["quick","detail"]},
-    {"key":"priceMode","label":"Fiyat biçimi","valueType":"single","requirement":"recommended","storage":"metadata.service.priceMode","options":["fixed","starting_from","ask"],"display":["quick","detail"]},
-    {"key":"durationMinutes","label":"Tahmini süre (dakika)","valueType":"number","requirement":"optional","storage":"metadata.service.durationMinutes","display":["quick","detail"]},
-    {"key":"serviceLocation","label":"Hizmet yeri","valueType":"single","requirement":"recommended","storage":"metadata.service.serviceLocation","options":["business","customer","remote"],"display":["quick","detail"]},
-    {"key":"appointmentRequired","label":"Randevu gerekli","valueType":"boolean","requirement":"optional","storage":"metadata.service.appointmentRequired","display":["detail"]},
-    {"key":"included","label":"Hizmete dahil olanlar","valueType":"multi","requirement":"optional","storage":"metadata.service.included","display":["detail"]}
+    {
+      "key": "priceMode",
+      "label": "Fiyat biçimi",
+      "valueType": "single",
+      "requirement": "required",
+      "storage": "metadata.service.priceMode",
+      "options": [
+        "fixed",
+        "starting_from",
+        "ask",
+        "free",
+        "hidden"
+      ],
+      "display": [
+        "card",
+        "quick",
+        "detail"
+      ],
+      "optionLabels": {
+        "fixed": "Sabit fiyat",
+        "starting_from": "Başlangıç fiyatı",
+        "ask": "Fiyat sor",
+        "free": "Ücretsiz",
+        "hidden": "Fiyatı gösterme"
+      }
+    },
+    {
+      "key": "serviceLocation",
+      "label": "Hizmet yeri",
+      "valueType": "single",
+      "requirement": "required",
+      "storage": "metadata.service.serviceLocation",
+      "options": [
+        "business",
+        "customer",
+        "remote"
+      ],
+      "display": [
+        "card",
+        "quick",
+        "detail"
+      ],
+      "optionLabels": {
+        "business": "İşletmede",
+        "customer": "Müşteri adresinde",
+        "remote": "Uzaktan"
+      }
+    },
+    {
+      "key": "appointmentRequired",
+      "label": "Randevu gerekli",
+      "valueType": "boolean",
+      "requirement": "optional",
+      "storage": "metadata.service.appointmentRequired",
+      "display": [
+        "detail"
+      ]
+    },
+    {
+      "key": "included",
+      "label": "Hizmete dahil olanlar",
+      "valueType": "multi",
+      "requirement": "optional",
+      "storage": "metadata.service.included",
+      "display": [
+        "detail"
+      ]
+    }
   ],
   "templates": [
     {
-      "key":"generic",
-      "label":"Genel ürün",
-      "itemKind":"physical",
-      "attributes":[]
+      "key": "generic",
+      "label": "Genel ürün",
+      "itemKind": "physical",
+      "attributes": []
     },
     {
-      "key":"fashion",
-      "label":"Giyim ve moda",
-      "itemKind":"physical",
-      "attributes":[
-        {"key":"color","label":"Renk","valueType":"single","requirement":"recommended","storage":"metadata.attributes","variantEligible":true,"display":["quick","detail"]},
-        {"key":"size","label":"Beden","valueType":"single","requirement":"recommended","storage":"metadata.attributes","variantEligible":true,"display":["quick","detail"]},
-        {"key":"material","label":"Materyal","valueType":"text","requirement":"recommended","storage":"metadata.attributes","display":["quick","detail"]},
-        {"key":"pattern","label":"Desen","valueType":"text","requirement":"optional","storage":"metadata.attributes","variantEligible":true,"display":["detail"]},
-        {"key":"sizeSystem","label":"Beden sistemi","valueType":"text","requirement":"optional","storage":"metadata.attributes","display":["detail"]}
+      "key": "fashion",
+      "label": "Giyim ve moda",
+      "itemKind": "physical",
+      "attributes": [
+        {
+          "key": "color",
+          "label": "Renk",
+          "valueType": "single",
+          "requirement": "required",
+          "storage": "metadata.attributes",
+          "variantEligible": true,
+          "display": [
+            "card",
+            "quick",
+            "detail"
+          ]
+        },
+        {
+          "key": "size",
+          "label": "Beden",
+          "valueType": "single",
+          "requirement": "required",
+          "storage": "metadata.attributes",
+          "variantEligible": true,
+          "display": [
+            "quick",
+            "detail"
+          ]
+        },
+        {
+          "key": "gender",
+          "label": "Cinsiyet",
+          "valueType": "single",
+          "requirement": "required",
+          "storage": "metadata.attributes",
+          "options": [
+            "kadin",
+            "erkek",
+            "unisex",
+            "cocuk"
+          ],
+          "display": [
+            "quick",
+            "detail"
+          ],
+          "optionLabels": {
+            "kadin": "Kadın",
+            "erkek": "Erkek",
+            "unisex": "Unisex",
+            "cocuk": "Çocuk"
+          }
+        },
+        {
+          "key": "fit",
+          "label": "Kalıp / kesim",
+          "valueType": "single",
+          "requirement": "required",
+          "storage": "metadata.attributes",
+          "options": [
+            "dar",
+            "normal",
+            "bol"
+          ],
+          "display": [
+            "quick",
+            "detail"
+          ],
+          "optionLabels": {
+            "dar": "Dar kesim",
+            "normal": "Normal kesim",
+            "bol": "Bol / oversize"
+          }
+        },
+        {
+          "key": "material",
+          "label": "Materyal",
+          "valueType": "text",
+          "requirement": "optional",
+          "storage": "metadata.attributes",
+          "display": [
+            "quick",
+            "detail"
+          ]
+        },
+        {
+          "key": "fiberComposition",
+          "label": "Elyaf bileşimi",
+          "valueType": "text",
+          "requirement": "optional",
+          "storage": "metadata.attributes",
+          "display": [
+            "detail"
+          ]
+        },
+        {
+          "key": "measurements",
+          "label": "Ölçü tablosu",
+          "valueType": "text",
+          "requirement": "optional",
+          "storage": "metadata.attributes",
+          "display": [
+            "detail"
+          ]
+        },
+        {
+          "key": "pattern",
+          "label": "Desen",
+          "valueType": "text",
+          "requirement": "optional",
+          "storage": "metadata.attributes",
+          "variantEligible": true,
+          "display": [
+            "detail"
+          ]
+        }
       ]
     },
     {
-      "key":"electronics",
-      "label":"Elektronik",
-      "itemKind":"physical",
-      "attributes":[
-        {"key":"model","label":"Model","valueType":"text","requirement":"recommended","storage":"metadata.attributes","display":["quick","detail"]},
-        {"key":"color","label":"Renk","valueType":"single","requirement":"optional","storage":"metadata.attributes","variantEligible":true,"display":["quick","detail"]},
-        {"key":"ram","label":"RAM","valueType":"text","requirement":"optional","storage":"metadata.attributes","variantEligible":true,"display":["quick","detail"]},
-        {"key":"storageCapacity","label":"Depolama kapasitesi","valueType":"text","requirement":"optional","storage":"metadata.attributes","variantEligible":true,"display":["quick","detail"]},
-        {"key":"compatibility","label":"Uyumluluk","valueType":"multi","requirement":"optional","storage":"metadata.attributes","display":["detail"]},
-        {"key":"warranty","label":"Garanti bilgisi","valueType":"text","requirement":"optional","storage":"metadata.attributes","display":["detail"]}
+      "key": "electronics",
+      "label": "Elektronik",
+      "itemKind": "physical",
+      "attributes": [
+        {
+          "key": "model",
+          "label": "Model",
+          "valueType": "text",
+          "requirement": "required",
+          "storage": "metadata.attributes",
+          "display": [
+            "quick",
+            "detail"
+          ]
+        },
+        {
+          "key": "color",
+          "label": "Renk",
+          "valueType": "single",
+          "requirement": "optional",
+          "storage": "metadata.attributes",
+          "variantEligible": true,
+          "display": [
+            "card",
+            "quick",
+            "detail"
+          ]
+        },
+        {
+          "key": "ram",
+          "label": "RAM",
+          "valueType": "text",
+          "requirement": "optional",
+          "storage": "metadata.attributes",
+          "variantEligible": true,
+          "display": [
+            "quick",
+            "detail"
+          ]
+        },
+        {
+          "key": "storageCapacity",
+          "label": "Depolama kapasitesi",
+          "valueType": "text",
+          "requirement": "optional",
+          "storage": "metadata.attributes",
+          "variantEligible": true,
+          "display": [
+            "quick",
+            "detail"
+          ]
+        },
+        {
+          "key": "compatibility",
+          "label": "Uyumluluk",
+          "valueType": "multi",
+          "requirement": "optional",
+          "storage": "metadata.attributes",
+          "display": [
+            "detail"
+          ]
+        },
+        {
+          "key": "warranty",
+          "label": "Garanti bilgisi",
+          "valueType": "text",
+          "requirement": "optional",
+          "storage": "metadata.attributes",
+          "display": [
+            "detail"
+          ]
+        }
       ]
     },
     {
-      "key":"beauty",
-      "label":"Kozmetik ve bakım",
-      "itemKind":"physical",
-      "attributes":[
-        {"key":"shade","label":"Renk / ton","valueType":"single","requirement":"optional","storage":"metadata.attributes","variantEligible":true,"display":["quick","detail"]},
-        {"key":"netQuantity","label":"Net miktar","valueType":"text","requirement":"recommended","storage":"metadata.attributes","display":["quick","detail"]},
-        {"key":"usageType","label":"Kullanım alanı","valueType":"text","requirement":"optional","storage":"metadata.attributes","display":["detail"]},
-        {"key":"skinHairType","label":"Cilt / saç tipi","valueType":"multi","requirement":"optional","storage":"metadata.attributes","display":["detail"]},
-        {"key":"ingredients","label":"İçerik","valueType":"multi","requirement":"optional","storage":"metadata.attributes","display":["detail"]},
-        {"key":"warnings","label":"Uyarılar","valueType":"multi","requirement":"optional","storage":"metadata.attributes","display":["detail"]}
+      "key": "beauty",
+      "label": "Kozmetik ve bakım",
+      "itemKind": "physical",
+      "attributes": [
+        {
+          "key": "shade",
+          "label": "Renk / ton",
+          "valueType": "single",
+          "requirement": "optional",
+          "storage": "metadata.attributes",
+          "variantEligible": true,
+          "display": [
+            "quick",
+            "detail"
+          ]
+        },
+        {
+          "key": "netQuantity",
+          "label": "Net miktar",
+          "valueType": "text",
+          "requirement": "required",
+          "storage": "metadata.attributes",
+          "display": [
+            "card",
+            "quick",
+            "detail"
+          ]
+        },
+        {
+          "key": "usageType",
+          "label": "Kullanım alanı",
+          "valueType": "text",
+          "requirement": "optional",
+          "storage": "metadata.attributes",
+          "display": [
+            "detail"
+          ]
+        },
+        {
+          "key": "skinHairType",
+          "label": "Cilt / saç tipi",
+          "valueType": "multi",
+          "requirement": "optional",
+          "storage": "metadata.attributes",
+          "display": [
+            "detail"
+          ]
+        },
+        {
+          "key": "ingredients",
+          "label": "İçerik",
+          "valueType": "multi",
+          "requirement": "optional",
+          "storage": "metadata.attributes",
+          "display": [
+            "detail"
+          ]
+        },
+        {
+          "key": "warnings",
+          "label": "Uyarılar",
+          "valueType": "multi",
+          "requirement": "optional",
+          "storage": "metadata.attributes",
+          "display": [
+            "detail"
+          ]
+        }
       ]
     },
     {
-      "key":"food",
-      "label":"Gıda ve içecek",
-      "itemKind":"physical",
-      "attributes":[
-        {"key":"netQuantity","label":"Net miktar","valueType":"text","requirement":"recommended","storage":"metadata.attributes","display":["quick","detail"]},
-        {"key":"ingredients","label":"İçindekiler","valueType":"multi","requirement":"optional","storage":"metadata.attributes","display":["detail"]},
-        {"key":"allergens","label":"Alerjen bilgisi","valueType":"multi","requirement":"optional","storage":"metadata.attributes","display":["quick","detail"]},
-        {"key":"storageInstructions","label":"Saklama koşulları","valueType":"text","requirement":"optional","storage":"metadata.attributes","display":["detail"]},
-        {"key":"origin","label":"Menşei","valueType":"text","requirement":"optional","storage":"metadata.attributes","display":["detail"]}
+      "key": "food",
+      "label": "Paketli gıda",
+      "itemKind": "physical",
+      "attributes": [
+        {
+          "key": "netQuantity",
+          "label": "Net miktar",
+          "valueType": "text",
+          "requirement": "required",
+          "storage": "metadata.attributes",
+          "display": [
+            "card",
+            "quick",
+            "detail"
+          ]
+        },
+        {
+          "key": "unitPrice",
+          "label": "Birim fiyat",
+          "valueType": "text",
+          "requirement": "required",
+          "storage": "metadata.attributes",
+          "display": [
+            "card",
+            "quick",
+            "detail"
+          ]
+        },
+        {
+          "key": "allergens",
+          "label": "Alerjen bilgisi",
+          "valueType": "multi",
+          "requirement": "required",
+          "storage": "metadata.attributes",
+          "display": [
+            "quick",
+            "detail"
+          ]
+        },
+        {
+          "key": "origin",
+          "label": "Menşei",
+          "valueType": "text",
+          "requirement": "required",
+          "storage": "metadata.attributes",
+          "display": [
+            "card",
+            "detail"
+          ]
+        },
+        {
+          "key": "nutrition",
+          "label": "Beslenme bildirimi (100 g/ml)",
+          "valueType": "text",
+          "requirement": "required",
+          "storage": "metadata.attributes",
+          "display": [
+            "detail"
+          ]
+        },
+        {
+          "key": "ingredients",
+          "label": "İçindekiler",
+          "valueType": "multi",
+          "requirement": "optional",
+          "storage": "metadata.attributes",
+          "display": [
+            "detail"
+          ]
+        },
+        {
+          "key": "storageInstructions",
+          "label": "Saklama koşulları",
+          "valueType": "text",
+          "requirement": "optional",
+          "storage": "metadata.attributes",
+          "display": [
+            "detail"
+          ]
+        }
       ]
     },
     {
-      "key":"home",
-      "label":"Ev, mobilya ve dekorasyon",
-      "itemKind":"physical",
-      "attributes":[
-        {"key":"material","label":"Materyal","valueType":"text","requirement":"recommended","storage":"metadata.attributes","display":["quick","detail"]},
-        {"key":"color","label":"Renk","valueType":"single","requirement":"optional","storage":"metadata.attributes","variantEligible":true,"display":["quick","detail"]},
-        {"key":"width","label":"Genişlik","valueType":"text","requirement":"optional","storage":"metadata.attributes","display":["detail"]},
-        {"key":"height","label":"Yükseklik","valueType":"text","requirement":"optional","storage":"metadata.attributes","display":["detail"]},
-        {"key":"depth","label":"Derinlik","valueType":"text","requirement":"optional","storage":"metadata.attributes","display":["detail"]},
-        {"key":"weight","label":"Ağırlık","valueType":"text","requirement":"optional","storage":"metadata.attributes","display":["detail"]},
-        {"key":"assembly","label":"Montaj bilgisi","valueType":"text","requirement":"optional","storage":"metadata.attributes","display":["detail"]}
+      "key": "cafe_restaurant",
+      "label": "Kafe / Lokanta",
+      "itemKind": "physical",
+      "attributes": [
+        {
+          "key": "portion",
+          "label": "Porsiyon",
+          "valueType": "text",
+          "requirement": "required",
+          "storage": "metadata.attributes",
+          "display": [
+            "card",
+            "quick",
+            "detail"
+          ]
+        },
+        {
+          "key": "allergens",
+          "label": "Alerjen bilgisi",
+          "valueType": "multi",
+          "requirement": "required",
+          "storage": "metadata.attributes",
+          "display": [
+            "card",
+            "quick",
+            "detail"
+          ]
+        },
+        {
+          "key": "mainIngredients",
+          "label": "Temel bileşenler",
+          "valueType": "multi",
+          "requirement": "required",
+          "storage": "metadata.attributes",
+          "display": [
+            "quick",
+            "detail"
+          ]
+        },
+        {
+          "key": "containsAlcoholPork",
+          "label": "Alkol / domuz türevi içerir",
+          "valueType": "single",
+          "requirement": "required",
+          "storage": "metadata.attributes",
+          "options": [
+            "yok",
+            "alkol",
+            "domuz",
+            "ikisi_de"
+          ],
+          "display": [
+            "quick",
+            "detail"
+          ],
+          "optionLabels": {
+            "yok": "İçermez",
+            "alkol": "Alkol içerir",
+            "domuz": "Domuz türevi içerir",
+            "ikisi_de": "Alkol ve domuz türevi içerir"
+          }
+        },
+        {
+          "key": "prepMinutes",
+          "label": "Hazırlama süresi (dakika)",
+          "valueType": "number",
+          "requirement": "optional",
+          "storage": "metadata.attributes",
+          "display": [
+            "card",
+            "detail"
+          ]
+        },
+        {
+          "key": "calories",
+          "label": "Porsiyon başına kalori (kcal)",
+          "valueType": "number",
+          "requirement": "optional",
+          "storage": "metadata.attributes",
+          "display": [
+            "quick",
+            "detail"
+          ]
+        },
+        {
+          "key": "dietTags",
+          "label": "Beslenme işaretleri",
+          "valueType": "multi",
+          "requirement": "optional",
+          "storage": "metadata.attributes",
+          "display": [
+            "quick",
+            "detail"
+          ]
+        },
+        {
+          "key": "spiceLevel",
+          "label": "Acı seviyesi",
+          "valueType": "single",
+          "requirement": "optional",
+          "storage": "metadata.attributes",
+          "options": [
+            "yok",
+            "az",
+            "orta",
+            "cok"
+          ],
+          "display": [
+            "detail"
+          ],
+          "optionLabels": {
+            "yok": "Acısız",
+            "az": "Az acı",
+            "orta": "Orta acı",
+            "cok": "Çok acı"
+          }
+        }
+      ],
+      "excludeCommon": [
+        "brand",
+        "barcode",
+        "sku",
+        "mpn",
+        "condition"
       ]
     },
     {
-      "key":"automotive",
-      "label":"Oto ve yedek parça",
-      "itemKind":"physical",
-      "attributes":[
-        {"key":"partNumber","label":"Parça / model kodu","valueType":"text","requirement":"recommended","storage":"metadata.attributes","display":["quick","detail"]},
-        {"key":"oemNumber","label":"OEM numarası","valueType":"text","requirement":"optional","storage":"metadata.attributes","display":["detail"]},
-        {"key":"compatibleMake","label":"Uyumlu marka","valueType":"multi","requirement":"recommended","storage":"metadata.attributes","display":["detail"]},
-        {"key":"compatibleModel","label":"Uyumlu model","valueType":"multi","requirement":"recommended","storage":"metadata.attributes","display":["detail"]},
-        {"key":"compatibleYear","label":"Uyumlu yıl","valueType":"multi","requirement":"optional","storage":"metadata.attributes","display":["detail"]},
-        {"key":"position","label":"Parça konumu / tarafı","valueType":"text","requirement":"optional","storage":"metadata.attributes","display":["detail"]}
+      "key": "home",
+      "label": "Ev, mobilya ve dekorasyon",
+      "itemKind": "physical",
+      "attributes": [
+        {
+          "key": "material",
+          "label": "Materyal",
+          "valueType": "text",
+          "requirement": "required",
+          "storage": "metadata.attributes",
+          "display": [
+            "quick",
+            "detail"
+          ]
+        },
+        {
+          "key": "color",
+          "label": "Renk",
+          "valueType": "single",
+          "requirement": "optional",
+          "storage": "metadata.attributes",
+          "variantEligible": true,
+          "display": [
+            "card",
+            "quick",
+            "detail"
+          ]
+        },
+        {
+          "key": "width",
+          "label": "Genişlik",
+          "valueType": "text",
+          "requirement": "optional",
+          "storage": "metadata.attributes",
+          "display": [
+            "detail"
+          ]
+        },
+        {
+          "key": "height",
+          "label": "Yükseklik",
+          "valueType": "text",
+          "requirement": "optional",
+          "storage": "metadata.attributes",
+          "display": [
+            "detail"
+          ]
+        },
+        {
+          "key": "depth",
+          "label": "Derinlik",
+          "valueType": "text",
+          "requirement": "optional",
+          "storage": "metadata.attributes",
+          "display": [
+            "detail"
+          ]
+        },
+        {
+          "key": "weight",
+          "label": "Ağırlık",
+          "valueType": "text",
+          "requirement": "optional",
+          "storage": "metadata.attributes",
+          "display": [
+            "detail"
+          ]
+        },
+        {
+          "key": "assembly",
+          "label": "Montaj bilgisi",
+          "valueType": "text",
+          "requirement": "optional",
+          "storage": "metadata.attributes",
+          "display": [
+            "detail"
+          ]
+        }
       ]
     },
     {
-      "key":"service",
-      "label":"Hizmet",
-      "itemKind":"service",
-      "attributes":[]
+      "key": "automotive",
+      "label": "Oto ve yedek parça",
+      "itemKind": "physical",
+      "attributes": [
+        {
+          "key": "partNumber",
+          "label": "Parça / model kodu",
+          "valueType": "text",
+          "requirement": "required",
+          "storage": "metadata.attributes",
+          "display": [
+            "quick",
+            "detail"
+          ]
+        },
+        {
+          "key": "oemNumber",
+          "label": "OEM numarası",
+          "valueType": "text",
+          "requirement": "optional",
+          "storage": "metadata.attributes",
+          "display": [
+            "detail"
+          ]
+        },
+        {
+          "key": "compatibleMake",
+          "label": "Uyumlu marka",
+          "valueType": "multi",
+          "requirement": "required",
+          "storage": "metadata.attributes",
+          "display": [
+            "detail"
+          ]
+        },
+        {
+          "key": "compatibleModel",
+          "label": "Uyumlu model",
+          "valueType": "multi",
+          "requirement": "required",
+          "storage": "metadata.attributes",
+          "display": [
+            "detail"
+          ]
+        },
+        {
+          "key": "compatibleYear",
+          "label": "Uyumlu yıl",
+          "valueType": "multi",
+          "requirement": "optional",
+          "storage": "metadata.attributes",
+          "display": [
+            "detail"
+          ]
+        },
+        {
+          "key": "position",
+          "label": "Parça konumu / tarafı",
+          "valueType": "text",
+          "requirement": "optional",
+          "storage": "metadata.attributes",
+          "display": [
+            "detail"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "service",
+      "label": "Hizmet",
+      "itemKind": "service",
+      "attributes": [
+        {
+          "key": "serviceType",
+          "label": "Hizmet türü",
+          "valueType": "single",
+          "requirement": "required",
+          "storage": "metadata.service.serviceType",
+          "options": [
+            "Saç kesimi",
+            "Saç boyama",
+            "Saç bakımı",
+            "Makyaj",
+            "Tırnak bakımı",
+            "Cilt bakımı",
+            "Epilasyon",
+            "Masaj",
+            "Diğer"
+          ],
+          "display": [
+            "quick",
+            "detail"
+          ]
+        },
+        {
+          "key": "hairLength",
+          "label": "Saç boyu",
+          "valueType": "single",
+          "requirement": "optional",
+          "storage": "metadata.attributes",
+          "options": [
+            "kisa",
+            "orta",
+            "uzun"
+          ],
+          "variantEligible": true,
+          "display": [
+            "quick",
+            "detail"
+          ],
+          "optionLabels": {
+            "kisa": "Kısa",
+            "orta": "Orta",
+            "uzun": "Uzun"
+          }
+        },
+        {
+          "key": "durationMinutes",
+          "label": "Tahmini süre (dakika)",
+          "valueType": "number",
+          "requirement": "optional",
+          "storage": "metadata.service.durationMinutes",
+          "display": [
+            "card",
+            "quick",
+            "detail"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "technical_service",
+      "label": "Teknik servis",
+      "itemKind": "service",
+      "attributes": [
+        {
+          "key": "serviceType",
+          "label": "Hizmet türü",
+          "valueType": "single",
+          "requirement": "required",
+          "storage": "metadata.service.serviceType",
+          "options": [
+            "Ekran değişimi",
+            "Batarya değişimi",
+            "Anakart onarımı",
+            "Yazılım / kurulum",
+            "Veri kurtarma",
+            "Periyodik bakım",
+            "Arıza tespiti",
+            "Diğer"
+          ],
+          "display": [
+            "quick",
+            "detail"
+          ]
+        },
+        {
+          "key": "deviceBrandModel",
+          "label": "Cihaz marka / model",
+          "valueType": "text",
+          "requirement": "required",
+          "storage": "metadata.attributes",
+          "display": [
+            "quick",
+            "detail"
+          ]
+        },
+        {
+          "key": "deviceModelVariant",
+          "label": "Cihaz modeli (seçenek)",
+          "valueType": "text",
+          "requirement": "optional",
+          "storage": "metadata.attributes",
+          "variantEligible": true,
+          "display": [
+            "detail"
+          ]
+        },
+        {
+          "key": "warrantyMonths",
+          "label": "Garanti süresi (ay)",
+          "valueType": "number",
+          "requirement": "required",
+          "storage": "metadata.attributes",
+          "display": [
+            "card",
+            "quick",
+            "detail"
+          ]
+        },
+        {
+          "key": "partsIncluded",
+          "label": "Parça fiyata dahil mi",
+          "valueType": "single",
+          "requirement": "required",
+          "storage": "metadata.attributes",
+          "options": [
+            "dahil",
+            "haric",
+            "duruma_gore"
+          ],
+          "display": [
+            "quick",
+            "detail"
+          ],
+          "optionLabels": {
+            "dahil": "Parça fiyata dahil",
+            "haric": "Parça ayrıca ücretli",
+            "duruma_gore": "Duruma göre değişir"
+          }
+        },
+        {
+          "key": "deliveryDays",
+          "label": "Teslim süresi (gün)",
+          "valueType": "number",
+          "requirement": "optional",
+          "storage": "metadata.attributes",
+          "display": [
+            "card",
+            "quick",
+            "detail"
+          ]
+        },
+        {
+          "key": "diagnosisFee",
+          "label": "Arıza tespit ücreti",
+          "valueType": "text",
+          "requirement": "optional",
+          "storage": "metadata.attributes",
+          "display": [
+            "detail"
+          ]
+        },
+        {
+          "key": "partType",
+          "label": "Parça tipi",
+          "valueType": "single",
+          "requirement": "optional",
+          "storage": "metadata.attributes",
+          "options": [
+            "orijinal",
+            "muadil"
+          ],
+          "display": [
+            "detail"
+          ],
+          "optionLabels": {
+            "orijinal": "Orijinal parça",
+            "muadil": "Muadil parça"
+          }
+        }
+      ]
     }
   ]
 }

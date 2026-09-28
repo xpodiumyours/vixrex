@@ -153,7 +153,7 @@ export function FaqEditor({ slug, items, onClose, inline = false }: Props) {
   );
 
   if (inline) {
-    return <div className="w-full overflow-hidden rounded-xl border border-lp-border bg-white shadow-sm">{content}</div>;
+    return <div className="w-full overflow-hidden rounded-xl border border-lp-border bg-lp-surface shadow-sm">{content}</div>;
   }
 
   return (

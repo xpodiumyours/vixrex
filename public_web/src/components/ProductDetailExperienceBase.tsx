@@ -1,8 +1,9 @@
 "use client";
 
+import { eskiFiyatYazisi, kartRozeti } from "@/lib/productCardPresentation";
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { TrackedWhatsAppLink } from "@/components/TrackedWhatsAppLink";
 import type { RichProductItem } from "@/lib/richProductItem";
 import { MapPinIcon } from "@/lib/vitrinBrandIcons";
@@ -28,9 +29,10 @@ interface ProductDetailExperienceProps {
   instagramUrl?: string | null;
   sourceUrl?: string | null;
   storeAddress?: string | null;
+  commercePanel?: ReactNode;
 }
 
-function formatVariantPrice(amount: number, currency?: string) {
+export function formatVariantPrice(amount: number, currency?: string) {
   return new Intl.NumberFormat("tr-TR", {
     style: "currency",
     currency: currency || "TRY",
@@ -44,7 +46,7 @@ function mapsSearchUrl(value: string | null | undefined) {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(clean)}`;
 }
 
-function stockTone(status?: string | null) {
+export function stockTone(status?: string | null) {
   const value = String(status || "").toLocaleLowerCase("tr-TR");
   if (value.includes("tükendi")) return "text-red-300";
   if (value.includes("son") || value.includes("az") || value.includes("sınırl")) {
@@ -53,7 +55,7 @@ function stockTone(status?: string | null) {
   return "text-emerald-300";
 }
 
-function whatsappWithVariantSelection(
+export function whatsappWithVariantSelection(
   url: string | null,
   selectedVariantText: string,
 ): string | null {
@@ -83,6 +85,7 @@ export default function ProductDetailExperience({
   instagramUrl = null,
   sourceUrl = null,
   storeAddress = null,
+  commercePanel = null,
 }: ProductDetailExperienceProps) {
   const metadata = useMemo(() => normalizeProductMetadata(product.metadata), [product.metadata]);
   const isService = metadata.itemKind === "service";
@@ -143,6 +146,11 @@ export default function ProductDetailExperience({
     selectedVariant?.priceAmount != null
       ? formatVariantPrice(selectedVariant.priceAmount, product.currency)
       : product.price || "Fiyat sorun";
+  const rozet = kartRozeti({
+    badgeTag: product.badgeTag,
+    priceAmount: product.priceAmount,
+    oldPriceAmount: product.oldPriceAmount,
+  });
   const stockQuantity = selectedVariant?.stockQuantity ?? product.stockQuantity ?? null;
   const stockStatus =
     stockQuantity === 0
@@ -228,11 +236,16 @@ export default function ProductDetailExperience({
               </p>
             ) : null}
 
-            <div className="mt-5 flex flex-wrap items-baseline gap-3">
+            <div className="mt-5 flex flex-wrap items-center gap-3">
               <span className="text-2xl font-extrabold text-[#E8A87C]">{displayedPrice}</span>
-              {product.oldPriceAmount ? (
+              {eskiFiyatYazisi(product.oldPriceAmount) ? (
                 <span className="text-sm font-medium text-white/30 line-through">
-                  {product.oldPriceAmount} TL
+                  {eskiFiyatYazisi(product.oldPriceAmount)}
+                </span>
+              ) : null}
+              {rozet ? (
+                <span className="rounded-lg bg-gradient-to-r from-blue-600 to-cyan-600 px-2.5 py-1 text-[10px] font-extrabold text-white shadow-md">
+                  {rozet}
                 </span>
               ) : null}
             </div>
@@ -381,6 +394,10 @@ export default function ProductDetailExperience({
               >
                 Kaynak paylaşımı
               </Link>
+            ) : null}
+
+            {commercePanel ? (
+              <div className="mt-6 border-t border-white/10 pt-5">{commercePanel}</div>
             ) : null}
           </aside>
         </div>

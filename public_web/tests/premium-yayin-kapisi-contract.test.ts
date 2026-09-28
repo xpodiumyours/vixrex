@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "fs";
 import { resolve } from "path";
+import { YAYIN_KAPISI_UYARISI } from "@/lib/fiyatlandirma";
 
 /**
  * Premium yayın kapısı (PR #3) — "Kiralık Vitrin = Premium".
@@ -68,7 +69,8 @@ describe("api/owner-publish — kullanıcıya anlamlı hata", () => {
 
   it("PREMIUM_REQUIRED için Türkçe mesaj ve 402 durum kodu tanımlı", () => {
     expect(routeSource).toContain("PREMIUM_REQUIRED:");
-    expect(routeSource).toContain("299 TL");
+    expect(YAYIN_KAPISI_UYARISI).toContain("299 TL");
+    expect(routeSource).toContain("YAYIN_KAPISI_UYARISI");
     expect(routeSource).toContain("PREMIUM_REQUIRED: 402");
   });
 });

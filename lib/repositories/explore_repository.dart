@@ -29,7 +29,7 @@ class ExploreRepository {
             .select(StoreSafeSelect.columns)
             .eq('is_published', true)
             .order('updated_at', ascending: false)
-            .limit(50);
+            .limit(100);
         final List<dynamic> rawList = response as List<dynamic>;
         final stores = rawList.map((json) => StoreData.fromJson(json)).toList();
 

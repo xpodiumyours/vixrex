@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import type { KesfetVitrini } from "@/lib/explore";
 import { useKesfetKirala } from "@/lib/useKesfetKirala";
+import { AYLIK_PREMIUM_BEDEL, PREMIUM_DEGIL_ROZET } from "@/lib/fiyatlandirma";
 
 export type PremiumBilgisi = {
   aktif: boolean;
@@ -32,7 +33,7 @@ function whatsappEtiketi(vitrin: KesfetVitrini): string {
 
 function premiumEtiketi(premium: PremiumBilgisi | null): string | null {
   if (!premium) return null;
-  if (!premium.aktif) return "Premium değil · Aylık 299 TL ile yayınla";
+  if (!premium.aktif) return PREMIUM_DEGIL_ROZET;
   if (!premium.bitis) return "Premium aktif";
   const bitis = Date.parse(premium.bitis);
   if (!Number.isFinite(bitis)) return "Premium aktif";
@@ -168,7 +169,7 @@ export function VitrinKarti({
         </div>
 
         <div className="flex flex-[3] flex-col p-3">
-          <p className="truncate text-[9px] font-black uppercase tracking-[0.6px] text-lp-primary">
+          <p className="line-clamp-2 text-[9px] font-black uppercase leading-[1.25] tracking-[0.6px] text-lp-primary">
             {vitrin.kategoriEtiketi}
           </p>
           <h3 className="mt-1 truncate text-[15px] font-black leading-[1.15] text-lp-text">
@@ -197,7 +198,7 @@ export function VitrinKarti({
 
           {vitrin.kiralikMi ? (
             <p className="mt-2 flex min-w-0 items-baseline gap-1.5">
-              <span className="shrink-0 text-[12px] font-black text-amber-500">Aylık 299 TL</span>
+              <span className="shrink-0 text-[12px] font-black text-amber-500">{AYLIK_PREMIUM_BEDEL}</span>
               <span className="truncate text-[10px] font-semibold text-lp-muted">· 14 gün ücretsiz dene</span>
             </p>
           ) : null}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { useOwnerDraft } from "./hooks/useOwnerDraft";
 import { useOwnerChat } from "./hooks/useOwnerChat";
 import { useFieldSelection } from "./hooks/useFieldSelection";
@@ -49,94 +49,26 @@ import OwnerEditorBar from "./components/OwnerEditorBar";
 // yazar (bkz. PublishBar).
 
 // ============================================================================
-// SAHİPLİK EKRANI — KALAN PLAN (Casper, 2026-09-03/04 konuşması)
+// SAHİPLİK EKRANI — GÜNCEL GÖRSEL SÖZLEŞME (2026-09-21)
 // ============================================================================
-// Bu blok, panelin görsel/etkileşim yeniden tasarımı için SIRADAKİ AJANIN
-// nereden, nasıl ve NEDEN başlayacağını bilmesi için yazıldı. Aşağıdaki 5
-// madde (eski numaralandırmayla 1, 2, 5, 6, 10) 2026-09-03'teki ilk
-// incelemeden kalan, henüz UYGULANMAMIŞ maddelerdi. 2026-09-04'te Casper bir
-// "3 modlu, tek elle kullanılabilen" bottom-sheet mockup'ı tarif etti; aynı
-// gün MOD 2'nin (Asistan Modu, sheet açık) gerçek görseli de geldi — aşağıdaki
-// tarif artık o görsele dayanıyor. MOD 1 (vitrin + kapalı asistan) ve MOD 3
-// HÂLÂ GÖRÜLMEDİ — yalnız MOD 2'nin üstünde kesik/soluk görünen MOD 1 satırı
-// var. Sıradaki ajan koda dökmeden önce Casper'dan MOD 1'in TAMAMINI ve
-// MOD 3'ü istemeli.
+// TELEFON (<640px): PR #545 ile onaylandı. Altta sürekli compact mesaj kutusu,
+// küçük gönder düğmesi ve SAĞDA canonical Vixrex maskotu bulunur; yukarı
+// çekilince sohbet geçmişi açılır. Masaüstü çalışmaları bu yüzeyi değiştirmez.
 //
-// MOD 2 GÖRSELİNDEN DOĞRULANAN SOMUT DETAYLAR (2026-09-04):
-//   - Sheet, vitrinin ÜSTÜNE yuvarlak köşeli bir kart olarak biner (tam ekranı
-//     kaplamaz), üstte sürükleme çubuğu (drag handle) var.
-//   - Sheet başlığı: robot avatar + "Vixrex Asistan" + yeşil nokta "Çevrimiçi"
-//     solda; sağda "Aşama 2/3" (vurgulu) + küçük gri "15/46" (ham sayaç
-//     TAMAMEN kalkmıyor, Aşama'nın yanında ikincil/küçük bilgi olarak kalıyor)
-//     + kapatma X'i (X'e basınca muhtemelen MOD 1'e döner).
-//   - Aksiyon butonlarında SÜRE TAHMİNİ var: "+ Hizmet & Fiyat Ekle" /
-//     "~2 dakika" — büyük yeşil buton, altta küçük gri alt yazı.
-//   - MOD 1→MOD 2 geçişi muhtemelen SWIPE değil DOKUNMA: MOD 2'nin üstünde
-//     görünen kesik MOD 1 satırı "Asistan sağ altta, sadece dokunulduğunda
-//     büyür" diyor — bu, koddaki MEVCUT yuvarlak Vixrex düğmesiyle
-//     (`fixed bottom-5 right-5`, bu dosyada "Canonical Vixrex düğmesi" yorumu)
-//     örtüşüyor; sıfırdan bir gesture sistemi kurmaya GEREK OLMAYABİLİR.
+// TABLET (640–1023px): mevcut yüzen panel davranışı korunur.
 //
-// MEVCUT SORUN → YENİ ÇÖZÜM (Casper'ın 2026-09-04 tarifi):
-//   Sol editör + sağ chat dikkat dağıtıyor
-//     → Bottom sheet asistan: yukarı kaydırınca açılır, aşağı kaydırınca
-//       vitrin tam ekran. Şu anki "sağda sabit 460px panel" modelinin YERİNİ
-//       ALIYOR — madde 10'un (mobil split-view) hem mobil hem masaüstü için
-//       genelleşmiş hâli.
-//   "23/46" korkutucu
-//     → "Aşama 2/3": 3 aşamalı akış, her aşama bitince "Devam et / Şimdilik
-//       yeter". Madde 1'in ("N/6 zorunlu" göstergesi) YERİNE GEÇİYOR — sayaç
-//       değil, adım/aşama metaforu.
-//   Asistan aynı mesajı tekrar ediyor
-//     → Onay kartı: zaten VAR (bkz. useOwnerActions.gonder içindeki "Doğru/
-//       Geri al" kartı, 2026-09-03). Mockup'ta buton adları "Onayla/Düzelt" —
-//       küçük bir isimlendirme/UX cilası, mantık değişmiyor.
-//   Karar noktalarında sadece metin
-//     → Görsel karar kartları: "Hizmet ekle", "Yayınla" gibi büyük renkli
-//       butonlar. Yayınla'nın YERİ zaten düzeltildi (bkz. PublishBar'ın artık
-//       composer altında sabit şerit olması, 2026-09-03) — kalan iş yalnız
-//       GÖRSEL ağırlık/stil.
-//   Yayına alma dağınık
-//     → Alt navigasyon: vitrin / düzenle / önizle (=müşteri modu) / ayarlar,
-//       4 sekme. BU, önceki 10 maddede YOKTU — yeni bir yapısal öğe (kalıcı
-//       bottom tab bar). İKONLAR EMOJİ OLMAYACAK (Casper, 2026-09-04) — gerçek
-//       SVG/icon component (repoda zaten ikon kullanımı varsa onun deseniyle,
-//       yoksa yeni eklenecek bir ikon seti). SpotlightGuide'ın "balonu
-//       küçült" fikrini (eski madde 5) muhtemelen gereksiz kılıyor: balon
-//       yerine zaten "düzenle" modunda esnaf tek bir aktif alanla baş başa
-//       kalıyor.
+// MASAÜSTÜ (>=1024px): üstte OwnerEditorBar + solda gerçek vitrin + sağda
+// yerleşik Vixrex Asistan sütunu. Sütun genişliği tek kaynaktan
+// --owner-rail-w ile gelir. İçerik üç çalışma alanına ayrılır:
+//   - Sohbet: yalnız konuşma + sade compact composer.
+//   - Alanlar: 46 alan, seçili alan ve özel düzenleme araçları.
+//   - Eksikler: zorunlu eksikler, kalite önerileri, hesap/yasal hazırlık.
+// Yayın ana eylemi OwnerEditorBar'da TEK yerde kalır. PublishBar'ın güvenlik
+// mantığı (yasal onay, premium, taslağı bırakma) kaybolmaz; Eksikler içinde
+// gerektiğinde yalnız hazırlık kontrolleri gösterilir.
 //
-// SONUÇ — ESKİ 5 MADDE NASIL DEĞİŞTİ:
-//   Madde 1 (yüzde → N/6)         → YENİDEN ÇERÇEVELENDİ: "Aşama 2/3" stepper.
-//   Madde 2 (SIRADA tek görev)    → KORUNUYOR, bottom-sheet içinde "düzenle"
-//                                    modunun kendi ekranı olarak yaşıyor.
-//   Madde 5 (Spotlight küçült)    → MUHTEMELEN GEREKSİZLEŞTİ — balon modeli
-//                                    yerine ayrı bir "düzenle" tam-ekran modu
-//                                    geliyor. Sıradaki ajan SpotlightGuide'ı
-//                                    küçültmeden önce bunun hâlâ gerekip
-//                                    gerekmediğini Casper'a sormalı.
-//   Madde 6 (sohbet geçmişi kısa) → KORUNUYOR, bottom-sheet'in "sohbet" alt-
-//                                    modunda hâlâ geçerli.
-//   Madde 10 (mobil split-view)   → GENİŞLEDİ: yalnız mobil değil, masaüstü de
-//                                    dahil "bottom sheet, 3 mod" modeline.
-//   YENİ: alt navigasyon (vitrin/düzenle/önizle/ayarlar, emoji DEĞİL gerçek
-//   ikon) — önceki plana hiç yoktu, eklendi.
-//
-// SIRADAKİ AJAN NEREDEN BAŞLAMALI (sıra önemli):
-//   1) Casper'dan MOD 1'in TAMAMINI ve MOD 3'ü iste (yalnız MOD 2 görüldü,
-//      2026-09-04) — sheet ne kadar açılıyor, "Aşama 2/3" hangi 3 aşama,
-//      MOD 3 ne (muhtemelen ⚙️ ayarlar ya da 👁️ önizle modu) hâlâ belirsiz.
-//   2) CLAUDE.md kuralı gereği: bu tamamen görsel/etkileşimsel bir değişiklik
-//      — Browser pane / canlı önizleme ile GÖRÜP doğrulamadan "düzelttim"
-//      DENMEZ. Sandbox'ta public_web/.env.local yoksa (2026-09-03'te öyleydi)
-//      bunu açıkça söyle, kör tahminle commit atma.
-//   3) Küçük, geri alınabilir adımlarla ilerle — örn. önce yalnız alt
-//      navigasyonu (emoji DEĞİL, gerçek ikonlarla) ekle ve canlı doğrula,
-//      SONRA bottom-sheet geçişine geç. Hepsini tek commit'te denemek,
-//      ÖNCE SOR kuralını (bu dosyanın en üstündeki CLAUDE.md talimatı) ihlal
-//      eder.
-//   4) ÖNCE SOR: küçük görünse bile Casper'a sormadan hiçbir adımı uygulama
-//      (bkz. CLAUDE.md, "Çalışma kuralı — ÖNCE SOR").
+// Veri/iş mantığı değişmez: useOwnerChat, useOwnerActions, NLU, 46 alan şeması,
+// store_working_drafts ve Supabase aynı kaynak olmaya devam eder.
 // ============================================================================
 
 interface Props {
@@ -202,8 +134,13 @@ export default function OwnerAssistantPanel({
   // kutucuklarda zaten ne yapılacağı yazıyor". Artık alan seçilince
   // mobilde harita kapanır; sayfada yalnız sembol ve balon kalır.
   // Masaüstünde yer bol, harita açık durmaya devam eder.
-  const [sekme, setSekme] = useState<"sohbet" | "oneriler">("sohbet");
+  const [sekme, setSekme] = useState<"sohbet" | "alanlar" | "eksikler">("sohbet");
   const [haritaAcik, setHaritaAcik] = useState(false);
+  // Mobil hedef (2026-09-21): mesaj kutusu her zaman altta görünür;
+  // yalnız sohbet geçmişi yukarı çekildiğinde büyüyen çekmece açılır.
+  // Masaüstü panel state'i bundan tamamen ayrıdır.
+  const [mobilGecmisAcik, setMobilGecmisAcik] = useState(false);
+  const mobilTutamakRef = useRef<{ baslangicY: number } | null>(null);
   const [masaustu, setMasaustu] = useState(false);
 
   useEffect(() => {
@@ -256,15 +193,41 @@ export default function OwnerAssistantPanel({
     }
   }
 
-  // Panel açıkken vitrindeki TÜM doldurulabilir yerler sürekli hafif ışıklı
-  // dursun (Vixrex Asistan rehberli tamamlama, ADR 0002) — yalnız o an
-  // seçili olan değil. Sınıf `body`'ye eklenir, gerçek stil globals.css'te
-  // `[data-vixrex-editable]` üzerinden çalışır — bu öznitelik yalnız sahip
-  // modunda DOM'a girdiği için müşteri görünümü hiç etkilenmez.
+  // Panel açık/kapalı durumunu body sınıfında tut. Bu sınıf artık vitrindeki
+  // bütün düzenlenebilir alanları topluca ışıklandırmaz; masaüstü/tablet
+  // kabuğundaki panel davranışları için korunur. Tuval vurgusu yalnız hover
+  // ve seçili tek alan üzerinden globals.css'te yönetilir.
   useEffect(() => {
     document.body.classList.toggle("vixrex-asistan-acik", acik);
     return () => document.body.classList.remove("vixrex-asistan-acik");
   }, [acik]);
+
+  const mobilGecmisiAc = () => {
+    setHaritaAcik(false);
+    setSekme("sohbet");
+    setMobilGecmisAcik(true);
+  };
+
+  const mobilTutamakBasla = (olay: ReactPointerEvent<HTMLDivElement>) => {
+    if (window.matchMedia("(min-width: 640px)").matches) return;
+    mobilTutamakRef.current = { baslangicY: olay.clientY };
+    olay.currentTarget.setPointerCapture?.(olay.pointerId);
+  };
+
+  const mobilTutamakBitir = (olay: ReactPointerEvent<HTMLDivElement>) => {
+    const baslangic = mobilTutamakRef.current;
+    mobilTutamakRef.current = null;
+    if (!baslangic) return;
+    const fark = baslangic.baslangicY - olay.clientY;
+    if (fark > 28) {
+      mobilGecmisiAc();
+    } else if (fark < -28) {
+      setMobilGecmisAcik(false);
+    }
+    if (olay.currentTarget.hasPointerCapture?.(olay.pointerId)) {
+      olay.currentTarget.releasePointerCapture?.(olay.pointerId);
+    }
+  };
 
   const { yerelTaslak, setAlan, rapor, atlanmisAlanlar, alanAtlandi } = useOwnerDraft(
     slug,
@@ -289,9 +252,16 @@ export default function OwnerAssistantPanel({
       mesajEkle,
       onAlanSecildi: () => {
         setAcik(true);
-        // Mobilde harita çekilir: esnaf düzenlediği yeri görsün.
-        if (!window.matchMedia("(min-width: 640px)").matches) {
+        if (window.matchMedia("(min-width: 640px)").matches) {
+          // Masaüstü/tablet: vitrindeki bir alana tıklamak doğrudan o alanın
+          // araçlarını gösterir. Sohbetin içine kart yığmak yerine "Alanlar"
+          // sekmesi tek düzenleme yüzeyi olur.
+          setSekme("alanlar");
+          setHaritaAcik(true);
+        } else {
+          // Telefon: onaylanan compact composer davranışı korunur.
           setHaritaAcik(false);
+          setMobilGecmisAcik(false);
         }
       },
     });
@@ -597,11 +567,21 @@ export default function OwnerAssistantPanel({
         onOnizleme={() => setAcik((onceki) => !onceki)}
         onAyarlar={() => {
           setAcik(true);
-          setHaritaAcik((onceki) => !onceki);
+          setSekme("alanlar");
+          setHaritaAcik(true);
         }}
-        onYayinla={actions.yayinla}
+        onYayinla={
+          rapor.temelTamam
+            ? actions.yayinla
+            : async () => {
+                setAcik(true);
+                setSekme("eksikler");
+                setHaritaAcik(false);
+              }
+        }
         onYasalOnayGerek={() => {
           setAcik(true);
+          setSekme("eksikler");
           setHaritaAcik(false);
         }}
       />
@@ -620,39 +600,68 @@ export default function OwnerAssistantPanel({
         />
       )}
 
-      {/* Canonical Vixrex düğmesi */}
-      <button
-        type="button"
-        onClick={() => {
-          const yeni = !acik;
-          setAcik(yeni);
-          // Harita açılmaz (Faz A, Tek Asistan planı, 2026-09-02): maskot
-          // rehberi başlatır, aşağıdaki etki ilk eksik alanı seçer, sayfada
-          // sembol ve balon görünür, vitrin görünür kalır. Harita yalnız
-          // balondaki ☰ ile ("Tüm alanlar") elle açılır — masaüstünde de.
-          //
-          // Tek istisna: doldurulacak alan kalmadıysa seçilecek bir şey de
-          // yok — o zaman harita otomatik açılır, yoksa asistan açılmış
-          // ama ekranda hiçbir şey yokmuş gibi görünürdü.
-          const yapilacakVar = Boolean(
-            sonrakiRehberAlan(yerelTaslak, null, atlanmisAlanlar),
-          );
-          setHaritaAcik(yeni && !yapilacakVar);
-        }}
-        className="fixed bottom-5 right-5 z-[75] flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-3 text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transition lg:hidden"
-        aria-label="Vixrex Asistan"
-        aria-expanded={acik}
-      >
-        <VixrexAvatar size={28} decorative />
-        <span className="text-sm font-semibold hidden sm:inline">Vixrex Asistan</span>
-        {!rapor.temelTamam && (
-          <span className="ml-1 rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-bold text-slate-900">
-            %{rapor.yuzde}
-          </span>
-        )}
-      </button>
+      {/* Mobil: compact mesaj dock'u. Mesaj kutusu ana öğedir; canonical
+       * Vixrex maskotu SAĞDA kalır. Sayaç/aşama/eksik bilgi bu dar yüzde
+       * gösterilmez. Yukarı sürükleme veya maskota dokunma geçmişi açar. */}
+      {!masaustu && !haritaAcik ? (
+        <div
+          data-vixrex-mobile-dock="true"
+          className="fixed inset-x-3 z-[76] rounded-[1.35rem] border border-sky-200/20 bg-[#081422]/[0.98] px-2.5 pb-2.5 pt-1.5 shadow-2xl backdrop-blur-xl sm:hidden"
+          style={{ bottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
+        >
+          <div
+            role="separator"
+            aria-orientation="horizontal"
+            aria-label="Sohbet geçmişini açmak için yukarı çek"
+            onPointerDown={mobilTutamakBasla}
+            onPointerUp={mobilTutamakBitir}
+            onPointerCancel={() => {
+              mobilTutamakRef.current = null;
+            }}
+            onDoubleClick={mobilGecmisiAc}
+            className="flex h-5 touch-none select-none items-center justify-center"
+          >
+            <span className="h-1 w-10 rounded-full bg-slate-400/70" />
+          </div>
 
-      {acik && (
+          <FieldInputArea
+            compact
+            trailing={
+              <button
+                type="button"
+                aria-label="Sohbet geçmişini aç"
+                onClick={mobilGecmisiAc}
+                className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-sky-400/45 bg-[#0D1B2D] shadow-[0_0_16px_rgba(14,165,233,0.20)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70"
+              >
+                <VixrexAvatar size={44} decorative />
+              </button>
+            }
+            seciliAlan={seciliAlan}
+            giris={giris}
+            girisRef={girisRef}
+            kaydediliyor={actions.kaydediliyor}
+            geriAliniyor={fieldRestore.geriAliniyor}
+            hazirGorseller={actions.hazirGorseller}
+            hazirYukleniyor={actions.hazirYukleniyor}
+            mevcutIl={mevcutIl}
+            mevcutIlce={mevcutIlce}
+            setGiris={setGiris}
+            gorselYukle={actions.gorselYukle}
+            hazirGorselleriAc={actions.hazirGorselleriAc}
+            hazirGorselSec={actions.hazirGorselSec}
+            gonder={actions.gonder}
+            alanAtla={actions.alanAtla}
+            canliyaDondur={fieldRestore.canliyaDondur}
+            sonrayaBirak={sonrayaBirak}
+            onIlDegisti={handleIlDegisti}
+            onIlceDegisti={handleIlceDegisti}
+            onGpsKonumAl={handleGpsKonumAl}
+            gpsLoading={gpsLoading}
+          />
+        </div>
+      ) : null}
+
+      {(masaustu ? acik : mobilGecmisAcik || haritaAcik) && (
         // 2026-09-03 (Çalışma masası / Yön C, Faz 3) — Casper'ın kararı:
         // yazma yeri panelin ALT ŞERİDİNDE ve asistan açıkken HEP açık,
         // "Tüm alanlar" (☰) kapalıyken de. Önceki hâlde bu kutu yalnız
@@ -670,7 +679,7 @@ export default function OwnerAssistantPanel({
         // maskot olsun", tam ekran kaplayan bir panel mobilde istenmedi).
         //
         // 2026-09-03 (Casper'ın onayladığı "C" tasarım tuvaline sadakat
-        // düzeltmesi, iki turda): tuvalde asistan sağda 460px, EKRANIN
+        // düzeltmesi, iki turda): tuvalde asistan sağda rail tokenı kadar, EKRANIN
         // TAMAMI kadar yükseklikte, başlığı/SIRADA'sı HER ZAMAN görünen,
         // hep açık bir panel olarak tasarlanmıştı — burada (Faz 1-5
         // yazılırken) sessizce alt köşede kapalı-varsayılan, başlıksız
@@ -683,7 +692,7 @@ export default function OwnerAssistantPanel({
         // true olur (aşağı bkz. masaustuIlkAcilisRef). Başlık (ChatTopBar) +
         // SIRADA artık `haritaAcik`ten bağımsız, panel açıkken hep çizilir
         // (aşağıda). Mobil davranış hiç değişmedi.
-        <div className="fixed inset-x-3 bottom-24 z-[75] flex max-h-[calc(100vh-8rem)] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0B1120] shadow-2xl lg:bg-[#0E1729] sm:inset-x-auto sm:inset-y-auto sm:top-9 sm:bottom-5 sm:right-5 sm:max-h-none sm:w-[460px] lg:bottom-0 lg:right-0 lg:top-[var(--owner-bar-h)] lg:w-[var(--owner-rail-w)] lg:rounded-none lg:border-y-0 lg:border-r-0 lg:shadow-none">
+        <div data-vixrex-mobile-details={haritaAcik ? "true" : "false"} className="vixrex-owner-assistant-shell fixed inset-x-3 bottom-24 z-[75] flex max-h-[calc(100vh-8rem)] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0B1120] shadow-2xl lg:bg-[#0E1729] sm:inset-x-auto sm:inset-y-auto sm:top-9 sm:bottom-5 sm:right-5 sm:max-h-none sm:w-[460px] lg:bottom-0 lg:right-0 lg:top-[var(--owner-bar-h)] lg:w-[var(--owner-rail-w)] lg:rounded-none lg:border-y-0 lg:border-r-0 lg:shadow-none">
           {/* 2026-09-03 (Casper'ın onayladığı "C" tasarımına sadakat, ikinci
            * tur): tuvalde maskot+"Vixrex Asistan"+%hazır başlığı ve SIRADA
            * listesi panel her açıldığında GÖRÜNÜRDÜ — "☰ Tüm alanlar" gibi
@@ -697,231 +706,15 @@ export default function OwnerAssistantPanel({
            * "sihirbaz kalabalığı kalksın" kararı bunlar için hâlâ geçerli). */}
           <ChatTopBar
             rapor={rapor}
-            onKapat={() => (masaustu ? setAcik(false) : setHaritaAcik(false))}
+            onKapat={() => (masaustu ? setAcik(false) : haritaAcik ? setHaritaAcik(false) : setMobilGecmisAcik(false))}
           />
 
-          <div className="flex shrink-0 gap-1 border-b border-white/10 px-3 pt-2">
-            {(["sohbet", "oneriler"] as const).map((deger) => (
-              <button
-                key={deger}
-                type="button"
-                onClick={() => setSekme(deger)}
-                className={`flex-1 rounded-t-lg px-3 py-2 text-[12px] font-bold transition ${
-                  sekme === deger
-                    ? "border-b-2 border-sky-400 bg-white/[0.04] text-white"
-                    : "border-b-2 border-transparent text-slate-400 hover:text-slate-200"
-                }`}
-              >
-                {deger === "sohbet" ? "Sohbet" : "Öneriler"}
-              </button>
-            ))}
-          </div>
-
-          <div className="shrink-0 space-y-2 px-3 py-3">
-            <div className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-[12px] font-bold text-white">Vitrindeki tüm bilgiler</p>
-                <p className="text-[11px] font-semibold text-slate-400">
-                  {rapor.doluSayisi}/{rapor.toplamSayisi} bilgi dolu
-                </p>
-              </div>
-              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-emerald-500 transition-all duration-500"
-                  style={{ width: `${rapor.yuzde}%` }}
-                />
-              </div>
-            </div>
-
-            {seciliAlan ? (
-              <div className="rounded-xl border border-sky-400/30 bg-sky-500/[0.08] px-3 py-2.5">
-                <p className="text-[12px] font-bold text-white">
-                  Seçili alan: {seciliAlan.etiket}
-                </p>
-                {seciliAlan.neden ? (
-                  <p className="mt-1 text-[11px] font-medium leading-snug text-slate-400">
-                    {seciliAlan.neden}
-                  </p>
-                ) : null}
-                <button
-                  type="button"
-                  onClick={() => setHaritaAcik(true)}
-                  className="mt-2 w-full rounded-lg bg-white/[0.06] px-3 py-1.5 text-[11px] font-bold text-sky-300 transition hover:bg-white/10"
-                >
-                  Alan ayarlarını düzenle →
-                </button>
-              </div>
-            ) : null}
-
-            {eksikTemelSayisi > 0 ? (
-              <button
-                type="button"
-                onClick={() => setHaritaAcik(true)}
-                className="flex w-full items-center gap-3 rounded-xl border border-amber-400/25 bg-amber-500/[0.08] px-3 py-2.5 text-left transition hover:bg-amber-500/[0.14]"
-              >
-                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-amber-400/20 text-[12px] font-black text-amber-300">
-                  !
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-[12px] font-bold text-white">
-                    Yayın için {eksikTemelSayisi} gerekli bilgi eksik
-                  </span>
-                  <span className="block text-[11px] font-medium text-slate-400">
-                    Bu bilgileri tamamladığında vitrini yayınlayabilirsin.
-                  </span>
-                </span>
-                <span className="shrink-0 text-slate-500">›</span>
-              </button>
-            ) : null}
-          </div>
-
-          {sekme === "oneriler" ? (
-            <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 pb-3">
-              {yonetimOnerileriUret(
-                yerelTaslak,
-                urunFiyatsizSayisi,
-                urunAciklamasizSayisi
-              ).map((oneri, sira) => (
-                <div
-                  key={`${sira}-${oneri.mesaj.slice(0, 24)}`}
-                  className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-[12px] font-medium text-slate-200"
-                >
-                  {oneri.mesaj}
-                </div>
-              ))}
-              {yonetimOnerileriUret(
-                yerelTaslak,
-                urunFiyatsizSayisi,
-                urunAciklamasizSayisi
-              ).length === 0 ? (
-                <p className="px-1 py-6 text-center text-[12px] font-medium text-slate-500">
-                  Şu an bekleyen bir öneri yok.
-                </p>
-              ) : null}
-            </div>
-          ) : null}
-
-          {hesapBagliDegil ? (
-            <div className={haritaAcik ? "" : "lg:hidden"}>
-              <HesapBaglaSeridi slug={slug} />
-            </div>
-          ) : null}
-
-          {oturumSaniye !== null && oturumSaniye < 300 ? (
-            <p className="border-b border-white/10 px-4 py-2 text-[11px] font-semibold text-amber-400">
-              Oturunun bitmesine az kaldı — değişikliklerin kayıtlı.
-            </p>
-          ) : null}
-
-          {haritaAcik && (
-            <UpNextList
-              yerelTaslak={yerelTaslak}
-              suankiAnahtar={seciliAlan?.anahtar ?? null}
-              atlanmisAlanlar={atlanmisAlanlar}
-              alanSec={alanSec}
-              alanAtla={alanAtlandi}
-            />
-          )}
-
-          {haritaAcik && (
-            <div className="min-h-0 flex-1 overflow-y-auto">
-                {/* Bölüm listesi ekranın yarısını kaplıyordu; artık kapalı
-                 * duran bir açılırın içinde — isteyen açar. */}
-                <details className="border-b border-white/10">
-                  <summary className="cursor-pointer list-none px-4 py-2.5 text-[11px] font-black uppercase tracking-[0.14em] text-slate-400 hover:text-slate-200">
-                    Tüm bölümler
-                  </summary>
-                  <SectionProgressList yerelTaslak={yerelTaslak} alanSec={alanSec} />
-                </details>
-
-                <SectionVisibilityToggle
-                  slug={slug}
-                  visibility={yerelTaslak.section_visibility as Record<string, boolean> | null}
-                  setAlan={setAlan}
-                  mesajEkle={mesajEkle}
-                />
-
-                <BookingSettingsPanel
-                  slug={slug}
-                  mevcutAyarlar={bookingSettings as { is_enabled: boolean; capacity: number; working_hours: Record<string, { start: string; end: string; active: boolean }>; lunch_break: { start: string; end: string; active: boolean } } | null}
-                />
-
-                {/* Hakkımızda / SSS / Kampanya / Galeri / Pazaryeri düzenleme kartları */}
-                <div className="border-t border-white/10 px-4 py-3 space-y-1">
-                  <p className="mb-1 text-[11px] font-semibold text-white/40 uppercase tracking-wider">İçerik Düzenleme</p>
-                  <button
-                    type="button"
-                    onClick={() => setAboutAcik(true)}
-                    className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-white/70 hover:bg-white/5 transition text-left"
-                  >
-                    <span>ℹ️</span>
-                    <span className="flex-1 font-medium text-[13px]">Hakkımızda</span>
-                    <span className="text-[10px] text-white/30">{aboutSection?.title ? "Dolu" : "Boş"}</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setGaleriAcik(true)}
-                    className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-white/70 hover:bg-white/5 transition text-left"
-                  >
-                    <span>🖼️</span>
-                    <span className="flex-1 font-medium text-[13px]">Galeri</span>
-                    <span className="text-[10px] text-white/30">{galleryItems && galleryItems.length > 0 ? `${galleryItems.length} görsel` : "Boş"}</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setMarketplaceAcik(true)}
-                    className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-white/70 hover:bg-white/5 transition text-left"
-                  >
-                    <span>🛒</span>
-                    <span className="flex-1 font-medium text-[13px]">Pazaryeri Bağlantıları</span>
-                    <span className="text-[10px] text-white/30">{marketplaceLinks && marketplaceLinks.length > 0 ? `${marketplaceLinks.length} link` : "Boş"}</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFaqAcik(true)}
-                    className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-white/70 hover:bg-white/5 transition text-left"
-                  >
-                    <span>❓</span>
-                    <span className="flex-1 font-medium text-[13px]">Sık Sorulan Sorular</span>
-                    <span className="text-[10px] text-white/30">{faqItems && faqItems.length > 0 ? `${faqItems.length} soru` : "Boş"}</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setKampanyaAcik(true)}
-                    className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-white/70 hover:bg-white/5 transition text-left"
-                  >
-                    <span>🎯</span>
-                    <span className="flex-1 font-medium text-[13px]">Öne Çıkan Kampanya</span>
-                    <span className="text-[10px] text-white/30">{campaignBanner?.title ? "Dolu" : "Boş"}</span>
-                  </button>
-                </div>
-            </div>
-          )}
-
-          {/* Sohbet akışı — kendi kaydırma alanında, kendi otomatik-aşağı-
-           * kaydırma mantığı (useOwnerChat.akisRef) değişmedi.
-           *
-           * 2026-09-03 ölçüm düzenlemesi (2. tur): "Faz G3.1: ÇIKAR sohbet
-           * akışının paneli kaplaması" kararıyla bu kutu `max-h-40` (sonra
-           * `max-h-[20vh]/[32vh]`) gibi SABİT bir tavana bağlanmıştı — o
-           * zamanki panel tasarımında sohbet büyüyüp paneli kaplıyordu.
-           * Ama şimdiki panel (Faz C) `flex flex-col` ve TOPLAM yüksekliği
-           * zaten sabit (sm:top-9 sm:bottom-5) — başlık/SIRADA/yazı kutusu
-           * kendi boylarını koruyor. Sabit tavan burada paneli kaplama
-           * riskini önlemiyordu, tam tersi bir kusur yaratıyordu: harita
-           * kapalıyken (varsayılan) hiçbir kardeş öge büyüyüp boşluğu
-           * doldurmadığından tavanın altındaki alan boş kalıyor, yazı kutusu
-           * panelin ortasında asılı kalıyordu (Casper canlıda gördü, ekran
-           * görüntüsüyle işaretledi). `min-h-0 flex-1` — haritaAcik dolgu
-           * kutusunun (yukarıda, satır ~643) zaten kullandığı desen — kalan
-           * boşluğu doldurur, yazı kutusu panelin dibine yapışır; panel
-           * yüksekliği sabit olduğu için taşıp "kaplama" riski yok.
-           * Kaydırma şeridi ince, koyu panele uyumlu kalmaya devam ediyor
-           * (bkz. .vixrex-panel-kaydirici, globals.css). */}
-          {sekme === "sohbet" ? (
+          {/* Telefon geçmişi: mobil PR #545'in onaylanan davranışı.
+           * Masaüstü yeniden düzeni bu kola dokunmaz. */}
+          {!masaustu && mobilGecmisAcik && !haritaAcik ? (
             <div
               ref={akisRef}
-              className="vixrex-panel-kaydirici min-h-0 flex-1 space-y-2 overflow-y-auto border-t border-white/10 px-4 py-3"
+              className="vixrex-panel-kaydirici min-h-0 flex-1 space-y-2 overflow-y-auto px-4 py-3"
             >
               {mesajlar.map((m) => (
                 <ChatBubble key={m.id} mesaj={m} onHizliCevap={handleHizliCevap} />
@@ -929,67 +722,379 @@ export default function OwnerAssistantPanel({
             </div>
           ) : null}
 
-          {/* HEP AÇIK giriş şeridi (Faz 3). Eskiden yazı kutusu yalnız bir
-           * alana tıklanınca (SpotlightGuide balonunda) açılıyordu; tıklamayan
-           * esnaf "hangi alanı değiştireceğini bilmiyorum" cevabını alıyordu.
-           * Artık buraya her zaman yazılabilir: alan seçiliyse o alana
-           * kaydeder, seçili değilse akıllı motor cümleden alanı kendi bulur
-           * (useOwnerActions.gonder). TEK giriş bileşeni — StepCard'ın da
-           * kullandığı FieldInputArea, ikinci bir kopyası değil; görsel/
-           * seçim/il-ilçe/GPS için gereken özel kutuları da o çizer. */}
-          <div className="shrink-0 border-t border-white/10 px-3 py-2">
-            <FieldInputArea
-              seciliAlan={seciliAlan}
-              giris={giris}
-              girisRef={girisRef}
-              kaydediliyor={actions.kaydediliyor}
-              geriAliniyor={fieldRestore.geriAliniyor}
-              hazirGorseller={actions.hazirGorseller}
-              hazirYukleniyor={actions.hazirYukleniyor}
-              mevcutIl={mevcutIl}
-              mevcutIlce={mevcutIlce}
-              setGiris={setGiris}
-              gorselYukle={actions.gorselYukle}
-              hazirGorselleriAc={actions.hazirGorselleriAc}
-              hazirGorselSec={actions.hazirGorselSec}
-              gonder={actions.gonder}
-              alanAtla={actions.alanAtla}
-              canliyaDondur={fieldRestore.canliyaDondur}
-              sonrayaBirak={sonrayaBirak}
-              onIlDegisti={handleIlDegisti}
-              onIlceDegisti={handleIlceDegisti}
-              onGpsKonumAl={handleGpsKonumAl}
-              gpsLoading={gpsLoading}
-            />
-          </div>
+          {/* Telefonda "Tüm alanlar" ayrıntı yüzeyi eski araçları korur.
+           * Compact composer / sohbet geçmişi sözleşmesi değişmez. */}
+          {!masaustu && haritaAcik ? (
+            <>
+              <div className="min-h-0 flex-1 overflow-y-auto">
+                <UpNextList
+                  yerelTaslak={yerelTaslak}
+                  suankiAnahtar={seciliAlan?.anahtar ?? null}
+                  atlanmisAlanlar={atlanmisAlanlar}
+                  alanSec={alanSec}
+                  alanAtla={alanAtlandi}
+                />
+                <SectionProgressList yerelTaslak={yerelTaslak} alanSec={alanSec} />
+                <SectionVisibilityToggle
+                  slug={slug}
+                  visibility={yerelTaslak.section_visibility as Record<string, boolean> | null}
+                  setAlan={setAlan}
+                  mesajEkle={mesajEkle}
+                />
+                <BookingSettingsPanel
+                  slug={slug}
+                  mevcutAyarlar={bookingSettings as { is_enabled: boolean; capacity: number; working_hours: Record<string, { start: string; end: string; active: boolean }>; lunch_break: { start: string; end: string; active: boolean } } | null}
+                />
+              </div>
+              <div className="shrink-0 border-t border-white/10 px-3 py-2">
+                <FieldInputArea
+                  seciliAlan={seciliAlan}
+                  giris={giris}
+                  girisRef={girisRef}
+                  kaydediliyor={actions.kaydediliyor}
+                  geriAliniyor={fieldRestore.geriAliniyor}
+                  hazirGorseller={actions.hazirGorseller}
+                  hazirYukleniyor={actions.hazirYukleniyor}
+                  mevcutIl={mevcutIl}
+                  mevcutIlce={mevcutIlce}
+                  setGiris={setGiris}
+                  gorselYukle={actions.gorselYukle}
+                  hazirGorselleriAc={actions.hazirGorselleriAc}
+                  hazirGorselSec={actions.hazirGorselSec}
+                  gonder={actions.gonder}
+                  alanAtla={actions.alanAtla}
+                  canliyaDondur={fieldRestore.canliyaDondur}
+                  sonrayaBirak={sonrayaBirak}
+                  onIlDegisti={handleIlDegisti}
+                  onIlceDegisti={handleIlceDegisti}
+                  onGpsKonumAl={handleGpsKonumAl}
+                  gpsLoading={gpsLoading}
+                />
+              </div>
+              <div className="shrink-0 border-t border-white/10 px-4 py-3">
+                <PublishBar
+                  yayinlaniyor={actions.yayinlaniyor}
+                  silmeOnayi={actions.silmeOnayi}
+                  yayinla={actions.yayinla}
+                  silmeOnayla={actions.silmeOnayla}
+                  sil={actions.sil}
+                  setSilmeOnayi={actions.setSilmeOnayi}
+                  temelTamam={rapor.temelTamam}
+                  eksikTemelSayisi={eksikTemelSayisi}
+                  kiralikVitrinMi={kiralikVitrinMi}
+                  premiumAktifMi={premiumAktifMi}
+                  yasalOnayli={yasalOnayli}
+                  onayVeriliyor={actions.onayVeriliyor}
+                  onayVer={actions.onayVer}
+                />
+              </div>
+            </>
+          ) : null}
 
-          {/* Adım 9 (sahiplik ekranı gözden geçirme, 2026-09-03): Yayınla
-           * eskiden yalnız "Tüm alanlar" (haritaAcik) açıkken görünen ikincil
-           * bir bölümün içindeydi — panelin asıl SONUCU ikinci sekmede
-           * saklanıyordu. Artık composer'ın hemen altında, harita açık
-           * olsun olmasın hep görünen sabit bir şerit. */}
-          <div className={`shrink-0 border-t border-white/10 px-4 py-3 ${haritaAcik ? "" : "lg:hidden"}`}>
-            <p className="pb-2 text-[11px] font-semibold text-slate-400">
-              {yayinlanmamisDegisiklik
-                ? "Yayınlanmamış değişikliklerin var — hazır olduğunda yayınla."
-                : "Vitrinin yayındaki hâliyle aynı."}
-            </p>
-            <PublishBar
-              yayinlaniyor={actions.yayinlaniyor}
-              silmeOnayi={actions.silmeOnayi}
-              yayinla={actions.yayinla}
-              silmeOnayla={actions.silmeOnayla}
-              sil={actions.sil}
-              setSilmeOnayi={actions.setSilmeOnayi}
-              temelTamam={rapor.temelTamam}
-              eksikTemelSayisi={eksikTemelSayisi}
-              kiralikVitrinMi={kiralikVitrinMi}
-              premiumAktifMi={premiumAktifMi}
-              yasalOnayli={yasalOnayli}
-              onayVeriliyor={actions.onayVeriliyor}
-              onayVer={actions.onayVer}
-            />
-          </div>
+          {/* Masaüstü/tablet: sohbet, alanlar ve eksikler birbirinden ayrılır.
+           * Aynı veri/aynı NLU/aynı yazma fonksiyonları kullanılır; yalnız
+           * çalışan araçların ekrandaki yeri değişir. */}
+          {masaustu ? (
+            <>
+              <div
+                data-vixrex-desktop-tabs="true"
+                className="grid shrink-0 grid-cols-3 border-b border-white/10"
+              >
+                {([
+                  ["sohbet", "Sohbet"],
+                  ["alanlar", "Alanlar"],
+                  ["eksikler", "Eksikler"],
+                ] as const).map(([deger, etiket]) => (
+                  <button
+                    key={deger}
+                    type="button"
+                    onClick={() => {
+                      setSekme(deger);
+                      setHaritaAcik(deger === "alanlar");
+                    }}
+                    className={`border-b-2 px-3 py-3 text-[11px] font-black transition ${
+                      sekme === deger
+                        ? "border-sky-400 bg-white/[0.035] text-white"
+                        : "border-transparent text-slate-500 hover:text-slate-200"
+                    }`}
+                  >
+                    {etiket}
+                    {deger === "eksikler" && eksikTemelSayisi > 0 ? (
+                      <span className="ml-1.5 rounded-full bg-amber-400/15 px-1.5 py-0.5 text-[9px] text-amber-300">
+                        {eksikTemelSayisi}
+                      </span>
+                    ) : null}
+                  </button>
+                ))}
+              </div>
+
+              {sekme === "sohbet" ? (
+                <>
+                  <div
+                    ref={akisRef}
+                    className="vixrex-panel-kaydirici min-h-0 flex-1 space-y-2 overflow-y-auto px-4 py-3"
+                  >
+                    {mesajlar.map((m) => (
+                      <ChatBubble key={m.id} mesaj={m} onHizliCevap={handleHizliCevap} />
+                    ))}
+                  </div>
+                  <div className="shrink-0 border-t border-white/10 px-3 py-2.5">
+                    <FieldInputArea
+                      compact
+                      seciliAlan={seciliAlan}
+                      giris={giris}
+                      girisRef={girisRef}
+                      kaydediliyor={actions.kaydediliyor}
+                      geriAliniyor={fieldRestore.geriAliniyor}
+                      hazirGorseller={actions.hazirGorseller}
+                      hazirYukleniyor={actions.hazirYukleniyor}
+                      mevcutIl={mevcutIl}
+                      mevcutIlce={mevcutIlce}
+                      setGiris={setGiris}
+                      gorselYukle={actions.gorselYukle}
+                      hazirGorselleriAc={actions.hazirGorselleriAc}
+                      hazirGorselSec={actions.hazirGorselSec}
+                      gonder={actions.gonder}
+                      alanAtla={actions.alanAtla}
+                      canliyaDondur={fieldRestore.canliyaDondur}
+                      sonrayaBirak={sonrayaBirak}
+                      onIlDegisti={handleIlDegisti}
+                      onIlceDegisti={handleIlceDegisti}
+                      onGpsKonumAl={handleGpsKonumAl}
+                      gpsLoading={gpsLoading}
+                    />
+                    <div className="mt-1.5 flex items-center justify-between px-1 text-[9px] font-medium text-slate-600">
+                      <span>Enter gönderir · Shift+Enter yeni satır</span>
+                      <span>Tek mesajla birden fazla alan</span>
+                    </div>
+                  </div>
+                </>
+              ) : null}
+
+              {sekme === "alanlar" ? (
+                <>
+                  <div className="vixrex-panel-kaydirici min-h-0 flex-1 overflow-y-auto">
+                    {seciliAlan ? (
+                      <div className="border-b border-white/10 px-4 py-3">
+                        <div className="rounded-xl border border-sky-400/25 bg-sky-500/[0.07] px-3 py-2.5">
+                          <p className="text-[11px] font-black uppercase tracking-[0.08em] text-sky-300">
+                            Seçili alan
+                          </p>
+                          <p className="mt-1 text-[13px] font-bold text-white">
+                            {seciliAlan.etiket}
+                          </p>
+                          {seciliAlan.neden ? (
+                            <p className="mt-1 text-[10px] leading-relaxed text-slate-400">
+                              {seciliAlan.neden}
+                            </p>
+                          ) : null}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    <SectionProgressList yerelTaslak={yerelTaslak} alanSec={alanSec} />
+
+                    <SectionVisibilityToggle
+                      slug={slug}
+                      visibility={yerelTaslak.section_visibility as Record<string, boolean> | null}
+                      setAlan={setAlan}
+                      mesajEkle={mesajEkle}
+                    />
+
+                    <BookingSettingsPanel
+                      slug={slug}
+                      mevcutAyarlar={bookingSettings as { is_enabled: boolean; capacity: number; working_hours: Record<string, { start: string; end: string; active: boolean }>; lunch_break: { start: string; end: string; active: boolean } } | null}
+                    />
+
+                    <div className="border-t border-white/10 px-4 py-3">
+                      <p className="mb-2 text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">
+                        İçerik düzenleme
+                      </p>
+                      <div className="space-y-1">
+                        <button type="button" onClick={() => setAboutAcik(true)} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[12px] font-semibold text-slate-300 hover:bg-white/5">
+                          <span className="flex-1">Hakkımızda</span>
+                          <span className="text-[9px] text-slate-600">{aboutSection?.title ? "Dolu" : "Boş"}</span>
+                        </button>
+                        <button type="button" onClick={() => setGaleriAcik(true)} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[12px] font-semibold text-slate-300 hover:bg-white/5">
+                          <span className="flex-1">Galeri</span>
+                          <span className="text-[9px] text-slate-600">{galleryItems && galleryItems.length > 0 ? `${galleryItems.length} görsel` : "Boş"}</span>
+                        </button>
+                        <button type="button" onClick={() => setMarketplaceAcik(true)} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[12px] font-semibold text-slate-300 hover:bg-white/5">
+                          <span className="flex-1">Pazaryeri bağlantıları</span>
+                          <span className="text-[9px] text-slate-600">{marketplaceLinks && marketplaceLinks.length > 0 ? `${marketplaceLinks.length} link` : "Boş"}</span>
+                        </button>
+                        <button type="button" onClick={() => setFaqAcik(true)} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[12px] font-semibold text-slate-300 hover:bg-white/5">
+                          <span className="flex-1">Sık Sorulan Sorular</span>
+                          <span className="text-[9px] text-slate-600">{faqItems && faqItems.length > 0 ? `${faqItems.length} soru` : "Boş"}</span>
+                        </button>
+                        <button type="button" onClick={() => setKampanyaAcik(true)} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[12px] font-semibold text-slate-300 hover:bg-white/5">
+                          <span className="flex-1">Öne Çıkan Kampanya</span>
+                          <span className="text-[9px] text-slate-600">{campaignBanner?.title ? "Dolu" : "Boş"}</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="shrink-0 border-t border-white/10 px-3 py-2.5">
+                    <FieldInputArea
+                      seciliAlan={seciliAlan}
+                      giris={giris}
+                      girisRef={girisRef}
+                      kaydediliyor={actions.kaydediliyor}
+                      geriAliniyor={fieldRestore.geriAliniyor}
+                      hazirGorseller={actions.hazirGorseller}
+                      hazirYukleniyor={actions.hazirYukleniyor}
+                      mevcutIl={mevcutIl}
+                      mevcutIlce={mevcutIlce}
+                      setGiris={setGiris}
+                      gorselYukle={actions.gorselYukle}
+                      hazirGorselleriAc={actions.hazirGorselleriAc}
+                      hazirGorselSec={actions.hazirGorselSec}
+                      gonder={actions.gonder}
+                      alanAtla={actions.alanAtla}
+                      canliyaDondur={fieldRestore.canliyaDondur}
+                      sonrayaBirak={sonrayaBirak}
+                      onIlDegisti={handleIlDegisti}
+                      onIlceDegisti={handleIlceDegisti}
+                      onGpsKonumAl={handleGpsKonumAl}
+                      gpsLoading={gpsLoading}
+                    />
+                  </div>
+                </>
+              ) : null}
+
+              {sekme === "eksikler" ? (
+                <div className="vixrex-panel-kaydirici min-h-0 flex-1 overflow-y-auto">
+                  {hesapBagliDegil ? <HesapBaglaSeridi slug={slug} /> : null}
+
+                  {oturumSaniye !== null && oturumSaniye < 300 ? (
+                    <p className="border-b border-white/10 px-4 py-2 text-[10px] font-semibold text-amber-400">
+                      Oturumunun bitmesine az kaldı — değişikliklerin kayıtlı.
+                    </p>
+                  ) : null}
+
+                  <UpNextList
+                    yerelTaslak={yerelTaslak}
+                    suankiAnahtar={seciliAlan?.anahtar ?? null}
+                    atlanmisAlanlar={atlanmisAlanlar}
+                    alanSec={(anahtar) => {
+                      setSekme("alanlar");
+                      setHaritaAcik(true);
+                      alanSec(anahtar);
+                    }}
+                    alanAtla={alanAtlandi}
+                  />
+
+                  <div className="border-b border-white/10 px-4 py-3">
+                    <p className="mb-2 text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">
+                      Yayın için gerekli
+                    </p>
+                    <div className="space-y-1.5">
+                      {rapor.eksikler.filter((e) => e.onem === "temel").map((eksik) => (
+                        <button
+                          key={eksik.anahtar}
+                          type="button"
+                          onClick={() => {
+                            setSekme("alanlar");
+                            setHaritaAcik(true);
+                            alanSec(eksik.anahtar);
+                          }}
+                          className="flex w-full items-center gap-3 rounded-xl border border-amber-400/20 bg-amber-500/[0.07] px-3 py-2.5 text-left hover:bg-amber-500/[0.12]"
+                        >
+                          <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-amber-400/15 text-[11px] font-black text-amber-300">!</span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-[11px] font-bold text-white">{eksik.etiket}</span>
+                            <span className="mt-0.5 block text-[9px] text-slate-500">Tamamlamak için aç</span>
+                          </span>
+                          <span className="text-slate-600">›</span>
+                        </button>
+                      ))}
+                      {eksikTemelSayisi === 0 ? (
+                        <div className="rounded-xl border border-emerald-400/15 bg-emerald-500/[0.06] px-3 py-2.5 text-[11px] font-semibold text-emerald-300">
+                          Zorunlu bilgiler tamam.
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <div className="border-b border-white/10 px-4 py-3">
+                    <p className="mb-2 text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">
+                      Kalite önerileri
+                    </p>
+                    <div className="space-y-1.5">
+                      {rapor.eksikler.filter((e) => e.onem === "kalite").map((eksik) => (
+                        <button
+                          key={eksik.anahtar}
+                          type="button"
+                          onClick={() => {
+                            setSekme("alanlar");
+                            setHaritaAcik(true);
+                            alanSec(eksik.anahtar);
+                          }}
+                          className="flex w-full items-center gap-3 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2.5 text-left hover:bg-white/[0.06]"
+                        >
+                          <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-sky-400/10 text-[11px] font-black text-sky-300">+</span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-[11px] font-bold text-white">{eksik.etiket}</span>
+                            <span className="mt-0.5 block text-[9px] text-slate-500">Vitrini güçlendirir</span>
+                          </span>
+                          <span className="text-slate-600">›</span>
+                        </button>
+                      ))}
+
+                      {yonetimOnerileriUret(
+                        yerelTaslak,
+                        urunFiyatsizSayisi,
+                        urunAciklamasizSayisi
+                      ).map((oneri) => (
+                        <div
+                          key={oneri.id}
+                          className="rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2.5 text-[10px] leading-relaxed text-slate-300"
+                        >
+                          {oneri.mesaj}
+                        </div>
+                      ))}
+
+                      {rapor.eksikler.filter((e) => e.onem === "kalite").length === 0 &&
+                      yonetimOnerileriUret(
+                        yerelTaslak,
+                        urunFiyatsizSayisi,
+                        urunAciklamasizSayisi
+                      ).length === 0 ? (
+                        <p className="py-3 text-center text-[10px] font-medium text-slate-600">
+                          Şu an bekleyen bir kalite önerisi yok.
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <div className="px-4 py-3">
+                    <p className="pb-2 text-[10px] font-semibold text-slate-500">
+                      {yayinlanmamisDegisiklik
+                        ? "Yayınlanmamış değişikliklerin var."
+                        : "Vitrinin yayındaki hâliyle aynı."}
+                    </p>
+                    <PublishBar
+                      yayinlaniyor={actions.yayinlaniyor}
+                      silmeOnayi={actions.silmeOnayi}
+                      yayinla={actions.yayinla}
+                      silmeOnayla={actions.silmeOnayla}
+                      sil={actions.sil}
+                      setSilmeOnayi={actions.setSilmeOnayi}
+                      temelTamam={rapor.temelTamam}
+                      eksikTemelSayisi={eksikTemelSayisi}
+                      kiralikVitrinMi={kiralikVitrinMi}
+                      premiumAktifMi={premiumAktifMi}
+                      yasalOnayli={yasalOnayli}
+                      onayVeriliyor={actions.onayVeriliyor}
+                      onayVer={actions.onayVer}
+                      showPublishButton={false}
+                    />
+                  </div>
+                </div>
+              ) : null}
+            </>
+          ) : null}
         </div>
       )}
       {/* Hakkımızda / SSS / Kampanya düzenleme modalleri */}

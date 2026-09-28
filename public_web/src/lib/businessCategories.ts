@@ -1,11 +1,14 @@
 import categoryContract from "../../../shared/business_categories.json";
+import { productTemplateByKey } from "./productAttributeSchema";
 
 export interface BusinessCategoryCore {
   id: string;
   order: number;
   label: string;
   templateGroup: BusinessTemplateGroup;
+  productTemplateKey: string;
   aliases: string[];
+  aktif?: boolean;
 }
 
 export type BusinessTemplateGroup = "perakende" | "hizmet" | "gida" | "diger";
@@ -38,7 +41,8 @@ export function validateBusinessCategoryContract(
       !category.id ||
       ids.has(category.id) ||
       category.order !== index + 1 ||
-      !templateGroups.has(category.templateGroup)
+      !templateGroups.has(category.templateGroup) ||
+      !productTemplateByKey(category.productTemplateKey)
     ) {
       throw new Error(`Kategori ID/sıra sözleşmesi geçersiz: ${category.id}`);
     }
@@ -57,6 +61,10 @@ export function validateBusinessCategoryContract(
 export const BUSINESS_CATEGORIES =
   categoryContract.categories as BusinessCategoryCore[];
 validateBusinessCategoryContract(BUSINESS_CATEGORIES);
+
+export const AKTIF_BUSINESS_CATEGORIES = BUSINESS_CATEGORIES.filter(
+  (category) => category.aktif === true,
+);
 
 const BY_ID = new Map(BUSINESS_CATEGORIES.map((category) => [category.id, category]));
 const TERMS = new Map<string, string>();
@@ -94,6 +102,19 @@ export function resolveBusinessCategory(raw: string): BusinessCategoryCore | nul
  */
 export function kategoriUrlParcasi(id: string): string {
   return id.replace(/_/g, "-");
+}
+
+/**
+ * İşletme kategorisinden o vitrinin ürün şablonu. `stores.kategori` boşsa
+ * `stores.business_type` denenir; ikisi de çözülmezse genel şablona düşer.
+ */
+export function isletmeUrunSablonu(
+  kategori: string | null | undefined,
+  isletmeTipi?: string | null,
+): string {
+  const ham = String(kategori || "").trim() || String(isletmeTipi || "").trim();
+  if (!ham) return "generic";
+  return resolveBusinessCategory(ham)?.productTemplateKey || "generic";
 }
 
 /** URL parçasından kanonik kategoriye. Bilinmeyen parça için `null`. */

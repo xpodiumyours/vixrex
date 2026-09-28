@@ -22,7 +22,9 @@ describe("Faz F — tıklamalar artık Supabase'e de yazılıyor (GA'nın yanın
     const sayfa = oku("app/v/[slug]/urun/[productSlug]/page.tsx");
     expect(sayfa).toContain("<ProductViewTracker storeSlug={store.slug} productSlug={productSlug} />");
     const tracker = oku("components/ProductViewTracker.tsx");
-    expect(tracker).toContain('p_event_type: "product_view"');
+    expect(tracker).toContain('fetch("/api/vitrin-engagement"');
+    expect(tracker).toContain('eventType: "product_view"');
+    expect(tracker).not.toContain('.rpc("record_vitrin_engagement"');
   });
 
   it("hepsi aynı ziyaretçi anahtarını paylaşır — üç ayrı localStorage anahtarı yok", () => {

@@ -30,10 +30,12 @@ describe("OwnerAssistantPanel — yeni bir ekran elemanı yok", () => {
 describe("useOwnerActions.gonder() — mevcut kutuya bonus çıkarım katıldı", () => {
   const kaynak = oku("app/v/[slug]/hooks/useOwnerActions.ts");
 
-  it("yalnız gonder()'ın (metin girişi) başarılı akışının İÇİNDE tetiklenir — ayrı bir buton/kart yok", () => {
-    const gonderBaslangici = kaynak.indexOf("const gonder = useCallback(async () => {");
-    const cagriIndex = kaynak.indexOf("bonusAlanlariCikarVeKaydet(", gonderBaslangici);
-    expect(cagriIndex).toBeGreaterThan(gonderBaslangici);
+  it("yalnız başarılı alan-kayıt akışının İÇİNDE tetiklenir — ayrı bir buton/kart yok", () => {
+    // (2026-09-25) Alan kayıt yolu kaydetSeciliAlana'a ayrıldı; bonus
+    // çağrısı başarılı kaydın hemen sonrasında O FONKSİYONUN içinde.
+    const yolBaslangici = kaynak.indexOf("const kaydetSeciliAlana = useCallback");
+    const cagriIndex = kaynak.indexOf("bonusAlanlariCikarVeKaydet(", yolBaslangici);
+    expect(cagriIndex).toBeGreaterThan(yolBaslangici);
   });
 
   it("kısa/tek kelimelik cevaplarda gereksiz yere çalışmaz (uzunluk eşiği var)", () => {

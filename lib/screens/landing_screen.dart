@@ -359,10 +359,10 @@ class _LandingScreenState extends State<LandingScreen>
   /// tarayıcıya inen kodda, açıkta duruyordu. Anahtarlar kaldırıldı;
   /// yayındaki bir vitrin için gizli bağlantı gerekmez.
   static const Map<String, String> _landingDemoDrafts = {
-    'Aymira Giyim': 'demo-aymira-giyim',
-    'Lezzet Durağı': 'demo-lezzet-duragi',
-    'Nova Kuaför': 'demo-nova-kuafor',
-    'TeknoFix': 'demo-teknofix',
+    'Aymira Giyim': 'kiralik-aymira-giyim',
+    'Lezzet Durağı': 'kiralik-lezzet-duragi',
+    'Nova Kuaför': 'kiralik-nova-kuafor',
+    'TeknoFix': 'kiralik-teknofix',
   };
 
   void _navigateToPreview() {

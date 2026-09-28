@@ -12,6 +12,55 @@ export interface BlogSeoResult {
   recommendations: string[];
 }
 
+export const BLOG_YAYIN_ESIGI = 60;
+export const BLOG_BASLIK_EN_AZ = 30;
+export const BLOG_BASLIK_EN_FAZLA = 60;
+export const BLOG_OZET_EN_AZ = 80;
+export const BLOG_OZET_EN_FAZLA = 160;
+export const BLOG_EN_AZ_KELIME = 300;
+
+export function blogKelimeSayisi(metin: string): number {
+  const temiz = metin.trim();
+  return temiz ? temiz.split(/\s+/).length : 0;
+}
+
+/**
+ * Yayın için yapısal asgari: başlık/özet aralığı ve en az 300 kelime.
+ * Kalan ölçütler (kapak, hedef kelime, hedef şehir) puanı yükseltir ama
+ * yayını engellemez — bunlar sıralama iyileştirmesi, yazının var olması
+ * değil.
+ */
+export function blogYayinEngelleri(input: BlogSeoInput): string[] {
+  const engeller: string[] = [];
+  const title = input.title.trim();
+  const summary = input.summary.trim();
+  const kelime = blogKelimeSayisi(input.content);
+
+  if (!title) {
+    engeller.push("Başlık zorunludur.");
+  } else if (title.length < BLOG_BASLIK_EN_AZ || title.length > BLOG_BASLIK_EN_FAZLA) {
+    engeller.push(
+      `Başlık ${BLOG_BASLIK_EN_AZ}-${BLOG_BASLIK_EN_FAZLA} karakter olmalı (şu an ${title.length}).`
+    );
+  }
+
+  if (!summary) {
+    engeller.push("Özet (meta açıklaması) zorunludur.");
+  } else if (summary.length < BLOG_OZET_EN_AZ || summary.length > BLOG_OZET_EN_FAZLA) {
+    engeller.push(
+      `Özet ${BLOG_OZET_EN_AZ}-${BLOG_OZET_EN_FAZLA} karakter olmalı (şu an ${summary.length}).`
+    );
+  }
+
+  if (kelime < BLOG_EN_AZ_KELIME) {
+    engeller.push(
+      `İçerik en az ${BLOG_EN_AZ_KELIME} kelime olmalı (şu an ${kelime}).`
+    );
+  }
+
+  return engeller;
+}
+
 /** Flutter SeoAnalysisService ile aynı blog ölçütlerini uygular. */
 export function blogSeoAnalizi(input: BlogSeoInput): BlogSeoResult {
   let score = 0;
@@ -40,7 +89,7 @@ export function blogSeoAnalizi(input: BlogSeoInput): BlogSeoResult {
     score += 20;
   }
 
-  const wordCount = content ? content.split(/\s+/).length : 0;
+  const wordCount = blogKelimeSayisi(content);
   if (wordCount === 0) {
     recommendations.push("İçerik metni yazın (En az 300 kelime)");
   } else if (wordCount < 150) {

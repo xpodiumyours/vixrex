@@ -1,8 +1,10 @@
-export const MIN_PRODUCT_IMAGES = 3;
-export const MAX_PRODUCT_IMAGES = 11;
-export const MAX_PRODUCT_IMAGE_SOURCE_MEGABYTES = 5;
+import policyJson from "../../../shared/product_image_policy.json";
+
+export const MIN_PRODUCT_IMAGES = policyJson.minImages;
+export const MAX_PRODUCT_IMAGES = policyJson.maxImages;
+export const MAX_PRODUCT_IMAGE_SOURCE_MEGABYTES = policyJson.maxSourceMegabytes;
 export const MAX_PRODUCT_IMAGE_SOURCE_BYTES = MAX_PRODUCT_IMAGE_SOURCE_MEGABYTES * 1024 * 1024;
-export const MIN_PRODUCT_IMAGE_SOURCE_SHORT_EDGE = 1200;
+export const MIN_PRODUCT_IMAGE_SOURCE_SHORT_EDGE = policyJson.minSourceShortEdge;
 
 export interface ProductImageValidationResult {
   ok: boolean;
@@ -45,7 +47,7 @@ export function validateProductImageDimensions(
 
 function validateCountAndUrls(
   value: unknown,
-  options: { httpsOnly: boolean },
+  options: { httpsOnly: boolean; ignoreMinCount?: boolean },
 ): ProductImageValidationResult {
   if (!Array.isArray(value)) {
     return {
@@ -56,7 +58,7 @@ function validateCountAndUrls(
   }
 
   const imageUrls = normalizeProductImageUrls(value);
-  if (imageUrls.length < MIN_PRODUCT_IMAGES) {
+  if (!options.ignoreMinCount && imageUrls.length < MIN_PRODUCT_IMAGES) {
     return {
       ok: false,
       imageUrls,
@@ -125,4 +127,19 @@ export function validateProductImageUrls(value: unknown): ProductImageValidation
  */
 export function validateExternalProductImageUrls(value: unknown): ProductImageValidationResult {
   return validateCountAndUrls(value, { httpsOnly: false });
+}
+
+export function validateProductImageUrlsAllowingFewerImages(
+  value: unknown,
+): ProductImageValidationResult {
+  const base = validateCountAndUrls(value, { httpsOnly: true, ignoreMinCount: true });
+  if (!base.ok) return base;
+  if (base.imageUrls.some((url) => !managedProductImageUrl(url))) {
+    return {
+      ok: false,
+      imageUrls: base.imageUrls,
+      error: "Ürün fotoğraflarını Görsel ekle alanından yükleyin; dış bağlantı kullanılamaz.",
+    };
+  }
+  return base;
 }

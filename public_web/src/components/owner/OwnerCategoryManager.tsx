@@ -13,6 +13,7 @@ export interface OwnerCat {
 interface Props {
   storeSlug: string;
   categories: OwnerCat[];
+  varsayilanUrunTipi?: string;
   onRefresh: () => Promise<void>;
 }
 
@@ -21,12 +22,12 @@ const TEMPLATE_OPTIONS = PRODUCT_ATTRIBUTE_SCHEMA.templates.map((template) => ({
   label: template.label,
 }));
 
-export function OwnerCategoryManager({ storeSlug, categories, onRefresh }: Props) {
+export function OwnerCategoryManager({ storeSlug, categories, varsayilanUrunTipi = "generic", onRefresh }: Props) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [newName, setNewName] = useState("");
-  const [newTemplateKey, setNewTemplateKey] = useState("generic");
+  const [newTemplateKey, setNewTemplateKey] = useState(varsayilanUrunTipi);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [deletingCat, setDeletingCat] = useState<OwnerCat | null>(null);
@@ -48,7 +49,7 @@ export function OwnerCategoryManager({ storeSlug, categories, onRefresh }: Props
       const govde = await res.json();
       if (!res.ok) throw new Error(govde?.hata || "Oluşturulamadı.");
       setNewName("");
-      setNewTemplateKey("generic");
+      setNewTemplateKey(varsayilanUrunTipi);
       await refresh();
     } catch (e) { setError(e instanceof Error ? e.message : "Hata"); }
     finally { setBusy(false); }

@@ -1,6 +1,7 @@
 import { readFileSync } from "fs";
 import { resolve } from "path";
 import { describe, expect, it } from "vitest";
+import { AYLIK_PREMIUM_BEDEL } from "@/lib/fiyatlandirma";
 
 /**
  * Keşfet eşitlik sözleşmesi (#344, 2026-08-27).
@@ -18,6 +19,10 @@ describe("Keşfet eşitlik sözleşmesi", () => {
   );
   const flutterKaynak = readFileSync(
     resolve(__dirname, "../../lib/screens/explore_screen.dart"),
+    "utf-8"
+  );
+  const webIcerik = readFileSync(
+    resolve(__dirname, "../src/components/kesfet/KesfetIcerik.tsx"),
     "utf-8"
   );
 
@@ -53,19 +58,34 @@ describe("Keşfet eşitlik sözleşmesi", () => {
     ).toContain("Beğendiğin hazır vitrini");
   });
 
+  it("premium üst alan Web ve Flutter'da aynı sade yapıyı korur", () => {
+    expect(webIcerik).toContain('aria-label="Favorilerim"');
+    expect(flutterKaynak).toContain("message: 'Favorilerim'");
+    for (const kaynak of [webIcerik, flutterKaynak]) {
+      expect(kaynak).toContain("Vitrin, ürün veya il/ilçe ara");
+      expect(kaynak).not.toContain("Perakende");
+    }
+    expect(webIcerik).toContain('aria-label="Vitrin kategorileri"');
+    expect(flutterKaynak).toContain("_buildCategoryFilterBar");
+    for (const kimlik of ["giyim", "butik", "gida", "kafe_lokanta", "kuafor", "teknik_servis"]) {
+      expect(flutterKaynak).toContain(`'${kimlik}'`);
+    }
+  });
+
   it("kiralık fiyat vaadi her iki tarafta aynı", () => {
     const kart = readFileSync(
       resolve(__dirname, "../src/components/kesfet/VitrinKarti.tsx"),
       "utf-8"
     );
-    expect(kart).toContain("Aylık 299 TL");
+    expect(AYLIK_PREMIUM_BEDEL).toBe("Aylık 299 TL");
+    expect(kart).toContain("{AYLIK_PREMIUM_BEDEL}");
     expect(kart).toContain("14 gün ücretsiz dene");
     // Flutter: VitrinStoreCard içinde aynı metinler
     const flutterKart = readFileSync(
       resolve(__dirname, "../../lib/widgets/vitrin_store_card.dart"),
       "utf-8"
     );
-    expect(flutterKart).toContain("Aylık 299 TL");
+    expect(flutterKart).toContain("aylikPremiumBedel");
     expect(flutterKart).toContain("14 gün ücretsiz dene");
   });
 

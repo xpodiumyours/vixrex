@@ -16,17 +16,19 @@ const CATEGORY_FIELD_CASES: Array<[string, string[]]> = [
 ];
 
 describe("ürün özellik şeması — runtime adapter", () => {
-  it("shared şemayı tek kaynak olarak sürüm 2 ile okur", () => {
-    expect(PRODUCT_ATTRIBUTE_SCHEMA.version).toBe(2);
+  it("shared şemayı tek kaynak olarak sürüm 4 ile okur", () => {
+    expect(PRODUCT_ATTRIBUTE_SCHEMA.version).toBe(4);
     expect(PRODUCT_ATTRIBUTE_SCHEMA.templates.map((item) => item.key)).toEqual([
       "generic",
       "fashion",
       "electronics",
       "beauty",
       "food",
+      "cafe_restaurant",
       "home",
       "automotive",
       "service",
+      "technical_service",
     ]);
   });
 

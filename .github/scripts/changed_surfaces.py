@@ -66,8 +66,13 @@ FLUTTER_FILES = {
 }
 
 SCHEMA_FILES = {
+    "lib/config/business_categories.g.dart",
     "lib/config/vitrin_alanlari.g.dart",
+    "lib/config/vixrex_mesajlar.g.dart",
+    "public_web/src/lib/businessCategories.ts",
+    "public_web/src/lib/productAttributeSchema.ts",
     "public_web/src/lib/vitrinFieldSchema.ts",
+    "public_web/src/lib/vixrexMesajlari.ts",
     "shared/vitrin_alanlari.json",
     "tool/alan_semasi_uret.dart",
     "tool/sema_disa_aktar.ts",

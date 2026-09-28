@@ -1,12 +1,13 @@
 "use client";
 
+import { eskiFiyatYazisi, kartRozeti } from "@/lib/productCardPresentation";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import type { RichProductItem } from "@/lib/richProductItem";
 import { MapPinIcon } from "@/lib/vitrinBrandIcons";
 import { MAX_PRODUCT_IMAGES } from "@/lib/productImagePolicy";
 import {
-  buildProductQuickFacts,
+  buildProductDetailFacts,
   buildVariantOptionGroups,
   findMatchingVariant,
   productVariantsForTemplate,
@@ -16,12 +17,16 @@ import {
   normalizeProductMetadata,
   productIsService,
 } from "@/lib/productRichData";
+import ProductCommercePanel from "@/components/ProductCommercePanel";
 
 interface ProductQuickViewProps {
   product: RichProductItem;
   images: string[];
   productUrl: string;
   storeName: string;
+  storeSlug: string;
+  productSlug: string;
+  commerceEnabled?: boolean;
   whatsappBaseUrl?: string | null;
   storeLocationText?: string | null;
   storeMapsUrl?: string | null;
@@ -34,7 +39,7 @@ function productLocationMapUrl(location: string): string | null {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(normalized)}`;
 }
 
-function productWhatsappUrl(
+export function productWhatsappUrl(
   baseUrl: string | null | undefined,
   storeName: string,
   productName: string,
@@ -49,7 +54,7 @@ function productWhatsappUrl(
   return `${baseUrl}${separator}text=${encodeURIComponent(message)}`;
 }
 
-function stockTone(stockStatus: string | undefined) {
+export function stockTone(stockStatus: string | undefined) {
   const value = String(stockStatus || "").toLocaleLowerCase("tr-TR");
   if (value.includes("tükendi")) return "text-red-300";
   if (value.includes("son") || value.includes("az") || value.includes("sınırl")) {
@@ -58,7 +63,7 @@ function stockTone(stockStatus: string | undefined) {
   return "text-emerald-300";
 }
 
-function formatVariantPrice(amount: number, currency?: string) {
+export function formatVariantPrice(amount: number, currency?: string) {
   return new Intl.NumberFormat("tr-TR", {
     style: "currency",
     currency: currency || "TRY",
@@ -71,6 +76,9 @@ export default function ProductQuickView({
   images,
   productUrl,
   storeName,
+  storeSlug,
+  productSlug,
+  commerceEnabled = true,
   whatsappBaseUrl = null,
   storeLocationText = null,
   storeMapsUrl = null,
@@ -156,10 +164,14 @@ export default function ProductQuickView({
     }
   };
 
-  const quickFacts = buildProductQuickFacts({
+  // Ayri bir urun detay sayfasi yok: esnafin girdigi kategori alanlarinin
+  // tamami bu kartta gorunur. buildProductQuickFacts yalniz "hizli" yuzeyine
+  // isaretli alanlari aliyordu; giyimde desen/beden sistemi, gidada
+  // icindekiler/saklama/mensei hicbir yerde gorunmuyordu.
+  const quickFacts = buildProductDetailFacts({
     brand: product.brand,
+    barcode: product.barcode,
     metadata: product.metadata,
-    limit: 8,
   }).filter((fact) => fact.key !== "brand" && !variantKeys.has(fact.key));
 
   const selectedStockQuantity =
@@ -173,6 +185,11 @@ export default function ProductQuickView({
       ? formatVariantPrice(selectedVariant.priceAmount, product.currency)
       : product.price || "Fiyat sorun";
   const brand = String(product.brand || "").trim();
+  const rozet = kartRozeti({
+    badgeTag: product.badgeTag,
+    priceAmount: product.priceAmount,
+    oldPriceAmount: product.oldPriceAmount,
+  });
   const fulfillmentRegion = String(product.fulfillmentRegion || "").trim();
   const fulfillmentMapUrl = productLocationMapUrl(fulfillmentRegion);
   const selectedVariantText = variantGroups
@@ -295,11 +312,16 @@ export default function ProductQuickView({
             </p>
           ) : null}
 
-          <div className="mt-4 flex flex-wrap items-baseline gap-3">
+          <div className="mt-4 flex flex-wrap items-center gap-3">
             <p className="text-2xl font-black text-blue-400">{displayedPrice}</p>
-            {product.oldPriceAmount ? (
+            {eskiFiyatYazisi(product.oldPriceAmount) ? (
               <span className="text-sm font-medium text-slate-500 line-through">
-                {product.oldPriceAmount} TL
+                {eskiFiyatYazisi(product.oldPriceAmount)}
+              </span>
+            ) : null}
+            {rozet ? (
+              <span className="rounded-lg bg-gradient-to-r from-blue-600 to-cyan-600 px-2.5 py-1 text-[10px] font-extrabold text-white shadow-md">
+                {rozet}
               </span>
             ) : null}
           </div>
@@ -363,27 +385,32 @@ export default function ProductQuickView({
           ) : null}
 
           {quickFacts.length > 0 ? (
-            <div className="mt-5 grid grid-cols-2 gap-2">
+            // Ozellikler ince satir listesi olarak cizilir: etiket solda, deger
+            // sagda. Onceki iki sutunlu kutu duzeni tek sayida bilgide yaninda
+            // bos hucre birakiyordu.
+            <dl className="mt-5 flex flex-col">
               {quickFacts.map((fact) => (
-                <div key={fact.key} className="rounded-xl border border-white/8 bg-white/[0.03] p-3">
-                  <p className="text-[9px] font-extrabold uppercase tracking-wider text-slate-500">
+                <div
+                  key={fact.key}
+                  className="flex items-baseline justify-between gap-4 border-b border-white/8 py-2 last:border-b-0"
+                >
+                  <dt className="shrink-0 text-[11px] font-semibold text-slate-500">
                     {fact.label}
-                  </p>
-                  <p className="mt-1 break-words text-xs font-bold leading-5 text-slate-200">
+                  </dt>
+                  <dd className="min-w-0 break-words text-right text-xs font-bold leading-5 text-slate-200">
                     {fact.value}
-                  </p>
+                  </dd>
                 </div>
               ))}
-            </div>
+            </dl>
           ) : null}
 
-          {(fulfillmentRegion || storeLocationText) ? (
-            <div className="mt-5 rounded-2xl border border-blue-500/20 bg-gradient-to-br from-blue-500/10 to-cyan-500/5 p-4">
-              <div className="flex items-start gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-500/15">
-                  <MapPinIcon className="h-4 w-4 text-blue-300" aria-hidden="true" />
-                </div>
-                <div className="min-w-0 flex-1">
+          <div className="mt-5 rounded-2xl border border-blue-500/20 bg-gradient-to-br from-blue-500/10 to-cyan-500/5 p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-500/15">
+                <MapPinIcon className="h-4 w-4 text-blue-300" aria-hidden="true" />
+              </div>
+              <div className="min-w-0 flex-1">
                   {fulfillmentRegion ? (
                     <div>
                       <p className="text-[10px] font-extrabold uppercase tracking-wider text-blue-300">
@@ -424,10 +451,14 @@ export default function ProductQuickView({
                       ) : null}
                     </div>
                   ) : null}
+                  {!fulfillmentRegion && !storeLocationText ? (
+                    <p className="text-xs font-semibold leading-5 text-slate-300">
+                      Bu {isService ? "hizmet" : "ürün"} için konum bilgisi eklenmemiş.
+                    </p>
+                  ) : null}
                 </div>
               </div>
             </div>
-          ) : null}
 
           {product.description ? (
             <p className="mt-5 line-clamp-3 text-sm leading-6 text-slate-300">
@@ -457,6 +488,30 @@ export default function ProductQuickView({
               {isService ? "Tüm hizmet detayları" : "Tüm ürün detayları"}
             </a>
           </div>
+
+          <ProductCommercePanel
+            storeSlug={storeSlug}
+            productSlug={productSlug}
+            productName={product.name}
+            imageUrl={currentImage}
+            priceText={displayedPrice}
+            selectedVariantText={selectedVariantText}
+            selectedVariantId={selectedVariant?.id ?? null}
+            stockQuantity={selectedStockQuantity}
+            cartEnabled={
+              !isService &&
+              selectedStockQuantity !== 0 &&
+              !String(selectedStockStatus || "").toLocaleLowerCase("tr-TR").includes("tükendi")
+            }
+            enabled={commerceEnabled}
+            cartDisabledReason={
+              isService
+                ? "Hizmetler sipariş sepetine eklenmez; WhatsApp üzerinden bilgi alabilirsin."
+                : String(selectedStockStatus || "").toLocaleLowerCase("tr-TR").includes("tükendi")
+                  ? "Bu seçenek şu anda stokta görünmüyor."
+                  : ""
+            }
+          />
         </div>
       </div>
     </div>

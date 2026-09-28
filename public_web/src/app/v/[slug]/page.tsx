@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import { cookies } from "next/headers";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
@@ -28,6 +28,7 @@ import VitrinProfileView from "./VitrinProfileView";
 import OwnerWorkspaceShell, { WorkingDraftData } from "./OwnerWorkspaceShell";
 import { parseAssistantHandoff } from "@/lib/assistantHandoff";
 import { resolveVitrinProfile } from "@/lib/vitrinProfile";
+import { normalizeProductMetadata } from "@/lib/productRichData";
 import {
   PUBLIC_STORE_SELECT,
   PUBLIC_STORE_SELECT_WITH_VERIFICATION,
@@ -234,7 +235,7 @@ async function _buildStoreDataBundle(
         supabase
           .from("products")
           .select(
-            "id,name,slug,description,price_text,price_amount,old_price_amount,badge_tag,fulfillment_region,currency,stock_status,image_urls,category_id,is_visible,is_active,source_type,sort_order"
+            "id,name,slug,description,price_text,price_amount,old_price_amount,badge_tag,fulfillment_region,currency,stock_status,stock_quantity,brand,barcode,variants,image_urls,category_id,is_visible,is_active,source_type,sort_order,metadata"
           )
           .eq("store_id", storeId)
           .eq("is_active", true)
@@ -263,6 +264,12 @@ async function _buildStoreDataBundle(
           (p.price_amount != null
             ? `${p.price_amount} ${p.currency}`
             : undefined),
+        priceAmount: (p.price_amount as number | null) ?? null,
+        currency: (p.currency as string) || undefined,
+        stockQuantity: (p.stock_quantity as number | null) ?? null,
+        brand: (p.brand as string | null) ?? null,
+        barcode: (p.barcode as string | null) ?? null,
+        variants: p.variants,
         oldPriceAmount: (p.old_price_amount as number | null) ?? null,
         badgeTag: (p.badge_tag as string | null) ?? null,
         fulfillmentRegion: (p.fulfillment_region as string | null) ?? null,
@@ -274,6 +281,7 @@ async function _buildStoreDataBundle(
         stockStatus: (p.stock_status as string) || undefined,
         isVisible: p.is_visible as boolean,
         source: p.source_type as string,
+        metadata: p.metadata,
       }))
       .filter((p: ProductItem) => isPublicCatalogProduct(p));
 
@@ -438,8 +446,20 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
   };
 }
 
+const LEGACY_STORE_SLUGS: Record<string, string> = {
+  "demo-aymira-giyim": "kiralik-aymira-giyim",
+  "demo-lezzet-duragi": "kiralik-lezzet-duragi",
+  "demo-nova-kuafor": "kiralik-nova-kuafor",
+  "demo-teknofix": "kiralik-teknofix",
+};
+
 export default async function StorePage(props: PageProps) {
   const params = await props.params;
+
+  const legacySlug = LEGACY_STORE_SLUGS[params.slug];
+  if (legacySlug) {
+    permanentRedirect(`/v/${legacySlug}`);
+  }
 
   const cookieStore = await cookies();
   // DİKKAT: bu çerezin TAMAMI (imzalı paket), oturum tokenının kendisi DEĞİL.
@@ -623,6 +643,13 @@ export default async function StorePage(props: PageProps) {
       : store.address
         ? `https://maps.google.com/maps?q=${encodeURIComponent(store.address)}&output=embed`
         : null;
+  // Hizmet vitrini mi? Tum gorunur kayitlar hizmet sablonundaysa arayuzde
+  // "urun" degil "hizmet" dili kullanilir. Yeni sorgu yok; cekilmis veriden.
+  const isServiceStore =
+    visibleProducts.length > 0 &&
+    visibleProducts.every(
+      (p) => normalizeProductMetadata(p.metadata).itemKind === "service"
+    );
   const rawCollections = deriveCollections(visibleProducts);
   const collections = rawCollections.map((col) => {
     const firstProduct = visibleProducts.find(
@@ -787,6 +814,7 @@ export default async function StorePage(props: PageProps) {
         profile={vitrinProfile}
         collections={collections}
         productCount={visibleProducts.length}
+        isServiceStore={isServiceStore}
         sectionVisibility={store.section_visibility}
         heroLocationText={store.hero_location_text}
         mapLabel={store.map_label}
@@ -810,7 +838,9 @@ export default async function StorePage(props: PageProps) {
             storeSlug={store.slug}
             storeName={store.name}
             whatsappBaseUrl={waBaseUrl}
+            storeLocationText={displayAddress}
             storeMapsUrl={mapsUrl}
+            trackingEnabled={!isOwnerMode}
             products={visibleProducts}
             categoryMap={(categories || []).map((c) => ({ id: c.id, name: c.name }))}
             fallbackImage={store.logo_url || "/vixrex_v_crystal_mascot.png"}
@@ -869,6 +899,7 @@ export default async function StorePage(props: PageProps) {
           profile={vitrinProfile}
           collections={collections}
           productCount={visibleProducts.length}
+          isServiceStore={isServiceStore}
           // Faz E (Tek Asistan planı): yönetim modu için ucuz sayaçlar —
           // yeni sorgu yok, zaten çekilmiş visibleProducts'tan türetiliyor.
           urunFiyatsizSayisi={visibleProducts.filter((p) => !p.price).length}

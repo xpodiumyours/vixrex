@@ -33,3 +33,12 @@ olarak verilen "test-secret-..." değeri. IP'nin ham dönmediğini sınamak içi
 kasıtlı sabit.
 """
 commits = ["a2bfc037945a1d723e6b4d473d1f700400f8f509"]
+
+[[allowlists]]
+description = """
+public_web/tests/api/fatura-okuyucu-durumu.test.ts — OPENROUTER_API_KEY
+olarak verilen sahte değer. Uç noktanın anahtarı dışarı vermediğini sınamak
+için kasıtlı sabitti; gerçek bir anahtar değildi. Sonraki commit'te gerçek
+anahtar biçiminden uzak bir değerle değiştirildi.
+"""
+commits = ["8963ebe2c07aa402e3c9fd6c2fc4701875370bb1"]

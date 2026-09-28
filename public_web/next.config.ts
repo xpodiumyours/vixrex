@@ -95,6 +95,17 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // Ürün havuzu katalogları `src/` dışında durur (toplam hacim megabaytları
+  // bulduğu için pakete gömülmez) ve fatura ucu bunları çalışma anında okur.
+  // Next.js yalnız kodun izlediği dosyaları dağıtıma kattığı için bu satır
+  // gerekir; olmazsa üretimde kataloglar bulunamaz.
+  // Kataloğu okuyan HER uç burada olmalı; eksik kalan uç üretimde katalogsuz
+  // çalışır ve hiçbir ürünü tanımaz (yerelde fark edilmez, canlıda çıkar).
+  outputFileTracingIncludes: {
+    "/api/fatura-oku": ["./data/katalog/**/*.json"],
+    "/api/fatura-eslestir": ["./data/katalog/**/*.json"],
+    "/api/products/batch": ["./data/katalog/**/*.json"],
+  },
   env: {
     NEXT_PUBLIC_SUPABASE_URL: publicSupabaseUrl,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: publicSupabaseKey,

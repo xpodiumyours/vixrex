@@ -105,12 +105,13 @@ describe("CI — secret sızıntı taraması (2026-08-15 taraması: eksikti)", (
   );
 
   it("gitleaks adımı her PR/push'ta çalışır (needs/if koşulu yok — her zaman)", () => {
-    // 2026-09-07: gitleaks-action bırakıldı — Windows ikilisini yanlış adreste
-    // arıyor (404) ve iş GitHub'ın kendi makinelerinde kotaya takılıyordu.
-    // Sözleşmenin amacı aynı: tarama koşulsuz çalışacak. Artık resmi sürüm
-    // doğrudan indirilip çalıştırılıyor, o yüzden eklenti adı değil taramanın
-    // kendisi aranıyor.
-    expect(ciSource).toContain("gitleaks.exe");
+    // 2026-09-07: gitleaks-action bırakıldı — resmi sürüm doğrudan indirilip
+    // çalıştırılıyor, o yüzden eklenti adı değil taramanın kendisi aranıyor.
+    // 2026-09-19: depo herkese açıldı, iş GitHub makinesine taşındı. Önceki
+    // sürüm "gitleaks.exe" arıyordu; ikilinin adı işletim sistemine göre
+    // değişen bir ayrıntı, sözleşme değil. Aranan şey artık taramanın
+    // koşulsuz çalışması ve kendi kural dosyasını kullanması.
+    expect(ciSource).toMatch(/gitleaks(\.exe)?"? git \./);
     expect(ciSource).toContain("gitleaks/releases/download");
     expect(ciSource).toContain(".gitleaks.toml");
   });

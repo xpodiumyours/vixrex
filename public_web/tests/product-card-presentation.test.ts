@@ -4,10 +4,23 @@ import {
   buildProductQuickFacts,
   buildVariantOptionGroups,
   findMatchingVariant,
+  productPhotoCountBadge,
   productVariantCount,
   productVariantLabel,
   variantOptionIsAvailable,
 } from "../src/lib/productCardPresentation";
+
+describe("ürün kartı çoklu fotoğraf rozeti", () => {
+  it("tek fotoğrafta rozet göstermez", () => {
+    expect(productPhotoCountBadge(0)).toBeNull();
+    expect(productPhotoCountBadge(1)).toBeNull();
+  });
+
+  it("birden fazla fotoğrafta 1/N rozeti üretir", () => {
+    expect(productPhotoCountBadge(3)).toBe("1/3");
+    expect(productPhotoCountBadge(11)).toBe("1/11");
+  });
+});
 
 describe("ürün kartı veri sunumu", () => {
   it("moda ürününde yalnız quick yüzeyindeki gerçek alanları döndürür", () => {

@@ -6,10 +6,12 @@ import { useEffect, useMemo, useState } from "react";
 import { OnayIkonu, StorefrontIkonu } from "@/components/site/icons";
 import { useAppShell } from "@/components/app/AppShellContext";
 import { VitrinPaylasimKarti } from "@/components/owner/VitrinPaylasimKarti";
+import { OwnerDashboardMetrics } from "@/components/owner/OwnerDashboardMetrics";
 import { FIELD_BY_KEY } from "@/lib/vitrinFieldSchema";
 import { safeParseJson } from "@/lib/products";
 import { gpsAdresiniCoz } from "@/lib/konumCozumleme";
 import { OwnerProductManager, type OwnerProduct, type OwnerProductCategory } from "./OwnerProductManager";
+import { isletmeUrunSablonu } from "@/lib/businessCategories";
 import { AboutEditor } from "@/app/v/[slug]/components/AboutEditor";
 import { CampaignEditor } from "@/app/v/[slug]/components/CampaignEditor";
 import { FaqEditor } from "@/app/v/[slug]/components/FaqEditor";
@@ -23,6 +25,8 @@ interface Props {
     slug: string;
     name: string;
     is_published: boolean;
+    kategori?: string | null;
+    business_type?: string | null;
     products: OwnerProduct[];
     product_categories: OwnerProductCategory[];
   };
@@ -402,6 +406,8 @@ export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode 
           {store.is_published ? "Düzenledikten sonra kaydet, linkin ve QR kodun güncellenir." : "Ad, WhatsApp ve konumunu gir — vitrin hazır. Diğer detayları sonra ekleyebilirsin."}
         </p>
 
+        {store.is_published && !isCreationMode ? <OwnerDashboardMetrics /> : null}
+
         <VitrinPaylasimKarti
           slug={store.slug}
           adVar={Boolean(valueFor(draft, "isletmeAdi").trim())}
@@ -474,7 +480,7 @@ export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode 
                           <div className="space-y-4"><h3 className="text-[13px] font-black text-lp-text">Pazar yeri bağlantıları</h3><MarketplaceEditor inline slug={store.slug} links={marketplaceLinks} onClose={() => { void onRefresh(); }} /></div>
                           <Link href={`/v/${store.slug}/blog-yonetim`} className={`${editorButtonClass} flex items-center justify-center`}>Blog yönetimi</Link>
                           <p className="mb-3 text-[12px] font-bold text-lp-muted">Ürünler ve kategoriler</p>
-                          <OwnerProductManager storeSlug={store.slug} products={store.products ?? []} categories={store.product_categories ?? []} onRefresh={onRefresh} />
+                          <OwnerProductManager storeSlug={store.slug} products={store.products ?? []} categories={store.product_categories ?? []} varsayilanUrunTipi={isletmeUrunSablonu(store.kategori, store.business_type)} storeName={store.name} onRefresh={onRefresh} />
                         </div>
                       ) : null}
                       {section.title === "Konum ve saatler" ? <button type="button" onClick={() => void konumuAl()} disabled={locating} className={`${editorButtonClass} w-full`}>{locating ? "Konum alınıyor…" : "📍 Konumumu al (GPS)"}</button> : null}

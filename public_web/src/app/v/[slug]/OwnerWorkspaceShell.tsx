@@ -75,6 +75,7 @@ export interface OwnerWorkspaceShellProps {
   profile: VitrinCategoryProfile;
   collections: VitrinCollection[];
   productCount: number;
+  isServiceStore?: boolean;
   /** Faz E: yönetim modu önerileri için — fiyatı/açıklaması boş ürün sayısı. */
   urunFiyatsizSayisi?: number;
   urunAciklamasizSayisi?: number;

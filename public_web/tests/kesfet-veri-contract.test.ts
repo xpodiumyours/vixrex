@@ -73,10 +73,10 @@ describe("Keşfet veri katmanı", () => {
   it("sorgu Flutter'daki Keşfet sorgusuyla aynı kuralları taşır", () => {
     expect(exploreKaynak).toContain('.eq("is_published", true)');
     expect(exploreKaynak).toContain('.order("updated_at", { ascending: false })');
-    expect(exploreKaynak).toContain("KESFET_LIMIT = 50");
+    expect(exploreKaynak).toContain("KESFET_LIMIT = 100");
     // Dart tarafı da aynı üç kuralı uyguluyor olmalı.
     expect(dartKaynak).toContain("'is_published', true");
-    expect(dartKaynak).toContain("limit(50)");
+    expect(dartKaynak).toContain("limit(100)");
   });
 
   it("kiralık ayrımı yalnız is_demo — var olmayan storefront_kind kullanılmaz", () => {

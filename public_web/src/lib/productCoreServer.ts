@@ -125,6 +125,8 @@ export async function createRichCoreProduct(args: {
   stockStatus?: string | null;
   metadata: ProductMetadata;
   variants: ProductVariant[];
+  isVisible?: boolean;
+  sortOrder?: number;
 }): Promise<CreatedCoreProduct> {
   const { data, error } = await args.admin.rpc("create_store_product_v3", {
     p_store_id: args.storeId,
@@ -137,8 +139,8 @@ export async function createRichCoreProduct(args: {
     p_category_id: args.categoryId || null,
     p_source_type: args.sourceType,
     p_external_product_id: args.externalProductId || null,
-    p_is_visible: true,
-    p_sort_order: 0,
+    p_is_visible: args.isVisible ?? true,
+    p_sort_order: args.sortOrder ?? 0,
     p_old_price_amount: args.oldPriceAmount ?? null,
     p_badge_tag: args.badgeTag ?? null,
     p_fulfillment_region: args.fulfillmentRegion ?? null,
@@ -214,6 +216,7 @@ export async function updateRichCoreProduct(args: {
   barcode?: string | null;
   metadata: ProductMetadata;
   variants: ProductVariant[];
+  isVisible?: boolean;
 }) {
   const { data, error } = await args.admin.rpc("update_store_product_v2", {
     p_product_id: args.productId,
@@ -224,6 +227,7 @@ export async function updateRichCoreProduct(args: {
     p_price_amount: args.priceAmount ?? null,
     p_image_urls: args.imageUrls,
     p_category_id: args.categoryId || null,
+    p_is_visible: args.isVisible ?? null,
     p_stock_quantity: args.stockQuantity ?? null,
     p_stock_status: args.stockStatus,
     p_old_price_amount: args.oldPriceAmount ?? null,

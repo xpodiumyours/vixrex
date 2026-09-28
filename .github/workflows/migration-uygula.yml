@@ -1,0 +1,294 @@
+name: Migration Uygula
+
+# NEDEN VAR (2026-09-27)
+# Canli veritabanina (Supabase) migration uygulamak icin depoda bir yol yoktu:
+# ajanlarin makinesinde canli anahtar olmadigi icin zincir duruyordu
+# ("Canliya cikis yolu kapali", YOL-TAHTASI risk 4). Bu is, depodaki migration
+# dosyalarini canliya uygular.
+#
+# UC MOD VAR
+# 1) Tek dosya: `dosya` girisi veya `migration-uygula/<dosya adi>` etiketi.
+# 2) Toplu: `baslangic` girisi veya `migration-uygula-toplu/<dosya adi>` etiketi.
+#    Verilen dosyadan itibaren TUM migration dosyalari sirayla denenir; kayit
+#    tablosunda (public.uygulanan_migrationlar) kayitli olanlar atlanir, yalniz
+#    kayitsizlar uygulanir. Yarida kalan kosu ayni etiketle kaldigi yerden
+#    devam eder. Kayitli bir dosyanin icerigi sonradan degistiyse uyari verir.
+# 3) Kayit: `kayit_dosyalari` girisi (virgulle liste) veya
+#    `migration-kayit/<dosya adi>` etiketi. SQL CALISTIRMADAN dosyalari
+#    "uygulandi" olarak isaretler (Supabase migration repair karsiligi).
+#    Canliya psql ile uygulanmis ama kayit zincirine dusmemis dosyalari
+#    backfill eder; boylece sonraki toplu kosu bu dosyalari yeniden uygulamaz.
+#
+# TEK KAYNAK KARARI (2026-09-27)
+# Migration kaydinin tek kaynagi public.uygulanan_migrationlar tablosudur.
+# Supabase'in kendi migration gecmisi (schema_migrations) psql ile yapilan
+# uygulamalari bilmez; sapmasi beklenendir ve referans disi birakildi.
+# Kayitlara yalnizca asagidaki kaydet adimi yazar, elle tabloya dokunulmaz.
+#
+# NASIL TETIKLENIR
+# a) Elle: Actions > Migration Uygula > Run workflow.
+# b) Etiketle: git push origin migration-uygula/<dosya adi>
+#    veya:      git push origin migration-uygula-toplu/<baslangic dosyasi>
+#    veya:      git push origin migration-kayit/<dosya adi>
+#    Etiket tetigi, etiketin isaret ettigi commit'teki workflow dosyasini
+#    calistirir; yeni mod once main'e girmis olmali.
+#    Etiket yolu, ajanlarin workflow tetikleme yetkisi olmadigi icin eklendi
+#    (olculdu 2026-09-27: dispatch API'si 403 donuyor).
+#
+# KORUMALAR
+# - Push yalnizca yukaridaki uc etiket ailesinde calisir.
+# - Dosya adi kaliba uymali ve supabase/migrations/ altinda var olmali.
+# - ON_ERROR_STOP=1: ilk hatada is kirmizi biter. Her dosya kendi begin/commit
+#   blogunu tasir; hata halinde yalniz o dosyanin degisiklikleri geri alinir.
+# - Baglanti adresi yalnizca DATABASE_URL sirrindan gelir; depoya yazilmaz.
+
+on:
+  workflow_dispatch:
+    inputs:
+      dosya:
+        description: "TEK DOSYA modu: uygulanacak dosya adi (orn. 20260926180000_vitrin_olcer_profesyonel.sql)"
+        required: false
+        type: string
+      baslangic:
+        description: "TOPLU mod: bu dosyadan itibaren kayitsiz tum migration'lar sirayla uygulanir"
+        required: false
+        type: string
+      kayit_dosyalari:
+        description: "KAYIT modu: SQL calistirmadan 'uygulandi' isaretlenecek dosyalar (virgulle, or. 20260926180000_vitrin_olcer_profesyonel.sql,20260927100000_uygulanan_migrationlar.sql)"
+        required: false
+        type: string
+      kuru_kosu:
+        description: "Yalniz listele/dogrula, SQL uygulama"
+        required: false
+        default: false
+        type: boolean
+  push:
+    tags:
+      - "migration-uygula/*"
+      - "migration-uygula-toplu/*"
+      - "migration-kayit/*"
+
+permissions:
+  contents: read
+
+jobs:
+  uygula:
+    name: Canliya uygula
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Girdiyi coz ve dogrula
+        env:
+          DOSYA: ${{ inputs.dosya }}
+          BASLANGIC: ${{ inputs.baslangic }}
+          KAYITLAR: ${{ inputs.kayit_dosyalari }}
+          ETIKET: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
+        run: |
+          set -euo pipefail
+          MOD="tek"; AD="${DOSYA:-}"; BAS="${BASLANGIC:-}"; KAYIT="${KAYITLAR:-}"
+
+          GIRDI=0
+          [ -n "$AD" ] && GIRDI=$((GIRDI + 1))
+          [ -n "$BAS" ] && GIRDI=$((GIRDI + 1))
+          [ -n "$KAYIT" ] && GIRDI=$((GIRDI + 1))
+          if [ "$GIRDI" -gt 1 ]; then
+            echo "Ayni anda birden fazla mod verilemez (dosya + baslangic + kayit_dosyalari)."
+            exit 1
+          fi
+          if [ -n "$BAS" ]; then MOD="toplu"; fi
+          if [ -n "$KAYIT" ]; then MOD="kayit"; fi
+
+          case "${ETIKET:-}" in
+            migration-uygula-toplu/*) MOD="toplu"; BAS="${ETIKET#migration-uygula-toplu/}" ;;
+            migration-uygula/*) MOD="tek"; AD="${ETIKET#migration-uygula/}" ;;
+            migration-kayit/*) MOD="kayit"; KAYIT="${ETIKET#migration-kayit/}" ;;
+            "") ;;
+            *) echo "Bilinmeyen etiket: $ETIKET"; exit 1 ;;
+          esac
+
+          # Ayni etiket iki kez itilemez (GitHub reddeder). Tekrar kosulari icin
+          # etiket sonuna #ek eklenebilir: migration-uygula-toplu/<dosya>#tekrar
+          AD="${AD%%#*}"
+          BAS="${BAS%%#*}"
+          KAYIT="${KAYIT%%#*}"
+
+          KALIP='[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]_*.sql'
+
+          dogrula() {
+            ad="$1"
+            case "$ad" in $KALIP) ;; *) echo "Gecersiz dosya adi: $ad"; exit 1 ;; esac
+            [ -f "supabase/migrations/$ad" ] || { echo "Dosya yok: supabase/migrations/$ad"; exit 1; }
+          }
+
+          if [ "$MOD" = "tek" ]; then
+            [ -n "$AD" ] || { echo "Dosya adi gerekli: dosya girisi veya migration-uygula/<ad> etiketi."; exit 1; }
+            dogrula "$AD"
+          elif [ "$MOD" = "toplu" ]; then
+            [ -n "$BAS" ] || { echo "Baslangic dosyasi gerekli: baslangic girisi veya migration-uygula-toplu/<ad> etiketi."; exit 1; }
+            dogrula "$BAS"
+          else
+            [ -n "$KAYIT" ] || { echo "Kayit listesi gerekli: kayit_dosyalari girisi veya migration-kayit/<ad> etiketi."; exit 1; }
+            IFS=',' read -ra KAYIT_DIZISI <<< "$KAYIT"
+            for ad in "${KAYIT_DIZISI[@]}"; do
+              ad="$(echo "$ad" | xargs)"
+              [ -n "$ad" ] || continue
+              dogrula "$ad"
+            done
+          fi
+
+          {
+            echo "MOD=$MOD"
+            echo "AD=$AD"
+            echo "BAS=$BAS"
+            echo "KAYITLAR=$KAYIT"
+          } >> "$GITHUB_ENV"
+          echo "Mod: $MOD | tek=$AD | toplu=$BAS | kayit=$KAYIT"
+
+      - name: Install PostgreSQL 17 client
+        # Sunucu PostgreSQL 17.6; Ubuntu varsayilan paketi (16) uyumsuz.
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl ca-certificates
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc --fail https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client-17
+
+      - name: Uygula
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          KURU: ${{ inputs.kuru_kosu }}
+        run: |
+          set -euo pipefail
+          export PATH="/usr/lib/postgresql/17/bin:$PATH"
+
+          psql --version
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "select current_database() as veritabani, current_user as kullanici;"
+
+          kayitlar() {
+            psql "$DATABASE_URL" -Atc "select ad || ':' || sha256 from public.uygulanan_migrationlar" 2>/dev/null || true
+          }
+
+          # NOT: psql -c, psql degiskenlerini yerine koymaz (canlida olculdu:
+          # "syntax error at or near \":\""); bu yuzden kayit SQL'i gecici
+          # dosyaya yazilip -f ile calistirilir.
+          kaydet() {
+            yol="$1"
+            ad="$(basename "$yol")"
+            ozet="$(sha256sum "$yol" | awk '{print $1}')"
+            sql="$(mktemp)"
+            printf '%s\n' \
+              "insert into public.uygulanan_migrationlar (ad, sha256, uygulayan, calisma_id)" \
+              "values (:'a', :'s', :'u', :'c')" \
+              "on conflict (ad) do update" \
+              "  set sha256 = excluded.sha256," \
+              "      uygulama_zamani = now()," \
+              "      uygulayan = excluded.uygulayan," \
+              "      calisma_id = excluded.calisma_id;" > "$sql"
+            if psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q \
+                -v a="$ad" -v s="$ozet" -v u="${GITHUB_ACTOR:-bilinmiyor}" -v c="${GITHUB_RUN_ID:-yerel}" \
+                -f "$sql"; then
+              rm -f "$sql"
+              return 0
+            fi
+            rm -f "$sql"
+            return 1
+          }
+
+          if [ "$MOD" = "kayit" ]; then
+            if [ -z "$(psql "$DATABASE_URL" -Atc "select to_regclass('public.uygulanan_migrationlar')" 2>/dev/null || true)" ]; then
+              echo "HATA: kayit tablosu canlida yok. Once kayit migration'ini tek dosya modunda uygulayin:"
+              echo "  git push origin migration-uygula/20260927100000_uygulanan_migrationlar.sql"
+              exit 1
+            fi
+            IFS=',' read -ra KAYIT_DIZISI <<< "$KAYITLAR"
+            SAYAC=0
+            for ad in "${KAYIT_DIZISI[@]}"; do
+              ad="$(echo "$ad" | xargs)"
+              [ -n "$ad" ] || continue
+              if [ "$KURU" = "true" ]; then
+                echo "kayit edilecek: $ad"
+                continue
+              fi
+              echo "== kayit ediliyor (SQL calismaz): $ad"
+              if ! kaydet "supabase/migrations/$ad"; then
+                echo "HATA: kayit yazilamadi: $ad"
+                exit 1
+              fi
+              SAYAC=$((SAYAC + 1))
+            done
+            if [ "$KURU" = "true" ]; then
+              echo "Kuru kosu tamam: kayit yazilmadi."
+            else
+              echo "Kayit kosu bitti: yazilan=$SAYAC"
+            fi
+            exit 0
+          fi
+
+          if [ "$MOD" = "toplu" ]; then
+            if [ -z "$(psql "$DATABASE_URL" -Atc "select to_regclass('public.uygulanan_migrationlar')" 2>/dev/null || true)" ]; then
+              echo "HATA: kayit tablosu canlida yok. Once kayit migration'ini tek dosya modunda uygulayin:"
+              echo "  git push origin migration-uygula/20260927100000_uygulanan_migrationlar.sql"
+              exit 1
+            fi
+
+            KAYIT="$(kayitlar)"
+            LISTE="$(ls supabase/migrations/*.sql | sort | awk -v bas="supabase/migrations/$BAS" '$0 == bas { bulundu = 1 } bulundu == 1 { print }')"
+            if [ -z "$LISTE" ]; then
+              echo "HATA: baslangic dosyasi listede bulunamadi: $BAS"
+              exit 1
+            fi
+
+            UYGULANAN=0; ATLANAN=0; DEGISEN=0
+            while IFS= read -r yol; do
+              ad="$(basename "$yol")"
+              gercek="$(sha256sum "$yol" | awk '{print $1}')"
+              eski="$(printf '%s\n' "$KAYIT" | awk -F: -v a="$ad" '$1 == a { print $2 }')"
+              if [ -n "$eski" ]; then
+                if [ "$eski" != "$gercek" ]; then
+                  echo "UYARI: kayitli dosya sonradan degismis: $ad"
+                  DEGISEN=$((DEGISEN + 1))
+                fi
+                echo "atlandi (kayitli): $ad"
+                ATLANAN=$((ATLANAN + 1))
+                continue
+              fi
+              if [ "$KURU" = "true" ]; then
+                echo "uygulanacak: $ad"
+                continue
+              fi
+              echo "== uygulaniyor: $ad"
+              psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$yol"
+              if ! kaydet "$yol"; then
+                echo "UYARI: kayit yazilamadi: $ad"
+              fi
+              UYGULANAN=$((UYGULANAN + 1))
+            done <<< "$LISTE"
+
+            if [ "$KURU" = "true" ]; then
+              echo "Kuru kosu tamam: SQL uygulanmadi."
+              exit 0
+            fi
+            echo "Toplu kosu bitti: uygulanan=$UYGULANAN atlanan=$ATLANAN degisen=$DEGISEN"
+            if [ "$UYGULANAN" -eq 0 ]; then
+              echo "Yeni migration yok - canli zaten guncel."
+            fi
+          else
+            if [ "$KURU" = "true" ]; then
+              echo "Kuru kosu: $AD (uygulanmadi)."
+              exit 0
+            fi
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "supabase/migrations/$AD"
+            if ! kaydet "supabase/migrations/$AD"; then
+              echo "UYARI: kayit yazilamadi (kayit tablosu henuz yok olabilir): $AD"
+            fi
+            echo "Uygulandi: $AD"
+          fi

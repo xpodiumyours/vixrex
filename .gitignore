@@ -77,6 +77,13 @@ dart_defines.local.json
 # Local release APKs and scratch scripts
 release_apk/
 scratch/
+.scratch/
+
+# Local AI agent tool state — never commit
+.codex-worktrees/
+.freebuff/
+.opencode/
+.pytest_cache/
 
 # Cursor temporary task plans are local-only
 .cursor/plans/
@@ -86,9 +93,7 @@ supabase/backup/dumps/
 
 
 # Obsidian — kisisel calisma durumu (her acilisla degisir)
-.obsidian/workspace.json
-.obsidian/workspace-mobile.json
-.obsidian/cache
+.obsidian/
 
 supabase/.temp/
 supabase/.branches/

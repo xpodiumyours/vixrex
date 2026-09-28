@@ -9,7 +9,7 @@ describe("Landing katalog tek-kaynak sözleşmesi", () => {
   const webKatalog = oku("../src/components/landing/TemplateCatalog.tsx");
   const paylasilan = JSON.parse(
     oku("../../shared/business_categories.json"),
-  ) as { categories: Array<{ id: string }> };
+  ) as { categories: Array<{ id: string; aktif?: boolean }> };
 
   it("web kataloğu paylaşılan JSON'u tek kaynak kullanır", () => {
     expect(webKatalog).toContain("BUSINESS_CATEGORIES");
@@ -44,10 +44,24 @@ describe("Landing katalog Flutter tutarlılığı", () => {
   const flutterKatalog = oku(
     "../../lib/widgets/landing/landing_template_catalog.dart",
   );
+  const flutterListe = oku(
+    "../../lib/widgets/landing/landing_template_category.dart",
+  );
+  const kategoriler = (
+    JSON.parse(oku("../../shared/business_categories.json")) as {
+      categories: Array<{ id: string; label: string; aktif?: boolean }>;
+    }
+  ).categories;
 
-  it("Flutter başlığındaki sabit sayı bilinçli işaretlidir", () => {
-    // Flutter 12 yazıyor, paylaşılan kaynak 19 tanıyor — sayı değişirse
-    // iki taraf birlikte güncellenir. Bu test sessiz kaymayı engeller.
-    expect(flutterKatalog).toContain("12 farklı kategoride");
+  it("Flutter başlığındaki sabit sayı aktif kategori sayısıyla aynıdır", () => {
+    const aktif = kategoriler.filter((k) => k.aktif === true).length;
+    expect(flutterKatalog).toContain(`${aktif} farklı kategoride`);
+  });
+
+  it("Flutter katalog listesi aktif kanonik kategorileri taşır", () => {
+    for (const kategori of kategoriler) {
+      const aranan = `'${kategori.id}'`;
+      expect(flutterListe.includes(aranan)).toBe(kategori.aktif === true);
+    }
   });
 });

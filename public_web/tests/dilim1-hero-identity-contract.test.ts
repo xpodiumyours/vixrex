@@ -37,6 +37,34 @@ describe("Dilim 1 hero kimlik alanları", () => {
     expect(viewSource).not.toContain("4.9 (128 değerlendirme)");
   });
 
+  it("masaüstü hero 420/440 standardını ve erken kategori başlangıcını korur", () => {
+    expect(viewSource).toContain("lg:min-h-[420px] xl:min-h-[440px]");
+    expect(viewSource).not.toContain("lg:min-h-[560px]");
+    expect(viewSource).toContain("lg:px-12 lg:py-10");
+    expect(viewSource).not.toContain("lg:px-12 lg:py-16");
+  });
+
+  it("masaüstünde aksiyonlar sağ sütunda değil kimlik bilgilerinin altında kompakt satırdadır", () => {
+    expect(viewSource).toContain("mt-3 hidden flex-wrap items-center gap-2 lg:flex");
+    expect(viewSource).toContain("px-3 py-1.5 text-[13px]");
+    expect(viewSource).toContain("sm:flex-row md:flex-col lg:hidden");
+    expect(viewSource).not.toContain("lg:w-[260px] lg:min-w-0");
+  });
+
+  it("masaüstü tipografi kompakt, mobil/tablet ölçüleri korunur", () => {
+    expect(viewSource).toContain("text-3xl sm:text-5xl lg:text-[40px]");
+    expect(viewSource).toContain("text-sm sm:text-base lg:text-[15px]");
+    expect(viewSource).toContain("text-[26px] sm:text-4xl lg:text-[30px]");
+    expect(viewSource).toContain("lg:px-12 lg:py-7");
+  });
+
+  it("uydurma Google Maps ikonu yok; mevcut pin ve gerçek WhatsApp glifi kullanılır", () => {
+    expect(viewSource).not.toContain("GoogleMapsIcon");
+    expect(viewSource).toContain("<MapPinIcon size={16} />");
+    expect(viewSource).toContain("<MapPinIcon size={18} />");
+    expect(viewSource).toContain('text-[#25D366]');
+  });
+
   it("yalnız doğrulanmış işletmede güven rozeti gösterir", () => {
     expect(pageSource).toContain("business_verified_at");
     expect(pageSource).toContain("PUBLIC_STORE_SELECT_WITH_VERIFICATION");

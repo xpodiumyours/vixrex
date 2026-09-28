@@ -23,19 +23,6 @@ class SupabaseAuthRepository implements AuthRepository {
   bool get hasActiveSession => currentUser != null;
 
   @override
-  Future<AuthResponse> signUp(String email, String password) async {
-    return await _client.auth.signUp(email: email, password: password);
-  }
-
-  @override
-  Future<AuthResponse> signIn(String email, String password) async {
-    return await _client.auth.signInWithPassword(
-      email: email,
-      password: password,
-    );
-  }
-
-  @override
   Future<void> signOut() async {
     await _client.auth.signOut();
   }

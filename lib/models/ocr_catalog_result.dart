@@ -1,15 +1,18 @@
 import 'detected_product.dart';
+import 'invoice_product_draft.dart';
 
 /// OCR analizinin tam sonucu.
 class OcrCatalogResult {
   final String rawText;
   final List<DetectedProduct> products;
+  final List<InvoiceProductDraft> invoiceDrafts;
   final double confidence;
   final DateTime analyzedAt;
 
   OcrCatalogResult({
     required this.rawText,
     required this.products,
+    this.invoiceDrafts = const [],
     required this.confidence,
     DateTime? analyzedAt,
   }) : analyzedAt = analyzedAt ?? DateTime.now();
@@ -17,6 +20,7 @@ class OcrCatalogResult {
   OcrCatalogResult.empty()
     : rawText = '',
       products = const [],
+      invoiceDrafts = const [],
       confidence = 0.0,
       analyzedAt = DateTime.now();
 

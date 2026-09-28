@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 import ProductQuickView from "@/components/ProductQuickView";
+import VitrinCartDock from "@/components/VitrinCartDock";
 import { TrackedDirectionsLink } from "@/components/TrackedContactLink";
 import { MapPinIcon } from "@/lib/vitrinBrandIcons";
 import { MAX_PRODUCT_IMAGES } from "@/lib/productImagePolicy";
@@ -15,7 +16,13 @@ import {
   resolveCatalogImage,
 } from "@/lib/products";
 import type { RichProductItem } from "@/lib/richProductItem";
-import { productVariantLabel } from "@/lib/productCardPresentation";
+import {
+  buildProductCardFacts,
+  eskiFiyatYazisi,
+  kartRozeti,
+  productPhotoCountBadge,
+  productVariantLabel,
+} from "@/lib/productCardPresentation";
 import { normalizeProductMetadata } from "@/lib/productRichData";
 
 type CatalogProduct = RichProductItem;
@@ -243,6 +250,7 @@ export default function ProductCatalog({
           const productUrl = `/v/${storeSlug}/urun/${productSlug}`;
           const image = productImageOnly(product);
           const quickImages = productImagesOnly(product);
+          const photoCountBadge = productPhotoCountBadge(quickImages.length);
           const category = String(product.category || "").trim();
           const metadata = normalizeProductMetadata(product.metadata);
           const isService = metadata.itemKind === "service";
@@ -256,6 +264,17 @@ export default function ProductCatalog({
           const variantLabel = isService
             ? null
             : productVariantLabel(product.variants, metadata.templateKey);
+          const kartOzellikleri = buildProductCardFacts({
+            brand: product.brand,
+            metadata: product.metadata,
+            variants: isService ? undefined : product.variants,
+          }).ozellikler;
+          const rozet = kartRozeti({
+            badgeTag: product.badgeTag,
+            priceAmount: product.priceAmount,
+            oldPriceAmount: product.oldPriceAmount,
+          });
+          const eskiFiyat = eskiFiyatYazisi(product.oldPriceAmount);
           const fulfillmentRegion = String(product.fulfillmentRegion || "").trim();
           const fulfillmentMapUrl = productLocationMapUrl(fulfillmentRegion);
           const productKey = product.id || productUrl;
@@ -284,13 +303,18 @@ export default function ProductCatalog({
                     emptyLabel={isService ? "Hizmet görseli yok" : "Ürün görseli yok"}
                   />
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0B1120]/45 via-transparent to-transparent" />
-                  {product.badgeTag ? (
+                  {rozet ? (
                     <span className="absolute left-2.5 top-2.5 z-10 max-w-[70%] truncate rounded-lg bg-gradient-to-r from-blue-600 to-cyan-600 px-2.5 py-1 text-[10px] font-extrabold text-white shadow-md">
-                      {product.badgeTag}
+                      {rozet}
                     </span>
                   ) : category && category.toLocaleLowerCase("tr-TR") !== "tümü" ? (
                     <span className="absolute left-2.5 top-2.5 z-10 max-w-[70%] truncate rounded-lg border border-blue-500/25 bg-slate-950/80 px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-wider text-blue-300 shadow-sm backdrop-blur-md">
                       {category}
+                    </span>
+                  ) : null}
+                  {photoCountBadge ? (
+                    <span className="absolute bottom-2.5 right-2.5 z-10 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm">
+                      {photoCountBadge}
                     </span>
                   ) : null}
                 </div>
@@ -304,13 +328,18 @@ export default function ProductCatalog({
                   <h3 className="line-clamp-2 min-h-[2.5em] text-xs font-extrabold leading-snug text-white sm:text-sm">
                     {product.name}
                   </h3>
+                  {kartOzellikleri.length > 0 ? (
+                    <p className="mt-1 truncate text-[10px] font-semibold text-slate-400 sm:text-[11px]">
+                      {kartOzellikleri.map((ozellik) => ozellik.value).join(" · ")}
+                    </p>
+                  ) : null}
                   <div className="mt-2.5 flex min-w-0 items-baseline gap-2">
                     <p className="truncate text-xs font-extrabold text-blue-400 sm:text-sm">
                       {product.price || "Fiyat sorun"}
                     </p>
-                    {product.oldPriceAmount ? (
+                    {eskiFiyat ? (
                       <span className="shrink-0 text-[10px] font-medium text-slate-500 line-through sm:text-[11px]">
-                        {product.oldPriceAmount} TL
+                        {eskiFiyat}
                       </span>
                     ) : null}
                   </div>
@@ -463,6 +492,13 @@ export default function ProductCatalog({
           onClose={() => setQuickView(null)}
         />
       ) : null}
+
+      <VitrinCartDock
+        storeSlug={storeSlug}
+        storeName={storeName}
+        whatsappBaseUrl={whatsappBaseUrl}
+        trackingEnabled={trackingEnabled}
+      />
     </section>
   );
 }
