@@ -1,59 +1,52 @@
-# Vixrex Control Map Protocol v1
+# Vixrex Control Map Protocol v2
 
-## Kapsam
-Bu branch Vixrex'in bağımsız kontrol haritası omurgasıdır. Base44 yalnızca kalıcı görüntü/komuta yüzeyi olabilir; sistem gerçeği Base44'a bağlı değildir.
+## Kilitli kapsam
+Kalıcı panel URL'si Base44 üzerinde kalır. Base44 yalnız görüntü/komuta yüzeyidir.
+Vixrex kontrol haritasının kodu, yapısı, canlı durumu ve ajan yönetimi GitHub'dadır.
 
-## Kanonik dosyalar
-- `control-map-system/map.json`: insan kontrollü yapı; node ve ilişkiler.
-- `control-map-system/state.json`: ölçülmüş canlı durum.
-- `control-map-system/tasks.json`: ajan görev kuyruğu ve kilitler.
-- `control-map-system/protocol.md`: bu kurallar.
+## Kanonik omurga
+Repo: `xpodiumyours/vixrex`
+Branch: `control-map-system`
 
-## Gerçek kaynakları
-- GitHub = kod ve CI gerçeği.
-- Vercel = deploy gerçeği.
-- Supabase = production veri gerçeği.
-- `/api/health` = runtime gerçeği.
-- Playwright/E2E = kullanıcı akışı kanıtı.
+- `control-map-system/map.json` — Vixrex ön yüz/arka uç/veri/altyapı node ve ilişkileri.
+- `control-map-system/state.json` — ölçülmüş canlı sinyaller.
+- `control-map-system/management.json` — ortak ajan/yönetim sözleşmesi.
+- `control-map-system/protocol.md` — bu kurallar.
+- `control-map-system/web/` — panelin platformdan bağımsız referans arayüzü.
 
-## Durum kuralları
-- healthy: yalnız kanıt varsa.
-- broken: ölçülmüş başarısızlık.
-- partial: kısmi/eksik çalışma.
-- unknown: ölçülmemiş veya kanıtsız.
-- disabled: bilinçli kapalı.
-- Unknown hiçbir zaman tahminle green yapılmaz.
-- Kod, Preview, Live, Data ve E2E ayrı gerçekliklerdir.
+## Ortak yönetim
+Aktif görevlerin ortak gerçeği GitHub Issues'tır.
+Görev başlığı: `[CONTROL:<node_key>] <görev>`
 
-## Çok ajanlı yönetim
-1. ChatGPT, Base44 ajanı ve diğer ajanlar aynı `map/state/tasks` dosyalarını kullanır.
-2. Bir ajan görevi almadan önce `tasks.json` içindeki kilidi kontrol eder.
-3. Görev kapsamı seçilen node + doğrudan bağımlılıklarla sınırlıdır.
-4. Yeni bağımlılık bulunursa `map.json` için öneri üretilebilir; görev kapsamı otomatik genişlemez.
-5. Aynı göreve iki ajan aynı anda yazmaz.
-6. Ajan kendi işini tek başına green/proven ilan etmez; ayrı kanıt gerekir.
+Bir görev ilgili Vixrex node'una bağlıdır. Issue state, assignee ve yorumlar ortak yönetim gerçeğidir.
+ChatGPT, Base44 ajanı ve diğer ajanlar aynı GitHub issue/branch omurgasını kullanır.
+Base44 AI limiti omurgayı veya diğer ajanların çalışmasını durdurmaz.
 
-## Değişiklik izni
-Aşağıdakiler kullanıcı onayı olmadan YASAK:
+## Canlı sinyal kuralları
+GitHub = kod + CI
+Vercel = deploy
+Supabase = production veri
+/api/health = runtime
+Playwright/E2E = kullanıcı akışı
+
+KOD / PREVIEW / CANLI / VERİ / E2E ayrıdır.
+Kanıt yoksa `unknown`; tahminle `healthy` verilmez.
+
+## Ajan çalışma kuralı
+1. Node ve doğrudan bağımlılıkları oku.
+2. Açık `[CONTROL:<node_key>]` issue var mı kontrol et.
+3. Varsa aynı görevi çoğaltma; mevcut görevi kullan.
+4. İlgisiz kapsamı değiştirme.
+5. Ajan kendi işini kanıtsız green ilan edemez.
+
+## Kullanıcı onayı olmadan yasak
 - main merge
-- production deploy/publish
-- Supabase schema/RLS değişikliği
-- geri döndürülemez veri işlemi
-- ödeme/auth/güvenlik ayarı değişikliği
-
-Read-only ölçüm, kanıt toplama ve control-map branch güncellemesi serbesttir.
-
-## Branch ve deploy izolasyonu
-Kanonik kontrol omurgası `control-map-system` branch'indedir.
-Vixrex Vercel yapılandırması `* = false` olduğu için bu branch production/preview deploy tetiklemez.
-GitHub CI mevcut yapılandırmada yalnız PR ve main push'ta çalışır.
-Bu branch main'e otomatik birleştirilmez.
+- production deploy / publish
+- DB schema / RLS değişikliği
+- auth / ödeme / güvenlik ayarı
+- geri döndürülemez veri değişikliği
 
 ## Base44
-Base44'ın görevi:
-- bu dosyaları okumak,
-- haritayı çizmek,
-- kullanıcı komutlarını görev olarak yazmak/göstermek,
-- Base44 ajanı uygun olduğunda aynı protokolü kullanmak.
-
-Base44 build/AI limiti kontrol omurgasının varlığını veya diğer ajanların yönetimini durdurmaz.
+Base44 veritabanı kanonik kaynak değildir; yalnız görünüm/cache olabilir.
+Kalıcı URL: `https://live-ops-path.base44.app`
+Panel GitHub kanonik omurgasındaki durum ve görevleri göstermelidir.
