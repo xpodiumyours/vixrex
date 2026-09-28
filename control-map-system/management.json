@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "backend": "github",
+  "repository": "xpodiumyours/vixrex",
+  "branch": "control-map-system",
+  "task_backend": {
+    "type": "github_issues",
+    "title_pattern": "[CONTROL:<node_key>] <task>",
+    "open_query": "repo:xpodiumyours/vixrex is:issue is:open in:title [CONTROL:",
+    "truth": "issue state + assignee + comments"
+  },
+  "agents": [
+    {
+      "id": "chatgpt",
+      "role": "controller",
+      "production_requires_user_approval": true
+    },
+    {
+      "id": "base44_agent",
+      "role": "controller",
+      "production_requires_user_approval": true
+    },
+    {
+      "id": "external_agent",
+      "role": "worker",
+      "production_requires_user_approval": true
+    }
+  ],
+  "protected_actions": [
+    "main_merge",
+    "production_deploy",
+    "publish",
+    "database_schema_or_rls",
+    "auth_payment_security",
+    "irreversible_data_change"
+  ],
+  "panel": {
+    "permanent_url": "https://live-ops-path.base44.app",
+    "map": "control-map-system/map.json",
+    "state": "control-map-system/state.json",
+    "management": "control-map-system/management.json",
+    "protocol": "control-map-system/protocol.md"
+  }
+}
