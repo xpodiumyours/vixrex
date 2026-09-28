@@ -1,0 +1,510 @@
+{
+  "schema_version": 1,
+  "system": "Vixrex Control Map",
+  "canonical_branch": "control-map-system",
+  "purpose": "Base44'dan bağımsız, çok ajanlı Vixrex kontrol haritası omurgası",
+  "status_semantics": {
+    "healthy": "ölçülmüş ve çalışan",
+    "broken": "ölçülmüş ve başarısız",
+    "partial": "kısmi/eksik",
+    "unknown": "ölçülmemiş veya kanıtsız",
+    "disabled": "bilerek kapalı"
+  },
+  "relation_types": [
+    "partOf",
+    "dependsOn",
+    "readsFrom",
+    "writesTo",
+    "calls",
+    "testedBy",
+    "observedBy",
+    "deployedTo"
+  ],
+  "nodes": [
+    {
+      "key": "vixrex",
+      "label": "VIXREX",
+      "kind": "root",
+      "layer": "business",
+      "parent": null,
+      "criticality": "critical",
+      "route": null,
+      "live_url": "https://www.vixrex.com",
+      "source_paths": [
+        "Vixrex Haritası.md"
+      ],
+      "change_permission": "proposal_requires_approval"
+    },
+    {
+      "key": "giris",
+      "label": "Giriş",
+      "kind": "flow",
+      "layer": "experience",
+      "parent": "vixrex",
+      "criticality": "critical",
+      "route": "/giris",
+      "source_paths": [
+        "public_web/src/app"
+      ],
+      "change_permission": "proposal_requires_approval"
+    },
+    {
+      "key": "vitrin-olustur",
+      "label": "Vitrin Oluştur",
+      "kind": "flow",
+      "layer": "experience",
+      "parent": "vixrex",
+      "criticality": "critical",
+      "route": "/",
+      "source_paths": [
+        "public_web/src/app"
+      ],
+      "api_refs": [
+        "POST /api/create-store"
+      ],
+      "rpc_refs": [
+        "get_or_create_working_draft"
+      ],
+      "table_refs": [
+        "stores",
+        "store_working_drafts"
+      ],
+      "change_permission": "proposal_requires_approval"
+    },
+    {
+      "key": "api-create-store",
+      "label": "POST /api/create-store",
+      "kind": "api",
+      "layer": "code",
+      "parent": "vitrin-olustur",
+      "criticality": "critical",
+      "route": "/api/create-store",
+      "source_paths": [
+        "public_web/src/app/api/create-store"
+      ],
+      "api_refs": [
+        "POST /api/create-store"
+      ],
+      "rpc_refs": [
+        "get_or_create_working_draft"
+      ],
+      "change_permission": "proposal_requires_approval"
+    },
+    {
+      "key": "rpc-get-draft",
+      "label": "get_or_create_working_draft",
+      "kind": "rpc",
+      "layer": "data",
+      "parent": "vitrin-olustur",
+      "criticality": "critical",
+      "source_paths": [
+        "supabase/migrations"
+      ],
+      "rpc_refs": [
+        "get_or_create_working_draft"
+      ],
+      "table_refs": [
+        "store_working_drafts"
+      ],
+      "change_permission": "proposal_requires_approval"
+    },
+    {
+      "key": "vitrin-duzenle",
+      "label": "Vitrin Düzenle",
+      "kind": "flow",
+      "layer": "experience",
+      "parent": "vixrex",
+      "criticality": "critical",
+      "route": "/app",
+      "source_paths": [
+        "public_web/src/app/app"
+      ],
+      "test_refs": [
+        "vitrin-duzenleme.spec.ts"
+      ],
+      "table_refs": [
+        "store_working_drafts"
+      ],
+      "change_permission": "proposal_requires_approval"
+    },
+    {
+      "key": "owner-workspace",
+      "label": "Owner Workspace",
+      "kind": "screen",
+      "layer": "experience",
+      "parent": "vitrin-duzenle",
+      "criticality": "critical",
+      "route": "/app",
+      "source_paths": [
+        "public_web/src/app/app"
+      ],
+      "api_refs": [
+        "/api/owner-workspace",
+        "/api/owner-bootstrap"
+      ],
+      "test_refs": [
+        "vitrin-duzenleme.spec.ts"
+      ],
+      "table_refs": [
+        "store_working_drafts"
+      ],
+      "change_permission": "proposal_requires_approval"
+    },
+    {
+      "key": "working-draft",
+      "label": "Working Draft",
+      "kind": "database",
+      "layer": "data",
+      "parent": "vitrin-duzenle",
+      "criticality": "critical",
+      "source_paths": [
+        "public_web/src/lib/workingDraftBroadcast.ts"
+      ],
+      "rpc_refs": [
+        "get_or_create_working_draft",
+        "publish_working_draft"
+      ],
+      "table_refs": [
+        "store_working_drafts"
+      ],
+      "change_permission": "proposal_requires_approval"
+    },
+    {
+      "key": "urunler",
+      "label": "Ürünler",
+      "kind": "flow",
+      "layer": "experience",
+      "parent": "vixrex",
+      "criticality": "important",
+      "route": "/app/urunler",
+      "source_paths": [
+        "public_web/src/app/app/urunler"
+      ],
+      "table_refs": [
+        "products",
+        "product_categories"
+      ],
+      "change_permission": "proposal_requires_approval"
+    },
+    {
+      "key": "yayinla",
+      "label": "Yayınla",
+      "kind": "flow",
+      "layer": "experience",
+      "parent": "vixrex",
+      "criticality": "critical",
+      "source_paths": [
+        "public_web/src/app/api/owner-publish"
+      ],
+      "api_refs": [
+        "POST /api/owner-publish"
+      ],
+      "rpc_refs": [
+        "publish_working_draft"
+      ],
+      "table_refs": [
+        "stores",
+        "store_working_drafts"
+      ],
+      "change_permission": "proposal_requires_approval"
+    },
+    {
+      "key": "api-owner-publish",
+      "label": "POST /api/owner-publish",
+      "kind": "api",
+      "layer": "code",
+      "parent": "yayinla",
+      "criticality": "critical",
+      "route": "/api/owner-publish",
+      "source_paths": [
+        "public_web/src/app/api/owner-publish"
+      ],
+      "api_refs": [
+        "POST /api/owner-publish"
+      ],
+      "rpc_refs": [
+        "publish_working_draft"
+      ],
+      "change_permission": "proposal_requires_approval"
+    },
+    {
+      "key": "rpc-publish-draft",
+      "label": "publish_working_draft",
+      "kind": "rpc",
+      "layer": "data",
+      "parent": "yayinla",
+      "criticality": "critical",
+      "source_paths": [
+        "supabase/migrations"
+      ],
+      "rpc_refs": [
+        "publish_working_draft"
+      ],
+      "table_refs": [
+        "stores",
+        "store_working_drafts"
+      ],
+      "change_permission": "proposal_requires_approval"
+    },
+    {
+      "key": "public-vitrin",
+      "label": "Public Vitrin",
+      "kind": "flow",
+      "layer": "experience",
+      "parent": "vixrex",
+      "criticality": "critical",
+      "route": "/v/:slug",
+      "live_url": "https://www.vixrex.com",
+      "source_paths": [
+        "public_web/src/app/v"
+      ],
+      "test_refs": [
+        "public-vitrin.spec.ts",
+        "vitrin-smoke.spec.ts",
+        "mobile-emulation.spec.ts"
+      ],
+      "table_refs": [
+        "stores",
+        "products"
+      ],
+      "health_refs": [
+        "/api/health"
+      ],
+      "change_permission": "proposal_requires_approval"
+    },
+    {
+      "key": "health-api",
+      "label": "Runtime Health",
+      "kind": "health",
+      "layer": "infra",
+      "parent": "public-vitrin",
+      "criticality": "important",
+      "route": "/api/health",
+      "live_url": "https://vixrex-public.vercel.app/api/health",
+      "source_paths": [
+        "public_web/src/app/api/health/route.ts"
+      ],
+      "api_refs": [
+        "GET /api/health"
+      ],
+      "health_refs": [
+        "application",
+        "database",
+        "paytr"
+      ],
+      "table_refs": [
+        "stores"
+      ],
+      "change_permission": "read_only"
+    },
+    {
+      "key": "browser-e2e",
+      "label": "Browser E2E",
+      "kind": "test",
+      "layer": "test",
+      "parent": "public-vitrin",
+      "criticality": "important",
+      "source_paths": [
+        "public_web/e2e",
+        "public_web/playwright.config.ts"
+      ],
+      "test_refs": [
+        "public-vitrin.spec.ts",
+        "vitrin-duzenleme.spec.ts",
+        "vitrin-smoke.spec.ts",
+        "mobile-emulation.spec.ts",
+        "visual-regression.spec.ts"
+      ],
+      "change_permission": "read_only"
+    },
+    {
+      "key": "supabase-production",
+      "label": "Supabase Production",
+      "kind": "database",
+      "layer": "data",
+      "parent": "vixrex",
+      "criticality": "critical",
+      "live_url": "https://chfulefxczbgurtgavtp.supabase.co",
+      "source_paths": [
+        "supabase/.temp/project-ref"
+      ],
+      "table_refs": [
+        "stores",
+        "products",
+        "store_working_drafts"
+      ],
+      "change_permission": "read_only"
+    },
+    {
+      "key": "github-main-ci",
+      "label": "GitHub main / CI",
+      "kind": "test",
+      "layer": "test",
+      "parent": "vixrex",
+      "criticality": "important",
+      "live_url": "https://github.com/xpodiumyours/vixrex",
+      "source_paths": [
+        ".github/workflows/ci.yml"
+      ],
+      "change_permission": "read_only"
+    },
+    {
+      "key": "vercel-public",
+      "label": "Vercel · vixrex-public",
+      "kind": "deploy",
+      "layer": "infra",
+      "parent": "vixrex",
+      "criticality": "critical",
+      "live_url": "https://vixrex-public.vercel.app",
+      "source_paths": [
+        "public_web"
+      ],
+      "health_refs": [
+        "/api/health"
+      ],
+      "change_permission": "read_only"
+    },
+    {
+      "key": "vercel-app",
+      "label": "Vercel · vixrex-app",
+      "kind": "deploy",
+      "layer": "infra",
+      "parent": "vixrex",
+      "criticality": "important",
+      "live_url": "https://vixrex-app.vercel.app",
+      "source_paths": [
+        "lib/",
+        "vercel-build.sh"
+      ],
+      "change_permission": "read_only"
+    }
+  ],
+  "edges": [
+    {
+      "from": "giris",
+      "to": "vixrex",
+      "relation": "partOf",
+      "required": true
+    },
+    {
+      "from": "vitrin-olustur",
+      "to": "vixrex",
+      "relation": "partOf",
+      "required": true
+    },
+    {
+      "from": "vitrin-duzenle",
+      "to": "vixrex",
+      "relation": "partOf",
+      "required": true
+    },
+    {
+      "from": "urunler",
+      "to": "vixrex",
+      "relation": "partOf",
+      "required": true
+    },
+    {
+      "from": "yayinla",
+      "to": "vixrex",
+      "relation": "partOf",
+      "required": true
+    },
+    {
+      "from": "public-vitrin",
+      "to": "vixrex",
+      "relation": "partOf",
+      "required": true
+    },
+    {
+      "from": "vitrin-olustur",
+      "to": "api-create-store",
+      "relation": "calls",
+      "required": true
+    },
+    {
+      "from": "api-create-store",
+      "to": "rpc-get-draft",
+      "relation": "calls",
+      "required": true
+    },
+    {
+      "from": "rpc-get-draft",
+      "to": "working-draft",
+      "relation": "writesTo",
+      "required": true
+    },
+    {
+      "from": "owner-workspace",
+      "to": "vitrin-duzenle",
+      "relation": "partOf",
+      "required": true
+    },
+    {
+      "from": "owner-workspace",
+      "to": "working-draft",
+      "relation": "readsFrom",
+      "required": true
+    },
+    {
+      "from": "owner-workspace",
+      "to": "working-draft",
+      "relation": "writesTo",
+      "required": true
+    },
+    {
+      "from": "yayinla",
+      "to": "api-owner-publish",
+      "relation": "calls",
+      "required": true
+    },
+    {
+      "from": "api-owner-publish",
+      "to": "rpc-publish-draft",
+      "relation": "calls",
+      "required": true
+    },
+    {
+      "from": "rpc-publish-draft",
+      "to": "supabase-production",
+      "relation": "writesTo",
+      "required": true
+    },
+    {
+      "from": "public-vitrin",
+      "to": "supabase-production",
+      "relation": "readsFrom",
+      "required": true
+    },
+    {
+      "from": "public-vitrin",
+      "to": "browser-e2e",
+      "relation": "testedBy",
+      "required": true
+    },
+    {
+      "from": "public-vitrin",
+      "to": "health-api",
+      "relation": "observedBy",
+      "required": true
+    },
+    {
+      "from": "vixrex",
+      "to": "vercel-public",
+      "relation": "deployedTo",
+      "required": true
+    },
+    {
+      "from": "vixrex",
+      "to": "vercel-app",
+      "relation": "deployedTo",
+      "required": false
+    },
+    {
+      "from": "vixrex",
+      "to": "github-main-ci",
+      "relation": "observedBy",
+      "required": true
+    }
+  ]
+}
