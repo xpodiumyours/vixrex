@@ -82,16 +82,12 @@ test.describe("görsel regresyon — sahip ve katalog yüzeyleri", () => {
     await expect(page).toHaveScreenshot("kesfet-desktop.png", { maxDiffPixelRatio: 0.30, timeout: 15_000 });
   });
 
-  test("randevu sayfası desktop — durumla uyumlu", async ({ page }) => {
+  test("randevu sayfası desktop — 200 döner", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
     const response = await page.goto(`/v/${DEMO_SLUG}/randevu`, { waitUntil: "domcontentloaded" });
     const status = response?.status() ?? 0;
-    if (status === 404) {
-      await expect(page.getByText(/bulunamad|not found|404/i).first()).toBeVisible({ timeout: 10_000 });
-    } else {
-      expect(status).toBe(200);
-      await expect(page.getByText(/randevu|rezervasyon|online/i).first()).toBeVisible({ timeout: 15_000 });
-    }
+    expect(status, `randevu sayfası canlıda 200 döner — 404 kabul edilmez (audit: randevu 200/307/404 esnekliği)`).toBe(200);
+    await expect(page.getByText(/randevu|rezervasyon|online/i).first()).toBeVisible({ timeout: 15_000 });
 
     await expect(page).toHaveScreenshot("randevu-desktop.png", { maxDiffPixelRatio: 0.30, timeout: 15_000 });
   });
