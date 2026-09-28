@@ -4,41 +4,86 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="color-scheme" content="dark" />
-  <title>Vixrex Control</title>
+  <title>Vixrex Canlı Harita</title>
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
   <div id="app">
     <header class="topbar">
       <div>
-        <div class="eyebrow">VIXREX CONTROL MAP</div>
-        <h1>Canlı Sistem Haritası</h1>
+        <div class="eyebrow">VIXREX CANLI HARİTA · GitHub kontrol omurgası</div>
+        <h1>Sistem Durum Tablosu</h1>
       </div>
       <div class="top-actions">
         <button id="refreshBtn" class="ghost">Yenile</button>
-        <a class="ghost" href="https://www.vixrex.com" target="_blank" rel="noreferrer">Canlıyı Aç</a>
+        <a class="ghost" href="https://www.vixrex.com" target="_blank" rel="noreferrer">Canlı siteyi aç</a>
       </div>
     </header>
 
     <section id="commandBar" class="command-bar">
-      <div class="metric"><span>CANLI</span><strong id="liveMetric">—</strong></div>
-      <div class="metric"><span>PREVIEW</span><strong id="previewMetric">—</strong></div>
-      <div class="metric"><span>VERİ</span><strong id="dataMetric">—</strong></div>
-      <div class="metric"><span>E2E</span><strong id="e2eMetric">—</strong></div>
-      <div class="metric wide"><span>MAIN</span><strong id="shaMetric">—</strong></div>
-      <div class="metric wide"><span>SON ÖLÇÜM</span><strong id="ageMetric">—</strong></div>
+      <div class="metric"><span>DÜĞÜM</span><strong id="nodeMetric">-</strong></div>
+      <div class="metric"><span>KIRMIZI</span><strong id="badMetric">-</strong></div>
+      <div class="metric"><span>SARI</span><strong id="warnMetric">-</strong></div>
+      <div class="metric"><span>AÇIK GÖREV</span><strong id="taskMetric">-</strong></div>
+      <div class="metric wide"><span>SON ÖLÇÜM</span><strong id="ageMetric">-</strong></div>
+      <div class="metric wide"><span>KAYNAK COMMIT</span><strong id="shaMetric">-</strong></div>
     </section>
 
     <section class="filters">
       <button data-filter="all" class="filter active">Tümü</button>
       <button data-filter="problem" class="filter">Kırmızılar</button>
-      <button data-filter="changed" class="filter">Bugün</button>
-      <button data-filter="agent" class="filter">Ajanlar</button>
+      <button data-filter="measured" class="filter">Ölçülenler</button>
+      <button data-filter="agent" class="filter">Ajanlı olanlar</button>
     </section>
 
     <main>
       <div id="sourceWarning" class="warning hidden"></div>
-      <section id="graph" class="graph" aria-label="Vixrex bağımlılık haritası"></section>
+
+      <section class="table-card">
+        <div class="table-head">
+          <h2>Düğümler</h2>
+          <span id="tableNote">GitHub: control-map-system</span>
+        </div>
+        <div class="table-scroll">
+          <table id="nodeTable">
+            <thead>
+              <tr>
+                <th class="col-name">Düğüm</th>
+                <th>Katman</th>
+                <th class="sig">KOD</th>
+                <th class="sig">ÖNİZLEME</th>
+                <th class="sig">CANLI</th>
+                <th class="sig">VERİ</th>
+                <th class="sig">E2E</th>
+                <th>Kritiklik</th>
+                <th class="col-task">Ajan / Görev</th>
+              </tr>
+            </thead>
+            <tbody id="nodeRows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="table-card" id="issueCard">
+        <div class="table-head">
+          <h2>Ortak Yönetim / Ajanlar</h2>
+          <span id="issueNote">GitHub Issues · [CONTROL:]</span>
+        </div>
+        <div class="table-scroll">
+          <table id="issueTable">
+            <thead>
+              <tr>
+                <th class="col-no">#</th>
+                <th>Görev</th>
+                <th>Düğüm</th>
+                <th>Ajan</th>
+                <th>Durum</th>
+              </tr>
+            </thead>
+            <tbody id="issueRows"></tbody>
+          </table>
+        </div>
+      </section>
     </main>
   </div>
 
@@ -78,6 +123,7 @@
     </form>
   </dialog>
 
-  <script src="./app.js"></script>\n  <script src="./agents.js"></script>
+  <script src="./app.js"></script>
+  <script src="./agents.js"></script>
 </body>
 </html>
