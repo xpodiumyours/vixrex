@@ -83,7 +83,7 @@ export function SharedVixrexAssistant({ onBrowse }: { onBrowse: () => void }) {
       <header className="flex min-h-[58px] items-center gap-3 border-b border-lp-border px-4">
         <span className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-lp-primary/60 bg-lp-surface" aria-hidden="true">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/images/vixrex_v_crystal_mascot.png" alt="" className="h-9 w-9 object-contain" />
+          <img src="/images/vixrex_v_crystal_mascot.webp" alt="" className="h-9 w-9 object-contain" />
         </span>
         <div>
           <h1 id="vixrex-assistant-title" className="text-[16px] font-black text-lp-text">Vixrex</h1>

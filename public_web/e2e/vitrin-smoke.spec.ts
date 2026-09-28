@@ -24,15 +24,12 @@ test.describe("public vitrin smoke", () => {
       waitUntil: "domcontentloaded",
     });
 
-    // Next notFound → 404; bazı deploy'larda soft 200 + not-found UI olabilir.
+    // Audit (30): esneklik kaldırıldı — 404 kesin kabul; soft-200+
+    // not-found UI varyantı yasak (404'ü başarı sayan test kapanıyor).
     const status = response?.status() ?? 0;
-    if (status === 404) {
-      expect(status).toBe(404);
-      return;
-    }
-
-    await expect(
-      page.getByText(/bulunamad|not found|404/i).first(),
-    ).toBeVisible({ timeout: 15_000 });
+    expect(
+      status,
+      "bilinmeyen vitrin kesin 404 döner — 200 esnekliği yok",
+    ).toBe(404);
   });
 });

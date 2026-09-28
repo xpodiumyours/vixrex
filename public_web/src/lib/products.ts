@@ -75,7 +75,7 @@ export function resolveCatalogImage(
 
   // OCR veya görselsiz ürünlerde temiz http görsel yoksa Vixrex Asistan maskotunu kullan
   if (cleaned[0]) return cleaned[0];
-  return "/vixrex_v_crystal_mascot.png";
+  return "/images/vixrex_v_crystal_mascot.webp";
 }
 
 export function isPublicCatalogProduct(product: ProductItem): boolean {

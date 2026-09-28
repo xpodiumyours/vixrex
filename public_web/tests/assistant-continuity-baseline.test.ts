@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { readFileSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import { resolve } from "path";
 
 /**
@@ -159,8 +159,11 @@ describe("Vixrex Asistan sürekliliği — korunan mevcut akış", () => {
 
     expect(flutterAvatarSource).toContain(canonicalAsset);
     expect(nextMascot.equals(flutterMascot)).toBe(true);
+    // Web servisi ağır PNG yerine webp'den yapılır (audit: 664KB → 92KB);
+    // kök PNG yalnız Flutter ile bayt-eş kanonik aynadır, sayfa yüklemez.
+    expect(existsSync(resolve(__dirname, "../public/images/vixrex_v_crystal_mascot.webp"))).toBe(true);
     expect(nextAvatarSource).toContain(
-      'src="/images/vixrex_v_crystal_mascot.png"'
+      'src="/images/vixrex_v_crystal_mascot.webp"'
     );
     expect(ownerPanelSource).toContain("<VixrexAvatar size={44} decorative />");
     expect(ownerTopBarSource).toContain(

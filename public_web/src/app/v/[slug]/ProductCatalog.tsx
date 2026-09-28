@@ -58,7 +58,7 @@ const PAGE_SIZE = 24;
 
 function productImageOnly(product: CatalogProduct): string | null {
   const resolved = resolveCatalogImage(product, null);
-  return resolved === "/vixrex_v_crystal_mascot.png" ? null : resolved;
+  return resolved === "/images/vixrex_v_crystal_mascot.webp" ? null : resolved;
 }
 
 function productImagesOnly(product: CatalogProduct): string[] {

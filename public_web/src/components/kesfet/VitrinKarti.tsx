@@ -324,7 +324,7 @@ export function VitrinKarti({
           <div className="flex items-start gap-3">
             <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-lp-primary/60 bg-lp-surface-soft" aria-hidden="true">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/images/vixrex_v_crystal_mascot.png" alt="" className="h-9 w-9 object-contain" />
+              <img src="/images/vixrex_v_crystal_mascot.webp" alt="" className="h-9 w-9 object-contain" />
             </span>
             <div className="min-w-0">
               <h2 id={`kirala-baslik-${vitrin.slug}`} className="truncate text-[14px] font-black">Vixrex</h2>

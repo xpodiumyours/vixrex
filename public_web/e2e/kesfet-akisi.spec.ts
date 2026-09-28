@@ -17,7 +17,8 @@ test.describe("ana sayfa", () => {
     page,
   }) => {
     const response = await page.goto("/", { waitUntil: "domcontentloaded" });
-    expect(response?.ok()).toBeTruthy();
+    // Audit (30): ok() 3xx'i de geçerdi — ana sayfa kesin 200 + içerik iddiası.
+    expect(response?.status(), "ana sayfa canlıda kesin 200 döner").toBe(200);
 
     const html = await page.content();
     expect(html).toContain("birkaç dakikada hazır");
@@ -52,7 +53,8 @@ test.describe("Keşfet dizini", () => {
     const response = await page.goto("/kesfet", {
       waitUntil: "domcontentloaded",
     });
-    expect(response?.ok()).toBeTruthy();
+    // Audit (30): kesin 200 — keşfet dizini boş da olsa 404/3xx geçmez.
+    expect(response?.status(), "keşfet sayfası canlıda kesin 200 döner").toBe(200);
 
     const html = await page.content();
     expect(html).toContain("Keşfet");
@@ -71,7 +73,8 @@ test.describe("Keşfet dizini", () => {
     expect(hedef).toBeTruthy();
 
     const response = await page.goto(hedef!, { waitUntil: "domcontentloaded" });
-    expect(response?.ok()).toBeTruthy();
+    // Audit (30): kategori sayfası kesin 200 — boş kategori de 200 dönmeli.
+    expect(response?.status(), "kategori sayfası kesin 200 döner").toBe(200);
     await expect(page.locator("h1")).toBeVisible();
   });
 
