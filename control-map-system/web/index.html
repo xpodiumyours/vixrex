@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="color-scheme" content="dark" />
+  <title>Vixrex Control</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">VIXREX CONTROL MAP</div>
+        <h1>Canlı Sistem Haritası</h1>
+      </div>
+      <div class="top-actions">
+        <button id="refreshBtn" class="ghost">Yenile</button>
+        <a class="ghost" href="https://www.vixrex.com" target="_blank" rel="noreferrer">Canlıyı Aç</a>
+      </div>
+    </header>
+
+    <section id="commandBar" class="command-bar">
+      <div class="metric"><span>CANLI</span><strong id="liveMetric">—</strong></div>
+      <div class="metric"><span>PREVIEW</span><strong id="previewMetric">—</strong></div>
+      <div class="metric"><span>VERİ</span><strong id="dataMetric">—</strong></div>
+      <div class="metric"><span>E2E</span><strong id="e2eMetric">—</strong></div>
+      <div class="metric wide"><span>MAIN</span><strong id="shaMetric">—</strong></div>
+      <div class="metric wide"><span>SON ÖLÇÜM</span><strong id="ageMetric">—</strong></div>
+    </section>
+
+    <section class="filters">
+      <button data-filter="all" class="filter active">Tümü</button>
+      <button data-filter="problem" class="filter">Kırmızılar</button>
+      <button data-filter="changed" class="filter">Bugün</button>
+      <button data-filter="agent" class="filter">Ajanlar</button>
+    </section>
+
+    <main>
+      <div id="sourceWarning" class="warning hidden"></div>
+      <section id="graph" class="graph" aria-label="Vixrex bağımlılık haritası"></section>
+    </main>
+  </div>
+
+  <div id="sheetBackdrop" class="sheet-backdrop hidden"></div>
+  <aside id="sheet" class="sheet" aria-hidden="true">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <div>
+        <div id="sheetKind" class="eyebrow"></div>
+        <h2 id="sheetTitle"></h2>
+      </div>
+      <button id="closeSheet" class="icon-btn" aria-label="Kapat">×</button>
+    </div>
+    <div id="sheetStatuses" class="status-grid"></div>
+    <div id="sheetDetail" class="sheet-detail"></div>
+    <div class="sheet-actions">
+      <a id="openReal" class="primary" target="_blank" rel="noreferrer">Gerçek ekranı aç</a>
+      <button id="focusDeps" class="ghost">Bağımlılıkları gör</button>
+      <button id="assignAgent" class="ghost">Ajana ver</button>
+    </div>
+  </aside>
+
+  <dialog id="taskDialog">
+    <form method="dialog">
+      <div class="dialog-head">
+        <div>
+          <div class="eyebrow">AJAN GÖREV PAKETİ</div>
+          <h3 id="taskTitle"></h3>
+        </div>
+        <button value="cancel" class="icon-btn">×</button>
+      </div>
+      <textarea id="taskPackage" readonly></textarea>
+      <div class="dialog-actions">
+        <button id="copyTask" type="button" class="primary">Paketi kopyala</button>
+        <a id="openIssue" class="ghost" target="_blank" rel="noreferrer">GitHub görevi aç</a>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="./app.js"></script>
+</body>
+</html>
