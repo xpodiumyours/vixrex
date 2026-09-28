@@ -1,6 +1,6 @@
 # Vixrex Yol Tahtası
 
-Son ölçüm: 2026-09-27, 09:50 (ana dal; #563 Vitrin Ölçer ve 4 açık PR birleşti, Vitrin Ölçer migration'ı canlıya uygulandı). **Bu dosya tek gerçek kaynaktır.** Casper, Claude,
+Son ölçüm: 2026-09-28 (32 maddelik Checkup turu kapandı: #585 + #586 birleşti, kayıtsız 2 migration canlıya uygulandı, randevu butonu canlıda ölçüldü). **Bu dosya tek gerçek kaynaktır.** Casper, Claude,
 Freebuff ve Gemini aynı tahtaya bakar. İş bitince satırın durumu burada
 güncellenir — başka yerde değil.
 
@@ -158,3 +158,31 @@ yürünmesi (ekran görülmedi) ve gerçek kullanıcı oturumuyla sahip panosu.
    koymuyor (koşu 36312023523: `syntax error at or near ":"`); kayıt SQL'i
    artık geçici dosyaya yazılıp `-f` ile çalıştırılıyor. Aynı etiket iki kez
    itilemediği için etiket sonuna `#ek` eklenebiliyor.
+
+## 2026-09-28 ek notu — 32 maddelik Checkup turu kapandı
+
+6. **Denetim + düzeltme kapandı.** 32 maddelik kontrol listesinin dört dalgası
+   (W1 sözleşme, W2 keşfet-para-kimlik, W3 müşteri-güven, W4 yapı-kural)
+   `verify-web-cerrahi-20260928` dalında sonuçlandı → PR #586 main'de.
+   Kapatılan kusurlar: vitrin görünümünden **eksik randevu linki**
+   (`isBookingEnabled` hiç kullanılmıyordu → "Randevu Sistemi" açıkken hero'da
+   "Randevu Al → /v/<slug>/randevu"), /giris + /kayit'te misafir verisi
+   bağlama notu (/hesap-bagla), toplu yüklemede kategori eşleme + görsel
+   süzgeci, keşfet kartında puan, kök hata sınırı (`src/app/error.tsx`).
+   Birleşimde main'in kararları korundu: #583 noindex, website CTA kaldırma.
+7. **Görsel referanslar PR #585 ile main'de.** Randevu görsel testinde 404
+   esnekliği kalktı (canlıda kesin 200); Linux temelleri `gorsel-referans-yenile`
+   işiyle canlıdan yenilendi (`maxDiffPixelRatio: 0.30`,
+   `--update-snapshots=all` — tolerans içi değişimler de yazılır).
+8. **Kayıtsız kalan 2 migration canlıya uygulandı** (bkz. 27 Eylül notu 2):
+   `20260927120000_fix_delete_user_account_vitrin_kullanici_verileri` (KVKK
+   hesap silme zinciri) + `20260927121000_vitrin_olcer_donem_araligi_birlestir`
+   (Ölçer dönem hesabı). Toplu koşu 36362338913: `uygulanan=2 atlanan=1
+   değişen=0`.
+9. **Kapılar:** vitest 246/246 (1851 test), tsc, eslint, üretim derlemesi —
+   hepsi yeşil. **Canlı ölçüm:** production dağıtım `68aa8c05` READY;
+   `vixrex.com/v/kiralik-lezzet-duragi` 200 ve "Randevu Al" butonu canlıda
+   görünüyor (önbellek kırıcıyla ölçüldü).
+
+**Doğrulanan:** randevu butonu canlıda. **Doğrulanmayan:** gerçek kullanıcı
+oturumuyla randevu sihirbazının uçtan uca doldurulması (bkz. 27 Eylül notu).
