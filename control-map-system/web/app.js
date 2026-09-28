@@ -109,7 +109,7 @@ function taskPackage(n){
 }
 function assign(){
  if(!selected)return;const p=taskPackage(selected);document.getElementById("taskTitle").textContent=selected.label;document.getElementById("taskPackage").value=p;
- const title="[CONTROL] "+selected.label;
+ const title="[CONTROL:"+selected.key+"] "+selected.label;
  document.getElementById("openIssue").href=ISSUE_BASE+"?title="+encodeURIComponent(title)+"&body="+encodeURIComponent(p);
  document.getElementById("taskDialog").showModal();
 }
