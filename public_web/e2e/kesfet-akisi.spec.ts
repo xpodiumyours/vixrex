@@ -94,22 +94,44 @@ test.describe("Keşfet dizini", () => {
       expect(html).toContain("Aylık 299 TL");
       expect(html).toContain('action="/api/rent-demo"');
 
-      await kiralaButonu.first().click();
-      await expect(page.locator("dialog").first()).toBeVisible();
+      // Kartta İKİ pencere var: WhatsApp paneli (whatsapp-baslik-…) ile
+      // Kirala paneli (kirala-baslik-…). Eski test "dialog" deyip ilkinde
+      // kalıyordu — o hep kapalıdır. (2026-09-29: yalnız test düzeltmesi.)
+      const dialog = page.locator('dialog[aria-labelledby^="kirala-baslik"]');
+      await expect(async () => {
+        if (await dialog.first().isVisible()) return;
+        await kiralaButonu.first().click();
+        await expect(dialog.first()).toBeVisible({ timeout: 2_000 });
+      }).toPass({ timeout: 20_000 });
     }
   });
 
   test("rent-demo sayfası native form POST köprüsünü içerir", async ({
     page,
   }) => {
+    // Otomatik kiralama akışı sayfayı form gönderimiyle yönlendirebilir;
+    // bu test yalnızca formun VARLIĞını ölçdüğü için gerçek gönderim
+    // devre dışı bırakılır. (2026-09-29: ürün koduna dokunmadan.)
+    await page.addInitScript(() => {
+      HTMLFormElement.prototype.submit = function () {};
+    });
+
     await page.goto("/rent-demo?slug=ornek-vitrin", {
       waitUntil: "domcontentloaded",
     });
 
-    const html = await page.content();
-    expect(html).toContain("Vitrin hazırlanıyor");
-    expect(html).toContain('action="/api/rent-demo"');
-    expect(html).toContain('name="slug"');
+    // Sayfa önce "Vitrin hazırlanıyor…" bekleme ekranını gönderir; gizli
+    // form sayfa hazır olduğunda (JS çalıştıktan sonra) çizilir. Eski test
+    // ilk HTML'e bakıp "form yok" diye düşüyordu — şimdi formun gelmesini
+    // bekliyoruz.
+    await expect(page.getByText("Vitrin hazırlanıyor").first()).toBeVisible();
+
+    const form = page.locator('form[action="/api/rent-demo"]');
+    await expect(form).toBeAttached({ timeout: 15_000 });
+    await expect(form.locator('input[name="slug"]')).toHaveAttribute(
+      "value",
+      "ornek-vitrin",
+    );
   });
 
   test("vitrin kartına tıklamak vitrin sayfasını açar", async ({ page }) => {
