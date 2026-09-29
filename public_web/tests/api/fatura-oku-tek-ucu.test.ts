@@ -76,6 +76,7 @@ const TEK_SATIR = {
   satirlar: [
     {
       model: "ELT1302",
+      ad: "Elit Erkek Elastan Sıfır Yaka",
       barkod: "8681128321677",
       varyant: "Siyah",
       beden: "L",
@@ -112,6 +113,41 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(govde.satirlar[0].model).toBe("ELT1302");
     expect(govde.satirlar[0].adet).toBe(2);
     expect(govde.satirlar[0].alisBirimFiyat).toBe(137);
+  });
+
+  it("model ve barkod yoksa ürün adı bulunan satırı kaybetmez", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        okuyucuCevabi({
+          tedarikci: "Örnek Toptan",
+          satirlar: [
+            {
+              model: "",
+              ad: "500 g Süzme Peynir",
+              barkod: "",
+              varyant: "",
+              beden: "",
+              adet: 3,
+              birim_fiyat: 80,
+              tutar: 240,
+            },
+          ],
+          toplam_adet: 3,
+          toplam_tutar: 240,
+        }),
+      ),
+    );
+
+    const cevap = await faturaOku(istek());
+    const govde = await cevap.json();
+
+    expect(cevap.status).toBe(200);
+    expect(govde.satirlar).toHaveLength(1);
+    expect(govde.satirlar[0].ad).toBe("500 g Süzme Peynir");
+    expect(govde.satirlar[0].model).toBe("");
+    expect(govde.satirlar[0].barkod).toBe("");
+    expect(govde.satirlar[0].katalog).toBeNull();
   });
 
   it("çerez yoksa ama editToken geçerliyse Flutter isteği de kabul edilir", async () => {

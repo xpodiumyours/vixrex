@@ -158,10 +158,10 @@ export async function POST(request: NextRequest) {
       const okuma = await faturayiOku(goruntu);
 
       const hamSatirlar: HamFaturaSatiri[] = okuma.satirlar
-        .filter((satir: GoruSatiri) => satir.model || satir.barkod)
+        .filter((satir: GoruSatiri) => satir.model || satir.ad || satir.barkod)
         .map((satir: GoruSatiri) => ({
           model: satir.model,
-          ad: "",
+          ad: satir.ad,
           barkod: satir.barkod,
           varyant: satir.varyant,
           beden: satir.beden,
