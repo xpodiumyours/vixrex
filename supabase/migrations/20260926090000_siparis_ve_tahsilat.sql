@@ -141,7 +141,7 @@ begin
 
   select allowed, retry_after_seconds
   into v_allowed, v_retry_after
-  from public.consume_assistant_request('order:' || v_store.id::text, 5, 3600);
+  from public.consume_assistant_request('order:' || v_store.id::text, 30, 3600);
   if not v_allowed then
     raise exception 'RATE_LIMITED'
       using errcode = 'P0001', detail = v_retry_after::text;

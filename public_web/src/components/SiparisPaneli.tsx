@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
+import { useRecaptcha } from "@/components/recaptcha/RecaptchaProvider";
 
 interface SiparisPaneliProps {
   storeSlug: string;
@@ -45,6 +46,7 @@ export default function SiparisPaneli({
   const [gonderiliyor, setGonderiliyor] = useState(false);
   const [hata, setHata] = useState("");
   const [sonuc, setSonuc] = useState<SiparisSonuc | null>(null);
+  const { executeRecaptcha } = useRecaptcha();
 
   if (priceKurus === null || priceKurus <= 0) return null;
 
@@ -55,6 +57,7 @@ export default function SiparisPaneli({
     setHata("");
     setGonderiliyor(true);
     try {
+      const recaptchaToken = await executeRecaptcha("order_create");
       const yanit = await fetch("/api/orders", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -66,6 +69,7 @@ export default function SiparisPaneli({
           fulfillment: teslim,
           paymentMethod: odeme,
           items: [{ productSlug, quantity: adet }],
+          recaptchaToken,
         }),
       });
       const govde = await yanit.json().catch(() => null);
