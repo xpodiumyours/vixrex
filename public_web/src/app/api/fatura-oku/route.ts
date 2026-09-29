@@ -153,6 +153,9 @@ export async function POST(request: NextRequest) {
     let sonSatirlar: HamFaturaSatiri[] = [];
     let sonOzet = { adet: null as number | null, toplam: null as number | null };
     let sonTedarikci = "";
+    let sonTedarikciVergiNo = "";
+    let sonTedarikciAdres = "";
+    let sonTedarikciSite = "";
 
     for (let deneme = 1; deneme <= DENEME_SINIRI; deneme++) {
       const okuma = await faturayiOku(goruntu);
@@ -160,6 +163,7 @@ export async function POST(request: NextRequest) {
       const hamSatirlar: HamFaturaSatiri[] = okuma.satirlar
         .filter((satir: GoruSatiri) => satir.model || satir.ad || satir.barkod)
         .map((satir: GoruSatiri) => ({
+          hamSatir: satir.hamSatir,
           model: satir.model,
           ad: satir.ad,
           barkod: satir.barkod,
@@ -170,8 +174,8 @@ export async function POST(request: NextRequest) {
           satirToplam: satir.tutar,
           // Güven, satırın kendi kanıtından gelir: kod/barkod/adet/fiyat.
           guven:
-            [satir.model, satir.barkod, satir.beden, satir.adet !== null, satir.birimFiyat !== null]
-              .filter(Boolean).length / 5,
+            [satir.model, satir.ad, satir.barkod, satir.beden, satir.adet !== null, satir.birimFiyat !== null]
+              .filter(Boolean).length / 6,
         }));
 
       if (hamSatirlar.length === 0) {
@@ -182,6 +186,9 @@ export async function POST(request: NextRequest) {
       }
 
       sonTedarikci = okuma.tedarikci;
+      sonTedarikciVergiNo = okuma.tedarikciVergiNo;
+      sonTedarikciAdres = okuma.tedarikciAdres;
+      sonTedarikciSite = okuma.tedarikciSite;
       sonOzet = { adet: okuma.belgeAdedi, toplam: okuma.belgeToplami };
       sonSatirlar = hamSatirlar;
       sonUyum = belgeGercegiUyuyorMu(hamSatirlar, sonOzet);
@@ -216,6 +223,9 @@ export async function POST(request: NextRequest) {
       belgeToplami: sonOzet.toplam,
       belgeAdedi: sonOzet.adet,
       tedarikci: sonTedarikci,
+      tedarikciVergiNo: sonTedarikciVergiNo,
+      tedarikciAdres: sonTedarikciAdres,
+      tedarikciSite: sonTedarikciSite,
       katalogEslesmesi: eslesenSayisi,
     });
   } catch (err) {

@@ -25,16 +25,19 @@ export const GORU_MODELI = "openai/gpt-5.6-luna";
 
 const SORU = [
   "Bu bir fatura tablosu. HER urun satirini oku. Yalniz JSON dondur.",
-  '{"tedarikci":"","satirlar":[{"model":"","ad":"","barkod":"","varyant":"","beden":"","adet":0,"birim_fiyat":0,"tutar":0}],"toplam_adet":0,"toplam_tutar":0}',
+  '{"tedarikci":"","tedarikci_vergi_no":"","tedarikci_adres":"","tedarikci_site":"","satirlar":[{"ham_satir":"","model":"","ad":"","barkod":"","varyant":"","beden":"","adet":0,"birim_fiyat":0,"tutar":0}],"toplam_adet":0,"toplam_tutar":0}',
   "1. Her satirda adet * birim_fiyat = tutar olmali.",
   "2. Satirlarin adet toplami = toplam_adet, tutar toplami = toplam_tutar.",
   "3. toplam_adet/toplam_tutar en alttaki 'Toplam' satirindan alinir.",
   "4. Sayilari 6.034,00 -> 6034.00 bicimine cevir. Uydurma yok.",
   "5. tedarikci = faturayi kesen firmanin adi. Yazmiyorsa bos birak, tahmin etme.",
   "6. ad = faturada yazan urun adi veya urun aciklamasi. Yazmiyorsa bos birak, tahmin etme.",
+  "7. ham_satir = urun satirinda gorunen metni sirasi ve degerleriyle koru.",
+  "8. tedarikci_vergi_no, tedarikci_adres ve tedarikci_site yalniz belgede acikca yaziyorsa doldur; tahmin etme.",
 ].join("\n");
 
 export interface GoruSatiri {
+  hamSatir: string;
   model: string;
   ad: string;
   barkod: string;
@@ -48,6 +51,9 @@ export interface GoruSatiri {
 export interface GoruSonucu {
   /** Faturayı kesen firma. Belgede yazmıyorsa boş — tahmin edilmez. */
   tedarikci: string;
+  tedarikciVergiNo: string;
+  tedarikciAdres: string;
+  tedarikciSite: string;
   satirlar: GoruSatiri[];
   belgeAdedi: number | null;
   belgeToplami: number | null;
@@ -118,6 +124,9 @@ export async function faturayiOku(dataUrl: string): Promise<GoruSonucu> {
 
   const kok = cozulen as {
     tedarikci?: unknown;
+    tedarikci_vergi_no?: unknown;
+    tedarikci_adres?: unknown;
+    tedarikci_site?: unknown;
     satirlar?: unknown;
     toplam_adet?: unknown;
     toplam_tutar?: unknown;
@@ -127,6 +136,7 @@ export async function faturayiOku(dataUrl: string): Promise<GoruSonucu> {
   const satirlar: GoruSatiri[] = hamSatirlar.map((girdi) => {
     const s = girdi as Record<string, unknown>;
     return {
+      hamSatir: metin(s.ham_satir),
       model: metin(s.model),
       ad: metin(s.ad),
       barkod: metin(s.barkod),
@@ -140,6 +150,9 @@ export async function faturayiOku(dataUrl: string): Promise<GoruSonucu> {
 
   return {
     tedarikci: metin(kok.tedarikci),
+    tedarikciVergiNo: metin(kok.tedarikci_vergi_no),
+    tedarikciAdres: metin(kok.tedarikci_adres),
+    tedarikciSite: metin(kok.tedarikci_site),
     satirlar,
     belgeAdedi: sayi(kok.toplam_adet),
     belgeToplami: sayi(kok.toplam_tutar),

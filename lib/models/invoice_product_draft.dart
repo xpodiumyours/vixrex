@@ -151,6 +151,9 @@ class InvoiceProductDraft {
   final String rawSourceLine;
 
   final EvidenceValue<String>? supplierName;
+  final EvidenceValue<String>? supplierTaxOrTradeIdentifier;
+  final EvidenceValue<String>? supplierAddress;
+  final EvidenceValue<String>? supplierOfficialDomain;
   final EvidenceValue<String>? rawName;
   final EvidenceValue<String>? normalizedName;
   final EvidenceValue<String>? gtinBarcode;
@@ -183,6 +186,9 @@ class InvoiceProductDraft {
     required this.id,
     required this.rawSourceLine,
     this.supplierName,
+    this.supplierTaxOrTradeIdentifier,
+    this.supplierAddress,
+    this.supplierOfficialDomain,
     this.rawName,
     this.normalizedName,
     this.gtinBarcode,
@@ -215,6 +221,9 @@ class InvoiceProductDraft {
 
   InvoiceProductDraft copyWith({
     EvidenceValue<String>? supplierName,
+    EvidenceValue<String>? supplierTaxOrTradeIdentifier,
+    EvidenceValue<String>? supplierAddress,
+    EvidenceValue<String>? supplierOfficialDomain,
     EvidenceValue<String>? rawName,
     EvidenceValue<String>? normalizedName,
     EvidenceValue<String>? gtinBarcode,
@@ -242,6 +251,10 @@ class InvoiceProductDraft {
       id: id,
       rawSourceLine: rawSourceLine,
       supplierName: supplierName ?? this.supplierName,
+      supplierTaxOrTradeIdentifier:
+          supplierTaxOrTradeIdentifier ?? this.supplierTaxOrTradeIdentifier,
+      supplierAddress: supplierAddress ?? this.supplierAddress,
+      supplierOfficialDomain: supplierOfficialDomain ?? this.supplierOfficialDomain,
       rawName: rawName ?? this.rawName,
       normalizedName: normalizedName ?? this.normalizedName,
       gtinBarcode: gtinBarcode ?? this.gtinBarcode,
@@ -273,6 +286,11 @@ class InvoiceProductDraft {
     'id': id,
     'raw_source_line': rawSourceLine,
     if (supplierName != null) 'supplier_name': supplierName!.toJson(),
+    if (supplierTaxOrTradeIdentifier != null)
+      'supplier_tax_or_trade_identifier': supplierTaxOrTradeIdentifier!.toJson(),
+    if (supplierAddress != null) 'supplier_address': supplierAddress!.toJson(),
+    if (supplierOfficialDomain != null)
+      'supplier_official_domain': supplierOfficialDomain!.toJson(),
     if (rawName != null) 'raw_name': rawName!.toJson(),
     if (normalizedName != null) 'normalized_name': normalizedName!.toJson(),
     if (gtinBarcode != null) 'gtin_barcode': gtinBarcode!.toJson(),

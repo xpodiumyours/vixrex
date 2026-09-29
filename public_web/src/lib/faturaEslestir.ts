@@ -8,6 +8,7 @@ import { firmaAnahtariniCoz, ureticiUrunuBul } from "@/lib/ureticiKatalog";
 // yazmaz — ikinci bir "hangi ürün bu" kararı hiçbir yerde tekrarlanmaz.
 
 export interface HamFaturaSatiri {
+  hamSatir?: string;
   model: string;
   ad: string;
   barkod: string;

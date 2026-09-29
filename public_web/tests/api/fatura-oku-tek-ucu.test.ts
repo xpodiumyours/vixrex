@@ -73,8 +73,13 @@ function okuyucuCevabi(govde: unknown) {
 }
 
 const TEK_SATIR = {
+  tedarikci: "Seher Mensucat",
+  tedarikci_vergi_no: "1234567890",
+  tedarikci_adres: "İstanbul",
+  tedarikci_site: "sehermensucat.com",
   satirlar: [
     {
+      ham_satir: "ELT1302 Elit Erkek Elastan Sıfır Yaka 8681128321677 Siyah L 2 137,00 274,00",
       model: "ELT1302",
       ad: "Elit Erkek Elastan Sıfır Yaka",
       barkod: "8681128321677",
@@ -113,6 +118,11 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(govde.satirlar[0].model).toBe("ELT1302");
     expect(govde.satirlar[0].adet).toBe(2);
     expect(govde.satirlar[0].alisBirimFiyat).toBe(137);
+    expect(govde.satirlar[0].hamSatir).toContain("ELT1302");
+    expect(govde.tedarikci).toBe("Seher Mensucat");
+    expect(govde.tedarikciVergiNo).toBe("1234567890");
+    expect(govde.tedarikciAdres).toBe("İstanbul");
+    expect(govde.tedarikciSite).toBe("sehermensucat.com");
   });
 
   it("model ve barkod yoksa ürün adı bulunan satırı kaybetmez", async () => {
@@ -123,6 +133,7 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
           tedarikci: "Örnek Toptan",
           satirlar: [
             {
+              ham_satir: "500 g Süzme Peynir 3 AD 80,00 240,00",
               model: "",
               ad: "500 g Süzme Peynir",
               barkod: "",

@@ -78,11 +78,22 @@ class FaturaOkuServisi {
 
       final urunler = <DetectedProduct>[];
       final taslaklar = <InvoiceProductDraft>[];
+      final tedarikci = (govde['tedarikci'] ?? '').toString().trim();
+      final tedarikciVergiNo = (govde['tedarikciVergiNo'] ?? '').toString().trim();
+      final tedarikciAdres = (govde['tedarikciAdres'] ?? '').toString().trim();
+      final tedarikciSite = (govde['tedarikciSite'] ?? '').toString().trim();
 
       for (var i = 0; i < hamSatirlar.length; i++) {
         final satir = hamSatirlar[i];
         if (satir is! Map) continue;
-        final cift = _satirdanCiftUret(satir, i);
+        final cift = _satirdanCiftUret(
+          satir,
+          i,
+          tedarikci: tedarikci,
+          tedarikciVergiNo: tedarikciVergiNo,
+          tedarikciAdres: tedarikciAdres,
+          tedarikciSite: tedarikciSite,
+        );
         urunler.add(cift.$1);
         taslaklar.add(cift.$2);
       }
@@ -110,12 +121,17 @@ class FaturaOkuServisi {
 
   (DetectedProduct, InvoiceProductDraft) _satirdanCiftUret(
     Map satir,
-    int index,
-  ) {
+    int index, {
+    required String tedarikci,
+    required String tedarikciVergiNo,
+    required String tedarikciAdres,
+    required String tedarikciSite,
+  }) {
     final now = DateTime.now().toUtc();
     String metin(dynamic v) => (v ?? '').toString().trim();
     num? sayi(dynamic v) => v is num ? v : num.tryParse((v ?? '').toString());
 
+    final hamSatir = metin(satir['hamSatir']);
     final model = metin(satir['model']);
     final ad = metin(satir['ad']);
     final barkod = metin(satir['barkod']);
@@ -169,7 +185,11 @@ class FaturaOkuServisi {
             ? EvidenceStrength.partial
             : EvidenceStrength.weak;
     final tedarikciGucu =
-        katalogVar ? EvidenceStrength.strong : EvidenceStrength.weak;
+        katalogVar
+            ? EvidenceStrength.strong
+            : tedarikci.isNotEmpty
+            ? EvidenceStrength.partial
+            : EvidenceStrength.weak;
 
     String resmiAd = ad;
     String marka = '';
@@ -228,11 +248,34 @@ class FaturaOkuServisi {
 
     final taslak = InvoiceProductDraft(
       id: id,
-      rawSourceLine: [
-        if (model.isNotEmpty) model,
-        ad,
-        if (barkod.isNotEmpty) barkod,
-      ].join(' '),
+      rawSourceLine:
+          hamSatir.isNotEmpty
+              ? hamSatir
+              : [
+                if (model.isNotEmpty) model,
+                ad,
+                if (barkod.isNotEmpty) barkod,
+              ].join(' '),
+      supplierName: evMetin(
+        tedarikci,
+        EvidenceSourceType.invoice,
+        EvidenceStrength.partial,
+      ),
+      supplierTaxOrTradeIdentifier: evMetin(
+        tedarikciVergiNo,
+        EvidenceSourceType.invoice,
+        EvidenceStrength.partial,
+      ),
+      supplierAddress: evMetin(
+        tedarikciAdres,
+        EvidenceSourceType.invoice,
+        EvidenceStrength.partial,
+      ),
+      supplierOfficialDomain: evMetin(
+        tedarikciSite,
+        EvidenceSourceType.invoice,
+        EvidenceStrength.partial,
+      ),
       rawName: evMetin(
         ad,
         EvidenceSourceType.invoice,

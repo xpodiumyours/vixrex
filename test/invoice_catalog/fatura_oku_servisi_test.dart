@@ -22,8 +22,13 @@ void main() {
           return http.Response(
             jsonEncode({
               'tamam': true,
+              'tedarikci': 'Seher Mensucat',
+              'tedarikciVergiNo': '1234567890',
+              'tedarikciAdres': 'İstanbul Güngören',
+              'tedarikciSite': 'sehermensucat.com',
               'satirlar': [
                 {
+                  'hamSatir': 'ELT1302 Elit Erkek Elastan Sıfır Yaka 8681128321677 2 137,00 274,00',
                   'model': 'ELT1302',
                   'ad': 'Elit Erkek Elastan Sıfır Yaka',
                   'barkod': '8681128321677',
@@ -82,6 +87,12 @@ void main() {
       final katalog = sonuc.data!;
       expect(katalog.products, hasLength(1));
       expect(katalog.invoiceDrafts, hasLength(1));
+      final taslak = katalog.invoiceDrafts.single;
+      expect(taslak.rawSourceLine, contains('137,00'));
+      expect(taslak.supplierName?.value, 'Seher Mensucat');
+      expect(taslak.supplierTaxOrTradeIdentifier?.value, '1234567890');
+      expect(taslak.supplierAddress?.value, 'İstanbul Güngören');
+      expect(taslak.supplierOfficialDomain?.value, 'sehermensucat.com');
     });
 
     test(
@@ -93,6 +104,7 @@ void main() {
           httpClient: MockClient((request) async {
             return http.Response(
               jsonEncode({
+                'tedarikci': 'Seher Mensucat',
                 'satirlar': [
                   {
                     'model': 'ELT1302',
