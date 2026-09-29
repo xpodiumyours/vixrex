@@ -77,6 +77,49 @@ extension AutomationDecisionWire on AutomationDecision {
   };
 }
 
+/// Kartın ekranda görünen hâli. Tam olarak dört sonuç vardır ve beşincisi
+/// yoktur: kanıtlı / eksik bilgi sor / çelişkiyi çöz / iz bulunamadı.
+///
+/// Yalnız [kanitli] satırdan ürün kartı yayına çıkar; diğer üçü esnafın
+/// inceleme kaydında kalır (web tarafındaki `faturaKartDurumu.ts` ile aynı).
+enum KartDurumu { kanitli, eksik, celiski, izYok }
+
+extension KartDurumuWire on KartDurumu {
+  String get wireValue => switch (this) {
+    KartDurumu.kanitli => 'kanitli',
+    KartDurumu.eksik => 'eksik',
+    KartDurumu.celiski => 'celiski',
+    KartDurumu.izYok => 'iz-yok',
+  };
+
+  String get etiket => switch (this) {
+    KartDurumu.kanitli => 'Kanıtlı',
+    KartDurumu.eksik => 'Eksik bilgi',
+    KartDurumu.celiski => 'Çelişki',
+    KartDurumu.izYok => 'İz bulunamadı',
+  };
+
+  bool get kartYayinaUygun => this == KartDurumu.kanitli;
+}
+
+KartDurumu? kartDurumuFromWire(dynamic deger) {
+  final ham = (deger ?? '').toString().trim();
+  for (final durum in KartDurumu.values) {
+    if (durum.wireValue == ham) return durum;
+  }
+  return null;
+}
+
+/// Aynı kod/barkod birden çok ürüne düştüğünde gösterilen aday.
+class InvoiceConflictCandidate {
+  final String ad;
+  final String kaynak;
+
+  const InvoiceConflictCandidate({required this.ad, this.kaynak = ''});
+
+  Map<String, dynamic> toJson() => {'ad': ad, 'kaynak': kaynak};
+}
+
 /// Tek bir alanın yalnız değerini değil, nereden ve ne kadar güvenle geldiğini taşır.
 class EvidenceValue<T> {
   final T? value;
@@ -176,6 +219,21 @@ class InvoiceProductDraft {
   final EvidenceStrength productIdentityStrength;
   final RightsStatus rightsStatus;
 
+  /// Sunucunun verdiği kart hâli. Boşsa kanıt gücünden türetilir.
+  final KartDurumu? kartDurumu;
+
+  /// Çelişki hâlinde aynı koda düşen ürün adayları.
+  final List<InvoiceConflictCandidate> celiskiAdaylari;
+
+  /// Çelişkinin dayanağı: ürün kodu mu, barkod mu.
+  final String? celiskiDayanak;
+
+  /// Faturadaki adet ÖNERİDİR; esnaf onaylamadan stok yerine geçmez.
+  final bool stockConfirmed;
+
+  /// Aynı belgenin işlem kimliği (kalıcı kanıt kaydı).
+  final String? islemKimligi;
+
   final bool merchantApproved;
   final double? salePrice;
 
@@ -208,12 +266,37 @@ class InvoiceProductDraft {
     required this.supplierIdentityStrength,
     required this.productIdentityStrength,
     this.rightsStatus = RightsStatus.unknown,
+    this.kartDurumu,
+    this.celiskiAdaylari = const [],
+    this.celiskiDayanak,
+    this.stockConfirmed = false,
+    this.islemKimligi,
     this.merchantApproved = false,
     this.salePrice,
     this.isVisible = false,
   });
 
   bool get hasPositiveSalePrice => salePrice != null && salePrice! > 0;
+
+  /// Ekranda gösterilen kart hâli. Açıkça verilmediyse yalnız kanıt
+  /// gücünden türetilir; ürün izi zayıfsa "iz bulunamadı" olur ve tahmin
+  /// edilmez, kısmi ise "eksik bilgi" olur.
+  KartDurumu get etkinKartDurumu {
+    final acik = kartDurumu;
+    if (acik != null) return acik;
+    if (productIdentityStrength == EvidenceStrength.weak) {
+      return KartDurumu.izYok;
+    }
+    if (productIdentityStrength == EvidenceStrength.strong &&
+        supplierIdentityStrength == EvidenceStrength.strong) {
+      return KartDurumu.kanitli;
+    }
+    return KartDurumu.eksik;
+  }
+
+  /// Faturadaki miktar stok yerine geçmez: onay yoksa stok sayılmaz.
+  bool get canUseQuantityAsStock =>
+      stockConfirmed && quantity != null && (quantity!.value ?? 0) > 0;
 
   List<InvoiceImageCandidate> get selectedExternalImages => imageCandidates
       .where((item) => item.selected && item.isExternal)
@@ -243,6 +326,11 @@ class InvoiceProductDraft {
     EvidenceStrength? supplierIdentityStrength,
     EvidenceStrength? productIdentityStrength,
     RightsStatus? rightsStatus,
+    KartDurumu? kartDurumu,
+    List<InvoiceConflictCandidate>? celiskiAdaylari,
+    String? celiskiDayanak,
+    bool? stockConfirmed,
+    String? islemKimligi,
     bool? merchantApproved,
     double? salePrice,
     bool? isVisible,
@@ -277,6 +365,11 @@ class InvoiceProductDraft {
       productIdentityStrength:
           productIdentityStrength ?? this.productIdentityStrength,
       rightsStatus: rightsStatus ?? this.rightsStatus,
+      kartDurumu: kartDurumu ?? this.kartDurumu,
+      celiskiAdaylari: celiskiAdaylari ?? this.celiskiAdaylari,
+      celiskiDayanak: celiskiDayanak ?? this.celiskiDayanak,
+      stockConfirmed: stockConfirmed ?? this.stockConfirmed,
+      islemKimligi: islemKimligi ?? this.islemKimligi,
       merchantApproved: merchantApproved ?? this.merchantApproved,
       salePrice: salePrice ?? this.salePrice,
       isVisible: isVisible ?? this.isVisible,
@@ -318,6 +411,14 @@ class InvoiceProductDraft {
     'supplier_identity_strength': supplierIdentityStrength.wireValue,
     'product_identity_strength': productIdentityStrength.wireValue,
     'rights_status': rightsStatus.wireValue,
+    'card_state': etkinKartDurumu.wireValue,
+    'conflict_candidates': celiskiAdaylari
+        .map((aday) => aday.toJson())
+        .toList(growable: false),
+    if (celiskiDayanak != null) 'conflict_basis': celiskiDayanak,
+    // Faturadaki adet öneri olarak taşınır; stok onayı ayrı alandır.
+    'stock_confirmed': stockConfirmed,
+    if (islemKimligi != null) 'operation_id': islemKimligi,
     'merchant_approved': merchantApproved,
     'sale_price': salePrice,
     'visibility': isVisible,

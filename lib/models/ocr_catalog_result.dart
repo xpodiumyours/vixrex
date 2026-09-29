@@ -6,6 +6,10 @@ class OcrCatalogResult {
   final String rawText;
   final List<DetectedProduct> products;
   final List<InvoiceProductDraft> invoiceDrafts;
+
+  /// Aynı belgenin kalıcı kanıt/işlem kaydı. Web ile telefon aynı işlem
+  /// kimliğini taşır; iki yüzey aynı işten konuşur.
+  final String? islemKimligi;
   final double confidence;
   final DateTime analyzedAt;
 
@@ -13,6 +17,7 @@ class OcrCatalogResult {
     required this.rawText,
     required this.products,
     this.invoiceDrafts = const [],
+    this.islemKimligi,
     required this.confidence,
     DateTime? analyzedAt,
   }) : analyzedAt = analyzedAt ?? DateTime.now();
@@ -21,6 +26,7 @@ class OcrCatalogResult {
     : rawText = '',
       products = const [],
       invoiceDrafts = const [],
+      islemKimligi = null,
       confidence = 0.0,
       analyzedAt = DateTime.now();
 

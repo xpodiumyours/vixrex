@@ -218,6 +218,8 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
           onApprove: widget.ocrController.approveProduct,
           onReject: widget.ocrController.rejectProduct,
           onEdit: _editProduct,
+          // Faturadaki adet öneridir; esnaf bu düğmeyle stoğu onaylar.
+          onConfirmStock: widget.ocrController.confirmInvoiceStock,
         ),
         const SizedBox(height: 16),
         // Kaydet butonu

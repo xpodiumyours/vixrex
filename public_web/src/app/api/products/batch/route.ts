@@ -5,6 +5,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { createRichCoreProduct } from "@/lib/productCoreServer";
 import { urunGirdisiniHazirla } from "@/lib/productIntake";
 import { izinsizUreticiGorseli } from "@/lib/ureticiKatalog";
+import { durumGecerliMi, yayinEksikleri } from "@/lib/faturaKartDurumu";
 
 /**
  * Toplu ürün oluşturma API'si.
@@ -32,19 +33,15 @@ function pozitifSayi(value: unknown): number | null {
 function faturaKapisiSebebi(args: {
   hazirlik: { durum: string; eksik?: string };
   faturaKaynakli: boolean;
-  satisFiyatiGirildi: boolean;
-  esnafOnayladi: boolean;
+  faturaEksikleri: string[];
   izinsizGorselVar: boolean;
 }): string {
   if (args.hazirlik.durum === "taslak" && args.hazirlik.eksik) return args.hazirlik.eksik;
-  if (args.faturaKaynakli && !args.satisFiyatiGirildi) {
-    return "Satış fiyatı girilmedi; ürün taslak kaldı.";
-  }
-  if (args.faturaKaynakli && !args.esnafOnayladi) {
-    return "Ürün onaylanmadı; ürün taslak kaldı.";
-  }
   if (args.izinsizGorselVar) {
     return "Üreticinin fotoğraf kullanım izni yok; kendi fotoğrafınızı ekleyin.";
+  }
+  if (args.faturaKaynakli && args.faturaEksikleri.length > 0) {
+    return args.faturaEksikleri[0];
   }
   return "Görünürlük kapalı istendi.";
 }
@@ -72,6 +69,10 @@ interface ProductBatchItem {
   externalProductId?: string;
   /** Faturadan gelen satırlarda esnafın açık yayın onayı. */
   ownerApproved?: boolean;
+  /** Faturadan gelen satırlarda esnafın stok onayı. Faturadaki adet öneridir. */
+  stokOnaylandi?: boolean;
+  /** Satırın kanıt durumu. Yalnız "kanitli" satır yayına çıkar. */
+  kartDurumu?: unknown;
   /** Faturadaki birim alış fiyatı. Karta yazılmaz, müşteriye gösterilmez. */
   purchasePriceAmount?: unknown;
 }
@@ -170,9 +171,9 @@ export async function POST(request: NextRequest) {
     // kendiliğinden yayına çıkmaz: esnaf satış fiyatını girmeli ve kartı
     // açıkça onaylamalı. Fatura alış fiyatı satış fiyatı yerine geçmez.
     const faturaKaynakli = kaynak === FATURA_KAYNAGI;
-    const satisFiyatiGirildi =
-      typeof hazirlik.girdi.priceAmount === "number" && hazirlik.girdi.priceAmount > 0;
     const esnafOnayladi = ham.ownerApproved === true;
+    const stokOnaylandi = ham.stokOnaylandi === true;
+    const kartDurumu = durumGecerliMi(ham.kartDurumu) ? ham.kartDurumu : "eksik";
 
     // İzin kapısı — sunucuda, tarayıcıdan atlanamaz. Üreticinin yazılı izni
     // yoksa onun fotoğrafı ürün kartına hiç yazılmaz; ürün de yayına çıkmaz.
@@ -184,7 +185,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const faturaKapisi = !faturaKaynakli || (satisFiyatiGirildi && esnafOnayladi);
+    const faturaEksikleri = faturaKaynakli
+      ? yayinEksikleri({
+          durum: kartDurumu,
+          satisFiyati: hazirlik.girdi.priceAmount,
+          stok: hazirlik.girdi.stockQuantity,
+          stokOnaylandi,
+          onaylandi: esnafOnayladi,
+          gorselSayisi: hazirlik.girdi.imageUrls.length,
+        })
+      : [];
+
+    const faturaKapisi = !faturaKaynakli || faturaEksikleri.length === 0;
 
     const gorunur =
       hazirlik.durum === "hazir" &&
@@ -248,8 +260,7 @@ export async function POST(request: NextRequest) {
           sebep: faturaKapisiSebebi({
             hazirlik,
             faturaKaynakli,
-            satisFiyatiGirildi,
-            esnafOnayladi,
+            faturaEksikleri,
             izinsizGorselVar,
           }),
         });

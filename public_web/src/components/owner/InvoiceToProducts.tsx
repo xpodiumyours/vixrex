@@ -1,12 +1,29 @@
 "use client";
 
 import { useCallback, useMemo, useRef, useState } from "react";
+import {
+  KART_DURUM_ETIKETI,
+  durumBilgisi,
+  kartDegerlendir,
+  type KartDurumu,
+} from "@/lib/faturaKartDurumu";
+import {
+  MAX_PRODUCT_IMAGES,
+  MAX_PRODUCT_IMAGE_SOURCE_BYTES,
+  MAX_PRODUCT_IMAGE_SOURCE_MEGABYTES,
+} from "@/lib/productImagePolicy";
 
 // Faturadan ürün kartına — 4 adımlı esnaf akışı.
 //
 // Kilitli kural: buradan çıkan hiçbir ürün kendiliğinden yayına girmez.
-// Esnaf satış fiyatını girer ve kartı açıkça onaylar; sunucu (products/batch)
-// bunu ayrıca bir daha kontrol eder. Fatura alış fiyatı satış fiyatı olmaz.
+// Esnaf satış fiyatını girer, stoğu onaylar ve kartı açıkça onaylar; sunucu
+// (products/batch) bunu ayrıca bir daha kontrol eder. Fatura alış fiyatı
+// satış fiyatı olmaz; faturadaki miktar da stok yerine geçmez.
+
+export interface CeliskiBilgisi {
+  dayanak: "kod" | "barkod";
+  adaylar: Array<{ ad: string; kaynak: string }>;
+}
 
 export interface FaturaSatiri {
   model: string;
@@ -18,18 +35,22 @@ export interface FaturaSatiri {
   alisBirimFiyat: number | null;
   satirToplam: number | null;
   guven: number;
-  /** Üretici kataloğundan gelen resmî bilgi. Eşleşme yoksa null. */
+  sonuc: KartDurumu;
+  uyari?: string;
+  celiski?: CeliskiBilgisi;
   katalog: KatalogBilgisi | null;
 }
 
 export interface KatalogBilgisi {
   firma: string;
+  kaynakFirma: string;
   dayanak: "kod" | "barkod";
   izinDurumu: "yok" | "bekliyor" | "var";
   resmiAd: string;
   marka: string;
   aciklama: string;
   gorseller: string[];
+  gorselAdaylari: string[];
   kaynak: string;
 }
 
@@ -38,13 +59,20 @@ interface FaturaOkumaSonucu {
   belgeToplami: number | null;
   belgeAdedi: number | null;
   tedarikci: string;
+  tedarikciVergiNo?: string;
+  tedarikciSite?: string;
   katalogEslesmesi?: number;
+  sonucOzeti?: Record<string, number>;
+  islemKimligi?: string | null;
 }
 
 interface SatirDurumu extends FaturaSatiri {
   satisFiyati: string;
   onayli: boolean;
   kategoriId: string;
+  stok: string;
+  stokOnaylandi: boolean;
+  esnafGorselleri: string[];
 }
 
 interface YazmaSonucu {
@@ -81,14 +109,11 @@ function fiyatSayisi(ham: string): number | null {
   return Number.isFinite(n) && n > 0 ? n : null;
 }
 
-/** Açıklama yalnız faturada gerçekten yazan bilgiden kurulur; uydurma yok. */
-function faturaAciklamasi(satir: SatirDurumu): string {
-  const parcalar: string[] = [];
-  if (satir.varyant) parcalar.push(`Renk: ${satir.varyant}`);
-  if (satir.beden) parcalar.push(`Beden: ${satir.beden}`);
-  if (satir.adet !== null) parcalar.push(`Faturadaki miktar: ${satir.adet} adet`);
-  const kuyruk = parcalar.length > 0 ? ` ${parcalar.join(", ")}.` : "";
-  return `${satir.ad}.${kuyruk}`;
+function stokSayisi(ham: string): number | null {
+  const temiz = ham.trim();
+  if (!temiz) return null;
+  const n = Number(temiz);
+  return Number.isInteger(n) && n >= 0 ? n : null;
 }
 
 export default function InvoiceToProducts({
@@ -106,13 +131,26 @@ export default function InvoiceToProducts({
   const [toplamKategori, setToplamKategori] = useState<string>(categories[0]?.id ?? "");
   const [kar, setKar] = useState("40");
   const [hata, setHata] = useState<string | null>(null);
+  const [yukleniyor, setYukleniyor] = useState(false);
   const [sonuc, setSonuc] = useState<YazmaSonucu | null>(null);
   const dosyaRef = useRef<HTMLInputElement>(null);
 
-  const hazirSayisi = useMemo(
-    () => satirlar.filter((s) => s.onayli && fiyatSayisi(s.satisFiyati) !== null).length,
+  const degerlendirmeler = useMemo(
+    () =>
+      satirlar.map((satir) =>
+        kartDegerlendir({
+          satir,
+          satisFiyati: fiyatSayisi(satir.satisFiyati),
+          stok: stokSayisi(satir.stok),
+          stokOnaylandi: satir.stokOnaylandi,
+          esnafGorselleri: satir.esnafGorselleri,
+          onaylandi: satir.onayli,
+        }),
+      ),
     [satirlar],
   );
+
+  const hazirSayisi = degerlendirmeler.filter((d) => d.yayinaHazir).length;
 
   const dosyaSecildi = useCallback(
     async (dosya: File) => {
@@ -153,6 +191,9 @@ export default function InvoiceToProducts({
             satisFiyati: "",
             onayli: false,
             kategoriId: categories[0]?.id ?? "",
+            stok: satir.adet === null ? "" : String(satir.adet),
+            stokOnaylandi: false,
+            esnafGorselleri: [],
           })),
         );
         setAdim("urunler");
@@ -181,15 +222,24 @@ export default function InvoiceToProducts({
     );
   }
 
-  /** Güveni düşük satır toplu onaya girmez — esnaf ona tek tek bakar. */
+  /**
+   * Toplu onay yalnız kanıtlı satırlara dokunur; stok onayı da esnafın bu
+   * eylemiyle verilir. Şüpheli satır tek tek bakılır.
+   */
   function tumunuOnayla() {
     setSatirlar((oncekiler) =>
-      oncekiler.map((satir) => ({ ...satir, onayli: satir.guven >= GUVEN_ESIGI })),
+      oncekiler.map((satir) => {
+        if (satir.sonuc !== "kanitli") return satir;
+        if (satir.stok.trim() === "") return satir;
+        return { ...satir, onayli: true, stokOnaylandi: true };
+      }),
     );
   }
 
   function onaylariKaldir() {
-    setSatirlar((oncekiler) => oncekiler.map((satir) => ({ ...satir, onayli: false })));
+    setSatirlar((oncekiler) =>
+      oncekiler.map((satir) => ({ ...satir, onayli: false, stokOnaylandi: false })),
+    );
   }
 
   function kategoriHepsineUygula(kategoriId: string) {
@@ -197,10 +247,55 @@ export default function InvoiceToProducts({
     setSatirlar((oncekiler) => oncekiler.map((satir) => ({ ...satir, kategoriId })));
   }
 
+  async function gorselYukle(index: number, dosyalar: FileList | null) {
+    const secilenler = Array.from(dosyalar ?? []);
+    if (secilenler.length === 0) return;
+
+    setYukleniyor(true);
+    setHata(null);
+    const yeni: string[] = [];
+
+    for (const dosya of secilenler) {
+      if (dosya.size > MAX_PRODUCT_IMAGE_SOURCE_BYTES) {
+        setHata(`${dosya.name} çok büyük. En fazla ${MAX_PRODUCT_IMAGE_SOURCE_MEGABYTES} MB.`);
+        continue;
+      }
+      const form = new FormData();
+      form.append("slug", storeSlug);
+      form.append("productId", "new");
+      form.append("dosya", dosya);
+      try {
+        const cevap = await fetch("/api/product-image-upload", { method: "POST", body: form });
+        const govde = await cevap.json().catch(() => null);
+        if (!cevap.ok) {
+          setHata(govde?.hata ?? "Görsel yüklenemedi.");
+          continue;
+        }
+        if (govde?.url) yeni.push(String(govde.url));
+      } catch {
+        setHata("Görsel yüklenemedi.");
+      }
+    }
+
+    if (yeni.length > 0) {
+      setSatirlar((oncekiler) =>
+        oncekiler.map((satir, i) =>
+          i === index
+            ? {
+                ...satir,
+                esnafGorselleri: [...satir.esnafGorselleri, ...yeni].slice(0, MAX_PRODUCT_IMAGES),
+              }
+            : satir,
+        ),
+      );
+    }
+    setYukleniyor(false);
+  }
+
   async function vitrineYaz() {
     const gonderilecek = satirlar
-      .map((satir, sira) => ({ satir, sira }))
-      .filter(({ satir }) => satir.onayli && fiyatSayisi(satir.satisFiyati) !== null);
+      .map((satir, sira) => ({ satir, sira, degerlendirme: degerlendirmeler[sira] }))
+      .filter(({ degerlendirme }) => degerlendirme.yayinaHazir);
 
     if (gonderilecek.length === 0) return;
 
@@ -213,22 +308,21 @@ export default function InvoiceToProducts({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           slug: storeSlug,
-          products: gonderilecek.map(({ satir, sira }) => {
+          products: gonderilecek.map(({ satir, sira, degerlendirme }) => {
             const satisFiyati = fiyatSayisi(satir.satisFiyati);
             const katalog = satir.katalog;
             return {
               name: katalog?.resmiAd || satir.ad,
-              description: katalog?.aciklama || faturaAciklamasi(satir),
+              description: katalog?.aciklama ?? "",
               priceText: `${satisFiyati} TL`,
               categoryId: satir.kategoriId,
-              // Üreticinin kendi yayınladığı fotoğraflar. Eşleşme yoksa boş
-              // kalır ve ürün taslak olarak kaydedilir.
-              imageUrls: katalog?.gorseller ?? [],
+              imageUrls: degerlendirme.gorseller,
               brand: katalog?.marka || undefined,
               barcode: satir.barkod || undefined,
-              stockQuantity: satir.adet ?? undefined,
+              stockQuantity: stokSayisi(satir.stok),
               sourceType: "invoice",
-              // Aynı fatura ikinci kez okunursa aynı satır aynı kimliğe düşer.
+              kartDurumu: satir.sonuc,
+              stokOnaylandi: true,
               externalProductId: satir.barkod || satir.model || undefined,
               ownerApproved: true,
               purchasePriceAmount: satir.alisBirimFiyat ?? undefined,
@@ -242,7 +336,7 @@ export default function InvoiceToProducts({
                           ...(satir.varyant ? { color: satir.varyant } : {}),
                           ...(satir.beden ? { size: satir.beden } : {}),
                         },
-                        stockQuantity: satir.adet ?? undefined,
+                        stockQuantity: stokSayisi(satir.stok) ?? undefined,
                       },
                     ]
                   : undefined,
@@ -285,8 +379,8 @@ export default function InvoiceToProducts({
       <div className="fatura-akis">
         <h3>Faturadan ürün ekle</h3>
         <p className="fatura-aciklama">
-          Faturanın fotoğrafını yükle. Vixrex ürünleri hazırlar; satış fiyatlarını sen
-          belirlersin. <strong>Sen onaylamadan hiçbir ürün vitrinde görünmez.</strong>
+          Faturanın fotoğrafını yükle. Vixrex ürünleri hazırlar; satış fiyatlarını ve stoğu sen
+          onaylarsın. <strong>Sen onaylamadan hiçbir ürün vitrinde görünmez.</strong>
         </p>
 
         {hata && <p className="fatura-hata">{hata}</p>}
@@ -317,9 +411,12 @@ export default function InvoiceToProducts({
       <div className="fatura-akis">
         <h3>Faturan hazırlanıyor</h3>
         {onizleme && <img className="fatura-onizleme" src={onizleme} alt="Fatura" />}
-        <p className="fatura-aciklama">
-          Ürün satırları ayrılıyor. Bu işlem birkaç saniye sürebilir.
-        </p>
+        <ol className="fatura-adimlar">
+          <li>Belge okunuyor: satırlar, miktar ve belge toplamı çıkarılıyor.</li>
+          <li>Faturayı kesen firmanın kimliği ve resmî sitesi araştırılıyor.</li>
+          <li>Ürünlerin resmî kaynağı ve kaynak çelişkisi kontrol ediliyor.</li>
+          <li>Kanıtlı satırlardan kart taslakları hazırlanıyor.</li>
+        </ol>
       </div>
     );
   }
@@ -335,7 +432,7 @@ export default function InvoiceToProducts({
             <strong>{sonuc.yayinda}</strong> ürün vitrinde görünüyor
           </li>
           <li>
-            <strong>{sonuc.taslak}</strong> ürün taslak — fotoğrafı eklenince görünecek
+            <strong>{sonuc.taslak}</strong> ürün taslak kaldı — eksik görünen yere bak
           </li>
           {sonuc.hatali > 0 && (
             <li>
@@ -343,13 +440,6 @@ export default function InvoiceToProducts({
             </li>
           )}
         </ul>
-
-        {sonuc.taslak > 0 && (
-          <p className="fatura-aciklama">
-            Taslak ürünler kaydedildi ama müşteriye gösterilmiyor. Ürün fotoğrafları
-            eklendiğinde kendiliğinden vitrine çıkarlar.
-          </p>
-        )}
 
         <ul className="fatura-satir-ozet">
           {sonuc.satirlar
@@ -376,42 +466,46 @@ export default function InvoiceToProducts({
   // ─── 3. Ürünler (yazma sırasında kilitli hâliyle aynı ekran) ───
 
   const yaziliyor = adim === "yaziliyor";
-  const eslesenSayisi = satirlar.filter((satir) => satir.katalog !== null).length;
-  const izinBekleyen = satirlar.some((satir) => satir.katalog?.izinDurumu !== "var");
+  const kanitliSayisi = satirlar.filter((satir) => satir.sonuc === "kanitli").length;
+  const bekleyenSatir = satirlar.length - hazirSayisi;
+  const ozet = belge?.sonucOzeti;
 
   return (
     <div className="fatura-akis">
       <div className="fatura-baslik">
-        <h3>{satirlar.length} ürün hazırlandı</h3>
+        <h3>{satirlar.length} satır okundu</h3>
         {belge && (
           <p className="fatura-aciklama">
             {belge.tedarikci ? `${belge.tedarikci} • ` : ""}
+            {belge.tedarikciSite ? `${belge.tedarikciSite} • ` : ""}
             {belge.belgeAdedi !== null ? `${belge.belgeAdedi} adet • ` : ""}
             {belge.belgeToplami !== null ? `${paraYaz(belge.belgeToplami)} alış toplamı` : ""}
           </p>
         )}
       </div>
 
-      <p className="fatura-aciklama">
-        Faturadaki rakamlar <strong>alış fiyatıdır</strong>. Satış fiyatını sen belirle,
-        kartı onayla.
-      </p>
-
-      {eslesenSayisi > 0 && (
-        <p className="fatura-aciklama">
-          <strong>
-            {eslesenSayisi} / {satirlar.length}
-          </strong>{" "}
-          ürün üretici kataloğunda bulundu; resmî ad, açıklama ve fotoğrafları hazır.
-          {izinBekleyen && (
-            <>
-              {" "}
-              <strong>Üretici izni henüz alınmadı</strong> — yayına almadan önce izin
-              gerekir.
-            </>
-          )}
-        </p>
+      {ozet && (
+        <ul className="fatura-ozet-satirlari">
+          <li>
+            <strong>{ozet.kanitli ?? 0}</strong> kanıtlı
+          </li>
+          <li>
+            <strong>{ozet.eksik ?? 0}</strong> eksik bilgi
+          </li>
+          <li>
+            <strong>{ozet.celiski ?? 0}</strong> çelişki
+          </li>
+          <li>
+            <strong>{ozet.izYok ?? 0}</strong> iz bulunamadı
+          </li>
+        </ul>
       )}
+
+      <p className="fatura-aciklama">
+        Faturadaki rakamlar <strong>alış fiyatı</strong> ve <strong>alış adedidir</strong>;
+        satış fiyatı ve stok yerine geçmez. Yalnız <strong>kanıtlı</strong> satırlardan kart
+        yayına çıkar.
+      </p>
 
       {hata && <p className="fatura-hata">{hata}</p>}
 
@@ -446,10 +540,10 @@ export default function InvoiceToProducts({
           %
         </label>
         <button type="button" onClick={karUygula} disabled={yaziliyor}>
-          {satirlar.length} ürüne uygula
+          Fiyatları ayarla
         </button>
         <button type="button" onClick={tumunuOnayla} disabled={yaziliyor}>
-          Tümünü onayla
+          Kanıtlıları onayla
         </button>
         <button type="button" onClick={onaylariKaldir} disabled={yaziliyor}>
           Onayları kaldır
@@ -458,43 +552,91 @@ export default function InvoiceToProducts({
 
       <div className="fatura-izgara">
         {satirlar.map((satir, index) => {
+          const degerlendirme = degerlendirmeler[index];
+          const bilgi = durumBilgisi(satir);
+          const katalog = satir.katalog;
           const dusukGuven = satir.guven < GUVEN_ESIGI;
+          const izinliGorselVar = katalog?.izinDurumu === "var";
           return (
             <article
               key={`${satir.model}-${satir.barkod}-${index}`}
-              className={dusukGuven ? "fatura-kart fatura-kart-suphe" : "fatura-kart"}
+              className={`fatura-kart fatura-kart-${satir.sonuc}`}
             >
-              {dusukGuven && <span className="fatura-rozet">Kontrol et</span>}
+              <span className="fatura-rozet">{KART_DURUM_ETIKETI[satir.sonuc]}</span>
+              {dusukGuven && <span className="fatura-rozet fatura-rozet-suphe">Kontrol et</span>}
 
-              {satir.katalog && satir.katalog.gorseller.length > 0 ? (
+              {degerlendirme.gorseller.length > 0 ? (
                 <img
                   className="fatura-kart-gorsel"
-                  src={satir.katalog.gorseller[0]}
-                  alt={satir.katalog.resmiAd}
+                  src={degerlendirme.gorseller[0]}
+                  alt={katalog?.resmiAd || satir.ad}
                   loading="lazy"
                 />
               ) : (
-                <div className="fatura-kart-gorselsiz">Fotoğraf yok</div>
+                <div className="fatura-kart-gorselsiz">
+                  {izinliGorselVar ? "Fotoğraf yok" : "Kullanılabilir fotoğraf yok"}
+                </div>
               )}
 
               {satir.model && <div className="fatura-model">{satir.model}</div>}
-              <div className="fatura-ad">{satir.katalog?.resmiAd || satir.ad}</div>
+              <div className="fatura-ad">{katalog?.resmiAd || satir.ad}</div>
 
-              {satir.katalog ? (
+              <div className="fatura-durum">{bilgi.detay}</div>
+
+              {bilgi.adaylar.length > 0 && (
+                <ul className="fatura-adaylar">
+                  {bilgi.adaylar.map((aday) => (
+                    <li key={aday.kaynak}>
+                      {aday.kaynak ? (
+                        <a href={aday.kaynak} target="_blank" rel="noreferrer">
+                          {aday.ad}
+                        </a>
+                      ) : (
+                        aday.ad
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {katalog ? (
                 <div className="fatura-eslesme">
-                  {satir.katalog.firma} · {satir.katalog.gorseller.length} fotoğraf
-                  {satir.katalog.dayanak === "barkod" ? " · barkod" : " · ürün kodu"}
+                  <a href={katalog.kaynak} target="_blank" rel="noreferrer">
+                    Kaynak
+                  </a>
+                  {" · "}
+                  {katalog.kaynakFirma}
+                  {" · "}
+                  {katalog.dayanak === "barkod" ? "barkod" : "ürün kodu"}
+                  {" · "}
+                  {degerlendirme.gorseller.length} fotoğraf
+                  {" · "}
+                  {katalog.izinDurumu === "var"
+                    ? "üretici izni var"
+                    : "üretici izni yok — yalnız kendi fotoğrafın kullanılır"}
                 </div>
               ) : (
                 <div className="fatura-eslesme fatura-eslesme-yok">
-                  Üretici kataloğunda bulunamadı — taslak kalacak
+                  Kanıtlı eşleşme yok — bu satırdan kart üretilmez
                 </div>
+              )}
+
+              {katalog && katalog.gorselAdaylari.length > 0 && (
+                <ul className="fatura-adaylar">
+                  {katalog.gorselAdaylari.slice(0, 3).map((aday) => (
+                    <li key={aday}>
+                      <a href={aday} target="_blank" rel="noreferrer">
+                        Fotoğraf adayı
+                      </a>
+                    </li>
+                  ))}
+                </ul>
               )}
 
               <div className="fatura-cipler">
                 {satir.beden && <span>{satir.beden}</span>}
                 {satir.varyant && <span>{satir.varyant}</span>}
-                {satir.adet !== null && <span>{satir.adet} adet</span>}
+                {satir.adet !== null && <span>Faturada {satir.adet} adet</span>}
               </div>
 
               <div className="fatura-alis">
@@ -502,25 +644,81 @@ export default function InvoiceToProducts({
                 {satir.barkod && ` • Barkod: ${satir.barkod}`}
               </div>
 
-              <label className="fatura-fiyat">
-                Satış fiyatı
-                <input
-                  inputMode="decimal"
-                  placeholder="0,00"
-                  value={satir.satisFiyati}
-                  onChange={(e) => satirGuncelle(index, { satisFiyati: e.target.value })}
-                  disabled={yaziliyor}
-                />
-              </label>
+              {katalog && !katalog.aciklama && (
+                <div className="fatura-durum">Kaynaktan açıklama gelmedi.</div>
+              )}
 
-              <button
-                type="button"
-                className={satir.onayli ? "fatura-onay fatura-onay-acik" : "fatura-onay"}
-                onClick={() => satirGuncelle(index, { onayli: !satir.onayli })}
-                disabled={yaziliyor}
-              >
-                {satir.onayli ? "✓ Onaylandı" : "Onayla"}
-              </button>
+              {satir.sonuc === "kanitli" && (
+                <>
+                  <label className="fatura-stok">
+                    Stok (faturadan öneri: {satir.adet ?? "yok"})
+                    <input
+                      inputMode="numeric"
+                      placeholder="0"
+                      value={satir.stok}
+                      onChange={(e) =>
+                        satirGuncelle(index, { stok: e.target.value, stokOnaylandi: false })
+                      }
+                      disabled={yaziliyor}
+                    />
+                  </label>
+
+                  <button
+                    type="button"
+                    className={
+                      satir.stokOnaylandi ? "fatura-onay fatura-onay-acik" : "fatura-onay"
+                    }
+                    onClick={() =>
+                      satirGuncelle(index, { stokOnaylandi: !satir.stokOnaylandi })
+                    }
+                    disabled={yaziliyor || stokSayisi(satir.stok) === null}
+                  >
+                    {satir.stokOnaylandi ? "✓ Stok onaylandı" : "Stoğu onayla"}
+                  </button>
+
+                  <label className="fatura-fiyat">
+                    Satış fiyatı
+                    <input
+                      inputMode="decimal"
+                      placeholder="0,00"
+                      value={satir.satisFiyati}
+                      onChange={(e) => satirGuncelle(index, { satisFiyati: e.target.value })}
+                      disabled={yaziliyor}
+                    />
+                  </label>
+
+                  <label className="fatura-gorsel-ekle">
+                    Kendi fotoğrafını ekle ({degerlendirme.gorseller.length}/{MAX_PRODUCT_IMAGES})
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      multiple
+                      onChange={(e) => {
+                        void gorselYukle(index, e.target.files);
+                        e.target.value = "";
+                      }}
+                      disabled={yaziliyor || yukleniyor}
+                    />
+                  </label>
+
+                  {degerlendirme.eksikler.length > 0 && (
+                    <ul className="fatura-eksikler">
+                      {degerlendirme.eksikler.map((eksik) => (
+                        <li key={eksik}>{eksik}</li>
+                      ))}
+                    </ul>
+                  )}
+
+                  <button
+                    type="button"
+                    className={satir.onayli ? "fatura-onay fatura-onay-acik" : "fatura-onay"}
+                    onClick={() => satirGuncelle(index, { onayli: !satir.onayli })}
+                    disabled={yaziliyor || !degerlendirme.yayinaHazir}
+                  >
+                    {satir.onayli ? "✓ Onaylandı" : "Kartı onayla"}
+                  </button>
+                </>
+              )}
             </article>
           );
         })}
@@ -530,10 +728,24 @@ export default function InvoiceToProducts({
         <span>
           {hazirSayisi} / {satirlar.length} hazır
         </span>
-        <button type="button" onClick={vitrineYaz} disabled={hazirSayisi === 0 || yaziliyor}>
-          {yaziliyor ? "Kaydediliyor…" : `${hazirSayisi} ürünü kaydet`}
+        <button
+          type="button"
+          onClick={vitrineYaz}
+          disabled={hazirSayisi === 0 || yaziliyor}
+        >
+          {yaziliyor ? "Yayınlanıyor…" : `${hazirSayisi} ürünü Vixrex'te yayınla`}
         </button>
       </div>
+
+      {bekleyenSatir > 0 && (
+        <p className="fatura-aciklama">
+          <strong>{bekleyenSatir}</strong> satır yayına hazır değil; onlar inceleme kaydında
+          kalır, yayına girmez.
+          {kanitliSayisi < satirlar.length && (
+            <> Kanıtsız satırlar için tahmin yapılmaz.</>
+          )}
+        </p>
+      )}
     </div>
   );
 }

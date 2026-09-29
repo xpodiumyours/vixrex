@@ -3,9 +3,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Faturadan gelen satırın yayın kapısı.
 //
-// Kural: fotoğrafı ve zorunlu alanları tam olsa bile, esnaf satış fiyatını
-// girip kartı açıkça onaylamadan ürün vitrinde görünmez. Alış fiyatı da
-// satış fiyatı yerine geçmez ve ürün kartına sızmaz.
+// Kural: fotoğrafı ve zorunlu alanları tam olsa bile, satır KANITLI değilse,
+// esnaf satış fiyatını girip stoğu ve kartı açıkça onaylamadan ürün vitrinde
+// görünmez. Alış fiyatı satış fiyatı yerine geçmez ve ürün kartına sızmaz;
+// faturadaki adet de tek başına stok sayılmaz.
 
 const mocks = vi.hoisted(() => ({
   get: vi.fn(() => "owner-cookie"),
@@ -85,7 +86,10 @@ function adminMock() {
   });
 }
 
-/** Fotoğrafı ve zorunlu alanları tam, yani kapıyı yalnız onay/fiyat tutar. */
+/**
+ * Fotoğrafı, zorunlu alanları ve kanıt durumu tam satır. Kapıyı yalnız
+ * testin kapatmak istediği tek şart tutar.
+ */
 function faturaSatiri(fazla: Record<string, unknown> = {}) {
   return {
     name: "Elit Erkek Elastan Sıfır Yaka Uzun Kol",
@@ -95,6 +99,9 @@ function faturaSatiri(fazla: Record<string, unknown> = {}) {
     imageUrls: FOTOGRAFLAR,
     stockQuantity: 2,
     sourceType: "invoice",
+    kartDurumu: "kanitli",
+    stokOnaylandi: true,
+    ownerApproved: true,
     variants: [{ id: "v-elt1302-siyah-l", options: { color: "Siyah", size: "L" } }],
     metadata: {
       attributes: [
@@ -138,22 +145,48 @@ describe("faturadan gelen ürünün yayın kapısı", () => {
   });
 
   it("onay alanı hiç gönderilmezse de ürün taslak kalır", async () => {
-    await topluUrunEkle(istek([faturaSatiri()]));
+    await topluUrunEkle(istek([faturaSatiri({ ownerApproved: undefined })]));
     expect(mocks.createProduct.mock.calls[0][0].isVisible).toBe(false);
   });
 
-  it("satış fiyatı girilmemişse onaylı olsa bile taslak kalır", async () => {
+  it("kanıtlı olmayan satır, onay ve fiyat olsa bile taslak kalır", async () => {
     const cevap = await topluUrunEkle(
-      istek([faturaSatiri({ ownerApproved: true, priceText: "" })]),
+      istek([faturaSatiri({ kartDurumu: "celiski" })]),
     );
+    const govde = await cevap.json();
+
+    expect(mocks.createProduct.mock.calls[0][0].isVisible).toBe(false);
+    expect(govde.yayinda).toBe(0);
+    expect(govde.satirlar[0].sebep).toContain("kanıtlı değil");
+  });
+
+  it("kart durumu hiç gönderilmezse satır taslak kalır — eksik bilgi uydurulmaz", async () => {
+    const cevap = await topluUrunEkle(istek([faturaSatiri({ kartDurumu: undefined })]));
+    const govde = await cevap.json();
+
+    expect(mocks.createProduct.mock.calls[0][0].isVisible).toBe(false);
+    expect(govde.satirlar[0].sebep).toContain("kanıtlı değil");
+  });
+
+  it("faturadaki adet stok yerine geçmez: stok onayı olmadan satır yayına çıkmaz", async () => {
+    const cevap = await topluUrunEkle(istek([faturaSatiri({ stokOnaylandi: false })]));
+    const govde = await cevap.json();
+
+    expect(mocks.createProduct.mock.calls[0][0].isVisible).toBe(false);
+    expect(govde.yayinda).toBe(0);
+    expect(govde.satirlar[0].sebep).toContain("Stok onaylanmadı");
+  });
+
+  it("satış fiyatı girilmemişse onaylı olsa bile taslak kalır", async () => {
+    const cevap = await topluUrunEkle(istek([faturaSatiri({ priceText: "" })]));
     const govde = await cevap.json();
 
     expect(mocks.createProduct.mock.calls[0][0].isVisible).toBe(false);
     expect(govde.satirlar[0].sebep).toContain("Satış fiyatı");
   });
 
-  it("onay ve satış fiyatı birlikte varsa ürün yayına çıkar", async () => {
-    const cevap = await topluUrunEkle(istek([faturaSatiri({ ownerApproved: true })]));
+  it("dört kapı birlikte açılınca ürün yayına çıkar", async () => {
+    const cevap = await topluUrunEkle(istek([faturaSatiri()]));
     const govde = await cevap.json();
 
     expect(mocks.createProduct.mock.calls[0][0].isVisible).toBe(true);
@@ -162,7 +195,7 @@ describe("faturadan gelen ürünün yayın kapısı", () => {
 
   it("fotoğrafı eksik ürün, onaylı ve fiyatlı olsa bile taslak kalır", async () => {
     const cevap = await topluUrunEkle(
-      istek([faturaSatiri({ ownerApproved: true, imageUrls: [FOTOGRAFLAR[0]] })]),
+      istek([faturaSatiri({ imageUrls: [FOTOGRAFLAR[0]] })]),
     );
     const govde = await cevap.json();
 
@@ -171,9 +204,7 @@ describe("faturadan gelen ürünün yayın kapısı", () => {
   });
 
   it("alış fiyatı ürün kartına hiçbir alandan sızmaz", async () => {
-    await topluUrunEkle(
-      istek([faturaSatiri({ ownerApproved: true, purchasePriceAmount: 137 })]),
-    );
+    await topluUrunEkle(istek([faturaSatiri({ purchasePriceAmount: 137 })]));
 
     const yazilan = mocks.createProduct.mock.calls[0][0];
     expect(JSON.stringify(yazilan)).not.toContain("137");
@@ -184,9 +215,7 @@ describe("faturadan gelen ürünün yayın kapısı", () => {
   it("alış fiyatı karta değil, kilitli tabloya yazılır", async () => {
     // products tablosunda anon'un tablo düzeyinde okuma yetkisi var; oraya
     // yazılan her alan müşteriye de açılırdı. Bu yüzden ayrı tablo.
-    await topluUrunEkle(
-      istek([faturaSatiri({ ownerApproved: true, purchasePriceAmount: 137 })]),
-    );
+    await topluUrunEkle(istek([faturaSatiri({ purchasePriceAmount: 137 })]));
 
     expect(mocks.upsert).toHaveBeenCalledTimes(1);
     const [kayit, secenek] = mocks.upsert.mock.calls[0];
@@ -200,9 +229,7 @@ describe("faturadan gelen ürünün yayın kapısı", () => {
     // Tarayıcı kapıyı atlayıp doğrudan üretici adresini gönderse bile sunucu
     // tanır: Seher'in izni "bekliyor", fotoğrafı yayına çıkamaz.
     const cevap = await topluUrunEkle(
-      istek([
-        faturaSatiri({ ownerApproved: true, imageUrls: IZINSIZ_URETICI_FOTOGRAFLARI }),
-      ]),
+      istek([faturaSatiri({ imageUrls: IZINSIZ_URETICI_FOTOGRAFLARI })]),
     );
     const govde = await cevap.json();
 
@@ -213,9 +240,7 @@ describe("faturadan gelen ürünün yayın kapısı", () => {
 
   it("izinsiz üretici fotoğrafı ürün kartına hiç yazılmaz", async () => {
     await topluUrunEkle(
-      istek([
-        faturaSatiri({ ownerApproved: true, imageUrls: IZINSIZ_URETICI_FOTOGRAFLARI }),
-      ]),
+      istek([faturaSatiri({ imageUrls: IZINSIZ_URETICI_FOTOGRAFLARI })]),
     );
 
     const yazilan: string[] = mocks.createProduct.mock.calls[0][0].imageUrls;
@@ -227,9 +252,7 @@ describe("faturadan gelen ürünün yayın kapısı", () => {
   it("esnaf kendi fotoğrafını koyarsa aynı ürün yayına çıkar", async () => {
     // İzin kuralı esnafı kilitlemez: kendi çektiği fotoğrafla sistem uçtan
     // uca çalışır. Kilitlenen yalnız izinsiz ÜRETİCİ fotoğrafıdır.
-    const cevap = await topluUrunEkle(
-      istek([faturaSatiri({ ownerApproved: true, imageUrls: FOTOGRAFLAR })]),
-    );
+    const cevap = await topluUrunEkle(istek([faturaSatiri({ imageUrls: FOTOGRAFLAR })]));
     const govde = await cevap.json();
 
     expect(mocks.createProduct.mock.calls[0][0].isVisible).toBe(true);
@@ -238,7 +261,14 @@ describe("faturadan gelen ürünün yayın kapısı", () => {
 
   it("Excel/XML gibi fatura dışı kaynaklar eski davranışını korur", async () => {
     await topluUrunEkle(
-      istek([faturaSatiri({ sourceType: "bulk_import", ownerApproved: undefined })]),
+      istek([
+        faturaSatiri({
+          sourceType: "bulk_import",
+          ownerApproved: undefined,
+          kartDurumu: undefined,
+          stokOnaylandi: undefined,
+        }),
+      ]),
     );
 
     expect(mocks.createProduct.mock.calls[0][0].isVisible).toBe(true);

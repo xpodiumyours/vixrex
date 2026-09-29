@@ -12,7 +12,15 @@ export interface FaturaTaslagi {
   gorselAdaylari: string[];
   izinDurumu: "yok" | "bekliyor" | "var";
   kaynak: string;
+  kaynakFirma: string;
+  dayanak: "kod" | "barkod";
   sonuc: string;
+  celiski: EslesmisFaturaSatiri["celiski"];
+  uyari: string | null;
+  alisBirimFiyat: number | null;
+  stokOnerisi: number | null;
+  stokOnaylandi: boolean;
+  satisFiyati: number | null;
   islemKimligi: string | null;
   sourceType: string;
   ownerApproved: boolean;
@@ -35,11 +43,19 @@ export function satirdanFaturaTaslagi(
     brand: katalog.marka.trim() || null,
     barcode: satir.barkod.trim() || satir.model.trim() || null,
     model: satir.model.trim(),
-    imageUrls: katalog.gorseller,
+    imageUrls: katalog.izinDurumu === "var" ? katalog.gorseller : [],
     gorselAdaylari: katalog.gorselAdaylari,
     izinDurumu: katalog.izinDurumu,
     kaynak: katalog.kaynak,
+    kaynakFirma: katalog.kaynakFirma || katalog.firma,
+    dayanak: katalog.dayanak,
     sonuc: satir.sonuc,
+    celiski: satir.celiski,
+    uyari: satir.uyari ?? null,
+    alisBirimFiyat: satir.alisBirimFiyat,
+    stokOnerisi: satir.adet,
+    stokOnaylandi: false,
+    satisFiyati: null,
     islemKimligi,
     sourceType: FATURA_TASLAK_KAYNAGI,
     ownerApproved: false,

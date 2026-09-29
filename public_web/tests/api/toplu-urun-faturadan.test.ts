@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   admin: vi.fn(),
   verifyOwner: vi.fn(() => ({ storeId: "store-1" })),
   createProduct: vi.fn(),
+  upsert: vi.fn(async () => ({ error: null })),
 }));
 vi.mock("next/headers", () => ({ cookies: vi.fn(async () => ({ get: mocks.get })) }));
 vi.mock("@/lib/supabaseAdmin", () => ({ getSupabaseAdmin: mocks.admin }));
@@ -28,7 +29,7 @@ function adminMock() {
       query.single.mockResolvedValue({ data: STORE, error: null });
       return query;
     }
-    const query = { select: vi.fn(), eq: vi.fn(), maybeSingle: vi.fn() };
+    const query = { select: vi.fn(), eq: vi.fn(), maybeSingle: vi.fn(), upsert: mocks.upsert };
     query.select.mockReturnValue(query);
     query.eq.mockReturnValue(query);
     query.maybeSingle.mockResolvedValue({
@@ -161,5 +162,99 @@ describe("faturadan gelen satırlar toplu kapıdan ürün kartına dönüşür",
     expect(mocks.createProduct).toHaveBeenCalledTimes(1);
     expect(yazilan.isVisible).toBe(false);
     expect(yazilan.imageUrls).toHaveLength(1);
+  });
+});
+
+// Faturadan gelen satırın yayına çıkması için dört kapı birden geçmelidir:
+// kanıtlı kart durumu, esnafın satış fiyatı, onayladığı stok ve kart onayı.
+// Bu testler tek tek kapıyı kapatıp ürünün taslakta kaldığını kanıtlar.
+describe("faturadan gelen satirin yayin kapisi", () => {
+  const FATURA_URUNU = {
+    name: "Elit Erkek Elastan Sıfır Yaka",
+    description: "Pamuklu, nefes alan kumaş.",
+    priceText: "199 TL",
+    categoryId: "kategori-1",
+    barcode: "8681128321677",
+    imageUrls: FOTOGRAFLAR,
+    stockQuantity: 2,
+    sourceType: "invoice",
+    kartDurumu: "kanitli",
+    stokOnaylandi: true,
+    ownerApproved: true,
+    variants: [{ id: "v-elt1302-siyah-l", options: { color: "Siyah", size: "L" } }],
+    metadata: {
+      attributes: [
+        { key: "gender", value: "Erkek" },
+        { key: "fit", value: "Normal" },
+      ],
+    },
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.get.mockReturnValue("owner-cookie");
+    mocks.verifyOwner.mockReturnValue({ storeId: "store-1" });
+    mocks.admin.mockImplementation(() => ({ from: adminMock() }));
+    mocks.createProduct.mockResolvedValue({ id: "urun-1", slug: "urun-1" });
+  });
+
+  it("dört kapı birlikte açılınca ürün vitrine çıkar", async () => {
+    const cevap = await topluUrunEkle(istek([FATURA_URUNU]));
+    const govde = await cevap.json();
+
+    expect(govde.yayinda).toBe(1);
+    expect(govde.taslak).toBe(0);
+    expect(mocks.createProduct.mock.calls[0][0].isVisible).toBe(true);
+  });
+
+  it("kanıtlı olmayan satır yayına çıkmaz", async () => {
+    const cevap = await topluUrunEkle(
+      istek([{ ...FATURA_URUNU, kartDurumu: "iz-yok" }]),
+    );
+    const govde = await cevap.json();
+
+    expect(govde.yayinda).toBe(0);
+    expect(govde.taslak).toBe(1);
+    expect(govde.satirlar[0].sebep).toContain("kanıtlı değil");
+    expect(mocks.createProduct.mock.calls[0][0].isVisible).toBe(false);
+  });
+
+  it("stok onaylanmadan satır yayına çıkmaz", async () => {
+    const cevap = await topluUrunEkle(
+      istek([{ ...FATURA_URUNU, stokOnaylandi: false }]),
+    );
+    const govde = await cevap.json();
+
+    expect(govde.yayinda).toBe(0);
+    expect(govde.satirlar[0].sebep).toContain("Stok onaylanmadı");
+  });
+
+  it("esnaf kartı onaylamadan satır yayına çıkmaz", async () => {
+    const cevap = await topluUrunEkle(
+      istek([{ ...FATURA_URUNU, ownerApproved: false }]),
+    );
+    const govde = await cevap.json();
+
+    expect(govde.yayinda).toBe(0);
+    expect(govde.satirlar[0].sebep).toContain("onaylanmadı");
+  });
+
+  it("alış fiyatı kartta görünmez, yalnız kilitli tabloya yazılır", async () => {
+    const cevap = await topluUrunEkle(
+      istek([{ ...FATURA_URUNU, purchasePriceAmount: 137 }]),
+    );
+    const govde = await cevap.json();
+
+    // Ürün kartı hiçbir alanında alış fiyatını taşımaz.
+    const yazilan = mocks.createProduct.mock.calls[0][0];
+    expect(JSON.stringify(yazilan)).not.toContain("137");
+    expect(yazilan.priceAmount).toBe(199);
+
+    // Alış fiyatı ayrı, kilitli tabloya yazılır ve ürün taslakta kalmaz.
+    expect(mocks.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({ amount: 137, store_id: "store-1" }),
+      { onConflict: "product_id" },
+    );
+    expect(govde.yayinda).toBe(1);
   });
 });

@@ -10,6 +10,7 @@ class OcrResultList extends StatelessWidget {
   final Function(int index) onApprove;
   final Function(int index) onReject;
   final Function(int index)? onEdit;
+  final Function(int index)? onConfirmStock;
   final List<InvoiceProductDraft> invoiceDrafts;
 
   const OcrResultList({
@@ -18,6 +19,7 @@ class OcrResultList extends StatelessWidget {
     required this.onApprove,
     required this.onReject,
     this.onEdit,
+    this.onConfirmStock,
     this.invoiceDrafts = const [],
   });
 
@@ -165,7 +167,7 @@ class OcrResultList extends StatelessWidget {
                   ],
                   if (index < invoiceDrafts.length) ...[
                     const SizedBox(height: 6),
-                    _buildInvoiceDecision(invoiceDrafts[index]),
+                    _buildInvoiceDecision(invoiceDrafts[index], index),
                   ],
                 ],
               ],
@@ -248,8 +250,13 @@ class OcrResultList extends StatelessWidget {
     return labels.toSet().join(' · ');
   }
 
-  Widget _buildInvoiceDecision(InvoiceProductDraft draft) {
+  /// Kartın ekranda görünen hâli ve kanıtı. Web paneliyle AYNI dört hâl:
+  /// kanıtlı / eksik bilgi / çelişki / iz bulunamadı. Kaynak, izin ve
+  /// faturadaki adet önerisi burada açıkça görünür; faturadaki adet stok
+  /// yerine geçmez, esnaf onaylar.
+  Widget _buildInvoiceDecision(InvoiceProductDraft draft, int index) {
     final result = const InvoiceDraftDecisionEngine().evaluate(draft);
+    final durum = result.kartDurumu;
     final label = switch (result.decision) {
       AutomationDecision.stopNoGuess => 'DUR — ürün tahmin edilmedi',
       AutomationDecision.askMissing => 'SOR — eksik kanıt var',
@@ -262,17 +269,41 @@ class OcrResultList extends StatelessWidget {
             : result.warnings.isNotEmpty
             ? result.warnings.first
             : '';
+    final izinVar = draft.rightsStatus.isUsableBasis;
+    final adet = draft.quantity?.value;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w800,
-            color: AppColors.primary,
-          ),
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: _kartDurumuRengi(durum).withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                durum.etiket,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  color: _kartDurumuRengi(durum),
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
+          ],
         ),
         if (detail.isNotEmpty)
           Text(
@@ -283,8 +314,70 @@ class OcrResultList extends StatelessWidget {
               color: AppColors.mutedText,
             ),
           ),
+        if (draft.celiskiAdaylari.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          ...draft.celiskiAdaylari
+              .take(3)
+              .map(
+                (aday) => Text(
+                  '• ${aday.ad}${aday.kaynak.isEmpty ? '' : ' — ${aday.kaynak}'}',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: AppColors.mutedText,
+                  ),
+                ),
+              ),
+        ],
+        if (draft.canonicalProductUrl?.value != null &&
+            draft.canonicalProductUrl!.value!.trim().isNotEmpty)
+          Text(
+            'Kaynak: ${draft.canonicalProductUrl!.value}'
+            '${izinVar ? ' · üretici izni var' : ' · üretici izni yok — yalnız kendi fotoğrafın'}',
+            style: const TextStyle(fontSize: 10, color: AppColors.mutedText),
+          ),
+        if (durum.kartYayinaUygun) ...[
+          const SizedBox(height: 6),
+          Text(
+            adet == null
+                ? 'Faturada adet okunamadı; stoğu sen gir.'
+                : 'Faturadaki adet: $adet (öneri — stok değil)',
+            style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: AppColors.mutedText,
+            ),
+          ),
+          const SizedBox(height: 4),
+          OutlinedButton(
+            onPressed:
+                onConfirmStock == null ? null : () => onConfirmStock!(index),
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size(0, 32),
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              foregroundColor:
+                  draft.stockConfirmed ? AppColors.success : AppColors.primary,
+              side: BorderSide(
+                color:
+                    draft.stockConfirmed ? AppColors.success : AppColors.border,
+              ),
+            ),
+            child: Text(
+              draft.stockConfirmed ? '✓ Stok onaylandı' : 'Stoğu onayla',
+              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+            ),
+          ),
+        ],
       ],
     );
+  }
+
+  Color _kartDurumuRengi(KartDurumu durum) {
+    return switch (durum) {
+      KartDurumu.kanitli => AppColors.success,
+      KartDurumu.eksik => const Color(0xFFF59E0B),
+      KartDurumu.celiski => AppColors.error,
+      KartDurumu.izYok => AppColors.mutedText,
+    };
   }
 
   Color _getConfidenceColor(double confidence) {

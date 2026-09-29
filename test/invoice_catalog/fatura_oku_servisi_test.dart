@@ -228,6 +228,79 @@ void main() {
       expect(sonuc.failure?.message, contains('ürün satırı bulunamadı'));
     });
 
+    test(
+      'sunucunun kart hali, celiskisi ve islem kimligi telefonda aynen tasinir',
+      () async {
+        final servis = FaturaOkuServisi(
+          originOverride: 'https://vixrex-test.local',
+          httpClient: MockClient((request) async {
+            return http.Response(
+              jsonEncode({
+                'tamam': true,
+                'islemKimligi': 'islem-42',
+                'satirlar': [
+                  {
+                    'model': 'TER0117',
+                    'ad': 'Tutku Erkek Atlet',
+                    'guven': 0.9,
+                    'sonuc': 'celiski',
+                    'katalog': null,
+                    'celiski': {
+                      'dayanak': 'barkod',
+                      'adaylar': [
+                        {
+                          'ad': 'Tutku Erkek Atlet Siyah L',
+                          'kaynak': 'https://sehermensucat.com/a',
+                        },
+                        {
+                          'ad': 'Tutku Erkek Atlet Siyah XL',
+                          'kaynak': 'https://sehermensucat.com/b',
+                        },
+                      ],
+                    },
+                  },
+                  {
+                    'model': 'YOK999',
+                    'ad': 'Bilinmeyen ürün',
+                    'guven': 0.9,
+                    'sonuc': 'iz-yok',
+                    'katalog': null,
+                  },
+                ],
+              }),
+              200,
+              headers: {'content-type': 'application/json; charset=utf-8'},
+            );
+          }),
+        );
+
+        final sonuc = await servis.oku(
+          imageBytes: Uint8List.fromList([1]),
+          storeSlug: 'deneme-vitrin',
+          editToken: 'token-1',
+        );
+
+        final katalog = sonuc.data!;
+        // Aynı belge, aynı işlem: web ile telefon aynı kimliği taşır.
+        expect(katalog.islemKimligi, 'islem-42');
+
+        final celiskili = katalog.invoiceDrafts[0];
+        expect(celiskili.etkinKartDurumu, KartDurumu.celiski);
+        expect(celiskili.celiskiAdaylari, hasLength(2));
+        expect(celiskili.celiskiDayanak, 'barkod');
+        expect(celiskili.islemKimligi, 'islem-42');
+
+        final izsiz = katalog.invoiceDrafts[1];
+        expect(izsiz.etkinKartDurumu, KartDurumu.izYok);
+
+        // Faturadaki adet öneridir; hiçbir taslak kendiliğinden stok onaylı değil.
+        expect(
+          katalog.invoiceDrafts.every((taslak) => !taslak.stockConfirmed),
+          isTrue,
+        );
+      },
+    );
+
     test('ağ hatasında çökmez, anlaşılır hata döner', () async {
       final servis = FaturaOkuServisi(
         httpClient: MockClient(
