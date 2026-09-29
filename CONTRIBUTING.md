@@ -7,18 +7,18 @@ değildir.
 
 ## Bu depoda çalışırken
 
-Bu depodaki çalışma kuralları, kalite kapıları ve komutlar için tek
-kaynak `CLAUDE.md` dosyasıdır — hem insan hem de yapay zekâ ajanları için
-geçerlidir. Bir değişiklik yapmadan önce onu okuyun.
+Bu depodaki çalışma kurallarının tek adresi `AGENTS.md` dosyasıdır — hem
+insan hem de yapay zekâ ajanları için geçerlidir. Bir değişikliğe
+başlamadan önce onu okuyun. Kuralları başka bir dosyada tekrarlamayın: iki
+kopya zamanla ayrışır ve çelişki doğar.
 
 Kısa özet:
 
+- Çalışma kuralları ve işlem sırası: `AGENTS.md`.
 - Değişiklikler ayrı bir dalda yapılır, doğrudan `main`'e commit
-  edilmez.
-- PR açmadan önce ilgili kalite kapılarını (`dart format`/`dart
-  analyze`/`flutter test`, `npm run lint`/`typecheck`/`test`/`build`)
-  yerelde çalıştırın.
-- CI'daki gerçek kapılar `.github/workflows/ci.yml` içindedir.
+  edilmez; ana dala giriş PR iledir.
+- Kalite kapıları yerelde koşulur; merge öncesi `bash tool/merge-hazir.sh`.
+  Gerçek/kalan kapı listesi `.github/workflows/ci.yml` içindedir.
 
 ## Güvenlik açığı bildirimi
 
