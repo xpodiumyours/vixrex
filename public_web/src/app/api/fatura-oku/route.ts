@@ -5,7 +5,7 @@ import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 import { verifyStoreEditToken } from "@/lib/instagramServer";
 import { fingerprintClient, getClientIp } from "@/lib/rentDemoSecurity";
 import { belgeGercegiUyuyorMu } from "@/lib/faturaSatirAyikla";
-import { faturaSatirlariniEslestir, type HamFaturaSatiri } from "@/lib/faturaEslestir";
+import { faturaSatirlariniDijitalIzle, type HamFaturaSatiri } from "@/lib/faturaEslestir";
 import { faturayiOku, type GoruSatiri } from "@/lib/faturaGoru";
 
 // Vixrex'in TEK fatura okuma ucu.
@@ -214,7 +214,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const satirlar = faturaSatirlariniEslestir(sonSatirlar, sonTedarikci);
+    const { satirlar, tedarikciIz } = await faturaSatirlariniDijitalIzle(
+      sonSatirlar,
+      sonTedarikci,
+      sonTedarikciSite,
+    );
     const eslesenSayisi = satirlar.filter((satir) => satir.katalog !== null).length;
 
     return NextResponse.json({
@@ -226,6 +230,7 @@ export async function POST(request: NextRequest) {
       tedarikciVergiNo: sonTedarikciVergiNo,
       tedarikciAdres: sonTedarikciAdres,
       tedarikciSite: sonTedarikciSite,
+      tedarikciDijitalIz: tedarikciIz,
       katalogEslesmesi: eslesenSayisi,
     });
   } catch (err) {

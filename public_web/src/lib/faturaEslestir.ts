@@ -1,4 +1,14 @@
-import { firmaAnahtariniCoz, ureticiUrunuBul } from "@/lib/ureticiKatalog";
+import {
+  firmaAnahtariniCoz,
+  firmaKataloguVarMi,
+  ureticiUrunuBul,
+} from "@/lib/ureticiKatalog";
+import {
+  dinamikUrunIzleriniBul,
+  tedarikciDijitalIziBul,
+  type DijitalIzBagimliliklari,
+  type TedarikciDijitalIzi,
+} from "@/lib/faturaDijitalIz";
 
 // Fatura satırını üretici kataloğuyla buluşturan TEK yer.
 //
@@ -100,4 +110,65 @@ export function faturaSatirlariniEslestir(
       uyari: `Bu satır ${satir.katalog.firma} ürünüyle eşleşti; faturadaki diğer ürünler ${baskinFirma} firmasından. Kontrol et.`,
     };
   });
+}
+
+
+export interface FaturaDijitalIzSonucu {
+  satirlar: EslesmisFaturaSatiri[];
+  tedarikciIz: TedarikciDijitalIzi | null;
+}
+
+export async function faturaSatirlariniDijitalIzle(
+  satirlar: HamFaturaSatiri[],
+  tedarikciAdi = "",
+  tedarikciSite = "",
+  bagimliliklar: DijitalIzBagimliliklari = {},
+): Promise<FaturaDijitalIzSonucu> {
+  const tedarikciIz = tedarikciDijitalIziBul(tedarikciAdi, tedarikciSite);
+  const yerelAramaGuvenli =
+    !tedarikciIz ||
+    (tedarikciIz.havuzda &&
+      Boolean(tedarikciIz.anahtar) &&
+      firmaKataloguVarMi(tedarikciIz.anahtar as string));
+
+  const yerel = yerelAramaGuvenli
+    ? faturaSatirlariniEslestir(satirlar, tedarikciAdi)
+    : satirlar.map((satir) => ({ ...satir, katalog: null }));
+
+  if (!tedarikciIz) return { satirlar: yerel, tedarikciIz };
+
+  const eksikIndeksler = yerel
+    .map((satir, indeks) => (satir.katalog === null ? indeks : -1))
+    .filter((indeks) => indeks >= 0);
+  if (eksikIndeksler.length === 0) return { satirlar: yerel, tedarikciIz };
+
+  const dinamik = await dinamikUrunIzleriniBul(
+    eksikIndeksler.map((indeks) => ({
+      model: yerel[indeks].model,
+      barkod: yerel[indeks].barkod,
+    })),
+    tedarikciIz,
+    bagimliliklar,
+  );
+
+  const sonuc = yerel.map((satir) => ({ ...satir }));
+  eksikIndeksler.forEach((indeks, sira) => {
+    const eslesme = dinamik[sira];
+    if (!eslesme) return;
+    sonuc[indeks] = {
+      ...sonuc[indeks],
+      katalog: {
+        firma: tedarikciIz.firma,
+        dayanak: eslesme.dayanak,
+        izinDurumu: tedarikciIz.izinDurumu,
+        resmiAd: eslesme.urun.ad,
+        marka: eslesme.urun.marka,
+        aciklama: eslesme.urun.aciklama,
+        gorseller: eslesme.urun.gorseller,
+        kaynak: eslesme.urun.kaynak || tedarikciIz.kaynak,
+      },
+    };
+  });
+
+  return { satirlar: sonuc, tedarikciIz };
 }
