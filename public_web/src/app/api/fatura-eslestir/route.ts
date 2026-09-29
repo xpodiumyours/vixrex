@@ -4,6 +4,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 import { fingerprintClient, getClientIp } from "@/lib/rentDemoSecurity";
 import { faturaSatirlariniDijitalIzle, sonucOzeti, type HamFaturaSatiri } from "@/lib/faturaEslestir";
+import { faturaTaslaklari } from "@/lib/faturaTaslagi";
 import { verifyStoreEditToken } from "@/lib/instagramServer";
 
 // Fatura satırlarını üretici kataloğuyla eşleştirir.
@@ -144,6 +145,7 @@ export async function POST(request: NextRequest) {
     toplamSatir: eslesenSatirlar.length,
     katalogEslesmesi: eslesenSayisi,
     sonucOzeti: sonucOzeti(eslesenSatirlar),
+    taslaklar: faturaTaslaklari(eslesenSatirlar),
     tedarikciDijitalIz: tedarikciIz,
   });
 }

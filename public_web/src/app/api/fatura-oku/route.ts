@@ -7,6 +7,7 @@ import { fingerprintClient, getClientIp } from "@/lib/rentDemoSecurity";
 import { belgeGercegiUyuyorMu } from "@/lib/faturaSatirAyikla";
 import { faturaSatirlariniDijitalIzle, sonucOzeti, type HamFaturaSatiri } from "@/lib/faturaEslestir";
 import { belgeParmakIzi, islemKaydet } from "@/lib/faturaIslemKaydi";
+import { faturaTaslaklari } from "@/lib/faturaTaslagi";
 import { faturayiOku, type GoruSatiri } from "@/lib/faturaGoru";
 
 // Vixrex'in TEK fatura okuma ucu.
@@ -247,6 +248,7 @@ export async function POST(request: NextRequest) {
       tedarikciDijitalIz: tedarikciIz,
       katalogEslesmesi: eslesenSayisi,
       sonucOzeti: sonucOzeti(satirlar),
+      taslaklar: faturaTaslaklari(satirlar, islemKimligi),
       islemKimligi,
     });
   } catch (err) {
