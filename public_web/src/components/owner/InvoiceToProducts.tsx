@@ -33,8 +33,37 @@ export interface KatalogBilgisi {
   kaynak: string;
 }
 
+export interface FaturaUrunKartiTaslagi {
+  key: string;
+  eslesmeDurumu: "eslesti" | "eslesmedi";
+  name: string;
+  description: string;
+  imageUrls: string[];
+  brand: string | null;
+  barcode: string | null;
+  stockQuantity: number | null;
+  sourceType: "invoice";
+  externalProductId: string | null;
+  purchasePriceAmount: number | null;
+  metadata: { identifiers?: { sku?: string } };
+  variants: Array<{
+    id: string;
+    options: Record<string, string>;
+    stockQuantity?: number;
+  }>;
+  isVisible: false;
+  katalog: {
+    firma: string;
+    dayanak: "kod" | "barkod";
+    izinDurumu: "yok" | "bekliyor" | "var";
+    kaynak: string;
+  } | null;
+  eksikler: string[];
+}
+
 interface FaturaOkumaSonucu {
   satirlar: FaturaSatiri[];
+  kartlar: FaturaUrunKartiTaslagi[];
   belgeToplami: number | null;
   belgeAdedi: number | null;
   tedarikci: string;
@@ -42,6 +71,7 @@ interface FaturaOkumaSonucu {
 }
 
 interface SatirDurumu extends FaturaSatiri {
+  urunKarti: FaturaUrunKartiTaslagi;
   satisFiyati: string;
   onayli: boolean;
   kategoriId: string;
@@ -110,7 +140,13 @@ export default function InvoiceToProducts({
   const dosyaRef = useRef<HTMLInputElement>(null);
 
   const hazirSayisi = useMemo(
-    () => satirlar.filter((s) => s.onayli && fiyatSayisi(s.satisFiyati) !== null).length,
+    () =>
+      satirlar.filter(
+        (s) =>
+          s.urunKarti.eslesmeDurumu === "eslesti" &&
+          s.onayli &&
+          fiyatSayisi(s.satisFiyati) !== null,
+      ).length,
     [satirlar],
   );
 
@@ -146,10 +182,14 @@ export default function InvoiceToProducts({
         }
 
         const okunan = govde as FaturaOkumaSonucu;
+        if (!Array.isArray(okunan.kartlar) || okunan.kartlar.length !== okunan.satirlar.length) {
+          throw new Error("Ürün kartları hazırlanamadı.");
+        }
         setBelge(okunan);
         setSatirlar(
-          okunan.satirlar.map((satir) => ({
+          okunan.satirlar.map((satir, index) => ({
             ...satir,
+            urunKarti: okunan.kartlar[index],
             satisFiyati: "",
             onayli: false,
             kategoriId: categories[0]?.id ?? "",
@@ -184,7 +224,11 @@ export default function InvoiceToProducts({
   /** Güveni düşük satır toplu onaya girmez — esnaf ona tek tek bakar. */
   function tumunuOnayla() {
     setSatirlar((oncekiler) =>
-      oncekiler.map((satir) => ({ ...satir, onayli: satir.guven >= GUVEN_ESIGI })),
+      oncekiler.map((satir) => ({
+        ...satir,
+        onayli:
+          satir.urunKarti.eslesmeDurumu === "eslesti" && satir.guven >= GUVEN_ESIGI,
+      })),
     );
   }
 
@@ -200,7 +244,12 @@ export default function InvoiceToProducts({
   async function vitrineYaz() {
     const gonderilecek = satirlar
       .map((satir, sira) => ({ satir, sira }))
-      .filter(({ satir }) => satir.onayli && fiyatSayisi(satir.satisFiyati) !== null);
+      .filter(
+        ({ satir }) =>
+          satir.urunKarti.eslesmeDurumu === "eslesti" &&
+          satir.onayli &&
+          fiyatSayisi(satir.satisFiyati) !== null,
+      );
 
     if (gonderilecek.length === 0) return;
 
@@ -215,37 +264,23 @@ export default function InvoiceToProducts({
           slug: storeSlug,
           products: gonderilecek.map(({ satir, sira }) => {
             const satisFiyati = fiyatSayisi(satir.satisFiyati);
-            const katalog = satir.katalog;
+            const kart = satir.urunKarti;
             return {
-              name: katalog?.resmiAd || satir.ad,
-              description: katalog?.aciklama || faturaAciklamasi(satir),
+              name: kart.name,
+              description: kart.description || faturaAciklamasi(satir),
               priceText: `${satisFiyati} TL`,
               categoryId: satir.kategoriId,
-              // Üreticinin kendi yayınladığı fotoğraflar. Eşleşme yoksa boş
-              // kalır ve ürün taslak olarak kaydedilir.
-              imageUrls: katalog?.gorseller ?? [],
-              brand: katalog?.marka || undefined,
-              barcode: satir.barkod || undefined,
-              stockQuantity: satir.adet ?? undefined,
-              sourceType: "invoice",
-              // Aynı fatura ikinci kez okunursa aynı satır aynı kimliğe düşer.
-              externalProductId: satir.barkod || satir.model || undefined,
+              imageUrls: kart.imageUrls,
+              brand: kart.brand ?? undefined,
+              barcode: kart.barcode ?? undefined,
+              stockQuantity: kart.stockQuantity ?? undefined,
+              sourceType: kart.sourceType,
+              externalProductId: kart.externalProductId ?? undefined,
               ownerApproved: true,
-              purchasePriceAmount: satir.alisBirimFiyat ?? undefined,
-              metadata: satir.model ? { identifiers: { sku: satir.model } } : undefined,
-              variants:
-                satir.varyant || satir.beden
-                  ? [
-                      {
-                        id: `v-${(satir.model || satir.barkod || String(sira)).toLowerCase()}`,
-                        options: {
-                          ...(satir.varyant ? { color: satir.varyant } : {}),
-                          ...(satir.beden ? { size: satir.beden } : {}),
-                        },
-                        stockQuantity: satir.adet ?? undefined,
-                      },
-                    ]
-                  : undefined,
+              purchasePriceAmount: kart.purchasePriceAmount ?? undefined,
+              metadata: kart.metadata,
+              variants: kart.variants,
+              isVisible: kart.isVisible,
               sortOrder: sira,
             };
           }),
@@ -329,13 +364,10 @@ export default function InvoiceToProducts({
   if (adim === "bitti" && sonuc) {
     return (
       <div className="fatura-akis">
-        <h3>Ürünler kaydedildi</h3>
+        <h3>Ürün kartları kaydedildi</h3>
         <ul className="fatura-ozet">
           <li>
-            <strong>{sonuc.yayinda}</strong> ürün vitrinde görünüyor
-          </li>
-          <li>
-            <strong>{sonuc.taslak}</strong> ürün taslak — fotoğrafı eklenince görünecek
+            <strong>{sonuc.taslak}</strong> ürün kartı taslak olarak kaydedildi
           </li>
           {sonuc.hatali > 0 && (
             <li>
@@ -346,8 +378,8 @@ export default function InvoiceToProducts({
 
         {sonuc.taslak > 0 && (
           <p className="fatura-aciklama">
-            Taslak ürünler kaydedildi ama müşteriye gösterilmiyor. Ürün fotoğrafları
-            eklendiğinde kendiliğinden vitrine çıkarlar.
+            Taslak ürün kartları müşteriye gösterilmiyor. Ayrı yayınlama adımına kadar
+            kapalı kalırlar.
           </p>
         )}
 
@@ -376,13 +408,17 @@ export default function InvoiceToProducts({
   // ─── 3. Ürünler (yazma sırasında kilitli hâliyle aynı ekran) ───
 
   const yaziliyor = adim === "yaziliyor";
-  const eslesenSayisi = satirlar.filter((satir) => satir.katalog !== null).length;
-  const izinBekleyen = satirlar.some((satir) => satir.katalog?.izinDurumu !== "var");
+  const eslesenSayisi = satirlar.filter(
+    (satir) => satir.urunKarti.eslesmeDurumu === "eslesti",
+  ).length;
+  const izinBekleyen = satirlar.some(
+    (satir) => satir.urunKarti.katalog && satir.urunKarti.katalog.izinDurumu !== "var",
+  );
 
   return (
     <div className="fatura-akis">
       <div className="fatura-baslik">
-        <h3>{satirlar.length} ürün hazırlandı</h3>
+        <h3>{eslesenSayisi} ürün kartı hazırlandı</h3>
         {belge && (
           <p className="fatura-aciklama">
             {belge.tedarikci ? `${belge.tedarikci} • ` : ""}
@@ -466,11 +502,11 @@ export default function InvoiceToProducts({
             >
               {dusukGuven && <span className="fatura-rozet">Kontrol et</span>}
 
-              {satir.katalog && satir.katalog.gorseller.length > 0 ? (
+              {satir.urunKarti.imageUrls.length > 0 ? (
                 <img
                   className="fatura-kart-gorsel"
-                  src={satir.katalog.gorseller[0]}
-                  alt={satir.katalog.resmiAd}
+                  src={satir.urunKarti.imageUrls[0]}
+                  alt={satir.urunKarti.name}
                   loading="lazy"
                 />
               ) : (
@@ -478,7 +514,7 @@ export default function InvoiceToProducts({
               )}
 
               {satir.model && <div className="fatura-model">{satir.model}</div>}
-              <div className="fatura-ad">{satir.katalog?.resmiAd || satir.ad}</div>
+              <div className="fatura-ad">{satir.urunKarti.name}</div>
 
               {satir.katalog ? (
                 <div className="fatura-eslesme">
@@ -487,7 +523,7 @@ export default function InvoiceToProducts({
                 </div>
               ) : (
                 <div className="fatura-eslesme fatura-eslesme-yok">
-                  Üretici kataloğunda bulunamadı — taslak kalacak
+                  Dijital ürün eşleşmesi bulunamadı — ürün kartı oluşturulmadı
                 </div>
               )}
 
@@ -517,9 +553,13 @@ export default function InvoiceToProducts({
                 type="button"
                 className={satir.onayli ? "fatura-onay fatura-onay-acik" : "fatura-onay"}
                 onClick={() => satirGuncelle(index, { onayli: !satir.onayli })}
-                disabled={yaziliyor}
+                disabled={yaziliyor || satir.urunKarti.eslesmeDurumu !== "eslesti"}
               >
-                {satir.onayli ? "✓ Onaylandı" : "Onayla"}
+                {satir.urunKarti.eslesmeDurumu !== "eslesti"
+                  ? "Eşleşme gerekli"
+                  : satir.onayli
+                    ? "✓ Onaylandı"
+                    : "Onayla"}
               </button>
             </article>
           );

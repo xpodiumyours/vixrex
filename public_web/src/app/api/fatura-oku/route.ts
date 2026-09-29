@@ -6,6 +6,7 @@ import { verifyStoreEditToken } from "@/lib/instagramServer";
 import { fingerprintClient, getClientIp } from "@/lib/rentDemoSecurity";
 import { belgeGercegiUyuyorMu } from "@/lib/faturaSatirAyikla";
 import { faturaSatirlariniEslestir, type HamFaturaSatiri } from "@/lib/faturaEslestir";
+import { faturaSatirlariniKartlaraDonustur } from "@/lib/faturaUrunKarti";
 import { faturayiOku, type GoruSatiri } from "@/lib/faturaGoru";
 
 // Vixrex'in TEK fatura okuma ucu.
@@ -208,11 +209,13 @@ export async function POST(request: NextRequest) {
     }
 
     const satirlar = faturaSatirlariniEslestir(sonSatirlar, sonTedarikci);
-    const eslesenSayisi = satirlar.filter((satir) => satir.katalog !== null).length;
+    const kartlar = faturaSatirlariniKartlaraDonustur(satirlar);
+    const eslesenSayisi = kartlar.filter((kart) => kart.eslesmeDurumu === "eslesti").length;
 
     return NextResponse.json({
       tamam: true,
       satirlar,
+      kartlar,
       belgeToplami: sonOzet.toplam,
       belgeAdedi: sonOzet.adet,
       tedarikci: sonTedarikci,

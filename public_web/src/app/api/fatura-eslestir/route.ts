@@ -4,6 +4,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 import { fingerprintClient, getClientIp } from "@/lib/rentDemoSecurity";
 import { faturaSatirlariniEslestir, type HamFaturaSatiri } from "@/lib/faturaEslestir";
+import { faturaSatirlariniKartlaraDonustur } from "@/lib/faturaUrunKarti";
 import { verifyStoreEditToken } from "@/lib/instagramServer";
 
 // Fatura satırlarını üretici kataloğuyla eşleştirir.
@@ -12,8 +13,8 @@ import { verifyStoreEditToken } from "@/lib/instagramServer";
 // kendi OCR'ı, Başak, ya da ileride tarayıcı) zaten çıkarmış olarak
 // gönderir. Görevi tek: her satırı gerçek üretici kataloğuna bağlamak.
 //
-// Hiçbir ürün oluşturmaz, hiçbir şey yayınlamaz. Kart oluşturma ve yayın
-// kapısı /api/products/batch üzerinden, esnaf onayı ve fiyatıyla olur.
+// Eşleşen satırlar cevapta taslak ürün kartına da dönüştürülür. Kalıcı yazma
+// ve yayın kapısı /api/products/batch üzerinden, esnaf onayı ve fiyatıyla olur.
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -125,11 +126,13 @@ export async function POST(request: NextRequest) {
   // Başak, tarayıcı) biliyorsa gönderir; bilmiyorsa firma dağılımına bakılır.
   const tedarikci = typeof govde.tedarikci === "string" ? govde.tedarikci.trim() : "";
   const eslesenSatirlar = faturaSatirlariniEslestir(temizSatirlar, tedarikci);
-  const eslesenSayisi = eslesenSatirlar.filter((s) => s.katalog !== null).length;
+  const kartlar = faturaSatirlariniKartlaraDonustur(eslesenSatirlar);
+  const eslesenSayisi = kartlar.filter((kart) => kart.eslesmeDurumu === "eslesti").length;
 
   return NextResponse.json({
     tamam: true,
     satirlar: eslesenSatirlar,
+    kartlar,
     toplamSatir: eslesenSatirlar.length,
     katalogEslesmesi: eslesenSayisi,
   });

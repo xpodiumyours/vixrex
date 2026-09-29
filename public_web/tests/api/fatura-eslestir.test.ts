@@ -100,12 +100,18 @@ describe("/api/fatura-eslestir — OCR kaynağından bağımsız katalog eşleş
     expect(govde.satirlar[0].katalog.izinDurumu).not.toBe("var");
     expect(govde.satirlar[0].katalog.gorseller).toHaveLength(0);
     expect(govde.satirlar[1].katalog.marka).toBeTruthy();
+    expect(govde.kartlar).toHaveLength(2);
+    expect(govde.kartlar[0].eslesmeDurumu).toBe("eslesti");
+    expect(govde.kartlar[0].name).toBe(govde.satirlar[0].katalog.resmiAd);
+    expect(govde.kartlar[0].isVisible).toBe(false);
   });
 
   it("katalogda olmayan kod tahmin üretmez, katalog null döner", async () => {
     const cevap = await faturaEslestir(istek([{ model: "ZZZ9999", ad: "bilinmeyen ürün" }]));
     const govde = await cevap.json();
     expect(govde.satirlar[0].katalog).toBeNull();
+    expect(govde.kartlar[0].eslesmeDurumu).toBe("eslesmedi");
+    expect(govde.kartlar[0].isVisible).toBe(false);
   });
 
   it("500 satırlık istek 200'e kırpılır, sistem çökmez", async () => {

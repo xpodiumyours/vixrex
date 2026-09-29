@@ -112,6 +112,10 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(govde.satirlar[0].model).toBe("ELT1302");
     expect(govde.satirlar[0].adet).toBe(2);
     expect(govde.satirlar[0].alisBirimFiyat).toBe(137);
+    expect(govde.kartlar).toHaveLength(1);
+    expect(govde.kartlar[0].eslesmeDurumu).toBe("eslesti");
+    expect(govde.kartlar[0].sourceType).toBe("invoice");
+    expect(govde.kartlar[0].isVisible).toBe(false);
   });
 
   it("çerez yoksa ama editToken geçerliyse Flutter isteği de kabul edilir", async () => {
