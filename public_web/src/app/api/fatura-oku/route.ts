@@ -5,7 +5,8 @@ import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 import { verifyStoreEditToken } from "@/lib/instagramServer";
 import { fingerprintClient, getClientIp } from "@/lib/rentDemoSecurity";
 import { belgeGercegiUyuyorMu } from "@/lib/faturaSatirAyikla";
-import { faturaSatirlariniDijitalIzle, type HamFaturaSatiri } from "@/lib/faturaEslestir";
+import { faturaSatirlariniDijitalIzle, sonucOzeti, type HamFaturaSatiri } from "@/lib/faturaEslestir";
+import { belgeParmakIzi, islemKaydet } from "@/lib/faturaIslemKaydi";
 import { faturayiOku, type GoruSatiri } from "@/lib/faturaGoru";
 
 // Vixrex'in TEK fatura okuma ucu.
@@ -221,6 +222,19 @@ export async function POST(request: NextRequest) {
     );
     const eslesenSayisi = satirlar.filter((satir) => satir.katalog !== null).length;
 
+    const islemKimligi = await islemKaydet({
+      slug: ownerSlug,
+      parmakIzi: belgeParmakIzi(bayt),
+      belgeAdedi: sonOzet.adet,
+      belgeToplami: sonOzet.toplam,
+      tedarikci: sonTedarikci,
+      tedarikciVergiNo: sonTedarikciVergiNo,
+      tedarikciAdres: sonTedarikciAdres,
+      tedarikciSite: sonTedarikciSite,
+      tedarikciIz,
+      satirlar,
+    });
+
     return NextResponse.json({
       tamam: true,
       satirlar,
@@ -232,6 +246,8 @@ export async function POST(request: NextRequest) {
       tedarikciSite: sonTedarikciSite,
       tedarikciDijitalIz: tedarikciIz,
       katalogEslesmesi: eslesenSayisi,
+      sonucOzeti: sonucOzeti(satirlar),
+      islemKimligi,
     });
   } catch (err) {
     const kod = err instanceof Error ? err.message : "unknown";
