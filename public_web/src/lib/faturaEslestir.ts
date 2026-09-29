@@ -125,11 +125,13 @@ export async function faturaSatirlariniDijitalIzle(
   bagimliliklar: DijitalIzBagimliliklari = {},
 ): Promise<FaturaDijitalIzSonucu> {
   const tedarikciIz = tedarikciDijitalIziBul(tedarikciAdi, tedarikciSite);
+  const tedarikciBelirtilmisAmaCozulememis = Boolean(tedarikciAdi.trim()) && !tedarikciIz;
   const yerelAramaGuvenli =
-    !tedarikciIz ||
-    (tedarikciIz.havuzda &&
-      Boolean(tedarikciIz.anahtar) &&
-      firmaKataloguVarMi(tedarikciIz.anahtar as string));
+    !tedarikciBelirtilmisAmaCozulememis &&
+    (!tedarikciIz ||
+      (tedarikciIz.havuzda &&
+        Boolean(tedarikciIz.anahtar) &&
+        firmaKataloguVarMi(tedarikciIz.anahtar as string)));
 
   const yerel = yerelAramaGuvenli
     ? faturaSatirlariniEslestir(satirlar, tedarikciAdi)

@@ -58,6 +58,12 @@ describe("fatura dinamik dijital iz", () => {
     expect(sonuc.satirlar[0].katalog?.gorseller).toEqual([]);
   });
 
+  it("taninmayan tedarikci adi varken kod cakismasiyla baska firmaya baglanmaz", async () => {
+    const sonuc = await faturaSatirlariniDijitalIzle([satir("ELT1302")], "Rastgele Tedarikçi");
+    expect(sonuc.tedarikciIz).toBeNull();
+    expect(sonuc.satirlar[0].katalog).toBeNull();
+  });
+
   it("55 havuzu disindaki tedarikciyi faturadaki resmi siteyle ayirir ve kod cakismasini karistirmaz", async () => {
     const fetcher = async (input: string) => {
       if (input.includes("/products.json")) return new Response("{}", { status: 404 });
