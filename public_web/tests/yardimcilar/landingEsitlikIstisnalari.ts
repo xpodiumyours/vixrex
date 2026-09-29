@@ -52,9 +52,9 @@ export const LANDING_ESITLIK_ISTISNALARI: Istisna[] = [
       "bağlantı eklenmedi; o sayfa açılınca istisna kaldırılmalı.",
   },
   {
-    metin: "Demo vitrin önizlemesi açılamadı.",
+    metin: "Vitrin önizlemesi açılamadı.",
     neden:
-      "Uygulama içi hata bildirimi. Webde mockup demo vitrine değil kategori " +
+      "Uygulama içi hata bildirimi. Webde mockup vitrine değil kategori " +
       "sayfasına bağlanıyor, dolayısıyla böyle bir hata oluşamaz.",
   },
   {

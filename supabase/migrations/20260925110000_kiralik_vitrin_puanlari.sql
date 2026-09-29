@@ -1,5 +1,5 @@
 -- Kiralik vitrin puanlarini cesitlendirir ve puan bandini acar (2026-09-25)
--- GOREV Adim 3 / KIRALIK-VITRIN-KALITE-PLANI Adim 5: 20260728 seed'inden
+-- 20260728 seed'inden
 -- beri bazi vitrinlerde ayni puan/yorum tekrari vardi ve
 -- show_storefront_rating varsayilan kapali oldugu icin puan hic
 -- gorunmuyordu.

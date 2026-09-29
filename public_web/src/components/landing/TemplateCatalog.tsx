@@ -10,10 +10,11 @@ import { kategoriSablonHaritasi } from "@/lib/categoryTemplates";
  * bir modalın içeriğini arama motoru göremez, #344'ün tamamı da zaten
  * taranabilir yüzey üretmekle ilgili.
  *
- * KATEGORİ SAYISI: Flutter 20 kart çiziyor ama başlığında "12 farklı
- * kategoride" yazıyor; veritabanı ise 19 kanonik kimlik tanıyor ve o 20
- * arayüz anahtarının 11'i hiçbir satırla eşleşmiyor. Burada tek doğru
- * kaynak kullanılıyor: shared/business_categories.json'daki 19 kimlik.
+ * KATEGORİ SAYISI: Flutter ve web aynı kaynaktan besleniyor —
+ * shared/business_categories.json. Kartlar `aktif` işaretli 6 kategoriyi
+ * çizer, başlık da sayıyı elle yazmak yerine o listeden okur; ikisi de
+ * landing-katalog-parite testiyle kilitli. JSON'daki toplam 19 kanonik
+ * kimlik, ürün şablonu çözümünün kaynağı olarak duruyor.
  * Ölçüm (2026-08-26): 19 kategorinin hepsinde en az 3 kapak görseli var.
  */
 export async function TemplateCatalog() {

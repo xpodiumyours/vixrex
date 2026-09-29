@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
-/// Hesap bağlama nöbetçisi (docs/kok-neden-arastirmasi.md — kimlik kökü).
+/// Hesap bağlama nöbetçisi (kimlik kökü).
 ///
 /// Uygulama açılışta anonim oturum kuruyor; vitrin ilk andan sahipli
 /// oluyor. Ama anonim hesap CİHAZA bağlıdır — esnaf telefonunu

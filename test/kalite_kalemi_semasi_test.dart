@@ -9,7 +9,7 @@ import 'package:vixrex/services/vixrex_guidance_service.dart';
 /// gerçek örtüşmesi bozulursa) yakalar.
 ///
 /// Faz F (Tek Asistan planı) — bkz. lib/services/vixrex_guidance_service.dart
-/// başındaki eşleme tablosu ve docs/adr/0001-vixrex-core-omurga-ve-uzman-beyinler.md.
+/// başındaki eşleme tablosu.
 void main() {
   test('kalite kalemi anahtarları şemanın alan anahtarlarıyla ÇAKIŞMAZ', () {
     // "cover" ve "kapakGorseli" farklı anahtarlar (id vs şema anahtarı) —
