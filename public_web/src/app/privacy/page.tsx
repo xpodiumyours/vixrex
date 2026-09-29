@@ -26,12 +26,14 @@ export default function PrivacyPage() {
         <li><strong>Kullanım verileri:</strong> cihaz/tarayıcı bilgisi ve görüntülenme kayıtları. Web vitrin ölçümünde IP adresi ham olarak saklanmaz; kötüye kullanım kontrolü için tek yönlü teknik özet (hash) üretilir.</li>
         <li><strong>Vitrin etkileşim verileri:</strong> ürün görüntüleme, beğeni, yorum, sepete ekleme ve WhatsApp sipariş geçişi. İşletme sahibine ham ziyaretçi kimliği gösterilmez.</li>
         <li><strong>Sepet verisi:</strong> ürün, varyant ve adet bilgisi sipariş WhatsApp&apos;a aktarılana kadar tarayıcınızda yerel olarak tutulabilir.</li>
+        <li><strong>Sipariş verileri:</strong> müşteri adı, telefonu, sipariş notu, sipariş içeriği ile teslim ve ödeme tercihi</li>
       </ul>
 
       <h2>3. Verilerin Kullanım Amacı</h2>
       <ul>
         <li>Hizmetin sağlanması ve işletilmesi</li>
         <li>Randevu yönetimi ve müşteri iletişimi</li>
+        <li>Siparişin alınması, hazırlanması, teslimi ve ödeme süreçlerinin yürütülmesi</li>
         <li>SEO ve arama motoru görünürlüğü</li>
         <li>Vitrin sahibine toplulaştırılmış performans ölçümleri sunulması</li>
         <li>Yasal yükümlülüklerin yerine getirilmesi</li>
@@ -52,7 +54,7 @@ export default function PrivacyPage() {
         <li><strong>Cloudflare Turnstile:</strong> bazı formlarda (ör. içerik bildirimi) bot koruması için.</li>
         <li><strong>Sentry:</strong> uygulama hatalarını tespit edip düzeltebilmemiz için hata/performans kaydı.</li>
         <li><strong>Meta / Instagram:</strong> yalnızca Instagram hesabınızı VixRex&apos;e bağlarsanız, ürün fotoğraflarınızı içe aktarmak için.</li>
-        <li><strong>PayTR:</strong> premium abonelik ödemesi alıyorsanız, ödeme işlemini gerçekleştiren ödeme kuruluşu.</li>
+        <li><strong>PayTR:</strong> premium abonelik ödemesi veya vitrinden verdiğiniz siparişin online ödemesi için ödeme işlemini gerçekleştiren ödeme kuruluşu.</li>
         <li><strong>OneSignal:</strong> abonelik/randevu hatırlatma bildirimleri gönderebilmemiz için.</li>
       </ul>
       <p>
@@ -64,7 +66,7 @@ export default function PrivacyPage() {
 
       <h2>5. Veri Saklama</h2>
       <p>
-        Hesabınız aktif olduğu sürece verileriniz saklanır. Hesabınızı sildiğinizde tüm verileriniz kalıcı olarak silinir.
+        Hesabınız aktif olduğu sürece verileriniz saklanır. Hesabınızı sildiğinizde tüm verileriniz kalıcı olarak silinir. Vitrin sahibi olarak bir hesabınız yoksa ve vitrinden sipariş verdiyseniz, sipariş kaydınızdaki ad ve telefon bilgileri siparişin iletilebilmesi amacıyla tutulur; silinmesini talep etmek için bu sayfanın başındaki e-posta adresinden bize ulaşabilirsiniz.
       </p>
 
       <h2>6. Haklarınız (KVKK)</h2>

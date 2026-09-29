@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import Link from "next/link";
 
 interface SiparisPaneliProps {
   storeSlug: string;
@@ -275,6 +276,14 @@ export default function SiparisPaneli({
           >
             {gonderiliyor ? "Gönderiliyor..." : `${productName} siparişini ver`}
           </button>
+
+          <p className="mt-3 text-[11px] font-semibold leading-relaxed text-white/45">
+            Siparişini iletirken adın ve telefonun, siparişini ulaştırmak için
+            vitrin sahibine; online ödemede PayTR&apos;ye aktarılır.{" "}
+            <Link href="/privacy" className="font-bold text-white/70 underline">
+              Gizlilik Politikası
+            </Link>
+          </p>
         </form>
       ) : null}
     </div>

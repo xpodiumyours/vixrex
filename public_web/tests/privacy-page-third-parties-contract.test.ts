@@ -19,6 +19,11 @@ const pageSource = readFileSync(
   "utf-8"
 );
 
+const siparisPaneli = readFileSync(
+  resolve(__dirname, "../src/components/SiparisPaneli.tsx"),
+  "utf-8"
+);
+
 describe("Gizlilik politikası — üçüncü taraf paylaşımı doğru beyan ediyor", () => {
   it("'üçüncü taraflarla paylaşılmaz' yanlış beyanı YOK", () => {
     expect(pageSource).not.toContain(
@@ -38,5 +43,23 @@ describe("Gizlilik politikası — üçüncü taraf paylaşımı doğru beyan ed
     "OneSignal",
   ])("gerçekten kullanılan sağlayıcı listeleniyor: %s", (provider) => {
     expect(pageSource).toContain(provider);
+  });
+});
+
+describe("Gizlilik politikası — sipariş verisi beyan ediliyor", () => {
+  it("sipariş verisi, toplanan veriler arasında sayılıyor", () => {
+    expect(pageSource).toContain("Sipariş verileri:");
+  });
+
+  it("PayTR beyanı sipariş ödemesini de kapsıyor", () => {
+    expect(pageSource).toContain("siparişin online ödemesi");
+  });
+
+  it("sipariş verisi için silme yolu yazılı", () => {
+    expect(pageSource).toContain("silinmesini talep etmek");
+  });
+
+  it("sipariş formu gizlilik politikasına bağlanıyor", () => {
+    expect(siparisPaneli).toContain('href="/privacy"');
   });
 });
