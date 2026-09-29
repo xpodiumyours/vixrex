@@ -1,15 +1,16 @@
 import {
   firmaAnahtariniCoz,
   firmaKataloguVarMi,
+  satirdaHavuzMarkasiBul,
   ureticiUrunuBul,
 } from "@/lib/ureticiKatalog";
 import {
   dinamikUrunIzleriniBul,
   tedarikciDijitalIziBul,
   type DijitalIzBagimliliklari,
+  type DijitalIzHedefi,
   type TedarikciDijitalIzi,
 } from "@/lib/faturaDijitalIz";
-
 // Fatura satırını üretici kataloğuyla buluşturan TEK yer.
 //
 // Bilerek fotoğrafı KİM okursa okusun (telefon uygulaması, Başak, ileride
@@ -30,24 +31,43 @@ export interface HamFaturaSatiri {
   guven: number;
 }
 
+/**
+ * Her satırın dört sonuçtan biri vardır:
+ * kanitli · eksik · celiski · iz-yok.
+ */
+export type SatirSonucu = "kanitli" | "eksik" | "celiski" | "iz-yok";
+
 export interface KatalogBilgisi {
   firma: string;
+  kaynakFirma: string;
   dayanak: "kod" | "barkod";
   izinDurumu: "yok" | "bekliyor" | "var";
   resmiAd: string;
   marka: string;
   aciklama: string;
   gorseller: string[];
+  gorselAdaylari: string[];
   kaynak: string;
+}
+
+export interface CeliskiBilgisi {
+  dayanak: "kod" | "barkod";
+  adaylar: Array<{ ad: string; kaynak: string }>;
 }
 
 export interface EslesmisFaturaSatiri extends HamFaturaSatiri {
   katalog: KatalogBilgisi | null;
+  sonuc: SatirSonucu;
+  celiski?: CeliskiBilgisi;
   /**
    * Esnafa gösterilecek şüphe notu. Eşleşme kuruldu ama kanıt zayıfsa
    * doldurulur; dolu olan satır toplu onaydan çıkar, tek tek bakılır.
    */
   uyari?: string;
+}
+
+export function eslesmeyenSatir(satir: HamFaturaSatiri): EslesmisFaturaSatiri {
+  return { ...satir, katalog: null, sonuc: "eksik" };
 }
 
 export function faturaSatiriniEslestir(
@@ -59,18 +79,20 @@ export function faturaSatiriniEslestir(
     barkod: satir.barkod || null,
     firmaAnahtari,
   });
-  if (!eslesme) return { ...satir, katalog: null };
-
+  if (!eslesme) return eslesmeyenSatir(satir);
   return {
     ...satir,
+    sonuc: "kanitli",
     katalog: {
       firma: eslesme.firma.ad,
+      kaynakFirma: eslesme.firma.ad,
       dayanak: eslesme.dayanak,
       izinDurumu: eslesme.firma.izinDurumu,
       resmiAd: eslesme.urun.ad,
       marka: eslesme.urun.marka,
       aciklama: eslesme.urun.aciklama,
       gorseller: eslesme.urun.gorseller,
+      gorselAdaylari: eslesme.gorselAdaylari,
       kaynak: eslesme.urun.kaynak,
     },
   };
@@ -101,7 +123,6 @@ export function faturaSatirlariniEslestir(
   if (sayim.size < 2) return eslesenler;
 
   const [baskinFirma] = [...sayim.entries()].sort((a, b) => b[1] - a[1])[0];
-
   return eslesenler.map((satir) => {
     if (!satir.katalog || satir.katalog.firma === baskinFirma) return satir;
     return {
@@ -112,6 +133,46 @@ export function faturaSatirlariniEslestir(
   });
 }
 
+function kodVeyaBarkodAranabilir(satir: HamFaturaSatiri): boolean {
+  const barkod = satir.barkod.replace(/\D/g, "");
+  if (barkod.length >= 8) return true;
+  const model = satir.model.trim().toUpperCase().replace(/[\s._\-/]/g, "");
+  return model.length >= 4;
+}
+
+function markaAyrimiNotu(marka: string, faturaFirmasi: string): string {
+  const faturaKismi = faturaFirmasi ? `faturayı kesen firma (${faturaFirmasi}) ile` : "faturayı kesen firma ile";
+  return `Bu satırda "${marka}" markası geçiyor; ${faturaKismi} marka ayrı. Ürün izi markanın kaynağından araştırılmalı.`;
+}
+
+function sonuclandir(
+  satirlar: EslesmisFaturaSatiri[],
+  tedarikciIz: TedarikciDijitalIzi | null,
+): EslesmisFaturaSatiri[] {
+  const faturaFirmasi = tedarikciIz?.firma ?? "";
+  const tedarikciAnahtari = tedarikciIz?.anahtar ?? null;
+
+  return satirlar.map((satir) => {
+    if (satir.katalog || satir.sonuc === "celiski") return satir;
+
+    const marka = satirdaHavuzMarkasiBul(
+      `${satir.ad} ${satir.varyant}`,
+      tedarikciAnahtari,
+    );
+    if (marka) {
+      return {
+        ...satir,
+        sonuc: "eksik",
+        uyari: markaAyrimiNotu(marka.ad, faturaFirmasi),
+      };
+    }
+
+    if (tedarikciIz && kodVeyaBarkodAranabilir(satir)) {
+      return { ...satir, sonuc: "iz-yok" };
+    }
+    return satir.sonuc === "eksik" ? satir : { ...satir, sonuc: "eksik" };
+  });
+}
 
 export interface FaturaDijitalIzSonucu {
   satirlar: EslesmisFaturaSatiri[];
@@ -135,16 +196,18 @@ export async function faturaSatirlariniDijitalIzle(
 
   const yerel = yerelAramaGuvenli
     ? faturaSatirlariniEslestir(satirlar, tedarikciAdi)
-    : satirlar.map((satir) => ({ ...satir, katalog: null }));
+    : satirlar.map((satir) => eslesmeyenSatir(satir));
 
-  if (!tedarikciIz) return { satirlar: yerel, tedarikciIz };
+  if (!tedarikciIz) return { satirlar: sonuclandir(yerel, null), tedarikciIz };
 
   const eksikIndeksler = yerel
-    .map((satir, indeks) => (satir.katalog === null ? indeks : -1))
+    .map((satir, indeks) => (satir.katalog === null && satir.sonuc !== "celiski" ? indeks : -1))
     .filter((indeks) => indeks >= 0);
-  if (eksikIndeksler.length === 0) return { satirlar: yerel, tedarikciIz };
+  if (eksikIndeksler.length === 0) {
+    return { satirlar: sonuclandir(yerel, tedarikciIz), tedarikciIz };
+  }
 
-  const dinamik = await dinamikUrunIzleriniBul(
+  const dinamik: Array<DijitalIzHedefi | null> = await dinamikUrunIzleriniBul(
     eksikIndeksler.map((indeks) => ({
       model: yerel[indeks].model,
       barkod: yerel[indeks].barkod,
@@ -155,22 +218,47 @@ export async function faturaSatirlariniDijitalIzle(
 
   const sonuc = yerel.map((satir) => ({ ...satir }));
   eksikIndeksler.forEach((indeks, sira) => {
-    const eslesme = dinamik[sira];
-    if (!eslesme) return;
+    const hedef = dinamik[sira];
+    if (!hedef) return;
+
+    if ("celiski" in hedef) {
+      sonuc[indeks] = {
+        ...sonuc[indeks],
+        katalog: null,
+        sonuc: "celiski",
+        celiski: { dayanak: hedef.dayanak, adaylar: hedef.adaylar },
+      };
+      return;
+    }
+
     sonuc[indeks] = {
       ...sonuc[indeks],
+      sonuc: "kanitli",
       katalog: {
         firma: tedarikciIz.firma,
-        dayanak: eslesme.dayanak,
+        kaynakFirma: tedarikciIz.firma,
+        dayanak: hedef.dayanak,
         izinDurumu: tedarikciIz.izinDurumu,
-        resmiAd: eslesme.urun.ad,
-        marka: eslesme.urun.marka,
-        aciklama: eslesme.urun.aciklama,
-        gorseller: eslesme.urun.gorseller,
-        kaynak: eslesme.urun.kaynak || tedarikciIz.kaynak,
+        resmiAd: hedef.urun.ad,
+        marka: hedef.urun.marka,
+        aciklama: hedef.urun.aciklama,
+        gorseller: hedef.urun.gorseller,
+        gorselAdaylari: hedef.gorselAdaylari,
+        kaynak: hedef.urun.kaynak || tedarikciIz.kaynak,
       },
     };
   });
 
-  return { satirlar: sonuc, tedarikciIz };
+  return { satirlar: sonuclandir(sonuc, tedarikciIz), tedarikciIz };
+}
+
+export function sonucOzeti(
+  satirlar: EslesmisFaturaSatiri[],
+): Record<"kanitli" | "eksik" | "celiski" | "izYok", number> {
+  const ozet = { kanitli: 0, eksik: 0, celiski: 0, izYok: 0 };
+  for (const satir of satirlar) {
+    if (satir.sonuc === "iz-yok") ozet.izYok += 1;
+    else ozet[satir.sonuc] += 1;
+  }
+  return ozet;
 }

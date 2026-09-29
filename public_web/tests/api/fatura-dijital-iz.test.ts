@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { faturaSatirlariniDijitalIzle, type HamFaturaSatiri } from "@/lib/faturaEslestir";
+import {
+  faturaSatirlariniDijitalIzle,
+  sonucOzeti,
+  type HamFaturaSatiri,
+} from "@/lib/faturaEslestir";
 import { firmaAnahtariniCoz } from "@/lib/ureticiKatalog";
 
 function satir(model: string, barkod = ""): HamFaturaSatiri {
@@ -98,5 +102,136 @@ describe("fatura dinamik dijital iz", () => {
     expect(sonuc.satirlar[0].katalog?.marka).toBe("Dış Marka");
     expect(sonuc.satirlar[0].katalog?.resmiAd).toBe("Dış Firma Ürünü");
     expect(sonuc.satirlar[0].katalog?.gorseller).toEqual([]);
+    expect(sonuc.satirlar[0].sonuc).toBe("kanitli");
+  });
+
+  it("ayni kod iki farkli urun sayfasina duserse eslesme kurmaz, celiski gosterir", async () => {
+    const fetcher = async (input: string) => {
+      if (input.includes("/products.json")) {
+        return new Response(
+          JSON.stringify({
+            products: [
+              {
+                title: "Örnek A",
+                handle: "ornek-a",
+                variants: [{ sku: "ORTAK-1", barcode: "8690000000001", title: "Default Title" }],
+              },
+              {
+                title: "Örnek B",
+                handle: "ornek-b",
+                variants: [{ sku: "ORTAK-1", barcode: "8690000000002", title: "Default Title" }],
+              },
+            ],
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        );
+      }
+      return new Response("{}", { status: 404 });
+    };
+
+    const sonuc = await faturaSatirlariniDijitalIzle(
+      [satir("ORTAK-1")],
+      "Çakışan Site",
+      "https://cakisan.example",
+      { fetcher, resolveHost },
+    );
+
+    expect(sonuc.satirlar[0].sonuc).toBe("celiski");
+    expect(sonuc.satirlar[0].katalog).toBeNull();
+    expect(sonuc.satirlar[0].celiski?.dayanak).toBe("kod");
+    expect(sonuc.satirlar[0].celiski?.adaylar.map((aday) => aday.kaynak)).toEqual([
+      "https://cakisan.example/products/ornek-a",
+      "https://cakisan.example/products/ornek-b",
+    ]);
+    expect(sonucOzeti(sonuc.satirlar)).toEqual({
+      kanitli: 0,
+      eksik: 0,
+      celiski: 1,
+      izYok: 0,
+    });
+  });
+
+  it("kaynakta hicbir yerde bulunamayan kod iz bulunamadı sonucunu verir", async () => {
+    const fetcher = async () => new Response("{}", { status: 404 });
+
+    const sonuc = await faturaSatirlariniDijitalIzle(
+      [satir("YOK1302")],
+      "Örnek Toptan",
+      "https://ornek-toptan.example",
+      { fetcher, resolveHost },
+    );
+
+    expect(sonuc.tedarikciIz?.havuzda).toBe(false);
+    expect(sonuc.satirlar[0].sonuc).toBe("iz-yok");
+    expect(sonuc.satirlar[0].katalog).toBeNull();
+    expect(sonucOzeti(sonuc.satirlar).izYok).toBe(1);
+  });
+
+  it("kodu olmayan ve markasi gecmeyen satir eksik bilgi sorar", async () => {
+    const fetcher = async () => new Response("{}", { status: 404 });
+
+    const sonuc = await faturaSatirlariniDijitalIzle(
+      [{ ...satir(""), ad: "Bilinmeyen Ürün" }],
+      "Örnek Toptan",
+      "https://ornek-toptan.example",
+      { fetcher, resolveHost },
+    );
+
+    expect(sonuc.satirlar[0].sonuc).toBe("eksik");
+    expect(sonuc.satirlar[0].uyari).toBeUndefined();
+    expect(sonucOzeti(sonuc.satirlar).eksik).toBe(1);
+  });
+
+  it("faturada baska bir havuz firmasinin markasi geciyorsa satiri eksik diye isaretler ve ayrimi soyler", async () => {
+    const fetcher = async () => new Response("{}", { status: 404 });
+
+    const sonuc = await faturaSatirlariniDijitalIzle(
+      [{ ...satir(""), ad: "Aycenk Gıda Ayçiçek Yağı 1 L" }],
+      "Örnek Toptan",
+      "https://ornek-toptan.example",
+      { fetcher, resolveHost },
+    );
+
+    expect(sonuc.satirlar[0].sonuc).toBe("eksik");
+    expect(sonuc.satirlar[0].uyari).toContain("Aycenk Gıda");
+    expect(sonuc.satirlar[0].uyari).toContain("marka ayrı");
+  });
+
+  it("JSON-LD urun sayfasi okuyarak sitemap uzerinden kaynak bulur", async () => {
+    const html = `<html><head><script type="application/ld+json">{"@context":"https://schema.org","@type":"Product","name":"Örnek Gömlek","sku":"ABC123","gtin13":"8690000000777","brand":{"@type":"Brand","name":"Örnek Marka"},"description":"<p>Örnek açıklama</p>","image":["https://ornek-toptan.example/gorsel.jpg"],"url":"https://ornek-toptan.example/urun/abc-123"}</script></head><body></body></html>`;
+    const fetcher = async (input: string) => {
+      if (input.includes("/sitemap.xml")) {
+        return new Response(
+          "<urlset><loc>https://ornek-toptan.example/urun/abc-123</loc></urlset>",
+          { status: 200, headers: { "content-type": "application/xml" } },
+        );
+      }
+      if (input.includes("/urun/abc-123")) {
+        return new Response(html, {
+          status: 200,
+          headers: { "content-type": "text/html" },
+        });
+      }
+      return new Response("{}", { status: 404 });
+    };
+
+    const sonuc = await faturaSatirlariniDijitalIzle(
+      [satir("ABC-123")],
+      "Örnek Toptan",
+      "https://ornek-toptan.example",
+      { fetcher, resolveHost },
+    );
+
+    expect(sonuc.satirlar[0].sonuc).toBe("kanitli");
+    expect(sonuc.satirlar[0].katalog?.resmiAd).toBe("Örnek Gömlek");
+    expect(sonuc.satirlar[0].katalog?.marka).toBe("Örnek Marka");
+    expect(sonuc.satirlar[0].katalog?.kaynak).toBe(
+      "https://ornek-toptan.example/urun/abc-123",
+    );
+    expect(sonuc.satirlar[0].katalog?.gorseller).toEqual([]);
+    expect(sonuc.satirlar[0].katalog?.gorselAdaylari).toEqual([
+      "https://ornek-toptan.example/gorsel.jpg",
+    ]);
+    expect(sonuc.satirlar[0].katalog?.izinDurumu).toBe("yok");
   });
 });

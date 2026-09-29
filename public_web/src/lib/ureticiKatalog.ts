@@ -197,6 +197,30 @@ export function firmaKataloguVarMi(anahtar: string): boolean {
   );
 }
 
+export function havuzFirmalari(): readonly HavuzFirmasi[] {
+  return firmaHavuzu();
+}
+
+export function satirdaHavuzMarkasiBul(
+  metin: string,
+  haricAnahtar: string | null = null,
+): HavuzFirmasi | null {
+  const sade = sadeFirmaDegeri(metin);
+  if (sade.length < 3) return null;
+
+  for (const firma of firmaHavuzu()) {
+    if (haricAnahtar && firma.anahtar === haricAnahtar) continue;
+
+    const firmaSade = sadeFirmaDegeri(firma.ad);
+    if (firmaSade.length >= 4 && sade.includes(firmaSade)) return firma;
+
+    const alanSade = sadeFirmaDegeri(alanAdiTemizle(firma.site));
+    if (alanSade.length >= 4 && sade.includes(alanSade)) return firma;
+  }
+
+  return null;
+}
+
 /** Katalog dosyalarını diskten okur. Bozuk dosya tüm akışı durdurmaz. */
 function kataloglariYukle(): Map<string, UreticiUrunu[]> {
   const harita = new Map<string, UreticiUrunu[]>();
@@ -296,6 +320,8 @@ export interface KatalogEslesmesi {
   dayanak: "kod" | "barkod";
   /** Firmanın fotoğraf kullanım izni var mı. Yoksa `urun.gorseller` boştur. */
   gorselIzniVar: boolean;
+  /** İzin kapısından ÖNCE aday olan fotoğraf adresleri. İnceleme alanı içindir. */
+  gorselAdaylari: string[];
 }
 
 /**
@@ -357,6 +383,7 @@ export function ureticiUrunuBul(args: {
     firma: dizin.firma,
     dayanak,
     gorselIzniVar: dizin.gorselIzniVar,
+    gorselAdaylari: urun.gorseller ?? [],
   };
 }
 
