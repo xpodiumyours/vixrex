@@ -48,5 +48,4 @@ Kanıt yoksa `unknown`; tahminle `healthy` verilmez.
 
 ## Base44
 Base44 veritabanı kanonik kaynak değildir; yalnız görünüm/cache olabilir.
-Kalıcı URL: `https://live-ops-path.base44.app`
 Panel GitHub kanonik omurgasındaki durum ve görevleri göstermelidir.

@@ -4,21 +4,24 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="color-scheme" content="dark" />
-  <title>Vixrex Canlı Harita</title>
+  <title>Vixrex Sistem Haritası</title>
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
   <div id="app">
     <header class="topbar">
       <div>
-        <div class="eyebrow">VIXREX CANLI HARİTA · GitHub kontrol omurgası</div>
+        <div class="eyebrow">VIXREX SİSTEM HARİTASI · GitHub kontrol omurgası</div>
         <h1>Sistem Durum Tablosu</h1>
       </div>
       <div class="top-actions">
         <button id="refreshBtn" class="ghost">Yenile</button>
-        <a class="ghost" href="https://www.vixrex.com" target="_blank" rel="noreferrer">Canlı siteyi aç</a>
+        <a class="ghost" href="https://vixrex.com" target="_blank" rel="noreferrer">Canlı siteyi aç</a>
       </div>
     </header>
+
+    <!-- Renkler canlı ölçüm değil, dosyadaki son fotoğrafın sonucu. (2026-09-29) -->
+    <div id="snapshotNote" class="warning hidden"></div>
 
     <section id="commandBar" class="command-bar">
       <div class="metric"><span>DÜĞÜM</span><strong id="nodeMetric">-</strong></div>

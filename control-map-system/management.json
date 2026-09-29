@@ -35,7 +35,6 @@
     "irreversible_data_change"
   ],
   "panel": {
-    "permanent_url": "https://live-ops-path.base44.app",
     "map": "control-map-system/map.json",
     "state": "control-map-system/state.json",
     "management": "control-map-system/management.json",

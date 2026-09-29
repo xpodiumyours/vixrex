@@ -6,7 +6,7 @@ const STATUS_LABELS = { code: "KOD", preview: "ÖNİZLEME", live: "CANLI", data:
 const STATUS_TEXT = { healthy: "ÇALIŞIYOR", partial: "KISMİ", broken: "HATA", unknown: "BİLİN MİYOR", disabled: "KAPALI" };
 const STATUS_SHORT = { healthy: "OK", partial: "~", broken: "X", unknown: "-", disabled: "off" };
 
-let MAP = null, STATE = null, TASKS = null;
+let MAP = null, STATE = null;
 let selected = null, currentFilter = "all", focusSet = null;
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
@@ -32,8 +32,18 @@ async function loadAll() {
   const btn = document.getElementById("refreshBtn");
   btn.textContent = "Ölçülüyor…";
   try {
-    [MAP, STATE, TASKS] = await Promise.all([loadJSON("map.json"), loadJSON("state.json"), loadJSON("tasks.json")]);
+    [MAP, STATE] = await Promise.all([loadJSON("map.json"), loadJSON("state.json")]);
     document.getElementById("sourceWarning").classList.add("hidden");
+    // Ekrandaki renkler canlı ölçüm değil, dosyadaki son fotoğrafın sonucu.
+    // Kullanıcı bunu baştan bilsin diye tarih üstte yazılır. (2026-09-29)
+    const snap = document.getElementById("snapshotNote");
+    if (snap) {
+      const t = STATE && STATE.observed_at
+        ? new Date(STATE.observed_at).toLocaleString("tr-TR", { dateStyle: "long", timeStyle: "short" })
+        : "tarihi bilinmiyor";
+      snap.textContent = "CANLI DEĞİL · Renkler " + t + " tarihli son görüntüden geliyor; şimdiki durumu göstermez.";
+      snap.classList.remove("hidden");
+    }
     render();
   } catch (e) {
     const w = document.getElementById("sourceWarning");
@@ -61,8 +71,7 @@ function openIssuesFor(key) {
   return list;
 }
 function hasAgent(key) {
-  const q = ((TASKS && TASKS.queue) || []).some(t => t.node_key === key && !["done", "cancelled"].includes(t.status));
-  return q || openIssuesFor(key).length > 0;
+  return openIssuesFor(key).length > 0;
 }
 
 function shouldShow(key) {
@@ -87,13 +96,11 @@ function renderMetrics() {
 
 function issueCellHTML(key) {
   const issues = openIssuesFor(key);
-  const q = ((TASKS && TASKS.queue) || []).filter(t => t.node_key === key && !["done", "cancelled"].includes(t.status));
   const parts = [];
   issues.forEach(i => {
     const who = (i.assignees || []).map(a => a.login).join(", ") || "atanmadı";
     parts.push('<a class="task-link" href="' + esc(i.html_url) + '" target="_blank" rel="noreferrer">#' + i.number + " " + esc(who) + "</a>");
   });
-  q.forEach(t => parts.push('<span class="task-link inline">' + esc(t.executor || "atanmadı") + " · " + esc(t.status) + "</span>"));
   if (!parts.length) return '<span class="no-task">—</span>';
   return parts.join("<br>");
 }
@@ -168,7 +175,7 @@ function openNode(key) {
   ).join("");
 
   const open = document.getElementById("openReal");
-  open.href = selected.live_url || (selected.route ? "https://www.vixrex.com" + selected.route : "https://github.com/xpodiumyours/vixrex");
+  open.href = selected.live_url || (selected.route ? "https://vixrex.com" + selected.route : "https://github.com/xpodiumyours/vixrex");
   document.getElementById("sheet").classList.add("open");
   document.getElementById("sheet").setAttribute("aria-hidden", "false");
   document.getElementById("sheetBackdrop").classList.remove("hidden");

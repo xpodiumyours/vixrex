@@ -29,7 +29,7 @@
       "parent": null,
       "criticality": "critical",
       "route": null,
-      "live_url": "https://www.vixrex.com",
+      "live_url": "https://vixrex.com",
       "source_paths": [
         "Vixrex Haritası.md"
       ],
@@ -254,7 +254,7 @@
       "parent": "vixrex",
       "criticality": "critical",
       "route": "/v/:slug",
-      "live_url": "https://www.vixrex.com",
+      "live_url": "https://vixrex.com",
       "source_paths": [
         "public_web/src/app/v"
       ],
