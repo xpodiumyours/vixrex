@@ -370,7 +370,7 @@ class _LandingScreenState extends State<LandingScreen>
     final slug = _landingDemoDrafts[profile.name];
     if (slug == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Demo vitrin önizlemesi açılamadı.')),
+        const SnackBar(content: Text('Vitrin önizlemesi açılamadı.')),
       );
       return;
     }
@@ -378,7 +378,7 @@ class _LandingScreenState extends State<LandingScreen>
     AppRouter.openPublicUrl(
       context,
       PublicSiteConfig.buildVitrinLink(slug),
-      failureMessage: 'Demo vitrin önizlemesi açılamadı.',
+      failureMessage: 'Vitrin önizlemesi açılamadı.',
     );
   }
 

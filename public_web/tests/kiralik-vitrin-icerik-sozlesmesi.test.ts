@@ -4,7 +4,9 @@ import { join } from "node:path";
 
 // 2026-09-25 kiralik vitrin icerik sozlesmesi: oznitelik + puan seed'lerinin
 // kapsam, kaynak ve idempotentlik kurallarini kilitler.
-// Kural kaynagi: GOREV-vitrin-kalite.md Adim 3 + KIRALIK-VITRIN-KALITE-PLANI.
+// Kural kaynagi: kirali vitrin icerik standardi (urun karti oznitelikleri +
+// puan seed'i). Standardi anlatan plan belgeleri #590 ile depodan kaldirildi;
+// kural artik bu testte ve asagidaki migration'larda yasiyor.
 // Ad: kullaniciya gorunen ad "kiralik vitrin"; veritabani teknik isareti `is_demo`.
 
 const oznitelikYolu = join(

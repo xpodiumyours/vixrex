@@ -56,7 +56,7 @@ void main() {
             isFalse,
             reason:
                 '"siz" kipi bulundu (${giris.key}):\n  $metin\n'
-                'Vixrex her yerde "sen" der. Bkz. docs/tek-asistan-plani.md',
+                'Vixrex her yerde "sen" der.',
           );
         }
       }

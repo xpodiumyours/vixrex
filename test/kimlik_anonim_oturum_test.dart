@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
-/// Kimlik kökü nöbetçisi (docs/kok-neden-arastirmasi.md).
+/// Kimlik kökü nöbetçisi.
 ///
 /// 2026-08-07 sayımı: buluttaki 128 vitrinin 128'i sahipsizdi. Sahiplik
 /// politikaları veritabanında doğru yazılmıştı ama hiç eşleşmiyordu;

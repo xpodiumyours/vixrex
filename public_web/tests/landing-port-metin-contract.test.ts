@@ -42,9 +42,11 @@ describe("landing metin kuralları", () => {
   });
 
   it("kategori sayısı tek kaynaktan gelir, metne gömülmez", () => {
-    // Flutter'da başlık "12 farklı kategoride" diyor ama katalog 20 kart
-    // çiziyor; veritabanında ise 19 kanonik kategori var. Sayı artık
-    // BUSINESS_CATEGORIES.length'ten okunuyor, yani üçü de ayrışamaz.
+    // Flutter başlığı sabit "6 farklı kategoride" yazıyor, web sayıyı
+    // paylaşılan JSON'dan (AKTIF_BUSINESS_CATEGORIES.length) basıyor; ikisi
+    // de 6 ve bu landing-katalog-parite testiyle kilitli. Sayı metne
+    // gömülmesin diye buradaki iddia, toplam kimlik sözleşmesi de (19
+    // kanonik kimlik) alt satırda kilitleniyor.
     expect(kaynak).toContain("{kategoriSayisi} farklı kategoride");
     expect(kaynak).not.toContain("12 farklı kategoride");
     expect(BUSINESS_CATEGORIES.length).toBe(19);
