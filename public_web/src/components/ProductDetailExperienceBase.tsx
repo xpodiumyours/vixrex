@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState, type ReactNode } from "react";
 import { TrackedWhatsAppLink } from "@/components/TrackedWhatsAppLink";
+import SiparisPaneli from "@/components/SiparisPaneli";
 import type { RichProductItem } from "@/lib/richProductItem";
 import { MapPinIcon } from "@/lib/vitrinBrandIcons";
 import { MAX_PRODUCT_IMAGES } from "@/lib/productImagePolicy";
@@ -387,6 +388,17 @@ export default function ProductDetailExperience({
                 </Link>
               ) : null}
             </div>
+            <SiparisPaneli
+              storeSlug={storeSlug}
+              productSlug={productSlug}
+              productName={product.name}
+              priceKurus={
+                product.priceAmount != null && product.priceAmount > 0
+                  ? Math.round(product.priceAmount * 100)
+                  : null
+              }
+              isService={isService}
+            />
             {sourceUrl ? (
               <Link
                 href={sourceUrl}
