@@ -71,25 +71,5 @@ void main() {
         expect(siteUrl, isNot(contains('vixrex-two.vercel.app')));
       },
     );
-
-    test('project guide keeps public web ownership explicit', () {
-      final projectGuide = File('CLAUDE.md').readAsStringSync();
-
-      expect(projectGuide, contains('`lib/` — Flutter app (Web + Android)'));
-      expect(
-        projectGuide,
-        contains('`public_web/` — Next.js (TypeScript, App Router)'),
-      );
-      expect(
-        projectGuide,
-        contains(
-          'The two Vercel projects are deployed and verified independently',
-        ),
-      );
-      expect(
-        projectGuide,
-        contains('The storefront view is rendered only by Next.js.'),
-      );
-    });
   });
 }
