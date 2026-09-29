@@ -28,7 +28,8 @@ void main() {
               'tedarikciSite': 'sehermensucat.com',
               'satirlar': [
                 {
-                  'hamSatir': 'ELT1302 Elit Erkek Elastan Sıfır Yaka 8681128321677 2 137,00 274,00',
+                  'hamSatir':
+                      'ELT1302 Elit Erkek Elastan Sıfır Yaka 8681128321677 2 137,00 274,00',
                   'model': 'ELT1302',
                   'ad': 'Elit Erkek Elastan Sıfır Yaka',
                   'barkod': '8681128321677',

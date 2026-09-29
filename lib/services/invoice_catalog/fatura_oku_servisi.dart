@@ -79,7 +79,8 @@ class FaturaOkuServisi {
       final urunler = <DetectedProduct>[];
       final taslaklar = <InvoiceProductDraft>[];
       final tedarikci = (govde['tedarikci'] ?? '').toString().trim();
-      final tedarikciVergiNo = (govde['tedarikciVergiNo'] ?? '').toString().trim();
+      final tedarikciVergiNo =
+          (govde['tedarikciVergiNo'] ?? '').toString().trim();
       final tedarikciAdres = (govde['tedarikciAdres'] ?? '').toString().trim();
       final tedarikciSite = (govde['tedarikciSite'] ?? '').toString().trim();
 

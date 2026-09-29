@@ -254,7 +254,8 @@ class InvoiceProductDraft {
       supplierTaxOrTradeIdentifier:
           supplierTaxOrTradeIdentifier ?? this.supplierTaxOrTradeIdentifier,
       supplierAddress: supplierAddress ?? this.supplierAddress,
-      supplierOfficialDomain: supplierOfficialDomain ?? this.supplierOfficialDomain,
+      supplierOfficialDomain:
+          supplierOfficialDomain ?? this.supplierOfficialDomain,
       rawName: rawName ?? this.rawName,
       normalizedName: normalizedName ?? this.normalizedName,
       gtinBarcode: gtinBarcode ?? this.gtinBarcode,
@@ -287,7 +288,8 @@ class InvoiceProductDraft {
     'raw_source_line': rawSourceLine,
     if (supplierName != null) 'supplier_name': supplierName!.toJson(),
     if (supplierTaxOrTradeIdentifier != null)
-      'supplier_tax_or_trade_identifier': supplierTaxOrTradeIdentifier!.toJson(),
+      'supplier_tax_or_trade_identifier':
+          supplierTaxOrTradeIdentifier!.toJson(),
     if (supplierAddress != null) 'supplier_address': supplierAddress!.toJson(),
     if (supplierOfficialDomain != null)
       'supplier_official_domain': supplierOfficialDomain!.toJson(),
