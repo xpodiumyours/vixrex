@@ -41,7 +41,6 @@ const dartKaynak = readFileSync(
  *
  * 2. İKİ İSTEMCİ AYRIŞMASI. Uygulama ve web aynı listeyi göstermezse
  *    "uygulamada gördüğüm vitrin sitede yok" kaçınılmaz.
- *    (bkz. docs/agents/iki-istemci-ortak-omurga-denetimi.md)
  */
 describe("Keşfet veri katmanı", () => {
   it("seçim listesi açık liste — joker yok", () => {

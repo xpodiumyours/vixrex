@@ -41,7 +41,7 @@ class AuthService {
   /// Sign in with Google using native ID token authentication.
   /// Anonim hesabı Google'a bağlar. AYNI hesap kalır, veri taşınmaz.
   ///
-  /// NEDEN VAR (docs/kok-neden-arastirmasi.md — kimlik kökü):
+  /// NEDEN VAR (kimlik kökü):
   /// Uygulama açılışta anonim oturum kuruyor; vitrin ilk andan sahipli
   /// oluyor. Ama anonim hesap CİHAZA bağlıdır — esnaf telefonunu
   /// değiştirse ya da tarayıcı verisini silse vitrinine bir daha

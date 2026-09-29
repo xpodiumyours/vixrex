@@ -18,7 +18,7 @@
    token'lari (--primary vb.) asagidaki :root blogunda oldugu gibi durur,
    landing renkleri `lp-` (landing page) onekiyle AYRI yasar. Boylece 29
    canli vitrinin gorunumu bu isten hic etkilenmez.
-   Kaynak: docs/research/landing-port-envanteri-2026-08-25.md §6.1
+   Kaynak: Flutter landing portu ile canli vitrin sayfalarinin renk ayrimi olcumu (2026-08-25).
 --------------------------------------------------------------------------- */
 @theme {
   --font-outfit: var(--font-outfit-src), 'Outfit', sans-serif;

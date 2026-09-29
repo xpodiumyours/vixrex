@@ -19,8 +19,7 @@ import { mockupProfilleriniGetir } from "@/components/landing/mockupProfilleri";
 // eski, statik Flutter `index.html` çıktısı `/` adresini kapabiliyor.
 //
 // Bölümlerin metinleri ve ölçüleri, Flutter landing'inden çıkarılan
-// envanterden birebir alınmıştır:
-// docs/research/landing-port-envanteri-2026-08-25.md §2 ve §6.
+// envanterden birebir alınmıştır.
 
 export const revalidate = 300;
 

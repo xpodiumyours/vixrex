@@ -1,5 +1,5 @@
 -- Kiralik vitrin urunlerinin kategoriye ozel oznitelik/hizmet alanlarini tamamlar (2026-09-25)
--- GOREV Adim 3 / KIRALIK-VITRIN-KALITE-PLANI Adim 2: 30 kiralik vitrindeki
+-- 30 kiralik vitrindeki
 -- urunlerde metadata.attributes ve metadata.service bos; bu yuzden kartta
 -- ozellik satiri hic gorunmuyor. Kaynak yalniz tek dosya:
 --   shared/product_attribute_schema.json (v4, kategori sablonlari)

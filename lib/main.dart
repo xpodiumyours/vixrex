@@ -80,7 +80,7 @@ Future<void> _initializeSupabase() async {
 
 /// Her kullanıcı ilk saniyeden itibaren bir hesaba sahip olur.
 ///
-/// NEDEN VAR (docs/kok-neden-arastirmasi.md — kimlik kökü):
+/// NEDEN VAR (kimlik kökü):
 /// 2026-08-07 sayımında buluttaki 128 vitrinin 128'i SAHİPSİZDİ
 /// (`user_id` boş). Veritabanındaki sahiplik politikaları doğru yazılmıştı
 /// ama hiç eşleşmiyordu; bu yüzden her işlem RLS'i atlayan 25 fonksiyondan

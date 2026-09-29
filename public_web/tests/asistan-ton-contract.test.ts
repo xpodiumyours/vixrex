@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "fs";
 import { resolve } from "path";
 
-// docs/tek-asistan-plani.md Aşama 2 — tek yüz.
+// Tek yüz kararı, Aşama 2: asistan dört yüzeyde tek ağızdan konuşur.
 //
 // Vixrex dört yüzeyde çıkıyor. Flutter tarafı esnafa "sen" diye hitap
 // ediyordu, Next.js paneli "siz". Aynı esnaf, aynı vitrin, iki farklı ağız —
@@ -80,7 +80,7 @@ describe("Vixrex Asistan tek ağızdan konuşur — hitap: sen", () => {
           expect(
             kalip.test(metin),
             `"siz" kipi bulundu (${ad}):\n  ${metin}\n` +
-              `Vixrex her yerde "sen" der. Bkz. docs/tek-asistan-plani.md`
+              `Vixrex her yerde "sen" der.`
           ).toBe(false);
         }
       }
