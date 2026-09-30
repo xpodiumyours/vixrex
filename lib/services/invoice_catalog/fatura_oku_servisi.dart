@@ -379,8 +379,8 @@ class FaturaOkuServisi {
       kartDurumu: kartDurumu,
       celiskiAdaylari: celiskiAdaylari,
       celiskiDayanak: celiskiDayanak.isEmpty ? null : celiskiDayanak,
-      // Faturadaki adet öneridir; stok onayı esnafın ayrı eylemidir.
-      stockConfirmed: false,
+      // Esnaf yalnız satış fiyatını girer; faturadaki adet stok olarak alınır.
+      stockConfirmed: adet != null && adet >= 0,
       islemKimligi: islemKimligi,
     );
 

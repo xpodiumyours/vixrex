@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import FirmaIzniPaneli from "@/components/owner/FirmaIzniPaneli";
+import { kategoriSec, otomatikOzellikler } from "@/lib/faturaOtomatikDoldur";
 import {
   KART_DURUM_ETIKETI,
   durumBilgisi,
@@ -127,7 +128,7 @@ interface YazmaSonucu {
 
 interface InvoiceToProductsProps {
   storeSlug: string;
-  categories?: Array<{ id: string; name: string }>;
+  categories?: Array<{ id: string; name: string; product_template_key?: string | null }>;
   onUploaded: () => Promise<void>;
   onClose?: () => void;
   baslangicIslemKimligi?: string;
@@ -172,7 +173,6 @@ export default function InvoiceToProducts({
   const [onizleme, setOnizleme] = useState<string | null>(null);
   const [belge, setBelge] = useState<FaturaOkumaSonucu | null>(null);
   const [satirlar, setSatirlar] = useState<SatirDurumu[]>([]);
-  const [toplamKategori, setToplamKategori] = useState<string>(categories[0]?.id ?? "");
   const [kar, setKar] = useState("40");
   // Firmanın sitesi faturada okunamazsa esnaf yazar (zorunlu değil):
   // havuzda olmayan firmanın keşfi buradan yürür.
@@ -197,26 +197,32 @@ export default function InvoiceToProducts({
           stok: stokSayisi(satir.stok),
           stokOnaylandi: satir.stokOnaylandi,
           esnafGorselleri: satir.esnafGorselleri,
-          onaylandi: satir.onayli,
+          onaylandi: true,
         }),
       ),
     [satirlar],
   );
 
   const hazirSayisi = degerlendirmeler.filter((d) => d.yayinaHazir).length;
-  const onayliSayisi = satirlar.filter((satir) => satir.onayli).length;
+  const onayliSayisi = degerlendirmeler.filter((d) => d.onaylanabilir).length;
 
   const satirlariHazirla = useCallback(
     (okunan: FaturaOkumaSonucu): SatirDurumu[] =>
       okunan.satirlar.map((satir) => {
         const kayitli = satir.sahipDurumu;
+        const stok = kayitli?.stok ?? (satir.adet === null ? "" : String(satir.adet));
         return {
           ...satir,
           satisFiyati: kayitli?.satisFiyati ?? "",
-          onayli: kayitli?.onayli === true,
-          kategoriId: kayitli?.kategoriId || (categories[0]?.id ?? ""),
-          stok: kayitli?.stok ?? (satir.adet === null ? "" : String(satir.adet)),
-          stokOnaylandi: kayitli?.stokOnaylandi === true,
+          onayli: true,
+          kategoriId:
+            kayitli?.kategoriId ||
+            kategoriSec(
+              { ad: satir.ad, marka: satir.marka, resmiAd: satir.katalog?.resmiAd },
+              categories,
+            ),
+          stok,
+          stokOnaylandi: stokSayisi(stok) !== null,
           esnafGorselleri: kayitli?.esnafGorselleri ?? [],
           urunId: satir.urunId ?? null,
         };
@@ -394,28 +400,6 @@ export default function InvoiceToProducts({
     );
   }
 
-  /**
-   * Toplu onay tekil onayla aynı kurala bağlıdır: yalnız bilgisi tamam,
-   * stoğu esnafın kendisi onaylamış kanıtlı satırlar onaylanır.
-   */
-  function tumunuOnayla() {
-    setSatirlar((oncekiler) =>
-      oncekiler.map((satir) => {
-        if (satir.sonuc !== "kanitli" || satir.ayniAlisverisTekrari) return satir;
-        const degerlendirme = kartDegerlendir({
-          satir,
-          satisFiyati: fiyatSayisi(satir.satisFiyati),
-          stok: stokSayisi(satir.stok),
-          stokOnaylandi: satir.stokOnaylandi,
-          esnafGorselleri: satir.esnafGorselleri,
-          onaylandi: satir.onayli,
-        });
-        if (!degerlendirme.onaylanabilir) return satir;
-        return { ...satir, onayli: true };
-      }),
-    );
-  }
-
   function kodTemiz(ham: string): string {
     return ham.toUpperCase().replace(/[^A-Z0-9]/g, "");
   }
@@ -456,17 +440,6 @@ export default function InvoiceToProducts({
           : { ...satir, ayniAlisverisTekrari: false, stok: satir.adet === null ? "" : String(satir.adet) };
       }),
     );
-  }
-
-  function onaylariKaldir() {
-    setSatirlar((oncekiler) =>
-      oncekiler.map((satir) => ({ ...satir, onayli: false, stokOnaylandi: false })),
-    );
-  }
-
-  function kategoriHepsineUygula(kategoriId: string) {
-    setToplamKategori(kategoriId);
-    setSatirlar((oncekiler) => oncekiler.map((satir) => ({ ...satir, kategoriId })));
   }
 
   async function gorselYukle(index: number, dosyalar: FileList | null) {
@@ -524,7 +497,7 @@ export default function InvoiceToProducts({
     const gonderilecek = satirlar
       .map((satir, sira) => ({ satir, sira, degerlendirme: degerlendirmeler[sira] }))
       .filter(({ satir, degerlendirme }) =>
-        yayinIstegi ? satir.onayli && degerlendirme.yayinaHazir : satir.onayli,
+        yayinIstegi ? degerlendirme.yayinaHazir : degerlendirme.onaylanabilir,
       );
 
     if (gonderilecek.length === 0) return;
@@ -565,7 +538,19 @@ export default function InvoiceToProducts({
               ownerApproved: true,
               yayinIstegi,
               purchasePriceAmount: satir.alisBirimFiyat ?? undefined,
-              metadata: satir.model ? { identifiers: { sku: satir.model } } : undefined,
+              metadata: (() => {
+                const sablon = categories.find((kategori) => kategori.id === satir.kategoriId)
+                  ?.product_template_key;
+                const nitelikler = otomatikOzellikler(
+                  { ad: satir.ad, resmiAd: katalog?.resmiAd, varyant: satir.varyant, beden: satir.beden },
+                  sablon || "generic",
+                );
+                if (!satir.model && nitelikler.length === 0) return undefined;
+                return {
+                  ...(satir.model ? { identifiers: { sku: satir.model } } : {}),
+                  ...(nitelikler.length > 0 ? { attributes: nitelikler } : {}),
+                };
+              })(),
               variants:
                 satir.varyant || satir.beden
                   ? [
@@ -882,27 +867,11 @@ export default function InvoiceToProducts({
       <p className="fatura-aciklama">
         Faturadaki rakamlar <strong>alış fiyatı</strong> ve <strong>alış adedidir</strong>;
         satış fiyatı ve stok yerine geçmez. Yalnız <strong>kanıtlı</strong> satırlardan kart
-        çıkar; kart önce taslak kaydedilir, <strong>Yayınla</strong> demeden görünmez.
+        çıkar. Sen yalnız <strong>satış fiyatını</strong> yaz; kategori, stok ve ürün bilgileri
+        otomatik hazırlanır. Kart önce taslak kaydedilir, <strong>Yayınla</strong> demeden görünmez.
       </p>
 
       {hata && <p className="fatura-hata">{hata}</p>}
-
-      {categories.length > 0 && (
-        <label className="fatura-kategori">
-          Kategori
-          <select
-            value={toplamKategori}
-            onChange={(e) => kategoriHepsineUygula(e.target.value)}
-            disabled={yaziliyor}
-          >
-            {categories.map((kategori) => (
-              <option key={kategori.id} value={kategori.id}>
-                {kategori.name}
-              </option>
-            ))}
-          </select>
-        </label>
-      )}
 
       <div className="fatura-araclar">
         <label>
@@ -919,12 +888,6 @@ export default function InvoiceToProducts({
         </label>
         <button type="button" onClick={karUygula} disabled={yaziliyor}>
           Fiyatları ayarla
-        </button>
-        <button type="button" onClick={tumunuOnayla} disabled={yaziliyor}>
-          Kanıtlıları onayla
-        </button>
-        <button type="button" onClick={onaylariKaldir} disabled={yaziliyor}>
-          Onayları kaldır
         </button>
       </div>
 
@@ -1090,31 +1053,11 @@ export default function InvoiceToProducts({
 
               {satir.sonuc === "kanitli" && (
                 <>
-                  <label className="fatura-stok">
-                    Stok (faturadan öneri: {satir.adet ?? "yok"})
-                    <input
-                      inputMode="numeric"
-                      placeholder="0"
-                      value={satir.stok}
-                      onChange={(e) =>
-                        satirGuncelle(index, { stok: e.target.value, stokOnaylandi: false })
-                      }
-                      disabled={yaziliyor}
-                    />
-                  </label>
-
-                  <button
-                    type="button"
-                    className={
-                      satir.stokOnaylandi ? "fatura-onay fatura-onay-acik" : "fatura-onay"
-                    }
-                    onClick={() =>
-                      satirGuncelle(index, { stokOnaylandi: !satir.stokOnaylandi })
-                    }
-                    disabled={yaziliyor || stokSayisi(satir.stok) === null}
-                  >
-                    {satir.stokOnaylandi ? "✓ Stok onaylandı" : "Stoğu onayla"}
-                  </button>
+                  <div className="fatura-alis">
+                    {satir.stokOnaylandi
+                      ? `Stok: ${satir.stok} adet (faturadan)`
+                      : "Faturada adet okunamadı; stok yazılmaz."}
+                  </div>
 
                   <label className="fatura-fiyat">
                     Satış fiyatı
@@ -1127,6 +1070,7 @@ export default function InvoiceToProducts({
                     />
                   </label>
 
+                  {degerlendirme.gorseller.length === 0 && (
                   <label className="fatura-gorsel-ekle">
                     Kendi fotoğrafını ekle ({degerlendirme.gorseller.length}/{MAX_PRODUCT_IMAGES})
                     <input
@@ -1140,6 +1084,7 @@ export default function InvoiceToProducts({
                       disabled={yaziliyor || yukleniyor}
                     />
                   </label>
+                  )}
 
                   {degerlendirme.bilgiEksikleri.length > 0 && (
                     <ul className="fatura-eksikler">
@@ -1155,18 +1100,6 @@ export default function InvoiceToProducts({
                     </p>
                   )}
 
-                  <button
-                    type="button"
-                    className={satir.onayli ? "fatura-onay fatura-onay-acik" : "fatura-onay"}
-                    onClick={() => satirGuncelle(index, { onayli: !satir.onayli })}
-                    disabled={
-                      yaziliyor ||
-                      satir.ayniAlisverisTekrari === true ||
-                      (!satir.onayli && !degerlendirme.onaylanabilir)
-                    }
-                  >
-                    {satir.onayli ? "✓ Onaylandı" : "Kartı onayla"}
-                  </button>
                 </>
               )}
             </article>

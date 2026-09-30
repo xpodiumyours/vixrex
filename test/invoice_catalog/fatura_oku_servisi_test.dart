@@ -293,9 +293,12 @@ void main() {
         final izsiz = katalog.invoiceDrafts[1];
         expect(izsiz.etkinKartDurumu, KartDurumu.izYok);
 
-        // Faturadaki adet öneridir; hiçbir taslak kendiliğinden stok onaylı değil.
+        // Esnaf yalnız satış fiyatını girer: faturada adet okunduysa stok
+        // onaylı sayılır, okunmadıysa onaylanmaz.
         expect(
-          katalog.invoiceDrafts.every((taslak) => !taslak.stockConfirmed),
+          katalog.invoiceDrafts.every(
+            (taslak) => taslak.stockConfirmed == (taslak.quantity?.value != null),
+          ),
           isTrue,
         );
       },
