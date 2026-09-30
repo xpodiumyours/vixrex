@@ -36,16 +36,33 @@ export interface DijitalIzCeliskisi {
 
 export type DijitalIzHedefi = DijitalUrunEslesmesi | DijitalIzCeliskisi;
 
+export interface DijitalIzAramaDurumu {
+  erisimHatasi: boolean;
+  sinirDoldu: boolean;
+}
+
+interface KesifBaglami {
+  bitis: number;
+  simdi: () => number;
+  durum: DijitalIzAramaDurumu;
+}
+
 export interface DijitalIzBagimliliklari {
   fetcher?: (input: string, init?: RequestInit) => Promise<Response>;
   resolveHost?: (hostname: string) => Promise<string[]>;
+  durum?: DijitalIzAramaDurumu;
+  simdi?: () => number;
+  kesifButcesiMs?: number;
   /** Firma resmi site araması (Brave). Verilmezse ortam anahtarı kullanılır. */
   firmaArama?: import("@/lib/firmaArama").FirmaAramaBagimliliklari;
 }
 
 const MAKS_YANIT_BAYT = 2 * 1024 * 1024;
-const MAKS_SAYFA = 3;
-const MAKS_SAYFA_OKUMA = 4;
+const MAKS_SAYFA = 8;
+const MAKS_SAYFA_OKUMA = 12;
+const MAKS_ALT_HARITA = 6;
+const MAKS_ARAMA_ADAYI = 5;
+const KESIF_BUTCESI_MS = 20000;
 const ISTEK_ZAMAN_ASIMI_MS = 2500;
 
 function alanAdiTemizle(deger: string): string {
@@ -119,11 +136,26 @@ async function hostGuvenliMi(
   return adresler.length > 0 && adresler.every(guvenliIp);
 }
 
-async function hamGet(
+function sureVarMi(baglam: KesifBaglami | undefined): boolean {
+  if (!baglam) return true;
+  if (baglam.simdi() < baglam.bitis) return true;
+  baglam.durum.sinirDoldu = true;
+  return false;
+}
+
+function ayniSiteMi(a: string, b: string): boolean {
+  const sade = (alan: string) => alan.toLowerCase().replace(/^www\./, "");
+  return sade(a) === sade(b);
+}
+
+export async function hamGet(
   adres: string,
   fetcher: (input: string, init?: RequestInit) => Promise<Response>,
   resolveHost: (hostname: string) => Promise<string[]>,
+  baglam?: KesifBaglami,
+  yonlendirmeHakki = 1,
 ): Promise<{ durum: number; govde: string } | null> {
+  if (!sureVarMi(baglam)) return null;
   let url: URL;
   try {
     url = new URL(adres);
@@ -131,7 +163,10 @@ async function hamGet(
     return null;
   }
   if (url.protocol !== "https:" || url.username || url.password || url.port) return null;
-  if (!(await hostGuvenliMi(url.hostname, resolveHost))) return null;
+  if (!(await hostGuvenliMi(url.hostname, resolveHost))) {
+    if (baglam) baglam.durum.erisimHatasi = true;
+    return null;
+  }
 
   let response: Response;
   try {
@@ -142,10 +177,26 @@ async function hamGet(
       headers: { accept: "application/json, text/html, application/xml, text/xml" },
     });
   } catch {
+    if (baglam) baglam.durum.erisimHatasi = true;
     return null;
   }
 
-  if (response.status >= 300 && response.status < 400) return null;
+  if (response.status >= 300 && response.status < 400) {
+    const yonlenen = response.headers.get("location");
+    if (yonlendirmeHakki > 0 && yonlenen) {
+      try {
+        const hedef = new URL(yonlenen, url);
+        if (hedef.protocol === "https:" && ayniSiteMi(hedef.hostname, url.hostname)) {
+          return hamGet(hedef.toString(), fetcher, resolveHost, baglam, yonlendirmeHakki - 1);
+        }
+      } catch {
+        if (baglam) baglam.durum.erisimHatasi = true;
+        return null;
+      }
+    }
+    if (baglam) baglam.durum.erisimHatasi = true;
+    return null;
+  }
   const uzunluk = Number(response.headers.get("content-length") ?? 0);
   if (Number.isFinite(uzunluk) && uzunluk > MAKS_YANIT_BAYT) return null;
 
@@ -159,8 +210,9 @@ async function jsonGet(
   adres: string,
   fetcher: (input: string, init?: RequestInit) => Promise<Response>,
   resolveHost: (hostname: string) => Promise<string[]>,
+  baglam?: KesifBaglami,
 ): Promise<{ durum: number; veri: unknown } | null> {
-  const ham = await hamGet(adres, fetcher, resolveHost);
+  const ham = await hamGet(adres, fetcher, resolveHost, baglam);
   if (!ham) return null;
 
   try {
@@ -304,11 +356,23 @@ function hedefBul(
   });
 }
 
+function eslesmeyenIndeksler(bulunan: Array<DijitalIzHedefi | null>): number[] {
+  return bulunan.map((hedef, indeks) => (hedef === null ? indeks : -1)).filter((indeks) => indeks >= 0);
+}
+
+function aramaKodu(satir: DijitalIzSatiri): string {
+  const barkod = normalizeBarkod(satir.barkod);
+  if (barkod.length >= 8) return barkod;
+  const model = satir.model.trim();
+  return normalizeKod(model).length >= 4 ? model : "";
+}
+
 async function shopifyAra(
   iz: TedarikciDijitalIzi,
   satirlar: DijitalIzSatiri[],
   fetcher: (input: string, init?: RequestInit) => Promise<Response>,
   resolveHost: (hostname: string) => Promise<string[]>,
+  baglam: KesifBaglami,
 ): Promise<Array<DijitalIzHedefi | null>> {
   const urunler: UreticiUrunu[] = [];
   for (let sayfa = 1; sayfa <= MAKS_SAYFA; sayfa++) {
@@ -316,6 +380,7 @@ async function shopifyAra(
       `https://${iz.alan}/products.json?limit=250&page=${sayfa}`,
       fetcher,
       resolveHost,
+      baglam,
     );
     if (!sonuc || sonuc.durum !== 200) break;
     const yeni = shopifyUrunleri(sonuc.veri, iz.alan);
@@ -324,7 +389,39 @@ async function shopifyAra(
     const bulunan = hedefBul(urunler, satirlar, iz.izinDurumu);
     if (bulunan.every((eslesme) => eslesme !== null)) return bulunan;
   }
-  return hedefBul(urunler, satirlar, iz.izinDurumu);
+
+  let bulunan = hedefBul(urunler, satirlar, iz.izinDurumu);
+  for (const indeks of eslesmeyenIndeksler(bulunan)) {
+    const kod = aramaKodu(satirlar[indeks]);
+    if (!kod) continue;
+    const oneri = await jsonGet(
+      `https://${iz.alan}/search/suggest.json?q=${encodeURIComponent(kod)}&resources[type]=product&resources[limit]=${MAKS_ARAMA_ADAYI}`,
+      fetcher,
+      resolveHost,
+      baglam,
+    );
+    if (!oneri || oneri.durum !== 200) continue;
+    const sonuclar = (
+      oneri.veri as { resources?: { results?: { products?: Array<{ handle?: unknown }> } } }
+    )?.resources?.results?.products;
+    if (!Array.isArray(sonuclar)) continue;
+    for (const aday of sonuclar.slice(0, MAKS_ARAMA_ADAYI)) {
+      const handle = typeof aday?.handle === "string" ? aday.handle : "";
+      if (!handle) continue;
+      const detay = await jsonGet(
+        `https://${iz.alan}/products/${encodeURIComponent(handle)}.json`,
+        fetcher,
+        resolveHost,
+        baglam,
+      );
+      if (!detay || detay.durum !== 200) continue;
+      const urun = (detay.veri as { product?: unknown })?.product;
+      if (!urun) continue;
+      urunler.push(...shopifyUrunleri({ products: [urun] }, iz.alan));
+    }
+    bulunan = hedefBul(urunler, satirlar, iz.izinDurumu);
+  }
+  return bulunan;
 }
 
 async function wooAra(
@@ -332,6 +429,7 @@ async function wooAra(
   satirlar: DijitalIzSatiri[],
   fetcher: (input: string, init?: RequestInit) => Promise<Response>,
   resolveHost: (hostname: string) => Promise<string[]>,
+  baglam: KesifBaglami,
 ): Promise<Array<DijitalIzHedefi | null>> {
   const urunler: UreticiUrunu[] = [];
   for (let sayfa = 1; sayfa <= MAKS_SAYFA; sayfa++) {
@@ -339,6 +437,7 @@ async function wooAra(
       `https://${iz.alan}/wp-json/wc/store/v1/products?per_page=100&page=${sayfa}`,
       fetcher,
       resolveHost,
+      baglam,
     );
     if (!sonuc || sonuc.durum !== 200) break;
     const yeni = wooUrunleri(sonuc.veri, iz.alan);
@@ -347,7 +446,25 @@ async function wooAra(
     const bulunan = hedefBul(urunler, satirlar, iz.izinDurumu);
     if (bulunan.every((eslesme) => eslesme !== null)) return bulunan;
   }
-  return hedefBul(urunler, satirlar, iz.izinDurumu);
+
+  let bulunan = hedefBul(urunler, satirlar, iz.izinDurumu);
+  for (const indeks of eslesmeyenIndeksler(bulunan)) {
+    const kod = aramaKodu(satirlar[indeks]);
+    if (!kod) continue;
+    for (const parametre of ["sku", "search"]) {
+      const sonuc = await jsonGet(
+        `https://${iz.alan}/wp-json/wc/store/v1/products?${parametre}=${encodeURIComponent(kod)}&per_page=${MAKS_ARAMA_ADAYI * 4}`,
+        fetcher,
+        resolveHost,
+        baglam,
+      );
+      if (!sonuc || sonuc.durum !== 200) continue;
+      urunler.push(...wooUrunleri(sonuc.veri, iz.alan));
+      bulunan = hedefBul(urunler, satirlar, iz.izinDurumu);
+      if (bulunan[indeks] !== null) break;
+    }
+  }
+  return bulunan;
 }
 
 function xmlLocBul(metin: string): string[] {
@@ -429,24 +546,37 @@ function jsonLdUrunleri(html: string, sayfaAdresi: string): UreticiUrunu[] {
   return sonuc;
 }
 
+function slugKodu(loc: string): string {
+  try {
+    return new URL(loc).pathname.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  } catch {
+    return "";
+  }
+}
+
 async function sayfaAra(
   iz: TedarikciDijitalIzi,
   satirlar: DijitalIzSatiri[],
   fetcher: (input: string, init?: RequestInit) => Promise<Response>,
   resolveHost: (hostname: string) => Promise<string[]>,
+  baglam: KesifBaglami,
 ): Promise<Array<DijitalIzHedefi | null>> {
   const bos = () => satirlar.map(() => null);
 
-  const kok = await hamGet(`https://${iz.alan}/sitemap.xml`, fetcher, resolveHost);
+  const kok = await hamGet(`https://${iz.alan}/sitemap.xml`, fetcher, resolveHost, baglam);
   if (!kok || kok.durum !== 200) return bos();
 
   let loclar = xmlLocBul(kok.govde);
   if (/<sitemapindex/i.test(kok.govde)) {
-    const ilk = loclar[0];
-    if (!ilk) return bos();
-    const alt = await hamGet(ilk, fetcher, resolveHost);
-    if (!alt || alt.durum !== 200) return bos();
-    loclar = xmlLocBul(alt.govde);
+    const altHaritalar = loclar.filter((loc) => loc.startsWith("https://"));
+    const urunHaritalari = altHaritalar.filter((loc) => /product|urun|shop|magaza/i.test(slugAdi(loc)));
+    const okunacak = (urunHaritalari.length > 0 ? urunHaritalari : altHaritalar).slice(0, MAKS_ALT_HARITA);
+    loclar = [];
+    for (const adres of okunacak) {
+      const alt = await hamGet(adres, fetcher, resolveHost, baglam);
+      if (!alt || alt.durum !== 200) continue;
+      loclar.push(...xmlLocBul(alt.govde));
+    }
   }
 
   const haric = /\/(blog|category|kategori|etiket|tag|page|sayfa)(\/|$)/i;
@@ -459,12 +589,21 @@ async function sayfaAra(
   };
   const urunSayfalari = loclar.filter((loc) => loc.startsWith("https://") && !haric.test(yol(loc)));
   const oncelikli = urunSayfalari.filter((loc) => /\/(products?|urun)(\/|$)/i.test(yol(loc)));
-  const secilen = (oncelikli.length > 0 ? oncelikli : urunSayfalari).slice(0, MAKS_SAYFA_OKUMA);
-  if (secilen.length === 0) return bos();
+  const havuz = oncelikli.length > 0 ? oncelikli : urunSayfalari;
+  if (havuz.length === 0) return bos();
+
+  const kodlar = satirlar
+    .flatMap((satir) => [normalizeKod(satir.model), normalizeBarkod(satir.barkod)])
+    .filter((kod) => kod.length >= 4);
+  const kodluAdresler = havuz.filter((loc) => {
+    const slug = slugKodu(loc);
+    return kodlar.some((kod) => slug.includes(kod));
+  });
+  const secilen = [...new Set([...kodluAdresler, ...havuz])].slice(0, MAKS_SAYFA_OKUMA);
 
   const urunler: UreticiUrunu[] = [];
   for (const adres of secilen) {
-    const sayfa = await hamGet(adres, fetcher, resolveHost);
+    const sayfa = await hamGet(adres, fetcher, resolveHost, baglam);
     if (!sayfa || sayfa.durum !== 200) continue;
     urunler.push(...jsonLdUrunleri(sayfa.govde, adres));
     const bulunan = hedefBul(urunler, satirlar, iz.izinDurumu);
@@ -472,6 +611,14 @@ async function sayfaAra(
   }
 
   return hedefBul(urunler, satirlar, iz.izinDurumu);
+}
+
+function slugAdi(loc: string): string {
+  try {
+    return new URL(loc).pathname.split("/").pop() ?? "";
+  } catch {
+    return "";
+  }
 }
 
 export function tedarikciDijitalIziBul(
@@ -514,19 +661,28 @@ export async function dinamikUrunIzleriniBul(
   if (satirlar.length === 0) return [];
   const fetcher = bagimliliklar.fetcher ?? fetch;
   const resolveHost = bagimliliklar.resolveHost ?? varsayilanCoz;
+  const durum = bagimliliklar.durum ?? { erisimHatasi: false, sinirDoldu: false };
+  const simdi = bagimliliklar.simdi ?? Date.now;
+  const baglam: KesifBaglami = {
+    bitis: simdi() + (bagimliliklar.kesifButcesiMs ?? KESIF_BUTCESI_MS),
+    simdi,
+    durum,
+  };
 
   let sonuc: Array<DijitalIzHedefi | null>;
   if (iz.platform === "shopify") {
-    sonuc = await shopifyAra(iz, satirlar, fetcher, resolveHost);
+    sonuc = await shopifyAra(iz, satirlar, fetcher, resolveHost, baglam);
   } else if (iz.platform === "woocommerce") {
-    sonuc = await wooAra(iz, satirlar, fetcher, resolveHost);
+    sonuc = await wooAra(iz, satirlar, fetcher, resolveHost, baglam);
   } else {
-    const shopify = await shopifyAra(iz, satirlar, fetcher, resolveHost);
-    sonuc = shopify.some((hedef) => hedef !== null) ? shopify : await wooAra(iz, satirlar, fetcher, resolveHost);
+    const shopify = await shopifyAra(iz, satirlar, fetcher, resolveHost, baglam);
+    sonuc = shopify.some((hedef) => hedef !== null)
+      ? shopify
+      : await wooAra(iz, satirlar, fetcher, resolveHost, baglam);
   }
 
   if (sonuc.every((hedef) => hedef !== null)) return sonuc;
 
-  const sayfa = await sayfaAra(iz, satirlar, fetcher, resolveHost);
+  const sayfa = await sayfaAra(iz, satirlar, fetcher, resolveHost, baglam);
   return sonuc.map((hedef, indeks) => hedef ?? sayfa[indeks]);
 }

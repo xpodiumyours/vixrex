@@ -7,6 +7,7 @@ import {
 import {
   dinamikUrunIzleriniBul,
   tedarikciDijitalIziBul,
+  type DijitalIzAramaDurumu,
   type DijitalIzBagimliliklari,
   type DijitalIzHedefi,
   type TedarikciDijitalIzi,
@@ -146,9 +147,13 @@ function markaAyrimiNotu(marka: string, faturaFirmasi: string): string {
   return `Bu satırda "${marka}" markası geçiyor; ${faturaKismi} marka ayrı. Ürün izi markanın kaynağından araştırılmalı.`;
 }
 
+export const KAYNAK_ERISILEMEDI_NOTU =
+  "Kaynağa tam erişilemedi ya da arama süresi doldu; bu ürünün kaynakta olmadığı anlamına gelmez. Tekrar denenebilir.";
+
 function sonuclandir(
   satirlar: EslesmisFaturaSatiri[],
   tedarikciIz: TedarikciDijitalIzi | null,
+  aramaDurumu: DijitalIzAramaDurumu = { erisimHatasi: false, sinirDoldu: false },
 ): EslesmisFaturaSatiri[] {
   const faturaFirmasi = tedarikciIz?.firma ?? "";
   const tedarikciAnahtari = tedarikciIz?.anahtar ?? null;
@@ -169,7 +174,10 @@ function sonuclandir(
     }
 
     if (tedarikciIz && kodVeyaBarkodAranabilir(satir)) {
-      return { ...satir, sonuc: "iz-yok" };
+      const yarimKaldi = aramaDurumu.erisimHatasi || aramaDurumu.sinirDoldu;
+      return yarimKaldi
+        ? { ...satir, sonuc: "iz-yok", uyari: KAYNAK_ERISILEMEDI_NOTU }
+        : { ...satir, sonuc: "iz-yok" };
     }
     return satir.sonuc === "eksik" ? satir : { ...satir, sonuc: "eksik" };
   });
@@ -225,13 +233,17 @@ export async function faturaSatirlariniDijitalIzle(
     return { satirlar: sonuclandir(yerel, tedarikciIz), tedarikciIz };
   }
 
+  const aramaDurumu: DijitalIzAramaDurumu = bagimliliklar.durum ?? {
+    erisimHatasi: false,
+    sinirDoldu: false,
+  };
   const dinamik: Array<DijitalIzHedefi | null> = await dinamikUrunIzleriniBul(
     eksikIndeksler.map((indeks) => ({
       model: yerel[indeks].model,
       barkod: yerel[indeks].barkod,
     })),
     tedarikciIz,
-    bagimliliklar,
+    { ...bagimliliklar, durum: aramaDurumu },
   );
 
   const sonuc = yerel.map((satir) => ({ ...satir }));
@@ -267,7 +279,7 @@ export async function faturaSatirlariniDijitalIzle(
     };
   });
 
-  return { satirlar: sonuclandir(sonuc, tedarikciIz), tedarikciIz };
+  return { satirlar: sonuclandir(sonuc, tedarikciIz, aramaDurumu), tedarikciIz };
 }
 
 export function sonucOzeti(

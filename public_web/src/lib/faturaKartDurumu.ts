@@ -134,7 +134,7 @@ export function durumBilgisi(satir: EslesmisFaturaSatiri): DurumBilgisi {
   if (satir.sonuc === "iz-yok") {
     return {
       etiket,
-      detay: "Bu satırın resmî ürün kaynağı bulunamadı. Tahmin yapılmadı.",
+      detay: satir.uyari ?? "Bu satırın resmî ürün kaynağı bulunamadı. Tahmin yapılmadı.",
       adaylar: [],
     };
   }

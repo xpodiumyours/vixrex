@@ -294,3 +294,82 @@ describe("fatura dinamik dijital iz", () => {
     expect(sonuc.satirlar[0].katalog?.izinDurumu).toBe("yok");
   });
 });
+
+describe("hedefli arama ve erişim durumu", () => {
+  function yanit(veri: unknown, durum = 200) {
+    return new Response(JSON.stringify(veri), {
+      status: durum,
+      headers: { "content-type": "application/json" },
+    });
+  }
+
+  it("ilk sayfalarda olmayan Shopify ürünü kodla aratılarak bulunur", async () => {
+    const fetcher = async (input: string) => {
+      if (input.includes("/products.json")) {
+        return yanit({
+          products: [
+            { title: "Başka Ürün", vendor: "Goldfresh", handle: "baska", images: [], variants: [{ sku: "XX-1" }] },
+          ],
+        });
+      }
+      if (input.includes("/search/suggest.json")) {
+        expect(input).toContain("q=GF-777");
+        return yanit({ resources: { results: { products: [{ handle: "gizli-urun" }] } } });
+      }
+      if (input.includes("/products/gizli-urun.json")) {
+        return yanit({
+          product: {
+            title: "Gizli Ürün",
+            vendor: "Goldfresh",
+            handle: "gizli-urun",
+            images: [{ src: "https://cdn.example/gizli.jpg" }],
+            variants: [{ sku: "GF-777", barcode: "", title: "Default Title" }],
+          },
+        });
+      }
+      return yanit({}, 404);
+    };
+
+    const sonuc = await faturaSatirlariniDijitalIzle([satir("GF-777")], "Goldfresh Mutfak", "", {
+      fetcher,
+      resolveHost,
+    });
+
+    expect(sonuc.satirlar[0].sonuc).toBe("kanitli");
+    expect(sonuc.satirlar[0].katalog?.resmiAd).toBe("Gizli Ürün");
+  });
+
+  it("kaynağa erişilemezse satır iz-yok olur ama nedeni erişim olarak yazılır", async () => {
+    const fetcher = async () => {
+      throw new Error("ag hatasi");
+    };
+    const durum = { erisimHatasi: false, sinirDoldu: false };
+
+    const sonuc = await faturaSatirlariniDijitalIzle([satir("GF-123")], "Goldfresh Mutfak", "", {
+      fetcher,
+      resolveHost,
+      durum,
+    });
+
+    expect(durum.erisimHatasi).toBe(true);
+    expect(sonuc.satirlar[0].sonuc).toBe("iz-yok");
+    expect(sonuc.satirlar[0].uyari).toContain("erişilemedi");
+  });
+
+  it("kesif süresi dolarsa 'yok' denmez, süre doldu işaretlenir", async () => {
+    let an = 0;
+    const fetcher = async () => yanit({ products: [] });
+    const durum = { erisimHatasi: false, sinirDoldu: false };
+
+    const sonuc = await faturaSatirlariniDijitalIzle([satir("GF-123")], "Goldfresh Mutfak", "", {
+      fetcher,
+      resolveHost,
+      durum,
+      simdi: () => (an += 5000),
+      kesifButcesiMs: 1000,
+    });
+
+    expect(durum.sinirDoldu).toBe(true);
+    expect(sonuc.satirlar[0].uyari).toContain("süresi doldu");
+  });
+});
