@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   geriAl: vi.fn(),
   mevcutOku: vi.fn(),
   update: vi.fn(),
+  jeton: vi.fn(),
 }));
 vi.mock("next/headers", () => ({ cookies: vi.fn(async () => ({ get: mocks.get })) }));
 vi.mock("@/lib/supabaseAdmin", () => ({ getSupabaseAdmin: mocks.admin }));
@@ -20,6 +21,7 @@ vi.mock("@/lib/ownerSession", () => ({
   OWNER_SESSION_COOKIE: "vixrex_owner_session",
   verifyOwnerSession: mocks.verifyOwner,
 }));
+vi.mock("@/lib/instagramServer", () => ({ verifyStoreEditToken: mocks.jeton }));
 vi.mock("@/lib/faturaGorsel", () => ({
   kaynakGorselleriniHazirla: async (args: { adaylar: string[]; kaynakSayfa: string }) => ({
     gorseller: args.adaylar.map((adres) => ({
@@ -214,5 +216,40 @@ describe("fatura satırı → ürün bağlantısı", () => {
     expect(govde.hatali).toBe(1);
     expect(govde.yayinda).toBe(0);
     expect(mocks.publishProduct).not.toHaveBeenCalled();
+  });
+});
+
+describe("telefon: çerez yerine edit_token ile aynı kapı", () => {
+  it("çerezi olmayan istek geçerli jetonla aynı sunucu doğrulamasından geçer", async () => {
+    mocks.verifyOwner.mockReturnValue(null as never);
+    mocks.jeton.mockResolvedValue({ id: "store-1", slug: "deneme-vitrin" });
+
+    const cevap = await topluUrunEkle(
+      new NextRequest("http://localhost/api/products/batch", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ slug: "deneme-vitrin", editToken: "token-1", products: [satir()] }),
+      }),
+    );
+
+    expect(cevap.status).toBe(200);
+    expect(mocks.jeton).toHaveBeenCalledWith("deneme-vitrin", "token-1");
+    expect(mocks.dogrula).toHaveBeenCalledTimes(1);
+  });
+
+  it("geçersiz jeton reddedilir ve hiçbir ürün yazılmaz", async () => {
+    mocks.verifyOwner.mockReturnValue(null as never);
+    mocks.jeton.mockRejectedValue(new Error("STORE_AUTH_FAILED"));
+
+    const cevap = await topluUrunEkle(
+      new NextRequest("http://localhost/api/products/batch", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ slug: "deneme-vitrin", editToken: "kotu", products: [satir()] }),
+      }),
+    );
+
+    expect(cevap.status).toBe(401);
+    expect(mocks.createProduct).not.toHaveBeenCalled();
   });
 });

@@ -109,7 +109,7 @@ interface SatirSonucu {
 }
 
 export async function POST(request: NextRequest) {
-  let govde: { slug?: unknown; products?: unknown };
+  let govde: { slug?: unknown; products?: unknown; editToken?: unknown };
   try {
     govde = await request.json();
   } catch {
@@ -131,7 +131,18 @@ export async function POST(request: NextRequest) {
 
   const cookieStore = await cookies();
   const ownerSessionCookie = cookieStore.get(OWNER_SESSION_COOKIE)?.value;
-  const ownerSession = verifyOwnerSession(ownerSessionCookie, slug);
+  const cerezliOturum = verifyOwnerSession(ownerSessionCookie, slug);
+  const editTokenGovde = typeof govde.editToken === "string" ? govde.editToken.trim() : "";
+  let ownerSession: { storeId: string } | null = cerezliOturum;
+  if (!ownerSession && editTokenGovde) {
+    try {
+      const { verifyStoreEditToken } = await import("@/lib/instagramServer");
+      const dogrulanan = await verifyStoreEditToken(slug, editTokenGovde);
+      if (dogrulanan.id) ownerSession = { storeId: dogrulanan.id };
+    } catch {
+      ownerSession = null;
+    }
+  }
   if (!ownerSession) {
     return NextResponse.json(
       { hata: "Oturumun geçersiz veya süresi dolmuş." },
