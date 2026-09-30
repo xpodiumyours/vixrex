@@ -126,6 +126,30 @@ describe("kart durumu tek karar kaynagi", () => {
     ).toContain("fotoğraf");
   });
 
+  it("sablonun zorunlu bilgisi (ornegin cinsiyet) girilmedikce kart onaylanamaz", () => {
+    const eksik = kartDegerlendir({
+      satir: satir(),
+      eksikOzellikler: ["Cinsiyet"],
+      satisFiyati: 199,
+      stok: 18,
+      stokOnaylandi: true,
+      onaylandi: false,
+    });
+
+    expect(eksik.onaylanabilir).toBe(false);
+    expect(eksik.bilgiEksikleri).toContain("Cinsiyet bilgisi girilmedi.");
+
+    const tamam = kartDegerlendir({
+      satir: satir(),
+      eksikOzellikler: [],
+      satisFiyati: 199,
+      stok: 18,
+      stokOnaylandi: true,
+      onaylandi: false,
+    });
+    expect(tamam.onaylanabilir).toBe(true);
+  });
+
   it("faturadaki adet stok yerine gecmez: stok onaylanmadan yayin yok", () => {
     const degerlendirme = kartDegerlendir({
       satir: satir(),

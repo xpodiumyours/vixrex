@@ -169,6 +169,14 @@ describe("fatura satırı → ürün bağlantısı", () => {
     expect(mocks.createProduct.mock.calls[0][0].imageUrls).toEqual([]);
   });
 
+  it("şablonun zorunlu bilgileri (cinsiyet, kalıp) eksikse kart yayına çıkmaz, taslak kalır", async () => {
+    const govde = await (await topluUrunEkle(istek([satir({ metadata: {} })]))).json();
+
+    expect(mocks.publishProduct).not.toHaveBeenCalled();
+    expect(govde.yayinda).toBe(0);
+    expect(govde.taslak).toBe(1);
+  });
+
   it("yeni ürün satıra bağlanır", async () => {
     const govde = await (await topluUrunEkle(istek([satir()]))).json();
 

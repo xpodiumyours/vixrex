@@ -68,6 +68,7 @@ export function karttaKullanilabilirGorseller(
 
 export interface KartGirdisi {
   satir: EslesmisFaturaSatiri;
+  eksikOzellikler?: string[];
   satisFiyati?: number | null;
   stok?: number | null;
   stokOnaylandi?: boolean;
@@ -96,6 +97,14 @@ export function kartDegerlendir(girdi: KartGirdisi): KartDegerlendirmesi {
     onaylandi: girdi.onaylandi === true,
     gorselSayisi: gorseller.length,
   });
+
+  const ozellikEksikleri = (girdi.eksikOzellikler ?? []).map((ad) => `${ad} bilgisi girilmedi.`);
+  if (ozellikEksikleri.length > 0) {
+    const onayVar = eksikler.includes(ONAY_EKSIGI);
+    const digerleri = eksikler.filter((eksik) => eksik !== ONAY_EKSIGI);
+    eksikler.length = 0;
+    eksikler.push(...digerleri, ...ozellikEksikleri, ...(onayVar ? [ONAY_EKSIGI] : []));
+  }
 
   const bilgiEksikleri = eksikler.filter((eksik) => eksik !== ONAY_EKSIGI);
 

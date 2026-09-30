@@ -287,7 +287,8 @@ export async function POST(request: NextRequest) {
     // esnaf açıkça yayın istemedikçe taslak kalır. Fatura dışı kaynaklar
     // (Excel/CSV/XML, tekil, kopya) eski davranışını korur.
     const faturaKapisi =
-      !faturaKaynakli || (faturaEksikleri.length === 0 && yayinIstegi);
+      !faturaKaynakli ||
+      (faturaEksikleri.length === 0 && yayinIstegi && hazirlik.durum === "hazir");
 
     // Fatura dışı kaynaklarda eski kural: hazır ve kapatılmamışsa görünür.
     // Fatura satırı önce TASLAK kurulur; ayrı Yayınla isteği ve bütün
