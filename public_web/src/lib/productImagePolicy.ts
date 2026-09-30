@@ -2,6 +2,8 @@ import policyJson from "../../../shared/product_image_policy.json";
 
 export const MIN_PRODUCT_IMAGES = policyJson.minImages;
 export const MAX_PRODUCT_IMAGES = policyJson.maxImages;
+/** Faturaya özel min 1; diğer girişler 3 kalır (MIN_PRODUCT_IMAGES). */
+export const MIN_FATURA_IMAGES = 1;
 export const MAX_PRODUCT_IMAGE_SOURCE_MEGABYTES = policyJson.maxSourceMegabytes;
 export const MAX_PRODUCT_IMAGE_SOURCE_BYTES = MAX_PRODUCT_IMAGE_SOURCE_MEGABYTES * 1024 * 1024;
 export const MIN_PRODUCT_IMAGE_SOURCE_SHORT_EDGE = policyJson.minSourceShortEdge;
@@ -47,22 +49,25 @@ export function validateProductImageDimensions(
 
 function validateCountAndUrls(
   value: unknown,
-  options: { httpsOnly: boolean; ignoreMinCount?: boolean },
+  options: { httpsOnly: boolean; ignoreMinCount?: boolean; faturaKaynakli?: boolean },
 ): ProductImageValidationResult {
+  // Fatura dalı min 1, diğer girişler 3 kalır. ignoreMinCount benzeri fatura
+  // bayrağı; manuel validateProductImageUrls yolu bu bayrağı kullanmaz.
+  const minGerekli = options.faturaKaynakli ? MIN_FATURA_IMAGES : MIN_PRODUCT_IMAGES;
   if (!Array.isArray(value)) {
     return {
       ok: false,
       imageUrls: [],
-      error: `Bir ürün için en az ${MIN_PRODUCT_IMAGES} fotoğraf zorunludur.`,
+      error: `Bir ürün için en az ${minGerekli} fotoğraf zorunludur.`,
     };
   }
 
   const imageUrls = normalizeProductImageUrls(value);
-  if (!options.ignoreMinCount && imageUrls.length < MIN_PRODUCT_IMAGES) {
+  if (!options.ignoreMinCount && imageUrls.length < minGerekli) {
     return {
       ok: false,
       imageUrls,
-      error: `Bir ürün için en az ${MIN_PRODUCT_IMAGES} fotoğraf zorunludur.`,
+      error: `Bir ürün için en az ${minGerekli} fotoğraf zorunludur.`,
     };
   }
   if (imageUrls.length > MAX_PRODUCT_IMAGES) {
@@ -124,9 +129,19 @@ export function validateProductImageUrls(value: unknown): ProductImageValidation
 /**
  * XML/toplu entegrasyonları mevcut tedarikçi CDN görsellerini korur. Owner'ın
  * manuel kalite kapısı bu uyumluluk istisnasından etkilenmez.
+ * Faturaya özel: min 1 fotoğraf (diğer girişler 3 kalır); manuel yol bozulmaz.
  */
-export function validateExternalProductImageUrls(value: unknown): ProductImageValidationResult {
-  return validateCountAndUrls(value, { httpsOnly: false });
+export function validateExternalProductImageUrls(
+  value: unknown,
+  options?: { faturaKaynakli?: boolean },
+): ProductImageValidationResult {
+  // Fatura dalı min 1; fatura dışı dış girişler faturaKaynakli:false ile 3
+  // kalır. Varsayılan fatura (true) çünkü bu doğrulayıcı fatura/toplu dış
+  // görseller içindir; manuel validateProductImageUrls yolu değişmez.
+  return validateCountAndUrls(value, {
+    httpsOnly: false,
+    faturaKaynakli: options?.faturaKaynakli ?? false,
+  });
 }
 
 export function validateProductImageUrlsAllowingFewerImages(

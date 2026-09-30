@@ -131,6 +131,50 @@ describe("fatura islem kaydi", () => {
     expect(belgeParmakIzi(bayt)).toHaveLength(64);
   });
 
+  it("belgeNo/tarih varsa parmak izine girer, ikisi de yoksa dosya hash'ine duser", () => {
+    const bayt = new Uint8Array([1, 2, 3]);
+    const yalın = belgeParmakIzi(bayt);
+    expect(belgeParmakIzi(bayt, {})).toBe(yalın);
+    expect(belgeParmakIzi(bayt, { belgeNo: null, tarih: null })).toBe(yalın);
+    expect(belgeParmakIzi(bayt, { belgeNo: "  ", tarih: " " })).toBe(yalın);
+
+    const kimlikli = belgeParmakIzi(bayt, { belgeNo: "2026/123", tarih: "2026-09-30" });
+    expect(kimlikli).toHaveLength(64);
+    expect(kimlikli).not.toBe(yalın);
+    // Aynı kimlik aynı izi üretir (idempotent), farklı no farklı iz üretir.
+    expect(belgeParmakIzi(bayt, { belgeNo: "2026/123", tarih: "2026-09-30" })).toBe(kimlikli);
+    expect(belgeParmakIzi(bayt, { belgeNo: "2026/124", tarih: "2026-09-30" })).not.toBe(kimlikli);
+    // Yalnız tarih de izi değiştirir.
+    expect(belgeParmakIzi(bayt, { tarih: "2026-09-30" })).not.toBe(yalın);
+  });
+
+  it("belge kimligi migration'siz supplier_trace icine gomulur", async () => {
+    durum.yazilan.length = 0;
+    durum.setHata(null);
+
+    await islemKaydet({
+      ...girdi([satir({})]),
+      belgeTuru: "fatura",
+      belgeNo: "2026/123",
+      belgeTarihi: "2026-09-30",
+      kdvToplam: 120.5,
+    });
+
+    const is = kaydiBul("invoice_jobs");
+    const govde = is?.govde as Record<string, unknown>;
+    // Yeni kolon yok: adet/total mevcut kolonlarda, kimlik trace JSON'unda.
+    expect(govde.document_adet).toBe(2);
+    expect(govde.document_total).toBe(400);
+    expect(govde).not.toHaveProperty("belge_no");
+    const trace = govde.supplier_trace as Record<string, unknown>;
+    expect(trace.belgeTuru).toBe("fatura");
+    expect(trace.belgeNo).toBe("2026/123");
+    expect(trace.belgeTarihi).toBe("2026-09-30");
+    expect(trace.kdvToplam).toBe(120.5);
+    // Tedarikçi izi korunur.
+    expect(trace.anahtar).toBe("seher-mensucat");
+  });
+
   it("is, satirlar, kanit, aday kaynak ve gorsel iznini yazar", async () => {
     durum.yazilan.length = 0;
     durum.setHata(null);

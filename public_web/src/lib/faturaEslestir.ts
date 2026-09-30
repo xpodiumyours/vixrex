@@ -146,6 +146,24 @@ function markaAyrimiNotu(marka: string, faturaFirmasi: string): string {
   return `Bu satırda "${marka}" markası geçiyor; ${faturaKismi} marka ayrı. Ürün izi markanın kaynağından araştırılmalı.`;
 }
 
+// B3 genelleme (hafif): satırda beden/varyant dolu ama katalog ürün adında
+// geçmiyorsa uyarı ver. Silme yok, eşleşme bozulmaz — çekirdek eşleşmeye dokunmaz.
+function varyantTutarlilikNotu(satir: EslesmisFaturaSatiri): string | null {
+  if (!satir.katalog) return null;
+  const resmiAd = (satir.katalog.resmiAd ?? "").trim();
+  if (!resmiAd) return null;
+  const parcalar = [satir.beden, satir.varyant]
+    .map((deger) => (deger ?? "").trim())
+    .filter(Boolean);
+  if (parcalar.length === 0) return null;
+  const kucukAd = resmiAd.toLocaleLowerCase("tr-TR");
+  const eksik = parcalar.filter(
+    (parca) => !kucukAd.includes(parca.toLocaleLowerCase("tr-TR")),
+  );
+  if (eksik.length === 0) return null;
+  return `Faturada varyant/beden (${eksik.join(", ")}) geçiyor ama katalog ürün adında görünmüyor. Kontrol et.`;
+}
+
 function sonuclandir(
   satirlar: EslesmisFaturaSatiri[],
   tedarikciIz: TedarikciDijitalIzi | null,
@@ -154,7 +172,18 @@ function sonuclandir(
   const tedarikciAnahtari = tedarikciIz?.anahtar ?? null;
 
   return satirlar.map((satir) => {
-    if (satir.katalog || satir.sonuc === "celiski") return satir;
+    // B3 genelleme (hafif): eşleşmiş satırda varyant tutarlılığı — silme yok,
+    // eşleşme bozulmaz, yalnız uyarı + güven düşüşü.
+    if (satir.katalog) {
+      const varyantNotu = varyantTutarlilikNotu(satir);
+      if (!varyantNotu) return satir;
+      return {
+        ...satir,
+        guven: Math.min(satir.guven, 0.5),
+        uyari: satir.uyari ? `${satir.uyari} ${varyantNotu}` : varyantNotu,
+      };
+    }
+    if (satir.sonuc === "celiski") return satir;
 
     const marka = satirdaHavuzMarkasiBul(
       `${satir.ad} ${satir.varyant}`,

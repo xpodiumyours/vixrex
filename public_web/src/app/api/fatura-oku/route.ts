@@ -161,6 +161,10 @@ export async function POST(request: NextRequest) {
     let sonTedarikciVergiNo = "";
     let sonTedarikciAdres = "";
     let sonTedarikciSite = "";
+    let sonBelgeTuru: string | null = null;
+    let sonBelgeNo: string | null = null;
+    let sonBelgeTarihi: string | null = null;
+    let sonKdvToplam: number | null = null;
 
     for (let deneme = 1; deneme <= DENEME_SINIRI; deneme++) {
       const okuma = await faturayiOku(goruntu);
@@ -194,6 +198,11 @@ export async function POST(request: NextRequest) {
       sonTedarikciVergiNo = okuma.tedarikciVergiNo;
       sonTedarikciAdres = okuma.tedarikciAdres;
       sonTedarikciSite = okuma.tedarikciSite;
+      // Belge kimliği yoksa null kalır — akış durmaz, parmak izi dosya hash'ine düşer.
+      sonBelgeTuru = okuma.belgeTuru;
+      sonBelgeNo = okuma.belgeNo;
+      sonBelgeTarihi = okuma.belgeTarihi;
+      sonKdvToplam = okuma.kdvToplam;
       sonOzet = { adet: okuma.belgeAdedi, toplam: okuma.belgeToplami };
       sonSatirlar = hamSatirlar;
       sonUyum = belgeGercegiUyuyorMu(hamSatirlar, sonOzet);
@@ -225,7 +234,7 @@ export async function POST(request: NextRequest) {
 
     const islemKimligi = await islemKaydet({
       slug: ownerSlug,
-      parmakIzi: belgeParmakIzi(bayt),
+      parmakIzi: belgeParmakIzi(bayt, { belgeNo: sonBelgeNo, tarih: sonBelgeTarihi }),
       belgeAdedi: sonOzet.adet,
       belgeToplami: sonOzet.toplam,
       tedarikci: sonTedarikci,
@@ -234,6 +243,10 @@ export async function POST(request: NextRequest) {
       tedarikciSite: etkinSite,
       tedarikciIz,
       satirlar,
+      belgeTuru: sonBelgeTuru,
+      belgeNo: sonBelgeNo,
+      belgeTarihi: sonBelgeTarihi,
+      kdvToplam: sonKdvToplam,
     });
 
     return NextResponse.json({
@@ -241,6 +254,10 @@ export async function POST(request: NextRequest) {
       satirlar,
       belgeToplami: sonOzet.toplam,
       belgeAdedi: sonOzet.adet,
+      belgeTuru: sonBelgeTuru,
+      belgeNo: sonBelgeNo,
+      belgeTarihi: sonBelgeTarihi,
+      kdvToplam: sonKdvToplam,
       // Toplam tutmadıysa akış durmaz; uyarı esnafa açıkça gösterilir.
       ...(belgeUyarisi ? { belgeUyarisi } : {}),
       tedarikci: sonTedarikci,

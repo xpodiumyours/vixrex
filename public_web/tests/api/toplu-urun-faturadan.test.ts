@@ -311,4 +311,49 @@ describe("faturadan gelen satirin yayin kapisi", () => {
     );
     expect(govde.yayinda).toBe(1);
   });
+
+  it("aynı islemKimligi+satirIndex iki kez gönderilince ikinci çağrı yeni ürün oluşturmuyor", async () => {
+    const depo = new Map<string, string>();
+    const baglantiliFrom = (tablo: string) => {
+      if (tablo === "invoice_product_links") {
+        let jobId: string | null = null;
+        let lineIndex: number | null = null;
+        const zincir: Record<string, unknown> = {};
+        (zincir as { select: unknown }).select = vi.fn(() => zincir);
+        (zincir as { eq: unknown }).eq = vi.fn((kolon: string, deger: unknown) => {
+          if (kolon === "job_id") jobId = deger as string;
+          if (kolon === "line_index") lineIndex = deger as number;
+          return zincir;
+        });
+        (zincir as { maybeSingle: unknown }).maybeSingle = vi.fn(async () => {
+          const anahtar = `${jobId}:${lineIndex}`;
+          if (jobId !== null && lineIndex !== null && depo.has(anahtar)) {
+            return { data: { product_id: depo.get(anahtar) }, error: null };
+          }
+          return { data: null, error: null };
+        });
+        (zincir as { insert: unknown }).insert = vi.fn(
+          async (satir: Record<string, unknown>) => {
+            depo.set(`${satir.job_id}:${satir.line_index}`, satir.product_id as string);
+            return { error: null };
+          },
+        );
+        return zincir;
+      }
+      return adminMock()(tablo);
+    };
+    mocks.admin.mockImplementation(() => ({ from: baglantiliFrom }));
+
+    const satir = { ...FATURA_URUNU, islemKimligi: "job-1", satirIndex: 0 };
+    const ilk = await topluUrunEkle(istek([satir]));
+    expect((await ilk.json()).satirlar[0].durum).toBe("yayinda");
+
+    const ikinci = await topluUrunEkle(istek([satir]));
+    const ikinciGovde = await ikinci.json();
+
+    expect(mocks.createProduct).toHaveBeenCalledTimes(1);
+    expect(ikinciGovde.satirlar[0].durum).toBe("atlandi");
+    expect(ikinciGovde.satirlar[0].sebep).toContain("zaten yazılmış");
+    expect(ikinciGovde.satirlar[0].id).toBe("urun-1");
+  });
 });

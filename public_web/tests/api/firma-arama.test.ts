@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 // Arama sonucu kalıcı saklanmaz; anahtar yoksa akış durmaz.
 
 import { firmaSitesiniAra } from "@/lib/firmaArama";
+import { faturaSatirlariniDijitalIzle } from "@/lib/faturaEslestir";
 
 function aramaYaniti(sonuclar: Array<{ url: string; title?: string }>) {
   return vi.fn(async () => ({
@@ -77,5 +78,81 @@ describe("firma resmi site arama", () => {
     const sonuc = await firmaSitesiniAra("AB", { apiAnahtari: "test-anahtar" });
 
     expect(sonuc.durum).toBe("bulunamadi");
+  });
+
+  it("havuz-dışı ad Brave mock bulundu -> havuzda:false iz kurulur (köprü)", async () => {
+    // Kilitli kapsam: havuz SADECE hızlı yoldur. Tutku Tuhafiye listede yoksa
+    // adı aratılır; 2 jeton (tutku+tuhafiye) eşleşince aynı keşif oradan yürür.
+    const brave = aramaYaniti([
+      { url: "https://tutkutuhafiye.com/urunler", title: "Tutku Tuhafiye" },
+    ]);
+    const birlesik = (async (input: string, init?: RequestInit) => {
+      if (typeof input === "string" && input.includes("api.search.brave.com")) {
+        return brave(input, init);
+      }
+      return new Response("{}", { status: 404 });
+    }) as unknown as typeof fetch;
+
+    const sonuc = await faturaSatirlariniDijitalIzle(
+      [
+        {
+          model: "",
+          ad: "Bilinmeyen Ürün",
+          barkod: "",
+          varyant: "",
+          beden: "",
+          adet: 1,
+          alisBirimFiyat: null,
+          satirToplam: null,
+          guven: 0.9,
+        },
+      ],
+      "Tutku Tuhafiye",
+      "",
+      {
+        fetcher: birlesik,
+        resolveHost: async () => ["8.8.8.8"],
+        firmaArama: { apiAnahtari: "test-anahtar", fetcher: birlesik },
+      },
+    );
+
+    expect(sonuc.tedarikciIz?.havuzda).toBe(false);
+    expect(sonuc.tedarikciIz?.alan).toBe("tutkutuhafiye.com");
+    expect(sonuc.tedarikciIz?.kaynak).toBe("https://tutkutuhafiye.com");
+  });
+
+  it("anahtarsız kapalı yol dürüst mesaj verir, akışı durdurmaz", async () => {
+    const kapali = await firmaSitesiniAra("Tutku Tuhafiye", { apiAnahtari: "" });
+
+    expect(kapali.durum).toBe("kapali");
+    if (kapali.durum === "kapali") {
+      expect(kapali.sebep).toBe(
+        "Arama servisi bağlı değil; firmanın sitesini yazarak devam edilebilir.",
+      );
+    }
+
+    const sonuc = await faturaSatirlariniDijitalIzle(
+      [
+        {
+          model: "",
+          ad: "Bilinmeyen Ürün",
+          barkod: "",
+          varyant: "",
+          beden: "",
+          adet: 1,
+          alisBirimFiyat: null,
+          satirToplam: null,
+          guven: 0.9,
+        },
+      ],
+      "Tutku Tuhafiye",
+      "",
+      {
+        resolveHost: async () => ["8.8.8.8"],
+        firmaArama: { apiAnahtari: "" },
+      },
+    );
+
+    expect(sonuc.tedarikciIz).toBeNull();
   });
 });

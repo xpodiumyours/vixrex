@@ -16,6 +16,7 @@
 --   kolonunda tutulur; sunucu her yazımda günceller.
 --
 -- ROLLBACK SQL (yalnız acil durum; önce istemciler eski davranışa alınır):
+-- drop table public.invoice_product_links;
 -- drop trigger fatura_yayin_kilidi on public.products;
 -- drop function public.fatura_yayin_kilidi();
 -- drop function public.publish_invoice_product(uuid, text);
@@ -116,8 +117,9 @@ begin
     return jsonb_build_object('success', false, 'hata', 'Satış fiyatı girilmedi.');
   end if;
 
-  if v_images is null or jsonb_typeof(v_images) <> 'array' or jsonb_array_length(v_images) < 3 then
-    return jsonb_build_object('success', false, 'hata', 'En az 3 fotoğraf gerekiyor.');
+  -- Faturaya özel min 1 fotoğraf; diğer girişler 3 kalır.
+  if v_images is null or jsonb_typeof(v_images) <> 'array' or jsonb_array_length(v_images) < 1 then
+    return jsonb_build_object('success', false, 'hata', 'En az 1 fotoğraf gerekiyor.');
   end if;
 
   if v_stock is null then
@@ -156,3 +158,27 @@ grant execute on function public.publish_invoice_product(uuid, text)
 
 comment on function public.publish_invoice_product(uuid, text) is
   'Fatura taslagini gorunur yapan TEK yol. Kapilar (sahiplik, fiyat, fotograf, stok, kanit) yeniden okunur.';
+
+-- Cift-kart engeli (B1): ayni fatura satiri iki kez vitrine yazilmaz.
+-- batch ucu (job_id, line_index) ikilisiyle bu kopruye bakar; kayit varsa
+-- urunu tekrar olusturmaz, mevcut product_id'yi doner.
+create table if not exists public.invoice_product_links (
+  job_id uuid not null,
+  line_index integer not null,
+  product_id uuid not null,
+  store_id uuid not null,
+  created_at timestamptz not null default now(),
+  unique (job_id, line_index)
+);
+
+create index if not exists invoice_product_links_product_id_idx
+  on public.invoice_product_links (product_id);
+
+comment on table public.invoice_product_links is
+  'Fatura satiri -> urun karti koprusu. Ayni satirin ikinci yazimi engellenir. Yalniz vixrex sunucusu (service_role) yazar; anon ve authenticated okuyamaz.';
+
+alter table public.invoice_product_links enable row level security;
+
+revoke all on public.invoice_product_links from anon;
+revoke all on public.invoice_product_links from authenticated;
+revoke all on public.invoice_product_links from public;

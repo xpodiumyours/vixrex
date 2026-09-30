@@ -25,7 +25,7 @@ export const GORU_MODELI = "openai/gpt-5.6-luna";
 
 const SORU = [
   "Bu bir fatura tablosu. HER urun satirini oku. Yalniz JSON dondur.",
-  '{"tedarikci":"","tedarikci_vergi_no":"","tedarikci_adres":"","tedarikci_site":"","satirlar":[{"ham_satir":"","model":"","ad":"","barkod":"","varyant":"","beden":"","adet":0,"birim_fiyat":0,"tutar":0}],"toplam_adet":0,"toplam_tutar":0}',
+  '{"tedarikci":"","tedarikci_vergi_no":"","tedarikci_adres":"","tedarikci_site":"","belge_turu":null,"belge_no":null,"belge_tarihi":null,"kdv_toplam":null,"satirlar":[{"ham_satir":"","model":"","ad":"","barkod":"","varyant":"","beden":"","adet":0,"birim_fiyat":0,"tutar":0}],"toplam_adet":0,"toplam_tutar":0}',
   "1. Her satirda adet * birim_fiyat = tutar olmali.",
   "2. Satirlarin adet toplami = toplam_adet, tutar toplami = toplam_tutar.",
   "3. toplam_adet/toplam_tutar en alttaki 'Toplam' satirindan alinir.",
@@ -34,6 +34,7 @@ const SORU = [
   "6. ad = faturada yazan urun adi veya urun aciklamasi. Yazmiyorsa bos birak, tahmin etme.",
   "7. ham_satir = urun satirinda gorunen metni sirasi ve degerleriyle koru.",
   "8. tedarikci_vergi_no, tedarikci_adres ve tedarikci_site yalniz belgede acikca yaziyorsa doldur; tahmin etme.",
+  "9. belge_turu (fatura/irsaliye/fis), belge_no, belge_tarihi ve kdv_toplam yalniz belgede acikca yaziyorsa doldur; yazmiyorsa null birak, tahmin etme, akis durmaz.",
 ].join("\n");
 
 export interface GoruSatiri {
@@ -54,6 +55,11 @@ export interface GoruSonucu {
   tedarikciVergiNo: string;
   tedarikciAdres: string;
   tedarikciSite: string;
+  /** Belge üstü kimlik: yazmıyorsa null — tahmin edilmez, akış durmaz. */
+  belgeTuru: string | null;
+  belgeNo: string | null;
+  belgeTarihi: string | null;
+  kdvToplam: number | null;
   satirlar: GoruSatiri[];
   belgeAdedi: number | null;
   belgeToplami: number | null;
@@ -68,6 +74,18 @@ function sayi(deger: unknown): number | null {
 
 function metin(deger: unknown): string {
   return typeof deger === "string" ? deger.trim() : "";
+}
+
+/** Belge kimlik alanları: yazmıyorsa null — boş string tahminle doldurulmaz, akış durmaz. */
+function metinYoksaNull(deger: unknown): string | null {
+  const t = metin(deger);
+  return t ? t : null;
+}
+
+/** Sayı alanları (KDV): yazmıyorsa null — `sayi` boş girdiyi 0 sayar, burada null gerekir. */
+function sayiYoksaNull(deger: unknown): number | null {
+  if (deger === null || deger === undefined || deger === "") return null;
+  return sayi(deger);
 }
 
 /**
@@ -127,6 +145,10 @@ export async function faturayiOku(dataUrl: string): Promise<GoruSonucu> {
     tedarikci_vergi_no?: unknown;
     tedarikci_adres?: unknown;
     tedarikci_site?: unknown;
+    belge_turu?: unknown;
+    belge_no?: unknown;
+    belge_tarihi?: unknown;
+    kdv_toplam?: unknown;
     satirlar?: unknown;
     toplam_adet?: unknown;
     toplam_tutar?: unknown;
@@ -153,6 +175,10 @@ export async function faturayiOku(dataUrl: string): Promise<GoruSonucu> {
     tedarikciVergiNo: metin(kok.tedarikci_vergi_no),
     tedarikciAdres: metin(kok.tedarikci_adres),
     tedarikciSite: metin(kok.tedarikci_site),
+    belgeTuru: metinYoksaNull(kok.belge_turu),
+    belgeNo: metinYoksaNull(kok.belge_no),
+    belgeTarihi: metinYoksaNull(kok.belge_tarihi),
+    kdvToplam: sayiYoksaNull(kok.kdv_toplam),
     satirlar,
     belgeAdedi: sayi(kok.toplam_adet),
     belgeToplami: sayi(kok.toplam_tutar),

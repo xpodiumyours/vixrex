@@ -1,6 +1,7 @@
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import {
   MAX_PRODUCT_IMAGES,
+  MIN_FATURA_IMAGES,
   MIN_PRODUCT_IMAGES,
   normalizeProductImageUrls,
   validateExternalProductImageUrls,
@@ -197,6 +198,7 @@ export async function urunGirdisiniHazirla(args: {
   storeName: unknown;
   govde: Record<string, unknown>;
   gorselPolitikasi?: "sahip" | "toplu";
+  faturaKaynakli?: boolean;
   sablonOnbellegi?: Map<string, string | null>;
 }): Promise<UrunGirdiSonucu> {
   const { admin, storeId, storeName, govde } = args;
@@ -205,8 +207,9 @@ export async function urunGirdisiniHazirla(args: {
   if (!name) return { durum: "reddedildi", sebep: "Ürün adı zorunludur." };
 
   const toplu = args.gorselPolitikasi === "toplu";
+  const faturaYolu = args.faturaKaynakli === true;
   const imageValidation = toplu
-    ? validateExternalProductImageUrls(govde.imageUrls)
+    ? validateExternalProductImageUrls(govde.imageUrls, { faturaKaynakli: faturaYolu })
     : validateProductImageUrlsAllowingFewerImages(govde.imageUrls);
 
   let gorselEksigi: string | null = null;
@@ -223,8 +226,12 @@ export async function urunGirdisiniHazirla(args: {
     imageUrls = normalizeProductImageUrls(govde.imageUrls);
   }
 
-  if (fotografSayisi < MIN_PRODUCT_IMAGES) {
-    gorselEksigi = `Ürün için en az ${MIN_PRODUCT_IMAGES} fotoğraf gerekiyor; şu an ${fotografSayisi} tane var.`;
+  const minFotograf = faturaYolu ? MIN_FATURA_IMAGES : MIN_PRODUCT_IMAGES;
+  if (fotografSayisi < minFotograf) {
+    // Fatura taslak yolu min-1 dili; fatura-dışı toplu yolun mesajı ayrı.
+    gorselEksigi = faturaYolu
+      ? `En az ${MIN_FATURA_IMAGES} fotoğraf gerekiyor; şu an ${fotografSayisi} tane var. Fatura taslağı en az 1 fotoğrafla kaydedilir.`
+      : `En az ${MIN_PRODUCT_IMAGES} fotoğraf gerekiyor; şu an ${fotografSayisi} tane var.`;
   }
 
   const categoryId = cleanString(govde.categoryId) || "";

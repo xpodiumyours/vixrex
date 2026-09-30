@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:vixrex/core/result.dart';
+import 'package:vixrex/utils/failure.dart';
 import 'package:vixrex/models/detected_product.dart';
 import 'package:vixrex/models/ocr_catalog_result.dart';
 import 'package:vixrex/models/product_rich_data.dart';
@@ -8,6 +10,7 @@ import 'package:vixrex/models/invoice_product_draft.dart';
 import 'package:vixrex/services/invoice_catalog/invoice_draft_decision_engine.dart';
 import 'package:vixrex/models/store_product.dart';
 import 'package:vixrex/services/invoice_catalog/fatura_oku_servisi.dart';
+import 'package:vixrex/services/invoice_catalog/fatura_yayinla_servisi.dart';
 import 'package:vixrex/services/ocr/invoice_row_parser.dart';
 import 'package:vixrex/services/ocr/ocr_service.dart';
 import 'package:vixrex/services/ocr/ocr_feedback_service.dart';
@@ -317,6 +320,79 @@ class OcrController extends ChangeNotifier {
       _errorMessage = 'Ürünler kaydedilemedi: $e';
       notifyListeners();
     }
+  }
+
+  /// Onaylıları önce mevcut [saveApprovedProducts] ile lokal kaydet, sonra
+  /// SADECE sunucu karşılığı (UUID) eldeki ürünler için `/api/fatura-yayinla`
+  /// çağrısı yapar.
+  ///
+  /// Mevcut kaydet akışı aynen korunur: bu metot [saveApprovedProducts]'ı
+  /// çağırır, kendi yazma mantığı yoktur. Uydurma sunucu ID'si üretilmez;
+  /// `ocr_` / `ocr_invoice_` önekli lokal ID'ler asla yayın ucuna gönderilmez.
+  /// Sunucu ID'si yoksa ağa hiç çıkılmaz ve dürüst gerekçeyle failure dönülür.
+  Future<Result<FaturaYayinlaSonucu>> yayinlaOnaylilar({
+    required String storeSlug,
+    required String editToken,
+    FaturaYayinlaServisi? yayinlaServisi,
+  }) async {
+    final editor = _editorController;
+    if (editor == null) {
+      return Result.failure(
+        Failure('Vitrin düzenleyici hazır değil. Ürünler kaydedilemedi.'),
+      );
+    }
+    final onaylilar = _result?.approvedProducts ?? <DetectedProduct>[];
+    if (onaylilar.isEmpty) {
+      return Result.failure(Failure('Yayınlanacak onaylı ürün yok.'));
+    }
+
+    // saveApprovedProducts hata durumunda [_errorMessage] yazar; eski bir
+    // hatayı yeni sanmamak için önce temizlenir (kaydet akışı değişmez).
+    clearError();
+    final oncekiIdler = editor.products.map((urun) => urun.id).toSet();
+    await saveApprovedProducts();
+    final kaydetHatasi = _errorMessage;
+    if (kaydetHatasi != null) {
+      return Result.failure(Failure(kaydetHatasi));
+    }
+
+    final sunucuIdleri =
+        editor.products
+            .where((urun) => !oncekiIdler.contains(urun.id))
+            .map((urun) => urun.id.trim())
+            .where(_isSunucuId)
+            .toList();
+    if (sunucuIdleri.isEmpty) {
+      return Result.failure(
+        Failure(
+          'Kaydedilen ürünlerin sunucu karşılığı yok; yayın adımı atlandı.',
+        ),
+      );
+    }
+
+    final servis = yayinlaServisi ?? const FaturaYayinlaServisi();
+    return servis.yayinla(
+      productIds: sunucuIdleri,
+      storeSlug: storeSlug,
+      editToken: editToken,
+    );
+  }
+
+  /// Sunucu ürünü kimliği (Supabase UUID) mi? Lokal `ocr_` / `ocr_invoice_`
+  /// ID'ler bilerek elenir — yayın ucu bunları tanımaz.
+  static bool _isSunucuId(String id) {
+    if (id.isEmpty) return false;
+    if (id.startsWith('ocr_')) return false;
+    return RegExp(
+      r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
+    ).hasMatch(id);
+  }
+
+  /// Yalnız testler için: analiz sonucu yükler.
+  @visibleForTesting
+  void testSonucuYukle(OcrCatalogResult sonuc) {
+    _result = sonuc;
+    notifyListeners();
   }
 
   /// DetectedProduct'ı Product'a çevir.

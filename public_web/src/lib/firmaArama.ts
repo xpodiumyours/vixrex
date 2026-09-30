@@ -60,7 +60,6 @@ function firmaJetonlari(ad: string): string[] {
 
 function alanFimayaUyarMi(alan: string, jetonlar: string[]): boolean {
   if (jetonlar.length === 0) return false;
-  const duz = alan.toLowerCase().replace(/\./g, "");
   const ceviri = (s: string) =>
     s
       .replace(/ç/g, "c")
@@ -69,12 +68,36 @@ function alanFimayaUyarMi(alan: string, jetonlar: string[]): boolean {
       .replace(/ö/g, "o")
       .replace(/ş/g, "s")
       .replace(/ü/g, "u");
-  return jetonlar.some((jeton) => {
+  const kucukAlan = alan.toLowerCase();
+  const duz = ceviri(kucukAlan).replace(/\./g, "");
+  const ham = kucukAlan.replace(/\./g, "");
+  const etiketler = ceviri(kucukAlan).split(/[^a-z0-9]+/).filter(Boolean);
+  const hamEtiketler = kucukAlan.split(/[^a-zçğıöşü0-9]+/).filter(Boolean);
+
+  const jetonEslesiyorMu = (jeton: string): boolean => {
     const sade = ceviri(jeton);
     if (sade.length < 3) return false;
-    if (duz.includes(sade) || duz.includes(jeton)) return true;
-    return jeton.includes(duz.replace(/comtr|com|net|org/g, ""));
-  });
+    if (duz.includes(sade) || ham.includes(jeton)) return true;
+    const cekirdek = duz.replace(/comtr|com|net|org/g, "");
+    if (cekirdek.length >= 3 && (jeton.includes(cekirdek) || sade.includes(cekirdek)))
+      return true;
+    return false;
+  };
+
+  const eslesenler = jetonlar.filter(jetonEslesiyorMu);
+  // Sıkı eşik: tek-kelime substring yetmez — kısa markalarda (Eti/Ülker/Tutku)
+  // yanlış pozitif kurar. En az 2 jetonun alanda geçmesi gerekir; tek jeton
+  // ancak alanın tam kelimesiyse (ulker == ulker.com etiketi) kabul edilir.
+  if (eslesenler.length >= 2) return true;
+  if (eslesenler.length === 1) {
+    const tek = eslesenler[0];
+    const sadeTek = ceviri(tek);
+    return (
+      etiketler.some((etiket) => etiket === sadeTek) ||
+      hamEtiketler.some((etiket) => etiket === tek)
+    );
+  }
+  return false;
 }
 
 function resmiSiteOlmayan(alan: string): boolean {

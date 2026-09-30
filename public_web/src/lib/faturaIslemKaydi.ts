@@ -3,8 +3,23 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import type { TedarikciDijitalIzi } from "@/lib/faturaDijitalIz";
 import type { EslesmisFaturaSatiri } from "@/lib/faturaEslestir";
 
-export function belgeParmakIzi(bayt: Uint8Array): string {
-  return createHash("sha256").update(bayt).digest("hex");
+export interface BelgeKimligi {
+  belgeNo?: string | null;
+  tarih?: string | null;
+}
+
+/**
+ * Belgenin parmak izi: dosya-hash + belgeNo/tarih birleşimi.
+ * İkisi de yoksa dosya hash'ine düşer — aynı fotoğraf yeniden yüklenince
+ * aynı iş açılır, ikinci kayıt oluşmaz. Geriye uyumlu: tek argümanla
+ * çağrılınca eski dosya-hash davranışı korunur.
+ */
+export function belgeParmakIzi(bayt: Uint8Array, kimlik?: BelgeKimligi): string {
+  const dosyaHash = createHash("sha256").update(bayt).digest("hex");
+  const no = kimlik?.belgeNo?.trim() ?? "";
+  const tarih = kimlik?.tarih?.trim() ?? "";
+  if (!no && !tarih) return dosyaHash;
+  return createHash("sha256").update(`${dosyaHash}|${no}|${tarih}`).digest("hex");
 }
 
 export interface IslemKaydiGirdisi {
@@ -18,6 +33,11 @@ export interface IslemKaydiGirdisi {
   tedarikciSite: string;
   tedarikciIz: TedarikciDijitalIzi | null;
   satirlar: EslesmisFaturaSatiri[];
+  /** Belge üstü kimlik — migration yok; supplier_trace içine gömülür. */
+  belgeTuru?: string | null;
+  belgeNo?: string | null;
+  belgeTarihi?: string | null;
+  kdvToplam?: number | null;
 }
 
 // Kilitli kapsam: üretici görseli karta girer ve yayınlanır; kullanım izni
@@ -47,6 +67,28 @@ export async function islemKaydet(girdi: IslemKaydiGirdisi): Promise<string | nu
     if (typeof storeId !== "string" || !storeId) return null;
 
     const beklemeVar = girdi.satirlar.some((satir) => satir.sonuc !== "kanitli");
+    // Migration yok: invoice_jobs'ta belge_no/tur/tarih kolonu açılmaz.
+    // Belge kimliği mevcut kolonlara gömülür — adet/total zaten
+    // document_adet/document_total'da, no/tur/tarih/KDV supplier_trace JSON'undadır.
+    const izTabani = girdi.tedarikciIz
+      ? {
+          anahtar: girdi.tedarikciIz.anahtar,
+          alan: girdi.tedarikciIz.alan,
+          platform: girdi.tedarikciIz.platform,
+          izinDurumu: girdi.tedarikciIz.izinDurumu,
+          kaynak: girdi.tedarikciIz.kaynak,
+          havuzda: girdi.tedarikciIz.havuzda,
+        }
+      : null;
+    const belgeMeta: Record<string, string | number | null> = {};
+    if (girdi.belgeTuru) belgeMeta.belgeTuru = girdi.belgeTuru.slice(0, 40);
+    if (girdi.belgeNo) belgeMeta.belgeNo = girdi.belgeNo.slice(0, 80);
+    if (girdi.belgeTarihi) belgeMeta.belgeTarihi = girdi.belgeTarihi.slice(0, 40);
+    if (typeof girdi.kdvToplam === "number" && Number.isFinite(girdi.kdvToplam)) {
+      belgeMeta.kdvToplam = girdi.kdvToplam;
+    }
+    const tedarikciIzKaydi =
+      izTabani || Object.keys(belgeMeta).length > 0 ? { ...izTabani, ...belgeMeta } : null;
     const isKaydi = await admin
       .from("invoice_jobs")
       .upsert(
@@ -58,16 +100,7 @@ export async function islemKaydet(girdi: IslemKaydiGirdisi): Promise<string | nu
           supplier_tax_id: girdi.tedarikciVergiNo.slice(0, 40),
           supplier_address: girdi.tedarikciAdres.slice(0, 500),
           supplier_site: girdi.tedarikciSite.slice(0, 200),
-          supplier_trace: girdi.tedarikciIz
-            ? {
-                anahtar: girdi.tedarikciIz.anahtar,
-                alan: girdi.tedarikciIz.alan,
-                platform: girdi.tedarikciIz.platform,
-                izinDurumu: girdi.tedarikciIz.izinDurumu,
-                kaynak: girdi.tedarikciIz.kaynak,
-                havuzda: girdi.tedarikciIz.havuzda,
-              }
-            : null,
+          supplier_trace: tedarikciIzKaydi,
           document_adet: girdi.belgeAdedi,
           document_total: girdi.belgeToplami,
           updated_at: new Date().toISOString(),

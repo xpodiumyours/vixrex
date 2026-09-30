@@ -224,14 +224,49 @@ describe("faturadan gelen ürünün yayın kapısı", () => {
     expect(yazilan).toMatchObject({ fatura_kanit: { kartDurumu: "kanitli", stokOnaylandi: true } });
   });
 
-  it("fotoğrafı eksik ürün, onaylı ve fiyatlı olsa bile taslak kalır", async () => {
+  it("fotoğrafı olmayan ürün (0 görsel), onaylı ve fiyatlı olsa bile taslak kalır", async () => {
+    // A2: fatura min 1 — 1 görsel yeterli, 0 görsel eksiktir.
     const cevap = await topluUrunEkle(
-      istek([faturaSatiri({ imageUrls: [FOTOGRAFLAR[0]] })]),
+      istek([faturaSatiri({ imageUrls: [] })]),
     );
     const govde = await cevap.json();
 
     expect(mocks.createProduct.mock.calls[0][0].isVisible).toBe(false);
     expect(govde.satirlar[0].sebep).toContain("fotoğraf");
+  });
+
+  it("tek fotoğraf fatura için yeterlidir (min 1): 1 görselle ürün yayına çıkar", async () => {
+    const cevap = await topluUrunEkle(
+      istek([faturaSatiri({ imageUrls: [FOTOGRAFLAR[0]] })]),
+    );
+    const govde = await cevap.json();
+
+    expect(mocks.publishProduct).toHaveBeenCalledTimes(1);
+    expect(govde.yayinda).toBe(1);
+  });
+
+  it("katalog kaynağı fatura kanıtına yazılır — ürün kartına sızmaz", async () => {
+    // A2b hotlink: kaynak/kaynakFirma karta değil, fatura_kanit özetine taşınır.
+    const kaynak = "https://uretici-ornegi.example.com/kaynak-kart";
+    await topluUrunEkle(
+      istek([faturaSatiri({ kaynak, kaynakFirma: "Örnek Mensucat" })]),
+    );
+
+    const yazilan = mocks.update.mock.calls[0][0];
+    expect(yazilan).toMatchObject({
+      fatura_kanit: { kaynak, kaynakFirma: "Örnek Mensucat" },
+    });
+    const kart = mocks.createProduct.mock.calls[0][0];
+    expect(JSON.stringify(kart)).not.toContain("kaynak-kart");
+  });
+
+  it("kaynak gönderilmezse kanıtta boş yazılır — eski satırlar kırılmaz", async () => {
+    await topluUrunEkle(istek([faturaSatiri()]));
+
+    const yazilan = mocks.update.mock.calls[0][0];
+    expect(yazilan).toMatchObject({
+      fatura_kanit: { kaynak: null, kaynakFirma: null },
+    });
   });
 
   it("alış fiyatı ürün kartına hiçbir alandan sızmaz", async () => {

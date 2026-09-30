@@ -1,4 +1,4 @@
-import { MIN_PRODUCT_IMAGES } from "@/lib/productImagePolicy";
+import { MIN_FATURA_IMAGES } from "@/lib/productImagePolicy";
 import type { EslesmisFaturaSatiri } from "@/lib/faturaEslestir";
 
 export type KartDurumu = "kanitli" | "eksik" | "celiski" | "iz-yok";
@@ -40,9 +40,10 @@ export function yayinEksikleri(girdi: YayinGirdisi): string[] {
   if (girdi.stok === null || !Number.isInteger(girdi.stok) || girdi.stok < 0) {
     eksikler.push("Stok adedi geçersiz.");
   }
-  if (girdi.gorselSayisi < MIN_PRODUCT_IMAGES) {
+  if (girdi.gorselSayisi < MIN_FATURA_IMAGES) {
     eksikler.push(
-      `En az ${MIN_PRODUCT_IMAGES} fotoğraf gerekiyor; kartta ${girdi.gorselSayisi} fotoğraf var.`,
+      // Faturaya özel min 1; diğer girişler 3 kalır (MIN_PRODUCT_IMAGES).
+      `En az ${MIN_FATURA_IMAGES} fotoğraf gerekiyor; kartta ${girdi.gorselSayisi} fotoğraf var.`,
     );
   }
   if (!girdi.onaylandi) {
@@ -75,6 +76,9 @@ export interface KartGirdisi {
 
 export interface KartDegerlendirmesi {
   durum: KartDurumu;
+  /** Kartı onayla butonu kapısı: kanıtlı + fiyat>0 + stok geçerli + >=1 görsel. */
+  onaylanabilir: boolean;
+  /** Yayın kapısı: onaylanabilir + stokOnaylandi + onaylandi. */
   yayinaHazir: boolean;
   eksikler: string[];
   gorseller: string[];
@@ -83,17 +87,38 @@ export interface KartDegerlendirmesi {
 export function kartDegerlendir(girdi: KartGirdisi): KartDegerlendirmesi {
   const durum = girdi.satir.sonuc;
   const gorseller = karttaKullanilabilirGorseller(girdi.satir, girdi.esnafGorselleri);
+  const satisFiyati = girdi.satisFiyati ?? null;
+  const stok = girdi.stok ?? null;
+  const gorselSayisi = gorseller.length;
 
   const eksikler = yayinEksikleri({
     durum,
-    satisFiyati: girdi.satisFiyati ?? null,
-    stok: girdi.stok ?? null,
+    satisFiyati,
+    stok,
     stokOnaylandi: girdi.stokOnaylandi === true,
     onaylandi: girdi.onaylandi === true,
-    gorselSayisi: gorseller.length,
+    gorselSayisi,
   });
 
-  return { durum, yayinaHazir: eksikler.length === 0, eksikler, gorseller };
+  // Onay kilidi ayrımı: "Kartı onayla" butonu onaylanabilir'e bakar; onaylandi
+  // + stokOnaylandi yalnız yayın kapısında aranır. Çoğaltma yok: onay bayrakları
+  // true varsayılarak aynı yayinEksikleri yeniden kullanılır.
+  const onayEksikleri = yayinEksikleri({
+    durum,
+    satisFiyati,
+    stok,
+    stokOnaylandi: true,
+    onaylandi: true,
+    gorselSayisi,
+  });
+
+  return {
+    durum,
+    onaylanabilir: onayEksikleri.length === 0,
+    yayinaHazir: eksikler.length === 0,
+    eksikler,
+    gorseller,
+  };
 }
 
 export interface DurumBilgisi {

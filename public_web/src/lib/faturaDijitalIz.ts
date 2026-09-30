@@ -44,8 +44,8 @@ export interface DijitalIzBagimliliklari {
 }
 
 const MAKS_YANIT_BAYT = 2 * 1024 * 1024;
-const MAKS_SAYFA = 3;
-const MAKS_SAYFA_OKUMA = 4;
+const MAKS_SAYFA = 6;
+const MAKS_SAYFA_OKUMA = 8;
 const ISTEK_ZAMAN_ASIMI_MS = 2500;
 
 function alanAdiTemizle(deger: string): string {
@@ -442,7 +442,20 @@ async function sayfaAra(
 
   let loclar = xmlLocBul(kok.govde);
   if (/<sitemapindex/i.test(kok.govde)) {
-    const ilk = loclar[0];
+    // B3 genelleme: yalnız ilk alt-harita yerine hedef kod/barkod geçen
+    // alt-haritaya öncelik ver; yoksa ilkini al.
+    const hedefParcalar = satirlar
+      .flatMap((satir) => [
+        satir.model.trim().toLowerCase(),
+        normalizeKod(satir.model).toLowerCase(),
+        normalizeBarkod(satir.barkod),
+      ])
+      .filter((parca) => parca.length >= 4);
+    const eslesen = loclar.find((loc) => {
+      const kucuk = loc.toLowerCase();
+      return hedefParcalar.some((parca) => parca && kucuk.includes(parca));
+    });
+    const ilk = eslesen ?? loclar[0];
     if (!ilk) return bos();
     const alt = await hamGet(ilk, fetcher, resolveHost);
     if (!alt || alt.durum !== 200) return bos();

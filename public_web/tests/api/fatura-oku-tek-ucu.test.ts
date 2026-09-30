@@ -226,4 +226,42 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(govde.belgeAdedi).toBe(2);
     expect(govde.belgeToplami).toBe(274);
   });
+
+  it("belge kimligi yoksa null doner, akis durmaz; islemKimligi donusu korunur", async () => {
+    const cevap = await faturaOku(istek());
+    const govde = await cevap.json();
+
+    expect(cevap.status).toBe(200);
+    expect(govde.belgeTuru).toBeNull();
+    expect(govde.belgeNo).toBeNull();
+    expect(govde.belgeTarihi).toBeNull();
+    expect(govde.kdvToplam).toBeNull();
+    expect("islemKimligi" in govde).toBe(true);
+    expect(Array.isArray(govde.taslaklar)).toBe(true);
+  });
+
+  it("okuyucu belge kimligi donerse cevapta tasinir", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        okuyucuCevabi({
+          ...TEK_SATIR,
+          belge_turu: "fatura",
+          belge_no: "2026/123",
+          belge_tarihi: "2026-09-30",
+          kdv_toplam: 48.2,
+        }),
+      ),
+    );
+
+    const cevap = await faturaOku(istek());
+    const govde = await cevap.json();
+
+    expect(cevap.status).toBe(200);
+    expect(govde.belgeTuru).toBe("fatura");
+    expect(govde.belgeNo).toBe("2026/123");
+    expect(govde.belgeTarihi).toBe("2026-09-30");
+    expect(govde.kdvToplam).toBe(48.2);
+    expect("islemKimligi" in govde).toBe(true);
+  });
 });

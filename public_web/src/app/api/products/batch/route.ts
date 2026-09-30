@@ -79,8 +79,17 @@ interface ProductBatchItem {
   stokOnaylandi?: boolean;
   /** Satırın kanıt durumu. Yalnız "kanitli" satır yayına çıkar. */
   kartDurumu?: unknown;
+  /** Katalog hotlink'i: ürün kartına değil, fatura_kanit özetine yazılır. */
+  kaynak?: string;
+  /** Kaynak firma adı: ürün kartına değil, fatura_kanit özetine yazılır. */
+  kaynakFirma?: string;
   /** Faturadaki birim alış fiyatı. Karta yazılmaz, müşteriye gösterilmez. */
   purchasePriceAmount?: unknown;
+  /** Çift-kart engeli: fatura işlem kimliği (invoice_jobs.id). */
+  islemKimligi?: string | null;
+  /** Çift-kart engeli: fatura satır sırası. */
+  satirIndex?: number | null;
+  satir_index?: number | null;
 }
 
 interface SatirSonucu {
@@ -156,12 +165,16 @@ export async function POST(request: NextRequest) {
       variants: ham.variants,
     };
 
+    const kaynak = (ham.sourceType || ham.source_type || "bulk_import").trim();
+    const faturaKaynakli = kaynak === FATURA_KAYNAGI;
+
     const hazirlik = await urunGirdisiniHazirla({
       admin,
       storeId: store.id,
       storeName: store.name,
       govde: satirGovdesi,
       gorselPolitikasi: "toplu",
+      faturaKaynakli,
       sablonOnbellegi,
     });
 
@@ -171,17 +184,48 @@ export async function POST(request: NextRequest) {
       continue;
     }
 
-    const kaynak = (ham.sourceType || ham.source_type || "bulk_import").trim();
-
     // Faturadan gelen satır, fotoğrafı ve zorunlu alanları tam olsa bile
     // kendiliğinden yayına çıkmaz: esnaf satış fiyatını girmeli, kartı
     // açıkça onaylamalı VE ayrıca Yayınla demeli. Bilgileri onayla yalnız
     // taslak kaydeder. Fatura alış fiyatı satış fiyatı yerine geçmez.
-    const faturaKaynakli = kaynak === FATURA_KAYNAGI;
     const esnafOnayladi = ham.ownerApproved === true;
     const stokOnaylandi = ham.stokOnaylandi === true;
     const kartDurumu = durumGecerliMi(ham.kartDurumu) ? ham.kartDurumu : "eksik";
     const yayinIstegi = ham.yayinIstegi === true;
+
+    // Çift-kart engeli: fatura kaynaklı satırda (islemKimligi, satirIndex)
+    // doluysa köprü tablosuna bak; kayıt varsa ürünü tekrar oluşturma.
+    const islemKimligi =
+      typeof ham.islemKimligi === "string" && ham.islemKimligi.trim()
+        ? ham.islemKimligi.trim()
+        : null;
+    const satirIndex =
+      typeof ham.satirIndex === "number" && Number.isInteger(ham.satirIndex)
+        ? ham.satirIndex
+        : typeof ham.satir_index === "number" && Number.isInteger(ham.satir_index)
+          ? ham.satir_index
+          : null;
+    if (faturaKaynakli && islemKimligi !== null && satirIndex !== null) {
+      try {
+        const { data: mevcut } = await admin
+          .from("invoice_product_links")
+          .select("product_id")
+          .eq("job_id", islemKimligi)
+          .eq("line_index", satirIndex)
+          .maybeSingle();
+        const mevcutId =
+          mevcut && typeof (mevcut as { product_id?: unknown }).product_id === "string"
+            ? (mevcut as { product_id: string }).product_id
+            : null;
+        if (mevcutId) {
+          atlandi += 1;
+          sonuclar.push({ sira: index, ad, durum: "atlandi", sebep: "zaten yazılmış", id: mevcutId });
+          continue;
+        }
+      } catch (err) {
+        console.error("[products/batch] link sorgulanamadi:", err);
+      }
+    }
 
     // Fotoğraf izleme (kilitli kapsam): üreticinin fotoğrafı karta girer ve
     // yayınlanabilir; kullanım izni sonra, çalışan sistemle istenir. Hangi
@@ -242,6 +286,25 @@ export async function POST(request: NextRequest) {
             : index,
       });
 
+      // Çift-kart engeli: ilk yazımda köprüyü kur; hata akışı bozmaz.
+      if (faturaKaynakli && islemKimligi !== null && satirIndex !== null) {
+        try {
+          const { error: linkHatasi } = await admin
+            .from("invoice_product_links")
+            .insert({
+              job_id: islemKimligi,
+              line_index: satirIndex,
+              product_id: olusan.id,
+              store_id: store.id,
+            });
+          if (linkHatasi) {
+            console.error("[products/batch] link yazilamadi:", linkHatasi.message);
+          }
+        } catch (err) {
+          console.error("[products/batch] link yazilamadi:", err);
+        }
+      }
+
       // Alış fiyatı ürün kartına DEĞİL, kilitli kendi tablosuna yazılır.
       // products tablosunda anon'un tablo düzeyinde okuma yetkisi olduğu için
       // oraya konulan her kolon müşteriye de açılırdı (2026-09-26 ölçümü).
@@ -266,7 +329,15 @@ export async function POST(request: NextRequest) {
       if (faturaKaynakli) {
         const { error: kanitHatasi } = await admin
           .from("products")
-          .update({ fatura_kanit: { kartDurumu, stokOnaylandi, ureticiGorsel: ureticiGorselVar } })
+          .update({
+            fatura_kanit: {
+              kartDurumu,
+              stokOnaylandi,
+              ureticiGorsel: ureticiGorselVar,
+              kaynak: typeof ham.kaynak === "string" ? ham.kaynak : null,
+              kaynakFirma: typeof ham.kaynakFirma === "string" ? ham.kaynakFirma : null,
+            },
+          })
           .eq("id", olusan.id);
         if (kanitHatasi) {
           console.error("[products/batch] fatura kaniti yazilamadi:", kanitHatasi.message);

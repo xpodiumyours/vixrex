@@ -334,14 +334,19 @@ export default function InvoiceToProducts({
               priceText: `${satisFiyati} TL`,
               categoryId: satir.kategoriId,
               imageUrls: degerlendirme.gorseller,
+              kaynak: katalog?.kaynak,
+              kaynakFirma: katalog?.kaynakFirma,
+              gorselAdaylari: degerlendirme.gorseller,
               brand: katalog?.marka || undefined,
               barcode: satir.barkod || undefined,
               stockQuantity: stokSayisi(satir.stok),
               sourceType: "invoice",
+              islemKimligi: belge?.islemKimligi ?? null,
+              satirIndex: sira,
               kartDurumu: satir.sonuc,
-              stokOnaylandi: true,
+              stokOnaylandi: satir.stokOnaylandi,
               externalProductId: satir.barkod || satir.model || undefined,
-              ownerApproved: true,
+              ownerApproved: satir.onayli,
               yayinIstegi,
               purchasePriceAmount: satir.alisBirimFiyat ?? undefined,
               metadata: satir.model ? { identifiers: { sku: satir.model } } : undefined,
@@ -437,6 +442,21 @@ export default function InvoiceToProducts({
     }
   }
 
+  // Kapat-aç devamı yalnız istemci tarafındadır: sunucuda invoice_* okuyan
+  // GET ucu YOK, açılmadı. Son işlem kimliği localStorage'da işaret olarak
+  // saklanır; satırlar yeniden yüklenmez, aynı fatura yeniden okutulur.
+  // Tek-satır yeniden-eşleştirme çağrısı kapsam dışı — eklenmedi.
+  const FATURA_TASLAK_ANAHTARI = "vixrex:fatura-taslak:islem-kimligi";
+
+  function sonFaturaIslemKimligi(): string | null {
+    try {
+      if (typeof window === "undefined") return null;
+      return window.localStorage.getItem(FATURA_TASLAK_ANAHTARI);
+    } catch {
+      return null;
+    }
+  }
+
   function bastanBasla() {
     setAdim("sec");
     setOnizleme(null);
@@ -445,11 +465,20 @@ export default function InvoiceToProducts({
     setSonuc(null);
     setHata(null);
     if (dosyaRef.current) dosyaRef.current.value = "";
+    // Sıfırlama korunur; yarım kalan istemci taslak işareti de temizlenir.
+    try {
+      if (typeof window !== "undefined") {
+        window.localStorage.removeItem(FATURA_TASLAK_ANAHTARI);
+      }
+    } catch {
+      // Temizlenemezse akış durmaz.
+    }
   }
 
   // ─── 1. Fatura seç ─────────────────────────────────────────────
 
   if (adim === "sec") {
+    const yarimKalanIslem = sonFaturaIslemKimligi();
     return (
       <div className="fatura-akis">
         <h3>Faturadan ürün ekle</h3>
@@ -457,6 +486,14 @@ export default function InvoiceToProducts({
           Faturanın fotoğrafını yükle. Vixrex ürünleri hazırlar; satış fiyatlarını ve stoğu sen
           onaylarsın. <strong>Sen yayınlamadan hiçbir ürün vitrinde görünmez. Bilgileri onaylamak yalnız taslak kaydeder.</strong>
         </p>
+
+        {yarimKalanIslem && (
+          <p className="fatura-aciklama" role="status">
+            Yarım kalan fatura işlemi var (işlem: {yarimKalanIslem}). Satırlar sunucuda
+            saklanmadığı için aynı faturayı yeniden yükle; kaldığın yerden değil,
+            baştan başlarsın.
+          </p>
+        )}
 
         {hata && <p className="fatura-hata">{hata}</p>}
 
@@ -566,6 +603,19 @@ export default function InvoiceToProducts({
   const kanitliSayisi = satirlar.filter((satir) => satir.sonuc === "kanitli").length;
   const bekleyenSatir = satirlar.length - hazirSayisi;
   const ozet = belge?.sonucOzeti;
+
+  // İstemci taslak işareti yazımı (idempotent; sunucu okuması yok, GET ucu
+  // açılmadı). Belge ekranındayken işlem kimliği varsa saklanır; kapat-aç
+  // durumunda "sec" ekranındaki not buradan beslenir.
+  if (belge?.islemKimligi) {
+    try {
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(FATURA_TASLAK_ANAHTARI, belge.islemKimligi);
+      }
+    } catch {
+      // Saklanamazsa akış durmaz.
+    }
+  }
 
   return (
     <div className="fatura-akis">
@@ -814,7 +864,7 @@ export default function InvoiceToProducts({
                     type="button"
                     className={satir.onayli ? "fatura-onay fatura-onay-acik" : "fatura-onay"}
                     onClick={() => satirGuncelle(index, { onayli: !satir.onayli })}
-                    disabled={yaziliyor || !degerlendirme.yayinaHazir}
+                    disabled={yaziliyor || !degerlendirme.onaylanabilir}
                   >
                     {satir.onayli ? "✓ Onaylandı" : "Kartı onayla"}
                   </button>
