@@ -33,6 +33,22 @@ vi.mock("@/lib/faturaGorsel", () => ({
     altyapiSorunu: false,
   }),
 }));
+vi.mock("@/lib/faturaUrunBaglantisi", () => ({
+  satiriDogrula: async (
+    _admin: unknown,
+    _storeId: string,
+    _kimlik: unknown,
+    iddia: string,
+  ) => ({
+    satirId: "satir-1",
+    sonuc: iddia,
+    urunId: null,
+    izinliGorseller: { has: () => true },
+  }),
+  satiriUrunleBagla: async () => true,
+  urunuGeriAl: async () => undefined,
+  mevcutUrunuOku: async () => null,
+}));
 vi.mock("@/lib/productCoreServer", () => ({
   createRichCoreProduct: mocks.createProduct,
   publishInvoiceProduct: mocks.publishProduct,

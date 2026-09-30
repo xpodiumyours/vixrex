@@ -2,7 +2,17 @@ import { NextResponse, type NextRequest } from "next/server";
 import { cookies } from "next/headers";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
-import { createRichCoreProduct, publishInvoiceProduct } from "@/lib/productCoreServer";
+import {
+  createRichCoreProduct,
+  publishInvoiceProduct,
+  updateRichCoreProduct,
+} from "@/lib/productCoreServer";
+import {
+  mevcutUrunuOku,
+  satiriDogrula,
+  satiriUrunleBagla,
+  urunuGeriAl,
+} from "@/lib/faturaUrunBaglantisi";
 import { urunGirdisiniHazirla } from "@/lib/productIntake";
 import { izinsizUreticiGorseli } from "@/lib/ureticiKatalog";
 import { durumGecerliMi, yayinEksikleri } from "@/lib/faturaKartDurumu";
@@ -80,6 +90,8 @@ interface ProductBatchItem {
   /** Faturadan gelen satırlarda esnafın stok onayı. Faturadaki adet öneridir. */
   stokOnaylandi?: boolean;
   gorselKaynagi?: string;
+  islemKimligi?: string;
+  satirSirasi?: number;
   /** Satırın kanıt durumu. Yalnız "kanitli" satır yayına çıkar. */
   kartDurumu?: unknown;
   /** Faturadaki birim alış fiyatı. Karta yazılmaz, müşteriye gösterilmez. */
@@ -92,6 +104,7 @@ interface SatirSonucu {
   durum: "yayinda" | "taslak" | "atlandi";
   sebep?: string;
   id?: string;
+  kayit?: "yeni" | "guncellendi" | "mevcut";
 }
 
 export async function POST(request: NextRequest) {
@@ -187,7 +200,16 @@ export async function POST(request: NextRequest) {
     const faturaKaynakli = kaynak === FATURA_KAYNAGI;
     const esnafOnayladi = ham.ownerApproved === true;
     const stokOnaylandi = ham.stokOnaylandi === true;
-    const kartDurumu = durumGecerliMi(ham.kartDurumu) ? ham.kartDurumu : "eksik";
+    const iddiaDurumu = durumGecerliMi(ham.kartDurumu) ? ham.kartDurumu : "eksik";
+    const dogrulanmis = faturaKaynakli
+      ? await satiriDogrula(
+          admin,
+          store.id,
+          { islemKimligi: ham.islemKimligi, satirSirasi: ham.satirSirasi },
+          iddiaDurumu,
+        )
+      : null;
+    const kartDurumu = faturaKaynakli ? (dogrulanmis?.sonuc ?? "eksik") : iddiaDurumu;
     const yayinIstegi = ham.yayinIstegi === true;
 
     // Fotoğraf izleme (kilitli kapsam): üreticinin fotoğrafı karta girer ve
@@ -195,12 +217,18 @@ export async function POST(request: NextRequest) {
     // kartta üretici görseli olduğu fatura_kanit + invoice_image_rights
     // kayıtlarından izlenir — izin turu bu listeden yürür. Esnafın kendi
     // fotoğrafı her zamanki gibi serbestçe geçer.
+    const kaynakGorselleri = faturaKaynakli
+      ? hazirlik.girdi.imageUrls.filter(
+          (adres) =>
+            yonetilenUrunGorseliMi(adres) || dogrulanmis?.izinliGorseller.has(adres.trim()) === true,
+        )
+      : hazirlik.girdi.imageUrls;
     const disGorseller = faturaKaynakli
-      ? hazirlik.girdi.imageUrls.filter((adres) => !yonetilenUrunGorseliMi(adres))
+      ? kaynakGorselleri.filter((adres) => !yonetilenUrunGorseliMi(adres))
       : [];
     const ureticiGorselVar = hazirlik.girdi.imageUrls.some(izinsizUreticiGorseli);
 
-    let urunGorselleri = hazirlik.girdi.imageUrls;
+    let urunGorselleri = kaynakGorselleri;
     let gorselDurumu = "";
     let gorselKaynaklari: Array<Record<string, unknown>> = [];
     if (disGorseller.length > 0) {
@@ -216,7 +244,7 @@ export async function POST(request: NextRequest) {
           .filter((red) => red.sebep === "erisilemedi" || red.sebep === "depoya-yazilamadi")
           .map((red) => red.kaynakGorsel),
       );
-      urunGorselleri = hazirlik.girdi.imageUrls.flatMap((adres) => {
+      urunGorselleri = kaynakGorselleri.flatMap((adres) => {
         if (yonetilenUrunGorseliMi(adres)) return [adres];
         const kopya = depodaki.get(adres);
         if (kopya) return [kopya.url];
@@ -258,7 +286,34 @@ export async function POST(request: NextRequest) {
     const gorunur = faturaKaynakli ? false : normalGorunur;
 
     try {
-      const olusan = await createRichCoreProduct({
+      const mevcutBagli = dogrulanmis?.urunId
+        ? await mevcutUrunuOku(admin, store.id, dogrulanmis.urunId)
+        : null;
+      let kayit: "yeni" | "guncellendi" | "mevcut" = mevcutBagli ? "guncellendi" : "yeni";
+
+      if (mevcutBagli) {
+        await updateRichCoreProduct({
+          admin,
+          productId: mevcutBagli.id,
+          editToken: store.edit_token,
+          name: hazirlik.girdi.name,
+          description: hazirlik.girdi.description,
+          priceText: hazirlik.girdi.priceText,
+          priceAmount: hazirlik.girdi.priceAmount,
+          imageUrls: urunGorselleri,
+          categoryId: hazirlik.girdi.categoryId,
+          stockStatus: mevcutBagli.stockStatus ?? hazirlik.girdi.stockStatus ?? "",
+          stockQuantity: mevcutBagli.stockQuantity,
+          brand: hazirlik.girdi.brand,
+          barcode: hazirlik.girdi.barcode,
+          metadata: hazirlik.girdi.metadata,
+          variants: hazirlik.girdi.variants,
+        });
+      }
+
+      const olusan = mevcutBagli
+        ? { id: mevcutBagli.id, slug: "", created: false }
+        : await createRichCoreProduct({
         admin,
         storeId: store.id,
         editToken: store.edit_token,
@@ -306,20 +361,39 @@ export async function POST(request: NextRequest) {
       // listesidir (kilitli kapsam: önce çalışan sistem). create/update
       // RPC'leri bu kolonu taşımadığı için doğrudan yazılır.
       if (faturaKaynakli) {
-        const { error: kanitHatasi } = await admin
-          .from("products")
-          .update({
-            fatura_kanit: {
-              kartDurumu,
-              stokOnaylandi,
-              ureticiGorsel: ureticiGorselVar,
-              gorselDurumu,
-              gorselKaynaklari,
-            },
-          })
-          .eq("id", olusan.id);
-        if (kanitHatasi) {
-          console.error("[products/batch] fatura kaniti yazilamadi:", kanitHatasi.message);
+        if (olusan.created === false && !mevcutBagli) kayit = "mevcut";
+        const kanitYazilsin =
+          kayit === "yeni" || (kayit === "guncellendi" && mevcutBagli !== null && !mevcutBagli.gorunur);
+
+        if (kanitYazilsin) {
+          const { error: kanitHatasi } = await admin
+            .from("products")
+            .update({
+              fatura_kanit: {
+                kartDurumu,
+                stokOnaylandi,
+                ureticiGorsel: ureticiGorselVar,
+                gorselDurumu,
+                gorselKaynaklari,
+                ...(dogrulanmis ? { islemKimligi: ham.islemKimligi, satirSirasi: ham.satirSirasi } : {}),
+              },
+            })
+            .eq("id", olusan.id);
+          if (kanitHatasi) {
+            console.error("[products/batch] fatura kaniti yazilamadi:", kanitHatasi.message);
+            if (kayit === "yeni") {
+              await urunuGeriAl(admin, store.id, olusan.id);
+              throw new Error("FATURA_KANIT_YAZILAMADI");
+            }
+          }
+        }
+
+        if (dogrulanmis && kayit !== "guncellendi") {
+          const baglandi = await satiriUrunleBagla(admin, dogrulanmis.satirId, olusan.id);
+          if (!baglandi && kayit === "yeni") {
+            await urunuGeriAl(admin, store.id, olusan.id);
+            throw new Error("FATURA_BAGLANTISI_YAZILAMADI");
+          }
         }
       }
 
@@ -377,6 +451,9 @@ export async function POST(request: NextRequest) {
             yayinIstegi,
           }),
         });
+      }
+      if (sonuclar.length > 0 && faturaKaynakli) {
+        sonuclar[sonuclar.length - 1].kayit = kayit;
       }
     } catch (err) {
       console.error("[products/batch] create failed:", err);

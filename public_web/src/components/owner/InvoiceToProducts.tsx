@@ -405,7 +405,14 @@ export default function InvoiceToProducts({
               sourceType: "invoice",
               kartDurumu: satir.sonuc,
               stokOnaylandi: satir.stokOnaylandi,
-              externalProductId: satir.barkod || satir.model || undefined,
+              externalProductId:
+                satir.barkod || satir.model
+                  ? [belge?.tedarikciVergiNo || belge?.tedarikci || "", satir.barkod || satir.model]
+                      .filter(Boolean)
+                      .join(":")
+                  : undefined,
+              islemKimligi: belge?.islemKimligi || undefined,
+              satirSirasi: sira,
               ownerApproved: true,
               yayinIstegi,
               purchasePriceAmount: satir.alisBirimFiyat ?? undefined,
