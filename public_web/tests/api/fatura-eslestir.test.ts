@@ -95,10 +95,10 @@ describe("/api/fatura-eslestir — OCR kaynağından bağımsız katalog eşleş
     expect(cevap.status).toBe(200);
     expect(govde.katalogEslesmesi).toBe(2);
     expect(govde.satirlar[0].katalog.resmiAd).toContain("ELT1302");
-    // İzin kapısı: Seher'in görsel izni henüz "var" değil. Resmî ad ve marka
-    // gelir, fotoğraf GELMEZ. İzin "var" olunca bu alan kendiliğinden dolar.
+    // Kilitli kapsam: resmî ad, marka VE fotoğraf gelir; kullanım izni sonra,
+    // çalışan sistemle istenir (izin durumu bilgi olarak taşınır).
     expect(govde.satirlar[0].katalog.izinDurumu).not.toBe("var");
-    expect(govde.satirlar[0].katalog.gorseller).toHaveLength(0);
+    expect(govde.satirlar[0].katalog.gorseller.length).toBeGreaterThan(0);
     expect(govde.satirlar[1].katalog.marka).toBeTruthy();
   });
 

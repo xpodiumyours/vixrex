@@ -1,10 +1,12 @@
 import policyJson from "../../../shared/product_image_policy.json";
 
 export const MIN_PRODUCT_IMAGES = policyJson.minImages;
+export const FATURA_MIN_PRODUCT_IMAGES = policyJson.faturaMinImages;
 export const MAX_PRODUCT_IMAGES = policyJson.maxImages;
 export const MAX_PRODUCT_IMAGE_SOURCE_MEGABYTES = policyJson.maxSourceMegabytes;
 export const MAX_PRODUCT_IMAGE_SOURCE_BYTES = MAX_PRODUCT_IMAGE_SOURCE_MEGABYTES * 1024 * 1024;
 export const MIN_PRODUCT_IMAGE_SOURCE_SHORT_EDGE = policyJson.minSourceShortEdge;
+export const FATURA_MIN_SOURCE_SHORT_EDGE = policyJson.faturaMinSourceShortEdge;
 
 export interface ProductImageValidationResult {
   ok: boolean;
@@ -83,6 +85,10 @@ function validateCountAndUrls(
     };
   }
   return { ok: true, imageUrls };
+}
+
+export function yonetilenUrunGorseliMi(url: string): boolean {
+  return managedProductImageUrl(url);
 }
 
 function managedProductImageUrl(url: string): boolean {

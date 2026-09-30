@@ -41,6 +41,16 @@ export interface UreticiFirmasi {
   izinDurumu: IzinDurumu;
 }
 
+export interface HavuzFirmasi {
+  anahtar: string;
+  ad: string;
+  sektor: string;
+  altKategori: string;
+  site: string;
+  platform: string;
+  izinDurumu: IzinDurumu;
+}
+
 /**
  * Havuzdaki firmalar — İZİN LİSTESİ TEK KAYNAKTAN GELİR.
  *
@@ -95,6 +105,120 @@ function katalogKlasoru(): string {
     path.resolve(process.cwd(), "public_web", "data", "katalog"),
   ];
   return adaylar.find((yol) => existsSync(yol)) ?? adaylar[0];
+}
+
+function firmaHavuzuYolu(): string {
+  const adaylar = [
+    path.resolve(process.cwd(), "scripts", "katalog", "firmalar.json"),
+    path.resolve(process.cwd(), "public_web", "scripts", "katalog", "firmalar.json"),
+  ];
+  return adaylar.find((yol) => existsSync(yol)) ?? adaylar[0];
+}
+
+let firmaHavuzuOnbellek: HavuzFirmasi[] | null = null;
+
+function firmaHavuzu(): HavuzFirmasi[] {
+  if (firmaHavuzuOnbellek) return firmaHavuzuOnbellek;
+
+  try {
+    const icerik: unknown = JSON.parse(readFileSync(firmaHavuzuYolu(), "utf8"));
+    if (!Array.isArray(icerik)) throw new Error("liste bekleniyordu");
+
+    firmaHavuzuOnbellek = icerik.map((ham) => {
+      const firma = ham as Record<string, unknown>;
+      const izin =
+        firma.izin === "var" || firma.izin === "bekliyor" ? (firma.izin as IzinDurumu) : "yok";
+      return {
+        anahtar: String(firma.anahtar ?? ""),
+        ad: String(firma.ad ?? ""),
+        sektor: String(firma.sektor ?? ""),
+        altKategori: String(firma.altKategori ?? ""),
+        site: String(firma.site ?? ""),
+        platform: String(firma.platform ?? ""),
+        izinDurumu: izin,
+      };
+    });
+    return firmaHavuzuOnbellek;
+  } catch (hata) {
+    console.error(
+      `[ureticiKatalog] firma havuzu okunamadi (${firmaHavuzuYolu()}):`,
+      hata instanceof Error ? hata.message : "bilinmeyen hata",
+    );
+    firmaHavuzuOnbellek = [];
+    return firmaHavuzuOnbellek;
+  }
+}
+
+function sadeFirmaDegeri(deger: string): string {
+  return deger
+    .toLocaleUpperCase("tr-TR")
+    .replace(/[^A-ZÇĞİÖŞÜ0-9]/g, "");
+}
+
+export function alanAdiTemizle(deger: string): string {
+  const ham = deger.trim();
+  if (!ham) return "";
+  try {
+    const url = new URL(ham.includes("://") ? ham : `https://${ham}`);
+    return url.hostname.toLowerCase().replace(/^www\./, "").replace(/\.$/, "");
+  } catch {
+    return "";
+  }
+}
+
+export function firmaHavuzKaydiniBul(
+  tedarikciAdi: string,
+  tedarikciSite = "",
+): HavuzFirmasi | null {
+  const alan = alanAdiTemizle(tedarikciSite);
+  if (alan) {
+    const siteEslesmesi = firmaHavuzu().find((firma) => alanAdiTemizle(firma.site) === alan);
+    if (siteEslesmesi) return siteEslesmesi;
+  }
+
+  const aranan = sadeFirmaDegeri(tedarikciAdi);
+  if (aranan.length < 3) return null;
+
+  for (const firma of firmaHavuzu()) {
+    const firmaSade = sadeFirmaDegeri(firma.ad);
+    if (firmaSade && (aranan.includes(firmaSade) || firmaSade.includes(aranan))) return firma;
+
+    const alanSade = sadeFirmaDegeri(alanAdiTemizle(firma.site));
+    if (alanSade.length >= 4 && aranan.includes(alanSade)) return firma;
+  }
+
+  return null;
+}
+
+export function firmaKataloguVarMi(anahtar: string): boolean {
+  return dizinler().some(
+    (dizin) =>
+      dizin.firma.anahtar === anahtar && (dizin.koda.size > 0 || dizin.barkoda.size > 0),
+  );
+}
+
+export function havuzFirmalari(): readonly HavuzFirmasi[] {
+  return firmaHavuzu();
+}
+
+export function satirdaHavuzMarkasiBul(
+  metin: string,
+  haricAnahtar: string | null = null,
+): HavuzFirmasi | null {
+  const sade = sadeFirmaDegeri(metin);
+  if (sade.length < 3) return null;
+
+  for (const firma of firmaHavuzu()) {
+    if (haricAnahtar && firma.anahtar === haricAnahtar) continue;
+
+    const firmaSade = sadeFirmaDegeri(firma.ad);
+    if (firmaSade.length >= 4 && sade.includes(firmaSade)) return firma;
+
+    const alanSade = sadeFirmaDegeri(alanAdiTemizle(firma.site));
+    if (alanSade.length >= 4 && sade.includes(alanSade)) return firma;
+  }
+
+  return null;
 }
 
 /** Katalog dosyalarını diskten okur. Bozuk dosya tüm akışı durdurmaz. */
@@ -181,11 +305,16 @@ function dizinler(): Dizin[] {
 }
 
 /**
- * İzin kapısı: firmanın fotoğrafları yalnız izin "var" olduğunda geçer.
- * İzin yoksa ürünün diğer bilgileri korunur, fotoğraflar boşaltılır.
+ * Fotoğraf taşıma (kilitli kapsam: önce çalışan sistem).
+ *
+ * Üreticinin fotoğrafları taslağa ve yayına girer; kullanım izni sonra,
+ * çalışan sistemle istenir. İzin takibi `invoice_image_rights` (okuma anında)
+ * ve `products.fatura_kanit.ureticiGorsel` (yazım anında) kayıtlarından yürür.
+ * `izinDurumu` artık bilgi olarak taşınır, engel olarak değil.
  */
-export function gorselKapisi(urun: UreticiUrunu, izinDurumu: IzinDurumu): UreticiUrunu {
-  return izinDurumu === "var" ? urun : { ...urun, gorseller: [] };
+export function gorselKapisi(urun: UreticiUrunu, _izinDurumu: IzinDurumu): UreticiUrunu {
+  void _izinDurumu;
+  return urun;
 }
 
 export interface KatalogEslesmesi {
@@ -196,6 +325,8 @@ export interface KatalogEslesmesi {
   dayanak: "kod" | "barkod";
   /** Firmanın fotoğraf kullanım izni var mı. Yoksa `urun.gorseller` boştur. */
   gorselIzniVar: boolean;
+  /** İzin kapısından ÖNCE aday olan fotoğraf adresleri. İnceleme alanı içindir. */
+  gorselAdaylari: string[];
 }
 
 /**
@@ -204,8 +335,8 @@ export interface KatalogEslesmesi {
  * Sıra kanıt gücüne göredir: önce barkod (tek ürünü gösterir), sonra model
  * kodu. İkisi de tutmazsa eşleşme yoktur — ada bakarak tahmin yapılmaz.
  *
- * Fotoğraf yalnız firmanın izni "var" ise döner. Böylece izinsiz görsel
- * akışın hiçbir yerine sızamaz.
+ * Fotoğraflar her zaman döner (kilitli kapsam: önce çalışan sistem);
+ * kullanım izni sonra istenir, `gorselIzniVar` bilgi olarak taşınır.
  */
 export function ureticiUrunuBul(args: {
   model?: string | null;
@@ -257,6 +388,7 @@ export function ureticiUrunuBul(args: {
     firma: dizin.firma,
     dayanak,
     gorselIzniVar: dizin.gorselIzniVar,
+    gorselAdaylari: urun.gorseller ?? [],
   };
 }
 
@@ -278,11 +410,12 @@ export function katalogOzeti(): Array<{
 let izinsizGorsellerOnbellek: Set<string> | null = null;
 
 /**
- * İzni olmayan firmaların katalogdaki bütün fotoğraf adresleri.
+ * İzni henüz istenmemiş firmaların katalogdaki bütün fotoğraf adresleri.
  *
- * `gorselKapisi` eşleştirme sırasında fotoğrafı zaten boşaltır; bu küme ikinci
- * ve asıl savunmadır: tarayıcıdan gelen istek, adresi başka yoldan öğrenip
- * doğrudan yayın ucuna gönderse bile sunucu onu tanır ve durdurur.
+ * Bu küme ENGEL değil İZLEME içindir: hangi kartta üretici görseli olduğunu
+ * `fatura_kanit.ureticiGorsel` işaretiyle birlikte gösterir; kullanım izni
+ * sonra, çalışan sistemle bu listeden istenir. Esnafın kendi fotoğrafı bu
+ * kümede olmadığı için her zamanki gibi serbestçe geçer.
  */
 function izinsizGorseller(): Set<string> {
   if (izinsizGorsellerOnbellek) return izinsizGorsellerOnbellek;
@@ -305,9 +438,11 @@ function izinsizGorseller(): Set<string> {
 }
 
 /**
- * Bu fotoğraf adresi, görsel izni olmayan bir üreticinin kataloğundan mı?
+ * Bu fotoğraf adresi, izni sonra istenecek bir üreticinin kataloğundan mı?
  *
- * Esnafın kendi çektiği fotoğraf bu kümede olmadığı için serbestçe geçer.
+ * Kilitli kapsam: EVET ise fotoğraf karta girer ve yayınlanır; adres,
+ * izin turu listesine (`fatura_kanit`, `invoice_image_rights`) yazılır.
+ * Esnafın kendi çektiği fotoğraf bu kümede olmadığı için izlenmez.
  */
 export function izinsizUreticiGorseli(adres: unknown): boolean {
   return typeof adres === "string" && izinsizGorseller().has(adres.trim());
@@ -322,22 +457,5 @@ export function izinsizUreticiGorseli(adres: unknown): boolean {
  * yanlış firmaya kilitlemek, hiç kilitlememekten kötüdür.
  */
 export function firmaAnahtariniCoz(tedarikciAdi: string): string | null {
-  const sade = (deger: string) =>
-    deger
-      .toLocaleUpperCase("tr-TR")
-      .replace(/[^A-ZÇĞİÖŞÜ0-9]/g, "");
-
-  const aranan = sade(tedarikciAdi);
-  if (aranan.length < 3) return null;
-
-  for (const firma of ureticiler()) {
-    const firmaSade = sade(firma.ad);
-    if (!firmaSade) continue;
-    if (aranan.includes(firmaSade) || firmaSade.includes(aranan)) return firma.anahtar;
-
-    const alanSade = sade(firma.alan.replace(/\.(com|net|org)(\.tr)?$/i, ""));
-    if (alanSade.length >= 4 && aranan.includes(alanSade)) return firma.anahtar;
-  }
-
-  return null;
+  return firmaHavuzKaydiniBul(tedarikciAdi)?.anahtar ?? null;
 }

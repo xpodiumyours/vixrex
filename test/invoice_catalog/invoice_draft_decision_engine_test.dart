@@ -85,28 +85,130 @@ void main() {
       expect(result.questions, isNotEmpty);
     });
 
-    test('guclu iz + izin + esnaf onayi + satis fiyati yayina hazirdir', () {
+    test(
+      'guclu iz + izin + esnaf onayi + satis fiyati + stok onayi yayina hazirdir',
+      () {
+        final draft = InvoiceProductDraft(
+          id: 'ready',
+          rawSourceLine: 'TER0101 ...',
+          supplierName: textEvidence('Seher Mensucat'),
+          normalizedName: textEvidence(
+            'Tutku Erkek Penye Atlet',
+            source: EvidenceSourceType.officialProductPage,
+          ),
+          supplierIdentityStrength: EvidenceStrength.strong,
+          productIdentityStrength: EvidenceStrength.strong,
+          rightsStatus: RightsStatus.verifiedSupplierPermission,
+          stockConfirmed: true,
+          merchantApproved: true,
+          salePrice: 149.90,
+        );
+
+        final result = engine.evaluate(draft);
+
+        expect(result.kartDurumu, KartDurumu.kanitli);
+        expect(result.decision, AutomationDecision.readyForPublish);
+        expect(result.canPrepareDraft, isTrue);
+        expect(result.canPublish, isTrue);
+        expect(result.externalMediaBlocked, isFalse);
+      },
+    );
+
+    test(
+      'faturadaki adet tek basina stok yerine gecmez: stok onayi yoksa yayin yok',
+      () {
+        final draft = InvoiceProductDraft(
+          id: 'stok-onaysiz',
+          rawSourceLine: 'TER0101 ... 18 AD 63,50 1143,00',
+          supplierName: textEvidence('Seher Mensucat'),
+          normalizedName: textEvidence('Tutku Erkek Penye Atlet'),
+          quantity: EvidenceValue<num>(
+            value: 18,
+            sourceType: EvidenceSourceType.invoice,
+            sourceReference: 'TER0101',
+            strength: EvidenceStrength.partial,
+            verifiedAt: now,
+          ),
+          supplierIdentityStrength: EvidenceStrength.strong,
+          productIdentityStrength: EvidenceStrength.strong,
+          rightsStatus: RightsStatus.verifiedSupplierPermission,
+          merchantApproved: true,
+          salePrice: 149.90,
+        );
+
+        final result = engine.evaluate(draft);
+
+        expect(result.kartDurumu, KartDurumu.kanitli);
+        expect(result.canPrepareDraft, isTrue);
+        expect(result.canPublish, isFalse);
+        expect(
+          result.questions.any((q) => q.contains('öneri')),
+          isTrue,
+          reason: 'Faturadaki adedin oneri oldugu ve onaylanmasi soylenmeli',
+        );
+        expect(draft.canUseQuantityAsStock, isFalse);
+        expect(
+          draft.copyWith(stockConfirmed: true).canUseQuantityAsStock,
+          isTrue,
+        );
+      },
+    );
+
+    test('ayni kod iki urune duserse eslesme kurulmaz, celiski gosterilir', () {
       final draft = InvoiceProductDraft(
-        id: 'ready',
-        rawSourceLine: 'TER0101 ...',
-        supplierName: textEvidence('Seher Mensucat'),
-        normalizedName: textEvidence(
-          'Tutku Erkek Penye Atlet',
-          source: EvidenceSourceType.officialProductPage,
-        ),
+        id: 'celiski',
+        rawSourceLine: 'TER0117 ...',
+        normalizedName: textEvidence('Tutku Erkek Penye Atlet'),
         supplierIdentityStrength: EvidenceStrength.strong,
         productIdentityStrength: EvidenceStrength.strong,
         rightsStatus: RightsStatus.verifiedSupplierPermission,
+        kartDurumu: KartDurumu.celiski,
+        celiskiDayanak: 'barkod',
+        celiskiAdaylari: const [
+          InvoiceConflictCandidate(
+            ad: 'Tutku Erkek Atlet Siyah L',
+            kaynak: 'https://sehermensucat.com/a',
+          ),
+          InvoiceConflictCandidate(
+            ad: 'Tutku Erkek Atlet Siyah XL',
+            kaynak: 'https://sehermensucat.com/b',
+          ),
+        ],
         merchantApproved: true,
         salePrice: 149.90,
+        stockConfirmed: true,
       );
 
       final result = engine.evaluate(draft);
 
-      expect(result.decision, AutomationDecision.readyForPublish);
-      expect(result.canPrepareDraft, isTrue);
-      expect(result.canPublish, isTrue);
-      expect(result.externalMediaBlocked, isFalse);
+      expect(result.kartDurumu, KartDurumu.celiski);
+      expect(result.decision, AutomationDecision.askMissing);
+      expect(result.canPrepareDraft, isFalse);
+      expect(result.canPublish, isFalse);
+      expect(result.questions.single, contains('barkod'));
+    });
+
+    test('sunucu hicbir durum vermezse durum kanit gucunden turetilir', () {
+      InvoiceProductDraft taslak({required String id}) => InvoiceProductDraft(
+        id: id,
+        rawSourceLine: 'satir',
+        supplierIdentityStrength: EvidenceStrength.strong,
+        productIdentityStrength: EvidenceStrength.strong,
+      );
+
+      expect(taslak(id: 'a').etkinKartDurumu, KartDurumu.kanitli);
+      expect(
+        taslak(id: 'b')
+            .copyWith(productIdentityStrength: EvidenceStrength.partial)
+            .etkinKartDurumu,
+        KartDurumu.eksik,
+      );
+      expect(
+        taslak(id: 'c')
+            .copyWith(productIdentityStrength: EvidenceStrength.weak)
+            .etkinKartDurumu,
+        KartDurumu.izYok,
+      );
     });
   });
 }

@@ -13,6 +13,12 @@ const mocks = vi.hoisted(() => ({
   admin: vi.fn(),
   verifyOwner: vi.fn(() => ({ storeId: "store-1" })),
   createProduct: vi.fn(),
+  publishProduct: vi.fn(
+    async (_args: Record<string, unknown>): Promise<{ success: boolean; id?: string; hata?: string }> => ({
+      success: true,
+      id: "urun-1",
+    }),
+  ),
   update: vi.fn(),
   upsert: vi.fn(),
 }));
@@ -22,7 +28,39 @@ vi.mock("@/lib/ownerSession", () => ({
   OWNER_SESSION_COOKIE: "vixrex_owner_session",
   verifyOwnerSession: mocks.verifyOwner,
 }));
-vi.mock("@/lib/productCoreServer", () => ({ createRichCoreProduct: mocks.createProduct }));
+vi.mock("@/lib/faturaGorsel", () => ({
+  kaynakGorselleriniHazirla: async (args: { adaylar: string[]; kaynakSayfa: string }) => ({
+    gorseller: args.adaylar.map((adres) => ({
+      url: adres,
+      kaynakGorsel: adres,
+      kaynakSayfa: args.kaynakSayfa,
+      genislik: 1200,
+      yukseklik: 1200,
+    })),
+    reddedilenler: [],
+    altyapiSorunu: false,
+  }),
+}));
+vi.mock("@/lib/faturaUrunBaglantisi", () => ({
+  satiriDogrula: async (
+    _admin: unknown,
+    _storeId: string,
+    _kimlik: unknown,
+    iddia: string,
+  ) => ({
+    satirId: "satir-1",
+    sonuc: iddia,
+    urunId: null,
+    izinliGorseller: { has: () => true },
+  }),
+  satiriUrunleBagla: async () => true,
+  urunuGeriAl: async () => undefined,
+  mevcutUrunuOku: async () => null,
+}));
+vi.mock("@/lib/productCoreServer", () => ({
+  createRichCoreProduct: mocks.createProduct,
+  publishInvoiceProduct: mocks.publishProduct,
+}));
 
 import { POST as topluUrunEkle } from "@/app/api/products/batch/route";
 import { ureticiUrunuBul } from "@/lib/ureticiKatalog";

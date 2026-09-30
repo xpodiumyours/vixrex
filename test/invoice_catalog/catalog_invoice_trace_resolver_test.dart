@@ -146,16 +146,77 @@ void main() {
         final tasarim = eslesen.single.copyWith(
           merchantApproved: true,
           salePrice: 199,
+          // Faturadaki adet stok değildir; esnaf onayı ayrı bir eylemdir.
+          stockConfirmed: true,
         );
 
         final karar = const InvoiceDraftDecisionEngine().evaluate(tasarim);
 
         // Bu satır eski kodda ASLA true olamazdı — supplierIdentityStrength
         // hep weak olduğu için evaluate() ilk kontrolde stopNoGuess dönerdi.
+        expect(karar.kartDurumu, KartDurumu.kanitli);
         expect(karar.canPublish, isTrue);
         expect(karar.decision, AutomationDecision.readyForPublish);
+
+        // Aynı satır stok onayı olmadan yayına çıkmaz.
+        final onaysiz = eslesen.single.copyWith(
+          merchantApproved: true,
+          salePrice: 199,
+        );
+        expect(
+          const InvoiceDraftDecisionEngine().evaluate(onaysiz).canPublish,
+          isFalse,
+        );
       },
     );
+
+    test('sunucunun celiski hali telefonda da aynen tasinir', () async {
+      final resolver = CatalogInvoiceTraceResolver(
+        storeSlug: 'deneme-vitrin',
+        editToken: 'token-1',
+        originOverride: 'https://vixrex-test.local',
+        httpClient: MockClient((request) async {
+          return http.Response(
+            jsonEncode({
+              'satirlar': [
+                {
+                  'model': 'TER0117',
+                  'sonuc': 'celiski',
+                  'katalog': null,
+                  'celiski': {
+                    'dayanak': 'barkod',
+                    'adaylar': [
+                      {
+                        'ad': 'Tutku Erkek Atlet Siyah L',
+                        'kaynak': 'https://sehermensucat.com/a',
+                      },
+                      {
+                        'ad': 'Tutku Erkek Atlet Siyah XL',
+                        'kaynak': 'https://sehermensucat.com/b',
+                      },
+                    ],
+                  },
+                },
+              ],
+            }),
+            200,
+            headers: {'content-type': 'application/json; charset=utf-8'},
+          );
+        }),
+      );
+
+      final guncellenen =
+          (await resolver.resolve([zayifTaslak(model: 'TER0117')])).single;
+
+      expect(guncellenen.etkinKartDurumu, KartDurumu.celiski);
+      expect(guncellenen.celiskiAdaylari, hasLength(2));
+      expect(guncellenen.celiskiDayanak, 'barkod');
+
+      final karar = const InvoiceDraftDecisionEngine().evaluate(guncellenen);
+      expect(karar.canPrepareDraft, isFalse);
+      expect(karar.canPublish, isFalse);
+      expect(karar.questions.single, contains('barkod'));
+    });
 
     test(
       'katalogda bulunmayan kod: kanıt zayıf kalır, kapı yine kapalı',
