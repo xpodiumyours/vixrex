@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import FirmaIzniPaneli from "@/components/owner/FirmaIzniPaneli";
 import {
   KART_DURUM_ETIKETI,
   durumBilgisi,
@@ -777,6 +778,10 @@ export default function InvoiceToProducts({
         </ul>
 
         {hata && <p className="fatura-hata">{hata}</p>}
+
+        {belge?.islemKimligi && (
+          <FirmaIzniPaneli storeSlug={storeSlug} islemKimligi={belge.islemKimligi} />
+        )}
 
         {yayinlanabilirTaslak > 0 && (
           <button type="button" onClick={taslaklariYayinla} disabled={yukleniyor}>
