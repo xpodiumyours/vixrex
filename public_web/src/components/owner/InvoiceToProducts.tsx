@@ -56,6 +56,17 @@ export interface KatalogBilgisi {
   kaynak: string;
 }
 
+interface AyniAlisverisAdayi {
+  islemKimligi: string;
+  iliski: "ayni" | "olasi";
+  sebep: string;
+  belgeTuru: string;
+  belgeNo: string;
+  belgeTarihi: string | null;
+  satirSayisi: number;
+  satirlar: Array<{ kod: string; adet: number | null }>;
+}
+
 interface FaturaOkumaSonucu {
   satirlar: FaturaSatiri[];
   belgeToplami: number | null;
@@ -68,6 +79,7 @@ interface FaturaOkumaSonucu {
   katalogEslesmesi?: number;
   sonucOzeti?: Record<string, number>;
   islemKimligi?: string | null;
+  ayniAlisveris?: AyniAlisverisAdayi[];
 }
 
 interface SatirDurumu extends FaturaSatiri {
@@ -77,6 +89,7 @@ interface SatirDurumu extends FaturaSatiri {
   stok: string;
   stokOnaylandi: boolean;
   esnafGorselleri: string[];
+  ayniAlisverisTekrari?: boolean;
 }
 
 interface YazmaSonucu {
@@ -140,6 +153,7 @@ export default function InvoiceToProducts({
   const [hata, setHata] = useState<string | null>(null);
   const [yukleniyor, setYukleniyor] = useState(false);
   const [sonuc, setSonuc] = useState<YazmaSonucu | null>(null);
+  const [alisverisCevaplari, setAlisverisCevaplari] = useState<Record<string, boolean>>({});
   const dosyaRef = useRef<HTMLInputElement>(null);
 
   const degerlendirmeler = useMemo(
@@ -238,7 +252,7 @@ export default function InvoiceToProducts({
   function tumunuOnayla() {
     setSatirlar((oncekiler) =>
       oncekiler.map((satir) => {
-        if (satir.sonuc !== "kanitli") return satir;
+        if (satir.sonuc !== "kanitli" || satir.ayniAlisverisTekrari) return satir;
         const degerlendirme = kartDegerlendir({
           satir,
           satisFiyati: fiyatSayisi(satir.satisFiyati),
@@ -249,6 +263,48 @@ export default function InvoiceToProducts({
         });
         if (!degerlendirme.onaylanabilir) return satir;
         return { ...satir, onayli: true };
+      }),
+    );
+  }
+
+  function kodTemiz(ham: string): string {
+    return ham.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  }
+
+  async function alisverisCevapla(aday: AyniAlisverisAdayi, ayni: boolean) {
+    if (!belge?.islemKimligi) return;
+    setHata(null);
+    try {
+      const cevap = await fetch("/api/fatura-alisveris-teyit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug: storeSlug,
+          islemKimligi: belge.islemKimligi,
+          digerIslemKimligi: aday.islemKimligi,
+          ayni,
+        }),
+      });
+      const govde = await cevap.json().catch(() => null);
+      if (!cevap.ok) {
+        throw new Error(
+          govde && typeof govde.hata === "string" ? govde.hata : "Cevabın kaydedilemedi.",
+        );
+      }
+    } catch (err) {
+      setHata(err instanceof Error ? err.message : "Cevabın kaydedilemedi.");
+      return;
+    }
+
+    setAlisverisCevaplari((onceki) => ({ ...onceki, [aday.islemKimligi]: ayni }));
+    const ilkKodlar = new Set(aday.satirlar.map((satir) => kodTemiz(satir.kod)).filter(Boolean));
+    setSatirlar((oncekiler) =>
+      oncekiler.map((satir) => {
+        const kod = kodTemiz(satir.model || satir.barkod);
+        if (!kod || !ilkKodlar.has(kod)) return satir;
+        return ayni
+          ? { ...satir, ayniAlisverisTekrari: true, onayli: false, stokOnaylandi: false, stok: "" }
+          : { ...satir, ayniAlisverisTekrari: false, stok: satir.adet === null ? "" : String(satir.adet) };
       }),
     );
   }
@@ -596,6 +652,32 @@ export default function InvoiceToProducts({
         </p>
       )}
 
+      {(belge?.ayniAlisveris ?? []).map((aday) => (
+        <div key={aday.islemKimligi} className="fatura-hata" role="status">
+          <p>
+            Bu belge, daha önce yüklediğin{aday.belgeNo ? ` ${aday.belgeNo} numaralı` : ""}
+            {aday.belgeTarihi ? ` ${aday.belgeTarihi} tarihli` : ""} belgeyle aynı alışveriş olabilir.{" "}
+            {aday.sebep} Aynı alışverişse adetler ikinci kez eklenmez.
+          </p>
+          {alisverisCevaplari[aday.islemKimligi] === undefined ? (
+            <>
+              <button type="button" onClick={() => alisverisCevapla(aday, true)}>
+                Evet, aynı alışveriş
+              </button>
+              <button type="button" onClick={() => alisverisCevapla(aday, false)}>
+                Hayır, ayrı alışveriş
+              </button>
+            </>
+          ) : (
+            <p>
+              {alisverisCevaplari[aday.islemKimligi]
+                ? "Aynı alışveriş olarak kaydedildi."
+                : "Ayrı alışveriş olarak kaydedildi."}
+            </p>
+          )}
+        </div>
+      ))}
+
       {ozet && (
         <ul className="fatura-ozet-satirlari">
           <li>
@@ -818,11 +900,21 @@ export default function InvoiceToProducts({
                     </ul>
                   )}
 
+                  {satir.ayniAlisverisTekrari && (
+                    <p className="fatura-hata" role="status">
+                      Bu ürün aynı alışverişin ilk belgesinde zaten var; stok ikinci kez eklenmez.
+                    </p>
+                  )}
+
                   <button
                     type="button"
                     className={satir.onayli ? "fatura-onay fatura-onay-acik" : "fatura-onay"}
                     onClick={() => satirGuncelle(index, { onayli: !satir.onayli })}
-                    disabled={yaziliyor || (!satir.onayli && !degerlendirme.onaylanabilir)}
+                    disabled={
+                      yaziliyor ||
+                      satir.ayniAlisverisTekrari === true ||
+                      (!satir.onayli && !degerlendirme.onaylanabilir)
+                    }
                   >
                     {satir.onayli ? "✓ Onaylandı" : "Kartı onayla"}
                   </button>

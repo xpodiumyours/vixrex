@@ -6,7 +6,7 @@ import { verifyStoreEditToken } from "@/lib/instagramServer";
 import { fingerprintClient, getClientIp } from "@/lib/rentDemoSecurity";
 import { belgeGercegiUyuyorMu } from "@/lib/faturaSatirAyikla";
 import { faturaSatirlariniDijitalIzle, sonucOzeti, type HamFaturaSatiri } from "@/lib/faturaEslestir";
-import { belgeParmakIzi, islemKaydet } from "@/lib/faturaIslemKaydi";
+import { ayniAlisverisAdaylari, belgeParmakIzi, islemKaydet } from "@/lib/faturaIslemKaydi";
 import { faturaTaslaklari } from "@/lib/faturaTaslagi";
 import { faturayiOku, type GoruSatiri } from "@/lib/faturaGoru";
 
@@ -161,6 +161,15 @@ export async function POST(request: NextRequest) {
     let sonTedarikciVergiNo = "";
     let sonTedarikciAdres = "";
     let sonTedarikciSite = "";
+    let sonBelge = {
+      belgeTuru: "",
+      belgeNo: "",
+      belgeTarihi: "",
+      malBedeli: null as number | null,
+      kdvTutari: null as number | null,
+      indirimTutari: null as number | null,
+      odenecekToplam: null as number | null,
+    };
 
     for (let deneme = 1; deneme <= DENEME_SINIRI; deneme++) {
       const okuma = await faturayiOku(goruntu);
@@ -196,7 +205,19 @@ export async function POST(request: NextRequest) {
       sonTedarikciSite = okuma.tedarikciSite;
       sonOzet = { adet: okuma.belgeAdedi, toplam: okuma.belgeToplami };
       sonSatirlar = hamSatirlar;
-      sonUyum = belgeGercegiUyuyorMu(hamSatirlar, sonOzet);
+      sonBelge = {
+        belgeTuru: okuma.belgeTuru,
+        belgeNo: okuma.belgeNo,
+        belgeTarihi: okuma.belgeTarihi,
+        malBedeli: okuma.malBedeli,
+        kdvTutari: okuma.kdvTutari,
+        indirimTutari: okuma.indirimTutari,
+        odenecekToplam: okuma.odenecekToplam,
+      };
+      sonUyum = belgeGercegiUyuyorMu(hamSatirlar, {
+        adet: sonOzet.adet,
+        toplam: okuma.malBedeli ?? sonOzet.toplam,
+      });
       if (sonUyum.uyumlu) break;
 
       console.warn(
@@ -223,7 +244,7 @@ export async function POST(request: NextRequest) {
     );
     const eslesenSayisi = satirlar.filter((satir) => satir.katalog !== null).length;
 
-    const islemKimligi = await islemKaydet({
+    const kayitGirdisi = {
       slug: ownerSlug,
       parmakIzi: belgeParmakIzi(bayt),
       belgeAdedi: sonOzet.adet,
@@ -234,7 +255,12 @@ export async function POST(request: NextRequest) {
       tedarikciSite: etkinSite,
       tedarikciIz,
       satirlar,
-    });
+      ...sonBelge,
+    };
+    const islemKimligi = await islemKaydet(kayitGirdisi);
+    const ayniAlisveris = islemKimligi
+      ? await ayniAlisverisAdaylari({ slug: ownerSlug, islemKimligi, girdi: kayitGirdisi })
+      : [];
 
     return NextResponse.json({
       tamam: true,
@@ -252,6 +278,8 @@ export async function POST(request: NextRequest) {
       sonucOzeti: sonucOzeti(satirlar),
       taslaklar: faturaTaslaklari(satirlar, islemKimligi),
       islemKimligi,
+      belge: sonBelge,
+      ayniAlisveris,
     });
   } catch (err) {
     const kod = err instanceof Error ? err.message : "unknown";
