@@ -127,6 +127,7 @@ void main() {
           return http.Response(
             jsonEncode({'hata': 'Oturumun geçersiz veya süresi dolmuş.'}),
             401,
+            headers: {'content-type': 'application/json; charset=utf-8'},
           );
         }),
       );
