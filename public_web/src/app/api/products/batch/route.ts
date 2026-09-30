@@ -6,6 +6,7 @@ import { createRichCoreProduct, publishInvoiceProduct } from "@/lib/productCoreS
 import { urunGirdisiniHazirla } from "@/lib/productIntake";
 import { izinsizUreticiGorseli } from "@/lib/ureticiKatalog";
 import { durumGecerliMi, yayinEksikleri } from "@/lib/faturaKartDurumu";
+import { FATURA_MIN_PRODUCT_IMAGES } from "@/lib/productImagePolicy";
 
 /**
  * Toplu ürün oluşturma API'si.
@@ -162,6 +163,10 @@ export async function POST(request: NextRequest) {
       storeName: store.name,
       govde: satirGovdesi,
       gorselPolitikasi: "toplu",
+      enAzGorsel:
+        (ham.sourceType || ham.source_type || "").trim() === FATURA_KAYNAGI
+          ? FATURA_MIN_PRODUCT_IMAGES
+          : undefined,
       sablonOnbellegi,
     });
 

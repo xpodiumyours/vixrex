@@ -116,8 +116,8 @@ begin
     return jsonb_build_object('success', false, 'hata', 'Satış fiyatı girilmedi.');
   end if;
 
-  if v_images is null or jsonb_typeof(v_images) <> 'array' or jsonb_array_length(v_images) < 3 then
-    return jsonb_build_object('success', false, 'hata', 'En az 3 fotoğraf gerekiyor.');
+  if v_images is null or jsonb_typeof(v_images) <> 'array' or jsonb_array_length(v_images) < 1 then
+    return jsonb_build_object('success', false, 'hata', 'En az 1 doğrulanmış ürün fotoğrafı gerekiyor.');
   end if;
 
   if v_stock is null then

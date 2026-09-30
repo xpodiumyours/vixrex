@@ -224,14 +224,24 @@ describe("faturadan gelen ürünün yayın kapısı", () => {
     expect(yazilan).toMatchObject({ fatura_kanit: { kartDurumu: "kanitli", stokOnaylandi: true } });
   });
 
-  it("fotoğrafı eksik ürün, onaylı ve fiyatlı olsa bile taslak kalır", async () => {
+  it("fotoğrafsız ürün, onaylı ve fiyatlı olsa bile taslak kalır", async () => {
+    const cevap = await topluUrunEkle(istek([faturaSatiri({ imageUrls: [] })]));
+    const govde = await cevap.json();
+
+    expect(mocks.createProduct.mock.calls[0][0].isVisible).toBe(false);
+    expect(mocks.publishProduct).not.toHaveBeenCalled();
+    expect(govde.satirlar[0].sebep).toContain("fotoğraf");
+  });
+
+  it("tek doğrulanmış ürün fotoğrafı olan kanıtlı satır yayına çıkabilir", async () => {
     const cevap = await topluUrunEkle(
       istek([faturaSatiri({ imageUrls: [FOTOGRAFLAR[0]] })]),
     );
     const govde = await cevap.json();
 
     expect(mocks.createProduct.mock.calls[0][0].isVisible).toBe(false);
-    expect(govde.satirlar[0].sebep).toContain("fotoğraf");
+    expect(mocks.publishProduct).toHaveBeenCalledTimes(1);
+    expect(govde.yayinda).toBe(1);
   });
 
   it("alış fiyatı ürün kartına hiçbir alandan sızmaz", async () => {

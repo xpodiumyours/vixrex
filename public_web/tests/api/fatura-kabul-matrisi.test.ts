@@ -151,7 +151,7 @@ describe("kabul matrisi R1-R10 + R2a sunucu sozlesmesi", () => {
       { stokOnaylandi: false },
       { kartDurumu: "eksik" },
       { priceText: "" },
-      { imageUrls: [FOTOGRAFLAR[0]] },
+      { imageUrls: [] },
       { yayinIstegi: false },
     ];
     for (const varyant of kapaliVaryantlar) {

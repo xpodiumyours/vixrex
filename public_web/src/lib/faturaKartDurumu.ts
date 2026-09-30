@@ -1,4 +1,4 @@
-import { MIN_PRODUCT_IMAGES } from "@/lib/productImagePolicy";
+import { FATURA_MIN_PRODUCT_IMAGES } from "@/lib/productImagePolicy";
 import type { EslesmisFaturaSatiri } from "@/lib/faturaEslestir";
 
 export type KartDurumu = "kanitli" | "eksik" | "celiski" | "iz-yok";
@@ -15,6 +15,8 @@ export const KART_DURUM_ETIKETI: Record<KartDurumu, string> = {
 export function durumGecerliMi(deger: unknown): deger is KartDurumu {
   return typeof deger === "string" && (KART_DURUMLARI as readonly string[]).includes(deger);
 }
+
+export const ONAY_EKSIGI = "Kart onaylanmadı.";
 
 export interface YayinGirdisi {
   durum: KartDurumu;
@@ -40,13 +42,13 @@ export function yayinEksikleri(girdi: YayinGirdisi): string[] {
   if (girdi.stok === null || !Number.isInteger(girdi.stok) || girdi.stok < 0) {
     eksikler.push("Stok adedi geçersiz.");
   }
-  if (girdi.gorselSayisi < MIN_PRODUCT_IMAGES) {
+  if (girdi.gorselSayisi < FATURA_MIN_PRODUCT_IMAGES) {
     eksikler.push(
-      `En az ${MIN_PRODUCT_IMAGES} fotoğraf gerekiyor; kartta ${girdi.gorselSayisi} fotoğraf var.`,
+      `En az ${FATURA_MIN_PRODUCT_IMAGES} doğrulanmış ürün fotoğrafı gerekiyor; kartta ${girdi.gorselSayisi} fotoğraf var.`,
     );
   }
   if (!girdi.onaylandi) {
-    eksikler.push("Kart onaylanmadı.");
+    eksikler.push(ONAY_EKSIGI);
   }
 
   return eksikler;
@@ -76,6 +78,8 @@ export interface KartGirdisi {
 export interface KartDegerlendirmesi {
   durum: KartDurumu;
   yayinaHazir: boolean;
+  onaylanabilir: boolean;
+  bilgiEksikleri: string[];
   eksikler: string[];
   gorseller: string[];
 }
@@ -93,7 +97,16 @@ export function kartDegerlendir(girdi: KartGirdisi): KartDegerlendirmesi {
     gorselSayisi: gorseller.length,
   });
 
-  return { durum, yayinaHazir: eksikler.length === 0, eksikler, gorseller };
+  const bilgiEksikleri = eksikler.filter((eksik) => eksik !== ONAY_EKSIGI);
+
+  return {
+    durum,
+    yayinaHazir: eksikler.length === 0,
+    onaylanabilir: bilgiEksikleri.length === 0,
+    bilgiEksikleri,
+    eksikler,
+    gorseller,
+  };
 }
 
 export interface DurumBilgisi {

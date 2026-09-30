@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { ureticiUrunuBul, katalogOzeti, type UreticiUrunu } from "@/lib/ureticiKatalog";
+import { FATURA_MIN_PRODUCT_IMAGES } from "@/lib/productImagePolicy";
 import seherHam from "../../data/katalog/uretici-katalog-seher-mensucat.json";
 
 // Casper'ın gerçek faturası tek örnekti (13 satır). Bu test onun ötesine
@@ -80,7 +81,7 @@ function kartUret(satir: FaturaSatiri): UretilenKart {
   // Kilitli kapsam: üretici fotoğrafı karta girer ve yayınlanır; kullanım
   // izni sonra, çalışan sistemle istenir. Yayına hazırlık yalnız fotoğraf
   // sayısına (kural: en az 3) ve kanıtlı eşleşmeye bakar.
-  const yeterliFoto = eslesme.urun.gorseller.length >= 3;
+  const yeterliFoto = eslesme.urun.gorseller.length >= FATURA_MIN_PRODUCT_IMAGES;
   return {
     kod: satir.kod,
     ad: eslesme.urun.ad,
@@ -88,7 +89,7 @@ function kartUret(satir: FaturaSatiri): UretilenKart {
     gorselSayisi: eslesme.urun.gorseller.length,
     barkod: eslesme.urun.barkod,
     yayinaHazir: yeterliFoto,
-    sebep: yeterliFoto ? "yayına hazır" : "fotoğraf < 3, taslak kalır",
+    sebep: yeterliFoto ? "yayına hazır" : "fotoğraf yok, taslak kalır",
   };
 }
 
@@ -149,8 +150,10 @@ describe("rastgele fatura genelleme — tek örnekle sınırlı değil", () => {
     // ürün yayına hazırdır, kullanım izni sonra istenir. Her kartın kararı
     // fotoğraf sayısıyla tutarlı olmalı, sebep de açık olmalı.
     for (const kart of raporlar.flatMap((r) => r.kartlar)) {
-      expect(kart.yayinaHazir).toBe(kart.gorselSayisi >= 3);
-      expect(kart.sebep).toBe(kart.gorselSayisi >= 3 ? "yayına hazır" : "fotoğraf < 3, taslak kalır");
+      expect(kart.yayinaHazir).toBe(kart.gorselSayisi >= FATURA_MIN_PRODUCT_IMAGES);
+      expect(kart.sebep).toBe(
+        kart.gorselSayisi >= FATURA_MIN_PRODUCT_IMAGES ? "yayına hazır" : "fotoğraf yok, taslak kalır",
+      );
     }
     expect(toplamHazir).toBeGreaterThan(0);
     expect(toplamSatir).toBe(40);

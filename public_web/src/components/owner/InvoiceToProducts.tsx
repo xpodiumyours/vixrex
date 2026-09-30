@@ -232,15 +232,23 @@ export default function InvoiceToProducts({
   }
 
   /**
-   * Toplu onay yalnız kanıtlı satırlara dokunur; stok onayı da esnafın bu
-   * eylemiyle verilir. Şüpheli satır tek tek bakılır.
+   * Toplu onay tekil onayla aynı kurala bağlıdır: yalnız bilgisi tamam,
+   * stoğu esnafın kendisi onaylamış kanıtlı satırlar onaylanır.
    */
   function tumunuOnayla() {
     setSatirlar((oncekiler) =>
       oncekiler.map((satir) => {
         if (satir.sonuc !== "kanitli") return satir;
-        if (satir.stok.trim() === "") return satir;
-        return { ...satir, onayli: true, stokOnaylandi: true };
+        const degerlendirme = kartDegerlendir({
+          satir,
+          satisFiyati: fiyatSayisi(satir.satisFiyati),
+          stok: stokSayisi(satir.stok),
+          stokOnaylandi: satir.stokOnaylandi,
+          esnafGorselleri: satir.esnafGorselleri,
+          onaylandi: satir.onayli,
+        });
+        if (!degerlendirme.onaylanabilir) return satir;
+        return { ...satir, onayli: true };
       }),
     );
   }
@@ -339,7 +347,7 @@ export default function InvoiceToProducts({
               stockQuantity: stokSayisi(satir.stok),
               sourceType: "invoice",
               kartDurumu: satir.sonuc,
-              stokOnaylandi: true,
+              stokOnaylandi: satir.stokOnaylandi,
               externalProductId: satir.barkod || satir.model || undefined,
               ownerApproved: true,
               yayinIstegi,
@@ -802,9 +810,9 @@ export default function InvoiceToProducts({
                     />
                   </label>
 
-                  {degerlendirme.eksikler.length > 0 && (
+                  {degerlendirme.bilgiEksikleri.length > 0 && (
                     <ul className="fatura-eksikler">
-                      {degerlendirme.eksikler.map((eksik) => (
+                      {degerlendirme.bilgiEksikleri.map((eksik) => (
                         <li key={eksik}>{eksik}</li>
                       ))}
                     </ul>
@@ -814,7 +822,7 @@ export default function InvoiceToProducts({
                     type="button"
                     className={satir.onayli ? "fatura-onay fatura-onay-acik" : "fatura-onay"}
                     onClick={() => satirGuncelle(index, { onayli: !satir.onayli })}
-                    disabled={yaziliyor || !degerlendirme.yayinaHazir}
+                    disabled={yaziliyor || (!satir.onayli && !degerlendirme.onaylanabilir)}
                   >
                     {satir.onayli ? "✓ Onaylandı" : "Kartı onayla"}
                   </button>
