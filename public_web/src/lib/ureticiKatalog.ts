@@ -8,11 +8,13 @@ import path from "node:path";
 // Toplama betikleri: public_web/scripts/katalog/ (bkz. scripts/katalog/rapor.json)
 // Katalog dosyaları: public_web/data/katalog/uretici-katalog-<firma>.json
 //
-// İki kural hiç değişmez:
+// Kilitli kapsam (F1, Master Plan): önce çalışan sistem.
 //   1. TAHMİN YOK — eşleşme yalnız barkod veya model kodu birebir tuttuğunda
 //      kurulur. Ada bakarak eşleştirme yapılmaz.
-//   2. İZİN KAPISI — firmanın fotoğrafları ancak izinDurumu "var" olduğunda
-//      kullanılır. İzin yoksa ürünün adı/açıklaması gelir, fotoğrafı gelmez.
+//   2. GÖRSEL KARTIN PARÇASIDIR — firmanın fotoğrafları taslağa ve yayına girer;
+//      kullanım izni sonra, çalışan sistemle istenir. İzin takibi
+//      `invoice_image_rights` ve `products.fatura_kanit.ureticiGorsel`
+//      kayıtlarından yürür. `izinDurumu` bilgi olarak taşınır, engel değil.
 //
 // Kataloglar `src/` dışında tutulur ve ilk kullanımda diskten okunur: toplam
 // hacim megabaytları bulduğu için Next.js paketine gömülmesi yanlış olur.
@@ -318,14 +320,14 @@ export function gorselKapisi(urun: UreticiUrunu, _izinDurumu: IzinDurumu): Ureti
 }
 
 export interface KatalogEslesmesi {
-  /** Katalogdaki ürün. Fotoğraflar izin kapısından geçmiştir. */
+  /** Katalogdaki ürün. Fotoğraflar görsel kapısından geçmiştir (F1: karta girer, izin sonra istenir). */
   urun: UreticiUrunu;
   firma: UreticiFirmasi;
   /** Eşleşmenin neye dayandığı. Kanıt olmadan eşleşme kurulmaz. */
   dayanak: "kod" | "barkod";
-  /** Firmanın fotoğraf kullanım izni var mı. Yoksa `urun.gorseller` boştur. */
+  /** Firmanın fotoğraf kullanım izni var mı. F1: bilgi olarak taşınır, engel değil. */
   gorselIzniVar: boolean;
-  /** İzin kapısından ÖNCE aday olan fotoğraf adresleri. İnceleme alanı içindir. */
+  /** Katalogdaki bütün fotoğraf adresleri. İnceleme ve izin turu alanı içindir. */
   gorselAdaylari: string[];
 }
 

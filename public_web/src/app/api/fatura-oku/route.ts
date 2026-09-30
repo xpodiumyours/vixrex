@@ -16,7 +16,8 @@ import { faturayiOku, type GoruSatiri } from "@/lib/faturaGoru";
 // ayrı "okuma beyni" olmaz (bkz. 2026-09-26 mimari düzeltmesi: önceden web
 // tarafı ayrı bir OpenAI zinciri kullanıyordu, anahtar yoktu, hiç çalışmadı).
 //
-// Zincir: görüntü → vixrex-fatura-goru (Kilo, ücretsiz, anahtarsız) → ham
+// Zincir: görüntü → faturaGoru.ts (OpenRouter, OPENROUTER_API_KEY gerekir;
+// anahtar yoksa okuyucu kapalıdır, bkz. /api/fatura-okuyucu-durumu) → ham
 // metin → faturaSatirAyikla.ts (deterministik satır ayırma) →
 // faturaEslestir.ts (gerçek üretici kataloğu). Hiçbir aşama ürün oluşturmaz
 // veya yayınlamaz — o /api/products/batch üzerinden, esnaf onayıyla olur.
