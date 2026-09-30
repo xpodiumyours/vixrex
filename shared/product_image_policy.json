@@ -6,5 +6,6 @@
   "faturaMinImages": 1,
   "maxImages": 11,
   "maxSourceMegabytes": 5,
-  "minSourceShortEdge": 1200
+  "minSourceShortEdge": 1200,
+  "faturaMinSourceShortEdge": 600
 }

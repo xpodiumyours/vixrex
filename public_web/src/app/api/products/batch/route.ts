@@ -6,7 +6,8 @@ import { createRichCoreProduct, publishInvoiceProduct } from "@/lib/productCoreS
 import { urunGirdisiniHazirla } from "@/lib/productIntake";
 import { izinsizUreticiGorseli } from "@/lib/ureticiKatalog";
 import { durumGecerliMi, yayinEksikleri } from "@/lib/faturaKartDurumu";
-import { FATURA_MIN_PRODUCT_IMAGES } from "@/lib/productImagePolicy";
+import { FATURA_MIN_PRODUCT_IMAGES, yonetilenUrunGorseliMi } from "@/lib/productImagePolicy";
+import { kaynakGorselleriniHazirla } from "@/lib/faturaGorsel";
 
 /**
  * Toplu ürün oluşturma API'si.
@@ -78,6 +79,7 @@ interface ProductBatchItem {
   yayinIstegi?: boolean;
   /** Faturadan gelen satırlarda esnafın stok onayı. Faturadaki adet öneridir. */
   stokOnaylandi?: boolean;
+  gorselKaynagi?: string;
   /** Satırın kanıt durumu. Yalnız "kanitli" satır yayına çıkar. */
   kartDurumu?: unknown;
   /** Faturadaki birim alış fiyatı. Karta yazılmaz, müşteriye gösterilmez. */
@@ -193,7 +195,42 @@ export async function POST(request: NextRequest) {
     // kartta üretici görseli olduğu fatura_kanit + invoice_image_rights
     // kayıtlarından izlenir — izin turu bu listeden yürür. Esnafın kendi
     // fotoğrafı her zamanki gibi serbestçe geçer.
+    const disGorseller = faturaKaynakli
+      ? hazirlik.girdi.imageUrls.filter((adres) => !yonetilenUrunGorseliMi(adres))
+      : [];
     const ureticiGorselVar = hazirlik.girdi.imageUrls.some(izinsizUreticiGorseli);
+
+    let urunGorselleri = hazirlik.girdi.imageUrls;
+    let gorselDurumu = "";
+    let gorselKaynaklari: Array<Record<string, unknown>> = [];
+    if (disGorseller.length > 0) {
+      const hazir = await kaynakGorselleriniHazirla({
+        admin,
+        slug,
+        kaynakSayfa: typeof ham.gorselKaynagi === "string" ? ham.gorselKaynagi.trim() : "",
+        adaylar: disGorseller,
+      });
+      const depodaki = new Map(hazir.gorseller.map((gorsel) => [gorsel.kaynakGorsel, gorsel]));
+      const altyapiHatasi = new Set(
+        hazir.reddedilenler
+          .filter((red) => red.sebep === "erisilemedi" || red.sebep === "depoya-yazilamadi")
+          .map((red) => red.kaynakGorsel),
+      );
+      urunGorselleri = hazirlik.girdi.imageUrls.flatMap((adres) => {
+        if (yonetilenUrunGorseliMi(adres)) return [adres];
+        const kopya = depodaki.get(adres);
+        if (kopya) return [kopya.url];
+        return altyapiHatasi.has(adres) ? [adres] : [];
+      });
+      gorselKaynaklari = hazir.gorseller.map((gorsel) => ({
+        depoUrl: gorsel.url,
+        kaynakGorsel: gorsel.kaynakGorsel,
+        kaynakSayfa: gorsel.kaynakSayfa,
+        genislik: gorsel.genislik,
+        yukseklik: gorsel.yukseklik,
+      }));
+      gorselDurumu = altyapiHatasi.size > 0 ? "dis-baglanti" : "depoda";
+    }
 
     const faturaEksikleri = faturaKaynakli
       ? yayinEksikleri({
@@ -202,7 +239,7 @@ export async function POST(request: NextRequest) {
           stok: hazirlik.girdi.stockQuantity,
           stokOnaylandi,
           onaylandi: esnafOnayladi,
-          gorselSayisi: hazirlik.girdi.imageUrls.length,
+          gorselSayisi: urunGorselleri.length,
         })
       : [];
 
@@ -229,7 +266,7 @@ export async function POST(request: NextRequest) {
         description: hazirlik.girdi.description,
         priceText: hazirlik.girdi.priceText,
         priceAmount: hazirlik.girdi.priceAmount,
-        imageUrls: hazirlik.girdi.imageUrls,
+        imageUrls: urunGorselleri,
         categoryId: hazirlik.girdi.categoryId,
         sourceType: kaynak,
         externalProductId: ham.externalProductId || "",
@@ -271,7 +308,15 @@ export async function POST(request: NextRequest) {
       if (faturaKaynakli) {
         const { error: kanitHatasi } = await admin
           .from("products")
-          .update({ fatura_kanit: { kartDurumu, stokOnaylandi, ureticiGorsel: ureticiGorselVar } })
+          .update({
+            fatura_kanit: {
+              kartDurumu,
+              stokOnaylandi,
+              ureticiGorsel: ureticiGorselVar,
+              gorselDurumu,
+              gorselKaynaklari,
+            },
+          })
           .eq("id", olusan.id);
         if (kanitHatasi) {
           console.error("[products/batch] fatura kaniti yazilamadi:", kanitHatasi.message);

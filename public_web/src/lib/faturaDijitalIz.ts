@@ -128,7 +128,7 @@ export async function varsayilanCoz(hostname: string): Promise<string[]> {
   ];
 }
 
-async function hostGuvenliMi(
+export async function hostGuvenliMi(
   hostname: string,
   resolveHost: (hostname: string) => Promise<string[]>,
 ): Promise<boolean> {

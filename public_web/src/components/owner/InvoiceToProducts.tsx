@@ -398,6 +398,7 @@ export default function InvoiceToProducts({
               priceText: `${satisFiyati} TL`,
               categoryId: satir.kategoriId,
               imageUrls: degerlendirme.gorseller,
+              gorselKaynagi: katalog?.kaynak || undefined,
               brand: katalog?.marka || undefined,
               barcode: satir.barkod || undefined,
               stockQuantity: stokSayisi(satir.stok),

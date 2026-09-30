@@ -20,6 +20,19 @@ vi.mock("@/lib/ownerSession", () => ({
   OWNER_SESSION_COOKIE: "vixrex_owner_session",
   verifyOwnerSession: mocks.verifyOwner,
 }));
+vi.mock("@/lib/faturaGorsel", () => ({
+  kaynakGorselleriniHazirla: async (args: { adaylar: string[]; kaynakSayfa: string }) => ({
+    gorseller: args.adaylar.map((adres) => ({
+      url: adres,
+      kaynakGorsel: adres,
+      kaynakSayfa: args.kaynakSayfa,
+      genislik: 1200,
+      yukseklik: 1200,
+    })),
+    reddedilenler: [],
+    altyapiSorunu: false,
+  }),
+}));
 vi.mock("@/lib/productCoreServer", () => ({
   createRichCoreProduct: mocks.createProduct,
   publishInvoiceProduct: mocks.publishProduct,
