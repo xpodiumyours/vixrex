@@ -147,11 +147,17 @@ export async function PATCH(request: NextRequest) {
 
   const { data: current } = await owned.admin
     .from("products")
-    .select("name,description,price_text,price_amount,category_id,metadata,variants,brand,barcode,stock_quantity,stock_status,image_urls,old_price_amount,badge_tag,fulfillment_region")
+    .select("name,description,price_text,price_amount,category_id,metadata,variants,brand,barcode,stock_quantity,stock_status,image_urls,old_price_amount,badge_tag,fulfillment_region,source_type,is_visible")
     .eq("id", productId)
     .eq("store_id", owned.store.id)
     .maybeSingle();
   if (!current) return NextResponse.json({ hata: "Ürün bulunamadı." }, { status: 404 });
+
+  // Fatura taslağı sıradan düzenlemeyle yayına çıkmaz (bayrak aşağıda,
+  // görünürlük hesabının yanında uygulanır). Geçerli yayındaki fatura
+  // ürünü de sıradan düzenlemeyle taslağa düşmez.
+  const faturaSatiri = (current as { source_type?: string }).source_type === "invoice";
+  const faturaTaslak = faturaSatiri && (current as { is_visible?: boolean }).is_visible !== true;
 
   const currentImageUrls = normalizeProductImageUrls(current.image_urls);
   const requestedImageUrls = hasOwn(govde, "imageUrls")
@@ -167,6 +173,12 @@ export async function PATCH(request: NextRequest) {
     }
     imageUrls = imageValidation.imageUrls;
     gorunurlukYenidenHesaplanacak = true;
+  }
+  // Fatura taslağı: fotoğraf tamamlansa bile görünürlük korunur (taslak
+  // kalır); yalnız /api/fatura-yayinla görünür yapar. Böylece eski sürüm,
+  // toplu düzenleme veya fotoğraf ekleme kapıyı atlayamaz.
+  if (faturaTaslak) {
+    gorunurlukYenidenHesaplanacak = false;
   }
   const eksikFotografSayisi = Math.max(0, MIN_PRODUCT_IMAGES - imageUrls.length);
 
@@ -261,7 +273,8 @@ export async function PATCH(request: NextRequest) {
     });
     return NextResponse.json({
       tamam: true,
-      taslak: eksikFotografSayisi > 0,
+      // Fatura taslağı fotoğrafı tam olsa da taslaktır; yalnız Yayınla açar.
+      taslak: faturaTaslak ? true : eksikFotografSayisi > 0,
       eksikFotografSayisi,
     });
   } catch (err) {

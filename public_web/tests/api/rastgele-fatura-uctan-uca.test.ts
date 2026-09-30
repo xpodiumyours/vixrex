@@ -13,6 +13,12 @@ const mocks = vi.hoisted(() => ({
   admin: vi.fn(),
   verifyOwner: vi.fn(() => ({ storeId: "store-1" })),
   createProduct: vi.fn(),
+  publishProduct: vi.fn(
+    async (_args: Record<string, unknown>): Promise<{ success: boolean; id?: string; hata?: string }> => ({
+      success: true,
+      id: "urun-1",
+    }),
+  ),
   update: vi.fn(),
   upsert: vi.fn(),
 }));
@@ -22,7 +28,10 @@ vi.mock("@/lib/ownerSession", () => ({
   OWNER_SESSION_COOKIE: "vixrex_owner_session",
   verifyOwnerSession: mocks.verifyOwner,
 }));
-vi.mock("@/lib/productCoreServer", () => ({ createRichCoreProduct: mocks.createProduct }));
+vi.mock("@/lib/productCoreServer", () => ({
+  createRichCoreProduct: mocks.createProduct,
+  publishInvoiceProduct: mocks.publishProduct,
+}));
 
 import { POST as topluUrunEkle } from "@/app/api/products/batch/route";
 import { ureticiUrunuBul } from "@/lib/ureticiKatalog";

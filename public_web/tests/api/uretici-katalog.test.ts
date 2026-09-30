@@ -131,9 +131,11 @@ describe("görsel izin kapısı", () => {
     kaynak: "https://ornek.example/urun",
   };
 
-  it("izin yokken ve izin beklerken fotoğraf geçmez", () => {
-    expect(gorselKapisi(urun, "yok").gorseller).toHaveLength(0);
-    expect(gorselKapisi(urun, "bekliyor").gorseller).toHaveLength(0);
+  it("izin durumu ne olursa olsun fotoğraf taşınır — izin sonra istenir", () => {
+    // Kilitli kapsam: önce çalışan sistem. Fotoğraf karta girer ve
+    // yayınlanır; kullanım izni invoice_image_rights listesinden sonra istenir.
+    expect(gorselKapisi(urun, "yok").gorseller).toEqual(urun.gorseller);
+    expect(gorselKapisi(urun, "bekliyor").gorseller).toEqual(urun.gorseller);
   });
 
   it("izin 'var' iken fotoğraf geçer, diğer bilgiler korunur", () => {
@@ -148,12 +150,12 @@ describe("görsel izin kapısı", () => {
     expect(urun.gorseller).toHaveLength(2);
   });
 
-  it("izni olmayan firmadan gelen eşleşmede fotoğraf boş, durum açıkça bildirilir", () => {
+  it("izni olmayan firmadan gelen eşleşmede fotoğraf taşınır, durum açıkça bildirilir", () => {
     const eslesme = ureticiUrunuBul({ model: "ELT1302" });
     expect(eslesme).not.toBeNull();
     expect(eslesme!.firma.izinDurumu).not.toBe("var");
     expect(eslesme!.gorselIzniVar).toBe(false);
-    expect(eslesme!.urun.gorseller).toHaveLength(0);
+    expect(eslesme!.urun.gorseller.length).toBeGreaterThan(0);
   });
 
   it("ürünün kendisi ve kodu kapıdan sonra da gelir", () => {

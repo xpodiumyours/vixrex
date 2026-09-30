@@ -73,9 +73,15 @@ function okuyucuCevabi(govde: unknown) {
 }
 
 const TEK_SATIR = {
+  tedarikci: "Seher Mensucat",
+  tedarikci_vergi_no: "1234567890",
+  tedarikci_adres: "İstanbul",
+  tedarikci_site: "sehermensucat.com",
   satirlar: [
     {
+      ham_satir: "ELT1302 Elit Erkek Elastan Sıfır Yaka 8681128321677 Siyah L 2 137,00 274,00",
       model: "ELT1302",
+      ad: "Elit Erkek Elastan Sıfır Yaka",
       barkod: "8681128321677",
       varyant: "Siyah",
       beden: "L",
@@ -112,6 +118,47 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(govde.satirlar[0].model).toBe("ELT1302");
     expect(govde.satirlar[0].adet).toBe(2);
     expect(govde.satirlar[0].alisBirimFiyat).toBe(137);
+    expect(govde.satirlar[0].hamSatir).toContain("ELT1302");
+    expect(govde.tedarikci).toBe("Seher Mensucat");
+    expect(govde.tedarikciVergiNo).toBe("1234567890");
+    expect(govde.tedarikciAdres).toBe("İstanbul");
+    expect(govde.tedarikciSite).toBe("sehermensucat.com");
+  });
+
+  it("model ve barkod yoksa ürün adı bulunan satırı kaybetmez", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        okuyucuCevabi({
+          tedarikci: "Örnek Toptan",
+          satirlar: [
+            {
+              ham_satir: "500 g Süzme Peynir 3 AD 80,00 240,00",
+              model: "",
+              ad: "500 g Süzme Peynir",
+              barkod: "",
+              varyant: "",
+              beden: "",
+              adet: 3,
+              birim_fiyat: 80,
+              tutar: 240,
+            },
+          ],
+          toplam_adet: 3,
+          toplam_tutar: 240,
+        }),
+      ),
+    );
+
+    const cevap = await faturaOku(istek());
+    const govde = await cevap.json();
+
+    expect(cevap.status).toBe(200);
+    expect(govde.satirlar).toHaveLength(1);
+    expect(govde.satirlar[0].ad).toBe("500 g Süzme Peynir");
+    expect(govde.satirlar[0].model).toBe("");
+    expect(govde.satirlar[0].barkod).toBe("");
+    expect(govde.satirlar[0].katalog).toBeNull();
   });
 
   it("çerez yoksa ama editToken geçerliyse Flutter isteği de kabul edilir", async () => {
@@ -151,10 +198,11 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(cevap.status).toBe(429);
   });
 
-  it("belge toplamı satırlarla tutmuyorsa akış durur ve tekrar denenir", async () => {
-    // Gerçek ölçüm: okuyucu bazı adet/fiyatları yanlış okuyabiliyor. Böyle
-    // bir okumadan ürün kartı üretmek, esnafa yanlış stok ve yanlış maliyet
-    // yazmak demektir. Kapı durdurur, tahminle düzeltmez.
+  it("belge toplamı tutmuyorsa akış durmaz: satırlar uyarıyla taşınır", async () => {
+    // Kilitli kapsam: el yazısı ve toptancı notu bizi bağlamaz. Okuyucu bazı
+    // adet/fiyatları yanlış okuyabiliyor; böyle okumadan ürün kartı
+    // üretilmez ama satırlar da kaybolmaz — uyarı esnafa açıkça gösterilir,
+    // her satır kendi kanıtıyla değerlendirilir.
     const okuma = vi.fn(async () =>
       okuyucuCevabi({ ...TEK_SATIR, toplam_adet: 75, toplam_tutar: 6034 }),
     );
@@ -163,10 +211,9 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     const cevap = await faturaOku(istek());
     const govde = await cevap.json();
 
-    expect(cevap.status).toBe(422);
-    expect(govde.hata).toContain("tam okunamadı");
-    expect(govde.belgeAdedi).toBe(75);
-    expect(govde.okunanAdet).toBe(2);
+    expect(cevap.status).toBe(200);
+    expect(govde.satirlar.length).toBeGreaterThan(0);
+    expect(typeof govde.belgeUyarisi).toBe("string");
     // Yarım okuma bir kez olabilir; ısrarla olmaz — üç kez denenir.
     expect(okuma).toHaveBeenCalledTimes(3);
   });

@@ -5,7 +5,9 @@ import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 import { verifyStoreEditToken } from "@/lib/instagramServer";
 import { fingerprintClient, getClientIp } from "@/lib/rentDemoSecurity";
 import { belgeGercegiUyuyorMu } from "@/lib/faturaSatirAyikla";
-import { faturaSatirlariniEslestir, type HamFaturaSatiri } from "@/lib/faturaEslestir";
+import { faturaSatirlariniDijitalIzle, sonucOzeti, type HamFaturaSatiri } from "@/lib/faturaEslestir";
+import { belgeParmakIzi, islemKaydet } from "@/lib/faturaIslemKaydi";
+import { faturaTaslaklari } from "@/lib/faturaTaslagi";
 import { faturayiOku, type GoruSatiri } from "@/lib/faturaGoru";
 
 // Vixrex'in TEK fatura okuma ucu.
@@ -64,6 +66,9 @@ export async function POST(request: NextRequest) {
   const slug = String(form.get("slug") ?? "").trim();
   const dosya = form.get("dosya");
   const editTokenGovde = String(form.get("editToken") ?? "").trim();
+  // Esnaf firmanın sitesini biliyorsa yazar (zorunlu değil): havuzda olmayan
+  // veya el yazısı faturada okunamayan site için keşif buradan yürür.
+  const siteIpucu = String(form.get("firmaSitesi") ?? "").trim().slice(0, 200);
 
   if (!slug) {
     return NextResponse.json({ hata: "Vitrin belirtilmedi." }, { status: 400 });
@@ -143,8 +148,8 @@ export async function POST(request: NextRequest) {
   }
 
   // Yarım okuma bir kere olabilir; ısrarla olmaz. Belge kendi toplamını
-  // tutturana kadar en fazla DENEME_SINIRI kez okunur. Tutmazsa akış durur —
-  // eksik okunmuş satırdan ürün kartı üretilmez.
+  // tutturana kadar en fazla DENEME_SINIRI kez okunur. Tutmazsa bile akış
+  // durmaz — okunan satırlar uyarıyla taşınır, el yazısı bizi bağlamaz.
   const DENEME_SINIRI = 3;
   const goruntu = `data:${tur};base64,${base64Cevir(bayt)}`;
 
@@ -153,15 +158,19 @@ export async function POST(request: NextRequest) {
     let sonSatirlar: HamFaturaSatiri[] = [];
     let sonOzet = { adet: null as number | null, toplam: null as number | null };
     let sonTedarikci = "";
+    let sonTedarikciVergiNo = "";
+    let sonTedarikciAdres = "";
+    let sonTedarikciSite = "";
 
     for (let deneme = 1; deneme <= DENEME_SINIRI; deneme++) {
       const okuma = await faturayiOku(goruntu);
 
       const hamSatirlar: HamFaturaSatiri[] = okuma.satirlar
-        .filter((satir: GoruSatiri) => satir.model || satir.barkod)
+        .filter((satir: GoruSatiri) => satir.model || satir.ad || satir.barkod)
         .map((satir: GoruSatiri) => ({
+          hamSatir: satir.hamSatir,
           model: satir.model,
-          ad: "",
+          ad: satir.ad,
           barkod: satir.barkod,
           varyant: satir.varyant,
           beden: satir.beden,
@@ -170,8 +179,8 @@ export async function POST(request: NextRequest) {
           satirToplam: satir.tutar,
           // Güven, satırın kendi kanıtından gelir: kod/barkod/adet/fiyat.
           guven:
-            [satir.model, satir.barkod, satir.beden, satir.adet !== null, satir.birimFiyat !== null]
-              .filter(Boolean).length / 5,
+            [satir.model, satir.ad, satir.barkod, satir.beden, satir.adet !== null, satir.birimFiyat !== null]
+              .filter(Boolean).length / 6,
         }));
 
       if (hamSatirlar.length === 0) {
@@ -182,6 +191,9 @@ export async function POST(request: NextRequest) {
       }
 
       sonTedarikci = okuma.tedarikci;
+      sonTedarikciVergiNo = okuma.tedarikciVergiNo;
+      sonTedarikciAdres = okuma.tedarikciAdres;
+      sonTedarikciSite = okuma.tedarikciSite;
       sonOzet = { adet: okuma.belgeAdedi, toplam: okuma.belgeToplami };
       sonSatirlar = hamSatirlar;
       sonUyum = belgeGercegiUyuyorMu(hamSatirlar, sonOzet);
@@ -192,31 +204,54 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Belge gerçeği kapısı: tutmadıysa ürün üretilmez. Esnafa neyin tutmadığı
-    // açıkça söylenir; sessizce yanlış stok/fiyat yazılmaz.
-    if (!sonUyum || !sonUyum.uyumlu) {
-      return NextResponse.json(
-        {
-          hata: `${sonUyum?.sebep ?? "Fatura tam okunamadı."} Daha net bir fotoğraf dene.`,
-          belgeAdedi: sonUyum?.belgeAdedi ?? null,
-          belgeToplami: sonUyum?.belgeToplami ?? null,
-          okunanAdet: sonUyum?.okunanAdet ?? 0,
-          okunanToplam: sonUyum?.okunanToplam ?? 0,
-        },
-        { status: 422 },
-      );
+    // Belge gerçeği NOTU (kilitli kapsam): el yazısı ve toptancı notu bizi
+    // bağlamaz. Toplam tutmazsa akış DURMAZ — okunan satırlar kaybolmaz,
+    // tutmayan kısım uyarı olarak taşınır; her satır kendi kanıtıyla
+    // değerlendirilir. Sessizce yanlış stok/fiyat yazılmaz, uydurulmaz.
+    const belgeUyarisi = !sonUyum || !sonUyum.uyumlu ? (sonUyum?.sebep ?? null) : null;
+    if (belgeUyarisi) {
+      console.warn(`[fatura-oku] belge uyumsuzlugu not edildi, akis suruyor: ${belgeUyarisi}`);
     }
 
-    const satirlar = faturaSatirlariniEslestir(sonSatirlar, sonTedarikci);
+    // Esnafın site ipucu: OCR siteyi okuyamadıysa keşif buradan yürür.
+    const etkinSite = sonTedarikciSite || siteIpucu;
+
+    const { satirlar, tedarikciIz } = await faturaSatirlariniDijitalIzle(
+      sonSatirlar,
+      sonTedarikci,
+      etkinSite,
+    );
     const eslesenSayisi = satirlar.filter((satir) => satir.katalog !== null).length;
+
+    const islemKimligi = await islemKaydet({
+      slug: ownerSlug,
+      parmakIzi: belgeParmakIzi(bayt),
+      belgeAdedi: sonOzet.adet,
+      belgeToplami: sonOzet.toplam,
+      tedarikci: sonTedarikci,
+      tedarikciVergiNo: sonTedarikciVergiNo,
+      tedarikciAdres: sonTedarikciAdres,
+      tedarikciSite: etkinSite,
+      tedarikciIz,
+      satirlar,
+    });
 
     return NextResponse.json({
       tamam: true,
       satirlar,
       belgeToplami: sonOzet.toplam,
       belgeAdedi: sonOzet.adet,
+      // Toplam tutmadıysa akış durmaz; uyarı esnafa açıkça gösterilir.
+      ...(belgeUyarisi ? { belgeUyarisi } : {}),
       tedarikci: sonTedarikci,
+      tedarikciVergiNo: sonTedarikciVergiNo,
+      tedarikciAdres: sonTedarikciAdres,
+      tedarikciSite: etkinSite,
+      tedarikciDijitalIz: tedarikciIz,
       katalogEslesmesi: eslesenSayisi,
+      sonucOzeti: sonucOzeti(satirlar),
+      taslaklar: faturaTaslaklari(satirlar, islemKimligi),
+      islemKimligi,
     });
   } catch (err) {
     const kod = err instanceof Error ? err.message : "unknown";

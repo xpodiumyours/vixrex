@@ -78,11 +78,27 @@ class FaturaOkuServisi {
 
       final urunler = <DetectedProduct>[];
       final taslaklar = <InvoiceProductDraft>[];
+      final tedarikci = (govde['tedarikci'] ?? '').toString().trim();
+      final tedarikciVergiNo =
+          (govde['tedarikciVergiNo'] ?? '').toString().trim();
+      final tedarikciAdres = (govde['tedarikciAdres'] ?? '').toString().trim();
+      final tedarikciSite = (govde['tedarikciSite'] ?? '').toString().trim();
+      // Aynı belgenin kalıcı kanıt kaydı (P3). Telefon web ile aynı işlem
+      // kimliğini taşır; böylece iki yüzey aynı işten konuşur.
+      final islemKimligi = (govde['islemKimligi'] ?? '').toString().trim();
 
       for (var i = 0; i < hamSatirlar.length; i++) {
         final satir = hamSatirlar[i];
         if (satir is! Map) continue;
-        final cift = _satirdanCiftUret(satir, i);
+        final cift = _satirdanCiftUret(
+          satir,
+          i,
+          tedarikci: tedarikci,
+          tedarikciVergiNo: tedarikciVergiNo,
+          tedarikciAdres: tedarikciAdres,
+          tedarikciSite: tedarikciSite,
+          islemKimligi: islemKimligi.isEmpty ? null : islemKimligi,
+        );
         urunler.add(cift.$1);
         taslaklar.add(cift.$2);
       }
@@ -92,6 +108,7 @@ class FaturaOkuServisi {
           rawText: '',
           products: urunler,
           invoiceDrafts: taslaklar,
+          islemKimligi: islemKimligi.isEmpty ? null : islemKimligi,
           confidence:
               urunler.isEmpty
                   ? 0
@@ -110,12 +127,18 @@ class FaturaOkuServisi {
 
   (DetectedProduct, InvoiceProductDraft) _satirdanCiftUret(
     Map satir,
-    int index,
-  ) {
+    int index, {
+    required String tedarikci,
+    required String tedarikciVergiNo,
+    required String tedarikciAdres,
+    required String tedarikciSite,
+    String? islemKimligi,
+  }) {
     final now = DateTime.now().toUtc();
     String metin(dynamic v) => (v ?? '').toString().trim();
     num? sayi(dynamic v) => v is num ? v : num.tryParse((v ?? '').toString());
 
+    final hamSatir = metin(satir['hamSatir']);
     final model = metin(satir['model']);
     final ad = metin(satir['ad']);
     final barkod = metin(satir['barkod']);
@@ -128,6 +151,24 @@ class FaturaOkuServisi {
 
     final katalog = satir['katalog'];
     final katalogVar = katalog is Map;
+
+    // Sunucunun verdiği kart hâli (kanıtlı / eksik / çelişki / iz yok).
+    // Sunucu vermezse kanıt gücünden türetilir — burada uydurulmaz.
+    final kartDurumu = kartDurumuFromWire(satir['sonuc']);
+    final celiski = satir['celiski'];
+    final celiskiAdaylari = <InvoiceConflictCandidate>[];
+    final celiskiDayanak = celiski is Map ? metin(celiski['dayanak']) : '';
+    if (celiski is Map && celiski['adaylar'] is List) {
+      for (final aday in celiski['adaylar'] as List) {
+        if (aday is! Map) continue;
+        celiskiAdaylari.add(
+          InvoiceConflictCandidate(
+            ad: metin(aday['ad']),
+            kaynak: metin(aday['kaynak']),
+          ),
+        );
+      }
+    }
 
     final id = 'ocr_invoice_${now.microsecondsSinceEpoch}_$index';
 
@@ -169,7 +210,11 @@ class FaturaOkuServisi {
             ? EvidenceStrength.partial
             : EvidenceStrength.weak;
     final tedarikciGucu =
-        katalogVar ? EvidenceStrength.strong : EvidenceStrength.weak;
+        katalogVar
+            ? EvidenceStrength.strong
+            : tedarikci.isNotEmpty
+            ? EvidenceStrength.partial
+            : EvidenceStrength.weak;
 
     String resmiAd = ad;
     String marka = '';
@@ -228,11 +273,34 @@ class FaturaOkuServisi {
 
     final taslak = InvoiceProductDraft(
       id: id,
-      rawSourceLine: [
-        if (model.isNotEmpty) model,
-        ad,
-        if (barkod.isNotEmpty) barkod,
-      ].join(' '),
+      rawSourceLine:
+          hamSatir.isNotEmpty
+              ? hamSatir
+              : [
+                if (model.isNotEmpty) model,
+                ad,
+                if (barkod.isNotEmpty) barkod,
+              ].join(' '),
+      supplierName: evMetin(
+        tedarikci,
+        EvidenceSourceType.invoice,
+        EvidenceStrength.partial,
+      ),
+      supplierTaxOrTradeIdentifier: evMetin(
+        tedarikciVergiNo,
+        EvidenceSourceType.invoice,
+        EvidenceStrength.partial,
+      ),
+      supplierAddress: evMetin(
+        tedarikciAdres,
+        EvidenceSourceType.invoice,
+        EvidenceStrength.partial,
+      ),
+      supplierOfficialDomain: evMetin(
+        tedarikciSite,
+        EvidenceSourceType.invoice,
+        EvidenceStrength.partial,
+      ),
       rawName: evMetin(
         ad,
         EvidenceSourceType.invoice,
@@ -304,6 +372,12 @@ class FaturaOkuServisi {
       supplierIdentityStrength: tedarikciGucu,
       productIdentityStrength: urunGucu,
       rightsStatus: izinDurumu,
+      kartDurumu: kartDurumu,
+      celiskiAdaylari: celiskiAdaylari,
+      celiskiDayanak: celiskiDayanak.isEmpty ? null : celiskiDayanak,
+      // Faturadaki adet öneridir; stok onayı esnafın ayrı eylemidir.
+      stockConfirmed: false,
+      islemKimligi: islemKimligi,
     );
 
     return (urun, taslak);

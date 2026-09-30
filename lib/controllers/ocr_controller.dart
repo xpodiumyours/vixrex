@@ -144,6 +144,20 @@ class OcrController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Faturadaki adedi STOK olarak onayla.
+  ///
+  /// Faturadaki miktar alış adedidir; raf stoğu değildir. Esnaf bu düğmeye
+  /// basmadan adet ürün kartının stoğuna yazılmaz.
+  void confirmInvoiceStock(int index) {
+    if (_result == null) return;
+    if (index < 0 || index >= _result!.invoiceDrafts.length) return;
+    final draft = _result!.invoiceDrafts[index];
+    _result!.invoiceDrafts[index] = draft.copyWith(
+      stockConfirmed: !draft.stockConfirmed,
+    );
+    notifyListeners();
+  }
+
   /// Ürünü reddet.
   void rejectProduct(int index) {
     if (_result == null) return;
@@ -323,6 +337,15 @@ class OcrController extends ChangeNotifier {
     if (variant != null && variant.isNotEmpty) options['color'] = variant;
     if (size != null && size.isNotEmpty) options['size'] = size;
 
+    // Faturadaki adet stok DEĞİLDİR. Esnaf stoğu onaylamadıysa ürün kartına
+    // stok yazılmaz (bilinmiyor kalır); onayladıysa faturadaki adet yazılır.
+    final faturaStok = detected.isInvoiceSource;
+    final stokOnayli = invoiceDraft?.stockConfirmed == true;
+    final int? stokMiktari =
+        faturaStok
+            ? (stokOnayli ? detected.documentQuantity : null)
+            : detected.quantity;
+
     final variants =
         options.isEmpty
             ? <ProductVariantData>[]
@@ -333,10 +356,7 @@ class OcrController extends ChangeNotifier {
                 sku: detected.sku,
                 barcode: detected.barcode,
                 priceAmount: detected.price,
-                stockQuantity:
-                    detected.isInvoiceSource
-                        ? detected.documentQuantity
-                        : detected.quantity,
+                stockQuantity: stokMiktari,
                 stockStatus: StockStatus.available.label,
               ),
             ];
@@ -367,10 +387,7 @@ class OcrController extends ChangeNotifier {
       source: detected.source,
       barcode: detected.barcode,
       sku: detected.sku,
-      stockQuantity:
-          detected.isInvoiceSource
-              ? detected.documentQuantity
-              : detected.quantity,
+      stockQuantity: stokMiktari,
       variants: variants,
     );
   }

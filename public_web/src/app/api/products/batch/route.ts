@@ -2,9 +2,10 @@ import { NextResponse, type NextRequest } from "next/server";
 import { cookies } from "next/headers";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
-import { createRichCoreProduct } from "@/lib/productCoreServer";
+import { createRichCoreProduct, publishInvoiceProduct } from "@/lib/productCoreServer";
 import { urunGirdisiniHazirla } from "@/lib/productIntake";
 import { izinsizUreticiGorseli } from "@/lib/ureticiKatalog";
+import { durumGecerliMi, yayinEksikleri } from "@/lib/faturaKartDurumu";
 
 /**
  * Toplu ürün oluşturma API'si.
@@ -32,19 +33,15 @@ function pozitifSayi(value: unknown): number | null {
 function faturaKapisiSebebi(args: {
   hazirlik: { durum: string; eksik?: string };
   faturaKaynakli: boolean;
-  satisFiyatiGirildi: boolean;
-  esnafOnayladi: boolean;
-  izinsizGorselVar: boolean;
+  faturaEksikleri: string[];
+  yayinIstegi: boolean;
 }): string {
   if (args.hazirlik.durum === "taslak" && args.hazirlik.eksik) return args.hazirlik.eksik;
-  if (args.faturaKaynakli && !args.satisFiyatiGirildi) {
-    return "Satış fiyatı girilmedi; ürün taslak kaldı.";
+  if (args.faturaKaynakli && args.faturaEksikleri.length > 0) {
+    return args.faturaEksikleri[0];
   }
-  if (args.faturaKaynakli && !args.esnafOnayladi) {
-    return "Ürün onaylanmadı; ürün taslak kaldı.";
-  }
-  if (args.izinsizGorselVar) {
-    return "Üreticinin fotoğraf kullanım izni yok; kendi fotoğrafınızı ekleyin.";
+  if (args.faturaKaynakli && !args.yayinIstegi) {
+    return "Yayın onayı verilmedi; ürün taslak kaydedildi.";
   }
   return "Görünürlük kapalı istendi.";
 }
@@ -70,8 +67,18 @@ interface ProductBatchItem {
   metadata?: unknown;
   variants?: unknown;
   externalProductId?: string;
-  /** Faturadan gelen satırlarda esnafın açık yayın onayı. */
+  /** Faturadan gelen satırlarda esnafın açık bilgi onayı (taslak kaydı). */
   ownerApproved?: boolean;
+  /**
+   * Faturadan gelen satırlarda esnafın ayrı Yayınla onayı. Yalnız true ise
+   * ve bütün kapılar geçerse ürün görünür olur; yoksa taslak kaydedilir.
+   * Bilgileri onayla ile Yayınla iki ayrı eylemdir.
+   */
+  yayinIstegi?: boolean;
+  /** Faturadan gelen satırlarda esnafın stok onayı. Faturadaki adet öneridir. */
+  stokOnaylandi?: boolean;
+  /** Satırın kanıt durumu. Yalnız "kanitli" satır yayına çıkar. */
+  kartDurumu?: unknown;
   /** Faturadaki birim alış fiyatı. Karta yazılmaz, müşteriye gösterilmez. */
   purchasePriceAmount?: unknown;
 }
@@ -167,30 +174,46 @@ export async function POST(request: NextRequest) {
     const kaynak = (ham.sourceType || ham.source_type || "bulk_import").trim();
 
     // Faturadan gelen satır, fotoğrafı ve zorunlu alanları tam olsa bile
-    // kendiliğinden yayına çıkmaz: esnaf satış fiyatını girmeli ve kartı
-    // açıkça onaylamalı. Fatura alış fiyatı satış fiyatı yerine geçmez.
+    // kendiliğinden yayına çıkmaz: esnaf satış fiyatını girmeli, kartı
+    // açıkça onaylamalı VE ayrıca Yayınla demeli. Bilgileri onayla yalnız
+    // taslak kaydeder. Fatura alış fiyatı satış fiyatı yerine geçmez.
     const faturaKaynakli = kaynak === FATURA_KAYNAGI;
-    const satisFiyatiGirildi =
-      typeof hazirlik.girdi.priceAmount === "number" && hazirlik.girdi.priceAmount > 0;
     const esnafOnayladi = ham.ownerApproved === true;
+    const stokOnaylandi = ham.stokOnaylandi === true;
+    const kartDurumu = durumGecerliMi(ham.kartDurumu) ? ham.kartDurumu : "eksik";
+    const yayinIstegi = ham.yayinIstegi === true;
 
-    // İzin kapısı — sunucuda, tarayıcıdan atlanamaz. Üreticinin yazılı izni
-    // yoksa onun fotoğrafı ürün kartına hiç yazılmaz; ürün de yayına çıkmaz.
-    // Esnaf kendi fotoğrafını eklerse kart normal şekilde yayınlanır.
-    const izinsizGorselVar = hazirlik.girdi.imageUrls.some(izinsizUreticiGorseli);
-    if (izinsizGorselVar) {
-      hazirlik.girdi.imageUrls = hazirlik.girdi.imageUrls.filter(
-        (adres) => !izinsizUreticiGorseli(adres),
-      );
-    }
+    // Fotoğraf izleme (kilitli kapsam): üreticinin fotoğrafı karta girer ve
+    // yayınlanabilir; kullanım izni sonra, çalışan sistemle istenir. Hangi
+    // kartta üretici görseli olduğu fatura_kanit + invoice_image_rights
+    // kayıtlarından izlenir — izin turu bu listeden yürür. Esnafın kendi
+    // fotoğrafı her zamanki gibi serbestçe geçer.
+    const ureticiGorselVar = hazirlik.girdi.imageUrls.some(izinsizUreticiGorseli);
 
-    const faturaKapisi = !faturaKaynakli || (satisFiyatiGirildi && esnafOnayladi);
+    const faturaEksikleri = faturaKaynakli
+      ? yayinEksikleri({
+          durum: kartDurumu,
+          satisFiyati: hazirlik.girdi.priceAmount,
+          stok: hazirlik.girdi.stockQuantity,
+          stokOnaylandi,
+          onaylandi: esnafOnayladi,
+          gorselSayisi: hazirlik.girdi.imageUrls.length,
+        })
+      : [];
 
-    const gorunur =
-      hazirlik.durum === "hazir" &&
-      ham.isVisible !== false &&
-      faturaKapisi &&
-      !izinsizGorselVar;
+    // Ayrı Yayınla kapısı: fatura satırı bütün bilgi kapılarını geçse bile
+    // esnaf açıkça yayın istemedikçe taslak kalır. Fatura dışı kaynaklar
+    // (Excel/CSV/XML, tekil, kopya) eski davranışını korur.
+    const faturaKapisi =
+      !faturaKaynakli || (faturaEksikleri.length === 0 && yayinIstegi);
+
+    // Fatura dışı kaynaklarda eski kural: hazır ve kapatılmamışsa görünür.
+    // Fatura satırı önce TASLAK kurulur; ayrı Yayınla isteği ve bütün
+    // kapılar tamamsa aşağıdaki publish RPC'si görünür yapar. Bu sıra,
+    // veritabanı tetiğiyle (fatura_yayin_kilidi) birebir aynıdır.
+    const normalGorunur =
+      hazirlik.durum === "hazir" && ham.isVisible !== false;
+    const gorunur = faturaKaynakli ? false : normalGorunur;
 
     try {
       const olusan = await createRichCoreProduct({
@@ -235,9 +258,61 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      if (gorunur) {
-        yayinda += 1;
-        sonuclar.push({ sira: index, ad, durum: "yayinda", id: olusan.id });
+      // Fatura kanıt özeti satıra yazılır; ayrı Yayınla adımı (bu uçtaki
+      // yayinIstegi veya /api/fatura-yayinla) kapıları buradan yeniden okur.
+      // ureticiGorsel işareti, kullanım izni sonra istenecek kartların
+      // listesidir (kilitli kapsam: önce çalışan sistem). create/update
+      // RPC'leri bu kolonu taşımadığı için doğrudan yazılır.
+      if (faturaKaynakli) {
+        const { error: kanitHatasi } = await admin
+          .from("products")
+          .update({ fatura_kanit: { kartDurumu, stokOnaylandi, ureticiGorsel: ureticiGorselVar } })
+          .eq("id", olusan.id);
+        if (kanitHatasi) {
+          console.error("[products/batch] fatura kaniti yazilamadi:", kanitHatasi.message);
+        }
+      }
+
+      if (!faturaKaynakli) {
+        if (gorunur) {
+          yayinda += 1;
+          sonuclar.push({ sira: index, ad, durum: "yayinda", id: olusan.id });
+        } else {
+          taslak += 1;
+          sonuclar.push({
+            sira: index,
+            ad,
+            durum: "taslak",
+            id: olusan.id,
+            sebep: faturaKapisiSebebi({
+              hazirlik,
+              faturaKaynakli,
+              faturaEksikleri,
+              yayinIstegi,
+            }),
+          });
+        }
+      } else if (faturaKapisi) {
+        // Esnaf ayrıca Yayınla dedi ve bilgi kapıları tam: publish RPC'si
+        // güncel satırı sunucuda tekrar okuyup görünür yapar.
+        const yayin = await publishInvoiceProduct({
+          admin,
+          productId: olusan.id,
+          editToken: store.edit_token,
+        });
+        if (yayin.success) {
+          yayinda += 1;
+          sonuclar.push({ sira: index, ad, durum: "yayinda", id: olusan.id });
+        } else {
+          taslak += 1;
+          sonuclar.push({
+            sira: index,
+            ad,
+            durum: "taslak",
+            id: olusan.id,
+            sebep: yayin.hata ?? "Ürün yayınlanamadı.",
+          });
+        }
       } else {
         taslak += 1;
         sonuclar.push({
@@ -248,9 +323,8 @@ export async function POST(request: NextRequest) {
           sebep: faturaKapisiSebebi({
             hazirlik,
             faturaKaynakli,
-            satisFiyatiGirildi,
-            esnafOnayladi,
-            izinsizGorselVar,
+            faturaEksikleri,
+            yayinIstegi,
           }),
         });
       }

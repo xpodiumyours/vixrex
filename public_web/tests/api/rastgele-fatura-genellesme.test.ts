@@ -77,23 +77,18 @@ function kartUret(satir: FaturaSatiri): UretilenKart {
       sebep: "katalogda bulunamadı",
     };
   }
-  // İzin kapısı en önde: üreticinin görsel izni yoksa fotoğraf hiç gelmez,
-  // dolayısıyla ürün yayına çıkamaz. Esnaf kendi fotoğrafını koyarsa çıkar.
-  const izinVar = eslesme.gorselIzniVar;
+  // Kilitli kapsam: üretici fotoğrafı karta girer ve yayınlanır; kullanım
+  // izni sonra, çalışan sistemle istenir. Yayına hazırlık yalnız fotoğraf
+  // sayısına (kural: en az 3) ve kanıtlı eşleşmeye bakar.
   const yeterliFoto = eslesme.urun.gorseller.length >= 3;
-  const yayinaHazir = izinVar && yeterliFoto;
   return {
     kod: satir.kod,
     ad: eslesme.urun.ad,
     marka: eslesme.urun.marka,
     gorselSayisi: eslesme.urun.gorseller.length,
     barkod: eslesme.urun.barkod,
-    yayinaHazir,
-    sebep: !izinVar
-      ? "üretici görsel izni yok, taslak kalır"
-      : yeterliFoto
-        ? "yayına hazır"
-        : "fotoğraf < 3, taslak kalır",
+    yayinaHazir: yeterliFoto,
+    sebep: yeterliFoto ? "yayına hazır" : "fotoğraf < 3, taslak kalır",
   };
 }
 
@@ -150,14 +145,14 @@ describe("rastgele fatura genelleme — tek örnekle sınırlı değil", () => {
     const toplamSatir = raporlar.reduce((t, r) => t + r.satirSayisi, 0);
     const toplamHazir = raporlar.reduce((t, r) => t + r.yayinaHazir, 0);
 
-    // İzin kuralı: bugün hiçbir üreticinin görsel izni "var" değil, bu yüzden
-    // üretici fotoğrafıyla doğrudan yayına çıkan ürün SIFIR olmalı. Bu satır
-    // kuralı kilitler: izin gelmeden yayın açılırsa test kırılır.
-    expect(toplamHazir).toBe(0);
-    // Buna rağmen eşleştirme %100 çalışıyor — ürün tanınıyor, yalnız yayın
-    // izne bağlı. Sebep de tek ve açık olmalı.
-    const sebepler = new Set(raporlar.flatMap((r) => r.kartlar.map((k) => k.sebep)));
-    expect([...sebepler]).toEqual(["üretici görsel izni yok, taslak kalır"]);
+    // Kilitli kapsam: üretici fotoğrafı karta girer; 3+ fotoğraflı kanıtlı
+    // ürün yayına hazırdır, kullanım izni sonra istenir. Her kartın kararı
+    // fotoğraf sayısıyla tutarlı olmalı, sebep de açık olmalı.
+    for (const kart of raporlar.flatMap((r) => r.kartlar)) {
+      expect(kart.yayinaHazir).toBe(kart.gorselSayisi >= 3);
+      expect(kart.sebep).toBe(kart.gorselSayisi >= 3 ? "yayına hazır" : "fotoğraf < 3, taslak kalır");
+    }
+    expect(toplamHazir).toBeGreaterThan(0);
     expect(toplamSatir).toBe(40);
 
     mkdirSync("test-sonuc", { recursive: true });
