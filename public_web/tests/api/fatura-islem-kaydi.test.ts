@@ -17,6 +17,10 @@ const durum = vi.hoisted(() => {
     secenek: unknown;
   }> = [];
   let hata: Error | null = null;
+  const mevcut: { isKimligi: string | null; satirSayisi: number } = {
+    isKimligi: null,
+    satirSayisi: 0,
+  };
 
   const zincir = (tablo: string) => {
     const kayit: (typeof yazilan)[number] = { tablo, yollar: [], govde: undefined, secenek: undefined };
@@ -42,9 +46,18 @@ const durum = vi.hoisted(() => {
       kayit.secenek = secenek;
       return z;
     };
-    z.maybeSingle = async () => ({ data: { id: "magaza-1" }, error: null });
+    z.maybeSingle = async () =>
+      tablo === "invoice_jobs"
+        ? { data: mevcut.isKimligi ? { id: mevcut.isKimligi } : null, error: null }
+        : { data: { id: "magaza-1" }, error: null };
     z.single = async () => ({ data: { id: `is-${yazilan.length}` }, error: null });
     z.then = (basari: unknown, alici: unknown) => {
+      if (tablo === "invoice_job_lines" && kayit.yollar.includes("select") && !kayit.yollar.includes("insert")) {
+        return Promise.resolve({ data: null, count: mevcut.satirSayisi, error: null }).then(
+          basari as never,
+          alici as never,
+        );
+      }
       const dizi = Array.isArray(kayit.govde) ? kayit.govde : [];
       const veri = dizi.map((_og, indeks) => ({ id: `satir-${indeks}` }));
       return Promise.resolve({ data: veri, error: null }).then(basari as never, alici as never);
@@ -55,6 +68,7 @@ const durum = vi.hoisted(() => {
   return {
     yazilan,
     zincir,
+    mevcut,
     setHata: (yeni: Error | null) => {
       hata = yeni;
     },
@@ -121,7 +135,8 @@ const izinliTablolar = new Set([
 ]);
 
 function kaydiBul(tablo: string): YazilanKayit | undefined {
-  return durum.yazilan.find((kayit) => kayit.tablo === tablo);
+  const hepsi = durum.yazilan.filter((kayit) => kayit.tablo === tablo);
+  return hepsi.find((kayit) => kayit.govde !== undefined) ?? hepsi[0];
 }
 
 describe("fatura islem kaydi", () => {
@@ -234,5 +249,26 @@ describe("fatura islem kaydi", () => {
 
     expect(sonuc).toBeNull();
     expect(durum.yazilan).toHaveLength(0);
+  });
+
+  it("aynı belge yeniden yüklenince kayıtlı satırlara dokunulmaz, aynı işlem döner", async () => {
+    durum.yazilan.length = 0;
+    durum.setHata(null);
+    durum.mevcut.isKimligi = "is-var";
+    durum.mevcut.satirSayisi = 3;
+
+    const islemKimligi = await islemKaydet(girdi([satir({ sonuc: "eksik" })]));
+
+    durum.mevcut.isKimligi = null;
+    durum.mevcut.satirSayisi = 0;
+    expect(islemKimligi).toBe("is-var");
+    expect(
+      durum.yazilan.some(
+        (kayit) =>
+          kayit.tablo === "invoice_job_lines" &&
+          (kayit.yollar.includes("delete") || kayit.yollar.includes("insert")),
+      ),
+    ).toBe(false);
+    expect(durum.yazilan.some((kayit) => kayit.yollar.includes("upsert"))).toBe(false);
   });
 });

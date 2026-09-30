@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   KART_DURUM_ETIKETI,
   durumBilgisi,
@@ -33,6 +33,7 @@ export interface FaturaSatiri {
   barkod: string;
   varyant: string;
   beden: string;
+  marka?: string;
   adet: number | null;
   alisBirimFiyat: number | null;
   satirToplam: number | null;
@@ -67,8 +68,30 @@ interface AyniAlisverisAdayi {
   satirlar: Array<{ kod: string; adet: number | null }>;
 }
 
+interface KayitliSahipDurumu {
+  satisFiyati?: string;
+  stok?: string;
+  stokOnaylandi?: boolean;
+  kategoriId?: string;
+  onayli?: boolean;
+  esnafGorselleri?: string[];
+}
+
+interface FaturaOkumaSatiri extends FaturaSatiri {
+  sahipDurumu?: KayitliSahipDurumu | null;
+  urunId?: string | null;
+}
+
+interface OncekiIslem {
+  islemKimligi: string;
+  durum: string;
+  tedarikci: string;
+  olusturma: string;
+  satirSayisi: number;
+}
+
 interface FaturaOkumaSonucu {
-  satirlar: FaturaSatiri[];
+  satirlar: FaturaOkumaSatiri[];
   belgeToplami: number | null;
   belgeAdedi: number | null;
   /** Toplam tutmadıysa akış durmaz; bu uyarı esnafa gösterilir. */
@@ -90,6 +113,7 @@ interface SatirDurumu extends FaturaSatiri {
   stokOnaylandi: boolean;
   esnafGorselleri: string[];
   ayniAlisverisTekrari?: boolean;
+  urunId?: string | null;
 }
 
 interface YazmaSonucu {
@@ -154,6 +178,11 @@ export default function InvoiceToProducts({
   const [yukleniyor, setYukleniyor] = useState(false);
   const [sonuc, setSonuc] = useState<YazmaSonucu | null>(null);
   const [alisverisCevaplari, setAlisverisCevaplari] = useState<Record<string, boolean>>({});
+  const [oncekiIslemler, setOncekiIslemler] = useState<OncekiIslem[]>([]);
+  const [duzeltmeler, setDuzeltmeler] = useState<
+    Record<number, { model: string; barkod: string; marka: string }>
+  >({});
+  const [duzeltilen, setDuzeltilen] = useState<number | null>(null);
   const dosyaRef = useRef<HTMLInputElement>(null);
 
   const degerlendirmeler = useMemo(
@@ -173,6 +202,128 @@ export default function InvoiceToProducts({
 
   const hazirSayisi = degerlendirmeler.filter((d) => d.yayinaHazir).length;
   const onayliSayisi = satirlar.filter((satir) => satir.onayli).length;
+
+  const satirlariHazirla = useCallback(
+    (okunan: FaturaOkumaSonucu): SatirDurumu[] =>
+      okunan.satirlar.map((satir) => {
+        const kayitli = satir.sahipDurumu;
+        return {
+          ...satir,
+          satisFiyati: kayitli?.satisFiyati ?? "",
+          onayli: kayitli?.onayli === true,
+          kategoriId: kayitli?.kategoriId || (categories[0]?.id ?? ""),
+          stok: kayitli?.stok ?? (satir.adet === null ? "" : String(satir.adet)),
+          stokOnaylandi: kayitli?.stokOnaylandi === true,
+          esnafGorselleri: kayitli?.esnafGorselleri ?? [],
+          urunId: satir.urunId ?? null,
+        };
+      }),
+    [categories],
+  );
+
+  useEffect(() => {
+    let iptal = false;
+    void (async () => {
+      try {
+        const cevap = await fetch(`/api/fatura-islem?slug=${encodeURIComponent(storeSlug)}`);
+        if (!cevap.ok) return;
+        const govde = await cevap.json().catch(() => null);
+        if (!iptal && govde && Array.isArray(govde.islemler)) {
+          setOncekiIslemler(govde.islemler as OncekiIslem[]);
+        }
+      } catch {
+        return;
+      }
+    })();
+    return () => {
+      iptal = true;
+    };
+  }, [storeSlug]);
+
+  useEffect(() => {
+    if (adim !== "urunler" || !belge?.islemKimligi || satirlar.length === 0) return;
+    const zamanlayici = setTimeout(() => {
+      void fetch("/api/fatura-islem", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug: storeSlug,
+          islemKimligi: belge.islemKimligi,
+          satirlar: satirlar.map((satir, sira) => ({
+            satirSirasi: sira,
+            sahipDurumu: {
+              satisFiyati: satir.satisFiyati,
+              stok: satir.stok,
+              stokOnaylandi: satir.stokOnaylandi,
+              kategoriId: satir.kategoriId,
+              onayli: satir.onayli,
+              esnafGorselleri: satir.esnafGorselleri,
+            },
+          })),
+        }),
+      }).catch(() => undefined);
+    }, 800);
+    return () => clearTimeout(zamanlayici);
+  }, [adim, belge?.islemKimligi, satirlar, storeSlug]);
+
+  async function islemiAc(islemKimligi: string) {
+    setHata(null);
+    setYukleniyor(true);
+    try {
+      const cevap = await fetch(
+        `/api/fatura-islem?slug=${encodeURIComponent(storeSlug)}&islemKimligi=${encodeURIComponent(islemKimligi)}`,
+      );
+      const govde = await cevap.json().catch(() => null);
+      if (!cevap.ok) {
+        throw new Error(
+          govde && typeof govde.hata === "string" ? govde.hata : "İşlem açılamadı. Tekrar dene.",
+        );
+      }
+      const acilan = govde as FaturaOkumaSonucu;
+      setBelge(acilan);
+      setSatirlar(satirlariHazirla(acilan));
+      setAdim("urunler");
+    } catch (err) {
+      setHata(err instanceof Error ? err.message : "İşlem açılamadı.");
+    }
+    setYukleniyor(false);
+  }
+
+  async function satiriDuzelt(index: number) {
+    const giris = duzeltmeler[index];
+    if (!giris || !belge?.islemKimligi) return;
+    setHata(null);
+    setDuzeltilen(index);
+    try {
+      const cevap = await fetch("/api/fatura-satir-duzelt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug: storeSlug,
+          islemKimligi: belge.islemKimligi,
+          satirSirasi: index,
+          model: giris.model,
+          barkod: giris.barkod,
+          marka: giris.marka,
+        }),
+      });
+      const govde = await cevap.json().catch(() => null);
+      if (!cevap.ok) {
+        throw new Error(
+          govde && typeof govde.hata === "string" ? govde.hata : "Satır düzeltilemedi. Tekrar dene.",
+        );
+      }
+      const yeni = govde.satir as FaturaSatiri;
+      setSatirlar((oncekiler) =>
+        oncekiler.map((satir, i) =>
+          i === index ? { ...satir, ...yeni, onayli: false, ayniAlisverisTekrari: false } : satir,
+        ),
+      );
+    } catch (err) {
+      setHata(err instanceof Error ? err.message : "Satır düzeltilemedi.");
+    }
+    setDuzeltilen(null);
+  }
 
   const dosyaSecildi = useCallback(
     async (dosya: File) => {
@@ -208,24 +359,14 @@ export default function InvoiceToProducts({
 
         const okunan = govde as FaturaOkumaSonucu;
         setBelge(okunan);
-        setSatirlar(
-          okunan.satirlar.map((satir) => ({
-            ...satir,
-            satisFiyati: "",
-            onayli: false,
-            kategoriId: categories[0]?.id ?? "",
-            stok: satir.adet === null ? "" : String(satir.adet),
-            stokOnaylandi: false,
-            esnafGorselleri: [],
-          })),
-        );
+        setSatirlar(satirlariHazirla(okunan));
         setAdim("urunler");
       } catch (err) {
         setHata(err instanceof Error ? err.message : "Fatura okunamadı.");
         setAdim("sec");
       }
     },
-    [categories, firmaSitesi, storeSlug],
+    [firmaSitesi, satirlariHazirla, storeSlug],
   );
 
   function satirGuncelle(index: number, degisiklik: Partial<SatirDurumu>) {
@@ -543,6 +684,29 @@ export default function InvoiceToProducts({
           />
         </label>
 
+        {oncekiIslemler.length > 0 && (
+          <div className="fatura-onceki">
+            <h4>Devam edebileceğin faturalar</h4>
+            <ul>
+              {oncekiIslemler.map((islem) => (
+                <li key={islem.islemKimligi}>
+                  <span>
+                    {islem.tedarikci || "Firma okunamadı"} • {islem.satirSayisi} satır •{" "}
+                    {new Date(islem.olusturma).toLocaleDateString("tr-TR")}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => void islemiAc(islem.islemKimligi)}
+                    disabled={yukleniyor}
+                  >
+                    Devam et
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         <input
           ref={dosyaRef}
           type="file"
@@ -781,6 +945,71 @@ export default function InvoiceToProducts({
               <div className="fatura-ad">{katalog?.resmiAd || satir.ad}</div>
 
               <div className="fatura-durum">{bilgi.detay}</div>
+
+              {satir.sonuc !== "kanitli" && belge?.islemKimligi && (
+                <details className="fatura-duzelt">
+                  <summary>Kodu ya da markayı düzelt</summary>
+                  <label>
+                    Ürün kodu
+                    <input
+                      type="text"
+                      value={duzeltmeler[index]?.model ?? satir.model}
+                      onChange={(e) =>
+                        setDuzeltmeler((onceki) => ({
+                          ...onceki,
+                          [index]: {
+                            model: e.target.value,
+                            barkod: onceki[index]?.barkod ?? satir.barkod,
+                            marka: onceki[index]?.marka ?? satir.marka ?? "",
+                          },
+                        }))
+                      }
+                    />
+                  </label>
+                  <label>
+                    Barkod
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={duzeltmeler[index]?.barkod ?? satir.barkod}
+                      onChange={(e) =>
+                        setDuzeltmeler((onceki) => ({
+                          ...onceki,
+                          [index]: {
+                            model: onceki[index]?.model ?? satir.model,
+                            barkod: e.target.value,
+                            marka: onceki[index]?.marka ?? satir.marka ?? "",
+                          },
+                        }))
+                      }
+                    />
+                  </label>
+                  <label>
+                    Marka
+                    <input
+                      type="text"
+                      value={duzeltmeler[index]?.marka ?? satir.marka ?? ""}
+                      onChange={(e) =>
+                        setDuzeltmeler((onceki) => ({
+                          ...onceki,
+                          [index]: {
+                            model: onceki[index]?.model ?? satir.model,
+                            barkod: onceki[index]?.barkod ?? satir.barkod,
+                            marka: e.target.value,
+                          },
+                        }))
+                      }
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => void satiriDuzelt(index)}
+                    disabled={yaziliyor || duzeltilen !== null || !duzeltmeler[index]}
+                  >
+                    {duzeltilen === index ? "Aranıyor…" : "Yeniden eşleştir"}
+                  </button>
+                </details>
+              )}
 
               {bilgi.adaylar.length > 0 && (
                 <ul className="fatura-adaylar">

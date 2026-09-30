@@ -9,6 +9,7 @@ import { faturaSatirlariniDijitalIzle, sonucOzeti, type HamFaturaSatiri } from "
 import { ayniAlisverisAdaylari, belgeParmakIzi, islemKaydet } from "@/lib/faturaIslemKaydi";
 import { faturaTaslaklari } from "@/lib/faturaTaslagi";
 import { faturayiOku, type GoruSatiri } from "@/lib/faturaGoru";
+import { islemiYukle, islemYaniti, parmakIzindenIslemBul } from "@/lib/faturaIslemOku";
 
 // Vixrex'in TEK fatura okuma ucu.
 //
@@ -142,6 +143,21 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  try {
+    const magaza = await admin.from("stores").select("id").eq("slug", ownerSlug).maybeSingle();
+    const magazaId = magaza.data?.id;
+    if (typeof magazaId === "string" && magazaId) {
+      const onceki = await parmakIzindenIslemBul(admin, magazaId, belgeParmakIzi(bayt));
+      const kayitli = onceki ? await islemiYukle(admin, magazaId, onceki) : null;
+      if (kayitli) return NextResponse.json(islemYaniti(kayitli));
+    }
+  } catch (hata) {
+    console.warn(
+      "[fatura-oku] onceki islem aranamadi, yeniden okunuyor:",
+      hata instanceof Error ? hata.message : hata,
+    );
+  }
+
   // Okuma tek yerde: src/lib/faturaGoru.ts. Anahtar yoksa hiç denenmez.
   if (!process.env.OPENROUTER_API_KEY) {
     return NextResponse.json({ hata: "Fatura okuyucu hazır değil." }, { status: 503 });
@@ -257,6 +273,7 @@ export async function POST(request: NextRequest) {
       tedarikciSite: etkinSite,
       tedarikciIz,
       satirlar,
+      belgeUyarisi,
       ...sonBelge,
     };
     const islemKimligi = await islemKaydet(kayitGirdisi);

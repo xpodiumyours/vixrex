@@ -31,6 +31,7 @@ export interface IslemKaydiGirdisi {
   kdvTutari?: number | null;
   indirimTutari?: number | null;
   odenecekToplam?: number | null;
+  belgeUyarisi?: string | null;
 }
 
 export interface AyniAlisverisAdayi {
@@ -58,6 +59,56 @@ function kanitGucu(satir: EslesmisFaturaSatiri): "strong" | "partial" | "weak" {
   return satir.guven >= 0.6 ? "partial" : "weak";
 }
 
+export function satirKanitKayitlari(
+  lineId: string,
+  satir: EslesmisFaturaSatiri,
+  platform: string,
+): {
+  kanit: Array<Record<string, unknown>>;
+  aday: Array<Record<string, unknown>>;
+  gorsel: Array<Record<string, unknown>>;
+} {
+  const kanit: Array<Record<string, unknown>> = [];
+  const aday: Array<Record<string, unknown>> = [];
+  const gorsel: Array<Record<string, unknown>> = [];
+
+  const kaynak = satir.katalog?.kaynak || "fatura";
+  kanit.push({
+    line_id: lineId,
+    field_name: "urun_adi",
+    value_text: (satir.katalog?.resmiAd || satir.ad || "").slice(0, 300),
+    source: kaynak,
+    strength: kanitGucu(satir),
+  });
+  kanit.push({
+    line_id: lineId,
+    field_name: "kod",
+    value_text: (satir.model || satir.barkod).slice(0, 60),
+    source: kaynak,
+    strength: satir.katalog ? "strong" : "weak",
+  });
+
+  if (satir.katalog) {
+    aday.push({
+      line_id: lineId,
+      url: satir.katalog.kaynak.slice(0, 500),
+      platform: platform.slice(0, 40),
+    });
+
+    const durum = gorselIzinDurumu(satir.katalog.izinDurumu);
+    for (const adres of satir.katalog.gorselAdaylari) {
+      gorsel.push({
+        line_id: lineId,
+        image_url: adres.slice(0, 500),
+        usage_status: durum,
+        source: satir.katalog.kaynak.slice(0, 500),
+      });
+    }
+  }
+
+  return { kanit, aday, gorsel };
+}
+
 export async function islemKaydet(girdi: IslemKaydiGirdisi): Promise<string | null> {
   try {
     const admin = getSupabaseAdmin();
@@ -69,6 +120,20 @@ export async function islemKaydet(girdi: IslemKaydiGirdisi): Promise<string | nu
       .maybeSingle();
     const storeId = magaza.data?.id;
     if (typeof storeId !== "string" || !storeId) return null;
+
+    const varolan = await admin
+      .from("invoice_jobs")
+      .select("id")
+      .eq("store_id", storeId)
+      .eq("document_fingerprint", girdi.parmakIzi)
+      .maybeSingle();
+    if (typeof varolan.data?.id === "string" && varolan.data.id) {
+      const satirVar = await admin
+        .from("invoice_job_lines")
+        .select("id", { count: "exact", head: true })
+        .eq("job_id", varolan.data.id);
+      if ((satirVar.count ?? 0) > 0) return varolan.data.id;
+    }
 
     const beklemeVar = girdi.satirlar.some((satir) => satir.sonuc !== "kanitli");
     const isKaydi = await admin
@@ -95,6 +160,7 @@ export async function islemKaydet(girdi: IslemKaydiGirdisi): Promise<string | nu
             : null,
           document_adet: girdi.belgeAdedi,
           document_total: girdi.belgeToplami,
+          document_warning: (girdi.belgeUyarisi ?? "").slice(0, 500),
           document_type: (girdi.belgeTuru ?? "").slice(0, 40),
           document_no: (girdi.belgeNo ?? "").slice(0, 60),
           document_date: belgeTarihiIso(girdi.belgeTarihi ?? "") || null,
@@ -128,6 +194,10 @@ export async function islemKaydet(girdi: IslemKaydiGirdisi): Promise<string | nu
       line_total: satir.satirToplam,
       confidence: satir.guven,
       outcome: satir.sonuc,
+      brand: (satir.marka ?? "").slice(0, 120),
+      warning: (satir.uyari ?? "").slice(0, 500),
+      catalog_snapshot: satir.katalog,
+      conflict_snapshot: satir.celiski ?? null,
     }));
 
     const satirKayitlari = satirYazlari.length
@@ -145,39 +215,10 @@ export async function islemKaydet(girdi: IslemKaydiGirdisi): Promise<string | nu
       const satir = girdi.satirlar[sira];
       if (!satir) return;
 
-      const kaynak = satir.katalog?.kaynak || "fatura";
-      kanitSatillari.push({
-        line_id: lineId,
-        field_name: "urun_adi",
-        value_text: (satir.katalog?.resmiAd || satir.ad || "").slice(0, 300),
-        source: kaynak,
-        strength: kanitGucu(satir),
-      });
-      kanitSatillari.push({
-        line_id: lineId,
-        field_name: "kod",
-        value_text: (satir.model || satir.barkod).slice(0, 60),
-        source: kaynak,
-        strength: satir.katalog ? "strong" : "weak",
-      });
-
-      if (satir.katalog) {
-        adaySatirlari.push({
-          line_id: lineId,
-          url: satir.katalog.kaynak.slice(0, 500),
-          platform: (girdi.tedarikciIz?.platform ?? "").slice(0, 40),
-        });
-
-        const durum = gorselIzinDurumu(satir.katalog.izinDurumu);
-        for (const aday of satir.katalog.gorselAdaylari) {
-          gorselSatirlari.push({
-            line_id: lineId,
-            image_url: aday.slice(0, 500),
-            usage_status: durum,
-            source: satir.katalog.kaynak.slice(0, 500),
-          });
-        }
-      }
+      const kayitlar = satirKanitKayitlari(lineId, satir, girdi.tedarikciIz?.platform ?? "");
+      kanitSatillari.push(...kayitlar.kanit);
+      adaySatirlari.push(...kayitlar.aday);
+      gorselSatirlari.push(...kayitlar.gorsel);
     });
 
     if (kanitSatillari.length) {
