@@ -39,12 +39,18 @@ export async function satiriDogrula(
     .maybeSingle();
   if (!satir.data?.id) return null;
 
+  // Kullanım izni: kümeye yalnızca açıkça `denied` işaretlenmemiş görseller girer.
+  // `unknown` bilinçli olarak KALIR — kilitli kapsam: üretici fotoğrafı karta
+  // girer ve yayınlanır, izin turu sonra yürür (bkz. products/batch yorumu).
+  // Süzgeç Dart/TS tarafında, `.neq()` ile değil: SQL'de `usage_status <> 'denied'`
+  // NULL satırı da düşürür; yazılmamış usage_status 'denied' sayılmamalı.
   const gorseller = await admin
     .from("invoice_image_rights")
-    .select("image_url")
+    .select("image_url,usage_status")
     .eq("line_id", satir.data.id);
   const izinli = new Set<string>(
     (Array.isArray(gorseller.data) ? gorseller.data : [])
+      .filter((kayit) => String(kayit.usage_status ?? "") !== "denied")
       .map((kayit) => String(kayit.image_url ?? "").trim())
       .filter(Boolean),
   );

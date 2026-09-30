@@ -109,7 +109,7 @@ create index if not exists invoice_image_rights_line_id_idx
   on public.invoice_image_rights (line_id);
 
 comment on table public.invoice_image_rights is
-  'Gorsel adayi ve kullanim izni durumu. denied/unknown durumdaki gorsel tuketici kartina girmez.';
+  'Gorsel adayi ve kullanim izni durumu. Yalnizca acikca "denied" isaretli gorsel tuketici kartina girmez; "unknown" (izin henuz sorulmadi) GIRER — izin turu calisan sistemi durdurmaz, sonra yurur. Kilitli kapsam: docs/FATURADAN-VITRINE-MASTER-PLAN.md F1 ve AGENTS.md.';
 
 alter table public.invoice_jobs enable row level security;
 alter table public.invoice_job_lines enable row level security;
