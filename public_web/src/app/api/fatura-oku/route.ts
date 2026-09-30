@@ -166,7 +166,7 @@ export async function POST(request: NextRequest) {
   // Yarım okuma bir kere olabilir; ısrarla olmaz. Belge kendi toplamını
   // tutturana kadar en fazla DENEME_SINIRI kez okunur. Tutmazsa bile akış
   // durmaz — okunan satırlar uyarıyla taşınır, el yazısı bizi bağlamaz.
-  const DENEME_SINIRI = 3;
+  const DENEME_SINIRI = 1;
   const goruntu = `data:${tur};base64,${base64Cevir(bayt)}`;
 
   try {
@@ -254,13 +254,12 @@ export async function POST(request: NextRequest) {
     // Esnafın site ipucu: OCR siteyi okuyamadıysa keşif buradan yürür.
     const etkinSite = sonTedarikciSite || siteIpucu;
 
-    const { satirlar, tedarikciIz } = await faturaSatirlariniDijitalIzle(
+    const { satirlar, tedarikciIz, aramaDurumu } = await faturaSatirlariniDijitalIzle(
       sonSatirlar,
       sonTedarikci,
       etkinSite,
       { tedarikciKimligi: { vergiNo: sonTedarikciVergiNo, adres: sonTedarikciAdres } },
     );
-    const eslesenSayisi = satirlar.filter((satir) => satir.katalog !== null).length;
 
     const kayitGirdisi = {
       slug: ownerSlug,
@@ -272,32 +271,42 @@ export async function POST(request: NextRequest) {
       tedarikciAdres: sonTedarikciAdres,
       tedarikciSite: etkinSite,
       tedarikciIz,
+      aramaDurumu,
       satirlar,
       belgeUyarisi,
       ...sonBelge,
     };
     const islemKimligi = await islemKaydet(kayitGirdisi);
+    if (!islemKimligi) {
+      return NextResponse.json({ hata: "Fatura işlemi kaydedilemedi. Tekrar dene." }, { status: 503 });
+    }
+    const magaza = await admin.from("stores").select("id").eq("slug", ownerSlug).maybeSingle();
+    const kayitli = typeof magaza.data?.id === "string"
+      ? await islemiYukle(admin, magaza.data.id, islemKimligi) : null;
+    if (!kayitli) {
+      return NextResponse.json({ hata: "Kaydedilen fatura tekrar açılamadı. Tekrar dene." }, { status: 503 });
+    }
     const ayniAlisveris = islemKimligi
       ? await ayniAlisverisAdaylari({ slug: ownerSlug, islemKimligi, girdi: kayitGirdisi })
       : [];
 
     return NextResponse.json({
       tamam: true,
-      satirlar,
-      belgeToplami: sonOzet.toplam,
-      belgeAdedi: sonOzet.adet,
+      satirlar: kayitli.satirlar,
+      belgeToplami: kayitli.belgeToplami,
+      belgeAdedi: kayitli.belgeAdedi,
       // Toplam tutmadıysa akış durmaz; uyarı esnafa açıkça gösterilir.
-      ...(belgeUyarisi ? { belgeUyarisi } : {}),
-      tedarikci: sonTedarikci,
-      tedarikciVergiNo: sonTedarikciVergiNo,
-      tedarikciAdres: sonTedarikciAdres,
-      tedarikciSite: etkinSite,
-      tedarikciDijitalIz: tedarikciIz,
-      katalogEslesmesi: eslesenSayisi,
-      sonucOzeti: sonucOzeti(satirlar),
-      taslaklar: faturaTaslaklari(satirlar, islemKimligi),
+      ...(kayitli.belgeUyarisi ? { belgeUyarisi: kayitli.belgeUyarisi } : {}),
+      tedarikci: kayitli.tedarikci,
+      tedarikciVergiNo: kayitli.tedarikciVergiNo,
+      tedarikciAdres: kayitli.tedarikciAdres,
+      tedarikciSite: kayitli.tedarikciSite,
+      tedarikciDijitalIz: kayitli.tedarikciDijitalIz,
+      katalogEslesmesi: kayitli.satirlar.filter((satir) => satir.katalog !== null).length,
+      sonucOzeti: sonucOzeti(kayitli.satirlar),
+      taslaklar: faturaTaslaklari(kayitli.satirlar, islemKimligi),
       islemKimligi,
-      belge: sonBelge,
+      belge: kayitli.belge,
       ayniAlisveris,
     });
   } catch (err) {

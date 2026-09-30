@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   get: vi.fn(() => "owner-cookie"),
   admin: vi.fn(),
   verifyOwner: vi.fn(() => ({ storeId: "store-1" })),
+  save: vi.fn(),
   createProduct: vi.fn(),
   updateProduct: vi.fn(),
   publishProduct: vi.fn(async () => ({ success: true, id: "urun-1" })),
@@ -41,6 +42,7 @@ vi.mock("@/lib/productCoreServer", () => ({
   publishInvoiceProduct: mocks.publishProduct,
 }));
 vi.mock("@/lib/faturaUrunBaglantisi", () => ({
+  faturaUrununuKaydet: mocks.save,
   satiriDogrula: mocks.dogrula,
   satiriUrunleBagla: mocks.bagla,
   urunuGeriAl: mocks.geriAl,
@@ -125,6 +127,8 @@ function dogrulanmis(fazla: Record<string, unknown> = {}) {
     sonuc: "kanitli",
     urunId: null,
     izinliGorseller: new Set([GORSEL]),
+    alisBirimFiyati: 450,
+    katalog: { resmiAd: "Işılay İnterlok Penye Erkek Takım", aciklama: "Resmî açıklama", marka: "Işılay", kaynak: "https://firma.example/16747" },
     ...fazla,
   };
 }
@@ -134,6 +138,7 @@ beforeEach(() => {
   mocks.get.mockReturnValue("owner-cookie");
   mocks.verifyOwner.mockReturnValue({ storeId: "store-1" });
   mocks.admin.mockImplementation(() => ({ from: adminMock() }));
+  mocks.save.mockResolvedValue({ id: "urun-1", slug: "urun-1", created: true, kayit: "yeni" });
   mocks.createProduct.mockResolvedValue({ id: "urun-1", slug: "urun-1", created: true });
   mocks.publishProduct.mockResolvedValue({ success: true, id: "urun-1" });
   mocks.dogrula.mockResolvedValue(dogrulanmis());
@@ -141,81 +146,46 @@ beforeEach(() => {
   mocks.mevcutOku.mockResolvedValue(null);
 });
 
-describe("fatura satırı → ürün bağlantısı", () => {
-  it("tarayıcının 'kanıtlı' etiketi tek başına yetmez: sunucudaki sonuç eksikse yayın olmaz", async () => {
+describe("fatura satırı → atomik ürün kaydı", () => {
+  it("tarayıcının kanıtlı etiketi sunucudaki eksik sonucu yayımlatamaz", async () => {
     mocks.dogrula.mockResolvedValue(dogrulanmis({ sonuc: "eksik" }));
-
-    const govde = await (await topluUrunEkle(istek([satir()]))).json();
-
+    const body = await (await topluUrunEkle(istek([satir()]))).json();
     expect(mocks.publishProduct).not.toHaveBeenCalled();
-    expect(govde.yayinda).toBe(0);
-    expect(govde.taslak).toBe(1);
+    expect(body.yayinda).toBe(0);
+    expect(body.taslak).toBe(1);
   });
-
-  it("işlem ve satır kimliği doğrulanamayan satır yayına çıkamaz", async () => {
+  it("sahipliği doğrulanamayan satır kaydedilemez", async () => {
     mocks.dogrula.mockResolvedValue(null);
-
-    const govde = await (await topluUrunEkle(istek([satir({ islemKimligi: undefined })]))).json();
-
+    const body = await (await topluUrunEkle(istek([satir({ islemKimligi: undefined })]))).json();
+    expect(body.hatali).toBe(1);
+    expect(mocks.save).not.toHaveBeenCalled();
     expect(mocks.publishProduct).not.toHaveBeenCalled();
-    expect(govde.yayinda).toBe(0);
   });
-
-  it("satırla kayıtlı olmayan dış görsel karta girmez", async () => {
-    mocks.dogrula.mockResolvedValue(dogrulanmis({ izinliGorseller: new Set<string>() }));
-
-    await topluUrunEkle(istek([satir({ imageUrls: [GORSEL, "https://baska.example/sizan.jpg"] })]));
-
-    expect(mocks.createProduct.mock.calls[0][0].imageUrls).toEqual([]);
-  });
-
-  it("yeni ürün satıra bağlanır", async () => {
-    const govde = await (await topluUrunEkle(istek([satir()]))).json();
-
-    expect(mocks.bagla).toHaveBeenCalledWith(expect.anything(), "satir-1", "urun-1");
-    expect(govde.satirlar[0].kayit).toBe("yeni");
-  });
-
-  it("aynı satır yeniden kaydedilince ikinci ürün oluşmaz, aynı ürün güncellenir ve stok korunur", async () => {
-    mocks.dogrula.mockResolvedValue(dogrulanmis({ urunId: "urun-9" }));
-    mocks.mevcutOku.mockResolvedValue({
-      id: "urun-9",
-      stockQuantity: 5,
-      stockStatus: "Mevcut",
-      gorunur: false,
+  it("satırın kayıtlı kaynak ve alış bilgisi tek kayıt kapısına taşınır", async () => {
+    await topluUrunEkle(istek([satir({ name: "Yanlış ad", purchasePriceAmount: 1 })]));
+    expect(mocks.save).toHaveBeenCalledOnce();
+    expect(mocks.save.mock.calls[0][1]).toMatchObject({
+      satirId: "satir-1", alisFiyati: 450,
+      girdi: { name: "Işılay İnterlok Penye Erkek Takım", brand: "Işılay" },
     });
-
-    const govde = await (await topluUrunEkle(istek([satir({ stockQuantity: 8 })]))).json();
-
     expect(mocks.createProduct).not.toHaveBeenCalled();
-    expect(mocks.updateProduct).toHaveBeenCalledTimes(1);
-    expect(mocks.updateProduct.mock.calls[0][0]).toMatchObject({
-      productId: "urun-9",
-      stockQuantity: 5,
-      priceText: "499 TL",
-    });
-    expect(govde.satirlar[0].kayit).toBe("guncellendi");
+    expect(mocks.bagla).not.toHaveBeenCalled();
   });
-
-  it("aynı ürün başka alışverişten gelirse mevcut kayıt korunur, üzerine yazılmaz", async () => {
-    mocks.createProduct.mockResolvedValue({ id: "urun-3", slug: "urun-3", created: false });
-
-    const govde = await (await topluUrunEkle(istek([satir()]))).json();
-
-    expect(govde.satirlar[0].kayit).toBe("mevcut");
-    expect(mocks.update).not.toHaveBeenCalled();
-    expect(mocks.geriAl).not.toHaveBeenCalled();
+  it("aynı satırın mevcut kimliği atomik kayıttan geri gelir", async () => {
+    mocks.dogrula.mockResolvedValue(dogrulanmis({ urunId: "urun-9" }));
+    mocks.save.mockResolvedValue({ id: "urun-9", slug: "urun-9", created: false, kayit: "guncellendi" });
+    const body = await (await topluUrunEkle(istek([satir()]))).json();
+    expect(body.satirlar[0]).toMatchObject({ id: "urun-9", kayit: "guncellendi" });
+    expect(mocks.createProduct).not.toHaveBeenCalled();
+    expect(mocks.updateProduct).not.toHaveBeenCalled();
   });
-
-  it("ürün yazıldı ama satır bağlantısı yazılamadıysa yarım kayıt bırakılmaz", async () => {
-    mocks.bagla.mockResolvedValue(false);
-
-    const govde = await (await topluUrunEkle(istek([satir()]))).json();
-
-    expect(mocks.geriAl).toHaveBeenCalledWith(expect.anything(), "store-1", "urun-1");
-    expect(govde.hatali).toBe(1);
-    expect(govde.yayinda).toBe(0);
+  it("transaction hatası başarı veya yayın üretmez; mevcut ürün silinmez", async () => {
+    mocks.save.mockRejectedValue(new Error("FATURA_KANIT_YAZILAMADI"));
+    const body = await (await topluUrunEkle(istek([satir()]))).json();
+    expect(body.hatali).toBe(1);
+    expect(body.eklenen).toBe(0);
     expect(mocks.publishProduct).not.toHaveBeenCalled();
+    expect(mocks.geriAl).not.toHaveBeenCalled();
   });
 });
 

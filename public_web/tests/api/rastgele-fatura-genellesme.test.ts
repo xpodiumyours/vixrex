@@ -66,7 +66,7 @@ function faturaUret(tohum: number, satirSayisi: number): FaturaSatiri[] {
 /** Gerçek eşleştirme + gerçek yayın kapısı kuralını (productImagePolicy ile
  * aynı 3 fotoğraf eşiği) satır üzerinde uygular. */
 function kartUret(satir: FaturaSatiri): UretilenKart {
-  const eslesme = ureticiUrunuBul({ model: satir.kod });
+  const eslesme = ureticiUrunuBul({ model: satir.kod, firmaAnahtari: "seher-mensucat" });
   if (!eslesme) {
     return {
       kod: satir.kod,

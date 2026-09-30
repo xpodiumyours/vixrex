@@ -44,7 +44,22 @@ Bu tablo 30 Eylül yerel Git geçmişi ve çalışma dosyaları incelemesidir. A
 
 İncelemede ilgili son commit `preview/faturadan-urun-karti-p1` dalındaydı; yerelde görünen `origin/main` kaydına dahil değildi. Kök çalışma klasörü `faturadankataloga` dalında, farklı bir taban üzerinde çok sayıda devam eden değişiklik içeriyordu. Dosya bulunması, commit edilmesi, testin geçmesi ve canlıda çalışması ayrı kanıtlardır.
 
-`test-sonuc/fatura-tamamlama-notu.md` içindeki test sayıları önceki çalışmanın beyanıdır; bu plan yazılırken yeniden çalıştırılmadı. “Harici firma araması ayrı iş” gibi hedefi daraltan eski notlar bu planın kapsamını değiştirmez. API anahtarı veya migration için eski “eksik” notu da güncel ortam kontrolünün yerine geçmez.
+Önceki tamamlanma ve durum notları `.fatura-kurtarma/eski-notlar/` altında korunur; uygulamayı durduran talimat veya güncel kabul kanıtı olarak kullanılmaz. “Harici firma araması ayrı iş” gibi hedefi daraltan eski notlar bu planın kapsamını değiştirmez. API anahtarı veya veritabanı için eski “eksik” notu güncel ortam kontrolünün yerine geçmez.
+
+### 1 Ekim: aynı çalışma üzerinde tamamlama
+
+Mevcut `integration/fatura-birlestirme` çalışmasında kaynak eşleştirme, kayıt, telefon ekranları ve yayın parçaları birleştirilmiştir. Yeni ürün akışı kurulmamıştır. Bulut oturumunun okunabilen değişiklik kayıtları kurtarma alanında korunmuştur; erişilemeyen son dosyaların bütünü kurtarılmış sayılmaz.
+
+| Plan işi | Uygulanan tamamlayıcı parça | Kabul sınırı |
+| --- | --- | --- |
+| F1–F2 | Gerçek barkod ayrımı, açık kart/stok onayı ve kayıtlı esnaf seçimleri | Gerçek belgedeki okuma ve alışveriş eşliği ayrıca gösterilmelidir. |
+| F3–F4 | Üretici kimliğiyle eşleştirme, resmî bağlı PDF/sosyal katalog okuma, kalıcı görsel ve kaldığı yerden arama | Erişilemeyen katalog veya belirsiz ürün kesin eşleşme sayılmaz. PDF'nin tamamı taranmadan sonuç kesinleştirilmez. |
+| F5 | İlk işlem, satır/kanıt ve ürün bağlantısı atomik kaydedilir; tekrar aynı kaydı döndürür | `supabase/tests/invoice_atomic_smoke.sql` ayrı yerel veritabanında çalıştırılmıştır; canlı kurulum kanıtı değildir. |
+| F6 | Web/telefon geçmişi, taslağa dönüş, güvenli çıkış, sunucuda düzeltme ve ayrı yayın | Ekran ve servis kontrolleri gerçek sağlayıcıyla fatura kabulünün yerine geçmez. |
+| F7 | Çok üreticili faturada ayrı izin hedefleri, mevcut talebe yeni kart bağlantısı ve güncel ret kontrolü | Firma adına gönderim veya izin alınması yapılmış sayılmaz. |
+| F8 | Gerçek belge kabulü açık | `14544.jpg`, `14545.jpg`, `14550.jpg` bu çalışma dosyalarında bulunamamıştır; Işılay 16747 ve sektörler arası gerçek kabul tamamlanmış sayılmaz. |
+
+Birleşik veritabanı dosyası `docs/VERITABANI_KURULUMU.sql` güncel sekiz fatura değişikliğini içerir. Mevcut ürün çekirdeği ve alış fiyatı tablosu önkoşuldur. Dosyanın hazırlanması canlıya uygulanmış olduğu anlamına gelmez.
 
 ## 4. Esnafın yaşayacağı tek akış
 

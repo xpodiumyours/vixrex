@@ -966,9 +966,9 @@ body.vixrex-kaydediliyor .vixrex-secili-alan {
 }
 
 .fatura-alt-cubuk {
-  position: sticky;
-  bottom: 0;
+  position: relative;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;

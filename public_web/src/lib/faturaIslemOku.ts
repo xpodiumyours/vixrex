@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { EslesmisFaturaSatiri, KatalogBilgisi } from "@/lib/faturaEslestir";
 import { sonucOzeti } from "@/lib/faturaEslestir";
 import { durumGecerliMi } from "@/lib/faturaKartDurumu";
+import type { DijitalIzAramaDurumu } from "@/lib/faturaDijitalIz";
 
 export interface SahipDurumu {
   satisFiyati: string;
@@ -37,6 +38,8 @@ export interface KayitliIslem {
     odenecekToplam: number | null;
   };
   satirlar: KayitliSatir[];
+  aramaDurumu?: DijitalIzAramaDurumu;
+  tedarikciDijitalIz?: Record<string, unknown> | null;
 }
 
 export interface IslemOzeti {
@@ -84,12 +87,12 @@ export async function islemiYukle(
   const is = await admin
     .from("invoice_jobs")
     .select(
-      "id,status,supplier_name,supplier_tax_id,supplier_address,supplier_site,document_adet,document_total,document_warning,document_type,document_no,document_date,goods_total,vat_total,discount_total,payable_total",
+      "id,status,supplier_name,supplier_tax_id,supplier_address,supplier_site,supplier_trace,document_adet,document_total,document_warning,document_type,document_no,document_date,goods_total,vat_total,discount_total,payable_total,discovery_state",
     )
     .eq("id", islemKimligi)
     .eq("store_id", storeId)
     .maybeSingle();
-  if (!is.data?.id) return null;
+  if (is.error || !is.data?.id) return null;
 
   const satirlar = await admin
     .from("invoice_job_lines")
@@ -98,9 +101,14 @@ export async function islemiYukle(
     )
     .eq("job_id", islemKimligi)
     .order("line_index", { ascending: true });
-  const kayitlar = Array.isArray(satirlar.data) ? satirlar.data : [];
+  if (satirlar.error || !Array.isArray(satirlar.data)) return null;
+  const kayitlar = satirlar.data;
 
   return {
+    tedarikciDijitalIz: is.data.supplier_trace && typeof is.data.supplier_trace === "object"
+      ? { ...is.data.supplier_trace, firma: String(is.data.supplier_name ?? "") } : null,
+    aramaDurumu: is.data.discovery_state && typeof is.data.discovery_state === "object"
+      ? is.data.discovery_state as DijitalIzAramaDurumu : undefined,
     islemKimligi: String(is.data.id),
     durum: String(is.data.status ?? ""),
     tedarikci: String(is.data.supplier_name ?? ""),
@@ -153,9 +161,11 @@ export function islemYaniti(islem: KayitliIslem): Record<string, unknown> {
     tedarikciVergiNo: islem.tedarikciVergiNo,
     tedarikciAdres: islem.tedarikciAdres,
     tedarikciSite: islem.tedarikciSite,
+    tedarikciDijitalIz: islem.tedarikciDijitalIz,
     katalogEslesmesi: islem.satirlar.filter((satir) => satir.katalog !== null).length,
     sonucOzeti: sonucOzeti(islem.satirlar),
     islemKimligi: islem.islemKimligi,
+    aramaSuruyor: islem.aramaDurumu?.sinirDoldu === true,
     belge: islem.belge,
     ayniAlisveris: [],
   };
@@ -223,8 +233,9 @@ export async function parmakIzindenIslemBul(
     .select("id")
     .eq("store_id", storeId)
     .eq("document_fingerprint", parmakIzi)
+    .eq("ingest_complete", true)
     .maybeSingle();
-  if (!is.data?.id) return null;
+  if (is.error || !is.data?.id) return null;
   const say = await admin
     .from("invoice_job_lines")
     .select("id", { count: "exact", head: true })
@@ -238,22 +249,10 @@ export async function sahipDurumlariniKaydet(
   islemKimligi: string,
   guncellemeler: Array<{ satirSirasi: number; sahipDurumu: SahipDurumu }>,
 ): Promise<boolean> {
-  const is = await admin
-    .from("invoice_jobs")
-    .select("id")
-    .eq("id", islemKimligi)
-    .eq("store_id", storeId)
-    .maybeSingle();
-  if (!is.data?.id) return false;
-
-  const simdi = new Date().toISOString();
-  for (const guncelleme of guncellemeler) {
-    const { error } = await admin
-      .from("invoice_job_lines")
-      .update({ owner_state: guncelleme.sahipDurumu, owner_state_updated_at: simdi })
-      .eq("job_id", islemKimligi)
-      .eq("line_index", guncelleme.satirSirasi);
-    if (error) return false;
-  }
-  return true;
+  const { data, error } = await admin.rpc("save_invoice_owner_state", {
+    p_store_id: storeId,
+    p_job_id: islemKimligi,
+    p_updates: guncellemeler,
+  });
+  return !error && data?.success === true && data.kaydedilen === guncellemeler.length;
 }

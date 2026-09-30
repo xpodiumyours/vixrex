@@ -59,10 +59,10 @@ describe("tedarikçi kimliği eşleştirmeyi sınırlar", () => {
       satir({ model: "ELT1302" }),
       satir({ model: "ELT1303" }),
       satir({ model: "ELT1306" }),
-      satir({ model: "KP160" }), // Aycenk Gıda kataloğundan
+      satir({ model: "KP160", marka: "Karpuzoğlu" }), // Aycenk Gıda kataloğundan
     ];
 
-    const sonuc = faturaSatirlariniEslestir(satirlar);
+    const sonuc = faturaSatirlariniEslestir(satirlar, "Seher Mensucat");
     expect(sonuc.filter((s) => s.katalog !== null)).toHaveLength(4);
 
     const yabanci = sonuc[3];
@@ -77,6 +77,7 @@ describe("tedarikçi kimliği eşleştirmeyi sınırlar", () => {
   it("hepsi aynı firmadansa hiçbir satır işaretlenmez", () => {
     const sonuc = faturaSatirlariniEslestir(
       ["ELT1302", "ELT1303", "ELT1306"].map((kod) => satir({ model: kod })),
+      "Seher Mensucat",
     );
     expect(sonuc.every((s) => s.uyari === undefined)).toBe(true);
     expect(sonuc.filter((s) => s.katalog !== null)).toHaveLength(3);

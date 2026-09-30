@@ -107,7 +107,12 @@ function temelVeri(): Record<string, Satir[]> {
       {
         job_id: ISLEM,
         product_id: "urun-1",
-        catalog_snapshot: { resmiAd: "IŞILAY 16747 İnterlok Penye Erkek Takım" },
+        catalog_snapshot: {
+          resmiAd: "IŞILAY 16747 İnterlok Penye Erkek Takım",
+          kaynakFirma: "Işılay Tekstil",
+          marka: "Işılay",
+          kaynak: "https://isilaytekstil.com/urun/16747",
+        },
       },
       { job_id: ISLEM, product_id: null, catalog_snapshot: null },
     ],
@@ -179,7 +184,7 @@ describe("firma izni talebi", () => {
     expect(tablolar.supplier_permission_requests[0]).toMatchObject({
       status: "hazirlandi",
       requested_by: "owner",
-      supplier_key: "isilay",
+      supplier_key: "ışılaytekstil:isilaytekstil.com",
     });
     expect(String(tablolar.supplier_permission_requests[0].message)).toContain("16747");
     expect(tablolar.supplier_permission_products).toHaveLength(1);
@@ -211,7 +216,7 @@ describe("firma izni talebi", () => {
   it("firma izni zaten geçerliyse talep açılmaz", async () => {
     const veri = temelVeri();
     veri.supplier_permissions.push({
-      supplier_key: "isilay",
+      supplier_key: "ışılaytekstil:isilaytekstil.com",
       scope: "data_and_images",
       status: "izin_verildi",
       valid_until: null,
@@ -229,7 +234,7 @@ describe("firma izni talebi", () => {
   it("firma reddettiyse her faturada yeniden talep yağdırılmaz", async () => {
     const veri = temelVeri();
     veri.supplier_permissions.push({
-      supplier_key: "isilay",
+      supplier_key: "ışılaytekstil:isilaytekstil.com",
       scope: "data_and_images",
       status: "reddedildi",
       valid_until: null,
@@ -267,7 +272,7 @@ describe("firma cevabı", () => {
     await talepOlustur(admin, { ...ORTAK, secim: "owner" });
 
     const sonuc = await cevapKaydet(admin, {
-      firmaAnahtari: "isilay",
+      firmaAnahtari: "ışılaytekstil:isilaytekstil.com",
       firmaAdi: "Işılay Tekstil",
       kapsam: "data_and_images",
       durum: "izin_verildi",
@@ -287,7 +292,7 @@ describe("firma cevabı", () => {
     await talepOlustur(admin, { ...ORTAK, secim: "owner" });
 
     const sonuc = await cevapKaydet(admin, {
-      firmaAnahtari: "isilay",
+      firmaAnahtari: "ışılaytekstil:isilaytekstil.com",
       firmaAdi: "Işılay Tekstil",
       kapsam: "data_and_images",
       durum: "reddedildi",

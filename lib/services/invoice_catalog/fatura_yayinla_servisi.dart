@@ -59,7 +59,9 @@ class FaturaYayinlaServisi {
       if (yanit.statusCode < 200 || yanit.statusCode >= 300) {
         final mesaj = (govde['hata'] ?? '').toString();
         return Result.failure(
-          Failure(mesaj.isNotEmpty ? mesaj : 'Ürünler yayınlanamadı. Tekrar dene.'),
+          Failure(
+            mesaj.isNotEmpty ? mesaj : 'Ürünler yayınlanamadı. Tekrar dene.',
+          ),
         );
       }
 
@@ -78,11 +80,25 @@ class FaturaYayinlaServisi {
         }
       }
 
+      if (govde['tamam'] != true ||
+          satirlar.length != temizIdler.toSet().length ||
+          satirlar.map((satir) => satir.id).toSet().length != satirlar.length ||
+          satirlar.any((satir) => !temizIdler.contains(satir.id))) {
+        return Result.failure(
+          Failure(
+            'Sunucu bütün ürünlerin yayın sonucunu vermedi. Tekrar dene.',
+          ),
+        );
+      }
+
       return Result.success(
         FaturaYayinlaSonucu(
-          yayinda: (govde['yayinda'] is num) ? (govde['yayinda'] as num).toInt() : 0,
-          taslak: (govde['taslak'] is num) ? (govde['taslak'] as num).toInt() : 0,
+          yayinda:
+              (govde['yayinda'] is num) ? (govde['yayinda'] as num).toInt() : 0,
+          taslak:
+              (govde['taslak'] is num) ? (govde['taslak'] as num).toInt() : 0,
           satirlar: satirlar,
+          tuketiciDogrulandi: govde['tuketiciDogrulamasi'] == 'tamam',
         ),
       );
     } catch (_) {
@@ -119,11 +135,13 @@ class FaturaYayinlaSonucu {
   final int yayinda;
   final int taslak;
   final List<YayinlananSatir> satirlar;
+  final bool tuketiciDogrulandi;
 
   const FaturaYayinlaSonucu({
     required this.yayinda,
     required this.taslak,
     required this.satirlar,
+    this.tuketiciDogrulandi = false,
   });
 }
 

@@ -109,11 +109,6 @@ export async function POST(request: NextRequest) {
       sonuclar.push({ id, durum: "taslak", sebep: "Bu ürün fatura akışından gelmedi." });
       continue;
     }
-    if (satir.is_visible === true) {
-      yayinda += 1;
-      sonuclar.push({ id, durum: "yayinda" });
-      continue;
-    }
 
     // Kilitli kapsam: üretici fotoğrafı yayını durdurmaz; kullanım izni
     // sonra, çalışan sistemle istenir (kayıtlar invoice_image_rights'ta).

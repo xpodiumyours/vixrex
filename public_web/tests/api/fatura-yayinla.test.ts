@@ -143,14 +143,14 @@ describe("/api/fatura-yayinla — ayrı Yayınla kapısı", () => {
     expect(mocks.publish).not.toHaveBeenCalled();
   });
 
-  it("zaten yayındaki ürün için publish çağrılmaz", async () => {
+  it("zaten yayındaki ürün için güncel kaynak ve izin yeniden doğrulanır", async () => {
     urunSatiri = { ...TASLAK_FATURA_URUNU, is_visible: true };
 
     const cevap = await faturaYayinla(istek({ slug: "deneme-vitrin", productIds: ["urun-1"] }));
     const govde = await cevap.json();
 
     expect(govde.yayinda).toBe(1);
-    expect(mocks.publish).not.toHaveBeenCalled();
+    expect(mocks.publish).toHaveBeenCalledOnce();
   });
 
   it("başka vitrinin ürünü yayınlanmaz", async () => {
@@ -181,4 +181,13 @@ describe("/api/fatura-yayinla — ayrı Yayınla kapısı", () => {
     expect(cevap.status).toBe(422);
     expect(mocks.publish).not.toHaveBeenCalled();
   });
+  it("yayındaki üründe güncel firma reddi başarılı yayın diye dönmez", async () => {
+    urunSatiri = { ...TASLAK_FATURA_URUNU, is_visible: true };
+    mocks.publish.mockResolvedValueOnce({ success: false, hata: "Firma içerik kullanımını reddetti." });
+    const body = await (await faturaYayinla(istek({ slug: "deneme-vitrin", productIds: ["urun-1"] }))).json();
+    expect(mocks.publish).toHaveBeenCalledOnce();
+    expect(body.yayinda).toBe(0);
+    expect(body.satirlar[0].sebep).toContain("reddetti");
+  });
+
 });

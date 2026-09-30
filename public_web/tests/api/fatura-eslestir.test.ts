@@ -1,7 +1,13 @@
 import { NextRequest } from "next/server";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import seherHam from "../../data/katalog/uretici-katalog-seher-mensucat.json";
 import type { UreticiUrunu } from "@/lib/ureticiKatalog";
+
+vi.mock("node:dns/promises", async (importOriginal) => ({
+  ...await importOriginal<typeof import("node:dns/promises")>(),
+  resolve4: vi.fn(async () => ["8.8.8.8"]),
+  resolve6: vi.fn(async () => []),
+}));
 
 // /api/fatura-eslestir — fotoğrafı KİM okumuş olursa olsun (telefon, Başak,
 // elle giriş), aynı satırların aynı şekilde katalogla eşleştiğini kanıtlar.
@@ -44,11 +50,11 @@ mocks.admin.mockImplementation(() => ({ rpc: mocks.rpc }));
 
 import { POST as faturaEslestir } from "@/app/api/fatura-eslestir/route";
 
-function istek(satirlar: unknown[], slug = "deneme-vitrin") {
+function istek(satirlar: unknown[], slug = "deneme-vitrin", tedarikci = "") {
   return new NextRequest("http://localhost/api/fatura-eslestir", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ slug, satirlar }),
+    body: JSON.stringify({ slug, satirlar, tedarikci }),
   });
 }
 
@@ -58,7 +64,10 @@ describe("/api/fatura-eslestir — OCR kaynağından bağımsız katalog eşleş
     mocks.get.mockReturnValue("owner-cookie");
     mocks.verifyOwner.mockReturnValue({ storeId: "store-1", slug: "deneme-vitrin" });
     mocks.rpc.mockResolvedValue({ data: { allowed: true }, error: null });
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("{}", { status: 404 })));
   });
+
+  afterEach(() => { vi.unstubAllGlobals(); });
 
   it("oturum yoksa reddeder", async () => {
     mocks.verifyOwner.mockReturnValue(null);
@@ -83,12 +92,12 @@ describe("/api/fatura-eslestir — OCR kaynağından bağımsız katalog eşleş
     expect(cevap.status).toBe(200);
   });
 
-  it("gerçek katalog kodları HTTP üzerinden eşleşir; resmî ad döner, izinsiz fotoğraf dönmez", async () => {
+  it("üreticisi belirtilen gerçek katalog kodları resmî bilgi ve fotoğrafla eşleşir", async () => {
     const cevap = await faturaEslestir(
       istek([
         { model: "ELT1302", ad: "elastan sıfır yaka", barkod: "", adet: 2, alisBirimFiyat: 137, guven: 0.9 },
         { model: "TER0101", ad: "penye atlet", barkod: "", adet: 18, alisBirimFiyat: 63.5, guven: 0.85 },
-      ]),
+      ], "deneme-vitrin", "Seher Mensucat"),
     );
     const govde = await cevap.json();
 
@@ -140,7 +149,7 @@ describe("/api/fatura-eslestir — OCR kaynağından bağımsız katalog eşleş
       const satirlar = [...gercekKodlar].map((model) => ({ model, ad: "", guven: 0.8 }));
       satirlar.push({ model: "UYDURMA9999", ad: "gerçek olmayan ürün", guven: 0.3 });
 
-      const cevap = await faturaEslestir(istek(satirlar));
+      const cevap = await faturaEslestir(istek(satirlar, "deneme-vitrin", "Seher Mensucat"));
       const govde = await cevap.json();
 
       expect(govde.katalogEslesmesi).toBe(12); // 12 gerçek + 1 uydurma

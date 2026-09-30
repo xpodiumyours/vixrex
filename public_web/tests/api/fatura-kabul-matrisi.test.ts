@@ -11,6 +11,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   get: vi.fn(() => "owner-cookie"),
   admin: vi.fn(),
+  rpc: vi.fn(),
+  kayitlar: new Map<number, Record<string, unknown>>(),
   verifyOwner: vi.fn(() => ({ storeId: "store-1" })),
   createProduct: vi.fn(),
   publishProduct: vi.fn(
@@ -40,21 +42,9 @@ vi.mock("@/lib/faturaGorsel", () => ({
     altyapiSorunu: false,
   }),
 }));
-vi.mock("@/lib/faturaUrunBaglantisi", () => ({
-  satiriDogrula: async (
-    _admin: unknown,
-    _storeId: string,
-    _kimlik: unknown,
-    iddia: string,
-  ) => ({
-    satirId: "satir-1",
-    sonuc: iddia,
-    urunId: null,
-    izinliGorseller: { has: () => true },
-  }),
-  satiriUrunleBagla: async () => true,
-  urunuGeriAl: async () => undefined,
-  mevcutUrunuOku: async () => null,
+vi.mock("@/lib/faturaUrunBaglantisi", async (importOriginal) => ({
+  ...await importOriginal<typeof import("@/lib/faturaUrunBaglantisi")>(),
+  satiriDogrula: async (_admin: unknown, _storeId: string, kimlik: { satirSirasi: number }) => mocks.kayitlar.get(kimlik.satirSirasi) ?? null,
 }));
 vi.mock("@/lib/productCoreServer", () => ({
   createRichCoreProduct: mocks.createProduct,
@@ -121,7 +111,20 @@ function kanitliSatir(fazla: Record<string, unknown> = {}) {
   };
 }
 
+function kayitlariHazirla(products: unknown[]) {
+  for (const [i, ham] of products.entries()) {
+    const p = ham as Record<string, unknown>;
+    if (p.sourceType !== "invoice") continue;
+    p.islemKimligi = "11111111-1111-4111-8111-111111111111";
+    p.satirSirasi = i;
+    mocks.kayitlar.set(i, { satirId: String(i), sonuc: p.kartDurumu ?? "kanitli", urunId: null,
+      izinliGorseller: new Set(p.imageUrls as string[]), alisBirimFiyati: typeof p.purchasePriceAmount === "number" ? p.purchasePriceAmount : null,
+      katalog: { resmiAd: p.name, aciklama: p.description ?? "", marka: p.brand ?? "Üretici", kaynak: `https://tedarikci.example.com/urun/${i}` } });
+  }
+}
+
 function istek(products: unknown[]) {
+  kayitlariHazirla(products);
   return new NextRequest("http://localhost/api/products/batch", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -132,9 +135,11 @@ function istek(products: unknown[]) {
 describe("kabul matrisi R1-R10 + R2a sunucu sozlesmesi", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.kayitlar.clear();
+    mocks.rpc.mockImplementation(async (_name: string, args: { p_line_id: string }) => ({ data: { success: true, id: `urun-${args.p_line_id}`, slug: `urun-${args.p_line_id}`, created: true, kayit: "yeni" }, error: null }));
     mocks.get.mockReturnValue("owner-cookie");
     mocks.verifyOwner.mockReturnValue({ storeId: "store-1" });
-    mocks.admin.mockImplementation(() => ({ from: adminMock() }));
+    mocks.admin.mockImplementation(() => ({ from: adminMock(), rpc: mocks.rpc }));
     mocks.publishProduct.mockResolvedValue({ success: true, id: "urun-1" });
     let sayac = 0;
     mocks.createProduct.mockImplementation(async () => {
@@ -147,7 +152,7 @@ describe("kabul matrisi R1-R10 + R2a sunucu sozlesmesi", () => {
     const cevap = await topluUrunEkle(istek([kanitliSatir({ kartDurumu: "iz-yok" })]));
     const govde = await cevap.json();
 
-    expect(mocks.createProduct).toHaveBeenCalledTimes(1);
+    expect(mocks.rpc).toHaveBeenCalledTimes(1);
     expect(govde.yayinda).toBe(0);
     expect(govde.taslak).toBe(1);
     expect(govde.satirlar[0].sebep).toContain("kanıtlı değil");
@@ -169,8 +174,9 @@ describe("kabul matrisi R1-R10 + R2a sunucu sozlesmesi", () => {
     // Her yazım ayrı taslak/yayın kaydıdır; sessizce birleşmez, fiyatı sızdırmaz.
     expect(birinci.yayinda).toBe(1);
     expect(ikinci.yayinda).toBe(1);
-    for (const cagri of mocks.createProduct.mock.calls) {
-      expect(JSON.stringify(cagri[0])).not.toContain("137");
+    expect(birinci.satirlar[0].id).toBe(ikinci.satirlar[0].id);
+    for (const cagri of mocks.rpc.mock.calls) {
+      expect(JSON.stringify(cagri[1].p_product)).not.toContain("137");
     }
   });
 
@@ -185,9 +191,11 @@ describe("kabul matrisi R1-R10 + R2a sunucu sozlesmesi", () => {
     ];
     for (const varyant of kapaliVaryantlar) {
       vi.clearAllMocks();
+    mocks.kayitlar.clear();
+    mocks.rpc.mockImplementation(async (_name: string, args: { p_line_id: string }) => ({ data: { success: true, id: `urun-${args.p_line_id}`, slug: `urun-${args.p_line_id}`, created: true, kayit: "yeni" }, error: null }));
       mocks.get.mockReturnValue("owner-cookie");
       mocks.verifyOwner.mockReturnValue({ storeId: "store-1" });
-      mocks.admin.mockImplementation(() => ({ from: adminMock() }));
+      mocks.admin.mockImplementation(() => ({ from: adminMock(), rpc: mocks.rpc }));
       mocks.publishProduct.mockResolvedValue({ success: true, id: "urun-1" });
       mocks.createProduct.mockResolvedValue({ id: "urun-1", slug: "urun-1" });
 

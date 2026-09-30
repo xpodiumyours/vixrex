@@ -21,7 +21,7 @@ void main() {
   }
 
   group('InvoiceDraftDecisionEngine', () {
-    test('guclu urunu hazirlar ama izin bilinmiyorsa yayinlamaz', () {
+    test('bilinmeyen izin hazirligi engellemez, eksik esnaf bilgisi yayini engeller', () {
       final draft = InvoiceProductDraft(
         id: 'ter0101',
         rawSourceLine:
@@ -44,11 +44,10 @@ void main() {
       expect(result.decision, AutomationDecision.autoPrepareDraft);
       expect(result.canPrepareDraft, isTrue);
       expect(result.canPublish, isFalse);
-      expect(result.externalMediaBlocked, isTrue);
-      expect(
-        result.questions.any((q) => q.contains('kullanma yetkiniz')),
-        isTrue,
-      );
+      expect(result.externalMediaBlocked, isFalse);
+      expect(result.questions.any((q) => q.contains('kullanma yetkiniz')), isFalse);
+      expect(result.questions.any((q) => q.contains('Satış fiyatı')), isTrue);
+      expect(result.questions.any((q) => q.contains('stoğunu')), isTrue);
     });
 
     test('zayif urun izinde tahmin etmez', () {
@@ -90,6 +89,7 @@ void main() {
       () {
         final draft = InvoiceProductDraft(
           id: 'ready',
+          imageCandidates: const [InvoiceImageCandidate(url: 'https://uretici.example/TER0101.jpg', sourceType: EvidenceSourceType.officialProductPage, sourceReference: 'https://uretici.example/TER0101', strength: EvidenceStrength.strong, rightsStatus: RightsStatus.verifiedSupplierPermission, selected: true)],
           rawSourceLine: 'TER0101 ...',
           supplierName: textEvidence('Seher Mensucat'),
           normalizedName: textEvidence(
@@ -111,6 +111,16 @@ void main() {
         expect(result.canPrepareDraft, isTrue);
         expect(result.canPublish, isTrue);
         expect(result.externalMediaBlocked, isFalse);
+        expect(engine.evaluate(draft.copyWith(stockConfirmed: false)).canPublish, isFalse);
+        expect(engine.evaluate(draft.copyWith(merchantApproved: false)).canPublish, isFalse);
+        expect(engine.evaluate(draft.copyWith(clearSalePrice: true)).canPublish, isFalse);
+        expect(engine.evaluate(draft.copyWith(imageCandidates: const [])).canPublish, isFalse);
+        final pendingPermission = draft.copyWith(rightsStatus: RightsStatus.unknown,
+          imageCandidates: const [InvoiceImageCandidate(url: 'https://uretici.example/TER0101.jpg',
+            sourceType: EvidenceSourceType.officialProductPage, sourceReference: 'https://uretici.example/TER0101',
+            strength: EvidenceStrength.strong, rightsStatus: RightsStatus.unknown, selected: true)]);
+        expect(engine.evaluate(pendingPermission).canPublish, isTrue);
+        expect(engine.evaluate(pendingPermission.copyWith(rightsStatus: RightsStatus.denied)).canPublish, isFalse);
       },
     );
 

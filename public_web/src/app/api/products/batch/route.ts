@@ -8,6 +8,7 @@ import {
   updateRichCoreProduct,
 } from "@/lib/productCoreServer";
 import {
+  faturaUrununuKaydet,
   mevcutUrunuOku,
   satiriDogrula,
   satiriUrunleBagla,
@@ -221,6 +222,22 @@ export async function POST(request: NextRequest) {
           iddiaDurumu,
         )
       : null;
+    if (faturaKaynakli && !dogrulanmis) {
+      atlandi += 1;
+      sonuclar.push({ sira: index, ad, durum: "atlandi", sebep: "Fatura satırı doğrulanamadı; tekrar dene." });
+      continue;
+    }
+    if (dogrulanmis?.sonuc === "kanitli") {
+      const katalog = dogrulanmis.katalog;
+      if (!katalog || typeof katalog.resmiAd !== "string" || typeof katalog.kaynak !== "string") {
+        atlandi += 1;
+        sonuclar.push({ sira: index, ad, durum: "atlandi", sebep: "Kayıtlı resmî ürün kaynağı eksik; yeniden eşleştir." });
+        continue;
+      }
+      hazirlik.girdi.name = katalog.resmiAd;
+      hazirlik.girdi.description = typeof katalog.aciklama === "string" ? katalog.aciklama : "";
+      hazirlik.girdi.brand = typeof katalog.marka === "string" ? katalog.marka : null;
+    }
     const kartDurumu = faturaKaynakli ? (dogrulanmis?.sonuc ?? "eksik") : iddiaDurumu;
     const yayinIstegi = ham.yayinIstegi === true;
 
@@ -247,7 +264,7 @@ export async function POST(request: NextRequest) {
       const hazir = await kaynakGorselleriniHazirla({
         admin,
         slug,
-        kaynakSayfa: typeof ham.gorselKaynagi === "string" ? ham.gorselKaynagi.trim() : "",
+        kaynakSayfa: typeof dogrulanmis?.katalog?.kaynak === "string" ? dogrulanmis.katalog.kaynak : "",
         adaylar: disGorseller,
       });
       const depodaki = new Map(hazir.gorseller.map((gorsel) => [gorsel.kaynakGorsel, gorsel]));
@@ -256,11 +273,16 @@ export async function POST(request: NextRequest) {
           .filter((red) => red.sebep === "erisilemedi" || red.sebep === "depoya-yazilamadi")
           .map((red) => red.kaynakGorsel),
       );
+      if (altyapiHatasi.size > 0) {
+        atlandi += 1;
+        sonuclar.push({ sira: index, ad, durum: "atlandi", sebep: "Ürün görseli kalıcı kaydedilemedi; tekrar dene." });
+        continue;
+      }
       urunGorselleri = kaynakGorselleri.flatMap((adres) => {
         if (yonetilenUrunGorseliMi(adres)) return [adres];
         const kopya = depodaki.get(adres);
         if (kopya) return [kopya.url];
-        return altyapiHatasi.has(adres) ? [adres] : [];
+        return [];
       });
       gorselKaynaklari = hazir.gorseller.map((gorsel) => ({
         depoUrl: gorsel.url,
@@ -298,6 +320,27 @@ export async function POST(request: NextRequest) {
     const gorunur = faturaKaynakli ? false : normalGorunur;
 
     try {
+      if (faturaKaynakli && dogrulanmis) {
+        const olusan = await faturaUrununuKaydet(admin, {
+          storeId: store.id,
+          editToken: store.edit_token,
+          satirId: dogrulanmis.satirId,
+          girdi: { ...hazirlik.girdi, imageUrls: urunGorselleri, sortOrder: ham.sortOrder ?? ham.sort_order ?? index },
+          kanit: { kartDurumu, stokOnaylandi, esnafOnayladi, ureticiGorsel: ureticiGorselVar, gorselDurumu, gorselKaynaklari },
+          alisFiyati: dogrulanmis.alisBirimFiyati,
+        });
+        let sonuc: SatirSonucu = { sira: index, ad: hazirlik.girdi.name, durum: "taslak", id: olusan.id, kayit: olusan.kayit,
+          sebep: faturaKapisiSebebi({ hazirlik, faturaKaynakli, faturaEksikleri, yayinIstegi }) };
+        if (faturaKapisi) {
+          const yayin = await publishInvoiceProduct({ admin, productId: olusan.id, editToken: store.edit_token });
+          if (yayin.success) sonuc = { ...sonuc, durum: "yayinda", sebep: undefined };
+          else sonuc.sebep = yayin.hata ?? "Ürün yayınlanamadı; taslak kaydedildi.";
+        }
+        if (sonuc.durum === "yayinda") yayinda += 1;
+        else taslak += 1;
+        sonuclar.push(sonuc);
+        continue;
+      }
       const mevcutBagli = dogrulanmis?.urunId
         ? await mevcutUrunuOku(admin, store.id, dogrulanmis.urunId)
         : null;

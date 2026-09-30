@@ -174,7 +174,7 @@ class InvoiceImageCandidate {
   bool get canUse =>
       !isExternal ||
       rightsStatus == RightsStatus.merchantOwnedMedia ||
-      rightsStatus.isUsableBasis;
+      rightsStatus != RightsStatus.denied;
 
   Map<String, dynamic> toJson() => {
     'url': url,
@@ -333,6 +333,7 @@ class InvoiceProductDraft {
     String? islemKimligi,
     bool? merchantApproved,
     double? salePrice,
+    bool clearSalePrice = false,
     bool? isVisible,
   }) {
     return InvoiceProductDraft(
@@ -371,7 +372,7 @@ class InvoiceProductDraft {
       stockConfirmed: stockConfirmed ?? this.stockConfirmed,
       islemKimligi: islemKimligi ?? this.islemKimligi,
       merchantApproved: merchantApproved ?? this.merchantApproved,
-      salePrice: salePrice ?? this.salePrice,
+      salePrice: clearSalePrice ? null : salePrice ?? this.salePrice,
       isVisible: isVisible ?? this.isVisible,
     );
   }

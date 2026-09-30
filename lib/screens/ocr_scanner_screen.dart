@@ -18,10 +18,19 @@ class OcrScannerScreen extends StatefulWidget {
 }
 
 class _OcrScannerScreenState extends State<OcrScannerScreen> {
+  bool _allowPop = false;
+  bool _leaving = false;
+  bool get _busy =>
+      widget.ocrController.isSaving ||
+      widget.ocrController.isProcessing ||
+      widget.ocrController.isPublishing;
   @override
   void initState() {
     super.initState();
     widget.ocrController.addListener(_onStateChanged);
+    if (widget.ocrController.scanMode == 'invoice') {
+      widget.ocrController.loadInvoiceHistory();
+    }
   }
 
   @override
@@ -37,85 +46,156 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return AppScreenScaffold(
-      title:
-          widget.ocrController.scanMode == 'invoice'
-              ? 'Faturadan Ürün Çıkar'
-              : 'Fotoğraftan Ürün Çıkar',
-      actions: [
-        if (widget.ocrController.hasResult)
-          TextButton(
-            onPressed: _saveProducts,
-            child: const Text(
-              'Kaydet',
-              style: TextStyle(color: AppColors.primary),
+    return PopScope(
+      canPop: widget.ocrController.scanMode != 'invoice' || _allowPop,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) _leave();
+      },
+      child: AppScreenScaffold(
+        title:
+            widget.ocrController.scanMode == 'invoice'
+                ? 'Faturadan Ürün Çıkar'
+                : 'Fotoğraftan Ürün Çıkar',
+        actions: [
+          if (widget.ocrController.scanMode == 'invoice')
+            TextButton(
+              onPressed: _busy ? null : _showHistory,
+              child: const Text('Faturalarım'),
             ),
-          ),
-      ],
-      padding: EdgeInsets.zero,
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Tarama Modu Seçici
-            if (!widget.ocrController.hasResult) ...[
-              SegmentedButton<String>(
-                segments: const [
-                  ButtonSegment<String>(
-                    value: 'receipt',
-                    label: Text('Fiş'),
-                    icon: Icon(Icons.receipt_long_rounded),
+          if (widget.ocrController.hasResult)
+            TextButton(
+              onPressed: _busy ? null : _saveProducts,
+              child: const Text(
+                'Kaydet',
+                style: TextStyle(color: AppColors.primary),
+              ),
+            ),
+        ],
+        padding: EdgeInsets.zero,
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Tarama Modu Seçici
+              if (!widget.ocrController.hasResult) ...[
+                SegmentedButton<String>(
+                  segments: const [
+                    ButtonSegment<String>(
+                      value: 'receipt',
+                      label: Text('Fiş'),
+                      icon: Icon(Icons.receipt_long_rounded),
+                    ),
+                    ButtonSegment<String>(
+                      value: 'invoice',
+                      label: Text('Fatura'),
+                      icon: Icon(Icons.description_outlined),
+                    ),
+                    ButtonSegment<String>(
+                      value: 'shelf_label',
+                      label: Text('Raf/Etiket'),
+                      icon: Icon(Icons.label_outline_rounded),
+                    ),
+                  ],
+                  selected: {widget.ocrController.scanMode},
+                  onSelectionChanged:
+                      _busy
+                          ? null
+                          : (Set<String> newSelection) {
+                            setState(() {
+                              widget.ocrController.scanMode =
+                                  newSelection.first;
+                              if (newSelection.first == 'invoice') {
+                                widget.ocrController.loadInvoiceHistory();
+                              }
+                            });
+                          },
+                  style: SegmentedButton.styleFrom(
+                    selectedBackgroundColor: AppColors.primary,
+                    selectedForegroundColor: Colors.white,
+                    backgroundColor: AppColors.surface,
                   ),
-                  ButtonSegment<String>(
-                    value: 'invoice',
-                    label: Text('Fatura'),
-                    icon: Icon(Icons.description_outlined),
-                  ),
-                  ButtonSegment<String>(
-                    value: 'shelf_label',
-                    label: Text('Raf/Etiket'),
-                    icon: Icon(Icons.label_outline_rounded),
-                  ),
-                ],
-                selected: {widget.ocrController.scanMode},
-                onSelectionChanged: (Set<String> newSelection) {
-                  setState(() {
-                    widget.ocrController.scanMode = newSelection.first;
-                  });
-                },
-                style: SegmentedButton.styleFrom(
-                  selectedBackgroundColor: AppColors.primary,
-                  selectedForegroundColor: Colors.white,
-                  backgroundColor: AppColors.surface,
                 ),
-              ),
-              const SizedBox(height: 16),
+                const SizedBox(height: 16),
+              ],
+
+              // Tarama widget'ı
+              if (!widget.ocrController.hasResult)
+                OcrScannerWidget(
+                  onImageSelected: _analyzeImage,
+                  scanMode: widget.ocrController.scanMode,
+                ),
+
+              // Hata mesajı
+              if (widget.ocrController.errorMessage != null)
+                _buildErrorMessage(),
+
+              // Yükleme göstergesi
+              if (widget.ocrController.isProcessing) _buildProgressIndicator(),
+
+              // Fatura taslakları sunucuya yazıldıktan sonraki özet ve yayın
+              if (widget.ocrController.faturaKaydiSonucu != null)
+                _buildFaturaKaydiBolumu(),
+
+              // Sonuç listesi
+              if (widget.ocrController.hasResult) _buildResultSection(),
             ],
-
-            // Tarama widget'ı
-            if (!widget.ocrController.hasResult)
-              OcrScannerWidget(
-                onImageSelected: _analyzeImage,
-                scanMode: widget.ocrController.scanMode,
-              ),
-
-            // Hata mesajı
-            if (widget.ocrController.errorMessage != null) _buildErrorMessage(),
-
-            // Yükleme göstergesi
-            if (widget.ocrController.isProcessing) _buildProgressIndicator(),
-
-            // Fatura taslakları sunucuya yazıldıktan sonraki özet ve yayın
-            if (widget.ocrController.faturaKaydiSonucu != null)
-              _buildFaturaKaydiBolumu(),
-
-            // Sonuç listesi
-            if (widget.ocrController.hasResult) _buildResultSection(),
-          ],
+          ),
         ),
       ),
     );
+  }
+
+  Future<void> _leave() async {
+    if (_busy || _leaving) return;
+    _leaving = true;
+    final saved = await widget.ocrController.persistInvoiceState();
+    if (!mounted || !saved) {
+      _leaving = false;
+      return;
+    }
+    setState(() => _allowPop = true);
+    await WidgetsBinding.instance.endOfFrame;
+    if (mounted) Navigator.of(context).pop();
+    _leaving = false;
+  }
+
+  Future<void> _showHistory() async {
+    await widget.ocrController.loadInvoiceHistory();
+    if (!mounted) return;
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      builder:
+          (ctx) => SafeArea(
+            child:
+                widget.ocrController.invoiceHistory.isEmpty
+                    ? const Padding(
+                      padding: EdgeInsets.all(24),
+                      child: Text('Henüz kaydedilmiş fatura yok.'),
+                    )
+                    : ListView(
+                      shrinkWrap: true,
+                      children: [
+                        for (final item in widget.ocrController.invoiceHistory)
+                          ListTile(
+                            title: Text(
+                              (item['tedarikci'] ?? 'Fatura').toString(),
+                            ),
+                            subtitle: Text(
+                              '${item['satirSayisi'] ?? 0} ürün • ${item['olusturma'] ?? ''}',
+                            ),
+                            onTap:
+                                () => Navigator.of(
+                                  ctx,
+                                ).pop((item['islemKimligi'] ?? '').toString()),
+                          ),
+                      ],
+                    ),
+          ),
+    );
+    if (selected != null && selected.isNotEmpty && mounted) {
+      await widget.ocrController.resumeInvoice(selected);
+    }
   }
 
   Widget _buildErrorMessage() {
@@ -210,12 +290,15 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
             if (yayin != null) ...[
               const SizedBox(height: 12),
               Text(
-                '${yayin.yayinda} ürün vitrinde görünüyor, '
-                '${yayin.taslak} ürün taslak kaldı.',
+                yayin.tuketiciDogrulandi
+                    ? '${yayin.yayinda} ürün vitrinde görünüyor, ${yayin.taslak} ürün taslak kaldı.'
+                    : 'Yayın kaydı alındı. Tüketici görünümü doğrulanamadı; ${yayin.taslak} ürün taslak kaldı.',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   color:
-                      yayin.taslak == 0 ? AppColors.success : AppColors.darkText,
+                      yayin.taslak == 0
+                          ? AppColors.success
+                          : AppColors.darkText,
                 ),
               ),
               for (final satir in yayin.satirlar.where(
@@ -230,10 +313,10 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
                 ),
             ],
             const SizedBox(height: 12),
-            if (yayin == null && bekleyen > 0)
+            if (bekleyen > 0)
               ElevatedButton(
                 onPressed:
-                    yayinlaniyor
+                    yayinlaniyor || _busy
                         ? null
                         : widget.ocrController.publishSavedInvoiceDrafts,
                 style: ElevatedButton.styleFrom(
@@ -321,7 +404,7 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
         const SizedBox(height: 16),
         // Kaydet butonu
         ElevatedButton(
-          onPressed: approved > 0 ? _saveProducts : null,
+          onPressed: approved > 0 && !_busy ? _saveProducts : null,
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
             foregroundColor: Colors.white,
@@ -345,7 +428,165 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
     widget.ocrController.analyzeImage(Uint8List.fromList(imageBytes));
   }
 
+  Future<void> _editInvoiceProduct(int index) async {
+    final product = widget.ocrController.result!.products[index];
+    final price = TextEditingController(text: product.price?.toString() ?? '');
+    final stock = TextEditingController(text: product.quantity.toString());
+    final name = TextEditingController(text: product.name);
+    final model = TextEditingController(text: product.sku ?? '');
+    final barcode = TextEditingController(text: product.barcode ?? '');
+    final brand = TextEditingController(text: product.brand);
+    String? category = widget.ocrController.categoryFor(index);
+    final categories = widget.ocrController.invoiceCategories;
+    if (!categories.any((item) => item.id == category)) category = null;
+    final saved = await showDialog<bool>(
+      context: context,
+      builder:
+          (ctx) => StatefulBuilder(
+            builder:
+                (ctx, setDialogState) => AlertDialog(
+                  title: const Text('Ürünü kontrol et'),
+                  content: SizedBox(
+                    width: double.maxFinite,
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          TextField(
+                            controller: price,
+                            decoration: const InputDecoration(
+                              labelText: 'Satış fiyatı (₺)',
+                            ),
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
+                          ),
+                          TextField(
+                            controller: stock,
+                            decoration: const InputDecoration(
+                              labelText: 'Satış stoğu',
+                            ),
+                            keyboardType: TextInputType.number,
+                          ),
+                          if (categories.isNotEmpty)
+                            DropdownButtonFormField<String>(
+                              initialValue: category,
+                              decoration: const InputDecoration(
+                                labelText: 'Ürün kategorisi',
+                              ),
+                              items: [
+                                for (final item in categories)
+                                  DropdownMenuItem(
+                                    value: item.id,
+                                    child: Text(item.name),
+                                  ),
+                              ],
+                              onChanged:
+                                  (value) =>
+                                      setDialogState(() => category = value),
+                            ),
+                          const SizedBox(height: 12),
+                          ExpansionTile(
+                            title: const Text('Okunan ürün bilgisini düzelt'),
+                            children: [
+                              TextField(
+                                controller: name,
+                                decoration: const InputDecoration(
+                                  labelText: 'Ürün adı',
+                                ),
+                              ),
+                              TextField(
+                                controller: model,
+                                decoration: const InputDecoration(
+                                  labelText: 'Model kodu',
+                                ),
+                              ),
+                              TextField(
+                                controller: barcode,
+                                decoration: const InputDecoration(
+                                  labelText: 'Barkod',
+                                ),
+                              ),
+                              TextField(
+                                controller: brand,
+                                decoration: const InputDecoration(
+                                  labelText: 'Marka',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(ctx).pop(false),
+                      child: const Text('İptal'),
+                    ),
+                    FilledButton(
+                      onPressed: () {
+                        final amount = _parseDecimal(price.text);
+                        final quantity = int.tryParse(stock.text.trim());
+                        if ((price.text.trim().isNotEmpty &&
+                                (amount == null || amount <= 0)) ||
+                            quantity == null ||
+                            quantity < 0) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Fiyatı ve stoğu kontrol et.'),
+                            ),
+                          );
+                          return;
+                        }
+                        Navigator.of(ctx).pop(true);
+                      },
+                      child: const Text('Kaydet'),
+                    ),
+                  ],
+                ),
+          ),
+    );
+    if (saved == true && mounted) {
+      final identityChanged =
+          name.text.trim() != product.name ||
+          model.text.trim() != (product.sku ?? '') ||
+          barcode.text.trim() != (product.barcode ?? '') ||
+          brand.text.trim() != product.brand;
+      final stockChanged = product.quantity != int.parse(stock.text.trim());
+      product.price = _parseDecimal(price.text);
+      product.quantity = int.parse(stock.text.trim());
+      widget.ocrController.updateProduct(
+        index,
+        product,
+        stockChanged: stockChanged,
+      );
+      if (category != null) {
+        widget.ocrController.setInvoiceCategory(index, category!);
+      }
+      if (identityChanged) {
+        await widget.ocrController.correctInvoiceRow(
+          index,
+          ad: name.text.trim(),
+          model: model.text.trim(),
+          barkod: barcode.text.trim(),
+          marka: brand.text.trim(),
+        );
+      } else {
+        await widget.ocrController.persistInvoiceState();
+      }
+    }
+    for (final controller in [price, stock, name, model, barcode, brand]) {
+      controller.dispose();
+    }
+  }
+
   void _editProduct(int index) {
+    if (_busy) return;
+    if (widget.ocrController.result!.products[index].isInvoiceSource) {
+      _editInvoiceProduct(index);
+      return;
+    }
     final product = widget.ocrController.result!.products[index];
     final nameController = TextEditingController(text: product.name);
     final priceController = TextEditingController(
@@ -559,7 +800,9 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
           backgroundColor: AppColors.success,
         ),
       );
-      Navigator.of(context).pop();
+      if (widget.ocrController.scanMode != 'invoice') {
+        Navigator.of(context).pop();
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

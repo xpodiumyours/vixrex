@@ -1,89 +1,8 @@
-import { describe, expect, it, vi } from "vitest";
-import { belgeParmakIzi, islemKaydet, type IslemKaydiGirdisi } from "@/lib/faturaIslemKaydi";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { belgeParmakIzi, islemKaydet, satirKanitKayitlari, type IslemKaydiGirdisi } from "@/lib/faturaIslemKaydi";
 import type { EslesmisFaturaSatiri } from "@/lib/faturaEslestir";
-
-interface YazilanKayit {
-  tablo: string;
-  yollar: string[];
-  govde: unknown;
-  secenek: unknown;
-}
-
-const durum = vi.hoisted(() => {
-  const yazilan: Array<{
-    tablo: string;
-    yollar: string[];
-    govde: unknown;
-    secenek: unknown;
-  }> = [];
-  let hata: Error | null = null;
-  const mevcut: { isKimligi: string | null; satirSayisi: number } = {
-    isKimligi: null,
-    satirSayisi: 0,
-  };
-
-  const zincir = (tablo: string) => {
-    const kayit: (typeof yazilan)[number] = { tablo, yollar: [], govde: undefined, secenek: undefined };
-    yazilan.push(kayit);
-
-    const z: Record<string, unknown> = {};
-    const sarmala = (yol: string) => (..._args: unknown[]) => {
-      kayit.yollar.push(yol);
-      return z;
-    };
-    z.select = sarmala("select");
-    z.eq = sarmala("eq");
-    z.order = sarmala("order");
-    z.delete = sarmala("delete");
-    z.insert = (govde: unknown) => {
-      kayit.yollar.push("insert");
-      kayit.govde = govde;
-      return z;
-    };
-    z.upsert = (govde: unknown, secenek: unknown) => {
-      kayit.yollar.push("upsert");
-      kayit.govde = govde;
-      kayit.secenek = secenek;
-      return z;
-    };
-    z.maybeSingle = async () =>
-      tablo === "invoice_jobs"
-        ? { data: mevcut.isKimligi ? { id: mevcut.isKimligi } : null, error: null }
-        : { data: { id: "magaza-1" }, error: null };
-    z.single = async () => ({ data: { id: `is-${yazilan.length}` }, error: null });
-    z.then = (basari: unknown, alici: unknown) => {
-      if (tablo === "invoice_job_lines" && kayit.yollar.includes("select") && !kayit.yollar.includes("insert")) {
-        return Promise.resolve({ data: null, count: mevcut.satirSayisi, error: null }).then(
-          basari as never,
-          alici as never,
-        );
-      }
-      const dizi = Array.isArray(kayit.govde) ? kayit.govde : [];
-      const veri = dizi.map((_og, indeks) => ({ id: `satir-${indeks}` }));
-      return Promise.resolve({ data: veri, error: null }).then(basari as never, alici as never);
-    };
-    return z;
-  };
-
-  return {
-    yazilan,
-    zincir,
-    mevcut,
-    setHata: (yeni: Error | null) => {
-      hata = yeni;
-    },
-    getHata: () => hata,
-  };
-});
-
-vi.mock("@/lib/supabaseAdmin", () => ({
-  getSupabaseAdmin: () => {
-    const hata = durum.getHata();
-    if (hata) throw hata;
-    return { from: (tablo: string) => durum.zincir(tablo) };
-  },
-}));
-
+const m = vi.hoisted(() => ({ rpc: vi.fn(), from: vi.fn() }));
+vi.mock("@/lib/supabaseAdmin", () => ({ getSupabaseAdmin: () => ({ from: m.from, rpc: m.rpc }) }));
 function satir(uzeler: Partial<EslesmisFaturaSatiri>): EslesmisFaturaSatiri {
   return {
     hamSatir: "ELT1302 Elit Erkek 2 137,00 274,00",
@@ -125,150 +44,54 @@ function girdi(satirlar: EslesmisFaturaSatiri[]): IslemKaydiGirdisi {
   };
 }
 
-const izinliTablolar = new Set([
-  "stores",
-  "invoice_jobs",
-  "invoice_job_lines",
-  "invoice_line_evidence",
-  "invoice_line_candidates",
-  "invoice_image_rights",
-]);
 
-function kaydiBul(tablo: string): YazilanKayit | undefined {
-  const hepsi = durum.yazilan.filter((kayit) => kayit.tablo === tablo);
-  return hepsi.find((kayit) => kayit.govde !== undefined) ?? hepsi[0];
-}
-
-describe("fatura islem kaydi", () => {
-  it("fotografin ozeti ayniysa ayni is kaydini acar", () => {
-    const bayt = new Uint8Array([1, 2, 3]);
-    expect(belgeParmakIzi(bayt)).toBe(belgeParmakIzi(bayt));
-    expect(belgeParmakIzi(bayt)).toHaveLength(64);
+beforeEach(() => {
+  vi.clearAllMocks();
+  m.from.mockImplementation(() => {
+    const q = { select: () => q, eq: () => q, maybeSingle: async () => ({ data: { id: "magaza-1" }, error: null }) };
+    return q;
   });
-
-  it("is, satirlar, kanit, aday kaynak ve gorsel iznini yazar", async () => {
-    durum.yazilan.length = 0;
-    durum.setHata(null);
-
-    const kataloglu = satir({
-      sonuc: "kanitli",
-      katalog: {
-        firma: "Seher Mensucat",
-        kaynakFirma: "Seher Mensucat",
-        dayanak: "kod",
-        izinDurumu: "yok",
-        resmiAd: "Elit Erkek Elastan Sıfır Yaka",
-        marka: "Elit",
-        aciklama: "Pamuklu",
-        gorseller: [],
-        gorselAdaylari: ["https://sehermensucat.com/elt1302.jpg"],
-        kaynak: "https://sehermensucat.com/elt1302",
-      },
-    });
-
-    const islemKimligi = await islemKaydet(girdi([kataloglu, satir({ sonuc: "eksik" })]));
-
-    expect(islemKimligi).toBeTruthy();
-    expect(durum.yazilan.every((kayit) => izinliTablolar.has(kayit.tablo))).toBe(true);
-
-    const is = kaydiBul("invoice_jobs");
-    expect(is?.yollar).toContain("upsert");
-    expect(is?.secenek).toEqual({ onConflict: "store_id,document_fingerprint" });
-    expect((is?.govde as Record<string, unknown>).status).toBe("inceleme");
-    expect((is?.govde as Record<string, unknown>).document_fingerprint).toHaveLength(64);
-
-    const silme = durum.yazilan.find(
-      (kayit) => kayit.tablo === "invoice_job_lines" && kayit.yollar.includes("delete"),
-    );
-    const satirlar = durum.yazilan.find(
-      (kayit) => kayit.tablo === "invoice_job_lines" && kayit.yollar.includes("insert"),
-    );
-    expect(silme?.yollar).toContain("delete");
-    expect(satirlar?.yollar).toContain("insert");
-    expect((satirlar?.govde as Array<Record<string, unknown>>).map((satirKaydi) => satirKaydi.outcome)).toEqual([
-      "kanitli",
-      "eksik",
-    ]);
-    expect((satirlar?.govde as Array<Record<string, unknown>>)[0].unit_price).toBe(137);
-
-    const kanit = kaydiBul("invoice_line_evidence");
-    const kanitSatillari = kanit?.govde as Array<Record<string, unknown>>;
-    expect(kanit?.secenek).toEqual({ onConflict: "line_id,field_name,source" });
-    expect(kanitSatillari.some((satirKaydi) => satirKaydi.field_name === "urun_adi")).toBe(true);
-    expect(kanitSatillari.filter((satirKaydi) => satirKaydi.strength === "strong")).toHaveLength(2);
-
-    const aday = kaydiBul("invoice_line_candidates");
-    expect((aday?.govde as Array<Record<string, unknown>>)[0].url).toBe(
-      "https://sehermensucat.com/elt1302",
-    );
-
-    const gorsel = kaydiBul("invoice_image_rights");
-    // Kilitli kapsam: izni olmayan görsel `denied` değil `unknown` (izin turu
-    // bekliyor) yazılır; izin turu bu listeden yürür.
-    expect((gorsel?.govde as Array<Record<string, unknown>>)[0].usage_status).toBe("unknown");
+  m.rpc.mockResolvedValue({ data: { success: true, id: "is-1" }, error: null });
+});
+describe("fatura işlem kaydı tek transaction", () => {
+  it("fotoğraf parmak izi içerikle sabittir", () => {
+    expect(belgeParmakIzi(new Uint8Array([1, 2, 3]))).toBe(belgeParmakIzi(new Uint8Array([1, 2, 3])));
+    expect(belgeParmakIzi(new Uint8Array([1, 2, 3]))).not.toBe(belgeParmakIzi(new Uint8Array([1, 2, 4])));
   });
-
-  it("tumu kanitliysa is durumu eslestirme olur", async () => {
-    durum.yazilan.length = 0;
-    durum.setHata(null);
-
-    await islemKaydet(
-      girdi([
-        satir({
-          sonuc: "kanitli",
-          katalog: {
-            firma: "Seher Mensucat",
-            kaynakFirma: "Seher Mensucat",
-            dayanak: "kod",
-            izinDurumu: "var",
-            resmiAd: "Elit Erkek Elastan",
-            marka: "Elit",
-            aciklama: "",
-            gorseller: ["https://sehermensucat.com/elt1302.jpg"],
-            gorselAdaylari: ["https://sehermensucat.com/elt1302.jpg"],
-            kaynak: "https://sehermensucat.com/elt1302",
-          },
-        }),
-      ]),
-    );
-
-    const is = kaydiBul("invoice_jobs");
-    expect((is?.govde as Record<string, unknown>).status).toBe("eslestirme");
-
-    const gorsel = kaydiBul("invoice_image_rights");
-    expect((gorsel?.govde as Array<Record<string, unknown>>)[0].usage_status).toBe(
-      "verified_supplier_permission",
-    );
+  it("ham satır, adet ve alış bilgisi tek atomik istekle yazılır", async () => {
+    const result = await islemKaydet(girdi([satir({})]));
+    expect(result).toBe("is-1");
+    expect(m.rpc).toHaveBeenCalledOnce();
+    expect(m.rpc).toHaveBeenCalledWith("save_invoice_job", expect.objectContaining({
+      p_store_id: "magaza-1",
+      p_job: expect.objectContaining({ document_fingerprint: "a".repeat(64), supplier_name: "Seher Mensucat" }),
+      p_lines: [expect.objectContaining({ line_index: 0, raw_line: "ELT1302 Elit Erkek 2 137,00 274,00", qty: 2, unit_price: 137, outcome: "eksik" })],
+    }));
+    expect(m.from).toHaveBeenCalledTimes(1);
+    expect(m.from).toHaveBeenCalledWith("stores");
   });
-
-  it("veritabanina yazilamazsa hata uretmez, okuma devam eder", async () => {
-    durum.yazilan.length = 0;
-    durum.setHata(new Error("baglanti yok"));
-
-    const sonuc = await islemKaydet(girdi([satir({})]));
-
-    expect(sonuc).toBeNull();
-    expect(durum.yazilan).toHaveLength(0);
+  it("dört satır sonucu kaybolmadan aynı transaction'a gider", async () => {
+    await islemKaydet(girdi([satir({sonuc:"kanitli"}),satir({sonuc:"eksik"}),satir({sonuc:"celiski"}),satir({sonuc:"iz-yok"})]));
+    expect(m.rpc.mock.calls[0][1].p_lines.map((s: {outcome: string}) => s.outcome)).toEqual(["kanitli","eksik","celiski","iz-yok"]);
   });
-
-  it("aynı belge yeniden yüklenince kayıtlı satırlara dokunulmaz, aynı işlem döner", async () => {
-    durum.yazilan.length = 0;
-    durum.setHata(null);
-    durum.mevcut.isKimligi = "is-var";
-    durum.mevcut.satirSayisi = 3;
-
-    const islemKimligi = await islemKaydet(girdi([satir({ sonuc: "eksik" })]));
-
-    durum.mevcut.isKimligi = null;
-    durum.mevcut.satirSayisi = 0;
-    expect(islemKimligi).toBe("is-var");
-    expect(
-      durum.yazilan.some(
-        (kayit) =>
-          kayit.tablo === "invoice_job_lines" &&
-          (kayit.yollar.includes("delete") || kayit.yollar.includes("insert")),
-      ),
-    ).toBe(false);
-    expect(durum.yazilan.some((kayit) => kayit.yollar.includes("upsert"))).toBe(false);
+  it("veritabanı satır veya kanıt yazım hatası başarılı işlem kimliği dönmez", async () => {
+    m.rpc.mockResolvedValue({ data: null, error: { message: "evidence write failed" } });
+    expect(await islemKaydet(girdi([satir({})]))).toBeNull();
+    expect(m.from).toHaveBeenCalledTimes(1);
+  });
+  it("eksik veya başarısız RPC yanıtı başarılı sayılmaz", async () => {
+    m.rpc.mockResolvedValue({ data: { success: false, id: "is-1" }, error: null });
+    expect(await islemKaydet(girdi([satir({})]))).toBeNull();
+    m.rpc.mockResolvedValue({ data: { success: true }, error: null });
+    expect(await islemKaydet(girdi([satir({})]))).toBeNull();
+  });
+  it("katalog kanıtı ve izin belirsizliği doğru kayda hazırlanır", () => {
+    const kayit = satirKanitKayitlari("line-1", satir({ sonuc: "kanitli", katalog: {
+      firma: "Seher", kaynakFirma: "Seher", dayanak: "kod", izinDurumu: "bekliyor", resmiAd: "Resmî model",
+      marka: "Seher", aciklama: "Ürün bilgisi", kaynak: "https://firma.example/ELT1302",
+      gorseller: ["https://firma.example/model.jpg"], gorselAdaylari: ["https://firma.example/model.jpg"],
+    }}), "site");
+    expect(kayit.kanit).toContainEqual(expect.objectContaining({ field_name: "urun_adi", value_text: "Resmî model", strength: "strong" }));
+    expect(kayit.gorsel).toEqual([expect.objectContaining({ usage_status: "unknown", line_id: "line-1" })]);
   });
 });

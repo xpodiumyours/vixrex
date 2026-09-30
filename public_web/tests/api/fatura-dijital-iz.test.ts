@@ -5,6 +5,8 @@ import {
   type HamFaturaSatiri,
 } from "@/lib/faturaEslestir";
 import { firmaAnahtariniCoz } from "@/lib/ureticiKatalog";
+import { dinamikUrunIzleriniBul, pdfKatalogGorseliniOku, hamGet } from "@/lib/faturaDijitalIz";
+import { kaynakGorseliniDogrula } from "@/lib/faturaGorsel";
 
 function satir(model: string, barkod = ""): HamFaturaSatiri {
   return {
@@ -21,6 +23,24 @@ function satir(model: string, barkod = ""): HamFaturaSatiri {
 }
 
 const resolveHost = async () => ["8.8.8.8"];
+
+function kaynakKimligiyle(fetcher: (input: string) => Promise<Response>) {
+  return async (input: string) => {
+    const url = new URL(input);
+    const adlar: Record<string, string> = {
+      "rastgelegida.example": "Rastgele Gıda", "cakisan.example": "Çakışan Site",
+      "ornek-toptan.example": "Örnek Toptan", "goldfreshmutfak.com": "Goldfresh Mutfak",
+    };
+    const ad = adlar[url.hostname];
+    if (ad && ["/", "/iletisim", "/contact", "/hakkimizda", "/about-us", "/kurumsal"].includes(url.pathname)) {
+      return new Response(`<html><head><title>${ad}</title></head><body>${ad}</body></html>`, {
+        headers: { "content-type": "text/html" },
+      });
+    }
+    return fetcher(input);
+  };
+}
+
 
 describe("fatura dinamik dijital iz", () => {
   it("hazir katalogu olmayan 55 havuz firmasini kimlik olarak cozer", () => {
@@ -51,7 +71,7 @@ describe("fatura dinamik dijital iz", () => {
       [satir("GF-123")],
       "Goldfresh Mutfak",
       "",
-      { fetcher, resolveHost },
+      { fetcher: kaynakKimligiyle(fetcher), resolveHost },
     );
 
     expect(sonuc.tedarikciIz?.anahtar).toBe("goldfresh-mutfak");
@@ -109,7 +129,7 @@ describe("fatura dinamik dijital iz", () => {
     };
 
     const sonuc = await faturaSatirlariniDijitalIzle([satir("ETI-001")], "Eti Gıda", "", {
-      fetcher,
+      fetcher: kaynakKimligiyle(fetcher),
       resolveHost,
       firmaArama: { apiAnahtari: "test-anahtar", fetcher },
     });
@@ -148,7 +168,7 @@ describe("fatura dinamik dijital iz", () => {
       [satir("ELT1302")],
       "Rastgele Gıda",
       "https://rastgelegida.example",
-      { fetcher, resolveHost },
+      { fetcher: kaynakKimligiyle(fetcher), resolveHost },
     );
 
     expect(sonuc.tedarikciIz?.havuzda).toBe(false);
@@ -189,7 +209,7 @@ describe("fatura dinamik dijital iz", () => {
       [satir("ORTAK-1")],
       "Çakışan Site",
       "https://cakisan.example",
-      { fetcher, resolveHost },
+      { fetcher: kaynakKimligiyle(fetcher), resolveHost },
     );
 
     expect(sonuc.satirlar[0].sonuc).toBe("celiski");
@@ -208,13 +228,13 @@ describe("fatura dinamik dijital iz", () => {
   });
 
   it("kaynakta hicbir yerde bulunamayan kod iz bulunamadı sonucunu verir", async () => {
-    const fetcher = async () => new Response("{}", { status: 404 });
+    const fetcher = async (input: string) => kaynakKimligiyle(async () => new Response("{}", { status: 404 }))(input);
 
     const sonuc = await faturaSatirlariniDijitalIzle(
       [satir("YOK1302")],
       "Örnek Toptan",
       "https://ornek-toptan.example",
-      { fetcher, resolveHost },
+      { fetcher: kaynakKimligiyle(fetcher), resolveHost },
     );
 
     expect(sonuc.tedarikciIz?.havuzda).toBe(false);
@@ -224,13 +244,13 @@ describe("fatura dinamik dijital iz", () => {
   });
 
   it("kodu olmayan ve markasi gecmeyen satir eksik bilgi sorar", async () => {
-    const fetcher = async () => new Response("{}", { status: 404 });
+    const fetcher = async (input: string) => kaynakKimligiyle(async () => new Response("{}", { status: 404 }))(input);
 
     const sonuc = await faturaSatirlariniDijitalIzle(
       [{ ...satir(""), ad: "Bilinmeyen Ürün" }],
       "Örnek Toptan",
       "https://ornek-toptan.example",
-      { fetcher, resolveHost },
+      { fetcher: kaynakKimligiyle(fetcher), resolveHost },
     );
 
     expect(sonuc.satirlar[0].sonuc).toBe("eksik");
@@ -239,13 +259,13 @@ describe("fatura dinamik dijital iz", () => {
   });
 
   it("faturada baska bir havuz firmasinin markasi geciyorsa satiri eksik diye isaretler ve ayrimi soyler", async () => {
-    const fetcher = async () => new Response("{}", { status: 404 });
+    const fetcher = async (input: string) => kaynakKimligiyle(async () => new Response("{}", { status: 404 }))(input);
 
     const sonuc = await faturaSatirlariniDijitalIzle(
       [{ ...satir(""), ad: "Aycenk Gıda Ayçiçek Yağı 1 L" }],
       "Örnek Toptan",
       "https://ornek-toptan.example",
-      { fetcher, resolveHost },
+      { fetcher: kaynakKimligiyle(fetcher), resolveHost },
     );
 
     expect(sonuc.satirlar[0].sonuc).toBe("eksik");
@@ -275,7 +295,7 @@ describe("fatura dinamik dijital iz", () => {
       [satir("ABC-123")],
       "Örnek Toptan",
       "https://ornek-toptan.example",
-      { fetcher, resolveHost },
+      { fetcher: kaynakKimligiyle(fetcher), resolveHost },
     );
 
     expect(sonuc.satirlar[0].sonuc).toBe("kanitli");
@@ -331,7 +351,7 @@ describe("hedefli arama ve erişim durumu", () => {
     };
 
     const sonuc = await faturaSatirlariniDijitalIzle([satir("GF-777")], "Goldfresh Mutfak", "", {
-      fetcher,
+      fetcher: kaynakKimligiyle(fetcher),
       resolveHost,
     });
 
@@ -346,7 +366,7 @@ describe("hedefli arama ve erişim durumu", () => {
     const durum = { erisimHatasi: false, sinirDoldu: false };
 
     const sonuc = await faturaSatirlariniDijitalIzle([satir("GF-123")], "Goldfresh Mutfak", "", {
-      fetcher,
+      fetcher: kaynakKimligiyle(fetcher),
       resolveHost,
       durum,
     });
@@ -362,7 +382,7 @@ describe("hedefli arama ve erişim durumu", () => {
     const durum = { erisimHatasi: false, sinirDoldu: false };
 
     const sonuc = await faturaSatirlariniDijitalIzle([satir("GF-123")], "Goldfresh Mutfak", "", {
-      fetcher,
+      fetcher: kaynakKimligiyle(fetcher),
       resolveHost,
       durum,
       simdi: () => (an += 5000),
@@ -404,10 +424,10 @@ describe("çok markalı toptancı faturası", () => {
     };
 
     const sonuc = await faturaSatirlariniDijitalIzle(
-      [{ ...satir("GF-123"), marka: "Goldfresh Mutfak" }],
+      [{ ...satir("GF-123"), marka: "Goldfresh" }],
       "Örnek Toptan",
       "https://ornek-toptan.example",
-      { fetcher, resolveHost },
+      { fetcher: kaynakKimligiyle(fetcher), resolveHost },
     );
 
     expect(gidilenAlanlar).toContain("goldfreshmutfak.com");
@@ -417,13 +437,13 @@ describe("çok markalı toptancı faturası", () => {
   });
 
   it("markanın kaynağında ürün yoksa 'markanın kaynağında bulunamadı' yazılır", async () => {
-    const fetcher = async () => new Response("{}", { status: 404 });
+    const fetcher = async (input: string) => kaynakKimligiyle(async () => new Response("{}", { status: 404 }))(input);
 
     const sonuc = await faturaSatirlariniDijitalIzle(
       [{ ...satir("GF-999"), marka: "Goldfresh Mutfak" }],
       "Örnek Toptan",
       "https://ornek-toptan.example",
-      { fetcher, resolveHost },
+      { fetcher: kaynakKimligiyle(fetcher), resolveHost },
     );
 
     expect(sonuc.satirlar[0].sonuc).toBe("iz-yok");
@@ -441,9 +461,130 @@ describe("çok markalı toptancı faturası", () => {
       [{ ...satir("GF-999"), marka: "Goldfresh" }],
       "Goldfresh Mutfak",
       "",
-      { fetcher, resolveHost },
+      { fetcher: kaynakKimligiyle(fetcher), resolveHost },
     );
 
     expect(new Set(gidilenAlanlar)).toEqual(new Set(["goldfreshmutfak.com"]));
+  });
+});
+
+
+function gercekPdf(metin = "MODEL: ABC123 Cotton shirt"): Uint8Array {
+  const resim = Buffer.alloc(800 * 800 * 3);
+  for (let i = 0; i < resim.length; i++) resim[i] = (i * 37) % 255;
+  const icerik = Buffer.from(`BT /F1 18 Tf 40 700 Td (${metin}) Tj ET q 400 0 0 400 40 250 cm /Im1 Do Q`);
+  const nesneler = [
+    Buffer.from("<< /Type /Catalog /Pages 2 0 R >>"),
+    Buffer.from("<< /Type /Pages /Kids [3 0 R] /Count 1 >>"),
+    Buffer.from("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 600 800] /Resources << /Font << /F1 4 0 R >> /XObject << /Im1 5 0 R >> >> /Contents 6 0 R >>"),
+    Buffer.from("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"),
+    Buffer.concat([Buffer.from(`<< /Type /XObject /Subtype /Image /Width 800 /Height 800 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Length ${resim.length} >>\nstream\n`), resim, Buffer.from("\nendstream")]),
+    Buffer.concat([Buffer.from(`<< /Length ${icerik.length} >>\nstream\n`), icerik, Buffer.from("\nendstream")]),
+  ];
+  const parcalar = [Buffer.from("%PDF-1.4\n")];
+  const offsetler: number[] = [];
+  let offset = parcalar[0].length;
+  nesneler.forEach((nesne, i) => {
+    offsetler.push(offset);
+    const parca = Buffer.concat([Buffer.from(`${i + 1} 0 obj\n`), nesne, Buffer.from("\nendobj\n")]);
+    parcalar.push(parca);
+    offset += parca.length;
+  });
+  parcalar.push(Buffer.from(`xref\n0 7\n0000000000 65535 f \n` +
+    offsetler.map((n) => `${String(n).padStart(10, "0")} 00000 n \n`).join("") +
+    `trailer\n<< /Size 7 /Root 1 0 R >>\nstartxref\n${offset}\n%%EOF`));
+  return new Uint8Array(Buffer.concat(parcalar));
+}
+
+const pdfKaynak = "https://resmi.example/katalog.pdf";
+const resmiIz = {
+  anahtar: null, firma: "Resmi", alan: "resmi.example", platform: "shopify",
+  izinDurumu: "yok" as const, kaynak: "https://resmi.example", havuzda: false,
+  dogrulama: {
+    guc: "guclu" as const, kanitlar: ["vergi_no"], bagliHesaplar: [],
+    katalogDosyalari: [pdfKaynak],
+  },
+};
+
+function pdfFetch(pdf: Uint8Array) {
+  return async (input: string) => input === pdfKaynak
+    ? new Response(pdf.slice(), { headers: { "content-type": "application/pdf" } })
+    : new Response("{}", { status: 404 });
+}
+
+describe("resmi PDF ve sosyal katalog baglantisi", () => {
+  it("gercek PDF metni ve 800px gomulu resmi kalite yoluna tasir", async () => {
+    const fetcher = pdfFetch(gercekPdf());
+    const sonuc = await dinamikUrunIzleriniBul([{ model: "ABC123", barkod: "" }], resmiIz, { fetcher, resolveHost });
+    const hedef = sonuc[0];
+    if (!hedef || "celiski" in hedef) throw new Error("PDF urunu bekleniyordu");
+    expect(hedef.urun.kaynak).toBe(`${pdfKaynak}#page=1`);
+    expect(hedef.urun.barkod).toBe("");
+    const adres = hedef.urun.gorseller[0];
+    const bayt = await pdfKatalogGorseliniOku(adres, { fetcher, resolveHost });
+    expect(Buffer.from(bayt ?? []).subarray(0, 8)).toEqual(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
+    const kalite = await kaynakGorseliniDogrula(adres, { fetcher, resolveHost });
+    expect(kalite.tamam).toBe(true);
+    expect(kalite.genislik).toBe(800);
+    const url = new URL(adres);
+    const hash = new URLSearchParams(url.hash.slice(1));
+    hash.set("vixrex-sha256", "0".repeat(64));
+    url.hash = hash.toString();
+    expect(await pdfKatalogGorseliniOku(url.toString(), { fetcher, resolveHost })).toBeNull();
+  });
+
+  it("yalniz acik GTIN bulunan PDF urununu model uydurmadan bulur", async () => {
+    const fetcher = pdfFetch(gercekPdf("GTIN: 8690000000123 Cotton shirt"));
+    const sonuc = await dinamikUrunIzleriniBul([{ model: "", barkod: "8690000000123" }], resmiIz, { fetcher, resolveHost });
+    const hedef = sonuc[0];
+    if (!hedef || "celiski" in hedef) throw new Error("GTIN urunu bekleniyordu");
+    expect(hedef.dayanak).toBe("barkod");
+    expect(hedef.urun.kod).toBe("");
+    expect(hedef.urun.barkod).toBe("8690000000123");
+  });
+
+  it("iki urun koduna bir fotografi kesin baglamaz", async () => {
+    const fetcher = pdfFetch(gercekPdf("MODEL: ABC123 MODEL: DEF456 Two products"));
+    expect(await dinamikUrunIzleriniBul([{ model: "ABC123", barkod: "" }], resmiIz, { fetcher, resolveHost })).toEqual([null]);
+  });
+
+  it("resmi hesabin ItemList urununu baglar", async () => {
+    const hesap = "https://www.instagram.com/resmi/";
+    const html = `<script type="application/ld+json">${JSON.stringify({
+      "@type": "ItemList", itemListElement: [{ "@type": "ListItem", item: {
+        "@type": "Product", name: "Resmi Gomlek", sku: "ABC123", brand: { name: "Resmi" },
+        image: "https://resmi.example/abc123.jpg", url: hesap,
+      } }],
+    })}</script>`;
+    const fetcher = async (input: string) => input === hesap ? new Response(html) : new Response("{}", { status: 404 });
+    const sonuc = await dinamikUrunIzleriniBul([{ model: "ABC123", barkod: "", marka: "Resmi" }], {
+      ...resmiIz, dogrulama: { ...resmiIz.dogrulama, bagliHesaplar: [hesap], katalogDosyalari: [] },
+    }, { fetcher, resolveHost });
+    const hedef = sonuc[0];
+    if (!hedef || "celiski" in hedef) throw new Error("Resmi urun bekleniyordu");
+    expect(hedef.urun.ad).toBe("Resmi Gomlek");
+  });
+
+  it("ozel IP PDF kaynagini indirmez", async () => {
+    let cagrildi = false;
+    const hash = new URLSearchParams({ "vixrex-page": "1", "vixrex-image": "0", "vixrex-sha256": "0".repeat(64) });
+    expect(await pdfKatalogGorseliniOku(`${pdfKaynak}#${hash}`, {
+      resolveHost: async () => ["127.0.0.1"], fetcher: async () => {
+        cagrildi = true; return new Response(Buffer.from(gercekPdf()));
+      },
+    })).toBeNull();
+    expect(cagrildi).toBe(false);
+  });
+
+  it("boyut basligi olmadan siniri asan PDF akisinin kalanini okumaz", async () => {
+    let iptal = false;
+    let parca = 0;
+    const fetcher = async () => new Response(new ReadableStream<Uint8Array>({
+      pull(controller) { parca++; controller.enqueue(new Uint8Array(1024 * 1024)); },
+      cancel() { iptal = true; },
+    }), { headers: { "content-type": "application/pdf" } });
+    expect(await hamGet(pdfKaynak, fetcher, resolveHost)).toBeNull();
+    expect(iptal).toBe(true);
+    expect(parca).toBeLessThanOrEqual(23);
   });
 });

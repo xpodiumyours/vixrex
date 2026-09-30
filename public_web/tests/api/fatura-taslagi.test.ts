@@ -101,11 +101,12 @@ describe("faturadan taslak urun karti", () => {
     expect(bos).toBeNull();
   });
 
-  it("barkod yoksa model kodu kimlik olarak taslaga tasinir", () => {
+  it("barkod yoksa model kodu barkoda donusturulmez", () => {
     const taslak = satirdanFaturaTaslagi(
       satir({ barkod: "", sonuc: "kanitli", katalog: katalog() }),
     );
-    expect(taslak?.barcode).toBe("ELT1302");
+    expect(taslak?.barcode).toBeNull();
+    expect(taslak?.model).toBe("ELT1302");
   });
 
   it("karisik satir listesinden yalniz kanitli olanlar kart olur", () => {
