@@ -10,7 +10,6 @@ export interface SahipDurumu {
   kategoriId: string;
   onayli: boolean;
   esnafGorselleri: string[];
-  ozellikler: Record<string, string>;
 }
 
 export interface KayitliSatir extends EslesmisFaturaSatiri {
@@ -67,14 +66,7 @@ export function sahipDurumunuTemizle(ham: unknown): SahipDurumu | null {
         .map((adres) => adres.slice(0, 500))
         .slice(0, 11)
     : [];
-  const ozellikler: Record<string, string> = {};
-  if (girdi.ozellikler && typeof girdi.ozellikler === "object" && !Array.isArray(girdi.ozellikler)) {
-    for (const [anahtar, deger] of Object.entries(girdi.ozellikler as Record<string, unknown>).slice(0, 20)) {
-      if (typeof deger === "string" && anahtar.length <= 40) ozellikler[anahtar] = deger.slice(0, 200);
-    }
-  }
   return {
-    ozellikler,
     satisFiyati: metin(girdi.satisFiyati, 20),
     stok: metin(girdi.stok, 10),
     stokOnaylandi: girdi.stokOnaylandi === true,

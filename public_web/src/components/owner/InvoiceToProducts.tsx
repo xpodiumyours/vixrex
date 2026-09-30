@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import FirmaIzniPaneli from "@/components/owner/FirmaIzniPaneli";
-import { requiredProductAttributes } from "@/lib/productAttributeSchema";
 import {
   KART_DURUM_ETIKETI,
   durumBilgisi,
@@ -71,7 +70,6 @@ interface AyniAlisverisAdayi {
 }
 
 interface KayitliSahipDurumu {
-  ozellikler?: Record<string, string>;
   satisFiyati?: string;
   stok?: string;
   stokOnaylandi?: boolean;
@@ -115,7 +113,6 @@ interface SatirDurumu extends FaturaSatiri {
   stok: string;
   stokOnaylandi: boolean;
   esnafGorselleri: string[];
-  ozellikler: Record<string, string>;
   ayniAlisverisTekrari?: boolean;
   urunId?: string | null;
 }
@@ -130,7 +127,7 @@ interface YazmaSonucu {
 
 interface InvoiceToProductsProps {
   storeSlug: string;
-  categories?: Array<{ id: string; name: string; product_template_key?: string | null }>;
+  categories?: Array<{ id: string; name: string }>;
   onUploaded: () => Promise<void>;
   onClose?: () => void;
   baslangicIslemKimligi?: string;
@@ -191,25 +188,11 @@ export default function InvoiceToProducts({
   const [duzeltilen, setDuzeltilen] = useState<number | null>(null);
   const dosyaRef = useRef<HTMLInputElement>(null);
 
-  const eksikOzellikler = useCallback(
-    (satir: SatirDurumu): Array<{ key: string; label: string }> => {
-      const sablon = categories.find((kategori) => kategori.id === satir.kategoriId)?.product_template_key;
-      return requiredProductAttributes(sablon || "generic")
-        .filter((ozellik) => ozellik.key !== "brand")
-        .filter((ozellik) => !(satir.ozellikler[ozellik.key] ?? "").trim())
-        .filter((ozellik) => !(ozellik.key === "color" && (satir.varyant ?? "").trim()))
-        .filter((ozellik) => !(ozellik.key === "size" && (satir.beden ?? "").trim()))
-        .map((ozellik) => ({ key: ozellik.key, label: ozellik.label }));
-    },
-    [categories],
-  );
-
   const degerlendirmeler = useMemo(
     () =>
       satirlar.map((satir) =>
         kartDegerlendir({
           satir,
-          eksikOzellikler: eksikOzellikler(satir).map((ozellik) => ozellik.label),
           satisFiyati: fiyatSayisi(satir.satisFiyati),
           stok: stokSayisi(satir.stok),
           stokOnaylandi: satir.stokOnaylandi,
@@ -217,7 +200,7 @@ export default function InvoiceToProducts({
           onaylandi: satir.onayli,
         }),
       ),
-    [satirlar, eksikOzellikler],
+    [satirlar],
   );
 
   const hazirSayisi = degerlendirmeler.filter((d) => d.yayinaHazir).length;
@@ -235,7 +218,6 @@ export default function InvoiceToProducts({
           stok: kayitli?.stok ?? (satir.adet === null ? "" : String(satir.adet)),
           stokOnaylandi: kayitli?.stokOnaylandi === true,
           esnafGorselleri: kayitli?.esnafGorselleri ?? [],
-          ozellikler: kayitli?.ozellikler ?? {},
           urunId: satir.urunId ?? null,
         };
       }),
@@ -279,7 +261,6 @@ export default function InvoiceToProducts({
               kategoriId: satir.kategoriId,
               onayli: satir.onayli,
               esnafGorselleri: satir.esnafGorselleri,
-              ozellikler: satir.ozellikler,
             },
           })),
         }),
@@ -423,7 +404,6 @@ export default function InvoiceToProducts({
         if (satir.sonuc !== "kanitli" || satir.ayniAlisverisTekrari) return satir;
         const degerlendirme = kartDegerlendir({
           satir,
-          eksikOzellikler: eksikOzellikler(satir).map((ozellik) => ozellik.label),
           satisFiyati: fiyatSayisi(satir.satisFiyati),
           stok: stokSayisi(satir.stok),
           stokOnaylandi: satir.stokOnaylandi,
@@ -585,16 +565,7 @@ export default function InvoiceToProducts({
               ownerApproved: true,
               yayinIstegi,
               purchasePriceAmount: satir.alisBirimFiyat ?? undefined,
-              metadata: (() => {
-                const nitelikler = Object.entries(satir.ozellikler)
-                  .filter(([, deger]) => deger.trim())
-                  .map(([key, value]) => ({ key, value: value.trim() }));
-                if (!satir.model && nitelikler.length === 0) return undefined;
-                return {
-                  ...(satir.model ? { identifiers: { sku: satir.model } } : {}),
-                  ...(nitelikler.length > 0 ? { attributes: nitelikler } : {}),
-                };
-              })(),
+              metadata: satir.model ? { identifiers: { sku: satir.model } } : undefined,
               variants:
                 satir.varyant || satir.beden
                   ? [
@@ -1169,39 +1140,6 @@ export default function InvoiceToProducts({
                       disabled={yaziliyor || yukleniyor}
                     />
                   </label>
-
-                  {categories.length > 0 && (
-                    <label className="fatura-fiyat">
-                      Kategori
-                      <select
-                        value={satir.kategoriId}
-                        onChange={(e) => satirGuncelle(index, { kategoriId: e.target.value, onayli: false })}
-                        disabled={yaziliyor}
-                      >
-                        {categories.map((kategori) => (
-                          <option key={kategori.id} value={kategori.id}>
-                            {kategori.name}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  )}
-
-                  {eksikOzellikler(satir).map((ozellik) => (
-                    <label key={ozellik.key} className="fatura-fiyat">
-                      {ozellik.label}
-                      <input
-                        type="text"
-                        value={satir.ozellikler[ozellik.key] ?? ""}
-                        onChange={(e) =>
-                          satirGuncelle(index, {
-                            ozellikler: { ...satir.ozellikler, [ozellik.key]: e.target.value },
-                          })
-                        }
-                        disabled={yaziliyor}
-                      />
-                    </label>
-                  ))}
 
                   {degerlendirme.bilgiEksikleri.length > 0 && (
                     <ul className="fatura-eksikler">
