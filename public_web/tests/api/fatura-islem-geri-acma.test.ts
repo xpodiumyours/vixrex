@@ -225,3 +225,50 @@ describe("fatura-islem ucu", () => {
     expect((await PUT(istek([{ satirSirasi: -1, sahipDurumu: {} }]))).status).toBe(422);
   });
 });
+
+describe("ürün yönetiminden faturaya dönme", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.yetki.mockResolvedValue({ tamam: true, storeId: "store-1", slug: "deneme-vitrin" });
+  });
+
+  it("faturadan gelen taslak ürünün işlemi bulunur", async () => {
+    mocks.admin.mockReturnValue(
+      sahteAdmin({
+        invoice_job_lines: { tekil: { job_id: ISLEM } },
+        invoice_jobs: { tekil: { id: ISLEM } },
+      }),
+    );
+
+    const cevap = await GET(
+      new NextRequest(
+        "http://localhost/api/fatura-islem?slug=deneme-vitrin&urunId=44444444-4444-4444-8444-444444444444",
+      ),
+    );
+
+    expect(cevap.status).toBe(200);
+    expect((await cevap.json()).islemKimligi).toBe(ISLEM);
+  });
+
+  it("faturadan gelmeyen ürün için 404 döner", async () => {
+    mocks.admin.mockReturnValue(sahteAdmin({ invoice_job_lines: {}, invoice_jobs: {} }));
+
+    const cevap = await GET(
+      new NextRequest(
+        "http://localhost/api/fatura-islem?slug=deneme-vitrin&urunId=44444444-4444-4444-8444-444444444444",
+      ),
+    );
+
+    expect(cevap.status).toBe(404);
+  });
+
+  it("geçersiz ürün kimliği reddedilir", async () => {
+    mocks.admin.mockReturnValue(sahteAdmin({}));
+
+    const cevap = await GET(
+      new NextRequest("http://localhost/api/fatura-islem?slug=deneme-vitrin&urunId=abc"),
+    );
+
+    expect(cevap.status).toBe(422);
+  });
+});

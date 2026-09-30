@@ -5,6 +5,7 @@ import {
   islemiYukle,
   islemleriListele,
   islemYaniti,
+  urundenIslemBul,
   sahipDurumlariniKaydet,
   sahipDurumunuTemizle,
   type SahipDurumu,
@@ -24,6 +25,18 @@ export async function GET(request: NextRequest) {
   if (!yetki.tamam) return NextResponse.json({ hata: yetki.hata }, { status: yetki.durum });
 
   const admin = getSupabaseAdmin();
+
+  const urunId = (request.nextUrl.searchParams.get("urunId") ?? "").trim();
+  if (urunId) {
+    if (!KIMLIK.test(urunId)) {
+      return NextResponse.json({ hata: "Ürün kimliği geçersiz." }, { status: 422 });
+    }
+    const bulunan = await urundenIslemBul(admin, yetki.storeId, urunId);
+    if (!bulunan) {
+      return NextResponse.json({ hata: "Bu ürün bir faturadan gelmedi." }, { status: 404 });
+    }
+    return NextResponse.json({ tamam: true, islemKimligi: bulunan });
+  }
 
   if (!islemKimligi) {
     const islemler = await islemleriListele(admin, yetki.storeId);

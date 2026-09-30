@@ -117,6 +117,7 @@ export function OwnerProductManager({
   const [deleting, setDeleting] = useState<OwnerProduct | null>(null);
   const [showBulkUpload, setShowBulkUpload] = useState(false);
   const [showInvoice, setShowInvoice] = useState(false);
+  const [faturaIslemKimligi, setFaturaIslemKimligi] = useState<string | null>(null);
   // Okuyucu anahtarı tanımlı değilse "Faturadan Ekle" hiç gösterilmez —
   // esnaf çalışmayacak bir düğmeye basıp hata görmesin.
   const [faturaOkuyucuHazir, setFaturaOkuyucuHazir] = useState(false);
@@ -239,6 +240,27 @@ export function OwnerProductManager({
       );
     });
   }, [products, filterText, filterCategory]);
+
+  async function faturayaDon(product: OwnerProduct) {
+    setError("");
+    setSuccess("");
+    try {
+      const cevap = await fetch(
+        `/api/fatura-islem?slug=${encodeURIComponent(storeSlug)}&urunId=${encodeURIComponent(product.id)}`,
+      );
+      const govde = await cevap.json().catch(() => null);
+      if (!cevap.ok || typeof govde?.islemKimligi !== "string") {
+        setError(responseError(govde, "Bu ürün bir faturadan gelmedi."));
+        return;
+      }
+      setFaturaIslemKimligi(govde.islemKimligi);
+      setShowBulkUpload(false);
+      setEditing(null);
+      setShowInvoice(true);
+    } catch {
+      setError("Fatura açılamadı. Tekrar dene.");
+    }
+  }
 
   function openEditProduct(product: OwnerProduct) {
     setError("");
@@ -416,7 +438,8 @@ export function OwnerProductManager({
           storeSlug={storeSlug}
           categories={resolvedCategories}
           onUploaded={async () => { await refreshAll(); }}
-          onClose={() => setShowInvoice(false)}
+          onClose={() => { setShowInvoice(false); setFaturaIslemKimligi(null); }}
+          baslangicIslemKimligi={faturaIslemKimligi ?? undefined}
         />
       )}
 
@@ -471,6 +494,9 @@ export function OwnerProductManager({
                     {product.fulfillment_region && <span className="text-[10px] text-[var(--owner-muted)]">• {product.fulfillment_region}</span>}
                   </div>
                   <p className="mt-1 text-xs text-[var(--owner-muted)]">{product.product_categories?.name || "Kategorisiz"}</p>
+                  {product.is_visible === false ? (
+                    <button type="button" className="owner-button-secondary mt-3 w-full text-xs" onClick={() => faturayaDon(product)} disabled={busy}>🧾 Faturaya dön</button>
+                  ) : null}
                   <div className="mt-4 grid grid-cols-3 gap-2">
                     <button type="button" className="owner-button-secondary text-xs" onClick={() => openEditProduct(product)} disabled={busy}>✏️</button>
                     <button type="button" className="owner-button-danger text-xs" onClick={() => setDeleting(product)} disabled={busy}>🗑️</button>

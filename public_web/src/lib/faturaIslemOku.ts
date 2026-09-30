@@ -190,6 +190,29 @@ export async function islemleriListele(
   return sonuc;
 }
 
+export async function urundenIslemBul(
+  admin: SupabaseClient,
+  storeId: string,
+  urunId: string,
+): Promise<string | null> {
+  const satir = await admin
+    .from("invoice_job_lines")
+    .select("job_id")
+    .eq("product_id", urunId)
+    .limit(1)
+    .maybeSingle();
+  const islemKimligi = satir.data?.job_id ? String(satir.data.job_id) : "";
+  if (!islemKimligi) return null;
+
+  const is = await admin
+    .from("invoice_jobs")
+    .select("id")
+    .eq("id", islemKimligi)
+    .eq("store_id", storeId)
+    .maybeSingle();
+  return is.data?.id ? String(is.data.id) : null;
+}
+
 export async function parmakIzindenIslemBul(
   admin: SupabaseClient,
   storeId: string,

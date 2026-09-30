@@ -130,6 +130,7 @@ interface InvoiceToProductsProps {
   categories?: Array<{ id: string; name: string }>;
   onUploaded: () => Promise<void>;
   onClose?: () => void;
+  baslangicIslemKimligi?: string;
 }
 
 /** Bu eşiğin altındaki satır toplu onaya girmez; esnaf ona tek tek bakar. */
@@ -163,6 +164,7 @@ export default function InvoiceToProducts({
   categories = [],
   onUploaded,
   onClose,
+  baslangicIslemKimligi,
 }: InvoiceToProductsProps) {
   const [adim, setAdim] = useState<"sec" | "okunuyor" | "urunler" | "yaziliyor" | "bitti">(
     "sec",
@@ -289,6 +291,11 @@ export default function InvoiceToProducts({
     }
     setYukleniyor(false);
   }
+
+  useEffect(() => {
+    if (baslangicIslemKimligi) void islemiAc(baslangicIslemKimligi);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [baslangicIslemKimligi]);
 
   async function satiriDuzelt(index: number) {
     const giris = duzeltmeler[index];

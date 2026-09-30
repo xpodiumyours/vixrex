@@ -387,7 +387,6 @@ export async function POST(request: NextRequest) {
                 ureticiGorsel: ureticiGorselVar,
                 gorselDurumu,
                 gorselKaynaklari,
-                ...(dogrulanmis ? { islemKimligi: ham.islemKimligi, satirSirasi: ham.satirSirasi } : {}),
               },
             })
             .eq("id", olusan.id);
