@@ -264,7 +264,69 @@ export async function faturaSatirlariniDijitalIzle(
   );
 
   const sonuc = yerel.map((satir) => ({ ...satir }));
+  // Marka ayrımı ikinci tur: faturayı kesen firmanın kaynağında bulunamayan
+  // satır, satırdaki markanın resmî kaynağında aranır (çok markalı toptancı
+  // faturası otomatik çelişki sayılmaz). Bulunamazsa dürüstçe eksik/iz-yok kalır.
+  const markaIkinciTur = new Map<string, number[]>();
+  eksikIndeksler.forEach((indeks) => {
+    const ham = yerel[indeks];
+    const marka = satirdaHavuzMarkasiBul(`${ham.ad} ${ham.varyant}`, tedarikciIz.anahtar);
+    if (!marka) return;
+    const liste = markaIkinciTur.get(marka.ad) ?? [];
+    liste.push(indeks);
+    markaIkinciTur.set(marka.ad, liste);
+  });
+  for (const [markaAdi, indeksler] of markaIkinciTur) {
+    const dinamikSonuclar = dinamik;
+    const hepsiBos = indeksler.every((indeks) => {
+      const sira = eksikIndeksler.indexOf(indeks);
+      return sira < 0 || !dinamikSonuclar[sira];
+    });
+    if (!hepsiBos) continue;
+    try {
+      const arama = await firmaSitesiniAra(markaAdi, bagimliliklar.firmaArama ?? {});
+      if (arama.durum !== "bulundu") continue;
+      const markaIz: TedarikciDijitalIzi = {
+        anahtar: null,
+        firma: markaAdi,
+        alan: arama.alan,
+        platform: "",
+        izinDurumu: "yok",
+        kaynak: arama.kaynak,
+        havuzda: false,
+      };
+      const hedefler = await dinamikUrunIzleriniBul(
+        indeksler.map((indeks) => ({ model: yerel[indeks].model, barkod: yerel[indeks].barkod })),
+        markaIz,
+        bagimliliklar,
+      );
+      hedefler.forEach((hedef, sira) => {
+        if (!hedef || "celiski" in hedef) return;
+        const indeks = indeksler[sira];
+        sonuc[indeks] = {
+          ...sonuc[indeks],
+          sonuc: "kanitli",
+          katalog: {
+            firma: markaIz.firma,
+            kaynakFirma: markaIz.firma,
+            dayanak: hedef.dayanak,
+            izinDurumu: markaIz.izinDurumu,
+            resmiAd: hedef.urun.ad,
+            marka: hedef.urun.marka || markaAdi,
+            aciklama: hedef.urun.aciklama,
+            gorseller: hedef.urun.gorseller,
+            gorselAdaylari: hedef.gorselAdaylari,
+            kaynak: hedef.urun.kaynak || markaIz.kaynak,
+          },
+        };
+      });
+    } catch {
+      // Marka kaynağına ulaşılamazsa satır eksik kalır; akış durmaz.
+    }
+  }
   eksikIndeksler.forEach((indeks, sira) => {
+    // İkinci turda doldurulan satıra dokunma.
+    if (sonuc[indeks].katalog) return;
     const hedef = dinamik[sira];
     if (!hedef) return;
 

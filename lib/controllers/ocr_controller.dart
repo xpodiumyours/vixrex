@@ -378,6 +378,27 @@ class OcrController extends ChangeNotifier {
     );
   }
 
+  /// Ekrandaki ayrı Yayınla düğmesi: vitrin bilgisini kendi okur, ekrandan
+  /// slug/token taşımaz. Önce taslak kaydeder, sonra sunucu karşılığı olan
+  /// ürünleri aynı web kapısından yayına alır.
+  Future<Result<FaturaYayinlaSonucu>> yayinlaHazirTaslaklar({
+    FaturaYayinlaServisi? yayinlaServisi,
+  }) async {
+    final yayinBilgisi = _editorController?.publishedInfo;
+    final slug = yayinBilgisi?.slug.trim() ?? '';
+    final editToken = yayinBilgisi?.editToken.trim() ?? '';
+    if (slug.isEmpty || editToken.isEmpty) {
+      return Result.failure(
+        Failure('Yayınlamak için önce vitrinini yayınlaman gerekiyor.'),
+      );
+    }
+    return yayinlaOnaylilar(
+      storeSlug: slug,
+      editToken: editToken,
+      yayinlaServisi: yayinlaServisi,
+    );
+  }
+
   /// Sunucu ürünü kimliği (Supabase UUID) mi? Lokal `ocr_` / `ocr_invoice_`
   /// ID'ler bilerek elenir — yayın ucu bunları tanımaz.
   static bool _isSunucuId(String id) {

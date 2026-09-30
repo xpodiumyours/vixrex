@@ -222,7 +222,8 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
           onConfirmStock: widget.ocrController.confirmInvoiceStock,
         ),
         const SizedBox(height: 16),
-        // Kaydet butonu
+        // Kaydet + ayrı Yayınla: fatura taslağı önce görünmez kurulur,
+        // Yayınla web ile aynı sunucu kapısından geçirir.
         ElevatedButton(
           onPressed: approved > 0 ? _saveProducts : null,
           style: ElevatedButton.styleFrom(
@@ -240,6 +241,13 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
         ),
+        if (widget.ocrController.scanMode == 'invoice') ...[
+          const SizedBox(height: 8),
+          OutlinedButton(
+            onPressed: approved > 0 ? _publishProducts : null,
+            child: Text('$approved Ürünü Yayınla'),
+          ),
+        ],
       ],
     );
   }
@@ -437,6 +445,35 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
       clean = clean.replaceAll('.', '').replaceAll(',', '.');
     }
     return double.tryParse(clean);
+  }
+
+  Future<void> _publishProducts() async {
+    try {
+      final sonuc = await widget.ocrController.yayinlaHazirTaslaklar();
+      if (!mounted) return;
+      sonuc.when(
+        success: (ozet) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${ozet.yayinda} ürün yayında, ${ozet.taslak} ürün taslak kaldı.'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+          Navigator.of(context).pop();
+        },
+        failure: (hata) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(hata.message), backgroundColor: AppColors.error),
+          );
+        },
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Yayınlama hatası: $e'), backgroundColor: AppColors.error),
+        );
+      }
+    }
   }
 
   Future<void> _saveProducts() async {

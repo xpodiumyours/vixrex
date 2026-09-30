@@ -53,6 +53,17 @@ export function yayinEksikleri(girdi: YayinGirdisi): string[] {
   return eksikler;
 }
 
+function gorselAdresiGecerliMi(adres: string): boolean {
+  const temiz = adres.trim();
+  if (!temiz) return false;
+  // Kırık/logo/kapak sızmasın: yalnız güvenli https ürün görseli karta girer.
+  if (!/^https:\/\//i.test(temiz)) return false;
+  if (temiz.length > 500) return false;
+  const kucuk = temiz.toLowerCase();
+  if (kucuk.includes("logo") || kucuk.includes("placeholder") || kucuk.includes("blank")) return false;
+  return true;
+}
+
 export function karttaKullanilabilirGorseller(
   satir: EslesmisFaturaSatiri,
   esnafGorselleri: string[] = [],
@@ -61,8 +72,9 @@ export function karttaKullanilabilirGorseller(
   // izni sonra, çalışan sistemle istenir. İzin takibi sunucu kayıtlarındadır
   // (fatura_kanit.ureticiGorsel, invoice_image_rights), kartta değil.
   const katalog = satir.katalog;
-  const ureticiGorselleri = katalog ? katalog.gorseller.filter(Boolean) : [];
-  return [...new Set([...ureticiGorselleri, ...esnafGorselleri.filter(Boolean)])];
+  const ureticiGorselleri = katalog ? katalog.gorseller.filter(gorselAdresiGecerliMi) : [];
+  const esnaf = esnafGorselleri.filter(gorselAdresiGecerliMi);
+  return [...new Set([...ureticiGorselleri, ...esnaf])].slice(0, 11);
 }
 
 export interface KartGirdisi {

@@ -190,7 +190,7 @@ export async function POST(request: NextRequest) {
     // taslak kaydeder. Fatura alış fiyatı satış fiyatı yerine geçmez.
     const esnafOnayladi = ham.ownerApproved === true;
     const stokOnaylandi = ham.stokOnaylandi === true;
-    const kartDurumu = durumGecerliMi(ham.kartDurumu) ? ham.kartDurumu : "eksik";
+    let kartDurumu = durumGecerliMi(ham.kartDurumu) ? ham.kartDurumu : "eksik";
     const yayinIstegi = ham.yayinIstegi === true;
 
     // Çift-kart engeli: fatura kaynaklı satırda (islemKimligi, satirIndex)
@@ -224,6 +224,27 @@ export async function POST(request: NextRequest) {
         }
       } catch (err) {
         console.error("[products/batch] link sorgulanamadi:", err);
+      }
+    }
+
+    // Sunucu doğrulaması: istemcinin "kanıtlı" etiketi tek başına yetmez.
+    // İşlem + satır kimliği varsa satırın gerçek sonucu kayıttan yeniden okunur;
+    // kayıt kanıtlı değilse kart yayına çıkmaz.
+    if (faturaKaynakli && islemKimligi !== null && satirIndex !== null && kartDurumu === "kanitli") {
+      try {
+        const { data: satirKaydi } = await admin
+          .from("invoice_job_lines")
+          .select("id,outcome,job_id")
+          .eq("job_id", islemKimligi)
+          .eq("line_index", satirIndex)
+          .maybeSingle();
+        const kayitSonuc = (satirKaydi as { outcome?: unknown } | null)?.outcome;
+        if (typeof kayitSonuc === "string" && kayitSonuc !== "kanitli") {
+          kartDurumu = "eksik";
+        }
+      } catch (err) {
+        console.error("[products/batch] satir kaniti okunamadi:", err);
+        kartDurumu = "eksik";
       }
     }
 

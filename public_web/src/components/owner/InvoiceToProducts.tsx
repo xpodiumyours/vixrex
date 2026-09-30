@@ -92,6 +92,8 @@ interface InvoiceToProductsProps {
   categories?: Array<{ id: string; name: string }>;
   onUploaded: () => Promise<void>;
   onClose?: () => void;
+  /** Fotoğraf okuyucu hazır değilse yazma yolu kullanılır; akış kapanmaz. */
+  okuyucuHazir?: boolean;
 }
 
 /** Bu eşiğin altındaki satır toplu onaya girmez; esnaf ona tek tek bakar. */
@@ -125,6 +127,7 @@ export default function InvoiceToProducts({
   categories = [],
   onUploaded,
   onClose,
+  okuyucuHazir = true,
 }: InvoiceToProductsProps) {
   const [adim, setAdim] = useState<"sec" | "okunuyor" | "urunler" | "yaziliyor" | "bitti">(
     "sec",
@@ -140,6 +143,11 @@ export default function InvoiceToProducts({
   const [hata, setHata] = useState<string | null>(null);
   const [yukleniyor, setYukleniyor] = useState(false);
   const [sonuc, setSonuc] = useState<YazmaSonucu | null>(null);
+  const [devamYukleniyor, setDevamYukleniyor] = useState(false);
+  const [manuelMetin, setManuelMetin] = useState("");
+  const [manuelTedarikci, setManuelTedarikci] = useState("");
+  const [manuelYukleniyor, setManuelYukleniyor] = useState(false);
+  const [izinMesaji, setIzinMesaji] = useState<string | null>(null);
   const dosyaRef = useRef<HTMLInputElement>(null);
 
   const degerlendirmeler = useMemo(
@@ -193,19 +201,7 @@ export default function InvoiceToProducts({
         }
 
         const okunan = govde as FaturaOkumaSonucu;
-        setBelge(okunan);
-        setSatirlar(
-          okunan.satirlar.map((satir) => ({
-            ...satir,
-            satisFiyati: "",
-            onayli: false,
-            kategoriId: categories[0]?.id ?? "",
-            stok: satir.adet === null ? "" : String(satir.adet),
-            stokOnaylandi: false,
-            esnafGorselleri: [],
-          })),
-        );
-        setAdim("urunler");
+        okumaSonucunuIsle(okunan);
       } catch (err) {
         setHata(err instanceof Error ? err.message : "Fatura okunamadı.");
         setAdim("sec");
@@ -213,6 +209,53 @@ export default function InvoiceToProducts({
     },
     [categories, firmaSitesi, storeSlug],
   );
+
+  function okumaSonucunuIsle(okunan: FaturaOkumaSonucu) {
+    setBelge(okunan);
+    setSatirlar(
+      okunan.satirlar.map((satir) => ({
+        ...satir,
+        satisFiyati: "",
+        onayli: false,
+        kategoriId: categories[0]?.id ?? "",
+        stok: satir.adet === null ? "" : String(satir.adet),
+        stokOnaylandi: false,
+        esnafGorselleri: [],
+      })),
+    );
+    setAdim("urunler");
+  }
+
+  /** Anahtarsız yol: esnaf satırları yazar, aynı zincirden kart çıkar. */
+  async function metindenHazirla() {
+    const metin = manuelMetin.trim();
+    if (!metin || manuelYukleniyor) return;
+    setManuelYukleniyor(true);
+    setHata(null);
+    try {
+      const cevap = await fetch("/api/fatura-metin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug: storeSlug,
+          metin,
+          tedarikci: manuelTedarikci.trim(),
+          firmaSitesi: firmaSitesi.trim(),
+        }),
+      });
+      const govde = await cevap.json().catch(() => null);
+      if (!cevap.ok) {
+        throw new Error(
+          govde && typeof govde.hata === "string" ? govde.hata : "Satırlar anlaşılamadı.",
+        );
+      }
+      okumaSonucunuIsle(govde as FaturaOkumaSonucu);
+    } catch (err) {
+      setHata(err instanceof Error ? err.message : "Satırlar anlaşılamadı.");
+    } finally {
+      setManuelYukleniyor(false);
+    }
+  }
 
   function satirGuncelle(index: number, degisiklik: Partial<SatirDurumu>) {
     setSatirlar((oncekiler) =>
@@ -442,11 +485,101 @@ export default function InvoiceToProducts({
     }
   }
 
-  // Kapat-aç devamı yalnız istemci tarafındadır: sunucuda invoice_* okuyan
-  // GET ucu YOK, açılmadı. Son işlem kimliği localStorage'da işaret olarak
-  // saklanır; satırlar yeniden yüklenmez, aynı fatura yeniden okutulur.
-  // Tek-satır yeniden-eşleştirme çağrısı kapsam dışı — eklenmedi.
+  // Kapat-aç devamı: son işlem kimliği saklanır; /api/fatura-islem üzerinden
+  // sunucudaki satırlar ve bağlı ürünler geri yüklenir.
   const FATURA_TASLAK_ANAHTARI = "vixrex:fatura-taslak:islem-kimligi";
+
+  async function devamIsiniAc(islemKimligi: string) {
+    setDevamYukleniyor(true);
+    setHata(null);
+    try {
+      const cevap = await fetch(
+        `/api/fatura-islem?slug=${encodeURIComponent(storeSlug)}&islem=${encodeURIComponent(islemKimligi)}`,
+        { cache: "no-store" },
+      );
+      const govde = await cevap.json().catch(() => null);
+      if (!cevap.ok) throw new Error(govde?.hata ?? "İşlem açılamadı.");
+      const satirlar = Array.isArray(govde?.satirlar) ? govde.satirlar : [];
+      if (satirlar.length === 0) throw new Error("Bu işlemde açılacak satır yok.");
+      setBelge({
+        satirlar: satirlar.map((s: Record<string, unknown>) => ({
+          model: String(s.model ?? ""),
+          ad: String(s.product_name ?? ""),
+          barkod: String(s.barcode ?? ""),
+          varyant: String(s.variant_name ?? ""),
+          beden: String(s.size_text ?? ""),
+          adet: typeof s.qty === "number" ? s.qty : null,
+          alisBirimFiyat: typeof s.unit_price === "number" ? s.unit_price : null,
+          satirToplam: typeof s.line_total === "number" ? s.line_total : null,
+          guven: typeof s.confidence === "number" ? s.confidence : 0.5,
+          sonuc: (s.outcome as KartDurumu) ?? "eksik",
+          katalog: null,
+        })),
+        belgeToplami: typeof govde?.belgeToplami === "number" ? govde.belgeToplami : null,
+        belgeAdedi: typeof govde?.belgeAdedi === "number" ? govde.belgeAdedi : null,
+        tedarikci: String(govde?.tedarikci ?? ""),
+        tedarikciSite: String(govde?.tedarikciSite ?? ""),
+        islemKimligi: String(govde?.islemKimligi ?? islemKimligi),
+      });
+      setSatirlar(
+        satirlar.map((s: Record<string, unknown>) => ({
+          model: String(s.model ?? ""),
+          ad: String(s.product_name ?? ""),
+          barkod: String(s.barcode ?? ""),
+          varyant: String(s.variant_name ?? ""),
+          beden: String(s.size_text ?? ""),
+          adet: typeof s.qty === "number" ? s.qty : null,
+          alisBirimFiyat: typeof s.unit_price === "number" ? s.unit_price : null,
+          satirToplam: typeof s.line_total === "number" ? s.line_total : null,
+          guven: typeof s.confidence === "number" ? s.confidence : 0.5,
+          sonuc: (s.outcome as KartDurumu) ?? "eksik",
+          katalog: null,
+          satisFiyati: "",
+          onayli: false,
+          kategoriId: categories[0]?.id ?? "",
+          stok: typeof s.qty === "number" ? String(s.qty) : "",
+          stokOnaylandi: false,
+          esnafGorselleri: [],
+        })),
+      );
+      setAdim("urunler");
+    } catch (err) {
+      setHata(err instanceof Error ? err.message : "İşlem açılamadı.");
+    } finally {
+      setDevamYukleniyor(false);
+    }
+  }
+
+  async function izinGonder(sorumlu: "esnaf" | "vixrex") {
+    setIzinMesaji(null);
+    setHata(null);
+    try {
+      const firma = belge?.tedarikci?.trim() || satirlar.find((s) => s.katalog?.kaynakFirma)?.katalog?.kaynakFirma || "";
+      if (!firma) throw new Error("Firma adı bulunamadı.");
+      const ornekUrunId = (sonuc?.satirlar ?? []).find((s) => s.id)?.id ?? null;
+      const cevap = await fetch("/api/fatura-izin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug: storeSlug,
+          firma,
+          sorumlu,
+          islemKimligi: belge?.islemKimligi ?? null,
+          ornekUrunId,
+          kapsam: "Ürün bilgileri ve görselleri",
+        }),
+      });
+      const govde = await cevap.json().catch(() => null);
+      if (!cevap.ok) throw new Error(govde?.hata ?? "Talep kaydedilemedi.");
+      setIzinMesaji(
+        sorumlu === "esnaf"
+          ? "Talep hazır: firma bilgisi ve vitrin örneğiyle paylaşabilirsin. İzin gelmeden var sayılmaz."
+          : "Talebin alındı, firma cevabı buradan takip edilecek. Gönderilmeden gönderildi görünmez.",
+      );
+    } catch (err) {
+      setHata(err instanceof Error ? err.message : "Talep kaydedilemedi.");
+    }
+  }
 
   function sonFaturaIslemKimligi(): string | null {
     try {
@@ -488,11 +621,12 @@ export default function InvoiceToProducts({
         </p>
 
         {yarimKalanIslem && (
-          <p className="fatura-aciklama" role="status">
-            Yarım kalan fatura işlemi var (işlem: {yarimKalanIslem}). Satırlar sunucuda
-            saklanmadığı için aynı faturayı yeniden yükle; kaldığın yerden değil,
-            baştan başlarsın.
-          </p>
+          <div className="fatura-aciklama" role="status">
+            <p>Yarım kalan fatura işlemi var. Kaldığın yerden devam edebilirsin.</p>
+            <button type="button" onClick={() => void devamIsiniAc(yarimKalanIslem)} disabled={devamYukleniyor}>
+              {devamYukleniyor ? "Açılıyor…" : "Kaldığım işe dön"}
+            </button>
+          </div>
         )}
 
         {hata && <p className="fatura-hata">{hata}</p>}
@@ -508,15 +642,50 @@ export default function InvoiceToProducts({
           />
         </label>
 
-        <input
-          ref={dosyaRef}
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          onChange={(e) => {
-            const dosya = e.target.files?.[0];
-            if (dosya) void dosyaSecildi(dosya);
-          }}
-        />
+        {okuyucuHazir ? (
+          <input
+            ref={dosyaRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            onChange={(e) => {
+              const dosya = e.target.files?.[0];
+              if (dosya) void dosyaSecildi(dosya);
+            }}
+          />
+        ) : (
+          <p className="fatura-aciklama" role="status">
+            Fotoğrafla okuma şu an hazır değil; aşağıdaki kutuya faturadaki
+            satırları yazarak devam edebilirsin. Ücretli bir işlem yapılmaz.
+          </p>
+        )}
+
+        <label className="fatura-fiyat">
+          Faturadaki satırları yaz ya da yapıştır (anahtarsız yol — aynı zincir)
+          <textarea
+            rows={5}
+            placeholder={"Örn:\nELT1302 Elit Erkek Elastan Sıfır Yaka 8681128321677 Siyah L 2 Adet 137,00 274,00"}
+            value={manuelMetin}
+            onChange={(e) => setManuelMetin(e.target.value)}
+          />
+        </label>
+
+        <label className="fatura-fiyat">
+          Tedarikçi / firma adı (biliyorsan yaz)
+          <input
+            type="text"
+            placeholder="Seher Mensucat"
+            value={manuelTedarikci}
+            onChange={(e) => setManuelTedarikci(e.target.value)}
+          />
+        </label>
+
+        <button
+          type="button"
+          onClick={() => void metindenHazirla()}
+          disabled={!manuelMetin.trim() || manuelYukleniyor}
+        >
+          {manuelYukleniyor ? "Hazırlanıyor…" : "Yazıyla hazırla"}
+        </button>
 
         {onClose && (
           <button type="button" className="fatura-ikincil" onClick={onClose}>
@@ -578,6 +747,16 @@ export default function InvoiceToProducts({
         </ul>
 
         {hata && <p className="fatura-hata">{hata}</p>}
+
+        <div className="fatura-izin">
+          <h4>Firma izni</h4>
+          <p className="fatura-aciklama">Veri ve görsel iznini sen mi isteyeceksin, biz senin için isteyelim mi?</p>
+          <div className="fatura-araclar">
+            <button type="button" onClick={() => void izinGonder("esnaf")}>Ben isteyeceğim</button>
+            <button type="button" onClick={() => void izinGonder("vixrex")}>VixRex benim için istesin</button>
+          </div>
+          {izinMesaji && <p className="fatura-aciklama" role="status">{izinMesaji}</p>}
+        </div>
 
         {yayinlanabilirTaslak > 0 && (
           <button type="button" onClick={taslaklariYayinla} disabled={yukleniyor}>

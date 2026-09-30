@@ -225,10 +225,12 @@ export function OwnerProductManager({
 
   const [filterText, setFilterText] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("");
+  const [yalnizTaslak, setYalnizTaslak] = useState(false);
 
   const filteredProducts = useMemo(() => {
     const q = filterText.trim().toLowerCase();
     return products.filter((p) => {
+      if (yalnizTaslak && p.is_visible !== false) return false;
       if (filterCategory && p.category_id !== filterCategory) return false;
       if (!q) return true;
       return (
@@ -237,8 +239,7 @@ export function OwnerProductManager({
         (p.price_text || "").toLowerCase().includes(q) ||
         (p.badge_tag || "").toLowerCase().includes(q)
       );
-    });
-  }, [products, filterText, filterCategory]);
+    });      }, [products, filterText, filterCategory, yalnizTaslak]);
 
   function openEditProduct(product: OwnerProduct) {
     setError("");
@@ -389,9 +390,7 @@ export function OwnerProductManager({
         </div>
         <div className="flex shrink-0 gap-2">
           <button type="button" className="owner-button-secondary" onClick={() => { setError(""); setSuccess(""); setShowBulkUpload(!showBulkUpload); setEditing(null); }} disabled={busy}>📄 Toplu Yükle</button>
-          {faturaOkuyucuHazir && (
-            <button type="button" className="owner-button-secondary" onClick={() => { setError(""); setSuccess(""); setShowInvoice(!showInvoice); setShowBulkUpload(false); setEditing(null); }} disabled={busy}>🧾 Faturadan Ekle</button>
-          )}
+          <button type="button" className="owner-button-secondary" onClick={() => { setError(""); setSuccess(""); setShowInvoice(!showInvoice); setShowBulkUpload(false); setEditing(null); }} disabled={busy}>🧾 Faturadan Ekle</button>
           <button type="button" className="owner-button-primary" onClick={() => { setError(""); setSuccess(""); setShowBulkUpload(false); setEditing("new"); }} disabled={busy}>+ Ürün Ekle</button>
         </div>
       </div>
@@ -402,13 +401,17 @@ export function OwnerProductManager({
 
       <OwnerCategoryManager storeSlug={storeSlug} categories={categoriesWithCount} varsayilanUrunTipi={varsayilanUrunTipi} onRefresh={refreshAll} />
 
-      <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+        <label className="flex items-center gap-2 text-xs text-[var(--owner-muted)]">
+          <input type="checkbox" checked={yalnizTaslak} onChange={(e) => setYalnizTaslak(e.target.checked)} />
+          Yalnız taslaklar (fatura kartını yeniden aç)
+        </label>
         <input value={filterText} onChange={(e) => setFilterText(e.target.value)} placeholder="Ürün ara — ad, açıklama, fiyat, rozet" className="owner-input flex-1 text-sm" />
         <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="owner-input sm:w-48 text-sm">
           <option value="">Tüm kategoriler</option>
           {resolvedCategories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
-        {(filterText || filterCategory) && <span className="self-center text-xs text-[var(--owner-muted)]">{filteredProducts.length}/{products.length}</span>}
+        {(filterText || filterCategory || yalnizTaslak) && <span className="self-center text-xs text-[var(--owner-muted)]">{filteredProducts.length}/{products.length}</span>}
       </div>
 
       {showInvoice && !editing && (
@@ -417,6 +420,7 @@ export function OwnerProductManager({
           categories={resolvedCategories}
           onUploaded={async () => { await refreshAll(); }}
           onClose={() => setShowInvoice(false)}
+          okuyucuHazir={faturaOkuyucuHazir}
         />
       )}
 

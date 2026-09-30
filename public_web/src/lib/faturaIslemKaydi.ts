@@ -54,6 +54,49 @@ function kanitGucu(satir: EslesmisFaturaSatiri): "strong" | "partial" | "weak" {
   return satir.guven >= 0.6 ? "partial" : "weak";
 }
 
+/**
+ * Aynı alışverişin farklı fotoğrafı mı? Belge no + tarih + tedarikçi aynıysa
+ * aynı iştir — örn. bilgi fişi + e-Arşiv faturası 8 adedi 16 yapmaz.
+ * supplier_trace içine gömülü belgeNo/tarih üzerinden son işlere bakılır.
+ */
+export async function ayniAlisIsiniBul(args: {
+  storeId: string;
+  tedarikci: string;
+  belgeNo: string | null | undefined;
+  belgeTarihi: string | null | undefined;
+}): Promise<{ id: string; parmakIzi: string } | null> {
+  const no = (args.belgeNo ?? "").trim();
+  if (!no) return null;
+  try {
+    const admin = getSupabaseAdmin();
+    const { data } = await admin
+      .from("invoice_jobs")
+      .select("id,document_fingerprint,supplier_name,supplier_trace")
+      .eq("store_id", args.storeId)
+      .order("updated_at", { ascending: false })
+      .limit(20);
+    if (!Array.isArray(data)) return null;
+    const tarih = (args.belgeTarihi ?? "").trim();
+    for (const satir of data as Array<{
+      id: string;
+      document_fingerprint: string;
+      supplier_name?: string;
+      supplier_trace?: Record<string, unknown> | null;
+    }>) {
+      const iz = (satir.supplier_trace ?? {}) as Record<string, unknown>;
+      const kayitNo = String(iz.belgeNo ?? "").trim();
+      if (!kayitNo || kayitNo !== no) continue;
+      const kayitTarih = String(iz.belgeTarihi ?? "").trim();
+      // Tarih iki belgede de yazıyorsa tutmalı; biri boşsa no + tedarikçi yeter.
+      if (tarih && kayitTarih && kayitTarih !== tarih) continue;
+      return { id: String(satir.id), parmakIzi: String(satir.document_fingerprint) };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 export async function islemKaydet(girdi: IslemKaydiGirdisi): Promise<string | null> {
   try {
     const admin = getSupabaseAdmin();
@@ -65,6 +108,15 @@ export async function islemKaydet(girdi: IslemKaydiGirdisi): Promise<string | nu
       .maybeSingle();
     const storeId = magaza.data?.id;
     if (typeof storeId !== "string" || !storeId) return null;
+
+    // Aynı alışverişin ikinci belgesi aynı işe bağlanır: çift kart/stok çıkmaz.
+    const mevcut = await ayniAlisIsiniBul({
+      storeId,
+      tedarikci: girdi.tedarikci,
+      belgeNo: girdi.belgeNo,
+      belgeTarihi: girdi.belgeTarihi,
+    });
+    const parmakIzi = mevcut ? mevcut.parmakIzi : girdi.parmakIzi;
 
     const beklemeVar = girdi.satirlar.some((satir) => satir.sonuc !== "kanitli");
     // Migration yok: invoice_jobs'ta belge_no/tur/tarih kolonu açılmaz.
@@ -94,7 +146,7 @@ export async function islemKaydet(girdi: IslemKaydiGirdisi): Promise<string | nu
       .upsert(
         {
           store_id: storeId,
-          document_fingerprint: girdi.parmakIzi,
+          document_fingerprint: parmakIzi,
           status: beklemeVar ? "inceleme" : "eslestirme",
           supplier_name: girdi.tedarikci.slice(0, 200),
           supplier_tax_id: girdi.tedarikciVergiNo.slice(0, 40),

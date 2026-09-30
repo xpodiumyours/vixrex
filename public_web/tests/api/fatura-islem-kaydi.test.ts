@@ -30,6 +30,7 @@ const durum = vi.hoisted(() => {
     z.select = sarmala("select");
     z.eq = sarmala("eq");
     z.order = sarmala("order");
+    z.limit = sarmala("limit");
     z.delete = sarmala("delete");
     z.insert = (govde: unknown) => {
       kayit.yollar.push("insert");
@@ -121,7 +122,9 @@ const izinliTablolar = new Set([
 ]);
 
 function kaydiBul(tablo: string): YazilanKayit | undefined {
-  return durum.yazilan.find((kayit) => kayit.tablo === tablo);
+  const adaylar = durum.yazilan.filter((kayit) => kayit.tablo === tablo);
+  // Aynı alışveriş araması SELECT yapar; gerçek yazım upsert olandır.
+  return adaylar.find((kayit) => kayit.yollar.includes("upsert")) ?? adaylar[0];
 }
 
 describe("fatura islem kaydi", () => {
