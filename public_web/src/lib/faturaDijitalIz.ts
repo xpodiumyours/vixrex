@@ -15,6 +15,7 @@ export interface TedarikciDijitalIzi {
   izinDurumu: IzinDurumu;
   kaynak: string;
   havuzda: boolean;
+  dogrulama?: import("@/lib/firmaDogrula").FirmaDogrulamasi;
 }
 
 export interface DijitalIzSatiri {
@@ -51,6 +52,7 @@ export interface DijitalIzBagimliliklari {
   fetcher?: (input: string, init?: RequestInit) => Promise<Response>;
   resolveHost?: (hostname: string) => Promise<string[]>;
   durum?: DijitalIzAramaDurumu;
+  tedarikciKimligi?: { vergiNo: string; adres: string };
   simdi?: () => number;
   kesifButcesiMs?: number;
   /** Firma resmi site araması (Brave). Verilmezse ortam anahtarı kullanılır. */
@@ -118,7 +120,7 @@ function guvenliIp(ip: string): boolean {
   return false;
 }
 
-async function varsayilanCoz(hostname: string): Promise<string[]> {
+export async function varsayilanCoz(hostname: string): Promise<string[]> {
   const [v4, v6] = await Promise.allSettled([resolve4(hostname), resolve6(hostname)]);
   return [
     ...(v4.status === "fulfilled" ? v4.value : []),

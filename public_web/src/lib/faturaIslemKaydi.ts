@@ -90,6 +90,7 @@ export async function islemKaydet(girdi: IslemKaydiGirdisi): Promise<string | nu
                 izinDurumu: girdi.tedarikciIz.izinDurumu,
                 kaynak: girdi.tedarikciIz.kaynak,
                 havuzda: girdi.tedarikciIz.havuzda,
+                dogrulama: girdi.tedarikciIz.dogrulama ?? null,
               }
             : null,
           document_adet: girdi.belgeAdedi,

@@ -1,4 +1,9 @@
 import { alanAdiTemizle } from "@/lib/ureticiKatalog";
+import {
+  siteFirmayaAitMi,
+  type FirmaDogrulamasi,
+  type FirmaDogrulaBagimliliklari,
+} from "@/lib/firmaDogrula";
 
 // Firmanın resmi sitesini internette bulma (kilitli kapsam kararı).
 //
@@ -17,12 +22,14 @@ import { alanAdiTemizle } from "@/lib/ureticiKatalog";
 export interface FirmaAramaBagimliliklari {
   fetcher?: (input: string, init?: RequestInit) => Promise<Response>;
   apiAnahtari?: string;
+  kimlik?: { vergiNo: string; adres: string };
+  dogrula?: FirmaDogrulaBagimliliklari;
 }
 
 export type FirmaAramaDurumu =
   | { durum: "kapali"; sebep: string }
   | { durum: "bulunamadi"; sebep: string }
-  | { durum: "bulundu"; alan: string; kaynak: string };
+  | { durum: "bulundu"; alan: string; kaynak: string; dogrulama?: FirmaDogrulamasi };
 
 const ARAMA_ZAMAN_ASIMI_MS = 4000;
 
@@ -125,13 +132,31 @@ export async function firmaSitesiniAra(
     ?.results;
   if (!Array.isArray(sonuclar)) return { durum: "bulunamadi", sebep: "Arama sonuç vermedi." };
 
+  let celisenVar = false;
   for (const sonuc of sonuclar) {
     const adres = typeof sonuc?.url === "string" ? sonuc.url : "";
     const alan = alanAdiTemizle(adres);
     if (!alan || resmiSiteOlmayan(alan)) continue;
     if (!alanFimayaUyarMi(alan, jetonlar)) continue;
-    return { durum: "bulundu", alan, kaynak: `https://${alan}` };
+
+    if (!bagimliliklar.kimlik) return { durum: "bulundu", alan, kaynak: `https://${alan}` };
+
+    const dogrulama = await siteFirmayaAitMi(
+      alan,
+      { ad, vergiNo: bagimliliklar.kimlik.vergiNo, adres: bagimliliklar.kimlik.adres },
+      bagimliliklar.dogrula ?? {},
+    );
+    if (dogrulama.guc === "celisiyor") {
+      celisenVar = true;
+      continue;
+    }
+    return { durum: "bulundu", alan, kaynak: `https://${alan}`, dogrulama };
   }
 
-  return { durum: "bulunamadi", sebep: "Firmanın resmi sitesi aramada bulunamadı." };
+  return {
+    durum: "bulunamadi",
+    sebep: celisenVar
+      ? "Bulunan site faturadaki firma bilgileriyle (vergi no, adres, ad) doğrulanamadı."
+      : "Firmanın resmi sitesi aramada bulunamadı.",
+  };
 }

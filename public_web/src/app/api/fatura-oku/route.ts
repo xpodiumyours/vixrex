@@ -183,6 +183,7 @@ export async function POST(request: NextRequest) {
           barkod: satir.barkod,
           varyant: satir.varyant,
           beden: satir.beden,
+          marka: satir.marka,
           adet: satir.adet,
           alisBirimFiyat: satir.birimFiyat,
           satirToplam: satir.tutar,
@@ -241,6 +242,7 @@ export async function POST(request: NextRequest) {
       sonSatirlar,
       sonTedarikci,
       etkinSite,
+      { tedarikciKimligi: { vergiNo: sonTedarikciVergiNo, adres: sonTedarikciAdres } },
     );
     const eslesenSayisi = satirlar.filter((satir) => satir.katalog !== null).length;
 

@@ -373,3 +373,77 @@ describe("hedefli arama ve erişim durumu", () => {
     expect(sonuc.satirlar[0].uyari).toContain("süresi doldu");
   });
 });
+
+describe("çok markalı toptancı faturası", () => {
+  function shopifyYaniti(kod: string) {
+    return new Response(
+      JSON.stringify({
+        products: [
+          {
+            title: "Dondurulmuş Ürün",
+            vendor: "Goldfresh",
+            handle: "dondurulmus-urun",
+            images: [{ src: "https://cdn.example/urun.jpg" }],
+            variants: [{ sku: kod, barcode: "", title: "Default Title" }],
+          },
+        ],
+      }),
+      { status: 200 },
+    );
+  }
+
+  it("satırdaki marka toptancıdan farklıysa markanın kendi kaynağında aranır", async () => {
+    const gidilenAlanlar: string[] = [];
+    const fetcher = async (input: string) => {
+      const alan = new URL(input).hostname;
+      gidilenAlanlar.push(alan);
+      if (alan === "goldfreshmutfak.com" && input.includes("/products.json")) {
+        return shopifyYaniti("GF-123");
+      }
+      return new Response("{}", { status: 404 });
+    };
+
+    const sonuc = await faturaSatirlariniDijitalIzle(
+      [{ ...satir("GF-123"), marka: "Goldfresh Mutfak" }],
+      "Örnek Toptan",
+      "https://ornek-toptan.example",
+      { fetcher, resolveHost },
+    );
+
+    expect(gidilenAlanlar).toContain("goldfreshmutfak.com");
+    expect(sonuc.satirlar[0].sonuc).toBe("kanitli");
+    expect(sonuc.satirlar[0].katalog?.firma).toBe("Goldfresh Mutfak");
+    expect(sonuc.satirlar[0].katalog?.kaynak).toContain("goldfreshmutfak.com");
+  });
+
+  it("markanın kaynağında ürün yoksa 'markanın kaynağında bulunamadı' yazılır", async () => {
+    const fetcher = async () => new Response("{}", { status: 404 });
+
+    const sonuc = await faturaSatirlariniDijitalIzle(
+      [{ ...satir("GF-999"), marka: "Goldfresh Mutfak" }],
+      "Örnek Toptan",
+      "https://ornek-toptan.example",
+      { fetcher, resolveHost },
+    );
+
+    expect(sonuc.satirlar[0].sonuc).toBe("iz-yok");
+    expect(sonuc.satirlar[0].uyari).toContain("markanın resmî kaynağında");
+  });
+
+  it("marka faturayı kesen firmayla aynıysa ayrı marka araması yapılmaz", async () => {
+    const gidilenAlanlar: string[] = [];
+    const fetcher = async (input: string) => {
+      gidilenAlanlar.push(new URL(input).hostname);
+      return new Response("{}", { status: 404 });
+    };
+
+    await faturaSatirlariniDijitalIzle(
+      [{ ...satir("GF-999"), marka: "Goldfresh" }],
+      "Goldfresh Mutfak",
+      "",
+      { fetcher, resolveHost },
+    );
+
+    expect(new Set(gidilenAlanlar)).toEqual(new Set(["goldfreshmutfak.com"]));
+  });
+});
