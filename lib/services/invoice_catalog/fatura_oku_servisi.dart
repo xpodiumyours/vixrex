@@ -263,6 +263,10 @@ class FaturaOkuServisi {
               ? 0.6
               : 0.3,
       source: 'ocr_invoice',
+      description:
+          katalog is Map && metin(katalog['aciklama']).isNotEmpty
+              ? metin(katalog['aciklama'])
+              : null,
       barcode: barkod.isNotEmpty ? barkod : null,
       sku: model.isNotEmpty ? model : null,
       variant: varyant.isNotEmpty ? varyant : null,

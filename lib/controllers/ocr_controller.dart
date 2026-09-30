@@ -8,6 +8,8 @@ import 'package:vixrex/models/invoice_product_draft.dart';
 import 'package:vixrex/services/invoice_catalog/invoice_draft_decision_engine.dart';
 import 'package:vixrex/models/store_product.dart';
 import 'package:vixrex/services/invoice_catalog/fatura_oku_servisi.dart';
+import 'package:vixrex/services/invoice_catalog/fatura_urun_kaydi_servisi.dart';
+import 'package:vixrex/services/invoice_catalog/fatura_yayinla_servisi.dart';
 import 'package:vixrex/services/ocr/invoice_row_parser.dart';
 import 'package:vixrex/services/ocr/ocr_service.dart';
 import 'package:vixrex/services/ocr/ocr_feedback_service.dart';
@@ -19,15 +21,25 @@ class OcrController extends ChangeNotifier {
   final OcrService _ocrService;
   final StoreEditorController? _editorController;
 
+  final FaturaUrunKaydiServisi _faturaKaydiServisi;
+  final FaturaYayinlaServisi _faturaYayinServisi;
+
   OcrCatalogResult? _result;
   bool _isProcessing = false;
+  bool _isPublishing = false;
   String? _errorMessage;
+  FaturaKaydiSonucu? _faturaKaydiSonucu;
+  FaturaYayinlaSonucu? _faturaYayinSonucu;
 
   OcrController({
     required OcrService ocrService,
     StoreEditorController? editorController,
+    FaturaUrunKaydiServisi faturaKaydiServisi = const FaturaUrunKaydiServisi(),
+    FaturaYayinlaServisi faturaYayinServisi = const FaturaYayinlaServisi(),
   }) : _ocrService = ocrService,
-       _editorController = editorController;
+       _editorController = editorController,
+       _faturaKaydiServisi = faturaKaydiServisi,
+       _faturaYayinServisi = faturaYayinServisi;
 
   String _scanMode = 'receipt';
   String get scanMode => _scanMode;
@@ -42,6 +54,9 @@ class OcrController extends ChangeNotifier {
   bool get isProcessing => _isProcessing;
   String? get errorMessage => _errorMessage;
   bool get hasResult => _result != null;
+  bool get isPublishing => _isPublishing;
+  FaturaKaydiSonucu? get faturaKaydiSonucu => _faturaKaydiSonucu;
+  FaturaYayinlaSonucu? get faturaYayinSonucu => _faturaYayinSonucu;
 
   /// Görüntüyü analiz et.
   ///
@@ -230,6 +245,11 @@ class OcrController extends ChangeNotifier {
       return;
     }
 
+    if (_scanMode == 'invoice') {
+      await _faturaTaslaklariniKaydet(validProducts);
+      return;
+    }
+
     try {
       // 1. Düzeltilmiş feedback verilerini Supabase'e gönder (Active Learning Loop)
       final feedbackList =
@@ -317,6 +337,187 @@ class OcrController extends ChangeNotifier {
       _errorMessage = 'Ürünler kaydedilemedi: $e';
       notifyListeners();
     }
+  }
+
+  /// Onaylanan fatura satırlarını web ile AYNI sunucu kapısına taslak yazar.
+  ///
+  /// Ürün burada yayınlanmaz. Sunucu satırın kanıt durumunu ve izinli
+  /// görsellerini işlem kaydından yeniden okur; yayın ayrı eylemdir.
+  Future<void> _faturaTaslaklariniKaydet(
+    List<DetectedProduct> secilenler,
+  ) async {
+    final editor = _editorController;
+    final sonuc = _result;
+    if (editor == null || sonuc == null) {
+      _errorMessage = 'Vitrin düzenleyici hazır değil. Ürünler kaydedilemedi.';
+      notifyListeners();
+      return;
+    }
+
+    final yayinBilgisi = editor.publishedInfo;
+    final slug = yayinBilgisi?.slug.trim() ?? '';
+    final editToken = yayinBilgisi?.editToken.trim() ?? '';
+    if (slug.isEmpty || editToken.isEmpty) {
+      _errorMessage = 'Ürünleri kaydetmek için önce vitrinini yayınlaman gerekiyor.';
+      notifyListeners();
+      return;
+    }
+
+    final kategoriId = _uuidKategoriBul(editor);
+    if (kategoriId == null) {
+      _errorMessage = 'Önce vitrinine bir ürün kategorisi ekle.';
+      notifyListeners();
+      return;
+    }
+
+    final satirlar = <FaturaKaydiSatiri>[];
+    for (final urun in secilenler) {
+      final sira = sonuc.products.indexOf(urun);
+      if (sira < 0 || sira >= sonuc.invoiceDrafts.length) continue;
+      final taslak = sonuc.invoiceDrafts[sira];
+      final islemKimligi = (taslak.islemKimligi ?? sonuc.islemKimligi ?? '').trim();
+      if (islemKimligi.isEmpty) continue;
+
+      final satisFiyati = taslak.salePrice ?? urun.price;
+      final kod = (urun.barcode ?? urun.sku ?? '').trim();
+      final tedarikciKimligi =
+          (taslak.supplierTaxOrTradeIdentifier?.value ??
+                  taslak.supplierName?.value ??
+                  '')
+              .trim();
+      final gorseller = taslak.imageCandidates
+          .where((aday) => aday.selected && aday.canUse)
+          .map((aday) => aday.url)
+          .toList(growable: false);
+
+      satirlar.add(
+        FaturaKaydiSatiri(
+          satirSirasi: sira,
+          islemKimligi: islemKimligi,
+          ad: (taslak.normalizedName?.value ?? urun.name).trim(),
+          aciklama: (urun.description ?? '').trim(),
+          fiyatMetni: satisFiyati == null ? '' : '${_fiyatYaz(satisFiyati)} TL',
+          kategoriId: kategoriId,
+          gorseller: gorseller,
+          gorselKaynagi: taslak.canonicalProductUrl?.value,
+          marka: taslak.brand?.value ?? urun.brand,
+          barkod: urun.barcode,
+          model: urun.sku,
+          varyant: urun.variant,
+          beden: urun.size,
+          stok: taslak.stockConfirmed ? urun.documentQuantity : null,
+          stokOnaylandi: taslak.stockConfirmed,
+          kartDurumu: taslak.etkinKartDurumu.wireValue,
+          disKimlik:
+              kod.isEmpty
+                  ? ''
+                  : [tedarikciKimligi, kod].where((p) => p.isNotEmpty).join(':'),
+          alisFiyati: urun.purchaseUnitPrice,
+        ),
+      );
+    }
+
+    if (satirlar.isEmpty) {
+      _errorMessage =
+          'Bu faturanın işlem kaydı bulunamadı. Faturayı yeniden okut.';
+      notifyListeners();
+      return;
+    }
+
+    final kayit = await _faturaKaydiServisi.taslakKaydet(
+      satirlar: satirlar,
+      storeSlug: slug,
+      editToken: editToken,
+    );
+
+    kayit.when(
+      success: (ozet) {
+        if (ozet.taslak + ozet.yayinda == 0) {
+          final ilkSebep =
+              ozet.satirlar.where((s) => s.sebep.isNotEmpty).isEmpty
+                  ? 'Ürün kaydedilemedi.'
+                  : ozet.satirlar.firstWhere((s) => s.sebep.isNotEmpty).sebep;
+          _errorMessage = ilkSebep;
+          notifyListeners();
+          return;
+        }
+        _faturaKaydiSonucu = ozet;
+        _faturaYayinSonucu = null;
+        _result = null;
+        notifyListeners();
+      },
+      failure: (failure) {
+        _errorMessage = failure.message;
+        notifyListeners();
+      },
+    );
+  }
+
+  /// Kaydedilen fatura taslaklarını AYRI Yayınla ucuyla yayınlar.
+  ///
+  /// Kapılar sunucuda yeniden okunur; kapısı kapalı ürün taslak kalır ve
+  /// sebebi sonuçta döner. Telefon "yayınlandı" demeden önce sunucunun
+  /// cevabına bakar.
+  Future<void> publishSavedInvoiceDrafts() async {
+    final kayit = _faturaKaydiSonucu;
+    if (kayit == null || _isPublishing) return;
+
+    final idler = kayit.yayinlanabilirTaslakIdleri;
+    if (idler.isEmpty) {
+      _errorMessage = 'Yayınlanacak taslak ürün yok.';
+      notifyListeners();
+      return;
+    }
+
+    final yayinBilgisi = _editorController?.publishedInfo;
+    final slug = yayinBilgisi?.slug.trim() ?? '';
+    final editToken = yayinBilgisi?.editToken.trim() ?? '';
+
+    _isPublishing = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    final sonuc = await _faturaYayinServisi.yayinla(
+      productIds: idler,
+      storeSlug: slug,
+      editToken: editToken,
+    );
+
+    _isPublishing = false;
+    sonuc.when(
+      success: (ozet) {
+        _faturaYayinSonucu = ozet;
+        notifyListeners();
+      },
+      failure: (failure) {
+        _errorMessage = failure.message;
+        notifyListeners();
+      },
+    );
+  }
+
+  /// Kayıt ve yayın özetini kapatır.
+  void clearFaturaSonucu() {
+    _faturaKaydiSonucu = null;
+    _faturaYayinSonucu = null;
+    notifyListeners();
+  }
+
+  String? _uuidKategoriBul(StoreEditorController editor) {
+    final uuid = RegExp(
+      r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
+    );
+    for (final kategori in editor.data.productCategories) {
+      final id = kategori.id.trim();
+      if (uuid.hasMatch(id)) return id;
+    }
+    return null;
+  }
+
+  String _fiyatYaz(double deger) {
+    return deger == deger.roundToDouble()
+        ? deger.toInt().toString()
+        : deger.toString();
   }
 
   /// DetectedProduct'ı Product'a çevir.

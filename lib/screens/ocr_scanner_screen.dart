@@ -106,6 +106,10 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
             // Yükleme göstergesi
             if (widget.ocrController.isProcessing) _buildProgressIndicator(),
 
+            // Fatura taslakları sunucuya yazıldıktan sonraki özet ve yayın
+            if (widget.ocrController.faturaKaydiSonucu != null)
+              _buildFaturaKaydiBolumu(),
+
             // Sonuç listesi
             if (widget.ocrController.hasResult) _buildResultSection(),
           ],
@@ -154,6 +158,99 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
             style: TextStyle(color: AppColors.mutedText),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildFaturaKaydiBolumu() {
+    final kayit = widget.ocrController.faturaKaydiSonucu!;
+    final yayin = widget.ocrController.faturaYayinSonucu;
+    final bekleyen = kayit.yayinlanabilirTaslakIdleri.length;
+    final yayinlaniyor = widget.ocrController.isPublishing;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 16),
+      child: AppCard(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Ürünler kaydedildi',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: AppColors.darkText,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '${kayit.taslak + kayit.yayinda} ürün kaydedildi. '
+              'Yayınlamadan vitrinde görünmez.',
+              style: const TextStyle(color: AppColors.mutedText),
+            ),
+            if (kayit.hatali > 0)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  '${kayit.hatali} satır eklenemedi.',
+                  style: const TextStyle(color: AppColors.error),
+                ),
+              ),
+            for (final satir in kayit.satirlar.where(
+              (s) => s.durum != 'yayinda' && s.sebep.isNotEmpty,
+            ))
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  '${satir.ad} — ${satir.sebep}',
+                  style: const TextStyle(color: AppColors.mutedText),
+                ),
+              ),
+            if (yayin != null) ...[
+              const SizedBox(height: 12),
+              Text(
+                '${yayin.yayinda} ürün vitrinde görünüyor, '
+                '${yayin.taslak} ürün taslak kaldı.',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color:
+                      yayin.taslak == 0 ? AppColors.success : AppColors.darkText,
+                ),
+              ),
+              for (final satir in yayin.satirlar.where(
+                (s) => !s.yayinda && s.sebep.isNotEmpty,
+              ))
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    satir.sebep,
+                    style: const TextStyle(color: AppColors.mutedText),
+                  ),
+                ),
+            ],
+            const SizedBox(height: 12),
+            if (yayin == null && bekleyen > 0)
+              ElevatedButton(
+                onPressed:
+                    yayinlaniyor
+                        ? null
+                        : widget.ocrController.publishSavedInvoiceDrafts,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                child: Text(
+                  yayinlaniyor ? 'Yayınlanıyor…' : '$bekleyen taslağı yayınla',
+                ),
+              ),
+            OutlinedButton(
+              onPressed: widget.ocrController.clearFaturaSonucu,
+              child: const Text('Kapat'),
+            ),
+          ],
+        ),
       ),
     );
   }
