@@ -18,6 +18,7 @@ import { izinsizUreticiGorseli } from "@/lib/ureticiKatalog";
 import { durumGecerliMi, yayinEksikleri } from "@/lib/faturaKartDurumu";
 import { FATURA_MIN_PRODUCT_IMAGES, yonetilenUrunGorseliMi } from "@/lib/productImagePolicy";
 import { kaynakGorselleriniHazirla } from "@/lib/faturaGorsel";
+import { tuketicideGorunenler, vitrinOnbelleginiYenile } from "@/lib/vitrinYayinDogrula";
 
 /**
  * Toplu ürün oluşturma API'si.
@@ -461,6 +462,29 @@ export async function POST(request: NextRequest) {
       sonuclar.push({ sira: index, ad, durum: "atlandi", sebep: "Ürün oluşturulamadı." });
     }
   }
+
+  const faturaYayinlari = sonuclar.filter(
+    (sonuc) => sonuc.kayit !== undefined && sonuc.durum === "yayinda" && sonuc.id,
+  );
+  if (faturaYayinlari.length > 0) {
+    const gorunum = await tuketicideGorunenler(
+      admin,
+      store.id,
+      faturaYayinlari.map((sonuc) => sonuc.id as string),
+    );
+    if (gorunum) {
+      for (const sonuc of faturaYayinlari) {
+        const durum = gorunum.get(sonuc.id as string);
+        if (durum && !durum.gorunur) {
+          sonuc.durum = "taslak";
+          sonuc.sebep = durum.sebep;
+          yayinda -= 1;
+          taslak += 1;
+        }
+      }
+    }
+  }
+  if (yayinda > 0) vitrinOnbelleginiYenile(slug);
 
   return NextResponse.json({
     tamam: true,

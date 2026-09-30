@@ -4,6 +4,7 @@ import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { verifyStoreEditToken } from "@/lib/instagramServer";
 import { publishInvoiceProduct } from "@/lib/productCoreServer";
+import { tuketicideGorunenler, vitrinOnbelleginiYenile } from "@/lib/vitrinYayinDogrula";
 
 // Fatura taslaklarının AYRI Yayınla ucu (P5 + P6).
 //
@@ -132,5 +133,30 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  return NextResponse.json({ tamam: true, yayinda, taslak, satirlar: sonuclar });
+  const yayindakiler = sonuclar.filter((sonuc) => sonuc.durum === "yayinda").map((sonuc) => sonuc.id);
+  const gorunum = await tuketicideGorunenler(admin, storeId, yayindakiler);
+  let dogrulanamayan = 0;
+  if (gorunum) {
+    for (const sonuc of sonuclar) {
+      if (sonuc.durum !== "yayinda") continue;
+      const durum = gorunum.get(sonuc.id);
+      if (durum && !durum.gorunur) {
+        sonuc.durum = "taslak";
+        sonuc.sebep = durum.sebep;
+        yayinda -= 1;
+        taslak += 1;
+      }
+    }
+  } else {
+    dogrulanamayan = yayindakiler.length;
+  }
+  if (yayinda > 0) vitrinOnbelleginiYenile(slug);
+
+  return NextResponse.json({
+    tamam: true,
+    yayinda,
+    taslak,
+    satirlar: sonuclar,
+    ...(dogrulanamayan > 0 ? { tuketiciDogrulamasi: "yapilamadi" } : { tuketiciDogrulamasi: "tamam" }),
+  });
 }
