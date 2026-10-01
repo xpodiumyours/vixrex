@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import type { TedarikciDijitalIzi, DijitalIzAramaDurumu } from "@/lib/faturaDijitalIz";
 import type { EslesmisFaturaSatiri } from "@/lib/faturaEslestir";
+import { kisiselVeriTemizle } from "@/lib/faturaKisiselVeri";
 import {
   alisverisKarari,
   belgeTarihiIso,
@@ -145,7 +146,7 @@ export async function islemKaydet(girdi: IslemKaydiGirdisi): Promise<string | nu
             : null,
           document_adet: girdi.belgeAdedi,
           document_total: girdi.belgeToplami,
-          document_warning: (girdi.belgeUyarisi ?? "").slice(0, 500),
+          document_warning: kisiselVeriTemizle((girdi.belgeUyarisi ?? "").slice(0, 500)),
           document_type: (girdi.belgeTuru ?? "").slice(0, 40),
           document_no: (girdi.belgeNo ?? "").slice(0, 60),
           document_date: belgeTarihiIso(girdi.belgeTarihi ?? "") || null,
@@ -157,7 +158,7 @@ export async function islemKaydet(girdi: IslemKaydiGirdisi): Promise<string | nu
         };
     const satirYazlari = girdi.satirlar.map((satir, sira) => ({
       line_index: sira,
-      raw_line: (satir.hamSatir ?? "").slice(0, 1000),
+      raw_line: kisiselVeriTemizle((satir.hamSatir ?? "").slice(0, 1000)),
       model: satir.model.slice(0, 60),
       product_name: satir.ad.slice(0, 300),
       barcode: satir.barkod.replace(/\D/g, "").slice(0, 20),
@@ -169,7 +170,7 @@ export async function islemKaydet(girdi: IslemKaydiGirdisi): Promise<string | nu
       confidence: satir.guven,
       outcome: satir.sonuc,
       brand: (satir.marka ?? "").slice(0, 120),
-      warning: (satir.uyari ?? "").slice(0, 500),
+      warning: kisiselVeriTemizle((satir.uyari ?? "").slice(0, 500)),
       catalog_snapshot: satir.katalog,
       conflict_snapshot: satir.celiski ?? null,
     }));

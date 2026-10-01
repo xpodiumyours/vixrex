@@ -20,6 +20,8 @@
  * karşılaştırır. Tutmayan okuma kullanılmaz.
  */
 
+import { kisiselVeriTemizle } from "@/lib/faturaKisiselVeri";
+
 const ADRES = "https://openrouter.ai/api/v1/chat/completions";
 export const GORU_MODELI = "openai/gpt-5.6-luna";
 
@@ -156,10 +158,16 @@ export async function faturayiOku(dataUrl: string): Promise<GoruSonucu> {
   };
   const hamSatirlar = Array.isArray(kok.satirlar) ? kok.satirlar : [];
 
+  // KVKK veri minimizasyonu: modelin okuduğu serbest metin T.C. Kimlik No veya
+  // vergi numarası içerebilir. Sistem bunlara ihtiyaç duymaz (eşleştirme stok
+  // kodu/barkodla yapılır; tedarikçi doğrulaması OCR çıktısından gelmez), bu
+  // yüzden model yanlılıkla satıra karıştırmış olsa bile SİLİNİR. Satırın
+  // geri kalanına dokunulmaz — OCR doğrulaması bozulmasın diye.
+  // Ayrıntı ve kapsam: src/lib/faturaKisiselVeri.ts
   const satirlar: GoruSatiri[] = hamSatirlar.map((girdi) => {
     const s = girdi as Record<string, unknown>;
     return {
-      hamSatir: metin(s.ham_satir),
+      hamSatir: kisiselVeriTemizle(metin(s.ham_satir)),
       model: metin(s.model),
       ad: metin(s.ad),
       barkod: metin(s.barkod),
