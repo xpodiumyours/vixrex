@@ -1,331 +1,198 @@
-﻿# AGENTS.md ÔÇö VixRex ajan ├ğal─▒┼şma kurallar─▒
+# AGENTS.md — VixRex ajan çalışma kuralları
 
-Bu dosya, bu depoda ├ğal─▒┼şan **her** ajan i├ğindir (Claude, ChatGPT/Codex, Kilo,
-Freebuff, Cursor). Depo bilgisi de─şil, **kural** dosyas─▒d─▒r.
+Bu dosya, bu depoda çalışan **her** ajan içindir (Claude, ChatGPT/Codex, Kilo,
+Freebuff, Cursor). Depo bilgisi değil, **kural** dosyasıdır.
 
-**Tek adres buras─▒d─▒r.** ├çal─▒┼şma tarz─▒ kurallar─▒ ba┼şka bir dosyada tutulmaz.
-Ba┼şka bir dosya bu kurallar─▒ tekrarl─▒yorsa iki kopya zamanla ayr─▒┼ş─▒r ve
-├ğeli┼şki do─şar (2026-09-29: `CONTRIBUTING.md` "tek kaynak" olarak art─▒k depoda
-bulunmayan `CLAUDE.md`'yi g├Âsteriyordu ÔÇö yani ├ğal─▒┼şma kurallar─▒n─▒n hi├ğbir
-adresi kalmam─▒┼şt─▒).
+**Tek adres burasıdır.** Çalışma tarzı kuralları başka bir dosyada tutulmaz.
+Başka bir dosya bu kuralları tekrarlıyorsa iki kopya zamanla ayrışır ve
+çelişki doğar (2026-09-29: `CONTRIBUTING.md` "tek kaynak" olarak artık depoda
+bulunmayan `CLAUDE.md`'yi gösteriyordu — yani çalışma kurallarının hiçbir
+adresi kalmamıştı).
 
-Depo haritas─▒, mimari, komut listesi ve ortam de─şi┼şkenleri bu dosyan─▒n i┼şi
-de─şildir; onlar `README.md` ve kodun kendisinde ya┼şar. **Haritalar buraya
-ta┼ş─▒nmaz.**
+Depo haritası, mimari, komut listesi ve ortam değişkenleri bu dosyanın işi
+değildir; onlar `README.md` ve kodun kendisinde yaşar. **Haritalar buraya
+taşınmaz.**
 
-Kural: a┼şa─ş─▒daki her sat─▒r ge├ğmi┼şte ya┼şanm─▒┼ş somut bir aksili─şe dayan─▒r.
-Daya─ş─▒ olmayan sat─▒r eklenmez. Yeni bir aksilik ya┼şand─▒─ş─▒nda buraya bir sat─▒r
-eklenir ve m├╝mk├╝nse bir kanca ile ├Âl├ğ├╝l├╝r.
+Kural: aşağıdaki her satır geçmişte yaşanmış somut bir aksiliğe dayanır.
+Dayağı olmayan satır eklenmez. Yeni bir aksilik yaşandığında buraya bir satır
+eklenir ve mümkünse bir kanca ile ölçülür.
 
-> **├ûl├ğ├╝m kancalar─▒ hakk─▒nda not:** Bu dosyada ad─▒ ge├ğen kanca betikleri
-> (`.claude/hooks/`) 2026-09-26'da depodan kald─▒r─▒ld─▒. Kural metinleri kald─▒;
-> kancalar─▒ geri getirmek Casper'─▒n karar─▒d─▒r. Kancas─▒ olmayan bir kural,
-> ├Âl├ğ├╝lmeyen bir kurald─▒r ÔÇö buna g├╝venip "├Âl├ğ├╝ld├╝" demeyin.
+> **Ölçüm kancaları hakkında not:** Bu dosyada adı geçen kanca betikleri
+> (`.claude/hooks/`) 2026-09-26'da depodan kaldırıldı. Kural metinleri kaldı;
+> kancaları geri getirmek Casper'ın kararıdır. Kancası olmayan bir kural,
+> ölçülmeyen bir kuraldır — buna güvenip "ölçüldü" demeyin.
 
 ---
 
-## A. Durmadan ├Ânce
+## A. Durmadan önce
 
 ### 1. Sormadan uygulama (2026-09-03)
-Hi├ğbir ad─▒m─▒, hi├ğbir de─şi┼şikli─şi Casper'a sormadan yapma ÔÇö k├╝├ğ├╝k g├Âr├╝nse bile.
-"┼Şunu d├╝zelteyim mi", "bu iki se├ğenekten hangisi" diye sor, cevab─▒ bekle, sonra
-uygula. Bir d├╝zeltmenin "do─şru" g├Âr├╝nd├╝─ş├╝ sana de─şil ona ait bir karar.
+Hiçbir adımı, hiçbir değişikliği Casper'a sormadan yapma — küçük görünse bile.
+"Şunu düzelteyim mi", "bu iki seçenekten hangisi" diye sor, cevabı bekle, sonra
+uygula. Bir düzeltmenin "doğru" göründüğü sana değil ona ait bir karar.
 
-Neden: 2026-09-03'te "├çal─▒┼şma masas─▒" ekran─▒ bitmeden, onaylanmam─▒┼ş bir
-d├╝zeltmeyle ak─▒ll─▒ motorun (serbest c├╝mleden alan ├ğ─▒karan motor) bir par├ğas─▒
-sessizce devre d─▒┼ş─▒ b─▒rak─▒ld─▒ ve do─şrudan ana dala al─▒nd─▒. Casper canl─▒da fark
-etti, saatlerce token yak─▒ld─▒, sonu├ğ g├╝vensizlik oldu.
+Neden: 2026-09-03'te "Çalışma masası" ekranı bitmeden, onaylanmamış bir
+düzeltmeyle akıllı motorun (serbest cümleden alan çıkaran motor) bir parçası
+sessizce devre dışı bırakıldı ve doğrudan ana dala alındı. Casper canlıda fark
+etti, saatlerce token yakıldı, sonuç güvensizlik oldu.
 
-### 2. Varsay─▒m, tahmin ve ├Âl├ğ├╝s├╝z de─şi┼şiklik yasak (2026-09-09, 2026-09-12)
-- **Varsay─▒m yasak.** Emin olmad─▒─ş─▒n ┼şeyi do─şru gibi yazma. Bilmiyorsan
+### 2. Varsayım, tahmin ve ölçüsüz değişiklik yasak (2026-09-09, 2026-09-12)
+- **Varsayım yasak.** Emin olmadığın şeyi doğru gibi yazma. Bilmiyorsan
   "bilmiyorum" de, sor, bekle.
-- **Tahminle i┼ş yapma.** Koda bakmadan "┼ş├Âyle olmal─▒" diye d├╝zeltme, dosya
+- **Tahminle iş yapma.** Koda bakmadan "şöyle olmalı" diye düzeltme, dosya
   ekleme, silme.
-- **├ûl├ğmeden de─şi┼ştirme.** Bir e┼şik/ayar de─şi┼ştirmeden ├Ânce ger├ğekte ne
-  ├╝retti─şini ├Âl├ğ.
-- **Kan─▒t ver.** Hangi dosyaya bakt─▒ysan tam yol ve sat─▒r yaz; bakmad─▒ysan
-  "bakmad─▒m" de.
+- **Ölçmeden değiştirme.** Bir eşik/ayar değiştirmeden önce gerçekte ne
+  ürettiğini ölç.
+- **Kanıt ver.** Hangi dosyaya baktıysan tam yol ve satır yaz; bakmadıysan
+  "bakmadım" de.
 
-Neden: 2026-09-12 ├Âl├ğ├╝m├╝nde tek dosya lint'i bile 50 saniye s├╝rd├╝; ├Âl├ğmeden
-"ye┼şil" demek bu depoda pahal─▒ya mal oldu.
+Neden: 2026-09-12 ölçümünde tek dosya lint'i bile 50 saniye sürdü; ölçmeden
+"yeşil" demek bu depoda pahalıya mal oldu.
 
-### 3. Kendi ara├ğlar─▒nla bulabilece─şini Casper'a sorma (2026-09-10)
-Arama, tarama, envanter, ├Âl├ğ├╝m ve "┼şu paket kurulu mu / ┼şu API nas─▒l ├ğal─▒┼ş─▒r"
-gibi sorular─▒n cevab─▒ sende. ├ûnce kendin ara┼şt─▒r, sonra SONUCU anlat.
-Casper'a sorulacak tek ┼şey ger├ğekten onun karar─▒ olan ┼şeydir: b├╝y├╝k mimari,
-├╝r├╝n kural─▒, onay gerektiren canl─▒ i┼şlem.
+### 3. Kendi araçlarınla bulabileceğini Casper'a sorma (2026-09-10)
+Arama, tarama, envanter, ölçüm ve "şu paket kurulu mu / şu API nasıl çalışır"
+gibi soruların cevabı sende. Önce kendin araştır, sonra SONUCU anlat.
+Casper'a sorulacak tek şey gerçekten onun kararı olan şeydir: büyük mimari,
+ürün kuralı, onay gerektiren canlı işlem.
 
-### 4. CERRAH─░ ─░┼ŞLEM D├£ZEN─░ ÔÇö her de─şi┼şiklikte, istisnas─▒z (2026-09-24)
-Casper: "her i┼şlem i├ğin b├Âyle ├ğal─▒┼şaca─ş─▒z." A┼şa─ş─▒daki 6 ad─▒m bir ├Âneri de─şil,
-bu depodaki her kod de─şi┼şikli─şinin zorunlu s─▒ras─▒. Ad─▒m atlanamaz.
+### 4. CERRAHİ İŞLEM DÜZENİ — her değişiklikte, istisnasız (2026-09-24)
+Casper: "her işlem için böyle çalışacağız." Aşağıdaki 6 adım bir öneri değil,
+bu depodaki her kod değişikliğinin zorunlu sırası. Adım atlanamaz.
 
-1. **├ûnce tespit ÔÇö dokunmadan ├Ânce.** Nereye, neden, ne kadar dokunaca─ş─▒n─▒
-   yaz: dosya, sat─▒r, ne de─şi┼şecek. Yan─▒na "dokunmayaca─ş─▒m" listesini de yaz.
-   Onay al, sonra ba┼şla. Kapsam onaydan sonra b├╝y├╝t├╝lemez.
-2. **Sadece onaylanan sat─▒rlar.** Yol ├╝st├╝nde ba┼şka bir hata g├Ârsen bile
-   dokunma; ayr─▒ca s├Âyle. Hi├ğbir ┼şey "geri getirilmez", hi├ğbir b├Âl├╝m
-   eklenmez/kald─▒r─▒lmaz.
-3. **Yay─▒lma alan─▒n─▒ ├Âl├ğ.** Dokundu─şun dosya/bile┼şen ba┼şka nerelerde
-   kullan─▒l─▒yor ÔÇö hepsini bul ve yaz. "Ba┼şka yeri k─▒rmad─▒m" c├╝mlesi ancak bu
-   ├Âl├ğ├╝mle kurulabilir.
-4. **Kap─▒lar─▒ ko┼ş.** Testler, tip kontrol├╝, lint, ├╝retim derlemesi. Ger├ğek
-   ├ğ─▒kt─▒y─▒ yaz (ka├ğ test ge├ğti), "ye┼şil" deyip ge├ğme.
-5. **G├ûRSEL KANIT ÔÇö jargonsuz.** G├Âr├╝nen her de─şi┼şiklikte ├Âncesi/sonras─▒
-   resmini Casper'a g├Ânder. Kod okuyarak "b├Âyle g├Âr├╝necek" demek yasak.
-   Ger├ğek panele girilemiyorsa (giri┼ş gerekiyorsa) bunu a├ğ─▒k├ğa s├Âyle ve
-   sitenin kendi derlenmi┼ş stil dosyas─▒yla izole kopyas─▒n─▒ ├ğizip g├Âster ÔÇö
-   ama "ger├ğek ekran de─şil" diye belirt.
-6. **Dal / ana dal / canl─▒ ayr─▒m─▒ + geri alma.** De─şi┼şikli─şin ┼şu an nerede
-   oldu─şunu ├╝├ğ kelimeyle s├Âyle, test adresini yaz, geri alma komutunu ver.
+1. **Önce tespit — dokunmadan önce.** Nereye, neden, ne kadar dokunacağını
+   yaz: dosya, satır, ne değişecek. Yanına "dokunmayacağım" listesini de yaz.
+   Onay al, sonra başla. Kapsam onaydan sonra büyütülemez.
+2. **Sadece onaylanan satırlar.** Yol üstünde başka bir hata görsen bile
+   dokunma; ayrıca söyle. Hiçbir şey "geri getirilmez", hiçbir bölüm
+   eklenmez/kaldırılmaz.
+3. **Yayılma alanını ölç.** Dokunduğun dosya/bileşen başka nerelerde
+   kullanılıyor — hepsini bul ve yaz. "Başka yeri kırmadım" cümlesi ancak bu
+   ölçümle kurulabilir.
+4. **Kapıları koş.** Testler, tip kontrolü, lint, üretim derlemesi. Gerçek
+   çıktıyı yaz (kaç test geçti), "yeşil" deyip geçme.
+5. **GÖRSEL KANIT — jargonsuz.** Görünen her değişiklikte öncesi/sonrası
+   resmini Casper'a gönder. Kod okuyarak "böyle görünecek" demek yasak.
+   Gerçek panele girilemiyorsa (giriş gerekiyorsa) bunu açıkça söyle ve
+   sitenin kendi derlenmiş stil dosyasıyla izole kopyasını çizip göster —
+   ama "gerçek ekran değil" diye belirt.
+6. **Dal / ana dal / canlı ayrımı + geri alma.** Değişikliğin şu an nerede
+   olduğunu üç kelimeyle söyle, test adresini yaz, geri alma komutunu ver.
 
-**Anlat─▒m kural─▒:** teknik terim kullanma. Kullanmak zorundaysan yan─▒na tek
-c├╝mlelik T├╝rk├ğe kar┼ş─▒l─▒─ş─▒n─▒ yaz. Yar─▒m anlatma ÔÇö Casper'─▒n projeye h├ókimiyeti
-senin anlat─▒m─▒na ba─şl─▒.
+**Anlatım kuralı:** teknik terim kullanma. Kullanmak zorundaysan yanına tek
+cümlelik Türkçe karşılığını yaz. Yarım anlatma — Casper'ın projeye hâkimiyeti
+senin anlatımına bağlı.
 
-Neden: 2026-09-24'te panelin Hakk─▒m─▒zda/SSS/Kampanya/Pazaryeri/Galeri kutular─▒
-"beyaz zemin ├╝st├╝nde beyaz yaz─▒" oldu─şu i├ğin g├Âr├╝nmez hale gelmi┼şti; sebebi,
-1 Eyl├╝l'de bu kutular a├ğ─▒l─▒r pencereden panele g├Âm├╝l├╝rken zemin renginin beyaz
-b─▒rak─▒lmas─▒yd─▒. Casper'─▒n sorusu ┼şuydu: "ba┼şka bir yeri k─▒rmad─▒─ş─▒na nas─▒l emin
-olacaks─▒n?" Cevab─▒ ├╝reten ┼şey bu 6 ad─▒m oldu.
+Neden: 2026-09-24'te panelin Hakkımızda/SSS/Kampanya/Pazaryeri/Galeri kutuları
+"beyaz zemin üstünde beyaz yazı" olduğu için görünmez hale gelmişti; sebebi,
+1 Eylül'de bu kutular açılır pencereden panele gömülürken zemin renginin beyaz
+bırakılmasıydı. Casper'ın sorusu şuydu: "başka bir yeri kırmadığına nasıl emin
+olacaksın?" Cevabı üreten şey bu 6 adım oldu.
 
 ---
 
 ## B. Yazarken
 
-### 5. Yorum sat─▒r─▒ kural─▒ (2026-09-09)
-Kod i├ğine **yeni** yorum sat─▒r─▒ ekleme (`//`, `/* */`, `#`, `<!-- -->`, `--`).
-A├ğ─▒klama gerekiyorsa mesaja yaz.
+### 5. Yorum satırı kuralı (2026-09-09)
+Kod içine **yeni** yorum satırı ekleme (`//`, `/* */`, `#`, `<!-- -->`, `--`).
+Açıklama gerekiyorsa mesaja yaz.
 
-Var olan bir yorumu **kendi karar─▒nla** de─şi┼ştirme veya silme. Ama bir yorum
-fiilen yanl─▒┼ş h├óle gelmi┼şse (├Âr. kald─▒r─▒lm─▒┼ş bir dosyay─▒, ge├ğmi┼ş bir say─▒y─▒
-g├Âsteriyorsa) bunu Casper'a s├Âyle ÔÇö onay verirse **yaln─▒z o yorum** d├╝zeltilir.
-Yanl─▒┼ş bilgi ta┼ş─▒yan bir yorumu "dokunma" diye korumak, yanl─▒┼ş─▒n kal─▒c─▒
-olmas─▒na izin vermektir.
+Var olan bir yorumu **kendi kararınla** değiştirme veya silme. Ama bir yorum
+fiilen yanlış hâle gelmişse (ör. kaldırılmış bir dosyayı, geçmiş bir sayıyı
+gösteriyorsa) bunu Casper'a söyle — onay verirse **yalnız o yorum** düzeltilir.
+Yanlış bilgi taşıyan bir yorumu "dokunma" diye korumak, yanlışın kalıcı
+olmasına izin vermektir.
 
-### 6. Anahtar─▒/jetonu dosyaya g├Âmme (2026-08-19 s─▒z─▒nt─▒s─▒)
-Ortam de─şi┼şkeni kullan. Alan─▒n ADINA g├╝venme, de─şerin ┼şekline bak.
+### 6. Anahtarı/jetonu dosyaya gömme (2026-08-19 sızıntısı)
+Ortam değişkeni kullan. Alanın ADINA güvenme, değerin şekline bak.
 
-### 7. Ba┼şka ajan─▒n i┼şine girme (2026-09-10)
-Bir d├╝zeltme teklif etmeden ├Ânce `git log --oneline -5 -- <dosya>` ile yak─▒n
-zamanl─▒ bir commit var m─▒ bak. Kendi yazd─▒─ş─▒n─▒ sonra "hata buldum" diye
+### 7. Başka ajanın işine girme (2026-09-10)
+Bir düzeltme teklif etmeden önce `git log --oneline -5 -- <dosya>` ile yakın
+zamanlı bir commit var mı bak. Kendi yazdığını sonra "hata buldum" diye
 raporlama.
 
-### 8. Ayn─▒ klas├Ârde iki ajan ├ğal─▒┼şt─▒rma (2026-08-26)
-─░┼ş sessizce silinir.
+### 8. Aynı klasörde iki ajan çalıştırma (2026-08-26)
+İş sessizce silinir.
 
-### 9. Dal a├ğarken taban─▒ uzaktan al
+### 9. Dal açarken tabanı uzaktan al
 Yerel ana daldan alma; yerel kirli olabilir.
 
 ---
 
-## C. Bitirdim demeden ├Ânce
+## C. Bitirdim demeden önce
 
-### 10. Ye┼şil test, "├ğal─▒┼ş─▒yor" demek de─şil (2026-09-03)
-Ger├ğek ├ğ─▒kt─▒y─▒ ├ğal─▒┼şt─▒r, ekran─▒ a├ğ. G├Ârsel/UI hatas─▒nda canl─▒ do─şrula;
-g├Âremiyorsan "g├Âremedim" de, tahminle "d├╝zelttim" deme.
+### 10. Yeşil test, "çalışıyor" demek değil (2026-09-03)
+Gerçek çıktıyı çalıştır, ekranı aç. Görsel/UI hatasında canlı doğrula;
+göremiyorsan "göremedim" de, tahminle "düzelttim" deme.
 
-### 11. G├Ârsel/UI hatas─▒nda ├Ânce canl─▒ do─şrula (2026-09-03)
-Bir UI/g├Ârsel hatay─▒ (ekran g├Âr├╝nt├╝s├╝yle bildirilen, "kutu kaym─▒┼ş", "bo┼şluk
-yanl─▒┼ş" tarz─▒) koda bak─▒p tahminle d├╝zeltip commit etme. ├ûnce canl─▒ a├ğ, sorunu
-kendi g├Âz├╝nle g├Âr, d├╝zeltmeyi uygulad─▒ktan sonra AYNI ┼şekilde tekrar bak ve
-do─şrula ÔÇö ancak ├Âyle "d├╝zelttim" de. Canl─▒ do─şrulama ger├ğekten m├╝mk├╝n de─şilse
-(├Âr. sandbox'tan Supabase'e a─ş eri┼şimi yok) bunu a├ğ─▒k├ğa s├Âyle ve Casper'dan
-ekran g├Âr├╝nt├╝s├╝/canl─▒ bak─▒┼ş iste ÔÇö k├Âr tahminle commit atma.
+### 11. Görsel/UI hatasında önce canlı doğrula (2026-09-03)
+Bir UI/görsel hatayı (ekran görüntüsüyle bildirilen, "kutu kaymış", "boşluk
+yanlış" tarzı) koda bakıp tahminle düzeltip commit etme. Önce canlı aç, sorunu
+kendi gözünle gör, düzeltmeyi uyguladıktan sonra AYNI şekilde tekrar bak ve
+doğrula — ancak öyle "düzelttim" de. Canlı doğrulama gerçekten mümkün değilse
+(ör. sandbox'tan Supabase'e ağ erişimi yok) bunu açıkça söyle ve Casper'dan
+ekran görüntüsü/canlı bakış iste — kör tahminle commit atma.
 
-Neden: ayn─▒ g├╝n iki uzun oturum (807 ve 461 mesaj) b├╝y├╝k ├Âl├ğ├╝de verimsiz
-soru-cevap d├Âng├╝s├╝ne girdi.
+Neden: aynı gün iki uzun oturum (807 ve 461 mesaj) büyük ölçüde verimsiz
+soru-cevap döngüsüne girdi.
 
-### 12. Ajan kendi i┼şini denetlemez
-├£reten ayr─▒, do─şrulayan ayr─▒.
+### 12. Ajan kendi işini denetlemez
+Üreten ayrı, doğrulayan ayrı.
 
-### 13. A─ş─▒r kap─▒lar elde (2026-09-12 ├Âl├ğ├╝m├╝)
-Testler, tip kontrol├╝, lint, ├╝retim derlemesi. Bunlar kancaya konmad─▒ ├ğ├╝nk├╝ tek
-dosya lint'i bile 50 saniye s├╝r├╝yor. Merge ├Âncesi `bash tool/merge-hazir.sh`
-ko┼şulur; g├╝ncel kap─▒ listesi `.github/workflows/ci.yml` i├ğindedir.
+### 13. Ağır kapılar elde (2026-09-12 ölçümü)
+Testler, tip kontrolü, lint, üretim derlemesi. Bunlar kancaya konmadı çünkü tek
+dosya lint'i bile 50 saniye sürüyor. Merge öncesi `bash tool/merge-hazir.sh`
+koşulur; güncel kapı listesi `.github/workflows/ci.yml` içindedir.
 
-(2026-09-29'a kadar burada `kapilar` adl─▒ bir k─▒sayoldan s├Âz ediliyordu; ├Âyle
-bir komut depoda hi├ğ yoktu. Do─şru adres `tool/merge-hazir.sh`.)
+(2026-09-29'a kadar burada `kapilar` adlı bir kısayoldan söz ediliyordu; öyle
+bir komut depoda hiç yoktu. Doğru adres `tool/merge-hazir.sh`.)
 
 ---
 
-## D. Bitmemi┼ş i┼ş ve saha d├╝zeni
+## D. Bitmemiş iş ve saha düzeni
 
-### 14. Bitmemi┼ş i┼ş burada beklemez (2026-09-29)
-El eme─şi, ├╝retildi─şi g├╝n kendi hatt─▒na al─▒n─▒r. Bir i┼ş bitti─şinde hatt─▒ ve
-ge├ğici ├ğal─▒┼şma alan─▒ silinir. Bu klas├Âr bir ge├ğici ├ğal─▒┼şma masas─▒ de─şildir.
+### 14. Bitmemiş iş burada beklemez (2026-09-29)
+El emeği, üretildiği gün kendi hattına alınır. Bir iş bittiğinde hattı ve
+geçici çalışma alanı silinir. Bu klasör bir geçici çalışma masası değildir.
 
-Neden: 2026-09-29'da sipari┼ş/tahsilat i┼şi g├╝nlerce kaydedilmeden bu klas├Ârde
-durdu; bu klas├Âr ana dal─▒n 32 ad─▒m gerisinde kald─▒ ve ayn─▒ d├Ânemde yaz─▒lan
-belgeler "├ğeli┼şkili" h├óle geldi. Belgeler yanl─▒┼ş de─şildi, **eskiydi**: ├ğeli┼şki
-diye g├Âr├╝nen ┼şeyin k├Âk├╝, geride kalm─▒┼ş bir kopyayd─▒.
+Neden: 2026-09-29'da sipariş/tahsilat işi günlerce kaydedilmeden bu klasörde
+durdu; bu klasör ana dalın 32 adım gerisinde kaldı ve aynı dönemde yazılan
+belgeler "çelişkili" hâle geldi. Belgeler yanlış değildi, **eskiydi**: çelişki
+diye görünen şeyin kökü, geride kalmış bir kopyaydı.
 
 ---
 
 ## E. Rapor verirken
 
-### 15. Dal, ana dal ve canl─▒ ayr─▒ ┼şeyler
-"G├Ânderdim" demek canl─▒da d├╝zeldi demek de─şil. Hangisinden bahsetti─şini a├ğ─▒k├ğa
+### 15. Dal, ana dal ve canlı ayrı şeyler
+"Gönderdim" demek canlıda düzeldi demek değil. Hangisinden bahsettiğini açıkça
 yaz.
 
 ### 16. Taslak/WIP/deneme commit ana dala inmez (2026-09-10)
-Onaydan ├Ânce fark─▒ oku.
+Onaydan önce farkı oku.
 
 ### 17. Test adresini hep yaz
-Hangi adrese bak─▒laca─ş─▒ yaz─▒lmazsa yanl─▒┼ş s├╝r├╝m test edilir.
+Hangi adrese bakılacağı yazılmazsa yanlış sürüm test edilir.
 
-### 18. Cevap k─▒sa olsun (2026-09-10)
-Kan─▒t istenmeden d├Âk├╝lmez. Migration s├╝r├╝m numaras─▒, commit hash'i, sat─▒r
-numaras─▒ gibi detaylar sonu├ğ de─şildir: ├Ânce 2-3 c├╝mlelik sade sonu├ğ, detay
-yaln─▒z sorulursa. Cevab─▒n sonuna soru/┼ş├╝phe/uyar─▒ ili┼ştirme; bir hatay─▒ kabul
-ediyorsan sadece kabul et, arkas─▒na savunma ekleme. Kapan─▒┼şta soru gerekiyorsa
-tek soru olsun ve ger├ğekten Casper'─▒n karar─▒ olsun.
+### 18. Cevap kısa olsun (2026-09-10)
+Kanıt istenmeden dökülmez. Migration sürüm numarası, commit hash'i, satır
+numarası gibi detaylar sonuç değildir: önce 2-3 cümlelik sade sonuç, detay
+yalnız sorulursa. Cevabın sonuna soru/şüphe/uyarı iliştirme; bir hatayı kabul
+ediyorsan sadece kabul et, arkasına savunma ekleme. Kapanışta soru gerekiyorsa
+tek soru olsun ve gerçekten Casper'ın kararı olsun.
 
-Neden: 2026-09-10 oturumunda ayn─▒ g├╝n ana dala al─▒nm─▒┼ş bir d├╝zeltme s─▒f─▒rdan
-ke┼şfedilip "canl─▒ya uygulayay─▒m m─▒" diye soruldu; cevaplar tablo/hash/sat─▒r
-numaras─▒yla ┼şi┼şirildi ve hatay─▒ kabul eden mesaj─▒n sonuna yine soru eklendi.
-Casper: "art─▒k seninle ├ğal─▒┼şmaktan b─▒kmaya ba┼şlad─▒m."
+Neden: 2026-09-10 oturumunda aynı gün ana dala alınmış bir düzeltme sıfırdan
+keşfedilip "canlıya uygulayayım mı" diye soruldu; cevaplar tablo/hash/satır
+numarasıyla şişirildi ve hatayı kabul eden mesajın sonuna yine soru eklendi.
+Casper: "artık seninle çalışmaktan bıkmaya başladım."
 
 ### Token ekonomisi (2026-09-16)
-Token en k─▒t kaynak. Bitince koordinasyon, do─şrulama ve merge sorumlulu─şu
-duruyor ÔÇö yani proje duruyor. Yava┼ş ajan, duran projeden iyidir.
+Token en kıt kaynak. Bitince koordinasyon, doğrulama ve merge sorumluluğu
+duruyor — yani proje duruyor. Yavaş ajan, duran projeden iyidir.
 
-- Arama, tarama, envanter, ├Âl├ğ├╝m, raporlama ve kodun kendisi ajana verilir.
-- Koordinat├Ârde kalan: hedefi yazmak, ajan─▒n raporunu do─şrulamak, riskli tek
-  noktay─▒ **tek komutla** ├Âl├ğmek, commit/merge/s─▒ra takibi.
-- G├Ârev yazmadan ├Ânce dosya ad─▒ do─şrulamak i├ğin komut ├ğal─▒┼şt─▒rma; ajan bulur.
-- ├ûl├ğ├╝m yaln─▒z bir **karar** ona ba─şl─▒ysa yap─▒l─▒r.
-- Her yeni faz ÔåÆ yeni oturum; ┼şi┼şmi┼ş ba─şlam her cevab─▒ pahal─▒la┼şt─▒r─▒r.
-- Uzun rapor yazma; sonu├ğ tek sat─▒r, detay istenirse gelir.
-
-
----
-
-## F. Bu 12 hatanın tekrarını önleme (2026-10-01)
-
-Bu bölüm, yaşanan aşağıdaki 12 hataya karşı mevcut çalışma kurallarını somutlaştırır.
-Ürün kapsamını veya master planı değiştirmez; yeni plan, iş hattı veya uygulama kurmaz.
-
-1. **Dalların ayrışması:** Birleştirmeden önce ilgili çalışma dallarının commitlerini
-   ve dosya farklarını güncel ana dal ve teslim edilecek dal ile karşılaştır.
-   Her ilgili geliştirmeyi taşındı, mevcut kodla karşılandı veya açık kaldı olarak
-   kod kanıtıyla ayır. Bir dalın bir kısmını taşıyıp tamamı birleştirildi deme;
-   eski dosyaları topluca koyarak sonraki düzeltmeleri geri alma.
-
-2. **Ayrı çalışma kopyaları:** İlgili çalışma klasörlerinin kaydedilmiş ve
-   kaydedilmemiş farklarını incele; hangi kopyanın hangi sürümde olduğunu belirle.
-   Alınacak değişiklikleri aynı teslim sürümünde birleştir ve doğrula. Bir
-   kopyadaki kodu veya test sonucunu başka kopyanın sonucu gibi raporlama.
-   İçerik korunmadan çalışma kopyası veya dal kaldırma.
-
-3. **Kaydedilmemiş işler:** İş bitiminde veya oturum bırakılırken kendi
-   değişikliklerini mevcut yetki kapsamında commit ile koru; commit mümkün
-   değilse geri yüklenebilir dosya farkı ve yeni dosya kopyalarıyla koru,
-   kayıt yerini bildir. Başkasının değişikliğini kendi işine katma. Yerelde
-   kaydedilen işi gönderilmiş sayma; push yapıldıysa uzak dalın aynı kaydı
-   taşıdığını doğrula. Bu madde tek başına push veya canlı işlem yetkisi vermez.
-
-4. **Eski durum belgeleri:** Durum notunu kullanmadan önce ait olduğu dalı,
-   sürümü ve kodun bugünkü halini kontrol et. Eski notu güncel tamamlanma veya
-   engel kanıtı sayma. Yetkili belge düzeltmesini AGENTS.md ve mevcut master
-   plan içinde yap; başka dosyada çalışma kuralı veya ikinci plan çoğaltma.
-
-5. **İki ayrı ekran uygulaması:** Ürün yönetiminde Flutter Web/APK doğru
-   görünüm ve davranış referansıdır. Next.js değişikliğini aynı işlemi iki
-   tarafta açarak karşılaştır; aynı ürünün bilgisi, onayı ve yayın durumunun
-   korunmasını doğrula. Ortak sunucu kullanılması ekranların eşitlendiği
-   anlamına gelmez; doğrulanmamış eşitliği tamamlandı diye bildirme.
-
-6. **Yanlış ekran yerleşimi:** Ürün yönetiminin açıldığı yeri ve kullanılabilir
-   alanını bilgisayar ve telefon genişliğinde gerçek ekranda kontrol et.
-   Flutter'daki ayrı ürün yönetimi penceresini Next.js'te dar içerik sütununa
-   gömme. Formların ve işlem düğmelerinin sığdığını, kaydırılarak erişildiğini
-   ve başka menünün arkasında kalmadığını görünür kanıtla doğrula.
-
-7. **Eksik ekran bağlantıları:** Bir geliştirmeyi taşırken onu açan düğme,
-   bağlı işlem, filtre, geri dönüş ve kayıtlı işlemi yeniden açma yollarını
-   birlikte incele. Eski dalın metin desteği ve taslak filtresi gibi mevcut
-   davranışları bağlantısız bırakma. Mevcut karşılığı varsa ona bağla;
-   dosya bulunmasını çalışan ekran bağlantısı sayma.
-
-8. **Model–varyant karışıklığı:** Ürün modeli, beden/renk seçenekleri ve
-   satın alınan adet ayrı anlam taşır. Aynı modelin doğrulanmış beden/renklerini
-   mevcut tek kartın varyant yapısında koru; farklı ürünleri birleştirme.
-   M/L/XL gibi seçenekleri tek beden yapma, toplam adedi bedenlere tahminle
-   dağıtma. Eşleştirme ve kayıt tekrarını bu ayrımı koruyarak doğrula.
-
-9. **Tek satıra bağlı yayın kontrolü:** Bir kart birden fazla fatura satırından
-   hazırlanıyorsa bütün ilgili satırların kaynağını, görsel kanıtını, onayını,
-   fiyat ve stok ilişkisini birlikte denetle. Son satırın öncekilerin kanıtını
-   silmesine veya tek satır kontrolünün birleşik kartı yanlış değerlendirmesine
-   izin verme. Birleştirme, tekrar, düzeltme ve yayın aynı kuralla sınanır.
-
-10. **Kayıt adımlarının ayrılığı:** Ürün, fatura satırı bağlantısı ve kanıt
-    birlikte başarılı kaydedilmeden başarı döndürme. Bu adımlardan biri
-    başarısız olduğunda yarım kayıt kalmadığını gerçek veritabanında kontrollü
-    hata ile doğrula. Yeniden deneme aynı kayda ulaşmalı; çift ürün veya çift
-    stok üretmemeli, mevcut kullanıcı verisini bozmamalı.
-
-11. **Kontrollerin gerçek hizmetten kopması:** Taklit servis testi yalnızca
-    sınadığı davranışın kanıtıdır. Bağlantıların gerçek işlem adları, alanları
-    ve yanıtlarıyla uyumunu ayrıca kontrol et. Gerçek fatura, gerçek okuyucu,
-    resmî kaynak, kalıcı kayıt ve tüketici ekranı denenmeden baştan sona
-    çalışıyor deme; çalıştırılmayan veya erişilemeyen kısmı açık belirt.
-
-12. **Canlı kurulumun ayrı kalması:** Teslim edilen kod sürümüyle gerekli
-    veritabanı değişikliklerini ve ortam hazırlığını eşleştir. Dosyanın
-    hazırlanması, uygulanması ve canlıda çalışması ayrı durumlardır.
-    Kullanıcının yetkilendirdiği canlı aktarım sonrası aynı sürümün veritabanı,
-    uygulama ve tüketici ekranında çalıştığını doğrula. Commit, push veya
-    yerel test başarısını canlı tamamlanma kanıtı olarak kullanma.
-
----
-
-# Ürün hedefi: Faturadan dijital vitrine
-
-
-# VixRex ÔÇö Ajanlar i├ğin proje talimatlar─▒
-
-Fatura, firma ke┼şfi, ├╝r├╝n e┼şle┼ştirme, g├Ârsel, kart ve yay─▒nlama i┼şlerinde **[Faturadan Vitrine Master Plan](docs/FATURADAN-VITRINE-MASTER-PLAN.md)** esas al─▒n─▒r. Mevcut i┼şleri bu plandaki eksiklerle e┼şle┼ştir; ikinci bir plan veya paralel ├╝r├╝n ak─▒┼ş─▒ kurma. Fazlar─▒ yaln─▒z kod var diye tamamland─▒ sayma; ger├ğek kabul kan─▒t─▒n─▒ kaydet. Kullan─▒c─▒dan bu hedefi yeniden tarif etmesini isteme.
-
-## Faturadan dijital vitrine: de─şi┼ştirilmeyecek ├╝r├╝n kapsam─▒
-
-Bu b├Âl├╝m, proje sahibinin 30 Eyl├╝l 2026 tarihinde a├ğ─▒k├ğa belirtti─şi ├╝r├╝n hedefidir. Fatura, OCR, firma ke┼şfi, katalog e┼şle┼ştirme, ├╝r├╝n bilgisi, g├Ârsel ve ├╝r├╝n yay─▒nlama ├ğal─▒┼şmalar─▒nda bu hedefi esas al. Kullan─▒c─▒ya ayn─▒ kapsam─▒ yeniden anlatt─▒rma. Eski planlar, mevcut firma listeleri veya uygulamadaki eksikler bu hedefi daraltmaz. Kullan─▒c─▒n─▒n sonraki a├ğ─▒k talimat─▒ kapsam─▒ g├╝ncelleyebilir.
-
-### Kime, hangi anda yard─▒mc─▒ oluyoruz?
-
-K├╝├ğ├╝k esnaf, toptanc─▒dan veya ├╝reticiden ├╝r├╝n├╝n├╝ al─▒p ├╝r├╝n ve faturas─▒yla ba┼ş ba┼şa kald─▒─ş─▒nda VixRex devreye girer. Ama├ğ, esnaf─▒n raftaki ├╝r├╝nlerini tek tek foto─şraflay─▒p a├ğ─▒klama yazarak y├╝klemesini gerektirmeden dijital ├╝r├╝n kartlar─▒na ve t├╝keticinin g├Ârebilece─şi vitrine d├Ân├╝┼şt├╝rmektir. VixRex, ├╝retici ile k├╝├ğ├╝k esnaf aras─▒nda dijital k├Âpr├╝d├╝r.
-
-### Ger├ğek kapsam ve e┼şle┼ştirme s─▒n─▒r─▒
-
-- Hedef, ─░stanbul toptanc─▒lar─▒ ve T├╝rkiye ├╝reticileridir. Kapsam tek bir marka, sekt├Âr veya ├Ânceden haz─▒rlanm─▒┼ş firma listesi de─şildir.
-- G─▒da, tekstil, temizlik, ev tekstili ve tuhafiye dahil farkl─▒ ├╝r├╝n gruplar─▒ kapsamdad─▒r. Tutku yaln─▒zca bir ├Ârnektir; bakkal─▒n faturas─▒ndaki Eti ve ├£lker ├╝r├╝nleri de ayn─▒ yakla┼ş─▒m─▒n i├ğindedir.
-- **16 firma ve 54 firmal─▒k havuz, OpenRouter token maliyetini azaltmak i├ğin d├╝┼ş├╝n├╝lm├╝┼şt├╝r. Bunlar kapsam s─▒n─▒r─▒, izin verilen firmalar listesi veya yaln─▒z bu firmalarla ├ğal─▒┼şma karar─▒ de─şildir.** Havuz d─▒┼ş─▒nda olmak tek ba┼ş─▒na eleme gerek├ğesi olamaz.
-- Belirleyici ko┼şul, faturadaki firma ve ├╝r├╝n bilgilerinin firman─▒n resm├« dijital kaynaklar─▒ndaki ├╝r├╝nlerle do─şrulanabilir bi├ğimde e┼şle┼şmesidir. Faturay─▒ kesen toptanc─▒ ile ├╝r├╝n├╝n ├╝reticisi ayn─▒ firma olmak zorunda de─şildir; do─şru ├╝r├╝n ve ├╝retici ili┼şkisi ├ğ├Âz├╝lmelidir.
-- Bas─▒l─▒ veya el yaz─▒s─▒ fatura olmas─▒ tek ba┼ş─▒na kabul ya da ret nedeni de─şildir. Bilgiler okunabiliyor ve dijital kar┼ş─▒l─▒─ş─▒ bulunabiliyorsa ak─▒┼ş─▒n konusudur.
-- Sadece benzerlik nedeniyle ba┼şka ├╝r├╝n├╝n g├Ârselini veya bilgisini kullanma. E┼şle┼şmeyen ya da belirsiz ├╝r├╝n├╝ e┼şle┼şmi┼ş gibi sunma. Tekil bir e┼şle┼şme sorunu ├╝zerinden b├╝t├╝n bir sekt├Âr├╝ veya firmalar─▒ kapsamdan ├ğ─▒karma.
-- Sistem, her yeni firma veya faturada yorucu elle ara┼şt─▒rma gerektirmeden bu k├Âpr├╝y├╝ kurabilmelidir. Maliyet azaltma ├ğal─▒┼şmalar─▒ bu hedefi korumal─▒d─▒r.
-
-### U├ğtan uca ba┼şar─▒ ├Âl├ğ├╝t├╝
-
-1. Esnaf faturan─▒n foto─şraf─▒n─▒ verir.
-2. Firma ve ├╝r├╝n bilgileri okunur; ilgili toptanc─▒, ├╝retici veya marka belirlenir.
-3. Faturadaki ├╝r├╝nler, ilgili firman─▒n resm├« dijital ├╝r├╝nleriyle e┼şle┼ştirilir.
-4. E┼şle┼şen ├╝r├╝nlerin do─şru bilgileri ve g├Ârselleri ├╝r├╝n kartlar─▒na yerle┼ştirilir.
-5. Kartlar, t├╝keticinin g├Ârebilece─şi dijital vitrine kadar ula┼ş─▒r; yay─▒nlama ve g├Âr├╝nt├╝leme zinciri ger├ğek ak─▒┼şta do─şrulan─▒r.
-
-Sadece OCR ├ğ─▒kt─▒s─▒, firma ba─şlant─▒s─▒, katalog arama sonucu veya g├Ârselsiz ara taslak bu hedefin tamamland─▒─ş─▒ anlam─▒na gelmez. Birka├ğ se├ğilmi┼ş marka ├╝zerinde ├ğal─▒┼şan ├Ârnek de genel kapsam─▒n tamamland─▒─ş─▒n─▒n kan─▒t─▒ de─şildir. Kullan─▒c─▒n─▒n ÔÇ£%100 ├ğal─▒┼şmal─▒ÔÇØ beklentisini kapsam─▒ k├╝├ğ├╝lterek kar┼ş─▒lama; zincirin tamam─▒n─▒ ├ğal─▒┼şt─▒r ve do─şrulanmam─▒┼ş noktalar─▒ a├ğ─▒k├ğa belirt.
-
-### ├çal─▒┼şan sistem ve firma izin g├Âr├╝┼şmeleri
-
-Kullan─▒c─▒n─▒n s─▒ralamas─▒: **├Ânce g├Ârseller ve t├╝keticiye g├Âsterilebilen ├╝r├╝n kartlar─▒ dahil ├ğal─▒┼şan sistemi somut olarak ispatlamak, ard─▒ndan bu ├ğal─▒┼şan sistemle firmalarla kullan─▒m izni g├Âr├╝┼şmesi yapmak.** ─░zin g├Âr├╝┼şmesini teknik geli┼ştirmeyi s├╝rekli durduran veya kapsam─▒ daraltan bir ├Ânko┼şula d├Ân├╝┼şt├╝rme. ─░zin s├╝reci hedefin bir par├ğas─▒d─▒r; yok say─▒lacak bir konu de─şildir.
-
-Firmalara sunulacak de─şer: ÔÇ£├£r├╝nlerinizi satan k├╝├ğ├╝k esnafla dijital k├Âpr├╝n├╝z olal─▒m; esnaf─▒n raf─▒ndaki ├╝r├╝nlerinizi dijital vitrinde katalo─şa d├Ân├╝┼şt├╝relim.ÔÇØ Ama├ğ, hen├╝z ├ğal─▒┼şmayan bir fikre izin istemek de─şil, i┼şleyen ak─▒┼ş─▒ g├Âsterebilmektir.
-
-Bu ├╝r├╝n hedefi, firmalardan izin al─▒nm─▒┼ş oldu─şu veya sistemin bug├╝n tamamland─▒─ş─▒ anlam─▒na gelmez. Teknik kabiliyet, do─şrulanm─▒┼ş u├ğtan uca sonu├ğ, canl─▒ yay─▒n ve al─▒nm─▒┼ş firma iznini raporlarken ayr─▒ ayr─▒ belirt. Bu belge tek ba┼ş─▒na firma ad─▒na ileti┼şim kurma, canl─▒ya da─ş─▒t─▒m veya d─▒┼ş ayar de─şi┼şikli─şi i├ğin i┼şlem yetkisi vermez; ilgili i┼şin kullan─▒c─▒ talimat─▒n─▒ esas al.
-
-### Ajanlar─▒n ├ğal─▒┼şma bi├ğimi
-
-- Bu hedefi yeniden tart─▒┼şmaya a├ğmak yerine mevcut eksikleri hedefe g├Âre belirle.
-- Tutku'ya, sabit firma havuzlar─▒na veya izin konusuna tak─▒l─▒p b├╝y├╝k hedefi daraltma.
-- Mevcut ├ğal─▒┼şan davran─▒┼ş─▒ ve kullan─▒c─▒ verilerini koru; yaln─▒z istenen i┼ş kapsam─▒nda de─şi┼şiklik yap.
-- Hedefi, uygulanm─▒┼ş ├Âzelli─şi ve do─şrulanm─▒┼ş sonucu birbirine kar─▒┼şt─▒rma. ├çal─▒┼şt─▒rmad─▒─ş─▒n testi veya g├Ârmedi─şin canl─▒ sonucu tamamland─▒ diye raporlama.
+- Arama, tarama, envanter, ölçüm, raporlama ve kodun kendisi ajana verilir.
+- Koordinatörde kalan: hedefi yazmak, ajanın raporunu doğrulamak, riskli tek
+  noktayı **tek komutla** ölçmek, commit/merge/sıra takibi.
+- Görev yazmadan önce dosya adı doğrulamak için komut çalıştırma; ajan bulur.
+- Ölçüm yalnız bir **karar** ona bağlıysa yapılır.
+- Her yeni faz → yeni oturum; şişmiş bağlam her cevabı pahalılaştırır.
+- Uzun rapor yazma; sonuç tek satır, detay istenirse gelir.
