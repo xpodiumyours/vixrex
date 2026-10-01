@@ -3,7 +3,8 @@ import { cookies } from "next/headers";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 import { fingerprintClient, getClientIp } from "@/lib/rentDemoSecurity";
-import { faturaSatirlariniEslestir, type HamFaturaSatiri } from "@/lib/faturaEslestir";
+import { faturaSatirlariniDijitalIzle, sonucOzeti, type HamFaturaSatiri } from "@/lib/faturaEslestir";
+import { faturaTaslaklari } from "@/lib/faturaTaslagi";
 import { verifyStoreEditToken } from "@/lib/instagramServer";
 
 // Fatura satırlarını üretici kataloğuyla eşleştirir.
@@ -49,7 +50,13 @@ function satirTemizle(ham: unknown): HamFaturaSatiri | null {
 }
 
 export async function POST(request: NextRequest) {
-  let govde: { slug?: unknown; satirlar?: unknown; editToken?: unknown; tedarikci?: unknown };
+  let govde: {
+    slug?: unknown;
+    satirlar?: unknown;
+    editToken?: unknown;
+    tedarikci?: unknown;
+    tedarikciSite?: unknown;
+  };
   try {
     govde = await request.json();
   } catch {
@@ -124,7 +131,12 @@ export async function POST(request: NextRequest) {
   // Tedarikçi adı isteğe bağlıdır: fotoğrafı kim okursa okusun (telefon,
   // Başak, tarayıcı) biliyorsa gönderir; bilmiyorsa firma dağılımına bakılır.
   const tedarikci = typeof govde.tedarikci === "string" ? govde.tedarikci.trim() : "";
-  const eslesenSatirlar = faturaSatirlariniEslestir(temizSatirlar, tedarikci);
+  const tedarikciSite = typeof govde.tedarikciSite === "string" ? govde.tedarikciSite.trim() : "";
+  const { satirlar: eslesenSatirlar, tedarikciIz } = await faturaSatirlariniDijitalIzle(
+    temizSatirlar,
+    tedarikci,
+    tedarikciSite,
+  );
   const eslesenSayisi = eslesenSatirlar.filter((s) => s.katalog !== null).length;
 
   return NextResponse.json({
@@ -132,5 +144,8 @@ export async function POST(request: NextRequest) {
     satirlar: eslesenSatirlar,
     toplamSatir: eslesenSatirlar.length,
     katalogEslesmesi: eslesenSayisi,
+    sonucOzeti: sonucOzeti(eslesenSatirlar),
+    taslaklar: faturaTaslaklari(eslesenSatirlar),
+    tedarikciDijitalIz: tedarikciIz,
   });
 }

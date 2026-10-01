@@ -25,19 +25,28 @@ export const GORU_MODELI = "openai/gpt-5.6-luna";
 
 const SORU = [
   "Bu bir fatura tablosu. HER urun satirini oku. Yalniz JSON dondur.",
-  '{"tedarikci":"","satirlar":[{"model":"","barkod":"","varyant":"","beden":"","adet":0,"birim_fiyat":0,"tutar":0}],"toplam_adet":0,"toplam_tutar":0}',
+  '{"tedarikci":"","tedarikci_vergi_no":"","tedarikci_adres":"","tedarikci_site":"","belge_turu":"","belge_no":"","belge_tarihi":"","satirlar":[{"ham_satir":"","model":"","ad":"","barkod":"","varyant":"","beden":"","marka":"","adet":0,"birim_fiyat":0,"tutar":0}],"toplam_adet":0,"toplam_tutar":0,"mal_bedeli":0,"kdv_tutari":0,"indirim_tutari":0,"odenecek_toplam":0}',
   "1. Her satirda adet * birim_fiyat = tutar olmali.",
   "2. Satirlarin adet toplami = toplam_adet, tutar toplami = toplam_tutar.",
   "3. toplam_adet/toplam_tutar en alttaki 'Toplam' satirindan alinir.",
   "4. Sayilari 6.034,00 -> 6034.00 bicimine cevir. Uydurma yok.",
   "5. tedarikci = faturayi kesen firmanin adi. Yazmiyorsa bos birak, tahmin etme.",
+  "6. ad = faturada yazan urun adi veya urun aciklamasi. Yazmiyorsa bos birak, tahmin etme.",
+  "7. ham_satir = urun satirinda gorunen metni sirasi ve degerleriyle koru.",
+  "8. tedarikci_vergi_no, tedarikci_adres ve tedarikci_site yalniz belgede acikca yaziyorsa doldur; tahmin etme.",
+  "9. belge_turu: belgede acikca yaziyorsa fatura, e-arsiv, irsaliye veya bilgi fisi; belge_no ve belge_tarihi yalniz belgede yaziyorsa doldur (tarih GG.AA.YYYY), tahmin etme.",
+  "10. mal_bedeli, kdv_tutari, indirim_tutari ve odenecek_toplam belgede ayri ayri yaziyorsa ayri ayri doldur; yazmiyorsa null birak, hesaplayip uydurma.",
+  "11. marka = urun satirinda ya da urun kodunun yaninda yazan marka adi; yazmiyorsa bos birak, faturayi kesen firmayi marka sanma, tahmin etme.",
 ].join("\n");
 
 export interface GoruSatiri {
+  hamSatir: string;
   model: string;
+  ad: string;
   barkod: string;
   varyant: string;
   beden: string;
+  marka: string;
   adet: number | null;
   birimFiyat: number | null;
   tutar: number | null;
@@ -46,9 +55,19 @@ export interface GoruSatiri {
 export interface GoruSonucu {
   /** Faturayı kesen firma. Belgede yazmıyorsa boş — tahmin edilmez. */
   tedarikci: string;
+  tedarikciVergiNo: string;
+  tedarikciAdres: string;
+  tedarikciSite: string;
   satirlar: GoruSatiri[];
   belgeAdedi: number | null;
   belgeToplami: number | null;
+  belgeTuru: string;
+  belgeNo: string;
+  belgeTarihi: string;
+  malBedeli: number | null;
+  kdvTutari: number | null;
+  indirimTutari: number | null;
+  odenecekToplam: number | null;
   /** Bu okumanın OpenRouter'da tuttuğu gerçek maliyet (USD). */
   maliyet: number | null;
 }
@@ -56,6 +75,11 @@ export interface GoruSonucu {
 function sayi(deger: unknown): number | null {
   const n = typeof deger === "number" ? deger : Number(String(deger ?? "").replace(",", "."));
   return Number.isFinite(n) ? n : null;
+}
+
+function yaziliSayi(deger: unknown): number | null {
+  if (deger === null || deger === undefined || deger === "") return null;
+  return sayi(deger);
 }
 
 function metin(deger: unknown): string {
@@ -116,19 +140,32 @@ export async function faturayiOku(dataUrl: string): Promise<GoruSonucu> {
 
   const kok = cozulen as {
     tedarikci?: unknown;
+    tedarikci_vergi_no?: unknown;
+    tedarikci_adres?: unknown;
+    tedarikci_site?: unknown;
+    belge_turu?: unknown;
+    belge_no?: unknown;
+    belge_tarihi?: unknown;
     satirlar?: unknown;
     toplam_adet?: unknown;
     toplam_tutar?: unknown;
+    mal_bedeli?: unknown;
+    kdv_tutari?: unknown;
+    indirim_tutari?: unknown;
+    odenecek_toplam?: unknown;
   };
   const hamSatirlar = Array.isArray(kok.satirlar) ? kok.satirlar : [];
 
   const satirlar: GoruSatiri[] = hamSatirlar.map((girdi) => {
     const s = girdi as Record<string, unknown>;
     return {
+      hamSatir: metin(s.ham_satir),
       model: metin(s.model),
+      ad: metin(s.ad),
       barkod: metin(s.barkod),
       varyant: metin(s.varyant),
       beden: metin(s.beden),
+      marka: metin(s.marka),
       adet: sayi(s.adet),
       birimFiyat: sayi(s.birim_fiyat),
       tutar: sayi(s.tutar),
@@ -137,9 +174,19 @@ export async function faturayiOku(dataUrl: string): Promise<GoruSonucu> {
 
   return {
     tedarikci: metin(kok.tedarikci),
+    tedarikciVergiNo: metin(kok.tedarikci_vergi_no),
+    tedarikciAdres: metin(kok.tedarikci_adres),
+    tedarikciSite: metin(kok.tedarikci_site),
     satirlar,
     belgeAdedi: sayi(kok.toplam_adet),
     belgeToplami: sayi(kok.toplam_tutar),
+    belgeTuru: metin(kok.belge_turu),
+    belgeNo: metin(kok.belge_no),
+    belgeTarihi: metin(kok.belge_tarihi),
+    malBedeli: yaziliSayi(kok.mal_bedeli),
+    kdvTutari: yaziliSayi(kok.kdv_tutari),
+    indirimTutari: yaziliSayi(kok.indirim_tutari),
+    odenecekToplam: yaziliSayi(kok.odenecek_toplam),
     maliyet: sayi(govde?.usage?.cost),
   };
 }

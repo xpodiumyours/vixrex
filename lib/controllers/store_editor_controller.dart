@@ -637,6 +637,12 @@ class StoreEditorController extends ChangeNotifier
     }
   }
 
+  Future<void> reloadRemoteProducts() async {
+    await ensureRemoteStoreId();
+    await _loadRemoteProductsIfReady();
+    _revalidateStoreCache();
+  }
+
   Future<void> _loadRemoteProductsIfReady() async {
     final storeId = _data.id?.trim() ?? '';
     if (storeId.isEmpty || !_isUuid(storeId)) return;

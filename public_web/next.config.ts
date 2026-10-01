@@ -102,8 +102,8 @@ const nextConfig: NextConfig = {
   // Kataloğu okuyan HER uç burada olmalı; eksik kalan uç üretimde katalogsuz
   // çalışır ve hiçbir ürünü tanımaz (yerelde fark edilmez, canlıda çıkar).
   outputFileTracingIncludes: {
-    "/api/fatura-oku": ["./data/katalog/**/*.json"],
-    "/api/fatura-eslestir": ["./data/katalog/**/*.json"],
+    "/api/fatura-oku": ["./data/katalog/**/*.json", "./scripts/katalog/firmalar.json"],
+    "/api/fatura-eslestir": ["./data/katalog/**/*.json", "./scripts/katalog/firmalar.json"],
     "/api/products/batch": ["./data/katalog/**/*.json"],
   },
   env: {

@@ -197,6 +197,7 @@ export async function urunGirdisiniHazirla(args: {
   storeName: unknown;
   govde: Record<string, unknown>;
   gorselPolitikasi?: "sahip" | "toplu";
+  enAzGorsel?: number;
   sablonOnbellegi?: Map<string, string | null>;
 }): Promise<UrunGirdiSonucu> {
   const { admin, storeId, storeName, govde } = args;
@@ -223,8 +224,9 @@ export async function urunGirdisiniHazirla(args: {
     imageUrls = normalizeProductImageUrls(govde.imageUrls);
   }
 
-  if (fotografSayisi < MIN_PRODUCT_IMAGES) {
-    gorselEksigi = `Ürün için en az ${MIN_PRODUCT_IMAGES} fotoğraf gerekiyor; şu an ${fotografSayisi} tane var.`;
+  const enAzGorsel = args.enAzGorsel ?? MIN_PRODUCT_IMAGES;
+  if (fotografSayisi < enAzGorsel) {
+    gorselEksigi = `Ürün için en az ${enAzGorsel} fotoğraf gerekiyor; şu an ${fotografSayisi} tane var.`;
   }
 
   const categoryId = cleanString(govde.categoryId) || "";

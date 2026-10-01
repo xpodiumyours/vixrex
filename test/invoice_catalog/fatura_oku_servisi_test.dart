@@ -22,8 +22,14 @@ void main() {
           return http.Response(
             jsonEncode({
               'tamam': true,
+              'tedarikci': 'Seher Mensucat',
+              'tedarikciVergiNo': '1234567890',
+              'tedarikciAdres': 'İstanbul Güngören',
+              'tedarikciSite': 'sehermensucat.com',
               'satirlar': [
                 {
+                  'hamSatir':
+                      'ELT1302 Elit Erkek Elastan Sıfır Yaka 8681128321677 2 137,00 274,00',
                   'model': 'ELT1302',
                   'ad': 'Elit Erkek Elastan Sıfır Yaka',
                   'barkod': '8681128321677',
@@ -82,6 +88,12 @@ void main() {
       final katalog = sonuc.data!;
       expect(katalog.products, hasLength(1));
       expect(katalog.invoiceDrafts, hasLength(1));
+      final taslak = katalog.invoiceDrafts.single;
+      expect(taslak.rawSourceLine, contains('137,00'));
+      expect(taslak.supplierName?.value, 'Seher Mensucat');
+      expect(taslak.supplierTaxOrTradeIdentifier?.value, '1234567890');
+      expect(taslak.supplierAddress?.value, 'İstanbul Güngören');
+      expect(taslak.supplierOfficialDomain?.value, 'sehermensucat.com');
     });
 
     test(
@@ -93,6 +105,7 @@ void main() {
           httpClient: MockClient((request) async {
             return http.Response(
               jsonEncode({
+                'tedarikci': 'Seher Mensucat',
                 'satirlar': [
                   {
                     'model': 'ELT1302',
@@ -214,6 +227,83 @@ void main() {
       expect(sonuc.isFailure, isTrue);
       expect(sonuc.failure?.message, contains('ürün satırı bulunamadı'));
     });
+
+    test(
+      'sunucunun kart hali, celiskisi ve islem kimligi telefonda aynen tasinir',
+      () async {
+        final servis = FaturaOkuServisi(
+          originOverride: 'https://vixrex-test.local',
+          httpClient: MockClient((request) async {
+            return http.Response(
+              jsonEncode({
+                'tamam': true,
+                'islemKimligi': 'islem-42',
+                'satirlar': [
+                  {
+                    'model': 'TER0117',
+                    'ad': 'Tutku Erkek Atlet',
+                    'guven': 0.9,
+                    'sonuc': 'celiski',
+                    'katalog': null,
+                    'celiski': {
+                      'dayanak': 'barkod',
+                      'adaylar': [
+                        {
+                          'ad': 'Tutku Erkek Atlet Siyah L',
+                          'kaynak': 'https://sehermensucat.com/a',
+                        },
+                        {
+                          'ad': 'Tutku Erkek Atlet Siyah XL',
+                          'kaynak': 'https://sehermensucat.com/b',
+                        },
+                      ],
+                    },
+                  },
+                  {
+                    'model': 'YOK999',
+                    'ad': 'Bilinmeyen ürün',
+                    'guven': 0.9,
+                    'sonuc': 'iz-yok',
+                    'katalog': null,
+                  },
+                ],
+              }),
+              200,
+              headers: {'content-type': 'application/json; charset=utf-8'},
+            );
+          }),
+        );
+
+        final sonuc = await servis.oku(
+          imageBytes: Uint8List.fromList([1]),
+          storeSlug: 'deneme-vitrin',
+          editToken: 'token-1',
+        );
+
+        final katalog = sonuc.data!;
+        // Aynı belge, aynı işlem: web ile telefon aynı kimliği taşır.
+        expect(katalog.islemKimligi, 'islem-42');
+
+        final celiskili = katalog.invoiceDrafts[0];
+        expect(celiskili.etkinKartDurumu, KartDurumu.celiski);
+        expect(celiskili.celiskiAdaylari, hasLength(2));
+        expect(celiskili.celiskiDayanak, 'barkod');
+        expect(celiskili.islemKimligi, 'islem-42');
+
+        final izsiz = katalog.invoiceDrafts[1];
+        expect(izsiz.etkinKartDurumu, KartDurumu.izYok);
+
+        // Esnaf yalnız satış fiyatını girer: faturada adet okunduysa stok
+        // onaylı sayılır, okunmadıysa onaylanmaz.
+        expect(
+          katalog.invoiceDrafts.every(
+            (taslak) =>
+                taslak.stockConfirmed == (taslak.quantity?.value != null),
+          ),
+          isTrue,
+        );
+      },
+    );
 
     test('ağ hatasında çökmez, anlaşılır hata döner', () async {
       final servis = FaturaOkuServisi(

@@ -97,7 +97,36 @@ class CatalogInvoiceTraceResolver {
 
   InvoiceProductDraft _uygula(InvoiceProductDraft draft, Map ham) {
     final katalog = ham['katalog'];
-    if (katalog is! Map) return draft; // eşleşme yok — kanıt zayıf kalır
+
+    // Sunucunun kart hâli her zaman uygulanır: çelişki/iz-yok satırları
+    // katalog eşleşmesi olmasa da esnafa aynı hâlle görünmelidir.
+    final kartDurumu = kartDurumuFromWire(ham['sonuc']);
+    final celiski = ham['celiski'];
+    final celiskiAdaylari = <InvoiceConflictCandidate>[];
+    final celiskiDayanak =
+        celiski is Map ? (celiski['dayanak'] ?? '').toString().trim() : '';
+    if (celiski is Map && celiski['adaylar'] is List) {
+      for (final aday in celiski['adaylar'] as List) {
+        if (aday is! Map) continue;
+        celiskiAdaylari.add(
+          InvoiceConflictCandidate(
+            ad: (aday['ad'] ?? '').toString().trim(),
+            kaynak: (aday['kaynak'] ?? '').toString().trim(),
+          ),
+        );
+      }
+    }
+
+    final durumluTaslak = draft.copyWith(
+      kartDurumu: kartDurumu ?? draft.kartDurumu,
+      celiskiAdaylari: celiskiAdaylari,
+      celiskiDayanak: celiskiDayanak.isEmpty ? null : celiskiDayanak,
+    );
+
+    if (katalog is! Map) {
+      // Eşleşme yok — kanıt zayıf kalır, ama sunucunun kart hâli korunur.
+      return durumluTaslak;
+    }
 
     final now = DateTime.now().toUtc();
     final kaynak = (katalog['kaynak'] ?? '').toString();
@@ -128,7 +157,9 @@ class CatalogInvoiceTraceResolver {
       _ => RightsStatus.unknown, // "bekliyor" / "yok" — görsel kullanılamaz
     };
 
-    return draft.copyWith(
+    return durumluTaslak.copyWith(
+      // Katalogda bulundu: sunucu bir hâl vermediyse kanıtlı sayılır.
+      kartDurumu: kartDurumu ?? KartDurumu.kanitli,
       normalizedName: metin(
         katalog['resmiAd']?.toString(),
         EvidenceSourceType.officialProductPage,

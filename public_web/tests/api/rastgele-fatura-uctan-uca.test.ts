@@ -11,8 +11,16 @@ import type { UreticiUrunu } from "@/lib/ureticiKatalog";
 const mocks = vi.hoisted(() => ({
   get: vi.fn(() => "owner-cookie"),
   admin: vi.fn(),
+  rpc: vi.fn(),
+  kayitlar: new Map<number, Record<string, unknown>>(),
   verifyOwner: vi.fn(() => ({ storeId: "store-1" })),
   createProduct: vi.fn(),
+  publishProduct: vi.fn(
+    async (_args: Record<string, unknown>): Promise<{ success: boolean; id?: string; hata?: string }> => ({
+      success: true,
+      id: "urun-1",
+    }),
+  ),
   update: vi.fn(),
   upsert: vi.fn(),
 }));
@@ -22,7 +30,27 @@ vi.mock("@/lib/ownerSession", () => ({
   OWNER_SESSION_COOKIE: "vixrex_owner_session",
   verifyOwnerSession: mocks.verifyOwner,
 }));
-vi.mock("@/lib/productCoreServer", () => ({ createRichCoreProduct: mocks.createProduct }));
+vi.mock("@/lib/faturaGorsel", () => ({
+  kaynakGorselleriniHazirla: async (args: { adaylar: string[]; kaynakSayfa: string }) => ({
+    gorseller: args.adaylar.map((adres) => ({
+      url: adres,
+      kaynakGorsel: adres,
+      kaynakSayfa: args.kaynakSayfa,
+      genislik: 1200,
+      yukseklik: 1200,
+    })),
+    reddedilenler: [],
+    altyapiSorunu: false,
+  }),
+}));
+vi.mock("@/lib/faturaUrunBaglantisi", async (importOriginal) => ({
+  ...await importOriginal<typeof import("@/lib/faturaUrunBaglantisi")>(),
+  satiriDogrula: async (_admin: unknown, _storeId: string, kimlik: { satirSirasi: number }) => mocks.kayitlar.get(kimlik.satirSirasi) ?? null,
+}));
+vi.mock("@/lib/productCoreServer", () => ({
+  createRichCoreProduct: mocks.createProduct,
+  publishInvoiceProduct: mocks.publishProduct,
+}));
 
 import { POST as topluUrunEkle } from "@/app/api/products/batch/route";
 import { ureticiUrunuBul } from "@/lib/ureticiKatalog";
@@ -60,6 +88,18 @@ function adminMock() {
     query.maybeSingle.mockResolvedValue({ data: { id: "kategori-1", product_template_key: "fashion" }, error: null });
     return query;
   });
+}
+
+function kayitlariHazirla(products: unknown[]) {
+  for (const [i, ham] of products.entries()) {
+    const p = ham as Record<string, unknown>;
+    if (p.sourceType !== "invoice") continue;
+    p.islemKimligi = "11111111-1111-4111-8111-111111111111";
+    p.satirSirasi = i;
+    mocks.kayitlar.set(i, { satirId: String(i), sonuc: p.kartDurumu ?? "kanitli", urunId: null,
+      izinliGorseller: new Set(p.imageUrls as string[]), alisBirimFiyati: typeof p.purchasePriceAmount === "number" ? p.purchasePriceAmount : null,
+      katalog: { resmiAd: p.name, aciklama: p.description ?? "", marka: p.brand ?? "Üretici", kaynak: `https://tedarikci.example.com/urun/${i}` } });
+  }
 }
 
 function tohumluRastgele(tohum: number) {
@@ -108,6 +148,7 @@ function rastgeleFaturaIstegi(tohum: number, satirSayisi: number) {
     });
   }
 
+  kayitlariHazirla(urunler);
   return new NextRequest("http://localhost/api/products/batch", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -118,9 +159,11 @@ function rastgeleFaturaIstegi(tohum: number, satirSayisi: number) {
 describe("rastgele faturalar gerçek /api/products/batch uç noktasından geçer", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.kayitlar.clear();
+    mocks.rpc.mockImplementation(async (_name: string, args: { p_line_id: string }) => ({ data: { success: true, id: `urun-${args.p_line_id}`, slug: `urun-${args.p_line_id}`, created: true, kayit: "yeni" }, error: null }));
     mocks.get.mockReturnValue("owner-cookie");
     mocks.verifyOwner.mockReturnValue({ storeId: "store-1" });
-    mocks.admin.mockImplementation(() => ({ from: adminMock() }));
+    mocks.admin.mockImplementation(() => ({ from: adminMock(), rpc: mocks.rpc }));
     let sayac = 0;
     mocks.createProduct.mockImplementation(async () => {
       sayac += 1;
@@ -141,8 +184,9 @@ describe("rastgele faturalar gerçek /api/products/batch uç noktasından geçer
     expect(govde.toplam).toBeGreaterThan(0);
     expect(govde.hatali).toBe(0);
 
-    for (const cagri of mocks.createProduct.mock.calls) {
-      const yazilan = cagri[0];
+    expect(mocks.rpc.mock.calls.length).toBe(govde.eklenen);
+    for (const cagri of mocks.rpc.mock.calls) {
+      const yazilan = cagri[1].p_product;
       // Seher katalogundaki alış fiyatları 60-260 TL bandında; bu aralıktaki
       // hiçbir sayı satış metnine/açıklamaya karışmamalı.
       expect(yazilan.priceText).not.toMatch(/\b(6\d|1\d\d|2[0-5]\d)\.\d\d TL\b.*alış/i);
@@ -150,7 +194,7 @@ describe("rastgele faturalar gerçek /api/products/batch uç noktasından geçer
     }
   });
 
-  it("fotoğrafı 3'ten az olan katalog ürünü rastgele faturaya düşerse taslak kalır", async () => {
+  it("tek doğru görselli ürünün stok ve yayın onayı eksikse taslak kalır", async () => {
     // Katalogda bilerek az fotoğraflı bir ürün arıyoruz (gerçek veri).
     const azFotografli = (seherHam as UreticiUrunu[]).find((u) => u.gorseller.length > 0 && u.gorseller.length < 3);
     expect(azFotografli, "test verisi için az fotoğraflı ürün bulunamadı").toBeTruthy();
@@ -175,7 +219,11 @@ describe("rastgele faturalar gerçek /api/products/batch uç noktasından geçer
       }),
     });
 
-    const cevap = await topluUrunEkle(istek);
+    const govdeIstegi = await istek.clone().json();
+    kayitlariHazirla(govdeIstegi.products);
+    const cevap = await topluUrunEkle(new NextRequest("http://localhost/api/products/batch", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(govdeIstegi),
+    }));
     const govde = await cevap.json();
     expect(govde.taslak).toBe(1);
     expect(govde.yayinda).toBe(0);

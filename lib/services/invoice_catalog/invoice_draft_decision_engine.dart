@@ -1,6 +1,8 @@
 import 'package:vixrex/models/invoice_product_draft.dart';
 
 class InvoiceDraftDecisionResult {
+  /// Kartın ekranda görünen hâli: kanıtlı / eksik / çelişki / iz bulunamadı.
+  final KartDurumu kartDurumu;
   final AutomationDecision decision;
   final bool canPrepareDraft;
   final bool canPublish;
@@ -9,6 +11,7 @@ class InvoiceDraftDecisionResult {
   final List<String> warnings;
 
   const InvoiceDraftDecisionResult({
+    required this.kartDurumu,
     required this.decision,
     required this.canPrepareDraft,
     required this.canPublish,
@@ -22,12 +25,41 @@ class InvoiceDraftDecisionResult {
 /// güçlü iz -> taslak hazırla
 /// kısmi iz -> yalnız eksik kritik bilgiyi sor
 /// zayıf ürün izi -> tahmin etme
+///
+/// Ek kilitli kurallar (web tarafıyla aynı):
+/// çelişki -> eşleşme kurma, esnafa seçtir
+/// faturadaki adet -> stok önerisi, esnaf onaylamadan stok değil
 class InvoiceDraftDecisionEngine {
   const InvoiceDraftDecisionEngine();
 
   InvoiceDraftDecisionResult evaluate(InvoiceProductDraft draft) {
-    if (draft.productIdentityStrength == EvidenceStrength.weak) {
+    final kartDurumu = draft.etkinKartDurumu;
+
+    if (kartDurumu == KartDurumu.celiski) {
+      final adaylar = draft.celiskiAdaylari
+          .map((aday) => aday.ad.trim())
+          .where((ad) => ad.isNotEmpty)
+          .toList(growable: false);
+      final dayanak = draft.celiskiDayanak == 'barkod' ? 'barkod' : 'ürün kodu';
+      return InvoiceDraftDecisionResult(
+        kartDurumu: kartDurumu,
+        decision: AutomationDecision.askMissing,
+        canPrepareDraft: false,
+        canPublish: false,
+        externalMediaBlocked: true,
+        questions: [
+          adaylar.isEmpty
+              ? 'Aynı $dayanak birden çok ürüne düşüyor; hangi ürün olduğunu sen seçmelisin.'
+              : 'Aynı $dayanak ${adaylar.length} farklı ürüne düşüyor '
+                  '(${adaylar.take(3).join(', ')}). Hangisi olduğunu sen seçmelisin.',
+        ],
+        warnings: ['Eşleşme kurulmadı; Vixrex bu satırda tahmin yapmaz.'],
+      );
+    }
+
+    if (kartDurumu == KartDurumu.izYok) {
       return const InvoiceDraftDecisionResult(
+        kartDurumu: KartDurumu.izYok,
         decision: AutomationDecision.stopNoGuess,
         canPrepareDraft: false,
         canPublish: false,
@@ -41,20 +73,7 @@ class InvoiceDraftDecisionEngine {
       );
     }
 
-    if (draft.supplierIdentityStrength == EvidenceStrength.weak) {
-      return const InvoiceDraftDecisionResult(
-        decision: AutomationDecision.askMissing,
-        canPrepareDraft: false,
-        canPublish: false,
-        externalMediaBlocked: true,
-        questions: [
-          'Faturayı kesen tedarikçiyi doğrulayacak şirket veya resmî kaynak bilgisi gerekli.',
-        ],
-      );
-    }
-
-    if (draft.productIdentityStrength == EvidenceStrength.partial ||
-        draft.supplierIdentityStrength == EvidenceStrength.partial) {
+    if (kartDurumu == KartDurumu.eksik) {
       final questions = <String>[];
 
       if (draft.productIdentityStrength == EvidenceStrength.partial) {
@@ -62,13 +81,15 @@ class InvoiceDraftDecisionEngine {
           'Bu ürünün barkodu, model/stok kodu veya tedarikçi kataloğundaki karşılığı nedir?',
         );
       }
-      if (draft.supplierIdentityStrength == EvidenceStrength.partial) {
+      if (draft.productIdentityStrength == EvidenceStrength.weak ||
+          draft.supplierIdentityStrength != EvidenceStrength.strong) {
         questions.add(
-          'Bu tedarikçinin resmî adı veya ürün kataloğu/feed bağlantısı doğrulanmalı.',
+          'Faturayı kesen tedarikçiyi doğrulayacak şirket veya resmî kaynak bilgisi gerekli.',
         );
       }
 
       return InvoiceDraftDecisionResult(
+        kartDurumu: kartDurumu,
         decision: AutomationDecision.askMissing,
         canPrepareDraft: false,
         canPublish: false,
@@ -98,9 +119,7 @@ class InvoiceDraftDecisionEngine {
       }
     }
 
-    final dataRightsMissing =
-        draft.rightsStatus == RightsStatus.unknown ||
-        draft.rightsStatus == RightsStatus.denied;
+    final dataRightsMissing = draft.rightsStatus == RightsStatus.denied;
 
     if (dataRightsMissing) {
       externalMediaBlocked = true;
@@ -119,6 +138,15 @@ class InvoiceDraftDecisionEngine {
       questions.add('Satış fiyatı esnaf tarafından belirlenmeli.');
     }
 
+    // Faturadaki adet ALIŞ adedidir, raf stoğu değildir. Esnaf onaylamadan
+    // stok sayılmaz; kartta da yalnız öneri olarak görünür.
+    final stokOnayli = draft.stockConfirmed;
+    if (!stokOnayli) {
+      questions.add(
+        'Faturadaki adet öneridir; satış stoğunu kontrol edip onayla.',
+      );
+    }
+
     if (!draft.merchantApproved) {
       questions.add('Taslak ürün kartı esnaf tarafından onaylanmalı.');
     }
@@ -126,9 +154,12 @@ class InvoiceDraftDecisionEngine {
     final canPublish =
         draft.merchantApproved &&
         draft.hasPositiveSalePrice &&
-        !externalMediaBlocked;
+        stokOnayli &&
+        !externalMediaBlocked &&
+        draft.imageCandidates.any((image) => image.selected && image.canUse);
 
     return InvoiceDraftDecisionResult(
+      kartDurumu: kartDurumu,
       decision:
           canPublish
               ? AutomationDecision.readyForPublish

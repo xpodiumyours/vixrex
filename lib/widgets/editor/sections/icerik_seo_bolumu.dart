@@ -342,6 +342,27 @@ class IcerikSeoBolumu extends StatelessWidget {
                 ),
               );
             },
+            onInvoiceProductTap: (product) async {
+              final navigator = Navigator.of(ctx, rootNavigator: true);
+              Navigator.of(ctx).pop();
+              final invoiceController = OcrController(
+                ocrService: const OcrService(),
+                editorController: controller,
+              )..scanMode = 'invoice';
+              await invoiceController.resumeInvoiceProduct(product.id);
+              if (!ctx.mounted) {
+                invoiceController.dispose();
+                return;
+              }
+              await navigator.push(
+                MaterialPageRoute(
+                  builder:
+                      (_) => OcrScannerScreen(ocrController: invoiceController),
+                ),
+              );
+              invoiceController.dispose();
+              await controller.reloadRemoteProducts();
+            },
             onInvoiceTap: () {
               Navigator.of(ctx).pop();
               final invoiceController = OcrController(

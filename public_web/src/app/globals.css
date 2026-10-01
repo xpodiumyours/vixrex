@@ -624,6 +624,409 @@ body.vixrex-kaydediliyor .vixrex-secili-alan {
   animation: mascot-pulse-glow 2s ease-in-out infinite;
 }
 
+/* Faturadan ürün ekleme akışı (esnaf ekranı).
+   Kart başında dört sonuçtan biri açıkça görünür: kanıtlı / eksik / çelişki /
+   iz bulunamadı. Renk, "her satır hazır" izlenimi veren tek tip görünümü
+   engeller; zayıf izde kart sessiz kalmaz. */
+.fatura-akis {
+  display: grid;
+  gap: 0.875rem;
+}
+
+.fatura-baslik h3,
+.fatura-akis h3 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: var(--owner-text);
+}
+
+.fatura-aciklama {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: var(--owner-muted);
+}
+
+.fatura-hata {
+  margin: 0;
+  border: 1px solid color-mix(in srgb, var(--owner-error) 45%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--owner-error) 12%, transparent);
+  padding: 0.625rem 0.75rem;
+  font-size: 0.8125rem;
+  color: #FCA5A5;
+}
+
+.fatura-ikincil {
+  min-height: 44px;
+  border: 1px solid var(--owner-border);
+  border-radius: 12px;
+  background: var(--owner-surface-soft);
+  padding: 0.625rem 1rem;
+  font-weight: 700;
+  color: var(--owner-text-alt);
+}
+
+.fatura-onizleme {
+  width: 100%;
+  max-height: 220px;
+  border: 1px solid var(--owner-border);
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.fatura-adimlar {
+  margin: 0;
+  padding-left: 1.125rem;
+  display: grid;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--owner-text-alt);
+}
+
+.fatura-ozet,
+.fatura-satir-ozet,
+.fatura-ozet-satirlari {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  color: var(--owner-text-alt);
+}
+
+.fatura-ozet-satirlari {
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+}
+
+.fatura-ozet-satirlari li {
+  border: 1px solid var(--owner-border);
+  border-radius: 10px;
+  background: var(--owner-surface);
+  padding: 0.5rem 0.625rem;
+  font-size: 0.75rem;
+}
+
+.fatura-kategori {
+  display: grid;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--owner-text-alt);
+}
+
+.fatura-kategori select {
+  min-height: 44px;
+  border: 1px solid var(--owner-border);
+  border-radius: 12px;
+  background: var(--owner-bg-soft);
+  padding: 0 0.75rem;
+  color: var(--owner-text);
+}
+
+.fatura-araclar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.5rem;
+}
+
+.fatura-araclar label {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--owner-text-alt);
+}
+
+.fatura-araclar input {
+  width: 5.5rem;
+  min-height: 44px;
+  border: 1px solid var(--owner-border);
+  border-radius: 12px;
+  background: var(--owner-bg-soft);
+  padding: 0 0.75rem;
+  color: var(--owner-text);
+}
+
+.fatura-araclar button {
+  min-height: 44px;
+  border: 1px solid var(--owner-border);
+  border-radius: 12px;
+  background: var(--owner-surface-soft);
+  padding: 0.625rem 0.875rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--owner-text-alt);
+}
+
+.fatura-araclar button:disabled,
+.fatura-ikincil:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.fatura-izgara {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+}
+
+.fatura-kart {
+  display: grid;
+  gap: 0.375rem;
+  border: 1px solid var(--owner-border);
+  border-left-width: 3px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--owner-surface) 94%, transparent);
+  padding: 0.75rem;
+}
+
+.fatura-kart-kanitli {
+  border-left-color: var(--owner-success);
+}
+
+.fatura-kart-eksik {
+  border-left-color: var(--owner-warning);
+}
+
+.fatura-kart-celiski,
+.fatura-kart-iz-yok {
+  border-left-color: var(--owner-error);
+}
+
+.fatura-rozet {
+  justify-self: start;
+  border-radius: 999px;
+  background: var(--owner-surface-soft);
+  padding: 0.1875rem 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  color: var(--owner-text-alt);
+}
+
+.fatura-kart-kanitli .fatura-rozet {
+  color: #6ee7b7;
+}
+
+.fatura-kart-eksik .fatura-rozet {
+  color: #fcd34d;
+}
+
+.fatura-kart-celiski .fatura-rozet,
+.fatura-kart-iz-yok .fatura-rozet {
+  color: #fca5a5;
+}
+
+.fatura-rozet-suphe {
+  color: #fcd34d;
+}
+
+.fatura-kart-gorsel,
+.fatura-kart-gorselsiz {
+  width: 100%;
+  height: 120px;
+  border-radius: 10px;
+  background: var(--owner-bg-soft);
+  object-fit: cover;
+}
+
+.fatura-kart-gorselsiz {
+  display: grid;
+  place-items: center;
+  font-size: 0.75rem;
+  color: var(--owner-muted);
+}
+
+.fatura-model {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--owner-secondary);
+}
+
+.fatura-ad {
+  font-size: 0.875rem;
+  font-weight: 800;
+  line-height: 1.3;
+  color: var(--owner-text);
+}
+
+.fatura-durum {
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--owner-muted);
+}
+
+.fatura-adaylar {
+  margin: 0;
+  padding-left: 1rem;
+  display: grid;
+  gap: 0.1875rem;
+  font-size: 0.75rem;
+}
+
+.fatura-adaylar a {
+  color: var(--owner-secondary);
+  text-underline-offset: 3px;
+}
+
+.fatura-eslesme {
+  font-size: 0.6875rem;
+  line-height: 1.45;
+  color: var(--owner-muted);
+}
+
+.fatura-eslesme a {
+  color: var(--owner-secondary);
+}
+
+.fatura-eslesme-yok {
+  color: #fca5a5;
+}
+
+.fatura-cipler {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.fatura-cipler span {
+  border-radius: 8px;
+  background: var(--owner-surface-soft);
+  padding: 0.1875rem 0.4375rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--owner-text-alt);
+}
+
+.fatura-alis {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--owner-text-alt);
+}
+
+.fatura-stok,
+.fatura-fiyat,
+.fatura-gorsel-ekle {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--owner-text-alt);
+}
+
+.fatura-stok input,
+.fatura-fiyat input {
+  min-height: 44px;
+  border: 1px solid var(--owner-border);
+  border-radius: 12px;
+  background: var(--owner-bg-soft);
+  padding: 0 0.75rem;
+  color: var(--owner-text);
+}
+
+.fatura-gorsel-ekle input {
+  font-size: 0.6875rem;
+  color: var(--owner-muted);
+}
+
+.fatura-onay {
+  min-height: 44px;
+  border: 1px solid var(--owner-border);
+  border-radius: 12px;
+  background: var(--owner-surface-soft);
+  font-size: 0.8125rem;
+  font-weight: 800;
+  color: var(--owner-text-alt);
+}
+
+.fatura-onay-acik {
+  border-color: color-mix(in srgb, var(--owner-success) 55%, transparent);
+  background: color-mix(in srgb, var(--owner-success) 14%, transparent);
+  color: #6ee7b7;
+}
+
+.fatura-onay:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.fatura-eksikler {
+  margin: 0;
+  padding-left: 1rem;
+  display: grid;
+  gap: 0.1875rem;
+  font-size: 0.6875rem;
+  line-height: 1.4;
+  color: #fcd34d;
+}
+
+.fatura-alt-cubuk {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-top: 1px solid var(--owner-border);
+  background: color-mix(in srgb, var(--owner-bg) 88%, transparent);
+  padding: 0.75rem 0;
+  backdrop-filter: blur(12px);
+}
+
+.fatura-urun-yonetimi {
+  position: fixed;
+  inset: auto 0 0;
+  margin: 0 auto;
+  width: min(100%, 640px);
+  max-width: 100vw;
+  height: 88dvh;
+  min-height: 0;
+  max-height: 88dvh;
+  overflow-y: auto;
+  border: 1px solid var(--owner-border);
+  border-radius: 24px 24px 0 0;
+  background: var(--owner-bg);
+  color: var(--owner-text);
+  padding: 32px 20px max(24px, env(safe-area-inset-bottom));
+}
+
+.fatura-urun-yonetimi::backdrop {
+  background: rgb(0 0 0 / 65%);
+}
+
+@media (min-width: 768px) {
+  .fatura-urun-yonetimi {
+    inset: 6dvh 0;
+    border-radius: 24px;
+  }
+}
+
+.fatura-alt-cubuk span {
+  font-size: 0.8125rem;
+  font-weight: 800;
+  color: var(--owner-text-alt);
+}
+
+.fatura-alt-cubuk button {
+  min-height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--owner-primary), var(--owner-primary-dark));
+  padding: 0.75rem 1.125rem;
+  font-size: 0.875rem;
+  font-weight: 800;
+  color: var(--owner-text);
+}
+
+.fatura-alt-cubuk button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 /* Hareketi azaltılmış cihazlarda animasyon yok — yalnız renk kalır. */
 @media (prefers-reduced-motion: reduce) {
   .vixrex-degisti,

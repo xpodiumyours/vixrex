@@ -255,6 +255,31 @@ export async function updateRichCoreProduct(args: {
   }
 }
 
+/**
+ * Fatura taslağını görünür yapan TEK yolun istemci ucu.
+ *
+ * Veritabanındaki publish_invoice_product RPC'si sahiplik, güncel fiyat,
+ * fotoğraf sayısı, stok ve fatura kanıt durumunu yeniden okur; kapı
+ * kapalıysa hata değil somut eksikli { success:false, hata } döner.
+ */
+export async function publishInvoiceProduct(args: {
+  admin: SupabaseClient;
+  productId: string;
+  editToken: string;
+}): Promise<{ success: boolean; id?: string; zatenYayinda?: boolean; hata?: string }> {
+  const { data, error } = await args.admin.rpc("publish_invoice_product", {
+    p_product_id: args.productId,
+    p_edit_token: args.editToken,
+  });
+  if (error) rpcError(error, "PRODUCT_PUBLISH_FAILED");
+  return (data ?? { success: false, hata: "Ürün yayınlanamadı." }) as {
+    success: boolean;
+    id?: string;
+    zatenYayinda?: boolean;
+    hata?: string;
+  };
+}
+
 export async function deleteCoreProductsBySource(args: {
   admin: SupabaseClient;
   storeId: string;

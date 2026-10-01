@@ -74,7 +74,7 @@ describe("üretici kataloğu — yükleme", () => {
 
 describe("üretici kataloğu — eşleştirme", () => {
   it("gerçek faturadaki 12 kodun hepsi katalogda bulunur", () => {
-    const bulunan = FATURA_KODLARI.filter((kod) => ureticiUrunuBul({ model: kod }) !== null);
+    const bulunan = FATURA_KODLARI.filter((kod) => ureticiUrunuBul({ model: kod, firmaAnahtari: "seher-mensucat" }) !== null);
     expect(bulunan).toHaveLength(FATURA_KODLARI.length);
   });
 
@@ -85,23 +85,23 @@ describe("üretici kataloğu — eşleştirme", () => {
   });
 
   it("resmî ad ve marka faturadaki ham addan daha zengin gelir", () => {
-    const eslesme = ureticiUrunuBul({ model: "ELT1302" });
+    const eslesme = ureticiUrunuBul({ model: "ELT1302", firmaAnahtari: "seher-mensucat" });
     expect(eslesme!.urun.ad).toContain("ELT1302");
     expect(eslesme!.urun.marka).toBeTruthy();
     expect(eslesme!.dayanak).toBe("kod");
   });
 
   it("model kodu küçük harf veya boşluklu gelse de eşleşir", () => {
-    expect(ureticiUrunuBul({ model: " elt1302 " })).not.toBeNull();
-    expect(ureticiUrunuBul({ model: "elt-1302" })).not.toBeNull();
+    expect(ureticiUrunuBul({ model: " elt1302 ", firmaAnahtari: "seher-mensucat" })).not.toBeNull();
+    expect(ureticiUrunuBul({ model: "elt-1302", firmaAnahtari: "seher-mensucat" })).not.toBeNull();
   });
 
   it("barkod eşleşmesi model kodundan önce gelir", () => {
-    const koddan = ureticiUrunuBul({ model: "ELT1302" });
+    const koddan = ureticiUrunuBul({ model: "ELT1302", firmaAnahtari: "seher-mensucat" });
     const barkod = koddan!.urun.barkod;
     expect(barkod.length).toBeGreaterThanOrEqual(8);
 
-    const barkoddan = ureticiUrunuBul({ model: "TER0101", barkod });
+    const barkoddan = ureticiUrunuBul({ model: "TER0101", barkod, firmaAnahtari: "seher-mensucat" });
     expect(barkoddan!.dayanak).toBe("barkod");
     expect(barkoddan!.urun.kod).toBe("ELT1302");
   });
@@ -131,9 +131,11 @@ describe("görsel izin kapısı", () => {
     kaynak: "https://ornek.example/urun",
   };
 
-  it("izin yokken ve izin beklerken fotoğraf geçmez", () => {
-    expect(gorselKapisi(urun, "yok").gorseller).toHaveLength(0);
-    expect(gorselKapisi(urun, "bekliyor").gorseller).toHaveLength(0);
+  it("izin durumu ne olursa olsun fotoğraf taşınır — izin sonra istenir", () => {
+    // Kilitli kapsam: önce çalışan sistem. Fotoğraf karta girer ve
+    // yayınlanır; kullanım izni invoice_image_rights listesinden sonra istenir.
+    expect(gorselKapisi(urun, "yok").gorseller).toEqual(urun.gorseller);
+    expect(gorselKapisi(urun, "bekliyor").gorseller).toEqual(urun.gorseller);
   });
 
   it("izin 'var' iken fotoğraf geçer, diğer bilgiler korunur", () => {
@@ -148,16 +150,16 @@ describe("görsel izin kapısı", () => {
     expect(urun.gorseller).toHaveLength(2);
   });
 
-  it("izni olmayan firmadan gelen eşleşmede fotoğraf boş, durum açıkça bildirilir", () => {
-    const eslesme = ureticiUrunuBul({ model: "ELT1302" });
+  it("izni olmayan firmadan gelen eşleşmede fotoğraf taşınır, durum açıkça bildirilir", () => {
+    const eslesme = ureticiUrunuBul({ model: "ELT1302", firmaAnahtari: "seher-mensucat" });
     expect(eslesme).not.toBeNull();
     expect(eslesme!.firma.izinDurumu).not.toBe("var");
     expect(eslesme!.gorselIzniVar).toBe(false);
-    expect(eslesme!.urun.gorseller).toHaveLength(0);
+    expect(eslesme!.urun.gorseller.length).toBeGreaterThan(0);
   });
 
   it("ürünün kendisi ve kodu kapıdan sonra da gelir", () => {
-    const eslesme = ureticiUrunuBul({ model: "ELT1302" });
+    const eslesme = ureticiUrunuBul({ model: "ELT1302", firmaAnahtari: "seher-mensucat" });
     expect(eslesme!.urun.kod).toBe("ELT1302");
     expect(eslesme!.urun.ad).toContain("Elit");
     expect(eslesme!.urun.kaynak).toContain("sehermensucat.com");

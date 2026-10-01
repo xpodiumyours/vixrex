@@ -8,6 +8,7 @@ import 'package:vixrex/screens/product_category_management_screen.dart';
 import 'package:vixrex/services/bulk_product_field_update_service.dart';
 import 'package:vixrex/services/product_category_sync_service.dart';
 import 'package:vixrex/services/product_conversation_logger.dart';
+import 'package:vixrex/services/invoice_catalog/fatura_yayinla_servisi.dart';
 import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/widgets/product/bulk_product_field_update_sheet.dart';
 import 'package:vixrex/widgets/product/product_editor_sheet.dart';
@@ -33,6 +34,7 @@ class ProductManagementSheet extends StatefulWidget {
     required this.onProductDelete,
     required this.onOcrTap,
     this.onInvoiceTap,
+    this.onInvoiceProductTap,
     this.storeKategori = '',
   });
 
@@ -48,6 +50,7 @@ class ProductManagementSheet extends StatefulWidget {
   final Future<bool> Function(Product product) onProductDelete;
   final VoidCallback onOcrTap;
   final VoidCallback? onInvoiceTap;
+  final Future<void> Function(Product)? onInvoiceProductTap;
 
   /// Magazanin isletme kategorisi. Yeni urun kategorisi acilirken varsayilan
   /// alan sablonu bundan turetilir; bos ise onceki 'generic' davranisi kalir.
@@ -68,6 +71,7 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
   // state'i, controller'a veya uzak yazmaya kadar hiçbir şey yapmaz.
   bool _selectionMode = false;
   final Set<String> _selectedIds = {};
+  final Set<String> _publishingInvoiceIds = {};
   static const _bulkFieldUpdater = BulkProductFieldUpdateService();
 
   @override
@@ -992,10 +996,29 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
                 if (value == 'edit') _openEditor(product);
                 if (value == 'duplicate') _duplicate(product);
                 if (value == 'delete') _delete(product);
+                if (value == 'invoice') {
+                  widget.onInvoiceProductTap?.call(product);
+                }
+                if (value == 'publish_invoice') _publishInvoice(product);
               },
               itemBuilder:
-                  (_) => const [
-                    PopupMenuItem(value: 'edit', child: Text('Düzenle')),
+                  (_) => [
+                    const PopupMenuItem(value: 'edit', child: Text('Düzenle')),
+                    if ((product.source == 'invoice' ||
+                            product.source == 'ocr_invoice') &&
+                        widget.onInvoiceProductTap != null)
+                      const PopupMenuItem(
+                        value: 'invoice',
+                        child: Text('Faturaya dön'),
+                      ),
+                    if ((product.source == 'invoice' ||
+                            product.source == 'ocr_invoice') &&
+                        !product.isVisible)
+                      PopupMenuItem(
+                        value: 'publish_invoice',
+                        enabled: !_publishingInvoiceIds.contains(product.id),
+                        child: const Text('Yayınla'),
+                      ),
                     PopupMenuItem(value: 'duplicate', child: Text('Çoğalt')),
                     PopupMenuItem(value: 'delete', child: Text('Sil')),
                   ],
@@ -1010,6 +1033,39 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
       onTap: () => _toggleSelected(product.id),
       child: card,
     );
+  }
+
+  Future<void> _publishInvoice(Product product) async {
+    if (!_publishingInvoiceIds.add(product.id)) return;
+    setState(() {});
+    try {
+      final result = await const FaturaYayinlaServisi().yayinla(
+        productIds: [product.id],
+        storeSlug: widget.storeSlug,
+        editToken: widget.editToken,
+      );
+      if (!mounted) return;
+      if (result.isFailure) {
+        widget.showMessage(result.failure!.message);
+        return;
+      }
+      final rows = result.data!.satirlar;
+      if (!rows.any((row) => row.id == product.id && row.yayinda)) {
+        widget.showMessage(
+          rows.isEmpty ? 'Ürün taslak kaldı.' : rows.first.sebep,
+        );
+        return;
+      }
+      setState(() => product.isVisible = true);
+      widget.showMessage(
+        result.data!.tuketiciDogrulandi
+            ? 'Ürün vitrinde görünüyor.'
+            : 'Yayın kaydı alındı. Tüketici görünümü doğrulanamadı.',
+      );
+    } finally {
+      _publishingInvoiceIds.remove(product.id);
+      if (mounted) setState(() {});
+    }
   }
 
   Widget _imageFallback() {
