@@ -2,7 +2,7 @@
 
 > **Küçük işletmeler için dijital vitrin ve müşteri yönetim platformu.**
 
-> **Ajanlar için:** Çalışmaya başlamadan önce [proje talimatlarını ve faturadan dijital vitrine ürün kapsamını](AGENTS.md) okuyun. Firma havuzları hedef kapsamı sınırlamaz.
+> **Ajanlar için:** Çalışmaya başlamadan önce [çalışma kurallarını](AGENTS.md) okuyun.
 
 Faturadan görselli ürün kartına, gerçek tüketici vitrinine ve firma izin görüşmesine kadar tamamlama planı: **[Faturadan Vitrine Master Plan](docs/FATURADAN-VITRINE-MASTER-PLAN.md)**.
 
