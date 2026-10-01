@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { OnayIkonu, StorefrontIkonu } from "@/components/site/icons";
 import { useAppShell } from "@/components/app/AppShellContext";
 import { VitrinPaylasimKarti } from "@/components/owner/VitrinPaylasimKarti";
@@ -165,6 +165,14 @@ export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode 
   ));
   const [message, setMessage] = useState("");
   const [activeEditor, setActiveEditor] = useState<"about" | "campaign" | "faq" | "gallery" | "marketplace" | null>(null);
+  const [productsOpen, setProductsOpen] = useState(false);
+  const productDialog = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    const dialog = productDialog.current;
+    if (productsOpen && dialog && !dialog.open) dialog.showModal();
+    return () => { if (dialog?.open) dialog.close(); };
+  }, [productsOpen]);
 
   useEffect(() => {
     let active = true;
@@ -479,8 +487,10 @@ export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode 
                           <div className="space-y-4"><h3 className="text-[13px] font-black text-lp-text">Sık sorulanlar</h3><FaqEditor inline slug={store.slug} items={faqItems} onClose={() => { void onRefresh(); }} /></div>
                           <div className="space-y-4"><h3 className="text-[13px] font-black text-lp-text">Pazar yeri bağlantıları</h3><MarketplaceEditor inline slug={store.slug} links={marketplaceLinks} onClose={() => { void onRefresh(); }} /></div>
                           <Link href={`/v/${store.slug}/blog-yonetim`} className={`${editorButtonClass} flex items-center justify-center`}>Blog yönetimi</Link>
-                          <p className="mb-3 text-[12px] font-bold text-lp-muted">Ürünler ve kategoriler</p>
-                          <OwnerProductManager storeSlug={store.slug} products={store.products ?? []} categories={store.product_categories ?? []} varsayilanUrunTipi={isletmeUrunSablonu(store.kategori, store.business_type)} storeName={store.name} onRefresh={onRefresh} />
+                          <button type="button" className={`${editorButtonClass} w-full text-left`} onClick={() => setProductsOpen(true)}>
+                            <span className="block text-[15px] font-black">Ürünlerimi Yönet</span>
+                            <span className="mt-1 block text-[12px] font-medium text-lp-muted">Vitrininde sergileyeceğin ürünler ve kategoriler · {store.products?.length ?? 0} ürün</span>
+                          </button>
                         </div>
                       ) : null}
                       {section.title === "Konum ve saatler" ? <button type="button" onClick={() => void konumuAl()} disabled={locating} className={`${editorButtonClass} w-full`}>{locating ? "Konum alınıyor…" : "📍 Konumumu al (GPS)"}</button> : null}
@@ -507,6 +517,11 @@ export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode 
         </section>
       </div>
 
+      {productsOpen && (
+        <dialog ref={productDialog} className="fatura-urun-yonetimi owner-shell" aria-label="Ürün Yönetimi" onCancel={(event) => event.preventDefault()}>
+          <OwnerProductManager storeSlug={store.slug} products={store.products ?? []} categories={store.product_categories ?? []} varsayilanUrunTipi={isletmeUrunSablonu(store.kategori, store.business_type)} storeName={store.name} onRefresh={onRefresh} onClose={() => setProductsOpen(false)} />
+        </dialog>
+      )}
       {activeEditor === "gallery" ? <GalleryEditor slug={store.slug} items={galleryItems} onClose={() => { void closeStructuredEditor(); }} /> : null}
       {activeEditor === "faq" ? <FaqEditor slug={store.slug} items={faqItems} onClose={() => { void closeStructuredEditor(); }} /> : null}
       {activeEditor === "marketplace" ? <MarketplaceEditor slug={store.slug} links={marketplaceLinks} onClose={() => { void closeStructuredEditor(); }} /> : null}

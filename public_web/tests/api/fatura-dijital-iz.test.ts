@@ -588,3 +588,30 @@ describe("resmi PDF ve sosyal katalog baglantisi", () => {
     expect(parca).toBeLessThanOrEqual(23);
   });
 });
+
+
+describe("ayni modelin assorti katalog eslesmesi", () => {
+  const iz = { anahtar: null, firma: "Resmi", alan: "resmi.example", platform: "shopify", izinDurumu: "yok" as const, kaynak: "https://resmi.example", havuzda: false };
+  const fetcher = async (input: string) => input.includes("/products.json") ? new Response(JSON.stringify({ products: [{
+    title: "Erkek Takim", vendor: "Resmi", handle: "16747", images: [{ src: "https://resmi.example/takim.jpg" }],
+    variants: ["M", "L", "XL", "XXL"].map((title) => ({ sku: "16747", title })),
+  }] })) : new Response("{}", { status: 404 });
+  it("M L XL XXL ayni modelde tek katalog eslesmesi olur", async () => {
+    const sonuc = await dinamikUrunIzleriniBul([{ model: "16747", barkod: "", beden: "M/L/XL/XXL" }], iz, { fetcher, resolveHost });
+    const hedef = sonuc[0];
+    if (!hedef || "celiski" in hedef) throw new Error("Tek model eslesmesi bekleniyordu");
+    expect(hedef.urun.ad).toBe("Erkek Takim");
+    expect(hedef.varyantlar?.map((v) => v.ad)).toEqual(["M", "L", "XL", "XXL"]);
+  });
+  it("kaynakta olmayan XS bedeni varmis gibi kabul etmez", async () => {
+    expect(await dinamikUrunIzleriniBul([{ model: "16747", barkod: "", beden: "M/XS" }], iz, { fetcher, resolveHost })).toEqual([null]);
+  });
+  it("ayni kod farkli resmi urun sayfasinda ise hala celiski olur", async () => {
+    const farkliFetch = async (input: string) => input.includes("/products.json") ? new Response(JSON.stringify({ products: [
+      { title: "Takim A", vendor: "Resmi", handle: "takim-a", variants: [{ sku: "16747", title: "M" }] },
+      { title: "Takim B", vendor: "Resmi", handle: "takim-b", variants: [{ sku: "16747", title: "L" }] },
+    ] })) : new Response("{}", { status: 404 });
+    const sonuc = await dinamikUrunIzleriniBul([{ model: "16747", barkod: "" }], iz, { fetcher: farkliFetch, resolveHost });
+    expect(sonuc[0]).toHaveProperty("celiski", true);
+  });
+});

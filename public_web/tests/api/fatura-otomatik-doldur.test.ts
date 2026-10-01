@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { kategoriSec, otomatikOzellikler } from "@/lib/faturaOtomatikDoldur";
+import { kategoriSec, otomatikOzellikler, faturaVaryantlari } from "@/lib/faturaOtomatikDoldur";
 
 const KATEGORILER = [
   { id: "genel", name: "Genel", product_template_key: "generic" },
@@ -56,5 +56,31 @@ describe("fatura satırı için otomatik özellik", () => {
       { key: "netQuantity", value: "300 g" },
     ]);
     expect(otomatikOzellikler({ ad: "Erkek Takım 500 g" }, "generic")).toEqual([]);
+  });
+});
+
+
+describe("fatura assorti varyantlari", () => {
+  it("sekiz adet dort bedenin seceneklerini korur, beden basina stok uydurmaz", () => {
+    const variants = faturaVaryantlari({ model: "16747", barkod: "", varyant: "", beden: "M/L/XL/XXL", stok: 8 });
+    expect(variants?.map((v) => v.options.size)).toEqual(["M", "L", "XL", "XXL"]);
+    expect(variants?.every((v) => !("stockQuantity" in v))).toBe(true);
+  });
+  it("tek bilinen varyantin gercek adedini korur", () => {
+    const variants = faturaVaryantlari({ model: "16747", barkod: "", varyant: "Siyah", beden: "L", stok: 8 });
+    expect(variants).toHaveLength(1);
+    expect(variants?.[0].options).toEqual({ color: "Siyah", size: "L" });
+    expect(variants?.[0].stockQuantity).toBe(8);
+  });
+  it("kaynakta olmayan renk beden kombinasyonlarini uydurmaz", () => {
+    const variants = faturaVaryantlari({ model: "16747", barkod: "", varyant: "Siyah/Beyaz", beden: "M/L", stok: 8,
+      kaynakVaryantlar: [
+        { ad: "Siyah / M", barkod: "8690000000123", gorseller: [] },
+        { ad: "Beyaz / L", barkod: "8690000000130", gorseller: [] },
+      ],
+    });
+    expect(variants?.map((v) => v.options)).toEqual([{ color: "Siyah", size: "M" }, { color: "Beyaz", size: "L" }]);
+    expect(variants?.every((v) => !("stockQuantity" in v))).toBe(true);
+    expect(faturaVaryantlari({ model: "16747", barkod: "", varyant: "Siyah/Beyaz", beden: "M/L", stok: 8 })).toBeUndefined();
   });
 });

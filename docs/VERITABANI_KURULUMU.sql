@@ -475,11 +475,19 @@ declare
   v_state jsonb;
   v_price numeric;
   v_stock integer;
+  v_ids jsonb;
+  v_total integer;
+  v_group_price numeric;
+  v_prices integer;
+  v_variants jsonb;
+  v_images jsonb;
+  v_proofs jsonb;
+  v_authoritative_job uuid;
 begin
   if not public._check_store_authorization(p_store_id, p_edit_token) then raise exception 'UNAUTHORIZED'; end if;
   select l.* into v_line from public.invoice_job_lines l
     join public.invoice_jobs j on j.id=l.job_id
-    where l.id=p_line_id and j.store_id=p_store_id for update of l;
+    where l.id=p_line_id and j.store_id=p_store_id;
   if not found then raise exception 'FATURA_SATIRI_BULUNAMADI'; end if;
   if v_line.outcome='kanitli' and (v_line.catalog_snapshot is null or nullif(v_line.catalog_snapshot->>'kaynak','') is null) then
     raise exception 'FATURA_KAYNAK_KANITI_EKSIK';
@@ -487,9 +495,10 @@ begin
   v_source := v_line.catalog_snapshot->>'kaynak';
   v_code := case when v_line.catalog_snapshot->>'dayanak'='barkod' then nullif(v_line.barcode,'') else nullif(v_line.model,'') end;
   v_identity := case when v_line.outcome='kanitli' and v_source is not null and v_code is not null
-    then md5(jsonb_build_array(coalesce(v_line.catalog_snapshot->>'kaynakFirma',v_line.catalog_snapshot->>'marka'),v_source,v_code,
-      lower(btrim(v_line.variant_name)),lower(btrim(v_line.size_text)))::text)
+    then md5(jsonb_build_array(coalesce(v_line.catalog_snapshot->>'kaynakFirma',v_line.catalog_snapshot->>'marka'),v_source,v_code)::text)
     else v_line.id::text end;
+  perform pg_advisory_xact_lock(hashtextextended(p_store_id::text||':'||v_identity,0));
+  select * into v_line from public.invoice_job_lines where id=p_line_id for update;
   v_state := v_line.owner_state;
   v_price := nullif(case when strpos(v_state->>'satisFiyati',',')>0
     then replace(replace(v_state->>'satisFiyati','.',''),',','.') else v_state->>'satisFiyati' end,'')::numeric;
@@ -512,22 +521,8 @@ begin
     select * into v_current from public.products where id=v_line.product_id and store_id=p_store_id for update;
     if not found then raise exception 'FATURA_BAGLI_URUN_BULUNAMADI'; end if;
     v_id:=v_current.id;
-    v_mode:='guncellendi';
-    v_result:=public.update_store_product_v2(
-      p_product_id=>v_id,p_edit_token=>p_edit_token,
-      p_name=>coalesce(v_line.catalog_snapshot->>'resmiAd',p_product->>'name'),
-      p_description=>coalesce(v_line.catalog_snapshot->>'aciklama',p_product->>'description',''),
-      p_price_text=>p_product->>'priceText',p_price_amount=>(p_product->>'priceAmount')::numeric,
-      p_image_urls=>p_product->'imageUrls',p_category_id=>nullif(p_product->>'categoryId','')::uuid,
-      p_stock_quantity=>v_stock,
-      p_stock_status=>p_product->>'stockStatus',
-      p_brand=>coalesce(v_line.catalog_snapshot->>'marka',v_line.brand),p_barcode=>nullif(v_line.barcode,''),
-      p_metadata=>p_product->'metadata',p_variants=>p_product->'variants',
-      p_clear_category=>nullif(p_product->>'categoryId','') is null,
-      p_clear_price_amount=>nullif(p_product->>'priceAmount','') is null
-    );
+    v_created:=false;
   else
-    perform pg_advisory_xact_lock(hashtextextended(p_store_id::text||':'||v_identity,0));
     v_result:=public.create_store_product_v3(
       p_store_id=>p_store_id,p_edit_token=>p_edit_token,
       p_name=>coalesce(v_line.catalog_snapshot->>'resmiAd',p_product->>'name'),
@@ -538,15 +533,79 @@ begin
       p_is_visible=>false,p_sort_order=>coalesce((p_product->>'sortOrder')::integer,0),
       p_brand=>coalesce(v_line.catalog_snapshot->>'marka',v_line.brand),p_barcode=>nullif(v_line.barcode,''),
       p_stock_quantity=>(p_product->>'stockQuantity')::integer,p_stock_status=>p_product->>'stockStatus',
-      p_metadata=>p_product->'metadata',p_variants=>p_product->'variants'
+      p_metadata=>p_product->'metadata',p_variants=>'[]'::jsonb
     );
+    if v_result->>'success' is distinct from 'true' then raise exception 'FATURA_URUN_YAZILAMADI'; end if;
     v_id:=(v_result->>'id')::uuid;
     v_created:=coalesce((v_result->>'created')::boolean,true);
-    v_mode:=case when v_created then 'yeni' else 'mevcut' end;
+    select * into v_current from public.products where id=v_id and store_id=p_store_id for update;
+    if not found then raise exception 'FATURA_BAGLI_URUN_BULUNAMADI'; end if;
   end if;
+  select job_id into v_authoritative_job from public.invoice_job_lines
+    where id=nullif(v_current.fatura_kanit->>'satirId','')::uuid;
+  update public.invoice_job_lines set product_id=v_id,product_linked_at=now() where id=p_line_id;
+  if v_authoritative_job is not null and v_authoritative_job<>v_line.job_id then
+    return jsonb_build_object('success',true,'id',v_id,'slug',v_current.slug,'created',false,'kayit','mevcut');
+  end if;
+  perform 1 from public.invoice_job_lines where job_id=v_line.job_id and product_id=v_id order by id for update;
+  select jsonb_agg(id::text order by line_index),sum(nullif(owner_state->>'stok','')::integer),
+    min(nullif(case when strpos(owner_state->>'satisFiyati',',')>0 then
+      replace(replace(owner_state->>'satisFiyati','.',''),',','.') else owner_state->>'satisFiyati' end,'')::numeric),
+    count(distinct nullif(case when strpos(owner_state->>'satisFiyati',',')>0 then
+      replace(replace(owner_state->>'satisFiyati','.',''),',','.') else owner_state->>'satisFiyati' end,'')::numeric)
+    into v_ids,v_total,v_group_price,v_prices from public.invoice_job_lines where job_id=v_line.job_id and product_id=v_id;
+  if v_prices<>1 or v_group_price is null then raise exception 'FATURA_MODEL_FIYATLARI_FARKLI'; end if;
+  if exists(select 1 from public.invoice_job_lines where job_id=v_line.job_id and product_id=v_id
+    and (owner_state is null or nullif(owner_state->>'stok','') is null or (owner_state->>'stok')::integer<0
+      or catalog_snapshot->>'kaynak' is distinct from v_source
+      or (case when catalog_snapshot->>'dayanak'='barkod' then nullif(barcode,'') else nullif(model,'') end) is distinct from v_code)) then raise exception 'FATURA_MODEL_GRUBU_GECERSIZ'; end if;
+  select coalesce(jsonb_agg(v),'[]'::jsonb) into v_variants from jsonb_array_elements(coalesce(v_current.variants,'[]'::jsonb)) v
+    where coalesce(v->>'id','') not like 'iv-%';
+  with lines as (
+    select l.*,array(select distinct btrim(x) from regexp_split_to_table(coalesce(variant_name,''),'[/|,;]+') x where btrim(x)<>'') colors,
+      array(select distinct btrim(x) from regexp_split_to_table(coalesce(size_text,''),'[/|,;]+') x where btrim(x)<>'') sizes
+      from public.invoice_job_lines l where job_id=v_line.job_id and product_id=v_id
+  ), options as (
+    select l.id,l.owner_state,l.colors,l.sizes,o.color,o.size from lines l cross join lateral (
+      select c.color,z.size from jsonb_array_elements(case when jsonb_typeof(l.catalog_snapshot->'varyantlar')='array'
+        then l.catalog_snapshot->'varyantlar' else '[]'::jsonb end) official
+      cross join lateral (select (select x from unnest(l.colors) x where exists(select 1 from
+        regexp_split_to_table(coalesce(official->>'ad',''),'[/|,;]+') t where lower(btrim(t))=lower(x)) limit 1) color) c
+      cross join lateral (select (select x from unnest(l.sizes) x where exists(select 1 from
+        regexp_split_to_table(coalesce(official->>'ad',''),'[/|,;]+') t where lower(btrim(t))=lower(x)) limit 1) size) z
+      where (cardinality(l.colors)=0 or c.color is not null) and (cardinality(l.sizes)=0 or z.size is not null)
+      union
+      select nullif(c,''),nullif(z,'') from unnest(case when cardinality(l.colors)=0 then array[''] else l.colors end) c
+        cross join unnest(case when cardinality(l.sizes)=0 then array[''] else l.sizes end) z
+      where (l.catalog_snapshot->'varyantlar' is null or l.catalog_snapshot->'varyantlar'='[]'::jsonb)
+        and (cardinality(l.colors)<=1 or cardinality(l.sizes)<=1)
+    ) o where o.color is not null or o.size is not null
+  ), quantities as (
+    select *,cardinality(colors)<=1 and cardinality(sizes)<=1 and count(*) over(partition by id)=1 exact_qty from options
+  ), grouped as (
+    select min(color) color,min(size) size,bool_and(exact_qty) exact_qty,sum((owner_state->>'stok')::integer) qty
+      from quantities group by lower(color),lower(size)
+  ) select v_variants||coalesce(jsonb_agg(jsonb_build_object('id','iv-'||md5(jsonb_build_array(lower(color),lower(size))::text),
+      'options',jsonb_strip_nulls(jsonb_build_object('color',color,'size',size)))||
+      case when exact_qty then jsonb_build_object('stockQuantity',qty) else '{}'::jsonb end),'[]'::jsonb) into v_variants from grouped;
+  select coalesce(jsonb_agg(distinct u),'[]'::jsonb) into v_images from jsonb_array_elements(
+    coalesce(v_current.image_urls,'[]'::jsonb)||coalesce(p_product->'imageUrls','[]'::jsonb)) u;
+  select coalesce(jsonb_agg(distinct g),'[]'::jsonb) into v_proofs from jsonb_array_elements(
+    coalesce(v_current.fatura_kanit->'gorselKaynaklari','[]'::jsonb)||coalesce(p_evidence->'gorselKaynaklari','[]'::jsonb)) g;
+  v_mode:=case when v_created then 'yeni' else 'guncellendi' end;
+  v_result:=public.update_store_product_v2(p_product_id=>v_id,p_edit_token=>p_edit_token,
+    p_name=>coalesce(v_line.catalog_snapshot->>'resmiAd',p_product->>'name'),
+    p_description=>coalesce(v_line.catalog_snapshot->>'aciklama',p_product->>'description',''),
+    p_price_text=>p_product->>'priceText',p_price_amount=>v_group_price,p_image_urls=>v_images,
+    p_category_id=>nullif(p_product->>'categoryId','')::uuid,p_stock_quantity=>v_total,
+    p_stock_status=>p_product->>'stockStatus',p_brand=>coalesce(v_line.catalog_snapshot->>'marka',v_line.brand),
+    p_barcode=>nullif(v_line.barcode,''),p_metadata=>coalesce(v_current.metadata,p_product->'metadata'),
+    p_variants=>v_variants,p_clear_category=>nullif(p_product->>'categoryId','') is null,
+    p_clear_price_amount=>false);
   if v_result->>'success' is distinct from 'true' or v_id is null then raise exception 'FATURA_URUN_YAZILAMADI'; end if;
   if v_mode<>'mevcut' then
     update public.products set fatura_kanit=p_evidence||jsonb_build_object('kartDurumu',v_line.outcome,'satirId',v_line.id,'kaynak',v_source,
+      'satirIdler',v_ids,'gorselKaynaklari',v_proofs,
       'esnafOnayladi',coalesce(v_state->>'onayli','false')='true',
       'stokOnaylandi',coalesce(v_state->>'stokOnaylandi','false')='true') where id=v_id and store_id=p_store_id;
     if v_line.unit_price is not null and v_line.unit_price>0 then
@@ -574,6 +633,10 @@ declare
   v_state jsonb;
   v_price numeric;
   v_stock integer;
+  v_ids jsonb;
+  v_member public.invoice_job_lines%rowtype;
+  v_total integer:=0;
+  v_member_count integer:=0;
 begin
   select id into v_store from public.stores where edit_token=p_edit_token limit 1;
   if v_store is null or not public._check_store_authorization(v_store,p_edit_token) then
@@ -583,6 +646,7 @@ begin
   if not found or v_product.source_type is distinct from 'invoice' then
     return jsonb_build_object('success',false,'hata','Fatura ürünü bulunamadı.');
   end if;
+  perform pg_advisory_xact_lock(hashtextextended(v_store::text||':'||substring(v_product.external_product_id from '^invoice:(.*)$'),0));
   select l.* into v_line from public.invoice_job_lines l join public.invoice_jobs j on j.id=l.job_id
     where l.product_id=p_product_id and j.store_id=v_store
       and l.id::text=v_product.fatura_kanit->>'satirId' for update of l;
@@ -598,6 +662,32 @@ begin
     or nullif(v_line.catalog_snapshot->>'resmiAd','') is null then
     return jsonb_build_object('success',false,'hata','Resmî ürün kaynağı doğrulanamadı.');
   end if;
+  v_ids:=case when jsonb_typeof(v_product.fatura_kanit->'satirIdler')='array' then
+    v_product.fatura_kanit->'satirIdler' else jsonb_build_array(v_line.id::text) end;
+  if jsonb_array_length(v_ids)<1 then return jsonb_build_object('success',false,'hata','Fatura grubu boş.'); end if;
+  for v_member in select * from public.invoice_job_lines where job_id=v_line.job_id
+    and product_id=p_product_id and v_ids ? id::text order by id for update loop
+    v_member_count:=v_member_count+1;
+    if v_member.outcome is distinct from 'kanitli' or v_member.catalog_snapshot->>'kaynak' is distinct from v_source
+      or v_member.owner_state->>'onayli' is distinct from 'true'
+      or v_member.owner_state->>'stokOnaylandi' is distinct from 'true'
+      or nullif(v_member.owner_state->>'stok','') is null then
+      return jsonb_build_object('success',false,'hata','Fatura grubundaki kartlar yeniden onaylanmalı.');
+    end if;
+    begin
+      v_stock:=(v_member.owner_state->>'stok')::integer;
+      v_price:=nullif(case when strpos(v_member.owner_state->>'satisFiyati',',')>0 then
+        replace(replace(v_member.owner_state->>'satisFiyati','.',''),',','.') else v_member.owner_state->>'satisFiyati' end,'')::numeric;
+    exception when invalid_text_representation or numeric_value_out_of_range then
+      return jsonb_build_object('success',false,'hata','Grup fiyatı veya stoku geçersiz.');
+    end;
+    if v_stock<0 or v_price is null or v_price<=0 or v_price is distinct from v_product.price_amount then
+      return jsonb_build_object('success',false,'hata','Grup fiyatı veya stoku değişti.');
+    end if;
+    v_total:=v_total+v_stock;
+  end loop;
+  if v_member_count<>jsonb_array_length(v_ids) or v_total is distinct from v_product.stock_quantity then
+    return jsonb_build_object('success',false,'hata','Fatura grubu stok toplamı değişti.'); end if;
   v_state:=v_line.owner_state;
   begin
     v_price:=nullif(case when strpos(v_state->>'satisFiyati',',')>0
@@ -611,7 +701,7 @@ begin
     or v_product.fatura_kanit->>'esnafOnayladi' is distinct from 'true'
     or v_product.fatura_kanit->>'stokOnaylandi' is distinct from 'true'
     or v_price is null or v_price<=0 or v_stock is null or v_stock<0
-    or v_price is distinct from v_product.price_amount or v_stock is distinct from v_product.stock_quantity
+    or v_price is distinct from v_product.price_amount
   then return jsonb_build_object('success',false,'hata','Fiyat, stok ve kart onayını yeniden kontrol et.'); end if;
   if v_product.image_urls is null or jsonb_typeof(v_product.image_urls)<>'array' or jsonb_array_length(v_product.image_urls)<1 then
     return jsonb_build_object('success',false,'hata','En az bir doğru ürün görseli gerekiyor.');
@@ -619,7 +709,8 @@ begin
   if exists(select 1 from jsonb_array_elements_text(v_product.image_urls) image(url)
     where not exists(select 1 from jsonb_array_elements(case when jsonb_typeof(v_product.fatura_kanit->'gorselKaynaklari')='array'
         then v_product.fatura_kanit->'gorselKaynaklari' else '[]'::jsonb end) g where g->>'depoUrl'=image.url)
-      and not (coalesce(v_state->'esnafGorselleri','[]'::jsonb) ? image.url
+      and not (exists(select 1 from public.invoice_job_lines l where l.job_id=v_line.job_id and l.product_id=p_product_id
+          and v_ids ? l.id::text and coalesce(l.owner_state->'esnafGorselleri','[]'::jsonb) ? image.url)
         and exists(select 1 from public.stores s where s.id=v_store
           and starts_with(substring(image.url from '^https://[^/]+(/.*)$'),
             '/storage/v1/object/public/shelf-images/'||s.slug||'/products/'))))
@@ -627,8 +718,10 @@ begin
   if exists(select 1 from jsonb_array_elements(case when jsonb_typeof(v_product.fatura_kanit->'gorselKaynaklari')='array'
       then v_product.fatura_kanit->'gorselKaynaklari' else '[]'::jsonb end) g
     where g->>'kaynakSayfa' is distinct from v_source or not exists(
-      select 1 from public.invoice_image_rights r where r.line_id=v_line.id
-        and r.image_url=g->>'kaynakGorsel' and coalesce(r.usage_status,'unknown')<>'denied')) then
+      select 1 from public.invoice_image_rights r where v_ids ? r.line_id::text
+        and r.image_url=g->>'kaynakGorsel' and coalesce(r.usage_status,'unknown')<>'denied')
+      or exists(select 1 from public.invoice_image_rights r where v_ids ? r.line_id::text
+        and r.image_url=g->>'kaynakGorsel' and r.usage_status='denied')) then
     return jsonb_build_object('success',false,'hata','Ürün görselinin güncel kaynak veya izin kaydı uygun değil.');
   end if;
   v_supplier:=regexp_replace(lower(translate(coalesce(v_line.catalog_snapshot->>'kaynakFirma',v_line.catalog_snapshot->>'marka',''),'Iİ','ıi')),

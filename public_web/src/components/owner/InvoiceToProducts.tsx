@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import FirmaIzniPaneli from "@/components/owner/FirmaIzniPaneli";
-import { kategoriSec, otomatikOzellikler } from "@/lib/faturaOtomatikDoldur";
+import { kategoriSec, otomatikOzellikler, faturaVaryantlari } from "@/lib/faturaOtomatikDoldur";
 import {
   KART_DURUM_ETIKETI,
   durumBilgisi,
@@ -56,6 +56,7 @@ export interface KatalogBilgisi {
   aciklama: string;
   gorseller: string[];
   gorselAdaylari: string[];
+  varyantlar?: Array<{ ad: string; barkod: string; gorseller: string[] }>;
   kaynak: string;
 }
 
@@ -133,6 +134,7 @@ interface InvoiceToProductsProps {
   onUploaded: () => Promise<void>;
   onClose?: () => void;
   baslangicIslemKimligi?: string;
+  okuyucuHazir?: boolean;
 }
 
 /** Bu eşiğin altındaki satır toplu onaya girmez; esnaf ona tek tek bakar. */
@@ -185,6 +187,7 @@ export default function InvoiceToProducts({
   onUploaded,
   onClose,
   baslangicIslemKimligi,
+  okuyucuHazir = true,
 }: InvoiceToProductsProps) {
   const [adim, setAdim] = useState<"sec" | "okunuyor" | "urunler" | "yaziliyor" | "bitti">(
     "sec",
@@ -196,6 +199,7 @@ export default function InvoiceToProducts({
   // Firmanın sitesi faturada okunamazsa esnaf yazar (zorunlu değil):
   // havuzda olmayan firmanın keşfi buradan yürür.
   const [firmaSitesi, setFirmaSitesi] = useState("");
+  const [manuelMetin, setManuelMetin] = useState("");
   const [hata, setHata] = useState<string | null>(null);
   const [yukleniyor, setYukleniyor] = useState(false);
   const [sonuc, setSonuc] = useState<YazmaSonucu | null>(null);
@@ -418,6 +422,26 @@ export default function InvoiceToProducts({
     [firmaSitesi, satirlariHazirla, storeSlug],
   );
 
+  async function metniOku() {
+    setHata(null);
+    setAdim("okunuyor");
+    try {
+      const cevap = await fetch("/api/fatura-metin", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug: storeSlug, metin: manuelMetin, firmaSitesi }),
+      });
+      const govde = await cevap.json().catch(() => null);
+      if (!cevap.ok) throw new Error(typeof govde?.hata === "string" ? govde.hata : "Belge okunamadı.");
+      const okunan = govde as FaturaOkumaSonucu;
+      setBelge(okunan);
+      setSatirlar(satirlariHazirla(okunan));
+      setAdim("urunler");
+    } catch (err) {
+      setHata(err instanceof Error ? err.message : "Belge okunamadı.");
+      setAdim("sec");
+    }
+  }
+
   function satirGuncelle(index: number, degisiklik: Partial<SatirDurumu>) {
     setSatirlar((oncekiler) =>
       oncekiler.map((satir, i) => (i === index ? {
@@ -593,19 +617,11 @@ export default function InvoiceToProducts({
                   ...(nitelikler.length > 0 ? { attributes: nitelikler } : {}),
                 };
               })(),
-              variants:
-                satir.varyant || satir.beden
-                  ? [
-                      {
-                        id: `v-${(satir.model || satir.barkod || String(sira)).toLowerCase()}`,
-                        options: {
-                          ...(satir.varyant ? { color: satir.varyant } : {}),
-                          ...(satir.beden ? { size: satir.beden } : {}),
-                        },
-                        stockQuantity: stokSayisi(satir.stok) ?? undefined,
-                      },
-                    ]
-                  : undefined,
+              variants: faturaVaryantlari({
+                model: satir.model || String(sira), barkod: satir.barkod,
+                varyant: satir.varyant, beden: satir.beden,
+                stok: stokSayisi(satir.stok), kaynakVaryantlar: katalog?.varyantlar,
+              }),
               sortOrder: sira,
             };
           }),
@@ -743,7 +759,9 @@ export default function InvoiceToProducts({
           </div>
         )}
 
+        {!okuyucuHazir && <p className="fatura-aciklama">Fotoğraf okuyucu şu an hazır değil. Fatura metnini yapıştırabilir veya ürün satırlarını yazabilirsin.</p>}
         <input
+          disabled={!okuyucuHazir}
           ref={dosyaRef}
           type="file"
           accept="image/jpeg,image/png,image/webp"
@@ -753,6 +771,11 @@ export default function InvoiceToProducts({
           }}
         />
 
+        <label className="fatura-fiyat">
+          Fatura metnini yapıştır veya her ürünü ayrı satıra yaz
+          <textarea value={manuelMetin} onChange={(e) => setManuelMetin(e.target.value)} rows={6} placeholder="Model, ürün adı, beden, adet ve alış fiyatı" />
+        </label>
+        <button type="button" className="fatura-ikincil" disabled={!manuelMetin.trim() || yukleniyor} onClick={() => void metniOku()}>Metinden ürünleri hazırla</button>
         {onClose && (
           <button type="button" className="fatura-ikincil" onClick={() => void kapat()}>
             Vazgeç

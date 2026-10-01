@@ -61,6 +61,10 @@ Mevcut `integration/fatura-birlestirme` çalışmasında kaynak eşleştirme, ka
 
 Birleşik veritabanı dosyası `docs/VERITABANI_KURULUMU.sql` güncel sekiz fatura değişikliğini içerir. Mevcut ürün çekirdeği ve alış fiyatı tablosu önkoşuldur. Dosyanın hazırlanması canlıya uygulanmış olduğu anlamına gelmez.
 
+`faturadankataloga` dalı yeniden kod üzerinden karşılaştırılmıştır: ayrışık 15 yönetim kaydının içeriği ana dalda zaten vardır; üç fatura kaydının temeli mevcut birleşimde korunur. Eksik kalan metin desteği ve yalnız taslak filtresi, eski izin sistemini çoğaltmadan mevcut kayıt zincirine bağlanmıştır. Aynı modelin farklı satırları artık tek kalıcı karta ve ayrı beden/renk seçeneklerine bağlanır. Kayıt tekrarı stok eklemez; düzeltme miktarı değiştirir. Assorti toplamı bedenlere dağıtılmaz. Bu davranışlar `supabase/tests/invoice_variant_group_smoke.sql` ile ayrı yerel veritabanında doğrulanmıştır.
+
+Ürün yönetimi içerik sütunundan ayrı pencereye alınmıştır; fatura ve geri açma aynı ürün yöneticisinde kalır. Bu yerleşim düzeltmesi Flutter görünümünün tümüyle eşitlendiği anlamına gelmez. Gerçek belge kabulü ve canlı aktarım açık kalır.
+
 ## 4. Esnafın yaşayacağı tek akış
 
 1. **Faturayı yükle:** Fotoğraf alınır; işlem kaydı oluşturulur. Aynı alışveriş tekrar eklenmez.

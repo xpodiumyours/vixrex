@@ -111,3 +111,46 @@ export function otomatikOzellikler(
   }
   return sonuc;
 }
+
+
+export function faturaVaryantlari(girdi: {
+  model: string;
+  barkod: string;
+  varyant: string;
+  beden: string;
+  stok: number | null;
+  kaynakVaryantlar?: Array<{ ad: string; barkod: string; gorseller: string[] }>;
+}) {
+  const ayir = (s: string) => [...new Set(s.split(/[\/|,;]+/).map((v) => v.trim()).filter(Boolean))];
+  const sade = (s: string) => s.trim().toLocaleLowerCase("tr-TR");
+  const renkler = ayir(girdi.varyant);
+  const bedenler = ayir(girdi.beden);
+  const secenekler: Array<{ options: Record<string, string>; barcode?: string; imageUrls?: string[] }> = [];
+  if (girdi.kaynakVaryantlar?.length) {
+    for (const kaynak of girdi.kaynakVaryantlar) {
+      const degerler = ayir(kaynak.ad);
+      const renk = renkler.find((r) => degerler.some((d) => sade(d) === sade(r)));
+      const beden = bedenler.find((b) => degerler.some((d) => sade(d) === sade(b)));
+      if (renkler.length > 0 && !renk || bedenler.length > 0 && !beden) continue;
+      const options = { ...(renk ? { color: renk } : {}), ...(beden ? { size: beden } : {}) };
+      if (Object.keys(options).length === 0) continue;
+      secenekler.push({ options, barcode: kaynak.barkod || undefined, imageUrls: kaynak.gorseller });
+    }
+  } else if (renkler.length <= 1 || bedenler.length <= 1) {
+    for (const renk of renkler.length ? renkler : [""]) {
+      for (const beden of bedenler.length ? bedenler : [""]) {
+        const options = { ...(renk ? { color: renk } : {}), ...(beden ? { size: beden } : {}) };
+        if (Object.keys(options).length > 0) secenekler.push({ options });
+      }
+    }
+  }
+  const benzersiz = secenekler.filter((s, i, hepsi) =>
+    hepsi.findIndex((d) => JSON.stringify(d.options) === JSON.stringify(s.options)) === i);
+  if (benzersiz.length === 0) return undefined;
+  const assorti = renkler.length > 1 || bedenler.length > 1 || benzersiz.length > 1;
+  return benzersiz.map((s, index) => ({
+    id: `v-${(girdi.model || girdi.barkod || "urun").toLowerCase()}-${index + 1}`,
+    ...s,
+    ...(!assorti && girdi.stok !== null ? { stockQuantity: girdi.stok } : {}),
+  }));
+}

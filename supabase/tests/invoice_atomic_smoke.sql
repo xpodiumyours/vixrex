@@ -68,8 +68,9 @@ begin
   select id into v_line from public.invoice_job_lines where job_id=v_job_id;
   perform public.save_invoice_owner_state(v_store,v_job_id,jsonb_build_array(jsonb_build_object('satirSirasi',0,'sahipDurumu','{"satisFiyati":"1.799,50","stok":"3","stokOnaylandi":true,"onayli":true,"esnafGorselleri":[]}'::jsonb)));
   v_result:=public.save_invoice_product(v_store,'fatura-local-test-token',v_line,v_input,v_evidence,450);
-  if v_result->>'id'=v_product::text then raise exception 'different variant collapsed'; end if;
-  select id into v_line from public.invoice_job_lines where product_id=v_product;
+  if v_result->>'id'<>v_product::text then raise exception 'same model split across invoices'; end if;
+  if (select stock_quantity from public.products where id=v_product)<>3 then raise exception 'new invoice changed existing stock'; end if;
+  select nullif(fatura_kanit->>'satirId','')::uuid into v_line from public.products where id=v_product;
   v_result:=public.publish_invoice_product(v_product,'fatura-local-test-token');
   if v_result->>'success'<>'true' then raise exception 'publish failed: %',v_result; end if;
   update public.invoice_image_rights set usage_status='denied' where line_id=v_line;

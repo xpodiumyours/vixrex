@@ -30,6 +30,7 @@ export interface UreticiUrunu {
   gorseller: string[];
   kaynak: string;
   varyant?: string;
+  modelAdi?: string;
 }
 
 export type IzinDurumu = "yok" | "bekliyor" | "var";

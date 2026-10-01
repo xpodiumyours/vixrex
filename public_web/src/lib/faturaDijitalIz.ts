@@ -33,6 +33,7 @@ export interface DijitalUrunEslesmesi {
   urun: UreticiUrunu;
   dayanak: "kod" | "barkod";
   gorselAdaylari: string[];
+  varyantlar?: Array<{ ad: string; barkod: string; gorseller: string[] }>;
 }
 
 export interface DijitalIzCeliskisi {
@@ -287,6 +288,7 @@ function shopifyUrunleri(veri: unknown, alan: string): UreticiUrunu[] {
         aciklama,
         barkod: String(varyant.barcode ?? "").trim(),
         varyant: baslik === "Default Title" ? "" : baslik,
+        modelAdi: ad,
         gorseller: typeof varyant.featured_image === "object" && varyant.featured_image
           ? [String((varyant.featured_image as Record<string, unknown>).src ?? "")].filter(Boolean)
           : gorseller,
@@ -332,7 +334,12 @@ function wooUrunleri(veri: unknown, alan: string): UreticiUrunu[] {
 }
 
 function urunKimligi(urun: UreticiUrunu): string {
-  return `${urun.kaynak?.trim() || urun.ad}|${urun.varyant ?? ""}`;
+  const model = `${urun.kaynak?.trim() || urun.ad}|${normalizeKod(urun.kod)}|${urun.marka.trim().toLocaleLowerCase("tr-TR")}`;
+  return urun.varyant ? model : `${model}|${urun.ad}|${urun.barkod}`;
+}
+
+function varyantKimligi(urun: UreticiUrunu): string {
+  return `${urunKimligi(urun)}|${urun.varyant ?? ""}|${urun.barkod}`;
 }
 
 function hedefBul(
@@ -345,7 +352,7 @@ function hedefBul(
   const yaz = (harita: Map<string, UreticiUrunu[]>, anahtar: string, urun: UreticiUrunu) => {
     if (!anahtar) return;
     const liste = harita.get(anahtar) ?? [];
-    if (!liste.some((mevcut) => urunKimligi(mevcut) === urunKimligi(urun))) liste.push(urun);
+    if (!liste.some((mevcut) => varyantKimligi(mevcut) === varyantKimligi(urun))) liste.push(urun);
     harita.set(anahtar, liste);
   };
 
@@ -357,12 +364,12 @@ function hedefBul(
 
   const karar = (tumAdaylar: UreticiUrunu[], dayanak: "kod" | "barkod", satir: DijitalIzSatiri): DijitalIzHedefi | null => {
     const marka = (satir.marka ?? "").trim().toLocaleLowerCase("tr-TR");
-    const secenekler = [satir.varyant, satir.beden].filter(Boolean)
-      .flatMap((s) => s!.split(/[\/|,;]+/)).map(normalizeKod).filter(Boolean);
+    const secenekGruplari = [satir.varyant, satir.beden].filter(Boolean)
+      .map((s) => s!.split(/[\/|,;]+/).map(normalizeKod).filter(Boolean));
     const adaylar = tumAdaylar.filter((urun) => {
       if (marka && urun.marka && urun.marka.trim().toLocaleLowerCase("tr-TR") !== marka) return false;
       const kaynakSecenekleri = (urun.varyant ?? "").split(/[\/|,;]+/).map(normalizeKod).filter(Boolean);
-      if (secenekler.length > 0 && secenekler.some((secenek) => !kaynakSecenekleri.includes(secenek))) return false;
+      if (secenekGruplari.some((grup) => !grup.some((secenek) => kaynakSecenekleri.includes(secenek)))) return false;
       return true;
     });
     if (adaylar.length === 0) return null;
@@ -377,11 +384,18 @@ function hedefBul(
         }),
       };
     }
-    const urun = adaylar[0];
+    if (secenekGruplari.some((grup) => grup.some((secenek) => !adaylar.some((aday) =>
+      (aday.varyant ?? "").split(/[\/|,;]+/).map(normalizeKod).includes(secenek))))) return null;
+    const ilk = adaylar[0];
+    const gorseller = [...new Set(adaylar.flatMap((aday) => aday.gorseller ?? []))];
+    const urun = { ...ilk, ad: ilk.modelAdi || ilk.ad, gorseller };
     return {
       urun: gorselKapisi(urun, izinDurumu),
       dayanak,
-      gorselAdaylari: urun.gorseller ?? [],
+      gorselAdaylari: gorseller,
+      varyantlar: adaylar.filter((aday) => aday.varyant).map((aday) => ({
+        ad: aday.varyant!, barkod: aday.barkod, gorseller: aday.gorseller ?? [],
+      })),
     };
   };
 

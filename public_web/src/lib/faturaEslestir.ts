@@ -51,6 +51,7 @@ export interface KatalogBilgisi {
   aciklama: string;
   gorseller: string[];
   gorselAdaylari: string[];
+  varyantlar?: Array<{ ad: string; barkod: string; gorseller: string[] }>;
   kaynak: string;
 }
 
@@ -320,6 +321,7 @@ function hedefiSatiraYaz(
       aciklama: hedef.urun.aciklama,
       gorseller: hedef.urun.gorseller,
       gorselAdaylari: hedef.gorselAdaylari,
+      varyantlar: hedef.varyantlar,
       kaynak: hedef.urun.kaynak || iz.kaynak,
     },
   };
