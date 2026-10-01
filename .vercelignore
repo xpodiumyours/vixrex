@@ -25,10 +25,6 @@ public_web_next._bak
 .codex-worktrees
 calistir-migration.ps1
 agent-tracker
-pubspec.yaml
-pubspec.lock
-lib/
-test/integration_test
 android
 ios
 linux
