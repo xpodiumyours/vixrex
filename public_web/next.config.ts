@@ -94,6 +94,45 @@ const securityHeaders = [
   },
 ];
 
+// sharp'in libvips paylaşımlı kütüphanesi (2026-10-01 canlı teşhisi):
+//   sharp 0.35.x, linux'ta `.so` dosyalarını `@img/sharp-linux-x64` paketinin
+//   İÇİNDE değil, ayrı bir hard bağımlılık olan `@img/sharp-libvips-linux-x64`
+//   paketinde taşır ve oraya RPATH ile bağlanır. Next.js'in kullandığı nft
+//   (node file trace) yalnız `require()` zincirini statik izler; RPATH/dlop
+//   ile açılan `.so` dosyaları bu zincirde görünmez. Sonuç: derleme yeşil,
+//   kurulum tam (`@img/sharp-libvips-linux-x64` lock'ta 1.3.3 olarak var) ama
+//   lambda paketinde `.so` yok -> ilk istekte modül yüklenemiyor ve rota
+//   500 veriyor:
+//     Failed to load external module sharp-<hash>
+//     Could not load the "sharp" module using the linux-x64 runtime
+//     ERR_DLOPEN_FAILED: libvips-cpp.so.8.18.6: cannot open shared object file
+//   Bu bilinen bir upstream sorunu (lovell/sharp#4567: sharp 0.35.x + Next 16
+//   + Turbopack + Vercel; orada önerilen geçici çözüm sharp'ı 0.34.x'e
+//   düşürmek — bizim kodumuz 0.35 API'sini kullanıyor, sürüm düşürmüyoruz).
+//   Kalıcı çözüm: paketleri izlemeye AÇIKÇA eklemek.
+const SHARP_TRACE = [
+  "./node_modules/sharp/**",
+  "./node_modules/@img/sharp-linux-x64/**",
+  "./node_modules/@img/sharp-libvips-linux-x64/**",
+];
+
+// Bu uçlardan 9'u sharp'e RUNTIME'da transitif ulaşıyor (`import type`
+// derlemede silindiği için dikkate alınmadı; liste transitive çözümle
+// hesaplandı ve canlıdaki 500'lerle birebir örtüştü). Yeni bir uç sharp'e
+// ulaşırsa BURAYA EKLENMEK zorunda: scripts/kontrol/sharp-trace-kapsam.mjs
+// bu kuralı CI'da zorunlu kılar (eksik uç ya da bayat liste kırmızı verir).
+const SHARP_ROUTES = [
+  "/api/fatura-eslestir",
+  "/api/fatura-islem",
+  "/api/fatura-metin",
+  "/api/fatura-oku",
+  "/api/fatura-satir-duzelt",
+  "/api/instagram/import",
+  "/api/owner-upload",
+  "/api/product-image-upload",
+  "/api/products/batch",
+];
+
 const nextConfig: NextConfig = {
   // Ürün havuzu katalogları `src/` dışında durur (toplam hacim megabaytları
   // bulduğu için pakete gömülmez) ve fatura ucu bunları çalışma anında okur.
@@ -102,9 +141,16 @@ const nextConfig: NextConfig = {
   // Kataloğu okuyan HER uç burada olmalı; eksik kalan uç üretimde katalogsuz
   // çalışır ve hiçbir ürünü tanımaz (yerelde fark edilmez, canlıda çıkar).
   outputFileTracingIncludes: {
-    "/api/fatura-oku": ["./data/katalog/**/*.json", "./scripts/katalog/firmalar.json"],
-    "/api/fatura-eslestir": ["./data/katalog/**/*.json", "./scripts/katalog/firmalar.json"],
-    "/api/products/batch": ["./data/katalog/**/*.json"],
+    // Katalog + sharp izleme girdileri birleşik: sharp kullanan uçların
+    // katalog gereksinimi varsa SHARP_TRACE ile birlikte buraya yazılır.
+    "/api/fatura-oku": ["./data/katalog/**/*.json", "./scripts/katalog/firmalar.json", ...SHARP_TRACE],
+    "/api/fatura-eslestir": ["./data/katalog/**/*.json", "./scripts/katalog/firmalar.json", ...SHARP_TRACE],
+    "/api/products/batch": ["./data/katalog/**/*.json", ...SHARP_TRACE],
+    ...Object.fromEntries(
+      SHARP_ROUTES
+        .filter((route) => !["/api/fatura-oku", "/api/fatura-eslestir", "/api/products/batch"].includes(route))
+        .map((route) => [route, SHARP_TRACE]),
+    ),
   },
   env: {
     NEXT_PUBLIC_SUPABASE_URL: publicSupabaseUrl,
