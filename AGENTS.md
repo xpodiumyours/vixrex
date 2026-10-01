@@ -200,6 +200,86 @@ duruyor ÔÇö yani proje duruyor. Yava┼ş ajan, duran projeden iyidir.
 
 ---
 
+## F. Bu 12 hatanın tekrarını önleme (2026-10-01)
+
+Bu bölüm, yaşanan aşağıdaki 12 hataya karşı mevcut çalışma kurallarını somutlaştırır.
+Ürün kapsamını veya master planı değiştirmez; yeni plan, iş hattı veya uygulama kurmaz.
+
+1. **Dalların ayrışması:** Birleştirmeden önce ilgili çalışma dallarının commitlerini
+   ve dosya farklarını güncel ana dal ve teslim edilecek dal ile karşılaştır.
+   Her ilgili geliştirmeyi taşındı, mevcut kodla karşılandı veya açık kaldı olarak
+   kod kanıtıyla ayır. Bir dalın bir kısmını taşıyıp tamamı birleştirildi deme;
+   eski dosyaları topluca koyarak sonraki düzeltmeleri geri alma.
+
+2. **Ayrı çalışma kopyaları:** İlgili çalışma klasörlerinin kaydedilmiş ve
+   kaydedilmemiş farklarını incele; hangi kopyanın hangi sürümde olduğunu belirle.
+   Alınacak değişiklikleri aynı teslim sürümünde birleştir ve doğrula. Bir
+   kopyadaki kodu veya test sonucunu başka kopyanın sonucu gibi raporlama.
+   İçerik korunmadan çalışma kopyası veya dal kaldırma.
+
+3. **Kaydedilmemiş işler:** İş bitiminde veya oturum bırakılırken kendi
+   değişikliklerini mevcut yetki kapsamında commit ile koru; commit mümkün
+   değilse geri yüklenebilir dosya farkı ve yeni dosya kopyalarıyla koru,
+   kayıt yerini bildir. Başkasının değişikliğini kendi işine katma. Yerelde
+   kaydedilen işi gönderilmiş sayma; push yapıldıysa uzak dalın aynı kaydı
+   taşıdığını doğrula. Bu madde tek başına push veya canlı işlem yetkisi vermez.
+
+4. **Eski durum belgeleri:** Durum notunu kullanmadan önce ait olduğu dalı,
+   sürümü ve kodun bugünkü halini kontrol et. Eski notu güncel tamamlanma veya
+   engel kanıtı sayma. Yetkili belge düzeltmesini AGENTS.md ve mevcut master
+   plan içinde yap; başka dosyada çalışma kuralı veya ikinci plan çoğaltma.
+
+5. **İki ayrı ekran uygulaması:** Ürün yönetiminde Flutter Web/APK doğru
+   görünüm ve davranış referansıdır. Next.js değişikliğini aynı işlemi iki
+   tarafta açarak karşılaştır; aynı ürünün bilgisi, onayı ve yayın durumunun
+   korunmasını doğrula. Ortak sunucu kullanılması ekranların eşitlendiği
+   anlamına gelmez; doğrulanmamış eşitliği tamamlandı diye bildirme.
+
+6. **Yanlış ekran yerleşimi:** Ürün yönetiminin açıldığı yeri ve kullanılabilir
+   alanını bilgisayar ve telefon genişliğinde gerçek ekranda kontrol et.
+   Flutter'daki ayrı ürün yönetimi penceresini Next.js'te dar içerik sütununa
+   gömme. Formların ve işlem düğmelerinin sığdığını, kaydırılarak erişildiğini
+   ve başka menünün arkasında kalmadığını görünür kanıtla doğrula.
+
+7. **Eksik ekran bağlantıları:** Bir geliştirmeyi taşırken onu açan düğme,
+   bağlı işlem, filtre, geri dönüş ve kayıtlı işlemi yeniden açma yollarını
+   birlikte incele. Eski dalın metin desteği ve taslak filtresi gibi mevcut
+   davranışları bağlantısız bırakma. Mevcut karşılığı varsa ona bağla;
+   dosya bulunmasını çalışan ekran bağlantısı sayma.
+
+8. **Model–varyant karışıklığı:** Ürün modeli, beden/renk seçenekleri ve
+   satın alınan adet ayrı anlam taşır. Aynı modelin doğrulanmış beden/renklerini
+   mevcut tek kartın varyant yapısında koru; farklı ürünleri birleştirme.
+   M/L/XL gibi seçenekleri tek beden yapma, toplam adedi bedenlere tahminle
+   dağıtma. Eşleştirme ve kayıt tekrarını bu ayrımı koruyarak doğrula.
+
+9. **Tek satıra bağlı yayın kontrolü:** Bir kart birden fazla fatura satırından
+   hazırlanıyorsa bütün ilgili satırların kaynağını, görsel kanıtını, onayını,
+   fiyat ve stok ilişkisini birlikte denetle. Son satırın öncekilerin kanıtını
+   silmesine veya tek satır kontrolünün birleşik kartı yanlış değerlendirmesine
+   izin verme. Birleştirme, tekrar, düzeltme ve yayın aynı kuralla sınanır.
+
+10. **Kayıt adımlarının ayrılığı:** Ürün, fatura satırı bağlantısı ve kanıt
+    birlikte başarılı kaydedilmeden başarı döndürme. Bu adımlardan biri
+    başarısız olduğunda yarım kayıt kalmadığını gerçek veritabanında kontrollü
+    hata ile doğrula. Yeniden deneme aynı kayda ulaşmalı; çift ürün veya çift
+    stok üretmemeli, mevcut kullanıcı verisini bozmamalı.
+
+11. **Kontrollerin gerçek hizmetten kopması:** Taklit servis testi yalnızca
+    sınadığı davranışın kanıtıdır. Bağlantıların gerçek işlem adları, alanları
+    ve yanıtlarıyla uyumunu ayrıca kontrol et. Gerçek fatura, gerçek okuyucu,
+    resmî kaynak, kalıcı kayıt ve tüketici ekranı denenmeden baştan sona
+    çalışıyor deme; çalıştırılmayan veya erişilemeyen kısmı açık belirt.
+
+12. **Canlı kurulumun ayrı kalması:** Teslim edilen kod sürümüyle gerekli
+    veritabanı değişikliklerini ve ortam hazırlığını eşleştir. Dosyanın
+    hazırlanması, uygulanması ve canlıda çalışması ayrı durumlardır.
+    Kullanıcının yetkilendirdiği canlı aktarım sonrası aynı sürümün veritabanı,
+    uygulama ve tüketici ekranında çalıştığını doğrula. Commit, push veya
+    yerel test başarısını canlı tamamlanma kanıtı olarak kullanma.
+
+---
+
 # Ürün hedefi: Faturadan dijital vitrine
 
 
