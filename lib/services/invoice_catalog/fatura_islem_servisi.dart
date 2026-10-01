@@ -75,12 +75,13 @@ class FaturaIslemServisi {
         ),
       );
       final body = {'slug': slug, ...alanlar};
-      if (method == 'GET')
+      if (method == 'GET') {
         uri = uri.replace(
           queryParameters: body.map(
             (key, value) => MapEntry(key, value.toString()),
           ),
         );
+      }
       final request = http.Request(method, uri)
         ..headers.addAll({
           'content-type': 'application/json; charset=utf-8',
@@ -91,8 +92,9 @@ class FaturaIslemServisi {
           .send(request)
           .timeout(const Duration(seconds: 90));
       final decoded = jsonDecode(await response.stream.bytesToString());
-      if (decoded is! Map)
+      if (decoded is! Map) {
         return Result.failure(Failure('Sunucu yanıtı okunamadı.'));
+      }
       final data = Map<String, dynamic>.from(decoded);
       if (response.statusCode < 200 ||
           response.statusCode >= 300 ||
