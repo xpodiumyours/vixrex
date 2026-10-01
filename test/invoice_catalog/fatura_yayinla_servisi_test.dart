@@ -11,51 +11,57 @@ import 'package:vixrex/services/invoice_catalog/fatura_yayinla_servisi.dart';
 
 void main() {
   group('FaturaYayinlaServisi — telefonun ayrı Yayınla çağrısı', () {
-    test('taslak id listesini slug ve jetonla /api/fatura-yayinla ucuna gönderir',
-        () async {
-      late http.BaseRequest yakalanan;
-      final servis = FaturaYayinlaServisi(
-        originOverride: 'https://vixrex-test.local',
-        httpClient: MockClient((request) async {
-          yakalanan = request;
-          return http.Response(
-            jsonEncode({
-              'tamam': true,
-              'yayinda': 1,
-              'taslak': 1,
-              'satirlar': [
-                {'id': 'urun-1', 'durum': 'yayinda'},
-                {'id': 'urun-2', 'durum': 'taslak', 'sebep': 'Satış fiyatı girilmedi.'},
-              ],
-            }),
-            200,
-            headers: {'content-type': 'application/json; charset=utf-8'},
-          );
-        }),
-      );
+    test(
+      'taslak id listesini slug ve jetonla /api/fatura-yayinla ucuna gönderir',
+      () async {
+        late http.BaseRequest yakalanan;
+        final servis = FaturaYayinlaServisi(
+          originOverride: 'https://vixrex-test.local',
+          httpClient: MockClient((request) async {
+            yakalanan = request;
+            return http.Response(
+              jsonEncode({
+                'tamam': true,
+                'yayinda': 1,
+                'taslak': 1,
+                'satirlar': [
+                  {'id': 'urun-1', 'durum': 'yayinda'},
+                  {
+                    'id': 'urun-2',
+                    'durum': 'taslak',
+                    'sebep': 'Satış fiyatı girilmedi.',
+                  },
+                ],
+              }),
+              200,
+              headers: {'content-type': 'application/json; charset=utf-8'},
+            );
+          }),
+        );
 
-      final sonuc = await servis.yayinla(
-        productIds: ['urun-1', 'urun-2'],
-        storeSlug: 'deneme-vitrin',
-        editToken: 'token-1',
-      );
+        final sonuc = await servis.yayinla(
+          productIds: ['urun-1', 'urun-2'],
+          storeSlug: 'deneme-vitrin',
+          editToken: 'token-1',
+        );
 
-      expect(yakalanan.method, 'POST');
-      expect(yakalanan.url.path, '/api/fatura-yayinla');
-      final govde = jsonDecode((yakalanan as http.Request).body) as Map;
-      expect(govde['slug'], 'deneme-vitrin');
-      expect(govde['editToken'], 'token-1');
-      expect(govde['productIds'], ['urun-1', 'urun-2']);
+        expect(yakalanan.method, 'POST');
+        expect(yakalanan.url.path, '/api/fatura-yayinla');
+        final govde = jsonDecode((yakalanan as http.Request).body) as Map;
+        expect(govde['slug'], 'deneme-vitrin');
+        expect(govde['editToken'], 'token-1');
+        expect(govde['productIds'], ['urun-1', 'urun-2']);
 
-      expect(sonuc.isSuccess, isTrue);
-      final ozet = sonuc.data!;
-      expect(ozet.yayinda, 1);
-      expect(ozet.taslak, 1);
-      expect(ozet.satirlar, hasLength(2));
-      expect(ozet.satirlar[0].yayinda, isTrue);
-      expect(ozet.satirlar[1].yayinda, isFalse);
-      expect(ozet.satirlar[1].sebep, contains('Satış fiyatı'));
-    });
+        expect(sonuc.isSuccess, isTrue);
+        final ozet = sonuc.data!;
+        expect(ozet.yayinda, 1);
+        expect(ozet.taslak, 1);
+        expect(ozet.satirlar, hasLength(2));
+        expect(ozet.satirlar[0].yayinda, isTrue);
+        expect(ozet.satirlar[1].yayinda, isFalse);
+        expect(ozet.satirlar[1].sebep, contains('Satış fiyatı'));
+      },
+    );
 
     test('vitrin yayınlanmamışsa ağa hiç çıkmaz', () async {
       var cagrildi = false;

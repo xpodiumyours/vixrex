@@ -119,8 +119,7 @@ class InvoiceDraftDecisionEngine {
       }
     }
 
-    final dataRightsMissing =
-        draft.rightsStatus == RightsStatus.denied;
+    final dataRightsMissing = draft.rightsStatus == RightsStatus.denied;
 
     if (dataRightsMissing) {
       externalMediaBlocked = true;

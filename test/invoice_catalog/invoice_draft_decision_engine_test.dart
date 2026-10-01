@@ -21,34 +21,40 @@ void main() {
   }
 
   group('InvoiceDraftDecisionEngine', () {
-    test('bilinmeyen izin hazirligi engellemez, eksik esnaf bilgisi yayini engeller', () {
-      final draft = InvoiceProductDraft(
-        id: 'ter0101',
-        rawSourceLine:
-            'TER0101 TUT ERK PEN ATLET 8680508918131 18 AD 63,50 1143,00',
-        supplierName: textEvidence('Seher Mensucat'),
-        rawName: textEvidence('TUT ERK PEN ATLET'),
-        normalizedName: textEvidence(
-          'Tutku Erkek Penye Atlet',
-          source: EvidenceSourceType.officialProductPage,
-        ),
-        gtinBarcode: textEvidence('8680508918131'),
-        modelCode: textEvidence('TER0101'),
-        supplierIdentityStrength: EvidenceStrength.strong,
-        productIdentityStrength: EvidenceStrength.strong,
-        rightsStatus: RightsStatus.unknown,
-      );
+    test(
+      'bilinmeyen izin hazirligi engellemez, eksik esnaf bilgisi yayini engeller',
+      () {
+        final draft = InvoiceProductDraft(
+          id: 'ter0101',
+          rawSourceLine:
+              'TER0101 TUT ERK PEN ATLET 8680508918131 18 AD 63,50 1143,00',
+          supplierName: textEvidence('Seher Mensucat'),
+          rawName: textEvidence('TUT ERK PEN ATLET'),
+          normalizedName: textEvidence(
+            'Tutku Erkek Penye Atlet',
+            source: EvidenceSourceType.officialProductPage,
+          ),
+          gtinBarcode: textEvidence('8680508918131'),
+          modelCode: textEvidence('TER0101'),
+          supplierIdentityStrength: EvidenceStrength.strong,
+          productIdentityStrength: EvidenceStrength.strong,
+          rightsStatus: RightsStatus.unknown,
+        );
 
-      final result = engine.evaluate(draft);
+        final result = engine.evaluate(draft);
 
-      expect(result.decision, AutomationDecision.autoPrepareDraft);
-      expect(result.canPrepareDraft, isTrue);
-      expect(result.canPublish, isFalse);
-      expect(result.externalMediaBlocked, isFalse);
-      expect(result.questions.any((q) => q.contains('kullanma yetkiniz')), isFalse);
-      expect(result.questions.any((q) => q.contains('Satış fiyatı')), isTrue);
-      expect(result.questions.any((q) => q.contains('stoğunu')), isTrue);
-    });
+        expect(result.decision, AutomationDecision.autoPrepareDraft);
+        expect(result.canPrepareDraft, isTrue);
+        expect(result.canPublish, isFalse);
+        expect(result.externalMediaBlocked, isFalse);
+        expect(
+          result.questions.any((q) => q.contains('kullanma yetkiniz')),
+          isFalse,
+        );
+        expect(result.questions.any((q) => q.contains('Satış fiyatı')), isTrue);
+        expect(result.questions.any((q) => q.contains('stoğunu')), isTrue);
+      },
+    );
 
     test('zayif urun izinde tahmin etmez', () {
       final draft = InvoiceProductDraft(
@@ -89,7 +95,16 @@ void main() {
       () {
         final draft = InvoiceProductDraft(
           id: 'ready',
-          imageCandidates: const [InvoiceImageCandidate(url: 'https://uretici.example/TER0101.jpg', sourceType: EvidenceSourceType.officialProductPage, sourceReference: 'https://uretici.example/TER0101', strength: EvidenceStrength.strong, rightsStatus: RightsStatus.verifiedSupplierPermission, selected: true)],
+          imageCandidates: const [
+            InvoiceImageCandidate(
+              url: 'https://uretici.example/TER0101.jpg',
+              sourceType: EvidenceSourceType.officialProductPage,
+              sourceReference: 'https://uretici.example/TER0101',
+              strength: EvidenceStrength.strong,
+              rightsStatus: RightsStatus.verifiedSupplierPermission,
+              selected: true,
+            ),
+          ],
           rawSourceLine: 'TER0101 ...',
           supplierName: textEvidence('Seher Mensucat'),
           normalizedName: textEvidence(
@@ -111,16 +126,44 @@ void main() {
         expect(result.canPrepareDraft, isTrue);
         expect(result.canPublish, isTrue);
         expect(result.externalMediaBlocked, isFalse);
-        expect(engine.evaluate(draft.copyWith(stockConfirmed: false)).canPublish, isFalse);
-        expect(engine.evaluate(draft.copyWith(merchantApproved: false)).canPublish, isFalse);
-        expect(engine.evaluate(draft.copyWith(clearSalePrice: true)).canPublish, isFalse);
-        expect(engine.evaluate(draft.copyWith(imageCandidates: const [])).canPublish, isFalse);
-        final pendingPermission = draft.copyWith(rightsStatus: RightsStatus.unknown,
-          imageCandidates: const [InvoiceImageCandidate(url: 'https://uretici.example/TER0101.jpg',
-            sourceType: EvidenceSourceType.officialProductPage, sourceReference: 'https://uretici.example/TER0101',
-            strength: EvidenceStrength.strong, rightsStatus: RightsStatus.unknown, selected: true)]);
+        expect(
+          engine.evaluate(draft.copyWith(stockConfirmed: false)).canPublish,
+          isFalse,
+        );
+        expect(
+          engine.evaluate(draft.copyWith(merchantApproved: false)).canPublish,
+          isFalse,
+        );
+        expect(
+          engine.evaluate(draft.copyWith(clearSalePrice: true)).canPublish,
+          isFalse,
+        );
+        expect(
+          engine.evaluate(draft.copyWith(imageCandidates: const [])).canPublish,
+          isFalse,
+        );
+        final pendingPermission = draft.copyWith(
+          rightsStatus: RightsStatus.unknown,
+          imageCandidates: const [
+            InvoiceImageCandidate(
+              url: 'https://uretici.example/TER0101.jpg',
+              sourceType: EvidenceSourceType.officialProductPage,
+              sourceReference: 'https://uretici.example/TER0101',
+              strength: EvidenceStrength.strong,
+              rightsStatus: RightsStatus.unknown,
+              selected: true,
+            ),
+          ],
+        );
         expect(engine.evaluate(pendingPermission).canPublish, isTrue);
-        expect(engine.evaluate(pendingPermission.copyWith(rightsStatus: RightsStatus.denied)).canPublish, isFalse);
+        expect(
+          engine
+              .evaluate(
+                pendingPermission.copyWith(rightsStatus: RightsStatus.denied),
+              )
+              .canPublish,
+          isFalse,
+        );
       },
     );
 

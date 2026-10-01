@@ -16,9 +16,11 @@ class FaturaUrunKaydiServisi {
   final http.Client? _httpClient;
   final String? _originOverride;
 
-  const FaturaUrunKaydiServisi({http.Client? httpClient, String? originOverride})
-    : _httpClient = httpClient,
-      _originOverride = originOverride;
+  const FaturaUrunKaydiServisi({
+    http.Client? httpClient,
+    String? originOverride,
+  }) : _httpClient = httpClient,
+       _originOverride = originOverride;
 
   Future<Result<FaturaKaydiSonucu>> taslakKaydet({
     required List<FaturaKaydiSatiri> satirlar,
@@ -80,12 +82,23 @@ class FaturaUrunKaydiServisi {
         }
       }
 
-      if (govde['tamam'] != true || kaydedilenler.length != satirlar.length ||
-          kaydedilenler.map((satir) => satir.sira).toSet().length != satirlar.length ||
-          kaydedilenler.any((satir) => satir.sira < 0 || satir.sira >= satirlar.length ||
-            !['taslak', 'yayinda', 'atlandi'].contains(satir.durum) ||
-            (satir.durum != 'atlandi' && (satir.id == null || satir.id!.trim().isEmpty)))) {
-        return Result.failure(Failure('Sunucu bütün ürünlerin kayıt sonucunu vermedi. Taslağın korunuyor; tekrar dene.'));
+      if (govde['tamam'] != true ||
+          kaydedilenler.length != satirlar.length ||
+          kaydedilenler.map((satir) => satir.sira).toSet().length !=
+              satirlar.length ||
+          kaydedilenler.any(
+            (satir) =>
+                satir.sira < 0 ||
+                satir.sira >= satirlar.length ||
+                !['taslak', 'yayinda', 'atlandi'].contains(satir.durum) ||
+                (satir.durum != 'atlandi' &&
+                    (satir.id == null || satir.id!.trim().isEmpty)),
+          )) {
+        return Result.failure(
+          Failure(
+            'Sunucu bütün ürünlerin kayıt sonucunu vermedi. Taslağın korunuyor; tekrar dene.',
+          ),
+        );
       }
 
       return Result.success(
@@ -174,14 +187,16 @@ class FaturaKaydiSatiri {
 
   Map<String, dynamic> toJson() {
     final secenekler = <String, String>{
-      if (varyant != null && varyant!.trim().isNotEmpty) 'color': varyant!.trim(),
+      if (varyant != null && varyant!.trim().isNotEmpty)
+        'color': varyant!.trim(),
       if (beden != null && beden!.trim().isNotEmpty) 'size': beden!.trim(),
     };
-    final degisimKodu = (model ?? '').trim().isNotEmpty
-        ? model!.trim()
-        : (barkod ?? '').trim().isNotEmpty
-        ? barkod!.trim()
-        : '$satirSirasi';
+    final degisimKodu =
+        (model ?? '').trim().isNotEmpty
+            ? model!.trim()
+            : (barkod ?? '').trim().isNotEmpty
+            ? barkod!.trim()
+            : '$satirSirasi';
 
     return {
       'name': ad,
@@ -192,7 +207,8 @@ class FaturaKaydiSatiri {
       if (gorselKaynagi != null && gorselKaynagi!.trim().isNotEmpty)
         'gorselKaynagi': gorselKaynagi!.trim(),
       if (marka != null && marka!.trim().isNotEmpty) 'brand': marka!.trim(),
-      if (barkod != null && barkod!.trim().isNotEmpty) 'barcode': barkod!.trim(),
+      if (barkod != null && barkod!.trim().isNotEmpty)
+        'barcode': barkod!.trim(),
       'stockQuantity': stok,
       'sourceType': 'invoice',
       'kartDurumu': kartDurumu,
@@ -232,11 +248,10 @@ class FaturaKaydiSonucu {
     required this.satirlar,
   });
 
-  List<String> get yayinlanabilirTaslakIdleri =>
-      satirlar
-          .where((satir) => satir.durum == 'taslak' && satir.id != null)
-          .map((satir) => satir.id!)
-          .toList(growable: false);
+  List<String> get yayinlanabilirTaslakIdleri => satirlar
+      .where((satir) => satir.durum == 'taslak' && satir.id != null)
+      .map((satir) => satir.id!)
+      .toList(growable: false);
 }
 
 class KaydedilenSatir {

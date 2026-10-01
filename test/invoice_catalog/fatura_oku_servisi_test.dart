@@ -297,7 +297,8 @@ void main() {
         // onaylı sayılır, okunmadıysa onaylanmaz.
         expect(
           katalog.invoiceDrafts.every(
-            (taslak) => taslak.stockConfirmed == (taslak.quantity?.value != null),
+            (taslak) =>
+                taslak.stockConfirmed == (taslak.quantity?.value != null),
           ),
           isTrue,
         );
