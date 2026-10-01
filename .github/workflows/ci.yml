@@ -338,6 +338,17 @@ jobs:
       - name: Testler
         run: npm run test
 
+      # sharp 0.35.x, linux'ta libvips `.so` dosyalarını ayrı pakette tutar ve
+      # `.node` addon'u oraya RPATH ile bağlanır. Next.js'in nft izlemecisi
+      # yalnız `require()` zincirini statik izlediği için bu `.so` dosyaları
+      # lambda paketine GİRMEZ -> derleme yeşil geçer, uç runtime'da 500 verir
+      # (ERR_DLOPEN_FAILED: libvips-cpp.so.8.18.6). Çözüm next.config.ts içindeki
+      # outputFileTracingIncludes; bu kapı, sharp'e ulaşan her yeni uç
+      # (route.ts ya da bir lib üzerinden transitif) listeye eklenmeden
+      # merge edilmesini engeller. E2E bu uçları test etmiyor.
+      - name: sharp izleme kapsamı (libvips .so paketleniyor mu)
+        run: node scripts/kontrol/sharp-trace-kapsam.mjs .
+
       - name: Production build
         run: npm run build
         env:
