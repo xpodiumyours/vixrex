@@ -4,8 +4,6 @@ Tarih: 30 Eylül 2026
 
 Durum: Uygulama ve kabul planı. Planın yazılması, sistemin tamamlandığı anlamına gelmez.
 
-Ürün hedefi: [AGENTS.md](../AGENTS.md)
-
 ## 1. Teslim edilecek sonuç
 
 Küçük esnaf, aldığı ürünlerle ve faturasıyla baş başa kaldığında VixRex devreye girer. Esnaf **tek bir okunabilir fatura fotoğrafı** verir. Sistem firmayı ve ürünleri çözer; resmî dijital kaynakta karşılığı bulunan ürünlerin doğru bilgilerini ve gerçek görsellerini mevcut VixRex ürün kartlarına taşır. Esnaf satış fiyatını ve mevcut stoğunu kontrol eder. Ürünler, tüketicinin kullanabileceği kalitede dijital vitrinde gösterilir.
@@ -59,7 +57,7 @@ Mevcut `integration/fatura-birlestirme` çalışmasında kaynak eşleştirme, ka
 | F7 | Çok üreticili faturada ayrı izin hedefleri, mevcut talebe yeni kart bağlantısı ve güncel ret kontrolü | Firma adına gönderim veya izin alınması yapılmış sayılmaz. |
 | F8 | Gerçek belge kabulü açık | `14544.jpg`, `14545.jpg`, `14550.jpg` bu çalışma dosyalarında bulunamamıştır; Işılay 16747 ve sektörler arası gerçek kabul tamamlanmış sayılmaz. |
 
-Birleşik veritabanı dosyası `docs/VERITABANI_KURULUMU.sql` güncel sekiz fatura değişikliğini içerir. Mevcut ürün çekirdeği ve alış fiyatı tablosu önkoşuldur. Dosyanın hazırlanması canlıya uygulanmış olduğu anlamına gelmez.
+Güncel sekiz fatura değişikliği `supabase/migrations/` altındaki `20260929000000`–`20261001000000` numaralı migrasyonlardır; şemanın tek kaynağı budur. Mevcut ürün çekirdeği ve alış fiyatı tablosu önkoşuldur. Migrasyonların hazırlanması canlıya uygulanmış olduğu anlamına gelmez.
 
 `faturadankataloga` dalı yeniden kod üzerinden karşılaştırılmıştır: ayrışık 15 yönetim kaydının içeriği ana dalda zaten vardır; üç fatura kaydının temeli mevcut birleşimde korunur. Eksik kalan metin desteği ve yalnız taslak filtresi, eski izin sistemini çoğaltmadan mevcut kayıt zincirine bağlanmıştır. Aynı modelin farklı satırları artık tek kalıcı karta ve ayrı beden/renk seçeneklerine bağlanır. Kayıt tekrarı stok eklemez; düzeltme miktarı değiştirir. Assorti toplamı bedenlere dağıtılmaz. Bu davranışlar `supabase/tests/invoice_variant_group_smoke.sql` ile ayrı yerel veritabanında doğrulanmıştır.
 
