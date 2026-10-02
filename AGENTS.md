@@ -196,3 +196,12 @@ duruyor — yani proje duruyor. Yavaş ajan, duran projeden iyidir.
 - Ölçüm yalnız bir **karar** ona bağlıysa yapılır.
 - Her yeni faz → yeni oturum; şişmiş bağlam her cevabı pahalılaştırır.
 - Uzun rapor yazma; sonuç tek satır, detay istenirse gelir.
+
+---
+
+## F. Canlıya almadan önce
+
+### 19. Canlı veriyle denenmemiş dal canlıya çıkmaz (2026-10-02)
+Her gelişim dalı, Vercel önizlemesinde canlı veriyle denenmeden ana dala ve canlıya alınmaz. Geliştirme önizlemesi ve birim test kanıt sayılmaz. Canlı verisiz gelişim yasaktır. Kanıt, commit mesajındaki `Preview-Kanit: <vercel-adresi>` satırıdır; merge kapısı satır yoksa veya adres açılmıyorsa kayıt basmaz.
+
+Neden: 2026-10-02'de geliştirme önizlemesi sayfaları canlandırmadı (üç sayfada da program bağlantısı sıfırdı); çalışmayan düğme kod hatası sanılıp kör tahminle kod değiştirildi, oysa canlıda sohbet açılıyordu. Ajanlar günlerce aynı yanlış izi sürdü.

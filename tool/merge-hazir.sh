@@ -111,6 +111,29 @@ PW="$(deger public_web)"
 FL="$(deger flutter)"
 SC="$(deger schema)"
 
+baslik "Canlı veri kanıtı"
+
+if [ "$PW" = "true" ] || [ "$FL" = "true" ] || [ "$SC" = "true" ]; then
+  KANIT_URL="$(git log --format=%B origin/main..HEAD | grep -E '^Preview-Kanit: https://' | head -1 | sed -E 's/^Preview-Kanit: *//; s/[.,;)]+$//')"
+  if [ -z "$KANIT_URL" ]; then
+    echo "Commit mesajlarında 'Preview-Kanit: https://...' satırı yok."
+    echo "Önce Vercel önizlemesinde canlı veriyle dene, adresi commit mesajına yaz."
+    hata "Canlı veri kanıtı"
+  else
+    echo "Adres: $KANIT_URL"
+    KOD="$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 -L "$KANIT_URL" || echo 000)"
+    echo "HTTP: $KOD"
+    case "$KOD" in
+      2*|3*) basari "Canlı veri kanıtı" ;;
+      *)
+        echo "Adres açılmıyor; önizleme yayında değil ya da erişilemiyor."
+        hata "Canlı veri kanıtı" ;;
+    esac
+  fi
+else
+  atlandi "Canlı veri kanıtı"
+fi
+
 # --- 4) Next.js kapıları ----------------------------------------------------
 
 if [ "$PW" = "true" ]; then
