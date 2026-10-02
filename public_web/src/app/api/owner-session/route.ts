@@ -133,7 +133,7 @@ export async function GET(request: Request) {
     );
   }
 
-  const destination = new URL(`/v/${slug}`, url);
+  const destination = new URL(`/v/${slug}?editor=1`, url);
   const response = NextResponse.redirect(destination, 303);
   response.headers.set("cache-control", "no-store");
   response.cookies.set(OWNER_SESSION_COOKIE, token, {

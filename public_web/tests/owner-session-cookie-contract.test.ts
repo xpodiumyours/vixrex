@@ -175,7 +175,7 @@ describe("sahip oturumu giriş rotası — tek kullanımlık kod değişimi", ()
 
   it("gizli sorgu değerini adres çubuğundan kaldırarak temiz /v/:slug'a yönlendirir", () => {
     expect(routeSource).toContain("NextResponse.redirect(destination, 303)");
-    expect(routeSource).toContain("new URL(`/v/${slug}`, url)");
+    expect(routeSource).toContain("new URL(`/v/${slug}?editor=1`, url)");
   });
 
   it("hatalı, kullanılmış veya süresi dolmuş kodu açık hata durumuyla reddeder", () => {

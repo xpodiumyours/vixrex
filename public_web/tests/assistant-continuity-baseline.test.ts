@@ -110,7 +110,7 @@ describe("Vixrex Asistan sürekliliği — korunan mevcut akış", () => {
       "response.cookies.set(OWNER_SESSION_COOKIE"
     );
     expect(ownerEntryRouteSource).toContain(
-      "const destination = new URL(`/v/${slug}`, url)"
+      "const destination = new URL(`/v/${slug}?editor=1`, url)"
     );
     expect(ownerEntryRouteSource).toContain(
       "NextResponse.redirect(destination, 303)"

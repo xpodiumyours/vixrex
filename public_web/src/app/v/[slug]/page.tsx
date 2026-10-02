@@ -486,6 +486,11 @@ export default async function StorePage(props: PageProps) {
     if (!draft) {
       isOwnerMode = false;
     } else {
+      const sp = await props.searchParams;
+      const editorNiyeti = sp.editor === "1" || sp.owner === "true";
+      if (!editorNiyeti && (await getStoreData(params.slug))) {
+        isOwnerMode = false;
+      }
       ownerCatalog = await getOwnerCatalog(ownerSession.sessionToken);
 
       if (ownerSession) {
