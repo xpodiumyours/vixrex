@@ -1,0 +1,18 @@
+# Vixrex
+
+> Vixrex, işletmelerin bilgilerini, fotoğraflarını, ürünlerini, adresini ve WhatsApp iletişimini tek vitrin linkinde toplayan dijital vitrin platformudur.
+
+Vixrex bir SaaS'tır: işletme sahipleri kayıt olur, vitrinini dakikalar içinde oluşturur ve https://vixrex.com/v/<slug> adresinde yayına alır. Kredi kartı gerekmez, komisyon alınmaz. Hizmet Türkiyeededir, arayüz Türkçedir.
+
+## Sayfalar
+
+- [Ana sayfa](https://vixrex.com/): Platform tanıtımı ve kayıt
+- [Keşfet](https://vixrex.com/kesfet): Yayındaki vitrinleri kategoriye göre keşfet
+- [Hakkımızda](https://vixrex.com/hakkimizda): Vixrex hakkında bilgi
+- [İletişim](https://vixrex.com/iletisim): Destek ve iş birliği iletişim kanalları
+- [Yardım](https://vixrex.com/yardim): Sıkça sorulan sorular
+
+## Sözleşmeler ve politikalar
+
+- [Gizlilik politikası](https://vixrex.com/privacy): Kişisel verilerin işlenmesi (KVKK)
+- [Kullanım koşulları](https://vixrex.com/legal/terms): Hizmet kullanım koşulları

@@ -1,0 +1,4 @@
+Contact: mailto:destek@vixrex.com
+Expires: 2027-10-02T00:00:00.000Z
+Canonical: https://vixrex.com/.well-known/security.txt
+Preferred-Languages: tr, en

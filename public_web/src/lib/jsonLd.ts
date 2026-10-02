@@ -35,6 +35,7 @@ export function organizationJsonLd(siteUrl: string) {
     "@type": "Organization",
     name: "Vixrex",
     url: siteUrl,
+    logo: `${siteUrl}/icon-512.png`,
     description:
       "İşletmelerin bilgilerini, ürünlerini, adresini ve WhatsApp iletişimini tek linkte toplayan dijital vitrin platformu.",
     areaServed: "TR",
