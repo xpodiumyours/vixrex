@@ -88,6 +88,7 @@ void main() {
       expect(payload['privacy_notice_version'], 'privacy-v1');
       expect(payload['terms_accepted'], isTrue);
       expect(payload['explicit_consent_given'], isTrue);
+      expect(payload['publication_consent_accepted'], isTrue);
       expect(payload['publication_consent_version'], 'consent-v1');
     });
 
