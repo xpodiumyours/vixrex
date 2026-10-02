@@ -125,15 +125,18 @@ describe("landing asistanı vitrini gerçekten yayınlar", () => {
     });
   });
 
-  it("yasal onay istenmediyse damga yazmaz", async () => {
+  it("yasal onay yoksa vitrin hiç oluşturmaz, neyin eksik olduğunu söyler", async () => {
     kuran(AKTIF_BELGELER);
 
-    await POST(govde({ legal_consent: false }));
+    const response = await POST(govde({ legal_consent: false }));
 
-    const gonderilen = rpcCagrisi("update_store_with_token")?.[1].p_store;
-    expect(gonderilen).toMatchObject({ is_published: true });
-    expect(gonderilen.privacy_notice_acknowledged).toBeUndefined();
-    expect(gonderilen.terms_accepted).toBeUndefined();
+    // Eski davranış: vitrin yine oluşur sonra yayın kapısında düşerdi →
+    // ortada yayına alınamayan bir kayıt kalırdı. Artık baştan duruyoruz.
+    expect(response.status).toBe(422);
+    const govdeSonucu = await response.json();
+    expect(govdeSonucu.hata).toContain("üç yasal onayın tamamı gerekli");
+    expect(rpcCagrisi("create_store_with_token")).toBeUndefined();
+    expect(rpcCagrisi("update_store_with_token")).toBeUndefined();
   });
 
   it("yayın kapısı reddederse sahte başarı döndürmez, slug'ı korur", async () => {
@@ -155,7 +158,11 @@ describe("landing asistanı vitrini gerçekten yayınlar", () => {
 
     expect(response.status).toBe(500);
     const govdeSonucu = await response.json();
-    expect(govdeSonucu.hata).toContain("yayınlanamadı");
+    // Sahte başarı yok; ham kod da gösterilmiyor — neyin yanlış olduğu
+    // esnafın anlayacağı cümleyle söyleniyor.
+    expect(govdeSonucu.tamam).toBeUndefined();
+    expect(govdeSonucu.hata).toContain("WhatsApp numarası geçerli görünmüyor");
+    expect(govdeSonucu.sebep).toBe("STORE_WHATSAPP_INVALID");
     expect(govdeSonucu.slug).toBeTruthy();
     expect(govdeSonucu.yonlendir).toContain("/api/owner-session");
     // Sahiplik ve oturum YİNE de kuruldu: öksüz vitrin kalmaz.
