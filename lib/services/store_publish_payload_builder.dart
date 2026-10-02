@@ -112,6 +112,7 @@ class StorePublishPayloadBuilder {
       'terms_hash': data.termsHash.trim(),
       'terms_accepted_at': data.termsAcceptedAt?.toIso8601String(),
       'explicit_consent_given': data.publicationConsentAccepted,
+      'publication_consent_accepted': data.publicationConsentAccepted,
       'publication_consent_version': data.publicationConsentVersion.trim(),
       'publication_consent_hash': data.publicationConsentHash.trim(),
       'publication_consent_accepted_at':
