@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { yayinSahiplikKarari } from "@/lib/yayinSahiplikKarari";
 
 /**
@@ -43,6 +43,49 @@ function generateEditToken(): string {
   const array = new Uint8Array(32);
   crypto.getRandomValues(array);
   return Array.from(array, (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+const YASAL_BELGE_TURLERI = ["privacy", "terms", "consent"] as const;
+type YasalBelgeTuru = (typeof YASAL_BELGE_TURLERI)[number];
+
+type AktifYasalBelgeler = Record<
+  YasalBelgeTuru,
+  { version: string; content_hash: string }
+>;
+
+// `accept_store_legal_consent` RPC'si aktif sürümü SUNUCUDA okuyup
+// damgalar; istemci gövdesinden gelen sürüm/hash güvenilmezdir. Landing
+// asistanı da aynı damgayı, aynı kaynaktan üretmek zorunda.
+async function aktifYasalBelgeleriOku(
+  supabase: SupabaseClient<any>,
+): Promise<AktifYasalBelgeler | null> {
+  const { data, error } = await supabase
+    .from("legal_documents")
+    .select("document_type, version, content_hash")
+    .in("document_type", [...YASAL_BELGE_TURLERI])
+    .eq("is_active", true);
+
+  if (error || !Array.isArray(data)) return null;
+
+  const bulunan = new Map<string, { version: string; content_hash: string }>();
+  for (const satir of data as {
+    document_type?: unknown;
+    version?: unknown;
+    content_hash?: unknown;
+  }[]) {
+    const tur = String(satir.document_type ?? "");
+    const version = String(satir.version ?? "").trim();
+    const hash = String(satir.content_hash ?? "").trim();
+    if (tur && version && hash) bulunan.set(tur, { version, content_hash: hash });
+  }
+
+  const sonuc = {} as AktifYasalBelgeler;
+  for (const tur of YASAL_BELGE_TURLERI) {
+    const belge = bulunan.get(tur);
+    if (!belge) return null;
+    sonuc[tur] = belge;
+  }
+  return sonuc;
 }
 
 export async function POST(request: NextRequest) {
@@ -282,6 +325,59 @@ export async function POST(request: NextRequest) {
   const yonlendir =
     `/api/owner-session?slug=${encodeURIComponent(slug)}` +
     `&ocode=${encodeURIComponent(kod)}`;
+
+  // ADIM 5 — vitrini GERÇEKTEN yayınla.
+  //
+  // `create_store_with_token` INSERT'i is_published=false yazıp bitiyor
+  // (20260824050000); Flutter da bu yüzden ardından `update_store_with_token`
+  // çağırıyor. Web'de bu ikinci adım yoktu: asistan "yayınlandı" derdi,
+  // vitrin taslak kalır, Keşfet'e girmez ve müşteri linki 404 verirdi.
+  //
+  // Yayın denemesi bilinçli olarak SAHİPLİK ve oturum kurulduktan SONRA
+  // yapılır: yayın kapısı reddederse vitrin sahipsiz/öksüz kalmaz, kullanıcı
+  // Vitrinim ekranından tekrar yayınlayabilir.
+  const yasalOnay = govde.legal_consent === true;
+  const belgeler = yasalOnay
+    ? await aktifYasalBelgeleriOku(supabaseUser)
+    : null;
+
+  const yasalDamga: Record<string, unknown> = belgeler
+    ? {
+        privacy_notice_acknowledged: true,
+        privacy_notice_version: belgeler.privacy.version,
+        privacy_notice_hash: belgeler.privacy.content_hash,
+        terms_accepted: true,
+        terms_version: belgeler.terms.version,
+        terms_hash: belgeler.terms.content_hash,
+        publication_consent_accepted: true,
+        publication_consent_version: belgeler.consent.version,
+        publication_consent_hash: belgeler.consent.content_hash,
+      }
+    : {};
+
+  const { error: yayinHatasi } = await supabaseUser.rpc(
+    "update_store_with_token",
+    {
+      p_slug: slug,
+      p_edit_token: editToken,
+      p_store: { ...storeData, ...yasalDamga },
+    },
+  );
+
+  if (yayinHatasi) {
+    console.error("[create-store] yayınlama başarısız:", yayinHatasi.message);
+    return NextResponse.json(
+      {
+        hata:
+          "Vitrinin oluşturuldu ama yayınlanamadı. " +
+          "Vitrinim sayfasından tekrar yayınlayabilirsin.",
+        slug,
+        yonlendir,
+        sebep: yayinHatasi.message,
+      },
+      { status: 500 },
+    );
+  }
 
   return NextResponse.json({
     tamam: true,
