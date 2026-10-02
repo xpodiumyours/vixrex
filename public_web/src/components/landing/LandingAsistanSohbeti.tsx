@@ -8,6 +8,7 @@ import {
   ASISTAN_BITIS,
   ASISTAN_KARSILAMA,
   asistanHandoffOlustur,
+  handoffMesajMetni,
   taslagiKaydet,
   type AsistanCevaplari,
 } from "@/lib/landingAsistanAkisi";
@@ -253,12 +254,7 @@ export function LandingAsistanSohbeti({
   }
 
   function cevapOzeti(alan: (typeof ASISTAN_ADIMLARI)[number]) {
-    if (alan.alan === "location") {
-      return [cevaplar.district_name, cevaplar.province_name, cevaplar.address]
-        .filter(Boolean)
-        .join(" — ");
-    }
-    return alan.cevapAnahtari ? String(cevaplar[alan.cevapAnahtari] ?? "") : "";
+    return handoffMesajMetni(alan, cevaplar);
   }
 
   const yasalOnayVerildi = aydinlatmaOnay && sartlarOnay && acikRizaOnay;

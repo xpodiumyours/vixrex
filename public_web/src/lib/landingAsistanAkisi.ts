@@ -108,10 +108,57 @@ export interface AsistanCevaplari {
   acik_riza_onay?: boolean;
   assistant_handoff?: {
     version: 1;
-    completed_steps: ["name", "category", "whatsapp", "location", "legal", "publish"];
+    completed_steps: [
+      "name",
+      "category",
+      "whatsapp",
+      "location",
+      "legal",
+      "publishing",
+    ];
     next_step: null;
     messages: { role: "assistant" | "user"; text: string }[];
   };
+}
+
+/**
+ * Handoff adım adı eşlemesi.
+ *
+ * `shared/vixrex_mesajlar.json` akışı `publish` der; DB'nin
+ * `sanitize_assistant_handoff` izin listesi ise `publishing` bekler
+ * (20260811180000_assistant_handoff_core.sql). İsim uyuşmazlığı canlıda
+ * "asistan konuşması aktarılamadı" hatası üretti; yayın adımı sessizce
+ * reddediliyordu.
+ */
+const HANDOFF_ADIMLARI: Record<AsistanAdimi["alan"], string> = {
+  name: "name",
+  category: "category",
+  whatsapp: "whatsapp",
+  location: "location",
+  legal: "legal",
+  publish: "publishing",
+  share: "publishing",
+};
+
+/** DB, boş kullanıcı metnini de reddeder (INVALID_ASSISTANT_HANDOFF_MESSAGE). */
+export function handoffMesajMetni(
+  adim: AsistanAdimi,
+  cevaplar: AsistanCevaplari,
+): string {
+  const ham = adim.alan === "location"
+    ? [cevaplar.district_name, cevaplar.province_name, cevaplar.address]
+        .filter(Boolean)
+        .join(" — ")
+    : adim.cevapAnahtari
+      ? String(cevaplar[adim.cevapAnahtari] ?? "")
+      : "";
+
+  if (ham.trim()) return ham;
+
+  if (adim.alan === "legal") {
+    return cevaplar.legal_consent === true ? "Onaylandı" : "Onaylanmadı";
+  }
+  return adim.dugme;
 }
 
 export function asistanHandoffOlustur(
@@ -124,21 +171,16 @@ export function asistanHandoffOlustur(
     },
   ];
   for (const adim of ASISTAN_ADIMLARI) {
-    const cevap = adim.alan === "location"
-      ? [cevaplar.district_name, cevaplar.province_name, cevaplar.address]
-          .filter(Boolean)
-          .join(" — ")
-      : adim.cevapAnahtari
-        ? String(cevaplar[adim.cevapAnahtari] ?? "")
-        : "";
     messages.push(
       { role: "assistant", text: `${adim.baslik}\n${adim.aciklama}` },
-      { role: "user", text: cevap },
+      { role: "user", text: handoffMesajMetni(adim, cevaplar) },
     );
   }
   return {
     version: 1,
-    completed_steps: ["name", "category", "whatsapp", "location", "legal", "publish"],
+    completed_steps: ASISTAN_ADIMLARI.map(
+      (adim) => HANDOFF_ADIMLARI[adim.alan] as "name",
+    ) as NonNullable<AsistanCevaplari["assistant_handoff"]>["completed_steps"],
     next_step: null,
     messages,
   };
