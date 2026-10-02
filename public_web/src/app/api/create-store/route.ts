@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js";
 import { yayinSahiplikKarari } from "@/lib/yayinSahiplikKarari";
 
 /**
@@ -56,23 +56,13 @@ type AktifYasalBelgeler = Record<
 // `accept_store_legal_consent` RPC'si aktif sürümü SUNUCUDA okuyup
 // damgalar; istemci gövdesinden gelen sürüm/hash güvenilmezdir. Landing
 // asistanı da aynı damgayı, aynı kaynaktan üretmek zorunda.
-async function aktifYasalBelgeleriOku(
-  supabase: SupabaseClient<any>,
-): Promise<AktifYasalBelgeler | null> {
-  const { data, error } = await supabase
-    .from("legal_documents")
-    .select("document_type, version, content_hash")
-    .in("document_type", [...YASAL_BELGE_TURLERI])
-    .eq("is_active", true);
-
-  if (error || !Array.isArray(data)) return null;
+function aktifYasalBelgeleriHaritala(
+  satirlar: unknown,
+): AktifYasalBelgeler | null {
+  if (!Array.isArray(satirlar)) return null;
 
   const bulunan = new Map<string, { version: string; content_hash: string }>();
-  for (const satir of data as {
-    document_type?: unknown;
-    version?: unknown;
-    content_hash?: unknown;
-  }[]) {
+  for (const satir of satirlar as Record<string, unknown>[]) {
     const tur = String(satir.document_type ?? "");
     const version = String(satir.version ?? "").trim();
     const hash = String(satir.content_hash ?? "").trim();
@@ -337,9 +327,15 @@ export async function POST(request: NextRequest) {
   // yapılır: yayın kapısı reddederse vitrin sahipsiz/öksüz kalmaz, kullanıcı
   // Vitrinim ekranından tekrar yayınlayabilir.
   const yasalOnay = govde.legal_consent === true;
-  const belgeler = yasalOnay
-    ? await aktifYasalBelgeleriOku(supabaseUser)
-    : null;
+  let belgeler: AktifYasalBelgeler | null = null;
+  if (yasalOnay) {
+    const { data: belgeSatirlari } = await supabaseUser
+      .from("legal_documents")
+      .select("document_type, version, content_hash")
+      .in("document_type", [...YASAL_BELGE_TURLERI])
+      .eq("is_active", true);
+    belgeler = aktifYasalBelgeleriHaritala(belgeSatirlari);
+  }
 
   const yasalDamga: Record<string, unknown> = belgeler
     ? {
