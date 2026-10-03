@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@supabase/supabase-js";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 import { YAYIN_KAPISI_UYARISI } from "@/lib/fiyatlandirma";
+import { kesfetOnbelleginiYenile } from "@/lib/explore";
 
 // Sahip çalışma taslağını canlı vitrine yayınlar (implementation_plan.md Faz 11).
 //
@@ -130,6 +131,8 @@ export async function POST(request: NextRequest) {
 
   // Canlı satır değişti — /v/:slug önbelleği tazelenir.
   revalidatePath(`/v/${slug}`);
+  // Keşfet listesi de tazelenir: yayınlanan vitrin anında görünsün.
+  kesfetOnbelleginiYenile();
 
   return NextResponse.json({
     tamam: true,
