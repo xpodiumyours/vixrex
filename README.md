@@ -206,8 +206,8 @@ kontrolü şarttır.
 
 Yeni gelen kişinin **yanlış deseni çoğaltmaması** için; issue listesi değildir.
 
-- **Fiyat tek kaynakta değil.** "299 TL" on ayrı dosyada elle yazılı (Flutter,
-  web ve ödeme kodunda). Fiyat değişirse hepsini tek tek bulmak gerekir.
+- ~~**Fiyat tek kaynakta değil.**~~ Çözüldü (#535): `shared/fiyatlandirma.json`
+  tek kaynak; Flutter ve web bu dosyadan üretiliyor.
 - **Renkler elle kopyalanmış.** `lib/theme/app_colors.dart` 38 renk tanımlıyor;
   `public_web/src/app/globals.css` bunların bir kısmını `--color-lp-*` adıyla
   elle taşımış. Hiçbir test ikisini bağlamıyor.
@@ -310,4 +310,5 @@ siler. Bu 2026-08-26'da yaşandı.
 
 ## 📄 Lisans
 
-Bu proje özel mülkiyete tabidir. Tüm hakları saklıdır.
+Kaynak kodu herkese açıktır (public repo), ancak lisans özel mülkiyet
+şartlarındadır; `LICENSE` dosyasına bakın.

@@ -1,17 +1,16 @@
 # Güvenlik Politikası
 
-VixRex kapalı kaynaklı, özel mülkiyete tabi bir projedir (bkz. `LICENSE`).
+VixRex'in kaynak kodu herkese açıktır (public depo); lisans özel
+mülkiyet şartlarındadır (bkz. `LICENSE`).
 
 ## Güvenlik açığı bildirimi
 
 Bu depoda genel kullanıma açık bir güvenlik e-posta adresi
 bulunmamaktadır. Bir güvenlik açığı (ör. veri sızıntısı, yetkisiz erişim,
 kimlik doğrulama açığı) tespit ettiyseniz lütfen bunu **herkese açık bir
-issue olarak paylaşmayın**; yerine bu depoda özel/gizli bir
-[GitHub issue](https://github.com/xpodiumyours/vixrex/issues/new) açıp
-konuyu yalnızca başlıkta ("Güvenlik: ..." gibi) belirtin, ayrıntıyı issue
-sahibiyle repo üzerinden özel olarak paylaşacağınızı yazın; repo sahibi
-(`@xpodiumyours`) sizinle iletişime geçecektir.
+issue olarak paylaşmayın**; GitHub'ın özel güvenlik açığı bildirimi
+(Private Vulnerability Reporting) özelliğini kullanın veya repo sahibi
+(`@xpodiumyours`) ile özel kanaldan iletişime geçin.
 
 ## Kapsam
 

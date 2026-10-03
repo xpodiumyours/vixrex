@@ -1,9 +1,10 @@
 # Katkıda Bulunma
 
 VixRex, tek geliştirici (repo sahibi) ve ona yardım eden yapay zekâ
-ajanları (Claude, ChatGPT, Codex vb.) tarafından geliştirilen kapalı
-kaynaklı bir projedir. Dışarıdan katkı süreci (fork/PR akışı) açık
-değildir.
+ajanları (Claude, ChatGPT, Codex vb.) tarafından geliştirilen bir
+projedir. Kaynak kodu herkese açıktır (public depo), ancak lisans
+özel mülkiyet şartlarındadır ve dışarıdan katkı süreci (fork/PR
+akışı) açık değildir.
 
 ## Bu depoda çalışırken
 

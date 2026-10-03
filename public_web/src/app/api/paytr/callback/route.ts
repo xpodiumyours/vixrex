@@ -11,7 +11,7 @@ import { paytrCallbackToken, paytrEnv } from "@/lib/paytr";
 //   → status='success' ise record_premium_payment RPC (service_role)
 //   → başarıda "OK" (PayTR başarıyı bu metinle anlar), hata "FAIL"
 //
-// GÜVENLİK (VIXREX_RULES §9): premium'u YALNIZ bu rota yazabilir.
+// GÜVENLİK (AGENTS.md kural 9): premium'u YALNIZ bu rota yazabilir.
 // İmza doğrulanmadan gelen istek reddedilir; istemci kendi kendine
 // premium yazamaz (Flutter'daki purchasePremium iskeleti kapatıldı).
 // Tutar callback'ten asla doğrudan güvenilmez — record_premium_payment

@@ -1,5 +1,10 @@
 # Vixrex Control Map Protocol v2
 
+> **ARŞİV (2026-10-03):** Bu protokol artık uygulanmıyor. `state.json`
+> 2026-09-28'de donmuş, `control-map-system` dalı main'den ayrı, Base44
+> omurgası aktif değil. Güncel çalışma düzeni `AGENTS.md` ve
+> `.github/workflows/ci.yml` içindedir. Bu klasör yalnız geçmiş kaydıdır.
+
 ## Kilitli kapsam
 Kalıcı panel URL'si Base44 üzerinde kalır. Base44 yalnız görüntü/komuta yüzeyidir.
 Vixrex kontrol haritasının kodu, yapısı, canlı durumu ve ajan yönetimi GitHub'dadır.

@@ -14,3 +14,5 @@ Main'e almak yayına almak değildir — site ancak push sonrası değişir.
 - [ ] İlgili testler geçti (`flutter test` / `public_web` vitest)
 - [ ] Push sonrası Vercel deploy'u izlendi
 - [ ] Canlıda doğrulandı (ilgili sayfa açılıp bakıldı)
+- [ ] Commit mesajında `Preview-Kanit: <vercel-adresi>` satırı var (AGENTS §19)
+- [ ] Commit mesajında gerekiyorsa `Kapsam-Onay:` satırı var (AGENTS §4)
