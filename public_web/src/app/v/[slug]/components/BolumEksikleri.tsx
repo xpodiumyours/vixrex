@@ -22,7 +22,7 @@ import { editableProps } from "@/lib/vitrinEditableProps";
 // her biri için gerçek bir `data-vixrex-editable` işareti çizer. Alan
 // başına kod yoktur; şemaya yeni satır eklenince kendiliğinden çıkar.
 //
-// Bu bir FORM DEĞİLDİR (VIXREX_RULES §1 — "ikinci form paneli açılmaz"):
+// Bu bir FORM DEĞİLDİR (AGENTS.md kural 1 — "ikinci form paneli açılmaz"):
 // buradaki düğmeler hiçbir şey kaydetmez, yalnız mevcut seçim akışını
 // tetikler. Tıklamayı `useFieldSelection`'daki tek global dinleyici
 // yakalar; bu dosya kendi dinleyicisini kurmaz.

@@ -73,7 +73,7 @@ describe("sahip çalışma alanı kabuğu — davranışsal garantiler", () => {
   });
 
   it("sahip panelinde form değil, tıkla-düzenle editörü bulunur (üçüncü kapı yok)", () => {
-    // 2026-08-05 kararı (VIXREX_RULES.md §1): düzenlemenin iki kapısı vardır
+    // 2026-08-05 kararı (AGENTS.md kural 1): düzenlemenin iki kapısı vardır
     // — Flutter manuel paneli ve Next.js'teki Vixrex Asistan. Next.js
     // tarafında ikinci bir FORM paneli açılmaz; o üçüncü kapı olur ve aynı
     // alan için iki kayıt yolu doğurur.

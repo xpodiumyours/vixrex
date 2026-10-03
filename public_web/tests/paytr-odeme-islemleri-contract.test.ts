@@ -19,7 +19,7 @@ const recordFn = migration.slice(
 /**
  * PayTR ödeme akışı RPC'lerinin güvenlik sözleşmesi (spec PR #4).
  *
- * Temel ilkeler (VIXREX_RULES §9):
+ * Temel ilkeler (AGENTS.md kural 9):
  * - Ödeme yalnız doğrulanmış callback üzerinden işlenir; istemci kendi
  *   kendine premium yazamaz → her iki fonksiyon da security definer +
  *   public/anon/authenticated'e açıkça kapalı, yalnız service_role.

@@ -1,4 +1,4 @@
-// PayTR Link API — imza ve parametre üretimi (VIXREX_RULES §3.7: sırlar
+// PayTR Link API — imza ve parametre üretimi (AGENTS.md kural 3.7: sırlar
 // yalnız env'den gelir, koda/README'ye yazılmaz).
 //
 // 2026-09-20 doğrulaması: dev.paytr.com resmî dokümanlarından birebir

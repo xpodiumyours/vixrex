@@ -589,7 +589,7 @@ class _VixRexOnboardingChatScreenState
             ),
           // TEK ASİSTAN (C2): birincil yol vitrini AÇIP birlikte devam
           // etmek. Manuel panel ikincil kalıyor — silinmedi, yerinde
-          // duruyor (VIXREX_RULES §1) ama artık varsayılan değil.
+          // duruyor (AGENTS.md kural 1) ama artık varsayılan değil.
           if (step == VixRexOnboardingStep.done) ...[
             if (_onboarding.hesapKorumasiz) ...[
               Container(

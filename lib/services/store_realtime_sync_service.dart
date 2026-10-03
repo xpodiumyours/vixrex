@@ -34,7 +34,7 @@ class StoreRealtimeSyncService {
   ///
   /// Sessizce başarısız olur: internet yoksa ya da sorgu düşerse `null`
   /// döner, hata fırlatmaz. Çevrimdışı çalışabilmek manuel panelin varlık
-  /// sebebi (VIXREX_RULES §1) — bu senkron onu bozamaz.
+  /// sebebi (AGENTS.md kural 1) — bu senkron onu bozamaz.
   Future<StoreData?> pullFromCloudIfNewer({
     required SupabaseClient client,
     required String slug,

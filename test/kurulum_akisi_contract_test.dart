@@ -149,7 +149,7 @@ void main() {
     });
 
     test('manuel form paneline giden ikincil yol duruyor', () {
-      // VIXREX_RULES §1: manuel üyelik paneli taşınmaz, silinmez.
+      // AGENTS.md kural 1: manuel üyelik paneli taşınmaz, silinmez.
       // Çevrimdışı ve toplu iş yolu odur.
       expect(chat, contains('_navigateAfterHandoff'));
     });

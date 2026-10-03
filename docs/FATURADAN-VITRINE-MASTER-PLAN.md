@@ -4,6 +4,10 @@ Tarih: 30 Eylül 2026
 
 Durum: Uygulama ve kabul planı. Planın yazılması, sistemin tamamlandığı anlamına gelmez.
 
+> **2026-10-03 notu:** Bu belge tarihli bir plandır; hangi işin bittiği
+> GitHub Issues ve commit geçmişinde izlenir. Buradaki durum satırları
+> 30 Eylül itibarıyla geçerlidir.
+
 ## 1. Teslim edilecek sonuç
 
 Küçük esnaf, aldığı ürünlerle ve faturasıyla baş başa kaldığında VixRex devreye girer. Esnaf **tek bir okunabilir fatura fotoğrafı** verir. Sistem firmayı ve ürünleri çözer; resmî dijital kaynakta karşılığı bulunan ürünlerin doğru bilgilerini ve gerçek görsellerini mevcut VixRex ürün kartlarına taşır. Esnaf satış fiyatını ve mevcut stoğunu kontrol eder. Ürünler, tüketicinin kullanabileceği kalitede dijital vitrinde gösterilir.
