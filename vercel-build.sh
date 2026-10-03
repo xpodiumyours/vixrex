@@ -39,6 +39,7 @@ flutter build web --release \
   --dart-define=SENTRY_DSN="${SENTRY_DSN:-}" \
   --dart-define=SENTRY_RELEASE="$SENTRY_RELEASE" \
   --dart-define=SENTRY_ENVIRONMENT="$SENTRY_ENVIRONMENT" \
+  --dart-define=REVALIDATION_SECRET="${REVALIDATION_SECRET:-}" \
   --dart-define=INSTAGRAM_SYNC_ENABLED="${INSTAGRAM_SYNC_ENABLED:-false}"
 
 if grep -q "showScoreCard" build/web/main.dart.js; then
