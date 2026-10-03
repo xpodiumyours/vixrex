@@ -34,12 +34,8 @@ NEUTRAL_FILES = {
     ".gitattributes",
     ".gitignore",
     "AGENTS.md",
-    "CLAUDE.md",
-    "CONTEXT.md",
-    "GEMINI.md",
     "LICENSE",
     "README.md",
-    "VIXREX_RULES.md",
 }
 
 FLUTTER_PREFIXES = (
