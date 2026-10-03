@@ -31,7 +31,7 @@
       "route": null,
       "live_url": "https://vixrex.com",
       "source_paths": [
-        "Vixrex Haritası.md"
+        "README.md"
       ],
       "change_permission": "proposal_requires_approval"
     },

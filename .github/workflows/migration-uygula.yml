@@ -3,7 +3,7 @@ name: Migration Uygula
 # NEDEN VAR (2026-09-27)
 # Canli veritabanina (Supabase) migration uygulamak icin depoda bir yol yoktu:
 # ajanlarin makinesinde canli anahtar olmadigi icin zincir duruyordu
-# ("Canliya cikis yolu kapali", YOL-TAHTASI risk 4). Bu is, depodaki migration
+# ("Canliya cikis yolu kapali" risk olarak izleniyordu). Bu is, depodaki migration
 # dosyalarini canliya uygular.
 #
 # UC MOD VAR

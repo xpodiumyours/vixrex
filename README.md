@@ -69,7 +69,7 @@ bağlanmayacaktır. Web'de gerçek asistan yalnız sahip panelindedir.
 Bu kural 2026-08-26'da kondu: o gün ölçüldüğünde iki yüzeyde toplam **dokuz
 ayrı "Vixrex Asistan" parçası** vardı (Flutter'da 6, web'de 3). Maketi
 "çalışmıyor" sanıp motora bağlamak dördüncü bir web asistanı doğururdu.
-Tam metin: `VIXREX_RULES.md` §1.
+Tam metin: `AGENTS.md`.
 
 ### Vitrin kalıcı hesaba bağlıdır (2026-08-26)
 
@@ -294,12 +294,9 @@ Veritabanı şeması `supabase/migrations/` altındaki sürümlü SQL dosyaları
 
 Yeni geliştirici veya ajan için sıra:
 
-1. **`VIXREX_RULES.md`** — değişmez mimari kurallar, kanıt seviyeleri, yetki
-   sınırları. **Kural kaynağı burasıdır**; bu README kural üretmez, kurala
-   yönlendirir.
-2. **`AGENTS.md`** — ajan çalışma akışı ve PR disiplini.
-3. **`CONTEXT.md`** — ürün hedefi ve güncel durum notları.
-4. Bu README — mimari rehber ve kurulum.
+1. **`AGENTS.md`** — ajan çalışma akışı, PR disiplini ve çalışma kuralları.
+   **Kural kaynağı burasıdır**; bu README kural üretmez, kurala yönlendirir.
+2. Bu README — mimari rehber ve kurulum.
 
 Sonra: değiştireceğin akışı **koddan takip et** (giriş noktası → controller →
 service/repository → Supabase → ekran). README ile kod çelişirse **kodu esas
