@@ -2,10 +2,13 @@
 
 import Image from "next/image";
 import { taslakUrunMu } from "@/lib/faturaTaslakFiltresi";
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import BulkProductUpload from "./BulkProductUpload";
 import InvoiceToProducts from "./InvoiceToProducts";
 import { OwnerCategoryManager } from "./OwnerCategoryManager";
+import { OwnerKatalogAsistani } from "./OwnerKatalogAsistani";
+import { OwnerTopluDuzenle, type TopluAksiyon } from "./OwnerTopluDuzenle";
+import { OwnerXmlYukle } from "./OwnerXmlYukle";
 import {
   OwnerRichProductFields,
   createRichProductDraft,
@@ -25,6 +28,8 @@ import {
   normalizeProductImageUrls,
 } from "@/lib/productImagePolicy";
 import { parseProductPriceNumber } from "@/lib/productPrice";
+import { fiyatUygula } from "@/lib/topluAlanGuncelle";
+import type { FotografUrunOnerisi } from "@/lib/fotografUrunCikar";
 import { eksikZorunluAlanlar, eksikZorunluAlanMesaji } from "@/lib/productRequiredFields";
 
 export interface OwnerProductCategory {
@@ -84,6 +89,19 @@ function sameStringList(left: string[], right: string[]) {
   return left.length === right.length && left.every((value, index) => value === right[index]);
 }
 
+function urunBasliginiDuzelt(ham: string): string {
+  const temiz = ham.trim().replace(/\s+/g, " ");
+  if (!temiz) return temiz;
+  return temiz
+    .split(" ")
+    .map((kelime) => {
+      if (!kelime) return kelime;
+      if (kelime.length === 1) return kelime.toUpperCase();
+      return kelime[0].toUpperCase() + kelime.slice(1).toLowerCase();
+    })
+    .join(" ");
+}
+
 async function fetchCategoryTemplateKeys(
   storeSlug: string,
 ): Promise<Record<string, string> | null> {
@@ -127,6 +145,14 @@ export function OwnerProductManager({
   const [success, setSuccess] = useState("");
   const [queuedCount, setQueuedCount] = useState(0);
   const [fetchedTemplateKeys, setFetchedTemplateKeys] = useState<Record<string, string>>({});
+  const [secimModu, setSecimModu] = useState(false);
+  const [seciliIdler, setSeciliIdler] = useState<Set<string>>(new Set());
+  const [topluAcik, setTopluAcik] = useState(false);
+  const [xmlAcik, setXmlAcik] = useState(false);
+  const [kategoriAcik, setKategoriAcik] = useState(false);
+  const [fotografOneri, setFotografOneri] = useState<FotografUrunOnerisi | null>(null);
+  const [fotoYukleniyor, setFotoYukleniyor] = useState(false);
+  const fotografInputRef = useRef<HTMLInputElement | null>(null);
 
   const resolvedCategories = useMemo(
     () => categories.map((category) => ({
@@ -270,6 +296,179 @@ export function OwnerProductManager({
     setEditing(product);
   }
 
+  function secimModunuDegistir() {
+    setSecimModu((onceki) => !onceki);
+    setSeciliIdler(new Set());
+    setTopluAcik(false);
+  }
+
+  function urunSecimiDegistir(id: string) {
+    setSeciliIdler((onceki) => {
+      const sonraki = new Set(onceki);
+      if (sonraki.has(id)) sonraki.delete(id);
+      else sonraki.add(id);
+      return sonraki;
+    });
+  }
+
+  async function urunGuncelleBody(govde: Record<string, unknown>): Promise<{ ok: boolean; hata: string }> {
+    try {
+      const cevap = await fetch("/api/products", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug: storeSlug, ...govde }),
+      });
+      const cevapGovde = await cevap.json().catch(() => null);
+      if (cevap.ok) return { ok: true, hata: "" };
+      return { ok: false, hata: responseError(cevapGovde, "Ürün güncellenemedi.") };
+    } catch {
+      return { ok: false, hata: "Bağlantı kurulamadı." };
+    }
+  }
+
+  async function topluUygula(aksiyon: TopluAksiyon) {
+    const secili = products.filter((urun) => seciliIdler.has(urun.id));
+    if (secili.length === 0) return;
+    setBusy(true);
+    setError("");
+    setSuccess("");
+    let atlananFiyat = 0;
+    let beklenen = secili.length;
+    let basarili = 0;
+    let ilkHata = "";
+    try {
+      if (aksiyon.tip === "fiyat") {
+        const fiyatSonuc = fiyatUygula(
+          secili.map((urun) => ({ id: urun.id, priceText: urun.price_text ?? "" })),
+          aksiyon.mod,
+          aksiyon.deger,
+        );
+        atlananFiyat = fiyatSonuc.atlanan.length;
+        beklenen = fiyatSonuc.guncellenen.length;
+        for (const guncel of fiyatSonuc.guncellenen) {
+          const sonuc = await urunGuncelleBody({ productId: guncel.id, priceText: guncel.priceText });
+          if (sonuc.ok) basarili++;
+          else if (!ilkHata) ilkHata = sonuc.hata;
+        }
+      } else if (aksiyon.tip === "stok") {
+        for (const urun of secili) {
+          const sonuc = await urunGuncelleBody({ productId: urun.id, stockStatus: aksiyon.deger });
+          if (sonuc.ok) basarili++;
+          else if (!ilkHata) ilkHata = sonuc.hata;
+        }
+      } else {
+        for (const urun of secili) {
+          const sonuc = await urunGuncelleBody({ productId: urun.id, categoryId: aksiyon.kategoriId });
+          if (sonuc.ok) basarili++;
+          else if (!ilkHata) ilkHata = sonuc.hata;
+        }
+      }
+      await refreshAll();
+      if (basarili === 0) {
+        setError(ilkHata || "Ürünler kaydedilemedi.");
+        return;
+      }
+      const atlamaNotu = atlananFiyat > 0 ? ` ${atlananFiyat} ürünün fiyatı sayı olarak okunamadığı için atlandı.` : "";
+      const eksikNotu = basarili < beklenen ? ` ${beklenen - basarili} ürün güncellenemedi.` : "";
+      setSuccess(`Seçili ürünler güncellendi.${atlamaNotu}${eksikNotu}`);
+      setSecimModu(false);
+      setSeciliIdler(new Set());
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function baslikOnerileriniUygula() {
+    if (products.length === 0) {
+      setSuccess("Önce ürün ekleyin, sonra başlık önerilerini uygulayın.");
+      return;
+    }
+    setBusy(true);
+    setError("");
+    setSuccess("");
+    let iyilestirilen = 0;
+    let ilkHata = "";
+    try {
+      for (const urun of products) {
+        const sonraki = urunBasliginiDuzelt(urun.name);
+        if (sonraki === urun.name) continue;
+        const sonuc = await urunGuncelleBody({ productId: urun.id, name: sonraki });
+        if (sonuc.ok) iyilestirilen++;
+        else if (!ilkHata) ilkHata = sonuc.hata;
+      }
+      await refreshAll();
+      if (iyilestirilen > 0) setSuccess(`${iyilestirilen} ürün başlığı iyileştirildi.`);
+      else if (ilkHata) setError(ilkHata);
+      else setSuccess("Ürün başlıkları zaten düzenli görünüyor.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function fotografCikar(dosya: File) {
+    if (fotoYukleniyor) return;
+    setFotoYukleniyor(true);
+    setError("");
+    setSuccess("");
+    try {
+      const form = new FormData();
+      form.append("slug", storeSlug);
+      form.append("dosya", dosya);
+      const cevap = await fetch("/api/fotograf-urun-cikar", { method: "POST", body: form });
+      const govde = await cevap.json().catch(() => null);
+      if (!cevap.ok || !govde?.oneri) {
+        throw new Error(
+          typeof govde?.hata === "string" && govde.hata ? govde.hata : "Fotoğraf okunamadı.",
+        );
+      }
+      setFotografOneri(govde.oneri as FotografUrunOnerisi);
+      setShowInvoice(false);
+      setShowBulkUpload(false);
+      setEditing("new");
+    } catch (fotoHata) {
+      setError(fotoHata instanceof Error && fotoHata.message ? fotoHata.message : "Fotoğraf okunamadı.");
+    } finally {
+      setFotoYukleniyor(false);
+    }
+  }
+
+  async function urunCogalt(urun: OwnerProduct) {
+    setBusy(true);
+    setError("");
+    setSuccess("");
+    try {
+      const cevap = await fetch("/api/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug: storeSlug,
+          name: `${urun.name} (Kopya)`,
+          description: urun.description ?? "",
+          priceText: urun.price_text ?? "",
+          imageUrls: urun.image_urls ?? [],
+          categoryId: urun.category_id ?? "",
+          stockStatus: urun.stock_status || "Mevcut",
+          stockQuantity: urun.stock_quantity ?? null,
+          oldPriceAmount: urun.old_price_amount ?? null,
+          badgeTag: urun.badge_tag ?? null,
+          fulfillmentRegion: urun.fulfillment_region ?? null,
+          brand: urun.brand ?? null,
+          barcode: urun.barcode ?? null,
+          ...(urun.metadata ? { metadata: urun.metadata } : {}),
+          ...(urun.variants ? { variants: urun.variants } : {}),
+        }),
+      });
+      const cevapGovde = await cevap.json().catch(() => null);
+      if (!cevap.ok) throw new Error(responseError(cevapGovde, "Ürün kopyalanamadı."));
+      await refreshAll();
+      setSuccess("Ürün kopyalandı.");
+    } catch (kopyaHata) {
+      setError(kopyaHata instanceof Error && kopyaHata.message ? kopyaHata.message : "Ürün kopyalanamadı.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function saveProduct(form: ProductFormValue) {
     setBusy(true);
     setError("");
@@ -311,6 +510,7 @@ export function OwnerProductManager({
 
       await refreshAll();
       setEditing(null);
+      setFotografOneri(null);
       const taslak = Boolean(payload && typeof payload === "object" && (payload as { taslak?: unknown }).taslak);
       const eksikFotografSayisi =
         payload && typeof payload === "object" && typeof (payload as { eksikFotografSayisi?: unknown }).eksikFotografSayisi === "number"
@@ -411,30 +611,60 @@ export function OwnerProductManager({
       )}
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 id="products-title" className="text-xl font-bold text-[var(--owner-text)]">Ürünler</h2>
-          <p className="mt-1 text-sm text-[var(--owner-muted)]">Vitrinindeki ürünleri ekle, düzenle veya kaldır.</p>
+          <h2 id="products-title" className="text-xl font-bold text-[var(--owner-text)]">Ürün Yönetimi</h2>
+          <p className="mt-1 text-sm text-[var(--owner-muted)]">Ürünlerini ve kategorilerini tek yerden yönet.</p>
         </div>
         <div className="flex shrink-0 gap-2">
-          <button type="button" className="owner-button-secondary" onClick={() => { setError(""); setSuccess(""); setShowBulkUpload(!showBulkUpload); setEditing(null); }} disabled={busy}>📄 Toplu Yükle</button>
-            <button type="button" className="owner-button-secondary" onClick={() => { setError(""); setSuccess(""); setShowInvoice(true); setShowBulkUpload(false); setEditing(null); }} disabled={busy}>🧾 Faturadan Ekle</button>
-          <button type="button" className="owner-button-primary" onClick={() => { setError(""); setSuccess(""); setShowBulkUpload(false); setEditing("new"); }} disabled={busy}>+ Ürün Ekle</button>
+          <button type="button" className="owner-button-secondary" onClick={secimModunuDegistir} disabled={busy}>{secimModu ? "Vazgeç" : "Seç"}</button>
+          <button type="button" className="owner-button-secondary" onClick={() => setKategoriAcik(true)} disabled={busy}>🏷️ Kategoriler</button>
         </div>
       </div>
+
+      <input
+        ref={fotografInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        className="hidden"
+        onChange={(e) => { const secilen = e.target.files?.[0]; e.target.value = ""; if (secilen) void fotografCikar(secilen); }}
+      />
 
       {error ? <p className="owner-error mb-4 text-sm" role="alert">{error}</p> : null}
       {queuedCount > 0 ? <p className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm font-bold text-amber-600" role="status">{queuedCount} ürün işlemi kuyrukta — bağlantı gelince otomatik gönderilecek (vitrin metin kuyruğundan ayrı).</p> : null}
       {success ? <p className="mb-4 rounded-xl border border-[var(--owner-success)]/40 bg-[var(--owner-success)]/10 p-3 text-sm text-[var(--owner-success)]" role="status">{success}</p> : null}
 
-      <OwnerCategoryManager storeSlug={storeSlug} categories={categoriesWithCount} varsayilanUrunTipi={varsayilanUrunTipi} onRefresh={refreshAll} />
+      <OwnerKatalogAsistani
+        onFotografCikar={() => { if (!fotoYukleniyor) fotografInputRef.current?.click(); }}
+        onFaturaCikar={() => { setError(""); setSuccess(""); setShowBulkUpload(false); setEditing(null); setShowInvoice(true); }}
+        onBaslikOnerileri={() => { void baslikOnerileriniUygula(); }}
+        fotoYukleniyor={fotoYukleniyor}
+      />
 
-      <div className="mt-4 flex flex-wrap gap-2">
-        <input value={filterText} onChange={(e) => setFilterText(e.target.value)} placeholder="Ürün ara — ad, açıklama, fiyat, rozet" className="owner-input min-w-[200px] flex-[1_1_240px] text-sm" />
-        <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="owner-input flex-[1_1_192px] text-sm">
-          <option value="">Tüm kategoriler</option>
-          {resolvedCategories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
-        <label className="self-center text-sm"><input type="checkbox" checked={yalnizTaslak} onChange={(e) => setYalnizTaslak(e.target.checked)} /> Yalnız taslaklar</label>
-        {(filterText || filterCategory || yalnizTaslak) && <span className="self-center text-xs text-[var(--owner-muted)]">{filteredProducts.length}/{products.length}</span>}
+      <div className="mt-4">
+        <OwnerCategoryManager storeSlug={storeSlug} categories={categoriesWithCount} varsayilanUrunTipi={varsayilanUrunTipi} onRefresh={refreshAll} acik={kategoriAcik} onAcikDegis={setKategoriAcik} />
+      </div>
+
+      <div className="mt-4 flex flex-col gap-3">
+        <div className="flex flex-wrap gap-2">
+          <input value={filterText} onChange={(e) => setFilterText(e.target.value)} placeholder="Ürün ara..." className="owner-input min-w-[200px] flex-[1_1_240px] text-sm" />
+          <label className="self-center text-sm"><input type="checkbox" checked={yalnizTaslak} onChange={(e) => setYalnizTaslak(e.target.checked)} /> Yalnız taslaklar</label>
+          {(filterText || filterCategory || yalnizTaslak) && <span className="self-center text-xs text-[var(--owner-muted)]">{filteredProducts.length}/{products.length}</span>}
+        </div>
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {[{ id: "", name: "Tümü" }, ...resolvedCategories].map((cip) => (
+            <button
+              key={cip.id || "tumu"}
+              type="button"
+              onClick={() => setFilterCategory(cip.id)}
+              className={
+                filterCategory === cip.id
+                  ? "shrink-0 rounded-full border border-[var(--owner-primary)] bg-[var(--owner-primary)]/10 px-3 py-1.5 text-xs font-bold text-[var(--owner-primary)]"
+                  : "shrink-0 rounded-full border border-[var(--owner-border)] px-3 py-1.5 text-xs text-[var(--owner-text-alt)] hover:border-[var(--owner-primary)]"
+              }
+            >
+              {cip.name}
+            </button>
+          ))}
+        </div>
       </div>
 
       {showInvoice && !editing && (
@@ -460,23 +690,33 @@ export function OwnerProductManager({
           busy={busy}
           storeSlug={storeSlug}
           storeName={storeName}
-          onCancel={() => setEditing(null)}
+          baslangic={editing === "new" ? fotografOneri ?? undefined : undefined}
+          onCancel={() => { setEditing(null); setFotografOneri(null); }}
           onSave={saveProduct}
         />
       ) : products.length === 0 ? (
         <div className="owner-card px-5 py-10 text-center sm:px-8">
-          <h3 className="font-bold text-[var(--owner-text)]">Henüz ürün yok</h3>
-          <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[var(--owner-muted)]">İlk ürününü ekleyerek vitrininin kataloğunu oluşturmaya başla.</p>
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto h-11 w-11 text-[var(--owner-primary)]">
+            <path d="M6 7h12l1 13H5L6 7z" />
+            <path d="M9 7a3 3 0 0 1 6 0" />
+          </svg>
+          <h3 className="mt-3 font-bold text-[var(--owner-text)]">Henüz ürün yok</h3>
+          <p className="mx-auto mt-1 max-w-md text-sm leading-6 text-[var(--owner-muted)]">İlk ürününü ekleyerek kataloğunu oluştur.</p>
         </div>
       ) : filteredProducts.length === 0 ? (
-        <p className="mt-6 text-center text-sm text-[var(--owner-muted)]">Aramayla eşleşen ürün yok.</p>
+        <p className="mt-6 text-center text-sm text-[var(--owner-muted)]">Aramana uygun ürün bulunamadı.</p>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filteredProducts.map((product) => {
             const image = product.image_urls?.find((url) => url.trim());
             const isService = product.product_categories?.product_template_key === "service";
+            const secili = seciliIdler.has(product.id);
             return (
-              <article key={product.id} className="owner-card overflow-hidden">
+              <article
+                key={product.id}
+                className={`owner-card overflow-hidden${secimModu ? " cursor-pointer" : ""}${secili ? " ring-2 ring-[var(--owner-primary)]" : ""}`}
+                onClick={secimModu ? () => urunSecimiDegistir(product.id) : undefined}
+              >
                 <div className="relative aspect-[4/3] bg-[var(--owner-bg-soft)]">
                   {image ? <Image src={image} alt={`${product.name} ürün görseli`} fill unoptimized sizes="(min-width: 1024px) 300px, (min-width: 640px) 45vw, 100vw" className="object-cover" /> : <div className="flex h-full items-center justify-center text-sm text-[var(--owner-muted)]">Görsel eklenmedi</div>}
                   {product.is_visible === false ? (
@@ -484,6 +724,18 @@ export function OwnerProductManager({
                   ) : null}
                 </div>
                 <div className="p-4">
+                  {secimModu ? (
+                    <label className="mb-2 flex cursor-pointer items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={secili}
+                        onChange={() => urunSecimiDegistir(product.id)}
+                        className="h-4 w-4 accent-[var(--owner-primary)]"
+                        disabled={busy}
+                      />
+                      <span className="text-xs font-bold text-[var(--owner-text)]">Bu ürünü seç</span>
+                    </label>
+                  ) : null}
                   <div className="flex items-start justify-between gap-3">
                     <h3 className="line-clamp-2 font-bold text-[var(--owner-text)]">{product.name}</h3>
                     {!isService ? (
@@ -499,23 +751,70 @@ export function OwnerProductManager({
                     {product.fulfillment_region && <span className="text-[10px] text-[var(--owner-muted)]">• {product.fulfillment_region}</span>}
                   </div>
                   <p className="mt-1 text-xs text-[var(--owner-muted)]">{product.product_categories?.name || "Kategorisiz"}</p>
-                  {product.is_visible === false ? (
-                    <button type="button" className="owner-button-secondary mt-3 w-full text-xs" onClick={() => faturayaDon(product)} disabled={busy}>🧾 Faturaya dön</button>
+                  {!secimModu ? (
+                    <>
+                      {product.is_visible === false ? (
+                        <button type="button" className="owner-button-secondary mt-3 w-full text-xs" onClick={() => faturayaDon(product)} disabled={busy}>🧾 Faturaya dön</button>
+                      ) : null}
+                      <div className="mt-4 grid grid-cols-4 gap-2">
+                        <button type="button" className="owner-button-secondary text-xs" onClick={() => openEditProduct(product)} disabled={busy} title="Düzenle">✏️</button>
+                        <button type="button" className="owner-button-secondary text-xs" onClick={() => void urunCogalt(product)} disabled={busy} title="Çoğalt">⧉</button>
+                        <button type="button" className="owner-button-danger text-xs" onClick={() => setDeleting(product)} disabled={busy} title="Sil">🗑️</button>
+                        <div className="flex gap-0.5">
+                          <button type="button" className="owner-button-secondary flex-1 text-xs" onClick={() => moveProduct(products.indexOf(product), "up")} disabled={busy || secimModu || !!filterText || !!filterCategory || products.indexOf(product) === 0} title={filterText || filterCategory ? "Filtre varken sıralama kapalı" : "Yukarı taşı"}>↑</button>
+                          <button type="button" className="owner-button-secondary flex-1 text-xs" onClick={() => moveProduct(products.indexOf(product), "down")} disabled={busy || secimModu || !!filterText || !!filterCategory || products.indexOf(product) === products.length - 1} title={filterText || filterCategory ? "Filtre varken sıralama kapalı" : "Aşağı taşı"}>↓</button>
+                        </div>
+                      </div>
+                    </>
                   ) : null}
-                  <div className="mt-4 grid grid-cols-3 gap-2">
-                    <button type="button" className="owner-button-secondary text-xs" onClick={() => openEditProduct(product)} disabled={busy}>✏️</button>
-                    <button type="button" className="owner-button-danger text-xs" onClick={() => setDeleting(product)} disabled={busy}>🗑️</button>
-                    <div className="flex gap-0.5">
-                      <button type="button" className="owner-button-secondary flex-1 text-xs" onClick={() => moveProduct(products.indexOf(product), "up")} disabled={busy || !!filterText || !!filterCategory || products.indexOf(product) === 0} title={filterText || filterCategory ? "Filtre varken sıralama kapalı" : "Yukarı taşı"}>↑</button>
-                      <button type="button" className="owner-button-secondary flex-1 text-xs" onClick={() => moveProduct(products.indexOf(product), "down")} disabled={busy || !!filterText || !!filterCategory || products.indexOf(product) === products.length - 1} title={filterText || filterCategory ? "Filtre varken sıralama kapalı" : "Aşağı taşı"}>↓</button>
-                    </div>
-                  </div>
                 </div>
               </article>
             );
           })}
         </div>
       )}
+
+      {!editing ? (
+        secimModu ? (
+          <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-[var(--owner-border)] bg-[var(--owner-bg-soft)] p-3">
+            <p className="text-sm font-bold text-[var(--owner-text)]">
+              {seciliIdler.size === 0 ? "Düzenlemek için ürün seç" : `${seciliIdler.size} ürün seçili`}
+            </p>
+            <button
+              type="button"
+              className="owner-button-primary shrink-0"
+              onClick={() => setTopluAcik(true)}
+              disabled={busy || seciliIdler.size === 0}
+            >
+              Toplu Düzenle
+            </button>
+          </div>
+        ) : (
+          <div className="mt-4 flex flex-col gap-2">
+            <button type="button" className="owner-button-primary w-full" onClick={() => { setError(""); setSuccess(""); setShowBulkUpload(false); setFotografOneri(null); setEditing("new"); }} disabled={busy}>+ Yeni Ürün Ekle</button>
+            <button type="button" className="owner-button-secondary w-full" onClick={() => { setError(""); setSuccess(""); setShowBulkUpload(!showBulkUpload); setEditing(null); }} disabled={busy}>📄 Toplu Ürün Yükle</button>
+            <button type="button" className="owner-button-secondary w-full" onClick={() => { setError(""); setSuccess(""); setXmlAcik(true); }} disabled={busy}>🔗 XML ile Yükle</button>
+          </div>
+        )
+      ) : null}
+
+      {topluAcik && seciliIdler.size > 0 ? (
+        <OwnerTopluDuzenle
+          seciliSayi={seciliIdler.size}
+          kategoriler={resolvedCategories}
+          onKapat={() => setTopluAcik(false)}
+          onUygula={topluUygula}
+        />
+      ) : null}
+
+      {xmlAcik ? (
+        <OwnerXmlYukle
+          storeSlug={storeSlug}
+          kategoriler={resolvedCategories}
+          onKapat={() => setXmlAcik(false)}
+          onYukuldu={async () => { await refreshAll(); }}
+        />
+      ) : null}
 
       {deleting ? (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-4 sm:items-center" role="presentation">
@@ -546,33 +845,41 @@ interface ProductFormValue {
   rich: RichProductDraft;
 }
 
+interface ProductFormBaslangic {
+  ad?: string;
+  fiyat?: string;
+  aciklama?: string;
+  kategori?: string;
+}
+
 interface ProductFormProps {
   product: OwnerProduct | null;
   categories: OwnerProductCategory[];
   busy: boolean;
   storeSlug: string;
   storeName?: string | null;
+  baslangic?: ProductFormBaslangic;
   onCancel: () => void;
   onSave: (value: ProductFormValue) => Promise<void>;
 }
 
-function ProductForm({ product, categories, busy, storeSlug, storeName, onCancel, onSave }: ProductFormProps) {
+function ProductForm({ product, categories, busy, storeSlug, storeName, baslangic, onCancel, onSave }: ProductFormProps) {
   const initialImageUrls = useMemo(
     () => normalizeProductImageUrls(product?.image_urls).slice(0, MAX_PRODUCT_IMAGES),
     [product],
   );
-  const [name, setName] = useState(product?.name || "");
-  const [priceText, setPriceText] = useState(product?.price_text || "");
+  const [name, setName] = useState(product?.name || baslangic?.ad || "");
+  const [priceText, setPriceText] = useState(product?.price_text || baslangic?.fiyat || "");
   const [oldPriceText, setOldPriceText] = useState(product?.old_price_amount != null ? String(product.old_price_amount) : "");
   const [badgeTag, setBadgeTag] = useState(product?.badge_tag || "");
   const [fulfillmentRegion, setFulfillmentRegion] = useState(product?.fulfillment_region || "");
-  const [description, setDescription] = useState(product?.description || "");
+  const [description, setDescription] = useState(product?.description || baslangic?.aciklama || "");
   const [imageUrls, setImageUrls] = useState<string[]>(() => initialImageUrls);
   const [rich, setRich] = useState<RichProductDraft>(() => createRichProductDraft(product));
   const [categoryId, setCategoryId] = useState(() => {
     const explicit = product?.category_id?.trim() ?? "";
     if (categories.some((c) => c.id === explicit)) return explicit;
-    const label = product?.product_categories?.name?.trim().toLowerCase() ?? "";
+    const label = (product?.product_categories?.name ?? baslangic?.kategori ?? "").trim().toLowerCase();
     for (const c of categories) if (c.name.trim().toLowerCase() === label) return c.id;
     return categories.length > 0 ? categories[0].id : "";
   });
