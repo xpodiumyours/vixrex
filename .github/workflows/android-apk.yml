@@ -32,6 +32,7 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
           GOOGLE_WEB_CLIENT_ID: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
+          REVALIDATION_SECRET: ${{ secrets.REVALIDATION_SECRET }}
         run: |
           missing=0
           for name in \
@@ -41,7 +42,8 @@ jobs:
             ANDROID_KEY_PASSWORD \
             SUPABASE_URL \
             SUPABASE_PUBLISHABLE_KEY \
-            GOOGLE_WEB_CLIENT_ID
+            GOOGLE_WEB_CLIENT_ID \
+            REVALIDATION_SECRET
           do
             if [ -z "${!name}" ]; then
               echo "Missing required secret: $name"
@@ -165,21 +167,28 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
           GOOGLE_WEB_CLIENT_ID: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
+          REVALIDATION_SECRET: ${{ secrets.REVALIDATION_SECRET }}
         run: |
+          # REVALIDATION_SECRET: uygulamadaki kayıt/publish sonrası web
+          # önbelleğini anında düşürmek için gerekli. Derlemede verilmezse
+          # SeoService boş anahtarla hiç istek atmaz ve site 5 dakika bayat
+          # kalır (2026-10-03 bulgusu) — o yüzden yukarıda ZORUNLU.
           flutter build apk --release \
             --build-name="${{ steps.version.outputs.version_name }}" \
             --build-number="${{ steps.version.outputs.build_number }}" \
             --dart-define=SUPABASE_URL="$SUPABASE_URL" \
             --dart-define=SUPABASE_PUBLISHABLE_KEY="$SUPABASE_PUBLISHABLE_KEY" \
             --dart-define=PUBLIC_SITE_URL="${{ env.PUBLIC_SITE_URL }}" \
-            --dart-define=GOOGLE_WEB_CLIENT_ID="$GOOGLE_WEB_CLIENT_ID"
+            --dart-define=GOOGLE_WEB_CLIENT_ID="$GOOGLE_WEB_CLIENT_ID" \
+            --dart-define=REVALIDATION_SECRET="$REVALIDATION_SECRET"
           flutter build appbundle --release \
             --build-name="${{ steps.version.outputs.version_name }}" \
             --build-number="${{ steps.version.outputs.build_number }}" \
             --dart-define=SUPABASE_URL="$SUPABASE_URL" \
             --dart-define=SUPABASE_PUBLISHABLE_KEY="$SUPABASE_PUBLISHABLE_KEY" \
             --dart-define=PUBLIC_SITE_URL="${{ env.PUBLIC_SITE_URL }}" \
-            --dart-define=GOOGLE_WEB_CLIENT_ID="$GOOGLE_WEB_CLIENT_ID"
+            --dart-define=GOOGLE_WEB_CLIENT_ID="$GOOGLE_WEB_CLIENT_ID" \
+            --dart-define=REVALIDATION_SECRET="$REVALIDATION_SECRET"
 
       - name: Verify AAB certificate signature and report metadata
         run: |
