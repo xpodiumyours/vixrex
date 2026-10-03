@@ -78,6 +78,49 @@ function aktifYasalBelgeleriHaritala(
   return sonuc;
 }
 
+/**
+ * Yayın zincirinden (veritabanı) dönen kodların esnafa söylenen hâli.
+ *
+ * Zincirde iki yerde hata çıkabilir: vitrin kaydı ve yayına alma. İkisinde
+ * de `error.message` ham bir koddur (`STORE_WHATSAPP_INVALID` gibi).
+ * Kullanıcıya o ham kodu göstermek onun yapamayacağı bir şeyi istemek
+ * demektir — neyin eksik olduğunu cümleyle söylüyoruz ki kapayıp
+ * tamamlayabilsin.
+ */
+const RPC_HATA_METNI: Record<string, string> = {
+  STORE_NAME_REQUIRED: "İşletme adı zorunludur.",
+  STORE_CATEGORY_REQUIRED:
+    "Yayına çıkmak için geçerli bir kategori seçmen gerekiyor.",
+  STORE_WHATSAPP_REQUIRED: "Yayına çıkmak için WhatsApp numarası gerekli.",
+  STORE_WHATSAPP_INVALID:
+    "WhatsApp numarası geçerli görünmüyor. 05XX XXX XX XX biçiminde yaz.",
+  STORE_ADDRESS_REQUIRED: "Yayına çıkmak için açık adres gerekli.",
+  STORE_PROVINCE_REQUIRED: "Yayına çıkmak için il bilgisi gerekli.",
+  STORE_DISTRICT_REQUIRED: "Yayına çıkmak için ilçe bilgisi gerekli.",
+  PRIVACY_NOTICE_REQUIRED:
+    "Aydınlatma Metni onayı olmadan vitrin yayına alınamaz.",
+  TERMS_ACCEPTANCE_REQUIRED:
+    "Kullanım Şartları onayı olmadan vitrin yayına alınamaz.",
+  PUBLICATION_CONSENT_REQUIRED:
+    "Açık Rıza Beyanı onayı olmadan vitrin yayına alınamaz.",
+  PRIVACY_NOTICE_VERSION_INVALID:
+    "Aydınlatma Metni sürümü güncellenmiş. Sayfayı yenileyip onay ver.",
+  TERMS_VERSION_INVALID:
+    "Kullanım Şartları sürümü güncellenmiş. Sayfayı yenileyip onay ver.",
+  PUBLICATION_CONSENT_VERSION_INVALID:
+    "Açık Rıza Beyanı sürümü güncellenmiş. Sayfayı yenileyip onay ver.",
+  PRODUCT_IMAGE_REQUIRED:
+    "Yayına çıkmak için en az bir ürüne fotoğraf ekle.",
+};
+
+/** Ham RPC kodunu — varsa — esnafın anlayacağı cümleye çevirir. */
+function hataMetni(kod: string, yedek: string): string {
+  if (kod === "UNIQUE_VIOLATION") {
+    return "Bu isimle bir vitrin zaten var. Farklı bir isim dene.";
+  }
+  return RPC_HATA_METNI[kod] ?? yedek;
+}
+
 export async function POST(request: NextRequest) {
   let govde: Record<string, unknown>;
   try {
@@ -197,6 +240,74 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // ADIM 0.5 — "Yayınla" demeye yetecek kadar bilgi var mı?
+  //
+  // NEDEN BURADA: vitrin taslakta bırakılmıyor, yayına alınıyor. Yayın
+  // kapısı veritabanında şunları zorunlu tutuyor: ad, kategori, WhatsApp,
+  // adres, il, ilçe. Bunları eksik yakalarsak kullanıcı "Vitrin
+  // oluşturulamadı" gibi muğlak bir yerde kalmasın — NEYİN eksik olduğunu
+  // baştan söyleyelim ki kapayıp tamamlasın, tekrar bastığında vitrin
+  // anında yayında olsun. Taslak üretip sessizce bırakmak yok.
+  const eksik: string[] = [];
+
+  const kategori = String(storeData.kategori ?? "");
+  if (!kategori || ["diğer", "diger"].includes(kategori.toLowerCase())) {
+    eksik.push("kategori");
+  }
+
+  const whatsapp = String(storeData.whatsapp ?? "");
+  const whatsappRakamlari = whatsapp.replace(/[^0-9]/g, "");
+  const whatsappGecerli =
+    whatsapp !== "" &&
+    !/[a-zA-Z]/.test(whatsapp) &&
+    (/^05\d{9}$/.test(whatsappRakamlari) ||
+      /^5\d{9}$/.test(whatsappRakamlari) ||
+      /^905\d{9}$/.test(whatsappRakamlari));
+  if (!whatsappGecerli) eksik.push("WhatsApp numarası (05XX XXX XX XX)");
+
+  if (!String(storeData.address ?? "")) eksik.push("açık adres");
+  if (!String(storeData.province_name ?? "")) eksik.push("il");
+  if (!String(storeData.district_name ?? "")) eksik.push("ilçe");
+
+  if (eksik.length > 0) {
+    return NextResponse.json(
+      {
+        hata:
+          "Vitrini yayınlamak için şu bilgiler eksik: " +
+          eksik.join(", ") +
+          ". Tamamlayıp tekrar dene — bilgiler tam olduğu an vitrinin " +
+          "anında yayına alınır.",
+        eksik,
+      },
+      { status: 422 }
+    );
+  }
+
+  // Yasal onay da yayın için şart. Tek bir "onayladım" yeterli: landing'de
+  // o düğme üç kutu işaretlenmeden basılmıyor (yasalOnayVerildi), oluşturma
+  // ekranındaki tek kutu da üç metnin tamamını kapsıyor — tıpkı paneldeki
+  // accept_store_legal_consent'in hiçbir bayrak almadan kaydı yazması gibi.
+  // Onay VERİLMEDİYSE vitrin hiç oluşmuyor; neyin eksik olduğunu söylüyoruz.
+  const yayinOnayi =
+    govde.legal_consent === true ||
+    (govde.privacy_notice_acknowledged === true &&
+      govde.terms_accepted === true &&
+      (govde.publication_consent_accepted === true ||
+        govde.explicit_consent_given === true));
+
+  if (!yayinOnayi) {
+    return NextResponse.json(
+      {
+        hata:
+          "Vitrini yayınlamak için üç yasal onayın tamamı gerekli: " +
+          "Aydınlatma Metni, Kullanım Şartları ve Açık Rıza Beyanı. " +
+          "Onayları işaretle, vitrinin anında yayında olsun.",
+        eksik: ["yasal onay"],
+      },
+      { status: 422 }
+    );
+  }
+
   // ADIM 1 — vitrini oluştur.
   //
   // DİKKAT: `create_store_with_token` sahipliği KURMAZ. Canlı veritabanında
@@ -212,11 +323,15 @@ export async function POST(request: NextRequest) {
 
   if (error) {
     console.error("[create-store] RPC failed:", error.message);
-    const metin =
-      error.message === "UNIQUE_VIOLATION"
-        ? "Bu isimle bir vitrin zaten var. Farklı bir isim dene."
-        : "Vitrin oluşturulamadı. Lütfen tekrar dene.";
-    return NextResponse.json({ hata: metin }, { status: 400 });
+    return NextResponse.json(
+      {
+        hata: hataMetni(
+          error.message,
+          "Vitrin oluşturulamadı. Lütfen tekrar dene.",
+        ),
+      },
+      { status: 400 }
+    );
   }
 
   // ADIM 2 — kalıcı oturumsa vitrini hesaba bağla. Anonim oturumda
@@ -326,7 +441,9 @@ export async function POST(request: NextRequest) {
   // Yayın denemesi bilinçli olarak SAHİPLİK ve oturum kurulduktan SONRA
   // yapılır: yayın kapısı reddederse vitrin sahipsiz/öksüz kalmaz, kullanıcı
   // Vitrinim ekranından tekrar yayınlayabilir.
-  const yasalOnay = govde.legal_consent === true;
+  // Erken kontrolde `yayinOnayi` zorunlu tutuldu; damga için aynı sonucu
+  // kullanıyoruz ki "onay var ama damga yok" diye ikiye bölünmesin.
+  const yasalOnay = yayinOnayi;
   let belgeler: AktifYasalBelgeler | null = null;
   if (yasalOnay) {
     const { data: belgeSatirlari } = await supabaseUser
@@ -335,6 +452,20 @@ export async function POST(request: NextRequest) {
       .in("document_type", [...YASAL_BELGE_TURLERI])
       .eq("is_active", true);
     belgeler = aktifYasalBelgeleriHaritala(belgeSatirlari);
+
+    // Onay alındı ama sistemde aktif belge kaydı yoksa yayın kapısı
+    // reddedecek. Sessizce taslak bırakmak yerine baştan söyleyelim.
+    if (!belgeler) {
+      return NextResponse.json(
+        {
+          hata:
+            "Yasal metinlerin güncel kaydı bulunamadı, bu yüzden yayın " +
+            "yapılamıyor. Birkaç dakika sonra tekrar dene.",
+          slug,
+        },
+        { status: 500 }
+      );
+    }
   }
 
   const yasalDamga: Record<string, unknown> = belgeler
@@ -364,9 +495,11 @@ export async function POST(request: NextRequest) {
     console.error("[create-store] yayınlama başarısız:", yayinHatasi.message);
     return NextResponse.json(
       {
-        hata:
+        hata: hataMetni(
+          yayinHatasi.message,
           "Vitrinin oluşturuldu ama yayınlanamadı. " +
-          "Vitrinim sayfasından tekrar yayınlayabilirsin.",
+            "Vitrinim sayfasından tekrar yayınlayabilirsin.",
+        ),
         slug,
         yonlendir,
         sebep: yayinHatasi.message,

@@ -159,9 +159,16 @@ export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode 
   const [uploading, setUploading] = useState(false);
   const [locating, setLocating] = useState(false);
   const [legalAccepted, setLegalAccepted] = useState(() => Boolean(
-    initialDraft.privacy_notice_version &&
-    initialDraft.terms_version &&
-    initialDraft.publication_consent_accepted
+    (initialDraft.privacy_notice_version &&
+      initialDraft.terms_version &&
+      initialDraft.publication_consent_accepted) ||
+    // Landing'den gelen esnaf üç kutuyu zaten işaretledi. O cevaplar
+    // `aydinlatma_onay`/`sartlar_onay`/`acik_riza_onay` adıyla gelir ve
+    // vitrin henüz OLMADIĞI için panelden onay kaydı yazılamaz — ama
+    // onay alınmış gerçeği değişmez. Yoksa "Vitrinimi Yayına Al"
+    // düğmesi hiç açılmaz, esnaf onay kutusuna bassa bile
+    // "Yasal onay kaydedilemedi" alır ve akış orada tıkanır.
+    initialDraft.legal_consent
   ));
   const [message, setMessage] = useState("");
   const [activeEditor, setActiveEditor] = useState<"about" | "campaign" | "faq" | "gallery" | "marketplace" | null>(null);
@@ -273,7 +280,12 @@ export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode 
       setPublishing(true);
       setMessage("");
       try {
-        await onCreate(draft);
+        // Vitrin daha oluşmadı: onay sunucuya ayrı bir çağrıyla yazılamaz,
+        // ama onay ALINMIŞTIR ve create-store'a legal_consent olarak gider —
+        // orada aktif belge sürüm/hash'i sunucuda damgalanır.
+        await onCreate(
+          legalAccepted ? { ...draft, legal_consent: true } : draft,
+        );
         refreshShellStatus();
       } catch (error) {
         setMessage(error instanceof Error ? error.message : "Vitrin oluşturulamadı.");
@@ -507,7 +519,17 @@ export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode 
               <h2 className="flex items-center gap-2 text-[16px] font-black"><OnayIkonu boyut={20} className="text-lp-primary" /> Yasal Bilgilendirme ve Yayınlama Onayı</h2>
               <p className="mt-2 text-[12px] font-medium leading-5 text-lp-muted">Taslağınızı onay vermeden düzenleyebilirsiniz. Bu beyanlar yalnızca herkese açık yayınlama için gereklidir.</p>
               <label className="mt-4 flex cursor-pointer items-start gap-3 text-[12.5px] font-semibold leading-5 text-lp-text">
-                <input type="checkbox" checked={legalAccepted} disabled={legalAccepted || publishing} onChange={() => { if (!legalAccepted) void acceptLegal(); }} className="mt-0.5 h-5 w-5 shrink-0 accent-[#147DFF]" />
+                <input type="checkbox" checked={legalAccepted} disabled={legalAccepted || publishing} onChange={() => {
+                  if (legalAccepted) return;
+                  // Vitrin henüz OLMADI: onay kaydı sunucuya yazılamaz, o yüzden
+                  // oluşturma modunda yalnız burada geçerlidir ve vitrin
+                  // create-store ile oluşurken birlikte damgalanır.
+                  // Eski davranış acceptLegal()'i çağırıyordu; o da slug
+                  // "taslak" olduğu için hep hata döndü ve esnaf onay
+                  // kutusuna bassa bile Yayınla düğmesi hiç açılmıyordu.
+                  if (isCreationMode) { setLegalAccepted(true); return; }
+                  void acceptLegal();
+                }} className="mt-0.5 h-5 w-5 shrink-0 accent-[#147DFF]" />
                 <span><Link href="/legal/privacy" target="_blank" className="font-bold text-lp-secondary underline">Aydınlatma Metni</Link>,{" "}<Link href="/legal/terms" target="_blank" className="font-bold text-lp-secondary underline">Kullanım Şartları</Link> ve{" "}<Link href="/legal/consent" target="_blank" className="font-bold text-lp-secondary underline">Açık Rıza Beyanı</Link>&apos;nı okudum, anladım ve kabul ediyorum.</span>
               </label>
             </div>
