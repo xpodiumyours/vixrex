@@ -436,8 +436,8 @@ export function LandingAsistanSohbeti({
               onSelect={(deger) => {
                 const kategori = resolveBusinessCategory(deger);
                 const hedef = kategori
-                  ? `/kesfet?yalniz_kiralik=1&kategori=${encodeURIComponent(kategoriUrlParcasi(kategori.id))}`
-                  : "/kesfet?yalniz_kiralik=1";
+                  ? `/kesfet?kategori=${encodeURIComponent(kategoriUrlParcasi(kategori.id))}`
+                  : "/kesfet";
                 void niyetSohbetiKaydet([
                   { role: "user", text: deger },
                   { role: "assistant", text: `${deger} işletmesine uygun hazır vitrinleri buldum.` },
@@ -460,8 +460,8 @@ export function LandingAsistanSohbeti({
                   const metin = niyetSerbestMetin.trim();
                   const kategori = resolveBusinessCategory(metin);
                   const hedef = kategori
-                    ? `/kesfet?yalniz_kiralik=1&kategori=${encodeURIComponent(kategoriUrlParcasi(kategori.id))}`
-                    : "/kesfet?yalniz_kiralik=1";
+                    ? `/kesfet?kategori=${encodeURIComponent(kategoriUrlParcasi(kategori.id))}`
+                    : "/kesfet";
                   void niyetSohbetiKaydet([
                     { role: "user", text: metin, messageKey: NIYET_SERBEST_METIN_ANAHTARI },
                     {

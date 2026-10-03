@@ -31,7 +31,10 @@ describe("Landing — serbest niyet metni opsiyonel, kategori kutucuklarının y
     const idx = kaynak.indexOf("NIYET_SERBEST_METIN_ANAHTARI }");
     const cevre = kaynak.slice(Math.max(0, idx - 400), idx + 50);
     expect(cevre).toContain("resolveBusinessCategory(metin)");
-    expect(cevre).toContain("yalniz_kiralik=1");
+    // Keşfet hem kiralık şablonu hem yayındaki gerçek vitrinleri gösterir;
+    // niyet köprüsü artık sadece kiralık vitrinlere kilitlenmiyor (2026-10-03).
+    expect(cevre).toContain("/kesfet");
+    expect(cevre).not.toContain("yalniz_kiralik=1");
   });
 });
 

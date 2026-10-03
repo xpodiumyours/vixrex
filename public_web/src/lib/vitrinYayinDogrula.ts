@@ -56,7 +56,8 @@ export async function tuketicideGorunenler(
 
 export function vitrinOnbelleginiYenile(slug: string): void {
   if (!slug) return;
-  for (const etiket of [`store-${slug}`, `products-${slug}`]) {
+  // "kesfet": ürün sayısı ve sıralama kartı değiştirir — liste de tazelenir.
+  for (const etiket of [`store-${slug}`, `products-${slug}`, "kesfet"]) {
     try {
       revalidateTag(etiket, { expire: 0 });
     } catch (hata) {

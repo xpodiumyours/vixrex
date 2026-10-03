@@ -141,10 +141,10 @@ class VitrinStoreCard extends StatelessWidget {
                         fit: BoxFit.cover,
                         errorBuilder:
                             (context, error, stackTrace) =>
-                                _buildImagePlaceholder(),
+                                _buildImagePlaceholder(categoryLabel),
                       )
                     else
-                      _buildImagePlaceholder(),
+                      _buildImagePlaceholder(categoryLabel),
 
                     // İnce Karartma Gradyanı
                     Positioned.fill(
@@ -331,12 +331,15 @@ class VitrinStoreCard extends StatelessWidget {
                     const SizedBox(height: 10),
 
                     // Ürün sayısı — web'deki VitrinKarti ile eşitlik.
-                    // Yalnız kiralık olmayan kartlarda, ürün sayisi > 0 ise gösterilir.
-                    if (!_isRentalTemplate && store.products.isNotEmpty)
+                    // Yalnız kiralık olmayan kartlarda gösterilir; ürün yoksa
+                    // kart yarım kalmasın diye bunu açıkça yazarız.
+                    if (!_isRentalTemplate)
                       Padding(
                         padding: const EdgeInsets.only(bottom: 4),
                         child: Text(
-                          '${store.products.length} ürün',
+                          store.products.isNotEmpty
+                              ? '${store.products.length} ürün'
+                              : 'Henüz ürün eklenmedi',
                           style: const TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
@@ -611,7 +614,7 @@ class VitrinStoreCard extends StatelessWidget {
     );
   }
 
-  Widget _buildImagePlaceholder() {
+  Widget _buildImagePlaceholder(String kategoriEtiketi) {
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -630,8 +633,24 @@ class VitrinStoreCard extends StatelessWidget {
               size: 34,
             ),
             const SizedBox(height: 6),
+            // Kapak yoksa kart "yarım" görünmesin: kategori öne çıkar,
+            // altında neyin eksik olduğu açıkça yazılır (web ile aynı).
             Text(
-              'Kapak görseli bekleniyor',
+              kategoriEtiketi,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: AppColors.primary,
+                fontSize: 12,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.6,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              _isRentalTemplate
+                  ? 'Kapak görseli bekleniyor'
+                  : 'Kapak görseli eklenmedi',
+              textAlign: TextAlign.center,
               style: TextStyle(
                 color: AppColors.mutedText.withValues(alpha: 0.8),
                 fontSize: 10,

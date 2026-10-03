@@ -128,7 +128,16 @@ export function VitrinKarti({
                   <path d="M3 10.5 12 4l9 6.5V20H3z" />
                   <path d="M8 20v-6h8v6" />
                 </svg>
-                <span className="text-[10px] font-bold">Kapak görseli bekleniyor</span>
+                {/* Kapak yoksa kart "yarım" görünmesin: kategori öne çıkar,
+                    altında neyin eksik olduğu açıkça yazılır. */}
+                <span className="text-[12px] font-black uppercase leading-[1.25] tracking-[0.6px] text-lp-primary">
+                  {vitrin.kategoriEtiketi}
+                </span>
+                <span className="text-[10px] font-bold">
+                  {vitrin.kiralikMi
+                    ? "Kapak görseli bekleniyor"
+                    : "Kapak görseli eklenmedi"}
+                </span>
               </span>
             )}
             <span className="absolute inset-0 bg-gradient-to-b from-black/15 via-transparent to-lp-surface/90" aria-hidden="true" />
@@ -192,8 +201,12 @@ export function VitrinKarti({
             </p>
           ) : null}
 
-          {!vitrin.kiralikMi && vitrin.urunSayisi > 0 ? (
-            <p className="mt-2 text-[10px] font-semibold text-lp-muted">{vitrin.urunSayisi} ürün</p>
+          {!vitrin.kiralikMi ? (
+            <p className="mt-2 text-[10px] font-semibold text-lp-muted">
+              {vitrin.urunSayisi > 0
+                ? `${vitrin.urunSayisi} ürün`
+                : "Henüz ürün eklenmedi"}
+            </p>
           ) : null}
 
           {vitrin.kiralikMi ? (

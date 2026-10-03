@@ -1,4 +1,4 @@
-import { unstable_cache } from "next/cache";
+import { revalidateTag, unstable_cache } from "next/cache";
 import { supabase } from "./supabase";
 import { EXPLORE_STORE_SELECT } from "./publicStoreSelect";
 import { resolveBusinessCategory } from "./businessCategories";
@@ -150,6 +150,25 @@ const kesfetVitrinleriniOnbellektenGetir = unstable_cache(
 );
 
 export const kesfetVitrinleriniGetir = kesfetVitrinleriniOnbellektenGetir;
+
+/**
+ * Yayın/pasifleştirme anında Keşfet listesinin önbelleğini düşürür.
+ *
+ * Yukarıdaki liste 5 dakika saklanıyor. Düşürülmezse esnaf "yayınladım"
+ * der ama kendi vitrinini Keşfet'te en fazla 5 dakika sonra görür —
+ * akış orada "çalışmıyor" gibi durur (2026-10-03). Yayınlama uçları
+ * (create-store, owner-publish, ürün yayını) bunu çağırır.
+ */
+export function kesfetOnbelleginiYenile(): void {
+  try {
+    revalidateTag("kesfet", { expire: 0 });
+  } catch (hata) {
+    console.warn(
+      "[kesfet] onbellek yenilenemedi:",
+      hata instanceof Error ? hata.message : hata
+    );
+  }
+}
 
 /** Tek kategorinin yayındaki vitrinleri — ek sorgu atmaz, listeyi süzer. */
 export async function kategoriVitrinleriniGetir(

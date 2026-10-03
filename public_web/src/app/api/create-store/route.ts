@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { yayinSahiplikKarari } from "@/lib/yayinSahiplikKarari";
+import { kesfetOnbelleginiYenile } from "@/lib/explore";
 
 /**
  * Yeni vitrin oluşturma (sıfırdan).
@@ -507,6 +508,10 @@ export async function POST(request: NextRequest) {
       { status: 500 },
     );
   }
+
+  // Yayın bitti. Keşfet listesi 5 dakika saklanıyor; hemen düşürülmezse
+  // esnaf kendi vitrinini dakikalarca göremez.
+  kesfetOnbelleginiYenile();
 
   return NextResponse.json({
     tamam: true,

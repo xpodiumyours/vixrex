@@ -65,7 +65,9 @@ void main() {
     expect(find.text('Test Mağazası'), findsOneWidget);
     // Kart kategori etiketini büyük harfe çevirerek gösterir
     // (VitrinStoreCard içindeki categoryLabel .toUpperCase()).
-    expect(find.text('Giyim & Butik'.toUpperCase()), findsOneWidget);
+    // Kapak görseli yoksa kategori aynı zamanda görsel alanında da çıkar:
+    // orası boş kalmasın diye (web VitrinKarti ile aynı metin).
+    expect(find.text('Giyim & Butik'.toUpperCase()), findsNWidgets(2));
   });
 
   testWidgets('2. isExample true olduğunda Örnek etiketi gösteriliyor', (
@@ -309,7 +311,7 @@ void main() {
     expect(find.text('3 ürün'), findsOneWidget);
   });
 
-  testWidgets('9b. Ürün sayısı 0 ise kartta gösterilmiyor', (
+  testWidgets('9b. Ürün sayısı 0 ise kartta açıklayıcı metin gösteriliyor', (
     WidgetTester tester,
   ) async {
     testStore.products = [];
@@ -322,7 +324,10 @@ void main() {
       ),
     );
 
-    expect(find.textContaining('ürün'), findsNothing);
+    // "0 ürün" gibi bir sayı yazılmaz — kart yarım kalmasın diye eksiklik
+    // açıkça söylenir. Metin web'deki VitrinKarti ile birebir aynı.
+    expect(find.text('Henüz ürün eklenmedi'), findsOneWidget);
+    expect(find.textContaining('ürün'), findsOneWidget);
   });
 
   testWidgets('9c. Kiralık kartta ürün sayısı gösterilmiyor', (
