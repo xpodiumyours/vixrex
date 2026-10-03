@@ -159,6 +159,7 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: path.join(__dirname, ".."),
   },
+  allowedDevOrigins: ["30897-ifdgxe4prkss0eold8upd.e2b.app"],
   images: {
     unoptimized: true,
     remotePatterns: [

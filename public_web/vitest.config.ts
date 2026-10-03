@@ -18,6 +18,7 @@ export default defineConfig({
   test: {
     environment: "node",
     globals: true,
+    setupFiles: ["tests/temiz-ortam.setup.ts"],
     // e2e/ klasörü PLAYWRIGHT'a ait; vitest onu çalıştırmaya kalkarsa
     // "test is not defined" diye kırılır. İki koşucu, iki klasör:
     //   tests/ → vitest   (npm test)

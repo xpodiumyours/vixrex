@@ -15,6 +15,8 @@ interface Props {
   categories: OwnerCat[];
   varsayilanUrunTipi?: string;
   onRefresh: () => Promise<void>;
+  acik?: boolean;
+  onAcikDegis?: (acik: boolean) => void;
 }
 
 const TEMPLATE_OPTIONS = PRODUCT_ATTRIBUTE_SCHEMA.templates.map((template) => ({
@@ -22,8 +24,14 @@ const TEMPLATE_OPTIONS = PRODUCT_ATTRIBUTE_SCHEMA.templates.map((template) => ({
   label: template.label,
 }));
 
-export function OwnerCategoryManager({ storeSlug, categories, varsayilanUrunTipi = "generic", onRefresh }: Props) {
-  const [open, setOpen] = useState(false);
+export function OwnerCategoryManager({ storeSlug, categories, varsayilanUrunTipi = "generic", onRefresh, acik, onAcikDegis }: Props) {
+  const [icAcik, setIcAcik] = useState(false);
+  const disaridanKontrol = typeof acik === "boolean";
+  const open = disaridanKontrol ? acik === true : icAcik;
+  const setOpen = (deger: boolean) => {
+    if (!disaridanKontrol) setIcAcik(deger);
+    onAcikDegis?.(deger);
+  };
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [newName, setNewName] = useState("");
@@ -124,6 +132,7 @@ export function OwnerCategoryManager({ storeSlug, categories, varsayilanUrunTipi
   }
 
   if (!open) {
+    if (disaridanKontrol) return null;
     return (
       <button type="button" onClick={() => setOpen(true)} className="owner-button-secondary text-xs">
         🏷️ Kategoriler ({categories.length})
