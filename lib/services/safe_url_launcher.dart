@@ -39,31 +39,10 @@ Future<bool> safeLaunchUrl(
   LaunchMode? webMode,
   LaunchMode? nativeMode,
 }) async {
-  final uri = Uri.tryParse(url);
+  final uri = parseSafeLaunchUri(url);
   if (uri == null) {
-    if (kDebugMode) debugPrint('[safeLaunchUrl] Invalid URI: $url');
+    if (kDebugMode) debugPrint('[safeLaunchUrl] Blocked URI: $url');
     return false;
-  }
-
-  // Scheme validation — javascript:, data:, file:, vb. engelle
-  if (!LaunchScheme.isAllowed(uri.scheme)) {
-    if (kDebugMode)
-      debugPrint('[safeLaunchUrl] Blocked scheme: ${uri.scheme} for $url');
-    return false;
-  }
-
-  if ((uri.scheme == 'http' || uri.scheme == 'https') &&
-      (!uri.hasAuthority || uri.host.isEmpty)) {
-    return false;
-  }
-
-  // URL validation — localhost/private IP engelle (SSRF koruması)
-  if (uri.hasScheme && (uri.scheme == 'http' || uri.scheme == 'https')) {
-    if (!_isSafeHost(uri.host)) {
-      if (kDebugMode)
-        debugPrint('[safeLaunchUrl] Blocked unsafe host: ${uri.host}');
-      return false;
-    }
   }
 
   try {
@@ -77,6 +56,20 @@ Future<bool> safeLaunchUrl(
     if (kDebugMode) debugPrint('[safeLaunchUrl] Launch failed: $e');
     return false;
   }
+}
+
+@visibleForTesting
+Uri? parseSafeLaunchUri(String url) {
+  final uri = Uri.tryParse(url);
+  if (uri == null || !LaunchScheme.isAllowed(uri.scheme)) return null;
+
+  if (uri.scheme == 'http' || uri.scheme == 'https') {
+    if (!uri.hasAuthority || uri.host.isEmpty || !_isSafeHost(uri.host)) {
+      return null;
+    }
+  }
+
+  return uri;
 }
 
 /// Host güvenlik kontrolü — localhost/private IP engelle
