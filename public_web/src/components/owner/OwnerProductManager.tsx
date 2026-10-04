@@ -59,6 +59,7 @@ export interface OwnerProduct {
   badge_tag?: string | null;
   fulfillment_region?: string | null;
   is_visible?: boolean | null;
+  source_type?: string | null;
 }
 
 interface OwnerProductManagerProps {
@@ -253,6 +254,8 @@ export function OwnerProductManager({
   const [filterText, setFilterText] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("");
   const [yalnizTaslak, setYalnizTaslak] = useState(false);
+  const [publishingId, setPublishingId] = useState<string | null>(null);
+  const [dragId, setDragId] = useState<string | null>(null);
 
   const filteredProducts = useMemo(() => {
     const q = filterText.trim().toLowerCase();
@@ -575,9 +578,10 @@ export function OwnerProductManager({
     }
   }
 
-  const moveProduct = useCallback(async (fromIndex: number, direction: "up" | "down") => {
-    const toIndex = direction === "up" ? fromIndex - 1 : fromIndex + 1;
-    if (toIndex < 0 || toIndex >= products.length) return;
+  // Sıralama APK ile aynı etkileşimle: sürükleyip bırak. ↑↓ butonları
+  // kaldırıldı (2026-10-04 Casper kararı — iki platformda da sürükleme).
+  const urunTasi = useCallback(async (fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex || toIndex < 0 || toIndex >= products.length) return;
     const reordered = [...products];
     const [moved] = reordered.splice(fromIndex, 1);
     reordered.splice(toIndex, 0, moved);
@@ -603,6 +607,49 @@ export function OwnerProductManager({
       await refreshAll();
     }
   }, [products, storeSlug, refreshAll]);
+
+  // APK'deki menüdeki "Yayınla" ile AYNI kapı: /api/fatura-yayinla sunucuda
+  // kartı yeniden okur, kapılar kapalıysa ürün taslak kalır.
+  async function urunYayinla(product: OwnerProduct) {
+    if (publishingId) return;
+    setError("");
+    setSuccess("");
+    setPublishingId(product.id);
+    try {
+      const cevap = await fetch("/api/fatura-yayinla", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug: storeSlug, productIds: [product.id] }),
+      });
+      const govde = await cevap.json().catch(() => null);
+      if (!cevap.ok) {
+        setError(responseError(govde, "Ürün yayınlanamadı. Tekrar dene."));
+        return;
+      }
+      const satirlar = (
+        Array.isArray(govde?.satirlar) ? govde.satirlar : []
+      ) as Array<{ id?: string; durum?: string; sebep?: string }>;
+      const satir = satirlar.find((s) => s.id === product.id);
+      if (!satir || satir.durum !== "yayinda") {
+        setError(
+          satirlar.length === 0
+            ? "Ürün taslak kaldı."
+            : (satir?.sebep ?? "Ürün taslak kaldı."),
+        );
+        return;
+      }
+      await refreshAll();
+      setSuccess(
+        govde?.tuketiciDogrulamasi === "tamam"
+          ? "Ürün vitrinde görünüyor."
+          : "Yayın kaydı alındı. Tüketici görünümü doğrulanamadı.",
+      );
+    } catch {
+      setError("Ürün yayınlanamadı. Tekrar dene.");
+    } finally {
+      setPublishingId(null);
+    }
+  }
 
   return (
     <section className={onClose ? "" : "mt-8"} aria-labelledby="products-title" aria-busy={busy}>
@@ -711,11 +758,34 @@ export function OwnerProductManager({
             const image = product.image_urls?.find((url) => url.trim());
             const isService = product.product_categories?.product_template_key === "service";
             const secili = seciliIdler.has(product.id);
+            const siralamaAcik =
+              !busy &&
+              !secimModu &&
+              !filterText &&
+              !filterCategory &&
+              !yalnizTaslak &&
+              products.length > 1;
             return (
               <article
                 key={product.id}
-                className={`owner-card overflow-hidden${secimModu ? " cursor-pointer" : ""}${secili ? " ring-2 ring-[var(--owner-primary)]" : ""}`}
+                className={`owner-card overflow-hidden${secimModu ? " cursor-pointer" : ""}${secili ? " ring-2 ring-[var(--owner-primary)]" : ""}${siralamaAcik ? " cursor-grab active:cursor-grabbing" : ""}${dragId === product.id ? " opacity-50" : ""}`}
                 onClick={secimModu ? () => urunSecimiDegistir(product.id) : undefined}
+                draggable={siralamaAcik && !secili}
+                onDragStart={(e) => {
+                  e.dataTransfer.effectAllowed = "move";
+                  setDragId(product.id);
+                }}
+                onDragEnd={() => setDragId(null)}
+                onDragOver={(e) => {
+                  if (dragId && dragId !== product.id) e.preventDefault();
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const from = products.findIndex((p) => p.id === dragId);
+                  const to = products.findIndex((p) => p.id === product.id);
+                  setDragId(null);
+                  if (from >= 0 && to >= 0 && from !== to) void urunTasi(from, to);
+                }}
               >
                 <div className="relative aspect-[4/3] bg-[var(--owner-bg-soft)]">
                   {image ? <Image src={image} alt={`${product.name} ürün görseli`} fill unoptimized sizes="(min-width: 1024px) 300px, (min-width: 640px) 45vw, 100vw" className="object-cover" /> : <div className="flex h-full items-center justify-center text-sm text-[var(--owner-muted)]">Görsel eklenmedi</div>}
@@ -753,17 +823,18 @@ export function OwnerProductManager({
                   <p className="mt-1 text-xs text-[var(--owner-muted)]">{product.product_categories?.name || "Kategorisiz"}</p>
                   {!secimModu ? (
                     <>
-                      {product.is_visible === false ? (
-                        <button type="button" className="owner-button-secondary mt-3 w-full text-xs" onClick={() => faturayaDon(product)} disabled={busy}>🧾 Faturaya dön</button>
+                      {product.source_type === "invoice" ? (
+                        <>
+                          <button type="button" className="owner-button-secondary mt-3 w-full text-xs" onClick={() => faturayaDon(product)} disabled={busy}>🧾 Faturaya dön</button>
+                          {product.is_visible === false ? (
+                            <button type="button" className="owner-button-primary mt-2 w-full text-xs" onClick={() => void urunYayinla(product)} disabled={busy || publishingId === product.id}>{publishingId === product.id ? "Yayınlanıyor…" : "Yayınla"}</button>
+                          ) : null}
+                        </>
                       ) : null}
-                      <div className="mt-4 grid grid-cols-4 gap-2">
+                      <div className="mt-4 grid grid-cols-3 gap-2">
                         <button type="button" className="owner-button-secondary text-xs" onClick={() => openEditProduct(product)} disabled={busy} title="Düzenle">✏️</button>
                         <button type="button" className="owner-button-secondary text-xs" onClick={() => void urunCogalt(product)} disabled={busy} title="Çoğalt">⧉</button>
                         <button type="button" className="owner-button-danger text-xs" onClick={() => setDeleting(product)} disabled={busy} title="Sil">🗑️</button>
-                        <div className="flex gap-0.5">
-                          <button type="button" className="owner-button-secondary flex-1 text-xs" onClick={() => moveProduct(products.indexOf(product), "up")} disabled={busy || secimModu || !!filterText || !!filterCategory || products.indexOf(product) === 0} title={filterText || filterCategory ? "Filtre varken sıralama kapalı" : "Yukarı taşı"}>↑</button>
-                          <button type="button" className="owner-button-secondary flex-1 text-xs" onClick={() => moveProduct(products.indexOf(product), "down")} disabled={busy || secimModu || !!filterText || !!filterCategory || products.indexOf(product) === products.length - 1} title={filterText || filterCategory ? "Filtre varken sıralama kapalı" : "Aşağı taşı"}>↓</button>
-                        </div>
                       </div>
                     </>
                   ) : null}

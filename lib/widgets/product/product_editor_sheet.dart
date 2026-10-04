@@ -520,22 +520,43 @@ class _ProductEditorSheetState extends State<ProductEditorSheet> {
                     onChanged: (next) => setState(() => _variants = next),
                   ),
                 const SizedBox(height: 16),
-                ElevatedButton.icon(
-                  onPressed: _isSaving ? null : _save,
-                  icon:
-                      _isSaving
-                          ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                          : const Icon(Icons.save_rounded),
-                  label: Text(_isSaving ? 'Kaydediliyor...' : 'Ürünü Kaydet'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.black,
-                    minimumSize: const Size.fromHeight(52),
-                  ),
+                Row(
+                  children: [
+                    OutlinedButton(
+                      onPressed:
+                          _isSaving ? null : () => Navigator.of(context).pop(),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.darkText,
+                        side: const BorderSide(color: AppColors.border),
+                        minimumSize: const Size(0, 52),
+                      ),
+                      child: const Text('İptal'),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: _isSaving ? null : _save,
+                        icon:
+                            _isSaving
+                                ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                                : const Icon(Icons.save_rounded),
+                        label: Text(
+                          _isSaving ? 'Kaydediliyor...' : 'Ürünü Kaydet',
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.black,
+                          minimumSize: const Size.fromHeight(52),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

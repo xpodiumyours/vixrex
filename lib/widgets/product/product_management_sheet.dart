@@ -67,6 +67,9 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
   final _searchController = TextEditingController();
   String _selectedCategoryId = '';
 
+  // Web'deki "Yalnız taslaklar" filtresi ile aynı (2026-10-04 paritesi).
+  bool _yalnizTaslak = false;
+
   // #262: toplu düzenleme seçim durumu — yalnız bu ekranın kendi UI
   // state'i, controller'a veya uzak yazmaya kadar hiçbir şey yapmaz.
   bool _selectionMode = false;
@@ -133,7 +136,8 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
           query.isEmpty ||
           product.name.toLowerCase().contains(query) ||
           product.description.toLowerCase().contains(query);
-      return matchesCategory && matchesQuery;
+      final matchesTaslak = !_yalnizTaslak || !product.isVisible;
+      return matchesCategory && matchesQuery && matchesTaslak;
     }).toList();
   }
 
@@ -620,6 +624,7 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
     final filtered = _filteredProducts;
     final canReorder =
         !_selectionMode &&
+        !_yalnizTaslak &&
         _searchController.text.trim().isEmpty &&
         _selectedCategoryId.isEmpty;
     return SizedBox(
@@ -735,6 +740,19 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
             hintText: 'Ürün ara...',
             prefixIcon: Icon(Icons.search_rounded),
           ),
+        ),
+        Row(
+          children: [
+            Checkbox(
+              value: _yalnizTaslak,
+              onChanged:
+                  (_) => setState(() => _yalnizTaslak = !_yalnizTaslak),
+            ),
+            const Text(
+              'Yalnız taslaklar',
+              style: TextStyle(fontSize: 13, color: AppColors.darkText),
+            ),
+          ],
         ),
         const SizedBox(height: 10),
         SizedBox(
@@ -971,6 +989,26 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (!product.isVisible)
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.amber,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: const Text(
+                      'Taslak — vitrinde görünmüyor',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
                 Text(
                   product.name,
                   maxLines: 1,
