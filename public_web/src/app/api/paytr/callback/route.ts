@@ -86,7 +86,10 @@ export async function POST(request: NextRequest) {
     return new Response("FAIL", { status: 400 });
   }
 
-  const { error } = await getSupabaseAdmin().rpc("record_premium_payment", {
+  const siparisMi = callbackId.startsWith("ord_");
+  const rpcAdi = siparisMi ? "record_store_order_payment" : "record_premium_payment";
+
+  const { error } = await getSupabaseAdmin().rpc(rpcAdi, {
     p_callback_id: callbackId,
     p_merchant_oid: merchantOid,
     p_amount_kurus: totalAmount,
@@ -95,7 +98,7 @@ export async function POST(request: NextRequest) {
 
   if (error) {
     // AMOUNT_MISMATCH / UNKNOWN_ORDER — sipariş işlenmez; PayTR'ye FAIL.
-    console.error("[paytr/callback] record_premium_payment failed:", error.message);
+    console.error("[paytr/callback] " + rpcAdi + " failed:", error.message);
     return new Response("FAIL", { status: 422 });
   }
 

@@ -58,12 +58,13 @@ export interface PaytrCreateLinkInput {
   name: string;
   callbackId: string;
   callbackLink: string;
+  amountKurus?: number;
 }
 
 export function paytrCreateToken(input: PaytrCreateLinkInput): string {
   const raw = [
     input.name,
-    String(PAYTR_AYLIK_PREMIUM_KRUS),
+    String(input.amountKurus ?? PAYTR_AYLIK_PREMIUM_KRUS),
     PAYTR_CURRENCY,
     PAYTR_MAX_INSTALLMENT,
     PAYTR_LINK_TYPE,
@@ -79,7 +80,7 @@ export function paytrCreateLinkPayload(input: PaytrCreateLinkInput): URLSearchPa
   const params = new URLSearchParams();
   params.set("merchant_id", input.merchantId);
   params.set("name", input.name);
-  params.set("price", String(PAYTR_AYLIK_PREMIUM_KRUS));
+  params.set("price", String(input.amountKurus ?? PAYTR_AYLIK_PREMIUM_KRUS));
   params.set("currency", PAYTR_CURRENCY);
   params.set("max_installment", PAYTR_MAX_INSTALLMENT);
   params.set("link_type", PAYTR_LINK_TYPE);

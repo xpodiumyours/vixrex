@@ -14,7 +14,12 @@ import Script from "next/script";
 // yükleniyordu — oysa yalnızca rent-demo + randevu akışları kullanır.
 // Yükleme artık talep olduğunda başlar: sayfa mount'ta script yok,
 // "Randevu Al"/"Kirala" akışına giren kullanıcıda yüklenir.
-const GERCEK_EYLEMLER = new Set(["rent_demo", "booking_create", "booking_track"]);
+const GERCEK_EYLEMLER = new Set([
+  "rent_demo",
+  "booking_create",
+  "booking_track",
+  "order_create",
+]);
 
 const SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "";
 
