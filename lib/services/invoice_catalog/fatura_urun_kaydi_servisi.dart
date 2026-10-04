@@ -80,6 +80,14 @@ class FaturaUrunKaydiServisi {
         }
       }
 
+      if (govde['tamam'] != true || kaydedilenler.length != satirlar.length ||
+          kaydedilenler.map((satir) => satir.sira).toSet().length != satirlar.length ||
+          kaydedilenler.any((satir) => satir.sira < 0 || satir.sira >= satirlar.length ||
+            !['taslak', 'yayinda', 'atlandi'].contains(satir.durum) ||
+            (satir.durum != 'atlandi' && (satir.id == null || satir.id!.trim().isEmpty)))) {
+        return Result.failure(Failure('Sunucu bütün ürünlerin kayıt sonucunu vermedi. Taslağın korunuyor; tekrar dene.'));
+      }
+
       return Result.success(
         FaturaKaydiSonucu(
           yayinda: _tamSayi(govde['yayinda']),
@@ -140,6 +148,7 @@ class FaturaKaydiSatiri {
   final String kartDurumu;
   final String disKimlik;
   final double? alisFiyati;
+  final bool onayli;
 
   const FaturaKaydiSatiri({
     required this.satirSirasi,
@@ -160,6 +169,7 @@ class FaturaKaydiSatiri {
     this.stok,
     this.stokOnaylandi = false,
     this.alisFiyati,
+    this.onayli = false,
   });
 
   Map<String, dynamic> toJson() {
@@ -188,7 +198,7 @@ class FaturaKaydiSatiri {
       'kartDurumu': kartDurumu,
       'stokOnaylandi': stokOnaylandi,
       if (disKimlik.trim().isNotEmpty) 'externalProductId': disKimlik.trim(),
-      'ownerApproved': true,
+      'ownerApproved': onayli,
       'yayinIstegi': false,
       if (alisFiyati != null) 'purchasePriceAmount': alisFiyati,
       if ((model ?? '').trim().isNotEmpty)

@@ -71,6 +71,18 @@ class FaturaOkuServisi {
       }
 
       final govde = _govdeCoz(govdeMetni);
+      return cozumle(govde);
+
+    } catch (_) {
+      return Result.failure(
+        Failure('Fatura şu an okunamadı. İnternet bağlantını kontrol et.'),
+      );
+    } finally {
+      if (ownsClient) client.close();
+    }
+  }
+
+  Result<OcrCatalogResult> cozumle(Map<String, dynamic> govde) {
       final hamSatirlar = govde['satirlar'];
       if (hamSatirlar is! List || hamSatirlar.isEmpty) {
         return Result.failure(Failure('Bu fotoğrafta ürün satırı bulunamadı.'));
@@ -89,7 +101,7 @@ class FaturaOkuServisi {
 
       for (var i = 0; i < hamSatirlar.length; i++) {
         final satir = hamSatirlar[i];
-        if (satir is! Map) continue;
+        if (satir is! Map) return Result.failure(Failure('Fatura satırı eksik veya geçersiz.'));
         final cift = _satirdanCiftUret(
           satir,
           i,
@@ -116,13 +128,6 @@ class FaturaOkuServisi {
                       urunler.length,
         ),
       );
-    } catch (_) {
-      return Result.failure(
-        Failure('Fatura şu an okunamadı. İnternet bağlantını kontrol et.'),
-      );
-    } finally {
-      if (ownsClient) client.close();
-    }
   }
 
   (DetectedProduct, InvoiceProductDraft) _satirdanCiftUret(
@@ -170,7 +175,11 @@ class FaturaOkuServisi {
       }
     }
 
-    final id = 'ocr_invoice_${now.microsecondsSinceEpoch}_$index';
+    final id = islemKimligi == null ? 'ocr_invoice_${now.microsecondsSinceEpoch}_$index' : 'invoice_${islemKimligi}_$index';
+    final sahip = satir['sahipDurumu'];
+    final sahipDurumu = sahip is Map ? sahip : <String, dynamic>{};
+    final satisFiyati = sayi(sahipDurumu['satisFiyati'])?.toDouble();
+    final stok = sayi(sahipDurumu['stok'])?.toInt();
 
     EvidenceValue<String>? evMetin(
       String deger,
@@ -227,7 +236,9 @@ class FaturaOkuServisi {
       marka = metin(katalog['marka']);
       final izinHam = metin(katalog['izinDurumu']);
       izinDurumu =
-          izinHam == 'var'
+          izinHam == 'denied' || izinHam == 'reddedildi'
+              ? RightsStatus.denied
+              : izinHam == 'var'
               ? RightsStatus.verifiedSupplierPermission
               : RightsStatus.unknown;
 
@@ -254,7 +265,10 @@ class FaturaOkuServisi {
       id: id,
       name: resmiAd.isNotEmpty ? resmiAd : (model.isNotEmpty ? model : 'Ürün'),
       brand: marka,
-      quantity: adet ?? 1,
+      quantity: stok ?? adet ?? 1,
+      price: satisFiyati,
+      isApproved: sahipDurumu['onayli'] == true,
+      databaseEntryId: metin(satir['urunId']).isEmpty ? null : metin(satir['urunId']),
       documentQuantity: adet,
       confidence:
           urunGucu == EvidenceStrength.strong
@@ -380,7 +394,9 @@ class FaturaOkuServisi {
       celiskiAdaylari: celiskiAdaylari,
       celiskiDayanak: celiskiDayanak.isEmpty ? null : celiskiDayanak,
       // Esnaf yalnız satış fiyatını girer; faturadaki adet stok olarak alınır.
-      stockConfirmed: adet != null && adet >= 0,
+      stockConfirmed: sahipDurumu['stokOnaylandi'] == true,
+      merchantApproved: sahipDurumu['onayli'] == true,
+      salePrice: satisFiyati,
       islemKimligi: islemKimligi,
     );
 

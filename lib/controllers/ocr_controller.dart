@@ -7,6 +7,9 @@ import 'package:vixrex/models/product_rich_data.dart';
 import 'package:vixrex/models/invoice_product_draft.dart';
 import 'package:vixrex/services/invoice_catalog/invoice_draft_decision_engine.dart';
 import 'package:vixrex/models/store_product.dart';
+import 'package:vixrex/core/result.dart';
+import 'package:vixrex/utils/failure.dart';
+import 'package:vixrex/services/invoice_catalog/fatura_islem_servisi.dart';
 import 'package:vixrex/services/invoice_catalog/fatura_oku_servisi.dart';
 import 'package:vixrex/services/invoice_catalog/fatura_urun_kaydi_servisi.dart';
 import 'package:vixrex/services/invoice_catalog/fatura_yayinla_servisi.dart';
@@ -23,10 +26,19 @@ class OcrController extends ChangeNotifier {
 
   final FaturaUrunKaydiServisi _faturaKaydiServisi;
   final FaturaYayinlaServisi _faturaYayinServisi;
+  final FaturaOkuServisi _faturaOkuServisi;
+  final FaturaIslemServisi _faturaIslemServisi;
 
   OcrCatalogResult? _result;
   bool _isProcessing = false;
   bool _isPublishing = false;
+  bool _isSaving = false;
+  bool get isSaving => _isSaving;
+  final Map<int, String> _savedInvoiceIds = {};
+  final Map<int, String> _invoiceCategories = {};
+  Timer? _stateSaveTimer;
+  List<Map<String, dynamic>> invoiceHistory = [];
+  String? _stateSaveError;
   String? _errorMessage;
   FaturaKaydiSonucu? _faturaKaydiSonucu;
   FaturaYayinlaSonucu? _faturaYayinSonucu;
@@ -36,10 +48,14 @@ class OcrController extends ChangeNotifier {
     StoreEditorController? editorController,
     FaturaUrunKaydiServisi faturaKaydiServisi = const FaturaUrunKaydiServisi(),
     FaturaYayinlaServisi faturaYayinServisi = const FaturaYayinlaServisi(),
+    FaturaOkuServisi faturaOkuServisi = const FaturaOkuServisi(),
+    FaturaIslemServisi faturaIslemServisi = const FaturaIslemServisi(),
   }) : _ocrService = ocrService,
        _editorController = editorController,
        _faturaKaydiServisi = faturaKaydiServisi,
-       _faturaYayinServisi = faturaYayinServisi;
+       _faturaYayinServisi = faturaYayinServisi,
+       _faturaOkuServisi = faturaOkuServisi,
+       _faturaIslemServisi = faturaIslemServisi;
 
   String _scanMode = 'receipt';
   String get scanMode => _scanMode;
@@ -70,6 +86,12 @@ class OcrController extends ChangeNotifier {
   /// hâlâ cihaz üstü [_ocrService] kullanır — onlar üretici kataloğuyla
   /// hiç ilişkili değil.
   Future<void> analyzeImage(Uint8List imageBytes) async {
+    if (_isSaving || _isProcessing) return;
+    if (!await persistInvoiceState()) return;
+    _savedInvoiceIds.clear();
+    _invoiceCategories.clear();
+    _faturaKaydiSonucu = null;
+    _faturaYayinSonucu = null;
     _isProcessing = true;
     _errorMessage = null;
     notifyListeners();
@@ -109,8 +131,7 @@ class OcrController extends ChangeNotifier {
       return;
     }
 
-    const servis = FaturaOkuServisi();
-    final result = await servis.oku(
+    final result = await _faturaOkuServisi.oku(
       imageBytes: imageBytes,
       storeSlug: slug,
       editToken: editToken,
@@ -156,6 +177,7 @@ class OcrController extends ChangeNotifier {
     }
 
     product.isApproved = true;
+    _invoiceStateChanged();
     notifyListeners();
   }
 
@@ -169,7 +191,10 @@ class OcrController extends ChangeNotifier {
     final draft = _result!.invoiceDrafts[index];
     _result!.invoiceDrafts[index] = draft.copyWith(
       stockConfirmed: !draft.stockConfirmed,
+      merchantApproved: false,
     );
+    _result!.products[index].isApproved = false;
+    _invoiceStateChanged();
     notifyListeners();
   }
 
@@ -178,6 +203,7 @@ class OcrController extends ChangeNotifier {
     if (_result == null) return;
     if (index < 0 || index >= _result!.products.length) return;
     _result!.products[index].isApproved = false;
+    _invoiceStateChanged();
     notifyListeners();
   }
 
@@ -186,9 +212,13 @@ class OcrController extends ChangeNotifier {
     if (_result == null) return;
     if (index < 0 || index >= _result!.products.length) return;
     if (updated.isInvoiceSource) {
+      updated.isApproved = false;
+      final draft = _result!.invoiceDrafts[index];
+      _result!.invoiceDrafts[index] = draft.copyWith(salePrice: updated.price, clearSalePrice: updated.price == null, merchantApproved: false);
       updated.issues = InvoiceRowParser.validateProduct(updated);
     }
     _result!.products[index] = updated;
+    _invoiceStateChanged();
     notifyListeners();
   }
 
@@ -213,6 +243,7 @@ class OcrController extends ChangeNotifier {
       );
       product.isApproved = decision.canPrepareDraft;
     }
+    _invoiceStateChanged();
     notifyListeners();
   }
 
@@ -222,11 +253,14 @@ class OcrController extends ChangeNotifier {
     for (final product in _result!.products) {
       product.isApproved = false;
     }
+    _invoiceStateChanged();
     notifyListeners();
   }
 
   /// Onaylanan ürünleri kaydet.
   Future<void> saveApprovedProducts() async {
+    if (_isSaving) return;
+    _errorMessage = null;
     final approved = _result?.approvedProducts;
     if (approved == null || approved.isEmpty) return;
 
@@ -378,7 +412,7 @@ class OcrController extends ChangeNotifier {
       final islemKimligi = (taslak.islemKimligi ?? sonuc.islemKimligi ?? '').trim();
       if (islemKimligi.isEmpty) continue;
 
-      final satisFiyati = taslak.salePrice ?? urun.price;
+      final satisFiyati = urun.price;
       final kod = (urun.barcode ?? urun.sku ?? '').trim();
       final tedarikciKimligi =
           (taslak.supplierTaxOrTradeIdentifier?.value ??
@@ -397,7 +431,7 @@ class OcrController extends ChangeNotifier {
           ad: (taslak.normalizedName?.value ?? urun.name).trim(),
           aciklama: (urun.description ?? '').trim(),
           fiyatMetni: satisFiyati == null ? '' : '${_fiyatYaz(satisFiyati)} TL',
-          kategoriId: kategoriId,
+          kategoriId: _invoiceCategories[sira] ?? kategoriId,
           gorseller: gorseller,
           gorselKaynagi: taslak.canonicalProductUrl?.value,
           marka: taslak.brand?.value ?? urun.brand,
@@ -405,7 +439,8 @@ class OcrController extends ChangeNotifier {
           model: urun.sku,
           varyant: urun.variant,
           beden: urun.size,
-          stok: taslak.stockConfirmed ? urun.documentQuantity : null,
+          stok: taslak.stockConfirmed ? urun.quantity : null,
+          onayli: urun.isApproved,
           stokOnaylandi: taslak.stockConfirmed,
           kartDurumu: taslak.etkinKartDurumu.wireValue,
           disKimlik:
@@ -424,26 +459,29 @@ class OcrController extends ChangeNotifier {
       return;
     }
 
+    if (!await persistInvoiceState()) return;
+    _isSaving = true;
+    notifyListeners();
     final kayit = await _faturaKaydiServisi.taslakKaydet(
       satirlar: satirlar,
       storeSlug: slug,
       editToken: editToken,
     );
 
+    _isSaving = false;
     kayit.when(
       success: (ozet) {
-        if (ozet.taslak + ozet.yayinda == 0) {
-          final ilkSebep =
-              ozet.satirlar.where((s) => s.sebep.isNotEmpty).isEmpty
-                  ? 'Ürün kaydedilemedi.'
-                  : ozet.satirlar.firstWhere((s) => s.sebep.isNotEmpty).sebep;
-          _errorMessage = ilkSebep;
-          notifyListeners();
-          return;
-        }
         _faturaKaydiSonucu = ozet;
         _faturaYayinSonucu = null;
-        _result = null;
+        for (final row in ozet.satirlar) {
+          if (row.id == null || row.durum == 'atlandi') continue;
+          final index = satirlar[row.sira].satirSirasi;
+          _savedInvoiceIds[index] = row.id!;
+          sonuc.products[index].databaseEntryId = row.id;
+        }
+        final failed = ozet.satirlar.where((row) => row.durum == 'atlandi');
+        if (failed.isNotEmpty) _errorMessage = failed.map((row) => row.sebep).join('\n');
+        if (_savedInvoiceIds.isNotEmpty) unawaited(editor.reloadRemoteProducts());
         notifyListeners();
       },
       failure: (failure) {
@@ -462,7 +500,7 @@ class OcrController extends ChangeNotifier {
     final kayit = _faturaKaydiSonucu;
     if (kayit == null || _isPublishing) return;
 
-    final idler = kayit.yayinlanabilirTaslakIdleri;
+    final idler = kayit.yayinlanabilirTaslakIdleri.where((id) => !(_faturaYayinSonucu?.satirlar.any((row) => row.id == id && row.yayinda) ?? false)).toList();
     if (idler.isEmpty) {
       _errorMessage = 'Yayınlanacak taslak ürün yok.';
       notifyListeners();
@@ -487,6 +525,7 @@ class OcrController extends ChangeNotifier {
     sonuc.when(
       success: (ozet) {
         _faturaYayinSonucu = ozet;
+        unawaited(_editorController!.reloadRemoteProducts());
         notifyListeners();
       },
       failure: (failure) {
@@ -501,6 +540,123 @@ class OcrController extends ChangeNotifier {
     _faturaKaydiSonucu = null;
     _faturaYayinSonucu = null;
     notifyListeners();
+  }
+
+  List<ProductCategory> get invoiceCategories => _editorController?.data.productCategories ?? [];
+
+  String? categoryFor(int index) => _invoiceCategories[index];
+
+  void setInvoiceCategory(int index, String categoryId) {
+    _invoiceCategories[index] = categoryId;
+    if (_result != null) _result!.products[index].isApproved = false;
+    _invoiceStateChanged();
+    notifyListeners();
+  }
+
+  void _invoiceStateChanged() {
+    _stateSaveTimer?.cancel();
+    if (_scanMode != 'invoice') return;
+    _stateSaveTimer = Timer(const Duration(milliseconds: 350), () { unawaited(persistInvoiceState()); });
+  }
+
+  Future<bool> persistInvoiceState() async {
+    _stateSaveTimer?.cancel();
+    final catalog = _result;
+    final info = _editorController?.publishedInfo;
+    if (_scanMode != 'invoice' || catalog == null || catalog.islemKimligi == null || info == null) return true;
+    final result = await _faturaIslemServisi.kaydet(
+      slug: info.slug, editToken: info.editToken, islemKimligi: catalog.islemKimligi!,
+      satirlar: List.generate(catalog.products.length, (index) {
+        final product = catalog.products[index];
+        final draft = catalog.invoiceDrafts[index];
+        return {'satirSirasi': index, 'sahipDurumu': {
+          'satisFiyati': product.price?.toString() ?? '',
+          'stok': product.quantity.toString(),
+          'stokOnaylandi': draft.stockConfirmed,
+          'kategoriId': _invoiceCategories[index] ?? _uuidKategoriBul(_editorController!) ?? '',
+          'onayli': product.isApproved,
+          'esnafGorselleri': <String>[],
+        }};
+      }),
+    );
+    if (result.isFailure) {
+      _stateSaveError = result.failure!.message;
+      _errorMessage = _stateSaveError;
+      notifyListeners();
+      return false;
+    }
+    if (_errorMessage == _stateSaveError) _errorMessage = null;
+    _stateSaveError = null;
+    return true;
+  }
+
+  Future<void> loadInvoiceHistory() async {
+    final info = _editorController?.publishedInfo;
+    if (info == null) return;
+    final result = await _faturaIslemServisi.listele(slug: info.slug, editToken: info.editToken);
+    if (result.isFailure) { _errorMessage = result.failure!.message; } else {
+      final rows = result.data!['islemler'];
+      if (rows is List) invoiceHistory = rows.whereType<Map>().map((row) => Map<String, dynamic>.from(row)).toList();
+    }
+    notifyListeners();
+  }
+
+  Future<void> resumeInvoice(String islemKimligi) async {
+    if (_isSaving || _isProcessing || !await persistInvoiceState()) return;
+    final info = _editorController?.publishedInfo;
+    if (info == null) return;
+    _isProcessing = true;
+    _errorMessage = null;
+    notifyListeners();
+    final response = await _faturaIslemServisi.yukle(slug: info.slug, editToken: info.editToken, islemKimligi: islemKimligi);
+    _isProcessing = false;
+    if (response.isFailure) { _errorMessage = response.failure!.message; } else {
+      final parsed = _faturaOkuServisi.cozumle(response.data!);
+      if (parsed.isFailure) { _errorMessage = parsed.failure!.message; } else {
+        _result = parsed.data;
+        _savedInvoiceIds.clear();
+        _invoiceCategories.clear();
+        final rows = response.data!['satirlar'] as List;
+        for (var i = 0; i < rows.length; i++) {
+          final row = rows[i] as Map;
+          if (row['urunId'] is String) _savedInvoiceIds[i] = row['urunId'] as String;
+          final owner = row['sahipDurumu'];
+          if (owner is Map && owner['kategoriId'] is String) _invoiceCategories[i] = owner['kategoriId'] as String;
+        }
+        _faturaKaydiSonucu = null;
+        _faturaYayinSonucu = null;
+      }
+    }
+    notifyListeners();
+  }
+
+  Future<void> resumeInvoiceProduct(String productId) async {
+    final info = _editorController?.publishedInfo;
+    if (info == null) return;
+    final response = await _faturaIslemServisi.urundenBul(slug: info.slug, editToken: info.editToken, urunId: productId);
+    if (response.isFailure) { _errorMessage = response.failure!.message; notifyListeners(); return; }
+    await resumeInvoice((response.data!['islemKimligi'] ?? '').toString());
+  }
+
+  Future<void> correctInvoiceRow(int index, {required String ad, required String model, required String barkod, required String marka}) async {
+    final info = _editorController?.publishedInfo;
+    final catalog = _result;
+    if (info == null || catalog?.islemKimligi == null || _isProcessing || !await persistInvoiceState()) return;
+    final product = catalog!.products[index];
+    product.isApproved = false;
+    if (!await persistInvoiceState()) return;
+    _isProcessing = true;
+    notifyListeners();
+    final response = await _faturaIslemServisi.duzelt(slug: info.slug, editToken: info.editToken, islemKimligi: catalog.islemKimligi!, satirSirasi: index, ad: ad, model: model, barkod: barkod, marka: marka);
+    _isProcessing = false;
+    if (response.isFailure) { _errorMessage = response.failure!.message; notifyListeners(); return; }
+    await resumeInvoice(catalog.islemKimligi!);
+  }
+
+  @override
+  void dispose() {
+    _stateSaveTimer?.cancel();
+    super.dispose();
   }
 
   String? _uuidKategoriBul(StoreEditorController editor) {

@@ -78,6 +78,12 @@ class FaturaYayinlaServisi {
         }
       }
 
+      if (govde['tamam'] != true || satirlar.length != temizIdler.toSet().length ||
+          satirlar.map((satir) => satir.id).toSet().length != satirlar.length ||
+          satirlar.any((satir) => !temizIdler.contains(satir.id))) {
+        return Result.failure(Failure('Sunucu bütün ürünlerin yayın sonucunu vermedi. Tekrar dene.'));
+      }
+
       return Result.success(
         FaturaYayinlaSonucu(
           yayinda: (govde['yayinda'] is num) ? (govde['yayinda'] as num).toInt() : 0,

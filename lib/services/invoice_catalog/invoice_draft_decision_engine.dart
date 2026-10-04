@@ -120,7 +120,6 @@ class InvoiceDraftDecisionEngine {
     }
 
     final dataRightsMissing =
-        draft.rightsStatus == RightsStatus.unknown ||
         draft.rightsStatus == RightsStatus.denied;
 
     if (dataRightsMissing) {
@@ -157,7 +156,8 @@ class InvoiceDraftDecisionEngine {
         draft.merchantApproved &&
         draft.hasPositiveSalePrice &&
         stokOnayli &&
-        !externalMediaBlocked;
+        !externalMediaBlocked &&
+        draft.imageCandidates.any((image) => image.selected && image.canUse);
 
     return InvoiceDraftDecisionResult(
       kartDurumu: kartDurumu,
