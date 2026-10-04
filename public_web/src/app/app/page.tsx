@@ -78,7 +78,7 @@ export default function AppPage() {
     const [productsResult, categoriesResult] = await Promise.all([
       supabase
         .from("products")
-        .select("id, slug, name, description, price_text, price_amount, currency, image_urls, category_id, stock_status, stock_quantity, brand, barcode, metadata, variants, old_price_amount, badge_tag, fulfillment_region, product_categories(name, product_template_key)")
+        .select("id, slug, name, description, price_text, price_amount, currency, image_urls, category_id, stock_status, stock_quantity, brand, barcode, metadata, variants, old_price_amount, badge_tag, fulfillment_region, is_visible, source_type, product_categories(name, product_template_key)")
         .eq("store_id", storeId),
       supabase
         .from("product_categories")
