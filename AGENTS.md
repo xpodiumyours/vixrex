@@ -159,6 +159,21 @@ durdu; bu klasör ana dalın 32 adım gerisinde kaldı ve aynı dönemde yazıla
 belgeler "çelişkili" hâle geldi. Belgeler yanlış değildi, **eskiydi**: çelişki
 diye görünen şeyin kökü, geride kalmış bir kopyaydı.
 
+**Eki (2026-10-03) — dal taşıma düzeni ve ölçüm kanca:**
+Bir işin **tek** taşıyıcı dalı olur; aynı iş için ikinci dal açılmaz. Taşıyıcı
+dal üç gün içinde push edilmezse veya işi main'e/önizlemeye alınmazsa dal
+kapatılır — sessizce bekleyen dal, unutulmuş iştir. Haftada bir
+`bash tool/dal-durumu.sh` koşulur; çıktısındaki SESSİZ (3+ gün), ESKI (15+
+gün), GERIDE (100+ commit) etiketleri bir sonraki oturumda kapatılır.
+"SILINEBILIR" etiketi `git cherry` novel=0 demektir: iş zaten main'dedir, dalın
+görevi bitmiştir; silme onayı yine Casper'ındır. Merge kapısı ayrıdır:
+`bash tool/merge-hazir.sh` (kural 13, 19).
+
+Neden (2026-10-03 ölçümü): ölçüm yokken depoda 71 yerel dal ve 46 worktree
+birikti; 35 dal tamamen boş, 31 worktree mezarlıktı ve kimse fark etmiyordu.
+Aynı ölçümde 61 dal üç gündür, 31 dal on beş gündür dokunulmamış; 34 dal
+main'den yüzün üzerinde commit gerideydi. Sayılmayan dal çoğalır.
+
 ---
 
 ## E. Rapor verirken
