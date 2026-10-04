@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vixrex/services/image_optimization_service.dart';
+import 'package:vixrex/services/product_image_policy.dart';
 
 class StoreShelfUploadService {
   const StoreShelfUploadService({
@@ -27,12 +28,14 @@ class StoreShelfUploadService {
     String slug, {
     String fileExtension = 'jpg',
     String contentType = 'image/jpeg',
+    int minShortEdge = 0,
   }) async {
     final safeSlug = sanitizeSlug(slug);
     final optimizedImage = await imageOptimizationService.optimize(
       bytes,
       fileExtension: sanitizeExtension(fileExtension),
       contentType: contentType,
+      minShortEdge: minShortEdge,
     );
     final path =
         '$safeSlug/${DateTime.now().millisecondsSinceEpoch}.'
@@ -84,6 +87,7 @@ class StoreShelfUploadService {
       '${sanitizeSlug(slug)}/products/${sanitizeSlug(productId)}',
       fileExtension: fileExtension,
       contentType: contentType,
+      minShortEdge: ProductImagePolicy.minSourceShortEdge,
     );
   }
 

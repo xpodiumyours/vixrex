@@ -50,12 +50,27 @@ export type SikistirilmisGorsel = {
  */
 export async function gorseliSikistir(
   bayt: Uint8Array,
-  tur: string
+  tur: string,
+  secenekler: { minShortEdge?: number } = {},
 ): Promise<SikistirilmisGorsel> {
   if (bayt.length === 0) {
     throw new GorselSikistirmaHatasi("Görsel okunamadı.");
   }
 
+  if ((secenekler.minShortEdge ?? 0) > 0) {
+    try {
+      const metadata = await sharp(Buffer.from(bayt), { failOn: "none" }).metadata();
+      const width = metadata.width ?? 0;
+      const height = metadata.height ?? 0;
+      if (width <= 0 || height <= 0) throw new Error("dimensions");
+      if (Math.min(width, height) < secenekler.minShortEdge!) {
+        throw new GorselSikistirmaHatasi(`Ürün fotoğrafının kısa kenarı en az ${secenekler.minShortEdge} px olmalıdır.`);
+      }
+    } catch (error) {
+      if (error instanceof GorselSikistirmaHatasi) throw error;
+      throw new GorselSikistirmaHatasi("Ürün fotoğrafının ölçüleri okunamadı.");
+    }
+  }
   if (tur === "image/webp") {
     return { bayt, tur, uzanti: "webp" };
   }
