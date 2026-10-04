@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { taslakUrunMu } from "@/lib/faturaTaslakFiltresi";
 import { useState, useCallback, useMemo, useEffect } from "react";
 import BulkProductUpload from "./BulkProductUpload";
 import InvoiceToProducts from "./InvoiceToProducts";
@@ -62,6 +63,7 @@ interface OwnerProductManagerProps {
   varsayilanUrunTipi?: string;
   storeName?: string | null;
   onRefresh: () => Promise<void>;
+  onClose?: () => void;
 }
 
 const STOCK_OPTIONS = ["Mevcut", "Tükendi", "Son birkaç adet"] as const;
@@ -112,6 +114,7 @@ export function OwnerProductManager({
   varsayilanUrunTipi = "generic",
   storeName,
   onRefresh,
+  onClose,
 }: OwnerProductManagerProps) {
   const [editing, setEditing] = useState<OwnerProduct | "new" | null>(null);
   const [deleting, setDeleting] = useState<OwnerProduct | null>(null);
@@ -226,10 +229,12 @@ export function OwnerProductManager({
 
   const [filterText, setFilterText] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("");
+  const [yalnizTaslak, setYalnizTaslak] = useState(false);
 
   const filteredProducts = useMemo(() => {
     const q = filterText.trim().toLowerCase();
     return products.filter((p) => {
+      if (yalnizTaslak && !taslakUrunMu(p)) return false;
       if (filterCategory && p.category_id !== filterCategory) return false;
       if (!q) return true;
       return (
@@ -239,7 +244,7 @@ export function OwnerProductManager({
         (p.badge_tag || "").toLowerCase().includes(q)
       );
     });
-  }, [products, filterText, filterCategory]);
+  }, [products, filterText, filterCategory, yalnizTaslak]);
 
   async function faturayaDon(product: OwnerProduct) {
     setError("");
@@ -403,7 +408,10 @@ export function OwnerProductManager({
   }, [products, storeSlug, refreshAll]);
 
   return (
-    <section className="mt-8" aria-labelledby="products-title" aria-busy={busy}>
+    <section className={onClose ? "" : "mt-8"} aria-labelledby="products-title" aria-busy={busy}>
+      {onClose && !showInvoice && !editing && (
+        <button type="button" onClick={onClose} disabled={busy} className="owner-button-secondary mb-4">Ürün yönetimini kapat</button>
+      )}
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 id="products-title" className="text-xl font-bold text-[var(--owner-text)]">Ürünler</h2>
@@ -411,9 +419,7 @@ export function OwnerProductManager({
         </div>
         <div className="flex shrink-0 gap-2">
           <button type="button" className="owner-button-secondary" onClick={() => { setError(""); setSuccess(""); setShowBulkUpload(!showBulkUpload); setEditing(null); }} disabled={busy}>📄 Toplu Yükle</button>
-          {faturaOkuyucuHazir && (
-            <button type="button" className="owner-button-secondary" onClick={() => { setError(""); setSuccess(""); setShowInvoice(!showInvoice); setShowBulkUpload(false); setEditing(null); }} disabled={busy}>🧾 Faturadan Ekle</button>
-          )}
+            <button type="button" className="owner-button-secondary" onClick={() => { setError(""); setSuccess(""); setShowInvoice(true); setShowBulkUpload(false); setEditing(null); }} disabled={busy}>🧾 Faturadan Ekle</button>
           <button type="button" className="owner-button-primary" onClick={() => { setError(""); setSuccess(""); setShowBulkUpload(false); setEditing("new"); }} disabled={busy}>+ Ürün Ekle</button>
         </div>
       </div>
@@ -430,7 +436,8 @@ export function OwnerProductManager({
           <option value="">Tüm kategoriler</option>
           {resolvedCategories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
-        {(filterText || filterCategory) && <span className="self-center text-xs text-[var(--owner-muted)]">{filteredProducts.length}/{products.length}</span>}
+        <label className="self-center text-sm"><input type="checkbox" checked={yalnizTaslak} onChange={(e) => setYalnizTaslak(e.target.checked)} /> Yalnız taslaklar</label>
+        {(filterText || filterCategory || yalnizTaslak) && <span className="self-center text-xs text-[var(--owner-muted)]">{filteredProducts.length}/{products.length}</span>}
       </div>
 
       {showInvoice && !editing && (
@@ -440,6 +447,7 @@ export function OwnerProductManager({
           onUploaded={async () => { await refreshAll(); }}
           onClose={() => { setShowInvoice(false); setFaturaIslemKimligi(null); }}
           baslangicIslemKimligi={faturaIslemKimligi ?? undefined}
+          okuyucuHazir={faturaOkuyucuHazir}
         />
       )}
 
