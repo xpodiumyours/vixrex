@@ -8,6 +8,8 @@ export interface DogrulanmisSatir {
   sonuc: KartDurumu;
   urunId: string | null;
   izinliGorseller: Set<string>;
+  katalog: Record<string, unknown> | null;
+  alisBirimFiyati: number | null;
 }
 
 export async function satiriDogrula(
@@ -33,7 +35,7 @@ export async function satiriDogrula(
 
   const satir = await admin
     .from("invoice_job_lines")
-    .select("id,outcome,product_id")
+    .select("id,outcome,product_id,catalog_snapshot,unit_price")
     .eq("job_id", islemKimligi)
     .eq("line_index", sira)
     .maybeSingle();
@@ -55,7 +57,11 @@ export async function satiriDogrula(
       .filter(Boolean),
   );
 
+  if (gorseller.error) return null;
+
   return {
+    katalog: satir.data.catalog_snapshot && typeof satir.data.catalog_snapshot === "object" ? satir.data.catalog_snapshot : null,
+    alisBirimFiyati: typeof satir.data.unit_price === "number" ? satir.data.unit_price : null,
     satirId: String(satir.data.id),
     sonuc: durumGecerliMi(satir.data.outcome) ? satir.data.outcome : "eksik",
     urunId: satir.data.product_id ? String(satir.data.product_id) : null,
@@ -111,4 +117,20 @@ export async function mevcutUrunuOku(
     stockStatus: typeof data.stock_status === "string" ? data.stock_status : null,
     gorunur: data.is_visible === true,
   };
+}
+
+export async function faturaUrununuKaydet(
+  admin: SupabaseClient,
+  args: { storeId: string; editToken: string; satirId: string; girdi: Record<string, unknown>; kanit: Record<string, unknown>; alisFiyati: number | null },
+): Promise<{ id: string; slug: string; created: boolean; kayit: "yeni" | "guncellendi" | "mevcut" }> {
+  const { data, error } = await admin.rpc("save_invoice_product", {
+    p_store_id: args.storeId,
+    p_edit_token: args.editToken,
+    p_line_id: args.satirId,
+    p_product: args.girdi,
+    p_evidence: args.kanit,
+    p_purchase_price: args.alisFiyati,
+  });
+  if (error || data?.success !== true || !data.id) throw new Error(error?.message || "FATURA_KAYDI_TAMAMLANAMADI");
+  return { id: String(data.id), slug: String(data.slug ?? ""), created: data.created === true, kayit: data.kayit };
 }

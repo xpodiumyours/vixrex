@@ -11,6 +11,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   get: vi.fn((): string | undefined => "owner-cookie"),
   admin: vi.fn(),
+  kaydet: vi.fn(),
+  yukle: vi.fn(),
+  kalici: null as Record<string, unknown> | null,
   verifyOwner: vi.fn((): { storeId: string; slug: string } | null => ({
     storeId: "store-1",
     slug: "deneme-vitrin",
@@ -35,7 +38,19 @@ vi.mock("@/lib/rentDemoSecurity", () => ({
   getClientIp: () => "127.0.0.1",
   fingerprintClient: (ip: string) => `fp-${ip}`,
 }));
-vi.mock("@/lib/supabaseAdmin", () => ({ getSupabaseAdmin: () => ({ rpc: mocks.rpc }) }));
+vi.mock("@/lib/supabaseAdmin", () => ({ getSupabaseAdmin: () => ({ rpc: mocks.rpc, from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { id: "store-1" }, error: null }) }) }) }) }) }));
+
+vi.mock("@/lib/faturaIslemKaydi", async (importOriginal) => ({
+  ...await importOriginal<typeof import("@/lib/faturaIslemKaydi")>(),
+  islemKaydet: mocks.kaydet,
+  ayniAlisverisAdaylari: async () => [],
+}));
+
+vi.mock("@/lib/faturaIslemOku", async (importOriginal) => ({
+  ...await importOriginal<typeof import("@/lib/faturaIslemOku")>(),
+  islemiYukle: mocks.yukle,
+  parmakIzindenIslemBul: async () => null,
+}));
 
 import { POST as faturaOku } from "@/app/api/fatura-oku/route";
 
@@ -97,6 +112,12 @@ const TEK_SATIR = {
 describe("/api/fatura-oku — tek okuma ucu", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.kalici = null;
+    mocks.yukle.mockImplementation(async () => mocks.kalici);
+    mocks.kaydet.mockImplementation(async (girdi) => {
+      mocks.kalici = { ...girdi, islemKimligi: "11111111-1111-4111-8111-111111111111", durum: "hazir", belge: girdi, tedarikciDijitalIz: girdi.tedarikciIz };
+      return "11111111-1111-4111-8111-111111111111";
+    });
     mocks.get.mockReturnValue("owner-cookie");
     mocks.verifyOwner.mockReturnValue({ storeId: "store-1", slug: "deneme-vitrin" });
     mocks.rpc.mockResolvedValue({ data: { allowed: true }, error: null });
@@ -215,7 +236,7 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(govde.satirlar.length).toBeGreaterThan(0);
     expect(typeof govde.belgeUyarisi).toBe("string");
     // Yarım okuma bir kez olabilir; ısrarla olmaz — üç kez denenir.
-    expect(okuma).toHaveBeenCalledTimes(3);
+    expect(okuma).toHaveBeenCalledTimes(1);
   });
 
   it("belge toplamı tutuyorsa belge gerçeği cevapta döner", async () => {
@@ -226,4 +247,29 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(govde.belgeAdedi).toBe(2);
     expect(govde.belgeToplami).toBe(274);
   });
+  it("kalıcı işlem kaydı başarısızsa okunmuş satırlar başarılı teslim sayılmaz", async () => {
+    mocks.kaydet.mockResolvedValue(null);
+    const cevap = await faturaOku(istek());
+    expect(cevap.status).toBe(503);
+    expect(mocks.kaydet).toHaveBeenCalledOnce();
+    expect((await cevap.json()).hata).toBeTruthy();
+  });
+
+  it("kaydedilen canonical satır yeni okumadan farklıysa kaydedileni döndürür", async () => {
+    mocks.yukle.mockImplementation(async () => ({ ...mocks.kalici, satirlar: [{ ...(mocks.kalici?.satirlar as Record<string, unknown>[])[0], model: "KALICI-MODEL", urunId: "urun-kalici" }] }));
+    const cevap = await faturaOku(istek());
+    const govde = await cevap.json();
+    expect(cevap.status).toBe(200);
+    expect(govde.satirlar[0].model).toBe("KALICI-MODEL");
+    expect(govde.satirlar[0].urunId).toBe("urun-kalici");
+    expect(mocks.yukle).toHaveBeenCalledWith(expect.anything(), "store-1", "11111111-1111-4111-8111-111111111111");
+  });
+
+  it("kalıcı kayıt yeniden okunamazsa başarılı teslim sayılmaz", async () => {
+    mocks.yukle.mockResolvedValue(null);
+    const cevap = await faturaOku(istek());
+    expect(cevap.status).toBe(503);
+    expect((await cevap.json()).hata).toContain("tekrar açılamadı");
+  });
+
 });

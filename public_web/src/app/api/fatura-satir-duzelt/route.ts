@@ -3,6 +3,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { sahipYetkisi } from "@/lib/faturaYetki";
 import { faturaSatirlariniDijitalIzle, type HamFaturaSatiri } from "@/lib/faturaEslestir";
 import { satirKanitKayitlari } from "@/lib/faturaIslemKaydi";
+import type { DijitalIzAramaDurumu } from "@/lib/faturaDijitalIz";
 
 export const dynamic = "force-dynamic";
 
@@ -53,7 +54,7 @@ export async function POST(request: NextRequest) {
 
   const is = await admin
     .from("invoice_jobs")
-    .select("id,supplier_name,supplier_tax_id,supplier_address,supplier_site")
+    .select("id,supplier_name,supplier_tax_id,supplier_address,supplier_site,discovery_state")
     .eq("id", islemKimligi)
     .eq("store_id", yetki.storeId)
     .maybeSingle();
@@ -81,11 +82,13 @@ export async function POST(request: NextRequest) {
     guven: Number(kayit.data.confidence ?? 0),
   };
 
-  const { satirlar, tedarikciIz } = await faturaSatirlariniDijitalIzle(
+  const { satirlar, tedarikciIz, aramaDurumu } = await faturaSatirlariniDijitalIzle(
     [duzeltilmis],
     String(is.data.supplier_name ?? ""),
     String(is.data.supplier_site ?? ""),
     {
+      durum: is.data.discovery_state && typeof is.data.discovery_state === "object"
+        ? is.data.discovery_state as DijitalIzAramaDurumu : undefined,
       tedarikciKimligi: {
         vergiNo: String(is.data.supplier_tax_id ?? ""),
         adres: String(is.data.supplier_address ?? ""),
@@ -94,9 +97,13 @@ export async function POST(request: NextRequest) {
   );
   const yeni = satirlar[0];
 
-  const { error: satirHatasi } = await admin
-    .from("invoice_job_lines")
-    .update({
+  const lineId = String(kayit.data.id);
+  const kayitlar = satirKanitKayitlari(lineId, yeni, tedarikciIz?.platform ?? "");
+  const { data: duzeltme, error: satirHatasi } = await admin.rpc("replace_invoice_line", {
+    p_store_id: yetki.storeId,
+    p_job_id: islemKimligi,
+    p_line_id: lineId,
+    p_line: {
       model: duzeltilmis.model.slice(0, 60),
       product_name: duzeltilmis.ad.slice(0, 300),
       barcode: duzeltilmis.barkod.slice(0, 20),
@@ -105,31 +112,20 @@ export async function POST(request: NextRequest) {
       warning: (yeni.uyari ?? "").slice(0, 500),
       catalog_snapshot: yeni.katalog,
       conflict_snapshot: yeni.celiski ?? null,
-    })
-    .eq("id", kayit.data.id);
-  if (satirHatasi) {
-    return NextResponse.json({ hata: "Düzeltme kaydedilemedi. Tekrar dene." }, { status: 500 });
-  }
-
-  const lineId = String(kayit.data.id);
-  await admin.from("invoice_line_evidence").delete().eq("line_id", lineId);
-  await admin.from("invoice_line_candidates").delete().eq("line_id", lineId);
-  await admin.from("invoice_image_rights").delete().eq("line_id", lineId);
-  const kayitlar = satirKanitKayitlari(lineId, yeni, tedarikciIz?.platform ?? "");
-  if (kayitlar.kanit.length) {
-    await admin.from("invoice_line_evidence").upsert(kayitlar.kanit, { onConflict: "line_id,field_name,source" });
-  }
-  if (kayitlar.aday.length) {
-    await admin.from("invoice_line_candidates").upsert(kayitlar.aday, { onConflict: "line_id,url" });
-  }
-  if (kayitlar.gorsel.length) {
-    await admin.from("invoice_image_rights").upsert(kayitlar.gorsel, { onConflict: "line_id,image_url" });
-  }
+    },
+    p_evidence: kayitlar.kanit,
+    p_candidates: kayitlar.aday,
+    p_rights: kayitlar.gorsel,
+    p_discovery: aramaDurumu ?? {},
+  });
+  if (satirHatasi || duzeltme?.success !== true) return NextResponse.json({ hata: "Düzeltme kaydedilemedi. Tekrar dene." }, { status: 500 });
 
   return NextResponse.json({
     tamam: true,
     satirSirasi,
     satir: yeni,
+    sahipDurumu: duzeltme.sahipDurumu ?? null,
+    onaySifirlandi: duzeltme.onaySifirlandi === true,
     urunId: kayit.data.product_id ? String(kayit.data.product_id) : null,
   });
 }

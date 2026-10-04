@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   admin: vi.fn(),
+  rpc: vi.fn(),
   yetki: vi.fn(),
 }));
 vi.mock("@/lib/supabaseAdmin", () => ({ getSupabaseAdmin: mocks.admin }));
@@ -22,6 +23,7 @@ interface TabloVerisi {
 
 function sahteAdmin(tablolar: Record<string, TabloVerisi>, guncellemeler: unknown[] = []) {
   return {
+    rpc: mocks.rpc,
     from: (tablo: string) => {
       const veri = tablolar[tablo] ?? {};
       const z: Record<string, unknown> = {};
@@ -152,6 +154,7 @@ describe("işlemi kapatıp yeniden açma", () => {
 describe("fatura-islem ucu", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.rpc.mockResolvedValue({ data: { success: true, kaydedilen: 1 }, error: null });
     mocks.yetki.mockResolvedValue({ tamam: true, storeId: "store-1", slug: "deneme-vitrin" });
   });
 
@@ -206,10 +209,24 @@ describe("fatura-islem ucu", () => {
     );
 
     expect(cevap.status).toBe(200);
-    expect(guncellemeler).toHaveLength(1);
-    expect((guncellemeler[0] as { govde: { owner_state: { satisFiyati: string } } }).govde.owner_state.satisFiyati).toBe(
-      "599",
-    );
+    expect(guncellemeler).toHaveLength(0);
+    expect(mocks.rpc).toHaveBeenCalledWith("save_invoice_owner_state", expect.objectContaining({
+      p_store_id: "store-1", p_job_id: ISLEM,
+      p_updates: [expect.objectContaining({ satirSirasi: 0, sahipDurumu: expect.objectContaining({ satisFiyati: "599" }) })],
+    }));
+  });
+
+
+  it("RPC sıfır satır kaydettiyse başarılı PUT dönmez", async () => {
+    mocks.admin.mockReturnValue(sahteAdmin({}));
+    mocks.rpc.mockResolvedValueOnce({ data: { success: true, kaydedilen: 0 }, error: null });
+    const cevap = await PUT(new NextRequest("http://localhost/api/fatura-islem", {
+      method: "PUT", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ slug: "deneme-vitrin", islemKimligi: ISLEM,
+        satirlar: [{ satirSirasi: 0, sahipDurumu: { satisFiyati: "599", stok: "8", stokOnaylandi: true, onayli: true } }] }),
+    }));
+    expect(cevap.status).toBe(404);
+    expect(mocks.rpc).toHaveBeenCalledOnce();
   });
 
   it("geçersiz satır sırası ya da boş liste reddedilir", async () => {
@@ -229,6 +246,7 @@ describe("fatura-islem ucu", () => {
 describe("ürün yönetiminden faturaya dönme", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.rpc.mockResolvedValue({ data: { success: true, kaydedilen: 1 }, error: null });
     mocks.yetki.mockResolvedValue({ tamam: true, storeId: "store-1", slug: "deneme-vitrin" });
   });
 

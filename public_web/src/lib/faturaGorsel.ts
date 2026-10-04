@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import sharp from "sharp";
-import { hostGuvenliMi, varsayilanCoz } from "@/lib/faturaDijitalIz";
+import { hostGuvenliMi, varsayilanCoz, pdfKatalogGorseliniOku } from "@/lib/faturaDijitalIz";
 import { gorseliSikistir, ONBELLEK_SANIYE } from "@/lib/gorselSikistir";
 import {
   FATURA_MIN_SOURCE_SHORT_EDGE,
@@ -92,6 +92,12 @@ export async function kaynakGorseliniDogrula(
     return { tamam: false, sebep: "erisilemedi" };
   }
 
+  let bayt: Uint8Array;
+  if (new URLSearchParams(url.hash.slice(1)).has("vixrex-page")) {
+    const sonuc = await pdfKatalogGorseliniOku(adres, { fetcher, resolveHost });
+    if (!sonuc) return { tamam: false, sebep: "acilmadi" };
+    bayt = sonuc;
+  } else {
   let yanit: Response;
   try {
     yanit = await fetcher(url.toString(), {
@@ -111,11 +117,11 @@ export async function kaynakGorseliniDogrula(
     return { tamam: false, sebep: "cok-buyuk" };
   }
 
-  let bayt: Uint8Array;
   try {
     bayt = new Uint8Array(await yanit.arrayBuffer());
   } catch {
     return { tamam: false, sebep: "erisilemedi" };
+  }
   }
   if (bayt.byteLength > MAX_PRODUCT_IMAGE_SOURCE_BYTES) {
     return { tamam: false, sebep: "cok-buyuk" };

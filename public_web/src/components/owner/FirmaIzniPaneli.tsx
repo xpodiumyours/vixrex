@@ -12,10 +12,12 @@ interface Talep {
 }
 
 interface IzinYaniti {
+  firmaAnahtari?: string;
   firmaAdi: string;
   etiket: string;
   izin: { durum: string; gecerli: boolean; gecerlilik: string | null };
   talep: Talep | null;
+  firmalar?: IzinYaniti[];
 }
 
 interface FirmaIzniPaneliProps {
@@ -28,6 +30,7 @@ export default function FirmaIzniPaneli({ storeSlug, islemKimligi }: FirmaIzniPa
   const [hata, setHata] = useState<string | null>(null);
   const [calisiyor, setCalisiyor] = useState(false);
   const [kopyalandi, setKopyalandi] = useState(false);
+  const [firmaSecimi, setFirmaSecimi] = useState("");
 
   const yukle = useCallback(async () => {
     try {
@@ -47,7 +50,8 @@ export default function FirmaIzniPaneli({ storeSlug, islemKimligi }: FirmaIzniPa
   }, [islemKimligi, storeSlug]);
 
   useEffect(() => {
-    void yukle();
+    const zamanlayici = setTimeout(() => void yukle(), 0);
+    return () => clearTimeout(zamanlayici);
   }, [yukle]);
 
   async function talepEt(secim: "owner" | "vixrex") {
@@ -57,13 +61,13 @@ export default function FirmaIzniPaneli({ storeSlug, islemKimligi }: FirmaIzniPa
       const cevap = await fetch("/api/firma-izni", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug: storeSlug, islemKimligi, secim }),
+        body: JSON.stringify({ slug: storeSlug, islemKimligi, secim, firmaAnahtari: firmaSecimi || secili.firmaAnahtari }),
       });
       const govde = await cevap.json().catch(() => null);
       if (!cevap.ok) {
         throw new Error(govde && typeof govde.hata === "string" ? govde.hata : "Talep açılamadı.");
       }
-      setVeri(govde as IzinYaniti);
+      await yukle();
     } catch (err) {
       setHata(err instanceof Error ? err.message : "Talep açılamadı.");
     }
@@ -100,18 +104,28 @@ export default function FirmaIzniPaneli({ storeSlug, islemKimligi }: FirmaIzniPa
     return hata ? <p className="fatura-hata">{hata}</p> : null;
   }
 
-  const talep = veri.talep;
+  const firmalar = veri.firmalar?.length ? veri.firmalar : [veri];
+  const secili = firmalar.find((firma) => firma.firmaAnahtari === firmaSecimi) ?? firmalar[0];
+  const talep = secili.talep;
   const aktifTalepVar =
     talep !== null &&
     (talep.durum === "hazirlandi" || talep.durum === "gonderim_bekliyor" || talep.durum === "gonderildi");
-  const izinVar = veri.izin.durum === "izin_verildi" && veri.izin.gecerli;
-  const reddedildi = veri.izin.durum === "reddedildi" || veri.izin.durum === "geri_cekildi";
+  const izinVar = secili.izin.durum === "izin_verildi" && secili.izin.gecerli;
+  const reddedildi = secili.izin.durum === "reddedildi" || secili.izin.durum === "geri_cekildi";
 
   return (
     <section className="fatura-izin">
-      <h4>{veri.firmaAdi || "Firma"} için kullanım izni</h4>
+      {firmalar.length > 1 && (
+        <label>Üretici
+          <select value={secili.firmaAnahtari} disabled={calisiyor}
+            onChange={(e) => { setFirmaSecimi(e.target.value); setKopyalandi(false); }}>
+            {firmalar.map((firma) => <option key={firma.firmaAnahtari} value={firma.firmaAnahtari}>{firma.firmaAdi}</option>)}
+          </select>
+        </label>
+      )}
+      <h4>{secili.firmaAdi || "Firma"} için kullanım izni</h4>
       <p>
-        <strong>{veri.etiket}</strong>
+        <strong>{secili.etiket}</strong>
       </p>
       <p className="fatura-aciklama">
         Ürünler çalışan vitrininde şimdiden görünebilir. Firmadan veri ve görsel kullanım izni ayrıca

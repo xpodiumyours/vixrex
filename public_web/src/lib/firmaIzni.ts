@@ -157,15 +157,64 @@ async function isiOku(admin: SupabaseClient, storeId: string, islemKimligi: stri
   return is.data?.id ? (is.data as IsBilgisi) : null;
 }
 
-export async function izinOzetiOku(
+export interface UreticiIzinHedefi {
+  anahtar: string;
+  ad: string;
+  site: string;
+  urunAdlari: string[];
+  urunIdleri: string[];
+}
+
+export function ureticiIzinHedefleri(satirlar: Array<Record<string, unknown>>): UreticiIzinHedefi[] {
+  const firmalar = new Map<string, UreticiIzinHedefi>();
+  for (const satir of satirlar) {
+    const katalog = satir.catalog_snapshot as Record<string, unknown> | null;
+    if (!katalog || typeof katalog.kaynak !== "string" || !satir.product_id) continue;
+    const ad = String(katalog.kaynakFirma || katalog.marka || "").trim();
+    if (!ad) continue;
+    let site: URL;
+    try { site = new URL(katalog.kaynak); } catch { continue; }
+    if (site.protocol !== "https:") continue;
+    const anahtar = ad.toLocaleLowerCase("tr-TR").replace(/[^a-z0-9çğıöşü]/g, "") + ":" + site.hostname.toLowerCase();
+    const firma = firmalar.get(anahtar) ?? { anahtar, ad, site: site.origin, urunAdlari: [], urunIdleri: [] };
+    const urunId = String(satir.product_id);
+    if (!firma.urunIdleri.includes(urunId)) {
+      firma.urunIdleri.push(urunId);
+      firma.urunAdlari.push(String(katalog.resmiAd ?? ""));
+    }
+    firmalar.set(anahtar, firma);
+  }
+  return [...firmalar.values()];
+}
+
+async function ureticileriOku(admin: SupabaseClient, storeId: string, islemKimligi: string): Promise<UreticiIzinHedefi[]> {
+  if (!await isiOku(admin, storeId, islemKimligi)) return [];
+  const satirlar = await admin.from("invoice_job_lines").select("product_id,catalog_snapshot").eq("job_id", islemKimligi);
+  if (satirlar.error || !Array.isArray(satirlar.data)) return [];
+  return ureticiIzinHedefleri(satirlar.data);
+}
+
+export async function izinOzetleriOku(admin: SupabaseClient, storeId: string, islemKimligi: string, kapsam: IzinKapsami = "data_and_images"): Promise<IzinOzeti[]> {
+  const firmalar = await ureticileriOku(admin, storeId, islemKimligi);
+  const ozetler = await Promise.all(firmalar.map((firma) => firmaOzetiOku(admin, storeId, islemKimligi, kapsam, firma)));
+  return ozetler.filter((ozet): ozet is IzinOzeti => ozet !== null);
+}
+
+export async function izinOzetiOku(admin: SupabaseClient, storeId: string, islemKimligi: string, kapsam: IzinKapsami = "data_and_images", firmaAnahtari?: string): Promise<IzinOzeti | null> {
+  const ozetler = await izinOzetleriOku(admin, storeId, islemKimligi, kapsam);
+  return firmaAnahtari ? ozetler.find((ozet) => ozet.firmaAnahtari === firmaAnahtari) ?? null : ozetler.length === 1 ? ozetler[0] : null;
+}
+
+async function firmaOzetiOku(
   admin: SupabaseClient,
   storeId: string,
   islemKimligi: string,
-  kapsam: IzinKapsami = "data_and_images",
+  kapsam: IzinKapsami,
+  firma: UreticiIzinHedefi,
 ): Promise<IzinOzeti | null> {
   const is = await isiOku(admin, storeId, islemKimligi);
   if (!is) return null;
-  const firmaAnahtari = firmaAnahtariUret(is);
+  const firmaAnahtari = firma.anahtar;
   if (!firmaAnahtari) return null;
 
   const izin = await admin
@@ -174,6 +223,7 @@ export async function izinOzetiOku(
     .eq("supplier_key", firmaAnahtari)
     .eq("scope", kapsam)
     .maybeSingle();
+  if (izin.error) return null;
   const izinKaydi = izinKaydiOlustur(izin.data as Record<string, unknown> | null, kapsam);
 
   const talepler = await admin
@@ -184,6 +234,7 @@ export async function izinOzetiOku(
     .eq("scope", kapsam)
     .order("created_at", { ascending: false })
     .limit(1);
+  if (talepler.error) return null;
   const sonTalep = Array.isArray(talepler.data) ? (talepler.data[0] as Record<string, unknown> | undefined) : undefined;
 
   let talep: TalepKaydi | null = null;
@@ -197,7 +248,7 @@ export async function izinOzetiOku(
 
   return {
     firmaAnahtari,
-    firmaAdi: is.supplier_name ?? "",
+    firmaAdi: firma.ad,
     izin: izinKaydi,
     talep,
     etiket: izinEtiketi(izinKaydi, talep),
@@ -220,41 +271,41 @@ export async function talepOlustur(
     secim: "owner" | "vixrex";
     kapsam: IzinKapsami;
     siteOrigin: string;
+    firmaAnahtari?: string;
   },
 ): Promise<TalepSonucu> {
   const is = await isiOku(admin, args.storeId, args.islemKimligi);
   if (!is) return { durum: "hata", hata: "İşlem bulunamadı." };
-  const firmaAnahtari = firmaAnahtariUret(is);
-  if (!firmaAnahtari) return { durum: "hata", hata: "Faturadaki firma belirlenemedi; izin talebi açılamaz." };
-
-  const mevcut = await izinOzetiOku(admin, args.storeId, args.islemKimligi, args.kapsam);
+  const firmalar = await ureticileriOku(admin, args.storeId, args.islemKimligi);
+  const firma = args.firmaAnahtari ? firmalar.find((f) => f.anahtar === args.firmaAnahtari) : firmalar.length === 1 ? firmalar[0] : null;
+  if (!firma) return { durum: "hata", hata: "Talep için kartın üreticisini seç; farklı markalar ayrı izinlerle takip edilir." };
+  const firmaAnahtari = firma.anahtar;
+  const mevcut = await izinOzetiOku(admin, args.storeId, args.islemKimligi, args.kapsam, firmaAnahtari);
   if (!mevcut) return { durum: "hata", hata: "İzin durumu okunamadı." };
   if (mevcut.izin.durum === "izin_verildi" && mevcut.izin.gecerli) return { durum: "izin-var", ozet: mevcut };
-  if (mevcut.izin.durum === "reddedildi") return { durum: "reddedilmis", ozet: mevcut };
+  if (mevcut.izin.durum === "reddedildi" || mevcut.izin.durum === "geri_cekildi") return { durum: "reddedilmis", ozet: mevcut };
+  async function urunleriBagla(talepKimligi: string): Promise<boolean> {
+    if (firma!.urunIdleri.length === 0) return false;
+    const { error } = await admin.from("supplier_permission_products").upsert(
+      firma!.urunIdleri.map((productId) => ({ request_id: talepKimligi, product_id: productId })),
+      { onConflict: "request_id,product_id" },
+    );
+    return !error;
+  }
   if (
     mevcut.talep &&
     (mevcut.talep.durum === "hazirlandi" ||
       mevcut.talep.durum === "gonderim_bekliyor" ||
       mevcut.talep.durum === "gonderildi")
   ) {
-    return { durum: "mevcut", ozet: mevcut };
+    if (!await urunleriBagla(mevcut.talep.talepKimligi)) return { durum: "hata", hata: "Talep ürün bağlantısı kaydedilemedi. Tekrar dene." };
+    const ozet = await izinOzetiOku(admin, args.storeId, args.islemKimligi, args.kapsam, firmaAnahtari);
+    return ozet ? { durum: "mevcut", ozet } : { durum: "hata", hata: "Talep okunamadı." };
   }
 
-  const satirlar = await admin
-    .from("invoice_job_lines")
-    .select("product_id,catalog_snapshot")
-    .eq("job_id", args.islemKimligi);
-  const kayitlar = Array.isArray(satirlar.data) ? satirlar.data : [];
-  const eslesenler = kayitlar.filter((kayit) => kayit.catalog_snapshot);
-  const urunAdlari = eslesenler
-    .map((kayit) => String((kayit.catalog_snapshot as { resmiAd?: unknown }).resmiAd ?? ""))
-    .filter(Boolean);
-  const urunIdleri = eslesenler
-    .map((kayit) => (kayit.product_id ? String(kayit.product_id) : ""))
-    .filter(Boolean);
-
+  const urunAdlari = firma.urunAdlari;
   const ornekAdres = `${args.siteOrigin.replace(/\/$/, "")}/v/${args.magazaSlug}`;
-  const firmaAdi = (is.supplier_name ?? "").trim() || "ilgili firma";
+  const firmaAdi = firma.ad;
   const mesaj = talepMetniOlustur({
     firmaAdi,
     esnafAdi: args.magazaAdi || "Bir esnaf",
@@ -270,7 +321,7 @@ export async function talepOlustur(
       job_id: args.islemKimligi,
       supplier_key: firmaAnahtari,
       supplier_name: firmaAdi,
-      supplier_site: (is.supplier_site ?? "").slice(0, 200),
+      supplier_site: firma.site.slice(0, 200),
       scope: args.kapsam,
       requested_by: args.secim,
       status: args.secim === "owner" ? "hazirlandi" : "gonderim_bekliyor",
@@ -281,21 +332,18 @@ export async function talepOlustur(
     .single();
 
   if (eklenen.error || !eklenen.data?.id) {
-    const cakisma = await izinOzetiOku(admin, args.storeId, args.islemKimligi, args.kapsam);
-    if (cakisma?.talep) return { durum: "mevcut", ozet: cakisma };
+    const cakisma = await izinOzetiOku(admin, args.storeId, args.islemKimligi, args.kapsam, firmaAnahtari);
+    if (cakisma?.talep) {
+      if (!await urunleriBagla(cakisma.talep.talepKimligi)) return { durum: "hata", hata: "Talep ürün bağlantısı kaydedilemedi. Tekrar dene." };
+      const ozet = await izinOzetiOku(admin, args.storeId, args.islemKimligi, args.kapsam, firmaAnahtari);
+      return ozet ? { durum: "mevcut", ozet } : { durum: "hata", hata: "Talep okunamadı." };
+    }
     return { durum: "hata", hata: "Talep kaydedilemedi. Tekrar dene." };
   }
 
-  if (urunIdleri.length > 0) {
-    await admin
-      .from("supplier_permission_products")
-      .upsert(
-        urunIdleri.map((productId) => ({ request_id: String(eklenen.data.id), product_id: productId })),
-        { onConflict: "request_id,product_id" },
-      );
-  }
+  if (!await urunleriBagla(String(eklenen.data.id))) return { durum: "hata", hata: "Talep ürün bağlantısı kaydedilemedi. Tekrar dene." };
 
-  const ozet = await izinOzetiOku(admin, args.storeId, args.islemKimligi, args.kapsam);
+  const ozet = await izinOzetiOku(admin, args.storeId, args.islemKimligi, args.kapsam, firmaAnahtari);
   if (!ozet) return { durum: "hata", hata: "Talep okunamadı." };
   return { durum: "olustu", ozet };
 }

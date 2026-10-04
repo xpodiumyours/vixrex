@@ -29,6 +29,7 @@ export interface UreticiUrunu {
   barkod: string;
   gorseller: string[];
   kaynak: string;
+  varyant?: string;
 }
 
 export type IzinDurumu = "yok" | "bekliyor" | "var";
@@ -341,6 +342,7 @@ export interface KatalogEslesmesi {
 export function ureticiUrunuBul(args: {
   model?: string | null;
   barkod?: string | null;
+  marka?: string | null;
   /**
    * Faturadaki tedarikçinin firma anahtarı. Verilirse o firmanın kataloğu
    * ÖNCE aranır: bir fatura tek tedarikçiden gelir, aynı kod başka firmada
@@ -362,18 +364,27 @@ export function ureticiUrunuBul(args: {
   })();
 
   const eslesme = (() => {
+    const marka = (args.marka ?? "").trim().toLocaleLowerCase("tr-TR");
+    const sec = (alan: "barkoda" | "koda", anahtar: string) => {
+      const adaylar = siraliDizinler.flatMap((dizin) => {
+        const urun = dizin[alan].get(anahtar);
+        if (!urun) return [];
+        if (marka && urun.marka.trim().toLocaleLowerCase("tr-TR") !== marka &&
+          dizin.firma.ad.trim().toLocaleLowerCase("tr-TR") !== marka) return [];
+        return [{ dizin, urun }];
+      });
+      const dogruFirma = adaylar.filter(({ dizin }) => dizin.firma.anahtar === args.firmaAnahtari);
+      const guvenli = dogruFirma.length > 0 && !marka ? dogruFirma : adaylar;
+      return guvenli.length === 1 ? guvenli[0] : null;
+    };
     if (barkod.length >= 8) {
-      for (const dizin of siraliDizinler) {
-        const urun = dizin.barkoda.get(barkod);
-        if (urun) return { dizin, urun, dayanak: "barkod" as const };
-      }
+      const bulunan = sec("barkoda", barkod);
+      if (bulunan) return { ...bulunan, dayanak: "barkod" as const };
     }
 
     if (model.length >= 4) {
-      for (const dizin of siraliDizinler) {
-        const urun = dizin.koda.get(model);
-        if (urun) return { dizin, urun, dayanak: "kod" as const };
-      }
+      const bulunan = sec("koda", model);
+      if (bulunan) return { ...bulunan, dayanak: "kod" as const };
     }
 
     return null;

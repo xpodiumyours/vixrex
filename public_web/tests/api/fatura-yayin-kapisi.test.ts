@@ -11,6 +11,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   get: vi.fn(() => "owner-cookie"),
   admin: vi.fn(),
+  rpc: vi.fn(),
+  kayitlar: new Map<number, Record<string, unknown>>(),
   verifyOwner: vi.fn(() => ({ storeId: "store-1" })),
   createProduct: vi.fn(),
   publishProduct: vi.fn(
@@ -41,21 +43,9 @@ vi.mock("@/lib/faturaGorsel", () => ({
     altyapiSorunu: false,
   }),
 }));
-vi.mock("@/lib/faturaUrunBaglantisi", () => ({
-  satiriDogrula: async (
-    _admin: unknown,
-    _storeId: string,
-    _kimlik: unknown,
-    iddia: string,
-  ) => ({
-    satirId: "satir-1",
-    sonuc: iddia,
-    urunId: null,
-    izinliGorseller: { has: () => true },
-  }),
-  satiriUrunleBagla: async () => true,
-  urunuGeriAl: async () => undefined,
-  mevcutUrunuOku: async () => null,
+vi.mock("@/lib/faturaUrunBaglantisi", async (importOriginal) => ({
+  ...await importOriginal<typeof import("@/lib/faturaUrunBaglantisi")>(),
+  satiriDogrula: async (_admin: unknown, _storeId: string, kimlik: { satirSirasi: number }) => mocks.kayitlar.get(kimlik.satirSirasi) ?? null,
 }));
 vi.mock("@/lib/productCoreServer", () => ({
   createRichCoreProduct: mocks.createProduct,
@@ -153,6 +143,15 @@ function faturaSatiri(fazla: Record<string, unknown> = {}) {
 }
 
 function istek(products: unknown[]) {
+  for (const [i, ham] of products.entries()) {
+    const p = ham as Record<string, unknown>;
+    if (p.sourceType !== "invoice") continue;
+    p.islemKimligi = "11111111-1111-4111-8111-111111111111";
+    p.satirSirasi = i;
+    mocks.kayitlar.set(i, { satirId: String(i), sonuc: p.kartDurumu ?? "eksik", urunId: null,
+      izinliGorseller: new Set(p.imageUrls as string[]), alisBirimFiyati: typeof p.purchasePriceAmount === "number" ? p.purchasePriceAmount : null,
+      katalog: { resmiAd: p.name, aciklama: p.description ?? "", marka: p.brand ?? "Üretici", kaynak: `https://tedarikci.example.com/urun/${i}` } });
+  }
   return new NextRequest("http://localhost/api/products/batch", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -163,9 +162,11 @@ function istek(products: unknown[]) {
 describe("faturadan gelen ürünün yayın kapısı", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.kayitlar.clear();
+    mocks.rpc.mockImplementation(async () => ({ data: { success: true, id: "urun-1", slug: "urun-1", created: true, kayit: "yeni" }, error: null }));
     mocks.get.mockReturnValue("owner-cookie");
     mocks.verifyOwner.mockReturnValue({ storeId: "store-1" });
-    mocks.admin.mockImplementation(() => ({ from: adminMock() }));
+    mocks.admin.mockImplementation(() => ({ from: adminMock(), rpc: mocks.rpc }));
     let sayac = 0;
     mocks.createProduct.mockImplementation(async () => {
       sayac += 1;
@@ -177,7 +178,8 @@ describe("faturadan gelen ürünün yayın kapısı", () => {
     const cevap = await topluUrunEkle(istek([faturaSatiri({ ownerApproved: false })]));
     const govde = await cevap.json();
 
-    expect(mocks.createProduct.mock.calls[0][0].isVisible).toBe(false);
+    expect(mocks.rpc.mock.calls[0][0]).toBe("save_invoice_product");
+    expect(mocks.createProduct).not.toHaveBeenCalled();
     expect(govde.yayinda).toBe(0);
     expect(govde.taslak).toBe(1);
     expect(govde.satirlar[0].sebep).toContain("onaylanmadı");
@@ -185,7 +187,8 @@ describe("faturadan gelen ürünün yayın kapısı", () => {
 
   it("onay alanı hiç gönderilmezse de ürün taslak kalır", async () => {
     await topluUrunEkle(istek([faturaSatiri({ ownerApproved: undefined })]));
-    expect(mocks.createProduct.mock.calls[0][0].isVisible).toBe(false);
+    expect(mocks.rpc.mock.calls[0][0]).toBe("save_invoice_product");
+    expect(mocks.createProduct).not.toHaveBeenCalled();
   });
 
   it("kanıtlı olmayan satır, onay ve fiyat olsa bile taslak kalır", async () => {
@@ -194,7 +197,8 @@ describe("faturadan gelen ürünün yayın kapısı", () => {
     );
     const govde = await cevap.json();
 
-    expect(mocks.createProduct.mock.calls[0][0].isVisible).toBe(false);
+    expect(mocks.rpc.mock.calls[0][0]).toBe("save_invoice_product");
+    expect(mocks.createProduct).not.toHaveBeenCalled();
     expect(govde.yayinda).toBe(0);
     expect(govde.satirlar[0].sebep).toContain("kanıtlı değil");
   });
@@ -203,7 +207,8 @@ describe("faturadan gelen ürünün yayın kapısı", () => {
     const cevap = await topluUrunEkle(istek([faturaSatiri({ kartDurumu: undefined })]));
     const govde = await cevap.json();
 
-    expect(mocks.createProduct.mock.calls[0][0].isVisible).toBe(false);
+    expect(mocks.rpc.mock.calls[0][0]).toBe("save_invoice_product");
+    expect(mocks.createProduct).not.toHaveBeenCalled();
     expect(govde.satirlar[0].sebep).toContain("kanıtlı değil");
   });
 
@@ -211,7 +216,8 @@ describe("faturadan gelen ürünün yayın kapısı", () => {
     const cevap = await topluUrunEkle(istek([faturaSatiri({ stokOnaylandi: false })]));
     const govde = await cevap.json();
 
-    expect(mocks.createProduct.mock.calls[0][0].isVisible).toBe(false);
+    expect(mocks.rpc.mock.calls[0][0]).toBe("save_invoice_product");
+    expect(mocks.createProduct).not.toHaveBeenCalled();
     expect(govde.yayinda).toBe(0);
     expect(govde.satirlar[0].sebep).toContain("Stok onaylanmadı");
   });
@@ -220,7 +226,8 @@ describe("faturadan gelen ürünün yayın kapısı", () => {
     const cevap = await topluUrunEkle(istek([faturaSatiri({ priceText: "" })]));
     const govde = await cevap.json();
 
-    expect(mocks.createProduct.mock.calls[0][0].isVisible).toBe(false);
+    expect(mocks.rpc.mock.calls[0][0]).toBe("save_invoice_product");
+    expect(mocks.createProduct).not.toHaveBeenCalled();
     expect(govde.satirlar[0].sebep).toContain("Satış fiyatı");
   });
 
@@ -229,7 +236,8 @@ describe("faturadan gelen ürünün yayın kapısı", () => {
     const govde = await cevap.json();
 
     // Satır önce taslak kurulur, sonra publish RPC'si görünür yapar.
-    expect(mocks.createProduct.mock.calls[0][0].isVisible).toBe(false);
+    expect(mocks.rpc.mock.calls[0][0]).toBe("save_invoice_product");
+    expect(mocks.createProduct).not.toHaveBeenCalled();
     expect(mocks.publishProduct).toHaveBeenCalledTimes(1);
     expect(govde.yayinda).toBe(1);
   });
@@ -238,7 +246,8 @@ describe("faturadan gelen ürünün yayın kapısı", () => {
     const cevap = await topluUrunEkle(istek([faturaSatiri({ yayinIstegi: false })]));
     const govde = await cevap.json();
 
-    expect(mocks.createProduct.mock.calls[0][0].isVisible).toBe(false);
+    expect(mocks.rpc.mock.calls[0][0]).toBe("save_invoice_product");
+    expect(mocks.createProduct).not.toHaveBeenCalled();
     expect(mocks.publishProduct).not.toHaveBeenCalled();
     expect(govde.yayinda).toBe(0);
     expect(govde.taslak).toBe(1);
@@ -248,16 +257,16 @@ describe("faturadan gelen ürünün yayın kapısı", () => {
   it("fatura kanıt özeti satıra yazılır — ayrı Yayınla buradan okur", async () => {
     await topluUrunEkle(istek([faturaSatiri()]));
 
-    expect(mocks.update).toHaveBeenCalled();
-    const yazilan = mocks.update.mock.calls[0][0];
-    expect(yazilan).toMatchObject({ fatura_kanit: { kartDurumu: "kanitli", stokOnaylandi: true } });
+    expect(mocks.rpc).toHaveBeenCalledOnce();
+    expect(mocks.rpc.mock.calls[0][1].p_evidence).toMatchObject({ kartDurumu: "kanitli", stokOnaylandi: true });
   });
 
   it("fotoğrafsız ürün, onaylı ve fiyatlı olsa bile taslak kalır", async () => {
     const cevap = await topluUrunEkle(istek([faturaSatiri({ imageUrls: [] })]));
     const govde = await cevap.json();
 
-    expect(mocks.createProduct.mock.calls[0][0].isVisible).toBe(false);
+    expect(mocks.rpc.mock.calls[0][0]).toBe("save_invoice_product");
+    expect(mocks.createProduct).not.toHaveBeenCalled();
     expect(mocks.publishProduct).not.toHaveBeenCalled();
     expect(govde.satirlar[0].sebep).toContain("fotoğraf");
   });
@@ -268,7 +277,8 @@ describe("faturadan gelen ürünün yayın kapısı", () => {
     );
     const govde = await cevap.json();
 
-    expect(mocks.createProduct.mock.calls[0][0].isVisible).toBe(false);
+    expect(mocks.rpc.mock.calls[0][0]).toBe("save_invoice_product");
+    expect(mocks.createProduct).not.toHaveBeenCalled();
     expect(mocks.publishProduct).toHaveBeenCalledTimes(1);
     expect(govde.yayinda).toBe(1);
   });
@@ -276,7 +286,7 @@ describe("faturadan gelen ürünün yayın kapısı", () => {
   it("alış fiyatı ürün kartına hiçbir alandan sızmaz", async () => {
     await topluUrunEkle(istek([faturaSatiri({ purchasePriceAmount: 137 })]));
 
-    const yazilan = mocks.createProduct.mock.calls[0][0];
+    const yazilan = mocks.rpc.mock.calls[0][1].p_product;
     expect(JSON.stringify(yazilan)).not.toContain("137");
     expect(yazilan.priceText).toBe("199 TL");
     expect(yazilan.priceAmount).toBe(199);
@@ -287,10 +297,9 @@ describe("faturadan gelen ürünün yayın kapısı", () => {
     // yazılan her alan müşteriye de açılırdı. Bu yüzden ayrı tablo.
     await topluUrunEkle(istek([faturaSatiri({ purchasePriceAmount: 137 })]));
 
-    expect(mocks.upsert).toHaveBeenCalledTimes(1);
-    const [kayit, secenek] = mocks.upsert.mock.calls[0];
-    expect(kayit).toMatchObject({ product_id: "urun-1", store_id: "store-1", amount: 137 });
-    expect(secenek).toMatchObject({ onConflict: "product_id" });
+    expect(mocks.rpc).toHaveBeenCalledOnce();
+    expect(mocks.rpc.mock.calls[0][1]).toMatchObject({ p_store_id: "store-1", p_purchase_price: 137 });
+    expect(JSON.stringify(mocks.rpc.mock.calls[0][1].p_product)).not.toContain("137");
     // Ürün satırına yazılan tek şey fatura kanıt özetidir; alış fiyatı yok.
     for (const cagri of mocks.update.mock.calls) {
       expect(JSON.stringify(cagri[0])).not.toContain("137");
@@ -307,7 +316,7 @@ describe("faturadan gelen ürünün yayın kapısı", () => {
 
     expect(mocks.publishProduct).toHaveBeenCalledTimes(1);
     expect(govde.yayinda).toBe(1);
-    const yazilan: string[] = mocks.createProduct.mock.calls[0][0].imageUrls;
+    const yazilan: string[] = mocks.rpc.mock.calls[0][1].p_product.imageUrls;
     for (const adres of IZINSIZ_URETICI_FOTOGRAFLARI) {
       expect(yazilan).toContain(adres);
     }
@@ -318,7 +327,7 @@ describe("faturadan gelen ürünün yayın kapısı", () => {
       istek([faturaSatiri({ imageUrls: IZINSIZ_URETICI_FOTOGRAFLARI })]),
     );
 
-    const yazilan = mocks.update.mock.calls[0][0];
+    const yazilan = { fatura_kanit: mocks.rpc.mock.calls[0][1].p_evidence };
     expect(yazilan).toMatchObject({
       fatura_kanit: { kartDurumu: "kanitli", stokOnaylandi: true, ureticiGorsel: true },
     });
@@ -327,7 +336,7 @@ describe("faturadan gelen ürünün yayın kapısı", () => {
   it("esnafın kendi fotoğrafında üretici işareti konmaz", async () => {
     await topluUrunEkle(istek([faturaSatiri({ imageUrls: FOTOGRAFLAR })]));
 
-    const yazilan = mocks.update.mock.calls[0][0];
+    const yazilan = { fatura_kanit: mocks.rpc.mock.calls[0][1].p_evidence };
     expect(yazilan).toMatchObject({
       fatura_kanit: { kartDurumu: "kanitli", stokOnaylandi: true, ureticiGorsel: false },
     });
@@ -339,7 +348,8 @@ describe("faturadan gelen ürünün yayın kapısı", () => {
     const cevap = await topluUrunEkle(istek([faturaSatiri({ imageUrls: FOTOGRAFLAR })]));
     const govde = await cevap.json();
 
-    expect(mocks.createProduct.mock.calls[0][0].isVisible).toBe(false);
+    expect(mocks.rpc.mock.calls[0][0]).toBe("save_invoice_product");
+    expect(mocks.createProduct).not.toHaveBeenCalled();
     expect(mocks.publishProduct).toHaveBeenCalledTimes(1);
     expect(govde.yayinda).toBe(1);
   });

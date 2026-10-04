@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
-import type { TedarikciDijitalIzi } from "@/lib/faturaDijitalIz";
+import type { TedarikciDijitalIzi, DijitalIzAramaDurumu } from "@/lib/faturaDijitalIz";
 import type { EslesmisFaturaSatiri } from "@/lib/faturaEslestir";
 import {
   alisverisKarari,
@@ -32,6 +32,7 @@ export interface IslemKaydiGirdisi {
   indirimTutari?: number | null;
   odenecekToplam?: number | null;
   belgeUyarisi?: string | null;
+  aramaDurumu?: DijitalIzAramaDurumu;
 }
 
 export interface AyniAlisverisAdayi {
@@ -121,25 +122,8 @@ export async function islemKaydet(girdi: IslemKaydiGirdisi): Promise<string | nu
     const storeId = magaza.data?.id;
     if (typeof storeId !== "string" || !storeId) return null;
 
-    const varolan = await admin
-      .from("invoice_jobs")
-      .select("id")
-      .eq("store_id", storeId)
-      .eq("document_fingerprint", girdi.parmakIzi)
-      .maybeSingle();
-    if (typeof varolan.data?.id === "string" && varolan.data.id) {
-      const satirVar = await admin
-        .from("invoice_job_lines")
-        .select("id", { count: "exact", head: true })
-        .eq("job_id", varolan.data.id);
-      if ((satirVar.count ?? 0) > 0) return varolan.data.id;
-    }
-
     const beklemeVar = girdi.satirlar.some((satir) => satir.sonuc !== "kanitli");
-    const isKaydi = await admin
-      .from("invoice_jobs")
-      .upsert(
-        {
+    const isGirdisi = {
           store_id: storeId,
           document_fingerprint: girdi.parmakIzi,
           status: beklemeVar ? "inceleme" : "eslestirme",
@@ -147,6 +131,7 @@ export async function islemKaydet(girdi: IslemKaydiGirdisi): Promise<string | nu
           supplier_tax_id: girdi.tedarikciVergiNo.slice(0, 40),
           supplier_address: girdi.tedarikciAdres.slice(0, 500),
           supplier_site: girdi.tedarikciSite.slice(0, 200),
+          discovery_state: girdi.aramaDurumu ?? {},
           supplier_trace: girdi.tedarikciIz
             ? {
                 anahtar: girdi.tedarikciIz.anahtar,
@@ -169,19 +154,8 @@ export async function islemKaydet(girdi: IslemKaydiGirdisi): Promise<string | nu
           discount_total: girdi.indirimTutari ?? null,
           payable_total: girdi.odenecekToplam ?? null,
           updated_at: new Date().toISOString(),
-        },
-        { onConflict: "store_id,document_fingerprint" },
-      )
-      .select("id")
-      .single();
-
-    const jobId = isKaydi.data?.id;
-    if (typeof jobId !== "string" || !jobId) return null;
-
-    await admin.from("invoice_job_lines").delete().eq("job_id", jobId);
-
+        };
     const satirYazlari = girdi.satirlar.map((satir, sira) => ({
-      job_id: jobId,
       line_index: sira,
       raw_line: (satir.hamSatir ?? "").slice(0, 1000),
       model: satir.model.slice(0, 60),
@@ -199,43 +173,13 @@ export async function islemKaydet(girdi: IslemKaydiGirdisi): Promise<string | nu
       catalog_snapshot: satir.katalog,
       conflict_snapshot: satir.celiski ?? null,
     }));
-
-    const satirKayitlari = satirYazlari.length
-      ? await admin.from("invoice_job_lines").insert(satirYazlari).select("id")
-      : { data: [] as Array<{ id: string }> };
-    const satirIdleri = Array.isArray(satirKayitlari.data)
-      ? satirKayitlari.data.map((kayit) => String(kayit.id))
-      : [];
-
-    const kanitSatillari: Array<Record<string, unknown>> = [];
-    const adaySatirlari: Array<Record<string, unknown>> = [];
-    const gorselSatirlari: Array<Record<string, unknown>> = [];
-
-    satirIdleri.forEach((lineId, sira) => {
-      const satir = girdi.satirlar[sira];
-      if (!satir) return;
-
-      const kayitlar = satirKanitKayitlari(lineId, satir, girdi.tedarikciIz?.platform ?? "");
-      kanitSatillari.push(...kayitlar.kanit);
-      adaySatirlari.push(...kayitlar.aday);
-      gorselSatirlari.push(...kayitlar.gorsel);
+    const { data, error } = await admin.rpc("save_invoice_job", {
+      p_store_id: storeId,
+      p_job: isGirdisi,
+      p_lines: satirYazlari,
     });
-
-    if (kanitSatillari.length) {
-      await admin
-        .from("invoice_line_evidence")
-        .upsert(kanitSatillari, { onConflict: "line_id,field_name,source" });
-    }
-    if (adaySatirlari.length) {
-      await admin.from("invoice_line_candidates").upsert(adaySatirlari, { onConflict: "line_id,url" });
-    }
-    if (gorselSatirlari.length) {
-      await admin
-        .from("invoice_image_rights")
-        .upsert(gorselSatirlari, { onConflict: "line_id,image_url" });
-    }
-
-    return jobId;
+    if (error || data?.success !== true || typeof data.id !== "string" || !data.id) return null;
+    return data.id;
   } catch (hata) {
     console.error(
       "[faturaIslemKaydi] is kaydi yazilamadi:",

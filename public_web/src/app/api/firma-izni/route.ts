@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { sahipYetkisi } from "@/lib/faturaYetki";
 import {
-  izinOzetiOku,
+  izinOzetleriOku,
   kapsamGecerliMi,
   talepGonderildiIsaretle,
   talepOlustur,
@@ -30,9 +30,10 @@ export async function GET(request: NextRequest) {
   const yetki = await sahipYetkisi(slug, jetonu(request));
   if (!yetki.tamam) return NextResponse.json({ hata: yetki.hata }, { status: yetki.durum });
 
-  const ozet = await izinOzetiOku(getSupabaseAdmin(), yetki.storeId, islemKimligi, kapsam);
+  const firmalar = await izinOzetleriOku(getSupabaseAdmin(), yetki.storeId, islemKimligi, kapsam);
+  const ozet = firmalar[0];
   if (!ozet) return NextResponse.json({ hata: "Firma bilgisi bulunamadı." }, { status: 404 });
-  return NextResponse.json({ tamam: true, ...ozet });
+  return NextResponse.json({ tamam: true, ...ozet, firmalar });
 }
 
 export async function POST(request: NextRequest) {
@@ -65,6 +66,7 @@ export async function POST(request: NextRequest) {
     secim,
     kapsam,
     siteOrigin: request.nextUrl.origin,
+    firmaAnahtari: typeof govde.firmaAnahtari === "string" ? govde.firmaAnahtari : undefined,
   });
 
   if (sonuc.durum === "hata") return NextResponse.json({ hata: sonuc.hata }, { status: 422 });
