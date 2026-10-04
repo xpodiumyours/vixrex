@@ -18,6 +18,7 @@ import type { RichProductItem } from "@/lib/richProductItem";
 import {
   buildProductCardFacts,
   eskiFiyatYazisi,
+  indirimOrani,
   kartRozeti,
   productPhotoCountBadge,
   productVariantLabel,
@@ -98,6 +99,29 @@ function stockTone(stockStatus: string | undefined) {
   };
 }
 
+function PhotoPlaceholderIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+      className={className}
+    >
+      <rect x="3" y="4.5" width="18" height="15" rx="2.5" />
+      <circle cx="9" cy="10" r="1.75" />
+      <path d="M3 16.5l5.25-5.25a1.5 1.5 0 012.12 0L15 16.5" />
+      <path d="M14 15l1.88-1.88a1.5 1.5 0 012.12 0L21 15.5" />
+    </svg>
+  );
+}
+
 function CatalogProductImage({
   src,
   alt,
@@ -119,11 +143,9 @@ function CatalogProductImage({
 
   if (!imgSrc || hasError) {
     return (
-      <div className="flex h-full flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 px-4 text-center">
-        <span className="text-xs font-extrabold text-slate-400">{emptyLabel}</span>
-        <span className="mt-1 text-[10px] font-medium text-slate-600">
-          Fotoğraf eklendiğinde burada gösterilir
-        </span>
+      <div className="flex h-full flex-col items-center justify-center gap-2 bg-slate-900/60 px-4 text-center">
+        <PhotoPlaceholderIcon className="h-7 w-7 text-slate-600" />
+        <span className="text-[10px] font-bold text-slate-500">{emptyLabel}</span>
       </div>
     );
   }
@@ -268,12 +290,25 @@ export default function ProductCatalog({
             metadata: product.metadata,
             variants: isService ? undefined : product.variants,
           }).ozellikler;
+          const ozellikDegerleri = kartOzellikleri.flatMap((ozellik) =>
+            ozellik.value
+              .split(",")
+              .map((parca) => parca.trim())
+              .filter(Boolean),
+          );
+          const ozellikChipLimiti = 4;
+          const ozellikChipleri = ozellikDegerleri.slice(0, ozellikChipLimiti);
+          const ozellikFazlasi = Math.max(0, ozellikDegerleri.length - ozellikChipLimiti);
           const rozet = kartRozeti({
             badgeTag: product.badgeTag,
             priceAmount: product.priceAmount,
             oldPriceAmount: product.oldPriceAmount,
           });
           const eskiFiyat = eskiFiyatYazisi(product.oldPriceAmount);
+          const indirimYuzdesi = indirimOrani({
+            priceAmount: product.priceAmount,
+            oldPriceAmount: product.oldPriceAmount,
+          });
           const fulfillmentRegion = String(product.fulfillmentRegion || "").trim();
           const fulfillmentMapUrl = productLocationMapUrl(fulfillmentRegion);
           const productKey = product.id || productUrl;
@@ -292,48 +327,62 @@ export default function ProductCatalog({
                   setLocationProductId(null);
                   setQuickView({ product, images: quickImages, productUrl, productSlug });
                 }}
-                className="block min-w-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+                className="flex h-full min-w-0 flex-col focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
                 aria-label={`${product.name} ${isService ? "hizmetini" : "ürününü"} hızlı incele`}
               >
-                <div className="relative aspect-[4/5] w-full overflow-hidden bg-slate-950 v-product-media">
+                <div className="relative aspect-[4/5] w-full shrink-0 overflow-hidden bg-slate-950 v-product-media">
                   <CatalogProductImage
                     src={image}
                     alt={product.name}
                     emptyLabel={isService ? "Hizmet görseli yok" : "Ürün görseli yok"}
                   />
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0B1120]/45 via-transparent to-transparent" />
-                  {rozet ? (
-                    <span className="absolute left-2.5 top-2.5 z-10 max-w-[70%] truncate rounded-lg bg-gradient-to-r from-blue-600 to-cyan-600 px-2.5 py-1 text-[10px] font-extrabold text-white shadow-md">
-                      {rozet}
-                    </span>
-                  ) : category && category.toLocaleLowerCase("tr-TR") !== "tümü" ? (
-                    <span className="absolute left-2.5 top-2.5 z-10 max-w-[70%] truncate rounded-lg border border-blue-500/25 bg-slate-950/80 px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-wider text-blue-300 shadow-sm backdrop-blur-md">
-                      {category}
-                    </span>
-                  ) : null}
-                  {photoCountBadge ? (
-                    <span className="absolute bottom-2.5 right-2.5 z-10 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm">
-                      {photoCountBadge}
-                    </span>
-                  ) : null}
+                  <div className="absolute left-2.5 top-2.5 z-10 flex max-w-[70%] flex-col items-start gap-1">
+                    {rozet ? (
+                      <span className="max-w-full truncate rounded-lg bg-gradient-to-r from-blue-600 to-cyan-600 px-2.5 py-1 text-[10px] font-extrabold text-white shadow-md">
+                        {rozet}
+                      </span>
+                    ) : category && category.toLocaleLowerCase("tr-TR") !== "tümü" ? (
+                      <span className="max-w-full truncate rounded-lg border border-blue-500/25 bg-slate-950/80 px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-wider text-blue-300 shadow-sm backdrop-blur-md">
+                        {category}
+                      </span>
+                    ) : null}
+                    {photoCountBadge ? (
+                      <span className="rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm">
+                        {photoCountBadge}
+                      </span>
+                    ) : null}
+                  </div>
                 </div>
 
-                <div className="px-3.5 py-3.5">
+                <div className="flex flex-1 flex-col px-3.5 py-3.5">
                   {brand ? (
                     <p className="mb-1 truncate text-[9px] font-extrabold uppercase tracking-[0.12em] text-slate-500 sm:text-[10px]">
                       {brand}
                     </p>
                   ) : null}
-                  <h3 className="line-clamp-2 min-h-[2.5em] text-xs font-extrabold leading-snug text-white sm:text-sm">
+                  <h3 className="line-clamp-2 min-h-[2.5em] text-[13px] font-extrabold leading-snug text-white sm:text-[15px]">
                     {product.name}
                   </h3>
-                  {kartOzellikleri.length > 0 ? (
-                    <p className="mt-1 truncate text-[10px] font-semibold text-slate-400 sm:text-[11px]">
-                      {kartOzellikleri.map((ozellik) => ozellik.value).join(" · ")}
-                    </p>
+                  {ozellikChipleri.length > 0 ? (
+                    <div className="mt-1.5 flex min-w-0 flex-wrap items-center gap-1">
+                      {ozellikChipleri.map((deger, ozellikIndex) => (
+                        <span
+                          key={`${productKey}-ozellik-${ozellikIndex}`}
+                          className="rounded-md border border-white/10 bg-white/[0.04] px-1.5 py-0.5 text-[9px] font-bold text-slate-400 sm:text-[10px]"
+                        >
+                          {deger}
+                        </span>
+                      ))}
+                      {ozellikFazlasi > 0 ? (
+                        <span className="rounded-md border border-blue-500/20 bg-blue-500/10 px-1.5 py-0.5 text-[9px] font-bold text-blue-300 sm:text-[10px]">
+                          +{ozellikFazlasi}
+                        </span>
+                      ) : null}
+                    </div>
                   ) : null}
-                  <div className="mt-2.5 flex min-w-0 items-baseline gap-2">
-                    <p className="truncate text-xs font-extrabold text-blue-400 sm:text-sm">
+                  <div className="mt-2.5 flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
+                    <p className="truncate text-base font-extrabold text-blue-400 sm:text-lg">
                       {product.price || "Fiyat sorun"}
                     </p>
                     {eskiFiyat ? (
@@ -341,12 +390,27 @@ export default function ProductCatalog({
                         {eskiFiyat}
                       </span>
                     ) : null}
+                    {indirimYuzdesi ? (
+                      <span className="shrink-0 rounded-md bg-gradient-to-r from-blue-600 to-cyan-600 px-1.5 py-0.5 text-[9px] font-extrabold text-white sm:text-[10px]">
+                        %{indirimYuzdesi}
+                      </span>
+                    ) : null}
                   </div>
-                  <div className="mt-2 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                    {!isService && stockStatus ? (
-                      <span className={`inline-flex min-w-0 items-center gap-2 text-[10px] font-bold sm:text-[11px] ${tone.text}`}>
-                        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${tone.dot}`} />
-                        <span className="truncate">{stockStatus}</span>
+                  <div className="mt-auto flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 pt-2">
+                    {stockStatus || fulfillmentRegion ? (
+                      <span className="inline-flex min-w-0 max-w-full items-center gap-1.5 text-[10px] font-bold sm:text-[11px]">
+                        {stockStatus ? (
+                          <>
+                            <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${tone.dot}`} />
+                            <span className={`truncate ${tone.text}`}>{stockStatus}</span>
+                          </>
+                        ) : null}
+                        {stockStatus && fulfillmentRegion ? (
+                          <span className="text-slate-600">·</span>
+                        ) : null}
+                        {fulfillmentRegion ? (
+                          <span className="truncate font-semibold text-slate-500">{fulfillmentRegion}</span>
+                        ) : null}
                       </span>
                     ) : null}
                     {!isService && variantLabel ? (
@@ -359,7 +423,7 @@ export default function ProductCatalog({
                         Hizmet
                       </span>
                     ) : null}
-                    <span className="ml-auto text-[9px] font-extrabold text-blue-400 sm:text-[10px]">
+                    <span className="ml-auto shrink-0 text-[9px] font-extrabold text-blue-400 sm:text-[10px]">
                       Hızlı incele →
                     </span>
                   </div>
