@@ -745,8 +745,7 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
           children: [
             Checkbox(
               value: _yalnizTaslak,
-              onChanged:
-                  (_) => setState(() => _yalnizTaslak = !_yalnizTaslak),
+              onChanged: (_) => setState(() => _yalnizTaslak = !_yalnizTaslak),
             ),
             const Text(
               'Yalnız taslaklar',
