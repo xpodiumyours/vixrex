@@ -13,6 +13,7 @@ import {
   type TedarikciDijitalIzi,
 } from "@/lib/faturaDijitalIz";
 import { firmaSitesiniAra } from "@/lib/firmaArama";
+import { siteFirmayaAitMi } from "@/lib/firmaDogrula";
 // Fatura satırını üretici kataloğuyla buluşturan TEK yer.
 //
 // Bilerek fotoğrafı KİM okursa okusun (telefon uygulaması, Başak, ileride
@@ -80,6 +81,7 @@ export function faturaSatiriniEslestir(
   const eslesme = ureticiUrunuBul({
     model: satir.model || null,
     barkod: satir.barkod || null,
+    marka: satir.marka || null,
     firmaAnahtari,
   });
   if (!eslesme) return eslesmeyenSatir(satir);
@@ -212,6 +214,16 @@ export async function faturaSatirlariniDijitalIzle(
   // internette aratılır; resmi sitesi bulunursa aynı keşif oradan yürür.
   // Bulunamazsa akış durmaz — satırlar dürüstçe iz-yok/eksik döner.
   let tedarikciIz = tedarikciDijitalIziBul(tedarikciAdi, tedarikciSite);
+  if (tedarikciIz && !tedarikciIz.havuzda) {
+    const dogrulama = await siteFirmayaAitMi(
+      tedarikciIz.alan,
+      { ad: tedarikciAdi, vergiNo: bagimliliklar.tedarikciKimligi?.vergiNo ?? "", adres: bagimliliklar.tedarikciKimligi?.adres ?? "" },
+      { fetcher: bagimliliklar.fetcher, resolveHost: bagimliliklar.resolveHost },
+    );
+    tedarikciIz = dogrulama.guc === "guclu" || dogrulama.guc === "orta"
+      ? { ...tedarikciIz, dogrulama }
+      : null;
+  }
   if (!tedarikciIz && tedarikciAdi.trim().length >= 3) {
     const arama = await firmaSitesiniAra(tedarikciAdi, {
       ...(bagimliliklar.tedarikciKimligi ? { kimlik: bagimliliklar.tedarikciKimligi } : {}),
@@ -255,7 +267,7 @@ export async function faturaSatirlariniDijitalIzle(
       .filter((indeks) => indeks >= 0);
     if (eksikIndeksler.length > 0) {
       const dinamik = await dinamikUrunIzleriniBul(
-        eksikIndeksler.map((indeks) => ({ model: yerel[indeks].model, barkod: yerel[indeks].barkod })),
+        eksikIndeksler.map((indeks) => ({ ...yerel[indeks] })),
         tedarikciIz,
         { ...bagimliliklar, durum: aramaDurumu },
       );
@@ -365,7 +377,7 @@ async function markaKaynaginda(
     }
 
     const dinamik = await dinamikUrunIzleriniBul(
-      indeksler.map((indeks) => ({ model: sonuc[indeks].model, barkod: sonuc[indeks].barkod })),
+      indeksler.map((indeks) => ({ ...sonuc[indeks] })),
       markaIz,
       { ...bagimliliklar, durum: aramaDurumu },
     );

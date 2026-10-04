@@ -137,7 +137,7 @@ export async function firmaSitesiniAra(
     const adres = typeof sonuc?.url === "string" ? sonuc.url : "";
     const alan = alanAdiTemizle(adres);
     if (!alan || resmiSiteOlmayan(alan)) continue;
-    if (!alanFimayaUyarMi(alan, jetonlar)) continue;
+    if (!bagimliliklar.kimlik && !alanFimayaUyarMi(alan, jetonlar)) continue;
 
     if (!bagimliliklar.kimlik) return { durum: "bulundu", alan, kaynak: `https://${alan}` };
 
@@ -146,7 +146,7 @@ export async function firmaSitesiniAra(
       { ad, vergiNo: bagimliliklar.kimlik.vergiNo, adres: bagimliliklar.kimlik.adres },
       bagimliliklar.dogrula ?? {},
     );
-    if (dogrulama.guc === "celisiyor") {
+    if (dogrulama.guc !== "guclu" && dogrulama.guc !== "orta") {
       celisenVar = true;
       continue;
     }

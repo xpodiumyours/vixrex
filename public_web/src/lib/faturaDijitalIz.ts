@@ -21,6 +21,9 @@ export interface TedarikciDijitalIzi {
 export interface DijitalIzSatiri {
   model: string;
   barkod: string;
+  marka?: string;
+  varyant?: string;
+  beden?: string;
 }
 
 export interface DijitalUrunEslesmesi {
@@ -40,6 +43,7 @@ export type DijitalIzHedefi = DijitalUrunEslesmesi | DijitalIzCeliskisi;
 export interface DijitalIzAramaDurumu {
   erisimHatasi: boolean;
   sinirDoldu: boolean;
+  devam?: Record<string, { sonrakiSayfa: number; urunler: UreticiUrunu[] }>;
 }
 
 interface KesifBaglami {
@@ -253,8 +257,11 @@ function shopifyUrunleri(veri: unknown, alan: string): UreticiUrunu[] {
         ad: baslik && baslik !== "Default Title" ? `${ad} — ${baslik}` : ad,
         marka,
         aciklama,
-        barkod: String(varyant.barcode ?? "").trim() || kod,
-        gorseller,
+        barkod: String(varyant.barcode ?? "").trim(),
+        varyant: baslik === "Default Title" ? "" : baslik,
+        gorseller: typeof varyant.featured_image === "object" && varyant.featured_image
+          ? [String((varyant.featured_image as Record<string, unknown>).src ?? "")].filter(Boolean)
+          : gorseller,
         kaynak,
       });
     }
@@ -288,7 +295,7 @@ function wooUrunleri(veri: unknown, alan: string): UreticiUrunu[] {
         ad: String(ham.name ?? ""),
         marka: markalar,
         aciklama,
-        barkod: kod,
+        barkod: "",
         gorseller,
         kaynak: String(ham.permalink ?? "") || `https://${alan}`,
       } satisfies UreticiUrunu;
@@ -297,7 +304,7 @@ function wooUrunleri(veri: unknown, alan: string): UreticiUrunu[] {
 }
 
 function urunKimligi(urun: UreticiUrunu): string {
-  return urun.kaynak?.trim() || urun.ad;
+  return `${urun.kaynak?.trim() || urun.ad}|${urun.varyant ?? ""}`;
 }
 
 function hedefBul(
@@ -320,7 +327,14 @@ function hedefBul(
     if (barkod.length >= 8) yaz(barkoda, barkod, urun);
   }
 
-  const karar = (adaylar: UreticiUrunu[], dayanak: "kod" | "barkod"): DijitalIzHedefi | null => {
+  const karar = (tumAdaylar: UreticiUrunu[], dayanak: "kod" | "barkod", satir: DijitalIzSatiri): DijitalIzHedefi | null => {
+    const marka = (satir.marka ?? "").trim().toLocaleLowerCase("tr-TR");
+    const secenekler = [satir.varyant, satir.beden].filter(Boolean).map((s) => normalizeKod(s!));
+    const adaylar = tumAdaylar.filter((urun) => {
+      if (marka && urun.marka && urun.marka.trim().toLocaleLowerCase("tr-TR") !== marka) return false;
+      if (urun.varyant && secenekler.some((secenek) => !normalizeKod(urun.varyant!).includes(secenek))) return false;
+      return true;
+    });
     if (adaylar.length === 0) return null;
     const kimlikler = [...new Set(adaylar.map(urunKimligi))];
     if (kimlikler.length > 1) {
@@ -344,13 +358,13 @@ function hedefBul(
   return satirlar.map((satir) => {
     const barkod = normalizeBarkod(satir.barkod);
     if (barkod.length >= 8) {
-      const sonuc = karar(barkoda.get(barkod) ?? [], "barkod");
+      const sonuc = karar(barkoda.get(barkod) ?? [], "barkod", satir);
       if (sonuc) return sonuc;
     }
 
     const model = normalizeKod(satir.model);
     if (model.length >= 4) {
-      const sonuc = karar(koda.get(model) ?? [], "kod");
+      const sonuc = karar(koda.get(model) ?? [], "kod", satir);
       if (sonuc) return sonuc;
     }
 
@@ -376,8 +390,12 @@ async function shopifyAra(
   resolveHost: (hostname: string) => Promise<string[]>,
   baglam: KesifBaglami,
 ): Promise<Array<DijitalIzHedefi | null>> {
-  const urunler: UreticiUrunu[] = [];
-  for (let sayfa = 1; sayfa <= MAKS_SAYFA; sayfa++) {
+  const anahtar = `shopify:${iz.alan}`;
+  const devam = (baglam.durum.devam ??= {});
+  const kayit = devam[anahtar] ??= { sonrakiSayfa: 1, urunler: [] };
+  const urunler = kayit.urunler;
+  const baslangic = kayit.sonrakiSayfa;
+  for (let sayfa = baslangic; sayfa < baslangic + MAKS_SAYFA; sayfa++) {
     const sonuc = await jsonGet(
       `https://${iz.alan}/products.json?limit=250&page=${sayfa}`,
       fetcher,
@@ -388,6 +406,7 @@ async function shopifyAra(
     const yeni = shopifyUrunleri(sonuc.veri, iz.alan);
     if (yeni.length === 0) break;
     urunler.push(...yeni);
+    kayit.sonrakiSayfa = sayfa + 1;
     const bulunan = hedefBul(urunler, satirlar, iz.izinDurumu);
     if (bulunan.every((eslesme) => eslesme !== null)) return bulunan;
   }
@@ -433,8 +452,12 @@ async function wooAra(
   resolveHost: (hostname: string) => Promise<string[]>,
   baglam: KesifBaglami,
 ): Promise<Array<DijitalIzHedefi | null>> {
-  const urunler: UreticiUrunu[] = [];
-  for (let sayfa = 1; sayfa <= MAKS_SAYFA; sayfa++) {
+  const anahtar = `woocommerce:${iz.alan}`;
+  const devam = (baglam.durum.devam ??= {});
+  const kayit = devam[anahtar] ??= { sonrakiSayfa: 1, urunler: [] };
+  const urunler = kayit.urunler;
+  const baslangic = kayit.sonrakiSayfa;
+  for (let sayfa = baslangic; sayfa < baslangic + MAKS_SAYFA; sayfa++) {
     const sonuc = await jsonGet(
       `https://${iz.alan}/wp-json/wc/store/v1/products?per_page=100&page=${sayfa}`,
       fetcher,
@@ -445,6 +468,7 @@ async function wooAra(
     const yeni = wooUrunleri(sonuc.veri, iz.alan);
     if (yeni.length === 0) break;
     urunler.push(...yeni);
+    kayit.sonrakiSayfa = sayfa + 1;
     const bulunan = hedefBul(urunler, satirlar, iz.izinDurumu);
     if (bulunan.every((eslesme) => eslesme !== null)) return bulunan;
   }
@@ -539,7 +563,7 @@ function jsonLdUrunleri(html: string, sayfaAdresi: string): UreticiUrunu[] {
       ad,
       marka,
       aciklama,
-      barkod: barkod || kod,
+      barkod,
       gorseller,
       kaynak: adres.startsWith("http") ? adres : sayfaAdresi,
     });
@@ -601,13 +625,16 @@ async function sayfaAra(
     const slug = slugKodu(loc);
     return kodlar.some((kod) => slug.includes(kod));
   });
-  const secilen = [...new Set([...kodluAdresler, ...havuz])].slice(0, MAKS_SAYFA_OKUMA);
-
-  const urunler: UreticiUrunu[] = [];
+  const devam = (baglam.durum.devam ??= {});
+  const kayit = devam[`sitemap:${iz.alan}`] ??= { sonrakiSayfa: 1, urunler: [] };
+  const adresler = [...new Set([...kodluAdresler, ...havuz])];
+  const secilen = adresler.slice(kayit.sonrakiSayfa - 1, kayit.sonrakiSayfa - 1 + MAKS_SAYFA_OKUMA);
+  const urunler = kayit.urunler;
   for (const adres of secilen) {
     const sayfa = await hamGet(adres, fetcher, resolveHost, baglam);
     if (!sayfa || sayfa.durum !== 200) continue;
     urunler.push(...jsonLdUrunleri(sayfa.govde, adres));
+    kayit.sonrakiSayfa = adresler.indexOf(adres) + 2;
     const bulunan = hedefBul(urunler, satirlar, iz.izinDurumu);
     if (bulunan.every((hedef) => hedef !== null)) return bulunan;
   }

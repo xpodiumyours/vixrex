@@ -41,7 +41,7 @@ export function satirdanFaturaTaslagi(
     name: ad,
     description: katalog.aciklama.trim(),
     brand: katalog.marka.trim() || null,
-    barcode: satir.barkod.trim() || satir.model.trim() || null,
+    barcode: satir.barkod.trim() || null,
     model: satir.model.trim(),
     // Kilitli kapsam: üretici fotoğrafı taslağa girer; kullanım izni sonra,
     // çalışan sistemle istenir (izin takibi sunucu kayıtlarındadır).
