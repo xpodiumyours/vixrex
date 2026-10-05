@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   gorselKapisi,
   katalogOzeti,
+  tekEslesme,
   ureticiUrunuBul,
   type UreticiUrunu,
 } from "@/lib/ureticiKatalog";
@@ -85,7 +86,7 @@ describe("üretici kataloğu — eşleştirme", () => {
   });
 
   it("resmî ad ve marka faturadaki ham addan daha zengin gelir", () => {
-    const eslesme = ureticiUrunuBul({ model: "ELT1302", firmaAnahtari: "seher-mensucat" });
+    const eslesme = tekEslesme(ureticiUrunuBul({ model: "ELT1302", firmaAnahtari: "seher-mensucat" }));
     expect(eslesme!.urun.ad).toContain("ELT1302");
     expect(eslesme!.urun.marka).toBeTruthy();
     expect(eslesme!.dayanak).toBe("kod");
@@ -97,11 +98,11 @@ describe("üretici kataloğu — eşleştirme", () => {
   });
 
   it("barkod eşleşmesi model kodundan önce gelir", () => {
-    const koddan = ureticiUrunuBul({ model: "ELT1302", firmaAnahtari: "seher-mensucat" });
+    const koddan = tekEslesme(ureticiUrunuBul({ model: "ELT1302", firmaAnahtari: "seher-mensucat" }));
     const barkod = koddan!.urun.barkod;
     expect(barkod.length).toBeGreaterThanOrEqual(8);
 
-    const barkoddan = ureticiUrunuBul({ model: "TER0101", barkod, firmaAnahtari: "seher-mensucat" });
+    const barkoddan = tekEslesme(ureticiUrunuBul({ model: "TER0101", barkod, firmaAnahtari: "seher-mensucat" }));
     expect(barkoddan!.dayanak).toBe("barkod");
     expect(barkoddan!.urun.kod).toBe("ELT1302");
   });
@@ -117,6 +118,22 @@ describe("üretici kataloğu — eşleştirme", () => {
     // "KP1" katalogda var ama 3 karakter; yanlış eşleşmeyi önlemek için
     // 4 karakterden kısa kodlar aranmaz.
     expect(ureticiUrunuBul({ model: "KP1" })).toBeNull();
+  });
+
+  it("aynı kod iki firmada ise adayların hepsini taşır, tekine bağlanmaz", () => {
+    const sonuc = ureticiUrunuBul({ model: "TER0101" });
+    expect(sonuc).not.toBeNull();
+    if (!sonuc || !("belirsiz" in sonuc)) throw new Error("belirsiz eşleşme bekleniyordu");
+    expect(sonuc.dayanak).toBe("kod");
+    expect(sonuc.adaylar).toHaveLength(2);
+    expect(new Set(sonuc.adaylar.map((aday) => aday.firma.anahtar)).size).toBe(2);
+    expect(tekEslesme(sonuc)).toBeNull();
+  });
+
+  it("tedarikçi biliniyorsa aynı kod artık belirsiz değildir", () => {
+    const sonuc = tekEslesme(ureticiUrunuBul({ model: "TER0101", firmaAnahtari: "seher-mensucat" }));
+    expect(sonuc).not.toBeNull();
+    expect(sonuc!.firma.anahtar).toBe("seher-mensucat");
   });
 });
 
@@ -151,7 +168,7 @@ describe("görsel izin kapısı", () => {
   });
 
   it("izni olmayan firmadan gelen eşleşmede fotoğraf taşınır, durum açıkça bildirilir", () => {
-    const eslesme = ureticiUrunuBul({ model: "ELT1302", firmaAnahtari: "seher-mensucat" });
+    const eslesme = tekEslesme(ureticiUrunuBul({ model: "ELT1302", firmaAnahtari: "seher-mensucat" }));
     expect(eslesme).not.toBeNull();
     expect(eslesme!.firma.izinDurumu).not.toBe("var");
     expect(eslesme!.gorselIzniVar).toBe(false);
@@ -159,7 +176,7 @@ describe("görsel izin kapısı", () => {
   });
 
   it("ürünün kendisi ve kodu kapıdan sonra da gelir", () => {
-    const eslesme = ureticiUrunuBul({ model: "ELT1302", firmaAnahtari: "seher-mensucat" });
+    const eslesme = tekEslesme(ureticiUrunuBul({ model: "ELT1302", firmaAnahtari: "seher-mensucat" }));
     expect(eslesme!.urun.kod).toBe("ELT1302");
     expect(eslesme!.urun.ad).toContain("Elit");
     expect(eslesme!.urun.kaynak).toContain("sehermensucat.com");

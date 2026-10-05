@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { mkdirSync, writeFileSync } from "node:fs";
-import { ureticiUrunuBul, katalogOzeti, type UreticiUrunu } from "@/lib/ureticiKatalog";
+import { tekEslesme, ureticiUrunuBul, katalogOzeti, type UreticiUrunu } from "@/lib/ureticiKatalog";
 import { FATURA_MIN_PRODUCT_IMAGES } from "@/lib/productImagePolicy";
 import seherHam from "../../data/katalog/uretici-katalog-seher-mensucat.json";
 
@@ -66,7 +66,7 @@ function faturaUret(tohum: number, satirSayisi: number): FaturaSatiri[] {
 /** Gerçek eşleştirme + gerçek yayın kapısı kuralını (productImagePolicy ile
  * aynı 3 fotoğraf eşiği) satır üzerinde uygular. */
 function kartUret(satir: FaturaSatiri): UretilenKart {
-  const eslesme = ureticiUrunuBul({ model: satir.kod, firmaAnahtari: "seher-mensucat" });
+  const eslesme = tekEslesme(ureticiUrunuBul({ model: satir.kod, firmaAnahtari: "seher-mensucat" }));
   if (!eslesme) {
     return {
       kod: satir.kod,

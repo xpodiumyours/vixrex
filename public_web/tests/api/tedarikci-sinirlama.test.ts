@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { faturaSatirlariniEslestir, type HamFaturaSatiri } from "@/lib/faturaEslestir";
 import { tedarikciAdiniAyikla } from "@/lib/faturaSatirAyikla";
-import { firmaAnahtariniCoz, ureticiUrunuBul } from "@/lib/ureticiKatalog";
+import { firmaAnahtariniCoz, tekEslesme, ureticiUrunuBul } from "@/lib/ureticiKatalog";
 
 const GERCEK_OCR = readFileSync("tests/veri/fis-4-gercek-ocr.txt", "utf8");
 
@@ -43,11 +43,11 @@ describe("tedarikçi kimliği eşleştirmeyi sınırlar", () => {
   });
 
   it("tedarikçi verilince o firmanın kataloğu önce aranır", () => {
-    const dogru = ureticiUrunuBul({ model: "ELT1302", firmaAnahtari: "seher-mensucat" });
+    const dogru = tekEslesme(ureticiUrunuBul({ model: "ELT1302", firmaAnahtari: "seher-mensucat" }));
     expect(dogru?.firma.anahtar).toBe("seher-mensucat");
 
     // Tedarikçi yanlış verilse bile eşleşme kaybolmaz; yalnız sıra değişir.
-    const yine = ureticiUrunuBul({ model: "ELT1302", firmaAnahtari: "kul-gida" });
+    const yine = tekEslesme(ureticiUrunuBul({ model: "ELT1302", firmaAnahtari: "kul-gida" }));
     expect(yine?.firma.anahtar).toBe("seher-mensucat");
   });
 

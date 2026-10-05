@@ -340,6 +340,18 @@ export interface KatalogEslesmesi {
  * Fotoğraflar her zaman döner (kilitli kapsam: önce çalışan sistem);
  * kullanım izni sonra istenir, `gorselIzniVar` bilgi olarak taşınır.
  */
+export interface BelirsizKatalogEslesmesi {
+  belirsiz: true;
+  dayanak: "kod" | "barkod";
+  adaylar: KatalogEslesmesi[];
+}
+
+export function tekEslesme(
+  sonuc: KatalogEslesmesi | BelirsizKatalogEslesmesi | null,
+): KatalogEslesmesi | null {
+  return sonuc && !("belirsiz" in sonuc) ? sonuc : null;
+}
+
 export function ureticiUrunuBul(args: {
   model?: string | null;
   barkod?: string | null;
@@ -350,7 +362,7 @@ export function ureticiUrunuBul(args: {
    * da varsa doğru olan faturayı kesendir.
    */
   firmaAnahtari?: string | null;
-}): KatalogEslesmesi | null {
+}): KatalogEslesmesi | BelirsizKatalogEslesmesi | null {
   const barkod = normalizeBarkod(args.barkod ?? "");
   const model = normalizeKod(args.model ?? "");
 
@@ -364,7 +376,18 @@ export function ureticiUrunuBul(args: {
     return [...oncelikli, ...hepsi.filter((d) => d.firma.anahtar !== args.firmaAnahtari)];
   })();
 
-  const eslesme = (() => {
+  const eslesmeyiKur = (
+    bulunan: { dizin: Dizin; urun: UreticiUrunu },
+    dayanak: "kod" | "barkod",
+  ): KatalogEslesmesi => ({
+    urun: gorselKapisi(bulunan.urun, bulunan.dizin.firma.izinDurumu),
+    firma: bulunan.dizin.firma,
+    dayanak,
+    gorselIzniVar: bulunan.dizin.gorselIzniVar,
+    gorselAdaylari: bulunan.urun.gorseller ?? [],
+  });
+
+  const secim = (() => {
     const marka = (args.marka ?? "").trim().toLocaleLowerCase("tr-TR");
     const sec = (alan: "barkoda" | "koda", anahtar: string) => {
       const adaylar = siraliDizinler.flatMap((dizin) => {
@@ -375,32 +398,29 @@ export function ureticiUrunuBul(args: {
         return [{ dizin, urun }];
       });
       const dogruFirma = adaylar.filter(({ dizin }) => dizin.firma.anahtar === args.firmaAnahtari);
-      const guvenli = dogruFirma.length > 0 && !marka ? dogruFirma : adaylar;
-      return guvenli.length === 1 ? guvenli[0] : null;
+      return (dogruFirma.length > 0 && !marka ? dogruFirma : adaylar);
     };
-    if (barkod.length >= 8) {
-      const bulunan = sec("barkoda", barkod);
-      if (bulunan) return { ...bulunan, dayanak: "barkod" as const };
-    }
 
-    if (model.length >= 4) {
-      const bulunan = sec("koda", model);
-      if (bulunan) return { ...bulunan, dayanak: "kod" as const };
-    }
+    const barkodAdaylari = barkod.length >= 8 ? sec("barkoda", barkod) : [];
+    if (barkodAdaylari.length === 1) return { dayanak: "barkod" as const, adaylar: barkodAdaylari };
+
+    const kodAdaylari = model.length >= 4 ? sec("koda", model) : [];
+    if (kodAdaylari.length === 1) return { dayanak: "kod" as const, adaylar: kodAdaylari };
+
+    if (kodAdaylari.length > 1) return { dayanak: "kod" as const, adaylar: kodAdaylari };
+    if (barkodAdaylari.length > 1) return { dayanak: "barkod" as const, adaylar: barkodAdaylari };
 
     return null;
   })();
 
-  if (!eslesme) return null;
+  if (!secim) return null;
 
-  const { dizin, urun, dayanak } = eslesme;
+  if (secim.adaylar.length === 1) return eslesmeyiKur(secim.adaylar[0], secim.dayanak);
 
   return {
-    urun: gorselKapisi(urun, dizin.firma.izinDurumu),
-    firma: dizin.firma,
-    dayanak,
-    gorselIzniVar: dizin.gorselIzniVar,
-    gorselAdaylari: urun.gorseller ?? [],
+    belirsiz: true,
+    dayanak: secim.dayanak,
+    adaylar: secim.adaylar.map((aday) => eslesmeyiKur(aday, secim.dayanak)),
   };
 }
 

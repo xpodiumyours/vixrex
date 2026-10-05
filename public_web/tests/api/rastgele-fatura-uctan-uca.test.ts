@@ -53,7 +53,7 @@ vi.mock("@/lib/productCoreServer", () => ({
 }));
 
 import { POST as topluUrunEkle } from "@/app/api/products/batch/route";
-import { ureticiUrunuBul } from "@/lib/ureticiKatalog";
+import { tekEslesme, ureticiUrunuBul } from "@/lib/ureticiKatalog";
 
 const STORE = { id: "store-1", edit_token: "token-1", name: "Deneme Butik" };
 
@@ -128,7 +128,7 @@ function rastgeleFaturaIstegi(tohum: number, satirSayisi: number) {
     if (secilenKodlar.has(kod)) continue;
     secilenKodlar.add(kod);
 
-    const eslesme = ureticiUrunuBul({ model: kod });
+    const eslesme = tekEslesme(ureticiUrunuBul({ model: kod }));
     if (!eslesme) continue; // katalogda gerçekten bulunmayan satır faturaya girmez
 
     const alisFiyati = Math.round((60 + rastgele() * 200) * 100) / 100;
@@ -199,7 +199,7 @@ describe("rastgele faturalar gerçek /api/products/batch uç noktasından geçer
     const azFotografli = (seherHam as UreticiUrunu[]).find((u) => u.gorseller.length > 0 && u.gorseller.length < 3);
     expect(azFotografli, "test verisi için az fotoğraflı ürün bulunamadı").toBeTruthy();
 
-    const eslesme = ureticiUrunuBul({ model: azFotografli!.kod });
+    const eslesme = tekEslesme(ureticiUrunuBul({ model: azFotografli!.kod }));
     const istek = new NextRequest("http://localhost/api/products/batch", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

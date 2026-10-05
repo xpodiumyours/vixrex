@@ -57,7 +57,7 @@ export interface KatalogBilgisi {
 
 export interface CeliskiBilgisi {
   dayanak: "kod" | "barkod";
-  adaylar: Array<{ ad: string; kaynak: string }>;
+  adaylar: Array<{ ad: string; kaynak: string; firma?: string }>;
 }
 
 export interface EslesmisFaturaSatiri extends HamFaturaSatiri {
@@ -86,6 +86,21 @@ export function faturaSatiriniEslestir(
     firmaAnahtari,
   });
   if (!eslesme) return eslesmeyenSatir(satir);
+  if ("belirsiz" in eslesme) {
+    return {
+      ...satir,
+      katalog: null,
+      sonuc: "celiski",
+      celiski: {
+        dayanak: eslesme.dayanak,
+        adaylar: eslesme.adaylar.map((aday) => ({
+          ad: aday.urun.ad,
+          kaynak: aday.urun.kaynak,
+          firma: aday.firma.ad,
+        })),
+      },
+    };
+  }
   return {
     ...satir,
     sonuc: "kanitli",

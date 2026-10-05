@@ -117,6 +117,23 @@ describe("/api/fatura-eslestir — OCR kaynağından bağımsız katalog eşleş
     expect(govde.satirlar[0].katalog).toBeNull();
   });
 
+  it("aynı kod iki firmada ise tahmin yapılmaz: çelişki yazılır, iki aday listelenir", async () => {
+    const cevap = await faturaEslestir(
+      istek([{ model: "TER0101", ad: "penye atlet", barkod: "", adet: 18, alisBirimFiyat: 63.5, guven: 0.85 }]),
+    );
+    const govde = await cevap.json();
+
+    expect(cevap.status).toBe(200);
+    expect(govde.satirlar[0].katalog).toBeNull();
+    expect(govde.satirlar[0].sonuc).toBe("celiski");
+    expect(govde.katalogEslesmesi).toBe(0);
+    expect(govde.satirlar[0].celiski.adaylar).toHaveLength(2);
+
+    const firmalar = govde.satirlar[0].celiski.adaylar.map((aday: { firma?: string }) => aday.firma ?? "");
+    expect(firmalar.filter(Boolean)).toHaveLength(2);
+    expect(new Set(firmalar).size).toBe(2);
+  });
+
   it("500 satırlık istek 200'e kırpılır, sistem çökmez", async () => {
     const cokSatir = Array.from({ length: 500 }, (_, i) => ({ model: `X${i}`, ad: `ürün ${i}` }));
     const cevap = await faturaEslestir(istek(cokSatir));
