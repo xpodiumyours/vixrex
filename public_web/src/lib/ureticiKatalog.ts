@@ -157,6 +157,36 @@ function sadeFirmaDegeri(deger: string): string {
     .replace(/[^A-ZÇĞİÖŞÜ0-9]/g, "");
 }
 
+function firmaAdiBolumleri(ad: string): string[] {
+  return String(ad)
+    .toLocaleUpperCase("tr-TR")
+    .replace(/[^A-ZÇĞİÖŞÜ0-9]/g, " ")
+    .split(/\s+/)
+    .filter((bolum) => bolum.length >= 4);
+}
+
+let benzersizFirmaTokenleri: Map<string, string> | null = null;
+
+function firmaTokenHaritasi(): Map<string, string> {
+  if (benzersizFirmaTokenleri) return benzersizFirmaTokenleri;
+
+  const harita = new Map<string, string>();
+  const cakisanlar = new Set<string>();
+
+  for (const firma of firmaHavuzu()) {
+    for (const token of new Set(firmaAdiBolumleri(firma.ad))) {
+      const sahip = harita.get(token);
+      if (sahip === undefined) harita.set(token, firma.anahtar);
+      else if (sahip !== firma.anahtar) cakisanlar.add(token);
+    }
+  }
+
+  for (const token of cakisanlar) harita.delete(token);
+
+  benzersizFirmaTokenleri = harita;
+  return harita;
+}
+
 export function alanAdiTemizle(deger: string): string {
   const ham = deger.trim();
   if (!ham) return "";
@@ -187,6 +217,14 @@ export function firmaHavuzKaydiniBul(
 
     const alanSade = sadeFirmaDegeri(alanAdiTemizle(firma.site));
     if (alanSade.length >= 4 && aranan.includes(alanSade)) return firma;
+  }
+
+  const harita = firmaTokenHaritasi();
+  for (const token of new Set(firmaAdiBolumleri(tedarikciAdi))) {
+    const anahtar = harita.get(token);
+    if (!anahtar) continue;
+    const bulunan = firmaHavuzu().find((aday) => aday.anahtar === anahtar);
+    if (bulunan) return bulunan;
   }
 
   return null;

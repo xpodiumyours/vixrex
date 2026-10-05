@@ -42,6 +42,17 @@ describe("tedarikçi kimliği eşleştirmeyi sınırlar", () => {
     expect(firmaAnahtariniCoz("AB")).toBeNull();
   });
 
+  it("firmanın kısaltılmış veya unvanlı adı da çözülür — ama yalnız tek firmada geçen kelimeyle", () => {
+    expect(firmaAnahtariniCoz("MENSUCAT TİCARET")).toBe("seher-mensucat");
+    expect(firmaAnahtariniCoz("KOZA TİCARET")).toBe("koza-icgiyim");
+    expect(firmaAnahtariniCoz("SEHER MENSUCAT SAN. TİC. LTD. ŞTİ.")).toBe("seher-mensucat");
+  });
+
+  it("herkeste geçen sektör kelimesi tek başına kilit olmaz", () => {
+    expect(firmaAnahtariniCoz("Gıda Anonim Şirketi")).toBeNull();
+    expect(firmaAnahtariniCoz("Tekstil Sanayi")).toBeNull();
+  });
+
   it("tedarikçi verilince o firmanın kataloğu önce aranır", () => {
     const dogru = tekEslesme(ureticiUrunuBul({ model: "ELT1302", firmaAnahtari: "seher-mensucat" }));
     expect(dogru?.firma.anahtar).toBe("seher-mensucat");
