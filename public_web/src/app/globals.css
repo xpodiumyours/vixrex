@@ -1027,6 +1027,217 @@ body.vixrex-kaydediliyor .vixrex-secili-alan {
   opacity: 0.5;
 }
 
+/* Fatura doğrulama sayacı: belgedeki satır / adet / toplam, satırlardan yeniden
+   hesaplanan değerle yan yana. Tutmayan sayı kalıcı olarak kırmızı kalır. */
+.fatura-kontrol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.5rem;
+}
+
+.fatura-kontrol li {
+  border: 1px solid var(--owner-border);
+  border-radius: 10px;
+  background: var(--owner-surface);
+  padding: 0.5rem 0.625rem;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--owner-text-alt);
+}
+
+.fatura-kontrol li strong {
+  display: block;
+  font-size: 0.9375rem;
+  font-weight: 800;
+  color: var(--owner-text);
+}
+
+.fatura-kontrol li.fatura-kontrol-farkli {
+  border-color: color-mix(in srgb, var(--owner-error) 55%, transparent);
+  background: color-mix(in srgb, var(--owner-error) 12%, transparent);
+}
+
+.fatura-kontrol li.fatura-kontrol-farkli,
+.fatura-kontrol li.fatura-kontrol-farkli strong {
+  color: #FCA5A5;
+}
+
+/* Yayın sonrası vitrin önizlemesi: esnaf müşterisinin göreceği kartları
+   kapatmadan görür, bağlantıyı kopyalar. */
+.fatura-vitrin-hazir {
+  display: grid;
+  gap: 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--owner-primary) 40%, transparent);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--owner-primary) 8%, transparent);
+  padding: 1rem;
+}
+
+.fatura-vitrin-izgara {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.625rem;
+}
+
+.fatura-vitrin-izgara li {
+  display: grid;
+  align-content: start;
+  gap: 0.25rem;
+  overflow: hidden;
+  border: 1px solid var(--owner-border);
+  border-radius: 12px;
+  background: var(--owner-surface);
+  padding: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--owner-text-alt);
+}
+
+.fatura-vitrin-izgara img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.fatura-vitrin-izgara span {
+  line-height: 1.35;
+}
+
+.fatura-vitrin-izgara strong {
+  font-size: 0.8125rem;
+  color: var(--owner-text);
+}
+
+/* Üretici veri ve görsel kullanım izni: akışın içinde görünür durum kutusu. */
+.fatura-izin {
+  display: grid;
+  gap: 0.5rem;
+  border: 1px solid var(--owner-border);
+  border-radius: 14px;
+  background: var(--owner-surface);
+  padding: 0.875rem;
+}
+
+.fatura-izin h4 {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 800;
+  color: var(--owner-text);
+}
+
+.fatura-izin p {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: var(--owner-text-alt);
+}
+
+.fatura-izin label {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--owner-text-alt);
+}
+
+.fatura-izin select {
+  min-height: 44px;
+  border: 1px solid var(--owner-border);
+  border-radius: 12px;
+  background: var(--owner-bg-soft);
+  padding: 0 0.75rem;
+  color: var(--owner-text);
+}
+
+.fatura-izin-secim {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.fatura-izin-secim button,
+.fatura-izin-metin button {
+  min-height: 44px;
+  border: 1px solid var(--owner-border);
+  border-radius: 12px;
+  background: var(--owner-surface-soft);
+  padding: 0.625rem 0.875rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--owner-text-alt);
+}
+
+.fatura-izin-metin {
+  display: grid;
+  gap: 0.5rem;
+  justify-items: start;
+}
+
+.fatura-izin-metin textarea {
+  width: 100%;
+  min-height: 140px;
+  border: 1px solid var(--owner-border);
+  border-radius: 12px;
+  background: var(--owner-bg-soft);
+  padding: 0.625rem 0.75rem;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--owner-text);
+  resize: vertical;
+}
+
+/* Devam edilebilen önceki faturalar listesi. */
+.fatura-onceki {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.fatura-onceki h4 {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 800;
+  color: var(--owner-text);
+}
+
+.fatura-onceki ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.375rem;
+}
+
+.fatura-onceki li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  border: 1px solid var(--owner-border);
+  border-radius: 12px;
+  background: var(--owner-surface);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  color: var(--owner-text-alt);
+}
+
+.fatura-onceki button {
+  min-height: 40px;
+  border: 1px solid var(--owner-border);
+  border-radius: 10px;
+  background: var(--owner-surface-soft);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--owner-text-alt);
+}
+
 /* Hareketi azaltılmış cihazlarda animasyon yok — yalnız renk kalır. */
 @media (prefers-reduced-motion: reduce) {
   .vixrex-degisti,
