@@ -10,6 +10,7 @@ import { ayniAlisverisAdaylari, belgeParmakIzi, islemKaydet } from "@/lib/fatura
 import { faturaTaslaklari } from "@/lib/faturaTaslagi";
 import { faturayiOku, type GoruSatiri } from "@/lib/faturaGoru";
 import { islemiYukle, islemYaniti, parmakIzindenIslemBul } from "@/lib/faturaIslemOku";
+import { alanAdiTemizle } from "@/lib/ureticiKatalog";
 
 // Vixrex'in TEK fatura okuma ucu.
 //
@@ -179,6 +180,7 @@ export async function POST(request: NextRequest) {
     let sonTedarikciVergiNo = "";
     let sonTedarikciAdres = "";
     let sonTedarikciSite = "";
+    let sonTedarikciResmiSite = "";
     let sonBelge = {
       belgeTuru: "",
       belgeNo: "",
@@ -222,6 +224,7 @@ export async function POST(request: NextRequest) {
       sonTedarikciVergiNo = okuma.tedarikciVergiNo;
       sonTedarikciAdres = okuma.tedarikciAdres;
       sonTedarikciSite = okuma.tedarikciSite;
+      sonTedarikciResmiSite = okuma.tedarikciResmiSite;
       sonOzet = { adet: okuma.belgeAdedi, toplam: okuma.belgeToplami };
       sonSatirlar = hamSatirlar;
       sonBelge = {
@@ -254,7 +257,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Esnafın site ipucu: OCR siteyi okuyamadıysa keşif buradan yürür.
-    const etkinSite = sonTedarikciSite || siteIpucu;
+    const belgedenSite = sonTedarikciSite || siteIpucu;
+    const modelSitesi = belgedenSite ? "" : sonTedarikciResmiSite;
+    const etkinSite = belgedenSite || modelSitesi;
 
     const { satirlar, tedarikciIz, aramaDurumu } = await faturaSatirlariniDijitalIzle(
       sonSatirlar,
@@ -262,6 +267,16 @@ export async function POST(request: NextRequest) {
       etkinSite,
       { tedarikciKimligi: { vergiNo: sonTedarikciVergiNo, adres: sonTedarikciAdres } },
     );
+
+    const modelSitesiDogrulandi = Boolean(
+      modelSitesi && tedarikciIz && tedarikciIz.alan === alanAdiTemizle(modelSitesi),
+    );
+    if (modelSitesi && !modelSitesiDogrulandi) {
+      console.warn(
+        "[fatura-oku] firmanin resmi sitesi belge bilgileriyle dogrulanamadi, kullanilmadi:",
+        modelSitesi,
+      );
+    }
 
     const kayitGirdisi = {
       slug: ownerSlug,
@@ -271,7 +286,7 @@ export async function POST(request: NextRequest) {
       tedarikci: sonTedarikci,
       tedarikciVergiNo: sonTedarikciVergiNo,
       tedarikciAdres: sonTedarikciAdres,
-      tedarikciSite: etkinSite,
+      tedarikciSite: belgedenSite || (modelSitesiDogrulandi ? etkinSite : ""),
       tedarikciIz,
       aramaDurumu,
       satirlar,

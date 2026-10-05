@@ -27,7 +27,7 @@ export const GORU_MODELI = "openai/gpt-5.6-luna";
 
 const SORU = [
   "Bu bir fatura tablosu. HER urun satirini oku. Yalniz JSON dondur.",
-  '{"tedarikci":"","tedarikci_vergi_no":"","tedarikci_adres":"","tedarikci_site":"","belge_turu":"","belge_no":"","belge_tarihi":"","satirlar":[{"ham_satir":"","model":"","ad":"","barkod":"","varyant":"","beden":"","marka":"","adet":0,"birim_fiyat":0,"tutar":0}],"toplam_adet":0,"toplam_tutar":0,"mal_bedeli":0,"kdv_tutari":0,"indirim_tutari":0,"odenecek_toplam":0}',
+  '{"tedarikci":"","tedarikci_vergi_no":"","tedarikci_adres":"","tedarikci_site":"","tedarikci_resmi_site":"","belge_turu":"","belge_no":"","belge_tarihi":"","satirlar":[{"ham_satir":"","model":"","ad":"","barkod":"","varyant":"","beden":"","marka":"","adet":0,"birim_fiyat":0,"tutar":0}],"toplam_adet":0,"toplam_tutar":0,"mal_bedeli":0,"kdv_tutari":0,"indirim_tutari":0,"odenecek_toplam":0}',
   "1. Her satirda adet * birim_fiyat = tutar olmali.",
   "2. Satirlarin adet toplami = toplam_adet, tutar toplami = toplam_tutar.",
   "3. toplam_adet/toplam_tutar en alttaki 'Toplam' satirindan alinir.",
@@ -39,6 +39,7 @@ const SORU = [
   "9. belge_turu: belgede acikca yaziyorsa fatura, e-arsiv, irsaliye veya bilgi fisi; belge_no ve belge_tarihi yalniz belgede yaziyorsa doldur (tarih GG.AA.YYYY), tahmin etme.",
   "10. mal_bedeli, kdv_tutari, indirim_tutari ve odenecek_toplam belgede ayri ayri yaziyorsa ayri ayri doldur; yazmiyorsa null birak, hesaplayip uydurma.",
   "11. marka = urun satirinda ya da urun kodunun yaninda yazan marka adi; yazmiyorsa bos birak, faturayi kesen firmayi marka sanma, tahmin etme.",
+  "12. tedarikci_resmi_site: belgede firmanin sitesi yazmiyorsa ve firmanin resmi web sitesini biliyorsan yalnizca alan adi olarak yaz (ornek:ornek.com). Bilmiyorsan bos birak, uydurma. Bu adres daha sonra belgedeki vergi no ve adresle dogrulanir; tutmazsa kullanilmaz.",
 ].join("\n");
 
 export interface GoruSatiri {
@@ -60,6 +61,7 @@ export interface GoruSonucu {
   tedarikciVergiNo: string;
   tedarikciAdres: string;
   tedarikciSite: string;
+  tedarikciResmiSite: string;
   satirlar: GoruSatiri[];
   belgeAdedi: number | null;
   belgeToplami: number | null;
@@ -145,6 +147,7 @@ export async function faturayiOku(dataUrl: string): Promise<GoruSonucu> {
     tedarikci_vergi_no?: unknown;
     tedarikci_adres?: unknown;
     tedarikci_site?: unknown;
+    tedarikci_resmi_site?: unknown;
     belge_turu?: unknown;
     belge_no?: unknown;
     belge_tarihi?: unknown;
@@ -185,6 +188,7 @@ export async function faturayiOku(dataUrl: string): Promise<GoruSonucu> {
     tedarikciVergiNo: metin(kok.tedarikci_vergi_no),
     tedarikciAdres: metin(kok.tedarikci_adres),
     tedarikciSite: metin(kok.tedarikci_site),
+    tedarikciResmiSite: metin(kok.tedarikci_resmi_site),
     satirlar,
     belgeAdedi: sayi(kok.toplam_adet),
     belgeToplami: sayi(kok.toplam_tutar),
