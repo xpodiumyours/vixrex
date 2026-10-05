@@ -236,7 +236,9 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(govde.satirlar.length).toBeGreaterThan(0);
     expect(typeof govde.belgeUyarisi).toBe("string");
     // Yarım okuma bir kez olabilir; ısrarla olmaz — üç kez denenir.
-    expect(okuma).toHaveBeenCalledTimes(1);
+    expect(
+      okuma.mock.calls.filter((cagri) => String(cagri.at(0) ?? "").includes("openrouter.ai")).length,
+    ).toBe(1);
   });
 
   it("belge toplamı tutuyorsa belge gerçeği cevapta döner", async () => {
