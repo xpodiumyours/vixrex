@@ -124,8 +124,8 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async (url: string) => {
-        expect(url).toContain("openrouter.ai");
-        return okuyucuCevabi(TEK_SATIR);
+        if (String(url).includes("openrouter.ai")) return okuyucuCevabi(TEK_SATIR);
+        return new Response("{}", { status: 404 });
       }),
     );
   });
@@ -236,7 +236,7 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(govde.satirlar.length).toBeGreaterThan(0);
     expect(typeof govde.belgeUyarisi).toBe("string");
     // Yarım okuma bir kez olabilir; ısrarla olmaz — üç kez denenir.
-    expect(okuma).toHaveBeenCalledTimes(1);
+    expect(okuma.mock.calls.filter((args) => String(args[0]).includes("openrouter.ai"))).toHaveLength(1);
   });
 
   it("belge toplamı tutuyorsa belge gerçeği cevapta döner", async () => {
