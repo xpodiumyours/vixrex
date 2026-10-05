@@ -4,6 +4,7 @@ import {
   satirdaHavuzMarkasiBul,
   ureticiUrunuBul,
 } from "@/lib/ureticiKatalog";
+import { kaynakGorseliniDogrula } from "@/lib/faturaGorsel";
 import {
   dinamikUrunIzleriniBul,
   tedarikciDijitalIziBul,
@@ -154,6 +155,28 @@ function markaAyrimiNotu(marka: string, faturaFirmasi: string): string {
 export const KAYNAK_ERISILEMEDI_NOTU =
   "Kaynağa tam erişilemedi ya da arama süresi doldu; bu ürünün kaynakta olmadığı anlamına gelmez. Tekrar denenebilir.";
 
+const HAVUZ_GORSEL_PROBE_SINIRI = 3;
+
+async function havuzGorselleriOlu(
+  adaylar: string[],
+  fetcher: ((input: string, init?: RequestInit) => Promise<Response>) | undefined,
+): Promise<boolean> {
+  const aday = [...new Set(adaylar)].slice(0, HAVUZ_GORSEL_PROBE_SINIRI);
+  if (aday.length === 0) return false;
+  const sonuclar = await Promise.all(
+    aday.map(async (adres) => {
+      try {
+        const kontrol = await kaynakGorseliniDogrula(adres, fetcher ? { fetcher } : {});
+        if (kontrol.tamam) return "canli" as const;
+        return kontrol.sebep === "erisilemedi" ? ("bilinmiyor" as const) : ("olu" as const);
+      } catch {
+        return "bilinmiyor" as const;
+      }
+    }),
+  );
+  return !sonuclar.some((sonuc) => sonuc !== "olu");
+}
+
 export const MARKA_KAYNAGINDA_YOK_NOTU =
   "Satırdaki markanın resmî kaynağında bu ürün bulunamadı. Tahmin yapılmadı.";
 
@@ -266,16 +289,32 @@ export async function faturaSatirlariniDijitalIzle(
   aramaDurumu.sinirDoldu = false;
 
   if (tedarikciIz) {
-    const eksikIndeksler = yerel
-      .map((satir, indeks) => (satir.katalog === null && satir.sonuc !== "celiski" ? indeks : -1))
-      .filter((indeks) => indeks >= 0);
-    if (eksikIndeksler.length > 0) {
+    const eksikKumesi = new Set(
+      yerel
+        .map((satir, indeks) => (satir.katalog === null && satir.sonuc !== "celiski" ? indeks : -1))
+        .filter((indeks) => indeks >= 0),
+    );
+
+    const havuzEslesenler = yerel
+      .map((satir, indeks) => ({ satir, indeks }))
+      .filter(({ satir, indeks }) => satir.katalog !== null && !eksikKumesi.has(indeks) && satir.sonuc !== "celiski");
+    const olukKumesi = new Set<number>();
+    await Promise.all(
+      havuzEslesenler.map(async ({ satir, indeks }) => {
+        if (await havuzGorselleriOlu(satir.katalog!.gorselAdaylari, bagimliliklar.fetcher)) {
+          olukKumesi.add(indeks);
+        }
+      }),
+    );
+
+    const aranacak = [...eksikKumesi, ...olukKumesi].sort((a, b) => a - b);
+    if (aranacak.length > 0) {
       const dinamik = await dinamikUrunIzleriniBul(
-        eksikIndeksler.map((indeks) => ({ ...yerel[indeks] })),
+        aranacak.map((indeks) => ({ ...sonuc[indeks] })),
         tedarikciIz,
         { ...bagimliliklar, durum: aramaDurumu },
       );
-      eksikIndeksler.forEach((indeks, sira) => {
+      aranacak.forEach((indeks, sira) => {
         hedefiSatiraYaz(sonuc, indeks, dinamik[sira], tedarikciIz);
       });
     }
