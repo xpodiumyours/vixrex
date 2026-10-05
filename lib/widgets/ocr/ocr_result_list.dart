@@ -11,6 +11,7 @@ class OcrResultList extends StatelessWidget {
   final Function(int index) onReject;
   final Function(int index)? onEdit;
   final Function(int index)? onConfirmStock;
+  final void Function(int index, InvoiceConflictCandidate aday)? onPickCandidate;
   final List<InvoiceProductDraft> invoiceDrafts;
 
   const OcrResultList({
@@ -20,6 +21,7 @@ class OcrResultList extends StatelessWidget {
     required this.onReject,
     this.onEdit,
     this.onConfirmStock,
+    this.onPickCandidate,
     this.invoiceDrafts = const [],
   });
 
@@ -316,17 +318,26 @@ class OcrResultList extends StatelessWidget {
           ),
         if (draft.celiskiAdaylari.isNotEmpty) ...[
           const SizedBox(height: 4),
-          ...draft.celiskiAdaylari
-              .take(3)
-              .map(
-                (aday) => Text(
-                  '• ${aday.ad}${aday.kaynak.isEmpty ? '' : ' — ${aday.kaynak}'}',
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: AppColors.mutedText,
+          ...draft.celiskiAdaylari.take(3).map(
+            (aday) => Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '• ${aday.ad}${aday.kaynak.isEmpty ? '' : ' — ${aday.kaynak}'}',
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: AppColors.mutedText,
+                    ),
                   ),
                 ),
-              ),
+                if (onPickCandidate != null && aday.kaynak.isNotEmpty)
+                  TextButton(
+                    onPressed: () => onPickCandidate!(index, aday),
+                    child: const Text('Bunu seç'),
+                  ),
+              ],
+            ),
+          ),
         ],
         if (draft.canonicalProductUrl?.value != null &&
             draft.canonicalProductUrl!.value!.trim().isNotEmpty)

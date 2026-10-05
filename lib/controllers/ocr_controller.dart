@@ -807,6 +807,7 @@ class OcrController extends ChangeNotifier {
     required String model,
     required String barkod,
     required String marka,
+    String? kaynak,
   }) async {
     final info = _editorController?.publishedInfo;
     final catalog = _result;
@@ -837,6 +838,7 @@ class OcrController extends ChangeNotifier {
       model: model,
       barkod: barkod,
       marka: marka,
+      kaynak: kaynak,
     );
     _isProcessing = false;
     if (response.isFailure) {

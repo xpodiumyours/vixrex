@@ -845,7 +845,7 @@ export function OwnerProductManager({
         </div>
       )}
 
-      {!editing ? (
+      {!editing && !showInvoice ? (
         secimModu ? (
           <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-[var(--owner-border)] bg-[var(--owner-bg-soft)] p-3">
             <p className="text-sm font-bold text-[var(--owner-text)]">
@@ -862,7 +862,8 @@ export function OwnerProductManager({
           </div>
         ) : (
           <div className="mt-4 flex flex-col gap-2">
-            <button type="button" className="owner-button-primary w-full" onClick={() => { setError(""); setSuccess(""); setShowBulkUpload(false); setFotografOneri(null); setEditing("new"); }} disabled={busy}>+ Yeni Ürün Ekle</button>
+            <button type="button" className="owner-button-primary w-full" onClick={() => { setError(""); setSuccess(""); setShowBulkUpload(false); setFotografOneri(null); setEditing(null); setShowInvoice(true); }} disabled={busy}>+ Yeni Ürün Ekle</button>
+            <button type="button" className="owner-button-secondary w-full" onClick={() => { setError(""); setSuccess(""); setShowBulkUpload(false); setShowInvoice(false); setFotografOneri(null); setEditing("new"); }} disabled={busy}>Elle tek ürün</button>
             <button type="button" className="owner-button-secondary w-full" onClick={() => { setError(""); setSuccess(""); setShowBulkUpload(!showBulkUpload); setEditing(null); }} disabled={busy}>📄 Toplu Ürün Yükle</button>
             <button type="button" className="owner-button-secondary w-full" onClick={() => { setError(""); setSuccess(""); setXmlAcik(true); }} disabled={busy}>🔗 XML ile Yükle</button>
           </div>

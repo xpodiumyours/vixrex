@@ -50,11 +50,46 @@ mocks.admin.mockImplementation(() => ({ rpc: mocks.rpc }));
 
 import { POST as faturaEslestir } from "@/app/api/fatura-eslestir/route";
 
+function seherSiteCevabi(input: RequestInfo | URL) {
+  let parsed: URL;
+  try {
+    parsed = new URL(String(input));
+  } catch {
+    return new Response("{}", { status: 404 });
+  }
+  const alan = parsed.hostname.replace(/^www\./, "");
+  if (alan !== "sehermensucat.com") return new Response("{}", { status: 404 });
+  if (["", "/", "/iletisim", "/contact", "/hakkimizda", "/about-us", "/kurumsal"].includes(parsed.pathname)) {
+    return new Response(
+      "<html><head><title>Seher Mensucat</title></head><body>Seher Mensucat</body></html>",
+      { headers: { "content-type": "text/html" } },
+    );
+  }
+  if (parsed.pathname === "/products.json") {
+    const urunler = seherHam as UreticiUrunu[];
+    return new Response(
+      JSON.stringify({
+        products: urunler.map((urun) => ({
+          title: urun.ad,
+          vendor: urun.marka,
+          body_html: urun.aciklama,
+          handle: urun.kod.toLowerCase(),
+          images: (urun.gorseller ?? []).map((src) => ({ src })),
+          variants: [{ sku: urun.kod, barcode: urun.barkod, title: "Default Title" }],
+        })),
+      }),
+      { status: 200, headers: { "content-type": "application/json" } },
+    );
+  }
+  return new Response("{}", { status: 404 });
+}
+
 function istek(satirlar: unknown[], slug = "deneme-vitrin", tedarikci = "") {
+  const tedarikciSite = /seher/i.test(tedarikci) ? "https://sehermensucat.com" : "";
   return new NextRequest("http://localhost/api/fatura-eslestir", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ slug, satirlar, tedarikci }),
+    body: JSON.stringify({ slug, satirlar, tedarikci, tedarikciSite }),
   });
 }
 
@@ -64,7 +99,7 @@ describe("/api/fatura-eslestir — OCR kaynağından bağımsız katalog eşleş
     mocks.get.mockReturnValue("owner-cookie");
     mocks.verifyOwner.mockReturnValue({ storeId: "store-1", slug: "deneme-vitrin" });
     mocks.rpc.mockResolvedValue({ data: { allowed: true }, error: null });
-    vi.stubGlobal("fetch", vi.fn(async () => new Response("{}", { status: 404 })));
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL) => seherSiteCevabi(input)));
   });
 
   afterEach(() => { vi.unstubAllGlobals(); });
@@ -157,4 +192,20 @@ describe("/api/fatura-eslestir — OCR kaynağından bağımsız katalog eşleş
       expect(uydurma.katalog).toBeNull();
     },
   );
+
+  it("site yoksa kayitli kopyadan kart doldurmaz", async () => {
+    const cevap = await faturaEslestir(istek([{ model: "ELT1001", ad: "atlet" }]));
+    const govde = await cevap.json();
+    expect(cevap.status).toBe(200);
+    expect(govde.satirlar[0].katalog).toBeNull();
+  });
+
+  it("tedarikçinin sitesi bulununca urun o siteden dolar", async () => {
+    const cevap = await faturaEslestir(
+      istek([{ model: "ELT1001", ad: "atlet" }], "deneme-vitrin", "Seher Mensucat"),
+    );
+    const govde = await cevap.json();
+    expect(govde.satirlar[0].sonuc).toBe("kanitli");
+    expect(govde.satirlar[0].katalog.kaynakFirma).toMatch(/seher/i);
+  });
 });

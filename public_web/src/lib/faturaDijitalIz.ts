@@ -39,7 +39,15 @@ export interface DijitalUrunEslesmesi {
 export interface DijitalIzCeliskisi {
   celiski: true;
   dayanak: "kod" | "barkod";
-  adaylar: Array<{ ad: string; kaynak: string }>;
+  adaylar: Array<{
+    ad: string;
+    kaynak: string;
+    firma?: string;
+    marka?: string;
+    aciklama?: string;
+    gorseller?: string[];
+    izinDurumu?: IzinDurumu;
+  }>;
 }
 
 export type DijitalIzHedefi = DijitalUrunEslesmesi | DijitalIzCeliskisi;
@@ -63,8 +71,18 @@ export interface DijitalIzBagimliliklari {
   tedarikciKimligi?: { vergiNo: string; adres: string };
   simdi?: () => number;
   kesifButcesiMs?: number;
-  /** Firma resmi site araması (Brave). Verilmezse ortam anahtarı kullanılır. */
   firmaArama?: import("@/lib/firmaArama").FirmaAramaBagimliliklari;
+  firmaKesfet?: (girdi: {
+    tedarikci: string;
+    vergiNo: string;
+    adres: string;
+    markalar: string[];
+    urunAdlari: string[];
+  }) => Promise<{ firma: string; site: string } | null>;
+  urunEslestir?: (
+    satirlar: Array<{ model: string; ad: string; barkod: string; marka?: string }>,
+    urunler: UreticiUrunu[],
+  ) => Promise<Array<number[] | null>>;
 }
 
 const MAKS_YANIT_BAYT = 2 * 1024 * 1024;
@@ -380,7 +398,14 @@ function hedefBul(
         dayanak,
         adaylar: kimlikler.map((kimlik) => {
           const urun = adaylar.find((aday) => urunKimligi(aday) === kimlik) as UreticiUrunu;
-          return { ad: urun.ad, kaynak: urun.kaynak };
+          return {
+            ad: urun.ad,
+            kaynak: urun.kaynak,
+            marka: urun.marka,
+            aciklama: urun.aciklama,
+            gorseller: urun.gorseller ?? [],
+            izinDurumu,
+          };
         }),
       };
     }

@@ -664,6 +664,8 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
                 else ...[
                   _buildAddProductButton(),
                   SizedBox(height: spacing8),
+                  _buildManualAddButton(),
+                  SizedBox(height: spacing8),
                   _buildBulkUploadButton(),
                   SizedBox(height: spacing8),
                   _buildXmlUploadButton(),
@@ -836,7 +838,7 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
 
   Widget _buildAddProductButton() {
     return ElevatedButton.icon(
-      onPressed: () => _openEditor(),
+      onPressed: widget.onInvoiceTap ?? () => _openEditor(),
       icon: const Icon(Icons.add_rounded, size: 18),
       label: const Text(
         'Yeni Ürün Ekle',
@@ -846,6 +848,22 @@ class _ProductManagementSheetState extends State<ProductManagementSheet> {
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.black,
         minimumSize: const Size.fromHeight(50),
+      ),
+    );
+  }
+
+  Widget _buildManualAddButton() {
+    return OutlinedButton.icon(
+      onPressed: () => _openEditor(),
+      icon: const Icon(Icons.edit_note_rounded, size: 18),
+      label: const Text(
+        'Elle tek ürün',
+        style: TextStyle(fontWeight: FontWeight.w700),
+      ),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: AppColors.darkText,
+        side: const BorderSide(color: AppColors.border),
+        minimumSize: const Size.fromHeight(44),
       ),
     );
   }

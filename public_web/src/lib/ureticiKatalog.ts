@@ -331,16 +331,7 @@ export interface KatalogEslesmesi {
   gorselAdaylari: string[];
 }
 
-/**
- * Faturadan okunan model kodu veya barkodu üretici kataloğunda arar.
- *
- * Sıra kanıt gücüne göredir: önce barkod (tek ürünü gösterir), sonra model
- * kodu. İkisi de tutmazsa eşleşme yoktur — ada bakarak tahmin yapılmaz.
- *
- * Fotoğraflar her zaman döner (kilitli kapsam: önce çalışan sistem);
- * kullanım izni sonra istenir, `gorselIzniVar` bilgi olarak taşınır.
- */
-export function ureticiUrunuBul(args: {
+export type UreticiUrunArama = {
   model?: string | null;
   barkod?: string | null;
   marka?: string | null;
@@ -350,58 +341,76 @@ export function ureticiUrunuBul(args: {
    * da varsa doğru olan faturayı kesendir.
    */
   firmaAnahtari?: string | null;
-}): KatalogEslesmesi | null {
+};
+
+export function ureticiUrunAdaylariniBul(args: UreticiUrunArama): KatalogEslesmesi[] {
   const barkod = normalizeBarkod(args.barkod ?? "");
   const model = normalizeKod(args.model ?? "");
 
   // Tedarikçi biliniyorsa onun kataloğu listenin başına alınır; diğerleri
   // yine aranır (tedarikçi yanlış okunmuş olabilir) ama sonra.
-  const siraliDizinler = (() => {
-    const hepsi = dizinler();
-    if (!args.firmaAnahtari) return hepsi;
-    const oncelikli = hepsi.filter((d) => d.firma.anahtar === args.firmaAnahtari);
-    if (oncelikli.length === 0) return hepsi;
-    return [...oncelikli, ...hepsi.filter((d) => d.firma.anahtar !== args.firmaAnahtari)];
-  })();
+  const hepsi = dizinler();
+  const oncelikli = args.firmaAnahtari
+    ? hepsi.filter((dizin) => dizin.firma.anahtar === args.firmaAnahtari)
+    : [];
+  const siraliDizinler =
+    oncelikli.length === 0
+      ? hepsi
+      : [...oncelikli, ...hepsi.filter((dizin) => dizin.firma.anahtar !== args.firmaAnahtari)];
+  const marka = (args.marka ?? "").trim().toLocaleLowerCase("tr-TR");
 
-  const eslesme = (() => {
-    const marka = (args.marka ?? "").trim().toLocaleLowerCase("tr-TR");
-    const sec = (alan: "barkoda" | "koda", anahtar: string) => {
-      const adaylar = siraliDizinler.flatMap((dizin) => {
-        const urun = dizin[alan].get(anahtar);
-        if (!urun) return [];
-        if (marka && urun.marka.trim().toLocaleLowerCase("tr-TR") !== marka &&
-          dizin.firma.ad.trim().toLocaleLowerCase("tr-TR") !== marka) return [];
-        return [{ dizin, urun }];
-      });
-      const dogruFirma = adaylar.filter(({ dizin }) => dizin.firma.anahtar === args.firmaAnahtari);
-      const guvenli = dogruFirma.length > 0 && !marka ? dogruFirma : adaylar;
-      return guvenli.length === 1 ? guvenli[0] : null;
-    };
-    if (barkod.length >= 8) {
-      const bulunan = sec("barkoda", barkod);
-      if (bulunan) return { ...bulunan, dayanak: "barkod" as const };
-    }
-
-    if (model.length >= 4) {
-      const bulunan = sec("koda", model);
-      if (bulunan) return { ...bulunan, dayanak: "kod" as const };
-    }
-
-    return null;
-  })();
-
-  if (!eslesme) return null;
-
-  const { dizin, urun, dayanak } = eslesme;
-
-  return {
-    urun: gorselKapisi(urun, dizin.firma.izinDurumu),
-    firma: dizin.firma,
-    dayanak,
-    gorselIzniVar: dizin.gorselIzniVar,
-    gorselAdaylari: urun.gorseller ?? [],
+  const sec = (alan: "barkoda" | "koda", anahtar: string) => {
+    const adaylar = siraliDizinler.flatMap((dizin) => {
+      const urun = dizin[alan].get(anahtar);
+      if (!urun) return [];
+      if (
+        marka &&
+        urun.marka.trim().toLocaleLowerCase("tr-TR") !== marka &&
+        dizin.firma.ad.trim().toLocaleLowerCase("tr-TR") !== marka
+      ) {
+        return [];
+      }
+      return [{ dizin, urun }];
+    });
+    const dogruFirma = adaylar.filter(({ dizin }) => dizin.firma.anahtar === args.firmaAnahtari);
+    return dogruFirma.length > 0 && !marka ? dogruFirma : adaylar;
   };
+
+  const paketle = (
+    bulunan: Array<{ dizin: (typeof siraliDizinler)[number]; urun: UreticiUrunu }>,
+    dayanak: "kod" | "barkod",
+  ): KatalogEslesmesi[] =>
+    bulunan.map(({ dizin, urun }) => ({
+      urun: gorselKapisi(urun, dizin.firma.izinDurumu),
+      firma: dizin.firma,
+      dayanak,
+      gorselIzniVar: dizin.gorselIzniVar,
+      gorselAdaylari: urun.gorseller ?? [],
+    }));
+
+  if (barkod.length >= 8) {
+    const bulunan = sec("barkoda", barkod);
+    if (bulunan.length > 0) return paketle(bulunan, "barkod");
+  }
+  if (model.length >= 4) {
+    const bulunan = sec("koda", model);
+    if (bulunan.length > 0) return paketle(bulunan, "kod");
+  }
+  return [];
+}
+
+/**
+ * Faturadan okunan model kodu veya barkodu üretici kataloğunda arar.
+ *
+ * Sıra kanıt gücüne göredir: önce barkod (tek ürünü gösterir), sonra model
+ * kodu. İkisi de tutmazsa eşleşme yoktur — ada bakarak tahmin yapılmaz.
+ *
+ * Fotoğraflar her zaman döner (kilitli kapsam: önce çalışan sistem);
+ * kullanım izni sonra istenir, `gorselIzniVar` bilgi olarak taşınır.
+ */
+export function ureticiUrunuBul(args: UreticiUrunArama): KatalogEslesmesi | null {
+  const adaylar = ureticiUrunAdaylariniBul(args);
+  return adaylar.length === 1 ? adaylar[0] : null;
 }
 
 /** Katalogdaki firma sayısı, ürün sayısı ve izin durumu — durum göstermek için. */
