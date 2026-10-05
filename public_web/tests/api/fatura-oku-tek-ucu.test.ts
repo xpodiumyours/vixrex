@@ -224,9 +224,11 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     // adet/fiyatları yanlış okuyabiliyor; böyle okumadan ürün kartı
     // üretilmez ama satırlar da kaybolmaz — uyarı esnafa açıkça gösterilir,
     // her satır kendi kanıtıyla değerlendirilir.
-    const okuma = vi.fn(async () =>
-      okuyucuCevabi({ ...TEK_SATIR, toplam_adet: 75, toplam_tutar: 6034 }),
-    );
+    const okuma = vi.fn(async (input: RequestInfo | URL) => {
+      const adres = String(input instanceof Request ? input.url : input);
+      if (!adres.includes("openrouter.ai")) return new Response("{}", { status: 404 });
+      return okuyucuCevabi({ ...TEK_SATIR, toplam_adet: 75, toplam_tutar: 6034 });
+    });
     vi.stubGlobal("fetch", okuma);
 
     const cevap = await faturaOku(istek());
@@ -236,7 +238,11 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(govde.satirlar.length).toBeGreaterThan(0);
     expect(typeof govde.belgeUyarisi).toBe("string");
     // Yarım okuma bir kez olabilir; ısrarla olmaz — üç kez denenir.
-    expect(okuma).toHaveBeenCalledTimes(1);
+    // Site doğrulaması da fetch çağırır; yalnız okuyucuya giden çağrı sayılır.
+    const okumaSayisi = okuma.mock.calls.filter(
+      (cagri) => String(cagri[0]).includes("openrouter.ai"),
+    ).length;
+    expect(okumaSayisi).toBe(1);
   });
 
   it("belge toplamı tutuyorsa belge gerçeği cevapta döner", async () => {

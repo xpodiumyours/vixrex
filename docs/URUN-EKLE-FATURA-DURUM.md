@@ -2,6 +2,10 @@
 
 Tarih: 2026-10-04. Bu belge ölçülmüş gerçeği yazar; plan değil, ölçüm raporudur.
 
+**Güncelleme (2026-10-05):** firma havuzu ve yerel katalog tamamen kaldırıldı. Aşağıdaki
+"Ölçülen sonuç: eşleştirmede iki ayrı kırılma" bölümü ve havuz eşleştirme seçenekleri
+tarihi kayıttır; güncel yol `docs/FATURADAN-VITRINE-MASTER-PLAN.md` içindedir.
+
 ## Amaç (Casper, 2026-10-04)
 
 Fatura fotoğrafı → **firmanın dijital izi** → ürünlerin sıralanması → esnaf satış fiyatını
@@ -47,7 +51,8 @@ Havuz: 16 firma / **8.594 ürün** (`public_web/data/katalog/`). Ürün kodu ala
 
 ## Açık karar (Casper'e ait)
 
-Eşleşme bulunan satır için iki seçenek ölçüldü, hangisinin yapılacağı kararlaştırılmadı:
+Havuz verisi 2026-10-05'te tamamen kaldırıldı; eşleşme artık yalnız firmanın kendi
+resmî sitesinden yürütüldüğü için aşağıdaki iki seçenek soru olmaktan çıktı (tarihi kayıt):
 
 - **A)** Aynı kod iki firmada bulunduğunda ikisini de gösterip esnafın seçmesi
   (yalnız arayüz + sunucu eşiği; veriye dokunmaz).
@@ -66,9 +71,8 @@ Ayrıca karar bekleyen ikinci konu: satış fişinde tedarikçi adı yokken ür�
 
 ## Bu dalı kullanan ajan için
 
-1. `tool/fatura_havuz_olc.mjs <okuma-json>` → satır satır "eşleşti / belirsiz / yok".
-2. Okuma raporu üretmek için: mağazaya ait owner oturumu ile `POST /api/fatura-oku`
+1. Okuma raporu üretmek için: mağazaya ait owner oturumu ile `POST /api/fatura-oku`
    (multipart: `slug`, `dosya`). Zincir: `faturaGoru.ts` (OpenRouter `openai/gpt-5.6-luna`)
    → `faturaSatirAyikla.ts` → `faturaEslestir.ts` → `/api/products/batch` → `/api/fatura-yayinla`.
-3. Yayın kapısı: `faturaKartDurumu.ts` — kanıtlı satır + satış fiyatı + stok onayı +
+2. Yayın kapısı: `faturaKartDurumu.ts` — kanıtlı satır + satış fiyatı + stok onayı +
    en az 1 fotoğraf + esnaf onayı. Beşi olmadan kart yayınlanmaz.

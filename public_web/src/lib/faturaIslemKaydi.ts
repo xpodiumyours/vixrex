@@ -135,12 +135,10 @@ export async function islemKaydet(girdi: IslemKaydiGirdisi): Promise<string | nu
           discovery_state: girdi.aramaDurumu ?? {},
           supplier_trace: girdi.tedarikciIz
             ? {
-                anahtar: girdi.tedarikciIz.anahtar,
                 alan: girdi.tedarikciIz.alan,
                 platform: girdi.tedarikciIz.platform,
                 izinDurumu: girdi.tedarikciIz.izinDurumu,
                 kaynak: girdi.tedarikciIz.kaynak,
-                havuzda: girdi.tedarikciIz.havuzda,
                 dogrulama: girdi.tedarikciIz.dogrulama ?? null,
               }
             : null,

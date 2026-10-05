@@ -70,8 +70,8 @@ export async function POST(request: NextRequest) {
   const slug = String(form.get("slug") ?? "").trim();
   const dosya = form.get("dosya");
   const editTokenGovde = String(form.get("editToken") ?? "").trim();
-  // Esnaf firmanın sitesini biliyorsa yazar (zorunlu değil): havuzda olmayan
-  // veya el yazısı faturada okunamayan site için keşif buradan yürür.
+  // Esnaf firmanın sitesini biliyorsa yazar (zorunlu değil): el yazısı
+  // faturada okunamayan site için keşif buradan yürür.
   const siteIpucu = String(form.get("firmaSitesi") ?? "").trim().slice(0, 200);
 
   if (!slug) {

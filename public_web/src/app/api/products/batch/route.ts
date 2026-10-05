@@ -15,7 +15,6 @@ import {
   urunuGeriAl,
 } from "@/lib/faturaUrunBaglantisi";
 import { urunGirdisiniHazirla } from "@/lib/productIntake";
-import { izinsizUreticiGorseli } from "@/lib/ureticiKatalog";
 import { durumGecerliMi, yayinEksikleri } from "@/lib/faturaKartDurumu";
 import { FATURA_MIN_PRODUCT_IMAGES, yonetilenUrunGorseliMi } from "@/lib/productImagePolicy";
 import { kaynakGorselleriniHazirla } from "@/lib/faturaGorsel";
@@ -255,7 +254,12 @@ export async function POST(request: NextRequest) {
     const disGorseller = faturaKaynakli
       ? kaynakGorselleri.filter((adres) => !yonetilenUrunGorseliMi(adres))
       : [];
-    const ureticiGorselVar = hazirlik.girdi.imageUrls.some(izinsizUreticiGorseli);
+    const katalogGorselleri = dogrulanmis?.katalog?.gorseller;
+    const ureticiGorselVar =
+      Array.isArray(katalogGorselleri) &&
+      katalogGorselleri.some((adres) =>
+        hazirlik.girdi.imageUrls.includes(String(adres)),
+      );
 
     let urunGorselleri = kaynakGorselleri;
     let gorselDurumu = "";

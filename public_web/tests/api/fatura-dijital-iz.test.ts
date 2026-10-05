@@ -4,7 +4,6 @@ import {
   sonucOzeti,
   type HamFaturaSatiri,
 } from "@/lib/faturaEslestir";
-import { firmaAnahtariniCoz } from "@/lib/ureticiKatalog";
 import { dinamikUrunIzleriniBul, pdfKatalogGorseliniOku, hamGet } from "@/lib/faturaDijitalIz";
 import { kaynakGorseliniDogrula } from "@/lib/faturaGorsel";
 
@@ -43,11 +42,7 @@ function kaynakKimligiyle(fetcher: (input: string) => Promise<Response>) {
 
 
 describe("fatura dinamik dijital iz", () => {
-  it("hazir katalogu olmayan 55 havuz firmasini kimlik olarak cozer", () => {
-    expect(firmaAnahtariniCoz("Goldfresh Mutfak")).toBe("goldfresh-mutfak");
-  });
-
-  it("havuzdaki katalogsuz Shopify firmasindan birebir kodla kaynak bulur", async () => {
+  it("katalogsuz Shopify firmasindan birebir kodla kaynak bulur", async () => {
     const fetcher = async (input: string) => {
       expect(input).toContain("goldfreshmutfak.com/products.json");
       return new Response(
@@ -70,11 +65,11 @@ describe("fatura dinamik dijital iz", () => {
     const sonuc = await faturaSatirlariniDijitalIzle(
       [satir("GF-123")],
       "Goldfresh Mutfak",
-      "",
+      "goldfreshmutfak.com",
       { fetcher: kaynakKimligiyle(fetcher), resolveHost },
     );
 
-    expect(sonuc.tedarikciIz?.anahtar).toBe("goldfresh-mutfak");
+    expect(sonuc.tedarikciIz?.alan).toBe("goldfreshmutfak.com");
     expect(sonuc.satirlar[0].katalog?.resmiAd).toBe("Dondurulmuş Ürün");
     expect(sonuc.satirlar[0].katalog?.kaynak).toBe(
       "https://goldfreshmutfak.com/products/dondurulmus-urun",
@@ -94,9 +89,9 @@ describe("fatura dinamik dijital iz", () => {
     expect(sonuc.satirlar[0].katalog).toBeNull();
   });
 
-  it("havuz disi firma aramada bulununca ayni kesif oradan yurur", async () => {
-    // Kilitli kapsam: havuz SADECE hızlı yoldur. Eti gibi büyük üretici
-    // listede yoksa adı aratılır, resmi sitesi bulununca ürünler eşleşir.
+  it("firma aramada bulununca ayni kesif oradan yurur", async () => {
+    // Kilitli kapsam: Eti gibi büyük üreticinin adı aratılır, resmî sitesi
+    // bulununca ürünler eşleşir.
     const fetcher = async (input: string) => {
       if (input.includes("api.search.brave.com")) {
         return new Response(
@@ -134,7 +129,6 @@ describe("fatura dinamik dijital iz", () => {
       firmaArama: { apiAnahtari: "test-anahtar", fetcher },
     });
 
-    expect(sonuc.tedarikciIz?.havuzda).toBe(false);
     expect(sonuc.tedarikciIz?.kaynak).toBe("https://etigida.com.tr");
     expect(sonuc.satirlar[0].sonuc).toBe("kanitli");
     expect(sonuc.satirlar[0].katalog?.resmiAd).toBe("Eti Kakaolu Bisküvi");
@@ -143,7 +137,7 @@ describe("fatura dinamik dijital iz", () => {
     ]);
   });
 
-  it("55 havuzu disindaki tedarikciyi faturadaki resmi siteyle ayirir ve kod cakismasini karistirmaz", async () => {
+  it("tedarikciyi faturadaki resmi siteyle ayirir ve kod cakismasini karistirmaz", async () => {
     const fetcher = async (input: string) => {
       if (input.includes("/products.json")) return new Response("{}", { status: 404 });
       if (input.includes("/wp-json/wc/store/v1/products")) {
@@ -171,7 +165,6 @@ describe("fatura dinamik dijital iz", () => {
       { fetcher: kaynakKimligiyle(fetcher), resolveHost },
     );
 
-    expect(sonuc.tedarikciIz?.havuzda).toBe(false);
     expect(sonuc.tedarikciIz?.kaynak).toBe("https://rastgelegida.example");
     expect(sonuc.satirlar[0].katalog?.firma).toBe("Rastgele Gıda");
     expect(sonuc.satirlar[0].katalog?.marka).toBe("Dış Marka");
@@ -237,7 +230,6 @@ describe("fatura dinamik dijital iz", () => {
       { fetcher: kaynakKimligiyle(fetcher), resolveHost },
     );
 
-    expect(sonuc.tedarikciIz?.havuzda).toBe(false);
     expect(sonuc.satirlar[0].sonuc).toBe("iz-yok");
     expect(sonuc.satirlar[0].katalog).toBeNull();
     expect(sonucOzeti(sonuc.satirlar).izYok).toBe(1);
@@ -256,21 +248,6 @@ describe("fatura dinamik dijital iz", () => {
     expect(sonuc.satirlar[0].sonuc).toBe("eksik");
     expect(sonuc.satirlar[0].uyari).toBeUndefined();
     expect(sonucOzeti(sonuc.satirlar).eksik).toBe(1);
-  });
-
-  it("faturada baska bir havuz firmasinin markasi geciyorsa satiri eksik diye isaretler ve ayrimi soyler", async () => {
-    const fetcher = async (input: string) => kaynakKimligiyle(async () => new Response("{}", { status: 404 }))(input);
-
-    const sonuc = await faturaSatirlariniDijitalIzle(
-      [{ ...satir(""), ad: "Aycenk Gıda Ayçiçek Yağı 1 L" }],
-      "Örnek Toptan",
-      "https://ornek-toptan.example",
-      { fetcher: kaynakKimligiyle(fetcher), resolveHost },
-    );
-
-    expect(sonuc.satirlar[0].sonuc).toBe("eksik");
-    expect(sonuc.satirlar[0].uyari).toContain("Aycenk Gıda");
-    expect(sonuc.satirlar[0].uyari).toContain("marka ayrı");
   });
 
   it("JSON-LD urun sayfasi okuyarak sitemap uzerinden kaynak bulur", async () => {
@@ -350,7 +327,7 @@ describe("hedefli arama ve erişim durumu", () => {
       return yanit({}, 404);
     };
 
-    const sonuc = await faturaSatirlariniDijitalIzle([satir("GF-777")], "Goldfresh Mutfak", "", {
+    const sonuc = await faturaSatirlariniDijitalIzle([satir("GF-777")], "Goldfresh Mutfak", "goldfreshmutfak.com", {
       fetcher: kaynakKimligiyle(fetcher),
       resolveHost,
     });
@@ -365,7 +342,7 @@ describe("hedefli arama ve erişim durumu", () => {
     };
     const durum = { erisimHatasi: false, sinirDoldu: false };
 
-    const sonuc = await faturaSatirlariniDijitalIzle([satir("GF-123")], "Goldfresh Mutfak", "", {
+    const sonuc = await faturaSatirlariniDijitalIzle([satir("GF-123")], "Goldfresh Mutfak", "goldfreshmutfak.com", {
       fetcher: kaynakKimligiyle(fetcher),
       resolveHost,
       durum,
@@ -381,7 +358,7 @@ describe("hedefli arama ve erişim durumu", () => {
     const fetcher = async () => yanit({ products: [] });
     const durum = { erisimHatasi: false, sinirDoldu: false };
 
-    const sonuc = await faturaSatirlariniDijitalIzle([satir("GF-123")], "Goldfresh Mutfak", "", {
+    const sonuc = await faturaSatirlariniDijitalIzle([satir("GF-123")], "Goldfresh Mutfak", "goldfreshmutfak.com", {
       fetcher: kaynakKimligiyle(fetcher),
       resolveHost,
       durum,
@@ -415,6 +392,12 @@ describe("çok markalı toptancı faturası", () => {
   it("satırdaki marka toptancıdan farklıysa markanın kendi kaynağında aranır", async () => {
     const gidilenAlanlar: string[] = [];
     const fetcher = async (input: string) => {
+      if (input.includes("api.search.brave.com")) {
+        return new Response(
+          JSON.stringify({ web: { results: [{ url: "https://www.goldfreshmutfak.com", title: "Goldfresh Mutfak" }] } }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        );
+      }
       const alan = new URL(input).hostname;
       gidilenAlanlar.push(alan);
       if (alan === "goldfreshmutfak.com" && input.includes("/products.json")) {
@@ -427,23 +410,31 @@ describe("çok markalı toptancı faturası", () => {
       [{ ...satir("GF-123"), marka: "Goldfresh" }],
       "Örnek Toptan",
       "https://ornek-toptan.example",
-      { fetcher: kaynakKimligiyle(fetcher), resolveHost },
+      { fetcher: kaynakKimligiyle(fetcher), resolveHost, firmaArama: { apiAnahtari: "test-anahtar", fetcher } },
     );
 
     expect(gidilenAlanlar).toContain("goldfreshmutfak.com");
     expect(sonuc.satirlar[0].sonuc).toBe("kanitli");
-    expect(sonuc.satirlar[0].katalog?.firma).toBe("Goldfresh Mutfak");
+    expect(sonuc.satirlar[0].katalog?.firma).toBe("Goldfresh");
     expect(sonuc.satirlar[0].katalog?.kaynak).toContain("goldfreshmutfak.com");
   });
 
   it("markanın kaynağında ürün yoksa 'markanın kaynağında bulunamadı' yazılır", async () => {
-    const fetcher = async (input: string) => kaynakKimligiyle(async () => new Response("{}", { status: 404 }))(input);
+    const fetcher = async (input: string) => {
+      if (input.includes("api.search.brave.com")) {
+        return new Response(
+          JSON.stringify({ web: { results: [{ url: "https://www.goldfreshmutfak.com", title: "Goldfresh Mutfak" }] } }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        );
+      }
+      return kaynakKimligiyle(async () => new Response("{}", { status: 404 }))(input);
+    };
 
     const sonuc = await faturaSatirlariniDijitalIzle(
       [{ ...satir("GF-999"), marka: "Goldfresh Mutfak" }],
       "Örnek Toptan",
       "https://ornek-toptan.example",
-      { fetcher: kaynakKimligiyle(fetcher), resolveHost },
+      { fetcher: kaynakKimligiyle(fetcher), resolveHost, firmaArama: { apiAnahtari: "test-anahtar", fetcher } },
     );
 
     expect(sonuc.satirlar[0].sonuc).toBe("iz-yok");
@@ -460,7 +451,7 @@ describe("çok markalı toptancı faturası", () => {
     await faturaSatirlariniDijitalIzle(
       [{ ...satir("GF-999"), marka: "Goldfresh" }],
       "Goldfresh Mutfak",
-      "",
+      "goldfreshmutfak.com",
       { fetcher: kaynakKimligiyle(fetcher), resolveHost },
     );
 
@@ -498,8 +489,8 @@ function gercekPdf(metin = "MODEL: ABC123 Cotton shirt"): Uint8Array {
 
 const pdfKaynak = "https://resmi.example/katalog.pdf";
 const resmiIz = {
-  anahtar: null, firma: "Resmi", alan: "resmi.example", platform: "shopify",
-  izinDurumu: "yok" as const, kaynak: "https://resmi.example", havuzda: false,
+  firma: "Resmi", alan: "resmi.example", platform: "shopify",
+  izinDurumu: "yok" as const, kaynak: "https://resmi.example",
   dogrulama: {
     guc: "guclu" as const, kanitlar: ["vergi_no"], bagliHesaplar: [],
     katalogDosyalari: [pdfKaynak],
@@ -591,7 +582,7 @@ describe("resmi PDF ve sosyal katalog baglantisi", () => {
 
 
 describe("ayni modelin assorti katalog eslesmesi", () => {
-  const iz = { anahtar: null, firma: "Resmi", alan: "resmi.example", platform: "shopify", izinDurumu: "yok" as const, kaynak: "https://resmi.example", havuzda: false };
+  const iz = { firma: "Resmi", alan: "resmi.example", platform: "shopify", izinDurumu: "yok" as const, kaynak: "https://resmi.example" };
   const fetcher = async (input: string) => input.includes("/products.json") ? new Response(JSON.stringify({ products: [{
     title: "Erkek Takim", vendor: "Resmi", handle: "16747", images: [{ src: "https://resmi.example/takim.jpg" }],
     variants: ["M", "L", "XL", "XXL"].map((title) => ({ sku: "16747", title })),

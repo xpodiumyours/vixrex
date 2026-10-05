@@ -4,20 +4,17 @@ import { createHash } from "node:crypto";
 import sharp from "sharp";
 import { FATURA_MIN_SOURCE_SHORT_EDGE } from "@/lib/productImagePolicy";
 import {
-  firmaHavuzKaydiniBul,
   gorselKapisi,
   type IzinDurumu,
   type UreticiUrunu,
 } from "@/lib/ureticiKatalog";
 
 export interface TedarikciDijitalIzi {
-  anahtar: string | null;
   firma: string;
   alan: string;
   platform: string;
   izinDurumu: IzinDurumu;
   kaynak: string;
-  havuzda: boolean;
   dogrulama?: import("@/lib/firmaDogrula").FirmaDogrulamasi;
 }
 
@@ -719,13 +716,7 @@ async function resmiKataloglariAra(
   resolveHost: (hostname: string) => Promise<string[]>,
   baglam: KesifBaglami,
 ): Promise<Array<DijitalIzHedefi | null>> {
-  let dogrulama = iz.dogrulama;
-  if (!dogrulama && iz.havuzda && sureVarMi(baglam)) {
-    const { siteFirmayaAitMi } = await import("@/lib/firmaDogrula");
-    const aday = await siteFirmayaAitMi(iz.alan,
-      { ad: iz.firma, vergiNo: "", adres: "" }, { fetcher, resolveHost });
-    if (aday.guc === "guclu" || aday.guc === "orta") dogrulama = aday;
-  }
+  const dogrulama = iz.dogrulama;
   const urunler: UreticiUrunu[] = [];
   const pdfler = new Set(dogrulama?.katalogDosyalari ?? []);
   for (const hesap of dogrulama?.bagliHesaplar ?? []) {
@@ -854,19 +845,19 @@ async function sayfaAra(
   };
   const urunSayfalari = loclar.filter((loc) => loc.startsWith("https://") && !haric.test(yol(loc)));
   const oncelikli = urunSayfalari.filter((loc) => /\/(products?|urun)(\/|$)/i.test(yol(loc)));
-  const havuz = oncelikli.length > 0 ? oncelikli : urunSayfalari;
-  if (havuz.length === 0) return bos();
+  const adayAdresler = oncelikli.length > 0 ? oncelikli : urunSayfalari;
+  if (adayAdresler.length === 0) return bos();
 
   const kodlar = satirlar
     .flatMap((satir) => [normalizeKod(satir.model), normalizeBarkod(satir.barkod)])
     .filter((kod) => kod.length >= 4);
-  const kodluAdresler = havuz.filter((loc) => {
+  const kodluAdresler = adayAdresler.filter((loc) => {
     const slug = slugKodu(loc);
     return kodlar.some((kod) => slug.includes(kod));
   });
   const devam = (baglam.durum.devam ??= {});
   const kayit = devam[`sitemap:${iz.alan}`] ??= { sonrakiSayfa: 1, urunler: [] };
-  const adresler = [...new Set([...kodluAdresler, ...havuz])];
+  const adresler = [...new Set([...kodluAdresler, ...adayAdresler])];
   const secilen = adresler.slice(kayit.sonrakiSayfa - 1, kayit.sonrakiSayfa - 1 + MAKS_SAYFA_OKUMA);
   const urunler = kayit.urunler;
   for (const adres of secilen) {
@@ -893,31 +884,14 @@ export function tedarikciDijitalIziBul(
   tedarikciAdi: string,
   tedarikciSite = "",
 ): TedarikciDijitalIzi | null {
-  const havuzFirmasi = firmaHavuzKaydiniBul(tedarikciAdi, tedarikciSite);
-  if (havuzFirmasi) {
-    const alan = alanAdiTemizle(havuzFirmasi.site);
-    if (!alan) return null;
-    return {
-      anahtar: havuzFirmasi.anahtar,
-      firma: havuzFirmasi.ad,
-      alan,
-      platform: havuzFirmasi.platform.toLowerCase(),
-      izinDurumu: havuzFirmasi.izinDurumu,
-      kaynak: `https://${alan}`,
-      havuzda: true,
-    };
-  }
-
   const alan = alanAdiTemizle(tedarikciSite);
   if (!alan) return null;
   return {
-    anahtar: null,
     firma: tedarikciAdi.trim() || alan,
     alan,
     platform: "",
     izinDurumu: "yok",
     kaynak: `https://${alan}`,
-    havuzda: false,
   };
 }
 

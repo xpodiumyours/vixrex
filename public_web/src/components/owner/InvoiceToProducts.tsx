@@ -196,8 +196,7 @@ export default function InvoiceToProducts({
   const [belge, setBelge] = useState<FaturaOkumaSonucu | null>(null);
   const [satirlar, setSatirlar] = useState<SatirDurumu[]>([]);
   const [kar, setKar] = useState("40");
-  // Firmanın sitesi faturada okunamazsa esnaf yazar (zorunlu değil):
-  // havuzda olmayan firmanın keşfi buradan yürür.
+  // Firmanın sitesi faturada okunamazsa esnaf yazar (zorunlu değil).
   const [firmaSitesi, setFirmaSitesi] = useState("");
   const [manuelMetin, setManuelMetin] = useState("");
   const [hata, setHata] = useState<string | null>(null);

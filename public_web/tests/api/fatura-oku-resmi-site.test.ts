@@ -115,13 +115,11 @@ const OKUMA = {
 };
 
 const IZ = {
-  anahtar: null,
   firma: "Ornek Tekstil",
   alan: "ornektekstil.com",
   platform: "",
   izinDurumu: "yok",
   kaynak: "https://ornektekstil.com",
-  havuzda: false,
 };
 
 process.env.SUPABASE_URL = "https://proje.supabase.co";

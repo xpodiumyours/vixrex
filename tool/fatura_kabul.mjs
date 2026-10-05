@@ -64,7 +64,6 @@ async function tekFatura(yol) {
     tedarikciDijitalIz: govde.tedarikciDijitalIz
       ? {
           alan: govde.tedarikciDijitalIz.alan,
-          havuzda: govde.tedarikciDijitalIz.havuzda,
           dogrulama: govde.tedarikciDijitalIz.dogrulama?.guc ?? "",
         }
       : null,

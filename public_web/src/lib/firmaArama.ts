@@ -7,11 +7,9 @@ import {
 
 // Firmanın resmi sitesini internette bulma (kilitli kapsam kararı).
 //
-// 55 firmalık havuz SADECE hızlı yoldur (jeton tasarrufu): listedeki firma
-// aranmadan bulunur. Listede OLMAYAN firma için adı internette aratılır;
-// eşleşen resmi alan adı bulunursa aynı keşif (Shopify/Woo/sitemap+JSON-LD)
-// oradan yürür. El yazısı notlar, kısaltmalar bizi bağlamaz — dijitalde
-// eşleşen firmayla köprü kurulur.
+// Faturada firma adı varsa adı internette aratılır; eşleşen resmi alan adı
+// bulunursa aynı keşif (Shopify/Woo/sitemap+JSON-LD) oradan yürür. El yazısı
+// notlar, kısaltmalar bizi bağlamaz — dijitalde eşleşen firmayla köprü kurulur.
 //
 // Arama sonucu KALICI saklanmaz (sağlayıcı koşulu): bulunan alan adı yalnız
 // bu işlemin belleğinde tutulur, sonraki faturada yeniden aranır.

@@ -24,7 +24,7 @@ Firmaya söylenmek istenen söz:
 
 - Hedef: İstanbul toptancıları ve Türkiye üreticileri; bunlardan ürün alan küçük esnaf.
 - Gıda, tekstil, temizlik, ev tekstili ve tuhafiye dahil farklı sektörler kapsamdadır. Tutku, Eti, Ülker ve Işılay örnektir; izin verilen markalar listesi değildir.
-- 16 katalog ve geçmişte 54 olarak anılan firma havuzu maliyet ve hız içindir. İncelenen yerel kopyada 55 firma kaydı olması da kapsam kararı değildir. Yeni firma keşfi ana işin içindedir.
+- Yerel katalog ve firma havuzu 2026-10-05'te tamamen kaldırıldı: tek yol, fatura bilgisiyle doğrulanan firmanın kendi resmî sitesidir. Yeni firma keşfi ana işin içindedir.
 - Sınır: faturadaki ürünün ve firma ilişkisinin resmî dijital kaynakla doğrulanabilir eşleşmesi. Basılı veya el yazısı olması tek başına eleme nedeni değildir.
 - Toptancı ile üretici aynı olmak zorunda değildir. Çok markalı bir toptancı faturası normal bir senaryodur.
 - Tek fotoğraf ana giriş yoludur. İkinci belge veya ambalaj fotoğrafı destekleyici olabilir; her esnafa zorunlu ek fotoğraf görevi verilmez.
@@ -112,18 +112,18 @@ Güncel sekiz fatura değişikliği `supabase/migrations/` altındaki `202609290
 
 **Bitiş:** Işılay bilgi fişi ile e-Arşiv faturası bir model ve sekiz adetlik aynı alımı temsil eder; toplam 16 adede çıkmaz. Tek e-Arşiv fotoğrafı ana akışı başlatmaya yeterlidir.
 
-### F3 — Havuz dışında da resmî firma ve doğru ürüne ulaşma
+### F3 — Resmî firmaya ve doğru ürüne ulaşma
 
 **İşler:**
 
-- Yerel katalog önce kullanılır; sonuç yoksa firma ve ürün keşfi devam eder. Havuz dışı firma araması bu fazın zorunlu parçasıdır.
+- Firma ve ürün keşfi firmanın kendi resmî sitesinden yürür: okumada modelin söylediği site fatura bilgisiyle doğrulanır, doğrulanmazsa kullanılmaz; keşif adla aramayla sürer.
 - Resmî kaynak doğrulaması yalnız alan adında firma adının geçmesine dayanmaz. Faturadaki firma bilgisi, resmî sitedeki iletişim/adres ve birbirine bağlı resmî hesaplar birlikte değerlendirilir.
 - Satıcı/toptancı, üretici ve marka ayrı tutulur. Toptancının faturasında başka marka bulunması otomatik çelişki değildir; ilgili markanın doğrulanmış kaynağında arama sürer.
 - Shopify/WooCommerce ve yapılandırılmış ürün sayfalarına ek olarak resmî PDF katalogları, resmî sosyal hesaplar ve firmanın sağladığı katalog dosyaları için erişim yolları tamamlanır. Erişilemeyen özel hesap veya kapalı kaynak aşılmış gibi gösterilmez.
 - İlk dört sayfaya bakıp “ürün yok” deme kaldırılır. Model/barkod hedefli arama, ilgili sitemap seçimi ve gerektiğinde kaldığı yerden devam eden sınırlı tarama kullanılır. Süre sınırına gelmek, kaynağın bulunmadığı anlamına çevrilmez.
 - Eşleştirme firma/marka + model veya doğrulanmış barkodla yapılır; varyant tutarlılığı kontrol edilir. Yalnız ürün adı veya görsel benzerliği kesin eşleşme sayılmaz. Çelişkide adaylar korunur.
 
-**Bitiş:** Havuz dışı, resmî dijital karşılığı erişilebilir firmalar aynı ana akışta çalışır. Kaynak hatası, arama hizmeti kapalı olması ve gerçekten sonuç bulunmaması ayrı açıklanır.
+**Bitiş:** Resmî dijital karşılığı erişilebilir firmalar aynı ana akışta çalışır. Kaynak hatası, arama hizmeti kapalı olması ve gerçekten sonuç bulunmaması ayrı açıklanır.
 
 ### F4 — Bulunan görseli tüketici kalitesinde karta taşıma
 
@@ -207,8 +207,8 @@ Araştırmada Işılay/Glisa adına dijital hesap izleri bulunmuş, fakat 16747 
 
 | Senaryo | Kabul koşulu |
 | --- | --- |
-| Havuzdaki firma | Bilinen katalog hızlı kullanılır; doğru ürün/görsel gerçek karta ulaşır. |
-| Havuz dışı firma | Firma ve ürün keşfi yapılır; havuzda olmadığı için reddedilmez. |
+| Fatura bilgisi olan firma | Doğrulanmış resmî siteden doğru ürün/görsel gerçek karta ulaşır. |
+| Yeni firma | Firma adı internette aranır, resmî site doğrulanınca aynı akışta işlenir; ad tek başına eleme nedeni değildir. |
 | Toptancı başka, marka başka | Doğru markanın resmî kaynağına gidilir; çok markalı fatura yanlış çelişki üretmez. |
 | Kod çakışması | Başka firmanın aynı kodu yanlış ürüne dönüşmez. |
 | El yazısı/kısaltmalı belge | Okunabilen ve eşleşebilen satır işlenir; belirsiz alan açıklanır. |
@@ -222,7 +222,7 @@ Araştırmada Işılay/Glisa adına dijital hesap izleri bulunmuş, fakat 16747 
 | Yayın | Onaylı gerçek kayıt tüketici vitrini ve ürün detayında görünür. |
 | İzin talebi | Esnaf seçimi, gönderim ve firma cevabı ayrı doğru durumları gösterir. |
 
-İlk kabul paketi Işılay örneğine ek olarak gıda, tekstil/tuhafiye, temizlik ve ev tekstilinden gerçek belgelerle genişletilir; en az iki havuz dışı firma ve bir çok markalı toptancı senaryosu içerir. Bunlar asgari genellenebilirlik kanıtıdır, ürün kapsamının üst sınırı değildir. Gerçek belge bulunmayan senaryo tamamlandı sayılmaz; yapay örnek yalnız yazılım kuralını sınamak için kullanılır.
+İlk kabul paketi Işılay örneğine ek olarak gıda, tekstil/tuhafiye, temizlik ve ev tekstilinden gerçek belgelerle genişletilir; en az iki yeni firma ve bir çok markalı toptancı senaryosu içerir. Bunlar asgari genellenebilirlik kanıtıdır, ürün kapsamının üst sınırı değildir. Gerçek belge bulunmayan senaryo tamamlandı sayılmaz; yapay örnek yalnız yazılım kuralını sınamak için kullanılır.
 
 Kabul örneklerinde yanlış ürün, yanlış görsel ve mükerrer ürün/stok toleransı sıfırdır. Dijital karşılığı önceden doğrulanmış erişilebilir örneklerin tamamı açıklanabilir şekilde işlenmelidir. Bu ölçüm tüm Türkiye faturalarında ölçülmemiş bir “%100 doğruluk” iddiasına dönüştürülmez. Kullanıcının beklentisi, akışın hiçbir aşamasının yarım bırakılmamasıdır.
 
@@ -245,7 +245,7 @@ Her faz şu bilgileri taşır: sorumlu çalışma/dal, dokunulan dosyalar, deği
 | F0 | Ön inceleme var; uygulama tabanı henüz sabitlenmedi | Korunmuş işler ve tek sürüm envanteri |
 | F1 | Kodda doğrulanmış çelişkiler var | Tekil/toplu onay ve tek görselli kartın gerçek akışı |
 | F2 | Okuyucu var; belge ilişkisi ve alan ayrımları eksik | Işılay tek fotoğraf + mükerrer belge kontrolü |
-| F3 | Yerel/dinamik arama var; erişim ve kimlik açıkları var | Havuz dışı ve çok markalı gerçek eşleşmeler |
+| F3 | Dinamik site keşfi var; erişim ve kimlik açıkları var | Yeni firma ve çok markalı gerçek eşleşmeler |
 | F4 | Görsel adayları var; tam Işılay görseli doğrulanmadı | Kaynakla bağlı, açılan doğru ürün görseli |
 | F5 | İş ve ürün kayıtları var; bağlantı tamamlanmalı | Sunucudan doğrulanan, tekrarda çoğalmayan kart |
 | F6 | Web parçaları var; geri açma ve telefon bağlantısı eksik | İki cihazda aynı kart ve gerçek tüketici görünümü |
