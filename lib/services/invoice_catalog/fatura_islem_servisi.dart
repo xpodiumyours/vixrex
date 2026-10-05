@@ -47,6 +47,7 @@ class FaturaIslemServisi {
     required String model,
     required String barkod,
     required String marka,
+    String? kaynak,
   }) => _istek('POST', '/api/fatura-satir-duzelt', slug, editToken, {
     'islemKimligi': islemKimligi,
     'satirSirasi': satirSirasi,
@@ -54,6 +55,7 @@ class FaturaIslemServisi {
     'model': model,
     'barkod': barkod,
     'marka': marka,
+    if (kaynak != null && kaynak.trim().isNotEmpty) 'kaynak': kaynak.trim(),
   });
 
   Future<Result<Map<String, dynamic>>> _istek(

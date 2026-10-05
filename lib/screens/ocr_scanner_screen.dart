@@ -400,6 +400,17 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
           onEdit: _editProduct,
           // Faturadaki adet öneridir; esnaf bu düğmeyle stoğu onaylar.
           onConfirmStock: widget.ocrController.confirmInvoiceStock,
+          onPickCandidate: (index, aday) {
+            final draft = result.invoiceDrafts[index];
+            widget.ocrController.correctInvoiceRow(
+              index,
+              ad: draft.rawName?.value ?? result.products[index].name,
+              model: draft.modelCode?.value ?? '',
+              barkod: draft.gtinBarcode?.value ?? '',
+              marka: draft.brand?.value ?? '',
+              kaynak: aday.kaynak,
+            );
+          },
         ),
         const SizedBox(height: 16),
         // Kaydet butonu

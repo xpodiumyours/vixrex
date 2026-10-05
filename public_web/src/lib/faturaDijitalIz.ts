@@ -39,7 +39,15 @@ export interface DijitalUrunEslesmesi {
 export interface DijitalIzCeliskisi {
   celiski: true;
   dayanak: "kod" | "barkod";
-  adaylar: Array<{ ad: string; kaynak: string }>;
+  adaylar: Array<{
+    ad: string;
+    kaynak: string;
+    firma?: string;
+    marka?: string;
+    aciklama?: string;
+    gorseller?: string[];
+    izinDurumu?: IzinDurumu;
+  }>;
 }
 
 export type DijitalIzHedefi = DijitalUrunEslesmesi | DijitalIzCeliskisi;
@@ -380,7 +388,14 @@ function hedefBul(
         dayanak,
         adaylar: kimlikler.map((kimlik) => {
           const urun = adaylar.find((aday) => urunKimligi(aday) === kimlik) as UreticiUrunu;
-          return { ad: urun.ad, kaynak: urun.kaynak };
+          return {
+            ad: urun.ad,
+            kaynak: urun.kaynak,
+            marka: urun.marka,
+            aciklama: urun.aciklama,
+            gorseller: urun.gorseller ?? [],
+            izinDurumu,
+          };
         }),
       };
     }

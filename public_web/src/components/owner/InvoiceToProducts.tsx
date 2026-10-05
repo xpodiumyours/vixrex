@@ -26,7 +26,15 @@ import {
 
 export interface CeliskiBilgisi {
   dayanak: "kod" | "barkod";
-  adaylar: Array<{ ad: string; kaynak: string }>;
+  adaylar: Array<{
+    ad: string;
+    kaynak: string;
+    firma?: string;
+    marka?: string;
+    aciklama?: string;
+    gorseller?: string[];
+    izinDurumu?: "yok" | "bekliyor" | "var";
+  }>;
 }
 
 export interface FaturaSatiri {
@@ -359,7 +367,7 @@ export default function InvoiceToProducts({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [baslangicIslemKimligi]);
 
-  async function satiriDuzelt(index: number) {
+  async function satiriDuzelt(index: number, kaynak?: string) {
     const giris = duzeltmeler[index] ?? satirlar[index];
     if (!giris || !belge?.islemKimligi) return;
     setHata(null);
@@ -376,6 +384,7 @@ export default function InvoiceToProducts({
           model: giris.model,
           barkod: giris.barkod,
           marka: giris.marka,
+          ...(kaynak ? { kaynak } : {}),
         }),
       });
       const govde = await cevap.json().catch(() => null);
@@ -1198,6 +1207,15 @@ export default function InvoiceToProducts({
                       ) : (
                         aday.ad
                       )}
+                      {aday.kaynak ? (
+                        <button
+                          type="button"
+                          onClick={() => void satiriDuzelt(index, aday.kaynak)}
+                          disabled={yaziliyor || duzeltilen !== null}
+                        >
+                          {duzeltilen === index ? "Seçiliyor…" : "Bunu seç"}
+                        </button>
+                      ) : null}
                     </li>
                   ))}
                 </ul>

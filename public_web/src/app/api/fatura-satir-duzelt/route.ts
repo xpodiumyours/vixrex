@@ -1,7 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { sahipYetkisi } from "@/lib/faturaYetki";
-import { faturaSatirlariniDijitalIzle, type HamFaturaSatiri } from "@/lib/faturaEslestir";
+import {
+  faturaSatirlariniDijitalIzle,
+  satiriAdayaKilitle,
+  type CeliskiBilgisi,
+  type EslesmisFaturaSatiri,
+  type HamFaturaSatiri,
+} from "@/lib/faturaEslestir";
 import { satirKanitKayitlari } from "@/lib/faturaIslemKaydi";
 import type { DijitalIzAramaDurumu } from "@/lib/faturaDijitalIz";
 
@@ -62,7 +68,7 @@ export async function POST(request: NextRequest) {
 
   const kayit = await admin
     .from("invoice_job_lines")
-    .select("id,raw_line,model,product_name,barcode,variant_name,size_text,brand,qty,unit_price,line_total,confidence,product_id")
+    .select("id,raw_line,model,product_name,barcode,variant_name,size_text,brand,qty,unit_price,line_total,confidence,product_id,conflict_snapshot")
     .eq("job_id", islemKimligi)
     .eq("line_index", satirSirasi)
     .maybeSingle();
@@ -82,23 +88,49 @@ export async function POST(request: NextRequest) {
     guven: Number(kayit.data.confidence ?? 0),
   };
 
-  const { satirlar, tedarikciIz, aramaDurumu } = await faturaSatirlariniDijitalIzle(
-    [duzeltilmis],
-    String(is.data.supplier_name ?? ""),
-    String(is.data.supplier_site ?? ""),
-    {
-      durum: is.data.discovery_state && typeof is.data.discovery_state === "object"
-        ? is.data.discovery_state as DijitalIzAramaDurumu : undefined,
-      tedarikciKimligi: {
-        vergiNo: String(is.data.supplier_tax_id ?? ""),
-        adres: String(is.data.supplier_address ?? ""),
+  const kaynak = alan(govde, "kaynak", 500) ?? "";
+  let yeni: EslesmisFaturaSatiri;
+  let aramaDurumu: DijitalIzAramaDurumu | Record<string, unknown> =
+    is.data.discovery_state && typeof is.data.discovery_state === "object"
+      ? (is.data.discovery_state as DijitalIzAramaDurumu)
+      : {};
+  let platform = "";
+
+  if (kaynak) {
+    const kilit = satiriAdayaKilitle(
+      {
+        ...duzeltilmis,
+        sonuc: "celiski",
+        katalog: null,
+        celiski: (kayit.data.conflict_snapshot ?? undefined) as CeliskiBilgisi | undefined,
       },
-    },
-  );
-  const yeni = satirlar[0];
+      kaynak,
+    );
+    if (!kilit) {
+      return NextResponse.json({ hata: "Bu ürün bu satırın seçeneklerinde yok." }, { status: 422 });
+    }
+    yeni = kilit;
+  } else {
+    const sonuc = await faturaSatirlariniDijitalIzle(
+      [duzeltilmis],
+      String(is.data.supplier_name ?? ""),
+      String(is.data.supplier_site ?? ""),
+      {
+        durum: is.data.discovery_state && typeof is.data.discovery_state === "object"
+          ? is.data.discovery_state as DijitalIzAramaDurumu : undefined,
+        tedarikciKimligi: {
+          vergiNo: String(is.data.supplier_tax_id ?? ""),
+          adres: String(is.data.supplier_address ?? ""),
+        },
+      },
+    );
+    yeni = sonuc.satirlar[0];
+    aramaDurumu = sonuc.aramaDurumu ?? {};
+    platform = sonuc.tedarikciIz?.platform ?? "";
+  }
 
   const lineId = String(kayit.data.id);
-  const kayitlar = satirKanitKayitlari(lineId, yeni, tedarikciIz?.platform ?? "");
+  const kayitlar = satirKanitKayitlari(lineId, yeni, platform);
   const { data: duzeltme, error: satirHatasi } = await admin.rpc("replace_invoice_line", {
     p_store_id: yetki.storeId,
     p_job_id: islemKimligi,

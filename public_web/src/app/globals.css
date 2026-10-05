@@ -874,6 +874,23 @@ body.vixrex-kaydediliyor .vixrex-secili-alan {
   text-underline-offset: 3px;
 }
 
+.fatura-adaylar button {
+  margin-left: 0.375rem;
+  min-height: 32px;
+  border: 1px solid var(--owner-border);
+  border-radius: 10px;
+  background: var(--owner-surface-soft);
+  padding: 0.25rem 0.625rem;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  color: var(--owner-text-alt);
+}
+
+.fatura-adaylar button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .fatura-eslesme {
   font-size: 0.6875rem;
   line-height: 1.45;

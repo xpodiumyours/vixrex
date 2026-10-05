@@ -2,7 +2,8 @@ import {
   firmaAnahtariniCoz,
   firmaKataloguVarMi,
   satirdaHavuzMarkasiBul,
-  ureticiUrunuBul,
+  ureticiUrunAdaylariniBul,
+  type KatalogEslesmesi,
 } from "@/lib/ureticiKatalog";
 import {
   dinamikUrunIzleriniBul,
@@ -55,9 +56,19 @@ export interface KatalogBilgisi {
   kaynak: string;
 }
 
+export interface CeliskiAdayi {
+  ad: string;
+  kaynak: string;
+  firma?: string;
+  marka?: string;
+  aciklama?: string;
+  gorseller?: string[];
+  izinDurumu?: "yok" | "bekliyor" | "var";
+}
+
 export interface CeliskiBilgisi {
   dayanak: "kod" | "barkod";
-  adaylar: Array<{ ad: string; kaynak: string }>;
+  adaylar: CeliskiAdayi[];
 }
 
 export interface EslesmisFaturaSatiri extends HamFaturaSatiri {
@@ -75,31 +86,85 @@ export function eslesmeyenSatir(satir: HamFaturaSatiri): EslesmisFaturaSatiri {
   return { ...satir, katalog: null, sonuc: "eksik" };
 }
 
+function katalogaCevir(eslesme: KatalogEslesmesi): KatalogBilgisi {
+  return {
+    firma: eslesme.firma.ad,
+    kaynakFirma: eslesme.firma.ad,
+    dayanak: eslesme.dayanak,
+    izinDurumu: eslesme.firma.izinDurumu,
+    resmiAd: eslesme.urun.ad,
+    marka: eslesme.urun.marka,
+    aciklama: eslesme.urun.aciklama,
+    gorseller: eslesme.urun.gorseller,
+    gorselAdaylari: eslesme.gorselAdaylari,
+    kaynak: eslesme.urun.kaynak,
+  };
+}
+
+function adayaCevir(eslesme: KatalogEslesmesi): CeliskiAdayi {
+  return {
+    ad: eslesme.urun.ad,
+    kaynak: eslesme.urun.kaynak,
+    firma: eslesme.firma.ad,
+    marka: eslesme.urun.marka,
+    aciklama: eslesme.urun.aciklama,
+    gorseller: eslesme.urun.gorseller,
+    izinDurumu: eslesme.firma.izinDurumu,
+  };
+}
+
 export function faturaSatiriniEslestir(
   satir: HamFaturaSatiri,
   firmaAnahtari: string | null = null,
 ): EslesmisFaturaSatiri {
-  const eslesme = ureticiUrunuBul({
+  const adaylar = ureticiUrunAdaylariniBul({
     model: satir.model || null,
     barkod: satir.barkod || null,
     marka: satir.marka || null,
     firmaAnahtari,
   });
-  if (!eslesme) return eslesmeyenSatir(satir);
+  if (adaylar.length === 1) {
+    return { ...satir, sonuc: "kanitli", katalog: katalogaCevir(adaylar[0]) };
+  }
+  if (adaylar.length > 1) {
+    return {
+      ...satir,
+      katalog: null,
+      sonuc: "celiski",
+      celiski: {
+        dayanak: adaylar[0].dayanak,
+        adaylar: adaylar.map(adayaCevir),
+      },
+    };
+  }
+  return eslesmeyenSatir(satir);
+}
+
+export function satiriAdayaKilitle(
+  satir: EslesmisFaturaSatiri,
+  kaynak: string,
+): EslesmisFaturaSatiri | null {
+  const hedef = kaynak.trim();
+  if (!hedef) return null;
+  const aday = (satir.celiski?.adaylar ?? []).find((secenek) => secenek.kaynak === hedef);
+  if (!aday) return null;
+  const gorseller = (aday.gorseller ?? []).filter(Boolean);
   return {
     ...satir,
     sonuc: "kanitli",
+    uyari: undefined,
+    celiski: undefined,
     katalog: {
-      firma: eslesme.firma.ad,
-      kaynakFirma: eslesme.firma.ad,
-      dayanak: eslesme.dayanak,
-      izinDurumu: eslesme.firma.izinDurumu,
-      resmiAd: eslesme.urun.ad,
-      marka: eslesme.urun.marka,
-      aciklama: eslesme.urun.aciklama,
-      gorseller: eslesme.urun.gorseller,
-      gorselAdaylari: eslesme.gorselAdaylari,
-      kaynak: eslesme.urun.kaynak,
+      firma: aday.firma ?? "",
+      kaynakFirma: aday.firma ?? "",
+      dayanak: satir.celiski?.dayanak ?? "kod",
+      izinDurumu: aday.izinDurumu ?? "yok",
+      resmiAd: aday.ad,
+      marka: aday.marka ?? "",
+      aciklama: aday.aciklama ?? "",
+      gorseller,
+      gorselAdaylari: gorseller,
+      kaynak: aday.kaynak,
     },
   };
 }
@@ -303,7 +368,14 @@ function hedefiSatiraYaz(
       ...sonuc[indeks],
       katalog: null,
       sonuc: "celiski",
-      celiski: { dayanak: hedef.dayanak, adaylar: hedef.adaylar },
+      celiski: {
+        dayanak: hedef.dayanak,
+        adaylar: hedef.adaylar.map((aday) => ({
+          ...aday,
+          firma: aday.firma || iz.firma,
+          izinDurumu: aday.izinDurumu ?? iz.izinDurumu,
+        })),
+      },
     };
     return;
   }

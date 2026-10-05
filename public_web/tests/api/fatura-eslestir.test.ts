@@ -157,4 +157,22 @@ describe("/api/fatura-eslestir — OCR kaynağından bağımsız katalog eşleş
       expect(uydurma.katalog).toBeNull();
     },
   );
+
+  it("aynı kod iki firmada sessiz kalmaz, adayları döner", async () => {
+    const cevap = await faturaEslestir(istek([{ model: "ELT1001", ad: "atlet" }]));
+    const govde = await cevap.json();
+    expect(cevap.status).toBe(200);
+    expect(govde.satirlar[0].sonuc).toBe("celiski");
+    expect(govde.satirlar[0].katalog).toBeNull();
+    expect(govde.satirlar[0].celiski.adaylar.length).toBeGreaterThan(1);
+  });
+
+  it("tedarikçi belliyse aynı kod o firmanın kartına bağlanır", async () => {
+    const cevap = await faturaEslestir(
+      istek([{ model: "ELT1001", ad: "atlet" }], "deneme-vitrin", "Seher Mensucat"),
+    );
+    const govde = await cevap.json();
+    expect(govde.satirlar[0].sonuc).toBe("kanitli");
+    expect(govde.satirlar[0].katalog.kaynakFirma).toMatch(/seher/i);
+  });
 });

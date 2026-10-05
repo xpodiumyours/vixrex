@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   gorselKapisi,
   katalogOzeti,
+  ureticiUrunAdaylariniBul,
   ureticiUrunuBul,
   type UreticiUrunu,
 } from "@/lib/ureticiKatalog";
@@ -110,6 +111,19 @@ describe("üretici kataloğu — eşleştirme", () => {
     expect(ureticiUrunuBul({ model: "ZZZ9999" })).toBeNull();
     expect(ureticiUrunuBul({ model: "", barkod: "" })).toBeNull();
     expect(ureticiUrunuBul({ model: null, barkod: null })).toBeNull();
+  });
+
+  it("aynı kod iki firmada tek eşleşme uydurmaz, adayları verir", () => {
+    expect(ureticiUrunuBul({ model: "ELT1001" })).toBeNull();
+    const adaylar = ureticiUrunAdaylariniBul({ model: "ELT1001" });
+    expect(adaylar.length).toBeGreaterThan(1);
+    expect(new Set(adaylar.map((aday) => aday.firma.anahtar)).size).toBeGreaterThan(1);
+  });
+
+  it("firma belliyse aynı kod o firmanın ürününe bağlanır", () => {
+    const eslesme = ureticiUrunuBul({ model: "ELT1001", firmaAnahtari: "seher-mensucat" });
+    expect(eslesme).not.toBeNull();
+    expect(eslesme!.firma.anahtar).toBe("seher-mensucat");
   });
 
   it("çok kısa kod yanlışlıkla eşleşmez", () => {
