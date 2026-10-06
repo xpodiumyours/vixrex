@@ -13,7 +13,7 @@ export interface FaturaTaslagi {
   izinDurumu: "yok" | "bekliyor" | "var";
   kaynak: string;
   kaynakFirma: string;
-  dayanak: "kod" | "barkod";
+  dayanak: "kod" | "barkod" | "ad";
   sonuc: string;
   celiski: EslesmisFaturaSatiri["celiski"];
   uyari: string | null;
