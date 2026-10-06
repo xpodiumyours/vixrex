@@ -31,7 +31,7 @@ describe("firma resmi site arama", () => {
           return aramaYaniti([
             { url: "https://www.trendyol.com/eti-gida", title: "Trendyol Eti" },
             { url: "https://www.etigida.com.tr/kurumsal", title: "Eti Resmi Site" },
-          ])();
+          ])("https://api.search.brave.com/res/v1/web/search");
         }
         return new Response("<html><title>Eti Gıda</title><body>Vergi No 1234567890</body></html>", {
           status: 200,
@@ -57,7 +57,7 @@ describe("firma resmi site arama", () => {
           return aramaYaniti([
             { url: "https://www.instagram.com/tutkutuhafiye", title: "Tutku Instagram" },
             { url: "https://tutkutuhafiye.com/urunler", title: "Tutku Tuhafiye" },
-          ])();
+          ])("https://api.search.brave.com/res/v1/web/search");
         }
         return new Response("<html><title>Tutku Tuhafiye</title><body>Vergi No 1234567890</body></html>", {
           status: 200,
@@ -83,7 +83,7 @@ describe("firma resmi site arama", () => {
           return aramaYaniti([
             { url: "https://www.ornekpazar.com/magaza", title: "Pazar yeri" },
             { url: "https://www.baska-firma.com", title: "Başka firma" },
-          ])();
+          ])("https://api.search.brave.com/res/v1/web/search");
         }
         return new Response("<html><title>Başka firma</title><body>Vergi No 9999999999</body></html>", {
           status: 200,
