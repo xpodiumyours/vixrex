@@ -10,6 +10,11 @@ import {
   type KartDurumu,
 } from "@/lib/faturaKartDurumu";
 import {
+  belgedeYazi,
+  firmaSiteCumlesi,
+  type FirmaSiteDurumu,
+} from "@/lib/firmaSiteDurumu";
+import {
   MAX_PRODUCT_IMAGES,
   MAX_PRODUCT_IMAGE_SOURCE_BYTES,
   MAX_PRODUCT_IMAGE_SOURCE_MEGABYTES,
@@ -25,8 +30,8 @@ import {
 // Fatura alış fiyatı satış fiyatı olmaz; faturadaki miktar stok yerine geçmez.
 
 export interface CeliskiBilgisi {
-  dayanak: "kod" | "barkod";
-  adaylar: Array<{ ad: string; kaynak: string }>;
+  dayanak: "kod" | "barkod" | "ad";
+  adaylar: Array<{ ad: string; kaynak: string; gorseller?: string[] }>;
 }
 
 export interface FaturaSatiri {
@@ -49,7 +54,7 @@ export interface FaturaSatiri {
 export interface KatalogBilgisi {
   firma: string;
   kaynakFirma: string;
-  dayanak: "kod" | "barkod";
+  dayanak: "kod" | "barkod" | "ad";
   izinDurumu: "yok" | "bekliyor" | "var";
   resmiAd: string;
   marka: string;
@@ -101,7 +106,9 @@ interface FaturaOkumaSonucu {
   belgeUyarisi?: string;
   tedarikci: string;
   tedarikciVergiNo?: string;
+  tedarikciAdres?: string;
   tedarikciSite?: string;
+  siteDurumu?: FirmaSiteDurumu | null;
   katalogEslesmesi?: number;
   sonucOzeti?: Record<string, number>;
   islemKimligi?: string | null;
@@ -358,6 +365,43 @@ export default function InvoiceToProducts({
     return () => clearTimeout(zamanlayici);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [baslangicIslemKimligi]);
+
+  async function adaySec(index: number, kaynak: string) {
+    if (!belge?.islemKimligi || !kaynak) return;
+    setHata(null);
+    setDuzeltilen(index);
+    try {
+      await sahipSecimleriniKaydet(satirlar);
+      const cevap = await fetch("/api/fatura-satir-duzelt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug: storeSlug,
+          islemKimligi: belge.islemKimligi,
+          satirSirasi: index,
+          secilenKaynak: kaynak,
+        }),
+      });
+      const govde = await cevap.json().catch(() => null);
+      if (!cevap.ok) {
+        throw new Error(govde && typeof govde.hata === "string" ? govde.hata : "Seçim kaydedilemedi. Tekrar dene.");
+      }
+      const yeni = govde.satir as FaturaSatiri;
+      setSatirlar((oncekiler) =>
+        oncekiler.map((satir, i) =>
+          i === index ? {
+            ...satir, ...yeni,
+            onayli: govde.onaySifirlandi ? false : satir.onayli,
+            stokOnaylandi: govde.onaySifirlandi ? false : satir.stokOnaylandi,
+            ayniAlisverisTekrari: false,
+          } : satir,
+        ),
+      );
+    } catch (err) {
+      setHata(err instanceof Error ? err.message : "Seçim kaydedilemedi.");
+    }
+    setDuzeltilen(null);
+  }
 
   async function satiriDuzelt(index: number) {
     const giris = duzeltmeler[index] ?? satirlar[index];
@@ -973,10 +1017,15 @@ export default function InvoiceToProducts({
         <h3>{satirlar.length} satır okundu</h3>
         {belge && (
           <p className="fatura-aciklama">
-            {belge.tedarikci ? `${belge.tedarikci} • ` : ""}
-            {belge.tedarikciSite ? `${belge.tedarikciSite} • ` : ""}
-            {belge.belgeAdedi !== null ? `${belge.belgeAdedi} adet • ` : ""}
-            {belge.belgeToplami !== null ? `${paraYaz(belge.belgeToplami)} alış toplamı` : ""}
+            Firma: {belgedeYazi(belge.tedarikci)}
+            {" · "}
+            Vergi no: {belgedeYazi(belge.tedarikciVergiNo)}
+            {" · "}
+            Adres: {belgedeYazi(belge.tedarikciAdres)}
+            {" · "}
+            Resmi site: {firmaSiteCumlesi(belge.siteDurumu)}
+            {belge.belgeAdedi !== null ? ` · ${belge.belgeAdedi} adet` : ""}
+            {belge.belgeToplami !== null ? ` · ${paraYaz(belge.belgeToplami)} alış toplamı` : ""}
           </p>
         )}
       </div>
@@ -1187,9 +1236,9 @@ export default function InvoiceToProducts({
                 </details>
               )}
 
-              {bilgi.adaylar.length > 0 && (
+              {(satir.celiski?.adaylar.length ?? 0) > 0 && (
                 <ul className="fatura-adaylar">
-                  {bilgi.adaylar.map((aday) => (
+                  {satir.celiski?.adaylar.map((aday) => (
                     <li key={aday.kaynak}>
                       {aday.kaynak ? (
                         <a href={aday.kaynak} target="_blank" rel="noreferrer">
@@ -1197,6 +1246,15 @@ export default function InvoiceToProducts({
                         </a>
                       ) : (
                         aday.ad
+                      )}
+                      {aday.kaynak && Array.isArray(aday.gorseller) && (
+                        <button
+                          type="button"
+                          onClick={() => void adaySec(index, aday.kaynak)}
+                          disabled={yaziliyor || duzeltilen !== null}
+                        >
+                          Bunu seç
+                        </button>
                       )}
                     </li>
                   ))}
@@ -1211,7 +1269,7 @@ export default function InvoiceToProducts({
                   {" · "}
                   {katalog.kaynakFirma}
                   {" · "}
-                  {katalog.dayanak === "barkod" ? "barkod" : "ürün kodu"}
+                  {katalog.dayanak === "barkod" ? "barkod" : katalog.dayanak === "ad" ? "ürün adı" : "ürün kodu"}
                   {" · "}
                   {degerlendirme.gorseller.length} fotoğraf
                   {" · "}

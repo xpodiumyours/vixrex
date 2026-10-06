@@ -76,6 +76,21 @@ process.env.SUPABASE_URL = "https://proje.supabase.co";
 process.env.SUPABASE_SERVICE_ROLE_KEY = "service-role-test-anahtari";
 process.env.OPENROUTER_API_KEY = "test-okuyucu-anahtari";
 
+function siteyiAyiranOkuma(govde: unknown) {
+  const okuma = vi.fn(async (url: string) => {
+    const adres = String(url);
+    if (adres.includes("openrouter.ai")) return okuyucuCevabi(govde);
+    if (adres.includes("sehermensucat.com")) {
+      return new Response(
+        "<html><head><title>Seher Mensucat</title></head><body>Seher Mensucat 1234567890 İstanbul</body></html>",
+        { status: 200, headers: { "content-type": "text/html" } },
+      );
+    }
+    return new Response("{}", { status: 404 });
+  });
+  return okuma;
+}
+
 /** Okuyucunun döndüğü yapılandırılmış cevabı taklit eder. */
 function okuyucuCevabi(govde: unknown) {
   return new Response(
@@ -121,13 +136,7 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     mocks.get.mockReturnValue("owner-cookie");
     mocks.verifyOwner.mockReturnValue({ storeId: "store-1", slug: "deneme-vitrin" });
     mocks.rpc.mockResolvedValue({ data: { allowed: true }, error: null });
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async (url: string) => {
-        expect(url).toContain("openrouter.ai");
-        return okuyucuCevabi(TEK_SATIR);
-      }),
-    );
+    vi.stubGlobal("fetch", siteyiAyiranOkuma(TEK_SATIR));
   });
 
   it("fotoğrafı okuyucuya gönderir, satırı ayırır, katalogla eşleştirir", async () => {
@@ -224,9 +233,7 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     // adet/fiyatları yanlış okuyabiliyor; böyle okumadan ürün kartı
     // üretilmez ama satırlar da kaybolmaz — uyarı esnafa açıkça gösterilir,
     // her satır kendi kanıtıyla değerlendirilir.
-    const okuma = vi.fn(async () =>
-      okuyucuCevabi({ ...TEK_SATIR, toplam_adet: 75, toplam_tutar: 6034 }),
-    );
+    const okuma = siteyiAyiranOkuma({ ...TEK_SATIR, toplam_adet: 75, toplam_tutar: 6034 });
     vi.stubGlobal("fetch", okuma);
 
     const cevap = await faturaOku(istek());
@@ -235,8 +242,8 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(cevap.status).toBe(200);
     expect(govde.satirlar.length).toBeGreaterThan(0);
     expect(typeof govde.belgeUyarisi).toBe("string");
-    // Yarım okuma bir kez olabilir; ısrarla olmaz — üç kez denenir.
-    expect(okuma).toHaveBeenCalledTimes(1);
+    const fotografOkuma = okuma.mock.calls.filter((cagri) => String(cagri[0]).includes("openrouter.ai"));
+    expect(fotografOkuma).toHaveLength(1);
   });
 
   it("belge toplamı tutuyorsa belge gerçeği cevapta döner", async () => {

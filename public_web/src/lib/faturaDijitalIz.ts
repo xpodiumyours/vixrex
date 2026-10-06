@@ -3,6 +3,7 @@ import { isIP } from "node:net";
 import { createHash } from "node:crypto";
 import sharp from "sharp";
 import { FATURA_MIN_SOURCE_SHORT_EDGE } from "@/lib/productImagePolicy";
+import type { FirmaSiteDurumu } from "@/lib/firmaSiteDurumu";
 import {
   firmaHavuzKaydiniBul,
   gorselKapisi,
@@ -24,6 +25,7 @@ export interface TedarikciDijitalIzi {
 export interface DijitalIzSatiri {
   model: string;
   barkod: string;
+  ad?: string;
   marka?: string;
   varyant?: string;
   beden?: string;
@@ -31,15 +33,25 @@ export interface DijitalIzSatiri {
 
 export interface DijitalUrunEslesmesi {
   urun: UreticiUrunu;
-  dayanak: "kod" | "barkod";
+  dayanak: "kod" | "barkod" | "ad";
   gorselAdaylari: string[];
   varyantlar?: Array<{ ad: string; barkod: string; gorseller: string[] }>;
 }
 
+export interface DijitalIzAdayi {
+  ad: string;
+  kaynak: string;
+  aciklama?: string;
+  gorseller?: string[];
+  kod?: string;
+  barkod?: string;
+  marka?: string;
+}
+
 export interface DijitalIzCeliskisi {
   celiski: true;
-  dayanak: "kod" | "barkod";
-  adaylar: Array<{ ad: string; kaynak: string }>;
+  dayanak: "kod" | "barkod" | "ad";
+  adaylar: DijitalIzAdayi[];
 }
 
 export type DijitalIzHedefi = DijitalUrunEslesmesi | DijitalIzCeliskisi;
@@ -47,6 +59,7 @@ export type DijitalIzHedefi = DijitalUrunEslesmesi | DijitalIzCeliskisi;
 export interface DijitalIzAramaDurumu {
   erisimHatasi: boolean;
   sinirDoldu: boolean;
+  siteDurumu?: FirmaSiteDurumu;
   devam?: Record<string, { sonrakiSayfa: number; urunler: UreticiUrunu[] }>;
 }
 
@@ -342,6 +355,89 @@ function varyantKimligi(urun: UreticiUrunu): string {
   return `${urunKimligi(urun)}|${urun.varyant ?? ""}|${urun.barkod}`;
 }
 
+function sadeAd(metin: string): string {
+  return metin
+    .toLocaleLowerCase("tr-TR")
+    .replace(/ç/g, "c")
+    .replace(/ğ/g, "g")
+    .replace(/ı/g, "i")
+    .replace(/ö/g, "o")
+    .replace(/ş/g, "s")
+    .replace(/ü/g, "u")
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function adJetonlari(metin: string): string[] {
+  const durak = new Set(["ve", "ile", "icin", "adet", "koli", "paket", "litre", "gram", "renk", "beden", "urun"]);
+  return sadeAd(metin)
+    .split(" ")
+    .filter((jeton) => jeton.length >= 3 && !durak.has(jeton) && !/^\d+$/.test(jeton));
+}
+
+function adaGoreSec(
+  urunler: UreticiUrunu[],
+  satir: DijitalIzSatiri,
+  izinDurumu: IzinDurumu,
+): DijitalIzHedefi | null {
+  const aranan = adJetonlari(satir.ad ?? "");
+  if (aranan.length === 0) return null;
+
+  const gruplar = new Map<string, UreticiUrunu[]>();
+  for (const urun of urunler) {
+    const anahtar = `${urun.kaynak}|${urun.modelAdi || urun.ad}`;
+    const liste = gruplar.get(anahtar) ?? [];
+    liste.push(urun);
+    gruplar.set(anahtar, liste);
+  }
+
+  const puanlar: Array<{ skor: number; urunler: UreticiUrunu[] }> = [];
+  for (const grup of gruplar.values()) {
+    const ad = sadeAd(grup[0].modelAdi || grup[0].ad);
+    const tutan = aranan.filter((jeton) => ad.includes(jeton));
+    const skor = tutan.length / aranan.length;
+    const yeterli = skor >= 0.8 && (tutan.length >= 2 || (tutan.length === 1 && tutan[0].length >= 8));
+    if (yeterli) puanlar.push({ skor, urunler: grup });
+  }
+  puanlar.sort((a, b) => b.skor - a.skor);
+  if (puanlar.length === 0) return null;
+
+  const enIyi = puanlar[0];
+  const yakinlar = puanlar.filter((puan) => enIyi.skor - puan.skor < 0.25);
+  if (yakinlar.length > 1) {
+    return {
+      celiski: true,
+      dayanak: "ad",
+      adaylar: yakinlar.slice(0, 3).map((puan) => {
+        const urun = puan.urunler[0];
+        const gorseller = [...new Set(puan.urunler.flatMap((aday) => aday.gorseller ?? []))];
+        return {
+          ad: urun.modelAdi || urun.ad,
+          kaynak: urun.kaynak,
+          aciklama: urun.aciklama,
+          gorseller,
+          kod: urun.kod,
+          barkod: urun.barkod,
+          marka: urun.marka,
+        };
+      }),
+    };
+  }
+
+  const adaylar = enIyi.urunler;
+  const ilk = adaylar[0];
+  const gorseller = [...new Set(adaylar.flatMap((aday) => aday.gorseller ?? []))];
+  return {
+    urun: gorselKapisi({ ...ilk, ad: ilk.modelAdi || ilk.ad, gorseller }, izinDurumu),
+    dayanak: "ad",
+    gorselAdaylari: gorseller,
+    varyantlar: adaylar.filter((aday) => aday.varyant).map((aday) => ({
+      ad: aday.varyant!, barkod: aday.barkod, gorseller: aday.gorseller ?? [],
+    })),
+  };
+}
+
 function hedefBul(
   urunler: UreticiUrunu[],
   satirlar: DijitalIzSatiri[],
@@ -412,7 +508,7 @@ function hedefBul(
       if (sonuc) return sonuc;
     }
 
-    return null;
+    return adaGoreSec(urunler, satir, izinDurumu);
   });
 }
 

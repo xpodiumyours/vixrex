@@ -303,6 +303,7 @@ export async function POST(request: NextRequest) {
       tedarikciVergiNo: kayitli.tedarikciVergiNo,
       tedarikciAdres: kayitli.tedarikciAdres,
       tedarikciSite: kayitli.tedarikciSite,
+      siteDurumu: kayitli.aramaDurumu?.siteDurumu ?? null,
       tedarikciDijitalIz: kayitli.tedarikciDijitalIz,
       katalogEslesmesi: kayitli.satirlar.filter((satir) => satir.katalog !== null).length,
       sonucOzeti: sonucOzeti(kayitli.satirlar),

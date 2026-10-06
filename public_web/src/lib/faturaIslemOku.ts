@@ -162,6 +162,7 @@ export function islemYaniti(islem: KayitliIslem): Record<string, unknown> {
     tedarikciAdres: islem.tedarikciAdres,
     tedarikciSite: islem.tedarikciSite,
     tedarikciDijitalIz: islem.tedarikciDijitalIz,
+    siteDurumu: islem.aramaDurumu?.siteDurumu ?? null,
     katalogEslesmesi: islem.satirlar.filter((satir) => satir.katalog !== null).length,
     sonucOzeti: sonucOzeti(islem.satirlar),
     islemKimligi: islem.islemKimligi,
