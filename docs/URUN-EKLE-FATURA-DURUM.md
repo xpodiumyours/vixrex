@@ -1,5 +1,7 @@
 # Ürün Ekle → Fatura → Ürün Kartı: nerede kaldık
 
+> Tarihsel kayıt, 2026-10-04 anlık görüntüsü. Güncel iş listesi değildir. Çelişki adayı ve aynı alışveriş adımları bu dosyada yoktur.
+
 Tarih: 2026-10-04. Bu belge ölçülmüş gerçeği yazar; plan değil, ölçüm raporudur.
 
 ## Amaç (Casper, 2026-10-04)

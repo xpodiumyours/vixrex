@@ -138,13 +138,9 @@ class InvoiceDraftDecisionEngine {
       questions.add('Satış fiyatı esnaf tarafından belirlenmeli.');
     }
 
-    // Faturadaki adet ALIŞ adedidir, raf stoğu değildir. Esnaf onaylamadan
-    // stok sayılmaz; kartta da yalnız öneri olarak görünür.
-    final stokOnayli = draft.stockConfirmed;
-    if (!stokOnayli) {
-      questions.add(
-        'Faturadaki adet öneridir; satış stoğunu kontrol edip onayla.',
-      );
+    final stokVar = draft.canUseQuantityAsStock;
+    if (!stokVar) {
+      questions.add('Faturada adet okunamadı; bu satırın stoğu yok.');
     }
 
     if (!draft.merchantApproved) {
@@ -154,7 +150,7 @@ class InvoiceDraftDecisionEngine {
     final canPublish =
         draft.merchantApproved &&
         draft.hasPositiveSalePrice &&
-        stokOnayli &&
+        stokVar &&
         !externalMediaBlocked &&
         draft.imageCandidates.any((image) => image.selected && image.canUse);
 

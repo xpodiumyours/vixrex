@@ -7,6 +7,7 @@ const temizlenecekDegiskenler = [
   "SUPABASE_SERVICE_ROLE_KEY",
   "OWNER_SESSION_SECRET",
   "OPENROUTER_API_KEY",
+  "OPENAI_API_KEY",
 ];
 
 for (const degisken of temizlenecekDegiskenler) {

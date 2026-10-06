@@ -212,14 +212,12 @@ describe("faturadan gelen ürünün yayın kapısı", () => {
     expect(govde.satirlar[0].sebep).toContain("kanıtlı değil");
   });
 
-  it("faturadaki adet stok yerine geçmez: stok onayı olmadan satır yayına çıkmaz", async () => {
+  it("ayri stok onayi olmadan, stok adedi varsa satır yayına çıkar", async () => {
     const cevap = await topluUrunEkle(istek([faturaSatiri({ stokOnaylandi: false })]));
     const govde = await cevap.json();
 
-    expect(mocks.rpc.mock.calls[0][0]).toBe("save_invoice_product");
-    expect(mocks.createProduct).not.toHaveBeenCalled();
-    expect(govde.yayinda).toBe(0);
-    expect(govde.satirlar[0].sebep).toContain("Stok onaylanmadı");
+    expect(govde.yayinda).toBe(1);
+    expect(govde.satirlar[0].durum).toBe("yayinda");
   });
 
   it("satış fiyatı girilmemişse onaylı olsa bile taslak kalır", async () => {

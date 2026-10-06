@@ -309,14 +309,13 @@ describe("faturadan gelen satirin yayin kapisi", () => {
     expect(mocks.rpc.mock.calls[0][0]).toBe("save_invoice_product");
   });
 
-  it("stok onaylanmadan satır yayına çıkmaz", async () => {
+  it("ayri stok onayi olmadan stok adedi varsa satır yayına çıkar", async () => {
     const cevap = await topluUrunEkle(
       istek([{ ...FATURA_URUNU, stokOnaylandi: false }]),
     );
     const govde = await cevap.json();
 
-    expect(govde.yayinda).toBe(0);
-    expect(govde.satirlar[0].sebep).toContain("Stok onaylanmadı");
+    expect(govde.yayinda).toBe(1);
   });
 
   it("esnaf kartı onaylamadan satır yayına çıkmaz", async () => {

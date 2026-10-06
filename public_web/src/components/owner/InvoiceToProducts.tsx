@@ -102,7 +102,7 @@ interface FaturaOkumaSonucu {
   satirlar: FaturaOkumaSatiri[];
   belgeToplami: number | null;
   belgeAdedi: number | null;
-  /** Toplam tutmadıysa akış durmaz; bu uyarı esnafa gösterilir. */
+  /** Eski kayıtlarda kalabilir. Tutmayan yeni okuma buraya gelmez. */
   belgeUyarisi?: string;
   tedarikci: string;
   tedarikciVergiNo?: string;
@@ -233,7 +233,7 @@ export default function InvoiceToProducts({
             satirSirasi: sira,
             sahipDurumu: {
               satisFiyati: satir.satisFiyati, stok: satir.stok,
-              stokOnaylandi: satir.stokOnaylandi, kategoriId: satir.kategoriId,
+              stokOnaylandi: stokSayisi(satir.stok) !== null, kategoriId: satir.kategoriId,
               onayli: satir.onayli, esnafGorselleri: satir.esnafGorselleri,
             },
           })),
@@ -262,12 +262,12 @@ export default function InvoiceToProducts({
           satir,
           satisFiyati: fiyatSayisi(satir.satisFiyati),
           stok: stokSayisi(satir.stok),
-          stokOnaylandi: satir.stokOnaylandi,
           esnafGorselleri: satir.esnafGorselleri,
           onaylandi: satir.onayli,
+          templateKey: categories.find((kategori) => kategori.id === satir.kategoriId)?.product_template_key,
         }),
       ),
-    [satirlar],
+    [satirlar, categories],
   );
 
   const hazirSayisi = degerlendirmeler.filter((d) => d.yayinaHazir).length;
@@ -515,7 +515,7 @@ export default function InvoiceToProducts({
         ...satir,
         ...degisiklik,
         onayli: degisiklik.onayli ?? false,
-        stokOnaylandi: degisiklik.stok !== undefined ? false : (degisiklik.stokOnaylandi ?? satir.stokOnaylandi),
+        stokOnaylandi: degisiklik.stokOnaylandi ?? satir.stokOnaylandi,
       } : satir)),
     );
   }
@@ -682,7 +682,7 @@ export default function InvoiceToProducts({
               stockQuantity: stokSayisi(satir.stok),
               sourceType: "invoice",
               kartDurumu: satir.sonuc,
-              stokOnaylandi: satir.stokOnaylandi,
+              stokOnaylandi: stokSayisi(satir.stok) !== null,
               externalProductId:
                 satir.barkod || satir.model
                   ? [belge?.tedarikciVergiNo || belge?.tedarikci || "", satir.barkod || satir.model]
@@ -1097,9 +1097,9 @@ export default function InvoiceToProducts({
       )}
 
       <p className="fatura-aciklama">
-        Faturadaki rakamlar <strong>alış fiyatı</strong> ve <strong>alış adedidir</strong>;
-        satış fiyatı ve stok yerine geçmez. Yalnız <strong>kanıtlı</strong> satırlardan kart
-        çıkar. <strong>Satış fiyatını</strong> belirle, mevcut stoğunu kontrol edip kartı onayla.
+        Faturadaki tutar <strong>alış fiyatıdır</strong>; satış fiyatı yerine geçmez.
+        Stok, faturadaki adettir. Yalnız <strong>kanıtlı</strong> satırlardan kart
+        çıkar. <strong>Satış fiyatını</strong> yazıp kartı onayla.
         Kart önce taslak kaydedilir, <strong>Yayınla</strong> demeden görünmez.
       </p>
 
@@ -1315,16 +1315,10 @@ export default function InvoiceToProducts({
               {satir.sonuc === "kanitli" && (
                 <>
                    <label className="fatura-fiyat">
-                     Mevcut stok
+                     Stok (faturadaki adet)
                      <input inputMode="numeric" value={satir.stok}
                        onChange={(e) => satirGuncelle(index, { stok: e.target.value })}
                        disabled={yaziliyor} />
-                   </label>
-                   <label>
-                     <input type="checkbox" checked={satir.stokOnaylandi}
-                       onChange={(e) => satirGuncelle(index, { stokOnaylandi: e.target.checked })}
-                       disabled={yaziliyor || stokSayisi(satir.stok) === null} />
-                     Mevcut stok miktarını kontrol ettim
                    </label>
 
                   <label className="fatura-fiyat">

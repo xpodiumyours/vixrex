@@ -12,7 +12,7 @@ import 'package:vixrex/models/ocr_catalog_result.dart';
 ///
 /// KASITLI OLARAK cihaz üstü OCR (Google ML Kit) veya yerel fatura satırı
 /// ayrıştırıcısı (InvoiceRowParser) KULLANMAZ. Fotoğraf doğrudan sunucuya
-/// gider; okuma (Kilo, ücretsiz) ve katalog eşleştirme orada, web'in
+/// gider; okuma (OpenAI gpt-5.6-luna) ve katalog eşleştirme orada, web'in
 /// kullandığı AYNI kodla yapılır.
 ///
 /// 2026-09-26 mimari düzeltmesi: önceden telefon ve web iki ayrı "okuma
