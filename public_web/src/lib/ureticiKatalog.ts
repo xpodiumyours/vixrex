@@ -340,6 +340,20 @@ export interface KatalogEslesmesi {
  * Fotoğraflar her zaman döner (kilitli kapsam: önce çalışan sistem);
  * kullanım izni sonra istenir, `gorselIzniVar` bilgi olarak taşınır.
  */
+export interface KatalogCeliskiAdayi {
+  ad: string;
+  kaynak: string;
+  aciklama: string;
+  gorseller: string[];
+  kod: string;
+  barkod: string;
+  marka: string;
+}
+
+export type UreticiAramasi =
+  | { tur: "tek"; eslesme: KatalogEslesmesi }
+  | { tur: "celiski"; dayanak: "kod" | "barkod"; adaylar: KatalogCeliskiAdayi[] };
+
 export function ureticiUrunuBul(args: {
   model?: string | null;
   barkod?: string | null;
@@ -351,6 +365,16 @@ export function ureticiUrunuBul(args: {
    */
   firmaAnahtari?: string | null;
 }): KatalogEslesmesi | null {
+  const arama = ureticiAramasi(args);
+  return arama?.tur === "tek" ? arama.eslesme : null;
+}
+
+export function ureticiAramasi(args: {
+  model?: string | null;
+  barkod?: string | null;
+  marka?: string | null;
+  firmaAnahtari?: string | null;
+}): UreticiAramasi | null {
   const barkod = normalizeBarkod(args.barkod ?? "");
   const model = normalizeKod(args.model ?? "");
 
@@ -375,33 +399,53 @@ export function ureticiUrunuBul(args: {
         return [{ dizin, urun }];
       });
       const dogruFirma = adaylar.filter(({ dizin }) => dizin.firma.anahtar === args.firmaAnahtari);
-      const guvenli = dogruFirma.length > 0 && !marka ? dogruFirma : adaylar;
-      return guvenli.length === 1 ? guvenli[0] : null;
+      return dogruFirma.length > 0 && !marka ? dogruFirma : adaylar;
+    };
+    const karar = (bulunan: Array<{ dizin: Dizin; urun: UreticiUrunu }>, dayanak: "kod" | "barkod"): UreticiAramasi | null => {
+      if (bulunan.length === 0) return null;
+      if (bulunan.length === 1) {
+        const { dizin, urun } = bulunan[0];
+        return {
+          tur: "tek",
+          eslesme: {
+            urun: gorselKapisi(urun, dizin.firma.izinDurumu),
+            firma: dizin.firma,
+            dayanak,
+            gorselIzniVar: dizin.gorselIzniVar,
+            gorselAdaylari: urun.gorseller ?? [],
+          },
+        };
+      }
+      return {
+        tur: "celiski",
+        dayanak,
+        adaylar: bulunan.map(({ dizin, urun }) => {
+          const acik = gorselKapisi(urun, dizin.firma.izinDurumu);
+          return {
+            ad: acik.ad,
+            kaynak: acik.kaynak,
+            aciklama: acik.aciklama,
+            gorseller: acik.gorseller ?? [],
+            kod: acik.kod,
+            barkod: acik.barkod,
+            marka: acik.marka,
+          };
+        }),
+      };
     };
     if (barkod.length >= 8) {
-      const bulunan = sec("barkoda", barkod);
-      if (bulunan) return { ...bulunan, dayanak: "barkod" as const };
+      const barkodKarari = karar(sec("barkoda", barkod), "barkod");
+      if (barkodKarari) return barkodKarari;
     }
 
     if (model.length >= 4) {
-      const bulunan = sec("koda", model);
-      if (bulunan) return { ...bulunan, dayanak: "kod" as const };
+      return karar(sec("koda", model), "kod");
     }
 
     return null;
   })();
 
-  if (!eslesme) return null;
-
-  const { dizin, urun, dayanak } = eslesme;
-
-  return {
-    urun: gorselKapisi(urun, dizin.firma.izinDurumu),
-    firma: dizin.firma,
-    dayanak,
-    gorselIzniVar: dizin.gorselIzniVar,
-    gorselAdaylari: urun.gorseller ?? [],
-  };
+  return eslesme;
 }
 
 /** Katalogdaki firma sayısı, ürün sayısı ve izin durumu — durum göstermek için. */

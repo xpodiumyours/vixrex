@@ -10,7 +10,6 @@ class OcrResultList extends StatelessWidget {
   final Function(int index) onApprove;
   final Function(int index) onReject;
   final Function(int index)? onEdit;
-  final Function(int index)? onConfirmStock;
   final List<InvoiceProductDraft> invoiceDrafts;
 
   const OcrResultList({
@@ -19,7 +18,6 @@ class OcrResultList extends StatelessWidget {
     required this.onApprove,
     required this.onReject,
     this.onEdit,
-    this.onConfirmStock,
     this.invoiceDrafts = const [],
   });
 
@@ -339,31 +337,12 @@ class OcrResultList extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             adet == null
-                ? 'Faturada adet okunamadı; stoğu sen gir.'
-                : 'Faturadaki adet: $adet (öneri — stok değil)',
+                ? 'Faturada adet okunamadı; bu satırın stoğu yok.'
+                : 'Stok: faturadaki $adet adet',
             style: const TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w700,
               color: AppColors.mutedText,
-            ),
-          ),
-          const SizedBox(height: 4),
-          OutlinedButton(
-            onPressed:
-                onConfirmStock == null ? null : () => onConfirmStock!(index),
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size(0, 32),
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              foregroundColor:
-                  draft.stockConfirmed ? AppColors.success : AppColors.primary,
-              side: BorderSide(
-                color:
-                    draft.stockConfirmed ? AppColors.success : AppColors.border,
-              ),
-            ),
-            child: Text(
-              draft.stockConfirmed ? '✓ Stok onaylandı' : 'Stoğu onayla',
-              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
             ),
           ),
         ],

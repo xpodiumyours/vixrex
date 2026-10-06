@@ -10,6 +10,8 @@ export interface DogrulanmisSatir {
   izinliGorseller: Set<string>;
   katalog: Record<string, unknown> | null;
   alisBirimFiyati: number | null;
+  varyant: string;
+  beden: string;
 }
 
 export async function satiriDogrula(
@@ -35,7 +37,7 @@ export async function satiriDogrula(
 
   const satir = await admin
     .from("invoice_job_lines")
-    .select("id,outcome,product_id,catalog_snapshot,unit_price")
+    .select("id,outcome,product_id,catalog_snapshot,unit_price,variant_name,size_text")
     .eq("job_id", islemKimligi)
     .eq("line_index", sira)
     .maybeSingle();
@@ -66,6 +68,8 @@ export async function satiriDogrula(
     sonuc: durumGecerliMi(satir.data.outcome) ? satir.data.outcome : "eksik",
     urunId: satir.data.product_id ? String(satir.data.product_id) : null,
     izinliGorseller: izinli,
+    varyant: String(satir.data.variant_name ?? ""),
+    beden: String(satir.data.size_text ?? ""),
   };
 }
 

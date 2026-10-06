@@ -2,7 +2,7 @@ import {
   firmaAnahtariniCoz,
   firmaKataloguVarMi,
   satirdaHavuzMarkasiBul,
-  ureticiUrunuBul,
+  ureticiAramasi,
 } from "@/lib/ureticiKatalog";
 import {
   dinamikUrunIzleriniBul,
@@ -88,13 +88,22 @@ export function faturaSatiriniEslestir(
   satir: HamFaturaSatiri,
   firmaAnahtari: string | null = null,
 ): EslesmisFaturaSatiri {
-  const eslesme = ureticiUrunuBul({
+  const arama = ureticiAramasi({
     model: satir.model || null,
     barkod: satir.barkod || null,
     marka: satir.marka || null,
     firmaAnahtari,
   });
-  if (!eslesme) return eslesmeyenSatir(satir);
+  if (!arama) return eslesmeyenSatir(satir);
+  if (arama.tur === "celiski") {
+    return {
+      ...satir,
+      katalog: null,
+      sonuc: "celiski",
+      celiski: { dayanak: arama.dayanak, adaylar: arama.adaylar },
+    };
+  }
+  const eslesme = arama.eslesme;
   return {
     ...satir,
     sonuc: "kanitli",

@@ -1,5 +1,6 @@
 import { FATURA_MIN_PRODUCT_IMAGES } from "@/lib/productImagePolicy";
 import type { EslesmisFaturaSatiri } from "@/lib/faturaEslestir";
+import { sablonEksikEtiketleri } from "@/lib/faturaOtomatikDoldur";
 
 export type KartDurumu = "kanitli" | "eksik" | "celiski" | "iz-yok";
 
@@ -25,6 +26,7 @@ export interface YayinGirdisi {
   stokOnaylandi: boolean;
   onaylandi: boolean;
   gorselSayisi: number;
+  sablonEksikleri?: string[];
 }
 
 export function yayinEksikleri(girdi: YayinGirdisi): string[] {
@@ -36,12 +38,10 @@ export function yayinEksikleri(girdi: YayinGirdisi): string[] {
   if (girdi.satisFiyati === null || !(girdi.satisFiyati > 0)) {
     eksikler.push("Satış fiyatı girilmedi.");
   }
-  if (!girdi.stokOnaylandi) {
-    eksikler.push("Stok onaylanmadı; faturadaki adet öneridir.");
-  }
   if (girdi.stok === null || !Number.isInteger(girdi.stok) || girdi.stok < 0) {
     eksikler.push("Stok adedi geçersiz.");
   }
+  for (const eksik of girdi.sablonEksikleri ?? []) eksikler.push(eksik);
   if (girdi.gorselSayisi < FATURA_MIN_PRODUCT_IMAGES) {
     eksikler.push(
       `En az ${FATURA_MIN_PRODUCT_IMAGES} doğrulanmış ürün fotoğrafı gerekiyor; kartta ${girdi.gorselSayisi} fotoğraf var.`,
@@ -73,6 +73,8 @@ export interface KartGirdisi {
   stokOnaylandi?: boolean;
   esnafGorselleri?: string[];
   onaylandi?: boolean;
+  templateKey?: string | null;
+  sablonEksikleri?: string[];
 }
 
 export interface KartDegerlendirmesi {
@@ -88,6 +90,7 @@ export function kartDegerlendir(girdi: KartGirdisi): KartDegerlendirmesi {
   const durum = girdi.satir.sonuc;
   const gorseller = karttaKullanilabilirGorseller(girdi.satir, girdi.esnafGorselleri);
 
+  const sablonEksikleri = girdi.sablonEksikleri ?? sablonEksikEtiketleri(girdi.satir, girdi.templateKey);
   const eksikler = yayinEksikleri({
     durum,
     satisFiyati: girdi.satisFiyati ?? null,
@@ -95,6 +98,7 @@ export function kartDegerlendir(girdi: KartGirdisi): KartDegerlendirmesi {
     stokOnaylandi: girdi.stokOnaylandi === true,
     onaylandi: girdi.onaylandi === true,
     gorselSayisi: gorseller.length,
+    sablonEksikleri,
   });
 
   const bilgiEksikleri = eksikler.filter((eksik) => eksik !== ONAY_EKSIGI);

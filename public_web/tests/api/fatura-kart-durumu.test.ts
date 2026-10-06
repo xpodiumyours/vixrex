@@ -90,7 +90,7 @@ describe("kart durumu tek karar kaynagi", () => {
     expect(degerlendirme.yayinaHazir).toBe(false);
   });
 
-  it("stok onaylanmamis kart onaylanamaz; toplu onay bunu kendiliginden vermez", () => {
+  it("stok sayisi varsa ayri stok onayi gerekmez", () => {
     const degerlendirme = kartDegerlendir({
       satir: satir(),
       satisFiyati: 199,
@@ -99,8 +99,8 @@ describe("kart durumu tek karar kaynagi", () => {
       onaylandi: false,
     });
 
-    expect(degerlendirme.onaylanabilir).toBe(false);
-    expect(degerlendirme.bilgiEksikleri.join(" ")).toContain("Stok onaylanmadı");
+    expect(degerlendirme.onaylanabilir).toBe(true);
+    expect(degerlendirme.bilgiEksikleri.join(" ")).not.toContain("Stok onaylanmadı");
   });
 
   it("tek dogrulanmis urun fotografi karti hazirlamak icin yeterlidir", () => {
@@ -126,7 +126,7 @@ describe("kart durumu tek karar kaynagi", () => {
     ).toContain("fotoğraf");
   });
 
-  it("faturadaki adet stok yerine gecmez: stok onaylanmadan yayin yok", () => {
+  it("faturadaki adet stok sayilir; ayri onay gerekmez", () => {
     const degerlendirme = kartDegerlendir({
       satir: satir(),
       satisFiyati: 199,
@@ -135,8 +135,8 @@ describe("kart durumu tek karar kaynagi", () => {
       onaylandi: true,
     });
 
-    expect(degerlendirme.yayinaHazir).toBe(false);
-    expect(degerlendirme.eksikler.join(" ")).toContain("Stok onaylanmadı");
+    expect(degerlendirme.yayinaHazir).toBe(true);
+    expect(degerlendirme.eksikler).toEqual([]);
   });
 
   it("kart onaylanmadan ve fiyat girilmeden yayina cikmaz", () => {

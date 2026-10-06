@@ -146,8 +146,14 @@ void main() {
         final tasarim = eslesen.single.copyWith(
           merchantApproved: true,
           salePrice: 199,
-          // Faturadaki adet stok değildir; esnaf onayı ayrı bir eylemdir.
-          stockConfirmed: true,
+          stockConfirmed: false,
+          quantity: EvidenceValue<num>(
+            value: 2,
+            sourceType: EvidenceSourceType.invoice,
+            sourceReference: 'fixture',
+            strength: EvidenceStrength.partial,
+            verifiedAt: DateTime.utc(2026, 9, 22),
+          ),
         );
 
         final karar = const InvoiceDraftDecisionEngine().evaluate(tasarim);
@@ -158,7 +164,7 @@ void main() {
         expect(karar.canPublish, isTrue);
         expect(karar.decision, AutomationDecision.readyForPublish);
 
-        // Aynı satır stok onayı olmadan yayına çıkmaz.
+        // Adet okunmadıysa stok yoktur; ayrı stok onayı aranmaz.
         final onaysiz = eslesen.single.copyWith(
           merchantApproved: true,
           salePrice: 199,

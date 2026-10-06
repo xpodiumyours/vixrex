@@ -1,4 +1,5 @@
 import { productAttributesForTemplate } from "@/lib/productAttributeSchema";
+import { eksikZorunluAlanlar, eksikZorunluAlanMesaji } from "@/lib/productRequiredFields";
 
 export interface OtomatikKategori {
   id: string;
@@ -91,25 +92,60 @@ const CINSIYET: Array<[RegExp, string]> = [
   [/\berkek\b/, "erkek"],
 ];
 
+const KALIP: Array<[RegExp, string]> = [
+  [/\b(oversize|bol kesim)\b/, "bol"],
+  [/\bdar kesim\b/, "dar"],
+  [/\bnormal kesim\b/, "normal"],
+];
+
 const NET_MIKTAR = /(\d+(?:[.,]\d+)?)\s?(kg|gr|g|ml|lt|l|cl)\b/;
 
 export function otomatikOzellikler(
-  satir: { ad: string; resmiAd?: string; varyant?: string; beden?: string },
+  satir: { ad: string; resmiAd?: string; aciklama?: string; varyant?: string; beden?: string },
   sablonAnahtari: string | null | undefined,
 ): OtomatikOzellik[] {
   const gecerli = new Set(productAttributesForTemplate(sablonAnahtari).map((ozellik) => ozellik.key));
-  const sade = sadelestir([satir.resmiAd, satir.ad].filter(Boolean).join(" "));
+  const sade = sadelestir([satir.resmiAd, satir.aciklama, satir.ad].filter(Boolean).join(" "));
   const sonuc: OtomatikOzellik[] = [];
 
+  if (gecerli.has("color") && satir.varyant?.trim()) sonuc.push({ key: "color", value: satir.varyant.trim() });
+  if (gecerli.has("size") && satir.beden?.trim()) sonuc.push({ key: "size", value: satir.beden.trim() });
   if (gecerli.has("gender")) {
     const eslesen = CINSIYET.find(([kalip]) => kalip.test(sade));
     if (eslesen) sonuc.push({ key: "gender", value: eslesen[1] });
+  }
+  if (gecerli.has("fit")) {
+    const eslesen = KALIP.find(([kalip]) => kalip.test(sade));
+    if (eslesen) sonuc.push({ key: "fit", value: eslesen[1] });
   }
   if (gecerli.has("netQuantity")) {
     const miktar = NET_MIKTAR.exec(sade);
     if (miktar) sonuc.push({ key: "netQuantity", value: `${miktar[1].replace(",", ".")} ${miktar[2]}` });
   }
   return sonuc;
+}
+
+export function sablonEksikEtiketleri(
+  satir: { ad: string; varyant?: string; beden?: string; katalog?: { resmiAd?: string; aciklama?: string } | null },
+  sablonAnahtari: string | null | undefined,
+): string[] {
+  if (!sablonAnahtari) return [];
+  const metadata = {
+    attributes: otomatikOzellikler(
+      {
+        ad: satir.ad,
+        resmiAd: satir.katalog?.resmiAd,
+        aciklama: satir.katalog?.aciklama,
+        varyant: satir.varyant,
+        beden: satir.beden,
+      },
+      sablonAnahtari,
+    ),
+  };
+  const mesaj = eksikZorunluAlanMesaji(
+    eksikZorunluAlanlar({ templateKey: sablonAnahtari, metadata }),
+  );
+  return mesaj ? [`${mesaj} Katalogda yok; bu satır yayınlanamaz.`] : [];
 }
 
 
