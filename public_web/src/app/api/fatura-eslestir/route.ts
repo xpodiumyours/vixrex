@@ -56,6 +56,7 @@ export async function POST(request: NextRequest) {
     editToken?: unknown;
     tedarikci?: unknown;
     tedarikciSite?: unknown;
+    tedarikciKimlik?: unknown;
   };
   try {
     govde = await request.json();
@@ -132,10 +133,16 @@ export async function POST(request: NextRequest) {
   // Başak, tarayıcı) biliyorsa gönderir; bilmiyorsa firma dağılımına bakılır.
   const tedarikci = typeof govde.tedarikci === "string" ? govde.tedarikci.trim() : "";
   const tedarikciSite = typeof govde.tedarikciSite === "string" ? govde.tedarikciSite.trim() : "";
+  const kimlikHam = (govde.tedarikciKimlik ?? {}) as Record<string, unknown>;
+  const kimlik = {
+    vergiNo: typeof kimlikHam.vergiNo === "string" ? kimlikHam.vergiNo.trim().slice(0, 32) : "",
+    adres: typeof kimlikHam.adres === "string" ? kimlikHam.adres.trim().slice(0, 200) : "",
+  };
   const { satirlar: eslesenSatirlar, tedarikciIz } = await faturaSatirlariniDijitalIzle(
     temizSatirlar,
     tedarikci,
     tedarikciSite,
+    { tedarikciKimligi: kimlik },
   );
   const eslesenSayisi = eslesenSatirlar.filter((s) => s.katalog !== null).length;
 

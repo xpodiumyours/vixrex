@@ -50,11 +50,16 @@ mocks.admin.mockImplementation(() => ({ rpc: mocks.rpc }));
 
 import { POST as faturaEslestir } from "@/app/api/fatura-eslestir/route";
 
-function istek(satirlar: unknown[], slug = "deneme-vitrin", tedarikci = "") {
+function istek(
+  satirlar: unknown[],
+  slug = "deneme-vitrin",
+  tedarikci = "",
+  tedarikciKimlik: { vergiNo?: string; adres?: string } = {},
+) {
   return new NextRequest("http://localhost/api/fatura-eslestir", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ slug, satirlar, tedarikci }),
+    body: JSON.stringify({ slug, satirlar, tedarikci, tedarikciKimlik }),
   });
 }
 
@@ -64,7 +69,20 @@ describe("/api/fatura-eslestir — OCR kaynağından bağımsız katalog eşleş
     mocks.get.mockReturnValue("owner-cookie");
     mocks.verifyOwner.mockReturnValue({ storeId: "store-1", slug: "deneme-vitrin" });
     mocks.rpc.mockResolvedValue({ data: { allowed: true }, error: null });
-    vi.stubGlobal("fetch", vi.fn(async () => new Response("{}", { status: 404 })));
+    // #637 sözleşmesi: tedarikçi, resmî sitesinde vergi numarasıyla
+    // doğrulanmadan ürün eşleşmesi kurulmaz. Sertifikalı test sitesi
+    // sehermensucat.com bu doğrulamayı sağlar; diğer adresler 404.
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) =>
+        input.startsWith("https://sehermensucat.com")
+          ? new Response(
+              "<html><body>Seher Mensucat A.Ş. — Vergi No: 1234567890</body></html>",
+              { status: 200 },
+            )
+          : new Response("{}", { status: 404 }),
+      ),
+    );
   });
 
   afterEach(() => { vi.unstubAllGlobals(); });
@@ -94,10 +112,15 @@ describe("/api/fatura-eslestir — OCR kaynağından bağımsız katalog eşleş
 
   it("üreticisi belirtilen gerçek katalog kodları resmî bilgi ve fotoğrafla eşleşir", async () => {
     const cevap = await faturaEslestir(
-      istek([
-        { model: "ELT1302", ad: "elastan sıfır yaka", barkod: "", adet: 2, alisBirimFiyat: 137, guven: 0.9 },
-        { model: "TER0101", ad: "penye atlet", barkod: "", adet: 18, alisBirimFiyat: 63.5, guven: 0.85 },
-      ], "deneme-vitrin", "Seher Mensucat"),
+      istek(
+        [
+          { model: "ELT1302", ad: "elastan sıfır yaka", barkod: "", adet: 2, alisBirimFiyat: 137, guven: 0.9 },
+          { model: "TER0101", ad: "penye atlet", barkod: "", adet: 18, alisBirimFiyat: 63.5, guven: 0.85 },
+        ],
+        "deneme-vitrin",
+        "Seher Mensucat",
+        { vergiNo: "1234567890" },
+      ),
     );
     const govde = await cevap.json();
 
@@ -149,7 +172,9 @@ describe("/api/fatura-eslestir — OCR kaynağından bağımsız katalog eşleş
       const satirlar = [...gercekKodlar].map((model) => ({ model, ad: "", guven: 0.8 }));
       satirlar.push({ model: "UYDURMA9999", ad: "gerçek olmayan ürün", guven: 0.3 });
 
-      const cevap = await faturaEslestir(istek(satirlar, "deneme-vitrin", "Seher Mensucat"));
+      const cevap = await faturaEslestir(
+        istek(satirlar, "deneme-vitrin", "Seher Mensucat", { vergiNo: "1234567890" }),
+      );
       const govde = await cevap.json();
 
       expect(govde.katalogEslesmesi).toBe(12); // 12 gerçek + 1 uydurma
