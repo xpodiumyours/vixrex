@@ -5,82 +5,136 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VixRex 8 Katman</title>
 <style>
-body{font-family:Arial,sans-serif;background:#f4f4f4;margin:0;padding:20px;color:#222}
-h1{font-size:22px;margin:0 0 6px 0}
-p.aciklama{font-size:14px;color:#555;margin:0 0 16px 0}
-.kart{background:#fff;border:1px solid #ddd;border-radius:8px;padding:14px;margin:0 0 12px 0}
-.kart h2{font-size:16px;margin:0 0 8px 0}
-.kart .satir{font-size:14px;margin:4px 0}
-.etiket{display:inline-block;background:#222;color:#fff;font-size:12px;border-radius:4px;padding:2px 8px;margin-bottom:8px}
+body{font-family:Arial,sans-serif;background:#f4f4f4;margin:0;padding:16px;color:#222;max-width:720px}
+h1{font-size:20px;margin:0 0 6px 0}
+p.aciklama{font-size:14px;color:#555;margin:0 0 14px 0}
+.kart{background:#fff;border:1px solid #ddd;border-radius:10px;margin:0 0 10px 0;overflow:hidden}
+.kart-baslik{width:100%;text-align:left;background:#fff;border:0;padding:14px;font-size:15px;cursor:pointer;display:flex;gap:10px;align-items:center}
+.etiket{background:#222;color:#fff;font-size:12px;border-radius:4px;padding:2px 8px;flex-shrink:0}
+.detay{display:none;padding:0 14px 14px 14px;font-size:14px}
+.detay.acik{display:block}
+.detay h3{font-size:14px;margin:12px 0 4px 0}
+.detay ul{margin:4px 0;padding-left:18px}
+.detay li{margin:3px 0}
 .kaynak{font-size:12px;color:#666}
+a{color:#0b5fff}
+.roz{font-size:12px;color:#fff;background:#0b7a3e;border-radius:4px;padding:2px 8px}
+.bek{font-size:12px;color:#fff;background:#8a6d00;border-radius:4px;padding:2px 8px}
 </style>
 </head>
 <body>
 <h1>Fatura Fotoğrafından Vitrine 8 Katman</h1>
-<p class="aciklama">Esnaf fatura verir, kart hazır olur, fiyat yazılır, vitrine çıkar. Bu dosya yol haritasıdır.</p>
+<p class="aciklama">Kata dokun, içi açılsın. 1. kat hazır araştırma, 2-8 şablon. Esnaf fatura verir, kart hazır olur, fiyat yazılır, vitrine çıkar.</p>
+
 <div class="kart">
-<span class="etiket">1</span>
-<h2>Alma ve süzme</h2>
-<div class="satir"><b>Ne yapar:</b> Fotoğrafı alır, fatura mı değil mi bakar, bozuksa geri çevirir.</div>
-<div class="satir"><b>Neden şart:</b> Çöp girerse çöp kart çıkar.</div>
-<div class="satir"><b>Yapay zeka:</b> Ucuz model yeter.</div>
-<div class="kaynak">Kaynak: Document AI sınıflandırma, OCI hattı</div>
+<button class="kart-baslik" onclick="acKapa('d1')"><span class="etiket">1</span><span><b>Alma ve süzme</b> <span class="roz">gerçek yol hazır</span></span></button>
+<div class="detay" id="d1">
+<h3>Ne yapar</h3>
+<ul>
+<li>Telefon fotoğrafını alır, gizli kutuya koyar.</li>
+<li>Fatura mı değil mi diye bakar, fatura değilse durdurur.</li>
+<li>Bozuk fotoğrafı geri çevirir, yenisini ister.</li>
+<li>Sağlam faturayı 2. kata geçirir.</li>
+</ul>
+<h3>Gerçek sistem</h3>
+<ul>
+<li>Yükleme: Supabase Storage dosya kutusu ya da Vercel Blob gizli kutu. İkisi de giriş isteyen yazma, yarım kalan yüklemeye devam etme var.</li>
+<li>Süzme: Google Document AI hazır sınıflandırıcı. Fatura, fiş ve diğerlerini ayırır. Fatura olmayan ücret yazmaz.</li>
+<li>Kural: Dosyalar üstüne yazılmaz, her yükleme yeni isim alır. Böylece önbellek eski resmi göstermez.</li>
+</ul>
+<h3>Masraf (resmi fiyat sayfasından)</h3>
+<ul>
+<li>Okuma: ilk 1000 sayfa bedava, sonra 1000 sayfa 1,50 dolar.</li>
+<li>Sınıflandırma: 1000 belge 5 dolar.</li>
+<li>Fatura ayrıştırma: 10 sayfaya kadar belge başı 0,10 dolar.</li>
+<li>Bozulan istekten ücret yok.</li>
+<li>Ucuzlatma: önce sınıflandır, fatura çıkarsa okumaya gönder. Her fotoğrafı en pahalıya okutma.</li>
+</ul>
+<div class="kaynak">Kaynak: cloud.google.com/document-ai/pricing, supabase.com/docs/guides/storage, vercel.com/docs/vercel-blob</div>
 </div>
+</div>
+
 <div class="kart">
-<span class="etiket">2</span>
-<h2>Yazıya çevirme</h2>
-<div class="satir"><b>Ne yapar:</b> Fotoğraftaki yazıyı metne çevirir.</div>
-<div class="satir"><b>Neden şart:</b> Okunmadan satır olmaz.</div>
-<div class="satir"><b>Yapay zeka:</b> Ucuz okuma, resmi küçültülmüş fotoğraf.</div>
-<div class="kaynak">Kaynak: Vision okuma, maliyet hesapları</div>
+<button class="kart-baslik" onclick="acKapa('d2')"><span class="etiket">2</span><span><b>Yazıya çevirme</b> <span class="bek">sıradaki araştırma</span></span></button>
+<div class="detay" id="d2">
+<h3>Ne yapar</h3>
+<ul><li>Fotoğraftaki yazıyı metne çevirir.</li><li>Türkçe karakteri korur.</li></ul>
+<h3>Girdi / çıktı</h3>
+<ul><li>Girdi: 1. kattan geçen fotoğraf.</li><li>Çıktı: satır satır metin + okuma güven puanı.</li></ul>
+<h3>Şablon notu</h3>
+<ul><li>Resmi küçültme kuralı ve ucuz okuma seçeneği buraya yazılacak.</li></ul>
 </div>
+</div>
+
 <div class="kart">
-<span class="etiket">3</span>
-<h2>Hesaba dökme ve doğrulama</h2>
-<div class="satir"><b>Ne yapar:</b> Satıcı, tarih, satırlar ve toplamı çıkarır, toplam ile satırları karşılaştırır, aynı faturanın tekrarına bakar.</div>
-<div class="satir"><b>Neden şart:</b> Yanlış toplamlı kart vitrine çıkmasın.</div>
-<div class="satir"><b>Yapay zeka:</b> Zor faturada güçlü model, kalanı ucuz model.</div>
-<div class="kaynak">Kaynak: 2026 üretim hattı hesap kontrolü</div>
+<button class="kart-baslik" onclick="acKapa('d3')"><span class="etiket">3</span><span><b>Hesaba dökme ve doğrulama</b> <span class="bek">sıradaki araştırma</span></span></button>
+<div class="detay" id="d3">
+<h3>Ne yapar</h3>
+<ul><li>Satıcı, tarih, satırlar ve toplamı çıkarır.</li><li>Toplam ile satırları toplayıp karşılaştırır.</li><li>Aynı faturanın tekrarına bakar.</li></ul>
+<h3>Girdi / çıktı</h3>
+<ul><li>Girdi: 2. kattan metin.</li><li>Çıktı: düzenli fatura kaydı ya da hata kutusu.</li></ul>
 </div>
+</div>
+
 <div class="kart">
-<span class="etiket">4</span>
-<h2>Firma doğrulama</h2>
-<div class="satir"><b>Ne yapar:</b> Faturadaki satıcıyı firmanın gerçek sitesiyle eşleştirir.</div>
-<div class="satir"><b>Neden şart:</b> Yanlış firmanın ürünü bağlanmasın.</div>
-<div class="satir"><b>Yapay zeka:</b> Site bilgisiyle zenginleştirme.</div>
-<div class="kaynak">Kaynak: Document AI bilgi zenginleştirme</div>
+<button class="kart-baslik" onclick="acKapa('d4')"><span class="etiket">4</span><span><b>Firma doğrulama</b> <span class="bek">sıradaki araştırma</span></span></button>
+<div class="detay" id="d4">
+<h3>Ne yapar</h3>
+<ul><li>Faturadaki satıcıyı firmanın gerçek sitesiyle eşleştirir.</li><li>Uymazsa durdurur.</li></ul>
+<h3>Girdi / çıktı</h3>
+<ul><li>Girdi: satıcı adı ve vergi bilgisi.</li><li>Çıktı: doğrulanmış firma + site adresi.</li></ul>
 </div>
+</div>
+
 <div class="kart">
-<span class="etiket">5</span>
-<h2>Ürün eşleştirme</h2>
-<div class="satir"><b>Ne yapar:</b> İsmi temizler, adayları daraltır, karşılaştırır, güven puanı verir, düşükse insana bırakır.</div>
-<div class="satir"><b>Neden şart:</b> Farklı yazılan aynı ürün birleşsin, emin olunmayan yayına çıkmasın.</div>
-<div class="satir"><b>Yapay zeka:</b> Kural + puan, düşük puan insana gider.</div>
-<div class="kaynak">Kaynak: ürün eşleştirme yazıları</div>
+<button class="kart-baslik" onclick="acKapa('d5')"><span class="etiket">5</span><span><b>Ürün eşleştirme</b> <span class="bek">sıradaki araştırma</span></span></button>
+<div class="detay" id="d5">
+<h3>Ne yapar</h3>
+<ul><li>İsmi temizler, adayları daraltır, karşılaştırır.</li><li>Güven puanı verir, düşükse insana bırakır.</li></ul>
+<h3>Girdi / çıktı</h3>
+<ul><li>Girdi: fatura satırı + firma kataloğu.</li><li>Çıktı: eşleşen ürün + resim + açıklama, ya da onay kutusu.</li></ul>
 </div>
+</div>
+
 <div class="kart">
-<span class="etiket">6</span>
-<h2>Kart hazırlama</h2>
-<div class="satir"><b>Ne yapar:</b> Başlık, resim ve açıklamayı alıcı kartına çevirir, taslak kaydeder.</div>
-<div class="satir"><b>Neden şart:</b> Dağınık veri satışa çıkmaz.</div>
-<div class="satir"><b>Yapay zeka:</b> Kısa açıklama yazımı, ucuz model.</div>
-<div class="kaynak">Kaynak: katalog çıkarma örnekleri</div>
+<button class="kart-baslik" onclick="acKapa('d6')"><span class="etiket">6</span><span><b>Kart hazırlama</b> <span class="bek">sıradaki araştırma</span></span></button>
+<div class="detay" id="d6">
+<h3>Ne yapar</h3>
+<ul><li>Başlık, resim ve açıklamayı alıcı kartına çevirir.</li><li>Taslak kaydeder.</li></ul>
+<h3>Girdi / çıktı</h3>
+<ul><li>Girdi: eşleşen ürün.</li><li>Çıktı: yayın bekleyen taslak kart.</li></ul>
 </div>
+</div>
+
 <div class="kart">
-<span class="etiket">7</span>
-<h2>Fiyat yazıp yayınlama</h2>
-<div class="satir"><b>Ne yapar:</b> Alış fiyatı gösterir, esnaf yalnız satış fiyatını yazar, tekli ya da toplu yayınlar.</div>
-<div class="satir"><b>Neden şart:</b> Tek dokunuşla satışa çıkış budur.</div>
-<div class="satir"><b>Yapay zeka:</b> Gerekmez, el ile yazım.</div>
-<div class="kaynak">Kaynak: senin isteğin</div>
+<button class="kart-baslik" onclick="acKapa('d7')"><span class="etiket">7</span><span><b>Fiyat yazıp yayınlama</b> <span class="bek">sıradaki araştırma</span></span></button>
+<div class="detay" id="d7">
+<h3>Ne yapar</h3>
+<ul><li>Alış fiyatını gösterir.</li><li>Esnaf yalnız satış fiyatını yazar.</li><li>Tekli ya da toplu yayınlar.</li></ul>
+<h3>Girdi / çıktı</h3>
+<ul><li>Girdi: taslak kart + satış fiyatı.</li><li>Çıktı: vitrinde açık ya da kapalı ürün.</li></ul>
 </div>
+</div>
+
 <div class="kart">
-<span class="etiket">8</span>
-<h2>Vitrin, onay ve izleme</h2>
-<div class="satir"><b>Ne yapar:</b> Kartı listeler ve aratır, eşleşemeyeni onaya düşürür, bozulmayı sayıyla gösterir.</div>
-<div class="satir"><b>Neden şart:</b> Takılan iş sessizce kaybolmasın.</div>
-<div class="satir"><b>Yapay zeka:</b> Gerekmez, sayaç ve liste.</div>
-<div class="kaynak">Kaynak: hata kuyruğu ve izleme ölçüleri</div>
+<button class="kart-baslik" onclick="acKapa('d8')"><span class="etiket">8</span><span><b>Vitrin, onay ve izleme</b> <span class="bek">sıradaki araştırma</span></span></button>
+<div class="detay" id="d8">
+<h3>Ne yapar</h3>
+<ul><li>Kartı listeler ve aratır.</li><li>Eşleşemeyeni onaya düşürür.</li><li>Bozulmayı sayıyla gösterir.</li></ul>
+<h3>Girdi / çıktı</h3>
+<ul><li>Girdi: yayınlanan kartlar.</li><li>Çıktı: alıcının gördüğü vitrin + bekleyen onay listesi.</li></ul>
 </div>
+</div>
+
+<script>
+function acKapa(id) {
+var el = document.getElementById(id);
+if (el.classList.contains("acik")) {
+el.classList.remove("acik");
+} else {
+el.classList.add("acik");
+}
+}
+</script>
 </body>
 </html>
