@@ -108,7 +108,9 @@ export async function firmaSitesiniAra(
 
   let yanit: Response;
   try {
-    const url = `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(`${ad} resmi site`)}&count=5`;
+    const vergiNo = (bagimliliklar.kimlik?.vergiNo ?? "").replace(/\D/g, "");
+    const sorgu = vergiNo.length >= 10 ? `${vergiNo} ${ad} resmi site` : `${ad} resmi site`;
+    const url = `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(sorgu)}&count=8&country=TR`;
     yanit = await fetcher(url, {
       headers: { Accept: "application/json", "X-Subscription-Token": anahtar },
       signal: AbortSignal.timeout(ARAMA_ZAMAN_ASIMI_MS),
@@ -139,14 +141,19 @@ export async function firmaSitesiniAra(
     if (!alan || resmiSiteOlmayan(alan)) continue;
     if (!bagimliliklar.kimlik && !alanFimayaUyarMi(alan, jetonlar)) continue;
 
-    if (!bagimliliklar.kimlik) return { durum: "bulundu", alan, kaynak: `https://${alan}` };
-
     const dogrulama = await siteFirmayaAitMi(
       alan,
-      { ad, vergiNo: bagimliliklar.kimlik.vergiNo, adres: bagimliliklar.kimlik.adres },
-      bagimliliklar.dogrula ?? {},
+      {
+        ad,
+        vergiNo: bagimliliklar.kimlik?.vergiNo ?? "",
+        adres: bagimliliklar.kimlik?.adres ?? "",
+      },
+      {
+        fetcher: bagimliliklar.dogrula?.fetcher ?? fetcher,
+        ...(bagimliliklar.dogrula?.resolveHost ? { resolveHost: bagimliliklar.dogrula.resolveHost } : {}),
+      },
     );
-    if (dogrulama.guc !== "guclu" && dogrulama.guc !== "orta") {
+    if (dogrulama.guc !== "guclu") {
       celisenVar = true;
       continue;
     }

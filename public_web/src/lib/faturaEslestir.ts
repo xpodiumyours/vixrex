@@ -231,7 +231,7 @@ export async function faturaSatirlariniDijitalIzle(
       { ad: tedarikciAdi, vergiNo: bagimliliklar.tedarikciKimligi?.vergiNo ?? "", adres: bagimliliklar.tedarikciKimligi?.adres ?? "" },
       { fetcher: bagimliliklar.fetcher, resolveHost: bagimliliklar.resolveHost },
     );
-    tedarikciIz = dogrulama.guc === "guclu" || dogrulama.guc === "orta"
+    tedarikciIz = dogrulama.guc === "guclu"
       ? { ...tedarikciIz, dogrulama }
       : null;
   }

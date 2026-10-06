@@ -820,7 +820,7 @@ async function resmiKataloglariAra(
     const { siteFirmayaAitMi } = await import("@/lib/firmaDogrula");
     const aday = await siteFirmayaAitMi(iz.alan,
       { ad: iz.firma, vergiNo: "", adres: "" }, { fetcher, resolveHost });
-    if (aday.guc === "guclu" || aday.guc === "orta") dogrulama = aday;
+    if (aday.guc === "guclu") dogrulama = aday;
   }
   const urunler: UreticiUrunu[] = [];
   const pdfler = new Set(dogrulama?.katalogDosyalari ?? []);
