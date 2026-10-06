@@ -51,6 +51,7 @@ th{background:#f0f0f0}
 .roz-var{background:#0b7a3e}
 .roz-mvp{background:#b07d00}
 .roz-yok{background:#a32020}
+.roz-don{background:#666}
 .roz-dal{background:#5b21b6}
 .roz-farkli{background:#1d4ed8}
 .isaret{margin:8px 0 0 0;font-size:13px}
@@ -73,13 +74,25 @@ th{background:#f0f0f0}
 <span class="roz roz-farkli">FARKLI</span> var ama teknik farklı.
 Taban: <b>main</b> (canlı). Kanıtlar dosya yolu / satır ile yazılıdı.</div>
 
+<div class="uyari"><b>Karar — esnafın gördüğü yer (2026-10-07):</b> Arayüz on ekran değildir. Aşağıda “ekran” diye numaralanan kutular sayfa değildir; sistemin iç adımlarıdır. Ürün listesi tek ekranın içinde, akışlarla hazırlanır. Bu tek ekran henüz tasarlanmadı. Öncelik çalışan sistemi kurmaktır. Ekran çizimleriyle oyalanılmaz.</div>
+
+<div class="uyari"><b>Karar — maliyet parçaları donduruldu (2026-10-07):</b> Gerçek fatura okuması yaklaşık 7 kuruş. Maliyeti düşürmek için eklenen parçalar şimdi yapılmaz. Sıra, çalışan yoldadır. Dondurulanlar:
+<ul>
+<li>Luna’dan önce ayrı ayırıcı. Google sınıflandırıcı (bin belge 5 dolar) ve Vision etiketleme (ayda ilk bin resim bedava).</li>
+<li>Önce ucuz okuma, tutmazsa pahalı ikinci okuma.</li>
+<li>Önce düşük netlik, yetmezse yüksek netlik.</li>
+<li>Luna’nın yerine konan diğer okuyucular: Google Vision, Google belge okuma, Amazon, Azure.</li>
+<li>Google fatura ayıklayıcısı. Belge başı 10 cent, ilk bin sayfa bedava.</li>
+</ul>
+Fotoğrafı okumadan küçültmek durur; çalışan yolda vardır, ikinci okuyucu değildir. Fatura olmayan kâğıdı durdurmak da durmaz: bunu ayrı araç değil, Luna’nın aynı okumada yazdığı belge türü yapar.</div>
+
 <div class="kart"><div class="detay acik" style="padding-top:10px">
 <h3>Özet — 8 katman</h3>
 <table>
 <tr><th>Katman</th><th>Durum</th><th>En kritik fark</th></tr>
 <tr><td>Omurga (5 karar)</td><td><span class="roz roz-mvp">MVP</span></td><td>kapı SQL'de var; belge kaderi ve izleme YOK</td></tr>
-<tr><td>1 — Alma ve süzme</td><td><span class="roz roz-yok">YOK</span></td><td>sınıflandırıcı ve ret kararları yok; akış durmuyor</td></tr>
-<tr><td>2 — Okuma</td><td><span class="roz roz-mvp">MVP</span></td><td>tek model var, yedek göz yok; OpenAI geçişi dalda</td></tr>
+<tr><td>1 — Alma ve süzme</td><td><span class="roz roz-don">DONDURULDU</span></td><td>ayrı ucuz sınıflandırıcı donduruldu. Fatura olmayan kâğıt, Luna’nın belge türüyle durur</td></tr>
+<tr><td>2 — Okuma</td><td><span class="roz roz-mvp">MVP</span></td><td>okuma Luna’da. Ucuz göz, pahalı yedek ve diğer okuyucular donduruldu</td></tr>
 <tr><td>3 — Hesap doğrulama</td><td><span class="roz roz-mvp">MVP</span></td><td>toplam + parmak izi var; GİB sorgusu yok</td></tr>
 <tr><td>4 — Firma doğrulama</td><td><span class="roz roz-farkli">FARKLI</span></td><td>iki kanıt yerine tek vergi no 'guclu' sayılıyor</td></tr>
 <tr><td>5 — Ürün eşleştirme</td><td><span class="roz roz-mvp">MVP</span></td><td>birebir + sitemap var; kanıt sırası ters (barkod önce)</td></tr>
@@ -100,39 +113,39 @@ Taban: <b>main</b> (canlı). Kanıtlar dosya yolu / satır ile yazılıdı.</div
 <h3>1) Belge kaderi tablosu — her belge şekli için tek satır</h3>
 <table>
 <tr><th>Belge şekli</th><th>Nasıl anlaşılır</th><th>MVP kaderi</th><th>Nereye düşer</th></tr>
-<tr><td>e-Fatura / e-Arşiv XML'i (dosya yüklendi)</td><td>Entegratörden gelen XML dosyası var</td><td><b>KABUL</b> — satırlar doğrudan belgeden alınır, fotoğraf okunmaz</td><td>Ekran 3 (belgeden) → 3. katman</td></tr>
-<tr><td>QR / karekodlu fatura, XML yok</td><td>Belgede GİB karekodu var</td><td><b>KABUL</b> — kimlik QR'dan anında gelir (VKN, tip, tarih, no); karekodda satır yoktur, satırlar için okuma yapılır</td><td>Ekran 3 → 3. katman</td></tr>
-<tr><td>Karekodsuz kağıt fatura</td><td>Karekod yok, tablo hâlinde yazım</td><td><b>KABUL</b> — tam okuma</td><td>Ekran 3 → 3. katman</td></tr>
-<tr><td>İade / tevkifat / istisna faturası</td><td>Fatura tipi kodundan</td><td><b>KABUL ama karta çevrilmez</b> — ayrı kuyruk</td><td>Ekran 4 uyarısı → Ekran 10</td></tr>
-<tr><td>Hesap tutmayan / okunamayan kayıt</td><td>Satırlar toplamı uymuyor ya da tarih/para birimi okunamadı</td><td><b>İNSAN</b> — düzelt ya da faturayı yeniden çek</td><td>Ekran 4 hatası → Ekran 10</td></tr>
-<tr><td>Teklif / proforma / sipariş</td><td>"Teklif" kelimesi, tahsilat ibaresi yok</td><td><b>RET</b></td><td>Ekran 2 hatası</td></tr>
-<tr><td>İrsaliye (sevk belgesi)</td><td>"İrsaliye", mal sevkiyat bilgisi</td><td><b>RET</b></td><td>Ekran 2 hatası</td></tr>
-<tr><td>Fiyat etiketi / garanti fişi / kutu etiketi</td><td>Ürün üzerinde tek fiyat yazısı</td><td><b>RET</b></td><td>Ekran 2 hatası</td></tr>
-<tr><td>Kasa fişi (perakende satış belgesi)</td><td>Kısa, üstte yazıcı bilgisi</td><td><b>MVP DIŞI</b> — "MVP'de fişle ürün kartı açılmaz" mesajıyla döner; profesyonel yolu ve resmî dayanağı Ek ②'de</td><td>Ekran 2 (kapsam dışı mesajı)</td></tr>
-<tr><td>e-SMM / gider pusulası (hizmet belgesi)</td><td>Hizmet, danışmanlık, kira yazısı</td><td><b>MVP DIŞI</b> — mesajla döner; profesyonel yolu ve resmî dayanağı Ek ②'de</td><td>Ekran 2 (kapsam dışı mesajı)</td></tr>
+<tr><td>e-Fatura / e-Arşiv XML'i (dosya yüklendi)</td><td>Entegratörden gelen XML dosyası var</td><td><b>KABUL</b> — satırlar doğrudan belgeden alınır, fotoğraf okunmaz</td><td>İç adım 3 (belgeden) → 3. katman</td></tr>
+<tr><td>QR / karekodlu fatura, XML yok</td><td>Belgede GİB karekodu var</td><td><b>KABUL</b> — kimlik QR'dan anında gelir (VKN, tip, tarih, no); karekodda satır yoktur, satırlar için okuma yapılır</td><td>İç adım 3 → 3. katman</td></tr>
+<tr><td>Karekodsuz kağıt fatura</td><td>Karekod yok, tablo hâlinde yazım</td><td><b>KABUL</b> — tam okuma</td><td>İç adım 3 → 3. katman</td></tr>
+<tr><td>İade / tevkifat / istisna faturası</td><td>Fatura tipi kodundan</td><td><b>KABUL ama karta çevrilmez</b> — ayrı kuyruk</td><td>İç adım 4 uyarısı → İç adım 10</td></tr>
+<tr><td>Hesap tutmayan / okunamayan kayıt</td><td>Satırlar toplamı uymuyor ya da tarih/para birimi okunamadı</td><td><b>İNSAN</b> — düzelt ya da faturayı yeniden çek</td><td>İç adım 4 hatası → İç adım 10</td></tr>
+<tr><td>Teklif / proforma / sipariş</td><td>"Teklif" kelimesi, tahsilat ibaresi yok</td><td><b>RET</b></td><td>İç adım 2 hatası</td></tr>
+<tr><td>İrsaliye (sevk belgesi)</td><td>"İrsaliye", mal sevkiyat bilgisi</td><td><b>RET</b></td><td>İç adım 2 hatası</td></tr>
+<tr><td>Fiyat etiketi / garanti fişi / kutu etiketi</td><td>Ürün üzerinde tek fiyat yazısı</td><td><b>RET</b></td><td>İç adım 2 hatası</td></tr>
+<tr><td>Kasa fişi (perakende satış belgesi)</td><td>Kısa, üstte yazıcı bilgisi</td><td><b>MVP DIŞI</b> — "MVP'de fişle ürün kartı açılmaz" mesajıyla döner; profesyonel yolu ve resmî dayanağı Ek ②'de</td><td>İç adım 2 (kapsam dışı mesajı)</td></tr>
+<tr><td>e-SMM / gider pusulası (hizmet belgesi)</td><td>Hizmet, danışmanlık, kira yazısı</td><td><b>MVP DIŞI</b> — mesajla döner; profesyonel yolu ve resmî dayanağı Ek ②'de</td><td>İç adım 2 (kapsam dışı mesajı)</td></tr>
 </table>
 
 <h3>2) Tek yayın kapısı — 7. katman bunu uygular, şartlar başka yerde tekrar yazılmaz</h3>
-<div class="adim">① Fatura doğrulandı (3. katman) + ② Firma doğrulandı (4. katman) + ③ Tüm satırlar onaylı (5. katman → Ekran 10) + ④ Satış fiyatı &gt; 0 (esnaf yazar, 7. katman) + ⑤ En az bir görsel (6. katman) + ⑥ Kart taslakta (6. katman). Altı şart da tamamsa yayın butonu açılır; toplu yayında her satır tek tek bu kapıdan geçer.</div>
+<div class="adim">① Fatura doğrulandı (3. katman) + ② Firma doğrulandı (4. katman) + ③ Tüm satırlar onaylı (5. katman → İç adım 10) + ④ Satış fiyatı &gt; 0 (esnaf yazar, 7. katman) + ⑤ En az bir görsel (6. katman) + ⑥ Kart taslakta (6. katman). Altı şart da tamamsa yayın butonu açılır; toplu yayında her satır tek tek bu kapıdan geçer.</div>
 
 <h3>3) Tek sahip çizelgesi</h3>
 <table>
-<tr><th>İş</th><th>Sahibi</th><th>Ekranı</th></tr>
-<tr><td>Belge kaderi kararı (kabul / ret / MVP dışı / insan)</td><td>1. katman — Omurga tablo 1</td><td>Ekran 2</td></tr>
-<tr><td>Hesap, gerçeklik, parmak izi</td><td>3. katman</td><td>Ekran 4</td></tr>
-<tr><td>Firma doğrulama</td><td>4. katman</td><td>Ekran 5</td></tr>
-<tr><td>Eşleştirme ve güven puanı üretmek</td><td>5. katman — sarı/griyi kuyruğa yalnız o düşürür</td><td>Ekran 6</td></tr>
-<tr><td>Taslak kart</td><td>6. katman</td><td>Ekran 7</td></tr>
-<tr><td>Satış fiyatı ve yayın kapısı</td><td>7. katman — fiyatı esnaf yazar</td><td>Ekran 8</td></tr>
-<tr><td><b>Onay kuyruğu</b></td><td><b>8. katman</b> — 3. ve 5. katman yalnız düşürür; kuyruğu ve onayı yöneten odur</td><td>Ekran 10</td></tr>
-<tr><td>Sayaç, alarm, geri besleme</td><td>8. katman</td><td>Ekran 10</td></tr>
+<tr><th>İş</th><th>Sahibi</th><th>İç adımı</th></tr>
+<tr><td>Belge kaderi kararı (kabul / ret / MVP dışı / insan)</td><td>1. katman — Omurga tablo 1</td><td>İç adım 2</td></tr>
+<tr><td>Hesap, gerçeklik, parmak izi</td><td>3. katman</td><td>İç adım 4</td></tr>
+<tr><td>Firma doğrulama</td><td>4. katman</td><td>İç adım 5</td></tr>
+<tr><td>Eşleştirme ve güven puanı üretmek</td><td>5. katman — sarı/griyi kuyruğa yalnız o düşürür</td><td>İç adım 6</td></tr>
+<tr><td>Taslak kart</td><td>6. katman</td><td>İç adım 7</td></tr>
+<tr><td>Satış fiyatı ve yayın kapısı</td><td>7. katman — fiyatı esnaf yazar</td><td>İç adım 8</td></tr>
+<tr><td><b>Onay kuyruğu</b></td><td><b>8. katman</b> — 3. ve 5. katman yalnız düşürür; kuyruğu ve onayı yöneten odur</td><td>İç adım 10</td></tr>
+<tr><td>Sayaç, alarm, geri besleme</td><td>8. katman</td><td>İç adım 10</td></tr>
 </table>
 
 <h3>4) Fiyat kuralı</h3>
 <div class="adim"><b>Alış fiyatı (maliyet):</b> fatura satırından gelir, 3. katman yazar, kartta okunur olarak durur. <b>Satış fiyatı:</b> yalnız esnaf yazar (7. katman); sistemin fiyat tahmin etmesi yasaktır. <b>6. katman fiyata dokunmaz.</b> <b>Stok:</b> MVP'de takip edilmez; yalnız Ek ①'de (Google listelemesi) zorunlu olunca gündeme gelir.</div>
 
 <h3>5) İzleme kuralı</h3>
-<div class="adim">Sayaç ve alarmın sahibi 8. katmandır ve <b>fatura hattını</b> ölçer (alınan, okunan, doğrulanan, eşleşen, yayınlanan, düşen). MVP'de kendi sayımız elle görünür (Ekran 10), profesyonelde otomatikleşir (Ek ③). Google arama görünürlüğü ayrı bir ölçümdür, fatura hattını ölçmez — o Ek ①'in konusudur.</div>
+<div class="adim">Sayaç ve alarmın sahibi 8. katmandır ve <b>fatura hattını</b> ölçer (alınan, okunan, doğrulanan, eşleşen, yayınlanan, düşen). MVP'de kendi sayımız elle görünür (İç adım 10), profesyonelde otomatikleşir (Ek ③). Google arama görünürlüğü ayrı bir ölçümdür, fatura hattını ölçmez — o Ek ①'in konusudur.</div>
 
 <div class="durum"><span class="roz roz-mvp">Vixrex: MVP</span></div><div class="isaret"><table><tr><th>Plan maddesi</th><th>Durum</th><th>Kanıt (main = canlı)</th></tr><tr><td>Belge kaderi tablosu (her belge şekli tek satır)</td><td><span class="roz roz-yok">YOK</span></td><td>sınıflandırıcı ve ret tipi main'de yok</td></tr><tr><td>Tek yayın kapısı 6 şart</td><td><span class="roz roz-mvp">MVP</span></td><td>20261001000000_fatura_atomik_kayit.sql — 4 şart var; firma doğrulandı şartı yok</td></tr><tr><td>Tek sahip çizelgesi</td><td><span class="roz roz-farkli">FARKLI</span></td><td>kural 3 yerde tekrar: faturaKartDurumu.ts + batch/route.ts:298 + InvoiceToProducts.tsx</td></tr><tr><td>Fiyat kuralı (6. katman dokunmaz, tahmin yasak)</td><td><span class="roz roz-farkli">FARKLI</span></td><td>faturaKartDurumu.ts:36 fiyat + :39 stok zorunlu; InvoiceToProducts.tsx:1108 marj aracı (onay zorunlu)</td></tr><tr><td>İzleme kuralı (7 sayac + alarm)</td><td><span class="roz roz-yok">YOK</span></td><td>sayac tablosu/alarm yok; sentry.client.config.ts:3 SDK var, uyarı yok</td></tr></table></div>
 </div>
@@ -148,22 +161,22 @@ Taban: <b>main</b> (canlı). Kanıtlar dosya yolu / satır ile yazılıdı.</div
 <li>Bozuk / okunaksız fotoğrafı geri çevirir, yenisini ister.</li>
 </ul>
 <h3>Neden şart</h3>
-<ul><li>Çöp girerse çöp kart çıkar; süzülmeyen her fotoğraf 2. ve 3. katta pahalı modeli gereksiz çalıştırır.</li></ul>
+<ul><li>Fatura olmayan kâğıt kart olmaz. Bunu ayrı ucuz ayırıcı yapmaz; Luna’nın belge türü durdurur. Ayrı sınıflandırıcı donduruldu.</li></ul>
 <h3>Mimari</h3>
 <div class="adim">1. Yükleme: giriş isteyen uç (sunucu), 6 MB üstü dosyada bölünebilir yükleme (TUS) kullan — resmî kural: standart yükleme 6 MB'a kadar önerilir, üstü için TUS.</div>
 <div class="adim">2. Adlandırma: her dosya benzersiz ad alır, aynı yola tekrar yazılmaz.</div>
-<div class="adim">3. Süzme sırası: önce ucuz sınıflandırıcı çalışır, kader kararı Omurga tablo 1'den okunur — yalnız KABUL satırları 2. ve 3. kata gider; RET ve MVP DIŞI belgeler 1. katmanda ilgili mesajla döner. Hatalı istekten ücret alınmaz (resmî).</div>
+<div class="adim"><span class="roz roz-don">DONDURULDU</span> 3. Süzme sırası: önce ucuz sınıflandırıcı çalışır. Bu adım yapılmaz. Fatura olmayan kâğıt, aynı Luna okumasının belge türüyle durur.</div>
 <div class="adim">4. Hata kutusu: RET kararında kullanıcıya nedeni yazan tek mesaj gider ("bu bir fatura değil", "sevk belgesi", "MVP'de desteklenmiyor"), sistem durur.</div>
 <h3>Resmi platformlar</h3>
 <table>
 <tr><th>Platform</th><th>Ne yapar</th><th>Bedava sınır</th><th>Fiyat</th></tr>
-<tr><td>Google Document AI — Custom Classifier</td><td>Fatura / fiş / diğer ayırır (sınıflandırma işlemcisi)</td><td>—</td><td>1000 belge 5 dolar</td></tr>
-<tr><td>Google Cloud Vision — etiketleme</td><td>İçerik etiketi (fatura mı bakışı)</td><td>ayda ilk 1000 resim bedava</td><td>sonrası 1000 resim 1,50 dolar</td></tr>
+<tr><td><span class="roz roz-don">DONDURULDU</span> Google Document AI — Custom Classifier</td><td>Fatura / fiş / diğer ayırır. Yapılmaz.</td><td>—</td><td>1000 belge 5 dolar</td></tr>
+<tr><td><span class="roz roz-don">DONDURULDU</span> Google Cloud Vision — etiketleme</td><td>İçerik etiketi. Yapılmaz.</td><td>ayda ilk 1000 resim bedava</td><td>sonrası 1000 resim 1,50 dolar</td></tr>
 <tr><td>Supabase Storage</td><td>gizli dosya kutusu; standart yükleme 6 MB'a kadar, üstü TUS ile bölünür</td><td>ücretsiz planda var</td><td>—</td></tr>
 <tr><td>Vercel Blob</td><td>gizli dosya kutusu (alternatif), sunucu üzerinden yükleme</td><td>tüm planlarda açık</td><td>indirme ayrı fiyatlanır</td></tr>
 </table>
 <div class="kaynak">Kaynak: cloud.google.com/document-ai/pricing, cloud.google.com/vision/pricing, supabase.com/docs/guides/storage/uploads/standard-uploads, vercel.com/docs/vercel-blob/server-upload</div>
-<div class="durum"><span class="roz roz-yok">Vixrex: YOK</span></div><div class="isaret"><table><tr><th>Plan maddesi</th><th>Durum</th><th>Kanıt (main = canlı)</th></tr><tr><td>Yükleme + benzersiz dosya adı</td><td><span class="roz roz-var">VAR</span></td><td>owner-upload/route.ts:245 (Date.now + rastgele)</td></tr><tr><td>6 MB yükleme / TUS</td><td><span class="roz roz-farkli">FARKLI</span></td><td>fatura-oku/route.ts MAKS_BAYT = 5 MB; TUS yok</td></tr><tr><td>Ucuz sınıflandırıcı + kader kararı</td><td><span class="roz roz-yok">YOK</span></td><td>classifier terimi main'de 0 eşleşme</td></tr><tr><td>RET / MVP DISI tek mesaj (teklif, irsaliye, etiket)</td><td><span class="roz roz-yok">YOK</span></td><td>ret tipi mesaji yok</td></tr><tr><td>Hesap tutmazsa akış durur</td><td><span class="roz roz-farkli">FARKLI</span></td><td>fatura-oku/route.ts:248-252 'akış suruyor' — uyarı taşıyor</td></tr><tr><td>XML fatura kabulü</td><td><span class="roz roz-yok">YOK</span></td><td>fatura XML ucu yok (OwnerXmlYukle = ürün XML'i)</td></tr><tr><td>Bozuk fotoğraf ret'i</td><td><span class="roz roz-var">VAR</span></td><td>fatura-oku/route.ts FOTOGRAFTA_YAZI_YOK</td></tr></table></div>
+<div class="durum"><span class="roz roz-yok">Vixrex: YOK</span></div><div class="isaret"><table><tr><th>Plan maddesi</th><th>Durum</th><th>Kanıt (main = canlı)</th></tr><tr><td>Yükleme + benzersiz dosya adı</td><td><span class="roz roz-var">VAR</span></td><td>owner-upload/route.ts:245 (Date.now + rastgele)</td></tr><tr><td>6 MB yükleme / TUS</td><td><span class="roz roz-farkli">FARKLI</span></td><td>fatura-oku/route.ts MAKS_BAYT = 5 MB; TUS yok</td></tr><tr><td>Ucuz sınıflandırıcı + kader kararı</td><td><span class="roz roz-don">DONDURULDU</span></td><td>ayrı ayırıcı yapılmaz</td></tr><tr><td>RET / MVP DISI tek mesaj (teklif, irsaliye, etiket)</td><td><span class="roz roz-yok">YOK</span></td><td>ret tipi mesaji yok</td></tr><tr><td>Hesap tutmazsa akış durur</td><td><span class="roz roz-farkli">FARKLI</span></td><td>fatura-oku/route.ts:248-252 'akış suruyor' — uyarı taşıyor</td></tr><tr><td>XML fatura kabulü</td><td><span class="roz roz-yok">YOK</span></td><td>fatura XML ucu yok (OwnerXmlYukle = ürün XML'i)</td></tr><tr><td>Bozuk fotoğraf ret'i</td><td><span class="roz roz-var">VAR</span></td><td>fatura-oku/route.ts FOTOGRAFTA_YAZI_YOK</td></tr></table></div>
 </div>
 </div>
 
@@ -176,20 +189,20 @@ Taban: <b>main</b> (canlı). Kanıtlar dosya yolu / satır ile yazılıdı.</div
 <li>Okunaksız kalan bölgeyi "düşük güven" diye işaretler.</li>
 </ul>
 <h3>Neden şart</h3>
-<ul><li>Okunmadan satır olmaz; ama her fotoğrafı en pahalıya okutmak masrafı iki katına çıkarır, doğruluk artmaz.</li></ul>
+<ul><li>Okunmadan satır olmaz. Okuma tek yerde, Luna’da kalır.</li><li><span class="roz roz-don">DONDURULDU</span> “En pahalıya okutmamak için ucuz okuma, sonra pahalı yedek” yapılmaz. Ölçülen okuma yaklaşık 7 kuruştur.</li></ul>
 <h3>Mimari</h3>
 <div class="adim">1. Fotoğraf okumadan önce küçültülür (uzun kenar ~2000 piksel, düzgün sıkıştırma) — okuma kalitesini bozmadan girdi maliyeti düşer.</div>
-<div class="adim">2. Birinci göz ucuz/standart okuma yapar; satır güveni yüksekse 3. katta hesap doğrulaması yeterlidir.</div>
-<div class="adim">3. Yedek göz yalnızca okunamayan veya hesabı tutmayan faturada devreye girer (güçlü model). Kural: yedek, her fotoğrafta değil, sadece başarısız okumada.</div>
+<div class="adim"><span class="roz roz-don">DONDURULDU</span> 2. Birinci göz ucuz okuma yapar. Yapılmaz. Tek okuma Luna’dır.</div>
+<div class="adim"><span class="roz roz-don">DONDURULDU</span> 3. Tutmayan faturada pahalı yedek göz. Yapılmaz. İkinci okuma açılmaz.</div>
 <div class="adim">4. Çıktı katı bir şemaya (JSON kalıbı) uymak zorunda; kalıba uymayan yanıt hata sayılır, vitrine girmez.</div>
 <h3>Resmi platformlar</h3>
 <table>
 <tr><th>Platform</th><th>Ne yapar</th><th>Bedava sınır</th><th>Fiyat</th></tr>
-<tr><td>Google Cloud Vision — belge okuma</td><td>düz metin okuma, Türkçe destekli</td><td>ayda ilk 1000 sayfa bedava</td><td>sonrası 1000 sayfa 1,50 dolar</td></tr>
-<tr><td>Google Document AI — Enterprise Document OCR</td><td>200+ dilde okuma + okunabilirlik kalite puanı (200+ dil arasında Türkçe var)</td><td>ilk 1000 sayfa okuma bedava</td><td>okuma 1000 sayfa 1,50 dolar; çevrimiçi istekte sayfa başı 15 sayfa sınırı</td></tr>
-<tr><td>Amazon Textract — düz okuma</td><td>düz metin okuma</td><td>yeni hesapta 3 ay, ayda 1000 sayfa</td><td>sonrası sayfa 0,0015 dolar</td></tr>
+<tr><td><span class="roz roz-don">DONDURULDU</span> Google Cloud Vision — belge okuma</td><td>Luna’nın yerine konmaz.</td><td>ayda ilk 1000 sayfa bedava</td><td>sonrası 1000 sayfa 1,50 dolar</td></tr>
+<tr><td><span class="roz roz-don">DONDURULDU</span> Google Document AI — Enterprise Document OCR</td><td>Luna’nın yerine konmaz.</td><td>ilk 1000 sayfa okuma bedava</td><td>okuma 1000 sayfa 1,50 dolar</td></tr>
+<tr><td><span class="roz roz-don">DONDURULDU</span> Amazon Textract — düz okuma</td><td>Luna’nın yerine konmaz.</td><td>yeni hesapta 3 ay, ayda 1000 sayfa</td><td>sonrası sayfa 0,0015 dolar</td></tr>
 <tr><td>OpenAI görücü model (gpt-5.6-luna)</td><td>görsel + düzenli JSON çıktı; görsel girdi jeton olarak sayılır</td><td>ayrı görsel bedava hakkı yok — görsel jetonu metin jetonu gibi fiyatlanır</td><td>giriş 1 milyon jeton 0,20 dolar; önbelleğe alınmış giriş 0,02 dolar; çıkış 1,20 dolar</td></tr>
-<tr><td>Azure belge zekâsı (Document Intelligence)</td><td>fatura ayrıştırma; hazır fatura modeli ayrı alan döndürür</td><td>ayda 500 sayfa bedava (F0 — ancak dosyanın yalnız ilk 2 sayfası, en fazla 4 MB)</td><td>ham okuma 1000 sayfa 1,50 dolar (1 milyon sayfa üstü 0,60); hazır fatura modeli 1000 sayfa 10 dolar; belge sınıflandırma 1000 sayfa 3 dolar</td></tr>
+<tr><td><span class="roz roz-don">DONDURULDU</span> Azure belge zekâsı (Document Intelligence)</td><td>Luna’nın yerine konmaz.</td><td>ayda 500 sayfa bedava</td><td>hazır fatura modeli 1000 sayfa 10 dolar</td></tr>
 </table>
 <div class="kaynak">Kaynak: cloud.google.com/vision/pricing, cloud.google.com/document-ai/pricing, docs.cloud.google.com/document-ai/docs/processors-list (Enterprise Document OCR — dil listesi ve 15 sayfa çevrimiçi sınırı), aws.amazon.com/textract/pricing, developers.openai.com/api/docs/pricing (gpt-5.6-luna jeton fiyatı), platform.openai.com/docs/guides/images-vision (görsel girdisinin jeton olarak sayıldığı), azure.microsoft.com/pricing/details/document-intelligence + docs.azure.cn servis sınırı sayfası (F0 500 sayfa/ay, sayfa başı fiyatlama).</div>
 <div class="durum"><span class="roz roz-mvp">Vixrex: MVP</span></div><div class="isaret"><table><tr><th>Plan maddesi</th><th>Durum</th><th>Kanıt (main = canlı)</th></tr><tr><td>Ucuz göz: tek model okuma</td><td><span class="roz roz-var">VAR</span></td><td>faturaGoru.ts GORU_MODELI = openai/gpt-5.6-luna</td></tr><tr><td>Yedek göz: güçlü modele geçiş</td><td><span class="roz roz-yok">YOK</span></td><td>fatura-oku/route.ts DENEME_SINIRI = 1; ikinci model yok</td></tr><tr><td>İlk önce görseli küçültme (~2000px)</td><td><span class="roz roz-mvp">MVP</span></td><td>yalnız telefonda (ocr_scanner_widget.dart maxWidth:2000); sunucuda yok</td></tr><tr><td>Katı JSON kalıbı, uymayan hata</td><td><span class="roz roz-mvp">MVP</span></td><td>JSON.parse + hata var; şema doğrulaması yok</td></tr><tr><td>Bulut OCR (Vision / Document AI / Textract)</td><td><span class="roz roz-yok">YOK</span></td><td>ilgili terimler main'de 0 eşleşme</td></tr><tr><td>DAL — OpenAI + json_schema + detail:high + 2048px sınırlama</td><td><span class="roz roz-dal">DAL</span></td><td>fatura/canli-derleme: lib/faturaGoru.ts, goruntuyuSinirla (main'de yok)</td></tr></table></div>
@@ -216,7 +229,7 @@ Taban: <b>main</b> (canlı). Kanıtlar dosya yolu / satır ile yazılıdı.</div
 <h3>Resmi platformlar</h3>
 <table>
 <tr><th>Platform</th><th>Ne yapar</th><th>Bedava sınır</th><th>Fiyat</th></tr>
-<tr><td>Google Document AI — Expense Parser (fatura işleme)</td><td>satıcı, toplam, satır kalemi, ürün kodunu hazır döndürür (çevrimiçi istekte sayfa başı 10 sayfa sınırı)</td><td>ilk 1000 sayfa okuma bedava</td><td>belge başı 0,10 dolar</td></tr>
+<tr><td><span class="roz roz-don">DONDURULDU</span> Google Document AI — Expense Parser</td><td>İkinci fatura okuyucu. Yapılmaz.</td><td>ilk 1000 sayfa bedava</td><td>belge başı 0,10 dolar</td></tr>
 <tr><td>Yerel hesap kodu</td><td>toplam doğrulama + tekrar kontrolü — saf hesap, sunucuda çalışır</td><td>bedava</td><td>0</td></tr>
 <tr><td>GİB e-Arşiv Fatura Sorgulama (resmî)</td><td>faturanın gerçekliğini resmi kayıtla karşılaştırma</td><td>bedava</td><td>0</td></tr>
 <tr><td>GİB elektronik belge (e-Fatura / e-Arşiv XML)</td><td>varsa satırları okumadan almanın en doğru yolu</td><td>belge sayısıyla artan kontör usulü</td><td>kontör ücreti entegratörün kendi fiyat sayfasından okunur: İzibiz paket 1 — 6.165 TL karşılığı 1.000 kontör; Faturaport ek kontör 100 adet için 3,60 TL/adet, 500 adet için 1,92 TL/adet (dönemsel değişebilir, alım anında fiyat sayfası esastır)</td></tr>
@@ -395,8 +408,8 @@ Taban: <b>main</b> (canlı). Kanıtlar dosya yolu / satır ile yazılıdı.</div
 <tr><td>Karekod okundu (senaryo, tip, tarih, no geldi)</td><td>3. katmanda kimlik ve tarih doğrulaması anında tamamlanır; no ile GİB sorgusu yapılır. Okuma yalnız satırlar için devam eder.</td></tr>
 <tr><td>Satırlar toplamıyla belge toplamı tutuyor</td><td>Yeşil → 4. kata (firma doğrulama) geçilir.</td></tr>
 <tr><td>Toplam tutmuyor</td><td>Kırmızı → 3. katmanda durur; esnaf düzeltir ya da faturayı yeniden çeker. Yola devam yok.</td></tr>
-<tr><td>Fatura tipi İade / Tevkifat / İstisna</td><td>Normal satış kartına çevrilmez; ayrı kuyruk + "bu iade/tevkifat faturası" uyarısı (Ekran 4 → kuyruk Ekran 10). Yanlış KDV hesabı bu yolla engellenir.</td></tr>
-<tr><td>Belge teklif / irsaliye / etiket çıktı</td><td>1. katmanda durur, ayrı mesajla geri çevrilir (teklif: "ödeme belgesi değil"; irsaliye: "sevk belgesi") → Ekran 2 (Omurga 1).</td></tr>
+<tr><td>Fatura tipi İade / Tevkifat / İstisna</td><td>Normal satış kartına çevrilmez; ayrı kuyruk + "bu iade/tevkifat faturası" uyarısı (İç adım 4 → kuyruk İç adım 10). Yanlış KDV hesabı bu yolla engellenir.</td></tr>
+<tr><td>Belge teklif / irsaliye / etiket çıktı</td><td>1. katmanda durur, ayrı mesajla geri çevrilir (teklif: "ödeme belgesi değil"; irsaliye: "sevk belgesi") → İç adım 2 (Omurga 1).</td></tr>
 <tr><td>Satır yok (kasa fişi, MVP dışı)</td><td>MVP'de 1. katta döner (Omurga 1); profesyonelde (Ek ②) toplam ve gerekirse KDV oranı alınır, ürün kartı elle açılır — sistem toplamı kör kabul etmez, açık uyarı verilir.</td></tr>
 <tr><td>Satıcı VKN/TCKN yok ya da okunamadı</td><td>4. katmanda arama yalnız unvanla yapılır → kanıt zayıf → firma onayı insana düşer.</td></tr>
 <tr><td>Para birimi TL değil / tarih okunamadı</td><td>3. katmanda uyarı; otomatik ilerleme durur, karar insana geçer.</td></tr>
@@ -464,13 +477,13 @@ Taban: <b>main</b> (canlı). Kanıtlar dosya yolu / satır ile yazılıdı.</div
 <tr><th>Katman</th><th>MVP (en küçük çalışan yol)</th><th>Profesyonel</th><th>Resmi kanıt</th></tr>
 
 <tr><td><b>1. Alma ve süzme</b></td>
-<td>Tek görsel, tek sınıflandırma, varsayılan haklar (limit dolduğunda iş bekler).</td>
+<td><span class="roz roz-don">DONDURULDU</span> Ayrı sınıflandırma yapılmaz. Tek okuma Luna’dır.</td>
 <td>İzin (hak) izleme + artış isteği; yoğun saatte işi sıraya alma; Avrupa veri merkezi seçimi (veri AB'de kalmalıysa); yedek modele geçiş kuralı.</td>
 <td>Google Document AI Quotas: varsayılan 1.800 istek/dk (kullanıcı başına); işlenmiş sayfa için işlemci tipi başına 120 sayfa/dk (ABD ve AB); hak artışı konsoldan istenir.</td></tr>
 
 <tr><td><b>2. Yazıya çevirme</b></td>
-<td>Görsel tek kalitede modele gönderilir; okuma tutarsa iyi, tutmazsa pahalı yedek.</td>
-<td>Katmanlı kalite: önce düşük çözünürlük (hızlı ve ucuz okuma), metin yoğun faturada yüksek kaliteye geçiş; görsel boyu gönderimden önce sınırın içine indirme (sınır aşılırsa istek <b>reddedilir</b>, otomatik küçültme yok).</td>
+<td>Tek okuma Luna’dır. Tutmazsa ikinci pahalı okuma açılmaz.</td>
+<td><span class="roz roz-don">DONDURULDU</span> Önce düşük netlik, sonra yüksek netlik. Yapılmaz. Fotoğraf küçültme çalışan yolda kalır.</td>
 <td>OpenAI Görsel kılavuzu: gpt-5.6-luna ailesinde düşük kalite 512×512; yüksek kalite 2048×2048 ve 2.500 yama; resim 30.000 yamayı aşarsa istek reddedilir; "detail" kipine göre maliyet değişir.</td></tr>
 
 <tr><td><b>3. Hesaba dökme ve doğrulama</b></td>
@@ -499,7 +512,7 @@ Taban: <b>main</b> (canlı). Kanıtlar dosya yolu / satır ile yazılıdı.</div
 <td>Ek ① kanıt satırında: Google Content API sunset uyarısı + developers.google.com/merchant/api/guides/quotas-limits.</td></tr>
 
 <tr><td><b>8. Vitrin / onay / izleme</b></td>
-<td>Kendi sayacımız: Ekran 10 paneli + Supabase sayaç tabloları; onay kuyruğu burada. Hata/uyarı: Sentry e-postası; servis ayakta kalma: UptimeRobot.</td>
+<td>Kendi sayacımız: İç adım 10 paneli + Supabase sayaç tabloları; onay kuyruğu burada. Hata/uyarı: Sentry e-postası; servis ayakta kalma: UptimeRobot.</td>
 <td><b>Ek ③:</b> sayaç ve alarm otomasyonu (API ile günlük çekim, eşikler gerçek ölçümle). <b>Ek ①:</b> yalnız arama görünürlüğü (Search Console) — fatura hattını ölçmez.</td>
 <td>Ek ③ kanıt satırında (Supabase, Sentry, UptimeRobot resmî fiyat sayfaları) + Ek ① (searchanalytics.query).</td></tr>
 </table>
@@ -526,7 +539,7 @@ Taban: <b>main</b> (canlı). Kanıtlar dosya yolu / satır ile yazılıdı.</div
 <div class="adim">8. katmanın MVP'si Google'ı ölçmek değildir; fatura hattının kendisini ölçmektir. Arama görünürlüğü ayrı ölçümdür (Ek ①) ve fatura işleme hatalarını göstermez.</div>
 <table>
 <tr><th>Ne ölçülür</th><th>MVP (ücretsiz)</th><th>Profesyonel</th></tr>
-<tr><td>Katman sayaçları: alınan, süzülen, okunan, doğrulanan, eşleşen, yayınlanan, düşen + düşme sebebi</td><td>Supabase tabloları, Ekran 10 panelinde elle okunur (ücretsiz plan: 500 MB, sınırsız istek; 1 hafta sessizlikte duraklar)</td><td>Günlük otomatik özet + Sentry ile eşik alarmı (geliştirici planı 0 dolar, 5.000 hata, 20 ölçüm alarmı, e-posta)</td></tr>
+<tr><td>Katman sayaçları: alınan, süzülen, okunan, doğrulanan, eşleşen, yayınlanan, düşen + düşme sebebi</td><td>Supabase tabloları, İç adım 10 panelinde elle okunur (ücretsiz plan: 500 MB, sınırsız istek; 1 hafta sessizlikte duraklar)</td><td>Günlük otomatik özet + Sentry ile eşik alarmı (geliştirici planı 0 dolar, 5.000 hata, 20 ölçüm alarmı, e-posta)</td></tr>
 <tr><td>Servis ayakta kalma (vitrin ve okuma ucu)</td><td>UptimeRobot ücretsiz: 50 izleme, 5 dakikalık kontrol, e-posta uyarı</td><td>60 saniyelik kontrol (Solo 10 dolar/ay)</td></tr>
 <tr><td>Arama görünürlüğü (tıklama / sıralama)</td><td>elle, günde bir bakış</td><td>Search Console API otomatik çekim → Ek ①</td></tr>
 </table>
@@ -555,43 +568,44 @@ Taban: <b>main</b> (canlı). Kanıtlar dosya yolu / satır ile yazılıdı.</div
 </div>
 </div>
 
-<h2 class="akis-baslik">Ön yüzde akış — esnaf ne görür</h2>
-<div class="aciklama">Yeşil kutular ana yol (esnafın sırayla gördüğü ekranlar), kesikli kırmızı kutular hata yolları (olmazsa ne olur). Her ekranın köşesinde yakaladığı katman yazıyor. Sağ üstteki sayaç: 8. katmanın izleme ekranı. <b>Hangi belge hangi ekrana düşer:</b> Omurga tablo 1'in "Nereye düşer" sütunu — QR/XML, fiş ve e-SMM yollarının ekran karşılığı oradadır.</div>
+<h2 class="akis-baslik">İç adımlar — sayfa değildir</h2>
+<div class="uyari"><b>Bu çizim on ekran değildir.</b> Kutular, sistemin aynı ekranda yürüttüğü akışlardır. Esnaf bu kutuları sırayla gezmez. Ürün listesi tek ekranda hazırlanır. O ekran henüz tasarlanmadı; şimdi çizilmez. Öncelik çalışan sistemdir.</div>
+<div class="aciklama">Yeşil kutular ana akış, kesikli kırmızı kutular hata hâli. Köşedeki numara katmanı gösterir, ayrı sayfa açmaz. <b>Hangi belge hangi iç adıma düşer:</b> Omurga tablo 1'in "Nereye düşer" sütunu.</div>
 <div class="lejant">
-<span><i class="kutu-renk" style="background:#0b7a3e"></i> ana yol — ekran</span>
-<span><i class="kutu-renk" style="background:#c33"></i> hata yolu — uyarı, geri dönüş</span>
-<span><i class="kutu-renk" style="background:#bbb"></i> bekleme ekranı (yapay zekâ çalışırken)</span>
-<span><i class="kutu-renk" style="background:#0b5fff"></i> izleme paneli</span>
+<span><i class="kutu-renk" style="background:#0b7a3e"></i> ana akış — sayfa değil</span>
+<span><i class="kutu-renk" style="background:#c33"></i> hata hâli — aynı yerde uyarı</span>
+<span><i class="kutu-renk" style="background:#bbb"></i> bekleme hâli</span>
+<span><i class="kutu-renk" style="background:#0b5fff"></i> sayaç — ayrı sayfa değil</span>
 </div>
 
-<div class="ekran"><span class="kat-tagi">1. katman</span><h4>Ekran 1 — Yeni fatura</h4><p class="ekran-isaret"><span class="roz roz-farkli">Vixrex: FARKLI</span> tek görüntü yükleme var; PDF / XML girişi yok (InvoiceToProducts.tsx:857)</p>
+<div class="ekran"><span class="kat-tagi">1. katman</span><h4>İç adım 1 — Yeni fatura</h4><p class="ekran-isaret"><span class="roz roz-farkli">Vixrex: FARKLI</span> tek görüntü yükleme var; PDF / XML girişi yok (InvoiceToProducts.tsx:857)</p>
 <p>Esnaf açar açmaz tek ekran: kamera, galeri ve dosya seçimi. Fatura PDF'i varsa onu da yükleyebilir.</p>
 <p><b>GİB XML dosyası (e-Fatura) varsa:</b> dosya olarak yükle — satırlar belgeden gelir, okuma atlanır (Omurga 1).</p>
 <span class="buton-orn">📷 Fotoğraf çek</span> <span class="buton-orn">📁 PDF yükle</span> <span class="buton-orn">📄 XML yükle</span>
 </div>
 <div class="ok"><span>↓</span> yükleme biter</div>
 
-<div class="bekleme"><span class="kat-tagi" style="float:right;background:#8a6d00;color:#fff;font-size:11px;border-radius:4px;padding:1px 7px">1. katman</span><h4>Ekran 2 — Kontrol ediliyor</h4><p class="ekran-isaret"><span class="roz roz-farkli">Vixrex: FARKLI</span> 'Faturan hazırlanıyor' var (InvoiceToProducts.tsx:883); RET mesajı ve süre göstergesi yok</p>
+<div class="bekleme"><span class="kat-tagi" style="float:right;background:#8a6d00;color:#fff;font-size:11px;border-radius:4px;padding:1px 7px">1. katman</span><h4>İç adım 2 — Kontrol ediliyor</h4><p class="ekran-isaret"><span class="roz roz-farkli">Vixrex: FARKLI</span> 'Faturan hazırlanıyor' var (InvoiceToProducts.tsx:883); RET mesajı ve süre göstergesi yok</p>
 <p>"Gönderildi... fatura mı bakıyoruz" — dönen simge, yaklaşık 1-3 saniye. Kullanıcı hiçbir şey yazmaz.</p>
 </div>
 <div class="dal"><b class="dal-etiket">HATA YOLU</b>
 <p><b>"Bu bir fatura fotoğrafı değil."</b> Teklif, irsaliye, etiket gibi belgeler 1. katmanda bu mesajla döner.</p>
 <p><b>"MVP'de bu belge desteklenmiyor."</b> Kasa fişi ve e-SMM 1. katmanda ayrı mesajla döner (Omurga 1; yol için Ek ②).</p>
-<p class="geri-ok">↑ Esnaf tek şeyle döner: yeni fotoğraf çek → Ekran 1</p>
+<p class="geri-ok">↑ Esnaf tek şeyle döner: yeni fotoğraf çek → İç adım 1</p>
 </div>
 <div class="ok"><span>↓</span> fatura ise</div>
 
-<div class="bekleme"><span class="kat-tagi" style="float:right;background:#8a6d00;color:#fff;font-size:11px;border-radius:4px;padding:1px 7px">2. katman</span><h4>Ekran 3 — Okunuyor</h4><p class="ekran-isaret"><span class="roz roz-mvp">Vixrex: MVP</span> okuma ekranı var; İptal düğmesi, süre ölçümü ve XML atlama yok</p>
+<div class="bekleme"><span class="kat-tagi" style="float:right;background:#8a6d00;color:#fff;font-size:11px;border-radius:4px;padding:1px 7px">2. katman</span><h4>İç adım 3 — Okunuyor</h4><p class="ekran-isaret"><span class="roz roz-mvp">Vixrex: MVP</span> okuma ekranı var; İptal düğmesi, süre ölçümü ve XML atlama yok</p>
 <p>"Fatura okunuyor" — bu sırada ekran donmaz, altta iptal butonu vardır. Ortalama süre gerçek ölçümle konur, tahminle değil.</p>
 <p>XML dosyası geldiyse bu adım atlanır: satırlar doğrudan belgeden gelir (Omurga 1).</p>
 </div>
 <div class="dal"><b class="dal-etiket">HATA YOLU</b>
 <p><b>"Fotoğraf bulanık, okunamadı."</b> Okuma başarısızsa ya da toplam tutmazsa sistem uydurmaz, uyarır.</p>
-<p class="geri-ok">↑ Düzgün ışıkta yeniden çek → Ekran 1</p>
+<p class="geri-ok">↑ Düzgün ışıkta yeniden çek → İç adım 1</p>
 </div>
 <div class="ok"><span>↓</span> satırlar okundu</div>
 
-<div class="ekran"><span class="kat-tagi">3. katman</span><h4>Ekran 4 — Fatura kontrolü</h4><p class="ekran-isaret"><span class="roz roz-mvp">Vixrex: MVP</span> kontrol listesi ve 'Kontrol et' rozeti var (InvoiceToProducts.tsx:1156); akış durmuyor</p>
+<div class="ekran"><span class="kat-tagi">3. katman</span><h4>İç adım 4 — Fatura kontrolü</h4><p class="ekran-isaret"><span class="roz roz-mvp">Vixrex: MVP</span> kontrol listesi ve 'Kontrol et' rozeti var (InvoiceToProducts.tsx:1156); akış durmuyor</p>
 <p>Okunan satırlar ve toplam ekranda: "13 satır bulundu, toplam 6.034,00 TL". Toplam satırlarla tutuyorsa yeşil onay.</p>
 <p>Tutan satır: <b>✓ doğrulandı</b> &nbsp; Tutmayan: <b>✗ sayıları kontrol edin</b></p>
 </div>
@@ -600,7 +614,7 @@ Taban: <b>main</b> (canlı). Kanıtlar dosya yolu / satır ile yazılıdı.</div
 </div>
 <div class="ok"><span>↓</span> fatura doğru</div>
 
-<div class="ekran"><span class="kat-tagi">4. katman</span><h4>Ekran 5 — Firma bulundu</h4><p class="ekran-isaret"><span class="roz roz-mvp">Vixrex: MVP</span> firma satırı + vergi no araması var; 'Firma doğrulandı' rozeti yok</p>
+<div class="ekran"><span class="kat-tagi">4. katman</span><h4>İç adım 5 — Firma bulundu</h4><p class="ekran-isaret"><span class="roz roz-mvp">Vixrex: MVP</span> firma satırı + vergi no araması var; 'Firma doğrulandı' rozeti yok</p>
 <p>Faturadaki satıcı: <b>"Yıldız Elektronik Ltd. Şti."</b> + doğrulanmış rozeti + firmanın resmi sitesi bağlantısı.</p>
 <p>Site ve kimlik tutuyorsa tek satır yeter: <b>✓ Firma doğrulandı</b></p>
 </div>
@@ -609,22 +623,22 @@ Taban: <b>main</b> (canlı). Kanıtlar dosya yolu / satır ile yazılıdı.</div
 </div>
 <div class="ok"><span>↓</span> firma onaylı</div>
 
-<div class="ekran"><span class="kat-tagi">5. katman</span><h4>Ekran 6 — Ürünler eşleşti</h4><p class="ekran-isaret"><span class="roz roz-farkli">Vixrex: FARKLI</span> yeşil/sarı var, gri satır renkliği yok (globals.css:797 yalnız iz-yok); tek kuyruk ekranı yok</p>
+<div class="ekran"><span class="kat-tagi">5. katman</span><h4>İç adım 6 — Ürünler eşleşti</h4><p class="ekran-isaret"><span class="roz roz-farkli">Vixrex: FARKLI</span> yeşil/sarı var, gri satır renkliği yok (globals.css:797 yalnız iz-yok); tek kuyruk ekranı yok</p>
 <p>Her fatura satırı ayrı satır kartı:</p>
 <p><b>✓ Yeşil</b> — kod veya barkod tuttu, kesin eşleşti (otomatik)<br>
 <b>⚠ Sarı</b> — isimle eşleşti, kontrol edin (esnaf görür)<br>
 <b>○ Gri</b> — bulunamadı, elle seçin (liste açılır)</p>
-<p>Sarı ve gri satırlar onaylanmadan ilerlemez; onay Ekran 10'daki kuyrukta toplanır (kuyruğun sahibi 8. katman — Omurga 3).</p>
+<p>Sarı ve gri satırlar onaylanmadan ilerlemez; onay İç adım 10'daki kuyrukta toplanır (kuyruğun sahibi 8. katman — Omurga 3).</p>
 </div>
 <div class="ok"><span>↓</span> tüm satırlar onaylı</div>
 
-<div class="ekran"><span class="kat-tagi">6. katman</span><h4>Ekran 7 — Kart taslağı</h4><p class="ekran-isaret"><span class="roz roz-farkli">Vixrex: FARKLI</span> fiyat ve stok bu ekranda (InvoiceToProducts.tsx:236,1108); taslak fiyat yazmaz</p>
+<div class="ekran"><span class="kat-tagi">6. katman</span><h4>İç adım 7 — Kart taslağı</h4><p class="ekran-isaret"><span class="roz roz-farkli">Vixrex: FARKLI</span> fiyat ve stok bu ekranda (InvoiceToProducts.tsx:236,1108); taslak fiyat yazmaz</p>
 <p>Hazır kart önizlemesi: başlık, görsel, açıklama, kategori — firmanın kendi sitesinden alındı.</p>
 <p>Esnaf isterse başlığı/açıklamayı düzenler. <b>Durum: taslak, yayında değil.</b></p>
 </div>
 <div class="ok"><span>↓</span> taslak tamam</div>
 
-<div class="ekran"><span class="kat-tagi">7. katman</span><h4>Ekran 8 — Fiyat yaz ve yayınla</h4><p class="ekran-isaret"><span class="roz roz-var">Vixrex: VAR</span> fiyat zorunlu + Yayınla + toplu yayın + atlanan raporu (batch/route.ts:203)</p>
+<div class="ekran"><span class="kat-tagi">7. katman</span><h4>İç adım 8 — Fiyat yaz ve yayınla</h4><p class="ekran-isaret"><span class="roz roz-var">Vixrex: VAR</span> fiyat zorunlu + Yayınla + toplu yayın + atlanan raporu (batch/route.ts:203)</p>
 <p>Alış fiyatı görünür durur, satış fiyatı boş bırakılır (kural Omurga 4). Tek satır için:</p>
 <span class="buton-orn">Yayınla</span> <span class="buton-orn" style="background:#333">Toplu yayınla →</span>
 <p style="margin-top:6px">Yayın kapısı Omurga tablo 2'dir (6 şart). Toplu yayında her satır tek tek kapıdan geçer; kapısı eksik satır atlanır, sonradan raporlanır.</p>
@@ -634,16 +648,16 @@ Taban: <b>main</b> (canlı). Kanıtlar dosya yolu / satır ile yazılıdı.</div
 </div>
 <div class="ok"><span>↓</span> yayınlandı</div>
 
-<div class="ekran"><span class="kat-tagi">8. katman</span><h4>Ekran 9 — Tamamlandı</h4><p class="ekran-isaret"><span class="roz roz-mvp">Vixrex: MVP</span> tek fatura tamamlandı ekranı var; 'N üründen M yayında' genel özet yok</p>
+<div class="ekran"><span class="kat-tagi">8. katman</span><h4>İç adım 9 — Tamamlandı</h4><p class="ekran-isaret"><span class="roz roz-mvp">Vixrex: MVP</span> tek fatura tamamlandı ekranı var; 'N üründen M yayında' genel özet yok</p>
 <p>Şu anki sonuç: "8 üründen 6'sı yayında, 2'si onay bekliyor." Ürünün vitrin bağlantısı tek dokunuşla açılır.</p>
 <span class="buton-orn">Vitrini gör</span> <span class="buton-orn" style="background:#333">Yeni fatura yükle →</span>
-<p style="margin-top:6px">"Yeni fatura yükle" → Esnaf Ekran 1'e döner, akış döngüye girer.</p>
+<p style="margin-top:6px">"Yeni fatura yükle" → Esnaf İç adım 1'e döner, akış döngüye girer.</p>
 </div>
 
 <div class="ok"><span>↓</span> ayrıca, her an açık kalır</div>
 
 <div class="panel"><span class="kat-tagi" style="float:right;background:#0b5fff;color:#fff;font-size:11px;border-radius:4px;padding:1px 7px">8. katman</span>
-<h4>Ekran 10 — İzleme paneli (ana ekranın üstünde sekme)</h4><p class="ekran-isaret"><span class="roz roz-farkli">Vixrex: FARKLI</span> ziyaret ölçümü var (OwnerDashboardMetrics.tsx:169); fatura hattı sayacı yok</p>
+<h4>İç adım 10 — İzleme paneli (ana ekranın üstünde sekme)</h4><p class="ekran-isaret"><span class="roz roz-farkli">Vixrex: FARKLI</span> ziyaret ölçümü var (OwnerDashboardMetrics.tsx:169); fatura hattı sayacı yok</p>
 <p>Esnafın görebildiği sayaçlar ve bekleyen onay listesi:</p>
 <div class="sayac"><span>Bugün alınan: 3</span><span>Okunan: 3</span><span>Eşleşen: 11</span><span>Yayınlanan: 6</span><span>Bekleyen onay: 2</span></div>
 <p style="margin-top:6px">Onay kuyruğu: sarı/gri eşleşmeler ve doğrulanmayan faturalar burada bekler; onaylanan ürün vitrine çıkar.</p>
