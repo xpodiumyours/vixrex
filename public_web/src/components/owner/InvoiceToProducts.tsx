@@ -1306,9 +1306,11 @@ export default function InvoiceToProducts({
                 {satir.barkod && ` • Barkod: ${satir.barkod}`}
               </div>
 
-              {katalog && !katalog.aciklama && (
+              {katalog?.aciklama ? (
+                <p className="fatura-aciklama">{katalog.aciklama}</p>
+              ) : katalog ? (
                 <div className="fatura-durum">Kaynaktan açıklama gelmedi.</div>
-              )}
+              ) : null}
 
               {satir.sonuc === "kanitli" && (
                 <>
