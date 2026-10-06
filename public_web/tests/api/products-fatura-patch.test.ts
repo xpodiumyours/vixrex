@@ -150,4 +150,35 @@ describe("PATCH fatura taslağını sıradan düzenlemeyle yayınlamaz", () => {
     expect(response.status).toBe(200);
     expect(mockUpdateRichCoreProduct.mock.calls[0]?.[0]?.isVisible).toBeUndefined();
   });
+
+  it("yayındaki fatura ürünü tek görselle düzenlenince gizlenmez", async () => {
+    mockGetSupabaseAdmin.mockReturnValue(
+      makeAdminStub({
+        ...TAM_FATURA_SATIRI,
+        is_visible: true,
+        image_urls: [yonetilenGorsel("a.jpg")],
+      }),
+    );
+    const response = await PATCH(patchRequest({ imageUrls: [yonetilenGorsel("b.jpg")] }));
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(mockUpdateRichCoreProduct.mock.calls[0]?.[0]?.isVisible).toBe(true);
+    expect(payload.taslak).toBe(false);
+  });
+
+  it("fatura dışı ürün tek görselle düzenlenince yayında kalmaz (üç görsel kuralı korunur)", async () => {
+    mockGetSupabaseAdmin.mockReturnValue(
+      makeAdminStub({
+        ...TAM_FATURA_SATIRI,
+        source_type: "manual",
+        is_visible: true,
+        image_urls: [yonetilenGorsel("a.jpg"), yonetilenGorsel("b.jpg"), yonetilenGorsel("c.jpg")],
+      }),
+    );
+    const response = await PATCH(patchRequest({ imageUrls: [yonetilenGorsel("a.jpg")] }));
+
+    expect(response.status).toBe(200);
+    expect(mockUpdateRichCoreProduct.mock.calls[0]?.[0]?.isVisible).toBe(false);
+  });
 });
