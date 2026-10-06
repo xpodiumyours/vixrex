@@ -23,10 +23,21 @@ describe("firma resmi site arama", () => {
   it("firma adıyla uyumlu resmi alanı bulur", async () => {
     const sonuc = await firmaSitesiniAra("Eti Gıda Sanayi", {
       apiAnahtari: "test-anahtar",
-      fetcher: aramaYaniti([
-        { url: "https://www.trendyol.com/eti-gida", title: "Trendyol Eti" },
-        { url: "https://www.etigida.com.tr/kurumsal", title: "Eti Resmi Site" },
-      ]),
+      kimlik: { vergiNo: "1234567890", adres: "" },
+      dogrula: { resolveHost: async () => ["8.8.8.8"] },
+      fetcher: async (input: string) => {
+        const adres = String(input);
+        if (adres.includes("api.search.brave.com")) {
+          return aramaYaniti([
+            { url: "https://www.trendyol.com/eti-gida", title: "Trendyol Eti" },
+            { url: "https://www.etigida.com.tr/kurumsal", title: "Eti Resmi Site" },
+          ])();
+        }
+        return new Response("<html><title>Eti Gıda</title><body>Vergi No 1234567890</body></html>", {
+          status: 200,
+          headers: { "content-type": "text/html" },
+        });
+      },
     });
 
     expect(sonuc.durum).toBe("bulundu");
@@ -38,10 +49,21 @@ describe("firma resmi site arama", () => {
   it("pazar yeri ve sosyal ağ adreslerini resmi site saymaz", async () => {
     const sonuc = await firmaSitesiniAra("Tutku Tuhafiye", {
       apiAnahtari: "test-anahtar",
-      fetcher: aramaYaniti([
-        { url: "https://www.instagram.com/tutkutuhafiye", title: "Tutku Instagram" },
-        { url: "https://tutkutuhafiye.com/urunler", title: "Tutku Tuhafiye" },
-      ]),
+      kimlik: { vergiNo: "1234567890", adres: "" },
+      dogrula: { resolveHost: async () => ["8.8.8.8"] },
+      fetcher: async (input: string) => {
+        const adres = String(input);
+        if (adres.includes("api.search.brave.com")) {
+          return aramaYaniti([
+            { url: "https://www.instagram.com/tutkutuhafiye", title: "Tutku Instagram" },
+            { url: "https://tutkutuhafiye.com/urunler", title: "Tutku Tuhafiye" },
+          ])();
+        }
+        return new Response("<html><title>Tutku Tuhafiye</title><body>Vergi No 1234567890</body></html>", {
+          status: 200,
+          headers: { "content-type": "text/html" },
+        });
+      },
     });
 
     expect(sonuc.durum).toBe("bulundu");
@@ -53,10 +75,21 @@ describe("firma resmi site arama", () => {
   it("alakasız alan adlarını eleyip bulunamadı döner", async () => {
     const sonuc = await firmaSitesiniAra("Berrak İç Giyim", {
       apiAnahtari: "test-anahtar",
-      fetcher: aramaYaniti([
-        { url: "https://www.ornekpazar.com/magaza", title: "Pazar yeri" },
-        { url: "https://www.baska-firma.com", title: "Başka firma" },
-      ]),
+      kimlik: { vergiNo: "1234567890", adres: "" },
+      dogrula: { resolveHost: async () => ["8.8.8.8"] },
+      fetcher: async (input: string) => {
+        const adres = String(input);
+        if (adres.includes("api.search.brave.com")) {
+          return aramaYaniti([
+            { url: "https://www.ornekpazar.com/magaza", title: "Pazar yeri" },
+            { url: "https://www.baska-firma.com", title: "Başka firma" },
+          ])();
+        }
+        return new Response("<html><title>Başka firma</title><body>Vergi No 9999999999</body></html>", {
+          status: 200,
+          headers: { "content-type": "text/html" },
+        });
+      },
     });
 
     expect(sonuc.durum).toBe("bulunamadi");

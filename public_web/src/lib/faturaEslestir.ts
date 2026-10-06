@@ -13,6 +13,7 @@ import {
   type TedarikciDijitalIzi,
 } from "@/lib/faturaDijitalIz";
 import { firmaSitesiniAra } from "@/lib/firmaArama";
+import { firmaSiteDurumuKur } from "@/lib/firmaSiteDurumu";
 import { siteFirmayaAitMi } from "@/lib/firmaDogrula";
 // Fatura satırını üretici kataloğuyla buluşturan TEK yer.
 //
@@ -44,7 +45,7 @@ export type SatirSonucu = "kanitli" | "eksik" | "celiski" | "iz-yok";
 export interface KatalogBilgisi {
   firma: string;
   kaynakFirma: string;
-  dayanak: "kod" | "barkod";
+  dayanak: "kod" | "barkod" | "ad";
   izinDurumu: "yok" | "bekliyor" | "var";
   resmiAd: string;
   marka: string;
@@ -56,8 +57,16 @@ export interface KatalogBilgisi {
 }
 
 export interface CeliskiBilgisi {
-  dayanak: "kod" | "barkod";
-  adaylar: Array<{ ad: string; kaynak: string }>;
+  dayanak: "kod" | "barkod" | "ad";
+  adaylar: Array<{
+    ad: string;
+    kaynak: string;
+    aciklama?: string;
+    gorseller?: string[];
+    kod?: string;
+    barkod?: string;
+    marka?: string;
+  }>;
 }
 
 export interface EslesmisFaturaSatiri extends HamFaturaSatiri {
@@ -216,16 +225,17 @@ export async function faturaSatirlariniDijitalIzle(
   // internette aratılır; resmi sitesi bulunursa aynı keşif oradan yürür.
   // Bulunamazsa akış durmaz — satırlar dürüstçe iz-yok/eksik döner.
   let tedarikciIz = tedarikciDijitalIziBul(tedarikciAdi, tedarikciSite);
-  if (tedarikciIz && !tedarikciIz.havuzda) {
+  if (tedarikciIz) {
     const dogrulama = await siteFirmayaAitMi(
       tedarikciIz.alan,
       { ad: tedarikciAdi, vergiNo: bagimliliklar.tedarikciKimligi?.vergiNo ?? "", adres: bagimliliklar.tedarikciKimligi?.adres ?? "" },
       { fetcher: bagimliliklar.fetcher, resolveHost: bagimliliklar.resolveHost },
     );
-    tedarikciIz = dogrulama.guc === "guclu" || dogrulama.guc === "orta"
+    tedarikciIz = dogrulama.guc === "guclu"
       ? { ...tedarikciIz, dogrulama }
       : null;
   }
+  let aramaKapali = false;
   if (!tedarikciIz && tedarikciAdi.trim().length >= 3) {
     const arama = await firmaSitesiniAra(tedarikciAdi, {
       ...(bagimliliklar.tedarikciKimligi ? { kimlik: bagimliliklar.tedarikciKimligi } : {}),
@@ -243,6 +253,8 @@ export async function faturaSatirlariniDijitalIzle(
         havuzda: false,
         ...(arama.dogrulama ? { dogrulama: arama.dogrulama } : {}),
       };
+    } else if (arama.durum === "kapali") {
+      aramaKapali = true;
     }
   }
   const tedarikciBelirtilmisAmaCozulememis = Boolean(tedarikciAdi.trim()) && !tedarikciIz;
@@ -282,6 +294,11 @@ export async function faturaSatirlariniDijitalIzle(
   }
 
   const markaAranan = await markaKaynaginda(sonuc, tedarikciIz, tedarikciAdi, bagimliliklar, aramaDurumu);
+  aramaDurumu.siteDurumu = firmaSiteDurumuKur({
+    firmaAdi: tedarikciAdi,
+    dogrulananAdres: tedarikciIz?.kaynak ?? null,
+    aramaKapali,
+  });
 
   return {
     satirlar: sonuclandir(sonuc, tedarikciIz, aramaDurumu, markaAranan),

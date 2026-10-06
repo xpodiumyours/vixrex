@@ -23,6 +23,20 @@ function satir(model: string, barkod = ""): HamFaturaSatiri {
 }
 
 const resolveHost = async () => ["8.8.8.8"];
+const faturaKimligi = { vergiNo: "1234567890", adres: "" };
+
+function izle(
+  satirlar: HamFaturaSatiri[],
+  tedarikci = "",
+  site = "",
+  bag: Parameters<typeof faturaSatirlariniDijitalIzle>[3] = {},
+) {
+  return faturaSatirlariniDijitalIzle(satirlar, tedarikci, site, {
+    resolveHost,
+    tedarikciKimligi: faturaKimligi,
+    ...bag,
+  });
+}
 
 function kaynakKimligiyle(fetcher: (input: string) => Promise<Response>) {
   return async (input: string) => {
@@ -30,12 +44,14 @@ function kaynakKimligiyle(fetcher: (input: string) => Promise<Response>) {
     const adlar: Record<string, string> = {
       "rastgelegida.example": "Rastgele Gıda", "cakisan.example": "Çakışan Site",
       "ornek-toptan.example": "Örnek Toptan", "goldfreshmutfak.com": "Goldfresh Mutfak",
+      "etigida.com.tr": "Eti Gıda",
     };
     const ad = adlar[url.hostname];
     if (ad && ["/", "/iletisim", "/contact", "/hakkimizda", "/about-us", "/kurumsal"].includes(url.pathname)) {
-      return new Response(`<html><head><title>${ad}</title></head><body>${ad}</body></html>`, {
-        headers: { "content-type": "text/html" },
-      });
+      return new Response(
+        `<html><head><title>${ad}</title></head><body>${ad} Vergi No 1234567890</body></html>`,
+        { headers: { "content-type": "text/html" } },
+      );
     }
     return fetcher(input);
   };
@@ -67,7 +83,7 @@ describe("fatura dinamik dijital iz", () => {
       );
     };
 
-    const sonuc = await faturaSatirlariniDijitalIzle(
+    const sonuc = await izle(
       [satir("GF-123")],
       "Goldfresh Mutfak",
       "",
@@ -75,6 +91,10 @@ describe("fatura dinamik dijital iz", () => {
     );
 
     expect(sonuc.tedarikciIz?.anahtar).toBe("goldfresh-mutfak");
+    expect(sonuc.aramaDurumu.siteDurumu).toEqual({
+      durum: "dogrulandi",
+      adres: "https://goldfreshmutfak.com",
+    });
     expect(sonuc.satirlar[0].katalog?.resmiAd).toBe("Dondurulmuş Ürün");
     expect(sonuc.satirlar[0].katalog?.kaynak).toBe(
       "https://goldfreshmutfak.com/products/dondurulmus-urun",
@@ -83,10 +103,102 @@ describe("fatura dinamik dijital iz", () => {
     expect(sonuc.satirlar[0].katalog?.gorseller).toEqual(["https://cdn.example/urun.jpg"]);
   });
 
+  it("kod tutmayinca siteden cekilen urun adina baglar", async () => {
+    const fetcher = async (input: string) => {
+      if (!input.includes("/products.json")) return new Response("{}", { status: 404 });
+      return new Response(
+        JSON.stringify({
+          products: [
+            {
+              title: "Dondurulmuş Bezelye",
+              vendor: "Goldfresh",
+              body_html: "<p>Bezelye açıklaması</p>",
+              handle: "bezelye",
+              images: [{ src: "https://cdn.example/bezelye.jpg" }],
+              variants: [{ sku: "BEZ-1", barcode: "", title: "Default Title" }],
+            },
+          ],
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      );
+    };
+
+    const sonuc = await izle(
+      [{ ...satir("YOK-999"), ad: "Dondurulmuş Bezelye 1 kg" }],
+      "Goldfresh Mutfak",
+      "",
+      { fetcher: kaynakKimligiyle(fetcher), resolveHost },
+    );
+
+    expect(sonuc.satirlar[0].sonuc).toBe("kanitli");
+    expect(sonuc.satirlar[0].katalog?.dayanak).toBe("ad");
+    expect(sonuc.satirlar[0].katalog?.resmiAd).toBe("Dondurulmuş Bezelye");
+    expect(sonuc.satirlar[0].katalog?.gorseller).toEqual(["https://cdn.example/bezelye.jpg"]);
+  });
+
+  it("iki yakin urun adinda kendiliginden baglamaz", async () => {
+    const fetcher = async (input: string) => {
+      if (!input.includes("/products.json")) return new Response("{}", { status: 404 });
+      return new Response(
+        JSON.stringify({
+          products: ["Dondurulmuş Bezelye", "Dondurulmuş Bezelye Ekstra"].map((title, sira) => ({
+            title,
+            vendor: "Goldfresh",
+            handle: `bezelye-${sira}`,
+            images: [{ src: `https://cdn.example/bezelye-${sira}.jpg` }],
+            variants: [{ sku: `BEZ-${sira}`, barcode: "", title: "Default Title" }],
+          })),
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      );
+    };
+
+    const sonuc = await izle(
+      [{ ...satir("YOK-999"), ad: "Dondurulmuş Bezelye" }],
+      "Goldfresh Mutfak",
+      "",
+      { fetcher: kaynakKimligiyle(fetcher), resolveHost },
+    );
+
+    expect(sonuc.satirlar[0].sonuc).toBe("celiski");
+    expect(sonuc.satirlar[0].katalog).toBeNull();
+    expect(sonuc.satirlar[0].celiski?.adaylar).toHaveLength(2);
+    expect(sonuc.satirlar[0].celiski?.adaylar.every((aday) => Array.isArray(aday.gorseller))).toBe(true);
+  });
+
+  it("listede adi duran firmanin sitesi baska firmaya aitse baglanmaz", async () => {
+    const gidilen: string[] = [];
+    const fetcher = async (input: string) => {
+      gidilen.push(input);
+      const yol = new URL(input).pathname;
+      if (["/", "/iletisim", "/contact", "/hakkimizda", "/about-us", "/kurumsal"].includes(yol)) {
+        return new Response("<html><head><title>Bambaşka Firma</title></head><body>Bambaşka Firma</body></html>", {
+          status: 200,
+          headers: { "content-type": "text/html" },
+        });
+      }
+      return new Response(
+        JSON.stringify({ products: [{ title: "Yanlış ürün", variants: [{ sku: "GF-123" }] }] }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      );
+    };
+
+    const sonuc = await izle([satir("GF-123")], "Goldfresh Mutfak", "", {
+      fetcher,
+      resolveHost,
+      firmaArama: { apiAnahtari: "" },
+    });
+
+    expect(sonuc.tedarikciIz).toBeNull();
+    expect(sonuc.satirlar[0].katalog).toBeNull();
+    expect(sonuc.aramaDurumu.siteDurumu?.durum).toBe("arama_kapali");
+    expect(gidilen.some((adres) => adres.includes("products.json"))).toBe(false);
+  });
+
   it("taninmayan tedarikci adi varken kod cakismasiyla baska firmaya baglanmaz", async () => {
     // Arama kapalı (anahtarsız) ve site ipucu yok: iz kurulmaz, satır
     // başka firmaya kilitlenmez.
-    const sonuc = await faturaSatirlariniDijitalIzle([satir("ELT1302")], "Rastgele Tedarikçi", "", {
+    const sonuc = await izle([satir("ELT1302")], "Rastgele Tedarikçi", "", {
       resolveHost,
       firmaArama: { apiAnahtari: "" },
     });
@@ -128,7 +240,7 @@ describe("fatura dinamik dijital iz", () => {
       return new Response("{}", { status: 404 });
     };
 
-    const sonuc = await faturaSatirlariniDijitalIzle([satir("ETI-001")], "Eti Gıda", "", {
+    const sonuc = await izle([satir("ETI-001")], "Eti Gıda", "", {
       fetcher: kaynakKimligiyle(fetcher),
       resolveHost,
       firmaArama: { apiAnahtari: "test-anahtar", fetcher },
@@ -164,7 +276,7 @@ describe("fatura dinamik dijital iz", () => {
       return new Response("{}", { status: 404 });
     };
 
-    const sonuc = await faturaSatirlariniDijitalIzle(
+    const sonuc = await izle(
       [satir("ELT1302")],
       "Rastgele Gıda",
       "https://rastgelegida.example",
@@ -205,7 +317,7 @@ describe("fatura dinamik dijital iz", () => {
       return new Response("{}", { status: 404 });
     };
 
-    const sonuc = await faturaSatirlariniDijitalIzle(
+    const sonuc = await izle(
       [satir("ORTAK-1")],
       "Çakışan Site",
       "https://cakisan.example",
@@ -230,7 +342,7 @@ describe("fatura dinamik dijital iz", () => {
   it("kaynakta hicbir yerde bulunamayan kod iz bulunamadı sonucunu verir", async () => {
     const fetcher = async (input: string) => kaynakKimligiyle(async () => new Response("{}", { status: 404 }))(input);
 
-    const sonuc = await faturaSatirlariniDijitalIzle(
+    const sonuc = await izle(
       [satir("YOK1302")],
       "Örnek Toptan",
       "https://ornek-toptan.example",
@@ -246,7 +358,7 @@ describe("fatura dinamik dijital iz", () => {
   it("kodu olmayan ve markasi gecmeyen satir eksik bilgi sorar", async () => {
     const fetcher = async (input: string) => kaynakKimligiyle(async () => new Response("{}", { status: 404 }))(input);
 
-    const sonuc = await faturaSatirlariniDijitalIzle(
+    const sonuc = await izle(
       [{ ...satir(""), ad: "Bilinmeyen Ürün" }],
       "Örnek Toptan",
       "https://ornek-toptan.example",
@@ -261,7 +373,7 @@ describe("fatura dinamik dijital iz", () => {
   it("faturada baska bir havuz firmasinin markasi geciyorsa satiri eksik diye isaretler ve ayrimi soyler", async () => {
     const fetcher = async (input: string) => kaynakKimligiyle(async () => new Response("{}", { status: 404 }))(input);
 
-    const sonuc = await faturaSatirlariniDijitalIzle(
+    const sonuc = await izle(
       [{ ...satir(""), ad: "Aycenk Gıda Ayçiçek Yağı 1 L" }],
       "Örnek Toptan",
       "https://ornek-toptan.example",
@@ -291,7 +403,7 @@ describe("fatura dinamik dijital iz", () => {
       return new Response("{}", { status: 404 });
     };
 
-    const sonuc = await faturaSatirlariniDijitalIzle(
+    const sonuc = await izle(
       [satir("ABC-123")],
       "Örnek Toptan",
       "https://ornek-toptan.example",
@@ -350,7 +462,7 @@ describe("hedefli arama ve erişim durumu", () => {
       return yanit({}, 404);
     };
 
-    const sonuc = await faturaSatirlariniDijitalIzle([satir("GF-777")], "Goldfresh Mutfak", "", {
+    const sonuc = await izle([satir("GF-777")], "Goldfresh Mutfak", "", {
       fetcher: kaynakKimligiyle(fetcher),
       resolveHost,
     });
@@ -365,7 +477,7 @@ describe("hedefli arama ve erişim durumu", () => {
     };
     const durum = { erisimHatasi: false, sinirDoldu: false };
 
-    const sonuc = await faturaSatirlariniDijitalIzle([satir("GF-123")], "Goldfresh Mutfak", "", {
+    const sonuc = await izle([satir("GF-123")], "Goldfresh Mutfak", "", {
       fetcher: kaynakKimligiyle(fetcher),
       resolveHost,
       durum,
@@ -381,7 +493,7 @@ describe("hedefli arama ve erişim durumu", () => {
     const fetcher = async () => yanit({ products: [] });
     const durum = { erisimHatasi: false, sinirDoldu: false };
 
-    const sonuc = await faturaSatirlariniDijitalIzle([satir("GF-123")], "Goldfresh Mutfak", "", {
+    const sonuc = await izle([satir("GF-123")], "Goldfresh Mutfak", "", {
       fetcher: kaynakKimligiyle(fetcher),
       resolveHost,
       durum,
@@ -423,7 +535,7 @@ describe("çok markalı toptancı faturası", () => {
       return new Response("{}", { status: 404 });
     };
 
-    const sonuc = await faturaSatirlariniDijitalIzle(
+    const sonuc = await izle(
       [{ ...satir("GF-123"), marka: "Goldfresh" }],
       "Örnek Toptan",
       "https://ornek-toptan.example",
@@ -439,7 +551,7 @@ describe("çok markalı toptancı faturası", () => {
   it("markanın kaynağında ürün yoksa 'markanın kaynağında bulunamadı' yazılır", async () => {
     const fetcher = async (input: string) => kaynakKimligiyle(async () => new Response("{}", { status: 404 }))(input);
 
-    const sonuc = await faturaSatirlariniDijitalIzle(
+    const sonuc = await izle(
       [{ ...satir("GF-999"), marka: "Goldfresh Mutfak" }],
       "Örnek Toptan",
       "https://ornek-toptan.example",
@@ -457,7 +569,7 @@ describe("çok markalı toptancı faturası", () => {
       return new Response("{}", { status: 404 });
     };
 
-    await faturaSatirlariniDijitalIzle(
+    await izle(
       [{ ...satir("GF-999"), marka: "Goldfresh" }],
       "Goldfresh Mutfak",
       "",
