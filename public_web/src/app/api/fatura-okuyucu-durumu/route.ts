@@ -13,5 +13,5 @@ import { NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  return NextResponse.json({ hazir: Boolean(process.env.OPENAI_API_KEY) });
+  return NextResponse.json({ hazir: Boolean(process.env.OPENROUTER_API_KEY) });
 }

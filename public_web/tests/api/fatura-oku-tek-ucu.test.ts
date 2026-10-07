@@ -106,12 +106,12 @@ function istek(args: { slug?: string; editToken?: string; dosyaVarMi?: boolean }
 
 process.env.SUPABASE_URL = "https://proje.supabase.co";
 process.env.SUPABASE_SERVICE_ROLE_KEY = "service-role-test-anahtari";
-process.env.OPENAI_API_KEY = "test-okuyucu-anahtari";
+process.env.OPENROUTER_API_KEY = "test-okuyucu-anahtari";
 
 function siteyiAyiranOkuma(govde: unknown) {
   const okuma = vi.fn(async (url: string) => {
     const adres = String(url);
-    if (adres.includes("api.openai.com")) return okuyucuCevabi(govde);
+    if (adres.includes("openrouter.ai/api/v1/responses")) return okuyucuCevabi(govde);
     if (adres.includes("sehermensucat.com")) {
       return new Response(
         "<html><head><title>Seher Mensucat</title></head><body>Seher Mensucat 1234567890 İstanbul</body></html>",
@@ -195,9 +195,9 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(govde.tedarikciSite).toBe("sehermensucat.com");
     expect(govde.satirlar[0].katalog).toBeNull();
     expect(govde.satirlar[0].sonuc).toBe("eksik");
-    const cagri = vi.mocked(fetch).mock.calls.find((satir) => String(satir[0]).includes("api.openai.com"));
+    const cagri = vi.mocked(fetch).mock.calls.find((satir) => String(satir[0]).includes("openrouter.ai/api/v1/responses"));
     const istekGovdesi = JSON.parse(String((cagri?.[1] as RequestInit).body));
-    expect(istekGovdesi.model).toBe("gpt-5.6-luna");
+    expect(istekGovdesi.model).toBe("openai/gpt-5.6-luna");
     expect(istekGovdesi.reasoning.effort).toBe("none");
     expect(istekGovdesi.text.format.strict).toBe(true);
     expect(istekGovdesi.input[0].content[1].detail).toBe("original");
@@ -206,11 +206,12 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     const soru = String(istekGovdesi.input[0].content[0].text);
     expect(soru).not.toContain("asil urun fotografi");
     expect(soru).toContain("baska yerden tamamlama");
-    const okumaCagrilari = vi.mocked(fetch).mock.calls.filter((satir) => String(satir[0]).includes("api.openai.com"));
+    const okumaCagrilari = vi.mocked(fetch).mock.calls.filter((satir) => String(satir[0]).includes("openrouter.ai/api/v1/responses"));
     const arama = JSON.parse(String((okumaCagrilari[1]?.[1] as RequestInit).body));
     expect(arama.reasoning.effort).toBe("low");
-    expect(arama.tools[0].filters.allowed_domains).toEqual(["sehermensucat.com"]);
-    expect(arama.tools[0].search_content_types).toEqual(["text", "image"]);
+    expect(arama.tools[0].type).toBe("openrouter:web_search");
+    expect(arama.tools[0].parameters.allowed_domains).toEqual(["sehermensucat.com"]);
+    expect(arama.tools[0].parameters.engine).toBe("native");
   });
 
   it("modelin yazdığı fotoğraf adresi kart kurmaz", async () => {
@@ -242,7 +243,7 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     const gorsel = "https://cdn.sehermensucat.com/elt1302.jpg";
     vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
       const adres = String(url);
-      if (adres.includes("api.openai.com")) {
+      if (adres.includes("openrouter.ai/api/v1/responses")) {
         const istekGovdesi = JSON.parse(String(init?.body ?? "{}"));
         if (istekGovdesi.tools) {
           return new Response(JSON.stringify({
@@ -364,7 +365,7 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(cevap.status).toBe(422);
     expect(govde.hata).toContain("Fotoğraf tutmadı");
     expect(mocks.kaydet).not.toHaveBeenCalled();
-    const fotografOkuma = okuma.mock.calls.filter((cagri) => String(cagri[0]).includes("api.openai.com"));
+    const fotografOkuma = okuma.mock.calls.filter((cagri) => String(cagri[0]).includes("openrouter.ai/api/v1/responses"));
     expect(fotografOkuma).toHaveLength(1);
   });
 
