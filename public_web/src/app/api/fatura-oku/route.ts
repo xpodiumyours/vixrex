@@ -5,10 +5,11 @@ import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 import { verifyStoreEditToken } from "@/lib/instagramServer";
 import { fingerprintClient, getClientIp } from "@/lib/rentDemoSecurity";
 import { belgeGercegiUyuyorMu } from "@/lib/faturaSatirAyikla";
-import { faturaSatirlariniDijitalIzle, sonucOzeti, type HamFaturaSatiri } from "@/lib/faturaEslestir";
+import { eslesmeyenSatir, siteKartiniUygula, sonucOzeti, type EslesmisFaturaSatiri, type HamFaturaSatiri } from "@/lib/faturaEslestir";
 import { ayniAlisverisAdaylari, belgeParmakIzi, islemKaydet } from "@/lib/faturaIslemKaydi";
 import { faturaTaslaklari } from "@/lib/faturaTaslagi";
 import { faturayiOku, goruntuyuSinirla, type GoruSatiri } from "@/lib/faturaGoru";
+import { kartaGirecekGorsel } from "@/lib/faturaGorsel";
 import { bugunkuMaliyetUsd, gunlukTavanDolduMu, kullanimKaydet } from "@/lib/faturaMaliyet";
 import { islemiYukle, islemYaniti, parmakIzindenIslemBul } from "@/lib/faturaIslemOku";
 
@@ -20,7 +21,7 @@ import { islemiYukle, islemYaniti, parmakIzindenIslemBul } from "@/lib/faturaIsl
 //
 // Zincir: görüntü → faturaGoru.ts (OpenAI/gpt-5.6-luna, katı şema) →
 // faturaSatirAyikla.ts (belge gerçeği doğrulaması) → faturaEslestir.ts
-// (gerçek üretici kataloğu). Tutmayan okuma vitrine yazılmaz.
+// (modelin site fotoğrafı, açıklaması ve sayfa adresi). Tutmayan okuma vitrine yazılmaz.
 // (Eski "vixrex-fatura-goru" kenar fonksiyonu ve Kilo zinciri 2026-10-04'te
 // kaldırıldı — ikinci okuma beyniydi. OpenRouter bu hattan 2026-10-06'da çıktı.)
 // Hiçbir aşama ürün oluşturmaz veya yayınlamaz — o /api/products/batch
@@ -218,6 +219,9 @@ export async function POST(request: NextRequest) {
         adet: satir.adet,
         alisBirimFiyat: satir.birimFiyat,
         satirToplam: satir.tutar,
+        siteAciklama: satir.siteAciklama,
+        siteGorsel: satir.siteGorsel,
+        siteSayfa: satir.siteSayfa,
         guven:
           [satir.model, satir.ad, satir.barkod, satir.beden, satir.adet !== null, satir.birimFiyat !== null]
             .filter(Boolean).length / 6,
@@ -257,15 +261,13 @@ export async function POST(request: NextRequest) {
     }
     const belgeUyarisi = null;
 
-    // Esnafın site ipucu: OCR siteyi okuyamadıysa keşif buradan yürür.
     const etkinSite = sonTedarikciSite || siteIpucu;
 
-    const { satirlar, tedarikciIz, aramaDurumu } = await faturaSatirlariniDijitalIzle(
-      sonSatirlar,
-      sonTedarikci,
-      etkinSite,
-      { tedarikciKimligi: { vergiNo: sonTedarikciVergiNo, adres: sonTedarikciAdres } },
-    );
+    const satirlar: EslesmisFaturaSatiri[] = [];
+    for (const satir of sonSatirlar) {
+      const gorsel = await kartaGirecekGorsel(satir.siteGorsel ?? "");
+      satirlar.push(siteKartiniUygula(eslesmeyenSatir({ ...satir, siteGorsel: gorsel })));
+    }
 
     const kayitGirdisi = {
       slug: ownerSlug,
@@ -276,8 +278,8 @@ export async function POST(request: NextRequest) {
       tedarikciVergiNo: sonTedarikciVergiNo,
       tedarikciAdres: sonTedarikciAdres,
       tedarikciSite: etkinSite,
-      tedarikciIz,
-      aramaDurumu,
+      tedarikciIz: null,
+      aramaDurumu: { erisimHatasi: false, sinirDoldu: false },
       satirlar,
       belgeUyarisi,
       ...sonBelge,

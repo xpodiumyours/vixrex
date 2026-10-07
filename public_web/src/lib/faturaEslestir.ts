@@ -34,6 +34,9 @@ export interface HamFaturaSatiri {
   alisBirimFiyat: number | null;
   satirToplam: number | null;
   guven: number;
+  siteAciklama?: string;
+  siteGorsel?: string;
+  siteSayfa?: string;
 }
 
 /**
@@ -82,6 +85,36 @@ export interface EslesmisFaturaSatiri extends HamFaturaSatiri {
 
 export function eslesmeyenSatir(satir: HamFaturaSatiri): EslesmisFaturaSatiri {
   return { ...satir, katalog: null, sonuc: "eksik" };
+}
+
+export function siteKartiniUygula(satir: EslesmisFaturaSatiri): EslesmisFaturaSatiri {
+  const aciklama = (satir.siteAciklama ?? "").trim();
+  const gorsel = (satir.siteGorsel ?? "").trim();
+  const sayfa = (satir.siteSayfa ?? "").trim();
+  if (aciklama && gorsel.startsWith("https://") && sayfa.startsWith("https://")) {
+    return {
+      ...satir,
+      sonuc: "kanitli",
+      katalog: {
+        firma: satir.katalog?.firma ?? "",
+        kaynakFirma: satir.katalog?.kaynakFirma ?? "",
+        dayanak: satir.katalog?.dayanak === "barkod" ? "barkod" : "kod",
+        izinDurumu: satir.katalog?.izinDurumu ?? "yok",
+        resmiAd: satir.katalog?.resmiAd || satir.ad,
+        marka: satir.katalog?.marka || satir.marka || "",
+        aciklama,
+        gorseller: [gorsel],
+        gorselAdaylari: [gorsel],
+        kaynak: sayfa,
+      },
+    };
+  }
+  if (satir.sonuc !== "kanitli" || !satir.katalog) return satir;
+  return {
+    ...satir,
+    sonuc: "eksik",
+    katalog: { ...satir.katalog, aciklama: "", gorseller: [] },
+  };
 }
 
 export function faturaSatiriniEslestir(

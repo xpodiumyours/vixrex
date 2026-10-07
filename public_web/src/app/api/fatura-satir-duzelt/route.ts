@@ -1,9 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { sahipYetkisi } from "@/lib/faturaYetki";
-import { faturaSatirlariniDijitalIzle, type HamFaturaSatiri } from "@/lib/faturaEslestir";
+import { eslesmeyenSatir, siteKartiniUygula, type HamFaturaSatiri } from "@/lib/faturaEslestir";
 import { satirKanitKayitlari } from "@/lib/faturaIslemKaydi";
-import type { DijitalIzAramaDurumu } from "@/lib/faturaDijitalIz";
 
 export const dynamic = "force-dynamic";
 
@@ -54,7 +53,7 @@ export async function POST(request: NextRequest) {
 
   const is = await admin
     .from("invoice_jobs")
-    .select("id,supplier_name,supplier_tax_id,supplier_address,supplier_site,discovery_state")
+    .select("id,discovery_state")
     .eq("id", islemKimligi)
     .eq("store_id", yetki.storeId)
     .maybeSingle();
@@ -62,7 +61,7 @@ export async function POST(request: NextRequest) {
 
   const kayit = await admin
     .from("invoice_job_lines")
-    .select("id,raw_line,model,product_name,barcode,variant_name,size_text,brand,qty,unit_price,line_total,confidence,product_id,conflict_snapshot")
+    .select("id,raw_line,model,product_name,barcode,variant_name,size_text,brand,qty,unit_price,line_total,confidence,product_id,catalog_snapshot")
     .eq("job_id", islemKimligi)
     .eq("line_index", satirSirasi)
     .maybeSingle();
@@ -82,85 +81,19 @@ export async function POST(request: NextRequest) {
     guven: Number(kayit.data.confidence ?? 0),
   };
 
-  const secilenKaynak = alan(govde, "secilenKaynak", 500);
-  if (secilenKaynak) {
-    const anlik = kayit.data.conflict_snapshot as { adaylar?: Array<Record<string, unknown>> } | null;
-    const adaylar = Array.isArray(anlik?.adaylar) ? anlik.adaylar : [];
-    const aday = adaylar.find((oge) => String(oge.kaynak ?? "") === secilenKaynak);
-    const gorseller = Array.isArray(aday?.gorseller)
-      ? aday.gorseller.filter((gorsel): gorsel is string => typeof gorsel === "string" && gorsel.startsWith("https://"))
-      : null;
-    if (!aday || !gorseller || typeof aday.ad !== "string" || !aday.ad.trim()) {
-      return NextResponse.json({ hata: "Bu aday siteden gelen ürünler arasında yok." }, { status: 422 });
-    }
-    const firma = String(is.data.supplier_name ?? "");
-    const yeni = {
-      ...duzeltilmis,
-      katalog: {
-        firma,
-        kaynakFirma: firma,
-        dayanak: "ad" as const,
-        izinDurumu: "yok" as const,
-        resmiAd: aday.ad.slice(0, 300),
-        marka: typeof aday.marka === "string" ? aday.marka.slice(0, 120) : "",
-        aciklama: typeof aday.aciklama === "string" ? aday.aciklama.slice(0, 2000) : "",
-        gorseller,
-        gorselAdaylari: gorseller,
-        kaynak: secilenKaynak.slice(0, 500),
-      },
-      sonuc: "kanitli" as const,
-    };
-    const lineId = String(kayit.data.id);
-    const kayitlar = satirKanitKayitlari(lineId, yeni, "");
-    const { data: duzeltme, error: satirHatasi } = await admin.rpc("replace_invoice_line", {
-      p_store_id: yetki.storeId,
-      p_job_id: islemKimligi,
-      p_line_id: lineId,
-      p_line: {
-        model: duzeltilmis.model.slice(0, 60),
-        product_name: duzeltilmis.ad.slice(0, 300),
-        barcode: duzeltilmis.barkod.slice(0, 20),
-        brand: (duzeltilmis.marka ?? "").slice(0, 120),
-        outcome: "kanitli",
-        warning: "",
-        catalog_snapshot: yeni.katalog,
-        conflict_snapshot: null,
-      },
-      p_evidence: kayitlar.kanit,
-      p_candidates: kayitlar.aday,
-      p_rights: kayitlar.gorsel,
-      p_discovery: is.data.discovery_state ?? {},
-    });
-    if (satirHatasi || duzeltme?.success !== true) {
-      return NextResponse.json({ hata: "Seçim kaydedilemedi. Tekrar dene." }, { status: 500 });
-    }
-    return NextResponse.json({
-      tamam: true,
-      satirSirasi,
-      satir: yeni,
-      sahipDurumu: duzeltme.sahipDurumu ?? null,
-      onaySifirlandi: duzeltme.onaySifirlandi === true,
-      urunId: kayit.data.product_id ? String(kayit.data.product_id) : null,
-    });
-  }
-
-  const { satirlar, tedarikciIz, aramaDurumu } = await faturaSatirlariniDijitalIzle(
-    [duzeltilmis],
-    String(is.data.supplier_name ?? ""),
-    String(is.data.supplier_site ?? ""),
-    {
-      durum: is.data.discovery_state && typeof is.data.discovery_state === "object"
-        ? is.data.discovery_state as DijitalIzAramaDurumu : undefined,
-      tedarikciKimligi: {
-        vergiNo: String(is.data.supplier_tax_id ?? ""),
-        adres: String(is.data.supplier_address ?? ""),
-      },
-    },
-  );
-  const yeni = satirlar[0];
+  const kart = kayit.data.catalog_snapshot && typeof kayit.data.catalog_snapshot === "object" && !Array.isArray(kayit.data.catalog_snapshot)
+    ? kayit.data.catalog_snapshot as Record<string, unknown>
+    : null;
+  const gorseller = Array.isArray(kart?.gorseller) ? kart.gorseller : [];
+  const yeni = siteKartiniUygula(eslesmeyenSatir({
+    ...duzeltilmis,
+    siteAciklama: typeof kart?.aciklama === "string" ? kart.aciklama : "",
+    siteGorsel: typeof gorseller[0] === "string" ? gorseller[0] : "",
+    siteSayfa: typeof kart?.kaynak === "string" ? kart.kaynak : "",
+  }));
 
   const lineId = String(kayit.data.id);
-  const kayitlar = satirKanitKayitlari(lineId, yeni, tedarikciIz?.platform ?? "");
+  const kayitlar = satirKanitKayitlari(lineId, yeni, "");
   const { data: duzeltme, error: satirHatasi } = await admin.rpc("replace_invoice_line", {
     p_store_id: yetki.storeId,
     p_job_id: islemKimligi,
@@ -173,12 +106,12 @@ export async function POST(request: NextRequest) {
       outcome: yeni.sonuc,
       warning: (yeni.uyari ?? "").slice(0, 500),
       catalog_snapshot: yeni.katalog,
-      conflict_snapshot: yeni.celiski ?? null,
+      conflict_snapshot: null,
     },
     p_evidence: kayitlar.kanit,
     p_candidates: kayitlar.aday,
     p_rights: kayitlar.gorsel,
-    p_discovery: aramaDurumu ?? {},
+    p_discovery: is.data.discovery_state ?? {},
   });
   if (satirHatasi || duzeltme?.success !== true) return NextResponse.json({ hata: "Düzeltme kaydedilemedi. Tekrar dene." }, { status: 500 });
 

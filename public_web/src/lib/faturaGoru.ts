@@ -35,7 +35,7 @@ const CIKTI_DOLAR = 1.2 / 1_000_000;
 
 const SORU = [
   "Bu bir fatura tablosu. HER urun satirini oku. Yalniz JSON dondur.",
-  '{"tedarikci":"","tedarikci_vergi_no":"","tedarikci_adres":"","tedarikci_site":"","belge_turu":"","belge_no":"","belge_tarihi":"","satirlar":[{"ham_satir":"","model":"","ad":"","barkod":"","varyant":"","beden":"","marka":"","adet":0,"birim_fiyat":0,"tutar":0}],"toplam_adet":0,"toplam_tutar":0,"mal_bedeli":0,"kdv_tutari":0,"indirim_tutari":0,"odenecek_toplam":0}',
+  '{"tedarikci":"","tedarikci_vergi_no":"","tedarikci_adres":"","tedarikci_site":"","belge_turu":"","belge_no":"","belge_tarihi":"","satirlar":[{"ham_satir":"","model":"","ad":"","barkod":"","varyant":"","beden":"","marka":"","adet":0,"birim_fiyat":0,"tutar":0,"urun_aciklama":"","urun_gorsel":"","urun_sayfa":""}],"toplam_adet":0,"toplam_tutar":0,"mal_bedeli":0,"kdv_tutari":0,"indirim_tutari":0,"odenecek_toplam":0}',
   "1. Her satirda adet * birim_fiyat = tutar olmali.",
   "2. Satirlarin adet toplami = toplam_adet, tutar toplami = toplam_tutar.",
   "3. toplam_adet/toplam_tutar en alttaki 'Toplam' satirindan alinir.",
@@ -47,6 +47,8 @@ const SORU = [
   "9. belge_turu: belgede acikca yaziyorsa fatura, e-arsiv, irsaliye veya bilgi fisi; belge_no ve belge_tarihi yalniz belgede yaziyorsa doldur (tarih GG.AA.YYYY), tahmin etme.",
   "10. mal_bedeli, kdv_tutari, indirim_tutari ve odenecek_toplam belgede ayri ayri yaziyorsa ayri ayri doldur; yazmiyorsa null birak, hesaplayip uydurma.",
   "11. marka = urun satirinda ya da urun kodunun yaninda yazan marka adi; yazmiyorsa bos birak, faturayi kesen firmayi marka sanma, tahmin etme.",
+  "12. Her urun icin firmanin kendi sitesinde ara. urun_gorsel o sayfadaki asil urun fotografinin adresidir; kucuk resim, logo veya afis yazma. urun_aciklama o sayfada yazan aciklamadir. urun_sayfa o sayfanin adresidir. Bulamazsan ucunu de bos birak. Uydurma, cizme.",
+  "13. varyant faturada yazan renktir. Satirda renk yoksa ve urun sayfasinda renk yaziyorsa sayfadaki rengi yaz. beden faturada yazan bedendir. Satirda beden yoksa ve sayfada beden yaziyorsa sayfadaki bedeni yaz. Ikisi de yoksa bos birak.",
 ].join("\n");
 
 export interface GoruSatiri {
@@ -60,6 +62,9 @@ export interface GoruSatiri {
   adet: number | null;
   birimFiyat: number | null;
   tutar: number | null;
+  siteAciklama: string;
+  siteGorsel: string;
+  siteSayfa: string;
 }
 
 export interface GoruSonucu {
@@ -99,6 +104,18 @@ function metin(deger: unknown): string {
   return typeof deger === "string" ? deger.trim() : "";
 }
 
+function guvenliAdres(deger: unknown): string {
+  const adres = metin(deger);
+  if (!adres.startsWith("https://")) return "";
+  try {
+    const cozulen = new URL(adres);
+    if (cozulen.protocol !== "https:") return "";
+    return cozulen.toString();
+  } catch {
+    return "";
+  }
+}
+
 const SAYI_VEYA_BOS = { type: ["number", "null"] };
 const YAZI = { type: "string" };
 
@@ -134,7 +151,7 @@ const FATURA_SEMA = {
       items: {
         type: "object",
         additionalProperties: false,
-        required: ["ham_satir", "model", "ad", "barkod", "varyant", "beden", "marka", "adet", "birim_fiyat", "tutar"],
+        required: ["ham_satir", "model", "ad", "barkod", "varyant", "beden", "marka", "adet", "birim_fiyat", "tutar", "urun_aciklama", "urun_gorsel", "urun_sayfa"],
         properties: {
           ham_satir: YAZI,
           model: YAZI,
@@ -146,6 +163,9 @@ const FATURA_SEMA = {
           adet: SAYI_VEYA_BOS,
           birim_fiyat: SAYI_VEYA_BOS,
           tutar: SAYI_VEYA_BOS,
+          urun_aciklama: YAZI,
+          urun_gorsel: YAZI,
+          urun_sayfa: YAZI,
         },
       },
     },
@@ -198,6 +218,38 @@ function ciktiMetni(govde: { output_text?: unknown; output?: unknown }): string 
   return parcalar.join("");
 }
 
+export function aramaGorseliniDoldur(
+  satirlar: GoruSatiri[],
+  govde: { output?: unknown } | null,
+): GoruSatiri[] {
+  const bulunan: Array<{ gorsel: string; sayfa: string }> = [];
+  if (Array.isArray(govde?.output)) {
+    for (const oge of govde.output) {
+      const kayit = oge as { type?: unknown; results?: unknown };
+      if (kayit.type !== "web_search_call" || !Array.isArray(kayit.results)) continue;
+      for (const sonuc of kayit.results) {
+        const resim = sonuc as { type?: unknown; image_url?: unknown; source_website_url?: unknown };
+        if (resim.type !== "image_result") continue;
+        const gorsel = guvenliAdres(resim.image_url);
+        if (!gorsel) continue;
+        bulunan.push({ gorsel, sayfa: guvenliAdres(resim.source_website_url) });
+      }
+    }
+  }
+  let sira = 0;
+  return satirlar.map((satir) => {
+    if (satir.siteGorsel) return satir;
+    const aday = bulunan[sira];
+    if (!aday) return satir;
+    sira += 1;
+    return {
+      ...satir,
+      siteGorsel: aday.gorsel,
+      siteSayfa: satir.siteSayfa || aday.sayfa,
+    };
+  });
+}
+
 /**
  * Fotoğrafı okur. Hata durumunda `Error` fırlatır — çağıran uç kullanıcıya
  * ne olduğunu kendi diliyle söyler.
@@ -216,6 +268,8 @@ export async function faturayiOku(dataUrl: string): Promise<GoruSonucu> {
       model: GORU_MODELI,
       max_output_tokens: CIKTI_TOKEN_TAVANI,
       reasoning: { effort: "none" },
+      tools: [{ type: "web_search", search_content_types: ["text", "image"] }],
+      include: ["web_search_call.results"],
       text: {
         format: {
           type: "json_schema",
@@ -279,7 +333,7 @@ export async function faturayiOku(dataUrl: string): Promise<GoruSonucu> {
   // yüzden model yanlılıkla satıra karıştırmış olsa bile SİLİNİR. Satırın
   // geri kalanına dokunulmaz — OCR doğrulaması bozulmasın diye.
   // Ayrıntı ve kapsam: src/lib/faturaKisiselVeri.ts
-  const satirlar: GoruSatiri[] = hamSatirlar.map((girdi) => {
+  const satirlar: GoruSatiri[] = aramaGorseliniDoldur(hamSatirlar.map((girdi) => {
     const s = girdi as Record<string, unknown>;
     return {
       hamSatir: kisiselVeriTemizle(metin(s.ham_satir)),
@@ -292,8 +346,11 @@ export async function faturayiOku(dataUrl: string): Promise<GoruSonucu> {
       adet: sayi(s.adet),
       birimFiyat: sayi(s.birim_fiyat),
       tutar: sayi(s.tutar),
+      siteAciklama: metin(s.urun_aciklama),
+      siteGorsel: guvenliAdres(s.urun_gorsel),
+      siteSayfa: guvenliAdres(s.urun_sayfa),
     };
-  });
+  }), govde);
 
   return {
     tedarikci: metin(kok.tedarikci),

@@ -3,7 +3,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { sahipYetkisi } from "@/lib/faturaYetki";
 import { fingerprintClient, getClientIp } from "@/lib/rentDemoSecurity";
 import { belgeGercegiUyuyorMu, belgeOzetiniAyikla, hamMetniSatirlaraAyir, tedarikciAdiniAyikla } from "@/lib/faturaSatirAyikla";
-import { faturaSatirlariniDijitalIzle, type HamFaturaSatiri } from "@/lib/faturaEslestir";
+import { eslesmeyenSatir, siteKartiniUygula, type HamFaturaSatiri } from "@/lib/faturaEslestir";
 import { ayniAlisverisAdaylari, belgeParmakIzi, islemKaydet } from "@/lib/faturaIslemKaydi";
 import { islemiYukle, islemYaniti, parmakIzindenIslemBul } from "@/lib/faturaIslemOku";
 
@@ -61,8 +61,8 @@ export async function POST(request: NextRequest) {
     }
     const ozet = metin ? belgeOzetiniAyikla(metin) : { adet: null, toplam: null };
     const uyum = belgeGercegiUyuyorMu(hamSatirlar, ozet);
-    const iz = await faturaSatirlariniDijitalIzle(hamSatirlar, tedarikci, tedarikciSite);
-    const girdi = { slug: yetki.slug, parmakIzi, belgeAdedi: ozet.adet, belgeToplami: ozet.toplam, tedarikci, tedarikciVergiNo: "", tedarikciAdres: "", tedarikciSite, tedarikciIz: iz.tedarikciIz, satirlar: iz.satirlar, aramaDurumu: iz.aramaDurumu, belgeUyarisi: uyum.uyumlu ? null : uyum.sebep };
+    const satirlar = hamSatirlar.map((satir) => siteKartiniUygula(eslesmeyenSatir(satir)));
+    const girdi = { slug: yetki.slug, parmakIzi, belgeAdedi: ozet.adet, belgeToplami: ozet.toplam, tedarikci, tedarikciVergiNo: "", tedarikciAdres: "", tedarikciSite, tedarikciIz: null, satirlar, aramaDurumu: { erisimHatasi: false, sinirDoldu: false }, belgeUyarisi: uyum.uyumlu ? null : uyum.sebep };
     const islemKimligi = await islemKaydet(girdi);
     if (!islemKimligi) return NextResponse.json({ hata: "Fatura kaydedilemedi. Tekrar dene." }, { status: 503 });
     const kayit = await islemiYukle(admin, yetki.storeId, islemKimligi);

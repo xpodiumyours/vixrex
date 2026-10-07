@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // /api/fatura-oku — Vixrex'in TEK okuma ucu. Görüntü → OpenAI gpt-5.6-luna
-// → katı JSON → belge aritmetiği → katalog eşleştirme.
+// → katı JSON → belge aritmetiği → modelin site fotoğrafı, açıklaması ve sayfa adresi.
 //
 // Bu test gerçek OpenAI'ye bağlanmaz (fetch mock'lanır); zincirin kendisinin
 // doğru sırayla çalıştığını ve iki kimlik yolunun da (çerez + editToken)
@@ -173,7 +173,7 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     vi.stubGlobal("fetch", siteyiAyiranOkuma(TEK_SATIR));
   });
 
-  it("fotoğrafı okuyucuya gönderir, satırı ayırır, katalogla eşleştirir", async () => {
+  it("fotoğrafı okuyucuya gönderir, satırı ayırır, site alanı yoksa kart kurmaz", async () => {
     const cevap = await faturaOku(istek());
     const govde = await cevap.json();
 
@@ -187,12 +187,43 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(govde.tedarikciVergiNo).toBe("1234567890");
     expect(govde.tedarikciAdres).toBe("İstanbul");
     expect(govde.tedarikciSite).toBe("sehermensucat.com");
+    expect(govde.satirlar[0].katalog).toBeNull();
+    expect(govde.satirlar[0].sonuc).toBe("eksik");
     const cagri = vi.mocked(fetch).mock.calls.find((satir) => String(satir[0]).includes("api.openai.com"));
     const istekGovdesi = JSON.parse(String((cagri?.[1] as RequestInit).body));
     expect(istekGovdesi.model).toBe("gpt-5.6-luna");
     expect(istekGovdesi.reasoning.effort).toBe("none");
     expect(istekGovdesi.text.format.strict).toBe(true);
     expect(istekGovdesi.input[0].content[1].detail).toBe("high");
+    expect(istekGovdesi.tools[0].type).toBe("web_search");
+    expect(istekGovdesi.include).toContain("web_search_call.results");
+    const soru = String(istekGovdesi.input[0].content[0].text);
+    expect(soru).toContain("asil urun fotografi");
+    expect(soru).toContain("sayfada beden yaziyorsa");
+  });
+
+  it("hazır listede duran ürünün kartını modelin site fotoğrafından kurar", async () => {
+    vi.stubGlobal("fetch", siteyiAyiranOkuma({
+      ...TEK_SATIR,
+      satirlar: [{
+        ...TEK_SATIR.satirlar[0],
+        model: "ELT1001",
+        ad: "Faturadaki fanila",
+        urun_aciklama: "Sitede yazan açıklama",
+        urun_gorsel: "https://firma.example/urun.jpg",
+        urun_sayfa: "https://firma.example/urun",
+      }],
+    }));
+
+    const cevap = await faturaOku(istek());
+    const govde = await cevap.json();
+
+    expect(cevap.status).toBe(200);
+    expect(govde.satirlar[0].sonuc).toBe("kanitli");
+    expect(govde.satirlar[0].katalog.resmiAd).toBe("Faturadaki fanila");
+    expect(govde.satirlar[0].katalog.aciklama).toBe("Sitede yazan açıklama");
+    expect(govde.satirlar[0].katalog.gorseller).toEqual(["https://firma.example/urun.jpg"]);
+    expect(govde.satirlar[0].katalog.kaynak).toBe("https://firma.example/urun");
   });
 
   it("model ve barkod yoksa ürün adı bulunan satırı kaybetmez", async () => {
