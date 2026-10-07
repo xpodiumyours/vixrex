@@ -653,18 +653,14 @@ export function OwnerProductManager({
 
   return (
     <section className={onClose ? "" : "mt-8"} aria-labelledby="products-title" aria-busy={busy}>
-      {onClose && !showInvoice && !editing && (
-        <button type="button" onClick={onClose} disabled={busy} className="owner-button-secondary mb-4">Ürün yönetimini kapat</button>
-      )}
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-4 flex items-start justify-between gap-3">
         <div>
           <h2 id="products-title" className="text-xl font-bold text-[var(--owner-text)]">Ürün Yönetimi</h2>
           <p className="mt-1 text-sm text-[var(--owner-muted)]">Ürünlerini ve kategorilerini tek yerden yönet.</p>
         </div>
-        <div className="flex shrink-0 gap-2">
-          <button type="button" className="owner-button-secondary" onClick={secimModunuDegistir} disabled={busy}>{secimModu ? "Vazgeç" : "Seç"}</button>
-          <button type="button" className="owner-button-secondary" onClick={() => setKategoriAcik(true)} disabled={busy}>🏷️ Kategoriler</button>
-        </div>
+        {onClose && !showInvoice && !editing ? (
+          <button type="button" onClick={onClose} disabled={busy} aria-label="Kapat" className="owner-button-secondary flex h-9 w-9 shrink-0 items-center justify-center p-0 text-lg">×</button>
+        ) : null}
       </div>
 
       <input
@@ -711,6 +707,10 @@ export function OwnerProductManager({
               {cip.name}
             </button>
           ))}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button type="button" className="owner-button-secondary" onClick={secimModunuDegistir} disabled={busy}>{secimModu ? "Vazgeç" : "Seç"}</button>
+          <button type="button" className="owner-button-secondary" onClick={() => setKategoriAcik(true)} disabled={busy}>Kategoriler</button>
         </div>
       </div>
 
@@ -863,8 +863,8 @@ export function OwnerProductManager({
         ) : (
           <div className="mt-4 flex flex-col gap-2">
             <button type="button" className="owner-button-primary w-full" onClick={() => { setError(""); setSuccess(""); setShowBulkUpload(false); setFotografOneri(null); setEditing("new"); }} disabled={busy}>+ Yeni Ürün Ekle</button>
-            <button type="button" className="owner-button-secondary w-full" onClick={() => { setError(""); setSuccess(""); setShowBulkUpload(!showBulkUpload); setEditing(null); }} disabled={busy}>📄 Toplu Ürün Yükle</button>
-            <button type="button" className="owner-button-secondary w-full" onClick={() => { setError(""); setSuccess(""); setXmlAcik(true); }} disabled={busy}>🔗 XML ile Yükle</button>
+            <button type="button" className="owner-button-secondary w-full" onClick={() => { setError(""); setSuccess(""); setShowBulkUpload(!showBulkUpload); setEditing(null); }} disabled={busy}>Toplu Ürün Yükle</button>
+            <button type="button" className="owner-button-secondary w-full" onClick={() => { setError(""); setSuccess(""); setXmlAcik(true); }} disabled={busy}>XML ile Yükle</button>
           </div>
         )
       ) : null}

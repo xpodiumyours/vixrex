@@ -1,5 +1,7 @@
 "use client";
 
+import { VixrexAvatar } from "@/app/v/[slug]/components/VixrexAvatar";
+
 interface OwnerKatalogAsistaniProps {
   onFotografCikar: () => void;
   onFaturaCikar: () => void;
@@ -9,7 +11,6 @@ interface OwnerKatalogAsistaniProps {
 
 interface Kutucuk {
   anahtar: string;
-  ikon: string;
   baslik: string;
   aciklama: string;
   tiklama: () => void;
@@ -24,21 +25,18 @@ export function OwnerKatalogAsistani({
   const kutucuklar: Kutucuk[] = [
     {
       anahtar: "fotograf",
-      ikon: "📷",
       baslik: "Fotoğraftan çıkar",
       aciklama: "Fotoğraftan ad/kategori çıkar",
       tiklama: onFotografCikar,
     },
     {
       anahtar: "fatura",
-      ikon: "🧾",
       baslik: "Faturadan çıkar",
       aciklama: "Faturayı güvenli taslak kataloğa çevir",
       tiklama: onFaturaCikar,
     },
     {
       anahtar: "oneri",
-      ikon: "🤖",
       baslik: "Vixrex önerileri",
       aciklama: "Ürün başlıklarını iyileştir",
       tiklama: onBaslikOnerileri,
@@ -47,8 +45,8 @@ export function OwnerKatalogAsistani({
 
   return (
     <section className="rounded-2xl border border-[var(--owner-primary)]/20 bg-[var(--owner-bg-soft)] p-3 shadow-sm">
-      <div className="flex items-start gap-2">
-        <span aria-hidden="true" className="text-base text-[var(--owner-primary)]">✨</span>
+      <div className="flex items-center gap-2">
+        <VixrexAvatar size={42} decorative />
         <div>
           <p className="text-xs font-bold text-[var(--owner-text)]">Vixrex ile katalog oluştur</p>
           <p className="mt-0.5 text-[10px] leading-4 text-[var(--owner-muted)]">
@@ -64,8 +62,7 @@ export function OwnerKatalogAsistani({
               disabled={kutucuk.anahtar === "fotograf" && fotoYukleniyor}
               className="w-40 shrink-0 rounded-xl border border-[var(--owner-border)] bg-[var(--owner-bg)] p-2.5 text-left transition-colors hover:border-[var(--owner-primary)] disabled:opacity-60"
             >
-              <span aria-hidden="true" className="text-lg">{kutucuk.ikon}</span>
-              <p className="mt-1.5 text-[11px] font-bold text-[var(--owner-text)]">{kutucuk.baslik}</p>
+              <p className="text-[11px] font-bold text-[var(--owner-text)]">{kutucuk.baslik}</p>
               <p className="mt-0.5 text-[10px] leading-4 text-[var(--owner-muted)]">
                 {kutucuk.anahtar === "fotograf" && fotoYukleniyor ? "Fotoğraf okunuyor..." : kutucuk.aciklama}
               </p>
