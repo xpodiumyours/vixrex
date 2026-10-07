@@ -499,10 +499,6 @@ export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode 
                           <div className="space-y-4"><h3 className="text-[13px] font-black text-lp-text">Sık sorulanlar</h3><FaqEditor inline slug={store.slug} items={faqItems} onClose={() => { void onRefresh(); }} /></div>
                           <div className="space-y-4"><h3 className="text-[13px] font-black text-lp-text">Pazar yeri bağlantıları</h3><MarketplaceEditor inline slug={store.slug} links={marketplaceLinks} onClose={() => { void onRefresh(); }} /></div>
                           <Link href={`/v/${store.slug}/blog-yonetim`} className={`${editorButtonClass} flex items-center justify-center`}>Blog yönetimi</Link>
-                          <button type="button" className={`${editorButtonClass} w-full text-left`} onClick={() => setProductsOpen(true)}>
-                            <span className="block text-[15px] font-black">Ürünlerimi Yönet</span>
-                            <span className="mt-1 block text-[12px] font-medium text-lp-muted">Vitrininde sergileyeceğin ürünler ve kategoriler · {store.products?.length ?? 0} ürün</span>
-                          </button>
                         </div>
                       ) : null}
                       {section.title === "Konum ve saatler" ? <button type="button" onClick={() => void konumuAl()} disabled={locating} className={`${editorButtonClass} w-full`}>{locating ? "Konum alınıyor…" : "📍 Konumumu al (GPS)"}</button> : null}
@@ -512,6 +508,15 @@ export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode 
                 </section>
               );
             })}
+            <section className="border-b border-lp-border">
+              <button type="button" onClick={() => setProductsOpen(true)} className="flex min-h-[76px] w-full items-center gap-3 px-6 text-left hover:bg-lp-surface-soft/45">
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[16px] font-black">Ürünlerimi Yönet</span>
+                  <span className="mt-0.5 block text-[12px] font-semibold text-lp-muted">Vitrininde sergileyeceğin ürünler ve kategoriler · {store.products?.length ?? 0} ürün</span>
+                </span>
+                <span className="text-[12px] font-bold text-lp-muted">Aç</span>
+              </button>
+            </section>
           </div>
 
           <div id="yasal-yayin-bolumu" className="scroll-mt-6 px-6 py-6">
