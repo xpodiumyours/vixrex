@@ -37,6 +37,7 @@ export interface HamFaturaSatiri {
   siteAciklama?: string;
   siteGorsel?: string;
   siteSayfa?: string;
+  sayfaDogrulandi?: boolean;
 }
 
 /**
@@ -91,7 +92,7 @@ export function siteKartiniUygula(satir: EslesmisFaturaSatiri): EslesmisFaturaSa
   const aciklama = (satir.siteAciklama ?? "").trim();
   const gorsel = (satir.siteGorsel ?? "").trim();
   const sayfa = (satir.siteSayfa ?? "").trim();
-  if (aciklama && gorsel.startsWith("https://") && sayfa.startsWith("https://")) {
+  if (satir.sayfaDogrulandi === true && aciklama && gorsel.startsWith("https://") && sayfa.startsWith("https://")) {
     return {
       ...satir,
       sonuc: "kanitli",

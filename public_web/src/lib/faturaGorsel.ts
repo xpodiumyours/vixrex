@@ -157,6 +157,8 @@ export async function kaynakGorseliniDogrula(
 }
 
 const KART_REDDI = new Set<GorselRedSebebi>([
+  "erisilemedi",
+  "acilmadi",
   "gorsel-degil",
   "cok-buyuk",
   "cok-kucuk",
@@ -164,6 +166,83 @@ const KART_REDDI = new Set<GorselRedSebebi>([
   "bos",
   "urun-fotografi-degil",
 ]);
+
+function sadeMetin(deger: string): string {
+  return deger
+    .toLocaleLowerCase("tr-TR")
+    .replace(/ç/g, "c")
+    .replace(/ğ/g, "g")
+    .replace(/ı/g, "i")
+    .replace(/ö/g, "o")
+    .replace(/ş/g, "s")
+    .replace(/ü/g, "u");
+}
+
+function htmlMetni(html: string): string {
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export async function sayfadanUrunAciklamasi(
+  adres: string,
+  kimlik: { model: string; ad: string },
+  bagimliliklar: GorselBagimliliklari = {},
+): Promise<string> {
+  const fetcher = bagimliliklar.fetcher ?? fetch;
+  const resolveHost = bagimliliklar.resolveHost ?? varsayilanCoz;
+  let url: URL;
+  try {
+    url = new URL(adres);
+  } catch {
+    return "";
+  }
+  if (url.protocol !== "https:" || url.username || url.password || url.port) return "";
+  if (!(await hostGuvenliMi(url.hostname, resolveHost))) return "";
+
+  let yanit: Response;
+  try {
+    yanit = await fetcher(url.toString(), {
+      method: "GET",
+      redirect: "manual",
+      signal: AbortSignal.timeout(ZAMAN_ASIMI_MS),
+      headers: { accept: "text/html" },
+    });
+  } catch {
+    return "";
+  }
+  if (yanit.status !== 200) return "";
+  let html = "";
+  try {
+    html = await yanit.text();
+  } catch {
+    return "";
+  }
+  if (html.length > 1_000_000) html = html.slice(0, 1_000_000);
+
+  const meta = html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i)?.[1]
+    ?? html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["']description["']/i)?.[1]
+    ?? "";
+  const metaMetin = htmlMetni(meta);
+  const govde = htmlMetni(html);
+  const sadeGovde = sadeMetin(`${metaMetin} ${govde}`);
+  const anahtarlar = [kimlik.model, kimlik.ad]
+    .map((parca) => parca.trim())
+    .filter((parca) => parca.length >= 3);
+  const tutan = anahtarlar.find((parca) => sadeGovde.includes(sadeMetin(parca)));
+  if (!tutan) return "";
+
+  if (metaMetin && sadeMetin(metaMetin).includes(sadeMetin(tutan))) return metaMetin.slice(0, 500);
+
+  const yer = sadeGovde.indexOf(sadeMetin(tutan));
+  const bas = Math.max(0, yer - 80);
+  return govde.slice(bas, bas + 320).trim();
+}
 
 export async function kartaGirecekGorsel(
   adres: string,

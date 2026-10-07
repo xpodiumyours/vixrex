@@ -1,6 +1,6 @@
 # Faturadan dijital vitrine — Master plan
 
-> Tarihsel kayıt. Güncel iş listesi değildir. Telefon ekranı okuma ucuna bağlıdır. Yayın kapısının çalışan tanımı `supabase/migrations/20261006180000_fatura_kart_katmanlari.sql` dosyasındadır.
+> Tarihsel kayıt. Güncel iş listesi değildir. 7 Ekim 2026 planı `docs/FATURA-URUN-KARTI-PLAN.md` dosyasındadır. Telefon ekranı okuma ucuna bağlıdır. Yayın kapısının çalışan tanımı `supabase/migrations/20261006180000_fatura_kart_katmanlari.sql` dosyasındadır.
 
 Tarih: 30 Eylül 2026
 
