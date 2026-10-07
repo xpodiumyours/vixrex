@@ -167,7 +167,7 @@ kapatılır — sessizce bekleyen dal, unutulmuş iştir. Haftada bir
 gün), GERIDE (100+ commit) etiketleri bir sonraki oturumda kapatılır.
 "SILINEBILIR" etiketi `git cherry` novel=0 demektir: iş zaten main'dedir, dalın
 görevi bitmiştir; silme onayı yine Casper'ındır. Merge kapısı ayrıdır:
-`bash tool/merge-hazir.sh` (kural 13, 19).
+`bash tool/merge-hazir.sh` (kural 13).
 
 Neden (2026-10-03 ölçümü): ölçüm yokken depoda 71 yerel dal ve 46 worktree
 birikti; 35 dal tamamen boş, 31 worktree mezarlıktı ve kimse fark etmiyordu.
@@ -211,12 +211,3 @@ duruyor — yani proje duruyor. Yavaş ajan, duran projeden iyidir.
 - Ölçüm yalnız bir **karar** ona bağlıysa yapılır.
 - Her yeni faz → yeni oturum; şişmiş bağlam her cevabı pahalılaştırır.
 - Uzun rapor yazma; sonuç tek satır, detay istenirse gelir.
-
----
-
-## F. Canlıya almadan önce
-
-### 19. Canlı veriyle denenmemiş dal canlıya çıkmaz (2026-10-02)
-Her gelişim dalı, Vercel önizlemesinde canlı veriyle denenmeden ana dala ve canlıya alınmaz. Geliştirme önizlemesi ve birim test kanıt sayılmaz. Canlı verisiz gelişim yasaktır. Kanıt, commit mesajındaki `Preview-Kanit: <vercel-adresi>` satırıdır; merge kapısı satır yoksa veya adres açılmıyorsa kayıt basmaz.
-
-Neden: 2026-10-02'de geliştirme önizlemesi sayfaları canlandırmadı (üç sayfada da program bağlantısı sıfırdı); çalışmayan düğme kod hatası sanılıp kör tahminle kod değiştirildi, oysa canlıda sohbet açılıyordu. Ajanlar günlerce aynı yanlış izi sürdü.

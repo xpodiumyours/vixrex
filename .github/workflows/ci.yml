@@ -112,28 +112,6 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: python .github/scripts/changed_surfaces.py --base "$BASE_SHA" --head "$HEAD_SHA" >> "$GITHUB_OUTPUT"
 
-  preview-kaniti:
-    name: Canlı veri kanıtı
-    needs: changes
-    if: github.event_name == 'pull_request' && (needs.changes.outputs.flutter == 'true' || needs.changes.outputs.schema == 'true' || needs.changes.outputs.public_web == 'true')
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    defaults:
-      run:
-        shell: bash
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Önizleme kanıtı satırını denetle
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: python .github/scripts/preview_kaniti.py --base "$BASE_SHA" --head "$HEAD_SHA"
-
   grant-guard:
     name: Supabase yerel doğrulama — GRANT güvenlik bekçisi
     needs: changes

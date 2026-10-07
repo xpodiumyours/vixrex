@@ -221,9 +221,6 @@ export async function POST(request: NextRequest) {
         adet: satir.adet,
         alisBirimFiyat: satir.birimFiyat,
         satirToplam: satir.tutar,
-        siteAciklama: satir.siteAciklama,
-        siteGorsel: satir.siteGorsel,
-        siteSayfa: satir.siteSayfa,
         guven:
           [satir.model, satir.ad, satir.barkod, satir.beden, satir.adet !== null, satir.birimFiyat !== null]
             .filter(Boolean).length / 6,
