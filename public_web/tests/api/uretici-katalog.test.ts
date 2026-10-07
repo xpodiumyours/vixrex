@@ -1,9 +1,11 @@
 import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
+import { faturaSatiriniEslestir } from "@/lib/faturaEslestir";
 import {
   gorselKapisi,
   katalogOzeti,
+  ureticiAramasi,
   ureticiUrunuBul,
   type UreticiUrunu,
 } from "@/lib/ureticiKatalog";
@@ -104,6 +106,30 @@ describe("üretici kataloğu — eşleştirme", () => {
     const barkoddan = ureticiUrunuBul({ model: "TER0101", barkod, firmaAnahtari: "seher-mensucat" });
     expect(barkoddan!.dayanak).toBe("barkod");
     expect(barkoddan!.urun.kod).toBe("ELT1302");
+  });
+
+  it("aynı kod iki firmadaysa sessizce elenmez, adayları döner", () => {
+    const arama = ureticiAramasi({ model: "ELT1001" });
+    expect(arama?.tur).toBe("celiski");
+    if (arama?.tur !== "celiski") return;
+    expect(arama.adaylar.length).toBeGreaterThanOrEqual(2);
+    expect(ureticiUrunuBul({ model: "ELT1001" })).toBeNull();
+    const satir = faturaSatiriniEslestir({
+      model: "ELT1001",
+      ad: "Elit Erkek Penye Atlet",
+      barkod: "",
+      varyant: "",
+      beden: "",
+      adet: 1,
+      alisBirimFiyat: 10,
+      satirToplam: 10,
+      guven: 1,
+    });
+    expect(satir.sonuc).toBe("celiski");
+    expect(satir.celiski?.adaylar.length).toBeGreaterThanOrEqual(2);
+    expect(ureticiUrunuBul({ model: "ELT1001", firmaAnahtari: "seher-mensucat" })?.firma.anahtar).toBe(
+      "seher-mensucat",
+    );
   });
 
   it("katalogda olmayan kod için tahmin üretmez", () => {

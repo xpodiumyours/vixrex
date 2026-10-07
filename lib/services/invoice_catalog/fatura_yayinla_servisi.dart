@@ -8,7 +8,7 @@ import 'package:vixrex/utils/failure.dart';
 /// Fatura taslaklarının AYRI Yayınla ucunu (`/api/fatura-yayinla`) çağırır.
 ///
 /// Web'deki sonuç ekranıyla AYNI kapı: taslak sunucuda tekrar okunur,
-/// kapılar (fiyat, fotoğraf, stok, kanıt durumu, stok onayı) yeniden
+/// kapılar (fiyat, fotoğraf, faturadaki adet, kanıt durumu) yeniden
 /// doğrulanır. Kapı kapalıysa ürün taslak kalır; telefondan "oldu" diye
 /// gösterilmez.
 ///

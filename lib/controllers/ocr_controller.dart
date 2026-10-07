@@ -209,24 +209,6 @@ class OcrController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Faturadaki adedi STOK olarak onayla.
-  ///
-  /// Faturadaki miktar alış adedidir; raf stoğu değildir. Esnaf bu düğmeye
-  /// basmadan adet ürün kartının stoğuna yazılmaz.
-  void confirmInvoiceStock(int index) {
-    if (_isSaving || _isProcessing || _isPublishing) return;
-    if (_result == null) return;
-    if (index < 0 || index >= _result!.invoiceDrafts.length) return;
-    final draft = _result!.invoiceDrafts[index];
-    _result!.invoiceDrafts[index] = draft.copyWith(
-      stockConfirmed: !draft.stockConfirmed,
-      merchantApproved: false,
-    );
-    _result!.products[index].isApproved = false;
-    _invoiceStateChanged();
-    notifyListeners();
-  }
-
   /// Ürünü reddet.
   void rejectProduct(int index) {
     if (_isSaving || _isProcessing || _isPublishing) return;
@@ -507,9 +489,9 @@ class OcrController extends ChangeNotifier {
           model: urun.sku,
           varyant: urun.variant,
           beden: urun.size,
-          stok: taslak.stockConfirmed ? urun.quantity : null,
+          stok: urun.quantity,
           onayli: urun.isApproved,
-          stokOnaylandi: taslak.stockConfirmed,
+          stokOnaylandi: urun.quantity != null,
           kartDurumu: taslak.etkinKartDurumu.wireValue,
           disKimlik:
               kod.isEmpty
@@ -685,7 +667,7 @@ class OcrController extends ChangeNotifier {
             ...owner,
             'satisFiyati': product.price?.toString() ?? '',
             'stok': product.quantity.toString(),
-            'stokOnaylandi': draft.stockConfirmed,
+            'stokOnaylandi': product.quantity != null,
             'kategoriId':
                 _invoiceCategories[index] ??
                 _uuidKategoriBul(_editorController!) ??
@@ -888,13 +870,11 @@ class OcrController extends ChangeNotifier {
     if (variant != null && variant.isNotEmpty) options['color'] = variant;
     if (size != null && size.isNotEmpty) options['size'] = size;
 
-    // Faturadaki adet stok DEĞİLDİR. Esnaf stoğu onaylamadıysa ürün kartına
-    // stok yazılmaz (bilinmiyor kalır); onayladıysa faturadaki adet yazılır.
     final faturaStok = detected.isInvoiceSource;
-    final stokOnayli = invoiceDraft?.stockConfirmed == true;
+    final taslakAdet = invoiceDraft?.quantity?.value?.round();
     final int? stokMiktari =
         faturaStok
-            ? (stokOnayli ? detected.documentQuantity : null)
+            ? (detected.quantity ?? detected.documentQuantity ?? taslakAdet)
             : detected.quantity;
 
     final variants =

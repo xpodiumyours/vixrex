@@ -2,7 +2,7 @@
  * Fatura metninden KİŞİSEL VERİ TEMİZLİĞİ (KVKK veri minimizasyonu).
  *
  * NEDEN VAR (2026-10-01):
- *   Fatura fotoğrafı OpenRouter'a gönderilip okunuyor. Fotoğrafta esnafın
+ *   Fatura fotoğrafı OpenAI'ye gönderilip okunuyor. Fotoğrafta esnafın
  *   MÜŞTERİSİNE ait kişisel veriler de var — T.C. Kimlik No ve vergi numarası.
  *   Sistem bu verilere İHTİYAÇ DUYMAZ:
  *     - Ürün eşleştirme yalnızca stok kodu/barkod ile yapılır

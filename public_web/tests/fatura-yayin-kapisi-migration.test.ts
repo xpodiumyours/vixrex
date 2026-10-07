@@ -63,3 +63,17 @@ describe("fatura yayin kapisi migration", () => {
     expect(migration).toMatch(/where id = p_product_id/);
   });
 });
+
+const katman = readFileSync(
+  resolve(repo, "supabase/migrations/20261006180000_fatura_kart_katmanlari.sql"),
+  "utf8",
+);
+
+describe("fatura kart katmanlari migration", () => {
+  it("ayri stok onayini zorunlu tutmaz, sablon ve fotoğraf netliğini tutar", () => {
+    expect(katman).toContain("sablonTam");
+    expect(katman).toContain("< 1200");
+    expect(katman).not.toContain("stokOnaylandi' is distinct from 'true'");
+    expect(katman).toContain("invoice_read_usage");
+  });
+});

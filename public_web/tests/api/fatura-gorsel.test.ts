@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import sharp from "sharp";
-import { kaynakGorseliniDogrula, kaynakGorselleriniHazirla } from "@/lib/faturaGorsel";
+import { kartaGirecekGorsel, kaynakGorseliniDogrula, kaynakGorselleriniHazirla } from "@/lib/faturaGorsel";
 
 const resolveHost = async () => ["8.8.8.8"];
 
@@ -32,12 +32,12 @@ describe("kaynak görseli doğrulama", () => {
   it("açılan, yeterince büyük gerçek fotoğrafı kabul eder", async () => {
     const adres = "https://firma.example/urun.jpg";
     const sonuc = await kaynakGorseliniDogrula(adres, {
-      fetcher: fetcherIle({ [adres]: { govde: await fotograf(900, 900) } }),
+      fetcher: fetcherIle({ [adres]: { govde: await fotograf(1200, 1200) } }),
       resolveHost,
     });
 
     expect(sonuc.tamam).toBe(true);
-    expect(sonuc.genislik).toBe(900);
+    expect(sonuc.genislik).toBe(1200);
   });
 
   it("kırık bağlantı, küçük görsel, boş görsel ve logo ürün fotoğrafı sayılmaz", async () => {
@@ -47,7 +47,7 @@ describe("kaynak görseli doğrulama", () => {
     const logo = "https://firma.example/assets/logo.jpg";
     const fetcher = fetcherIle({
       [kucuk]: { govde: await fotograf(200, 200) },
-      [bos]: { govde: await duzRenk(900, 900) },
+      [bos]: { govde: await duzRenk(1200, 1200) },
       [logo]: { govde: await fotograf(900, 900) },
     });
 
@@ -64,7 +64,7 @@ describe("kaynak görseli doğrulama", () => {
     const banner = "https://firma.example/kapak.jpg";
     const fetcher = fetcherIle({
       [html]: { govde: "<html>merhaba dunya bu bir gorsel degil</html>" },
-      [banner]: { govde: await fotograf(2400, 600) },
+      [banner]: { govde: await fotograf(4800, 1200) },
     });
 
     expect((await kaynakGorseliniDogrula(html, { fetcher, resolveHost })).sebep).toBe("gorsel-degil");
@@ -82,6 +82,20 @@ describe("kaynak görseli doğrulama", () => {
     });
 
     expect(sonuc.sebep).toBe("erisilemedi");
+  });
+
+  it("küçük, boş ve logo karttan düşer; açılamayan adres kartta kalır", async () => {
+    const buyuk = "https://firma.example/buyuk.jpg";
+    const kucuk = "https://firma.example/kucuk.jpg";
+    const kapali = "https://firma.example/kapali.jpg";
+    const fetcher = fetcherIle({
+      [buyuk]: { govde: await fotograf(1200, 1200) },
+      [kucuk]: { govde: await fotograf(200, 200) },
+    });
+    const bag = { fetcher, resolveHost };
+    expect(await kartaGirecekGorsel(buyuk, bag)).toBe(buyuk);
+    expect(await kartaGirecekGorsel(kucuk, bag)).toBe("");
+    expect(await kartaGirecekGorsel(kapali, bag)).toBe(kapali);
   });
 });
 
@@ -117,8 +131,8 @@ describe("kaynak görsellerini kendi depomuza alma", () => {
       adaylar: [iyi, bos],
       bagimliliklar: {
         fetcher: fetcherIle({
-          [iyi]: { govde: await fotograf(900, 900) },
-          [bos]: { govde: await duzRenk(900, 900) },
+          [iyi]: { govde: await fotograf(1200, 1200) },
+          [bos]: { govde: await duzRenk(1200, 1200) },
         }),
         resolveHost,
       },
@@ -143,7 +157,7 @@ describe("kaynak görsellerini kendi depomuza alma", () => {
       kaynakSayfa: "",
       adaylar: [iyi],
       bagimliliklar: {
-        fetcher: fetcherIle({ [iyi]: { govde: await fotograf(900, 900) } }),
+        fetcher: fetcherIle({ [iyi]: { govde: await fotograf(1200, 1200) } }),
         resolveHost,
       },
     });

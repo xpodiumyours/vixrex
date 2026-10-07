@@ -582,7 +582,7 @@ describe("çok markalı toptancı faturası", () => {
 
 
 function gercekPdf(metin = "MODEL: ABC123 Cotton shirt"): Uint8Array {
-  const resim = Buffer.alloc(800 * 800 * 3);
+  const resim = Buffer.alloc(1200 * 1200 * 3);
   for (let i = 0; i < resim.length; i++) resim[i] = (i * 37) % 255;
   const icerik = Buffer.from(`BT /F1 18 Tf 40 700 Td (${metin}) Tj ET q 400 0 0 400 40 250 cm /Im1 Do Q`);
   const nesneler = [
@@ -590,7 +590,7 @@ function gercekPdf(metin = "MODEL: ABC123 Cotton shirt"): Uint8Array {
     Buffer.from("<< /Type /Pages /Kids [3 0 R] /Count 1 >>"),
     Buffer.from("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 600 800] /Resources << /Font << /F1 4 0 R >> /XObject << /Im1 5 0 R >> >> /Contents 6 0 R >>"),
     Buffer.from("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"),
-    Buffer.concat([Buffer.from(`<< /Type /XObject /Subtype /Image /Width 800 /Height 800 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Length ${resim.length} >>\nstream\n`), resim, Buffer.from("\nendstream")]),
+    Buffer.concat([Buffer.from(`<< /Type /XObject /Subtype /Image /Width 1200 /Height 1200 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Length ${resim.length} >>\nstream\n`), resim, Buffer.from("\nendstream")]),
     Buffer.concat([Buffer.from(`<< /Length ${icerik.length} >>\nstream\n`), icerik, Buffer.from("\nendstream")]),
   ];
   const parcalar = [Buffer.from("%PDF-1.4\n")];
@@ -625,7 +625,7 @@ function pdfFetch(pdf: Uint8Array) {
 }
 
 describe("resmi PDF ve sosyal katalog baglantisi", () => {
-  it("gercek PDF metni ve 800px gomulu resmi kalite yoluna tasir", async () => {
+  it("gercek PDF metni ve 1200px gomulu resmi kalite yoluna tasir", async () => {
     const fetcher = pdfFetch(gercekPdf());
     const sonuc = await dinamikUrunIzleriniBul([{ model: "ABC123", barkod: "" }], resmiIz, { fetcher, resolveHost });
     const hedef = sonuc[0];
@@ -637,7 +637,7 @@ describe("resmi PDF ve sosyal katalog baglantisi", () => {
     expect(Buffer.from(bayt ?? []).subarray(0, 8)).toEqual(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
     const kalite = await kaynakGorseliniDogrula(adres, { fetcher, resolveHost });
     expect(kalite.tamam).toBe(true);
-    expect(kalite.genislik).toBe(800);
+    expect(kalite.genislik).toBe(1200);
     const url = new URL(adres);
     const hash = new URLSearchParams(url.hash.slice(1));
     hash.set("vixrex-sha256", "0".repeat(64));

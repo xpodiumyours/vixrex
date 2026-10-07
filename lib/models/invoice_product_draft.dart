@@ -228,7 +228,7 @@ class InvoiceProductDraft {
   /// Çelişkinin dayanağı: ürün kodu mu, barkod mu.
   final String? celiskiDayanak;
 
-  /// Faturadaki adet ÖNERİDİR; esnaf onaylamadan stok yerine geçmez.
+  /// Kayıtlı sahip durumundan gelir. Yayın kararı buna bakmaz; stok faturadaki adettir.
   final bool stockConfirmed;
 
   /// Aynı belgenin işlem kimliği (kalıcı kanıt kaydı).
@@ -294,9 +294,9 @@ class InvoiceProductDraft {
     return KartDurumu.eksik;
   }
 
-  /// Faturadaki miktar stok yerine geçmez: onay yoksa stok sayılmaz.
+  /// Faturadaki adet stoktur. Adet okunmadıysa stok yoktur.
   bool get canUseQuantityAsStock =>
-      stockConfirmed && quantity != null && (quantity!.value ?? 0) > 0;
+      quantity?.value != null && quantity!.value! >= 0;
 
   List<InvoiceImageCandidate> get selectedExternalImages => imageCandidates
       .where((item) => item.selected && item.isExternal)
@@ -417,7 +417,7 @@ class InvoiceProductDraft {
         .map((aday) => aday.toJson())
         .toList(growable: false),
     if (celiskiDayanak != null) 'conflict_basis': celiskiDayanak,
-    // Faturadaki adet öneri olarak taşınır; stok onayı ayrı alandır.
+    // Kayıtlı sahip durumundan gelir. Yayın kararı faturadaki adede bakar.
     'stock_confirmed': stockConfirmed,
     if (islemKimligi != null) 'operation_id': islemKimligi,
     'merchant_approved': merchantApproved,

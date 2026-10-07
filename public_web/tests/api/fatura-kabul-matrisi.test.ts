@@ -183,7 +183,6 @@ describe("kabul matrisi R1-R10 + R2a sunucu sozlesmesi", () => {
   it("R8: izinsiz yayin toleransi sifir — kapali kapidan hicbir satir cikmaz", async () => {
     const kapaliVaryantlar: Array<Record<string, unknown>> = [
       { ownerApproved: false },
-      { stokOnaylandi: false },
       { kartDurumu: "eksik" },
       { priceText: "" },
       { imageUrls: [] },

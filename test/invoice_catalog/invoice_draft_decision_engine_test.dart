@@ -52,7 +52,7 @@ void main() {
           isFalse,
         );
         expect(result.questions.any((q) => q.contains('Satış fiyatı')), isTrue);
-        expect(result.questions.any((q) => q.contains('stoğunu')), isTrue);
+        expect(result.questions.any((q) => q.contains('stoğu yok')), isTrue);
       },
     );
 
@@ -91,7 +91,7 @@ void main() {
     });
 
     test(
-      'guclu iz + izin + esnaf onayi + satis fiyati + stok onayi yayina hazirdir',
+      'guclu iz + izin + esnaf onayi + satis fiyati + faturadaki adet yayina hazirdir',
       () {
         final draft = InvoiceProductDraft(
           id: 'ready',
@@ -114,7 +114,14 @@ void main() {
           supplierIdentityStrength: EvidenceStrength.strong,
           productIdentityStrength: EvidenceStrength.strong,
           rightsStatus: RightsStatus.verifiedSupplierPermission,
-          stockConfirmed: true,
+          stockConfirmed: false,
+          quantity: EvidenceValue<num>(
+            value: 2,
+            sourceType: EvidenceSourceType.invoice,
+            sourceReference: 'fixture',
+            strength: EvidenceStrength.partial,
+            verifiedAt: now,
+          ),
           merchantApproved: true,
           salePrice: 149.90,
         );
@@ -128,7 +135,7 @@ void main() {
         expect(result.externalMediaBlocked, isFalse);
         expect(
           engine.evaluate(draft.copyWith(stockConfirmed: false)).canPublish,
-          isFalse,
+          isTrue,
         );
         expect(
           engine.evaluate(draft.copyWith(merchantApproved: false)).canPublish,
@@ -167,45 +174,35 @@ void main() {
       },
     );
 
-    test(
-      'faturadaki adet tek basina stok yerine gecmez: stok onayi yoksa yayin yok',
-      () {
-        final draft = InvoiceProductDraft(
-          id: 'stok-onaysiz',
-          rawSourceLine: 'TER0101 ... 18 AD 63,50 1143,00',
-          supplierName: textEvidence('Seher Mensucat'),
-          normalizedName: textEvidence('Tutku Erkek Penye Atlet'),
-          quantity: EvidenceValue<num>(
-            value: 18,
-            sourceType: EvidenceSourceType.invoice,
-            sourceReference: 'TER0101',
-            strength: EvidenceStrength.partial,
-            verifiedAt: now,
+    test('faturada adet okunmadiysa stok yoktur ve yayin yoktur', () {
+      final draft = InvoiceProductDraft(
+        id: 'stok-yok',
+        rawSourceLine: 'TER0101 ...',
+        supplierName: textEvidence('Seher Mensucat'),
+        normalizedName: textEvidence('Tutku Erkek Penye Atlet'),
+        imageCandidates: const [
+          InvoiceImageCandidate(
+            url: 'https://uretici.example/TER0101.jpg',
+            sourceType: EvidenceSourceType.officialProductPage,
+            sourceReference: 'https://uretici.example/TER0101',
+            strength: EvidenceStrength.strong,
+            rightsStatus: RightsStatus.verifiedSupplierPermission,
+            selected: true,
           ),
-          supplierIdentityStrength: EvidenceStrength.strong,
-          productIdentityStrength: EvidenceStrength.strong,
-          rightsStatus: RightsStatus.verifiedSupplierPermission,
-          merchantApproved: true,
-          salePrice: 149.90,
-        );
+        ],
+        supplierIdentityStrength: EvidenceStrength.strong,
+        productIdentityStrength: EvidenceStrength.strong,
+        rightsStatus: RightsStatus.verifiedSupplierPermission,
+        merchantApproved: true,
+        salePrice: 149.90,
+      );
 
-        final result = engine.evaluate(draft);
+      final result = engine.evaluate(draft);
 
-        expect(result.kartDurumu, KartDurumu.kanitli);
-        expect(result.canPrepareDraft, isTrue);
-        expect(result.canPublish, isFalse);
-        expect(
-          result.questions.any((q) => q.contains('öneri')),
-          isTrue,
-          reason: 'Faturadaki adedin oneri oldugu ve onaylanmasi soylenmeli',
-        );
-        expect(draft.canUseQuantityAsStock, isFalse);
-        expect(
-          draft.copyWith(stockConfirmed: true).canUseQuantityAsStock,
-          isTrue,
-        );
-      },
-    );
+      expect(result.canPublish, isFalse);
+      expect(result.questions.any((q) => q.contains('stoğu yok')), isTrue);
+      expect(draft.canUseQuantityAsStock, isFalse);
+    });
 
     test('ayni kod iki urune duserse eslesme kurulmaz, celiski gosterilir', () {
       final draft = InvoiceProductDraft(
