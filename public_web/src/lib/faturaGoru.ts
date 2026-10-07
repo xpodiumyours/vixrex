@@ -63,9 +63,6 @@ export interface GoruSatiri {
   adet: number | null;
   birimFiyat: number | null;
   tutar: number | null;
-  siteAciklama: string;
-  siteGorsel: string;
-  siteSayfa: string;
 }
 
 export interface GoruSonucu {
@@ -417,9 +414,6 @@ export async function faturayiOku(dataUrl: string): Promise<GoruSonucu> {
       adet: sayi(s.adet),
       birimFiyat: sayi(s.birim_fiyat),
       tutar: sayi(s.tutar),
-      siteAciklama: "",
-      siteGorsel: "",
-      siteSayfa: "",
     };
   });
 
