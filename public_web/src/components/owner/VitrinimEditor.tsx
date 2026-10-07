@@ -510,6 +510,7 @@ export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode 
             })}
             <section className="border-b border-lp-border">
               <button type="button" onClick={() => setProductsOpen(true)} className="flex min-h-[76px] w-full items-center gap-3 px-6 text-left hover:bg-lp-surface-soft/45">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-lp-border bg-lp-surface-soft text-[13px] font-bold text-lp-secondary">6</span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-[16px] font-black">Ürünlerimi Yönet</span>
                   <span className="mt-0.5 block text-[12px] font-semibold text-lp-muted">Vitrininde sergileyeceğin ürünler ve kategoriler · {store.products?.length ?? 0} ürün</span>
