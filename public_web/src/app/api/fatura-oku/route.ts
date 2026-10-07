@@ -171,7 +171,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (!process.env.OPENAI_API_KEY) {
+  if (!process.env.OPENROUTER_API_KEY) {
     return NextResponse.json({ hata: "Fatura okuyucu hazır değil." }, { status: 503 });
   }
 

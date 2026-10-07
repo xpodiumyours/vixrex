@@ -27,8 +27,8 @@ import { kisiselVeriTemizle } from "@/lib/faturaKisiselVeri";
 import { firmaSitesiniAra, resmiSiteSayilmaz } from "@/lib/firmaArama";
 import { alanAdiTemizle } from "@/lib/ureticiKatalog";
 
-const ADRES = "https://api.openai.com/v1/responses";
-export const GORU_MODELI = "gpt-5.6-luna";
+const ADRES = "https://openrouter.ai/api/v1/responses";
+export const GORU_MODELI = "openai/gpt-5.6-luna";
 export const CIKTI_TOKEN_TAVANI = 16384;
 export const UZUN_KENAR_SINIRI = 65535;
 const GIRDI_DOLAR = 0.2 / 1_000_000;
@@ -273,7 +273,7 @@ export async function satirSitesindeAra(girdi: {
   ad: string;
   barkod: string;
 }): Promise<SatirAramasi> {
-  const anahtar = process.env.OPENAI_API_KEY;
+  const anahtar = process.env.OPENROUTER_API_KEY;
   if (!anahtar) throw new Error("OKUYUCU_HAZIR_DEGIL");
   const alan = alanAdiTemizle(girdi.alan);
   if (!alan || resmiSiteSayilmaz(alan)) throw new Error("SITE_YOK");
@@ -291,9 +291,11 @@ export async function satirSitesindeAra(girdi: {
       max_output_tokens: 1024,
       reasoning: { effort: "low" },
       tools: [{
-        type: "web_search",
-        search_content_types: ["text", "image"],
-        filters: { allowed_domains: [alan] },
+        type: "openrouter:web_search",
+        parameters: {
+          engine: "native",
+          allowed_domains: [alan],
+        },
       }],
       include: ["web_search_call.results"],
       input: [{
@@ -325,7 +327,7 @@ export async function satirSitesindeAra(girdi: {
  * ne olduğunu kendi diliyle söyler.
  */
 export async function faturayiOku(dataUrl: string): Promise<GoruSonucu> {
-  const anahtar = process.env.OPENAI_API_KEY;
+  const anahtar = process.env.OPENROUTER_API_KEY;
   if (!anahtar) throw new Error("OKUYUCU_HAZIR_DEGIL");
 
   const cevap = await fetch(ADRES, {
