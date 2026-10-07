@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { siteKartiniUygula, type EslesmisFaturaSatiri } from "@/lib/faturaEslestir";
-import { aramaGorseliniDoldur, type GoruSatiri } from "@/lib/faturaGoru";
+import { satiraAitAramaGorseli } from "@/lib/faturaGoru";
 
 function satir(ek: Partial<EslesmisFaturaSatiri> = {}): EslesmisFaturaSatiri {
   return {
@@ -36,6 +36,7 @@ describe("site kartı", () => {
       siteAciklama: "Sitede yazan açıklama",
       siteGorsel: "https://firma.example/urun.jpg",
       siteSayfa: "https://firma.example/urun",
+      sayfaDogrulandi: true,
     }));
     expect(kart.sonuc).toBe("kanitli");
     expect(kart.katalog?.aciklama).toBe("Sitede yazan açıklama");
@@ -43,27 +44,17 @@ describe("site kartı", () => {
     expect(kart.katalog?.kaynak).toBe("https://firma.example/urun");
   });
 
-  it("site aramasındaki fotoğraf adresini boş satıra yazar", () => {
-    const bos: GoruSatiri = {
-      hamSatir: "ELT1302",
-      model: "ELT1302",
-      ad: "Fanila",
-      barkod: "",
-      varyant: "",
-      beden: "",
-      marka: "",
-      adet: 1,
-      birimFiyat: 10,
-      tutar: 10,
-      siteAciklama: "Sitede yazan açıklama",
-      siteGorsel: "",
-      siteSayfa: "",
-    };
-    const dolu = aramaGorseliniDoldur([bos], {
+  it("arama resmi yalnız kilitlenen firmanın sayfasından alınır", () => {
+    const govde = {
       output: [
         {
           type: "web_search_call",
           results: [
+            {
+              type: "image_result",
+              image_url: "https://baska.example/urun.jpg",
+              source_website_url: "https://baska.example/urun",
+            },
             {
               type: "image_result",
               image_url: "http://firma.example/urun.jpg",
@@ -71,15 +62,28 @@ describe("site kartı", () => {
             },
             {
               type: "image_result",
-              image_url: "https://firma.example/urun.jpg",
+              image_url: "https://cdn.example/urun.jpg",
               source_website_url: "https://firma.example/urun",
             },
           ],
         },
       ],
+    };
+    expect(satiraAitAramaGorseli("firma.example", govde)).toEqual({
+      gorsel: "https://cdn.example/urun.jpg",
+      sayfa: "https://firma.example/urun",
     });
-    expect(dolu[0].siteGorsel).toBe("https://firma.example/urun.jpg");
-    expect(dolu[0].siteSayfa).toBe("https://firma.example/urun");
+    expect(satiraAitAramaGorseli("sehermensucat.com", govde)).toBeNull();
+  });
+
+  it("sayfası doğrulanmamış site metni kart kurmaz", () => {
+    const kart = siteKartiniUygula(satir({
+      siteAciklama: "Sitede yazan açıklama",
+      siteGorsel: "https://firma.example/urun.jpg",
+      siteSayfa: "https://firma.example/urun",
+    }));
+    expect(kart.sonuc).toBe("eksik");
+    expect(kart.katalog?.gorseller).toEqual([]);
   });
 
   it("hazır liste tek başına kart sayılmaz", () => {

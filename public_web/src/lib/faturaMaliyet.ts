@@ -2,6 +2,11 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { GoruSonucu } from "@/lib/faturaGoru";
 
 export const GUNLUK_MALIYET_TAVANI_USD = 1;
+export const ARAMA_UCETI_USD = 0.02;
+
+export function aramaCagrisiSigarMi(harcananUsd: number): boolean {
+  return harcananUsd + ARAMA_UCETI_USD < GUNLUK_MALIYET_TAVANI_USD;
+}
 
 export function gunlukTavanDolduMu(harcananUsd: number): boolean {
   return harcananUsd >= GUNLUK_MALIYET_TAVANI_USD;
@@ -40,7 +45,11 @@ export async function bugunkuMaliyetUsd(admin: SupabaseClient, magazaId: string,
   return (data ?? []).reduce((toplam, satir) => toplam + (Number(satir.cost_usd) || 0), 0);
 }
 
-export async function kullanimKaydet(admin: SupabaseClient, magazaId: string, okuma: GoruSonucu): Promise<void> {
+export async function kullanimKaydet(
+  admin: SupabaseClient,
+  magazaId: string,
+  okuma: Pick<GoruSonucu, "maliyet" | "girdiToken" | "ciktiToken" | "akilToken">,
+): Promise<void> {
   const { error } = await admin.from("invoice_read_usage").insert({
     store_id: magazaId,
     input_tokens: okuma.girdiToken,

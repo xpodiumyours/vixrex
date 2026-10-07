@@ -8,9 +8,9 @@ import { belgeGercegiUyuyorMu } from "@/lib/faturaSatirAyikla";
 import { eslesmeyenSatir, siteKartiniUygula, sonucOzeti, type EslesmisFaturaSatiri, type HamFaturaSatiri } from "@/lib/faturaEslestir";
 import { ayniAlisverisAdaylari, belgeParmakIzi, islemKaydet } from "@/lib/faturaIslemKaydi";
 import { faturaTaslaklari } from "@/lib/faturaTaslagi";
-import { faturayiOku, goruntuyuSinirla, type GoruSatiri } from "@/lib/faturaGoru";
-import { kartaGirecekGorsel } from "@/lib/faturaGorsel";
-import { bugunkuMaliyetUsd, gunlukTavanDolduMu, kullanimKaydet } from "@/lib/faturaMaliyet";
+import { firmaAlaniniKilitle, faturayiOku, goruntuyuSinirla, satirSitesindeAra, type GoruSatiri } from "@/lib/faturaGoru";
+import { kartaGirecekGorsel, sayfadanUrunAciklamasi } from "@/lib/faturaGorsel";
+import { ARAMA_UCETI_USD, aramaCagrisiSigarMi, bugunkuMaliyetUsd, gunlukTavanDolduMu, kullanimKaydet } from "@/lib/faturaMaliyet";
 import { islemiYukle, islemYaniti, parmakIzindenIslemBul } from "@/lib/faturaIslemOku";
 
 // Vixrex'in TEK fatura okuma ucu.
@@ -175,9 +175,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ hata: "Fatura okuyucu hazır değil." }, { status: 503 });
   }
 
+  let gunlukHarcama = 0;
   try {
-    const harcanan = await bugunkuMaliyetUsd(admin, magazaId);
-    if (gunlukTavanDolduMu(harcanan)) {
+    gunlukHarcama = await bugunkuMaliyetUsd(admin, magazaId);
+    if (gunlukTavanDolduMu(gunlukHarcama)) {
       return NextResponse.json(
         { hata: "Bugünkü fatura okuma sınırına ulaşıldı." },
         { status: 503 },
@@ -201,6 +202,7 @@ export async function POST(request: NextRequest) {
     const okuma = await faturayiOku(goruntu);
     try {
       await kullanimKaydet(admin, magazaId, okuma);
+      gunlukHarcama += okuma.maliyet ?? 0;
     } catch (hata) {
       console.error("[fatura-oku] maliyet yazilamadi:", hata instanceof Error ? hata.message : hata);
       return NextResponse.json({ hata: "Fatura okuma kaydı yazılamadı. Tekrar dene." }, { status: 503 });
@@ -261,12 +263,53 @@ export async function POST(request: NextRequest) {
     }
     const belgeUyarisi = null;
 
-    const etkinSite = sonTedarikciSite || siteIpucu;
+    const etkinSite = await firmaAlaniniKilitle({
+      belgedeYazan: sonTedarikciSite,
+      esnafIpucu: siteIpucu,
+      tedarikciAdi: sonTedarikci,
+      vergiNo: sonTedarikciVergiNo,
+      adres: sonTedarikciAdres,
+    });
 
     const satirlar: EslesmisFaturaSatiri[] = [];
+    let aramaAcik = true;
     for (const satir of sonSatirlar) {
-      const gorsel = await kartaGirecekGorsel(satir.siteGorsel ?? "");
-      satirlar.push(siteKartiniUygula(eslesmeyenSatir({ ...satir, siteGorsel: gorsel })));
+      let siteAciklama = "";
+      let siteGorsel = "";
+      let siteSayfa = "";
+      const aranabilir = Boolean(etkinSite && (satir.model || satir.ad || satir.barkod));
+      if (aramaAcik && aranabilir && aramaCagrisiSigarMi(gunlukHarcama)) {
+        try {
+          const arama = await satirSitesindeAra({
+            alan: etkinSite,
+            model: satir.model,
+            ad: satir.ad,
+            barkod: satir.barkod,
+          });
+          const aramaMaliyeti = (arama.maliyet ?? 0) + ARAMA_UCETI_USD;
+          await kullanimKaydet(admin, magazaId, { ...arama, maliyet: aramaMaliyeti });
+          gunlukHarcama += aramaMaliyeti;
+          if (arama.gorsel && arama.sayfa) {
+            const aciklama = await sayfadanUrunAciklamasi(arama.sayfa, { model: satir.model, ad: satir.ad });
+            const gorsel = aciklama ? await kartaGirecekGorsel(arama.gorsel) : "";
+            if (aciklama && gorsel) {
+              siteAciklama = aciklama;
+              siteGorsel = gorsel;
+              siteSayfa = arama.sayfa;
+            }
+          }
+        } catch (hata) {
+          aramaAcik = false;
+          console.error("[fatura-oku] site aramasi durdu:", hata instanceof Error ? hata.message : hata);
+        }
+      }
+      satirlar.push(siteKartiniUygula(eslesmeyenSatir({
+        ...satir,
+        siteAciklama,
+        siteGorsel,
+        siteSayfa,
+        sayfaDogrulandi: Boolean(siteAciklama && siteGorsel && siteSayfa),
+      })));
     }
 
     const kayitGirdisi = {

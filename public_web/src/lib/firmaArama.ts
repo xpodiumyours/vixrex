@@ -88,6 +88,11 @@ function resmiSiteOlmayan(alan: string): boolean {
   return RESMI_SITE_OLMAYANLAR.some((kalip) => alan === kalip || alan.endsWith(`.${kalip}`) || alan.includes(kalip));
 }
 
+export function resmiSiteSayilmaz(alan: string): boolean {
+  const temiz = alanAdiTemizle(alan);
+  return !temiz || resmiSiteOlmayan(temiz);
+}
+
 export async function firmaSitesiniAra(
   tedarikciAdi: string,
   bagimliliklar: FirmaAramaBagimliliklari = {},

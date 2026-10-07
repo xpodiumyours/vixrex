@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import sharp from "sharp";
-import { kartaGirecekGorsel, kaynakGorseliniDogrula, kaynakGorselleriniHazirla } from "@/lib/faturaGorsel";
+import { kartaGirecekGorsel, kaynakGorseliniDogrula, kaynakGorselleriniHazirla, sayfadanUrunAciklamasi } from "@/lib/faturaGorsel";
 
 const resolveHost = async () => ["8.8.8.8"];
 
@@ -84,7 +84,7 @@ describe("kaynak görseli doğrulama", () => {
     expect(sonuc.sebep).toBe("erisilemedi");
   });
 
-  it("küçük, boş ve logo karttan düşer; açılamayan adres kartta kalır", async () => {
+  it("küçük, boş, logo ve açılamayan adres karttan düşer", async () => {
     const buyuk = "https://firma.example/buyuk.jpg";
     const kucuk = "https://firma.example/kucuk.jpg";
     const kapali = "https://firma.example/kapali.jpg";
@@ -95,7 +95,31 @@ describe("kaynak görseli doğrulama", () => {
     const bag = { fetcher, resolveHost };
     expect(await kartaGirecekGorsel(buyuk, bag)).toBe(buyuk);
     expect(await kartaGirecekGorsel(kucuk, bag)).toBe("");
-    expect(await kartaGirecekGorsel(kapali, bag)).toBe(kapali);
+    expect(await kartaGirecekGorsel(kapali, bag)).toBe("");
+  });
+});
+
+describe("firma sayfasından açıklama", () => {
+  it("sayfa ürün kodunu taşıyorsa açıklamayı sayfadan alır", async () => {
+    const sayfa = "https://firma.example/urun";
+    const aciklama = await sayfadanUrunAciklamasi(sayfa, { model: "ELT1302", ad: "Fanila" }, {
+      fetcher: fetcherIle({
+        [sayfa]: { govde: "<html><head><meta name=\"description\" content=\"ELT1302 erkek fanila\"></head><body>baska metin</body></html>" },
+      }),
+      resolveHost,
+    });
+    expect(aciklama).toBe("ELT1302 erkek fanila");
+  });
+
+  it("sayfada ürün kodu ve adı yoksa açıklama boş kalır", async () => {
+    const sayfa = "https://firma.example/urun";
+    const aciklama = await sayfadanUrunAciklamasi(sayfa, { model: "ELT1302", ad: "Fanila" }, {
+      fetcher: fetcherIle({
+        [sayfa]: { govde: "<html><body>Baska bir urun sayfasi</body></html>" },
+      }),
+      resolveHost,
+    });
+    expect(aciklama).toBe("");
   });
 });
 

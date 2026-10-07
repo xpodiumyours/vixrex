@@ -24,18 +24,20 @@
 
 import sharp from "sharp";
 import { kisiselVeriTemizle } from "@/lib/faturaKisiselVeri";
+import { firmaSitesiniAra, resmiSiteSayilmaz } from "@/lib/firmaArama";
+import { alanAdiTemizle } from "@/lib/ureticiKatalog";
 
 const ADRES = "https://api.openai.com/v1/responses";
 export const GORU_MODELI = "gpt-5.6-luna";
 export const CIKTI_TOKEN_TAVANI = 16384;
-export const UZUN_KENAR_SINIRI = 2048;
+export const UZUN_KENAR_SINIRI = 65535;
 const GIRDI_DOLAR = 0.2 / 1_000_000;
 const ONBELLEK_DOLAR = 0.02 / 1_000_000;
 const CIKTI_DOLAR = 1.2 / 1_000_000;
 
 const SORU = [
   "Bu bir fatura tablosu. HER urun satirini oku. Yalniz JSON dondur.",
-  '{"tedarikci":"","tedarikci_vergi_no":"","tedarikci_adres":"","tedarikci_site":"","belge_turu":"","belge_no":"","belge_tarihi":"","satirlar":[{"ham_satir":"","model":"","ad":"","barkod":"","varyant":"","beden":"","marka":"","adet":0,"birim_fiyat":0,"tutar":0,"urun_aciklama":"","urun_gorsel":"","urun_sayfa":""}],"toplam_adet":0,"toplam_tutar":0,"mal_bedeli":0,"kdv_tutari":0,"indirim_tutari":0,"odenecek_toplam":0}',
+  '{"tedarikci":"","tedarikci_vergi_no":"","tedarikci_adres":"","tedarikci_site":"","belge_turu":"","belge_no":"","belge_tarihi":"","satirlar":[{"ham_satir":"","model":"","ad":"","barkod":"","varyant":"","beden":"","marka":"","adet":0,"birim_fiyat":0,"tutar":0}],"toplam_adet":0,"toplam_tutar":0,"mal_bedeli":0,"kdv_tutari":0,"indirim_tutari":0,"odenecek_toplam":0}',
   "1. Her satirda adet * birim_fiyat = tutar olmali.",
   "2. Satirlarin adet toplami = toplam_adet, tutar toplami = toplam_tutar.",
   "3. toplam_adet/toplam_tutar en alttaki 'Toplam' satirindan alinir.",
@@ -47,8 +49,7 @@ const SORU = [
   "9. belge_turu: belgede acikca yaziyorsa fatura, e-arsiv, irsaliye veya bilgi fisi; belge_no ve belge_tarihi yalniz belgede yaziyorsa doldur (tarih GG.AA.YYYY), tahmin etme.",
   "10. mal_bedeli, kdv_tutari, indirim_tutari ve odenecek_toplam belgede ayri ayri yaziyorsa ayri ayri doldur; yazmiyorsa null birak, hesaplayip uydurma.",
   "11. marka = urun satirinda ya da urun kodunun yaninda yazan marka adi; yazmiyorsa bos birak, faturayi kesen firmayi marka sanma, tahmin etme.",
-  "12. Her urun icin firmanin kendi sitesinde ara. urun_gorsel o sayfadaki asil urun fotografinin adresidir; kucuk resim, logo veya afis yazma. urun_aciklama o sayfada yazan aciklamadir. urun_sayfa o sayfanin adresidir. Bulamazsan ucunu de bos birak. Uydurma, cizme.",
-  "13. varyant faturada yazan renktir. Satirda renk yoksa ve urun sayfasinda renk yaziyorsa sayfadaki rengi yaz. beden faturada yazan bedendir. Satirda beden yoksa ve sayfada beden yaziyorsa sayfadaki bedeni yaz. Ikisi de yoksa bos birak.",
+  "12. varyant faturada yazan renktir. beden faturada yazan bedendir. Yazmiyorsa bos birak, baska yerden tamamlama.",
 ].join("\n");
 
 export interface GoruSatiri {
@@ -151,7 +152,7 @@ const FATURA_SEMA = {
       items: {
         type: "object",
         additionalProperties: false,
-        required: ["ham_satir", "model", "ad", "barkod", "varyant", "beden", "marka", "adet", "birim_fiyat", "tutar", "urun_aciklama", "urun_gorsel", "urun_sayfa"],
+        required: ["ham_satir", "model", "ad", "barkod", "varyant", "beden", "marka", "adet", "birim_fiyat", "tutar"],
         properties: {
           ham_satir: YAZI,
           model: YAZI,
@@ -163,9 +164,6 @@ const FATURA_SEMA = {
           adet: SAYI_VEYA_BOS,
           birim_fiyat: SAYI_VEYA_BOS,
           tutar: SAYI_VEYA_BOS,
-          urun_aciklama: YAZI,
-          urun_gorsel: YAZI,
-          urun_sayfa: YAZI,
         },
       },
     },
@@ -218,36 +216,111 @@ function ciktiMetni(govde: { output_text?: unknown; output?: unknown }): string 
   return parcalar.join("");
 }
 
-export function aramaGorseliniDoldur(
-  satirlar: GoruSatiri[],
+export function sayfaFirmadaMi(sayfa: string, alan: string): boolean {
+  const host = alanAdiTemizle(sayfa);
+  const kilit = alanAdiTemizle(alan);
+  if (!host || !kilit) return false;
+  return host === kilit || host.endsWith(`.${kilit}`);
+}
+
+export function satiraAitAramaGorseli(
+  alan: string,
   govde: { output?: unknown } | null,
-): GoruSatiri[] {
-  const bulunan: Array<{ gorsel: string; sayfa: string }> = [];
-  if (Array.isArray(govde?.output)) {
-    for (const oge of govde.output) {
-      const kayit = oge as { type?: unknown; results?: unknown };
-      if (kayit.type !== "web_search_call" || !Array.isArray(kayit.results)) continue;
-      for (const sonuc of kayit.results) {
-        const resim = sonuc as { type?: unknown; image_url?: unknown; source_website_url?: unknown };
-        if (resim.type !== "image_result") continue;
-        const gorsel = guvenliAdres(resim.image_url);
-        if (!gorsel) continue;
-        bulunan.push({ gorsel, sayfa: guvenliAdres(resim.source_website_url) });
-      }
+): { gorsel: string; sayfa: string } | null {
+  if (!Array.isArray(govde?.output)) return null;
+  for (const oge of govde.output) {
+    const kayit = oge as { type?: unknown; results?: unknown };
+    if (kayit.type !== "web_search_call" || !Array.isArray(kayit.results)) continue;
+    for (const sonuc of kayit.results) {
+      const resim = sonuc as { type?: unknown; image_url?: unknown; source_website_url?: unknown };
+      if (resim.type !== "image_result") continue;
+      const sayfa = guvenliAdres(resim.source_website_url);
+      const gorsel = guvenliAdres(resim.image_url);
+      if (!gorsel || !sayfa || !sayfaFirmadaMi(sayfa, alan)) continue;
+      return { gorsel, sayfa };
     }
   }
-  let sira = 0;
-  return satirlar.map((satir) => {
-    if (satir.siteGorsel) return satir;
-    const aday = bulunan[sira];
-    if (!aday) return satir;
-    sira += 1;
-    return {
-      ...satir,
-      siteGorsel: aday.gorsel,
-      siteSayfa: satir.siteSayfa || aday.sayfa,
-    };
+  return null;
+}
+
+export async function firmaAlaniniKilitle(girdi: {
+  belgedeYazan: string;
+  esnafIpucu: string;
+  tedarikciAdi: string;
+  vergiNo: string;
+  adres: string;
+}): Promise<string> {
+  const belgede = alanAdiTemizle(girdi.belgedeYazan);
+  if (belgede && !resmiSiteSayilmaz(belgede)) return belgede;
+  const ipucu = alanAdiTemizle(girdi.esnafIpucu);
+  if (ipucu && !resmiSiteSayilmaz(ipucu)) return ipucu;
+  const arama = await firmaSitesiniAra(girdi.tedarikciAdi, {
+    kimlik: { vergiNo: girdi.vergiNo, adres: girdi.adres },
   });
+  if (arama.durum === "bulundu" && arama.alan && !resmiSiteSayilmaz(arama.alan)) return arama.alan;
+  return "";
+}
+
+export interface SatirAramasi {
+  gorsel: string;
+  sayfa: string;
+  maliyet: number | null;
+  girdiToken: number;
+  ciktiToken: number;
+  akilToken: number;
+}
+
+export async function satirSitesindeAra(girdi: {
+  alan: string;
+  model: string;
+  ad: string;
+  barkod: string;
+}): Promise<SatirAramasi> {
+  const anahtar = process.env.OPENAI_API_KEY;
+  if (!anahtar) throw new Error("OKUYUCU_HAZIR_DEGIL");
+  const alan = alanAdiTemizle(girdi.alan);
+  if (!alan || resmiSiteSayilmaz(alan)) throw new Error("SITE_YOK");
+  const sorgu = [girdi.model, girdi.ad, girdi.barkod].map((parca) => parca.trim()).filter(Boolean).join(" ");
+  if (!sorgu) throw new Error("SATIR_BOS");
+
+  const cevap = await fetch(ADRES, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${anahtar}`,
+    },
+    body: JSON.stringify({
+      model: GORU_MODELI,
+      max_output_tokens: 1024,
+      reasoning: { effort: "low" },
+      tools: [{
+        type: "web_search",
+        search_content_types: ["text", "image"],
+        filters: { allowed_domains: [alan] },
+      }],
+      include: ["web_search_call.results"],
+      input: [{
+        role: "user",
+        content: [{ type: "input_text", text: `${sorgu}\nBu urunun fotografini yalniz ${alan} sitesinde ara.` }],
+      }],
+    }),
+  });
+
+  if (!cevap.ok) {
+    const hataGovdesi = await cevap.json().catch(() => null);
+    const kod = (hataGovdesi as { error?: { code?: string } } | null)?.error?.code;
+    throw new Error(
+      cevap.status === 402 || kod === "insufficient_quota" ? "OKUYUCU_BAKIYE_BITTI" : "OKUYUCU_CEVAP_VERMEDI",
+    );
+  }
+
+  const govde = await cevap.json().catch(() => null);
+  const bulunan = satiraAitAramaGorseli(alan, govde);
+  return {
+    gorsel: bulunan?.gorsel ?? "",
+    sayfa: bulunan?.sayfa ?? "",
+    ...kullanimOku(govde),
+  };
 }
 
 /**
@@ -268,8 +341,6 @@ export async function faturayiOku(dataUrl: string): Promise<GoruSonucu> {
       model: GORU_MODELI,
       max_output_tokens: CIKTI_TOKEN_TAVANI,
       reasoning: { effort: "none" },
-      tools: [{ type: "web_search", search_content_types: ["text", "image"] }],
-      include: ["web_search_call.results"],
       text: {
         format: {
           type: "json_schema",
@@ -283,7 +354,7 @@ export async function faturayiOku(dataUrl: string): Promise<GoruSonucu> {
           role: "user",
           content: [
             { type: "input_text", text: SORU },
-            { type: "input_image", image_url: dataUrl, detail: "high" },
+            { type: "input_image", image_url: dataUrl, detail: "original" },
           ],
         },
       ],
@@ -333,7 +404,7 @@ export async function faturayiOku(dataUrl: string): Promise<GoruSonucu> {
   // yüzden model yanlılıkla satıra karıştırmış olsa bile SİLİNİR. Satırın
   // geri kalanına dokunulmaz — OCR doğrulaması bozulmasın diye.
   // Ayrıntı ve kapsam: src/lib/faturaKisiselVeri.ts
-  const satirlar: GoruSatiri[] = aramaGorseliniDoldur(hamSatirlar.map((girdi) => {
+  const satirlar: GoruSatiri[] = hamSatirlar.map((girdi) => {
     const s = girdi as Record<string, unknown>;
     return {
       hamSatir: kisiselVeriTemizle(metin(s.ham_satir)),
@@ -346,11 +417,11 @@ export async function faturayiOku(dataUrl: string): Promise<GoruSonucu> {
       adet: sayi(s.adet),
       birimFiyat: sayi(s.birim_fiyat),
       tutar: sayi(s.tutar),
-      siteAciklama: metin(s.urun_aciklama),
-      siteGorsel: guvenliAdres(s.urun_gorsel),
-      siteSayfa: guvenliAdres(s.urun_sayfa),
+      siteAciklama: "",
+      siteGorsel: "",
+      siteSayfa: "",
     };
-  }), govde);
+  });
 
   return {
     tedarikci: metin(kok.tedarikci),

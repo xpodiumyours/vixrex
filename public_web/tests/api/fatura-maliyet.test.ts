@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { dolarHesapla } from "@/lib/faturaGoru";
-import { gunlukTavanDolduMu, istanbulGunuBaslangici } from "@/lib/faturaMaliyet";
+import { ARAMA_UCETI_USD, aramaCagrisiSigarMi, gunlukTavanDolduMu, istanbulGunuBaslangici } from "@/lib/faturaMaliyet";
 
 describe("fatura maliyet tavanı", () => {
   it("resmi fiyattan dolar hesaplar, akıl yürütme tokenını ikinci kez saymaz", () => {
@@ -11,6 +11,12 @@ describe("fatura maliyet tavanı", () => {
   it("mağaza günü bir dolar dolunca kapanır", () => {
     expect(gunlukTavanDolduMu(0.99)).toBe(false);
     expect(gunlukTavanDolduMu(1)).toBe(true);
+  });
+
+  it("arama ücreti tavana sığmazsa yeni arama açılmaz", () => {
+    expect(ARAMA_UCETI_USD).toBe(0.02);
+    expect(aramaCagrisiSigarMi(0.97)).toBe(true);
+    expect(aramaCagrisiSigarMi(0.98)).toBe(false);
   });
 
   it("gün İstanbul gece yarısından başlar", () => {

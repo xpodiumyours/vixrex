@@ -85,11 +85,15 @@ export async function POST(request: NextRequest) {
     ? kayit.data.catalog_snapshot as Record<string, unknown>
     : null;
   const gorseller = Array.isArray(kart?.gorseller) ? kart.gorseller : [];
+  const siteAciklama = typeof kart?.aciklama === "string" ? kart.aciklama.trim() : "";
+  const siteGorsel = typeof gorseller[0] === "string" ? gorseller[0].trim() : "";
+  const siteSayfa = typeof kart?.kaynak === "string" ? kart.kaynak.trim() : "";
   const yeni = siteKartiniUygula(eslesmeyenSatir({
     ...duzeltilmis,
-    siteAciklama: typeof kart?.aciklama === "string" ? kart.aciklama : "",
-    siteGorsel: typeof gorseller[0] === "string" ? gorseller[0] : "",
-    siteSayfa: typeof kart?.kaynak === "string" ? kart.kaynak : "",
+    siteAciklama,
+    siteGorsel,
+    siteSayfa,
+    sayfaDogrulandi: Boolean(siteAciklama && siteGorsel.startsWith("https://") && siteSayfa.startsWith("https://")),
   }));
 
   const lineId = String(kayit.data.id);

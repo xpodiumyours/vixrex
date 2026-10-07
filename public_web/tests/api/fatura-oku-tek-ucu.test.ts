@@ -1,5 +1,11 @@
 import { NextRequest } from "next/server";
+import sharp from "sharp";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("node:dns/promises", () => ({
+  resolve4: async () => ["8.8.8.8"],
+  resolve6: async () => [],
+}));
 
 // /api/fatura-oku — Vixrex'in TEK okuma ucu. Görüntü → OpenAI gpt-5.6-luna
 // → katı JSON → belge aritmetiği → modelin site fotoğrafı, açıklaması ve sayfa adresi.
@@ -194,15 +200,20 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(istekGovdesi.model).toBe("gpt-5.6-luna");
     expect(istekGovdesi.reasoning.effort).toBe("none");
     expect(istekGovdesi.text.format.strict).toBe(true);
-    expect(istekGovdesi.input[0].content[1].detail).toBe("high");
-    expect(istekGovdesi.tools[0].type).toBe("web_search");
-    expect(istekGovdesi.include).toContain("web_search_call.results");
+    expect(istekGovdesi.input[0].content[1].detail).toBe("original");
+    expect(istekGovdesi.tools).toBeUndefined();
+    expect(istekGovdesi.include).toBeUndefined();
     const soru = String(istekGovdesi.input[0].content[0].text);
-    expect(soru).toContain("asil urun fotografi");
-    expect(soru).toContain("sayfada beden yaziyorsa");
+    expect(soru).not.toContain("asil urun fotografi");
+    expect(soru).toContain("baska yerden tamamlama");
+    const okumaCagrilari = vi.mocked(fetch).mock.calls.filter((satir) => String(satir[0]).includes("api.openai.com"));
+    const arama = JSON.parse(String((okumaCagrilari[1]?.[1] as RequestInit).body));
+    expect(arama.reasoning.effort).toBe("low");
+    expect(arama.tools[0].filters.allowed_domains).toEqual(["sehermensucat.com"]);
+    expect(arama.tools[0].search_content_types).toEqual(["text", "image"]);
   });
 
-  it("hazır listede duran ürünün kartını modelin site fotoğrafından kurar", async () => {
+  it("modelin yazdığı fotoğraf adresi kart kurmaz", async () => {
     vi.stubGlobal("fetch", siteyiAyiranOkuma({
       ...TEK_SATIR,
       satirlar: [{
@@ -219,11 +230,55 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     const govde = await cevap.json();
 
     expect(cevap.status).toBe(200);
+    expect(govde.satirlar[0].sonuc).toBe("eksik");
+    expect(govde.satirlar[0].katalog).toBeNull();
+  });
+
+  it("firmanın sayfasındaki fotoğraf ve açıklama kartı kurar", async () => {
+    const gurultu = Buffer.alloc(1200 * 1200 * 3);
+    for (let i = 0; i < gurultu.length; i += 97) gurultu[i] = (i * 13) % 251;
+    const foto = await sharp(gurultu, { raw: { width: 1200, height: 1200, channels: 3 } }).jpeg({ quality: 80 }).toBuffer();
+    const sayfa = "https://sehermensucat.com/elt1302";
+    const gorsel = "https://cdn.sehermensucat.com/elt1302.jpg";
+    vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
+      const adres = String(url);
+      if (adres.includes("api.openai.com")) {
+        const istekGovdesi = JSON.parse(String(init?.body ?? "{}"));
+        if (istekGovdesi.tools) {
+          return new Response(JSON.stringify({
+            output: [{
+              type: "web_search_call",
+              results: [{ type: "image_result", image_url: gorsel, source_website_url: sayfa }],
+            }],
+            usage: {
+              input_tokens: 100,
+              output_tokens: 20,
+              input_tokens_details: { cached_tokens: 0 },
+              output_tokens_details: { reasoning_tokens: 0 },
+            },
+          }), { status: 200 });
+        }
+        return okuyucuCevabi(TEK_SATIR);
+      }
+      if (adres === sayfa) {
+        return new Response(
+          "<html><head><meta name=\"description\" content=\"ELT1302 erkek elastan fanila\"></head></html>",
+          { status: 200 },
+        );
+      }
+      if (adres === gorsel) return new Response(new Uint8Array(foto), { status: 200 });
+      return new Response("{}", { status: 404 });
+    }));
+
+    const cevap = await faturaOku(istek());
+    const govde = await cevap.json();
+
+    expect(cevap.status).toBe(200);
     expect(govde.satirlar[0].sonuc).toBe("kanitli");
-    expect(govde.satirlar[0].katalog.resmiAd).toBe("Faturadaki fanila");
-    expect(govde.satirlar[0].katalog.aciklama).toBe("Sitede yazan açıklama");
-    expect(govde.satirlar[0].katalog.gorseller).toEqual(["https://firma.example/urun.jpg"]);
-    expect(govde.satirlar[0].katalog.kaynak).toBe("https://firma.example/urun");
+    expect(govde.satirlar[0].ad).toBe("Elit Erkek Elastan Sıfır Yaka");
+    expect(govde.satirlar[0].katalog.aciklama).toBe("ELT1302 erkek elastan fanila");
+    expect(govde.satirlar[0].katalog.gorseller).toEqual([gorsel]);
+    expect(govde.satirlar[0].katalog.kaynak).toBe(sayfa);
   });
 
   it("model ve barkod yoksa ürün adı bulunan satırı kaybetmez", async () => {
