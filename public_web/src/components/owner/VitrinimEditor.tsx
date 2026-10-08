@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { OnayIkonu, StorefrontIkonu } from "@/components/site/icons";
 import { useAppShell } from "@/components/app/AppShellContext";
 import { VitrinPaylasimKarti } from "@/components/owner/VitrinPaylasimKarti";
@@ -10,8 +10,7 @@ import { OwnerDashboardMetrics } from "@/components/owner/OwnerDashboardMetrics"
 import { FIELD_BY_KEY } from "@/lib/vitrinFieldSchema";
 import { safeParseJson } from "@/lib/products";
 import { gpsAdresiniCoz } from "@/lib/konumCozumleme";
-import { OwnerProductManager, type OwnerProduct, type OwnerProductCategory } from "./OwnerProductManager";
-import { isletmeUrunSablonu } from "@/lib/businessCategories";
+import type { OwnerProduct, OwnerProductCategory } from "./OwnerProductManager";
 import { AboutEditor } from "@/app/v/[slug]/components/AboutEditor";
 import { CampaignEditor } from "@/app/v/[slug]/components/CampaignEditor";
 import { FaqEditor } from "@/app/v/[slug]/components/FaqEditor";
@@ -25,8 +24,6 @@ interface Props {
     slug: string;
     name: string;
     is_published: boolean;
-    kategori?: string | null;
-    business_type?: string | null;
     products: OwnerProduct[];
     product_categories: OwnerProductCategory[];
   };
@@ -172,15 +169,6 @@ export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode 
   ));
   const [message, setMessage] = useState("");
   const [activeEditor, setActiveEditor] = useState<"about" | "campaign" | "faq" | "gallery" | "marketplace" | null>(null);
-  const [productsOpen, setProductsOpen] = useState(false);
-  const productDialog = useRef<HTMLDialogElement>(null);
-
-  useEffect(() => {
-    const dialog = productDialog.current;
-    if (productsOpen && dialog && !dialog.open) dialog.showModal();
-    return () => { if (dialog?.open) dialog.close(); };
-  }, [productsOpen]);
-
   useEffect(() => {
     let active = true;
     async function syncDraft() {
@@ -509,14 +497,14 @@ export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode 
               );
             })}
             <section className="border-b border-lp-border">
-              <button type="button" onClick={() => setProductsOpen(true)} className="flex min-h-[76px] w-full items-center gap-3 px-6 text-left hover:bg-lp-surface-soft/45">
+              <Link href="/app/urunler" className="flex min-h-[76px] w-full items-center gap-3 px-6 text-left hover:bg-lp-surface-soft/45">
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-lp-border bg-lp-surface-soft text-[13px] font-bold text-lp-secondary">6</span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-[16px] font-black">Ürünlerimi Yönet</span>
-                  <span className="mt-0.5 block text-[12px] font-semibold text-lp-muted">Vitrininde sergileyeceğin ürünler ve kategoriler · {store.products?.length ?? 0} ürün</span>
+                  <span className="mt-0.5 block text-[12px] font-semibold text-lp-muted">Fatura fotoğrafından ürün kartı · {store.products?.length ?? 0} ürün</span>
                 </span>
                 <span className="text-[12px] font-bold text-lp-muted">Aç</span>
-              </button>
+              </Link>
             </section>
           </div>
 
@@ -545,11 +533,6 @@ export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode 
         </section>
       </div>
 
-      {productsOpen && (
-        <dialog ref={productDialog} className="fatura-urun-yonetimi owner-shell" aria-label="Ürün Yönetimi" onCancel={(event) => event.preventDefault()}>
-          <OwnerProductManager storeSlug={store.slug} products={store.products ?? []} categories={store.product_categories ?? []} varsayilanUrunTipi={isletmeUrunSablonu(store.kategori, store.business_type)} storeName={store.name} onRefresh={onRefresh} onClose={() => setProductsOpen(false)} />
-        </dialog>
-      )}
       {activeEditor === "gallery" ? <GalleryEditor slug={store.slug} items={galleryItems} onClose={() => { void closeStructuredEditor(); }} /> : null}
       {activeEditor === "faq" ? <FaqEditor slug={store.slug} items={faqItems} onClose={() => { void closeStructuredEditor(); }} /> : null}
       {activeEditor === "marketplace" ? <MarketplaceEditor slug={store.slug} links={marketplaceLinks} onClose={() => { void closeStructuredEditor(); }} /> : null}

@@ -28,7 +28,13 @@ describe("ürün yüzeyi ikiz kontrolü", () => {
   });
 
   it("esnaf ürün yönetimi tek yüzeyden açılır", () => {
+    const editor = src("components/owner/VitrinimEditor.tsx");
+    const urunlerSayfasi = src("app/app/urunler/page.tsx");
     expect(kacKez(sahipSayfasi, "<OwnerProductManager")).toBe(0);
+    expect(kacKez(editor, "<OwnerProductManager")).toBe(0);
+    expect(editor).toContain('href="/app/urunler"');
+    expect(editor).not.toContain("fatura-urun-yonetimi");
+    expect(kacKez(urunlerSayfasi, "<OwnerProductManager")).toBe(1);
   });
 
   it("sahip sayfası kullanmadığı bir bileşeni içe aktarmaz", () => {
