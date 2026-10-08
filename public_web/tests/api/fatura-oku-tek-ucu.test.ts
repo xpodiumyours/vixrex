@@ -256,7 +256,12 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
           return new Response(JSON.stringify({
             output: [{
               type: "web_search_call",
-              results: [{ type: "image_result", image_url: gorsel, source_website_url: sayfa }],
+              results: [{
+                type: "image_result",
+                image_url: gorsel,
+                source_website_url: sayfa,
+                caption: "ELT1302 erkek elastan fanila",
+              }],
             }],
             usage: {
               input_tokens: 100,
@@ -267,12 +272,6 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
           }), { status: 200 });
         }
         return okuyucuCevabi(TEK_SATIR);
-      }
-      if (adres === sayfa) {
-        return new Response(
-          "<html><head><meta name=\"description\" content=\"ELT1302 erkek elastan fanila\"></head></html>",
-          { status: 200 },
-        );
       }
       if (adres === gorsel) return new Response(new Uint8Array(foto), { status: 200 });
       return new Response("{}", { status: 404 });

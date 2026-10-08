@@ -9,7 +9,7 @@ import { eslesmeyenSatir, siteKartiniUygula, sonucOzeti, type EslesmisFaturaSati
 import { ayniAlisverisAdaylari, belgeParmakIzi, islemKaydet } from "@/lib/faturaIslemKaydi";
 import { faturaTaslaklari } from "@/lib/faturaTaslagi";
 import { firmaAlaniniKilitle, faturayiOku, satirSitesindeAra, type GoruSatiri } from "@/lib/faturaGoru";
-import { kartaGirecekGorsel, sayfadanUrunAciklamasi, sayfadanUrunKaydi } from "@/lib/faturaGorsel";
+import { kartaGirecekGorsel } from "@/lib/faturaGorsel";
 import { ARAMA_UCETI_USD, aramaCagrisiSigarMi, bugunkuMaliyetUsd, kullanimKaydet } from "@/lib/faturaMaliyet";
 import { islemiYukle } from "@/lib/faturaIslemOku";
 
@@ -247,7 +247,6 @@ export async function POST(request: NextRequest) {
       let siteAciklama = "";
       let siteGorsel = "";
       let siteSayfa = "";
-      let siteAd = "";
       const aranabilir = Boolean(etkinSite && (satir.model || satir.ad || satir.barkod));
       if (aramaAcik && aranabilir && aramaCagrisiSigarMi(gunlukHarcama)) {
         try {
@@ -262,21 +261,8 @@ export async function POST(request: NextRequest) {
           gunlukHarcama += aramaMaliyeti;
           if (arama.sayfa && arama.gorsel) {
             const gorsel = await kartaGirecekGorsel(arama.gorsel);
-            if (gorsel) {
-              const bulunan = await sayfadanUrunAciklamasi(arama.sayfa, { model: satir.model, ad: satir.ad });
-              const aciklama = bulunan || satir.ad.trim() || satir.model.trim();
-              if (aciklama) {
-                siteAciklama = aciklama;
-                siteGorsel = gorsel;
-                siteSayfa = arama.sayfa;
-              }
-            }
-          } else if (arama.sayfa) {
-            const kayit = await sayfadanUrunKaydi(arama.sayfa, { model: satir.model, ad: satir.ad });
-            const gorsel = kayit ? await kartaGirecekGorsel(kayit.gorsel) : "";
-            const aciklama = kayit?.aciklama || satir.ad.trim() || satir.model.trim();
-            if (kayit && gorsel && aciklama) {
-              siteAd = kayit.ad;
+            const aciklama = arama.aciklama.trim() || satir.ad.trim() || satir.model.trim();
+            if (gorsel && aciklama) {
               siteAciklama = aciklama;
               siteGorsel = gorsel;
               siteSayfa = arama.sayfa;
@@ -293,7 +279,6 @@ export async function POST(request: NextRequest) {
         siteAciklama,
         siteGorsel,
         siteSayfa,
-        siteAd,
         sayfaDogrulandi: Boolean(siteAciklama && siteGorsel && siteSayfa),
       })));
     }
