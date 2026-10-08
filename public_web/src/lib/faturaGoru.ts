@@ -237,6 +237,21 @@ export function satiraAitAramaGorseli(
       return { gorsel, sayfa };
     }
   }
+  for (const oge of govde.output) {
+    const kayit = oge as { type?: unknown; content?: unknown };
+    if (kayit.type !== "message" || !Array.isArray(kayit.content)) continue;
+    for (const icerik of kayit.content) {
+      const parca = icerik as { annotations?: unknown };
+      if (!Array.isArray(parca.annotations)) continue;
+      for (const not of parca.annotations) {
+        const alinti = not as { type?: unknown; url?: unknown };
+        if (alinti.type !== "url_citation") continue;
+        const sayfa = guvenliAdres(alinti.url);
+        if (!sayfa || !sayfaFirmadaMi(sayfa, alan)) continue;
+        return { gorsel: "", sayfa };
+      }
+    }
+  }
   return null;
 }
 
@@ -297,7 +312,6 @@ export async function satirSitesindeAra(girdi: {
           allowed_domains: [alan],
         },
       }],
-      include: ["web_search_call.results"],
       input: [{
         role: "user",
         content: [{ type: "input_text", text: `${sorgu}\nBu urunun fotografini yalniz ${alan} sitesinde ara.` }],

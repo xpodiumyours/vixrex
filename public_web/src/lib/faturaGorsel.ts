@@ -189,6 +189,125 @@ function htmlMetni(html: string): string {
     .trim();
 }
 
+function cozulmus(deger: string): string {
+  return deger.replace(/&amp;/g, "&").replace(/&quot;/g, "\"").trim();
+}
+
+function mutlakHttps(kaynak: string, sayfa: string): string {
+  try {
+    const url = new URL(kaynak, sayfa);
+    if (url.protocol !== "https:" || url.username || url.password || url.port) return "";
+    return url.toString();
+  } catch {
+    return "";
+  }
+}
+
+function gorselAdresi(deger: unknown, sayfa: string): string {
+  if (typeof deger === "string") return mutlakHttps(cozulmus(deger), sayfa);
+  if (Array.isArray(deger)) {
+    for (const oge of deger) {
+      const bulunan = gorselAdresi(oge, sayfa);
+      if (bulunan) return bulunan;
+    }
+    return "";
+  }
+  if (deger && typeof deger === "object" && "url" in deger) {
+    return gorselAdresi((deger as { url?: unknown }).url, sayfa);
+  }
+  return "";
+}
+
+function urunKaydi(dugum: unknown): { name?: unknown; description?: unknown; image?: unknown } | null {
+  if (!dugum || typeof dugum !== "object") return null;
+  const kayit = dugum as { "@type"?: unknown; "@graph"?: unknown };
+  const tur = kayit["@type"];
+  const turler = (Array.isArray(tur) ? tur : [tur]).map((parca) => String(parca ?? "").toLowerCase());
+  if (turler.includes("product")) return kayit as { name?: unknown; description?: unknown; image?: unknown };
+  const grafik = kayit["@graph"];
+  if (Array.isArray(grafik)) {
+    for (const alt of grafik) {
+      const bulunan = urunKaydi(alt);
+      if (bulunan) return bulunan;
+    }
+  }
+  return null;
+}
+
+function metaIcerik(html: string, anahtar: string, alan: "property" | "name"): string {
+  const ilk = new RegExp(`<meta[^>]+${alan}=["']${anahtar}["'][^>]+content=["']([^"']+)["']`, "i").exec(html)?.[1];
+  const ters = new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+${alan}=["']${anahtar}["']`, "i").exec(html)?.[1];
+  return cozulmus(ilk || ters || "");
+}
+
+export function sayfadakiUrun(html: string, sayfa: string): { ad: string; aciklama: string; gorsel: string } {
+  let ad = "";
+  let aciklama = "";
+  let gorsel = "";
+  const parcalar = html.match(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi) ?? [];
+  for (const parca of parcalar) {
+    const govde = parca.replace(/^<script[^>]*>/i, "").replace(/<\/script>$/i, "").trim();
+    let cozulen: unknown;
+    try {
+      cozulen = JSON.parse(govde);
+    } catch {
+      continue;
+    }
+    const urun = urunKaydi(cozulen);
+    if (!urun) continue;
+    if (!ad && typeof urun.name === "string") ad = urun.name.trim();
+    if (!aciklama && typeof urun.description === "string") aciklama = htmlMetni(urun.description).slice(0, 500);
+    if (!gorsel) gorsel = gorselAdresi(urun.image, sayfa);
+    if (ad && aciklama && gorsel) break;
+  }
+  if (!ad) ad = htmlMetni(metaIcerik(html, "og:title", "property")).slice(0, 300);
+  if (!aciklama) aciklama = htmlMetni(metaIcerik(html, "description", "name")).slice(0, 500);
+  if (!gorsel) gorsel = mutlakHttps(metaIcerik(html, "og:image", "property"), sayfa);
+  return { ad, aciklama, gorsel };
+}
+
+export async function sayfadanUrunKaydi(
+  adres: string,
+  kimlik: { model: string; ad: string },
+  bagimliliklar: GorselBagimliliklari = {},
+): Promise<{ ad: string; aciklama: string; gorsel: string } | null> {
+  const fetcher = bagimliliklar.fetcher ?? fetch;
+  const resolveHost = bagimliliklar.resolveHost ?? varsayilanCoz;
+  let url: URL;
+  try {
+    url = new URL(adres);
+  } catch {
+    return null;
+  }
+  if (url.protocol !== "https:" || url.username || url.password || url.port) return null;
+  if (!(await hostGuvenliMi(url.hostname, resolveHost))) return null;
+  let yanit: Response;
+  try {
+    yanit = await fetcher(url.toString(), {
+      method: "GET",
+      redirect: "manual",
+      signal: AbortSignal.timeout(ZAMAN_ASIMI_MS),
+      headers: { accept: "text/html" },
+    });
+  } catch {
+    return null;
+  }
+  if (yanit.status !== 200) return null;
+  let html = "";
+  try {
+    html = await yanit.text();
+  } catch {
+    return null;
+  }
+  if (html.length > 1_000_000) html = html.slice(0, 1_000_000);
+  const sadeGovde = sadeMetin(htmlMetni(html));
+  const anahtarlar = [kimlik.model, kimlik.ad].map((parca) => parca.trim()).filter((parca) => parca.length >= 3);
+  if (!anahtarlar.some((parca) => sadeGovde.includes(sadeMetin(parca)))) return null;
+  const kayit = sayfadakiUrun(html, adres);
+  if (!kayit.gorsel) return null;
+  return kayit;
+}
+
 export async function sayfadanUrunAciklamasi(
   adres: string,
   kimlik: { model: string; ad: string },

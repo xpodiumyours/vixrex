@@ -9,7 +9,7 @@ import { eslesmeyenSatir, siteKartiniUygula, sonucOzeti, type EslesmisFaturaSati
 import { ayniAlisverisAdaylari, belgeParmakIzi, islemKaydet } from "@/lib/faturaIslemKaydi";
 import { faturaTaslaklari } from "@/lib/faturaTaslagi";
 import { firmaAlaniniKilitle, faturayiOku, satirSitesindeAra, type GoruSatiri } from "@/lib/faturaGoru";
-import { kartaGirecekGorsel, sayfadanUrunAciklamasi } from "@/lib/faturaGorsel";
+import { kartaGirecekGorsel, sayfadanUrunAciklamasi, sayfadanUrunKaydi } from "@/lib/faturaGorsel";
 import { ARAMA_UCETI_USD, aramaCagrisiSigarMi, bugunkuMaliyetUsd, kullanimKaydet } from "@/lib/faturaMaliyet";
 import { islemiYukle } from "@/lib/faturaIslemOku";
 
@@ -32,7 +32,7 @@ import { islemiYukle } from "@/lib/faturaIslemOku";
 // aynı desen, ikisi de bu tek ucu çağırabilir.
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 const MAKS_BAYT = 5 * 1024 * 1024;
 const VITRIN_BASINA_LIMIT = 20;
@@ -249,6 +249,7 @@ export async function POST(request: NextRequest) {
       let siteAciklama = "";
       let siteGorsel = "";
       let siteSayfa = "";
+      let siteAd = "";
       const aranabilir = Boolean(etkinSite && (satir.model || satir.ad || satir.barkod));
       if (aramaAcik && aranabilir && aramaCagrisiSigarMi(gunlukHarcama)) {
         try {
@@ -261,18 +262,32 @@ export async function POST(request: NextRequest) {
           const aramaMaliyeti = (arama.maliyet ?? 0) + ARAMA_UCETI_USD;
           await kullanimKaydet(admin, magazaId, { ...arama, maliyet: aramaMaliyeti });
           gunlukHarcama += aramaMaliyeti;
-          if (arama.gorsel && arama.sayfa) {
-            const aciklama = await sayfadanUrunAciklamasi(arama.sayfa, { model: satir.model, ad: satir.ad });
-            const gorsel = aciklama ? await kartaGirecekGorsel(arama.gorsel) : "";
-            if (aciklama && gorsel) {
+          if (arama.sayfa && arama.gorsel) {
+            const gorsel = await kartaGirecekGorsel(arama.gorsel);
+            if (gorsel) {
+              const bulunan = await sayfadanUrunAciklamasi(arama.sayfa, { model: satir.model, ad: satir.ad });
+              const aciklama = bulunan || satir.ad.trim() || satir.model.trim();
+              if (aciklama) {
+                siteAciklama = aciklama;
+                siteGorsel = gorsel;
+                siteSayfa = arama.sayfa;
+              }
+            }
+          } else if (arama.sayfa) {
+            const kayit = await sayfadanUrunKaydi(arama.sayfa, { model: satir.model, ad: satir.ad });
+            const gorsel = kayit ? await kartaGirecekGorsel(kayit.gorsel) : "";
+            const aciklama = kayit?.aciklama || satir.ad.trim() || satir.model.trim();
+            if (kayit && gorsel && aciklama) {
+              siteAd = kayit.ad;
               siteAciklama = aciklama;
               siteGorsel = gorsel;
               siteSayfa = arama.sayfa;
             }
           }
         } catch (hata) {
-          aramaAcik = false;
-          console.error("[fatura-oku] site aramasi durdu:", hata instanceof Error ? hata.message : hata);
+          const mesaj = hata instanceof Error ? hata.message : "";
+          if (mesaj === "OKUYUCU_BAKIYE_BITTI") aramaAcik = false;
+          console.error("[fatura-oku] site aramasi durdu:", mesaj || hata);
         }
       }
       satirlar.push(siteKartiniUygula(eslesmeyenSatir({
@@ -280,6 +295,7 @@ export async function POST(request: NextRequest) {
         siteAciklama,
         siteGorsel,
         siteSayfa,
+        siteAd,
         sayfaDogrulandi: Boolean(siteAciklama && siteGorsel && siteSayfa),
       })));
     }
