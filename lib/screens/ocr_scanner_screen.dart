@@ -77,49 +77,6 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Tarama Modu Seçici
-              if (!widget.ocrController.hasResult) ...[
-                SegmentedButton<String>(
-                  segments: const [
-                    ButtonSegment<String>(
-                      value: 'receipt',
-                      label: Text('Fiş'),
-                      icon: Icon(Icons.receipt_long_rounded),
-                    ),
-                    ButtonSegment<String>(
-                      value: 'invoice',
-                      label: Text('Fatura'),
-                      icon: Icon(Icons.description_outlined),
-                    ),
-                    ButtonSegment<String>(
-                      value: 'shelf_label',
-                      label: Text('Raf/Etiket'),
-                      icon: Icon(Icons.label_outline_rounded),
-                    ),
-                  ],
-                  selected: {widget.ocrController.scanMode},
-                  onSelectionChanged:
-                      _busy
-                          ? null
-                          : (Set<String> newSelection) {
-                            setState(() {
-                              widget.ocrController.scanMode =
-                                  newSelection.first;
-                              if (newSelection.first == 'invoice') {
-                                widget.ocrController.loadInvoiceHistory();
-                              }
-                            });
-                          },
-                  style: SegmentedButton.styleFrom(
-                    selectedBackgroundColor: AppColors.primary,
-                    selectedForegroundColor: Colors.white,
-                    backgroundColor: AppColors.surface,
-                  ),
-                ),
-                const SizedBox(height: 16),
-              ],
-
-              // Tarama widget'ı
               if (!widget.ocrController.hasResult)
                 OcrScannerWidget(
                   onImageSelected: _analyzeImage,

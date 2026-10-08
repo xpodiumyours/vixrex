@@ -3,10 +3,8 @@
 import { VixrexAvatar } from "@/app/v/[slug]/components/VixrexAvatar";
 
 interface OwnerKatalogAsistaniProps {
-  onFotografCikar: () => void;
   onFaturaCikar: () => void;
   onBaslikOnerileri: () => void;
-  fotoYukleniyor?: boolean;
 }
 
 interface Kutucuk {
@@ -17,18 +15,10 @@ interface Kutucuk {
 }
 
 export function OwnerKatalogAsistani({
-  onFotografCikar,
   onFaturaCikar,
   onBaslikOnerileri,
-  fotoYukleniyor = false,
 }: OwnerKatalogAsistaniProps) {
   const kutucuklar: Kutucuk[] = [
-    {
-      anahtar: "fotograf",
-      baslik: "Fotoğraftan çıkar",
-      aciklama: "Fotoğraftan ad/kategori çıkar",
-      tiklama: onFotografCikar,
-    },
     {
       anahtar: "fatura",
       baslik: "Faturadan çıkar",
@@ -50,21 +40,21 @@ export function OwnerKatalogAsistani({
         <div>
           <p className="text-xs font-bold text-[var(--owner-text)]">Vixrex ile katalog oluştur</p>
           <p className="mt-0.5 text-[10px] leading-4 text-[var(--owner-muted)]">
-            Fotoğraf, fatura veya Instagram ürünlerinden otomatik ürün kataloğu hazırlamaya yardımcı olacak.
+            Fatura fotoğrafından ürün kartı hazırlamaya yardımcı olacak.
           </p>
         </div>
       </div>
       <div className="mt-3 flex gap-2.5 overflow-x-auto pb-1">
-        {kutucuklar.map((kutucuk) => (            <button
+        {kutucuklar.map((kutucuk) => (
+          <button
               key={kutucuk.anahtar}
               type="button"
               onClick={kutucuk.tiklama}
-              disabled={kutucuk.anahtar === "fotograf" && fotoYukleniyor}
-              className="w-40 shrink-0 rounded-xl border border-[var(--owner-border)] bg-[var(--owner-bg)] p-2.5 text-left transition-colors hover:border-[var(--owner-primary)] disabled:opacity-60"
+              className="w-40 shrink-0 rounded-xl border border-[var(--owner-border)] bg-[var(--owner-bg)] p-2.5 text-left transition-colors hover:border-[var(--owner-primary)]"
             >
               <p className="text-[11px] font-bold text-[var(--owner-text)]">{kutucuk.baslik}</p>
               <p className="mt-0.5 text-[10px] leading-4 text-[var(--owner-muted)]">
-                {kutucuk.anahtar === "fotograf" && fotoYukleniyor ? "Fotoğraf okunuyor..." : kutucuk.aciklama}
+                {kutucuk.aciklama}
               </p>
             </button>
         ))}

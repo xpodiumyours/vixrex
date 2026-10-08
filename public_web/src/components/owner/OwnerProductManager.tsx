@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { taslakUrunMu } from "@/lib/faturaTaslakFiltresi";
-import { useState, useCallback, useMemo, useEffect, useRef } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import BulkProductUpload from "./BulkProductUpload";
 import InvoiceToProducts from "./InvoiceToProducts";
 import { OwnerCategoryManager } from "./OwnerCategoryManager";
@@ -29,7 +29,6 @@ import {
 } from "@/lib/productImagePolicy";
 import { parseProductPriceNumber } from "@/lib/productPrice";
 import { fiyatUygula } from "@/lib/topluAlanGuncelle";
-import type { FotografUrunOnerisi } from "@/lib/fotografUrunCikar";
 import { eksikZorunluAlanlar, eksikZorunluAlanMesaji } from "@/lib/productRequiredFields";
 
 export interface OwnerProductCategory {
@@ -151,10 +150,6 @@ export function OwnerProductManager({
   const [topluAcik, setTopluAcik] = useState(false);
   const [xmlAcik, setXmlAcik] = useState(false);
   const [kategoriAcik, setKategoriAcik] = useState(false);
-  const [fotografOneri, setFotografOneri] = useState<FotografUrunOnerisi | null>(null);
-  const [fotoYukleniyor, setFotoYukleniyor] = useState(false);
-  const fotografInputRef = useRef<HTMLInputElement | null>(null);
-
   const resolvedCategories = useMemo(
     () => categories.map((category) => ({
       ...category,
@@ -408,33 +403,6 @@ export function OwnerProductManager({
     }
   }
 
-  async function fotografCikar(dosya: File) {
-    if (fotoYukleniyor) return;
-    setFotoYukleniyor(true);
-    setError("");
-    setSuccess("");
-    try {
-      const form = new FormData();
-      form.append("slug", storeSlug);
-      form.append("dosya", dosya);
-      const cevap = await fetch("/api/fotograf-urun-cikar", { method: "POST", body: form });
-      const govde = await cevap.json().catch(() => null);
-      if (!cevap.ok || !govde?.oneri) {
-        throw new Error(
-          typeof govde?.hata === "string" && govde.hata ? govde.hata : "Fotoğraf okunamadı.",
-        );
-      }
-      setFotografOneri(govde.oneri as FotografUrunOnerisi);
-      setShowInvoice(false);
-      setShowBulkUpload(false);
-      setEditing("new");
-    } catch (fotoHata) {
-      setError(fotoHata instanceof Error && fotoHata.message ? fotoHata.message : "Fotoğraf okunamadı.");
-    } finally {
-      setFotoYukleniyor(false);
-    }
-  }
-
   async function urunCogalt(urun: OwnerProduct) {
     setBusy(true);
     setError("");
@@ -513,7 +481,6 @@ export function OwnerProductManager({
 
       await refreshAll();
       setEditing(null);
-      setFotografOneri(null);
       const taslak = Boolean(payload && typeof payload === "object" && (payload as { taslak?: unknown }).taslak);
       const eksikFotografSayisi =
         payload && typeof payload === "object" && typeof (payload as { eksikFotografSayisi?: unknown }).eksikFotografSayisi === "number"
@@ -663,23 +630,13 @@ export function OwnerProductManager({
         ) : null}
       </div>
 
-      <input
-        ref={fotografInputRef}
-        type="file"
-        accept="image/jpeg,image/png,image/webp"
-        className="hidden"
-        onChange={(e) => { const secilen = e.target.files?.[0]; e.target.value = ""; if (secilen) void fotografCikar(secilen); }}
-      />
-
       {error ? <p className="owner-error mb-4 text-sm" role="alert">{error}</p> : null}
       {queuedCount > 0 ? <p className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm font-bold text-amber-600" role="status">{queuedCount} ürün işlemi kuyrukta — bağlantı gelince otomatik gönderilecek (vitrin metin kuyruğundan ayrı).</p> : null}
       {success ? <p className="mb-4 rounded-xl border border-[var(--owner-success)]/40 bg-[var(--owner-success)]/10 p-3 text-sm text-[var(--owner-success)]" role="status">{success}</p> : null}
 
       <OwnerKatalogAsistani
-        onFotografCikar={() => { if (!fotoYukleniyor) fotografInputRef.current?.click(); }}
         onFaturaCikar={() => { setError(""); setSuccess(""); setShowBulkUpload(false); setEditing(null); setShowInvoice(true); }}
         onBaslikOnerileri={() => { void baslikOnerileriniUygula(); }}
-        fotoYukleniyor={fotoYukleniyor}
       />
 
       <div className="mt-4">
@@ -737,8 +694,7 @@ export function OwnerProductManager({
           busy={busy}
           storeSlug={storeSlug}
           storeName={storeName}
-          baslangic={editing === "new" ? fotografOneri ?? undefined : undefined}
-          onCancel={() => { setEditing(null); setFotografOneri(null); }}
+          onCancel={() => { setEditing(null); }}
           onSave={saveProduct}
         />
       ) : products.length === 0 ? (
@@ -862,7 +818,7 @@ export function OwnerProductManager({
           </div>
         ) : (
           <div className="mt-4 flex flex-col gap-2">
-            <button type="button" className="owner-button-primary w-full" onClick={() => { setError(""); setSuccess(""); setShowBulkUpload(false); setFotografOneri(null); setEditing("new"); }} disabled={busy}>+ Yeni Ürün Ekle</button>
+            <button type="button" className="owner-button-primary w-full" onClick={() => { setError(""); setSuccess(""); setShowBulkUpload(false); setEditing("new"); }} disabled={busy}>+ Yeni Ürün Ekle</button>
             <button type="button" className="owner-button-secondary w-full" onClick={() => { setError(""); setSuccess(""); setShowBulkUpload(!showBulkUpload); setEditing(null); }} disabled={busy}>Toplu Ürün Yükle</button>
             <button type="button" className="owner-button-secondary w-full" onClick={() => { setError(""); setSuccess(""); setXmlAcik(true); }} disabled={busy}>XML ile Yükle</button>
           </div>

@@ -124,7 +124,6 @@ const SHARP_TRACE = [
 const SHARP_ROUTES = [
   "/api/fatura-eslestir",
   "/api/fatura-islem",
-  "/api/fatura-metin",
   "/api/fatura-oku",
   "/api/fatura-satir-duzelt",
   "/api/instagram/import",
