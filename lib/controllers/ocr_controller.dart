@@ -11,15 +11,11 @@ import 'package:vixrex/services/invoice_catalog/fatura_islem_servisi.dart';
 import 'package:vixrex/services/invoice_catalog/fatura_oku_servisi.dart';
 import 'package:vixrex/services/invoice_catalog/fatura_urun_kaydi_servisi.dart';
 import 'package:vixrex/services/invoice_catalog/fatura_yayinla_servisi.dart';
-import 'package:vixrex/services/ocr/invoice_row_parser.dart';
-import 'package:vixrex/services/ocr/ocr_service.dart';
-import 'package:vixrex/services/ocr/ocr_feedback_service.dart';
 import 'package:vixrex/services/product_conversation_logger.dart';
 import 'store_editor_controller.dart';
 
 /// OCR state yönetimi controller'ı.
 class OcrController extends ChangeNotifier {
-  final OcrService _ocrService;
   final StoreEditorController? _editorController;
 
   final FaturaUrunKaydiServisi _faturaKaydiServisi;
@@ -43,20 +39,18 @@ class OcrController extends ChangeNotifier {
   FaturaYayinlaSonucu? _faturaYayinSonucu;
 
   OcrController({
-    required OcrService ocrService,
     StoreEditorController? editorController,
     FaturaUrunKaydiServisi faturaKaydiServisi = const FaturaUrunKaydiServisi(),
     FaturaYayinlaServisi faturaYayinServisi = const FaturaYayinlaServisi(),
     FaturaOkuServisi faturaOkuServisi = const FaturaOkuServisi(),
     FaturaIslemServisi faturaIslemServisi = const FaturaIslemServisi(),
-  }) : _ocrService = ocrService,
-       _editorController = editorController,
+  }) : _editorController = editorController,
        _faturaKaydiServisi = faturaKaydiServisi,
        _faturaYayinServisi = faturaYayinServisi,
        _faturaOkuServisi = faturaOkuServisi,
        _faturaIslemServisi = faturaIslemServisi;
 
-  String _scanMode = 'receipt';
+  String _scanMode = 'invoice';
   String get scanMode => _scanMode;
 
   set scanMode(String mode) {
@@ -81,15 +75,7 @@ class OcrController extends ChangeNotifier {
 
   /// Görüntüyü analiz et.
   ///
-  /// Fatura modu (`_scanMode == 'invoice'`) KASITLI OLARAK cihaz üstü OCR
-  /// kullanmaz — fotoğraf doğrudan Vixrex'in TEK okuma ucuna
-  /// (`/api/fatura-oku`) gider. Telefon ve web AYNI bu uçtan geçer; iki
-  /// ayrı "okuma beyni" (yerel ML Kit zinciri + ayrı bir web zinciri) bir
-  /// daha kurulmaz (2026-09-26 mimari düzeltmesi).
-  ///
-  /// Fiş/raf modları (`receipt`/`shelf_label`) bu değişiklikten etkilenmez,
-  /// hâlâ cihaz üstü [_ocrService] kullanır — onlar üretici kataloğuyla
-  /// hiç ilişkili değil.
+  /// Fotoğraf her zaman `/api/fatura-oku` ucuna gider.
   Future<void> analyzeImage(Uint8List imageBytes) async {
     if (_isSaving || _isProcessing || _isPublishing) return;
     _isProcessing = true;
@@ -106,28 +92,7 @@ class OcrController extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
-    if (_scanMode == 'invoice') {
-      await _faturaFotografiniOku(imageBytes);
-      return;
-    }
-
-    final result = await _ocrService.analyzeImage(
-      imageBytes,
-      scanMode: _scanMode,
-    );
-
-    result.when(
-      success: (catalog) {
-        _result = catalog;
-        _isProcessing = false;
-        notifyListeners();
-      },
-      failure: (failure) {
-        _errorMessage = failure.message;
-        _isProcessing = false;
-        notifyListeners();
-      },
-    );
+    await _faturaFotografiniOku(imageBytes);
   }
 
   Future<void> _faturaFotografiniOku(Uint8List imageBytes) async {
@@ -242,7 +207,6 @@ class OcrController extends ChangeNotifier {
         merchantApproved: false,
         stockConfirmed: stockChanged ? false : draft.stockConfirmed,
       );
-      updated.issues = InvoiceRowParser.validateProduct(updated);
     }
     _result!.products[index] = updated;
     _invoiceStateChanged();
@@ -333,44 +297,6 @@ class OcrController extends ChangeNotifier {
     }
 
     try {
-      // 1. Düzeltilmiş feedback verilerini Supabase'e gönder (Active Learning Loop)
-      final feedbackList =
-          _result!.products
-              .map(
-                (p) => {
-                  'name': p.name,
-                  'price': p.price,
-                  'is_approved': p.isApproved,
-                  'confidence': p.confidence,
-                },
-              )
-              .toList();
-
-      final parsedList =
-          _result!.products
-              .map(
-                (p) => {
-                  'name': p.name,
-                  'price': p.price,
-                  'confidence': p.confidence,
-                },
-              )
-              .toList();
-
-      // Fatura metni firma/tedarikçi/ticari fiyat gibi özel bilgiler
-      // içerebilir. Açık bir saklama politikası kurulana kadar fatura OCR
-      // ham metni feedback veri setine yazılmaz.
-      if (_scanMode != 'invoice') {
-        await const OcrFeedbackService().saveFeedback(
-          rawOcrText: _result!.rawText,
-          parsedProducts: parsedList,
-          correctedProducts: feedbackList,
-          scanMode: _scanMode,
-          imageHash: 'hash_${_result!.rawText.hashCode.abs()}',
-        );
-      }
-
-      // 2. Ürünleri editör kontrolcüsüne ekle (uzak yazma başarısızsa yerelde yok)
       final editor = _editorController;
       if (editor == null) {
         _errorMessage =

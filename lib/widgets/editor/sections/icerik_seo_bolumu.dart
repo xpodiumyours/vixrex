@@ -7,7 +7,6 @@ import 'package:vixrex/controllers/store_editor_controller.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/screens/my_vitrin/my_vitrin_state.dart';
 import 'package:vixrex/screens/ocr_scanner_screen.dart';
-import 'package:vixrex/services/ocr/ocr_service.dart';
 import 'package:vixrex/services/store_publish_payload_builder.dart';
 import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/widgets/editor/about_editor_sheet.dart';
@@ -335,9 +334,8 @@ class IcerikSeoBolumu extends StatelessWidget {
                   builder:
                       (_) => OcrScannerScreen(
                         ocrController: OcrController(
-                          ocrService: const OcrService(),
                           editorController: controller,
-                        ),
+                        )..scanMode = 'invoice',
                       ),
                 ),
               );
@@ -346,7 +344,6 @@ class IcerikSeoBolumu extends StatelessWidget {
               final navigator = Navigator.of(ctx, rootNavigator: true);
               Navigator.of(ctx).pop();
               final invoiceController = OcrController(
-                ocrService: const OcrService(),
                 editorController: controller,
               )..scanMode = 'invoice';
               await invoiceController.resumeInvoiceProduct(product.id);
@@ -366,7 +363,6 @@ class IcerikSeoBolumu extends StatelessWidget {
             onInvoiceTap: () {
               Navigator.of(ctx).pop();
               final invoiceController = OcrController(
-                ocrService: const OcrService(),
                 editorController: controller,
               )..scanMode = 'invoice';
               Navigator.of(ctx, rootNavigator: true).push(

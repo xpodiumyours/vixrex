@@ -15,7 +15,6 @@ import 'package:vixrex/screens/vixrex_screen.dart';
 import 'package:vixrex/screens/profile_screen.dart';
 import 'package:vixrex/controllers/ocr_controller.dart';
 import 'package:vixrex/controllers/store_editor_controller.dart';
-import 'package:vixrex/services/ocr/ocr_service.dart';
 import 'package:vixrex/services/store_local_storage_service.dart';
 import 'package:vixrex/services/vixrex_assistant_nlu_types.dart';
 import 'package:vixrex/services/vixrex_session_controller.dart';
@@ -291,7 +290,7 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
     });
   }
 
-  void _openOcrScanner({String scanMode = 'receipt'}) {
+  void _openOcrScanner({String scanMode = 'invoice'}) {
     final editorController = _myVitrinKey.currentState?.controller;
     if (editorController == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -304,7 +303,6 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
     }
 
     final ocrController = OcrController(
-      ocrService: const OcrService(),
       editorController: editorController,
     );
     ocrController.scanMode = scanMode;
@@ -547,10 +545,10 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
         _vixrexOpenCoverTemplatePicker();
         break;
       case VixRexAction.openOcrScanner:
-        _openOcrScanner(scanMode: 'receipt');
+        _openOcrScanner(scanMode: 'invoice');
         break;
       case VixRexAction.openOcrScannerShelf:
-        _openOcrScanner(scanMode: 'shelf_label');
+        _openOcrScanner(scanMode: 'invoice');
         break;
       case VixRexAction.openXmlUpload:
         _openXmlUpload();

@@ -206,7 +206,6 @@ export default function InvoiceToProducts({
   // Firmanın sitesi faturada okunamazsa esnaf yazar (zorunlu değil):
   // havuzda olmayan firmanın keşfi buradan yürür.
   const [firmaSitesi, setFirmaSitesi] = useState("");
-  const [manuelMetin, setManuelMetin] = useState("");
   const [hata, setHata] = useState<string | null>(null);
   const [yukleniyor, setYukleniyor] = useState(false);
   const [sonuc, setSonuc] = useState<YazmaSonucu | null>(null);
@@ -488,26 +487,6 @@ export default function InvoiceToProducts({
     },
     [firmaSitesi, satirlariHazirla, storeSlug],
   );
-
-  async function metniOku() {
-    setHata(null);
-    setAdim("okunuyor");
-    try {
-      const cevap = await fetch("/api/fatura-metin", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug: storeSlug, metin: manuelMetin, firmaSitesi }),
-      });
-      const govde = await cevap.json().catch(() => null);
-      if (!cevap.ok) throw new Error(typeof govde?.hata === "string" ? govde.hata : "Belge okunamadı.");
-      const okunan = govde as FaturaOkumaSonucu;
-      setBelge(okunan);
-      setSatirlar(satirlariHazirla(okunan));
-      setAdim("urunler");
-    } catch (err) {
-      setHata(err instanceof Error ? err.message : "Belge okunamadı.");
-      setAdim("sec");
-    }
-  }
 
   function satirGuncelle(index: number, degisiklik: Partial<SatirDurumu>) {
     setSatirlar((oncekiler) =>
@@ -849,7 +828,7 @@ export default function InvoiceToProducts({
           </div>
         )}
 
-        {!okuyucuHazir && <p className="fatura-aciklama">Fotoğraf okuyucu şu an hazır değil. Fatura metnini yapıştırabilir veya ürün satırlarını yazabilirsin.</p>}
+        {!okuyucuHazir && <p className="fatura-aciklama">Fotoğraf okuyucu şu an hazır değil.</p>}
         <input
           disabled={!okuyucuHazir}
           ref={dosyaRef}
@@ -860,12 +839,6 @@ export default function InvoiceToProducts({
             if (dosya) void dosyaSecildi(dosya);
           }}
         />
-
-        <label className="fatura-fiyat">
-          Fatura metnini yapıştır veya her ürünü ayrı satıra yaz
-          <textarea value={manuelMetin} onChange={(e) => setManuelMetin(e.target.value)} rows={6} placeholder="Model, ürün adı, beden, adet ve alış fiyatı" />
-        </label>
-        <button type="button" className="fatura-ikincil" disabled={!manuelMetin.trim() || yukleniyor} onClick={() => void metniOku()}>Metinden ürünleri hazırla</button>
         {onClose && (
           <button type="button" className="fatura-ikincil" onClick={() => void kapat()}>
             Vazgeç
