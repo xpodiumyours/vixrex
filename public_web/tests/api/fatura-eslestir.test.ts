@@ -1,7 +1,5 @@
 import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import seherHam from "../../data/katalog/uretici-katalog-seher-mensucat.json";
-import type { UreticiUrunu } from "@/lib/ureticiKatalog";
 
 vi.mock("node:dns/promises", async (importOriginal) => ({
   ...await importOriginal<typeof import("node:dns/promises")>(),
@@ -92,25 +90,6 @@ describe("/api/fatura-eslestir — OCR kaynağından bağımsız katalog eşleş
     expect(cevap.status).toBe(200);
   });
 
-  it("üreticisi belirtilen gerçek katalog kodları resmî bilgi ve fotoğrafla eşleşir", async () => {
-    const cevap = await faturaEslestir(
-      istek([
-        { model: "ELT1302", ad: "elastan sıfır yaka", barkod: "", adet: 2, alisBirimFiyat: 137, guven: 0.9 },
-        { model: "TER0101", ad: "penye atlet", barkod: "", adet: 18, alisBirimFiyat: 63.5, guven: 0.85 },
-      ], "deneme-vitrin", "Seher Mensucat"),
-    );
-    const govde = await cevap.json();
-
-    expect(cevap.status).toBe(200);
-    expect(govde.katalogEslesmesi).toBe(2);
-    expect(govde.satirlar[0].katalog.resmiAd).toContain("ELT1302");
-    // Kilitli kapsam: resmî ad, marka VE fotoğraf gelir; kullanım izni sonra,
-    // çalışan sistemle istenir (izin durumu bilgi olarak taşınır).
-    expect(govde.satirlar[0].katalog.izinDurumu).not.toBe("var");
-    expect(govde.satirlar[0].katalog.gorseller.length).toBeGreaterThan(0);
-    expect(govde.satirlar[1].katalog.marka).toBeTruthy();
-  });
-
   it("katalogda olmayan kod tahmin üretmez, katalog null döner", async () => {
     const cevap = await faturaEslestir(istek([{ model: "ZZZ9999", ad: "bilinmeyen ürün" }]));
     const govde = await cevap.json();
@@ -130,31 +109,4 @@ describe("/api/fatura-eslestir — OCR kaynağından bağımsız katalog eşleş
     const cevap = await faturaEslestir(istek([{ model: "ELT1302" }]));
     expect(cevap.status).toBe(429);
   });
-
-  it.each([1234, 5678, 9012])(
-    "tohum=%i: rastgele 15 satır — katalogdaki gerçek ürünlerin hepsi bulunur, uydurma ürün bulunmaz",
-    async (tohum) => {
-      let durum = tohum >>> 0;
-      const rastgele = () => {
-        durum |= 0;
-        durum = (durum + 0x6d2b79f5) | 0;
-        let t = Math.imul(durum ^ (durum >>> 15), 1 | durum);
-        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-      };
-      const havuz = seherHam as UreticiUrunu[];
-      const gercekKodlar = new Set<string>();
-      while (gercekKodlar.size < 12) gercekKodlar.add(havuz[Math.floor(rastgele() * havuz.length)].kod);
-
-      const satirlar = [...gercekKodlar].map((model) => ({ model, ad: "", guven: 0.8 }));
-      satirlar.push({ model: "UYDURMA9999", ad: "gerçek olmayan ürün", guven: 0.3 });
-
-      const cevap = await faturaEslestir(istek(satirlar, "deneme-vitrin", "Seher Mensucat"));
-      const govde = await cevap.json();
-
-      expect(govde.katalogEslesmesi).toBe(12); // 12 gerçek + 1 uydurma
-      const uydurma = govde.satirlar.find((s: { model: string }) => s.model === "UYDURMA9999");
-      expect(uydurma.katalog).toBeNull();
-    },
-  );
 });

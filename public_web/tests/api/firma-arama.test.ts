@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
-// Firma arama (kilitli kapsam): havuz SADECE hızlı yoldur. Listede olmayan
-// firmanın resmi sitesi internette aranır; bulunursa aynı keşif oradan yürür.
-// Arama sonucu kalıcı saklanmaz; anahtar yoksa akış durmaz.
+// Firma arama (kilitli kapsam): firmanın resmi sitesi internette aranır;
+// bulunursa aynı keşif oradan yürür. Arama sonucu kalıcı saklanmaz;
+// anahtar yoksa akış durmaz.
 
 import { firmaSitesiniAra } from "@/lib/firmaArama";
 
