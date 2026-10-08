@@ -543,6 +543,7 @@ export async function faturayiOku(dataUrl: string): Promise<GoruSonucu> {
   }
 
   const govde = await cevap.json().catch(() => null);
+  if (govde?.status === "incomplete") throw new Error("OKUMA_YARIM_KALDI");
   const ham = ciktiMetni(govde ?? {});
   if (!ham.trim()) throw new Error("FOTOGRAFTA_YAZI_YOK");
 
@@ -616,6 +617,7 @@ function kullanimOku(govde: { usage?: unknown } | null): Pick<GoruSonucu, "maliy
   const kullanim = (govde?.usage ?? {}) as {
     input_tokens?: unknown;
     output_tokens?: unknown;
+    cost?: unknown;
     input_tokens_details?: { cached_tokens?: unknown };
     output_tokens_details?: { reasoning_tokens?: unknown };
   };
@@ -623,10 +625,11 @@ function kullanimOku(govde: { usage?: unknown } | null): Pick<GoruSonucu, "maliy
   const ciktiToken = sayi(kullanim.output_tokens) ?? 0;
   const onbellek = sayi(kullanim.input_tokens_details?.cached_tokens) ?? 0;
   const akilToken = sayi(kullanim.output_tokens_details?.reasoning_tokens) ?? 0;
+  const platformMaliyeti = typeof kullanim.cost === "number" ? sayi(kullanim.cost) : null;
   return {
     girdiToken,
     ciktiToken,
     akilToken,
-    maliyet: dolarHesapla(girdiToken, ciktiToken, onbellek),
+    maliyet: platformMaliyeti ?? dolarHesapla(girdiToken, ciktiToken, onbellek),
   };
 }
