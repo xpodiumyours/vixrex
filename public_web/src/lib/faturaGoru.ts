@@ -24,8 +24,7 @@
 
 import sharp from "sharp";
 import { kisiselVeriTemizle } from "@/lib/faturaKisiselVeri";
-import { firmaSitesiniAra, resmiSiteSayilmaz } from "@/lib/firmaArama";
-import { siteFirmayaAitMi } from "@/lib/firmaDogrula";
+import { resmiSiteSayilmaz } from "@/lib/firmaArama";
 import { sayfadanUrunKaydi } from "@/lib/faturaGorsel";
 import { alanAdiTemizle } from "@/lib/ureticiKatalog";
 
@@ -294,6 +293,92 @@ function httpsAdresler(govde: { output?: unknown } | null): string[] {
   return adresler;
 }
 
+const FIRMA_DOGRULAMA_SEMASI = {
+  type: "object",
+  additionalProperties: false,
+  required: ["vergi_no_sayfada", "firma_adi_sayfada", "adres_sayfada", "kanit_sayfa"],
+  properties: {
+    vergi_no_sayfada: { type: "boolean" },
+    firma_adi_sayfada: { type: "boolean" },
+    adres_sayfada: { type: "boolean" },
+    kanit_sayfa: YAZI,
+  },
+};
+
+export function firmaDogrulamaIstegi(alan: string, kimlik: { ad: string; vergiNo: string; adres: string }) {
+  const vergiNo = kimlik.vergiNo.replace(/\D/g, "");
+  return {
+    model: GORU_MODELI,
+    max_output_tokens: 512,
+    reasoning: { effort: "low" as const },
+    tools: [{ type: "openrouter:web_search", parameters: { engine: "native", allowed_domains: [alan] } }],
+    text: {
+      format: {
+        type: "json_schema",
+        name: "firma_dogrulama",
+        strict: true,
+        schema: FIRMA_DOGRULAMA_SEMASI,
+      },
+    },
+    input: [
+      `Yalniz ${alan} sitesinde ara. Bu site su firmaya mi ait?`,
+      `Firma adi: ${kimlik.ad.trim() || "-"}`,
+      `Vergi numarasi: ${vergiNo || "-"}`,
+      `Adres: ${kimlik.adres.trim() || "-"}`,
+      "vergi_no_sayfada: vergi numarasi sitede aynen yaziyorsa true.",
+      "firma_adi_sayfada: firma adi sitenin basliginda veya iletisim/hakkimizda sayfasinda yaziyorsa true.",
+      "adres_sayfada: adres sitede yaziyorsa true.",
+      "kanit_sayfa: bu bilgiyi gordugun sayfanin tam adresi; gormediysen bos birak. Tahmin etme.",
+    ].join("\n"),
+  };
+}
+
+export function firmaDogrulamasiGecerliMi(
+  alan: string,
+  govde: { output_text?: unknown; output?: unknown } | null,
+): boolean {
+  if (!govde) return false;
+  let cozulen: unknown;
+  try {
+    cozulen = JSON.parse(ciktiMetni(govde));
+  } catch {
+    return false;
+  }
+  const k = cozulen as {
+    vergi_no_sayfada?: unknown;
+    firma_adi_sayfada?: unknown;
+    adres_sayfada?: unknown;
+    kanit_sayfa?: unknown;
+  };
+  const kanit = guvenliAdres(k.kanit_sayfa);
+  if (!kanit || !sayfaFirmadaMi(kanit, alan)) return false;
+  if (k.vergi_no_sayfada === true) return true;
+  return k.firma_adi_sayfada === true && k.adres_sayfada === true;
+}
+
+async function firmaSitesiniPlatformlaDogrula(
+  alan: string,
+  kimlik: { ad: string; vergiNo: string; adres: string },
+  anahtar: string,
+): Promise<boolean> {
+  let cevap: Response;
+  try {
+    cevap = await fetch(ADRES, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${anahtar}`,
+      },
+      body: JSON.stringify(firmaDogrulamaIstegi(alan, kimlik)),
+    });
+  } catch {
+    return false;
+  }
+  if (!cevap.ok) return false;
+  const govde = await cevap.json().catch(() => null);
+  return firmaDogrulamasiGecerliMi(alan, govde);
+}
+
 async function firmaSitesiniModelleBul(girdi: {
   tedarikciAdi: string;
   vergiNo: string;
@@ -330,12 +415,12 @@ async function firmaSitesiniModelleBul(girdi: {
     if (!alan || gorulen.has(alan) || resmiSiteSayilmaz(alan)) continue;
     gorulen.add(alan);
     if (gorulen.size > 3) break;
-    const dogrulama = await siteFirmayaAitMi(alan, {
-      ad,
-      vergiNo: girdi.vergiNo,
-      adres: girdi.adres,
-    });
-    if (dogrulama.guc === "guclu") return alan;
+    const uygun = await firmaSitesiniPlatformlaDogrula(
+      alan,
+      { ad, vergiNo: girdi.vergiNo, adres: girdi.adres },
+      anahtar,
+    );
+    if (uygun) return alan;
   }
   return "";
 }
@@ -351,10 +436,6 @@ export async function firmaAlaniniKilitle(girdi: {
   if (belgede && !resmiSiteSayilmaz(belgede)) return belgede;
   const ipucu = alanAdiTemizle(girdi.esnafIpucu);
   if (ipucu && !resmiSiteSayilmaz(ipucu)) return ipucu;
-  const arama = await firmaSitesiniAra(girdi.tedarikciAdi, {
-    kimlik: { vergiNo: girdi.vergiNo, adres: girdi.adres },
-  });
-  if (arama.durum === "bulundu" && arama.alan && !resmiSiteSayilmaz(arama.alan)) return arama.alan;
   return firmaSitesiniModelleBul(girdi);
 }
 
