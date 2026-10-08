@@ -122,7 +122,6 @@ const SHARP_TRACE = [
 // ulaşırsa BURAYA EKLENMEK zorunda: scripts/kontrol/sharp-trace-kapsam.mjs
 // bu kuralı CI'da zorunlu kılar (eksik uç ya da bayat liste kırmızı verir).
 const SHARP_ROUTES = [
-  "/api/fatura-eslestir",
   "/api/fatura-islem",
   "/api/fatura-oku",
   "/api/fatura-satir-duzelt",
@@ -143,11 +142,10 @@ const nextConfig: NextConfig = {
     // Katalog + sharp izleme girdileri birleşik: sharp kullanan uçların
     // katalog gereksinimi varsa SHARP_TRACE ile birlikte buraya yazılır.
     "/api/fatura-oku": ["./data/katalog/**/*.json", "./scripts/katalog/firmalar.json", ...SHARP_TRACE],
-    "/api/fatura-eslestir": ["./data/katalog/**/*.json", "./scripts/katalog/firmalar.json", ...SHARP_TRACE],
     "/api/products/batch": ["./data/katalog/**/*.json", ...SHARP_TRACE],
     ...Object.fromEntries(
       SHARP_ROUTES
-        .filter((route) => !["/api/fatura-oku", "/api/fatura-eslestir", "/api/products/batch"].includes(route))
+        .filter((route) => !["/api/fatura-oku", "/api/products/batch"].includes(route))
         .map((route) => [route, SHARP_TRACE]),
     ),
   },

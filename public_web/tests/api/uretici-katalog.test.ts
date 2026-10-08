@@ -1,7 +1,6 @@
 import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { faturaSatiriniEslestir } from "@/lib/faturaEslestir";
 import {
   gorselKapisi,
   katalogOzeti,
@@ -114,19 +113,6 @@ describe("üretici kataloğu — eşleştirme", () => {
     if (arama?.tur !== "celiski") return;
     expect(arama.adaylar.length).toBeGreaterThanOrEqual(2);
     expect(ureticiUrunuBul({ model: "ELT1001" })).toBeNull();
-    const satir = faturaSatiriniEslestir({
-      model: "ELT1001",
-      ad: "Elit Erkek Penye Atlet",
-      barkod: "",
-      varyant: "",
-      beden: "",
-      adet: 1,
-      alisBirimFiyat: 10,
-      satirToplam: 10,
-      guven: 1,
-    });
-    expect(satir.sonuc).toBe("celiski");
-    expect(satir.celiski?.adaylar.length).toBeGreaterThanOrEqual(2);
     expect(ureticiUrunuBul({ model: "ELT1001", firmaAnahtari: "seher-mensucat" })?.firma.anahtar).toBe(
       "seher-mensucat",
     );
