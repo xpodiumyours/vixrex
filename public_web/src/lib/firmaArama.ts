@@ -1,37 +1,4 @@
 import { alanAdiTemizle } from "@/lib/ureticiKatalog";
-import {
-  siteFirmayaAitMi,
-  type FirmaDogrulamasi,
-  type FirmaDogrulaBagimliliklari,
-} from "@/lib/firmaDogrula";
-
-// Firmanın resmi sitesini internette bulma (kilitli kapsam kararı).
-//
-// 55 firmalık havuz SADECE hızlı yoldur (jeton tasarrufu): listedeki firma
-// aranmadan bulunur. Listede OLMAYAN firma için adı internette aratılır;
-// eşleşen resmi alan adı bulunursa aynı keşif (Shopify/Woo/sitemap+JSON-LD)
-// oradan yürür. El yazısı notlar, kısaltmalar bizi bağlamaz — dijitalde
-// eşleşen firmayla köprü kurulur.
-//
-// Arama sonucu KALICI saklanmaz (sağlayıcı koşulu): bulunan alan adı yalnız
-// bu işlemin belleğinde tutulur, sonraki faturada yeniden aranır.
-//
-// Sağlayıcı: Brave Web Search (ücretsiz katman). Anahtar yoksa arama sessizce
-// atlanır — akış durmaz, esnaf site ipucu yazarak devam edebilir.
-
-export interface FirmaAramaBagimliliklari {
-  fetcher?: (input: string, init?: RequestInit) => Promise<Response>;
-  apiAnahtari?: string;
-  kimlik?: { vergiNo: string; adres: string };
-  dogrula?: FirmaDogrulaBagimliliklari;
-}
-
-export type FirmaAramaDurumu =
-  | { durum: "kapali"; sebep: string }
-  | { durum: "bulunamadi"; sebep: string }
-  | { durum: "bulundu"; alan: string; kaynak: string; dogrulama?: FirmaDogrulamasi };
-
-const ARAMA_ZAMAN_ASIMI_MS = 4000;
 
 // Pazar yeri, sosyal ağ, video ve sözlük adresleri firmanın resmi sitesi
 // sayılmaz — buralardan eşleşme kurulmaz.
@@ -53,37 +20,6 @@ const RESMI_SITE_OLMAYANLAR = [
   "eksisozluk.com",
 ];
 
-function firmaJetonlari(ad: string): string[] {
-  const duraklar = new Set([
-    "a", "s", "ltd", "sti", "tic", "san", "ve", "ile", "the", "of", "co", "ltdsti",
-  ]);
-  return ad
-    .toLocaleLowerCase("tr")
-    .replace(/[^a-zçğıöşü0-9\s]/g, " ")
-    .split(/\s+/)
-    .map((parca) => parca.trim())
-    .filter((parca) => parca.length >= 3 && !duraklar.has(parca));
-}
-
-function alanFimayaUyarMi(alan: string, jetonlar: string[]): boolean {
-  if (jetonlar.length === 0) return false;
-  const duz = alan.toLowerCase().replace(/\./g, "");
-  const ceviri = (s: string) =>
-    s
-      .replace(/ç/g, "c")
-      .replace(/ğ/g, "g")
-      .replace(/ı/g, "i")
-      .replace(/ö/g, "o")
-      .replace(/ş/g, "s")
-      .replace(/ü/g, "u");
-  return jetonlar.some((jeton) => {
-    const sade = ceviri(jeton);
-    if (sade.length < 3) return false;
-    if (duz.includes(sade) || duz.includes(jeton)) return true;
-    return jeton.includes(duz.replace(/comtr|com|net|org/g, ""));
-  });
-}
-
 function resmiSiteOlmayan(alan: string): boolean {
   return RESMI_SITE_OLMAYANLAR.some((kalip) => alan === kalip || alan.endsWith(`.${kalip}`) || alan.includes(kalip));
 }
@@ -91,84 +27,4 @@ function resmiSiteOlmayan(alan: string): boolean {
 export function resmiSiteSayilmaz(alan: string): boolean {
   const temiz = alanAdiTemizle(alan);
   return !temiz || resmiSiteOlmayan(temiz);
-}
-
-export async function firmaSitesiniAra(
-  tedarikciAdi: string,
-  bagimliliklar: FirmaAramaBagimliliklari = {},
-): Promise<FirmaAramaDurumu> {
-  const ad = tedarikciAdi.trim();
-  if (ad.length < 3) return { durum: "bulunamadi", sebep: "Firma adı okunamadı." };
-
-  const anahtar = (bagimliliklar.apiAnahtari ?? process.env.BRAVE_SEARCH_API_KEY ?? "").trim();
-  if (!anahtar) {
-    return {
-      durum: "kapali",
-      sebep: "Arama servisi bağlı değil; firmanın sitesini yazarak devam edilebilir.",
-    };
-  }
-
-  const fetcher = bagimliliklar.fetcher ?? fetch;
-  const jetonlar = firmaJetonlari(ad);
-
-  let yanit: Response;
-  try {
-    const vergiNo = (bagimliliklar.kimlik?.vergiNo ?? "").replace(/\D/g, "");
-    const sorgu = vergiNo.length >= 10 ? `${vergiNo} ${ad} resmi site` : `${ad} resmi site`;
-    const url = `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(sorgu)}&count=8&country=TR`;
-    yanit = await fetcher(url, {
-      headers: { Accept: "application/json", "X-Subscription-Token": anahtar },
-      signal: AbortSignal.timeout(ARAMA_ZAMAN_ASIMI_MS),
-    });
-  } catch {
-    return { durum: "bulunamadi", sebep: "Arama servisine ulaşılamadı." };
-  }
-
-  if (!yanit.ok) {
-    return { durum: "bulunamadi", sebep: "Arama servisi yanıt vermedi." };
-  }
-
-  let govde: unknown;
-  try {
-    govde = await yanit.json();
-  } catch {
-    return { durum: "bulunamadi", sebep: "Arama yanıtı okunamadı." };
-  }
-
-  const sonuclar = (govde as { web?: { results?: Array<{ url?: unknown; title?: unknown }> } })?.web
-    ?.results;
-  if (!Array.isArray(sonuclar)) return { durum: "bulunamadi", sebep: "Arama sonuç vermedi." };
-
-  let celisenVar = false;
-  for (const sonuc of sonuclar) {
-    const adres = typeof sonuc?.url === "string" ? sonuc.url : "";
-    const alan = alanAdiTemizle(adres);
-    if (!alan || resmiSiteOlmayan(alan)) continue;
-    if (!bagimliliklar.kimlik && !alanFimayaUyarMi(alan, jetonlar)) continue;
-
-    const dogrulama = await siteFirmayaAitMi(
-      alan,
-      {
-        ad,
-        vergiNo: bagimliliklar.kimlik?.vergiNo ?? "",
-        adres: bagimliliklar.kimlik?.adres ?? "",
-      },
-      {
-        fetcher: bagimliliklar.dogrula?.fetcher ?? fetcher,
-        ...(bagimliliklar.dogrula?.resolveHost ? { resolveHost: bagimliliklar.dogrula.resolveHost } : {}),
-      },
-    );
-    if (dogrulama.guc !== "guclu") {
-      celisenVar = true;
-      continue;
-    }
-    return { durum: "bulundu", alan, kaynak: `https://${alan}`, dogrulama };
-  }
-
-  return {
-    durum: "bulunamadi",
-    sebep: celisenVar
-      ? "Bulunan site faturadaki firma bilgileriyle (vergi no, adres, ad) doğrulanamadı."
-      : "Firmanın resmi sitesi aramada bulunamadı.",
-  };
 }
