@@ -76,6 +76,30 @@ describe("site kartı", () => {
     expect(satiraAitAramaGorseli("sehermensucat.com", govde)).toBeNull();
   });
 
+  it("arama kaydındaki firma sayfası fotoğrafsız da satıra bağlanır", () => {
+    const govde = {
+      output: [
+        {
+          type: "message",
+          content: [
+            {
+              type: "output_text",
+              text: "bulundu",
+              annotations: [
+                { type: "url_citation", url: "https://baska.example/urun" },
+                { type: "url_citation", url: "https://firma.example/elt1302" },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    expect(satiraAitAramaGorseli("firma.example", govde)).toEqual({
+      gorsel: "",
+      sayfa: "https://firma.example/elt1302",
+    });
+  });
+
   it("sayfası doğrulanmamış site metni kart kurmaz", () => {
     const kart = siteKartiniUygula(satir({
       siteAciklama: "Sitede yazan açıklama",
