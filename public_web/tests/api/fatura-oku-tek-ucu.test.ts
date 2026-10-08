@@ -395,36 +395,18 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(mocks.yukle).toHaveBeenCalledWith(expect.anything(), "store-1", "11111111-1111-4111-8111-111111111111");
   });
 
-  it("aynı fotoğraf kayıtlıysa ikinci okuma yapılmaz", async () => {
+  it("aynı fotoğraf kayıtlı olsa da yeniden okunur", async () => {
     mocks.parmak.mockResolvedValue("eski-islem");
-    mocks.yukle.mockResolvedValue({
-      satirlar: [],
-      belgeToplami: 10,
-      belgeAdedi: 1,
-      tedarikci: "Eski",
-      tedarikciVergiNo: "",
-      tedarikciAdres: "",
-      tedarikciSite: "",
-      tedarikciDijitalIz: null,
-      aramaDurumu: null,
-      islemKimligi: "eski-islem",
-      belge: null,
-    });
     const cevap = await faturaOku(istek());
-    const govde = await cevap.json();
     expect(cevap.status).toBe(200);
-    expect(govde.tekrar).toBe(true);
-    expect(vi.mocked(fetch)).not.toHaveBeenCalled();
-    expect(mocks.kullanimYaz).not.toHaveBeenCalled();
+    expect(vi.mocked(fetch)).toHaveBeenCalled();
   });
 
-  it("günlük tavan dolunca okuma yapılmaz", async () => {
+  it("günlük harcama dolu olsa da fotoğraf okunur", async () => {
     mocks.harcama = [{ cost_usd: 1 }];
     const cevap = await faturaOku(istek());
-    expect(cevap.status).toBe(503);
-    expect((await cevap.json()).hata).toContain("sınır");
-    expect(vi.mocked(fetch)).not.toHaveBeenCalled();
-    expect(mocks.kaydet).not.toHaveBeenCalled();
+    expect(cevap.status).toBe(200);
+    expect(vi.mocked(fetch)).toHaveBeenCalled();
   });
 
   it("maliyet yazılamazsa işlem kaydı açılmaz", async () => {

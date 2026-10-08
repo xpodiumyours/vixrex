@@ -8,10 +8,10 @@ import { belgeGercegiUyuyorMu } from "@/lib/faturaSatirAyikla";
 import { eslesmeyenSatir, siteKartiniUygula, sonucOzeti, type EslesmisFaturaSatiri, type HamFaturaSatiri } from "@/lib/faturaEslestir";
 import { ayniAlisverisAdaylari, belgeParmakIzi, islemKaydet } from "@/lib/faturaIslemKaydi";
 import { faturaTaslaklari } from "@/lib/faturaTaslagi";
-import { firmaAlaniniKilitle, faturayiOku, goruntuyuSinirla, satirSitesindeAra, type GoruSatiri } from "@/lib/faturaGoru";
+import { firmaAlaniniKilitle, faturayiOku, satirSitesindeAra, type GoruSatiri } from "@/lib/faturaGoru";
 import { kartaGirecekGorsel, sayfadanUrunAciklamasi } from "@/lib/faturaGorsel";
-import { ARAMA_UCETI_USD, aramaCagrisiSigarMi, bugunkuMaliyetUsd, gunlukTavanDolduMu, kullanimKaydet } from "@/lib/faturaMaliyet";
-import { islemiYukle, islemYaniti, parmakIzindenIslemBul } from "@/lib/faturaIslemOku";
+import { ARAMA_UCETI_USD, aramaCagrisiSigarMi, bugunkuMaliyetUsd, kullanimKaydet } from "@/lib/faturaMaliyet";
+import { islemiYukle } from "@/lib/faturaIslemOku";
 
 // Vixrex'in TEK fatura okuma ucu.
 //
@@ -160,17 +160,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ hata: "Vitrin bulunamadı." }, { status: 503 });
   }
 
-  try {
-    const onceki = await parmakIzindenIslemBul(admin, magazaId, belgeParmakIzi(bayt));
-    const kayitli = onceki ? await islemiYukle(admin, magazaId, onceki) : null;
-    if (kayitli) return NextResponse.json(islemYaniti(kayitli));
-  } catch (hata) {
-    console.warn(
-      "[fatura-oku] onceki islem aranamadi, yeniden okunuyor:",
-      hata instanceof Error ? hata.message : hata,
-    );
-  }
-
   if (!process.env.OPENROUTER_API_KEY) {
     return NextResponse.json({ hata: "Fatura okuyucu hazır değil." }, { status: 503 });
   }
@@ -178,25 +167,11 @@ export async function POST(request: NextRequest) {
   let gunlukHarcama = 0;
   try {
     gunlukHarcama = await bugunkuMaliyetUsd(admin, magazaId);
-    if (gunlukTavanDolduMu(gunlukHarcama)) {
-      return NextResponse.json(
-        { hata: "Bugünkü fatura okuma sınırına ulaşıldı." },
-        { status: 503 },
-      );
-    }
   } catch (hata) {
     console.error("[fatura-oku] maliyet okunamadi:", hata instanceof Error ? hata.message : hata);
-    return NextResponse.json({ hata: "Fatura okuma sınırı doğrulanamadı." }, { status: 503 });
   }
 
-  let sinirli: { bayt: Buffer; tur: string };
-  try {
-    sinirli = await goruntuyuSinirla(bayt, tur);
-  } catch (hata) {
-    console.error("[fatura-oku] fotograf hazirlanamadi:", hata instanceof Error ? hata.message : hata);
-    return NextResponse.json({ hata: "Fotoğraf hazırlanamadı. Daha net bir kare dene." }, { status: 422 });
-  }
-  const goruntu = `data:${sinirli.tur};base64,${base64Cevir(sinirli.bayt)}`;
+  const goruntu = `data:${tur};base64,${base64Cevir(bayt)}`;
 
   try {
     const okuma = await faturayiOku(goruntu);
