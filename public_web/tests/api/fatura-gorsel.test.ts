@@ -160,6 +160,14 @@ describe("firma sayfasındaki ürün kaydı", () => {
       gorsel: "https://firma.example/elt1302.jpg",
     });
   });
+
+  it("og görseli yoksa sayfadaki ürün resmi alınır", () => {
+    const html = `<html><body>
+      <img src="https://firma.example/logo.png" alt="logo">
+      <img src="https://firma.example/elt1302-on.jpg" alt="ELT1302">
+    </body><p>ELT1302 fanila</p></html>`;
+    expect(sayfadakiUrun(html, "https://firma.example/elt1302").gorsel).toBe("https://firma.example/elt1302-on.jpg");
+  });
 });
 
 describe("kaynak görsellerini kendi depomuza alma", () => {

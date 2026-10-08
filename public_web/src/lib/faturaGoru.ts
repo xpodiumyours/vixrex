@@ -31,6 +31,7 @@ import { alanAdiTemizle } from "@/lib/ureticiKatalog";
 
 const ADRES = "https://openrouter.ai/api/v1/responses";
 const OPENAI_FOTOGRAF_ADRESI = "https://api.openai.com/v1/responses";
+let acikFotografIstegiKapali = false;
 export const GORU_MODELI = "openai/gpt-5.6-luna";
 export const CIKTI_TOKEN_TAVANI = 16384;
 export const UZUN_KENAR_SINIRI = 65535;
@@ -366,9 +367,9 @@ export interface SatirAramasi {
   akilToken: number;
 }
 
-export function resmiFotografIstegi(alan: string, sorgu: string) {
+export function resmiFotografIstegi(alan: string, sorgu: string, model = "gpt-5.6-luna") {
   return {
-    model: "gpt-5.6-luna",
+    model,
     max_output_tokens: 1024,
     reasoning: { effort: "low" as const },
     tools: [{
@@ -420,11 +421,35 @@ export async function satirSitesindeAra(girdi: {
     if (openaiCevap.ok) {
       const openaiGovde = await openaiCevap.json().catch(() => null);
       const openaiBulunan = await sayfaFotografiniDoldur(satiraAitAramaGorseli(alan, openaiGovde), kimlik);
-      if (openaiBulunan?.gorsel) {
+      if (openaiBulunan?.gorsel || openaiBulunan?.sayfa) {
         return {
           gorsel: openaiBulunan.gorsel,
           sayfa: openaiBulunan.sayfa,
           ...kullanimOku(openaiGovde),
+        };
+      }
+    }
+  }
+
+  if (!acikFotografIstegiKapali) {
+    const resmiCevap = await fetch(ADRES, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${anahtar}`,
+      },
+      body: JSON.stringify(resmiFotografIstegi(alan, sorgu, GORU_MODELI)),
+    });
+    if (resmiCevap.status === 400) acikFotografIstegiKapali = true;
+    if (resmiCevap.status === 402) throw new Error("OKUYUCU_BAKIYE_BITTI");
+    if (resmiCevap.ok) {
+      const resmiGovde = await resmiCevap.json().catch(() => null);
+      const resmiBulunan = await sayfaFotografiniDoldur(satiraAitAramaGorseli(alan, resmiGovde), kimlik);
+      if (resmiBulunan?.gorsel || resmiBulunan?.sayfa) {
+        return {
+          gorsel: resmiBulunan.gorsel,
+          sayfa: resmiBulunan.sayfa,
+          ...kullanimOku(resmiGovde),
         };
       }
     }

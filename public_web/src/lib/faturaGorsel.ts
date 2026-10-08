@@ -194,6 +194,7 @@ function cozulmus(deger: string): string {
 }
 
 function mutlakHttps(kaynak: string, sayfa: string): string {
+  if (!kaynak.trim()) return "";
   try {
     const url = new URL(kaynak, sayfa);
     if (url.protocol !== "https:" || url.username || url.password || url.port) return "";
@@ -263,7 +264,25 @@ export function sayfadakiUrun(html: string, sayfa: string): { ad: string; acikla
   if (!ad) ad = htmlMetni(metaIcerik(html, "og:title", "property")).slice(0, 300);
   if (!aciklama) aciklama = htmlMetni(metaIcerik(html, "description", "name")).slice(0, 500);
   if (!gorsel) gorsel = mutlakHttps(metaIcerik(html, "og:image", "property"), sayfa);
+  if (!gorsel) gorsel = sayfaResmi(html, sayfa, ad);
   return { ad, aciklama, gorsel };
+}
+
+function sayfaResmi(html: string, sayfa: string, ad: string): string {
+  const adaylar: string[] = [];
+  for (const eslesen of html.matchAll(/<img\b[^>]*>/gi)) {
+    const src = /src=["']([^"']+)["']/i.exec(eslesen[0])?.[1] ?? "";
+    const adres = mutlakHttps(cozulmus(src), sayfa);
+    if (!adres || /logo|favicon|placeholder|sprite|banner|icon/i.test(adres)) continue;
+    adaylar.push(adres);
+  }
+  if (adaylar.length === 0) return "";
+  const ipucu = ad.toLowerCase().replace(/\s+/g, "");
+  if (ipucu.length >= 3) {
+    const tutan = adaylar.find((adres) => adres.toLowerCase().includes(ipucu));
+    if (tutan) return tutan;
+  }
+  return adaylar[0];
 }
 
 export async function sayfadanUrunKaydi(

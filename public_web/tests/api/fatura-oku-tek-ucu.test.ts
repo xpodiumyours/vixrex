@@ -208,13 +208,17 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(soru).not.toContain("asil urun fotografi");
     expect(soru).toContain("baska yerden tamamlama");
     const okumaCagrilari = vi.mocked(fetch).mock.calls.filter((satir) => String(satir[0]).includes("openrouter.ai/api/v1/responses"));
-    const arama = JSON.parse(String((okumaCagrilari[1]?.[1] as RequestInit).body));
+    const resmi = JSON.parse(String((okumaCagrilari[1]?.[1] as RequestInit).body));
+    expect(resmi.model).toBe("openai/gpt-5.6-luna");
+    expect(resmi.include).toEqual(["web_search_call.results"]);
+    expect(resmi.tools[0].type).toBe("web_search");
+    expect(resmi.tools[0].search_content_types).toEqual(["image", "text"]);
+    expect(resmi.tools[0].filters.allowed_domains).toEqual(["sehermensucat.com"]);
+    const arama = JSON.parse(String((okumaCagrilari[2]?.[1] as RequestInit).body));
     expect(arama.reasoning.effort).toBe("low");
     expect(arama.tools[0].type).toBe("openrouter:web_search");
     expect(arama.tools[0].parameters.allowed_domains).toEqual(["sehermensucat.com"]);
     expect(arama.tools[0].parameters.engine).toBe("native");
-    expect(arama.tools[0].parameters.search_content_types).toBeUndefined();
-    expect(arama.include).toBeUndefined();
   });
 
   it("modelin yazdığı fotoğraf adresi kart kurmaz", async () => {
