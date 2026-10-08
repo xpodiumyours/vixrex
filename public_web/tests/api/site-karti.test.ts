@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { siteKartiniUygula, type EslesmisFaturaSatiri } from "@/lib/faturaEslestir";
-import { satiraAitAramaGorseli } from "@/lib/faturaGoru";
+import { resmiFotografIstegi, satiraAitAramaGorseli } from "@/lib/faturaGoru";
 
 function satir(ek: Partial<EslesmisFaturaSatiri> = {}): EslesmisFaturaSatiri {
   return {
@@ -29,6 +29,17 @@ function satir(ek: Partial<EslesmisFaturaSatiri> = {}): EslesmisFaturaSatiri {
     ...ek,
   };
 }
+
+describe("resmi fotoğraf isteği", () => {
+  it("OpenAI aramasına görsel türünü ve sonuç kaydını birlikte koyar", () => {
+    const istek = resmiFotografIstegi("firma.example", "ELT1302 fanila");
+    expect(istek.model).toBe("gpt-5.6-luna");
+    expect(istek.include).toEqual(["web_search_call.results"]);
+    expect(istek.tools[0].type).toBe("web_search");
+    expect(istek.tools[0].search_content_types).toEqual(["image", "text"]);
+    expect(istek.tools[0].filters.allowed_domains).toEqual(["firma.example"]);
+  });
+});
 
 describe("site kartı", () => {
   it("firmanın sitesindeki fotoğraf ve açıklama kartı kurar", () => {

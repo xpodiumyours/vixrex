@@ -25,9 +25,12 @@
 import sharp from "sharp";
 import { kisiselVeriTemizle } from "@/lib/faturaKisiselVeri";
 import { firmaSitesiniAra, resmiSiteSayilmaz } from "@/lib/firmaArama";
+import { siteFirmayaAitMi } from "@/lib/firmaDogrula";
+import { sayfadanUrunKaydi } from "@/lib/faturaGorsel";
 import { alanAdiTemizle } from "@/lib/ureticiKatalog";
 
 const ADRES = "https://openrouter.ai/api/v1/responses";
+const OPENAI_FOTOGRAF_ADRESI = "https://api.openai.com/v1/responses";
 export const GORU_MODELI = "openai/gpt-5.6-luna";
 export const CIKTI_TOKEN_TAVANI = 16384;
 export const UZUN_KENAR_SINIRI = 65535;
@@ -258,6 +261,84 @@ export function satiraAitAramaGorseli(
   return null;
 }
 
+function httpsAdresler(govde: { output?: unknown } | null): string[] {
+  const adresler: string[] = [];
+  const ekle = (deger: unknown) => {
+    const adres = guvenliAdres(deger);
+    if (adres) adresler.push(adres);
+  };
+  if (!Array.isArray(govde?.output)) return adresler;
+  for (const oge of govde.output) {
+    const kayit = oge as { results?: unknown; content?: unknown };
+    if (Array.isArray(kayit.results)) {
+      for (const sonuc of kayit.results) {
+        const resim = sonuc as { image_url?: unknown; source_website_url?: unknown };
+        ekle(resim.source_website_url);
+        ekle(resim.image_url);
+      }
+    }
+    if (!Array.isArray(kayit.content)) continue;
+    for (const icerik of kayit.content) {
+      const parca = icerik as { annotations?: unknown };
+      if (!Array.isArray(parca.annotations)) continue;
+      for (const not of parca.annotations) {
+        const alinti = not as { url?: unknown; url_citation?: unknown };
+        ekle(alinti.url);
+        const ic = alinti.url_citation;
+        if (typeof ic === "string") ekle(ic);
+        else if (ic && typeof ic === "object") ekle((ic as { url?: unknown }).url);
+      }
+    }
+  }
+  return adresler;
+}
+
+async function firmaSitesiniModelleBul(girdi: {
+  tedarikciAdi: string;
+  vergiNo: string;
+  adres: string;
+}): Promise<string> {
+  const anahtar = process.env.OPENROUTER_API_KEY;
+  const ad = girdi.tedarikciAdi.trim();
+  if (!anahtar || ad.length < 3) return "";
+  const sorgu = [girdi.vergiNo.replace(/\D/g, ""), ad, "resmi site"].filter(Boolean).join(" ");
+  let cevap: Response;
+  try {
+    cevap = await fetch(ADRES, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${anahtar}`,
+      },
+      body: JSON.stringify({
+        model: GORU_MODELI,
+        max_output_tokens: 512,
+        reasoning: { effort: "low" },
+        tools: [{ type: "openrouter:web_search", parameters: { engine: "native", max_results: 5 } }],
+        input: sorgu,
+      }),
+    });
+  } catch {
+    return "";
+  }
+  if (!cevap.ok) return "";
+  const govde = await cevap.json().catch(() => null);
+  const gorulen = new Set<string>();
+  for (const sayfa of httpsAdresler(govde)) {
+    const alan = alanAdiTemizle(sayfa);
+    if (!alan || gorulen.has(alan) || resmiSiteSayilmaz(alan)) continue;
+    gorulen.add(alan);
+    if (gorulen.size > 3) break;
+    const dogrulama = await siteFirmayaAitMi(alan, {
+      ad,
+      vergiNo: girdi.vergiNo,
+      adres: girdi.adres,
+    });
+    if (dogrulama.guc === "guclu") return alan;
+  }
+  return "";
+}
+
 export async function firmaAlaniniKilitle(girdi: {
   belgedeYazan: string;
   esnafIpucu: string;
@@ -273,7 +354,7 @@ export async function firmaAlaniniKilitle(girdi: {
     kimlik: { vergiNo: girdi.vergiNo, adres: girdi.adres },
   });
   if (arama.durum === "bulundu" && arama.alan && !resmiSiteSayilmaz(arama.alan)) return arama.alan;
-  return "";
+  return firmaSitesiniModelleBul(girdi);
 }
 
 export interface SatirAramasi {
@@ -283,6 +364,32 @@ export interface SatirAramasi {
   girdiToken: number;
   ciktiToken: number;
   akilToken: number;
+}
+
+export function resmiFotografIstegi(alan: string, sorgu: string) {
+  return {
+    model: "gpt-5.6-luna",
+    max_output_tokens: 1024,
+    reasoning: { effort: "low" as const },
+    tools: [{
+      type: "web_search",
+      search_content_types: ["image", "text"],
+      image_settings: { max_results: 3, caption: true },
+      filters: { allowed_domains: [alan] },
+    }],
+    include: ["web_search_call.results"],
+    input: `${sorgu}\nBu urunun fotografini yalniz ${alan} sitesinde ara.`,
+  };
+}
+
+async function sayfaFotografiniDoldur(
+  bulunan: { gorsel: string; sayfa: string } | null,
+  kimlik: { model: string; ad: string },
+): Promise<{ gorsel: string; sayfa: string } | null> {
+  if (!bulunan?.sayfa || bulunan.gorsel) return bulunan;
+  const kayit = await sayfadanUrunKaydi(bulunan.sayfa, kimlik);
+  if (!kayit?.gorsel) return bulunan;
+  return { gorsel: kayit.gorsel, sayfa: bulunan.sayfa };
 }
 
 export async function satirSitesindeAra(girdi: {
@@ -298,43 +405,54 @@ export async function satirSitesindeAra(girdi: {
   const sorgu = [girdi.model, girdi.ad, girdi.barkod].map((parca) => parca.trim()).filter(Boolean).join(" ");
   if (!sorgu) throw new Error("SATIR_BOS");
 
-  const govdeKur = (parametreler: Record<string, unknown>) => JSON.stringify({
-    model: GORU_MODELI,
-    max_output_tokens: 1024,
-    reasoning: { effort: "low" },
-    tools: [{
-      type: "openrouter:web_search",
-      parameters: parametreler,
-    }],
-    input: [{
-      role: "user",
-      content: [{ type: "input_text", text: `${sorgu}\nBu urunun fotografini yalniz ${alan} sitesinde ara.` }],
-    }],
-  });
-  const basliklar = {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${anahtar}`,
-  };
-  let cevap = await fetch(ADRES, {
+  const kimlik = { model: girdi.model, ad: girdi.ad };
+  const openaiAnahtar = process.env.OPENAI_API_KEY?.trim();
+  if (openaiAnahtar) {
+    const openaiCevap = await fetch(OPENAI_FOTOGRAF_ADRESI, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${openaiAnahtar}`,
+      },
+      body: JSON.stringify(resmiFotografIstegi(alan, sorgu)),
+    });
+    if (openaiCevap.status === 402) throw new Error("OKUYUCU_BAKIYE_BITTI");
+    if (openaiCevap.ok) {
+      const openaiGovde = await openaiCevap.json().catch(() => null);
+      const openaiBulunan = await sayfaFotografiniDoldur(satiraAitAramaGorseli(alan, openaiGovde), kimlik);
+      if (openaiBulunan?.gorsel) {
+        return {
+          gorsel: openaiBulunan.gorsel,
+          sayfa: openaiBulunan.sayfa,
+          ...kullanimOku(openaiGovde),
+        };
+      }
+    }
+  }
+
+  const cevap = await fetch(ADRES, {
     method: "POST",
-    headers: basliklar,
-    body: govdeKur({
-      engine: "native",
-      allowed_domains: [alan],
-      search_content_types: ["image", "text"],
-      image_settings: { max_results: 3, caption: true },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${anahtar}`,
+    },
+    body: JSON.stringify({
+      model: GORU_MODELI,
+      max_output_tokens: 1024,
+      reasoning: { effort: "low" },
+      tools: [{
+        type: "openrouter:web_search",
+        parameters: {
+          engine: "native",
+          allowed_domains: [alan],
+        },
+      }],
+      input: [{
+        role: "user",
+        content: [{ type: "input_text", text: `${sorgu}\nBu urunun fotografini yalniz ${alan} sitesinde ara.` }],
+      }],
     }),
   });
-  if (cevap.status === 400) {
-    cevap = await fetch(ADRES, {
-      method: "POST",
-      headers: basliklar,
-      body: govdeKur({
-        engine: "native",
-        allowed_domains: [alan],
-      }),
-    });
-  }
 
   if (!cevap.ok) {
     const hataGovdesi = await cevap.json().catch(() => null);
@@ -345,7 +463,7 @@ export async function satirSitesindeAra(girdi: {
   }
 
   const govde = await cevap.json().catch(() => null);
-  const bulunan = satiraAitAramaGorseli(alan, govde);
+  const bulunan = await sayfaFotografiniDoldur(satiraAitAramaGorseli(alan, govde), kimlik);
   return {
     gorsel: bulunan?.gorsel ?? "",
     sayfa: bulunan?.sayfa ?? "",

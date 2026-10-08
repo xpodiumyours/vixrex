@@ -107,6 +107,7 @@ function istek(args: { slug?: string; editToken?: string; dosyaVarMi?: boolean }
 process.env.SUPABASE_URL = "https://proje.supabase.co";
 process.env.SUPABASE_SERVICE_ROLE_KEY = "service-role-test-anahtari";
 process.env.OPENROUTER_API_KEY = "test-okuyucu-anahtari";
+delete process.env.OPENAI_API_KEY;
 
 function siteyiAyiranOkuma(govde: unknown) {
   const okuma = vi.fn(async (url: string) => {
@@ -212,8 +213,8 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(arama.tools[0].type).toBe("openrouter:web_search");
     expect(arama.tools[0].parameters.allowed_domains).toEqual(["sehermensucat.com"]);
     expect(arama.tools[0].parameters.engine).toBe("native");
-    expect(arama.tools[0].parameters.search_content_types).toEqual(["image", "text"]);
-    expect(arama.tools[0].parameters.image_settings).toEqual({ max_results: 3, caption: true });
+    expect(arama.tools[0].parameters.search_content_types).toBeUndefined();
+    expect(arama.include).toBeUndefined();
   });
 
   it("modelin yazdığı fotoğraf adresi kart kurmaz", async () => {
