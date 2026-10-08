@@ -89,8 +89,8 @@ export default function UrunlerPage() {
       <div className="mx-auto max-w-[900px] space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-[22px] font-black text-white">Ürünler</h1>
-            <p className="text-sm text-white/60">{store.name} — {store.slug}</p>
+            <h1 className="text-[22px] font-black text-white">Faturadan ürün kartı</h1>
+            <p className="text-sm text-white/60">{store.name}</p>
           </div>
           <Link href="/app" className="owner-button-secondary">← Pano</Link>
         </div>

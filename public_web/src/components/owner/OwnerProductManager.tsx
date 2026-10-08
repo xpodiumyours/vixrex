@@ -620,7 +620,7 @@ export function OwnerProductManager({
 
   return (
     <section className={onClose ? "" : "mt-8"} aria-labelledby="products-title" aria-busy={busy}>
-      <div className="mb-4 flex items-start justify-between gap-3">
+      <div className={onClose ? "mb-4 flex items-start justify-between gap-3" : "sr-only"}>
         <div>
           <h2 id="products-title" className="text-xl font-bold text-[var(--owner-text)]">Ürün Yönetimi</h2>
           <p className="mt-1 text-sm text-[var(--owner-muted)]">Ürünlerini ve kategorilerini tek yerden yönet.</p>
