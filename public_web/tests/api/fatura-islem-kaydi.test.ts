@@ -32,11 +32,13 @@ function girdi(satirlar: EslesmisFaturaSatiri[]): IslemKaydiGirdisi {
     tedarikciAdres: "İstanbul",
     tedarikciSite: "sehermensucat.com",
     tedarikciIz: {
+      anahtar: "seher-mensucat",
       firma: "Seher Mensucat",
       alan: "sehermensucat.com",
       platform: "",
       izinDurumu: "yok",
       kaynak: "https://sehermensucat.com",
+      havuzda: true,
     },
     satirlar,
   };

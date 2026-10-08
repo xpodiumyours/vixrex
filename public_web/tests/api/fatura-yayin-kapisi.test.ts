@@ -56,11 +56,15 @@ import { POST as topluUrunEkle } from "@/app/api/products/batch/route";
 
 const STORE = { id: "store-1", edit_token: "token-1", name: "Deneme Butik" };
 
-const IZINSIZ_URETICI_FOTOGRAFLARI = [
-  "https://cdn.uretici.example/1.jpg",
-  "https://cdn.uretici.example/2.jpg",
-  "https://cdn.uretici.example/3.jpg",
-];
+import seherKatalog from "../../data/katalog/uretici-katalog-seher-mensucat.json";
+
+/**
+ * Gerçek katalogdan alınmış, izni OLMAYAN bir üretici fotoğrafı.
+ * Seher'in izni "bekliyor" — yani bu adres yayına çıkamamalı.
+ */
+const IZINSIZ_URETICI_FOTOGRAFLARI = (seherKatalog as Array<{ gorseller: string[] }>)
+  .find((urun) => urun.gorseller.length >= 3)!
+  .gorseller.slice(0, 3);
 
 const FOTOGRAFLAR = [
   "https://tedarikci.example.com/1.jpg",
@@ -146,8 +150,7 @@ function istek(products: unknown[]) {
     p.satirSirasi = i;
     mocks.kayitlar.set(i, { satirId: String(i), sonuc: p.kartDurumu ?? "eksik", urunId: null,
       izinliGorseller: new Set(p.imageUrls as string[]), alisBirimFiyati: typeof p.purchasePriceAmount === "number" ? p.purchasePriceAmount : null,
-      katalog: { resmiAd: p.name, aciklama: p.description ?? "", marka: p.brand ?? "Üretici", kaynak: `https://tedarikci.example.com/urun/${i}`,
-        gorseller: (p.katalogGorselleri as string[] | undefined) ?? [] } });
+      katalog: { resmiAd: p.name, aciklama: p.description ?? "", marka: p.brand ?? "Üretici", kaynak: `https://tedarikci.example.com/urun/${i}` } });
   }
   return new NextRequest("http://localhost/api/products/batch", {
     method: "POST",
@@ -302,10 +305,10 @@ describe("faturadan gelen ürünün yayın kapısı", () => {
   });
 
   it("üretici fotoğrafı karta girer ve yayınlanır; izni sonra istenir", async () => {
-    // Kilitli kapsam: önce çalışan sistem. Üreticinin fotoğrafı yayına girer;
-    // kullanım izni sonra bu kayıtlardan istenir.
+    // Kilitli kapsam: önce çalışan sistem. Seher'in izni "bekliyor" ama
+    // fotoğrafı yayına girer; kullanım izni sonra bu kayıtlardan istenir.
     const cevap = await topluUrunEkle(
-      istek([faturaSatiri({ imageUrls: IZINSIZ_URETICI_FOTOGRAFLARI, katalogGorselleri: IZINSIZ_URETICI_FOTOGRAFLARI })]),
+      istek([faturaSatiri({ imageUrls: IZINSIZ_URETICI_FOTOGRAFLARI })]),
     );
     const govde = await cevap.json();
 
@@ -319,7 +322,7 @@ describe("faturadan gelen ürünün yayın kapısı", () => {
 
   it("üretici görseli fatura kanıtına işaretlenir — izin turu bu listeden yürür", async () => {
     await topluUrunEkle(
-      istek([faturaSatiri({ imageUrls: IZINSIZ_URETICI_FOTOGRAFLARI, katalogGorselleri: IZINSIZ_URETICI_FOTOGRAFLARI })]),
+      istek([faturaSatiri({ imageUrls: IZINSIZ_URETICI_FOTOGRAFLARI })]),
     );
 
     const yazilan = { fatura_kanit: mocks.rpc.mock.calls[0][1].p_evidence };

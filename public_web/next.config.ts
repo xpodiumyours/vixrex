@@ -133,10 +133,18 @@ const SHARP_ROUTES = [
 ];
 
 const nextConfig: NextConfig = {
+  // Ürün havuzu katalogları `src/` dışında durur (toplam hacim megabaytları
+  // bulduğu için pakete gömülmez) ve fatura ucu bunları çalışma anında okur.
+  // Next.js yalnız kodun izlediği dosyaları dağıtıma kattığı için bu satır
+  // gerekir; olmazsa üretimde kataloglar bulunamaz.
+  // Kataloğu okuyan HER uç burada olmalı; eksik kalan uç üretimde katalogsuz
+  // çalışır ve hiçbir ürünü tanımaz (yerelde fark edilmez, canlıda çıkar).
   outputFileTracingIncludes: {
-    "/api/fatura-oku": [...SHARP_TRACE],
-    "/api/fatura-eslestir": [...SHARP_TRACE],
-    "/api/products/batch": [...SHARP_TRACE],
+    // Katalog + sharp izleme girdileri birleşik: sharp kullanan uçların
+    // katalog gereksinimi varsa SHARP_TRACE ile birlikte buraya yazılır.
+    "/api/fatura-oku": ["./data/katalog/**/*.json", "./scripts/katalog/firmalar.json", ...SHARP_TRACE],
+    "/api/fatura-eslestir": ["./data/katalog/**/*.json", "./scripts/katalog/firmalar.json", ...SHARP_TRACE],
+    "/api/products/batch": ["./data/katalog/**/*.json", ...SHARP_TRACE],
     ...Object.fromEntries(
       SHARP_ROUTES
         .filter((route) => !["/api/fatura-oku", "/api/fatura-eslestir", "/api/products/batch"].includes(route))

@@ -50,7 +50,6 @@ const SORU = [
   "10. mal_bedeli, kdv_tutari, indirim_tutari ve odenecek_toplam belgede ayri ayri yaziyorsa ayri ayri doldur; yazmiyorsa null birak, hesaplayip uydurma.",
   "11. marka = urun satirinda ya da urun kodunun yaninda yazan marka adi; yazmiyorsa bos birak, faturayi kesen firmayi marka sanma, tahmin etme.",
   "12. varyant faturada yazan renktir. beden faturada yazan bedendir. Yazmiyorsa bos birak, baska yerden tamamlama.",
-  "13. tedarikci_resmi_site: belgede firmanin sitesi yazmiyorsa ve firmanin resmi web sitesini biliyorsan yalnizca alan adi olarak yaz (ornek:ornek.com). Bilmiyorsan bos birak, uydurma. Bu adres daha sonra belgedeki vergi no ve adresle dogrulanir; tutmazsa kullanilmaz.",
 ].join("\n");
 
 export interface GoruSatiri {

@@ -1,0 +1,501 @@
+{
+  "tarih": "2026-09-25T23:23:36.558Z",
+  "toplam": 6808,
+  "satirlar": [
+    {
+      "firma": "Ak-Tekstil",
+      "platform": "taninmadi",
+      "durum": "okunamadi",
+      "urun": 0,
+      "kodsuz": 0,
+      "barkod": 0,
+      "foto": 0
+    },
+    {
+      "firma": "Berrak İçGiyim",
+      "platform": "taninmadi",
+      "durum": "okunamadi",
+      "urun": 0,
+      "kodsuz": 0,
+      "barkod": 0,
+      "foto": 0
+    },
+    {
+      "firma": "Beyaz Nevresim",
+      "platform": "taninmadi",
+      "durum": "okunamadi",
+      "urun": 0,
+      "kodsuz": 0,
+      "barkod": 0,
+      "foto": 0
+    },
+    {
+      "firma": "Donella İç Giyim",
+      "platform": "taninmadi",
+      "durum": "okunamadi",
+      "urun": 0,
+      "kodsuz": 0,
+      "barkod": 0,
+      "foto": 0
+    },
+    {
+      "firma": "GÜLTEKS",
+      "platform": "taninmadi",
+      "durum": "okunamadi",
+      "urun": 0,
+      "kodsuz": 0,
+      "barkod": 0,
+      "foto": 0
+    },
+    {
+      "firma": "Kazee",
+      "platform": "taninmadi",
+      "durum": "okunamadi",
+      "urun": 0,
+      "kodsuz": 0,
+      "barkod": 0,
+      "foto": 0
+    },
+    {
+      "firma": "Kinzi Toptan",
+      "platform": "taninmadi",
+      "durum": "okunamadi",
+      "urun": 0,
+      "kodsuz": 0,
+      "barkod": 0,
+      "foto": 0
+    },
+    {
+      "firma": "Merter Giyim",
+      "platform": "taninmadi",
+      "durum": "okunamadi",
+      "urun": 0,
+      "kodsuz": 0,
+      "barkod": 0,
+      "foto": 0
+    },
+    {
+      "firma": "Merterium (Toptan)",
+      "platform": "taninmadi",
+      "durum": "okunamadi",
+      "urun": 0,
+      "kodsuz": 0,
+      "barkod": 0,
+      "foto": 0
+    },
+    {
+      "firma": "NevresimToptan.com",
+      "platform": "taninmadi",
+      "durum": "okunamadi",
+      "urun": 0,
+      "kodsuz": 0,
+      "barkod": 0,
+      "foto": 0
+    },
+    {
+      "firma": "Toptan İç Giyim Pazarı",
+      "platform": "woocommerce",
+      "durum": "ok",
+      "urun": 2887,
+      "kodsuz": 5,
+      "barkod": 4,
+      "foto": 2887
+    },
+    {
+      "firma": "ToptanÇeyiz",
+      "platform": "taninmadi",
+      "durum": "okunamadi",
+      "urun": 0,
+      "kodsuz": 0,
+      "barkod": 0,
+      "foto": 0
+    },
+    {
+      "firma": "Özsa Özen-İş",
+      "platform": "taninmadi",
+      "durum": "okunamadi",
+      "urun": 0,
+      "kodsuz": 0,
+      "barkod": 0,
+      "foto": 0
+    },
+    {
+      "firma": "İstanbul Toptan İç Giyim (Tozcu)",
+      "platform": "taninmadi",
+      "durum": "okunamadi",
+      "urun": 0,
+      "kodsuz": 0,
+      "barkod": 0,
+      "foto": 0
+    },
+    {
+      "firma": "İşte Çanta",
+      "platform": "shopify",
+      "durum": "ok",
+      "urun": 2791,
+      "kodsuz": 811,
+      "barkod": 2081,
+      "foto": 2791
+    },
+    {
+      "firma": "Beds and Covers (SDN)",
+      "platform": "-",
+      "durum": "ulasilamadi",
+      "urun": 0,
+      "kodsuz": 0,
+      "barkod": 0,
+      "foto": 0
+    },
+    {
+      "firma": "Erdem İçGiyim",
+      "platform": "taninmadi",
+      "durum": "okunamadi",
+      "urun": 0,
+      "kodsuz": 0,
+      "barkod": 0,
+      "foto": 0
+    },
+    {
+      "firma": "Forema Tekstil",
+      "platform": "taninmadi",
+      "durum": "okunamadi",
+      "urun": 0,
+      "kodsuz": 0,
+      "barkod": 0,
+      "foto": 0
+    },
+    {
+      "firma": "Güngören Tişört (Meteks)",
+      "platform": "taninmadi",
+      "durum": "okunamadi",
+      "urun": 0,
+      "kodsuz": 0,
+      "barkod": 0,
+      "foto": 0
+    },
+    {
+      "firma": "Koza İçGiyim",
+      "platform": "taninmadi",
+      "durum": "okunamadi",
+      "urun": 0,
+      "kodsuz": 0,
+      "barkod": 0,
+      "foto": 0
+    },
+    {
+      "firma": "Lila Tekstil Örme",
+      "platform": "taninmadi",
+      "durum": "okunamadi",
+      "urun": 0,
+      "kodsuz": 0,
+      "barkod": 0,
+      "foto": 0
+    },
+    {
+      "firma": "Maviyelken Home",
+      "platform": "taninmadi",
+      "durum": "okunamadi",
+      "urun": 0,
+      "kodsuz": 0,
+      "barkod": 0,
+      "foto": 0
+    },
+    {
+      "firma": "Seher Mensucat",
+      "platform": "taninmadi",
+      "durum": "okunamadi",
+      "urun": 0,
+      "kodsuz": 0,
+      "barkod": 0,
+      "foto": 0
+    },
+    {
+      "firma": "Topshow",
+      "platform": "taninmadi",
+      "durum": "okunamadi",
+      "urun": 0,
+      "kodsuz": 0,
+      "barkod": 0,
+      "foto": 0
+    },
+    {
+      "firma": "TowelConcept",
+      "platform": "taninmadi",
+      "durum": "okunamadi",
+      "urun": 0,
+      "kodsuz": 0,
+      "barkod": 0,
+      "foto": 0
+    },
+    {
+      "firma": "Voltaj",
+      "platform": "taninmadi",
+      "durum": "okunamadi",
+      "urun": 0,
+      "kodsuz": 0,
+      "barkod": 0,
+      "foto": 0
+    },
+    {
+      "firma": "Yasin Örme",
+      "platform": "taninmadi",
+      "durum": "okunamadi",
+      "urun": 0,
+      "kodsuz": 0,
+      "barkod": 0,
+      "foto": 0
+    },
+    {
+      "firma": "Zeynep Giyim",
+      "platform": "taninmadi",
+      "durum": "okunamadi",
+      "urun": 0,
+      "kodsuz": 0,
+      "barkod": 0,
+      "foto": 0
+    },
+    {
+      "firma": "Önlükçüm",
+      "platform": "taninmadi",
+      "durum": "okunamadi",
+      "urun": 0,
+      "kodsuz": 0,
+      "barkod": 0,
+      "foto": 0
+    },
+    {
+      "firma": "İşmont",
+      "platform": "taninmadi",
+      "durum": "okunamadi",
+      "urun": 0,
+      "kodsuz": 0,
+      "barkod": 0,
+      "foto": 0
+    },
+    {
+      "firma": "Alya İş Elbiseleri",
+      "platform": "taninmadi",
+      "durum": "okunamadi",
+      "urun": 0,
+      "kodsuz": 0,
+      "barkod": 0,
+      "foto": 0
+    },
+    {
+      "firma": "Berdan Tekstil",
+      "platform": "taninmadi",
+      "durum": "okunamadi",
+      "urun": 0,
+      "kodsuz": 0,
+      "barkod": 0,
+      "foto": 0
+    },
+    {
+      "firma": "Karasoy Kumaşçılık",
+      "platform": "taninmadi",
+      "durum": "okunamadi",
+      "urun": 0,
+      "kodsuz": 0,
+      "barkod": 0,
+      "foto": 0
+    },
+    {
+      "firma": "Kazımoğlu Çeyiz",
+      "platform": "taninmadi",
+      "durum": "okunamadi",
+      "urun": 0,
+      "kodsuz": 0,
+      "barkod": 0,
+      "foto": 0
+    },
+    {
+      "firma": "Turkiye Textil",
+      "platform": "taninmadi",
+      "durum": "okunamadi",
+      "urun": 0,
+      "kodsuz": 0,
+      "barkod": 0,
+      "foto": 0
+    },
+    {
+      "firma": "Özşen Triko (Anisse)",
+      "platform": "taninmadi",
+      "durum": "okunamadi",
+      "urun": 0,
+      "kodsuz": 0,
+      "barkod": 0,
+      "foto": 0
+    },
+    {
+      "firma": "İlya Tekstil",
+      "platform": "woocommerce",
+      "durum": "kod yok",
+      "urun": 0,
+      "kodsuz": 37,
+      "barkod": 0,
+      "foto": 0
+    },
+    {
+      "firma": "Alireis Toptan Gıda",
+      "platform": "woocommerce",
+      "durum": "ok",
+      "urun": 39,
+      "kodsuz": 3,
+      "barkod": 0,
+      "foto": 39
+    },
+    {
+      "firma": "Aycenk Gıda",
+      "platform": "woocommerce",
+      "durum": "ok",
+      "urun": 8,
+      "kodsuz": 92,
+      "barkod": 0,
+      "foto": 8
+    },
+    {
+      "firma": "Goldfresh Mutfak",
+      "platform": "shopify",
+      "durum": "kod yok",
+      "urun": 0,
+      "kodsuz": 29,
+      "barkod": 0,
+      "foto": 0
+    },
+    {
+      "firma": "Saphori",
+      "platform": "taninmadi",
+      "durum": "okunamadi",
+      "urun": 0,
+      "kodsuz": 0,
+      "barkod": 0,
+      "foto": 0
+    },
+    {
+      "firma": "5 Mutlu Gıda",
+      "platform": "taninmadi",
+      "durum": "okunamadi",
+      "urun": 0,
+      "kodsuz": 0,
+      "barkod": 0,
+      "foto": 0
+    },
+    {
+      "firma": "Emir Toptan Gıda (Aşkın Group)",
+      "platform": "woocommerce",
+      "durum": "kod yok",
+      "urun": 0,
+      "kodsuz": 121,
+      "barkod": 0,
+      "foto": 0
+    },
+    {
+      "firma": "Santral Gıda",
+      "platform": "woocommerce",
+      "durum": "ok",
+      "urun": 1046,
+      "kodsuz": 68,
+      "barkod": 0,
+      "foto": 1046
+    },
+    {
+      "firma": "Ömrüm Toplu Tüketim",
+      "platform": "taninmadi",
+      "durum": "okunamadi",
+      "urun": 0,
+      "kodsuz": 0,
+      "barkod": 0,
+      "foto": 0
+    },
+    {
+      "firma": "Başar Ticaret (Nişastacı)",
+      "platform": "taninmadi",
+      "durum": "okunamadi",
+      "urun": 0,
+      "kodsuz": 0,
+      "barkod": 0,
+      "foto": 0
+    },
+    {
+      "firma": "Bool Tüketim",
+      "platform": "taninmadi",
+      "durum": "okunamadi",
+      "urun": 0,
+      "kodsuz": 0,
+      "barkod": 0,
+      "foto": 0
+    },
+    {
+      "firma": "Demir Gıda Pazarlama",
+      "platform": "-",
+      "durum": "ulasilamadi",
+      "urun": 0,
+      "kodsuz": 0,
+      "barkod": 0,
+      "foto": 0
+    },
+    {
+      "firma": "Emek Toptan",
+      "platform": "taninmadi",
+      "durum": "okunamadi",
+      "urun": 0,
+      "kodsuz": 0,
+      "barkod": 0,
+      "foto": 0
+    },
+    {
+      "firma": "Kaya Zeytin (Salih Kaya Gıda)",
+      "platform": "taninmadi",
+      "durum": "okunamadi",
+      "urun": 0,
+      "kodsuz": 0,
+      "barkod": 0,
+      "foto": 0
+    },
+    {
+      "firma": "Kul Gıda",
+      "platform": "woocommerce",
+      "durum": "ok",
+      "urun": 18,
+      "kodsuz": 0,
+      "barkod": 0,
+      "foto": 18
+    },
+    {
+      "firma": "Makro Plus Gıda",
+      "platform": "-",
+      "durum": "ulasilamadi",
+      "urun": 0,
+      "kodsuz": 0,
+      "barkod": 0,
+      "foto": 0
+    },
+    {
+      "firma": "Seç Salça Konserve",
+      "platform": "woocommerce",
+      "durum": "ok",
+      "urun": 19,
+      "kodsuz": 19,
+      "barkod": 18,
+      "foto": 19
+    },
+    {
+      "firma": "Türkmen Gıda",
+      "platform": "woocommerce",
+      "durum": "kod yok",
+      "urun": 0,
+      "kodsuz": 1640,
+      "barkod": 0,
+      "foto": 0
+    },
+    {
+      "firma": "Türkmenzade Toptan Gıda",
+      "platform": "taninmadi",
+      "durum": "okunamadi",
+      "urun": 0,
+      "kodsuz": 0,
+      "barkod": 0,
+      "foto": 0
+    }
+  ]
+}
