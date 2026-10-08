@@ -40,7 +40,7 @@ const CIKTI_DOLAR = 1.2 / 1_000_000;
 
 const SORU = [
   "Bu bir fatura tablosu. HER urun satirini oku. Yalniz JSON dondur.",
-  '{"tedarikci":"","tedarikci_vergi_no":"","tedarikci_adres":"","tedarikci_site":"","belge_turu":"","belge_no":"","belge_tarihi":"","satirlar":[{"ham_satir":"","model":"","ad":"","barkod":"","varyant":"","beden":"","marka":"","adet":0,"birim_fiyat":0,"tutar":0}],"toplam_adet":0,"toplam_tutar":0,"mal_bedeli":0,"kdv_tutari":0,"indirim_tutari":0,"odenecek_toplam":0}',
+  '{"tedarikci":"","tedarikci_vergi_no":"","tedarikci_adres":"","tedarikci_site":"","belge_turu":"","belge_no":"","belge_tarihi":"","satirlar":[{"ham_satir":"","model":"","ad":"","barkod":"","varyant":"","beden":"","marka":"","adet":0,"birim_fiyat":0,"tutar":0,"okuma_guveni":1}],"toplam_adet":0,"toplam_tutar":0,"mal_bedeli":0,"kdv_tutari":0,"indirim_tutari":0,"odenecek_toplam":0}',
   "1. Her satirda adet * birim_fiyat = tutar olmali.",
   "2. Satirlarin adet toplami = toplam_adet, tutar toplami = toplam_tutar.",
   "3. toplam_adet/toplam_tutar en alttaki 'Toplam' satirindan alinir.",
@@ -53,6 +53,7 @@ const SORU = [
   "10. mal_bedeli, kdv_tutari, indirim_tutari ve odenecek_toplam belgede ayri ayri yaziyorsa ayri ayri doldur; yazmiyorsa null birak, hesaplayip uydurma.",
   "11. marka = urun satirinda ya da urun kodunun yaninda yazan marka adi; yazmiyorsa bos birak, faturayi kesen firmayi marka sanma, tahmin etme.",
   "12. varyant faturada yazan renktir. beden faturada yazan bedendir. Yazmiyorsa bos birak, baska yerden tamamlama.",
+  "13. okuma_guveni 0 ile 1 arasi: satirdaki yazi ve rakamlar net okunduysa 1'e yakin; silik, kesik, ustu cizili veya emin olmadigin bir deger varsa dusuk ver.",
 ].join("\n");
 
 export interface GoruSatiri {
@@ -66,6 +67,7 @@ export interface GoruSatiri {
   adet: number | null;
   birimFiyat: number | null;
   tutar: number | null;
+  okumaGuveni: number | null;
 }
 
 export interface GoruSonucu {
@@ -103,6 +105,11 @@ function yaziliSayi(deger: unknown): number | null {
 
 function metin(deger: unknown): string {
   return typeof deger === "string" ? deger.trim() : "";
+}
+
+function guvenAraligi(deger: number | null): number | null {
+  if (deger === null) return null;
+  return Math.min(1, Math.max(0, deger));
 }
 
 function guvenliAdres(deger: unknown): string {
@@ -152,7 +159,7 @@ const FATURA_SEMA = {
       items: {
         type: "object",
         additionalProperties: false,
-        required: ["ham_satir", "model", "ad", "barkod", "varyant", "beden", "marka", "adet", "birim_fiyat", "tutar"],
+        required: ["ham_satir", "model", "ad", "barkod", "varyant", "beden", "marka", "adet", "birim_fiyat", "tutar", "okuma_guveni"],
         properties: {
           ham_satir: YAZI,
           model: YAZI,
@@ -164,6 +171,7 @@ const FATURA_SEMA = {
           adet: SAYI_VEYA_BOS,
           birim_fiyat: SAYI_VEYA_BOS,
           tutar: SAYI_VEYA_BOS,
+          okuma_guveni: { type: "number" },
         },
       },
     },
@@ -672,6 +680,7 @@ export async function faturayiOku(dataUrl: string): Promise<GoruSonucu> {
       adet: sayi(s.adet),
       birimFiyat: sayi(s.birim_fiyat),
       tutar: sayi(s.tutar),
+      okumaGuveni: guvenAraligi(sayi(s.okuma_guveni)),
     };
   });
 
