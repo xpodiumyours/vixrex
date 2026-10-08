@@ -263,7 +263,7 @@ export async function POST(request: NextRequest) {
           gunlukHarcama += aramaMaliyeti;
           if (arama.gorsel && arama.sayfa) {
             const aciklama = await sayfadanUrunAciklamasi(arama.sayfa, { model: satir.model, ad: satir.ad });
-            const gorsel = aciklama ? await kartaGirecekGorsel(arama.gorsel) : "";
+            const gorsel = aciklama ? await kartaGirecekGorsel(arama.gorsel, { model: satir.model, ad: satir.ad }) : "";
             if (aciklama && gorsel) {
               siteAciklama = aciklama;
               siteGorsel = gorsel;

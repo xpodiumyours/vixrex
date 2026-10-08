@@ -222,22 +222,9 @@ export function sayfaFirmadaMi(sayfa: string, alan: string): boolean {
 
 export function satiraAitAramaGorseli(
   alan: string,
-  govde: { output?: unknown } | null,
+  govde: { output_text?: unknown; output?: unknown } | null,
 ): { gorsel: string; sayfa: string } | null {
-  if (!Array.isArray(govde?.output)) return null;
-  for (const oge of govde.output) {
-    const kayit = oge as { type?: unknown; results?: unknown };
-    if (kayit.type !== "web_search_call" || !Array.isArray(kayit.results)) continue;
-    for (const sonuc of kayit.results) {
-      const resim = sonuc as { type?: unknown; image_url?: unknown; source_website_url?: unknown };
-      if (resim.type !== "image_result") continue;
-      const sayfa = guvenliAdres(resim.source_website_url);
-      const gorsel = guvenliAdres(resim.image_url);
-      if (!gorsel || !sayfa || !sayfaFirmadaMi(sayfa, alan)) continue;
-      return { gorsel, sayfa };
-    }
-  }
-  return null;
+  return satirAramaSonucu(alan, govde);
 }
 
 export async function firmaAlaniniKilitle(girdi: {
@@ -272,15 +259,16 @@ export async function satirSitesindeAra(girdi: {
   model: string;
   ad: string;
   barkod: string;
-}): Promise<SatirAramasi> {
-  const anahtar = process.env.OPENROUTER_API_KEY;
+}, bag: { fetcher?: (input: string, init?: RequestInit) => Promise<Response>; apiAnahtari?: string } = {}): Promise<SatirAramasi> {
+  const anahtar = (bag.apiAnahtari ?? process.env.OPENROUTER_API_KEY ?? "").trim();
   if (!anahtar) throw new Error("OKUYUCU_HAZIR_DEGIL");
   const alan = alanAdiTemizle(girdi.alan);
   if (!alan || resmiSiteSayilmaz(alan)) throw new Error("SITE_YOK");
   const sorgu = [girdi.model, girdi.ad, girdi.barkod].map((parca) => parca.trim()).filter(Boolean).join(" ");
   if (!sorgu) throw new Error("SATIR_BOS");
 
-  const cevap = await fetch(ADRES, {
+  const fetcher = bag.fetcher ?? fetch;
+  const cevap = await fetcher(ADRES, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -297,10 +285,22 @@ export async function satirSitesindeAra(girdi: {
           allowed_domains: [alan],
         },
       }],
-      include: ["web_search_call.results"],
+      text: {
+        format: {
+          type: "json_schema",
+          name: "satir_sayfa",
+          strict: true,
+          schema: {
+            type: "object",
+            additionalProperties: false,
+            required: ["sayfa", "gorsel"],
+            properties: { sayfa: { type: "string" }, gorsel: { type: "string" } },
+          },
+        },
+      },
       input: [{
         role: "user",
-        content: [{ type: "input_text", text: `${sorgu}\nBu urunun fotografini yalniz ${alan} sitesinde ara.` }],
+        content: [{ type: "input_text", text: `${sorgu}\nBu urunun sayfasini yalniz ${alan} sitesinde ara. Sayfa adresi o sitenin sayfasi olsun, gorsel adresi urunun fotografi olsun. Yalniz JSON dondur.` }],
       }],
     }),
   });
@@ -314,12 +314,29 @@ export async function satirSitesindeAra(girdi: {
   }
 
   const govde = await cevap.json().catch(() => null);
-  const bulunan = satiraAitAramaGorseli(alan, govde);
+  const bulunan = satirAramaSonucu(alan, govde);
   return {
     gorsel: bulunan?.gorsel ?? "",
     sayfa: bulunan?.sayfa ?? "",
     ...kullanimOku(govde),
   };
+}
+
+export function satirAramaSonucu(
+  alan: string,
+  govde: { output_text?: unknown; output?: unknown } | null,
+): { gorsel: string; sayfa: string } | null {
+  if (!govde) return null;
+  let cozulen: { sayfa?: unknown; gorsel?: unknown } | null = null;
+  try {
+    cozulen = JSON.parse(ciktiMetni(govde));
+  } catch {
+    return null;
+  }
+  const sayfa = guvenliAdres(cozulen?.sayfa);
+  const gorsel = guvenliAdres(cozulen?.gorsel);
+  if (!sayfa || !gorsel || !sayfaFirmadaMi(sayfa, alan)) return null;
+  return { gorsel, sayfa };
 }
 
 /**

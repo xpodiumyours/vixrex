@@ -15,6 +15,81 @@ import {
 import { firmaSitesiniAra } from "@/lib/firmaArama";
 import { firmaSiteDurumuKur } from "@/lib/firmaSiteDurumu";
 import { siteFirmayaAitMi } from "@/lib/firmaDogrula";
+import { kartaGirecekGorsel, sayfadanUrunAciklamasi } from "@/lib/faturaGorsel";
+
+const LUNA_ADRES = "https://openrouter.ai/api/v1/responses";
+const LUNA_MODEL = "openai/gpt-5.6-luna";
+
+function lunaCiktiMetni(govde: { output_text?: unknown; output?: unknown }): string {
+  if (typeof govde.output_text === "string" && govde.output_text.trim()) return govde.output_text;
+  if (!Array.isArray(govde.output)) return "";
+  const parcalar: string[] = [];
+  for (const oge of govde.output) {
+    const kayit = oge as { type?: unknown; content?: unknown };
+    if (kayit.type !== "message" || !Array.isArray(kayit.content)) continue;
+    for (const icerik of kayit.content) {
+      const parca = icerik as { type?: unknown; text?: unknown };
+      if (parca.type === "output_text" && typeof parca.text === "string") parcalar.push(parca.text);
+    }
+  }
+  return parcalar.join("");
+}
+
+export interface LunaEslestirBagimliligi {
+  fetcher?: (input: string, init?: RequestInit) => Promise<Response>;
+  apiAnahtari?: string;
+  model?: string;
+}
+
+function lunaAnahtari(bag?: LunaEslestirBagimliligi, dijital?: DijitalIzBagimliliklari): string {
+  return (
+    bag?.apiAnahtari ??
+    (dijital?.firmaArama?.apiAnahtari as string | undefined) ??
+    process.env.OPENROUTER_API_KEY ??
+    ""
+  ).trim();
+}
+
+async function lunaAyniUrunMu(
+  satir: HamFaturaSatiri,
+  aday: { ad: string; kod?: string; barkod?: string; marka?: string; aciklama?: string },
+  bag: LunaEslestirBagimliligi = {},
+): Promise<boolean | null> {
+  const anahtar = (bag.apiAnahtari ?? process.env.OPENROUTER_API_KEY ?? "").trim();
+  if (!anahtar) return null;
+  const fetcher = bag.fetcher ?? fetch;
+  const model = (bag.model ?? LUNA_MODEL).trim() || LUNA_MODEL;
+  const satirMetni = `model:${satir.model} ad:${satir.ad} barkod:${satir.barkod} marka:${satir.marka ?? ""} varyant:${satir.varyant} beden:${satir.beden}`;
+  const adayMetni = `ad:${aday.ad} kod:${aday.kod ?? ""} barkod:${aday.barkod ?? ""} marka:${aday.marka ?? ""} aciklama:${(aday.aciklama ?? "").slice(0, 300)}`;
+  try {
+    const yanit = await fetcher(LUNA_ADRES, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${anahtar}` },
+      signal: AbortSignal.timeout(60000),
+      body: JSON.stringify({
+        model,
+        max_output_tokens: 256,
+        reasoning: { effort: "low" },
+        text: {
+          format: {
+            type: "json_schema",
+            name: "eslesme_karar",
+            strict: true,
+            schema: { type: "object", additionalProperties: false, required: ["ayni"], properties: { ayni: { type: "boolean" } } },
+          },
+        },
+        input: [{ role: "user", content: [{ type: "input_text", text: `Fatura satırı ile katalog adayı aynı ürün mü? Yalnız JSON döndür.\nSATIR: ${satirMetni}\nADAY: ${adayMetni}` }] }],
+      }),
+    });
+    if (!yanit.ok) return null;
+    const govde = (await yanit.json().catch(() => null)) as { output_text?: unknown; output?: unknown } | null;
+    if (!govde) return null;
+    const ayni = (JSON.parse(lunaCiktiMetni(govde)) as { ayni?: unknown }).ayni;
+    return typeof ayni === "boolean" ? ayni : null;
+  } catch {
+    return null;
+  }
+}
 // Fatura satırını üretici kataloğuyla buluşturan TEK yer.
 //
 // Bilerek fotoğrafı KİM okursa okusun (telefon uygulaması, Başak, ileride
@@ -264,79 +339,43 @@ export async function faturaSatirlariniDijitalIzle(
   tedarikciSite = "",
   bagimliliklar: DijitalIzBagimliliklari = {},
 ): Promise<FaturaDijitalIzSonucu> {
-  // Havuz SADECE hızlı yoldur (jeton tasarrufu). Listede yoksa firmanın adı
-  // internette aratılır; resmi sitesi bulunursa aynı keşif oradan yürür.
-  // Bulunamazsa akış durmaz — satırlar dürüstçe iz-yok/eksik döner.
-  let tedarikciIz = tedarikciDijitalIziBul(tedarikciAdi, tedarikciSite);
-  if (tedarikciIz) {
-    const dogrulama = await siteFirmayaAitMi(
-      tedarikciIz.alan,
-      { ad: tedarikciAdi, vergiNo: bagimliliklar.tedarikciKimligi?.vergiNo ?? "", adres: bagimliliklar.tedarikciKimligi?.adres ?? "" },
-      { fetcher: bagimliliklar.fetcher, resolveHost: bagimliliklar.resolveHost },
-    );
-    tedarikciIz = dogrulama.guc === "guclu" || dogrulama.guc === "dogrulanamadi"
-      ? { ...tedarikciIz, dogrulama }
-      : null;
-  }
+  // Luna-tek-yol: site Luna'dan, aday Luna web_search'ten, açıklama+görsel
+  // Luna'dan. Deterministik havuz/tarama bu hatta çalışmaz. Anahtar yoksa
+  // satırlar eksik döner (tahmin yok).
+  const { alanAdiTemizle } = await import("@/lib/ureticiKatalog");
+  let alan = alanAdiTemizle(tedarikciSite);
   let aramaKapali = false;
-  if (!tedarikciIz && tedarikciAdi.trim().length >= 3) {
+  if (!alan && tedarikciAdi.trim().length >= 3) {
     const arama = await firmaSitesiniAra(tedarikciAdi, {
       ...(bagimliliklar.tedarikciKimligi ? { kimlik: bagimliliklar.tedarikciKimligi } : {}),
       dogrula: { fetcher: bagimliliklar.fetcher, resolveHost: bagimliliklar.resolveHost },
       ...(bagimliliklar.firmaArama ?? {}),
     });
     if (arama.durum === "bulundu") {
-      tedarikciIz = {
-        anahtar: null,
-        firma: tedarikciAdi.trim(),
-        alan: arama.alan,
-        platform: "",
-        izinDurumu: "yok",
-        kaynak: arama.kaynak,
-        havuzda: false,
-        ...(arama.dogrulama ? { dogrulama: arama.dogrulama } : {}),
-      };
+      alan = arama.alan;
     } else if (arama.durum === "kapali") {
       aramaKapali = true;
     }
   }
-  const tedarikciBelirtilmisAmaCozulememis = Boolean(tedarikciAdi.trim()) && !tedarikciIz;
-  const yerelAramaGuvenli =
-    !tedarikciBelirtilmisAmaCozulememis &&
-    (!tedarikciIz ||
-      (tedarikciIz.havuzda &&
-        Boolean(tedarikciIz.anahtar) &&
-        firmaKataloguVarMi(tedarikciIz.anahtar as string)));
-
-  const yerel = yerelAramaGuvenli
-    ? faturaSatirlariniEslestir(satirlar, tedarikciAdi)
-    : satirlar.map((satir) => eslesmeyenSatir(satir));
+  const tedarikciIz: TedarikciDijitalIzi | null = alan
+    ? {
+      anahtar: null,
+      firma: tedarikciAdi.trim() || alan,
+      alan,
+      platform: "",
+      izinDurumu: "yok",
+      kaynak: `https://${alan}`,
+      havuzda: false,
+    }
+    : null;
 
   const aramaDurumu: DijitalIzAramaDurumu = bagimliliklar.durum ?? {
     erisimHatasi: false,
     sinirDoldu: false,
   };
-  const sonuc = yerel.map((satir) => ({ ...satir }));
-  aramaDurumu.erisimHatasi = false;
-  aramaDurumu.sinirDoldu = false;
+  const nihai = satirlar.map((satir) => eslesmeyenSatir(satir));
+  await lunaAdayBul(nihai, tedarikciIz, bagimliliklar);
 
-  if (tedarikciIz) {
-    const eksikIndeksler = yerel
-      .map((satir, indeks) => (satir.katalog === null && satir.sonuc !== "celiski" ? indeks : -1))
-      .filter((indeks) => indeks >= 0);
-    if (eksikIndeksler.length > 0) {
-      const dinamik = await dinamikUrunIzleriniBul(
-        eksikIndeksler.map((indeks) => ({ ...yerel[indeks] })),
-        tedarikciIz,
-        { ...bagimliliklar, durum: aramaDurumu },
-      );
-      eksikIndeksler.forEach((indeks, sira) => {
-        hedefiSatiraYaz(sonuc, indeks, dinamik[sira], tedarikciIz);
-      });
-    }
-  }
-
-  const markaAranan = await markaKaynaginda(sonuc, tedarikciIz, tedarikciAdi, bagimliliklar, aramaDurumu);
   aramaDurumu.siteDurumu = firmaSiteDurumuKur({
     firmaAdi: tedarikciAdi,
     dogrulananAdres: tedarikciIz?.kaynak ?? null,
@@ -344,10 +383,92 @@ export async function faturaSatirlariniDijitalIzle(
   });
 
   return {
-    satirlar: sonuclandir(sonuc, tedarikciIz, aramaDurumu, markaAranan),
+    satirlar: nihai,
     tedarikciIz,
     aramaDurumu,
   };
+}
+
+async function lunaAdayBul(
+  satirlar: EslesmisFaturaSatiri[],
+  tedarikciIz: TedarikciDijitalIzi | null,
+  bagimliliklar: DijitalIzBagimliliklari = {},
+): Promise<void> {
+  const anahtar = lunaAnahtari(undefined, bagimliliklar);
+  if (!anahtar || !tedarikciIz?.alan) return;
+  const alan = tedarikciIz.alan;
+  const fetcher = bagimliliklar.fetcher ?? fetch;
+  for (const satir of satirlar) {
+    if (satir.katalog || satir.sonuc === "celiski") continue;
+    if (!satir.model && !satir.ad && !satir.barkod) continue;
+    try {
+      const arama = await lunaSatirArama(alan, satir, fetcher, anahtar);
+      if (!arama) continue;
+      const aciklama = await sayfadanUrunAciklamasi(arama.sayfa, { model: satir.model, ad: satir.ad }, { fetcher, apiAnahtari: anahtar });
+      if (!aciklama) continue;
+      const gorsel = await kartaGirecekGorsel(arama.gorsel, { model: satir.model, ad: satir.ad }, { fetcher, apiAnahtari: anahtar });
+      if (!gorsel) continue;
+      const karar = siteKartiniUygula(eslesmeyenSatir({
+        ...satir,
+        siteAciklama: aciklama,
+        siteGorsel: gorsel,
+        siteSayfa: arama.sayfa,
+        sayfaDogrulandi: true,
+      }));
+      if (karar.sonuc === "kanitli" && karar.katalog) {
+        satir.katalog = karar.katalog;
+        satir.sonuc = "kanitli";
+        satir.siteAciklama = aciklama;
+        satir.siteGorsel = gorsel;
+        satir.siteSayfa = arama.sayfa;
+        satir.sayfaDogrulandi = true;
+        satir.uyari = undefined;
+      }
+    } catch {
+      continue;
+    }
+  }
+}
+
+async function lunaSatirArama(
+  alan: string,
+  satir: HamFaturaSatiri,
+  fetcher: (input: string, init?: RequestInit) => Promise<Response>,
+  anahtar: string,
+): Promise<{ gorsel: string; sayfa: string } | null> {
+  const { satirSitesindeAra } = await import("@/lib/faturaGoru");
+  try {
+    const arama = await satirSitesindeAra(
+      { alan, model: satir.model, ad: satir.ad, barkod: satir.barkod },
+      { fetcher, apiAnahtari: anahtar },
+    );
+    if (!arama.gorsel || !arama.sayfa) return null;
+    return { gorsel: arama.gorsel, sayfa: arama.sayfa };
+  } catch {
+    return null;
+  }
+}
+
+async function lunaVetoUygula(
+  satirlar: EslesmisFaturaSatiri[],
+  bagimliliklar: DijitalIzBagimliliklari = {},
+): Promise<void> {
+  const anahtar = lunaAnahtari(undefined, bagimliliklar);
+  if (!anahtar) return;
+  const fetcher = bagimliliklar.fetcher ?? fetch;
+  for (const satir of satirlar) {
+    if (satir.sonuc !== "kanitli" || !satir.katalog) continue;
+    const karar = await lunaAyniUrunMu(
+      satir,
+      { ad: satir.katalog.resmiAd, marka: satir.katalog.marka, aciklama: satir.katalog.aciklama },
+      { fetcher, apiAnahtari: anahtar },
+    );
+    if (karar === false) {
+      satir.sonuc = "eksik";
+      satir.uyari = "Luna bu satırla kataloğu aynı ürün saymadı; kontrol et.";
+      satir.katalog = null;
+    }
+  }
 }
 
 function hedefiSatiraYaz(

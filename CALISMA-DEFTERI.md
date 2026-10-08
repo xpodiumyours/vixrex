@@ -3,9 +3,9 @@
 Sahip: Furkan Aksakal (Casper)
 Proje: C:\Projects\vixrex
 Canlı: https://www.vixrex.com (vitrin var, kullanıcı yok, fatura akışı canlıda yok)
-Aktif dal (2026-10-07 ölçüm): fatura/kart-kaynagi
+Aktif dal (2026-10-08 ölçüm): fatura/dilim-2-site-kilidi
 Remote: https://github.com/xpodiumyours/vixrex.git
-Son commit: 8ff0caaf feat(fatura): kart gorseli firmanin kendi sayfasindan gelir
+Son commit: 01936a04
 
 ## Kural
 1. Her işlem bitiminde bu dosya güncellenir: tarih + ne yapıldı + kanıt + kalan.
@@ -53,3 +53,16 @@ Değişiklik commitlenmedi (2 dosya M). CALISMA-DEFTERI.md untracked.
 ## Sıradaki (2026-10-07)
 Dilim-1 kod temizliği bitti. Plana göre Dilim 2-5 bu dalda yazılı görünüyor, doğrulaması yok. Mantıklı sıra: Dilim-2 tespiti (dokunmadan) → sonra commit + önizleme kanıtı.
 KARAR (2026-10-07): önizleme kanıtı kuralı kaldırıldı — AGENTS §19 + merge-hazir.sh kapısı + ci.yml preview-kaniti job + preview_kaniti.py ve testi + PR şablonu satırı. Kapılar: bash -n temiz, CI script testleri 11/11 geçti.
+CANLI (2026-10-07 ~23:10): 2 commit + main merge → PR #645 squash ile main'e alındı (385a97a0). CI: ilgili tüm kapılar PASS, Flutter FAIL (dart değişikliği yok, main'de de dalgalı). Vercel main push ile otomatik yayında.
+
+## Dilim-2 tespiti (2026-10-07, dokunmadan, dal: fatura/dilim-2-site-kilidi @ 385a97a0)
+- Kilit bağlı: route.ts:263 firmaAlaniniKilitle, sıra belgedeYazan → esnaf ipucu → firmaSitesiniAra (faturaGoru.ts:243).
+- Site yoksa arama yok: route.ts:277 aranabilir kapısı. SITE_YOK atan satirSitesindeAra:279.
+- Yan bulgu (değişiklik yok): route.ts:299 tek satır hatasında aramaAcik=false olup sonraki satırların aramasını da durduruyor. Ağ hatası ile site yokluğu aynı sepette.
+- Hüküm: Dilim-2 kodda bitmiş görünüyor, kod değişikliği önermiyorum.
+
+## Dilim-3 tespiti (2026-10-07, dokunmadan)
+- Satır başına kilitli arama: route.ts:280-285 her satır ayrı çağrı, sorgu o satırın model+ad+barkod (faturaGoru.ts:280), allowed_domains kilitli (:296), reasoning low (:292).
+- Yanlış satıra yapışmaz: sonuç döngü-içi yerel değişkende (route.ts:274-276, 293-295), her tur sıfırlanır.
+- Model adresi giremez: satiraAitAramaGorseli:223-241 yalnız arama aracının image_result çıktısını okur, https + sayfaFirmadaMi:236 kilitli.
+- Hüküm: Dilim-3 kodda bitmiş görünüyor, kod değişikliği önermiyorum.

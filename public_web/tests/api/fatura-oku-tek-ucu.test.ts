@@ -246,11 +246,9 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
       if (adres.includes("openrouter.ai/api/v1/responses")) {
         const istekGovdesi = JSON.parse(String(init?.body ?? "{}"));
         if (istekGovdesi.tools) {
+          expect(istekGovdesi.include).toBeUndefined();
           return new Response(JSON.stringify({
-            output: [{
-              type: "web_search_call",
-              results: [{ type: "image_result", image_url: gorsel, source_website_url: sayfa }],
-            }],
+            output: [{ type: "message", content: [{ type: "output_text", text: JSON.stringify({ sayfa, gorsel }) }] }],
             usage: {
               input_tokens: 100,
               output_tokens: 20,
@@ -259,15 +257,32 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
             },
           }), { status: 200 });
         }
+        const metin = JSON.stringify(istekGovdesi.input ?? "");
+        if (metin.includes("SAYFA:")) {
+          return new Response(JSON.stringify({
+            output: [{ type: "message", content: [{ type: "output_text", text: JSON.stringify({ aciklama: "ELT1302 erkek elastan fanila" }) }] }],
+          }), { status: 200 });
+        }
+        if (metin.includes("gerçek ürün fotoğrafı")) {
+          return new Response(JSON.stringify({
+            output: [{ type: "message", content: [{ type: "output_text", text: JSON.stringify({ uygun: true }) }] }],
+          }), { status: 200 });
+        }
         return okuyucuCevabi(TEK_SATIR);
       }
       if (adres === sayfa) {
         return new Response(
-          "<html><head><meta name=\"description\" content=\"ELT1302 erkek elastan fanila\"></head></html>",
+          "<html><head><title>ELT1302</title></head><body>ELT1302 erkek elastan fanila baska metin</body></html>",
           { status: 200 },
         );
       }
       if (adres === gorsel) return new Response(new Uint8Array(foto), { status: 200 });
+      if (adres.includes("sehermensucat.com")) {
+        return new Response(
+          "<html><head><title>Seher Mensucat</title></head><body>Seher Mensucat 1234567890 İstanbul</body></html>",
+          { status: 200 },
+        );
+      }
       return new Response("{}", { status: 404 });
     }));
 
