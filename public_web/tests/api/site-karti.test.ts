@@ -98,6 +98,23 @@ describe("site kartı", () => {
       gorsel: "",
       sayfa: "https://firma.example/elt1302",
     });
+    const icIce = {
+      output: [{
+        type: "message",
+        content: [{
+          type: "output_text",
+          text: "bulundu",
+          annotations: [{
+            type: "url_citation",
+            url_citation: { url: "https://firma.example/elt1302" },
+          }],
+        }],
+      }],
+    };
+    expect(satiraAitAramaGorseli("firma.example", icIce)).toEqual({
+      gorsel: "",
+      sayfa: "https://firma.example/elt1302",
+    });
   });
 
   it("sayfası doğrulanmamış site metni kart kurmaz", () => {

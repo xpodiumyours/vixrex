@@ -244,9 +244,12 @@ export function satiraAitAramaGorseli(
       const parca = icerik as { annotations?: unknown };
       if (!Array.isArray(parca.annotations)) continue;
       for (const not of parca.annotations) {
-        const alinti = not as { type?: unknown; url?: unknown };
+        const alinti = not as { type?: unknown; url?: unknown; url_citation?: unknown };
         if (alinti.type !== "url_citation") continue;
-        const sayfa = guvenliAdres(alinti.url);
+        const ic = alinti.url_citation;
+        const sayfa = guvenliAdres(alinti.url)
+          || (typeof ic === "string" ? guvenliAdres(ic) : "")
+          || (ic && typeof ic === "object" ? guvenliAdres((ic as { url?: unknown }).url) : "");
         if (!sayfa || !sayfaFirmadaMi(sayfa, alan)) continue;
         return { gorsel: "", sayfa };
       }
@@ -295,29 +298,43 @@ export async function satirSitesindeAra(girdi: {
   const sorgu = [girdi.model, girdi.ad, girdi.barkod].map((parca) => parca.trim()).filter(Boolean).join(" ");
   if (!sorgu) throw new Error("SATIR_BOS");
 
-  const cevap = await fetch(ADRES, {
+  const govdeKur = (parametreler: Record<string, unknown>) => JSON.stringify({
+    model: GORU_MODELI,
+    max_output_tokens: 1024,
+    reasoning: { effort: "low" },
+    tools: [{
+      type: "openrouter:web_search",
+      parameters: parametreler,
+    }],
+    input: [{
+      role: "user",
+      content: [{ type: "input_text", text: `${sorgu}\nBu urunun fotografini yalniz ${alan} sitesinde ara.` }],
+    }],
+  });
+  const basliklar = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${anahtar}`,
+  };
+  let cevap = await fetch(ADRES, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${anahtar}`,
-    },
-    body: JSON.stringify({
-      model: GORU_MODELI,
-      max_output_tokens: 1024,
-      reasoning: { effort: "low" },
-      tools: [{
-        type: "openrouter:web_search",
-        parameters: {
-          engine: "native",
-          allowed_domains: [alan],
-        },
-      }],
-      input: [{
-        role: "user",
-        content: [{ type: "input_text", text: `${sorgu}\nBu urunun fotografini yalniz ${alan} sitesinde ara.` }],
-      }],
+    headers: basliklar,
+    body: govdeKur({
+      engine: "native",
+      allowed_domains: [alan],
+      search_content_types: ["image", "text"],
+      image_settings: { max_results: 3, caption: true },
     }),
   });
+  if (cevap.status === 400) {
+    cevap = await fetch(ADRES, {
+      method: "POST",
+      headers: basliklar,
+      body: govdeKur({
+        engine: "native",
+        allowed_domains: [alan],
+      }),
+    });
+  }
 
   if (!cevap.ok) {
     const hataGovdesi = await cevap.json().catch(() => null);
