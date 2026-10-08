@@ -200,6 +200,33 @@ keşfedilip "canlıya uygulayayım mı" diye soruldu; cevaplar tablo/hash/satır
 numarasıyla şişirildi ve hatayı kabul eden mesajın sonuna yine soru eklendi.
 Casper: "artık seninle çalışmaktan bıkmaya başladım."
 
+---
+
+## F. Canlıya almadan önce
+
+### 19. Önizleme adresi yalnız canlıyı yayınlayan projeden verilir (2026-10-08)
+Canlı (vixrex.com) tek bir Vercel projesinden yayınlanır: `vixrex-public`.
+`vixrex-app` projesinin önizlemesi farklı bir kabuk açar ve hiç canlıya
+çıkmaz; adresi Casper'a test adresi diye verilmez, kanıt sayılmaz.
+
+Casper'a önizleme adresi vermeden önce iki şey ölçülür ve mesaja yazılır:
+1. Canlı hangi commit'te: `gh api repos/xpodiumyours/vixrex/deployments`
+   çıktısında `Production – vixrex-public` satırının commit'i.
+2. Dalın tabanı o commit mi: `git merge-base <dal> origin/main`.
+İkisi aynı değilse dal `origin/main` üstüne yeniden alınır, sonra adres
+verilir. Verilen adres `vixrex-public-git-...` ile başlamalı ve Casper'ın
+canlıda kullandığı sayfa yolu (ör. `/app/urunler`) eklenmelidir.
+
+Durum ölçümü, tablo ve "kodda ne var" tespiti de yalnız `origin/main`
+üzerinden yapılır; yerel `main` kanıt değildir.
+
+Neden: 2026-10-08'de yerel `main` uzaktakinin 16 commit gerisindeydi; dokuz
+adımlık durum tablosu eski kopyadan ölçüldü ve "şemasız istem, JSON kesme,
+elle site tarayıcı" gibi gerçek `main`'de çoktan kapanmış eksikler açıkmış gibi
+yazıldı. Aynı gün ajan test adresi olarak `vixrex-app` önizlemesini verdi;
+Casper `/home` sayfasında bambaşka bir ürün paneli gördü ve o gün düzeltilen
+ürün ekleme sayfasının yeniden bozulacağını sandı. Kod aynıydı; adres yanlıştı.
+
 ### Token ekonomisi (2026-09-16)
 Token en kıt kaynak. Bitince koordinasyon, doğrulama ve merge sorumluluğu
 duruyor — yani proje duruyor. Yavaş ajan, duran projeden iyidir.
