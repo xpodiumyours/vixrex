@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import sharp from "sharp";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import seherHam from "../../data/katalog/uretici-katalog-seher-mensucat.json";
 import type { UreticiUrunu } from "@/lib/ureticiKatalog";
@@ -50,11 +51,68 @@ mocks.admin.mockImplementation(() => ({ rpc: mocks.rpc }));
 
 import { POST as faturaEslestir } from "@/app/api/fatura-eslestir/route";
 
-function istek(satirlar: unknown[], slug = "deneme-vitrin", tedarikci = "") {
+function istek(satirlar: unknown[], slug = "deneme-vitrin", tedarikci = "", tedarikciSite = "") {
   return new NextRequest("http://localhost/api/fatura-eslestir", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ slug, satirlar, tedarikci }),
+    body: JSON.stringify({ slug, satirlar, tedarikci, tedarikciSite }),
+  });
+}
+
+const LUNA_SITE = "https://seher-mensucat.example";
+
+async function lunaFoto(): Promise<Buffer> {
+  const gurultu = Buffer.alloc(1200 * 1200 * 3);
+  for (let i = 0; i < gurultu.length; i += 97) gurultu[i] = (i * 13) % 251;
+  return sharp(gurultu, { raw: { width: 1200, height: 1200, channels: 3 } }).jpeg({ quality: 80 }).toBuffer();
+}
+
+function lunaHatti(foto: Buffer) {
+  return vi.fn(async (url: string, init?: RequestInit) => {
+    const adres = String(url);
+    if (adres.includes("openrouter.ai")) {
+      const govde = JSON.parse(String(init?.body ?? "{}"));
+      const metin = JSON.stringify(govde.input ?? "");
+      if (metin.includes("resmi web sitesi")) {
+        return new Response(JSON.stringify({
+          output: [{ type: "message", content: [{ type: "output_text", text: JSON.stringify({ alan: "seher-mensucat.example", kaynak: LUNA_SITE }) }] }],
+        }), { status: 200 });
+      }
+      if (govde.tools) {
+        const sorgu = metin.toUpperCase();
+        if (sorgu.includes("UYDURMA9999") || sorgu.includes("ZZZ9999")) {
+          return new Response(JSON.stringify({
+            output: [{ type: "message", content: [{ type: "output_text", text: JSON.stringify({ sayfa: "", gorsel: "" }) }] }],
+          }), { status: 200 });
+        }
+        const kod = (metin.match(/[A-Z0-9]{4,}/) || ["URUN"])[0].toUpperCase();
+        return new Response(JSON.stringify({
+          output: [{ type: "message", content: [{ type: "output_text", text: JSON.stringify({ sayfa: `${LUNA_SITE}/urun/${kod}`, gorsel: `${LUNA_SITE}/gorsel/${kod}.jpg` }) }] }],
+        }), { status: 200 });
+      }
+      if (metin.includes("SAYFA:")) {
+        const kod = (metin.match(/[A-Z0-9]{4,}/) || ["URUN"])[0].toUpperCase();
+        return new Response(JSON.stringify({
+          output: [{ type: "message", content: [{ type: "output_text", text: JSON.stringify({ aciklama: `${kod} resmi ürün açıklaması` }) }] }],
+        }), { status: 200 });
+      }
+      if (metin.includes("gerçek ürün fotoğrafı")) {
+        return new Response(JSON.stringify({
+          output: [{ type: "message", content: [{ type: "output_text", text: JSON.stringify({ uygun: true }) }] }],
+        }), { status: 200 });
+      }
+      return new Response(JSON.stringify({
+        output: [{ type: "message", content: [{ type: "output_text", text: JSON.stringify({ alan: "seher-mensucat.example", kaynak: LUNA_SITE }) }] }],
+      }), { status: 200 });
+    }
+    if (adres.startsWith(`${LUNA_SITE}/urun/`)) {
+      const kod = adres.split("/").pop() ?? "URUN";
+      return new Response(`<html><body>${kod} resmi ürün açıklaması detaylı metin</body></html>`, { status: 200 });
+    }
+    if (adres.startsWith(`${LUNA_SITE}/gorsel/`)) {
+      return new Response(new Uint8Array(foto), { status: 200 });
+    }
+    return new Response("{}", { status: 404 });
   });
 }
 
@@ -92,29 +150,77 @@ describe("/api/fatura-eslestir — OCR kaynağından bağımsız katalog eşleş
     expect(cevap.status).toBe(200);
   });
 
-  it("üreticisi belirtilen gerçek katalog kodları resmî bilgi ve fotoğrafla eşleşir", async () => {
-    const cevap = await faturaEslestir(
-      istek([
-        { model: "ELT1302", ad: "elastan sıfır yaka", barkod: "", adet: 2, alisBirimFiyat: 137, guven: 0.9 },
-        { model: "TER0101", ad: "penye atlet", barkod: "", adet: 18, alisBirimFiyat: 63.5, guven: 0.85 },
-      ], "deneme-vitrin", "Seher Mensucat"),
-    );
-    const govde = await cevap.json();
+  it("Luna site sayfasında bulursa kart kanitli olur", async () => {
+    const eski = process.env.OPENROUTER_API_KEY;
+    process.env.OPENROUTER_API_KEY = "test-luna";
+    const foto = await lunaFoto();
+    vi.stubGlobal("fetch", lunaHatti(foto));
+    try {
+      const cevap = await faturaEslestir(
+        istek([
+          { model: "ELT1302", ad: "ELT1302 elastan sıfır yaka", barkod: "", adet: 2, alisBirimFiyat: 137, guven: 0.9 },
+          { model: "TER0101", ad: "TER0101 penye atlet", barkod: "", adet: 18, alisBirimFiyat: 63.5, guven: 0.85 },
+        ], "deneme-vitrin", "Seher Mensucat", LUNA_SITE),
+      );
+      const govde = await cevap.json();
 
-    expect(cevap.status).toBe(200);
-    expect(govde.katalogEslesmesi).toBe(2);
-    expect(govde.satirlar[0].katalog.resmiAd).toContain("ELT1302");
-    // Kilitli kapsam: resmî ad, marka VE fotoğraf gelir; kullanım izni sonra,
-    // çalışan sistemle istenir (izin durumu bilgi olarak taşınır).
-    expect(govde.satirlar[0].katalog.izinDurumu).not.toBe("var");
-    expect(govde.satirlar[0].katalog.gorseller.length).toBeGreaterThan(0);
-    expect(govde.satirlar[1].katalog.marka).toBeTruthy();
+      expect(cevap.status).toBe(200);
+      expect(govde.katalogEslesmesi).toBe(2);
+      expect(govde.satirlar[0].katalog.resmiAd).toContain("ELT1302");
+      expect(govde.satirlar[0].katalog.izinDurumu).not.toBe("var");
+      expect(govde.satirlar[0].katalog.gorseller.length).toBeGreaterThan(0);
+      expect(govde.satirlar[0].katalog.kaynak).toContain("seher-mensucat.example");
+    } finally {
+      if (eski === undefined) delete process.env.OPENROUTER_API_KEY;
+      else process.env.OPENROUTER_API_KEY = eski;
+    }
   });
 
   it("katalogda olmayan kod tahmin üretmez, katalog null döner", async () => {
     const cevap = await faturaEslestir(istek([{ model: "ZZZ9999", ad: "bilinmeyen ürün" }]));
     const govde = await cevap.json();
     expect(govde.satirlar[0].katalog).toBeNull();
+  });
+
+  it("anahtar yoksa Luna çalışmaz, satır eksik kalır", async () => {
+    const eski = process.env.OPENROUTER_API_KEY;
+    delete process.env.OPENROUTER_API_KEY;
+    try {
+      const cevap = await faturaEslestir(
+        istek([{ model: "ELT1302", ad: "ELT1302 elastan sıfır yaka", guven: 0.9 }], "deneme-vitrin", "Seher Mensucat", LUNA_SITE),
+      );
+      const govde = await cevap.json();
+      expect(cevap.status).toBe(200);
+      expect(govde.satirlar[0].sonuc).toBe("eksik");
+      expect(govde.satirlar[0].katalog).toBeNull();
+    } finally {
+      if (eski !== undefined) process.env.OPENROUTER_API_KEY = eski;
+    }
+  });
+
+  it("Luna adayı bulamazsa satır eksik kalır", async () => {
+    const eski = process.env.OPENROUTER_API_KEY;
+    process.env.OPENROUTER_API_KEY = "test-luna";
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      if (String(url).includes("openrouter.ai")) {
+        return new Response(JSON.stringify({
+          output: [{ type: "message", content: [{ type: "output_text", text: JSON.stringify({ sayfa: "", gorsel: "" }) }] }],
+        }), { status: 200 });
+      }
+      return new Response("{}", { status: 404 });
+    }));
+    try {
+      const cevap = await faturaEslestir(
+        istek([{ model: "ELT1302", ad: "ELT1302 elastan sıfır yaka", guven: 0.9 }], "deneme-vitrin", "Seher Mensucat", LUNA_SITE),
+      );
+      const govde = await cevap.json();
+      expect(cevap.status).toBe(200);
+      expect(govde.satirlar[0].sonuc).toBe("eksik");
+      expect(govde.satirlar[0].katalog).toBeNull();
+    } finally {
+      if (eski === undefined) delete process.env.OPENROUTER_API_KEY;
+      else process.env.OPENROUTER_API_KEY = eski;
+    }
   });
 
   it("500 satırlık istek 200'e kırpılır, sistem çökmez", async () => {
@@ -132,29 +238,38 @@ describe("/api/fatura-eslestir — OCR kaynağından bağımsız katalog eşleş
   });
 
   it.each([1234, 5678, 9012])(
-    "tohum=%i: rastgele 15 satır — katalogdaki gerçek ürünlerin hepsi bulunur, uydurma ürün bulunmaz",
+    "tohum=%i: Luna gerçek kodları bulur, uydurma ürünü boş bırakır",
     async (tohum) => {
-      let durum = tohum >>> 0;
-      const rastgele = () => {
-        durum |= 0;
-        durum = (durum + 0x6d2b79f5) | 0;
-        let t = Math.imul(durum ^ (durum >>> 15), 1 | durum);
-        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-      };
-      const havuz = seherHam as UreticiUrunu[];
-      const gercekKodlar = new Set<string>();
-      while (gercekKodlar.size < 12) gercekKodlar.add(havuz[Math.floor(rastgele() * havuz.length)].kod);
+      const eski = process.env.OPENROUTER_API_KEY;
+      process.env.OPENROUTER_API_KEY = "test-luna";
+      const foto = await lunaFoto();
+      vi.stubGlobal("fetch", lunaHatti(foto));
+      try {
+        let durum = tohum >>> 0;
+        const rastgele = () => {
+          durum |= 0;
+          durum = (durum + 0x6d2b79f5) | 0;
+          let t = Math.imul(durum ^ (durum >>> 15), 1 | durum);
+          t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+        const havuz = seherHam as UreticiUrunu[];
+        const gercekKodlar = new Set<string>();
+        while (gercekKodlar.size < 12) gercekKodlar.add(havuz[Math.floor(rastgele() * havuz.length)].kod);
 
-      const satirlar = [...gercekKodlar].map((model) => ({ model, ad: "", guven: 0.8 }));
-      satirlar.push({ model: "UYDURMA9999", ad: "gerçek olmayan ürün", guven: 0.3 });
+        const satirlar = [...gercekKodlar].map((model) => ({ model, ad: model, guven: 0.8 }));
+        satirlar.push({ model: "UYDURMA9999", ad: "UYDURMA9999 gerçek olmayan ürün", guven: 0.3 });
 
-      const cevap = await faturaEslestir(istek(satirlar, "deneme-vitrin", "Seher Mensucat"));
-      const govde = await cevap.json();
+        const cevap = await faturaEslestir(istek(satirlar, "deneme-vitrin", "Seher Mensucat", LUNA_SITE));
+        const govde = await cevap.json();
 
-      expect(govde.katalogEslesmesi).toBe(12); // 12 gerçek + 1 uydurma
-      const uydurma = govde.satirlar.find((s: { model: string }) => s.model === "UYDURMA9999");
-      expect(uydurma.katalog).toBeNull();
+        expect(govde.katalogEslesmesi).toBe(12); // 12 gerçek + 1 uydurma
+        const uydurma = govde.satirlar.find((s: { model: string }) => s.model === "UYDURMA9999");
+        expect(uydurma.katalog).toBeNull();
+      } finally {
+        if (eski === undefined) delete process.env.OPENROUTER_API_KEY;
+        else process.env.OPENROUTER_API_KEY = eski;
+      }
     },
   );
 });

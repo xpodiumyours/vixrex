@@ -88,36 +88,104 @@ describe("kaynak görseli doğrulama", () => {
     const buyuk = "https://firma.example/buyuk.jpg";
     const kucuk = "https://firma.example/kucuk.jpg";
     const kapali = "https://firma.example/kapali.jpg";
-    const fetcher = fetcherIle({
-      [buyuk]: { govde: await fotograf(1200, 1200) },
-      [kucuk]: { govde: await fotograf(200, 200) },
-    });
-    const bag = { fetcher, resolveHost };
-    expect(await kartaGirecekGorsel(buyuk, bag)).toBe(buyuk);
-    expect(await kartaGirecekGorsel(kucuk, bag)).toBe("");
-    expect(await kartaGirecekGorsel(kapali, bag)).toBe("");
+    const buyukBayt = await fotograf(1200, 1200);
+    const fetcher = (async (input: string, init?: RequestInit) => {
+      if (String(input).includes("openrouter.ai")) {
+        return new Response(
+          JSON.stringify({ output: [{ type: "message", content: [{ type: "output_text", text: JSON.stringify({ uygun: true }) }] }] }),
+          { status: 200 },
+        );
+      }
+      const harita: Record<string, Buffer> = { [buyuk]: buyukBayt, [kucuk]: await fotograf(200, 200) };
+      const kayit = harita[String(input)];
+      if (!kayit) return new Response("yok", { status: 404 });
+      return new Response(new Uint8Array(kayit), { status: 200 });
+    }) as unknown as typeof fetch;
+    const bag = { fetcher, resolveHost, apiAnahtari: "test" };
+    const kimlik = { model: "ELT1302", ad: "Fanila" };
+    expect(await kartaGirecekGorsel(buyuk, kimlik, bag)).toBe(buyuk);
+    expect(await kartaGirecekGorsel(kucuk, kimlik, bag)).toBe("");
+    expect(await kartaGirecekGorsel(kapali, kimlik, bag)).toBe("");
   });
+
+  it("Luna uygun değilse görsel karta girmez", async () => {
+    const adres = "https://firma.example/urun.jpg";
+    const bayt = await fotograf(1200, 1200);
+    const fetcher = (async (input: string) => {
+      if (String(input).includes("openrouter.ai")) {
+        return new Response(
+          JSON.stringify({ output: [{ type: "message", content: [{ type: "output_text", text: JSON.stringify({ uygun: false }) }] }] }),
+          { status: 200 },
+        );
+      }
+      return new Response(new Uint8Array(bayt), { status: 200 });
+    }) as unknown as typeof fetch;
+    expect(await kartaGirecekGorsel(adres, { model: "X", ad: "Y" }, { fetcher, resolveHost, apiAnahtari: "t" })).toBe("");
+  });
+
+  it("anahtar yoksa görsel karta girmez", async () => {
+    const buyuk = "https://firma.example/buyuk2.jpg";
+    const fetcher = fetcherIle({ [buyuk]: { govde: await fotograf(1200, 1200) } });
+    expect(await kartaGirecekGorsel(buyuk, { model: "", ad: "" }, { fetcher, resolveHost, apiAnahtari: "" })).toBe("");
+});
 });
 
 describe("firma sayfasından açıklama", () => {
-  it("sayfa ürün kodunu taşıyorsa açıklamayı sayfadan alır", async () => {
+  function lunaAciklamaMock(aciklama: string) {
+    return async (input: string, init?: RequestInit) => {
+      if (String(input).includes("openrouter.ai")) {
+        return new Response(
+          JSON.stringify({
+            output: [
+              { type: "message", content: [{ type: "output_text", text: JSON.stringify({ aciklama }) }] },
+            ],
+          }),
+          { status: 200 },
+        );
+      }
+      const govde = "<html><head><meta name=\"description\" content=\"ELT1302 erkek fanila\"></head><body>ELT1302 erkek fanila baska metin</body></html>";
+      return new Response(govde, { status: 200 });
+    };
+  }
+
+  it("sayfa ürüne aitse açıklamayı Luna'dan alır", async () => {
     const sayfa = "https://firma.example/urun";
     const aciklama = await sayfadanUrunAciklamasi(sayfa, { model: "ELT1302", ad: "Fanila" }, {
-      fetcher: fetcherIle({
-        [sayfa]: { govde: "<html><head><meta name=\"description\" content=\"ELT1302 erkek fanila\"></head><body>baska metin</body></html>" },
-      }),
+      fetcher: lunaAciklamaMock("ELT1302 erkek fanila") as unknown as typeof fetch,
       resolveHost,
+      apiAnahtari: "test",
     });
     expect(aciklama).toBe("ELT1302 erkek fanila");
   });
 
-  it("sayfada ürün kodu ve adı yoksa açıklama boş kalır", async () => {
+  it("Luna boş dönerse açıklama boş kalır", async () => {
+    const sayfa = "https://firma.example/urun";
+    const aciklama = await sayfadanUrunAciklamasi(sayfa, { model: "ELT1302", ad: "Fanila" }, {
+      fetcher: (async (input: string) => {
+        if (String(input).includes("openrouter.ai")) {
+          return new Response(
+            JSON.stringify({
+              output: [{ type: "message", content: [{ type: "output_text", text: JSON.stringify({ aciklama: "" }) }] }],
+            }),
+            { status: 200 },
+          );
+        }
+        return new Response("<html><body>Baska bir urun sayfasi ELT1302 Fanila</body></html>", { status: 200 });
+      }) as unknown as typeof fetch,
+      resolveHost,
+      apiAnahtari: "test",
+    });
+    expect(aciklama).toBe("");
+  });
+
+  it("anahtar yoksa açıklama boş kalır", async () => {
     const sayfa = "https://firma.example/urun";
     const aciklama = await sayfadanUrunAciklamasi(sayfa, { model: "ELT1302", ad: "Fanila" }, {
       fetcher: fetcherIle({
-        [sayfa]: { govde: "<html><body>Baska bir urun sayfasi</body></html>" },
+        [sayfa]: { govde: "<html><body>ELT1302 Fanila</body></html>" },
       }),
       resolveHost,
+      apiAnahtari: "",
     });
     expect(aciklama).toBe("");
   });

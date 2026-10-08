@@ -44,36 +44,27 @@ describe("site kartı", () => {
     expect(kart.katalog?.kaynak).toBe("https://firma.example/urun");
   });
 
-  it("arama resmi yalnız kilitlenen firmanın sayfasından alınır", () => {
-    const govde = {
+  it("arama sonucu yalnız kilitlenen firmanın sayfasından alınır", () => {
+    const govde = (sayfa: string, gorsel: string) => ({
       output: [
         {
-          type: "web_search_call",
-          results: [
-            {
-              type: "image_result",
-              image_url: "https://baska.example/urun.jpg",
-              source_website_url: "https://baska.example/urun",
-            },
-            {
-              type: "image_result",
-              image_url: "http://firma.example/urun.jpg",
-              source_website_url: "https://firma.example/urun",
-            },
-            {
-              type: "image_result",
-              image_url: "https://cdn.example/urun.jpg",
-              source_website_url: "https://firma.example/urun",
-            },
-          ],
+          type: "message",
+          content: [{ type: "output_text", text: JSON.stringify({ sayfa, gorsel }) }],
         },
       ],
-    };
-    expect(satiraAitAramaGorseli("firma.example", govde)).toEqual({
+    });
+    expect(satiraAitAramaGorseli(
+      "firma.example",
+      govde("https://firma.example/urun", "https://cdn.example/urun.jpg"),
+    )).toEqual({
       gorsel: "https://cdn.example/urun.jpg",
       sayfa: "https://firma.example/urun",
     });
-    expect(satiraAitAramaGorseli("sehermensucat.com", govde)).toBeNull();
+    expect(satiraAitAramaGorseli(
+      "firma.example",
+      govde("https://baska.example/urun", "https://baska.example/urun.jpg"),
+    )).toBeNull();
+    expect(satiraAitAramaGorseli("sehermensucat.com", { output: [] })).toBeNull();
   });
 
   it("sayfası doğrulanmamış site metni kart kurmaz", () => {

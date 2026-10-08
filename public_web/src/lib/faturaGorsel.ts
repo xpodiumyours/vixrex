@@ -30,6 +30,8 @@ export interface KaynakGorselDogrulamasi {
 export interface GorselBagimliliklari {
   fetcher?: (input: string, init?: RequestInit) => Promise<Response>;
   resolveHost?: (hostname: string) => Promise<string[]>;
+  apiAnahtari?: string;
+  model?: string;
 }
 
 export interface HazirlananGorsel {
@@ -189,6 +191,24 @@ function htmlMetni(html: string): string {
     .trim();
 }
 
+const LUNA_ADRES = "https://openrouter.ai/api/v1/responses";
+const LUNA_MODEL = "openai/gpt-5.6-luna";
+
+function lunaCiktiMetni(govde: { output_text?: unknown; output?: unknown }): string {
+  if (typeof govde.output_text === "string" && govde.output_text.trim()) return govde.output_text;
+  if (!Array.isArray(govde.output)) return "";
+  const parcalar: string[] = [];
+  for (const oge of govde.output) {
+    const kayit = oge as { type?: unknown; content?: unknown };
+    if (kayit.type !== "message" || !Array.isArray(kayit.content)) continue;
+    for (const icerik of kayit.content) {
+      const parca = icerik as { type?: unknown; text?: unknown };
+      if (parca.type === "output_text" && typeof parca.text === "string") parcalar.push(parca.text);
+    }
+  }
+  return parcalar.join("");
+}
+
 export async function sayfadanUrunAciklamasi(
   adres: string,
   kimlik: { model: string; ad: string },
@@ -225,35 +245,159 @@ export async function sayfadanUrunAciklamasi(
   }
   if (html.length > 1_000_000) html = html.slice(0, 1_000_000);
 
-  const meta = html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i)?.[1]
-    ?? html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["']description["']/i)?.[1]
-    ?? "";
-  const metaMetin = htmlMetni(meta);
   const govde = htmlMetni(html);
-  const sadeGovde = sadeMetin(`${metaMetin} ${govde}`);
-  const anahtarlar = [kimlik.model, kimlik.ad]
-    .map((parca) => parca.trim())
-    .filter((parca) => parca.length >= 3);
-  const tutan = anahtarlar.find((parca) => sadeGovde.includes(sadeMetin(parca)));
-  if (!tutan) return "";
+  if (!govde) return "";
+  const sayfaMetni = govde.length > 6000 ? govde.slice(0, 6000) : govde;
 
-  if (metaMetin && sadeMetin(metaMetin).includes(sadeMetin(tutan))) return metaMetin.slice(0, 500);
+  const anahtar = (bagimliliklar.apiAnahtari ?? process.env.OPENROUTER_API_KEY ?? "").trim();
+  if (!anahtar) return "";
 
-  const yer = sadeGovde.indexOf(sadeMetin(tutan));
-  const bas = Math.max(0, yer - 80);
-  return govde.slice(bas, bas + 320).trim();
+  const model = (bagimliliklar.model ?? LUNA_MODEL).trim() || LUNA_MODEL;
+  const kimlikSatiri = [kimlik.model, kimlik.ad].map((p) => p.trim()).filter(Boolean).join(" / ") || "ürün";
+  let lunaGovde: { output_text?: unknown; output?: unknown } | null = null;
+  try {
+    const lunaYanit = await fetcher(LUNA_ADRES, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${anahtar}` },
+      signal: AbortSignal.timeout(60000),
+      body: JSON.stringify({
+        model,
+        max_output_tokens: 512,
+        reasoning: { effort: "none" },
+        text: {
+          format: {
+            type: "json_schema",
+            name: "urun_aciklama",
+            strict: true,
+            schema: {
+              type: "object",
+              additionalProperties: false,
+              required: ["aciklama"],
+              properties: { aciklama: { type: "string" } },
+            },
+          },
+        },
+        input: [{
+          role: "user",
+          content: [{
+            type: "input_text",
+            text: `Bu sayfa metni "${kimlikSatiri}" ürününe mi ait? Aitse ürün açıklamasını sayfadaki cümlelerle döndür, uydurma. Değilse boş döndür.\nSAYFA:\n${sayfaMetni}`,
+          }],
+        }],
+      }),
+    });
+    if (!lunaYanit.ok) return "";
+    lunaGovde = (await lunaYanit.json().catch(() => null)) as typeof lunaGovde;
+  } catch {
+    return "";
+  }
+  if (!lunaGovde) return "";
+  let aciklama = "";
+  try {
+    aciklama = String((JSON.parse(lunaCiktiMetni(lunaGovde)) as { aciklama?: unknown }).aciklama ?? "").trim();
+  } catch {
+    return "";
+  }
+  if (!aciklama) return "";
+  const sadeAciklama = sadeMetin(aciklama).replace(/\s+/g, " ").trim();
+  const sadeSayfa = sadeMetin(sayfaMetni).replace(/\s+/g, " ").trim();
+  if (!sadeAciklama || !sadeSayfa.includes(sadeAciklama.slice(0, Math.min(40, sadeAciklama.length)))) return "";
+  return aciklama.slice(0, 500);
 }
 
 export async function kartaGirecekGorsel(
   adres: string,
+  kimlik: { model: string; ad: string } = { model: "", ad: "" },
   bagimliliklar: GorselBagimliliklari = {},
 ): Promise<string> {
   const temiz = adres.trim();
   if (!temiz) return "";
-  const sonuc = await kaynakGorseliniDogrula(temiz, bagimliliklar);
-  if (sonuc.tamam) return temiz;
-  if (sonuc.sebep && KART_REDDI.has(sonuc.sebep)) return "";
-  return temiz;
+  let url: URL;
+  try {
+    url = new URL(temiz);
+  } catch {
+    return "";
+  }
+  if (url.protocol !== "https:" || url.username || url.password || url.port) return "";
+  const fetcher = bagimliliklar.fetcher ?? fetch;
+  const resolveHost = bagimliliklar.resolveHost ?? varsayilanCoz;
+  if (!(await hostGuvenliMi(url.hostname, resolveHost))) return "";
+
+  const anahtar = (bagimliliklar.apiAnahtari ?? process.env.OPENROUTER_API_KEY ?? "").trim();
+  if (!anahtar) return "";
+
+  let bayt: Uint8Array;
+  try {
+    const yanit = await fetcher(url.toString(), {
+      method: "GET",
+      redirect: "manual",
+      signal: AbortSignal.timeout(ZAMAN_ASIMI_MS),
+      headers: { accept: "image/jpeg,image/png,image/webp" },
+    });
+    if (yanit.status !== 200) return "";
+    bayt = new Uint8Array(await yanit.arrayBuffer());
+  } catch {
+    return "";
+  }
+  if (bayt.byteLength > MAX_PRODUCT_IMAGE_SOURCE_BYTES) return "";
+  const tur = gercekTur(bayt);
+  if (!tur) return "";
+  try {
+    const bilgi = await sharp(Buffer.from(bayt)).metadata();
+    const genislik = bilgi.width ?? 0;
+    const yukseklik = bilgi.height ?? 0;
+    if (!genislik || !yukseklik || Math.min(genislik, yukseklik) < FATURA_MIN_SOURCE_SHORT_EDGE) return "";
+  } catch {
+    return "";
+  }
+
+  const model = (bagimliliklar.model ?? LUNA_MODEL).trim() || LUNA_MODEL;
+  const kimlikSatiri = [kimlik.model, kimlik.ad].map((p) => p.trim()).filter(Boolean).join(" / ") || "ürün";
+  const dataUrl = `data:${tur};base64,${Buffer.from(bayt).toString("base64")}`;
+  let lunaGovde: { output_text?: unknown; output?: unknown } | null = null;
+  try {
+    const lunaYanit = await fetcher(LUNA_ADRES, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${anahtar}` },
+      signal: AbortSignal.timeout(60000),
+      body: JSON.stringify({
+        model,
+        max_output_tokens: 256,
+        reasoning: { effort: "none" },
+        text: {
+          format: {
+            type: "json_schema",
+            name: "gorsel_karar",
+            strict: true,
+            schema: {
+              type: "object",
+              additionalProperties: false,
+              required: ["uygun"],
+              properties: { uygun: { type: "boolean" } },
+            },
+          },
+        },
+        input: [{
+          role: "user",
+          content: [
+            { type: "input_text", text: `Bu görsel "${kimlikSatiri}" ürününün gerçek ürün fotoğrafı mı? Logo, boş zemin, banner, yer tutucu ise uygun değildir. Yalnız JSON döndür.` },
+            { type: "input_image", image_url: dataUrl, detail: "low" },
+          ],
+        }],
+      }),
+    });
+    if (!lunaYanit.ok) return "";
+    lunaGovde = (await lunaYanit.json().catch(() => null)) as typeof lunaGovde;
+  } catch {
+    return "";
+  }
+  if (!lunaGovde) return "";
+  try {
+    const uygun = (JSON.parse(lunaCiktiMetni(lunaGovde)) as { uygun?: unknown }).uygun;
+    return uygun === true ? temiz : "";
+  } catch {
+    return "";
+  }
 }
 
 interface DepoIstemcisi {
