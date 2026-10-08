@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import sharp from "sharp";
-import { kartaGirecekGorsel, kaynakGorseliniDogrula, kaynakGorselleriniHazirla, sayfadakiUrun, sayfadanUrunAciklamasi, sayfadanUrunKaydi } from "@/lib/faturaGorsel";
+import { kartaGirecekGorsel, kaynakGorseliniDogrula, kaynakGorselleriniHazirla } from "@/lib/faturaGorsel";
 
 const resolveHost = async () => ["8.8.8.8"];
 
@@ -96,77 +96,6 @@ describe("kaynak görseli doğrulama", () => {
     expect(await kartaGirecekGorsel(buyuk, bag)).toBe(buyuk);
     expect(await kartaGirecekGorsel(kucuk, bag)).toBe("");
     expect(await kartaGirecekGorsel(kapali, bag)).toBe("");
-  });
-});
-
-describe("firma sayfasından açıklama", () => {
-  it("sayfa ürün kodunu taşıyorsa açıklamayı sayfadan alır", async () => {
-    const sayfa = "https://firma.example/urun";
-    const aciklama = await sayfadanUrunAciklamasi(sayfa, { model: "ELT1302", ad: "Fanila" }, {
-      fetcher: fetcherIle({
-        [sayfa]: { govde: "<html><head><meta name=\"description\" content=\"ELT1302 erkek fanila\"></head><body>baska metin</body></html>" },
-      }),
-      resolveHost,
-    });
-    expect(aciklama).toBe("ELT1302 erkek fanila");
-  });
-
-  it("sayfada ürün kodu ve adı yoksa açıklama boş kalır", async () => {
-    const sayfa = "https://firma.example/urun";
-    const aciklama = await sayfadanUrunAciklamasi(sayfa, { model: "ELT1302", ad: "Fanila" }, {
-      fetcher: fetcherIle({
-        [sayfa]: { govde: "<html><body>Baska bir urun sayfasi</body></html>" },
-      }),
-      resolveHost,
-    });
-    expect(aciklama).toBe("");
-  });
-});
-
-describe("firma sayfasındaki ürün kaydı", () => {
-  it("sayfanın kendi ürün adı, açıklaması ve fotoğrafı okunur", () => {
-    const html = `<html><head>
-      <script type="application/ld+json">{"@type":"Product","name":"ELT1302 Fanila","description":"Pamuklu atlet","image":"https://firma.example/elt1302.jpg"}</script>
-    </head><body>ELT1302</body></html>`;
-    expect(sayfadakiUrun(html, "https://firma.example/elt1302")).toEqual({
-      ad: "ELT1302 Fanila",
-      aciklama: "Pamuklu atlet",
-      gorsel: "https://firma.example/elt1302.jpg",
-    });
-  });
-
-  it("ürün kodu sayfada yoksa kayıt alınmaz", async () => {
-    const sayfa = "https://firma.example/urun";
-    const kayit = await sayfadanUrunKaydi(sayfa, { model: "ELT1302", ad: "Fanila" }, {
-      fetcher: fetcherIle({
-        [sayfa]: { govde: "<html><head><meta property=\"og:image\" content=\"https://firma.example/baska.jpg\"></head><body>baska urun</body></html>" },
-      }),
-      resolveHost,
-    });
-    expect(kayit).toBeNull();
-  });
-
-  it("kodu taşıyan sayfanın og görseli karta girer", async () => {
-    const sayfa = "https://firma.example/elt1302";
-    const kayit = await sayfadanUrunKaydi(sayfa, { model: "ELT1302", ad: "Fanila" }, {
-      fetcher: fetcherIle({
-        [sayfa]: { govde: "<html><head><meta property=\"og:title\" content=\"ELT1302 Fanila\"><meta property=\"og:image\" content=\"https://firma.example/elt1302.jpg\"></head><body>ELT1302 fanila</body></html>" },
-      }),
-      resolveHost,
-    });
-    expect(kayit).toEqual({
-      ad: "ELT1302 Fanila",
-      aciklama: "",
-      gorsel: "https://firma.example/elt1302.jpg",
-    });
-  });
-
-  it("og görseli yoksa sayfadaki ürün resmi alınır", () => {
-    const html = `<html><body>
-      <img src="https://firma.example/logo.png" alt="logo">
-      <img src="https://firma.example/elt1302-on.jpg" alt="ELT1302">
-    </body><p>ELT1302 fanila</p></html>`;
-    expect(sayfadakiUrun(html, "https://firma.example/elt1302").gorsel).toBe("https://firma.example/elt1302-on.jpg");
   });
 });
 

@@ -75,6 +75,7 @@ describe("site kartı", () => {
               type: "image_result",
               image_url: "https://cdn.example/urun.jpg",
               source_website_url: "https://firma.example/urun",
+              caption: "Pamuklu fanila",
             },
           ],
         },
@@ -83,6 +84,7 @@ describe("site kartı", () => {
     expect(satiraAitAramaGorseli("firma.example", govde)).toEqual({
       gorsel: "https://cdn.example/urun.jpg",
       sayfa: "https://firma.example/urun",
+      aciklama: "Pamuklu fanila",
     });
     expect(satiraAitAramaGorseli("sehermensucat.com", govde)).toBeNull();
   });
@@ -108,6 +110,7 @@ describe("site kartı", () => {
     expect(satiraAitAramaGorseli("firma.example", govde)).toEqual({
       gorsel: "",
       sayfa: "https://firma.example/elt1302",
+      aciklama: "",
     });
     const icIce = {
       output: [{
@@ -125,6 +128,7 @@ describe("site kartı", () => {
     expect(satiraAitAramaGorseli("firma.example", icIce)).toEqual({
       gorsel: "",
       sayfa: "https://firma.example/elt1302",
+      aciklama: "",
     });
   });
 

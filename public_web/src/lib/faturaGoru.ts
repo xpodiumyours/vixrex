@@ -25,7 +25,6 @@
 import sharp from "sharp";
 import { kisiselVeriTemizle } from "@/lib/faturaKisiselVeri";
 import { resmiSiteSayilmaz } from "@/lib/firmaArama";
-import { sayfadanUrunKaydi } from "@/lib/faturaGorsel";
 import { alanAdiTemizle } from "@/lib/ureticiKatalog";
 
 const ADRES = "https://openrouter.ai/api/v1/responses";
@@ -234,18 +233,23 @@ export function sayfaFirmadaMi(sayfa: string, alan: string): boolean {
 export function satiraAitAramaGorseli(
   alan: string,
   govde: { output?: unknown } | null,
-): { gorsel: string; sayfa: string } | null {
+): { gorsel: string; sayfa: string; aciklama: string } | null {
   if (!Array.isArray(govde?.output)) return null;
   for (const oge of govde.output) {
     const kayit = oge as { type?: unknown; results?: unknown };
     if (kayit.type !== "web_search_call" || !Array.isArray(kayit.results)) continue;
     for (const sonuc of kayit.results) {
-      const resim = sonuc as { type?: unknown; image_url?: unknown; source_website_url?: unknown };
+      const resim = sonuc as {
+        type?: unknown;
+        image_url?: unknown;
+        source_website_url?: unknown;
+        caption?: unknown;
+      };
       if (resim.type !== "image_result") continue;
       const sayfa = guvenliAdres(resim.source_website_url);
       const gorsel = guvenliAdres(resim.image_url);
       if (!gorsel || !sayfa || !sayfaFirmadaMi(sayfa, alan)) continue;
-      return { gorsel, sayfa };
+      return { gorsel, sayfa, aciklama: metin(resim.caption) };
     }
   }
   for (const oge of govde.output) {
@@ -262,7 +266,7 @@ export function satiraAitAramaGorseli(
           || (typeof ic === "string" ? guvenliAdres(ic) : "")
           || (ic && typeof ic === "object" ? guvenliAdres((ic as { url?: unknown }).url) : "");
         if (!sayfa || !sayfaFirmadaMi(sayfa, alan)) continue;
-        return { gorsel: "", sayfa };
+        return { gorsel: "", sayfa, aciklama: "" };
       }
     }
   }
@@ -450,6 +454,7 @@ export async function firmaAlaniniKilitle(girdi: {
 export interface SatirAramasi {
   gorsel: string;
   sayfa: string;
+  aciklama: string;
   maliyet: number | null;
   girdiToken: number;
   ciktiToken: number;
@@ -472,16 +477,6 @@ export function resmiFotografIstegi(alan: string, sorgu: string, model = "gpt-5.
   };
 }
 
-async function sayfaFotografiniDoldur(
-  bulunan: { gorsel: string; sayfa: string } | null,
-  kimlik: { model: string; ad: string },
-): Promise<{ gorsel: string; sayfa: string } | null> {
-  if (!bulunan?.sayfa || bulunan.gorsel) return bulunan;
-  const kayit = await sayfadanUrunKaydi(bulunan.sayfa, kimlik);
-  if (!kayit?.gorsel) return bulunan;
-  return { gorsel: kayit.gorsel, sayfa: bulunan.sayfa };
-}
-
 export async function satirSitesindeAra(girdi: {
   alan: string;
   model: string;
@@ -495,7 +490,6 @@ export async function satirSitesindeAra(girdi: {
   const sorgu = [girdi.model, girdi.ad, girdi.barkod].map((parca) => parca.trim()).filter(Boolean).join(" ");
   if (!sorgu) throw new Error("SATIR_BOS");
 
-  const kimlik = { model: girdi.model, ad: girdi.ad };
   const openaiAnahtar = process.env.OPENAI_API_KEY?.trim();
   if (openaiAnahtar) {
     const openaiCevap = await fetch(OPENAI_FOTOGRAF_ADRESI, {
@@ -509,11 +503,12 @@ export async function satirSitesindeAra(girdi: {
     if (openaiCevap.status === 402) throw new Error("OKUYUCU_BAKIYE_BITTI");
     if (openaiCevap.ok) {
       const openaiGovde = await openaiCevap.json().catch(() => null);
-      const openaiBulunan = await sayfaFotografiniDoldur(satiraAitAramaGorseli(alan, openaiGovde), kimlik);
+      const openaiBulunan = satiraAitAramaGorseli(alan, openaiGovde);
       if (openaiBulunan?.gorsel || openaiBulunan?.sayfa) {
         return {
           gorsel: openaiBulunan.gorsel,
           sayfa: openaiBulunan.sayfa,
+          aciklama: openaiBulunan.aciklama,
           ...kullanimOku(openaiGovde),
         };
       }
@@ -533,11 +528,12 @@ export async function satirSitesindeAra(girdi: {
     if (resmiCevap.status === 402) throw new Error("OKUYUCU_BAKIYE_BITTI");
     if (resmiCevap.ok) {
       const resmiGovde = await resmiCevap.json().catch(() => null);
-      const resmiBulunan = await sayfaFotografiniDoldur(satiraAitAramaGorseli(alan, resmiGovde), kimlik);
+      const resmiBulunan = satiraAitAramaGorseli(alan, resmiGovde);
       if (resmiBulunan?.gorsel || resmiBulunan?.sayfa) {
         return {
           gorsel: resmiBulunan.gorsel,
           sayfa: resmiBulunan.sayfa,
+          aciklama: resmiBulunan.aciklama,
           ...kullanimOku(resmiGovde),
         };
       }
@@ -577,10 +573,11 @@ export async function satirSitesindeAra(girdi: {
   }
 
   const govde = await cevap.json().catch(() => null);
-  const bulunan = await sayfaFotografiniDoldur(satiraAitAramaGorseli(alan, govde), kimlik);
+  const bulunan = satiraAitAramaGorseli(alan, govde);
   return {
     gorsel: bulunan?.gorsel ?? "",
     sayfa: bulunan?.sayfa ?? "",
+    aciklama: bulunan?.aciklama ?? "",
     ...kullanimOku(govde),
   };
 }
