@@ -196,9 +196,7 @@ export async function POST(request: NextRequest) {
         adet: satir.adet,
         alisBirimFiyat: satir.birimFiyat,
         satirToplam: satir.tutar,
-        guven:
-          [satir.model, satir.ad, satir.barkod, satir.beden, satir.adet !== null, satir.birimFiyat !== null]
-            .filter(Boolean).length / 6,
+        guven: satir.okumaGuveni ?? 0,
       }));
 
     if (hamSatirlar.length === 0) {
