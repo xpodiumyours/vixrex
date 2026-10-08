@@ -212,6 +212,8 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(arama.tools[0].type).toBe("openrouter:web_search");
     expect(arama.tools[0].parameters.allowed_domains).toEqual(["sehermensucat.com"]);
     expect(arama.tools[0].parameters.engine).toBe("native");
+    expect(arama.tools[0].parameters.search_content_types).toEqual(["image", "text"]);
+    expect(arama.tools[0].parameters.image_settings).toEqual({ max_results: 3, caption: true });
   });
 
   it("modelin yazdığı fotoğraf adresi kart kurmaz", async () => {
