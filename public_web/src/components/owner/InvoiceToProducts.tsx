@@ -585,7 +585,6 @@ export default function InvoiceToProducts({
               kartDurumu: satir.sonuc,
               stokOnaylandi: stokSayisi(satir.stok) !== null,
               externalProductId:
-              externalProductId:
                 satir.barkod || satir.model
                   ? [belge?.tedarikciVergiNo || belge?.tedarikci || "", satir.barkod || satir.model]
                       .filter(Boolean)
