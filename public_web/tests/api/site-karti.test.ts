@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { siteKartiniUygula, type EslesmisFaturaSatiri } from "@/lib/faturaEslestir";
+import { siteAdayiniKoru, siteKartiniUygula, type EslesmisFaturaSatiri } from "@/lib/faturaEslestir";
 import { markaSitesiniBul, satirAramaIstegi, satirAramaCevabi } from "@/lib/faturaGoru";
 
 function satir(ek: Partial<EslesmisFaturaSatiri> = {}): EslesmisFaturaSatiri {
@@ -187,6 +187,37 @@ describe("OpenRouter kaynak doğrulama", () => {
   it("yarım veya bozuk cevap kart üretmez", () => {
     expect(satirAramaCevabi(girdi, { ...kanitli(), status: "incomplete" })).toBeNull();
     expect(satirAramaCevabi(girdi, { ...kanitli(), output_text: "{broken" })).toBeNull();
+  });
+});
+
+describe("C1 - kaynak adayi ile gorsel kanitini ayirma", () => {
+  it("urun arastirma adayi kaybolmaz ama goruntu olmadan kanitli ya da yayina hazir sayilmaz", () => {
+    const sonuc = siteAdayiniKoru(siteKartiniUygula(satir({
+      sonuc: "eksik", katalog: null,
+      siteAd: "Elit fanila",
+      siteDayanak: "kod",
+      siteAciklama: "Pamuklu fanila",
+      siteSayfa: "https://firma.example/elt1302",
+      siteGorsel: "https://cdn.example/elt1302.jpg",
+      sayfaDogrulandi: false,
+    })));
+    expect(sonuc.sonuc).toBe("eksik");
+    expect(sonuc.katalog?.resmiAd).toBe("Elit fanila");
+    expect(sonuc.katalog?.kaynak).toBe("https://firma.example/elt1302");
+    expect(sonuc.katalog?.gorseller).toEqual([]);
+    expect(sonuc.katalog?.gorselAdaylari).toEqual(["https://cdn.example/elt1302.jpg"]);
+    expect(sonuc.uyari).toContain("Yayınlanamaz");
+  });
+
+  it("resmi sayfasi veya uretici kodu kaniti olmayan model iddiasini aday diye bile eklemez", () => {
+    const ham = satir({ sonuc: "eksik", katalog: null, siteAd: "Benzer", siteSayfa: "https://firma.example/benzer" });
+    expect(siteAdayiniKoru(ham).katalog).toBeNull();
+    expect(siteAdayiniKoru({ ...ham, siteDayanak: "kod", siteSayfa: "http://firma.example/benzer" }).katalog).toBeNull();
+  });
+
+  it("kanitlanmis fotografli urunu asla aday seviyesine dusurmez", () => {
+    const kanitli = satir({ sonuc: "kanitli" });
+    expect(siteAdayiniKoru(kanitli)).toBe(kanitli);
   });
 });
 

@@ -5,7 +5,7 @@ import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 import { verifyStoreEditToken } from "@/lib/instagramServer";
 import { fingerprintClient, getClientIp } from "@/lib/rentDemoSecurity";
 import { belgeGercegiUyuyorMu } from "@/lib/faturaSatirAyikla";
-import { eslesmeyenSatir, siteKartiniUygula, sonucOzeti, type EslesmisFaturaSatiri, type HamFaturaSatiri } from "@/lib/faturaEslestir";
+import { eslesmeyenSatir, siteAdayiniKoru, siteKartiniUygula, sonucOzeti, type EslesmisFaturaSatiri, type HamFaturaSatiri } from "@/lib/faturaEslestir";
 import { ayniAlisverisAdaylari, belgeParmakIzi, islemKaydet, satirKanitKayitlari } from "@/lib/faturaIslemKaydi";
 import { faturaTaslaklari } from "@/lib/faturaTaslagi";
 import { firmaAlaniniKilitle, faturayiOku, lunaGorseliniDogrula, markaSitesiniBul, satirSitesindeAra, type GoruSatiri, type GoruSonucu } from "@/lib/faturaGoru";
@@ -386,6 +386,16 @@ export async function POST(request: NextRequest) {
           const aramaMaliyeti = (arama.maliyet ?? 0) + ARAMA_UCETI_USD;
           await kullanimKaydet(admin, magazaId, { ...arama, maliyet: aramaMaliyeti });
           gunlukHarcama += aramaMaliyeti;
+          // Kaynak araması fotoğraf aşamasında başarısız olsa bile doğrulanmamış
+          // ÜRÜN ADAYI ve kaynağı korunur. "kanitli" yalnız fotoğrafın bütün
+          // bağımsız kontrolleri de geçmesiyle mümkün olur.
+          if (arama.sayfa && arama.ad && arama.dayanak) {
+            siteAd = arama.ad;
+            siteDayanak = arama.dayanak;
+            siteAciklama = arama.aciklama;
+            siteSayfa = arama.sayfa;
+            siteGorsel = arama.gorsel;
+          }
           if (!arama.sayfa || !arama.gorsel) {
             siteUyari = "Resmî sitedeki ürün kimliği ve fotoğrafı doğrulanamadı.";
           }
@@ -441,7 +451,7 @@ export async function POST(request: NextRequest) {
           console.error("[fatura-oku] site aramasi durdu:", mesaj || hata);
         }
       }
-      const sonucSatir = siteKartiniUygula(eslesmeyenSatir({
+      const sonucSatir = siteAdayiniKoru(siteKartiniUygula(eslesmeyenSatir({
         ...satir,
         siteAd,
         siteDayanak,
@@ -450,7 +460,7 @@ export async function POST(request: NextRequest) {
         siteSayfa,
         siteFotografKaniti,
         sayfaDogrulandi: Boolean(siteFotografKaniti),
-      }));
+      })));
       if (siteUyari && sonucSatir.sonuc !== "kanitli") sonucSatir.uyari = siteUyari;
       satirlar.push(sonucSatir);
       const satirId = ilkKayit.satirlar[sira]?.satirId;
