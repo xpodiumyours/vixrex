@@ -180,6 +180,87 @@ export async function kartaGirecekGorsel(
   return temiz;
 }
 
+
+export async function urunSayfasindaGorselKaniti(
+  kaynakSayfa: string,
+  gorselAdresi: string,
+  varyant: string,
+  bagimliliklar: GorselBagimliliklari = {},
+): Promise<{ kaynakAlintisi: string } | null> {
+  const fetcher = bagimliliklar.fetcher ?? fetch;
+  const resolveHost = bagimliliklar.resolveHost ?? varsayilanCoz;
+  let sayfa: URL;
+  let gorsel: URL;
+  try {
+    sayfa = new URL(kaynakSayfa);
+    gorsel = new URL(gorselAdresi);
+  } catch {
+    return null;
+  }
+  if (
+    sayfa.protocol !== "https:" || sayfa.username || sayfa.password || sayfa.port ||
+    gorsel.protocol !== "https:" || gorsel.username || gorsel.password || gorsel.port ||
+    !(await hostGuvenliMi(sayfa.hostname, resolveHost))
+  ) return null;
+
+  let cevap: Response;
+  try {
+    cevap = await fetcher(sayfa.toString(), {
+      method: "GET",
+      redirect: "manual",
+      signal: AbortSignal.timeout(ZAMAN_ASIMI_MS),
+      headers: { accept: "text/html,application/xhtml+xml" },
+    });
+  } catch {
+    return null;
+  }
+  const tur = cevap.headers.get("content-type") ?? "";
+  if (cevap.status !== 200 || !/^(text\/html|application\/xhtml\+xml)/i.test(tur)) return null;
+  const MAKS_SAYFA_BAYT = 2 * 1024 * 1024;
+  const bildirilen = Number(cevap.headers.get("content-length") ?? 0);
+  if (Number.isFinite(bildirilen) && bildirilen > MAKS_SAYFA_BAYT) return null;
+  const oku = cevap.body?.getReader();
+  if (!oku) return null;
+  const parcalar: Uint8Array[] = [];
+  let toplam = 0;
+  try {
+    while (true) {
+      const { done, value } = await oku.read();
+      if (done) break;
+      toplam += value.byteLength;
+      if (toplam > MAKS_SAYFA_BAYT) {
+        await oku.cancel();
+        return null;
+      }
+      parcalar.push(value);
+    }
+  } catch {
+    return null;
+  }
+  const bayt = new Uint8Array(toplam);
+  let offset = 0;
+  for (const parca of parcalar) {
+    bayt.set(parca, offset);
+    offset += parca.byteLength;
+  }
+  const html = new TextDecoder().decode(bayt)
+    .replaceAll("&amp;", "&")
+    .replaceAll("&#38;", "&")
+    .replaceAll("\\/","/")
+    .replaceAll("\\u0026", "&")
+    .replaceAll("\\u002F", "/");
+  const adres = gorsel.toString();
+  const konum = html.indexOf(adres);
+  if (konum < 0) return null;
+  const baslangic = Math.max(0, konum - 260);
+  const bitis = Math.min(html.length, konum + adres.length + 260);
+  const kaynakAlintisi = html.slice(baslangic, bitis).replace(/\s+/g, " ").trim();
+  if (varyant.trim() && !kaynakAlintisi.toLocaleLowerCase("tr-TR").includes(varyant.trim().toLocaleLowerCase("tr-TR"))) {
+    return null;
+  }
+  return { kaynakAlintisi };
+}
+
 interface DepoIstemcisi {
   storage: {
     from: (kova: string) => {
