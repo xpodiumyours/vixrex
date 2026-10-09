@@ -4,7 +4,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 import { verifyStoreEditToken } from "@/lib/instagramServer";
 import { fingerprintClient, getClientIp } from "@/lib/rentDemoSecurity";
-import { belgeGercegiUyuyorMu } from "@/lib/faturaSatirAyikla";
+import { belgeGercegiUyuyorMu, belgeVergiToplamiUyuyorMu } from "@/lib/faturaSatirAyikla";
 import { eslesmeyenSatir, siteKartiniUygula, sonucOzeti, type EslesmisFaturaSatiri, type HamFaturaSatiri } from "@/lib/faturaEslestir";
 import { ayniAlisverisAdaylari, belgeParmakIzi, islemKaydet, satirKanitKayitlari } from "@/lib/faturaIslemKaydi";
 import { faturaTaslaklari } from "@/lib/faturaTaslagi";
@@ -270,7 +270,16 @@ export async function POST(request: NextRequest) {
         { status: 422 },
       );
     }
-    const belgeUyarisi = null;
+    const vergiKontrolu = belgeVergiToplamiUyuyorMu({
+      malBedeli: okuma.malBedeli, kdvTutari: okuma.kdvTutari,
+      indirimTutari: okuma.indirimTutari, odenecekToplam: okuma.odenecekToplam,
+    });
+    if (!vergiKontrolu.uyumlu) {
+      return NextResponse.json({ hata: vergiKontrolu.sebep }, { status: 422 });
+    }
+    const belgeUyarisi = !sonUyum.adetKarsilastirildi && sonOzet.adet !== null
+      ? "Belgede farklı ölçü birimleri bulunuyor. Miktarlar toplanmadı; her satırın fiyat hesabı ve belge tutarı doğrulandı."
+      : null;
 
     const etkinSite = oncekiIslem?.tedarikciSite || await firmaAlaniniKilitle({
       belgedeYazan: sonTedarikciSite,

@@ -25,6 +25,7 @@
 import sharp from "sharp";
 import { kisiselVeriTemizle } from "@/lib/faturaKisiselVeri";
 import { alanAdiTemizle, resmiSiteSayilmaz } from "@/lib/firmaArama";
+import { hamGet, varsayilanCoz } from "@/lib/faturaDijitalIz";
 
 const ADRES = "https://openrouter.ai/api/v1/responses";
 export const GORU_MODELI = "openai/gpt-5.6-luna";
@@ -343,6 +344,38 @@ export function firmaDogrulamasiGecerliMi(
   return k.firma_adi_sayfada === true && k.adres_sayfada === true;
 }
 
+/**
+ * Luna'nin aktardigi kaynak alintisi YALNIZCA model cevabinda geciyorsa kanit
+ * degildir. Alinti gercek kaynak sayfasinin gorunur metninde bulunmali.
+ * SSRF/DNS/yonlendirme/boyut korumasi mevcut hamGet ile aynidir.
+ */
+export async function ureticiKaynakAlintisiniDogrula(
+  alan: string,
+  sayfa: string,
+  alinti: string,
+  bagimliliklar: {
+    fetcher?: (input: string, init?: RequestInit) => Promise<Response>;
+    resolveHost?: (host: string) => Promise<string[]>;
+  } = {},
+): Promise<boolean> {
+  if (!sayfaFirmadaMi(sayfa, alan) || alinti.trim().length < 15) return false;
+  const sonuc = await hamGet(sayfa, bagimliliklar.fetcher ?? fetch, bagimliliklar.resolveHost ?? varsayilanCoz);
+  if (!sonuc || sonuc.durum !== 200) return false;
+  const duz = (metin: string) => metin
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;|&#160;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/\s+/g, " ")
+    .normalize("NFKC")
+    .toLocaleLowerCase("tr-TR")
+    .trim();
+  const gercekSayfa = duz(sonuc.govde);
+  const iddia = duz(alinti);
+  return iddia.length >= 15 && gercekSayfa.includes(iddia);
+}
+
 type SiteKullanimTakibi = {
   izin: () => boolean;
   kaydet: (kullanim: Pick<GoruSonucu, "maliyet" | "girdiToken" | "ciktiToken" | "akilToken">) => Promise<void>;
@@ -373,7 +406,11 @@ async function firmaSitesiniPlatformlaDogrula(
   if (takip) await takip.kaydet(kullanimOku(govde));
   const kullanim = govde && typeof govde === "object" ? (govde as { usage?: { server_tool_use?: { web_fetch_requests?: unknown } } }).usage : null;
   if (Number(kullanim?.server_tool_use?.web_fetch_requests ?? 0) < 1) return false;
-  return firmaDogrulamasiGecerliMi(alan, govde);
+  if (!firmaDogrulamasiGecerliMi(alan, govde)) return false;
+  let kanit: { kanit_sayfa?: unknown; uretim_kaniti?: unknown };
+  try { kanit = JSON.parse(ciktiMetni(govde)) as typeof kanit; }
+  catch { return false; }
+  return ureticiKaynakAlintisiniDogrula(alan, metin(kanit.kanit_sayfa), metin(kanit.uretim_kaniti));
 }
 
 async function firmaSitesiniModelleBul(girdi: {
@@ -516,6 +553,7 @@ export async function markaSitesiniBul(girdi: {
   if (!kanitSayfa.startsWith("https://") || !sayfaFirmadaMi(kanitSayfa, alan)) return bosSonuc;
   if (metin(veri.marka_adi).toLocaleLowerCase("tr-TR") !== marka.toLocaleLowerCase("tr-TR")) return bosSonuc;
   if (metin(veri.kanit).length < 15) return bosSonuc;
+  if (!await ureticiKaynakAlintisiniDogrula(alan, kanitSayfa, metin(veri.kanit))) return bosSonuc;
   return { alan, ...kullanim };
 }
 

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { firmaAlaniniKilitle, satirAramaCevabi } from "@/lib/faturaGoru";
+import { firmaAlaniniKilitle, satirAramaCevabi, ureticiKaynakAlintisiniDogrula } from "@/lib/faturaGoru";
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -65,4 +65,29 @@ describe("fatura kimlik ve üretici doğrulama kapısı", () => {
       tedarikciAdi: "Üretici", vergiNo: "", adres: "",
     })).toBe("");
   });
+  it("resmi kaynagin gercek metni modelin alintisini destekler", async () => {
+    const kaynak = "https://uretim.example/hakkimizda";
+    const kanit = "Üretim tesisimizde markamızı kendimiz üretiyoruz.";
+    const fetcher = async () => new Response(
+      `<html><body><p>${kanit}</p></body></html>`,
+      { status: 200, headers: { "content-type": "text/html" } },
+    );
+    const resolveHost = async () => ["8.8.8.8"];
+    expect(await ureticiKaynakAlintisiniDogrula("uretim.example", kaynak, kanit,
+      { fetcher, resolveHost })).toBe(true);
+    expect(await ureticiKaynakAlintisiniDogrula("uretim.example", kaynak,
+      "Bu üretici başka bir fabrikanın sahibidir.", { fetcher, resolveHost })).toBe(false);
+  });
+
+  it("script icindeki reklam metnini uretim kaniti saymaz", async () => {
+    const kaynak = "https://uretim.example/hakkimizda";
+    const kanit = "Bu markanin uretimini kendimiz yapiyoruz.";
+    const fetcher = async () => new Response(
+      `<html><script>var fake = "${kanit}"</script><body>Sadece toptanciyiz.</body></html>`,
+    );
+    expect(await ureticiKaynakAlintisiniDogrula("uretim.example", kaynak, kanit, {
+      fetcher, resolveHost: async () => ["8.8.8.8"],
+    })).toBe(false);
+  });
+
 });

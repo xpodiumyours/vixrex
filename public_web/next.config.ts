@@ -167,9 +167,13 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withSentryConfig(nextConfig, {
-  sourcemaps: {
-    disable: true,
-  },
-  widenClientFileUpload: true,
-});
+// Yalniz acikca secilmis yerel/izole derlemede harici Sentry build eklentisini
+// devreden cikar. Production icin bu degisken tanimlanmaz; runtime korunur.
+// Sentry SDK build telemetrisi resmi yapilandirmayla kapatilmistir.
+export default process.env.VIXREX_OFFLINE_BUILD === "1"
+  ? nextConfig
+  : withSentryConfig(nextConfig, {
+    telemetry: false,
+    sourcemaps: { disable: true },
+    widenClientFileUpload: true,
+  });

@@ -122,7 +122,7 @@ function siteyiAyiranOkuma(govde: unknown) {
     }
     if (adres.includes("sehermensucat.com")) {
       return new Response(
-        "<html><head><title>Seher Mensucat</title></head><body>Seher Mensucat 1234567890 İstanbul</body></html>",
+        "<html><head><title>Seher Mensucat</title></head><body>Seher Mensucat 1234567890 İstanbul. Seher Mensucat kendi ürünlerinin üretimini gerçekleştirmektedir.</body></html>",
         { status: 200, headers: { "content-type": "text/html" } },
       );
     }
