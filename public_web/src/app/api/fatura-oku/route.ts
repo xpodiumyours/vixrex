@@ -248,6 +248,7 @@ export async function POST(request: NextRequest) {
       let siteAciklama = "";
       let siteGorsel = "";
       let siteSayfa = "";
+      let siteAd = "";
       const aranabilir = Boolean(etkinSite && (satir.model || satir.ad || satir.barkod));
       if (aramaAcik && aranabilir && aramaCagrisiSigarMi(gunlukHarcama)) {
         try {
@@ -264,6 +265,7 @@ export async function POST(request: NextRequest) {
             const gorsel = await kartaGirecekGorsel(arama.gorsel);
             const aciklama = arama.aciklama.trim() || satir.ad.trim() || satir.model.trim();
             if (gorsel && aciklama) {
+              siteAd = arama.ad;
               siteAciklama = aciklama;
               siteGorsel = gorsel;
               siteSayfa = arama.sayfa;
@@ -277,6 +279,7 @@ export async function POST(request: NextRequest) {
       }
       satirlar.push(siteKartiniUygula(eslesmeyenSatir({
         ...satir,
+        siteAd,
         siteAciklama,
         siteGorsel,
         siteSayfa,
