@@ -231,8 +231,14 @@ export async function urunSayfasindaGorselKaniti(
   const baslangic = Math.max(0, konum - 260);
   const bitis = Math.min(html.length, konum + adres.length + 260);
   const kaynakAlintisi = html.slice(baslangic, bitis).replace(/\s+/g, " ").trim();
-  if (varyant.trim() && !kaynakAlintisi.toLocaleLowerCase("tr-TR").includes(varyant.trim().toLocaleLowerCase("tr-TR"))) {
-    return null;
+  if (varyant.trim()) {
+    const etiket = (html.match(/<img\b[^>]*>/gi) ?? []).find((img) => img.includes(adres));
+    if (!etiket) return null;
+    const goruntuEtiketleri = [...etiket.matchAll(/\b(?:alt|title|aria-label)\s*=\s*(["'])(.*?)\1/gi)]
+      .map((eslesme) => eslesme[2]).join(" ");
+    if (!goruntuEtiketleri.toLocaleLowerCase("tr-TR").includes(varyant.trim().toLocaleLowerCase("tr-TR"))) {
+      return null;
+    }
   }
   return { kaynakAlintisi };
 }
