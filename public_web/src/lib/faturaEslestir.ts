@@ -14,6 +14,7 @@ export interface HamFaturaSatiri {
   beden: string;
   marka?: string;
   adet: number | null;
+  birim?: string;
   alisBirimFiyat: number | null;
   satirToplam: number | null;
   guven: number;

@@ -302,9 +302,7 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
       return;
     }
 
-    final ocrController = OcrController(
-      editorController: editorController,
-    );
+    final ocrController = OcrController(editorController: editorController);
     ocrController.scanMode = scanMode;
 
     Navigator.of(context).push(

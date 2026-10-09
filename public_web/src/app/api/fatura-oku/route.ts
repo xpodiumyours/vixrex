@@ -194,6 +194,7 @@ export async function POST(request: NextRequest) {
         beden: satir.beden,
         marka: satir.marka,
         adet: satir.adet,
+        birim: satir.birim,
         alisBirimFiyat: satir.birimFiyat,
         satirToplam: satir.tutar,
         guven: satir.okumaGuveni ?? 0,

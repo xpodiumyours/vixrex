@@ -12,6 +12,7 @@ function satir(uzeler: Partial<EslesmisFaturaSatiri>): EslesmisFaturaSatiri {
     varyant: "Siyah",
     beden: "L",
     adet: 2,
+    birim: "Adet",
     alisBirimFiyat: 137,
     satirToplam: 274,
     guven: 0.9,
@@ -65,7 +66,7 @@ describe("fatura işlem kaydı tek transaction", () => {
     expect(m.rpc).toHaveBeenCalledWith("save_invoice_job", expect.objectContaining({
       p_store_id: "magaza-1",
       p_job: expect.objectContaining({ document_fingerprint: "a".repeat(64), supplier_name: "Seher Mensucat" }),
-      p_lines: [expect.objectContaining({ line_index: 0, raw_line: "ELT1302 Elit Erkek 2 137,00 274,00", qty: 2, unit_price: 137, outcome: "eksik" })],
+      p_lines: [expect.objectContaining({ line_index: 0, raw_line: "ELT1302 Elit Erkek 2 137,00 274,00", qty: 2, qty_unit: "Adet", unit_price: 137, outcome: "eksik" })],
     }));
     expect(m.from).toHaveBeenCalledTimes(1);
     expect(m.from).toHaveBeenCalledWith("stores");

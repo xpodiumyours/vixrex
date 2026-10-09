@@ -417,7 +417,7 @@ class OcrController extends ChangeNotifier {
           beden: urun.size,
           stok: urun.quantity,
           onayli: urun.isApproved,
-          stokOnaylandi: urun.quantity != null,
+          stokOnaylandi: true,
           kartDurumu: taslak.etkinKartDurumu.wireValue,
           disKimlik:
               kod.isEmpty
@@ -582,7 +582,6 @@ class OcrController extends ChangeNotifier {
       islemKimligi: catalog.islemKimligi!,
       satirlar: List.generate(catalog.products.length, (index) {
         final product = catalog.products[index];
-        final draft = catalog.invoiceDrafts[index];
         final owner =
             index < catalog.invoiceOwnerStates.length
                 ? catalog.invoiceOwnerStates[index]
@@ -593,7 +592,7 @@ class OcrController extends ChangeNotifier {
             ...owner,
             'satisFiyati': product.price?.toString() ?? '',
             'stok': product.quantity.toString(),
-            'stokOnaylandi': product.quantity != null,
+            'stokOnaylandi': true,
             'kategoriId':
                 _invoiceCategories[index] ??
                 _uuidKategoriBul(_editorController!) ??
@@ -796,12 +795,7 @@ class OcrController extends ChangeNotifier {
     if (variant != null && variant.isNotEmpty) options['color'] = variant;
     if (size != null && size.isNotEmpty) options['size'] = size;
 
-    final faturaStok = detected.isInvoiceSource;
-    final taslakAdet = invoiceDraft?.quantity?.value?.round();
-    final int? stokMiktari =
-        faturaStok
-            ? (detected.quantity ?? detected.documentQuantity ?? taslakAdet)
-            : detected.quantity;
+    final int stokMiktari = detected.quantity;
 
     final variants =
         options.isEmpty

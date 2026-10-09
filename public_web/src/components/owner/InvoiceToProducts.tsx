@@ -31,6 +31,7 @@ export interface FaturaSatiri {
   beden: string;
   marka?: string;
   adet: number | null;
+  birim?: string;
   alisBirimFiyat: number | null;
   satirToplam: number | null;
   guven: number;
@@ -1167,7 +1168,9 @@ export default function InvoiceToProducts({
               <div className="fatura-cipler">
                 {satir.beden && <span>{satir.beden}</span>}
                 {satir.varyant && <span>{satir.varyant}</span>}
-                {satir.adet !== null && <span>Faturada {satir.adet} adet</span>}
+                {satir.adet !== null && (
+                  <span>Faturada {satir.adet}{satir.birim?.trim() ? ` ${satir.birim.trim()}` : ""}</span>
+                )}
               </div>
 
               <div className="fatura-alis">
@@ -1183,7 +1186,7 @@ export default function InvoiceToProducts({
 
               {satir.sonuc === "kanitli" && (
                 <>
-                  <p className="fatura-alis">Stok: {satir.adet ?? "—"} adet</p>
+                  <p className="fatura-alis">Stok: {satir.adet ?? "—"}{satir.birim?.trim() ? ` ${satir.birim.trim()}` : ""}</p>
 
                   <label className="fatura-fiyat">
                     Satış fiyatı

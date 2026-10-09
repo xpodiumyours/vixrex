@@ -154,6 +154,7 @@ const TEK_SATIR = {
       varyant: "Siyah",
       beden: "L",
       adet: 2,
+      birim: "Adet",
       birim_fiyat: 137,
       tutar: 274,
     },
@@ -188,6 +189,7 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(govde.satirlar).toHaveLength(1);
     expect(govde.satirlar[0].model).toBe("ELT1302");
     expect(govde.satirlar[0].adet).toBe(2);
+    expect(govde.satirlar[0].birim).toBe("Adet");
     expect(govde.satirlar[0].alisBirimFiyat).toBe(137);
     expect(govde.satirlar[0].hamSatir).toContain("ELT1302");
     expect(govde.tedarikci).toBe("Seher Mensucat");
@@ -200,7 +202,12 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     const istekGovdesi = JSON.parse(String((cagri?.[1] as RequestInit).body));
     expect(istekGovdesi.model).toBe("openai/gpt-5.6-luna");
     expect(istekGovdesi.reasoning.effort).toBe("none");
+    expect(istekGovdesi.provider.require_parameters).toBe(true);
     expect(istekGovdesi.text.format.strict).toBe(true);
+    expect(istekGovdesi.text.format.schema.properties.tedarikci.description).toMatch(/Supplier name/);
+    expect(istekGovdesi.text.format.schema.properties.satirlar.items.required).toContain("birim");
+    expect(istekGovdesi.text.format.schema.properties.satirlar.items.properties.ad.description).toMatch(/Product name/);
+    expect(istekGovdesi.text.format.schema.properties.satirlar.items.properties.birim.description).toMatch(/Measure unit/);
     expect(istekGovdesi.input[0].content[1].detail).toBe("original");
     expect(istekGovdesi.tools).toBeUndefined();
     expect(istekGovdesi.include).toBeUndefined();
@@ -303,6 +310,7 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
               varyant: "",
               beden: "",
               adet: 3,
+              birim: "AD",
               birim_fiyat: 80,
               tutar: 240,
             },
@@ -319,6 +327,7 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(cevap.status).toBe(200);
     expect(govde.satirlar).toHaveLength(1);
     expect(govde.satirlar[0].ad).toBe("500 g Süzme Peynir");
+    expect(govde.satirlar[0].birim).toBe("AD");
     expect(govde.satirlar[0].model).toBe("");
     expect(govde.satirlar[0].barkod).toBe("");
     expect(govde.satirlar[0].katalog).toBeNull();

@@ -97,7 +97,7 @@ export async function islemiYukle(
   const satirlar = await admin
     .from("invoice_job_lines")
     .select(
-      "id,line_index,raw_line,model,product_name,barcode,variant_name,size_text,qty,unit_price,line_total,confidence,outcome,brand,warning,catalog_snapshot,conflict_snapshot,owner_state,product_id",
+      "id,line_index,raw_line,model,product_name,barcode,variant_name,size_text,qty,qty_unit,unit_price,line_total,confidence,outcome,brand,warning,catalog_snapshot,conflict_snapshot,owner_state,product_id",
     )
     .eq("job_id", islemKimligi)
     .order("line_index", { ascending: true });
@@ -136,6 +136,7 @@ export async function islemiYukle(
       beden: String(kayit.size_text ?? ""),
       marka: String(kayit.brand ?? ""),
       adet: sayiVeyaNull(kayit.qty),
+      birim: String(kayit.qty_unit ?? ""),
       alisBirimFiyat: sayiVeyaNull(kayit.unit_price),
       satirToplam: sayiVeyaNull(kayit.line_total),
       guven: sayiVeyaNull(kayit.confidence) ?? 0,
