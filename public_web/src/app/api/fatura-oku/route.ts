@@ -278,9 +278,20 @@ export async function POST(request: NextRequest) {
       indirimTutari: okuma.indirimTutari,
       odenecekToplam: okuma.odenecekToplam,
     };
+    // Fatura satırlarının KDV hariç ara toplamı ile ödenecek (KDV dahil)
+    // nihai tutar farklıdır. Mal bedeli okunamadıysa, KDV var olan belgede
+    // nihai tutarı doğrudan satır tutarına eşitleyip sahte doğruluk üretme.
+    const satirKontrolToplami = okuma.malBedeli
+      ?? (okuma.kdvTutari === null && okuma.indirimTutari === null ? sonOzet.toplam : null);
+    if (satirKontrolToplami === null &&
+        (okuma.kdvTutari !== null || okuma.indirimTutari !== null)) {
+      return NextResponse.json({
+        hata: "Faturadaki KDV hariç mal bedeli okunamadı; ödenecek toplamı ürün satırlarıyla karıştırmamak için kayıt durduruldu.",
+      }, { status: 422 });
+    }
     const sonUyum = belgeGercegiUyuyorMu(hamSatirlar, {
       adet: sonOzet.adet,
-      toplam: okuma.malBedeli ?? sonOzet.toplam,
+      toplam: satirKontrolToplami,
     });
     if (!sonUyum.uyumlu) {
       return NextResponse.json(
