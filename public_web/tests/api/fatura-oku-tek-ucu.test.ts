@@ -202,8 +202,11 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     const istekGovdesi = JSON.parse(String((cagri?.[1] as RequestInit).body));
     expect(istekGovdesi.model).toBe("openai/gpt-5.6-luna");
     expect(istekGovdesi.reasoning.effort).toBe("none");
+    expect(istekGovdesi.provider.require_parameters).toBe(true);
     expect(istekGovdesi.text.format.strict).toBe(true);
+    expect(istekGovdesi.text.format.schema.properties.tedarikci.description).toMatch(/Supplier name/);
     expect(istekGovdesi.text.format.schema.properties.satirlar.items.required).toContain("birim");
+    expect(istekGovdesi.text.format.schema.properties.satirlar.items.properties.ad.description).toMatch(/Product name/);
     expect(istekGovdesi.text.format.schema.properties.satirlar.items.properties.birim.description).toMatch(/Measure unit/);
     expect(istekGovdesi.input[0].content[1].detail).toBe("original");
     expect(istekGovdesi.tools).toBeUndefined();

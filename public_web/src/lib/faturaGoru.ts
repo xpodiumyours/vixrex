@@ -125,8 +125,13 @@ function guvenliAdres(deger: unknown): string {
   }
 }
 
-const SAYI_VEYA_BOS = { type: ["number", "null"] };
-const YAZI = { type: "string" };
+function alanYazi(description: string) {
+  return { type: "string" as const, description };
+}
+
+function alanSayi(description: string) {
+  return { type: ["number", "null"] as const, description };
+}
 
 const FATURA_SEMA = {
   type: "object",
@@ -148,45 +153,45 @@ const FATURA_SEMA = {
     "odenecek_toplam",
   ],
   properties: {
-    tedarikci: YAZI,
-    tedarikci_vergi_no: YAZI,
-    tedarikci_adres: YAZI,
-    tedarikci_site: YAZI,
-    belge_turu: YAZI,
-    belge_no: YAZI,
-    belge_tarihi: YAZI,
+    tedarikci: alanYazi("Supplier name printed on the invoice. Empty if not printed. Do not invent."),
+    tedarikci_vergi_no: alanYazi("Tax number printed on the invoice. Empty if not printed. Do not invent."),
+    tedarikci_adres: alanYazi("Supplier address printed on the invoice. Empty if not printed. Do not invent."),
+    tedarikci_site: alanYazi("Supplier website printed on the invoice. Empty if not printed. Do not invent."),
+    belge_turu: alanYazi("Document type as printed (fatura, e-arsiv, irsaliye, bilgi fisi). Empty if not printed."),
+    belge_no: alanYazi("Document number as printed. Empty if not printed. Do not invent."),
+    belge_tarihi: alanYazi("Document date as printed, DD.MM.YYYY. Empty if not printed. Do not invent."),
     satirlar: {
       type: "array",
+      description: "Product lines from the invoice table. Do not invent lines.",
       items: {
         type: "object",
         additionalProperties: false,
         required: ["ham_satir", "model", "ad", "barkod", "varyant", "beden", "marka", "adet", "birim", "birim_fiyat", "tutar", "okuma_guveni"],
         properties: {
-          ham_satir: YAZI,
-          model: YAZI,
-          ad: YAZI,
-          barkod: YAZI,
-          varyant: YAZI,
-          beden: YAZI,
-          marka: YAZI,
-          adet: SAYI_VEYA_BOS,
-          birim: {
-            type: "string",
-            description:
-              "Measure unit printed on the invoice line (Adet, KG, LT, M, Paket). Empty if not printed. Do not invent. Separate from quantity.",
+          ham_satir: alanYazi("Full line text in original order and values."),
+          model: alanYazi("Product code as printed. Empty if not printed. Do not invent."),
+          ad: alanYazi("Product name or description as printed. Empty if not printed. Do not invent."),
+          barkod: alanYazi("Barcode digits as printed. Empty if not printed. Do not invent."),
+          varyant: alanYazi("Color as printed. Empty if not printed. Do not fill from elsewhere."),
+          beden: alanYazi("Size as printed. Empty if not printed. Do not fill from elsewhere."),
+          marka: alanYazi("Brand on the line or next to the code. Empty if not printed. Do not use the supplier as brand."),
+          adet: alanSayi("Quantity as printed. Null if not printed. Do not invent."),
+          birim: alanYazi("Measure unit printed on the invoice line (Adet, KG, LT, M, Paket). Empty if not printed. Do not invent. Separate from quantity."),
+          birim_fiyat: alanSayi("Unit price as printed. Null if not printed. Do not invent."),
+          tutar: alanSayi("Line amount as printed. Null if not printed. Do not invent."),
+          okuma_guveni: {
+            type: "number",
+            description: "0 to 1. Near 1 if text and numbers are clear; lower if blurry, cut, struck through, or uncertain.",
           },
-          birim_fiyat: SAYI_VEYA_BOS,
-          tutar: SAYI_VEYA_BOS,
-          okuma_guveni: { type: "number" },
         },
       },
     },
-    toplam_adet: SAYI_VEYA_BOS,
-    toplam_tutar: SAYI_VEYA_BOS,
-    mal_bedeli: SAYI_VEYA_BOS,
-    kdv_tutari: SAYI_VEYA_BOS,
-    indirim_tutari: SAYI_VEYA_BOS,
-    odenecek_toplam: SAYI_VEYA_BOS,
+    toplam_adet: alanSayi("Quantity total from the bottom Totals row. Null if not printed. Do not compute."),
+    toplam_tutar: alanSayi("Amount total from the bottom Totals row. Null if not printed. Do not compute."),
+    mal_bedeli: alanSayi("Goods total as printed. Null if not printed. Do not compute."),
+    kdv_tutari: alanSayi("VAT as printed. Null if not printed. Do not compute."),
+    indirim_tutari: alanSayi("Discount as printed. Null if not printed. Do not compute."),
+    odenecek_toplam: alanSayi("Amount payable as printed. Null if not printed. Do not compute."),
   },
 };
 
@@ -317,10 +322,10 @@ const FIRMA_DOGRULAMA_SEMASI = {
   additionalProperties: false,
   required: ["vergi_no_sayfada", "firma_adi_sayfada", "adres_sayfada", "kanit_sayfa"],
   properties: {
-    vergi_no_sayfada: { type: "boolean" },
-    firma_adi_sayfada: { type: "boolean" },
-    adres_sayfada: { type: "boolean" },
-    kanit_sayfa: YAZI,
+    vergi_no_sayfada: { type: "boolean", description: "True only if the tax number is printed on the site. Do not invent." },
+    firma_adi_sayfada: { type: "boolean", description: "True only if the company name is on the site title or about/contact page. Do not invent." },
+    adres_sayfada: { type: "boolean", description: "True only if the address is printed on the site. Do not invent." },
+    kanit_sayfa: alanYazi("Full URL of the page where you saw this. Empty if not seen. Do not invent."),
   },
 };
 
@@ -330,6 +335,7 @@ export function firmaDogrulamaIstegi(alan: string, kimlik: { ad: string; vergiNo
     model: GORU_MODELI,
     max_output_tokens: 512,
     reasoning: { effort: "low" as const },
+    provider: { require_parameters: true },
     tools: [{ type: "openrouter:web_search", parameters: { engine: "native", allowed_domains: [alan] } }],
     text: {
       format: {
@@ -607,6 +613,7 @@ export async function faturayiOku(dataUrl: string): Promise<GoruSonucu> {
       model: GORU_MODELI,
       max_output_tokens: CIKTI_TOKEN_TAVANI,
       reasoning: { effort: "none" },
+      provider: { require_parameters: true },
       text: {
         format: {
           type: "json_schema",
