@@ -94,11 +94,13 @@ function pngDosyasi(): File {
   return new File([bayt], "fatura.png", { type: "image/png" });
 }
 
-function istek(args: { slug?: string; editToken?: string; dosyaVarMi?: boolean } = {}) {
+function istek(args: { slug?: string; editToken?: string; dosyaVarMi?: boolean; sayfaSayisi?: number } = {}) {
   const form = new FormData();
   form.set("slug", args.slug ?? "deneme-vitrin");
   if (args.editToken) form.set("editToken", args.editToken);
-  if (args.dosyaVarMi !== false) form.set("dosya", pngDosyasi());
+  if (args.dosyaVarMi !== false) {
+    for (let i = 0; i < (args.sayfaSayisi ?? 1); i++) form.append("dosya", pngDosyasi());
+  }
   return new NextRequest("http://localhost/api/fatura-oku", { method: "POST", body: form });
 }
 
@@ -208,6 +210,52 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     mocks.harcama = [];
     mocks.kullanimYaz.mockResolvedValue({ error: null });
     vi.stubGlobal("fetch", siteyiAyiranOkuma(TEK_SATIR));
+  });
+
+  it("iki sayfa fotografini ayni Luna isteginde okur; tek belge kaydi hazirlar", async () => {
+    const fakeFetch = siteyiAyiranOkuma(TEK_SATIR);
+    vi.stubGlobal("fetch", fakeFetch);
+    const yanit = await faturaOku(istek({ sayfaSayisi: 2 }));
+    expect(yanit.status).toBe(200);
+    const okumaIstegi = fakeFetch.mock.calls
+      .filter((call) => String(call[0]).includes("openrouter.ai/api/v1/responses"))
+      .map((call) => JSON.parse(String(call[1]?.body ?? "{}")))
+      .find((body) => body.text?.format?.name === "fatura_okuma");
+    expect(okumaIstegi).toBeDefined();
+    expect(okumaIstegi.input[0].content.filter((item: { type: string }) =>
+      item.type === "input_image")).toHaveLength(2);
+    const govde = await yanit.json();
+    expect(govde.satirlar).toHaveLength(1);
+    expect(govde.belgeAdedi).toBe(2);
+  });
+
+  it("bir faturaya ait 4 fotografi kabul etmez", async () => {
+    const yanit = await faturaOku(istek({ sayfaSayisi: 4 }));
+    expect(yanit.status).toBe(413);
+    expect((await yanit.json()).hata).toContain("en fazla 3 sayfa");
+  });
+
+  it("KDV olan faturada satirlar mal bedeliyle, odenecek toplam KDV ile dogrulanir", async () => {
+    vi.stubGlobal("fetch", siteyiAyiranOkuma({
+      ...TEK_SATIR,
+      mal_bedeli: 274, kdv_tutari: 27.4, indirim_tutari: 0,
+      odenecek_toplam: 301.4, toplam_tutar: 301.4,
+    }));
+    const yanit = await faturaOku(istek());
+    expect(yanit.status).toBe(200);
+    const govde = await yanit.json();
+    expect(govde.belgeToplami).toBe(301.4);
+  });
+
+  it("KDV varken net mal bedeli okunamadiysa genel toplami satir bedeli saymaz", async () => {
+    vi.stubGlobal("fetch", siteyiAyiranOkuma({
+      ...TEK_SATIR,
+      mal_bedeli: null, kdv_tutari: 27.4, indirim_tutari: null,
+      odenecek_toplam: 301.4, toplam_tutar: 301.4,
+    }));
+    const yanit = await faturaOku(istek());
+    expect(yanit.status).toBe(422);
+    expect((await yanit.json()).hata).toContain("KDV hariç mal bedeli");
   });
 
   it("okunamayan rakamlar sıfıra dönüşmez", async () => {

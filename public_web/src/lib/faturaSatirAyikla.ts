@@ -402,9 +402,11 @@ export function belgeVergiToplamiUyuyorMu(girdi: {
   }
   const indirim = girdi.indirimTutari ?? 0;
   const eslesiyor = (tutar: number) => Math.abs(tutar - odenecekToplam) <= 0.05;
-  const haric = malBedeli + kdvTutari - indirim;
-  const dahil = malBedeli - indirim;
-  if (eslesiyor(haric) || eslesiyor(dahil)) {
+  // "mal bedeli" bu sözleşmede KDV HARİÇ tutardır.
+  // Mal bedeli zaten KDV dahilmiş gibi ikinci bir olası denklem deneyerek
+  // yanlış OCR alanlarını doğrulanmış saymak yasaktır (UBL MonetaryTotal).
+  const vergiHaricMalBedeli = malBedeli + kdvTutari - indirim;
+  if (eslesiyor(vergiHaricMalBedeli)) {
     return { uyumlu: true, denetlendi: true, sebep: null };
   }
   return {

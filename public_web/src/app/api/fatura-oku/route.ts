@@ -34,7 +34,10 @@ import { islemiYukle, islemYaniti, parmakIzindenIslemBul } from "@/lib/faturaIsl
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
-const MAKS_BAYT = 5 * 1024 * 1024;
+// Vercel Function istek govdesi 4.5 MB ile sinirlidir (multipart dahildir).
+// Resimleri tek faturada toplarken 4 MB dosya toplamiyla guvenlik payi birak.
+const MAKS_BAYT = 4 * 1024 * 1024;
+const MAKS_SAYFA = 3;
 const VITRIN_BASINA_LIMIT = 20;
 const PENCERE_SANIYE = 3600;
 
@@ -70,7 +73,7 @@ export async function POST(request: NextRequest) {
   }
 
   const slug = String(form.get("slug") ?? "").trim();
-  const dosya = form.get("dosya");
+  const dosyalar = form.getAll("dosya");
   const editTokenGovde = String(form.get("editToken") ?? "").trim();
   // Esnaf firmanın sitesini biliyorsa yazar (zorunlu değil): havuzda olmayan
   // veya el yazısı faturada okunamayan site için keşif buradan yürür.
@@ -79,9 +82,13 @@ export async function POST(request: NextRequest) {
   if (!slug) {
     return NextResponse.json({ hata: "Vitrin belirtilmedi." }, { status: 400 });
   }
-  if (!(dosya instanceof File)) {
+  if (dosyalar.length === 0 || dosyalar.some((deger) => !(deger instanceof File))) {
     return NextResponse.json({ hata: "Fatura fotoğrafı bulunamadı." }, { status: 400 });
   }
+  if (dosyalar.length > MAKS_SAYFA) {
+    return NextResponse.json({ hata: "Tek faturada en fazla 3 sayfa fotoğrafı yüklenebilir." }, { status: 413 });
+  }
+  const secilenDosyalar = dosyalar as File[];
 
   // İki giriş yolu: tarayıcı çerezle, Flutter kendi edit_token'ıyla
   // (/api/fatura-eslestir ile birebir aynı desen).
@@ -137,19 +144,18 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (dosya.size > MAKS_BAYT) {
-    return NextResponse.json({ hata: "Fotoğraf çok büyük. En fazla 5 MB." }, { status: 413 });
+  const toplamBoyut = secilenDosyalar.reduce((toplam, d) => toplam + d.size, 0);
+  if (toplamBoyut > MAKS_BAYT) {
+    return NextResponse.json({ hata: "Sayfa fotoğraflarının toplamı en fazla 4 MB olabilir." }, { status: 413 });
   }
-
-  const bayt = new Uint8Array(await dosya.arrayBuffer());
-  if (bayt.length > MAKS_BAYT) {
-    return NextResponse.json({ hata: "Fotoğraf çok büyük. En fazla 5 MB." }, { status: 413 });
+  const sayfaBaytlari = await Promise.all(secilenDosyalar.map(async (d) => new Uint8Array(await d.arrayBuffer())));
+  if (sayfaBaytlari.reduce((toplam, bayt) => toplam + bayt.length, 0) > MAKS_BAYT) {
+    return NextResponse.json({ hata: "Sayfa fotoğraflarının toplamı en fazla 4 MB olabilir." }, { status: 413 });
   }
-
-  const tur = gercekTur(bayt);
-  if (!tur || !IZINLI_TURLER.has(tur)) {
+  const sayfaTurleri = sayfaBaytlari.map(gercekTur);
+  if (sayfaTurleri.some((tur) => !tur || !IZINLI_TURLER.has(tur))) {
     return NextResponse.json(
-      { hata: "Yalnız JPG, PNG veya WebP yükleyebilirsin." },
+      { hata: "Her sayfa JPG, PNG veya WebP fotoğrafı olmalıdır." },
       { status: 415 },
     );
   }
@@ -166,7 +172,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ hata: "Vitrin bulunamadı." }, { status: 503 });
   }
 
-  const parmakIzi = belgeParmakIzi(bayt);
+  // Tek fotoğrafta mevcut hash degismez. Çok sayfada sayfa sırası ve
+  // dosya sınırları da hash'e girer; aynı fotoğraf yanlışlıkla çift sayfa
+  // olarak sunulursa farklı belge kimliği oluşur.
+  const ozetBaytlari = sayfaBaytlari.length === 1 ? sayfaBaytlari[0] : new Uint8Array(Buffer.concat(
+    sayfaBaytlari.flatMap((icerik) => {
+      const uzunluk = Buffer.alloc(4);
+      uzunluk.writeUInt32BE(icerik.length, 0);
+      return [uzunluk, Buffer.from(icerik)];
+    }),
+  ));
+  const parmakIzi = belgeParmakIzi(ozetBaytlari);
   const eskiKimlik = await parmakIzindenIslemBul(admin, magazaId, parmakIzi);
   const oncekiIslem = eskiKimlik ? await islemiYukle(admin, magazaId, eskiKimlik) : null;
   const oncekiCursor = oncekiIslem?.aramaDurumu?.sonrakiSatir;
@@ -191,7 +207,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ hata: "Günlük fatura okuma maliyet sınırı doldu." }, { status: 429 });
   }
 
-  const goruntu = `data:${tur};base64,${base64Cevir(bayt)}`;
+  const fotograflar = sayfaBaytlari.map((bayt, index) =>
+    `data:${sayfaTurleri[index]};base64,${base64Cevir(bayt)}`);
+  const goruntu = fotograflar.length === 1 ? fotograflar[0] : fotograflar;
 
   try {
     // Ayni belge tekrar yukunurse OCR tekrarlanmaz; kayitli ham satirlar kullanilir.

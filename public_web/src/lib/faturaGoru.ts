@@ -39,15 +39,15 @@ const SORU = [
   "Bu bir fatura tablosu. HER urun satirini oku. Yalniz JSON dondur.",
   '{"tedarikci":"","tedarikci_vergi_no":"","tedarikci_adres":"","tedarikci_site":"","belge_turu":"","belge_no":"","belge_tarihi":"","satirlar":[{"ham_satir":"","model":"","ad":"","barkod":"","varyant":"","beden":"","marka":"","adet":0,"birim":"","birim_fiyat":0,"tutar":0,"okuma_guveni":1}],"toplam_adet":0,"toplam_tutar":0,"mal_bedeli":0,"kdv_tutari":0,"indirim_tutari":0,"odenecek_toplam":0}',
   "1. Her satirda adet * birim_fiyat = tutar olmali.",
-  "2. Satirlarin adet toplami = toplam_adet, tutar toplami = toplam_tutar.",
-  "3. toplam_adet/toplam_tutar en alttaki 'Toplam' satirindan alinir.",
+  "2. AD/KG/LT/M/Paket gibi farkli birimleri TOPLAMA. Belgede tek bir toplam miktar yazmiyorsa toplam_adet=null.",
+  "3. toplam_adet yalniz belgede tek bir olcu turunde toplam acikca yaziyorsa okunur. toplam_tutar belgede yazan genel tutardir, satir toplamindan hesaplama.",
   "4. Sayilari 6.034,00 -> 6034.00 bicimine cevir. Uydurma yok.",
   "5. tedarikci = faturayi kesen firmanin adi. Yazmiyorsa bos birak, tahmin etme.",
   "6. ad = faturada yazan urun adi veya urun aciklamasi. Yazmiyorsa bos birak, tahmin etme.",
   "7. ham_satir = urun satirinda gorunen metni sirasi ve degerleriyle koru.",
   "8. tedarikci_vergi_no, tedarikci_adres ve tedarikci_site yalniz belgede acikca yaziyorsa doldur; tahmin etme.",
   "9. belge_turu: belgede acikca yaziyorsa fatura, e-arsiv, irsaliye veya bilgi fisi; belge_no ve belge_tarihi yalniz belgede yaziyorsa doldur (tarih GG.AA.YYYY), tahmin etme.",
-  "10. mal_bedeli, kdv_tutari, indirim_tutari ve odenecek_toplam belgede ayri ayri yaziyorsa ayri ayri doldur; yazmiyorsa null birak, hesaplayip uydurma.",
+  "10. mal_bedeli yalniz KDV HARIC mal/hizmet bedeli (vergi matrahi veya ara toplam) olarak acikca etiketlenmisse doldur. KDV dahil tutari mal_bedeli alanina YAZMA; yoksa null. kdv_tutari vergiyi, indirim_tutari indirimi, odenecek_toplam odencek nihai tutari ayri ayri belgede yazildigi gibi oku; uydurma.",
   "11. marka = urun satirinda ya da urun kodunun yaninda yazan marka adi; yazmiyorsa bos birak, faturayi kesen firmayi marka sanma, tahmin etme.",
   "12. varyant faturada yazan renktir. beden faturada yazan bedendir. Yazmiyorsa bos birak, baska yerden tamamlama.",
   "13. okuma_guveni 0 ile 1 arasi: satirdaki yazi ve rakamlar net okunduysa 1'e yakin; silik, kesik, ustu cizili veya emin olmadigin bir deger varsa dusuk ver.",
@@ -182,7 +182,7 @@ const FATURA_SEMA = {
     },
     toplam_adet: alanSayi("Quantity total from the bottom Totals row. Null if not printed. Do not compute."),
     toplam_tutar: alanSayi("Amount total from the bottom Totals row. Null if not printed. Do not compute."),
-    mal_bedeli: alanSayi("Goods total as printed. Null if not printed. Do not compute."),
+    mal_bedeli: alanSayi("Only tax-exclusive goods net subtotal as explicitly labeled on invoice; never tax-inclusive total. Null if ambiguous."),
     kdv_tutari: alanSayi("VAT as printed. Null if not printed. Do not compute."),
     indirim_tutari: alanSayi("Discount as printed. Null if not printed. Do not compute."),
     odenecek_toplam: alanSayi("Amount payable as printed. Null if not printed. Do not compute."),
@@ -807,7 +807,7 @@ export async function lunaGorseliniDogrula(girdi: {
   }
 }
 
-export async function faturayiOku(dataUrl: string): Promise<GoruSonucu> {
+export async function faturayiOku(dataUrl: string | string[]): Promise<GoruSonucu> {
   const anahtar = process.env.OPENROUTER_API_KEY;
   if (!anahtar) throw new Error("OKUYUCU_HAZIR_DEGIL");
 
@@ -834,8 +834,14 @@ export async function faturayiOku(dataUrl: string): Promise<GoruSonucu> {
         {
           role: "user",
           content: [
-            { type: "input_text", text: SORU },
-            { type: "input_image", image_url: dataUrl, detail: "original" },
+            { type: "input_text", text: SORU + (
+              Array.isArray(dataUrl) && dataUrl.length > 1
+                ? "\nBirden fazla goruntu AYNI faturanin sirali sayfalaridir. Satirlari sayfa sirasinda bir kere oku; tekrar eden sayfa basliklarini ve onceki sayfa ara toplamlarini urun sayma. Belge ozetini yalniz belgenin nihai toplam satirindan oku; yoksa null."
+                : ""
+            ) },
+            ...(Array.isArray(dataUrl) ? dataUrl : [dataUrl]).map((url) => ({
+              type: "input_image" as const, image_url: url, detail: "original" as const,
+            })),
           ],
         },
       ],

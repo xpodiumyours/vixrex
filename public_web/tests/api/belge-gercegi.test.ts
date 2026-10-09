@@ -122,6 +122,13 @@ describe("belge gerçeği — satırlar belgenin toplamıyla karşılaştırıl�
       malBedeli: 200, kdvTutari: 20, indirimTutari: 10, odenecekToplam: 210,
     });
     expect(dogru).toMatchObject({ uyumlu: true, denetlendi: true });
+    // Önceki kusur: "mal bedeli" KDV dahilmiş gibi alternatif sonuç da kabul ediliyordu.
+    // UBL'de vergi hariç toplam ile ödenecek tutar aynı alan değildir.
+    const sahteVergiDahil = belgeVergiToplamiUyuyorMu({
+      malBedeli: 200, kdvTutari: 20, indirimTutari: 0, odenecekToplam: 200,
+    });
+    expect(sahteVergiDahil.uyumlu).toBe(false);
+    expect(sahteVergiDahil.denetlendi).toBe(true);
     const yanlis = belgeVergiToplamiUyuyorMu({
       malBedeli: 200, kdvTutari: 20, indirimTutari: 10, odenecekToplam: 240,
     });

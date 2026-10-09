@@ -92,6 +92,7 @@ interface FaturaOkumaSonucu {
   satirlar: FaturaOkumaSatiri[];
   belgeToplami: number | null;
   belgeAdedi: number | null;
+  belge?: { malBedeli?: number | null; kdvTutari?: number | null; indirimTutari?: number | null; odenecekToplam?: number | null };
   /** Eski kayıtlarda kalabilir. Tutmayan yeni okuma buraya gelmez. */
   belgeUyarisi?: string;
   tedarikci: string;
@@ -137,7 +138,8 @@ interface InvoiceToProductsProps {
 
 /** Bu eşiğin altındaki satır toplu onaya girmez; esnaf ona tek tek bakar. */
 const GUVEN_ESIGI = 0.7;
-const MAKS_BAYT = 5 * 1024 * 1024;
+const MAKS_BAYT = 4 * 1024 * 1024; // Vercel 4.5 MB request body, multipart payi.
+const MAKS_SAYFA = 3;
 
 function paraYaz(n: number | null): string {
   if (n === null) return "—";
@@ -205,7 +207,7 @@ export default function InvoiceToProducts({
   const [duzeltilen, setDuzeltilen] = useState<number | null>(null);
   const [baglantiKopyalandi, setBaglantiKopyalandi] = useState(false);
   const dosyaRef = useRef<HTMLInputElement>(null);
-  const sonFaturaDosyasi = useRef<File | null>(null);
+  const sonFaturaDosyasi = useRef<File[] | null>(null);
   const kayitSirasi = useRef<Promise<void>>(Promise.resolve());
 
   const sahipSecimleriniKaydet = useCallback((kaydedilecek: SatirDurumu[]) => {
@@ -265,19 +267,31 @@ export default function InvoiceToProducts({
   /** Faturanın üç beklenen sayısı satırlardan yeniden hesaplanır ve belgedeki
    * değerle karşılaştırılır: tutmayan fark esnafın gözünden saklanmaz. */
   const kontrol = useMemo(() => {
+    // Sunucu gibi, miktarlar yalnız aynı ölçüdeyse karşılaştırılabilir.
+    const normalizeBirim = (ham: string | undefined) => {
+      const birim = (ham ?? "").trim().toLocaleLowerCase("tr-TR").replace(/[.]$/, "");
+      return ["ad", "adet", "pcs", "piece"].includes(birim) ? "adet" : birim || "belirtilmedi";
+    };
+    const miktarGruplari = new Map<string, number>();
+    for (const satir of satirlar) {
+      const birim = normalizeBirim(satir.birim);
+      miktarGruplari.set(birim, (miktarGruplari.get(birim) ?? 0) + (satir.adet ?? 0));
+    }
+    const karisikBirim = miktarGruplari.size > 1;
+    const miktarOzeti = [...miktarGruplari.entries()]
+      .map(([birim, miktar]) => `${miktar.toLocaleString("tr-TR")} ${birim}`).join(" + ");
     const adetToplam = satirlar.reduce((toplam, satir) => toplam + (satir.adet ?? 0), 0);
-    const tutarToplam = satirlar.reduce(
-      (toplam, satir) =>
-        toplam + (satir.adet !== null && satir.alisBirimFiyat !== null ? satir.adet * satir.alisBirimFiyat : 0),
-      0,
-    );
+    const tutarToplam = satirlar.reduce((toplam, satir) => toplam + (satir.satirToplam ?? 0), 0);
+    const araToplam = belge?.belge?.malBedeli ??
+      (belge?.belge?.kdvTutari == null && belge?.belge?.indirimTutari == null
+        ? belge?.belgeToplami : null);
     return {
       satirSayisi: satirlar.length,
-      adetToplam,
-      tutarToplam,
-      adetTutuyor: belge?.belgeAdedi == null ? null : adetToplam === belge.belgeAdedi,
-      tutarTutuyor:
-        belge?.belgeToplami == null ? null : Math.abs(tutarToplam - belge.belgeToplami) < 0.01,
+      adetToplam, miktarOzeti, karisikBirim,
+      tutarToplam, araToplam,
+      adetTutuyor: belge?.belgeAdedi == null || karisikBirim ? null
+        : Math.abs(adetToplam - belge.belgeAdedi) < 0.00001,
+      tutarTutuyor: araToplam == null ? null : Math.abs(tutarToplam - araToplam) <= 0.05,
     };
   }, [satirlar, belge]);
 
@@ -432,25 +446,28 @@ export default function InvoiceToProducts({
   }
 
   const dosyaSecildi = useCallback(
-    async (dosya: File) => {
-      sonFaturaDosyasi.current = dosya;
+    async (dosyalar: File[]) => {
       setHata(null);
-
-      if (dosya.size > MAKS_BAYT) {
-        setHata("Fotoğraf çok büyük. En fazla 5 MB.");
+      if (!dosyalar.length || dosyalar.length > MAKS_SAYFA) {
+        setHata("Bir faturaya ait en fazla 3 sayfa fotoğrafı seç.");
         return;
       }
+      if (dosyalar.reduce((toplam, dosya) => toplam + dosya.size, 0) > MAKS_BAYT) {
+        setHata("Sayfa fotoğraflarının toplamı en fazla 4 MB olabilir.");
+        return;
+      }
+      sonFaturaDosyasi.current = dosyalar;
 
       const okuyucu = new FileReader();
       okuyucu.onload = () => setOnizleme(String(okuyucu.result));
-      okuyucu.readAsDataURL(dosya);
+      okuyucu.readAsDataURL(dosyalar[0]);
 
       setAdim("okunuyor");
 
       try {
         const form = new FormData();
         form.append("slug", storeSlug);
-        form.append("dosya", dosya);
+        for (const dosya of dosyalar) form.append("dosya", dosya);
 
         const cevap = await fetch("/api/fatura-oku", { method: "POST", body: form });
         const govde = await cevap.json().catch(() => null);
@@ -749,11 +766,13 @@ export default function InvoiceToProducts({
           ref={dosyaRef}
           type="file"
           accept="image/jpeg,image/png,image/webp"
+          multiple
           onChange={(e) => {
-            const dosya = e.target.files?.[0];
-            if (dosya) void dosyaSecildi(dosya);
+            const dosyalar = Array.from(e.target.files ?? []);
+            if (dosyalar.length) void dosyaSecildi(dosyalar);
           }}
         />
+        <p className="fatura-aciklama">Tek fatura için 1–3 sayfa fotoğrafı sırayla seçebilirsin. Toplam en fazla 4 MB. PDF desteği henüz yok.</p>
         {onClose && (
           <button type="button" className="fatura-ikincil" onClick={() => void kapat()}>
             Vazgeç
@@ -912,7 +931,7 @@ export default function InvoiceToProducts({
             Adres: {belgedeYazi(belge.tedarikciAdres)}
             {" · "}
             Resmi site: {firmaSiteCumlesi(belge.siteDurumu)}
-            {belge.belgeAdedi !== null ? ` · ${belge.belgeAdedi} adet` : ""}
+            {belge.belgeAdedi !== null ? ` · Belgede toplam miktar: ${belge.belgeAdedi}` : ""}
             {belge.belgeToplami !== null ? ` · ${paraYaz(belge.belgeToplami)} alış toplamı` : ""}
           </p>
         )}
@@ -920,8 +939,7 @@ export default function InvoiceToProducts({
 
       {belge?.belgeUyarisi && (
         <p className="fatura-hata" role="status">
-          Fatura toplamı satırlarla tutmadı; okunan satırlar kaybolmadı, her satır kendi
-          kanıtıyla değerlendiriliyor. Detay: {belge.belgeUyarisi}
+          Belge kontrolü: {belge.belgeUyarisi}
         </p>
       )}
 
@@ -930,14 +948,16 @@ export default function InvoiceToProducts({
           <strong>{kontrol.satirSayisi}</strong> ürün satırı bulundu
         </li>
         <li className={kontrol.adetTutuyor === false ? "fatura-kontrol-farkli" : undefined}>
-          <strong>{kontrol.adetToplam}</strong> adet doğrulandı
-          {kontrol.adetTutuyor === false && <> — belgede {belge?.belgeAdedi} yazıyor</>}
+          <strong>{kontrol.miktarOzeti || "—"}</strong> fatura miktarı
+          {kontrol.karisikBirim && <> — farklı ölçü birimleri toplanmadı</>}
+          {kontrol.adetTutuyor === false && <> — belgede toplam {belge?.belgeAdedi} yazıyor</>}
         </li>
         <li className={kontrol.tutarTutuyor === false ? "fatura-kontrol-farkli" : undefined}>
-          <strong>{paraYaz(kontrol.tutarToplam)}</strong> alış toplamı
+          <strong>{paraYaz(kontrol.tutarToplam)}</strong> ürün satırları toplamı (KDV hariç)
           {kontrol.tutarTutuyor === false && (
-            <> — belgede {paraYaz(belge?.belgeToplami ?? null)}</>
+            <> — belgede KDV hariç ara toplam {paraYaz(kontrol.araToplam ?? null)}</>
           )}
+          {kontrol.tutarTutuyor === null && <> — belge ara toplamıyla karşılaştırılamadı</>}
         </li>
       </ul>
 
