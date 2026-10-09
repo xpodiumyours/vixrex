@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import sharp from "sharp";
-import { kartaGirecekGorsel, kaynakGorseliniDogrula, kaynakGorselleriniHazirla } from "@/lib/faturaGorsel";
+import { kartaGirecekGorsel, kaynakGorseliniDogrula, kaynakGorselleriniHazirla, urunSayfasindaGorselKaniti } from "@/lib/faturaGorsel";
 
 const resolveHost = async () => ["8.8.8.8"];
 
@@ -96,6 +96,62 @@ describe("kaynak görseli doğrulama", () => {
     expect(await kartaGirecekGorsel(buyuk, bag)).toBe(buyuk);
     expect(await kartaGirecekGorsel(kucuk, bag)).toBe("");
     expect(await kartaGirecekGorsel(kapali, bag)).toBe("");
+  });
+});
+
+
+describe("resmî ürün sayfasından fotoğraf ve varyant kanıtı", () => {
+  const kaynak = "https://firma.example/urun/siyah";
+  const gorsel = "https://cdn.example/siyah.jpg";
+  const html = (metin: string) => new Response("<html><body>" + metin + "</body></html>", {
+    status: 200, headers: { "content-type": "text/html" },
+  });
+
+  it("sayfa gerçekten bu URL'yi ve ilgili rengi taşıyorsa kanıt döner", async () => {
+    const kanit = await urunSayfasindaGorselKaniti(kaynak, gorsel, "Siyah", {
+      resolveHost,
+      fetcher: async () => html('<img alt="Fanila Siyah" src="' + gorsel + '">'),
+    });
+    expect(kanit?.kaynakAlintisi).toContain(gorsel);
+    expect(kanit?.kaynakAlintisi).toContain("Siyah");
+  });
+
+  it("modelin uydurduğu fotoğraf adresi gerçek sayfada yoksa kanıt çıkmaz", async () => {
+    const kanit = await urunSayfasindaGorselKaniti(kaynak, gorsel, "Siyah", {
+      resolveHost,
+      fetcher: async () => html('<img alt="Fanila Siyah" src="https://cdn.example/baska.jpg">'),
+    });
+    expect(kanit).toBeNull();
+  });
+
+  it("fotoğraf doğru sayfada olsa da farklı renk adı bağlıysa kanıt sayılmaz", async () => {
+    const kanit = await urunSayfasindaGorselKaniti(kaynak, gorsel, "Siyah", {
+      resolveHost,
+      fetcher: async () => html('<img alt="Fanila Beyaz" src="' + gorsel + '">'),
+    });
+    expect(kanit).toBeNull();
+  });
+
+  it("doğrulanmayan kaynak site ve görsel dışındaki yönlendirmeyi kabul etmez", async () => {
+    const fetcher = async () => new Response("redirect", {
+      status: 302, headers: { location: "https://baska.example/urun", "content-type": "text/html" },
+    });
+    expect(await urunSayfasindaGorselKaniti(kaynak, gorsel, "Siyah", { resolveHost, fetcher })).toBeNull();
+  });
+
+  it("HTML değilse ve sayfa aşırı büyükse kanıt uydurmaz", async () => {
+    expect(await urunSayfasindaGorselKaniti(kaynak, gorsel, "", {
+      resolveHost,
+      fetcher: async () => new Response('{"image":"'+gorsel+'"}', {
+        headers: { "content-type": "application/json" },
+      }),
+    })).toBeNull();
+    expect(await urunSayfasindaGorselKaniti(kaynak, gorsel, "", {
+      resolveHost,
+      fetcher: async () => new Response("x", {
+        headers: { "content-type": "text/html", "content-length": "9999999" },
+      }),
+    })).toBeNull();
   });
 });
 
