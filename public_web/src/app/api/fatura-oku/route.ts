@@ -199,7 +199,7 @@ export async function POST(request: NextRequest) {
       tedarikci: oncekiIslem.tedarikci, tedarikciVergiNo: oncekiIslem.tedarikciVergiNo,
       tedarikciAdres: oncekiIslem.tedarikciAdres, tedarikciSite: oncekiIslem.tedarikciSite,
       satirlar: oncekiIslem.satirlar.map((satir) => ({
-        hamSatir: satir.hamSatir, model: satir.model, ad: satir.ad, barkod: satir.barkod,
+        hamSatir: satir.hamSatir ?? "", model: satir.model, ad: satir.ad, barkod: satir.barkod,
         varyant: satir.varyant, beden: satir.beden, marka: satir.marka ?? "",
         adet: satir.adet, birim: satir.birim ?? "", birimFiyat: satir.alisBirimFiyat,
         tutar: satir.satirToplam, okumaGuveni: satir.guven,

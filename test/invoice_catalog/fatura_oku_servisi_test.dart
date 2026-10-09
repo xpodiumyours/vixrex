@@ -151,9 +151,7 @@ void main() {
       },
     );
 
-    test(
-      'kesirli fatura miktarı korunur; stok adede yuvarlanmaz',
-      () async {
+    test('kesirli fatura miktarı korunur; stok adede yuvarlanmaz', () async {
         final servis = FaturaOkuServisi(
           originOverride: 'https://vixrex-test.local',
           httpClient: MockClient((request) async {
@@ -188,8 +186,7 @@ void main() {
         expect(urun.quantity, isNot(2));
         expect(urun.isApproved, isFalse);
         expect(taslak.quantity?.value, 2.5);
-      },
-    );
+    });
 
     test('katalogda bulunamayan satır zayıf kalır, tahmin edilmez', () async {
       final servis = FaturaOkuServisi(

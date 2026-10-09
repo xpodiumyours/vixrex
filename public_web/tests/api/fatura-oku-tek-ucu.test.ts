@@ -187,7 +187,7 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     });
     mocks.get.mockReturnValue("owner-cookie");
     mocks.verifyOwner.mockReturnValue({ storeId: "store-1", slug: "deneme-vitrin" });
-    mocks.rpc.mockImplementation(async (isim: string, args?: Record<string, unknown>) => {
+    mocks.rpc.mockImplementation(async (isim?: string, args?: Record<string, unknown>) => {
       if (isim === "replace_invoice_line") {
         const mevcut = mocks.kalici?.satirlar as Record<string, unknown>[] | undefined;
         if (mevcut) {
