@@ -368,6 +368,10 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
         }
         return okuyucuCevabi(TEK_SATIR);
       }
+      if (adres === "https://sehermensucat.com/iletisim") return new Response(
+        "<html><body>Seher Mensucat kendi ürünlerinin üretimini gerçekleştirmektedir.</body></html>",
+        { status: 200, headers: { "content-type": "text/html" } },
+      );
       if (adres === gorsel) return new Response(new Uint8Array(foto), { status: 200 });
       if (adres === sayfa) return new Response(
         '<html><body><img alt="Elit fanila Siyah" src="' + gorsel + '"></body></html>',
@@ -393,7 +397,15 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
 
 
   it("toptancı faturasındaki marka için üreticinin resmî sitesini ayrı bulur", async () => {
-    const cevapVer = vi.fn(async (_url: string, init?: RequestInit) => {
+    const cevapVer = vi.fn(async (url: string, init?: RequestInit) => {
+      // HTML kaniti, OpenRouter'un JSON yanitindan BAGIMSIZ gercek sayfa
+      // cevabidir. Kanit sayfada yoksa uretici sitesi kilitlenemez.
+      if (String(url) === "https://elit.example/hakkimizda") {
+        return new Response(
+          "<html><body>Elit bu üreticinin kendi kayıtlı markasıdır.</body></html>",
+          { status: 200, headers: { "content-type": "text/html" } },
+        );
+      }
       const requestBody = JSON.parse(String(init?.body ?? "{}"));
       if (!requestBody.tools) return okuyucuCevabi({
         ...TEK_SATIR,
@@ -422,6 +434,8 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(response.status).toBe(200);
     const bodies = cevapVer.mock.calls.map((call) => JSON.parse(String((call[1] as RequestInit)?.body ?? "{}")));
     const productSearch = bodies.find((item) => item.text?.format?.name === "fatura_urun_kaynagi");
+    expect(cevapVer.mock.calls.some((call) => String(call[0]) === "https://elit.example/hakkimizda")).toBe(true);
+    expect(productSearch).toBeDefined();
     expect(productSearch.tools[0].parameters.allowed_domains).toEqual(["elit.example"]);
     expect(productSearch.tools[1].parameters.allowed_domains).toEqual(["elit.example"]);
     expect((await response.json()).satirlar[0].sonuc).toBe("eksik");
