@@ -57,7 +57,10 @@ function gorselIzinDurumu(izin: "yok" | "bekliyor" | "var"): string {
 }
 
 function kanitGucu(satir: EslesmisFaturaSatiri): "strong" | "partial" | "weak" {
-  if (satir.katalog) return "strong";
+  // Araştırma adayında katalog/kaynak saklanmış olabilir. Onu güçlü kanıt
+  // olarak etiketlemek, görsel ve varyant doğrulamasını atlamak olur.
+  if (satir.sonuc === "kanitli" && satir.katalog) return "strong";
+  if (satir.katalog) return "partial";
   return satir.guven >= 0.6 ? "partial" : "weak";
 }
 
@@ -87,7 +90,7 @@ export function satirKanitKayitlari(
     field_name: "kod",
     value_text: (satir.model || satir.barkod).slice(0, 60),
     source: kaynak,
-    strength: satir.katalog ? "strong" : "weak",
+    strength: satir.katalog && satir.sonuc === "kanitli" ? "strong" : satir.katalog ? "partial" : "weak",
   });
 
   if (satir.katalog) {
