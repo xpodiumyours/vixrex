@@ -7,12 +7,9 @@ vi.mock("node:dns/promises", () => ({
   resolve6: async () => [],
 }));
 
-// /api/fatura-oku — Vixrex'in TEK okuma ucu. Görüntü → OpenAI gpt-5.6-luna
-// → katı JSON → belge aritmetiği → modelin site fotoğrafı, açıklaması ve sayfa adresi.
-//
-// Bu test gerçek OpenAI'ye bağlanmaz (fetch mock'lanır); zincirin kendisinin
-// doğru sırayla çalıştığını ve iki kimlik yolunun da (çerez + editToken)
-// kabul edildiğini kanıtlar.
+// Tek fatura okuma ucu: OpenRouter görsel okuma → belge doğrulama →
+// OpenRouter kaynak arama/okuma → mevcut ürün taslağı.
+// Dış API cevapları mock ile sağlanır; gerçek kaynak doğruluğu ayrıca ölçülür.
 
 const mocks = vi.hoisted(() => ({
   get: vi.fn((): string | undefined => "owner-cookie"),
@@ -215,17 +212,17 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(soru).not.toContain("asil urun fotografi");
     expect(soru).toContain("baska yerden tamamlama");
     const okumaCagrilari = vi.mocked(fetch).mock.calls.filter((satir) => String(satir[0]).includes("openrouter.ai/api/v1/responses"));
-    const resmi = JSON.parse(String((okumaCagrilari[1]?.[1] as RequestInit).body));
-    expect(resmi.model).toBe("openai/gpt-5.6-luna");
-    expect(resmi.include).toEqual(["web_search_call.results"]);
-    expect(resmi.tools[0].type).toBe("web_search");
-    expect(resmi.tools[0].search_content_types).toEqual(["image", "text"]);
-    expect(resmi.tools[0].filters.allowed_domains).toEqual(["sehermensucat.com"]);
-    const arama = JSON.parse(String((okumaCagrilari[2]?.[1] as RequestInit).body));
+    expect(okumaCagrilari).toHaveLength(2);
+    const arama = JSON.parse(String((okumaCagrilari[1]?.[1] as RequestInit).body));
+    expect(arama.model).toBe("openai/gpt-5.6-luna");
     expect(arama.reasoning.effort).toBe("low");
-    expect(arama.tools[0].type).toBe("openrouter:web_search");
+    expect(arama.max_tool_calls).toBe(4);
+    expect(arama.tools.map((arac: { type: string }) => arac.type)).toEqual([
+      "openrouter:web_search", "openrouter:web_fetch",
+    ]);
     expect(arama.tools[0].parameters.allowed_domains).toEqual(["sehermensucat.com"]);
-    expect(arama.tools[0].parameters.engine).toBe("native");
+    expect(arama.tools[1].parameters.allowed_domains).toEqual(["sehermensucat.com"]);
+    expect(arama.text.format.strict).toBe(true);
   });
 
   it("modelin yazdığı fotoğraf adresi kart kurmaz", async () => {
@@ -261,20 +258,22 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
         const istekGovdesi = JSON.parse(String(init?.body ?? "{}"));
         if (istekGovdesi.tools) {
           return new Response(JSON.stringify({
-            output: [{
-              type: "web_search_call",
-              results: [{
-                type: "image_result",
-                image_url: gorsel,
-                source_website_url: sayfa,
-                caption: "ELT1302 erkek elastan fanila",
-              }],
-            }],
+            status: "completed",
+            output_text: JSON.stringify({
+              eslesti: true,
+              urun_adi: "Elit Erkek Elastan Sıfır Yaka",
+              aciklama: "ELT1302 erkek elastan fanila",
+              kaynak_sayfa: sayfa,
+              gorsel_adresi: gorsel,
+              kanit: "ELT1302 8681128321677 Siyah L",
+              eslesme_dayanagi: "kod",
+            }),
             usage: {
               input_tokens: 100,
               output_tokens: 20,
               input_tokens_details: { cached_tokens: 0 },
               output_tokens_details: { reasoning_tokens: 0 },
+              server_tool_use: { web_fetch_requests: 1 },
             },
           }), { status: 200 });
         }
