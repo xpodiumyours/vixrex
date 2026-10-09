@@ -82,6 +82,7 @@ vi.mock("@/lib/faturaIslemOku", async (importOriginal) => ({
 }));
 
 import { POST as faturaOku } from "@/app/api/fatura-oku/route";
+import { faturayiOku } from "@/lib/faturaGoru";
 
 // Gerçek fatura formatındaki 1x1 PNG (gerçek dosya-türü kontrolünü geçmesi
 // için doğru PNG imzasıyla).
@@ -176,6 +177,32 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     mocks.harcama = [];
     mocks.kullanimYaz.mockResolvedValue({ error: null });
     vi.stubGlobal("fetch", siteyiAyiranOkuma(TEK_SATIR));
+  });
+
+  it("okunamayan rakamlar sıfıra dönüşmez", async () => {
+    const cevap = { ...TEK_SATIR, toplam_adet: null, toplam_tutar: null, mal_bedeli: null,
+      satirlar: [{ ...TEK_SATIR.satirlar[0], adet: null, birim_fiyat: null, tutar: null, okuma_guveni: null }] };
+    vi.stubGlobal("fetch", vi.fn(async () => okuyucuCevabi(cevap)));
+    const sonuc = await faturayiOku("data:image/png;base64," + PNG_BASE64);
+    expect(sonuc.satirlar[0].adet).toBeNull();
+    expect(sonuc.satirlar[0].birimFiyat).toBeNull();
+    expect(sonuc.satirlar[0].tutar).toBeNull();
+    expect(sonuc.satirlar[0].okumaGuveni).toBeNull();
+    expect(sonuc.belgeAdedi).toBeNull();
+    expect(sonuc.belgeToplami).toBeNull();
+    expect(sonuc.malBedeli).toBeNull();
+  });
+
+  it("gerçek sıfır ile eksik rakamı karıştırmaz", async () => {
+    const cevap = { ...TEK_SATIR, toplam_adet: 0, toplam_tutar: 0,
+      satirlar: [{ ...TEK_SATIR.satirlar[0], adet: 0, birim_fiyat: 0, tutar: 0 }] };
+    vi.stubGlobal("fetch", vi.fn(async () => okuyucuCevabi(cevap)));
+    const sonuc = await faturayiOku("data:image/png;base64," + PNG_BASE64);
+    expect(sonuc.satirlar[0].adet).toBe(0);
+    expect(sonuc.satirlar[0].birimFiyat).toBe(0);
+    expect(sonuc.satirlar[0].tutar).toBe(0);
+    expect(sonuc.belgeAdedi).toBe(0);
+    expect(sonuc.belgeToplami).toBe(0);
   });
 
   it("fotoğrafı okuyucuya gönderir, satırı ayırır, site alanı yoksa kart kurmaz", async () => {
