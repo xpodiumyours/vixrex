@@ -15,7 +15,7 @@ import {
   type FirmaSiteDurumu,
 } from "@/lib/firmaSiteDurumu";
 // Faturadan ürün kartına.
-// Esnaf satış fiyatını yazar ve bir kez yayınlar. Faturadaki adet stok olur.
+// Esnaf satış fiyatını ve satışa açacağı tam-adet stoku kontrol eder; fatura miktarı öneridir.
 // Alış fiyatı satış fiyatı olmaz. Sunucu fiyatı ve fotoğrafı ayrıca kontrol eder.
 
 export interface CeliskiBilgisi {
@@ -103,6 +103,7 @@ interface FaturaOkumaSonucu {
   sonucOzeti?: Record<string, number>;
   islemKimligi?: string | null;
   ayniAlisveris?: AyniAlisverisAdayi[];
+  aramaSuruyor?: boolean;
 }
 
 interface SatirDurumu extends FaturaSatiri {
@@ -204,6 +205,7 @@ export default function InvoiceToProducts({
   const [duzeltilen, setDuzeltilen] = useState<number | null>(null);
   const [baglantiKopyalandi, setBaglantiKopyalandi] = useState(false);
   const dosyaRef = useRef<HTMLInputElement>(null);
+  const sonFaturaDosyasi = useRef<File | null>(null);
   const kayitSirasi = useRef<Promise<void>>(Promise.resolve());
 
   const sahipSecimleriniKaydet = useCallback((kaydedilecek: SatirDurumu[]) => {
@@ -431,6 +433,7 @@ export default function InvoiceToProducts({
 
   const dosyaSecildi = useCallback(
     async (dosya: File) => {
+      sonFaturaDosyasi.current = dosya;
       setHata(null);
 
       if (dosya.size > MAKS_BAYT) {
@@ -1186,7 +1189,24 @@ export default function InvoiceToProducts({
 
               {satir.sonuc === "kanitli" && (
                 <>
-                  <p className="fatura-alis">Stok: {satir.adet ?? "—"}{satir.birim?.trim() ? ` ${satir.birim.trim()}` : ""}</p>
+                  <p className="fatura-alis">Faturadaki miktar: {satir.adet ?? "—"}{satir.birim?.trim() ? ` ${satir.birim.trim()}` : ""}</p>
+                  <label className="fatura-fiyat">
+                    Satışa açılacak stok (adet)
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      min="0"
+                      step="1"
+                      value={satir.stok}
+                      onChange={(e) => satirGuncelle(index, { stok: e.target.value, stokOnaylandi: false })}
+                      disabled={yaziliyor}
+                    />
+                  </label>
+                  {satir.adet !== null && !Number.isInteger(satir.adet) && (
+                    <p className="fatura-hata" role="status">
+                      Faturadaki kesirli miktar otomatik adede çevrilmez. Satılabilir tam-adet stoku doğrulayarak gir.
+                    </p>
+                  )}
 
                   <label className="fatura-fiyat">
                     Satış fiyatı
@@ -1220,6 +1240,19 @@ export default function InvoiceToProducts({
         })}
       </div>
 
+      {belge?.aramaSuruyor && (
+        <button
+          type="button"
+          className="fatura-ikincil"
+          disabled={yaziliyor || yukleniyor}
+          onClick={() => {
+            const dosya = sonFaturaDosyasi.current;
+            if (dosya) void dosyaSecildi(dosya);
+          }}
+        >
+          Kalan satırların araştırmasına devam et
+        </button>
+      )}
       <div className="fatura-alt-cubuk">
         {onClose && <button type="button" className="fatura-ikincil"
           onClick={() => void kapat()} disabled={yaziliyor || yukleniyor}>İşlemi kapat</button>}

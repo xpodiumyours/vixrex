@@ -7,6 +7,13 @@ const m = vi.hoisted(() => ({
   rpc: vi.fn(),
   is: vi.fn(),
   satir: vi.fn(),
+  siteSearch: vi.fn(),
+  brandSearch: vi.fn(),
+  imageCheck: vi.fn(),
+  cost: vi.fn(),
+  record: vi.fn(),
+  imgFetch: vi.fn(),
+  pageProof: vi.fn(),
 }));
 
 vi.mock("@/lib/supabaseAdmin", () => ({
@@ -24,6 +31,21 @@ vi.mock("@/lib/supabaseAdmin", () => ({
   }),
 }));
 vi.mock("@/lib/faturaYetki", () => ({ sahipYetkisi: m.yetki }));
+vi.mock("@/lib/faturaGoru", () => ({
+  satirSitesindeAra: m.siteSearch,
+  markaSitesiniBul: m.brandSearch,
+  lunaGorseliniDogrula: m.imageCheck,
+}));
+vi.mock("@/lib/faturaGorsel", () => ({
+  kaynakGorseliniDogrula: m.imgFetch,
+  urunSayfasindaGorselKaniti: m.pageProof,
+}));
+vi.mock("@/lib/faturaMaliyet", () => ({
+  ARAMA_UCETI_USD: 0.01,
+  aramaCagrisiSigarMi: () => true,
+  bugunkuMaliyetUsd: m.cost,
+  kullanimKaydet: m.record,
+}));
 
 import { POST } from "@/app/api/fatura-satir-duzelt/route";
 
@@ -37,6 +59,22 @@ describe("satır düzeltme kartı site kaydından kurar", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     m.yetki.mockResolvedValue({ tamam: true, slug: "dukkan", storeId: "store" });
+    m.cost.mockResolvedValue(0);
+    m.record.mockResolvedValue(undefined);
+    m.siteSearch.mockResolvedValue({
+      ad: "ELT1002 Üretici Fanila", dayanak: "kod",
+      gorsel: "https://cdn.example/elt1002.jpg",
+      sayfa: "https://sehermensucat.com/urun/elt1002",
+      aciklama: "ELT1002 pamuklu fanila",
+      maliyet: 0.01,
+    });
+    m.imgFetch.mockResolvedValue({
+      tamam: true, bayt: new Uint8Array([1, 2, 3]), tur: "image/jpeg",
+    });
+    m.pageProof.mockResolvedValue({
+      kaynakAlintisi: '<img alt="ELT1002 Fanila" src="https://cdn.example/elt1002.jpg">',
+    });
+    m.imageCheck.mockResolvedValue({ uyumlu: true, gerekce: "Doğru fanila", maliyet: 0.001 });
     m.rpc.mockImplementation(async (ad: string) => {
       if (ad === "consume_assistant_request") return { data: [{ allowed: true }], error: null };
       return { data: { success: true, sahipDurumu: null, onaySifirlandi: false }, error: null };
@@ -124,4 +162,52 @@ describe("satır düzeltme kartı site kaydından kurar", () => {
     expect(govde.satir.katalog).toBeNull();
     expect(govde.satir.sonuc).toBe("eksik");
   });
+  it("kimlik düzeltmesinde sadece bu satırı yeniden araştırıp yeni kanıtla kart kurar", async () => {
+    m.is.mockResolvedValue({
+      data: { id: ISLEM, discovery_state: {}, supplier_name: "Seher Mensucat",
+        supplier_site: "sehermensucat.com" },
+      error: null,
+    });
+    const cevap = await POST(istek({ model: "ELT1002" }));
+    const govde = await cevap.json();
+
+    expect(cevap.status).toBe(200);
+    expect(m.siteSearch).toHaveBeenCalledOnce();
+    expect(m.siteSearch).toHaveBeenCalledWith(expect.objectContaining({
+      alan: "sehermensucat.com", model: "ELT1002",
+    }));
+    expect(m.pageProof).toHaveBeenCalledOnce();
+    expect(m.imageCheck).toHaveBeenCalledOnce();
+    expect(govde.satir.sonuc).toBe("kanitli");
+    expect(govde.satir.katalog.kaynak).toBe("https://sehermensucat.com/urun/elt1002");
+    expect(govde.satir.katalog.fotografKaniti.kaynakGorsel).toBe("https://cdn.example/elt1002.jpg");
+    expect(m.rpc.mock.calls.find((c) => c[0] === "replace_invoice_line")?.[1].p_line.outcome)
+      .toBe("kanitli");
+  });
+
+  it("yeniden araştırma başarısızsa eski kanıtı kabul etmez ve satırı taslak tutar", async () => {
+    m.is.mockResolvedValue({
+      data: { id: ISLEM, discovery_state: {}, supplier_name: "Seher Mensucat",
+        supplier_site: "sehermensucat.com" },
+      error: null,
+    });
+    m.siteSearch.mockRejectedValue(new Error("OKUYUCU_CEVAP_VERMEDI"));
+    const cevap = await POST(istek({ model: "ELT1002" }));
+    const govde = await cevap.json();
+
+    expect(cevap.status).toBe(200);
+    expect(m.siteSearch).toHaveBeenCalledOnce();
+    expect(m.imageCheck).not.toHaveBeenCalled();
+    expect(govde.satir.sonuc).toBe("eksik");
+    expect(govde.satir.katalog).toBeNull();
+    expect(govde.satir.uyari).toContain("başarısız");
+  });
+
+  it("ürün kimliği değişmediyse ücretli araştırmayı tekrar başlatmaz", async () => {
+    const cevap = await POST(istek());
+    expect(cevap.status).toBe(200);
+    expect(m.siteSearch).not.toHaveBeenCalled();
+    expect(m.imageCheck).not.toHaveBeenCalled();
+  });
+
 });

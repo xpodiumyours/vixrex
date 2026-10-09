@@ -157,7 +157,16 @@ class FaturaOkuServisi {
     final barkod = metin(satir['barkod']);
     final varyant = metin(satir['varyant']);
     final beden = metin(satir['beden']);
-    final adet = sayi(satir['adet'])?.toInt();
+    int? tamAdet(num? miktar) {
+      if (miktar == null || !miktar.isFinite) return null;
+      if (miktar != miktar.toInt()) return null;
+      return miktar.toInt();
+    }
+
+    final hamAdet = sayi(satir['adet']);
+    // Fatura 2,5 KG ise bunu 2 adede yuvarlamak veri kaybidir.
+    final adet = tamAdet(hamAdet);
+    final kesirliAdet = hamAdet != null && adet == null;
     final alisFiyat = sayi(satir['alisBirimFiyat'])?.toDouble();
     final satirToplam = sayi(satir['satirToplam'])?.toDouble();
     final guven = (sayi(satir['guven']) ?? 0.5).toDouble();
@@ -190,7 +199,8 @@ class FaturaOkuServisi {
     final sahip = satir['sahipDurumu'];
     final sahipDurumu = sahip is Map ? sahip : <String, dynamic>{};
     final satisFiyati = _satisFiyati(sahipDurumu['satisFiyati']);
-    final stok = sayi(sahipDurumu['stok'])?.toInt();
+    final stok = tamAdet(sayi(sahipDurumu['stok']));
+    final onaylanabilir = !kesirliAdet || stok != null;
 
     EvidenceValue<String>? evMetin(
       String deger,
@@ -294,9 +304,9 @@ class FaturaOkuServisi {
       id: id,
       name: resmiAd.isNotEmpty ? resmiAd : (model.isNotEmpty ? model : 'Ürün'),
       brand: marka,
-      quantity: stok ?? adet ?? 1,
+      quantity: stok ?? adet ?? 0,
       price: satisFiyati,
-      isApproved: sahipDurumu['onayli'] == true,
+      isApproved: sahipDurumu['onayli'] == true && onaylanabilir,
       databaseEntryId:
           metin(satir['urunId']).isEmpty ? null : metin(satir['urunId']),
       documentQuantity: adet,
@@ -390,7 +400,7 @@ class FaturaOkuServisi {
         EvidenceSourceType.invoice,
         EvidenceStrength.partial,
       ),
-      quantity: evSayi(adet, EvidenceStrength.partial),
+      quantity: evSayi(hamAdet, EvidenceStrength.partial),
       purchaseUnitPrice: evSayi(alisFiyat, EvidenceStrength.partial),
       purchaseLineTotal: evSayi(satirToplam, EvidenceStrength.partial),
       currency: EvidenceValue<String>(
@@ -424,7 +434,7 @@ class FaturaOkuServisi {
       celiskiAdaylari: celiskiAdaylari,
       celiskiDayanak: celiskiDayanak.isEmpty ? null : celiskiDayanak,
       // Esnaf yalnız satış fiyatını girer; faturadaki adet stok olarak alınır.
-      stockConfirmed: sahipDurumu['stokOnaylandi'] == true,
+      stockConfirmed: sahipDurumu['stokOnaylandi'] == true && onaylanabilir,
       merchantApproved: sahipDurumu['onayli'] == true,
       salePrice: satisFiyati,
       islemKimligi: islemKimligi,

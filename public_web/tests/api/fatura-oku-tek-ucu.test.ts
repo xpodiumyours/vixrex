@@ -25,7 +25,7 @@ const mocks = vi.hoisted(() => ({
     throw new Error("STORE_AUTH_FAILED");
   }),
   rpc: vi.fn(
-    async (): Promise<{ data: { allowed: boolean; retry_after_seconds?: number }; error: null }> => ({
+    async (_name?: string, _args?: Record<string, unknown>): Promise<{ data: Record<string, unknown>; error: null }> => ({
       data: { allowed: true },
       error: null,
     }),
@@ -108,9 +108,18 @@ process.env.OPENROUTER_API_KEY = "test-okuyucu-anahtari";
 delete process.env.OPENAI_API_KEY;
 
 function siteyiAyiranOkuma(govde: unknown) {
-  const okuma = vi.fn(async (url: string) => {
+  const okuma = vi.fn(async (url: string, init?: RequestInit) => {
     const adres = String(url);
-    if (adres.includes("openrouter.ai/api/v1/responses")) return okuyucuCevabi(govde);
+    if (adres.includes("openrouter.ai/api/v1/responses")) {
+      const istek = JSON.parse(String(init?.body ?? "{}"));
+      if (istek.text?.format?.name === "firma_dogrulama") return okuyucuCevabi({
+        firma_adi_sayfada: true, adres_sayfada: true,
+        vergi_no_sayfada: true, kanit_sayfa: "https://sehermensucat.com/iletisim",
+        uretici_veya_marka_sahibi: true,
+        uretim_kaniti: "Seher Mensucat kendi ürünlerinin üretimini gerçekleştirmektedir.",
+      });
+      return okuyucuCevabi(govde);
+    }
     if (adres.includes("sehermensucat.com")) {
       return new Response(
         "<html><head><title>Seher Mensucat</title></head><body>Seher Mensucat 1234567890 İstanbul</body></html>",
@@ -130,6 +139,7 @@ function okuyucuCevabi(govde: unknown) {
       usage: {
         input_tokens: 1200,
         output_tokens: 400,
+        server_tool_use: { web_fetch_requests: 1 },
         input_tokens_details: { cached_tokens: 0 },
         output_tokens_details: { reasoning_tokens: 0 },
       },
@@ -167,12 +177,33 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     mocks.kalici = null;
     mocks.yukle.mockImplementation(async () => mocks.kalici);
     mocks.kaydet.mockImplementation(async (girdi) => {
-      mocks.kalici = { ...girdi, islemKimligi: "11111111-1111-4111-8111-111111111111", durum: "hazir", belge: girdi, tedarikciDijitalIz: girdi.tedarikciIz };
+      mocks.kalici = { ...girdi,
+        satirlar: girdi.satirlar.map((satir: Record<string, unknown>, sira: number) => ({
+          ...satir, satirId: `test-satir-${sira}`, urunId: null,
+        })),
+        islemKimligi: "11111111-1111-4111-8111-111111111111",
+        durum: "hazir", belge: girdi, tedarikciDijitalIz: girdi.tedarikciIz };
       return "11111111-1111-4111-8111-111111111111";
     });
     mocks.get.mockReturnValue("owner-cookie");
     mocks.verifyOwner.mockReturnValue({ storeId: "store-1", slug: "deneme-vitrin" });
-    mocks.rpc.mockResolvedValue({ data: { allowed: true }, error: null });
+    mocks.rpc.mockImplementation(async (isim?: string, args?: Record<string, unknown>) => {
+      if (isim === "replace_invoice_line") {
+        const mevcut = mocks.kalici?.satirlar as Record<string, unknown>[] | undefined;
+        if (mevcut) {
+          const hedef = mevcut.find((satir) => satir.satirId === args?.p_line_id);
+          if (hedef) {
+            const veri = args?.p_line as Record<string, unknown>;
+            hedef.sonuc = veri.outcome;
+            hedef.uyari = veri.warning;
+            hedef.katalog = veri.catalog_snapshot;
+          }
+          mocks.kalici!.aramaDurumu = args?.p_discovery;
+        }
+        return { data: { success: true }, error: null };
+      }
+      return { data: { allowed: true }, error: null };
+    });
     mocks.parmak.mockResolvedValue(null);
     mocks.harcama = [];
     mocks.kullanimYaz.mockResolvedValue({ error: null });
@@ -239,8 +270,10 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(soru).not.toContain("asil urun fotografi");
     expect(soru).toContain("baska yerden tamamlama");
     const okumaCagrilari = vi.mocked(fetch).mock.calls.filter((satir) => String(satir[0]).includes("openrouter.ai/api/v1/responses"));
-    expect(okumaCagrilari).toHaveLength(2);
-    const arama = JSON.parse(String((okumaCagrilari[1]?.[1] as RequestInit).body));
+    expect(okumaCagrilari.length).toBeGreaterThanOrEqual(3);
+    const aramaCagrisi = okumaCagrilari.find((cagri) =>
+      JSON.parse(String((cagri[1] as RequestInit).body)).text?.format?.name === "fatura_urun_kaynagi");
+    const arama = JSON.parse(String((aramaCagrisi?.[1] as RequestInit).body));
     expect(arama.model).toBe("openai/gpt-5.6-luna");
     expect(arama.reasoning.effort).toBe("low");
     expect(arama.max_tool_calls).toBe(4);
@@ -283,6 +316,14 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
       const adres = String(url);
       if (adres.includes("openrouter.ai/api/v1/responses")) {
         const istekGovdesi = JSON.parse(String(init?.body ?? "{}"));
+        if (istekGovdesi.text?.format?.name === "firma_dogrulama") {
+          return okuyucuCevabi({
+            vergi_no_sayfada: true, firma_adi_sayfada: true,
+            adres_sayfada: true, kanit_sayfa: "https://sehermensucat.com/iletisim",
+            uretici_veya_marka_sahibi: true,
+            uretim_kaniti: "Seher Mensucat kendi ürünlerinin üretimini gerçekleştirmektedir.",
+          });
+        }
         if (istekGovdesi.text?.format?.name === "urun_fotografi_kontrol") {
           expect(istekGovdesi.input[0].content[1].type).toBe("input_image");
           expect(istekGovdesi.input[0].content[1].image_url).toMatch(/^data:image\/jpeg;base64,/);
@@ -501,18 +542,24 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(mocks.yukle).toHaveBeenCalledWith(expect.anything(), "store-1", "11111111-1111-4111-8111-111111111111");
   });
 
-  it("aynı fotoğraf kayıtlı olsa da yeniden okunur", async () => {
+  it("aynı fatura zaten tamamlandıysa yeniden ücretli OCR başlatılmaz", async () => {
     mocks.parmak.mockResolvedValue("eski-islem");
+    mocks.yukle.mockResolvedValue({
+      islemKimligi: "eski-islem", durum: "hazir", tedarikci: "Üretici",
+      satirlar: [{ model: "M1", ad: "Ürün", sonuc: "eksik", katalog: null }],
+      aramaDurumu: { sonrakiSatir: 1, erisimHatasi: false, sinirDoldu: false },
+      belge: { belgeTuru: "fatura" },
+    });
     const cevap = await faturaOku(istek());
     expect(cevap.status).toBe(200);
-    expect(vi.mocked(fetch)).toHaveBeenCalled();
+    expect(vi.mocked(fetch)).not.toHaveBeenCalled();
   });
 
-  it("günlük harcama dolu olsa da fotoğraf okunur", async () => {
+  it("günlük harcama doluysa yeni ücretli okuma başlamaz", async () => {
     mocks.harcama = [{ cost_usd: 1 }];
     const cevap = await faturaOku(istek());
-    expect(cevap.status).toBe(200);
-    expect(vi.mocked(fetch)).toHaveBeenCalled();
+    expect(cevap.status).toBe(429);
+    expect(vi.mocked(fetch)).not.toHaveBeenCalled();
   });
 
   it("maliyet yazılamazsa işlem kaydı açılmaz", async () => {

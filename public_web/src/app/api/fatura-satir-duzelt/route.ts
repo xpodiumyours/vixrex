@@ -3,6 +3,9 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { sahipYetkisi } from "@/lib/faturaYetki";
 import { eslesmeyenSatir, siteKartiniUygula, type HamFaturaSatiri } from "@/lib/faturaEslestir";
 import { satirKanitKayitlari } from "@/lib/faturaIslemKaydi";
+import { markaSitesiniBul, satirSitesindeAra, lunaGorseliniDogrula } from "@/lib/faturaGoru";
+import { kaynakGorseliniDogrula, urunSayfasindaGorselKaniti } from "@/lib/faturaGorsel";
+import { ARAMA_UCETI_USD, aramaCagrisiSigarMi, bugunkuMaliyetUsd, kullanimKaydet } from "@/lib/faturaMaliyet";
 
 export const dynamic = "force-dynamic";
 
@@ -38,13 +41,16 @@ export async function POST(request: NextRequest) {
 
   const admin = getSupabaseAdmin();
 
-  const { data: limitRows } = await admin.rpc("consume_assistant_request", {
+  const { data: limitRows, error: limitHatasi } = await admin.rpc("consume_assistant_request", {
     p_client_key: `fatura_duzelt:${yetki.slug}`,
     p_max_requests: LIMIT,
     p_window_seconds: PENCERE_SANIYE,
   });
   const limit = Array.isArray(limitRows) ? limitRows[0] : limitRows;
-  if (limit && !limit.allowed) {
+  if (limitHatasi || !limit || typeof limit.allowed !== "boolean") {
+    return NextResponse.json({ hata: "Düzeltme limiti kontrol edilemedi." }, { status: 503 });
+  }
+  if (!limit.allowed) {
     return NextResponse.json(
       { hata: `Çok fazla düzeltme yaptın. ${limit.retry_after_seconds} sn sonra dene.` },
       { status: 429 },
@@ -53,7 +59,7 @@ export async function POST(request: NextRequest) {
 
   const is = await admin
     .from("invoice_jobs")
-    .select("id,discovery_state")
+    .select("id,discovery_state,supplier_name,supplier_site")
     .eq("id", islemKimligi)
     .eq("store_id", yetki.storeId)
     .maybeSingle();
@@ -91,20 +97,104 @@ export async function POST(request: NextRequest) {
     duzeltilmis.barkod !== String(kayit.data.barcode ?? "") ||
     (duzeltilmis.marka ?? "") !== String(kayit.data.brand ?? "");
   const gorseller = Array.isArray(kart?.gorseller) ? kart.gorseller : [];
-  const siteAciklama = typeof kart?.aciklama === "string" ? kart.aciklama.trim() : "";
-  const siteGorsel = typeof gorseller[0] === "string" ? gorseller[0].trim() : "";
-  const siteSayfa = typeof kart?.kaynak === "string" ? kart.kaynak.trim() : "";
+  let siteAciklama = !kimlikDegisti && typeof kart?.aciklama === "string" ? kart.aciklama.trim() : "";
+  let siteGorsel = !kimlikDegisti && typeof gorseller[0] === "string" ? gorseller[0].trim() : "";
+  let siteSayfa = !kimlikDegisti && typeof kart?.kaynak === "string" ? kart.kaynak.trim() : "";
+  let siteAd = "";
+  let siteDayanak: "kod" | "barkod" | "ad" | undefined;
+  let yeniFotografKaniti: { kaynakSayfa: string; kaynakGorsel: string; kaynakAlintisi: string; lunaGerekcesi: string } | undefined;
+  let siteUyari = "";
+  if (kimlikDegisti) {
+    // Yalniz duzeltilen satir arastirilir; eski site/gorsel kaniti asla tasinmaz.
+    try {
+      let harcama = await bugunkuMaliyetUsd(admin, yetki.storeId);
+      let site = String(is.data.supplier_site ?? "");
+      const marka = (duzeltilmis.marka ?? "").trim();
+      const tedarikci = String(is.data.supplier_name ?? "");
+      if (marka && marka.toLocaleLowerCase("tr-TR") !== tedarikci.trim().toLocaleLowerCase("tr-TR")) {
+        if (!aramaCagrisiSigarMi(harcama)) throw new Error("KOTA_DOLDU");
+        const bulunan = await markaSitesiniBul({
+          marka, tedarikci, tedarikciSitesi: site,
+          model: duzeltilmis.model, ad: duzeltilmis.ad,
+        });
+        const maliyet = (bulunan.maliyet ?? 0) + ARAMA_UCETI_USD;
+        await kullanimKaydet(admin, yetki.storeId, { ...bulunan, maliyet });
+        harcama += maliyet;
+        site = bulunan.alan;
+      }
+      if (!site) {
+        siteUyari = "Üreticinin resmî sitesi doğrulanamadı.";
+      } else if (!aramaCagrisiSigarMi(harcama)) {
+        siteUyari = "Araştırma için günlük maliyet sınırı doldu.";
+      } else {
+        const arama = await satirSitesindeAra({
+          alan: site, model: duzeltilmis.model, ad: duzeltilmis.ad,
+          barkod: duzeltilmis.barkod, marka: duzeltilmis.marka,
+          varyant: duzeltilmis.varyant, beden: duzeltilmis.beden,
+        });
+        const maliyet = (arama.maliyet ?? 0) + ARAMA_UCETI_USD;
+        await kullanimKaydet(admin, yetki.storeId, { ...arama, maliyet });
+        harcama += maliyet;
+        if (arama.sayfa && arama.gorsel) {
+          const kontrol = await kaynakGorseliniDogrula(arama.gorsel);
+          const kanit = kontrol.tamam
+            ? await urunSayfasindaGorselKaniti(arama.sayfa, arama.gorsel, duzeltilmis.varyant)
+            : null;
+          if (!kanit) {
+            siteUyari = "Ürün görseli resmî sayfada doğrulanamadı.";
+          } else if (!aramaCagrisiSigarMi(harcama)) {
+            siteUyari = "Görsel araştırması için maliyet sınırı doldu.";
+          } else if (!kontrol.bayt || !kontrol.tur) {
+            siteUyari = "Görsel içeriği doğrulanamadı.";
+          } else {
+            const gorselVerisi = `data:${kontrol.tur};base64,${Buffer.from(kontrol.bayt).toString("base64")}`;
+            const inceleme = await lunaGorseliniDogrula({
+              gorsel: gorselVerisi, kaynakSayfa: arama.sayfa,
+              kaynakAlintisi: kanit.kaynakAlintisi, urunAdi: arama.ad,
+              faturaAdi: duzeltilmis.ad, marka: duzeltilmis.marka ?? "",
+              renk: duzeltilmis.varyant, beden: duzeltilmis.beden,
+            });
+            await kullanimKaydet(admin, yetki.storeId, inceleme);
+            if (inceleme.uyumlu) {
+              siteAd = arama.ad;
+              siteDayanak = arama.dayanak ?? undefined;
+              siteAciklama = arama.aciklama;
+              siteGorsel = arama.gorsel;
+              siteSayfa = arama.sayfa;
+              yeniFotografKaniti = {
+                kaynakSayfa: arama.sayfa, kaynakGorsel: arama.gorsel,
+                kaynakAlintisi: kanit.kaynakAlintisi, lunaGerekcesi: inceleme.gerekce,
+              };
+            } else {
+              siteUyari = "Luna ürün fotoğrafını veya renk eşleşmesini doğrulayamadı.";
+            }
+          }
+        } else {
+          siteUyari = "Resmî sitede bu ürünün kimliği ve görseli doğrulanamadı.";
+        }
+      }
+    } catch (err) {
+      const kod = err instanceof Error ? err.message : "";
+      siteUyari = kod === "OKUYUCU_BAKIYE_BITTI" || kod === "KOTA_DOLDU"
+        ? "Araştırma kotası doldu; satır doğrulanmadan saklandı."
+        : "Kaynak araştırması başarısız; satır doğrulanmadan saklandı.";
+      console.error("[fatura-satir-duzelt] arastirma:", kod || err);
+    }
+  }
   const yeni = siteKartiniUygula(eslesmeyenSatir({
     ...duzeltilmis,
+    siteAd, siteDayanak,
     siteAciklama,
     siteGorsel,
     siteSayfa,
-    siteDayanak: kart?.dayanak === "barkod" || kart?.dayanak === "ad" ? kart.dayanak : "kod",
-    siteFotografKaniti: !kimlikDegisti && kart?.fotografKaniti && typeof kart.fotografKaniti === "object" && !Array.isArray(kart.fotografKaniti)
-      ? kart.fotografKaniti as { kaynakSayfa: string; kaynakGorsel: string; kaynakAlintisi: string; lunaGerekcesi: string }
-      : undefined,
-    sayfaDogrulandi: !kimlikDegisti && Boolean(siteAciklama && siteGorsel.startsWith("https://") && siteSayfa.startsWith("https://")),
+    siteFotografKaniti: kimlikDegisti ? yeniFotografKaniti
+      : kart?.fotografKaniti && typeof kart.fotografKaniti === "object" && !Array.isArray(kart.fotografKaniti)
+        ? kart.fotografKaniti as { kaynakSayfa: string; kaynakGorsel: string; kaynakAlintisi: string; lunaGerekcesi: string }
+        : undefined,
+    sayfaDogrulandi: kimlikDegisti ? Boolean(yeniFotografKaniti)
+      : Boolean(siteAciklama && siteGorsel.startsWith("https://") && siteSayfa.startsWith("https://")),
   }));
+  if (siteUyari && yeni.sonuc !== "kanitli") yeni.uyari = siteUyari;
 
   const lineId = String(kayit.data.id);
   const kayitlar = satirKanitKayitlari(lineId, yeni, "");

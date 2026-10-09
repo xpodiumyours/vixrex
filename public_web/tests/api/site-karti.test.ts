@@ -118,9 +118,13 @@ describe("OpenRouter kaynak doğrulama", () => {
     expect(satirAramaCevabi(barkodlu, kanitli({
       site_barkodu: "8681128321677", eslesme_dayanagi: "barkod",
     }))?.dayanak).toBe("barkod");
-    const adsizKod = { alan: "firma.example", model: "", barkod: "", ad: "Elit fanila", marka: "Elit" };
+    const adsizKod = {
+      alan: "firma.example", model: "", barkod: "", ad: "Elit fanila",
+      marka: "Elit", varyant: "Siyah",
+    };
     expect(satirAramaCevabi(adsizKod, kanitli({
-      site_kodu: "", site_markasi: "Elit", eslesme_dayanagi: "ad-ve-ozellik",
+      site_kodu: "", site_markasi: "Elit", site_rengi: "Siyah",
+      fotograf_rengi_dogrulandi: true, eslesme_dayanagi: "ad-ve-ozellik",
     }))?.dayanak).toBe("ad");
     expect(satirAramaCevabi({ ...adsizKod, marka: "" }, kanitli({
       site_kodu: "", eslesme_dayanagi: "ad-ve-ozellik",
