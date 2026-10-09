@@ -85,6 +85,11 @@ export async function POST(request: NextRequest) {
   const kart = kayit.data.catalog_snapshot && typeof kayit.data.catalog_snapshot === "object" && !Array.isArray(kayit.data.catalog_snapshot)
     ? kayit.data.catalog_snapshot as Record<string, unknown>
     : null;
+  const kimlikDegisti =
+    duzeltilmis.model !== String(kayit.data.model ?? "") ||
+    duzeltilmis.ad !== String(kayit.data.product_name ?? "") ||
+    duzeltilmis.barkod !== String(kayit.data.barcode ?? "") ||
+    (duzeltilmis.marka ?? "") !== String(kayit.data.brand ?? "");
   const gorseller = Array.isArray(kart?.gorseller) ? kart.gorseller : [];
   const siteAciklama = typeof kart?.aciklama === "string" ? kart.aciklama.trim() : "";
   const siteGorsel = typeof gorseller[0] === "string" ? gorseller[0].trim() : "";
@@ -94,7 +99,8 @@ export async function POST(request: NextRequest) {
     siteAciklama,
     siteGorsel,
     siteSayfa,
-    sayfaDogrulandi: Boolean(siteAciklama && siteGorsel.startsWith("https://") && siteSayfa.startsWith("https://")),
+    siteDayanak: kart?.dayanak === "barkod" || kart?.dayanak === "ad" ? kart.dayanak : "kod",
+    sayfaDogrulandi: !kimlikDegisti && Boolean(siteAciklama && siteGorsel.startsWith("https://") && siteSayfa.startsWith("https://")),
   }));
 
   const lineId = String(kayit.data.id);

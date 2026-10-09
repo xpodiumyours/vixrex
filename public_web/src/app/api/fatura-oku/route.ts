@@ -8,7 +8,7 @@ import { belgeGercegiUyuyorMu } from "@/lib/faturaSatirAyikla";
 import { eslesmeyenSatir, siteKartiniUygula, sonucOzeti, type EslesmisFaturaSatiri, type HamFaturaSatiri } from "@/lib/faturaEslestir";
 import { ayniAlisverisAdaylari, belgeParmakIzi, islemKaydet } from "@/lib/faturaIslemKaydi";
 import { faturaTaslaklari } from "@/lib/faturaTaslagi";
-import { firmaAlaniniKilitle, faturayiOku, satirSitesindeAra, type GoruSatiri } from "@/lib/faturaGoru";
+import { firmaAlaniniKilitle, faturayiOku, markaSitesiniBul, satirSitesindeAra, type GoruSatiri } from "@/lib/faturaGoru";
 import { kartaGirecekGorsel } from "@/lib/faturaGorsel";
 import { ARAMA_UCETI_USD, aramaCagrisiSigarMi, bugunkuMaliyetUsd, kullanimKaydet } from "@/lib/faturaMaliyet";
 import { islemiYukle } from "@/lib/faturaIslemOku";
@@ -243,20 +243,46 @@ export async function POST(request: NextRequest) {
     });
 
     const satirlar: EslesmisFaturaSatiri[] = [];
+    const markaAlanlari = new Map<string, string>();
     let aramaAcik = true;
     for (const satir of sonSatirlar) {
       let siteAciklama = "";
       let siteGorsel = "";
       let siteSayfa = "";
       let siteAd = "";
-      const aranabilir = Boolean(etkinSite && (satir.model || satir.ad || satir.barkod));
+      let siteDayanak: "kod" | "barkod" | "ad" | undefined;
+      const ayriMarka = Boolean(satir.marka.trim()) &&
+        satir.marka.trim().toLocaleLowerCase("tr-TR") !== sonTedarikci.trim().toLocaleLowerCase("tr-TR");
+      const markaAnahtari = satir.marka.trim().toLocaleLowerCase("tr-TR");
+      if (ayriMarka && !markaAlanlari.has(markaAnahtari) && aramaAcik && aramaCagrisiSigarMi(gunlukHarcama)) {
+        try {
+          const bulunan = await markaSitesiniBul({
+            marka: satir.marka, tedarikci: sonTedarikci, tedarikciSitesi: etkinSite,
+            model: satir.model, ad: satir.ad,
+          });
+          const aramaMaliyeti = (bulunan.maliyet ?? 0) + ARAMA_UCETI_USD;
+          await kullanimKaydet(admin, magazaId, { ...bulunan, maliyet: aramaMaliyeti });
+          gunlukHarcama += aramaMaliyeti;
+          markaAlanlari.set(markaAnahtari, bulunan.alan);
+        } catch (hata) {
+          const mesaj = hata instanceof Error ? hata.message : "";
+          if (mesaj === "OKUYUCU_BAKIYE_BITTI") aramaAcik = false;
+          console.error("[fatura-oku] marka sitesi aramasi durdu:", mesaj || hata);
+          markaAlanlari.set(markaAnahtari, "");
+        }
+      }
+      const satirSitesi = ayriMarka ? (markaAlanlari.get(markaAnahtari) ?? "") : etkinSite;
+      const aranabilir = Boolean(satirSitesi && (satir.model || satir.ad || satir.barkod));
       if (aramaAcik && aranabilir && aramaCagrisiSigarMi(gunlukHarcama)) {
         try {
           const arama = await satirSitesindeAra({
-            alan: etkinSite,
+            alan: satirSitesi,
             model: satir.model,
             ad: satir.ad,
             barkod: satir.barkod,
+            marka: satir.marka,
+            varyant: satir.varyant,
+            beden: satir.beden,
           });
           const aramaMaliyeti = (arama.maliyet ?? 0) + ARAMA_UCETI_USD;
           await kullanimKaydet(admin, magazaId, { ...arama, maliyet: aramaMaliyeti });
@@ -266,6 +292,7 @@ export async function POST(request: NextRequest) {
             const aciklama = arama.aciklama.trim() || satir.ad.trim() || satir.model.trim();
             if (gorsel && aciklama) {
               siteAd = arama.ad;
+              siteDayanak = arama.dayanak ?? undefined;
               siteAciklama = aciklama;
               siteGorsel = gorsel;
               siteSayfa = arama.sayfa;
@@ -280,6 +307,7 @@ export async function POST(request: NextRequest) {
       satirlar.push(siteKartiniUygula(eslesmeyenSatir({
         ...satir,
         siteAd,
+        siteDayanak,
         siteAciklama,
         siteGorsel,
         siteSayfa,

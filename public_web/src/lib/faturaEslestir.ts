@@ -22,6 +22,7 @@ export interface HamFaturaSatiri {
   siteGorsel?: string;
   siteSayfa?: string;
   siteAd?: string;
+  siteDayanak?: "kod" | "barkod" | "ad";
   sayfaDogrulandi?: boolean;
 }
 
@@ -84,7 +85,7 @@ export function siteKartiniUygula(satir: EslesmisFaturaSatiri): EslesmisFaturaSa
       katalog: {
         firma: satir.katalog?.firma ?? "",
         kaynakFirma: satir.katalog?.kaynakFirma ?? "",
-        dayanak: satir.katalog?.dayanak === "barkod" ? "barkod" : "kod",
+        dayanak: satir.siteDayanak ?? satir.katalog?.dayanak ?? "kod",
         izinDurumu: satir.katalog?.izinDurumu ?? "yok",
         resmiAd: (satir.siteAd ?? "").trim() || satir.katalog?.resmiAd || satir.ad,
         marka: satir.katalog?.marka || satir.marka || "",
