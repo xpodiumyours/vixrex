@@ -171,6 +171,24 @@ describe("fatura satırı → atomik ürün kaydı", () => {
     expect(mocks.createProduct).not.toHaveBeenCalled();
     expect(mocks.bagla).not.toHaveBeenCalled();
   });
+  it("ayri yayin istegi olmadan gercek urun ID'si taslak kalir", async () => {
+    const body = await (await topluUrunEkle(istek([satir({
+      yayinIstegi: false, ownerApproved: true,
+    })]))).json();
+    expect(body.taslak).toBe(1);
+    expect(body.yayinda).toBe(0);
+    expect(body.kayitBasarili).toBe(true);
+    expect(body.kayitliUrunIdleri).toEqual(["urun-1"]);
+    expect(mocks.save).toHaveBeenCalledOnce();
+    expect(mocks.publishProduct).not.toHaveBeenCalled();
+  });
+  it("sahip onayi olmadan dogru gorselli kart dahi yayina cikmaz", async () => {
+    const body = await (await topluUrunEkle(istek([satir({
+      yayinIstegi: true, ownerApproved: false,
+    })]))).json();
+    expect(body.yayinda).toBe(0);
+    expect(mocks.publishProduct).not.toHaveBeenCalled();
+  });
   it("aynı satırın mevcut kimliği atomik kayıttan geri gelir", async () => {
     mocks.dogrula.mockResolvedValue(dogrulanmis({ urunId: "urun-9" }));
     mocks.save.mockResolvedValue({ id: "urun-9", slug: "urun-9", created: false, kayit: "guncellendi" });
@@ -184,6 +202,8 @@ describe("fatura satırı → atomik ürün kaydı", () => {
     const body = await (await topluUrunEkle(istek([satir()]))).json();
     expect(body.hatali).toBe(1);
     expect(body.eklenen).toBe(0);
+    expect(body.kayitBasarili).toBe(false);
+    expect(body.kayitliUrunIdleri).toEqual([]);
     expect(mocks.publishProduct).not.toHaveBeenCalled();
     expect(mocks.geriAl).not.toHaveBeenCalled();
   });

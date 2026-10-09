@@ -565,8 +565,16 @@ export async function POST(request: NextRequest) {
   }
   if (yayinda > 0) vitrinOnbelleginiYenile(slug);
 
+  // "İstek işlendi" (tamam) ve "gerçek ürün ID'si kaydedildi"
+  // farklı sonuçlardır. Sıfır ürün yazıldığında sahte başarı üretme.
+  const kayitliUrunIdleri = [...new Set(
+    sonuclar.filter((satir) => (satir.durum === "taslak" || satir.durum === "yayinda") && satir.id)
+      .map((satir) => satir.id as string),
+  )];
   return NextResponse.json({
     tamam: true,
+    kayitBasarili: kayitliUrunIdleri.length > 0,
+    kayitliUrunIdleri,
     toplam: sonuclar.length,
     eklenen: yayinda + taslak,
     yayinda,

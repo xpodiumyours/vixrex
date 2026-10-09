@@ -221,7 +221,7 @@ export default function InvoiceToProducts({
             satirSirasi: sira,
             sahipDurumu: {
               satisFiyati: satir.satisFiyati, stok: satir.stok,
-              stokOnaylandi: stokSayisi(satir.stok) !== null, kategoriId: satir.kategoriId,
+              stokOnaylandi: satir.stokOnaylandi, kategoriId: satir.kategoriId,
               onayli: satir.onayli, esnafGorselleri: satir.esnafGorselleri,
             },
           })),
@@ -550,8 +550,9 @@ export default function InvoiceToProducts({
   }
 
   /**
-   * Satış fiyatı yazılmış, fotoğrafı aramadan gelmiş satır yayınlanır.
-   * Ayrı kart onayı ve taslak adımı yoktur. Faturadaki adet stok olarak gider.
+   * Esnafın BU düğmeye basması satır bilgilerine açık onaydır.
+   * Önce sunucudaki invoice_job_lines.owner_state güncellenir, sonra
+   * yalnız kalıcı TASLAK kaydı istenir. Yayınlama ayrı bir eylemdir.
    */
   async function vitrineYaz() {
     const gonderilecek = satirlar
@@ -562,17 +563,32 @@ export default function InvoiceToProducts({
 
     if (gonderilecek.length === 0) return;
 
+    // Önceki satırlarda kaydedilmiş gerçek kararlar korunur.
+    // Yalnız esnafın bu düğmeyle onayladığı, yayına uygun satırlar onaylanır.
+    const secili = new Set(gonderilecek.map((girdi) => girdi.sira));
+    const onaylanan = satirlar.map((satir, index) =>
+      secili.has(index)
+        ? { ...satir, onayli: true, stokOnaylandi: stokSayisi(satir.stok) !== null }
+        : satir,
+    );
+    const onayliGonderilecek = gonderilecek.map((girdi) => ({
+      ...girdi,
+      satir: onaylanan[girdi.sira],
+    }));
+
     setAdim("yaziliyor");
     setHata(null);
 
     try {
-      await sahipSecimleriniKaydet(satirlar);
+      // DB'de gerçek onay saklanmadan kart yazma isteği gönderilmez.
+      await sahipSecimleriniKaydet(onaylanan);
+      setSatirlar(onaylanan);
       const cevap = await fetch("/api/products/batch", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           slug: storeSlug,
-          products: gonderilecek.map(({ satir, sira, degerlendirme }) => {
+          products: onayliGonderilecek.map(({ satir, sira, degerlendirme }) => {
             const satisFiyati = fiyatSayisi(satir.satisFiyati);
             const katalog = satir.katalog;
             return {
@@ -596,8 +612,8 @@ export default function InvoiceToProducts({
                   : undefined,
               islemKimligi: belge?.islemKimligi || undefined,
               satirSirasi: sira,
-              ownerApproved: true,
-              yayinIstegi: true,
+              ownerApproved: satir.onayli,
+              yayinIstegi: false,
               purchasePriceAmount: satir.alisBirimFiyat ?? undefined,
               metadata: (() => {
                 const sablon = categories.find((kategori) => kategori.id === satir.kategoriId)
@@ -630,6 +646,13 @@ export default function InvoiceToProducts({
         );
       }
 
+      // HTTP 200 veya tamam:true, tek başına ürün yazıldığını ispatlamaz.
+      if (!govde || typeof govde.eklenen !== "number" || govde.eklenen < 1) {
+        const hata = Array.isArray(govde?.satirlar)
+          ? govde.satirlar.map((item: { sebep?: string }) => item.sebep).filter(Boolean).join(" · ")
+          : "";
+        throw new Error(hata || "Hiçbir ürün kartı kaydedilemedi. Değişiklikler faturada saklandı.");
+      }
       setSonuc(govde as YazmaSonucu);
       setAdim("bitti");
       await onUploaded();
@@ -1264,7 +1287,7 @@ export default function InvoiceToProducts({
           onClick={() => void vitrineYaz()}
           disabled={hazirSayisi === 0 || yaziliyor}
         >
-          {yaziliyor ? "Yayınlanıyor…" : `${hazirSayisi} ürünü yayınla`}
+          {yaziliyor ? "Taslaklar kaydediliyor…" : `${hazirSayisi} kartı onayla ve taslak kaydet`}
         </button>
       </div>
 
