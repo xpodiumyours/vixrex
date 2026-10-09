@@ -1,4 +1,13 @@
-import { alanAdiTemizle } from "@/lib/ureticiKatalog";
+export function alanAdiTemizle(deger: string): string {
+  const ham = deger.trim();
+  if (!ham) return "";
+  try {
+    const url = new URL(ham.includes("://") ? ham : `https://${ham}`);
+    return url.hostname.toLowerCase().replace(/^www\./, "").replace(/\.$/, "");
+  } catch {
+    return "";
+  }
+}
 
 // Pazar yeri, sosyal ağ, video ve sözlük adresleri firmanın resmi sitesi
 // sayılmaz — buralardan eşleşme kurulmaz.

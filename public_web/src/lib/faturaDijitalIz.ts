@@ -4,7 +4,19 @@ import { createHash } from "node:crypto";
 import sharp from "sharp";
 import { FATURA_MIN_SOURCE_SHORT_EDGE } from "@/lib/productImagePolicy";
 import type { FirmaSiteDurumu } from "@/lib/firmaSiteDurumu";
-import type { IzinDurumu, UreticiUrunu } from "@/lib/ureticiKatalog";
+type IzinDurumu = "yok" | "bekliyor" | "var";
+
+interface UreticiUrunu {
+  kod: string;
+  ad: string;
+  marka: string;
+  aciklama: string;
+  barkod: string;
+  gorseller: string[];
+  kaynak: string;
+  varyant?: string;
+  modelAdi?: string;
+}
 
 export interface TedarikciDijitalIzi {
   anahtar: string | null;

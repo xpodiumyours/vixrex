@@ -15,7 +15,6 @@ import {
   urunuGeriAl,
 } from "@/lib/faturaUrunBaglantisi";
 import { urunGirdisiniHazirla } from "@/lib/productIntake";
-import { izinsizUreticiGorseli } from "@/lib/ureticiKatalog";
 import { durumGecerliMi, yayinEksikleri } from "@/lib/faturaKartDurumu";
 import { otomatikOzellikler } from "@/lib/faturaOtomatikDoldur";
 import { eksikZorunluAlanlar, eksikZorunluAlanMesaji } from "@/lib/productRequiredFields";
@@ -259,11 +258,8 @@ export async function POST(request: NextRequest) {
     const kartDurumu = faturaKaynakli ? (dogrulanmis?.sonuc ?? "eksik") : iddiaDurumu;
     const yayinIstegi = ham.yayinIstegi === true;
 
-    // Fotoğraf izleme (kilitli kapsam): üreticinin fotoğrafı karta girer ve
-    // yayınlanabilir; kullanım izni sonra, çalışan sistemle istenir. Hangi
-    // kartta üretici görseli olduğu fatura_kanit + invoice_image_rights
-    // kayıtlarından izlenir — izin turu bu listeden yürür. Esnafın kendi
-    // fotoğrafı her zamanki gibi serbestçe geçer.
+    // Fotoğraf firmanın kendi sitesinden veya esnafın yüklediğinden karta
+    // girer. Üretici ürün havuzu yoktur; ureticiGorsel o havuzdan işaretlenmez.
     const kaynakGorselleri = faturaKaynakli
       ? hazirlik.girdi.imageUrls.filter(
           (adres) =>
@@ -273,7 +269,7 @@ export async function POST(request: NextRequest) {
     const disGorseller = faturaKaynakli
       ? kaynakGorselleri.filter((adres) => !yonetilenUrunGorseliMi(adres))
       : [];
-    const ureticiGorselVar = hazirlik.girdi.imageUrls.some(izinsizUreticiGorseli);
+    const ureticiGorselVar = false;
 
     let urunGorselleri = kaynakGorselleri;
     let gorselDurumu = "";
