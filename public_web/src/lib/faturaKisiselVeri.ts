@@ -5,8 +5,7 @@
  *   Fatura fotoğrafı OpenAI'ye gönderilip okunuyor. Fotoğrafta esnafın
  *   MÜŞTERİSİNE ait kişisel veriler de var — T.C. Kimlik No ve vergi numarası.
  *   Sistem bu verilere İHTİYAÇ DUYMAZ:
- *     - Ürün eşleştirme yalnızca stok kodu/barkod ile yapılır
- *       (`ureticiKatalog.ts`: "TAHMİN YOK").
+ *     - Ürün eşleştirme firmanın kendi sitesinde yapılır; ada göre tahmin yok.
  *     - Tedarikçi doğrulaması OCR çıktısından değil, DIŞARIDAN geçilen
  *       `tedarikciKimligi`'nden gelir (`faturaEslestir.ts:222`).
  *   Yani bu veriler hiçbir işe yaramıyor — yalnızca saklanıyordu.

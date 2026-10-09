@@ -1,6 +1,7 @@
 # Ürün Ekle → Fatura → Ürün Kartı: nerede kaldık
 
-> Tarihsel kayıt, 2026-10-04 anlık görüntüsü. Güncel iş listesi değildir. Çelişki adayı ve aynı alışveriş adımları bu dosyada yoktur.
+> Tarihsel kayıt, 2026-10-04 anlık görüntüsü. Güncel iş listesi değildir.
+> **2026-10-09 Casper:** Üretici ürün havuzu yok. Aşağıdaki "16 firma / 8.594 ürün" ve `data/katalog` satırları geçersizdir; dosyalar silindi.
 
 Tarih: 2026-10-04. Bu belge ölçülmüş gerçeği yazar; plan değil, ölçüm raporudur.
 

@@ -1,36 +1,24 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
-type Firma = { anahtar: string; sektor: string; izin: "yok" | "bekliyor" | "var" };
-
 const kok = resolve(__dirname, "../..");
-const firmalar = JSON.parse(
-  readFileSync(resolve(kok, "public_web/scripts/katalog/firmalar.json"), "utf8"),
-) as Firma[];
-const katalogDosyalari = readdirSync(resolve(kok, "public_web/data/katalog")).filter(
-  (ad) => /^uretici-katalog-.+\.json$/.test(ad),
-);
 const sozlesme = JSON.parse(
   readFileSync(resolve(kok, "shared/fatura_katalog_kanit_sozlesmesi.json"), "utf8"),
 ) as { core_rule: string; rules: Array<{ id: string }> };
 
-describe("faturadan kataloga master kapsam kilidi", () => {
-  it("55 firma havuzunu, 16 hazir katalogu ve 39 katalog bekleyen firmayi korur", () => {
-    expect(firmalar).toHaveLength(55);
-    expect(katalogDosyalari).toHaveLength(16);
-    expect(firmalar.length - katalogDosyalari.length).toBe(39);
-  });
+function havuzDosyasiVar(): boolean {
+  const klasor = resolve(kok, "public_web/data/katalog");
+  if (!existsSync(klasor)) return false;
+  return readdirSync(klasor).some((ad) => /^uretici-katalog-/.test(ad) || ad === "_firmalar.json");
+}
 
-  it("tekstil ve gida senaryolarini havuzda birlikte tutar", () => {
-    expect(firmalar.filter((f) => f.sektor === "Tekstil")).toHaveLength(37);
-    expect(firmalar.filter((f) => f.sektor === "Gıda")).toHaveLength(18);
-  });
-
-  it("izin durumunu tek kaynakta olculebilir tutar", () => {
-    expect(firmalar.filter((f) => f.izin === "yok")).toHaveLength(54);
-    expect(firmalar.filter((f) => f.izin === "bekliyor")).toHaveLength(1);
-    expect(firmalar.filter((f) => f.izin === "var")).toHaveLength(0);
+describe("uretici urun havuzu yok kilidi", () => {
+  it("Casper 2026-10-09: havuz dosyasi geri gelmez", () => {
+    expect(havuzDosyasiVar()).toBe(false);
+    expect(existsSync(resolve(kok, "public_web/scripts/katalog"))).toBe(false);
+    expect(existsSync(resolve(kok, "public_web/src/lib/ureticiKatalog.ts"))).toBe(false);
+    expect(existsSync(resolve(kok, "tool/fatura_havuz_olc.mjs"))).toBe(false);
   });
 
   it("zayif kanitta tahmin etmeme ve yayin onayi kurallarini korur", () => {

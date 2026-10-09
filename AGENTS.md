@@ -227,6 +227,20 @@ yazıldı. Aynı gün ajan test adresi olarak `vixrex-app` önizlemesini verdi;
 Casper `/home` sayfasında bambaşka bir ürün paneli gördü ve o gün düzeltilen
 ürün ekleme sayfasının yeniden bozulacağını sandı. Kod aynıydı; adres yanlıştı.
 
+### 20. Üretici ürün havuzu yok (2026-10-09)
+Casper: "böyle bir havuzumuz yok." `public_web/data/katalog`,
+`public_web/scripts/katalog`, `ureticiKatalog.ts` ve `ureticiUrunuBul` geri
+getirilmez. Bu dosyaları "izin listesi"ne çevirmek de yasaktır. Fatura satırı
+firmanın kendi sitesinde aranır. Gerçek fatura ile ölçüm iş listesinin başı
+değil, canlıya çıkış kapısıdır (sonda).
+
+Kanca: `public_web/tests/fatura-katalog-master-sozlesme.test.ts` havuz
+dosyasının yokluğunu kilitler.
+
+Neden: 2026-10-09'da ajanlar içeride unutulmuş üretici JSON dosyalarını gerçek
+bir ürün havuzu sanıp "izin listesine çevirelim" diye plan kurdu. Casper'ın
+havuzu yok; ürün firmanın sitesinden bulunur.
+
 ### Token ekonomisi (2026-09-16)
 Token en kıt kaynak. Bitince koordinasyon, doğrulama ve merge sorumluluğu
 duruyor — yani proje duruyor. Yavaş ajan, duran projeden iyidir.

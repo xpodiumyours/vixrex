@@ -1,6 +1,8 @@
 # Fatura fotoğrafından ürün kartı — 7 Ekim 2026
 
-Bu dosya güncel plandır. 30 Eylül belgesi (`docs/FATURADAN-VITRINE-MASTER-PLAN.md`) tarihsel kayıttır; iş listesi değildir.
+**2026-10-09 Casper kararı:** Üretici ürün havuzu yok. `public_web/data/katalog` geri getirilmez. Ürün firmanın kendi sitesinden bulunur. Gerçek fatura en sonda bakılır.
+
+Bu dosya 7 Ekim planıdır. 30 Eylül belgesi (`docs/FATURADAN-VITRINE-MASTER-PLAN.md`) tarihsel kayıttır; iş listesi değildir. Aşağıdaki dilim/dal satırları 7 Ekim'dir; havuz kararı onları geçersiz kılar.
 
 Dilim 1–4 bu dalda yazıldı. Dilim 5 önceden koddaydı: stok onayı olmadan, faturadaki adet varsa satır yayınlanır. Açık dal `fatura/kart-kaynagi`. Ana dal `origin/main`. Canlıya alınmadı. Birleştirme ve canlı ayrı karardır.
 

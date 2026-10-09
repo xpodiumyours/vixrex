@@ -24,8 +24,7 @@
 
 import sharp from "sharp";
 import { kisiselVeriTemizle } from "@/lib/faturaKisiselVeri";
-import { resmiSiteSayilmaz } from "@/lib/firmaArama";
-import { alanAdiTemizle } from "@/lib/ureticiKatalog";
+import { alanAdiTemizle, resmiSiteSayilmaz } from "@/lib/firmaArama";
 
 const ADRES = "https://openrouter.ai/api/v1/responses";
 const OPENAI_FOTOGRAF_ADRESI = "https://api.openai.com/v1/responses";

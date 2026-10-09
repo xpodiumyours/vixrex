@@ -26,7 +26,7 @@ Firmaya söylenmek istenen söz:
 
 - Hedef: İstanbul toptancıları ve Türkiye üreticileri; bunlardan ürün alan küçük esnaf.
 - Gıda, tekstil, temizlik, ev tekstili ve tuhafiye dahil farklı sektörler kapsamdadır. Tutku, Eti, Ülker ve Işılay örnektir; izin verilen markalar listesi değildir.
-- 16 katalog ve geçmişte 54 olarak anılan firma havuzu maliyet ve hız içindir. İncelenen yerel kopyada 55 firma kaydı olması da kapsam kararı değildir. Yeni firma keşfi ana işin içindedir.
+- **2026-10-09 Casper:** Üretici ürün havuzu yok; 16 katalog / 55 firma sayıları bu belgede tarihseldir, geri getirilmez. Ürün firmanın kendi sitesinden bulunur. Yeni firma keşfi ana işin içindedir.
 - Sınır: faturadaki ürünün ve firma ilişkisinin resmî dijital kaynakla doğrulanabilir eşleşmesi. Basılı veya el yazısı olması tek başına eleme nedeni değildir.
 - Toptancı ile üretici aynı olmak zorunda değildir. Çok markalı bir toptancı faturası normal bir senaryodur.
 - Tek fotoğraf ana giriş yoludur. İkinci belge veya ambalaj fotoğrafı destekleyici olabilir; her esnafa zorunlu ek fotoğraf görevi verilmez.
@@ -281,7 +281,7 @@ Bu liste çalışma yönünü gösterir; dosyalar aktif geliştiği için satır
 | --- | --- |
 | Fotoğraf okuma ve yanıt | [faturaGoru.ts](../public_web/src/lib/faturaGoru.ts), [fatura-oku](../public_web/src/app/api/fatura-oku/route.ts) |
 | Firma ve ürün keşfi | [firmaArama.ts](../public_web/src/lib/firmaArama.ts), [faturaDijitalIz.ts](../public_web/src/lib/faturaDijitalIz.ts), [faturaEslestir.ts](../public_web/src/lib/faturaEslestir.ts) |
-| Katalog, kart ve taslak | [ureticiKatalog.ts](../public_web/src/lib/ureticiKatalog.ts), [faturaKartDurumu.ts](../public_web/src/lib/faturaKartDurumu.ts), [faturaTaslagi.ts](../public_web/src/lib/faturaTaslagi.ts) |
+| Kart ve taslak | [faturaKartDurumu.ts](../public_web/src/lib/faturaKartDurumu.ts), [faturaTaslagi.ts](../public_web/src/lib/faturaTaslagi.ts). `ureticiKatalog.ts` 2026-10-09'da silindi; havuz yok. |
 | İşlem ve kanıt kaydı | [faturaIslemKaydi.ts](../public_web/src/lib/faturaIslemKaydi.ts), [işlem şeması](../supabase/migrations/20260929000000_fatura_islem_kaniti.sql) |
 | Esnaf ekranları | [InvoiceToProducts.tsx](../public_web/src/components/owner/InvoiceToProducts.tsx), [OwnerProductManager.tsx](../public_web/src/components/owner/OwnerProductManager.tsx) |
 | Ürün yazma ve yayınlama | [products/batch](../public_web/src/app/api/products/batch/route.ts), [products](../public_web/src/app/api/products/route.ts), [fatura-yayinla](../public_web/src/app/api/fatura-yayinla/route.ts), [yayın şeması](../supabase/migrations/20260930000000_fatura_yayin_kapisi.sql) |

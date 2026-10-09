@@ -56,16 +56,6 @@ import { POST as topluUrunEkle } from "@/app/api/products/batch/route";
 
 const STORE = { id: "store-1", edit_token: "token-1", name: "Deneme Butik" };
 
-import seherKatalog from "../../data/katalog/uretici-katalog-seher-mensucat.json";
-
-/**
- * Gerçek katalogdan alınmış, izni OLMAYAN bir üretici fotoğrafı.
- * Seher'in izni "bekliyor" — yani bu adres yayına çıkamamalı.
- */
-const IZINSIZ_URETICI_FOTOGRAFLARI = (seherKatalog as Array<{ gorseller: string[] }>)
-  .find((urun) => urun.gorseller.length >= 3)!
-  .gorseller.slice(0, 3);
-
 const FOTOGRAFLAR = [
   "https://tedarikci.example.com/1.jpg",
   "https://tedarikci.example.com/2.jpg",
@@ -304,33 +294,6 @@ describe("faturadan gelen ürünün yayın kapısı", () => {
     }
   });
 
-  it("üretici fotoğrafı karta girer ve yayınlanır; izni sonra istenir", async () => {
-    // Kilitli kapsam: önce çalışan sistem. Seher'in izni "bekliyor" ama
-    // fotoğrafı yayına girer; kullanım izni sonra bu kayıtlardan istenir.
-    const cevap = await topluUrunEkle(
-      istek([faturaSatiri({ imageUrls: IZINSIZ_URETICI_FOTOGRAFLARI })]),
-    );
-    const govde = await cevap.json();
-
-    expect(mocks.publishProduct).toHaveBeenCalledTimes(1);
-    expect(govde.yayinda).toBe(1);
-    const yazilan: string[] = mocks.rpc.mock.calls[0][1].p_product.imageUrls;
-    for (const adres of IZINSIZ_URETICI_FOTOGRAFLARI) {
-      expect(yazilan).toContain(adres);
-    }
-  });
-
-  it("üretici görseli fatura kanıtına işaretlenir — izin turu bu listeden yürür", async () => {
-    await topluUrunEkle(
-      istek([faturaSatiri({ imageUrls: IZINSIZ_URETICI_FOTOGRAFLARI })]),
-    );
-
-    const yazilan = { fatura_kanit: mocks.rpc.mock.calls[0][1].p_evidence };
-    expect(yazilan).toMatchObject({
-      fatura_kanit: { kartDurumu: "kanitli", stokOnaylandi: true, ureticiGorsel: true },
-    });
-  });
-
   it("esnafın kendi fotoğrafında üretici işareti konmaz", async () => {
     await topluUrunEkle(istek([faturaSatiri({ imageUrls: FOTOGRAFLAR })]));
 
@@ -341,8 +304,7 @@ describe("faturadan gelen ürünün yayın kapısı", () => {
   });
 
   it("esnaf kendi fotoğrafını koyarsa aynı ürün yayına çıkar", async () => {
-    // İzin kuralı esnafı kilitlemez: kendi çektiği fotoğrafla sistem uçtan
-    // uca çalışır. Kilitlenen yalnız izinsiz ÜRETİCİ fotoğrafıdır.
+    // Esnaf kendi fotoğrafını koyunca yayın kapısı açılır.
     const cevap = await topluUrunEkle(istek([faturaSatiri({ imageUrls: FOTOGRAFLAR })]));
     const govde = await cevap.json();
 
