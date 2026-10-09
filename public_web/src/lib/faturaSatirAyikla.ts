@@ -257,6 +257,8 @@ export interface BelgeUyumu {
   okunanToplam: number;
   belgeAdedi: number | null;
   belgeToplami: number | null;
+  /** Farkli olcu birimleri birbiriyle toplanmaz. Bu bayrak UI'da gorunur. */
+  adetKarsilastirildi: boolean;
 }
 
 /**
@@ -275,9 +277,15 @@ export function belgeGercegiUyuyorMu(
 ): BelgeUyumu {
   const okunanAdet = satirlar.reduce((t, s) => t + (s.adet ?? 0), 0);
   const okunanToplam = satirlar.reduce((t, s) => t + (s.satirToplam ?? 0), 0);
+  const birimNormalize = (girdi: string | undefined) => {
+    const deger = (girdi ?? "").trim().toLocaleLowerCase("tr-TR").replace(/[.]$/, "");
+    return ["ad", "adet", "pcs", "piece"].includes(deger) ? "adet" : deger || "belirtilmedi";
+  };
+  const karmaBirim = new Set(satirlar.map((satir) => birimNormalize(satir.birim))).size > 1;
 
   const temel = {
     okunanAdet,
+    adetKarsilastirildi: !karmaBirim && ozet.adet !== null,
     okunanToplam,
     belgeAdedi: ozet.adet,
     belgeToplami: ozet.toplam,
@@ -299,7 +307,7 @@ export function belgeGercegiUyuyorMu(
       eksikler.push((index + 1) + ". ürünün miktar × birim fiyat hesabı tutmuyor");
     }
   }
-  if (ozet.adet !== null && ozet.adet !== okunanAdet) {
+  if (!karmaBirim && ozet.adet !== null && ozet.adet !== okunanAdet) {
     eksikler.push(`adet ${okunanAdet} okundu, belgede ${ozet.adet} yazıyor`);
   }
   // Kuruş yuvarlamasına tolerans; bunun ötesi gerçek uyumsuzluktur.
@@ -374,4 +382,36 @@ export function tedarikciAdiniAyikla(metin: string): string {
     if (ad) return ad;
   }
   return "";
+}
+
+/**
+ * Fatura tutarlari bolgeler ve firmalara gore KDV dahil/haric olabiliyor.
+ * Bu nedenle sadece belgede acikca yazan tum alanlar varsa denklem kontrol edilir.
+ * Bir konvansiyonu ezbere dayatmak yerine iki yaygin bicimden hangisinin
+ * belgede tuttugunu olcer, hicbiri tutmuyorsa yayini durdurur.
+ */
+export function belgeVergiToplamiUyuyorMu(girdi: {
+  malBedeli: number | null;
+  kdvTutari: number | null;
+  indirimTutari: number | null;
+  odenecekToplam: number | null;
+}): { uyumlu: boolean; denetlendi: boolean; sebep: string | null } {
+  const { malBedeli, kdvTutari, odenecekToplam } = girdi;
+  if (malBedeli === null || kdvTutari === null || odenecekToplam === null) {
+    return { uyumlu: true, denetlendi: false, sebep: null };
+  }
+  const indirim = girdi.indirimTutari ?? 0;
+  const eslesiyor = (tutar: number) => Math.abs(tutar - odenecekToplam) <= 0.05;
+  // "mal bedeli" bu sözleşmede KDV HARİÇ tutardır.
+  // Mal bedeli zaten KDV dahilmiş gibi ikinci bir olası denklem deneyerek
+  // yanlış OCR alanlarını doğrulanmış saymak yasaktır (UBL MonetaryTotal).
+  const vergiHaricMalBedeli = malBedeli + kdvTutari - indirim;
+  if (eslesiyor(vergiHaricMalBedeli)) {
+    return { uyumlu: true, denetlendi: true, sebep: null };
+  }
+  return {
+    uyumlu: false,
+    denetlendi: true,
+    sebep: "Belgedeki mal bedeli, KDV, indirim ve ödenecek toplam uyuşmuyor.",
+  };
 }

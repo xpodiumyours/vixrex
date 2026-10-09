@@ -25,6 +25,7 @@
 import sharp from "sharp";
 import { kisiselVeriTemizle } from "@/lib/faturaKisiselVeri";
 import { alanAdiTemizle, resmiSiteSayilmaz } from "@/lib/firmaArama";
+import { hamGet, varsayilanCoz } from "@/lib/faturaDijitalIz";
 
 const ADRES = "https://openrouter.ai/api/v1/responses";
 export const GORU_MODELI = "openai/gpt-5.6-luna";
@@ -38,15 +39,15 @@ const SORU = [
   "Bu bir fatura tablosu. HER urun satirini oku. Yalniz JSON dondur.",
   '{"tedarikci":"","tedarikci_vergi_no":"","tedarikci_adres":"","tedarikci_site":"","belge_turu":"","belge_no":"","belge_tarihi":"","satirlar":[{"ham_satir":"","model":"","ad":"","barkod":"","varyant":"","beden":"","marka":"","adet":0,"birim":"","birim_fiyat":0,"tutar":0,"okuma_guveni":1}],"toplam_adet":0,"toplam_tutar":0,"mal_bedeli":0,"kdv_tutari":0,"indirim_tutari":0,"odenecek_toplam":0}',
   "1. Her satirda adet * birim_fiyat = tutar olmali.",
-  "2. Satirlarin adet toplami = toplam_adet, tutar toplami = toplam_tutar.",
-  "3. toplam_adet/toplam_tutar en alttaki 'Toplam' satirindan alinir.",
+  "2. AD/KG/LT/M/Paket gibi farkli birimleri TOPLAMA. Belgede tek bir toplam miktar yazmiyorsa toplam_adet=null.",
+  "3. toplam_adet yalniz belgede tek bir olcu turunde toplam acikca yaziyorsa okunur. toplam_tutar belgede yazan genel tutardir, satir toplamindan hesaplama.",
   "4. Sayilari 6.034,00 -> 6034.00 bicimine cevir. Uydurma yok.",
   "5. tedarikci = faturayi kesen firmanin adi. Yazmiyorsa bos birak, tahmin etme.",
   "6. ad = faturada yazan urun adi veya urun aciklamasi. Yazmiyorsa bos birak, tahmin etme.",
   "7. ham_satir = urun satirinda gorunen metni sirasi ve degerleriyle koru.",
   "8. tedarikci_vergi_no, tedarikci_adres ve tedarikci_site yalniz belgede acikca yaziyorsa doldur; tahmin etme.",
   "9. belge_turu: belgede acikca yaziyorsa fatura, e-arsiv, irsaliye veya bilgi fisi; belge_no ve belge_tarihi yalniz belgede yaziyorsa doldur (tarih GG.AA.YYYY), tahmin etme.",
-  "10. mal_bedeli, kdv_tutari, indirim_tutari ve odenecek_toplam belgede ayri ayri yaziyorsa ayri ayri doldur; yazmiyorsa null birak, hesaplayip uydurma.",
+  "10. mal_bedeli yalniz KDV HARIC mal/hizmet bedeli (vergi matrahi veya ara toplam) olarak acikca etiketlenmisse doldur. KDV dahil tutari mal_bedeli alanina YAZMA; yoksa null. kdv_tutari vergiyi, indirim_tutari indirimi, odenecek_toplam odencek nihai tutari ayri ayri belgede yazildigi gibi oku; uydurma.",
   "11. marka = urun satirinda ya da urun kodunun yaninda yazan marka adi; yazmiyorsa bos birak, faturayi kesen firmayi marka sanma, tahmin etme.",
   "12. varyant faturada yazan renktir. beden faturada yazan bedendir. Yazmiyorsa bos birak, baska yerden tamamlama.",
   "13. okuma_guveni 0 ile 1 arasi: satirdaki yazi ve rakamlar net okunduysa 1'e yakin; silik, kesik, ustu cizili veya emin olmadigin bir deger varsa dusuk ver.",
@@ -181,7 +182,7 @@ const FATURA_SEMA = {
     },
     toplam_adet: alanSayi("Quantity total from the bottom Totals row. Null if not printed. Do not compute."),
     toplam_tutar: alanSayi("Amount total from the bottom Totals row. Null if not printed. Do not compute."),
-    mal_bedeli: alanSayi("Goods total as printed. Null if not printed. Do not compute."),
+    mal_bedeli: alanSayi("Only tax-exclusive goods net subtotal as explicitly labeled on invoice; never tax-inclusive total. Null if ambiguous."),
     kdv_tutari: alanSayi("VAT as printed. Null if not printed. Do not compute."),
     indirim_tutari: alanSayi("Discount as printed. Null if not printed. Do not compute."),
     odenecek_toplam: alanSayi("Amount payable as printed. Null if not printed. Do not compute."),
@@ -343,6 +344,38 @@ export function firmaDogrulamasiGecerliMi(
   return k.firma_adi_sayfada === true && k.adres_sayfada === true;
 }
 
+/**
+ * Luna'nin aktardigi kaynak alintisi YALNIZCA model cevabinda geciyorsa kanit
+ * degildir. Alinti gercek kaynak sayfasinin gorunur metninde bulunmali.
+ * SSRF/DNS/yonlendirme/boyut korumasi mevcut hamGet ile aynidir.
+ */
+export async function ureticiKaynakAlintisiniDogrula(
+  alan: string,
+  sayfa: string,
+  alinti: string,
+  bagimliliklar: {
+    fetcher?: (input: string, init?: RequestInit) => Promise<Response>;
+    resolveHost?: (host: string) => Promise<string[]>;
+  } = {},
+): Promise<boolean> {
+  if (!sayfaFirmadaMi(sayfa, alan) || alinti.trim().length < 15) return false;
+  const sonuc = await hamGet(sayfa, bagimliliklar.fetcher ?? fetch, bagimliliklar.resolveHost ?? varsayilanCoz);
+  if (!sonuc || sonuc.durum !== 200) return false;
+  const duz = (metin: string) => metin
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;|&#160;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/\s+/g, " ")
+    .normalize("NFKC")
+    .toLocaleLowerCase("tr-TR")
+    .trim();
+  const gercekSayfa = duz(sonuc.govde);
+  const iddia = duz(alinti);
+  return iddia.length >= 15 && gercekSayfa.includes(iddia);
+}
+
 type SiteKullanimTakibi = {
   izin: () => boolean;
   kaydet: (kullanim: Pick<GoruSonucu, "maliyet" | "girdiToken" | "ciktiToken" | "akilToken">) => Promise<void>;
@@ -373,7 +406,11 @@ async function firmaSitesiniPlatformlaDogrula(
   if (takip) await takip.kaydet(kullanimOku(govde));
   const kullanim = govde && typeof govde === "object" ? (govde as { usage?: { server_tool_use?: { web_fetch_requests?: unknown } } }).usage : null;
   if (Number(kullanim?.server_tool_use?.web_fetch_requests ?? 0) < 1) return false;
-  return firmaDogrulamasiGecerliMi(alan, govde);
+  if (!firmaDogrulamasiGecerliMi(alan, govde)) return false;
+  let kanit: { kanit_sayfa?: unknown; uretim_kaniti?: unknown };
+  try { kanit = JSON.parse(ciktiMetni(govde)) as typeof kanit; }
+  catch { return false; }
+  return ureticiKaynakAlintisiniDogrula(alan, metin(kanit.kanit_sayfa), metin(kanit.uretim_kaniti));
 }
 
 async function firmaSitesiniModelleBul(girdi: {
@@ -516,6 +553,7 @@ export async function markaSitesiniBul(girdi: {
   if (!kanitSayfa.startsWith("https://") || !sayfaFirmadaMi(kanitSayfa, alan)) return bosSonuc;
   if (metin(veri.marka_adi).toLocaleLowerCase("tr-TR") !== marka.toLocaleLowerCase("tr-TR")) return bosSonuc;
   if (metin(veri.kanit).length < 15) return bosSonuc;
+  if (!await ureticiKaynakAlintisiniDogrula(alan, kanitSayfa, metin(veri.kanit))) return bosSonuc;
   return { alan, ...kullanim };
 }
 
@@ -769,17 +807,48 @@ export async function lunaGorseliniDogrula(girdi: {
   }
 }
 
-export async function faturayiOku(dataUrl: string): Promise<GoruSonucu> {
+/**
+ * PDF de aynı Luna okumasını ve JSON şemasını kullanır.
+ * OpenRouter'ın resmî PDF girdisi yalnız /chat/completions yolundadır;
+ * görsel Responses API yolunu değiştirmeden sonuçları ortak GoruSonucu'na
+ * çeviririz. Ayrı ürün araştırması / ek OCR kodu yoktur.
+ */
+export function pdfLunaIstegi(dataUrl: string) {
+  if (!/^data:application\/pdf;base64,[A-Za-z0-9+/=]+$/.test(dataUrl)) {
+    throw new Error("FATURA_PDF_GECERSIZ");
+  }
+  return {
+    model: GORU_MODELI,
+    max_completion_tokens: CIKTI_TOKEN_TAVANI,
+    reasoning: { effort: "none" as const },
+    provider: { require_parameters: true },
+    response_format: {
+      type: "json_schema" as const,
+      json_schema: { name: "fatura_okuma", strict: true, schema: FATURA_SEMA },
+    },
+    plugins: [{ id: "file-parser", pdf: { engine: "mistral-ocr" } }],
+    messages: [{
+      role: "user" as const,
+      content: [
+        { type: "text" as const, text: SORU },
+        { type: "file" as const, file: { filename: "fatura.pdf", file_data: dataUrl } },
+      ],
+    }],
+  };
+}
+
+export async function faturayiOku(dataUrl: string | string[]): Promise<GoruSonucu> {
   const anahtar = process.env.OPENROUTER_API_KEY;
   if (!anahtar) throw new Error("OKUYUCU_HAZIR_DEGIL");
-
-  const cevap = await fetch(ADRES, {
+  const pdfGirdisi = typeof dataUrl === "string" && dataUrl.startsWith("data:application/pdf;");
+  const pdfIstegi = pdfGirdisi ? pdfLunaIstegi(dataUrl) : null;
+  const cevap = await fetch(pdfIstegi ? "https://openrouter.ai/api/v1/chat/completions" : ADRES, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${anahtar}`,
     },
-    body: JSON.stringify({
+    body: JSON.stringify(pdfIstegi ?? {
       model: GORU_MODELI,
       max_output_tokens: CIKTI_TOKEN_TAVANI,
       reasoning: { effort: "none" },
@@ -796,8 +865,14 @@ export async function faturayiOku(dataUrl: string): Promise<GoruSonucu> {
         {
           role: "user",
           content: [
-            { type: "input_text", text: SORU },
-            { type: "input_image", image_url: dataUrl, detail: "original" },
+            { type: "input_text", text: SORU + (
+              Array.isArray(dataUrl) && dataUrl.length > 1
+                ? "\nBirden fazla goruntu AYNI faturanin sirali sayfalaridir. Satirlari sayfa sirasinda bir kere oku; tekrar eden sayfa basliklarini ve onceki sayfa ara toplamlarini urun sayma. Belge ozetini yalniz belgenin nihai toplam satirindan oku; yoksa null."
+                : ""
+            ) },
+            ...(Array.isArray(dataUrl) ? dataUrl : [dataUrl]).map((url) => ({
+              type: "input_image" as const, image_url: url, detail: "original" as const,
+            })),
           ],
         },
       ],
@@ -812,7 +887,26 @@ export async function faturayiOku(dataUrl: string): Promise<GoruSonucu> {
     );
   }
 
-  const govde = await cevap.json().catch(() => null);
+  const hamCevap = await cevap.json().catch(() => null);
+  // Chat Completions PDF cevabını var olan Responses okuma sözleşmesine uyarla.
+  // İçerik boş, kesilmiş veya tamamlanmamışsa başarı üretme.
+  const pdfMesaji = pdfIstegi ? hamCevap?.choices?.[0] : null;
+  if (pdfIstegi && (
+    !pdfMesaji || pdfMesaji.finish_reason !== "stop" ||
+    typeof pdfMesaji.message?.content !== "string" || !pdfMesaji.message.content.trim()
+  )) throw new Error("OKUMA_YARIM_KALDI");
+  const pdfUsage = hamCevap?.usage;
+  const govde = pdfIstegi ? {
+    status: "completed",
+    output_text: pdfMesaji.message.content,
+    usage: {
+      input_tokens: pdfUsage?.input_tokens ?? pdfUsage?.prompt_tokens ?? 0,
+      output_tokens: pdfUsage?.output_tokens ?? pdfUsage?.completion_tokens ?? 0,
+      cost: pdfUsage?.cost ?? null,
+      input_tokens_details: { cached_tokens: pdfUsage?.prompt_tokens_details?.cached_tokens ?? 0 },
+      output_tokens_details: { reasoning_tokens: pdfUsage?.completion_tokens_details?.reasoning_tokens ?? 0 },
+    },
+  } : hamCevap;
   if (govde?.status === "incomplete") throw new Error("OKUMA_YARIM_KALDI");
   const ham = ciktiMetni(govde ?? {});
   if (!ham.trim()) throw new Error("FOTOGRAFTA_YAZI_YOK");

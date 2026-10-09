@@ -21,8 +21,8 @@ describe("fatura satırı için otomatik kategori", () => {
     expect(kategoriSec({ ad: "Sıvı Deterjan 3 L" }, KATEGORILER)).toBe("ev");
   });
 
-  it("tahmin edilemeyen ürün ilk kategoriye düşer, kategori yoksa boş döner", () => {
-    expect(kategoriSec({ ad: "Xyz 123" }, KATEGORILER)).toBe("genel");
+  it("kanıt yoksa kategori uydurmaz, kategori yoksa da boş döner", () => {
+    expect(kategoriSec({ ad: "Xyz 123" }, KATEGORILER)).toBe("");
     expect(kategoriSec({ ad: "Bisküvi" }, [])).toBe("");
   });
 
