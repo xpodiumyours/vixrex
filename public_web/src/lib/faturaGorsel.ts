@@ -156,30 +156,6 @@ export async function kaynakGorseliniDogrula(
   return { tamam: true, genislik, yukseklik, tur, bayt };
 }
 
-const KART_REDDI = new Set<GorselRedSebebi>([
-  "erisilemedi",
-  "acilmadi",
-  "gorsel-degil",
-  "cok-buyuk",
-  "cok-kucuk",
-  "logo-veya-yer-tutucu",
-  "bos",
-  "urun-fotografi-degil",
-]);
-
-
-export async function kartaGirecekGorsel(
-  adres: string,
-  bagimliliklar: GorselBagimliliklari = {},
-): Promise<string> {
-  const temiz = adres.trim();
-  if (!temiz) return "";
-  const sonuc = await kaynakGorseliniDogrula(temiz, bagimliliklar);
-  if (sonuc.tamam) return temiz;
-  if (sonuc.sebep && KART_REDDI.has(sonuc.sebep)) return "";
-  return temiz;
-}
-
 
 export async function urunSayfasindaGorselKaniti(
   kaynakSayfa: string,

@@ -284,9 +284,9 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
       if (adres.includes("openrouter.ai/api/v1/responses")) {
         const istekGovdesi = JSON.parse(String(init?.body ?? "{}"));
         if (istekGovdesi.text?.format?.name === "urun_fotografi_kontrol") {
-          expect(istekGovdesi.input[0].content[1]).toEqual({
-            type: "input_image", image_url: gorsel, detail: "original",
-          });
+          expect(istekGovdesi.input[0].content[1].type).toBe("input_image");
+          expect(istekGovdesi.input[0].content[1].image_url).toMatch(/^data:image\/jpeg;base64,/);
+          expect(istekGovdesi.input[0].content[1].detail).toBe("original");
           return new Response(JSON.stringify({
             status: "completed",
             output_text: JSON.stringify({

@@ -9,7 +9,7 @@ import { eslesmeyenSatir, siteKartiniUygula, sonucOzeti, type EslesmisFaturaSati
 import { ayniAlisverisAdaylari, belgeParmakIzi, islemKaydet } from "@/lib/faturaIslemKaydi";
 import { faturaTaslaklari } from "@/lib/faturaTaslagi";
 import { firmaAlaniniKilitle, faturayiOku, lunaGorseliniDogrula, markaSitesiniBul, satirSitesindeAra, type GoruSatiri } from "@/lib/faturaGoru";
-import { kartaGirecekGorsel, urunSayfasindaGorselKaniti } from "@/lib/faturaGorsel";
+import { kaynakGorseliniDogrula, urunSayfasindaGorselKaniti } from "@/lib/faturaGorsel";
 import { ARAMA_UCETI_USD, aramaCagrisiSigarMi, bugunkuMaliyetUsd, kullanimKaydet } from "@/lib/faturaMaliyet";
 import { islemiYukle } from "@/lib/faturaIslemOku";
 
@@ -291,7 +291,8 @@ export async function POST(request: NextRequest) {
           await kullanimKaydet(admin, magazaId, { ...arama, maliyet: aramaMaliyeti });
           gunlukHarcama += aramaMaliyeti;
           if (arama.sayfa && arama.gorsel) {
-            const gorsel = await kartaGirecekGorsel(arama.gorsel);
+            const gorselDogrulama = await kaynakGorseliniDogrula(arama.gorsel);
+            const gorsel = gorselDogrulama.tamam ? arama.gorsel : "";
             const aciklama = arama.aciklama.trim() || satir.ad.trim() || satir.model.trim();
             if (gorsel && aciklama) {
               const kaynakKaniti = await urunSayfasindaGorselKaniti(arama.sayfa, gorsel, satir.varyant);
@@ -300,8 +301,14 @@ export async function POST(request: NextRequest) {
               } else if (!aramaCagrisiSigarMi(gunlukHarcama)) {
                 siteUyari = "Fotoğraf incelemesi için günlük kullanım sınırı doldu.";
               } else {
+                const dogrulananGorselVerisi = gorselDogrulama.bayt && gorselDogrulama.tur
+                  ? `data:${gorselDogrulama.tur};base64,${Buffer.from(gorselDogrulama.bayt).toString("base64")}`
+                  : "";
+                if (!dogrulananGorselVerisi) {
+                  throw new Error("FOTOGRAF_VERISI_DOGRULANAMADI");
+                }
                 const inceleme = await lunaGorseliniDogrula({
-                  gorsel, kaynakSayfa: arama.sayfa, kaynakAlintisi: kaynakKaniti.kaynakAlintisi,
+                  gorsel: dogrulananGorselVerisi, kaynakSayfa: arama.sayfa, kaynakAlintisi: kaynakKaniti.kaynakAlintisi,
                   urunAdi: arama.ad, faturaAdi: satir.ad, marka: satir.marka ?? "",
                   renk: satir.varyant, beden: satir.beden,
                 });

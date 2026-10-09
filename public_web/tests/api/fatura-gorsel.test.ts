@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import sharp from "sharp";
-import { kartaGirecekGorsel, kaynakGorseliniDogrula, kaynakGorselleriniHazirla, urunSayfasindaGorselKaniti } from "@/lib/faturaGorsel";
+import { kaynakGorseliniDogrula, kaynakGorselleriniHazirla, urunSayfasindaGorselKaniti } from "@/lib/faturaGorsel";
 
 const resolveHost = async () => ["8.8.8.8"];
 
@@ -84,19 +84,6 @@ describe("kaynak görseli doğrulama", () => {
     expect(sonuc.sebep).toBe("erisilemedi");
   });
 
-  it("küçük, boş, logo ve açılamayan adres karttan düşer", async () => {
-    const buyuk = "https://firma.example/buyuk.jpg";
-    const kucuk = "https://firma.example/kucuk.jpg";
-    const kapali = "https://firma.example/kapali.jpg";
-    const fetcher = fetcherIle({
-      [buyuk]: { govde: await fotograf(1200, 1200) },
-      [kucuk]: { govde: await fotograf(200, 200) },
-    });
-    const bag = { fetcher, resolveHost };
-    expect(await kartaGirecekGorsel(buyuk, bag)).toBe(buyuk);
-    expect(await kartaGirecekGorsel(kucuk, bag)).toBe("");
-    expect(await kartaGirecekGorsel(kapali, bag)).toBe("");
-  });
 });
 
 
