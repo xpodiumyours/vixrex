@@ -116,13 +116,14 @@ const SHARP_TRACE = [
   "./node_modules/@img/sharp-libvips-linux-x64/**",
 ];
 
-// Bu uçlardan 9'u sharp'e RUNTIME'da transitif ulaşıyor (`import type`
+// Sharp kullanan API uçları RUNTIME'da transitif ulaşıyor (`import type`
 // derlemede silindiği için dikkate alınmadı; liste transitive çözümle
 // hesaplandı ve canlıdaki 500'lerle birebir örtüştü). Yeni bir uç sharp'e
 // ulaşırsa BURAYA EKLENMEK zorunda: scripts/kontrol/sharp-trace-kapsam.mjs
 // bu kuralı CI'da zorunlu kılar (eksik uç ya da bayat liste kırmızı verir).
 const SHARP_ROUTES = [
   "/api/fatura-oku",
+  "/api/fatura-satir-duzelt",
   "/api/instagram/import",
   "/api/owner-upload",
   "/api/product-image-upload",
