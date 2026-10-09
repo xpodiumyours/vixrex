@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
 
   const kayit = await admin
     .from("invoice_job_lines")
-    .select("id,raw_line,model,product_name,barcode,variant_name,size_text,brand,qty,unit_price,line_total,confidence,product_id,catalog_snapshot")
+    .select("id,raw_line,model,product_name,barcode,variant_name,size_text,brand,qty,qty_unit,unit_price,line_total,confidence,product_id,catalog_snapshot")
     .eq("job_id", islemKimligi)
     .eq("line_index", satirSirasi)
     .maybeSingle();
@@ -76,6 +76,7 @@ export async function POST(request: NextRequest) {
     beden: String(kayit.data.size_text ?? ""),
     marka: alan(govde, "marka", 120) ?? String(kayit.data.brand ?? ""),
     adet: kayit.data.qty === null ? null : Number(kayit.data.qty),
+    birim: String(kayit.data.qty_unit ?? ""),
     alisBirimFiyat: kayit.data.unit_price === null ? null : Number(kayit.data.unit_price),
     satirToplam: kayit.data.line_total === null ? null : Number(kayit.data.line_total),
     guven: Number(kayit.data.confidence ?? 0),

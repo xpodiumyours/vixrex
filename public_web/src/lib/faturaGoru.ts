@@ -39,7 +39,7 @@ const CIKTI_DOLAR = 1.2 / 1_000_000;
 
 const SORU = [
   "Bu bir fatura tablosu. HER urun satirini oku. Yalniz JSON dondur.",
-  '{"tedarikci":"","tedarikci_vergi_no":"","tedarikci_adres":"","tedarikci_site":"","belge_turu":"","belge_no":"","belge_tarihi":"","satirlar":[{"ham_satir":"","model":"","ad":"","barkod":"","varyant":"","beden":"","marka":"","adet":0,"birim_fiyat":0,"tutar":0,"okuma_guveni":1}],"toplam_adet":0,"toplam_tutar":0,"mal_bedeli":0,"kdv_tutari":0,"indirim_tutari":0,"odenecek_toplam":0}',
+  '{"tedarikci":"","tedarikci_vergi_no":"","tedarikci_adres":"","tedarikci_site":"","belge_turu":"","belge_no":"","belge_tarihi":"","satirlar":[{"ham_satir":"","model":"","ad":"","barkod":"","varyant":"","beden":"","marka":"","adet":0,"birim":"","birim_fiyat":0,"tutar":0,"okuma_guveni":1}],"toplam_adet":0,"toplam_tutar":0,"mal_bedeli":0,"kdv_tutari":0,"indirim_tutari":0,"odenecek_toplam":0}',
   "1. Her satirda adet * birim_fiyat = tutar olmali.",
   "2. Satirlarin adet toplami = toplam_adet, tutar toplami = toplam_tutar.",
   "3. toplam_adet/toplam_tutar en alttaki 'Toplam' satirindan alinir.",
@@ -53,6 +53,7 @@ const SORU = [
   "11. marka = urun satirinda ya da urun kodunun yaninda yazan marka adi; yazmiyorsa bos birak, faturayi kesen firmayi marka sanma, tahmin etme.",
   "12. varyant faturada yazan renktir. beden faturada yazan bedendir. Yazmiyorsa bos birak, baska yerden tamamlama.",
   "13. okuma_guveni 0 ile 1 arasi: satirdaki yazi ve rakamlar net okunduysa 1'e yakin; silik, kesik, ustu cizili veya emin olmadigin bir deger varsa dusuk ver.",
+  "14. birim = faturada adetin yaninda yazan olcu (Adet, KG, LT, M, Paket). Yazmiyorsa bos birak, tahmin etme, adet sayisina karistirma.",
 ].join("\n");
 
 export interface GoruSatiri {
@@ -64,6 +65,7 @@ export interface GoruSatiri {
   beden: string;
   marka: string;
   adet: number | null;
+  birim: string;
   birimFiyat: number | null;
   tutar: number | null;
   okumaGuveni: number | null;
@@ -158,7 +160,7 @@ const FATURA_SEMA = {
       items: {
         type: "object",
         additionalProperties: false,
-        required: ["ham_satir", "model", "ad", "barkod", "varyant", "beden", "marka", "adet", "birim_fiyat", "tutar", "okuma_guveni"],
+        required: ["ham_satir", "model", "ad", "barkod", "varyant", "beden", "marka", "adet", "birim", "birim_fiyat", "tutar", "okuma_guveni"],
         properties: {
           ham_satir: YAZI,
           model: YAZI,
@@ -168,6 +170,11 @@ const FATURA_SEMA = {
           beden: YAZI,
           marka: YAZI,
           adet: SAYI_VEYA_BOS,
+          birim: {
+            type: "string",
+            description:
+              "Measure unit printed on the invoice line (Adet, KG, LT, M, Paket). Empty if not printed. Do not invent. Separate from quantity.",
+          },
           birim_fiyat: SAYI_VEYA_BOS,
           tutar: SAYI_VEYA_BOS,
           okuma_guveni: { type: "number" },
@@ -675,6 +682,7 @@ export async function faturayiOku(dataUrl: string): Promise<GoruSonucu> {
       beden: metin(s.beden),
       marka: metin(s.marka),
       adet: sayi(s.adet),
+      birim: metin(s.birim),
       birimFiyat: sayi(s.birim_fiyat),
       tutar: sayi(s.tutar),
       okumaGuveni: guvenAraligi(sayi(s.okuma_guveni)),

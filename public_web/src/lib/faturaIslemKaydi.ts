@@ -165,6 +165,7 @@ export async function islemKaydet(girdi: IslemKaydiGirdisi): Promise<string | nu
       variant_name: satir.varyant.slice(0, 80),
       size_text: satir.beden.slice(0, 60),
       qty: satir.adet,
+      qty_unit: (satir.birim ?? "").slice(0, 40),
       unit_price: satir.alisBirimFiyat,
       line_total: satir.satirToplam,
       confidence: satir.guven,
