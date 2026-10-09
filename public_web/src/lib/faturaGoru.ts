@@ -522,7 +522,7 @@ export async function satirSitesindeAra(girdi: {
   if (!istek) throw new Error("SITE_YOK_VEYA_SATIR_BOS");
   const cevap = await fetch(ADRES, {
     method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: \`Bearer \${anahtar}\` },
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${anahtar}` },
     body: JSON.stringify(istek),
   });
   if (!cevap.ok) {
