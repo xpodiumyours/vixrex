@@ -288,6 +288,15 @@ export function belgeGercegiUyuyorMu(
   }
 
   const eksikler: string[] = [];
+  for (const [index, satir] of satirlar.entries()) {
+    if (!Number.isFinite(satir.adet) || !Number.isFinite(satir.alisBirimFiyat) || !Number.isFinite(satir.satirToplam)) {
+      eksikler.push(`${index + 1}. ürünün miktarı, birim fiyatı veya tutarı okunamadı`);
+      continue;
+    }
+    if (Math.abs(satir.adet! * satir.alisBirimFiyat! - satir.satirToplam!) > 0.05) {
+      eksikler.push(`${index + 1}. ürünün tutarı miktar × birim fiyat ile uyuşmuyor`);
+    }
+  }
   if (ozet.adet !== null && ozet.adet !== okunanAdet) {
     eksikler.push(`adet ${okunanAdet} okundu, belgede ${ozet.adet} yazıyor`);
   }

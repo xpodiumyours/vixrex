@@ -51,13 +51,40 @@ describe("belge gerçeği — satırlar belgenin toplamıyla karşılaştırıl�
   it("satırlar belgeyle tutuyorsa geçer", () => {
     const uyum = belgeGercegiUyuyorMu(
       [
-        { adet: 2, satirToplam: 274 },
-        { adet: 3, satirToplam: 345 },
-      ].map((s) => ({ ...s, model: "", ad: "", barkod: "", varyant: "", beden: "", alisBirimFiyat: null, guven: 1 })),
+        { adet: 2, alisBirimFiyat: 137, satirToplam: 274 },
+        { adet: 3, alisBirimFiyat: 115, satirToplam: 345 },
+      ].map((s) => ({ ...s, model: "", ad: "", barkod: "", varyant: "", beden: "", guven: 1 })),
       { adet: 5, toplam: 619 },
     );
     expect(uyum.uyumlu).toBe(true);
     expect(uyum.sebep).toBeNull();
+  });
+
+  it("satırların toplamı tutsa bile ürünün kendi hesabı yanlışsa geçirmez", () => {
+    const satirlar = [
+      { adet: 2, alisBirimFiyat: 100, satirToplam: 250 },
+      { adet: 3, alisBirimFiyat: 100, satirToplam: 250 },
+    ].map((deger) => ({ ...deger, model: "URUN", ad: "Ürün", barkod: "", varyant: "", beden: "", guven: 1 }));
+    const uyum = belgeGercegiUyuyorMu(satirlar, { adet: 5, toplam: 500 });
+    expect(uyum.uyumlu).toBe(false);
+    expect(uyum.sebep).toContain("birim fiyat");
+  });
+
+  it("satırın birim fiyatı eksikse belge toplamı tutsa bile geçirmez", () => {
+    const uyum = belgeGercegiUyuyorMu([
+      { model: "URUN", ad: "Ürün", barkod: "", varyant: "", beden: "", guven: 1,
+        adet: 2, alisBirimFiyat: null, satirToplam: 274 },
+    ], { adet: 2, toplam: 274 });
+    expect(uyum.uyumlu).toBe(false);
+    expect(uyum.sebep).toContain("okunamadı");
+  });
+
+  it("dört ondalıklı birim fiyat için kuruş yuvarlaması sorun olmaz", () => {
+    const uyum = belgeGercegiUyuyorMu([
+      { model: "URUN", ad: "Ürün", barkod: "", varyant: "", beden: "", guven: 1,
+        adet: 3, alisBirimFiyat: 14.3333, satirToplam: 43 },
+    ], { adet: 3, toplam: 43 });
+    expect(uyum.uyumlu).toBe(true);
   });
 
   it("belgenin toplamı hiç okunamadıysa 'doğru' sayılmaz", () => {

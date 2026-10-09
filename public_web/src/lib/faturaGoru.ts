@@ -92,13 +92,11 @@ export interface GoruSonucu {
 }
 
 function sayi(deger: unknown): number | null {
-  const n = typeof deger === "number" ? deger : Number(String(deger ?? "").replace(",", "."));
+  if (deger === null || deger === undefined) return null;
+  if (typeof deger !== "number" && typeof deger !== "string") return null;
+  if (typeof deger === "string" && deger.trim() === "") return null;
+  const n = typeof deger === "number" ? deger : Number(deger.trim().replace(",", "."));
   return Number.isFinite(n) ? n : null;
-}
-
-function yaziliSayi(deger: unknown): number | null {
-  if (deger === null || deger === undefined || deger === "") return null;
-  return sayi(deger);
 }
 
 function metin(deger: unknown): string {
@@ -655,10 +653,10 @@ export async function faturayiOku(dataUrl: string): Promise<GoruSonucu> {
     belgeTuru: metin(kok.belge_turu),
     belgeNo: metin(kok.belge_no),
     belgeTarihi: metin(kok.belge_tarihi),
-    malBedeli: yaziliSayi(kok.mal_bedeli),
-    kdvTutari: yaziliSayi(kok.kdv_tutari),
-    indirimTutari: yaziliSayi(kok.indirim_tutari),
-    odenecekToplam: yaziliSayi(kok.odenecek_toplam),
+    malBedeli: sayi(kok.mal_bedeli),
+    kdvTutari: sayi(kok.kdv_tutari),
+    indirimTutari: sayi(kok.indirim_tutari),
+    odenecekToplam: sayi(kok.odenecek_toplam),
     ...kullanimOku(govde),
   };
 }
