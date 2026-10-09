@@ -251,13 +251,14 @@ export async function POST(request: NextRequest) {
       let siteSayfa = "";
       let siteAd = "";
       let siteDayanak: "kod" | "barkod" | "ad" | undefined;
-      const ayriMarka = Boolean(satir.marka.trim()) &&
-        satir.marka.trim().toLocaleLowerCase("tr-TR") !== sonTedarikci.trim().toLocaleLowerCase("tr-TR");
-      const markaAnahtari = satir.marka.trim().toLocaleLowerCase("tr-TR");
+      const marka = satir.marka?.trim() ?? "";
+      const ayriMarka = Boolean(marka) &&
+        marka.toLocaleLowerCase("tr-TR") !== sonTedarikci.trim().toLocaleLowerCase("tr-TR");
+      const markaAnahtari = marka.toLocaleLowerCase("tr-TR");
       if (ayriMarka && !markaAlanlari.has(markaAnahtari) && aramaAcik && aramaCagrisiSigarMi(gunlukHarcama)) {
         try {
           const bulunan = await markaSitesiniBul({
-            marka: satir.marka, tedarikci: sonTedarikci, tedarikciSitesi: etkinSite,
+            marka, tedarikci: sonTedarikci, tedarikciSitesi: etkinSite,
             model: satir.model, ad: satir.ad,
           });
           const aramaMaliyeti = (bulunan.maliyet ?? 0) + ARAMA_UCETI_USD;
