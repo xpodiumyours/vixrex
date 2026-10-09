@@ -283,6 +283,21 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
       const adres = String(url);
       if (adres.includes("openrouter.ai/api/v1/responses")) {
         const istekGovdesi = JSON.parse(String(init?.body ?? "{}"));
+        if (istekGovdesi.text?.format?.name === "urun_fotografi_kontrol") {
+          expect(istekGovdesi.input[0].content[1]).toEqual({
+            type: "input_image", image_url: gorsel, detail: "original",
+          });
+          return new Response(JSON.stringify({
+            status: "completed",
+            output_text: JSON.stringify({
+              urun_uyuyor: true,
+              renk_uyuyor: true,
+              fotograf_net: true,
+              gerekce: "Fanila ve siyah renk fotoğrafta açıkça görünüyor.",
+            }),
+            usage: { input_tokens: 250, output_tokens: 60 },
+          }), { status: 200 });
+        }
         if (istekGovdesi.tools) {
           return new Response(JSON.stringify({
             status: "completed",
@@ -313,6 +328,10 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
         return okuyucuCevabi(TEK_SATIR);
       }
       if (adres === gorsel) return new Response(new Uint8Array(foto), { status: 200 });
+      if (adres === sayfa) return new Response(
+        '<html><body><img alt="Elit fanila Siyah" src="' + gorsel + '"></body></html>',
+        { status: 200, headers: { "content-type": "text/html" } },
+      );
       return new Response("{}", { status: 404 });
     }));
 
@@ -326,6 +345,9 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(govde.satirlar[0].katalog.gorseller).toEqual([gorsel]);
     expect(govde.satirlar[0].katalog.kaynak).toBe(sayfa);
     expect(govde.satirlar[0].katalog.dayanak).toBe("kod");
+    expect(govde.satirlar[0].katalog.fotografKaniti.kaynakSayfa).toBe(sayfa);
+    expect(govde.satirlar[0].katalog.fotografKaniti.kaynakGorsel).toBe(gorsel);
+    expect(govde.satirlar[0].katalog.fotografKaniti.lunaGerekcesi).toContain("siyah renk");
   });
 
 
