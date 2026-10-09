@@ -139,6 +139,7 @@ describe("OpenRouter kaynak doğrulama", () => {
         kanit: "Elit markası bu firmanın üretim markasıdır.",
       }),
     }), { status: 200 }));
+    vi.stubEnv("OPENROUTER_API_KEY", "test-okuyucu-anahtari");
     vi.stubGlobal("fetch", fakeFetch);
     try {
       const sonuc = await markaSitesiniBul({
@@ -151,6 +152,7 @@ describe("OpenRouter kaynak doğrulama", () => {
       expect(body.text.format.strict).toBe(true);
     } finally {
       vi.unstubAllGlobals();
+      vi.unstubAllEnvs();
     }
   });
 
@@ -165,6 +167,7 @@ describe("OpenRouter kaynak doğrulama", () => {
         kanit: "Sitede Elit markalı ürün yalnız satılıyor.",
       }),
     }), { status: 200 }));
+    vi.stubEnv("OPENROUTER_API_KEY", "test-okuyucu-anahtari");
     vi.stubGlobal("fetch", fakeFetch);
     try {
       expect((await markaSitesiniBul({
@@ -173,6 +176,7 @@ describe("OpenRouter kaynak doğrulama", () => {
       })).alan).toBe("");
     } finally {
       vi.unstubAllGlobals();
+      vi.unstubAllEnvs();
     }
   });
 
