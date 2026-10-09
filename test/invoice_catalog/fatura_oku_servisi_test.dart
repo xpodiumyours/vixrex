@@ -151,6 +151,41 @@ void main() {
       },
     );
 
+    test('kesirli 2,5 KG faturada korunur; stok sessizce 2 adede yuvarlanmaz', () async {
+      final servis = FaturaOkuServisi(
+        originOverride: 'https://vixrex-test.local',
+        httpClient: MockClient((request) async => http.Response(
+          jsonEncode({
+            'tedarikci': 'Deneme Üretim',
+            'satirlar': [
+              {
+                'model': 'KG-5',
+                'ad': 'Peynir',
+                'adet': 2.5,
+                'birim': 'KG',
+                'guven': 0.9,
+                'katalog': null,
+              },
+            ],
+          }),
+          200,
+          headers: {'content-type': 'application/json; charset=utf-8'},
+        )),
+      );
+      final sonuc = await servis.oku(
+        imageBytes: Uint8List.fromList([1]),
+        storeSlug: 'deneme-vitrin',
+        editToken: 'token-1',
+      );
+      expect(sonuc.isSuccess, isTrue);
+      final urun = sonuc.data!.products.single;
+      final taslak = sonuc.data!.invoiceDrafts.single;
+      expect(urun.documentQuantity, isNull);
+      expect(urun.quantity, isNot(2));
+      expect(urun.isApproved, isFalse);
+      expect(taslak.quantity?.value, 2.5);
+    });
+
     test('katalogda bulunamayan satır zayıf kalır, tahmin edilmez', () async {
       final servis = FaturaOkuServisi(
         originOverride: 'https://vixrex-test.local',

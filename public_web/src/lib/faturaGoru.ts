@@ -270,12 +270,14 @@ function httpsAdresler(govde: { output?: unknown } | null): string[] {
 const FIRMA_DOGRULAMA_SEMASI = {
   type: "object",
   additionalProperties: false,
-  required: ["vergi_no_sayfada", "firma_adi_sayfada", "adres_sayfada", "kanit_sayfa"],
+  required: ["vergi_no_sayfada", "firma_adi_sayfada", "adres_sayfada", "kanit_sayfa", "uretici_veya_marka_sahibi", "uretim_kaniti"],
   properties: {
     vergi_no_sayfada: { type: "boolean", description: "True only if the tax number is printed on the site. Do not invent." },
     firma_adi_sayfada: { type: "boolean", description: "True only if the company name is on the site title or about/contact page. Do not invent." },
     adres_sayfada: { type: "boolean", description: "True only if the address is printed on the site. Do not invent." },
-    kanit_sayfa: alanYazi("Full URL of the page where you saw this. Empty if not seen. Do not invent."),
+    kanit_sayfa: alanYazi("Full URL of the company-owned fetched evidence page. Empty if not seen."),
+    uretici_veya_marka_sahibi: { type: "boolean", description: "True only if fetched content proves this company manufactures the item or owns its brand; wholesalers/resellers alone are false." },
+    uretim_kaniti: alanYazi("Specific evidence text from the fetched site showing factory/production or brand ownership. Empty if absent."),
   },
 };
 
@@ -286,7 +288,11 @@ export function firmaDogrulamaIstegi(alan: string, kimlik: { ad: string; vergiNo
     max_output_tokens: 512,
     reasoning: { effort: "low" as const },
     provider: { require_parameters: true },
-    tools: [{ type: "openrouter:web_search", parameters: { engine: "native", allowed_domains: [alan] } }],
+    max_tool_calls: 4,
+    tools: [
+      { type: "openrouter:web_search", parameters: { engine: "auto", max_uses: 2, allowed_domains: [alan] } },
+      { type: "openrouter:web_fetch", parameters: { engine: "openrouter", max_uses: 2, allowed_domains: [alan], max_content_tokens: 5000 } },
+    ],
     text: {
       format: {
         type: "json_schema",
@@ -303,7 +309,10 @@ export function firmaDogrulamaIstegi(alan: string, kimlik: { ad: string; vergiNo
       "vergi_no_sayfada: vergi numarasi sitede aynen yaziyorsa true.",
       "firma_adi_sayfada: firma adi sitenin basliginda veya iletisim/hakkimizda sayfasinda yaziyorsa true.",
       "adres_sayfada: adres sitede yaziyorsa true.",
-      "kanit_sayfa: bu bilgiyi gordugun sayfanin tam adresi; gormediysen bos birak. Tahmin etme.",
+      "kanit_sayfa: bu bilgiyi bizzat WEB_FETCH ile okudugun sayfanin tam adresi; tahmin etme.",
+      "ureticidir veya marka sahibidir ancak somut sitede bulunan uretim/marka sahipligi metni varsa uretici_veya_marka_sahibi=true yap.",
+      "Bayi, dagitici veya toptanci olmak tek basina uretici ya da marka sahibi olmak degildir.",
+      "uretim_kaniti: FETCH edilen kaynaktaki dogrudan ilgili gercek metin. Bulamazsan false ve bos metin dondur.",
     ].join("\n"),
   };
 }
@@ -324,18 +333,28 @@ export function firmaDogrulamasiGecerliMi(
     firma_adi_sayfada?: unknown;
     adres_sayfada?: unknown;
     kanit_sayfa?: unknown;
+    uretici_veya_marka_sahibi?: unknown;
+    uretim_kaniti?: unknown;
   };
   const kanit = guvenliAdres(k.kanit_sayfa);
-  if (!kanit || !sayfaFirmadaMi(kanit, alan)) return false;
+  if (!kanit || !sayfaFirmadaMi(kanit, alan)
+    || k.uretici_veya_marka_sahibi !== true || metin(k.uretim_kaniti).length < 15) return false;
   if (k.vergi_no_sayfada === true) return true;
   return k.firma_adi_sayfada === true && k.adres_sayfada === true;
 }
+
+type SiteKullanimTakibi = {
+  izin: () => boolean;
+  kaydet: (kullanim: Pick<GoruSonucu, "maliyet" | "girdiToken" | "ciktiToken" | "akilToken">) => Promise<void>;
+};
 
 async function firmaSitesiniPlatformlaDogrula(
   alan: string,
   kimlik: { ad: string; vergiNo: string; adres: string },
   anahtar: string,
+  takip?: SiteKullanimTakibi,
 ): Promise<boolean> {
+  if (takip && !takip.izin()) return false;
   let cevap: Response;
   try {
     cevap = await fetch(ADRES, {
@@ -351,6 +370,9 @@ async function firmaSitesiniPlatformlaDogrula(
   }
   if (!cevap.ok) return false;
   const govde = await cevap.json().catch(() => null);
+  if (takip) await takip.kaydet(kullanimOku(govde));
+  const kullanim = govde && typeof govde === "object" ? (govde as { usage?: { server_tool_use?: { web_fetch_requests?: unknown } } }).usage : null;
+  if (Number(kullanim?.server_tool_use?.web_fetch_requests ?? 0) < 1) return false;
   return firmaDogrulamasiGecerliMi(alan, govde);
 }
 
@@ -358,10 +380,10 @@ async function firmaSitesiniModelleBul(girdi: {
   tedarikciAdi: string;
   vergiNo: string;
   adres: string;
-}): Promise<string> {
+}, takip?: SiteKullanimTakibi): Promise<string> {
   const anahtar = process.env.OPENROUTER_API_KEY;
   const ad = girdi.tedarikciAdi.trim();
-  if (!anahtar || ad.length < 3) return "";
+  if (!anahtar || ad.length < 3 || (takip && !takip.izin())) return "";
   const sorgu = [girdi.vergiNo.replace(/\D/g, ""), ad, "resmi site"].filter(Boolean).join(" ");
   let cevap: Response;
   try {
@@ -384,6 +406,7 @@ async function firmaSitesiniModelleBul(girdi: {
   }
   if (!cevap.ok) return "";
   const govde = await cevap.json().catch(() => null);
+  if (takip) await takip.kaydet(kullanimOku(govde));
   const gorulen = new Set<string>();
   for (const sayfa of httpsAdresler(govde)) {
     const alan = alanAdiTemizle(sayfa);
@@ -394,6 +417,7 @@ async function firmaSitesiniModelleBul(girdi: {
       alan,
       { ad, vergiNo: girdi.vergiNo, adres: girdi.adres },
       anahtar,
+      takip,
     );
     if (uygun) return alan;
   }
@@ -406,12 +430,20 @@ export async function firmaAlaniniKilitle(girdi: {
   tedarikciAdi: string;
   vergiNo: string;
   adres: string;
-}): Promise<string> {
-  const belgede = alanAdiTemizle(girdi.belgedeYazan);
-  if (belgede && !resmiSiteSayilmaz(belgede)) return belgede;
-  const ipucu = alanAdiTemizle(girdi.esnafIpucu);
-  if (ipucu && !resmiSiteSayilmaz(ipucu)) return ipucu;
-  return firmaSitesiniModelleBul(girdi);
+}, takip?: SiteKullanimTakibi): Promise<string> {
+  // Bir alan adinin faturada veya esnafin ipucunda yer almasi resmi sahiplik kaniti degildir.
+  // Once mevcut kaynak dogrulayicisini kullan; kanit yoksa alan adini kilitleme.
+  const anahtar = process.env.OPENROUTER_API_KEY;
+  const kimlik = { ad: girdi.tedarikciAdi, vergiNo: girdi.vergiNo, adres: girdi.adres };
+  const adaylar = [girdi.belgedeYazan, girdi.esnafIpucu]
+    .map(alanAdiTemizle)
+    .filter((alan, sira, tumu) => alan && !resmiSiteSayilmaz(alan) && tumu.indexOf(alan) === sira);
+  if (anahtar) {
+    for (const alan of adaylar) {
+      if (await firmaSitesiniPlatformlaDogrula(alan, kimlik, anahtar, takip)) return alan;
+    }
+  }
+  return firmaSitesiniModelleBul(girdi, takip);
 }
 
 
@@ -598,7 +630,18 @@ export function satirAramaCevabi(
   const dayanak = veri.eslesme_dayanagi;
   if (dayanak === "barkod" && (!girdi.barkod.trim() || !esit(girdi.barkod, siteBarkodu))) return null;
   if (dayanak === "kod" && (!girdi.model.trim() || !esit(girdi.model, siteKodu))) return null;
-  if (dayanak === "ad-ve-ozellik" && (!girdi.ad.trim() || !(girdi.marka?.trim() || girdi.varyant?.trim() || girdi.beden?.trim()))) return null;
+  // Kod/barkod faturada varsa isme benziyor diye farkli urunu kabul etme.
+  const modelEslesiyor = Boolean(girdi.model.trim() && siteKodu && esit(girdi.model, siteKodu));
+  const barkodEslesiyor = Boolean(girdi.barkod.trim() && siteBarkodu && esit(girdi.barkod, siteBarkodu));
+  const tanimlayiciVar = Boolean(girdi.model.trim() || girdi.barkod.trim());
+  if (tanimlayiciVar && !modelEslesiyor && !barkodEslesiyor) return null;
+  if (dayanak === "ad-ve-ozellik") {
+    if (tanimlayiciVar || !girdi.ad.trim() || !esit(girdi.ad, metin(veri.urun_adi))) return null;
+    const ozellikSayisi = Number(Boolean(girdi.marka?.trim() && siteMarkasi))
+      + Number(Boolean(girdi.varyant?.trim() && siteRengi))
+      + Number(Boolean(girdi.beden?.trim() && siteBedeni));
+    if (ozellikSayisi < 2) return null;
+  }
   if (!["barkod", "kod", "ad-ve-ozellik"].includes(String(dayanak))) return null;
   const ad = metin(veri.urun_adi);
   const aciklama = metin(veri.aciklama);

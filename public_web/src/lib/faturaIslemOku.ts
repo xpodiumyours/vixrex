@@ -14,6 +14,7 @@ export interface SahipDurumu {
 }
 
 export interface KayitliSatir extends EslesmisFaturaSatiri {
+  satirId: string;
   sahipDurumu: SahipDurumu | null;
   urunId: string | null;
 }
@@ -128,6 +129,7 @@ export async function islemiYukle(
       odenecekToplam: sayiVeyaNull(is.data.payable_total),
     },
     satirlar: kayitlar.map((kayit) => ({
+      satirId: String(kayit.id),
       hamSatir: String(kayit.raw_line ?? ""),
       model: String(kayit.model ?? ""),
       ad: String(kayit.product_name ?? ""),

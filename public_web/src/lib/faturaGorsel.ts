@@ -232,8 +232,13 @@ export async function urunSayfasindaGorselKaniti(
   const bitis = Math.min(html.length, konum + adres.length + 260);
   const kaynakAlintisi = html.slice(baslangic, bitis).replace(/\s+/g, " ").trim();
   if (varyant.trim()) {
-    const etiket = (html.match(/<img\b[^>]*>/gi) ?? []).find((img) => img.includes(adres));
-    if (!etiket) return null;
+    const duzEtiket = (html.match(/<img\b[^>]*>/gi) ?? []).find((img) => img.includes(adres));
+    // Responsive <picture><source srcset="..."><img alt="Renk"></picture> yapisinda
+    // gorsel <source> icinde, varyant metni ise ayni picture'daki img'dedir.
+    const picture = (html.match(/<picture\b[^>]*>[\s\S]*?<\/picture>/gi) ?? [])
+      .find((icerik) => icerik.includes(adres));
+    const etiket = duzEtiket ?? (picture?.match(/<img\b[^>]*>/i)?.[0] ?? "");
+    if (!etiket || (!duzEtiket && !picture)) return null;
     const goruntuEtiketleri = [...etiket.matchAll(/\b(?:alt|title|aria-label)\s*=\s*(["'])(.*?)\1/gi)]
       .map((eslesme) => eslesme[2]).join(" ");
     if (!goruntuEtiketleri.toLocaleLowerCase("tr-TR").includes(varyant.trim().toLocaleLowerCase("tr-TR"))) {

@@ -37,6 +37,8 @@ export interface TedarikciDijitalIzi {
 export interface DijitalIzAramaDurumu {
   erisimHatasi: boolean;
   sinirDoldu: boolean;
+  sonrakiSatir?: number;
+  hatalar?: Record<string, string>;
   siteDurumu?: FirmaSiteDurumu;
   devam?: Record<string, { sonrakiSayfa: number; urunler: UreticiUrunu[] }>;
 }

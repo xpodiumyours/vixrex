@@ -103,6 +103,15 @@ describe("resmî ürün sayfasından fotoğraf ve varyant kanıtı", () => {
     expect(kanit?.kaynakAlintisi).toContain("Siyah");
   });
 
+  it("responsive picture kaynak görseli aynı varyant etiketiyle bağlıysa kanıtlanır", async () => {
+    const kanit = await urunSayfasindaGorselKaniti(kaynak, gorsel, "Siyah", {
+      resolveHost,
+      fetcher: async () => html('<picture><source srcset="' + gorsel +
+        ' 1200w"><img alt="Fanila Siyah" src="https://cdn.example/kucuk.jpg"></picture>'),
+    });
+    expect(kanit?.kaynakAlintisi).toContain(gorsel);
+  });
+
   it("modelin uydurduğu fotoğraf adresi gerçek sayfada yoksa kanıt çıkmaz", async () => {
     const kanit = await urunSayfasindaGorselKaniti(kaynak, gorsel, "Siyah", {
       resolveHost,
