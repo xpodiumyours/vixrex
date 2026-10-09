@@ -51,9 +51,9 @@ describe("belge gerçeği — satırlar belgenin toplamıyla karşılaştırıl�
   it("satırlar belgeyle tutuyorsa geçer", () => {
     const uyum = belgeGercegiUyuyorMu(
       [
-        { adet: 2, satirToplam: 274 },
-        { adet: 3, satirToplam: 345 },
-      ].map((s) => ({ ...s, model: "", ad: "", barkod: "", varyant: "", beden: "", alisBirimFiyat: null, guven: 1 })),
+        { adet: 2, satirToplam: 274, alisBirimFiyat: 137 },
+        { adet: 3, satirToplam: 345, alisBirimFiyat: 115 },
+      ].map((s) => ({ ...s, model: "", ad: "", barkod: "", varyant: "", beden: "", guven: 1 })),
       { adet: 5, toplam: 619 },
     );
     expect(uyum.uyumlu).toBe(true);
@@ -65,4 +65,31 @@ describe("belge gerçeği — satırlar belgenin toplamıyla karşılaştırıl�
     expect(uyum.uyumlu).toBe(false);
     expect(uyum.sebep).toContain("okunamadı");
   });
+  it("genel toplam tutsa bile ürün hesabı yanlışsa durur", () => {
+    const satirlar = [
+      { adet: 1, alisBirimFiyat: 100, satirToplam: 200 },
+      { adet: 1, alisBirimFiyat: 200, satirToplam: 100 },
+    ].map((s) => ({ ...s, model: "K", ad: "Ürün", barkod: "", varyant: "", beden: "", guven: 1 }));
+    const sonuc = belgeGercegiUyuyorMu(satirlar, { adet: 2, toplam: 300 });
+    expect(sonuc.uyumlu).toBe(false);
+    expect(sonuc.sebep).toContain("miktar × birim fiyat hesabı tutmuyor");
+  });
+
+  it("eksik fiyat veya adet yok sayılmaz", () => {
+    const satirlar = [
+      { adet: 2, alisBirimFiyat: null, satirToplam: 0 },
+      { adet: null, alisBirimFiyat: 100, satirToplam: 0 },
+    ].map((s) => ({ ...s, model: "K", ad: "Ürün", barkod: "", varyant: "", beden: "", guven: 1 }));
+    const sonuc = belgeGercegiUyuyorMu(satirlar, { adet: 2, toplam: 0 });
+    expect(sonuc.uyumlu).toBe(false);
+    expect(sonuc.sebep).toContain("1. ürünün miktarı veya fiyatı okunamadı");
+    expect(sonuc.sebep).toContain("2. ürünün miktarı veya fiyatı okunamadı");
+  });
+
+  it("dört ondalıklı alış fiyatında kuruş toleransı geçerlidir", () => {
+    const satir = { model: "K", ad: "Ürün", barkod: "", varyant: "", beden: "",
+      adet: 3, alisBirimFiyat: 19.995, satirToplam: 59.99, guven: 1 };
+    expect(belgeGercegiUyuyorMu([satir], { adet: 3, toplam: 59.99 }).uyumlu).toBe(true);
+  });
+
 });
