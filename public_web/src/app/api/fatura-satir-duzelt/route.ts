@@ -100,6 +100,9 @@ export async function POST(request: NextRequest) {
     siteGorsel,
     siteSayfa,
     siteDayanak: kart?.dayanak === "barkod" || kart?.dayanak === "ad" ? kart.dayanak : "kod",
+    siteFotografKaniti: !kimlikDegisti && kart?.fotografKaniti && typeof kart.fotografKaniti === "object" && !Array.isArray(kart.fotografKaniti)
+      ? kart.fotografKaniti as { kaynakSayfa: string; kaynakGorsel: string; kaynakAlintisi: string; lunaGerekcesi: string }
+      : undefined,
     sayfaDogrulandi: !kimlikDegisti && Boolean(siteAciklama && siteGorsel.startsWith("https://") && siteSayfa.startsWith("https://")),
   }));
 
