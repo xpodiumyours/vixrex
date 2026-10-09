@@ -45,10 +45,13 @@ const IZINLI_TURLER = new Map([
   ["image/jpeg", "jpg"],
   ["image/png", "png"],
   ["image/webp", "webp"],
+  ["application/pdf", "pdf"],
 ]);
 
 function gercekTur(bayt: Uint8Array): string | null {
   if (bayt.length < 12) return null;
+  if (bayt[0] === 0x25 && bayt[1] === 0x50 && bayt[2] === 0x44 &&
+      bayt[3] === 0x46 && bayt[4] === 0x2d) return "application/pdf";
   if (bayt[0] === 0xff && bayt[1] === 0xd8 && bayt[2] === 0xff) return "image/jpeg";
   const png = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
   if (png.every((b, i) => bayt[i] === b)) return "image/png";
@@ -155,7 +158,14 @@ export async function POST(request: NextRequest) {
   const sayfaTurleri = sayfaBaytlari.map(gercekTur);
   if (sayfaTurleri.some((tur) => !tur || !IZINLI_TURLER.has(tur))) {
     return NextResponse.json(
-      { hata: "Her sayfa JPG, PNG veya WebP fotoğrafı olmalıdır." },
+      { hata: "Fatura yalnız JPG, PNG, WebP veya PDF biçiminde olmalıdır." },
+      { status: 415 },
+    );
+  }
+  // PDF ayrı bir fatura biçimidir; aynı yüklemede fotoğraflarla karıştırılmaz.
+  if (sayfaTurleri.includes("application/pdf") && sayfaTurleri.length !== 1) {
+    return NextResponse.json(
+      { hata: "PDF faturayı tek dosya olarak yükle; fotoğraflarla karıştırma." },
       { status: 415 },
     );
   }

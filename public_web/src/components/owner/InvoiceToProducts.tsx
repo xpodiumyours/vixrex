@@ -456,11 +456,21 @@ export default function InvoiceToProducts({
         setHata("Sayfa fotoğraflarının toplamı en fazla 4 MB olabilir.");
         return;
       }
+      // Esnaf yalnız faturasını seçer. PDF ile fotoğraflar karıştırılmaz.
+      const pdfMi = dosyalar[0]?.type === "application/pdf"
+        || dosyalar[0]?.name.toLocaleLowerCase("tr-TR").endsWith(".pdf");
+      if (pdfMi && dosyalar.length !== 1) {
+        setHata("PDF faturayı tek dosya olarak seç.");
+        return;
+      }
       sonFaturaDosyasi.current = dosyalar;
-
-      const okuyucu = new FileReader();
-      okuyucu.onload = () => setOnizleme(String(okuyucu.result));
-      okuyucu.readAsDataURL(dosyalar[0]);
+      if (pdfMi) {
+        setOnizleme(null);
+      } else {
+        const okuyucu = new FileReader();
+        okuyucu.onload = () => setOnizleme(String(okuyucu.result));
+        okuyucu.readAsDataURL(dosyalar[0]);
+      }
 
       setAdim("okunuyor");
 
@@ -765,14 +775,14 @@ export default function InvoiceToProducts({
           disabled={!okuyucuHazir}
           ref={dosyaRef}
           type="file"
-          accept="image/jpeg,image/png,image/webp"
+          accept="image/jpeg,image/png,image/webp,application/pdf"
           multiple
           onChange={(e) => {
             const dosyalar = Array.from(e.target.files ?? []);
             if (dosyalar.length) void dosyaSecildi(dosyalar);
           }}
         />
-        <p className="fatura-aciklama">Tek fatura için 1–3 sayfa fotoğrafı sırayla seçebilirsin. Toplam en fazla 4 MB. PDF desteği henüz yok.</p>
+        <p className="fatura-aciklama">Fatura fotoğrafını (1–3 sayfa) veya PDF dosyasını seç. Toplam en fazla 4 MB. Başka belge gerekmiyor.</p>
         {onClose && (
           <button type="button" className="fatura-ikincil" onClick={() => void kapat()}>
             Vazgeç

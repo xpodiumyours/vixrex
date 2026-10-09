@@ -807,17 +807,48 @@ export async function lunaGorseliniDogrula(girdi: {
   }
 }
 
+/**
+ * PDF de aynı Luna okumasını ve JSON şemasını kullanır.
+ * OpenRouter'ın resmî PDF girdisi yalnız /chat/completions yolundadır;
+ * görsel Responses API yolunu değiştirmeden sonuçları ortak GoruSonucu'na
+ * çeviririz. Ayrı ürün araştırması / ek OCR kodu yoktur.
+ */
+export function pdfLunaIstegi(dataUrl: string) {
+  if (!/^data:application\/pdf;base64,[A-Za-z0-9+/=]+$/.test(dataUrl)) {
+    throw new Error("FATURA_PDF_GECERSIZ");
+  }
+  return {
+    model: GORU_MODELI,
+    max_completion_tokens: CIKTI_TOKEN_TAVANI,
+    reasoning: { effort: "none" as const },
+    provider: { require_parameters: true },
+    response_format: {
+      type: "json_schema" as const,
+      json_schema: { name: "fatura_okuma", strict: true, schema: FATURA_SEMA },
+    },
+    plugins: [{ id: "file-parser", pdf: { engine: "mistral-ocr" } }],
+    messages: [{
+      role: "user" as const,
+      content: [
+        { type: "text" as const, text: SORU },
+        { type: "file" as const, file: { filename: "fatura.pdf", file_data: dataUrl } },
+      ],
+    }],
+  };
+}
+
 export async function faturayiOku(dataUrl: string | string[]): Promise<GoruSonucu> {
   const anahtar = process.env.OPENROUTER_API_KEY;
   if (!anahtar) throw new Error("OKUYUCU_HAZIR_DEGIL");
-
-  const cevap = await fetch(ADRES, {
+  const pdfGirdisi = typeof dataUrl === "string" && dataUrl.startsWith("data:application/pdf;");
+  const pdfIstegi = pdfGirdisi ? pdfLunaIstegi(dataUrl) : null;
+  const cevap = await fetch(pdfIstegi ? "https://openrouter.ai/api/v1/chat/completions" : ADRES, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${anahtar}`,
     },
-    body: JSON.stringify({
+    body: JSON.stringify(pdfIstegi ?? {
       model: GORU_MODELI,
       max_output_tokens: CIKTI_TOKEN_TAVANI,
       reasoning: { effort: "none" },
@@ -856,7 +887,26 @@ export async function faturayiOku(dataUrl: string | string[]): Promise<GoruSonuc
     );
   }
 
-  const govde = await cevap.json().catch(() => null);
+  const hamCevap = await cevap.json().catch(() => null);
+  // Chat Completions PDF cevabını var olan Responses okuma sözleşmesine uyarla.
+  // İçerik boş, kesilmiş veya tamamlanmamışsa başarı üretme.
+  const pdfMesaji = pdfIstegi ? hamCevap?.choices?.[0] : null;
+  if (pdfIstegi && (
+    !pdfMesaji || pdfMesaji.finish_reason !== "stop" ||
+    typeof pdfMesaji.message?.content !== "string" || !pdfMesaji.message.content.trim()
+  )) throw new Error("OKUMA_YARIM_KALDI");
+  const pdfUsage = hamCevap?.usage;
+  const govde = pdfIstegi ? {
+    status: "completed",
+    output_text: pdfMesaji.message.content,
+    usage: {
+      input_tokens: pdfUsage?.input_tokens ?? pdfUsage?.prompt_tokens ?? 0,
+      output_tokens: pdfUsage?.output_tokens ?? pdfUsage?.completion_tokens ?? 0,
+      cost: pdfUsage?.cost ?? null,
+      input_tokens_details: { cached_tokens: pdfUsage?.prompt_tokens_details?.cached_tokens ?? 0 },
+      output_tokens_details: { reasoning_tokens: pdfUsage?.completion_tokens_details?.reasoning_tokens ?? 0 },
+    },
+  } : hamCevap;
   if (govde?.status === "incomplete") throw new Error("OKUMA_YARIM_KALDI");
   const ham = ciktiMetni(govde ?? {});
   if (!ham.trim()) throw new Error("FOTOGRAFTA_YAZI_YOK");

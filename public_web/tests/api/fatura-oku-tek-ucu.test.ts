@@ -94,12 +94,21 @@ function pngDosyasi(): File {
   return new File([bayt], "fatura.png", { type: "image/png" });
 }
 
-function istek(args: { slug?: string; editToken?: string; dosyaVarMi?: boolean; sayfaSayisi?: number } = {}) {
+// Ayrı belge değil: esnafın yüklediği faturanın PDF temsili.
+// API sözleşme testidir; gerçek sağlayıcıya dosya göndermeyiz.
+function pdfDosyasi(): File {
+  const pdf = "%PDF-1.4\n1 0 obj <</Type /Catalog>> endobj\ntrailer <</Root 1 0 R>>\n%%EOF";
+  return new File([pdf], "fatura.pdf", { type: "application/pdf" });
+}
+
+function istek(args: { slug?: string; editToken?: string; dosyaVarMi?: boolean; sayfaSayisi?: number; pdf?: boolean } = {}) {
   const form = new FormData();
   form.set("slug", args.slug ?? "deneme-vitrin");
   if (args.editToken) form.set("editToken", args.editToken);
   if (args.dosyaVarMi !== false) {
-    for (let i = 0; i < (args.sayfaSayisi ?? 1); i++) form.append("dosya", pngDosyasi());
+    for (let i = 0; i < (args.sayfaSayisi ?? 1); i++) {
+      form.append("dosya", args.pdf ? pdfDosyasi() : pngDosyasi());
+    }
   }
   return new NextRequest("http://localhost/api/fatura-oku", { method: "POST", body: form });
 }
@@ -210,6 +219,64 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     mocks.harcama = [];
     mocks.kullanimYaz.mockResolvedValue({ error: null });
     vi.stubGlobal("fetch", siteyiAyiranOkuma(TEK_SATIR));
+  });
+
+  it("PDF fatura da AYNI Luna okumasindan ve urun karti yolundan gecer", async () => {
+    const resimAkisi = siteyiAyiranOkuma(TEK_SATIR);
+    const istemci = vi.fn(async (url: string, init?: RequestInit) => {
+      if (String(url).includes("openrouter.ai/api/v1/chat/completions")) {
+        return new Response(JSON.stringify({
+          choices: [{ finish_reason: "stop", message: { content: JSON.stringify(TEK_SATIR) } }],
+          usage: { prompt_tokens: 100, completion_tokens: 20, cost: 0.003 },
+        }), { status: 200 });
+      }
+      return resimAkisi(url, init);
+    });
+    vi.stubGlobal("fetch", istemci);
+    const response = await faturaOku(istek({ pdf: true }));
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.satirlar).toHaveLength(1);
+    expect(body.satirlar[0].model).toBe("ELT1302");
+    const chatCall = istemci.mock.calls.find((call) =>
+      String(call[0]).includes("/chat/completions"));
+    expect(chatCall).toBeDefined();
+    const requestBody = JSON.parse(String(chatCall?.[1]?.body ?? "{}"));
+    expect(requestBody.model).toBe("openai/gpt-5.6-luna");
+    expect(requestBody.plugins).toEqual([{ id: "file-parser", pdf: { engine: "mistral-ocr" } }]);
+    expect(requestBody.response_format).toMatchObject({
+      type: "json_schema", json_schema: { name: "fatura_okuma", strict: true },
+    });
+    expect(requestBody.messages[0].content[1]).toMatchObject({
+      type: "file", file: { filename: "fatura.pdf" },
+    });
+    expect(requestBody.messages[0].content[1].file.file_data.startsWith("data:application/pdf;base64,")).toBe(true);
+  });
+
+  it("PDF ile fotografu ayni yuklemede karistirmaz", async () => {
+    const response = await faturaOku(istek({ pdf: true, sayfaSayisi: 2 }));
+    expect(response.status).toBe(415);
+  });
+
+  it("PDF gibi adlandirilmis sahte dosyayi gercek imzayla reddeder", async () => {
+    const form = new FormData();
+    form.set("slug", "deneme-vitrin");
+    form.set("dosya", new File(["Duz metin, fatura degil"], "fatura.pdf", { type: "application/pdf" }));
+    const response = await faturaOku(new NextRequest("http://localhost/api/fatura-oku", {
+      method: "POST", body: form,
+    }));
+    expect(response.status).toBe(415);
+  });
+
+  it("PDF Luna yaniti yarimsa fatura kaydi basarili sayilmaz", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      if (String(url).includes("/chat/completions")) return new Response(JSON.stringify({
+        choices: [{ finish_reason: "length", message: { content: JSON.stringify(TEK_SATIR) } }],
+      }), { status: 200 });
+      return siteyiAyiranOkuma(TEK_SATIR)(url);
+    }));
+    const response = await faturaOku(istek({ pdf: true }));
+    expect(response.status).toBe(500);
   });
 
   it("iki sayfa fotografini ayni Luna isteginde okur; tek belge kaydi hazirlar", async () => {
