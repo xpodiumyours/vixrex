@@ -61,6 +61,12 @@ describe("satır düzeltme kartı site kaydından kurar", () => {
           aciklama: "Sitede yazan açıklama",
           gorseller: ["https://firma.example/urun.jpg"],
           kaynak: "https://firma.example/urun",
+          fotografKaniti: {
+            kaynakSayfa: "https://firma.example/urun",
+            kaynakGorsel: "https://firma.example/urun.jpg",
+            kaynakAlintisi: '<img src="https://firma.example/urun.jpg">',
+            lunaGerekcesi: "Fotoğrafta fanila görünüyor.",
+          },
         },
       },
       error: null,
@@ -75,6 +81,17 @@ describe("satır düzeltme kartı site kaydından kurar", () => {
     expect(govde.satir.katalog.kaynak).toBe("https://firma.example/urun");
     expect(govde.satir.katalog.aciklama).toBe("Sitede yazan açıklama");
     expect(govde.satir.katalog.resmiAd).toBe("Faturadaki fanila");
+  });
+
+
+  it("ürün kodu veya marka değişince eski fotoğraf ve eşleşme kanıtı geçersiz olur", async () => {
+    const cevap = await POST(istek({ model: "BASKA-MODEL", marka: "Baska Marka" }));
+    const govde = await cevap.json();
+    expect(cevap.status).toBe(200);
+    expect(govde.satir.sonuc).toBe("eksik");
+    expect(govde.satir.katalog).toBeNull();
+    const islem = m.rpc.mock.calls.find((c) => c[0] === "replace_invoice_line");
+    expect(islem?.[1].p_line.outcome).toBe("eksik");
   });
 
   it("açıklaması olmayan kayıtlı fotoğraftan kart kurmaz", async () => {

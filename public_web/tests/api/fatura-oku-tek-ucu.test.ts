@@ -283,6 +283,21 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
       const adres = String(url);
       if (adres.includes("openrouter.ai/api/v1/responses")) {
         const istekGovdesi = JSON.parse(String(init?.body ?? "{}"));
+        if (istekGovdesi.text?.format?.name === "urun_fotografi_kontrol") {
+          expect(istekGovdesi.input[0].content[1].type).toBe("input_image");
+          expect(istekGovdesi.input[0].content[1].image_url).toMatch(/^data:image\/jpeg;base64,/);
+          expect(istekGovdesi.input[0].content[1].detail).toBe("original");
+          return new Response(JSON.stringify({
+            status: "completed",
+            output_text: JSON.stringify({
+              urun_uyuyor: true,
+              renk_uyuyor: true,
+              fotograf_net: true,
+              gerekce: "Fanila ve siyah renk fotoğrafta açıkça görünüyor.",
+            }),
+            usage: { input_tokens: 250, output_tokens: 60 },
+          }), { status: 200 });
+        }
         if (istekGovdesi.tools) {
           return new Response(JSON.stringify({
             status: "completed",
@@ -293,6 +308,12 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
               kaynak_sayfa: sayfa,
               gorsel_adresi: gorsel,
               kanit: "ELT1302 8681128321677 Siyah L",
+              site_kodu: "ELT1302",
+              site_barkodu: "8681128321677",
+              site_markasi: "",
+              site_rengi: "Siyah",
+              site_bedeni: "L",
+              fotograf_rengi_dogrulandi: true,
               eslesme_dayanagi: "kod",
             }),
             usage: {
@@ -307,6 +328,10 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
         return okuyucuCevabi(TEK_SATIR);
       }
       if (adres === gorsel) return new Response(new Uint8Array(foto), { status: 200 });
+      if (adres === sayfa) return new Response(
+        '<html><body><img alt="Elit fanila Siyah" src="' + gorsel + '"></body></html>',
+        { status: 200, headers: { "content-type": "text/html" } },
+      );
       return new Response("{}", { status: 404 });
     }));
 
@@ -319,6 +344,46 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(govde.satirlar[0].katalog.aciklama).toBe("ELT1302 erkek elastan fanila");
     expect(govde.satirlar[0].katalog.gorseller).toEqual([gorsel]);
     expect(govde.satirlar[0].katalog.kaynak).toBe(sayfa);
+    expect(govde.satirlar[0].katalog.dayanak).toBe("kod");
+    expect(govde.satirlar[0].katalog.fotografKaniti.kaynakSayfa).toBe(sayfa);
+    expect(govde.satirlar[0].katalog.fotografKaniti.kaynakGorsel).toBe(gorsel);
+    expect(govde.satirlar[0].katalog.fotografKaniti.lunaGerekcesi).toContain("siyah renk");
+  });
+
+
+  it("toptancı faturasındaki marka için üreticinin resmî sitesini ayrı bulur", async () => {
+    const cevapVer = vi.fn(async (_url: string, init?: RequestInit) => {
+      const requestBody = JSON.parse(String(init?.body ?? "{}"));
+      if (!requestBody.tools) return okuyucuCevabi({
+        ...TEK_SATIR,
+        tedarikci: "Örnek Toptan",
+        tedarikci_site: "toptan.example",
+        satirlar: [{ ...TEK_SATIR.satirlar[0], marka: "Elit" }],
+      });
+      if (requestBody.text?.format?.name === "markanin_resmi_sitesi") {
+        return new Response(JSON.stringify({
+          status: "completed",
+          usage: { server_tool_use: { web_fetch_requests: 1 }, input_tokens: 100, output_tokens: 20 },
+          output_text: JSON.stringify({
+            marka_adi: "Elit", resmi_site: "https://elit.example",
+            kanit_sayfa: "https://elit.example/hakkimizda",
+            marka_sahibi_dogrulandi: true,
+            kanit: "Elit bu üreticinin kendi kayıtlı markasıdır.",
+          }),
+        }), { status: 200 });
+      }
+      return new Response(JSON.stringify({
+        status: "completed", usage: { server_tool_use: { web_fetch_requests: 0 } }, output_text: "{}",
+      }), { status: 200 });
+    });
+    vi.stubGlobal("fetch", cevapVer);
+    const response = await faturaOku(istek());
+    expect(response.status).toBe(200);
+    const bodies = cevapVer.mock.calls.map((call) => JSON.parse(String((call[1] as RequestInit)?.body ?? "{}")));
+    const productSearch = bodies.find((item) => item.text?.format?.name === "fatura_urun_kaynagi");
+    expect(productSearch.tools[0].parameters.allowed_domains).toEqual(["elit.example"]);
+    expect(productSearch.tools[1].parameters.allowed_domains).toEqual(["elit.example"]);
+    expect((await response.json()).satirlar[0].sonuc).toBe("eksik");
   });
 
   it("model ve barkod yoksa ürün adı bulunan satırı kaybetmez", async () => {

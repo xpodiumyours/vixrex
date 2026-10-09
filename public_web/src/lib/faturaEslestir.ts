@@ -5,6 +5,13 @@
 // burada tek kopya durur; farklı okuyucular kendi eşleştirme kuralını
 // yazmaz — ikinci bir "hangi ürün bu" kararı hiçbir yerde tekrarlanmaz.
 
+export interface FotografKaniti {
+  kaynakSayfa: string;
+  kaynakGorsel: string;
+  kaynakAlintisi: string;
+  lunaGerekcesi: string;
+}
+
 export interface HamFaturaSatiri {
   hamSatir?: string;
   model: string;
@@ -22,6 +29,8 @@ export interface HamFaturaSatiri {
   siteGorsel?: string;
   siteSayfa?: string;
   siteAd?: string;
+  siteDayanak?: "kod" | "barkod" | "ad";
+  siteFotografKaniti?: FotografKaniti;
   sayfaDogrulandi?: boolean;
 }
 
@@ -41,6 +50,7 @@ export interface KatalogBilgisi {
   aciklama: string;
   gorseller: string[];
   gorselAdaylari: string[];
+  fotografKaniti?: FotografKaniti;
   varyantlar?: Array<{ ad: string; barkod: string; gorseller: string[] }>;
   kaynak: string;
 }
@@ -77,20 +87,26 @@ export function siteKartiniUygula(satir: EslesmisFaturaSatiri): EslesmisFaturaSa
   const aciklama = (satir.siteAciklama ?? "").trim();
   const gorsel = (satir.siteGorsel ?? "").trim();
   const sayfa = (satir.siteSayfa ?? "").trim();
-  if (satir.sayfaDogrulandi === true && aciklama && gorsel.startsWith("https://") && sayfa.startsWith("https://")) {
+  const fotografKaniti = satir.siteFotografKaniti;
+  if (
+    satir.sayfaDogrulandi === true && aciklama && gorsel.startsWith("https://") && sayfa.startsWith("https://") &&
+    fotografKaniti?.kaynakSayfa === sayfa && fotografKaniti.kaynakGorsel === gorsel &&
+    fotografKaniti.kaynakAlintisi.length > 0 && fotografKaniti.lunaGerekcesi.length > 0
+  ) {
     return {
       ...satir,
       sonuc: "kanitli",
       katalog: {
         firma: satir.katalog?.firma ?? "",
         kaynakFirma: satir.katalog?.kaynakFirma ?? "",
-        dayanak: satir.katalog?.dayanak === "barkod" ? "barkod" : "kod",
+        dayanak: satir.siteDayanak ?? satir.katalog?.dayanak ?? "kod",
         izinDurumu: satir.katalog?.izinDurumu ?? "yok",
         resmiAd: (satir.siteAd ?? "").trim() || satir.katalog?.resmiAd || satir.ad,
         marka: satir.katalog?.marka || satir.marka || "",
         aciklama,
         gorseller: [gorsel],
         gorselAdaylari: [gorsel],
+        fotografKaniti,
         kaynak: sayfa,
       },
     };
