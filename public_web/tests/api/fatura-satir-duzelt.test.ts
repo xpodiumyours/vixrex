@@ -61,6 +61,12 @@ describe("satır düzeltme kartı site kaydından kurar", () => {
           aciklama: "Sitede yazan açıklama",
           gorseller: ["https://firma.example/urun.jpg"],
           kaynak: "https://firma.example/urun",
+          fotografKaniti: {
+            kaynakSayfa: "https://firma.example/urun",
+            kaynakGorsel: "https://firma.example/urun.jpg",
+            kaynakAlintisi: '<img src="https://firma.example/urun.jpg">',
+            lunaGerekcesi: "Fotoğrafta fanila görünüyor.",
+          },
         },
       },
       error: null,
