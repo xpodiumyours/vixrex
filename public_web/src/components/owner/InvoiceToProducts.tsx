@@ -1244,7 +1244,7 @@ export default function InvoiceToProducts({
         <button
           type="button"
           className="fatura-ikincil"
-          disabled={yaziliyor || yukleniyor || !sonFaturaDosyasi.current}
+          disabled={yaziliyor || yukleniyor}
           onClick={() => {
             const dosya = sonFaturaDosyasi.current;
             if (dosya) void dosyaSecildi(dosya);
