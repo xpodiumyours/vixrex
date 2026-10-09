@@ -193,6 +193,12 @@ describe("site kartı", () => {
       siteAciklama: "Pamuklu fanila",
       siteGorsel: "https://cdn.example/elt1302.jpg",
       siteSayfa: "https://firma.example/elt1302",
+      siteFotografKaniti: {
+        kaynakSayfa: "https://firma.example/elt1302",
+        kaynakGorsel: "https://cdn.example/elt1302.jpg",
+        kaynakAlintisi: '<img src="https://cdn.example/elt1302.jpg" alt="Elit fanila">',
+        lunaGerekcesi: "Ürün ve renk fotoğrafta uyuşuyor.",
+      },
       sayfaDogrulandi: true,
       siteDayanak: "barkod",
     }));
