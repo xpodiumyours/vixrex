@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { siteAdayiniKoru, siteKartiniUygula, type EslesmisFaturaSatiri } from "@/lib/faturaEslestir";
-import { markaSitesiniBul, satirAramaIstegi, satirAramaCevabi } from "@/lib/faturaGoru";
+import { httpsAdresler, markaSitesiniBul, satirAramaIstegi, satirAramaCevabi } from "@/lib/faturaGoru";
 
 // .example alanlariyla calisan test: test DNS'i internetten etkilenmez.
 // Kaynak sayfanin HTML icerigi ayrica gercek fetch yanitindan kontrol edilir.
@@ -291,5 +291,101 @@ describe("site kartı", () => {
   it("eski katalog fikstürü tek başına doğrulama sayılmaz", () => {
     const sonuc = siteKartiniUygula(satir());
     expect(sonuc.sonuc).toBe("eksik");
+  });
+});
+
+
+describe("A2-A4 uretici kaynagi izlenebilirligi (ucretsiz, API anahtarsiz)", () => {
+  const markaGirdisi = {
+    marka: "Tutku Elit", tedarikci: "Ornek Toptan", tedarikciSitesi: "",
+    model: "TST100", ad: "Ornek urun",
+  };
+  const cevap = (govde: Record<string, unknown>, status = 200) => new Response(
+    JSON.stringify(govde), { status, headers: { "content-type": "application/json" } },
+  );
+  const temel = {
+    id: "resp_local_test_1", status: "completed",
+    usage: { server_tool_use: { web_search_requests: 1, web_fetch_requests: 1 } },
+    output_text: JSON.stringify({
+      marka_adi: "Tutku Elit", resmi_site: "https://uretici.example",
+      kanit_sayfa: "https://uretici.example/hakkimizda",
+      marka_sahibi_dogrulandi: true,
+      kanit: "Tutku Elit markasinin resmî ureticisiyiz.",
+    }),
+  };
+  it("arama sonuclari output_text, action.sources, results.url ve atiflardan toplanir", () => {
+    expect(httpsAdresler({
+      output_text: "Resmî site: https://uretim.example/hakkimizda.",
+      output: [
+        { action: { sources: [{ url: "https://kaynak.example/about" }] } },
+        { results: [{ url: "https://baska.example/brand" }] },
+        { type: "message", content: [{ annotations: [{ url_citation: { url: "https://son.example/kanit" } }] }] },
+      ],
+    })).toEqual([
+      "https://kaynak.example/about",
+      "https://baska.example/brand",
+      "https://son.example/kanit",
+      "https://uretim.example/hakkimizda",
+    ]);
+  });
+  it("anahtar eksigi gercek neden olarak doner, web cagrisi yapmaz", async () => {
+    vi.stubEnv("OPENROUTER_API_KEY", "");
+    const fakeFetch = vi.fn();
+    vi.stubGlobal("fetch", fakeFetch);
+    try {
+      const sonuc = await markaSitesiniBul(markaGirdisi);
+      expect(sonuc.alan).toBe("");
+      expect(sonuc.iz.neden).toBe("anahtar_yok");
+      expect(fakeFetch).not.toHaveBeenCalled();
+    } finally { vi.unstubAllEnvs(); vi.unstubAllGlobals(); }
+  });
+  it("web_fetch yapilmadiysa kanitsiz siteyi kabul etmez ve nedenini saklar", async () => {
+    vi.stubEnv("OPENROUTER_API_KEY", "fake-key");
+    vi.stubGlobal("fetch", vi.fn(async () => cevap({
+      ...temel, usage: { server_tool_use: { web_search_requests: 2, web_fetch_requests: 0 } },
+    })));
+    try {
+      const sonuc = await markaSitesiniBul(markaGirdisi);
+      expect(sonuc.alan).toBe("");
+      expect(sonuc.iz.neden).toBe("web_fetch_yok");
+      expect(sonuc.iz.webAramaSayisi).toBe(2);
+      expect(sonuc.iz.yanitKimligi).toBe("resp_local_test_1");
+      expect(sonuc.iz.adayAlanlar).toContain("uretici.example");
+    } finally { vi.unstubAllEnvs(); vi.unstubAllGlobals(); }
+  });
+  it("marka celiskisi hatasini korur; yanlis marka resmî kabul edilmez", async () => {
+    vi.stubEnv("OPENROUTER_API_KEY", "fake-key");
+    vi.stubGlobal("fetch", vi.fn(async () => cevap({
+      ...temel, output_text: JSON.stringify({
+        ...JSON.parse(temel.output_text), marka_adi: "Baska Marka",
+      }),
+    })));
+    try {
+      const sonuc = await markaSitesiniBul(markaGirdisi);
+      expect(sonuc.alan).toBe("");
+      expect(sonuc.iz.neden).toBe("marka_adi_eslesmedi");
+    } finally { vi.unstubAllEnvs(); vi.unstubAllGlobals(); }
+  });
+  it("API 402 durumunu bos site degil bakiye arizasi olarak siniflandirir", async () => {
+    vi.stubEnv("OPENROUTER_API_KEY", "fake-key");
+    vi.stubGlobal("fetch", vi.fn(async () => cevap({ error: { code: "insufficient_quota" } }, 402)));
+    try {
+      const sonuc = await markaSitesiniBul(markaGirdisi);
+      expect(sonuc.iz.neden).toBe("bakiye_yok");
+      expect(sonuc.iz.httpDurum).toBe(402);
+    } finally { vi.unstubAllEnvs(); vi.unstubAllGlobals(); }
+  });
+  it("resmî kaynak HTML alintisi eslesmeden marka kanitli olamaz", async () => {
+    const fakeFetch = vi.fn(async (url: string) =>
+      String(url) === "https://uretici.example/hakkimizda"
+        ? new Response("<html><body>Uretimimiz suruyor.</body></html>", { status: 200 })
+        : cevap(temel));
+    vi.stubEnv("OPENROUTER_API_KEY", "fake-key");
+    vi.stubGlobal("fetch", fakeFetch);
+    try {
+      const sonuc = await markaSitesiniBul(markaGirdisi);
+      expect(sonuc.alan).toBe("");
+      expect(sonuc.iz.neden).toBe("kanit_sayfada_bulunamadi");
+    } finally { vi.unstubAllEnvs(); vi.unstubAllGlobals(); }
   });
 });

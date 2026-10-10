@@ -39,6 +39,8 @@ export interface DijitalIzAramaDurumu {
   sinirDoldu: boolean;
   sonrakiSatir?: number;
   hatalar?: Record<string, string>;
+  /** Sadece alan adlari, sayaclar ve hata kodlari; fatura/vergi/anahtar kaydedilmez. */
+  markaArastirmalari?: Record<string, import("@/lib/faturaGoru").MarkaArastirmaIzi>;
   siteDurumu?: FirmaSiteDurumu;
   devam?: Record<string, { sonrakiSayfa: number; urunler: UreticiUrunu[] }>;
 }

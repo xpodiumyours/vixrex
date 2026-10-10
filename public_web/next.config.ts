@@ -51,7 +51,7 @@ const publicSupabaseKey =
 // Cerrahi PR #672'nin izolasyonu sadece frontend'e değil backend'e de
 // uygulanır: Preview yanlış DB'ye bağlanmışsa deploy açık hata ile durur.
 const isCerrahiPreview = isVercelPreview &&
-  process.env.VERCEL_GIT_COMMIT_REF === "fix/fatura-cerrahi-birlesik-20261010";
+  ["fix/fatura-cerrahi-birlesik-20261010", "fix/uretici-arastirma-izleme-20261010"].includes(process.env.VERCEL_GIT_COMMIT_REF ?? "");
 if (isCerrahiPreview && (
   publicSupabaseUrl !== "https://nfivinvdlxhyxsoxzarh.supabase.co" ||
   !publicSupabaseKey
