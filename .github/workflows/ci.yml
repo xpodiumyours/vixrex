@@ -168,6 +168,11 @@ jobs:
           PGPASSWORD=postgres psql -h 127.0.0.1 -p 54322 -U postgres -d postgres \
             -v ON_ERROR_STOP=1 -f supabase/tests/vitrin_engagement_events_security_smoke.sql
 
+      - name: C7 — 17 fatura satırından gizli kalıcı ürün, gerçek veritabanı
+        run: |
+          PGPASSWORD=postgres psql -h 127.0.0.1 -p 54322 -U postgres -d postgres \
+            -v ON_ERROR_STOP=1 -f supabase/tests/invoice_c7_17_draft_smoke.sql
+
       - name: Yerel Supabase'i durdur
         if: always()
         run: supabase stop

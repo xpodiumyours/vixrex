@@ -1,14 +1,14 @@
-/** Kaynak kanıtı olmayan fatura satırından otomatik kart uydurulmaz. */
+/**
+ * C7: fatura satırı, üretici doğrulanmasa bile KENDİ kaynak ifadesiyle
+ * yalnızca gizli taslak olabilir. Bu bir kimlik eşleşmesi veya yayın kanıtı değildir.
+ * Eksik kimliği olmayan satır ise invoice_job_lines içinde saklanır, kart uydurulmaz.
+ */
 export function otomatikTaslakAdayi(satir: {
+  ad?: string | null;
   model?: string | null;
   barkod?: string | null;
   sonuc?: string;
   katalog?: { resmiAd?: string | null; kaynak?: string | null; dayanak?: string | null } | null;
 }): boolean {
-  const kaynak = satir.katalog;
-  if (!kaynak?.resmiAd?.trim() || !kaynak.kaynak?.startsWith("https://")) return false;
-  if (satir.sonuc === "celiski" || satir.sonuc === "iz-yok") return false;
-  if (kaynak.dayanak === "kod") return Boolean(satir.model?.trim());
-  if (kaynak.dayanak === "barkod") return Boolean(satir.barkod?.trim());
-  return kaynak.dayanak === "ad" && satir.sonuc === "kanitli";
+  return Boolean(satir.ad?.trim() || satir.model?.trim() || satir.barkod?.trim());
 }

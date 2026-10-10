@@ -201,7 +201,7 @@ function faturaUrunIstekGirdisi(
             const satisFiyati = fiyatSayisi(satir.satisFiyati);
             const katalog = satir.katalog;
             return {
-              name: katalog?.resmiAd || satir.ad,
+              name: (satir.sonuc === "kanitli" ? katalog?.resmiAd : null) || satir.ad || satir.model || satir.barkod,
               description: katalog?.aciklama ?? "",
               priceText: satisFiyati === null ? "" : `${satisFiyati} TL`,
               categoryId: satir.kategoriId,
@@ -403,12 +403,14 @@ export default function InvoiceToProducts({
   }, [adim, belge?.islemKimligi, satirlar, sahipSecimleriniKaydet]);
 
 
-  // Yalnız resmî kaynağı bulunan satırları görünmez ürün taslağına kaydeder.
+  // Faturanın tanımlanabilir HER satırını kalıcı görünmez taslağa kaydeder.
+  // Resmî kaynak/fotoğraf bulunmaması veya çelişki, yayın izni değildir.
+  // Aynı satır tekrar açılınca güncel kaynak bilgisiyle tekrar kaydedilebilir.
   // Bu akış otomatik satış/yayın onayı VERMEZ.
   const otomatikTaslaklariKaydet = useCallback(async (okunan: FaturaOkumaSonucu, hazir: SatirDurumu[]) => {
     if (!okunan.islemKimligi) return;
     const adaylar = hazir.map((satir, sira) => ({ satir, sira }))
-      .filter(({ satir }) => !satir.urunId && !satir.ayniAlisverisTekrari && otomatikTaslakAdayi(satir));
+      .filter(({ satir }) => !satir.ayniAlisverisTekrari && otomatikTaslakAdayi(satir));
     if (adaylar.length === 0) return;
     const sahipCevabi = await fetch("/api/fatura-islem", {
       method: "PUT", headers: { "Content-Type": "application/json" },
