@@ -8,7 +8,7 @@ import { belgeGercegiUyuyorMu, belgeVergiToplamiUyuyorMu } from "@/lib/faturaSat
 import { eslesmeyenSatir, siteAdayiniKoru, siteKartiniUygula, sonucOzeti, type EslesmisFaturaSatiri, type HamFaturaSatiri } from "@/lib/faturaEslestir";
 import { ayniAlisverisAdaylari, belgeParmakIzi, islemKaydet, satirKanitKayitlari } from "@/lib/faturaIslemKaydi";
 import { faturaTaslaklari } from "@/lib/faturaTaslagi";
-import { firmaAlaniniKilitle, faturayiOku, lunaGorseliniDogrula, markaSitesiniBul, satirSitesindeAra, type GoruSatiri, type GoruSonucu } from "@/lib/faturaGoru";
+import { firmaAlaniniKilitle, faturayiOku, lunaGorseliniDogrula, markaArastirmaAciklamasi, markaSitesiniBul, satirSitesindeAra, type GoruSatiri, type GoruSonucu } from "@/lib/faturaGoru";
 import { kaynakGorseliniDogrula, urunSayfasindaGorselKaniti } from "@/lib/faturaGorsel";
 import { ARAMA_UCETI_USD, aramaCagrisiSigarMi, belgeMaliyetOzeti, bugunkuMaliyetUsd, gunlukTavanDolduMu, kullanimKaydet } from "@/lib/faturaMaliyet";
 import { islemiYukle, islemYaniti, parmakIzindenIslemBul } from "@/lib/faturaIslemOku";
@@ -338,6 +338,7 @@ export async function POST(request: NextRequest) {
     const ilkDurum = {
       erisimHatasi: false, sinirDoldu: false, sonrakiSatir: 0,
       hatalar: {} as Record<string, string>,
+      markaArastirmalari: {} as Record<string, import("@/lib/faturaGoru").MarkaArastirmaIzi>,
     };
     const kayitGirdisi = {
       slug: ownerSlug, parmakIzi,
@@ -361,6 +362,7 @@ export async function POST(request: NextRequest) {
       sinirDoldu: false,
       sonrakiSatir: oncekiCursor ?? 0,
       hatalar: { ...(oncekiIslem.aramaDurumu.hatalar ?? {}) },
+      markaArastirmalari: { ...(oncekiIslem.aramaDurumu.markaArastirmalari ?? {}) },
     } : ilkDurum;
     const satirlar: EslesmisFaturaSatiri[] = [];
     const markaAlanlari = new Map<string, string>();
@@ -395,7 +397,14 @@ export async function POST(request: NextRequest) {
           const aramaMaliyeti = (bulunan.maliyet ?? 0) + ARAMA_UCETI_USD;
           await kullanimKaydet(admin, magazaId, { ...bulunan, maliyet: aramaMaliyeti }, ARAMA_UCETI_USD, parmakIzi);
           gunlukHarcama += aramaMaliyeti;
+          aramaDurumu.markaArastirmalari[markaAnahtari] = bulunan.iz;
           markaAlanlari.set(markaAnahtari, bulunan.alan);
+          // HTTP/anahtar arizasi "site bulunamadi" diye tamamlanmis sayilmaz.
+          if (["anahtar_yok", "bakiye_yok", "http_hatasi", "baglanti_hatasi"].includes(bulunan.iz.neden)) {
+            aramaAcik = false;
+            aramaDurumu.erisimHatasi = true;
+            aramaDurumu.sinirDoldu = true;
+          }
         } catch (hata) {
           const mesaj = hata instanceof Error ? hata.message : "";
           aramaAcik = false;
@@ -409,6 +418,10 @@ export async function POST(request: NextRequest) {
         }
       }
       const satirSitesi = ayriMarka ? (markaAlanlari.get(markaAnahtari) ?? "") : etkinSite;
+      if (ayriMarka && satirSitesi) siteUyari = "";
+      if (ayriMarka && !satirSitesi && aramaDurumu.markaArastirmalari[markaAnahtari]) {
+        siteUyari = markaArastirmaAciklamasi(aramaDurumu.markaArastirmalari[markaAnahtari].neden) + ".";
+      }
       const aranabilir = Boolean(satirSitesi && (satir.model || satir.ad || satir.barkod));
       if (aramaAcik && ayriMarka && !satirSitesi && !aramaCagrisiSigarMi(gunlukHarcama)) {
         aramaAcik = false;
