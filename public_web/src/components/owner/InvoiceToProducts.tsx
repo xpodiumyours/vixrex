@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import FirmaIzniPaneli from "@/components/owner/FirmaIzniPaneli";
 import { kategoriSec, otomatikOzellikler, faturaVaryantlari } from "@/lib/faturaOtomatikDoldur";
+import { otomatikTaslakAdayi } from "@/lib/faturaTaslakAdayi";
 import {
   KART_DURUM_ETIKETI,
   durumBilgisi,
@@ -181,6 +182,63 @@ export function faturaSatiriDurumunuHazirla(
   };
 }
 
+
+/** Tek hazırlama yolu: otomatik taslak ve esnaf onayında aynı ürün alanları. */
+function faturaUrunIstekGirdisi(
+ satir: SatirDurumu,
+ sira: number,
+ degerlendirme: ReturnType<typeof kartDegerlendir>,
+ kaynakBelge: FaturaOkumaSonucu | null,
+ categories: Array<{ id: string; name: string; product_template_key?: string | null }>,
+) {
+            const satisFiyati = fiyatSayisi(satir.satisFiyati);
+            const katalog = satir.katalog;
+            return {
+              name: katalog?.resmiAd || satir.ad,
+              description: katalog?.aciklama ?? "",
+              priceText: satisFiyati === null ? "" : `${satisFiyati} TL`,
+              categoryId: satir.kategoriId,
+              imageUrls: degerlendirme.gorseller,
+              gorselKaynagi: katalog?.kaynak || undefined,
+              brand: katalog?.marka || undefined,
+              barcode: satir.barkod || undefined,
+              stockQuantity: stokSayisi(satir.stok),
+              sourceType: "invoice",
+              kartDurumu: satir.sonuc,
+              stokOnaylandi: satir.stokOnaylandi,
+              externalProductId:
+                satir.barkod || satir.model
+                  ? [kaynakBelge?.tedarikciVergiNo || kaynakBelge?.tedarikci || "", satir.barkod || satir.model]
+                      .filter(Boolean)
+                      .join(":")
+                  : undefined,
+              islemKimligi: kaynakBelge?.islemKimligi || undefined,
+              satirSirasi: sira,
+              ownerApproved: satir.onayli,
+              yayinIstegi: false,
+              purchasePriceAmount: satir.alisBirimFiyat ?? undefined,
+              metadata: (() => {
+                const sablon = categories.find((kategori) => kategori.id === satir.kategoriId)
+                  ?.product_template_key;
+                const nitelikler = otomatikOzellikler(
+                  { ad: satir.ad, resmiAd: katalog?.resmiAd, varyant: satir.varyant, beden: satir.beden },
+                  sablon || "generic",
+                );
+                if (!satir.model && nitelikler.length === 0) return undefined;
+                return {
+                  ...(satir.model ? { identifiers: { sku: satir.model } } : {}),
+                  ...(nitelikler.length > 0 ? { attributes: nitelikler } : {}),
+                };
+              })(),
+              variants: faturaVaryantlari({
+                model: satir.model || String(sira), barkod: satir.barkod,
+                varyant: satir.varyant, beden: satir.beden,
+                stok: stokSayisi(satir.stok), kaynakVaryantlar: katalog?.varyantlar,
+              }),
+              sortOrder: sira,
+            };
+}
+
 export default function InvoiceToProducts({
   storeSlug,
   categories = [],
@@ -199,6 +257,7 @@ export default function InvoiceToProducts({
   const [hata, setHata] = useState<string | null>(null);
   const [yukleniyor, setYukleniyor] = useState(false);
   const [sonuc, setSonuc] = useState<YazmaSonucu | null>(null);
+  const [otomatikTaslakRaporu, setOtomatikTaslakRaporu] = useState<{ kaydedildi: number; atlandi: number } | null>(null);
   const [alisverisCevaplari, setAlisverisCevaplari] = useState<Record<string, boolean>>({});
   const [oncekiIslemler, setOncekiIslemler] = useState<OncekiIslem[]>([]);
   const [duzeltmeler, setDuzeltmeler] = useState<
@@ -336,6 +395,59 @@ export default function InvoiceToProducts({
     return () => clearTimeout(zamanlayici);
   }, [adim, belge?.islemKimligi, satirlar, sahipSecimleriniKaydet]);
 
+
+  // Yalnız resmî kaynağı bulunan satırları görünmez ürün taslağına kaydeder.
+  // Bu akış otomatik satış/yayın onayı VERMEZ.
+  const otomatikTaslaklariKaydet = useCallback(async (okunan: FaturaOkumaSonucu, hazir: SatirDurumu[]) => {
+    if (!okunan.islemKimligi) return;
+    const adaylar = hazir.map((satir, sira) => ({ satir, sira }))
+      .filter(({ satir }) => !satir.urunId && !satir.ayniAlisverisTekrari && otomatikTaslakAdayi(satir));
+    if (adaylar.length === 0) return;
+    const sahipCevabi = await fetch("/api/fatura-islem", {
+      method: "PUT", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ slug: storeSlug, islemKimligi: okunan.islemKimligi,
+        satirlar: hazir.map((satir, sira) => ({
+          satirSirasi: sira,
+          sahipDurumu: { satisFiyati: satir.satisFiyati, stok: satir.stok,
+            stokOnaylandi: satir.stokOnaylandi, kategoriId: satir.kategoriId,
+            onayli: satir.onayli, esnafGorselleri: satir.esnafGorselleri },
+        })),
+      }),
+    });
+    if (!sahipCevabi.ok) throw new Error("Taslak kayıt için fatura seçimleri saklanamadı.");
+    const cevap = await fetch("/api/products/batch", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ slug: storeSlug, products: adaylar.map(({ satir, sira }) => ({
+        ...faturaUrunIstekGirdisi(satir, sira, kartDegerlendir({
+          satir, satisFiyati: fiyatSayisi(satir.satisFiyati),
+          stok: stokSayisi(satir.stok), esnafGorselleri: satir.esnafGorselleri,
+          onaylandi: satir.onayli,
+          templateKey: categories.find((kategori) => kategori.id === satir.kategoriId)?.product_template_key,
+        }), okunan, categories),
+        yayinIstegi: false,
+      })) }),
+    });
+    const yanit = await cevap.json().catch(() => null);
+    if (!cevap.ok || !yanit || !Array.isArray(yanit.satirlar)) {
+      throw new Error(yanit?.hata || "Ürün taslaklarının kalıcı kaydı doğrulanamadı.");
+    }
+    const baglanan = new Map<number, string>();
+    let atlandi = 0;
+    for (const kayit of yanit.satirlar as Array<{ sira: number; id?: string; durum: string }>) {
+      const aday = adaylar[kayit.sira];
+      if (!aday) throw new Error("Ürün taslağı ile fatura satırı uyuşmuyor.");
+      if (kayit.durum === "taslak" && typeof kayit.id === "string" && kayit.id) {
+        baglanan.set(aday.sira, kayit.id);
+      } else atlandi++;
+    }
+    if (baglanan.size + atlandi !== adaylar.length) throw new Error("Ürün taslağı kayıt sayısı uyuşmuyor.");
+    setSatirlar((eskiler) => eskiler.map((satir, sira) =>
+      baglanan.has(sira) ? { ...satir, urunId: baglanan.get(sira) } : satir));
+    setOtomatikTaslakRaporu({ kaydedildi: baglanan.size, atlandi });
+    if (atlandi > 0) setHata(`${atlandi} fatura satırı kalıcı ürün taslağına kaydedilemedi.`);
+    if (baglanan.size > 0) await onUploaded();
+  }, [categories, onUploaded, storeSlug]);
+
   async function islemiAc(islemKimligi: string) {
     setHata(null);
     setYukleniyor(true);
@@ -350,8 +462,11 @@ export default function InvoiceToProducts({
         );
       }
       const acilan = govde as FaturaOkumaSonucu;
+      const hazir = satirlariHazirla(acilan);
       setBelge(acilan);
-      setSatirlar(satirlariHazirla(acilan));
+      setSatirlar(hazir);
+      try { await otomatikTaslaklariKaydet(acilan, hazir); }
+      catch (hata) { setHata(hata instanceof Error ? hata.message : "Otomatik taslak kaydı başarısız."); }
       setAdim("urunler");
     } catch (err) {
       setHata(err instanceof Error ? err.message : "İşlem açılamadı.");
@@ -448,6 +563,7 @@ export default function InvoiceToProducts({
   const dosyaSecildi = useCallback(
     async (dosyalar: File[]) => {
       setHata(null);
+      setOtomatikTaslakRaporu(null);
       if (!dosyalar.length || dosyalar.length > MAKS_SAYFA) {
         setHata("Bir faturaya ait en fazla 3 sayfa fotoğrafı seç.");
         return;
@@ -491,15 +607,18 @@ export default function InvoiceToProducts({
         }
 
         const okunan = govde as FaturaOkumaSonucu;
+        const hazir = satirlariHazirla(okunan);
         setBelge(okunan);
-        setSatirlar(satirlariHazirla(okunan));
+        setSatirlar(hazir);
+        try { await otomatikTaslaklariKaydet(okunan, hazir); }
+        catch (hata) { setHata(hata instanceof Error ? hata.message : "Otomatik taslak kaydı başarısız."); }
         setAdim("urunler");
       } catch (err) {
         setHata(err instanceof Error ? err.message : "Fatura okunamadı.");
         setAdim("sec");
       }
     },
-    [satirlariHazirla, storeSlug],
+    [otomatikTaslaklariKaydet, satirlariHazirla, storeSlug],
   );
 
   function satirGuncelle(index: number, degisiklik: Partial<SatirDurumu>) {
@@ -585,7 +704,7 @@ export default function InvoiceToProducts({
     const gonderilecek = satirlar
       .map((satir, sira) => ({ satir, sira, degerlendirme: degerlendirmeler[sira] }))
       .filter(({ satir, degerlendirme }) =>
-        !satir.ayniAlisverisTekrari && degerlendirme.onaylanabilir,
+        !satir.ayniAlisverisTekrari && (degerlendirme.onaylanabilir || otomatikTaslakAdayi(satir)),
       );
 
     if (gonderilecek.length === 0) return;
@@ -594,7 +713,7 @@ export default function InvoiceToProducts({
     // Yalnız esnafın bu düğmeyle onayladığı, yayına uygun satırlar onaylanır.
     const secili = new Set(gonderilecek.map((girdi) => girdi.sira));
     const onaylanan = satirlar.map((satir, index) =>
-      secili.has(index)
+      secili.has(index) && degerlendirmeler[index].onaylanabilir
         ? { ...satir, onayli: true, stokOnaylandi: stokSayisi(satir.stok) !== null }
         : satir,
     );
@@ -615,54 +734,9 @@ export default function InvoiceToProducts({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           slug: storeSlug,
-          products: onayliGonderilecek.map(({ satir, sira, degerlendirme }) => {
-            const satisFiyati = fiyatSayisi(satir.satisFiyati);
-            const katalog = satir.katalog;
-            return {
-              name: katalog?.resmiAd || satir.ad,
-              description: katalog?.aciklama ?? "",
-              priceText: `${satisFiyati} TL`,
-              categoryId: satir.kategoriId,
-              imageUrls: degerlendirme.gorseller,
-              gorselKaynagi: katalog?.kaynak || undefined,
-              brand: katalog?.marka || undefined,
-              barcode: satir.barkod || undefined,
-              stockQuantity: stokSayisi(satir.stok),
-              sourceType: "invoice",
-              kartDurumu: satir.sonuc,
-              stokOnaylandi: stokSayisi(satir.stok) !== null,
-              externalProductId:
-                satir.barkod || satir.model
-                  ? [belge?.tedarikciVergiNo || belge?.tedarikci || "", satir.barkod || satir.model]
-                      .filter(Boolean)
-                      .join(":")
-                  : undefined,
-              islemKimligi: belge?.islemKimligi || undefined,
-              satirSirasi: sira,
-              ownerApproved: satir.onayli,
-              yayinIstegi: false,
-              purchasePriceAmount: satir.alisBirimFiyat ?? undefined,
-              metadata: (() => {
-                const sablon = categories.find((kategori) => kategori.id === satir.kategoriId)
-                  ?.product_template_key;
-                const nitelikler = otomatikOzellikler(
-                  { ad: satir.ad, resmiAd: katalog?.resmiAd, varyant: satir.varyant, beden: satir.beden },
-                  sablon || "generic",
-                );
-                if (!satir.model && nitelikler.length === 0) return undefined;
-                return {
-                  ...(satir.model ? { identifiers: { sku: satir.model } } : {}),
-                  ...(nitelikler.length > 0 ? { attributes: nitelikler } : {}),
-                };
-              })(),
-              variants: faturaVaryantlari({
-                model: satir.model || String(sira), barkod: satir.barkod,
-                varyant: satir.varyant, beden: satir.beden,
-                stok: stokSayisi(satir.stok), kaynakVaryantlar: katalog?.varyantlar,
-              }),
-              sortOrder: sira,
-            };
-          }),
+          products: onayliGonderilecek.map(({ satir, sira, degerlendirme }) =>
+            faturaUrunIstekGirdisi(satir, sira, degerlendirme, belge, categories),
+          ),
         }),
       });
 
@@ -753,6 +827,7 @@ export default function InvoiceToProducts({
     setBelge(null);
     setSatirlar([]);
     setSonuc(null);
+    setOtomatikTaslakRaporu(null);
     setHata(null);
     if (dosyaRef.current) dosyaRef.current.value = "";
   }
@@ -955,6 +1030,10 @@ export default function InvoiceToProducts({
     <div className="fatura-akis">
       <div className="fatura-baslik">
         <h3>{satirlar.length} satır okundu</h3>
+        {otomatikTaslakRaporu && <p role="status" className="fatura-aciklama">
+          {otomatikTaslakRaporu.kaydedildi} ürün görünmez taslak olarak kaydedildi.
+          {otomatikTaslakRaporu.atlandi > 0 ? ` ${otomatikTaslakRaporu.atlandi} satır kaydedilemedi.` : ""}
+        </p>}
         {belge && (
           <p className="fatura-aciklama">
             Firma: {belgedeYazi(belge.tedarikci)}
