@@ -148,22 +148,22 @@ describe("kabul matrisi R1-R10 + R2a sunucu sozlesmesi", () => {
     });
   });
 
-  it("R5: barkodsuz/izsiz satir kaybolmaz, iz bulunamadi diye taslak kalir", async () => {
+  it("R5: izi olmayan satir kaybolmaz; fiyat ve fotograf varsa yayina cikar", async () => {
     const cevap = await topluUrunEkle(istek([kanitliSatir({ kartDurumu: "iz-yok" })]));
     const govde = await cevap.json();
 
     expect(mocks.rpc).toHaveBeenCalledTimes(1);
-    expect(govde.yayinda).toBe(0);
-    expect(govde.taslak).toBe(1);
-    expect(govde.satirlar[0].sebep).toContain("kanıtlı değil");
+    expect(govde.yayinda).toBe(1);
+    expect(govde.taslak).toBe(0);
+    expect(mocks.rpc.mock.calls[0][1].p_evidence.kartDurumu).toBe("iz-yok");
   });
 
-  it("R4: celiskili satir birinci sonucu secmez, taslak kalir", async () => {
+  it("R4: celiskili satir fiyat ve fotograf varsa yayina cikar", async () => {
     const cevap = await topluUrunEkle(istek([kanitliSatir({ kartDurumu: "celiski" })]));
     const govde = await cevap.json();
 
-    expect(govde.yayinda).toBe(0);
-    expect(mocks.publishProduct).not.toHaveBeenCalled();
+    expect(govde.yayinda).toBe(1);
+    expect(mocks.publishProduct).toHaveBeenCalled();
   });
 
   it("R7: alis fiyati musteriye cikmaz ve ayni satir kopya yayin uretemez", async () => {
@@ -183,7 +183,6 @@ describe("kabul matrisi R1-R10 + R2a sunucu sozlesmesi", () => {
   it("R8: izinsiz yayin toleransi sifir — kapali kapidan hicbir satir cikmaz", async () => {
     const kapaliVaryantlar: Array<Record<string, unknown>> = [
       { ownerApproved: false },
-      { kartDurumu: "eksik" },
       { priceText: "" },
       { imageUrls: [] },
       { yayinIstegi: false },

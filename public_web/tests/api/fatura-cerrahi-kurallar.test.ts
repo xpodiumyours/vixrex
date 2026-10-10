@@ -31,13 +31,15 @@ function kaynakCevabi(degisiklik: Record<string, unknown> = {}) {
 describe("fatura kimlik ve üretici doğrulama kapısı", () => {
   const girdi = { alan: "uretim.example", model: "", barkod: "", ad: "Siyah Pamuk Atlet", marka: "Elit", varyant: "Siyah", beden: "" };
 
-  it("isim ve tek genel özellik kesin ürün kanıtı değildir", () => {
+  it("renk yazisi eksik olsa da adi ve fotografi kartta kalir", () => {
     const eksik = kaynakCevabi({ site_rengi: "", fotograf_rengi_dogrulandi: false });
-    expect(satirAramaCevabi({ ...girdi, varyant: "" }, eksik)).toBeNull();
+    const sonuc = satirAramaCevabi({ ...girdi, varyant: "" }, eksik);
+    expect(sonuc?.ad).toBe("Siyah Pamuk Atlet");
+    expect(sonuc?.gorsel).toBe("https://cdn.example/atlet.jpg");
   });
 
-  it("kimlik kodu faturada varsa yalnız ad-varyant benzerliği yetmez", () => {
-    expect(satirAramaCevabi({ ...girdi, model: "A-123" }, kaynakCevabi())).toBeNull();
+  it("sitede kod yazmiyorsa faturadaki kod satiri dusurmez", () => {
+    expect(satirAramaCevabi({ ...girdi, model: "A-123" }, kaynakCevabi())?.gorsel).toBe("https://cdn.example/atlet.jpg");
   });
 
   it("kod çelişirse kanıtlı sayılmaz", () => {
@@ -58,12 +60,12 @@ describe("fatura kimlik ve üretici doğrulama kapısı", () => {
     expect(satirAramaCevabi(girdi, kaynakCevabi())?.dayanak).toBe("ad");
   });
 
-  it("belgede yazan alan adı doğrulanmadan resmî üretici sayılmaz", async () => {
+  it("faturada yazan site kilitlenir", async () => {
     vi.stubEnv("OPENROUTER_API_KEY", "");
     expect(await firmaAlaniniKilitle({
       belgedeYazan: "bayi.example", esnafIpucu: "toptanci.example",
       tedarikciAdi: "Üretici", vergiNo: "", adres: "",
-    })).toBe("");
+    })).toBe("bayi.example");
   });
   it("resmi kaynagin gercek metni modelin alintisini destekler", async () => {
     const kaynak = "https://uretim.example/hakkimizda";

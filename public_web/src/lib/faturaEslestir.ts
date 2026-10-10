@@ -112,10 +112,17 @@ export function siteKartiniUygula(satir: EslesmisFaturaSatiri): EslesmisFaturaSa
     };
   }
   if (satir.sonuc !== "kanitli" || !satir.katalog) return satir;
+  const eldeki = satir.katalog.gorseller.filter((adres) => adres.startsWith("https://"));
+  const gelen = gorsel.startsWith("https://") ? [gorsel] : eldeki;
   return {
     ...satir,
     sonuc: "eksik",
-    katalog: { ...satir.katalog, aciklama: "", gorseller: [] },
+    katalog: {
+      ...satir.katalog,
+      aciklama: aciklama || satir.katalog.aciklama,
+      gorseller: gelen,
+      gorselAdaylari: gelen.length > 0 ? gelen : satir.katalog.gorselAdaylari,
+    },
   };
 }
 
@@ -132,6 +139,7 @@ export function siteAdayiniKoru(satir: EslesmisFaturaSatiri): EslesmisFaturaSati
   const dayanak = satir.siteDayanak;
   if (!kaynak.startsWith("https://") || !resmiAd || !dayanak) return satir;
   const gorselAdayi = (satir.siteGorsel ?? "").trim();
+  const gorselListesi = gorselAdayi.startsWith("https://") ? [gorselAdayi] : [];
   return {
     ...satir,
     sonuc: "eksik",
@@ -143,11 +151,11 @@ export function siteAdayiniKoru(satir: EslesmisFaturaSatiri): EslesmisFaturaSati
       resmiAd,
       marka: satir.marka ?? "",
       aciklama: (satir.siteAciklama ?? "").trim(),
-      gorseller: [],
-      gorselAdaylari: gorselAdayi.startsWith("https://") ? [gorselAdayi] : [],
+      gorseller: gorselListesi,
+      gorselAdaylari: gorselListesi,
       kaynak,
     },
-    uyari: satir.uyari || "Ürün sayfası adayı bulundu; doğru fotoğraf henüz doğrulanmadı. Yayınlanamaz.",
+    uyari: satir.uyari || "Ürün sayfası adayı bulundu; fotoğraf kartta.",
   };
 }
 

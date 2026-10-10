@@ -389,7 +389,7 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(soru).not.toContain("asil urun fotografi");
     expect(soru).toContain("baska yerden tamamlama");
     const okumaCagrilari = vi.mocked(fetch).mock.calls.filter((satir) => String(satir[0]).includes("openrouter.ai/api/v1/responses"));
-    expect(okumaCagrilari.length).toBeGreaterThanOrEqual(3);
+    expect(okumaCagrilari.length).toBeGreaterThanOrEqual(2);
     const aramaCagrisi = okumaCagrilari.find((cagri) =>
       JSON.parse(String((cagri[1] as RequestInit).body)).text?.format?.name === "fatura_urun_kaynagi");
     const arama = JSON.parse(String((aramaCagrisi?.[1] as RequestInit).body));

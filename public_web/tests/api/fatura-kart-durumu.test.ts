@@ -153,7 +153,7 @@ describe("kart durumu tek karar kaynagi", () => {
     expect(eksikler).toContain("Kart onaylanmadı.");
   });
 
-  it("kanitli olmayan satirdan kart yayina cikmaz", () => {
+  it("kanitli olmayan satir fiyat, stok, onay ve fotograf varsa yayina hazirdir", () => {
     for (const durum of ["eksik", "celiski", "iz-yok"] as KartDurumu[]) {
       const degerlendirme = kartDegerlendir({
         satir: satir({ sonuc: durum, katalog: null }),
@@ -164,8 +164,8 @@ describe("kart durumu tek karar kaynagi", () => {
         esnafGorselleri: ESNAF_GORSELLERI,
       });
 
-      expect(degerlendirme.yayinaHazir).toBe(false);
-      expect(degerlendirme.eksikler.join(" ")).toContain("kanıtlı değil");
+      expect(degerlendirme.yayinaHazir).toBe(true);
+      expect(degerlendirme.eksikler.join(" ")).not.toContain("kanıtlı değil");
     }
   });
 

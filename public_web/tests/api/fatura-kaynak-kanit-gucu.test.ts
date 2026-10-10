@@ -24,7 +24,7 @@ describe("C1 kaynak adayinin kanit gucu", () => {
     const satir = siteAdayiniKoru(siteKartiniUygula(eslesmeyenSatir(ORTAK)));
     expect(satir.sonuc).toBe("eksik");
     expect(satir.katalog?.kaynak).toBe(ORTAK.siteSayfa);
-    expect(satir.katalog?.gorseller).toEqual([]);
+    expect(satir.katalog?.gorseller).toEqual([ORTAK.siteGorsel]);
     const kayit = satirKanitKayitlari("satir-1", satir, "");
     expect(kayit.kanit).toHaveLength(2);
     expect(kayit.kanit[0].strength).toBe("partial");

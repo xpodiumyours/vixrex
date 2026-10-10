@@ -17,7 +17,6 @@ import {
 import { urunGirdisiniHazirla } from "@/lib/productIntake";
 import { durumGecerliMi, yayinEksikleri } from "@/lib/faturaKartDurumu";
 import { otomatikOzellikler } from "@/lib/faturaOtomatikDoldur";
-import { eksikZorunluAlanlar, eksikZorunluAlanMesaji } from "@/lib/productRequiredFields";
 import { FATURA_MIN_PRODUCT_IMAGES, yonetilenUrunGorseliMi } from "@/lib/productImagePolicy";
 import { kaynakGorselleriniHazirla } from "@/lib/faturaGorsel";
 import { tuketicideGorunenler, vitrinOnbelleginiYenile } from "@/lib/vitrinYayinDogrula";
@@ -308,17 +307,7 @@ export async function POST(request: NextRequest) {
       gorselDurumu = altyapiHatasi.size > 0 ? "dis-baglanti" : "depoda";
     }
 
-    const sablonMesaji = faturaKaynakli
-      ? eksikZorunluAlanMesaji(
-          eksikZorunluAlanlar({
-            templateKey: hazirlik.girdi.metadata.templateKey,
-            brand: hazirlik.girdi.brand,
-            metadata: hazirlik.girdi.metadata,
-            variants: hazirlik.girdi.variants,
-          }),
-        )
-      : null;
-    const sablonTam = Boolean(faturaKaynakli && kartDurumu === "kanitli" && !sablonMesaji);
+    const sablonTam = Boolean(faturaKaynakli);
     const faturaEksikleri = faturaKaynakli
       ? yayinEksikleri({
           durum: kartDurumu,
@@ -327,7 +316,6 @@ export async function POST(request: NextRequest) {
           stokOnaylandi,
           onaylandi: esnafOnayladi,
           gorselSayisi: urunGorselleri.length,
-          sablonEksikleri: sablonMesaji ? [`${sablonMesaji} Katalogda yok; bu satır yayınlanamaz.`] : [],
         })
       : [];
 

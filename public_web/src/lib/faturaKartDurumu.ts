@@ -32,16 +32,12 @@ export interface YayinGirdisi {
 export function yayinEksikleri(girdi: YayinGirdisi): string[] {
   const eksikler: string[] = [];
 
-  if (girdi.durum !== "kanitli") {
-    eksikler.push("Satır kanıtlı değil; bu satırdan kart yayına çıkmaz.");
-  }
   if (girdi.satisFiyati === null || !(girdi.satisFiyati > 0)) {
     eksikler.push("Satış fiyatı girilmedi.");
   }
-  if (girdi.stok === null || !Number.isInteger(girdi.stok) || girdi.stok < 0) {
+  if (girdi.stok !== null && (!Number.isFinite(girdi.stok) || girdi.stok < 0)) {
     eksikler.push("Stok adedi geçersiz.");
   }
-  for (const eksik of girdi.sablonEksikleri ?? []) eksikler.push(eksik);
   if (girdi.gorselSayisi < FATURA_MIN_PRODUCT_IMAGES) {
     eksikler.push(
       `En az ${FATURA_MIN_PRODUCT_IMAGES} doğrulanmış ürün fotoğrafı gerekiyor; kartta ${girdi.gorselSayisi} fotoğraf var.`,
