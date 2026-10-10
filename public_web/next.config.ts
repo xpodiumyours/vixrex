@@ -39,21 +39,25 @@ import path from "path";
 const isDev = process.env.NODE_ENV === "development";
 const isVercelPreview = process.env.VERCEL_ENV === "preview";
 
-// Supabase URL ve publishable key gizli değildir; web istemcisine zaten
-// gönderilen public proje kimlikleridir. Vercel env varsa her zaman öncelikli.
-// Yalnız Vercel Preview env'i eksik kaldığında placeholder Supabase'e
-// düşmemek için gerçek public değerler son fallback olarak kullanılır.
-// Production ve yerel geliştirme bu fallback'i kullanmaz.
+// Preview, eksik yapılandırmada ASLA üretim Supabase adresine geri düşmez.
+// URL/anahtarlar Vercel environment üzerinde açıkça tanımlanmalıdır.
 const publicSupabaseUrl =
   process.env.NEXT_PUBLIC_SUPABASE_URL ||
-  process.env.SUPABASE_URL ||
-  (isVercelPreview ? "https://chfulefxczbgurtgavtp.supabase.co" : "");
+  process.env.SUPABASE_URL || "";
 const publicSupabaseKey =
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-  process.env.SUPABASE_PUBLISHABLE_KEY ||
-  (isVercelPreview
-    ? "sb_publishable_GcCRXDh6vXFGR1UvBFG-3w_x85hvXbN" // gitleaks:allow — Supabase publishable key, sır değil
-    : "");
+  process.env.SUPABASE_PUBLISHABLE_KEY || "";
+
+// Cerrahi PR #672'nin izolasyonu sadece frontend'e değil backend'e de
+// uygulanır: Preview yanlış DB'ye bağlanmışsa deploy açık hata ile durur.
+const isCerrahiPreview = isVercelPreview &&
+  process.env.VERCEL_GIT_COMMIT_REF === "fix/fatura-cerrahi-birlesik-20261010";
+if (isCerrahiPreview && (
+  publicSupabaseUrl !== "https://nfivinvdlxhyxsoxzarh.supabase.co" ||
+  !publicSupabaseKey
+)) {
+  throw new Error("MP_CER_PREVIEW_DB_MUST_BE_ISOLATED");
+}
 
 const CSP =
   "default-src 'self'; " +

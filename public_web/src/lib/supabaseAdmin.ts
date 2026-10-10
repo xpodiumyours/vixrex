@@ -13,6 +13,13 @@ export function getSupabaseAdmin() {
     throw new Error("SUPABASE_URL is missing");
   }
 
+  // Fail closed: PR #672'nin Preview işlemleri üretim DB'ye yazamaz.
+  if (process.env.VERCEL_ENV === "preview" &&
+    process.env.VERCEL_GIT_COMMIT_REF === "fix/fatura-cerrahi-birlesik-20261010" &&
+    supabaseUrl !== "https://nfivinvdlxhyxsoxzarh.supabase.co") {
+    throw new Error("MP_CER_PREVIEW_DB_MUST_BE_ISOLATED");
+  }
+
   if (!serviceRoleKey) {
     throw new Error("SUPABASE_SERVICE_ROLE_KEY is missing");
   }
