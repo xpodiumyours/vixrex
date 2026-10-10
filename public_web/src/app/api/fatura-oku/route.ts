@@ -330,7 +330,7 @@ export async function POST(request: NextRequest) {
       izin: () => aramaCagrisiSigarMi(gunlukHarcama),
       kaydet: async (kullanim) => {
         const maliyet = (kullanim.maliyet ?? 0) + ARAMA_UCETI_USD;
-        await kullanimKaydet(admin, magazaId, { ...kullanim, maliyet });
+        await kullanimKaydet(admin, magazaId, { ...kullanim, maliyet }, ARAMA_UCETI_USD);
         gunlukHarcama += maliyet;
       },
     });
@@ -393,7 +393,7 @@ export async function POST(request: NextRequest) {
             model: satir.model, ad: satir.ad,
           });
           const aramaMaliyeti = (bulunan.maliyet ?? 0) + ARAMA_UCETI_USD;
-          await kullanimKaydet(admin, magazaId, { ...bulunan, maliyet: aramaMaliyeti });
+          await kullanimKaydet(admin, magazaId, { ...bulunan, maliyet: aramaMaliyeti }, ARAMA_UCETI_USD);
           gunlukHarcama += aramaMaliyeti;
           markaAlanlari.set(markaAnahtari, bulunan.alan);
         } catch (hata) {
@@ -432,7 +432,7 @@ export async function POST(request: NextRequest) {
             beden: satir.beden,
           });
           const aramaMaliyeti = (arama.maliyet ?? 0) + ARAMA_UCETI_USD;
-          await kullanimKaydet(admin, magazaId, { ...arama, maliyet: aramaMaliyeti });
+          await kullanimKaydet(admin, magazaId, { ...arama, maliyet: aramaMaliyeti }, ARAMA_UCETI_USD);
           gunlukHarcama += aramaMaliyeti;
           // Kaynak araması fotoğraf aşamasında başarısız olsa bile doğrulanmamış
           // ÜRÜN ADAYI ve kaynağı korunur. "kanitli" yalnız fotoğrafın bütün

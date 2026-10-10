@@ -85,8 +85,10 @@ export interface GoruSonucu {
   kdvTutari: number | null;
   indirimTutari: number | null;
   odenecekToplam: number | null;
-  /** Resmi fiyattan hesaplanan maliyet (USD). OpenAI kullanım nesnesinde dolar alanı yoktur. */
+  /** Günlük maliyet limiti için kullanılan değer: tahmin olabilir. */
   maliyet: number | null;
+  /** Yalnız OpenRouter usage.cost alanından, bilinmiyorsa null. */
+  gercekMaliyet?: number | null;
   girdiToken: number;
   ciktiToken: number;
   akilToken: number;
@@ -378,7 +380,7 @@ export async function ureticiKaynakAlintisiniDogrula(
 
 type SiteKullanimTakibi = {
   izin: () => boolean;
-  kaydet: (kullanim: Pick<GoruSonucu, "maliyet" | "girdiToken" | "ciktiToken" | "akilToken">) => Promise<void>;
+  kaydet: (kullanim: Pick<GoruSonucu, "maliyet" | "gercekMaliyet" | "girdiToken" | "ciktiToken" | "akilToken">) => Promise<void>;
 };
 
 async function firmaSitesiniPlatformlaDogrula(
@@ -499,7 +501,7 @@ const MARKA_SITE_SEMASI = {
 
 export async function markaSitesiniBul(girdi: {
   marka: string; tedarikci: string; tedarikciSitesi: string; model: string; ad: string;
-}): Promise<{ alan: string } & Pick<GoruSonucu, "maliyet" | "girdiToken" | "ciktiToken" | "akilToken">> {
+}): Promise<{ alan: string } & Pick<GoruSonucu, "maliyet" | "gercekMaliyet" | "girdiToken" | "ciktiToken" | "akilToken">> {
   const bos = { alan: "", ...kullanimOku(null) };
   const marka = girdi.marka.trim();
   const anahtar = process.env.OPENROUTER_API_KEY;
@@ -564,6 +566,7 @@ export interface SatirAramasi {
   sayfa: string;
   aciklama: string;
   maliyet: number | null;
+  gercekMaliyet?: number | null;
   girdiToken: number;
   ciktiToken: number;
   akilToken: number;
@@ -759,7 +762,7 @@ export async function lunaGorseliniDogrula(girdi: {
   marka: string;
   renk: string;
   beden: string;
-}): Promise<{ uyumlu: boolean; gerekce: string } & Pick<GoruSonucu, "maliyet" | "girdiToken" | "ciktiToken" | "akilToken">> {
+}): Promise<{ uyumlu: boolean; gerekce: string } & Pick<GoruSonucu, "maliyet" | "gercekMaliyet" | "girdiToken" | "ciktiToken" | "akilToken">> {
   const anahtar = process.env.OPENROUTER_API_KEY;
   if (!anahtar) throw new Error("OKUYUCU_HAZIR_DEGIL");
   const cevap = await fetch(ADRES, {
@@ -986,7 +989,7 @@ export async function faturayiOku(dataUrl: string | string[]): Promise<GoruSonuc
   };
 }
 
-function kullanimOku(govde: { usage?: unknown } | null): Pick<GoruSonucu, "maliyet" | "girdiToken" | "ciktiToken" | "akilToken"> {
+function kullanimOku(govde: { usage?: unknown } | null): Pick<GoruSonucu, "maliyet" | "gercekMaliyet" | "girdiToken" | "ciktiToken" | "akilToken"> {
   const kullanim = (govde?.usage ?? {}) as {
     input_tokens?: unknown;
     output_tokens?: unknown;
@@ -1004,5 +1007,6 @@ function kullanimOku(govde: { usage?: unknown } | null): Pick<GoruSonucu, "maliy
     ciktiToken,
     akilToken,
     maliyet: platformMaliyeti ?? dolarHesapla(girdiToken, ciktiToken, onbellek),
+    gercekMaliyet: platformMaliyeti !== null && platformMaliyeti >= 0 ? platformMaliyeti : null,
   };
 }
