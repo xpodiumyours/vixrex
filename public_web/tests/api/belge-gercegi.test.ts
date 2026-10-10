@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   belgeGercegiUyuyorMu,
+  belgeVergiToplamiUyuyorMu,
   belgeOzetiniAyikla,
   hamMetniSatirlaraAyir,
   urunSatirlari,
@@ -90,6 +91,53 @@ describe("belge gerçeği — satırlar belgenin toplamıyla karşılaştırıl�
     const satir = { model: "K", ad: "Ürün", barkod: "", varyant: "", beden: "",
       adet: 3, alisBirimFiyat: 19.995, satirToplam: 59.99, guven: 1 };
     expect(belgeGercegiUyuyorMu([satir], { adet: 3, toplam: 59.99 }).uyumlu).toBe(true);
+  });
+
+  it("farkli birimlerin miktarini toplamaz; para ve satir hesaplarini ayrica dogrular", () => {
+    const urun = (adet: number, birim: string, fiyat: number) => ({
+      model: "K", ad: "Ürün", barkod: "", varyant: "", beden: "",
+      adet, birim, alisBirimFiyat: fiyat, satirToplam: adet * fiyat, guven: 1,
+    });
+    const sonuc = belgeGercegiUyuyorMu([urun(2.5, "KG", 100), urun(3, "ADET", 50)],
+      { adet: 9, toplam: 400 });
+    expect(sonuc.uyumlu).toBe(true);
+    expect(sonuc.adetKarsilastirildi).toBe(false);
+    const eksikTutar = belgeGercegiUyuyorMu([urun(2.5, "KG", 100), urun(3, "ADET", 50)],
+      { adet: 9, toplam: 410 });
+    expect(eksikTutar.uyumlu).toBe(false);
+  });
+
+  it("ad ve adet ayni satis birimi kabul edilir", () => {
+    const urun = (birim: string) => ({
+      model: "K", ad: "Ürün", barkod: "", varyant: "", beden: "", birim,
+      adet: 1, alisBirimFiyat: 20, satirToplam: 20, guven: 1,
+    });
+    const sonuc = belgeGercegiUyuyorMu([urun("Ad."), urun("ADET")], { adet: 2, toplam: 40 });
+    expect(sonuc.uyumlu).toBe(true);
+    expect(sonuc.adetKarsilastirildi).toBe(true);
+  });
+
+  it("mal bedeli KDV indirim ve odenecek tutar uyuşmazsa reddeder", () => {
+    const dogru = belgeVergiToplamiUyuyorMu({
+      malBedeli: 200, kdvTutari: 20, indirimTutari: 10, odenecekToplam: 210,
+    });
+    expect(dogru).toMatchObject({ uyumlu: true, denetlendi: true });
+    // Önceki kusur: "mal bedeli" KDV dahilmiş gibi alternatif sonuç da kabul ediliyordu.
+    // UBL'de vergi hariç toplam ile ödenecek tutar aynı alan değildir.
+    const sahteVergiDahil = belgeVergiToplamiUyuyorMu({
+      malBedeli: 200, kdvTutari: 20, indirimTutari: 0, odenecekToplam: 200,
+    });
+    expect(sahteVergiDahil.uyumlu).toBe(false);
+    expect(sahteVergiDahil.denetlendi).toBe(true);
+    const yanlis = belgeVergiToplamiUyuyorMu({
+      malBedeli: 200, kdvTutari: 20, indirimTutari: 10, odenecekToplam: 240,
+    });
+    expect(yanlis.uyumlu).toBe(false);
+    expect(yanlis.sebep).toContain("KDV");
+    const eksik = belgeVergiToplamiUyuyorMu({
+      malBedeli: 200, kdvTutari: null, indirimTutari: 10, odenecekToplam: 210,
+    });
+    expect(eksik).toMatchObject({ uyumlu: true, denetlendi: false });
   });
 
 });

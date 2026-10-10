@@ -1,6 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
-import { siteKartiniUygula, type EslesmisFaturaSatiri } from "@/lib/faturaEslestir";
+import { siteAdayiniKoru, siteKartiniUygula, type EslesmisFaturaSatiri } from "@/lib/faturaEslestir";
 import { markaSitesiniBul, satirAramaIstegi, satirAramaCevabi } from "@/lib/faturaGoru";
+
+// .example alanlariyla calisan test: test DNS'i internetten etkilenmez.
+// Kaynak sayfanin HTML icerigi ayrica gercek fetch yanitindan kontrol edilir.
+vi.mock("node:dns/promises", () => ({
+  resolve4: async () => ["8.8.8.8"],
+  resolve6: async () => [],
+}));
 
 function satir(ek: Partial<EslesmisFaturaSatiri> = {}): EslesmisFaturaSatiri {
   return {
@@ -78,9 +85,9 @@ describe("OpenRouter kaynak doğrulama", () => {
     expect(satirAramaCevabi(girdi, { ...kanitli(), usage: undefined })).toBeNull();
   });
 
-  it("yanlış firma, görselsiz veya kanıtsız yanıt reddedilir", () => {
+  it("yanlış firma veya kanıtsız yanıt reddedilir; fotoğraf yoksa yalnız aday saklanır", () => {
     expect(satirAramaCevabi(girdi, kanitli({ kaynak_sayfa: "https://baska.example/urun" }))).toBeNull();
-    expect(satirAramaCevabi(girdi, kanitli({ gorsel_adresi: "" }))).toBeNull();
+    expect(satirAramaCevabi(girdi, kanitli({ gorsel_adresi: "" }))?.gorsel).toBe("");
     expect(satirAramaCevabi(girdi, kanitli({ kanit: "" }))).toBeNull();
     expect(satirAramaCevabi(girdi, kanitli({ eslesti: false }))).toBeNull();
   });
@@ -110,7 +117,7 @@ describe("OpenRouter kaynak doğrulama", () => {
     expect(satirAramaCevabi(renkli, kanitli(dogru))?.dayanak).toBe("kod");
     expect(satirAramaCevabi(renkli, kanitli({ ...dogru, site_rengi: "Beyaz" }))).toBeNull();
     expect(satirAramaCevabi(renkli, kanitli({ ...dogru, site_bedeni: "M" }))).toBeNull();
-    expect(satirAramaCevabi(renkli, kanitli({ ...dogru, fotograf_rengi_dogrulandi: false }))).toBeNull();
+    expect(satirAramaCevabi(renkli, kanitli({ ...dogru, fotograf_rengi_dogrulandi: false }))?.gorsel).toBe("");
   });
 
   it("doğrulamanın gerçek dayanağı barkod veya ad olarak saklanır", () => {
@@ -131,18 +138,45 @@ describe("OpenRouter kaynak doğrulama", () => {
     }))).toBeNull();
   });
 
+  it("satıcı stok kodu farklı ama üretici barkodu tam eşleşirse resmî kimlik korunur", () => {
+    const barkodlu = { ...girdi, model: "SATICI-IC-KOD", barkod: "8681128321677" };
+    const kanit = kanitli({
+      eslesme_dayanagi: "barkod", site_kodu: "URETICI-KODU",
+      site_barkodu: "8681128321677",
+    });
+    expect(satirAramaCevabi(barkodlu, kanit)?.dayanak).toBe("barkod");
+    expect(satirAramaCevabi(barkodlu, kanitli({
+      eslesme_dayanagi: "barkod", site_kodu: "URETICI-KODU",
+      site_barkodu: "8681128321678",
+    }))).toBeNull();
+  });
+
+  it("kimlikli ürünün resmi sayfasında fotoğraf eksikse aday korunur ama kanıtlı olmaz", () => {
+    const aday = satirAramaCevabi(girdi, kanitli({ gorsel_adresi: "" }));
+    expect(aday?.sayfa).toBe("https://firma.example/elt1302");
+    expect(aday?.gorsel).toBe("");
+  });
+
   it("resmî marka sayfası ancak arama ve sayfa okuma kanıtıyla seçilir", async () => {
-    const fakeFetch = vi.fn(async (_url: string, init?: RequestInit) => new Response(JSON.stringify({
-      status: "completed",
-      usage: { server_tool_use: { web_fetch_requests: 1 }, input_tokens: 100, output_tokens: 40 },
-      output_text: JSON.stringify({
-        marka_adi: "Elit",
-        resmi_site: "https://elit.example",
-        kanit_sayfa: "https://elit.example/hakkimizda",
-        marka_sahibi_dogrulandi: true,
-        kanit: "Elit markası bu firmanın üretim markasıdır.",
-      }),
-    }), { status: 200 }));
+    const fakeFetch = vi.fn(async (url: string, init?: RequestInit) => {
+      if (String(url) === "https://elit.example/hakkimizda") {
+        return new Response(
+          "<html><body>Elit markası bu firmanın üretim markasıdır.</body></html>",
+          { status: 200, headers: { "content-type": "text/html" } },
+        );
+      }
+      return new Response(JSON.stringify({
+        status: "completed",
+        usage: { server_tool_use: { web_fetch_requests: 1 }, input_tokens: 100, output_tokens: 40 },
+        output_text: JSON.stringify({
+          marka_adi: "Elit",
+          resmi_site: "https://elit.example",
+          kanit_sayfa: "https://elit.example/hakkimizda",
+          marka_sahibi_dogrulandi: true,
+          kanit: "Elit markası bu firmanın üretim markasıdır.",
+        }),
+      }), { status: 200 });
+    });
     vi.stubEnv("OPENROUTER_API_KEY", "test-okuyucu-anahtari");
     vi.stubGlobal("fetch", fakeFetch);
     try {
@@ -151,6 +185,7 @@ describe("OpenRouter kaynak doğrulama", () => {
         model: "ELT1302", ad: "Elit fanila",
       });
       expect(sonuc.alan).toBe("elit.example");
+      expect(fakeFetch.mock.calls.some((call) => String(call[0]) === "https://elit.example/hakkimizda")).toBe(true);
       const body = JSON.parse(String((fakeFetch.mock.calls[0]?.[1] as RequestInit).body));
       expect(body.tools.map((t: { type: string }) => t.type)).toEqual(["openrouter:web_search", "openrouter:web_fetch"]);
       expect(body.text.format.strict).toBe(true);
@@ -187,6 +222,37 @@ describe("OpenRouter kaynak doğrulama", () => {
   it("yarım veya bozuk cevap kart üretmez", () => {
     expect(satirAramaCevabi(girdi, { ...kanitli(), status: "incomplete" })).toBeNull();
     expect(satirAramaCevabi(girdi, { ...kanitli(), output_text: "{broken" })).toBeNull();
+  });
+});
+
+describe("C1 - kaynak adayi ile gorsel kanitini ayirma", () => {
+  it("urun arastirma adayi kaybolmaz ama goruntu olmadan kanitli ya da yayina hazir sayilmaz", () => {
+    const sonuc = siteAdayiniKoru(siteKartiniUygula(satir({
+      sonuc: "eksik", katalog: null,
+      siteAd: "Elit fanila",
+      siteDayanak: "kod",
+      siteAciklama: "Pamuklu fanila",
+      siteSayfa: "https://firma.example/elt1302",
+      siteGorsel: "https://cdn.example/elt1302.jpg",
+      sayfaDogrulandi: false,
+    })));
+    expect(sonuc.sonuc).toBe("eksik");
+    expect(sonuc.katalog?.resmiAd).toBe("Elit fanila");
+    expect(sonuc.katalog?.kaynak).toBe("https://firma.example/elt1302");
+    expect(sonuc.katalog?.gorseller).toEqual([]);
+    expect(sonuc.katalog?.gorselAdaylari).toEqual(["https://cdn.example/elt1302.jpg"]);
+    expect(sonuc.uyari).toContain("Yayınlanamaz");
+  });
+
+  it("resmi sayfasi veya uretici kodu kaniti olmayan model iddiasini aday diye bile eklemez", () => {
+    const ham = satir({ sonuc: "eksik", katalog: null, siteAd: "Benzer", siteSayfa: "https://firma.example/benzer" });
+    expect(siteAdayiniKoru(ham).katalog).toBeNull();
+    expect(siteAdayiniKoru({ ...ham, siteDayanak: "kod", siteSayfa: "http://firma.example/benzer" }).katalog).toBeNull();
+  });
+
+  it("kanitlanmis fotografli urunu asla aday seviyesine dusurmez", () => {
+    const kanitli = satir({ sonuc: "kanitli" });
+    expect(siteAdayiniKoru(kanitli)).toBe(kanitli);
   });
 });
 

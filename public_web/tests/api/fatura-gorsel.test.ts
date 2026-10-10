@@ -112,6 +112,26 @@ describe("resmî ürün sayfasından fotoğraf ve varyant kanıtı", () => {
     expect(kanit?.kaynakAlintisi).toContain(gorsel);
   });
 
+  it("resmî ProductGroup JSON-LD varyantı renk ve görselle kanıtlanır", async () => {
+    const katalog = {
+      "@context": "https://schema.org",
+      "@type": "ProductGroup",
+      hasVariant: [
+        { "@type": "Product", color: "Siyah", image: gorsel, sku: "URETICI-SIYAH" },
+        { "@type": "Product", color: "Beyaz", image: "https://cdn.example/beyaz.jpg", sku: "URETICI-BEYAZ" },
+      ],
+    };
+    const sonuc = await urunSayfasindaGorselKaniti(kaynak, gorsel, "Siyah", {
+      resolveHost,
+      fetcher: async () => html('<script type="application/ld+json">' + JSON.stringify(katalog) + "</script>"),
+    });
+    expect(sonuc?.kaynakAlintisi).toContain(gorsel);
+    expect(await urunSayfasindaGorselKaniti(kaynak, gorsel, "Kırmızı", {
+      resolveHost,
+      fetcher: async () => html('<script type="application/ld+json">' + JSON.stringify(katalog) + "</script>"),
+    })).toBeNull();
+  });
+
   it("modelin uydurduğu fotoğraf adresi gerçek sayfada yoksa kanıt çıkmaz", async () => {
     const kanit = await urunSayfasindaGorselKaniti(kaynak, gorsel, "Siyah", {
       resolveHost,

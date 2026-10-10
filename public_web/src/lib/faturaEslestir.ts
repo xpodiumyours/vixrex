@@ -119,6 +119,38 @@ export function siteKartiniUygula(satir: EslesmisFaturaSatiri): EslesmisFaturaSa
   };
 }
 
+/**
+ * Resmî sayfa / kod araştırması bir fotoğraf adayı döndürmüş olabilir.
+ * Görsel doğrulanmadan "kanitli" etiketi verilmez. Buna rağmen araştırma
+ * adayı ve kaynak URL'si kaybolmaz; sonraki denemede aynı kaynak incelenebilir.
+ * Buradaki katalog, ONAYLANMIŞ ürün kimliği veya yayın izni değildir.
+ */
+export function siteAdayiniKoru(satir: EslesmisFaturaSatiri): EslesmisFaturaSatiri {
+  if (satir.sonuc === "kanitli") return satir;
+  const kaynak = (satir.siteSayfa ?? "").trim();
+  const resmiAd = (satir.siteAd ?? "").trim();
+  const dayanak = satir.siteDayanak;
+  if (!kaynak.startsWith("https://") || !resmiAd || !dayanak) return satir;
+  const gorselAdayi = (satir.siteGorsel ?? "").trim();
+  return {
+    ...satir,
+    sonuc: "eksik",
+    katalog: {
+      firma: satir.katalog?.firma ?? "",
+      kaynakFirma: satir.katalog?.kaynakFirma ?? "",
+      dayanak,
+      izinDurumu: satir.katalog?.izinDurumu ?? "yok",
+      resmiAd,
+      marka: satir.marka ?? "",
+      aciklama: (satir.siteAciklama ?? "").trim(),
+      gorseller: [],
+      gorselAdaylari: gorselAdayi.startsWith("https://") ? [gorselAdayi] : [],
+      kaynak,
+    },
+    uyari: satir.uyari || "Ürün sayfası adayı bulundu; doğru fotoğraf henüz doğrulanmadı. Yayınlanamaz.",
+  };
+}
+
 export function sonucOzeti(
   satirlar: EslesmisFaturaSatiri[],
 ): Record<"kanitli" | "eksik" | "celiski" | "izYok", number> {

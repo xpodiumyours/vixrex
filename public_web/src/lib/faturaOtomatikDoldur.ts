@@ -77,7 +77,9 @@ export function kategoriSec(
     const sablonEslesmesi = kategoriler.find((kategori) => kategori.product_template_key === sablon);
     if (sablonEslesmesi) return sablonEslesmesi.id;
   }
-  return kategoriler[0].id;
+  // Emin olunmayan urun yanlis sektorun zorunlu alanlariyla yayinlanamaz.
+  // Secimi esnaf yapar; liste sirasi bir siniflandirma kaniti degildir.
+  return "";
 }
 
 export interface OtomatikOzellik {
