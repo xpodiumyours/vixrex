@@ -52,7 +52,11 @@ vi.mock("@/lib/supabaseAdmin", () => ({
         return {
           select: () => ({
             eq: () => ({
+              // Günlük maliyet sorgusu store_id + created_at; fatura raporu
+              // store_id + document_fingerprint kullanır. İkisi de bu mockta
+              // ayrı kontrol edilir; gerçek Luna çağrısı yapılmaz.
               gte: async () => ({ data: mocks.harcama, error: null }),
+              eq: async () => ({ data: [], error: null }),
             }),
           }),
           insert: mocks.kullanimYaz,
