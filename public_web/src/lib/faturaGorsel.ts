@@ -156,6 +156,40 @@ export async function kaynakGorseliniDogrula(
   return { tamam: true, genislik, yukseklik, tur, bayt };
 }
 
+/** Schema.org ProductGroup.hasVariant ve Product.image/color bilgisinde AYNI varyant/fotoğraf eşleşmeli. */
+function yapilandirilmisUrunGorseliKanitli(html: string, adres: string, renk: string): boolean {
+  const scriptler = html.matchAll(/<script\b[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi);
+  const renkEsit = (deger: unknown) =>
+    typeof deger === "string" && deger.trim().toLocaleLowerCase("tr-TR") === renk.trim().toLocaleLowerCase("tr-TR");
+  const ziyaret = (veri: unknown, derinlik = 0): boolean => {
+    if (!veri || derinlik > 6 || typeof veri !== "object") return false;
+    if (Array.isArray(veri)) return veri.some((deger) => ziyaret(deger, derinlik + 1));
+    const nesne = veri as Record<string, unknown>;
+    const tipler = Array.isArray(nesne["@type"]) ? nesne["@type"] : [nesne["@type"]];
+    if (tipler.includes("Product")) {
+      const ham = Array.isArray(nesne.image) ? nesne.image : [nesne.image];
+      const adresler = ham.map((deger) => {
+        if (typeof deger === "string") return deger;
+        if (deger && typeof deger === "object") {
+          const resim = deger as Record<string, unknown>;
+          return typeof resim.url === "string" ? resim.url : resim.contentUrl;
+        }
+        return "";
+      });
+      if (adresler.includes(adres) && (!renk.trim() || renkEsit(nesne.color))) return true;
+    }
+    return ziyaret(nesne["@graph"], derinlik + 1) || ziyaret(nesne.hasVariant, derinlik + 1);
+  };
+  for (const script of scriptler) {
+    try {
+      if (ziyaret(JSON.parse(script[1]))) return true;
+    } catch {
+      // Bozuk JSON-LD ürün/renk/fotoğraf kanıtı değildir.
+    }
+  }
+  return false;
+}
+
 
 export async function urunSayfasindaGorselKaniti(
   kaynakSayfa: string,
@@ -238,10 +272,13 @@ export async function urunSayfasindaGorselKaniti(
     const picture = (html.match(/<picture\b[^>]*>[\s\S]*?<\/picture>/gi) ?? [])
       .find((icerik) => icerik.includes(adres));
     const etiket = duzEtiket ?? (picture?.match(/<img\b[^>]*>/i)?.[0] ?? "");
-    if (!etiket || (!duzEtiket && !picture)) return null;
     const goruntuEtiketleri = [...etiket.matchAll(/\b(?:alt|title|aria-label)\s*=\s*(["'])(.*?)\1/gi)]
       .map((eslesme) => eslesme[2]).join(" ");
-    if (!goruntuEtiketleri.toLocaleLowerCase("tr-TR").includes(varyant.trim().toLocaleLowerCase("tr-TR"))) {
+    const etiketRengi = goruntuEtiketleri.toLocaleLowerCase("tr-TR");
+    const istenenRenk = varyant.trim().toLocaleLowerCase("tr-TR");
+    // Açıkça farklı renk yazan HTML etiketi yapılandırılmış veriyle geçersiz kılınamaz.
+    if (goruntuEtiketleri && !etiketRengi.includes(istenenRenk)) return null;
+    if (!etiketRengi.includes(istenenRenk) && !yapilandirilmisUrunGorseliKanitli(html, adres, varyant)) {
       return null;
     }
   }

@@ -444,8 +444,10 @@ export async function POST(request: NextRequest) {
             siteSayfa = arama.sayfa;
             siteGorsel = arama.gorsel;
           }
-          if (!arama.sayfa || !arama.gorsel) {
-            siteUyari = "Resmî sitedeki ürün kimliği ve fotoğrafı doğrulanamadı.";
+          if (!arama.sayfa) {
+            siteUyari = "Resmî ürün kimliği henüz doğrulanamadı.";
+          } else if (!arama.gorsel) {
+            siteUyari = "Resmî ürün kaynağı bulundu; doğru fotoğraf eksik. Ürün taslak kalır.";
           }
           if (arama.sayfa && arama.gorsel) {
             const gorselDogrulama = await kaynakGorseliniDogrula(arama.gorsel);

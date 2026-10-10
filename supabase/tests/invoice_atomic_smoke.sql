@@ -16,7 +16,7 @@ declare
   v_line uuid;
   v_product uuid;
   v_input jsonb:='{"name":"Yanlış istemci adı","priceText":"1799,50 TL","priceAmount":1799.50,"stockQuantity":3,"stockStatus":"available","imageUrls":["https://depo.example/model1.webp"],"metadata":{},"variants":[]}';
-  v_evidence jsonb:='{"esnafOnayladi":true,"stokOnaylandi":true,"ureticiGorsel":true,"gorselKaynaklari":[{"depoUrl":"https://depo.example/model1.webp","kaynakGorsel":"https://uretici.example/model1.jpg","kaynakSayfa":"https://uretici.example/model1"}]}';
+  v_evidence jsonb:='{"esnafOnayladi":true,"stokOnaylandi":true,"sablonTam":true,"ureticiGorsel":true,"gorselKaynaklari":[{"depoUrl":"https://depo.example/model1.webp","kaynakGorsel":"https://uretici.example/model1.jpg","kaynakSayfa":"https://uretici.example/model1"}]}';
   v_failed boolean:=false;
 begin
   begin

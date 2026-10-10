@@ -659,12 +659,17 @@ export function satirAramaCevabi(
   const siteMarkasi = metin(veri.site_markasi);
   const siteRengi = metin(veri.site_rengi);
   const siteBedeni = metin(veri.site_bedeni);
-  if (girdi.model.trim() && siteKodu && !esit(girdi.model, siteKodu)) return null;
+  // Satıcının stok kodu üretici SKU olmayabilir. Resmî barkod birebir aynıysa
+  // yalnız bu kod farkı ürünü reddetmeye neden olmaz.
+  if (girdi.model.trim() && siteKodu && !esit(girdi.model, siteKodu)
+    && !(girdi.barkod.trim() && esit(girdi.barkod, siteBarkodu))) return null;
   if (girdi.barkod.trim() && siteBarkodu && !esit(girdi.barkod, siteBarkodu)) return null;
   if (girdi.marka?.trim() && !esit(girdi.marka, siteMarkasi)) return null;
-  if (girdi.varyant?.trim() && !esit(girdi.varyant, siteRengi)) return null;
-  if (girdi.beden?.trim() && !esit(girdi.beden, siteBedeni)) return null;
-  if (girdi.varyant?.trim() && veri.fotograf_rengi_dogrulandi !== true) return null;
+  if (girdi.varyant?.trim() && siteRengi && !esit(girdi.varyant, siteRengi)) return null;
+  if (girdi.beden?.trim() && siteBedeni && !esit(girdi.beden, siteBedeni)) return null;
+  // Sayfada renk/beden eksikse MODEL adayı saklanır, görseli kanıtlı sayılmaz.
+  const varyantKanitli = (!girdi.varyant?.trim() || (Boolean(siteRengi) && veri.fotograf_rengi_dogrulandi === true))
+    && (!girdi.beden?.trim() || Boolean(siteBedeni));
   const dayanak = veri.eslesme_dayanagi;
   if (dayanak === "barkod" && (!girdi.barkod.trim() || !esit(girdi.barkod, siteBarkodu))) return null;
   if (dayanak === "kod" && (!girdi.model.trim() || !esit(girdi.model, siteKodu))) return null;
@@ -683,9 +688,11 @@ export function satirAramaCevabi(
   if (!["barkod", "kod", "ad-ve-ozellik"].includes(String(dayanak))) return null;
   const ad = metin(veri.urun_adi);
   const aciklama = metin(veri.aciklama);
-  const gorsel = guvenliAdres(veri.gorsel_adresi);
+  const gorsel = varyantKanitli ? guvenliAdres(veri.gorsel_adresi) : "";
   const kanit = metin(veri.kanit);
-  if (!ad || !aciklama || !gorsel || !kanit) return null;
+  // Resmî sayfa + kimlik kanıtı varsa fotoğraf/ açıklama eksikliği ürün ADAYINI silmez.
+  // Fotoğraf olmadan sonraki yayın kapısı açılmaz.
+  if (!ad || !kanit) return null;
   return { ad, aciklama, gorsel, sayfa, dayanak: dayanak === "ad-ve-ozellik" ? "ad" : dayanak as "kod" | "barkod" };
 }
 

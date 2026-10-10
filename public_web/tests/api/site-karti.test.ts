@@ -85,9 +85,9 @@ describe("OpenRouter kaynak doğrulama", () => {
     expect(satirAramaCevabi(girdi, { ...kanitli(), usage: undefined })).toBeNull();
   });
 
-  it("yanlış firma, görselsiz veya kanıtsız yanıt reddedilir", () => {
+  it("yanlış firma veya kanıtsız yanıt reddedilir; fotoğraf yoksa yalnız aday saklanır", () => {
     expect(satirAramaCevabi(girdi, kanitli({ kaynak_sayfa: "https://baska.example/urun" }))).toBeNull();
-    expect(satirAramaCevabi(girdi, kanitli({ gorsel_adresi: "" }))).toBeNull();
+    expect(satirAramaCevabi(girdi, kanitli({ gorsel_adresi: "" }))?.gorsel).toBe("");
     expect(satirAramaCevabi(girdi, kanitli({ kanit: "" }))).toBeNull();
     expect(satirAramaCevabi(girdi, kanitli({ eslesti: false }))).toBeNull();
   });
@@ -117,7 +117,7 @@ describe("OpenRouter kaynak doğrulama", () => {
     expect(satirAramaCevabi(renkli, kanitli(dogru))?.dayanak).toBe("kod");
     expect(satirAramaCevabi(renkli, kanitli({ ...dogru, site_rengi: "Beyaz" }))).toBeNull();
     expect(satirAramaCevabi(renkli, kanitli({ ...dogru, site_bedeni: "M" }))).toBeNull();
-    expect(satirAramaCevabi(renkli, kanitli({ ...dogru, fotograf_rengi_dogrulandi: false }))).toBeNull();
+    expect(satirAramaCevabi(renkli, kanitli({ ...dogru, fotograf_rengi_dogrulandi: false }))?.gorsel).toBe("");
   });
 
   it("doğrulamanın gerçek dayanağı barkod veya ad olarak saklanır", () => {
@@ -136,6 +136,25 @@ describe("OpenRouter kaynak doğrulama", () => {
     expect(satirAramaCevabi({ ...adsizKod, marka: "" }, kanitli({
       site_kodu: "", eslesme_dayanagi: "ad-ve-ozellik",
     }))).toBeNull();
+  });
+
+  it("satıcı stok kodu farklı ama üretici barkodu tam eşleşirse resmî kimlik korunur", () => {
+    const barkodlu = { ...girdi, model: "SATICI-IC-KOD", barkod: "8681128321677" };
+    const kanit = kanitli({
+      eslesme_dayanagi: "barkod", site_kodu: "URETICI-KODU",
+      site_barkodu: "8681128321677",
+    });
+    expect(satirAramaCevabi(barkodlu, kanit)?.dayanak).toBe("barkod");
+    expect(satirAramaCevabi(barkodlu, kanitli({
+      eslesme_dayanagi: "barkod", site_kodu: "URETICI-KODU",
+      site_barkodu: "8681128321678",
+    }))).toBeNull();
+  });
+
+  it("kimlikli ürünün resmi sayfasında fotoğraf eksikse aday korunur ama kanıtlı olmaz", () => {
+    const aday = satirAramaCevabi(girdi, kanitli({ gorsel_adresi: "" }));
+    expect(aday?.sayfa).toBe("https://firma.example/elt1302");
+    expect(aday?.gorsel).toBe("");
   });
 
   it("resmî marka sayfası ancak arama ve sayfa okuma kanıtıyla seçilir", async () => {
