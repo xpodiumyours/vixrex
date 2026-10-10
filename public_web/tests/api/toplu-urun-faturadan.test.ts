@@ -297,16 +297,15 @@ describe("faturadan gelen satirin yayin kapisi", () => {
     expect(govde.satirlar[0].sebep).toContain("Satış fiyatı");
   });
 
-  it("kanıtlı olmayan satır yayına çıkmaz", async () => {
+  it("kanıtlı olmayan satır fiyat ve fotoğraf varsa yayına çıkar", async () => {
     const cevap = await topluUrunEkle(
       istek([{ ...FATURA_URUNU, kartDurumu: "iz-yok" }]),
     );
     const govde = await cevap.json();
 
-    expect(govde.yayinda).toBe(0);
-    expect(govde.taslak).toBe(1);
-    expect(govde.satirlar[0].sebep).toContain("kanıtlı değil");
-    expect(mocks.rpc.mock.calls[0][0]).toBe("save_invoice_product");
+    expect(govde.yayinda).toBe(1);
+    expect(govde.taslak).toBe(0);
+    expect(mocks.rpc.mock.calls[0][1].p_evidence.kartDurumu).toBe("iz-yok");
   });
 
   it("ayri stok onayi olmadan stok adedi varsa satır yayına çıkar", async () => {

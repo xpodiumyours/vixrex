@@ -408,7 +408,8 @@ export async function POST(request: NextRequest) {
           markaAlanlari.set(markaAnahtari, "");
         }
       }
-      const satirSitesi = ayriMarka ? (markaAlanlari.get(markaAnahtari) ?? "") : etkinSite;
+      const bulunanMarka = ayriMarka ? (markaAlanlari.get(markaAnahtari) ?? "") : "";
+      const satirSitesi = bulunanMarka || etkinSite;
       const aranabilir = Boolean(satirSitesi && (satir.model || satir.ad || satir.barkod));
       if (aramaAcik && ayriMarka && !satirSitesi && !aramaCagrisiSigarMi(gunlukHarcama)) {
         aramaAcik = false;
@@ -450,44 +451,36 @@ export async function POST(request: NextRequest) {
             siteUyari = "Resmî ürün kaynağı bulundu; doğru fotoğraf eksik. Ürün taslak kalır.";
           }
           if (arama.sayfa && arama.gorsel) {
-            const gorselDogrulama = await kaynakGorseliniDogrula(arama.gorsel);
-            const gorsel = gorselDogrulama.tamam ? arama.gorsel : "";
-            const aciklama = arama.aciklama.trim() || satir.ad.trim() || satir.model.trim();
-            if (gorsel && aciklama) {
-              const kaynakKaniti = await urunSayfasindaGorselKaniti(arama.sayfa, gorsel, satir.varyant);
-              if (!kaynakKaniti) {
-                siteUyari = "Fotoğrafın bu resmî ürün sayfasına ve doğru renk seçeneğine bağlı olduğu doğrulanamadı.";
-              } else if (!aramaCagrisiSigarMi(gunlukHarcama)) {
-                siteUyari = "Fotoğraf incelemesi için günlük kullanım sınırı doldu.";
-              } else {
-                const dogrulananGorselVerisi = gorselDogrulama.bayt && gorselDogrulama.tur
-                  ? `data:${gorselDogrulama.tur};base64,${Buffer.from(gorselDogrulama.bayt).toString("base64")}`
-                  : "";
-                if (!dogrulananGorselVerisi) {
-                  throw new Error("FOTOGRAF_VERISI_DOGRULANAMADI");
-                }
-                const inceleme = await lunaGorseliniDogrula({
-                  gorsel: dogrulananGorselVerisi, kaynakSayfa: arama.sayfa, kaynakAlintisi: kaynakKaniti.kaynakAlintisi,
-                  urunAdi: arama.ad, faturaAdi: satir.ad, marka: satir.marka ?? "",
-                  renk: satir.varyant, beden: satir.beden,
-                });
-                await kullanimKaydet(admin, magazaId, inceleme, 0, parmakIzi);
-                gunlukHarcama += inceleme.maliyet ?? 0;
-                if (inceleme.uyumlu) {
-                  siteAd = arama.ad;
-                  siteDayanak = arama.dayanak ?? undefined;
-                  siteAciklama = aciklama;
-                  siteGorsel = gorsel;
-                  siteSayfa = arama.sayfa;
-                  siteFotografKaniti = {
-                    kaynakSayfa: arama.sayfa, kaynakGorsel: gorsel,
-                    kaynakAlintisi: kaynakKaniti.kaynakAlintisi,
-                    lunaGerekcesi: inceleme.gerekce,
-                  };
-                } else {
-                  siteUyari = "Luna fotoğraftaki ürün veya renk uyumunu doğrulayamadı.";
+            try {
+              const gorselDogrulama = await kaynakGorseliniDogrula(arama.gorsel);
+              const gorsel = gorselDogrulama.tamam ? arama.gorsel : "";
+              const aciklama = arama.aciklama.trim() || satir.ad.trim() || satir.model.trim();
+              if (gorsel && aciklama) {
+                const kaynakKaniti = await urunSayfasindaGorselKaniti(arama.sayfa, gorsel, satir.varyant);
+                if (kaynakKaniti && aramaCagrisiSigarMi(gunlukHarcama)) {
+                  const dogrulananGorselVerisi = gorselDogrulama.bayt && gorselDogrulama.tur
+                    ? `data:${gorselDogrulama.tur};base64,${Buffer.from(gorselDogrulama.bayt).toString("base64")}`
+                    : "";
+                  if (dogrulananGorselVerisi) {
+                    const inceleme = await lunaGorseliniDogrula({
+                      gorsel: dogrulananGorselVerisi, kaynakSayfa: arama.sayfa, kaynakAlintisi: kaynakKaniti.kaynakAlintisi,
+                      urunAdi: arama.ad, faturaAdi: satir.ad, marka: satir.marka ?? "",
+                      renk: satir.varyant, beden: satir.beden,
+                    });
+                    await kullanimKaydet(admin, magazaId, inceleme, 0, parmakIzi);
+                    gunlukHarcama += inceleme.maliyet ?? 0;
+                    if (inceleme.uyumlu) {
+                      siteFotografKaniti = {
+                        kaynakSayfa: arama.sayfa, kaynakGorsel: gorsel,
+                        kaynakAlintisi: kaynakKaniti.kaynakAlintisi,
+                        lunaGerekcesi: inceleme.gerekce,
+                      };
+                    }
+                  }
                 }
               }
+            } catch (hata) {
+              console.error("[fatura-oku] fotograf bakisi surdu:", hata instanceof Error ? hata.message : hata);
             }
           }
         } catch (hata) {

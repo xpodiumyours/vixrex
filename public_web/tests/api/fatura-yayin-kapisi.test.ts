@@ -181,25 +181,22 @@ describe("faturadan gelen ürünün yayın kapısı", () => {
     expect(mocks.createProduct).not.toHaveBeenCalled();
   });
 
-  it("kanıtlı olmayan satır, onay ve fiyat olsa bile taslak kalır", async () => {
+  it("kanıtlı olmayan satır, fiyat, fotoğraf ve onay varsa yayına çıkar", async () => {
     const cevap = await topluUrunEkle(
       istek([faturaSatiri({ kartDurumu: "celiski" })]),
     );
     const govde = await cevap.json();
 
-    expect(mocks.rpc.mock.calls[0][0]).toBe("save_invoice_product");
-    expect(mocks.createProduct).not.toHaveBeenCalled();
-    expect(govde.yayinda).toBe(0);
-    expect(govde.satirlar[0].sebep).toContain("kanıtlı değil");
+    expect(govde.yayinda).toBe(1);
+    expect(govde.satirlar[0].durum).toBe("yayinda");
   });
 
-  it("kart durumu hiç gönderilmezse satır taslak kalır — eksik bilgi uydurulmaz", async () => {
+  it("kart durumu hiç gönderilmezse eksik kalır ve kanıtlı diye uydurulmaz", async () => {
     const cevap = await topluUrunEkle(istek([faturaSatiri({ kartDurumu: undefined })]));
     const govde = await cevap.json();
 
-    expect(mocks.rpc.mock.calls[0][0]).toBe("save_invoice_product");
-    expect(mocks.createProduct).not.toHaveBeenCalled();
-    expect(govde.satirlar[0].sebep).toContain("kanıtlı değil");
+    expect(govde.yayinda).toBe(1);
+    expect(mocks.rpc.mock.calls[0][1].p_evidence.kartDurumu).toBe("eksik");
   });
 
   it("ayri stok onayi olmadan, stok adedi varsa satır yayına çıkar", async () => {

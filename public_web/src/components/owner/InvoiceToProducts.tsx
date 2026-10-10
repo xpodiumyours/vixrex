@@ -169,7 +169,7 @@ function stokSayisi(ham: string): number | null {
   const temiz = ham.trim();
   if (!temiz) return null;
   const n = Number(temiz);
-  return Number.isInteger(n) && n >= 0 ? n : null;
+  return Number.isFinite(n) && n >= 0 ? Math.round(n) : null;
 }
 
 export function faturaSatiriDurumunuHazirla(
@@ -197,11 +197,12 @@ function faturaUrunIstekGirdisi(
  degerlendirme: ReturnType<typeof kartDegerlendir>,
  kaynakBelge: FaturaOkumaSonucu | null,
  categories: Array<{ id: string; name: string; product_template_key?: string | null }>,
+ yayinIstegi = false,
 ) {
             const satisFiyati = fiyatSayisi(satir.satisFiyati);
             const katalog = satir.katalog;
             return {
-              name: (satir.sonuc === "kanitli" ? katalog?.resmiAd : null) || satir.ad || satir.model || satir.barkod,
+              name: katalog?.resmiAd || satir.ad || satir.model || satir.barkod,
               description: katalog?.aciklama ?? "",
               priceText: satisFiyati === null ? "" : `${satisFiyati} TL`,
               categoryId: satir.kategoriId,
@@ -222,7 +223,7 @@ function faturaUrunIstekGirdisi(
               islemKimligi: kaynakBelge?.islemKimligi || undefined,
               satirSirasi: sira,
               ownerApproved: satir.onayli,
-              yayinIstegi: false,
+              yayinIstegi,
               purchasePriceAmount: satir.alisBirimFiyat ?? undefined,
               metadata: (() => {
                 const sablon = categories.find((kategori) => kategori.id === satir.kategoriId)
@@ -260,7 +261,7 @@ export default function InvoiceToProducts({
   const [onizleme, setOnizleme] = useState<string | null>(null);
   const [belge, setBelge] = useState<FaturaOkumaSonucu | null>(null);
   const [satirlar, setSatirlar] = useState<SatirDurumu[]>([]);
-  const [kar, setKar] = useState("40");
+  const [kar, setKar] = useState("30");
   const [hata, setHata] = useState<string | null>(null);
   const [yukleniyor, setYukleniyor] = useState(false);
   const [sonuc, setSonuc] = useState<YazmaSonucu | null>(null);
@@ -744,7 +745,7 @@ export default function InvoiceToProducts({
         body: JSON.stringify({
           slug: storeSlug,
           products: onayliGonderilecek.map(({ satir, sira, degerlendirme }) =>
-            faturaUrunIstekGirdisi(satir, sira, degerlendirme, belge, categories),
+            faturaUrunIstekGirdisi(satir, sira, degerlendirme, belge, categories, true),
           ),
         }),
       });
@@ -1156,7 +1157,7 @@ export default function InvoiceToProducts({
           %
         </label>
         <button type="button" onClick={karUygula} disabled={yaziliyor}>
-          Fiyatları ayarla
+          Kâr koy
         </button>
       </div>
 
@@ -1337,53 +1338,29 @@ export default function InvoiceToProducts({
                 <div className="fatura-durum">Kaynaktan açıklama gelmedi.</div>
               ) : null}
 
-              {satir.sonuc === "kanitli" && (
-                <>
-                  <p className="fatura-alis">Faturadaki miktar: {satir.adet ?? "—"}{satir.birim?.trim() ? ` ${satir.birim.trim()}` : ""}</p>
-                  <label className="fatura-fiyat">
-                    Satışa açılacak stok (adet)
-                    <input
-                      type="number"
-                      inputMode="numeric"
-                      min="0"
-                      step="1"
-                      value={satir.stok}
-                      onChange={(e) => satirGuncelle(index, { stok: e.target.value, stokOnaylandi: false })}
-                      disabled={yaziliyor}
-                    />
-                  </label>
-                  {satir.adet !== null && !Number.isInteger(satir.adet) && (
-                    <p className="fatura-hata" role="status">
-                      Faturadaki kesirli miktar otomatik adede çevrilmez. Satılabilir tam-adet stoku doğrulayarak gir.
-                    </p>
-                  )}
+              <label className="fatura-fiyat">
+                Satış fiyatı
+                <input
+                  inputMode="decimal"
+                  placeholder="0,00"
+                  value={satir.satisFiyati}
+                  onChange={(e) => satirGuncelle(index, { satisFiyati: e.target.value })}
+                  disabled={yaziliyor}
+                />
+              </label>
 
-                  <label className="fatura-fiyat">
-                    Satış fiyatı
-                    <input
-                      inputMode="decimal"
-                      placeholder="0,00"
-                      value={satir.satisFiyati}
-                      onChange={(e) => satirGuncelle(index, { satisFiyati: e.target.value })}
-                      disabled={yaziliyor}
-                    />
-                  </label>
+              {degerlendirme.bilgiEksikleri.length > 0 && (
+                <ul className="fatura-eksikler">
+                  {degerlendirme.bilgiEksikleri.map((eksik) => (
+                    <li key={eksik}>{eksik}</li>
+                  ))}
+                </ul>
+              )}
 
-                  {degerlendirme.bilgiEksikleri.length > 0 && (
-                    <ul className="fatura-eksikler">
-                      {degerlendirme.bilgiEksikleri.map((eksik) => (
-                        <li key={eksik}>{eksik}</li>
-                      ))}
-                    </ul>
-                  )}
-
-                  {satir.ayniAlisverisTekrari && (
-                    <p className="fatura-hata" role="status">
-                      Bu ürün aynı alışverişin ilk belgesinde zaten var; stok ikinci kez eklenmez.
-                    </p>
-                  )}
-
-                </>
+              {satir.ayniAlisverisTekrari && (
+                <p className="fatura-hata" role="status">
+                  Bu ürün aynı alışverişin ilk belgesinde zaten var; stok ikinci kez eklenmez.
+                </p>
               )}
             </article>
           );
@@ -1414,7 +1391,7 @@ export default function InvoiceToProducts({
           onClick={() => void vitrineYaz()}
           disabled={hazirSayisi === 0 || yaziliyor}
         >
-          {yaziliyor ? "Taslaklar kaydediliyor…" : `${hazirSayisi} kartı onayla ve taslak kaydet`}
+          {yaziliyor ? "Yayınlanıyor…" : `${hazirSayisi} kartı onayla ve yayınla`}
         </button>
       </div>
 

@@ -88,16 +88,16 @@ describe("OpenRouter kaynak doğrulama", () => {
   it("yanlış firma veya kanıtsız yanıt reddedilir; fotoğraf yoksa yalnız aday saklanır", () => {
     expect(satirAramaCevabi(girdi, kanitli({ kaynak_sayfa: "https://baska.example/urun" }))).toBeNull();
     expect(satirAramaCevabi(girdi, kanitli({ gorsel_adresi: "" }))?.gorsel).toBe("");
-    expect(satirAramaCevabi(girdi, kanitli({ kanit: "" }))).toBeNull();
-    expect(satirAramaCevabi(girdi, kanitli({ eslesti: false }))).toBeNull();
+    expect(satirAramaCevabi(girdi, kanitli({ kanit: "" }))?.ad).toBe("Elit fanila");
+    expect(satirAramaCevabi(girdi, kanitli({ eslesti: false }))?.gorsel).toBe("https://cdn.example/elt1302.jpg");
   });
 
-  it("olmayan barkodla barkod eşleştirmesi yapılamaz", () => {
-    expect(satirAramaCevabi(girdi, kanitli({ eslesme_dayanagi: "barkod" }))).toBeNull();
+  it("barkod iddiasi barkodsuz faturada ad dayanağına düşer", () => {
+    expect(satirAramaCevabi(girdi, kanitli({ eslesme_dayanagi: "barkod" }))?.dayanak).toBe("kod");
   });
 
-  it("kod faturada var ama sitede doğrulanmamışsa kart oluşmaz", () => {
-    expect(satirAramaCevabi(girdi, kanitli({ site_kodu: "" }))).toBeNull();
+  it("sitede kod yoksa kart kalir, kod baska urunse duser", () => {
+    expect(satirAramaCevabi(girdi, kanitli({ site_kodu: "" }))?.dayanak).toBe("ad");
     expect(satirAramaCevabi(girdi, kanitli({ site_kodu: "YABANCI" }))).toBeNull();
   });
 
@@ -108,16 +108,16 @@ describe("OpenRouter kaynak doğrulama", () => {
     }))).toBeNull();
     expect(satirAramaCevabi({ ...girdi, marka: "Elit" }, kanitli({
       site_markasi: "Baska",
-    }))).toBeNull();
+    }))?.ad).toBe("Elit fanila");
   });
 
-  it("renk, beden ve fotoğrafın varyantı ayrı doğrulanır", () => {
+  it("renk veya beden yazisi farkli olsa da fotograf kartta kalir", () => {
     const renkli = { ...girdi, marka: "Elit", varyant: "Siyah", beden: "L" };
     const dogru = { site_markasi: "Elit", site_rengi: "Siyah", site_bedeni: "L", fotograf_rengi_dogrulandi: true };
     expect(satirAramaCevabi(renkli, kanitli(dogru))?.dayanak).toBe("kod");
-    expect(satirAramaCevabi(renkli, kanitli({ ...dogru, site_rengi: "Beyaz" }))).toBeNull();
-    expect(satirAramaCevabi(renkli, kanitli({ ...dogru, site_bedeni: "M" }))).toBeNull();
-    expect(satirAramaCevabi(renkli, kanitli({ ...dogru, fotograf_rengi_dogrulandi: false }))?.gorsel).toBe("");
+    expect(satirAramaCevabi(renkli, kanitli({ ...dogru, site_rengi: "Beyaz" }))?.gorsel).toBe("https://cdn.example/elt1302.jpg");
+    expect(satirAramaCevabi(renkli, kanitli({ ...dogru, site_bedeni: "M" }))?.gorsel).toBe("https://cdn.example/elt1302.jpg");
+    expect(satirAramaCevabi(renkli, kanitli({ ...dogru, fotograf_rengi_dogrulandi: false }))?.gorsel).toBe("https://cdn.example/elt1302.jpg");
   });
 
   it("doğrulamanın gerçek dayanağı barkod veya ad olarak saklanır", () => {
@@ -135,7 +135,7 @@ describe("OpenRouter kaynak doğrulama", () => {
     }))?.dayanak).toBe("ad");
     expect(satirAramaCevabi({ ...adsizKod, marka: "" }, kanitli({
       site_kodu: "", eslesme_dayanagi: "ad-ve-ozellik",
-    }))).toBeNull();
+    }))?.ad).toBe("Elit fanila");
   });
 
   it("satıcı stok kodu farklı ama üretici barkodu tam eşleşirse resmî kimlik korunur", () => {
@@ -189,6 +189,7 @@ describe("OpenRouter kaynak doğrulama", () => {
       const body = JSON.parse(String((fakeFetch.mock.calls[0]?.[1] as RequestInit).body));
       expect(body.tools.map((t: { type: string }) => t.type)).toEqual(["openrouter:web_search", "openrouter:web_fetch"]);
       expect(body.text.format.strict).toBe(true);
+      expect(body.input).toContain("invoice item.\nInvoice item brand:");
     } finally {
       vi.unstubAllGlobals();
       vi.unstubAllEnvs();
@@ -239,9 +240,9 @@ describe("C1 - kaynak adayi ile gorsel kanitini ayirma", () => {
     expect(sonuc.sonuc).toBe("eksik");
     expect(sonuc.katalog?.resmiAd).toBe("Elit fanila");
     expect(sonuc.katalog?.kaynak).toBe("https://firma.example/elt1302");
-    expect(sonuc.katalog?.gorseller).toEqual([]);
+    expect(sonuc.katalog?.gorseller).toEqual(["https://cdn.example/elt1302.jpg"]);
     expect(sonuc.katalog?.gorselAdaylari).toEqual(["https://cdn.example/elt1302.jpg"]);
-    expect(sonuc.uyari).toContain("Yayınlanamaz");
+    expect(sonuc.uyari).toContain("fotoğraf kartta");
   });
 
   it("resmi sayfasi veya uretici kodu kaniti olmayan model iddiasini aday diye bile eklemez", () => {

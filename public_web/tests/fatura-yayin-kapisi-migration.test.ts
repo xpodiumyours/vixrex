@@ -69,6 +69,20 @@ const katman = readFileSync(
   "utf8",
 );
 
+const kanitSarti = readFileSync(
+  resolve(repo, "supabase/migrations/20261010220000_fatura_kanit_sarti_kalkar.sql"),
+  "utf8",
+);
+
+describe("fatura kanit sarti kalkar", () => {
+  it("yayin fonksiyonu satir durumunun kanitli olmasini istemez", () => {
+    expect(kanitSarti).toContain("create or replace function public.publish_invoice_product");
+    expect(kanitSarti).not.toContain("outcome is distinct from 'kanitli'");
+    expect(kanitSarti).not.toContain("sablonTam");
+    expect(kanitSarti).not.toContain("< 1200");
+  });
+});
+
 describe("fatura kart katmanlari migration", () => {
   it("ayri stok onayini zorunlu tutmaz, sablon ve fotoğraf netliğini tutar", () => {
     expect(katman).toContain("sablonTam");

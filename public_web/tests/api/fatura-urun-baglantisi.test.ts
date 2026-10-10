@@ -173,12 +173,12 @@ describe("fatura satırı → atomik ürün kaydı", () => {
     expect(mocks.save).toHaveBeenCalledTimes(17);
     expect(mocks.publishProduct).not.toHaveBeenCalled();
   });
-  it("tarayıcının kanıtlı etiketi sunucudaki eksik sonucu yayımlatamaz", async () => {
+  it("sunucudaki eksik sonuç fiyat, fotoğraf ve sahip onayı tamsa yayını kapatmaz", async () => {
     mocks.dogrula.mockResolvedValue(dogrulanmis({ sonuc: "eksik" }));
     const body = await (await topluUrunEkle(istek([satir()]))).json();
-    expect(mocks.publishProduct).not.toHaveBeenCalled();
-    expect(body.yayinda).toBe(0);
-    expect(body.taslak).toBe(1);
+    expect(mocks.publishProduct).toHaveBeenCalledOnce();
+    expect(body.yayinda).toBe(1);
+    expect(body.taslak).toBe(0);
   });
   it("sahipliği doğrulanamayan satır kaydedilemez", async () => {
     mocks.dogrula.mockResolvedValue(null);

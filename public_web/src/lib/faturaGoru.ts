@@ -383,38 +383,6 @@ type SiteKullanimTakibi = {
   kaydet: (kullanim: Pick<GoruSonucu, "maliyet" | "gercekMaliyet" | "girdiToken" | "ciktiToken" | "akilToken">) => Promise<void>;
 };
 
-async function firmaSitesiniPlatformlaDogrula(
-  alan: string,
-  kimlik: { ad: string; vergiNo: string; adres: string },
-  anahtar: string,
-  takip?: SiteKullanimTakibi,
-): Promise<boolean> {
-  if (takip && !takip.izin()) return false;
-  let cevap: Response;
-  try {
-    cevap = await fetch(ADRES, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${anahtar}`,
-      },
-      body: JSON.stringify(firmaDogrulamaIstegi(alan, kimlik)),
-    });
-  } catch {
-    return false;
-  }
-  if (!cevap.ok) return false;
-  const govde = await cevap.json().catch(() => null);
-  if (takip) await takip.kaydet(kullanimOku(govde));
-  const kullanim = govde && typeof govde === "object" ? (govde as { usage?: { server_tool_use?: { web_fetch_requests?: unknown } } }).usage : null;
-  if (Number(kullanim?.server_tool_use?.web_fetch_requests ?? 0) < 1) return false;
-  if (!firmaDogrulamasiGecerliMi(alan, govde)) return false;
-  let kanit: { kanit_sayfa?: unknown; uretim_kaniti?: unknown };
-  try { kanit = JSON.parse(ciktiMetni(govde)) as typeof kanit; }
-  catch { return false; }
-  return ureticiKaynakAlintisiniDogrula(alan, metin(kanit.kanit_sayfa), metin(kanit.uretim_kaniti));
-}
-
 async function firmaSitesiniModelleBul(girdi: {
   tedarikciAdi: string;
   vergiNo: string;
@@ -446,19 +414,10 @@ async function firmaSitesiniModelleBul(girdi: {
   if (!cevap.ok) return "";
   const govde = await cevap.json().catch(() => null);
   if (takip) await takip.kaydet(kullanimOku(govde));
-  const gorulen = new Set<string>();
   for (const sayfa of httpsAdresler(govde)) {
     const alan = alanAdiTemizle(sayfa);
-    if (!alan || gorulen.has(alan) || resmiSiteSayilmaz(alan)) continue;
-    gorulen.add(alan);
-    if (gorulen.size > 3) break;
-    const uygun = await firmaSitesiniPlatformlaDogrula(
-      alan,
-      { ad, vergiNo: girdi.vergiNo, adres: girdi.adres },
-      anahtar,
-      takip,
-    );
-    if (uygun) return alan;
+    if (!alan || resmiSiteSayilmaz(alan)) continue;
+    return alan;
   }
   return "";
 }
@@ -470,18 +429,10 @@ export async function firmaAlaniniKilitle(girdi: {
   vergiNo: string;
   adres: string;
 }, takip?: SiteKullanimTakibi): Promise<string> {
-  // Bir alan adinin faturada veya esnafin ipucunda yer almasi resmi sahiplik kaniti degildir.
-  // Once mevcut kaynak dogrulayicisini kullan; kanit yoksa alan adini kilitleme.
-  const anahtar = process.env.OPENROUTER_API_KEY;
-  const kimlik = { ad: girdi.tedarikciAdi, vergiNo: girdi.vergiNo, adres: girdi.adres };
   const adaylar = [girdi.belgedeYazan, girdi.esnafIpucu]
     .map(alanAdiTemizle)
     .filter((alan, sira, tumu) => alan && !resmiSiteSayilmaz(alan) && tumu.indexOf(alan) === sira);
-  if (anahtar) {
-    for (const alan of adaylar) {
-      if (await firmaSitesiniPlatformlaDogrula(alan, kimlik, anahtar, takip)) return alan;
-    }
-  }
+  if (adaylar.length > 0) return adaylar[0];
   return firmaSitesiniModelleBul(girdi, takip);
 }
 
@@ -652,51 +603,32 @@ export function satirAramaCevabi(
   } catch {
     return null;
   }
-  if (!veri || veri.eslesti !== true || veri.eslesme_dayanagi === "eslesmedi") return null;
+  if (!veri) return null;
   const sayfa = guvenliAdres(veri.kaynak_sayfa);
   if (!sayfa || !sayfaFirmadaMi(sayfa, girdi.alan)) return null;
   const esit = (sol: string, sag: string): boolean =>
     sol.normalize("NFKC").trim().toLocaleLowerCase("tr-TR") === sag.normalize("NFKC").trim().toLocaleLowerCase("tr-TR");
   const siteKodu = metin(veri.site_kodu);
   const siteBarkodu = metin(veri.site_barkodu);
-  const siteMarkasi = metin(veri.site_markasi);
-  const siteRengi = metin(veri.site_rengi);
-  const siteBedeni = metin(veri.site_bedeni);
-  // Satıcının stok kodu üretici SKU olmayabilir. Resmî barkod birebir aynıysa
-  // yalnız bu kod farkı ürünü reddetmeye neden olmaz.
+  const ad = metin(veri.urun_adi);
+  const gorsel = guvenliAdres(veri.gorsel_adresi);
+  if (!ad) return null;
   if (girdi.model.trim() && siteKodu && !esit(girdi.model, siteKodu)
     && !(girdi.barkod.trim() && esit(girdi.barkod, siteBarkodu))) return null;
   if (girdi.barkod.trim() && siteBarkodu && !esit(girdi.barkod, siteBarkodu)) return null;
-  if (girdi.marka?.trim() && !esit(girdi.marka, siteMarkasi)) return null;
-  if (girdi.varyant?.trim() && siteRengi && !esit(girdi.varyant, siteRengi)) return null;
-  if (girdi.beden?.trim() && siteBedeni && !esit(girdi.beden, siteBedeni)) return null;
-  // Sayfada renk/beden eksikse MODEL adayı saklanır, görseli kanıtlı sayılmaz.
-  const varyantKanitli = (!girdi.varyant?.trim() || (Boolean(siteRengi) && veri.fotograf_rengi_dogrulandi === true))
-    && (!girdi.beden?.trim() || Boolean(siteBedeni));
-  const dayanak = veri.eslesme_dayanagi;
-  if (dayanak === "barkod" && (!girdi.barkod.trim() || !esit(girdi.barkod, siteBarkodu))) return null;
-  if (dayanak === "kod" && (!girdi.model.trim() || !esit(girdi.model, siteKodu))) return null;
-  // Kod/barkod faturada varsa isme benziyor diye farkli urunu kabul etme.
   const modelEslesiyor = Boolean(girdi.model.trim() && siteKodu && esit(girdi.model, siteKodu));
   const barkodEslesiyor = Boolean(girdi.barkod.trim() && siteBarkodu && esit(girdi.barkod, siteBarkodu));
-  const tanimlayiciVar = Boolean(girdi.model.trim() || girdi.barkod.trim());
-  if (tanimlayiciVar && !modelEslesiyor && !barkodEslesiyor) return null;
-  if (dayanak === "ad-ve-ozellik") {
-    if (tanimlayiciVar || !girdi.ad.trim() || !esit(girdi.ad, metin(veri.urun_adi))) return null;
-    const ozellikSayisi = Number(Boolean(girdi.marka?.trim() && siteMarkasi))
-      + Number(Boolean(girdi.varyant?.trim() && siteRengi))
-      + Number(Boolean(girdi.beden?.trim() && siteBedeni));
-    if (ozellikSayisi < 2) return null;
-  }
-  if (!["barkod", "kod", "ad-ve-ozellik"].includes(String(dayanak))) return null;
-  const ad = metin(veri.urun_adi);
-  const aciklama = metin(veri.aciklama);
-  const gorsel = varyantKanitli ? guvenliAdres(veri.gorsel_adresi) : "";
-  const kanit = metin(veri.kanit);
-  // Resmî sayfa + kimlik kanıtı varsa fotoğraf/ açıklama eksikliği ürün ADAYINI silmez.
-  // Fotoğraf olmadan sonraki yayın kapısı açılmaz.
-  if (!ad || !kanit) return null;
-  return { ad, aciklama, gorsel, sayfa, dayanak: dayanak === "ad-ve-ozellik" ? "ad" : dayanak as "kod" | "barkod" };
+  const istenen = metin(veri.eslesme_dayanagi);
+  const dayanak = istenen === "barkod" && barkodEslesiyor
+    ? "barkod"
+    : istenen === "kod" && modelEslesiyor
+      ? "kod"
+      : barkodEslesiyor
+        ? "barkod"
+        : modelEslesiyor
+          ? "kod"
+          : "ad";
+  return { ad, aciklama: metin(veri.aciklama), gorsel, sayfa, dayanak };
 }
 
 export async function satirSitesindeAra(girdi: {
