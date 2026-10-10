@@ -15,7 +15,10 @@ export function getSupabaseAdmin() {
 
   // Fail closed: PR #672'nin Preview işlemleri üretim DB'ye yazamaz.
   if (process.env.VERCEL_ENV === "preview" &&
-    ["fix/fatura-cerrahi-birlesik-20261010", "fix/uretici-arastirma-izleme-20261010"].includes(process.env.VERCEL_GIT_COMMIT_REF ?? "") &&
+    (
+      process.env.VERCEL_GIT_COMMIT_REF === "fix/fatura-cerrahi-birlesik-20261010" ||
+      process.env.VERCEL_GIT_COMMIT_REF === "fix/uretici-arastirma-izleme-20261010"
+    ) &&
     supabaseUrl !== "https://nfivinvdlxhyxsoxzarh.supabase.co") {
     throw new Error("MP_CER_PREVIEW_DB_MUST_BE_ISOLATED");
   }
