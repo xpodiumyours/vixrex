@@ -90,6 +90,13 @@ interface OncekiIslem {
 }
 
 interface FaturaOkumaSonucu {
+  maliyetOzeti?: {
+    kayitSayisi: number;
+    gercekUsd: number;
+    tahminiUsd: number;
+    tahminiKayitSayisi: number;
+    ayrilanButceUsd: number;
+  };
   satirlar: FaturaOkumaSatiri[];
   belgeToplami: number | null;
   belgeAdedi: number | null;
@@ -1030,6 +1037,15 @@ export default function InvoiceToProducts({
     <div className="fatura-akis">
       <div className="fatura-baslik">
         <h3>{satirlar.length} satır okundu</h3>
+        {belge?.maliyetOzeti && (
+          <p role="status" className="fatura-aciklama">
+            OpenRouter bildirilen gerçek tutar: ${belge.maliyetOzeti.gercekUsd.toFixed(4)} USD.
+            ${belge.maliyetOzeti.tahminiKayitSayisi > 0
+              ? ` ${belge.maliyetOzeti.tahminiKayitSayisi} kullanımın maliyeti henüz doğrulanamadı; ${belge.maliyetOzeti.tahminiUsd.toFixed(4)} USD tahmin.`
+              : ""}
+            {" "}Bütçe payı ${belge.maliyetOzeti.ayrilanButceUsd.toFixed(4)} USD gerçek ödeme değildir.
+          </p>
+        )}
         {otomatikTaslakRaporu && <p role="status" className="fatura-aciklama">
           {otomatikTaslakRaporu.kaydedildi} ürün görünmez taslak olarak kaydedildi.
           {otomatikTaslakRaporu.atlandi > 0 ? ` ${otomatikTaslakRaporu.atlandi} satır kaydedilemedi.` : ""}

@@ -10,7 +10,7 @@ import { ayniAlisverisAdaylari, belgeParmakIzi, islemKaydet, satirKanitKayitlari
 import { faturaTaslaklari } from "@/lib/faturaTaslagi";
 import { firmaAlaniniKilitle, faturayiOku, lunaGorseliniDogrula, markaSitesiniBul, satirSitesindeAra, type GoruSatiri, type GoruSonucu } from "@/lib/faturaGoru";
 import { kaynakGorseliniDogrula, urunSayfasindaGorselKaniti } from "@/lib/faturaGorsel";
-import { ARAMA_UCETI_USD, aramaCagrisiSigarMi, bugunkuMaliyetUsd, gunlukTavanDolduMu, kullanimKaydet } from "@/lib/faturaMaliyet";
+import { ARAMA_UCETI_USD, aramaCagrisiSigarMi, belgeMaliyetOzeti, bugunkuMaliyetUsd, gunlukTavanDolduMu, kullanimKaydet } from "@/lib/faturaMaliyet";
 import { islemiYukle, islemYaniti, parmakIzindenIslemBul } from "@/lib/faturaIslemOku";
 
 // Vixrex'in TEK fatura okuma ucu.
@@ -241,7 +241,7 @@ export async function POST(request: NextRequest) {
     } : await faturayiOku(goruntu);
     if (!oncekiIslem) {
       try {
-        await kullanimKaydet(admin, magazaId, okuma);
+        await kullanimKaydet(admin, magazaId, okuma, 0, parmakIzi);
         gunlukHarcama += okuma.maliyet ?? 0;
       } catch (hata) {
         console.error("[fatura-oku] maliyet yazilamadi:", hata instanceof Error ? hata.message : hata);
@@ -330,7 +330,7 @@ export async function POST(request: NextRequest) {
       izin: () => aramaCagrisiSigarMi(gunlukHarcama),
       kaydet: async (kullanim) => {
         const maliyet = (kullanim.maliyet ?? 0) + ARAMA_UCETI_USD;
-        await kullanimKaydet(admin, magazaId, { ...kullanim, maliyet }, ARAMA_UCETI_USD);
+        await kullanimKaydet(admin, magazaId, { ...kullanim, maliyet }, ARAMA_UCETI_USD, parmakIzi);
         gunlukHarcama += maliyet;
       },
     });
@@ -393,7 +393,7 @@ export async function POST(request: NextRequest) {
             model: satir.model, ad: satir.ad,
           });
           const aramaMaliyeti = (bulunan.maliyet ?? 0) + ARAMA_UCETI_USD;
-          await kullanimKaydet(admin, magazaId, { ...bulunan, maliyet: aramaMaliyeti }, ARAMA_UCETI_USD);
+          await kullanimKaydet(admin, magazaId, { ...bulunan, maliyet: aramaMaliyeti }, ARAMA_UCETI_USD, parmakIzi);
           gunlukHarcama += aramaMaliyeti;
           markaAlanlari.set(markaAnahtari, bulunan.alan);
         } catch (hata) {
@@ -432,7 +432,7 @@ export async function POST(request: NextRequest) {
             beden: satir.beden,
           });
           const aramaMaliyeti = (arama.maliyet ?? 0) + ARAMA_UCETI_USD;
-          await kullanimKaydet(admin, magazaId, { ...arama, maliyet: aramaMaliyeti }, ARAMA_UCETI_USD);
+          await kullanimKaydet(admin, magazaId, { ...arama, maliyet: aramaMaliyeti }, ARAMA_UCETI_USD, parmakIzi);
           gunlukHarcama += aramaMaliyeti;
           // Kaynak araması fotoğraf aşamasında başarısız olsa bile doğrulanmamış
           // ÜRÜN ADAYI ve kaynağı korunur. "kanitli" yalnız fotoğrafın bütün
@@ -471,7 +471,7 @@ export async function POST(request: NextRequest) {
                   urunAdi: arama.ad, faturaAdi: satir.ad, marka: satir.marka ?? "",
                   renk: satir.varyant, beden: satir.beden,
                 });
-                await kullanimKaydet(admin, magazaId, inceleme);
+                await kullanimKaydet(admin, magazaId, inceleme, 0, parmakIzi);
                 gunlukHarcama += inceleme.maliyet ?? 0;
                 if (inceleme.uyumlu) {
                   siteAd = arama.ad;
@@ -543,8 +543,10 @@ export async function POST(request: NextRequest) {
       ? await ayniAlisverisAdaylari({ slug: ownerSlug, islemKimligi, girdi: kayitGirdisi })
       : [];
 
+    const maliyetOzeti = await belgeMaliyetOzeti(admin, magazaId, parmakIzi);
     return NextResponse.json({
       tamam: true,
+      maliyetOzeti,
       satirlar: kayitli.satirlar,
       belgeToplami: kayitli.belgeToplami,
       belgeAdedi: kayitli.belgeAdedi,
