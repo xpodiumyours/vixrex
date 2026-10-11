@@ -339,11 +339,8 @@ export async function POST(request: NextRequest) {
           .filter((red) => red.sebep === "erisilemedi" || red.sebep === "depoya-yazilamadi")
           .map((red) => red.kaynakGorsel),
       );
-      if (altyapiHatasi.size > 0) {
-        atlandi += 1;
-        sonuclar.push({ sira: index, ad, durum: "atlandi", sebep: "Ürün görseli kalıcı kaydedilemedi; tekrar dene." });
-        continue;
-      }
+      // Image transport failures must not erase Luna's product draft.
+      // Keep source candidates in the invoice record and retry on a later save.
       urunGorselleri = kaynakGorselleri.flatMap((adres) => {
         if (yonetilenUrunGorseliMi(adres)) return [adres];
         const kopya = depodaki.get(adres);
@@ -357,13 +354,13 @@ export async function POST(request: NextRequest) {
         genislik: gorsel.genislik,
         yukseklik: gorsel.yukseklik,
       }));
-      gorselDurumu = altyapiHatasi.size > 0 ? "dis-baglanti" : "depoda";
+      gorselDurumu = altyapiHatasi.size > 0 ? "aktarim-bekliyor" : "depoda";
     }
     // Variant images follow the same original-to-managed URL transport, with no image verdict.
     const depoGorselleri = new Map(gorselKaynaklari.map((kaynak) =>
       [String(kaynak.kaynakGorsel || ""), String(kaynak.depoUrl || "")]));
     hazirlik.girdi.variants = hazirlik.girdi.variants.map((variant) => ({
-      ...variant, imageUrls: variant.imageUrls?.map((url) => depoGorselleri.get(url) || url),
+      ...variant, imageUrls: variant.imageUrls?.map((url) => depoGorselleri.get(url) || (yonetilenUrunGorseliMi(url) ? url : "")).filter(Boolean),
     }));
 
     const sablonTam = Boolean(faturaKaynakli);
