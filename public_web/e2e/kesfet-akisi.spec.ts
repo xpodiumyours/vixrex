@@ -81,6 +81,7 @@ test.describe("Keşfet dizini", () => {
   test("kiralık kart diyalog + native form POST akışını sunar", async ({
     page,
   }) => {
+    await page.route("**/api/rent-demo", (route) => route.fulfill({ status: 204 }));
     await page.goto("/kesfet", { waitUntil: "domcontentloaded" });
 
     const kiralaButonu = page.getByRole("button", { name: "Kirala" });
@@ -97,12 +98,27 @@ test.describe("Keşfet dizini", () => {
       // Kartta İKİ pencere var: WhatsApp paneli (whatsapp-baslik-…) ile
       // Kirala paneli (kirala-baslik-…). Eski test "dialog" deyip ilkinde
       // kalıyordu — o hep kapalıdır. (2026-09-29: yalnız test düzeltmesi.)
-      const dialog = page.locator('dialog[aria-labelledby^="kirala-baslik"]');
+      const kart = page.getByRole("article").filter({
+        has: page.getByRole("button", { name: "Kirala", exact: true }),
+      }).first();
+      const hedef = await kart.locator('a[href^="/v/"]').first().getAttribute("href");
+      expect(hedef).toBeTruthy();
+      const slug = hedef!.slice("/v/".length);
+      const dialog = page.locator(`dialog[aria-labelledby="kirala-baslik-${slug}"]`);
+      const postIstegi = page.waitForRequest((request) =>
+        new URL(request.url()).pathname === "/api/rent-demo"
+        && request.method() === "POST"
+        && request.isNavigationRequest(),
+      );
       await expect(async () => {
-        if (await dialog.first().isVisible()) return;
-        await kiralaButonu.first().click();
-        await expect(dialog.first()).toBeVisible({ timeout: 2_000 });
+        if (await dialog.isVisible()) return;
+        await kart.getByRole("button", { name: "Kirala", exact: true }).click();
+        await expect(dialog).toBeVisible({ timeout: 2_000 });
       }).toPass({ timeout: 20_000 });
+      const istek = await postIstegi;
+      const form = new URLSearchParams(istek.postData() ?? "");
+      expect(form.get("slug")).toBe(slug);
+      expect(form.get("recaptchaToken")).toBeTruthy();
     }
   });
 
