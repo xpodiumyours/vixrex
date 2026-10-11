@@ -577,7 +577,7 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     const productSearch = bodies.find((item) => item.text?.format?.name === "fatura_urun_kaynagi");
     expect(cevapVer.mock.calls.some((call) => String(call[0]) === "https://elit.example/hakkimizda")).toBe(false);
     expect(productSearch).toBeDefined();
-    expect(productSearch.input).toContain("Invoice brand: Elit");
+    expect(productSearch.input).toContain('"invoice_brand":"Elit"');
     expect(bodies.some((item) => item.text?.format?.name === "markanin_resmi_sitesi")).toBe(false);
     expect(productSearch.tools[0].parameters.allowed_domains).toBeUndefined();
     expect(productSearch.tools[1].parameters.allowed_domains).toBeUndefined();
