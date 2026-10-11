@@ -65,4 +65,3 @@ describe("fatura maliyet tavanı", () => {
   });
 
 });
-});
