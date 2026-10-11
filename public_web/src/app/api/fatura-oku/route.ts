@@ -195,7 +195,12 @@ export async function POST(request: NextRequest) {
   const eskiKimlik = await parmakIzindenIslemBul(admin, magazaId, parmakIzi);
   const oncekiIslem = eskiKimlik ? await islemiYukle(admin, magazaId, eskiKimlik) : null;
   const oncekiCursor = oncekiIslem?.aramaDurumu?.sonrakiSatir;
-  if (oncekiIslem && (typeof oncekiCursor !== "number" || !Number.isInteger(oncekiCursor) || oncekiCursor >= oncekiIslem.satirlar.length)) {
+  const aramaTamamlandi = typeof oncekiCursor !== "number" || !Number.isInteger(oncekiCursor) || oncekiCursor >= (oncekiIslem?.satirlar.length ?? 0);
+  const eksikArastirmaVar = oncekiIslem?.satirlar.some((satir) => satir.sonuc !== "kanitli") ?? false;
+  // A previously completed invoice with unresolved items must be researchable again.
+  // Reuse its OCR and confirmed products; Luna rechecks only unresolved items.
+  const eksikleriYenidenAra = Boolean(oncekiIslem && aramaTamamlandi && eksikArastirmaVar);
+  if (oncekiIslem && aramaTamamlandi && !eksikleriYenidenAra) {
     return NextResponse.json({
       ...islemYaniti(oncekiIslem),
       taslaklar: faturaTaslaklari(oncekiIslem.satirlar, oncekiIslem.islemKimligi),
@@ -337,7 +342,7 @@ export async function POST(request: NextRequest) {
     const aramaDurumu = oncekiIslem?.aramaDurumu ? {
       erisimHatasi: oncekiIslem.aramaDurumu.erisimHatasi,
       sinirDoldu: false,
-      sonrakiSatir: oncekiCursor ?? 0,
+      sonrakiSatir: eksikleriYenidenAra ? 0 : oncekiCursor ?? 0,
       hatalar: { ...(oncekiIslem.aramaDurumu.hatalar ?? {}) },
     } : ilkDurum;
     const satirlar: EslesmisFaturaSatiri[] = [];
@@ -345,6 +350,11 @@ export async function POST(request: NextRequest) {
     for (const [sira, satir] of sonSatirlar.entries()) {
       if (sira < aramaDurumu.sonrakiSatir) {
         satirlar.push(ilkKayit.satirlar[sira]);
+        continue;
+      }
+      if (oncekiIslem && ilkKayit.satirlar[sira]?.sonuc === "kanitli") {
+        satirlar.push(ilkKayit.satirlar[sira]);
+        aramaDurumu.sonrakiSatir = sira + 1;
         continue;
       }
       let siteAciklama = "";
@@ -459,6 +469,14 @@ export async function POST(request: NextRequest) {
       if (!aramaAcik) break;
     }
 
+    // Confirmed lines can be skipped without rewriting their catalog or permissions.
+    // Persist the advanced cursor even when the last lines were already confirmed.
+    if (oncekiIslem && aramaDurumu.sonrakiSatir !== oncekiCursor) {
+      const { error: ilerlemeHatasi } = await admin.from("invoice_jobs")
+        .update({ discovery_state: aramaDurumu })
+        .eq("id", islemKimligi).eq("store_id", magazaId);
+      if (ilerlemeHatasi) throw new Error("FATURA_ARAMA_ILERI_KAYDEDILEMEDI");
+    }
     const kayitli = await islemiYukle(admin, magazaId, islemKimligi);
     if (!kayitli) {
       return NextResponse.json({ hata: "Kaydedilen fatura tekrar açılamadı. Tekrar dene." }, { status: 503 });
