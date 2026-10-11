@@ -37,15 +37,15 @@ export function satirdanFaturaTaslagi(
   const katalog = satir.katalog;
   if (!katalog) return null;
 
-  const ad = katalog.resmiAd.trim() || satir.ad.trim();
+  const ad = (katalog.resmiAd ?? "").trim() || (satir.ad ?? "").trim();
   if (!ad) return null;
 
   return {
     name: ad,
-    description: katalog.aciklama.trim(),
-    brand: katalog.marka.trim() || null,
-    barcode: satir.barkod.trim() || null,
-    model: satir.model.trim(),
+    description: (katalog.aciklama ?? "").trim(),
+    brand: (katalog.marka ?? "").trim() || null,
+    barcode: (satir.barkod ?? "").trim() || null,
+    model: (satir.model ?? "").trim(),
     // Kilitli kapsam: üretici fotoğrafı taslağa girer; kullanım izni sonra,
     // çalışan sistemle istenir (izin takibi sunucu kayıtlarındadır).
     imageUrls: katalog.gorseller,
