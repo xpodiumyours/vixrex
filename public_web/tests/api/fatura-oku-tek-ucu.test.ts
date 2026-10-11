@@ -737,11 +737,11 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(mocks.rpc).toHaveBeenCalledWith("replace_invoice_line", expect.anything());
   });
 
-  it("günlük harcama doluysa yeni ücretli okuma başlamaz", async () => {
+  it("önceki harcama 1 USD olsa da fatura okuma ve araştırma sürer", async () => {
     mocks.harcama = [{ cost_usd: 1 }];
     const cevap = await faturaOku(istek());
-    expect(cevap.status).toBe(429);
-    expect(vi.mocked(fetch)).not.toHaveBeenCalled();
+    expect(cevap.status).toBe(200);
+    expect(vi.mocked(fetch)).toHaveBeenCalled();
   });
 
   it("maliyet yazılamazsa işlem kaydı açılmaz", async () => {
