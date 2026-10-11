@@ -277,7 +277,7 @@ const URUN_KAYNAK_SEMASI = {
     site_bedeni: alanYazi("Size/variant seen on FETCHED product page, empty if absent."),
     fotograf_rengi_dogrulandi: { type: "boolean", description: "True only if fetched source links the exact image to the invoice color, false if ambiguous." },
     gorsel_adresleri: { type: "array", items: alanYazi("Actual original image URL exposed by the fetched official product page. Never invent.") },
-    kategori: alanYazi("Product category determined from the fetched official product page. Empty if unknown."),
+    kategori: alanYazi("Select the appropriate product category yourself from the identified official product and its actual use; the source need not explicitly label the category. Empty only if product identity is unknown."),
     ozellikler: {
       type: "array", items: {
         type: "object", additionalProperties: false, required: ["key", "label", "value"],
