@@ -692,13 +692,41 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     mocks.parmak.mockResolvedValue("eski-islem");
     mocks.yukle.mockResolvedValue({
       islemKimligi: "eski-islem", durum: "hazir", tedarikci: "Üretici",
-      satirlar: [{ model: "M1", ad: "Ürün", sonuc: "eksik", katalog: null }],
+      satirlar: [{ model: "M1", ad: "Ürün", sonuc: "kanitli", katalog: { resmiAd: "Ürün", kaynak: "https://uretici.example/urun" } }],
       aramaDurumu: { sonrakiSatir: 1, erisimHatasi: false, sinirDoldu: false },
       belge: { belgeTuru: "fatura" },
     });
     const cevap = await faturaOku(istek());
     expect(cevap.status).toBe(200);
     expect(vi.mocked(fetch)).not.toHaveBeenCalled();
+  });
+
+  it("tamamlanmış faturanın eksik ürünlerini yeniden araştırır; OCR tekrarlanmaz", async () => {
+    mocks.parmak.mockResolvedValue("11111111-1111-4111-8111-111111111111");
+    const eski = {
+      islemKimligi: "11111111-1111-4111-8111-111111111111",
+      tedarikci: "Üretici",
+      tedarikciVergiNo: "",
+      tedarikciAdres: "",
+      tedarikciSite: "",
+      belgeAdedi: 2,
+      belgeToplami: 274,
+      belge: { belgeTuru: "fatura", malBedeli: 274 },
+      satirlar: [{
+        hamSatir: "ELT1302 Elit fanila", model: "ELT1302", ad: "Elit fanila",
+        barkod: "", varyant: "", beden: "", marka: "Elit", adet: 2,
+        alisBirimFiyat: 137, satirToplam: 274, guven: 0.95,
+        sonuc: "eksik", katalog: null, satirId: "test-satir-0",
+      }],
+      aramaDurumu: { sonrakiSatir: 1, erisimHatasi: false, sinirDoldu: false, hatalar: {} },
+    };
+    mocks.kalici = eski;
+    mocks.yukle.mockImplementation(async () => mocks.kalici);
+    const cevap = await faturaOku(istek());
+    expect(cevap.status).toBe(200);
+    expect(faturayiOku).not.toHaveBeenCalled();
+    expect(vi.mocked(fetch)).toHaveBeenCalled();
+    expect(mocks.rpc).toHaveBeenCalledWith("replace_invoice_line", expect.anything());
   });
 
   it("günlük harcama doluysa yeni ücretli okuma başlamaz", async () => {
