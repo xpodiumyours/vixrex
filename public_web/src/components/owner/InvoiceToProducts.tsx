@@ -171,7 +171,7 @@ function stokSayisi(ham: string): number | null {
   const temiz = ham.trim();
   if (!temiz) return null;
   const n = Number(temiz);
-  return Number.isFinite(n) && n >= 0 ? Math.round(n) : null;
+  return Number.isSafeInteger(n) && n >= 0 ? n : null;
 }
 
 export function faturaSatiriDurumunuHazirla(

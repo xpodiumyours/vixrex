@@ -10,6 +10,7 @@ import { MapPinIcon } from "@/lib/vitrinBrandIcons";
 import { MAX_PRODUCT_IMAGES } from "@/lib/productImagePolicy";
 import {
   getProductImages,
+  isLunaInvoiceProduct,
   getProductUrlSlug,
   isLikelyUiScreenshotUrl,
   isPublicCatalogProduct,
@@ -65,12 +66,13 @@ function productImagesOnly(product: CatalogProduct): string[] {
   const primary = productImageOnly(product);
   if (!primary) return [];
 
-  return Array.from(
+  const images = Array.from(
     new Set([
       primary,
-      ...getProductImages(product).filter((url) => !isLikelyUiScreenshotUrl(url)),
+      ...getProductImages(product).filter((url) => isLunaInvoiceProduct(product) || !isLikelyUiScreenshotUrl(url)),
     ]),
-  ).slice(0, MAX_PRODUCT_IMAGES);
+  );
+  return isLunaInvoiceProduct(product) ? images : images.slice(0, MAX_PRODUCT_IMAGES);
 }
 
 function productLocationMapUrl(location: string): string | null {

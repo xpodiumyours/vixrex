@@ -207,7 +207,10 @@ export async function urunGirdisiniHazirla(args: {
   if (!name) return { durum: "reddedildi", sebep: "Ürün adı zorunludur." };
 
   const toplu = args.gorselPolitikasi === "toplu";
-  const imageValidation = toplu
+  const lunaGorselleri = normalizeProductImageUrls(govde.imageUrls);
+  const imageValidation = args.lunaVaryantlariniKoru === true
+    ? { ok: lunaGorselleri.every((url) => /^https:\/\//i.test(url)), imageUrls: lunaGorselleri, error: "Ürün fotoğrafı bağlantıları güvenli HTTPS olmalıdır." }
+    : toplu
     ? validateExternalProductImageUrls(govde.imageUrls)
     : validateProductImageUrlsAllowingFewerImages(govde.imageUrls);
 
@@ -218,7 +221,7 @@ export async function urunGirdisiniHazirla(args: {
 
   if (!imageValidation.ok) {
     const yalnizcaAzFotograf =
-      toplu && fotografSayisi < MIN_PRODUCT_IMAGES && fotografSayisi <= MAX_PRODUCT_IMAGES;
+      args.lunaVaryantlariniKoru !== true && toplu && fotografSayisi < MIN_PRODUCT_IMAGES && fotografSayisi <= MAX_PRODUCT_IMAGES;
     if (!yalnizcaAzFotograf) {
       return { durum: "reddedildi", sebep: imageValidation.error ?? "Ürün fotoğrafları geçersiz." };
     }
@@ -249,7 +252,7 @@ export async function urunGirdisiniHazirla(args: {
   }
 
   const variants = args.lunaVaryantlariniKoru === true
-    ? normalizeProductVariants(govde.variants)
+    ? normalizeProductVariants(govde.variants, true)
     : variantsForTemplate(govde.variants, templateKey, imageUrls);
   const barcode = isService ? null : cleanString(govde.barcode);
   const brand = isService ? null : markaVeyaMagazaAdi(govde.brand, templateKey, storeName);

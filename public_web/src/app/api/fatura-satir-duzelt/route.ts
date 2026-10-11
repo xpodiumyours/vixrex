@@ -3,7 +3,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { sahipYetkisi } from "@/lib/faturaYetki";
 import { eslesmeyenSatir, siteKartiniUygula, type HamFaturaSatiri } from "@/lib/faturaEslestir";
 import { satirKanitKayitlari } from "@/lib/faturaIslemKaydi";
-import { markaSitesiniBul, satirSitesindeAra } from "@/lib/faturaGoru";
+import { ArastirmaHatasi, markaSitesiniBul, satirSitesindeAra } from "@/lib/faturaGoru";
 import { ARAMA_UCETI_USD, aramaCagrisiSigarMi, bugunkuMaliyetUsd, kullanimKaydet } from "@/lib/faturaMaliyet";
 
 export const dynamic = "force-dynamic";
@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
       const bulunan = await markaSitesiniBul({
         marka: duzeltilmis.marka?.trim() ?? "",
         tedarikci, tedarikciSitesi: String(is.data.supplier_site ?? ""),
-        model: duzeltilmis.model, ad: duzeltilmis.ad,
+        model: duzeltilmis.model, ad: duzeltilmis.ad, barkod: duzeltilmis.barkod, hamSatir: duzeltilmis.hamSatir,
       });
       const aramaMaliyeti = (bulunan.maliyet ?? 0) + ARAMA_UCETI_USD;
       await kullanimKaydet(admin, yetki.storeId, { ...bulunan, maliyet: aramaMaliyeti });
@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
         siteUyari = "Araştırma için günlük maliyet sınırı doldu.";
       } else {
         const arama = await satirSitesindeAra({
-          alan: bulunan.alan, model: duzeltilmis.model, ad: duzeltilmis.ad,
+          alan: bulunan.alan, model: duzeltilmis.model, ad: duzeltilmis.ad || duzeltilmis.hamSatir || "",
           barkod: duzeltilmis.barkod, marka: duzeltilmis.marka,
           varyant: duzeltilmis.varyant, beden: duzeltilmis.beden,
         });
@@ -154,6 +154,10 @@ export async function POST(request: NextRequest) {
         }
       }
     } catch (err) {
+      if (err instanceof ArastirmaHatasi) {
+        const maliyet = (err.kullanim.maliyet ?? 0) + ARAMA_UCETI_USD;
+        await kullanimKaydet(admin, yetki.storeId, { ...err.kullanim, maliyet }, ARAMA_UCETI_USD);
+      }
       const kod = err instanceof Error ? err.message : "";
       siteUyari = kod === "OKUYUCU_BAKIYE_BITTI" || kod === "KOTA_DOLDU"
         ? "Araştırma kotası doldu; satır saklandı."

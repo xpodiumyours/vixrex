@@ -303,6 +303,61 @@ class OcrResultList extends StatelessWidget {
             ),
           ],
         ),
+        if (draft.imageCandidates.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (final image in draft.imageCandidates)
+                if (image.selected && image.canUse)
+                  Image.network(
+                    image.url,
+                    width: 72,
+                    height: 72,
+                    fit: BoxFit.contain,
+                    errorBuilder:
+                        (_, _, _) => const SizedBox(
+                          width: 72,
+                          height: 72,
+                          child: Icon(Icons.image_not_supported_outlined),
+                        ),
+                  ),
+            ],
+          ),
+        ],
+        for (final attribute in draft.catalogAttributes)
+          Text(
+            '${attribute['label'] ?? attribute['key'] ?? ''}: ${attribute['value'] ?? ''}',
+            style: const TextStyle(fontSize: 11, color: AppColors.mutedText),
+          ),
+        for (final variant in draft.catalogVariants) ...[
+          Text(
+            _variantSummary(variant),
+            style: const TextStyle(fontSize: 11, color: AppColors.mutedText),
+          ),
+          if (variant['gorseller'] is List)
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final url in variant['gorseller'] as List)
+                  if (url is String)
+                    Image.network(
+                      url,
+                      width: 72,
+                      height: 72,
+                      fit: BoxFit.contain,
+                      errorBuilder:
+                          (_, _, _) => const SizedBox(
+                            width: 72,
+                            height: 72,
+                            child: Icon(Icons.image_not_supported_outlined),
+                          ),
+                    ),
+              ],
+            ),
+        ],
         if (detail.isNotEmpty)
           Text(
             detail,
@@ -348,6 +403,19 @@ class OcrResultList extends StatelessWidget {
         ],
       ],
     );
+  }
+
+  String _variantSummary(Map<String, dynamic> variant) {
+    final options = variant['secenekler'];
+    return [
+      if (variant['id'] is String) variant['id'] as String,
+      if (options is List)
+        for (final option in options.whereType<Map>())
+          '${option['key'] ?? ''}: ${option['value'] ?? ''}',
+      if (variant['barkod'] is String &&
+          (variant['barkod'] as String).isNotEmpty)
+        'Barkod: ${variant['barkod']}',
+    ].join(' · ');
   }
 
   Color _kartDurumuRengi(KartDurumu durum) {

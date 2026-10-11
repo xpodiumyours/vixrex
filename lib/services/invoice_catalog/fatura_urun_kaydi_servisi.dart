@@ -15,10 +15,12 @@ import 'package:vixrex/utils/failure.dart';
 class FaturaUrunKaydiServisi {
   final http.Client? _httpClient;
   final String? _originOverride;
+  final Duration requestTimeout;
 
   const FaturaUrunKaydiServisi({
     http.Client? httpClient,
     String? originOverride,
+    this.requestTimeout = const Duration(seconds: 310),
   }) : _httpClient = httpClient,
        _originOverride = originOverride;
 
@@ -51,7 +53,7 @@ class FaturaUrunKaydiServisi {
               'products': satirlar.map((satir) => satir.toJson()).toList(),
             }),
           )
-          .timeout(const Duration(seconds: 90));
+          .timeout(requestTimeout);
 
       final govde = _govdeCoz(yanit.body);
       if (yanit.statusCode < 200 || yanit.statusCode >= 300) {

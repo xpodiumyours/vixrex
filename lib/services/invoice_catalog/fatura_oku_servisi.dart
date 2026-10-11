@@ -21,10 +21,14 @@ import 'package:vixrex/models/ocr_catalog_result.dart';
 class FaturaOkuServisi {
   final http.Client? _httpClient;
   final String? _originOverride;
+  final Duration requestTimeout;
 
-  const FaturaOkuServisi({http.Client? httpClient, String? originOverride})
-    : _httpClient = httpClient,
-      _originOverride = originOverride;
+  const FaturaOkuServisi({
+    http.Client? httpClient,
+    String? originOverride,
+    this.requestTimeout = const Duration(seconds: 310),
+  }) : _httpClient = httpClient,
+       _originOverride = originOverride;
 
   Future<Result<OcrCatalogResult>> oku({
     required List<int> imageBytes,
@@ -55,10 +59,13 @@ class FaturaOkuServisi {
               ),
             );
 
-      final yanit = await client
-          .send(istek)
-          .timeout(const Duration(seconds: 45));
-      final govdeMetni = await yanit.stream.bytesToString();
+      final cevap = await (() async {
+        final yanit = await client.send(istek);
+        final metin = await yanit.stream.bytesToString();
+        return (yanit, metin);
+      })().timeout(requestTimeout);
+      final yanit = cevap.$1;
+      final govdeMetni = cevap.$2;
 
       if (yanit.statusCode < 200 || yanit.statusCode >= 300) {
         final hataGovdesi = _govdeCoz(govdeMetni);
@@ -166,7 +173,6 @@ class FaturaOkuServisi {
     final hamAdet = sayi(satir['adet']);
     // Fatura 2,5 KG ise bunu 2 adede yuvarlamak veri kaybidir.
     final adet = tamAdet(hamAdet);
-    final kesirliAdet = hamAdet != null && adet == null;
     final alisFiyat = sayi(satir['alisBirimFiyat'])?.toDouble();
     final satirToplam = sayi(satir['satirToplam'])?.toDouble();
     final guven = (sayi(satir['guven']) ?? 0.5).toDouble();
@@ -199,8 +205,8 @@ class FaturaOkuServisi {
     final sahip = satir['sahipDurumu'];
     final sahipDurumu = sahip is Map ? sahip : <String, dynamic>{};
     final satisFiyati = _satisFiyati(sahipDurumu['satisFiyati']);
-    final stok = tamAdet(sayi(sahipDurumu['stok']));
-    final onaylanabilir = !kesirliAdet || stok != null;
+    final sahipStogu = sayi(sahipDurumu['stok']?.toString().replaceAll(',', '.'));
+    final stok = tamAdet(sahipStogu);
 
     EvidenceValue<String>? evMetin(
       String deger,
@@ -304,9 +310,10 @@ class FaturaOkuServisi {
       id: id,
       name: resmiAd.isNotEmpty ? resmiAd : (model.isNotEmpty ? model : 'Ürün'),
       brand: marka,
+      category: katalogVar ? metin(katalog['kategori']) : '',
       quantity: stok ?? adet ?? 0,
       price: satisFiyati,
-      isApproved: sahipDurumu['onayli'] == true && onaylanabilir,
+      isApproved: sahipDurumu['onayli'] == true,
       databaseEntryId:
           metin(satir['urunId']).isEmpty ? null : metin(satir['urunId']),
       documentQuantity: adet,
@@ -427,6 +434,11 @@ class FaturaOkuServisi {
               )
               : null,
       imageCandidates: gorseller,
+      catalogAttributes:
+          katalogVar ? _nesneler(katalog['ozellikler']) : const [],
+      catalogVariants:
+          katalogVar ? _nesneler(katalog['urunVaryantlari']) : const [],
+      stockQuantity: sahipStogu ?? hamAdet,
       supplierIdentityStrength: tedarikciGucu,
       productIdentityStrength: urunGucu,
       rightsStatus: izinDurumu,
@@ -434,7 +446,7 @@ class FaturaOkuServisi {
       celiskiAdaylari: celiskiAdaylari,
       celiskiDayanak: celiskiDayanak.isEmpty ? null : celiskiDayanak,
       // Esnaf yalnız satış fiyatını girer; faturadaki adet stok olarak alınır.
-      stockConfirmed: sahipDurumu['stokOnaylandi'] == true && onaylanabilir,
+      stockConfirmed: sahipDurumu['stokOnaylandi'] == true,
       merchantApproved: sahipDurumu['onayli'] == true,
       salePrice: satisFiyati,
       islemKimligi: islemKimligi,
@@ -442,6 +454,14 @@ class FaturaOkuServisi {
 
     return (urun, taslak);
   }
+
+  List<Map<String, dynamic>> _nesneler(dynamic value) =>
+      value is List
+          ? value
+              .whereType<Map>()
+              .map((item) => Map<String, dynamic>.from(item))
+              .toList(growable: false)
+          : const [];
 
   Map<String, dynamic> _govdeCoz(String govdeMetni) {
     try {

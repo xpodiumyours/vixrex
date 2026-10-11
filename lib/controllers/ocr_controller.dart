@@ -194,6 +194,8 @@ class OcrController extends ChangeNotifier {
     int index,
     DetectedProduct updated, {
     bool stockChanged = false,
+    num? invoiceStockQuantity,
+    bool clearInvoiceStockQuantity = false,
   }) {
     if (_isSaving || _isProcessing || _isPublishing) return;
     if (_result == null) return;
@@ -206,6 +208,11 @@ class OcrController extends ChangeNotifier {
         clearSalePrice: updated.price == null,
         merchantApproved: false,
         stockConfirmed: stockChanged ? false : draft.stockConfirmed,
+        stockQuantity:
+            stockChanged
+                ? invoiceStockQuantity ?? updated.quantity
+                : draft.stockQuantity,
+        clearStockQuantity: stockChanged && clearInvoiceStockQuantity,
       );
     }
     _result!.products[index] = updated;
@@ -372,12 +379,7 @@ class OcrController extends ChangeNotifier {
       return;
     }
 
-    final kategoriId = _uuidKategoriBul(editor);
-    if (kategoriId == null) {
-      _errorMessage = 'Önce vitrinine bir ürün kategorisi ekle.';
-      notifyListeners();
-      return;
-    }
+    final kategoriId = _uuidKategoriBul(editor) ?? '';
 
     final satirlar = <FaturaKaydiSatiri>[];
     for (final urun in secilenler) {
@@ -415,7 +417,7 @@ class OcrController extends ChangeNotifier {
           model: urun.sku,
           varyant: urun.variant,
           beden: urun.size,
-          stok: urun.quantity,
+          stok: _tamFaturaStogu(taslak.stockQuantity),
           onayli: urun.isApproved,
           stokOnaylandi: true,
           kartDurumu: taslak.etkinKartDurumu.wireValue,
@@ -591,7 +593,8 @@ class OcrController extends ChangeNotifier {
           'sahipDurumu': {
             ...owner,
             'satisFiyati': product.price?.toString() ?? '',
-            'stok': product.quantity.toString(),
+            'stok':
+                catalog.invoiceDrafts[index].stockQuantity?.toString() ?? '',
             'stokOnaylandi': true,
             'kategoriId':
                 _invoiceCategories[index] ??
@@ -769,6 +772,11 @@ class OcrController extends ChangeNotifier {
       if (uuid.hasMatch(id)) return id;
     }
     return null;
+  }
+
+  int? _tamFaturaStogu(num? value) {
+    if (value == null || !value.isFinite || value != value.toInt()) return null;
+    return value.toInt();
   }
 
   String _fiyatYaz(double deger) {

@@ -71,6 +71,14 @@ describe("fatura işlem kaydı tek transaction", () => {
     expect(m.from).toHaveBeenCalledTimes(1);
     expect(m.from).toHaveBeenCalledWith("stores");
   });
+  it("devam eden araştırmanın uzun satır ve site ipuçları kesilmez", async () => {
+    const model = "MODEL".repeat(30);
+    const hamSatir = "ürün ".repeat(300);
+    const site = `https://uretici.example/ara?q=${"a".repeat(600)}`;
+    await islemKaydet({ ...girdi([satir({ model, hamSatir })]), tedarikciSite: site });
+    expect(m.rpc.mock.calls[0][1].p_job.supplier_site).toBe(site);
+    expect(m.rpc.mock.calls[0][1].p_lines[0]).toMatchObject({ model, raw_line: hamSatir });
+  });
   it("dört satır sonucu kaybolmadan aynı transaction'a gider", async () => {
     await islemKaydet(girdi([satir({sonuc:"kanitli"}),satir({sonuc:"eksik"}),satir({sonuc:"celiski"}),satir({sonuc:"iz-yok"})]));
     expect(m.rpc.mock.calls[0][1].p_lines.map((s: {outcome: string}) => s.outcome)).toEqual(["kanitli","eksik","celiski","iz-yok"]);

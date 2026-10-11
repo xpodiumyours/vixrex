@@ -79,12 +79,12 @@ function ProductQuickViewSession({
   const returnFocusRef = useRef<HTMLElement | null>(null);
   const metadata = useMemo(() => normalizeProductMetadata(product.metadata), [product.metadata]);
   const variants = useMemo(
-    () => productVariantsForTemplate(product.variants, metadata.templateKey),
-    [product.variants, metadata.templateKey],
+    () => productVariantsForTemplate(product.variants, metadata.templateKey, metadata.lunaInvoice),
+    [product.variants, metadata.templateKey, metadata.lunaInvoice],
   );
   const groups = useMemo(
-    () => buildVariantOptionGroups(product.variants, metadata.templateKey),
-    [product.variants, metadata.templateKey],
+    () => buildVariantOptionGroups(product.variants, metadata.templateKey, metadata.lunaInvoice),
+    [product.variants, metadata.templateKey, metadata.lunaInvoice],
   );
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>(
     variants[0] ? { ...variants[0].options } : {},
@@ -135,8 +135,8 @@ function ProductQuickViewSession({
   }, []);
 
   const selectedVariant = useMemo(
-    () => findMatchingVariant(product.variants, selectedOptions, metadata.templateKey),
-    [product.variants, selectedOptions, metadata.templateKey],
+    () => findMatchingVariant(product.variants, selectedOptions, metadata.templateKey, metadata.lunaInvoice),
+    [product.variants, selectedOptions, metadata.templateKey, metadata.lunaInvoice],
   );
 
   const detailUrl = selectedVariant?.id

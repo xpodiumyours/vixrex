@@ -3,7 +3,6 @@ import sharp from "sharp";
 import { hostGuvenliMi, varsayilanCoz, pdfKatalogGorseliniOku } from "@/lib/faturaDijitalIz";
 import { gorseliSikistir, ONBELLEK_SANIYE, UZUN_KENAR } from "@/lib/gorselSikistir";
 import {
-  MAX_PRODUCT_IMAGES,
   MAX_PRODUCT_IMAGE_SOURCE_BYTES,
 } from "@/lib/productImagePolicy";
 
@@ -314,8 +313,6 @@ export async function kaynakGorselleriniHazirla(args: {
   const guvenliSlug = args.slug.replace(/[^a-zA-Z0-9-]/g, "");
 
   for (const aday of [...new Set(args.adaylar)]) {
-    if (gorseller.length >= MAX_PRODUCT_IMAGES) break;
-
     const kontrol = await kaynakGorseliniDogrula(aday, args.bagimliliklar);
     if (!kontrol.tamam || !kontrol.bayt || !kontrol.tur) {
       const sebep = kontrol.sebep ?? "acilmadi";

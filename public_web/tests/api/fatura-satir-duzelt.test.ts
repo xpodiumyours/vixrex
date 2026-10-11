@@ -31,7 +31,8 @@ vi.mock("@/lib/supabaseAdmin", () => ({
   }),
 }));
 vi.mock("@/lib/faturaYetki", () => ({ sahipYetkisi: m.yetki }));
-vi.mock("@/lib/faturaGoru", () => ({
+vi.mock("@/lib/faturaGoru", async (importOriginal) => ({
+  ...await importOriginal<typeof import("@/lib/faturaGoru")>(),
   satirSitesindeAra: m.siteSearch,
   markaSitesiniBul: m.brandSearch,
   lunaGorseliniDogrula: m.imageCheck,

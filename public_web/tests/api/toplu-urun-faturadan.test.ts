@@ -385,6 +385,21 @@ describe("faturadan gelen satirin yayin kapisi", () => {
     expect(yazilan.metadata.templateKey).toBe("fashion");
   });
 
+  it("12 görselli ve 101 varyantlı Luna kartı kalıcı kayıt isteğine tam taşınır", async () => {
+    const imageUrls = Array.from({ length: 12 }, (_, i) => `https://cdn.example/${i}.jpg`);
+    const request = istek([{ ...FATURA_URUNU, imageUrls, yayinIstegi: false }]);
+    mocks.kayitlar.get(0)!.katalog = { resmiAd: "Ürün", kaynak: "https://tedarikci.example.com/urun/0",
+      urunVaryantlari: Array.from({ length: 101 }, (_, i) => ({ id: `v${i}`, secenekler: [{ key: "voltage", value: String(i) }], gorseller: imageUrls, barkod: "" })) };
+    const govde = await (await topluUrunEkle(request)).json();
+    expect(govde.taslak).toBe(1);
+    const yazilan = mocks.rpc.mock.calls.find(([name]) => name === "save_invoice_product")![1].p_product;
+    expect(yazilan.imageUrls).toHaveLength(12);
+    expect(yazilan.variants).toHaveLength(101);
+    expect(yazilan.variants[100].imageUrls).toHaveLength(12);
+    expect(yazilan.metadata.lunaInvoice).toBe(true);
+    expect(mocks.publishProduct).not.toHaveBeenCalled();
+  });
+
   it.each(["okuma", "kayit"])("kategori %s hatası sessiz başarıya dönüşmez", async (hata) => {
     const request = istek([{ ...FATURA_URUNU, yayinIstegi: false }]);
     mocks.kayitlar.get(0)!.katalog = { resmiAd: "Ürün", kaynak: "https://tedarikci.example.com/urun/0", kategori: "İç Giyim" };

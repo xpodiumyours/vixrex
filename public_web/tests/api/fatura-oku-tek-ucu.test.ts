@@ -720,4 +720,35 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect((await cevap.json()).hata).toContain("tekrar açılamadı");
   });
 
+  it.each(["barkod", "hamSatir"])("yalnız %s olan satırı Luna araştırır ve kayıt korur", async (tur) => {
+    const satir = { ...TEK_SATIR.satirlar[0], model: "", ad: "", marka: "", barkod: tur === "barkod" ? "8681128321677" : "", ham_satir: "Pamuklu atlet 2 adet" };
+    const istekler: Record<string, unknown>[] = [];
+    vi.stubGlobal("fetch", async (_url: string, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body ?? "{}"));
+      istekler.push(body);
+      if (body.text?.format?.name === "markanin_resmi_sitesi") return okuyucuCevabi({ marka_sahibi_dogrulandi: true, resmi_site: "https://uretici.example", kanit_sayfa: "https://uretici.example/hakkimizda" });
+      if (body.text?.format?.name === "fatura_urun_kaynagi") return okuyucuCevabi({ eslesti: false });
+      return okuyucuCevabi({ ...TEK_SATIR, satirlar: [satir] });
+    });
+    const yanit = await (await faturaOku(istek())).json();
+    expect(yanit.satirlar).toHaveLength(1);
+    const arama = istekler.find((body) => (body.text as { format: { name: string } })?.format?.name === "fatura_urun_kaynagi");
+    expect(arama).toBeDefined();
+    expect(arama!.input).toContain(tur === "barkod" ? satir.barkod : satir.ham_satir);
+  });
+
+  it.each(["markanin_resmi_sitesi", "fatura_urun_kaynagi"])("%s yarım kalırsa aynı satır devam için korunur", async (asama) => {
+    vi.stubGlobal("fetch", async (_url: string, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body ?? "{}"));
+      if (body.text?.format?.name === asama) return new Response(JSON.stringify({ status: "incomplete", usage: { cost: 0.07 } }));
+      if (body.text?.format?.name === "markanin_resmi_sitesi") return okuyucuCevabi({ marka_sahibi_dogrulandi: true, resmi_site: "https://uretici.example", kanit_sayfa: "https://uretici.example/hakkimizda" });
+      return okuyucuCevabi(TEK_SATIR);
+    });
+    const yanit = await (await faturaOku(istek())).json();
+    expect(yanit.satirlar).toHaveLength(1);
+    expect(yanit.aramaSuruyor).toBe(true);
+    expect((mocks.kalici!.aramaDurumu as { sonrakiSatir: number }).sonrakiSatir).toBe(0);
+    expect(mocks.kullanimYaz).toHaveBeenCalledWith(expect.objectContaining({ provider_cost_usd: 0.07 }));
+  });
+
 });

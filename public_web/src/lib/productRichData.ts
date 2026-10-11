@@ -28,6 +28,7 @@ export interface ProductServiceMetadata {
 
 export interface ProductMetadata {
   schemaVersion?: number;
+  lunaInvoice?: boolean;
   itemKind?: ProductItemKind;
   templateKey?: string;
   identifiers?: ProductIdentifierMetadata;
@@ -71,6 +72,7 @@ export function normalizeProductMetadata(value: unknown): ProductMetadata {
   if (!root) return {};
 
   const result: ProductMetadata = {};
+  if (root.lunaInvoice === true) result.lunaInvoice = true;
   if (typeof root.schemaVersion === "number" && Number.isFinite(root.schemaVersion)) {
     result.schemaVersion = root.schemaVersion;
   }
@@ -88,7 +90,7 @@ export function normalizeProductMetadata(value: unknown): ProductMetadata {
 
   if (Array.isArray(root.attributes)) {
     const attributes: ProductAttributeValue[] = [];
-    for (const raw of root.attributes.slice(0, 100)) {
+    for (const raw of result.lunaInvoice ? root.attributes : root.attributes.slice(0, 100)) {
       const attribute = asObject(raw);
       if (!attribute) continue;
       const key = cleanString(attribute.key);
@@ -134,10 +136,10 @@ export function normalizeProductMetadata(value: unknown): ProductMetadata {
   return result;
 }
 
-export function normalizeProductVariants(value: unknown): ProductVariant[] {
+export function normalizeProductVariants(value: unknown, preserveInvoice = false): ProductVariant[] {
   if (!Array.isArray(value)) return [];
   const variants: ProductVariant[] = [];
-  for (const raw of value.slice(0, 100)) {
+  for (const raw of preserveInvoice ? value : value.slice(0, 100)) {
     const variant = asObject(raw);
     if (!variant) continue;
     const id = cleanString(variant.id);
@@ -162,7 +164,7 @@ export function normalizeProductVariants(value: unknown): ProductVariant[] {
       normalized.stockQuantity = variant.stockQuantity;
     }
     normalized.stockStatus = cleanString(variant.stockStatus);
-    normalized.imageUrls = cleanStringArray(variant.imageUrls, MAX_PRODUCT_IMAGES);
+    normalized.imageUrls = cleanStringArray(variant.imageUrls, preserveInvoice ? Infinity : MAX_PRODUCT_IMAGES);
     variants.push(normalized);
   }
   return variants;

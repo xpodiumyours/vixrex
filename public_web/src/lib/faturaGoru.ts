@@ -23,6 +23,7 @@
  */
 
 import sharp from "sharp";
+import { createHash } from "node:crypto";
 import { kisiselVeriTemizle } from "@/lib/faturaKisiselVeri";
 import { alanAdiTemizle } from "@/lib/firmaArama";
 import { hamGet, varsayilanCoz } from "@/lib/faturaDijitalIz";
@@ -379,13 +380,23 @@ const MARKA_SITE_SEMASI = {
   },
 } as const;
 
+export class ArastirmaHatasi extends Error {
+  readonly kullanim: Pick<GoruSonucu, "maliyet" | "gercekMaliyet" | "girdiToken" | "ciktiToken" | "akilToken">;
+
+  constructor(kod: string, govde: { usage?: unknown } | null) {
+    super(kod);
+    this.kullanim = kullanimOku(govde);
+  }
+}
+
 export async function markaSitesiniBul(girdi: {
-  marka: string; tedarikci: string; tedarikciSitesi: string; model: string; ad: string;
+  marka: string; tedarikci: string; tedarikciSitesi: string; model: string; ad: string; barkod?: string; hamSatir?: string;
 }): Promise<{ alan: string } & Pick<GoruSonucu, "maliyet" | "gercekMaliyet" | "girdiToken" | "ciktiToken" | "akilToken">> {
   const bos = { alan: "", ...kullanimOku(null) };
   const marka = girdi.marka.trim();
   const anahtar = process.env.OPENROUTER_API_KEY;
-  if (!anahtar || !(marka || girdi.model.trim() || girdi.ad.trim())) return bos;
+  if (!anahtar) return bos;
+  if (!(marka || girdi.model.trim() || girdi.ad.trim() || girdi.barkod?.trim() || girdi.hamSatir?.trim())) return bos;
   let govde: { status?: unknown; output_text?: unknown; output?: unknown; usage?: unknown } | null;
   try {
     const cevap = await fetch(ADRES, {
@@ -406,6 +417,8 @@ export async function markaSitesiniBul(girdi: {
           `Invoice issuer / possible wholesaler: ${girdi.tedarikci || "unknown"}`,
           `Invoice issuer site: ${girdi.tedarikciSitesi || "unknown"}`,
           `Product code: ${girdi.model || "not printed"}; name: ${girdi.ad || "not printed"}`,
+          `Invoice barcode: ${girdi.barkod || "not printed"}`,
+          `Original invoice item text: ${girdi.hamSatir || "not printed"}`,
           "Invoice issuer may be a wholesaler, NOT the product manufacturer. Do not assume they are the same.",
           "Search and FETCH the brand owner/manufacturer website, checking official About or brand ownership evidence.",
           "A reseller/wholesaler product listing is NOT proof of brand ownership.",
@@ -415,16 +428,18 @@ export async function markaSitesiniBul(girdi: {
         ].join("\n"),
       }),
     });
-    if (!cevap.ok) return bos;
+    if (!cevap.ok) throw new Error(cevap.status === 402 ? "OKUYUCU_BAKIYE_BITTI" : "OKUYUCU_CEVAP_VERMEDI");
     govde = await cevap.json().catch(() => null);
-  } catch {
-    return bos;
+  } catch (hata) {
+    throw hata instanceof Error ? hata : new Error("OKUYUCU_CEVAP_VERMEDI");
   }
   const kullanim = kullanimOku(govde);
   const bosSonuc = { alan: "", ...kullanim };
-  if (!govde || govde.status === "incomplete") return bosSonuc;
+  if (!govde || (govde.status !== undefined && govde.status !== "completed")) throw new ArastirmaHatasi("ARASTIRMA_YARIM_KALDI", govde);
   let veri: Record<string, unknown>;
-  try { veri = JSON.parse(ciktiMetni(govde)) as Record<string, unknown>; } catch { return bosSonuc; }
+  try { veri = JSON.parse(ciktiMetni(govde)) as Record<string, unknown>; } catch { throw new ArastirmaHatasi("ARASTIRMA_COZULEMEDI", govde); }
+  if (!veri || Array.isArray(veri) || typeof veri.marka_sahibi_dogrulandi !== "boolean") throw new ArastirmaHatasi("ARASTIRMA_COZULEMEDI", govde);
+  if (veri.marka_sahibi_dogrulandi === true && (typeof veri.resmi_site !== "string" || typeof veri.kanit_sayfa !== "string")) throw new ArastirmaHatasi("ARASTIRMA_COZULEMEDI", govde);
   const alan = alanAdiTemizle(metin(veri.resmi_site));
   const kanitSayfa = metin(veri.kanit_sayfa);
   if (veri.marka_sahibi_dogrulandi !== true || !alan) return bosSonuc;
@@ -546,14 +561,16 @@ export function satirAramaCevabi(
   girdi: { alan: string; model: string; ad: string; barkod: string; marka?: string; varyant?: string; beden?: string },
   govde: { status?: unknown; output_text?: unknown; output?: unknown; usage?: unknown } | null,
 ): Pick<SatirAramasi, "ad" | "gorsel" | "sayfa" | "aciklama" | "dayanak" | "marka" | "gorseller" | "kategori" | "ozellikler" | "urunVaryantlari"> | null {
-  if (!govde || govde.status === "incomplete") return null;
+  if (!govde || (govde.status !== undefined && govde.status !== "completed")) throw new ArastirmaHatasi("ARASTIRMA_YARIM_KALDI", govde);
   let veri: Record<string, unknown>;
   try {
     veri = JSON.parse(ciktiMetni(govde)) as Record<string, unknown>;
   } catch {
-    return null;
+    throw new ArastirmaHatasi("ARASTIRMA_COZULEMEDI", govde);
   }
-  if (!veri || veri.eslesti !== true) return null;
+  if (!veri || Array.isArray(veri) || typeof veri.eslesti !== "boolean") throw new ArastirmaHatasi("ARASTIRMA_COZULEMEDI", govde);
+  if (veri.eslesti !== true) return null;
+  if (typeof veri.urun_adi !== "string" || typeof veri.kaynak_sayfa !== "string") throw new ArastirmaHatasi("ARASTIRMA_COZULEMEDI", govde);
   const sayfa = guvenliAdres(veri.kaynak_sayfa);
   if (!sayfa || !sayfaFirmadaMi(sayfa, girdi.alan)) return null;
   const ad = metin(veri.urun_adi);
@@ -577,8 +594,9 @@ export function satirAramaCevabi(
       const option = secenek as Record<string, unknown>, key = metin(option.key), value = metin(option.value);
       return key && value ? [{ key, value }] : [];
     }) : [];
-    if (!id || secenekler.length === 0) return [];
-    return [{ id, secenekler, barkod: metin(alan.barkod),
+    if (secenekler.length === 0) return [];
+    const teknikId = id || `luna-${createHash("sha256").update(JSON.stringify([sayfa, secenekler.map(({ key, value }) => [key, value]).sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)))])).digest("hex").slice(0, 24)}`;
+    return [{ id: teknikId, secenekler, barkod: metin(alan.barkod),
       gorseller: Array.isArray(alan.gorseller) ? alan.gorseller.map(guvenliAdres).filter(Boolean) : [] }];
   }) : [];
   return { ad, marka: metin(veri.site_markasi), aciklama: metin(veri.aciklama), gorsel: gorseller[0] || "", gorseller,

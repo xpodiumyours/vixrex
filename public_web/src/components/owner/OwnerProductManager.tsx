@@ -891,8 +891,9 @@ interface ProductFormProps {
 }
 
 function ProductForm({ product, categories, busy, storeSlug, storeName, baslangic, onCancel, onSave }: ProductFormProps) {
+  const lunaFaturaKarti = product?.source_type === "invoice";
   const initialImageUrls = useMemo(
-    () => normalizeProductImageUrls(product?.image_urls).slice(0, MAX_PRODUCT_IMAGES),
+    () => normalizeProductImageUrls(product?.image_urls).slice(0, product?.source_type === "invoice" ? Infinity : MAX_PRODUCT_IMAGES),
     [product],
   );
   const [name, setName] = useState(product?.name || baslangic?.ad || "");
@@ -902,13 +903,15 @@ function ProductForm({ product, categories, busy, storeSlug, storeName, baslangi
   const [fulfillmentRegion, setFulfillmentRegion] = useState(product?.fulfillment_region || "");
   const [description, setDescription] = useState(product?.description || baslangic?.aciklama || "");
   const [imageUrls, setImageUrls] = useState<string[]>(() => initialImageUrls);
-  const [rich, setRich] = useState<RichProductDraft>(() => createRichProductDraft(product));
+  const [rich, setRich] = useState<RichProductDraft>(() => createRichProductDraft(product?.source_type === "invoice"
+    ? { ...product, metadata: { ...(product.metadata && typeof product.metadata === "object" ? product.metadata : {}), lunaInvoice: true } }
+    : product));
   const [categoryId, setCategoryId] = useState(() => {
     const explicit = product?.category_id?.trim() ?? "";
     if (categories.some((c) => c.id === explicit)) return explicit;
     const label = (product?.product_categories?.name ?? baslangic?.kategori ?? "").trim().toLowerCase();
     for (const c of categories) if (c.name.trim().toLowerCase() === label) return c.id;
-    return categories.length > 0 ? categories[0].id : "";
+    return lunaFaturaKarti ? "" : categories.length > 0 ? categories[0].id : "";
   });
   const [stockStatus, setStockStatus] = useState(product?.stock_status || "Mevcut");
   const [validation, setValidation] = useState("");
@@ -977,15 +980,15 @@ function ProductForm({ product, categories, busy, storeSlug, storeName, baslangi
     event.preventDefault();
     const cleanName = name.trim();
     if (!cleanName) { setValidation("Ürün adı zorunludur."); return; }
-    if (categories.length > 0 && !categoryId) { setValidation("Ürün kategorisi zorunludur."); return; }
-    const mustMeetImagePolicy = !product || imageListChanged;
+    if (!lunaFaturaKarti && categories.length > 0 && !categoryId) { setValidation("Ürün kategorisi zorunludur."); return; }
+    const mustMeetImagePolicy = !lunaFaturaKarti && (!product || imageListChanged);
     if (mustMeetImagePolicy && imageUrls.length > MAX_PRODUCT_IMAGES) { setValidation(`Bir ürüne en fazla ${MAX_PRODUCT_IMAGES} fotoğraf eklenebilir.`); return; }
     if (mustMeetImagePolicy && imageUrls.some((url) => !/^https?:\/\//i.test(url))) { setValidation("Görsel bağlantıları http:// veya https:// ile başlamalıdır."); return; }
     const oldPriceAmount = oldPriceText.trim() ? parseAmount(oldPriceText) : null;
     if (oldPriceText.trim() && oldPriceAmount == null) { setValidation("Eski fiyat sayı olmalı."); return; }
     if (badgeTag.trim().length > 20) { setValidation("Rozet en fazla 20 karakter."); return; }
     if (!isService && rich.stockQuantity.trim() && (!/^\d+$/.test(rich.stockQuantity) || Number(rich.stockQuantity) < 0)) { setValidation("Stok adedi 0 veya daha büyük tam sayı olmalı."); return; }
-    const eksikler = eksikZorunluAlanlar({
+    const eksikler = lunaFaturaKarti ? [] : eksikZorunluAlanlar({
       templateKey,
       brand: rich.brand,
       metadata: rich.metadata,

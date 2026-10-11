@@ -226,8 +226,8 @@ describe("OpenRouter kaynak doğrulama", () => {
   });
 
   it("yarım veya bozuk cevap kart üretmez", () => {
-    expect(satirAramaCevabi(girdi, { ...kanitli(), status: "incomplete" })).toBeNull();
-    expect(satirAramaCevabi(girdi, { ...kanitli(), output_text: "{broken" })).toBeNull();
+    expect(() => satirAramaCevabi(girdi, { ...kanitli(), status: "incomplete" })).toThrow("ARASTIRMA_YARIM_KALDI");
+    expect(() => satirAramaCevabi(girdi, { ...kanitli(), output_text: "{broken" })).toThrow("ARASTIRMA_COZULEMEDI");
   });
 });
 

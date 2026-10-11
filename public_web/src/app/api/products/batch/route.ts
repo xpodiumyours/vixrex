@@ -184,7 +184,8 @@ export async function POST(request: NextRequest) {
       barcode: ham.barcode,
       stockQuantity: ham.stockQuantity,
       stockStatus: ham.stockStatus,
-      metadata: ham.metadata,
+      metadata: (ham.sourceType || ham.source_type || "").trim() === FATURA_KAYNAGI
+        ? { ...(ham.metadata ?? {}), lunaInvoice: true } : ham.metadata,
       variants: ham.variants,
     };
 
@@ -254,7 +255,7 @@ export async function POST(request: NextRequest) {
       if (lunaKategori && !ozellikler.some((attr) => attr.key === "category")) {
         ozellikler.push({ key: "category", label: "Kategori", value: lunaKategori });
       }
-      hazirlik.girdi.metadata = { ...hazirlik.girdi.metadata, attributes: ozellikler };
+      hazirlik.girdi.metadata = { ...hazirlik.girdi.metadata, lunaInvoice: true, attributes: ozellikler };
 
       const lunaVaryantlari = Array.isArray(katalog.urunVaryantlari) ? katalog.urunVaryantlari : [];
       hazirlik.girdi.variants = normalizeProductVariants(lunaVaryantlari.map((raw) => {
@@ -267,7 +268,7 @@ export async function POST(request: NextRequest) {
           if (typeof option.key === "string" && typeof option.value === "string") options[option.key] = option.value;
         }
         return { id: variant.id, options, barcode: variant.barkod, imageUrls: variant.gorseller };
-      }));
+      }), true);
 
       // Category is a Luna label. Persist/create exactly that label; do not guess a template.
       if (lunaKategori) {
@@ -324,12 +325,13 @@ export async function POST(request: NextRequest) {
     let urunGorselleri = kaynakGorselleri;
     let gorselDurumu = "";
     let gorselKaynaklari: Array<Record<string, unknown>> = [];
-    if (disGorseller.length > 0) {
+    const aktarilacakGorseller = [...new Set([...disGorseller, ...hazirlik.girdi.variants.flatMap((variant) => variant.imageUrls ?? []).filter((url) => !yonetilenUrunGorseliMi(url))])];
+    if (faturaKaynakli && aktarilacakGorseller.length > 0) {
       const hazir = await kaynakGorselleriniHazirla({
         admin,
         slug,
         kaynakSayfa: typeof dogrulanmis?.katalog?.kaynak === "string" ? dogrulanmis.katalog.kaynak : "",
-        adaylar: disGorseller,
+        adaylar: aktarilacakGorseller,
       });
       const depodaki = new Map(hazir.gorseller.map((gorsel) => [gorsel.kaynakGorsel, gorsel]));
       const altyapiHatasi = new Set(

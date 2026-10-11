@@ -8,7 +8,7 @@ import { belgeGercegiUyuyorMu, belgeVergiToplamiUyuyorMu } from "@/lib/faturaSat
 import { eslesmeyenSatir, siteAdayiniKoru, siteKartiniUygula, sonucOzeti, type EslesmisFaturaSatiri, type HamFaturaSatiri } from "@/lib/faturaEslestir";
 import { ayniAlisverisAdaylari, belgeParmakIzi, islemKaydet, satirKanitKayitlari } from "@/lib/faturaIslemKaydi";
 import { faturaTaslaklari } from "@/lib/faturaTaslagi";
-import { faturayiOku, markaSitesiniBul, satirSitesindeAra, type GoruSatiri, type GoruSonucu } from "@/lib/faturaGoru";
+import { ArastirmaHatasi, faturayiOku, markaSitesiniBul, satirSitesindeAra, type GoruSatiri, type GoruSonucu } from "@/lib/faturaGoru";
 import { ARAMA_UCETI_USD, aramaCagrisiSigarMi, belgeMaliyetOzeti, bugunkuMaliyetUsd, gunlukTavanDolduMu, kullanimKaydet } from "@/lib/faturaMaliyet";
 import { islemiYukle, islemYaniti, parmakIzindenIslemBul } from "@/lib/faturaIslemOku";
 
@@ -249,7 +249,6 @@ export async function POST(request: NextRequest) {
     }
 
     const hamSatirlar: HamFaturaSatiri[] = okuma.satirlar
-      .filter((satir: GoruSatiri) => satir.model || satir.ad || satir.barkod)
       .map((satir: GoruSatiri) => ({
         hamSatir: satir.hamSatir,
         model: satir.model,
@@ -367,18 +366,23 @@ export async function POST(request: NextRequest) {
         siteUyari = "Resmî site araştırması için günlük maliyet sınırı doldu.";
       }
       const marka = satir.marka?.trim() ?? "";
-      const markaAnahtari = (marka || [satir.model, satir.ad].filter(Boolean).join("|")).toLocaleLowerCase("tr-TR");
+      const markaAnahtari = (marka || [satir.model, satir.ad, satir.barkod, satir.hamSatir].filter(Boolean).join("|")).toLocaleLowerCase("tr-TR");
       if (markaAnahtari && !markaAlanlari.has(markaAnahtari) && aramaAcik && aramaCagrisiSigarMi(gunlukHarcama)) {
         try {
           const bulunan = await markaSitesiniBul({
             marka, tedarikci: sonTedarikci, tedarikciSitesi: etkinSite,
-            model: satir.model, ad: satir.ad,
+            model: satir.model, ad: satir.ad, barkod: satir.barkod, hamSatir: satir.hamSatir,
           });
           const aramaMaliyeti = (bulunan.maliyet ?? 0) + ARAMA_UCETI_USD;
           await kullanimKaydet(admin, magazaId, { ...bulunan, maliyet: aramaMaliyeti }, ARAMA_UCETI_USD, parmakIzi);
           gunlukHarcama += aramaMaliyeti;
           markaAlanlari.set(markaAnahtari, bulunan.alan);
         } catch (hata) {
+          if (hata instanceof ArastirmaHatasi) {
+            const maliyet = (hata.kullanim.maliyet ?? 0) + ARAMA_UCETI_USD;
+            await kullanimKaydet(admin, magazaId, { ...hata.kullanim, maliyet }, ARAMA_UCETI_USD, parmakIzi);
+            gunlukHarcama += maliyet;
+          }
           const mesaj = hata instanceof Error ? hata.message : "";
           aramaAcik = false;
           aramaDurumu.sinirDoldu = true;
@@ -388,7 +392,7 @@ export async function POST(request: NextRequest) {
         }
       }
       const satirSitesi = markaAlanlari.get(markaAnahtari) || "";
-      const aranabilir = Boolean(satirSitesi && (satir.model || satir.ad || satir.barkod));
+      const aranabilir = Boolean(satirSitesi && (satir.model || satir.ad || satir.barkod || satir.hamSatir));
       if (!satirSitesi && aramaAcik) siteUyari = "Luna bu ürünün resmî üreticisini bulamadı.";
       if (aramaAcik && aranabilir && !aramaCagrisiSigarMi(gunlukHarcama)) {
         aramaAcik = false;
@@ -400,7 +404,7 @@ export async function POST(request: NextRequest) {
           const arama = await satirSitesindeAra({
             alan: satirSitesi,
             model: satir.model,
-            ad: satir.ad,
+            ad: satir.ad || satir.hamSatir || "",
             barkod: satir.barkod,
             marka: satir.marka,
             varyant: satir.varyant,
@@ -434,6 +438,11 @@ export async function POST(request: NextRequest) {
           // Source image identity is Luna's decision; secure download happens at storage.
 
         } catch (hata) {
+          if (hata instanceof ArastirmaHatasi) {
+            const maliyet = (hata.kullanim.maliyet ?? 0) + ARAMA_UCETI_USD;
+            await kullanimKaydet(admin, magazaId, { ...hata.kullanim, maliyet }, ARAMA_UCETI_USD, parmakIzi);
+            gunlukHarcama += maliyet;
+          }
           const mesaj = hata instanceof Error ? hata.message : "";
           aramaAcik = false;
           aramaDurumu.sinirDoldu = true;

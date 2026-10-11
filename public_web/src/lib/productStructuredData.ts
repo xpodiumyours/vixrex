@@ -153,7 +153,7 @@ export function buildPhysicalProductStructuredData(args: {
 }) {
   const { product, productUrl, storeName, description, images } = args;
   const metadata = normalizeProductMetadata(product.metadata);
-  const variants = normalizeProductVariants(product.variants);
+  const variants = normalizeProductVariants(product.variants, metadata.lunaInvoice);
   const currency = product.currency || "TRY";
   const parentPrice = structuredPrice(product);
   const itemCondition = productCondition(metadata);
