@@ -129,6 +129,8 @@ function istek(args: { slug?: string; editToken?: string; dosyaVarMi?: boolean; 
 process.env.SUPABASE_URL = "https://proje.supabase.co";
 process.env.SUPABASE_SERVICE_ROLE_KEY = "service-role-test-anahtari";
 process.env.OPENROUTER_API_KEY = "test-okuyucu-anahtari";
+process.env.OPENROUTER_INVOICE_PRESET = "test-invoice";
+process.env.OPENROUTER_PRODUCT_PRESET = "test-product";
 delete process.env.OPENAI_API_KEY;
 
 function siteyiAyiranOkuma(govde: unknown) {
@@ -261,7 +263,7 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
       String(call[0]).includes("/chat/completions"));
     expect(chatCall).toBeDefined();
     const requestBody = JSON.parse(String(chatCall?.[1]?.body ?? "{}"));
-    expect(requestBody.model).toBe("openai/gpt-5.6-luna");
+    expect(requestBody.model).toBe("@preset/test-invoice");
     expect(requestBody.plugins).toEqual([{ id: "file-parser", pdf: { engine: "mistral-ocr" } }]);
     expect(requestBody.response_format).toMatchObject({
       type: "json_schema", json_schema: { name: "fatura_okuma", strict: true },
@@ -390,14 +392,14 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(govde.satirlar[0].sonuc).toBe("eksik");
     const cagri = vi.mocked(fetch).mock.calls.find((satir) => String(satir[0]).includes("openrouter.ai/api/v1/responses"));
     const istekGovdesi = JSON.parse(String((cagri?.[1] as RequestInit).body));
-    expect(istekGovdesi.model).toBe("openai/gpt-5.6-luna");
-    expect(istekGovdesi.reasoning.effort).toBe("none");
-    expect(istekGovdesi.provider.require_parameters).toBe(true);
+    expect(istekGovdesi.model).toBe("@preset/test-invoice");
+    expect(istekGovdesi.reasoning).toBeUndefined();
+    expect(istekGovdesi.provider).toBeUndefined();
     expect(istekGovdesi.text.format.strict).toBe(true);
-    expect(istekGovdesi.text.format.schema.properties.tedarikci.description).toMatch(/Supplier name/);
+    expect(istekGovdesi.text.format.schema.properties.tedarikci.description).toBeUndefined();
     expect(istekGovdesi.text.format.schema.properties.satirlar.items.required).toContain("birim");
-    expect(istekGovdesi.text.format.schema.properties.satirlar.items.properties.ad.description).toMatch(/Product name/);
-    expect(istekGovdesi.text.format.schema.properties.satirlar.items.properties.birim.description).toMatch(/Measure unit/);
+    expect(istekGovdesi.text.format.schema.properties.satirlar.items.properties.ad.description).toBeUndefined();
+    expect(istekGovdesi.text.format.schema.properties.satirlar.items.properties.birim.description).toBeUndefined();
     expect(istekGovdesi.input[0].content[0].detail).toBe("original");
     expect(istekGovdesi.tools).toBeUndefined();
     expect(istekGovdesi.include).toBeUndefined();
@@ -408,14 +410,10 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     const aramaCagrisi = okumaCagrilari.find((cagri) =>
       JSON.parse(String((cagri[1] as RequestInit).body)).text?.format?.name === "fatura_urun_kaynagi");
     const arama = JSON.parse(String((aramaCagrisi?.[1] as RequestInit).body));
-    expect(arama.model).toBe("openai/gpt-5.6-luna");
+    expect(arama.model).toBe("@preset/test-product");
     expect(arama.reasoning).toBeUndefined();
     expect(arama.max_tool_calls).toBeUndefined();
-    expect(arama.tools.map((arac: { type: string }) => arac.type)).toEqual([
-      "openrouter:web_search", "openrouter:web_fetch",
-    ]);
-    expect(arama.tools[0].parameters.allowed_domains).toBeUndefined();
-    expect(arama.tools[1].parameters.allowed_domains).toBeUndefined();
+    expect(arama.tools).toBeUndefined();
     expect(arama.text.format.strict).toBe(true);
   });
 
@@ -482,7 +480,7 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
             usage: { input_tokens: 250, output_tokens: 60 },
           }), { status: 200 });
         }
-        if (istekGovdesi.tools) {
+        if (istekGovdesi.text?.format?.name === "fatura_urun_kaynagi") {
           return new Response(JSON.stringify({
             status: "completed",
             output_text: JSON.stringify({
@@ -548,7 +546,7 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
         );
       }
       const requestBody = JSON.parse(String(init?.body ?? "{}"));
-      if (!requestBody.tools) return okuyucuCevabi({
+      if (requestBody.text?.format?.name !== "fatura_urun_kaynagi") return okuyucuCevabi({
         ...TEK_SATIR,
         tedarikci: "Örnek Toptan",
         tedarikci_site: "toptan.example",
@@ -579,8 +577,7 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(productSearch).toBeDefined();
     expect(productSearch.input).toContain('"invoice_brand":"Elit"');
     expect(bodies.some((item) => item.text?.format?.name === "markanin_resmi_sitesi")).toBe(false);
-    expect(productSearch.tools[0].parameters.allowed_domains).toBeUndefined();
-    expect(productSearch.tools[1].parameters.allowed_domains).toBeUndefined();
+    expect(productSearch.tools).toBeUndefined();
     expect((await response.json()).satirlar[0].sonuc).toBe("eksik");
   });
 

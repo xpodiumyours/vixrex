@@ -1,22 +1,24 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import sharp from "sharp";
-import { satirAramaIstegi, CIKTI_TOKEN_TAVANI } from "@/lib/faturaGoru";
+import { satirAramaIstegi } from "@/lib/faturaGoru";
 import { kaynakGorseliniDogrula, kaynakGorselleriniHazirla } from "@/lib/faturaGorsel";
 
 const resolveHost = async () => ["8.8.8.8"];
 const kaynak = "https://firma.example/foto";
+beforeEach(() => vi.stubEnv("OPENROUTER_PRODUCT_PRESET", "test-product"));
+afterEach(() => vi.unstubAllEnvs());
 
 describe("Luna'nın kartına kalan aktarım engelleri", () => {
   it("site yazmayan faturanın firma adı Luna'ya yalnız ipucu olarak aktarılır", () => {
     const istek = satirAramaIstegi({ alan: "", tedarikci: "Örnek Toptancı", model: "M1", ad: "Ürün", barkod: "" });
     expect(istek?.input).toContain('"invoice_issuer_name":"Örnek Toptancı"');
     expect(istek?.input).not.toContain("Choose the manufacturer");
-    expect(istek?.tools.every((tool) => !("allowed_domains" in tool.parameters))).toBe(true);
+    expect(istek).not.toHaveProperty("tools");
   });
   it.each(["apex.com", "phoenix.com", "vixrex.com"])("%s alanı araştırmada zorunlu filtre olmaz", (alan) => {
     const istek = satirAramaIstegi({ alan, model: "M1", ad: "Ürün", barkod: "" });
-    expect(istek?.max_output_tokens).toBe(CIKTI_TOKEN_TAVANI);
-    expect(istek?.tools.every((tool) => !("allowed_domains" in tool.parameters))).toBe(true);
+    expect(istek).not.toHaveProperty("max_output_tokens");
+    expect(istek).not.toHaveProperty("tools");
     expect(istek?.input).toContain(alan);
   });
 

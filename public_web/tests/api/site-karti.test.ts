@@ -1,6 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { siteAdayiniKoru, siteKartiniUygula, type EslesmisFaturaSatiri } from "@/lib/faturaEslestir";
 import { satirAramaIstegi, satirAramaCevabi } from "@/lib/faturaGoru";
+beforeEach(() => vi.stubEnv("OPENROUTER_PRODUCT_PRESET", "test-product"));
+afterEach(() => vi.unstubAllEnvs());
 
 function satir(ek: Partial<EslesmisFaturaSatiri> = {}): EslesmisFaturaSatiri {
   return {
@@ -55,16 +57,14 @@ describe("OpenRouter kaynak doğrulama", () => {
 
   it("tek OpenRouter isteğinde arama, sayfa okuma ve katı çıktı kullanılır", () => {
     const istek = satirAramaIstegi(girdi);
-    expect(istek?.model).toBe("openai/gpt-5.6-luna");
-    expect(istek?.tools.map((t) => t.type)).toEqual(["openrouter:web_search", "openrouter:web_fetch"]);
-    expect(istek?.tools[0].parameters).not.toHaveProperty("allowed_domains");
-    expect(istek?.tools[1].parameters).not.toHaveProperty("allowed_domains");
+    expect(istek?.model).toBe("@preset/test-product");
+    expect(istek).not.toHaveProperty("tools");
     expect(istek?.text.format.strict).toBe(true);
     expect(JSON.stringify(istek)).not.toContain("image_generation");
   });
 
   it("kaynağı doğrulanmış ürün fotoğrafı ve açıklaması karta hazırlanır", () => {
-    expect(satirAramaCevabi(girdi, kanitli())).toEqual({
+    expect(satirAramaCevabi(girdi, kanitli())).toMatchObject({
       ad: "Elit fanila",
       marka: "",
       aciklama: "Resmi sitedeki pamuklu fanila",
@@ -159,7 +159,7 @@ describe("OpenRouter kaynak doğrulama", () => {
     const istek = satirAramaIstegi({ ...girdi, alan: "" });
     expect(istek).not.toBeNull();
     expect(istek?.input).toContain('"invoice_issuer_website":""');
-    expect(istek?.tools.map((tool) => tool.type)).toEqual(["openrouter:web_search", "openrouter:web_fetch"]);
+    expect(istek).not.toHaveProperty("tools");
   });
 
   it("yarım veya bozuk cevap kart üretmez", () => {
