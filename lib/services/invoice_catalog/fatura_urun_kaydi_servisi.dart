@@ -66,9 +66,11 @@ class FaturaUrunKaydiServisi {
         final govde = _govdeCoz(yanit.body);
         if (yanit.statusCode < 200 || yanit.statusCode >= 300) {
           final mesaj = (govde['hata'] ?? '').toString();
-          return Result.failure(Failure(
-            mesaj.isNotEmpty ? mesaj : 'Ürünler kaydedilemedi. Tekrar dene.',
-          ));
+          return Result.failure(
+            Failure(
+              mesaj.isNotEmpty ? mesaj : 'Ürünler kaydedilemedi. Tekrar dene.',
+            ),
+          );
         }
 
         final parcaKayitlari = <KaydedilenSatir>[];
@@ -77,29 +79,35 @@ class FaturaUrunKaydiServisi {
           for (final satir in hamSatirlar) {
             if (satir is! Map) continue;
             final id = (satir['id'] ?? '').toString();
-            final sira = satir['sira'] is num ? (satir['sira'] as num).toInt() : -1;
-            parcaKayitlari.add(KaydedilenSatir(
-              sira: sira + baslangic,
+            final sira =
+                satir['sira'] is num ? (satir['sira'] as num).toInt() : -1;
+            parcaKayitlari.add(
+              KaydedilenSatir(
+                sira: sira + baslangic,
               ad: (satir['ad'] ?? '').toString(),
               durum: (satir['durum'] ?? '').toString(),
               sebep: (satir['sebep'] ?? '').toString(),
               kayit: (satir['kayit'] ?? '').toString(),
-              id: id.isEmpty ? null : id,
-            ));
+                id: id.isEmpty ? null : id,
+              ),
+            );
           }
         }
         if (govde['tamam'] != true ||
             parcaKayitlari.length != parca.length ||
-            parcaKayitlari.map((satir) => satir.sira).toSet().length != parca.length ||
+            parcaKayitlari.map((satir) => satir.sira).toSet().length !=
+                parca.length ||
             parcaKayitlari.any((satir) =>
                 satir.sira < baslangic ||
                 satir.sira >= baslangic + parca.length ||
                 !['taslak', 'yayinda', 'atlandi'].contains(satir.durum) ||
                 (satir.durum != 'atlandi' &&
                     (satir.id == null || satir.id!.trim().isEmpty)))) {
-          return Result.failure(Failure(
-            'Sunucu bütün ürünlerin kayıt sonucunu vermedi. Kaydedilen taslaklar korunuyor; tekrar dene.',
-          ));
+          return Result.failure(
+            Failure(
+              'Sunucu bütün ürünlerin kayıt sonucunu vermedi. Kaydedilen taslaklar korunuyor; tekrar dene.',
+            ),
+          );
         }
         kaydedilenler.addAll(parcaKayitlari);
         toplamYayinda += _tamSayi(govde['yayinda']);
@@ -107,12 +115,14 @@ class FaturaUrunKaydiServisi {
         toplamHatali += _tamSayi(govde['hatali']);
       }
 
-      return Result.success(FaturaKaydiSonucu(
-        yayinda: toplamYayinda,
-        taslak: toplamTaslak,
-        hatali: toplamHatali,
-        satirlar: kaydedilenler,
-      ));
+      return Result.success(
+        FaturaKaydiSonucu(
+          yayinda: toplamYayinda,
+          taslak: toplamTaslak,
+          hatali: toplamHatali,
+          satirlar: kaydedilenler,
+        ),
+      );
     } catch (_) {
       return Result.failure(
         Failure('Ürünler kaydedilemedi. İnternet bağlantını kontrol et.'),
