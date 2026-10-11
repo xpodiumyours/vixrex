@@ -528,7 +528,7 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
   });
 
 
-  it("toptancı faturasındaki marka için üreticinin resmî sitesini ayrı bulur", async () => {
+  it("toptancı faturasındaki ürünün resmî üreticisini Luna kendi araştırır", async () => {
     const cevapVer = vi.fn(async (url: string, init?: RequestInit) => {
       // HTML kaniti, OpenRouter'un JSON yanitindan BAGIMSIZ gercek sayfa
       // cevabidir. Kanit sayfada yoksa uretici sitesi kilitlenemez.
@@ -568,6 +568,8 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     const productSearch = bodies.find((item) => item.text?.format?.name === "fatura_urun_kaynagi");
     expect(cevapVer.mock.calls.some((call) => String(call[0]) === "https://elit.example/hakkimizda")).toBe(false);
     expect(productSearch).toBeDefined();
+    expect(productSearch.input).toContain("Invoice brand: Elit");
+    expect(bodies.some((item) => item.text?.format?.name === "markanin_resmi_sitesi")).toBe(false);
     expect(productSearch.tools[0].parameters.allowed_domains).toBeUndefined();
     expect(productSearch.tools[1].parameters.allowed_domains).toBeUndefined();
     expect((await response.json()).satirlar[0].sonuc).toBe("eksik");
@@ -737,11 +739,10 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(arama!.input).toContain(tur === "barkod" ? satir.barkod : satir.ham_satir);
   });
 
-  it.each(["markanin_resmi_sitesi", "fatura_urun_kaynagi"])("%s yarım kalırsa aynı satır devam için korunur", async (asama) => {
+  it("Luna ürün araştırması yarım kalırsa aynı satır devam için korunur", async () => {
     vi.stubGlobal("fetch", async (_url: string, init?: RequestInit) => {
       const body = JSON.parse(String(init?.body ?? "{}"));
-      if (body.text?.format?.name === asama) return new Response(JSON.stringify({ status: "incomplete", usage: { cost: 0.07 } }));
-      if (body.text?.format?.name === "markanin_resmi_sitesi") return okuyucuCevabi({ marka_sahibi_dogrulandi: true, resmi_site: "https://uretici.example", kanit_sayfa: "https://uretici.example/hakkimizda" });
+      if (body.text?.format?.name === "fatura_urun_kaynagi") return new Response(JSON.stringify({ status: "incomplete", usage: { cost: 0.07 } }));
       return okuyucuCevabi(TEK_SATIR);
     });
     const yanit = await (await faturaOku(istek())).json();
