@@ -202,12 +202,7 @@ jobs:
         run: flutter pub get
 
       - name: Biçim kontrolü
-        run: |
-          dart format --output=none --set-exit-if-changed lib test || {
-            dart format lib/services/invoice_catalog/fatura_urun_kaydi_servisi.dart test/invoice_catalog/catalog_invoice_trace_resolver_test.dart test/invoice_catalog/fatura_urun_kaydi_servisi_test.dart
-            git diff -- lib/services/invoice_catalog/fatura_urun_kaydi_servisi.dart test/invoice_catalog/catalog_invoice_trace_resolver_test.dart test/invoice_catalog/fatura_urun_kaydi_servisi_test.dart
-            exit 1
-          }
+        run: dart format --output=none --set-exit-if-changed lib test
 
       - name: Statik analiz
         run: dart analyze --fatal-infos
