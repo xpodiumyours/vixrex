@@ -8,7 +8,7 @@ import { belgeGercegiUyuyorMu, belgeVergiToplamiUyuyorMu } from "@/lib/faturaSat
 import { eslesmeyenSatir, siteAdayiniKoru, siteKartiniUygula, sonucOzeti, type EslesmisFaturaSatiri, type HamFaturaSatiri } from "@/lib/faturaEslestir";
 import { ayniAlisverisAdaylari, belgeParmakIzi, islemKaydet, satirKanitKayitlari } from "@/lib/faturaIslemKaydi";
 import { faturaTaslaklari } from "@/lib/faturaTaslagi";
-import { ArastirmaHatasi, faturayiOku, markaSitesiniBul, satirSitesindeAra, type GoruSatiri, type GoruSonucu } from "@/lib/faturaGoru";
+import { ArastirmaHatasi, faturayiOku, satirSitesindeAra, type GoruSatiri, type GoruSonucu } from "@/lib/faturaGoru";
 import { ARAMA_UCETI_USD, aramaCagrisiSigarMi, belgeMaliyetOzeti, bugunkuMaliyetUsd, gunlukTavanDolduMu, kullanimKaydet } from "@/lib/faturaMaliyet";
 import { islemiYukle, islemYaniti, parmakIzindenIslemBul } from "@/lib/faturaIslemOku";
 
@@ -341,7 +341,6 @@ export async function POST(request: NextRequest) {
       hatalar: { ...(oncekiIslem.aramaDurumu.hatalar ?? {}) },
     } : ilkDurum;
     const satirlar: EslesmisFaturaSatiri[] = [];
-    const markaAlanlari = new Map<string, string>();
     let aramaAcik = true;
     for (const [sira, satir] of sonSatirlar.entries()) {
       if (sira < aramaDurumu.sonrakiSatir) {
@@ -360,40 +359,9 @@ export async function POST(request: NextRequest) {
       let siteAd = "";
       let siteDayanak: "kod" | "barkod" | "ad" | undefined;
       let siteUyari = "Luna henüz resmî üretici sitesini bulamadı.";
-      if (!etkinSite && !aramaCagrisiSigarMi(gunlukHarcama)) {
-        aramaAcik = false;
-        aramaDurumu.sinirDoldu = true;
-        siteUyari = "Resmî site araştırması için günlük maliyet sınırı doldu.";
-      }
-      const marka = satir.marka?.trim() ?? "";
-      const markaAnahtari = (marka || [satir.model, satir.ad, satir.barkod, satir.hamSatir].filter(Boolean).join("|")).toLocaleLowerCase("tr-TR");
-      if (markaAnahtari && !markaAlanlari.has(markaAnahtari) && aramaAcik && aramaCagrisiSigarMi(gunlukHarcama)) {
-        try {
-          const bulunan = await markaSitesiniBul({
-            marka, tedarikci: sonTedarikci, tedarikciSitesi: etkinSite,
-            model: satir.model, ad: satir.ad, barkod: satir.barkod, hamSatir: satir.hamSatir,
-          });
-          const aramaMaliyeti = (bulunan.maliyet ?? 0) + ARAMA_UCETI_USD;
-          await kullanimKaydet(admin, magazaId, { ...bulunan, maliyet: aramaMaliyeti }, ARAMA_UCETI_USD, parmakIzi);
-          gunlukHarcama += aramaMaliyeti;
-          markaAlanlari.set(markaAnahtari, bulunan.alan);
-        } catch (hata) {
-          if (hata instanceof ArastirmaHatasi) {
-            const maliyet = (hata.kullanim.maliyet ?? 0) + ARAMA_UCETI_USD;
-            await kullanimKaydet(admin, magazaId, { ...hata.kullanim, maliyet }, ARAMA_UCETI_USD, parmakIzi);
-            gunlukHarcama += maliyet;
-          }
-          const mesaj = hata instanceof Error ? hata.message : "";
-          aramaAcik = false;
-          aramaDurumu.sinirDoldu = true;
-          aramaDurumu.erisimHatasi = true;
-          siteUyari = "Üretici araştırmasına erişilemedi; tekrar denenecek.";
-          console.error("[fatura-oku] uretici sitesi:", mesaj || hata);
-        }
-      }
-      const satirSitesi = markaAlanlari.get(markaAnahtari) || "";
-      const aranabilir = Boolean(satirSitesi && (satir.model || satir.ad || satir.barkod || satir.hamSatir));
-      if (!satirSitesi && aramaAcik) siteUyari = "Luna bu ürünün resmî üreticisini bulamadı.";
+      // Luna independently identifies the manufacturer and official product page.
+      // The invoice supplier site is only a clue, never a prerequisite.
+      const aranabilir = Boolean(satir.model || satir.ad || satir.barkod || satir.hamSatir);
       if (aramaAcik && aranabilir && !aramaCagrisiSigarMi(gunlukHarcama)) {
         aramaAcik = false;
         aramaDurumu.sinirDoldu = true;
@@ -402,7 +370,7 @@ export async function POST(request: NextRequest) {
       if (aramaAcik && aranabilir && aramaCagrisiSigarMi(gunlukHarcama)) {
         try {
           const arama = await satirSitesindeAra({
-            alan: satirSitesi,
+            alan: etkinSite,
             model: satir.model,
             ad: satir.ad || satir.hamSatir || "",
             barkod: satir.barkod,
