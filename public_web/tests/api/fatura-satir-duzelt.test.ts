@@ -8,7 +8,6 @@ const m = vi.hoisted(() => ({
   is: vi.fn(),
   satir: vi.fn(),
   siteSearch: vi.fn(),
-  brandSearch: vi.fn(),
   imageCheck: vi.fn(),
   cost: vi.fn(),
   record: vi.fn(),
@@ -34,7 +33,6 @@ vi.mock("@/lib/faturaYetki", () => ({ sahipYetkisi: m.yetki }));
 vi.mock("@/lib/faturaGoru", async (importOriginal) => ({
   ...await importOriginal<typeof import("@/lib/faturaGoru")>(),
   satirSitesindeAra: m.siteSearch,
-  markaSitesiniBul: m.brandSearch,
   lunaGorseliniDogrula: m.imageCheck,
 }));
 vi.mock("@/lib/faturaGorsel", () => ({
@@ -61,7 +59,6 @@ describe("satır düzeltme kartı site kaydından kurar", () => {
     vi.clearAllMocks();
     m.yetki.mockResolvedValue({ tamam: true, slug: "dukkan", storeId: "store" });
     m.cost.mockResolvedValue(0);
-    m.brandSearch.mockResolvedValue({ alan: "sehermensucat.com", maliyet: 0.01 });
     m.record.mockResolvedValue(undefined);
     m.siteSearch.mockResolvedValue({
       ad: "ELT1002 Üretici Fanila", dayanak: "kod",
@@ -128,7 +125,7 @@ describe("satır düzeltme kartı site kaydından kurar", () => {
 
 
   it("ürün kimliği değişince eski kart kararını taşımayız", async () => {
-    m.brandSearch.mockResolvedValueOnce({ alan: "" });
+    m.siteSearch.mockResolvedValueOnce({ ad: "", sayfa: "", dayanak: null, gorsel: "", aciklama: "", maliyet: 0 });
     const cevap = await POST(istek({ model: "BASKA-MODEL", marka: "Baska Marka" }));
     const govde = await cevap.json();
     expect(cevap.status).toBe(200);
