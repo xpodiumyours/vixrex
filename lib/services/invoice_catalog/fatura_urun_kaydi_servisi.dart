@@ -97,12 +97,14 @@ class FaturaUrunKaydiServisi {
             parcaKayitlari.length != parca.length ||
             parcaKayitlari.map((satir) => satir.sira).toSet().length !=
                 parca.length ||
-            parcaKayitlari.any((satir) =>
-                satir.sira < baslangic ||
-                satir.sira >= baslangic + parca.length ||
-                !['taslak', 'yayinda', 'atlandi'].contains(satir.durum) ||
-                (satir.durum != 'atlandi' &&
-                    (satir.id == null || satir.id!.trim().isEmpty)))) {
+            parcaKayitlari.any(
+              (satir) =>
+                  satir.sira < baslangic ||
+                  satir.sira >= baslangic + parca.length ||
+                  !['taslak', 'yayinda', 'atlandi'].contains(satir.durum) ||
+                  (satir.durum != 'atlandi' &&
+                      (satir.id == null || satir.id!.trim().isEmpty)),
+            )) {
           return Result.failure(
             Failure(
               'Sunucu bütün ürünlerin kayıt sonucunu vermedi. Kaydedilen taslaklar korunuyor; tekrar dene.',
