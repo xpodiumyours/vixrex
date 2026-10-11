@@ -64,8 +64,8 @@ describe("OpenRouter kaynak doğrulama", () => {
     const istek = satirAramaIstegi(girdi);
     expect(istek?.model).toBe("openai/gpt-5.6-luna");
     expect(istek?.tools.map((t) => t.type)).toEqual(["openrouter:web_search", "openrouter:web_fetch"]);
-    expect(istek?.tools[0].parameters.allowed_domains).toBeUndefined();
-    expect(istek?.tools[1].parameters.allowed_domains).toBeUndefined();
+    expect(istek?.tools[0].parameters).not.toHaveProperty("allowed_domains");
+    expect(istek?.tools[1].parameters).not.toHaveProperty("allowed_domains");
     expect(istek?.text.format.strict).toBe(true);
     expect(JSON.stringify(istek)).not.toContain("image_generation");
   });

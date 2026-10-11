@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
 
   const kayit = await admin
     .from("invoice_job_lines")
-    .select("id,raw_line,model,product_name,barcode,variant_name,size_text,brand,qty,qty_unit,unit_price,line_total,confidence,product_id,catalog_snapshot")
+    .select("id,raw_line,model,product_name,barcode,variant_name,size_text,brand,qty,qty_unit,unit_price,line_total,confidence,product_id,outcome,catalog_snapshot")
     .eq("job_id", islemKimligi)
     .eq("line_index", satirSirasi)
     .maybeSingle();
