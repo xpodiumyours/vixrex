@@ -1,13 +1,6 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { siteAdayiniKoru, siteKartiniUygula, type EslesmisFaturaSatiri } from "@/lib/faturaEslestir";
-import { markaSitesiniBul, satirAramaIstegi, satirAramaCevabi } from "@/lib/faturaGoru";
-
-// .example alanlariyla calisan test: test DNS'i internetten etkilenmez.
-// Kaynak sayfanin HTML icerigi ayrica gercek fetch yanitindan kontrol edilir.
-vi.mock("node:dns/promises", () => ({
-  resolve4: async () => ["8.8.8.8"],
-  resolve6: async () => [],
-}));
+import { satirAramaIstegi, satirAramaCevabi } from "@/lib/faturaGoru";
 
 function satir(ek: Partial<EslesmisFaturaSatiri> = {}): EslesmisFaturaSatiri {
   return {
@@ -90,8 +83,8 @@ describe("OpenRouter kaynak doğrulama", () => {
     expect(satirAramaCevabi(girdi, { ...kanitli(), usage: undefined })?.ad).toBe("Elit fanila");
   });
 
-  it("yanlış firma veya kanıtsız yanıt reddedilir; fotoğraf yoksa yalnız aday saklanır", () => {
-    expect(satirAramaCevabi(girdi, kanitli({ kaynak_sayfa: "https://baska.example/urun" }))).toBeNull();
+  it("Luna seçtiği resmî ürün sayfasını kendi bildirir; fotoğraf yoksa aday kalır", () => {
+    expect(satirAramaCevabi(girdi, kanitli({ kaynak_sayfa: "https://baska.example/urun" }))?.sayfa).toBe("https://baska.example/urun");
     expect(satirAramaCevabi(girdi, kanitli({ gorsel_adresi: "" }))?.gorsel).toBe("");
     expect(satirAramaCevabi(girdi, kanitli({ kanit: "" }))?.ad).toBe("Elit fanila");
     expect(satirAramaCevabi(girdi, kanitli({ eslesti: false }))).toBeNull();
@@ -162,67 +155,11 @@ describe("OpenRouter kaynak doğrulama", () => {
     expect(aday?.gorsel).toBe("");
   });
 
-  it("resmî marka sayfası ancak arama ve sayfa okuma kanıtıyla seçilir", async () => {
-    const fakeFetch = vi.fn(async (url: string, init?: RequestInit) => {
-      if (String(url) === "https://elit.example/hakkimizda") {
-        return new Response(
-          "<html><body>Elit markası bu firmanın üretim markasıdır.</body></html>",
-          { status: 200, headers: { "content-type": "text/html" } },
-        );
-      }
-      return new Response(JSON.stringify({
-        status: "completed",
-        usage: { server_tool_use: { web_fetch_requests: 1 }, input_tokens: 100, output_tokens: 40 },
-        output_text: JSON.stringify({
-          marka_adi: "Elit",
-          resmi_site: "https://elit.example",
-          kanit_sayfa: "https://elit.example/hakkimizda",
-          marka_sahibi_dogrulandi: true,
-          kanit: "Elit markası bu firmanın üretim markasıdır.",
-        }),
-      }), { status: 200 });
-    });
-    vi.stubEnv("OPENROUTER_API_KEY", "test-okuyucu-anahtari");
-    vi.stubGlobal("fetch", fakeFetch);
-    try {
-      const sonuc = await markaSitesiniBul({
-        marka: "Elit", tedarikci: "Örnek Toptan", tedarikciSitesi: "toptan.example",
-        model: "ELT1302", ad: "Elit fanila",
-      });
-      expect(sonuc.alan).toBe("elit.example");
-      expect(fakeFetch.mock.calls.some((call) => String(call[0]) === "https://elit.example/hakkimizda")).toBe(false);
-      const body = JSON.parse(String((fakeFetch.mock.calls[0]?.[1] as RequestInit).body));
-      expect(body.tools.map((t: { type: string }) => t.type)).toEqual(["openrouter:web_search", "openrouter:web_fetch"]);
-      expect(body.text.format.strict).toBe(true);
-      expect(body.input).toContain("Invoice item brand: Elit");
-    } finally {
-      vi.unstubAllGlobals();
-      vi.unstubAllEnvs();
-    }
-  });
-
-  it("ürünü satan toptancı sitesi marka sahibi değilse kabul edilmez", async () => {
-    const fakeFetch = vi.fn(async () => new Response(JSON.stringify({
-      status: "completed",
-      usage: { server_tool_use: { web_fetch_requests: 1 } },
-      output_text: JSON.stringify({
-        marka_adi: "Elit", resmi_site: "https://toptan.example",
-        kanit_sayfa: "https://toptan.example/urun",
-        marka_sahibi_dogrulandi: false,
-        kanit: "Sitede Elit markalı ürün yalnız satılıyor.",
-      }),
-    }), { status: 200 }));
-    vi.stubEnv("OPENROUTER_API_KEY", "test-okuyucu-anahtari");
-    vi.stubGlobal("fetch", fakeFetch);
-    try {
-      expect((await markaSitesiniBul({
-        marka: "Elit", tedarikci: "Örnek Toptan", tedarikciSitesi: "toptan.example",
-        model: "", ad: "Elit fanila",
-      })).alan).toBe("");
-    } finally {
-      vi.unstubAllGlobals();
-      vi.unstubAllEnvs();
-    }
+  it("resmî site önceden bilinmese de Luna ürün araştırmasını başlatır", () => {
+    const istek = satirAramaIstegi({ ...girdi, alan: "" });
+    expect(istek).not.toBeNull();
+    expect(istek?.input).toContain("Invoice issuer website (only a clue, never a domain restriction): not provided");
+    expect(istek?.tools.map((tool) => tool.type)).toEqual(["openrouter:web_search", "openrouter:web_fetch"]);
   });
 
   it("yarım veya bozuk cevap kart üretmez", () => {
