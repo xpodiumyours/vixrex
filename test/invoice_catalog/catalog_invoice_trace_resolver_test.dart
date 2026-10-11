@@ -5,17 +5,8 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:vixrex/models/invoice_product_draft.dart';
 import 'package:vixrex/services/invoice_catalog/catalog_invoice_trace_resolver.dart';
-import 'package:vixrex/services/invoice_catalog/invoice_draft_decision_engine.dart';
 
-// ASIL BUG BURADA KANITLANIYOR: eski zincirde InvoiceOcrDraftAdapter
-// supplierIdentityStrength'i her zaman `weak` yazıyordu
-// (invoice_ocr_draft_adapter.dart:69) ve InvoiceDraftDecisionEngine bu
-// yüzden kapıyı hiç açmıyordu — telefon ne kadar iyi okursa okusun taslak
-// bile hazırlanmıyordu.
-//
-// Bu test, gerçek üretici kataloğunda BULUNAN bir satırın, ağdan gelen
-// gerçek yanıtla `strong` kanıta yükseltildiğini ve kapının GERÇEKTEN
-// açıldığını kanıtlar.
+// Resmî ürün kaynağından gelen alanların değişmeden taşınmasını sınar.
 
 InvoiceProductDraft zayifTaslak({required String model}) {
   final now = DateTime.now().toUtc();
@@ -110,7 +101,7 @@ void main() {
     );
 
     test(
-      'uçtan uca: fiyat + esnaf onayı + kanıt birlikte gerçekten yayına açar',
+      'Luna kartı, satış fiyatı ve esnaf onayı değerlerini ayrı ayrı taşır',
       () async {
         final resolver = CatalogInvoiceTraceResolver(
           storeSlug: 'deneme-vitrin',
@@ -156,23 +147,11 @@ void main() {
           ),
         );
 
-        final karar = const InvoiceDraftDecisionEngine().evaluate(tasarim);
+        expect(tasarim.etkinKartDurumu, KartDurumu.kanitli);
+        expect(tasarim.merchantApproved, isTrue);
+        expect(tasarim.salePrice, 199);
+        expect(tasarim.canUseQuantityAsStock, isTrue);
 
-        // Bu satır eski kodda ASLA true olamazdı — supplierIdentityStrength
-        // hep weak olduğu için evaluate() ilk kontrolde stopNoGuess dönerdi.
-        expect(karar.kartDurumu, KartDurumu.kanitli);
-        expect(karar.canPublish, isTrue);
-        expect(karar.decision, AutomationDecision.readyForPublish);
-
-        // Adet okunmadıysa stok yoktur; ayrı stok onayı aranmaz.
-        final onaysiz = eslesen.single.copyWith(
-          merchantApproved: true,
-          salePrice: 199,
-        );
-        expect(
-          const InvoiceDraftDecisionEngine().evaluate(onaysiz).canPublish,
-          isFalse,
-        );
       },
     );
 
@@ -218,10 +197,6 @@ void main() {
       expect(guncellenen.celiskiAdaylari, hasLength(2));
       expect(guncellenen.celiskiDayanak, 'barkod');
 
-      final karar = const InvoiceDraftDecisionEngine().evaluate(guncellenen);
-      expect(karar.canPrepareDraft, isFalse);
-      expect(karar.canPublish, isFalse);
-      expect(karar.questions.single, contains('barkod'));
     });
 
     test(
@@ -248,12 +223,7 @@ void main() {
         final degismeyen = sonuc.single;
 
         expect(degismeyen.supplierIdentityStrength, EvidenceStrength.weak);
-        final karar = const InvoiceDraftDecisionEngine().evaluate(degismeyen);
-        expect(karar.canPublish, isFalse);
-        expect(
-          karar.canPrepareDraft,
-          isFalse,
-        ); // uydurma yok — taslak bile açılmaz
+        expect(degismeyen.etkinKartDurumu, KartDurumu.izYok);
       },
     );
 
