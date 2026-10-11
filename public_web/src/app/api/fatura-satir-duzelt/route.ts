@@ -4,7 +4,7 @@ import { sahipYetkisi } from "@/lib/faturaYetki";
 import { eslesmeyenSatir, siteKartiniUygula, type HamFaturaSatiri } from "@/lib/faturaEslestir";
 import { satirKanitKayitlari } from "@/lib/faturaIslemKaydi";
 import { ArastirmaHatasi, satirSitesindeAra } from "@/lib/faturaGoru";
-import { ARAMA_UCETI_USD, aramaCagrisiSigarMi, bugunkuMaliyetUsd, kullanimKaydet } from "@/lib/faturaMaliyet";
+import { kullanimKaydet } from "@/lib/faturaMaliyet";
 
 export const dynamic = "force-dynamic";
 
@@ -106,6 +106,7 @@ export async function POST(request: NextRequest) {
   let siteKategori = !kimlikDegisti && typeof kart?.kategori === "string" ? kart.kategori : "";
   let siteOzellikler = !kimlikDegisti && Array.isArray(kart?.ozellikler) ? kart.ozellikler : [];
   let siteUrunVaryantlari = !kimlikDegisti && Array.isArray(kart?.urunVaryantlari) ? kart.urunVaryantlari : [];
+  let siteKaynakKaniti = !kimlikDegisti && kart?.kaynakKaniti && typeof kart.kaynakKaniti === "object" ? kart.kaynakKaniti : undefined;
   let siteDayanak: "kod" | "barkod" | "ad" | undefined =
     !kimlikDegisti && (kart?.dayanak === "kod" || kart?.dayanak === "barkod" || kart?.dayanak === "ad")
       ? kart.dayanak : undefined;
@@ -114,8 +115,6 @@ export async function POST(request: NextRequest) {
   if (kimlikDegisti) {
     // Re-research ONLY this changed invoice item. Luna alone determines manufacturer/product/photos.
     try {
-      const harcama = await bugunkuMaliyetUsd(admin, yetki.storeId);
-      if (!aramaCagrisiSigarMi(harcama)) throw new Error("KOTA_DOLDU");
       // Luna determines the manufacturer and official product page in one research request.
       const arama = await satirSitesindeAra({
         alan: String(is.data.supplier_site ?? ""),
@@ -124,8 +123,7 @@ export async function POST(request: NextRequest) {
         barkod: duzeltilmis.barkod, marka: duzeltilmis.marka,
         varyant: duzeltilmis.varyant, beden: duzeltilmis.beden,
       });
-      const maliyet = (arama.maliyet ?? 0) + ARAMA_UCETI_USD;
-      await kullanimKaydet(admin, yetki.storeId, { ...arama, maliyet });
+      await kullanimKaydet(admin, yetki.storeId, arama);
       if (arama.sayfa && arama.ad && arama.dayanak) {
         siteEslesti = true;
         siteAd = arama.ad;
@@ -137,17 +135,17 @@ export async function POST(request: NextRequest) {
         siteKategori = arama.kategori ?? "";
         siteOzellikler = arama.ozellikler ?? [];
         siteUrunVaryantlari = arama.urunVaryantlari ?? [];
+        siteKaynakKaniti = arama.kaynakKaniti;
         siteSayfa = arama.sayfa;
       } else {
         siteUyari = "Luna resmî üretici ürününü eşleştiremedi.";
       }
     } catch (err) {
       if (err instanceof ArastirmaHatasi) {
-        const maliyet = (err.kullanim.maliyet ?? 0) + ARAMA_UCETI_USD;
-        await kullanimKaydet(admin, yetki.storeId, { ...err.kullanim, maliyet }, ARAMA_UCETI_USD);
+        await kullanimKaydet(admin, yetki.storeId, err.kullanim);
       }
       const kod = err instanceof Error ? err.message : "";
-      siteUyari = kod === "OKUYUCU_BAKIYE_BITTI" || kod === "KOTA_DOLDU"
+      siteUyari = kod === "OKUYUCU_BAKIYE_BITTI"
         ? "Araştırma kotası doldu; satır saklandı."
         : "Kaynak araştırması başarısız; satır saklandı.";
       console.error("[fatura-satir-duzelt] arastirma:", kod || err);
@@ -156,6 +154,7 @@ export async function POST(request: NextRequest) {
   const yeni = siteKartiniUygula(eslesmeyenSatir({
     ...duzeltilmis, siteAd, siteMarka, siteEslesti, siteDayanak,
     siteAciklama, siteGorsel, siteGorseller,
+    siteKaynakKaniti: siteKaynakKaniti as import("@/lib/faturaEslestir").LunaKaynakKaniti | undefined,
     siteKategori,
     siteOzellikler: siteOzellikler as Array<{ key: string; label: string; value: string }>,
     siteUrunVaryantlari: siteUrunVaryantlari as Array<{ id: string; secenekler: Array<{ key: string; value: string }>; barkod: string; gorseller: string[] }>,

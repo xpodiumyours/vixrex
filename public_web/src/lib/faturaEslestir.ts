@@ -5,6 +5,17 @@
 // burada tek kopya durur; farklı okuyucular kendi eşleştirme kuralını
 // yazmaz — ikinci bir "hangi ürün bu" kararı hiçbir yerde tekrarlanmaz.
 
+export interface LunaKaynakKaniti {
+  kanit: string;
+  siteKodu: string;
+  siteBarkodu: string;
+  siteMarkasi: string;
+  siteRengi: string;
+  siteBedeni: string;
+  fotografRengiDogrulandi: boolean;
+  eslesmeDayanagi: string;
+}
+
 export interface FotografKaniti {
   kaynakSayfa: string;
   kaynakGorsel: string;
@@ -37,6 +48,7 @@ export interface HamFaturaSatiri {
   siteAd?: string;
   siteDayanak?: "kod" | "barkod" | "ad";
   siteFotografKaniti?: FotografKaniti;
+  siteKaynakKaniti?: LunaKaynakKaniti;
   sayfaDogrulandi?: boolean;
 }
 
@@ -60,6 +72,7 @@ export interface KatalogBilgisi {
   ozellikler?: Array<{ key: string; label: string; value: string }>;
   urunVaryantlari?: Array<{ id: string; secenekler: Array<{ key: string; value: string }>; barkod: string; gorseller: string[] }>;
   fotografKaniti?: FotografKaniti;
+  kaynakKaniti?: LunaKaynakKaniti;
   varyantlar?: Array<{ ad: string; barkod: string; gorseller: string[] }>;
   kaynak: string;
 }
@@ -113,6 +126,7 @@ export function siteKartiniUygula(satir: EslesmisFaturaSatiri): EslesmisFaturaSa
       kategori: satir.siteKategori ?? "",
       ozellikler: satir.siteOzellikler ?? [],
       urunVaryantlari: satir.siteUrunVaryantlari ?? [],
+      kaynakKaniti: satir.siteKaynakKaniti,
       kaynak: sayfa,
     },
   };
@@ -148,6 +162,7 @@ export function siteAdayiniKoru(satir: EslesmisFaturaSatiri): EslesmisFaturaSati
       kategori: satir.siteKategori ?? "",
       ozellikler: satir.siteOzellikler ?? [],
       urunVaryantlari: satir.siteUrunVaryantlari ?? [],
+      kaynakKaniti: satir.siteKaynakKaniti,
       kaynak,
     },
     uyari: satir.uyari || "Ürün sayfası adayı bulundu; fotoğraf kartta.",
