@@ -185,6 +185,23 @@ describe("fatura-islem ucu", () => {
     expect(govde.islemler[0]).toMatchObject({ islemKimligi: ISLEM, tedarikci: "Glisa", satirSayisi: 3 });
   });
 
+  it.each([
+    { sonrakiSatir: 0, beklenen: true },
+    { sonrakiSatir: 1, beklenen: true },
+    { sonrakiSatir: 2, beklenen: false },
+  ])("açılan işlemin araştırma imleci $sonrakiSatir ise devam durumu $beklenen döner", async ({ sonrakiSatir, beklenen }) => {
+    mocks.admin.mockReturnValue(sahteAdmin({
+      invoice_jobs: { tekil: { id: ISLEM, discovery_state: { sonrakiSatir, sinirDoldu: false, erisimHatasi: false } } },
+      invoice_job_lines: { liste: [
+        { id: "satir-1", line_index: 0, outcome: "kanitli", catalog_snapshot: KATALOG },
+        { id: "satir-2", line_index: 1, outcome: "eksik" },
+      ] },
+    }));
+    const cevap = await GET(new NextRequest(`http://localhost/api/fatura-islem?slug=deneme-vitrin&islemKimligi=${ISLEM}`));
+    expect(cevap.status).toBe(200);
+    expect((await cevap.json()).aramaSuruyor).toBe(beklenen);
+  });
+
   it("esnaf girdileri satıra kaydedilir", async () => {
     const guncellemeler: unknown[] = [];
     mocks.admin.mockReturnValue(

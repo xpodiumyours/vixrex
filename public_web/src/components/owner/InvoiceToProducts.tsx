@@ -277,7 +277,6 @@ export default function InvoiceToProducts({
   const [duzeltilen, setDuzeltilen] = useState<number | null>(null);
   const [baglantiKopyalandi, setBaglantiKopyalandi] = useState(false);
   const dosyaRef = useRef<HTMLInputElement>(null);
-  const sonFaturaDosyasi = useRef<File[] | null>(null);
   const kayitSirasi = useRef<Promise<void>>(Promise.resolve());
 
   const sahipSecimleriniKaydet = useCallback((kaydedilecek: SatirDurumu[]) => {
@@ -599,7 +598,6 @@ export default function InvoiceToProducts({
         setHata("PDF faturayı tek dosya olarak seç.");
         return;
       }
-      sonFaturaDosyasi.current = dosyalar;
       if (pdfMi) {
         setOnizleme(null);
       } else {
@@ -640,6 +638,42 @@ export default function InvoiceToProducts({
     },
     [otomatikTaslaklariKaydet, satirlariHazirla, storeSlug],
   );
+
+  async function arastirmayaDevamEt() {
+    if (yukleniyor || duzeltilen !== null || adim !== "urunler") return;
+    const islemKimligi = belge?.islemKimligi;
+    if (!islemKimligi) {
+      setHata("Fatura işlemi bulunamadı.");
+      return;
+    }
+    setHata(null);
+    setYukleniyor(true);
+    setAdim("okunuyor");
+    try {
+      await sahipSecimleriniKaydet(satirlar);
+      const form = new FormData();
+      form.set("slug", storeSlug);
+      form.set("islemKimligi", islemKimligi);
+      const cevap = await fetch("/api/fatura-oku", { method: "POST", body: form });
+      const govde = await cevap.json().catch(() => null);
+      if (!cevap.ok) {
+        throw new Error(
+          govde && typeof govde.hata === "string" ? govde.hata : "Araştırma sürdürülemedi. Tekrar dene.",
+        );
+      }
+      const okunan = govde as FaturaOkumaSonucu;
+      const hazir = satirlariHazirla(okunan);
+      setBelge(okunan);
+      setSatirlar(hazir);
+      try { await otomatikTaslaklariKaydet(okunan, hazir); }
+      catch (hata) { setHata(hata instanceof Error ? hata.message : "Otomatik taslak kaydı başarısız."); }
+    } catch (err) {
+      setHata(err instanceof Error ? err.message : "Araştırma sürdürülemedi.");
+    } finally {
+      setYukleniyor(false);
+      setAdim("urunler");
+    }
+  }
 
   function satirGuncelle(index: number, degisiklik: Partial<SatirDurumu>) {
     setSatirlar((oncekiler) =>
@@ -936,14 +970,20 @@ export default function InvoiceToProducts({
   if (adim === "okunuyor") {
     return (
       <div className="fatura-akis">
-        <h3>Faturan hazırlanıyor</h3>
-        {onizleme && <img className="fatura-onizleme" src={onizleme} alt="Fatura" />}
-        <ol className="fatura-adimlar">
-          <li>Belge okunuyor: satırlar, miktar ve belge toplamı çıkarılıyor.</li>
-          <li>Faturayı kesen firmanın kimliği ve resmî sitesi araştırılıyor.</li>
-          <li>Ürünlerin resmî kaynağı ve kaynak çelişkisi kontrol ediliyor.</li>
-          <li>Kanıtlı satırlardan kart taslakları hazırlanıyor.</li>
-        </ol>
+        <h3>{yukleniyor ? "Kalan ürünler hazırlanıyor" : "Faturan hazırlanıyor"}</h3>
+        {yukleniyor ? (
+          <p className="fatura-aciklama">Kaydedilen fatura satırlarından ürün araştırması sürüyor.</p>
+        ) : (
+          <>
+            {onizleme && <img className="fatura-onizleme" src={onizleme} alt="Fatura" />}
+            <ol className="fatura-adimlar">
+              <li>Belge okunuyor: satırlar, miktar ve belge toplamı çıkarılıyor.</li>
+              <li>Faturayı kesen firmanın kimliği ve resmî sitesi araştırılıyor.</li>
+              <li>Ürünlerin resmî kaynağı ve kaynak çelişkisi kontrol ediliyor.</li>
+              <li>Kanıtlı satırlardan kart taslakları hazırlanıyor.</li>
+            </ol>
+          </>
+        )}
       </div>
     );
   }
@@ -1402,11 +1442,8 @@ export default function InvoiceToProducts({
         <button
           type="button"
           className="fatura-ikincil"
-          disabled={yaziliyor || yukleniyor}
-          onClick={() => {
-            const dosya = sonFaturaDosyasi.current;
-            if (dosya) void dosyaSecildi(dosya);
-          }}
+          disabled={yaziliyor || yukleniyor || duzeltilen !== null}
+          onClick={() => void arastirmayaDevamEt()}
         >
           Kalan satırların araştırmasına devam et
         </button>

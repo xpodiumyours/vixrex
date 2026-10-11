@@ -6,15 +6,18 @@ import { GET as okuyucuDurumu } from "@/app/api/fatura-okuyucu-durumu/route";
 // görmesin. Bu uç ayrıca anahtarın kendisini ASLA dışarı vermemeli.
 
 describe("/api/fatura-okuyucu-durumu", () => {
-  const onceki = process.env.OPENROUTER_API_KEY;
+  const alanlar = ["OPENROUTER_API_KEY", "OPENROUTER_INVOICE_PRESET", "OPENROUTER_PRODUCT_PRESET"];
+  const onceki = Object.fromEntries(alanlar.map((alan) => [alan, process.env[alan]]));
 
   beforeEach(() => {
-    delete process.env.OPENROUTER_API_KEY;
+    for (const alan of alanlar) delete process.env[alan];
   });
 
   afterEach(() => {
-    if (onceki === undefined) delete process.env.OPENROUTER_API_KEY;
-    else process.env.OPENROUTER_API_KEY = onceki;
+    for (const alan of alanlar) {
+      if (onceki[alan] === undefined) delete process.env[alan];
+      else process.env[alan] = onceki[alan];
+    }
   });
 
   it("anahtar yoksa hazır değil der", async () => {
@@ -22,10 +25,26 @@ describe("/api/fatura-okuyucu-durumu", () => {
     expect(govde).toEqual({ hazir: false });
   });
 
-  it("anahtar varsa hazır der", async () => {
+  it("yalnız anahtar varsa hazır değil der", async () => {
     process.env.OPENROUTER_API_KEY = "deneme-anahtari";
     const govde = await (await okuyucuDurumu()).json();
+    expect(govde).toEqual({ hazir: false });
+  });
+
+  it("anahtar ve iki Preset tanımlıysa hazır der", async () => {
+    process.env.OPENROUTER_API_KEY = "deneme-anahtari";
+    process.env.OPENROUTER_INVOICE_PRESET = "test-invoice";
+    process.env.OPENROUTER_PRODUCT_PRESET = "test-product";
+    const govde = await (await okuyucuDurumu()).json();
     expect(govde).toEqual({ hazir: true });
+  });
+
+  it.each(["OPENROUTER_INVOICE_PRESET", "OPENROUTER_PRODUCT_PRESET"])("%s boşsa hazır değil der", async (alan) => {
+    process.env.OPENROUTER_API_KEY = "deneme-anahtari";
+    process.env.OPENROUTER_INVOICE_PRESET = "test-invoice";
+    process.env.OPENROUTER_PRODUCT_PRESET = "test-product";
+    process.env[alan] = "  ";
+    expect(await (await okuyucuDurumu()).json()).toEqual({ hazir: false });
   });
 
   it("anahtarın hiçbir parçasını dışarı vermez", async () => {
@@ -33,6 +52,8 @@ describe("/api/fatura-okuyucu-durumu", () => {
     // tarayıcısı (gitleaks) bunu gerçek sızıntı sanıp CI'ı kırıyor.
     const sahteAnahtar = "DENEME_OKUYUCU_DEGERI_9f3c";
     process.env.OPENROUTER_API_KEY = sahteAnahtar;
+    process.env.OPENROUTER_INVOICE_PRESET = "test-invoice";
+    process.env.OPENROUTER_PRODUCT_PRESET = "test-product";
 
     const ham = await (await okuyucuDurumu()).text();
     expect(ham).not.toContain(sahteAnahtar);

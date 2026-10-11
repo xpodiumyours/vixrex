@@ -4,12 +4,12 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 import { verifyStoreEditToken } from "@/lib/instagramServer";
 import { fingerprintClient, getClientIp } from "@/lib/rentDemoSecurity";
-import { belgeGercegiUyuyorMu, belgeVergiToplamiUyuyorMu } from "@/lib/faturaSatirAyikla";
+import { belgeGercegiUyuyorMu, belgeVergiToplamiUyuyorMu } from "@/lib/faturaBelgeKontrol";
 import { eslesmeyenSatir, siteAdayiniKoru, siteKartiniUygula, sonucOzeti, type EslesmisFaturaSatiri, type HamFaturaSatiri } from "@/lib/faturaEslestir";
 import { ayniAlisverisAdaylari, belgeParmakIzi, islemKaydet, satirKanitKayitlari } from "@/lib/faturaIslemKaydi";
 import { faturaTaslaklari } from "@/lib/faturaTaslagi";
-import { ArastirmaHatasi, faturayiOku, satirSitesindeAra, type GoruSatiri, type GoruSonucu } from "@/lib/faturaGoru";
-import { ARAMA_UCETI_USD, aramaCagrisiSigarMi, belgeMaliyetOzeti, bugunkuMaliyetUsd, gunlukTavanDolduMu, kullanimKaydet } from "@/lib/faturaMaliyet";
+import { ArastirmaHatasi, faturayiOku, satirSitesindeAra, type SatirAramasi, type GoruSatiri, type GoruSonucu } from "@/lib/faturaGoru";
+import { belgeMaliyetOzeti, kullanimKaydet } from "@/lib/faturaMaliyet";
 import { islemiYukle, islemYaniti, parmakIzindenIslemBul } from "@/lib/faturaIslemOku";
 
 // Vixrex'in TEK fatura okuma ucu.
@@ -39,6 +39,7 @@ const MAKS_BAYT = 4 * 1024 * 1024;
 const MAKS_SAYFA = 3;
 const VITRIN_BASINA_LIMIT = 20;
 const PENCERE_SANIYE = 3600;
+const KIMLIK = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const IZINLI_TURLER = new Map([
   ["image/jpeg", "jpg"],
@@ -75,6 +76,7 @@ export async function POST(request: NextRequest) {
   }
 
   const slug = String(form.get("slug") ?? "").trim();
+  const devamKimligi = String(form.get("islemKimligi") ?? "").trim();
   const dosyalar = form.getAll("dosya");
   const editTokenGovde = String(form.get("editToken") ?? "").trim();
   // Esnaf firmanın sitesini biliyorsa yazar (zorunlu değil): havuzda olmayan
@@ -84,7 +86,13 @@ export async function POST(request: NextRequest) {
   if (!slug) {
     return NextResponse.json({ hata: "Vitrin belirtilmedi." }, { status: 400 });
   }
-  if (dosyalar.length === 0 || dosyalar.some((deger) => !(deger instanceof File))) {
+  if (devamKimligi && !KIMLIK.test(devamKimligi)) {
+    return NextResponse.json({ hata: "Geçersiz fatura işlemi." }, { status: 422 });
+  }
+  if (devamKimligi && dosyalar.length > 0) {
+    return NextResponse.json({ hata: "Kayıtlı faturaya devam etmek için fotoğraf yükleme." }, { status: 400 });
+  }
+  if ((!devamKimligi && dosyalar.length === 0) || dosyalar.some((deger) => !(deger instanceof File))) {
     return NextResponse.json({ hata: "Fatura fotoğrafı bulunamadı." }, { status: 400 });
   }
   if (dosyalar.length > MAKS_SAYFA) {
@@ -191,9 +199,31 @@ export async function POST(request: NextRequest) {
       return [uzunluk, Buffer.from(icerik)];
     }),
   ));
-  const parmakIzi = belgeParmakIzi(ozetBaytlari);
-  const eskiKimlik = await parmakIzindenIslemBul(admin, magazaId, parmakIzi);
+  let parmakIzi: string;
+  let eskiKimlik: string | null;
+  if (devamKimligi) {
+    const kayit = await admin.from("invoice_jobs")
+      .select("id,document_fingerprint")
+      .eq("id", devamKimligi).eq("store_id", magazaId).maybeSingle();
+    if (kayit.error) {
+      return NextResponse.json({ hata: "Fatura işlemi okunamadı. Tekrar dene." }, { status: 503 });
+    }
+    if (!kayit.data?.id) {
+      return NextResponse.json({ hata: "Fatura işlemi bulunamadı." }, { status: 404 });
+    }
+    if (typeof kayit.data.document_fingerprint !== "string" || !kayit.data.document_fingerprint) {
+      return NextResponse.json({ hata: "Fatura kaydı eksik. Tekrar dene." }, { status: 503 });
+    }
+    parmakIzi = kayit.data.document_fingerprint;
+    eskiKimlik = devamKimligi;
+  } else {
+    parmakIzi = belgeParmakIzi(ozetBaytlari);
+    eskiKimlik = await parmakIzindenIslemBul(admin, magazaId, parmakIzi);
+  }
   const oncekiIslem = eskiKimlik ? await islemiYukle(admin, magazaId, eskiKimlik) : null;
+  if (devamKimligi && !oncekiIslem) {
+    return NextResponse.json({ hata: "Kaydedilen fatura tekrar açılamadı. Tekrar dene." }, { status: 503 });
+  }
   const oncekiCursor = oncekiIslem?.aramaDurumu?.sonrakiSatir;
   const aramaTamamlandi = typeof oncekiCursor !== "number" || !Number.isInteger(oncekiCursor) || oncekiCursor >= (oncekiIslem?.satirlar.length ?? 0);
   const eksikArastirmaVar = oncekiIslem?.satirlar.some((satir) => satir.sonuc !== "kanitli") ?? false;
@@ -206,20 +236,11 @@ export async function POST(request: NextRequest) {
       taslaklar: faturaTaslaklari(oncekiIslem.satirlar, oncekiIslem.islemKimligi),
     });
   }
-  if (!process.env.OPENROUTER_API_KEY) {
+  if (!process.env.OPENROUTER_API_KEY?.trim() || !process.env.OPENROUTER_PRODUCT_PRESET?.trim() ||
+      (!oncekiIslem && !process.env.OPENROUTER_INVOICE_PRESET?.trim())) {
     return NextResponse.json({ hata: "Fatura okuyucu hazır değil." }, { status: 503 });
   }
 
-  let gunlukHarcama = 0;
-  try {
-    gunlukHarcama = await bugunkuMaliyetUsd(admin, magazaId);
-  } catch (hata) {
-    console.error("[fatura-oku] maliyet okunamadi:", hata instanceof Error ? hata.message : hata);
-    return NextResponse.json({ hata: "Günlük maliyet doğrulanamadı; ücretli okuma başlatılmadı." }, { status: 503 });
-  }
-  if (gunlukTavanDolduMu(gunlukHarcama)) {
-    return NextResponse.json({ hata: "Günlük fatura okuma maliyet sınırı doldu." }, { status: 429 });
-  }
 
   const fotograflar = sayfaBaytlari.map((bayt, index) =>
     `data:${sayfaTurleri[index]};base64,${base64Cevir(bayt)}`);
@@ -246,7 +267,6 @@ export async function POST(request: NextRequest) {
     if (!oncekiIslem) {
       try {
         await kullanimKaydet(admin, magazaId, okuma, 0, parmakIzi);
-        gunlukHarcama += okuma.maliyet ?? 0;
       } catch (hata) {
         console.error("[fatura-oku] maliyet yazilamadi:", hata instanceof Error ? hata.message : hata);
         return NextResponse.json({ hata: "Fatura okuma kaydı yazılamadı. Tekrar dene." }, { status: 503 });
@@ -363,6 +383,7 @@ export async function POST(request: NextRequest) {
       let siteKategori = "";
       let siteOzellikler: Array<{ key: string; label: string; value: string }> = [];
       let siteUrunVaryantlari: Array<{ id: string; secenekler: Array<{ key: string; value: string }>; barkod: string; gorseller: string[] }> = [];
+      let siteKaynakKaniti: SatirAramasi["kaynakKaniti"];
       let siteSayfa = "";
       let siteMarka = "";
       let siteEslesti = false;
@@ -372,12 +393,7 @@ export async function POST(request: NextRequest) {
       // Luna independently identifies the manufacturer and official product page.
       // The invoice supplier site is only a clue, never a prerequisite.
       const aranabilir = Boolean(satir.model || satir.ad || satir.barkod || satir.hamSatir);
-      if (aramaAcik && aranabilir && !aramaCagrisiSigarMi(gunlukHarcama)) {
-        aramaAcik = false;
-        aramaDurumu.sinirDoldu = true;
-        siteUyari = "Günlük araştırma maliyet sınırı doldu; kaldığı satırdan devam edebilir.";
-      }
-      if (aramaAcik && aranabilir && aramaCagrisiSigarMi(gunlukHarcama)) {
+      if (aramaAcik && aranabilir) {
         try {
           const arama = await satirSitesindeAra({
             alan: etkinSite,
@@ -389,9 +405,7 @@ export async function POST(request: NextRequest) {
             varyant: satir.varyant,
             beden: satir.beden,
           });
-          const aramaMaliyeti = (arama.maliyet ?? 0) + ARAMA_UCETI_USD;
-          await kullanimKaydet(admin, magazaId, { ...arama, maliyet: aramaMaliyeti }, ARAMA_UCETI_USD, parmakIzi);
-          gunlukHarcama += aramaMaliyeti;
+          await kullanimKaydet(admin, magazaId, arama, 0, parmakIzi);
           // Kaynak araması fotoğraf aşamasında başarısız olsa bile doğrulanmamış
           // ÜRÜN ADAYI ve kaynağı korunur. "kanitli" yalnız fotoğrafın bütün
           // bağımsız kontrolleri de geçmesiyle mümkün olur.
@@ -408,6 +422,7 @@ export async function POST(request: NextRequest) {
             siteKategori = arama.kategori ?? "";
             siteOzellikler = arama.ozellikler ?? [];
             siteUrunVaryantlari = arama.urunVaryantlari ?? [];
+            siteKaynakKaniti = arama.kaynakKaniti;
           }
           if (!arama.sayfa) {
             siteUyari = "Resmî ürün kimliği henüz doğrulanamadı.";
@@ -418,9 +433,7 @@ export async function POST(request: NextRequest) {
 
         } catch (hata) {
           if (hata instanceof ArastirmaHatasi) {
-            const maliyet = (hata.kullanim.maliyet ?? 0) + ARAMA_UCETI_USD;
-            await kullanimKaydet(admin, magazaId, { ...hata.kullanim, maliyet }, ARAMA_UCETI_USD, parmakIzi);
-            gunlukHarcama += maliyet;
+            await kullanimKaydet(admin, magazaId, hata.kullanim, 0, parmakIzi);
           }
           const mesaj = hata instanceof Error ? hata.message : "";
           aramaAcik = false;
@@ -444,6 +457,7 @@ export async function POST(request: NextRequest) {
         siteKategori,
         siteOzellikler,
         siteUrunVaryantlari,
+        siteKaynakKaniti,
         siteSayfa,
       })));
       if (siteUyari && sonucSatir.sonuc !== "kanitli") sonucSatir.uyari = siteUyari;

@@ -25,6 +25,8 @@ describe("Luna kaynak verisi ürün kartına kayıpsız aktarım", () => {
     });
     expect(cevap?.gorseller).toEqual(["https://cdn.example/1.jpg", "https://cdn.example/2.jpg"]);
     expect(cevap?.kategori).toBe("İç Giyim");
+    expect(cevap?.kaynakKaniti?.siteKodu).toBe("M100");
+    expect(cevap?.kaynakKaniti?.kanit).toBe("Resmî ürün sayfası");
     expect(cevap?.ozellikler).toEqual([{ key: "material", label: "Malzeme", value: "Pamuk" }]);
 
     const satir = siteAdayiniKoru(siteKartiniUygula(eslesmeyenSatir({
@@ -35,9 +37,11 @@ describe("Luna kaynak verisi ürün kartına kayıpsız aktarım", () => {
       siteGorseller: cevap?.gorseller, siteKategori: cevap?.kategori,
       siteOzellikler: cevap?.ozellikler,
       siteUrunVaryantlari: cevap?.urunVaryantlari, siteSayfa: cevap?.sayfa,
+      siteKaynakKaniti: cevap?.kaynakKaniti,
     })));
     expect(satir.katalog?.gorseller).toHaveLength(2);
     expect(satir.katalog?.kategori).toBe("İç Giyim");
+    expect(satir.katalog?.kaynakKaniti).toEqual(cevap?.kaynakKaniti);
     expect(satir.katalog?.ozellikler?.[0]?.value).toBe("Pamuk");
     expect(satir.katalog?.urunVaryantlari?.[0]?.secenekler[0]?.value).toBe("S");
     expect(satir.sonuc).toBe("eksik");

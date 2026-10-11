@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import sharp from "sharp";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("node:dns/promises", () => ({
   resolve4: async () => ["8.8.8.8"],
@@ -31,6 +31,8 @@ const mocks = vi.hoisted(() => ({
     }),
   ),
   parmak: vi.fn(async (): Promise<string | null> => null),
+  islemOku: vi.fn(),
+  islemFiltre: vi.fn(),
   harcama: [] as Array<{ cost_usd: number }>,
   kullanimYaz: vi.fn(async () => ({ error: null as { message: string } | null })),
 }));
@@ -50,6 +52,17 @@ vi.mock("@/lib/supabaseAdmin", () => ({
     from: (tablo: string) => {
       if (tablo === "invoice_jobs") {
         return {
+          select: () => ({
+            eq: (alan: string, deger: string) => {
+              mocks.islemFiltre(alan, deger);
+              return {
+                eq: (alan: string, deger: string) => {
+                  mocks.islemFiltre(alan, deger);
+                  return { maybeSingle: mocks.islemOku };
+                },
+              };
+            },
+          }),
           update: () => ({
             eq: () => ({
               eq: async () => ({ error: null }),
@@ -114,10 +127,11 @@ function pdfDosyasi(): File {
   return new File([pdf], "fatura.pdf", { type: "application/pdf" });
 }
 
-function istek(args: { slug?: string; editToken?: string; dosyaVarMi?: boolean; sayfaSayisi?: number; pdf?: boolean } = {}) {
+function istek(args: { slug?: string; editToken?: string; dosyaVarMi?: boolean; sayfaSayisi?: number; pdf?: boolean; islemKimligi?: string } = {}) {
   const form = new FormData();
   form.set("slug", args.slug ?? "deneme-vitrin");
   if (args.editToken) form.set("editToken", args.editToken);
+  if (args.islemKimligi) form.set("islemKimligi", args.islemKimligi);
   if (args.dosyaVarMi !== false) {
     for (let i = 0; i < (args.sayfaSayisi ?? 1); i++) {
       form.append("dosya", args.pdf ? pdfDosyasi() : pngDosyasi());
@@ -129,7 +143,11 @@ function istek(args: { slug?: string; editToken?: string; dosyaVarMi?: boolean; 
 process.env.SUPABASE_URL = "https://proje.supabase.co";
 process.env.SUPABASE_SERVICE_ROLE_KEY = "service-role-test-anahtari";
 process.env.OPENROUTER_API_KEY = "test-okuyucu-anahtari";
+process.env.OPENROUTER_INVOICE_PRESET = "test-invoice";
+process.env.OPENROUTER_PRODUCT_PRESET = "test-product";
 delete process.env.OPENAI_API_KEY;
+
+afterEach(() => vi.unstubAllEnvs());
 
 function siteyiAyiranOkuma(govde: unknown) {
   const okuma = vi.fn(async (url: string, init?: RequestInit) => {
@@ -201,6 +219,36 @@ const TEK_SATIR = {
   toplam_tutar: 274,
 };
 
+function devamIslemi() {
+  const ortak = {
+    hamSatir: "ELT1302 Elit fanila", model: "ELT1302", ad: "Elit fanila",
+    barkod: "", varyant: "", beden: "", marka: "Elit", adet: 1, birim: "adet",
+    alisBirimFiyat: 137, satirToplam: 137, guven: 0.95,
+    sahipDurumu: { satisFiyati: "249", stok: "1", stokOnaylandi: true,
+      kategoriId: "kategori-1", onayli: false, esnafGorselleri: [] },
+  };
+  return {
+    islemKimligi: "11111111-1111-4111-8111-111111111111", durum: "inceleme",
+    tedarikci: "Üretici", tedarikciVergiNo: "", tedarikciAdres: "", tedarikciSite: "",
+    belgeAdedi: 2, belgeToplami: 274,
+    belge: { belgeTuru: "fatura", belgeNo: "F1", belgeTarihi: null, malBedeli: 274,
+      kdvTutari: null, indirimTutari: null, odenecekToplam: 274 },
+    satirlar: [
+      { ...ortak, sonuc: "kanitli", satirId: "test-satir-0", urunId: "urun-kayitli",
+        katalog: { firma: "Üretici", kaynakFirma: "Üretici", dayanak: "kod", izinDurumu: "yok",
+          resmiAd: "Kayıtlı fanila", marka: "Elit", aciklama: "Kayıtlı açıklama",
+          gorseller: ["https://uretici.example/kayitli.jpg"], gorselAdaylari: [],
+          kaynak: "https://uretici.example/kayitli", kategori: "Fanila",
+          ozellikler: [{ key: "material", label: "Kumaş", value: "Pamuk" }],
+          urunVaryantlari: [{ id: "kayitli-v1", secenekler: [{ key: "size", value: "L" }],
+            barkod: "", gorseller: [] }] } },
+      { ...ortak, model: "ELT1303", ad: "Kalan fanila", sonuc: "eksik",
+        katalog: null, satirId: "test-satir-1", urunId: "urun-eksik" },
+    ],
+    aramaDurumu: { sonrakiSatir: 1, erisimHatasi: false, sinirDoldu: false, hatalar: {} },
+  };
+}
+
 describe("/api/fatura-oku — tek okuma ucu", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -235,6 +283,10 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
       return { data: { allowed: true }, error: null };
     });
     mocks.parmak.mockResolvedValue(null);
+    mocks.islemOku.mockResolvedValue({
+      data: { id: "11111111-1111-4111-8111-111111111111", document_fingerprint: "a".repeat(64) },
+      error: null,
+    });
     mocks.harcama = [];
     mocks.kullanimYaz.mockResolvedValue({ error: null });
     vi.stubGlobal("fetch", siteyiAyiranOkuma(TEK_SATIR));
@@ -261,15 +313,16 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
       String(call[0]).includes("/chat/completions"));
     expect(chatCall).toBeDefined();
     const requestBody = JSON.parse(String(chatCall?.[1]?.body ?? "{}"));
-    expect(requestBody.model).toBe("openai/gpt-5.6-luna");
+    expect(requestBody.model).toBe("@preset/test-invoice");
     expect(requestBody.plugins).toEqual([{ id: "file-parser", pdf: { engine: "mistral-ocr" } }]);
     expect(requestBody.response_format).toMatchObject({
       type: "json_schema", json_schema: { name: "fatura_okuma", strict: true },
     });
-    expect(requestBody.messages[0].content[1]).toMatchObject({
+    expect(requestBody.messages[0].content[0]).toMatchObject({
       type: "file", file: { filename: "fatura.pdf" },
     });
-    expect(requestBody.messages[0].content[1].file.file_data.startsWith("data:application/pdf;base64,")).toBe(true);
+    expect(requestBody.messages[0].content[0].file.file_data.startsWith("data:application/pdf;base64,")).toBe(true);
+    expect(requestBody.messages[0].content).toHaveLength(1);
   });
 
   it("PDF ile fotografu ayni yuklemede karistirmaz", async () => {
@@ -389,33 +442,28 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(govde.satirlar[0].sonuc).toBe("eksik");
     const cagri = vi.mocked(fetch).mock.calls.find((satir) => String(satir[0]).includes("openrouter.ai/api/v1/responses"));
     const istekGovdesi = JSON.parse(String((cagri?.[1] as RequestInit).body));
-    expect(istekGovdesi.model).toBe("openai/gpt-5.6-luna");
-    expect(istekGovdesi.reasoning.effort).toBe("none");
-    expect(istekGovdesi.provider.require_parameters).toBe(true);
+    expect(istekGovdesi.model).toBe("@preset/test-invoice");
+    expect(istekGovdesi.reasoning).toBeUndefined();
+    expect(istekGovdesi.provider).toBeUndefined();
     expect(istekGovdesi.text.format.strict).toBe(true);
-    expect(istekGovdesi.text.format.schema.properties.tedarikci.description).toMatch(/Supplier name/);
+    expect(istekGovdesi.text.format.schema.properties.tedarikci.description).toBeUndefined();
     expect(istekGovdesi.text.format.schema.properties.satirlar.items.required).toContain("birim");
-    expect(istekGovdesi.text.format.schema.properties.satirlar.items.properties.ad.description).toMatch(/Product name/);
-    expect(istekGovdesi.text.format.schema.properties.satirlar.items.properties.birim.description).toMatch(/Measure unit/);
-    expect(istekGovdesi.input[0].content[1].detail).toBe("original");
+    expect(istekGovdesi.text.format.schema.properties.satirlar.items.properties.ad.description).toBeUndefined();
+    expect(istekGovdesi.text.format.schema.properties.satirlar.items.properties.birim.description).toBeUndefined();
+    expect(istekGovdesi.input[0].content[0].detail).toBe("original");
     expect(istekGovdesi.tools).toBeUndefined();
     expect(istekGovdesi.include).toBeUndefined();
-    const soru = String(istekGovdesi.input[0].content[0].text);
-    expect(soru).not.toContain("asil urun fotografi");
-    expect(soru).toContain("baska yerden tamamlama");
+    expect(istekGovdesi.input[0].content.every((parca: { type: string }) =>
+      parca.type === "input_image")).toBe(true);
     const okumaCagrilari = vi.mocked(fetch).mock.calls.filter((satir) => String(satir[0]).includes("openrouter.ai/api/v1/responses"));
     expect(okumaCagrilari.length).toBeGreaterThanOrEqual(2);
     const aramaCagrisi = okumaCagrilari.find((cagri) =>
       JSON.parse(String((cagri[1] as RequestInit).body)).text?.format?.name === "fatura_urun_kaynagi");
     const arama = JSON.parse(String((aramaCagrisi?.[1] as RequestInit).body));
-    expect(arama.model).toBe("openai/gpt-5.6-luna");
+    expect(arama.model).toBe("@preset/test-product");
     expect(arama.reasoning).toBeUndefined();
     expect(arama.max_tool_calls).toBeUndefined();
-    expect(arama.tools.map((arac: { type: string }) => arac.type)).toEqual([
-      "openrouter:web_search", "openrouter:web_fetch",
-    ]);
-    expect(arama.tools[0].parameters.allowed_domains).toBeUndefined();
-    expect(arama.tools[1].parameters.allowed_domains).toBeUndefined();
+    expect(arama.tools).toBeUndefined();
     expect(arama.text.format.strict).toBe(true);
   });
 
@@ -482,7 +530,7 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
             usage: { input_tokens: 250, output_tokens: 60 },
           }), { status: 200 });
         }
-        if (istekGovdesi.tools) {
+        if (istekGovdesi.text?.format?.name === "fatura_urun_kaynagi") {
           return new Response(JSON.stringify({
             status: "completed",
             output_text: JSON.stringify({
@@ -548,7 +596,7 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
         );
       }
       const requestBody = JSON.parse(String(init?.body ?? "{}"));
-      if (!requestBody.tools) return okuyucuCevabi({
+      if (requestBody.text?.format?.name !== "fatura_urun_kaynagi") return okuyucuCevabi({
         ...TEK_SATIR,
         tedarikci: "Örnek Toptan",
         tedarikci_site: "toptan.example",
@@ -577,10 +625,9 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     const productSearch = bodies.find((item) => item.text?.format?.name === "fatura_urun_kaynagi");
     expect(cevapVer.mock.calls.some((call) => String(call[0]) === "https://elit.example/hakkimizda")).toBe(false);
     expect(productSearch).toBeDefined();
-    expect(productSearch.input).toContain("Invoice brand: Elit");
+    expect(productSearch.input).toContain('"invoice_brand":"Elit"');
     expect(bodies.some((item) => item.text?.format?.name === "markanin_resmi_sitesi")).toBe(false);
-    expect(productSearch.tools[0].parameters.allowed_domains).toBeUndefined();
-    expect(productSearch.tools[1].parameters.allowed_domains).toBeUndefined();
+    expect(productSearch.tools).toBeUndefined();
     expect((await response.json()).satirlar[0].sonuc).toBe("eksik");
   });
 
@@ -740,11 +787,90 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(mocks.rpc).toHaveBeenCalledWith("replace_invoice_line", expect.anything());
   });
 
-  it("günlük harcama doluysa yeni ücretli okuma başlamaz", async () => {
+  it.each([0, 1])("kayıtlı işleme %i imlecinden fotoğrafsız devam eder; OCR, tamamlanan kart ve esnaf fiyatları korunur", async (sonrakiSatir) => {
+    const eski = devamIslemi();
+    eski.aramaDurumu.sonrakiSatir = sonrakiSatir;
+    const tamamlanan = structuredClone(eski.satirlar[0]);
+    mocks.kalici = eski;
+    const arama = vi.fn(async () => okuyucuCevabi({
+      eslesti: true, urun_adi: "Resmî kalan fanila", kaynak_sayfa: "https://uretici.example/elt1303",
+      eslesme_dayanagi: "kod", gorsel_adresi: "https://uretici.example/elt1303.jpg",
+      gorsel_adresleri: ["https://uretici.example/elt1303.jpg"], aciklama: "Luna açıklaması",
+    }));
+    vi.stubGlobal("fetch", arama);
+    const cevap = await faturaOku(istek({ dosyaVarMi: false, islemKimligi: eski.islemKimligi }));
+    const govde = await cevap.json();
+
+    expect(cevap.status).toBe(200);
+    expect(mocks.kaydet).not.toHaveBeenCalled();
+    expect(mocks.parmak).not.toHaveBeenCalled();
+    expect(mocks.islemFiltre).toHaveBeenCalledWith("id", eski.islemKimligi);
+    expect(mocks.islemFiltre).toHaveBeenCalledWith("store_id", "store-1");
+    expect(mocks.yukle).toHaveBeenCalledWith(expect.anything(), "store-1", eski.islemKimligi);
+    expect(arama).toHaveBeenCalledOnce();
+    const istekGovdesi = JSON.parse(String(vi.mocked(fetch).mock.calls[0][1]?.body ?? "{}"));
+    expect(istekGovdesi.text.format.name).toBe("fatura_urun_kaynagi");
+    expect(JSON.parse(istekGovdesi.input).invoice_product_code).toBe("ELT1303");
+    expect(govde.satirlar[0]).toEqual(tamamlanan);
+    expect(govde.satirlar[1].sahipDurumu.satisFiyati).toBe("249");
+    expect(govde.satirlar[1].urunId).toBe("urun-eksik");
+    expect(govde.satirlar[1].katalog.resmiAd).toBe("Resmî kalan fanila");
+    expect(govde.aramaSuruyor).toBe(false);
+    expect(mocks.kullanimYaz).toHaveBeenCalledWith(expect.objectContaining({ document_fingerprint: "a".repeat(64) }));
+    const yazilanlar = mocks.rpc.mock.calls.filter((call) => call[0] === "replace_invoice_line");
+    expect(yazilanlar).toHaveLength(1);
+    expect(yazilanlar[0][1]?.p_line_id).toBe("test-satir-1");
+  });
+
+  it("başka mağazanın veya olmayan kayıtlı işlemine devam etmez", async () => {
+    mocks.islemOku.mockResolvedValue({ data: null, error: null });
+    const cevap = await faturaOku(istek({ dosyaVarMi: false,
+      islemKimligi: "11111111-1111-4111-8111-111111111111" }));
+    expect(cevap.status).toBe(404);
+    expect(mocks.islemFiltre).toHaveBeenCalledWith("store_id", "store-1");
+    expect(mocks.yukle).not.toHaveBeenCalled();
+    expect(vi.mocked(fetch)).not.toHaveBeenCalled();
+  });
+
+  it("kayıtlı işleme devam da sahip oturumu ister", async () => {
+    mocks.verifyOwner.mockReturnValue(null);
+    const cevap = await faturaOku(istek({ dosyaVarMi: false,
+      islemKimligi: "11111111-1111-4111-8111-111111111111" }));
+    expect(cevap.status).toBe(401);
+    expect(mocks.islemOku).not.toHaveBeenCalled();
+    expect(vi.mocked(fetch)).not.toHaveBeenCalled();
+  });
+
+  it("kayıtlı işleme devam aynı kullanım sınırına tabidir", async () => {
+    mocks.rpc.mockResolvedValue({ data: { allowed: false, retry_after_seconds: 30 }, error: null });
+    const cevap = await faturaOku(istek({ dosyaVarMi: false,
+      islemKimligi: "11111111-1111-4111-8111-111111111111" }));
+    expect(cevap.status).toBe(429);
+    expect(mocks.islemOku).not.toHaveBeenCalled();
+    expect(vi.mocked(fetch)).not.toHaveBeenCalled();
+  });
+
+  it("araştırma Preseti yokken kayıtlı satırlara ücretli çağrı başlatmaz", async () => {
+    const eski = devamIslemi();
+    mocks.kalici = eski;
+    vi.stubEnv("OPENROUTER_PRODUCT_PRESET", "  ");
+    const cevap = await faturaOku(istek({ dosyaVarMi: false, islemKimligi: eski.islemKimligi }));
+    expect(cevap.status).toBe(503);
+    expect(vi.mocked(fetch)).not.toHaveBeenCalled();
+    expect(mocks.rpc.mock.calls.some((call) => call[0] === "replace_invoice_line")).toBe(false);
+  });
+
+  it("kayıtlı işleme devam fotoğrafla karıştırılmaz", async () => {
+    const cevap = await faturaOku(istek({ islemKimligi: "11111111-1111-4111-8111-111111111111" }));
+    expect(cevap.status).toBe(400);
+    expect(vi.mocked(fetch)).not.toHaveBeenCalled();
+  });
+
+  it("önceki harcama 1 USD olsa da fatura okuma ve araştırma sürer", async () => {
     mocks.harcama = [{ cost_usd: 1 }];
     const cevap = await faturaOku(istek());
-    expect(cevap.status).toBe(429);
-    expect(vi.mocked(fetch)).not.toHaveBeenCalled();
+    expect(cevap.status).toBe(200);
+    expect(vi.mocked(fetch)).toHaveBeenCalled();
   });
 
   it("maliyet yazılamazsa işlem kaydı açılmaz", async () => {

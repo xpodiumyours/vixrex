@@ -1,4 +1,5 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+beforeEach(() => vi.stubEnv("OPENROUTER_PRODUCT_PRESET", "test-product"));
 import { satirAramaIstegi, satirAramaCevabi, satirSitesindeAra } from "@/lib/faturaGoru";
 
 const urun = { alan: "uretici.example", model: "", ad: "", barkod: "8681128321677" };
