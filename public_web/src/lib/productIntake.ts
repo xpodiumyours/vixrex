@@ -235,9 +235,13 @@ export async function urunGirdisiniHazirla(args: {
 
   const categoryId = cleanString(govde.categoryId) || "";
   const onbellek = args.sablonOnbellegi;
-  const templateKey = onbellek?.has(categoryId)
-    ? onbellek.get(categoryId) ?? null
-    : await categoryTemplateKey(admin, storeId, categoryId);
+  // Invoice cards receive their Luna category after the stored catalog is read.
+  // Do not reject the draft before that category can be created and attached.
+  const templateKey = args.lunaVaryantlariniKoru === true && !categoryId
+    ? "generic"
+    : onbellek?.has(categoryId)
+      ? onbellek.get(categoryId) ?? null
+      : await categoryTemplateKey(admin, storeId, categoryId);
   if (onbellek && !onbellek.has(categoryId)) onbellek.set(categoryId, templateKey);
   if (!templateKey) {
     return { durum: "reddedildi", sebep: "Kategori bu vitrine ait değil veya ürün tipi geçersiz." };
