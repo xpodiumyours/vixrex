@@ -139,7 +139,10 @@ void main() {
       );
       expect(sonuc.isSuccess, isTrue);
       expect(gonderilenler, [100, 5]);
-      expect(sonuc.data!.satirlar.map((s) => s.sira).toList(), List.generate(105, (i) => i));
+      expect(
+        sonuc.data!.satirlar.map((s) => s.sira).toList(),
+        List.generate(105, (i) => i),
+      );
       expect(sonuc.data!.taslak, 105);
     });
 
