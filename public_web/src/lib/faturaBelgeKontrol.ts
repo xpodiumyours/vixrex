@@ -1,5 +1,10 @@
 import type { HamFaturaSatiri } from "@/lib/faturaEslestir";
 
+export interface BelgeOzeti {
+  adet: number | null;
+  toplam: number | null;
+}
+
 export interface BelgeUyumu {
   uyumlu: boolean;
   /** Uyumsuzsa esnafa gösterilecek, jargonsuz sebep. */
