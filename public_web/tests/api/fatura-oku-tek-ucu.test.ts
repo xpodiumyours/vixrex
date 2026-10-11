@@ -284,7 +284,7 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     });
     mocks.parmak.mockResolvedValue(null);
     mocks.islemOku.mockResolvedValue({
-      data: { id: "11111111-1111-4111-8111-111111111111", document_fingerprint: "kayitli-parmak-izi" },
+      data: { id: "11111111-1111-4111-8111-111111111111", document_fingerprint: "a".repeat(64) },
       error: null,
     });
     mocks.harcama = [];
@@ -816,6 +816,7 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(govde.satirlar[1].urunId).toBe("urun-eksik");
     expect(govde.satirlar[1].katalog.resmiAd).toBe("Resmî kalan fanila");
     expect(govde.aramaSuruyor).toBe(false);
+    expect(mocks.kullanimYaz).toHaveBeenCalledWith(expect.objectContaining({ document_fingerprint: "a".repeat(64) }));
     const yazilanlar = mocks.rpc.mock.calls.filter((call) => call[0] === "replace_invoice_line");
     expect(yazilanlar).toHaveLength(1);
     expect(yazilanlar[0][1]?.p_line_id).toBe("test-satir-1");
