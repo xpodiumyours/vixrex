@@ -39,6 +39,7 @@ const MAKS_BAYT = 4 * 1024 * 1024;
 const MAKS_SAYFA = 3;
 const VITRIN_BASINA_LIMIT = 20;
 const PENCERE_SANIYE = 3600;
+const KIMLIK = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const IZINLI_TURLER = new Map([
   ["image/jpeg", "jpg"],
@@ -75,6 +76,7 @@ export async function POST(request: NextRequest) {
   }
 
   const slug = String(form.get("slug") ?? "").trim();
+  const devamKimligi = String(form.get("islemKimligi") ?? "").trim();
   const dosyalar = form.getAll("dosya");
   const editTokenGovde = String(form.get("editToken") ?? "").trim();
   // Esnaf firmanın sitesini biliyorsa yazar (zorunlu değil): havuzda olmayan
@@ -84,7 +86,13 @@ export async function POST(request: NextRequest) {
   if (!slug) {
     return NextResponse.json({ hata: "Vitrin belirtilmedi." }, { status: 400 });
   }
-  if (dosyalar.length === 0 || dosyalar.some((deger) => !(deger instanceof File))) {
+  if (devamKimligi && !KIMLIK.test(devamKimligi)) {
+    return NextResponse.json({ hata: "Geçersiz fatura işlemi." }, { status: 422 });
+  }
+  if (devamKimligi && dosyalar.length > 0) {
+    return NextResponse.json({ hata: "Kayıtlı faturaya devam etmek için fotoğraf yükleme." }, { status: 400 });
+  }
+  if ((!devamKimligi && dosyalar.length === 0) || dosyalar.some((deger) => !(deger instanceof File))) {
     return NextResponse.json({ hata: "Fatura fotoğrafı bulunamadı." }, { status: 400 });
   }
   if (dosyalar.length > MAKS_SAYFA) {
@@ -191,9 +199,31 @@ export async function POST(request: NextRequest) {
       return [uzunluk, Buffer.from(icerik)];
     }),
   ));
-  const parmakIzi = belgeParmakIzi(ozetBaytlari);
-  const eskiKimlik = await parmakIzindenIslemBul(admin, magazaId, parmakIzi);
+  let parmakIzi: string;
+  let eskiKimlik: string | null;
+  if (devamKimligi) {
+    const kayit = await admin.from("invoice_jobs")
+      .select("id,document_fingerprint")
+      .eq("id", devamKimligi).eq("store_id", magazaId).maybeSingle();
+    if (kayit.error) {
+      return NextResponse.json({ hata: "Fatura işlemi okunamadı. Tekrar dene." }, { status: 503 });
+    }
+    if (!kayit.data?.id) {
+      return NextResponse.json({ hata: "Fatura işlemi bulunamadı." }, { status: 404 });
+    }
+    if (typeof kayit.data.document_fingerprint !== "string" || !kayit.data.document_fingerprint) {
+      return NextResponse.json({ hata: "Fatura kaydı eksik. Tekrar dene." }, { status: 503 });
+    }
+    parmakIzi = kayit.data.document_fingerprint;
+    eskiKimlik = devamKimligi;
+  } else {
+    parmakIzi = belgeParmakIzi(ozetBaytlari);
+    eskiKimlik = await parmakIzindenIslemBul(admin, magazaId, parmakIzi);
+  }
   const oncekiIslem = eskiKimlik ? await islemiYukle(admin, magazaId, eskiKimlik) : null;
+  if (devamKimligi && !oncekiIslem) {
+    return NextResponse.json({ hata: "Kaydedilen fatura tekrar açılamadı. Tekrar dene." }, { status: 503 });
+  }
   const oncekiCursor = oncekiIslem?.aramaDurumu?.sonrakiSatir;
   const aramaTamamlandi = typeof oncekiCursor !== "number" || !Number.isInteger(oncekiCursor) || oncekiCursor >= (oncekiIslem?.satirlar.length ?? 0);
   const eksikArastirmaVar = oncekiIslem?.satirlar.some((satir) => satir.sonuc !== "kanitli") ?? false;
@@ -206,7 +236,8 @@ export async function POST(request: NextRequest) {
       taslaklar: faturaTaslaklari(oncekiIslem.satirlar, oncekiIslem.islemKimligi),
     });
   }
-  if (!process.env.OPENROUTER_API_KEY) {
+  if (!process.env.OPENROUTER_API_KEY?.trim() || !process.env.OPENROUTER_PRODUCT_PRESET?.trim() ||
+      (!oncekiIslem && !process.env.OPENROUTER_INVOICE_PRESET?.trim())) {
     return NextResponse.json({ hata: "Fatura okuyucu hazır değil." }, { status: 503 });
   }
 

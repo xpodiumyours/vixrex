@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
       ? kart.dayanak : undefined;
   let siteEslesti = !kimlikDegisti && kayit.data.outcome === "kanitli" && Boolean(siteAd && siteSayfa);
   let siteUyari = "";
-  if (kimlikDegisti) {
+  if (kimlikDegisti || !siteEslesti) {
     // Re-research ONLY this changed invoice item. Luna alone determines manufacturer/product/photos.
     try {
       // Luna determines the manufacturer and official product page in one research request.

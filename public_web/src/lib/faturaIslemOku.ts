@@ -169,7 +169,11 @@ export function islemYaniti(islem: KayitliIslem): Record<string, unknown> {
     katalogEslesmesi: islem.satirlar.filter((satir) => satir.katalog !== null).length,
     sonucOzeti: sonucOzeti(islem.satirlar),
     islemKimligi: islem.islemKimligi,
-    aramaSuruyor: islem.aramaDurumu?.sinirDoldu === true,
+    aramaSuruyor: islem.aramaDurumu?.sinirDoldu === true ||
+      (typeof islem.aramaDurumu?.sonrakiSatir === "number" &&
+        Number.isInteger(islem.aramaDurumu.sonrakiSatir) &&
+        islem.aramaDurumu.sonrakiSatir >= 0 &&
+        islem.aramaDurumu.sonrakiSatir < islem.satirlar.length),
     belge: islem.belge,
     ayniAlisveris: [],
   };

@@ -135,7 +135,7 @@ describe("satır düzeltme kartı site kaydından kurar", () => {
     expect(islem?.[1].p_line.outcome).toBe("eksik");
   });
 
-  it("açıklaması olmayan kayıtlı fotoğraftan kart kurmaz", async () => {
+  it("kaynağı tamamlanmamış satırı aynı bilgilerle yeniden araştırır", async () => {
     m.satir.mockResolvedValue({
       data: {
         id: "satir-1",
@@ -162,8 +162,11 @@ describe("satır düzeltme kartı site kaydından kurar", () => {
     const cevap = await POST(istek({ model: "ELT1001" }));
     const govde = await cevap.json();
     expect(cevap.status).toBe(200);
-    expect(govde.satir.katalog).toBeNull();
-    expect(govde.satir.sonuc).toBe("eksik");
+    expect(m.siteSearch).toHaveBeenCalledOnce();
+    expect(m.siteSearch).toHaveBeenCalledWith(expect.objectContaining({ model: "ELT1001" }));
+    expect(govde.satir.katalog.resmiAd).toBe("ELT1002 Üretici Fanila");
+    expect(govde.satir.katalog.kaynak).toBe("https://sehermensucat.com/urun/elt1002");
+    expect(govde.satir.sonuc).toBe("kanitli");
   });
   it("kimlik düzeltmesinde sadece bu satırı yeniden araştırıp yeni kanıtla kart kurar", async () => {
     m.is.mockResolvedValue({
@@ -206,7 +209,7 @@ describe("satır düzeltme kartı site kaydından kurar", () => {
     expect(govde.satir.uyari).toContain("başarısız");
   });
 
-  it("ürün kimliği değişmediyse ücretli araştırmayı tekrar başlatmaz", async () => {
+  it("tamamlanmış kartın ürün kimliği değişmediyse ücretli araştırmayı tekrar başlatmaz", async () => {
     const cevap = await POST(istek());
     expect(cevap.status).toBe(200);
     expect(m.siteSearch).not.toHaveBeenCalled();
