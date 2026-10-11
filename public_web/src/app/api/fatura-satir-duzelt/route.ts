@@ -3,8 +3,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { sahipYetkisi } from "@/lib/faturaYetki";
 import { eslesmeyenSatir, siteKartiniUygula, type HamFaturaSatiri } from "@/lib/faturaEslestir";
 import { satirKanitKayitlari } from "@/lib/faturaIslemKaydi";
-import { markaSitesiniBul, satirSitesindeAra, lunaGorseliniDogrula } from "@/lib/faturaGoru";
-import { kaynakGorseliniDogrula, urunSayfasindaGorselKaniti } from "@/lib/faturaGorsel";
+import { markaSitesiniBul, satirSitesindeAra } from "@/lib/faturaGoru";
 import { ARAMA_UCETI_USD, aramaCagrisiSigarMi, bugunkuMaliyetUsd, kullanimKaydet } from "@/lib/faturaMaliyet";
 
 export const dynamic = "force-dynamic";
@@ -96,103 +95,79 @@ export async function POST(request: NextRequest) {
     duzeltilmis.ad !== String(kayit.data.product_name ?? "") ||
     duzeltilmis.barkod !== String(kayit.data.barcode ?? "") ||
     (duzeltilmis.marka ?? "") !== String(kayit.data.brand ?? "");
-  const gorseller = Array.isArray(kart?.gorseller) ? kart.gorseller : [];
-  let siteAciklama = !kimlikDegisti && typeof kart?.aciklama === "string" ? kart.aciklama.trim() : "";
-  let siteGorsel = !kimlikDegisti && typeof gorseller[0] === "string" ? gorseller[0].trim() : "";
-  let siteSayfa = !kimlikDegisti && typeof kart?.kaynak === "string" ? kart.kaynak.trim() : "";
-  let siteAd = "";
-  let siteDayanak: "kod" | "barkod" | "ad" | undefined;
-  let yeniFotografKaniti: { kaynakSayfa: string; kaynakGorsel: string; kaynakAlintisi: string; lunaGerekcesi: string } | undefined;
+  const gorseller = Array.isArray(kart?.gorseller)
+    ? kart.gorseller.filter((url): url is string => typeof url === "string") : [];
+  let siteAciklama = !kimlikDegisti && typeof kart?.aciklama === "string" ? kart.aciklama : "";
+  let siteGorsel = !kimlikDegisti ? (gorseller[0] || "") : "";
+  let siteGorseller = !kimlikDegisti ? gorseller : [];
+  let siteSayfa = !kimlikDegisti && typeof kart?.kaynak === "string" ? kart.kaynak : "";
+  let siteAd = !kimlikDegisti && typeof kart?.resmiAd === "string" ? kart.resmiAd : "";
+  let siteMarka = !kimlikDegisti && typeof kart?.marka === "string" ? kart.marka : "";
+  let siteKategori = !kimlikDegisti && typeof kart?.kategori === "string" ? kart.kategori : "";
+  let siteOzellikler = !kimlikDegisti && Array.isArray(kart?.ozellikler) ? kart.ozellikler : [];
+  let siteUrunVaryantlari = !kimlikDegisti && Array.isArray(kart?.urunVaryantlari) ? kart.urunVaryantlari : [];
+  let siteDayanak: "kod" | "barkod" | "ad" | undefined =
+    !kimlikDegisti && (kart?.dayanak === "kod" || kart?.dayanak === "barkod" || kart?.dayanak === "ad")
+      ? kart.dayanak : undefined;
+  let siteEslesti = !kimlikDegisti && kayit.data.outcome === "kanitli" && Boolean(siteAd && siteSayfa);
   let siteUyari = "";
   if (kimlikDegisti) {
-    // Yalniz duzeltilen satir arastirilir; eski site/gorsel kaniti asla tasinmaz.
+    // Re-research ONLY this changed invoice item. Luna alone determines manufacturer/product/photos.
     try {
       let harcama = await bugunkuMaliyetUsd(admin, yetki.storeId);
-      let site = String(is.data.supplier_site ?? "");
-      const marka = (duzeltilmis.marka ?? "").trim();
+      if (!aramaCagrisiSigarMi(harcama)) throw new Error("KOTA_DOLDU");
       const tedarikci = String(is.data.supplier_name ?? "");
-      if (marka && marka.toLocaleLowerCase("tr-TR") !== tedarikci.trim().toLocaleLowerCase("tr-TR")) {
-        if (!aramaCagrisiSigarMi(harcama)) throw new Error("KOTA_DOLDU");
-        const bulunan = await markaSitesiniBul({
-          marka, tedarikci, tedarikciSitesi: site,
-          model: duzeltilmis.model, ad: duzeltilmis.ad,
-        });
-        const maliyet = (bulunan.maliyet ?? 0) + ARAMA_UCETI_USD;
-        await kullanimKaydet(admin, yetki.storeId, { ...bulunan, maliyet });
-        harcama += maliyet;
-        site = bulunan.alan;
-      }
-      if (!site) {
-        siteUyari = "Üreticinin resmî sitesi doğrulanamadı.";
+      const bulunan = await markaSitesiniBul({
+        marka: duzeltilmis.marka?.trim() ?? "",
+        tedarikci, tedarikciSitesi: String(is.data.supplier_site ?? ""),
+        model: duzeltilmis.model, ad: duzeltilmis.ad,
+      });
+      const aramaMaliyeti = (bulunan.maliyet ?? 0) + ARAMA_UCETI_USD;
+      await kullanimKaydet(admin, yetki.storeId, { ...bulunan, maliyet: aramaMaliyeti });
+      harcama += aramaMaliyeti;
+      if (!bulunan.alan) {
+        siteUyari = "Luna bu ürünün resmî üreticisini bulamadı.";
       } else if (!aramaCagrisiSigarMi(harcama)) {
         siteUyari = "Araştırma için günlük maliyet sınırı doldu.";
       } else {
         const arama = await satirSitesindeAra({
-          alan: site, model: duzeltilmis.model, ad: duzeltilmis.ad,
+          alan: bulunan.alan, model: duzeltilmis.model, ad: duzeltilmis.ad,
           barkod: duzeltilmis.barkod, marka: duzeltilmis.marka,
           varyant: duzeltilmis.varyant, beden: duzeltilmis.beden,
         });
         const maliyet = (arama.maliyet ?? 0) + ARAMA_UCETI_USD;
         await kullanimKaydet(admin, yetki.storeId, { ...arama, maliyet });
-        harcama += maliyet;
-        if (arama.sayfa && arama.gorsel) {
-          const kontrol = await kaynakGorseliniDogrula(arama.gorsel);
-          const kanit = kontrol.tamam
-            ? await urunSayfasindaGorselKaniti(arama.sayfa, arama.gorsel, duzeltilmis.varyant)
-            : null;
-          if (!kanit) {
-            siteUyari = "Ürün görseli resmî sayfada doğrulanamadı.";
-          } else if (!aramaCagrisiSigarMi(harcama)) {
-            siteUyari = "Görsel araştırması için maliyet sınırı doldu.";
-          } else if (!kontrol.bayt || !kontrol.tur) {
-            siteUyari = "Görsel içeriği doğrulanamadı.";
-          } else {
-            const gorselVerisi = `data:${kontrol.tur};base64,${Buffer.from(kontrol.bayt).toString("base64")}`;
-            const inceleme = await lunaGorseliniDogrula({
-              gorsel: gorselVerisi, kaynakSayfa: arama.sayfa,
-              kaynakAlintisi: kanit.kaynakAlintisi, urunAdi: arama.ad,
-              faturaAdi: duzeltilmis.ad, marka: duzeltilmis.marka ?? "",
-              renk: duzeltilmis.varyant, beden: duzeltilmis.beden,
-            });
-            await kullanimKaydet(admin, yetki.storeId, inceleme);
-            if (inceleme.uyumlu) {
-              siteAd = arama.ad;
-              siteDayanak = arama.dayanak ?? undefined;
-              siteAciklama = arama.aciklama;
-              siteGorsel = arama.gorsel;
-              siteSayfa = arama.sayfa;
-              yeniFotografKaniti = {
-                kaynakSayfa: arama.sayfa, kaynakGorsel: arama.gorsel,
-                kaynakAlintisi: kanit.kaynakAlintisi, lunaGerekcesi: inceleme.gerekce,
-              };
-            } else {
-              siteUyari = "Luna ürün fotoğrafını veya renk eşleşmesini doğrulayamadı.";
-            }
-          }
+        if (arama.sayfa && arama.ad && arama.dayanak) {
+          siteEslesti = true;
+          siteAd = arama.ad;
+          siteMarka = arama.marka ?? "";
+          siteDayanak = arama.dayanak;
+          siteAciklama = arama.aciklama;
+          siteGorsel = arama.gorsel;
+          siteGorseller = arama.gorseller ?? [];
+          siteKategori = arama.kategori ?? "";
+          siteOzellikler = arama.ozellikler ?? [];
+          siteUrunVaryantlari = arama.urunVaryantlari ?? [];
+          siteSayfa = arama.sayfa;
         } else {
-          siteUyari = "Resmî sitede bu ürünün kimliği ve görseli doğrulanamadı.";
+          siteUyari = "Luna resmî üretici ürününü eşleştiremedi.";
         }
       }
     } catch (err) {
       const kod = err instanceof Error ? err.message : "";
       siteUyari = kod === "OKUYUCU_BAKIYE_BITTI" || kod === "KOTA_DOLDU"
-        ? "Araştırma kotası doldu; satır doğrulanmadan saklandı."
-        : "Kaynak araştırması başarısız; satır doğrulanmadan saklandı.";
+        ? "Araştırma kotası doldu; satır saklandı."
+        : "Kaynak araştırması başarısız; satır saklandı.";
       console.error("[fatura-satir-duzelt] arastirma:", kod || err);
     }
   }
   const yeni = siteKartiniUygula(eslesmeyenSatir({
-    ...duzeltilmis,
-    siteAd, siteDayanak,
-    siteAciklama,
-    siteGorsel,
+    ...duzeltilmis, siteAd, siteMarka, siteEslesti, siteDayanak,
+    siteAciklama, siteGorsel, siteGorseller,
+    siteKategori,
+    siteOzellikler: siteOzellikler as Array<{ key: string; label: string; value: string }>,
+    siteUrunVaryantlari: siteUrunVaryantlari as Array<{ id: string; secenekler: Array<{ key: string; value: string }>; barkod: string; gorseller: string[] }>,
     siteSayfa,
-    siteFotografKaniti: kimlikDegisti ? yeniFotografKaniti
-      : kart?.fotografKaniti && typeof kart.fotografKaniti === "object" && !Array.isArray(kart.fotografKaniti)
-        ? kart.fotografKaniti as { kaynakSayfa: string; kaynakGorsel: string; kaynakAlintisi: string; lunaGerekcesi: string }
-        : undefined,
-    sayfaDogrulandi: kimlikDegisti ? Boolean(yeniFotografKaniti)
-      : Boolean(siteAciklama && siteGorsel.startsWith("https://") && siteSayfa.startsWith("https://")),
   }));
   if (siteUyari && yeni.sonuc !== "kanitli") yeni.uyari = siteUyari;
 

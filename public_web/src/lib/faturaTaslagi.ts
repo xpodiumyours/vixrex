@@ -9,6 +9,9 @@ export interface FaturaTaslagi {
   barcode: string | null;
   model: string;
   imageUrls: string[];
+  kategori: string;
+  ozellikler: Array<{ key: string; label: string; value: string }>;
+  urunVaryantlari: Array<{ id: string; secenekler: Array<{ key: string; value: string }>; barkod: string; gorseller: string[] }>;
   gorselAdaylari: string[];
   izinDurumu: "yok" | "bekliyor" | "var";
   kaynak: string;
@@ -46,6 +49,9 @@ export function satirdanFaturaTaslagi(
     // Kilitli kapsam: üretici fotoğrafı taslağa girer; kullanım izni sonra,
     // çalışan sistemle istenir (izin takibi sunucu kayıtlarındadır).
     imageUrls: katalog.gorseller,
+    kategori: katalog.kategori ?? "",
+    ozellikler: katalog.ozellikler ?? [],
+    urunVaryantlari: katalog.urunVaryantlari ?? [],
     gorselAdaylari: katalog.gorselAdaylari,
     izinDurumu: katalog.izinDurumu,
     kaynak: katalog.kaynak,

@@ -64,8 +64,8 @@ describe("OpenRouter kaynak doğrulama", () => {
     const istek = satirAramaIstegi(girdi);
     expect(istek?.model).toBe("openai/gpt-5.6-luna");
     expect(istek?.tools.map((t) => t.type)).toEqual(["openrouter:web_search", "openrouter:web_fetch"]);
-    expect(istek?.tools[0].parameters.allowed_domains).toEqual(["firma.example"]);
-    expect(istek?.tools[1].parameters.allowed_domains).toEqual(["firma.example"]);
+    expect(istek?.tools[0].parameters.allowed_domains).toBeUndefined();
+    expect(istek?.tools[1].parameters.allowed_domains).toBeUndefined();
     expect(istek?.text.format.strict).toBe(true);
     expect(JSON.stringify(istek)).not.toContain("image_generation");
   });
@@ -73,6 +73,7 @@ describe("OpenRouter kaynak doğrulama", () => {
   it("kaynağı doğrulanmış ürün fotoğrafı ve açıklaması karta hazırlanır", () => {
     expect(satirAramaCevabi(girdi, kanitli())).toEqual({
       ad: "Elit fanila",
+      marka: "",
       aciklama: "Resmi sitedeki pamuklu fanila",
       gorsel: "https://cdn.example/elt1302.jpg",
       sayfa: "https://firma.example/elt1302",
@@ -97,11 +98,11 @@ describe("OpenRouter kaynak doğrulama", () => {
   });
 
   it("barkod iddiasi barkodsuz faturada ad dayanağına düşer", () => {
-    expect(satirAramaCevabi(girdi, kanitli({ eslesme_dayanagi: "barkod" }))?.dayanak).toBe("kod");
+    expect(satirAramaCevabi(girdi, kanitli({ eslesme_dayanagi: "barkod" }))?.dayanak).toBe("barkod");
   });
 
   it("sitede kod yoksa kart kalir, kod baska urunse duser", () => {
-    expect(satirAramaCevabi(girdi, kanitli({ site_kodu: "" }))?.dayanak).toBe("ad");
+    expect(satirAramaCevabi(girdi, kanitli({ site_kodu: "" }))?.dayanak).toBe("kod");
     expect(satirAramaCevabi(girdi, kanitli({ site_kodu: "YABANCI" }))?.ad).toBe("Elit fanila");
   });
 
@@ -189,7 +190,7 @@ describe("OpenRouter kaynak doğrulama", () => {
         model: "ELT1302", ad: "Elit fanila",
       });
       expect(sonuc.alan).toBe("elit.example");
-      expect(fakeFetch.mock.calls.some((call) => String(call[0]) === "https://elit.example/hakkimizda")).toBe(true);
+      expect(fakeFetch.mock.calls.some((call) => String(call[0]) === "https://elit.example/hakkimizda")).toBe(false);
       const body = JSON.parse(String((fakeFetch.mock.calls[0]?.[1] as RequestInit).body));
       expect(body.tools.map((t: { type: string }) => t.type)).toEqual(["openrouter:web_search", "openrouter:web_fetch"]);
       expect(body.text.format.strict).toBe(true);
@@ -265,6 +266,7 @@ describe("site kartı", () => {
   it("firma kaynağındaki gerçek görsel ve açıklama satırı kanıtlı yapar", () => {
     const sonuc = siteKartiniUygula(satir({
       siteAd: "Elit fanila",
+      siteEslesti: true,
       siteAciklama: "Pamuklu fanila",
       siteGorsel: "https://cdn.example/elt1302.jpg",
       siteSayfa: "https://firma.example/elt1302",

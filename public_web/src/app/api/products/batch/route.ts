@@ -15,6 +15,7 @@ import {
   urunuGeriAl,
 } from "@/lib/faturaUrunBaglantisi";
 import { urunGirdisiniHazirla } from "@/lib/productIntake";
+import { normalizeProductVariants } from "@/lib/productRichData";
 import { durumGecerliMi, yayinEksikleri } from "@/lib/faturaKartDurumu";
 import { FATURA_MIN_PRODUCT_IMAGES, yonetilenUrunGorseliMi } from "@/lib/productImagePolicy";
 import { kaynakGorselleriniHazirla } from "@/lib/faturaGorsel";
@@ -163,6 +164,7 @@ export async function POST(request: NextRequest) {
   }
 
   const sablonOnbellegi = new Map<string, string | null>();
+  const lunaKategoriOnbellegi = new Map<string, string>();
   const sonuclar: SatirSonucu[] = [];
   let yayinda = 0;
   let taslak = 0;
@@ -237,6 +239,54 @@ export async function POST(request: NextRequest) {
       hazirlik.girdi.name = katalog.resmiAd;
       hazirlik.girdi.description = typeof katalog.aciklama === "string" ? katalog.aciklama : "";
       hazirlik.girdi.brand = typeof katalog.marka === "string" ? katalog.marka : null;
+
+      // The persisted Luna catalog (not frontend classification) owns all product data.
+      const ozellikler = Array.isArray(katalog.ozellikler)
+        ? katalog.ozellikler.flatMap((raw) => {
+            if (!raw || typeof raw !== "object") return [];
+            const attr = raw as Record<string, unknown>;
+            if (typeof attr.key !== "string" || typeof attr.value !== "string") return [];
+            return [{ key: attr.key, label: typeof attr.label === "string" ? attr.label : attr.key, value: attr.value }];
+          }) : [];
+      const lunaKategori = typeof katalog.kategori === "string" ? katalog.kategori.trim() : "";
+      if (lunaKategori && !ozellikler.some((attr) => attr.key === "category")) {
+        ozellikler.push({ key: "category", label: "Kategori", value: lunaKategori });
+      }
+      hazirlik.girdi.metadata = { ...hazirlik.girdi.metadata, attributes: ozellikler };
+
+      const lunaVaryantlari = Array.isArray(katalog.urunVaryantlari) ? katalog.urunVaryantlari : [];
+      hazirlik.girdi.variants = normalizeProductVariants(lunaVaryantlari.map((raw) => {
+        const variant = raw && typeof raw === "object" ? raw as Record<string, unknown> : {};
+        const secenekler = Array.isArray(variant.secenekler) ? variant.secenekler : [];
+        const options: Record<string, string> = {};
+        for (const secenek of secenekler) {
+          if (!secenek || typeof secenek !== "object") continue;
+          const option = secenek as Record<string, unknown>;
+          if (typeof option.key === "string" && typeof option.value === "string") options[option.key] = option.value;
+        }
+        return { id: variant.id, options, barcode: variant.barkod, imageUrls: variant.gorseller };
+      }));
+
+      // Category is a Luna label. Persist/create exactly that label; do not guess a template.
+      if (lunaKategori && lunaKategori.length <= 40) {
+        const anahtar = lunaKategori.normalize("NFKC").toLocaleLowerCase("tr-TR");
+        let kategoriId = lunaKategoriOnbellegi.get(anahtar);
+        if (!kategoriId) {
+          const mevcut = await admin.from("product_categories").select("id")
+            .eq("store_id", store.id).ilike("name", lunaKategori).maybeSingle();
+          kategoriId = typeof mevcut.data?.id === "string" ? mevcut.data.id : undefined;
+          if (!kategoriId && !mevcut.error) {
+            const ekleme = await admin.rpc("upsert_store_category_v2", {
+              p_store_id: store.id, p_edit_token: store.edit_token,
+              p_name: lunaKategori, p_template_key: "generic",
+            });
+            kategoriId = typeof ekleme.data?.id === "string" ? ekleme.data.id : undefined;
+          }
+          if (kategoriId) lunaKategoriOnbellegi.set(anahtar, kategoriId);
+        }
+        // Technical category link only; Luna's original label always remains in metadata.
+        if (kategoriId) hazirlik.girdi.categoryId = kategoriId;
+      }
     }
     const kartDurumu = faturaKaynakli ? (dogrulanmis?.sonuc ?? "eksik") : iddiaDurumu;
     const yayinIstegi = ham.yayinIstegi === true;
@@ -290,6 +340,12 @@ export async function POST(request: NextRequest) {
       }));
       gorselDurumu = altyapiHatasi.size > 0 ? "dis-baglanti" : "depoda";
     }
+    // Variant images follow the same original-to-managed URL transport, with no image verdict.
+    const depoGorselleri = new Map(gorselKaynaklari.map((kaynak) =>
+      [String(kaynak.kaynakGorsel || ""), String(kaynak.depoUrl || "")]));
+    hazirlik.girdi.variants = hazirlik.girdi.variants.map((variant) => ({
+      ...variant, imageUrls: variant.imageUrls?.map((url) => depoGorselleri.get(url) || url),
+    }));
 
     const sablonTam = Boolean(faturaKaynakli);
     const faturaEksikleri = faturaKaynakli

@@ -60,12 +60,12 @@ describe("fatura kimlik ve üretici doğrulama kapısı", () => {
     expect(satirAramaCevabi(girdi, kaynakCevabi())?.dayanak).toBe("ad");
   });
 
-  it("faturada yazan site kilitlenir", async () => {
+  it("faturada yazan site Luna'nın araştırması olmadan kilitlenmez", async () => {
     vi.stubEnv("OPENROUTER_API_KEY", "");
     expect(await firmaAlaniniKilitle({
       belgedeYazan: "bayi.example", esnafIpucu: "toptanci.example",
       tedarikciAdi: "Üretici", vergiNo: "", adres: "",
-    })).toBe("bayi.example");
+    })).toBe("");
   });
   it("resmi kaynagin gercek metni modelin alintisini destekler", async () => {
     const kaynak = "https://uretim.example/hakkimizda";

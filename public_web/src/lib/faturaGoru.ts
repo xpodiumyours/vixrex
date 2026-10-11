@@ -238,38 +238,6 @@ export function sayfaFirmadaMi(sayfa: string, alan: string): boolean {
   return host === kilit || host.endsWith(`.${kilit}`);
 }
 
-function httpsAdresler(govde: { output?: unknown } | null): string[] {
-  const adresler: string[] = [];
-  const ekle = (deger: unknown) => {
-    const adres = guvenliAdres(deger);
-    if (adres) adresler.push(adres);
-  };
-  if (!Array.isArray(govde?.output)) return adresler;
-  for (const oge of govde.output) {
-    const kayit = oge as { results?: unknown; content?: unknown };
-    if (Array.isArray(kayit.results)) {
-      for (const sonuc of kayit.results) {
-        const resim = sonuc as { image_url?: unknown; source_website_url?: unknown };
-        ekle(resim.source_website_url);
-        ekle(resim.image_url);
-      }
-    }
-    if (!Array.isArray(kayit.content)) continue;
-    for (const icerik of kayit.content) {
-      const parca = icerik as { annotations?: unknown };
-      if (!Array.isArray(parca.annotations)) continue;
-      for (const not of parca.annotations) {
-        const alinti = not as { url?: unknown; url_citation?: unknown };
-        ekle(alinti.url);
-        const ic = alinti.url_citation;
-        if (typeof ic === "string") ekle(ic);
-        else if (ic && typeof ic === "object") ekle((ic as { url?: unknown }).url);
-      }
-    }
-  }
-  return adresler;
-}
-
 const FIRMA_DOGRULAMA_SEMASI = {
   type: "object",
   additionalProperties: false,
@@ -383,59 +351,20 @@ type SiteKullanimTakibi = {
   kaydet: (kullanim: Pick<GoruSonucu, "maliyet" | "gercekMaliyet" | "girdiToken" | "ciktiToken" | "akilToken">) => Promise<void>;
 };
 
-async function firmaSitesiniModelleBul(girdi: {
-  tedarikciAdi: string;
-  vergiNo: string;
-  adres: string;
-}, takip?: SiteKullanimTakibi): Promise<string> {
-  const anahtar = process.env.OPENROUTER_API_KEY;
-  const ad = girdi.tedarikciAdi.trim();
-  if (!anahtar || ad.length < 3 || (takip && !takip.izin())) return "";
-  const sorgu = [girdi.vergiNo.replace(/\D/g, ""), ad, "resmi site"].filter(Boolean).join(" ");
-  let cevap: Response;
-  try {
-    cevap = await fetch(ADRES, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${anahtar}`,
-      },
-      body: JSON.stringify({
-        model: GORU_MODELI,
-        max_output_tokens: 512,
-        reasoning: { effort: "low" },
-        tools: [{ type: "openrouter:web_search", parameters: { engine: "native", max_results: 5 } }],
-        input: sorgu,
-      }),
-    });
-  } catch {
-    return "";
-  }
-  if (!cevap.ok) return "";
-  const govde = await cevap.json().catch(() => null);
-  if (takip) await takip.kaydet(kullanimOku(govde));
-  for (const sayfa of httpsAdresler(govde)) {
-    const alan = alanAdiTemizle(sayfa);
-    if (!alan || resmiSiteSayilmaz(alan)) continue;
-    return alan;
-  }
-  return "";
-}
-
 export async function firmaAlaniniKilitle(girdi: {
-  belgedeYazan: string;
-  esnafIpucu: string;
-  tedarikciAdi: string;
-  vergiNo: string;
-  adres: string;
+  belgedeYazan: string; esnafIpucu: string; tedarikciAdi: string;
+  vergiNo: string; adres: string;
 }, takip?: SiteKullanimTakibi): Promise<string> {
-  const adaylar = [girdi.belgedeYazan, girdi.esnafIpucu]
-    .map(alanAdiTemizle)
-    .filter((alan, sira, tumu) => alan && !resmiSiteSayilmaz(alan) && tumu.indexOf(alan) === sira);
-  if (adaylar.length > 0) return adaylar[0];
-  return firmaSitesiniModelleBul(girdi, takip);
+  // Invoice and merchant websites are hints, never authoritative manufacturer locks.
+  if (!girdi.tedarikciAdi.trim() || (takip && !takip.izin())) return "";
+  const cevap = await markaSitesiniBul({
+    marka: girdi.tedarikciAdi, tedarikci: girdi.tedarikciAdi,
+    tedarikciSitesi: girdi.belgedeYazan || girdi.esnafIpucu,
+    model: "", ad: girdi.tedarikciAdi,
+  });
+  if (takip) await takip.kaydet(cevap);
+  return cevap.alan;
 }
-
 
 const MARKA_SITE_SEMASI = {
   type: "object",
@@ -456,7 +385,7 @@ export async function markaSitesiniBul(girdi: {
   const bos = { alan: "", ...kullanimOku(null) };
   const marka = girdi.marka.trim();
   const anahtar = process.env.OPENROUTER_API_KEY;
-  if (!anahtar || !marka) return bos;
+  if (!anahtar || !(marka || girdi.model.trim() || girdi.ad.trim())) return bos;
   let govde: { status?: unknown; output_text?: unknown; output?: unknown; usage?: unknown } | null;
   try {
     const cevap = await fetch(ADRES, {
@@ -464,17 +393,15 @@ export async function markaSitesiniBul(girdi: {
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${anahtar}` },
       body: JSON.stringify({
         model: GORU_MODELI,
-        max_output_tokens: 700,
-        max_tool_calls: 4,
-        reasoning: { effort: "low" },
+        max_output_tokens: 3500,
         provider: { require_parameters: true },
         tools: [
-          { type: "openrouter:web_search", parameters: { engine: "auto", max_results: 5, max_uses: 2 } },
-          { type: "openrouter:web_fetch", parameters: { engine: "openrouter", max_uses: 2, max_content_tokens: 5000 } },
+          { type: "openrouter:web_search", parameters: { engine: "auto" } },
+          { type: "openrouter:web_fetch", parameters: { engine: "openrouter" } },
         ],
         text: { format: { type: "json_schema", name: "markanin_resmi_sitesi", strict: true, schema: MARKA_SITE_SEMASI } },
         input: [
-          "Find the OFFICIAL site of the manufacturer or brand owner for this invoice item.",
+          "Find the OFFICIAL manufacturer or brand owner of this specific invoice item, including products whose brand is not printed on the invoice.",
           `Invoice item brand: ${marka}`,
           `Invoice issuer / possible wholesaler: ${girdi.tedarikci || "unknown"}`,
           `Invoice issuer site: ${girdi.tedarikciSitesi || "unknown"}`,
@@ -496,23 +423,19 @@ export async function markaSitesiniBul(girdi: {
   const kullanim = kullanimOku(govde);
   const bosSonuc = { alan: "", ...kullanim };
   if (!govde || govde.status === "incomplete") return bosSonuc;
-  const kayit = govde.usage as { server_tool_use?: { web_fetch_requests?: unknown } } | undefined;
-  if (Number(kayit?.server_tool_use?.web_fetch_requests ?? 0) < 1) return bosSonuc;
   let veri: Record<string, unknown>;
   try { veri = JSON.parse(ciktiMetni(govde)) as Record<string, unknown>; } catch { return bosSonuc; }
   const alan = alanAdiTemizle(metin(veri.resmi_site));
   const kanitSayfa = metin(veri.kanit_sayfa);
   if (veri.marka_sahibi_dogrulandi !== true || !alan || resmiSiteSayilmaz(alan)) return bosSonuc;
   if (!kanitSayfa.startsWith("https://") || !sayfaFirmadaMi(kanitSayfa, alan)) return bosSonuc;
-  if (metin(veri.marka_adi).toLocaleLowerCase("tr-TR") !== marka.toLocaleLowerCase("tr-TR")) return bosSonuc;
-  if (metin(veri.kanit).length < 15) return bosSonuc;
-  if (!await ureticiKaynakAlintisiniDogrula(alan, kanitSayfa, metin(veri.kanit))) return bosSonuc;
   return { alan, ...kullanim };
 }
 
 export interface SatirAramasi {
   dayanak: "kod" | "barkod" | "ad" | null;
   ad: string;
+  marka?: string;
   gorsel: string;
   sayfa: string;
   aciklama: string;
@@ -585,13 +508,11 @@ export function satirAramaIstegi(girdi: { alan: string; model: string; ad: strin
   if (!sorgu) return null;
   return {
     model: GORU_MODELI,
-    max_output_tokens: 1200,
-    max_tool_calls: 4,
-    reasoning: { effort: "low" as const },
+    max_output_tokens: 3500,
     provider: { require_parameters: true },
     tools: [
-      { type: "openrouter:web_search", parameters: { engine: "auto", max_uses: 2, allowed_domains: [alan] } },
-      { type: "openrouter:web_fetch", parameters: { engine: "openrouter", max_uses: 2, max_content_tokens: 6000, allowed_domains: [alan] } },
+      { type: "openrouter:web_search", parameters: { engine: "auto" } },
+      { type: "openrouter:web_fetch", parameters: { engine: "openrouter" } },
     ],
     text: {
       format: { type: "json_schema", name: "fatura_urun_kaynagi", strict: true, schema: URUN_KAYNAK_SEMASI },
@@ -624,7 +545,7 @@ export function satirAramaIstegi(girdi: { alan: string; model: string; ad: strin
 export function satirAramaCevabi(
   girdi: { alan: string; model: string; ad: string; barkod: string; marka?: string; varyant?: string; beden?: string },
   govde: { status?: unknown; output_text?: unknown; output?: unknown; usage?: unknown } | null,
-): Pick<SatirAramasi, "ad" | "gorsel" | "sayfa" | "aciklama" | "dayanak" | "gorseller" | "kategori" | "ozellikler" | "urunVaryantlari"> | null {
+): Pick<SatirAramasi, "ad" | "gorsel" | "sayfa" | "aciklama" | "dayanak" | "marka" | "gorseller" | "kategori" | "ozellikler" | "urunVaryantlari"> | null {
   if (!govde || govde.status === "incomplete") return null;
   let veri: Record<string, unknown>;
   try {
@@ -635,25 +556,12 @@ export function satirAramaCevabi(
   if (!veri || veri.eslesti !== true) return null;
   const sayfa = guvenliAdres(veri.kaynak_sayfa);
   if (!sayfa || !sayfaFirmadaMi(sayfa, girdi.alan)) return null;
-  const esit = (sol: string, sag: string): boolean =>
-    sol.normalize("NFKC").trim().toLocaleLowerCase("tr-TR") === sag.normalize("NFKC").trim().toLocaleLowerCase("tr-TR");
-  const siteKodu = metin(veri.site_kodu);
-  const siteBarkodu = metin(veri.site_barkodu);
   const ad = metin(veri.urun_adi);
   const gorsel = guvenliAdres(veri.gorsel_adresi);
-  if (!ad) return null;
-  const modelEslesiyor = Boolean(girdi.model.trim() && siteKodu && esit(girdi.model, siteKodu));
-  const barkodEslesiyor = Boolean(girdi.barkod.trim() && siteBarkodu && esit(girdi.barkod, siteBarkodu));
-  const istenen = metin(veri.eslesme_dayanagi);
-  const dayanak = istenen === "barkod" && barkodEslesiyor
-    ? "barkod"
-    : istenen === "kod" && modelEslesiyor
-      ? "kod"
-      : barkodEslesiyor
-        ? "barkod"
-        : modelEslesiyor
-          ? "kod"
-          : "ad";
+  if (!ad || veri.eslesme_dayanagi === "eslesmedi") return null;
+  // Classification is Luna's decision, not a barcode/code comparison engine.
+  const dayanak = veri.eslesme_dayanagi === "barkod" ? "barkod"
+    : veri.eslesme_dayanagi === "kod" ? "kod" : "ad";
   const gorseller = [...new Set([gorsel, ...(Array.isArray(veri.gorsel_adresleri) ? veri.gorsel_adresleri.map(guvenliAdres) : [])].filter(Boolean))];
   const ozellikler = Array.isArray(veri.ozellikler) ? veri.ozellikler.flatMap((ham) => {
     if (!ham || typeof ham !== "object" || Array.isArray(ham)) return [];
@@ -673,7 +581,7 @@ export function satirAramaCevabi(
     return [{ id, secenekler, barkod: metin(alan.barkod),
       gorseller: Array.isArray(alan.gorseller) ? alan.gorseller.map(guvenliAdres).filter(Boolean) : [] }];
   }) : [];
-  return { ad, aciklama: metin(veri.aciklama), gorsel: gorseller[0] || "", gorseller,
+  return { ad, marka: metin(veri.site_markasi), aciklama: metin(veri.aciklama), gorsel: gorseller[0] || "", gorseller,
     sayfa, dayanak, kategori: metin(veri.kategori), ozellikler, urunVaryantlari };
 }
 
@@ -706,6 +614,7 @@ export async function satirSitesindeAra(girdi: {
   const bulunan = satirAramaCevabi(girdi, govde);
   return {
     ad: bulunan?.ad ?? "",
+    marka: bulunan?.marka ?? "",
     dayanak: bulunan?.dayanak ?? null,
     gorsel: bulunan?.gorsel ?? "",
     sayfa: bulunan?.sayfa ?? "",

@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import FirmaIzniPaneli from "@/components/owner/FirmaIzniPaneli";
-import { faturaVaryantlari } from "@/lib/faturaOtomatikDoldur";
 import { otomatikTaslakAdayi } from "@/lib/faturaTaslakAdayi";
 import {
   KART_DURUM_ETIKETI,
@@ -239,18 +238,12 @@ function faturaUrunIstekGirdisi(
                   ...(nitelikler.length > 0 ? { attributes: nitelikler } : {}),
                 };
               })(),
-              variants: katalog?.urunVaryantlari?.length
-                ? katalog.urunVaryantlari.map((varyant) => ({
-                    id: varyant.id,
-                    options: Object.fromEntries(varyant.secenekler.map((secenek) => [secenek.key, secenek.value])),
-                    barcode: varyant.barkod || undefined,
-                    imageUrls: varyant.gorseller,
-                  }))
-                : faturaVaryantlari({
-                    model: satir.model || String(sira), barkod: satir.barkod,
-                    varyant: satir.varyant, beden: satir.beden,
-                    stok: stokSayisi(satir.stok), kaynakVaryantlar: katalog?.varyantlar,
-                  }),
+              variants: (katalog?.urunVaryantlari ?? []).map((varyant) => ({
+                id: varyant.id,
+                options: Object.fromEntries(varyant.secenekler.map((secenek) => [secenek.key, secenek.value])),
+                barcode: varyant.barkod || undefined,
+                imageUrls: varyant.gorseller,
+              })),
               sortOrder: sira,
             };
 }

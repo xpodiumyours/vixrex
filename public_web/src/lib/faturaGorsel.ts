@@ -3,7 +3,6 @@ import sharp from "sharp";
 import { hostGuvenliMi, varsayilanCoz, pdfKatalogGorseliniOku } from "@/lib/faturaDijitalIz";
 import { gorseliSikistir, ONBELLEK_SANIYE } from "@/lib/gorselSikistir";
 import {
-  FATURA_MIN_SOURCE_SHORT_EDGE,
   MAX_PRODUCT_IMAGES,
   MAX_PRODUCT_IMAGE_SOURCE_BYTES,
 } from "@/lib/productImagePolicy";
@@ -52,9 +51,6 @@ export interface GorselHazirlamaSonucu {
 }
 
 const ZAMAN_ASIMI_MS = 6000;
-const YER_TUTUCU_ADRES = /(^|[\/_\-.])(logo|favicon|placeholder|no[-_]?image|noimage|default[-_]?image|blank|sprite|banner)([\/_\-.]|$)/i;
-const EN_BOY_SINIRI = 3.5;
-const BOS_SAPMA_ESIGI = 3;
 
 function gercekTur(bayt: Uint8Array): string | null {
   if (bayt.length < 12) return null;
@@ -84,9 +80,6 @@ export async function kaynakGorseliniDogrula(
   }
   if (url.protocol !== "https:" || url.username || url.password || url.port) {
     return { tamam: false, sebep: "acilmadi" };
-  }
-  if (YER_TUTUCU_ADRES.test(decodeURIComponent(url.pathname))) {
-    return { tamam: false, sebep: "logo-veya-yer-tutucu" };
   }
   if (!(await hostGuvenliMi(url.hostname, resolveHost))) {
     return { tamam: false, sebep: "erisilemedi" };
@@ -132,26 +125,16 @@ export async function kaynakGorseliniDogrula(
 
   let genislik: number;
   let yukseklik: number;
-  let bos: boolean;
   try {
     const goruntu = sharp(Buffer.from(bayt));
     const bilgi = await goruntu.metadata();
     genislik = bilgi.width ?? 0;
     yukseklik = bilgi.height ?? 0;
-    const istatistik = await sharp(Buffer.from(bayt)).stats();
-    bos = istatistik.channels.every((kanal) => kanal.stdev < BOS_SAPMA_ESIGI);
   } catch {
     return { tamam: false, sebep: "gorsel-degil" };
   }
 
   if (genislik <= 0 || yukseklik <= 0) return { tamam: false, sebep: "gorsel-degil" };
-  if (Math.min(genislik, yukseklik) < FATURA_MIN_SOURCE_SHORT_EDGE) {
-    return { tamam: false, sebep: "cok-kucuk", genislik, yukseklik };
-  }
-  if (bos) return { tamam: false, sebep: "bos", genislik, yukseklik };
-  if (Math.max(genislik, yukseklik) / Math.min(genislik, yukseklik) > EN_BOY_SINIRI) {
-    return { tamam: false, sebep: "urun-fotografi-degil", genislik, yukseklik };
-  }
 
   return { tamam: true, genislik, yukseklik, tur, bayt };
 }

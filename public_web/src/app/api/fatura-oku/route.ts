@@ -8,8 +8,7 @@ import { belgeGercegiUyuyorMu, belgeVergiToplamiUyuyorMu } from "@/lib/faturaSat
 import { eslesmeyenSatir, siteAdayiniKoru, siteKartiniUygula, sonucOzeti, type EslesmisFaturaSatiri, type HamFaturaSatiri } from "@/lib/faturaEslestir";
 import { ayniAlisverisAdaylari, belgeParmakIzi, islemKaydet, satirKanitKayitlari } from "@/lib/faturaIslemKaydi";
 import { faturaTaslaklari } from "@/lib/faturaTaslagi";
-import { firmaAlaniniKilitle, faturayiOku, lunaGorseliniDogrula, markaSitesiniBul, satirSitesindeAra, type GoruSatiri, type GoruSonucu } from "@/lib/faturaGoru";
-import { kaynakGorseliniDogrula, urunSayfasindaGorselKaniti } from "@/lib/faturaGorsel";
+import { faturayiOku, markaSitesiniBul, satirSitesindeAra, type GoruSatiri, type GoruSonucu } from "@/lib/faturaGoru";
 import { ARAMA_UCETI_USD, aramaCagrisiSigarMi, belgeMaliyetOzeti, bugunkuMaliyetUsd, gunlukTavanDolduMu, kullanimKaydet } from "@/lib/faturaMaliyet";
 import { islemiYukle, islemYaniti, parmakIzindenIslemBul } from "@/lib/faturaIslemOku";
 
@@ -293,47 +292,27 @@ export async function POST(request: NextRequest) {
     // nihai tutarı doğrudan satır tutarına eşitleyip sahte doğruluk üretme.
     const satirKontrolToplami = okuma.malBedeli
       ?? (okuma.kdvTutari === null && okuma.indirimTutari === null ? sonOzet.toplam : null);
-    if (satirKontrolToplami === null &&
-        (okuma.kdvTutari !== null || okuma.indirimTutari !== null)) {
-      return NextResponse.json({
-        hata: "Faturadaki KDV hariç mal bedeli okunamadı; ödenecek toplamı ürün satırlarıyla karıştırmamak için kayıt durduruldu.",
-      }, { status: 422 });
-    }
+    // Absent price/tax subtotal is a review warning, not reason to drop all Luna's rows.
+    const eksikMalBedeli = satirKontrolToplami === null &&
+      (okuma.kdvTutari !== null || okuma.indirimTutari !== null);
     const sonUyum = belgeGercegiUyuyorMu(hamSatirlar, {
       adet: sonOzet.adet,
       toplam: satirKontrolToplami,
     });
-    if (!sonUyum.uyumlu) {
-      return NextResponse.json(
-        { hata: "Fotoğraf tutmadı. Satırların toplamı belgenin toplamıyla uyuşmuyor. Daha net bir fotoğraf dene." },
-        { status: 422 },
-      );
-    }
+    // Math differences are diagnostic: preserve the invoice line items Luna read.
+    const tutarUyarisi = sonUyum.uyumlu ? "" : sonUyum.sebep || "Satır tutarları kontrol edilmeli.";
     const vergiKontrolu = belgeVergiToplamiUyuyorMu({
       malBedeli: okuma.malBedeli, kdvTutari: okuma.kdvTutari,
       indirimTutari: okuma.indirimTutari, odenecekToplam: okuma.odenecekToplam,
     });
-    if (!vergiKontrolu.uyumlu) {
-      return NextResponse.json({ hata: vergiKontrolu.sebep }, { status: 422 });
-    }
-    const belgeUyarisi = !sonUyum.adetKarsilastirildi && sonOzet.adet !== null
-      ? "Belgede farklı ölçü birimleri bulunuyor. Miktarlar toplanmadı; her satırın fiyat hesabı ve belge tutarı doğrulandı."
-      : null;
+    const belgeUyarisi = [
+      eksikMalBedeli ? "Belgedeki vergi hariç mal bedeli okunamadı." : "",
+      tutarUyarisi,
+      vergiKontrolu.uyumlu ? "" : vergiKontrolu.sebep || "Vergi tutarları kontrol edilmeli.",
+    ].filter(Boolean).join(" ") || null;
 
-    const etkinSite = oncekiIslem?.tedarikciSite || await firmaAlaniniKilitle({
-      belgedeYazan: sonTedarikciSite,
-      esnafIpucu: siteIpucu,
-      tedarikciAdi: sonTedarikci,
-      vergiNo: sonTedarikciVergiNo,
-      adres: sonTedarikciAdres,
-    }, {
-      izin: () => aramaCagrisiSigarMi(gunlukHarcama),
-      kaydet: async (kullanim) => {
-        const maliyet = (kullanim.maliyet ?? 0) + ARAMA_UCETI_USD;
-        await kullanimKaydet(admin, magazaId, { ...kullanim, maliyet }, ARAMA_UCETI_USD, parmakIzi);
-        gunlukHarcama += maliyet;
-      },
-    });
+    // Only a clue; Luna will determine the manufacturer for every product.
+    const etkinSite = oncekiIslem?.tedarikciSite || sonTedarikciSite || siteIpucu;
 
     const ilkDurum = {
       erisimHatasi: false, sinirDoldu: false, sonrakiSatir: 0,
@@ -377,20 +356,19 @@ export async function POST(request: NextRequest) {
       let siteOzellikler: Array<{ key: string; label: string; value: string }> = [];
       let siteUrunVaryantlari: Array<{ id: string; secenekler: Array<{ key: string; value: string }>; barkod: string; gorseller: string[] }> = [];
       let siteSayfa = "";
+      let siteMarka = "";
+      let siteEslesti = false;
       let siteAd = "";
       let siteDayanak: "kod" | "barkod" | "ad" | undefined;
-      let siteFotografKaniti: { kaynakSayfa: string; kaynakGorsel: string; kaynakAlintisi: string; lunaGerekcesi: string } | undefined;
-      let siteUyari = etkinSite ? "" : "Resmî üretici sitesi doğrulanamadı.";
+      let siteUyari = "Luna henüz resmî üretici sitesini bulamadı.";
       if (!etkinSite && !aramaCagrisiSigarMi(gunlukHarcama)) {
         aramaAcik = false;
         aramaDurumu.sinirDoldu = true;
         siteUyari = "Resmî site araştırması için günlük maliyet sınırı doldu.";
       }
       const marka = satir.marka?.trim() ?? "";
-      const ayriMarka = Boolean(marka) &&
-        marka.toLocaleLowerCase("tr-TR") !== sonTedarikci.trim().toLocaleLowerCase("tr-TR");
-      const markaAnahtari = marka.toLocaleLowerCase("tr-TR");
-      if (ayriMarka && !markaAlanlari.has(markaAnahtari) && aramaAcik && aramaCagrisiSigarMi(gunlukHarcama)) {
+      const markaAnahtari = (marka || [satir.model, satir.ad].filter(Boolean).join("|")).toLocaleLowerCase("tr-TR");
+      if (markaAnahtari && !markaAlanlari.has(markaAnahtari) && aramaAcik && aramaCagrisiSigarMi(gunlukHarcama)) {
         try {
           const bulunan = await markaSitesiniBul({
             marka, tedarikci: sonTedarikci, tedarikciSitesi: etkinSite,
@@ -405,21 +383,13 @@ export async function POST(request: NextRequest) {
           aramaAcik = false;
           aramaDurumu.sinirDoldu = true;
           aramaDurumu.erisimHatasi = true;
-          siteUyari = mesaj === "OKUYUCU_BAKIYE_BITTI"
-            ? "Üretici arama bakiyesi doldu; satır doğrulanmadı."
-            : "Üretici araştırması servisine erişilemedi; yeniden denenecek.";
-          console.error("[fatura-oku] marka sitesi aramasi durdu:", mesaj || hata);
-          markaAlanlari.set(markaAnahtari, "");
+          siteUyari = "Üretici araştırmasına erişilemedi; tekrar denenecek.";
+          console.error("[fatura-oku] uretici sitesi:", mesaj || hata);
         }
       }
-      const bulunanMarka = ayriMarka ? (markaAlanlari.get(markaAnahtari) ?? "") : "";
-      const satirSitesi = bulunanMarka || etkinSite;
+      const satirSitesi = markaAlanlari.get(markaAnahtari) || "";
       const aranabilir = Boolean(satirSitesi && (satir.model || satir.ad || satir.barkod));
-      if (aramaAcik && ayriMarka && !satirSitesi && !aramaCagrisiSigarMi(gunlukHarcama)) {
-        aramaAcik = false;
-        aramaDurumu.sinirDoldu = true;
-        siteUyari = "Üretici araması için günlük maliyet sınırı doldu.";
-      }
+      if (!satirSitesi && aramaAcik) siteUyari = "Luna bu ürünün resmî üreticisini bulamadı.";
       if (aramaAcik && aranabilir && !aramaCagrisiSigarMi(gunlukHarcama)) {
         aramaAcik = false;
         aramaDurumu.sinirDoldu = true;
@@ -444,6 +414,9 @@ export async function POST(request: NextRequest) {
           // bağımsız kontrolleri de geçmesiyle mümkün olur.
           if (arama.sayfa && arama.ad && arama.dayanak) {
             siteAd = arama.ad;
+            siteMarka = arama.marka ?? "";
+            siteEslesti = true;
+            siteUyari = "";
             siteDayanak = arama.dayanak;
             siteAciklama = arama.aciklama;
             siteSayfa = arama.sayfa;
@@ -458,39 +431,8 @@ export async function POST(request: NextRequest) {
           } else if (!arama.gorsel) {
             siteUyari = "Resmî ürün kaynağı bulundu; doğru fotoğraf eksik. Ürün taslak kalır.";
           }
-          if (arama.sayfa && arama.gorsel) {
-            try {
-              const gorselDogrulama = await kaynakGorseliniDogrula(arama.gorsel);
-              const gorsel = gorselDogrulama.tamam ? arama.gorsel : "";
-              const aciklama = arama.aciklama.trim() || satir.ad.trim() || satir.model.trim();
-              if (gorsel && aciklama) {
-                const kaynakKaniti = await urunSayfasindaGorselKaniti(arama.sayfa, gorsel, satir.varyant);
-                if (kaynakKaniti && aramaCagrisiSigarMi(gunlukHarcama)) {
-                  const dogrulananGorselVerisi = gorselDogrulama.bayt && gorselDogrulama.tur
-                    ? `data:${gorselDogrulama.tur};base64,${Buffer.from(gorselDogrulama.bayt).toString("base64")}`
-                    : "";
-                  if (dogrulananGorselVerisi) {
-                    const inceleme = await lunaGorseliniDogrula({
-                      gorsel: dogrulananGorselVerisi, kaynakSayfa: arama.sayfa, kaynakAlintisi: kaynakKaniti.kaynakAlintisi,
-                      urunAdi: arama.ad, faturaAdi: satir.ad, marka: satir.marka ?? "",
-                      renk: satir.varyant, beden: satir.beden,
-                    });
-                    await kullanimKaydet(admin, magazaId, inceleme, 0, parmakIzi);
-                    gunlukHarcama += inceleme.maliyet ?? 0;
-                    if (inceleme.uyumlu) {
-                      siteFotografKaniti = {
-                        kaynakSayfa: arama.sayfa, kaynakGorsel: gorsel,
-                        kaynakAlintisi: kaynakKaniti.kaynakAlintisi,
-                        lunaGerekcesi: inceleme.gerekce,
-                      };
-                    }
-                  }
-                }
-              }
-            } catch (hata) {
-              console.error("[fatura-oku] fotograf bakisi surdu:", hata instanceof Error ? hata.message : hata);
-            }
-          }
+          // Source image identity is Luna's decision; secure download happens at storage.
+
         } catch (hata) {
           const mesaj = hata instanceof Error ? hata.message : "";
           aramaAcik = false;
@@ -505,6 +447,8 @@ export async function POST(request: NextRequest) {
       const sonucSatir = siteAdayiniKoru(siteKartiniUygula(eslesmeyenSatir({
         ...satir,
         siteAd,
+        siteMarka,
+        siteEslesti,
         siteDayanak,
         siteAciklama,
         siteGorsel,
@@ -513,8 +457,6 @@ export async function POST(request: NextRequest) {
         siteOzellikler,
         siteUrunVaryantlari,
         siteSayfa,
-        siteFotografKaniti,
-        sayfaDogrulandi: Boolean(siteFotografKaniti),
       })));
       if (siteUyari && sonucSatir.sonuc !== "kanitli") sonucSatir.uyari = siteUyari;
       satirlar.push(sonucSatir);

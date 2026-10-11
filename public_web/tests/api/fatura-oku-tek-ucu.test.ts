@@ -127,6 +127,12 @@ function siteyiAyiranOkuma(govde: unknown) {
     const adres = String(url);
     if (adres.includes("openrouter.ai/api/v1/responses")) {
       const istek = JSON.parse(String(init?.body ?? "{}"));
+      if (istek.text?.format?.name === "markanin_resmi_sitesi") return okuyucuCevabi({
+        marka_adi: "Seher Mensucat", resmi_site: "https://sehermensucat.com",
+        kanit_sayfa: "https://sehermensucat.com/iletisim",
+        marka_sahibi_dogrulandi: true,
+        kanit: "Seher Mensucat kendi ürünlerinin üretimini gerçekleştirmektedir.",
+      });
       if (istek.text?.format?.name === "firma_dogrulama") return okuyucuCevabi({
         firma_adi_sayfada: true, adres_sayfada: true,
         vergi_no_sayfada: true, kanit_sayfa: "https://sehermensucat.com/iletisim",
@@ -318,15 +324,15 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(govde.belgeToplami).toBe(301.4);
   });
 
-  it("KDV varken net mal bedeli okunamadiysa genel toplami satir bedeli saymaz", async () => {
+  it("KDV varken net mal bedeli okunamadığında Luna satırları kaybolmaz, uyarı saklanır", async () => {
     vi.stubGlobal("fetch", siteyiAyiranOkuma({
       ...TEK_SATIR,
       mal_bedeli: null, kdv_tutari: 27.4, indirim_tutari: null,
       odenecek_toplam: 301.4, toplam_tutar: 301.4,
     }));
     const yanit = await faturaOku(istek());
-    expect(yanit.status).toBe(422);
-    expect((await yanit.json()).hata).toContain("KDV hariç mal bedeli");
+    expect(yanit.status).toBe(200);
+    expect((await yanit.json()).belgeUyarisi).toContain("vergi hariç");
   });
 
   it("okunamayan rakamlar sıfıra dönüşmez", async () => {
@@ -394,13 +400,13 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
       JSON.parse(String((cagri[1] as RequestInit).body)).text?.format?.name === "fatura_urun_kaynagi");
     const arama = JSON.parse(String((aramaCagrisi?.[1] as RequestInit).body));
     expect(arama.model).toBe("openai/gpt-5.6-luna");
-    expect(arama.reasoning.effort).toBe("low");
-    expect(arama.max_tool_calls).toBe(4);
+    expect(arama.reasoning).toBeUndefined();
+    expect(arama.max_tool_calls).toBeUndefined();
     expect(arama.tools.map((arac: { type: string }) => arac.type)).toEqual([
       "openrouter:web_search", "openrouter:web_fetch",
     ]);
-    expect(arama.tools[0].parameters.allowed_domains).toEqual(["sehermensucat.com"]);
-    expect(arama.tools[1].parameters.allowed_domains).toEqual(["sehermensucat.com"]);
+    expect(arama.tools[0].parameters.allowed_domains).toBeUndefined();
+    expect(arama.tools[1].parameters.allowed_domains).toBeUndefined();
     expect(arama.text.format.strict).toBe(true);
   });
 
@@ -435,6 +441,15 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
       const adres = String(url);
       if (adres.includes("openrouter.ai/api/v1/responses")) {
         const istekGovdesi = JSON.parse(String(init?.body ?? "{}"));
+        if (istekGovdesi.text?.format?.name === "markanin_resmi_sitesi") {
+          return okuyucuCevabi({
+            marka_adi: "Seher Mensucat",
+            resmi_site: "https://sehermensucat.com",
+            kanit_sayfa: "https://sehermensucat.com/iletisim",
+            marka_sahibi_dogrulandi: true,
+            kanit: "Seher Mensucat kendi ürünlerinin üretimini gerçekleştirmektedir.",
+          });
+        }
         if (istekGovdesi.text?.format?.name === "firma_dogrulama") {
           return okuyucuCevabi({
             vergi_no_sayfada: true, firma_adi_sayfada: true,
@@ -509,9 +524,7 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(govde.satirlar[0].katalog.gorseller).toEqual([gorsel]);
     expect(govde.satirlar[0].katalog.kaynak).toBe(sayfa);
     expect(govde.satirlar[0].katalog.dayanak).toBe("kod");
-    expect(govde.satirlar[0].katalog.fotografKaniti.kaynakSayfa).toBe(sayfa);
-    expect(govde.satirlar[0].katalog.fotografKaniti.kaynakGorsel).toBe(gorsel);
-    expect(govde.satirlar[0].katalog.fotografKaniti.lunaGerekcesi).toContain("siyah renk");
+    expect(govde.satirlar[0].katalog.resmiAd).toBe("Elit Erkek Elastan Sıfır Yaka");
   });
 
 
@@ -553,10 +566,10 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(response.status).toBe(200);
     const bodies = cevapVer.mock.calls.map((call) => JSON.parse(String((call[1] as RequestInit)?.body ?? "{}")));
     const productSearch = bodies.find((item) => item.text?.format?.name === "fatura_urun_kaynagi");
-    expect(cevapVer.mock.calls.some((call) => String(call[0]) === "https://elit.example/hakkimizda")).toBe(true);
+    expect(cevapVer.mock.calls.some((call) => String(call[0]) === "https://elit.example/hakkimizda")).toBe(false);
     expect(productSearch).toBeDefined();
-    expect(productSearch.tools[0].parameters.allowed_domains).toEqual(["elit.example"]);
-    expect(productSearch.tools[1].parameters.allowed_domains).toEqual(["elit.example"]);
+    expect(productSearch.tools[0].parameters.allowed_domains).toBeUndefined();
+    expect(productSearch.tools[1].parameters.allowed_domains).toBeUndefined();
     expect((await response.json()).satirlar[0].sonuc).toBe("eksik");
   });
 
@@ -635,18 +648,16 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(cevap.status).toBe(429);
   });
 
-  it("belge toplamı tutmuyorsa vitrine yazılmaz", async () => {
+  it("belge toplamı tutmasa bile Luna satırları uyarıyla saklanır", async () => {
     const okuma = siteyiAyiranOkuma({ ...TEK_SATIR, toplam_adet: 75, toplam_tutar: 6034 });
     vi.stubGlobal("fetch", okuma);
 
     const cevap = await faturaOku(istek());
     const govde = await cevap.json();
 
-    expect(cevap.status).toBe(422);
-    expect(govde.hata).toContain("Fotoğraf tutmadı");
-    expect(mocks.kaydet).not.toHaveBeenCalled();
-    const fotografOkuma = okuma.mock.calls.filter((cagri) => String(cagri[0]).includes("openrouter.ai/api/v1/responses"));
-    expect(fotografOkuma).toHaveLength(1);
+    expect(cevap.status).toBe(200);
+    expect(govde.belgeUyarisi).toContain("uyuşmuyor");
+    expect(mocks.kaydet).toHaveBeenCalled();
   });
 
   it("belge toplamı tutuyorsa belge gerçeği cevapta döner", async () => {

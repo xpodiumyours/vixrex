@@ -40,7 +40,7 @@ describe("kaynak görseli doğrulama", () => {
     expect(sonuc.genislik).toBe(1200);
   });
 
-  it("kırık bağlantı, küçük görsel, boş görsel ve logo ürün fotoğrafı sayılmaz", async () => {
+  it("yalnız teknik erişim sorunu reddedilir; Luna'nın seçtiği resim kodla yeniden yargılanmaz", async () => {
     const kirik = "https://firma.example/yok.jpg";
     const kucuk = "https://firma.example/kucuk.jpg";
     const bos = "https://firma.example/beyaz.jpg";
@@ -52,14 +52,12 @@ describe("kaynak görseli doğrulama", () => {
     });
 
     expect((await kaynakGorseliniDogrula(kirik, { fetcher, resolveHost })).sebep).toBe("acilmadi");
-    expect((await kaynakGorseliniDogrula(kucuk, { fetcher, resolveHost })).sebep).toBe("cok-kucuk");
-    expect((await kaynakGorseliniDogrula(bos, { fetcher, resolveHost })).sebep).toBe("bos");
-    expect((await kaynakGorseliniDogrula(logo, { fetcher, resolveHost })).sebep).toBe(
-      "logo-veya-yer-tutucu",
-    );
+    expect((await kaynakGorseliniDogrula(kucuk, { fetcher, resolveHost })).tamam).toBe(true);
+    expect((await kaynakGorseliniDogrula(bos, { fetcher, resolveHost })).tamam).toBe(true);
+    expect((await kaynakGorseliniDogrula(logo, { fetcher, resolveHost })).tamam).toBe(true);
   });
 
-  it("görsel olmayan içerik ve çok geniş banner reddedilir", async () => {
+  it("görsel olmayan içerik reddedilir, resmin biçimiyle ürün kimliği belirlenmez", async () => {
     const html = "https://firma.example/sayfa.jpg";
     const banner = "https://firma.example/kapak.jpg";
     const fetcher = fetcherIle({
@@ -68,9 +66,7 @@ describe("kaynak görseli doğrulama", () => {
     });
 
     expect((await kaynakGorseliniDogrula(html, { fetcher, resolveHost })).sebep).toBe("gorsel-degil");
-    expect((await kaynakGorseliniDogrula(banner, { fetcher, resolveHost })).sebep).toBe(
-      "urun-fotografi-degil",
-    );
+    expect((await kaynakGorseliniDogrula(banner, { fetcher, resolveHost })).tamam).toBe(true);
   });
 
   it("ağ hatası 'erişilemedi' olur; içerik hatasıyla karıştırılmaz", async () => {
@@ -210,12 +206,12 @@ describe("kaynak görsellerini kendi depomuza alma", () => {
       },
     });
 
-    expect(sonuc.gorseller).toHaveLength(1);
+    expect(sonuc.gorseller).toHaveLength(2);
     expect(sonuc.gorseller[0].kaynakGorsel).toBe(iyi);
     expect(sonuc.gorseller[0].kaynakSayfa).toBe("https://firma.example/urun/16747");
     expect(sonuc.gorseller[0].url).toContain("https://depo.example/deneme-vitrin/products/fatura/");
-    expect(yuklenen).toHaveLength(1);
-    expect(sonuc.reddedilenler).toEqual([{ kaynakGorsel: bos, sebep: "bos" }]);
+    expect(yuklenen).toHaveLength(2);
+    expect(sonuc.reddedilenler).toEqual([]);
     expect(sonuc.altyapiSorunu).toBe(false);
   });
 

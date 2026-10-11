@@ -32,6 +32,8 @@ export interface HamFaturaSatiri {
   siteOzellikler?: Array<{ key: string; label: string; value: string }>;
   siteUrunVaryantlari?: Array<{ id: string; secenekler: Array<{ key: string; value: string }>; barkod: string; gorseller: string[] }>;
   siteSayfa?: string;
+  siteMarka?: string;
+  siteEslesti?: boolean;
   siteAd?: string;
   siteDayanak?: "kod" | "barkod" | "ad";
   siteFotografKaniti?: FotografKaniti;
@@ -91,51 +93,27 @@ export function eslesmeyenSatir(satir: HamFaturaSatiri): EslesmisFaturaSatiri {
 }
 
 export function siteKartiniUygula(satir: EslesmisFaturaSatiri): EslesmisFaturaSatiri {
-  const aciklama = (satir.siteAciklama ?? "").trim();
-  const gorsel = (satir.siteGorsel ?? "").trim();
-  const gorseller = [...new Set([gorsel, ...(satir.siteGorseller ?? [])].filter((adres) => adres.startsWith("https://")))];
   const sayfa = (satir.siteSayfa ?? "").trim();
-  const fotografKaniti = satir.siteFotografKaniti;
-  if (
-    satir.sayfaDogrulandi === true && aciklama && gorsel.startsWith("https://") && sayfa.startsWith("https://") &&
-    fotografKaniti?.kaynakSayfa === sayfa && fotografKaniti.kaynakGorsel === gorsel &&
-    fotografKaniti.kaynakAlintisi.length > 0 && fotografKaniti.lunaGerekcesi.length > 0
-  ) {
-    return {
-      ...satir,
-      sonuc: "kanitli",
-      katalog: {
-        firma: satir.katalog?.firma ?? "",
-        kaynakFirma: satir.katalog?.kaynakFirma ?? "",
-        dayanak: satir.siteDayanak ?? satir.katalog?.dayanak ?? "kod",
-        izinDurumu: satir.katalog?.izinDurumu ?? "yok",
-        resmiAd: (satir.siteAd ?? "").trim() || satir.katalog?.resmiAd || satir.ad,
-        marka: satir.katalog?.marka || satir.marka || "",
-        aciklama,
-        gorseller,
-        gorselAdaylari: gorseller,
-        kategori: satir.siteKategori ?? "",
-        ozellikler: satir.siteOzellikler ?? [],
-        urunVaryantlari: satir.siteUrunVaryantlari ?? [],
-        fotografKaniti,
-        kaynak: sayfa,
-      },
-    };
-  }
-  if (satir.sonuc !== "kanitli" || !satir.katalog) return satir;
-  const eldeki = satir.katalog.gorseller.filter((adres) => adres.startsWith("https://"));
-  const gelen = gorseller.length ? gorseller : eldeki;
+  const resmiAd = (satir.siteAd ?? "").trim();
+  const gorseller = [...new Set([satir.siteGorsel ?? "", ...(satir.siteGorseller ?? [])]
+    .map((url) => url.trim()).filter((url) => url.startsWith("https://")))];
+  if (satir.siteEslesti !== true || !resmiAd || !sayfa.startsWith("https://"))
+    return satir.sonuc === "kanitli" ? { ...satir, sonuc: "eksik" } : satir;
+  // Luna has decided the official product identity; technical transport never grades the match.
   return {
-    ...satir,
-    sonuc: "eksik",
+    ...satir, sonuc: "kanitli",
     katalog: {
-      ...satir.katalog,
-      aciklama: aciklama || satir.katalog.aciklama,
-      kategori: satir.siteKategori ?? satir.katalog.kategori,
-      ozellikler: satir.siteOzellikler ?? satir.katalog.ozellikler,
-      urunVaryantlari: satir.siteUrunVaryantlari ?? satir.katalog.urunVaryantlari,
-      gorseller: gelen,
-      gorselAdaylari: gelen.length > 0 ? gelen : satir.katalog.gorselAdaylari,
+      firma: satir.katalog?.firma ?? "",
+      kaynakFirma: satir.siteMarka || satir.katalog?.kaynakFirma || "",
+      dayanak: satir.siteDayanak ?? "ad",
+      izinDurumu: satir.katalog?.izinDurumu ?? "yok",
+      resmiAd, marka: satir.siteMarka || satir.marka || satir.katalog?.marka || "",
+      aciklama: (satir.siteAciklama ?? "").trim(),
+      gorseller, gorselAdaylari: gorseller,
+      kategori: satir.siteKategori ?? "",
+      ozellikler: satir.siteOzellikler ?? [],
+      urunVaryantlari: satir.siteUrunVaryantlari ?? [],
+      kaynak: sayfa,
     },
   };
 }
@@ -159,11 +137,11 @@ export function siteAdayiniKoru(satir: EslesmisFaturaSatiri): EslesmisFaturaSati
     sonuc: "eksik",
     katalog: {
       firma: satir.katalog?.firma ?? "",
-      kaynakFirma: satir.katalog?.kaynakFirma ?? "",
+      kaynakFirma: satir.siteMarka || satir.katalog?.kaynakFirma || "",
       dayanak,
       izinDurumu: satir.katalog?.izinDurumu ?? "yok",
       resmiAd,
-      marka: satir.marka ?? "",
+      marka: satir.siteMarka || satir.marka || "",
       aciklama: (satir.siteAciklama ?? "").trim(),
       gorseller: gorselListesi,
       gorselAdaylari: gorselListesi,

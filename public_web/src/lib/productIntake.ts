@@ -254,7 +254,8 @@ export async function urunGirdisiniHazirla(args: {
   const barcode = isService ? null : cleanString(govde.barcode);
   const brand = isService ? null : markaVeyaMagazaAdi(govde.brand, templateKey, storeName);
 
-  const variantError = validateVariantSet(variants, barcode);
+  // Luna's official variants are not judged by another product/variant engine.
+  const variantError = args.lunaVaryantlariniKoru === true ? null : validateVariantSet(variants, barcode);
   if (variantError) return { durum: "reddedildi", sebep: variantError };
 
   const priceText = typeof govde.priceText === "string" ? govde.priceText.trim() : "";
