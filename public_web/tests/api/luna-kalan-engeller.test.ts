@@ -9,8 +9,8 @@ const kaynak = "https://firma.example/foto";
 describe("Luna'nın kartına kalan aktarım engelleri", () => {
   it("site yazmayan faturanın firma adı Luna'ya yalnız ipucu olarak aktarılır", () => {
     const istek = satirAramaIstegi({ alan: "", tedarikci: "Örnek Toptancı", model: "M1", ad: "Ürün", barkod: "" });
-    expect(istek?.input).toContain("Invoice issuer name (only a clue, not necessarily the manufacturer): Örnek Toptancı");
-    expect(istek?.input).toContain("Choose the manufacturer and its official domain yourself.");
+    expect(istek?.input).toContain('"invoice_issuer_name":"Örnek Toptancı"');
+    expect(istek?.input).not.toContain("Choose the manufacturer");
     expect(istek?.tools.every((tool) => !("allowed_domains" in tool.parameters))).toBe(true);
   });
   it.each(["apex.com", "phoenix.com", "vixrex.com"])("%s alanı araştırmada zorunlu filtre olmaz", (alan) => {

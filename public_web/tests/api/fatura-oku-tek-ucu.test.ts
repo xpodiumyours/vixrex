@@ -266,10 +266,11 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(requestBody.response_format).toMatchObject({
       type: "json_schema", json_schema: { name: "fatura_okuma", strict: true },
     });
-    expect(requestBody.messages[0].content[1]).toMatchObject({
+    expect(requestBody.messages[0].content[0]).toMatchObject({
       type: "file", file: { filename: "fatura.pdf" },
     });
-    expect(requestBody.messages[0].content[1].file.file_data.startsWith("data:application/pdf;base64,")).toBe(true);
+    expect(requestBody.messages[0].content[0].file.file_data.startsWith("data:application/pdf;base64,")).toBe(true);
+    expect(requestBody.messages[0].content).toHaveLength(1);
   });
 
   it("PDF ile fotografu ayni yuklemede karistirmaz", async () => {
@@ -397,12 +398,11 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(istekGovdesi.text.format.schema.properties.satirlar.items.required).toContain("birim");
     expect(istekGovdesi.text.format.schema.properties.satirlar.items.properties.ad.description).toMatch(/Product name/);
     expect(istekGovdesi.text.format.schema.properties.satirlar.items.properties.birim.description).toMatch(/Measure unit/);
-    expect(istekGovdesi.input[0].content[1].detail).toBe("original");
+    expect(istekGovdesi.input[0].content[0].detail).toBe("original");
     expect(istekGovdesi.tools).toBeUndefined();
     expect(istekGovdesi.include).toBeUndefined();
-    const soru = String(istekGovdesi.input[0].content[0].text);
-    expect(soru).not.toContain("asil urun fotografi");
-    expect(soru).toContain("baska yerden tamamlama");
+    expect(istekGovdesi.input[0].content.every((parca: { type: string }) =>
+      parca.type === "input_image")).toBe(true);
     const okumaCagrilari = vi.mocked(fetch).mock.calls.filter((satir) => String(satir[0]).includes("openrouter.ai/api/v1/responses"));
     expect(okumaCagrilari.length).toBeGreaterThanOrEqual(2);
     const aramaCagrisi = okumaCagrilari.find((cagri) =>

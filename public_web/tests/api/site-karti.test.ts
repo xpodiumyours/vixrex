@@ -158,7 +158,7 @@ describe("OpenRouter kaynak doğrulama", () => {
   it("resmî site önceden bilinmese de Luna ürün araştırmasını başlatır", () => {
     const istek = satirAramaIstegi({ ...girdi, alan: "" });
     expect(istek).not.toBeNull();
-    expect(istek?.input).toContain("Invoice issuer website (only a clue, never a domain restriction): not provided");
+    expect(istek?.input).toContain('"invoice_issuer_website":""');
     expect(istek?.tools.map((tool) => tool.type)).toEqual(["openrouter:web_search", "openrouter:web_fetch"]);
   });
 
