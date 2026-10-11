@@ -42,11 +42,11 @@ describe("fatura kimlik ve üretici doğrulama kapısı", () => {
     expect(satirAramaCevabi({ ...girdi, model: "A-123" }, kaynakCevabi())?.gorsel).toBe("https://cdn.example/atlet.jpg");
   });
 
-  it("kod çelişirse kanıtlı sayılmaz", () => {
+  it("Luna eşleştirme kararını kod çelişkisinde ikinci kez değiştirmeyiz", () => {
     const satir = { ...girdi, model: "A-123" };
-    expect(satirAramaCevabi(satir, kaynakCevabi({
-      eslesme_dayanagi: "kod", site_kodu: "B-999",
-    }))).toBeNull();
+    const kayit = { eslesme_dayanagi: "kod", site_kodu: "B-999" };
+    expect(satirAramaCevabi(satir, kaynakCevabi(kayit))?.ad).toBe("Siyah Pamuk Atlet");
+    expect(satirAramaCevabi(satir, kaynakCevabi({ ...kayit, eslesti: false }))).toBeNull();
   });
 
   it("resmî sayfada kod uyuşuyorsa eşleşme geçebilir", () => {
