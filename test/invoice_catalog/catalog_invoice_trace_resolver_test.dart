@@ -151,7 +151,6 @@ void main() {
         expect(tasarim.merchantApproved, isTrue);
         expect(tasarim.salePrice, 199);
         expect(tasarim.canUseQuantityAsStock, isTrue);
-
       },
     );
 
