@@ -48,6 +48,15 @@ vi.mock("@/lib/supabaseAdmin", () => ({
   getSupabaseAdmin: () => ({
     rpc: mocks.rpc,
     from: (tablo: string) => {
+      if (tablo === "invoice_jobs") {
+        return {
+          update: () => ({
+            eq: () => ({
+              eq: async () => ({ error: null }),
+            }),
+          }),
+        };
+      }
       if (tablo === "invoice_read_usage") {
         return {
           select: () => ({
