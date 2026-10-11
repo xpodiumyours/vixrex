@@ -194,7 +194,7 @@ describe("OpenRouter kaynak doğrulama", () => {
       const body = JSON.parse(String((fakeFetch.mock.calls[0]?.[1] as RequestInit).body));
       expect(body.tools.map((t: { type: string }) => t.type)).toEqual(["openrouter:web_search", "openrouter:web_fetch"]);
       expect(body.text.format.strict).toBe(true);
-      expect(body.input).toContain("invoice item.\nInvoice item brand:");
+      expect(body.input).toContain("Invoice item brand: Elit");
     } finally {
       vi.unstubAllGlobals();
       vi.unstubAllEnvs();

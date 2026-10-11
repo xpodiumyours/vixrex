@@ -656,7 +656,7 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     const govde = await cevap.json();
 
     expect(cevap.status).toBe(200);
-    expect(govde.belgeUyarisi).toContain("uyuşmuyor");
+    expect(govde.belgeUyarisi).toContain("Fatura tam okunamadı");
     expect(mocks.kaydet).toHaveBeenCalled();
   });
 
