@@ -103,48 +103,51 @@ void main() {
       },
     );
 
-    test('105 fatura ürünü iki partide kaydeder; satır kimliklerini korur', () async {
-      final gonderilenler = <int>[];
-      final servis = FaturaUrunKaydiServisi(
-        originOverride: 'https://vixrex-test.local',
-        httpClient: MockClient((request) async {
-          final govde = jsonDecode(request.body) as Map;
-          final urunler = govde['products'] as List;
-          gonderilenler.add(urunler.length);
-          return http.Response(
-            jsonEncode({
-              'tamam': true,
-              'yayinda': 0,
-              'taslak': urunler.length,
-              'hatali': 0,
-              'satirlar': List.generate(
-                urunler.length,
-                (i) => {
-                  'sira': i,
-                  'ad': 'Ürün',
-                  'durum': 'taslak',
-                  'id': 'urun-${(urunler[i] as Map)['satirSirasi']}',
-                  'kayit': 'yeni',
-                },
-              ),
-            }),
-            200,
-          );
-        }),
-      );
-      final sonuc = await servis.taslakKaydet(
-        satirlar: List.generate(105, (i) => ornekSatir(satirSirasi: i)),
-        storeSlug: 'deneme-vitrin',
-        editToken: 'token-1',
-      );
-      expect(sonuc.isSuccess, isTrue);
-      expect(gonderilenler, [100, 5]);
-      expect(
-        sonuc.data!.satirlar.map((s) => s.sira).toList(),
-        List.generate(105, (i) => i),
-      );
-      expect(sonuc.data!.taslak, 105);
-    });
+    test(
+      '105 fatura ürünü iki partide kaydeder; satır kimliklerini korur',
+      () async {
+        final gonderilenler = <int>[];
+        final servis = FaturaUrunKaydiServisi(
+          originOverride: 'https://vixrex-test.local',
+          httpClient: MockClient((request) async {
+            final govde = jsonDecode(request.body) as Map;
+            final urunler = govde['products'] as List;
+            gonderilenler.add(urunler.length);
+            return http.Response(
+              jsonEncode({
+                'tamam': true,
+                'yayinda': 0,
+                'taslak': urunler.length,
+                'hatali': 0,
+                'satirlar': List.generate(
+                  urunler.length,
+                  (i) => {
+                    'sira': i,
+                    'ad': 'Ürün',
+                    'durum': 'taslak',
+                    'id': 'urun-${(urunler[i] as Map)['satirSirasi']}',
+                    'kayit': 'yeni',
+                  },
+                ),
+              }),
+              200,
+            );
+          }),
+        );
+        final sonuc = await servis.taslakKaydet(
+          satirlar: List.generate(105, (i) => ornekSatir(satirSirasi: i)),
+          storeSlug: 'deneme-vitrin',
+          editToken: 'token-1',
+        );
+        expect(sonuc.isSuccess, isTrue);
+        expect(gonderilenler, [100, 5]);
+        expect(
+          sonuc.data!.satirlar.map((s) => s.sira).toList(),
+          List.generate(105, (i) => i),
+        );
+        expect(sonuc.data!.taslak, 105);
+      },
+    );
 
     test('stok onaylanmadıysa stok gönderilmez', () async {
       late http.BaseRequest yakalanan;
@@ -211,31 +214,34 @@ void main() {
       expect(sonuc.failure!.message, contains('Oturumun geçersiz'));
     });
 
-    test('slug veya düzenleme jetonu yoksa ya da satır boşsa ağa çıkmaz', () async {
-      var cagriSayisi = 0;
-      final servis = FaturaUrunKaydiServisi(
-        originOverride: 'https://vixrex-test.local',
-        httpClient: MockClient((request) async {
-          cagriSayisi++;
-          return http.Response('{}', 200);
-        }),
-      );
+    test(
+      'slug veya düzenleme jetonu yoksa ya da satır boşsa ağa çıkmaz',
+      () async {
+        var cagriSayisi = 0;
+        final servis = FaturaUrunKaydiServisi(
+          originOverride: 'https://vixrex-test.local',
+          httpClient: MockClient((request) async {
+            cagriSayisi++;
+            return http.Response('{}', 200);
+          }),
+        );
 
-      final jetonsuz = await servis.taslakKaydet(
-        satirlar: [ornekSatir()],
-        storeSlug: '',
-        editToken: '',
-      );
-      final satirsiz = await servis.taslakKaydet(
-        satirlar: const [],
-        storeSlug: 'deneme-vitrin',
-        editToken: 'token-1',
-      );
+        final jetonsuz = await servis.taslakKaydet(
+          satirlar: [ornekSatir()],
+          storeSlug: '',
+          editToken: '',
+        );
+        final satirsiz = await servis.taslakKaydet(
+          satirlar: const [],
+          storeSlug: 'deneme-vitrin',
+          editToken: 'token-1',
+        );
 
-      expect(jetonsuz.isFailure, isTrue);
-      expect(satirsiz.isFailure, isTrue);
-      expect(cagriSayisi, 0);
-    });
+        expect(jetonsuz.isFailure, isTrue);
+        expect(satirsiz.isFailure, isTrue);
+        expect(cagriSayisi, 0);
+      },
+    );
     test('eksik kategori satiri reddedilir ve yayin kimligi uretmez', () async {
       late Map<String, dynamic> sent;
       final servis = FaturaUrunKaydiServisi(
