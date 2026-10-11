@@ -3,7 +3,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { sahipYetkisi } from "@/lib/faturaYetki";
 import { eslesmeyenSatir, siteKartiniUygula, type HamFaturaSatiri } from "@/lib/faturaEslestir";
 import { satirKanitKayitlari } from "@/lib/faturaIslemKaydi";
-import { ArastirmaHatasi, markaSitesiniBul, satirSitesindeAra } from "@/lib/faturaGoru";
+import { ArastirmaHatasi, satirSitesindeAra } from "@/lib/faturaGoru";
 import { ARAMA_UCETI_USD, aramaCagrisiSigarMi, bugunkuMaliyetUsd, kullanimKaydet } from "@/lib/faturaMaliyet";
 
 export const dynamic = "force-dynamic";
@@ -114,44 +114,31 @@ export async function POST(request: NextRequest) {
   if (kimlikDegisti) {
     // Re-research ONLY this changed invoice item. Luna alone determines manufacturer/product/photos.
     try {
-      let harcama = await bugunkuMaliyetUsd(admin, yetki.storeId);
+      const harcama = await bugunkuMaliyetUsd(admin, yetki.storeId);
       if (!aramaCagrisiSigarMi(harcama)) throw new Error("KOTA_DOLDU");
-      const tedarikci = String(is.data.supplier_name ?? "");
-      const bulunan = await markaSitesiniBul({
-        marka: duzeltilmis.marka?.trim() ?? "",
-        tedarikci, tedarikciSitesi: String(is.data.supplier_site ?? ""),
-        model: duzeltilmis.model, ad: duzeltilmis.ad, barkod: duzeltilmis.barkod, hamSatir: duzeltilmis.hamSatir,
+      // Luna determines the manufacturer and official product page in one research request.
+      const arama = await satirSitesindeAra({
+        alan: String(is.data.supplier_site ?? ""),
+        model: duzeltilmis.model, ad: duzeltilmis.ad || duzeltilmis.hamSatir || "",
+        barkod: duzeltilmis.barkod, marka: duzeltilmis.marka,
+        varyant: duzeltilmis.varyant, beden: duzeltilmis.beden,
       });
-      const aramaMaliyeti = (bulunan.maliyet ?? 0) + ARAMA_UCETI_USD;
-      await kullanimKaydet(admin, yetki.storeId, { ...bulunan, maliyet: aramaMaliyeti });
-      harcama += aramaMaliyeti;
-      if (!bulunan.alan) {
-        siteUyari = "Luna bu ürünün resmî üreticisini bulamadı.";
-      } else if (!aramaCagrisiSigarMi(harcama)) {
-        siteUyari = "Araştırma için günlük maliyet sınırı doldu.";
+      const maliyet = (arama.maliyet ?? 0) + ARAMA_UCETI_USD;
+      await kullanimKaydet(admin, yetki.storeId, { ...arama, maliyet });
+      if (arama.sayfa && arama.ad && arama.dayanak) {
+        siteEslesti = true;
+        siteAd = arama.ad;
+        siteMarka = arama.marka ?? "";
+        siteDayanak = arama.dayanak;
+        siteAciklama = arama.aciklama;
+        siteGorsel = arama.gorsel;
+        siteGorseller = arama.gorseller ?? [];
+        siteKategori = arama.kategori ?? "";
+        siteOzellikler = arama.ozellikler ?? [];
+        siteUrunVaryantlari = arama.urunVaryantlari ?? [];
+        siteSayfa = arama.sayfa;
       } else {
-        const arama = await satirSitesindeAra({
-          alan: bulunan.alan, model: duzeltilmis.model, ad: duzeltilmis.ad || duzeltilmis.hamSatir || "",
-          barkod: duzeltilmis.barkod, marka: duzeltilmis.marka,
-          varyant: duzeltilmis.varyant, beden: duzeltilmis.beden,
-        });
-        const maliyet = (arama.maliyet ?? 0) + ARAMA_UCETI_USD;
-        await kullanimKaydet(admin, yetki.storeId, { ...arama, maliyet });
-        if (arama.sayfa && arama.ad && arama.dayanak) {
-          siteEslesti = true;
-          siteAd = arama.ad;
-          siteMarka = arama.marka ?? "";
-          siteDayanak = arama.dayanak;
-          siteAciklama = arama.aciklama;
-          siteGorsel = arama.gorsel;
-          siteGorseller = arama.gorseller ?? [];
-          siteKategori = arama.kategori ?? "";
-          siteOzellikler = arama.ozellikler ?? [];
-          siteUrunVaryantlari = arama.urunVaryantlari ?? [];
-          siteSayfa = arama.sayfa;
-        } else {
-          siteUyari = "Luna resmî üretici ürününü eşleştiremedi.";
-        }
+        siteUyari = "Luna resmî üretici ürününü eşleştiremedi.";
       }
     } catch (err) {
       if (err instanceof ArastirmaHatasi) {
