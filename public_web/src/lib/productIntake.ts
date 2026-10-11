@@ -242,7 +242,7 @@ export async function urunGirdisiniHazirla(args: {
     : onbellek?.has(categoryId)
       ? onbellek.get(categoryId) ?? null
       : await categoryTemplateKey(admin, storeId, categoryId);
-  if (onbellek && !onbellek.has(categoryId)) onbellek.set(categoryId, templateKey);
+  if (onbellek && categoryId && !onbellek.has(categoryId)) onbellek.set(categoryId, templateKey);
   if (!templateKey) {
     return { durum: "reddedildi", sebep: "Kategori bu vitrine ait değil veya ürün tipi geçersiz." };
   }
