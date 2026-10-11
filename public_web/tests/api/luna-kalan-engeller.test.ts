@@ -1,33 +1,17 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import sharp from "sharp";
-import { markaSitesiniBul, satirAramaIstegi, CIKTI_TOKEN_TAVANI } from "@/lib/faturaGoru";
+import { satirAramaIstegi, CIKTI_TOKEN_TAVANI } from "@/lib/faturaGoru";
 import { kaynakGorseliniDogrula, kaynakGorselleriniHazirla } from "@/lib/faturaGorsel";
 
 const resolveHost = async () => ["8.8.8.8"];
 const kaynak = "https://firma.example/foto";
 
 describe("Luna'nın kartına kalan aktarım engelleri", () => {
-  it.each(["apex.com", "phoenix.com", "vixrex.com"])("%s üretici alanı kodun parça filtresiyle elenmez", async (alan) => {
-    const fakeFetch = vi.fn(async (_url: string, _init: RequestInit) => {
-      void _url;
-      void _init;
-      return new Response(JSON.stringify({
-      status: "completed", output_text: JSON.stringify({
-        resmi_site: `https://${alan}`, kanit_sayfa: `https://${alan}/hakkimizda`,
-        marka_sahibi_dogrulandi: true,
-      }),
-    }));
-    });
-    vi.stubEnv("OPENROUTER_API_KEY", "test-key");
-    vi.stubGlobal("fetch", fakeFetch);
-    try {
-      expect((await markaSitesiniBul({ marka: "Üretici", tedarikci: "Firma", tedarikciSitesi: "", model: "M1", ad: "Ürün" })).alan).toBe(alan);
-      expect(satirAramaIstegi({ alan, model: "M1", ad: "Ürün", barkod: "" })?.max_output_tokens).toBe(CIKTI_TOKEN_TAVANI);
-      expect(JSON.parse(fakeFetch.mock.calls[0][1].body as string).max_output_tokens).toBe(CIKTI_TOKEN_TAVANI);
-    } finally {
-      vi.unstubAllGlobals();
-      vi.unstubAllEnvs();
-    }
+  it.each(["apex.com", "phoenix.com", "vixrex.com"])("%s alanı araştırmada zorunlu filtre olmaz", (alan) => {
+    const istek = satirAramaIstegi({ alan, model: "M1", ad: "Ürün", barkod: "" });
+    expect(istek?.max_output_tokens).toBe(CIKTI_TOKEN_TAVANI);
+    expect(istek?.tools.every((tool) => !("allowed_domains" in tool.parameters))).toBe(true);
+    expect(istek?.input).toContain(alan);
   });
 
   it.each(["avif", "svg"])("%s kaynağı gerçek webp dosyası olarak aktarılır", async (format) => {
