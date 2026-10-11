@@ -128,6 +128,11 @@ class OcrController extends ChangeNotifier {
         }
         _isProcessing = false;
         notifyListeners();
+        // Luna's invoice cards are saved as hidden drafts without merchant approval.
+        // Merchant approval is reserved for the separate publication action.
+        if (catalog.invoiceDrafts.isNotEmpty) {
+          unawaited(_faturaTaslaklariniKaydet(catalog.products));
+        }
       },
       failure: (failure) {
         _errorMessage = failure.message;
