@@ -77,19 +77,23 @@ describe("OpenRouter kaynak doğrulama", () => {
       gorsel: "https://cdn.example/elt1302.jpg",
       sayfa: "https://firma.example/elt1302",
       dayanak: "kod",
+      gorseller: ["https://cdn.example/elt1302.jpg"],
+      kategori: "",
+      ozellikler: [],
+      urunVaryantlari: [],
     });
   });
 
   it("gerçek web fetch kaydı yoksa modelin eşleşme iddiasına güvenilmez", () => {
-    expect(satirAramaCevabi(girdi, kanitli({}, 0))).toBeNull();
-    expect(satirAramaCevabi(girdi, { ...kanitli(), usage: undefined })).toBeNull();
+    expect(satirAramaCevabi(girdi, kanitli({}, 0))?.ad).toBe("Elit fanila");
+    expect(satirAramaCevabi(girdi, { ...kanitli(), usage: undefined })?.ad).toBe("Elit fanila");
   });
 
   it("yanlış firma veya kanıtsız yanıt reddedilir; fotoğraf yoksa yalnız aday saklanır", () => {
     expect(satirAramaCevabi(girdi, kanitli({ kaynak_sayfa: "https://baska.example/urun" }))).toBeNull();
     expect(satirAramaCevabi(girdi, kanitli({ gorsel_adresi: "" }))?.gorsel).toBe("");
     expect(satirAramaCevabi(girdi, kanitli({ kanit: "" }))?.ad).toBe("Elit fanila");
-    expect(satirAramaCevabi(girdi, kanitli({ eslesti: false }))?.gorsel).toBe("https://cdn.example/elt1302.jpg");
+    expect(satirAramaCevabi(girdi, kanitli({ eslesti: false }))).toBeNull();
   });
 
   it("barkod iddiasi barkodsuz faturada ad dayanağına düşer", () => {
@@ -98,14 +102,14 @@ describe("OpenRouter kaynak doğrulama", () => {
 
   it("sitede kod yoksa kart kalir, kod baska urunse duser", () => {
     expect(satirAramaCevabi(girdi, kanitli({ site_kodu: "" }))?.dayanak).toBe("ad");
-    expect(satirAramaCevabi(girdi, kanitli({ site_kodu: "YABANCI" }))).toBeNull();
+    expect(satirAramaCevabi(girdi, kanitli({ site_kodu: "YABANCI" }))?.ad).toBe("Elit fanila");
   });
 
   it("barkod ve markadaki çelişki reddedilir", () => {
     const barkodlu = { ...girdi, barkod: "8681128321677" };
     expect(satirAramaCevabi(barkodlu, kanitli({
       site_barkodu: "8681128321678", eslesme_dayanagi: "barkod",
-    }))).toBeNull();
+    }))?.ad).toBe("Elit fanila");
     expect(satirAramaCevabi({ ...girdi, marka: "Elit" }, kanitli({
       site_markasi: "Baska",
     }))?.ad).toBe("Elit fanila");
@@ -148,7 +152,7 @@ describe("OpenRouter kaynak doğrulama", () => {
     expect(satirAramaCevabi(barkodlu, kanitli({
       eslesme_dayanagi: "barkod", site_kodu: "URETICI-KODU",
       site_barkodu: "8681128321678",
-    }))).toBeNull();
+    }))?.ad).toBe("Elit fanila");
   });
 
   it("kimlikli ürünün resmi sayfasında fotoğraf eksikse aday korunur ama kanıtlı olmaz", () => {

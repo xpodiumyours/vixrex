@@ -372,6 +372,10 @@ export async function POST(request: NextRequest) {
       }
       let siteAciklama = "";
       let siteGorsel = "";
+      let siteGorseller: string[] = [];
+      let siteKategori = "";
+      let siteOzellikler: Array<{ key: string; label: string; value: string }> = [];
+      let siteUrunVaryantlari: Array<{ id: string; secenekler: Array<{ key: string; value: string }>; barkod: string; gorseller: string[] }> = [];
       let siteSayfa = "";
       let siteAd = "";
       let siteDayanak: "kod" | "barkod" | "ad" | undefined;
@@ -444,6 +448,10 @@ export async function POST(request: NextRequest) {
             siteAciklama = arama.aciklama;
             siteSayfa = arama.sayfa;
             siteGorsel = arama.gorsel;
+            siteGorseller = arama.gorseller ?? [];
+            siteKategori = arama.kategori ?? "";
+            siteOzellikler = arama.ozellikler ?? [];
+            siteUrunVaryantlari = arama.urunVaryantlari ?? [];
           }
           if (!arama.sayfa) {
             siteUyari = "Resmî ürün kimliği henüz doğrulanamadı.";
@@ -500,6 +508,10 @@ export async function POST(request: NextRequest) {
         siteDayanak,
         siteAciklama,
         siteGorsel,
+        siteGorseller,
+        siteKategori,
+        siteOzellikler,
+        siteUrunVaryantlari,
         siteSayfa,
         siteFotografKaniti,
         sayfaDogrulandi: Boolean(siteFotografKaniti),

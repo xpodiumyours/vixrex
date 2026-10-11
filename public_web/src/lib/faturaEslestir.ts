@@ -27,6 +27,10 @@ export interface HamFaturaSatiri {
   guven: number;
   siteAciklama?: string;
   siteGorsel?: string;
+  siteGorseller?: string[];
+  siteKategori?: string;
+  siteOzellikler?: Array<{ key: string; label: string; value: string }>;
+  siteUrunVaryantlari?: Array<{ id: string; secenekler: Array<{ key: string; value: string }>; barkod: string; gorseller: string[] }>;
   siteSayfa?: string;
   siteAd?: string;
   siteDayanak?: "kod" | "barkod" | "ad";
@@ -50,6 +54,9 @@ export interface KatalogBilgisi {
   aciklama: string;
   gorseller: string[];
   gorselAdaylari: string[];
+  kategori?: string;
+  ozellikler?: Array<{ key: string; label: string; value: string }>;
+  urunVaryantlari?: Array<{ id: string; secenekler: Array<{ key: string; value: string }>; barkod: string; gorseller: string[] }>;
   fotografKaniti?: FotografKaniti;
   varyantlar?: Array<{ ad: string; barkod: string; gorseller: string[] }>;
   kaynak: string;
@@ -86,6 +93,7 @@ export function eslesmeyenSatir(satir: HamFaturaSatiri): EslesmisFaturaSatiri {
 export function siteKartiniUygula(satir: EslesmisFaturaSatiri): EslesmisFaturaSatiri {
   const aciklama = (satir.siteAciklama ?? "").trim();
   const gorsel = (satir.siteGorsel ?? "").trim();
+  const gorseller = [...new Set([gorsel, ...(satir.siteGorseller ?? [])].filter((adres) => adres.startsWith("https://")))];
   const sayfa = (satir.siteSayfa ?? "").trim();
   const fotografKaniti = satir.siteFotografKaniti;
   if (
@@ -104,8 +112,11 @@ export function siteKartiniUygula(satir: EslesmisFaturaSatiri): EslesmisFaturaSa
         resmiAd: (satir.siteAd ?? "").trim() || satir.katalog?.resmiAd || satir.ad,
         marka: satir.katalog?.marka || satir.marka || "",
         aciklama,
-        gorseller: [gorsel],
-        gorselAdaylari: [gorsel],
+        gorseller,
+        gorselAdaylari: gorseller,
+        kategori: satir.siteKategori ?? "",
+        ozellikler: satir.siteOzellikler ?? [],
+        urunVaryantlari: satir.siteUrunVaryantlari ?? [],
         fotografKaniti,
         kaynak: sayfa,
       },
@@ -113,13 +124,16 @@ export function siteKartiniUygula(satir: EslesmisFaturaSatiri): EslesmisFaturaSa
   }
   if (satir.sonuc !== "kanitli" || !satir.katalog) return satir;
   const eldeki = satir.katalog.gorseller.filter((adres) => adres.startsWith("https://"));
-  const gelen = gorsel.startsWith("https://") ? [gorsel] : eldeki;
+  const gelen = gorseller.length ? gorseller : eldeki;
   return {
     ...satir,
     sonuc: "eksik",
     katalog: {
       ...satir.katalog,
       aciklama: aciklama || satir.katalog.aciklama,
+      kategori: satir.siteKategori ?? satir.katalog.kategori,
+      ozellikler: satir.siteOzellikler ?? satir.katalog.ozellikler,
+      urunVaryantlari: satir.siteUrunVaryantlari ?? satir.katalog.urunVaryantlari,
       gorseller: gelen,
       gorselAdaylari: gelen.length > 0 ? gelen : satir.katalog.gorselAdaylari,
     },
@@ -139,7 +153,7 @@ export function siteAdayiniKoru(satir: EslesmisFaturaSatiri): EslesmisFaturaSati
   const dayanak = satir.siteDayanak;
   if (!kaynak.startsWith("https://") || !resmiAd || !dayanak) return satir;
   const gorselAdayi = (satir.siteGorsel ?? "").trim();
-  const gorselListesi = gorselAdayi.startsWith("https://") ? [gorselAdayi] : [];
+  const gorselListesi = [...new Set([gorselAdayi, ...(satir.siteGorseller ?? [])].filter((adres) => adres.startsWith("https://")))];
   return {
     ...satir,
     sonuc: "eksik",
@@ -153,6 +167,9 @@ export function siteAdayiniKoru(satir: EslesmisFaturaSatiri): EslesmisFaturaSati
       aciklama: (satir.siteAciklama ?? "").trim(),
       gorseller: gorselListesi,
       gorselAdaylari: gorselListesi,
+      kategori: satir.siteKategori ?? "",
+      ozellikler: satir.siteOzellikler ?? [],
+      urunVaryantlari: satir.siteUrunVaryantlari ?? [],
       kaynak,
     },
     uyari: satir.uyari || "Ürün sayfası adayı bulundu; fotoğraf kartta.",

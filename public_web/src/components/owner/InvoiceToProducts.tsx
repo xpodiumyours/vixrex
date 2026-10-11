@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import FirmaIzniPaneli from "@/components/owner/FirmaIzniPaneli";
-import { kategoriSec, otomatikOzellikler, faturaVaryantlari } from "@/lib/faturaOtomatikDoldur";
+import { faturaVaryantlari } from "@/lib/faturaOtomatikDoldur";
 import { otomatikTaslakAdayi } from "@/lib/faturaTaslakAdayi";
 import {
   KART_DURUM_ETIKETI,
@@ -52,6 +52,9 @@ export interface KatalogBilgisi {
   aciklama: string;
   gorseller: string[];
   gorselAdaylari: string[];
+  kategori?: string;
+  ozellikler?: Array<{ key: string; label: string; value: string }>;
+  urunVaryantlari?: Array<{ id: string; secenekler: Array<{ key: string; value: string }>; barkod: string; gorseller: string[] }>;
   varyantlar?: Array<{ ad: string; barkod: string; gorseller: string[] }>;
   kaynak: string;
 }
@@ -226,23 +229,28 @@ function faturaUrunIstekGirdisi(
               yayinIstegi,
               purchasePriceAmount: satir.alisBirimFiyat ?? undefined,
               metadata: (() => {
-                const sablon = categories.find((kategori) => kategori.id === satir.kategoriId)
-                  ?.product_template_key;
-                const nitelikler = otomatikOzellikler(
-                  { ad: satir.ad, resmiAd: katalog?.resmiAd, varyant: satir.varyant, beden: satir.beden },
-                  sablon || "generic",
-                );
+                const nitelikler = [...(katalog?.ozellikler ?? [])];
+                if (katalog?.kategori && !nitelikler.some((ozellik) => ozellik.key === "category")) {
+                  nitelikler.push({ key: "category", label: "Kategori", value: katalog.kategori });
+                }
                 if (!satir.model && nitelikler.length === 0) return undefined;
                 return {
                   ...(satir.model ? { identifiers: { sku: satir.model } } : {}),
                   ...(nitelikler.length > 0 ? { attributes: nitelikler } : {}),
                 };
               })(),
-              variants: faturaVaryantlari({
-                model: satir.model || String(sira), barkod: satir.barkod,
-                varyant: satir.varyant, beden: satir.beden,
-                stok: stokSayisi(satir.stok), kaynakVaryantlar: katalog?.varyantlar,
-              }),
+              variants: katalog?.urunVaryantlari?.length
+                ? katalog.urunVaryantlari.map((varyant) => ({
+                    id: varyant.id,
+                    options: Object.fromEntries(varyant.secenekler.map((secenek) => [secenek.key, secenek.value])),
+                    barcode: varyant.barkod || undefined,
+                    imageUrls: varyant.gorseller,
+                  }))
+                : faturaVaryantlari({
+                    model: satir.model || String(sira), barkod: satir.barkod,
+                    varyant: satir.varyant, beden: satir.beden,
+                    stok: stokSayisi(satir.stok), kaynakVaryantlar: katalog?.varyantlar,
+                  }),
               sortOrder: sira,
             };
 }
@@ -364,13 +372,13 @@ export default function InvoiceToProducts({
 
   const satirlariHazirla = useCallback(
     (okunan: FaturaOkumaSonucu): SatirDurumu[] =>
-      okunan.satirlar.map((satir) =>
-        faturaSatiriDurumunuHazirla(satir,
-            kategoriSec(
-              { ad: satir.ad, marka: satir.marka, resmiAd: satir.katalog?.resmiAd },
-              categories,
-            )),
-      ),
+      okunan.satirlar.map((satir) => {
+        const lunaKategori = satir.katalog?.kategori?.normalize("NFKC").trim().toLocaleLowerCase("tr-TR");
+        const kategoriId = lunaKategori
+          ? categories.find((kategori) => kategori.name.normalize("NFKC").trim().toLocaleLowerCase("tr-TR") === lunaKategori)?.id ?? ""
+          : "";
+        return faturaSatiriDurumunuHazirla(satir, kategoriId);
+      }),
     [categories],
   );
 

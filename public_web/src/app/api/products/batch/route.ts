@@ -16,7 +16,6 @@ import {
 } from "@/lib/faturaUrunBaglantisi";
 import { urunGirdisiniHazirla } from "@/lib/productIntake";
 import { durumGecerliMi, yayinEksikleri } from "@/lib/faturaKartDurumu";
-import { otomatikOzellikler } from "@/lib/faturaOtomatikDoldur";
 import { FATURA_MIN_PRODUCT_IMAGES, yonetilenUrunGorseliMi } from "@/lib/productImagePolicy";
 import { kaynakGorselleriniHazirla } from "@/lib/faturaGorsel";
 import { tuketicideGorunenler, vitrinOnbelleginiYenile } from "@/lib/vitrinYayinDogrula";
@@ -191,6 +190,7 @@ export async function POST(request: NextRequest) {
       storeName: store.name,
       govde: satirGovdesi,
       gorselPolitikasi: "toplu",
+      lunaVaryantlariniKoru: (ham.sourceType || ham.source_type || "").trim() === FATURA_KAYNAGI,
       enAzGorsel:
         (ham.sourceType || ham.source_type || "").trim() === FATURA_KAYNAGI
           ? FATURA_MIN_PRODUCT_IMAGES
@@ -237,22 +237,6 @@ export async function POST(request: NextRequest) {
       hazirlik.girdi.name = katalog.resmiAd;
       hazirlik.girdi.description = typeof katalog.aciklama === "string" ? katalog.aciklama : "";
       hazirlik.girdi.brand = typeof katalog.marka === "string" ? katalog.marka : null;
-      const sablonAnahtari = hazirlik.girdi.metadata.templateKey;
-      const nitelikler = otomatikOzellikler(
-        {
-          ad: katalog.resmiAd,
-          aciklama: hazirlik.girdi.description,
-          varyant: dogrulanmis.varyant,
-          beden: dogrulanmis.beden,
-        },
-        sablonAnahtari,
-      );
-      const mevcut = hazirlik.girdi.metadata.attributes ?? [];
-      const anahtarlar = new Set(mevcut.map((ozellik) => ozellik.key));
-      hazirlik.girdi.metadata = {
-        ...hazirlik.girdi.metadata,
-        attributes: [...mevcut, ...nitelikler.filter((ozellik) => !anahtarlar.has(ozellik.key))],
-      };
     }
     const kartDurumu = faturaKaynakli ? (dogrulanmis?.sonuc ?? "eksik") : iddiaDurumu;
     const yayinIstegi = ham.yayinIstegi === true;

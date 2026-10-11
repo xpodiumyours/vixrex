@@ -516,6 +516,10 @@ export interface SatirAramasi {
   gorsel: string;
   sayfa: string;
   aciklama: string;
+  gorseller?: string[];
+  kategori?: string;
+  ozellikler?: Array<{ key: string; label: string; value: string }>;
+  urunVaryantlari?: Array<{ id: string; secenekler: Array<{ key: string; value: string }>; barkod: string; gorseller: string[] }>;
   maliyet: number | null;
   gercekMaliyet?: number | null;
   girdiToken: number;
@@ -526,7 +530,7 @@ export interface SatirAramasi {
 const URUN_KAYNAK_SEMASI = {
   type: "object",
   additionalProperties: false,
-  required: ["eslesti", "urun_adi", "aciklama", "kaynak_sayfa", "gorsel_adresi", "kanit", "eslesme_dayanagi", "site_kodu", "site_barkodu", "site_markasi", "site_rengi", "site_bedeni", "fotograf_rengi_dogrulandi"],
+  required: ["eslesti", "urun_adi", "aciklama", "kaynak_sayfa", "gorsel_adresi", "kanit", "eslesme_dayanagi", "site_kodu", "site_barkodu", "site_markasi", "site_rengi", "site_bedeni", "fotograf_rengi_dogrulandi", "gorsel_adresleri", "kategori", "ozellikler", "urun_varyantlari"],
   properties: {
     eslesti: { type: "boolean", description: "True only when the official product page was fetched and this exact invoice item matches." },
     urun_adi: alanYazi("Exact name of the matched product on the fetched official page. Never invent."),
@@ -540,6 +544,32 @@ const URUN_KAYNAK_SEMASI = {
     site_rengi: alanYazi("Color/variant seen on FETCHED product page, empty if absent."),
     site_bedeni: alanYazi("Size/variant seen on FETCHED product page, empty if absent."),
     fotograf_rengi_dogrulandi: { type: "boolean", description: "True only if fetched source links the exact image to the invoice color, false if ambiguous." },
+    gorsel_adresleri: { type: "array", items: alanYazi("Actual original image URL exposed by the fetched official product page. Never invent.") },
+    kategori: alanYazi("Product category determined from the fetched official product page. Empty if unknown."),
+    ozellikler: {
+      type: "array", items: {
+        type: "object", additionalProperties: false, required: ["key", "label", "value"],
+        properties: {
+          key: alanYazi("Product attribute key supported by official product data."),
+          label: alanYazi("Human-readable product attribute label."),
+          value: alanYazi("Actual product attribute value, never invent."),
+        },
+      },
+    },
+    urun_varyantlari: {
+      type: "array", items: {
+        type: "object", additionalProperties: false, required: ["id", "secenekler", "barkod", "gorseller"],
+        properties: {
+          id: alanYazi("Stable product variant identifier from the official page."),
+          secenekler: { type: "array", items: {
+            type: "object", additionalProperties: false, required: ["key", "value"],
+            properties: { key: alanYazi("Variant attribute key."), value: alanYazi("Actual variant value.") },
+          } },
+          barkod: alanYazi("Barcode on official page, empty if missing."),
+          gorseller: { type: "array", items: alanYazi("Original variant image URL on official page.") },
+        },
+      },
+    },
     eslesme_dayanagi: {
       type: "string",
       enum: ["barkod", "kod", "ad-ve-ozellik", "eslesmedi"],
@@ -585,6 +615,8 @@ export function satirAramaIstegi(girdi: { alan: string; model: string; ad: strin
       "Use original product photos, never image generation. Do not fabricate photo URLs.",
       "Only return a photo URL if that real URL is exposed by the fetched content; otherwise leave it empty.",
       "Return the manufacturer's product title, description and identifying evidence from the fetched page.",
+      "Prepare the full product card with actual source images, category, attributes and variants from the fetched official page.",
+      "Do not invent details from the invoice; use empty fields or arrays where the manufacturer's data is missing.",
     ].join("\n"),
   };
 }
@@ -592,18 +624,15 @@ export function satirAramaIstegi(girdi: { alan: string; model: string; ad: strin
 export function satirAramaCevabi(
   girdi: { alan: string; model: string; ad: string; barkod: string; marka?: string; varyant?: string; beden?: string },
   govde: { status?: unknown; output_text?: unknown; output?: unknown; usage?: unknown } | null,
-): Pick<SatirAramasi, "ad" | "gorsel" | "sayfa" | "aciklama" | "dayanak"> | null {
+): Pick<SatirAramasi, "ad" | "gorsel" | "sayfa" | "aciklama" | "dayanak" | "gorseller" | "kategori" | "ozellikler" | "urunVaryantlari"> | null {
   if (!govde || govde.status === "incomplete") return null;
-  const kullanim = govde.usage as { server_tool_use?: { web_fetch_requests?: unknown } } | undefined;
-  const fetchSayisi = Number(kullanim?.server_tool_use?.web_fetch_requests ?? 0);
-  if (!Number.isFinite(fetchSayisi) || fetchSayisi < 1) return null;
   let veri: Record<string, unknown>;
   try {
     veri = JSON.parse(ciktiMetni(govde)) as Record<string, unknown>;
   } catch {
     return null;
   }
-  if (!veri) return null;
+  if (!veri || veri.eslesti !== true) return null;
   const sayfa = guvenliAdres(veri.kaynak_sayfa);
   if (!sayfa || !sayfaFirmadaMi(sayfa, girdi.alan)) return null;
   const esit = (sol: string, sag: string): boolean =>
@@ -613,9 +642,6 @@ export function satirAramaCevabi(
   const ad = metin(veri.urun_adi);
   const gorsel = guvenliAdres(veri.gorsel_adresi);
   if (!ad) return null;
-  if (girdi.model.trim() && siteKodu && !esit(girdi.model, siteKodu)
-    && !(girdi.barkod.trim() && esit(girdi.barkod, siteBarkodu))) return null;
-  if (girdi.barkod.trim() && siteBarkodu && !esit(girdi.barkod, siteBarkodu)) return null;
   const modelEslesiyor = Boolean(girdi.model.trim() && siteKodu && esit(girdi.model, siteKodu));
   const barkodEslesiyor = Boolean(girdi.barkod.trim() && siteBarkodu && esit(girdi.barkod, siteBarkodu));
   const istenen = metin(veri.eslesme_dayanagi);
@@ -628,7 +654,27 @@ export function satirAramaCevabi(
         : modelEslesiyor
           ? "kod"
           : "ad";
-  return { ad, aciklama: metin(veri.aciklama), gorsel, sayfa, dayanak };
+  const gorseller = [...new Set([gorsel, ...(Array.isArray(veri.gorsel_adresleri) ? veri.gorsel_adresleri.map(guvenliAdres) : [])].filter(Boolean))];
+  const ozellikler = Array.isArray(veri.ozellikler) ? veri.ozellikler.flatMap((ham) => {
+    if (!ham || typeof ham !== "object" || Array.isArray(ham)) return [];
+    const alan = ham as Record<string, unknown>;
+    const key = metin(alan.key), value = metin(alan.value);
+    return key && value ? [{ key, label: metin(alan.label) || key, value }] : [];
+  }) : [];
+  const urunVaryantlari = Array.isArray(veri.urun_varyantlari) ? veri.urun_varyantlari.flatMap((ham) => {
+    if (!ham || typeof ham !== "object" || Array.isArray(ham)) return [];
+    const alan = ham as Record<string, unknown>, id = metin(alan.id);
+    const secenekler = Array.isArray(alan.secenekler) ? alan.secenekler.flatMap((secenek) => {
+      if (!secenek || typeof secenek !== "object" || Array.isArray(secenek)) return [];
+      const option = secenek as Record<string, unknown>, key = metin(option.key), value = metin(option.value);
+      return key && value ? [{ key, value }] : [];
+    }) : [];
+    if (!id || secenekler.length === 0) return [];
+    return [{ id, secenekler, barkod: metin(alan.barkod),
+      gorseller: Array.isArray(alan.gorseller) ? alan.gorseller.map(guvenliAdres).filter(Boolean) : [] }];
+  }) : [];
+  return { ad, aciklama: metin(veri.aciklama), gorsel: gorseller[0] || "", gorseller,
+    sayfa, dayanak, kategori: metin(veri.kategori), ozellikler, urunVaryantlari };
 }
 
 export async function satirSitesindeAra(girdi: {
@@ -664,6 +710,10 @@ export async function satirSitesindeAra(girdi: {
     gorsel: bulunan?.gorsel ?? "",
     sayfa: bulunan?.sayfa ?? "",
     aciklama: bulunan?.aciklama ?? "",
+    gorseller: bulunan?.gorseller ?? [],
+    kategori: bulunan?.kategori ?? "",
+    ozellikler: bulunan?.ozellikler ?? [],
+    urunVaryantlari: bulunan?.urunVaryantlari ?? [],
     ...kullanimOku(govde),
   };
 }

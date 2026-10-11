@@ -198,6 +198,7 @@ export async function urunGirdisiniHazirla(args: {
   govde: Record<string, unknown>;
   gorselPolitikasi?: "sahip" | "toplu";
   enAzGorsel?: number;
+  lunaVaryantlariniKoru?: boolean;
   sablonOnbellegi?: Map<string, string | null>;
 }): Promise<UrunGirdiSonucu> {
   const { admin, storeId, storeName, govde } = args;
@@ -247,7 +248,9 @@ export async function urunGirdisiniHazirla(args: {
     return { durum: "reddedildi", sebep: "Ürün detayları kategori tipiyle uyuşmuyor." };
   }
 
-  const variants = variantsForTemplate(govde.variants, templateKey, imageUrls);
+  const variants = args.lunaVaryantlariniKoru === true
+    ? normalizeProductVariants(govde.variants)
+    : variantsForTemplate(govde.variants, templateKey, imageUrls);
   const barcode = isService ? null : cleanString(govde.barcode);
   const brand = isService ? null : markaVeyaMagazaAdi(govde.brand, templateKey, storeName);
 
