@@ -59,7 +59,10 @@ class OcrController extends ChangeNotifier {
     if (published != null &&
         published.slug.trim().isNotEmpty &&
         published.editToken.trim().isNotEmpty) {
-      return (slug: published.slug.trim(), editToken: published.editToken.trim());
+      return (
+        slug: published.slug.trim(),
+        editToken: published.editToken.trim(),
+      );
     }
     if (_invoiceDraftSlug.isNotEmpty && _invoiceDraftEditToken.isNotEmpty) {
       return (slug: _invoiceDraftSlug, editToken: _invoiceDraftEditToken);
@@ -79,13 +82,16 @@ class OcrController extends ChangeNotifier {
         editToken: token,
       );
       if (saved.isFailure) {
-        _errorMessage = saved.failure?.message ?? 'Vitrin taslağı oluşturulamadı.';
+        _errorMessage =
+            saved.failure?.message ?? 'Vitrin taslağı oluşturulamadı.';
         return null;
       }
       final draft = saved.data!;
       _invoiceDraftSlug = draft.slug.trim();
       _invoiceDraftEditToken = draft.editToken.trim();
-      if (_invoiceDraftSlug.isEmpty || _invoiceDraftEditToken.isEmpty) return null;
+      if (_invoiceDraftSlug.isEmpty || _invoiceDraftEditToken.isEmpty) {
+        return null;
+      }
       editor.data.slug = _invoiceDraftSlug;
       await editor.saveLocally();
       return (slug: _invoiceDraftSlug, editToken: _invoiceDraftEditToken);
