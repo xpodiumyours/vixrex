@@ -52,6 +52,14 @@ describe("Luna ürün araştırma kararının korunması", () => {
     }))?.dayanak).toBe("kod");
   });
 
+  it("yardımcı dayanak alanı Luna'nın eşleşme kararını değiştirmez", () => {
+    const kayit = { eslesme_dayanagi: "eslesmedi" };
+    const sonuc = satirAramaCevabi(girdi, kaynakCevabi(kayit));
+    expect(sonuc?.ad).toBe("Siyah Pamuk Atlet");
+    expect(sonuc?.gorsel).toBe("https://cdn.example/atlet.jpg");
+    expect(satirAramaCevabi(girdi, kaynakCevabi({ ...kayit, eslesti: false }))).toBeNull();
+  });
+
   it("kod yoksa aynı ad ile iki kaynak özelliği birlikte aranır", () => {
     expect(satirAramaCevabi(girdi, kaynakCevabi())?.dayanak).toBe("ad");
   });

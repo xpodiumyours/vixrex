@@ -370,7 +370,7 @@ export function satirAramaCevabi(
   if (!sayfa) return null;
   const ad = metin(veri.urun_adi);
   const gorsel = guvenliAdres(veri.gorsel_adresi);
-  if (!ad || veri.eslesme_dayanagi === "eslesmedi") return null;
+  if (!ad) return null;
   // Classification is Luna's decision, not a barcode/code comparison engine.
   const dayanak = veri.eslesme_dayanagi === "barkod" ? "barkod"
     : veri.eslesme_dayanagi === "kod" ? "kod" : "ad";
