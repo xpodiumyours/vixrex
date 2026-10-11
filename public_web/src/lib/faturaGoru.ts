@@ -4,7 +4,7 @@
  * Telefon uygulaması da web de `/api/fatura-oku` ucuna gider; o uç da buraya.
  * İkinci bir "okuma beyni" yoktur.
  *
- * Sağlayıcı: OpenAI Responses API, model `gpt-5.6-luna`. Anahtar `OPENAI_API_KEY`.
+ * Sağlayıcı: OpenRouter Responses API, model `openai/gpt-5.6-luna`. Anahtar `OPENROUTER_API_KEY`.
  *
  * Neden bu model — 2026-09-26'da gerçek faturayla (fis_4, 13 satır / 75 adet /
  * 6.034,00 TL) ölçüldü:
@@ -14,8 +14,8 @@
  *   ücretsiz modeller hiçbiri tutturamadı
  * luna üç kez üst üste hatasız okudu; hem en doğru hem en ucuz olduğu için
  * seçildi. Model adı bu ölçümden sonra değiştirilmedi. Fotoğraf dosyası depoda
- * olmadığı için çağrı ayarları (doğrudan OpenAI, detail high, akıl yürütme
- * kapalı) yeni bir doğruluk iddiası taşımaz.
+ * olmadığı için çağrı ayarları (OpenRouter üzerinden, görsel detail original, akıl yürütme
+ * kapalı/düşük) yeni bir doğruluk iddiası taşımaz.
  *
  * Çıktı katı JSON şemasına uymak zorundadır. Yine de doğru kabul edilmez —
  * `belgeGercegiUyuyorMu` satır toplamlarını belgenin kendi toplamıyla
