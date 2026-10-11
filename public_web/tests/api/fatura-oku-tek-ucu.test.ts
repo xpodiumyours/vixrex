@@ -701,7 +701,7 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     mocks.parmak.mockResolvedValue("eski-islem");
     mocks.yukle.mockResolvedValue({
       islemKimligi: "eski-islem", durum: "hazir", tedarikci: "Üretici",
-      satirlar: [{ model: "M1", ad: "Ürün", sonuc: "kanitli", katalog: { resmiAd: "Ürün", kaynak: "https://uretici.example/urun" } }],
+      satirlar: [{ model: "M1", ad: "Ürün", sonuc: "kanitli", katalog: { resmiAd: "Ürün", marka: "Üretici", aciklama: "Açıklama", gorseller: [], gorselAdaylari: [], izinDurumu: "yok", firma: "Üretici", kaynakFirma: "Üretici", dayanak: "kod", kaynak: "https://uretici.example/urun" } }],
       aramaDurumu: { sonrakiSatir: 1, erisimHatasi: false, sinirDoldu: false },
       belge: { belgeTuru: "fatura" },
     });
@@ -733,7 +733,9 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     mocks.yukle.mockImplementation(async () => mocks.kalici);
     const cevap = await faturaOku(istek());
     expect(cevap.status).toBe(200);
-    expect(faturayiOku).not.toHaveBeenCalled();
+    expect(mocks.kaydet).not.toHaveBeenCalled();
+    const istekler = vi.mocked(fetch).mock.calls.map((call) => JSON.parse(String(call[1]?.body ?? "{}")));
+    expect(istekler.some((body) => body.text?.format?.name === "fatura_urun_kaynagi")).toBe(true);
     expect(vi.mocked(fetch)).toHaveBeenCalled();
     expect(mocks.rpc).toHaveBeenCalledWith("replace_invoice_line", expect.anything());
   });
