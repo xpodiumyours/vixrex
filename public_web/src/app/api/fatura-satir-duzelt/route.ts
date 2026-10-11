@@ -119,6 +119,7 @@ export async function POST(request: NextRequest) {
       // Luna determines the manufacturer and official product page in one research request.
       const arama = await satirSitesindeAra({
         alan: String(is.data.supplier_site ?? ""),
+        tedarikci: String(is.data.supplier_name ?? ""),
         model: duzeltilmis.model, ad: duzeltilmis.ad || duzeltilmis.hamSatir || "",
         barkod: duzeltilmis.barkod, marka: duzeltilmis.marka,
         varyant: duzeltilmis.varyant, beden: duzeltilmis.beden,

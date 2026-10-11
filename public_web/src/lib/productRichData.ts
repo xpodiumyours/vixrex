@@ -152,7 +152,7 @@ export function normalizeProductVariants(value: unknown, preserveInvoice = false
       const cleanValue = cleanString(optionValue);
       if (cleanKey && cleanValue) options[cleanKey] = cleanValue;
     }
-    if (!Object.keys(options).length) continue;
+    if (!Object.keys(options).length && !preserveInvoice) continue;
 
     const normalized: ProductVariant = { id, options };
     normalized.sku = cleanString(variant.sku);

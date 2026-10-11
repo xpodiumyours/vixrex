@@ -387,8 +387,10 @@ describe("faturadan gelen satirin yayin kapisi", () => {
 
   it("12 görselli ve 101 varyantlı Luna kartı kalıcı kayıt isteğine tam taşınır", async () => {
     const imageUrls = Array.from({ length: 12 }, (_, i) => `https://cdn.example/${i}.jpg`);
-    const request = istek([{ ...FATURA_URUNU, imageUrls, yayinIstegi: false }]);
+    const request = istek([{ ...FATURA_URUNU, imageUrls: [], yayinIstegi: false }]);
+    mocks.kayitlar.get(0)!.izinliGorseller = new Set(imageUrls);
     mocks.kayitlar.get(0)!.katalog = { resmiAd: "Ürün", kaynak: "https://tedarikci.example.com/urun/0",
+      gorseller: imageUrls,
       urunVaryantlari: Array.from({ length: 101 }, (_, i) => ({ id: `v${i}`, secenekler: [{ key: "voltage", value: String(i) }], gorseller: imageUrls, barkod: "" })) };
     const govde = await (await topluUrunEkle(request)).json();
     expect(govde.taslak).toBe(1);
@@ -397,6 +399,7 @@ describe("faturadan gelen satirin yayin kapisi", () => {
     expect(yazilan.variants).toHaveLength(101);
     expect(yazilan.variants[100].imageUrls).toHaveLength(12);
     expect(yazilan.metadata.lunaInvoice).toBe(true);
+    expect(govde.satirlar[0].sebep).not.toContain("fotoğraf gerekiyor");
     expect(mocks.publishProduct).not.toHaveBeenCalled();
   });
 

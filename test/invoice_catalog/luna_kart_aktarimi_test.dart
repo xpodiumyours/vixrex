@@ -12,6 +12,7 @@ import 'package:http/testing.dart';
 import 'package:vixrex/controllers/ocr_controller.dart';
 import 'package:vixrex/controllers/store_editor_controller.dart';
 import 'package:vixrex/models/store_data.dart';
+import 'package:vixrex/models/invoice_product_draft.dart';
 import 'package:vixrex/services/store_local_storage_service.dart';
 import 'package:vixrex/services/invoice_catalog/fatura_islem_servisi.dart';
 import 'package:vixrex/services/invoice_catalog/fatura_urun_kaydi_servisi.dart';
@@ -102,6 +103,20 @@ void main() {
     );
     expect(draft.toJson()['catalog_attributes'], catalog['ozellikler']);
   });
+  test('Yalnız ham satırı okunan ürünün kaynak metni kartta korunur', () {
+    final invoice = _invoice();
+    final row = (invoice['satirlar'] as List).single as Map;
+    row.remove('katalog');
+    row['ad'] = '';
+    row['model'] = '';
+    row['barkod'] = '';
+    row['hamSatir'] = 'Peynir teneke 2,5 KG';
+    row['sonuc'] = 'eksik';
+    final result = const FaturaOkuServisi().cozumle(invoice).data!;
+    expect(result.products.single.name, row['hamSatir']);
+    expect(result.invoiceDrafts.single.rawSourceLine, row['hamSatir']);
+    expect(result.invoiceDrafts.single.etkinKartDurumu, KartDurumu.eksik);
+  });
 
   test('Kesirli fatura miktarı stok adedine çevrilmez, onayı düşürmez', () {
     final result = const FaturaOkuServisi().cozumle(_invoice()).data!;
@@ -173,12 +188,20 @@ void main() {
     () async {
       final editor = _EmptyCategoryEditor();
       Map<String, dynamic>? saved;
+      final savedRequest = Completer<void>();
+      final invoice = _invoice();
+      final invoiceRow = (invoice['satirlar'] as List).single as Map;
+      (invoiceRow['sahipDurumu'] as Map)['onayli'] = false;
       final controller = OcrController(
         editorController: editor,
         faturaOkuServisi: FaturaOkuServisi(
           originOverride: 'https://vixrex-test.local',
           httpClient: MockClient(
-            (_) async => http.Response(jsonEncode(_invoice()), 200),
+            (_) async => http.Response(
+              jsonEncode(invoice),
+              200,
+              headers: {'content-type': 'application/json; charset=utf-8'},
+            ),
           ),
         ),
         faturaIslemServisi: FaturaIslemServisi(
@@ -196,6 +219,7 @@ void main() {
             saved = Map<String, dynamic>.from(
               (jsonDecode(request.body)['products'] as List).single as Map,
             );
+            if (!savedRequest.isCompleted) savedRequest.complete();
             return http.Response(
               jsonEncode({
                 'tamam': true,
@@ -210,7 +234,8 @@ void main() {
         ),
       );
       await controller.analyzeImage(Uint8List.fromList([1]));
-      await controller.saveApprovedProducts();
+      await savedRequest.future.timeout(const Duration(seconds: 2));
+      await Future<void>.delayed(Duration.zero);
       expect(saved, isNotNull);
       expect(saved!['categoryId'], '');
       expect(saved!['stockQuantity'], isNull);

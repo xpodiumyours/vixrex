@@ -310,7 +310,16 @@ class FaturaOkuServisi {
 
     final urun = DetectedProduct(
       id: id,
-      name: resmiAd.isNotEmpty ? resmiAd : (model.isNotEmpty ? model : 'Ürün'),
+      name:
+          resmiAd.isNotEmpty
+              ? resmiAd
+              : model.isNotEmpty
+              ? model
+              : barkod.isNotEmpty
+              ? barkod
+              : hamSatir.isNotEmpty
+              ? hamSatir
+              : 'Ürün',
       brand: marka,
       category: katalogVar ? metin(katalog['kategori']) : '',
       quantity: stok ?? adet ?? 0,

@@ -310,7 +310,7 @@ const URUN_KAYNAK_SEMASI = {
   },
 } as const;
 
-export function satirAramaIstegi(girdi: { alan: string; model: string; ad: string; barkod: string; marka?: string; varyant?: string; beden?: string }) {
+export function satirAramaIstegi(girdi: { alan: string; model: string; ad: string; barkod: string; marka?: string; varyant?: string; beden?: string; tedarikci?: string }) {
   const alan = alanAdiTemizle(girdi.alan);
   const sorgu = [girdi.model, girdi.ad, girdi.barkod].map((p) => p.trim()).filter(Boolean).join(" ");
   if (!sorgu) return null;
@@ -328,6 +328,7 @@ export function satirAramaIstegi(girdi: { alan: string; model: string; ad: strin
     input: [
       "Independently identify the real manufacturer or brand owner for this invoice item, then research its exact product on the manufacturer's OFFICIAL website.",
       "Invoice issuer website (only a clue, never a domain restriction): " + (alan || "not provided"),
+      "Invoice issuer name (only a clue, not necessarily the manufacturer): " + (girdi.tedarikci || "not printed"),
       "The invoice issuer may be a wholesaler; do not assume the issuer is the product manufacturer.",
       "Invoice product code: " + (girdi.model || "not printed"),
       "Invoice barcode: " + (girdi.barkod || "not printed"),
@@ -388,8 +389,10 @@ export function satirAramaCevabi(
       const option = secenek as Record<string, unknown>, key = metin(option.key), value = metin(option.value);
       return key && value ? [{ key, value }] : [];
     }) : [];
-    if (secenekler.length === 0) return [];
-    const teknikId = id || `luna-${createHash("sha256").update(JSON.stringify([sayfa, secenekler.map(({ key, value }) => [key, value]).sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)))])).digest("hex").slice(0, 24)}`;
+    const kimlikVerisi = secenekler.length > 0
+      ? secenekler.map(({ key, value }) => [key, value]).sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)))
+      : [metin(alan.barkod), alan.gorseller];
+    const teknikId = id || `luna-${createHash("sha256").update(JSON.stringify([sayfa, kimlikVerisi])).digest("hex").slice(0, 24)}`;
     return [{ id: teknikId, secenekler, barkod: metin(alan.barkod),
       gorseller: Array.isArray(alan.gorseller) ? alan.gorseller.map(guvenliAdres).filter(Boolean) : [] }];
   }) : [];
@@ -405,6 +408,7 @@ export async function satirSitesindeAra(girdi: {
   marka?: string;
   varyant?: string;
   beden?: string;
+  tedarikci?: string;
 }): Promise<SatirAramasi> {
   const anahtar = process.env.OPENROUTER_API_KEY;
   if (!anahtar) throw new Error("OKUYUCU_HAZIR_DEGIL");

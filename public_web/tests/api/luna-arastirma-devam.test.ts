@@ -43,4 +43,9 @@ describe("Luna araştırma verisi ve devam sınırı", () => {
     expect(cevap(secenekler).id).toMatch(/^luna-/);
     expect(cevap(secenekler).id).toBe(cevap([...secenekler].reverse()).id);
   });
+  it("Luna'nın seçenekleri boş olan resmî barkodlu varyantı araştırma sonucunda korunur", () => {
+    const varyant = { id: "official-v1", secenekler: [], barkod: "8681234567890", gorseller: [] };
+    const sonuc = satirAramaCevabi(urun, { status: "completed", output_text: JSON.stringify({ ...kart, urun_varyantlari: [varyant] }) });
+    expect(sonuc?.urunVaryantlari).toEqual([varyant]);
+  });
 });

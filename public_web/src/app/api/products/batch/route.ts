@@ -51,7 +51,7 @@ function faturaKapisiSebebi(args: {
   faturaEksikleri: string[];
   yayinIstegi: boolean;
 }): string {
-  if (args.hazirlik.durum === "taslak" && args.hazirlik.eksik) return args.hazirlik.eksik;
+  if (!args.faturaKaynakli && args.hazirlik.durum === "taslak" && args.hazirlik.eksik) return args.hazirlik.eksik;
   if (args.faturaKaynakli && args.faturaEksikleri.length > 0) {
     return args.faturaEksikleri[0];
   }
@@ -242,6 +242,9 @@ export async function POST(request: NextRequest) {
       hazirlik.girdi.name = katalog.resmiAd;
       hazirlik.girdi.description = typeof katalog.aciklama === "string" ? katalog.aciklama : "";
       hazirlik.girdi.brand = typeof katalog.marka === "string" ? katalog.marka : null;
+      if (Array.isArray(katalog.gorseller)) {
+        hazirlik.girdi.imageUrls = katalog.gorseller.filter((url): url is string => typeof url === "string");
+      }
 
       // The persisted Luna catalog (not frontend classification) owns all product data.
       const ozellikler = Array.isArray(katalog.ozellikler)

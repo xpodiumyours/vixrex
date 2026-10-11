@@ -24,6 +24,7 @@ export interface CeliskiBilgisi {
 }
 
 export interface FaturaSatiri {
+  hamSatir?: string;
   model: string;
   ad: string;
   barkod: string;
@@ -205,7 +206,7 @@ function faturaUrunIstekGirdisi(
             const satisFiyati = fiyatSayisi(satir.satisFiyati);
             const katalog = satir.katalog;
             return {
-              name: katalog?.resmiAd || satir.ad || satir.model || satir.barkod,
+              name: katalog?.resmiAd || satir.ad || satir.model || satir.barkod || satir.hamSatir,
               description: katalog?.aciklama ?? "",
               priceText: satisFiyati === null ? "" : `${satisFiyati} TL`,
               categoryId: satir.kategoriId,

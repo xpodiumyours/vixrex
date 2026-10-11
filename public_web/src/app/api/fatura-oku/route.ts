@@ -381,6 +381,7 @@ export async function POST(request: NextRequest) {
         try {
           const arama = await satirSitesindeAra({
             alan: etkinSite,
+            tedarikci: sonTedarikci,
             model: satir.model,
             ad: satir.ad || satir.hamSatir || "",
             barkod: satir.barkod,
