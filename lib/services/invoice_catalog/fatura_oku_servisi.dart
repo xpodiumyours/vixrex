@@ -205,7 +205,9 @@ class FaturaOkuServisi {
     final sahip = satir['sahipDurumu'];
     final sahipDurumu = sahip is Map ? sahip : <String, dynamic>{};
     final satisFiyati = _satisFiyati(sahipDurumu['satisFiyati']);
-    final sahipStogu = sayi(sahipDurumu['stok']?.toString().replaceAll(',', '.'));
+    final sahipStogu = sayi(
+      sahipDurumu['stok']?.toString().replaceAll(',', '.'),
+    );
     final stok = tamAdet(sahipStogu);
 
     EvidenceValue<String>? evMetin(
