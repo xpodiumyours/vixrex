@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { cookies } from "next/headers";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
@@ -164,7 +165,7 @@ export async function POST(request: NextRequest) {
   }
 
   const sablonOnbellegi = new Map<string, string | null>();
-  const lunaKategoriOnbellegi = new Map<string, string>();
+  const lunaKategoriOnbellegi = new Map<string, { id: string; templateKey: string }>();
   const sonuclar: SatirSonucu[] = [];
   let yayinda = 0;
   let taslak = 0;
@@ -176,7 +177,8 @@ export async function POST(request: NextRequest) {
       name: ad,
       description: ham.description ?? "",
       priceText: ham.priceText ?? ham.price_text ?? "",
-      categoryId: ham.categoryId ?? ham.category_id ?? "",
+      categoryId: (ham.sourceType || ham.source_type || "").trim() === FATURA_KAYNAGI
+        ? "" : ham.categoryId ?? ham.category_id ?? "",
       imageUrls: ham.imageUrls ?? ham.image_urls ?? [],
       brand: ham.brand,
       barcode: ham.barcode,
@@ -229,7 +231,7 @@ export async function POST(request: NextRequest) {
       sonuclar.push({ sira: index, ad, durum: "atlandi", sebep: "Fatura satırı doğrulanamadı; tekrar dene." });
       continue;
     }
-    if (dogrulanmis?.sonuc === "kanitli") {
+    if (dogrulanmis?.sonuc === "kanitli" || dogrulanmis?.katalog) {
       const katalog = dogrulanmis.katalog;
       if (!katalog || typeof katalog.resmiAd !== "string" || typeof katalog.kaynak !== "string") {
         atlandi += 1;
@@ -268,24 +270,39 @@ export async function POST(request: NextRequest) {
       }));
 
       // Category is a Luna label. Persist/create exactly that label; do not guess a template.
-      if (lunaKategori && lunaKategori.length <= 40) {
+      if (lunaKategori) {
         const anahtar = lunaKategori.normalize("NFKC").toLocaleLowerCase("tr-TR");
-        let kategoriId = lunaKategoriOnbellegi.get(anahtar);
-        if (!kategoriId) {
-          const mevcut = await admin.from("product_categories").select("id")
-            .eq("store_id", store.id).ilike("name", lunaKategori).maybeSingle();
-          kategoriId = typeof mevcut.data?.id === "string" ? mevcut.data.id : undefined;
-          if (!kategoriId && !mevcut.error) {
+        let kategori = lunaKategoriOnbellegi.get(anahtar);
+        if (!kategori) {
+          const mevcut = await admin.from("product_categories").select("id,product_template_key")
+            .eq("store_id", store.id).ilike("name", lunaKategori.replace(/[\\%_]/g, "\\$&")).maybeSingle();
+          if (mevcut.error) {
+            atlandi += 1;
+            sonuclar.push({ sira: index, ad, durum: "atlandi", sebep: "Luna'nın kategorisi okunamadı; tekrar dene." });
+            continue;
+          }
+          if (typeof mevcut.data?.id === "string") {
+            kategori = { id: mevcut.data.id, templateKey: mevcut.data.product_template_key || "generic" };
+          } else {
             const ekleme = await admin.rpc("upsert_store_category_v2", {
               p_store_id: store.id, p_edit_token: store.edit_token,
               p_name: lunaKategori, p_template_key: "generic",
+              p_slug: `luna-${createHash("sha256").update(anahtar).digest("hex").slice(0, 24)}`,
             });
-            kategoriId = typeof ekleme.data?.id === "string" ? ekleme.data.id : undefined;
+            if (!ekleme.error && ekleme.data?.success === true && typeof ekleme.data.id === "string") {
+              kategori = { id: ekleme.data.id, templateKey: "generic" };
+            }
           }
-          if (kategoriId) lunaKategoriOnbellegi.set(anahtar, kategoriId);
+          if (!kategori) {
+            atlandi += 1;
+            sonuclar.push({ sira: index, ad, durum: "atlandi", sebep: "Luna'nın kategorisi kaydedilemedi; tekrar dene." });
+            continue;
+          }
+          lunaKategoriOnbellegi.set(anahtar, kategori);
         }
         // Technical category link only; Luna's original label always remains in metadata.
-        if (kategoriId) hazirlik.girdi.categoryId = kategoriId;
+        hazirlik.girdi.categoryId = kategori.id;
+        hazirlik.girdi.metadata = { ...hazirlik.girdi.metadata, templateKey: kategori.templateKey };
       }
     }
     const kartDurumu = faturaKaynakli ? (dogrulanmis?.sonuc ?? "eksik") : iddiaDurumu;

@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import sharp from "sharp";
 import { hostGuvenliMi, varsayilanCoz, pdfKatalogGorseliniOku } from "@/lib/faturaDijitalIz";
-import { gorseliSikistir, ONBELLEK_SANIYE } from "@/lib/gorselSikistir";
+import { gorseliSikistir, ONBELLEK_SANIYE, UZUN_KENAR } from "@/lib/gorselSikistir";
 import {
   MAX_PRODUCT_IMAGES,
   MAX_PRODUCT_IMAGE_SOURCE_BYTES,
@@ -52,19 +52,6 @@ export interface GorselHazirlamaSonucu {
 
 const ZAMAN_ASIMI_MS = 6000;
 
-function gercekTur(bayt: Uint8Array): string | null {
-  if (bayt.length < 12) return null;
-  if (bayt[0] === 0xff && bayt[1] === 0xd8 && bayt[2] === 0xff) return "image/jpeg";
-  const png = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
-  if (png.every((b, i) => bayt[i] === b)) return "image/png";
-  const riff = [0x52, 0x49, 0x46, 0x46];
-  const webp = [0x57, 0x45, 0x42, 0x50];
-  if (riff.every((b, i) => bayt[i] === b) && webp.every((b, i) => bayt[8 + i] === b)) {
-    return "image/webp";
-  }
-  return null;
-}
-
 export async function kaynakGorseliniDogrula(
   adres: string,
   bagimliliklar: GorselBagimliliklari = {},
@@ -91,45 +78,78 @@ export async function kaynakGorseliniDogrula(
     if (!sonuc) return { tamam: false, sebep: "acilmadi" };
     bayt = sonuc;
   } else {
-  let yanit: Response;
-  try {
-    yanit = await fetcher(url.toString(), {
-      method: "GET",
-      redirect: "manual",
-      signal: AbortSignal.timeout(ZAMAN_ASIMI_MS),
-      headers: { accept: "image/jpeg,image/png,image/webp" },
-    });
-  } catch {
-    return { tamam: false, sebep: "erisilemedi" };
-  }
-  if (yanit.status >= 500) return { tamam: false, sebep: "erisilemedi" };
-  if (yanit.status !== 200) return { tamam: false, sebep: "acilmadi" };
-
-  const bildirilen = Number(yanit.headers.get("content-length") ?? 0);
-  if (Number.isFinite(bildirilen) && bildirilen > MAX_PRODUCT_IMAGE_SOURCE_BYTES) {
-    return { tamam: false, sebep: "cok-buyuk" };
-  }
-
-  try {
-    bayt = new Uint8Array(await yanit.arrayBuffer());
-  } catch {
-    return { tamam: false, sebep: "erisilemedi" };
-  }
+    let yanit: Response | null = null;
+    const gorulenler = new Set<string>();
+    const signal = AbortSignal.timeout(ZAMAN_ASIMI_MS);
+    try {
+      for (let adim = 0; adim <= 5; adim++) {
+        if (url.protocol !== "https:" || url.username || url.password || url.port || gorulenler.has(url.href)) {
+          return { tamam: false, sebep: "acilmadi" };
+        }
+        if (!(await hostGuvenliMi(url.hostname, resolveHost))) {
+          return { tamam: false, sebep: "erisilemedi" };
+        }
+        gorulenler.add(url.href);
+        yanit = await fetcher(url.toString(), {
+          method: "GET", redirect: "manual", signal,
+          headers: { accept: "image/avif,image/webp,image/png,image/jpeg,image/svg+xml,image/*" },
+        });
+        if (![301, 302, 303, 307, 308].includes(yanit.status)) break;
+        const hedef = yanit.headers.get("location");
+        await yanit.body?.cancel();
+        if (!hedef) return { tamam: false, sebep: "acilmadi" };
+        url = new URL(hedef, url);
+      }
+      if (!yanit || yanit.status >= 500) return { tamam: false, sebep: "erisilemedi" };
+      if (yanit.status !== 200) return { tamam: false, sebep: "acilmadi" };
+      const bildirilen = Number(yanit.headers.get("content-length") ?? 0);
+      if (Number.isFinite(bildirilen) && bildirilen > MAX_PRODUCT_IMAGE_SOURCE_BYTES) {
+        await yanit.body?.cancel();
+        return { tamam: false, sebep: "cok-buyuk" };
+      }
+      const okuyucu = yanit.body?.getReader();
+      if (!okuyucu) return { tamam: false, sebep: "acilmadi" };
+      const parcalar: Uint8Array[] = [];
+      let toplam = 0;
+      for (;;) {
+        const { value, done } = await okuyucu.read();
+        if (done) break;
+        toplam += value.byteLength;
+        if (toplam > MAX_PRODUCT_IMAGE_SOURCE_BYTES) {
+          await okuyucu.cancel();
+          return { tamam: false, sebep: "cok-buyuk" };
+        }
+        parcalar.push(value);
+      }
+      bayt = new Uint8Array(Buffer.concat(parcalar));
+    } catch {
+      return { tamam: false, sebep: "erisilemedi" };
+    }
   }
   if (bayt.byteLength > MAX_PRODUCT_IMAGE_SOURCE_BYTES) {
     return { tamam: false, sebep: "cok-buyuk" };
   }
 
-  const tur = gercekTur(bayt);
-  if (!tur) return { tamam: false, sebep: "gorsel-degil" };
+  let tur: string;
 
   let genislik: number;
   let yukseklik: number;
   try {
     const goruntu = sharp(Buffer.from(bayt));
     const bilgi = await goruntu.metadata();
+    const turler: Record<string, string> = { jpeg: "image/jpeg", png: "image/png", webp: "image/webp" };
+    tur = turler[bilgi.format ?? ""];
     genislik = bilgi.width ?? 0;
     yukseklik = bilgi.height ?? 0;
+    if (!tur) {
+      const donusum = await goruntu.rotate().resize({
+        width: UZUN_KENAR, height: UZUN_KENAR, fit: "inside", withoutEnlargement: true,
+      }).webp().toBuffer({ resolveWithObject: true });
+      bayt = new Uint8Array(donusum.data);
+      genislik = donusum.info.width;
+      yukseklik = donusum.info.height;
+      tur = "image/webp";
+    }
   } catch {
     return { tamam: false, sebep: "gorsel-degil" };
   }

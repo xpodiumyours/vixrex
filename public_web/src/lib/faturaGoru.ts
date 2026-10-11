@@ -24,7 +24,7 @@
 
 import sharp from "sharp";
 import { kisiselVeriTemizle } from "@/lib/faturaKisiselVeri";
-import { alanAdiTemizle, resmiSiteSayilmaz } from "@/lib/firmaArama";
+import { alanAdiTemizle } from "@/lib/firmaArama";
 import { hamGet, varsayilanCoz } from "@/lib/faturaDijitalIz";
 
 const ADRES = "https://openrouter.ai/api/v1/responses";
@@ -393,7 +393,7 @@ export async function markaSitesiniBul(girdi: {
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${anahtar}` },
       body: JSON.stringify({
         model: GORU_MODELI,
-        max_output_tokens: 3500,
+        max_output_tokens: CIKTI_TOKEN_TAVANI,
         provider: { require_parameters: true },
         tools: [
           { type: "openrouter:web_search", parameters: { engine: "auto" } },
@@ -427,7 +427,7 @@ export async function markaSitesiniBul(girdi: {
   try { veri = JSON.parse(ciktiMetni(govde)) as Record<string, unknown>; } catch { return bosSonuc; }
   const alan = alanAdiTemizle(metin(veri.resmi_site));
   const kanitSayfa = metin(veri.kanit_sayfa);
-  if (veri.marka_sahibi_dogrulandi !== true || !alan || resmiSiteSayilmaz(alan)) return bosSonuc;
+  if (veri.marka_sahibi_dogrulandi !== true || !alan) return bosSonuc;
   if (!kanitSayfa.startsWith("https://") || !sayfaFirmadaMi(kanitSayfa, alan)) return bosSonuc;
   return { alan, ...kullanim };
 }
@@ -503,12 +503,12 @@ const URUN_KAYNAK_SEMASI = {
 
 export function satirAramaIstegi(girdi: { alan: string; model: string; ad: string; barkod: string; marka?: string; varyant?: string; beden?: string }) {
   const alan = alanAdiTemizle(girdi.alan);
-  if (!alan || resmiSiteSayilmaz(alan)) return null;
+  if (!alan) return null;
   const sorgu = [girdi.model, girdi.ad, girdi.barkod].map((p) => p.trim()).filter(Boolean).join(" ");
   if (!sorgu) return null;
   return {
     model: GORU_MODELI,
-    max_output_tokens: 3500,
+    max_output_tokens: CIKTI_TOKEN_TAVANI,
     provider: { require_parameters: true },
     tools: [
       { type: "openrouter:web_search", parameters: { engine: "auto" } },
