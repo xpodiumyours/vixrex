@@ -5,7 +5,6 @@ import 'package:vixrex/models/detected_product.dart';
 import 'package:vixrex/models/ocr_catalog_result.dart';
 import 'package:vixrex/models/product_rich_data.dart';
 import 'package:vixrex/models/invoice_product_draft.dart';
-import 'package:vixrex/services/invoice_catalog/invoice_draft_decision_engine.dart';
 import 'package:vixrex/models/store_product.dart';
 import 'package:vixrex/services/invoice_catalog/fatura_islem_servisi.dart';
 import 'package:vixrex/services/invoice_catalog/fatura_oku_servisi.dart';
@@ -151,17 +150,6 @@ class OcrController extends ChangeNotifier {
         notifyListeners();
         return;
       }
-      final decision = const InvoiceDraftDecisionEngine().evaluate(
-        _result!.invoiceDrafts[index],
-      );
-      if (!decision.canPrepareDraft) {
-        _errorMessage =
-            decision.questions.isNotEmpty
-                ? decision.questions.first
-                : 'Bu ürün henüz güvenilir dijital ürünle doğrulanmadı.';
-        notifyListeners();
-        return;
-      }
     }
 
     product.isApproved = true;
@@ -237,10 +225,7 @@ class OcrController extends ChangeNotifier {
         product.isApproved = false;
         continue;
       }
-      final decision = const InvoiceDraftDecisionEngine().evaluate(
-        _result!.invoiceDrafts[index],
-      );
-      product.isApproved = decision.canPrepareDraft;
+      product.isApproved = true;
       _result!.invoiceDrafts[index] = _result!.invoiceDrafts[index].copyWith(
         merchantApproved: product.isApproved,
       );
