@@ -195,7 +195,6 @@ void main() {
       expect(guncellenen.etkinKartDurumu, KartDurumu.celiski);
       expect(guncellenen.celiskiAdaylari, hasLength(2));
       expect(guncellenen.celiskiDayanak, 'barkod');
-
     });
 
     test(
