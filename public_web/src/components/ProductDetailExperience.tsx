@@ -6,7 +6,7 @@ import ProductDetailExperienceBase from "./ProductDetailExperienceBase";
 import { trackDirectionsClick } from "./TrackedContactLink";
 import type { RichProductItem } from "@/lib/richProductItem";
 import type { ProductQuickFact } from "@/lib/productCardPresentation";
-import { normalizeProductVariants } from "@/lib/productRichData";
+import { normalizeProductMetadata, normalizeProductVariants } from "@/lib/productRichData";
 
 interface ProductDetailExperienceProps {
   product: RichProductItem;
@@ -38,7 +38,7 @@ export default function ProductDetailExperience(props: ProductDetailExperiencePr
 
   const product = useMemo(() => {
     if (!selectedVariantId) return props.product;
-    const variants = normalizeProductVariants(props.product.variants);
+    const variants = normalizeProductVariants(props.product.variants, normalizeProductMetadata(props.product.metadata).lunaInvoice);
     const selectedIndex = variants.findIndex((variant) => variant.id === selectedVariantId);
     if (selectedIndex <= 0) return props.product;
     const selected = variants[selectedIndex];

@@ -15,10 +15,12 @@ import 'package:vixrex/utils/failure.dart';
 class FaturaUrunKaydiServisi {
   final http.Client? _httpClient;
   final String? _originOverride;
+  final Duration requestTimeout;
 
   const FaturaUrunKaydiServisi({
     http.Client? httpClient,
     String? originOverride,
+    this.requestTimeout = const Duration(seconds: 310),
   }) : _httpClient = httpClient,
        _originOverride = originOverride;
 
@@ -41,71 +43,85 @@ class FaturaUrunKaydiServisi {
 
     try {
       final endpoint = _buildEndpoint('/api/products/batch');
-      final yanit = await client
-          .post(
-            endpoint,
-            headers: {'Content-Type': 'application/json; charset=utf-8'},
-            body: jsonEncode({
-              'slug': storeSlug,
-              'editToken': editToken,
-              'products': satirlar.map((satir) => satir.toJson()).toList(),
-            }),
-          )
-          .timeout(const Duration(seconds: 90));
-
-      final govde = _govdeCoz(yanit.body);
-      if (yanit.statusCode < 200 || yanit.statusCode >= 300) {
-        final mesaj = (govde['hata'] ?? '').toString();
-        return Result.failure(
-          Failure(
-            mesaj.isNotEmpty ? mesaj : 'Ürünler kaydedilemedi. Tekrar dene.',
-          ),
-        );
-      }
-
       final kaydedilenler = <KaydedilenSatir>[];
-      final hamSatirlar = govde['satirlar'];
-      if (hamSatirlar is List) {
-        for (final satir in hamSatirlar) {
-          if (satir is! Map) continue;
-          final id = (satir['id'] ?? '').toString();
-          kaydedilenler.add(
-            KaydedilenSatir(
-              sira: satir['sira'] is num ? (satir['sira'] as num).toInt() : -1,
-              ad: (satir['ad'] ?? '').toString(),
-              durum: (satir['durum'] ?? '').toString(),
-              sebep: (satir['sebep'] ?? '').toString(),
-              kayit: (satir['kayit'] ?? '').toString(),
-              id: id.isEmpty ? null : id,
+      var toplamYayinda = 0;
+      var toplamTaslak = 0;
+      var toplamHatali = 0;
+
+      // The existing web endpoint accepts at most 100 products per request.
+      // Preserve original invoice row indices while saving every mobile draft.
+      for (var baslangic = 0; baslangic < satirlar.length; baslangic += 100) {
+        final parca = satirlar.skip(baslangic).take(100).toList();
+        final yanit = await client
+            .post(
+              endpoint,
+              headers: {'Content-Type': 'application/json; charset=utf-8'},
+              body: jsonEncode({
+                'slug': storeSlug,
+                'editToken': editToken,
+                'products': parca.map((satir) => satir.toJson()).toList(),
+              }),
+            )
+            .timeout(requestTimeout);
+        final govde = _govdeCoz(yanit.body);
+        if (yanit.statusCode < 200 || yanit.statusCode >= 300) {
+          final mesaj = (govde['hata'] ?? '').toString();
+          return Result.failure(
+            Failure(
+              mesaj.isNotEmpty ? mesaj : 'Ürünler kaydedilemedi. Tekrar dene.',
             ),
           );
         }
-      }
 
-      if (govde['tamam'] != true ||
-          kaydedilenler.length != satirlar.length ||
-          kaydedilenler.map((satir) => satir.sira).toSet().length !=
-              satirlar.length ||
-          kaydedilenler.any(
-            (satir) =>
-                satir.sira < 0 ||
-                satir.sira >= satirlar.length ||
-                !['taslak', 'yayinda', 'atlandi'].contains(satir.durum) ||
-                (satir.durum != 'atlandi' &&
-                    (satir.id == null || satir.id!.trim().isEmpty)),
-          )) {
-        return Result.failure(
-          Failure(
-            'Sunucu bütün ürünlerin kayıt sonucunu vermedi. Taslağın korunuyor; tekrar dene.',
-          ),
-        );
+        final parcaKayitlari = <KaydedilenSatir>[];
+        final hamSatirlar = govde['satirlar'];
+        if (hamSatirlar is List) {
+          for (final satir in hamSatirlar) {
+            if (satir is! Map) continue;
+            final id = (satir['id'] ?? '').toString();
+            final sira =
+                satir['sira'] is num ? (satir['sira'] as num).toInt() : -1;
+            parcaKayitlari.add(
+              KaydedilenSatir(
+                sira: sira + baslangic,
+                ad: (satir['ad'] ?? '').toString(),
+                durum: (satir['durum'] ?? '').toString(),
+                sebep: (satir['sebep'] ?? '').toString(),
+                kayit: (satir['kayit'] ?? '').toString(),
+                id: id.isEmpty ? null : id,
+              ),
+            );
+          }
+        }
+        if (govde['tamam'] != true ||
+            parcaKayitlari.length != parca.length ||
+            parcaKayitlari.map((satir) => satir.sira).toSet().length !=
+                parca.length ||
+            parcaKayitlari.any(
+              (satir) =>
+                  satir.sira < baslangic ||
+                  satir.sira >= baslangic + parca.length ||
+                  !['taslak', 'yayinda', 'atlandi'].contains(satir.durum) ||
+                  (satir.durum != 'atlandi' &&
+                      (satir.id == null || satir.id!.trim().isEmpty)),
+            )) {
+          return Result.failure(
+            Failure(
+              'Sunucu bütün ürünlerin kayıt sonucunu vermedi. Kaydedilen taslaklar korunuyor; tekrar dene.',
+            ),
+          );
+        }
+        kaydedilenler.addAll(parcaKayitlari);
+        toplamYayinda += _tamSayi(govde['yayinda']);
+        toplamTaslak += _tamSayi(govde['taslak']);
+        toplamHatali += _tamSayi(govde['hatali']);
       }
 
       return Result.success(
         FaturaKaydiSonucu(
-          yayinda: _tamSayi(govde['yayinda']),
-          taslak: _tamSayi(govde['taslak']),
-          hatali: _tamSayi(govde['hatali']),
+          yayinda: toplamYayinda,
+          taslak: toplamTaslak,
+          hatali: toplamHatali,
           satirlar: kaydedilenler,
         ),
       );

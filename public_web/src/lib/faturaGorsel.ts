@@ -1,10 +1,8 @@
 import { createHash } from "node:crypto";
 import sharp from "sharp";
 import { hostGuvenliMi, varsayilanCoz, pdfKatalogGorseliniOku } from "@/lib/faturaDijitalIz";
-import { gorseliSikistir, ONBELLEK_SANIYE } from "@/lib/gorselSikistir";
+import { gorseliSikistir, ONBELLEK_SANIYE, UZUN_KENAR } from "@/lib/gorselSikistir";
 import {
-  FATURA_MIN_SOURCE_SHORT_EDGE,
-  MAX_PRODUCT_IMAGES,
   MAX_PRODUCT_IMAGE_SOURCE_BYTES,
 } from "@/lib/productImagePolicy";
 
@@ -52,22 +50,6 @@ export interface GorselHazirlamaSonucu {
 }
 
 const ZAMAN_ASIMI_MS = 6000;
-const YER_TUTUCU_ADRES = /(^|[\/_\-.])(logo|favicon|placeholder|no[-_]?image|noimage|default[-_]?image|blank|sprite|banner)([\/_\-.]|$)/i;
-const EN_BOY_SINIRI = 3.5;
-const BOS_SAPMA_ESIGI = 3;
-
-function gercekTur(bayt: Uint8Array): string | null {
-  if (bayt.length < 12) return null;
-  if (bayt[0] === 0xff && bayt[1] === 0xd8 && bayt[2] === 0xff) return "image/jpeg";
-  const png = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
-  if (png.every((b, i) => bayt[i] === b)) return "image/png";
-  const riff = [0x52, 0x49, 0x46, 0x46];
-  const webp = [0x57, 0x45, 0x42, 0x50];
-  if (riff.every((b, i) => bayt[i] === b) && webp.every((b, i) => bayt[8 + i] === b)) {
-    return "image/webp";
-  }
-  return null;
-}
 
 export async function kaynakGorseliniDogrula(
   adres: string,
@@ -85,9 +67,6 @@ export async function kaynakGorseliniDogrula(
   if (url.protocol !== "https:" || url.username || url.password || url.port) {
     return { tamam: false, sebep: "acilmadi" };
   }
-  if (YER_TUTUCU_ADRES.test(decodeURIComponent(url.pathname))) {
-    return { tamam: false, sebep: "logo-veya-yer-tutucu" };
-  }
   if (!(await hostGuvenliMi(url.hostname, resolveHost))) {
     return { tamam: false, sebep: "erisilemedi" };
   }
@@ -98,191 +77,85 @@ export async function kaynakGorseliniDogrula(
     if (!sonuc) return { tamam: false, sebep: "acilmadi" };
     bayt = sonuc;
   } else {
-  let yanit: Response;
-  try {
-    yanit = await fetcher(url.toString(), {
-      method: "GET",
-      redirect: "manual",
-      signal: AbortSignal.timeout(ZAMAN_ASIMI_MS),
-      headers: { accept: "image/jpeg,image/png,image/webp" },
-    });
-  } catch {
-    return { tamam: false, sebep: "erisilemedi" };
-  }
-  if (yanit.status >= 500) return { tamam: false, sebep: "erisilemedi" };
-  if (yanit.status !== 200) return { tamam: false, sebep: "acilmadi" };
-
-  const bildirilen = Number(yanit.headers.get("content-length") ?? 0);
-  if (Number.isFinite(bildirilen) && bildirilen > MAX_PRODUCT_IMAGE_SOURCE_BYTES) {
-    return { tamam: false, sebep: "cok-buyuk" };
-  }
-
-  try {
-    bayt = new Uint8Array(await yanit.arrayBuffer());
-  } catch {
-    return { tamam: false, sebep: "erisilemedi" };
-  }
+    let yanit: Response | null = null;
+    const gorulenler = new Set<string>();
+    const signal = AbortSignal.timeout(ZAMAN_ASIMI_MS);
+    try {
+      for (let adim = 0; adim <= 5; adim++) {
+        if (url.protocol !== "https:" || url.username || url.password || url.port || gorulenler.has(url.href)) {
+          return { tamam: false, sebep: "acilmadi" };
+        }
+        if (!(await hostGuvenliMi(url.hostname, resolveHost))) {
+          return { tamam: false, sebep: "erisilemedi" };
+        }
+        gorulenler.add(url.href);
+        yanit = await fetcher(url.toString(), {
+          method: "GET", redirect: "manual", signal,
+          headers: { accept: "image/avif,image/webp,image/png,image/jpeg,image/svg+xml,image/*" },
+        });
+        if (![301, 302, 303, 307, 308].includes(yanit.status)) break;
+        const hedef = yanit.headers.get("location");
+        await yanit.body?.cancel();
+        if (!hedef) return { tamam: false, sebep: "acilmadi" };
+        url = new URL(hedef, url);
+      }
+      if (!yanit || yanit.status >= 500) return { tamam: false, sebep: "erisilemedi" };
+      if (yanit.status !== 200) return { tamam: false, sebep: "acilmadi" };
+      const bildirilen = Number(yanit.headers.get("content-length") ?? 0);
+      if (Number.isFinite(bildirilen) && bildirilen > MAX_PRODUCT_IMAGE_SOURCE_BYTES) {
+        await yanit.body?.cancel();
+        return { tamam: false, sebep: "cok-buyuk" };
+      }
+      const okuyucu = yanit.body?.getReader();
+      if (!okuyucu) return { tamam: false, sebep: "acilmadi" };
+      const parcalar: Uint8Array[] = [];
+      let toplam = 0;
+      for (;;) {
+        const { value, done } = await okuyucu.read();
+        if (done) break;
+        toplam += value.byteLength;
+        if (toplam > MAX_PRODUCT_IMAGE_SOURCE_BYTES) {
+          await okuyucu.cancel();
+          return { tamam: false, sebep: "cok-buyuk" };
+        }
+        parcalar.push(value);
+      }
+      bayt = new Uint8Array(Buffer.concat(parcalar));
+    } catch {
+      return { tamam: false, sebep: "erisilemedi" };
+    }
   }
   if (bayt.byteLength > MAX_PRODUCT_IMAGE_SOURCE_BYTES) {
     return { tamam: false, sebep: "cok-buyuk" };
   }
 
-  const tur = gercekTur(bayt);
-  if (!tur) return { tamam: false, sebep: "gorsel-degil" };
+  let tur: string;
 
   let genislik: number;
   let yukseklik: number;
-  let bos: boolean;
   try {
     const goruntu = sharp(Buffer.from(bayt));
     const bilgi = await goruntu.metadata();
+    const turler: Record<string, string> = { jpeg: "image/jpeg", png: "image/png", webp: "image/webp" };
+    tur = turler[bilgi.format ?? ""];
     genislik = bilgi.width ?? 0;
     yukseklik = bilgi.height ?? 0;
-    const istatistik = await sharp(Buffer.from(bayt)).stats();
-    bos = istatistik.channels.every((kanal) => kanal.stdev < BOS_SAPMA_ESIGI);
+    if (!tur) {
+      const donusum = await goruntu.rotate().resize({
+        width: UZUN_KENAR, height: UZUN_KENAR, fit: "inside", withoutEnlargement: true,
+      }).webp().toBuffer({ resolveWithObject: true });
+      bayt = new Uint8Array(donusum.data);
+      genislik = donusum.info.width;
+      yukseklik = donusum.info.height;
+      tur = "image/webp";
+    }
   } catch {
     return { tamam: false, sebep: "gorsel-degil" };
   }
 
   if (genislik <= 0 || yukseklik <= 0) return { tamam: false, sebep: "gorsel-degil" };
-  if (Math.min(genislik, yukseklik) < FATURA_MIN_SOURCE_SHORT_EDGE) {
-    return { tamam: false, sebep: "cok-kucuk", genislik, yukseklik };
-  }
-  if (bos) return { tamam: false, sebep: "bos", genislik, yukseklik };
-  if (Math.max(genislik, yukseklik) / Math.min(genislik, yukseklik) > EN_BOY_SINIRI) {
-    return { tamam: false, sebep: "urun-fotografi-degil", genislik, yukseklik };
-  }
 
   return { tamam: true, genislik, yukseklik, tur, bayt };
-}
-
-/** Schema.org ProductGroup.hasVariant ve Product.image/color bilgisinde AYNI varyant/fotoğraf eşleşmeli. */
-function yapilandirilmisUrunGorseliKanitli(html: string, adres: string, renk: string): boolean {
-  const scriptler = html.matchAll(/<script\b[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi);
-  const renkEsit = (deger: unknown) =>
-    typeof deger === "string" && deger.trim().toLocaleLowerCase("tr-TR") === renk.trim().toLocaleLowerCase("tr-TR");
-  const ziyaret = (veri: unknown, derinlik = 0): boolean => {
-    if (!veri || derinlik > 6 || typeof veri !== "object") return false;
-    if (Array.isArray(veri)) return veri.some((deger) => ziyaret(deger, derinlik + 1));
-    const nesne = veri as Record<string, unknown>;
-    const tipler = Array.isArray(nesne["@type"]) ? nesne["@type"] : [nesne["@type"]];
-    if (tipler.includes("Product")) {
-      const ham = Array.isArray(nesne.image) ? nesne.image : [nesne.image];
-      const adresler = ham.map((deger) => {
-        if (typeof deger === "string") return deger;
-        if (deger && typeof deger === "object") {
-          const resim = deger as Record<string, unknown>;
-          return typeof resim.url === "string" ? resim.url : resim.contentUrl;
-        }
-        return "";
-      });
-      if (adresler.includes(adres) && (!renk.trim() || renkEsit(nesne.color))) return true;
-    }
-    return ziyaret(nesne["@graph"], derinlik + 1) || ziyaret(nesne.hasVariant, derinlik + 1);
-  };
-  for (const script of scriptler) {
-    try {
-      if (ziyaret(JSON.parse(script[1]))) return true;
-    } catch {
-      // Bozuk JSON-LD ürün/renk/fotoğraf kanıtı değildir.
-    }
-  }
-  return false;
-}
-
-
-export async function urunSayfasindaGorselKaniti(
-  kaynakSayfa: string,
-  gorselAdresi: string,
-  varyant: string,
-  bagimliliklar: GorselBagimliliklari = {},
-): Promise<{ kaynakAlintisi: string } | null> {
-  const fetcher = bagimliliklar.fetcher ?? fetch;
-  const resolveHost = bagimliliklar.resolveHost ?? varsayilanCoz;
-  let sayfa: URL;
-  let gorsel: URL;
-  try {
-    sayfa = new URL(kaynakSayfa);
-    gorsel = new URL(gorselAdresi);
-  } catch {
-    return null;
-  }
-  if (
-    sayfa.protocol !== "https:" || sayfa.username || sayfa.password || sayfa.port ||
-    gorsel.protocol !== "https:" || gorsel.username || gorsel.password || gorsel.port ||
-    !(await hostGuvenliMi(sayfa.hostname, resolveHost))
-  ) return null;
-
-  let cevap: Response;
-  try {
-    cevap = await fetcher(sayfa.toString(), {
-      method: "GET",
-      redirect: "manual",
-      signal: AbortSignal.timeout(ZAMAN_ASIMI_MS),
-      headers: { accept: "text/html,application/xhtml+xml" },
-    });
-  } catch {
-    return null;
-  }
-  const tur = cevap.headers.get("content-type") ?? "";
-  if (cevap.status !== 200 || !/^(text\/html|application\/xhtml\+xml)/i.test(tur)) return null;
-  const MAKS_SAYFA_BAYT = 2 * 1024 * 1024;
-  const bildirilen = Number(cevap.headers.get("content-length") ?? 0);
-  if (Number.isFinite(bildirilen) && bildirilen > MAKS_SAYFA_BAYT) return null;
-  const oku = cevap.body?.getReader();
-  if (!oku) return null;
-  const parcalar: Uint8Array[] = [];
-  let toplam = 0;
-  try {
-    while (true) {
-      const { done, value } = await oku.read();
-      if (done) break;
-      toplam += value.byteLength;
-      if (toplam > MAKS_SAYFA_BAYT) {
-        await oku.cancel();
-        return null;
-      }
-      parcalar.push(value);
-    }
-  } catch {
-    return null;
-  }
-  const bayt = new Uint8Array(toplam);
-  let offset = 0;
-  for (const parca of parcalar) {
-    bayt.set(parca, offset);
-    offset += parca.byteLength;
-  }
-  const html = new TextDecoder().decode(bayt)
-    .replaceAll("&amp;", "&")
-    .replaceAll("&#38;", "&")
-    .replaceAll("\\/","/")
-    .replaceAll("\\u0026", "&")
-    .replaceAll("\\u002F", "/");
-  const adres = gorsel.toString();
-  const konum = html.indexOf(adres);
-  if (konum < 0) return null;
-  const baslangic = Math.max(0, konum - 260);
-  const bitis = Math.min(html.length, konum + adres.length + 260);
-  const kaynakAlintisi = html.slice(baslangic, bitis).replace(/\s+/g, " ").trim();
-  if (varyant.trim()) {
-    const duzEtiket = (html.match(/<img\b[^>]*>/gi) ?? []).find((img) => img.includes(adres));
-    // Responsive <picture><source srcset="..."><img alt="Renk"></picture> yapisinda
-    // gorsel <source> icinde, varyant metni ise ayni picture'daki img'dedir.
-    const picture = (html.match(/<picture\b[^>]*>[\s\S]*?<\/picture>/gi) ?? [])
-      .find((icerik) => icerik.includes(adres));
-    const etiket = duzEtiket ?? (picture?.match(/<img\b[^>]*>/i)?.[0] ?? "");
-    const goruntuEtiketleri = [...etiket.matchAll(/\b(?:alt|title|aria-label)\s*=\s*(["'])(.*?)\1/gi)]
-      .map((eslesme) => eslesme[2]).join(" ");
-    const etiketRengi = goruntuEtiketleri.toLocaleLowerCase("tr-TR");
-    const istenenRenk = varyant.trim().toLocaleLowerCase("tr-TR");
-    // Açıkça farklı renk yazan HTML etiketi yapılandırılmış veriyle geçersiz kılınamaz.
-    if (goruntuEtiketleri && !etiketRengi.includes(istenenRenk)) return null;
-    if (!etiketRengi.includes(istenenRenk) && !yapilandirilmisUrunGorseliKanitli(html, adres, varyant)) {
-      return null;
-    }
-  }
-  return { kaynakAlintisi };
 }
 
 interface DepoIstemcisi {
@@ -311,8 +184,6 @@ export async function kaynakGorselleriniHazirla(args: {
   const guvenliSlug = args.slug.replace(/[^a-zA-Z0-9-]/g, "");
 
   for (const aday of [...new Set(args.adaylar)]) {
-    if (gorseller.length >= MAX_PRODUCT_IMAGES) break;
-
     const kontrol = await kaynakGorseliniDogrula(aday, args.bagimliliklar);
     if (!kontrol.tamam || !kontrol.bayt || !kontrol.tur) {
       const sebep = kontrol.sebep ?? "acilmadi";

@@ -5,7 +5,6 @@ import 'package:vixrex/models/detected_product.dart';
 import 'package:vixrex/models/ocr_catalog_result.dart';
 import 'package:vixrex/models/product_rich_data.dart';
 import 'package:vixrex/models/invoice_product_draft.dart';
-import 'package:vixrex/services/invoice_catalog/invoice_draft_decision_engine.dart';
 import 'package:vixrex/models/store_product.dart';
 import 'package:vixrex/services/invoice_catalog/fatura_islem_servisi.dart';
 import 'package:vixrex/services/invoice_catalog/fatura_oku_servisi.dart';
@@ -49,6 +48,58 @@ class OcrController extends ChangeNotifier {
        _faturaYayinServisi = faturaYayinServisi,
        _faturaOkuServisi = faturaOkuServisi,
        _faturaIslemServisi = faturaIslemServisi;
+
+  // A working draft already has a store slug and edit token, even if the
+  // storefront has not been published. Invoice cards remain invisible.
+  String _invoiceDraftSlug = '';
+  String _invoiceDraftEditToken = '';
+
+  ({String slug, String editToken})? get _invoiceCredentials {
+    final published = _editorController?.publishedInfo;
+    if (published != null &&
+        published.slug.trim().isNotEmpty &&
+        published.editToken.trim().isNotEmpty) {
+      return (
+        slug: published.slug.trim(),
+        editToken: published.editToken.trim(),
+      );
+    }
+    if (_invoiceDraftSlug.isNotEmpty && _invoiceDraftEditToken.isNotEmpty) {
+      return (slug: _invoiceDraftSlug, editToken: _invoiceDraftEditToken);
+    }
+    return null;
+  }
+
+  Future<({String slug, String editToken})?> _ensureInvoiceCredentials() async {
+    final existing = _invoiceCredentials;
+    if (existing != null) return existing;
+    final editor = _editorController;
+    if (editor == null) return null;
+    try {
+      final token = await editor.ensureDraftEditToken();
+      final saved = await editor.publishService.saveDraft(
+        editor.data,
+        editToken: token,
+      );
+      if (saved.isFailure) {
+        _errorMessage =
+            saved.failure?.message ?? 'Vitrin taslağı oluşturulamadı.';
+        return null;
+      }
+      final draft = saved.data!;
+      _invoiceDraftSlug = draft.slug.trim();
+      _invoiceDraftEditToken = draft.editToken.trim();
+      if (_invoiceDraftSlug.isEmpty || _invoiceDraftEditToken.isEmpty) {
+        return null;
+      }
+      editor.data.slug = _invoiceDraftSlug;
+      await editor.saveLocally();
+      return (slug: _invoiceDraftSlug, editToken: _invoiceDraftEditToken);
+    } catch (error) {
+      _errorMessage = 'Vitrin taslağı kaydedilemedi: $error';
+      return null;
+    }
+  }
 
   String _scanMode = 'invoice';
   String get scanMode => _scanMode;
@@ -96,11 +147,9 @@ class OcrController extends ChangeNotifier {
   }
 
   Future<void> _faturaFotografiniOku(Uint8List imageBytes) async {
-    final yayinBilgisi = _editorController?.publishedInfo;
-    final slug = yayinBilgisi?.slug.trim() ?? '';
-    final editToken = yayinBilgisi?.editToken.trim() ?? '';
-    if (slug.isEmpty || editToken.isEmpty) {
-      _errorMessage = 'Fatura okumak için önce vitrinini yayınlaman gerekiyor.';
+    final kimlik = await _ensureInvoiceCredentials();
+    if (kimlik == null) {
+      _errorMessage ??= 'Faturayı kaydetmek için bir vitrin taslağı gerekli.';
       _isProcessing = false;
       notifyListeners();
       return;
@@ -108,8 +157,8 @@ class OcrController extends ChangeNotifier {
 
     final result = await _faturaOkuServisi.oku(
       imageBytes: imageBytes,
-      storeSlug: slug,
-      editToken: editToken,
+      storeSlug: kimlik.slug,
+      editToken: kimlik.editToken,
     );
 
     result.when(
@@ -129,6 +178,11 @@ class OcrController extends ChangeNotifier {
         }
         _isProcessing = false;
         notifyListeners();
+        // Luna's invoice cards are saved as hidden drafts without merchant approval.
+        // Merchant approval is reserved for the separate publication action.
+        if (catalog.invoiceDrafts.isNotEmpty) {
+          unawaited(_faturaTaslaklariniKaydet(catalog.products));
+        }
       },
       failure: (failure) {
         _errorMessage = failure.message;
@@ -148,17 +202,6 @@ class OcrController extends ChangeNotifier {
     if (product.isInvoiceSource) {
       if (index >= _result!.invoiceDrafts.length) {
         _errorMessage = 'Fatura kanıt taslağı bulunamadı.';
-        notifyListeners();
-        return;
-      }
-      final decision = const InvoiceDraftDecisionEngine().evaluate(
-        _result!.invoiceDrafts[index],
-      );
-      if (!decision.canPrepareDraft) {
-        _errorMessage =
-            decision.questions.isNotEmpty
-                ? decision.questions.first
-                : 'Bu ürün henüz güvenilir dijital ürünle doğrulanmadı.';
         notifyListeners();
         return;
       }
@@ -194,6 +237,8 @@ class OcrController extends ChangeNotifier {
     int index,
     DetectedProduct updated, {
     bool stockChanged = false,
+    num? invoiceStockQuantity,
+    bool clearInvoiceStockQuantity = false,
   }) {
     if (_isSaving || _isProcessing || _isPublishing) return;
     if (_result == null) return;
@@ -206,6 +251,11 @@ class OcrController extends ChangeNotifier {
         clearSalePrice: updated.price == null,
         merchantApproved: false,
         stockConfirmed: stockChanged ? false : draft.stockConfirmed,
+        stockQuantity:
+            stockChanged
+                ? invoiceStockQuantity ?? updated.quantity
+                : draft.stockQuantity,
+        clearStockQuantity: stockChanged && clearInvoiceStockQuantity,
       );
     }
     _result!.products[index] = updated;
@@ -230,10 +280,7 @@ class OcrController extends ChangeNotifier {
         product.isApproved = false;
         continue;
       }
-      final decision = const InvoiceDraftDecisionEngine().evaluate(
-        _result!.invoiceDrafts[index],
-      );
-      product.isApproved = decision.canPrepareDraft;
+      product.isApproved = true;
       _result!.invoiceDrafts[index] = _result!.invoiceDrafts[index].copyWith(
         merchantApproved: product.isApproved,
       );
@@ -362,22 +409,14 @@ class OcrController extends ChangeNotifier {
       return;
     }
 
-    final yayinBilgisi = editor.publishedInfo;
-    final slug = yayinBilgisi?.slug.trim() ?? '';
-    final editToken = yayinBilgisi?.editToken.trim() ?? '';
-    if (slug.isEmpty || editToken.isEmpty) {
-      _errorMessage =
-          'Ürünleri kaydetmek için önce vitrinini yayınlaman gerekiyor.';
+    final kimlik = _invoiceCredentials;
+    if (kimlik == null) {
+      _errorMessage = 'Vitrin taslağı kaydedilemedi.';
       notifyListeners();
       return;
     }
 
-    final kategoriId = _uuidKategoriBul(editor);
-    if (kategoriId == null) {
-      _errorMessage = 'Önce vitrinine bir ürün kategorisi ekle.';
-      notifyListeners();
-      return;
-    }
+    final kategoriId = _uuidKategoriBul(editor) ?? '';
 
     final satirlar = <FaturaKaydiSatiri>[];
     for (final urun in secilenler) {
@@ -415,7 +454,7 @@ class OcrController extends ChangeNotifier {
           model: urun.sku,
           varyant: urun.variant,
           beden: urun.size,
-          stok: urun.quantity,
+          stok: _tamFaturaStogu(taslak.stockQuantity),
           onayli: urun.isApproved,
           stokOnaylandi: true,
           kartDurumu: taslak.etkinKartDurumu.wireValue,
@@ -441,8 +480,8 @@ class OcrController extends ChangeNotifier {
     if (!await persistInvoiceState()) return;
     final kayit = await _faturaKaydiServisi.taslakKaydet(
       satirlar: satirlar,
-      storeSlug: slug,
-      editToken: editToken,
+      storeSlug: kimlik.slug,
+      editToken: kimlik.editToken,
     );
 
     kayit.when(
@@ -496,9 +535,9 @@ class OcrController extends ChangeNotifier {
       return;
     }
 
-    final yayinBilgisi = _editorController?.publishedInfo;
-    final slug = yayinBilgisi?.slug.trim() ?? '';
-    final editToken = yayinBilgisi?.editToken.trim() ?? '';
+    final kimlik = _invoiceCredentials;
+    final slug = kimlik?.slug ?? '';
+    final editToken = kimlik?.editToken ?? '';
 
     _isPublishing = true;
     _errorMessage = null;
@@ -564,7 +603,7 @@ class OcrController extends ChangeNotifier {
 
   Future<bool> _persistInvoiceState() async {
     final catalog = _result;
-    final info = _editorController?.publishedInfo;
+    final info = _invoiceCredentials;
     if (_scanMode != 'invoice' ||
         catalog == null ||
         catalog.islemKimligi == null ||
@@ -591,7 +630,8 @@ class OcrController extends ChangeNotifier {
           'sahipDurumu': {
             ...owner,
             'satisFiyati': product.price?.toString() ?? '',
-            'stok': product.quantity.toString(),
+            'stok':
+                catalog.invoiceDrafts[index].stockQuantity?.toString() ?? '',
             'stokOnaylandi': true,
             'kategoriId':
                 _invoiceCategories[index] ??
@@ -620,7 +660,7 @@ class OcrController extends ChangeNotifier {
   }
 
   Future<void> loadInvoiceHistory() async {
-    final info = _editorController?.publishedInfo;
+    final info = _invoiceCredentials;
     if (info == null) return;
     final result = await _faturaIslemServisi.listele(
       slug: info.slug,
@@ -649,7 +689,7 @@ class OcrController extends ChangeNotifier {
       notifyListeners();
       return;
     }
-    final info = _editorController?.publishedInfo;
+    final info = _invoiceCredentials;
     if (info == null) {
       _isProcessing = false;
       notifyListeners();
@@ -693,7 +733,7 @@ class OcrController extends ChangeNotifier {
   }
 
   Future<void> resumeInvoiceProduct(String productId) async {
-    final info = _editorController?.publishedInfo;
+    final info = _invoiceCredentials;
     if (info == null) return;
     final response = await _faturaIslemServisi.urundenBul(
       slug: info.slug,
@@ -715,7 +755,7 @@ class OcrController extends ChangeNotifier {
     required String barkod,
     required String marka,
   }) async {
-    final info = _editorController?.publishedInfo;
+    final info = _invoiceCredentials;
     final catalog = _result;
     if (info == null ||
         catalog?.islemKimligi == null ||
@@ -769,6 +809,11 @@ class OcrController extends ChangeNotifier {
       if (uuid.hasMatch(id)) return id;
     }
     return null;
+  }
+
+  int? _tamFaturaStogu(num? value) {
+    if (value == null || !value.isFinite || value != value.toInt()) return null;
+    return value.toInt();
   }
 
   String _fiyatYaz(double deger) {

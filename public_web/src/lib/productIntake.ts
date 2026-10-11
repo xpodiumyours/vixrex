@@ -198,6 +198,7 @@ export async function urunGirdisiniHazirla(args: {
   govde: Record<string, unknown>;
   gorselPolitikasi?: "sahip" | "toplu";
   enAzGorsel?: number;
+  lunaVaryantlariniKoru?: boolean;
   sablonOnbellegi?: Map<string, string | null>;
 }): Promise<UrunGirdiSonucu> {
   const { admin, storeId, storeName, govde } = args;
@@ -206,7 +207,10 @@ export async function urunGirdisiniHazirla(args: {
   if (!name) return { durum: "reddedildi", sebep: "Ürün adı zorunludur." };
 
   const toplu = args.gorselPolitikasi === "toplu";
-  const imageValidation = toplu
+  const lunaGorselleri = normalizeProductImageUrls(govde.imageUrls);
+  const imageValidation = args.lunaVaryantlariniKoru === true
+    ? { ok: lunaGorselleri.every((url) => /^https:\/\//i.test(url)), imageUrls: lunaGorselleri, error: "Ürün fotoğrafı bağlantıları güvenli HTTPS olmalıdır." }
+    : toplu
     ? validateExternalProductImageUrls(govde.imageUrls)
     : validateProductImageUrlsAllowingFewerImages(govde.imageUrls);
 
@@ -217,7 +221,7 @@ export async function urunGirdisiniHazirla(args: {
 
   if (!imageValidation.ok) {
     const yalnizcaAzFotograf =
-      toplu && fotografSayisi < MIN_PRODUCT_IMAGES && fotografSayisi <= MAX_PRODUCT_IMAGES;
+      args.lunaVaryantlariniKoru !== true && toplu && fotografSayisi < MIN_PRODUCT_IMAGES && fotografSayisi <= MAX_PRODUCT_IMAGES;
     if (!yalnizcaAzFotograf) {
       return { durum: "reddedildi", sebep: imageValidation.error ?? "Ürün fotoğrafları geçersiz." };
     }
@@ -231,10 +235,14 @@ export async function urunGirdisiniHazirla(args: {
 
   const categoryId = cleanString(govde.categoryId) || "";
   const onbellek = args.sablonOnbellegi;
-  const templateKey = onbellek?.has(categoryId)
-    ? onbellek.get(categoryId) ?? null
-    : await categoryTemplateKey(admin, storeId, categoryId);
-  if (onbellek && !onbellek.has(categoryId)) onbellek.set(categoryId, templateKey);
+  // Invoice cards receive their Luna category after the stored catalog is read.
+  // Do not reject the draft before that category can be created and attached.
+  const templateKey = args.lunaVaryantlariniKoru === true && !categoryId
+    ? "generic"
+    : onbellek?.has(categoryId)
+      ? onbellek.get(categoryId) ?? null
+      : await categoryTemplateKey(admin, storeId, categoryId);
+  if (onbellek && categoryId && !onbellek.has(categoryId)) onbellek.set(categoryId, templateKey);
   if (!templateKey) {
     return { durum: "reddedildi", sebep: "Kategori bu vitrine ait değil veya ürün tipi geçersiz." };
   }
@@ -247,11 +255,14 @@ export async function urunGirdisiniHazirla(args: {
     return { durum: "reddedildi", sebep: "Ürün detayları kategori tipiyle uyuşmuyor." };
   }
 
-  const variants = variantsForTemplate(govde.variants, templateKey, imageUrls);
+  const variants = args.lunaVaryantlariniKoru === true
+    ? normalizeProductVariants(govde.variants, true)
+    : variantsForTemplate(govde.variants, templateKey, imageUrls);
   const barcode = isService ? null : cleanString(govde.barcode);
   const brand = isService ? null : markaVeyaMagazaAdi(govde.brand, templateKey, storeName);
 
-  const variantError = validateVariantSet(variants, barcode);
+  // Luna's official variants are not judged by another product/variant engine.
+  const variantError = args.lunaVaryantlariniKoru === true ? null : validateVariantSet(variants, barcode);
   if (variantError) return { durum: "reddedildi", sebep: variantError };
 
   const priceText = typeof govde.priceText === "string" ? govde.priceText.trim() : "";

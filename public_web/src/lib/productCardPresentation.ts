@@ -106,16 +106,16 @@ function metadataAttributeFacts(args: {
   for (const attribute of args.metadata.attributes || []) {
     if (args.existingKeys.has(attribute.key)) continue;
     const definition = definitionByKey.get(attribute.key);
-    if (!definition) continue;
+    if (!definition && !args.metadata.lunaInvoice) continue;
     const rawValue = formatAttributeValue(attribute.value, attribute.unit);
     const okunur = Array.isArray(attribute.value)
       ? attribute.value
-          .map((item) => definition.optionLabels?.[String(item)] ?? String(item))
+          .map((item) => definition?.optionLabels?.[String(item)] ?? String(item))
           .join(", ")
-      : definition.optionLabels?.[rawValue] ?? CONDITION_LABELS[rawValue] ?? rawValue;
+      : definition?.optionLabels?.[rawValue] ?? CONDITION_LABELS[rawValue] ?? rawValue;
     facts.push({
       key: attribute.key,
-      label: attribute.label || definition.label,
+      label: attribute.label || definition?.label || attribute.key,
       value: okunur,
     });
   }
@@ -200,8 +200,10 @@ export function buildProductDetailFacts(args: {
 export function productVariantsForTemplate(
   value: unknown,
   templateKey?: string | null,
+  lunaInvoice = false,
 ): ProductVariant[] {
-  const variants = normalizeProductVariants(value);
+  const variants = normalizeProductVariants(value, lunaInvoice);
+  if (lunaInvoice) return variants;
   const template = productTemplateByKey(templateKey);
   if (!template) return [];
 
@@ -223,8 +225,8 @@ export function productVariantsForTemplate(
     .filter((variant) => Object.keys(variant.options).length > 0);
 }
 
-export function buildVariantOptionFacts(value: unknown, templateKey?: string | null): ProductQuickFact[] {
-  return buildVariantOptionGroups(value, templateKey).map((group) => ({
+export function buildVariantOptionFacts(value: unknown, templateKey?: string | null, lunaInvoice = false): ProductQuickFact[] {
+  return buildVariantOptionGroups(value, templateKey, lunaInvoice).map((group) => ({
     key: `variant:${group.key}`,
     label: group.label,
     value: group.values.join(", "),
@@ -234,8 +236,9 @@ export function buildVariantOptionFacts(value: unknown, templateKey?: string | n
 export function buildVariantOptionGroups(
   value: unknown,
   templateKey?: string | null,
+  lunaInvoice = false,
 ): ProductVariantOptionGroup[] {
-  const variants = productVariantsForTemplate(value, templateKey);
+  const variants = productVariantsForTemplate(value, templateKey, lunaInvoice);
   const valuesByKey = new Map<string, Set<string>>();
   const definitions = productAttributesForTemplate(templateKey).filter(
     (definition) => definition.variantEligible,
@@ -261,8 +264,9 @@ export function findMatchingVariant(
   value: unknown,
   selectedOptions: Record<string, string>,
   templateKey?: string | null,
+  lunaInvoice = false,
 ): ProductVariant | null {
-  const variants = productVariantsForTemplate(value, templateKey);
+  const variants = productVariantsForTemplate(value, templateKey, lunaInvoice);
   const selectedEntries = Object.entries(selectedOptions).filter(([, optionValue]) => optionValue);
   if (!selectedEntries.length) return variants[0] ?? null;
   return (
@@ -278,8 +282,9 @@ export function variantOptionIsAvailable(
   optionKey: string,
   optionValue: string,
   templateKey?: string | null,
+  lunaInvoice = false,
 ): boolean {
-  const variants = productVariantsForTemplate(value, templateKey);
+  const variants = productVariantsForTemplate(value, templateKey, lunaInvoice);
   return variants.some((variant) => {
     if (variant.options[optionKey] !== optionValue) return false;
     return Object.entries(selectedOptions).every(([key, selectedValue]) => {
@@ -359,7 +364,7 @@ export function buildProductCardFacts(args: {
 
   if (metadata.itemKind !== "service") {
     const mevcutAnahtarlar = new Set(ozellikler.map((ozellik) => ozellik.key));
-    for (const varyantAlani of buildVariantOptionFacts(args.variants, metadata.templateKey)) {
+    for (const varyantAlani of buildVariantOptionFacts(args.variants, metadata.templateKey, metadata.lunaInvoice)) {
       const temelAnahtar = varyantAlani.key.replace("variant:", "");
       if (mevcutAnahtarlar.has(temelAnahtar)) continue;
       ozellikler.unshift(varyantAlani);

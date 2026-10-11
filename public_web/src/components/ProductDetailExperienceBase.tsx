@@ -90,12 +90,12 @@ export default function ProductDetailExperience({
   const metadata = useMemo(() => normalizeProductMetadata(product.metadata), [product.metadata]);
   const isService = metadata.itemKind === "service";
   const variants = useMemo(
-    () => productVariantsForTemplate(product.variants, metadata.templateKey),
-    [product.variants, metadata.templateKey],
+    () => productVariantsForTemplate(product.variants, metadata.templateKey, metadata.lunaInvoice),
+    [product.variants, metadata.templateKey, metadata.lunaInvoice],
   );
   const groups = useMemo(
-    () => buildVariantOptionGroups(product.variants, metadata.templateKey),
-    [product.variants, metadata.templateKey],
+    () => buildVariantOptionGroups(product.variants, metadata.templateKey, metadata.lunaInvoice),
+    [product.variants, metadata.templateKey, metadata.lunaInvoice],
   );
   const variantKeys = useMemo(
     () => new Set(groups.map((group) => group.key)),
@@ -105,12 +105,12 @@ export default function ProductDetailExperience({
     variants[0] ? { ...variants[0].options } : {},
   );
   const selectedVariant = useMemo(
-    () => findMatchingVariant(product.variants, selectedOptions, metadata.templateKey),
-    [product.variants, selectedOptions, metadata.templateKey],
+    () => findMatchingVariant(product.variants, selectedOptions, metadata.templateKey, metadata.lunaInvoice),
+    [product.variants, selectedOptions, metadata.templateKey, metadata.lunaInvoice],
   );
   const gallery = useMemo(
-    () => Array.from(new Set([...(selectedVariant?.imageUrls || []), ...images])).slice(0, MAX_PRODUCT_IMAGES),
-    [images, selectedVariant],
+    () => Array.from(new Set([...(selectedVariant?.imageUrls || []), ...images])).slice(0, metadata.lunaInvoice ? Infinity : MAX_PRODUCT_IMAGES),
+    [images, selectedVariant, metadata.lunaInvoice],
   );
   const [imageIndex, setImageIndex] = useState(0);
 
@@ -121,7 +121,7 @@ export default function ProductDetailExperience({
         selectedOptions,
         key,
         value,
-        metadata.templateKey,
+        metadata.templateKey, metadata.lunaInvoice,
       )
     ) {
       return;
@@ -265,7 +265,7 @@ export default function ProductDetailExperience({
                           selectedOptions,
                           group.key,
                           value,
-                          metadata.templateKey,
+                          metadata.templateKey, metadata.lunaInvoice,
                         );
                         return (
                           <button

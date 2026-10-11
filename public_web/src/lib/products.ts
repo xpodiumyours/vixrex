@@ -16,19 +16,28 @@ export interface ProductItem {
   stockStatus?: string;
   isVisible?: boolean;
   source?: string;
+  metadata?: unknown;
   sourceMediaId?: string;
   sourcePermalink?: string;
   importedAt?: string;
 }
 
+export function isLunaInvoiceProduct(product: ProductItem): boolean {
+  return product.source === "invoice" || Boolean(
+    product.metadata && typeof product.metadata === "object" &&
+    "lunaInvoice" in product.metadata && product.metadata.lunaInvoice === true
+  );
+}
+
 export function getProductImages(product: ProductItem): string[] {
-  return Array.from(
+  const images = Array.from(
     new Set(
       [...(Array.isArray(product.imageUrls) ? product.imageUrls : []), product.imagePath || ""]
         .map((value) => String(value || "").trim())
         .filter(Boolean)
     )
-  ).slice(0, MAX_PRODUCT_IMAGES);
+  );
+  return isLunaInvoiceProduct(product) ? images : images.slice(0, MAX_PRODUCT_IMAGES);
 }
 
 /** Taslak / test ürün adları — müşteri vitrininde gizlenmeli */
@@ -59,14 +68,14 @@ export function resolveCatalogImage(
   fallbackImage?: string | null,
 ): string | null {
   const source = String(product.source || "").toLowerCase();
-  const preferFallbackForSource =
+  const preferFallbackForSource = !isLunaInvoiceProduct(product) && (
     source.includes("ocr") ||
     source.includes("receipt") ||
     source.includes("fatura") ||
     source.includes("invoice") ||
-    source.includes("scan");
+    source.includes("scan"));
 
-  const cleaned = getProductImages(product).filter((url) => !isLikelyUiScreenshotUrl(url));
+  const cleaned = getProductImages(product).filter((url) => isLunaInvoiceProduct(product) || !isLikelyUiScreenshotUrl(url));
 
   if (!preferFallbackForSource && cleaned[0]) return cleaned[0];
 
@@ -81,7 +90,7 @@ export function resolveCatalogImage(
 export function isPublicCatalogProduct(product: ProductItem): boolean {
   if (!String(product.name || "").trim()) return false;
   if (product.isVisible === false) return false;
-  if (isJunkProductName(product.name)) return false;
+  if (!isLunaInvoiceProduct(product) && isJunkProductName(product.name)) return false;
   return true;
 }
 

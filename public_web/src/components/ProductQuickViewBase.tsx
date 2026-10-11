@@ -90,12 +90,12 @@ export default function ProductQuickView({
   );
   const isService = productIsService(product.metadata);
   const variants = useMemo(
-    () => productVariantsForTemplate(product.variants, metadata.templateKey),
-    [product.variants, metadata.templateKey],
+    () => productVariantsForTemplate(product.variants, metadata.templateKey, metadata.lunaInvoice),
+    [product.variants, metadata.templateKey, metadata.lunaInvoice],
   );
   const variantGroups = useMemo(
-    () => buildVariantOptionGroups(product.variants, metadata.templateKey),
-    [product.variants, metadata.templateKey],
+    () => buildVariantOptionGroups(product.variants, metadata.templateKey, metadata.lunaInvoice),
+    [product.variants, metadata.templateKey, metadata.lunaInvoice],
   );
   const variantKeys = useMemo(
     () => new Set(variantGroups.map((group) => group.key)),
@@ -107,14 +107,14 @@ export default function ProductQuickView({
   const [imageIndex, setImageIndex] = useState(0);
 
   const selectedVariant = useMemo(
-    () => findMatchingVariant(product.variants, selectedOptions, metadata.templateKey),
-    [product.variants, selectedOptions, metadata.templateKey],
+    () => findMatchingVariant(product.variants, selectedOptions, metadata.templateKey, metadata.lunaInvoice),
+    [product.variants, selectedOptions, metadata.templateKey, metadata.lunaInvoice],
   );
 
   const displayImages = useMemo(() => {
     const variantImages = selectedVariant?.imageUrls || [];
-    return Array.from(new Set([...variantImages, ...images])).slice(0, MAX_PRODUCT_IMAGES);
-  }, [images, selectedVariant]);
+    return Array.from(new Set([...variantImages, ...images])).slice(0, metadata.lunaInvoice ? Infinity : MAX_PRODUCT_IMAGES);
+  }, [images, selectedVariant, metadata.lunaInvoice]);
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -144,7 +144,7 @@ export default function ProductQuickView({
         selectedOptions,
         key,
         value,
-        metadata.templateKey,
+        metadata.templateKey, metadata.lunaInvoice,
       )
     ) {
       return;
@@ -341,7 +341,7 @@ export default function ProductQuickView({
                         selectedOptions,
                         group.key,
                         value,
-                        metadata.templateKey,
+                        metadata.templateKey, metadata.lunaInvoice,
                       );
                       return (
                         <button

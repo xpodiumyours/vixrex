@@ -48,6 +48,15 @@ vi.mock("@/lib/supabaseAdmin", () => ({
   getSupabaseAdmin: () => ({
     rpc: mocks.rpc,
     from: (tablo: string) => {
+      if (tablo === "invoice_jobs") {
+        return {
+          update: () => ({
+            eq: () => ({
+              eq: async () => ({ error: null }),
+            }),
+          }),
+        };
+      }
       if (tablo === "invoice_read_usage") {
         return {
           select: () => ({
@@ -127,6 +136,12 @@ function siteyiAyiranOkuma(govde: unknown) {
     const adres = String(url);
     if (adres.includes("openrouter.ai/api/v1/responses")) {
       const istek = JSON.parse(String(init?.body ?? "{}"));
+      if (istek.text?.format?.name === "markanin_resmi_sitesi") return okuyucuCevabi({
+        marka_adi: "Seher Mensucat", resmi_site: "https://sehermensucat.com",
+        kanit_sayfa: "https://sehermensucat.com/iletisim",
+        marka_sahibi_dogrulandi: true,
+        kanit: "Seher Mensucat kendi ürünlerinin üretimini gerçekleştirmektedir.",
+      });
       if (istek.text?.format?.name === "firma_dogrulama") return okuyucuCevabi({
         firma_adi_sayfada: true, adres_sayfada: true,
         vergi_no_sayfada: true, kanit_sayfa: "https://sehermensucat.com/iletisim",
@@ -318,15 +333,15 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(govde.belgeToplami).toBe(301.4);
   });
 
-  it("KDV varken net mal bedeli okunamadiysa genel toplami satir bedeli saymaz", async () => {
+  it("KDV varken net mal bedeli okunamadığında Luna satırları kaybolmaz, uyarı saklanır", async () => {
     vi.stubGlobal("fetch", siteyiAyiranOkuma({
       ...TEK_SATIR,
       mal_bedeli: null, kdv_tutari: 27.4, indirim_tutari: null,
       odenecek_toplam: 301.4, toplam_tutar: 301.4,
     }));
     const yanit = await faturaOku(istek());
-    expect(yanit.status).toBe(422);
-    expect((await yanit.json()).hata).toContain("KDV hariç mal bedeli");
+    expect(yanit.status).toBe(200);
+    expect((await yanit.json()).belgeUyarisi).toContain("vergi hariç");
   });
 
   it("okunamayan rakamlar sıfıra dönüşmez", async () => {
@@ -394,13 +409,13 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
       JSON.parse(String((cagri[1] as RequestInit).body)).text?.format?.name === "fatura_urun_kaynagi");
     const arama = JSON.parse(String((aramaCagrisi?.[1] as RequestInit).body));
     expect(arama.model).toBe("openai/gpt-5.6-luna");
-    expect(arama.reasoning.effort).toBe("low");
-    expect(arama.max_tool_calls).toBe(4);
+    expect(arama.reasoning).toBeUndefined();
+    expect(arama.max_tool_calls).toBeUndefined();
     expect(arama.tools.map((arac: { type: string }) => arac.type)).toEqual([
       "openrouter:web_search", "openrouter:web_fetch",
     ]);
-    expect(arama.tools[0].parameters.allowed_domains).toEqual(["sehermensucat.com"]);
-    expect(arama.tools[1].parameters.allowed_domains).toEqual(["sehermensucat.com"]);
+    expect(arama.tools[0].parameters.allowed_domains).toBeUndefined();
+    expect(arama.tools[1].parameters.allowed_domains).toBeUndefined();
     expect(arama.text.format.strict).toBe(true);
   });
 
@@ -435,6 +450,15 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
       const adres = String(url);
       if (adres.includes("openrouter.ai/api/v1/responses")) {
         const istekGovdesi = JSON.parse(String(init?.body ?? "{}"));
+        if (istekGovdesi.text?.format?.name === "markanin_resmi_sitesi") {
+          return okuyucuCevabi({
+            marka_adi: "Seher Mensucat",
+            resmi_site: "https://sehermensucat.com",
+            kanit_sayfa: "https://sehermensucat.com/iletisim",
+            marka_sahibi_dogrulandi: true,
+            kanit: "Seher Mensucat kendi ürünlerinin üretimini gerçekleştirmektedir.",
+          });
+        }
         if (istekGovdesi.text?.format?.name === "firma_dogrulama") {
           return okuyucuCevabi({
             vergi_no_sayfada: true, firma_adi_sayfada: true,
@@ -509,13 +533,11 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(govde.satirlar[0].katalog.gorseller).toEqual([gorsel]);
     expect(govde.satirlar[0].katalog.kaynak).toBe(sayfa);
     expect(govde.satirlar[0].katalog.dayanak).toBe("kod");
-    expect(govde.satirlar[0].katalog.fotografKaniti.kaynakSayfa).toBe(sayfa);
-    expect(govde.satirlar[0].katalog.fotografKaniti.kaynakGorsel).toBe(gorsel);
-    expect(govde.satirlar[0].katalog.fotografKaniti.lunaGerekcesi).toContain("siyah renk");
+    expect(govde.satirlar[0].katalog.resmiAd).toBe("Elit Erkek Elastan Sıfır Yaka");
   });
 
 
-  it("toptancı faturasındaki marka için üreticinin resmî sitesini ayrı bulur", async () => {
+  it("toptancı faturasındaki ürünün resmî üreticisini Luna kendi araştırır", async () => {
     const cevapVer = vi.fn(async (url: string, init?: RequestInit) => {
       // HTML kaniti, OpenRouter'un JSON yanitindan BAGIMSIZ gercek sayfa
       // cevabidir. Kanit sayfada yoksa uretici sitesi kilitlenemez.
@@ -553,10 +575,12 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(response.status).toBe(200);
     const bodies = cevapVer.mock.calls.map((call) => JSON.parse(String((call[1] as RequestInit)?.body ?? "{}")));
     const productSearch = bodies.find((item) => item.text?.format?.name === "fatura_urun_kaynagi");
-    expect(cevapVer.mock.calls.some((call) => String(call[0]) === "https://elit.example/hakkimizda")).toBe(true);
+    expect(cevapVer.mock.calls.some((call) => String(call[0]) === "https://elit.example/hakkimizda")).toBe(false);
     expect(productSearch).toBeDefined();
-    expect(productSearch.tools[0].parameters.allowed_domains).toEqual(["elit.example"]);
-    expect(productSearch.tools[1].parameters.allowed_domains).toEqual(["elit.example"]);
+    expect(productSearch.input).toContain("Invoice brand: Elit");
+    expect(bodies.some((item) => item.text?.format?.name === "markanin_resmi_sitesi")).toBe(false);
+    expect(productSearch.tools[0].parameters.allowed_domains).toBeUndefined();
+    expect(productSearch.tools[1].parameters.allowed_domains).toBeUndefined();
     expect((await response.json()).satirlar[0].sonuc).toBe("eksik");
   });
 
@@ -635,18 +659,16 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(cevap.status).toBe(429);
   });
 
-  it("belge toplamı tutmuyorsa vitrine yazılmaz", async () => {
+  it("belge toplamı tutmasa bile Luna satırları uyarıyla saklanır", async () => {
     const okuma = siteyiAyiranOkuma({ ...TEK_SATIR, toplam_adet: 75, toplam_tutar: 6034 });
     vi.stubGlobal("fetch", okuma);
 
     const cevap = await faturaOku(istek());
     const govde = await cevap.json();
 
-    expect(cevap.status).toBe(422);
-    expect(govde.hata).toContain("Fotoğraf tutmadı");
-    expect(mocks.kaydet).not.toHaveBeenCalled();
-    const fotografOkuma = okuma.mock.calls.filter((cagri) => String(cagri[0]).includes("openrouter.ai/api/v1/responses"));
-    expect(fotografOkuma).toHaveLength(1);
+    expect(cevap.status).toBe(200);
+    expect(govde.belgeUyarisi).toContain("Fatura tam okunamadı");
+    expect(mocks.kaydet).toHaveBeenCalled();
   });
 
   it("belge toplamı tutuyorsa belge gerçeği cevapta döner", async () => {
@@ -679,13 +701,43 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     mocks.parmak.mockResolvedValue("eski-islem");
     mocks.yukle.mockResolvedValue({
       islemKimligi: "eski-islem", durum: "hazir", tedarikci: "Üretici",
-      satirlar: [{ model: "M1", ad: "Ürün", sonuc: "eksik", katalog: null }],
+      satirlar: [{ model: "M1", ad: "Ürün", sonuc: "kanitli", katalog: { resmiAd: "Ürün", marka: "Üretici", aciklama: "Açıklama", gorseller: [], gorselAdaylari: [], izinDurumu: "yok", firma: "Üretici", kaynakFirma: "Üretici", dayanak: "kod", kaynak: "https://uretici.example/urun" } }],
       aramaDurumu: { sonrakiSatir: 1, erisimHatasi: false, sinirDoldu: false },
       belge: { belgeTuru: "fatura" },
     });
     const cevap = await faturaOku(istek());
     expect(cevap.status).toBe(200);
     expect(vi.mocked(fetch)).not.toHaveBeenCalled();
+  });
+
+  it("tamamlanmış faturanın eksik ürünlerini yeniden araştırır; OCR tekrarlanmaz", async () => {
+    mocks.parmak.mockResolvedValue("11111111-1111-4111-8111-111111111111");
+    const eski = {
+      islemKimligi: "11111111-1111-4111-8111-111111111111",
+      tedarikci: "Üretici",
+      tedarikciVergiNo: "",
+      tedarikciAdres: "",
+      tedarikciSite: "",
+      belgeAdedi: 2,
+      belgeToplami: 274,
+      belge: { belgeTuru: "fatura", malBedeli: 274 },
+      satirlar: [{
+        hamSatir: "ELT1302 Elit fanila", model: "ELT1302", ad: "Elit fanila",
+        barkod: "", varyant: "", beden: "", marka: "Elit", adet: 2,
+        alisBirimFiyat: 137, satirToplam: 274, guven: 0.95,
+        sonuc: "eksik", katalog: null, satirId: "test-satir-0",
+      }],
+      aramaDurumu: { sonrakiSatir: 1, erisimHatasi: false, sinirDoldu: false, hatalar: {} },
+    };
+    mocks.kalici = eski;
+    mocks.yukle.mockImplementation(async () => mocks.kalici);
+    const cevap = await faturaOku(istek());
+    expect(cevap.status).toBe(200);
+    expect(mocks.kaydet).not.toHaveBeenCalled();
+    const istekler = vi.mocked(fetch).mock.calls.map((call) => JSON.parse(String(call[1]?.body ?? "{}")));
+    expect(istekler.some((body) => body.text?.format?.name === "fatura_urun_kaynagi")).toBe(true);
+    expect(vi.mocked(fetch)).toHaveBeenCalled();
+    expect(mocks.rpc).toHaveBeenCalledWith("replace_invoice_line", expect.anything());
   });
 
   it("günlük harcama doluysa yeni ücretli okuma başlamaz", async () => {
@@ -707,6 +759,36 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     const cevap = await faturaOku(istek());
     expect(cevap.status).toBe(503);
     expect((await cevap.json()).hata).toContain("tekrar açılamadı");
+  });
+
+  it.each(["barkod", "hamSatir"])("yalnız %s olan satırı Luna araştırır ve kayıt korur", async (tur) => {
+    const satir = { ...TEK_SATIR.satirlar[0], model: "", ad: "", marka: "", barkod: tur === "barkod" ? "8681128321677" : "", ham_satir: "Pamuklu atlet 2 adet" };
+    const istekler: Record<string, unknown>[] = [];
+    vi.stubGlobal("fetch", async (_url: string, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body ?? "{}"));
+      istekler.push(body);
+      if (body.text?.format?.name === "markanin_resmi_sitesi") return okuyucuCevabi({ marka_sahibi_dogrulandi: true, resmi_site: "https://uretici.example", kanit_sayfa: "https://uretici.example/hakkimizda" });
+      if (body.text?.format?.name === "fatura_urun_kaynagi") return okuyucuCevabi({ eslesti: false });
+      return okuyucuCevabi({ ...TEK_SATIR, satirlar: [satir] });
+    });
+    const yanit = await (await faturaOku(istek())).json();
+    expect(yanit.satirlar).toHaveLength(1);
+    const arama = istekler.find((body) => (body.text as { format: { name: string } })?.format?.name === "fatura_urun_kaynagi");
+    expect(arama).toBeDefined();
+    expect(arama!.input).toContain(tur === "barkod" ? satir.barkod : satir.ham_satir);
+  });
+
+  it("Luna ürün araştırması yarım kalırsa aynı satır devam için korunur", async () => {
+    vi.stubGlobal("fetch", async (_url: string, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body ?? "{}"));
+      if (body.text?.format?.name === "fatura_urun_kaynagi") return new Response(JSON.stringify({ status: "incomplete", usage: { cost: 0.07 } }));
+      return okuyucuCevabi(TEK_SATIR);
+    });
+    const yanit = await (await faturaOku(istek())).json();
+    expect(yanit.satirlar).toHaveLength(1);
+    expect(yanit.aramaSuruyor).toBe(true);
+    expect((mocks.kalici!.aramaDurumu as { sonrakiSatir: number }).sonrakiSatir).toBe(0);
+    expect(mocks.kullanimYaz).toHaveBeenCalledWith(expect.objectContaining({ provider_cost_usd: 0.07 }));
   });
 
 });

@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import FirmaIzniPaneli from "@/components/owner/FirmaIzniPaneli";
-import { kategoriSec, otomatikOzellikler, faturaVaryantlari } from "@/lib/faturaOtomatikDoldur";
 import { otomatikTaslakAdayi } from "@/lib/faturaTaslakAdayi";
 import {
   KART_DURUM_ETIKETI,
@@ -25,6 +24,7 @@ export interface CeliskiBilgisi {
 }
 
 export interface FaturaSatiri {
+  hamSatir?: string;
   model: string;
   ad: string;
   barkod: string;
@@ -52,6 +52,9 @@ export interface KatalogBilgisi {
   aciklama: string;
   gorseller: string[];
   gorselAdaylari: string[];
+  kategori?: string;
+  ozellikler?: Array<{ key: string; label: string; value: string }>;
+  urunVaryantlari?: Array<{ id: string; secenekler: Array<{ key: string; value: string }>; barkod: string; gorseller: string[] }>;
   varyantlar?: Array<{ ad: string; barkod: string; gorseller: string[] }>;
   kaynak: string;
 }
@@ -148,6 +151,7 @@ interface InvoiceToProductsProps {
 const GUVEN_ESIGI = 0.7;
 const MAKS_BAYT = 4 * 1024 * 1024; // Vercel 4.5 MB request body, multipart payi.
 const MAKS_SAYFA = 3;
+const TOPLU_UST_SINIR = 100;
 
 function paraYaz(n: number | null): string {
   if (n === null) return "—";
@@ -169,7 +173,7 @@ function stokSayisi(ham: string): number | null {
   const temiz = ham.trim();
   if (!temiz) return null;
   const n = Number(temiz);
-  return Number.isFinite(n) && n >= 0 ? Math.round(n) : null;
+  return Number.isSafeInteger(n) && n >= 0 ? n : null;
 }
 
 export function faturaSatiriDurumunuHazirla(
@@ -202,7 +206,7 @@ function faturaUrunIstekGirdisi(
             const satisFiyati = fiyatSayisi(satir.satisFiyati);
             const katalog = satir.katalog;
             return {
-              name: katalog?.resmiAd || satir.ad || satir.model || satir.barkod,
+              name: katalog?.resmiAd || satir.ad || satir.model || satir.barkod || satir.hamSatir,
               description: katalog?.aciklama ?? "",
               priceText: satisFiyati === null ? "" : `${satisFiyati} TL`,
               categoryId: satir.kategoriId,
@@ -226,23 +230,22 @@ function faturaUrunIstekGirdisi(
               yayinIstegi,
               purchasePriceAmount: satir.alisBirimFiyat ?? undefined,
               metadata: (() => {
-                const sablon = categories.find((kategori) => kategori.id === satir.kategoriId)
-                  ?.product_template_key;
-                const nitelikler = otomatikOzellikler(
-                  { ad: satir.ad, resmiAd: katalog?.resmiAd, varyant: satir.varyant, beden: satir.beden },
-                  sablon || "generic",
-                );
+                const nitelikler = [...(katalog?.ozellikler ?? [])];
+                if (katalog?.kategori && !nitelikler.some((ozellik) => ozellik.key === "category")) {
+                  nitelikler.push({ key: "category", label: "Kategori", value: katalog.kategori });
+                }
                 if (!satir.model && nitelikler.length === 0) return undefined;
                 return {
                   ...(satir.model ? { identifiers: { sku: satir.model } } : {}),
                   ...(nitelikler.length > 0 ? { attributes: nitelikler } : {}),
                 };
               })(),
-              variants: faturaVaryantlari({
-                model: satir.model || String(sira), barkod: satir.barkod,
-                varyant: satir.varyant, beden: satir.beden,
-                stok: stokSayisi(satir.stok), kaynakVaryantlar: katalog?.varyantlar,
-              }),
+              variants: (katalog?.urunVaryantlari ?? []).map((varyant) => ({
+                id: varyant.id,
+                options: Object.fromEntries(varyant.secenekler.map((secenek) => [secenek.key, secenek.value])),
+                barcode: varyant.barkod || undefined,
+                imageUrls: varyant.gorseller,
+              })),
               sortOrder: sira,
             };
 }
@@ -364,13 +367,13 @@ export default function InvoiceToProducts({
 
   const satirlariHazirla = useCallback(
     (okunan: FaturaOkumaSonucu): SatirDurumu[] =>
-      okunan.satirlar.map((satir) =>
-        faturaSatiriDurumunuHazirla(satir,
-            kategoriSec(
-              { ad: satir.ad, marka: satir.marka, resmiAd: satir.katalog?.resmiAd },
-              categories,
-            )),
-      ),
+      okunan.satirlar.map((satir) => {
+        const lunaKategori = satir.katalog?.kategori?.normalize("NFKC").trim().toLocaleLowerCase("tr-TR");
+        const kategoriId = lunaKategori
+          ? categories.find((kategori) => kategori.name.normalize("NFKC").trim().toLocaleLowerCase("tr-TR") === lunaKategori)?.id ?? ""
+          : "";
+        return faturaSatiriDurumunuHazirla(satir, kategoriId);
+      }),
     [categories],
   );
 
@@ -425,9 +428,9 @@ export default function InvoiceToProducts({
       }),
     });
     if (!sahipCevabi.ok) throw new Error("Taslak kayıt için fatura seçimleri saklanamadı.");
-    const cevap = await fetch("/api/products/batch", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ slug: storeSlug, products: adaylar.map(({ satir, sira }) => ({
+    const istekler = adaylar.map(({ satir, sira }) => ({
+      sira,
+      govde: {
         ...faturaUrunIstekGirdisi(satir, sira, kartDegerlendir({
           satir, satisFiyati: fiyatSayisi(satir.satisFiyati),
           stok: stokSayisi(satir.stok), esnafGorselleri: satir.esnafGorselleri,
@@ -435,20 +438,27 @@ export default function InvoiceToProducts({
           templateKey: categories.find((kategori) => kategori.id === satir.kategoriId)?.product_template_key,
         }), okunan, categories),
         yayinIstegi: false,
-      })) }),
-    });
-    const yanit = await cevap.json().catch(() => null);
-    if (!cevap.ok || !yanit || !Array.isArray(yanit.satirlar)) {
-      throw new Error(yanit?.hata || "Ürün taslaklarının kalıcı kaydı doğrulanamadı.");
-    }
+      },
+    }));
     const baglanan = new Map<number, string>();
     let atlandi = 0;
-    for (const kayit of yanit.satirlar as Array<{ sira: number; id?: string; durum: string }>) {
-      const aday = adaylar[kayit.sira];
-      if (!aday) throw new Error("Ürün taslağı ile fatura satırı uyuşmuyor.");
-      if (kayit.durum === "taslak" && typeof kayit.id === "string" && kayit.id) {
-        baglanan.set(aday.sira, kayit.id);
-      } else atlandi++;
+    for (let baslangic = 0; baslangic < istekler.length; baslangic += TOPLU_UST_SINIR) {
+      const parca = istekler.slice(baslangic, baslangic + TOPLU_UST_SINIR);
+      const cevap = await fetch("/api/products/batch", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug: storeSlug, products: parca.map((istek) => istek.govde) }),
+      });
+      const yanit = await cevap.json().catch(() => null);
+      if (!cevap.ok || !yanit || !Array.isArray(yanit.satirlar)) {
+        throw new Error(yanit?.hata || "Ürün taslaklarının kalıcı kaydı doğrulanamadı.");
+      }
+      for (const kayit of yanit.satirlar as Array<{ sira: number; id?: string; durum: string }>) {
+        const aday = parca[kayit.sira];
+        if (!aday) throw new Error("Ürün taslağı ile fatura satırı uyuşmuyor.");
+        if (kayit.durum === "taslak" && typeof kayit.id === "string" && kayit.id) {
+          baglanan.set(aday.sira, kayit.id);
+        } else atlandi++;
+      }
     }
     if (baglanan.size + atlandi !== adaylar.length) throw new Error("Ürün taslağı kayıt sayısı uyuşmuyor.");
     setSatirlar((eskiler) => eskiler.map((satir, sira) =>
@@ -739,32 +749,52 @@ export default function InvoiceToProducts({
       // DB'de gerçek onay saklanmadan kart yazma isteği gönderilmez.
       await sahipSecimleriniKaydet(onaylanan);
       setSatirlar(onaylanan);
-      const cevap = await fetch("/api/products/batch", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          slug: storeSlug,
-          products: onayliGonderilecek.map(({ satir, sira, degerlendirme }) =>
-            faturaUrunIstekGirdisi(satir, sira, degerlendirme, belge, categories, true),
-          ),
-        }),
-      });
-
-      const govde = await cevap.json().catch(() => null);
-      if (!cevap.ok) {
-        throw new Error(
-          govde && typeof govde.hata === "string" ? govde.hata : "Ürünler kaydedilemedi.",
-        );
+      const istekler = onayliGonderilecek.map(({ satir, sira, degerlendirme }) => ({
+        sira,
+        govde: faturaUrunIstekGirdisi(satir, sira, degerlendirme, belge, categories, true),
+      }));
+      const birlesenSatirlar: YazmaSonucu["satirlar"] = [];
+      let yayinda = 0;
+      let taslak = 0;
+      let hatali = 0;
+      for (let baslangic = 0; baslangic < istekler.length; baslangic += TOPLU_UST_SINIR) {
+        const parca = istekler.slice(baslangic, baslangic + TOPLU_UST_SINIR);
+        const cevap = await fetch("/api/products/batch", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ slug: storeSlug, products: parca.map((istek) => istek.govde) }),
+        });
+        const govde = await cevap.json().catch(() => null);
+        if (!cevap.ok) {
+          throw new Error(
+            govde && typeof govde.hata === "string" ? govde.hata : "Ürünler kaydedilemedi.",
+          );
+        }
+        if (!govde || !Array.isArray(govde.satirlar)) {
+          throw new Error("Ürünler kaydedilemedi.");
+        }
+        for (const kayit of govde.satirlar as YazmaSonucu["satirlar"]) {
+          const genelSira = parca[kayit.sira]?.sira;
+          if (genelSira === undefined) throw new Error("Ürün taslağı ile fatura satırı uyuşmuyor.");
+          birlesenSatirlar.push({ ...kayit, sira: genelSira });
+        }
+        yayinda += typeof govde.yayinda === "number" ? govde.yayinda : 0;
+        taslak += typeof govde.taslak === "number" ? govde.taslak : 0;
+        hatali += typeof govde.hatali === "number" ? govde.hatali : 0;
       }
 
       // HTTP 200 veya tamam:true, tek başına ürün yazıldığını ispatlamaz.
-      if (!govde || typeof govde.eklenen !== "number" || govde.eklenen < 1) {
-        const hata = Array.isArray(govde?.satirlar)
-          ? govde.satirlar.map((item: { sebep?: string }) => item.sebep).filter(Boolean).join(" · ")
-          : "";
+      if (birlesenSatirlar.filter((satir) => satir.durum === "yayinda" || satir.durum === "taslak").length < 1) {
+        const hata = birlesenSatirlar.map((item) => item.sebep).filter(Boolean).join(" · ");
         throw new Error(hata || "Hiçbir ürün kartı kaydedilemedi. Değişiklikler faturada saklandı.");
       }
-      setSonuc(govde as YazmaSonucu);
+      setSonuc({
+        toplam: birlesenSatirlar.length,
+        yayinda,
+        taslak,
+        hatali,
+        satirlar: birlesenSatirlar,
+      });
       setAdim("bitti");
       await onUploaded();
     } catch (err) {
@@ -784,27 +814,28 @@ export default function InvoiceToProducts({
     setYukleniyor(true);
     setHata(null);
     try {
-      const cevap = await fetch("/api/fatura-yayinla", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug: storeSlug, productIds: taslakIdler }),
-      });
-      const govde = await cevap.json().catch(() => null);
-      if (!cevap.ok) {
-        throw new Error(
-          govde && typeof govde.hata === "string" ? govde.hata : "Ürünler yayınlanamadı.",
-        );
+      const yayinlananIdler = new Set<string>();
+      const sebepler = new Map<string, string>();
+      let dogrulandi = true;
+      for (let baslangic = 0; baslangic < taslakIdler.length; baslangic += TOPLU_UST_SINIR) {
+        const parca = taslakIdler.slice(baslangic, baslangic + TOPLU_UST_SINIR);
+        const cevap = await fetch("/api/fatura-yayinla", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ slug: storeSlug, productIds: parca }),
+        });
+        const govde = await cevap.json().catch(() => null);
+        if (!cevap.ok) {
+          throw new Error(
+            govde && typeof govde.hata === "string" ? govde.hata : "Ürünler yayınlanamadı.",
+          );
+        }
+        dogrulandi = dogrulandi && govde?.tuketiciDogrulamasi === "tamam";
+        for (const satir of ((govde?.satirlar ?? []) as Array<{ id: string; durum: string; sebep?: string }>)) {
+          if (satir.durum === "yayinda") yayinlananIdler.add(satir.id);
+          else if (satir.sebep) sebepler.set(satir.id, satir.sebep);
+        }
       }
-      const yayinlananIdler = new Set<string>(
-        ((govde?.satirlar ?? []) as Array<{ id: string; durum: string }>)
-          .filter((satir) => satir.durum === "yayinda")
-          .map((satir) => satir.id),
-      );
-      const sebepler = new Map<string, string>(
-        ((govde?.satirlar ?? []) as Array<{ id: string; durum: string; sebep?: string }>)
-          .filter((satir) => satir.durum !== "yayinda" && satir.sebep)
-          .map((satir) => [satir.id, satir.sebep as string]),
-      );
       setSonuc((onceki) => {
         if (!onceki) return onceki;
         const satirlar = onceki.satirlar.map((satir) => {
@@ -817,7 +848,7 @@ export default function InvoiceToProducts({
         const yayinda = satirlar.filter((satir) => satir.durum === "yayinda").length;
         return {
           ...onceki,
-          tuketiciDogrulandi: govde?.tuketiciDogrulamasi === "tamam",
+          tuketiciDogrulandi: dogrulandi,
           yayinda,
           taslak: satirlar.filter((satir) => satir.durum === "taslak").length,
           satirlar,

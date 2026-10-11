@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:vixrex/models/detected_product.dart';
 import 'package:vixrex/models/invoice_product_draft.dart';
-import 'package:vixrex/services/invoice_catalog/invoice_draft_decision_engine.dart';
 import 'package:vixrex/theme/app_colors.dart';
 
 /// OCR sonuç listesi widget'ı.
@@ -248,26 +247,9 @@ class OcrResultList extends StatelessWidget {
     return labels.toSet().join(' · ');
   }
 
-  /// Kartın ekranda görünen hâli ve kanıtı. Web paneliyle AYNI dört hâl:
-  /// kanıtlı / eksik bilgi / çelişki / iz bulunamadı. Kaynak, izin ve
-  /// faturadaki adet önerisi burada açıkça görünür; faturadaki adet stok
-  /// yerine geçmez, esnaf onaylar.
+  /// Display Luna's product research without a second approval decision engine.
   Widget _buildInvoiceDecision(InvoiceProductDraft draft, int index) {
-    final result = const InvoiceDraftDecisionEngine().evaluate(draft);
-    final durum = result.kartDurumu;
-    final label = switch (result.decision) {
-      AutomationDecision.stopNoGuess => 'DUR — ürün tahmin edilmedi',
-      AutomationDecision.askMissing => 'SOR — eksik kanıt var',
-      AutomationDecision.autoPrepareDraft => 'TASLAK HAZIRLANABİLİR',
-      AutomationDecision.readyForPublish => 'YAYINA HAZIR',
-    };
-    final detail =
-        result.questions.isNotEmpty
-            ? result.questions.first
-            : result.warnings.isNotEmpty
-            ? result.warnings.first
-            : '';
-    final izinVar = draft.rightsStatus.isUsableBasis;
+    final durum = draft.etkinKartDurumu;
     final adet = draft.quantity?.value;
 
     return Column(
@@ -293,7 +275,7 @@ class OcrResultList extends StatelessWidget {
             const SizedBox(width: 6),
             Expanded(
               child: Text(
-                label,
+                'Luna ürün kartı',
                 style: const TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
@@ -303,15 +285,61 @@ class OcrResultList extends StatelessWidget {
             ),
           ],
         ),
-        if (detail.isNotEmpty)
-          Text(
-            detail,
-            style: const TextStyle(
-              fontSize: 10,
-              height: 1.35,
-              color: AppColors.mutedText,
-            ),
+        if (draft.imageCandidates.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (final image in draft.imageCandidates)
+                if (image.selected && image.canUse)
+                  Image.network(
+                    image.url,
+                    width: 72,
+                    height: 72,
+                    fit: BoxFit.contain,
+                    errorBuilder:
+                        (_, _, _) => const SizedBox(
+                          width: 72,
+                          height: 72,
+                          child: Icon(Icons.image_not_supported_outlined),
+                        ),
+                  ),
+            ],
           ),
+        ],
+        for (final attribute in draft.catalogAttributes)
+          Text(
+            '${attribute['label'] ?? attribute['key'] ?? ''}: ${attribute['value'] ?? ''}',
+            style: const TextStyle(fontSize: 11, color: AppColors.mutedText),
+          ),
+        for (final variant in draft.catalogVariants) ...[
+          Text(
+            _variantSummary(variant),
+            style: const TextStyle(fontSize: 11, color: AppColors.mutedText),
+          ),
+          if (variant['gorseller'] is List)
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final url in variant['gorseller'] as List)
+                  if (url is String)
+                    Image.network(
+                      url,
+                      width: 72,
+                      height: 72,
+                      fit: BoxFit.contain,
+                      errorBuilder:
+                          (_, _, _) => const SizedBox(
+                            width: 72,
+                            height: 72,
+                            child: Icon(Icons.image_not_supported_outlined),
+                          ),
+                    ),
+              ],
+            ),
+        ],
         if (draft.celiskiAdaylari.isNotEmpty) ...[
           const SizedBox(height: 4),
           ...draft.celiskiAdaylari
@@ -329,8 +357,7 @@ class OcrResultList extends StatelessWidget {
         if (draft.canonicalProductUrl?.value != null &&
             draft.canonicalProductUrl!.value!.trim().isNotEmpty)
           Text(
-            'Kaynak: ${draft.canonicalProductUrl!.value}'
-            '${izinVar ? ' · üretici izni var' : ' · üretici izni yok — yalnız kendi fotoğrafın'}',
+            'Kaynak: ${draft.canonicalProductUrl!.value}',
             style: const TextStyle(fontSize: 10, color: AppColors.mutedText),
           ),
         if (durum.kartYayinaUygun) ...[
@@ -348,6 +375,19 @@ class OcrResultList extends StatelessWidget {
         ],
       ],
     );
+  }
+
+  String _variantSummary(Map<String, dynamic> variant) {
+    final options = variant['secenekler'];
+    return [
+      if (variant['id'] is String) variant['id'] as String,
+      if (options is List)
+        for (final option in options.whereType<Map>())
+          '${option['key'] ?? ''}: ${option['value'] ?? ''}',
+      if (variant['barkod'] is String &&
+          (variant['barkod'] as String).isNotEmpty)
+        'Barkod: ${variant['barkod']}',
+    ].join(' · ');
   }
 
   Color _kartDurumuRengi(KartDurumu durum) {

@@ -4,11 +4,12 @@
  * Eksik kimliği olmayan satır ise invoice_job_lines içinde saklanır, kart uydurulmaz.
  */
 export function otomatikTaslakAdayi(satir: {
+  hamSatir?: string | null;
   ad?: string | null;
   model?: string | null;
   barkod?: string | null;
   sonuc?: string;
   katalog?: { resmiAd?: string | null; kaynak?: string | null; dayanak?: string | null } | null;
 }): boolean {
-  return Boolean(satir.ad?.trim() || satir.model?.trim() || satir.barkod?.trim());
+  return Boolean(satir.ad?.trim() || satir.model?.trim() || satir.barkod?.trim() || satir.hamSatir?.trim());
 }

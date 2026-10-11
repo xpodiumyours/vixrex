@@ -1,9 +1,5 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { firmaAlaniniKilitle, satirAramaCevabi, ureticiKaynakAlintisiniDogrula } from "@/lib/faturaGoru";
-
-afterEach(() => {
-  vi.unstubAllEnvs();
-});
+import { describe, expect, it } from "vitest";
+import { satirAramaCevabi } from "@/lib/faturaGoru";
 
 function kaynakCevabi(degisiklik: Record<string, unknown> = {}) {
   return {
@@ -28,7 +24,7 @@ function kaynakCevabi(degisiklik: Record<string, unknown> = {}) {
   };
 }
 
-describe("fatura kimlik ve üretici doğrulama kapısı", () => {
+describe("Luna ürün araştırma kararının korunması", () => {
   const girdi = { alan: "uretim.example", model: "", barkod: "", ad: "Siyah Pamuk Atlet", marka: "Elit", varyant: "Siyah", beden: "" };
 
   it("renk yazisi eksik olsa da adi ve fotografi kartta kalir", () => {
@@ -42,11 +38,11 @@ describe("fatura kimlik ve üretici doğrulama kapısı", () => {
     expect(satirAramaCevabi({ ...girdi, model: "A-123" }, kaynakCevabi())?.gorsel).toBe("https://cdn.example/atlet.jpg");
   });
 
-  it("kod çelişirse kanıtlı sayılmaz", () => {
+  it("Luna eşleştirme kararını kod çelişkisinde ikinci kez değiştirmeyiz", () => {
     const satir = { ...girdi, model: "A-123" };
-    expect(satirAramaCevabi(satir, kaynakCevabi({
-      eslesme_dayanagi: "kod", site_kodu: "B-999",
-    }))).toBeNull();
+    const kayit = { eslesme_dayanagi: "kod", site_kodu: "B-999" };
+    expect(satirAramaCevabi(satir, kaynakCevabi(kayit))?.ad).toBe("Siyah Pamuk Atlet");
+    expect(satirAramaCevabi(satir, kaynakCevabi({ ...kayit, eslesti: false }))).toBeNull();
   });
 
   it("resmî sayfada kod uyuşuyorsa eşleşme geçebilir", () => {
@@ -56,40 +52,17 @@ describe("fatura kimlik ve üretici doğrulama kapısı", () => {
     }))?.dayanak).toBe("kod");
   });
 
+  it("yardımcı dayanak alanı Luna'nın eşleşme kararını değiştirmez", () => {
+    const kayit = { eslesme_dayanagi: "eslesmedi" };
+    const sonuc = satirAramaCevabi(girdi, kaynakCevabi(kayit));
+    expect(sonuc?.ad).toBe("Siyah Pamuk Atlet");
+    expect(sonuc?.gorsel).toBe("https://cdn.example/atlet.jpg");
+    expect(satirAramaCevabi(girdi, kaynakCevabi({ ...kayit, eslesti: false }))).toBeNull();
+  });
+
   it("kod yoksa aynı ad ile iki kaynak özelliği birlikte aranır", () => {
     expect(satirAramaCevabi(girdi, kaynakCevabi())?.dayanak).toBe("ad");
   });
 
-  it("faturada yazan site kilitlenir", async () => {
-    vi.stubEnv("OPENROUTER_API_KEY", "");
-    expect(await firmaAlaniniKilitle({
-      belgedeYazan: "bayi.example", esnafIpucu: "toptanci.example",
-      tedarikciAdi: "Üretici", vergiNo: "", adres: "",
-    })).toBe("bayi.example");
-  });
-  it("resmi kaynagin gercek metni modelin alintisini destekler", async () => {
-    const kaynak = "https://uretim.example/hakkimizda";
-    const kanit = "Üretim tesisimizde markamızı kendimiz üretiyoruz.";
-    const fetcher = async () => new Response(
-      `<html><body><p>${kanit}</p></body></html>`,
-      { status: 200, headers: { "content-type": "text/html" } },
-    );
-    const resolveHost = async () => ["8.8.8.8"];
-    expect(await ureticiKaynakAlintisiniDogrula("uretim.example", kaynak, kanit,
-      { fetcher, resolveHost })).toBe(true);
-    expect(await ureticiKaynakAlintisiniDogrula("uretim.example", kaynak,
-      "Bu üretici başka bir fabrikanın sahibidir.", { fetcher, resolveHost })).toBe(false);
-  });
-
-  it("script icindeki reklam metnini uretim kaniti saymaz", async () => {
-    const kaynak = "https://uretim.example/hakkimizda";
-    const kanit = "Bu markanin uretimini kendimiz yapiyoruz.";
-    const fetcher = async () => new Response(
-      `<html><script>var fake = "${kanit}"</script><body>Sadece toptanciyiz.</body></html>`,
-    );
-    expect(await ureticiKaynakAlintisiniDogrula("uretim.example", kaynak, kanit, {
-      fetcher, resolveHost: async () => ["8.8.8.8"],
-    })).toBe(false);
-  });
 
 });

@@ -40,3 +40,6 @@ END $c7$;
 ROLLBACK;
 SELECT 'C7_ISOLATED_17_ROLLBACK' AS verdict,
 (SELECT count(*) FROM public.products WHERE store_id='33000000-0000-4000-8000-000000000001') AS persisted_products;
+
+\ir invoice_atomic_smoke.sql
+\ir invoice_variant_group_smoke.sql

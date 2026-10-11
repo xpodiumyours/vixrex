@@ -81,14 +81,14 @@ export function satirKanitKayitlari(
   kanit.push({
     line_id: lineId,
     field_name: "urun_adi",
-    value_text: (satir.katalog?.resmiAd || satir.ad || "").slice(0, 300),
+    value_text: (satir.katalog?.resmiAd || satir.ad || ""),
     source: kaynak,
     strength: kanitGucu(satir),
   });
   kanit.push({
     line_id: lineId,
     field_name: "kod",
-    value_text: (satir.model || satir.barkod).slice(0, 60),
+    value_text: (satir.model || satir.barkod),
     source: kaynak,
     strength: satir.katalog && satir.sonuc === "kanitli" ? "strong" : satir.katalog ? "partial" : "weak",
   });
@@ -96,17 +96,17 @@ export function satirKanitKayitlari(
   if (satir.katalog) {
     aday.push({
       line_id: lineId,
-      url: satir.katalog.kaynak.slice(0, 500),
-      platform: platform.slice(0, 40),
+      url: satir.katalog.kaynak,
+      platform: platform,
     });
 
     const durum = gorselIzinDurumu(satir.katalog.izinDurumu);
-    for (const adres of satir.katalog.gorselAdaylari) {
+    for (const adres of new Set([...satir.katalog.gorselAdaylari, ...(satir.katalog.urunVaryantlari ?? []).flatMap((varyant) => varyant.gorseller)])) {
       gorsel.push({
         line_id: lineId,
-        image_url: adres.slice(0, 500),
+        image_url: adres,
         usage_status: durum,
-        source: satir.katalog.kaynak.slice(0, 500),
+        source: satir.katalog.kaynak,
       });
     }
   }
@@ -131,10 +131,10 @@ export async function islemKaydet(girdi: IslemKaydiGirdisi): Promise<string | nu
           store_id: storeId,
           document_fingerprint: girdi.parmakIzi,
           status: beklemeVar ? "inceleme" : "eslestirme",
-          supplier_name: girdi.tedarikci.slice(0, 200),
-          supplier_tax_id: girdi.tedarikciVergiNo.slice(0, 40),
-          supplier_address: girdi.tedarikciAdres.slice(0, 500),
-          supplier_site: girdi.tedarikciSite.slice(0, 200),
+          supplier_name: girdi.tedarikci,
+          supplier_tax_id: girdi.tedarikciVergiNo,
+          supplier_address: girdi.tedarikciAdres,
+          supplier_site: girdi.tedarikciSite,
           discovery_state: girdi.aramaDurumu ?? {},
           supplier_trace: girdi.tedarikciIz
             ? {
@@ -149,9 +149,9 @@ export async function islemKaydet(girdi: IslemKaydiGirdisi): Promise<string | nu
             : null,
           document_adet: girdi.belgeAdedi,
           document_total: girdi.belgeToplami,
-          document_warning: kisiselVeriTemizle((girdi.belgeUyarisi ?? "").slice(0, 500)),
-          document_type: (girdi.belgeTuru ?? "").slice(0, 40),
-          document_no: (girdi.belgeNo ?? "").slice(0, 60),
+          document_warning: kisiselVeriTemizle((girdi.belgeUyarisi ?? "")),
+          document_type: (girdi.belgeTuru ?? ""),
+          document_no: (girdi.belgeNo ?? ""),
           document_date: belgeTarihiIso(girdi.belgeTarihi ?? "") || null,
           goods_total: girdi.malBedeli ?? null,
           vat_total: girdi.kdvTutari ?? null,
@@ -161,20 +161,20 @@ export async function islemKaydet(girdi: IslemKaydiGirdisi): Promise<string | nu
         };
     const satirYazlari = girdi.satirlar.map((satir, sira) => ({
       line_index: sira,
-      raw_line: kisiselVeriTemizle((satir.hamSatir ?? "").slice(0, 1000)),
-      model: satir.model.slice(0, 60),
-      product_name: satir.ad.slice(0, 300),
-      barcode: satir.barkod.replace(/\D/g, "").slice(0, 20),
-      variant_name: satir.varyant.slice(0, 80),
-      size_text: satir.beden.slice(0, 60),
+      raw_line: kisiselVeriTemizle((satir.hamSatir ?? "")),
+      model: satir.model,
+      product_name: satir.ad,
+      barcode: satir.barkod.replace(/\D/g, ""),
+      variant_name: satir.varyant,
+      size_text: satir.beden,
       qty: satir.adet,
-      qty_unit: (satir.birim ?? "").slice(0, 40),
+      qty_unit: (satir.birim ?? ""),
       unit_price: satir.alisBirimFiyat,
       line_total: satir.satirToplam,
       confidence: satir.guven,
       outcome: satir.sonuc,
-      brand: (satir.marka ?? "").slice(0, 120),
-      warning: kisiselVeriTemizle((satir.uyari ?? "").slice(0, 500)),
+      brand: (satir.marka ?? ""),
+      warning: kisiselVeriTemizle((satir.uyari ?? "")),
       catalog_snapshot: satir.katalog,
       conflict_snapshot: satir.celiski ?? null,
     }));

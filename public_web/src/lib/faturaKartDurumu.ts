@@ -1,6 +1,5 @@
 import { FATURA_MIN_PRODUCT_IMAGES } from "@/lib/productImagePolicy";
 import type { EslesmisFaturaSatiri } from "@/lib/faturaEslestir";
-import { sablonEksikEtiketleri } from "@/lib/faturaOtomatikDoldur";
 
 export type KartDurumu = "kanitli" | "eksik" | "celiski" | "iz-yok";
 
@@ -86,7 +85,8 @@ export function kartDegerlendir(girdi: KartGirdisi): KartDegerlendirmesi {
   const durum = girdi.satir.sonuc;
   const gorseller = karttaKullanilabilirGorseller(girdi.satir, girdi.esnafGorselleri);
 
-  const sablonEksikleri = girdi.sablonEksikleri ?? sablonEksikEtiketleri(girdi.satir, girdi.templateKey);
+  // Category/template heuristics do not evaluate Luna's product card.
+  const sablonEksikleri = girdi.sablonEksikleri ?? [];
   const eksikler = yayinEksikleri({
     durum,
     satisFiyati: girdi.satisFiyati ?? null,

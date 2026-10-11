@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { cookies } from "next/headers";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
@@ -15,8 +16,8 @@ import {
   urunuGeriAl,
 } from "@/lib/faturaUrunBaglantisi";
 import { urunGirdisiniHazirla } from "@/lib/productIntake";
+import { normalizeProductVariants } from "@/lib/productRichData";
 import { durumGecerliMi, yayinEksikleri } from "@/lib/faturaKartDurumu";
-import { otomatikOzellikler } from "@/lib/faturaOtomatikDoldur";
 import { FATURA_MIN_PRODUCT_IMAGES, yonetilenUrunGorseliMi } from "@/lib/productImagePolicy";
 import { kaynakGorselleriniHazirla } from "@/lib/faturaGorsel";
 import { tuketicideGorunenler, vitrinOnbelleginiYenile } from "@/lib/vitrinYayinDogrula";
@@ -50,7 +51,7 @@ function faturaKapisiSebebi(args: {
   faturaEksikleri: string[];
   yayinIstegi: boolean;
 }): string {
-  if (args.hazirlik.durum === "taslak" && args.hazirlik.eksik) return args.hazirlik.eksik;
+  if (!args.faturaKaynakli && args.hazirlik.durum === "taslak" && args.hazirlik.eksik) return args.hazirlik.eksik;
   if (args.faturaKaynakli && args.faturaEksikleri.length > 0) {
     return args.faturaEksikleri[0];
   }
@@ -164,6 +165,7 @@ export async function POST(request: NextRequest) {
   }
 
   const sablonOnbellegi = new Map<string, string | null>();
+  const lunaKategoriOnbellegi = new Map<string, { id: string; templateKey: string }>();
   const sonuclar: SatirSonucu[] = [];
   let yayinda = 0;
   let taslak = 0;
@@ -175,13 +177,15 @@ export async function POST(request: NextRequest) {
       name: ad,
       description: ham.description ?? "",
       priceText: ham.priceText ?? ham.price_text ?? "",
-      categoryId: ham.categoryId ?? ham.category_id ?? "",
+      categoryId: (ham.sourceType || ham.source_type || "").trim() === FATURA_KAYNAGI
+        ? "" : ham.categoryId ?? ham.category_id ?? "",
       imageUrls: ham.imageUrls ?? ham.image_urls ?? [],
       brand: ham.brand,
       barcode: ham.barcode,
       stockQuantity: ham.stockQuantity,
       stockStatus: ham.stockStatus,
-      metadata: ham.metadata,
+      metadata: (ham.sourceType || ham.source_type || "").trim() === FATURA_KAYNAGI
+        ? { ...(ham.metadata ?? {}), lunaInvoice: true } : ham.metadata,
       variants: ham.variants,
     };
 
@@ -191,6 +195,7 @@ export async function POST(request: NextRequest) {
       storeName: store.name,
       govde: satirGovdesi,
       gorselPolitikasi: "toplu",
+      lunaVaryantlariniKoru: (ham.sourceType || ham.source_type || "").trim() === FATURA_KAYNAGI,
       enAzGorsel:
         (ham.sourceType || ham.source_type || "").trim() === FATURA_KAYNAGI
           ? FATURA_MIN_PRODUCT_IMAGES
@@ -227,7 +232,7 @@ export async function POST(request: NextRequest) {
       sonuclar.push({ sira: index, ad, durum: "atlandi", sebep: "Fatura satırı doğrulanamadı; tekrar dene." });
       continue;
     }
-    if (dogrulanmis?.sonuc === "kanitli") {
+    if (dogrulanmis?.sonuc === "kanitli" || dogrulanmis?.katalog) {
       const katalog = dogrulanmis.katalog;
       if (!katalog || typeof katalog.resmiAd !== "string" || typeof katalog.kaynak !== "string") {
         atlandi += 1;
@@ -237,22 +242,72 @@ export async function POST(request: NextRequest) {
       hazirlik.girdi.name = katalog.resmiAd;
       hazirlik.girdi.description = typeof katalog.aciklama === "string" ? katalog.aciklama : "";
       hazirlik.girdi.brand = typeof katalog.marka === "string" ? katalog.marka : null;
-      const sablonAnahtari = hazirlik.girdi.metadata.templateKey;
-      const nitelikler = otomatikOzellikler(
-        {
-          ad: katalog.resmiAd,
-          aciklama: hazirlik.girdi.description,
-          varyant: dogrulanmis.varyant,
-          beden: dogrulanmis.beden,
-        },
-        sablonAnahtari,
-      );
-      const mevcut = hazirlik.girdi.metadata.attributes ?? [];
-      const anahtarlar = new Set(mevcut.map((ozellik) => ozellik.key));
-      hazirlik.girdi.metadata = {
-        ...hazirlik.girdi.metadata,
-        attributes: [...mevcut, ...nitelikler.filter((ozellik) => !anahtarlar.has(ozellik.key))],
-      };
+      if (Array.isArray(katalog.gorseller)) {
+        hazirlik.girdi.imageUrls = katalog.gorseller.filter((url): url is string => typeof url === "string");
+      }
+
+      // The persisted Luna catalog (not frontend classification) owns all product data.
+      const ozellikler = Array.isArray(katalog.ozellikler)
+        ? katalog.ozellikler.flatMap((raw) => {
+            if (!raw || typeof raw !== "object") return [];
+            const attr = raw as Record<string, unknown>;
+            if (typeof attr.key !== "string" || typeof attr.value !== "string") return [];
+            return [{ key: attr.key, label: typeof attr.label === "string" ? attr.label : attr.key, value: attr.value }];
+          }) : [];
+      const lunaKategori = typeof katalog.kategori === "string" ? katalog.kategori.trim() : "";
+      if (lunaKategori && !ozellikler.some((attr) => attr.key === "category")) {
+        ozellikler.push({ key: "category", label: "Kategori", value: lunaKategori });
+      }
+      hazirlik.girdi.metadata = { ...hazirlik.girdi.metadata, lunaInvoice: true, attributes: ozellikler };
+
+      const lunaVaryantlari = Array.isArray(katalog.urunVaryantlari) ? katalog.urunVaryantlari : [];
+      hazirlik.girdi.variants = normalizeProductVariants(lunaVaryantlari.map((raw) => {
+        const variant = raw && typeof raw === "object" ? raw as Record<string, unknown> : {};
+        const secenekler = Array.isArray(variant.secenekler) ? variant.secenekler : [];
+        const options: Record<string, string> = {};
+        for (const secenek of secenekler) {
+          if (!secenek || typeof secenek !== "object") continue;
+          const option = secenek as Record<string, unknown>;
+          if (typeof option.key === "string" && typeof option.value === "string") options[option.key] = option.value;
+        }
+        return { id: variant.id, options, barcode: variant.barkod, imageUrls: variant.gorseller };
+      }), true);
+
+      // Category is a Luna label. Persist/create exactly that label; do not guess a template.
+      if (lunaKategori) {
+        const anahtar = lunaKategori.normalize("NFKC").toLocaleLowerCase("tr-TR");
+        let kategori = lunaKategoriOnbellegi.get(anahtar);
+        if (!kategori) {
+          const mevcut = await admin.from("product_categories").select("id,product_template_key")
+            .eq("store_id", store.id).ilike("name", lunaKategori.replace(/[\\%_]/g, "\\$&")).maybeSingle();
+          if (mevcut.error) {
+            atlandi += 1;
+            sonuclar.push({ sira: index, ad, durum: "atlandi", sebep: "Luna'nın kategorisi okunamadı; tekrar dene." });
+            continue;
+          }
+          if (typeof mevcut.data?.id === "string") {
+            kategori = { id: mevcut.data.id, templateKey: mevcut.data.product_template_key || "generic" };
+          } else {
+            const ekleme = await admin.rpc("upsert_store_category_v2", {
+              p_store_id: store.id, p_edit_token: store.edit_token,
+              p_name: lunaKategori, p_template_key: "generic",
+              p_slug: `luna-${createHash("sha256").update(anahtar).digest("hex").slice(0, 24)}`,
+            });
+            if (!ekleme.error && ekleme.data?.success === true && typeof ekleme.data.id === "string") {
+              kategori = { id: ekleme.data.id, templateKey: "generic" };
+            }
+          }
+          if (!kategori) {
+            atlandi += 1;
+            sonuclar.push({ sira: index, ad, durum: "atlandi", sebep: "Luna'nın kategorisi kaydedilemedi; tekrar dene." });
+            continue;
+          }
+          lunaKategoriOnbellegi.set(anahtar, kategori);
+        }
+        // Technical category link only; Luna's original label always remains in metadata.
+        hazirlik.girdi.categoryId = kategori.id;
+        hazirlik.girdi.metadata = { ...hazirlik.girdi.metadata, templateKey: kategori.templateKey };
+      }
     }
     const kartDurumu = faturaKaynakli ? (dogrulanmis?.sonuc ?? "eksik") : iddiaDurumu;
     const yayinIstegi = ham.yayinIstegi === true;
@@ -273,12 +328,13 @@ export async function POST(request: NextRequest) {
     let urunGorselleri = kaynakGorselleri;
     let gorselDurumu = "";
     let gorselKaynaklari: Array<Record<string, unknown>> = [];
-    if (disGorseller.length > 0) {
+    const aktarilacakGorseller = [...new Set([...disGorseller, ...hazirlik.girdi.variants.flatMap((variant) => variant.imageUrls ?? []).filter((url) => !yonetilenUrunGorseliMi(url))])];
+    if (faturaKaynakli && aktarilacakGorseller.length > 0) {
       const hazir = await kaynakGorselleriniHazirla({
         admin,
         slug,
         kaynakSayfa: typeof dogrulanmis?.katalog?.kaynak === "string" ? dogrulanmis.katalog.kaynak : "",
-        adaylar: disGorseller,
+        adaylar: aktarilacakGorseller,
       });
       const depodaki = new Map(hazir.gorseller.map((gorsel) => [gorsel.kaynakGorsel, gorsel]));
       const altyapiHatasi = new Set(
@@ -286,11 +342,8 @@ export async function POST(request: NextRequest) {
           .filter((red) => red.sebep === "erisilemedi" || red.sebep === "depoya-yazilamadi")
           .map((red) => red.kaynakGorsel),
       );
-      if (altyapiHatasi.size > 0) {
-        atlandi += 1;
-        sonuclar.push({ sira: index, ad, durum: "atlandi", sebep: "Ürün görseli kalıcı kaydedilemedi; tekrar dene." });
-        continue;
-      }
+      // Image transport failures must not erase Luna's product draft.
+      // Keep source candidates in the invoice record and retry on a later save.
       urunGorselleri = kaynakGorselleri.flatMap((adres) => {
         if (yonetilenUrunGorseliMi(adres)) return [adres];
         const kopya = depodaki.get(adres);
@@ -304,8 +357,14 @@ export async function POST(request: NextRequest) {
         genislik: gorsel.genislik,
         yukseklik: gorsel.yukseklik,
       }));
-      gorselDurumu = altyapiHatasi.size > 0 ? "dis-baglanti" : "depoda";
+      gorselDurumu = altyapiHatasi.size > 0 ? "aktarim-bekliyor" : "depoda";
     }
+    // Variant images follow the same original-to-managed URL transport, with no image verdict.
+    const depoGorselleri = new Map(gorselKaynaklari.map((kaynak) =>
+      [String(kaynak.kaynakGorsel || ""), String(kaynak.depoUrl || "")]));
+    hazirlik.girdi.variants = hazirlik.girdi.variants.map((variant) => ({
+      ...variant, imageUrls: variant.imageUrls?.map((url) => depoGorselleri.get(url) || (yonetilenUrunGorseliMi(url) ? url : "")).filter(Boolean),
+    }));
 
     const sablonTam = Boolean(faturaKaynakli);
     const faturaEksikleri = faturaKaynakli

@@ -386,7 +386,10 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
   Future<void> _editInvoiceProduct(int index) async {
     final product = widget.ocrController.result!.products[index];
     final price = TextEditingController(text: product.price?.toString() ?? '');
-    final stock = TextEditingController(text: product.quantity.toString());
+    final draft = widget.ocrController.result!.invoiceDrafts[index];
+    final stock = TextEditingController(
+      text: draft.stockQuantity?.toString() ?? '',
+    );
     final name = TextEditingController(text: product.name);
     final model = TextEditingController(text: product.sku ?? '');
     final barcode = TextEditingController(text: product.barcode ?? '');
@@ -421,7 +424,9 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
                             decoration: const InputDecoration(
                               labelText: 'Satış stoğu',
                             ),
-                            keyboardType: TextInputType.number,
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
                           ),
                           if (categories.isNotEmpty)
                             DropdownButtonFormField<String>(
@@ -482,11 +487,13 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
                     FilledButton(
                       onPressed: () {
                         final amount = _parseDecimal(price.text);
-                        final quantity = int.tryParse(stock.text.trim());
+                        final quantity = _parseDecimal(stock.text);
                         if ((price.text.trim().isNotEmpty &&
                                 (amount == null || amount <= 0)) ||
-                            quantity == null ||
-                            quantity < 0) {
+                            (stock.text.trim().isNotEmpty &&
+                                (quantity == null ||
+                                    !quantity.isFinite ||
+                                    quantity < 0))) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text('Fiyatı ve stoğu kontrol et.'),
@@ -508,13 +515,19 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
           model.text.trim() != (product.sku ?? '') ||
           barcode.text.trim() != (product.barcode ?? '') ||
           brand.text.trim() != product.brand;
-      final stockChanged = product.quantity != int.parse(stock.text.trim());
+      final stockQuantity = _parseDecimal(stock.text);
+      final stockChanged = draft.stockQuantity != stockQuantity;
       product.price = _parseDecimal(price.text);
-      product.quantity = int.parse(stock.text.trim());
+      product.quantity =
+          stockQuantity != null && stockQuantity == stockQuantity.toInt()
+              ? stockQuantity.toInt()
+              : 0;
       widget.ocrController.updateProduct(
         index,
         product,
         stockChanged: stockChanged,
+        invoiceStockQuantity: stockQuantity,
+        clearInvoiceStockQuantity: stockQuantity == null,
       );
       if (category != null) {
         widget.ocrController.setInvoiceCategory(index, category!);

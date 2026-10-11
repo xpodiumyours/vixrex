@@ -38,7 +38,7 @@ export function createRichProductDraft(input?: {
         ? String(input.stock_quantity)
         : "",
     metadata: normalizeProductMetadata(input?.metadata),
-    variants: normalizeProductVariants(input?.variants),
+    variants: normalizeProductVariants(input?.variants, normalizeProductMetadata(input?.metadata).lunaInvoice),
   };
 }
 
@@ -200,7 +200,7 @@ export function OwnerRichProductFields({
   );
 
   useEffect(() => {
-    if (!template) return;
+    if (!template || value.metadata.lunaInvoice) return;
     const isService = template.itemKind === "service";
     const metadata = normalizeProductMetadata(value.metadata);
     const filteredAttributes = isService

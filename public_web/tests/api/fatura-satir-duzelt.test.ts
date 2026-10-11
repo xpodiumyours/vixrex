@@ -8,7 +8,6 @@ const m = vi.hoisted(() => ({
   is: vi.fn(),
   satir: vi.fn(),
   siteSearch: vi.fn(),
-  brandSearch: vi.fn(),
   imageCheck: vi.fn(),
   cost: vi.fn(),
   record: vi.fn(),
@@ -31,9 +30,9 @@ vi.mock("@/lib/supabaseAdmin", () => ({
   }),
 }));
 vi.mock("@/lib/faturaYetki", () => ({ sahipYetkisi: m.yetki }));
-vi.mock("@/lib/faturaGoru", () => ({
+vi.mock("@/lib/faturaGoru", async (importOriginal) => ({
+  ...await importOriginal<typeof import("@/lib/faturaGoru")>(),
   satirSitesindeAra: m.siteSearch,
-  markaSitesiniBul: m.brandSearch,
   lunaGorseliniDogrula: m.imageCheck,
 }));
 vi.mock("@/lib/faturaGorsel", () => ({
@@ -95,7 +94,10 @@ describe("satır düzeltme kartı site kaydından kurar", () => {
         line_total: 10,
         confidence: 1,
         product_id: null,
+        outcome: "kanitli",
         catalog_snapshot: {
+          resmiAd: "Faturadaki fanila",
+          dayanak: "kod",
           aciklama: "Sitede yazan açıklama",
           gorseller: ["https://firma.example/urun.jpg"],
           kaynak: "https://firma.example/urun",
@@ -122,7 +124,8 @@ describe("satır düzeltme kartı site kaydından kurar", () => {
   });
 
 
-  it("ürün kodu veya marka değişince eski fotoğraf ve eşleşme kanıtı geçersiz olur", async () => {
+  it("ürün kimliği değişince eski kart kararını taşımayız", async () => {
+    m.siteSearch.mockResolvedValueOnce({ ad: "", sayfa: "", dayanak: null, gorsel: "", aciklama: "", maliyet: 0 });
     const cevap = await POST(istek({ model: "BASKA-MODEL", marka: "Baska Marka" }));
     const govde = await cevap.json();
     expect(cevap.status).toBe(200);
@@ -176,11 +179,11 @@ describe("satır düzeltme kartı site kaydından kurar", () => {
     expect(m.siteSearch).toHaveBeenCalledWith(expect.objectContaining({
       alan: "sehermensucat.com", model: "ELT1002",
     }));
-    expect(m.pageProof).toHaveBeenCalledOnce();
-    expect(m.imageCheck).toHaveBeenCalledOnce();
+    expect(m.pageProof).not.toHaveBeenCalled();
+    expect(m.imageCheck).not.toHaveBeenCalled();
     expect(govde.satir.sonuc).toBe("kanitli");
     expect(govde.satir.katalog.kaynak).toBe("https://sehermensucat.com/urun/elt1002");
-    expect(govde.satir.katalog.fotografKaniti.kaynakGorsel).toBe("https://cdn.example/elt1002.jpg");
+    expect(govde.satir.katalog.gorseller).toEqual(["https://cdn.example/elt1002.jpg"]);
     expect(m.rpc.mock.calls.find((c) => c[0] === "replace_invoice_line")?.[1].p_line.outcome)
       .toBe("kanitli");
   });

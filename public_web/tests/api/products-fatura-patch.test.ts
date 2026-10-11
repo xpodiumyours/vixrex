@@ -137,6 +137,19 @@ describe("PATCH fatura taslağını sıradan düzenlemeyle yayınlamaz", () => {
     expect(mockUpdateRichCoreProduct.mock.calls[0]?.[0]?.isVisible).toBe(true);
   });
 
+  it("yalnız fiyat düzenlemesi Luna özelliklerini ve 101 varyantı kesmez", async () => {
+    const attributes = [{ key: "voltage", label: "Gerilim", value: "220 V" }];
+    const variants = Array.from({ length: 101 }, (_, i) => ({ id: `v${i}`, options: { voltage: String(i) } }));
+    mockGetSupabaseAdmin.mockReturnValue(makeAdminStub({ ...TAM_FATURA_SATIRI,
+      metadata: { lunaInvoice: true, attributes }, variants, image_urls: [yonetilenGorsel("a.jpg")] }));
+    const response = await PATCH(patchRequest({ priceText: "249 TL" }));
+    expect(response.status).toBe(200);
+    const yazilan = mockUpdateRichCoreProduct.mock.calls[0][0];
+    expect(yazilan.variants).toHaveLength(101);
+    expect(yazilan.metadata).toMatchObject({ lunaInvoice: true, attributes });
+    expect(yazilan.isVisible).not.toBe(true);
+  });
+
   it("yayındaki fatura ürünü sıradan düzenlemeyle taslağa düşmez", async () => {
     mockGetSupabaseAdmin.mockReturnValue(
       makeAdminStub({

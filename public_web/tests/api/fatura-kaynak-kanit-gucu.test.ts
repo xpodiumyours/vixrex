@@ -35,6 +35,7 @@ describe("C1 kaynak adayinin kanit gucu", () => {
   it("gercek sayfa ve gorsel uyumu olan satirin guclu kanit derecesi korunur", () => {
     const satir = siteKartiniUygula(eslesmeyenSatir({
       ...ORTAK,
+      siteEslesti: true,
       sayfaDogrulandi: true,
       siteFotografKaniti: {
         kaynakSayfa: ORTAK.siteSayfa,

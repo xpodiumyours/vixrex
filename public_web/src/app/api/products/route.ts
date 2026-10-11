@@ -1,3 +1,4 @@
+import { normalizeProductVariants } from "@/lib/productRichData";
 import { NextResponse, type NextRequest } from "next/server";
 import { cookies } from "next/headers";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
@@ -192,10 +193,14 @@ export async function PATCH(request: NextRequest) {
   const isService = template.itemKind === "service";
 
   const metadataInput = hasOwn(govde, "metadata") ? govde.metadata : current.metadata;
-  const metadata = metadataForTemplate(metadataInput, templateKey);
+  const metadata = metadataForTemplate(faturaSatiri
+    ? { ...(metadataInput && typeof metadataInput === "object" ? metadataInput : {}), lunaInvoice: true }
+    : metadataInput, templateKey);
   if (!metadata) return NextResponse.json({ hata: "Ürün detayları kategori tipiyle uyuşmuyor." }, { status: 422 });
   const variantInput = hasOwn(govde, "variants") ? govde.variants : current.variants;
-  const variants = variantsForTemplate(variantInput, templateKey, imageUrls);
+  const variants = faturaSatiri
+    ? normalizeProductVariants(variantInput, true)
+    : variantsForTemplate(variantInput, templateKey, imageUrls);
 
   const name = hasOwn(govde, "name") ? cleanString(govde.name) || "" : cleanString(current.name) || "";
   if (!name) return NextResponse.json({ hata: "Ürün adı zorunludur." }, { status: 422 });
@@ -241,10 +246,10 @@ export async function PATCH(request: NextRequest) {
   const fulfillmentRegion = hasOwn(govde, "fulfillmentRegion")
     ? cleanString(govde.fulfillmentRegion)
     : cleanString(current.fulfillment_region);
-  const variantError = validateVariantSet(variants, barcode);
+  const variantError = faturaSatiri ? null : validateVariantSet(variants, barcode);
   if (variantError) return NextResponse.json({ hata: variantError }, { status: 422 });
 
-  const eksikMesaji = eksikZorunluAlanMesaji(
+  const eksikMesaji = faturaSatiri ? "" : eksikZorunluAlanMesaji(
     eksikZorunluAlanlar({ templateKey, brand, metadata, variants }),
   );
   if (eksikMesaji) return NextResponse.json({ hata: eksikMesaji }, { status: 422 });

@@ -214,6 +214,9 @@ class InvoiceProductDraft {
   final EvidenceValue<String>? canonicalProductId;
   final EvidenceValue<String>? canonicalProductUrl;
   final List<InvoiceImageCandidate> imageCandidates;
+  final List<Map<String, dynamic>> catalogAttributes;
+  final List<Map<String, dynamic>> catalogVariants;
+  final num? stockQuantity;
 
   final EvidenceStrength supplierIdentityStrength;
   final EvidenceStrength productIdentityStrength;
@@ -263,6 +266,9 @@ class InvoiceProductDraft {
     this.canonicalProductId,
     this.canonicalProductUrl,
     this.imageCandidates = const [],
+    this.catalogAttributes = const [],
+    this.catalogVariants = const [],
+    this.stockQuantity,
     required this.supplierIdentityStrength,
     required this.productIdentityStrength,
     this.rightsStatus = RightsStatus.unknown,
@@ -323,6 +329,10 @@ class InvoiceProductDraft {
     EvidenceValue<String>? canonicalProductId,
     EvidenceValue<String>? canonicalProductUrl,
     List<InvoiceImageCandidate>? imageCandidates,
+    List<Map<String, dynamic>>? catalogAttributes,
+    List<Map<String, dynamic>>? catalogVariants,
+    num? stockQuantity,
+    bool clearStockQuantity = false,
     EvidenceStrength? supplierIdentityStrength,
     EvidenceStrength? productIdentityStrength,
     RightsStatus? rightsStatus,
@@ -361,6 +371,10 @@ class InvoiceProductDraft {
       canonicalProductId: canonicalProductId ?? this.canonicalProductId,
       canonicalProductUrl: canonicalProductUrl ?? this.canonicalProductUrl,
       imageCandidates: imageCandidates ?? this.imageCandidates,
+      catalogAttributes: catalogAttributes ?? this.catalogAttributes,
+      catalogVariants: catalogVariants ?? this.catalogVariants,
+      stockQuantity:
+          clearStockQuantity ? null : stockQuantity ?? this.stockQuantity,
       supplierIdentityStrength:
           supplierIdentityStrength ?? this.supplierIdentityStrength,
       productIdentityStrength:
@@ -409,6 +423,9 @@ class InvoiceProductDraft {
     'image_candidates': imageCandidates
         .map((item) => item.toJson())
         .toList(growable: false),
+    'catalog_attributes': catalogAttributes,
+    'catalog_variants': catalogVariants,
+    'stock_quantity': stockQuantity,
     'supplier_identity_strength': supplierIdentityStrength.wireValue,
     'product_identity_strength': productIdentityStrength.wireValue,
     'rights_status': rightsStatus.wireValue,

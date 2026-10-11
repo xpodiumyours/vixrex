@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import sharp from "sharp";
-import { kaynakGorseliniDogrula, kaynakGorselleriniHazirla, urunSayfasindaGorselKaniti } from "@/lib/faturaGorsel";
+import { kaynakGorseliniDogrula, kaynakGorselleriniHazirla } from "@/lib/faturaGorsel";
 
 const resolveHost = async () => ["8.8.8.8"];
 
@@ -40,7 +40,7 @@ describe("kaynak görseli doğrulama", () => {
     expect(sonuc.genislik).toBe(1200);
   });
 
-  it("kırık bağlantı, küçük görsel, boş görsel ve logo ürün fotoğrafı sayılmaz", async () => {
+  it("yalnız teknik erişim sorunu reddedilir; Luna'nın seçtiği resim kodla yeniden yargılanmaz", async () => {
     const kirik = "https://firma.example/yok.jpg";
     const kucuk = "https://firma.example/kucuk.jpg";
     const bos = "https://firma.example/beyaz.jpg";
@@ -52,14 +52,12 @@ describe("kaynak görseli doğrulama", () => {
     });
 
     expect((await kaynakGorseliniDogrula(kirik, { fetcher, resolveHost })).sebep).toBe("acilmadi");
-    expect((await kaynakGorseliniDogrula(kucuk, { fetcher, resolveHost })).sebep).toBe("cok-kucuk");
-    expect((await kaynakGorseliniDogrula(bos, { fetcher, resolveHost })).sebep).toBe("bos");
-    expect((await kaynakGorseliniDogrula(logo, { fetcher, resolveHost })).sebep).toBe(
-      "logo-veya-yer-tutucu",
-    );
+    expect((await kaynakGorseliniDogrula(kucuk, { fetcher, resolveHost })).tamam).toBe(true);
+    expect((await kaynakGorseliniDogrula(bos, { fetcher, resolveHost })).tamam).toBe(true);
+    expect((await kaynakGorseliniDogrula(logo, { fetcher, resolveHost })).tamam).toBe(true);
   });
 
-  it("görsel olmayan içerik ve çok geniş banner reddedilir", async () => {
+  it("görsel olmayan içerik reddedilir, resmin biçimiyle ürün kimliği belirlenmez", async () => {
     const html = "https://firma.example/sayfa.jpg";
     const banner = "https://firma.example/kapak.jpg";
     const fetcher = fetcherIle({
@@ -68,9 +66,7 @@ describe("kaynak görseli doğrulama", () => {
     });
 
     expect((await kaynakGorseliniDogrula(html, { fetcher, resolveHost })).sebep).toBe("gorsel-degil");
-    expect((await kaynakGorseliniDogrula(banner, { fetcher, resolveHost })).sebep).toBe(
-      "urun-fotografi-degil",
-    );
+    expect((await kaynakGorseliniDogrula(banner, { fetcher, resolveHost })).tamam).toBe(true);
   });
 
   it("ağ hatası 'erişilemedi' olur; içerik hatasıyla karıştırılmaz", async () => {
@@ -86,90 +82,6 @@ describe("kaynak görseli doğrulama", () => {
 
 });
 
-
-describe("resmî ürün sayfasından fotoğraf ve varyant kanıtı", () => {
-  const kaynak = "https://firma.example/urun/siyah";
-  const gorsel = "https://cdn.example/siyah.jpg";
-  const html = (metin: string) => new Response("<html><body>" + metin + "</body></html>", {
-    status: 200, headers: { "content-type": "text/html" },
-  });
-
-  it("sayfa gerçekten bu URL'yi ve ilgili rengi taşıyorsa kanıt döner", async () => {
-    const kanit = await urunSayfasindaGorselKaniti(kaynak, gorsel, "Siyah", {
-      resolveHost,
-      fetcher: async () => html('<img alt="Fanila Siyah" src="' + gorsel + '">'),
-    });
-    expect(kanit?.kaynakAlintisi).toContain(gorsel);
-    expect(kanit?.kaynakAlintisi).toContain("Siyah");
-  });
-
-  it("responsive picture kaynak görseli aynı varyant etiketiyle bağlıysa kanıtlanır", async () => {
-    const kanit = await urunSayfasindaGorselKaniti(kaynak, gorsel, "Siyah", {
-      resolveHost,
-      fetcher: async () => html('<picture><source srcset="' + gorsel +
-        ' 1200w"><img alt="Fanila Siyah" src="https://cdn.example/kucuk.jpg"></picture>'),
-    });
-    expect(kanit?.kaynakAlintisi).toContain(gorsel);
-  });
-
-  it("resmî ProductGroup JSON-LD varyantı renk ve görselle kanıtlanır", async () => {
-    const katalog = {
-      "@context": "https://schema.org",
-      "@type": "ProductGroup",
-      hasVariant: [
-        { "@type": "Product", color: "Siyah", image: gorsel, sku: "URETICI-SIYAH" },
-        { "@type": "Product", color: "Beyaz", image: "https://cdn.example/beyaz.jpg", sku: "URETICI-BEYAZ" },
-      ],
-    };
-    const sonuc = await urunSayfasindaGorselKaniti(kaynak, gorsel, "Siyah", {
-      resolveHost,
-      fetcher: async () => html('<script type="application/ld+json">' + JSON.stringify(katalog) + "</script>"),
-    });
-    expect(sonuc?.kaynakAlintisi).toContain(gorsel);
-    expect(await urunSayfasindaGorselKaniti(kaynak, gorsel, "Kırmızı", {
-      resolveHost,
-      fetcher: async () => html('<script type="application/ld+json">' + JSON.stringify(katalog) + "</script>"),
-    })).toBeNull();
-  });
-
-  it("modelin uydurduğu fotoğraf adresi gerçek sayfada yoksa kanıt çıkmaz", async () => {
-    const kanit = await urunSayfasindaGorselKaniti(kaynak, gorsel, "Siyah", {
-      resolveHost,
-      fetcher: async () => html('<img alt="Fanila Siyah" src="https://cdn.example/baska.jpg">'),
-    });
-    expect(kanit).toBeNull();
-  });
-
-  it("fotoğraf doğru sayfada olsa da farklı renk adı bağlıysa kanıt sayılmaz", async () => {
-    const kanit = await urunSayfasindaGorselKaniti(kaynak, gorsel, "Siyah", {
-      resolveHost,
-      fetcher: async () => html('<img alt="Fanila Beyaz" src="' + gorsel + '">'),
-    });
-    expect(kanit).toBeNull();
-  });
-
-  it("doğrulanmayan kaynak site ve görsel dışındaki yönlendirmeyi kabul etmez", async () => {
-    const fetcher = async () => new Response("redirect", {
-      status: 302, headers: { location: "https://baska.example/urun", "content-type": "text/html" },
-    });
-    expect(await urunSayfasindaGorselKaniti(kaynak, gorsel, "Siyah", { resolveHost, fetcher })).toBeNull();
-  });
-
-  it("HTML değilse ve sayfa aşırı büyükse kanıt uydurmaz", async () => {
-    expect(await urunSayfasindaGorselKaniti(kaynak, gorsel, "", {
-      resolveHost,
-      fetcher: async () => new Response('{"image":"'+gorsel+'"}', {
-        headers: { "content-type": "application/json" },
-      }),
-    })).toBeNull();
-    expect(await urunSayfasindaGorselKaniti(kaynak, gorsel, "", {
-      resolveHost,
-      fetcher: async () => new Response("x", {
-        headers: { "content-type": "text/html", "content-length": "9999999" },
-      }),
-    })).toBeNull();
-  });
-});
 
 describe("kaynak görsellerini kendi depomuza alma", () => {
   function depo(hataVer = false) {
@@ -210,12 +122,12 @@ describe("kaynak görsellerini kendi depomuza alma", () => {
       },
     });
 
-    expect(sonuc.gorseller).toHaveLength(1);
+    expect(sonuc.gorseller).toHaveLength(2);
     expect(sonuc.gorseller[0].kaynakGorsel).toBe(iyi);
     expect(sonuc.gorseller[0].kaynakSayfa).toBe("https://firma.example/urun/16747");
     expect(sonuc.gorseller[0].url).toContain("https://depo.example/deneme-vitrin/products/fatura/");
-    expect(yuklenen).toHaveLength(1);
-    expect(sonuc.reddedilenler).toEqual([{ kaynakGorsel: bos, sebep: "bos" }]);
+    expect(yuklenen).toHaveLength(2);
+    expect(sonuc.reddedilenler).toEqual([]);
     expect(sonuc.altyapiSorunu).toBe(false);
   });
 
