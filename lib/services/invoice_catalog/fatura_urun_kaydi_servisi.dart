@@ -84,10 +84,10 @@ class FaturaUrunKaydiServisi {
             parcaKayitlari.add(
               KaydedilenSatir(
                 sira: sira + baslangic,
-              ad: (satir['ad'] ?? '').toString(),
-              durum: (satir['durum'] ?? '').toString(),
-              sebep: (satir['sebep'] ?? '').toString(),
-              kayit: (satir['kayit'] ?? '').toString(),
+                ad: (satir['ad'] ?? '').toString(),
+                durum: (satir['durum'] ?? '').toString(),
+                sebep: (satir['sebep'] ?? '').toString(),
+                kayit: (satir['kayit'] ?? '').toString(),
                 id: id.isEmpty ? null : id,
               ),
             );
