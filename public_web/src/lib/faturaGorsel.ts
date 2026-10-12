@@ -1,6 +1,10 @@
 import { createHash } from "node:crypto";
 import sharp from "sharp";
-import { hostGuvenliMi, varsayilanCoz, pdfKatalogGorseliniOku } from "@/lib/faturaDijitalIz";
+function hostGuvenliMi(hostname: string): boolean {
+  if (!hostname || hostname === "localhost" || hostname.endsWith(".local")) return false;
+  if (/^(127\.|10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[0-1])\.)/.test(hostname)) return false;
+  return true;
+}
 import { gorseliSikistir, ONBELLEK_SANIYE, UZUN_KENAR } from "@/lib/gorselSikistir";
 import {
   MAX_PRODUCT_IMAGE_SOURCE_BYTES,
@@ -56,7 +60,6 @@ export async function kaynakGorseliniDogrula(
   bagimliliklar: GorselBagimliliklari = {},
 ): Promise<KaynakGorselDogrulamasi> {
   const fetcher = bagimliliklar.fetcher ?? fetch;
-  const resolveHost = bagimliliklar.resolveHost ?? varsayilanCoz;
 
   let url: URL;
   try {
@@ -67,16 +70,11 @@ export async function kaynakGorseliniDogrula(
   if (url.protocol !== "https:" || url.username || url.password || url.port) {
     return { tamam: false, sebep: "acilmadi" };
   }
-  if (!(await hostGuvenliMi(url.hostname, resolveHost))) {
+  if (!hostGuvenliMi(url.hostname)) {
     return { tamam: false, sebep: "erisilemedi" };
   }
 
   let bayt: Uint8Array;
-  if (new URLSearchParams(url.hash.slice(1)).has("vixrex-page")) {
-    const sonuc = await pdfKatalogGorseliniOku(adres, { fetcher, resolveHost });
-    if (!sonuc) return { tamam: false, sebep: "acilmadi" };
-    bayt = sonuc;
-  } else {
     let yanit: Response | null = null;
     const gorulenler = new Set<string>();
     const signal = AbortSignal.timeout(ZAMAN_ASIMI_MS);
@@ -85,7 +83,7 @@ export async function kaynakGorseliniDogrula(
         if (url.protocol !== "https:" || url.username || url.password || url.port || gorulenler.has(url.href)) {
           return { tamam: false, sebep: "acilmadi" };
         }
-        if (!(await hostGuvenliMi(url.hostname, resolveHost))) {
+        if (!hostGuvenliMi(url.hostname)) {
           return { tamam: false, sebep: "erisilemedi" };
         }
         gorulenler.add(url.href);
@@ -124,7 +122,6 @@ export async function kaynakGorseliniDogrula(
     } catch {
       return { tamam: false, sebep: "erisilemedi" };
     }
-  }
   if (bayt.byteLength > MAX_PRODUCT_IMAGE_SOURCE_BYTES) {
     return { tamam: false, sebep: "cok-buyuk" };
   }

@@ -3,14 +3,10 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { sahipYetkisi } from "@/lib/faturaYetki";
 import { eslesmeyenSatir, siteKartiniUygula, type HamFaturaSatiri } from "@/lib/faturaEslestir";
 import { satirKanitKayitlari } from "@/lib/faturaIslemKaydi";
-import { ArastirmaHatasi, satirSitesindeAra } from "@/lib/faturaGoru";
-import { ARAMA_UCETI_USD, aramaCagrisiSigarMi, bugunkuMaliyetUsd, kullanimKaydet } from "@/lib/faturaMaliyet";
 
 export const dynamic = "force-dynamic";
 
 const KIMLIK = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const LIMIT = 60;
-const PENCERE_SANIYE = 3600;
 
 function alan(govde: Record<string, unknown>, ad: string, sinir: number): string | undefined {
   const deger = govde[ad];
@@ -39,44 +35,17 @@ export async function POST(request: NextRequest) {
   if (!yetki.tamam) return NextResponse.json({ hata: yetki.hata }, { status: yetki.durum });
 
   const admin = getSupabaseAdmin();
+  const is = await admin.from("invoice_jobs").select("id, status, supplier_name, supplier_site, discovery_state").eq("id", islemKimligi).eq("store_id", yetki.storeId).maybeSingle();
+  if (!is.data) return NextResponse.json({ hata: "Fatura işlemi bulunamadı." }, { status: 404 });
 
-  const { data: limitRows, error: limitHatasi } = await admin.rpc("consume_assistant_request", {
-    p_client_key: `fatura_duzelt:${yetki.slug}`,
-    p_max_requests: LIMIT,
-    p_window_seconds: PENCERE_SANIYE,
-  });
-  const limit = Array.isArray(limitRows) ? limitRows[0] : limitRows;
-  if (limitHatasi || !limit || typeof limit.allowed !== "boolean") {
-    return NextResponse.json({ hata: "Düzeltme limiti kontrol edilemedi." }, { status: 503 });
-  }
-  if (!limit.allowed) {
-    return NextResponse.json(
-      { hata: `Çok fazla düzeltme yaptın. ${limit.retry_after_seconds} sn sonra dene.` },
-      { status: 429 },
-    );
-  }
-
-  const is = await admin
-    .from("invoice_jobs")
-    .select("id,discovery_state,supplier_name,supplier_site")
-    .eq("id", islemKimligi)
-    .eq("store_id", yetki.storeId)
-    .maybeSingle();
-  if (!is.data?.id) return NextResponse.json({ hata: "İşlem bulunamadı." }, { status: 404 });
-
-  const kayit = await admin
-    .from("invoice_job_lines")
-    .select("id,raw_line,model,product_name,barcode,variant_name,size_text,brand,qty,qty_unit,unit_price,line_total,confidence,product_id,outcome,catalog_snapshot")
-    .eq("job_id", islemKimligi)
-    .eq("line_index", satirSirasi)
-    .maybeSingle();
-  if (!kayit.data?.id) return NextResponse.json({ hata: "Satır bulunamadı." }, { status: 404 });
+  const kayit = await admin.from("invoice_job_lines").select("*").eq("job_id", islemKimligi).eq("line_index", satirSirasi).maybeSingle();
+  if (!kayit.data) return NextResponse.json({ hata: "Fatura satırı bulunamadı." }, { status: 404 });
 
   const duzeltilmis: HamFaturaSatiri = {
-    hamSatir: String(kayit.data.raw_line ?? ""),
-    model: alan(govde, "model", 60) ?? String(kayit.data.model ?? ""),
-    ad: alan(govde, "ad", 300) ?? String(kayit.data.product_name ?? ""),
-    barkod: (alan(govde, "barkod", 20) ?? String(kayit.data.barcode ?? "")).replace(/\D/g, ""),
+    hamSatir: String(kayit.data.raw_text ?? ""),
+    model: alan(govde, "model", 120) ?? String(kayit.data.model ?? ""),
+    ad: alan(govde, "ad", 200) ?? String(kayit.data.product_name ?? ""),
+    barkod: alan(govde, "barkod", 64) ?? String(kayit.data.barcode ?? ""),
     varyant: String(kayit.data.variant_name ?? ""),
     beden: String(kayit.data.size_text ?? ""),
     marka: alan(govde, "marka", 120) ?? String(kayit.data.brand ?? ""),
@@ -84,114 +53,81 @@ export async function POST(request: NextRequest) {
     birim: String(kayit.data.qty_unit ?? ""),
     alisBirimFiyat: kayit.data.unit_price === null ? null : Number(kayit.data.unit_price),
     satirToplam: kayit.data.line_total === null ? null : Number(kayit.data.line_total),
-    guven: Number(kayit.data.confidence ?? 0),
+    guven: 1,
   };
 
   const kart = kayit.data.catalog_snapshot && typeof kayit.data.catalog_snapshot === "object" && !Array.isArray(kayit.data.catalog_snapshot)
     ? kayit.data.catalog_snapshot as Record<string, unknown>
     : null;
+
   const kimlikDegisti =
     duzeltilmis.model !== String(kayit.data.model ?? "") ||
     duzeltilmis.ad !== String(kayit.data.product_name ?? "") ||
     duzeltilmis.barkod !== String(kayit.data.barcode ?? "") ||
     (duzeltilmis.marka ?? "") !== String(kayit.data.brand ?? "");
+
   const gorseller = Array.isArray(kart?.gorseller)
     ? kart.gorseller.filter((url): url is string => typeof url === "string") : [];
-  let siteAciklama = !kimlikDegisti && typeof kart?.aciklama === "string" ? kart.aciklama : "";
-  let siteGorsel = !kimlikDegisti ? (gorseller[0] || "") : "";
-  let siteGorseller = !kimlikDegisti ? gorseller : [];
-  let siteSayfa = !kimlikDegisti && typeof kart?.kaynak === "string" ? kart.kaynak : "";
-  let siteAd = !kimlikDegisti && typeof kart?.resmiAd === "string" ? kart.resmiAd : "";
-  let siteMarka = !kimlikDegisti && typeof kart?.marka === "string" ? kart.marka : "";
-  let siteKategori = !kimlikDegisti && typeof kart?.kategori === "string" ? kart.kategori : "";
-  let siteOzellikler = !kimlikDegisti && Array.isArray(kart?.ozellikler) ? kart.ozellikler : [];
-  let siteUrunVaryantlari = !kimlikDegisti && Array.isArray(kart?.urunVaryantlari) ? kart.urunVaryantlari : [];
-  let siteDayanak: "kod" | "barkod" | "ad" | undefined =
+
+  const siteAd = !kimlikDegisti && typeof kart?.resmiAd === "string" ? kart.resmiAd : "";
+  const siteMarka = !kimlikDegisti && typeof kart?.marka === "string" ? kart.marka : "";
+  const siteDayanak: "kod" | "barkod" | "ad" | undefined =
     !kimlikDegisti && (kart?.dayanak === "kod" || kart?.dayanak === "barkod" || kart?.dayanak === "ad")
-      ? kart.dayanak : undefined;
-  let siteEslesti = !kimlikDegisti && kayit.data.outcome === "kanitli" && Boolean(siteAd && siteSayfa);
-  let siteUyari = "";
-  if (kimlikDegisti) {
-    // Re-research ONLY this changed invoice item. Luna alone determines manufacturer/product/photos.
-    try {
-      const harcama = await bugunkuMaliyetUsd(admin, yetki.storeId);
-      if (!aramaCagrisiSigarMi(harcama)) throw new Error("KOTA_DOLDU");
-      // Luna determines the manufacturer and official product page in one research request.
-      const arama = await satirSitesindeAra({
-        alan: String(is.data.supplier_site ?? ""),
-        tedarikci: String(is.data.supplier_name ?? ""),
-        model: duzeltilmis.model, ad: duzeltilmis.ad || duzeltilmis.hamSatir || "",
-        barkod: duzeltilmis.barkod, marka: duzeltilmis.marka,
-        varyant: duzeltilmis.varyant, beden: duzeltilmis.beden,
-      });
-      const maliyet = (arama.maliyet ?? 0) + ARAMA_UCETI_USD;
-      await kullanimKaydet(admin, yetki.storeId, { ...arama, maliyet });
-      if (arama.sayfa && arama.ad && arama.dayanak) {
-        siteEslesti = true;
-        siteAd = arama.ad;
-        siteMarka = arama.marka ?? "";
-        siteDayanak = arama.dayanak;
-        siteAciklama = arama.aciklama;
-        siteGorsel = arama.gorsel;
-        siteGorseller = arama.gorseller ?? [];
-        siteKategori = arama.kategori ?? "";
-        siteOzellikler = arama.ozellikler ?? [];
-        siteUrunVaryantlari = arama.urunVaryantlari ?? [];
-        siteSayfa = arama.sayfa;
-      } else {
-        siteUyari = "Luna resmî üretici ürününü eşleştiremedi.";
-      }
-    } catch (err) {
-      if (err instanceof ArastirmaHatasi) {
-        const maliyet = (err.kullanim.maliyet ?? 0) + ARAMA_UCETI_USD;
-        await kullanimKaydet(admin, yetki.storeId, { ...err.kullanim, maliyet }, ARAMA_UCETI_USD);
-      }
-      const kod = err instanceof Error ? err.message : "";
-      siteUyari = kod === "OKUYUCU_BAKIYE_BITTI" || kod === "KOTA_DOLDU"
-        ? "Araştırma kotası doldu; satır saklandı."
-        : "Kaynak araştırması başarısız; satır saklandı.";
-      console.error("[fatura-satir-duzelt] arastirma:", kod || err);
-    }
-  }
+      ? kart.dayanak
+      : undefined;
+  const siteAciklama = !kimlikDegisti && typeof kart?.aciklama === "string" ? kart.aciklama : "";
+  const siteGorsel = !kimlikDegisti ? (gorseller[0] || "") : "";
+  const siteGorseller = !kimlikDegisti ? gorseller : [];
+  const siteKategori = !kimlikDegisti && typeof kart?.kategori === "string" ? kart.kategori : "";
+  const siteSayfa = !kimlikDegisti && typeof kart?.kaynak === "string" ? kart.kaynak : "";
+  const siteEslesti = !kimlikDegisti && kayit.data.outcome === "kanitli" && Boolean(siteAd && siteSayfa);
+
   const yeni = siteKartiniUygula(eslesmeyenSatir({
-    ...duzeltilmis, siteAd, siteMarka, siteEslesti, siteDayanak,
-    siteAciklama, siteGorsel, siteGorseller,
+    ...duzeltilmis,
+    siteAd,
+    siteMarka,
+    siteEslesti,
+    siteDayanak,
+    siteAciklama,
+    siteGorsel,
+    siteGorseller,
     siteKategori,
-    siteOzellikler: siteOzellikler as Array<{ key: string; label: string; value: string }>,
-    siteUrunVaryantlari: siteUrunVaryantlari as Array<{ id: string; secenekler: Array<{ key: string; value: string }>; barkod: string; gorseller: string[] }>,
     siteSayfa,
   }));
-  if (siteUyari && yeni.sonuc !== "kanitli") yeni.uyari = siteUyari;
+  if (kimlikDegisti && yeni.sonuc !== "kanitli") {
+    yeni.uyari = "Kimlik değişti; ürün kartı yeniden hazırlanmalı.";
+  }
 
   const lineId = String(kayit.data.id);
-  const kayitlar = satirKanitKayitlari(lineId, yeni, "");
-  const { data: duzeltme, error: satirHatasi } = await admin.rpc("replace_invoice_line", {
+  const kanit = satirKanitKayitlari(lineId, yeni, "");
+  const { data: duzeltme, error: yazmaHatasi } = await admin.rpc("replace_invoice_line", {
     p_store_id: yetki.storeId,
     p_job_id: islemKimligi,
     p_line_id: lineId,
     p_line: {
-      model: duzeltilmis.model.slice(0, 60),
-      product_name: duzeltilmis.ad.slice(0, 300),
-      barcode: duzeltilmis.barkod.slice(0, 20),
-      brand: (duzeltilmis.marka ?? "").slice(0, 120),
+      model: yeni.model.slice(0, 60),
+      product_name: yeni.ad.slice(0, 300),
+      barcode: yeni.barkod.replace(/\D/g, "").slice(0, 20),
+      brand: (yeni.marka ?? "").slice(0, 120),
       outcome: yeni.sonuc,
       warning: (yeni.uyari ?? "").slice(0, 500),
       catalog_snapshot: yeni.katalog,
       conflict_snapshot: null,
     },
-    p_evidence: kayitlar.kanit,
-    p_candidates: kayitlar.aday,
-    p_rights: kayitlar.gorsel,
+    p_evidence: kanit.kanit,
+    p_candidates: kanit.aday,
+    p_rights: kanit.gorsel,
     p_discovery: is.data.discovery_state ?? {},
   });
-  if (satirHatasi || duzeltme?.success !== true) return NextResponse.json({ hata: "Düzeltme kaydedilemedi. Tekrar dene." }, { status: 500 });
+
+  if (yazmaHatasi || duzeltme?.success !== true) {
+    return NextResponse.json({ hata: "Düzeltme kaydedilemedi." }, { status: 500 });
+  }
 
   return NextResponse.json({
     tamam: true,
-    satirSirasi,
     satir: yeni,
-    sahipDurumu: duzeltme.sahipDurumu ?? null,
-    onaySifirlandi: duzeltme.onaySifirlandi === true,
-    urunId: kayit.data.product_id ? String(kayit.data.product_id) : null,
+    onaySifirlandi: duzeltme?.onaySifirlandi === true,
+    sahipDurumu: duzeltme?.sahipDurumu ?? null,
   });
 }

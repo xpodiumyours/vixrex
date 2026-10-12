@@ -184,7 +184,6 @@ describe("kabul matrisi R1-R10 + R2a sunucu sozlesmesi", () => {
     const kapaliVaryantlar: Array<Record<string, unknown>> = [
       { ownerApproved: false },
       { priceText: "" },
-      { imageUrls: [] },
       { yayinIstegi: false },
     ];
     for (const varyant of kapaliVaryantlar) {

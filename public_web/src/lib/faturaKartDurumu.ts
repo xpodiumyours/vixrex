@@ -1,4 +1,3 @@
-import { FATURA_MIN_PRODUCT_IMAGES } from "@/lib/productImagePolicy";
 import type { EslesmisFaturaSatiri } from "@/lib/faturaEslestir";
 
 export type KartDurumu = "kanitli" | "eksik" | "celiski" | "iz-yok";
@@ -6,10 +5,10 @@ export type KartDurumu = "kanitli" | "eksik" | "celiski" | "iz-yok";
 export const KART_DURUMLARI: readonly KartDurumu[] = ["kanitli", "eksik", "celiski", "iz-yok"];
 
 export const KART_DURUM_ETIKETI: Record<KartDurumu, string> = {
-  kanitli: "Kanıtlı",
-  eksik: "Eksik bilgi",
+  kanitli: "Hazır",
+  eksik: "Taslak",
   celiski: "Çelişki",
-  "iz-yok": "İz bulunamadı",
+  "iz-yok": "Taslak",
 };
 
 export function durumGecerliMi(deger: unknown): deger is KartDurumu {
@@ -28,19 +27,16 @@ export interface YayinGirdisi {
   sablonEksikleri?: string[];
 }
 
+/**
+ * Esnafın vitrine yayına alabilmesi için gereken TEK şart:
+ * Satış fiyatının girilmiş olması ve esnafın onay vermiş olmasıdır.
+ * Resim adedi veya yapay puanlama vitrine çıkmayı engellemez.
+ */
 export function yayinEksikleri(girdi: YayinGirdisi): string[] {
   const eksikler: string[] = [];
 
   if (girdi.satisFiyati === null || !(girdi.satisFiyati > 0)) {
     eksikler.push("Satış fiyatı girilmedi.");
-  }
-  if (girdi.stok !== null && (!Number.isFinite(girdi.stok) || girdi.stok < 0)) {
-    eksikler.push("Stok adedi geçersiz.");
-  }
-  if (girdi.gorselSayisi < FATURA_MIN_PRODUCT_IMAGES) {
-    eksikler.push(
-      `En az ${FATURA_MIN_PRODUCT_IMAGES} doğrulanmış ürün fotoğrafı gerekiyor; kartta ${girdi.gorselSayisi} fotoğraf var.`,
-    );
   }
   if (!girdi.onaylandi) {
     eksikler.push(ONAY_EKSIGI);
@@ -53,9 +49,6 @@ export function karttaKullanilabilirGorseller(
   satir: EslesmisFaturaSatiri,
   esnafGorselleri: string[] = [],
 ): string[] {
-  // Kilitli kapsam: üretici fotoğrafı karta girer ve yayınlanır; kullanım
-  // izni sonra, çalışan sistemle istenir. İzin takibi sunucu kayıtlarındadır
-  // (fatura_kanit.ureticiGorsel, invoice_image_rights), kartta değil.
   const katalog = satir.katalog;
   const ureticiGorselleri = katalog ? katalog.gorseller.filter(Boolean) : [];
   return [...new Set([...ureticiGorselleri, ...esnafGorselleri.filter(Boolean)])];
@@ -85,8 +78,6 @@ export function kartDegerlendir(girdi: KartGirdisi): KartDegerlendirmesi {
   const durum = girdi.satir.sonuc;
   const gorseller = karttaKullanilabilirGorseller(girdi.satir, girdi.esnafGorselleri);
 
-  // Category/template heuristics do not evaluate Luna's product card.
-  const sablonEksikleri = girdi.sablonEksikleri ?? [];
   const eksikler = yayinEksikleri({
     durum,
     satisFiyati: girdi.satisFiyati ?? null,
@@ -94,7 +85,6 @@ export function kartDegerlendir(girdi: KartGirdisi): KartDegerlendirmesi {
     stokOnaylandi: girdi.stokOnaylandi === true,
     onaylandi: girdi.onaylandi === true,
     gorselSayisi: gorseller.length,
-    sablonEksikleri,
   });
 
   const bilgiEksikleri = eksikler.filter((eksik) => eksik !== ONAY_EKSIGI);
@@ -116,37 +106,7 @@ export interface DurumBilgisi {
 }
 
 export function durumBilgisi(satir: EslesmisFaturaSatiri): DurumBilgisi {
-  const etiket = KART_DURUM_ETIKETI[satir.sonuc] ?? KART_DURUM_ETIKETI.eksik;
-
-  if (satir.sonuc === "celiski") {
-    const adaylar = satir.celiski?.adaylar ?? [];
-    const dayanak = satir.celiski?.dayanak === "barkod" ? "barkod" : "ürün kodu";
-    return {
-      etiket,
-      detay:
-        adaylar.length > 0
-          ? `Aynı ${dayanak} ${adaylar.length} farklı ürüne düşüyor; hangisi olduğunu sen seçmelisin.`
-          : "Aynı kod birden çok ürüne düşüyor; eşleşme kurulmadı.",
-      adaylar,
-    };
-  }
-
-  if (satir.sonuc === "iz-yok") {
-    return {
-      etiket,
-      detay: satir.uyari ?? "Bu satırın resmî ürün kaynağı bulunamadı. Tahmin yapılmadı.",
-      adaylar: [],
-    };
-  }
-
-  if (satir.sonuc === "eksik") {
-    return {
-      etiket,
-      detay: satir.uyari ?? "Ürün kimliği ya da kaynağı eksik.",
-      adaylar: [],
-    };
-  }
-
+  const etiket = KART_DURUM_ETIKETI[satir.sonuc] ?? "Hazır";
   return {
     etiket,
     detay: satir.uyari ?? "",

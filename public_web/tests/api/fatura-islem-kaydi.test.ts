@@ -34,7 +34,6 @@ function girdi(satirlar: EslesmisFaturaSatiri[]): IslemKaydiGirdisi {
     tedarikciSite: "sehermensucat.com",
     tedarikciIz: {
       anahtar: "seher-mensucat",
-      firma: "Seher Mensucat",
       alan: "sehermensucat.com",
       platform: "",
       izinDurumu: "yok",
