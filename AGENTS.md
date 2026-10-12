@@ -209,6 +209,13 @@ Canlı (vixrex.com) tek bir Vercel projesinden yayınlanır: `vixrex-public`.
 `vixrex-app` projesinin önizlemesi farklı bir kabuk açar ve hiç canlıya
 çıkmaz; adresi Casper'a test adresi diye verilmez, kanıt sayılmaz.
 
+**En hızlı canlı ölçümü (2026-10-12):** `https://vixrex-public.vercel.app/deploy-info.json`
+adresi tek istekle canlıda çalışan commit'i verir (`commit` alanı) ve
+`Cache-Control: no-store` sayesinde önbelleğe takılmaz. Dashboard, token veya
+CLI gerekmez; `webfetch` yeterli. Çıkan SHA `git log origin/main` ile
+karşılaştırılır: canlıda eski bir sürüm varsa deploy olmuştur ama ya patlamış
+ya rate limit yemiştir — `errorCode` Vercel API'den çekilir (kural 22).
+
 Casper'a önizleme adresi vermeden önce iki şey ölçülür ve mesaja yazılır:
 1. Canlı hangi commit'te: `gh api repos/xpodiumyours/vixrex/deployments`
    çıktısında `Production – vixrex-public` satırının commit'i.
@@ -240,6 +247,41 @@ dosyasının yokluğunu kilitler.
 Neden: 2026-10-09'da ajanlar içeride unutulmuş üretici JSON dosyalarını gerçek
 bir ürün havuzu sanıp "izin listesine çevirelim" diye plan kurdu. Casper'ın
 havuzu yok; ürün firmanın sitesinden bulunur.
+
+### 21. Son düzenlemeden sonra TÜM kapılar tekrar koşulur (2026-10-12)
+Bir dosya düzenlendikten sonra **tüm** kapılar (tsc, lint, test, build ve ilgili
+kontrol betikleri) **en son düzenlemeden sonra** tekrar çalıştırılır. "Önceden
+geçti" yeterli değildir; kapı çalıştıktan sonra dosya tekrar değiştiyse kapı
+eskimiştir. Bir tür/değişken tipi değiştiyse lint değil tsc geçerli kapıdır.
+
+Neden: 2026-10-12'de test dosyasına `GonderilenGovde` arayüzü ekleyip lint'i
+koştum ama tsc'yi tekrar çalıştırmadan commit ettim. `gorsel` artık `.find()`'ten
+geliyordu, strict modda `possibly undefined` verdi; CI kırmızı çıktı, bozuk kod
+ana dale alındı ve production deploy `lint_or_type_error` ile patladı. Casper:
+"her işe ezbere başladığının en büyük kanıtı şu an yaşadığımız sorunlar zinciri."
+
+### 22. Deploy hatası tahmin edilmez, errorCode API'den çekilir (2026-10-12)
+Vercel deploy "0ms Error" gibi görünce altyapı/queue diye tahmin etme. Gerçek
+sebep API'den çekilir: `GET /v6/deployments?projectId=...` çıktısındaki
+`errorCode` + `errorMessage`. `git_info_fail` (GitHub rate limit) ile
+`lint_or_type_error` (bozuk kod) çok farklı şeylerdir; biri dışarıda, diğeri
+koddadır. Tahmine başlamadan önce errorCode oku.
+
+Neden: 2026-10-12'de deploy "0ms Error" görünce ignoreCommand exit kodları,
+`outputFileTracing`, lokal `vercel build` gibi tahminlere girdim; dakikalarca
+speküle ettim. API'den `git_info_fail` + "secondary rate limit" okunsaydı hemen
+anlaşılırdı.
+
+### 23. Push'ları sıkıştırma — arka arkaya çok push rate limit yaratır (2026-10-12)
+Düzeltmeleri kapılar yeşil olduktan sonra ve mümkünse tek push'ta topla; dakikalar
+içinde art arda push atma. GitHub, Vercel'e **secondary rate limit** yiyor ve
+Vercel commit bilgisini çekemeyince deploy hiç başlamadan `git_info_fail` ile
+düşüyor — kod sağlam olsa bile canlıya ÇIKMIYOR.
+
+Neden: 2026-10-12'de #677, #678, #679, #680 push'ları bir saatte arka arkaya
+atıldı; son ikisi GitHub 403 rate limit yüzünden canlıya çıkmadı, `vercel
+redeploy` ile elle çıkarıldı. Aynı gün içinde kapılar en son çalıştıktan sonra
+push atılır, her düzeltme için ayrı push açılmaz.
 
 ### Token ekonomisi (2026-09-16)
 Token en kıt kaynak. Bitince koordinasyon, doğrulama ve merge sorumluluğu
