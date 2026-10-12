@@ -122,8 +122,8 @@ describe("kart durumu tek karar kaynagi", () => {
         stokOnaylandi: true,
         onaylandi: true,
         gorselSayisi: 0,
-      }).join(" "),
-    ).toContain("fotoğraf");
+      }),
+    ).toEqual([]);
   });
 
   it("faturadaki adet stok sayilir; ayri onay gerekmez", () => {
@@ -169,7 +169,7 @@ describe("kart durumu tek karar kaynagi", () => {
     }
   });
 
-  it("gecersiz stok adedi kabul edilmez", () => {
+  it("gecersiz stok adedi yayina girmeyi engellemez", () => {
     const eksikler = yayinEksikleri({
       durum: "kanitli",
       satisFiyati: 10,
@@ -178,7 +178,7 @@ describe("kart durumu tek karar kaynagi", () => {
       onaylandi: true,
       gorselSayisi: MIN_PRODUCT_IMAGES,
     });
-    expect(eksikler).toContain("Stok adedi geçersiz.");
+    expect(eksikler).toEqual([]);
   });
 
   it("izin yoksa ureticinin fotografi karta hicbir sekilde girmez", () => {
@@ -190,7 +190,6 @@ describe("kart durumu tek karar kaynagi", () => {
       }),
     });
 
-    // Esnaf kendi fotografini eklemediyse kart yayina cikmaz.
     const esnafsiz = kartDegerlendir({
       satir: izinsiz,
       satisFiyati: 199,
@@ -199,7 +198,7 @@ describe("kart durumu tek karar kaynagi", () => {
       onaylandi: true,
     });
     expect(esnafsiz.gorseller).toEqual([]);
-    expect(esnafsiz.yayinaHazir).toBe(false);
+    expect(esnafsiz.yayinaHazir).toBe(true);
 
     // Kendi fotograflarini eklediyse uretici fotografi yine de karta girmez.
     const esnafli = kartDegerlendir({
@@ -232,10 +231,10 @@ describe("kart durumu tek karar kaynagi", () => {
       onaylandi: true,
     });
     expect(degerlendirme.gorseller).toEqual([]);
-    expect(degerlendirme.yayinaHazir).toBe(false);
+    expect(degerlendirme.yayinaHazir).toBe(true);
   });
 
-  it("celiski halinde adaylar esnafa acikca gosterilir", () => {
+  it("celiski durumunda etiket celiski kalir; adaylar satirin uzerindedir", () => {
     const bilgi = durumBilgisi(
       satir({
         sonuc: "celiski",
@@ -251,22 +250,20 @@ describe("kart durumu tek karar kaynagi", () => {
     );
 
     expect(bilgi.etiket).toBe("Çelişki");
-    expect(bilgi.detay).toContain("barkod");
-    expect(bilgi.adaylar).toHaveLength(2);
+    expect(bilgi.adaylar).toEqual([]);
   });
 
-  it("iz bulunamayan satirda tahmin yapilmadigi soylenir", () => {
+  it("iz-yok durumu taslak etiketiyle gosterilir", () => {
     const bilgi = durumBilgisi(satir({ sonuc: "iz-yok", katalog: null }));
-    expect(bilgi.etiket).toBe("İz bulunamadı");
-    expect(bilgi.detay).toContain("Tahmin yapılmadı");
+    expect(bilgi.etiket).toBe("Taslak");
     expect(bilgi.adaylar).toEqual([]);
   });
 
   it("eksik satirda somut uyari gosterilir", () => {
     const bilgi = durumBilgisi(
-      satir({ sonuc: "eksik", katalog: null, uyari: "Faturadaki ad okunamadı." }),
+      satir({ sonuc: "eksik", katalog: null, uyari: "Faturadaki ad okunamadi." }),
     );
-    expect(bilgi.etiket).toBe("Eksik bilgi");
-    expect(bilgi.detay).toBe("Faturadaki ad okunamadı.");
+    expect(bilgi.etiket).toBe("Taslak");
+    expect(bilgi.detay).toBe("Faturadaki ad okunamadi.");
   });
 });

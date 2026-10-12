@@ -1,14 +1,30 @@
 import { createHash } from "node:crypto";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
-import type { TedarikciDijitalIzi, DijitalIzAramaDurumu } from "@/lib/faturaDijitalIz";
 import type { EslesmisFaturaSatiri } from "@/lib/faturaEslestir";
-import { kisiselVeriTemizle } from "@/lib/faturaKisiselVeri";
 import {
   alisverisKarari,
   belgeTarihiIso,
   type AlisverisIliskisi,
   type AlisverisSatiri,
 } from "@/lib/faturaAlisveris";
+
+export interface TedarikciDijitalIzi {
+  anahtar?: string;
+  alan?: string;
+  platform?: string;
+  izinDurumu?: string;
+  kaynak?: string;
+  havuzda?: boolean;
+  dogrulama?: unknown;
+}
+
+export interface DijitalIzAramaDurumu {
+  erisimHatasi?: boolean;
+  sinirDoldu?: boolean;
+  sonrakiSatir?: number;
+  hatalar?: Record<string, string>;
+  siteDurumu?: unknown;
+}
 
 export function belgeParmakIzi(bayt: Uint8Array): string {
   return createHash("sha256").update(bayt).digest("hex");
@@ -149,7 +165,7 @@ export async function islemKaydet(girdi: IslemKaydiGirdisi): Promise<string | nu
             : null,
           document_adet: girdi.belgeAdedi,
           document_total: girdi.belgeToplami,
-          document_warning: kisiselVeriTemizle((girdi.belgeUyarisi ?? "")),
+          document_warning: (girdi.belgeUyarisi ?? "").trim(),
           document_type: (girdi.belgeTuru ?? ""),
           document_no: (girdi.belgeNo ?? ""),
           document_date: belgeTarihiIso(girdi.belgeTarihi ?? "") || null,
@@ -161,7 +177,7 @@ export async function islemKaydet(girdi: IslemKaydiGirdisi): Promise<string | nu
         };
     const satirYazlari = girdi.satirlar.map((satir, sira) => ({
       line_index: sira,
-      raw_line: kisiselVeriTemizle((satir.hamSatir ?? "")),
+      raw_line: satir.hamSatir ?? "",
       model: satir.model,
       product_name: satir.ad,
       barcode: satir.barkod.replace(/\D/g, ""),
@@ -174,7 +190,7 @@ export async function islemKaydet(girdi: IslemKaydiGirdisi): Promise<string | nu
       confidence: satir.guven,
       outcome: satir.sonuc,
       brand: (satir.marka ?? ""),
-      warning: kisiselVeriTemizle((satir.uyari ?? "")),
+      warning: (satir.uyari ?? "").trim(),
       catalog_snapshot: satir.katalog,
       conflict_snapshot: satir.celiski ?? null,
     }));

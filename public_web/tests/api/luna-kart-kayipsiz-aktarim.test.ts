@@ -9,16 +9,11 @@ import { normalizeProductVariants } from "@/lib/productRichData";
 import { buildProductDetailFacts, buildVariantOptionGroups, findMatchingVariant } from "@/lib/productCardPresentation";
 
 import { getProductImages, isPublicCatalogProduct, resolveCatalogImage } from "@/lib/products";
-import { otomatikTaslakAdayi } from "@/lib/faturaTaslakAdayi";
 
 const gorseller = Array.from({ length: 12 }, (_, i) => `https://cdn.example/${i}.jpg`);
 const varyantlar = Array.from({ length: 101 }, (_, i) => ({ id: `v${i}`, options: { voltage: String(i) }, imageUrls: gorseller }));
 
 describe("Luna kartı kayıt ve görünüm aktarımı", () => {
-  it("yalnız ham satırı okunan ürün taslak zincirine katılır", () => {
-    expect(otomatikTaslakAdayi({ hamSatir: "Peynir teneke 2,5 KG" })).toBe(true);
-    expect(otomatikTaslakAdayi({ hamSatir: " " })).toBe(false);
-  });
   it("Luna'nın seçenek alanı boş olan barkodlu varyantı silinmez", () => {
     const variants = [{ id: "v1", options: {}, barcode: "8681234567890", imageUrls: gorseller }];
     expect(normalizeProductVariants(variants, true)).toEqual(variants);

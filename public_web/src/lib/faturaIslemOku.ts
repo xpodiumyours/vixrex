@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { EslesmisFaturaSatiri, KatalogBilgisi } from "@/lib/faturaEslestir";
 import { sonucOzeti } from "@/lib/faturaEslestir";
 import { durumGecerliMi } from "@/lib/faturaKartDurumu";
-import type { DijitalIzAramaDurumu } from "@/lib/faturaDijitalIz";
+import type { DijitalIzAramaDurumu } from "@/lib/faturaIslemKaydi";
 
 export interface SahipDurumu {
   satisFiyati: string;

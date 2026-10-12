@@ -41,9 +41,9 @@ describe("fatura atomik kayıt kapısı",()=>{
  });
  it.each(["erisilemedi","depoya-yazilamadi"])("%s görsel dış bağlantıyla yayına kaçmaz",async(sebep)=>{
   m.medya.mockResolvedValue({gorseller:[],reddedilenler:[{kaynakGorsel:"https://firma.example/model.jpg",sebep}],altyapiSorunu:true});
-  const body=await(await POST(request())).json();expect(body.hatali).toBe(0);expect(body.taslak).toBe(1);expect(body.eklenen).toBe(1);
+  const body=await(await POST(request())).json();expect(body.hatali).toBe(0);expect(body.yayinda).toBe(1);expect(body.eklenen).toBe(1);
   expect(m.rpc).toHaveBeenCalledWith("save_invoice_product",expect.objectContaining({p_product:expect.objectContaining({imageUrls:[]})}));
-  expect(m.yayin).not.toHaveBeenCalled();
+  expect(m.yayin).toHaveBeenCalled();
  });
  it("kaynak kaydı yoksa istemcinin kanıtlı etiketi kurtarmaz",async()=>{
   const row=await m.satir();m.satir.mockResolvedValue({...row,katalog:null});

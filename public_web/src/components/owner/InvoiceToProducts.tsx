@@ -1,19 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import FirmaIzniPaneli from "@/components/owner/FirmaIzniPaneli";
-import { otomatikTaslakAdayi } from "@/lib/faturaTaslakAdayi";
 import {
   KART_DURUM_ETIKETI,
   durumBilgisi,
   kartDegerlendir,
   type KartDurumu,
 } from "@/lib/faturaKartDurumu";
-import {
-  belgedeYazi,
-  firmaSiteCumlesi,
-  type FirmaSiteDurumu,
-} from "@/lib/firmaSiteDurumu";
+function belgedeYazi(deger: string | null | undefined): string {
+  return (deger ?? "").trim() || "Belgede yazmiyor";
+}
 // Faturadan ürün kartına.
 // Esnaf satış fiyatını ve satışa açacağı tam-adet stoku kontrol eder; fatura miktarı öneridir.
 // Alış fiyatı satış fiyatı olmaz. Sunucu fiyatı ve fotoğrafı ayrıca kontrol eder.
@@ -110,7 +106,6 @@ interface FaturaOkumaSonucu {
   tedarikciVergiNo?: string;
   tedarikciAdres?: string;
   tedarikciSite?: string;
-  siteDurumu?: FirmaSiteDurumu | null;
   katalogEslesmesi?: number;
   sonucOzeti?: Record<string, number>;
   islemKimligi?: string | null;
@@ -414,7 +409,7 @@ export default function InvoiceToProducts({
   const otomatikTaslaklariKaydet = useCallback(async (okunan: FaturaOkumaSonucu, hazir: SatirDurumu[]) => {
     if (!okunan.islemKimligi) return;
     const adaylar = hazir.map((satir, sira) => ({ satir, sira }))
-      .filter(({ satir }) => !satir.ayniAlisverisTekrari && otomatikTaslakAdayi(satir));
+      .filter(({ satir }) => !satir.ayniAlisverisTekrari);
     if (adaylar.length === 0) return;
     const sahipCevabi = await fetch("/api/fatura-islem", {
       method: "PUT", headers: { "Content-Type": "application/json" },
@@ -724,7 +719,7 @@ export default function InvoiceToProducts({
     const gonderilecek = satirlar
       .map((satir, sira) => ({ satir, sira, degerlendirme: degerlendirmeler[sira] }))
       .filter(({ satir, degerlendirme }) =>
-        !satir.ayniAlisverisTekrari && (degerlendirme.onaylanabilir || otomatikTaslakAdayi(satir)),
+        !satir.ayniAlisverisTekrari && degerlendirme.onaylanabilir,
       );
 
     if (gonderilecek.length === 0) return;
@@ -1038,10 +1033,6 @@ export default function InvoiceToProducts({
 
         {hata && <p className="fatura-hata">{hata}</p>}
 
-        {belge?.islemKimligi && (
-          <FirmaIzniPaneli storeSlug={storeSlug} islemKimligi={belge.islemKimligi} />
-        )}
-
         {yayinlanabilirTaslak > 0 && (
           <button type="button" onClick={taslaklariYayinla} disabled={yukleniyor}>
             {yukleniyor ? "Yayınlanıyor…" : `${yayinlanabilirTaslak} taslağı yayınla`}
@@ -1091,8 +1082,6 @@ export default function InvoiceToProducts({
             Vergi no: {belgedeYazi(belge.tedarikciVergiNo)}
             {" · "}
             Adres: {belgedeYazi(belge.tedarikciAdres)}
-            {" · "}
-            Resmi site: {firmaSiteCumlesi(belge.siteDurumu)}
             {belge.belgeAdedi !== null ? ` · Belgede toplam miktar: ${belge.belgeAdedi}` : ""}
             {belge.belgeToplami !== null ? ` · ${paraYaz(belge.belgeToplami)} alış toplamı` : ""}
           </p>
@@ -1191,10 +1180,6 @@ export default function InvoiceToProducts({
           Kâr koy
         </button>
       </div>
-
-      {belge?.islemKimligi && satirlar.some((satir) => satir.katalog !== null) && (
-        <FirmaIzniPaneli storeSlug={storeSlug} islemKimligi={belge.islemKimligi} />
-      )}
 
       <div className="fatura-izgara">
         {satirlar.map((satir, index) => {

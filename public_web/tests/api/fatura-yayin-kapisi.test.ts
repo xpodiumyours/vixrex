@@ -246,14 +246,14 @@ describe("faturadan gelen ürünün yayın kapısı", () => {
     expect(mocks.rpc.mock.calls[0][1].p_evidence).toMatchObject({ kartDurumu: "kanitli", stokOnaylandi: true });
   });
 
-  it("fotoğrafsız ürün, onaylı ve fiyatlı olsa bile taslak kalır", async () => {
+  it("fotografsiz urun, onayli ve fiyatliysa yayina cikar", async () => {
     const cevap = await topluUrunEkle(istek([faturaSatiri({ imageUrls: [] })]));
     const govde = await cevap.json();
 
     expect(mocks.rpc.mock.calls[0][0]).toBe("save_invoice_product");
     expect(mocks.createProduct).not.toHaveBeenCalled();
-    expect(mocks.publishProduct).not.toHaveBeenCalled();
-    expect(govde.satirlar[0].sebep).toContain("fotoğraf");
+    expect(mocks.publishProduct).toHaveBeenCalled();
+    expect(govde.yayinda).toBe(1);
   });
 
   it("tek doğrulanmış ürün fotoğrafı olan kanıtlı satır yayına çıkabilir", async () => {

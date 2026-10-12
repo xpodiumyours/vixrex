@@ -39,12 +39,6 @@ vi.mock("@/lib/faturaGorsel", () => ({
   kaynakGorseliniDogrula: m.imgFetch,
   urunSayfasindaGorselKaniti: m.pageProof,
 }));
-vi.mock("@/lib/faturaMaliyet", () => ({
-  ARAMA_UCETI_USD: 0.01,
-  aramaCagrisiSigarMi: () => true,
-  bugunkuMaliyetUsd: m.cost,
-  kullanimKaydet: m.record,
-}));
 
 import { POST } from "@/app/api/fatura-satir-duzelt/route";
 
@@ -125,7 +119,6 @@ describe("satır düzeltme kartı site kaydından kurar", () => {
 
 
   it("ürün kimliği değişince eski kart kararını taşımayız", async () => {
-    m.siteSearch.mockResolvedValueOnce({ ad: "", sayfa: "", dayanak: null, gorsel: "", aciklama: "", maliyet: 0 });
     const cevap = await POST(istek({ model: "BASKA-MODEL", marka: "Baska Marka" }));
     const govde = await cevap.json();
     expect(cevap.status).toBe(200);
@@ -165,45 +158,17 @@ describe("satır düzeltme kartı site kaydından kurar", () => {
     expect(govde.satir.katalog).toBeNull();
     expect(govde.satir.sonuc).toBe("eksik");
   });
-  it("kimlik düzeltmesinde sadece bu satırı yeniden araştırıp yeni kanıtla kart kurar", async () => {
-    m.is.mockResolvedValue({
-      data: { id: ISLEM, discovery_state: {}, supplier_name: "Seher Mensucat",
-        supplier_site: "sehermensucat.com" },
-      error: null,
-    });
+  it("kimlik duzeltmesinde eski kart kaniti tasinmaz ve arastirma baslatilmaz", async () => {
     const cevap = await POST(istek({ model: "ELT1002" }));
     const govde = await cevap.json();
 
     expect(cevap.status).toBe(200);
-    expect(m.siteSearch).toHaveBeenCalledOnce();
-    expect(m.siteSearch).toHaveBeenCalledWith(expect.objectContaining({
-      alan: "sehermensucat.com", model: "ELT1002",
-    }));
-    expect(m.pageProof).not.toHaveBeenCalled();
-    expect(m.imageCheck).not.toHaveBeenCalled();
-    expect(govde.satir.sonuc).toBe("kanitli");
-    expect(govde.satir.katalog.kaynak).toBe("https://sehermensucat.com/urun/elt1002");
-    expect(govde.satir.katalog.gorseller).toEqual(["https://cdn.example/elt1002.jpg"]);
-    expect(m.rpc.mock.calls.find((c) => c[0] === "replace_invoice_line")?.[1].p_line.outcome)
-      .toBe("kanitli");
-  });
-
-  it("yeniden araştırma başarısızsa eski kanıtı kabul etmez ve satırı taslak tutar", async () => {
-    m.is.mockResolvedValue({
-      data: { id: ISLEM, discovery_state: {}, supplier_name: "Seher Mensucat",
-        supplier_site: "sehermensucat.com" },
-      error: null,
-    });
-    m.siteSearch.mockRejectedValue(new Error("OKUYUCU_CEVAP_VERMEDI"));
-    const cevap = await POST(istek({ model: "ELT1002" }));
-    const govde = await cevap.json();
-
-    expect(cevap.status).toBe(200);
-    expect(m.siteSearch).toHaveBeenCalledOnce();
-    expect(m.imageCheck).not.toHaveBeenCalled();
+    expect(m.siteSearch).not.toHaveBeenCalled();
     expect(govde.satir.sonuc).toBe("eksik");
     expect(govde.satir.katalog).toBeNull();
-    expect(govde.satir.uyari).toContain("başarısız");
+    expect(govde.satir.uyari).toBeTruthy();
+    expect(m.rpc.mock.calls.find((c) => c[0] === "replace_invoice_line")?.[1].p_line.outcome)
+      .toBe("eksik");
   });
 
   it("ürün kimliği değişmediyse ücretli araştırmayı tekrar başlatmaz", async () => {

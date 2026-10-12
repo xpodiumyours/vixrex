@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import { taslakUrunMu } from "@/lib/faturaTaslakFiltresi";
 import { useState, useCallback, useMemo, useEffect } from "react";
 import BulkProductUpload from "./BulkProductUpload";
 import InvoiceToProducts from "./InvoiceToProducts";
@@ -255,7 +254,7 @@ export function OwnerProductManager({
   const filteredProducts = useMemo(() => {
     const q = filterText.trim().toLowerCase();
     return products.filter((p) => {
-      if (yalnizTaslak && !taslakUrunMu(p)) return false;
+      if (yalnizTaslak && p.is_visible !== false) return false;
       if (filterCategory && p.category_id !== filterCategory) return false;
       if (!q) return true;
       return (
