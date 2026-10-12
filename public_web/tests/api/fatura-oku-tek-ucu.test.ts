@@ -158,7 +158,7 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     const gorsel = istekGovdesi.messages[0].content.find(
       (parca: { type: string }) => parca.type === "image_url",
     );
-    expect(gorsel.image_url.url).toMatch(/^data:image\/png;base64,/);
+    expect(gorsel?.image_url?.url).toMatch(/^data:image\/png;base64,/);
 
     expect(mocks.kaydet).toHaveBeenCalledTimes(1);
     const kayit = mocks.kaydet.mock.calls[0][0] as unknown as {
@@ -371,7 +371,7 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     const gorsel = istekGovdesi.messages[0].content.find(
       (parca: { type: string }) => parca.type === "image_url",
     );
-    expect(gorsel.image_url.url).toMatch(/^data:application\/pdf;base64,/);
+    expect(gorsel?.image_url?.url).toMatch(/^data:application\/pdf;base64,/);
   });
 
   it("gercek sifir ile eksik rakam karistirilmaz", async () => {
