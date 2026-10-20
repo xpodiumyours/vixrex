@@ -1,12 +1,7 @@
 /**
  * Fatura fotoğrafını OpenRouter üzerinden okuyan TEK yer.
- *
- * Sağlayıcı: OpenRouter API (model: `openai/gpt-5.6-luna` veya Preset).
- * Araştırma, üretici tespiti, ürün eşleştirme ve görsel bulma OpenRouter / Luna tarafından yapılır.
- * Kod tarafında yapay maliyet engeli, regex OCR filtresi veya izin bürokrasisi yoktur.
+ * Model, talimat ve araç ayarları OpenRouter Preset'inde tutulur; kod yalnız görselleri gönderir.
  */
-
-export const GORU_MODELI = process.env.OPENROUTER_MODEL || "openai/gpt-5.6-luna";
 
 export interface GoruSatiri {
   hamSatir: string;
@@ -73,29 +68,12 @@ export async function faturayiOku(dataUrl: string | string[]): Promise<GoruSonuc
   }));
 
   const presetHam = (process.env.OPENROUTER_PRESET || process.env.OPENROUTER_FATURA_PRESET || "").trim();
-  const presetRef = presetHam ? (presetHam.startsWith("@preset/") ? presetHam : `@preset/${presetHam}`) : "";
+  if (!presetHam) throw new Error("OKUYUCU_PRESET_YOK");
+  const presetRef = presetHam.startsWith("@preset/") ? presetHam : `@preset/${presetHam}`;
 
   const bodyData: Record<string, unknown> = {
-    model: presetRef || GORU_MODELI,
-    ...(presetRef ? {} : { temperature: 0 }),
-    messages: [
-      {
-        role: "user",
-        content: [
-          {
-            type: "text",
-            text: [
-              "Bu bir fatura. Tüm ürün satırlarını oku ve JSON formatında ürün kartları oluştur.",
-              "Her satır için: ham_satir, model/kod, ad, barkod, marka, varyant, beden, adet, birim, birim_fiyat, tutar belirle.",
-              "Toptancıyı üretici marka sanma. Markanın resmi sitesinden ürün açıklaması (site_aciklama), ürün sayfası (site_sayfa) ve orijinal ürün görsellerini (site_gorseller) bul.",
-              "Yalnız geçerli JSON döndür:",
-              '{"tedarikci":"","tedarikci_vergi_no":"","tedarikci_adres":"","tedarikci_site":"","belge_turu":"","belge_no":"","belge_tarihi":"","satirlar":[{"ham_satir":"","model":"","ad":"","barkod":"","varyant":"","beden":"","marka":"","adet":0,"birim":"","birim_fiyat":0,"tutar":0,"site_aciklama":"","site_sayfa":"","site_gorseller":["https://..."]}],"toplam_adet":0,"toplam_tutar":0,"mal_bedeli":0,"kdv_tutari":0,"odenecek_toplam":0}',
-            ].join("\n"),
-          },
-          ...gorseller,
-        ],
-      },
-    ],
+    model: presetRef,
+    messages: [{ role: "user", content: gorseller }],
   };
 
   const cevap = await fetch("https://openrouter.ai/api/v1/chat/completions", {

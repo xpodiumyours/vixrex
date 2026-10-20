@@ -53,7 +53,6 @@ vi.mock("@/lib/faturaIslemOku", async (importOriginal) => ({
 }));
 
 import { POST as faturaOku } from "@/app/api/fatura-oku/route";
-import { GORU_MODELI } from "@/lib/faturaGoru";
 
 const PNG_IMZA = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13]);
 
@@ -183,16 +182,15 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(govde.taslaklar.length).toBe(1);
   });
 
-  it("preset yokken model ve temperature koda gore gider", async () => {
+  it("preset yoksa OpenRouter'a hic istek gitmez", async () => {
     delete process.env.OPENROUTER_PRESET;
     cevapUcur(lunaCevabi([LUNA_SATIR]));
 
     const cevap = await faturaOku(istek());
 
-    expect(cevap.status).toBe(200);
-    const istekGovdesi = gonderilenGovde();
-    expect(istekGovdesi.model).toBe(GORU_MODELI);
-    expect(istekGovdesi.temperature).toBe(0);
+    expect(cevap.status).not.toBe(200);
+    expect(mocks.fetch).not.toHaveBeenCalled();
+    expect(mocks.kaydet).not.toHaveBeenCalled();
   });
 
   it("Luna satir dondurmezse 422 doner ve islem kaydedilmez", async () => {

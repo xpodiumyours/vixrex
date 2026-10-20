@@ -24,9 +24,9 @@ Son commit: 8ff0caaf feat(fatura): kart gorseli firmanin kendi sayfasindan gelir
 | P2 | Tuhafiye / iç giyim yarım vitrin | KABUL — yarım kapsama MVP olur | Dijital izi güçlü firma şartı | Kapsam dışı sayma, eksik satırı koru |
 | P3 | Aktar yarı barkodlu senaryo | KABUL — yarım kapsama | Aynı kural | Aynı |
 | P4 | Ajan bataklığı / çelişkili belgeler | SÜRÜYOR | AGENTS.md A.14: çelişki = eski kopya. 71 dal / 46 worktree ölçümü 2026-10-03 | Dal envanteri: tool/dal-durumu.sh koşulmadı |
-| P5 | AI maliyet kavgası | KARAR BEKLİYOR | 2026-10-04 ölçüm: 6 okuma 0.58 TL. Güncel plan: arama ücreti tavana yazılmıyor (faturaMaliyet.ts:4) | Luna web_search ücreti tavana eklenecek mi? |
+| P5 | AI maliyet | ÇÖZÜLDÜ — OpenAI web_search yolu kaldırıldı | Fatura fotoğrafı OpenRouter'a gider, model ve talimat Preset'te | Canlı OpenRouter maliyet ölçümü yapılmadı |
 | P6 | İzin paradoksu (çalışmayana kim izin verir) | KABUL — sıra: önce çalışan demo | MASTER-PLAN Madde 23: teknik eksik izin arkasına saklanmaz | Işılay 16747 tam görsel yok, demo eksik |
-| P7 | Teknik faz F0-F8 / Dilim 1-5 | SÜRÜYOR — dalda, canlıda değil | Güncel plan: docs/FATURA-URUN-KARTI-PLAN.md. Dilim 1-4 bu dalda yazıldı, Dilim 5 koddaydı. Canlıya alınmadı | Dilim 1: okuma-arama ayrımı + original + şemadan fotoğraf çıkarma |
+| P7 | Fatura → OpenRouter Preset → ürün kartı | SÜRÜYOR — dalda, canlıda değil | Fatura fotoğrafı OpenRouter'a gönderilir, Preset ürün kartını döner. Kodda `@preset/` zorunlu | Preset'in OpenRouter'da tanımlanması ve JSON şemasının parser ile eşleşmesi |
 | P8 | Işılay 16747 kabul örneği | EKSİK | 14544 bilgi fişi + e-Arşiv, 8 adet, 450 TL birim. Tam resmi görsel doğrulanmadı | F3-F4 işi |
 | P9 | Canlıda kullanıcı yok | DOĞRULANDI | webfetch 2026-10-07: ana sayfa vitrin anlatıyor, fatura girişi yok | Önce demo, sonra esnaf denemesi |
 
