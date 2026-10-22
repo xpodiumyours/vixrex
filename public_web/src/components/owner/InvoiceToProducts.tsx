@@ -322,8 +322,7 @@ export default function InvoiceToProducts({
 
       const controller = new AbortController();
       faturaBeklemeIptali.current = controller;
-      let istek: Promise<FaturaOkumaSonucu>;
-      istek = faturaSonucunuBekle(ilk, {
+      const istek = faturaSonucunuBekle(ilk, {
         slug: storeSlug,
         signal: controller.signal,
       }).finally(() => {
