@@ -1,10 +1,11 @@
 import { FATURA_JSON_ISTEGI, VARSAYILAN_FATURA_PRESET } from "@/lib/faturaPresetSozlesmesi";
 import { openrouterYanitiniOku } from "@/lib/openrouterYanitAkisi";
+import { normalizeProductMetadata, type ProductAttributeValue } from "@/lib/productRichData";
 export { VARSAYILAN_FATURA_PRESET } from "@/lib/faturaPresetSozlesmesi";
 
 /** Fatura görselini OpenRouter'a gönderir. Araştırma ve doğrulama mevcut preset'te kalır. */
 export const GORU_MODELI = process.env.OPENROUTER_MODEL || "openai/gpt-5.6-luna";
-export type UrunOzelligi = { key: string; label: string; value: string };
+export type UrunOzelligi = ProductAttributeValue;
 export type KartKaynagi = string | Record<string, unknown>;
 
 export interface GoruSatiri {
@@ -106,9 +107,7 @@ export function katalogJsonunuOku(icerik: string): GoruSonucu {
     const adresler = Array.isArray(s.site_gorseller) ? s.site_gorseller : [s.site_gorsel];
     const gorseller = [...new Set(adresler.filter(webAdresi))];
     const hamOzellikler = s.ozellikler ?? s.site_ozellikler;
-    const ozellikler = Array.isArray(hamOzellikler) ? hamOzellikler.filter(nesne)
-      .filter((o) => typeof o.key === "string" && typeof o.label === "string" && typeof o.value === "string")
-      .map((o) => ({ key: String(o.key), label: String(o.label), value: String(o.value) })) : [];
+    const ozellikler = normalizeProductMetadata({ lunaInvoice: true, attributes: hamOzellikler }).attributes ?? [];
     const guven = sayi(s.okuma_guveni);
     return {
       hamSatir: metin(s.ham_satir), model: metin(s.model), ad: metin(s.ad),

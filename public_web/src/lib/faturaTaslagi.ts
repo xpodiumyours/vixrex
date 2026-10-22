@@ -1,4 +1,5 @@
 import type { EslesmisFaturaSatiri } from "@/lib/faturaEslestir";
+import type { ProductAttributeValue } from "@/lib/productRichData";
 
 export const FATURA_TASLAK_KAYNAGI = "invoice";
 
@@ -10,7 +11,7 @@ export interface FaturaTaslagi {
   model: string;
   imageUrls: string[];
   kategori: string;
-  ozellikler: Array<{ key: string; label: string; value: string }>;
+  ozellikler: ProductAttributeValue[];
   urunVaryantlari: Array<{ id: string; secenekler: Array<{ key: string; value: string }>; barkod: string; gorseller: string[] }>;
   gorselAdaylari: string[];
   izinDurumu: "yok" | "bekliyor" | "var";

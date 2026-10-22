@@ -37,6 +37,7 @@ export function faturaSatiriniAktar(satir: GoruSatiri, tedarikci: string): Esles
       dayanak: "ad", izinDurumu: "yok", resmiAd: satir.ad || satir.model, marka: satir.marka,
       aciklama: satir.siteAciklama ?? "", gorseller, gorselAdaylari: gorseller,
       kaynak: satir.siteSayfa ?? "", kategori: satir.siteKategori, ozellikler: satir.ozellikler,
+      beden: satir.beden, varyant: satir.varyant,
     },
   };
 }

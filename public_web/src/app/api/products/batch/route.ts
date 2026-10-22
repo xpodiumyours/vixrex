@@ -20,6 +20,7 @@ import { normalizeProductVariants } from "@/lib/productRichData";
 import { durumGecerliMi, yayinEksikleri } from "@/lib/faturaKartDurumu";
 import { FATURA_MIN_PRODUCT_IMAGES, yonetilenUrunGorseliMi } from "@/lib/productImagePolicy";
 import { kaynakGorselleriniHazirla } from "@/lib/faturaGorsel";
+import { faturaKatalogMetadatasi } from "@/lib/faturaUrunIcerigi";
 import { tuketicideGorunenler, vitrinOnbelleginiYenile } from "@/lib/vitrinYayinDogrula";
 
 /**
@@ -246,19 +247,15 @@ export async function POST(request: NextRequest) {
         hazirlik.girdi.imageUrls = katalog.gorseller.filter((url): url is string => typeof url === "string");
       }
 
-      // The persisted Luna catalog (not frontend classification) owns all product data.
-      const ozellikler = Array.isArray(katalog.ozellikler)
-        ? katalog.ozellikler.flatMap((raw) => {
-            if (!raw || typeof raw !== "object") return [];
-            const attr = raw as Record<string, unknown>;
-            if (typeof attr.key !== "string" || typeof attr.value !== "string") return [];
-            return [{ key: attr.key, label: typeof attr.label === "string" ? attr.label : attr.key, value: attr.value }];
-          }) : [];
+      // Üretici/gramaj/özellikler ve kaynak yalnız kayıtlı OpenRouter kataloğundan taşınır.
+      const katalogMetadatasi = faturaKatalogMetadatasi(katalog);
       const lunaKategori = typeof katalog.kategori === "string" ? katalog.kategori.trim() : "";
-      if (lunaKategori && !ozellikler.some((attr) => attr.key === "category")) {
-        ozellikler.push({ key: "category", label: "Kategori", value: lunaKategori });
-      }
-      hazirlik.girdi.metadata = { ...hazirlik.girdi.metadata, lunaInvoice: true, attributes: ozellikler };
+      hazirlik.girdi.metadata = {
+        ...hazirlik.girdi.metadata,
+        attributes: [],
+        manufacturerSource: undefined,
+        ...katalogMetadatasi,
+      };
 
       const lunaVaryantlari = Array.isArray(katalog.urunVaryantlari) ? katalog.urunVaryantlari : [];
       hazirlik.girdi.variants = normalizeProductVariants(lunaVaryantlari.map((raw) => {

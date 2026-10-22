@@ -5,6 +5,8 @@
 // burada tek kopya durur; farklı okuyucular kendi eşleştirme kuralını
 // yazmaz — ikinci bir "hangi ürün bu" kararı hiçbir yerde tekrarlanmaz.
 
+import type { ProductAttributeValue } from "@/lib/productRichData";
+
 export interface FotografKaniti {
   kaynakSayfa: string;
   kaynakGorsel: string;
@@ -29,7 +31,7 @@ export interface HamFaturaSatiri {
   siteGorsel?: string;
   siteGorseller?: string[];
   siteKategori?: string;
-  siteOzellikler?: Array<{ key: string; label: string; value: string }>;
+  siteOzellikler?: ProductAttributeValue[];
   uretici?: string;
   gramaj?: string;
   satirNo?: number | null;
@@ -65,7 +67,9 @@ export interface KatalogBilgisi {
   gorseller: string[];
   gorselAdaylari: string[];
   kategori?: string;
-  ozellikler?: Array<{ key: string; label: string; value: string }>;
+  beden?: string;
+  varyant?: string;
+  ozellikler?: ProductAttributeValue[];
   uretici?: string;
   gramaj?: string;
   satirNo?: number | null;
