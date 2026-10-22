@@ -18,6 +18,7 @@ import {
   productIsService,
 } from "@/lib/productRichData";
 import ProductCommercePanel from "@/components/ProductCommercePanel";
+import ManufacturerProductSource from "@/components/ManufacturerProductSource";
 
 interface ProductQuickViewProps {
   product: RichProductItem;
@@ -230,7 +231,7 @@ export default function ProductQuickView({
                 alt={product.name}
                 fill
                 sizes="(max-width: 640px) 100vw, 50vw"
-                className="object-cover object-center"
+                className={metadata.lunaInvoice ? "object-contain object-center p-3" : "object-cover object-center"}
                 priority
               />
             ) : (
@@ -277,7 +278,13 @@ export default function ProductQuickView({
                     }`}
                     aria-label={`${index + 1}. ürün fotoğrafını göster`}
                   >
-                    <Image src={imageUrl} alt="" fill sizes="56px" className="object-cover" />
+                    <Image
+                      src={imageUrl}
+                      alt=""
+                      fill
+                      sizes="56px"
+                      className={metadata.lunaInvoice ? "object-contain p-1" : "object-cover"}
+                    />
                   </button>
                 ))}
               </div>
@@ -405,6 +412,8 @@ export default function ProductQuickView({
             </dl>
           ) : null}
 
+          <ManufacturerProductSource source={metadata.manufacturerSource} />
+
           <div className="mt-5 rounded-2xl border border-blue-500/20 bg-gradient-to-br from-blue-500/10 to-cyan-500/5 p-4">
             <div className="flex items-start gap-3">
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-500/15">
@@ -461,7 +470,7 @@ export default function ProductQuickView({
             </div>
 
           {product.description ? (
-            <p className="mt-5 line-clamp-3 text-sm leading-6 text-slate-300">
+            <p className={`mt-5 text-sm leading-6 text-slate-300 ${metadata.lunaInvoice ? "whitespace-pre-wrap" : "line-clamp-3"}`}>
               {product.description}
             </p>
           ) : null}

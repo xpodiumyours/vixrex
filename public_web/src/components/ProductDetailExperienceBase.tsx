@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState, type ReactNode } from "react";
 import { TrackedWhatsAppLink } from "@/components/TrackedWhatsAppLink";
+import ManufacturerProductSource from "@/components/ManufacturerProductSource";
 import type { RichProductItem } from "@/lib/richProductItem";
 import { MapPinIcon } from "@/lib/vitrinBrandIcons";
 import { MAX_PRODUCT_IMAGES } from "@/lib/productImagePolicy";
@@ -191,7 +192,7 @@ export default function ProductDetailExperience({
                   alt={product.name}
                   fill
                   sizes="(max-width: 1024px) 100vw, 55vw"
-                  className="object-cover"
+                  className={metadata.lunaInvoice ? "object-contain p-3" : "object-cover"}
                   priority
                 />
               ) : (
@@ -214,7 +215,13 @@ export default function ProductDetailExperience({
                     }`}
                     aria-label={`${index + 1}. görseli göster`}
                   >
-                    <Image src={imageUrl} alt="" fill sizes="56px" className="object-cover" />
+                    <Image
+                      src={imageUrl}
+                      alt=""
+                      fill
+                      sizes="56px"
+                      className={metadata.lunaInvoice ? "object-contain p-1" : "object-cover"}
+                    />
                   </button>
                 ))}
               </div>
@@ -314,6 +321,8 @@ export default function ProductDetailExperience({
               </p>
             ) : null}
 
+            <ManufacturerProductSource source={metadata.manufacturerSource} />
+
             {(fulfillmentRegion || storeAddress) ? (
               <div className="mt-6 rounded-2xl border border-blue-500/20 bg-gradient-to-br from-blue-500/10 to-cyan-500/5 p-4">
                 <div className="flex items-start gap-3">
@@ -409,7 +418,9 @@ export default function ProductDetailExperience({
                 {isService ? "Hizmet detayları" : "Ürün özellikleri"}
               </h2>
               <p className="mt-1 text-xs font-medium text-white/35">
-                Yalnız işletmenin bu {isService ? "hizmet" : "ürün"} için girdiği gerçek bilgiler gösterilir.
+                {metadata.lunaInvoice
+                  ? "Faturadan hazırlanan ve esnafın onayladığı ürün bilgileri."
+                  : `Yalnız işletmenin bu ${isService ? "hizmet" : "ürün"} için girdiği gerçek bilgiler gösterilir.`}
               </p>
             </div>
             <dl>

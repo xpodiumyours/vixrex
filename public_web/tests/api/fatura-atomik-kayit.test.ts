@@ -33,6 +33,24 @@ describe("fatura atomik kayıt kapısı",()=>{
    p_product:expect.objectContaining({name:"Resmî model",description:"Resmî açıklama",brand:"Üretici",imageUrls:["https://depo.example/model.jpg"]})}));
   expect(m.create).not.toHaveBeenCalled();expect(m.update).not.toHaveBeenCalled();
  });
+ it("üretici, gramaj, tüm özellikler ve belirsiz kaynak kararı kalıcı ürüne taşınır",async()=>{
+  const row=await m.satir();
+  m.satir.mockResolvedValue({...row,katalog:{...row.katalog,
+   uretici:"Resmî Üretici A.Ş.",gramaj:"175 g",dogrulamaDurumu:"? Belirsiz",
+   ozellikler:[{key:"ingredients",label:"İçindekiler",value:"Kaynakta yazan içerik"}],
+  }});
+  await POST(request());
+  expect(m.rpc).toHaveBeenCalledWith("save_invoice_product",expect.objectContaining({
+   p_product:expect.objectContaining({metadata:expect.objectContaining({lunaInvoice:true,
+    manufacturerSource:{url:"https://firma.example/urun/model",verificationStatus:"? Belirsiz"},
+    attributes:expect.arrayContaining([
+     {key:"manufacturer",label:"Üretici",value:"Resmî Üretici A.Ş."},
+     {key:"netQuantity",label:"Gramaj / hacim",value:"175 g"},
+     {key:"ingredients",label:"İçindekiler",value:"Kaynakta yazan içerik",unit:undefined,section:undefined},
+    ]),
+   })}),
+  }));
+ });
  it("transaction hatası mevcut ürünü ayrı bir silme yoluna sokmaz ve yayın olmaz",async()=>{
   const row=await m.satir();m.satir.mockResolvedValue({...row,urunId:"mevcut-urun"});
   m.rpc.mockResolvedValue({data:null,error:{message:"transaction failed"}});

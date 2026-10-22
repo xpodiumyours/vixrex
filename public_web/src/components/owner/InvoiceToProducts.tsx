@@ -1,6 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { buildProductDetailFacts } from "@/lib/productCardPresentation";
+import { faturaKatalogMetadatasi } from "@/lib/faturaUrunIcerigi";
+import type { ProductAttributeValue } from "@/lib/productRichData";
 import {
   KART_DURUM_ETIKETI,
   durumBilgisi,
@@ -49,7 +52,12 @@ export interface KatalogBilgisi {
   gorseller: string[];
   gorselAdaylari: string[];
   kategori?: string;
-  ozellikler?: Array<{ key: string; label: string; value: string }>;
+  beden?: string;
+  varyant?: string;
+  uretici?: string;
+  gramaj?: string;
+  dogrulamaDurumu?: string;
+  ozellikler?: ProductAttributeValue[];
   urunVaryantlari?: Array<{ id: string; secenekler: Array<{ key: string; value: string }>; barkod: string; gorseller: string[] }>;
   varyantlar?: Array<{ ad: string; barkod: string; gorseller: string[] }>;
   kaynak: string;
@@ -225,14 +233,9 @@ function faturaUrunIstekGirdisi(
               yayinIstegi,
               purchasePriceAmount: satir.alisBirimFiyat ?? undefined,
               metadata: (() => {
-                const nitelikler = [...(katalog?.ozellikler ?? [])];
-                if (katalog?.kategori && !nitelikler.some((ozellik) => ozellik.key === "category")) {
-                  nitelikler.push({ key: "category", label: "Kategori", value: katalog.kategori });
-                }
-                if (!satir.model && nitelikler.length === 0) return undefined;
                 return {
                   ...(satir.model ? { identifiers: { sku: satir.model } } : {}),
-                  ...(nitelikler.length > 0 ? { attributes: nitelikler } : {}),
+                  ...(katalog ? faturaKatalogMetadatasi(katalog) : {}),
                 };
               })(),
               variants: (katalog?.urunVaryantlari ?? []).map((varyant) => ({
@@ -1186,6 +1189,9 @@ export default function InvoiceToProducts({
           const degerlendirme = degerlendirmeler[index];
           const bilgi = durumBilgisi(satir);
           const katalog = satir.katalog;
+          const urunBilgileri = katalog
+            ? buildProductDetailFacts({ metadata: faturaKatalogMetadatasi(katalog) })
+            : [];
           const dusukGuven = satir.guven < GUVEN_ESIGI;
           return (
             <article
@@ -1353,6 +1359,23 @@ export default function InvoiceToProducts({
               ) : katalog ? (
                 <div className="fatura-durum">Kaynaktan açıklama gelmedi.</div>
               ) : null}
+
+              {urunBilgileri.length > 0 && (
+                <section className="rounded-xl border border-[var(--owner-border)] p-3" aria-label="Ürün bilgileri">
+                  <h4 className="mb-2 text-xs font-bold text-[var(--owner-text)]">Ürün bilgileri</h4>
+                  <dl className="grid gap-2 text-xs">
+                    {urunBilgileri.map((ozellik, sira) => (
+                      <div key={`${ozellik.key}-${sira}`} className="grid grid-cols-[minmax(90px,0.65fr)_minmax(0,1fr)] gap-3">
+                        <dt className="font-semibold text-[var(--owner-muted)]">{ozellik.label}</dt>
+                        <dd className="break-words text-[var(--owner-text)]">{ozellik.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </section>
+              )}
+              {katalog?.dogrulamaDurumu && (
+                <p className="fatura-durum">OpenRouter eşleşmesi: {katalog.dogrulamaDurumu}</p>
+              )}
 
               <label className="fatura-fiyat">
                 Satış fiyatı
