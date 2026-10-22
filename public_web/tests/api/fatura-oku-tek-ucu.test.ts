@@ -53,7 +53,7 @@ vi.mock("@/lib/faturaIslemOku", async (importOriginal) => ({
 }));
 
 import { POST as faturaOku } from "@/app/api/fatura-oku/route";
-import { GORU_MODELI } from "@/lib/faturaGoru";
+import { VARSAYILAN_FATURA_PRESET } from "@/lib/faturaGoru";
 
 const PNG_IMZA = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13]);
 
@@ -99,7 +99,7 @@ function cevapUcur(cevap: unknown): void {
 interface GonderilenGovde {
   model: string;
   temperature?: number;
-  messages: Array<{ content: Array<{ type: string; image_url?: { url: string } }> }>;
+  messages: Array<{ content: Array<{ type: string; image_url?: { url: string }; file?: { filename: string; file_data: string } }> }>;
 }
 
 function gonderilenGovde(): GonderilenGovde {
@@ -122,6 +122,8 @@ const LUNA_SATIR = {
   site_sayfa: "https://seher.example/elt1001",
   site_gorseller: ["https://seher.example/1.jpg"],
   kategori: "Atlet",
+  dogrulama_durumu: "✓ Doğrulandı",
+  okuma_guveni: 0.96,
 };
 
 beforeEach(() => {
@@ -183,7 +185,7 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
     expect(govde.taslaklar.length).toBe(1);
   });
 
-  it("preset yokken model ve temperature koda gore gider", async () => {
+  it("ortamda preset yokken mevcut Vixrex presetini varsayilan kullanir", async () => {
     delete process.env.OPENROUTER_PRESET;
     cevapUcur(lunaCevabi([LUNA_SATIR]));
 
@@ -191,8 +193,8 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
 
     expect(cevap.status).toBe(200);
     const istekGovdesi = gonderilenGovde();
-    expect(istekGovdesi.model).toBe(GORU_MODELI);
-    expect(istekGovdesi.temperature).toBe(0);
+    expect(istekGovdesi.model).toBe(`@preset/${VARSAYILAN_FATURA_PRESET}`);
+    expect(istekGovdesi.temperature).toBeUndefined();
   });
 
   it("Luna satir dondurmezse 422 doner ve islem kaydedilmez", async () => {
@@ -212,6 +214,26 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
 
     expect(cevap.status).toBe(422);
     expect(govde.hata).toBeTruthy();
+  });
+
+  it("araştırma sırasında SSE model 404 hatası taslak kaydetmeden bildirilir", async () => {
+    mocks.fetch.mockResolvedValue(new Response('data: {"error":{"code":404,"message":"Model call failed: upstream returned 404"}}\n\n', {
+      headers: { "content-type": "text/event-stream" },
+    }));
+    const cevap = await faturaOku(istek());
+    expect(cevap.status).toBe(503);
+    expect((await cevap.json()).hata).toContain("modeline");
+    expect(mocks.kaydet).not.toHaveBeenCalled();
+  });
+
+  it("ücretsiz günlük model kotası dolduğunda taslak kaydetmez", async () => {
+    mocks.fetch.mockResolvedValue(new Response(JSON.stringify({ error: { code: 429, message: "Rate limit exceeded: free-models-per-day" } }), {
+      status: 429, headers: { "content-type": "application/json" },
+    }));
+    const cevap = await faturaOku(istek());
+    expect(cevap.status).toBe(503);
+    expect((await cevap.json()).hata).toContain("günlük ücretsiz");
+    expect(mocks.kaydet).not.toHaveBeenCalled();
   });
 
   it("Luna metni cozulemezse okuma ucu 500 doner", async () => {
@@ -368,10 +390,10 @@ describe("/api/fatura-oku — tek okuma ucu", () => {
 
     expect(cevap.status).toBe(200);
     const istekGovdesi = gonderilenGovde();
-    const gorsel = istekGovdesi.messages[0].content.find(
-      (parca: { type: string }) => parca.type === "image_url",
+    const dosya = istekGovdesi.messages[0].content.find(
+      (parca: { type: string }) => parca.type === "file",
     );
-    expect(gorsel?.image_url?.url).toMatch(/^data:application\/pdf;base64,/);
+    expect(dosya?.file?.file_data).toMatch(/^data:application\/pdf;base64,/);
   });
 
   it("gercek sifir ile eksik rakam karistirilmaz", async () => {

@@ -172,6 +172,9 @@ export function islemYaniti(islem: KayitliIslem): Record<string, unknown> {
     aramaSuruyor: islem.aramaDurumu?.sinirDoldu === true,
     belge: islem.belge,
     ayniAlisveris: [],
+    belgeEkleri: islem.aramaDurumu?.presetCevabi?.belgeEkleri ?? {},
+    gruplar: islem.aramaDurumu?.presetCevabi?.gruplar ?? [],
+    uyarilar: islem.aramaDurumu?.presetCevabi?.uyarilar ?? [],
   };
 }
 

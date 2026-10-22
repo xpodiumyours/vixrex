@@ -24,6 +24,7 @@ export interface DijitalIzAramaDurumu {
   sonrakiSatir?: number;
   hatalar?: Record<string, string>;
   siteDurumu?: unknown;
+  presetCevabi?: { belgeEkleri?: unknown; gruplar?: unknown[]; uyarilar?: string[] };
 }
 
 export function belgeParmakIzi(bayt: Uint8Array): string {
