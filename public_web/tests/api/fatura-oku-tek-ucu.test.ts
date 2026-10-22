@@ -18,7 +18,7 @@ function request(files: File[] = [png()], extra: Record<string,string> = {}) {
   const form = new FormData(); form.set("slug", "deneme"); files.forEach((f) => form.append("dosya",f)); Object.entries(extra).forEach(([k,v]) => form.set(k,v));
   return new NextRequest("http://localhost/api/fatura-oku", { method: "POST", body: form });
 }
-const started = () => m.rpc.mock.calls.filter(([name]) => name === "enqueue_invoice_provider_job");
+const started = () => m.rpc.mock.calls.filter(([name]) => name === "enqueue_invoice_preset_chain");
 beforeEach(() => {
   vi.clearAllMocks(); process.env.OPENROUTER_API_KEY = "unit-test-key";
   m.cookie.mockReturnValue({ value: "owner" }); m.owner.mockImplementation((v?:string) => v ? {slug:"deneme"} : null);

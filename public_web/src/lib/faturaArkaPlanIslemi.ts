@@ -1,11 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { faturaIstekGovdesi, faturaYanitiniOku } from "@/lib/faturaGoru";
+import { faturaIstekGovdesi, faturaYanitiniOku, type GoruSonucu } from "@/lib/faturaGoru";
+import { kartPresetIstekGovdesi, kartPresetYanitiniOku } from "@/lib/faturaKartPreset";
 import { faturaSatiriniAktar } from "@/lib/faturaPresetAktarimi";
 import { islemKaydet } from "@/lib/faturaIslemKaydi";
 import { islemiYukle, islemYaniti } from "@/lib/faturaIslemOku";
 import { faturaTaslaklari } from "@/lib/faturaTaslagi";
 
-export const OTOMATIK_FATURA_PRESET = "@preset/vixrex-fatura-otomatik-kart";
+export const OTOMATIK_FATURA_PRESET = "@preset/vixrex-qwen-fatura-okuma-suzme";
 
 export function bekleyenFaturaYaniti(islemKimligi: string) {
   return {
@@ -26,7 +27,7 @@ export async function faturayiArkaPlanaGonder(
   const anahtar = process.env.OPENROUTER_API_KEY;
   if (!anahtar) throw new Error("OKUYUCU_HAZIR_DEGIL");
   const body = { ...faturaIstekGovdesi(goruntu), model: OTOMATIK_FATURA_PRESET };
-  const { data, error } = await admin.rpc("enqueue_invoice_provider_job", {
+  const { data, error } = await admin.rpc("enqueue_invoice_preset_chain", {
     p_store_id: storeId,
     p_fingerprint: parmakIzi,
     p_body: body,
@@ -65,10 +66,42 @@ export async function arkaPlanFaturaSonucunuAl(
   try {
     const httpStatus = Number(sonuc.httpStatus);
     if (!Number.isInteger(httpStatus) || httpStatus < 200 || httpStatus > 599) throw new Error("OKUYUCU_CEVAP_VERMEDI");
-    const okuma = await faturaYanitiniOku(new Response(sonuc.body, {
+    const cevap = new Response(sonuc.body, {
       status: httpStatus,
       headers: { "content-type": typeof sonuc.contentType === "string" ? sonuc.contentType : "application/json" },
-    }));
+    });
+    let okuma: GoruSonucu;
+    let kartCevabi: unknown;
+    let asamaKullanimlari: unknown;
+    if (sonuc.stage === "reading") {
+      okuma = await faturaYanitiniOku(cevap);
+      if (!okuma.satirlar.length) throw new Error("FOTOGRAFTA_YAZI_YOK");
+      const anahtar = process.env.OPENROUTER_API_KEY;
+      if (!anahtar) throw new Error("OKUYUCU_ASAMA_KAYDI_EKSIK");
+      const ileri = await admin.rpc("advance_invoice_provider_job", {
+        p_store_id: storeId, p_job_id: islemKimligi, p_expected_request_id: sonuc.requestId,
+        p_read_result: okuma, p_body: kartPresetIstekGovdesi(okuma), p_api_key: anahtar,
+      });
+      if (ileri.error || ileri.data?.success !== true) throw new Error("OKUYUCU_ASAMA_KAYDI_EKSIK");
+      return bekleyenFaturaYaniti(islemKimligi);
+    } else if (sonuc.stage === "cards") {
+      const readResult = sonuc.readResult as GoruSonucu | null;
+      if (!readResult || !Array.isArray(readResult.satirlar) || !readResult.satirlar.length) {
+        throw new Error("OKUYUCU_EKSIK_CEVAP");
+      }
+      const kart = await kartPresetYanitiniOku(cevap, readResult);
+      okuma = kart.sonuc;
+      kartCevabi = kart.kartCevabi;
+      asamaKullanimlari = {
+        okuma: { gercekMaliyet: readResult.gercekMaliyet, girdiToken: readResult.girdiToken,
+          ciktiToken: readResult.ciktiToken, akilToken: readResult.akilToken },
+        kart: kart.kullanim,
+      };
+    } else if (!sonuc.stage || sonuc.stage === "legacy") {
+      okuma = await faturaYanitiniOku(cevap);
+    } else {
+      throw new Error("OKUYUCU_EKSIK_CEVAP");
+    }
     if (!okuma.satirlar.length) throw new Error("FOTOGRAFTA_YAZI_YOK");
     const satirlar = okuma.satirlar.map((s) => faturaSatiriniAktar(s, okuma.tedarikci));
     const id = await islemKaydet({
@@ -84,7 +117,8 @@ export async function arkaPlanFaturaSonucunuAl(
       aramaDurumu: {
         erisimHatasi: satirlar.some((s) => s.dogrulamaDurumu?.includes("Araştırılamadı")),
         sonrakiSatir: satirlar.length,
-        presetCevabi: { belgeEkleri: okuma.belgeEkleri, gruplar: okuma.gruplar, uyarilar: okuma.uyarilar },
+        presetCevabi: { belgeEkleri: okuma.belgeEkleri, gruplar: okuma.gruplar,
+          uyarilar: okuma.uyarilar, kartCevabi, asamaKullanimlari },
       },
     });
     if (id !== islemKimligi) throw new Error("FATURA_KAYDI_EKSIK");
@@ -94,8 +128,14 @@ export async function arkaPlanFaturaSonucunuAl(
   } catch (err) {
     const kod = err instanceof Error && /^[A-Z_]{1,96}$/.test(err.message) ? err.message : "OKUYUCU_CEVAP_VERMEDI";
     // Geçici DB yazma/okuma hatasında alınmış cevabı harcamadan sonraki GET ile yeniden kaydet.
-    if (kod !== "FATURA_KAYDI_EKSIK") {
-      await admin.rpc("fail_invoice_provider_job", { p_store_id: storeId, p_job_id: islemKimligi, p_error: kod });
+    if (!["FATURA_KAYDI_EKSIK", "OKUYUCU_ASAMA_KAYDI_EKSIK"].includes(kod)) {
+      if (sonuc.stage === "reading" || sonuc.stage === "cards") {
+        await admin.rpc("fail_invoice_provider_stage", {
+          p_store_id: storeId, p_job_id: islemKimligi, p_error: kod, p_expected_request_id: sonuc.requestId,
+        });
+      } else {
+        await admin.rpc("fail_invoice_provider_job", { p_store_id: storeId, p_job_id: islemKimligi, p_error: kod });
+      }
     }
     throw new Error(kod);
   }
@@ -108,5 +148,8 @@ export function arkaPlanFaturaHatasi(kod: string): string {
   if (kod === "OKUYUCU_BAKIYE_BITTI") return "OpenRouter fatura işlemini tamamlayamadı. Hesabın kullanım durumunu kontrol edin.";
   if (kod === "FOTOGRAFTA_YAZI_YOK") return "Fotoğraftan ürün satırı alınamadı. Ürün oluşturulmadı.";
   if (kod === "FATURA_KAYDI_EKSIK") return "Gerçek sonuç alındı ancak kaydı henüz tamamlanmadı. Aynı işlemden devam edebilirsin.";
+  if (kod === "OKUYUCU_ASAMA_KAYDI_EKSIK") return "Fatura okundu ancak ürün hazırlama aşaması henüz başlatılamadı. Aynı işlemden devam edebilirsin.";
+  if (kod === "KART_SATIRLARI_ESLESMEDI") return "Ürün kartı cevabı faturanın bütün satırlarıyla eşleşmedi. Okunan fatura korundu; eksik cevap kaydedilmedi.";
+  if (kod === "KART_YANITI_COZULEMEDI") return "Ürün kartı cevabının biçimi okunamadı. Okunan fatura korundu; ürün kartı oluşturulmadı.";
   return "OpenRouter ürün hazırlamayı tamamlayamadı. Eksik cevap ürün kartı olarak kaydedilmedi.";
 }
