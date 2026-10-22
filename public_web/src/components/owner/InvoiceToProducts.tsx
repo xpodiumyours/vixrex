@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { buildProductDetailFacts } from "@/lib/productCardPresentation";
 import { faturaKatalogMetadatasi } from "@/lib/faturaUrunIcerigi";
+import { faturaSonucunuBekle } from "@/lib/faturaOtomatikBekleme";
 import type { ProductAttributeValue } from "@/lib/productRichData";
 import {
   KART_DURUM_ETIKETI,
@@ -97,6 +98,7 @@ interface OncekiIslem {
 }
 
 interface FaturaOkumaSonucu {
+  hazirlaniyor?: boolean;
   maliyetOzeti?: {
     kayitSayisi: number;
     gercekUsd: number;
@@ -155,6 +157,39 @@ const GUVEN_ESIGI = 0.7;
 const MAKS_BAYT = 4 * 1024 * 1024; // Vercel 4.5 MB request body, multipart payi.
 const MAKS_SAYFA = 3;
 const TOPLU_UST_SINIR = 100;
+const BEKLEYEN_FATURA_ANAHTAR = "vixrex:fatura-bekleyen-islem:";
+
+function bekleyenFaturaAnahtari(storeSlug: string): string {
+  return `${BEKLEYEN_FATURA_ANAHTAR}${encodeURIComponent(storeSlug)}`;
+}
+
+function bekleyenIslemKimliginiOku(storeSlug: string): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const kimlik = window.localStorage.getItem(bekleyenFaturaAnahtari(storeSlug));
+    return kimlik?.trim() || null;
+  } catch {
+    return null;
+  }
+}
+
+function bekleyenIslemKimliginiKaydet(storeSlug: string, islemKimligi: string): void {
+  if (typeof window === "undefined" || !islemKimligi.trim()) return;
+  try {
+    window.localStorage.setItem(bekleyenFaturaAnahtari(storeSlug), islemKimligi);
+  } catch {
+    // Özel tarama modu/localStorage kotası akışı durdurmamalı.
+  }
+}
+
+function bekleyenIslemKimliginiSil(storeSlug: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(bekleyenFaturaAnahtari(storeSlug));
+  } catch {
+    return;
+  }
+}
 
 function paraYaz(n: number | null): string {
   if (n === null) return "—";
@@ -277,6 +312,34 @@ export default function InvoiceToProducts({
   const dosyaRef = useRef<HTMLInputElement>(null);
   const sonFaturaDosyasi = useRef<File[] | null>(null);
   const kayitSirasi = useRef<Promise<void>>(Promise.resolve());
+
+  const aktifFaturaBeklemesi = useRef<Promise<FaturaOkumaSonucu> | null>(null);
+  const faturaBeklemeIptali = useRef<AbortController | null>(null);
+
+  const bekleyenFaturaSonucunuAl = useCallback(
+    (ilk: FaturaOkumaSonucu): Promise<FaturaOkumaSonucu> => {
+      if (aktifFaturaBeklemesi.current) return aktifFaturaBeklemesi.current;
+
+      const controller = new AbortController();
+      faturaBeklemeIptali.current = controller;
+      const istek = faturaSonucunuBekle(ilk, {
+        slug: storeSlug,
+        signal: controller.signal,
+      }).finally(() => {
+        if (aktifFaturaBeklemesi.current === istek) aktifFaturaBeklemesi.current = null;
+        if (faturaBeklemeIptali.current === controller) faturaBeklemeIptali.current = null;
+      });
+      aktifFaturaBeklemesi.current = istek;
+      return istek;
+    },
+    [storeSlug],
+  );
+
+  useEffect(() => () => {
+    faturaBeklemeIptali.current?.abort();
+    faturaBeklemeIptali.current = null;
+    aktifFaturaBeklemesi.current = null;
+  }, []);
 
   const sahipSecimleriniKaydet = useCallback((kaydedilecek: SatirDurumu[]) => {
     if (!belge?.islemKimligi || kaydedilecek.length === 0) return Promise.resolve();
@@ -479,7 +542,13 @@ export default function InvoiceToProducts({
           govde && typeof govde.hata === "string" ? govde.hata : "İşlem açılamadı. Tekrar dene.",
         );
       }
-      const acilan = govde as FaturaOkumaSonucu;
+      const ilk = govde as FaturaOkumaSonucu;
+      if (ilk.hazirlaniyor === true) {
+        setAdim("okunuyor");
+        if (ilk.islemKimligi) bekleyenIslemKimliginiKaydet(storeSlug, ilk.islemKimligi);
+      }
+      const acilan = await bekleyenFaturaSonucunuAl(ilk);
+      bekleyenIslemKimliginiSil(storeSlug);
       const hazir = satirlariHazirla(acilan);
       setBelge(acilan);
       setSatirlar(hazir);
@@ -493,11 +562,12 @@ export default function InvoiceToProducts({
   }
 
   useEffect(() => {
-    if (!baslangicIslemKimligi) return;
-    const zamanlayici = setTimeout(() => void islemiAc(baslangicIslemKimligi), 0);
+    const kayitliIslemKimligi = baslangicIslemKimligi || bekleyenIslemKimliginiOku(storeSlug);
+    if (!kayitliIslemKimligi) return;
+    const zamanlayici = setTimeout(() => void islemiAc(kayitliIslemKimligi), 0);
     return () => clearTimeout(zamanlayici);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [baslangicIslemKimligi]);
+  }, [baslangicIslemKimligi, storeSlug]);
 
   async function adaySec(index: number, kaynak: string) {
     if (!belge?.islemKimligi || !kaynak) return;
@@ -624,7 +694,12 @@ export default function InvoiceToProducts({
           );
         }
 
-        const okunan = govde as FaturaOkumaSonucu;
+        const ilk = govde as FaturaOkumaSonucu;
+        if (ilk.hazirlaniyor === true && ilk.islemKimligi) {
+          bekleyenIslemKimliginiKaydet(storeSlug, ilk.islemKimligi);
+        }
+        const okunan = await bekleyenFaturaSonucunuAl(ilk);
+        bekleyenIslemKimliginiSil(storeSlug);
         const hazir = satirlariHazirla(okunan);
         setBelge(okunan);
         setSatirlar(hazir);
@@ -636,7 +711,7 @@ export default function InvoiceToProducts({
         setAdim("sec");
       }
     },
-    [otomatikTaslaklariKaydet, satirlariHazirla, storeSlug],
+    [bekleyenFaturaSonucunuAl, otomatikTaslaklariKaydet, satirlariHazirla, storeSlug],
   );
 
   function satirGuncelle(index: number, degisiklik: Partial<SatirDurumu>) {
@@ -935,6 +1010,7 @@ export default function InvoiceToProducts({
     return (
       <div className="fatura-akis">
         <h3>Faturan hazırlanıyor</h3>
+        <p className="fatura-aciklama">OpenRouter ürün kartlarını hazırlıyor. Aynı faturayı tekrar yüklemene gerek yok.</p>
         {onizleme && <img className="fatura-onizleme" src={onizleme} alt="Fatura" />}
         <ol className="fatura-adimlar">
           <li>Belge okunuyor: satırlar, miktar ve belge toplamı çıkarılıyor.</li>

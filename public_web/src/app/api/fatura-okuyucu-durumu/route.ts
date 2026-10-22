@@ -1,17 +1,16 @@
 import { NextResponse } from "next/server";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
-/**
- * Fatura okuyucusu kullanıma hazır mı?
- *
- * "Faturadan Ekle" düğmesi bu cevaba göre gösterilir. Okuyucu anahtarı
- * tanımlı değilse düğme hiç çıkmaz — esnaf çalışmayacak bir düğmeye basıp
- * hata görmez.
- *
- * Yalnız EVET/HAYIR döner; anahtarın kendisi ya da herhangi bir parçası
- * dışarı verilmez.
- */
 export const dynamic = "force-dynamic";
 
+/** Anahtar veya özel iş bilgisi açılmaz; gerçek işleyici kurulumu da kontrol edilir. */
 export async function GET() {
-  return NextResponse.json({ hazir: Boolean(process.env.OPENROUTER_API_KEY) });
+  let hazir = false;
+  if (process.env.OPENROUTER_API_KEY) {
+    try {
+      const { data, error } = await getSupabaseAdmin().rpc("invoice_provider_ready");
+      hazir = !error && data === true;
+    } catch { hazir = false; }
+  }
+  return NextResponse.json({ hazir }, { headers: { "Cache-Control": "no-store" } });
 }

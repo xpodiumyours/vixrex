@@ -51,6 +51,7 @@ export interface IslemKaydiGirdisi {
   odenecekToplam?: number | null;
   belgeUyarisi?: string | null;
   aramaDurumu?: DijitalIzAramaDurumu;
+  providerJobId?: string;
 }
 
 export interface AyniAlisverisAdayi {
@@ -195,8 +196,9 @@ export async function islemKaydet(girdi: IslemKaydiGirdisi): Promise<string | nu
       catalog_snapshot: satir.katalog,
       conflict_snapshot: satir.celiski ?? null,
     }));
-    const { data, error } = await admin.rpc("save_invoice_job", {
+    const { data, error } = await admin.rpc(girdi.providerJobId ? "complete_invoice_provider_job" : "save_invoice_job", {
       p_store_id: storeId,
+      ...(girdi.providerJobId ? { p_job_id: girdi.providerJobId } : {}),
       p_job: isGirdisi,
       p_lines: satirYazlari,
     });

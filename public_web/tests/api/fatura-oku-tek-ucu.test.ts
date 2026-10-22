@@ -1,428 +1,61 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
-const mocks = vi.hoisted(() => ({
-  get: vi.fn((): { name: string; value: string } | undefined => ({ name: "sess", value: "owner-cookie" })),
-  verifyOwner: vi.fn(
-    (deger?: string | null): { storeId: string; slug: string } | null =>
-      deger ? { storeId: "store-1", slug: "deneme-vitrin" } : null,
-  ),
-  verifyEditToken: vi.fn(async (): Promise<{ slug: string }> => {
-    throw new Error("STORE_AUTH_FAILED");
-  }),
-  rpc: vi.fn(
-    async (): Promise<{ data: unknown; error: null }> => ({ data: { allowed: true }, error: null }),
-  ),
-  parmak: vi.fn(async (): Promise<string | null> => null),
-  yukle: vi.fn(async (): Promise<unknown> => null),
-  kaydet: vi.fn(async (_girdi?: unknown): Promise<string | null> => "islem-1"),
-  fetch: vi.fn(),
+const m = vi.hoisted(() => ({
+  cookie: vi.fn((): { value: string } | undefined => ({ value: "owner" })),
+  owner: vi.fn((v?: string): { slug: string } | null => v ? { slug: "deneme" } : null),
+  edit: vi.fn(async (): Promise<{ slug: string }> => { throw new Error("AUTH"); }),
+  rpc: vi.fn(), previous: vi.fn(), load: vi.fn(), fetch: vi.fn(),
 }));
-
-vi.mock("next/headers", () => ({ cookies: async () => ({ get: mocks.get }) }));
-vi.mock("@/lib/ownerSession", () => ({
-  OWNER_SESSION_COOKIE: "vixrex_owner_session",
-  verifyOwnerSession: mocks.verifyOwner,
-}));
-vi.mock("@/lib/instagramServer", () => ({ verifyStoreEditToken: mocks.verifyEditToken }));
-vi.mock("@/lib/rentDemoSecurity", () => ({
-  getClientIp: () => "9.9.9.9",
-  fingerprintClient: (ip: string) => `fp:${ip}`,
-}));
-vi.mock("@/lib/supabaseAdmin", () => ({
-  getSupabaseAdmin: () => ({
-    rpc: mocks.rpc,
-    from: () => ({
-      select: () => ({
-        eq: () => ({
-          maybeSingle: async () => ({ data: { id: "store-1" }, error: null }),
-        }),
-      }),
-    }),
-  }),
-}));
-vi.mock("@/lib/faturaIslemKaydi", async (importOriginal) => ({
-  ...await importOriginal<typeof import("@/lib/faturaIslemKaydi")>(),
-  islemKaydet: mocks.kaydet,
-}));
-vi.mock("@/lib/faturaIslemOku", async (importOriginal) => ({
-  ...await importOriginal<typeof import("@/lib/faturaIslemOku")>(),
-  parmakIzindenIslemBul: mocks.parmak,
-  islemiYukle: mocks.yukle,
-  islemYaniti: (islem: { satirlar: unknown[] }) => ({ tamam: true, satirlar: islem.satirlar }),
-}));
-
-import { POST as faturaOku } from "@/app/api/fatura-oku/route";
-import { VARSAYILAN_FATURA_PRESET } from "@/lib/faturaGoru";
-
-const PNG_IMZA = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13]);
-
-function pngDosya(): File {
-  return new File([PNG_IMZA], "fatura.png", { type: "image/png" });
-}
-
-function istek(dosyalar: File[] = [pngDosya()], alanlar: Record<string, string> = {}): NextRequest {
-  const form = new FormData();
-  form.set("slug", "deneme-vitrin");
-  for (const dosya of dosyalar) form.append("dosya", dosya);
-  for (const [ad, deger] of Object.entries(alanlar)) form.set(ad, deger);
+vi.mock("next/headers", () => ({ cookies: async () => ({ get: m.cookie }) }));
+vi.mock("@/lib/ownerSession", () => ({ OWNER_SESSION_COOKIE: "owner", verifyOwnerSession: m.owner }));
+vi.mock("@/lib/instagramServer", () => ({ verifyStoreEditToken: m.edit }));
+vi.mock("@/lib/supabaseAdmin", () => ({ getSupabaseAdmin: () => ({ rpc: m.rpc, from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { id: "store-1" } }) }) }) }) }) }));
+vi.mock("@/lib/faturaIslemOku", async (original) => ({ ...await original<typeof import("@/lib/faturaIslemOku")>(), parmakIzindenIslemBul: m.previous, islemiYukle: m.load, islemYaniti: (x: { satirlar: unknown[] }) => ({ tamam: true, satirlar: x.satirlar }) }));
+import { POST } from "@/app/api/fatura-oku/route";
+import { OTOMATIK_FATURA_PRESET } from "@/lib/faturaArkaPlanIslemi";
+const png = () => new File([new Uint8Array([137,80,78,71,13,10,26,10,0,0,0,13])], "fatura.png", { type: "image/png" });
+function request(files: File[] = [png()], extra: Record<string,string> = {}) {
+  const form = new FormData(); form.set("slug", "deneme"); files.forEach((f) => form.append("dosya",f)); Object.entries(extra).forEach(([k,v]) => form.set(k,v));
   return new NextRequest("http://localhost/api/fatura-oku", { method: "POST", body: form });
 }
-
-function lunaCevabi(satirlar: unknown[], ozel: Record<string, unknown> = {}) {
-  const govde = {
-    tedarikci: "Seher Mensucat",
-    tedarikci_vergi_no: "1234567890",
-    tedarikci_adres: "Istanbul",
-    tedarikci_site: "sehermensucat.com",
-    belge_turu: "fatura",
-    belge_no: "F-2026-001",
-    belge_tarihi: "12.10.2026",
-    satirlar,
-    toplam_adet: 2,
-    toplam_tutar: 998,
-    mal_bedeli: 846.44,
-    kdv_tutari: 151.56,
-    odenecek_toplam: 998,
-    ...ozel,
-  };
-  return {
-    choices: [{ message: { content: JSON.stringify(govde) } }],
-    usage: { prompt_tokens: 120, completion_tokens: 60, cost: 0.01 },
-  };
-}
-
-function cevapUcur(cevap: unknown): void {
-  mocks.fetch.mockResolvedValue({ ok: true, status: 200, json: async () => cevap });
-}
-
-interface GonderilenGovde {
-  model: string;
-  temperature?: number;
-  messages: Array<{ content: Array<{ type: string; image_url?: { url: string }; file?: { filename: string; file_data: string } }> }>;
-}
-
-function gonderilenGovde(): GonderilenGovde {
-  return JSON.parse(String(mocks.fetch.mock.calls[0][1].body));
-}
-
-const LUNA_SATIR = {
-  ham_satir: "ELT1001 Elit Fanila 2 AD499,00",
-  model: "ELT1001",
-  ad: "Elit Fanila",
-  barkod: "8680000000001",
-  varyant: "",
-  beden: "L",
-  marka: "Elit",
-  adet: 2,
-  birim: "adet",
-  birim_fiyat: 499,
-  tutar: 998,
-  site_aciklama: "Pamuklu fanila",
-  site_sayfa: "https://seher.example/elt1001",
-  site_gorseller: ["https://seher.example/1.jpg"],
-  kategori: "Atlet",
-  dogrulama_durumu: "✓ Doğrulandı",
-  okuma_guveni: 0.96,
-};
-
+const started = () => m.rpc.mock.calls.filter(([name]) => name === "enqueue_invoice_provider_job");
 beforeEach(() => {
-  process.env.OPENROUTER_API_KEY = "test-okuyucu-anahtari";
-  process.env.OPENROUTER_PRESET = "fatura-okuma";
-  delete process.env.OPENROUTER_FATURA_PRESET;
-  mocks.get.mockReturnValue({ name: "sess", value: "owner-cookie" });
-  mocks.verifyOwner.mockReset().mockImplementation((deger?: string | null) =>
-    deger ? { storeId: "store-1", slug: "deneme-vitrin" } : null,
-  );
-  mocks.verifyEditToken.mockRejectedValue(new Error("STORE_AUTH_FAILED"));
-  mocks.rpc.mockReset().mockResolvedValue({ data: { allowed: true }, error: null });
-  mocks.parmak.mockReset().mockResolvedValue(null);
-  mocks.yukle.mockReset().mockResolvedValue(null);
-  mocks.kaydet.mockReset().mockResolvedValue("islem-1");
-  mocks.fetch.mockReset();
-  vi.stubGlobal("fetch", mocks.fetch);
+  vi.clearAllMocks(); process.env.OPENROUTER_API_KEY = "unit-test-key";
+  m.cookie.mockReturnValue({ value: "owner" }); m.owner.mockImplementation((v?:string) => v ? {slug:"deneme"} : null);
+  m.edit.mockRejectedValue(new Error("AUTH")); m.previous.mockResolvedValue(null); m.load.mockResolvedValue(null);
+  m.rpc.mockImplementation(async (name:string) => ({ data: name === "consume_assistant_request" ? {allowed:true} : {success:true,id:"11111111-1111-4111-8111-111111111111",state:"queued"},error:null }));
+  vi.stubGlobal("fetch", m.fetch);
 });
-
-describe("/api/fatura-oku — tek okuma ucu", () => {
-  it("tek istekte okur, preset bagina gider ve islemi kaydeder", async () => {
-    cevapUcur(lunaCevabi([LUNA_SATIR]));
-
-    const cevap = await faturaOku(istek());
-    const govde = await cevap.json();
-
-    expect(cevap.status).toBe(200);
-    expect(mocks.fetch).toHaveBeenCalledTimes(1);
-    expect(mocks.fetch.mock.calls[0][0]).toBe("https://openrouter.ai/api/v1/chat/completions");
-
-    const istekGovdesi = gonderilenGovde();
-    expect(istekGovdesi.model).toBe("@preset/fatura-okuma");
-    expect(istekGovdesi.temperature).toBeUndefined();
-    const gorsel = istekGovdesi.messages[0].content.find(
-      (parca: { type: string }) => parca.type === "image_url",
-    );
-    expect(gorsel?.image_url?.url).toMatch(/^data:image\/png;base64,/);
-
-    expect(mocks.kaydet).toHaveBeenCalledTimes(1);
-    const kayit = mocks.kaydet.mock.calls[0][0] as unknown as {
-      tedarikci: string;
-      satirlar: Array<{ model: string; sonuc: string }>;
-    };
-    expect(kayit.tedarikci).toBe("Seher Mensucat");
-    expect(kayit.satirlar[0].model).toBe("ELT1001");
-
-    expect(govde.tamam).toBe(true);
-    expect(govde.islemKimligi).toBe("islem-1");
-    expect(govde.tedarikci).toBe("Seher Mensucat");
-    expect(govde.belgeToplami).toBe(998);
-    expect(govde.belgeNo).toBe("F-2026-001");
-    expect(govde.satirlar[0].sonuc).toBe("kanitli");
-    expect(govde.satirlar[0].adet).toBe(2);
-    expect(govde.satirlar[0].alisBirimFiyat).toBe(499);
-    expect(govde.satirlar[0].katalog.firma).toBe("Seher Mensucat");
-    expect(govde.satirlar[0].katalog.kaynak).toBe("https://seher.example/elt1001");
-    expect(govde.satirlar[0].katalog.resmiAd).toBe("Elit Fanila");
-    expect(Array.isArray(govde.taslaklar)).toBe(true);
-    expect(govde.taslaklar.length).toBe(1);
+describe("/api/fatura-oku otomatik iş", () => {
+  it("tek fotoğrafı tek kalıcı işe verir; sonuç gelmeden kart/ürün/ücretli ikinci çağrı üretmez",async()=>{
+    const res=await POST(request()); const body=await res.json();
+    expect(res.status).toBe(202); expect(body.hazirlaniyor).toBe(true); expect(body.tamam).toBe(false);
+    expect(body.satirlar).toBeUndefined(); expect(JSON.stringify(body)).not.toContain("unit-test-key");
+    expect(started()).toHaveLength(1); const args=started()[0][1];
+    expect(args.p_store_id).toBe("store-1"); expect(args.p_fingerprint).toMatch(/^[a-f0-9]{64}$/);
+    expect(args.p_body.model).toBe(OTOMATIK_FATURA_PRESET); expect(args.p_body.stream).toBe(true);
+    expect(args.p_body.messages[0].content[1].image_url.url).toMatch(/^data:image\/png;base64,/);
+    expect(m.fetch).not.toHaveBeenCalled();
   });
-
-  it("ortamda preset yokken mevcut Vixrex presetini varsayilan kullanir", async () => {
-    delete process.env.OPENROUTER_PRESET;
-    cevapUcur(lunaCevabi([LUNA_SATIR]));
-
-    const cevap = await faturaOku(istek());
-
-    expect(cevap.status).toBe(200);
-    const istekGovdesi = gonderilenGovde();
-    expect(istekGovdesi.model).toBe(`@preset/${VARSAYILAN_FATURA_PRESET}`);
-    expect(istekGovdesi.temperature).toBeUndefined();
+  it("iki fotoğraf aynı tek işe gider",async()=>{
+    expect((await POST(request([png(),png()]))).status).toBe(202);
+    expect(started()).toHaveLength(1); expect(started()[0][1].p_body.messages[0].content.filter((v:{type:string})=>v.type==='image_url')).toHaveLength(2);
   });
-
-  it("Luna satir dondurmezse 422 doner ve islem kaydedilmez", async () => {
-    cevapUcur(lunaCevabi([]));
-
-    const cevap = await faturaOku(istek());
-
-    expect(cevap.status).toBe(422);
-    expect(mocks.kaydet).not.toHaveBeenCalled();
+  it("PDF gerçek file_data ile aynı işleyiciye gider",async()=>{
+    const f=new File([new Uint8Array([37,80,68,70,45,49,46,54,10,0,0,0])],"fatura.pdf",{type:"application/pdf"});
+    expect((await POST(request([f]))).status).toBe(202);
+    expect(started()[0][1].p_body.messages[0].content[1].file.file_data).toMatch(/^data:application\/pdf;base64,/);
   });
-
-  it("Luna bos metin dondururse anlasilir hata verir", async () => {
-    cevapUcur({ choices: [{ message: { content: "" } }], usage: {} });
-
-    const cevap = await faturaOku(istek());
-    const govde = await cevap.json();
-
-    expect(cevap.status).toBe(422);
-    expect(govde.hata).toBeTruthy();
-  });
-
-  it("araştırma sırasında SSE model 404 hatası taslak kaydetmeden bildirilir", async () => {
-    mocks.fetch.mockResolvedValue(new Response('data: {"error":{"code":404,"message":"Model call failed: upstream returned 404"}}\n\n', {
-      headers: { "content-type": "text/event-stream" },
-    }));
-    const cevap = await faturaOku(istek());
-    expect(cevap.status).toBe(503);
-    expect((await cevap.json()).hata).toContain("modeline");
-    expect(mocks.kaydet).not.toHaveBeenCalled();
-  });
-
-  it("ücretsiz günlük model kotası dolduğunda taslak kaydetmez", async () => {
-    mocks.fetch.mockResolvedValue(new Response(JSON.stringify({ error: { code: 429, message: "Rate limit exceeded: free-models-per-day" } }), {
-      status: 429, headers: { "content-type": "application/json" },
-    }));
-    const cevap = await faturaOku(istek());
-    expect(cevap.status).toBe(503);
-    expect((await cevap.json()).hata).toContain("günlük ücretsiz");
-    expect(mocks.kaydet).not.toHaveBeenCalled();
-  });
-
-  it("Luna metni cozulemezse okuma ucu 500 doner", async () => {
-    cevapUcur({ choices: [{ message: { content: "bozuk metin" } }], usage: {} });
-
-    const cevap = await faturaOku(istek());
-
-    expect(cevap.status).toBe(500);
-  });
-
-  it("limit dolmissa okuma yapmadan 429 doner", async () => {
-    mocks.rpc.mockResolvedValue({ data: [{ allowed: false, retry_after_seconds: 45 }], error: null });
-
-    const cevap = await faturaOku(istek());
-    const govde = await cevap.json();
-
-    expect(cevap.status).toBe(429);
-    expect(govde.hata).toContain("45");
-    expect(mocks.fetch).not.toHaveBeenCalled();
-  });
-
-  it("oturum ve edit token yoksa 401 doner", async () => {
-    mocks.get.mockReturnValue(undefined);
-
-    const cevap = await faturaOku(istek());
-
-    expect(cevap.status).toBe(401);
-    expect(mocks.fetch).not.toHaveBeenCalled();
-  });
-
-  it("edit token ile Flutter istegi kabul edilir", async () => {
-    mocks.get.mockReturnValue(undefined);
-    mocks.verifyEditToken.mockResolvedValue({ slug: "deneme-vitrin" });
-    cevapUcur(lunaCevabi([LUNA_SATIR]));
-
-    const cevap = await faturaOku(istek([pngDosya()], { editToken: "duzenleme-anahtari" }));
-
-    expect(cevap.status).toBe(200);
-    expect(mocks.verifyEditToken).toHaveBeenCalledWith("deneme-vitrin", "duzenleme-anahtari");
-  });
-
-  it("bir faturaya ait 4 fotograf kabul edilmez", async () => {
-    const cevap = await faturaOku(istek([pngDosya(), pngDosya(), pngDosya(), pngDosya()]));
-
-    expect(cevap.status).toBe(413);
-    expect(mocks.fetch).not.toHaveBeenCalled();
-  });
-
-  it("sayfalarin toplami 4 MB'i gecerse 413 doner", async () => {
-    const buyuk = new File([Buffer.alloc(4 * 1024 * 1024 + 1)], "buyuk.png", { type: "image/png" });
-
-    const cevap = await faturaOku(istek([buyuk]));
-
-    expect(cevap.status).toBe(413);
-    expect(mocks.fetch).not.toHaveBeenCalled();
-  });
-
-  it("gercek imzasi olmayan dosya reddedilir", async () => {
-    const sahte = new File([new Uint8Array(13)], "sahte.png", { type: "image/png" });
-
-    const cevap = await faturaOku(istek([sahte]));
-
-    expect(cevap.status).toBe(415);
-    expect(mocks.fetch).not.toHaveBeenCalled();
-  });
-
-  it("okuyucu anahtari yoksa 503 doner", async () => {
-    delete process.env.OPENROUTER_API_KEY;
-
-    const cevap = await faturaOku(istek());
-
-    expect(cevap.status).toBe(503);
-    expect(mocks.fetch).not.toHaveBeenCalled();
-  });
-
-  it("kalici islem kaydi basarili olmassa okunmus satirlar teslim edilmez", async () => {
-    mocks.kaydet.mockResolvedValue(null);
-    cevapUcur(lunaCevabi([LUNA_SATIR]));
-
-    const cevap = await faturaOku(istek());
-
-    expect(cevap.status).toBe(503);
-    expect(mocks.fetch).toHaveBeenCalledTimes(1);
-  });
-
-  it("ayni fatura parmak iziyle kayitliysa yeniden okumaz", async () => {
-    mocks.parmak.mockResolvedValue("eski-kimlik");
-    mocks.yukle.mockResolvedValue({
-      islemKimligi: "eski-kimlik",
-      satirlar: [
-        {
-          hamSatir: "ESKI SATIR",
-          model: "ESKI-1",
-          ad: "Eski Kart",
-          barkod: "",
-          varyant: "",
-          beden: "",
-          marka: "",
-          adet: 1,
-          birim: "adet",
-          alisBirimFiyat: 1,
-          satirToplam: 1,
-          guven: 1,
-          sonuc: "kanitli",
-          katalog: {
-            firma: "Firma",
-            kaynakFirma: "Firma",
-            dayanak: "ad",
-            izinDurumu: "yok",
-            resmiAd: "Eski Kart",
-            marka: "",
-            aciklama: "Aciklama",
-            gorseller: [],
-            gorselAdaylari: [],
-            kaynak: "https://ornek.example/1",
-          },
-        },
-      ],
-    });
-
-    const cevap = await faturaOku(istek());
-    const govde = await cevap.json();
-
-    expect(cevap.status).toBe(200);
-    expect(mocks.fetch).not.toHaveBeenCalled();
-    expect(govde.satirlar[0].model).toBe("ESKI-1");
-    expect(govde.taslaklar.length).toBe(1);
-  });
-
-  it("iki sayfayi ayni Luna isteginde okur", async () => {
-    cevapUcur(lunaCevabi([LUNA_SATIR]));
-
-    const cevap = await faturaOku(istek([pngDosya(), pngDosya()]));
-
-    expect(cevap.status).toBe(200);
-    expect(mocks.fetch).toHaveBeenCalledTimes(1);
-    const istekGovdesi = gonderilenGovde();
-    const gorseller = istekGovdesi.messages[0].content.filter(
-      (parca: { type: string }) => parca.type === "image_url",
-    );
-    expect(gorseller).toHaveLength(2);
-    expect(mocks.kaydet).toHaveBeenCalledTimes(1);
-  });
-
-  it("PDF ayni Luna okumasindan gecer", async () => {
-    const pdf = new File(
-      [new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x36, 0x0a, 0, 0, 0])],
-      "fatura.pdf",
-      { type: "application/pdf" },
-    );
-    cevapUcur(lunaCevabi([LUNA_SATIR]));
-
-    const cevap = await faturaOku(istek([pdf]));
-
-    expect(cevap.status).toBe(200);
-    const istekGovdesi = gonderilenGovde();
-    const dosya = istekGovdesi.messages[0].content.find(
-      (parca: { type: string }) => parca.type === "file",
-    );
-    expect(dosya?.file?.file_data).toMatch(/^data:application\/pdf;base64,/);
-  });
-
-  it("gercek sifir ile eksik rakam karistirilmaz", async () => {
-    const sifirli = { ...LUNA_SATIR, model: "SIFIR", adet: 0, birim_fiyat: 0 };
-    const eksik: Record<string, unknown> = { ...LUNA_SATIR, model: "EKSIK" };
-    delete eksik.adet;
-    delete eksik.birim_fiyat;
-    cevapUcur(lunaCevabi([sifirli, eksik]));
-
-    const cevap = await faturaOku(istek());
-    const govde = await cevap.json();
-
-    expect(cevap.status).toBe(200);
-    expect(govde.satirlar[0].adet).toBe(0);
-    expect(govde.satirlar[0].alisBirimFiyat).toBe(0);
-    expect(govde.satirlar[1].adet).toBeNull();
-    expect(govde.satirlar[1].alisBirimFiyat).toBeNull();
-  });
-
-  it("belge toplamlari cevapta aynen doner", async () => {
-    cevapUcur(lunaCevabi([LUNA_SATIR], { toplam_tutar: 1234.5, mal_bedeli: 1000, kdv_tutari: 234.5 }));
-
-    const cevap = await faturaOku(istek());
-    const govde = await cevap.json();
-
-    expect(cevap.status).toBe(200);
-    expect(govde.belgeToplami).toBe(1234.5);
-    expect(govde.belgeAdedi).toBe(2);
-    expect(govde.belgeTuru).toBe("fatura");
-    expect(govde.tedarikciVergiNo).toBe("1234567890");
+  it("sahiplik yoksa iş başlatılmaz",async()=>{m.cookie.mockReturnValue(undefined);expect((await POST(request())).status).toBe(401);expect(started()).toHaveLength(0);});
+  it("geçerli düzenleme anahtarıyla mobil istek korunur",async()=>{m.cookie.mockReturnValue(undefined);m.edit.mockResolvedValue({slug:"deneme"});expect((await POST(request([png()],{editToken:"edit"}))).status).toBe(202);expect(m.edit).toHaveBeenCalledWith("deneme","edit");});
+  it("dördüncü sayfa reddedilir",async()=>{expect((await POST(request([png(),png(),png(),png()]))).status).toBe(413);expect(started()).toHaveLength(0);});
+  it("4 MB üstü reddedilir",async()=>{expect((await POST(request([new File([Buffer.alloc(4*1024*1024+1)],"big.png")]))).status).toBe(413);expect(started()).toHaveLength(0);});
+  it("gerçek dosya imzası yoksa iş başlamaz",async()=>{expect((await POST(request([new File([new Uint8Array(13)],"fake.png",{type:"image/png"})]))).status).toBe(415);expect(started()).toHaveLength(0);});
+  it("saatlik limit korunur",async()=>{m.rpc.mockResolvedValue({data:[{allowed:false,retry_after_seconds:45}],error:null});expect((await POST(request())).status).toBe(429);expect(started()).toHaveLength(0);});
+  it("sunucu anahtarı yoksa iş başlamaz",async()=>{delete process.env.OPENROUTER_API_KEY;expect((await POST(request())).status).toBe(503);expect(started()).toHaveLength(0);});
+  it("kuyruk kaydı başarısızsa hazır veya örnek kart dönmez",async()=>{m.rpc.mockImplementation(async(name:string)=>name==='consume_assistant_request'?{data:{allowed:true},error:null}:{data:null,error:{code:'MISSING'}});const res=await POST(request());expect(res.status).toBe(503);expect((await res.json()).hata).toContain('işleyicisi');expect(m.fetch).not.toHaveBeenCalled();});
+  it("önceki tamamlanmış sonuç varsa yeni model işi başlamaz",async()=>{
+    m.previous.mockResolvedValue("old-job");m.load.mockResolvedValue({islemKimligi:"old-job",satirlar:[{hamSatir:"satır",model:"1",ad:"Ürün",barkod:"",varyant:"",beden:"",marka:"",adet:1,birim:"adet",alisBirimFiyat:10,satirToplam:10,guven:0.8,sonuc:"eksik",katalog:{firma:"Firma",kaynakFirma:"Firma",dayanak:"ad",izinDurumu:"yok",resmiAd:"Eski ürün kartı",marka:"",aciklama:"Kaynak açıklaması",gorseller:[],gorselAdaylari:[],kaynak:"https://ornek.example/urun"}}]});
+    const res=await POST(request());expect(res.status).toBe(200);expect((await res.json()).taslaklar).toHaveLength(1);expect(started()).toHaveLength(0);
   });
 });

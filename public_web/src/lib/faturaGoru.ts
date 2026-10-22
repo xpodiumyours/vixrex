@@ -176,6 +176,11 @@ export async function faturayiOku(dataUrl: string | string[]): Promise<GoruSonuc
     }
     throw new Error("OKUYUCU_CEVAP_VERMEDI", { cause: hata });
   }
+  return faturaYanitiniOku(cevap);
+}
+
+/** Senkron ve kalıcı işleyici aynı tamamlanmış OpenRouter yanıtını çözümler. */
+export async function faturaYanitiniOku(cevap: Response): Promise<GoruSonucu> {
   let ham;
   try { ham = await openrouterYanitiniOku(cevap); }
   catch (hata) {
