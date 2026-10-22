@@ -12,7 +12,7 @@ vi.mock("@/lib/instagramServer", () => ({ verifyStoreEditToken: m.edit }));
 vi.mock("@/lib/supabaseAdmin", () => ({ getSupabaseAdmin: () => ({ rpc: m.rpc, from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { id: "store-1" } }) }) }) }) }) }));
 vi.mock("@/lib/faturaIslemOku", async (original) => ({ ...await original<typeof import("@/lib/faturaIslemOku")>(), parmakIzindenIslemBul: m.previous, islemiYukle: m.load, islemYaniti: (x: { satirlar: unknown[] }) => ({ tamam: true, satirlar: x.satirlar }) }));
 import { POST } from "@/app/api/fatura-oku/route";
-import { OTOMATIK_FATURA_PRESET } from "@/lib/faturaArkaPlanIslemi";
+import { OKUMA_PRESET } from "@/lib/faturaArkaPlanIslemi";
 const png = () => new File([new Uint8Array([137,80,78,71,13,10,26,10,0,0,0,13])], "fatura.png", { type: "image/png" });
 function request(files: File[] = [png()], extra: Record<string,string> = {}) {
   const form = new FormData(); form.set("slug", "deneme"); files.forEach((f) => form.append("dosya",f)); Object.entries(extra).forEach(([k,v]) => form.set(k,v));
@@ -33,7 +33,7 @@ describe("/api/fatura-oku otomatik iş", () => {
     expect(body.satirlar).toBeUndefined(); expect(JSON.stringify(body)).not.toContain("unit-test-key");
     expect(started()).toHaveLength(1); const args=started()[0][1];
     expect(args.p_store_id).toBe("store-1"); expect(args.p_fingerprint).toMatch(/^[a-f0-9]{64}$/);
-    expect(args.p_body.model).toBe(OTOMATIK_FATURA_PRESET); expect(args.p_body.stream).toBe(true);
+    expect(args.p_body.model).toBe(OKUMA_PRESET); expect(args.p_body.stream).toBe(true);
     expect(args.p_body.messages[0].content[1].image_url.url).toMatch(/^data:image\/png;base64,/);
     expect(m.fetch).not.toHaveBeenCalled();
   });

@@ -4,15 +4,22 @@ import { faturaSatiriniAktar } from "@/lib/faturaPresetAktarimi";
 import { islemKaydet } from "@/lib/faturaIslemKaydi";
 import { islemiYukle, islemYaniti } from "@/lib/faturaIslemOku";
 import { faturaTaslaklari } from "@/lib/faturaTaslagi";
+import {
+  faturaKartIstekGovdesi,
+  faturaKartSonucunuBirlestir,
+  KART_FATURA_PRESET,
+  OKUMA_FATURA_PRESET,
+} from "@/lib/faturaKartPreset";
 
-export const OTOMATIK_FATURA_PRESET = "@preset/vixrex-fatura-otomatik-kart";
+export const OKUMA_PRESET = OKUMA_FATURA_PRESET;
+export const OTOMATIK_FATURA_PRESET = KART_FATURA_PRESET;
 
 export function bekleyenFaturaYaniti(islemKimligi: string) {
   return {
     tamam: false,
     hazirlaniyor: true,
     islemKimligi,
-    mesaj: "OpenRouter ürün kartlarını hazırlıyor. Aynı faturayı tekrar yüklemene gerek yok.",
+    mesaj: "Fatura okunuyor ve ürün kartları hazırlanıyor. Aynı faturayı tekrar yüklemene gerek yok.",
   };
 }
 
@@ -25,7 +32,7 @@ export async function faturayiArkaPlanaGonder(
 ): Promise<string> {
   const anahtar = process.env.OPENROUTER_API_KEY;
   if (!anahtar) throw new Error("OKUYUCU_HAZIR_DEGIL");
-  const body = { ...faturaIstekGovdesi(goruntu), model: OTOMATIK_FATURA_PRESET };
+  const body = { ...faturaIstekGovdesi(goruntu), model: OKUMA_PRESET };
   const { data, error } = await admin.rpc("enqueue_invoice_provider_job", {
     p_store_id: storeId,
     p_fingerprint: parmakIzi,
@@ -65,26 +72,50 @@ export async function arkaPlanFaturaSonucunuAl(
   try {
     const httpStatus = Number(sonuc.httpStatus);
     if (!Number.isInteger(httpStatus) || httpStatus < 200 || httpStatus > 599) throw new Error("OKUYUCU_CEVAP_VERMEDI");
-    const okuma = await faturaYanitiniOku(new Response(sonuc.body, {
+    const cevap = new Response(sonuc.body, {
       status: httpStatus,
       headers: { "content-type": typeof sonuc.contentType === "string" ? sonuc.contentType : "application/json" },
-    }));
+    });
+    const okuma = await faturaYanitiniOku(cevap);
     if (!okuma.satirlar.length) throw new Error("FOTOGRAFTA_YAZI_YOK");
-    const satirlar = okuma.satirlar.map((s) => faturaSatiriniAktar(s, okuma.tedarikci));
+
+    // İlk cevap yalnızca fatura okuma aşamasıdır. Aynı işlem kimliği üzerinde
+    // ikinci preset'i bir kez kuyruğa al; GET/polling bundan sonra devam eder.
+    if (sonuc.stage === "reading") {
+      const ikinci = await admin.rpc("advance_invoice_provider_job", {
+        p_store_id: storeId,
+        p_job_id: islemKimligi,
+        p_read_result: okuma,
+        p_body: faturaKartIstekGovdesi(okuma),
+        p_api_key: process.env.OPENROUTER_API_KEY,
+      });
+      if (ikinci.error || ikinci.data?.success !== true) throw new Error("KART_ISLEYICI_HAZIR_DEGIL");
+      return bekleyenFaturaYaniti(islemKimligi);
+    }
+
+    // İkinci preset aynı satır sayısını döndürmeli. Fatura tutar/adet/kod
+    // alanlarının sahibi ilk cevap olarak kalır; kart preset'i yalnız katalog
+    // alanlarını zenginleştirir.
+    if (sonuc.stage !== "cards" || !sonuc.readResult || typeof sonuc.readResult !== "object") {
+      throw new Error("OKUYUCU_EKSIK_CEVAP");
+    }
+    const ilkOkuma = sonuc.readResult as typeof okuma;
+    const birlesikOkuma = faturaKartSonucunuBirlestir(ilkOkuma, okuma);
+    const satirlar = birlesikOkuma.satirlar.map((s) => faturaSatiriniAktar(s, birlesikOkuma.tedarikci));
     const id = await islemKaydet({
       slug, parmakIzi: sonuc.fingerprint, providerJobId: islemKimligi,
-      belgeAdedi: okuma.belgeAdedi, belgeToplami: okuma.belgeToplami,
-      tedarikci: okuma.tedarikci, tedarikciVergiNo: okuma.tedarikciVergiNo,
-      tedarikciAdres: okuma.tedarikciAdres, tedarikciSite: okuma.tedarikciSite,
+      belgeAdedi: birlesikOkuma.belgeAdedi, belgeToplami: birlesikOkuma.belgeToplami,
+      tedarikci: birlesikOkuma.tedarikci, tedarikciVergiNo: birlesikOkuma.tedarikciVergiNo,
+      tedarikciAdres: birlesikOkuma.tedarikciAdres, tedarikciSite: birlesikOkuma.tedarikciSite,
       tedarikciIz: null, satirlar,
-      belgeTuru: okuma.belgeTuru, belgeNo: okuma.belgeNo, belgeTarihi: okuma.belgeTarihi,
-      malBedeli: okuma.malBedeli, kdvTutari: okuma.kdvTutari,
-      indirimTutari: okuma.indirimTutari, odenecekToplam: okuma.odenecekToplam,
-      belgeUyarisi: (okuma.uyarilar ?? []).join(" · "),
+      belgeTuru: birlesikOkuma.belgeTuru, belgeNo: birlesikOkuma.belgeNo, belgeTarihi: birlesikOkuma.belgeTarihi,
+      malBedeli: birlesikOkuma.malBedeli, kdvTutari: birlesikOkuma.kdvTutari,
+      indirimTutari: birlesikOkuma.indirimTutari, odenecekToplam: birlesikOkuma.odenecekToplam,
+      belgeUyarisi: (birlesikOkuma.uyarilar ?? []).join(" · "),
       aramaDurumu: {
         erisimHatasi: satirlar.some((s) => s.dogrulamaDurumu?.includes("Araştırılamadı")),
         sonrakiSatir: satirlar.length,
-        presetCevabi: { belgeEkleri: okuma.belgeEkleri, gruplar: okuma.gruplar, uyarilar: okuma.uyarilar },
+        presetCevabi: { belgeEkleri: birlesikOkuma.belgeEkleri, gruplar: birlesikOkuma.gruplar, uyarilar: birlesikOkuma.uyarilar },
       },
     });
     if (id !== islemKimligi) throw new Error("FATURA_KAYDI_EKSIK");
