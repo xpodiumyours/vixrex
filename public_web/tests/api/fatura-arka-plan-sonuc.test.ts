@@ -7,14 +7,18 @@ import { arkaPlanFaturaSonucunuAl } from "@/lib/faturaArkaPlanIslemi";
 const job = "11111111-1111-4111-8111-111111111111";
 const line={ad:"Kaynak ürünü",model:"K-1",ham_satir:"K-1",uretici:"Üretici",beden:"L",varyant:"Lacivert",adet:2,birim_fiyat:100,site_aciklama:"Kaynak açıklaması",site_gorseller:["https://manufacturer.example/1.jpg"],site_sayfa:"https://manufacturer.example/product",ozellikler:[{key:"fabric",label:"Kumaş",value:"Pamuk"}],dogrulama_durumu:"? Belirsiz"};
 function client(receipt: unknown) {
-  const rpc=vi.fn(async(name:string,params?:unknown)=>{void name;void params;return {data:receipt,error:null};});
+  const rpc=vi.fn(async(name:string,params?:unknown)=>{
+    void params;
+    if (name === "advance_invoice_provider_job") return {data:{success:true,state:"queued",stage:"cards",id:job},error:null};
+    return {data:receipt,error:null};
+  });
   return { admin:{rpc} as unknown as SupabaseClient, rpc };
 }
-const receipt=(content:string)=>({state:"received",httpStatus:200,contentType:"application/json",body:JSON.stringify({choices:[{message:{content},finish_reason:"stop"}]}),fingerprint:"a".repeat(64)});
+const receipt=(content:string, extra:Record<string,unknown>={})=>({stage:"cards",state:"received",httpStatus:200,contentType:"application/json",body:JSON.stringify({choices:[{message:{content},finish_reason:"stop"}]}),fingerprint:"a".repeat(64),readResult:{tedarikci:"Tedarikçi",satirlar:[{hamSatir:"K-1",model:"K-1",ad:"Kaynak ürünü",barkod:"",varyant:"Lacivert",beden:"L",marka:"",adet:2,birim:"",birimFiyat:100,tutar:200,okumaGuveni:0.8,siteGorseller:[],ozellikler:[]}]},...extra});
 beforeEach(()=>{vi.clearAllMocks();m.save.mockResolvedValue(job);m.load.mockResolvedValue({islemKimligi:job,satirlar:[]});});
 describe("tamamlanmış arka plan sonucunun gerçek taşıma yolu",()=>{
  it("bekleyen iş hazır kart sayılmaz ve tekrar model çalıştırmaz",async()=>{const {admin,rpc}=client({state:"queued"});const data=await arkaPlanFaturaSonucunuAl(admin,"store","deneme",job);expect(data.hazirlaniyor).toBe(true);expect(data.satirlar).toBeUndefined();expect(m.save).not.toHaveBeenCalled();expect(rpc).toHaveBeenCalledTimes(1);});
- it("tamamlanan kaynağı üretici/beden/kumaş ile atomik kayda taşır; fiyat/onay/yayın eklemez",async()=>{
+ it("tamamlanan kart kaynağını üretici/beden/kumaş ile atomik kayda taşır; fiyat/onay/yayın eklemez",async()=>{
   const {admin}=client(receipt(JSON.stringify({tedarikci:"Tedarikçi",satirlar:[line],gruplar:[{marka:"Üretici"}],uyarilar:["Örnek test verisi"]})));
   m.load.mockImplementation(async()=>({islemKimligi:job,satirlar:m.save.mock.calls[0]?.[0].satirlar ?? []}));
   const data=await arkaPlanFaturaSonucunuAl(admin,"store","deneme",job);
@@ -25,6 +29,13 @@ describe("tamamlanmış arka plan sonucunun gerçek taşıma yolu",()=>{
   expect(input.aramaDurumu.presetCevabi.uyarilar).toEqual(["Örnek test verisi"]);
   expect(input.satirlar[0].satisFiyati).toBeUndefined();expect(input.satirlar[0].onayli).toBeUndefined();
   const drafts=data.taslaklar as Array<{satisFiyati:unknown;ownerApproved:boolean;isVisible:boolean}>;expect(drafts).toHaveLength(1);expect(drafts[0].ownerApproved).toBe(false);expect(drafts[0].isVisible).toBe(false);expect(drafts[0].satisFiyati).toBeNull();
+ });
+ it("okuma aşaması sonucu kart presetini tam bir kez kuyruğa alır",async()=>{
+  const first=JSON.stringify({tedarikci:"Tedarikçi",satirlar:[line]});
+  const {admin,rpc}=client(receipt(first,{stage:"reading",readResult:null}));
+  const data=await arkaPlanFaturaSonucunuAl(admin,"store","deneme",job);
+  expect(data.hazirlaniyor).toBe(true); expect(m.save).not.toHaveBeenCalled();
+  expect(rpc).toHaveBeenCalledWith("advance_invoice_provider_job",expect.objectContaining({p_job_id:job,p_read_result:expect.objectContaining({satirlar:expect.any(Array)}),p_body:expect.objectContaining({model:"@preset/vixrex-fatura-otomatik-kart"})}));
  });
  it.each(["bozuk",'{"satirlar":[]}'])("hatalı veya boş sonuç ürün oluşturmaz: %s",async(content)=>{const {admin,rpc}=client(receipt(content));await expect(arkaPlanFaturaSonucunuAl(admin,"store","deneme",job)).rejects.toThrow();expect(m.save).not.toHaveBeenCalled();expect(rpc).toHaveBeenCalledWith("fail_invoice_provider_job",expect.objectContaining({p_job_id:job}));});
  it("model404 hazır karta dönüştürülmez",async()=>{const {admin}=client({state:"received",httpStatus:200,contentType:"text/event-stream",body:'data: {"error":{"code":404}}\n\n',fingerprint:"a".repeat(64)});await expect(arkaPlanFaturaSonucunuAl(admin,"store","deneme",job)).rejects.toThrow("OKUYUCU_MODEL_BULUNAMADI");expect(m.save).not.toHaveBeenCalled();});
