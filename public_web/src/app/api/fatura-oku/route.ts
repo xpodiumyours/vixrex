@@ -3,11 +3,10 @@ import { cookies } from "next/headers";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 import { verifyStoreEditToken } from "@/lib/instagramServer";
-import { fingerprintClient, getClientIp } from "@/lib/rentDemoSecurity";
-import { type EslesmisFaturaSatiri, type KatalogBilgisi } from "@/lib/faturaEslestir";
+import { faturaSatiriniAktar } from "@/lib/faturaPresetAktarimi";
 import { belgeParmakIzi, islemKaydet } from "@/lib/faturaIslemKaydi";
 import { faturaTaslaklari } from "@/lib/faturaTaslagi";
-import { faturayiOku, type GoruSatiri, type GoruSonucu } from "@/lib/faturaGoru";
+import { faturayiOku, type GoruSonucu } from "@/lib/faturaGoru";
 import { islemiYukle, islemYaniti, parmakIzindenIslemBul } from "@/lib/faturaIslemOku";
 
 export const dynamic = "force-dynamic";
@@ -157,48 +156,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const sonSatirlar: EslesmisFaturaSatiri[] = okuma.satirlar.map((satir: GoruSatiri) => {
-      const gorseller = satir.siteGorseller?.length
-        ? satir.siteGorseller
-        : satir.siteGorsel ? [satir.siteGorsel] : [];
-
-      const katalog: KatalogBilgisi = {
-        firma: okuma.tedarikci,
-        kaynakFirma: satir.marka || okuma.tedarikci,
-        dayanak: satir.barkod ? "barkod" : (satir.model ? "kod" : "ad"),
-        izinDurumu: "var",
-        resmiAd: satir.ad || satir.model,
-        marka: satir.marka,
-        aciklama: satir.siteAciklama || "",
-        gorseller,
-        gorselAdaylari: gorseller,
-        kaynak: satir.siteSayfa || "",
-        kategori: satir.siteKategori || "",
-      };
-
-      return {
-        hamSatir: satir.hamSatir,
-        model: satir.model,
-        ad: satir.ad || satir.model,
-        barkod: satir.barkod,
-        varyant: satir.varyant,
-        beden: satir.beden,
-        marka: satir.marka,
-        adet: satir.adet,
-        birim: satir.birim,
-        alisBirimFiyat: satir.birimFiyat,
-        satirToplam: satir.tutar,
-        guven: satir.okumaGuveni ?? 1,
-        siteAd: satir.ad || satir.model,
-        siteAciklama: satir.siteAciklama,
-        siteGorsel: gorseller[0] || "",
-        siteGorseller: gorseller,
-        siteSayfa: satir.siteSayfa,
-        siteKategori: satir.siteKategori,
-        katalog,
-        sonuc: "kanitli" as const,
-      };
-    });
+    const sonSatirlar = okuma.satirlar.map((satir) => faturaSatiriniAktar(satir, okuma.tedarikci));
 
     const kayitGirdisi = {
       slug: ownerSlug,
@@ -210,7 +168,11 @@ export async function POST(request: NextRequest) {
       tedarikciAdres: okuma.tedarikciAdres,
       tedarikciSite: okuma.tedarikciSite,
       tedarikciIz: null,
-      aramaDurumu: { erisimHatasi: false, sinirDoldu: false, sonrakiSatir: sonSatirlar.length, hatalar: {} },
+      aramaDurumu: {
+        erisimHatasi: sonSatirlar.some((s) => s.dogrulamaDurumu?.includes("Araştırılamadı")),
+        sonrakiSatir: sonSatirlar.length,
+        presetCevabi: { belgeEkleri: okuma.belgeEkleri, gruplar: okuma.gruplar, uyarilar: okuma.uyarilar },
+      },
       satirlar: sonSatirlar,
       belgeTuru: okuma.belgeTuru,
       belgeNo: okuma.belgeNo,
@@ -219,6 +181,7 @@ export async function POST(request: NextRequest) {
       kdvTutari: okuma.kdvTutari,
       indirimTutari: okuma.indirimTutari,
       odenecekToplam: okuma.odenecekToplam,
+      belgeUyarisi: (okuma.uyarilar ?? []).join(" · "),
     };
 
     const islemKimligi = await islemKaydet(kayitGirdisi);
@@ -241,6 +204,11 @@ export async function POST(request: NextRequest) {
       belgeTuru: okuma.belgeTuru,
       belgeNo: okuma.belgeNo,
       belgeTarihi: okuma.belgeTarihi,
+      belge: { malBedeli: okuma.malBedeli, kdvTutari: okuma.kdvTutari, indirimTutari: okuma.indirimTutari, odenecekToplam: okuma.odenecekToplam },
+      belgeEkleri: okuma.belgeEkleri,
+      gruplar: okuma.gruplar,
+      uyarilar: okuma.uyarilar,
+      belgeUyarisi: (okuma.uyarilar ?? []).join(" · "),
       islemKimligi,
     });
   } catch (err) {
@@ -253,11 +221,23 @@ export async function POST(request: NextRequest) {
         { status: 503 },
       );
     }
+    if (kod === "OKUYUCU_MODEL_BULUNAMADI") {
+      return NextResponse.json({ hata: "Fatura okuma modeline şu anda erişilemiyor. Ürün taslakları oluşturulmadı." }, { status: 503 });
+    }
+    if (kod === "OKUYUCU_UCRETSIZ_KOTA_DOLDU") {
+      return NextResponse.json({ hata: "Fatura okuyucunun günlük ücretsiz kullanım sınırı doldu. Ürün taslakları oluşturulmadı." }, { status: 503 });
+    }
+    if (kod === "OKUYUCU_ISTEK_SINIRI") {
+      return NextResponse.json({ hata: "Fatura okuyucu şu anda istek sınırına ulaştı. Lütfen daha sonra deneyin." }, { status: 503 });
+    }
     if (kod === "FOTOGRAFTA_YAZI_YOK") {
       return NextResponse.json(
         { hata: "Bu fotoğrafta yazı bulunamadı. Daha net bir fotoğraf deneyin." },
         { status: 422 },
       );
+    }
+    if (["OKUYUCU_ZAMAN_ASIMI", "OKUYUCU_EKSIK_CEVAP", "OKUYUCU_TAMAMLANMADI"].includes(kod)) {
+      return NextResponse.json({ hata: "Ürün hazırlama tamamlanamadı. Eksik cevap yayınlanmadı; tekrar deneyin." }, { status: 504 });
     }
     return NextResponse.json({ hata: "Fatura şu an okunamadı. Tekrar deneyin." }, { status: 500 });
   }

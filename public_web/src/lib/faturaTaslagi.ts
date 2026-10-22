@@ -28,6 +28,14 @@ export interface FaturaTaslagi {
   sourceType: string;
   ownerApproved: boolean;
   isVisible: boolean;
+  satirNo?: number | null;
+  uretici?: string;
+  gramaj?: string;
+  dogrulamaDurumu?: string;
+  eslesenBilgiler?: unknown;
+  eksikler?: string[];
+  gorselDogrulamaDurumu?: string;
+  kaynaklar?: Array<string | Record<string, unknown>>;
 }
 
 export function satirdanFaturaTaslagi(
@@ -68,6 +76,14 @@ export function satirdanFaturaTaslagi(
     sourceType: FATURA_TASLAK_KAYNAGI,
     ownerApproved: false,
     isVisible: false,
+    satirNo: katalog.satirNo,
+    uretici: katalog.uretici,
+    gramaj: katalog.gramaj,
+    dogrulamaDurumu: katalog.dogrulamaDurumu,
+    eslesenBilgiler: katalog.eslesenBilgiler,
+    eksikler: katalog.eksikler ?? [],
+    gorselDogrulamaDurumu: katalog.gorselDogrulamaDurumu,
+    kaynaklar: katalog.kaynaklar ?? [],
   };
 }
 
