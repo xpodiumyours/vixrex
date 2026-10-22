@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { sahipYetkisi } from "@/lib/faturaYetki";
+import { arkaPlanFaturaSonucunuAl, arkaPlanFaturaHatasi } from "@/lib/faturaArkaPlanIslemi";
 import {
   islemiYukle,
   islemleriListele,
@@ -49,7 +50,14 @@ export async function GET(request: NextRequest) {
   const islem = await islemiYukle(admin, yetki.storeId, islemKimligi);
   if (!islem) return NextResponse.json({ hata: "İşlem bulunamadı." }, { status: 404 });
 
-  return NextResponse.json(islemYaniti(islem));
+  if (islem.satirlar.length) return NextResponse.json(islemYaniti(islem), { headers: { "Cache-Control": "private, no-store" } });
+  try {
+    const sonuc = await arkaPlanFaturaSonucunuAl(admin, yetki.storeId, slug, islemKimligi);
+    return NextResponse.json(sonuc, { status: sonuc.hazirlaniyor ? 202 : 200, headers: { "Cache-Control": "private, no-store" } });
+  } catch (err) {
+    const kod = err instanceof Error ? err.message : "OKUYUCU_CEVAP_VERMEDI";
+    return NextResponse.json({ hata: arkaPlanFaturaHatasi(kod) }, { status: 503, headers: { "Cache-Control": "private, no-store" } });
+  }
 }
 
 export async function PUT(request: NextRequest) {
