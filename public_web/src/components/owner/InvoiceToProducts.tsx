@@ -4,6 +4,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { buildProductDetailFacts } from "@/lib/productCardPresentation";
 import { faturaKatalogMetadatasi } from "@/lib/faturaUrunIcerigi";
 import { faturaSonucunuBekle } from "@/lib/faturaOtomatikBekleme";
+import { FaturaAkisBasligi } from "./FaturaAkisBasligi";
+import { FaturaIslemSonucu, type FaturaSonucKarti, type YazmaSonucu } from "./FaturaIslemSonucu";
+import "./faturaAkis.css";
 import type { ProductAttributeValue } from "@/lib/productRichData";
 import {
   KART_DURUM_ETIKETI,
@@ -132,15 +135,6 @@ interface SatirDurumu extends FaturaSatiri {
   esnafGorselleri: string[];
   ayniAlisverisTekrari?: boolean;
   urunId?: string | null;
-}
-
-interface YazmaSonucu {
-  tuketiciDogrulandi?: boolean;
-  toplam: number;
-  yayinda: number;
-  taslak: number;
-  hatali: number;
-  satirlar: Array<{ sira: number; ad: string; durum: string; sebep?: string; id?: string }>;
 }
 
 interface InvoiceToProductsProps {
@@ -392,7 +386,7 @@ export default function InvoiceToProducts({
   );
 
   const hazirSayisi = degerlendirmeler.filter(
-    (d, i) => d.onaylanabilir && !satirlar[i].ayniAlisverisTekrari,
+    (d, i) => d.yayinaHazir && !satirlar[i].ayniAlisverisTekrari,
   ).length;
 
   /** Faturanın üç beklenen sayısı satırlardan yeniden hesaplanır ve belgedeki
@@ -797,7 +791,7 @@ export default function InvoiceToProducts({
     const gonderilecek = satirlar
       .map((satir, sira) => ({ satir, sira, degerlendirme: degerlendirmeler[sira] }))
       .filter(({ satir, degerlendirme }) =>
-        !satir.ayniAlisverisTekrari && degerlendirme.onaylanabilir,
+        !satir.ayniAlisverisTekrari && satir.onayli && degerlendirme.onaylanabilir,
       );
 
     if (gonderilecek.length === 0) return;
@@ -953,13 +947,10 @@ export default function InvoiceToProducts({
   if (adim === "sec") {
     return (
       <div className="fatura-akis">
-        <h3>Faturadan ürün ekle</h3>
-        <p className="fatura-aciklama">
-          Faturanın fotoğrafını yükle. Ürün kartları hazırlanır. Satış fiyatını yazıp yayınlarsın.
-          Sen yayınlamadan hiçbir ürün vitrinde görünmez.
-        </p>
+        <FaturaAkisBasligi adim={adim} baslik="Faturadan ürün ekle"
+          aciklama="Faturanı ekle, ürün kartların hazırlansın. Satış fiyatlarını belirleyip kartları onayla. Sen yayınlamadan ürünler vitrinde görünmez." />
 
-        {hata && <p className="fatura-hata">{hata}</p>}
+        {hata && <p className="fatura-hata" role="alert">{hata}</p>}
 
         {oncekiIslemler.length > 0 && (
           <div className="fatura-onceki">
@@ -985,7 +976,11 @@ export default function InvoiceToProducts({
         )}
 
         {!okuyucuHazir && <p className="fatura-aciklama">Fotoğraf okuyucu şu an hazır değil.</p>}
-        <input
+        <label className={`fatura-dosya-sec${!okuyucuHazir ? " fatura-dosya-kapali" : ""}`}>
+          <strong>Fatura fotoğrafı veya PDF seç</strong>
+          <span>Telefonundan ya da bilgisayarından yükle</span>
+          <input
+          aria-label="Fatura fotoğrafı veya PDF seç"
           disabled={!okuyucuHazir}
           ref={dosyaRef}
           type="file"
@@ -996,6 +991,7 @@ export default function InvoiceToProducts({
             if (dosyalar.length) void dosyaSecildi(dosyalar);
           }}
         />
+        </label>
         <p className="fatura-aciklama">Fatura fotoğrafını (1–3 sayfa) veya PDF dosyasını seç. Toplam en fazla 4 MB. Başka belge gerekmiyor.</p>
         {onClose && (
           <button type="button" className="fatura-ikincil" onClick={() => void kapat()}>
@@ -1011,14 +1007,15 @@ export default function InvoiceToProducts({
   if (adim === "okunuyor") {
     return (
       <div className="fatura-akis">
-        <h3>Faturan hazırlanıyor</h3>
-        <p className="fatura-aciklama">OpenRouter ürün kartlarını hazırlıyor. Aynı faturayı tekrar yüklemene gerek yok.</p>
+        <FaturaAkisBasligi adim={adim} baslik="Faturan hazırlanıyor"
+          aciklama="Faturan okunuyor ve ürün kartların hazırlanıyor. Aynı faturayı tekrar yüklemene gerek yok." />
+        <p className="fatura-bekleme" role="status"><span className="fatura-yukleyici" aria-hidden="true" />Ürün kartları hazırlanıyor…</p>
         {onizleme && <img className="fatura-onizleme" src={onizleme} alt="Fatura" />}
         <ol className="fatura-adimlar">
           <li>Belge okunuyor: satırlar, miktar ve belge toplamı çıkarılıyor.</li>
           <li>Faturayı kesen firmanın kimliği ve resmî sitesi araştırılıyor.</li>
           <li>Ürünlerin resmî kaynağı ve kaynak çelişkisi kontrol ediliyor.</li>
-          <li>Kanıtlı satırlardan kart taslakları hazırlanıyor.</li>
+          <li>Ürün satırlarından kart taslakları hazırlanıyor; eksik bilgiler ayrıca gösteriliyor.</li>
         </ol>
       </div>
     );
@@ -1027,107 +1024,31 @@ export default function InvoiceToProducts({
   // ─── 4. Sonuç ──────────────────────────────────────────────────
 
   if (adim === "bitti" && sonuc) {
-    const yayinlanabilirTaslak = sonuc.satirlar.filter(
-      (satir) => satir.durum === "taslak" && satir.id,
-    ).length;
-
-    type YayindakiKart = { sira: number; ad: string; fiyat: string; gorsel: string | null };
-    const yayindakiKartlar: YayindakiKart[] = [];
+    const yayindakiKartlar: FaturaSonucKarti[] = [];
     for (const satir of sonuc.satirlar) {
       if (satir.durum !== "yayinda") continue;
       const yerel = satirlar[satir.sira];
       if (!yerel) continue;
       yayindakiKartlar.push({
-        sira: satir.sira,
-        ad: yerel.katalog?.resmiAd || yerel.ad,
-        fiyat: yerel.satisFiyati,
+        sira: satir.sira, ad: yerel.katalog?.resmiAd || yerel.ad, fiyat: yerel.satisFiyati,
         gorsel: degerlendirmeler[satir.sira]?.gorseller[0] ?? yerel.esnafGorselleri[0] ?? null,
       });
     }
-
+    const baslik = sonuc.yayinda > 0
+      ? sonuc.tuketiciDogrulandi ? "Vitrin hazır" : "Yayın kaydı alındı"
+      : "Onaylı kartların yayınlanmaya hazır";
     return (
       <div className="fatura-akis">
-        {yayindakiKartlar.length > 0 && (
-          <section className="fatura-vitrin-hazir">
-            <h3>Vitrin hazır</h3>
-            <p className="fatura-aciklama">
-              {yayindakiKartlar.length} ürün satış fiyatıyla vitrine yerleşti. Aşağıda
-              müşterilerin göreceği hâli var; paylaşabilir veya ürünleri düzenleyebilirsin.
-            </p>
-            <ul className="fatura-vitrin-izgara">
-              {yayindakiKartlar.map((kart) => (
-                <li key={kart.sira}>
-                  {kart.gorsel ? (
-                    <img src={kart.gorsel} alt={kart.ad} loading="lazy" />
-                  ) : (
-                    <div className="fatura-kart-gorselsiz">Fotoğraf yok</div>
-                  )}
-                  <span>{kart.ad}</span>
-                  {kart.fiyat && <strong>{kart.fiyat} TL</strong>}
-                </li>
-              ))}
-            </ul>
-            <div className="fatura-araclar">
-              <button type="button" onClick={() => void vitriniPaylas()}>
-                {baglantiKopyalandi ? "Bağlantı kopyalandı" : "Vitrini paylaş"}
-              </button>
-              {onClose && (
-                <button type="button" onClick={() => void kapat()}>
-                  Ürünleri düzenle
-                </button>
-              )}
-              <button
-                type="button"
-                className="fatura-ikincil"
-                onClick={() => setAdim("urunler")}
-              >
-                Ürünlere dön
-              </button>
-            </div>
-          </section>
-        )}
-
-        <h3>{yayindakiKartlar.length > 0 ? "Kayıt özeti" : "Ürünler kaydedildi"}</h3>
-        <ul className="fatura-ozet">
-          <li>
-            <strong>{sonuc.yayinda}</strong> ürün {sonuc.tuketiciDogrulandi ? "vitrinde görünüyor" : "için yayın kaydı alındı; tüketici görünümü doğrulanamadı"}
-          </li>
-          <li>
-            <strong>{sonuc.taslak}</strong> ürün taslak — yayınlamadan görünmez
-          </li>
-          {sonuc.hatali > 0 && (
-            <li>
-              <strong>{sonuc.hatali}</strong> satır eklenemedi
-            </li>
-          )}
-        </ul>
-
-        <ul className="fatura-satir-ozet">
-          {sonuc.satirlar
-            .filter((satir) => satir.durum !== "yayinda")
-            .map((satir) => (
-              <li key={satir.sira}>
-                {satir.ad} — {satir.sebep ?? satir.durum}
-              </li>
-            ))}
-        </ul>
-
-        {hata && <p className="fatura-hata">{hata}</p>}
-
-        {yayinlanabilirTaslak > 0 && (
-          <button type="button" onClick={taslaklariYayinla} disabled={yukleniyor}>
-            {yukleniyor ? "Yayınlanıyor…" : `${yayinlanabilirTaslak} taslağı yayınla`}
-          </button>
-        )}
-
-        <button type="button" onClick={bastanBasla}>
-          Başka fatura ekle
-        </button>
-        {onClose && (
-          <button type="button" className="fatura-ikincil" onClick={() => void kapat()}>
-            Kapat
-          </button>
-        )}
+        <FaturaAkisBasligi adim={adim} baslik={baslik} yayinDogrulandi={sonuc.tuketiciDogrulandi && sonuc.yayinda > 0}
+          aciklama={sonuc.yayinda > 0
+            ? sonuc.tuketiciDogrulandi ? "Ürünlerin satış fiyatlarıyla vitrinde görünüyor. Vitrinini açıp kontrol edebilirsin."
+              : "Ürünlerin yayın kaydı alındı. Tüketici görünümü henüz doğrulanamadı; vitrini açıp kontrol et."
+            : "Bilgilerin taslak olarak kaydedildi. Ürünleri vitrinde göstermek için yayınla."} />
+        <FaturaIslemSonucu sonuc={sonuc} kartlar={yayindakiKartlar} storeSlug={storeSlug} hata={hata}
+          yukleniyor={yukleniyor} baglantiKopyalandi={baglantiKopyalandi}
+          onYayinla={() => void taslaklariYayinla()} onPaylas={() => void vitriniPaylas()}
+          onKartlaraDon={() => setAdim("urunler")} onYeniFatura={bastanBasla}
+          onClose={onClose ? () => void kapat() : undefined} />
       </div>
     );
   }
@@ -1141,6 +1062,8 @@ export default function InvoiceToProducts({
 
   return (
     <div className="fatura-akis">
+      <FaturaAkisBasligi adim={adim} baslik={`${satirlar.length} ürün kartını kontrol et`}
+        aciklama="Satış fiyatlarını belirle ve yayınlamak istediğin kartları onayla. Bilgilerin önce taslak olarak kaydedilir." />
       <div className="fatura-baslik">
         <h3>{satirlar.length} satır okundu</h3>
         {belge?.maliyetOzeti && (
@@ -1238,11 +1161,11 @@ export default function InvoiceToProducts({
 
       <p className="fatura-aciklama">
         Faturadaki tutar <strong>alış fiyatıdır</strong>; satış fiyatı yerine geçmez.
-        Stok, faturadaki adettir. Yalnız fotoğrafı üreticinin sayfasından gelen satırlar kart olur.
-        <strong>Satış fiyatını</strong> yazıp yayınla.
+        Stok, faturadaki adettir. Eksik açıklama veya görsel kartta belirtilir.
+        <strong>Satış fiyatını</strong> yaz, kartı kontrol et ve onayla.
       </p>
 
-      {hata && <p className="fatura-hata">{hata}</p>}
+      {hata && <p className="fatura-hata" role="alert">{hata}</p>}
 
       <div className="fatura-araclar">
         <label>
@@ -1258,7 +1181,16 @@ export default function InvoiceToProducts({
           %
         </label>
         <button type="button" onClick={karUygula} disabled={yaziliyor}>
-          Kâr koy
+          Fiyatlara uygula
+        </button>
+        <button type="button" disabled={yaziliyor || !degerlendirmeler.some((d, i) => d.onaylanabilir && !satirlar[i].ayniAlisverisTekrari)}
+          onClick={() => setSatirlar((oncekiler) => oncekiler.map((satir, index) =>
+            degerlendirmeler[index].onaylanabilir && !satir.ayniAlisverisTekrari ? { ...satir, onayli: true } : satir))}>
+          Tümünü onayla
+        </button>
+        <button type="button" disabled={yaziliyor || !satirlar.some((satir) => satir.onayli)}
+          onClick={() => setSatirlar((oncekiler) => oncekiler.map((satir) => ({ ...satir, onayli: false })))}>
+          Onayları kaldır
         </button>
       </div>
 
@@ -1274,7 +1206,8 @@ export default function InvoiceToProducts({
           return (
             <article
               key={`${satir.model}-${satir.barkod}-${index}`}
-              className={`fatura-kart fatura-kart-${satir.sonuc}`}
+              className={`fatura-kart fatura-kart-${satir.sonuc}${satir.onayli ? " fatura-kart-onayli" : ""}`}
+              aria-label={katalog?.resmiAd || satir.ad || satir.model}
             >
               <span className="fatura-rozet">{KART_DURUM_ETIKETI[satir.sonuc]}</span>
               {dusukGuven && <span className="fatura-rozet fatura-rozet-suphe">Kontrol et</span>}
@@ -1403,7 +1336,7 @@ export default function InvoiceToProducts({
                 </div>
               ) : (
                 <div className="fatura-eslesme fatura-eslesme-yok">
-                  Kanıtlı eşleşme yok — bu satırdan kart üretilmez
+                  Resmî ürün kaynağı bulunamadı. Kart faturadaki bilgilerle taslak olarak korunur.
                 </div>
               )}
 
@@ -1458,6 +1391,7 @@ export default function InvoiceToProducts({
               <label className="fatura-fiyat">
                 Satış fiyatı
                 <input
+                  aria-label={`${katalog?.resmiAd || satir.ad} satış fiyatı`}
                   inputMode="decimal"
                   placeholder="0,00"
                   value={satir.satisFiyati}
@@ -1465,6 +1399,12 @@ export default function InvoiceToProducts({
                   disabled={yaziliyor}
                 />
               </label>
+              <button type="button" className={`fatura-onay${satir.onayli ? " fatura-onay-acik" : ""}`}
+                aria-pressed={satir.onayli}
+                disabled={yaziliyor || satir.ayniAlisverisTekrari || (!degerlendirme.onaylanabilir && !satir.onayli)}
+                onClick={() => satirGuncelle(index, { onayli: !satir.onayli })}>
+                {satir.onayli ? "✓ Onaylandı" : "Kartı onayla"}
+              </button>
 
               {degerlendirme.bilgiEksikleri.length > 0 && (
                 <ul className="fatura-eksikler">
@@ -1512,7 +1452,7 @@ export default function InvoiceToProducts({
           onClick={() => void vitrineYaz()}
           disabled={hazirSayisi === 0 || yaziliyor}
         >
-          {yaziliyor ? "Taslaklar hazırlanıyor…" : `${hazirSayisi} taslak ürünü hazırla`}
+          {yaziliyor ? "Bilgiler kaydediliyor…" : `${hazirSayisi} onaylı kartla devam et`}
         </button>
       </div>
 

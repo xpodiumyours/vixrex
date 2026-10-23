@@ -1,0 +1,72 @@
+.owner-shell .fatura-akis {
+  min-width: 0;
+  margin-top: 1.25rem;
+  padding: clamp(1rem, 3vw, 1.5rem);
+  gap: 1rem;
+  border: 1px solid var(--owner-border);
+  border-radius: 24px;
+  background: var(--owner-bg-soft);
+  color: var(--owner-text);
+}
+
+.fatura-akis-basligi { display: grid; gap: 1.25rem; }
+.fatura-ilerleme { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .5rem; padding: 0; margin: 0; list-style: none; }
+.fatura-ilerleme li { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; padding-top: .65rem; border-top: 3px solid var(--owner-border); font-size: .7rem; font-weight: 700; color: var(--owner-muted); }
+.fatura-ilerleme li > span { display: grid; place-items: center; width: 1.35rem; height: 1.35rem; border-radius: 50%; background: var(--owner-surface-soft); }
+.fatura-ilerleme .aktif { border-color: var(--owner-primary); color: var(--owner-text); }
+.fatura-ilerleme .tamam { border-color: var(--owner-success); color: #6ee7b7; }
+.fatura-asistan { display: flex; align-items: flex-start; gap: .75rem; min-width: 0; }
+.fatura-asistan img { flex: 0 0 56px; width: 56px; height: 56px; object-fit: contain; }
+.fatura-asistan > div { display: grid; gap: .4rem; min-width: 0; }
+.fatura-asistan-adi { font-size: .65rem; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--owner-secondary); }
+.owner-shell .fatura-asistan h3 { font-size: clamp(1.2rem, 3vw, 1.5rem); line-height: 1.2; }
+
+.fatura-dosya-sec { position: relative; display: grid; place-content: center; gap: .5rem; min-height: 145px; padding: 1.25rem; border: 1px dashed var(--owner-secondary); border-radius: 18px; background: color-mix(in srgb, var(--owner-primary) 10%, var(--owner-surface)); text-align: center; cursor: pointer; }
+.fatura-dosya-sec strong { font-size: 1rem; color: var(--owner-text); }
+.fatura-dosya-sec span { font-size: .75rem; color: var(--owner-muted); }
+.fatura-dosya-sec input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.fatura-dosya-kapali { opacity: .55; cursor: not-allowed; }
+.fatura-dosya-sec:focus-within { outline: 2px solid var(--owner-secondary); outline-offset: 3px; }
+.fatura-bekleme { display: flex; align-items: center; gap: .75rem; padding: 1rem; border: 1px solid var(--owner-border); border-radius: 16px; background: var(--owner-surface); font-size: .875rem; font-weight: 700; }
+.fatura-yukleyici { width: 22px; height: 22px; flex-shrink: 0; border: 2px solid var(--owner-border); border-top-color: var(--owner-secondary); border-radius: 50%; animation: fatura-don 1s linear infinite; }
+@keyframes fatura-don { to { transform: rotate(360deg); } }
+
+.owner-shell .fatura-onizleme { object-fit: contain; background: var(--owner-surface); }
+.owner-shell .fatura-baslik { display: grid; gap: .5rem; min-width: 0; }
+.owner-shell .fatura-araclar { padding: .875rem; border: 1px solid var(--owner-border); border-radius: 16px; background: var(--owner-surface); }
+.owner-shell .fatura-izgara { grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); align-items: start; gap: 1rem; }
+.owner-shell .fatura-kart { min-width: 0; gap: .6rem; padding: .875rem; border-radius: 18px; overflow-wrap: anywhere; }
+.owner-shell .fatura-kart-onayli { border-color: var(--owner-success); }
+.owner-shell .fatura-kart-gorsel { height: 180px; object-fit: contain; background: var(--owner-surface-soft); }
+.owner-shell .fatura-kart-gorselsiz { height: 180px; }
+.owner-shell .fatura-kart .fatura-fiyat { margin-top: .4rem; }
+.owner-shell .fatura-fiyat input { width: 100%; font-size: 1.125rem; font-weight: 800; }
+.owner-shell .fatura-kart .fatura-onay { width: 100%; }
+.owner-shell .fatura-durum:empty { display: none; }
+.owner-shell .fatura-duzelt { padding: .5rem; border: 1px solid var(--owner-border); border-radius: 10px; font-size: .75rem; }
+.owner-shell .fatura-duzelt summary { cursor: pointer; }
+.owner-shell .fatura-duzelt label { display: grid; gap: .25rem; margin-top: .5rem; }
+.owner-shell .fatura-duzelt input { min-width: 0; width: 100%; padding: .5rem; border: 1px solid var(--owner-border); border-radius: 8px; background: var(--owner-bg-soft); }
+.owner-shell .fatura-duzelt button { min-height: 44px; margin-top: .5rem; font-weight: 700; color: var(--owner-secondary); }
+
+.owner-shell .fatura-alt-cubuk { position: sticky; bottom: calc(var(--vx-app-bottom-nav-height, 0px) + env(safe-area-inset-bottom) + .5rem); z-index: 5; padding: .875rem; border: 1px solid var(--owner-border); border-radius: 16px; background: color-mix(in srgb, var(--owner-bg) 95%, transparent); box-shadow: 0 8px 24px #0005; }
+.owner-shell .fatura-alt-cubuk > p { flex-basis: 100%; order: 3; font-size: .7rem; }
+.owner-shell .fatura-alt-cubuk .fatura-ikincil { background: var(--owner-surface-soft); font-size: .75rem; padding: .5rem .75rem; }
+.owner-shell .fatura-birincil { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; border: 1px solid transparent; border-radius: 12px; padding: .75rem 1rem; background: linear-gradient(135deg, var(--owner-primary), var(--owner-primary-dark)); color: var(--owner-text); font-size: .875rem; font-weight: 800; text-decoration: none; }
+.fatura-sonuc-islemleri { display: flex; flex-wrap: wrap; gap: .5rem; }
+.fatura-vitrin-hazir h4 { margin: 0; font-size: .875rem; font-weight: 800; color: var(--owner-text); }
+.fatura-akis button:disabled { cursor: not-allowed; opacity: .5; }
+.fatura-akis :is(button, a, input):focus-visible { outline: 2px solid var(--owner-secondary); outline-offset: 3px; }
+
+@media (min-width: 901px) {
+  .owner-shell .fatura-alt-cubuk { bottom: .75rem; }
+}
+@media (max-width: 480px) {
+  .fatura-ilerleme li { font-size: .65rem; gap: .25rem; }
+  .fatura-ilerleme li > span { width: 1.15rem; height: 1.15rem; }
+  .owner-shell .fatura-alt-cubuk > button:last-child { flex-basis: 100%; }
+  .fatura-sonuc-islemleri > :first-child { flex-basis: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fatura-yukleyici { animation: none; border-top-color: var(--owner-secondary); }
+}

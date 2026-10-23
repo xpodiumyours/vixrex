@@ -34,7 +34,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 /** Fatura fotoğrafından gelen satırların kaynak etiketi. */
-export const FATURA_KAYNAGI = "invoice";
+const FATURA_KAYNAGI = "invoice";
 
 function pozitifSayi(value: unknown): number | null {
   const sayi =
