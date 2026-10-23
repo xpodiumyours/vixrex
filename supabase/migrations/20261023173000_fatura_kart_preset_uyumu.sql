@@ -158,7 +158,7 @@ $publish$;
 -- Var olan pg_cron her dakika çağırır. Sadece hazır cevaplara bildirim gider.
 create or replace function public.sync_invoice_provider_responses()
 returns void language plpgsql security definer set search_path=pg_catalog,public
-as $
+as $worker$
 declare v_row record;
 begin
   update public.invoice_provider_runs r
@@ -187,7 +187,7 @@ begin
       where job_id=v_row.job_id and state='received';
   end loop;
 end;
-$;
+$worker$;
 alter function public.sync_invoice_provider_responses() owner to postgres;
 revoke execute on function public.sync_invoice_provider_responses() from public,anon,authenticated;
 grant execute on function public.sync_invoice_provider_responses() to service_role;
