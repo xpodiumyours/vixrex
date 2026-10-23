@@ -173,6 +173,7 @@ export async function kaynakGorselleriniHazirla(args: {
   slug: string;
   kaynakSayfa: string;
   adaylar: string[];
+  sonTarih?: number;
   bagimliliklar?: GorselBagimliliklari;
 }): Promise<GorselHazirlamaSonucu> {
   const gorseller: HazirlananGorsel[] = [];
@@ -181,6 +182,11 @@ export async function kaynakGorselleriniHazirla(args: {
   const guvenliSlug = args.slug.replace(/[^a-zA-Z0-9-]/g, "");
 
   for (const aday of [...new Set(args.adaylar)]) {
+    if (args.sonTarih !== undefined && Date.now() + ZAMAN_ASIMI_MS >= args.sonTarih) {
+      altyapiSorunu = true;
+      reddedilenler.push({ kaynakGorsel: aday, sebep: "erisilemedi" });
+      continue;
+    }
     const kontrol = await kaynakGorseliniDogrula(aday, args.bagimliliklar);
     if (!kontrol.tamam || !kontrol.bayt || !kontrol.tur) {
       const sebep = kontrol.sebep ?? "acilmadi";

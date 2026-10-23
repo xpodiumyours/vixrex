@@ -101,6 +101,8 @@ interface OncekiIslem {
 }
 
 interface FaturaOkumaSonucu {
+  otomatikTaslakRaporu?: { kaydedildi: number; atlandi: number; bekleyen: number; hatalar: string[] };
+  taslakKayitUyarisi?: string;
   hazirlaniyor?: boolean;
   maliyetOzeti?: {
     kayitSayisi: number;
@@ -466,62 +468,14 @@ export default function InvoiceToProducts({
   // Resmî kaynak/fotoğraf bulunmaması veya çelişki, yayın izni değildir.
   // Aynı satır tekrar açılınca güncel kaynak bilgisiyle tekrar kaydedilebilir.
   // Bu akış otomatik satış/yayın onayı VERMEZ.
-  const otomatikTaslaklariKaydet = useCallback(async (okunan: FaturaOkumaSonucu, hazir: SatirDurumu[]) => {
-    if (!okunan.islemKimligi) return;
-    const adaylar = hazir.map((satir, sira) => ({ satir, sira }))
-      .filter(({ satir }) => !satir.ayniAlisverisTekrari);
-    if (adaylar.length === 0) return;
-    const sahipCevabi = await fetch("/api/fatura-islem", {
-      method: "PUT", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ slug: storeSlug, islemKimligi: okunan.islemKimligi,
-        satirlar: hazir.map((satir, sira) => ({
-          satirSirasi: sira,
-          sahipDurumu: { satisFiyati: satir.satisFiyati, stok: satir.stok,
-            stokOnaylandi: satir.stokOnaylandi, kategoriId: satir.kategoriId,
-            onayli: satir.onayli, esnafGorselleri: satir.esnafGorselleri },
-        })),
-      }),
+  const otomatikTaslakRaporunuGoster = useCallback(async (okunan: FaturaOkumaSonucu, hazir: SatirDurumu[]) => {
+    setOtomatikTaslakRaporu(okunan.otomatikTaslakRaporu ?? {
+      kaydedildi: hazir.filter((satir) => satir.urunId).length,
+      atlandi: hazir.filter((satir) => !satir.urunId && !satir.ayniAlisverisTekrari).length,
     });
-    if (!sahipCevabi.ok) throw new Error("Taslak kayıt için fatura seçimleri saklanamadı.");
-    const istekler = adaylar.map(({ satir, sira }) => ({
-      sira,
-      govde: {
-        ...faturaUrunIstekGirdisi(satir, sira, kartDegerlendir({
-          satir, satisFiyati: fiyatSayisi(satir.satisFiyati),
-          stok: stokSayisi(satir.stok), esnafGorselleri: satir.esnafGorselleri,
-          onaylandi: satir.onayli,
-          templateKey: categories.find((kategori) => kategori.id === satir.kategoriId)?.product_template_key,
-        }), okunan, categories),
-        yayinIstegi: false,
-      },
-    }));
-    const baglanan = new Map<number, string>();
-    let atlandi = 0;
-    for (let baslangic = 0; baslangic < istekler.length; baslangic += TOPLU_UST_SINIR) {
-      const parca = istekler.slice(baslangic, baslangic + TOPLU_UST_SINIR);
-      const cevap = await fetch("/api/products/batch", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug: storeSlug, products: parca.map((istek) => istek.govde) }),
-      });
-      const yanit = await cevap.json().catch(() => null);
-      if (!cevap.ok || !yanit || !Array.isArray(yanit.satirlar)) {
-        throw new Error(yanit?.hata || "Ürün taslaklarının kalıcı kaydı doğrulanamadı.");
-      }
-      for (const kayit of yanit.satirlar as Array<{ sira: number; id?: string; durum: string }>) {
-        const aday = parca[kayit.sira];
-        if (!aday) throw new Error("Ürün taslağı ile fatura satırı uyuşmuyor.");
-        if (kayit.durum === "taslak" && typeof kayit.id === "string" && kayit.id) {
-          baglanan.set(aday.sira, kayit.id);
-        } else atlandi++;
-      }
-    }
-    if (baglanan.size + atlandi !== adaylar.length) throw new Error("Ürün taslağı kayıt sayısı uyuşmuyor.");
-    setSatirlar((eskiler) => eskiler.map((satir, sira) =>
-      baglanan.has(sira) ? { ...satir, urunId: baglanan.get(sira) } : satir));
-    setOtomatikTaslakRaporu({ kaydedildi: baglanan.size, atlandi });
-    if (atlandi > 0) setHata(`${atlandi} fatura satırı kalıcı ürün taslağına kaydedilemedi.`);
-    if (baglanan.size > 0) await onUploaded();
-  }, [categories, onUploaded, storeSlug]);
+    if (okunan.taslakKayitUyarisi) setHata(okunan.taslakKayitUyarisi);
+    if (hazir.some((satir) => satir.urunId)) await onUploaded();
+  }, [onUploaded]);
 
   async function islemiAc(islemKimligi: string) {
     setHata(null);
@@ -546,7 +500,7 @@ export default function InvoiceToProducts({
       const hazir = satirlariHazirla(acilan);
       setBelge(acilan);
       setSatirlar(hazir);
-      try { await otomatikTaslaklariKaydet(acilan, hazir); }
+      try { await otomatikTaslakRaporunuGoster(acilan, hazir); }
       catch (hata) { setHata(hata instanceof Error ? hata.message : "Otomatik taslak kaydı başarısız."); }
       setAdim("urunler");
     } catch (err) {
@@ -697,7 +651,7 @@ export default function InvoiceToProducts({
         const hazir = satirlariHazirla(okunan);
         setBelge(okunan);
         setSatirlar(hazir);
-        try { await otomatikTaslaklariKaydet(okunan, hazir); }
+        try { await otomatikTaslakRaporunuGoster(okunan, hazir); }
         catch (hata) { setHata(hata instanceof Error ? hata.message : "Otomatik taslak kaydı başarısız."); }
         setAdim("urunler");
       } catch (err) {
@@ -705,7 +659,7 @@ export default function InvoiceToProducts({
         setAdim("sec");
       }
     },
-    [bekleyenFaturaSonucunuAl, otomatikTaslaklariKaydet, satirlariHazirla, storeSlug],
+    [bekleyenFaturaSonucunuAl, otomatikTaslakRaporunuGoster, satirlariHazirla, storeSlug],
   );
 
   function satirGuncelle(index: number, degisiklik: Partial<SatirDurumu>) {

@@ -26,6 +26,14 @@ export function kartPresetIstekGovdesi(okuma: GoruSonucu): Record<string, unknow
     brand: s.marka, name: s.ad, code: s.model, barcode: s.barkod,
     variant: s.varyant, size: s.beden, net_quantity: s.gramaj,
     invoice_data: { quantity: s.adet, unit: s.birim, unit_price: s.birimFiyat, total_amount: s.tutar },
+    previous_product_research: {
+      description: s.siteAciklama, product_url: s.siteSayfa,
+      image_urls: s.siteGorseller ?? (s.siteGorsel ? [s.siteGorsel] : []),
+      category: s.siteKategori, manufacturer: s.uretici, attributes: s.ozellikler,
+      validation_status: s.dogrulamaDurumu, matched_attributes: s.eslesenBilgiler,
+      unmatched_attributes: s.eksikler, image_validation_status: s.gorselDogrulamaDurumu,
+      sources: s.kaynaklar,
+    },
   }));
   const gruplar = [...new Set(satirlar.map((s) => s.brand))].map((brand) => ({
     brand, rows: satirlar.filter((s) => s.brand === brand),
@@ -68,13 +76,15 @@ export async function kartPresetYanitiniOku(cevap: Response, okuma: GoruSonucu) 
     if (!nesne(kart) || !nesne(validation) || !nesne(media) || !Object.hasOwn(DURUMLAR, metin(validation.status))) {
       throw new Error("KART_YANITI_COZULEMEDI");
     }
-    const gorsel = adres(media.image_url ?? media.source_url);
+    const gorsel = adres(media.image_url) || adres(media.source_url);
     const kaynak = adres(validation.official_product_url);
     const eksikler = Array.isArray(validation.unmatched_attributes)
       ? validation.unmatched_attributes.filter((v): v is string => typeof v === "string") : [];
     return {
       ...s, ad: metin(kart.title) || s.ad,
       siteAciklama: metin(kart.short_description), siteKategori: metin(kart.category_suggestion),
+      siteMarka: metin(kart.brand), siteVaryant: metin(kart.variant),
+      gorselKullanimDurumu: metin(media.rights_status),
       siteSayfa: kaynak, siteGorsel: gorsel, siteGorseller: gorsel ? [gorsel] : [],
       dogrulamaDurumu: DURUMLAR[metin(validation.status)],
       eslesenBilgiler: validation.matched_attributes ?? [], eksikler,

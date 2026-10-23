@@ -4,12 +4,12 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 import { verifyStoreEditToken } from "@/lib/instagramServer";
 import { belgeParmakIzi } from "@/lib/faturaIslemKaydi";
-import { faturaTaslaklari } from "@/lib/faturaTaslagi";
-import { islemiYukle, islemYaniti, parmakIzindenIslemBul } from "@/lib/faturaIslemOku";
+import { faturaTaslakYanitiniHazirla } from "@/lib/faturaOtomatikTaslakKaydi";
+import { islemiYukle, parmakIzindenIslemBul } from "@/lib/faturaIslemOku";
 import { faturayiArkaPlanaGonder, bekleyenFaturaYaniti, arkaPlanFaturaHatasi } from "@/lib/faturaArkaPlanIslemi";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 const MAKS_BAYT = 4 * 1024 * 1024;
 const MAKS_SAYFA = 3;
@@ -66,7 +66,10 @@ export async function POST(request: NextRequest) {
   const parmakIzi = belgeParmakIzi(ozet);
   const eskiId = await parmakIzindenIslemBul(admin, storeId, parmakIzi);
   const onceki = eskiId ? await islemiYukle(admin, storeId, eskiId) : null;
-  if (onceki?.satirlar.length) return NextResponse.json({ ...islemYaniti(onceki), taslaklar: faturaTaslaklari(onceki.satirlar, onceki.islemKimligi) });
+  if (onceki?.satirlar.length) {
+    const sonuc = await faturaTaslakYanitiniHazirla(admin, storeId, ownerSlug, onceki);
+    return NextResponse.json(sonuc, { status: sonuc.hazirlaniyor ? 202 : 200, headers: { "Cache-Control": "private, no-store" } });
+  }
   if (!process.env.OPENROUTER_API_KEY) return NextResponse.json({ hata: "Fatura okuyucu hazır değil." }, { status: 503 });
   const fotograflar = baytlar.map((b, i) => `data:${turler[i]};base64,${Buffer.from(b).toString("base64")}`);
   try {

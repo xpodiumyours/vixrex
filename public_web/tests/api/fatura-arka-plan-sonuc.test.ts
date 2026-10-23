@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const m = vi.hoisted(() => ({ save: vi.fn(), load: vi.fn() }));
 vi.mock("@/lib/faturaIslemKaydi", () => ({ islemKaydet: m.save }));
 vi.mock("@/lib/faturaIslemOku", () => ({ islemiYukle: m.load, islemYaniti: (x:{satirlar:unknown[]}) => ({tamam:true,satirlar:x.satirlar}) }));
+vi.mock("@/lib/faturaOtomatikTaslakKaydi", () => ({ faturaTaslakYanitiniHazirla: async (_admin: unknown, _store: string, _slug: string, kayit: { satirlar: never[]; islemKimligi: string }) => ({ tamam: true, satirlar: kayit.satirlar, taslaklar: (await import("@/lib/faturaTaslagi")).faturaTaslaklari(kayit.satirlar, kayit.islemKimligi) }) }));
 import { arkaPlanFaturaSonucunuAl } from "@/lib/faturaArkaPlanIslemi";
 const job = "11111111-1111-4111-8111-111111111111";
 const line={ad:"Kaynak ürünü",model:"K-1",ham_satir:"K-1",uretici:"Üretici",beden:"L",varyant:"Lacivert",adet:2,birim_fiyat:100,site_aciklama:"Kaynak açıklaması",site_gorseller:["https://manufacturer.example/1.jpg"],site_sayfa:"https://manufacturer.example/product",ozellikler:[{key:"fabric",label:"Kumaş",value:"Pamuk"}],dogrulama_durumu:"? Belirsiz"};

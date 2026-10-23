@@ -52,7 +52,7 @@ begin
   update public.invoice_provider_runs
     set stage='cards', state='queued', request_id=v_request_id,
         read_result=p_read_result, response_body=null, http_status=null,
-        content_type=null, error_code=null, finished_at=null, callback_sent_at=null
+        content_type=null, error_code=null, created_at=now(), finished_at=null, callback_sent_at=null
     where job_id=p_job_id and store_id=p_store_id;
 
   return jsonb_build_object('success',true,'id',p_job_id,'stage','cards','state','queued');
@@ -124,36 +124,30 @@ alter function public.enqueue_invoice_provider_job(uuid,text,jsonb,text) owner t
 revoke execute on function public.enqueue_invoice_provider_job(uuid,text,jsonb,text) from public,anon,authenticated;
 grant execute on function public.enqueue_invoice_provider_job(uuid,text,jsonb,text) to service_role;
 
--- Ürün yayını için satış fiyatı + açık onay: kaynaksız/görselsiz ürün sahte kanıt sayılmaz.
--- Var olan kaynak/görsel verisi mevcutsa, yanlış kaynağı ve reddedilen görselleri engellemeye devam et.
-do $publish$
+do $draft$
 declare
- v_signature regprocedure := 'public.publish_invoice_product(uuid,text)'::regprocedure;
+ v_signature regprocedure := 'public.save_invoice_product(uuid,text,uuid,jsonb,jsonb,numeric)'::regprocedure;
  v_definition text := pg_get_functiondef(v_signature);
- v_old_source text := $frag$  if nullif(v_source,'') is null or v_source is distinct from v_product.fatura_kanit->>'kaynak'
-    or nullif(v_line.catalog_snapshot->>'resmiAd','') is null then
-    return jsonb_build_object('success',false,'hata','Resmî ürün kaynağı doğrulanamadı.');
-  end if;$frag$;
- v_new_source text := $frag$  if nullif(v_source,'') is not null and v_source is distinct from v_product.fatura_kanit->>'kaynak' then
-    return jsonb_build_object('success',false,'hata','Ürün kaynağı kayıtlı kaynakla uyuşmuyor.');
-  end if;$frag$;
- v_old_image text := $frag$  if v_product.image_urls is null or jsonb_typeof(v_product.image_urls)<>'array' or jsonb_array_length(v_product.image_urls)<1 then
-    return jsonb_build_object('success',false,'hata','En az bir doğru ürün görseli gerekiyor.');
-  end if;$frag$;
- v_new_image text := $frag$  if v_product.image_urls is not null and jsonb_typeof(v_product.image_urls)<>'array' then
-    return jsonb_build_object('success',false,'hata','Ürün görsel listesi geçersiz.');
+ v_anchor text := $frag$  select * into v_line from public.invoice_job_lines where id=p_line_id for update;$frag$;
+ v_guard text := $frag$
+  if p_evidence->>'automaticDraft' = 'true' and v_line.product_id is not null then
+    select * into v_current from public.products where id=v_line.product_id and store_id=p_store_id;
+    if not found then raise exception 'FATURA_BAGLI_URUN_BULUNAMADI'; end if;
+    return jsonb_build_object('success',true,'id',v_current.id,'slug',v_current.slug,'created',false,'kayit','mevcut');
   end if;$frag$;
 begin
- if position(v_old_source in v_definition)=0 or position(v_old_image in v_definition)=0 then
-   raise exception 'FATURA_YAYIN_FONKSIYONU_BEKLENEN_SURUM_DEGIL';
+ if position(v_anchor in v_definition)=0 then
+   raise exception 'FATURA_KAYIT_FONKSIYONU_BEKLENEN_SURUM_DEGIL';
  end if;
- v_definition:=replace(replace(v_definition,v_old_source,v_new_source),v_old_image,v_new_image);
+ if position(v_guard in v_definition)=0 then
+   v_definition:=replace(v_definition,v_anchor,v_anchor||v_guard);
+ end if;
  execute v_definition;
  if not has_function_privilege('service_role',v_signature,'EXECUTE') then
-   raise exception 'FATURA_YAYIN_YETKISI_DEGISTI';
+   raise exception 'FATURA_KAYIT_YETKISI_DEGISTI';
  end if;
 end;
-$publish$;
+$draft$;
 
 -- Var olan pg_cron her dakika çağırır. Sadece hazır cevaplara bildirim gider.
 create or replace function public.sync_invoice_provider_responses()
@@ -174,17 +168,20 @@ begin
     where state='queued' and created_at<now()-interval '33 minutes';
   for v_row in
     select r.job_id,r.callback_token from public.invoice_provider_runs r
-    where r.state='received' and (r.callback_sent_at is null or r.callback_sent_at<now()-interval '2 minutes')
+    where (r.state='received' or (r.state='processed' and r.error_code is null and exists(
+      select 1 from public.invoice_job_lines l join public.invoice_jobs j on j.id=l.job_id
+      where l.job_id=r.job_id and j.store_id=r.store_id and j.same_purchase_of is null and l.product_id is null
+    ))) and (r.callback_sent_at is null or r.callback_sent_at<now()-interval '6 minutes')
     order by r.created_at limit 8 for update skip locked
   loop
     perform net.http_post(
       url := 'https://vixrex.com/api/cron/fatura-provider',
       body := jsonb_build_object('jobId',v_row.job_id::text),
       headers := jsonb_build_object('Content-Type','application/json','X-Vixrex-Callback',v_row.callback_token::text),
-      timeout_milliseconds := 60000
+      timeout_milliseconds := 300000
     );
     update public.invoice_provider_runs set callback_sent_at=now()
-      where job_id=v_row.job_id and state='received';
+      where job_id=v_row.job_id and state in ('received','processed');
   end loop;
 end;
 $worker$;

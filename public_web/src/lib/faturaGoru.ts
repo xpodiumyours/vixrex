@@ -26,6 +26,9 @@ export interface GoruSatiri {
   siteGorseller?: string[];
   siteSayfa?: string;
   siteKategori?: string;
+  siteMarka?: string;
+  siteVaryant?: string;
+  gorselKullanimDurumu?: string;
   satirNo?: number | null;
   uretici?: string;
   gramaj?: string;

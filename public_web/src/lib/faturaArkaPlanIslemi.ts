@@ -2,8 +2,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { faturaIstekGovdesi, faturaYanitiniOku, type GoruSonucu } from "@/lib/faturaGoru";
 import { faturaSatiriniAktar } from "@/lib/faturaPresetAktarimi";
 import { islemKaydet } from "@/lib/faturaIslemKaydi";
-import { islemiYukle, islemYaniti } from "@/lib/faturaIslemOku";
-import { faturaTaslaklari } from "@/lib/faturaTaslagi";
+import { islemiYukle } from "@/lib/faturaIslemOku";
+import { faturaTaslakYanitiniHazirla } from "@/lib/faturaOtomatikTaslakKaydi";
 import {
   kartPresetIstekGovdesi,
   kartPresetYanitiniOku,
@@ -63,7 +63,7 @@ export async function arkaPlanFaturaSonucunuAl(
   if (sonuc.state === "processed") {
     const kayit = await islemiYukle(admin, storeId, islemKimligi);
     if (!kayit?.satirlar.length) throw new Error("FATURA_KAYDI_EKSIK");
-    return { ...islemYaniti(kayit), taslaklar: faturaTaslaklari(kayit.satirlar, islemKimligi) };
+    return faturaTaslakYanitiniHazirla(admin, storeId, slug, kayit);
   }
   if (sonuc.state !== "received" || typeof sonuc.body !== "string" || typeof sonuc.fingerprint !== "string") {
     throw new Error("OKUYUCU_EKSIK_CEVAP");
@@ -130,7 +130,7 @@ export async function arkaPlanFaturaSonucunuAl(
     if (id !== islemKimligi) throw new Error("FATURA_KAYDI_EKSIK");
     const kayit = await islemiYukle(admin, storeId, islemKimligi);
     if (!kayit?.satirlar.length) throw new Error("FATURA_KAYDI_EKSIK");
-    return { ...islemYaniti(kayit), taslaklar: faturaTaslaklari(kayit.satirlar, islemKimligi) };
+    return faturaTaslakYanitiniHazirla(admin, storeId, slug, kayit);
   } catch (err) {
     const kod = err instanceof Error && /^[A-Z_]{1,96}$/.test(err.message) ? err.message : "OKUYUCU_CEVAP_VERMEDI";
     // Geçici DB yazma/okuma hatasında alınmış cevabı harcamadan sonraki GET ile yeniden kaydet.

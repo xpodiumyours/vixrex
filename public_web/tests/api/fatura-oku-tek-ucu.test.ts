@@ -11,6 +11,7 @@ vi.mock("@/lib/ownerSession", () => ({ OWNER_SESSION_COOKIE: "owner", verifyOwne
 vi.mock("@/lib/instagramServer", () => ({ verifyStoreEditToken: m.edit }));
 vi.mock("@/lib/supabaseAdmin", () => ({ getSupabaseAdmin: () => ({ rpc: m.rpc, from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { id: "store-1" } }) }) }) }) }) }));
 vi.mock("@/lib/faturaIslemOku", async (original) => ({ ...await original<typeof import("@/lib/faturaIslemOku")>(), parmakIzindenIslemBul: m.previous, islemiYukle: m.load, islemYaniti: (x: { satirlar: unknown[] }) => ({ tamam: true, satirlar: x.satirlar }) }));
+vi.mock("@/lib/faturaOtomatikTaslakKaydi", () => ({ faturaTaslakYanitiniHazirla: async (_admin: unknown, _store: string, _slug: string, kayit: { satirlar: never[]; islemKimligi: string }) => ({ tamam: true, satirlar: kayit.satirlar, taslaklar: (await import("@/lib/faturaTaslagi")).faturaTaslaklari(kayit.satirlar, kayit.islemKimligi) }) }));
 import { POST } from "@/app/api/fatura-oku/route";
 import { OKUMA_PRESET } from "@/lib/faturaArkaPlanIslemi";
 const png = () => new File([new Uint8Array([137,80,78,71,13,10,26,10,0,0,0,13])], "fatura.png", { type: "image/png" });
