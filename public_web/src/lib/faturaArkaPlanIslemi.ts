@@ -1,18 +1,17 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { faturaIstekGovdesi, faturaYanitiniOku } from "@/lib/faturaGoru";
+import { faturaIstekGovdesi, faturaYanitiniOku, type GoruSonucu } from "@/lib/faturaGoru";
 import { faturaSatiriniAktar } from "@/lib/faturaPresetAktarimi";
 import { islemKaydet } from "@/lib/faturaIslemKaydi";
 import { islemiYukle, islemYaniti } from "@/lib/faturaIslemOku";
 import { faturaTaslaklari } from "@/lib/faturaTaslagi";
 import {
-  faturaKartIstekGovdesi,
-  faturaKartSonucunuBirlestir,
-  KART_FATURA_PRESET,
-  OKUMA_FATURA_PRESET,
+  kartPresetIstekGovdesi,
+  kartPresetYanitiniOku,
+  URUN_KART_PRESET,
 } from "@/lib/faturaKartPreset";
 
-export const OKUMA_PRESET = OKUMA_FATURA_PRESET;
-export const OTOMATIK_FATURA_PRESET = KART_FATURA_PRESET;
+export const OKUMA_PRESET = "@preset/vixrex-qwen-fatura-okuma-suzme";
+export const OTOMATIK_FATURA_PRESET = URUN_KART_PRESET;
 
 export function bekleyenFaturaYaniti(islemKimligi: string) {
   return {
@@ -76,31 +75,40 @@ export async function arkaPlanFaturaSonucunuAl(
       status: httpStatus,
       headers: { "content-type": typeof sonuc.contentType === "string" ? sonuc.contentType : "application/json" },
     });
-    const okuma = await faturaYanitiniOku(cevap);
-    if (!okuma.satirlar.length) throw new Error("FOTOGRAFTA_YAZI_YOK");
-
-    // İlk cevap yalnızca fatura okuma aşamasıdır. Aynı işlem kimliği üzerinde
-    // ikinci preset'i bir kez kuyruğa al; GET/polling bundan sonra devam eder.
+    // Fatura okuyucusu ile ürün kartı preset'i farklı JSON sözleşmeleri üretir.
+    // İlk sonucu yalnızca bir kez okur, ikinciyi row_id ile eşleştirir.
+    let okuma: GoruSonucu;
+    let kartCevabi: unknown;
+    let asamaKullanimlari: unknown;
     if (sonuc.stage === "reading") {
+      okuma = await faturaYanitiniOku(cevap);
+      if (!okuma.satirlar.length) throw new Error("FOTOGRAFTA_YAZI_YOK");
       const ikinci = await admin.rpc("advance_invoice_provider_job", {
         p_store_id: storeId,
         p_job_id: islemKimligi,
         p_read_result: okuma,
-        p_body: faturaKartIstekGovdesi(okuma),
+        p_body: kartPresetIstekGovdesi(okuma),
         p_api_key: process.env.OPENROUTER_API_KEY,
       });
       if (ikinci.error || ikinci.data?.success !== true) throw new Error("KART_ISLEYICI_HAZIR_DEGIL");
       return bekleyenFaturaYaniti(islemKimligi);
-    }
-
-    // İkinci preset aynı satır sayısını döndürmeli. Fatura tutar/adet/kod
-    // alanlarının sahibi ilk cevap olarak kalır; kart preset'i yalnız katalog
-    // alanlarını zenginleştirir.
-    if (sonuc.stage !== "cards" || !sonuc.readResult || typeof sonuc.readResult !== "object") {
+    } else if (sonuc.stage === "cards") {
+      const ilkOkuma = sonuc.readResult as GoruSonucu | null;
+      if (!ilkOkuma || !Array.isArray(ilkOkuma.satirlar) || !ilkOkuma.satirlar.length) {
+        throw new Error("OKUYUCU_EKSIK_CEVAP");
+      }
+      const kart = await kartPresetYanitiniOku(cevap, ilkOkuma);
+      okuma = kart.sonuc;
+      kartCevabi = kart.kartCevabi;
+      asamaKullanimlari = {
+        okuma: { gercekMaliyet: ilkOkuma.gercekMaliyet, girdiToken: ilkOkuma.girdiToken,
+          ciktiToken: ilkOkuma.ciktiToken, akilToken: ilkOkuma.akilToken },
+        kart: kart.kullanim,
+      };
+    } else {
       throw new Error("OKUYUCU_EKSIK_CEVAP");
     }
-    const ilkOkuma = sonuc.readResult as typeof okuma;
-    const birlesikOkuma = faturaKartSonucunuBirlestir(ilkOkuma, okuma);
+    const birlesikOkuma = okuma;
     const satirlar = birlesikOkuma.satirlar.map((s) => faturaSatiriniAktar(s, birlesikOkuma.tedarikci));
     const id = await islemKaydet({
       slug, parmakIzi: sonuc.fingerprint, providerJobId: islemKimligi,
@@ -115,7 +123,8 @@ export async function arkaPlanFaturaSonucunuAl(
       aramaDurumu: {
         erisimHatasi: satirlar.some((s) => s.dogrulamaDurumu?.includes("Araştırılamadı")),
         sonrakiSatir: satirlar.length,
-        presetCevabi: { belgeEkleri: birlesikOkuma.belgeEkleri, gruplar: birlesikOkuma.gruplar, uyarilar: birlesikOkuma.uyarilar },
+        presetCevabi: { belgeEkleri: birlesikOkuma.belgeEkleri, gruplar: birlesikOkuma.gruplar,
+          uyarilar: birlesikOkuma.uyarilar, kartCevabi, asamaKullanimlari },
       },
     });
     if (id !== islemKimligi) throw new Error("FATURA_KAYDI_EKSIK");
@@ -125,7 +134,7 @@ export async function arkaPlanFaturaSonucunuAl(
   } catch (err) {
     const kod = err instanceof Error && /^[A-Z_]{1,96}$/.test(err.message) ? err.message : "OKUYUCU_CEVAP_VERMEDI";
     // Geçici DB yazma/okuma hatasında alınmış cevabı harcamadan sonraki GET ile yeniden kaydet.
-    if (kod !== "FATURA_KAYDI_EKSIK") {
+    if (!["FATURA_KAYDI_EKSIK", "KART_ISLEYICI_HAZIR_DEGIL"].includes(kod)) {
       await admin.rpc("fail_invoice_provider_job", { p_store_id: storeId, p_job_id: islemKimligi, p_error: kod });
     }
     throw new Error(kod);
@@ -139,5 +148,8 @@ export function arkaPlanFaturaHatasi(kod: string): string {
   if (kod === "OKUYUCU_BAKIYE_BITTI") return "OpenRouter fatura işlemini tamamlayamadı. Hesabın kullanım durumunu kontrol edin.";
   if (kod === "FOTOGRAFTA_YAZI_YOK") return "Fotoğraftan ürün satırı alınamadı. Ürün oluşturulmadı.";
   if (kod === "FATURA_KAYDI_EKSIK") return "Gerçek sonuç alındı ancak kaydı henüz tamamlanmadı. Aynı işlemden devam edebilirsin.";
+  if (kod === "KART_ISLEYICI_HAZIR_DEGIL") return "Fatura okundu ancak ürün kartı aşaması başlatılamadı. Aynı işlemden devam et.";
+  if (kod === "KART_SATIRLARI_ESLESMEDI") return "Kart yanıtındaki ürün kimlikleri faturayla eşleşmedi; yanlış karta bilgi yazılmadı.";
+  if (kod === "KART_YANITI_COZULEMEDI") return "İkinci preset JSON yanıtı doğrulanamadı; ürün kartı kaydedilmedi.";
   return "OpenRouter ürün hazırlamayı tamamlayamadı. Eksik cevap ürün kartı olarak kaydedilmedi.";
 }

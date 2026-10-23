@@ -180,7 +180,7 @@ export async function faturayiOku(dataUrl: string | string[]): Promise<GoruSonuc
 }
 
 /** Senkron ve kalıcı işleyici aynı tamamlanmış OpenRouter yanıtını çözümler. */
-export async function faturaYanitiniOku(cevap: Response): Promise<GoruSonucu> {
+export async function faturaYanitMetniniOku(cevap: Response) {
   let ham;
   try { ham = await openrouterYanitiniOku(cevap); }
   catch (hata) {
@@ -205,12 +205,17 @@ export async function faturaYanitiniOku(cevap: Response): Promise<GoruSonucu> {
   if (secim?.message?.refusal) throw new Error("OKUYUCU_CEVAP_VERMEDI");
   const icerik = secim?.message?.content;
   if (typeof icerik !== "string" || !icerik.trim()) throw new Error("FOTOGRAFTA_YAZI_YOK");
-  const sonuc = katalogJsonunuOku(icerik);
   const usage = ham?.usage;
   return {
-    ...sonuc, maliyet: sayi(usage?.cost), gercekMaliyet: sayi(usage?.cost),
+    icerik, maliyet: sayi(usage?.cost), gercekMaliyet: sayi(usage?.cost),
     girdiToken: Number(usage?.prompt_tokens ?? usage?.input_tokens ?? 0),
     ciktiToken: Number(usage?.completion_tokens ?? usage?.output_tokens ?? 0),
     akilToken: Number(usage?.completion_tokens_details?.reasoning_tokens ?? 0),
   };
+}
+
+/** Fatura okuyucusunun JSON biçimini, kart preset'inden bağımsız çözümler. */
+export async function faturaYanitiniOku(cevap: Response): Promise<GoruSonucu> {
+  const { icerik, ...kullanim } = await faturaYanitMetniniOku(cevap);
+  return { ...katalogJsonunuOku(icerik), ...kullanim };
 }
