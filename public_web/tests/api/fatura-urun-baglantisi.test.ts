@@ -218,6 +218,7 @@ describe("fatura satırı → atomik ürün kaydı", () => {
   it("aynı satırın mevcut kimliği atomik kayıttan geri gelir", async () => {
     mocks.dogrula.mockResolvedValue(dogrulanmis({ urunId: "urun-9" }));
     mocks.save.mockResolvedValue({ id: "urun-9", slug: "urun-9", created: false, kayit: "guncellendi" });
+    mocks.mevcutOku.mockResolvedValue({ id: "urun-9", gorunur: false });
     const body = await (await topluUrunEkle(istek([satir()]))).json();
     expect(body.satirlar[0]).toMatchObject({ id: "urun-9", kayit: "guncellendi" });
     expect(mocks.createProduct).not.toHaveBeenCalled();

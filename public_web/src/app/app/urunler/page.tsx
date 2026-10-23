@@ -62,7 +62,7 @@ export default function UrunlerPage() {
     });
   }, [router, yukle]);
 
-  if (yukleniyor) {
+  if (yukleniyor && !store) {
     return (
       <div className="owner-shell p-6">
         <div className="mx-auto max-w-[900px] space-y-4">
@@ -73,7 +73,7 @@ export default function UrunlerPage() {
     );
   }
 
-  if (hata || !store) {
+  if (!store) {
     return (
       <div className="owner-shell p-6">
         <div className="mx-auto max-w-[900px] rounded-2xl border border-white/10 bg-white/5 p-8 text-center">
@@ -94,6 +94,7 @@ export default function UrunlerPage() {
           </div>
           <Link href="/app" className="owner-button-secondary">← Pano</Link>
         </div>
+        {hata && <p role="alert" className="owner-error text-sm">{hata}</p>}
         <OwnerProductManager storeSlug={store.slug} products={store.products ?? []} categories={store.product_categories ?? []} varsayilanUrunTipi={isletmeUrunSablonu(store.kategori, store.business_type)} storeName={store.name} onRefresh={yukle} />
       </div>
     </div>

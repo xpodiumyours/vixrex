@@ -1,5 +1,6 @@
 import type { GoruSatiri } from "@/lib/faturaGoru";
 import type { EslesmisFaturaSatiri, SatirSonucu } from "@/lib/faturaEslestir";
+import { faturaKatalogMetadatasi } from "@/lib/faturaUrunIcerigi";
 
 /** Etiket çevirisi; ikinci bir araştırma veya ürün doğrulama kararı değildir. */
 export function presetDurumunuAktar(durum: string | undefined): SatirSonucu {
@@ -11,6 +12,9 @@ export function presetDurumunuAktar(durum: string | undefined): SatirSonucu {
 
 export function faturaSatiriniAktar(satir: GoruSatiri, tedarikci: string): EslesmisFaturaSatiri {
   const gorseller = satir.siteGorseller ?? [];
+  const ozellikler = satir.siteVaryant
+    ? faturaKatalogMetadatasi({ ozellikler: satir.ozellikler, varyant: satir.varyant }).attributes
+    : satir.ozellikler;
   const eksikler = [...(satir.eksikler ?? [])];
   if (!satir.dogrulamaDurumu) eksikler.push("OpenRouter doğrulama durumu bildirmedi.");
   if (satir.okumaGuveni === null) eksikler.push("OpenRouter okuma güveni bildirmedi.");
@@ -28,16 +32,18 @@ export function faturaSatiriniAktar(satir: GoruSatiri, tedarikci: string): Esles
     guven: satir.okumaGuveni ?? 0,
     siteAd: satir.ad || satir.model, siteAciklama: satir.siteAciklama,
     siteGorsel: gorseller[0] ?? "", siteGorseller: gorseller, siteSayfa: satir.siteSayfa,
-    siteKategori: satir.siteKategori, siteOzellikler: satir.ozellikler,
+    siteKategori: satir.siteKategori, siteOzellikler: ozellikler,
+    siteMarka: satir.siteMarka,
     sonuc: presetDurumunuAktar(satir.dogrulamaDurumu),
     uyari: eksikler.length ? eksikler.join(" · ") : undefined,
     katalog: {
-      ...ekler, firma: tedarikci, kaynakFirma: satir.uretici || satir.marka || tedarikci,
+      ...ekler, firma: tedarikci, kaynakFirma: satir.uretici || satir.siteMarka || satir.marka || tedarikci,
       // Kod/barkodun mevcut olması onların resmî kaynakla doğrulandığı anlamına gelmez.
-      dayanak: "ad", izinDurumu: "yok", resmiAd: satir.ad || satir.model, marka: satir.marka,
+      dayanak: "ad", izinDurumu: satir.gorselKullanimDurumu === "authorized" ? "var" : "yok",
+      resmiAd: satir.ad || satir.model, marka: satir.siteMarka || satir.marka,
       aciklama: satir.siteAciklama ?? "", gorseller, gorselAdaylari: gorseller,
-      kaynak: satir.siteSayfa ?? "", kategori: satir.siteKategori, ozellikler: satir.ozellikler,
-      beden: satir.beden, varyant: satir.varyant,
+      kaynak: satir.siteSayfa ?? "", kategori: satir.siteKategori, ozellikler,
+      beden: satir.beden, varyant: satir.siteVaryant || satir.varyant,
     },
   };
 }

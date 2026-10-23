@@ -55,6 +55,65 @@ const cases = [
 ];
 const results: unknown[] = [];
 
+function akisEkrani(adim: string, satirlar: unknown[], sonuc?: unknown) {
+  state.index = 0;
+  state.values = {
+    0: adim,
+    2: { satirlar, belgeAdedi: null, belgeToplami: null, tedarikci: "Test toptancı" },
+    3: satirlar,
+    ...(sonuc ? { 7: sonuc } : {}),
+  };
+  return renderToStaticMarkup(createElement(InvoiceToProducts, {
+    storeSlug: "offline-test", onUploaded: async () => {},
+  }));
+}
+
+function ornekKart() {
+  const parsed = katalogJsonunuOku(JSON.stringify({ satirlar: [cases[0].product] }));
+  return faturaSatiriDurumunuHazirla(faturaSatiriniAktar(parsed.satirlar[0], "Test toptancı"), "");
+}
+
+it("fiyatı yazılmış kart açık onay verilmeden hazır sayılmaz", () => {
+  const kart = { ...ornekKart(), satisFiyati: "149,90" };
+  const bekleyen = akisEkrani("urunler", [kart]);
+  expect(bekleyen).toContain("0 / 1 hazır");
+  expect(bekleyen).toContain('aria-pressed="false"');
+  const onayli = akisEkrani("urunler", [{ ...kart, onayli: true }]);
+  expect(onayli).toContain("1 / 1 hazır");
+  expect(onayli).toContain('aria-pressed="true"');
+  expect(onayli).toContain("1 onaylı kartla devam et");
+});
+
+it("resmî kaynak gelmeyen kartın taslakta korunduğunu açıklar", () => {
+  const html = akisEkrani("urunler", [{ ...ornekKart(), katalog: null }]);
+  expect(html).toContain("Kart faturadaki bilgilerle taslak olarak korunur.");
+  expect(html).not.toContain("kart üretilmez");
+});
+
+it.each([false, true])("yayın sonucunu tüketici doğrulamasına göre gösterir: %s", (dogrulandi) => {
+  const kart = { ...ornekKart(), satisFiyati: "149.90", onayli: true };
+  const html = akisEkrani("bitti", [kart], {
+    tuketiciDogrulandi: dogrulandi, toplam: 1, yayinda: 1, taslak: 0, hatali: 0,
+    satirlar: [{ sira: 0, ad: kart.ad, durum: "yayinda", id: "test-product" }],
+  });
+  expect(html).toContain(dogrulandi ? "Vitrin hazır" : "Yayın kaydı alındı");
+  if (!dogrulandi) expect(html).not.toContain("Vitrin hazır");
+  expect(html).toContain('href="/v/offline-test"');
+  expect(html).toContain("Kartları düzenle");
+});
+
+it("taslak kaydından sonra yayınlama ve kartlara dönüş ayrı kalır", () => {
+  const kart = { ...ornekKart(), satisFiyati: "149.90", onayli: true };
+  const html = akisEkrani("bitti", [kart], {
+    toplam: 1, yayinda: 0, taslak: 1, hatali: 0,
+    satirlar: [{ sira: 0, ad: kart.ad, durum: "taslak", id: "test-product" }],
+  });
+  expect(html).toContain("1 ürünü yayınla");
+  expect(html).toContain("Kartları düzenle");
+  expect(html).not.toContain("Vitrin hazır");
+  expect(html).not.toContain('href="/v/offline-test"');
+});
+
 it.each(cases)("$sector: gelen alanlar esnaf ve tüketici kartına taşınır", ({ sector, product, visible }) => {
   const input = { satirlar: [product] };
   const parsed = katalogJsonunuOku(JSON.stringify(input));

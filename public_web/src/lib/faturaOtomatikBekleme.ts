@@ -4,7 +4,7 @@ export type FaturaBeklemeDurumu = {
 };
 
 const BEKLEME_ARALIGI_MS = 5_000;
-const BEKLEME_ZAMAN_ASIMI_MS = 35 * 60 * 1_000;
+const BEKLEME_ZAMAN_ASIMI_MS = 70 * 60 * 1_000;
 
 type Kayit = Record<string, unknown>;
 
@@ -91,7 +91,7 @@ async function httpHatasi(yanit: Response): Promise<Error> {
 }
 
 function timeoutHatasi(): Error {
-  return new Error("Fatura ürünleri 35 dakika içinde hazırlanamadı. Lütfen tekrar dene.");
+  return new Error("Fatura ürünleri bekleme süresi içinde hazırlanamadı. Aynı işlemden devam edebilirsin.");
 }
 
 /**

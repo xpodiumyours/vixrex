@@ -5,14 +5,16 @@ import { arkaPlanFaturaSonucunuAl, arkaPlanFaturaHatasi } from "@/lib/faturaArka
 import {
   islemiYukle,
   islemleriListele,
-  islemYaniti,
   urundenIslemBul,
   sahipDurumlariniKaydet,
   sahipDurumunuTemizle,
   type SahipDurumu,
 } from "@/lib/faturaIslemOku";
 
+import { faturaTaslakYanitiniHazirla } from "@/lib/faturaOtomatikTaslakKaydi";
+
 export const dynamic = "force-dynamic";
+export const maxDuration = 300;
 
 const KIMLIK = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const EN_FAZLA_SATIR = 200;
@@ -50,7 +52,10 @@ export async function GET(request: NextRequest) {
   const islem = await islemiYukle(admin, yetki.storeId, islemKimligi);
   if (!islem) return NextResponse.json({ hata: "İşlem bulunamadı." }, { status: 404 });
 
-  if (islem.satirlar.length) return NextResponse.json(islemYaniti(islem), { headers: { "Cache-Control": "private, no-store" } });
+  if (islem.satirlar.length) {
+    const sonuc = await faturaTaslakYanitiniHazirla(admin, yetki.storeId, slug, islem);
+    return NextResponse.json(sonuc, { status: sonuc.hazirlaniyor ? 202 : 200, headers: { "Cache-Control": "private, no-store" } });
+  }
   try {
     const sonuc = await arkaPlanFaturaSonucunuAl(admin, yetki.storeId, slug, islemKimligi);
     return NextResponse.json(sonuc, { status: sonuc.hazirlaniyor ? 202 : 200, headers: { "Cache-Control": "private, no-store" } });
