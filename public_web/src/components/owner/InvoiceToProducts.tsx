@@ -824,7 +824,9 @@ export default function InvoiceToProducts({
       setSatirlar(onaylanan);
       const istekler = onayliGonderilecek.map(({ satir, sira, degerlendirme }) => ({
         sira,
-        govde: faturaUrunIstekGirdisi(satir, sira, degerlendirme, belge, categories, true),
+        // Flutter ile aynı sözleşme: bu adım bilgileri onaylar ve görünmez
+        // taslak oluşturur; vitrinde görünürlük ayrı Yayınla adımındadır.
+        govde: faturaUrunIstekGirdisi(satir, sira, degerlendirme, belge, categories, false),
       }));
       const birlesenSatirlar: YazmaSonucu["satirlar"] = [];
       let yayinda = 0;
@@ -1501,12 +1503,16 @@ export default function InvoiceToProducts({
         <span>
           {hazirSayisi} / {satirlar.length} hazır
         </span>
+        <p className="fatura-aciklama">
+          Bu adım yalnızca onaylanan kartları görünmez taslak olarak kaydeder. Vitrine almak için
+          sonraki ekranda ayrıca yayınlaman gerekir.
+        </p>
         <button
           type="button"
           onClick={() => void vitrineYaz()}
           disabled={hazirSayisi === 0 || yaziliyor}
         >
-          {yaziliyor ? "Yayınlanıyor…" : `${hazirSayisi} kartı onayla ve yayınla`}
+          {yaziliyor ? "Taslaklar hazırlanıyor…" : `${hazirSayisi} taslak ürünü hazırla`}
         </button>
       </div>
 
