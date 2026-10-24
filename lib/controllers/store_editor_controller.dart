@@ -925,6 +925,20 @@ class StoreEditorController extends ChangeNotifier
     );
   }
 
+  Future<OwnerPreviewLink> openExistingOwnerWorkspace({
+    required String slug,
+    required String editToken,
+  }) async {
+    final result = await _ownerPreviewService.openExistingStore(
+      slug: slug,
+      editToken: editToken,
+    );
+    return OwnerPreviewLink(
+      result.url,
+      versionConflict: result.versionConflict,
+    );
+  }
+
   void _syncEditorGalleryIntoStoreData() {
     _data.galleryItems =
         activeGalleryItems.map((item) {
