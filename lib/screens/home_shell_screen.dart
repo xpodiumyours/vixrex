@@ -16,6 +16,7 @@ import 'package:vixrex/screens/profile_screen.dart';
 import 'package:vixrex/controllers/ocr_controller.dart';
 import 'package:vixrex/controllers/store_editor_controller.dart';
 import 'package:vixrex/services/store_local_storage_service.dart';
+import 'package:vixrex/services/owner_bootstrap_service.dart';
 import 'package:vixrex/services/vixrex_assistant_nlu_types.dart';
 import 'package:vixrex/services/vixrex_session_controller.dart';
 import 'package:vixrex/services/vixrex_profile_snapshot.dart';
@@ -62,6 +63,7 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
   VixRexProfileSnapshot? _vixrexSnapshot;
   PublishedVitrinInfo? _publishedInfo;
   bool _vixrexHasShared = false;
+  bool _vixrexOpening = false;
   String? _dismissedVixRexRecommendationId;
   final _snapshotLoader = const VixRexSnapshotLoader();
 
@@ -95,6 +97,11 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
       widget.initialVitrinName,
     );
     _loadVixRexSnapshot();
+    if (_selectedIndex == 2) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _openVixrexTab();
+      });
+    }
     final pending = widget.initialVixRexAction;
     if (pending != null && pending != VixRexAction.none) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -167,6 +174,64 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
   }
 
   // ── Navigation ────────────────────────────────────────────────────────────
+
+  Future<void> _openVixrexTab() async {
+    if (_vixrexOpening) return;
+    _vixrexOpening = true;
+    try {
+      await _editorInitialization;
+      final ownerResult = await const OwnerBootstrapService().getir();
+      if (!mounted) return;
+      if (ownerResult.isFailure || ownerResult.data == null) {
+        throw StateError('Vitrin sahipliği doğrulanamadı.');
+      }
+      final owner = ownerResult.data!;
+      if (owner.hasStore) {
+        if (owner.slug.isEmpty || owner.editToken.isEmpty) {
+          throw StateError('Vitrin sahipliği doğrulanamadı.');
+        }
+        final link = await _editorController.openExistingOwnerWorkspace(
+          slug: owner.slug,
+          editToken: owner.editToken,
+        );
+        if (!mounted) return;
+        await AppRouter.openPublicUrl(
+          context,
+          link.url,
+          failureMessage: 'Vitrin düzenleyici açılamadı.',
+        );
+        return;
+      }
+
+      final publishedInfo = _editorController.publishedInfo;
+      if (publishedInfo != null && publishedInfo.isComplete) {
+        if (!publishedInfo.canEditRemote) {
+          throw StateError('Vitrin düzenleme yetkisi doğrulanamadı.');
+        }
+        final link = await _editorController.openOwnerPreview();
+        if (!mounted) return;
+        await AppRouter.openPublicUrl(
+          context,
+          link.url,
+          failureMessage: 'Vitrin düzenleyici açılamadı.',
+        );
+        return;
+      }
+
+      if (!mounted) return;
+      setState(() => _selectedIndex = 2);
+      await _loadVixRexSnapshot();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Vitrin sahipliği doğrulanamadı. Vitrinim bölümünden tekrar dene.'),
+        ),
+      );
+    } finally {
+      _vixrexOpening = false;
+    }
+  }
 
   void _openExplore() {
     setState(() => _selectedIndex = 1); // Discover
@@ -682,9 +747,12 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
               items: sidebarItems,
               selectedIndex: _selectedIndex,
               onSelected: (index) {
+                if (index == 2) {
+                  _openVixrexTab();
+                  return;
+                }
                 setState(() => _selectedIndex = index);
                 if (index == 1) _exploreKey.currentState?.reloadStores();
-                if (index == 2) _loadVixRexSnapshot();
               },
               searchController: _globalSearchController,
               onSearchSubmitted: _applyGlobalSearch,
@@ -731,8 +799,7 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
                                 snapshot: _vixrexSnapshot,
                                 hasShared: _vixrexHasShared,
                                 // Tek kapı: overlay FAQ yok → mevcut VixRex sekmesi.
-                                onOpen:
-                                    () => setState(() => _selectedIndex = 2),
+                                onOpen: _openVixrexTab,
                               ),
                             ),
                           ),
@@ -764,7 +831,7 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
                   snapshot: _vixrexSnapshot,
                   hasShared: _vixrexHasShared,
                   // Tek kapı: overlay FAQ yok → mevcut VixRex sekmesi.
-                  onOpen: () => setState(() => _selectedIndex = 2),
+                  onOpen: _openVixrexTab,
                 ),
               ),
             ),
@@ -777,9 +844,12 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
         child: NavigationBar(
           selectedIndex: _selectedIndex,
           onDestinationSelected: (index) {
+            if (index == 2) {
+              _openVixrexTab();
+              return;
+            }
             setState(() => _selectedIndex = index);
             if (index == 1) _exploreKey.currentState?.reloadStores();
-            if (index == 2) _loadVixRexSnapshot();
           },
           destinations: destinations,
         ),
