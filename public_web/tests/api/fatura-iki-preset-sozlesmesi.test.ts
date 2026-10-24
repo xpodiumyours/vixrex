@@ -69,7 +69,7 @@ describe("gerçek ikinci preset JSON sözleşmesi",()=>{
     await expect(kartPresetYanitiniOku(response([item("1","A"),item("1","B")]),first)).rejects.toThrow("KART_SATIRLARI_ESLESMEDI");
     await expect(kartPresetYanitiniOku(response([item("1","A")]),first)).rejects.toThrow("KART_SATIRLARI_ESLESMEDI");
   });
-  it("fatura kaynak verisini sabit row_id ile aktarır; ürün araştırmasını ikinci preset'e bırakır",()=>{
+  it("yeni ve eski presetlerle uyumlu iki biçimi taşır; araştırmayı ikinci preset'e bırakır",()=>{
     const arastirma = {siteAciklama:"Kaynak açıklaması",siteSayfa:"https://example.com/ilk",
       siteGorseller:["https://example.com/ilk-1.jpg","https://example.com/ilk-2.jpg"],
       siteKategori:"Gıda",uretici:"Üretici",ozellikler:[{key:"ingredients",value:"Fındık"}],
@@ -83,6 +83,10 @@ describe("gerçek ikinci preset JSON sözleşmesi",()=>{
       raw_text:"1",model_or_code:"A",gtin:"111",quantity:3,purchase_unit_price:10,
     }});
     expect(payload.items[1]).toMatchObject({row_id:"row-0002",invoice_item:{gtin:"222"}});
+    expect(payload.groups[0].rows[0]).toMatchObject({row_id:"1",barcode:"111",previous_product_research:{
+      description:arastirma.siteAciklama,product_url:arastirma.siteSayfa,image_urls:arastirma.siteGorseller,
+      validation_status:"Belirsiz",matched_attributes:["Marka"],unmatched_attributes:["Gramaj"],
+    }});
     expect(payload).not.toHaveProperty("previous_product_research");
     expect(payload.items[0].invoice_item).not.toHaveProperty("sale_price");
   });

@@ -113,6 +113,26 @@ export function kartPresetIstekGovdesi(okuma: GoruSonucu): Record<string, unknow
       line_total: s.tutar,
     },
   }));
+  // OpenRouter aynı preset slug'ı için her zaman en yeni sürümü çalıştırır.
+  // Kademeli geçişte eski canlı presetin de çalışabilmesi için geçici olarak
+  // aynı fatura bilgisinin önceki gruplu biçimini de taşı.
+  const eskiSatirlar = okuma.satirlar.map((s, i) => ({
+    row_id: String(i + 1), satir_no: s.satirNo ?? null, raw_invoice_line: s.hamSatir,
+    brand: s.marka || null, name: s.ad || null, code: s.model || null, barcode: s.barkod || null,
+    variant: s.varyant || null, size: s.beden || null, net_quantity: s.gramaj || null,
+    invoice_data: { quantity: s.adet, unit: s.birim || null, unit_price: s.birimFiyat, total_amount: s.tutar },
+    previous_product_research: {
+      description: s.siteAciklama || "", product_url: s.siteSayfa || "",
+      image_urls: s.siteGorseller ?? (s.siteGorsel ? [s.siteGorsel] : []),
+      category: s.siteKategori || "", manufacturer: s.uretici || "", attributes: s.ozellikler ?? [],
+      validation_status: s.dogrulamaDurumu || "", matched_attributes: s.eslesenBilgiler ?? [],
+      unmatched_attributes: s.eksikler ?? [], image_validation_status: s.gorselDogrulamaDurumu || "",
+      sources: s.kaynaklar ?? [],
+    },
+  }));
+  const legacyGroups = [...new Set(eskiSatirlar.map((row) => row.brand))].map((brand) => ({
+    brand, rows: eskiSatirlar.filter((row) => row.brand === brand),
+  }));
   return {
     model: URUN_KART_PRESET, stream: true,
     response_format: { type: "json_object" }, provider: { require_parameters: true },
@@ -130,7 +150,7 @@ export function kartPresetIstekGovdesi(okuma: GoruSonucu): Record<string, unknow
           tax_id: okuma.tedarikciVergiNo || null,
           website_printed_on_invoice: okuma.tedarikciSite || null,
         },
-        items,
+        items, groups: legacyGroups,
       }),
     ].join("\n") }],
   };

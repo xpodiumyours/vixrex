@@ -9,6 +9,8 @@ Bu klasör, OpenRouter preset’leri ile Vixrex kodu arasındaki **tek sürüm k
 
 OpenRouter’da mevcut iki slug korunur. Yeni test preset’i açılmaz. `archive/` altında üretimde gözlenen önceki promptlar, sürüm numaraları ve hash’leri geri dönüş için saklanır. Canlı sürümlerin ve hedef ayarların kaydı `release-manifest.json` dosyasındadır. Üretimdeki sürüm numarası ve araçlar API’den yeniden okunup manifestle karşılaştırılmadan “yayında” denmez.
 
+OpenRouter’da `@preset/slug` isteği her zaman en son preset sürümünü kullanır; belirli eski sürüm yalnızca görüntülenebilir, istek için sabitlenemez ([OpenRouter preset belgeleri](https://openrouter.ai/docs/guides/features/presets)). Bu yüzden Vixrex dalı geçişte yeni ve eski istek biçimlerini birlikte gönderir; eski ve yeni yanıtları da okuyabilir. Canlıya geçiş sırası şöyledir: önce bu uyumlu Vixrex kodunu dağıt; sonra **ürün araştırma preset’ini** güncelle ve tek test faturasıyla doğrula; ancak o geçince **fatura okuma preset’ini** güncelle. Bir adım geçmezse kaydedilmiş önceki ayarı geri yükle. Böylece üretimdeki esnaf akışı ile presetler sırayla uyumlu kalır.
+
 ## Değişiklik kapıları
 
 - **Kod kapısı:** şema/adaptör testleri, tüm fatura testleri, tip denetimi ve lint geçer.
