@@ -9,7 +9,7 @@ import 'package:vixrex/services/owner_preview_service.dart';
 import 'package:vixrex/services/store_publish_service.dart';
 
 void main() {
-  test('existing account store opens owner editor without creating a store', () async {
+  test('existing store opens verified owner editor', () async {
     final calls = <String>[];
     final client = SupabaseClient(
       'https://dummyproject.supabase.co',
@@ -87,7 +87,7 @@ void main() {
     expect(calls, ['/rest/v1/rpc/get_or_create_working_draft']);
   });
 
-  test('Vixrex tab uses verified account ownership on desktop and mobile', () {
+  test('Vixrex tab resolves account ownership on both layouts', () {
     final home = File('lib/screens/home_shell_screen.dart').readAsStringSync();
     final controller =
         File('lib/controllers/store_editor_controller.dart').readAsStringSync();
@@ -97,17 +97,17 @@ void main() {
     expect(home, contains('OwnerBootstrapService().getir()'));
     expect(home, contains('if (owner.hasStore)'));
     expect(home, contains('openExistingOwnerWorkspace('));
-    expect(home, contains('if (publishedInfo != null && publishedInfo.isComplete)'));
+    final publishedGuard =
+        'if (publishedInfo != null && publishedInfo.isComplete)';
+    expect(home, contains(publishedGuard));
     expect(home, contains('publishedInfo.canEditRemote'));
     expect(home, contains('AppRouter.openPublicUrl('));
-    expect(
-      RegExp(r'if \(index == 2\) \{\s*_openVixrexTab\(\);')
-          .allMatches(home)
-          .length,
-      2,
-    );
-    expect(RegExp('onOpen: _openVixrexTab,').allMatches(home).length, 2);
+    final navTap = RegExp(r'if \(index == 2\) \{\s*_openVixrexTab\(\);');
+    expect(navTap.allMatches(home).length, 2);
+    final assistantTap = RegExp('onOpen: _openVixrexTab,');
+    expect(assistantTap.allMatches(home).length, 2);
     expect(controller, contains('_ownerPreviewService.openExistingStore('));
-    expect(service, contains('buildOwnerSessionEntryLink(normalizedSlug, code)'));
+    final secureEntry = 'buildOwnerSessionEntryLink(normalizedSlug, code)';
+    expect(service, contains(secureEntry));
   });
 }
