@@ -428,10 +428,10 @@ export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode 
           <div className="border-b border-lp-border px-6 py-5">
             <div className="flex items-center justify-between gap-4">
               <h1 id="vitrinim-editor-title" className="text-[18px] font-black">Vitrinim</h1>
-              <span className="text-[13px] font-black text-lp-secondary">%{progress.percent} hazır</span>
+              <span className="text-[13px] font-black text-lp-secondary">%{progress.percent} bilgi doluluğu</span>
             </div>
             <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-lp-surface-soft"><div className="h-full rounded-full bg-lp-primary transition-all" style={{ width: `${progress.percent}%` }} /></div>
-            <p className="mt-3 text-[12px] font-medium text-lp-muted">{missing.length ? `Yayına çıkmak için ${missing.join(", ")} ve Yasal onay alanları kaldı.` : "Temel bilgiler hazır. Yasal onaydan sonra yayınlayabilirsin."}</p>
+            <p className="mt-3 text-[12px] font-medium text-lp-muted">{store.is_published ? "Vitrinin yayında. Buradan bilgilerini düzenleyebilirsin." : missing.length ? `Yayına çıkmak için ${missing.join(", ")} ve Yasal onay alanları kaldı.` : "Temel bilgiler hazır. Yasal onaydan sonra yayınlayabilirsin."}</p>
           </div>
 
           {message ? <p className="mx-6 mt-4 rounded-xl border border-lp-border bg-lp-bg-light px-4 py-3 text-[12px] text-lp-text" role="status">{message}</p> : null}

@@ -38,7 +38,9 @@ describe("/app sahip çalışma alanı çözümleme matrisi", () => {
     expect(ownerBridge).toContain("OWNER_SESSION_COOKIE");
     expect(ownerBridge).toContain("verifyOwnerSession(ownerSessionCookie, hintedSlug)");
     expect(ownerBridge).toContain('"get_working_draft_for_session"');
-    expect(ownerBridge).toContain('"get_owner_catalog_for_session"');
+    expect(ownerBridge).toContain("getSupabaseAdmin()");
+    expect(ownerBridge).toContain('.eq("id", storeId)');
+    expect(ownerBridge).toContain('.eq("slug", slug)');
     expect(ownerBridge).toContain('"cache-control": "private, no-store"');
   });
 

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { supabase } from "@/lib/supabase";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
 export const dynamic = "force-dynamic";
 
@@ -51,17 +52,18 @@ export async function GET() {
     });
   }
 
-  const [{ data: draftData, error: draftError }, { data: catalogData, error: catalogError }] =
-    await Promise.all([
-      supabase.rpc("get_working_draft_for_session", {
-        p_session_token: ownerSession.sessionToken,
-      }),
-      supabase.rpc("get_owner_catalog_for_session", {
-        p_session_token: ownerSession.sessionToken,
-      }),
-    ]);
+  const { data: draftData, error: draftError } = await supabase.rpc(
+    "get_working_draft_for_session",
+    { p_session_token: ownerSession.sessionToken }
+  );
 
   if (draftError || !draftData) {
+    if (draftError?.message === "INVALID_SESSION_TOKEN") {
+      return NextResponse.json({ tamam: false, sebep: "INVALID_OWNER_SESSION" }, {
+        status: 401,
+        headers: { "cache-control": "no-store" },
+      });
+    }
     console.error(
       "[owner-workspace/current] working draft okunamadı",
       draftError?.message ?? "NO_DRAFT"
@@ -72,23 +74,12 @@ export async function GET() {
     });
   }
 
-  if (catalogError) {
-    console.error(
-      "[owner-workspace/current] katalog okunamadı",
-      catalogError.message
-    );
-  }
-
   const draft = draftData as {
     store_id?: unknown;
     slug?: unknown;
     draft_data?: Record<string, unknown> | null;
     draft_version?: unknown;
     base_live_version?: unknown;
-  };
-  const catalog = (catalogData ?? {}) as {
-    products?: unknown;
-    categories?: unknown;
   };
   const slug = typeof draft.slug === "string" ? draft.slug.trim() : "";
   if (!slug || slug !== ownerSession.slug) {
@@ -98,22 +89,56 @@ export async function GET() {
     });
   }
 
+  const storeId = typeof draft.store_id === "string" ? draft.store_id : "";
+  if (!storeId || storeId !== ownerSession.storeId) {
+    return NextResponse.json({ tamam: false, sebep: "STORE_MISMATCH" }, {
+      status: 409,
+      headers: { "cache-control": "no-store" },
+    });
+  }
+
+  let store: Record<string, unknown>;
+  try {
+    const { data, error } = await getSupabaseAdmin()
+      .from("stores")
+      .select("id, slug, name, is_published, kategori, business_type, updated_at, products(id, slug, name, description, price_text, price_amount, currency, image_urls, category_id, stock_status, stock_quantity, brand, barcode, metadata, variants, old_price_amount, badge_tag, fulfillment_region, is_visible, source_type, product_categories(name, product_template_key)), product_categories(id, name, product_template_key)")
+      .eq("id", storeId)
+      .eq("slug", slug)
+      .maybeSingle();
+
+    if (error) throw new Error("WORKSPACE_UNAVAILABLE");
+    if (!data) {
+      return NextResponse.json({ tamam: false, sebep: "STORE_NOT_FOUND" }, {
+        status: 404,
+        headers: { "cache-control": "no-store" },
+      });
+    }
+    store = data as unknown as Record<string, unknown>;
+  } catch {
+    return NextResponse.json({ tamam: false, sebep: "WORKSPACE_UNAVAILABLE" }, {
+      status: 503,
+      headers: { "cache-control": "no-store" },
+    });
+  }
+
   const workingDraft = draft.draft_data ?? {};
-  const products = Array.isArray(catalog.products) ? catalog.products : [];
-  const categories = Array.isArray(catalog.categories) ? catalog.categories : [];
+  const products = Array.isArray(store.products) ? store.products : [];
+  const categories = Array.isArray(store.product_categories) ? store.product_categories : [];
 
   return NextResponse.json(
     {
       tamam: true,
       store: {
-        id: String(draft.store_id ?? ownerSession.storeId),
+        id: storeId,
         slug,
-        name: String(workingDraft.name ?? ""),
-        is_published: Boolean(workingDraft.is_published),
+        name: String(store.name ?? ""),
+        is_published: store.is_published === true,
         kategori:
-          typeof workingDraft.kategori === "string" ? workingDraft.kategori : null,
+          typeof store.kategori === "string" ? store.kategori : null,
+        business_type:
+          typeof store.business_type === "string" ? store.business_type : null,
         updated_at:
-          typeof workingDraft.updated_at === "string" ? workingDraft.updated_at : null,
+          typeof store.updated_at === "string" ? store.updated_at : null,
         products,
         product_categories: categories,
       },
