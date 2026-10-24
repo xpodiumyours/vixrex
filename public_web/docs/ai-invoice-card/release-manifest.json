@@ -1,0 +1,107 @@
+{
+  "manifest_version": "vixrex.openrouter-preset-release/1.0",
+  "status": "candidate-not-live",
+  "observed_at": "2026-10-24",
+  "repository": "xpodiumyours/vixrex",
+  "base_commit": "4cc7bb20",
+  "contract_file": "contracts/contracts-v1.json",
+  "contracts": {
+    "invoice_read": "vixrex.invoice-read/1.0",
+    "product_research": "vixrex.product-research/1.0"
+  },
+  "provider_versioning": {
+    "inference_uses_latest_active": true,
+    "specific_version_can_be_read": true,
+    "specific_version_inference_pin_supported": false,
+    "source_url": "https://openrouter.ai/docs/guides/features/presets"
+  },
+  "provider_baseline": {
+    "invoice_reader": {
+      "slug": "vixrex-qwen-fatura-okuma-suzme",
+      "version_id": "44dd75aa-b539-489f-a1d3-55f40cf089a9",
+      "version_number": 18,
+      "model": "openrouter/free",
+      "tools": [
+        "openrouter:datetime",
+        "openrouter:web_search",
+        "openrouter:web_fetch"
+      ],
+      "prompt_snapshot": "presets/archive/invoice-reader-v18.system.md",
+      "prompt_sha256": "c75384f060e3c8167a4e5017173f69c307215cc4b2ee8bd36f5866c977293af9"
+    },
+    "product_card": {
+      "slug": "urun-kart-olusturucu",
+      "version_id": "eb2cd227-bad0-4d86-bd03-91c545a89480",
+      "version_number": 6,
+      "model": "deepseek/deepseek-v4.1-flash-1017",
+      "tools": [
+        "openrouter:web_search",
+        "openrouter:web_fetch",
+        "openrouter:fusion",
+        "openrouter:advisor",
+        "openrouter:subagent",
+        "openrouter:shell"
+      ],
+      "prompt_snapshot": "presets/archive/product-card-v6.system.md",
+      "prompt_sha256": "f49ccb18c8b52dc8cfcc47247694b3c33c5df2deed0f3b0d11fe495bb8e7132b",
+      "known_failure": "Vixrex'in kullandığı chat/completions uç noktasında openrouter:shell aracı HTTP 400 oluşturuyor."
+    }
+  },
+  "candidate_release": {
+    "invoice_reader": {
+      "slug": "vixrex-qwen-fatura-okuma-suzme",
+      "version_id": null,
+      "model": "google/gemini-3.5-flash",
+      "tools": [],
+      "system_prompt": "presets/invoice-read.system.md",
+      "system_prompt_sha256": "cdf508e93361862e3a7b75d7d15478b056f3e63501efd89129c93f708735fb4f",
+      "intended_request_format": {
+        "type": "json_object"
+      },
+      "live_metadata_checked": true,
+      "checks": [
+        "image input",
+        "JSON response format"
+      ]
+    },
+    "product_card": {
+      "slug": "urun-kart-olusturucu",
+      "version_id": null,
+      "model": "deepseek/deepseek-v4.1-flash-1017",
+      "tools": [
+        "openrouter:web_search",
+        "openrouter:web_fetch"
+      ],
+      "system_prompt": "presets/product-research.system.md",
+      "system_prompt_sha256": "7ccc87ac9f5d47760d86bb969f32934575153fecd6121ee58e938bdf2b27ac02",
+      "intended_request_format": {
+        "type": "json_object"
+      },
+      "live_metadata_checked": true,
+      "checks": [
+        "tool calling",
+        "JSON response format"
+      ],
+      "shell_tool_removed": true
+    }
+  },
+  "release_gates": [
+    "The release commit contains both prompt files, both schema definitions, adapters, and tests before any provider write.",
+    "Existing preset slugs are retained; no test preset is created.",
+    "Deploy the backward-compatible Vixrex code first; update and test the product-research preset next; update the invoice-reader preset only after that passes.",
+    "Full provider version/settings are read back and compared with this manifest after update.",
+    "Stage 1 parses and preserves all invoice lines; Vixrex assigns stable row_id values.",
+    "Stage 2 returns each row_id exactly once and cannot override invoice quantities or purchase prices.",
+    "A 'verified' result must pass official-domain, evidence, and identity-consistency checks; unsupported results stay drafts.",
+    "A real invoice uploaded through the Vixrex user interface creates hidden drafts; no AI sale price; publication requires merchant price and approval.",
+    "Usage/cost, selected preset version, model, request/job ID, duration, and error code are recorded without raw invoice image or full invoice text in logs.",
+    "If the release fails, restore the exact recorded known-good configuration under the same slug; do not delete or blindly retry provider changes."
+  ],
+  "release_state": {
+    "provider_updated": false,
+    "synthetic_invoice_model_test": "not-passed",
+    "real_invoice_vixrex_e2e_passed": false,
+    "deployment_allowed": false,
+    "reason": "Candidate prompts and adapters are in a feature branch. OpenRouter rejected the Gemini request's estimated maximum cost; the lower-priced image candidate did not return plain-text JSON in the smoke-test harness. API-key usage remained unchanged. No production preset was changed and no real merchant invoice is available in this sandbox."
+  }
+}
