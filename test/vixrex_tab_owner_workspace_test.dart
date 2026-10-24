@@ -22,6 +22,7 @@ void main() {
             jsonEncode({'slug': 'existing-store', 'version_conflict': false}),
             200,
             headers: {'content-type': 'application/json'},
+            request: request,
           );
         }
         if (request.url.path.endsWith('/rpc/create_owner_session')) {
@@ -30,6 +31,7 @@ void main() {
             jsonEncode({'code': 'one-time-code'}),
             200,
             headers: {'content-type': 'application/json'},
+            request: request,
           );
         }
         fail('Unexpected owner session request: ${request.url.path}');
@@ -70,6 +72,7 @@ void main() {
           jsonEncode({'slug': 'different-store', 'version_conflict': false}),
           200,
           headers: {'content-type': 'application/json'},
+          request: request,
         );
       }),
     );
