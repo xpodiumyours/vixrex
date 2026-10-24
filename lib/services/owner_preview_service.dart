@@ -74,6 +74,27 @@ class OwnerPreviewService {
     );
   }
 
+  Future<OwnerPreviewResult> openExistingStore({
+    required String slug,
+    required String editToken,
+  }) async {
+    final normalizedSlug = slug.trim();
+    final normalizedToken = editToken.trim();
+    if (normalizedSlug.isEmpty || normalizedToken.isEmpty) {
+      throw const StorePublishException('Vitrin sahipliği doğrulanamadı.');
+    }
+    final draft = await _ensureWorkingDraft(normalizedSlug, normalizedToken);
+    if (draft.slug != normalizedSlug) {
+      throw const StorePublishException('Vitrin bilgisi doğrulanamadı.');
+    }
+    final code = await _createOwnerSession(normalizedSlug, normalizedToken);
+    return OwnerPreviewResult(
+      url: PublicSiteConfig.buildOwnerSessionEntryLink(normalizedSlug, code),
+      slug: normalizedSlug,
+      versionConflict: draft.versionConflict,
+    );
+  }
+
   Future<StoreDraftResult> _saveDraft(StoreData storeData) async {
     final editToken = await _draftEditTokenProvider();
     final result = await _publishService.saveDraft(
