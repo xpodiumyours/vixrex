@@ -225,7 +225,9 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Vitrin sahipliği doğrulanamadı. Vitrinim bölümünden tekrar dene.'),
+          content: Text(
+            'Vitrin sahipliği doğrulanamadı. Vitrinim bölümünden tekrar dene.',
+          ),
         ),
       );
     } finally {
