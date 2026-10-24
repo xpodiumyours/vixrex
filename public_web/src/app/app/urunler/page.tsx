@@ -28,39 +28,54 @@ export default function UrunlerPage() {
   const yukle = useCallback(async () => {
     setYukleniyor(true);
     setHata("");
-    const { data: durum, error: durumHatasi } = await supabase.rpc("bootstrap_owner_state");
-    const bootstrap = durum as { has_store?: boolean; slug?: string } | null;
-    if (durumHatasi || bootstrap?.has_store !== true) {
-      setHata("Vitrin bulunamadı. Önce vitrin oluştur.");
+    try {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw new Error("Vitrin bilgileri yüklenemedi. Lütfen tekrar dene.");
+      if (session) {
+        const { data: durum, error: durumHatasi } = await supabase.rpc("bootstrap_owner_state");
+        const bootstrap = durum as { has_store?: boolean; slug?: string } | null;
+        if (durumHatasi) throw new Error("Vitrin bilgileri yüklenemedi. Lütfen tekrar dene.");
+        if (!durumHatasi && bootstrap?.has_store === true) {
+          const slug = String(bootstrap.slug ?? "").trim();
+          if (!slug) throw new Error("Vitrin bilgileri okunamadı. Lütfen tekrar dene.");
+          const { data, error } = await supabase
+            .from("stores")
+            .select("id, slug, name, kategori, business_type, products(id, slug, name, description, price_text, price_amount, currency, image_urls, category_id, stock_status, stock_quantity, brand, barcode, metadata, variants, old_price_amount, badge_tag, fulfillment_region, is_visible, source_type, product_categories(name, product_template_key)), product_categories(id, name, product_template_key)")
+            .eq("slug", slug)
+            .maybeSingle();
+          if (error || !data) throw new Error("Ürünler yüklenemedi. Lütfen tekrar dene.");
+          setStore(data as unknown as Store);
+          return;
+        }
+      }
+
+      const response = await fetch("/api/owner-workspace/current", { cache: "no-store" });
+      const workspace = await response.json() as { store?: Store; sebep?: string };
+      if (response.ok && workspace.store?.slug) {
+        setStore(workspace.store);
+        return;
+      }
+      if (response.status === 401 || response.status === 403) {
+        throw new Error("Vitrin sahiplik oturumun geçersiz veya süresi dolmuş. Vitrinine yeniden giriş yap.");
+      }
+      if (response.status === 404 && workspace.sebep === "NO_OWNER_SESSION") {
+        if (!session) {
+          router.push("/giris");
+          return;
+        }
+        throw new Error("Vitrin bulunamadı. Önce vitrin oluştur.");
+      }
+      throw new Error("Vitrin bilgileri yüklenemedi. Lütfen tekrar dene.");
+    } catch (error) {
+      setHata(error instanceof Error ? error.message : "Ürünler yüklenemedi. Lütfen tekrar dene.");
+    } finally {
       setYukleniyor(false);
-      return;
     }
-    const slug = String(bootstrap.slug ?? "").trim();
-    if (!slug) {
-      setHata("Vitrin slug okunamadı.");
-      setYukleniyor(false);
-      return;
-    }
-    const { data, error } = await supabase
-      .from("stores")
-      .select("id, slug, name, kategori, business_type, products(id, slug, name, description, price_text, price_amount, currency, image_urls, category_id, stock_status, stock_quantity, brand, barcode, metadata, variants, old_price_amount, badge_tag, fulfillment_region, is_visible, source_type, product_categories(name, product_template_key)), product_categories(id, name, product_template_key)")
-      .eq("slug", slug)
-      .maybeSingle();
-    if (error || !data) {
-      setHata("Ürünler yüklenemedi.");
-      setYukleniyor(false);
-      return;
-    }
-    setStore(data as unknown as Store);
-    setYukleniyor(false);
-  }, []);
+  }, [router]);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) router.push("/giris");
-      else yukle();
-    });
-  }, [router, yukle]);
+    void Promise.resolve().then(yukle);
+  }, [yukle]);
 
   if (yukleniyor && !store) {
     return (
