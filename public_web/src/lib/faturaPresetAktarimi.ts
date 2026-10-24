@@ -18,8 +18,9 @@ export function faturaSatiriniAktar(satir: GoruSatiri, tedarikci: string): Esles
   const eksikler = [...(satir.eksikler ?? [])];
   if (!satir.dogrulamaDurumu) eksikler.push("OpenRouter doğrulama durumu bildirmedi.");
   if (satir.okumaGuveni === null) eksikler.push("OpenRouter okuma güveni bildirmedi.");
+  const uretici = satir.siteUretici || satir.uretici;
   const ekler = {
-    satirNo: satir.satirNo, uretici: satir.uretici, gramaj: satir.gramaj,
+    satirNo: satir.satirNo, uretici, gramaj: satir.gramaj,
     dogrulamaDurumu: satir.dogrulamaDurumu, eslesenBilgiler: satir.eslesenBilgiler,
     eksikler, gorselDogrulamaDurumu: satir.gorselDogrulamaDurumu, kaynaklar: satir.kaynaklar,
   };
@@ -37,7 +38,7 @@ export function faturaSatiriniAktar(satir: GoruSatiri, tedarikci: string): Esles
     sonuc: presetDurumunuAktar(satir.dogrulamaDurumu),
     uyari: eksikler.length ? eksikler.join(" · ") : undefined,
     katalog: {
-      ...ekler, firma: tedarikci, kaynakFirma: satir.uretici || satir.siteMarka || satir.marka || tedarikci,
+      ...ekler, firma: tedarikci, kaynakFirma: uretici || satir.siteMarka || satir.marka || tedarikci,
       // Kod/barkodun mevcut olması onların resmî kaynakla doğrulandığı anlamına gelmez.
       dayanak: "ad", izinDurumu: satir.gorselKullanimDurumu === "authorized" ? "var" : "yok",
       resmiAd: satir.ad || satir.model, marka: satir.siteMarka || satir.marka,

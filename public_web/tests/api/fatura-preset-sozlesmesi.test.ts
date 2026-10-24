@@ -38,13 +38,52 @@ describe("Vixrex preset taşıma sözleşmesi", () => {
     expect(body.provider).toEqual({ require_parameters: true });
     expect(JSON.stringify(body)).toContain(FATURA_JSON_ISTEGI.replace(/\n/g, "\\n").slice(0, 10));
   });
-  it("araştırma aşamaları için sohbet onayı beklemez; satış ve esnaf onayı üretmez", () => {
-    expect(FATURA_JSON_ISTEGI).toContain("AŞAMA 2 sonunda durma");
-    expect(FATURA_JSON_ISTEGI).toContain("devam onayı veya yeni sohbet mesajı isteme");
-    expect(FATURA_JSON_ISTEGI).toContain("Satış fiyatı ve esnaf onayı üretme");
+  it("birinci preset yalnız fatura okur; araştırmayı ve satış kararını ikinci aşamaya bırakır", () => {
+    expect(FATURA_JSON_ISTEGI).toContain("yalnız fatura okuma aşamasıdır");
+    expect(FATURA_JSON_ISTEGI).toContain("web araştırması yapma");
+    expect(FATURA_JSON_ISTEGI).toContain("Vixrex her satıra kendi değişmez row_id değerini atayacaktır");
+    expect(FATURA_JSON_ISTEGI).toContain("Satış fiyatı");
+    expect(FATURA_JSON_ISTEGI).toContain("vixrex.invoice-read/1.0");
     const body = faturaIstekGovdesi("data:image/png;base64,TEST");
     expect(body.model).toContain("@preset/");
     expect(body).not.toHaveProperty("tools");
+  });
+  it("invoice-read/1.0 bütün satırları korur ve row_id değerlerini Vixrex atar", () => {
+    const result = katalogJsonunuOku(JSON.stringify({
+      contract_version: "vixrex.invoice-read/1.0",
+      document: {
+        document_type: "e-arsiv", document_number: "F-001", document_date: null,
+        supplier: { name: "Toptancı", tax_id: null, address: null, website_printed_on_invoice: null },
+        buyer: { name: "Esnaf", tax_id: null }, currency: "TRY",
+        totals: { goods: 40, vat: 4, discount: null, payable: 44 },
+      },
+      items: [
+        { invoice_row_number: "07", raw_text: "ÜLKER PÖTİBÖR 175 G", product_name: "PÖTİBÖR", brand: "ÜLKER", manufacturer_printed: null, model_or_code: "A-7", gtin: "0012345678901", variant_text: "175 G", quantity: 2, unit: "AD", purchase_unit_price: 20, line_total: 40, read_confidence: 0.9 },
+        { invoice_row_number: null, raw_text: "Başka ürün", product_name: null, brand: null, manufacturer_printed: null, model_or_code: null, gtin: null, variant_text: null, quantity: 1, unit: "AD", purchase_unit_price: null, line_total: null, read_confidence: null },
+      ],
+      warnings: ["Bir satırın adı okunamadı"],
+    }));
+    expect(result.satirlar.map((s) => s.rowId)).toEqual(["row-0001", "row-0002"]);
+    expect(result.satirlar[0]).toMatchObject({ satirNo: 7, barkod: "0012345678901", marka: "ÜLKER", adet: 2, birimFiyat: 20, tutar: 40 });
+    expect(result.satirlar[1].ad).toBe("Başka ürün");
+    expect(result.tedarikci).toBe("Toptancı");
+    expect(result.belgeTuru).toBe("e-arsiv");
+    expect(result.uyarilar).toEqual(["Bir satırın adı okunamadı"]);
+  });
+  it("invoice-read/1.0 eksik zorunlu alanı veya sözleşme dışı alanı sessizce kabul etmez", () => {
+    const valid = {
+      contract_version: "vixrex.invoice-read/1.0",
+      document: { document_type: null, document_number: null, document_date: null,
+        supplier: { name: null, tax_id: null, address: null, website_printed_on_invoice: null },
+        buyer: { name: null, tax_id: null }, currency: null,
+        totals: { goods: null, vat: null, discount: null, payable: null } },
+      items: [{ invoice_row_number: null, raw_text: "Ürün", product_name: null, brand: null,
+        manufacturer_printed: null, model_or_code: null, gtin: null, variant_text: null,
+        quantity: null, unit: null, purchase_unit_price: null, line_total: null, read_confidence: null }],
+      warnings: [],
+    };
+    expect(() => katalogJsonunuOku(JSON.stringify({...valid, extra:"unexpected"}))).toThrow("OKUMA_COZULEMEDI");
+    expect(() => katalogJsonunuOku(JSON.stringify({...valid, items:[{...valid.items[0], gtin:undefined}]}))).toThrow("OKUMA_COZULEMEDI");
   });
   it("PDF file, fotoğraf image_url olarak gönderilir", () => {
     const body = faturaIstekGovdesi(["data:application/pdf;base64,TEST", "data:image/jpeg;base64,TEST"]);
