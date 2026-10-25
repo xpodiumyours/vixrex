@@ -9,6 +9,8 @@ export type UrunOzelligi = ProductAttributeValue;
 export type KartKaynagi = string | Record<string, unknown>;
 
 export interface GoruSatiri {
+  /** Vixrex tarafından fatura satır sırasından atanır; modelden alınmaz. */
+  rowId?: string;
   hamSatir: string;
   model: string;
   ad: string;
@@ -27,6 +29,7 @@ export interface GoruSatiri {
   siteSayfa?: string;
   siteKategori?: string;
   siteMarka?: string;
+  siteUretici?: string;
   siteVaryant?: string;
   gorselKullanimDurumu?: string;
   satirNo?: number | null;
@@ -82,6 +85,42 @@ function nesne(deger: unknown): deger is Record<string, unknown> {
   return deger !== null && typeof deger === "object" && !Array.isArray(deger);
 }
 
+function tamAlanlar(deger: unknown, alanlar: string[]): deger is Record<string, unknown> {
+  return nesne(deger) && Object.keys(deger).length === alanlar.length && alanlar.every((alan) => Object.hasOwn(deger, alan));
+}
+
+function nullableMetin(deger: unknown): boolean { return deger === null || typeof deger === "string"; }
+function nullableSayi(deger: unknown): boolean { return deger === null || (typeof deger === "number" && Number.isFinite(deger)); }
+
+function invoiceReadV1GecerliMi(deger: unknown): deger is Record<string, unknown> {
+  const top = ["contract_version", "document", "items", "warnings"];
+  const doc = ["document_type", "document_number", "document_date", "supplier", "buyer", "currency", "totals"];
+  const supplier = ["name", "tax_id", "address", "website_printed_on_invoice"];
+  const buyer = ["name", "tax_id"];
+  const totals = ["goods", "vat", "discount", "payable"];
+  const row = ["invoice_row_number", "raw_text", "product_name", "brand", "manufacturer_printed", "model_or_code", "gtin", "variant_text", "quantity", "unit", "purchase_unit_price", "line_total", "read_confidence"];
+  if (!tamAlanlar(deger, top) || deger.contract_version !== "vixrex.invoice-read/1.0" ||
+      !tamAlanlar(deger.document, doc) || !Array.isArray(deger.items) || !deger.items.length ||
+      !Array.isArray(deger.warnings) || !deger.warnings.every((x) => typeof x === "string")) return false;
+  const belge = deger.document as Record<string, unknown>;
+  const supplierValue = belge.supplier as Record<string, unknown>;
+  const buyerValue = belge.buyer as Record<string, unknown>;
+  const totalsValue = belge.totals as Record<string, unknown>;
+  if (![belge.document_type, belge.document_number, belge.document_date, belge.currency].every(nullableMetin) ||
+      !tamAlanlar(supplierValue, supplier) || !supplier.every((x) => nullableMetin(supplierValue[x])) ||
+      !tamAlanlar(buyerValue, buyer) || !buyer.every((x) => nullableMetin(buyerValue[x])) ||
+      !tamAlanlar(totalsValue, totals) || !totals.every((x) => nullableSayi(totalsValue[x]))) return false;
+  return (deger.items as Record<string, unknown>[]).every((satir) => {
+    if (!tamAlanlar(satir, row)) return false;
+    const confidence = satir.read_confidence;
+    return row.filter((x) => x !== "raw_text" && x !== "quantity" && x !== "purchase_unit_price" && x !== "line_total" && x !== "read_confidence")
+      .every((x) => nullableMetin(satir[x])) &&
+      typeof satir.raw_text === "string" && Boolean(satir.raw_text.trim()) &&
+      nullableSayi(satir.quantity) && nullableSayi(satir.purchase_unit_price) && nullableSayi(satir.line_total) &&
+      (confidence === null || (typeof confidence === "number" && Number.isFinite(confidence) && confidence >= 0 && confidence <= 1));
+  });
+}
+
 function metinListesi(deger: unknown): string[] {
   return Array.isArray(deger) ? deger.map((item) =>
     typeof item === "string" ? item : JSON.stringify(item),
@@ -97,7 +136,7 @@ function webAdresi(deger: unknown): deger is string {
 }
 
 /** JSON çözümleme taşıma kontrolüdür; ürün kimliğini/kanıtını değerlendirmez. */
-export function katalogJsonunuOku(icerik: string): GoruSonucu {
+function katalogJsonunuOkuEski(icerik: string): GoruSonucu {
   let cozulen: unknown;
   try {
     const temiz = icerik.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
@@ -137,6 +176,62 @@ export function katalogJsonunuOku(icerik: string): GoruSonucu {
     gruplar: Array.isArray(cozulen.gruplar) ? cozulen.gruplar : [], uyarilar: metinListesi(cozulen.uyarilar),
     maliyet: null, girdiToken: 0, ciktiToken: 0, akilToken: 0,
   };
+}
+
+/** Platformdan bağımsız invoice-read/1.0 sözleşmesini Vixrex'in iç modeline çevirir. */
+function invoiceReadV1iniEsle(deger: unknown): GoruSonucu {
+  if (!invoiceReadV1GecerliMi(deger)) throw new Error("OKUMA_COZULEMEDI");
+  const belge = deger.document as Record<string, unknown>;
+  const tedarikci = belge.supplier as Record<string, unknown>;
+  const alici = belge.buyer as Record<string, unknown>;
+  const toplamlar = belge.totals as Record<string, unknown>;
+  const satirlar = (deger.items as Record<string, unknown>[]).map((s, i): GoruSatiri => {
+    const guven = sayi(s.read_confidence);
+    const hamMetin = s.raw_text as string;
+    return {
+      rowId: `row-${String(i + 1).padStart(4, "0")}`,
+      hamSatir: hamMetin.trim(), model: metin(s.model_or_code),
+      ad: metin(s.product_name) || hamMetin.trim(), barkod: metin(s.gtin),
+      varyant: metin(s.variant_text), beden: "", marka: metin(s.brand),
+      adet: sayi(s.quantity), birim: metin(s.unit),
+      birimFiyat: sayi(s.purchase_unit_price), tutar: sayi(s.line_total),
+      okumaGuveni: guven !== null && guven >= 0 && guven <= 1 ? guven : null,
+      siteAciklama: "", siteGorsel: "", siteGorseller: [], siteSayfa: "",
+      siteKategori: "", satirNo: sayi(s.invoice_row_number),
+      uretici: metin(s.manufacturer_printed), gramaj: metin(s.variant_text),
+      ozellikler: [], dogrulamaDurumu: "", eslesenBilgiler: [], eksikler: [],
+      gorselDogrulamaDurumu: "", kaynaklar: [],
+    };
+  });
+  const miktarlar = satirlar.map((s) => s.adet);
+  const belgeAdedi = miktarlar.every((n) => n !== null)
+    ? miktarlar.reduce<number>((toplam, n) => toplam + (n ?? 0), 0) : null;
+  return {
+    tedarikci: metin(tedarikci.name), tedarikciVergiNo: metin(tedarikci.tax_id),
+    tedarikciAdres: metin(tedarikci.address),
+    tedarikciSite: metin(tedarikci.website_printed_on_invoice), satirlar,
+    belgeAdedi, belgeToplami: sayi(toplamlar.payable),
+    belgeTuru: metin(belge.document_type) || "fatura",
+    belgeNo: metin(belge.document_number), belgeTarihi: metin(belge.document_date),
+    malBedeli: sayi(toplamlar.goods), kdvTutari: sayi(toplamlar.vat),
+    indirimTutari: sayi(toplamlar.discount), odenecekToplam: sayi(toplamlar.payable),
+    belgeEkleri: { buyer: alici, currency: metin(belge.currency) || null },
+    gruplar: [], uyarilar: metinListesi(deger.warnings),
+    maliyet: null, girdiToken: 0, ciktiToken: 0, akilToken: 0,
+  };
+}
+
+/** Yeni sözleşmeyi tercih eder; geçiş boyunca eski cevap biçimini de okuyabilir. */
+export function katalogJsonunuOku(icerik: string): GoruSonucu {
+  let cozulen: unknown;
+  try {
+    const temiz = icerik.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
+    cozulen = JSON.parse(temiz);
+  } catch { throw new Error("OKUMA_COZULEMEDI"); }
+  if (nesne(cozulen) && cozulen.contract_version === "vixrex.invoice-read/1.0") {
+    return invoiceReadV1iniEsle(cozulen);
+  }
+  return katalogJsonunuOkuEski(icerik);
 }
 
 export function faturaPresetReferansi(): string {
