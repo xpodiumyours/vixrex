@@ -13,11 +13,12 @@ import {
 export const OKUMA_PRESET = "@preset/vixrex-qwen-fatura-okuma-suzme";
 export const OTOMATIK_FATURA_PRESET = URUN_KART_PRESET;
 
-export function bekleyenFaturaYaniti(islemKimligi: string) {
+export function bekleyenFaturaYaniti(islemKimligi: string, asama: "okunuyor" | "kartlaniyor" = "okunuyor") {
   return {
     tamam: false,
     hazirlaniyor: true,
     islemKimligi,
+    asama,
     mesaj: "Fatura okunuyor ve ürün kartları hazırlanıyor. Aynı faturayı tekrar yüklemene gerek yok.",
   };
 }
@@ -58,7 +59,7 @@ export async function arkaPlanFaturaSonucunuAl(
   });
   if (error) throw new Error("OKUYUCU_ISLEYICI_HAZIR_DEGIL");
   if (!sonuc) throw new Error("FATURA_ISLEMI_BULUNAMADI");
-  if (sonuc.state === "queued") return bekleyenFaturaYaniti(islemKimligi);
+  if (sonuc.state === "queued") return bekleyenFaturaYaniti(islemKimligi, sonuc.stage === "cards" ? "kartlaniyor" : "okunuyor");
   if (sonuc.state === "failed") throw new Error(typeof sonuc.error === "string" && /^[A-Z_]{1,96}$/.test(sonuc.error) ? sonuc.error : "OKUYUCU_ISLEMI_TAMAMLANMADI");
   if (sonuc.state === "processed") {
     const kayit = await islemiYukle(admin, storeId, islemKimligi);
@@ -91,7 +92,7 @@ export async function arkaPlanFaturaSonucunuAl(
         p_api_key: process.env.OPENROUTER_API_KEY,
       });
       if (ikinci.error || ikinci.data?.success !== true) throw new Error("KART_ISLEYICI_HAZIR_DEGIL");
-      return bekleyenFaturaYaniti(islemKimligi);
+      return bekleyenFaturaYaniti(islemKimligi, "kartlaniyor");
     } else if (sonuc.stage === "cards") {
       const ilkOkuma = sonuc.readResult as GoruSonucu | null;
       if (!ilkOkuma || !Array.isArray(ilkOkuma.satirlar) || !ilkOkuma.satirlar.length) {
