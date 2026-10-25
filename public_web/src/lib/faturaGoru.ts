@@ -41,6 +41,7 @@ export interface GoruSatiri {
 }
 
 export interface GoruSonucu {
+  okumaMetni?: string;
   tedarikci: string;
   tedarikciVergiNo: string;
   tedarikciAdres: string;

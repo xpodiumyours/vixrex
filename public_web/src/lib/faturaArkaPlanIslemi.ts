@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { faturaIstekGovdesi, faturaYanitiniOku, type GoruSonucu } from "@/lib/faturaGoru";
+import { type GoruSonucu } from "@/lib/faturaGoru";
+import { METIN_OKUMA_PRESET, metinPresetIstekGovdesi, faturaOkumaYanitiniOku } from "@/lib/faturaMetinPreset";
 import { faturaSatiriniAktar } from "@/lib/faturaPresetAktarimi";
 import { islemKaydet } from "@/lib/faturaIslemKaydi";
 import { islemiYukle } from "@/lib/faturaIslemOku";
@@ -10,7 +11,7 @@ import {
   URUN_KART_PRESET,
 } from "@/lib/faturaKartPreset";
 
-export const OKUMA_PRESET = "@preset/vixrex-qwen-fatura-okuma-suzme";
+export const OKUMA_PRESET = METIN_OKUMA_PRESET;
 export const OTOMATIK_FATURA_PRESET = URUN_KART_PRESET;
 
 export function bekleyenFaturaYaniti(islemKimligi: string) {
@@ -31,7 +32,7 @@ export async function faturayiArkaPlanaGonder(
 ): Promise<string> {
   const anahtar = process.env.OPENROUTER_API_KEY;
   if (!anahtar) throw new Error("OKUYUCU_HAZIR_DEGIL");
-  const body = { ...faturaIstekGovdesi(goruntu), model: OKUMA_PRESET };
+  const body = metinPresetIstekGovdesi(goruntu);
   const { data, error } = await admin.rpc("enqueue_invoice_provider_job", {
     p_store_id: storeId,
     p_fingerprint: parmakIzi,
@@ -81,7 +82,7 @@ export async function arkaPlanFaturaSonucunuAl(
     let kartCevabi: unknown;
     let asamaKullanimlari: unknown;
     if (sonuc.stage === "reading") {
-      okuma = await faturaYanitiniOku(cevap);
+      okuma = await faturaOkumaYanitiniOku(cevap);
       if (!okuma.satirlar.length) throw new Error("FOTOGRAFTA_YAZI_YOK");
       const ikinci = await admin.rpc("advance_invoice_provider_job", {
         p_store_id: storeId,
