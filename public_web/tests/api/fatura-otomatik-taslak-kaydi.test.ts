@@ -108,10 +108,10 @@ describe("sunucuda kalıcı görünmez fatura taslağı", () => {
     expect(reply).toMatchObject({ otomatikTaslakRaporu: { kaydedildi: 0 }, hazirlaniyor: false });
   });
 
-  it("üç satırlık parçadan sonra aynı kayıtla devam eder; ikinci ürünü kopyalamaz", async () => {
+  it("süre yeterliyse bütün satırları kaydeder; yeniden açılış ürünü kopyalamaz", async () => {
     const c = client(invoice(4));
     const first = await faturaTaslakYanitiniHazirla(c.admin, "store", "demo", structuredClone(c.kayit));
-    expect(first).toMatchObject({ hazirlaniyor: true, otomatikTaslakRaporu: { bekleyen: 1, kaydedildi: 3 } });
+    expect(first).toMatchObject({ hazirlaniyor: false, otomatikTaslakRaporu: { bekleyen: 0, kaydedildi: 4 } });
     const second = await faturaTaslakYanitiniHazirla(c.admin, "store", "demo", structuredClone(c.kayit));
     expect(second).toMatchObject({ hazirlaniyor: false, otomatikTaslakRaporu: { bekleyen: 0, kaydedildi: 4 } });
     expect(m.save).toHaveBeenCalledTimes(4);
