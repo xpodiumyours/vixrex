@@ -68,7 +68,7 @@ export async function faturaTaslakYanitiniHazirla(
         const store = await admin.from("stores").select("id,edit_token,name")
           .eq("id", storeId).eq("slug", slug).maybeSingle();
         if (store.error || !store.data?.edit_token) throw new Error("Vitrin kayıt yetkisi doğrulanamadı.");
-        for (const { satir, sira } of eksik.slice(0, 3)) {
+        for (const { satir, sira } of eksik) {
           if (Date.now() + 10_000 >= sonTarih) break;
           const dogrulanmis = await satiriDogrula(admin, storeId,
             { islemKimligi: kayit.islemKimligi, satirSirasi: sira }, satir.sonuc);
