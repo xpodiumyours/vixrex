@@ -1,6 +1,7 @@
 export type FaturaBeklemeDurumu = {
   hazirlaniyor?: boolean;
   islemKimligi?: string;
+  asama?: string;
 };
 
 const BEKLEME_ARALIGI_MS = 5_000;
@@ -106,6 +107,7 @@ export async function faturaSonucunuBekle<T>(
     signal?: AbortSignal;
     fetcher?: typeof fetch;
     bekle?: (ms: number) => Promise<void>;
+    onDurum?: (durum: FaturaBeklemeDurumu) => void;
   },
 ): Promise<T> {
   const baslangic = ilk as unknown;
@@ -115,6 +117,11 @@ export async function faturaSonucunuBekle<T>(
   if (!bekleyenKimlik) {
     throw new Error("Fatura hazırlama yanıtında işlem kimliği eksik.");
   }
+  options.onDurum?.({
+    hazirlaniyor: true,
+    islemKimligi: bekleyenKimlik,
+    asama: typeof baslangic.asama === "string" ? baslangic.asama : undefined,
+  });
 
   const signal = options.signal;
   const fetcher = options.fetcher ?? fetch;
@@ -150,6 +157,11 @@ export async function faturaSonucunuBekle<T>(
       if (donenKimlik !== bekleyenKimlik) {
         throw new Error("Fatura hazırlama yanıtı beklenen işlem kimliğiyle eşleşmiyor.");
       }
+      options.onDurum?.({
+        hazirlaniyor: true,
+        islemKimligi: donenKimlik,
+        asama: typeof govde.asama === "string" ? govde.asama : undefined,
+      });
       continue;
     }
 

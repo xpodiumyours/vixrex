@@ -104,6 +104,7 @@ interface FaturaOkumaSonucu {
   otomatikTaslakRaporu?: { kaydedildi: number; atlandi: number; bekleyen: number; hatalar: string[] };
   taslakKayitUyarisi?: string;
   hazirlaniyor?: boolean;
+  asama?: string;
   maliyetOzeti?: {
     kayitSayisi: number;
     gercekUsd: number;
@@ -309,6 +310,7 @@ export default function InvoiceToProducts({
   const sonFaturaDosyasi = useRef<File[] | null>(null);
   const kayitSirasi = useRef<Promise<void>>(Promise.resolve());
 
+  const [beklemeAsamasi, setBeklemeAsamasi] = useState<"okunuyor" | "kartlaniyor">("okunuyor");
   const aktifFaturaBeklemesi = useRef<Promise<FaturaOkumaSonucu> | null>(null);
   const faturaBeklemeIptali = useRef<AbortController | null>(null);
 
@@ -321,6 +323,7 @@ export default function InvoiceToProducts({
       const istek = faturaSonucunuBekle(ilk, {
         slug: storeSlug,
         signal: controller.signal,
+        onDurum: (durum) => setBeklemeAsamasi(durum.asama === "kartlaniyor" ? "kartlaniyor" : "okunuyor"),
       }).finally(() => {
         if (aktifFaturaBeklemesi.current === istek) aktifFaturaBeklemesi.current = null;
         if (faturaBeklemeIptali.current === controller) faturaBeklemeIptali.current = null;
@@ -959,17 +962,21 @@ export default function InvoiceToProducts({
   // ─── 2. Hazırlanıyor ───────────────────────────────────────────
 
   if (adim === "okunuyor") {
+    const beklemeAdimSinifi = (sira: number) =>
+      beklemeAsamasi === "kartlaniyor"
+        ? `fatura-adim fatura-adim--${sira === 0 ? "tamam" : "aktif"}`
+        : `fatura-adim fatura-adim--${sira === 0 ? "aktif" : "bekliyor"}`;
     return (
       <div className="fatura-akis">
         <FaturaAkisBasligi adim={adim} baslik="Faturan hazırlanıyor"
           aciklama="Faturan okunuyor ve ürün kartların hazırlanıyor. Aynı faturayı tekrar yüklemene gerek yok." />
-        <p className="fatura-bekleme" role="status"><span className="fatura-yukleyici" aria-hidden="true" />Ürün kartları hazırlanıyor…</p>
+        <p className="fatura-bekleme" role="status"><span className="fatura-yukleyici" aria-hidden="true" />{beklemeAsamasi === "kartlaniyor" ? "Ürün bilgileri araştırılıyor ve kartlar hazırlanıyor…" : "Fatura satırları okunuyor…"}</p>
         {onizleme && <img className="fatura-onizleme" src={onizleme} alt="Fatura" />}
         <ol className="fatura-adimlar">
-          <li>Belge okunuyor: satırlar, miktar ve belge toplamı çıkarılıyor.</li>
-          <li>Faturayı kesen firmanın kimliği ve resmî sitesi araştırılıyor.</li>
-          <li>Ürünlerin resmî kaynağı ve kaynak çelişkisi kontrol ediliyor.</li>
-          <li>Ürün satırlarından kart taslakları hazırlanıyor; eksik bilgiler ayrıca gösteriliyor.</li>
+          <li className={beklemeAdimSinifi(0)}>Belge okunuyor: satırlar, miktar ve belge toplamı çıkarılıyor.</li>
+          <li className={beklemeAdimSinifi(1)}>Faturayı kesen firmanın kimliği ve resmî sitesi araştırılıyor.</li>
+          <li className={beklemeAdimSinifi(2)}>Ürünlerin resmî kaynağı ve kaynak çelişkisi kontrol ediliyor.</li>
+          <li className={beklemeAdimSinifi(3)}>Ürün satırlarından kart taslakları hazırlanıyor; eksik bilgiler ayrıca gösteriliyor.</li>
         </ol>
       </div>
     );

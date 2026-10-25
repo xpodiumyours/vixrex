@@ -686,6 +686,42 @@ body.vixrex-kaydediliyor .vixrex-secili-alan {
   color: var(--owner-text-alt);
 }
 
+.fatura-adim--tamam {
+  color: var(--owner-success);
+}
+
+.fatura-adim--tamam::after {
+  content: " ✓";
+  font-weight: 700;
+}
+
+.fatura-adim--aktif {
+  color: var(--owner-text);
+  font-weight: 700;
+  animation: fatura-adim-nabiz 1.2s ease-in-out infinite;
+}
+
+.fatura-adim--bekliyor {
+  opacity: 0.55;
+}
+
+@keyframes fatura-adim-nabiz {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fatura-adim--aktif {
+    animation: none;
+  }
+}
+
 .fatura-ozet,
 .fatura-satir-ozet,
 .fatura-ozet-satirlari {
