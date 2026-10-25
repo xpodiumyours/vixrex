@@ -44,9 +44,23 @@ describe("gerçek ikinci preset JSON sözleşmesi",()=>{
     expect(faturaKatalogMetadatasi(satir.katalog ?? {}).attributes?.map(a=>a.value)).toEqual(expect.arrayContaining(["Sade","175 g tekli paket","175 g"]));
     expect(satirdanFaturaTaslagi(satir)).toMatchObject({brand:"Üreticinin markası",satisFiyati:null,stokOnerisi:3,ownerApproved:false,isVisible:false});
   });
-  it("mükerrer ve eksik kimlikleri reddeder",async()=>{
-    await expect(kartPresetYanitiniOku(response([item("1","A"),item("1","B")]),first)).rejects.toThrow("KART_SATIRLARI_ESLESMEDI");
-    await expect(kartPresetYanitiniOku(response([item("1","A")]),first)).rejects.toThrow("KART_SATIRLARI_ESLESMEDI");
+  it("tek satırın kart hatası tüm faturayı düşürmez",async()=>{
+    const result=await kartPresetYanitiniOku(response([item("1","A ürün")]),first);
+    expect(result.sonuc.satirlar.map(s=>s.ad)).toEqual(["A ürün","İkinci"]);
+    expect(result.sonuc.satirlar[0].dogrulamaDurumu).toBe("Doğrulandı");
+    expect(result.sonuc.satirlar[1].dogrulamaDurumu).toBe("Araştırılamadı");
+    expect(result.sonuc.satirlar[1].eksikler).toContain("Ürün kartı bu satır için üretilemedi.");
+    expect(result.sonuc.satirlar[1].barkod).toBe("222");
+    expect(result.sonuc.satirlar[1].tutar).toBe(80);
+  });
+  it("mükerrer kimlikte ilki kazanır, bozuk kayıt yalnız kendi satırını düşürür",async()=>{
+    const result=await kartPresetYanitiniOku(response([item("1","A ürün"),item("1","B ürün"),{row_id:"2"}]),first);
+    expect(result.sonuc.satirlar.map(s=>s.ad)).toEqual(["A ürün","İkinci"]);
+    expect(result.sonuc.satirlar[1].dogrulamaDurumu).toBe("Araştırılamadı");
+  });
+  it("hiçbir satır eşleşmezse reddeder",async()=>{
+    await expect(kartPresetYanitiniOku(response([item("9","X")]),first)).rejects.toThrow("KART_SATIRLARI_ESLESMEDI");
+    await expect(kartPresetYanitiniOku(response([{row_id:"2",vixrex_product_json:{}}]),first)).rejects.toThrow("KART_SATIRLARI_ESLESMEDI");
   });
   it("ilk araştırmanın açıklama, görsel, özellik ve kaynaklarını kendi satırıyla ikinci presete taşır",()=>{
     const arastirma = {siteAciklama:"Kaynak açıklaması",siteSayfa:"https://example.com/ilk",
