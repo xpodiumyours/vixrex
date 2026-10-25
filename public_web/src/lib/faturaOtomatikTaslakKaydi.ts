@@ -70,6 +70,7 @@ export async function faturaTaslakYanitiniHazirla(
         if (store.error || !store.data?.edit_token) throw new Error("Vitrin kayıt yetkisi doğrulanamadı.");
         for (const { satir, sira } of eksik) {
           if (Date.now() + 10_000 >= sonTarih) break;
+          try {
           const dogrulanmis = await satiriDogrula(admin, storeId,
             { islemKimligi: kayit.islemKimligi, satirSirasi: sira }, satir.sonuc);
           if (!dogrulanmis || dogrulanmis.satirId !== satir.satirId) throw new Error("Fatura satırı doğrulanamadı.");
@@ -116,10 +117,13 @@ export async function faturaTaslakYanitiniHazirla(
                 alisFiyati: dogrulanmis.alisBirimFiyati,
               });
               if (medya.gorselDurumu === "aktarim-bekliyor") {
-                rapor.hatalar.push("Ürün taslağı kaydedildi; bazı fotoğraflar aktarılamadı.");
-                break;
+                rapor.hatalar.push(`Satır ${sira + 1}: Ürün taslağı kaydedildi; bazı fotoğraflar aktarılamadı.`);
               }
             }
+          }
+          } catch (err) {
+            rapor.atlandi += 1;
+            rapor.hatalar.push(`Satır ${sira + 1}: ${err instanceof Error ? err.message : "Ürün taslağı kaydedilemedi."}`);
           }
         }
         const yenilenen = await islemiYukle(admin, storeId, kayit.islemKimligi);
@@ -133,7 +137,7 @@ export async function faturaTaslakYanitiniHazirla(
       rapor.atlandi = 1;
       const yenilenen = await islemiYukle(admin, storeId, kayit.islemKimligi).catch(() => null);
       if (yenilenen?.satirlar.length) guncelKayit = yenilenen;
-      rapor.bekleyen = Math.max(0, guncelKayit.satirlar.filter((satir) => !satir.urunId).length - 1);
+      rapor.bekleyen = guncelKayit.satirlar.filter((satir) => !satir.urunId).length;
     }
   }
   const bagliIdler = guncelKayit.satirlar.flatMap((satir) => satir.urunId ? [satir.urunId] : []);
