@@ -159,7 +159,8 @@ export async function faturaTaslakYanitiniHazirla(
     .update({ error_code: rapor.hatalar.length ? "FATURA_TASLAKLARI_EKSIK" : null })
     .eq("job_id", kayit.islemKimligi).eq("store_id", storeId).eq("state", "processed");
   if (durum.error) rapor.hatalar.push("Taslak kayıt durumu saklanamadı.");
-  const hazirlaniyor = rapor.bekleyen > 0 && rapor.hatalar.length === 0;
+  // Bekleyen satırlar hata içerse bile işlem tamamlanmış sayılamaz.
+  const hazirlaniyor = rapor.bekleyen > 0;
   return {
     ...islemYaniti(guncelKayit),
     tamam: !hazirlaniyor, hazirlaniyor,
