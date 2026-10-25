@@ -108,10 +108,10 @@ describe("sunucuda kalıcı görünmez fatura taslağı", () => {
     expect(reply).toMatchObject({ otomatikTaslakRaporu: { kaydedildi: 0 }, hazirlaniyor: false });
   });
 
-  it("üç satırlık parçadan sonra aynı kayıtla devam eder; ikinci ürünü kopyalamaz", async () => {
+  it("dört satırı tek geçişte kaydeder; tekrar açıldığında ürünleri kopyalamaz", async () => {
     const c = client(invoice(4));
     const first = await faturaTaslakYanitiniHazirla(c.admin, "store", "demo", structuredClone(c.kayit));
-    expect(first).toMatchObject({ hazirlaniyor: true, otomatikTaslakRaporu: { bekleyen: 1, kaydedildi: 3 } });
+    expect(first).toMatchObject({ tamam: true, hazirlaniyor: false, otomatikTaslakRaporu: { bekleyen: 0, kaydedildi: 4 } });
     const second = await faturaTaslakYanitiniHazirla(c.admin, "store", "demo", structuredClone(c.kayit));
     expect(second).toMatchObject({ hazirlaniyor: false, otomatikTaslakRaporu: { bekleyen: 0, kaydedildi: 4 } });
     expect(m.save).toHaveBeenCalledTimes(4);
@@ -120,7 +120,7 @@ describe("sunucuda kalıcı görünmez fatura taslağı", () => {
   it("kalıcı yazma hatasında faturayı korur, otomatik tekrarı durdurur ve sebebi gösterir", async () => {
     const c = client(); m.save.mockRejectedValue(new Error("Kayıt başarısız."));
     const reply = await faturaTaslakYanitiniHazirla(c.admin, "store", "demo", structuredClone(c.kayit));
-    expect(reply).toMatchObject({ tamam: true, hazirlaniyor: false, satirlar: [{ urunId: null }], taslakKayitUyarisi: "Kayıt başarısız." });
+    expect(reply).toMatchObject({ tamam: false, hazirlaniyor: false, satirlar: [{ urunId: null }], taslakKayitUyarisi: expect.stringContaining("Kayıt başarısız.") });
     expect(c.errorCode()).toBe("FATURA_TASLAKLARI_EKSIK");
   });
 
