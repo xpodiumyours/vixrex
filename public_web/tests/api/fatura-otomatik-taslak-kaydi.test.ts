@@ -26,7 +26,7 @@ function invoice(count = 1): KayitliIslem {
     })),
   };
 }
-function client(kayit = invoice(), duplicate = false) {
+function client(kayit = invoice(), duplicate = false, productReadFails = false) {
   const products: Array<{ id: string; is_visible: boolean; fatura_kanit: Record<string, unknown> }> = [];
   let errorCode: unknown = null;
   const ownerWrites: unknown[] = [];
@@ -51,7 +51,10 @@ function client(kayit = invoice(), duplicate = false) {
       },
       then: (resolve: (value: unknown) => unknown) => {
         if (table === "invoice_provider_runs") errorCode = update?.error_code;
-        return Promise.resolve(resolve({ data: table === "products" ? products : null, error: null }));
+        return Promise.resolve(resolve({
+          data: table === "products" ? (productReadFails ? null : products) : null,
+          error: table === "products" && productReadFails ? { message: "Ürünler okunamadı." } : null,
+        }));
       },
     };
     return q;
@@ -115,6 +118,82 @@ describe("sunucuda kalıcı görünmez fatura taslağı", () => {
     const second = await faturaTaslakYanitiniHazirla(c.admin, "store", "demo", structuredClone(c.kayit));
     expect(second).toMatchObject({ hazirlaniyor: false, otomatikTaslakRaporu: { bekleyen: 0, kaydedildi: 4 } });
     expect(m.save).toHaveBeenCalledTimes(4);
+  });
+
+
+  it("ikinci satırın kaydı başarısız olsa da diğerlerini kaydeder; tekrar açılışta yalnız eksik satırı tamamlar", async () => {
+    const c = client(invoice(4));
+    const normalSave = m.save.getMockImplementation();
+    if (!normalSave) throw new Error("Taslak kayıt testi kurulamadı.");
+    m.save.mockImplementationOnce(normalSave).mockRejectedValueOnce(new Error("Satır 2 kaydı başarısız."));
+
+    const first = await faturaTaslakYanitiniHazirla(c.admin, "store", "demo", structuredClone(c.kayit));
+    expect(first).toMatchObject({
+      tamam: false, hazirlaniyor: false,
+      otomatikTaslakRaporu: { kaydedildi: 3, bekleyen: 1, atlandi: 1 },
+      taslakKayitUyarisi: expect.stringContaining("Satır 2"),
+    });
+    expect(c.kayit.satirlar.map((satir) => Boolean(satir.urunId))).toEqual([true, false, true, true]);
+    expect(c.errorCode()).toBe("FATURA_TASLAKLARI_EKSIK");
+
+    const second = await faturaTaslakYanitiniHazirla(c.admin, "store", "demo", structuredClone(c.kayit));
+    expect(second).toMatchObject({
+      tamam: true, hazirlaniyor: false,
+      otomatikTaslakRaporu: { kaydedildi: 4, bekleyen: 0, atlandi: 0 },
+    });
+    expect(m.save).toHaveBeenCalledTimes(5);
+    expect(c.products).toHaveLength(4);
+    expect(new Set(c.products.map((urun) => urun.id)).size).toBe(4);
+  });
+
+  it("bir fotoğraf aktarımı beklerken diğer satırları işlemeye devam eder", async () => {
+    const c = client(invoice(4));
+    m.media.mockImplementation(async ({ satir }: { satir: { satirId: string } }) => ({
+      urunGorselleri: [], gorselDurumu: satir.satirId === "line-1" ? "aktarim-bekliyor" : "",
+      gorselKaynaklari: [],
+    }));
+    const reply = await faturaTaslakYanitiniHazirla(c.admin, "store", "demo", structuredClone(c.kayit));
+    expect(reply).toMatchObject({
+      tamam: true, hazirlaniyor: false,
+      otomatikTaslakRaporu: { kaydedildi: 4, bekleyen: 0, atlandi: 0 },
+      taslakKayitUyarisi: expect.stringContaining("fotoğraf"),
+    });
+    expect(m.save).toHaveBeenCalledTimes(4);
+    expect(c.products).toHaveLength(4);
+  });
+
+  it("kayıtlı ürünlerin doğrulama sorgusu başarısızsa tamamlandı demez", async () => {
+    const c = client(invoice(), false, true);
+    const reply = await faturaTaslakYanitiniHazirla(c.admin, "store", "demo", structuredClone(c.kayit));
+    expect(reply).toMatchObject({
+      tamam: false, hazirlaniyor: false,
+      otomatikTaslakRaporu: { bekleyen: 0 },
+      taslakKayitUyarisi: expect.stringContaining("doğrulanamadı"),
+    });
+    expect(m.save).toHaveBeenCalledTimes(1);
+  });
+
+  it("fatura satırı ürüne bağlı görünürken ürün gerçekten yoksa tamamlandı demez", async () => {
+    const kayit = invoice();
+    kayit.satirlar[0].urunId = "silinmis-urun";
+    const c = client(kayit);
+    const reply = await faturaTaslakYanitiniHazirla(c.admin, "store", "demo", structuredClone(c.kayit));
+    expect(reply).toMatchObject({
+      tamam: false, hazirlaniyor: false,
+      otomatikTaslakRaporu: { bekleyen: 0, kaydedildi: 0 },
+      taslakKayitUyarisi: expect.stringContaining("bulunamadı"),
+    });
+    expect(m.save).not.toHaveBeenCalled();
+  });
+
+  it("yetki doğrulaması başarısız olursa dört satırın tamamını beklemede tutar", async () => {
+    const c = client(invoice(4));
+    const reply = await faturaTaslakYanitiniHazirla(c.admin, "other-store", "demo", structuredClone(c.kayit));
+    expect(reply).toMatchObject({
+      tamam: false, hazirlaniyor: false,
+      otomatikTaslakRaporu: { bekleyen: 4, atlandi: 4 },
+    });
+    expect(m.save).not.toHaveBeenCalled();
   });
 
   it("kalıcı yazma hatasında faturayı korur, otomatik tekrarı durdurur ve sebebi gösterir", async () => {
