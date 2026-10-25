@@ -59,23 +59,27 @@ export async function kartPresetYanitiniOku(cevap: Response, okuma: GoruSonucu) 
   const { icerik, ...kullanim } = await faturaYanitMetniniOku(cevap);
   let ham: unknown;
   try { ham = JSON.parse(icerik); } catch { throw new Error("KART_YANITI_COZULEMEDI"); }
-  if (!nesne(ham) || !Array.isArray(ham.items) || ham.items.length !== okuma.satirlar.length) {
-    throw new Error("KART_SATIRLARI_ESLESMEDI");
+  if (!nesne(ham) || !Array.isArray(ham.items)) {
+    throw new Error("KART_YANITI_COZULEMEDI");
   }
   const items = new Map<string, Kayit>();
   for (const item of ham.items) {
-    if (!nesne(item) || typeof item.row_id !== "string" || items.has(item.row_id)) {
-      throw new Error("KART_SATIRLARI_ESLESMEDI");
+    if (nesne(item) && typeof item.row_id === "string" && !items.has(item.row_id)) {
+      items.set(item.row_id, item);
     }
-    items.set(item.row_id, item);
   }
+  let eslesen = 0;
   const satirlar = okuma.satirlar.map((s, i) => {
     const item = items.get(String(i + 1));
-    if (!item) throw new Error("KART_SATIRLARI_ESLESMEDI");
-    const kart = item.vixrex_product_json, validation = item.validation, media = item.media;
-    if (!nesne(kart) || !nesne(validation) || !nesne(media) || !Object.hasOwn(DURUMLAR, metin(validation.status))) {
-      throw new Error("KART_YANITI_COZULEMEDI");
+    const kart = item?.vixrex_product_json, validation = item?.validation, media = item?.media;
+    if (!item || !nesne(kart) || !nesne(validation) || !nesne(media) || !Object.hasOwn(DURUMLAR, metin(validation.status))) {
+      return {
+        ...s,
+        dogrulamaDurumu: "Araştırılamadı",
+        eksikler: [...(s.eksikler ?? []), "Ürün kartı bu satır için üretilemedi."],
+      };
     }
+    eslesen += 1;
     const gorsel = adres(media.image_url) || adres(media.source_url);
     const kaynak = adres(validation.official_product_url);
     const eksikler = Array.isArray(validation.unmatched_attributes)
@@ -92,5 +96,6 @@ export async function kartPresetYanitiniOku(cevap: Response, okuma: GoruSonucu) 
       kaynaklar: [{ ...validation, media: { ...media }, card_status: item.card_status }],
     };
   });
+  if (!eslesen) throw new Error("KART_SATIRLARI_ESLESMEDI");
   return { sonuc: { ...okuma, satirlar }, kartCevabi: ham, kullanim };
 }
