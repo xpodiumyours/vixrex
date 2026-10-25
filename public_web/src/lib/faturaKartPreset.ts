@@ -76,7 +76,13 @@ export async function kartPresetYanitiniOku(cevap: Response, okuma: GoruSonucu) 
     if (!nesne(kart) || !nesne(validation) || !nesne(media) || !Object.hasOwn(DURUMLAR, metin(validation.status))) {
       throw new Error("KART_YANITI_COZULEMEDI");
     }
-    const gorsel = adres(media.image_url) || adres(media.source_url);
+    // Kart presetinin döndürdüğü bütün geçerli görselleri koru; tekrarları kaldır.
+    // Tek URL kullanan mevcut preset yanıtlarıyla geriye dönük uyumludur.
+    const gorseller = [...new Set([
+      ...(Array.isArray(media.image_urls) ? media.image_urls : []),
+      media.image_url, media.source_url,
+    ].map(adres).filter(Boolean))];
+    const gorsel = gorseller[0] ?? "";
     const kaynak = adres(validation.official_product_url);
     const eksikler = Array.isArray(validation.unmatched_attributes)
       ? validation.unmatched_attributes.filter((v): v is string => typeof v === "string") : [];
@@ -85,7 +91,7 @@ export async function kartPresetYanitiniOku(cevap: Response, okuma: GoruSonucu) 
       siteAciklama: metin(kart.short_description), siteKategori: metin(kart.category_suggestion),
       siteMarka: metin(kart.brand), siteVaryant: metin(kart.variant),
       gorselKullanimDurumu: metin(media.rights_status),
-      siteSayfa: kaynak, siteGorsel: gorsel, siteGorseller: gorsel ? [gorsel] : [],
+      siteSayfa: kaynak, siteGorsel: gorsel, siteGorseller: gorseller,
       dogrulamaDurumu: DURUMLAR[metin(validation.status)],
       eslesenBilgiler: validation.matched_attributes ?? [], eksikler,
       gorselDogrulamaDurumu: metin(media.verification_status),

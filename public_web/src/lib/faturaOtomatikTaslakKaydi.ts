@@ -70,6 +70,7 @@ export async function faturaTaslakYanitiniHazirla(
         if (store.error || !store.data?.edit_token) throw new Error("Vitrin kayıt yetkisi doğrulanamadı.");
         for (const { satir, sira } of eksik) {
           if (Date.now() + 10_000 >= sonTarih) break;
+          try {
           const dogrulanmis = await satiriDogrula(admin, storeId,
             { islemKimligi: kayit.islemKimligi, satirSirasi: sira }, satir.sonuc);
           if (!dogrulanmis || dogrulanmis.satirId !== satir.satirId) throw new Error("Fatura satırı doğrulanamadı.");
@@ -116,10 +117,13 @@ export async function faturaTaslakYanitiniHazirla(
                 alisFiyati: dogrulanmis.alisBirimFiyati,
               });
               if (medya.gorselDurumu === "aktarim-bekliyor") {
-                rapor.hatalar.push("Ürün taslağı kaydedildi; bazı fotoğraflar aktarılamadı.");
-                break;
+                rapor.hatalar.push(`Satır ${sira + 1}: Ürün taslağı kaydedildi; bazı fotoğraflar aktarılamadı.`);
               }
             }
+          }
+          } catch (err) {
+            rapor.atlandi += 1;
+            rapor.hatalar.push(`Satır ${sira + 1}: ${err instanceof Error ? err.message : "Ürün taslağı kaydedilemedi."}`);
           }
         }
         const yenilenen = await islemiYukle(admin, storeId, kayit.islemKimligi);
@@ -130,20 +134,27 @@ export async function faturaTaslakYanitiniHazirla(
       }
     } catch (err) {
       rapor.hatalar.push(err instanceof Error ? err.message : "Ürün taslağı kaydedilemedi.");
-      rapor.atlandi = 1;
       const yenilenen = await islemiYukle(admin, storeId, kayit.islemKimligi).catch(() => null);
       if (yenilenen?.satirlar.length) guncelKayit = yenilenen;
-      rapor.bekleyen = Math.max(0, guncelKayit.satirlar.filter((satir) => !satir.urunId).length - 1);
+      rapor.bekleyen = guncelKayit.satirlar.filter((satir) => !satir.urunId).length;
+      rapor.atlandi = Math.max(rapor.atlandi, rapor.bekleyen);
     }
   }
   const bagliIdler = guncelKayit.satirlar.flatMap((satir) => satir.urunId ? [satir.urunId] : []);
+  let bagliUrunlerDogrulandi = true;
   rapor.kaydedildi = 0;
   if (bagliIdler.length) {
     const urunler = await admin.from("products").select("id,is_visible,fatura_kanit")
       .eq("store_id", storeId).in("id", bagliIdler);
     if (urunler.error || !Array.isArray(urunler.data)) {
+      bagliUrunlerDogrulandi = false;
       rapor.hatalar.push("Kayıtlı ürün taslakları doğrulanamadı.");
     } else {
+      const bulunanIdler = new Set(urunler.data.map((urun) => urun.id));
+      if (bagliIdler.some((id) => !bulunanIdler.has(id))) {
+        bagliUrunlerDogrulandi = false;
+        rapor.hatalar.push("Faturaya bağlı ürünlerden bazıları bulunamadı.");
+      }
       rapor.kaydedildi = urunler.data.filter((urun) => urun.is_visible === false).length;
       if (urunler.data.some((urun) => urun.fatura_kanit?.gorselDurumu === "aktarim-bekliyor") &&
         !rapor.hatalar.some((hata) => hata.includes("fotoğraf"))) {
@@ -155,10 +166,12 @@ export async function faturaTaslakYanitiniHazirla(
     .update({ error_code: rapor.hatalar.length ? "FATURA_TASLAKLARI_EKSIK" : null })
     .eq("job_id", kayit.islemKimligi).eq("store_id", storeId).eq("state", "processed");
   if (durum.error) rapor.hatalar.push("Taslak kayıt durumu saklanamadı.");
+  // Eksik satırlar varken tamamlanmış sayma; hata varsa otomatik tekrar döngüsüne girme.
   const hazirlaniyor = rapor.bekleyen > 0 && rapor.hatalar.length === 0;
+  const tamam = rapor.bekleyen === 0 && bagliUrunlerDogrulandi;
   return {
     ...islemYaniti(guncelKayit),
-    tamam: !hazirlaniyor, hazirlaniyor,
+    tamam, hazirlaniyor,
     taslaklar: faturaTaslaklari(guncelKayit.satirlar, kayit.islemKimligi),
     otomatikTaslakRaporu: rapor,
     ...(rapor.hatalar.length ? { taslakKayitUyarisi: rapor.hatalar.join(" ") } : {}),
