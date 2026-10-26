@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import sharp from "sharp";
-import { kaynakGorseliniDogrula, kaynakGorselleriniHazirla } from "@/lib/faturaGorsel";
+import { gorselsizSatirlariTamamla, kaynakGorseliniDogrula, kaynakGorselleriniHazirla, sayfaGorselAyikla } from "@/lib/faturaGorsel";
+import type { GoruSatiri } from "@/lib/faturaGoru";
 
 const resolveHost = async () => ["8.8.8.8"];
 
@@ -149,5 +150,90 @@ describe("kaynak görsellerini kendi depomuza alma", () => {
     expect(sonuc.gorseller).toHaveLength(0);
     expect(sonuc.altyapiSorunu).toBe(true);
     expect(sonuc.reddedilenler[0].sebep).toBe("depoya-yazilamadi");
+  });
+});
+
+function satir(ek: Partial<GoruSatiri>): GoruSatiri {
+  return {
+    hamSatir: "ELT1302", model: "ELT1302", ad: "Elit Erkek Fanila", barkod: "",
+    varyant: "", beden: "L", marka: "Tutku", adet: 2, birim: "Adet", birimFiyat: 100, tutar: 200,
+    okumaGuveni: 0.9, siteSayfa: "https://sehermensucat.com/elt1302", dogrulamaDurumu: "Doğrulandı",
+    ...ek,
+  };
+}
+
+describe("resmî sayfadan ürün fotoğrafı çıkarma", () => {
+  const GERCEK_SAYFA = `<html><head>
+    <meta property="og:image" content="https://cdn.myikas.com/images/74e89546/image_1080.jpg"/>
+    </head><body><img src="https://cdn.myikas.com/images/theme-images/tema.webp"/></body></html>`;
+
+  it("gerçek sayfadaki og:image adresini çıkarır, tema görselini değil", () => {
+    expect(sayfaGorselAyikla(GERCEK_SAYFA, "https://sehermensucat.com/elt1302"))
+      .toEqual(["https://cdn.myikas.com/images/74e89546/image_1080.jpg"]);
+  });
+
+  it("göreli adres sayfaya göre çözülür, güvenli olmayan adres reddedilir", () => {
+    const html = `<meta property="og:image" content="/img/urun.jpg"/>
+      <meta name="twitter:image" content="data:image/png;base64,AAA"/>`;
+    expect(sayfaGorselAyikla(html, "https://firma.example/urun/1"))
+      .toEqual(["https://firma.example/img/urun.jpg"]);
+  });
+
+  it("görsel içermeyen sayfa boş döner; satır olduğu gibi kalır", async () => {
+    const bos = satir({});
+    const sonuc = await gorselsizSatirlariTamamla({
+      satirlar: [bos],
+      bagimliliklar: { fetcher: async () => new Response("<html><body>yazi</body></html>", { status: 200 }) },
+    });
+    expect(sonuc[0]).toBe(bos);
+  });
+
+  it("bir satırın sayfası açılamazsa yalnız o satır etkilenmez, diğerleri tamamlanır", async () => {
+    const kirik = satir({ siteSayfa: "https://firma.example/urun/yok" });
+    const saglam = satir({ siteSayfa: "https://firma.example/urun/1" });
+    const sonuc = await gorselsizSatirlariTamamla({
+      satirlar: [kirik, saglam],
+      bagimliliklar: {
+        fetcher: async (adres: string) => adres.includes("/urun/1")
+          ? new Response(GERCEK_SAYFA, { status: 200 })
+          : new Response("", { status: 500 }),
+      },
+    });
+    expect(sonuc[0]).toBe(kirik);
+    expect(sonuc[1].siteGorsel).toBe("https://cdn.myikas.com/images/74e89546/image_1080.jpg");
+  });
+
+  it("görseli olan satıra dokunulmaz, sayfa yeniden açılmaz", async () => {
+    let istek = 0;
+    const dolu = satir({ siteGorsel: "https://cdn.myikas.com/mevcut.jpg", siteGorseller: ["https://cdn.myikas.com/mevcut.jpg"] });
+    const sonuc = await gorselsizSatirlariTamamla({
+      satirlar: [dolu],
+      bagimliliklar: { fetcher: async () => { istek += 1; return new Response(GERCEK_SAYFA); } },
+    });
+    expect(sonuc[0]).toBe(dolu);
+    expect(istek).toBe(0);
+  });
+
+  it("Bulunamadı satırına fotoğraf yapıştırılmaz", async () => {
+    let istek = 0;
+    const sat = satir({ dogrulamaDurumu: "Bulunamadı" });
+    const sonuc = await gorselsizSatirlariTamamla({
+      satirlar: [sat],
+      bagimliliklar: { fetcher: async () => { istek += 1; return new Response(GERCEK_SAYFA); } },
+    });
+    expect(sonuc[0]).toBe(sat);
+    expect(istek).toBe(0);
+  });
+
+  it("özel veya güvenli olmayan adrese istek atılmaz", async () => {
+    let istek = 0;
+    const fetcher = async () => { istek += 1; return new Response(GERCEK_SAYFA); };
+    const [yerel, http] = await gorselsizSatirlariTamamla({
+      satirlar: [satir({ siteSayfa: "https://localhost/urun" }), satir({ siteSayfa: "http://firma.example/urun" })],
+      bagimliliklar: { fetcher },
+    });
+    expect(istek).toBe(0);
+    expect(yerel.siteGorsel).toBeUndefined();
+    expect(http.siteGorsel).toBeUndefined();
   });
 });
