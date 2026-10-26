@@ -574,7 +574,7 @@ class VitrinStoreCard extends StatelessWidget {
           ),
           const SizedBox(width: 4),
           Text(
-            isOpen ? 'CANLI' : 'KAPALI',
+            isOpen ? 'AÇIK' : 'KAPALI',
             style: TextStyle(
               color: isOpen ? AppColors.success : AppColors.error,
               fontSize: 9,

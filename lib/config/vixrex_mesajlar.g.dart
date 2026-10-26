@@ -216,7 +216,8 @@ const Map<String, String> vixRexMesajlari = {
       'Vitrinini güvenceye almak için giriş yap / üye ol. Mevcut Auth ekranı açılır; vitrin token ile hesaba bağlanır.',
   'anlasilamadi':
       'Üzgünüm, bunu tam anlayamadım. Aşağıdaki seçeneklerden birini deneyebilirsiniz:',
-  'taslak_cakismasi': 'Canlı vitrin değişmiş — burada gördüğün eski hâli.',
+  'taslak_cakismasi':
+      'Canlı vitrin değişmiş. Canlı sürümü alırsan taslağındaki yayınlanmamış değişiklikler kaybolur.',
   'welcome_baslik': 'Merhaba, ben Vixrex Asistan.',
   'welcome_aciklama':
       'İşletmene ne kazandırıyorum?\n- Tek Link & QR Kod: Dijital vitrin sayfan.\n- WhatsApp Sipariş: Müşterilerin tek tıkla sana ulaşır.\n- Ürün & Galeri: Reyon ve ürünlerini sergilersin.\n- Konum & Adres: Dükkanına kolayca ulaşılır.\n\nSenin işletmen için de 2 dakikada beraber hazırlayalım mı?',

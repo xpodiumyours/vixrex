@@ -855,6 +855,7 @@ export default async function StorePage(props: PageProps) {
           />
         }
         isPreviewMode={isOwnerMode}
+        isPublished={store.is_published}
         ownerMode={isOwnerMode}
         // Yalnız sahip modunda: hangi alanın boş olduğunu bilmek için.
         // Ziyaretçi isteğinde undefined kalır, "bu bölüme eklenebilir"

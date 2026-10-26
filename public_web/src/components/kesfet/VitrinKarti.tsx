@@ -151,7 +151,7 @@ export function VitrinKarti({
             <span className="absolute left-2.5 top-2.5 flex items-center gap-1 rounded-full border border-white/20 bg-black/60 px-2 py-1 text-[9px] font-black tracking-[0.5px]">
               <span className={`h-1.5 w-1.5 rounded-full ${vitrin.acikMi ? "bg-lp-mint" : "bg-red-400"}`} aria-hidden="true" />
               <span className={vitrin.acikMi ? "text-lp-mint" : "text-red-400"}>
-                {vitrin.acikMi ? "CANLI" : "KAPALI"}
+                {vitrin.acikMi ? "AÇIK" : "KAPALI"}
               </span>
             </span>
           )}
