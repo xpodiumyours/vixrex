@@ -1,4 +1,4 @@
-import json, os, sys, time, urllib.request, urllib.error
+import html, json, os, sys, time, urllib.request, urllib.error
 
 UCRETSIZ = os.environ.get("UCRETSIZ") == "1"
 OKUMA_PRESET = os.environ.get("OKUMA_PRESET", "vixrex-fatura-okuma-metin-v1")
@@ -95,6 +95,80 @@ KART_ISTEK_SATIRLARI = [
 
 DURUMLAR = {"verified", "ambiguous", "not_found", "not_researched"}
 sonuc = []
+
+def kart_html(items, zaman):
+    def e(x):
+        return html.escape(str(x if x is not None else ""))
+    def kaynak_satiri(k):
+        return e(k.get("url") if isinstance(k, dict) else k)
+    renkler = {"verified": "#10B981", "ambiguous": "#F59E0B", "not_found": "#EF4444", "not_researched": "#64748B"}
+    etiketler = {"verified": "Doğrulandı", "ambiguous": "Belirsiz", "not_found": "Bulunamadı", "not_researched": "Araştırılmadı"}
+    kartlar = []
+    for it in items:
+        v = it.get("validation") or {}
+        p = it.get("vixrex_product_json") or {}
+        medya = it.get("media") or {}
+        fatura = it.get("invoice_data") or {}
+        durum_anahtar = v.get("status") or "not_researched"
+        renk = renkler.get(durum_anahtar, "#64748B")
+        gorsel = e(medya.get("image_url") or "")
+        gorsel_blok = '<img src="' + gorsel + '" alt="">' if gorsel else '<div class="bos">görsel yok</div>'
+        sayfa = e(v.get("official_product_url") or "")
+        sayfa_blok = ('<a href="' + sayfa + '" target="_blank" rel="noreferrer">' + sayfa + "</a>") if sayfa else '<span class="solgun">resmî sayfa yok</span>'
+        gorsel_sayfa = e(medya.get("image_source_page") or "")
+        gorsel_sayfa_blok = ('<a href="' + gorsel_sayfa + '" target="_blank" rel="noreferrer">' + gorsel_sayfa + "</a>") if gorsel_sayfa else '<span class="solgun">yok</span>'
+        kaynaklar = "".join("<li>" + kaynak_satiri(k) + "</li>" for k in (medya.get("sources") or v.get("sources") or []))
+        uyumlu = e(", ".join(v.get("matched_attributes") or []))
+        uyumsuz = e(", ".join(v.get("unmatched_attributes") or []))
+        kartlar.append(
+            '<article class="kart">'
+            + gorsel_blok
+            + "<h2>" + e(p.get("title")) + "</h2>"
+            + '<p class="marka">' + e(it.get("brand")) + " · " + e(p.get("category") or it.get("category")) + "</p>"
+            + '<p class="durum" style="border-color:' + renk + ";color:" + renk + '">' + etiketler.get(durum_anahtar, "Bilinmiyor") + "</p>"
+            + '<p class="satir">Fatura satırı: ' + e(it.get("raw_invoice_line")) + "</p>"
+            + '<dl><div><dt>Adet</dt><dd>' + e(fatura.get("quantity")) + "</dd></div>"
+            + '<div><dt>Birim fiyat</dt><dd>' + e(fatura.get("unit_price")) + "</dd></div>"
+            + '<div><dt>Tutar</dt><dd>' + e(fatura.get("total_amount")) + "</dd></div></dl>"
+            + '<p class="url">Resmî sayfa: ' + sayfa_blok + "</p>"
+            + '<p class="url">Görsel kaynağı: ' + gorsel_sayfa_blok + "</p>"
+            + '<p class="url">Görsel hakkı: ' + e(medya.get("image_rights") or "belirtilmedi") + "</p>"
+            + (("<p class=\"not\">Uyumlu: " + uyumlu + "</p>") if uyumlu else "")
+            + (("<p class=\"not\">Eşleşmeyen: " + uyumsuz + "</p>") if uyumsuz else "")
+            + (("<ul class=\"kaynak\">" + kaynaklar + "</ul>") if kaynaklar else "")
+            + "</article>"
+        )
+    stil = (
+        "*{box-sizing:border-box}body{margin:0;padding:24px;background:#050B1A;color:#F7FBFF;"
+        "font-family:Inter,'Segoe UI',system-ui,sans-serif}"
+        "header h1{margin:0;font-size:22px;letter-spacing:-.02em}header p{color:#A9BBDA;font-size:13px}"
+        ".izgara{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin-top:22px}"
+        ".kart{border:1px solid #294D88;border-radius:18px;background:#0B1730;padding:16px;display:grid;gap:8px;align-content:start}"
+        ".kart img{width:100%;height:190px;object-fit:contain;background:#112448;border-radius:12px}"
+        ".bos{height:190px;display:grid;place-items:center;background:#112448;border-radius:12px;color:#64748B;font-size:13px}"
+        ".kart h2{margin:0;font-size:15px;line-height:1.35}.marka{margin:0;color:#57B7FF;font-size:12px;font-weight:700}"
+        ".durum{margin:0;align-self:start;border:1px solid;border-radius:999px;padding:4px 10px;font-size:11px;font-weight:800}"
+        ".satir{margin:0;color:#A9BBDA;font-size:11px;line-height:1.5}"
+        ".kart dl{margin:0;display:flex;gap:14px;flex-wrap:wrap}"
+        ".kart dt{color:#A9BBDA;font-size:10px;text-transform:uppercase;letter-spacing:.06em}"
+        ".kart dd{margin:2px 0 0;font-size:13px;font-weight:800}"
+        ".url{margin:0;font-size:11px;color:#A9BBDA;overflow-wrap:anywhere}.url a{color:#57B7FF}"
+        ".solgun{color:#64748B}.not{margin:0;font-size:11px;color:#D9E7FF}"
+        ".kaynak{margin:0;padding-left:16px;font-size:10px;color:#A9BBDA;overflow-wrap:anywhere}"
+    )
+    baslik = "<header><h1>Vixrex — Gerçek Kart Testi</h1><p>" + e(zaman) + " · " + str(len(items)) + " kart üretildi</p></header>"
+    return "<!doctype html><html lang=\"tr\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Vixrex kart testi</title><style>" + stil + "</style></head><body>" + baslik + '<div class="izgara">' + "".join(kartlar) + "</div></body></html>"
+
+def kartlari_kaydet(items, okuma):
+    klasor = os.path.dirname(os.path.abspath(__file__))
+    zaman = time.strftime("%Y-%m-%d %H:%M:%S")
+    json_yolu = os.path.join(klasor, "son-kartlar.json")
+    with open(json_yolu, "w", encoding="utf-8") as f:
+        json.dump({"olusturuldu": zaman, "okuma": okuma, "kartlar": items}, f, ensure_ascii=False, indent=2)
+    html_yolu = os.path.join(klasor, "son-kartlar.html")
+    with open(html_yolu, "w", encoding="utf-8") as f:
+        f.write(kart_html(items, zaman))
+    print("kartlar kaydedildi: " + html_yolu + " | " + json_yolu)
 
 def kontrol(ad, gecti, ayrinti=""):
     sonuc.append((ad, gecti, ayrinti))
@@ -214,6 +288,7 @@ def main():
             v = it.get("validation") or {}
             print("  satır", it.get("row_id"), "|", (it.get("vixrex_product_json") or {}).get("title", "")[:45],
                   "|", v.get("status"), "|", v.get("official_product_url"), "| görsel:", (it.get("media") or {}).get("image_url"))
+        kartlari_kaydet(items, okuma)
     finally:
         if hash_deger:
             sil = anahtar_sil(yonetim, hash_deger)

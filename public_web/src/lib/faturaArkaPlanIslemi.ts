@@ -9,6 +9,7 @@ import {
   kartPresetYanitiniOku,
   URUN_KART_PRESET,
 } from "@/lib/faturaKartPreset";
+import { gorselsizSatirlariTamamla } from "@/lib/faturaGorsel";
 
 export const OKUMA_PRESET = "@preset/vixrex-qwen-fatura-okuma-suzme";
 export const OTOMATIK_FATURA_PRESET = URUN_KART_PRESET;
@@ -109,7 +110,7 @@ export async function arkaPlanFaturaSonucunuAl(
     } else {
       throw new Error("OKUYUCU_EKSIK_CEVAP");
     }
-    const birlesikOkuma = okuma;
+    const birlesikOkuma = { ...okuma, satirlar: await gorselsizSatirlariTamamla({ satirlar: okuma.satirlar }) };
     const satirlar = birlesikOkuma.satirlar.map((s) => faturaSatiriniAktar(s, birlesikOkuma.tedarikci));
     const id = await islemKaydet({
       slug, parmakIzi: sonuc.fingerprint, providerJobId: islemKimligi,

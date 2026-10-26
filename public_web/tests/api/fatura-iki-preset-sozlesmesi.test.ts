@@ -61,6 +61,62 @@ describe("gerçek ikinci preset JSON sözleşmesi",()=>{
   it("hiçbir satır eşleşmezse reddeder",async()=>{
     await expect(kartPresetYanitiniOku(response([item("9","X")]),first)).rejects.toThrow("KART_SATIRLARI_ESLESMEDI");
     await expect(kartPresetYanitiniOku(response([{row_id:"2",vixrex_product_json:{}}]),first)).rejects.toThrow("KART_SATIRLARI_ESLESMEDI");
+    await expect(kartPresetYanitiniOku(response([{row_id:"2",status:"tamamlandı"}]),first)).rejects.toThrow("KART_SATIRLARI_ESLESMEDI");
+  });
+  it("gerçek modelin düz/karma biçimini kabul eder: alanlar kökte, yalnız durum iç içe",async()=>{
+    const duz={
+      row_id:"1",
+      title:"ELT1302 Elit Erkek Elastan Sıfır Yaka Uzun Kol Fanila",
+      brand:"Elit (Tutku Elit)",
+      category_suggestion:"İç Giyim > Erkek > Fanila",
+      variant:"Resmî sayfada görüntülenen varyant: Beyaz; faturada: Siyah",
+      short_description:"Seher Mensucat üretimi ELT1302 fanila.",
+      consumer_sale_price:null,stock_quantity:null,
+      official_product_url:"https://example.com/elt1302",
+      image_url:null,image_urls:["https://example.com/elt1302.jpg"],
+      image_validation_status:"not_reviewed",rights_status:"unknown",
+      matched_attributes:["Ürün kodu (ELT1302)"],
+      unmatched_attributes:["Renk: faturada Siyah, sayfada Beyaz"],
+      sources:[{url:"https://example.com/elt1302",type:"official_manufacturer_product_page",fetched:true}],
+      validation:{status:"ambiguous",notes:"Renk doğrulanamadı."},
+    };
+    const result=await kartPresetYanitiniOku(response([duz]),first);
+    const satir=result.sonuc.satirlar[0];
+    expect(satir.ad).toBe("ELT1302 Elit Erkek Elastan Sıfır Yaka Uzun Kol Fanila");
+    expect(satir.dogrulamaDurumu).toBe("Belirsiz");
+    expect(satir.siteSayfa).toBe("https://example.com/elt1302");
+    expect(satir.siteGorsel).toBe("https://example.com/elt1302.jpg");
+    expect(satir.siteGorseller).toEqual(["https://example.com/elt1302.jpg"]);
+    expect(satir.siteMarka).toBe("Elit (Tutku Elit)");
+    expect(satir.siteKategori).toBe("İç Giyim > Erkek > Fanila");
+    expect(satir.siteVaryant).toBe("Resmî sayfada görüntülenen varyant: Beyaz; faturada: Siyah");
+    expect(satir.siteAciklama).toBe("Seher Mensucat üretimi ELT1302 fanila.");
+    expect(satir.eslesenBilgiler).toEqual(["Ürün kodu (ELT1302)"]);
+    expect(satir.eksikler).toEqual(["Renk: faturada Siyah, sayfada Beyaz"]);
+    expect(satir.gorselDogrulamaDurumu).toBe("not_reviewed");
+    expect(satir.gorselKullanimDurumu).toBe("unknown");
+    expect(satir.barkod).toBe("111");
+    expect(satir.adet).toBe(3);
+    expect(satir.tutar).toBe(30);
+    expect(satir.kaynaklar?.[0]).toMatchObject({status:"ambiguous",notes:"Renk doğrulanamadı.",official_product_url:"https://example.com/elt1302"});
+    expect(satir.kaynaklar).toContainEqual(expect.objectContaining({url:"https://example.com/elt1302",fetched:true}));
+  });
+  it("düz biçimde başlıksız bulunamadı satırı fatura verisiyle kendi satırında kalır",async()=>{
+    const duz={
+      row_id:"2",brand:"Tut",category_suggestion:"",
+      image_validation_status:"not_reviewed",rights_status:"unknown",
+      unmatched_attributes:["Tüm ürün özellikleri: resmî ürün sayfası bulunamadı"],
+      validation:{status:"not_found"},
+    };
+    const result=await kartPresetYanitiniOku(response([duz]),first);
+    const satir=result.sonuc.satirlar[1];
+    expect(satir.dogrulamaDurumu).toBe("Bulunamadı");
+    expect(satir.ad).toBe("İkinci");
+    expect(satir.barkod).toBe("222");
+    expect(satir.adet).toBe(4);
+    expect(satir.tutar).toBe(80);
+    expect(satir.eksikler).toEqual(["Tüm ürün özellikleri: resmî ürün sayfası bulunamadı"]);
+    expect(satir.siteSayfa).toBe("");
   });
   it("ilk araştırmanın açıklama, görsel, özellik ve kaynaklarını kendi satırıyla ikinci presete taşır",()=>{
     const arastirma = {siteAciklama:"Kaynak açıklaması",siteSayfa:"https://example.com/ilk",

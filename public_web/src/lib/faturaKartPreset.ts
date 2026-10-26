@@ -55,6 +55,44 @@ const DURUMLAR: Record<string, string> = {
   verified: "Doğrulandı", ambiguous: "Belirsiz", not_found: "Bulunamadı", not_researched: "Araştırılamadı",
 };
 
+type KartParcalari = {
+  kart: Kayit; validation: Kayit; media: Kayit; kanitlar: Kayit[]; card_status: unknown;
+};
+
+function ilkAdres(value: unknown): string {
+  return Array.isArray(value) ? metin(value.find((v) => typeof v === "string")) : "";
+}
+
+function doluDizi(ana: unknown, yedek: unknown): unknown[] {
+  if (Array.isArray(ana) && ana.length) return ana;
+  return Array.isArray(yedek) ? yedek : [];
+}
+
+function kartParcalari(item: Kayit): KartParcalari {
+  const kart: Kayit = { ...item, ...(nesne(item.vixrex_product_json) ? item.vixrex_product_json : {}) };
+  const dogrulama: Kayit = nesne(item.validation) ? item.validation : {};
+  const gorsel: Kayit = nesne(item.media) ? item.media : {};
+  return {
+    kart,
+    validation: {
+      ...dogrulama,
+      status: metin(dogrulama.status) || metin(item.validation_status) || metin(item.match_status) || metin(item.status),
+      official_product_url: metin(dogrulama.official_product_url) || metin(item.official_product_url),
+      matched_attributes: doluDizi(dogrulama.matched_attributes, item.matched_attributes),
+      unmatched_attributes: doluDizi(dogrulama.unmatched_attributes, item.unmatched_attributes),
+    },
+    media: {
+      ...gorsel,
+      image_url: metin(gorsel.image_url) || metin(item.image_url) || ilkAdres(item.image_urls),
+      source_url: metin(gorsel.source_url) || metin(item.source_url),
+      verification_status: metin(gorsel.verification_status) || metin(item.image_validation_status),
+      rights_status: metin(gorsel.rights_status) || metin(item.rights_status),
+    },
+    kanitlar: Array.isArray(item.sources) ? item.sources.filter(nesne) : [],
+    card_status: item.card_status,
+  };
+}
+
 export async function kartPresetYanitiniOku(cevap: Response, okuma: GoruSonucu) {
   const { icerik, ...kullanim } = await faturaYanitMetniniOku(cevap);
   let ham: unknown;
@@ -71,14 +109,15 @@ export async function kartPresetYanitiniOku(cevap: Response, okuma: GoruSonucu) 
   let eslesen = 0;
   const satirlar = okuma.satirlar.map((s, i) => {
     const item = items.get(String(i + 1));
-    const kart = item?.vixrex_product_json, validation = item?.validation, media = item?.media;
-    if (!item || !nesne(kart) || !nesne(validation) || !nesne(media) || !Object.hasOwn(DURUMLAR, metin(validation.status))) {
+    const parcalar = item ? kartParcalari(item) : null;
+    if (!parcalar || !Object.hasOwn(DURUMLAR, metin(parcalar.validation.status))) {
       return {
         ...s,
         dogrulamaDurumu: "Araştırılamadı",
         eksikler: [...(s.eksikler ?? []), "Ürün kartı bu satır için üretilemedi."],
       };
     }
+    const { kart, validation, media, kanitlar, card_status } = parcalar;
     eslesen += 1;
     const gorsel = adres(media.image_url) || adres(media.source_url);
     const kaynak = adres(validation.official_product_url);
@@ -93,7 +132,7 @@ export async function kartPresetYanitiniOku(cevap: Response, okuma: GoruSonucu) 
       dogrulamaDurumu: DURUMLAR[metin(validation.status)],
       eslesenBilgiler: validation.matched_attributes ?? [], eksikler,
       gorselDogrulamaDurumu: metin(media.verification_status),
-      kaynaklar: [{ ...validation, media: { ...media }, card_status: item.card_status }],
+      kaynaklar: [{ ...validation, media: { ...media }, card_status }, ...kanitlar],
     };
   });
   if (!eslesen) throw new Error("KART_SATIRLARI_ESLESMEDI");
