@@ -110,11 +110,22 @@ describe("sunucuda kalıcı görünmez fatura taslağı", () => {
 
   it("üç satırlık parçadan sonra aynı kayıtla devam eder; ikinci ürünü kopyalamaz", async () => {
     const c = client(invoice(4));
+    const simdi = { an: Date.now() };
+    const saat = vi.spyOn(Date, "now").mockImplementation(() => simdi.an);
+    const asilKaydet = m.save.getMockImplementation()!;
+    let kayitSayisi = 0;
+    m.save.mockImplementation(async (...args) => {
+      const sonuc = await asilKaydet(...args);
+      kayitSayisi += 1;
+      if (kayitSayisi === 3) simdi.an += 231_000;
+      return sonuc;
+    });
     const first = await faturaTaslakYanitiniHazirla(c.admin, "store", "demo", structuredClone(c.kayit));
     expect(first).toMatchObject({ hazirlaniyor: true, otomatikTaslakRaporu: { bekleyen: 1, kaydedildi: 3 } });
     const second = await faturaTaslakYanitiniHazirla(c.admin, "store", "demo", structuredClone(c.kayit));
     expect(second).toMatchObject({ hazirlaniyor: false, otomatikTaslakRaporu: { bekleyen: 0, kaydedildi: 4 } });
     expect(m.save).toHaveBeenCalledTimes(4);
+    saat.mockRestore();
   });
 
   it("kalıcı yazma hatasında faturayı korur, otomatik tekrarı durdurur ve sebebi gösterir", async () => {

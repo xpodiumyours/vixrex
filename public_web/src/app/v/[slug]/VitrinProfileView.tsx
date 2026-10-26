@@ -165,6 +165,7 @@ export interface VitrinProfileViewProps {
   articles: VitrinArticleTeaser[];
   catalog: ReactNode;
   isPreviewMode?: boolean;
+  isPublished?: boolean;
   /**
    * Sahip modu. Yalnız true iken vitrindeki öğelere tıkla-düzenle
    * işaretleri eklenir. Müşteri görünümünde bu öznitelikler DOM'a hiç
@@ -240,6 +241,7 @@ export default function VitrinProfileView({
   articles,
   catalog,
   isPreviewMode = false,
+  isPublished = false,
   ownerMode = false,
   ownerDraft,
   isDemo = false,
@@ -379,7 +381,9 @@ export default function VitrinProfileView({
       {!ownerMode && !isPreviewMode && <VitrinViewTracker storeSlug={storeSlug} />}
       {isPreviewMode && (
         <div className="fixed top-0 left-0 right-0 z-[60] h-9 bg-amber-500 text-[#0B1120] text-xs sm:text-sm font-bold flex items-center justify-center gap-2 lg:hidden">
-          Taslak önizleme — bu vitrin henüz yayında değil, müşteriler göremez.
+          {isPublished
+            ? "Taslak önizleme — müşteriler yayındaki hâli görüyor, buradaki değişiklikler henüz yayınlanmadı."
+            : "Taslak önizleme — bu vitrin henüz yayında değil, müşteriler göremez."}
         </div>
       )}
       {/* ===== NAVBAR ===== */}
