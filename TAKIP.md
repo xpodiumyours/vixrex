@@ -26,6 +26,6 @@ Durum sözlüğü: **BEKLİYOR · YAPILIYOR · BİTTİ · SENDE**
 
 | 17 | Kart görselleri 13/13 boş geliyor: web_fetch modele yalnız metin döndürüyor, görsel adresi hiç ulaşmıyor | BİTTİ — görsel artık modelin gerçekten açtığı resmî sayfadan Vixrex tarafından çıkarılıyor (og:image); güvenlik kapıları aynı (yalnız https, özel adres yok, süre sınırı, Bulunamadı satırına fotoğraf yapışmaz); PR #699 birleşti ve canlı ölçüldü: vixrex.com 8c162aa7 sunuyor; testler 13/13 yeşil, kapılar yeşil, tek kırmızı #11'in bilinen eski testi |
 
-| 18 | T1+K3 durum dili + yanlış çakışma alarmı: taslakta hiçbir şey yokken "Canlı vitrin değişmiş" bandı çıkıyor, "CANLI" kelimesi iki anlamda, taslak bandı yayındaki vitrinde bile "henüz yayında değil" diyor | BİTTİ — kök düzeltme göçü + dil tekilleştirmesi (10 dosya), kapılar yeşil (2109 test + tsc + lint + build + Flutter şema); bu PR ile gidiyor, merge + canlı onayı Casper'da (Supabase göçü kırmızı risk sınıfı) |
+| 18 | T1+K3 durum dili + yanlış çakışma alarmı: taslakta hiçbir şey yokken "Canlı vitrin değişmiş" bandı çıkıyor, "CANLI" kelimesi iki anlamda, taslak bandı yayındaki vitrinde bile "henüz yayında değil" diyor | BİTTİ — kök düzeltme göçü + dil tekilleştirmesi (10 dosya), kapılar yeşil (2109 test + tsc + lint + build + Flutter şema); PR #700 birleşti ve canlı ölçüldü: vixrex.com fb55f85e sunuyor, /kesfet "AÇIK" rozetini servis ediyor; göç canlı veritabanına bu yayında uygulandı |
 
 Kural: aynı anda tek iş. Her iş bitince tek cümle rapor. Canlıya çıkış yalnız Casper'ın onayıyla.
