@@ -1,4 +1,5 @@
 import { MAX_PRODUCT_IMAGES } from "@/lib/productImagePolicy";
+import { kategoriBirlestir } from "@/lib/kategoriBirlesim";
 
 export interface ProductItem {
   id?: string;
@@ -152,18 +153,20 @@ export function findProductBySlug(products: ProductItem[], productSlug: string) 
 }
 
 export function deriveCollections(products: ProductItem[], limit = 8): ProductCollection[] {
-  const counts = new Map<string, number>();
+  const groups = new Map<string, { name: string; count: number }>();
 
   for (const product of products) {
     const category = String(product.category || "").trim();
     if (!category || category.toLowerCase() === "tümü") continue;
-    counts.set(category, (counts.get(category) || 0) + 1);
+    const birlesik = kategoriBirlestir(category);
+    const mevcut = groups.get(birlesik.anahtar);
+    if (mevcut) mevcut.count += 1;
+    else groups.set(birlesik.anahtar, { name: birlesik.ad, count: 1 });
   }
 
-  return Array.from(counts.entries())
-    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "tr"))
-    .slice(0, limit)
-    .map(([name, count]) => ({ name, count }));
+  return Array.from(groups.values())
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "tr"))
+    .slice(0, limit);
 }
 
 export function normalizeWhatsappDigits(value: unknown): string {

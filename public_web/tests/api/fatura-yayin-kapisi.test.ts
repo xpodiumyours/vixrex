@@ -76,18 +76,20 @@ function adminMock() {
       return { upsert: mocks.upsert };
     }
     if (tablo === "products") {
+      const sorgu = { barkod: false };
       const query = {
         select: vi.fn(),
-        eq: vi.fn(),
-        maybeSingle: vi.fn(),
+        eq: vi.fn((kolon: string) => {
+          if (kolon === "barcode") sorgu.barkod = true;
+          return query;
+        }),
+        maybeSingle: vi.fn(async () => ({
+          data: sorgu.barkod ? null : { id: "kategori-1", product_template_key: "fashion" },
+          error: null,
+        })),
         update: mocks.update,
       };
       query.select.mockReturnValue(query);
-      query.eq.mockReturnValue(query);
-      query.maybeSingle.mockResolvedValue({
-        data: { id: "kategori-1", product_template_key: "fashion" },
-        error: null,
-      });
       mocks.update.mockReturnValue({
         eq: vi.fn(async () => ({ error: null })),
       });

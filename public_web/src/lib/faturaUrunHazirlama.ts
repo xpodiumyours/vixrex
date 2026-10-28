@@ -6,6 +6,7 @@ import { normalizeProductVariants } from "@/lib/productRichData";
 import { yonetilenUrunGorseliMi } from "@/lib/productImagePolicy";
 import { kaynakGorselleriniHazirla } from "@/lib/faturaGorsel";
 import { faturaKatalogMetadatasi } from "@/lib/faturaUrunIcerigi";
+import { kategoriBirlestir } from "@/lib/kategoriBirlesim";
 
 export async function kayitliFaturaKatalogunuUygula(args: {
   admin: SupabaseClient;
@@ -47,18 +48,23 @@ export async function kayitliFaturaKatalogunuUygula(args: {
   }), true);
   const lunaKategori = typeof katalog.kategori === "string" ? katalog.kategori.trim() : "";
   if (!lunaKategori) return null;
-  const anahtar = lunaKategori.normalize("NFKC").toLocaleLowerCase("tr-TR");
+  const birlesik = kategoriBirlestir(lunaKategori);
+  const anahtar = birlesik.anahtar;
   let kategori = kategoriOnbellegi.get(anahtar);
   if (!kategori) {
-    const mevcut = await admin.from("product_categories").select("id,product_template_key")
-      .eq("store_id", storeId).ilike("name", lunaKategori.replace(/[\\%_]/g, "\\$&")).maybeSingle();
-    if (mevcut.error) return "Luna'nın kategorisi okunamadı; tekrar dene.";
-    if (typeof mevcut.data?.id === "string") {
-      kategori = { id: mevcut.data.id, templateKey: mevcut.data.product_template_key || "generic" };
+    const mevcutlar = await admin.from("product_categories").select("id,name,product_template_key")
+      .eq("store_id", storeId);
+    if (mevcutlar.error) return "Luna'nın kategorisi okunamadı; tekrar dene.";
+    const eslesen = (Array.isArray(mevcutlar.data) ? mevcutlar.data : []).find(
+      (satir: { name?: string | null; id?: unknown; product_template_key?: string | null }) =>
+        kategoriBirlestir(String(satir.name ?? "")).anahtar === anahtar,
+    );
+    if (eslesen) {
+      kategori = { id: String(eslesen.id), templateKey: eslesen.product_template_key || "generic" };
     } else {
       const ekleme = await admin.rpc("upsert_store_category_v2", {
         p_store_id: storeId, p_edit_token: editToken,
-        p_name: lunaKategori, p_template_key: "generic",
+        p_name: birlesik.ad, p_template_key: "generic",
         p_slug: `luna-${createHash("sha256").update(anahtar).digest("hex").slice(0, 24)}`,
       });
       if (!ekleme.error && ekleme.data?.success === true && typeof ekleme.data.id === "string") {

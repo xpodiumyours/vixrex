@@ -16,10 +16,13 @@ describe("ManufacturerProductSource", () => {
     expect(html).toContain('target="_blank"');
     expect(html).toContain('rel="noopener noreferrer"');
   });
-  it("belirsiz sonucu doğrulandıya çevirmez", () => {
-    const html = render("https://example.com/product", "? Belirsiz");
-    expect(html).toContain("? Belirsiz");
-    expect(html).not.toContain("Doğrulandı");
+  it("iç eşleşme durumu tüketiciye gösterilmez", () => {
+    for (const durum of ["Doğrulandı", "? Belirsiz", "Bulunamadı"]) {
+      const html = render("https://example.com/product", durum);
+      expect(html).not.toContain(durum);
+      expect(html).not.toContain("eşleşme");
+      expect(html).not.toContain("OpenRouter");
+    }
   });
   it.each(["javascript:alert(1)", "https://user:password@example.com/product", "  "])(
     "geçersiz veya kimlik bilgili kaynağı göstermez: %s", (url) => expect(render(url)).toBe(""),

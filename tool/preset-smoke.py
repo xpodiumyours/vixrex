@@ -176,10 +176,50 @@ def kontrol(ad, gecti, ayrinti=""):
 
 def cerceve_temizle(metin):
     t = metin.strip()
-    if t.startswith("```"):
-        t = t.split("\n", 1)[1] if "\n" in t else t
-        t = t.rsplit("```", 1)[0]
+    if "```" in t:
+        for parca in t.split("```"):
+            p = parca.strip()
+            if p.startswith("json"):
+                p = p[4:].strip()
+            if p.startswith("{") or p.startswith("["):
+                return p
+    ilk = t.find("{")
+    son = t.rfind("}")
+    if ilk != -1 and son > ilk:
+        return t[ilk:son + 1].strip()
     return t.strip()
+
+def kart_bicimi_duzelt(it):
+    if not isinstance(it, dict):
+        return {}
+    p = it.get("vixrex_product_json") if isinstance(it.get("vixrex_product_json"), dict) else {}
+    m = it.get("media") if isinstance(it.get("media"), dict) else {}
+    v = it.get("validation") if isinstance(it.get("validation"), dict) else {}
+    return {
+        **it,
+        "vixrex_product_json": {
+            "title": p.get("title") or it.get("title"),
+            "brand": p.get("brand") or it.get("brand"),
+            "category_suggestion": p.get("category_suggestion") or it.get("category_suggestion"),
+            "variant": p.get("variant") or it.get("variant"),
+            "short_description": p.get("short_description") or it.get("short_description"),
+            "consumer_sale_price": p.get("consumer_sale_price", it.get("consumer_sale_price")),
+            "stock_quantity": p.get("stock_quantity", it.get("stock_quantity")),
+        },
+        "media": {
+            "image_url": m.get("image_url") or it.get("image_url"),
+            "source_url": m.get("source_url") or it.get("source_url"),
+            "image_source_page": m.get("image_source_page") or it.get("source_url"),
+            "image_rights": m.get("image_rights") or it.get("rights_status"),
+            "verification_status": m.get("verification_status") or it.get("image_validation_status"),
+            "sources": m.get("sources") or it.get("sources") or [],
+        },
+        "validation": {
+            **v,
+            "status": v.get("status") or it.get("validation_status") or it.get("status"),
+            "official_product_url": v.get("official_product_url") or it.get("official_product_url"),
+        },
+    }
 
 def main():
     yonetim = anahtar_oku()
@@ -194,14 +234,27 @@ def main():
           "provider": {"require_parameters": True},
           "messages": [{"role": "user", "content": FATURA_JSON_ISTEGI + "\n\n" + SAHTE_FATURA}],
         }
-        y1, k1 = istek("/chat/completions", "POST", govde1, anahtar)
-        if k1 != 200 or "error" in y1:
-            kontrol("AŞAMA 1 yanıt", False, json.dumps(y1.get("error", y1), ensure_ascii=False)[:300])
+        okuma = None
+        for deneme in range(1, 3):
+            y1, k1 = istek("/chat/completions", "POST", govde1, anahtar)
+            if k1 != 200 or "error" in y1:
+                kontrol("AŞAMA 1 yanıt", False, json.dumps(y1.get("error", y1), ensure_ascii=False)[:300])
+                return
+            s1 = y1["choices"][0]
+            kontrol("AŞAMA 1 tamamlandı", s1.get("finish_reason") == "stop", "finish_reason=" + str(s1.get("finish_reason")) + " model=" + str(y1.get("model")) + " deneme=" + str(deneme))
+            toplam_maliyet += float((y1.get("usage") or {}).get("cost") or 0)
+            ham_okuma = s1["message"].get("content") or ""
+            try:
+                aday = json.loads(cerceve_temizle(ham_okuma))
+            except Exception:
+                aday = None
+            if isinstance(aday, dict):
+                okuma = aday
+                break
+            print("AŞAMA 1 geçersiz içerik, tekrar denenecek | " + str(ham_okuma)[:300])
+        if not isinstance(okuma, dict):
+            kontrol("okuma: JSON nesnesi", False, "iki denemede de geçerli JSON gelmedi")
             return
-        s1 = y1["choices"][0]
-        kontrol("AŞAMA 1 tamamlandı", s1.get("finish_reason") == "stop", "finish_reason=" + str(s1.get("finish_reason")) + " model=" + str(y1.get("model")))
-        toplam_maliyet += float((y1.get("usage") or {}).get("cost") or 0)
-        okuma = json.loads(cerceve_temizle(s1["message"]["content"]))
         satirlar = okuma.get("satirlar") or []
         kontrol("okuma: satır sayısı >= 1", len(satirlar) >= 1, "satır=" + str(len(satirlar)))
         alanlar = ["ham_satir", "ad", "marka", "adet", "birim_fiyat", "tutar"]
@@ -257,6 +310,11 @@ def main():
             kontrol("kart: JSON çözümlendi", False, str(h)[:120] + " | içerik: " + ham_kart[:300] + " | akıl: " + str(s2["message"].get("reasoning") or "")[:200])
             return
         items = kart.get("items") or []
+        if not items and isinstance(kart.get("groups"), list):
+            for grup in kart["groups"]:
+                if isinstance(grup, dict):
+                    items.extend(grup.get("items") or [])
+        items = [kart_bicimi_duzelt(it) for it in items]
         kontrol("kart: satır sayısı eşleşti", len(items) == len(satirlar), "kart=" + str(len(items)) + " okuma=" + str(len(satirlar)))
         idler = [it.get("row_id") for it in items]
         kontrol("kart: row_id'ler birebir", sorted(idler) == [str(i + 1) for i in range(len(satirlar))], str(idler))
@@ -298,4 +356,5 @@ def main():
     gecen = sum(1 for _, g, _ in sonuc if g)
     print("SONUÇ: " + str(gecen) + "/" + str(len(sonuc)) + " kontrol geçti")
 
-main()
+if __name__ == "__main__":
+    main()

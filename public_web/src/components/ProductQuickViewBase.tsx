@@ -7,7 +7,7 @@ import type { RichProductItem } from "@/lib/richProductItem";
 import { MapPinIcon } from "@/lib/vitrinBrandIcons";
 import { MAX_PRODUCT_IMAGES } from "@/lib/productImagePolicy";
 import {
-  buildProductDetailFacts,
+  buildConsumerDetailFacts,
   buildVariantOptionGroups,
   findMatchingVariant,
   productVariantsForTemplate,
@@ -169,7 +169,7 @@ export default function ProductQuickView({
   // tamami bu kartta gorunur. buildProductQuickFacts yalniz "hizli" yuzeyine
   // isaretli alanlari aliyordu; giyimde desen/beden sistemi, gidada
   // icindekiler/saklama/mensei hicbir yerde gorunmuyordu.
-  const quickFacts = buildProductDetailFacts({
+  const quickFacts = buildConsumerDetailFacts({
     brand: product.brand,
     barcode: product.barcode,
     metadata: product.metadata,
@@ -218,7 +218,7 @@ export default function ProductQuickView({
       }}
     >
       <div
-        className="grid max-h-[94vh] w-full max-w-5xl overflow-y-auto rounded-t-[28px] border border-blue-500/20 bg-[#081321] shadow-[0_30px_100px_rgba(0,0,0,0.6)] sm:max-h-[90vh] sm:grid-cols-[1.02fr_0.98fr] sm:overflow-hidden sm:rounded-[28px]"
+        className="grid max-h-[94vh] w-full max-w-5xl overflow-y-auto rounded-t-[28px] border border-blue-500/20 bg-[#081321] shadow-[0_30px_100px_rgba(0,0,0,0.6)] sm:max-h-[90vh] sm:grid-cols-[1.02fr_0.98fr] sm:grid-rows-[minmax(0,90vh)] sm:overflow-hidden sm:rounded-[28px]"
         role="dialog"
         aria-modal="true"
         aria-labelledby="product-quick-view-title"

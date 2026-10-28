@@ -25,6 +25,7 @@ import {
   productVariantLabel,
 } from "@/lib/productCardPresentation";
 import { normalizeProductMetadata } from "@/lib/productRichData";
+import { kategoriBirlestir } from "@/lib/kategoriBirlesim";
 
 type CatalogProduct = RichProductItem;
 
@@ -166,10 +167,24 @@ export default function ProductCatalog({
   const currentCategory = searchParams.get("category") || "";
   const currentQuery = searchParams.get("q") || "";
 
+  const birlesikCipler = useMemo(() => {
+    const gruplar = new Map<string, CategoryItem>();
+    for (const cat of categoryMap) {
+      const birlesik = kategoriBirlestir(cat.name);
+      if (!birlesik.anahtar || gruplar.has(birlesik.anahtar)) continue;
+      gruplar.set(birlesik.anahtar, { id: birlesik.anahtar, name: birlesik.ad });
+    }
+    return Array.from(gruplar.values());
+  }, [categoryMap]);
+
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
       if (!isPublicCatalogProduct(product)) return false;
-      if (currentCategory && product.categoryId !== currentCategory) return false;
+      if (
+        currentCategory &&
+        product.categoryId !== currentCategory &&
+        kategoriBirlestir(String(product.category || "")).anahtar !== currentCategory
+      ) return false;
       if (currentQuery) {
         const q = currentQuery.toLowerCase();
         const matchName = product.name.toLowerCase().includes(q);
@@ -214,7 +229,7 @@ export default function ProductCatalog({
 
   return (
     <section>
-      {categoryMap.length > 1 && (
+      {birlesikCipler.length > 1 && (
         <div className="mb-8 flex items-center gap-2.5 overflow-x-auto pb-2 pr-6 scrollbar-none">
           <a
             href={buildCategoryUrl("")}
@@ -226,7 +241,7 @@ export default function ProductCatalog({
           >
             Tümü
           </a>
-          {categoryMap.map((cat) => (
+          {birlesikCipler.map((cat) => (
             <a
               key={cat.id}
               href={buildCategoryUrl(cat.id)}
@@ -311,7 +326,7 @@ export default function ProductCatalog({
                     </span>
                   ) : category && category.toLocaleLowerCase("tr-TR") !== "tümü" ? (
                     <span className="absolute left-2.5 top-2.5 z-10 max-w-[70%] truncate rounded-lg border border-blue-500/25 bg-slate-950/80 px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-wider text-blue-300 shadow-sm backdrop-blur-md">
-                      {category}
+                      {kategoriBirlestir(category).ad || category}
                     </span>
                   ) : null}
                   {photoCountBadge ? (
@@ -369,18 +384,20 @@ export default function ProductCatalog({
                 </div>
               </a>
 
-              <button
-                type="button"
-                onClick={() => setLocationProductId(showLocation ? null : productKey)}
-                className="absolute right-2.5 top-2.5 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-slate-950/75 text-white shadow-lg backdrop-blur-md transition hover:border-blue-400/40 hover:bg-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
-                aria-label={`${product.name} konum bilgilerini göster`}
-                aria-expanded={showLocation}
-                title="Konum bilgileri"
-              >
-                <MapPinIcon className="h-4 w-4" aria-hidden="true" />
-              </button>
+              {fulfillmentRegion || storeLocationText ? (
+                <button
+                  type="button"
+                  onClick={() => setLocationProductId(showLocation ? null : productKey)}
+                  className="absolute right-2.5 top-2.5 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-slate-950/75 text-white shadow-lg backdrop-blur-md transition hover:border-blue-400/40 hover:bg-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+                  aria-label={`${product.name} konum bilgilerini göster`}
+                  aria-expanded={showLocation}
+                  title="Konum bilgileri"
+                >
+                  <MapPinIcon className="h-4 w-4" aria-hidden="true" />
+                </button>
+              ) : null}
 
-              {showLocation ? (
+              {showLocation && (fulfillmentRegion || storeLocationText) ? (
                 <div className="absolute right-2.5 top-[3.25rem] z-30 w-[min(240px,calc(100%_-_20px))] rounded-xl border border-blue-500/20 bg-slate-950/95 p-3 text-left shadow-2xl backdrop-blur-xl">
                   <div className="flex items-start gap-2">
                     <MapPinIcon className="mt-0.5 h-4 w-4 shrink-0 text-blue-400" aria-hidden="true" />

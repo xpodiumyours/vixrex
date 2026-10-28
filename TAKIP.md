@@ -28,4 +28,6 @@ Durum sözlüğü: **BEKLİYOR · YAPILIYOR · BİTTİ · SENDE**
 
 | 18 | T1+K3 durum dili + yanlış çakışma alarmı: taslakta hiçbir şey yokken "Canlı vitrin değişmiş" bandı çıkıyor, "CANLI" kelimesi iki anlamda, taslak bandı yayındaki vitrinde bile "henüz yayında değil" diyor | BİTTİ — kök düzeltme göçü + dil tekilleştirmesi (10 dosya), kapılar yeşil (2109 test + tsc + lint + build + Flutter şema); PR #700 birleşti ve canlı ölçüldü: vixrex.com fb55f85e sunuyor, /kesfet "AÇIK" rozetini servis ediyor; göç canlı veritabanına bu yayında uygulandı |
 
+| 19 | Ürün kartlarında mağaza konumu zorunluluğu + yerel SEO ("en yakın X nereden" sorguları) | BİTTİ — konum altyapısı yerindeydi (kartlarda konum butonu, vitrinde LocalBusiness+GPS); eksik kalan ürün sayfasının arama verisine satıcı konumu (adres+GPS) bağlandı, vitrine hasMap eklendi; esnaf akışı yavaşlamadı, görünür değişiklik yok; kapılar yeşil (2111 test + tsc + lint + build); commit/Casper onayı bekliyor |
+
 Kural: aynı anda tek iş. Her iş bitince tek cümle rapor. Canlıya çıkış yalnız Casper'ın onayıyla.

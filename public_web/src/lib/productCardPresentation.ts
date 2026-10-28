@@ -9,6 +9,7 @@ import {
   type ProductAttributeValue,
   type ProductVariant,
 } from "./productRichData";
+import { kategoriBirlestir } from "./kategoriBirlesim";
 
 export interface ProductQuickFact {
   key: string;
@@ -36,6 +37,14 @@ function formatAttributeValue(value: ProductAttributeValue["value"], unit?: stri
         : "Hayır"
       : String(value);
   return unit ? `${formatted} ${unit}` : formatted;
+}
+
+function tuketiciMetni(value: string): string {
+  return value
+    .replace(/\s*\((varsayılan|varsayilan)\)\s*$/iu, "")
+    .replace(/(\d)\s*gr\b/giu, "$1 g")
+    .replace(/(\d)\s*lt\b/giu, "$1 L")
+    .trim();
 }
 
 const PRICE_MODE_LABELS = {
@@ -113,10 +122,14 @@ function metadataAttributeFacts(args: {
           .map((item) => definition?.optionLabels?.[String(item)] ?? String(item))
           .join(", ")
       : definition?.optionLabels?.[rawValue] ?? CONDITION_LABELS[rawValue] ?? rawValue;
+    const deger =
+      attribute.key === "category"
+        ? kategoriBirlestir(okunur).ad || okunur
+        : tuketiciMetni(okunur);
     facts.push({
       key: attribute.key,
       label: attribute.label || definition?.label || attribute.key,
-      value: okunur,
+      value: deger,
     });
   }
   return facts;
@@ -195,6 +208,26 @@ export function buildProductDetailFacts(args: {
   );
 
   return facts;
+}
+
+const TUKETICI_GIZLI_ANAHTARLAR = new Set(["barcode", "sku", "mpn"]);
+
+export function buildConsumerDetailFacts(args: {
+  brand?: string | null;
+  barcode?: string | null;
+  metadata?: unknown;
+}): ProductQuickFact[] {
+  const facts = buildProductDetailFacts(args).filter(
+    (fact) => !TUKETICI_GIZLI_ANAHTARLAR.has(fact.key) && !fact.label.includes("(aktarılan)"),
+  );
+  const miktarDegerleri = new Set(
+    facts
+      .filter((fact) => fact.key === "netQuantity" || fact.key === "size")
+      .map((fact) => fact.value),
+  );
+  return facts.filter(
+    (fact) => !(fact.key === "variant" && miktarDegerleri.has(fact.value)),
+  );
 }
 
 export function productVariantsForTemplate(
@@ -371,7 +404,15 @@ export function buildProductCardFacts(args: {
     }
   }
 
-  return { marka, ozellikler: ozellikler.slice(0, limit) };
+  const gorulenDegerler = new Set<string>();
+  const benzersiz = ozellikler.filter((ozellik) => {
+    const deger = ozellik.value.trim();
+    if (!deger || gorulenDegerler.has(deger)) return false;
+    gorulenDegerler.add(deger);
+    return true;
+  });
+
+  return { marka, ozellikler: benzersiz.slice(0, limit) };
 }
 
 const TUTAR_BICIMI = new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 2 });
