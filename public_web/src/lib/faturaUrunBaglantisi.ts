@@ -128,12 +128,66 @@ export async function mevcutUrunuOku(
 const URUN_ALANLARI =
   "id,slug,name,description,price_text,price_amount,image_urls,category_id,stock_status,stock_quantity,old_price_amount,badge_tag,fulfillment_region,brand,barcode,metadata,variants,is_visible";
 
-function urunAdAnahtari(deger: unknown): string {
-  return String(deger ?? "")
+const HARF_KATLAMA: Record<string, string> = {
+  ş: "s",
+  ı: "i",
+  ğ: "g",
+  ü: "u",
+  ö: "o",
+  ç: "c",
+  â: "a",
+  î: "i",
+  û: "u",
+};
+
+function harfKatla(metin: string): string {
+  return metin
     .toLocaleLowerCase("tr-TR")
-    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .replace(/[şığüöçâîû]/g, (harf) => HARF_KATLAMA[harf] ?? harf)
+    .replace(/[^a-z0-9]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function urunAdAnahtari(deger: unknown): string {
+  return harfKatla(String(deger ?? ""));
+}
+
+const MIKTAR_KALIBI = /(\d+(?:[.,]\d+)?)\s*(kg|g|gr|gram|ml|cl|lt|l|litre|adet)\b/;
+
+function urunAdGovdesi(deger: unknown, marka: unknown): string {
+  const katlanmis = harfKatla(String(deger ?? "").replace(/\([^)]*\)/g, " "));
+  const markaKatlanmis = harfKatla(String(marka ?? ""));
+  const markasiz =
+    markaKatlanmis && katlanmis.startsWith(`${markaKatlanmis} `)
+      ? katlanmis.slice(markaKatlanmis.length + 1)
+      : katlanmis;
+  return markasiz.replace(MIKTAR_KALIBI, " ").replace(/\s+/g, " ").trim();
+}
+
+function miktarImzasi(deger: unknown): string | null {
+  const eslesme = MIKTAR_KALIBI.exec(harfKatla(String(deger ?? "")));
+  if (!eslesme) return null;
+  const deger_ = Number(eslesme[1].replace(",", "."));
+  if (!Number.isFinite(deger_) || deger_ <= 0) return null;
+  switch (eslesme[2]) {
+    case "kg":
+      return `${Math.round(deger_ * 1000)} g`;
+    case "g":
+    case "gr":
+    case "gram":
+      return `${Math.round(deger_)} g`;
+    case "ml":
+      return `${Math.round(deger_)} ml`;
+    case "cl":
+      return `${Math.round(deger_ * 10)} ml`;
+    case "l":
+    case "lt":
+    case "litre":
+      return `${Math.round(deger_ * 1000)} ml`;
+    default:
+      return `${Math.round(deger_)} adet`;
+  }
 }
 
 function varyantImzalari(deger: unknown): Set<string> {
@@ -162,6 +216,20 @@ function varyantlarUyusuyor(bir: unknown, iki: unknown): boolean {
   return false;
 }
 
+export function ayniUrunMu(
+  mevcut: Record<string, unknown>,
+  girdi: Record<string, unknown>,
+): boolean {
+  if (urunAdAnahtari(mevcut.brand) !== urunAdAnahtari(girdi.brand)) return false;
+  const govdeMevcut = urunAdGovdesi(mevcut.name, mevcut.brand);
+  const govdeGirdi = urunAdGovdesi(girdi.name, girdi.brand);
+  if (!govdeMevcut || !govdeGirdi || govdeMevcut !== govdeGirdi) return false;
+  const miktarMevcut = miktarImzasi(mevcut.name);
+  const miktarGirdi = miktarImzasi(girdi.name);
+  if (miktarMevcut && miktarGirdi && miktarMevcut !== miktarGirdi) return false;
+  return varyantlarUyusuyor(mevcut.variants, girdi.variants);
+}
+
 export async function ayniUrunuBul(
   admin: SupabaseClient,
   storeId: string,
@@ -177,13 +245,10 @@ export async function ayniUrunuBul(
       .maybeSingle();
     if (data?.id && varyantlarUyusuyor(data.variants, girdi.variants)) return data as Record<string, unknown>;
   }
-  const ad = urunAdAnahtari(girdi.name);
-  if (!ad) return null;
-  const marka = urunAdAnahtari(girdi.brand);
+  if (!urunAdAnahtari(girdi.name)) return null;
   const { data } = await admin.from("products").select(URUN_ALANLARI).eq("store_id", storeId);
   for (const urun of Array.isArray(data) ? data : []) {
-    if (urunAdAnahtari(urun.name) !== ad || urunAdAnahtari(urun.brand) !== marka) continue;
-    if (!varyantlarUyusuyor(urun.variants, girdi.variants)) continue;
+    if (!ayniUrunMu(urun as Record<string, unknown>, girdi)) continue;
     return urun as Record<string, unknown>;
   }
   return null;

@@ -1,6 +1,7 @@
 import sharp from "sharp";
 import { faturaYanitMetniniOku, type GoruSatiri } from "@/lib/faturaGoru";
 import { kaynakGorseliniDogrula, type GorselBagimliliklari } from "@/lib/faturaGorsel";
+import { FATURA_MIN_SOURCE_SHORT_EDGE } from "@/lib/productImagePolicy";
 
 export const GORSEL_SECIM_PRESET = "@preset/urun-gorsel-secim";
 
@@ -105,24 +106,44 @@ export async function adayGorselleriniSec(args: {
   const girdiler: Array<{ row_id: string; ad: string; marka: string; aday_indeksleri: number[] }> = [];
   const veriUrler: string[] = [];
   const satirPozisyonlari = new Map<string, number[]>();
+  const tumPozisyonlari = new Map<string, number[]>();
 
   for (let i = 0; i < satirlar.length; i++) {
     const satir = satirlar[i];
     const adaylar = satir.siteGorseller ?? [];
     if (adaylar.length < 2) continue;
     const row_id = String(i + 1);
-    const orijinalPozisyonlar: number[] = [];
-    const aday_indeksleri: number[] = [];
+    const dogrulanan: Array<{ yerel: number; bayt: Uint8Array; kisaKenar: number }> = [];
     for (let yerel = 0; yerel < adaylar.length; yerel++) {
       const kontrol = await kaynakGorseliniDogrula(adaylar[yerel], args.bagimliliklar);
       if (!kontrol.tamam || !kontrol.bayt) continue;
-      orijinalPozisyonlar.push(yerel);
-      aday_indeksleri.push(veriUrler.length);
-      veriUrler.push(await kucukVeriUrl(kontrol.bayt));
+      const kisaKenar = Math.min(kontrol.genislik ?? 0, kontrol.yukseklik ?? 0);
+      dogrulanan.push({ yerel, bayt: kontrol.bayt, kisaKenar });
     }
-    if (!aday_indeksleri.length) continue;
+    if (!dogrulanan.length) continue;
+    const esigiGecen = dogrulanan.filter((aday) => aday.kisaKenar >= FATURA_MIN_SOURCE_SHORT_EDGE);
+    const modeleGiden = esigiGecen.length
+      ? esigiGecen
+      : [...dogrulanan].sort((a, b) => b.kisaKenar - a.kisaKenar);
+    const aday_indeksleri: number[] = [];
+    for (const aday of modeleGiden) {
+      aday_indeksleri.push(veriUrler.length);
+      veriUrler.push(await kucukVeriUrl(aday.bayt));
+    }
     girdiler.push({ row_id, ad: satir.ad, marka: satir.marka, aday_indeksleri });
-    satirPozisyonlari.set(row_id, orijinalPozisyonlar);
+    satirPozisyonlari.set(row_id, modeleGiden.map((aday) => aday.yerel));
+    tumPozisyonlari.set(
+      row_id,
+      [...dogrulanan]
+        .sort((a, b) => {
+          const aBuyuk = a.kisaKenar >= FATURA_MIN_SOURCE_SHORT_EDGE ? 1 : 0;
+          const bBuyuk = b.kisaKenar >= FATURA_MIN_SOURCE_SHORT_EDGE ? 1 : 0;
+          if (aBuyuk !== bBuyuk) return bBuyuk - aBuyuk;
+          if (a.kisaKenar !== b.kisaKenar) return b.kisaKenar - a.kisaKenar;
+          return a.yerel - b.yerel;
+        })
+        .map((aday) => aday.yerel),
+    );
   }
   if (!girdiler.length) return satirlar;
 
@@ -161,7 +182,13 @@ export async function adayGorselleriniSec(args: {
       if (kabul.has(y)) continue;
       elenenler.add(y);
     }
-    const kalan = adaylar.map((_, y) => y).filter((y) => !kabul.has(y) && !elenenler.has(y));
+    const siraliPozisyonlar = [
+      ...(tumPozisyonlari.get(row_id) ?? []),
+      ...adaylar
+        .map((_, y) => y)
+        .filter((y) => !(tumPozisyonlari.get(row_id) ?? []).includes(y)),
+    ];
+    const kalan = siraliPozisyonlar.filter((y) => !kabul.has(y) && !elenenler.has(y));
     const sonDizilim = [...dizilim, ...kalan];
     if (!sonDizilim.length) continue;
     const yeniListe = sonDizilim.map((y) => adaylar[y]);

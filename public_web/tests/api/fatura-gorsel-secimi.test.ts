@@ -169,6 +169,51 @@ describe("fatura görsel seçimi — OpenRouter kararı", () => {
     expect(sonuc[0].siteGorseller).toEqual([A, guvenliDegil, ozel]);
   });
 
+  it("kısa kenarı 1200 px altındaki aday modele gitmez, eşiği geçen aday seçilir", async () => {
+    const kucuk = await fotograf(300, 300, 7);
+    const buyuk = await fotograf(1600, 1600, 8);
+    const harita = { [A]: kucuk, [B]: buyuk };
+    const satirlar = [satir({ siteGorsel: A, siteGorseller: [A, B] })];
+    const govdeler: Array<Record<string, unknown>> = [];
+
+    const sonuc = await adayGorselleriniSec({
+      satirlar,
+      bagimliliklar: {
+        fetcher: fetcherIle(harita),
+        resolveHost,
+        modelCagrisi: async (govde) => {
+          govdeler.push(govde);
+          return modelYaniti([{ row_id: "1", secilen: 0, sira: [], red: [] }]);
+        },
+      },
+    });
+
+    const parcalar = (govdeler[0].messages as Array<{ content: Array<Record<string, unknown>> }>)[0].content;
+    expect(parcalar.filter((parca) => parca.type === "image_url")).toHaveLength(1);
+    expect(String(parcalar[0].text)).toContain('"aday_indeksleri":[0]');
+    expect(sonuc[0].siteGorsel).toBe(B);
+    expect(sonuc[0].siteGorseller).toEqual([B, A]);
+  });
+
+  it("hiçbir aday eşiği geçmiyorsa en büyük aday başa alınır", async () => {
+    const kucuk = await fotograf(280, 220, 9);
+    const orta = await fotograf(800, 800, 10);
+    const harita = { [A]: kucuk, [B]: orta };
+    const satirlar = [satir({ siteGorsel: A, siteGorseller: [A, B] })];
+
+    const sonuc = await adayGorselleriniSec({
+      satirlar,
+      bagimliliklar: {
+        fetcher: fetcherIle(harita),
+        resolveHost,
+        modelCagrisi: async () => modelYaniti([{ row_id: "1", secilen: 0, sira: [], red: [] }]),
+      },
+    });
+
+    expect(sonuc[0].siteGorsel).toBe(B);
+    expect(sonuc[0].siteGorseller).toEqual([B, A]);
+  });
+
   it("tek adaylı satırlarda model hiç çağrılmaz", async () => {
     const harita = await gorselHaritasi();
     const satirlar = [satir({ siteGorsel: A, siteGorseller: [A] })];
