@@ -1243,20 +1243,24 @@ export default function InvoiceToProducts({
                     <strong>{satir.birlestirmeAdayi.ad || "kayıtlı ürün"}</strong>. Barkod okunmadığı
                     için aynı ürün olduğu kanıtlanamadı; bu yüzden kart açılmadan önce sana soruyoruz.
                   </p>
-                  <button
-                    type="button"
-                    onClick={() => void birlestirmeKarariVer(index, "birlestir")}
-                    disabled={yaziliyor || yukleniyor}
-                  >
-                    Aynı ürün — kartları birleştir
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void birlestirmeKarariVer(index, "ayri")}
-                    disabled={yaziliyor || yukleniyor}
-                  >
-                    Farklı ürün — ayrı kart aç
-                  </button>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      className="fatura-ikincil grow"
+                      onClick={() => void birlestirmeKarariVer(index, "birlestir")}
+                      disabled={yaziliyor || yukleniyor}
+                    >
+                      Aynı ürün — kartları birleştir
+                    </button>
+                    <button
+                      type="button"
+                      className="fatura-ikincil grow"
+                      onClick={() => void birlestirmeKarariVer(index, "ayri")}
+                      disabled={yaziliyor || yukleniyor}
+                    >
+                      Farklı ürün — ayrı kart aç
+                    </button>
+                  </div>
                 </div>
               )}
 
