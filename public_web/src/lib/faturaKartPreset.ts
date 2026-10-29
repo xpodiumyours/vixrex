@@ -93,7 +93,7 @@ function kartParcalari(item: Kayit): KartParcalari {
   };
 }
 
-type TekrarSatiri = { barkod?: string; ad?: string; marka?: string; varyant?: string };
+type TekrarSatiri = { barkod?: string; model?: string; ad?: string; marka?: string; varyant?: string; beden?: string };
 
 function adAnahtari(ham: string | undefined): string {
   return (ham ?? "")
@@ -103,11 +103,31 @@ function adAnahtari(ham: string | undefined): string {
     .trim();
 }
 
-/** Tekilleştirme yalnız kanıtlanabilir durumda yapılır: aynı barkod, ya da barkodsuzsa aynı marka+ad. */
-export function tekrarGruplari(
+function ayniDeger(satirlar: TekrarSatiri[], sec: (satir: TekrarSatiri) => string | undefined): boolean {
+  return new Set(satirlar.map((satir) => adAnahtari(sec(satir)))).size === 1;
+}
+
+function kimlikKurulabilir(item: Kayit | undefined): boolean {
+  if (!item) return false;
+  const parcalar = kartParcalari(item);
+  if (metin(parcalar.validation.status) !== "verified") return false;
+  return Boolean(adres(parcalar.validation.official_product_url));
+}
+
+export type TekillesmeKarari = {
+  indirgenen: Map<string, number>;
+  bedenAyrisan: Set<string>;
+  kimlikKurulamayan: Set<string>;
+};
+
+/** Birleştirme yalnız barkod (ya da barkodsuzsa marka+ad) ve beden/varyant aynıyken ve kararlar doğrulanmışken yapılır. */
+export function tekillesmeKarari(
   satirlar: TekrarSatiri[],
   items: Map<string, Kayit>,
-): Map<string, number> {
+): TekillesmeKarari {
+  const karar: TekillesmeKarari = {
+    indirgenen: new Map(), bedenAyrisan: new Set(), kimlikKurulamayan: new Set(),
+  };
   const gruplar = new Map<string, number[]>();
   satirlar.forEach((_, i) => {
     const item = items.get(String(i + 1));
@@ -116,7 +136,6 @@ export function tekrarGruplari(
     gruplar.set(grup, [...(gruplar.get(grup) ?? []), i]);
   });
 
-  const sonuc = new Map<string, number>();
   for (const [, uyeler] of gruplar) {
     if (uyeler.length < 2) continue;
     const satirlarUye = uyeler.map((i) => satirlar[i]);
@@ -127,20 +146,37 @@ export function tekrarGruplari(
       const adlar = satirlarUye.map((s) => adAnahtari(s.ad));
       if (adlar.some((ad) => ad.replace(/\s/g, "").length < 6)) continue;
       if (new Set(adlar).size !== 1) continue;
-      const markalar = satirlarUye.map((s) => adAnahtari(s.marka));
-      if (new Set(markalar).size !== 1) continue;
+      if (!ayniDeger(satirlarUye, (s) => s.marka)) continue;
+    }
+    if (!ayniDeger(satirlarUye, (s) => s.varyant)) continue;
+    if (!ayniDeger(satirlarUye, (s) => s.beden)) {
+      for (const i of uyeler) karar.bedenAyrisan.add(String(i + 1));
+      continue;
+    }
+
+    const kurulamiyan = uyeler.filter((i) => !kimlikKurulabilir(items.get(String(i + 1))));
+    if (kurulamiyan.length) {
+      for (const i of kurulamiyan) karar.kimlikKurulamayan.add(String(i + 1));
+      continue;
     }
 
     const bildirilen = uyeler
       .map((i) => metin(items.get(String(i + 1))?.canonical_row_id))
-      .map((deger) => Number(deger) - 1)
+      .map((deger) => (/^\d+$/.test(deger) ? Number(deger) - 1 : -1))
       .find((sira) => uyeler.includes(sira));
     const kanonik = bildirilen ?? uyeler[0];
     for (const i of uyeler) {
-      if (i !== kanonik) sonuc.set(String(i + 1), kanonik + 1);
+      if (i !== kanonik) karar.indirgenen.set(String(i + 1), kanonik + 1);
     }
   }
-  return sonuc;
+  return karar;
+}
+
+export function tekrarGruplari(
+  satirlar: TekrarSatiri[],
+  items: Map<string, Kayit>,
+): Map<string, number> {
+  return tekillesmeKarari(satirlar, items).indirgenen;
 }
 
 export async function kartPresetYanitiniOku(cevap: Response, okuma: GoruSonucu) {
@@ -156,24 +192,31 @@ export async function kartPresetYanitiniOku(cevap: Response, okuma: GoruSonucu) 
       items.set(item.row_id, item);
     }
   }
-  const tekrarlar = tekrarGruplari(okuma.satirlar, items);
+  const karar = tekillesmeKarari(okuma.satirlar, items);
+  const tekrarlar = karar.indirgenen;
+  const kimlikNotu = "Aynı ürün doğrulanamadı; ayrı kart açıldı.";
   let eslesen = 0;
   const satirlar = okuma.satirlar.map((s, i) => {
-    const item = items.get(String(i + 1));
+    const sira = String(i + 1);
+    const item = items.get(sira);
     const parcalar = item ? kartParcalari(item) : null;
+    const kimlikEksik = karar.kimlikKurulamayan.has(sira);
     if (!parcalar || !Object.hasOwn(DURUMLAR, metin(parcalar.validation.status))) {
       return {
         ...s,
         dogrulamaDurumu: "Araştırılamadı",
-        eksikler: [...(s.eksikler ?? []), "Ürün kartı bu satır için üretilemedi."],
+        eksikler: [
+          ...(s.eksikler ?? []), "Ürün kartı bu satır için üretilemedi.",
+          ...(kimlikEksik ? [kimlikNotu] : []),
+        ],
       };
     }
     const { kart, validation, media, kanitlar, card_status } = parcalar;
-    const kanonik = tekrarlar.get(String(i + 1));
+    const kanonik = tekrarlar.get(sira);
     if (kanonik !== undefined) {
       return {
         ...s,
-        eksikler: [...(s.eksikler ?? []), `Aynı ürün belgede ${kanonik + 1}. satırda da geçiyor; tek kart açılır.`],
+        eksikler: [...(s.eksikler ?? []), `Aynı ürün belgede ${kanonik}. satırda da geçiyor; tek kart açılır.`],
       };
     }
     eslesen += 1;
@@ -181,8 +224,14 @@ export async function kartPresetYanitiniOku(cevap: Response, okuma: GoruSonucu) 
     const kaynak = adres(validation.official_product_url);
     const eksikler = Array.isArray(validation.unmatched_attributes)
       ? validation.unmatched_attributes.filter((v): v is string => typeof v === "string") : [];
+    if (kimlikEksik) eksikler.push(kimlikNotu);
+    const temelAd = metin(kart.title) || s.ad;
+    const beden = metin(s.beden);
+    const ad = karar.bedenAyrisan.has(sira) && beden &&
+      !temelAd.toLocaleLowerCase("tr-TR").includes(`beden ${beden.toLocaleLowerCase("tr-TR")}`)
+      ? `${temelAd} (Beden ${beden})` : temelAd;
     return {
-      ...s, ad: metin(kart.title) || s.ad,
+      ...s, ad,
       siteAciklama: metin(kart.short_description), siteKategori: metin(kart.category_suggestion),
       siteMarka: metin(kart.brand), siteVaryant: metin(kart.variant),
       gorselKullanimDurumu: metin(media.rights_status),
