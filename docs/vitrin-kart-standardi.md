@@ -42,3 +42,32 @@ yatay taşma (bunlar hata), kesik metin (uyarı). Hata varsa çıkış kodu 1'di
 
 Mevcut tekrarlar ve küçük fotoğraflar yalnız kural değişikliğiyle silinmez;
 var olan kartları birleştirmek veri silme demektir, ayrı onay ister.
+
+## 5. Var olan tekrar kartları birleştirme
+
+Birleştirmeyi `public.tekrar_urunleri_birlestir(store_id, uygula)` yapar
+(`supabase/migrations/20261029130000_tekrar_urun_kartlarini_birlestir.sql`).
+İki aşamalıdır ve iki kez koşulabilir (ikinci koşu bulgu üretmez):
+
+1. **Barkod aşaması:** barkodu aynı olan kartlar tek karta iner. GTIN aynıysa
+   üründür aynı üründür; iki farklı GTIN asla birleşmez.
+2. **Barkodsuz aşama:** barkodu boş kart, adı + markası + miktarı birebir aynı
+   olan barkodlu karta bağlanır. Miktar boşsa bağlanmaz.
+
+Kurallar:
+
+- **Toplanan:** stok (boş + boş = boş), fotoğraf listesi (tutulan kartınki önde,
+  en fazla 11), varyantlar, özellik satırı, barkod, kategori, satış sırası.
+- **Tutulan kart:** barkodu olan; eşitse en eski kart. Satış fiyatı tutulan
+  kartınkidir, ortalama alınmaz.
+- **Kapanan kart silinmez:** `is_visible=false`, `is_active=false` olur ve
+  `metadata.birlestirildi` alanında hedefini taşır; geri alınabilir.
+- **Bağlar taşınır:** `invoice_job_lines.product_id` ve varsa alış fiyatı
+  satırı tutulan karta geçer.
+- **Farklı GTIN ayrı kalır:** iki kartın barkodu dolu ve farklıysa birleştirme
+  reddedilir; bunlar ayrı üründür (farklı gramaj/ambalaj/çeşit).
+
+2026-10-29 canlı ölçümü: `elf-market-test-3` vitrininde 12 kartın 3'ü kapandı
+(Coca-Cola 330 ml, Popkek 60 g, Sütaş Ayran 300 ml). Kalan isim ikizleri
+(Popkek 40 g / 60 g, iki farklı barkodlu Pınar Süzme Peynir, 1 L Pınar sütler)
+ayrı GTIN taşıdığı için birleştirilmedi.
