@@ -440,9 +440,9 @@ export default function VitrinProfileView({
             clickLocation="storefront_floating"
             target="_blank"
             rel="noopener noreferrer"
-            className="ml-3 flex shrink-0 items-center gap-1.5 rounded-xl bg-[#25D366] px-3.5 py-2 text-sm font-bold text-white shadow-lg shadow-black/25 transition hover:brightness-110"
+            className="ml-3 flex shrink-0 items-center gap-1.5 rounded-xl bg-[#25D366] px-3.5 py-2 text-sm font-bold text-[#04140a] shadow-lg shadow-black/25 transition hover:brightness-110"
           >
-            <WhatsAppIcon size={17} className="text-white" />
+            <WhatsAppIcon size={17} className="text-[#04140a]" />
             WhatsApp
           </TrackedWhatsAppLink>
         )}

@@ -18,14 +18,21 @@ import {
 } from "@/lib/products";
 import type { RichProductItem } from "@/lib/richProductItem";
 import {
+  birimFiyatBilgisi,
   buildProductCardFacts,
   eskiFiyatYazisi,
   kartRozeti,
   productPhotoCountBadge,
   productVariantLabel,
+  tutarYazisi,
 } from "@/lib/productCardPresentation";
 import { normalizeProductMetadata } from "@/lib/productRichData";
 import { kategoriBirlestir } from "@/lib/kategoriBirlesim";
+import { vitrinGorunum } from "@/lib/vitrinGorunum";
+import { prototipKartlari, PrototipAnahtar } from "./prototip/prototipOrtak";
+import PrototipVaryantA from "./prototip/VaryantA";
+import PrototipVaryantB from "./prototip/VaryantB";
+import PrototipVaryantC from "./prototip/VaryantC";
 
 type CatalogProduct = RichProductItem;
 
@@ -106,10 +113,12 @@ function CatalogProductImage({
   src,
   alt,
   emptyLabel = "Ürün görseli yok",
+  contain = false,
 }: {
   src: string | null;
   alt: string;
   emptyLabel?: string;
+  contain?: boolean;
 }) {
   const [prevSrc, setPrevSrc] = useState(src);
   const [imgSrc, setImgSrc] = useState<string | null>(src);
@@ -139,7 +148,7 @@ function CatalogProductImage({
       fill
       sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
       onError={() => setHasError(true)}
-      className="object-cover object-center transition duration-500 group-hover:scale-[1.035]"
+      className={`${contain ? "object-contain p-2" : "object-cover"} object-center transition duration-500 group-hover:scale-[1.035]`}
     />
   );
 }
@@ -227,6 +236,24 @@ export default function ProductCatalog({
     [storeSlug, currentQuery],
   );
 
+  const prototipVaryant =
+    process.env.NODE_ENV === "production" ? null : searchParams.get("variant");
+  if (prototipVaryant === "A" || prototipVaryant === "B" || prototipVaryant === "C") {
+    const kartlar = prototipKartlari(paginatedProducts, storeSlug);
+    return (
+      <section>
+        {prototipVaryant === "A" ? (
+          <PrototipVaryantA kartlar={kartlar} storeName={storeName} whatsappBaseUrl={whatsappBaseUrl} />
+        ) : prototipVaryant === "B" ? (
+          <PrototipVaryantB kartlar={kartlar} storeName={storeName} whatsappBaseUrl={whatsappBaseUrl} />
+        ) : (
+          <PrototipVaryantC kartlar={kartlar} storeName={storeName} whatsappBaseUrl={whatsappBaseUrl} />
+        )}
+        <PrototipAnahtar aktif={prototipVaryant} />
+      </section>
+    );
+  }
+
   return (
     <section>
       {birlesikCipler.length > 1 && (
@@ -292,6 +319,13 @@ export default function ProductCatalog({
             oldPriceAmount: product.oldPriceAmount,
           });
           const eskiFiyat = eskiFiyatYazisi(product.oldPriceAmount);
+          const fiyatTutar =
+            typeof product.priceAmount === "number" && product.priceAmount > 0
+              ? product.priceAmount
+              : null;
+          const birimFiyat = isService
+            ? null
+            : birimFiyatBilgisi(product.metadata, fiyatTutar);
           const fulfillmentRegion = String(product.fulfillmentRegion || "").trim();
           const fulfillmentMapUrl = productLocationMapUrl(fulfillmentRegion);
           const productKey = product.id || productUrl;
@@ -317,11 +351,12 @@ export default function ProductCatalog({
                   <CatalogProductImage
                     src={image}
                     alt={product.name}
+                    contain={isLunaInvoiceProduct(product)}
                     emptyLabel={isService ? "Hizmet görseli yok" : "Ürün görseli yok"}
                   />
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0B1120]/45 via-transparent to-transparent" />
                   {rozet ? (
-                    <span className="absolute left-2.5 top-2.5 z-10 max-w-[70%] truncate rounded-lg bg-gradient-to-r from-blue-600 to-cyan-600 px-2.5 py-1 text-[10px] font-extrabold text-white shadow-md">
+                    <span className={`absolute left-2.5 top-2.5 z-10 max-w-[70%] truncate ${vitrinGorunum.rozet.gorsel} px-2.5 py-1 text-[10px] font-extrabold shadow-md`}>
                       {rozet}
                     </span>
                   ) : category && category.toLocaleLowerCase("tr-TR") !== "tümü" ? (
@@ -338,7 +373,7 @@ export default function ProductCatalog({
 
                 <div className="px-3.5 py-3.5">
                   {brand ? (
-                    <p className="mb-1 truncate text-[9px] font-extrabold uppercase tracking-[0.12em] text-slate-500 sm:text-[10px]">
+                    <p className="mb-1 truncate text-[9px] font-extrabold uppercase tracking-[0.12em] text-slate-400 sm:text-[10px]">
                       {brand}
                     </p>
                   ) : null}
@@ -351,15 +386,20 @@ export default function ProductCatalog({
                     </p>
                   ) : null}
                   <div className="mt-2.5 flex min-w-0 items-baseline gap-2">
-                    <p className="truncate text-xs font-extrabold text-blue-400 sm:text-sm">
-                      {product.price || "Fiyat sorun"}
+                    <p className={`truncate text-xs font-extrabold sm:text-sm ${vitrinGorunum.fiyat.ana}`}>
+                      {fiyatTutar != null ? tutarYazisi(fiyatTutar) : product.price || "Fiyat sorun"}
                     </p>
                     {eskiFiyat ? (
-                      <span className="shrink-0 text-[10px] font-medium text-slate-500 line-through sm:text-[11px]">
+                      <span className={`shrink-0 text-[10px] font-medium sm:text-[11px] ${vitrinGorunum.fiyat.eski}`}>
                         {eskiFiyat}
                       </span>
                     ) : null}
                   </div>
+                  {birimFiyat ? (
+                    <p className="mt-0.5 truncate text-[10px] font-semibold text-slate-400 sm:text-[11px]">
+                      {birimFiyat.miktar} · <span className="text-slate-300">{birimFiyat.birimFiyat}</span>
+                    </p>
+                  ) : null}
                   <div className="mt-2 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
                     {!isService && stockStatus ? (
                       <span className={`inline-flex min-w-0 items-center gap-2 text-[10px] font-bold sm:text-[11px] ${tone.text}`}>

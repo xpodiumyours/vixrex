@@ -1,6 +1,13 @@
 "use client";
 
-import { eskiFiyatYazisi, kartRozeti } from "@/lib/productCardPresentation";
+import {
+  birimFiyatBilgisi,
+  eskiFiyatYazisi,
+  indirimOrani,
+  kartRozeti,
+  tutarYazisi,
+} from "@/lib/productCardPresentation";
+import { vitrinGorunum } from "@/lib/vitrinGorunum";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import type { RichProductItem } from "@/lib/richProductItem";
@@ -181,10 +188,18 @@ export default function ProductQuickView({
     selectedStockQuantity === 0
       ? "Tükendi"
       : selectedVariant?.stockStatus || product.stockStatus || undefined;
+  const seciliFiyat = selectedVariant?.priceAmount ?? product.priceAmount ?? null;
+  const fiyatTutar =
+    typeof seciliFiyat === "number" && Number.isFinite(seciliFiyat) && seciliFiyat > 0
+      ? seciliFiyat
+      : null;
   const displayedPrice =
-    selectedVariant?.priceAmount != null
-      ? formatVariantPrice(selectedVariant.priceAmount, product.currency)
-      : product.price || "Fiyat sorun";
+    fiyatTutar != null ? tutarYazisi(fiyatTutar) : product.price || "Fiyat sorun";
+  const indirim =
+    !isService && fiyatTutar != null
+      ? indirimOrani({ priceAmount: fiyatTutar, oldPriceAmount: product.oldPriceAmount })
+      : null;
+  const miktarBilgisi = isService ? null : birimFiyatBilgisi(product.metadata, fiyatTutar);
   const brand = String(product.brand || "").trim();
   const rozet = kartRozeti({
     badgeTag: product.badgeTag,
@@ -314,30 +329,42 @@ export default function ProductQuickView({
             {product.name}
           </h2>
           {!isService && brand ? (
-            <p className="mt-2 text-[10px] font-extrabold uppercase tracking-[0.13em] text-slate-500">
+            <p className="mt-2 text-[10px] font-extrabold uppercase tracking-[0.13em] text-slate-400">
               {brand}
             </p>
           ) : null}
 
-          <div className="mt-4 flex flex-wrap items-center gap-3">
-            <p className="text-2xl font-black text-blue-400">{displayedPrice}</p>
+          <div className="mt-4 flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
+            <p className={`text-2xl font-black ${vitrinGorunum.fiyat.ana}`}>{displayedPrice}</p>
+            {indirim != null ? (
+              <span className={`${vitrinGorunum.rozet.indirim} px-1.5 py-0.5 text-[10px] font-black`}>
+                %{indirim}
+              </span>
+            ) : null}
             {eskiFiyatYazisi(product.oldPriceAmount) ? (
-              <span className="text-sm font-medium text-slate-500 line-through">
+              <span className={`text-sm font-medium ${vitrinGorunum.fiyat.eski}`}>
                 {eskiFiyatYazisi(product.oldPriceAmount)}
               </span>
             ) : null}
             {rozet ? (
-              <span className="rounded-lg bg-gradient-to-r from-blue-600 to-cyan-600 px-2.5 py-1 text-[10px] font-extrabold text-white shadow-md">
+              <span className={`${vitrinGorunum.rozet.gorsel} px-2.5 py-1 text-[10px] font-extrabold shadow-md`}>
                 {rozet}
               </span>
             ) : null}
           </div>
+          {miktarBilgisi ? (
+            <p className={`mt-1.5 flex flex-wrap items-center gap-x-1.5 text-xs font-semibold ${vitrinGorunum.fiyat.birim}`}>
+              <span>{miktarBilgisi.miktar}</span>
+              <span aria-hidden="true">·</span>
+              <span className={vitrinGorunum.fiyat.birimDeger}>{miktarBilgisi.birimFiyat}</span>
+            </p>
+          ) : null}
 
           {!isService && variantGroups.length > 0 ? (
             <div className="mt-5 space-y-4 border-t border-white/10 pt-5">
               {variantGroups.map((group) => (
                 <div key={group.key}>
-                  <p className="mb-2 text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
+                  <p className="mb-2 text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
                     {group.label}
                   </p>
                   <div className="flex flex-wrap gap-2">
@@ -401,7 +428,7 @@ export default function ProductQuickView({
                   key={fact.key}
                   className="flex items-baseline justify-between gap-4 border-b border-white/8 py-2 last:border-b-0"
                 >
-                  <dt className="shrink-0 text-[11px] font-semibold text-slate-500">
+                  <dt className="shrink-0 text-[11px] font-semibold text-slate-400">
                     {fact.label}
                   </dt>
                   <dd className="min-w-0 break-words text-right text-xs font-bold leading-5 text-slate-200">
@@ -442,7 +469,7 @@ export default function ProductQuickView({
                   ) : null}
                   {storeLocationText ? (
                     <div className={fulfillmentRegion ? "mt-3 border-t border-white/10 pt-3" : ""}>
-                      <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
+                      <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
                         İşletme konumu
                       </p>
                       <p className="mt-1 text-xs font-semibold leading-5 text-slate-200">
@@ -481,18 +508,14 @@ export default function ProductQuickView({
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex min-h-12 items-center justify-center rounded-xl bg-emerald-600 px-5 text-center text-sm font-extrabold text-white shadow-lg shadow-emerald-900/20 transition hover:bg-emerald-500"
+                className={`flex min-h-12 items-center justify-center rounded-xl px-5 text-center text-sm font-extrabold ${vitrinGorunum.buton.whatsapp}`}
               >
                 {isService ? "WhatsApp'tan hizmeti sor" : "WhatsApp'tan ürünü sor"}
               </a>
             ) : null}
             <a
               href={productUrl}
-              className={`flex min-h-12 items-center justify-center rounded-xl px-5 text-center text-sm font-extrabold transition ${
-                whatsappUrl
-                  ? "border border-white/10 bg-slate-900 text-slate-200 hover:border-blue-500/30 hover:text-white"
-                  : "bg-gradient-to-r from-blue-600 to-cyan-500 text-white"
-              }`}
+              className={`flex min-h-12 items-center justify-center rounded-xl px-5 text-center text-sm font-extrabold ${vitrinGorunum.buton.ikincil}`}
             >
               {isService ? "Tüm hizmet detayları" : "Tüm ürün detayları"}
             </a>
@@ -504,6 +527,7 @@ export default function ProductQuickView({
             productName={product.name}
             imageUrl={currentImage}
             priceText={displayedPrice}
+            priceAmount={fiyatTutar}
             selectedVariantText={selectedVariantText}
             selectedVariantId={selectedVariant?.id ?? null}
             stockQuantity={selectedStockQuantity}

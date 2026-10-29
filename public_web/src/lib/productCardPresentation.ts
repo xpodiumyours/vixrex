@@ -451,3 +451,40 @@ export function kartRozeti(args: {
   const oran = indirimOrani(args);
   return oran === null ? null : `%${oran} indirim`;
 }
+
+export function tutarYazisi(tutar: number): string {
+  return `${TUTAR_BICIMI.format(tutar)} TL`;
+}
+
+export function birimFiyatBilgisi(
+  metadata: unknown,
+  fiyatTutar: number | null,
+): { miktar: string; birimFiyat: string } | null {
+  if (fiyatTutar == null || !Number.isFinite(fiyatTutar) || fiyatTutar <= 0) return null;
+  const normalized = normalizeProductMetadata(metadata);
+  for (const attribute of normalized.attributes || []) {
+    if (attribute.key !== "netQuantity") continue;
+    const ham = `${Array.isArray(attribute.value) ? attribute.value.join(" ") : attribute.value ?? ""} ${attribute.unit ?? ""}`.trim();
+    const eslesme = ham.match(/(\d+(?:[.,]\d+)?)\s*(kg|kilo|gr|g|lt|l|ml|cl)\b/i);
+    if (!eslesme) continue;
+    const sayi = Number(eslesme[1].replace(",", "."));
+    if (!Number.isFinite(sayi) || sayi <= 0) continue;
+    const birim = eslesme[2].toLocaleLowerCase("tr-TR");
+    const agirlikMi = birim === "kg" || birim === "kilo" || birim === "gr" || birim === "g";
+    const olcu = agirlikMi
+      ? birim === "kg" || birim === "kilo"
+        ? sayi
+        : sayi / 1000
+      : birim === "lt" || birim === "l"
+        ? sayi
+        : sayi / 1000;
+    if (olcu <= 0) continue;
+    const birimAd = agirlikMi ? "kg" : "L";
+    const gosterilenMiktar = `${eslesme[1]} ${birim === "gr" ? "g" : birim === "lt" ? "L" : eslesme[2]}`;
+    return {
+      miktar: gosterilenMiktar,
+      birimFiyat: `${TUTAR_BICIMI.format(fiyatTutar / olcu)} TL/${birimAd}`,
+    };
+  }
+  return null;
+}
