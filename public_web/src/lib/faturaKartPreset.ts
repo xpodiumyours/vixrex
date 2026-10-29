@@ -195,6 +195,17 @@ export async function kartPresetYanitiniOku(cevap: Response, okuma: GoruSonucu) 
   const karar = tekillesmeKarari(okuma.satirlar, items);
   const tekrarlar = karar.indirgenen;
   const kimlikNotu = "Aynı ürün doğrulanamadı; ayrı kart açıldı.";
+  const adetToplami = new Map<string, number>();
+  const uyeler = new Map<string, string[]>();
+  for (const [uye, kanonik] of karar.indirgenen) {
+    uyeler.set(String(kanonik), [...(uyeler.get(String(kanonik)) ?? []), uye]);
+  }
+  for (const [kanonik, digerleri] of uyeler) {
+    const adetler = [kanonik, ...digerleri]
+      .map((id) => okuma.satirlar[Number(id) - 1]?.adet);
+    if (adetler.some((adet) => typeof adet !== "number" || !Number.isFinite(adet))) continue;
+    adetToplami.set(kanonik, adetler.reduce<number>((toplam, adet) => toplam + (adet as number), 0));
+  }
   let eslesen = 0;
   const satirlar = okuma.satirlar.map((s, i) => {
     const sira = String(i + 1);
@@ -231,7 +242,7 @@ export async function kartPresetYanitiniOku(cevap: Response, okuma: GoruSonucu) 
       !temelAd.toLocaleLowerCase("tr-TR").includes(`beden ${beden.toLocaleLowerCase("tr-TR")}`)
       ? `${temelAd} (Beden ${beden})` : temelAd;
     return {
-      ...s, ad,
+      ...s, ad, adet: adetToplami.get(sira) ?? s.adet,
       siteAciklama: metin(kart.short_description), siteKategori: metin(kart.category_suggestion),
       siteMarka: metin(kart.brand), siteVaryant: metin(kart.variant),
       gorselKullanimDurumu: metin(media.rights_status),

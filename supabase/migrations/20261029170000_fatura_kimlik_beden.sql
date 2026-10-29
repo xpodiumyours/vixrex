@@ -27,6 +27,9 @@ begin
   end if;
   v_definition := replace(v_definition,v_once,v_sonra);
   execute v_definition;
+  if position('size_text' in pg_get_functiondef(v_signature)) = 0 then
+    raise exception 'FATURA_KIMLIK_UYGULANMADI';
+  end if;
   if not has_function_privilege('service_role',v_signature,'EXECUTE') then
     raise exception 'FATURA_KAYIT_YETKISI_DEGISTI';
   end if;
