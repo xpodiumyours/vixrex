@@ -81,7 +81,43 @@ it("fiyatı yazılmış kart açık onay verilmeden hazır sayılmaz", () => {
   const onayli = akisEkrani("urunler", [{ ...kart, onayli: true }]);
   expect(onayli).toContain("1 / 1 hazır");
   expect(onayli).toContain('aria-pressed="true"');
-  expect(onayli).toContain("1 onaylı kartla devam et");
+  expect(onayli).toContain("onaylananlar taslak kaydedilir");
+  expect(onayli).toContain("1 kartla devam et");
+});
+
+it("hazırlama ekranı faturadan çıkan gerçek sayıları ve alış fiyatı kuralını gösterir", () => {
+  const html = akisEkrani("okunuyor", [{ ...ornekKart(), satirToplam: 100 }]);
+  expect(html).toContain("Fatura görüntüsü alındı");
+  expect(html).toContain("1 ürün satırı bulundu");
+  expect(html).toContain("Test toptancı");
+  expect(html).toContain("belgede karşılaştırılacak toplam yok");
+  expect(html).toContain("Alış fiyatı satış fiyatı olarak kullanılmaz");
+});
+
+it("hazırlama ekranı belge panelini, bulunan sayıları ve adım durumlarını birlikte gösterir", () => {
+  const html = akisEkrani("okunuyor", [{ ...ornekKart(), satirToplam: 100 }]);
+  expect(html).toContain("fatura-tarama-belge");
+  expect(html).toContain("Belge okundu");
+  expect(html).toContain("fatura-sayilar");
+  expect(html).toContain("<dt>Satır</dt>");
+  expect(html).toContain("<dt>Tutar</dt>");
+  expect(html).toContain("fatura-adim-satir--tamam");
+  expect(html).toContain(">tamam</span>");
+  expect(html).toContain("sürüyor");
+});
+
+it("hazırlama ekranı belgeyle tutmayan miktarı gizlemez", () => {
+  state.index = 0;
+  const kart = { ...ornekKart(), satirToplam: 100 };
+  state.values = {
+    0: "okunuyor",
+    2: { satirlar: [kart], belgeAdedi: 5, belgeToplami: null, tedarikci: "Test toptancı" },
+    3: [kart],
+  };
+  const html = renderToStaticMarkup(createElement(InvoiceToProducts, {
+    storeSlug: "offline-test", onUploaded: async () => {},
+  }));
+  expect(html).toContain("belgede toplam 5 yazıyor, tutmuyor");
 });
 
 it("resmî kaynak gelmeyen kartın taslakta korunduğunu açıklar", () => {

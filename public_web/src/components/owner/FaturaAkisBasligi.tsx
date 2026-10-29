@@ -21,7 +21,7 @@ export function FaturaAkisBasligi({ adim, baslik, aciklama, yayinDogrulandi = fa
         ))}
       </ol>
       <div className="fatura-asistan">
-        <Image src="/images/vixrex_v_crystal_mascot.webp" alt="" width={56} height={56} />
+        <Image src="/images/vixrex_v_crystal_mascot.webp" alt="" width={20} height={20} />
         <div>
           <span className="fatura-asistan-adi">Vixrex Asistan</span>
           <h3>{baslik}</h3>

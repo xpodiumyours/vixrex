@@ -11,14 +11,14 @@
 
 .fatura-akis-basligi { display: grid; gap: 1.25rem; }
 .fatura-ilerleme { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .5rem; padding: 0; margin: 0; list-style: none; }
-.fatura-ilerleme li { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; padding-top: .65rem; border-top: 3px solid var(--owner-border); font-size: .7rem; font-weight: 700; color: var(--owner-muted); }
+.fatura-ilerleme li { display: grid; justify-items: start; row-gap: .25rem; padding-top: .65rem; border-top: 3px solid var(--owner-border); font-size: .7rem; font-weight: 700; line-height: 1.25; color: var(--owner-muted); }
 .fatura-ilerleme li > span { display: grid; place-items: center; width: 1.35rem; height: 1.35rem; border-radius: 50%; background: var(--owner-surface-soft); }
 .fatura-ilerleme .aktif { border-color: var(--owner-primary); color: var(--owner-text); }
 .fatura-ilerleme .tamam { border-color: var(--owner-success); color: #6ee7b7; }
-.fatura-asistan { display: flex; align-items: flex-start; gap: .75rem; min-width: 0; }
-.fatura-asistan img { flex: 0 0 56px; width: 56px; height: 56px; object-fit: contain; }
+.fatura-asistan { display: flex; align-items: flex-start; gap: .55rem; min-width: 0; }
+.fatura-asistan img { flex: 0 0 20px; width: 20px; height: 20px; margin-top: .1rem; object-fit: contain; opacity: .9; }
 .fatura-asistan > div { display: grid; gap: .4rem; min-width: 0; }
-.fatura-asistan-adi { font-size: .65rem; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--owner-secondary); }
+.fatura-asistan-adi { font-size: .6rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--owner-muted); }
 .owner-shell .fatura-asistan h3 { font-size: clamp(1.2rem, 3vw, 1.5rem); line-height: 1.2; }
 
 .fatura-dosya-sec { position: relative; display: grid; place-content: center; gap: .5rem; min-height: 145px; padding: 1.25rem; border: 1px dashed var(--owner-secondary); border-radius: 18px; background: color-mix(in srgb, var(--owner-primary) 10%, var(--owner-surface)); text-align: center; cursor: pointer; }
@@ -27,11 +27,50 @@
 .fatura-dosya-sec input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
 .fatura-dosya-kapali { opacity: .55; cursor: not-allowed; }
 .fatura-dosya-sec:focus-within { outline: 2px solid var(--owner-secondary); outline-offset: 3px; }
-.fatura-bekleme { display: flex; align-items: center; gap: .75rem; padding: 1rem; border: 1px solid var(--owner-border); border-radius: 16px; background: var(--owner-surface); font-size: .875rem; font-weight: 700; }
-.fatura-yukleyici { width: 22px; height: 22px; flex-shrink: 0; border: 2px solid var(--owner-border); border-top-color: var(--owner-secondary); border-radius: 50%; animation: fatura-don 1s linear infinite; }
+.fatura-bekleme { display: flex; align-items: center; gap: .6rem; margin: 0; padding: .7rem .75rem; border: 1px solid var(--owner-border); border-radius: 10px; background: var(--owner-surface); font-size: .8125rem; font-weight: 700; }
+.fatura-yukleyici { width: 14px; height: 14px; flex-shrink: 0; border: 2px solid var(--owner-border); border-top-color: var(--owner-secondary); border-radius: 50%; animation: fatura-don 1s linear infinite; }
 @keyframes fatura-don { to { transform: rotate(360deg); } }
 
 .owner-shell .fatura-onizleme { object-fit: contain; background: var(--owner-surface); }
+
+.owner-shell .fatura-tarama { display: grid; gap: 1rem; align-items: start; }
+.owner-shell .fatura-tarama-belge { position: relative; display: grid; place-items: center; width: 100%; margin: 0; aspect-ratio: 3 / 4; overflow: hidden; border: 1px solid var(--owner-border); border-radius: 10px; background: var(--owner-bg); }
+.owner-shell .fatura-tarama-belge img { width: 100%; height: 100%; object-fit: contain; opacity: .96; }
+.owner-shell .fatura-tarama-belge--bos { aspect-ratio: 4 / 3; }
+.owner-shell .fatura-tarama-bos { display: grid; justify-items: center; gap: .2rem; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.owner-shell .fatura-tarama-bos b { font-size: 1rem; letter-spacing: .14em; color: var(--owner-text-alt); }
+.owner-shell .fatura-tarama-bos small { font-size: .68rem; letter-spacing: .06em; color: var(--owner-muted); }
+.owner-shell .fatura-tarama-kose { position: absolute; inset: 7px; pointer-events: none; }
+.owner-shell .fatura-tarama-kose::before,
+.owner-shell .fatura-tarama-kose::after { content: ""; position: absolute; width: 13px; height: 13px; border: 0 solid var(--owner-secondary); opacity: .75; }
+.owner-shell .fatura-tarama-kose::before { top: 0; left: 0; border-top-width: 2px; border-left-width: 2px; }
+.owner-shell .fatura-tarama-kose::after { right: 0; bottom: 0; border-right-width: 2px; border-bottom-width: 2px; }
+.owner-shell .fatura-tarama-kose--ters::before { top: 0; left: auto; right: 0; border-top-width: 2px; border-left-width: 0; border-right-width: 2px; }
+.owner-shell .fatura-tarama-kose--ters::after { right: auto; bottom: 0; left: 0; border-right-width: 0; border-bottom-width: 2px; border-left-width: 2px; }
+.owner-shell .fatura-tarama-cizgi { position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--owner-secondary), transparent); box-shadow: 0 0 12px rgba(87, 183, 255, .5); animation: fatura-tarama-tara 2.8s ease-in-out infinite; }
+@keyframes fatura-tarama-tara { 0% { top: 0; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: calc(100% - 2px); opacity: 0; } }
+.owner-shell .fatura-tarama-etiket { position: absolute; right: 0; bottom: 0; left: 0; display: flex; align-items: center; gap: .4rem; margin: 0; padding: .5rem .6rem; background: linear-gradient(180deg, transparent, rgba(5, 11, 26, .94)); font-size: .62rem; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--owner-text-alt); }
+.owner-shell .fatura-tarama-nokta { width: 6px; height: 6px; border-radius: 50%; background: var(--owner-secondary); animation: fatura-adim-nabiz 1.2s ease-in-out infinite; }
+.owner-shell .fatura-tarama-panel { display: grid; gap: .75rem; min-width: 0; }
+.owner-shell .fatura-sayilar { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .4rem; margin: 0; }
+.owner-shell .fatura-sayilar > div { padding: .45rem .55rem; border: 1px solid color-mix(in srgb, var(--owner-border) 70%, transparent); border-radius: 8px; background: var(--owner-surface); }
+.owner-shell .fatura-sayilar dt { font-size: .58rem; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--owner-muted); }
+.owner-shell .fatura-sayilar dd { margin: .15rem 0 0; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: clamp(.72rem, 3.1vw, .8125rem); font-weight: 700; line-height: 1.25; font-variant-numeric: tabular-nums; color: var(--owner-text); overflow-wrap: anywhere; word-break: break-word; }
+.owner-shell .fatura-adim-ray { margin: 0; padding: 0; list-style: none; display: grid; }
+.owner-shell .fatura-adim-satir { display: grid; grid-template-columns: 1.6rem minmax(0, 1fr) auto; align-items: start; gap: .6rem; padding: .55rem 0; border-top: 1px solid color-mix(in srgb, var(--owner-border) 60%, transparent); }
+.owner-shell .fatura-adim-satir:first-child { border-top: 0; }
+.owner-shell .fatura-adim-no { padding-top: .1rem; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .68rem; letter-spacing: .04em; color: var(--owner-muted); }
+.owner-shell .fatura-adim-govde { min-width: 0; }
+.owner-shell .fatura-adim-govde b { display: block; font-size: .8125rem; font-weight: 800; color: var(--owner-text); }
+.owner-shell .fatura-adim-govde small { display: block; margin-top: .15rem; font-size: .72rem; line-height: 1.45; color: var(--owner-muted); overflow-wrap: anywhere; }
+.owner-shell .fatura-adim-durum { padding-top: .1rem; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .58rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; color: var(--owner-muted); }
+.owner-shell .fatura-adim-satir--tamam .fatura-adim-durum { color: #6ee7b7; }
+.owner-shell .fatura-adim-satir--aktif .fatura-adim-durum { color: var(--owner-secondary); }
+.owner-shell .fatura-adim-satir--bekliyor { opacity: .5; }
+@media (min-width: 720px) {
+  .owner-shell .fatura-tarama { grid-template-columns: minmax(0, 200px) minmax(0, 1fr); gap: 1.25rem; }
+  .owner-shell .fatura-tarama-belge { max-height: 300px; }
+}
 .owner-shell .fatura-baslik { display: grid; gap: .5rem; min-width: 0; }
 .owner-shell .fatura-araclar { padding: .875rem; border: 1px solid var(--owner-border); border-radius: 16px; background: var(--owner-surface); }
 .owner-shell .fatura-izgara { grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); align-items: start; gap: 1rem; }
@@ -69,4 +108,7 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .fatura-yukleyici { animation: none; border-top-color: var(--owner-secondary); }
+  .owner-shell .fatura-tarama-cizgi { animation: none; top: 50%; opacity: .8; }
+  .owner-shell .fatura-tarama-nokta { animation: none; }
+  .owner-shell .fatura-adim-satir--aktif .fatura-adim-no { outline: 2px solid var(--owner-secondary); outline-offset: 2px; }
 }
