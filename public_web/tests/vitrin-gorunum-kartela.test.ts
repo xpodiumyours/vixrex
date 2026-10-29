@@ -52,6 +52,14 @@ describe("vitrin görünüm kartelası", () => {
     expect(kart).toContain("contain={isLunaInvoiceProduct(product)}");
   });
 
+  it("kart kategoriyi tek yerde, özellik satırında gösterir", () => {
+    const kart = kaynak("src/app/v/[slug]/ProductCatalog.tsx");
+    expect(kart).toContain('ozellik.key === "category"');
+    expect(kart).toContain("const kartEtiketleri =");
+    expect(kart).toContain("kartEtiketleri.map");
+    expect(kart).toContain('${vitrinGorunum.rozet.gorsel} px-2.5 py-1 text-[10px] font-extrabold shadow-md`}>');
+  });
+
   it("kırmızı yalnız indirim rozetinde kalır, kaldırma ve silme nötrdür", () => {
     expect(vitrinGorunum.rozet.gorsel).toContain("bg-red-600");
     expect(kaynak("src/components/VitrinCartDock.tsx")).not.toContain("text-red-");

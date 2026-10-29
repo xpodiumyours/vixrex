@@ -313,6 +313,17 @@ export default function ProductCatalog({
             metadata: product.metadata,
             variants: isService ? undefined : product.variants,
           }).ozellikler;
+          const kategoriEtiketi =
+            category && category.toLocaleLowerCase("tr-TR") !== "tümü"
+              ? kategoriBirlestir(category).ad || category
+              : null;
+          const kartEtiketleri =
+            kategoriEtiketi && !kartOzellikleri.some((ozellik) => ozellik.key === "category")
+              ? [
+                  { key: "category", label: "Kategori", value: kategoriEtiketi },
+                  ...kartOzellikleri.slice(0, -1),
+                ]
+              : kartOzellikleri;
           const rozet = kartRozeti({
             badgeTag: product.badgeTag,
             priceAmount: product.priceAmount,
@@ -359,10 +370,6 @@ export default function ProductCatalog({
                     <span className={`absolute left-2.5 top-2.5 z-10 max-w-[70%] truncate ${vitrinGorunum.rozet.gorsel} px-2.5 py-1 text-[10px] font-extrabold shadow-md`}>
                       {rozet}
                     </span>
-                  ) : category && category.toLocaleLowerCase("tr-TR") !== "tümü" ? (
-                    <span className="absolute left-2.5 top-2.5 z-10 max-w-[70%] truncate rounded-lg border border-blue-500/25 bg-slate-950/80 px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-wider text-blue-300 shadow-sm backdrop-blur-md">
-                      {kategoriBirlestir(category).ad || category}
-                    </span>
                   ) : null}
                   {photoCountBadge ? (
                     <span className="absolute bottom-2.5 right-2.5 z-10 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm">
@@ -380,9 +387,9 @@ export default function ProductCatalog({
                   <h3 className="line-clamp-2 min-h-[2.5em] text-xs font-extrabold leading-snug text-white sm:text-sm">
                     {product.name}
                   </h3>
-                  {kartOzellikleri.length > 0 ? (
+                  {kartEtiketleri.length > 0 ? (
                     <p className="mt-1 truncate text-[10px] font-semibold text-slate-400 sm:text-[11px]">
-                      {kartOzellikleri.map((ozellik) => ozellik.value).join(" · ")}
+                      {kartEtiketleri.map((ozellik) => ozellik.value).join(" · ")}
                     </p>
                   ) : null}
                   <div className="mt-2.5 flex min-w-0 items-baseline gap-2">
