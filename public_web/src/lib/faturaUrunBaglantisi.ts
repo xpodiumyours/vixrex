@@ -1,5 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { durumGecerliMi, type KartDurumu } from "@/lib/faturaKartDurumu";
+import { normalizeProductMetadata, normalizeProductVariants } from "@/lib/productRichData";
+import { updateRichCoreProduct } from "@/lib/productCoreServer";
 
 const KIMLIK = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -123,10 +125,137 @@ export async function mevcutUrunuOku(
   };
 }
 
+const URUN_ALANLARI =
+  "id,slug,name,description,price_text,price_amount,image_urls,category_id,stock_status,stock_quantity,old_price_amount,badge_tag,fulfillment_region,brand,barcode,metadata,variants,is_visible";
+
+function urunAdAnahtari(deger: unknown): string {
+  return String(deger ?? "")
+    .toLocaleLowerCase("tr-TR")
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function varyantImzalari(deger: unknown): Set<string> {
+  const liste = Array.isArray(deger) ? deger : [];
+  const imzalar = new Set<string>();
+  for (const varyant of liste) {
+    const secenekler =
+      varyant && typeof varyant === "object"
+        ? ((varyant as { options?: Record<string, unknown> }).options ?? {})
+        : {};
+    const imza = Object.values(secenekler)
+      .map((secenek) => String(secenek ?? "").toLocaleLowerCase("tr-TR").trim())
+      .filter(Boolean)
+      .sort()
+      .join("|");
+    if (imza) imzalar.add(imza);
+  }
+  return imzalar;
+}
+
+function varyantlarUyusuyor(bir: unknown, iki: unknown): boolean {
+  const birImza = varyantImzalari(bir);
+  const ikiImza = varyantImzalari(iki);
+  if (birImza.size === 0 && ikiImza.size === 0) return true;
+  for (const imza of birImza) if (ikiImza.has(imza)) return true;
+  return false;
+}
+
+export async function ayniUrunuBul(
+  admin: SupabaseClient,
+  storeId: string,
+  girdi: Record<string, unknown>,
+): Promise<Record<string, unknown> | null> {
+  const barkod = String(girdi.barcode ?? "").trim();
+  if (barkod) {
+    const { data } = await admin
+      .from("products")
+      .select(URUN_ALANLARI)
+      .eq("store_id", storeId)
+      .eq("barcode", barkod)
+      .maybeSingle();
+    if (data?.id && varyantlarUyusuyor(data.variants, girdi.variants)) return data as Record<string, unknown>;
+  }
+  const ad = urunAdAnahtari(girdi.name);
+  if (!ad) return null;
+  const marka = urunAdAnahtari(girdi.brand);
+  const { data } = await admin.from("products").select(URUN_ALANLARI).eq("store_id", storeId);
+  for (const urun of Array.isArray(data) ? data : []) {
+    if (urunAdAnahtari(urun.name) !== ad || urunAdAnahtari(urun.brand) !== marka) continue;
+    if (!varyantlarUyusuyor(urun.variants, girdi.variants)) continue;
+    return urun as Record<string, unknown>;
+  }
+  return null;
+}
+
 export async function faturaUrununuKaydet(
   admin: SupabaseClient,
   args: { storeId: string; editToken: string; satirId: string; girdi: Record<string, unknown>; kanit: Record<string, unknown>; alisFiyati: number | null },
 ): Promise<{ id: string; slug: string; created: boolean; kayit: "yeni" | "guncellendi" | "mevcut" }> {
+  const satirDurumu = await admin
+    .from("invoice_job_lines")
+    .select("product_id")
+    .eq("id", args.satirId)
+    .maybeSingle();
+  if (!satirDurumu.error && !satirDurumu.data?.product_id) {
+    const mevcut = await ayniUrunuBul(admin, args.storeId, args.girdi);
+    if (mevcut) {
+      const baglandi = await satiriUrunleBagla(admin, args.satirId, String(mevcut.id));
+      if (baglandi) {
+        const mevcutStok = typeof mevcut.stock_quantity === "number" ? mevcut.stock_quantity : null;
+        const eklenenStok = typeof args.girdi.stockQuantity === "number" ? args.girdi.stockQuantity : null;
+        const yeniStok =
+          mevcutStok == null && eklenenStok == null ? null : (mevcutStok ?? 0) + (eklenenStok ?? 0);
+        const gorseller = [
+          ...new Set([
+            ...(Array.isArray(mevcut.image_urls) ? mevcut.image_urls.map((adres) => String(adres)) : []),
+            ...(Array.isArray(args.girdi.imageUrls) ? args.girdi.imageUrls.map((adres) => String(adres)) : []),
+          ]),
+        ];
+        await updateRichCoreProduct({
+          admin,
+          productId: String(mevcut.id),
+          editToken: args.editToken,
+          name: String(mevcut.name ?? args.girdi.name ?? ""),
+          description: String(mevcut.description ?? args.girdi.description ?? ""),
+          priceText: String(mevcut.price_text ?? args.girdi.priceText ?? ""),
+          priceAmount:
+            typeof mevcut.price_amount === "number"
+              ? mevcut.price_amount
+              : typeof args.girdi.priceAmount === "number"
+                ? args.girdi.priceAmount
+                : null,
+          imageUrls: gorseller,
+          categoryId: String(mevcut.category_id ?? args.girdi.categoryId ?? ""),
+          stockStatus: String(mevcut.stock_status ?? args.girdi.stockStatus ?? ""),
+          stockQuantity: yeniStok,
+          oldPriceAmount: typeof mevcut.old_price_amount === "number" ? mevcut.old_price_amount : null,
+          badgeTag: typeof mevcut.badge_tag === "string" ? mevcut.badge_tag : null,
+          fulfillmentRegion: typeof mevcut.fulfillment_region === "string" ? mevcut.fulfillment_region : null,
+          brand: typeof mevcut.brand === "string" ? mevcut.brand : null,
+          barcode: String(mevcut.barcode ?? args.girdi.barcode ?? ""),
+          metadata: normalizeProductMetadata(mevcut.metadata),
+          variants: normalizeProductVariants(mevcut.variants),
+          isVisible: mevcut.is_visible !== false,
+        });
+        if (typeof args.alisFiyati === "number" && args.alisFiyati > 0) {
+          await admin
+            .from("product_purchase_prices")
+            .upsert(
+              {
+                product_id: String(mevcut.id),
+                store_id: args.storeId,
+                amount: args.alisFiyati,
+                updated_at: new Date().toISOString(),
+              },
+              { onConflict: "product_id" },
+            );
+        }
+        return { id: String(mevcut.id), slug: String(mevcut.slug ?? ""), created: false, kayit: "guncellendi" };
+      }
+    }
+  }
   const { data, error } = await admin.rpc("save_invoice_product", {
     p_store_id: args.storeId,
     p_edit_token: args.editToken,

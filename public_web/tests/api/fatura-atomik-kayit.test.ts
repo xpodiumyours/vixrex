@@ -4,7 +4,7 @@ const m=vi.hoisted(()=>({rpc:vi.fn(),satir:vi.fn(),mevcut:vi.fn(),medya:vi.fn(),
 vi.mock("next/headers",()=>({cookies:async()=>({get:()=>({value:"owner"})})}));
 vi.mock("@/lib/ownerSession",()=>({OWNER_SESSION_COOKIE:"owner",verifyOwnerSession:()=>({storeId:"store-1"})}));
 vi.mock("@/lib/supabaseAdmin",()=>({getSupabaseAdmin:()=>({rpc:m.rpc,from:()=>{
- const q={select:()=>q,eq:()=>q,single:async()=>({data:{id:"store-1",edit_token:"token",name:"Esnaf"},error:null})};return q;
+ const q={select:()=>q,eq:()=>q,single:async()=>({data:{id:"store-1",edit_token:"token",name:"Esnaf"},error:null}),maybeSingle:async()=>({data:null,error:null})};return q;
 }})}));
 vi.mock("@/lib/faturaUrunBaglantisi",async(importOriginal)=>({...await importOriginal<typeof import("@/lib/faturaUrunBaglantisi")>(),satiriDogrula:m.satir,mevcutUrunuOku:m.mevcut}));
 vi.mock("@/lib/productCoreServer",()=>({createRichCoreProduct:m.create,updateRichCoreProduct:m.update,publishInvoiceProduct:m.yayin}));

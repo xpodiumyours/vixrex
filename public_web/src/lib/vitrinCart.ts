@@ -4,6 +4,7 @@ export interface VitrinCartItem {
   variantKey: string;
   variantText: string;
   priceText: string;
+  priceAmount?: number | null;
   imageUrl: string | null;
   maxQuantity: number | null;
   quantity: number;
@@ -30,6 +31,12 @@ function normalizeMaxQuantity(value: unknown): number | null {
   return Math.max(0, Math.min(999, Math.round(parsed)));
 }
 
+function normalizePriceAmount(value: unknown): number | null {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed <= 0) return null;
+  return parsed;
+}
+
 function clampQuantity(value: unknown, maxQuantity: number | null = null): number {
   const parsed = Number(value);
   const normalized = Number.isFinite(parsed)
@@ -52,6 +59,7 @@ export function normalizeCartItem(item: VitrinCartItem): VitrinCartItem {
     variantKey: cleanText(item.variantKey, 180),
     variantText: cleanText(item.variantText, 180),
     priceText: cleanText(item.priceText, 80),
+    priceAmount: normalizePriceAmount(item.priceAmount),
     imageUrl: item.imageUrl ? cleanText(item.imageUrl, 500) : null,
     maxQuantity,
     quantity: clampQuantity(item.quantity, maxQuantity),
@@ -189,6 +197,17 @@ export function cartTotalQuantity(items: VitrinCartItem[]) {
   );
 }
 
+export function cartTotalAmount(items: VitrinCartItem[]): number | null {
+  if (items.length === 0) return null;
+  let toplam = 0;
+  for (const item of items) {
+    const tutar = normalizePriceAmount(item.priceAmount);
+    if (tutar == null) return null;
+    toplam += tutar * clampQuantity(item.quantity, item.maxQuantity);
+  }
+  return toplam;
+}
+
 export function buildWhatsappOrderUrl(
   baseUrl: string | null | undefined,
   storeName: string,
@@ -202,14 +221,20 @@ export function buildWhatsappOrderUrl(
     return `• ${clampQuantity(item.quantity)} × ${cleanText(item.productName, 180)}${variant}${price}`;
   });
 
+  const toplamTutar = cartTotalAmount(items);
   const message = [
     `Merhaba, ${cleanText(storeName, 120)} vitrininizden sipariş vermek istiyorum:`,
     "",
     ...lines,
     "",
     `Toplam ürün adedi: ${cartTotalQuantity(items)}`,
+    toplamTutar == null
+      ? null
+      : `Toplam tutar: ${toplamTutar.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} TL`,
     "Uygunluk ve teslimat bilgisini paylaşabilir misiniz?",
-  ].join("\n");
+  ]
+    .filter((satir): satir is string => satir !== null)
+    .join("\n");
 
   try {
     const parsed = new URL(baseUrl);

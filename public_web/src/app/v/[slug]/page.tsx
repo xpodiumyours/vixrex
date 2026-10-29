@@ -745,6 +745,9 @@ export default async function StorePage(props: PageProps) {
               longitude: store.longitude,
             }
           : undefined,
+        hasMap: hasPhysicalLocation
+          ? `https://www.google.com/maps/search/?api=1&query=${store.latitude},${store.longitude}`
+          : undefined,
         openingHoursSpecification: openingHoursSpecification,
       },
       {

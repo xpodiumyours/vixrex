@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { ziyaretAnahtariniOkuyaUret } from "@/lib/vitrinZiyaretAnahtari";
-import { addToVitrinCart } from "@/lib/vitrinCart";
+import { addToVitrinCart, cartItemKey } from "@/lib/vitrinCart";
+import { tutarYazisi } from "@/lib/productCardPresentation";
+import { vitrinGorunum } from "@/lib/vitrinGorunum";
 import { recordVitrinEngagement } from "@/lib/vitrinEngagement";
 
 type SocialComment = {
@@ -28,6 +30,7 @@ interface ProductCommercePanelProps {
   productName: string;
   imageUrl?: string | null;
   priceText?: string | null;
+  priceAmount?: number | null;
   selectedVariantText?: string;
   selectedVariantId?: string | null;
   stockQuantity?: number | null;
@@ -42,6 +45,7 @@ export default function ProductCommercePanel({
   productName,
   imageUrl = null,
   priceText = null,
+  priceAmount = null,
   selectedVariantText = "",
   selectedVariantId = null,
   stockQuantity = null,
@@ -58,6 +62,8 @@ export default function ProductCommercePanel({
   const [comment, setComment] = useState("");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  const [adet, setAdet] = useState(1);
+  const [sepetTeyidi, setSepetTeyidi] = useState("");
 
   useEffect(() => {
     if (!enabled) return;
@@ -186,57 +192,126 @@ export default function ProductCommercePanel({
     }
   }
 
+  const stokSinirinda = stockQuantity != null && adet >= stockQuantity;
+
   async function addCart() {
     if (!cartEnabled || stockQuantity === 0) return;
     const variantKey = selectedVariantId?.trim() || selectedVariantText.trim() || "standart";
-    addToVitrinCart(storeSlug, {
+    const guncel = addToVitrinCart(storeSlug, {
       productSlug,
       productName,
       variantKey,
       variantText: selectedVariantText.trim(),
       priceText: String(priceText || "").trim(),
+      priceAmount,
       imageUrl,
       maxQuantity: stockQuantity,
-      quantity: 1,
+      quantity: adet,
     });
+    const kalem = guncel.find(
+      (item) => cartItemKey(item) === cartItemKey({ productSlug, variantKey }),
+    );
+    const toplamAdet = kalem?.quantity ?? adet;
     await recordVitrinEngagement({
       storeSlug,
       eventType: "cart_add",
       productSlug,
-      quantity: 1,
+      quantity: adet,
       metadata: {
         variant: selectedVariantText.trim() || null,
         surface: "product",
       },
     });
-    setMessage("Sepete eklendi.");
+    setMessage("");
+    setSepetTeyidi(
+      `${toplamAdet} adet sepette${priceAmount != null ? ` · ${tutarYazisi(toplamAdet * priceAmount)}` : ""}`,
+    );
   }
 
   return (
     <section className="mt-5 rounded-2xl border border-white/10 bg-white/[0.03] p-4" aria-label="Ürün etkileşimleri">
-      <div className="grid gap-2 sm:grid-cols-2">
+      {stockQuantity === 0 ? (
         <button
           type="button"
-          onClick={() => void toggleLike()}
-          disabled={busy}
-          aria-pressed={social.liked}
-          className="min-h-11 rounded-xl border border-white/10 bg-slate-900 px-4 text-sm font-extrabold text-white disabled:opacity-60"
+          disabled
+          className={`mt-4 w-full rounded-xl py-3 text-sm font-extrabold ${vitrinGorunum.buton.devreDisi}`}
         >
-          {social.liked ? "♥ Beğendin" : "♡ Beğen"} · {social.like_count}
+          Tükendi
         </button>
+      ) : cartEnabled ? (
+        <div className="mt-4">
+          <div className="flex items-center justify-between rounded-xl border border-blue-500/40 bg-blue-500/10 px-2 py-2">
+            <button
+              type="button"
+              onClick={() => setAdet((mevcut) => Math.max(1, mevcut - 1))}
+              aria-label="Adedi azalt"
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-xl font-black text-white transition active:scale-90"
+            >
+              −
+            </button>
+            <span aria-live="polite" className="text-sm font-extrabold text-white">
+              {adet}
+            </span>
+            <button
+              type="button"
+              onClick={() => setAdet((mevcut) => mevcut + 1)}
+              disabled={stokSinirinda}
+              aria-label={stokSinirinda ? "Stok sınırına ulaşıldı" : "Adedi artır"}
+              title={
+                stokSinirinda && stockQuantity != null
+                  ? `Stokta ${stockQuantity} adet var`
+                  : undefined
+              }
+              className={`flex h-9 w-9 items-center justify-center rounded-lg text-xl font-black transition active:scale-90 ${
+                stokSinirinda ? "cursor-not-allowed text-white/25" : "text-white hover:bg-white/10"
+              }`}
+            >
+              +
+            </button>
+          </div>
+          {stokSinirinda && stockQuantity != null ? (
+            <p className={`mt-1 text-center text-[11px] font-bold ${vitrinGorunum.durum.uyari}`}>
+              Stok sınırı: en fazla {stockQuantity} adet
+            </p>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => void addCart()}
+            className={`mt-2 min-h-12 w-full rounded-xl px-4 text-sm font-extrabold ${vitrinGorunum.buton.ana}`}
+          >
+            {priceAmount != null
+              ? `Sepete ekle · ${tutarYazisi(priceAmount * adet)}`
+              : "Sepete ekle"}
+          </button>
+          {sepetTeyidi ? (
+            <p aria-live="polite" className={`mt-2 text-center text-xs font-bold ${vitrinGorunum.durum.teyit}`}>
+              {sepetTeyidi}
+            </p>
+          ) : null}
+        </div>
+      ) : (
         <button
           type="button"
-          onClick={() => void addCart()}
-          disabled={!cartEnabled || stockQuantity === 0}
-          className="min-h-11 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-4 text-sm font-extrabold text-white disabled:cursor-not-allowed disabled:opacity-45"
+          disabled
+          className={`mt-4 w-full rounded-xl px-4 py-3 text-sm font-extrabold ${vitrinGorunum.buton.devreDisi}`}
         >
-          {stockQuantity === 0 ? "Stokta yok" : "Sepete ekle"}
+          Sepete ekle
         </button>
-      </div>
+      )}
 
       {!cartEnabled && cartDisabledReason ? (
         <p className="mt-2 text-xs font-semibold leading-5 text-amber-200/80">{cartDisabledReason}</p>
       ) : null}
+
+      <button
+        type="button"
+        onClick={() => void toggleLike()}
+        disabled={busy}
+        aria-pressed={social.liked}
+        className={`mt-2 min-h-10 w-full rounded-xl px-4 text-xs font-extrabold disabled:opacity-60 ${vitrinGorunum.buton.ikincil}`}
+      >
+        {social.liked ? "♥ Beğendin" : "♡ Beğen"} · {social.like_count}
+      </button>
 
       <div className="mt-4 border-t border-white/10 pt-4">
         <div className="flex items-center justify-between gap-3">
@@ -250,7 +325,7 @@ export default function ProductCommercePanel({
             maxLength={500}
             onChange={(event) => setComment(event.target.value)}
             placeholder="Ürün hakkında yorum yaz"
-            className="min-h-11 min-w-0 flex-1 rounded-xl border border-white/10 bg-slate-950 px-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-blue-500/50"
+            className="min-h-11 w-0 min-w-0 flex-1 rounded-xl border border-white/10 bg-slate-950 px-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-blue-500/50"
           />
           <button
             type="button"
@@ -285,7 +360,7 @@ export default function ProductCommercePanel({
                       type="button"
                       disabled={busy}
                       onClick={() => void deleteComment(item.id)}
-                      className="shrink-0 text-[10px] font-extrabold text-red-300 disabled:opacity-50"
+                      className={`shrink-0 text-[10px] font-extrabold disabled:opacity-50 ${vitrinGorunum.baglanti.sessiz}`}
                     >
                       Sil
                     </button>

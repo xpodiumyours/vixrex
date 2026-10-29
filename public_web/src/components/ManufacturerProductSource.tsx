@@ -23,10 +23,6 @@ export default function ManufacturerProductSource({ source }: ManufacturerProduc
   const url = safeManufacturerUrl(source?.url);
   if (!url) return null;
 
-  const verificationStatus = typeof source?.verificationStatus === "string"
-    ? source.verificationStatus.trim()
-    : "";
-
   return (
     <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
       <a
@@ -37,11 +33,6 @@ export default function ManufacturerProductSource({ source }: ManufacturerProduc
       >
         Üretici ürün kaynağı →
       </a>
-      {verificationStatus ? (
-        <p className="mt-1 text-[11px] font-medium text-white/40">
-          OpenRouter eşleşme durumu: {verificationStatus}
-        </p>
-      ) : null}
     </div>
   );
 }

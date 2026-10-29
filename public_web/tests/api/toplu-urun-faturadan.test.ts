@@ -57,6 +57,32 @@ function adminMock() {
       query.single.mockResolvedValue({ data: STORE, error: null });
       return query;
     }
+    if (tablo === "invoice_job_lines") {
+      const query = {
+        select: vi.fn(),
+        eq: vi.fn(),
+        maybeSingle: vi.fn(async () => ({ data: { product_id: null }, error: null })),
+        update: vi.fn(() => ({ eq: vi.fn(async () => ({ error: null })) })),
+      };
+      query.select.mockReturnValue(query);
+      query.eq.mockReturnValue(query);
+      return query;
+    }
+    if (tablo === "products") {
+      const sorgu = { barkod: false, kimlik: false };
+      const query: Record<string, unknown> = {};
+      query.select = vi.fn(() => query);
+      query.eq = vi.fn((kolon: string) => {
+        if (kolon === "barcode") sorgu.barkod = true;
+        if (kolon === "id") sorgu.kimlik = true;
+        return query;
+      });
+      query.maybeSingle = vi.fn(async () => ({
+        data: sorgu.kimlik ? { id: "kategori-1", product_template_key: "fashion" } : null,
+        error: null,
+      }));
+      return query;
+    }
     const query = {
       select: vi.fn(),
       eq: vi.fn(),
@@ -343,9 +369,16 @@ describe("faturadan gelen satirin yayin kapisi", () => {
     expect(govde.yayinda).toBe(1);
   });
 
-  function kategoriCevabi(data: { id: string; product_template_key: string } | null, error: { message: string } | null = null) {
+  function kategoriCevabi(data: { id: string; name?: string; product_template_key: string } | null, error: { message: string } | null = null) {
     const base = adminMock();
-    const query = { select: vi.fn(), eq: vi.fn(), ilike: vi.fn(), maybeSingle: vi.fn(async () => ({ data, error })) };
+    const query = {
+      select: vi.fn(),
+      eq: vi.fn(),
+      ilike: vi.fn(),
+      maybeSingle: vi.fn(async () => ({ data, error })),
+      then: (ok: (deger: unknown) => unknown) =>
+        Promise.resolve({ data: data ? [data] : [], error }).then(ok),
+    };
     query.select.mockReturnValue(query);
     query.eq.mockReturnValue(query);
     query.ilike.mockReturnValue(query);
@@ -375,10 +408,10 @@ describe("faturadan gelen satirin yayin kapisi", () => {
   it("mevcut kategori harf farkıyla bulunur; tip ve diğer ürünler değiştirilmez", async () => {
     const request = istek([{ ...FATURA_URUNU, categoryId: "eski-gecersiz-kategori", yayinIstegi: false }]);
     mocks.kayitlar.get(0)!.katalog = { resmiAd: "Ürün", kaynak: "https://tedarikci.example.com/urun/0", kategori: "İç Giyim" };
-    const query = kategoriCevabi({ id: "mevcut-kategori", product_template_key: "fashion" });
+    const query = kategoriCevabi({ id: "mevcut-kategori", name: "iç giyim", product_template_key: "fashion" });
     const govde = await (await topluUrunEkle(request)).json();
     expect(govde.taslak).toBe(1);
-    expect(query.ilike).toHaveBeenCalledWith("name", "İç Giyim");
+    expect(query.select).toHaveBeenCalled();
     expect(mocks.rpc).not.toHaveBeenCalledWith("upsert_store_category_v2", expect.anything());
     const yazilan = mocks.rpc.mock.calls.find(([name]) => name === "save_invoice_product")![1].p_product;
     expect(yazilan.categoryId).toBe("mevcut-kategori");
