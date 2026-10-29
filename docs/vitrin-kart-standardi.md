@@ -15,6 +15,14 @@ Aynı ürün ikinci kez kart açmaz. Fatura satırı var olan ürüne bağlanır
 
 Miktar farklıysa (`250 ml` / `330 ml`) kart ayrı kalır: bunlar ayrı üründür.
 
+Barkod okunmamış satırda ad yazımı vitrindeki karttan farklıysa aynı ürün olduğu
+makinece kanıtlanamaz. Bu durumda kart **sessizce açılmaz**: satır "onay
+bekliyor" olarak işaretlenir ve esnafa tek soru sorulur — `Aynı ürün, kartı
+birleştir` ya da `Farklı ürün, ayrı kart aç`. Karar
+`invoice_job_lines.merge_decision` alanında saklanır; cevap gelene kadar o satır
+ne karta bağlanır ne de yeni kart açar. Tahminle birleştirme hiçbir koşulda
+yapılmaz, iki dolu farklı barkod birleşmez.
+
 ## 2. Fotoğraf eşiği
 
 Kart fotoğrafı, fatura akışında seçilirken şu sırayla aranır:

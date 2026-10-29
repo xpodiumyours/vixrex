@@ -107,7 +107,13 @@ describe("fatura ürün tekrar kilidi", () => {
       }),
     );
     expect(mocks.baglamalar).toContainEqual(expect.objectContaining({ product_id: "urun-9" }));
-    expect(sonuc).toEqual({ id: "urun-9", slug: "popkek", created: false, kayit: "guncellendi" });
+    expect(sonuc).toEqual({
+      durum: "kaydedildi",
+      id: "urun-9",
+      slug: "popkek",
+      created: false,
+      kayit: "guncellendi",
+    });
   });
 
   it("eksik fiyat tamamlanır, dolu fiyat değiştirilmez", async () => {
@@ -149,7 +155,7 @@ describe("fatura ürün tekrar kilidi", () => {
       alisFiyati: null,
     });
     expect(mocks.rpc).not.toHaveBeenCalled();
-    expect(sonuc.kayit).toBe("guncellendi");
+    expect(sonuc.durum === "kaydedildi" && sonuc.kayit).toBe("guncellendi");
     expect(mocks.update).toHaveBeenCalledWith(expect.objectContaining({ stockQuantity: 6 }));
   });
 
@@ -176,7 +182,13 @@ describe("fatura ürün tekrar kilidi", () => {
       "save_invoice_product",
       expect.objectContaining({ p_line_id: "satir-1" }),
     );
-    expect(sonuc).toEqual({ id: "yeni-1", slug: "yeni-1", created: true, kayit: "yeni" });
+    expect(sonuc).toEqual({
+      durum: "kaydedildi",
+      id: "yeni-1",
+      slug: "yeni-1",
+      created: true,
+      kayit: "yeni",
+    });
   });
 
   it("satır zaten bir ürüne bağlıysa ön kontrole girilmez", async () => {
