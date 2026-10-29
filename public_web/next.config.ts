@@ -127,6 +127,7 @@ const SHARP_TRACE = [
 // bu kuralı CI'da zorunlu kılar (eksik uç ya da bayat liste kırmızı verir).
 const SHARP_ROUTES = [
   "/api/cron/fatura-provider",
+  "/api/fatura-eslestirme",
   "/api/fatura-islem",
   "/api/fatura-oku",
   "/api/instagram/import",
