@@ -225,10 +225,57 @@ export function islemYaniti(islem: KayitliIslem): Record<string, unknown> {
   };
 }
 
+interface GomuluIs {
+  id: string;
+  status?: string | null;
+  supplier_name?: string | null;
+  created_at?: string | null;
+  invoice_job_lines?: Array<{ count?: number | null }> | { count?: number | null } | null;
+  invoice_provider_runs?:
+    | Array<{ state?: string | null; error_code?: string | null }>
+    | { state?: string | null; error_code?: string | null }
+    | null;
+}
+
+const LISTE_SECIMI =
+  "id,status,supplier_name,created_at,invoice_job_lines(count),invoice_provider_runs(state,error_code)";
+
+/** Gömülü tek yanıttan liste satırı üretir. */
+export function gomuluIslemOzeti(kayit: GomuluIs): IslemOzeti {
+  const satir = Array.isArray(kayit.invoice_job_lines)
+    ? kayit.invoice_job_lines[0]
+    : kayit.invoice_job_lines;
+  const kosu = Array.isArray(kayit.invoice_provider_runs)
+    ? kayit.invoice_provider_runs[0]
+    : kayit.invoice_provider_runs;
+  const satirSayisi = Number(satir?.count ?? 0);
+  return {
+    islemKimligi: String(kayit.id),
+    durum: String(kayit.status ?? ""),
+    tedarikci: String(kayit.supplier_name ?? ""),
+    olusturma: String(kayit.created_at ?? ""),
+    satirSayisi,
+    asama: islemAsamasi(satirSayisi, kosu?.state ?? null),
+    hata: kosu?.error_code ?? null,
+  };
+}
+
 export async function islemleriListele(
   admin: SupabaseClient,
   storeId: string,
 ): Promise<IslemOzeti[]> {
+  // Tek istek: satır sayısı ve sağlayıcı durumu ilişkili tablolardan gömülü gelir.
+  const gomulu = await admin
+    .from("invoice_jobs")
+    .select(LISTE_SECIMI)
+    .eq("store_id", storeId)
+    .order("created_at", { ascending: false })
+    .limit(20);
+  if (!gomulu.error && Array.isArray(gomulu.data)) {
+    return (gomulu.data as unknown as GomuluIs[]).map(gomuluIslemOzeti);
+  }
+
+  // İlişki çözülemezse liste boş kalmasın: iki toplu sorguya düşer.
   const isler = await admin
     .from("invoice_jobs")
     .select("id,status,supplier_name,created_at")
@@ -239,7 +286,6 @@ export async function islemleriListele(
   if (!kayitlar.length) return [];
 
   const kimlikler = kayitlar.map((kayit) => String(kayit.id));
-  // Tek sorguda satır sayısı ve sağlayıcı durumu: iş başına ayrı sorgu 5 sn gecikme üretiyordu.
   const [satirlarSonucu, kosularSonucu] = await Promise.all([
     admin.from("invoice_job_lines").select("job_id").in("job_id", kimlikler),
     admin.from("invoice_provider_runs").select("job_id,state,error_code").in("job_id", kimlikler),
