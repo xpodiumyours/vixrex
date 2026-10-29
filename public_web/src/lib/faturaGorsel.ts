@@ -19,7 +19,8 @@ export type GorselRedSebebi =
   | "cok-kucuk"
   | "logo-veya-yer-tutucu"
   | "bos"
-  | "urun-fotografi-degil";
+  | "urun-fotografi-degil"
+  | "kaynak-uyumsuz";
 
 export interface KaynakGorselDogrulamasi {
   tamam: boolean;
@@ -169,12 +170,18 @@ interface DepoIstemcisi {
   };
 }
 
+function alanAdiUyuyorMu(hostname: string, izinli: string[]): boolean {
+  const host = hostname.toLowerCase();
+  return izinli.some((alan) => host === alan || host.endsWith(`.${alan}`));
+}
+
 export async function kaynakGorselleriniHazirla(args: {
   admin: DepoIstemcisi;
   slug: string;
   kaynakSayfa: string;
   adaylar: string[];
   sonTarih?: number;
+  izinliAlanAdlari?: string[];
   bagimliliklar?: GorselBagimliliklari;
 }): Promise<GorselHazirlamaSonucu> {
   const gorseller: HazirlananGorsel[] = [];
@@ -187,6 +194,17 @@ export async function kaynakGorselleriniHazirla(args: {
       altyapiSorunu = true;
       reddedilenler.push({ kaynakGorsel: aday, sebep: "erisilemedi" });
       continue;
+    }
+    const izinli = (args.izinliAlanAdlari ?? [])
+      .map((alan) => alan.trim().toLowerCase().replace(/^www\./, ""))
+      .filter(Boolean);
+    if (izinli.length > 0) {
+      let adayHost = "";
+      try { adayHost = new URL(aday).hostname.toLowerCase().replace(/^www\./, ""); } catch { adayHost = ""; }
+      if (!adayHost || !alanAdiUyuyorMu(adayHost, izinli)) {
+        reddedilenler.push({ kaynakGorsel: aday, sebep: "kaynak-uyumsuz" });
+        continue;
+      }
     }
     const kontrol = await kaynakGorseliniDogrula(aday, args.bagimliliklar);
     if (!kontrol.tamam || !kontrol.bayt || !kontrol.tur) {

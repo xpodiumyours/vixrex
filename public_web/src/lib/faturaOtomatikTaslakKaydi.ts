@@ -13,6 +13,8 @@ export interface OtomatikTaslakRaporu {
   bekleyen: number;
   /** Kart açılmadı, esnafın "aynı ürün mü" cevabı bekleniyor. */
   birlestirmeBekleyen: number;
+  /** Görseli olmayan kart sayısı. */
+  gorselsiz: number;
   hatalar: string[];
 }
 
@@ -56,7 +58,7 @@ export async function faturaTaslakYanitiniHazirla(
 ): Promise<Record<string, unknown>> {
   const rapor: OtomatikTaslakRaporu = {
     kaydedildi: kayit.satirlar.filter((satir) => satir.urunId).length,
-    atlandi: 0, bekleyen: 0, birlestirmeBekleyen: 0, hatalar: [],
+    atlandi: 0, bekleyen: 0, birlestirmeBekleyen: 0, gorselsiz: 0, hatalar: [],
   };
   let guncelKayit = kayit;
   const eksik = kayit.satirlar.map((satir, sira) => ({ satir, sira })).filter(({ satir }) => !satir.urunId);
@@ -114,6 +116,7 @@ export async function faturaTaslakYanitiniHazirla(
                   stokOnaylandi: durum.stokOnaylandi, esnafOnayladi: durum.onayli,
                   sablonTam: true, ureticiGorsel: false,
                   gorselDurumu: medya.gorselDurumu, gorselKaynaklari: medya.gorselKaynaklari,
+                  gorselRedleri: medya.gorselRedleri,
                 },
                 alisFiyati: dogrulanmis.alisBirimFiyati,
               });
@@ -158,6 +161,12 @@ export async function faturaTaslakYanitiniHazirla(
       rapor.hatalar.push("Kayıtlı ürün taslakları doğrulanamadı.");
     } else {
       rapor.kaydedildi = urunler.data.filter((urun) => urun.is_visible === false).length;
+      rapor.gorselsiz = urunler.data.filter(
+        (urun) => (urun.fatura_kanit as { gorselDurumu?: string } | null)?.gorselDurumu === "gorsel-yok",
+      ).length;
+      if (rapor.gorselsiz > 0) {
+        rapor.hatalar.push(`${rapor.gorselsiz} kart görselsiz kaydedildi.`);
+      }
       if (urunler.data.some((urun) => urun.fatura_kanit?.gorselDurumu === "aktarim-bekliyor") &&
         !rapor.hatalar.some((hata) => hata.includes("fotoğraf"))) {
         rapor.hatalar.push("Bazı ürün fotoğrafları henüz aktarılamadı. Kartları düzenleyip yeniden kaydedebilirsin.");

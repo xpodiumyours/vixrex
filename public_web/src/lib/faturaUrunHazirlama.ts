@@ -94,6 +94,10 @@ export async function faturaUrunGorselleriniAktar(args: {
   let urunGorselleri = kaynakGorselleri;
   let gorselDurumu = "";
   let gorselKaynaklari: Array<Record<string, unknown>> = [];
+  let gorselRedleri: Array<{ kaynakGorsel: string; sebep: string }> = [];
+  const resmiSayfa = typeof satir.katalog?.kaynak === "string" ? satir.katalog.kaynak.trim() : "";
+  let resmiAlan = "";
+  try { resmiAlan = resmiSayfa ? new URL(resmiSayfa).hostname.toLowerCase().replace(/^www\./, "") : ""; } catch { resmiAlan = ""; }
   const aktarilacakGorseller = [...new Set([...disGorseller,
     ...girdi.variants.flatMap((variant) => variant.imageUrls ?? []).filter((url) => !yonetilenUrunGorseliMi(url)),
   ])];
@@ -103,9 +107,11 @@ export async function faturaUrunGorselleriniAktar(args: {
       kaynakSayfa: typeof satir.katalog?.kaynak === "string" ? satir.katalog.kaynak : "",
       adaylar: aktarilacakGorseller,
       sonTarih: args.sonTarih,
+      izinliAlanAdlari: resmiAlan ? [resmiAlan] : [],
     });
+    gorselRedleri = hazir.reddedilenler.map((red) => ({ kaynakGorsel: red.kaynakGorsel, sebep: String(red.sebep) }));
     const depodaki = new Map(hazir.gorseller.map((gorsel) => [gorsel.kaynakGorsel, gorsel]));
-    const altyapiHatasi = hazir.reddedilenler.length > 0;
+    const altyapiHatasi = hazir.reddedilenler.some((red) => red.sebep !== "kaynak-uyumsuz");
     urunGorselleri = kaynakGorselleri.flatMap((adres) => {
       if (yonetilenUrunGorseliMi(adres)) return [adres];
       const kopya = depodaki.get(adres);
@@ -115,7 +121,7 @@ export async function faturaUrunGorselleriniAktar(args: {
       depoUrl: gorsel.url, kaynakGorsel: gorsel.kaynakGorsel,
       kaynakSayfa: gorsel.kaynakSayfa, genislik: gorsel.genislik, yukseklik: gorsel.yukseklik,
     }));
-    gorselDurumu = altyapiHatasi ? "aktarim-bekliyor" : "depoda";
+    gorselDurumu = altyapiHatasi ? "aktarim-bekliyor" : urunGorselleri.length === 0 ? "gorsel-yok" : "depoda";
   }
   const depoGorselleri = new Map(gorselKaynaklari.map((kaynak) =>
     [String(kaynak.kaynakGorsel || ""), String(kaynak.depoUrl || "")]));
@@ -124,5 +130,6 @@ export async function faturaUrunGorselleriniAktar(args: {
     imageUrls: variant.imageUrls?.map((url) =>
       depoGorselleri.get(url) || (yonetilenUrunGorseliMi(url) ? url : "")).filter(Boolean),
   }));
-  return { urunGorselleri, gorselDurumu, gorselKaynaklari };
+  if (!gorselDurumu) gorselDurumu = urunGorselleri.length === 0 ? "gorsel-yok" : "depoda";
+  return { urunGorselleri, gorselDurumu, gorselKaynaklari, gorselRedleri };
 }
