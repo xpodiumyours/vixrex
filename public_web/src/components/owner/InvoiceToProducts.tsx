@@ -99,6 +99,8 @@ interface OncekiIslem {
   tedarikci: string;
   olusturma: string;
   satirSayisi: number;
+  asama?: "hazir" | "okunuyor" | "yarida";
+  hata?: string | null;
 }
 
 interface FaturaOkumaSonucu {
@@ -962,21 +964,33 @@ export default function InvoiceToProducts({
           <div className="fatura-onceki">
             <h4>Devam edebileceğin faturalar</h4>
             <ul>
-              {oncekiIslemler.map((islem) => (
+              {oncekiIslemler.map((islem) => {
+                const asama = islem.asama ?? (islem.satirSayisi > 0 ? "hazir" : "yarida");
+                return (
                 <li key={islem.islemKimligi}>
                   <span>
-                    {islem.tedarikci || "Firma okunamadı"} • {islem.satirSayisi} satır •{" "}
+                    {islem.tedarikci || "Firma okunamadı"} •{" "}
+                    {islem.satirSayisi > 0 ? `${islem.satirSayisi} satır` : "satır çıkmadı"} •{" "}
                     {new Date(islem.olusturma).toLocaleDateString("tr-TR")}
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => void islemiAc(islem.islemKimligi)}
-                    disabled={yukleniyor}
-                  >
-                    Devam et
-                  </button>
+                  {asama === "hazir" ? (
+                    <button
+                      type="button"
+                      onClick={() => void islemiAc(islem.islemKimligi)}
+                      disabled={yukleniyor}
+                    >
+                      Devam et
+                    </button>
+                  ) : asama === "okunuyor" ? (
+                    <span className="fatura-onceki-durum">okunuyor…</span>
+                  ) : (
+                    <span className="fatura-onceki-durum" title={islem.hata ?? undefined}>
+                      yarım kaldı — faturayı yeniden yükle
+                    </span>
+                  )}
                 </li>
-              ))}
+                );
+              })}
             </ul>
           </div>
         )}

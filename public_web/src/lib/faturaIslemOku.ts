@@ -45,12 +45,26 @@ export interface KayitliIslem {
   tedarikciDijitalIz?: Record<string, unknown> | null;
 }
 
+export type IslemAsamasi = "hazir" | "okunuyor" | "yarida";
+
 export interface IslemOzeti {
   islemKimligi: string;
   durum: string;
   tedarikci: string;
   olusturma: string;
   satirSayisi: number;
+  asama: IslemAsamasi;
+  hata: string | null;
+}
+
+/** Satırı olan iş devam eder; sağlayıcı hâlâ çalışıyorsa beklenir; kalanı yarıda kalmıştır. */
+export function islemAsamasi(
+  satirSayisi: number,
+  saglayiciDurumu: string | null | undefined,
+): IslemAsamasi {
+  if (satirSayisi > 0) return "hazir";
+  if (saglayiciDurumu === "queued" || saglayiciDurumu === "received") return "okunuyor";
+  return "yarida";
 }
 
 function sayiVeyaNull(deger: unknown): number | null {
@@ -222,22 +236,42 @@ export async function islemleriListele(
     .order("created_at", { ascending: false })
     .limit(20);
   const kayitlar = Array.isArray(isler.data) ? isler.data : [];
+  if (!kayitlar.length) return [];
 
-  const sonuc: IslemOzeti[] = [];
-  for (const kayit of kayitlar) {
-    const say = await admin
-      .from("invoice_job_lines")
-      .select("id", { count: "exact", head: true })
-      .eq("job_id", kayit.id);
-    sonuc.push({
-      islemKimligi: String(kayit.id),
+  const kimlikler = kayitlar.map((kayit) => String(kayit.id));
+  // Tek sorguda satır sayısı ve sağlayıcı durumu: iş başına ayrı sorgu 5 sn gecikme üretiyordu.
+  const [satirlarSonucu, kosularSonucu] = await Promise.all([
+    admin.from("invoice_job_lines").select("job_id").in("job_id", kimlikler),
+    admin.from("invoice_provider_runs").select("job_id,state,error_code").in("job_id", kimlikler),
+  ]);
+
+  const satirSayilari = new Map<string, number>();
+  for (const satir of Array.isArray(satirlarSonucu.data) ? satirlarSonucu.data : []) {
+    const anahtar = String(satir.job_id);
+    satirSayilari.set(anahtar, (satirSayilari.get(anahtar) ?? 0) + 1);
+  }
+  const kosular = new Map<string, { state: string; error_code: string | null }>();
+  for (const kosu of Array.isArray(kosularSonucu.data) ? kosularSonucu.data : []) {
+    kosular.set(String(kosu.job_id), {
+      state: String(kosu.state ?? ""),
+      error_code: kosu.error_code ? String(kosu.error_code) : null,
+    });
+  }
+
+  return kayitlar.map((kayit) => {
+    const islemKimligi = String(kayit.id);
+    const satirSayisi = satirSayilari.get(islemKimligi) ?? 0;
+    const kosu = kosular.get(islemKimligi);
+    return {
+      islemKimligi,
       durum: String(kayit.status ?? ""),
       tedarikci: String(kayit.supplier_name ?? ""),
       olusturma: String(kayit.created_at ?? ""),
-      satirSayisi: say.count ?? 0,
-    });
-  }
-  return sonuc;
+      satirSayisi,
+      asama: islemAsamasi(satirSayisi, kosu?.state),
+      hata: kosu?.error_code ?? null,
+    };
+  });
 }
 
 export async function urundenIslemBul(

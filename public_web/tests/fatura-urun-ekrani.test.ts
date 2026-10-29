@@ -120,6 +120,26 @@ it("hazırlama ekranı belgeyle tutmayan miktarı gizlemez", () => {
   expect(html).toContain("belgede toplam 5 yazıyor, tutmuyor");
 });
 
+it("devam listesi yarıda kalmış işe devam düğmesi koymaz", () => {
+  state.index = 0;
+  state.values = {
+    0: "sec",
+    10: [
+      { islemKimligi: "a", durum: "eslestirme", tedarikci: "", olusturma: "2026-10-29T10:00:00Z", satirSayisi: 0, asama: "yarida", hata: "KART_YANITI_COZULEMEDI" },
+      { islemKimligi: "b", durum: "inceleme", tedarikci: "Test toptancı", olusturma: "2026-10-29T10:00:00Z", satirSayisi: 13, asama: "hazir", hata: null },
+      { islemKimligi: "c", durum: "eslestirme", tedarikci: "", olusturma: "2026-10-29T10:00:00Z", satirSayisi: 0, asama: "okunuyor", hata: null },
+    ],
+  };
+  const html = renderToStaticMarkup(createElement(InvoiceToProducts, {
+    storeSlug: "offline-test", onUploaded: async () => {},
+  }));
+  expect(html).toContain("yarım kaldı — faturayı yeniden yükle");
+  expect(html).toContain("okunuyor…");
+  expect(html).toContain("13 satır");
+  expect(html).toContain("satır çıkmadı");
+  expect(html.match(/Devam et/g)?.length).toBe(1);
+});
+
 it("resmî kaynak gelmeyen kartın taslakta korunduğunu açıklar", () => {
   const html = akisEkrani("urunler", [{ ...ornekKart(), katalog: null }]);
   expect(html).toContain("Kart faturadaki bilgilerle taslak olarak korunur.");

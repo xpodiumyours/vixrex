@@ -31,6 +31,7 @@ function sahteAdmin(tablolar: Record<string, TabloVerisi>, guncellemeler: unknow
       z.eq = () => z;
       z.order = () => z;
       z.limit = () => z;
+      z.in = () => z;
       z.update = (govde: unknown) => {
         guncellemeler.push({ tablo, govde });
         return z;
@@ -173,7 +174,14 @@ describe("fatura-islem ucu", () => {
         invoice_jobs: {
           liste: [{ id: ISLEM, status: "inceleme", supplier_name: "Glisa", created_at: "2026-09-30T10:00:00Z" }],
         },
-        invoice_job_lines: { sayi: 3 },
+        invoice_job_lines: {
+          liste: [
+            { job_id: ISLEM },
+            { job_id: ISLEM },
+            { job_id: ISLEM },
+          ],
+        },
+        invoice_provider_runs: { liste: [{ job_id: ISLEM, state: "processed", error_code: null }] },
       }),
     );
 

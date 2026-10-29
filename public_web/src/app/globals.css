@@ -1189,6 +1189,12 @@ body.vixrex-kaydediliyor .vixrex-secili-alan {
   color: var(--owner-text-alt);
 }
 
+.fatura-onceki-durum {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--owner-muted);
+}
+
 .fatura-onceki button {
   min-height: 40px;
   border: 1px solid var(--owner-border);
