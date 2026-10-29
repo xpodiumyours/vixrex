@@ -126,7 +126,7 @@ export async function mevcutUrunuOku(
 }
 
 const URUN_ALANLARI =
-  "id,slug,name,description,price_text,price_amount,image_urls,category_id,stock_status,stock_quantity,old_price_amount,badge_tag,fulfillment_region,brand,barcode,metadata,variants,is_visible";
+  "id,slug,name,description,price_text,price_amount,image_urls,category_id,stock_status,stock_quantity,old_price_amount,badge_tag,fulfillment_region,brand,barcode,metadata,variants,is_visible,is_active";
 
 const HARF_KATLAMA: Record<string, string> = {
   ş: "s",
@@ -242,82 +242,251 @@ export async function ayniUrunuBul(
       .select(URUN_ALANLARI)
       .eq("store_id", storeId)
       .eq("barcode", barkod)
+      .eq("is_active", true)
       .maybeSingle();
     if (data?.id && varyantlarUyusuyor(data.variants, girdi.variants)) return data as Record<string, unknown>;
   }
   if (!urunAdAnahtari(girdi.name)) return null;
   const { data } = await admin.from("products").select(URUN_ALANLARI).eq("store_id", storeId);
   for (const urun of Array.isArray(data) ? data : []) {
+    if (urun.is_active === false) continue;
     if (!ayniUrunMu(urun as Record<string, unknown>, girdi)) continue;
     return urun as Record<string, unknown>;
   }
   return null;
 }
 
+function metadataMiktari(kayit: Record<string, unknown>): string | null {
+  const metadata = kayit.metadata;
+  if (!metadata || typeof metadata !== "object") return null;
+  const ozellikler = (metadata as { attributes?: unknown }).attributes;
+  if (!Array.isArray(ozellikler)) return null;
+  for (const ozellik of ozellikler) {
+    if (!ozellik || typeof ozellik !== "object") continue;
+    const kayitOzellik = ozellik as { key?: unknown; value?: unknown };
+    if (String(kayitOzellik.key ?? "").toLocaleLowerCase("tr-TR") !== "netquantity") continue;
+    const imza = miktarImzasi(kayitOzellik.value);
+    if (imza) return imza;
+  }
+  return null;
+}
+
+/** Ad yazmıyorsa "Gramaj / hacim" alanından; ikisi de yoksa null. */
+function urunMiktari(kayit: Record<string, unknown>): string | null {
+  return miktarImzasi(kayit.name) ?? metadataMiktari(kayit);
+}
+
+function kelimeler(metin: string): string[] {
+  return metin.split(" ").filter((kelime) => kelime.length >= 3);
+}
+
+export function ortakKelimeVar(bir: string, iki: string): boolean {
+  const birKume = new Set(kelimeler(bir));
+  return kelimeler(iki).some((kelime) => birKume.has(kelime));
+}
+
+function govdeDigeriniKapsiyor(bir: string, iki: string): boolean {
+  const birKume = new Set(kelimeler(bir));
+  const ikiKume = new Set(kelimeler(iki));
+  if (birKume.size === 0 || ikiKume.size === 0) return false;
+  const [kucuk, buyuk] = birKume.size <= ikiKume.size ? [birKume, ikiKume] : [ikiKume, birKume];
+  for (const kelime of kucuk) if (!buyuk.has(kelime)) return false;
+  return true;
+}
+
+/**
+ * "Aynı ürün olabilir" sorusunun kuralı. Bu fonksiyon KART BİRLEŞTİRMEZ;
+ * yalnız esnafa sorulacak bir aday üretir. Tahminle birleştirme yapılmaz.
+ *
+ * Soru yalnız barkodsuz satırda sorulur. Aynı marka + aynı miktar + farklı ad
+ * yazımı gerekir; iki farklı barkod asla aday olmaz.
+ */
+export function ayniUrunOlabilirMi(
+  mevcut: Record<string, unknown>,
+  girdi: Record<string, unknown>,
+): boolean {
+  if (String(girdi.barcode ?? "").trim()) return false;
+  const marka = urunAdAnahtari(girdi.brand);
+  if (!marka || marka !== urunAdAnahtari(mevcut.brand)) return false;
+
+  const govdeGirdi = urunAdGovdesi(girdi.name, girdi.brand);
+  const govdeMevcut = urunAdGovdesi(mevcut.name, mevcut.brand);
+  if (!govdeGirdi || !govdeMevcut || govdeGirdi === govdeMevcut) return false;
+
+  const miktarGirdi = urunMiktari(girdi);
+  const miktarMevcut = urunMiktari(mevcut);
+
+  // Miktar iki tarafta da yazıyorsa aynı olmalı: 250 ml ile 330 ml ayrı üründür.
+  if (miktarGirdi && miktarMevcut && miktarGirdi !== miktarMevcut) return false;
+
+  const ayniOlcu = Boolean(miktarGirdi && miktarMevcut) && ortakKelimeVar(govdeGirdi, govdeMevcut);
+  // Miktar yazmıyorsa daha dar bir kapı: biri diğerinin kelimelerini kapsamalı
+  // (ör. "kristal toz şeker" / "toz şeker polietilen ambalaj").
+  const kapsananAd = govdeDigeriniKapsiyor(govdeGirdi, govdeMevcut);
+  if (!ayniOlcu && !kapsananAd) return false;
+
+  return varyantlarUyusuyor(mevcut.variants, girdi.variants);
+}
+
+export async function ayniUrunAdayiBul(
+  admin: SupabaseClient,
+  storeId: string,
+  girdi: Record<string, unknown>,
+): Promise<Record<string, unknown> | null> {
+  if (String(girdi.barcode ?? "").trim()) return null;
+  if (!urunAdAnahtari(girdi.name)) return null;
+  const { data } = await admin.from("products").select(URUN_ALANLARI).eq("store_id", storeId);
+  for (const urun of Array.isArray(data) ? data : []) {
+    if (urun.is_active === false) continue;
+    if (!ayniUrunOlabilirMi(urun as Record<string, unknown>, girdi)) continue;
+    return urun as Record<string, unknown>;
+  }
+  return null;
+}
+
+export type FaturaKayitSonucu =
+  | { durum: "kaydedildi"; id: string; slug: string; created: boolean; kayit: "yeni" | "guncellendi" | "mevcut" }
+  | { durum: "onay-bekliyor"; aday: { id: string; ad: string } };
+
+interface KayitGirdisi {
+  storeId: string;
+  editToken: string;
+  satirId: string;
+  girdi: Record<string, unknown>;
+  alisFiyati: number | null;
+}
+
+async function urunKimligiyleOku(
+  admin: SupabaseClient,
+  storeId: string,
+  urunId: string,
+): Promise<Record<string, unknown> | null> {
+  const { data } = await admin
+    .from("products")
+    .select(URUN_ALANLARI)
+    .eq("store_id", storeId)
+    .eq("id", urunId)
+    .maybeSingle();
+  if (!data?.id || data.is_active === false) return null;
+  return data as Record<string, unknown>;
+}
+
+/** Var olan karta bağlar: stok toplanır, mevcut fiyat korunur, fotoğraflar birleşir. */
+async function mevcudaBagla(
+  admin: SupabaseClient,
+  args: KayitGirdisi,
+  mevcut: Record<string, unknown>,
+): Promise<FaturaKayitSonucu | null> {
+  const baglandi = await satiriUrunleBagla(admin, args.satirId, String(mevcut.id));
+  if (!baglandi) return null;
+
+  const mevcutStok = typeof mevcut.stock_quantity === "number" ? mevcut.stock_quantity : null;
+  const eklenenStok = typeof args.girdi.stockQuantity === "number" ? args.girdi.stockQuantity : null;
+  const yeniStok =
+    mevcutStok == null && eklenenStok == null ? null : (mevcutStok ?? 0) + (eklenenStok ?? 0);
+  const gorseller = [
+    ...new Set([
+      ...(Array.isArray(mevcut.image_urls) ? mevcut.image_urls.map((adres) => String(adres)) : []),
+      ...(Array.isArray(args.girdi.imageUrls) ? args.girdi.imageUrls.map((adres) => String(adres)) : []),
+    ]),
+  ];
+  await updateRichCoreProduct({
+    admin,
+    productId: String(mevcut.id),
+    editToken: args.editToken,
+    name: String(mevcut.name ?? args.girdi.name ?? ""),
+    description: String(mevcut.description ?? args.girdi.description ?? ""),
+    priceText: String(mevcut.price_text ?? args.girdi.priceText ?? ""),
+    priceAmount:
+      typeof mevcut.price_amount === "number"
+        ? mevcut.price_amount
+        : typeof args.girdi.priceAmount === "number"
+          ? args.girdi.priceAmount
+          : null,
+    imageUrls: gorseller,
+    categoryId: String(mevcut.category_id ?? args.girdi.categoryId ?? ""),
+    stockStatus: String(mevcut.stock_status ?? args.girdi.stockStatus ?? ""),
+    stockQuantity: yeniStok,
+    oldPriceAmount: typeof mevcut.old_price_amount === "number" ? mevcut.old_price_amount : null,
+    badgeTag: typeof mevcut.badge_tag === "string" ? mevcut.badge_tag : null,
+    fulfillmentRegion: typeof mevcut.fulfillment_region === "string" ? mevcut.fulfillment_region : null,
+    brand: typeof mevcut.brand === "string" ? mevcut.brand : null,
+    barcode: String(mevcut.barcode ?? args.girdi.barcode ?? ""),
+    metadata: normalizeProductMetadata(mevcut.metadata),
+    variants: normalizeProductVariants(mevcut.variants),
+    isVisible: mevcut.is_visible !== false,
+  });
+  if (typeof args.alisFiyati === "number" && args.alisFiyati > 0) {
+    await admin
+      .from("product_purchase_prices")
+      .upsert(
+        {
+          product_id: String(mevcut.id),
+          store_id: args.storeId,
+          amount: args.alisFiyati,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "product_id" },
+      );
+  }
+  return {
+    durum: "kaydedildi",
+    id: String(mevcut.id),
+    slug: String(mevcut.slug ?? ""),
+    created: false,
+    kayit: "guncellendi",
+  };
+}
+
 export async function faturaUrununuKaydet(
   admin: SupabaseClient,
   args: { storeId: string; editToken: string; satirId: string; girdi: Record<string, unknown>; kanit: Record<string, unknown>; alisFiyati: number | null },
-): Promise<{ id: string; slug: string; created: boolean; kayit: "yeni" | "guncellendi" | "mevcut" }> {
-  const satirDurumu = await admin
+): Promise<FaturaKayitSonucu> {
+  let satirDurumu = await admin
     .from("invoice_job_lines")
-    .select("product_id")
+    .select("product_id,merge_candidate_product_id,merge_decision")
     .eq("id", args.satirId)
     .maybeSingle();
-  if (!satirDurumu.error && !satirDurumu.data?.product_id) {
+  // Kolonlar henüz yoksa (migration sırası): satır kaydı durmaz, yalnız kilit kapalı kalır.
+  if (satirDurumu.error) {
+    satirDurumu = await admin
+      .from("invoice_job_lines")
+      .select("product_id")
+      .eq("id", args.satirId)
+      .maybeSingle();
+  }
+  const bagliSatir = Boolean(satirDurumu.data?.product_id);
+  if (!satirDurumu.error && !bagliSatir) {
     const mevcut = await ayniUrunuBul(admin, args.storeId, args.girdi);
     if (mevcut) {
-      const baglandi = await satiriUrunleBagla(admin, args.satirId, String(mevcut.id));
-      if (baglandi) {
-        const mevcutStok = typeof mevcut.stock_quantity === "number" ? mevcut.stock_quantity : null;
-        const eklenenStok = typeof args.girdi.stockQuantity === "number" ? args.girdi.stockQuantity : null;
-        const yeniStok =
-          mevcutStok == null && eklenenStok == null ? null : (mevcutStok ?? 0) + (eklenenStok ?? 0);
-        const gorseller = [
-          ...new Set([
-            ...(Array.isArray(mevcut.image_urls) ? mevcut.image_urls.map((adres) => String(adres)) : []),
-            ...(Array.isArray(args.girdi.imageUrls) ? args.girdi.imageUrls.map((adres) => String(adres)) : []),
-          ]),
-        ];
-        await updateRichCoreProduct({
-          admin,
-          productId: String(mevcut.id),
-          editToken: args.editToken,
-          name: String(mevcut.name ?? args.girdi.name ?? ""),
-          description: String(mevcut.description ?? args.girdi.description ?? ""),
-          priceText: String(mevcut.price_text ?? args.girdi.priceText ?? ""),
-          priceAmount:
-            typeof mevcut.price_amount === "number"
-              ? mevcut.price_amount
-              : typeof args.girdi.priceAmount === "number"
-                ? args.girdi.priceAmount
-                : null,
-          imageUrls: gorseller,
-          categoryId: String(mevcut.category_id ?? args.girdi.categoryId ?? ""),
-          stockStatus: String(mevcut.stock_status ?? args.girdi.stockStatus ?? ""),
-          stockQuantity: yeniStok,
-          oldPriceAmount: typeof mevcut.old_price_amount === "number" ? mevcut.old_price_amount : null,
-          badgeTag: typeof mevcut.badge_tag === "string" ? mevcut.badge_tag : null,
-          fulfillmentRegion: typeof mevcut.fulfillment_region === "string" ? mevcut.fulfillment_region : null,
-          brand: typeof mevcut.brand === "string" ? mevcut.brand : null,
-          barcode: String(mevcut.barcode ?? args.girdi.barcode ?? ""),
-          metadata: normalizeProductMetadata(mevcut.metadata),
-          variants: normalizeProductVariants(mevcut.variants),
-          isVisible: mevcut.is_visible !== false,
-        });
-        if (typeof args.alisFiyati === "number" && args.alisFiyati > 0) {
-          await admin
-            .from("product_purchase_prices")
-            .upsert(
-              {
-                product_id: String(mevcut.id),
-                store_id: args.storeId,
-                amount: args.alisFiyati,
-                updated_at: new Date().toISOString(),
-              },
-              { onConflict: "product_id" },
-            );
+      const baglanan = await mevcudaBagla(admin, args, mevcut);
+      if (baglanan) return baglanan;
+    }
+
+    // Barkodsuz satır: ad yazımı farklıysa aynı ürün olup olmadığı makinece
+    // kanıtlanamaz. Kart sessizce açılmaz; aday gösterilip esnafa sorulur.
+    if (!String(args.girdi.barcode ?? "").trim()) {
+      const karar = String(satirDurumu.data?.merge_decision ?? "");
+      if (karar !== "ayri") {
+        const kayitliAdayId = String(satirDurumu.data?.merge_candidate_product_id ?? "");
+        const aday = kayitliAdayId
+          ? await urunKimligiyleOku(admin, args.storeId, kayitliAdayId)
+          : await ayniUrunAdayiBul(admin, args.storeId, args.girdi);
+        if (aday) {
+          if (karar === "birlestir") {
+            const baglanan = await mevcudaBagla(admin, args, aday);
+            if (baglanan) return baglanan;
+          } else if (String(aday.id) !== kayitliAdayId) {
+            await admin
+              .from("invoice_job_lines")
+              .update({ merge_candidate_product_id: String(aday.id) })
+              .eq("id", args.satirId);
+          }
+          return {
+            durum: "onay-bekliyor",
+            aday: { id: String(aday.id), ad: String(aday.name ?? "") },
+          };
         }
-        return { id: String(mevcut.id), slug: String(mevcut.slug ?? ""), created: false, kayit: "guncellendi" };
       }
     }
   }
@@ -330,5 +499,11 @@ export async function faturaUrununuKaydet(
     p_purchase_price: args.alisFiyati,
   });
   if (error || data?.success !== true || !data.id) throw new Error(error?.message || "FATURA_KAYDI_TAMAMLANAMADI");
-  return { id: String(data.id), slug: String(data.slug ?? ""), created: data.created === true, kayit: data.kayit };
+  return {
+    durum: "kaydedildi",
+    id: String(data.id),
+    slug: String(data.slug ?? ""),
+    created: data.created === true,
+    kayit: data.kayit,
+  };
 }

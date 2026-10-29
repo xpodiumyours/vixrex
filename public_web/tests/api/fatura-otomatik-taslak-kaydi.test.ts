@@ -22,7 +22,7 @@ function invoice(count = 1): KayitliIslem {
     satirlar: Array.from({ length: count }, (_, i) => ({
       satirId: `line-${i}`, hamSatir: "Ürün 2 100", model: `M${i}`, ad: "Ürün", barkod: "", varyant: "", beden: "", marka: "",
       adet: 2, birim: "adet", alisBirimFiyat: 100, satirToplam: 200, guven: 1, sonuc: "eksik", katalog: null,
-      sahipDurumu: null, urunId: null,
+      sahipDurumu: null, urunId: null, birlestirmeAdayi: null,
     })),
   };
 }
@@ -64,7 +64,7 @@ function client(kayit = invoice(), duplicate = false) {
     const line = kayit.satirlar.find((row) => row.satirId === args.satirId)!;
     line.urunId = `product-${line.satirId}`;
     products.push({ id: line.urunId, is_visible: false, fatura_kanit: args.kanit });
-    return { id: line.urunId, created: true, kayit: "yeni" };
+    return { durum: "kaydedildi", id: line.urunId, created: true, kayit: "yeni" };
   });
   m.load.mockImplementation(async () => structuredClone(kayit));
   return { admin: { from } as unknown as SupabaseClient, kayit, products, ownerWrites, errorCode: () => errorCode };

@@ -11,6 +11,8 @@ export interface OtomatikTaslakRaporu {
   kaydedildi: number;
   atlandi: number;
   bekleyen: number;
+  /** Kart açılmadı, esnafın "aynı ürün mü" cevabı bekleniyor. */
+  birlestirmeBekleyen: number;
   hatalar: string[];
 }
 
@@ -54,7 +56,7 @@ export async function faturaTaslakYanitiniHazirla(
 ): Promise<Record<string, unknown>> {
   const rapor: OtomatikTaslakRaporu = {
     kaydedildi: kayit.satirlar.filter((satir) => satir.urunId).length,
-    atlandi: 0, bekleyen: 0, hatalar: [],
+    atlandi: 0, bekleyen: 0, birlestirmeBekleyen: 0, hatalar: [],
   };
   let guncelKayit = kayit;
   const eksik = kayit.satirlar.map((satir, sira) => ({ satir, sira })).filter(({ satir }) => !satir.urunId);
@@ -104,7 +106,7 @@ export async function faturaTaslakYanitiniHazirla(
               const medya = await faturaUrunGorselleriniAktar({
                 admin, slug, girdi: hazirlik.girdi, satir: dogrulanmis, sonTarih,
               });
-              await faturaUrununuKaydet(admin, {
+              const kayitSonucu = await faturaUrununuKaydet(admin, {
                 storeId, editToken: store.data.edit_token, satirId: dogrulanmis.satirId,
                 girdi: { ...hazirlik.girdi, imageUrls: medya.urunGorselleri, sortOrder: sira },
                 kanit: {
@@ -115,6 +117,7 @@ export async function faturaTaslakYanitiniHazirla(
                 },
                 alisFiyati: dogrulanmis.alisBirimFiyati,
               });
+              if (kayitSonucu.durum === "onay-bekliyor") continue;
               if (medya.gorselDurumu === "aktarim-bekliyor") {
                 rapor.hatalar.push("Ürün taslağı kaydedildi; bazı fotoğraflar aktarılamadı.");
                 break;
@@ -126,14 +129,24 @@ export async function faturaTaslakYanitiniHazirla(
         if (!yenilenen?.satirlar.length) throw new Error("Ürün taslağının kalıcı kaydı doğrulanamadı.");
         guncelKayit = yenilenen;
         rapor.kaydedildi = yenilenen.satirlar.filter((satir) => satir.urunId).length;
-        rapor.bekleyen = yenilenen.satirlar.length - rapor.kaydedildi;
+        rapor.birlestirmeBekleyen = yenilenen.satirlar.filter(
+          (satir) => !satir.urunId && satir.birlestirmeAdayi,
+        ).length;
+        rapor.bekleyen =
+          yenilenen.satirlar.length - rapor.kaydedildi - rapor.birlestirmeBekleyen;
       }
     } catch (err) {
       rapor.hatalar.push(err instanceof Error ? err.message : "Ürün taslağı kaydedilemedi.");
       rapor.atlandi = 1;
       const yenilenen = await islemiYukle(admin, storeId, kayit.islemKimligi).catch(() => null);
       if (yenilenen?.satirlar.length) guncelKayit = yenilenen;
-      rapor.bekleyen = Math.max(0, guncelKayit.satirlar.filter((satir) => !satir.urunId).length - 1);
+      rapor.birlestirmeBekleyen = guncelKayit.satirlar.filter(
+        (satir) => !satir.urunId && satir.birlestirmeAdayi,
+      ).length;
+      rapor.bekleyen = Math.max(
+        0,
+        guncelKayit.satirlar.filter((satir) => !satir.urunId && !satir.birlestirmeAdayi).length - 1,
+      );
     }
   }
   const bagliIdler = guncelKayit.satirlar.flatMap((satir) => satir.urunId ? [satir.urunId] : []);

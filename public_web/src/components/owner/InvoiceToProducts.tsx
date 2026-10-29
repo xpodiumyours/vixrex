@@ -90,6 +90,7 @@ interface KayitliSahipDurumu {
 interface FaturaOkumaSatiri extends FaturaSatiri {
   sahipDurumu?: KayitliSahipDurumu | null;
   urunId?: string | null;
+  birlestirmeAdayi?: { id: string; ad: string } | null;
 }
 
 interface OncekiIslem {
@@ -101,7 +102,7 @@ interface OncekiIslem {
 }
 
 interface FaturaOkumaSonucu {
-  otomatikTaslakRaporu?: { kaydedildi: number; atlandi: number; bekleyen: number; hatalar: string[] };
+  otomatikTaslakRaporu?: { kaydedildi: number; atlandi: number; bekleyen: number; birlestirmeBekleyen?: number; hatalar: string[] };
   taslakKayitUyarisi?: string;
   hazirlaniyor?: boolean;
   asama?: string;
@@ -138,6 +139,7 @@ interface SatirDurumu extends FaturaSatiri {
   esnafGorselleri: string[];
   ayniAlisverisTekrari?: boolean;
   urunId?: string | null;
+  birlestirmeAdayi?: { id: string; ad: string } | null;
 }
 
 interface InvoiceToProductsProps {
@@ -298,7 +300,11 @@ export default function InvoiceToProducts({
   const [hata, setHata] = useState<string | null>(null);
   const [yukleniyor, setYukleniyor] = useState(false);
   const [sonuc, setSonuc] = useState<YazmaSonucu | null>(null);
-  const [otomatikTaslakRaporu, setOtomatikTaslakRaporu] = useState<{ kaydedildi: number; atlandi: number } | null>(null);
+  const [otomatikTaslakRaporu, setOtomatikTaslakRaporu] = useState<{
+    kaydedildi: number;
+    atlandi: number;
+    birlestirmeBekleyen?: number;
+  } | null>(null);
   const [alisverisCevaplari, setAlisverisCevaplari] = useState<Record<string, boolean>>({});
   const [oncekiIslemler, setOncekiIslemler] = useState<OncekiIslem[]>([]);
   const [duzeltmeler, setDuzeltmeler] = useState<
@@ -508,6 +514,42 @@ export default function InvoiceToProducts({
       setAdim("urunler");
     } catch (err) {
       setHata(err instanceof Error ? err.message : "İşlem açılamadı.");
+    }
+    setYukleniyor(false);
+  }
+
+  /** Barkodsuz satırda "aynı ürün mü" sorusunun cevabı. Cevapla birlikte
+   * fatura yeniden işlenir: birleştirmede satır var olan karta bağlanır,
+   * ayrı denince kart normal yoldan açılır. */
+  async function birlestirmeKarariVer(index: number, karar: "birlestir" | "ayri") {
+    if (!belge?.islemKimligi || yukleniyor) return;
+    setHata(null);
+    setYukleniyor(true);
+    try {
+      const cevap = await fetch("/api/fatura-eslestirme", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug: storeSlug,
+          islemKimligi: belge.islemKimligi,
+          satirSirasi: index,
+          karar,
+        }),
+      });
+      const govde = await cevap.json().catch(() => null);
+      if (!cevap.ok) {
+        throw new Error(
+          govde && typeof govde.hata === "string" ? govde.hata : "Karar kaydedilemedi. Tekrar dene.",
+        );
+      }
+      const acilan = govde as FaturaOkumaSonucu;
+      const hazir = satirlariHazirla(acilan);
+      setBelge(acilan);
+      setSatirlar(hazir);
+      if (hazir.some((satir) => satir.urunId)) await onUploaded();
+      if (acilan.taslakKayitUyarisi) setHata(acilan.taslakKayitUyarisi);
+    } catch (err) {
+      setHata(err instanceof Error ? err.message : "Karar kaydedilemedi.");
     }
     setYukleniyor(false);
   }
@@ -1038,6 +1080,9 @@ export default function InvoiceToProducts({
         )}
         {otomatikTaslakRaporu && <p role="status" className="fatura-aciklama">
           {otomatikTaslakRaporu.kaydedildi} ürün görünmez taslak olarak kaydedildi.
+          {(otomatikTaslakRaporu.birlestirmeBekleyen ?? 0) > 0
+            ? ` ${otomatikTaslakRaporu.birlestirmeBekleyen} satır için "aynı ürün mü" cevabın bekleniyor; kart açılmadı.`
+            : ""}
           {otomatikTaslakRaporu.atlandi > 0 ? ` ${otomatikTaslakRaporu.atlandi} satır kaydedilemedi.` : ""}
         </p>}
         {belge && (
@@ -1146,7 +1191,9 @@ export default function InvoiceToProducts({
         </button>
         <button type="button" disabled={yaziliyor || !degerlendirmeler.some((d, i) => d.onaylanabilir && !satirlar[i].ayniAlisverisTekrari)}
           onClick={() => setSatirlar((oncekiler) => oncekiler.map((satir, index) =>
-            degerlendirmeler[index].onaylanabilir && !satir.ayniAlisverisTekrari ? { ...satir, onayli: true } : satir))}>
+            degerlendirmeler[index].onaylanabilir && !satir.ayniAlisverisTekrari && !(satir.birlestirmeAdayi && !satir.urunId)
+              ? { ...satir, onayli: true }
+              : satir))}>
           Tümünü onayla
         </button>
         <button type="button" disabled={yaziliyor || !satirlar.some((satir) => satir.onayli)}
@@ -1188,6 +1235,30 @@ export default function InvoiceToProducts({
               <div className="fatura-ad">{katalog?.resmiAd || satir.ad}</div>
 
               <div className="fatura-durum">{bilgi.detay}</div>
+
+              {satir.birlestirmeAdayi && !satir.urunId && (
+                <div className="fatura-hata" role="status">
+                  <p>
+                    Vitrinde aynı ürün olabilecek bir kart var:{" "}
+                    <strong>{satir.birlestirmeAdayi.ad || "kayıtlı ürün"}</strong>. Barkod okunmadığı
+                    için aynı ürün olduğu kanıtlanamadı; bu yüzden kart açılmadan önce sana soruyoruz.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => void birlestirmeKarariVer(index, "birlestir")}
+                    disabled={yaziliyor || yukleniyor}
+                  >
+                    Aynı ürün — kartları birleştir
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void birlestirmeKarariVer(index, "ayri")}
+                    disabled={yaziliyor || yukleniyor}
+                  >
+                    Farklı ürün — ayrı kart aç
+                  </button>
+                </div>
+              )}
 
               {satir.sonuc !== "kanitli" && belge?.islemKimligi && (
                 <details className="fatura-duzelt">
@@ -1362,7 +1433,7 @@ export default function InvoiceToProducts({
               </label>
               <button type="button" className={`fatura-onay${satir.onayli ? " fatura-onay-acik" : ""}`}
                 aria-pressed={satir.onayli}
-                disabled={yaziliyor || satir.ayniAlisverisTekrari || (!degerlendirme.onaylanabilir && !satir.onayli)}
+                disabled={yaziliyor || satir.ayniAlisverisTekrari || Boolean(satir.birlestirmeAdayi && !satir.urunId) || (!degerlendirme.onaylanabilir && !satir.onayli)}
                 onClick={() => satirGuncelle(index, { onayli: !satir.onayli })}>
                 {satir.onayli ? "✓ Onaylandı" : "Kartı onayla"}
               </button>

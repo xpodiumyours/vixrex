@@ -285,6 +285,18 @@ export async function POST(request: NextRequest) {
           kanit: { kartDurumu, stokOnaylandi, esnafOnayladi, sablonTam, ureticiGorsel: ureticiGorselVar, gorselDurumu, gorselKaynaklari },
           alisFiyati: dogrulanmis.alisBirimFiyati,
         });
+        if (olusan.durum === "onay-bekliyor") {
+          taslak += 1;
+          sonuclar.push({
+            sira: index,
+            ad: hazirlik.girdi.name,
+            durum: "taslak",
+            sebep: olusan.aday.ad
+              ? `Vitrinde "${olusan.aday.ad}" kartı olabilir; aynı ürün mü, ayrı ürün mü seçilmedi.`
+              : "Vitrinde aynı ürün olabilecek bir kart var; aynı ürün mü, ayrı ürün mü seçilmedi.",
+          });
+          continue;
+        }
         const kayitli = olusan.created ? null : await mevcutUrunuOku(admin, store.id, olusan.id);
         if (!olusan.created && !kayitli) throw new Error("FATURA_KAYDI_EKSIK");
         let sonuc: SatirSonucu = { sira: index, ad: hazirlik.girdi.name, durum: kayitli?.gorunur ? "yayinda" : "taslak", id: olusan.id, kayit: olusan.kayit,
