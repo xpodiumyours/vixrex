@@ -192,6 +192,22 @@ it("JSON içermeyen kart yanıtı hâlâ reddedilir", async () => {
     .rejects.toThrow("KART_YANITI_COZULEMEDI");
 });
 
+it("düz şemalı kart yanıtı doğrulama ve ürün adresini okur", async () => {
+  const duzKart = {
+    row_id: "1", title: "Tutku Elit Sıfıryaka", brand: "Tutku", variant: "100 BEYAZ",
+    short_description: "Pamuklu fanila", category_suggestion: "Erkek İç Giyim",
+    verification_status: "verified", product_url: "https://uretici.example/urun",
+    image_url: "https://cdn.example/urun.webp", source_url: "https://uretici.example/urun",
+    matched_attributes: ["beden: 4"], unmatched_attributes: [], sources: [],
+  };
+  const sonuc = await kartPresetYanitiniOku(metinYanit(JSON.stringify({ items: [duzKart] })), okuma([ikiSatir[0]]));
+  const satir = sonuc.sonuc.satirlar[0];
+  expect(satir.dogrulamaDurumu).toBe("Doğrulandı");
+  expect(satir.siteSayfa).toBe("https://uretici.example/urun");
+  expect(satir.siteGorseller).toEqual(["https://cdn.example/urun.webp"]);
+  expect(satir.ad).toBe("Tutku Elit Sıfıryaka");
+});
+
 it("adet sayı değilse birleşen kartta toplama yapılmaz", async () => {
   const sonuc = await kartPresetYanitiniOku(yanit([
     kartKaydi("1", "Tutku Elit Sıfıryaka", "4"), kartKaydi("2", "Tutku Elit Sıfıryaka", "4"),
