@@ -76,8 +76,8 @@ function kartParcalari(item: Kayit): KartParcalari {
     kart,
     validation: {
       ...dogrulama,
-      status: metin(dogrulama.status) || metin(item.validation_status) || metin(item.match_status) || metin(item.status),
-      official_product_url: metin(dogrulama.official_product_url) || metin(item.official_product_url),
+      status: metin(dogrulama.status) || metin(dogrulama.verification_status) || metin(item.verification_status) || metin(item.validation_status) || metin(item.match_status) || metin(item.status),
+      official_product_url: metin(dogrulama.official_product_url) || metin(item.official_product_url) || metin(item.product_url) || metin(dogrulama.product_url),
       matched_attributes: doluDizi(dogrulama.matched_attributes, item.matched_attributes),
       unmatched_attributes: doluDizi(dogrulama.unmatched_attributes, item.unmatched_attributes),
     },
