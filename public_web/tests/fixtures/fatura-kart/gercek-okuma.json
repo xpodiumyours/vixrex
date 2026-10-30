@@ -1,0 +1,74 @@
+{
+  "satirlar": [
+    {
+      "hamSatir": "ELT1301 ELIT ERK ELASTAN SIFIRYAKA 8681128321035 100 BEYAZ M 1 ad 115,0000 TL 115,00 TL",
+      "model": "ELT1301",
+      "ad": "ELIT ERK ELASTAN SIFIRYAKA",
+      "barkod": "8681128321035",
+      "varyant": "100 BEYAZ",
+      "beden": "M",
+      "marka": "ELIT",
+      "adet": 1,
+      "birim": "ad",
+      "birimFiyat": 115,
+      "tutar": 115,
+      "okumaGuveni": 1
+    },
+    {
+      "hamSatir": "ELT1302 ELIT ERK ELASTAN SIFIRYAKA UZUNKOL 8681128321653 750 SIYAH M 1 ad 137,0000 TL 137,00 TL",
+      "model": "ELT1302",
+      "ad": "ELIT ERK ELASTAN SIFIRYAKA UZUNKOL",
+      "barkod": "8681128321653",
+      "varyant": "750 SIYAH",
+      "beden": "M",
+      "marka": "ELIT",
+      "adet": 1,
+      "birim": "ad",
+      "birimFiyat": 137,
+      "tutar": 137,
+      "okumaGuveni": 1
+    },
+    {
+      "hamSatir": "SKD0010 SHR BYN PEN. KASKORSE 8681128334561 100 BEYAZ 7 6 ad 47,0000 TL 282,00 TL",
+      "model": "SKD0010",
+      "ad": "SHR BYN PEN. KASKORSE",
+      "barkod": "8681128334561",
+      "varyant": "100 BEYAZ",
+      "beden": "7",
+      "marka": "SHR",
+      "adet": 6,
+      "birim": "ad",
+      "birimFiyat": 47,
+      "tutar": 282,
+      "okumaGuveni": 1
+    },
+    {
+      "hamSatir": "TER0105 TUT ERK SIFIRYAKA 8680508918971 100 BEYAZ 4 6 ad 86,0000 TL 516,00 TL",
+      "model": "TER0105",
+      "ad": "TUT ERK SIFIRYAKA",
+      "barkod": "8680508918971",
+      "varyant": "100 BEYAZ",
+      "beden": "4",
+      "marka": "TUT",
+      "adet": 6,
+      "birim": "ad",
+      "birimFiyat": 86,
+      "tutar": 516,
+      "okumaGuveni": 1
+    },
+    {
+      "hamSatir": "TER0105 TUT ERK SIFIRYAKA 8680508918988 100 BEYAZ 5 6 ad 86,0000 TL 516,00 TL",
+      "model": "TER0105",
+      "ad": "TUT ERK SIFIRYAKA",
+      "barkod": "8680508918988",
+      "varyant": "100 BEYAZ",
+      "beden": "5",
+      "marka": "TUT",
+      "adet": 6,
+      "birim": "ad",
+      "birimFiyat": 86,
+      "tutar": 516,
+      "okumaGuveni": 1
+    }
+  ]
+}
