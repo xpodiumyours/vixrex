@@ -26,6 +26,11 @@ export interface ProductServiceMetadata {
   included?: string[];
 }
 
+export interface ProductManufacturerSource {
+  url: string;
+  verificationStatus?: string;
+}
+
 export interface ProductMetadata {
   schemaVersion?: number;
   lunaInvoice?: boolean;
@@ -34,6 +39,7 @@ export interface ProductMetadata {
   identifiers?: ProductIdentifierMetadata;
   attributes?: ProductAttributeValue[];
   service?: ProductServiceMetadata;
+  manufacturerSource?: ProductManufacturerSource;
 }
 
 export interface ProductVariant {
@@ -80,6 +86,22 @@ export function normalizeProductMetadata(value: unknown): ProductMetadata {
     result.itemKind = root.itemKind;
   }
   result.templateKey = cleanString(root.templateKey);
+
+  const manufacturerSource = asObject(root.manufacturerSource);
+  const sourceUrl = cleanString(manufacturerSource?.url);
+  if (sourceUrl) {
+    try {
+      const url = new URL(sourceUrl);
+      if (["https:", "http:"].includes(url.protocol) && !url.username && !url.password) {
+        result.manufacturerSource = {
+          url: sourceUrl,
+          verificationStatus: cleanString(manufacturerSource?.verificationStatus),
+        };
+      }
+    } catch {
+      // Geçersiz adres tüketici kartında dış bağlantı olarak gösterilmez.
+    }
+  }
 
   const identifiers = asObject(root.identifiers);
   if (identifiers) {

@@ -9,6 +9,7 @@ import { gorseliSikistir, ONBELLEK_SANIYE, UZUN_KENAR } from "@/lib/gorselSikist
 import {
   MAX_PRODUCT_IMAGE_SOURCE_BYTES,
 } from "@/lib/productImagePolicy";
+import type { GoruSatiri } from "@/lib/faturaGoru";
 
 export type GorselRedSebebi =
   | "erisilemedi"
@@ -18,7 +19,8 @@ export type GorselRedSebebi =
   | "cok-kucuk"
   | "logo-veya-yer-tutucu"
   | "bos"
-  | "urun-fotografi-degil";
+  | "urun-fotografi-degil"
+  | "kaynak-uyumsuz";
 
 export interface KaynakGorselDogrulamasi {
   tamam: boolean;
@@ -168,11 +170,18 @@ interface DepoIstemcisi {
   };
 }
 
+function alanAdiUyuyorMu(hostname: string, izinli: string[]): boolean {
+  const host = hostname.toLowerCase();
+  return izinli.some((alan) => host === alan || host.endsWith(`.${alan}`));
+}
+
 export async function kaynakGorselleriniHazirla(args: {
   admin: DepoIstemcisi;
   slug: string;
   kaynakSayfa: string;
   adaylar: string[];
+  sonTarih?: number;
+  izinliAlanAdlari?: string[];
   bagimliliklar?: GorselBagimliliklari;
 }): Promise<GorselHazirlamaSonucu> {
   const gorseller: HazirlananGorsel[] = [];
@@ -181,6 +190,22 @@ export async function kaynakGorselleriniHazirla(args: {
   const guvenliSlug = args.slug.replace(/[^a-zA-Z0-9-]/g, "");
 
   for (const aday of [...new Set(args.adaylar)]) {
+    if (args.sonTarih !== undefined && Date.now() + ZAMAN_ASIMI_MS >= args.sonTarih) {
+      altyapiSorunu = true;
+      reddedilenler.push({ kaynakGorsel: aday, sebep: "erisilemedi" });
+      continue;
+    }
+    const izinli = (args.izinliAlanAdlari ?? [])
+      .map((alan) => alan.trim().toLowerCase().replace(/^www\./, ""))
+      .filter(Boolean);
+    if (izinli.length > 0) {
+      let adayHost = "";
+      try { adayHost = new URL(aday).hostname.toLowerCase().replace(/^www\./, ""); } catch { adayHost = ""; }
+      if (!adayHost || !alanAdiUyuyorMu(adayHost, izinli)) {
+        reddedilenler.push({ kaynakGorsel: aday, sebep: "kaynak-uyumsuz" });
+        continue;
+      }
+    }
     const kontrol = await kaynakGorseliniDogrula(aday, args.bagimliliklar);
     if (!kontrol.tamam || !kontrol.bayt || !kontrol.tur) {
       const sebep = kontrol.sebep ?? "acilmadi";
@@ -218,4 +243,120 @@ export async function kaynakGorselleriniHazirla(args: {
   }
 
   return { gorseller, reddedilenler, altyapiSorunu };
+}
+
+const SAYFA_BAYIT_SINIRI = 3_000_000;
+
+function mutlakGorselAdresi(adres: string, sayfa: string): string {
+  try {
+    const url = new URL(adres.trim(), sayfa);
+    if (!["https:", "http:"].includes(url.protocol) || url.username || url.password) return "";
+    return url.toString();
+  } catch {
+    return "";
+  }
+}
+
+export function sayfaGorselAyikla(html: string, sayfa: string): string[] {
+  const bulunan: string[] = [];
+  for (const etiket of html.match(/<meta\b[^>]*>/gi) ?? []) {
+    const ozellik = /\s(?:property|name)\s*=\s*["']([^"']+)["']/i.exec(etiket);
+    if (!ozellik) continue;
+    const ad = ozellik[1].toLowerCase();
+    if (!["og:image", "og:image:url", "og:image:secure_url", "twitter:image", "twitter:image:src"].includes(ad)) continue;
+    const icerik = /\scontent\s*=\s*["']([^"']+)["']/i.exec(etiket);
+    if (!icerik) continue;
+    const mutlak = mutlakGorselAdresi(icerik[1], sayfa);
+    if (mutlak && !bulunan.includes(mutlak)) bulunan.push(mutlak);
+  }
+  return bulunan;
+}
+
+async function sayfadanGorselleriAl(
+  sayfa: string,
+  fetcher: (input: string, init?: RequestInit) => Promise<Response>,
+): Promise<string[]> {
+  let url: URL;
+  try {
+    url = new URL(sayfa);
+  } catch {
+    return [];
+  }
+  const gorulenler = new Set<string>();
+  const signal = AbortSignal.timeout(ZAMAN_ASIMI_MS);
+  try {
+    for (let adim = 0; adim <= 5; adim++) {
+      if (url.protocol !== "https:" || url.username || url.password || url.port || gorulenler.has(url.href)) return [];
+      if (!hostGuvenliMi(url.hostname)) return [];
+      gorulenler.add(url.href);
+      const yanit = await fetcher(url.toString(), {
+        method: "GET",
+        redirect: "manual",
+        signal,
+        headers: { accept: "text/html,application/xhtml+xml" },
+      });
+      if ([301, 302, 303, 307, 308].includes(yanit.status)) {
+        const hedef = yanit.headers.get("location");
+        await yanit.body?.cancel();
+        if (!hedef) return [];
+        url = new URL(hedef, url);
+        continue;
+      }
+      if (yanit.status !== 200) {
+        await yanit.body?.cancel();
+        return [];
+      }
+      const boyut = Number(yanit.headers.get("content-length") ?? 0);
+      if (Number.isFinite(boyut) && boyut > SAYFA_BAYIT_SINIRI) {
+        await yanit.body?.cancel();
+        return [];
+      }
+      return sayfaGorselAyikla(await yanit.text(), url.href);
+    }
+  } catch {
+    return [];
+  }
+  return [];
+}
+
+export async function sayfaGorselAlanAdlari(
+  sayfa: string,
+  fetcher: (input: string, init?: RequestInit) => Promise<Response> = fetch,
+): Promise<string[]> {
+  const alanlar = new Set<string>();
+  try {
+    alanlar.add(new URL(sayfa).hostname.toLowerCase().replace(/^www\./, ""));
+  } catch {
+    return [];
+  }
+  for (const adres of await sayfadanGorselleriAl(sayfa, fetcher)) {
+    try { alanlar.add(new URL(adres).hostname.toLowerCase().replace(/^www\./, "")); }
+    catch { continue; }
+  }
+  return [...alanlar];
+}
+
+export async function gorselsizSatirlariTamamla(args: {
+  satirlar: GoruSatiri[];
+  bagimliliklar?: GorselBagimliliklari;
+}): Promise<GoruSatiri[]> {
+  const fetcher = args.bagimliliklar?.fetcher ?? fetch;
+  const onbellek = new Map<string, string[]>();
+  const sonuc: GoruSatiri[] = [];
+  for (const satir of args.satirlar) {
+    const mevcut = (satir.siteGorseller ?? []).concat(satir.siteGorsel ? [satir.siteGorsel] : []);
+    const sayfa = (satir.siteSayfa ?? "").trim();
+    const kimlikVar = satir.dogrulamaDurumu === "Doğrulandı" || satir.dogrulamaDurumu === "Belirsiz";
+    if (mevcut.length > 0 || !sayfa || !kimlikVar) {
+      sonuc.push(satir);
+      continue;
+    }
+    let adaylar = onbellek.get(sayfa);
+    if (!adaylar) {
+      adaylar = await sayfadanGorselleriAl(sayfa, fetcher);
+      onbellek.set(sayfa, adaylar);
+    }
+    sonuc.push(adaylar.length > 0 ? { ...satir, siteGorsel: adaylar[0], siteGorseller: [...adaylar] } : satir);
+  }
+  return sonuc;
 }

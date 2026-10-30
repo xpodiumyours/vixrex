@@ -102,19 +102,21 @@ describe("Keşfet eşitlik sözleşmesi", () => {
     expect(flutterKart).toContain("KİRALIK");
   });
 
-  it("CANLI/KAPALI rozeti her iki tarafta aynı", () => {
+  it("AÇIK/KAPALI rozeti her iki tarafta aynı", () => {
     const kart = readFileSync(
       resolve(__dirname, "../src/components/kesfet/VitrinKarti.tsx"),
       "utf-8"
     );
-    expect(kart).toContain("CANLI");
+    expect(kart).toContain("AÇIK");
     expect(kart).toContain("KAPALI");
+    expect(kart).not.toContain("CANLI");
     const flutterKart = readFileSync(
       resolve(__dirname, "../../lib/widgets/vitrin_store_card.dart"),
       "utf-8"
     );
-    expect(flutterKart).toContain("CANLI");
+    expect(flutterKart).toContain("AÇIK");
     expect(flutterKart).toContain("KAPALI");
+    expect(flutterKart).not.toContain("CANLI");
   });
 
   it("kiralık kart butonları her iki tarafta aynı", () => {

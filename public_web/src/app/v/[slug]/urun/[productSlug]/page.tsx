@@ -7,17 +7,18 @@ import {
   normalizeExternalUrl,
   normalizeWhatsappDigits,
 } from "@/lib/products";
-import { buildProductDetailFacts } from "@/lib/productCardPresentation";
+import { buildConsumerDetailFacts } from "@/lib/productCardPresentation";
 import { normalizeProductMetadata } from "@/lib/productRichData";
 import {
+  buildLocalBusinessSeller,
   buildPhysicalProductStructuredData,
   parseProductPriceAmount,
+  type SellerLocation,
 } from "@/lib/productStructuredData";
 import type { RichProductItem } from "@/lib/richProductItem";
 import { buildSiteUrl, getSiteUrl } from "@/lib/siteUrl";
 import { safeJsonLdHtml } from "@/lib/jsonLd";
 import ProductDetailExperience from "@/components/ProductDetailExperience";
-import ProductCommercePanel from "@/components/ProductCommercePanel";
 import VitrinCartDock from "@/components/VitrinCartDock";
 import ProductViewTracker from "@/components/ProductViewTracker";
 
@@ -37,6 +38,8 @@ interface StoreRow {
   instagram?: string;
   website?: string;
   address?: string;
+  latitude?: number | null;
+  longitude?: number | null;
   logo_url?: string;
   shelf_image_url?: string;
   products?: unknown;
@@ -80,7 +83,7 @@ async function _getProductData(slug: string, productSlug: string) {
   const { data: store, error } = await supabase
     .from("stores")
     .select(
-      "id,slug,name,description,corporate_bio,whatsapp,instagram,website,address,logo_url,shelf_image_url,products,is_published,is_demo,product_storage_version",
+      "id,slug,name,description,corporate_bio,whatsapp,instagram,website,address,latitude,longitude,logo_url,shelf_image_url,products,is_published,is_demo,product_storage_version",
     )
     .eq("slug", slug)
     .eq("is_published", true)
@@ -219,6 +222,12 @@ export default async function ProductDetailPage(props: PageProps) {
   const siteUrl = getSiteUrl();
   const publicUrl = buildSiteUrl(`/v/${store.slug}/urun/${productSlug}`);
   const storeUrl = `/v/${store.slug}`;
+  const storeLocation: SellerLocation = {
+    url: buildSiteUrl(storeUrl),
+    address: store.address || null,
+    latitude: store.latitude ?? null,
+    longitude: store.longitude ?? null,
+  };
   const phoneDigits = normalizeWhatsappDigits(store.whatsapp);
   const itemAccusative = isService ? "hizmeti" : "ürünü";
   const whatsappUrl = phoneDigits
@@ -246,17 +255,11 @@ export default async function ProductDetailPage(props: PageProps) {
     product.priceAmount != null
       ? String(product.priceAmount)
       : parseProductPriceAmount(product.price);
-  const detailFacts = buildProductDetailFacts({
+  const detailFacts = buildConsumerDetailFacts({
     brand: product.brand,
     barcode: product.barcode,
     metadata: product.metadata,
   }).filter((fact) => fact.key !== "brand");
-  const hasVariants = Array.isArray(product.variants) && product.variants.length > 0;
-  const stockQuantity = product.stockQuantity ?? null;
-  const isInStock = !String(product.stockStatus || "")
-    .toLocaleLowerCase("tr-TR")
-    .includes("tükendi");
-
   const structuredData = isService
     ? {
         "@context": "https://schema.org",
@@ -268,18 +271,14 @@ export default async function ProductDetailPage(props: PageProps) {
         serviceType: metadata.service?.serviceType || product.category || undefined,
         areaServed: product.fulfillmentRegion || undefined,
         url: publicUrl,
-        provider: {
-          "@type": "LocalBusiness",
-          name: store.name,
-          url: buildSiteUrl(`/v/${store.slug}`),
-        },
+        provider: buildLocalBusinessSeller(store.name, storeLocation),
         offers: structuredPrice
           ? {
               "@type": "Offer",
               priceCurrency: product.currency || "TRY",
               price: structuredPrice,
               url: publicUrl,
-              seller: { "@type": "LocalBusiness", name: store.name },
+              seller: buildLocalBusinessSeller(store.name, storeLocation),
             }
           : undefined,
       }
@@ -289,6 +288,7 @@ export default async function ProductDetailPage(props: PageProps) {
         storeName: store.name,
         description: productDescription,
         images,
+        storeLocation,
       });
 
   const breadcrumbJsonLd = {
@@ -329,22 +329,6 @@ export default async function ProductDetailPage(props: PageProps) {
         instagramUrl={instagramUrl}
         sourceUrl={sourceUrl}
         storeAddress={store.address || null}
-        commercePanel={
-          <ProductCommercePanel
-            storeSlug={store.slug}
-            productSlug={productSlug}
-            productName={product.name}
-            imageUrl={images[0] || null}
-            priceText={product.price || null}
-            stockQuantity={stockQuantity}
-            cartEnabled={!hasVariants && isInStock}
-            cartDisabledReason={
-              hasVariants
-                ? "Bu ürünün seçenekli siparişi için Hızlı İncele ekranından beden/renk seç."
-                : ""
-            }
-          />
-        }
       />
 
       <VitrinCartDock

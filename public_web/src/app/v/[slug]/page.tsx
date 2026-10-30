@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import Link from "next/link";
 import { cookies } from "next/headers";
 import { notFound, permanentRedirect } from "next/navigation";
 import { unstable_cache } from "next/cache";
@@ -26,6 +27,7 @@ import {
 import ProductCatalog from "./ProductCatalog";
 import VitrinProfileView from "./VitrinProfileView";
 import OwnerWorkspaceShell, { WorkingDraftData } from "./OwnerWorkspaceShell";
+import { VixrexAvatar } from "./components/VixrexAvatar";
 import { parseAssistantHandoff } from "@/lib/assistantHandoff";
 import { resolveVitrinProfile } from "@/lib/vitrinProfile";
 import { normalizeProductMetadata } from "@/lib/productRichData";
@@ -743,6 +745,9 @@ export default async function StorePage(props: PageProps) {
               longitude: store.longitude,
             }
           : undefined,
+        hasMap: hasPhysicalLocation
+          ? `https://www.google.com/maps/search/?api=1&query=${store.latitude},${store.longitude}`
+          : undefined,
         openingHoursSpecification: openingHoursSpecification,
       },
       {
@@ -853,6 +858,7 @@ export default async function StorePage(props: PageProps) {
           />
         }
         isPreviewMode={isOwnerMode}
+        isPublished={store.is_published}
         ownerMode={isOwnerMode}
         // Yalnız sahip modunda: hangi alanın boş olduğunu bilmek için.
         // Ziyaretçi isteğinde undefined kalır, "bu bölüme eklenebilir"
@@ -864,6 +870,19 @@ export default async function StorePage(props: PageProps) {
         }
         isDemo={Boolean(store.is_demo)}
       />
+      {!isOwnerMode &&
+      ownerSession &&
+      draft?.store_id === ownerSession.storeId &&
+      draft.slug === store.slug ? (
+        <Link
+          href={`/v/${encodeURIComponent(store.slug)}?editor=1`}
+          prefetch={false}
+          className="fixed bottom-5 right-5 z-40 flex min-h-14 items-center gap-3 rounded-2xl border border-sky-400/45 bg-[#0D1B2D] py-2 pl-2 pr-4 text-white shadow-2xl transition-colors hover:bg-[#14283F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+        >
+          <VixrexAvatar size={44} decorative />
+          <span className="text-sm font-bold">Vixrex Asistan ile düzenle</span>
+        </Link>
+      ) : null}
       {isOwnerMode ? (
         <OwnerWorkspaceShell
           storeName={store.name}

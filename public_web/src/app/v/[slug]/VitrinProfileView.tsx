@@ -165,6 +165,7 @@ export interface VitrinProfileViewProps {
   articles: VitrinArticleTeaser[];
   catalog: ReactNode;
   isPreviewMode?: boolean;
+  isPublished?: boolean;
   /**
    * Sahip modu. Yalnız true iken vitrindeki öğelere tıkla-düzenle
    * işaretleri eklenir. Müşteri görünümünde bu öznitelikler DOM'a hiç
@@ -240,6 +241,7 @@ export default function VitrinProfileView({
   articles,
   catalog,
   isPreviewMode = false,
+  isPublished = false,
   ownerMode = false,
   ownerDraft,
   isDemo = false,
@@ -379,7 +381,9 @@ export default function VitrinProfileView({
       {!ownerMode && !isPreviewMode && <VitrinViewTracker storeSlug={storeSlug} />}
       {isPreviewMode && (
         <div className="fixed top-0 left-0 right-0 z-[60] h-9 bg-amber-500 text-[#0B1120] text-xs sm:text-sm font-bold flex items-center justify-center gap-2 lg:hidden">
-          Taslak önizleme — bu vitrin henüz yayında değil, müşteriler göremez.
+          {isPublished
+            ? "Taslak önizleme — müşteriler yayındaki hâli görüyor, buradaki değişiklikler henüz yayınlanmadı."
+            : "Taslak önizleme — bu vitrin henüz yayında değil, müşteriler göremez."}
         </div>
       )}
       {/* ===== NAVBAR ===== */}
@@ -436,9 +440,9 @@ export default function VitrinProfileView({
             clickLocation="storefront_floating"
             target="_blank"
             rel="noopener noreferrer"
-            className="ml-3 flex shrink-0 items-center gap-1.5 rounded-xl bg-[#25D366] px-3.5 py-2 text-sm font-bold text-white shadow-lg shadow-black/25 transition hover:brightness-110"
+            className="ml-3 flex shrink-0 items-center gap-1.5 rounded-xl bg-[#25D366] px-3.5 py-2 text-sm font-bold text-[#04140a] shadow-lg shadow-black/25 transition hover:brightness-110"
           >
-            <WhatsAppIcon size={17} className="text-white" />
+            <WhatsAppIcon size={17} className="text-[#04140a]" />
             WhatsApp
           </TrackedWhatsAppLink>
         )}

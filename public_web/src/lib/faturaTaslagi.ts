@@ -1,4 +1,5 @@
 import type { EslesmisFaturaSatiri } from "@/lib/faturaEslestir";
+import type { ProductAttributeValue } from "@/lib/productRichData";
 
 export const FATURA_TASLAK_KAYNAGI = "invoice";
 
@@ -10,7 +11,7 @@ export interface FaturaTaslagi {
   model: string;
   imageUrls: string[];
   kategori: string;
-  ozellikler: Array<{ key: string; label: string; value: string }>;
+  ozellikler: ProductAttributeValue[];
   urunVaryantlari: Array<{ id: string; secenekler: Array<{ key: string; value: string }>; barkod: string; gorseller: string[] }>;
   gorselAdaylari: string[];
   izinDurumu: "yok" | "bekliyor" | "var";
@@ -28,6 +29,14 @@ export interface FaturaTaslagi {
   sourceType: string;
   ownerApproved: boolean;
   isVisible: boolean;
+  satirNo?: number | null;
+  uretici?: string;
+  gramaj?: string;
+  dogrulamaDurumu?: string;
+  eslesenBilgiler?: unknown;
+  eksikler?: string[];
+  gorselDogrulamaDurumu?: string;
+  kaynaklar?: Array<string | Record<string, unknown>>;
 }
 
 export function satirdanFaturaTaslagi(
@@ -68,6 +77,14 @@ export function satirdanFaturaTaslagi(
     sourceType: FATURA_TASLAK_KAYNAGI,
     ownerApproved: false,
     isVisible: false,
+    satirNo: katalog.satirNo,
+    uretici: katalog.uretici,
+    gramaj: katalog.gramaj,
+    dogrulamaDurumu: katalog.dogrulamaDurumu,
+    eslesenBilgiler: katalog.eslesenBilgiler,
+    eksikler: katalog.eksikler ?? [],
+    gorselDogrulamaDurumu: katalog.gorselDogrulamaDurumu,
+    kaynaklar: katalog.kaynaklar ?? [],
   };
 }
 

@@ -17,6 +17,8 @@ export interface KayitliSatir extends EslesmisFaturaSatiri {
   satirId: string;
   sahipDurumu: SahipDurumu | null;
   urunId: string | null;
+  /** Barkodsuz satır aynı ürün olabilir mi; karar beklenirken dolu. */
+  birlestirmeAdayi: { id: string; ad: string } | null;
 }
 
 export interface KayitliIslem {
@@ -95,15 +97,39 @@ export async function islemiYukle(
     .maybeSingle();
   if (is.error || !is.data?.id) return null;
 
-  const satirlar = await admin
+  const satirAlanlari =
+    "id,line_index,raw_line,model,product_name,barcode,variant_name,size_text,qty,qty_unit,unit_price,line_total,confidence,outcome,brand,warning,catalog_snapshot,conflict_snapshot,owner_state,product_id";
+  type SatirSorgusu = { data: Array<Record<string, unknown>> | null; error: unknown };
+  let satirlar = (await admin
     .from("invoice_job_lines")
-    .select(
-      "id,line_index,raw_line,model,product_name,barcode,variant_name,size_text,qty,qty_unit,unit_price,line_total,confidence,outcome,brand,warning,catalog_snapshot,conflict_snapshot,owner_state,product_id",
-    )
+    .select(`${satirAlanlari},merge_candidate_product_id,merge_decision`)
     .eq("job_id", islemKimligi)
-    .order("line_index", { ascending: true });
+    .order("line_index", { ascending: true })) as unknown as SatirSorgusu;
+  // Kolonlar henüz yoksa (migration sırası) liste bozulmaz; birleştirme sorusu kapalı kalır.
+  if (satirlar.error) {
+    satirlar = (await admin
+      .from("invoice_job_lines")
+      .select(satirAlanlari)
+      .eq("job_id", islemKimligi)
+      .order("line_index", { ascending: true })) as unknown as SatirSorgusu;
+  }
   if (satirlar.error || !Array.isArray(satirlar.data)) return null;
   const kayitlar = satirlar.data;
+
+  const adayKimlikleri = [
+    ...new Set(
+      kayitlar
+        .map((kayit) => (kayit.merge_candidate_product_id ? String(kayit.merge_candidate_product_id) : ""))
+        .filter(Boolean),
+    ),
+  ];
+  const adayAdlari = new Map<string, string>();
+  if (adayKimlikleri.length > 0) {
+    const adaylar = await admin.from("products").select("id,name").in("id", adayKimlikleri);
+    for (const aday of Array.isArray(adaylar.data) ? adaylar.data : []) {
+      adayAdlari.set(String(aday.id), String(aday.name ?? ""));
+    }
+  }
 
   return {
     tedarikciDijitalIz: is.data.supplier_trace && typeof is.data.supplier_trace === "object"
@@ -148,6 +174,13 @@ export async function islemiYukle(
       uyari: kayit.warning ? String(kayit.warning) : undefined,
       sahipDurumu: sahipDurumunuTemizle(kayit.owner_state),
       urunId: kayit.product_id ? String(kayit.product_id) : null,
+      birlestirmeAdayi:
+        !kayit.product_id && kayit.merge_candidate_product_id
+          ? {
+              id: String(kayit.merge_candidate_product_id),
+              ad: adayAdlari.get(String(kayit.merge_candidate_product_id)) ?? "",
+            }
+          : null,
     })),
   };
 }
@@ -172,6 +205,9 @@ export function islemYaniti(islem: KayitliIslem): Record<string, unknown> {
     aramaSuruyor: islem.aramaDurumu?.sinirDoldu === true,
     belge: islem.belge,
     ayniAlisveris: [],
+    belgeEkleri: islem.aramaDurumu?.presetCevabi?.belgeEkleri ?? {},
+    gruplar: islem.aramaDurumu?.presetCevabi?.gruplar ?? [],
+    uyarilar: islem.aramaDurumu?.presetCevabi?.uyarilar ?? [],
   };
 }
 

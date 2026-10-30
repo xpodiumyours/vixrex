@@ -1,6 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { buildProductDetailFacts } from "@/lib/productCardPresentation";
+import { faturaKatalogMetadatasi } from "@/lib/faturaUrunIcerigi";
+import { faturaSonucunuBekle } from "@/lib/faturaOtomatikBekleme";
+import { FaturaAkisBasligi } from "./FaturaAkisBasligi";
+import { FaturaIslemSonucu, type FaturaSonucKarti, type YazmaSonucu } from "./FaturaIslemSonucu";
+import "./faturaAkis.css";
+import type { ProductAttributeValue } from "@/lib/productRichData";
 import {
   KART_DURUM_ETIKETI,
   durumBilgisi,
@@ -49,7 +56,12 @@ export interface KatalogBilgisi {
   gorseller: string[];
   gorselAdaylari: string[];
   kategori?: string;
-  ozellikler?: Array<{ key: string; label: string; value: string }>;
+  beden?: string;
+  varyant?: string;
+  uretici?: string;
+  gramaj?: string;
+  dogrulamaDurumu?: string;
+  ozellikler?: ProductAttributeValue[];
   urunVaryantlari?: Array<{ id: string; secenekler: Array<{ key: string; value: string }>; barkod: string; gorseller: string[] }>;
   varyantlar?: Array<{ ad: string; barkod: string; gorseller: string[] }>;
   kaynak: string;
@@ -78,6 +90,7 @@ interface KayitliSahipDurumu {
 interface FaturaOkumaSatiri extends FaturaSatiri {
   sahipDurumu?: KayitliSahipDurumu | null;
   urunId?: string | null;
+  birlestirmeAdayi?: { id: string; ad: string } | null;
 }
 
 interface OncekiIslem {
@@ -89,6 +102,10 @@ interface OncekiIslem {
 }
 
 interface FaturaOkumaSonucu {
+  otomatikTaslakRaporu?: { kaydedildi: number; atlandi: number; bekleyen: number; birlestirmeBekleyen?: number; hatalar: string[] };
+  taslakKayitUyarisi?: string;
+  hazirlaniyor?: boolean;
+  asama?: string;
   maliyetOzeti?: {
     kayitSayisi: number;
     gercekUsd: number;
@@ -122,15 +139,7 @@ interface SatirDurumu extends FaturaSatiri {
   esnafGorselleri: string[];
   ayniAlisverisTekrari?: boolean;
   urunId?: string | null;
-}
-
-interface YazmaSonucu {
-  tuketiciDogrulandi?: boolean;
-  toplam: number;
-  yayinda: number;
-  taslak: number;
-  hatali: number;
-  satirlar: Array<{ sira: number; ad: string; durum: string; sebep?: string; id?: string }>;
+  birlestirmeAdayi?: { id: string; ad: string } | null;
 }
 
 interface InvoiceToProductsProps {
@@ -147,6 +156,39 @@ const GUVEN_ESIGI = 0.7;
 const MAKS_BAYT = 4 * 1024 * 1024; // Vercel 4.5 MB request body, multipart payi.
 const MAKS_SAYFA = 3;
 const TOPLU_UST_SINIR = 100;
+const BEKLEYEN_FATURA_ANAHTAR = "vixrex:fatura-bekleyen-islem:";
+
+function bekleyenFaturaAnahtari(storeSlug: string): string {
+  return `${BEKLEYEN_FATURA_ANAHTAR}${encodeURIComponent(storeSlug)}`;
+}
+
+function bekleyenIslemKimliginiOku(storeSlug: string): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const kimlik = window.localStorage.getItem(bekleyenFaturaAnahtari(storeSlug));
+    return kimlik?.trim() || null;
+  } catch {
+    return null;
+  }
+}
+
+function bekleyenIslemKimliginiKaydet(storeSlug: string, islemKimligi: string): void {
+  if (typeof window === "undefined" || !islemKimligi.trim()) return;
+  try {
+    window.localStorage.setItem(bekleyenFaturaAnahtari(storeSlug), islemKimligi);
+  } catch {
+    // Özel tarama modu/localStorage kotası akışı durdurmamalı.
+  }
+}
+
+function bekleyenIslemKimliginiSil(storeSlug: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(bekleyenFaturaAnahtari(storeSlug));
+  } catch {
+    return;
+  }
+}
 
 function paraYaz(n: number | null): string {
   if (n === null) return "—";
@@ -225,14 +267,9 @@ function faturaUrunIstekGirdisi(
               yayinIstegi,
               purchasePriceAmount: satir.alisBirimFiyat ?? undefined,
               metadata: (() => {
-                const nitelikler = [...(katalog?.ozellikler ?? [])];
-                if (katalog?.kategori && !nitelikler.some((ozellik) => ozellik.key === "category")) {
-                  nitelikler.push({ key: "category", label: "Kategori", value: katalog.kategori });
-                }
-                if (!satir.model && nitelikler.length === 0) return undefined;
                 return {
                   ...(satir.model ? { identifiers: { sku: satir.model } } : {}),
-                  ...(nitelikler.length > 0 ? { attributes: nitelikler } : {}),
+                  ...(katalog ? faturaKatalogMetadatasi(katalog) : {}),
                 };
               })(),
               variants: (katalog?.urunVaryantlari ?? []).map((varyant) => ({
@@ -263,7 +300,11 @@ export default function InvoiceToProducts({
   const [hata, setHata] = useState<string | null>(null);
   const [yukleniyor, setYukleniyor] = useState(false);
   const [sonuc, setSonuc] = useState<YazmaSonucu | null>(null);
-  const [otomatikTaslakRaporu, setOtomatikTaslakRaporu] = useState<{ kaydedildi: number; atlandi: number } | null>(null);
+  const [otomatikTaslakRaporu, setOtomatikTaslakRaporu] = useState<{
+    kaydedildi: number;
+    atlandi: number;
+    birlestirmeBekleyen?: number;
+  } | null>(null);
   const [alisverisCevaplari, setAlisverisCevaplari] = useState<Record<string, boolean>>({});
   const [oncekiIslemler, setOncekiIslemler] = useState<OncekiIslem[]>([]);
   const [duzeltmeler, setDuzeltmeler] = useState<
@@ -274,6 +315,37 @@ export default function InvoiceToProducts({
   const dosyaRef = useRef<HTMLInputElement>(null);
   const sonFaturaDosyasi = useRef<File[] | null>(null);
   const kayitSirasi = useRef<Promise<void>>(Promise.resolve());
+
+  const [beklemeAsamasi, setBeklemeAsamasi] = useState<"okunuyor" | "kartlaniyor">("okunuyor");
+  const [yuklenenBelge, setYuklenenBelge] = useState<{ sayfa: number; bayt: number; pdf: boolean } | null>(null);
+  const aktifFaturaBeklemesi = useRef<Promise<FaturaOkumaSonucu> | null>(null);
+  const faturaBeklemeIptali = useRef<AbortController | null>(null);
+
+  const bekleyenFaturaSonucunuAl = useCallback(
+    (ilk: FaturaOkumaSonucu): Promise<FaturaOkumaSonucu> => {
+      if (aktifFaturaBeklemesi.current) return aktifFaturaBeklemesi.current;
+
+      const controller = new AbortController();
+      faturaBeklemeIptali.current = controller;
+      const istek = faturaSonucunuBekle(ilk, {
+        slug: storeSlug,
+        signal: controller.signal,
+        onDurum: (durum) => setBeklemeAsamasi(durum.asama === "kartlaniyor" ? "kartlaniyor" : "okunuyor"),
+      }).finally(() => {
+        if (aktifFaturaBeklemesi.current === istek) aktifFaturaBeklemesi.current = null;
+        if (faturaBeklemeIptali.current === controller) faturaBeklemeIptali.current = null;
+      });
+      aktifFaturaBeklemesi.current = istek;
+      return istek;
+    },
+    [storeSlug],
+  );
+
+  useEffect(() => () => {
+    faturaBeklemeIptali.current?.abort();
+    faturaBeklemeIptali.current = null;
+    aktifFaturaBeklemesi.current = null;
+  }, []);
 
   const sahipSecimleriniKaydet = useCallback((kaydedilecek: SatirDurumu[]) => {
     if (!belge?.islemKimligi || kaydedilecek.length === 0) return Promise.resolve();
@@ -326,7 +398,7 @@ export default function InvoiceToProducts({
   );
 
   const hazirSayisi = degerlendirmeler.filter(
-    (d, i) => d.onaylanabilir && !satirlar[i].ayniAlisverisTekrari,
+    (d, i) => d.yayinaHazir && !satirlar[i].ayniAlisverisTekrari,
   ).length;
 
   /** Faturanın üç beklenen sayısı satırlardan yeniden hesaplanır ve belgedeki
@@ -406,62 +478,14 @@ export default function InvoiceToProducts({
   // Resmî kaynak/fotoğraf bulunmaması veya çelişki, yayın izni değildir.
   // Aynı satır tekrar açılınca güncel kaynak bilgisiyle tekrar kaydedilebilir.
   // Bu akış otomatik satış/yayın onayı VERMEZ.
-  const otomatikTaslaklariKaydet = useCallback(async (okunan: FaturaOkumaSonucu, hazir: SatirDurumu[]) => {
-    if (!okunan.islemKimligi) return;
-    const adaylar = hazir.map((satir, sira) => ({ satir, sira }))
-      .filter(({ satir }) => !satir.ayniAlisverisTekrari);
-    if (adaylar.length === 0) return;
-    const sahipCevabi = await fetch("/api/fatura-islem", {
-      method: "PUT", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ slug: storeSlug, islemKimligi: okunan.islemKimligi,
-        satirlar: hazir.map((satir, sira) => ({
-          satirSirasi: sira,
-          sahipDurumu: { satisFiyati: satir.satisFiyati, stok: satir.stok,
-            stokOnaylandi: satir.stokOnaylandi, kategoriId: satir.kategoriId,
-            onayli: satir.onayli, esnafGorselleri: satir.esnafGorselleri },
-        })),
-      }),
+  const otomatikTaslakRaporunuGoster = useCallback(async (okunan: FaturaOkumaSonucu, hazir: SatirDurumu[]) => {
+    setOtomatikTaslakRaporu(okunan.otomatikTaslakRaporu ?? {
+      kaydedildi: hazir.filter((satir) => satir.urunId).length,
+      atlandi: hazir.filter((satir) => !satir.urunId && !satir.ayniAlisverisTekrari).length,
     });
-    if (!sahipCevabi.ok) throw new Error("Taslak kayıt için fatura seçimleri saklanamadı.");
-    const istekler = adaylar.map(({ satir, sira }) => ({
-      sira,
-      govde: {
-        ...faturaUrunIstekGirdisi(satir, sira, kartDegerlendir({
-          satir, satisFiyati: fiyatSayisi(satir.satisFiyati),
-          stok: stokSayisi(satir.stok), esnafGorselleri: satir.esnafGorselleri,
-          onaylandi: satir.onayli,
-          templateKey: categories.find((kategori) => kategori.id === satir.kategoriId)?.product_template_key,
-        }), okunan, categories),
-        yayinIstegi: false,
-      },
-    }));
-    const baglanan = new Map<number, string>();
-    let atlandi = 0;
-    for (let baslangic = 0; baslangic < istekler.length; baslangic += TOPLU_UST_SINIR) {
-      const parca = istekler.slice(baslangic, baslangic + TOPLU_UST_SINIR);
-      const cevap = await fetch("/api/products/batch", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug: storeSlug, products: parca.map((istek) => istek.govde) }),
-      });
-      const yanit = await cevap.json().catch(() => null);
-      if (!cevap.ok || !yanit || !Array.isArray(yanit.satirlar)) {
-        throw new Error(yanit?.hata || "Ürün taslaklarının kalıcı kaydı doğrulanamadı.");
-      }
-      for (const kayit of yanit.satirlar as Array<{ sira: number; id?: string; durum: string }>) {
-        const aday = parca[kayit.sira];
-        if (!aday) throw new Error("Ürün taslağı ile fatura satırı uyuşmuyor.");
-        if (kayit.durum === "taslak" && typeof kayit.id === "string" && kayit.id) {
-          baglanan.set(aday.sira, kayit.id);
-        } else atlandi++;
-      }
-    }
-    if (baglanan.size + atlandi !== adaylar.length) throw new Error("Ürün taslağı kayıt sayısı uyuşmuyor.");
-    setSatirlar((eskiler) => eskiler.map((satir, sira) =>
-      baglanan.has(sira) ? { ...satir, urunId: baglanan.get(sira) } : satir));
-    setOtomatikTaslakRaporu({ kaydedildi: baglanan.size, atlandi });
-    if (atlandi > 0) setHata(`${atlandi} fatura satırı kalıcı ürün taslağına kaydedilemedi.`);
-    if (baglanan.size > 0) await onUploaded();
-  }, [categories, onUploaded, storeSlug]);
+    if (okunan.taslakKayitUyarisi) setHata(okunan.taslakKayitUyarisi);
+    if (hazir.some((satir) => satir.urunId)) await onUploaded();
+  }, [onUploaded]);
 
   async function islemiAc(islemKimligi: string) {
     setHata(null);
@@ -476,11 +500,17 @@ export default function InvoiceToProducts({
           govde && typeof govde.hata === "string" ? govde.hata : "İşlem açılamadı. Tekrar dene.",
         );
       }
-      const acilan = govde as FaturaOkumaSonucu;
+      const ilk = govde as FaturaOkumaSonucu;
+      if (ilk.hazirlaniyor === true) {
+        setAdim("okunuyor");
+        if (ilk.islemKimligi) bekleyenIslemKimliginiKaydet(storeSlug, ilk.islemKimligi);
+      }
+      const acilan = await bekleyenFaturaSonucunuAl(ilk);
+      bekleyenIslemKimliginiSil(storeSlug);
       const hazir = satirlariHazirla(acilan);
       setBelge(acilan);
       setSatirlar(hazir);
-      try { await otomatikTaslaklariKaydet(acilan, hazir); }
+      try { await otomatikTaslakRaporunuGoster(acilan, hazir); }
       catch (hata) { setHata(hata instanceof Error ? hata.message : "Otomatik taslak kaydı başarısız."); }
       setAdim("urunler");
     } catch (err) {
@@ -489,12 +519,49 @@ export default function InvoiceToProducts({
     setYukleniyor(false);
   }
 
+  /** Barkodsuz satırda "aynı ürün mü" sorusunun cevabı. Cevapla birlikte
+   * fatura yeniden işlenir: birleştirmede satır var olan karta bağlanır,
+   * ayrı denince kart normal yoldan açılır. */
+  async function birlestirmeKarariVer(index: number, karar: "birlestir" | "ayri") {
+    if (!belge?.islemKimligi || yukleniyor) return;
+    setHata(null);
+    setYukleniyor(true);
+    try {
+      const cevap = await fetch("/api/fatura-eslestirme", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug: storeSlug,
+          islemKimligi: belge.islemKimligi,
+          satirSirasi: index,
+          karar,
+        }),
+      });
+      const govde = await cevap.json().catch(() => null);
+      if (!cevap.ok) {
+        throw new Error(
+          govde && typeof govde.hata === "string" ? govde.hata : "Karar kaydedilemedi. Tekrar dene.",
+        );
+      }
+      const acilan = govde as FaturaOkumaSonucu;
+      const hazir = satirlariHazirla(acilan);
+      setBelge(acilan);
+      setSatirlar(hazir);
+      if (hazir.some((satir) => satir.urunId)) await onUploaded();
+      if (acilan.taslakKayitUyarisi) setHata(acilan.taslakKayitUyarisi);
+    } catch (err) {
+      setHata(err instanceof Error ? err.message : "Karar kaydedilemedi.");
+    }
+    setYukleniyor(false);
+  }
+
   useEffect(() => {
-    if (!baslangicIslemKimligi) return;
-    const zamanlayici = setTimeout(() => void islemiAc(baslangicIslemKimligi), 0);
+    const kayitliIslemKimligi = baslangicIslemKimligi || bekleyenIslemKimliginiOku(storeSlug);
+    if (!kayitliIslemKimligi) return;
+    const zamanlayici = setTimeout(() => void islemiAc(kayitliIslemKimligi), 0);
     return () => clearTimeout(zamanlayici);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [baslangicIslemKimligi]);
+  }, [baslangicIslemKimligi, storeSlug]);
 
   async function adaySec(index: number, kaynak: string) {
     if (!belge?.islemKimligi || !kaynak) return;
@@ -595,6 +662,11 @@ export default function InvoiceToProducts({
         return;
       }
       sonFaturaDosyasi.current = dosyalar;
+      setYuklenenBelge({
+        sayfa: dosyalar.length,
+        bayt: dosyalar.reduce((toplam, dosya) => toplam + dosya.size, 0),
+        pdf: pdfMi,
+      });
       if (pdfMi) {
         setOnizleme(null);
       } else {
@@ -621,11 +693,16 @@ export default function InvoiceToProducts({
           );
         }
 
-        const okunan = govde as FaturaOkumaSonucu;
+        const ilk = govde as FaturaOkumaSonucu;
+        if (ilk.hazirlaniyor === true && ilk.islemKimligi) {
+          bekleyenIslemKimliginiKaydet(storeSlug, ilk.islemKimligi);
+        }
+        const okunan = await bekleyenFaturaSonucunuAl(ilk);
+        bekleyenIslemKimliginiSil(storeSlug);
         const hazir = satirlariHazirla(okunan);
         setBelge(okunan);
         setSatirlar(hazir);
-        try { await otomatikTaslaklariKaydet(okunan, hazir); }
+        try { await otomatikTaslakRaporunuGoster(okunan, hazir); }
         catch (hata) { setHata(hata instanceof Error ? hata.message : "Otomatik taslak kaydı başarısız."); }
         setAdim("urunler");
       } catch (err) {
@@ -633,7 +710,7 @@ export default function InvoiceToProducts({
         setAdim("sec");
       }
     },
-    [otomatikTaslaklariKaydet, satirlariHazirla, storeSlug],
+    [bekleyenFaturaSonucunuAl, otomatikTaslakRaporunuGoster, satirlariHazirla, storeSlug],
   );
 
   function satirGuncelle(index: number, degisiklik: Partial<SatirDurumu>) {
@@ -719,7 +796,7 @@ export default function InvoiceToProducts({
     const gonderilecek = satirlar
       .map((satir, sira) => ({ satir, sira, degerlendirme: degerlendirmeler[sira] }))
       .filter(({ satir, degerlendirme }) =>
-        !satir.ayniAlisverisTekrari && degerlendirme.onaylanabilir,
+        !satir.ayniAlisverisTekrari && satir.onayli && degerlendirme.onaylanabilir,
       );
 
     if (gonderilecek.length === 0) return;
@@ -746,7 +823,9 @@ export default function InvoiceToProducts({
       setSatirlar(onaylanan);
       const istekler = onayliGonderilecek.map(({ satir, sira, degerlendirme }) => ({
         sira,
-        govde: faturaUrunIstekGirdisi(satir, sira, degerlendirme, belge, categories, true),
+        // Flutter ile aynı sözleşme: bu adım bilgileri onaylar ve görünmez
+        // taslak oluşturur; vitrinde görünürlük ayrı Yayınla adımındadır.
+        govde: faturaUrunIstekGirdisi(satir, sira, degerlendirme, belge, categories, false),
       }));
       const birlesenSatirlar: YazmaSonucu["satirlar"] = [];
       let yayinda = 0;
@@ -864,6 +943,7 @@ export default function InvoiceToProducts({
     setSatirlar([]);
     setSonuc(null);
     setOtomatikTaslakRaporu(null);
+    setYuklenenBelge(null);
     setHata(null);
     if (dosyaRef.current) dosyaRef.current.value = "";
   }
@@ -873,13 +953,10 @@ export default function InvoiceToProducts({
   if (adim === "sec") {
     return (
       <div className="fatura-akis">
-        <h3>Faturadan ürün ekle</h3>
-        <p className="fatura-aciklama">
-          Faturanın fotoğrafını yükle. Ürün kartları hazırlanır. Satış fiyatını yazıp yayınlarsın.
-          Sen yayınlamadan hiçbir ürün vitrinde görünmez.
-        </p>
+        <FaturaAkisBasligi adim={adim} baslik="Faturadan ürün ekle"
+          aciklama="Faturanı ekle, ürün kartların hazırlansın. Satış fiyatlarını belirleyip kartları onayla. Sen yayınlamadan ürünler vitrinde görünmez." />
 
-        {hata && <p className="fatura-hata">{hata}</p>}
+        {hata && <p className="fatura-hata" role="alert">{hata}</p>}
 
         {oncekiIslemler.length > 0 && (
           <div className="fatura-onceki">
@@ -905,7 +982,11 @@ export default function InvoiceToProducts({
         )}
 
         {!okuyucuHazir && <p className="fatura-aciklama">Fotoğraf okuyucu şu an hazır değil.</p>}
-        <input
+        <label className={`fatura-dosya-sec${!okuyucuHazir ? " fatura-dosya-kapali" : ""}`}>
+          <strong>Fatura fotoğrafı veya PDF seç</strong>
+          <span>Telefonundan ya da bilgisayarından yükle</span>
+          <input
+          aria-label="Fatura fotoğrafı veya PDF seç"
           disabled={!okuyucuHazir}
           ref={dosyaRef}
           type="file"
@@ -916,6 +997,7 @@ export default function InvoiceToProducts({
             if (dosyalar.length) void dosyaSecildi(dosyalar);
           }}
         />
+        </label>
         <p className="fatura-aciklama">Fatura fotoğrafını (1–3 sayfa) veya PDF dosyasını seç. Toplam en fazla 4 MB. Başka belge gerekmiyor.</p>
         {onClose && (
           <button type="button" className="fatura-ikincil" onClick={() => void kapat()}>
@@ -929,16 +1011,101 @@ export default function InvoiceToProducts({
   // ─── 2. Hazırlanıyor ───────────────────────────────────────────
 
   if (adim === "okunuyor") {
+    const belgeOkundu = belge !== null;
+    const faturaTutuyor = kontrol.adetTutuyor === false
+      ? `belgede toplam ${belge?.belgeAdedi} yazıyor, tutmuyor`
+      : kontrol.tutarTutuyor === false
+        ? "belgedeki ara toplamla tutmuyor"
+        : kontrol.adetTutuyor === null && kontrol.tutarTutuyor === null
+          ? "belgede karşılaştırılacak toplam yok"
+          : "belgeyle eşleşiyor";
+    const kanitlar: Array<{ baslik: string; detay: string; durum: "tamam" | "aktif" | "bekliyor" }> = [
+      {
+        baslik: "Fatura görüntüsü alındı",
+        detay: yuklenenBelge
+          ? `${yuklenenBelge.sayfa} ${yuklenenBelge.pdf ? "sayfa PDF" : yuklenenBelge.sayfa > 1 ? "sayfa fotoğraf" : "fotoğraf"} · ${(yuklenenBelge.bayt / (1024 * 1024)).toLocaleString("tr-TR", { maximumFractionDigits: 1 })} MB`
+          : "Belge Vixrex'e ulaştı.",
+        durum: "tamam",
+      },
+      {
+        baslik: belgeOkundu ? `${satirlar.length} ürün satırı bulundu` : "Ürün satırları okunuyor",
+        detay: belgeOkundu
+          ? "Barkod, ürün adı, beden ve miktar satır satır çıkarıldı."
+          : "Barkod, ürün adı, miktar ve alış fiyatı satır satır çıkarılıyor.",
+        durum: belgeOkundu ? "tamam" : "aktif",
+      },
+      {
+        baslik: "Miktar ve tutar belgeyle karşılaştırıldı",
+        detay: belgeOkundu
+          ? `${kontrol.miktarOzeti || "miktar okunamadı"} · ${paraYaz(kontrol.tutarToplam)} — ${faturaTutuyor}`
+          : "Uydurma sayı kullanılmaz; belgeyle tutmayan değer işaretlenir.",
+        durum: belgeOkundu ? "tamam" : "bekliyor",
+      },
+      {
+        baslik: "Faturayı kesen firma ve ürün kaynağı araştırılıyor",
+        detay: belgeOkundu
+          ? `Firma: ${belgedeYazi(belge?.tedarikci)}. Ürün kaynağı faturadaki ad, model ve barkodla aranır.`
+          : "Resmî ürün kaynağı yalnız faturadaki firmaya bağlı aranıyor.",
+        durum: belgeOkundu ? "tamam" : "bekliyor",
+      },
+      {
+        baslik: "Ürün kartları hazırlanıyor",
+        detay: "Alış fiyatı satış fiyatı olarak kullanılmaz. Açıklamalar yalnız faturadaki doğrulanmış bilgiye dayanır.",
+        durum: belgeOkundu ? "aktif" : "bekliyor",
+      },
+    ];
     return (
       <div className="fatura-akis">
-        <h3>Faturan hazırlanıyor</h3>
-        {onizleme && <img className="fatura-onizleme" src={onizleme} alt="Fatura" />}
-        <ol className="fatura-adimlar">
-          <li>Belge okunuyor: satırlar, miktar ve belge toplamı çıkarılıyor.</li>
-          <li>Faturayı kesen firmanın kimliği ve resmî sitesi araştırılıyor.</li>
-          <li>Ürünlerin resmî kaynağı ve kaynak çelişkisi kontrol ediliyor.</li>
-          <li>Kanıtlı satırlardan kart taslakları hazırlanıyor.</li>
-        </ol>
+        <FaturaAkisBasligi adim={adim} baslik="Faturan hazırlanıyor"
+          aciklama="Faturan okunuyor ve ürün kartların hazırlanıyor. Aynı faturayı tekrar yüklemene gerek yok." />
+        <div className="fatura-tarama">
+          <figure className={`fatura-tarama-belge${onizleme ? "" : " fatura-tarama-belge--bos"}`}>
+            {onizleme ? (
+              <img src={onizleme} alt="Yüklediğin faturanın önizlemesi" />
+            ) : (
+              <span className="fatura-tarama-bos">
+                <b>PDF</b>
+                <small>{yuklenenBelge ? `${yuklenenBelge.sayfa} sayfa` : "belge"}</small>
+              </span>
+            )}
+            <span className="fatura-tarama-kose" aria-hidden="true" />
+            <span className="fatura-tarama-kose fatura-tarama-kose--ters" aria-hidden="true" />
+            {!belgeOkundu && <span className="fatura-tarama-cizgi" aria-hidden="true" />}
+            <figcaption className="fatura-tarama-etiket">
+              <span className="fatura-tarama-nokta" aria-hidden="true" />
+              {belgeOkundu ? "Belge okundu" : "Satırlar okunuyor"}
+            </figcaption>
+          </figure>
+          <div className="fatura-tarama-panel">
+            <dl className="fatura-sayilar">
+              <div>
+                <dt>Satır</dt>
+                <dd>{belgeOkundu ? satirlar.length : "—"}</dd>
+              </div>
+              <div>
+                <dt>Miktar</dt>
+                <dd>{belgeOkundu ? kontrol.miktarOzeti || "okunamadı" : "—"}</dd>
+              </div>
+              <div>
+                <dt>Tutar</dt>
+                <dd>{belgeOkundu ? paraYaz(kontrol.tutarToplam) : "—"}</dd>
+              </div>
+            </dl>
+            <p className="fatura-bekleme" role="status"><span className="fatura-yukleyici" aria-hidden="true" />{beklemeAsamasi === "kartlaniyor" ? "Ürün bilgileri araştırılıyor ve kartlar hazırlanıyor…" : "Fatura satırları okunuyor…"}</p>
+            <ol className="fatura-adim-ray">
+              {kanitlar.map((kanit, sira) => (
+                <li key={kanit.baslik} className={`fatura-adim-satir fatura-adim-satir--${kanit.durum}`}>
+                  <span className="fatura-adim-no" aria-hidden="true">{String(sira + 1).padStart(2, "0")}</span>
+                  <span className="fatura-adim-govde">
+                    <b>{kanit.baslik}</b>
+                    <small>{kanit.detay}</small>
+                  </span>
+                  <span className="fatura-adim-durum">{kanit.durum === "tamam" ? "tamam" : kanit.durum === "aktif" ? "sürüyor" : "bekliyor"}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </div>
       </div>
     );
   }
@@ -946,107 +1113,31 @@ export default function InvoiceToProducts({
   // ─── 4. Sonuç ──────────────────────────────────────────────────
 
   if (adim === "bitti" && sonuc) {
-    const yayinlanabilirTaslak = sonuc.satirlar.filter(
-      (satir) => satir.durum === "taslak" && satir.id,
-    ).length;
-
-    type YayindakiKart = { sira: number; ad: string; fiyat: string; gorsel: string | null };
-    const yayindakiKartlar: YayindakiKart[] = [];
+    const yayindakiKartlar: FaturaSonucKarti[] = [];
     for (const satir of sonuc.satirlar) {
       if (satir.durum !== "yayinda") continue;
       const yerel = satirlar[satir.sira];
       if (!yerel) continue;
       yayindakiKartlar.push({
-        sira: satir.sira,
-        ad: yerel.katalog?.resmiAd || yerel.ad,
-        fiyat: yerel.satisFiyati,
+        sira: satir.sira, ad: yerel.katalog?.resmiAd || yerel.ad, fiyat: yerel.satisFiyati,
         gorsel: degerlendirmeler[satir.sira]?.gorseller[0] ?? yerel.esnafGorselleri[0] ?? null,
       });
     }
-
+    const baslik = sonuc.yayinda > 0
+      ? sonuc.tuketiciDogrulandi ? "Vitrin hazır" : "Yayın kaydı alındı"
+      : "Onaylı kartların yayınlanmaya hazır";
     return (
       <div className="fatura-akis">
-        {yayindakiKartlar.length > 0 && (
-          <section className="fatura-vitrin-hazir">
-            <h3>Vitrin hazır</h3>
-            <p className="fatura-aciklama">
-              {yayindakiKartlar.length} ürün satış fiyatıyla vitrine yerleşti. Aşağıda
-              müşterilerin göreceği hâli var; paylaşabilir veya ürünleri düzenleyebilirsin.
-            </p>
-            <ul className="fatura-vitrin-izgara">
-              {yayindakiKartlar.map((kart) => (
-                <li key={kart.sira}>
-                  {kart.gorsel ? (
-                    <img src={kart.gorsel} alt={kart.ad} loading="lazy" />
-                  ) : (
-                    <div className="fatura-kart-gorselsiz">Fotoğraf yok</div>
-                  )}
-                  <span>{kart.ad}</span>
-                  {kart.fiyat && <strong>{kart.fiyat} TL</strong>}
-                </li>
-              ))}
-            </ul>
-            <div className="fatura-araclar">
-              <button type="button" onClick={() => void vitriniPaylas()}>
-                {baglantiKopyalandi ? "Bağlantı kopyalandı" : "Vitrini paylaş"}
-              </button>
-              {onClose && (
-                <button type="button" onClick={() => void kapat()}>
-                  Ürünleri düzenle
-                </button>
-              )}
-              <button
-                type="button"
-                className="fatura-ikincil"
-                onClick={() => setAdim("urunler")}
-              >
-                Ürünlere dön
-              </button>
-            </div>
-          </section>
-        )}
-
-        <h3>{yayindakiKartlar.length > 0 ? "Kayıt özeti" : "Ürünler kaydedildi"}</h3>
-        <ul className="fatura-ozet">
-          <li>
-            <strong>{sonuc.yayinda}</strong> ürün {sonuc.tuketiciDogrulandi ? "vitrinde görünüyor" : "için yayın kaydı alındı; tüketici görünümü doğrulanamadı"}
-          </li>
-          <li>
-            <strong>{sonuc.taslak}</strong> ürün taslak — yayınlamadan görünmez
-          </li>
-          {sonuc.hatali > 0 && (
-            <li>
-              <strong>{sonuc.hatali}</strong> satır eklenemedi
-            </li>
-          )}
-        </ul>
-
-        <ul className="fatura-satir-ozet">
-          {sonuc.satirlar
-            .filter((satir) => satir.durum !== "yayinda")
-            .map((satir) => (
-              <li key={satir.sira}>
-                {satir.ad} — {satir.sebep ?? satir.durum}
-              </li>
-            ))}
-        </ul>
-
-        {hata && <p className="fatura-hata">{hata}</p>}
-
-        {yayinlanabilirTaslak > 0 && (
-          <button type="button" onClick={taslaklariYayinla} disabled={yukleniyor}>
-            {yukleniyor ? "Yayınlanıyor…" : `${yayinlanabilirTaslak} taslağı yayınla`}
-          </button>
-        )}
-
-        <button type="button" onClick={bastanBasla}>
-          Başka fatura ekle
-        </button>
-        {onClose && (
-          <button type="button" className="fatura-ikincil" onClick={() => void kapat()}>
-            Kapat
-          </button>
-        )}
+        <FaturaAkisBasligi adim={adim} baslik={baslik} yayinDogrulandi={sonuc.tuketiciDogrulandi && sonuc.yayinda > 0}
+          aciklama={sonuc.yayinda > 0
+            ? sonuc.tuketiciDogrulandi ? "Ürünlerin satış fiyatlarıyla vitrinde görünüyor. Vitrinini açıp kontrol edebilirsin."
+              : "Ürünlerin yayın kaydı alındı. Tüketici görünümü henüz doğrulanamadı; vitrini açıp kontrol et."
+            : "Bilgilerin taslak olarak kaydedildi. Ürünleri vitrinde göstermek için yayınla."} />
+        <FaturaIslemSonucu sonuc={sonuc} kartlar={yayindakiKartlar} storeSlug={storeSlug} hata={hata}
+          yukleniyor={yukleniyor} baglantiKopyalandi={baglantiKopyalandi}
+          onYayinla={() => void taslaklariYayinla()} onPaylas={() => void vitriniPaylas()}
+          onKartlaraDon={() => setAdim("urunler")} onYeniFatura={bastanBasla}
+          onClose={onClose ? () => void kapat() : undefined} />
       </div>
     );
   }
@@ -1060,6 +1151,8 @@ export default function InvoiceToProducts({
 
   return (
     <div className="fatura-akis">
+      <FaturaAkisBasligi adim={adim} baslik={`${satirlar.length} ürün kartını kontrol et`}
+        aciklama="Satış fiyatlarını belirle ve yayınlamak istediğin kartları onayla. Bilgilerin önce taslak olarak kaydedilir." />
       <div className="fatura-baslik">
         <h3>{satirlar.length} satır okundu</h3>
         {belge?.maliyetOzeti && (
@@ -1073,6 +1166,9 @@ export default function InvoiceToProducts({
         )}
         {otomatikTaslakRaporu && <p role="status" className="fatura-aciklama">
           {otomatikTaslakRaporu.kaydedildi} ürün görünmez taslak olarak kaydedildi.
+          {(otomatikTaslakRaporu.birlestirmeBekleyen ?? 0) > 0
+            ? ` ${otomatikTaslakRaporu.birlestirmeBekleyen} satır için "aynı ürün mü" cevabın bekleniyor; kart açılmadı.`
+            : ""}
           {otomatikTaslakRaporu.atlandi > 0 ? ` ${otomatikTaslakRaporu.atlandi} satır kaydedilemedi.` : ""}
         </p>}
         {belge && (
@@ -1157,11 +1253,11 @@ export default function InvoiceToProducts({
 
       <p className="fatura-aciklama">
         Faturadaki tutar <strong>alış fiyatıdır</strong>; satış fiyatı yerine geçmez.
-        Stok, faturadaki adettir. Yalnız fotoğrafı üreticinin sayfasından gelen satırlar kart olur.
-        <strong>Satış fiyatını</strong> yazıp yayınla.
+        Stok, faturadaki adettir. Eksik açıklama veya görsel kartta belirtilir.
+        <strong>Satış fiyatını</strong> yaz, kartı kontrol et ve onayla.
       </p>
 
-      {hata && <p className="fatura-hata">{hata}</p>}
+      {hata && <p className="fatura-hata" role="alert">{hata}</p>}
 
       <div className="fatura-araclar">
         <label>
@@ -1177,7 +1273,18 @@ export default function InvoiceToProducts({
           %
         </label>
         <button type="button" onClick={karUygula} disabled={yaziliyor}>
-          Kâr koy
+          Fiyatlara uygula
+        </button>
+        <button type="button" disabled={yaziliyor || !degerlendirmeler.some((d, i) => d.onaylanabilir && !satirlar[i].ayniAlisverisTekrari)}
+          onClick={() => setSatirlar((oncekiler) => oncekiler.map((satir, index) =>
+            degerlendirmeler[index].onaylanabilir && !satir.ayniAlisverisTekrari && !(satir.birlestirmeAdayi && !satir.urunId)
+              ? { ...satir, onayli: true }
+              : satir))}>
+          Tümünü onayla
+        </button>
+        <button type="button" disabled={yaziliyor || !satirlar.some((satir) => satir.onayli)}
+          onClick={() => setSatirlar((oncekiler) => oncekiler.map((satir) => ({ ...satir, onayli: false })))}>
+          Onayları kaldır
         </button>
       </div>
 
@@ -1186,11 +1293,15 @@ export default function InvoiceToProducts({
           const degerlendirme = degerlendirmeler[index];
           const bilgi = durumBilgisi(satir);
           const katalog = satir.katalog;
+          const urunBilgileri = katalog
+            ? buildProductDetailFacts({ metadata: faturaKatalogMetadatasi(katalog) })
+            : [];
           const dusukGuven = satir.guven < GUVEN_ESIGI;
           return (
             <article
               key={`${satir.model}-${satir.barkod}-${index}`}
-              className={`fatura-kart fatura-kart-${satir.sonuc}`}
+              className={`fatura-kart fatura-kart-${satir.sonuc}${satir.onayli ? " fatura-kart-onayli" : ""}`}
+              aria-label={katalog?.resmiAd || satir.ad || satir.model}
             >
               <span className="fatura-rozet">{KART_DURUM_ETIKETI[satir.sonuc]}</span>
               {dusukGuven && <span className="fatura-rozet fatura-rozet-suphe">Kontrol et</span>}
@@ -1210,6 +1321,34 @@ export default function InvoiceToProducts({
               <div className="fatura-ad">{katalog?.resmiAd || satir.ad}</div>
 
               <div className="fatura-durum">{bilgi.detay}</div>
+
+              {satir.birlestirmeAdayi && !satir.urunId && (
+                <div className="fatura-hata" role="status">
+                  <p>
+                    Vitrinde aynı ürün olabilecek bir kart var:{" "}
+                    <strong>{satir.birlestirmeAdayi.ad || "kayıtlı ürün"}</strong>. Barkod okunmadığı
+                    için aynı ürün olduğu kanıtlanamadı; bu yüzden kart açılmadan önce sana soruyoruz.
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      className="fatura-ikincil grow"
+                      onClick={() => void birlestirmeKarariVer(index, "birlestir")}
+                      disabled={yaziliyor || yukleniyor}
+                    >
+                      Aynı ürün — kartları birleştir
+                    </button>
+                    <button
+                      type="button"
+                      className="fatura-ikincil grow"
+                      onClick={() => void birlestirmeKarariVer(index, "ayri")}
+                      disabled={yaziliyor || yukleniyor}
+                    >
+                      Farklı ürün — ayrı kart aç
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {satir.sonuc !== "kanitli" && belge?.islemKimligi && (
                 <details className="fatura-duzelt">
@@ -1276,6 +1415,22 @@ export default function InvoiceToProducts({
                 </details>
               )}
 
+              <div className="fatura-cipler">
+                {satir.beden && <span>{satir.beden}</span>}
+                {satir.varyant && <span>{satir.varyant}</span>}
+                {satir.adet !== null && (
+                  <span>Faturada {satir.adet}{satir.birim?.trim() ? ` ${satir.birim.trim()}` : ""}</span>
+                )}
+              </div>
+
+              <div className="fatura-alis">
+                Alış: {paraYaz(satir.alisBirimFiyat)}
+                {satir.barkod && ` • Barkod: ${satir.barkod}`}
+              </div>
+
+              <details className="fatura-duzelt">
+                <summary>Kaynak, fotoğraf ve ürün bilgileri</summary>
+
               {(satir.celiski?.adaylar.length ?? 0) > 0 && (
                 <ul className="fatura-adaylar">
                   {satir.celiski?.adaylar.map((aday) => (
@@ -1319,7 +1474,7 @@ export default function InvoiceToProducts({
                 </div>
               ) : (
                 <div className="fatura-eslesme fatura-eslesme-yok">
-                  Kanıtlı eşleşme yok — bu satırdan kart üretilmez
+                  Resmî ürün kaynağı bulunamadı. Kart faturadaki bilgilerle taslak olarak korunur.
                 </div>
               )}
 
@@ -1335,28 +1490,34 @@ export default function InvoiceToProducts({
                 </ul>
               )}
 
-              <div className="fatura-cipler">
-                {satir.beden && <span>{satir.beden}</span>}
-                {satir.varyant && <span>{satir.varyant}</span>}
-                {satir.adet !== null && (
-                  <span>Faturada {satir.adet}{satir.birim?.trim() ? ` ${satir.birim.trim()}` : ""}</span>
-                )}
-              </div>
-
-              <div className="fatura-alis">
-                Alış: {paraYaz(satir.alisBirimFiyat)}
-                {satir.barkod && ` • Barkod: ${satir.barkod}`}
-              </div>
-
               {katalog?.aciklama ? (
                 <p className="fatura-aciklama">{katalog.aciklama}</p>
               ) : katalog ? (
                 <div className="fatura-durum">Kaynaktan açıklama gelmedi.</div>
               ) : null}
 
+              {urunBilgileri.length > 0 && (
+                <section className="rounded-xl border border-[var(--owner-border)] p-3" aria-label="Ürün bilgileri">
+                  <h4 className="mb-2 text-xs font-bold text-[var(--owner-text)]">Ürün bilgileri</h4>
+                  <dl className="grid gap-2 text-xs">
+                    {urunBilgileri.map((ozellik, sira) => (
+                      <div key={`${ozellik.key}-${sira}`} className="grid grid-cols-[minmax(90px,0.65fr)_minmax(0,1fr)] gap-3">
+                        <dt className="font-semibold text-[var(--owner-muted)]">{ozellik.label}</dt>
+                        <dd className="break-words text-[var(--owner-text)]">{ozellik.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </section>
+              )}
+              {katalog?.dogrulamaDurumu && (
+                <p className="fatura-durum">OpenRouter eşleşmesi: {katalog.dogrulamaDurumu}</p>
+              )}
+              </details>
+
               <label className="fatura-fiyat">
                 Satış fiyatı
                 <input
+                  aria-label={`${katalog?.resmiAd || satir.ad} satış fiyatı`}
                   inputMode="decimal"
                   placeholder="0,00"
                   value={satir.satisFiyati}
@@ -1364,6 +1525,12 @@ export default function InvoiceToProducts({
                   disabled={yaziliyor}
                 />
               </label>
+              <button type="button" className={`fatura-onay${satir.onayli ? " fatura-onay-acik" : ""}`}
+                aria-pressed={satir.onayli}
+                disabled={yaziliyor || satir.ayniAlisverisTekrari || Boolean(satir.birlestirmeAdayi && !satir.urunId) || (!degerlendirme.onaylanabilir && !satir.onayli)}
+                onClick={() => satirGuncelle(index, { onayli: !satir.onayli })}>
+                {satir.onayli ? "✓ Onaylandı" : "Kartı onayla"}
+              </button>
 
               {degerlendirme.bilgiEksikleri.length > 0 && (
                 <ul className="fatura-eksikler">
@@ -1397,18 +1564,18 @@ export default function InvoiceToProducts({
         </button>
       )}
       <div className="fatura-alt-cubuk">
-        {onClose && <button type="button" className="fatura-ikincil"
-          onClick={() => void kapat()} disabled={yaziliyor || yukleniyor}>İşlemi kapat</button>}
         <span>
-          {hazirSayisi} / {satirlar.length} hazır
+          {hazirSayisi} / {satirlar.length} hazır · onaylananlar taslak kaydedilir
         </span>
         <button
           type="button"
           onClick={() => void vitrineYaz()}
           disabled={hazirSayisi === 0 || yaziliyor}
         >
-          {yaziliyor ? "Yayınlanıyor…" : `${hazirSayisi} kartı onayla ve yayınla`}
+          {yaziliyor ? "Bilgiler kaydediliyor…" : `${hazirSayisi} kartla devam et`}
         </button>
+        {onClose && <button type="button" className="fatura-ikincil"
+          onClick={() => void kapat()} disabled={yaziliyor || yukleniyor}>Kapat</button>}
       </div>
 
       {bekleyenSatir > 0 && (

@@ -36,6 +36,7 @@ vi.mock("@/lib/faturaGoru", async (importOriginal) => ({
   lunaGorseliniDogrula: m.imageCheck,
 }));
 vi.mock("@/lib/faturaGorsel", () => ({
+  sayfaGorselAlanAdlari: async () => [],
   kaynakGorseliniDogrula: m.imgFetch,
   urunSayfasindaGorselKaniti: m.pageProof,
 }));

@@ -30,6 +30,7 @@ vi.mock("@/lib/ownerSession", () => ({
   verifyOwnerSession: mocks.verifyOwner,
 }));
 vi.mock("@/lib/faturaGorsel", () => ({
+  sayfaGorselAlanAdlari: async () => [],
   kaynakGorselleriniHazirla: async (args: { adaylar: string[]; kaynakSayfa: string }) => ({
     gorseller: args.adaylar.map((adres) => ({
       url: adres,
@@ -62,6 +63,34 @@ function adminMock() {
       query.select.mockReturnValue(query);
       query.eq.mockReturnValue(query);
       query.single.mockResolvedValue({ data: STORE, error: null });
+      return query;
+    }
+    if (tablo === "invoice_job_lines") {
+      const query = {
+        select: vi.fn(),
+        eq: vi.fn(),
+        maybeSingle: vi.fn(async () => ({ data: { product_id: null }, error: null })),
+        update: vi.fn(() => ({ eq: vi.fn(async () => ({ error: null })) })),
+      };
+      query.select.mockReturnValue(query);
+      query.eq.mockReturnValue(query);
+      return query;
+    }
+    if (tablo === "products") {
+      const sorgu = { barkod: false };
+      const query = {
+        select: vi.fn(),
+        eq: vi.fn((kolon: string) => {
+          if (kolon === "barcode") sorgu.barkod = true;
+          return query;
+        }),
+        maybeSingle: vi.fn(async () => ({
+          data: sorgu.barkod ? null : { id: "kategori-1", product_template_key: "fashion" },
+          error: null,
+        })),
+        update: vi.fn(() => ({ eq: vi.fn(async () => ({ error: null })) })),
+      };
+      query.select.mockReturnValue(query);
       return query;
     }
     const query = {

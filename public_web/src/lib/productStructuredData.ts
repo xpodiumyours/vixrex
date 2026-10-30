@@ -121,6 +121,42 @@ function structuredPrice(product: RichProductItem): string | undefined {
   return parseProductPriceAmount(product.price);
 }
 
+export interface SellerLocation {
+  url?: string | null;
+  address?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+}
+
+/**
+ * Satici (isletme) dugumunu kurar. Konum alanlari yalniz dogrulanabildiginde
+ * yazilir; eksik konum uydurulmaz, satici adiyla kalir. "En yakin X nereden"
+ * gibi yerel sorgularda arama motorunun urunu yere baglamasi icin kullanilir.
+ */
+export function buildLocalBusinessSeller(storeName: string, storeLocation?: SellerLocation) {
+  const url = typeof storeLocation?.url === "string" ? storeLocation.url.trim() : "";
+  const address = typeof storeLocation?.address === "string" ? storeLocation.address.trim() : "";
+  const latitude = storeLocation?.latitude;
+  const longitude = storeLocation?.longitude;
+  return {
+    "@type": "LocalBusiness",
+    name: storeName,
+    ...(url ? { url } : {}),
+    ...(address
+      ? {
+          address: {
+            "@type": "PostalAddress",
+            streetAddress: address,
+            addressCountry: "TR",
+          },
+        }
+      : {}),
+    ...(typeof latitude === "number" && typeof longitude === "number"
+      ? { geo: { "@type": "GeoCoordinates", latitude, longitude } }
+      : {}),
+  };
+}
+
 function offer(args: {
   url: string;
   price?: number | string | null;
@@ -128,6 +164,7 @@ function offer(args: {
   stockStatus?: string | null;
   stockQuantity?: number | null;
   storeName: string;
+  storeLocation?: SellerLocation;
   itemCondition?: string;
 }) {
   if (args.price == null || String(args.price).trim() === "") return undefined;
@@ -140,7 +177,7 @@ function offer(args: {
       ? "https://schema.org/InStock"
       : "https://schema.org/OutOfStock",
     itemCondition: args.itemCondition,
-    seller: { "@type": "LocalBusiness", name: args.storeName },
+    seller: buildLocalBusinessSeller(args.storeName, args.storeLocation),
   };
 }
 
@@ -150,8 +187,9 @@ export function buildPhysicalProductStructuredData(args: {
   storeName: string;
   description: string;
   images: string[];
+  storeLocation?: SellerLocation;
 }) {
-  const { product, productUrl, storeName, description, images } = args;
+  const { product, productUrl, storeName, description, images, storeLocation } = args;
   const metadata = normalizeProductMetadata(product.metadata);
   const variants = normalizeProductVariants(product.variants, metadata.lunaInvoice);
   const currency = product.currency || "TRY";
@@ -182,6 +220,7 @@ export function buildPhysicalProductStructuredData(args: {
         stockStatus: product.stockStatus,
         stockQuantity: product.stockQuantity,
         storeName,
+        storeLocation,
         itemCondition,
       }),
     };
@@ -235,6 +274,7 @@ export function buildPhysicalProductStructuredData(args: {
         stockStatus: variant.stockStatus ?? product.stockStatus,
         stockQuantity: variant.stockQuantity ?? product.stockQuantity,
         storeName,
+        storeLocation,
         itemCondition,
       }),
     };

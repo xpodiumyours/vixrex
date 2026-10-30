@@ -167,4 +167,59 @@ describe("product structured data", () => {
       },
     });
   });
+
+  it("mağaza konumunu satıcı LocalBusiness verisine taşır (yerel arama)", () => {
+    const result = buildPhysicalProductStructuredData({
+      product: baseProduct,
+      productUrl: "https://vixrex.com/v/magaza/urun/keten-gomlek",
+      storeName: "Elif Market",
+      description: "Keten karışımlı gömlek",
+      images: ["https://example.com/product.jpg"],
+      storeLocation: {
+        url: "https://vixrex.com/v/elif-market",
+        address: "Caferağa Mah. Moda Cad. No:1, Kadıköy, İstanbul",
+        latitude: 40.9876,
+        longitude: 29.0123,
+      },
+    });
+
+    expect(result).toMatchObject({
+      offers: {
+        seller: {
+          "@type": "LocalBusiness",
+          name: "Elif Market",
+          url: "https://vixrex.com/v/elif-market",
+          address: {
+            "@type": "PostalAddress",
+            streetAddress: "Caferağa Mah. Moda Cad. No:1, Kadıköy, İstanbul",
+            addressCountry: "TR",
+          },
+          geo: {
+            "@type": "GeoCoordinates",
+            latitude: 40.9876,
+            longitude: 29.0123,
+          },
+        },
+      },
+    });
+  });
+
+  it("konum yoksa satıcı yalnız adıyla kalır, uydurma konum üretilmez", () => {
+    const result = buildPhysicalProductStructuredData({
+      product: baseProduct,
+      productUrl: "https://vixrex.com/v/magaza/urun/keten-gomlek",
+      storeName: "Örnek Mağaza",
+      description: "Keten karışımlı gömlek",
+      images: ["https://example.com/product.jpg"],
+      storeLocation: {
+        url: null,
+        address: null,
+        latitude: null,
+        longitude: null,
+      },
+    });
+
+    const offers = (result as { offers?: { seller?: unknown } }).offers;
+    expect(offers?.seller).toEqual({ "@type": "LocalBusiness", name: "Örnek Mağaza" });
+  });
 });

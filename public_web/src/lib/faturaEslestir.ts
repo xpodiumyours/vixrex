@@ -5,6 +5,8 @@
 // burada tek kopya durur; farklı okuyucular kendi eşleştirme kuralını
 // yazmaz — ikinci bir "hangi ürün bu" kararı hiçbir yerde tekrarlanmaz.
 
+import type { ProductAttributeValue } from "@/lib/productRichData";
+
 export interface FotografKaniti {
   kaynakSayfa: string;
   kaynakGorsel: string;
@@ -29,7 +31,15 @@ export interface HamFaturaSatiri {
   siteGorsel?: string;
   siteGorseller?: string[];
   siteKategori?: string;
-  siteOzellikler?: Array<{ key: string; label: string; value: string }>;
+  siteOzellikler?: ProductAttributeValue[];
+  uretici?: string;
+  gramaj?: string;
+  satirNo?: number | null;
+  dogrulamaDurumu?: string;
+  eslesenBilgiler?: unknown;
+  eksikler?: string[];
+  gorselDogrulamaDurumu?: string;
+  kaynaklar?: Array<string | Record<string, unknown>>;
   siteUrunVaryantlari?: Array<{ id: string; secenekler: Array<{ key: string; value: string }>; barkod: string; gorseller: string[] }>;
   siteSayfa?: string;
   siteMarka?: string;
@@ -57,7 +67,17 @@ export interface KatalogBilgisi {
   gorseller: string[];
   gorselAdaylari: string[];
   kategori?: string;
-  ozellikler?: Array<{ key: string; label: string; value: string }>;
+  beden?: string;
+  varyant?: string;
+  ozellikler?: ProductAttributeValue[];
+  uretici?: string;
+  gramaj?: string;
+  satirNo?: number | null;
+  dogrulamaDurumu?: string;
+  eslesenBilgiler?: unknown;
+  eksikler?: string[];
+  gorselDogrulamaDurumu?: string;
+  kaynaklar?: Array<string | Record<string, unknown>>;
   urunVaryantlari?: Array<{ id: string; secenekler: Array<{ key: string; value: string }>; barkod: string; gorseller: string[] }>;
   fotografKaniti?: FotografKaniti;
   varyantlar?: Array<{ ad: string; barkod: string; gorseller: string[] }>;

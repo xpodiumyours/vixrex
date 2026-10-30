@@ -1,16 +1,16 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-const m=vi.hoisted(()=>({rpc:vi.fn(),satir:vi.fn(),medya:vi.fn(),yayin:vi.fn(),create:vi.fn(),update:vi.fn()}));
+const m=vi.hoisted(()=>({rpc:vi.fn(),satir:vi.fn(),mevcut:vi.fn(),medya:vi.fn(),yayin:vi.fn(),create:vi.fn(),update:vi.fn()}));
 vi.mock("next/headers",()=>({cookies:async()=>({get:()=>({value:"owner"})})}));
 vi.mock("@/lib/ownerSession",()=>({OWNER_SESSION_COOKIE:"owner",verifyOwnerSession:()=>({storeId:"store-1"})}));
 vi.mock("@/lib/supabaseAdmin",()=>({getSupabaseAdmin:()=>({rpc:m.rpc,from:()=>{
- const q={select:()=>q,eq:()=>q,single:async()=>({data:{id:"store-1",edit_token:"token",name:"Esnaf"},error:null})};return q;
+ const q={select:()=>q,eq:()=>q,single:async()=>({data:{id:"store-1",edit_token:"token",name:"Esnaf"},error:null}),maybeSingle:async()=>({data:null,error:null})};return q;
 }})}));
-vi.mock("@/lib/faturaUrunBaglantisi",async(importOriginal)=>({...await importOriginal<typeof import("@/lib/faturaUrunBaglantisi")>(),satiriDogrula:m.satir}));
+vi.mock("@/lib/faturaUrunBaglantisi",async(importOriginal)=>({...await importOriginal<typeof import("@/lib/faturaUrunBaglantisi")>(),satiriDogrula:m.satir,mevcutUrunuOku:m.mevcut}));
 vi.mock("@/lib/productCoreServer",()=>({createRichCoreProduct:m.create,updateRichCoreProduct:m.update,publishInvoiceProduct:m.yayin}));
 vi.mock("@/lib/productIntake",()=>({urunGirdisiniHazirla:async({govde}:{govde:Record<string,unknown>})=>({durum:"hazir",girdi:{...govde,priceAmount:499,metadata:{},variants:[]}})}));
 vi.mock("@/lib/productImagePolicy",()=>({FATURA_MIN_PRODUCT_IMAGES:1,yonetilenUrunGorseliMi:(url:string)=>url.startsWith("https://depo.example/")}));
-vi.mock("@/lib/faturaGorsel",()=>({kaynakGorselleriniHazirla:m.medya}));
+vi.mock("@/lib/faturaGorsel",()=>({kaynakGorselleriniHazirla:m.medya,sayfaGorselAlanAdlari:async()=>[]}));
 vi.mock("@/lib/vitrinYayinDogrula",()=>({tuketicideGorunenler:async()=>null,vitrinOnbelleginiYenile:vi.fn()}));
 import { POST } from "@/app/api/products/batch/route";
 function request(){return new NextRequest("http://localhost/api/products/batch",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({slug:"esnaf",products:[{
@@ -24,6 +24,7 @@ beforeEach(()=>{
  katalog:{resmiAd:"Resmî model",aciklama:"Resmî açıklama",marka:"Üretici",kaynak:"https://firma.example/urun/model"}});
  m.medya.mockResolvedValue({gorseller:[{url:"https://depo.example/model.jpg",kaynakGorsel:"https://firma.example/model.jpg",kaynakSayfa:"https://firma.example/urun/model",genislik:1200,yukseklik:1200}],reddedilenler:[],altyapiSorunu:false});
  m.rpc.mockResolvedValue({data:{success:true,id:"urun-1",slug:"model",created:true,kayit:"yeni"},error:null});
+ m.mevcut.mockResolvedValue({id:"urun-1",gorunur:false});
  m.yayin.mockResolvedValue({success:true,id:"urun-1"});
 });
 describe("fatura atomik kayıt kapısı",()=>{
@@ -33,16 +34,46 @@ describe("fatura atomik kayıt kapısı",()=>{
    p_product:expect.objectContaining({name:"Resmî model",description:"Resmî açıklama",brand:"Üretici",imageUrls:["https://depo.example/model.jpg"]})}));
   expect(m.create).not.toHaveBeenCalled();expect(m.update).not.toHaveBeenCalled();
  });
+ it("üretici, gramaj, tüm özellikler ve belirsiz kaynak kararı kalıcı ürüne taşınır",async()=>{
+  const row=await m.satir();
+  m.satir.mockResolvedValue({...row,katalog:{...row.katalog,
+   uretici:"Resmî Üretici A.Ş.",gramaj:"175 g",dogrulamaDurumu:"? Belirsiz",
+   ozellikler:[{key:"ingredients",label:"İçindekiler",value:"Kaynakta yazan içerik"}],
+  }});
+  await POST(request());
+  expect(m.rpc).toHaveBeenCalledWith("save_invoice_product",expect.objectContaining({
+   p_product:expect.objectContaining({metadata:expect.objectContaining({lunaInvoice:true,
+    manufacturerSource:{url:"https://firma.example/urun/model",verificationStatus:"? Belirsiz"},
+    attributes:expect.arrayContaining([
+     {key:"manufacturer",label:"Üretici",value:"Resmî Üretici A.Ş."},
+     {key:"netQuantity",label:"Gramaj / hacim",value:"175 g"},
+     {key:"ingredients",label:"İçindekiler",value:"Kaynakta yazan içerik",unit:undefined,section:undefined},
+    ]),
+   })}),
+  }));
+ });
  it("transaction hatası mevcut ürünü ayrı bir silme yoluna sokmaz ve yayın olmaz",async()=>{
   const row=await m.satir();m.satir.mockResolvedValue({...row,urunId:"mevcut-urun"});
   m.rpc.mockResolvedValue({data:null,error:{message:"transaction failed"}});
   const body=await(await POST(request())).json();expect(body.hatali).toBe(1);expect(body.eklenen).toBe(0);
   expect(m.yayin).not.toHaveBeenCalled();expect(m.create).not.toHaveBeenCalled();expect(m.update).not.toHaveBeenCalled();
  });
- it.each(["erisilemedi","depoya-yazilamadi"])("%s görsel dış bağlantıyla yayına kaçmaz",async(sebep)=>{
+ it.each([true,false])("bağlı kartın kayıt cevabı gerçek yayın durumunu korur: %s",async(gorunur)=>{
+  m.rpc.mockResolvedValue({data:{success:true,id:"urun-1",created:false,kayit:"guncellendi"},error:null});
+  m.mevcut.mockResolvedValue({id:"urun-1",gorunur});
+  const req=request();const input=await req.json();input.products[0].yayinIstegi=false;
+  const body=await(await POST(new NextRequest(req.url,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(input)}))).json();
+  expect(body.satirlar[0].durum).toBe(gorunur?"yayinda":"taslak");
+  expect(body.yayinda).toBe(gorunur?1:0);expect(body.taslak).toBe(gorunur?0:1);
+  expect(m.yayin).not.toHaveBeenCalled();
+ });
+ it.each(["erisilemedi","depoya-yazilamadi","acilmadi","gorsel-degil"])("%s görsel dış bağlantıyla yayına kaçmaz",async(sebep)=>{
   m.medya.mockResolvedValue({gorseller:[],reddedilenler:[{kaynakGorsel:"https://firma.example/model.jpg",sebep}],altyapiSorunu:true});
   const body=await(await POST(request())).json();expect(body.hatali).toBe(0);expect(body.yayinda).toBe(1);expect(body.eklenen).toBe(1);
-  expect(m.rpc).toHaveBeenCalledWith("save_invoice_product",expect.objectContaining({p_product:expect.objectContaining({imageUrls:[]})}));
+  expect(m.rpc).toHaveBeenCalledWith("save_invoice_product",expect.objectContaining({
+   p_product:expect.objectContaining({imageUrls:[]}),
+   p_evidence:expect.objectContaining({gorselDurumu:"aktarim-bekliyor"}),
+  }));
   expect(m.yayin).toHaveBeenCalled();
  });
  it("kaynak kaydı yoksa istemcinin kanıtlı etiketi kurtarmaz",async()=>{
