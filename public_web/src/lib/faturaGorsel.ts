@@ -319,6 +319,23 @@ async function sayfadanGorselleriAl(
   return [];
 }
 
+export async function sayfaGorselAlanAdlari(
+  sayfa: string,
+  fetcher: (input: string, init?: RequestInit) => Promise<Response> = fetch,
+): Promise<string[]> {
+  const alanlar = new Set<string>();
+  try {
+    alanlar.add(new URL(sayfa).hostname.toLowerCase().replace(/^www\./, ""));
+  } catch {
+    return [];
+  }
+  for (const adres of await sayfadanGorselleriAl(sayfa, fetcher)) {
+    try { alanlar.add(new URL(adres).hostname.toLowerCase().replace(/^www\./, "")); }
+    catch { continue; }
+  }
+  return [...alanlar];
+}
+
 export async function gorselsizSatirlariTamamla(args: {
   satirlar: GoruSatiri[];
   bagimliliklar?: GorselBagimliliklari;

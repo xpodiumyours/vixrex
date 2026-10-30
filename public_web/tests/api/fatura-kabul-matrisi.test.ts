@@ -30,6 +30,7 @@ vi.mock("@/lib/ownerSession", () => ({
   verifyOwnerSession: mocks.verifyOwner,
 }));
 vi.mock("@/lib/faturaGorsel", () => ({
+  sayfaGorselAlanAdlari: async () => [],
   kaynakGorselleriniHazirla: async (args: { adaylar: string[]; kaynakSayfa: string }) => ({
     gorseller: args.adaylar.map((adres) => ({
       url: adres,

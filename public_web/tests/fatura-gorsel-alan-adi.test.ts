@@ -1,5 +1,5 @@
 import { expect, it, vi } from "vitest";
-import { kaynakGorselleriniHazirla } from "@/lib/faturaGorsel";
+import { kaynakGorselleriniHazirla, sayfaGorselAlanAdlari } from "@/lib/faturaGorsel";
 
 const depo = {
   storage: {
@@ -24,6 +24,15 @@ it("üretici alan adı dışındaki görsel kaynak-uyumsuz diye reddedilir", asy
     { kaynakGorsel: "https://pazaryeri.example/urun.jpg", sebep: "kaynak-uyumsuz" },
   ]);
   expect(fetcher).not.toHaveBeenCalled();
+});
+
+it("resmî sayfanın og:image alan adı izin listesine katılır", async () => {
+  const fetcher = vi.fn(async () => new Response(
+    '<html><head><meta property="og:image" content="https://cdn.myikas.com/urun.webp"/></head></html>',
+    { status: 200, headers: { "content-type": "text/html" } },
+  ));
+  const alanlar = await sayfaGorselAlanAdlari("https://sehermensucat.com/urun", fetcher as never);
+  expect([...alanlar].sort()).toEqual(["cdn.myikas.com", "sehermensucat.com"]);
 });
 
 it("alt alan adı üretici alanına aitse reddedilmez, indirilmeye çalışılır", async () => {
