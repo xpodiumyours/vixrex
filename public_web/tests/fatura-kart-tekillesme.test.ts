@@ -157,6 +157,41 @@ it("doğrulanmış aynı ürün iki satırı tek karta indirir", async () => {
   expect(sonuc.sonuc.satirlar[1].eksikler).toContain("Aynı ürün belgede 1. satırda da geçiyor; tek kart açılır.");
 });
 
+const metinYanit = (icerik: string) => new Response(JSON.stringify({
+  choices: [{ message: { content: icerik }, finish_reason: "stop" }],
+}), { status: 200, headers: { "content-type": "application/json" } });
+const gorselliKart = (id: string, baslik: string, beden: string) => ({
+  ...kartKaydi(id, baslik, beden),
+  media: { image_url: "https://cdn.example/urun.webp" },
+});
+const ikiSatir = [
+  { hamSatir: "1", model: "TER0105", ad: "Tutku Elit Sıfıryaka", barkod: "8680508918971", beden: "4", marka: "Tutku", adet: 6 },
+  { hamSatir: "2", model: "TER0105", ad: "Tutku Elit Sıfıryaka", barkod: "8680508918988", beden: "5", marka: "Tutku", adet: 6 },
+];
+
+it("kart yanıtı başında cümle ve JSON çitiyle gelse de çözülür", async () => {
+  const icerik = "I'll research each brand's official website.\n\n```json\n" +
+    JSON.stringify({ items: [gorselliKart("1", "Tutku Elit Sıfıryaka", "4"), gorselliKart("2", "Tutku Elit Sıfıryaka", "5")] }, null, 2) +
+    "\n```\n";
+  const sonuc = await kartPresetYanitiniOku(metinYanit(icerik), okuma(ikiSatir));
+  expect(sonuc.sonuc.satirlar.map((satir) => satir.dogrulamaDurumu))
+    .toEqual(["Doğrulandı", "Doğrulandı"]);
+  expect(sonuc.sonuc.satirlar.map((satir) => satir.siteGorseller))
+    .toEqual([["https://cdn.example/urun.webp"], ["https://cdn.example/urun.webp"]]);
+  expect(sonuc.sonuc.satirlar[0].siteSayfa).toBe("https://uretici.example/urun");
+});
+
+it("yalnız JSON çitiyle gelen kart yanıtı da çözülür", async () => {
+  const icerik = "```json\n" + JSON.stringify({ items: [gorselliKart("1", "Tutku Elit Sıfıryaka", "4")] }) + "\n```";
+  const sonuc = await kartPresetYanitiniOku(metinYanit(icerik), okuma([ikiSatir[0]]));
+  expect(sonuc.sonuc.satirlar[0].ad).toBe("Tutku Elit Sıfıryaka");
+});
+
+it("JSON içermeyen kart yanıtı hâlâ reddedilir", async () => {
+  await expect(kartPresetYanitiniOku(metinYanit("Ürün bulunamadı."), okuma([ikiSatir[0]])))
+    .rejects.toThrow("KART_YANITI_COZULEMEDI");
+});
+
 it("adet sayı değilse birleşen kartta toplama yapılmaz", async () => {
   const sonuc = await kartPresetYanitiniOku(yanit([
     kartKaydi("1", "Tutku Elit Sıfıryaka", "4"), kartKaydi("2", "Tutku Elit Sıfıryaka", "4"),

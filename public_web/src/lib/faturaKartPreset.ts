@@ -179,10 +179,22 @@ export function tekrarGruplari(
   return tekillesmeKarari(satirlar, items).indirgenen;
 }
 
+function jsonCoz(icerik: string): unknown {
+  const ham = icerik.trim();
+  const parcalar = ham.split("```").map((parca) => parca.replace(/^json\s*/i, "").trim()).filter(Boolean);
+  const adaylar = [ham, ...parcalar];
+  const bas = ham.indexOf("{");
+  const son = ham.lastIndexOf("}");
+  if (bas >= 0 && son > bas) adaylar.push(ham.slice(bas, son + 1));
+  for (const aday of adaylar) {
+    try { return JSON.parse(aday); } catch { continue; }
+  }
+  throw new Error("KART_YANITI_COZULEMEDI");
+}
+
 export async function kartPresetYanitiniOku(cevap: Response, okuma: GoruSonucu) {
   const { icerik, ...kullanim } = await faturaYanitMetniniOku(cevap);
-  let ham: unknown;
-  try { ham = JSON.parse(icerik); } catch { throw new Error("KART_YANITI_COZULEMEDI"); }
+  const ham = jsonCoz(icerik);
   if (!nesne(ham) || !Array.isArray(ham.items)) {
     throw new Error("KART_YANITI_COZULEMEDI");
   }
