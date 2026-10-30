@@ -10,7 +10,7 @@ vi.mock("@/lib/faturaUrunBaglantisi",async(importOriginal)=>({...await importOri
 vi.mock("@/lib/productCoreServer",()=>({createRichCoreProduct:m.create,updateRichCoreProduct:m.update,publishInvoiceProduct:m.yayin}));
 vi.mock("@/lib/productIntake",()=>({urunGirdisiniHazirla:async({govde}:{govde:Record<string,unknown>})=>({durum:"hazir",girdi:{...govde,priceAmount:499,metadata:{},variants:[]}})}));
 vi.mock("@/lib/productImagePolicy",()=>({FATURA_MIN_PRODUCT_IMAGES:1,yonetilenUrunGorseliMi:(url:string)=>url.startsWith("https://depo.example/")}));
-vi.mock("@/lib/faturaGorsel",()=>({kaynakGorselleriniHazirla:m.medya}));
+vi.mock("@/lib/faturaGorsel",()=>({kaynakGorselleriniHazirla:m.medya,sayfaGorselAlanAdlari:async()=>[]}));
 vi.mock("@/lib/vitrinYayinDogrula",()=>({tuketicideGorunenler:async()=>null,vitrinOnbelleginiYenile:vi.fn()}));
 import { POST } from "@/app/api/products/batch/route";
 function request(){return new NextRequest("http://localhost/api/products/batch",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({slug:"esnaf",products:[{

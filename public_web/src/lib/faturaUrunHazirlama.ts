@@ -4,7 +4,7 @@ import type { DogrulanmisSatir } from "@/lib/faturaUrunBaglantisi";
 import type { HazirUrunGirdisi } from "@/lib/productIntake";
 import { normalizeProductVariants } from "@/lib/productRichData";
 import { yonetilenUrunGorseliMi } from "@/lib/productImagePolicy";
-import { kaynakGorselleriniHazirla } from "@/lib/faturaGorsel";
+import { kaynakGorselleriniHazirla, sayfaGorselAlanAdlari } from "@/lib/faturaGorsel";
 import { faturaKatalogMetadatasi } from "@/lib/faturaUrunIcerigi";
 import { kategoriBirlestir } from "@/lib/kategoriBirlesim";
 
@@ -96,8 +96,7 @@ export async function faturaUrunGorselleriniAktar(args: {
   let gorselKaynaklari: Array<Record<string, unknown>> = [];
   let gorselRedleri: Array<{ kaynakGorsel: string; sebep: string }> = [];
   const resmiSayfa = typeof satir.katalog?.kaynak === "string" ? satir.katalog.kaynak.trim() : "";
-  let resmiAlan = "";
-  try { resmiAlan = resmiSayfa ? new URL(resmiSayfa).hostname.toLowerCase().replace(/^www\./, "") : ""; } catch { resmiAlan = ""; }
+  const resmiAlanlar = resmiSayfa ? await sayfaGorselAlanAdlari(resmiSayfa) : [];
   const aktarilacakGorseller = [...new Set([...disGorseller,
     ...girdi.variants.flatMap((variant) => variant.imageUrls ?? []).filter((url) => !yonetilenUrunGorseliMi(url)),
   ])];
@@ -107,7 +106,7 @@ export async function faturaUrunGorselleriniAktar(args: {
       kaynakSayfa: typeof satir.katalog?.kaynak === "string" ? satir.katalog.kaynak : "",
       adaylar: aktarilacakGorseller,
       sonTarih: args.sonTarih,
-      izinliAlanAdlari: resmiAlan ? [resmiAlan] : [],
+      izinliAlanAdlari: resmiAlanlar,
     });
     gorselRedleri = hazir.reddedilenler.map((red) => ({ kaynakGorsel: red.kaynakGorsel, sebep: String(red.sebep) }));
     const depodaki = new Map(hazir.gorseller.map((gorsel) => [gorsel.kaynakGorsel, gorsel]));
