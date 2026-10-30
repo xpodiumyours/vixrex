@@ -4,7 +4,7 @@ export interface YazmaSonucu {
   yayinda: number;
   taslak: number;
   hatali: number;
-  satirlar: Array<{ sira: number; ad: string; durum: string; sebep?: string; id?: string }>;
+  satirlar: Array<{ sira: number; ad: string; durum: string; sebep?: string; id?: string; gorsel?: string | null }>;
 }
 
 export interface FaturaSonucKarti {
@@ -40,7 +40,7 @@ export function FaturaIslemSonucu({ sonuc, kartlar, storeSlug, hata, yukleniyor,
             {kartlar.map((kart) => (
               <li key={kart.sira}>
                 {kart.gorsel ? <img src={kart.gorsel} alt={kart.ad} loading="lazy" />
-                  : <div className="fatura-kart-gorselsiz">Fotoğraf yok</div>}
+                  : <div className="fatura-kart-gorselsiz">Görsel hazırlanıyor</div>}
                 <span>{kart.ad}</span>
                 {kart.fiyat && <strong>{kart.fiyat} TL</strong>}
               </li>

@@ -29,6 +29,7 @@ function sahteAdmin(tablolar: Record<string, TabloVerisi>, guncellemeler: unknow
       const z: Record<string, unknown> = {};
       z.select = () => z;
       z.eq = () => z;
+      z.in = () => z;
       z.order = () => z;
       z.limit = () => z;
       z.update = (govde: unknown) => {
@@ -63,6 +64,15 @@ const KATALOG = {
 describe("işlemi kapatıp yeniden açma", () => {
   it("kayıtlı satır kart, uyarı ve esnaf girdileriyle birlikte aynı haliyle döner", async () => {
     const admin = sahteAdmin({
+      products: {
+        liste: [{
+          id: "urun-7",
+          image_urls: [
+            "https://chfulefxczbgurtgavtp.supabase.co/storage/v1/object/public/shelf-images/store-1/products/fatura/x.webp",
+            "https://cdn.myikas.com/images/x.webp",
+          ],
+        }],
+      },
       invoice_jobs: {
         tekil: {
           id: ISLEM,
@@ -126,6 +136,9 @@ describe("işlemi kapatıp yeniden açma", () => {
     expect(islem?.satirlar[0].sonuc).toBe("kanitli");
     expect(islem?.satirlar[0].sahipDurumu?.satisFiyati).toBe("599");
     expect(islem?.satirlar[0].urunId).toBe("urun-7");
+    expect(islem?.satirlar[0].gorsel).toBe(
+      "https://chfulefxczbgurtgavtp.supabase.co/storage/v1/object/public/shelf-images/store-1/products/fatura/x.webp",
+    );
   });
 
   it("başka vitrinin ya da olmayan işlem açılmaz", async () => {
