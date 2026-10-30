@@ -41,6 +41,8 @@ it("düz şemalı gerçek yanıt: doğrulama, sayfa ve görsel alanlarını okur
   expect(sonuc.sonuc.satirlar[0].siteSayfa).toBe("https://sehermensucat.com/elt1301-elit-erkek-elastan-sifiryaka-fanila");
   expect(sonuc.sonuc.satirlar[0].dogrulamaDurumu).toBe("Doğrulandı");
   expect(sonuc.sonuc.satirlar[2].dogrulamaDurumu).toBe("Belirsiz");
+  const kanit = sonuc.sonuc.satirlar[0].kaynaklar?.[0] as { media?: { image_url?: string } };
+  expect(kanit.media?.image_url).toBe(sonuc.sonuc.satirlar[0].siteGorsel);
 });
 
 it("aynı girdi aynı çıktı: üç biçim birebir aynı kartları verir", async () => {

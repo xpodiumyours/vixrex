@@ -112,6 +112,9 @@ export function tekKartSozlesmesi(item: Kayit): KartSozlesmesi {
   const resmiSayfa = metin(dogrulama.official_product_url) || metin(kart.official_product_url)
     || metin(kart.product_url) || metin(dogrulama.product_url);
   const gorselAdresi = metin(gorsel.image_url) || metin(kart.image_url) || ilkAdres(kart.image_urls);
+  const gorselKaynakSayfa = metin(gorsel.source_url) || metin(kart.source_url);
+  const gorselDogrulama = metin(gorsel.verification_status) || metin(kart.image_validation_status);
+  const gorselHaklari = metin(gorsel.rights_status) || metin(kart.rights_status);
   const rowId = metin(item.row_id) || metin(item.rowId);
   const fatura = nesne(item.invoice_data) ? item.invoice_data : {};
   const eslesenBilgiler = doluDizi(dogrulama.matched_attributes, kart.matched_attributes);
@@ -129,19 +132,19 @@ export function tekKartSozlesmesi(item: Kayit): KartSozlesmesi {
     alisFiyati: sayi(fatura.unit_price),
     resmiSayfa,
     gorselAdresi,
-    gorselKaynakSayfa: metin(gorsel.source_url) || metin(kart.source_url),
+    gorselKaynakSayfa,
     aciklama: metin(kart.short_description),
     kategori: metin(kart.category_suggestion),
     dogrulamaDurumu: durum,
     dogrulanmis: durum === "verified" && Boolean(adres(resmiSayfa)),
     eslesenBilgiler,
     eksikler,
-    gorselDogrulamaDurumu: metin(gorsel.verification_status) || metin(kart.image_validation_status),
-    gorselHaklari: metin(gorsel.rights_status) || metin(kart.rights_status),
+    gorselDogrulamaDurumu: gorselDogrulama,
+    gorselHaklari,
     tekrarGrubu: metin(item.duplicate_group),
     kanonikRowId: metin(item.canonical_row_id),
     kartDurumu: item.card_status,
-    kanit: { ...dogrulama, status: durum, official_product_url: resmiSayfa, matched_attributes: eslesenBilgiler, unmatched_attributes: eksikler, media: { ...gorsel }, card_status: item.card_status },
+    kanit: { ...dogrulama, status: durum, official_product_url: resmiSayfa, matched_attributes: eslesenBilgiler, unmatched_attributes: eksikler, media: { ...gorsel, image_url: gorselAdresi, source_url: gorselKaynakSayfa, verification_status: gorselDogrulama, rights_status: gorselHaklari }, card_status: item.card_status },
     kaynaklar: Array.isArray(item.sources) ? item.sources.filter(nesne) : [],
     ham: item,
   };
