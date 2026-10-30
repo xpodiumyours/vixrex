@@ -11,6 +11,7 @@ import {
 } from "@/lib/faturaKartPreset";
 import { gorselsizSatirlariTamamla } from "@/lib/faturaGorsel";
 import { adayGorselleriniSec } from "@/lib/faturaGorselSecimi";
+import { faturaBaslangicZamani, faturaOzetSatiri, faturaOzetiniKaydet, gecenSaniye } from "@/lib/faturaOzeti";
 
 export const OKUMA_PRESET = "@preset/vixrex-qwen-fatura-okuma-suzme";
 export const OTOMATIK_FATURA_PRESET = URUN_KART_PRESET;
@@ -137,6 +138,10 @@ export async function arkaPlanFaturaSonucunuAl(
     return faturaTaslakYanitiniHazirla(admin, storeId, slug, kayit);
   } catch (err) {
     const kod = err instanceof Error && /^[A-Z_]{1,96}$/.test(err.message) ? err.message : "OKUYUCU_CEVAP_VERMEDI";
+    await faturaOzetiniKaydet(admin, storeId, islemKimligi, faturaOzetSatiri({
+      islemKimligi, satirSayisi: 0, kartSayisi: 0, gorselliSayisi: 0,
+      sureSaniye: gecenSaniye(await faturaBaslangicZamani(admin, storeId, islemKimligi)), hataKodu: kod,
+    }));
     // Geçici DB yazma/okuma hatasında alınmış cevabı harcamadan sonraki GET ile yeniden kaydet.
     if (!["FATURA_KAYDI_EKSIK", "KART_ISLEYICI_HAZIR_DEGIL"].includes(kod)) {
       await admin.rpc("fail_invoice_provider_job", { p_store_id: storeId, p_job_id: islemKimligi, p_error: kod });

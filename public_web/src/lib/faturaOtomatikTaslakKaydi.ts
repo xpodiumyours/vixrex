@@ -6,6 +6,7 @@ import { kayitliFaturaKatalogunuUygula, faturaUrunGorselleriniAktar } from "@/li
 import { urunGirdisiniHazirla } from "@/lib/productIntake";
 import { faturaKatalogMetadatasi } from "@/lib/faturaUrunIcerigi";
 import { FATURA_MIN_PRODUCT_IMAGES } from "@/lib/productImagePolicy";
+import { faturaBaslangicZamani, faturaOzetSatiri, faturaOzetiniKaydet, gecenSaniye } from "@/lib/faturaOzeti";
 
 export interface OtomatikTaslakRaporu {
   kaydedildi: number;
@@ -154,8 +155,9 @@ export async function faturaTaslakYanitiniHazirla(
   }
   const bagliIdler = guncelKayit.satirlar.flatMap((satir) => satir.urunId ? [satir.urunId] : []);
   rapor.kaydedildi = 0;
+  let gorselliSayisi: number | null = bagliIdler.length ? null : 0;
   if (bagliIdler.length) {
-    const urunler = await admin.from("products").select("id,is_visible,fatura_kanit")
+    const urunler = await admin.from("products").select("id,is_visible,fatura_kanit,image_urls")
       .eq("store_id", storeId).in("id", bagliIdler);
     if (urunler.error || !Array.isArray(urunler.data)) {
       rapor.hatalar.push("Kayıtlı ürün taslakları doğrulanamadı.");
@@ -163,6 +165,9 @@ export async function faturaTaslakYanitiniHazirla(
       rapor.kaydedildi = urunler.data.filter((urun) => urun.is_visible === false).length;
       rapor.gorselsiz = urunler.data.filter(
         (urun) => (urun.fatura_kanit as { gorselDurumu?: string } | null)?.gorselDurumu === "gorsel-yok",
+      ).length;
+      gorselliSayisi = urunler.data.filter(
+        (urun) => Array.isArray(urun.image_urls) && urun.image_urls.length > 0,
       ).length;
       if (rapor.gorselsiz > 0) {
         rapor.hatalar.push(`${rapor.gorselsiz} kart görselsiz kaydedildi.`);
@@ -178,11 +183,25 @@ export async function faturaTaslakYanitiniHazirla(
     .eq("job_id", kayit.islemKimligi).eq("store_id", storeId).eq("state", "processed");
   if (durum.error) rapor.hatalar.push("Taslak kayıt durumu saklanamadı.");
   const hazirlaniyor = rapor.bekleyen > 0 && rapor.hatalar.length === 0;
+  let ozetSatiri: string | null = null;
+  if (!hazirlaniyor) {
+    const baslangic = await faturaBaslangicZamani(admin, storeId, kayit.islemKimligi);
+    ozetSatiri = faturaOzetSatiri({
+      islemKimligi: kayit.islemKimligi,
+      satirSayisi: guncelKayit.satirlar.length,
+      kartSayisi: bagliIdler.length,
+      gorselliSayisi,
+      sureSaniye: gecenSaniye(baslangic),
+      hataKodu: rapor.hatalar.length ? "FATURA_TASLAKLARI_EKSIK" : null,
+    });
+    await faturaOzetiniKaydet(admin, storeId, kayit.islemKimligi, ozetSatiri);
+  }
   return {
     ...islemYaniti(guncelKayit),
     tamam: !hazirlaniyor, hazirlaniyor,
     taslaklar: faturaTaslaklari(guncelKayit.satirlar, kayit.islemKimligi),
     otomatikTaslakRaporu: rapor,
+    ...(ozetSatiri ? { ozetSatiri } : {}),
     ...(rapor.hatalar.length ? { taslakKayitUyarisi: rapor.hatalar.join(" ") } : {}),
   };
 }

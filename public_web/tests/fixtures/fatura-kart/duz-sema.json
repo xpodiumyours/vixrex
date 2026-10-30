@@ -1,0 +1,217 @@
+{
+  "items": [
+    {
+      "row_id": "1",
+      "title": "ELT1301 Elit Erkek Elastan Sıfır Yaka Fanila",
+      "brand": "ELIT",
+      "variant": "Beyaz / S-2, M-3, L-4, XL-5, 2XL-6",
+      "short_description": "Elit erkek elastan sıfır yaka fanila; beyaz ve siyah renk seçenekleri ile S/2, M/3, L/4, XL/5 ve 2XL/6 bedenlerinde sunulur.",
+      "category_suggestion": "Erkek İç Giyim > Erkek Atlet / Fanila",
+      "verification_status": "verified",
+      "product_url": "https://sehermensucat.com/elt1301-elit-erkek-elastan-sifiryaka-fanila",
+      "image_url": "https://cdn.myikas.com/images/74e89546-a032-4dc5-a4cc-0765f50962f6/3ac5759d-36e6-4131-b723-2e1149825b1d/image_3840.webp",
+      "source_url": "https://sehermensucat.com/elt1301-elit-erkek-elastan-sifiryaka-fanila",
+      "rights_status": "unknown",
+      "matched_attributes": [
+        "ürün kodu: ELT1301",
+        "ürün adı: Elit Erkek Elastan Sıfır Yaka Fanila",
+        "marka: Tutku Elit",
+        "cinsiyet: erkek",
+        "renk: Beyaz (faturadaki 100 BEYAZ)",
+        "beden: M (resmî beden tablosunda M / 3)"
+      ],
+      "unmatched_attributes": [
+        "barkod 8681128321035 resmî ürün sayfasında gösterilmiyor",
+        "kumaş içeriği oranı resmî sayfa metninde doğrulanamadı",
+        "faturadaki renk kodu 100 ile resmî renk adı eşlemesi sayfada açıkça yazmıyor"
+      ],
+      "sources": [
+        {
+          "url": "https://sehermensucat.com/elt1301-elit-erkek-elastan-sifiryaka-fanila",
+          "type": "resmî üretici ürün sayfası",
+          "note": "Sayfa açıldı; ürün kodu, adı, renk ve beden seçenekleri ile ürün görseli doğrulandı."
+        },
+        {
+          "url": "https://sehermensucat.com/pages/hakkimizda",
+          "type": "resmî kurumsal sayfa",
+          "note": "Tutku / Tutku Elit markalarının Seher Mensucat A.Ş. bünyesinde olduğu doğrulandı."
+        }
+      ],
+      "duplicate_group": null,
+      "canonical_row_id": null,
+      "invoice_data": {
+        "quantity": 1,
+        "unit": "ad",
+        "unit_price": 115,
+        "total_amount": 115
+      }
+    },
+    {
+      "row_id": "2",
+      "title": "ELT1302 Elit Erkek Elastan Sıfır Yaka Uzun Kol Fanila",
+      "brand": "ELIT",
+      "variant": "Beyaz / Siyah; S-2, M-3, L-4, XL-5, 2XL-6",
+      "short_description": "Elit erkek elastan sıfır yaka uzun kol fanila; beyaz ve siyah renk seçenekleri ile S/2–2XL/6 beden aralığında sunulur.",
+      "category_suggestion": "Erkek İç Giyim > Erkek Atlet / Fanila",
+      "verification_status": "verified",
+      "product_url": "https://sehermensucat.com/elt1302-elit-erkek-elastan-sifiryaka-uzun-kol-fanila-fanila",
+      "image_url": "https://cdn.myikas.com/images/74e89546-a032-4dc5-a4cc-0765f50962f6/eebb417d-81e9-4e3f-a89a-17bcffd0e480/image_3840.webp",
+      "source_url": "https://sehermensucat.com/elt1302-elit-erkek-elastan-sifiryaka-uzun-kol-fanila-fanila",
+      "rights_status": "unknown",
+      "matched_attributes": [
+        "ürün kodu: ELT1302",
+        "ürün adı: Elit Erkek Elastan Sıfır Yaka Uzun Kol Fanila",
+        "marka: Tutku Elit",
+        "cinsiyet: erkek",
+        "kol tipi: uzun kol",
+        "renk: Siyah (faturadaki 750 SIYAH)",
+        "beden: M (resmî beden tablosunda M / 3)"
+      ],
+      "unmatched_attributes": [
+        "barkod 8681128321653 resmî ürün sayfasında gösterilmiyor",
+        "kumaş içeriği oranı resmî sayfa metninde doğrulanamadı",
+        "faturadaki renk kodu 750 ile resmî renk adı eşlemesi sayfada açıkça yazmıyor"
+      ],
+      "sources": [
+        {
+          "url": "https://sehermensucat.com/elt1302-elit-erkek-elastan-sifiryaka-uzun-kol-fanila-fanila",
+          "type": "resmî üretici ürün sayfası",
+          "note": "Sayfa açıldı; ürün kodu, adı, renk ve beden seçenekleri ile ürün görseli doğrulandı."
+        }
+      ],
+      "duplicate_group": null,
+      "canonical_row_id": null,
+      "invoice_data": {
+        "quantity": 1,
+        "unit": "ad",
+        "unit_price": 137,
+        "total_amount": 137
+      }
+    },
+    {
+      "row_id": "3",
+      "title": "SKD0010 Seher Kadın Penye Kaşkorse Atlet",
+      "brand": "SHR",
+      "variant": "Beyaz; XL-5, 2XL-6, 3XL-7",
+      "short_description": null,
+      "category_suggestion": "Kadın İç Giyim > Kadın Atlet",
+      "verification_status": "ambiguous",
+      "product_url": null,
+      "image_url": null,
+      "source_url": "https://sehermensucat.com/kadin-atlet",
+      "rights_status": "unknown",
+      "matched_attributes": [
+        "ürün kodu: SKD0010",
+        "ürün adı: Seher Kadın Penye Kaşkorse Atlet",
+        "marka: Seher (faturadaki SHR kısaltması)",
+        "renk seçeneği: Beyaz",
+        "beden aralığında 7 (3XL) seçeneği listeleniyor"
+      ],
+      "unmatched_attributes": [
+        "ürün sayfası açılamadığı için barkod 8681128334561 doğrulanamadı",
+        "faturadaki beden 7 ve renk kodu 100 eşlemesi ürün sayfasında teyit edilemedi",
+        "resmî ürün sayfası açılamadı; görsel doğrulanamadı",
+        "resmî sayfada ürün görseli doğrulanamadı"
+      ],
+      "sources": [
+        {
+          "url": "https://sehermensucat.com/kadin-atlet",
+          "type": "resmî üretici kategori sayfası",
+          "note": "Sayfa açıldı; SKD0010 Seher Kadın Penye Kaşkorse Atlet ürünü ve Beyaz renk seçeneği listelendi, ürün sayfası erişim limiti nedeniyle açılamadı."
+        }
+      ],
+      "duplicate_group": null,
+      "canonical_row_id": null,
+      "invoice_data": {
+        "quantity": 6,
+        "unit": "ad",
+        "unit_price": 47,
+        "total_amount": 282
+      }
+    },
+    {
+      "row_id": "4",
+      "title": "TER0105 Tutku Erkek Penye Sıfır Yaka Fanila",
+      "brand": "TUT",
+      "variant": "Beyaz / Gri / Siyah; XS-1, S-2, M-3, L-4, XL-5, 2XL-6",
+      "short_description": "Tutku erkek penye sıfır yaka fanila; beyaz, gri ve siyah renk seçenekleri ile XS/1–2XL/6 beden aralığında sunulur.",
+      "category_suggestion": "Erkek İç Giyim > Erkek Atlet / Fanila",
+      "verification_status": "verified",
+      "product_url": "https://sehermensucat.com/ter0105-tutku-erkek--penye-sifir-yaka-fanila",
+      "image_url": "https://cdn.myikas.com/images/74e89546-a032-4dc5-a4cc-0765f50962f6/34e4bebd-1f63-4abb-87de-6d70bff2bb54/image_3840.webp",
+      "source_url": "https://sehermensucat.com/ter0105-tutku-erkek--penye-sifir-yaka-fanila",
+      "rights_status": "unknown",
+      "matched_attributes": [
+        "ürün kodu: TER0105",
+        "ürün adı: Tutku Erkek Penye Sıfır Yaka Fanila",
+        "marka: Tutku",
+        "cinsiyet: erkek",
+        "kumaş tipi: penye",
+        "yaka: sıfır yaka",
+        "renk: Beyaz (faturadaki 100 BEYAZ)",
+        "beden: 4 (resmî beden tablosunda L / 4)"
+      ],
+      "unmatched_attributes": [
+        "barkod 8680508918971 resmî ürün sayfasında gösterilmiyor",
+        "kumaş içeriği oranı resmî sayfa metninde doğrulanamadı"
+      ],
+      "sources": [
+        {
+          "url": "https://sehermensucat.com/ter0105-tutku-erkek--penye-sifir-yaka-fanila",
+          "type": "resmî üretici ürün sayfası",
+          "note": "Sayfa açıldı; ürün kodu, adı, renk-bedен seçenekleri ve ürün görseli doğrulandı."
+        }
+      ],
+      "duplicate_group": "TER0105-BEYAZ",
+      "canonical_row_id": "4",
+      "invoice_data": {
+        "quantity": 6,
+        "unit": "ad",
+        "unit_price": 86,
+        "total_amount": 516
+      }
+    },
+    {
+      "row_id": "5",
+      "title": "TER0105 Tutku Erkek Penye Sıfır Yaka Fanila",
+      "brand": "TUT",
+      "variant": "Beyaz / Gri / Siyah; XS-1, S-2, M-3, L-4, XL-5, 2XL-6",
+      "short_description": "Tutku erkek penye sıfır yaka fanila; beyaz, gri ve siyah renk seçenekleri ile XS/1–2XL/6 beden aralığında sunulur.",
+      "category_suggestion": "Erkek İç Giyim > Erkek Atlet / Fanila",
+      "verification_status": "verified",
+      "product_url": "https://sehermensucat.com/ter0105-tutku-erkek--penye-sifir-yaka-fanila",
+      "image_url": "https://cdn.myikas.com/images/74e89546-a032-4dc5-a4cc-0765f50962f6/34e4bebd-1f63-4abb-87de-6d70bff2bb54/image_3840.webp",
+      "source_url": "https://sehermensucat.com/ter0105-tutku-erkek--penye-sifir-yaka-fanila",
+      "rights_status": "unknown",
+      "matched_attributes": [
+        "ürün kodu: TER0105",
+        "ürün adı: Tutku Erkek Penye Sıfır Yaka Fanila",
+        "marka: Tutku",
+        "cinsiyet: erkek",
+        "kumaş tipi: penye",
+        "yaka: sıfır yaka",
+        "renk: Beyaz (faturadaki 100 BEYAZ)",
+        "beden: 5 (resmî beden tablosunda XL / 5)"
+      ],
+      "unmatched_attributes": [
+        "barkod 8680508918988 resmî ürün sayfasında gösterilmiyor",
+        "kumaş içeriği oranı resmî sayfa metninde doğrulanamadı"
+      ],
+      "sources": [
+        {
+          "url": "https://sehermensucat.com/ter0105-tutku-erkek--penye-sifir-yaka-fanila",
+          "type": "resmî üretici ürün sayfası",
+          "note": "Sayfa açıldı; ürün kodu, adı, renk-bedен seçenekleri ve ürün görseli doğrulandı. Aynı ürünün farklı bedeni olduğu için canonical kayıt 4. satırdır."
+        }
+      ],
+      "duplicate_group": "TER0105-BEYAZ",
+      "canonical_row_id": "4",
+      "invoice_data": {
+        "quantity": 6,
+        "unit": "ad",
+        "unit_price": 86,
+        "total_amount": 516
+      }
+    }
+  ]
+}

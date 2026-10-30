@@ -104,6 +104,7 @@ interface OncekiIslem {
 interface FaturaOkumaSonucu {
   otomatikTaslakRaporu?: { kaydedildi: number; atlandi: number; bekleyen: number; birlestirmeBekleyen?: number; hatalar: string[] };
   taslakKayitUyarisi?: string;
+  ozetSatiri?: string;
   hazirlaniyor?: boolean;
   asama?: string;
   maliyetOzeti?: {
@@ -1171,6 +1172,9 @@ export default function InvoiceToProducts({
             : ""}
           {otomatikTaslakRaporu.atlandi > 0 ? ` ${otomatikTaslakRaporu.atlandi} satır kaydedilemedi.` : ""}
         </p>}
+        {belge?.ozetSatiri && (
+          <p className="fatura-aciklama">{belge.ozetSatiri}</p>
+        )}
         {belge && (
           <p className="fatura-aciklama">
             Firma: {belgedeYazi(belge.tedarikci)}
