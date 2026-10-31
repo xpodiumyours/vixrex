@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'Gizlilik Politikası | Vixrex',
@@ -68,7 +69,7 @@ export default function PrivacyPage() {
       <p>
         Hesap, vitrin ve diğer kişisel veriler için saklama ve silme koşulları veri türüne göre değişir.
         Yasal saklama yükümlülüğü bulunan bazı kayıtlar hesap silindikten sonra da ilgili süreler boyunca saklanabilir.
-        Yürürlükteki veri işleme ve saklama açıklamaları için <a href="/legal/privacy">KVKK Aydınlatma Metni</a>ni inceleyebilirsiniz.
+        Yürürlükteki veri işleme ve saklama açıklamaları için <Link href="/legal/privacy">KVKK Aydınlatma Metni</Link>ni inceleyebilirsiniz.
       </p>
 
       <h2>6. Haklarınız (KVKK)</h2>
