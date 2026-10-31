@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { durumGecerliMi, type KartDurumu } from "@/lib/faturaKartDurumu";
 import { normalizeProductMetadata, normalizeProductVariants } from "@/lib/productRichData";
 import { updateRichCoreProduct } from "@/lib/productCoreServer";
+import { gorselHakKayitlariniDerle, type GorselHakDurumu } from "@/lib/faturaGorselHakDenetimi";
 
 const KIMLIK = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -10,6 +11,8 @@ export interface DogrulanmisSatir {
   sonuc: KartDurumu;
   urunId: string | null;
   izinliGorseller: Set<string>;
+  /** Salt-okunur denetim: bu alan yayin izni yerine gecmez ve yayini durdurmaz. */
+  gorselHakDurumlari?: ReadonlyMap<string, GorselHakDurumu>;
   katalog: Record<string, unknown> | null;
   alisBirimFiyati: number | null;
   varyant: string;
@@ -54,12 +57,15 @@ export async function satiriDogrula(
     .from("invoice_image_rights")
     .select("image_url,usage_status")
     .eq("line_id", satir.data.id);
+  const hakKayitlari = Array.isArray(gorseller.data) ? gorseller.data : [];
+  // Mevcut davranis korunur: unknown karta girebilir, acik ret engellenir.
   const izinli = new Set<string>(
-    (Array.isArray(gorseller.data) ? gorseller.data : [])
+    hakKayitlari
       .filter((kayit) => String(kayit.usage_status ?? "") !== "denied")
       .map((kayit) => String(kayit.image_url ?? "").trim())
       .filter(Boolean),
   );
+  const hakDurumlari = gorselHakKayitlariniDerle(hakKayitlari);
 
   if (gorseller.error) return null;
 
@@ -70,6 +76,7 @@ export async function satiriDogrula(
     sonuc: durumGecerliMi(satir.data.outcome) ? satir.data.outcome : "eksik",
     urunId: satir.data.product_id ? String(satir.data.product_id) : null,
     izinliGorseller: izinli,
+    gorselHakDurumlari: hakDurumlari,
     varyant: String(satir.data.variant_name ?? ""),
     beden: String(satir.data.size_text ?? ""),
   };
