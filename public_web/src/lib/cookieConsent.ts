@@ -21,6 +21,7 @@ export function parseConsentSnapshot(raw: string | null): CookieConsent | null {
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw) as Partial<CookieConsent>;
+    if (typeof parsed.analytics !== "boolean" || typeof parsed.marketing !== "boolean") return null;
     return {
       necessary: true,
       analytics: Boolean(parsed.analytics),
@@ -64,6 +65,10 @@ export function writeConsent(
     updatedAt: new Date().toISOString(),
   };
   window.localStorage.setItem(COOKIE_CONSENT_KEY, JSON.stringify(value));
+  const measurementId = process.env.NEXT_PUBLIC_GA_ID;
+  if (measurementId) {
+    (window as unknown as Record<string, unknown>)[`ga-disable-${measurementId}`] = !value.analytics;
+  }
   window.dispatchEvent(new CustomEvent(COOKIE_CONSENT_EVENT, { detail: value }));
   return value;
 }

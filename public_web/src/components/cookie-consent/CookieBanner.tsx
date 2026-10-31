@@ -26,6 +26,7 @@ export function CookieBanner() {
   );
   const existingConsent = parseConsentSnapshot(consentSnapshot);
   const [dismissed, setDismissed] = useState(false);
+  const [reopened, setReopened] = useState(false);
   const [customize, setCustomize] = useState(false);
   const [analytics, setAnalytics] = useState(false);
   const [marketing, setMarketing] = useState(false);
@@ -33,10 +34,32 @@ export function CookieBanner() {
   function persist(next: Pick<CookieConsent, "analytics" | "marketing">) {
     writeConsent(next);
     setDismissed(true);
+    setReopened(false);
     setCustomize(false);
   }
 
-  if (!hydrated || existingConsent || dismissed) return null;
+  if (!hydrated) return null;
+
+  if (existingConsent && !reopened) {
+    return (
+      <button
+        type="button"
+        aria-label="Çerez tercihlerini yeniden düzenle"
+        onClick={() => {
+          setAnalytics(existingConsent.analytics);
+          setMarketing(existingConsent.marketing);
+          setCustomize(true);
+          setReopened(true);
+          setDismissed(false);
+        }}
+        className="fixed bottom-3 left-3 z-40 rounded-full border border-black/15 bg-white px-3 py-2 text-xs font-semibold text-[#182028] shadow-md dark:border-white/20 dark:bg-[#121820] dark:text-[#E2E8F0]"
+      >
+        Çerez tercihleri
+      </button>
+    );
+  }
+
+  if (dismissed) return null;
 
   return (
     <div
@@ -98,6 +121,15 @@ export function CookieBanner() {
           >
             Yalnızca gerekli
           </button>
+          {reopened ? (
+            <button
+              type="button"
+              className="rounded-lg px-4 py-2 text-sm font-semibold underline-offset-2 hover:underline"
+              onClick={() => setReopened(false)}
+            >
+              Vazgeç
+            </button>
+          ) : null}
           <button
             type="button"
             className="rounded-lg px-4 py-2 text-sm font-semibold underline-offset-2 hover:underline"
