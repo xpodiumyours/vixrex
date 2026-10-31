@@ -33,7 +33,7 @@ const KONULAR = [
     baslik: "Yasal konular ve veri talepleri",
     metin:
       "KVKK kapsamındaki başvurular, veri silme talepleri ve yasal bildirimler. Talebiniz mevzuattaki süreler içinde yanıtlanır.",
-    baglanti: { yazi: "KVKK ve Gizlilik Politikası", yol: "/privacy" },
+    baglanti: { yazi: "KVKK Aydınlatma Metni", yol: "/legal/privacy" },
   },
 ];
 

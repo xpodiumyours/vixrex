@@ -66,7 +66,9 @@ export default function PrivacyPage() {
 
       <h2>5. Veri Saklama</h2>
       <p>
-        Hesabınız aktif olduğu sürece verileriniz saklanır. Hesabınızı sildiğinizde tüm verileriniz kalıcı olarak silinir.
+        Hesap, vitrin ve diğer kişisel veriler için saklama ve silme koşulları veri türüne göre değişir.
+        Yasal saklama yükümlülüğü bulunan bazı kayıtlar hesap silindikten sonra da ilgili süreler boyunca saklanabilir.
+        Yürürlükteki veri işleme ve saklama açıklamaları için <a href="/legal/privacy">KVKK Aydınlatma Metni</a>ni inceleyebilirsiniz.
       </p>
 
       <h2>6. Haklarınız (KVKK)</h2>
