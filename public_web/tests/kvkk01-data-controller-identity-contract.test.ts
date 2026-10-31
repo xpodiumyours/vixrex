@@ -52,6 +52,12 @@ describe("R-02 / KVKK-01 — veri sorumlusu ve iletişim tutarlılığı", () =>
     expect(privacy).toContain('href="/iletisim"');
   });
 
+  it("hakkımızda sayfası genel gizlilik yerine resmi KVKK metnine yönlendirir", () => {
+    expect(about).toContain('href="/legal/privacy"');
+    expect(about).toContain("KVKK Aydınlatma Metni");
+    expect(about).not.toContain('href="/privacy"');
+  });
+
   it("mobil uygulama derleme zamanı hukuki kimlik ayarlarını korur", () => {
     expect(mobile).toContain("'LEGAL_DATA_CONTROLLER_TITLE'");
     expect(mobile).toContain("'LEGAL_DATA_CONTROLLER_ADDRESS'");
