@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { EslesmisFaturaSatiri, KatalogBilgisi } from "@/lib/faturaEslestir";
 import { sonucOzeti } from "@/lib/faturaEslestir";
 import { durumGecerliMi } from "@/lib/faturaKartDurumu";
+import { yonetilenUrunGorseliMi } from "@/lib/productImagePolicy";
 import type { DijitalIzAramaDurumu } from "@/lib/faturaIslemKaydi";
 
 export interface SahipDurumu {
@@ -15,6 +16,7 @@ export interface SahipDurumu {
 
 export interface KayitliSatir extends EslesmisFaturaSatiri {
   satirId: string;
+  gorsel?: string | null;
   sahipDurumu: SahipDurumu | null;
   urunId: string | null;
   /** Barkodsuz satır aynı ürün olabilir mi; karar beklenirken dolu. */
@@ -130,6 +132,19 @@ export async function islemiYukle(
       adayAdlari.set(String(aday.id), String(aday.name ?? ""));
     }
   }
+  const urunGorselleri = new Map<string, string>();
+  const urunKimlikleri = [...new Set(
+    kayitlar.map((kayit) => (kayit.product_id ? String(kayit.product_id) : "")).filter(Boolean),
+  )];
+  if (urunKimlikleri.length > 0) {
+    const urunler = await admin.from("products").select("id,image_urls").in("id", urunKimlikleri);
+    for (const urun of Array.isArray(urunler.data) ? urunler.data : []) {
+      const adres = Array.isArray(urun.image_urls)
+        ? urun.image_urls.find((url): url is string => typeof url === "string" && yonetilenUrunGorseliMi(url))
+        : undefined;
+      if (adres) urunGorselleri.set(String(urun.id), adres);
+    }
+  }
 
   return {
     tedarikciDijitalIz: is.data.supplier_trace && typeof is.data.supplier_trace === "object"
@@ -156,6 +171,7 @@ export async function islemiYukle(
     },
     satirlar: kayitlar.map((kayit) => ({
       satirId: String(kayit.id),
+      gorsel: kayit.product_id ? urunGorselleri.get(String(kayit.product_id)) ?? null : null,
       hamSatir: String(kayit.raw_line ?? ""),
       model: String(kayit.model ?? ""),
       ad: String(kayit.product_name ?? ""),

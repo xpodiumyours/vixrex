@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { buildProductDetailFacts } from "@/lib/productCardPresentation";
 import { faturaKatalogMetadatasi } from "@/lib/faturaUrunIcerigi";
 import { faturaSonucunuBekle } from "@/lib/faturaOtomatikBekleme";
+import { onizlemeKartiGorseli } from "@/lib/faturaOnizlemeGorseli";
 import { FaturaAkisBasligi } from "./FaturaAkisBasligi";
 import { FaturaIslemSonucu, type FaturaSonucKarti, type YazmaSonucu } from "./FaturaIslemSonucu";
 import "./faturaAkis.css";
@@ -43,6 +44,7 @@ export interface FaturaSatiri {
   uyari?: string;
   celiski?: CeliskiBilgisi;
   katalog: KatalogBilgisi | null;
+  gorsel?: string | null;
 }
 
 export interface KatalogBilgisi {
@@ -1121,7 +1123,7 @@ export default function InvoiceToProducts({
       if (!yerel) continue;
       yayindakiKartlar.push({
         sira: satir.sira, ad: yerel.katalog?.resmiAd || yerel.ad, fiyat: yerel.satisFiyati,
-        gorsel: degerlendirmeler[satir.sira]?.gorseller[0] ?? yerel.esnafGorselleri[0] ?? null,
+        gorsel: onizlemeKartiGorseli(satir.gorsel),
       });
     }
     const baslik = sonuc.yayinda > 0
@@ -1301,6 +1303,7 @@ export default function InvoiceToProducts({
             ? buildProductDetailFacts({ metadata: faturaKatalogMetadatasi(katalog) })
             : [];
           const dusukGuven = satir.guven < GUVEN_ESIGI;
+          const kartGorseli = onizlemeKartiGorseli(satir.gorsel);
           return (
             <article
               key={`${satir.model}-${satir.barkod}-${index}`}
@@ -1310,15 +1313,15 @@ export default function InvoiceToProducts({
               <span className="fatura-rozet">{KART_DURUM_ETIKETI[satir.sonuc]}</span>
               {dusukGuven && <span className="fatura-rozet fatura-rozet-suphe">Kontrol et</span>}
 
-              {degerlendirme.gorseller.length > 0 ? (
+              {kartGorseli ? (
                 <img
                   className="fatura-kart-gorsel"
-                  src={degerlendirme.gorseller[0]}
+                  src={kartGorseli}
                   alt={katalog?.resmiAd || satir.ad}
                   loading="lazy"
                 />
               ) : (
-                <div className="fatura-kart-gorselsiz">Fotoğraf yok</div>
+                <div className="fatura-kart-gorselsiz">Görsel hazırlanıyor</div>
               )}
 
               {satir.model && <div className="fatura-model">{satir.model}</div>}

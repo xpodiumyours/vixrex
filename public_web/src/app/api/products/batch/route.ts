@@ -16,7 +16,7 @@ import {
 } from "@/lib/faturaUrunBaglantisi";
 import { urunGirdisiniHazirla } from "@/lib/productIntake";
 import { durumGecerliMi, yayinEksikleri } from "@/lib/faturaKartDurumu";
-import { FATURA_MIN_PRODUCT_IMAGES } from "@/lib/productImagePolicy";
+import { FATURA_MIN_PRODUCT_IMAGES, yonetilenUrunGorseliMi } from "@/lib/productImagePolicy";
 import { kayitliFaturaKatalogunuUygula, faturaUrunGorselleriniAktar } from "@/lib/faturaUrunHazirlama";
 import { tuketicideGorunenler, vitrinOnbelleginiYenile } from "@/lib/vitrinYayinDogrula";
 
@@ -106,6 +106,7 @@ interface SatirSonucu {
   sebep?: string;
   id?: string;
   kayit?: "yeni" | "guncellendi" | "mevcut";
+  gorsel?: string | null;
 }
 
 export async function POST(request: NextRequest) {
@@ -248,6 +249,9 @@ export async function POST(request: NextRequest) {
     const { urunGorselleri, gorselDurumu, gorselKaynaklari } = dogrulanmis
       ? await faturaUrunGorselleriniAktar({ admin, slug, girdi: hazirlik.girdi, satir: dogrulanmis })
       : { urunGorselleri: hazirlik.girdi.imageUrls, gorselDurumu: "", gorselKaynaklari: [] };
+    const onizlemeGorseli = faturaKaynakli
+      ? urunGorselleri.find((adres) => yonetilenUrunGorseliMi(adres)) ?? null
+      : null;
 
     const sablonTam = Boolean(faturaKaynakli);
     const faturaEksikleri = faturaKaynakli
@@ -478,6 +482,7 @@ export async function POST(request: NextRequest) {
       }
       if (sonuclar.length > 0 && faturaKaynakli) {
         sonuclar[sonuclar.length - 1].kayit = kayit;
+        sonuclar[sonuclar.length - 1].gorsel = onizlemeGorseli;
       }
     } catch (err) {
       console.error("[products/batch] create failed:", err);
