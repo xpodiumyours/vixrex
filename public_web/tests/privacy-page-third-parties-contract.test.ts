@@ -40,3 +40,26 @@ describe("Gizlilik politikası — üçüncü taraf paylaşımı doğru beyan ed
     expect(pageSource).toContain(provider);
   });
 });
+
+describe("R-02 — gizlilik beyanı ve iletişim tutarlılığı", () => {
+  it("hesap silinince tüm verilerin koşulsuz silindiğini vaat etmez", () => {
+    expect(pageSource).not.toContain(
+      "Hesabınızı sildiğinizde tüm verileriniz kalıcı olarak silinir."
+    );
+    expect(pageSource).toContain("Yasal saklama yükümlülüğü");
+  });
+
+  it("saklama süreleri için aktif KVKK belgesine yönlendirir", () => {
+    expect(pageSource).toContain('href="/legal/privacy"');
+  });
+
+  it("kamuya açık iletişim adresi aktif aydınlatma metniyle eşleşir", () => {
+    expect(pageSource).toContain("mailto:destek@vixrex.com");
+    expect(pageSource).not.toContain("vixrex.app@gmail.com");
+    expect(pageSource).not.toContain("Xpodiumyours@gmail.com");
+  });
+
+  it("genel gizlilik sayfasının güncelleme tarihi değiştirilmiştir", () => {
+    expect(pageSource).toContain("Son güncelleme: 1 Kasım 2026");
+  });
+});

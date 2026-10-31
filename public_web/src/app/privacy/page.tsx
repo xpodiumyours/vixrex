@@ -9,13 +9,13 @@ export default function PrivacyPage() {
   return (
     <main style={{ maxWidth: 720, margin: '0 auto', padding: '40px 20px', color: '#EDEDED' }}>
       <h1>Gizlilik Politikası</h1>
-      <p>Son güncelleme: 26 Eylül 2026</p>
+      <p>Son güncelleme: 1 Kasım 2026</p>
 
       <h2>1. Veri Sorumlusu</h2>
       <p>
         <strong>Vixrex</strong>, Aksakal Ticaret tarafından işletilmektedir.<br />
         Adres: Ümraniye Esenevler Mahallesi Lokman Hekim Caddesi No 18, İstanbul<br />
-        E-posta: vixrex.app@gmail.com
+        E-posta: <a href="mailto:destek@vixrex.com">destek@vixrex.com</a>
       </p>
 
       <h2>2. Toplanan Veriler</h2>
@@ -64,7 +64,9 @@ export default function PrivacyPage() {
 
       <h2>5. Veri Saklama</h2>
       <p>
-        Hesabınız aktif olduğu sürece verileriniz saklanır. Hesabınızı sildiğinizde tüm verileriniz kalıcı olarak silinir.
+        Hesap, vitrin ve diğer kişisel veriler için saklama ve silme koşulları veri türüne göre değişir.
+        Yasal saklama yükümlülüğü bulunan bazı kayıtlar hesap silindikten sonra da ilgili süreler boyunca saklanabilir.
+        Güncel ayrıntılar ve saklama süreleri için <a href="/legal/privacy">KVKK Aydınlatma Metni</a>ni inceleyebilirsiniz.
       </p>
 
       <h2>6. Haklarınız (KVKK)</h2>
@@ -77,7 +79,7 @@ export default function PrivacyPage() {
 
       <h2>7. İletişim</h2>
       <p>
-        Gizlilikle ilgili sorularınız için: <a href="mailto:Xpodiumyours@gmail.com">Xpodiumyours@gmail.com</a>
+        Gizlilikle ilgili sorularınız için: <a href="mailto:destek@vixrex.com">destek@vixrex.com</a>
       </p>
     </main>
   );
