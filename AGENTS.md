@@ -17,6 +17,21 @@ Kural: aşağıdaki her satır geçmişte yaşanmış somut bir aksiliğe dayan�
 Dayağı olmayan satır eklenmez. Yeni bir aksilik yaşandığında buraya bir satır
 eklenir ve mümkünse bir kanca ile ölçülür.
 
+## Z.0 — Oturum açılışı (2026-10-31)
+
+Her oturumun ilk üç adımı, istisnasız:
+
+1. **İki defteri oku.** Yollar sabit, **arama yapma**:
+   `C:\Projects\vixrex\CALISMA-DEFTERI.md` (proje; repo dışında, `.gitignore`'da) ve
+   `C:\Projects\Casper\DEFTER.md` (kişisel). Başka defter dosyası yoktur; ikinci bir defter açma.
+2. **Canlı ölçüm yap.** Defter bir fotoğraftır: `main`, canlı commit (`deploy-info.json`) ve
+   açık PR'lar yeniden ölçülür. Ölçmeden "durum şu" denmez.
+3. **Sonra cevap ver.** Başka ajanın raporu kanıt değildir; "düzeldi/tamamlandı" ancak komut
+   çıktısı, dosya:satır veya canlı ölçümle kabul edilir.
+
+Neden: 2026-10-31'de bir oturum defterin yolunu bilmediği için 53 saniye aradı, bulamayınca
+**ikinci bir defter (`TAKİP.md`) açtı** ve içeriği ayrıştı. Kopya defter, kopya gerçek üretir.
+
 > **Ölçüm kancaları hakkında not:** Bu dosyada adı geçen kanca betikleri
 > (`.claude/hooks/`) 2026-09-26'da depodan kaldırıldı. Kural metinleri kaldı;
 > kancaları geri getirmek Casper'ın kararıdır. Kancası olmayan bir kural,
