@@ -11,6 +11,7 @@ const m = vi.hoisted(() => ({
   active: vi.fn(async () => false),
   admin: vi.fn(() => ({ from: vi.fn(), rpc: vi.fn() })),
   edit: vi.fn(async () => { throw new Error("INVALID_EDIT_TOKEN"); }),
+  intake: vi.fn(async () => ({ durum: "reddedildi", sebep: "Test ürünü kaydedilmiyor" })),
 }));
 
 vi.mock("next/headers", () => ({ cookies: async () => ({ get: m.cookie }) }));
@@ -23,6 +24,10 @@ vi.mock("@/lib/ownerSessionValidity", () => ({
 }));
 vi.mock("@/lib/supabaseAdmin", () => ({ getSupabaseAdmin: m.admin }));
 vi.mock("@/lib/instagramServer", () => ({ verifyStoreEditToken: m.edit }));
+vi.mock("@/lib/productIntake", async (importOriginal) => ({
+  ...await importOriginal<typeof import("@/lib/productIntake")>(),
+  urunGirdisiniHazirla: m.intake,
+}));
 
 import { GET, POST, PATCH, DELETE } from "@/app/api/products/route";
 import { POST as batch } from "@/app/api/products/batch/route";
@@ -72,6 +77,22 @@ describe("#611: iptal edilmiş fakat çerezi geçerli görünen oturum", () => {
     expect(response.status).toBe(401);
     expect(m.active).toHaveBeenCalledOnce();
     expect(m.admin.mock.results[0]?.value.from).not.toHaveBeenCalled();
+  });
+
+  it("iptal edilmiş çerez yanında geçerli Flutter anahtarı toplu ürüne erişebilir", async () => {
+    m.edit.mockResolvedValueOnce({ id: "11111111-1111-4111-8111-111111111111" } as never);
+    const store = { id: "11111111-1111-4111-8111-111111111111", edit_token: "valid", name: "Esnaf" };
+    const single = vi.fn(async () => ({ data: store, error: null }));
+    const eq = vi.fn(() => ({ single }));
+    const select = vi.fn(() => ({ eq }));
+    m.admin.mockImplementationOnce(() => ({ from: vi.fn(() => ({ select })), rpc: vi.fn() }));
+    const response = await batch(new NextRequest("http://localhost/api/products/batch", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ slug: "esnaf", editToken: "valid-flutter-token", products: [{ name: "Ürün" }] }),
+    }));
+    expect(response.status).toBe(200);
+    expect(m.edit).toHaveBeenCalledWith("esnaf", "valid-flutter-token");
+    expect(m.intake).toHaveBeenCalled();
   });
 
   it("fatura okuma isteğinde 401 döner ve ücretli iş başlatmaz", async () => {
