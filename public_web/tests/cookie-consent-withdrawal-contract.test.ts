@@ -50,4 +50,29 @@ describe("R02-CEREZ-01: değiştirilebilir çerez tercihleri", () => {
     expect(loader).toContain("!analyticsAllowed");
     expect(loader).toContain("if (!GA_ID || !analyticsAllowed) return null;");
   });
+
+  it("analitik rızası geri alınınca yalnız Google Analytics çerezlerini temizler", () => {
+    const deletions: string[] = [];
+    const saved = new Map<string, string>();
+    vi.stubEnv("NEXT_PUBLIC_GA_ID", "G-VIXREX-TEST");
+    vi.stubGlobal("CustomEvent", class { constructor(public type: string, public init: object) {} });
+    vi.stubGlobal("document", {
+      get cookie() { return "_ga=client; _ga_TEST=session; _gid=legacy; vixrex_session=retain"; },
+      set cookie(value: string) { deletions.push(value); },
+    });
+    vi.stubGlobal("window", {
+      location: { hostname: "www.vixrex.com" },
+      localStorage: { setItem: (key: string, value: string) => saved.set(key, value) },
+      dispatchEvent: vi.fn(),
+    });
+
+    writeConsent({ analytics: false, marketing: false });
+
+    expect(deletions.some((item) => item.startsWith("_ga=;") && item.includes("Domain=vixrex.com"))).toBe(true);
+    expect(deletions.some((item) => item.startsWith("_ga_TEST=;"))).toBe(true);
+    expect(deletions.some((item) => item.startsWith("_gid=;"))).toBe(true);
+    expect(deletions.some((item) => item.startsWith("vixrex_session=;"))).toBe(false);
+    expect(saved.has(COOKIE_CONSENT_KEY)).toBe(true);
+    expect((window as unknown as Record<string, unknown>)["ga-disable-G-VIXREX-TEST"]).toBe(true);
+  });
 });
