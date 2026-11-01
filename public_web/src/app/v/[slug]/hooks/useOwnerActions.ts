@@ -44,7 +44,7 @@ export interface OwnerActionsHook {
   sil: () => Promise<void>;
   setSilmeOnayi: (v: boolean) => void;
   onayVeriliyor: boolean;
-  onayVer: () => Promise<void>;
+  onayVer: (beyanlar: { privacyAcknowledged: boolean; termsAccepted: boolean; publicationConsent: boolean }) => Promise<boolean>;
 }
 
 interface Deps {
@@ -804,7 +804,7 @@ export function useOwnerActions({
   // Başarıdan sonra router.refresh() gerekir: draftData sunucuda yeniden
   // okunmadan yerelTaslak'taki onay bayrakları güncellenmez, PublishBar
   // hâlâ "onaylanmadı" görür.
-  const onayVer = useCallback(async () => {
+  const onayVer = useCallback(async (beyanlar: { privacyAcknowledged: boolean; termsAccepted: boolean; publicationConsent: boolean }): Promise<boolean> => {
     mesajEkle("kullanici", "Onaylıyorum");
     setOnayVeriliyor(true);
 
@@ -812,19 +812,21 @@ export function useOwnerActions({
       const yanit = await fetch("/api/owner-accept-legal", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug }),
+        body: JSON.stringify({ slug, ...beyanlar }),
       });
       const govde = await yanit.json();
 
       if (!yanit.ok) {
         mesajEkle("asistan", govde?.hata ?? "Onay verilemedi. Lütfen tekrar dene.");
-        return;
+        return false;
       }
 
-      mesajEkle("asistan", "Onay kaydedildi. Artık yayınlayabilirsin.");
+      mesajEkle("asistan", "Beyanların kaydedildi. Artık yayınlayabilirsin.");
       router.refresh();
+      return true;
     } catch {
       mesajEkle("asistan", "Bağlantı kurulamadı. Tekrar dene.");
+      return false;
     } finally {
       setOnayVeriliyor(false);
     }
