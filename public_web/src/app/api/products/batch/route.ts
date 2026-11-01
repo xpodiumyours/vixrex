@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { cookies } from "next/headers";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { ownerSessionStillActive } from "@/lib/ownerSessionValidity";
 import {
   createRichCoreProduct,
   publishInvoiceProduct,
@@ -134,7 +135,11 @@ export async function POST(request: NextRequest) {
   const ownerSessionCookie = cookieStore.get(OWNER_SESSION_COOKIE)?.value;
   const cerezliOturum = verifyOwnerSession(ownerSessionCookie, slug);
   const editTokenGovde = typeof govde.editToken === "string" ? govde.editToken.trim() : "";
-  let ownerSession: { storeId: string } | null = cerezliOturum;
+  const admin = getSupabaseAdmin();
+  let ownerSession: { storeId: string } | null =
+    cerezliOturum && await ownerSessionStillActive(admin, cerezliOturum)
+      ? cerezliOturum
+      : null;
   if (!ownerSession && editTokenGovde) {
     try {
       const { verifyStoreEditToken } = await import("@/lib/instagramServer");
@@ -150,8 +155,6 @@ export async function POST(request: NextRequest) {
       { status: 401 }
     );
   }
-
-  const admin = getSupabaseAdmin();
 
   const { data: store } = await admin
     .from("stores")

@@ -31,7 +31,9 @@ const TAM_YUK = {
   address: "Test Sokak No:1",
   province_name: "İstanbul",
   district_name: "Kadıköy",
-  legal_consent: true,
+  privacy_notice_acknowledged: true,
+  terms_accepted: true,
+  publication_consent_accepted: true,
 };
 
 const AKTIF_BELGELER = [
@@ -169,7 +171,7 @@ describe("vitrin olusturma parite (Flutter referansiyla)", () => {
   });
 
   it("yasal onay yoksa vitrin olusturmaz, neyin eksik oldugunu soyer", async () => {
-    const response = await POST(istek({ ...TAM_YUK, legal_consent: false }));
+    const response = await POST(istek({ ...TAM_YUK, publication_consent_accepted: false }));
 
     expect(response.status).toBe(422);
     const sonuc = await response.json();

@@ -80,13 +80,14 @@ describe("yayinla dediyse eksik bilgi soyenilir, taslak sessiz kalmaz", () => {
     expect(rota).toContain("hataMetni(");
   });
 
-  it("olusturma modundaki tek onay kutusu calisiyor", () => {
-    // Eski davranış: kutu her tıklamada /api/owner-accept-legal'i çağırıyor,
-    // vitrin henüz olmadığı için hep hata dönüyordu → Yayınla hiç açılmıyordu.
-    expect(editor).toContain(
-      "if (isCreationMode) { setLegalAccepted(true); return; }",
-    );
-    expect(editor).toContain("initialDraft.legal_consent");
-    expect(editor).toContain("legal_consent: true");
+  it("oluşturma modunda ayrı beyanlar toplanır ve birlikte sağlanmadan yayınlanmaz", () => {
+    expect(editor).toContain("privacyAcknowledged && termsAccepted && publicationConsent");
+    expect(editor).toContain("isCreationMode ? explicitDeclarationsReady : legalAccepted");
+    expect(editor).toContain("privacy_notice_acknowledged: true");
+    expect(editor).toContain("terms_accepted: true");
+    expect(editor).toContain("publication_consent_accepted: true");
+    expect(editor).toContain("onClick={() => void acceptLegal()}");
+    expect(rota).not.toContain("govde.legal_consent === true");
   });
+
 });

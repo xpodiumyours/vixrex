@@ -155,18 +155,19 @@ export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode 
   const [publishing, setPublishing] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [locating, setLocating] = useState(false);
+  const [privacyAcknowledged, setPrivacyAcknowledged] = useState(() =>
+    initialDraft.privacy_notice_acknowledged === true || initialDraft.aydinlatma_onay === true);
+  const [termsAccepted, setTermsAccepted] = useState(() =>
+    initialDraft.terms_accepted === true || initialDraft.sartlar_onay === true);
+  const [publicationConsent, setPublicationConsent] = useState(() =>
+    initialDraft.publication_consent_accepted === true || initialDraft.acik_riza_onay === true);
   const [legalAccepted, setLegalAccepted] = useState(() => Boolean(
-    (initialDraft.privacy_notice_version &&
-      initialDraft.terms_version &&
-      initialDraft.publication_consent_accepted) ||
-    // Landing'den gelen esnaf üç kutuyu zaten işaretledi. O cevaplar
-    // `aydinlatma_onay`/`sartlar_onay`/`acik_riza_onay` adıyla gelir ve
-    // vitrin henüz OLMADIĞI için panelden onay kaydı yazılamaz — ama
-    // onay alınmış gerçeği değişmez. Yoksa "Vitrinimi Yayına Al"
-    // düğmesi hiç açılmaz, esnaf onay kutusuna bassa bile
-    // "Yasal onay kaydedilemedi" alır ve akış orada tıkanır.
-    initialDraft.legal_consent
+    initialDraft.privacy_notice_acknowledged === true &&
+    initialDraft.terms_accepted === true &&
+    initialDraft.publication_consent_accepted === true
   ));
+  const explicitDeclarationsReady = privacyAcknowledged && termsAccepted && publicationConsent;
+  const legalReady = isCreationMode ? explicitDeclarationsReady : legalAccepted;
   const [message, setMessage] = useState("");
   const [activeEditor, setActiveEditor] = useState<"about" | "campaign" | "faq" | "gallery" | "marketplace" | null>(null);
   useEffect(() => {
@@ -272,7 +273,11 @@ export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode 
         // ama onay ALINMIŞTIR ve create-store'a legal_consent olarak gider —
         // orada aktif belge sürüm/hash'i sunucuda damgalanır.
         await onCreate(
-          legalAccepted ? { ...draft, legal_consent: true } : draft,
+          explicitDeclarationsReady
+            ? { ...draft, legal_consent: true,
+                privacy_notice_acknowledged: true, terms_accepted: true,
+                publication_consent_accepted: true }
+            : draft,
         );
         refreshShellStatus();
       } catch (error) {
@@ -309,7 +314,9 @@ export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode 
       const response = await fetch("/api/owner-accept-legal", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug: store.slug }),
+        body: JSON.stringify({
+          slug: store.slug, privacyAcknowledged, termsAccepted, publicationConsent,
+        }),
       });
       const body = await response.json();
       if (!response.ok) throw new Error(body?.hata ?? "Yasal onay kaydedilemedi.");
@@ -512,22 +519,38 @@ export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode 
             <div className={`rounded-[18px] border bg-lp-surface-soft p-4 ${legalAccepted ? "border-lp-primary" : "border-lp-border"}`}>
               <h2 className="flex items-center gap-2 text-[16px] font-black"><OnayIkonu boyut={20} className="text-lp-primary" /> Yasal Bilgilendirme ve Yayınlama Onayı</h2>
               <p className="mt-2 text-[12px] font-medium leading-5 text-lp-muted">Taslağınızı onay vermeden düzenleyebilirsiniz. Bu beyanlar yalnızca herkese açık yayınlama için gereklidir.</p>
-              <label className="mt-4 flex cursor-pointer items-start gap-3 text-[12.5px] font-semibold leading-5 text-lp-text">
-                <input type="checkbox" checked={legalAccepted} disabled={legalAccepted || publishing} onChange={() => {
-                  if (legalAccepted) return;
-                  // Vitrin henüz OLMADI: onay kaydı sunucuya yazılamaz, o yüzden
-                  // oluşturma modunda yalnız burada geçerlidir ve vitrin
-                  // create-store ile oluşurken birlikte damgalanır.
-                  // Eski davranış acceptLegal()'i çağırıyordu; o da slug
-                  // "taslak" olduğu için hep hata döndü ve esnaf onay
-                  // kutusuna bassa bile Yayınla düğmesi hiç açılmıyordu.
-                  if (isCreationMode) { setLegalAccepted(true); return; }
-                  void acceptLegal();
-                }} className="mt-0.5 h-5 w-5 shrink-0 accent-[#147DFF]" />
-                <span><Link href="/legal/privacy" target="_blank" className="font-bold text-lp-secondary underline">Aydınlatma Metni</Link>,{" "}<Link href="/legal/terms" target="_blank" className="font-bold text-lp-secondary underline">Kullanım Şartları</Link> ve{" "}<Link href="/legal/consent" target="_blank" className="font-bold text-lp-secondary underline">Açık Rıza Beyanı</Link>&apos;nı okudum, anladım ve kabul ediyorum.</span>
-              </label>
+              <div className="mt-4 space-y-3 text-[12.5px] font-semibold leading-5 text-lp-text">
+                <label className="flex cursor-pointer items-start gap-3">
+                  <input type="checkbox" aria-label="Aydınlatma metnini okudum"
+                    checked={privacyAcknowledged} disabled={legalAccepted || publishing}
+                    onChange={(event) => setPrivacyAcknowledged(event.target.checked)}
+                    className="mt-0.5 h-5 w-5 shrink-0 accent-[#147DFF]" />
+                  <span><Link href="/legal/privacy" target="_blank" className="font-bold text-lp-secondary underline">Aydınlatma Metni</Link>&apos;ni okudum ve bilgilendirildim.</span>
+                </label>
+                <label className="flex cursor-pointer items-start gap-3">
+                  <input type="checkbox" aria-label="Kullanım şartlarını kabul ediyorum"
+                    checked={termsAccepted} disabled={legalAccepted || publishing}
+                    onChange={(event) => setTermsAccepted(event.target.checked)}
+                    className="mt-0.5 h-5 w-5 shrink-0 accent-[#147DFF]" />
+                  <span><Link href="/legal/terms" target="_blank" className="font-bold text-lp-secondary underline">Kullanım Şartları</Link>&apos;nı kabul ediyorum.</span>
+                </label>
+                <label className="flex cursor-pointer items-start gap-3">
+                  <input type="checkbox" aria-label="Açık rıza veriyorum"
+                    checked={publicationConsent} disabled={legalAccepted || publishing}
+                    onChange={(event) => setPublicationConsent(event.target.checked)}
+                    className="mt-0.5 h-5 w-5 shrink-0 accent-[#147DFF]" />
+                  <span><Link href="/legal/consent" target="_blank" className="font-bold text-lp-secondary underline">Açık Rıza Beyanı</Link>&apos;nda açıklanan işleme kendi isteğimle rıza veriyorum.</span>
+                </label>
+                {!isCreationMode && !legalAccepted ? (
+                  <button type="button" onClick={() => void acceptLegal()}
+                    disabled={!explicitDeclarationsReady || publishing}
+                    className="rounded-lg border border-lp-primary px-4 py-2 font-bold text-lp-primary disabled:opacity-50">
+                    {publishing ? "Kaydediliyor…" : "Ayrı beyanları kaydet"}
+                  </button>
+                ) : null}
+              </div>
             </div>
-            <button type="button" onClick={publish} disabled={publishing || !legalAccepted} className="mt-4 min-h-[54px] w-full rounded-2xl bg-lp-primary px-5 text-[15px] font-black text-lp-on-primary disabled:bg-lp-surface-soft disabled:text-lp-muted disabled:opacity-70">{publishing ? "Yayına alınıyor…" : store.is_published ? "Değişiklikleri Kaydet & Yayına Al" : "Vitrinimi Yayına Al"}</button>
+            <button type="button" onClick={publish} disabled={publishing || !legalReady} className="mt-4 min-h-[54px] w-full rounded-2xl bg-lp-primary px-5 text-[15px] font-black text-lp-on-primary disabled:bg-lp-surface-soft disabled:text-lp-muted disabled:opacity-70">{publishing ? "Yayına alınıyor…" : store.is_published ? "Değişiklikleri Kaydet & Yayına Al" : "Vitrinimi Yayına Al"}</button>
             <p className="mt-2 text-center text-[12px] font-semibold text-lp-muted">{store.is_published ? "Mevcut linkin korunur, Keşfet görünümün güncellenir." : "Linkin oluşur, Keşfet'te görünürsün."}</p>
           </div>
         </section>
