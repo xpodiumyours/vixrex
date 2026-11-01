@@ -98,19 +98,32 @@ class LegalConsentSection extends StatelessWidget {
             CheckboxListTile(
               key: const ValueKey('privacy-notice-checkbox'),
               value: privacyNoticeAcknowledged,
-              onChanged: canAccept ? (value) => onPrivacyChanged(value ?? false) : null,
+              onChanged:
+                  canAccept
+                      ? (value) => onPrivacyChanged(value ?? false)
+                      : null,
               controlAffinity: ListTileControlAffinity.leading,
               contentPadding: EdgeInsets.zero,
               dense: true,
               activeColor: const Color(0xFF0EA5E9),
               title: Text.rich(
                 TextSpan(
-                  style: const TextStyle(fontSize: 12.5, color: AppColors.darkText),
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    color: AppColors.darkText,
+                  ),
                   children: [
                     TextSpan(
                       text: 'Aydınlatma Metni',
-                      style: const TextStyle(color: Color(0xFF0EA5E9), decoration: TextDecoration.underline),
-                      recognizer: TapGestureRecognizer()..onTap = () => onOpenLegalPage(LegalPageType.privacy),
+                      style: const TextStyle(
+                        color: Color(0xFF0EA5E9),
+                        decoration: TextDecoration.underline,
+                      ),
+                      recognizer:
+                          TapGestureRecognizer()
+                            ..onTap =
+                                () =>
+                                    onOpenLegalPage(LegalPageType.privacy),
                     ),
                     const TextSpan(text: "'ni okudum ve bilgilendirildim."),
                   ],
@@ -120,19 +133,32 @@ class LegalConsentSection extends StatelessWidget {
             CheckboxListTile(
               key: const ValueKey('terms-acceptance-checkbox'),
               value: termsAccepted,
-              onChanged: canAccept ? (value) => onTermsChanged(value ?? false) : null,
+              onChanged:
+                  canAccept
+                      ? (value) => onTermsChanged(value ?? false)
+                      : null,
               controlAffinity: ListTileControlAffinity.leading,
               contentPadding: EdgeInsets.zero,
               dense: true,
               activeColor: const Color(0xFF0EA5E9),
               title: Text.rich(
                 TextSpan(
-                  style: const TextStyle(fontSize: 12.5, color: AppColors.darkText),
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    color: AppColors.darkText,
+                  ),
                   children: [
                     TextSpan(
                       text: 'Kullanım Şartları',
-                      style: const TextStyle(color: Color(0xFF0EA5E9), decoration: TextDecoration.underline),
-                      recognizer: TapGestureRecognizer()..onTap = () => onOpenLegalPage(LegalPageType.terms),
+                      style: const TextStyle(
+                        color: Color(0xFF0EA5E9),
+                        decoration: TextDecoration.underline,
+                      ),
+                      recognizer:
+                          TapGestureRecognizer()
+                            ..onTap =
+                                () =>
+                                    onOpenLegalPage(LegalPageType.terms),
                     ),
                     const TextSpan(text: "'nı kabul ediyorum."),
                   ],
@@ -142,21 +168,37 @@ class LegalConsentSection extends StatelessWidget {
             CheckboxListTile(
               key: const ValueKey('publication-consent-checkbox'),
               value: publicationConsentAccepted,
-              onChanged: canAccept ? (value) => onPublicationChanged(value ?? false) : null,
+              onChanged:
+                  canAccept
+                      ? (value) => onPublicationChanged(value ?? false)
+                      : null,
               controlAffinity: ListTileControlAffinity.leading,
               contentPadding: EdgeInsets.zero,
               dense: true,
               activeColor: const Color(0xFF0EA5E9),
               title: Text.rich(
                 TextSpan(
-                  style: const TextStyle(fontSize: 12.5, color: AppColors.darkText),
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    color: AppColors.darkText,
+                  ),
                   children: [
                     TextSpan(
                       text: 'Açık Rıza Beyanı',
-                      style: const TextStyle(color: Color(0xFF0EA5E9), decoration: TextDecoration.underline),
-                      recognizer: TapGestureRecognizer()..onTap = () => onOpenLegalPage(LegalPageType.consent),
+                      style: const TextStyle(
+                        color: Color(0xFF0EA5E9),
+                        decoration: TextDecoration.underline,
+                      ),
+                      recognizer:
+                          TapGestureRecognizer()
+                            ..onTap =
+                                () =>
+                                    onOpenLegalPage(LegalPageType.consent),
                     ),
-                    const TextSpan(text: "'nda açıklanan işleme kendi isteğimle rıza veriyorum."),
+                    const TextSpan(
+                      text:
+                          "'nda açıklanan işleme kendi isteğimle rıza veriyorum.",
+                    ),
                   ],
                 ),
               ),
