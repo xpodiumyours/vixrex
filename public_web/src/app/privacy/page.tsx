@@ -47,7 +47,7 @@ export default function PrivacyPage() {
         amacıyla üçüncü taraflara aktarılmaz.
       </p>
       <ul>
-        <li><strong>Supabase:</strong> veritabanı, kimlik doğrulama ve dosya depolama altyapımız — tüm verileriniz burada barındırılır.</li>
+        <li><strong>Supabase:</strong> veritabanı, kimlik doğrulama ve dosya depolama altyapısı. Fatura işlemleri için gerekli içerikler ayrıca OpenRouter ve yapay zekâ hizmet sağlayıcılarına iletilir.</li>
         <li><strong>Vercel:</strong> web sitemizi barındıran sunucu sağlayıcısı.</li>
         <li><strong>OpenRouter ve seçilen yapay zekâ model sağlayıcıları:</strong> İşletmenin başlattığı fatura okuma ve ürün kartı oluşturma işleminde belge ve ürün bilgileri işlenir. Ürün eşleştirme amacıyla OpenRouter web arama/erişim araçları ve bunların altyapı sağlayıcıları kullanılabilir.</li>
         <li><strong>Google Analytics:</strong> yalnızca çerez onayı verdiyseniz, kullanım istatistikleri için (IP adresi anonimleştirilir).</li>
@@ -59,10 +59,10 @@ export default function PrivacyPage() {
         <li><strong>OneSignal:</strong> abonelik/randevu hatırlatma bildirimleri gönderebilmemiz için.</li>
       </ul>
       <p>
-        Bu sağlayıcıların bir kısmı (ör. Google, Sentry, Cloudflare, OpenRouter ve model sağlayıcıları) yurt
-        dışında veri işleyebilir. Bu sayfa hangi verinin hangi amaçla
-        paylaşıldığını gösterir; her sağlayıcıyla ayrı bir veri işleme
-        sözleşmesi (DPA) süreci ayrıca yürütülmektedir.
+        Bu sağlayıcıların bir kısmı (ör. Google, Sentry, Cloudflare, OpenRouter ve model sağlayıcıları)
+        yurt dışında veri işleyebilir. Kişisel verilerin yurt dışına aktarımında
+        KVKK&apos;nın 9. maddesindeki şartların ayrıca karşılanması gerekir.
+        Bu sayfa, aktarım için gerekli hukuki güvencelerin sağlandığını tek başına kanıtlamaz.
       </p>
 
       <h2>5. Veri Saklama</h2>
