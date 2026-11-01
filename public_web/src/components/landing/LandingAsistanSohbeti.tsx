@@ -285,7 +285,6 @@ export function LandingAsistanSohbeti({
         },
         body: JSON.stringify({
           ...cevaplar,
-          legal_consent: true,
           privacy_notice_acknowledged: aydinlatmaOnay,
           terms_accepted: sartlarOnay,
           is_published: true,
@@ -651,7 +650,7 @@ export function LandingAsistanSohbeti({
                   setHata(HATA_YASAL_ONAY);
                   return;
                 }
-                setCevaplar({ ...cevaplar, legal_consent: true, aydinlatma_onay: aydinlatmaOnay, sartlar_onay: sartlarOnay });
+                setCevaplar({ ...cevaplar, aydinlatma_onay: aydinlatmaOnay, sartlar_onay: sartlarOnay });
                 setHata("");
                 setAdim(adim + 1);
               }}
