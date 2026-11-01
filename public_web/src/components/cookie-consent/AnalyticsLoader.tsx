@@ -1,6 +1,6 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import Script from "next/script";
 import {
   parseConsentSnapshot,
@@ -17,8 +17,14 @@ export function AnalyticsLoader() {
     () => null,
   );
   const consent = parseConsentSnapshot(consentSnapshot);
+  const analyticsAllowed = consent?.analytics === true;
 
-  if (!GA_ID || !consent?.analytics) return null;
+  useEffect(() => {
+    if (!GA_ID) return;
+    (window as unknown as Record<string, unknown>)[`ga-disable-${GA_ID}`] = !analyticsAllowed;
+  }, [analyticsAllowed]);
+
+  if (!GA_ID || !analyticsAllowed) return null;
 
   return (
     <>

@@ -271,7 +271,8 @@ export function LandingAsistanSohbeti({
 
       if (!session) {
         // Giriş yapılmamış → /kayit sayfasına yönlendir
-        taslagiKaydet({ ...cevaplar, legal_consent: true });
+        taslagiKaydet({ ...cevaplar, legal_consent: true,
+          aydinlatma_onay: aydinlatmaOnay, sartlar_onay: sartlarOnay, acik_riza_onay: acikRizaOnay });
         window.location.href = "/kayit";
         return;
       }
@@ -286,6 +287,9 @@ export function LandingAsistanSohbeti({
         body: JSON.stringify({
           ...cevaplar,
           legal_consent: true,
+          privacy_notice_acknowledged: aydinlatmaOnay,
+          terms_accepted: sartlarOnay,
+          publication_consent_accepted: acikRizaOnay,
           is_published: true,
         }),
       });
@@ -311,7 +315,8 @@ export function LandingAsistanSohbeti({
       }
       setYayinTamamlandi(true);
       setAdim(ASISTAN_ADIMLARI.length); // bitti = true yapar
-      taslagiKaydet({ ...cevaplar, legal_consent: true });
+      taslagiKaydet({ ...cevaplar, legal_consent: true,
+          aydinlatma_onay: aydinlatmaOnay, sartlar_onay: sartlarOnay, acik_riza_onay: acikRizaOnay });
     } catch (e) {
       setHata(HATA_TEKRAR_DENE);
       console.error("[landing-asistan] publish error:", e);
@@ -626,7 +631,7 @@ export function LandingAsistanSohbeti({
               />
               <span className="text-[13px] text-lp-text">
                 <Link href="/legal/privacy" className="text-lp-primary underline" target="_blank">Aydınlatma Metni</Link>
-                ni okudum ve kabul ediyorum.
+                ni okudum ve bilgilendirildim.
               </span>
             </label>
             <label className="flex items-start gap-2 cursor-pointer">

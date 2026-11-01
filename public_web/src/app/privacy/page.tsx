@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'Gizlilik Politikası | Vixrex',
@@ -9,19 +10,22 @@ export default function PrivacyPage() {
   return (
     <main style={{ maxWidth: 720, margin: '0 auto', padding: '40px 20px', color: '#EDEDED' }}>
       <h1>Gizlilik Politikası</h1>
-      <p>Son güncelleme: 26 Eylül 2026</p>
+      <p>Son güncelleme: 1 Kasım 2026</p>
 
       <h2>1. Veri Sorumlusu</h2>
       <p>
-        <strong>Vixrex</strong>, Aksakal Ticaret tarafından işletilmektedir.<br />
-        Adres: Ümraniye Esenevler Mahallesi Lokman Hekim Caddesi No 18, İstanbul<br />
-        E-posta: vixrex.app@gmail.com
+        <strong>Veri sorumlusu:</strong> Furkan Aksakal (Aksakal Ticaret)<br />
+        Vixrex dijital vitrin ve yazılım hizmeti bu gerçek kişi işletmesi tarafından sunulmaktadır.<br />
+        Adres: Esenevler Mah. Lokman Hekim Cad. No:18 İç Kapı No:10 Ümraniye/İstanbul<br />
+        E-posta: <a href="mailto:destek@vixrex.com">destek@vixrex.com</a><br />
+        Telefon: <a href="tel:+905421802573">0542 180 25 73</a>
       </p>
 
       <h2>2. Toplanan Veriler</h2>
       <ul>
-        <li><strong>Hesap bilgileri:</strong> E-posta adresi, şifre (şifrelenmiş)</li>
+        <li><strong>Hesap ve oturum bilgileri:</strong> Kalıcı hesaplarda Google girişiyle alınan e-posta ve hesap kimliği, ücretsiz vitrin denemesinde anonim/misafir oturum kimliği. Vixrex kalıcı hesap açılışında kullanıcı şifresi toplamaz.</li>
         <li><strong>İşletme bilgileri:</strong> Ad, adres, telefon, sosyal medya linkleri, ürünler, fotoğraflar</li>
+        <li><strong>Fatura ve yapay zekâ işleme verileri:</strong> İşletmenin yüklediği fatura fotoğrafı/PDF, tedarikçi ve belge bilgileri, vergi numarası, fatura satırları, üretilen ürün taslakları, model yanıtları ve işlem kullanım kayıtları.</li>
         <li><strong>Randevu verileri:</strong> Müşteri adı, telefonu, notları, randevu saati</li>
         <li><strong>Kullanım verileri:</strong> cihaz/tarayıcı bilgisi ve görüntülenme kayıtları. Web vitrin ölçümünde IP adresi ham olarak saklanmaz; kötüye kullanım kontrolü için tek yönlü teknik özet (hash) üretilir.</li>
         <li><strong>Vitrin etkileşim verileri:</strong> ürün görüntüleme, beğeni, yorum, sepete ekleme ve WhatsApp sipariş geçişi. İşletme sahibine ham ziyaretçi kimliği gösterilmez.</li>
@@ -31,6 +35,7 @@ export default function PrivacyPage() {
       <h2>3. Verilerin Kullanım Amacı</h2>
       <ul>
         <li>Hizmetin sağlanması ve işletilmesi</li>
+        <li>İşletmenin yüklediği faturalardan yapay zekâ destekli ürün kartı taslakları oluşturulması ve doğrulanması</li>
         <li>Randevu yönetimi ve müşteri iletişimi</li>
         <li>SEO ve arama motoru görünürlüğü</li>
         <li>Vitrin sahibine toplulaştırılmış performans ölçümleri sunulması</li>
@@ -45,8 +50,9 @@ export default function PrivacyPage() {
         amacıyla üçüncü taraflara aktarılmaz.
       </p>
       <ul>
-        <li><strong>Supabase:</strong> veritabanı, kimlik doğrulama ve dosya depolama altyapımız — tüm verileriniz burada barındırılır.</li>
+        <li><strong>Supabase:</strong> veritabanı, kimlik doğrulama ve dosya depolama altyapısı. Fatura işlemleri için gerekli içerikler ayrıca OpenRouter ve yapay zekâ hizmet sağlayıcılarına iletilir.</li>
         <li><strong>Vercel:</strong> web sitemizi barındıran sunucu sağlayıcısı.</li>
+        <li><strong>OpenRouter ve seçilen yapay zekâ model sağlayıcıları:</strong> İşletmenin başlattığı fatura okuma ve ürün kartı oluşturma işleminde belge ve ürün bilgileri işlenir. Ürün eşleştirme amacıyla OpenRouter web arama/erişim araçları ve bunların altyapı sağlayıcıları kullanılabilir.</li>
         <li><strong>Google Analytics:</strong> yalnızca çerez onayı verdiyseniz, kullanım istatistikleri için (IP adresi anonimleştirilir).</li>
         <li><strong>Google reCAPTCHA:</strong> otomatik/kötüye kullanım (bot) girişlerini engellemek için.</li>
         <li><strong>Cloudflare Turnstile:</strong> bazı formlarda (ör. içerik bildirimi) bot koruması için.</li>
@@ -56,15 +62,17 @@ export default function PrivacyPage() {
         <li><strong>OneSignal:</strong> abonelik/randevu hatırlatma bildirimleri gönderebilmemiz için.</li>
       </ul>
       <p>
-        Bu sağlayıcıların bir kısmı (ör. Google, Sentry, Cloudflare) yurt
-        dışında veri işleyebilir. Bu sayfa hangi verinin hangi amaçla
-        paylaşıldığını gösterir; her sağlayıcıyla ayrı bir veri işleme
-        sözleşmesi (DPA) süreci ayrıca yürütülmektedir.
+        Bu sağlayıcıların bir kısmı (ör. Google, Sentry, Cloudflare, OpenRouter ve model sağlayıcıları)
+        yurt dışında veri işleyebilir. Kişisel verilerin yurt dışına aktarımında
+        KVKK&apos;nın 9. maddesindeki şartların ayrıca karşılanması gerekir.
+        Bu sayfa, aktarım için gerekli hukuki güvencelerin sağlandığını tek başına kanıtlamaz.
       </p>
 
       <h2>5. Veri Saklama</h2>
       <p>
-        Hesabınız aktif olduğu sürece verileriniz saklanır. Hesabınızı sildiğinizde tüm verileriniz kalıcı olarak silinir.
+        Hesap, vitrin ve diğer kişisel veriler için saklama ve silme koşulları veri türüne göre değişir.
+        Yasal saklama yükümlülüğü bulunan bazı kayıtlar hesap silindikten sonra da ilgili süreler boyunca saklanabilir.
+        Yürürlükteki veri işleme ve saklama açıklamaları için <Link href="/legal/privacy">KVKK Aydınlatma Metni</Link>ni inceleyebilirsiniz.
       </p>
 
       <h2>6. Haklarınız (KVKK)</h2>
@@ -77,7 +85,8 @@ export default function PrivacyPage() {
 
       <h2>7. İletişim</h2>
       <p>
-        Gizlilikle ilgili sorularınız için: <a href="mailto:Xpodiumyours@gmail.com">Xpodiumyours@gmail.com</a>
+        Gizlilikle ilgili sorularınız için: <a href="mailto:destek@vixrex.com">destek@vixrex.com</a>.
+        KVKK başvuru yöntemleri için <a href="/iletisim">İletişim</a> sayfasını inceleyebilirsiniz.
       </p>
     </main>
   );

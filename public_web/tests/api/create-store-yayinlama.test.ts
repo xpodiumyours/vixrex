@@ -50,7 +50,9 @@ function govde(ekstra: Record<string, unknown> = {}) {
       address: "Bağdat Caddesi 1",
       province_name: "İstanbul",
       district_name: "Kadıköy",
-      legal_consent: true,
+      privacy_notice_acknowledged: true,
+      terms_accepted: true,
+      publication_consent_accepted: true,
       ...ekstra,
     }),
   });
@@ -128,7 +130,7 @@ describe("landing asistanı vitrini gerçekten yayınlar", () => {
   it("yasal onay yoksa vitrin hiç oluşturmaz, neyin eksik olduğunu söyler", async () => {
     kuran(AKTIF_BELGELER);
 
-    const response = await POST(govde({ legal_consent: false }));
+    const response = await POST(govde({ privacy_notice_acknowledged: false }));
 
     // Eski davranış: vitrin yine oluşur sonra yayın kapısında düşerdi →
     // ortada yayına alınamayan bir kayıt kalırdı. Artık baştan duruyoruz.
