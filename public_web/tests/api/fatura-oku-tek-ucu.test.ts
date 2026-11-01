@@ -53,6 +53,40 @@ describe("/api/fatura-oku otomatik iş", () => {
   it("4 MB üstü reddedilir",async()=>{expect((await POST(request([new File([Buffer.alloc(4*1024*1024+1)],"big.png")]))).status).toBe(413);expect(started()).toHaveLength(0);});
   it("gerçek dosya imzası yoksa iş başlamaz",async()=>{expect((await POST(request([new File([new Uint8Array(13)],"fake.png",{type:"image/png"})]))).status).toBe(415);expect(started()).toHaveLength(0);});
   it("saatlik limit korunur",async()=>{m.rpc.mockResolvedValue({data:[{allowed:false,retry_after_seconds:45}],error:null});expect((await POST(request())).status).toBe(429);expect(started()).toHaveLength(0);});
+  it("kota RPC hata verirse 503 döner, dış iş başlamaz ve hata kodu izlenir",async()=>{
+    m.rpc.mockResolvedValue({data:null,error:{code:"DB_TIMEOUT"}});
+    const log=vi.spyOn(console,"error").mockImplementation(()=>{});
+    try {
+      const res=await POST(request());
+      expect(res.status).toBe(503);
+      expect(res.headers.get("Retry-After")).toBe("60");
+      expect((await res.json()).hata).toContain("Bir dakika sonra");
+      expect(log).toHaveBeenCalledWith("[fatura-oku] kota sayaci kullanilamiyor",{code:"DB_TIMEOUT"});
+      expect(started()).toHaveLength(0);
+      expect(m.fetch).not.toHaveBeenCalled();
+    } finally { log.mockRestore(); }
+  });
+  it("kota RPC boş veri dönerse maliyetli iş başlamaz",async()=>{
+    m.rpc.mockResolvedValue({data:null,error:null});
+    const log=vi.spyOn(console,"error").mockImplementation(()=>{});
+    try {
+      const res=await POST(request());
+      expect(res.status).toBe(503);
+      expect(log).toHaveBeenCalledWith("[fatura-oku] kota sayaci kullanilamiyor",{code:"INVALID_RATE_LIMIT_RESPONSE"});
+      expect(started()).toHaveLength(0);
+      expect(m.fetch).not.toHaveBeenCalled();
+    } finally { log.mockRestore(); }
+  });
+  it("kota RPC geçersiz allowed değerinde işlemi reddeder",async()=>{
+    m.rpc.mockResolvedValue({data:[{allowed:"true"}],error:null});
+    const log=vi.spyOn(console,"error").mockImplementation(()=>{});
+    try {
+      const res=await POST(request());
+      expect(res.status).toBe(503);
+      expect(started()).toHaveLength(0);
+      expect(m.fetch).not.toHaveBeenCalled();
+    } finally { log.mockRestore(); }
+  });
   it("sunucu anahtarı yoksa iş başlamaz",async()=>{delete process.env.OPENROUTER_API_KEY;expect((await POST(request())).status).toBe(503);expect(started()).toHaveLength(0);});
   it("kuyruk kaydı başarısızsa hazır veya örnek kart dönmez",async()=>{m.rpc.mockImplementation(async(name:string)=>name==='consume_assistant_request'?{data:{allowed:true},error:null}:{data:null,error:{code:'MISSING'}});const res=await POST(request());expect(res.status).toBe(503);expect((await res.json()).hata).toContain('işleyicisi');expect(m.fetch).not.toHaveBeenCalled();});
   it("önceki tamamlanmış sonuç varsa yeni model işi başlamaz",async()=>{
