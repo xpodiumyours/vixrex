@@ -54,7 +54,17 @@ export async function POST(request: NextRequest) {
     p_client_key: `fatura_oku:${ownerSlug}`, p_max_requests: VITRIN_BASINA_LIMIT, p_window_seconds: PENCERE_SANIYE,
   });
   const limit = Array.isArray(limitSonucu.data) ? limitSonucu.data[0] : limitSonucu.data;
-  if (!limitSonucu.error && limit?.allowed === false) return NextResponse.json({ hata: `Çok fazla fatura okudun. ${limit.retry_after_seconds} sn sonra dene.` }, { status: 429 });
+  // Kota sayacı çalışmıyorsa ücretli dış okuyucuya iş gönderme.
+  if (limitSonucu.error || typeof limit?.allowed !== "boolean") {
+    console.error("[fatura-oku] kota sayaci kullanilamiyor", {
+      code: limitSonucu.error?.code ?? "INVALID_RATE_LIMIT_RESPONSE",
+    });
+    return NextResponse.json(
+      { hata: "Fatura okuma geçici olarak kullanılamıyor. Bir dakika sonra tekrar dene." },
+      { status: 503, headers: { "Retry-After": "60" } },
+    );
+  }
+  if (!limit.allowed) return NextResponse.json({ hata: `Çok fazla fatura okudun. ${limit.retry_after_seconds} sn sonra dene.` }, { status: 429 });
   if (secilen.reduce((sum, f) => sum + f.size, 0) > MAKS_BAYT) return NextResponse.json({ hata: "Sayfa fotoğraflarının toplamı en fazla 4 MB olabilir." }, { status: 413 });
   const baytlar = await Promise.all(secilen.map(async (f) => new Uint8Array(await f.arrayBuffer())));
   const turler = baytlar.map(gercekTur);
