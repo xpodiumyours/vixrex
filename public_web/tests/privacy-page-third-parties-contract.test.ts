@@ -18,6 +18,10 @@ const pageSource = readFileSync(
   resolve(__dirname, "../src/app/privacy/page.tsx"),
   "utf-8"
 );
+const contactSource = readFileSync(
+  resolve(__dirname, "../src/app/(site)/iletisim/page.tsx"),
+  "utf-8"
+);
 
 describe("Gizlilik politikası — üçüncü taraf paylaşımı doğru beyan ediyor", () => {
   it("'üçüncü taraflarla paylaşılmaz' yanlış beyanı YOK", () => {
@@ -38,5 +42,29 @@ describe("Gizlilik politikası — üçüncü taraf paylaşımı doğru beyan ed
     "OneSignal",
   ])("gerçekten kullanılan sağlayıcı listeleniyor: %s", (provider) => {
     expect(pageSource).toContain(provider);
+  });
+});
+
+describe("R-02 — gizlilik beyanı ile yürürlükteki aydınlatma bağlantısı", () => {
+  it("hesap silinince bütün kayıtların koşulsuz silindiğini vaat etmez", () => {
+    expect(pageSource).not.toContain(
+      "Hesabınızı sildiğinizde tüm verileriniz kalıcı olarak silinir."
+    );
+    expect(pageSource).toContain("Yasal saklama yükümlülüğü");
+  });
+
+  it("saklama açıklaması yürürlükteki KVKK aydınlatmasına yönlendirir", () => {
+    expect(pageSource).toContain('href="/legal/privacy"');
+  });
+
+  it("KVKK başvuruları iletişim sayfasında sürümlü aydınlatma metnine yönlenir", () => {
+    expect(contactSource).toContain('yol: "/legal/privacy"');
+    expect(contactSource).toContain("KVKK Aydınlatma Metni");
+  });
+
+  it("kanıtlanmış kurumsal iletişim adresi korunur", () => {
+    expect(pageSource).toContain("mailto:destek@vixrex.com");
+    expect(pageSource).not.toContain("vixrex.app@gmail.com");
+    expect(pageSource).not.toContain("Xpodiumyours@gmail.com");
   });
 });

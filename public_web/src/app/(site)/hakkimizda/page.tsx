@@ -134,8 +134,8 @@ export default function HakkimizdaPage() {
               Kullanım Şartları
             </Link>{" "}
             ve{" "}
-            <Link href="/privacy" className="font-black text-lp-primary hover:underline">
-              KVKK ve Gizlilik Politikası
+            <Link href="/legal/privacy" className="font-black text-lp-primary hover:underline">
+              KVKK Aydınlatma Metni
             </Link>{" "}
             sayfalarına bakabilirsiniz.
           </p>
