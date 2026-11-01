@@ -73,13 +73,13 @@ String _normalizeBrandDisplay(String value) {
 class PublishingLegalDocuments {
   final LegalDocument privacy;
   final LegalDocument terms;
-  final LegalDocument consent;
+  final LegalDocument? consent;
 
   const PublishingLegalDocuments({
     required this.privacy,
     required this.terms,
-    required this.consent,
+    this.consent,
   });
 
-  bool get isComplete => privacy.isUsable && terms.isUsable && consent.isUsable;
+  bool get isComplete => privacy.isUsable && terms.isUsable;
 }
