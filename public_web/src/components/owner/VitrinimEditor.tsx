@@ -267,12 +267,11 @@ export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode 
       setMessage("");
       try {
         // Vitrin daha oluşmadı: onay sunucuya ayrı bir çağrıyla yazılamaz,
-        // ama onay ALINMIŞTIR ve create-store'a legal_consent olarak gider —
-        // orada aktif belge sürüm/hash'i sunucuda damgalanır.
+        // aydınlatma ve kullanım şartları ayrı boole değerleriyle iletilir;
+        // etkin belge sürüm/hash'i sunucuda damgalanır.
         await onCreate(
           explicitDeclarationsReady
-            ? { ...draft, legal_consent: true,
-                privacy_notice_acknowledged: true, terms_accepted: true }
+            ? { ...draft, privacy_notice_acknowledged: true, terms_accepted: true }
             : draft,
         );
         refreshShellStatus();
