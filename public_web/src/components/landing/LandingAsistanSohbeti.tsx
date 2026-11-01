@@ -270,8 +270,7 @@ export function LandingAsistanSohbeti({
 
       if (!session) {
         // Giriş yapılmamış → /kayit sayfasına yönlendir
-        taslagiKaydet({ ...cevaplar, legal_consent: true,
-          aydinlatma_onay: aydinlatmaOnay, sartlar_onay: sartlarOnay });
+        taslagiKaydet({ ...cevaplar, aydinlatma_onay: aydinlatmaOnay, sartlar_onay: sartlarOnay });
         window.location.href = "/kayit";
         return;
       }
@@ -312,8 +311,7 @@ export function LandingAsistanSohbeti({
       }
       setYayinTamamlandi(true);
       setAdim(ASISTAN_ADIMLARI.length); // bitti = true yapar
-      taslagiKaydet({ ...cevaplar, legal_consent: true,
-          aydinlatma_onay: aydinlatmaOnay, sartlar_onay: sartlarOnay });
+      taslagiKaydet({ ...cevaplar, aydinlatma_onay: aydinlatmaOnay, sartlar_onay: sartlarOnay });
     } catch (e) {
       setHata(HATA_TEKRAR_DENE);
       console.error("[landing-asistan] publish error:", e);
