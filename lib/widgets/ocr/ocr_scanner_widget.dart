@@ -50,6 +50,17 @@ class OcrScannerWidget extends StatelessWidget {
             style: const TextStyle(fontSize: 13, color: AppColors.mutedText),
           ),
           const SizedBox(height: 16),
+          if (scanMode == 'invoice') ...[
+            const Text(
+              'Fatura görseli, ürün kartı taslakları hazırlamak için OpenRouter ve seçilen yapay zekâ model sağlayıcılarına iletilir. '
+              'Görselin tamamı gönderilir; otomatik maskeleme yapılmaz. '
+              'Belgelerde tedarikçi veya diğer kişilere ait bilgiler bulunabilir. '
+              'Ürün satırları, miktar ve tutarları görünür bırakarak gereksiz alıcı bilgilerini yüklemeden önce görsel üzerinde gizleyin.',
+              style: TextStyle(fontSize: 12, color: AppColors.mutedText),
+              textAlign: TextAlign.start,
+            ),
+            const SizedBox(height: 16),
+          ],
           Row(
             children: [
               Expanded(

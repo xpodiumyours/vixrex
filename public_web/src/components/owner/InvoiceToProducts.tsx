@@ -1007,6 +1007,8 @@ export default function InvoiceToProducts({
           Fatura görseli veya PDF, ürün satırlarını okumak ve ürün kartı taslakları hazırlamak amacıyla
           OpenRouter ve işlemde seçilen yapay zekâ model sağlayıcılarına iletilir.
           Belgede tedarikçi veya diğer kişilere ait bilgiler bulunabileceğinden, yalnız bu işlem için gerekli belgeyi yükleyin.
+          Fotoğraf veya PDF dosyasının tamamı gönderilir; otomatik maskeleme yapılmaz.
+          Ürün satırları, miktar ve tutarları görünür bırakarak gereksiz alıcı bilgilerini yüklemeden önce görsel üzerinde gizleyin.
         </p>
         {onClose && (
           <button type="button" className="fatura-ikincil" onClick={() => void kapat()}>
