@@ -55,6 +55,33 @@ export function subscribeToConsent(onStoreChange: () => void): () => void {
   return () => window.removeEventListener(COOKIE_CONSENT_EVENT, onStoreChange);
 }
 
+function clearAnalyticsCookies(): void {
+  if (typeof document === "undefined") return;
+
+  try {
+    const names = document.cookie
+      .split(";")
+      .map((cookie) => cookie.trim().split("=")[0])
+      .filter((name) => /^_ga(?:_|$)|^_gid$|^_gat(?:_|$)|^_gac_/.test(name));
+
+    if (!names.length) return;
+
+    const labels = window.location.hostname.split(".");
+    const domains = [""];
+    for (let i = 0; i < labels.length - 1; i++) {
+      domains.push(labels.slice(i).join("."));
+    }
+
+    for (const name of names) {
+      for (const domain of domains) {
+        document.cookie = `${name}=; Max-Age=0; Path=/; SameSite=Lax${domain ? `; Domain=${domain}` : ""}`;
+      }
+    }
+  } catch {
+    return;
+  }
+}
+
 export function writeConsent(
   partial: Pick<CookieConsent, "analytics" | "marketing">,
 ): CookieConsent {
@@ -69,6 +96,7 @@ export function writeConsent(
   if (measurementId) {
     (window as unknown as Record<string, unknown>)[`ga-disable-${measurementId}`] = !value.analytics;
   }
+  if (!value.analytics) clearAnalyticsCookies();
   window.dispatchEvent(new CustomEvent(COOKIE_CONSENT_EVENT, { detail: value }));
   return value;
 }
