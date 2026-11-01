@@ -37,7 +37,7 @@ begin
   end if;
 
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.accept_store_legal_consent(p_session_token text)
  RETURNS jsonb
@@ -150,7 +150,7 @@ begin
     'accepted', true
   );
 end;
-$function$
+$function$;
 
 -- Permission boundaries remain unchanged for the existing owner-token RPC.
 REVOKE ALL ON FUNCTION public.accept_store_legal_consent(text) FROM PUBLIC;
