@@ -26,7 +26,6 @@ export default function PrivacyPage() {
         <li><strong>Hesap bilgileri:</strong> E-posta adresi, şifre (şifrelenmiş)</li>
         <li><strong>İşletme bilgileri:</strong> Ad, adres, telefon, sosyal medya linkleri, ürünler, fotoğraflar</li>
         <li><strong>Randevu verileri:</strong> Müşteri adı, telefonu, notları, randevu saati</li>
-        <li><strong>Fatura ve ürün verileri:</strong> Esnafın yüklediği fatura görüntüleri; faturadaki tedarikçi bilgileri, belge numarası, ürünler, miktarlar ve fiyatlar. Faturada üçüncü kişilere ait kişisel veriler de bulunabilir.</li>
         <li><strong>Kullanım verileri:</strong> cihaz/tarayıcı bilgisi ve görüntülenme kayıtları. Web vitrin ölçümünde IP adresi ham olarak saklanmaz; kötüye kullanım kontrolü için tek yönlü teknik özet (hash) üretilir.</li>
         <li><strong>Vitrin etkileşim verileri:</strong> ürün görüntüleme, beğeni, yorum, sepete ekleme ve WhatsApp sipariş geçişi. İşletme sahibine ham ziyaretçi kimliği gösterilmez.</li>
         <li><strong>Sepet verisi:</strong> ürün, varyant ve adet bilgisi sipariş WhatsApp&apos;a aktarılana kadar tarayıcınızda yerel olarak tutulabilir.</li>
@@ -36,7 +35,6 @@ export default function PrivacyPage() {
       <ul>
         <li>Hizmetin sağlanması ve işletilmesi</li>
         <li>Randevu yönetimi ve müşteri iletişimi</li>
-        <li>Yüklenen fatura görüntülerini yapay zekâ ile okuyarak ürün kartı taslakları hazırlamak</li>
         <li>SEO ve arama motoru görünürlüğü</li>
         <li>Vitrin sahibine toplulaştırılmış performans ölçümleri sunulması</li>
         <li>Yasal yükümlülüklerin yerine getirilmesi</li>
@@ -50,8 +48,7 @@ export default function PrivacyPage() {
         amacıyla üçüncü taraflara aktarılmaz.
       </p>
       <ul>
-        <li><strong>Supabase:</strong> veritabanı, kimlik doğrulama ve dosya depolama altyapısı.</li>
-        <li><strong>OpenRouter:</strong> Yüklenen fatura görüntüleri ve ürün kartı hazırlamak için gereken fatura/ürün bilgileri, yapay zekâ modeli üzerinden işlenmek üzere OpenRouter hizmetine iletilir.</li>
+        <li><strong>Supabase:</strong> veritabanı, kimlik doğrulama ve dosya depolama altyapımız — tüm verileriniz burada barındırılır.</li>
         <li><strong>Vercel:</strong> web sitemizi barındıran sunucu sağlayıcısı.</li>
         <li><strong>Google Analytics:</strong> yalnızca çerez onayı verdiyseniz, kullanım istatistikleri için (IP adresi anonimleştirilir).</li>
         <li><strong>Google reCAPTCHA:</strong> otomatik/kötüye kullanım (bot) girişlerini engellemek için.</li>
@@ -62,10 +59,10 @@ export default function PrivacyPage() {
         <li><strong>OneSignal:</strong> abonelik/randevu hatırlatma bildirimleri gönderebilmemiz için.</li>
       </ul>
       <p>
-        Bu sağlayıcıların bir kısmı (ör. OpenRouter, Google, Sentry, Cloudflare)
-        yurt dışında veri işleyebilir. Kişisel verilerin yurt dışına aktarımı
-        KVKK&apos;nın 9. maddesindeki şartlara tabidir. Bu bilgilendirme
-        tek başına açık rıza veya yurt dışına aktarım için yeterli güvence değildir.
+        Bu sağlayıcıların bir kısmı (ör. Google, Sentry, Cloudflare) yurt
+        dışında veri işleyebilir. Bu sayfa hangi verinin hangi amaçla
+        paylaşıldığını gösterir; her sağlayıcıyla ayrı bir veri işleme
+        sözleşmesi (DPA) süreci ayrıca yürütülmektedir.
       </p>
 
       <h2>5. Veri Saklama</h2>
