@@ -277,6 +277,11 @@ export default function ProductDetailExperience({
                 </span>
               ) : null}
             </div>
+            {product.gorselIzinBekliyor ? (
+              <p className="mt-2 inline-flex items-center rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-[11px] font-semibold text-amber-200">
+                İzin belgesi bekleniyor
+              </p>
+            ) : null}
             {miktarBilgisi ? (
               <p className={`mt-1.5 flex flex-wrap items-center gap-x-1.5 text-xs font-semibold ${vitrinGorunum.fiyat.birim}`}>
                 <span>{miktarBilgisi.miktar}</span>

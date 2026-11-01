@@ -402,6 +402,11 @@ export default function ProductCatalog({
                       </span>
                     ) : null}
                   </div>
+                  {product.gorselIzinBekliyor ? (
+                    <p className="mt-1 text-[10px] font-semibold text-amber-300 sm:text-[11px]">
+                      İzin belgesi bekleniyor
+                    </p>
+                  ) : null}
                   {birimFiyat ? (
                     <p className="mt-0.5 truncate text-[10px] font-semibold text-slate-400 sm:text-[11px]">
                       {birimFiyat.miktar} · <span className="text-slate-300">{birimFiyat.birimFiyat}</span>
