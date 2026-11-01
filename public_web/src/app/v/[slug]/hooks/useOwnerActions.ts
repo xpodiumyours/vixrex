@@ -44,7 +44,7 @@ export interface OwnerActionsHook {
   sil: () => Promise<void>;
   setSilmeOnayi: (v: boolean) => void;
   onayVeriliyor: boolean;
-  onayVer: (beyanlar: { privacyAcknowledged: boolean; termsAccepted: boolean; publicationConsent: boolean }) => Promise<boolean>;
+  onayVer: (beyanlar: { privacyAcknowledged: boolean; termsAccepted: boolean }) => Promise<boolean>;
 }
 
 interface Deps {
