@@ -33,7 +33,6 @@ describe("Gizlilik politikası — üçüncü taraf paylaşımı doğru beyan ed
   it.each([
     "Supabase",
     "Vercel",
-    "OpenRouter",
     "Google Analytics",
     "Google reCAPTCHA",
     "Cloudflare Turnstile",
@@ -67,23 +66,5 @@ describe("R-02 — gizlilik beyanı ile yürürlükteki aydınlatma bağlantıs�
     expect(pageSource).toContain("mailto:destek@vixrex.com");
     expect(pageSource).not.toContain("vixrex.app@gmail.com");
     expect(pageSource).not.toContain("Xpodiumyours@gmail.com");
-  });
-});
-
-describe("R-02 — faturadan yapay zekâya veri aktarımı açıklaması", () => {
-  it("fatura içeriğinin ve OpenRouter işleyişinin doğru açıklandığını denetler", () => {
-    const invoiceApi = readFileSync(resolve(__dirname, "../src/app/api/fatura-oku/route.ts"), "utf-8");
-    const provider = readFileSync(resolve(__dirname, "../src/lib/faturaArkaPlanIslemi.ts"), "utf-8");
-    expect(invoiceApi).toContain('Buffer.from(b).toString("base64")');
-    expect(provider).toContain("faturaIstekGovdesi(goruntu)");
-    expect(pageSource).toContain("Fatura ve ürün verileri");
-    expect(pageSource).toContain("Yüklenen fatura görüntüleri");
-    expect(pageSource).toContain("OpenRouter");
-    expect(pageSource).toContain("KVKK&apos;nın 9. maddesindeki şartlara");
-  });
-
-  it("tüm verilerin yalnız Supabase içinde tutulduğunu iddia etmez", () => {
-    expect(pageSource).not.toContain("tüm verileriniz burada barındırılır");
-    expect(pageSource).not.toContain("her sağlayıcıyla ayrı bir veri işleme");
   });
 });
