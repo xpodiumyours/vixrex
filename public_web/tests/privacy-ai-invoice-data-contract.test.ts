@@ -38,4 +38,11 @@ describe("R02-GIZ-01: yayımlanan veri envanteri gerçek fatura ve hesap akış�
     expect(privacy).toContain("OpenRouter ve model sağlayıcıları");
     expect(privacy).toContain("yurt");
   });
+
+  it("yalnız tek depoda saklama veya imzalanmamış DPA güvencesi iddiası yapmaz", () => {
+    expect(privacy).not.toContain("tüm verileriniz burada barındırılır");
+    expect(privacy).not.toContain("her sağlayıcıyla ayrı bir veri işleme");
+    expect(privacy).toContain("KVKK&apos;nın 9. maddesindeki şartların");
+    expect(privacy).toContain("tek başına kanıtlamaz");
+  });
 });
