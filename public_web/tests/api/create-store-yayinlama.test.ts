@@ -124,6 +124,21 @@ describe("landing asistanı vitrini gerçekten yayınlar", () => {
     });
   });
 
+  it("genel açık rıza olmadan yalnız gerekli iki belgeyle yayınlar", async () => {
+    kuran(AKTIF_BELGELER.filter((belge) => belge.document_type !== "consent"));
+
+    const response = await POST(govde({ publication_consent_accepted: false }));
+
+    expect(response.status).toBe(200);
+    const store = rpcCagrisi("update_store_with_token")?.[1].p_store;
+    expect(store.is_published).toBe(true);
+    expect(store.privacy_notice_acknowledged).toBe(true);
+    expect(store.terms_accepted).toBe(true);
+    expect(store.publication_consent_accepted).toBeUndefined();
+    expect(store.publication_consent_version).toBeUndefined();
+    expect(store.publication_consent_hash).toBeUndefined();
+  });
+
   it("yasal onay yoksa vitrin hiç oluşturmaz, neyin eksik olduğunu söyler", async () => {
     kuran(AKTIF_BELGELER);
 
