@@ -3,8 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vixrex/widgets/editor/legal_consent_section.dart';
 
 void main() {
-  testWidgets('Aydınlatma ve açık rıza bağımsız işaretlenir', (tester) async {
+  testWidgets('Üç beyan bağımsızdır', (tester) async {
     final events = <String>[];
+
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
@@ -37,10 +38,9 @@ void main() {
     expect(events, ['privacy:true', 'terms:true', 'publication:true']);
   });
 
-  testWidgets(
-    'Aydınlatma yüklenirken hiçbir onay değiştirilemez',
-    (tester) async {
+  testWidgets('Yüklenirken değişiklik engellenir', (tester) async {
     var changed = false;
+
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
@@ -64,7 +64,6 @@ void main() {
     );
 
     await tester.tap(find.byKey(const ValueKey('privacy-notice-checkbox')));
-      expect(changed, isFalse);
-    },
-  );
+    expect(changed, isFalse);
+  });
 }
