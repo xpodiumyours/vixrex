@@ -1,5 +1,5 @@
 vi.mock("@/lib/ownerSessionValidity", () => ({
-  ownerSessionStillActive: vi.fn(async () => true),
+  ownerSessionStillActive: m.valid,
 }));
 
 import { NextRequest } from "next/server";
@@ -9,6 +9,7 @@ const m = vi.hoisted(() => ({
   owner: vi.fn((v?: string): { slug: string } | null => v ? { slug: "deneme" } : null),
   edit: vi.fn(async (): Promise<{ slug: string }> => { throw new Error("AUTH"); }),
   rpc: vi.fn(), previous: vi.fn(), load: vi.fn(), fetch: vi.fn(),
+  valid: vi.fn(async () => true),
 }));
 vi.mock("next/headers", () => ({ cookies: async () => ({ get: m.cookie }) }));
 vi.mock("@/lib/ownerSession", () => ({ OWNER_SESSION_COOKIE: "owner", verifyOwnerSession: m.owner }));
@@ -28,6 +29,7 @@ beforeEach(() => {
   vi.clearAllMocks(); process.env.OPENROUTER_API_KEY = "unit-test-key";
   m.cookie.mockReturnValue({ value: "owner" }); m.owner.mockImplementation((v?:string) => v ? {slug:"deneme"} : null);
   m.edit.mockRejectedValue(new Error("AUTH")); m.previous.mockResolvedValue(null); m.load.mockResolvedValue(null);
+  m.valid.mockResolvedValue(true);
   m.rpc.mockImplementation(async (name:string) => ({ data: name === "consume_assistant_request" ? {allowed:true} : {success:true,id:"11111111-1111-4111-8111-111111111111",state:"queued"},error:null }));
   vi.stubGlobal("fetch", m.fetch);
 });
@@ -53,6 +55,15 @@ describe("/api/fatura-oku otomatik iş", () => {
   });
   it("sahiplik yoksa iş başlatılmaz",async()=>{m.cookie.mockReturnValue(undefined);expect((await POST(request())).status).toBe(401);expect(started()).toHaveLength(0);});
   it("geçerli düzenleme anahtarıyla mobil istek korunur",async()=>{m.cookie.mockReturnValue(undefined);m.edit.mockResolvedValue({slug:"deneme"});expect((await POST(request([png()],{editToken:"edit"}))).status).toBe(202);expect(m.edit).toHaveBeenCalledWith("deneme","edit");});
+  it("iptal edilmiş çerezle bile geçerli Flutter düzenleme anahtarı çalışır", async () => {
+    m.valid.mockResolvedValue(false);
+    m.edit.mockResolvedValue({ slug: "deneme" });
+    const res = await POST(request([png()], { editToken: "edit" }));
+    expect(res.status).toBe(202);
+    expect(m.valid).toHaveBeenCalled();
+    expect(m.edit).toHaveBeenCalledWith("deneme", "edit");
+    expect(started()).toHaveLength(1);
+  });
   it("dördüncü sayfa reddedilir",async()=>{expect((await POST(request([png(),png(),png(),png()]))).status).toBe(413);expect(started()).toHaveLength(0);});
   it("4 MB üstü reddedilir",async()=>{expect((await POST(request([new File([Buffer.alloc(4*1024*1024+1)],"big.png")]))).status).toBe(413);expect(started()).toHaveLength(0);});
   it("gerçek dosya imzası yoksa iş başlamaz",async()=>{expect((await POST(request([new File([new Uint8Array(13)],"fake.png",{type:"image/png"})]))).status).toBe(415);expect(started()).toHaveLength(0);});
