@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { cookies } from "next/headers";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { ownerSessionStillActive } from "@/lib/ownerSessionValidity";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 import { verifyStoreEditToken } from "@/lib/instagramServer";
 import { belgeParmakIzi } from "@/lib/faturaIslemKaydi";
@@ -40,7 +41,7 @@ export async function POST(request: NextRequest) {
   const cookieStore = await cookies();
   const oturum = verifyOwnerSession(cookieStore.get(OWNER_SESSION_COOKIE)?.value, slug);
   let ownerSlug: string;
-  if (oturum) ownerSlug = oturum.slug;
+  if (oturum && await ownerSessionStillActive(getSupabaseAdmin(), oturum)) ownerSlug = oturum.slug;
   else if (editToken) {
     try { ownerSlug = (await verifyStoreEditToken(slug, editToken)).slug; }
     catch { return NextResponse.json({ hata: "Oturumun geçersiz veya süresi dolmuş." }, { status: 401 }); }
