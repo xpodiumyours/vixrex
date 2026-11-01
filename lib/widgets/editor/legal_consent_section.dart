@@ -39,16 +39,10 @@ class LegalConsentSection extends StatelessWidget {
     onTermsChanged(value ?? false);
   }
 
-  void _publicationChanged(bool? value) {
-    onPublicationChanged(value ?? false);
-  }
-
   @override
   Widget build(BuildContext context) {
     final isAllAccepted =
-        privacyNoticeAcknowledged &&
-        termsAccepted &&
-        publicationConsentAccepted;
+        privacyNoticeAcknowledged && termsAccepted;
 
     return Material(
       color: AppColors.surface,
@@ -86,7 +80,7 @@ class LegalConsentSection extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             const Text(
-              'Taslağınızı onay vermeden düzenleyebilirsiniz. Bu beyanlar yalnızca herkese açık yayınlama için gereklidir.',
+              'Aydınlatma bildirimi ve kullanım şartları yayınlama için gereklidir. Genel açık rıza istenmez.',
               style: AppTextStyles.caption,
             ),
             if (isLoading) ...[
@@ -132,22 +126,6 @@ class LegalConsentSection extends StatelessWidget {
                 child: const Text('Kullanım Şartları'),
               ),
               subtitle: const Text('Kabul ediyorum.'),
-            ),
-            const SizedBox(height: 8),
-            CheckboxListTile(
-              key: const ValueKey('publication-consent-checkbox'),
-              value: publicationConsentAccepted,
-              onChanged: canAccept ? _publicationChanged : null,
-              contentPadding: EdgeInsets.zero,
-              controlAffinity: ListTileControlAffinity.leading,
-              activeColor: const Color(0xFF0EA5E9),
-              title: TextButton(
-                onPressed: () => onOpenLegalPage(LegalPageType.consent),
-                child: const Text('Açık Rıza Beyanı'),
-              ),
-              subtitle: const Text(
-                'Belirtilen işleme kendi isteğimle rıza veriyorum.',
-              ),
             ),
           ],
         ),
