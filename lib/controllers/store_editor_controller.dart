@@ -163,8 +163,7 @@ class StoreEditorController extends ChangeNotifier
   Set<String> get customPlatformLinkIds => {};
 
   bool get isLegalPublishReady =>
-      _data.privacyNoticeAcknowledged &&
-      _data.termsAccepted;
+      _data.privacyNoticeAcknowledged && _data.termsAccepted;
 
   bool get isWithdrawingConsent => isLoading;
 
