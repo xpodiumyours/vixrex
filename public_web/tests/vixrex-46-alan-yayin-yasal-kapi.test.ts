@@ -23,6 +23,10 @@ const legalGuardMigration = readFileSync(
   ),
   "utf8",
 );
+const kvkk03Migration = readFileSync(
+  resolve(__dirname, "../../supabase/migrations/20261101090000_r02_kvkk03_yayin_riza_ayrimi.sql"),
+  "utf8",
+);
 const legalAuditMigration = readFileSync(
   resolve(
     __dirname,
@@ -64,15 +68,13 @@ describe("Vixrex Assistant yayın/yasal güvenlik kapısı", () => {
     expect(gonder).not.toContain('/api/owner-accept-legal');
   });
 
-  it("aydınlatma, sözleşme ve açık rıza üç ayrı checkbox ile kayıtlanır", () => {
-    expect(publishBar).toContain('checked={privacyAcknowledged}');
-    expect(publishBar).toContain('checked={termsAccepted}');
-    expect(publishBar).toContain('checked={publicationConsent}');
-    expect(publishBar).toContain('disabled={!readyToRecord || onayVeriliyor}');
-    expect(publishBar).toContain('onayVer({ privacyAcknowledged, termsAccepted, publicationConsent })');
+  it("aydınlatma geri bildirimi ile şartlar ayrı; genel rıza yayın kapısı değil", () => {
+    expect(publishBar).toContain("checked={privacyAcknowledged}");
+    expect(publishBar).toContain("checked={termsAccepted}");
+    expect(publishBar).toContain("onayVer({ privacyAcknowledged, termsAccepted })");
+    expect(publishBar).not.toContain("checked={publicationConsent}");
     expect(publishBar).toContain("Aydınlatma Metni");
     expect(publishBar).toContain("Kullanım Şartları");
-    expect(publishBar).toContain("Açık Rıza Beyanı");
   });
 
   it("yayın düğmesi yasal onay yokken istemci tarafında kapalıdır", () => {
@@ -83,7 +85,7 @@ describe("Vixrex Assistant yayın/yasal güvenlik kapısı", () => {
     expect(publishRoute).toContain('rpc("publish_working_draft"');
   });
 
-  it("gerçek DB yayın kapısı üç yasal onayı yeniden zorunlu tutar", () => {
+  it("tarihsel DB migration ilk üçlü kapıyı içerir (KVKK-03 bunu geçersiz kılar)", () => {
     expect(legalGuardMigration).toContain(
       "create or replace function public.assert_store_legal_acceptance_ready(p_store jsonb)",
     );
@@ -131,6 +133,17 @@ describe("Vixrex Assistant yayın/yasal güvenlik kapısı", () => {
     expect(legalGuardMigration).toContain(
       "d.content_hash = p_store ->> 'publication_consent_hash'",
     );
+  });
+
+  it("KVKK-03 yayın kapısı yalnız aydınlatma ve sözleşmeyi zorunlu tutar", () => {
+    expect(kvkk03Migration).toContain("PRIVACY_NOTICE_REQUIRED");
+    expect(kvkk03Migration).toContain("TERMS_ACCEPTANCE_REQUIRED");
+    expect(kvkk03Migration).not.toContain("PUBLICATION_CONSENT_REQUIRED");
+    expect(kvkk03Migration).not.toContain("PUBLICATION_CONSENT_VERSION_INVALID");
+    expect(kvkk03Migration).not.toContain("publication_consent_accepted = true");
+    expect(kvkk03Migration).toContain("d.document_type = 'privacy'");
+    expect(kvkk03Migration).toContain("d.document_type = 'terms'");
+    expect(kvkk03Migration).not.toContain("d.document_type = 'consent'");
   });
 
   it("yasal onay geçmişini mevcut legal_acceptance_events tablosuna kaydeder", () => {
