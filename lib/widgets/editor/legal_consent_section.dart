@@ -41,8 +41,7 @@ class LegalConsentSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isAllAccepted =
-        privacyNoticeAcknowledged && termsAccepted;
+    final isAllAccepted = privacyNoticeAcknowledged && termsAccepted;
 
     return Material(
       color: AppColors.surface,
