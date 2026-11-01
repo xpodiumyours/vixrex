@@ -20,8 +20,9 @@ export default function PrivacyPage() {
 
       <h2>2. Toplanan Veriler</h2>
       <ul>
-        <li><strong>Hesap bilgileri:</strong> E-posta adresi, şifre (şifrelenmiş)</li>
+        <li><strong>Hesap ve oturum bilgileri:</strong> Kalıcı hesaplarda Google girişiyle alınan e-posta ve hesap kimliği, ücretsiz vitrin denemesinde anonim/misafir oturum kimliği. Vixrex kalıcı hesap açılışında kullanıcı şifresi toplamaz.</li>
         <li><strong>İşletme bilgileri:</strong> Ad, adres, telefon, sosyal medya linkleri, ürünler, fotoğraflar</li>
+        <li><strong>Fatura ve yapay zekâ işleme verileri:</strong> İşletmenin yüklediği fatura fotoğrafı/PDF, tedarikçi ve belge bilgileri, vergi numarası, fatura satırları, üretilen ürün taslakları, model yanıtları ve işlem kullanım kayıtları.</li>
         <li><strong>Randevu verileri:</strong> Müşteri adı, telefonu, notları, randevu saati</li>
         <li><strong>Kullanım verileri:</strong> cihaz/tarayıcı bilgisi ve görüntülenme kayıtları. Web vitrin ölçümünde IP adresi ham olarak saklanmaz; kötüye kullanım kontrolü için tek yönlü teknik özet (hash) üretilir.</li>
         <li><strong>Vitrin etkileşim verileri:</strong> ürün görüntüleme, beğeni, yorum, sepete ekleme ve WhatsApp sipariş geçişi. İşletme sahibine ham ziyaretçi kimliği gösterilmez.</li>
@@ -31,6 +32,7 @@ export default function PrivacyPage() {
       <h2>3. Verilerin Kullanım Amacı</h2>
       <ul>
         <li>Hizmetin sağlanması ve işletilmesi</li>
+        <li>İşletmenin yüklediği faturalardan yapay zekâ destekli ürün kartı taslakları oluşturulması ve doğrulanması</li>
         <li>Randevu yönetimi ve müşteri iletişimi</li>
         <li>SEO ve arama motoru görünürlüğü</li>
         <li>Vitrin sahibine toplulaştırılmış performans ölçümleri sunulması</li>
@@ -45,8 +47,9 @@ export default function PrivacyPage() {
         amacıyla üçüncü taraflara aktarılmaz.
       </p>
       <ul>
-        <li><strong>Supabase:</strong> veritabanı, kimlik doğrulama ve dosya depolama altyapımız — tüm verileriniz burada barındırılır.</li>
+        <li><strong>Supabase:</strong> veritabanı, kimlik doğrulama ve dosya depolama altyapısı. Fatura işlemleri için gerekli içerikler ayrıca OpenRouter ve yapay zekâ hizmet sağlayıcılarına iletilir.</li>
         <li><strong>Vercel:</strong> web sitemizi barındıran sunucu sağlayıcısı.</li>
+        <li><strong>OpenRouter ve seçilen yapay zekâ model sağlayıcıları:</strong> İşletmenin başlattığı fatura okuma ve ürün kartı oluşturma işleminde belge ve ürün bilgileri işlenir. Ürün eşleştirme amacıyla OpenRouter web arama/erişim araçları ve bunların altyapı sağlayıcıları kullanılabilir.</li>
         <li><strong>Google Analytics:</strong> yalnızca çerez onayı verdiyseniz, kullanım istatistikleri için (IP adresi anonimleştirilir).</li>
         <li><strong>Google reCAPTCHA:</strong> otomatik/kötüye kullanım (bot) girişlerini engellemek için.</li>
         <li><strong>Cloudflare Turnstile:</strong> bazı formlarda (ör. içerik bildirimi) bot koruması için.</li>
@@ -56,10 +59,10 @@ export default function PrivacyPage() {
         <li><strong>OneSignal:</strong> abonelik/randevu hatırlatma bildirimleri gönderebilmemiz için.</li>
       </ul>
       <p>
-        Bu sağlayıcıların bir kısmı (ör. Google, Sentry, Cloudflare) yurt
-        dışında veri işleyebilir. Bu sayfa hangi verinin hangi amaçla
-        paylaşıldığını gösterir; her sağlayıcıyla ayrı bir veri işleme
-        sözleşmesi (DPA) süreci ayrıca yürütülmektedir.
+        Bu sağlayıcıların bir kısmı (ör. Google, Sentry, Cloudflare, OpenRouter ve model sağlayıcıları)
+        yurt dışında veri işleyebilir. Kişisel verilerin yurt dışına aktarımında
+        KVKK&apos;nın 9. maddesindeki şartların ayrıca karşılanması gerekir.
+        Bu sayfa, aktarım için gerekli hukuki güvencelerin sağlandığını tek başına kanıtlamaz.
       </p>
 
       <h2>5. Veri Saklama</h2>
