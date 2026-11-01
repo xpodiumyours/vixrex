@@ -231,9 +231,9 @@ void main() {
       expect(validator.validateVitrin(data), contains('Kullanım Şartları'));
     });
 
-    test('rejects missing publication consent', () {
+    test('consent is not a mandatory publication gate', () {
       final data = validVitrin()..publicationConsentAccepted = false;
-      expect(validator.validateVitrin(data), contains('açık rıza'));
+      expect(validator.validateVitrin(data), isNull);
     });
   });
 
