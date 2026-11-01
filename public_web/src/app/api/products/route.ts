@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { cookies } from "next/headers";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { ownerSessionStillActive } from "@/lib/ownerSessionValidity";
 import {
   createRichCoreProduct,
   updateRichCoreProduct,
@@ -42,6 +43,7 @@ async function ownerContext(slug: string) {
   const ownerSession = verifyOwnerSession(cookieStore.get(OWNER_SESSION_COOKIE)?.value, slug);
   if (!ownerSession) return null;
   const admin = getSupabaseAdmin();
+  if (!(await ownerSessionStillActive(admin, ownerSession))) return null;
   const { data: store } = await admin
     .from("stores")
     .select("id, edit_token, name")
