@@ -79,7 +79,7 @@ class LegalConsentSection extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             const Text(
-              'Aydınlatma bildirimi ve kullanım şartları yayınlama için gereklidir. Genel açık rıza istenmez.',
+              'Taslağınızı onay vermeden düzenleyebilirsiniz. Yayınlamak için aydınlatma ve şartlar istenir; genel açık rıza istenmez.',
               style: AppTextStyles.caption,
             ),
             if (isLoading) ...[
