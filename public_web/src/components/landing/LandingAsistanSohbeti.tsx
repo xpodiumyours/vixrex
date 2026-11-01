@@ -139,7 +139,6 @@ export function LandingAsistanSohbeti({
   // Legal onay durumları — Flutter'daki LegalConsentSection ile birebir
   const [aydinlatmaOnay, setAydinlatmaOnay] = useState(false);
   const [sartlarOnay, setSartlarOnay] = useState(false);
-  const [acikRizaOnay, setAcikRizaOnay] = useState(false);
 
   const bitti = adim >= ASISTAN_ADIMLARI.length;
   const aktif = bitti ? null : ASISTAN_ADIMLARI[adim];
@@ -257,7 +256,7 @@ export function LandingAsistanSohbeti({
     return handoffMesajMetni(alan, cevaplar);
   }
 
-  const yasalOnayVerildi = aydinlatmaOnay && sartlarOnay && acikRizaOnay;
+  const yasalOnayVerildi = aydinlatmaOnay && sartlarOnay;
 
   const yayinla = useCallback(async () => {
     if (!yasalOnayVerildi || yayinliyor) return;
@@ -272,7 +271,7 @@ export function LandingAsistanSohbeti({
       if (!session) {
         // Giriş yapılmamış → /kayit sayfasına yönlendir
         taslagiKaydet({ ...cevaplar, legal_consent: true,
-          aydinlatma_onay: aydinlatmaOnay, sartlar_onay: sartlarOnay, acik_riza_onay: acikRizaOnay });
+          aydinlatma_onay: aydinlatmaOnay, sartlar_onay: sartlarOnay });
         window.location.href = "/kayit";
         return;
       }
@@ -289,7 +288,6 @@ export function LandingAsistanSohbeti({
           legal_consent: true,
           privacy_notice_acknowledged: aydinlatmaOnay,
           terms_accepted: sartlarOnay,
-          publication_consent_accepted: acikRizaOnay,
           is_published: true,
         }),
       });
@@ -316,7 +314,7 @@ export function LandingAsistanSohbeti({
       setYayinTamamlandi(true);
       setAdim(ASISTAN_ADIMLARI.length); // bitti = true yapar
       taslagiKaydet({ ...cevaplar, legal_consent: true,
-          aydinlatma_onay: aydinlatmaOnay, sartlar_onay: sartlarOnay, acik_riza_onay: acikRizaOnay });
+          aydinlatma_onay: aydinlatmaOnay, sartlar_onay: sartlarOnay });
     } catch (e) {
       setHata(HATA_TEKRAR_DENE);
       console.error("[landing-asistan] publish error:", e);
@@ -646,26 +644,14 @@ export function LandingAsistanSohbeti({
                 nı okudum ve kabul ediyorum.
               </span>
             </label>
-            <label className="flex items-start gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={acikRizaOnay}
-                onChange={(e) => setAcikRizaOnay(e.target.checked)}
-                className="mt-0.5 h-4 w-4 rounded border-lp-border text-lp-primary focus:ring-lp-primary"
-              />
-              <span className="text-[13px] text-lp-text">
-                <Link href="/legal/consent" className="text-lp-primary underline" target="_blank">Açık Rıza Beyanı</Link>
-                nı okudum, anladım ve kabul ediyorum.
-              </span>
-            </label>
-            <button
+<button
               type="button"
               onClick={() => {
                 if (!yasalOnayVerildi) {
                   setHata(HATA_YASAL_ONAY);
                   return;
                 }
-                setCevaplar({ ...cevaplar, legal_consent: true, aydinlatma_onay: aydinlatmaOnay, sartlar_onay: sartlarOnay, acik_riza_onay: acikRizaOnay });
+                setCevaplar({ ...cevaplar, legal_consent: true, aydinlatma_onay: aydinlatmaOnay, sartlar_onay: sartlarOnay });
                 setHata("");
                 setAdim(adim + 1);
               }}
