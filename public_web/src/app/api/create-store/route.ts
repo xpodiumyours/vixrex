@@ -284,17 +284,13 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Yasal onay da yayın için şart. Tek bir "onayladım" yeterli: landing'de
-  // o düğme üç kutu işaretlenmeden basılmıyor (yasalOnayVerildi), oluşturma
-  // ekranındaki tek kutu da üç metnin tamamını kapsıyor — tıpkı paneldeki
-  // accept_store_legal_consent'in hiçbir bayrak almadan kaydı yazması gibi.
-  // Onay VERİLMEDİYSE vitrin hiç oluşmuyor; neyin eksik olduğunu söylüyoruz.
+  // Yayın için üç ayrı, açık beyan gerekir. Tek bir toplu onay bayrağı
+  // aydınlatma ve açık rıza yerine geçemez.
   const yayinOnayi =
-    govde.legal_consent === true ||
-    (govde.privacy_notice_acknowledged === true &&
-      govde.terms_accepted === true &&
-      (govde.publication_consent_accepted === true ||
-        govde.explicit_consent_given === true));
+    govde.privacy_notice_acknowledged === true &&
+    govde.terms_accepted === true &&
+    (govde.publication_consent_accepted === true ||
+      govde.explicit_consent_given === true);
 
   if (!yayinOnayi) {
     return NextResponse.json(
