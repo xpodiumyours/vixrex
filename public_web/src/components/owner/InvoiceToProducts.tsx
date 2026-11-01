@@ -990,6 +990,7 @@ export default function InvoiceToProducts({
           <span>Telefonundan ya da bilgisayarından yükle</span>
           <input
           aria-label="Fatura fotoğrafı veya PDF seç"
+          aria-describedby="fatura-veri-aktarim-bilgisi"
           disabled={!okuyucuHazir}
           ref={dosyaRef}
           type="file"
@@ -1002,6 +1003,11 @@ export default function InvoiceToProducts({
         />
         </label>
         <p className="fatura-aciklama">Fatura fotoğrafını (1–3 sayfa) veya PDF dosyasını seç. Toplam en fazla 4 MB. Başka belge gerekmiyor.</p>
+        <p id="fatura-veri-aktarim-bilgisi" className="fatura-aciklama">
+          Fatura görseli veya PDF, ürün satırlarını okumak ve ürün kartı taslakları hazırlamak amacıyla
+          OpenRouter ve işlemde seçilen yapay zekâ model sağlayıcılarına iletilir.
+          Belgede tedarikçi veya diğer kişilere ait bilgiler bulunabileceğinden, yalnız bu işlem için gerekli belgeyi yükleyin.
+        </p>
         {onClose && (
           <button type="button" className="fatura-ikincil" onClick={() => void kapat()}>
             Vazgeç

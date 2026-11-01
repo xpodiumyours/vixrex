@@ -1,3 +1,7 @@
+vi.mock("@/lib/ownerSessionValidity", () => ({
+  ownerSessionStillActive: vi.fn(async () => true),
+}));
+
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 const m=vi.hoisted(()=>({rpc:vi.fn(),satir:vi.fn(),mevcut:vi.fn(),medya:vi.fn(),yayin:vi.fn(),create:vi.fn(),update:vi.fn()}));

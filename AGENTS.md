@@ -17,6 +17,21 @@ Kural: aşağıdaki her satır geçmişte yaşanmış somut bir aksiliğe dayan�
 Dayağı olmayan satır eklenmez. Yeni bir aksilik yaşandığında buraya bir satır
 eklenir ve mümkünse bir kanca ile ölçülür.
 
+## Z.0 — Oturum açılışı (2026-10-31)
+
+Her oturumun ilk üç adımı, istisnasız:
+
+1. **İki defteri oku.** Yollar sabit, **arama yapma**:
+   `C:\Projects\vixrex\CALISMA-DEFTERI.md` (proje; repo dışında, `.gitignore`'da) ve
+   `C:\Projects\Casper\DEFTER.md` (kişisel). Başka defter dosyası yoktur; ikinci bir defter açma.
+2. **Canlı ölçüm yap.** Defter bir fotoğraftır: `main`, canlı commit (`deploy-info.json`) ve
+   açık PR'lar yeniden ölçülür. Ölçmeden "durum şu" denmez.
+3. **Sonra cevap ver.** Başka ajanın raporu kanıt değildir; "düzeldi/tamamlandı" ancak komut
+   çıktısı, dosya:satır veya canlı ölçümle kabul edilir.
+
+Neden: 2026-10-31'de bir oturum defterin yolunu bilmediği için 53 saniye aradı, bulamayınca
+**ikinci bir defter (`TAKİP.md`) açtı** ve içeriği ayrıştı. Kopya defter, kopya gerçek üretir.
+
 > **Ölçüm kancaları hakkında not:** Bu dosyada adı geçen kanca betikleri
 > (`.claude/hooks/`) 2026-09-26'da depodan kaldırıldı. Kural metinleri kaldı;
 > kancaları geri getirmek Casper'ın kararıdır. Kancası olmayan bir kural,
@@ -282,6 +297,16 @@ Neden: 2026-10-12'de #677, #678, #679, #680 push'ları bir saatte arka arkaya
 atıldı; son ikisi GitHub 403 rate limit yüzünden canlıya çıkmadı, `vercel
 redeploy` ile elle çıkarıldı. Aynı gün içinde kapılar en son çalıştıktan sonra
 push atılır, her düzeltme için ayrı push açılmaz.
+
+### 24. "Sıradaki iş şu" demeden önce işin durumu ölçülür (2026-11-01)
+Bir işi "sıradaki" ilan etmeden veya "şuna geçelim" demeden önce üçü ölçülür ve
+cümlede yazılır: **1)** iş açık mı kapalı mı (hata kaydı durumu), **2)** düzeltme
+birleşmiş mi (PR birleşti mi, taslak mı), **3)** canlıda mı (canlı sürüm o
+düzeltmeyi içeriyor mu). Ölçüm yoksa "sıradaki" cümlesi de yoktur.
+
+Neden: 2026-11-01'de #611 canlıda değilken "#734'e geçelim" denildi; #734'ün
+taslak olduğu ve canlıya hiç inmemiş olduğu ölçülmemişti. Casper: "niye bakmadan
+734'e geçelim diyorsun? bu hataları yapmaman için önlem al kendine."
 
 ### Token ekonomisi (2026-09-16)
 Token en kıt kaynak. Bitince koordinasyon, doğrulama ve merge sorumluluğu

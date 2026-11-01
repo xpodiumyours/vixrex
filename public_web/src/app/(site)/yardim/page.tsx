@@ -76,7 +76,7 @@ export default function YardimPage() {
               Sorunu ve mümkünse ekran görüntüsünü gönder; destek ekibi inceleyip sana dönüş yapsın.
             </p>
           </div>
-          <a href="mailto:Xpodiumyours@gmail.com?subject=Vixrex%20Destek" className="mt-5 inline-flex min-h-12 shrink-0 items-center justify-center rounded-xl bg-lp-primary px-5 py-3 text-sm font-black text-lp-on-primary transition hover:brightness-105 sm:mt-0">
+          <a href="mailto:destek@vixrex.com?subject=Vixrex%20Destek" className="mt-5 inline-flex min-h-12 shrink-0 items-center justify-center rounded-xl bg-lp-primary px-5 py-3 text-sm font-black text-lp-on-primary transition hover:brightness-105 sm:mt-0">
             E-posta gönder
           </a>
         </section>

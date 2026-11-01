@@ -4,14 +4,14 @@ class LegalConfig {
   static const String appName = 'Vixrex';
   static const String ownerName = String.fromEnvironment(
     'LEGAL_DATA_CONTROLLER_TITLE',
-    defaultValue: 'Aksakal Ticaret',
+    defaultValue: 'Furkan Aksakal (Aksakal Ticaret)',
   );
   static const String companyName = ownerName;
   static const String productOwnershipText = '$appName, $ownerName ürünüdür.';
   static const String dataControllerAddress = String.fromEnvironment(
     'LEGAL_DATA_CONTROLLER_ADDRESS',
     defaultValue:
-        'Ümraniye Esenevler Mahallesi Lokman Hekim Caddesi No 18, İstanbul',
+        'Esenevler Mah. Lokman Hekim Cad. No:18 İç Kapı No:10 Ümraniye/İstanbul',
   );
   static const String mersisNumber = String.fromEnvironment(
     'LEGAL_MERSIS_NUMBER',
@@ -23,7 +23,7 @@ class LegalConfig {
   );
   static const String privacyEmail = String.fromEnvironment(
     'LEGAL_PRIVACY_EMAIL',
-    defaultValue: 'vixrex.app@gmail.com',
+    defaultValue: 'destek@vixrex.com',
   );
   static const String publicSiteUrl = String.fromEnvironment(
     'PUBLIC_SITE_URL',

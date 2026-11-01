@@ -64,8 +64,12 @@ describe("Vixrex Assistant yayın/yasal güvenlik kapısı", () => {
     expect(gonder).not.toContain('/api/owner-accept-legal');
   });
 
-  it("yasal onay yalnız kullanıcı checkboxı gerçekten işaretlediğinde çağrılır", () => {
-    expect(publishBar).toMatch(/type="checkbox"[\s\S]*onChange=\{\(e\) => \{[\s\S]*if \(e\.target\.checked\) void onayVer\(\)/);
+  it("aydınlatma, sözleşme ve açık rıza üç ayrı checkbox ile kayıtlanır", () => {
+    expect(publishBar).toContain('checked={privacyAcknowledged}');
+    expect(publishBar).toContain('checked={termsAccepted}');
+    expect(publishBar).toContain('checked={publicationConsent}');
+    expect(publishBar).toContain('disabled={!readyToRecord || onayVeriliyor}');
+    expect(publishBar).toContain('onayVer({ privacyAcknowledged, termsAccepted, publicationConsent })');
     expect(publishBar).toContain("Aydınlatma Metni");
     expect(publishBar).toContain("Kullanım Şartları");
     expect(publishBar).toContain("Açık Rıza Beyanı");
