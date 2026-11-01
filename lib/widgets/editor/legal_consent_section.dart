@@ -190,8 +190,7 @@ class LegalConsentSection extends StatelessWidget {
                           recognizer:
                               TapGestureRecognizer()
                                 ..onTap =
-                                    () =>
-                                        onOpenLegalPage(LegalPageType.terms),
+                                    () => onOpenLegalPage(LegalPageType.terms),
                         ),
                         const TextSpan(text: "'nı kabul ediyorum."),
                       ],
