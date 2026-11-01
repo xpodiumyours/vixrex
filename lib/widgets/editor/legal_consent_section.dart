@@ -140,9 +140,7 @@ class LegalConsentSection extends StatelessWidget {
                                     () =>
                                         onOpenLegalPage(LegalPageType.privacy),
                         ),
-                        const TextSpan(
-                          text: "'ni okudum ve bilgilendirildim.",
-                        ),
+                        const TextSpan(text: "'ni okudum ve bilgilendirildim."),
                       ],
                     ),
                   ),
@@ -195,9 +193,7 @@ class LegalConsentSection extends StatelessWidget {
                                     () =>
                                         onOpenLegalPage(LegalPageType.terms),
                         ),
-                        const TextSpan(
-                          text: "'nı kabul ediyorum.",
-                        ),
+                        const TextSpan(text: "'nı kabul ediyorum."),
                       ],
                     ),
                   ),
