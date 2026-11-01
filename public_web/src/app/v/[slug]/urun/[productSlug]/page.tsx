@@ -9,6 +9,7 @@ import {
 } from "@/lib/products";
 import { buildConsumerDetailFacts } from "@/lib/productCardPresentation";
 import { normalizeProductMetadata } from "@/lib/productRichData";
+import { gorselIzinBekliyorMu } from "@/lib/faturaGorselHakDenetimi";
 import {
   buildLocalBusinessSeller,
   buildPhysicalProductStructuredData,
@@ -102,6 +103,23 @@ async function _getProductData(slug: string, productSlug: string) {
       .eq("is_active", true)
       .maybeSingle<ProductRow>();
 
+    let gorselIzinBekliyor = false;
+    if (productRow?.id) {
+      try {
+        const { data: kanitSatiri, error: kanitHatasi } = await supabase
+          .from("products")
+          .select("id,fatura_kanit")
+          .eq("id", productRow.id)
+          .maybeSingle();
+        if (!kanitHatasi && kanitSatiri) {
+          gorselIzinBekliyor =
+            gorselIzinBekliyorMu((kanitSatiri as { fatura_kanit?: unknown }).fatura_kanit) === true;
+        }
+      } catch {
+        gorselIzinBekliyor = false;
+      }
+    }
+
     if (productRow && productRow.name?.trim() && productRow.is_visible) {
       let categoryName = "";
       if (productRow.category_id) {
@@ -140,6 +158,7 @@ async function _getProductData(slug: string, productSlug: string) {
         seoDescription: productRow.seo_description,
         isVisible: productRow.is_visible,
         source: productRow.source_type,
+        gorselIzinBekliyor,
       };
 
       return {

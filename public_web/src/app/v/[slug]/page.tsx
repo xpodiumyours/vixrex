@@ -31,6 +31,7 @@ import { VixrexAvatar } from "./components/VixrexAvatar";
 import { parseAssistantHandoff } from "@/lib/assistantHandoff";
 import { resolveVitrinProfile } from "@/lib/vitrinProfile";
 import { normalizeProductMetadata } from "@/lib/productRichData";
+import { gorselIzinBekliyorMu } from "@/lib/faturaGorselHakDenetimi";
 import {
   PUBLIC_STORE_SELECT,
   PUBLIC_STORE_SELECT_WITH_VERIFICATION,
@@ -249,6 +250,31 @@ async function _buildStoreDataBundle(
       productRows = (productResult.data || []) as Array<Record<string, unknown>>;
     }
 
+    const gorselIzinDurumlari = new Map<string, boolean>();
+    try {
+      const urunKimlikleri = productRows
+        .map((p: Record<string, unknown>) => String(p.id ?? ""))
+        .filter(Boolean);
+      if (urunKimlikleri.length > 0) {
+        const { data: kanitSatirlari, error: kanitHatasi } = await supabase
+          .from("products")
+          .select("id,fatura_kanit")
+          .in("id", urunKimlikleri);
+        if (!kanitHatasi && Array.isArray(kanitSatirlari)) {
+          for (const satir of kanitSatirlari) {
+            const bekliyor = gorselIzinBekliyorMu(
+              (satir as { fatura_kanit?: unknown }).fatura_kanit,
+            );
+            if (bekliyor !== undefined) {
+              gorselIzinDurumlari.set(String((satir as { id?: unknown }).id ?? ""), bekliyor);
+            }
+          }
+        }
+      }
+    } catch {
+      gorselIzinDurumlari.clear();
+    }
+
     const categoryMap = new Map<string, string>();
     categories.forEach((cat) => {
       categoryMap.set(cat.id, cat.name);
@@ -284,6 +310,7 @@ async function _buildStoreDataBundle(
         isVisible: p.is_visible as boolean,
         source: p.source_type as string,
         metadata: p.metadata,
+        gorselIzinBekliyor: gorselIzinDurumlari.get(String(p.id ?? "")) === true,
       }))
       .filter((p: ProductItem) => isPublicCatalogProduct(p));
 

@@ -10,4 +10,5 @@ export interface RichProductItem extends ProductItem {
   variants?: unknown;
   seoTitle?: string | null;
   seoDescription?: string | null;
+  gorselIzinBekliyor?: boolean;
 }

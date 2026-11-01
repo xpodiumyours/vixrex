@@ -59,3 +59,12 @@ export function gorselHakKaydiniRaporla(
     hakIncelemeGerekiyor: hakKayitDurumu !== "verified_supplier_permission",
   };
 }
+
+export function gorselIzinBekliyorMu(faturaKanit: unknown): boolean | undefined {
+  const kayitlar = (faturaKanit as { gorselKaynaklari?: unknown } | null)?.gorselKaynaklari;
+  if (!Array.isArray(kayitlar) || kayitlar.length === 0) return undefined;
+  return kayitlar.some((kaynak) => {
+    const durum = (kaynak as { hakKayitDurumu?: unknown } | null)?.hakKayitDurumu;
+    return durum !== "verified_supplier_permission";
+  });
+}
