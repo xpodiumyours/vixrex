@@ -1,3 +1,7 @@
+vi.mock("@/lib/ownerSessionValidity", () => ({
+  ownerSessionStillActive: vi.fn(async () => true),
+}));
+
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
