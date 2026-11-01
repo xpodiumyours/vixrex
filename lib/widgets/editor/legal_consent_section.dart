@@ -1,4 +1,3 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:vixrex/screens/legal_screen.dart';
 import 'package:vixrex/theme/app_colors.dart';
@@ -31,6 +30,18 @@ class LegalConsentSection extends StatelessWidget {
     required this.onReloadDocuments,
     required this.onOpenLegalPage,
   });
+
+  void _privacyChanged(bool? value) {
+    onPrivacyChanged(value ?? false);
+  }
+
+  void _termsChanged(bool? value) {
+    onTermsChanged(value ?? false);
+  }
+
+  void _publicationChanged(bool? value) {
+    onPublicationChanged(value ?? false);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -95,165 +106,46 @@ class LegalConsentSection extends StatelessWidget {
               ),
             ],
             const SizedBox(height: 14),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: Checkbox(
-                    key: const ValueKey('privacy-notice-checkbox'),
-                    value: privacyNoticeAcknowledged,
-                    activeColor: const Color(0xFF0EA5E9),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                    onChanged:
-                        canAccept
-                            ? (value) {
-                              onPrivacyChanged(value ?? false);
-                            }
-                            : null,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text.rich(
-                    TextSpan(
-                      style: const TextStyle(
-                        fontSize: 12.5,
-                        height: 1.45,
-                        color: AppColors.darkText,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      children: [
-                        TextSpan(
-                          text: 'Aydınlatma Metni',
-                          style: const TextStyle(
-                            color: Color(0xFF0EA5E9),
-                            fontWeight: FontWeight.w700,
-                            decoration: TextDecoration.underline,
-                          ),
-                          recognizer:
-                              TapGestureRecognizer()
-                                ..onTap =
-                                    () =>
-                                        onOpenLegalPage(LegalPageType.privacy),
-                        ),
-                        const TextSpan(text: "'ni okudum ve bilgilendirildim."),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+            CheckboxListTile(
+              key: const ValueKey('privacy-notice-checkbox'),
+              value: privacyNoticeAcknowledged,
+              onChanged: canAccept ? _privacyChanged : null,
+              contentPadding: EdgeInsets.zero,
+              controlAffinity: ListTileControlAffinity.leading,
+              activeColor: const Color(0xFF0EA5E9),
+              title: TextButton(
+                onPressed: () => onOpenLegalPage(LegalPageType.privacy),
+                child: const Text('Aydınlatma Metni'),
+              ),
+              subtitle: const Text('Okudum ve bilgilendirildim.'),
             ),
             const SizedBox(height: 8),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: Checkbox(
-                    key: const ValueKey('terms-acceptance-checkbox'),
-                    value: termsAccepted,
-                    activeColor: const Color(0xFF0EA5E9),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                    onChanged:
-                        canAccept
-                            ? (value) {
-                              onTermsChanged(value ?? false);
-                            }
-                            : null,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text.rich(
-                    TextSpan(
-                      style: const TextStyle(
-                        fontSize: 12.5,
-                        height: 1.45,
-                        color: AppColors.darkText,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      children: [
-                        TextSpan(
-                          text: 'Kullanım Şartları',
-                          style: const TextStyle(
-                            color: Color(0xFF0EA5E9),
-                            fontWeight: FontWeight.w700,
-                            decoration: TextDecoration.underline,
-                          ),
-                          recognizer:
-                              TapGestureRecognizer()
-                                ..onTap =
-                                    () => onOpenLegalPage(LegalPageType.terms),
-                        ),
-                        const TextSpan(text: "'nı kabul ediyorum."),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+            CheckboxListTile(
+              key: const ValueKey('terms-acceptance-checkbox'),
+              value: termsAccepted,
+              onChanged: canAccept ? _termsChanged : null,
+              contentPadding: EdgeInsets.zero,
+              controlAffinity: ListTileControlAffinity.leading,
+              activeColor: const Color(0xFF0EA5E9),
+              title: TextButton(
+                onPressed: () => onOpenLegalPage(LegalPageType.terms),
+                child: const Text('Kullanım Şartları'),
+              ),
+              subtitle: const Text('Kabul ediyorum.'),
             ),
             const SizedBox(height: 8),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: Checkbox(
-                    key: const ValueKey('publication-consent-checkbox'),
-                    value: publicationConsentAccepted,
-                    activeColor: const Color(0xFF0EA5E9),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                    onChanged:
-                        canAccept
-                            ? (value) {
-                              onPublicationChanged(value ?? false);
-                            }
-                            : null,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text.rich(
-                    TextSpan(
-                      style: const TextStyle(
-                        fontSize: 12.5,
-                        height: 1.45,
-                        color: AppColors.darkText,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      children: [
-                        TextSpan(
-                          text: 'Açık Rıza Beyanı',
-                          style: const TextStyle(
-                            color: Color(0xFF0EA5E9),
-                            fontWeight: FontWeight.w700,
-                            decoration: TextDecoration.underline,
-                          ),
-                          recognizer:
-                              TapGestureRecognizer()
-                                ..onTap =
-                                    () =>
-                                        onOpenLegalPage(LegalPageType.consent),
-                        ),
-                        const TextSpan(
-                          text:
-                              "'nda açıklanan işleme kendi isteğimle rıza veriyorum.",
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+            CheckboxListTile(
+              key: const ValueKey('publication-consent-checkbox'),
+              value: publicationConsentAccepted,
+              onChanged: canAccept ? _publicationChanged : null,
+              contentPadding: EdgeInsets.zero,
+              controlAffinity: ListTileControlAffinity.leading,
+              activeColor: const Color(0xFF0EA5E9),
+              title: TextButton(
+                onPressed: () => onOpenLegalPage(LegalPageType.consent),
+                child: const Text('Açık Rıza Beyanı'),
+              ),
+              subtitle: const Text('Belirtilen işleme kendi isteğimle rıza veriyorum.'),
             ),
           ],
         ),
