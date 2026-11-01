@@ -34,7 +34,9 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('terms-acceptance-checkbox')));
     expect(events, ['privacy:true', 'terms:true']);
 
-    await tester.tap(find.byKey(const ValueKey('publication-consent-checkbox')));
+    await tester.tap(
+      find.byKey(const ValueKey('publication-consent-checkbox')),
+    );
     expect(events, ['privacy:true', 'terms:true', 'publication:true']);
   });
 
