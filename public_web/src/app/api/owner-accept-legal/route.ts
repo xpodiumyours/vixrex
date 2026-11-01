@@ -45,7 +45,7 @@ function supabaseAnon() {
 }
 
 export async function POST(request: NextRequest) {
-  let govde: { slug?: unknown };
+  let govde: { slug?: unknown; privacyAcknowledged?: unknown; termsAccepted?: unknown; publicationConsent?: unknown };
   try {
     govde = await request.json();
   } catch {
@@ -56,6 +56,17 @@ export async function POST(request: NextRequest) {
 
   if (!slug) {
     return NextResponse.json({ hata: "Vitrin belirtilmedi." }, { status: 400 });
+  }
+
+  if (
+    govde.privacyAcknowledged !== true ||
+    govde.termsAccepted !== true ||
+    govde.publicationConsent !== true
+  ) {
+    return NextResponse.json(
+      { hata: "Aydınlatma, kullanım şartları ve açık rıza ayrı ayrı işaretlenmelidir." },
+      { status: 422 }
+    );
   }
 
   // Oturum YALNIZ çerezden okunur. Gövdeden gelen bir token kabul edilmez.

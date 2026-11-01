@@ -7,7 +7,7 @@ import Link from "next/link";
  * NEDEN VAR: 2026-08-29'a kadar sitede hiçbir iletişim sayfası yoktu;
  * e-posta adresi yalnız yasal metinlerin içinde geçiyordu. Hem ziyaretçi
  * hem de başvuru değerlendiren affiliate programları önce bu sayfayı
- * arıyor. Adres ve telefon henüz alınmadı — alınınca buraya eklenecek.
+ * arıyor.
  */
 
 export const metadata: Metadata = {
@@ -33,7 +33,7 @@ const KONULAR = [
     baslik: "Yasal konular ve veri talepleri",
     metin:
       "KVKK kapsamındaki başvurular, veri silme talepleri ve yasal bildirimler. Talebiniz mevzuattaki süreler içinde yanıtlanır.",
-    baglanti: { yazi: "KVKK ve Gizlilik Politikası", yol: "/privacy" },
+    baglanti: { yazi: "KVKK Aydınlatma Metni", yol: "/legal/privacy" },
   },
 ];
 
@@ -106,12 +106,25 @@ export default function IletisimPage() {
           </div>
 
           <h2 className="mt-10 text-xl font-black tracking-tight text-lp-text">
+            KVKK başvuru yöntemleri
+          </h2>
+          <p className="mt-2 text-[14px] leading-relaxed text-lp-muted">
+            KVKK kapsamındaki taleplerinizi aşağıdaki işletme adresine yazılı olarak
+            veya Vixrex&apos;e daha önce bildirdiğiniz ve sistemimizde kayıtlı
+            e-posta adresinizden destek@vixrex.com adresine iletebilirsiniz.
+            KEP, güvenli elektronik imza ve mobil imza gibi diğer yasal başvuru
+            yöntemleri saklıdır. Başvurular en geç 30 gün içinde yanıtlanır.
+          </p>
+
+          <h2 className="mt-10 text-xl font-black tracking-tight text-lp-text">
             Yasal bilgiler
           </h2>
           <dl className="mt-4 divide-y divide-lp-border overflow-hidden rounded-2xl border border-lp-border bg-lp-surface">
             {[
               ["Ticaret unvanı", "Furkan Aksakal — Aksakal Ticaret"],
               ["Vergi numarası", "0340472476"],
+              ["İşletme adresi", "Esenevler Mah. Lokman Hekim Cad. No:18 İç Kapı No:10 Ümraniye/İstanbul"],
+              ["Telefon", "0542 180 25 73"],
               ["Faaliyet konusu", "İnternet üzerinden perakende ticaret (479114)"],
             ].map(([etiket, deger]) => (
               <div key={etiket} className="flex flex-col gap-1 px-5 py-3.5 sm:flex-row sm:gap-4">
