@@ -7,6 +7,7 @@ import { yonetilenUrunGorseliMi } from "@/lib/productImagePolicy";
 import { kaynakGorselleriniHazirla, sayfaGorselAlanAdlari } from "@/lib/faturaGorsel";
 import { faturaKatalogMetadatasi } from "@/lib/faturaUrunIcerigi";
 import { kategoriBirlestir } from "@/lib/kategoriBirlesim";
+import { gorselHakKaydiniRaporla } from "@/lib/faturaGorselHakDenetimi";
 
 export async function kayitliFaturaKatalogunuUygula(args: {
   admin: SupabaseClient;
@@ -119,6 +120,8 @@ export async function faturaUrunGorselleriniAktar(args: {
     gorselKaynaklari = hazir.gorseller.map((gorsel) => ({
       depoUrl: gorsel.url, kaynakGorsel: gorsel.kaynakGorsel,
       kaynakSayfa: gorsel.kaynakSayfa, genislik: gorsel.genislik, yukseklik: gorsel.yukseklik,
+      // Gölge denetim alanlarıdır. Esnafın Yayınla kararı ve görsel sayısı değişmez.
+      ...gorselHakKaydiniRaporla(gorsel.kaynakGorsel, satir.gorselHakDurumlari),
     }));
     gorselDurumu = altyapiHatasi ? "aktarim-bekliyor" : urunGorselleri.length === 0 ? "gorsel-yok" : "depoda";
   }
