@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vixrex/widgets/editor/legal_consent_section.dart';
 
 void main() {
-  testWidgets('Üç beyan bağımsızdır', (tester) async {
+  testWidgets('Aydınlatma ve şartlar bağımsızdır', (tester) async {
     final events = <String>[];
 
     await tester.pumpWidget(
@@ -45,8 +45,7 @@ void main() {
     await tapCheckbox('terms-acceptance-checkbox');
     expect(events, ['privacy:true', 'terms:true']);
 
-    await tapCheckbox('publication-consent-checkbox');
-    expect(events, ['privacy:true', 'terms:true', 'publication:true']);
+    expect(find.byKey(const ValueKey('publication-consent-checkbox')), findsNothing);
   });
 
   testWidgets('Yüklenirken değişiklik engellenir', (tester) async {
