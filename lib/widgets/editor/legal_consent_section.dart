@@ -145,7 +145,9 @@ class LegalConsentSection extends StatelessWidget {
                 onPressed: () => onOpenLegalPage(LegalPageType.consent),
                 child: const Text('Açık Rıza Beyanı'),
               ),
-              subtitle: const Text('Belirtilen işleme kendi isteğimle rıza veriyorum.'),
+              subtitle: const Text(
+                'Belirtilen işleme kendi isteğimle rıza veriyorum.',
+              ),
             ),
           ],
         ),
