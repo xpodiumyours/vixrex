@@ -121,9 +121,6 @@ describe("landing asistanı vitrini gerçekten yayınlar", () => {
       terms_accepted: true,
       terms_version: "2026-02",
       terms_hash: "h-terms",
-      publication_consent_accepted: true,
-      publication_consent_version: "2026-03",
-      publication_consent_hash: "h-consent",
     });
   });
 
@@ -136,7 +133,7 @@ describe("landing asistanı vitrini gerçekten yayınlar", () => {
     // ortada yayına alınamayan bir kayıt kalırdı. Artık baştan duruyoruz.
     expect(response.status).toBe(422);
     const govdeSonucu = await response.json();
-    expect(govdeSonucu.hata).toContain("üç yasal onayın tamamı gerekli");
+    expect(govdeSonucu.hata).toContain("aydınlatma bildirimi ve Kullanım Şartları gerekli");
     expect(rpcCagrisi("create_store_with_token")).toBeUndefined();
     expect(rpcCagrisi("update_store_with_token")).toBeUndefined();
   });
