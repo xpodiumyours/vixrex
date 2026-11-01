@@ -95,90 +95,71 @@ class LegalConsentSection extends StatelessWidget {
               ),
             ],
             const SizedBox(height: 14),
-            // Master Consent Row
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: Checkbox(
-                    key: const ValueKey('privacy-notice-checkbox'),
-                    value: isAllAccepted,
-                    activeColor: const Color(0xFF0EA5E9),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                    onChanged:
-                        canAccept
-                            ? (value) {
-                              final newValue = value ?? false;
-                              onPrivacyChanged(newValue);
-                              onTermsChanged(newValue);
-                              onPublicationChanged(newValue);
-                            }
-                            : null,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text.rich(
+            CheckboxListTile(
+              key: const ValueKey('privacy-notice-checkbox'),
+              value: privacyNoticeAcknowledged,
+              onChanged: canAccept ? (value) => onPrivacyChanged(value ?? false) : null,
+              controlAffinity: ListTileControlAffinity.leading,
+              contentPadding: EdgeInsets.zero,
+              dense: true,
+              activeColor: const Color(0xFF0EA5E9),
+              title: Text.rich(
+                TextSpan(
+                  style: const TextStyle(fontSize: 12.5, color: AppColors.darkText),
+                  children: [
                     TextSpan(
-                      style: const TextStyle(
-                        fontSize: 12.5,
-                        height: 1.45,
-                        color: AppColors.darkText,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      children: [
-                        TextSpan(
-                          text: 'Aydınlatma Metni',
-                          style: const TextStyle(
-                            color: Color(0xFF0EA5E9),
-                            fontWeight: FontWeight.w700,
-                            decoration: TextDecoration.underline,
-                          ),
-                          recognizer:
-                              TapGestureRecognizer()
-                                ..onTap =
-                                    () =>
-                                        onOpenLegalPage(LegalPageType.privacy),
-                        ),
-                        const TextSpan(text: ', '),
-                        TextSpan(
-                          text: 'Kullanım Şartları',
-                          style: const TextStyle(
-                            color: Color(0xFF0EA5E9),
-                            fontWeight: FontWeight.w700,
-                            decoration: TextDecoration.underline,
-                          ),
-                          recognizer:
-                              TapGestureRecognizer()
-                                ..onTap =
-                                    () => onOpenLegalPage(LegalPageType.terms),
-                        ),
-                        const TextSpan(text: ' ve '),
-                        TextSpan(
-                          text: 'Açık Rıza Beyanı',
-                          style: const TextStyle(
-                            color: Color(0xFF0EA5E9),
-                            fontWeight: FontWeight.w700,
-                            decoration: TextDecoration.underline,
-                          ),
-                          recognizer:
-                              TapGestureRecognizer()
-                                ..onTap =
-                                    () =>
-                                        onOpenLegalPage(LegalPageType.consent),
-                        ),
-                        const TextSpan(
-                          text: '\'nı okudum, anladım ve kabul ediyorum.',
-                        ),
-                      ],
+                      text: 'Aydınlatma Metni',
+                      style: const TextStyle(color: Color(0xFF0EA5E9), decoration: TextDecoration.underline),
+                      recognizer: TapGestureRecognizer()..onTap = () => onOpenLegalPage(LegalPageType.privacy),
                     ),
-                  ),
+                    const TextSpan(text: "'ni okudum ve bilgilendirildim."),
+                  ],
                 ),
-              ],
+              ),
+            ),
+            CheckboxListTile(
+              key: const ValueKey('terms-acceptance-checkbox'),
+              value: termsAccepted,
+              onChanged: canAccept ? (value) => onTermsChanged(value ?? false) : null,
+              controlAffinity: ListTileControlAffinity.leading,
+              contentPadding: EdgeInsets.zero,
+              dense: true,
+              activeColor: const Color(0xFF0EA5E9),
+              title: Text.rich(
+                TextSpan(
+                  style: const TextStyle(fontSize: 12.5, color: AppColors.darkText),
+                  children: [
+                    TextSpan(
+                      text: 'Kullanım Şartları',
+                      style: const TextStyle(color: Color(0xFF0EA5E9), decoration: TextDecoration.underline),
+                      recognizer: TapGestureRecognizer()..onTap = () => onOpenLegalPage(LegalPageType.terms),
+                    ),
+                    const TextSpan(text: "'nı kabul ediyorum."),
+                  ],
+                ),
+              ),
+            ),
+            CheckboxListTile(
+              key: const ValueKey('publication-consent-checkbox'),
+              value: publicationConsentAccepted,
+              onChanged: canAccept ? (value) => onPublicationChanged(value ?? false) : null,
+              controlAffinity: ListTileControlAffinity.leading,
+              contentPadding: EdgeInsets.zero,
+              dense: true,
+              activeColor: const Color(0xFF0EA5E9),
+              title: Text.rich(
+                TextSpan(
+                  style: const TextStyle(fontSize: 12.5, color: AppColors.darkText),
+                  children: [
+                    TextSpan(
+                      text: 'Açık Rıza Beyanı',
+                      style: const TextStyle(color: Color(0xFF0EA5E9), decoration: TextDecoration.underline),
+                      recognizer: TapGestureRecognizer()..onTap = () => onOpenLegalPage(LegalPageType.consent),
+                    ),
+                    const TextSpan(text: "'nda açıklanan işleme kendi isteğimle rıza veriyorum."),
+                  ],
+                ),
+              ),
             ),
           ],
         ),
