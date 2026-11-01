@@ -45,7 +45,10 @@ void main() {
     await tapCheckbox('terms-acceptance-checkbox');
     expect(events, ['privacy:true', 'terms:true']);
 
-    expect(find.byKey(const ValueKey('publication-consent-checkbox')), findsNothing);
+    expect(
+      find.byKey(const ValueKey('publication-consent-checkbox')),
+      findsNothing,
+    );
   });
 
   testWidgets('Yüklenirken değişiklik engellenir', (tester) async {
