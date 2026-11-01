@@ -251,7 +251,8 @@ class LegalConsentSection extends StatelessWidget {
                                         onOpenLegalPage(LegalPageType.consent),
                         ),
                         const TextSpan(
-                          text: "'nda açıklanan işleme kendi isteğimle rıza veriyorum.",
+                          text:
+                              "'nda açıklanan işleme kendi isteğimle rıza veriyorum.",
                         ),
                       ],
                     ),
