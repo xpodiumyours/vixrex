@@ -102,10 +102,8 @@ export interface AsistanCevaplari {
   longitude?: number;
   location_accuracy_meters?: number;
   location_source?: "browser_gps" | "manual";
-  legal_consent?: boolean;
   aydinlatma_onay?: boolean;
   sartlar_onay?: boolean;
-  acik_riza_onay?: boolean;
   assistant_handoff?: {
     version: 1;
     completed_steps: [
@@ -156,7 +154,7 @@ export function handoffMesajMetni(
   if (ham.trim()) return ham;
 
   if (adim.alan === "legal") {
-    return cevaplar.legal_consent === true ? "Onaylandı" : "Onaylanmadı";
+    return cevaplar.aydinlatma_onay === true && cevaplar.sartlar_onay === true ? "Tamamlandı" : "Tamamlanmadı";
   }
   return adim.dugme;
 }
