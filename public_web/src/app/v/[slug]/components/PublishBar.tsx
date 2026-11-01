@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { PREMIUM_ILE_YAYINLA } from "@/lib/fiyatlandirma";
 
 interface Props {
@@ -20,7 +23,7 @@ interface Props {
    * değil). true olduktan sonra bu ekrandan geri alınamaz (kapsam dışı). */
   yasalOnayli: boolean;
   onayVeriliyor: boolean;
-  onayVer: () => Promise<void>;
+  onayVer: (beyanlar: { privacyAcknowledged: boolean; termsAccepted: boolean; publicationConsent: boolean }) => Promise<boolean>;
   /** Masaüstünde yayın ana eylemi üst editör çubuğundadır. Eksikler sekmesi
    * yalnız yasal onay + taslağı bırakma kontrollerini gösterebilir. */
   showPublishButton?: boolean;
@@ -42,6 +45,13 @@ export function PublishBar({
   onayVer,
   showPublishButton = true,
 }: Props) {
+  const [privacyAcknowledged, setPrivacyAcknowledged] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [publicationConsent, setPublicationConsent] = useState(false);
+  const [reapproving, setReapproving] = useState(false);
+  const readyToRecord = privacyAcknowledged && termsAccepted && publicationConsent;
+  const showConsentForm = !yasalOnayli || reapproving;
+
   // Kiralık şablon vitrin + aktif premium yoksa yayın premium ister.
   // Düğme yalan söylemez: ne gerekiyorsa onu yazar (Faz G3 ilkesi).
   const premiumGerekli = kiralikVitrinMi && !premiumAktifMi;
@@ -57,73 +67,93 @@ export function PublishBar({
 
   return (
     <div className="border-t border-white/10 px-4 py-3">
-      {/* Master onay kutusu — Flutter'daki LegalConsentSection ile aynı
-          desen (lib/widgets/editor/legal_consent_section.dart): tek kutu,
-          üç belgeyi birlikte kabul eder, ayrı ayrı sorulmaz. */}
-      {yasalOnayli ? (
+      {yasalOnayli && !reapproving ? (
         <p className="mb-2 flex items-center gap-1.5 text-[11px] font-medium text-emerald-400">
-          <span aria-hidden>✓</span> Yasal onay verildi.
-          {/* Belgeler güncellenip owner-publish PRIVACY/TERMS/CONSENT_
-              VERSION_INVALID döndüğünde kullanıcının önü kesilmesin diye
-              — checkbox kalıcı olarak gizlendiği için tek geri dönüş
-              yolu bu link (nadiren kullanılır, ama tıkanmayı önler). */}
+          <span aria-hidden>✓</span> Yasal beyanların kayıtlı.
           <button
             type="button"
-            onClick={() => void onayVer()}
+            onClick={() => {
+              setPrivacyAcknowledged(false);
+              setTermsAccepted(false);
+              setPublicationConsent(false);
+              setReapproving(true);
+            }}
             disabled={onayVeriliyor}
             className="text-slate-400 underline decoration-dotted hover:text-slate-300"
           >
-            {onayVeriliyor ? "Kaydediliyor…" : "yeniden onayla"}
+            yeniden değerlendir
           </button>
         </p>
-      ) : (
-        <label className="mb-2 flex items-start gap-2 text-[11px] leading-relaxed text-slate-300">
-          <input
-            type="checkbox"
-            checked={false}
-            disabled={onayVeriliyor}
-            onChange={(e) => {
-              if (e.target.checked) void onayVer();
+      ) : null}
+      {showConsentForm ? (
+        <div className="mb-3 space-y-2 text-[11px] leading-relaxed text-slate-300">
+          <p>Aydınlatma, kullanım şartları ve açık rıza birbirinden bağımsız beyanlardır.</p>
+          <label className="flex items-start gap-2">
+            <input
+              type="checkbox"
+              aria-label="Aydınlatma metnini okudum"
+              checked={privacyAcknowledged}
+              disabled={onayVeriliyor}
+              onChange={(e) => setPrivacyAcknowledged(e.target.checked)}
+              className="mt-0.5 h-3.5 w-3.5 shrink-0"
+            />
+            <span>
+              <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="font-semibold text-blue-400 underline">Aydınlatma Metni</a>
+              {"'ni okudum ve bilgilendirildim."}
+            </span>
+          </label>
+          <label className="flex items-start gap-2">
+            <input
+              type="checkbox"
+              aria-label="Kullanım şartlarını kabul ediyorum"
+              checked={termsAccepted}
+              disabled={onayVeriliyor}
+              onChange={(e) => setTermsAccepted(e.target.checked)}
+              className="mt-0.5 h-3.5 w-3.5 shrink-0"
+            />
+            <span>
+              <a href="/legal/terms" target="_blank" rel="noopener noreferrer" className="font-semibold text-blue-400 underline">Kullanım Şartları</a>
+              {"'nı kabul ediyorum."}
+            </span>
+          </label>
+          <label className="flex items-start gap-2">
+            <input
+              type="checkbox"
+              aria-label="Açık rıza veriyorum"
+              checked={publicationConsent}
+              disabled={onayVeriliyor}
+              onChange={(e) => setPublicationConsent(e.target.checked)}
+              className="mt-0.5 h-3.5 w-3.5 shrink-0"
+            />
+            <span>
+              <a href="/legal/consent" target="_blank" rel="noopener noreferrer" className="font-semibold text-blue-400 underline">Açık Rıza Beyanı</a>
+              {"'nda açıklanan işleme kendi isteğimle rıza veriyorum."}
+            </span>
+          </label>
+          <button
+            type="button"
+            disabled={!readyToRecord || onayVeriliyor}
+            onClick={() => {
+              void onayVer({ privacyAcknowledged, termsAccepted, publicationConsent }).then((success) => {
+                if (success) {
+                  setReapproving(false);
+                  setPrivacyAcknowledged(false);
+                  setTermsAccepted(false);
+                  setPublicationConsent(false);
+                }
+              });
             }}
-            className="mt-0.5 h-3.5 w-3.5 shrink-0"
-          />
-          <span>
-            {onayVeriliyor ? (
-              "Kaydediliyor…"
-            ) : (
-              <>
-                <a
-                  href="/legal/privacy"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-semibold text-blue-400 underline"
-                >
-                  Aydınlatma Metni
-                </a>
-                {", "}
-                <a
-                  href="/legal/terms"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-semibold text-blue-400 underline"
-                >
-                  Kullanım Şartları
-                </a>
-                {" ve "}
-                <a
-                  href="/legal/consent"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-semibold text-blue-400 underline"
-                >
-                  Açık Rıza Beyanı
-                </a>
-                {"'nı okudum, anladım ve kabul ediyorum."}
-              </>
-            )}
-          </span>
-        </label>
-      )}
+            className="w-full rounded-lg border border-blue-500/50 px-3 py-2 font-semibold text-blue-300 disabled:opacity-50"
+          >
+            {onayVeriliyor ? "Kaydediliyor…" : "Ayrı beyanları kaydet"}
+          </button>
+          {reapproving ? (
+            <button type="button" className="underline" onClick={() => setReapproving(false)}>
+              Vazgeç
+            </button>
+          ) : null}
+        </div>
+      ) : null}
       {showPublishButton ? (
         <button
           type="button"
