@@ -15,9 +15,13 @@ export function OwnerKatalogAsistani({
     <section className="rounded-2xl border border-[var(--owner-primary)]/20 bg-[var(--owner-bg-soft)] p-3 shadow-sm">
       <div className="flex items-center gap-2">
         <VixrexAvatar size={42} decorative />
-        <p className="text-[11px] leading-4 text-[var(--owner-muted)]">
-          Fotoğrafı yükle. Kartlar hazırlanır. Satış fiyatını yazıp yayınlarsın.
-        </p>
+        <div className="text-[11px] leading-4 text-[var(--owner-muted)]">
+          <p>Fotoğrafı yükle. Kartlar hazırlanır. Satış fiyatını yazıp yayınlarsın.</p>
+          <p className="mt-1">
+            Fatura fotoğrafı, satırları okumak için OpenRouter hizmetine (ABD) iletilir.
+            İstemezsen ürünlerini elle ekleyebilirsin.
+          </p>
+        </div>
       </div>
       <button type="button" onClick={onFaturaCikar} className="owner-button-primary mt-3 w-full">
         Fatura fotoğrafını yükle
