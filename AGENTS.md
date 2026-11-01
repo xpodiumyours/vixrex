@@ -298,6 +298,16 @@ atıldı; son ikisi GitHub 403 rate limit yüzünden canlıya çıkmadı, `verce
 redeploy` ile elle çıkarıldı. Aynı gün içinde kapılar en son çalıştıktan sonra
 push atılır, her düzeltme için ayrı push açılmaz.
 
+### 24. "Sıradaki iş şu" demeden önce işin durumu ölçülür (2026-11-01)
+Bir işi "sıradaki" ilan etmeden veya "şuna geçelim" demeden önce üçü ölçülür ve
+cümlede yazılır: **1)** iş açık mı kapalı mı (hata kaydı durumu), **2)** düzeltme
+birleşmiş mi (PR birleşti mi, taslak mı), **3)** canlıda mı (canlı sürüm o
+düzeltmeyi içeriyor mu). Ölçüm yoksa "sıradaki" cümlesi de yoktur.
+
+Neden: 2026-11-01'de #611 canlıda değilken "#734'e geçelim" denildi; #734'ün
+taslak olduğu ve canlıya hiç inmemiş olduğu ölçülmemişti. Casper: "niye bakmadan
+734'e geçelim diyorsun? bu hataları yapmaman için önlem al kendine."
+
 ### Token ekonomisi (2026-09-16)
 Token en kıt kaynak. Bitince koordinasyon, doğrulama ve merge sorumluluğu
 duruyor — yani proje duruyor. Yavaş ajan, duran projeden iyidir.
