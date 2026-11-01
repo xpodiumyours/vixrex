@@ -37,7 +37,9 @@ void main() {
     expect(events, ['privacy:true', 'terms:true', 'publication:true']);
   });
 
-  testWidgets('Aydınlatma yüklenirken hiçbir onay değiştirilemez', (tester) async {
+  testWidgets(
+    'Aydınlatma yüklenirken hiçbir onay değiştirilemez',
+    (tester) async {
     var changed = false;
     await tester.pumpWidget(
       MaterialApp(
@@ -62,6 +64,7 @@ void main() {
     );
 
     await tester.tap(find.byKey(const ValueKey('privacy-notice-checkbox')));
-    expect(changed, isFalse);
-  });
+      expect(changed, isFalse);
+    },
+  );
 }
