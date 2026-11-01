@@ -804,7 +804,7 @@ export function useOwnerActions({
   // Başarıdan sonra router.refresh() gerekir: draftData sunucuda yeniden
   // okunmadan yerelTaslak'taki onay bayrakları güncellenmez, PublishBar
   // hâlâ "onaylanmadı" görür.
-  const onayVer = useCallback(async (beyanlar: { privacyAcknowledged: boolean; termsAccepted: boolean; publicationConsent: boolean }): Promise<boolean> => {
+  const onayVer = useCallback(async (beyanlar: { privacyAcknowledged: boolean; termsAccepted: boolean }): Promise<boolean> => {
     mesajEkle("kullanici", "Onaylıyorum");
     setOnayVeriliyor(true);
 
