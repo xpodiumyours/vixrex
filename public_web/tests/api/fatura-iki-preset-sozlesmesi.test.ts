@@ -137,6 +137,30 @@ describe("gerçek ikinci preset JSON sözleşmesi",()=>{
     expect(result.sonuc.satirlar[0].siteSayfa).toBe("https://example.com/p/1");
     expect(result.sonuc.satirlar[0].siteGorseller).toEqual([]);
   });
+  it("katı ikinci preset media.source_url alanını ürün sayfası olarak taşır; fotoğraf olarak kullanmaz",async()=>{
+    const sonuc=await kartPresetYanitiniOku(response([{
+      row_id:"1",
+      vixrex_product_json:{title:"A ürün",short_description:"",category_suggestion:"Gıda"},
+      validation:{status:"ambiguous",official_product_url:null,matched_attributes:[],unmatched_attributes:["Beden belirsiz"]},
+      media:{image_url:null,source_url:"https://example.com/resmi-urun",verification_status:"not_reviewed",rights_status:"unknown"},
+    }]),{...first,satirlar:[first.satirlar[0]]});
+    const satir=sonuc.sonuc.satirlar[0];
+    expect(satir.siteSayfa).toBe("https://example.com/resmi-urun");
+    expect(satir.siteGorsel).toBe("");
+    expect(satir.siteGorseller).toEqual([]);
+    expect(satir.dogrulamaDurumu).toBe("Belirsiz");
+    expect(satir.eksikler).toEqual(["Beden belirsiz"]);
+  });
+  it("doğrulanmış resmî sayfa, görselin kaynak sayfasına göre önceliklidir",async()=>{
+    const sonuc=await kartPresetYanitiniOku(response([{
+      row_id:"1",
+      vixrex_product_json:{title:"A ürün",short_description:"",category_suggestion:"Gıda"},
+      validation:{status:"verified",official_product_url:"https://example.com/asli",matched_attributes:[],unmatched_attributes:[]},
+      media:{image_url:"https://cdn.example.com/image.webp",source_url:"https://example.com/fotograf-kaynagi",verification_status:"verified",rights_status:"unknown"},
+    }]),{...first,satirlar:[first.satirlar[0]]});
+    expect(sonuc.sonuc.satirlar[0].siteSayfa).toBe("https://example.com/asli");
+    expect(sonuc.sonuc.satirlar[0].siteGorseller).toEqual(["https://cdn.example.com/image.webp"]);
+  });
   it("ikinci presetin açık bulunamadı kararını ilk araştırmanın görseliyle değiştirmez",async()=>{
     const okuma={...first,satirlar:[{...first.satirlar[0],siteAciklama:"İlk açıklama",siteSayfa:"https://example.com/ilk",siteGorseller:["https://example.com/ilk.jpg"]}]};
     const result=await kartPresetYanitiniOku(response([{
