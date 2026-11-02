@@ -110,7 +110,6 @@ export async function arkaPlanFaturaSonucunuAl(
     } else {
       throw new Error("OKUYUCU_EKSIK_CEVAP");
     }
-    // OpenRouter nihai görseli belirler; Vixrex resmî sayfada yeni görsel aramaz veya seçimi değiştirmez.
     const birlesikOkuma = okuma;
     const satirlar = birlesikOkuma.satirlar.map((s) => faturaSatiriniAktar(s, birlesikOkuma.tedarikci));
     const id = await islemKaydet({

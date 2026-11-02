@@ -27,8 +27,6 @@ const say = (satirlar: Array<Record<string, unknown>>) => ({
 it("gerçek çitli yanıt: 5 satır → 5 kart; yalnız 4 gerçek görsel adresi", async () => {
   const sonuc = await kartPresetYanitiniOku(metinYanit(dosya("gercek-citli.txt")), ilkOkuma);
   expect(say(sonuc.sonuc.satirlar)).toEqual({ satir: 5, kart: 5, gorselli: 4 });
-  // Üçüncü ürünün resmî sayfası var, fakat model doğrulanmış fotoğraf döndürmemiş.
-  // Sayfa adresi fotoğraf diye uydurulmaz; ürün kartı ve eksik kanıt korunur.
   expect(sonuc.sonuc.satirlar[2].siteGorseller).toEqual([]);
   expect(sonuc.sonuc.satirlar[2].siteSayfa).toBe("https://sehermensucat.com/kadin-atlet");
   expect(sonuc.sonuc.satirlar[2].dogrulamaDurumu).toBe("Belirsiz");

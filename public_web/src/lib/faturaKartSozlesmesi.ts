@@ -109,9 +109,6 @@ export function tekKartSozlesmesi(item: Kayit): KartSozlesmesi {
   const durum = (metin(dogrulama.status) || metin(dogrulama.verification_status)
     || metin(item.verification_status) || metin(item.validation_status)
     || metin(item.match_status) || metin(item.status)) as KartDogrulamaDurumu;
-  // Düz OpenRouter yanıtında product_url boşken source_url ürün kaynak sayfasıdır.
-  // Görsel adresi bundan ayrı tutulur; yalnız image_url fotoğraf olarak kullanılır.
-  // Görselin kaynak sayfası gösterilebilir, fakat resmî ürün kimliği doğrulamasının yerine geçmez.
   const resmiKaniti = metin(dogrulama.official_product_url) || metin(kart.official_product_url)
     || metin(kart.product_url) || metin(dogrulama.product_url);
   const resmiSayfa = resmiKaniti || metin(kart.source_url) || metin(gorsel.source_url);

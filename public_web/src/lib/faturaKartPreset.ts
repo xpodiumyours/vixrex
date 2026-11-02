@@ -109,7 +109,6 @@ function tekillesmeKarariKartlardan(
       if (adlar.some((ad) => ad.replace(/\s/g, "").length < 6)) continue;
       if (new Set(adlar).size !== 1) continue;
       if (!ayniDeger(satirlarUye, (s) => s.marka)) continue;
-      // Barkodsuz ürünlerin ambalaj miktarı farklıysa aynı kart altında toplanmaz.
       if (!ayniDeger(satirlarUye, (s) => s.gramaj)) continue;
     }
     if (!ayniDeger(satirlarUye, (s) => s.varyant)) continue;
@@ -124,11 +123,9 @@ function tekillesmeKarariKartlardan(
       continue;
     }
 
-    // Her grup üyesi aynı, geçerli kanonik satırı bildirmelidir. Vixrex kendisi seçmez.
     const bildirilenler = uyeler.map((i) => kartlar.get(String(i + 1))?.kanonikRowId ?? "");
     if (bildirilenler.some((id) => !id || id !== bildirilenler[0])) continue;
     const kanonik = /^\d+$/.test(bildirilenler[0]) ? Number(bildirilenler[0]) - 1 : -1;
-    // Presetin en küçük row_id kuralını yalnız denetle; Vixrex alternatif satır seçmez.
     if (!uyeler.includes(kanonik) || kanonik !== Math.min(...uyeler)) continue;
     for (const i of uyeler) {
       if (i !== kanonik) karar.indirgenen.set(String(i + 1), kanonik + 1);
@@ -191,11 +188,9 @@ export async function kartPresetYanitiniOku(cevap: Response, okuma: GoruSonucu) 
       };
     }
     eslesen += 1;
-    // Kaynak sayfası fotoğraf URL’si değildir. Görsel yalnız ikinci presetin image_url alanıdır.
     const gorsel = adres(kart.gorselAdresi);
     const kaynak = adres(kart.resmiSayfa);
     const eksikler = kart.eksikler.filter((v): v is string => typeof v === "string");
-    // Kaynak görsel URL'si, verified için zorunlu resmî ürün sayfası kanıtı değildir.
     const resmiKanitEksik = kart.dogrulamaDurumu === "verified" && !kart.dogrulanmis;
     if (resmiKanitEksik) eksikler.push("Doğrulanmış ürün için resmî sayfa kanıtı eksik; doğrulanmış kabul edilmedi.");
     if (kimlikEksik) eksikler.push(kimlikNotu);

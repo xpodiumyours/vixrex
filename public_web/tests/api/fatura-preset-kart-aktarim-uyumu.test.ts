@@ -56,7 +56,6 @@ describe("OpenRouter → Vixrex kayıt sınırı (stok eşleştirmesi sabit)", (
     });
     expect(hata).toBeNull();
     expect(girdi.imageUrls).toEqual([resmiGorsel, esnafGorseli]);
-    // Bu çalışmada stok birleştirme davranışı değişmesin.
     expect(girdi.variants).toEqual([]);
     expect(girdi.metadata.attributes).toEqual(expect.arrayContaining([
       expect.objectContaining({ key: "size", value: "4" }),
