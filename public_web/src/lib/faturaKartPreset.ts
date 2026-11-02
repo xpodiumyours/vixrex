@@ -8,7 +8,7 @@ import {
 
 export const URUN_KART_PRESET = "@preset/urun-kart-olusturucu";
 export const URUN_KART_PRESET_YENI = "@preset/vixrex-urun-karti-v2";
-const akis = () => {
+export const akis = () => {
   if (process.env.NODE_ENV === "test" && process.env.PRESET_AKIS === undefined) return "yeni";
   return process.env.PRESET_AKIS === "yeni" ? "yeni" : "mevcut";
 };

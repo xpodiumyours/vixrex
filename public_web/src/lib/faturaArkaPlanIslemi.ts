@@ -4,7 +4,10 @@ import { faturaSatiriniAktar } from "@/lib/faturaPresetAktarimi";
 import { islemKaydet } from "@/lib/faturaIslemKaydi";
 import { islemiYukle } from "@/lib/faturaIslemOku";
 import { faturaTaslakYanitiniHazirla } from "@/lib/faturaOtomatikTaslakKaydi";
+import { gorselsizSatirlariTamamla } from "@/lib/faturaGorsel";
+import { adayGorselleriniSec } from "@/lib/faturaGorselSecimi";
 import {
+  akis,
   kartPresetIstekGovdesi,
   kartPresetYanitiniOku,
   URUN_KART_PRESET,
@@ -110,7 +113,15 @@ export async function arkaPlanFaturaSonucunuAl(
     } else {
       throw new Error("OKUYUCU_EKSIK_CEVAP");
     }
-    const birlesikOkuma = okuma;
+    const birlesikOkuma =
+  akis() === "mevcut"
+    ? {
+        ...okuma,
+        satirlar: await adayGorselleriniSec({
+          satirlar: await gorselsizSatirlariTamamla({ satirlar: okuma.satirlar }),
+        }),
+      }
+    : okuma;
     const satirlar = birlesikOkuma.satirlar.map((s) => faturaSatiriniAktar(s, birlesikOkuma.tedarikci));
     const id = await islemKaydet({
       slug, parmakIzi: sonuc.fingerprint, providerJobId: islemKimligi,
