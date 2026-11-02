@@ -38,10 +38,12 @@ describe("Vixrex preset taşıma sözleşmesi", () => {
     expect(body.provider).toEqual({ require_parameters: true });
     expect(JSON.stringify(body)).toContain(FATURA_JSON_ISTEGI.replace(/\n/g, "\\n").slice(0, 10));
   });
-  it("araştırma aşamaları için sohbet onayı beklemez; satış ve esnaf onayı üretmez", () => {
-    expect(FATURA_JSON_ISTEGI).toContain("AŞAMA 2 sonunda durma");
-    expect(FATURA_JSON_ISTEGI).toContain("devam onayı veya yeni sohbet mesajı isteme");
+  it("birinci preset yalnız belge okur; ürün araştırması ve kart üretimi ikinci presetin işidir", () => {
+    expect(FATURA_JSON_ISTEGI).toContain("birinci preset sadece belge okuma");
+    expect(FATURA_JSON_ISTEGI).toContain("ikinci OpenRouter presetinin görevidir");
     expect(FATURA_JSON_ISTEGI).toContain("Satış fiyatı ve esnaf onayı üretme");
+    expect(FATURA_JSON_ISTEGI).not.toContain("web_search");
+    expect(FATURA_JSON_ISTEGI).not.toContain("web_fetch");
     const body = faturaIstekGovdesi("data:image/png;base64,TEST");
     expect(body.model).toContain("@preset/");
     expect(body).not.toHaveProperty("tools");

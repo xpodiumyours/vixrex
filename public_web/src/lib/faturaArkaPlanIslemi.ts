@@ -9,8 +9,6 @@ import {
   kartPresetYanitiniOku,
   URUN_KART_PRESET,
 } from "@/lib/faturaKartPreset";
-import { gorselsizSatirlariTamamla } from "@/lib/faturaGorsel";
-import { adayGorselleriniSec } from "@/lib/faturaGorselSecimi";
 import { faturaBaslangicZamani, faturaOzetSatiri, faturaOzetiniKaydet, gecenSaniye } from "@/lib/faturaOzeti";
 
 export const OKUMA_PRESET = "@preset/vixrex-qwen-fatura-okuma-suzme";
@@ -112,8 +110,8 @@ export async function arkaPlanFaturaSonucunuAl(
     } else {
       throw new Error("OKUYUCU_EKSIK_CEVAP");
     }
-    const tamamlanmis = await gorselsizSatirlariTamamla({ satirlar: okuma.satirlar });
-    const birlesikOkuma = { ...okuma, satirlar: await adayGorselleriniSec({ satirlar: tamamlanmis }) };
+    // OpenRouter nihai görseli belirler; Vixrex resmî sayfada yeni görsel aramaz veya seçimi değiştirmez.
+    const birlesikOkuma = okuma;
     const satirlar = birlesikOkuma.satirlar.map((s) => faturaSatiriniAktar(s, birlesikOkuma.tedarikci));
     const id = await islemKaydet({
       slug, parmakIzi: sonuc.fingerprint, providerJobId: islemKimligi,

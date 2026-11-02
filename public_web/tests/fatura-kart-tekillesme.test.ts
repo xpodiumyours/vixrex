@@ -83,13 +83,13 @@ it("resmî kaynak adresi olmayan doğrulanmış satır birleştirilmez", () => {
   expect(tekrarGruplari(satirlar, items).size).toBe(0);
 });
 
-it("canonical_row_id geçersizse ilk satır kanonik olur", () => {
+it("canonical_row_id geçersizse Vixrex kendi kanonik satırını uydurmaz", () => {
   const satirlar = [
     { barkod: "8690123456789", model: "A1", ad: "Ülker Gofret", marka: "Ülker", beden: "40 g" },
     { barkod: "8690123456789", model: "A1", ad: "Ülker Gofret", marka: "Ülker", beden: "40 g" },
   ];
   const items = new Map([["1", kart("ulker", "9")], ["2", kart("ulker", "9.5")]]) as never;
-  expect([...tekrarGruplari(satirlar, items).entries()]).toEqual([["2", 1]]);
+  expect([...tekrarGruplari(satirlar, items).entries()]).toEqual([]);
 });
 
 it("farklı barkodlar aynı gruba konsa da birleştirilmez", () => {

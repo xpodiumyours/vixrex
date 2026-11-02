@@ -20,14 +20,6 @@ export function kartPresetIstekGovdesi(okuma: GoruSonucu): Record<string, unknow
     brand: s.marka, name: s.ad, code: s.model, barcode: s.barkod,
     variant: s.varyant, size: s.beden, net_quantity: s.gramaj,
     invoice_data: { quantity: s.adet, unit: s.birim, unit_price: s.birimFiyat, total_amount: s.tutar },
-    previous_product_research: {
-      description: s.siteAciklama, product_url: s.siteSayfa,
-      image_urls: s.siteGorseller ?? (s.siteGorsel ? [s.siteGorsel] : []),
-      category: s.siteKategori, manufacturer: s.uretici, attributes: s.ozellikler,
-      validation_status: s.dogrulamaDurumu, matched_attributes: s.eslesenBilgiler,
-      unmatched_attributes: s.eksikler, image_validation_status: s.gorselDogrulamaDurumu,
-      sources: s.kaynaklar,
-    },
   }));
   const gruplar = [...new Set(satirlar.map((s) => s.brand))].map((brand) => ({
     brand, rows: satirlar.filter((s) => s.brand === brand),
@@ -108,11 +100,11 @@ function tekillesmeKarariKartlardan(
       continue;
     }
 
-    const bildirilen = uyeler
-      .map((i) => kartlar.get(String(i + 1))?.kanonikRowId ?? "")
-      .map((deger) => (/^\d+$/.test(deger) ? Number(deger) - 1 : -1))
-      .find((sira) => uyeler.includes(sira));
-    const kanonik = bildirilen ?? uyeler[0];
+    // Her grup üyesi aynı, geçerli kanonik satırı bildirmelidir. Vixrex kendisi seçmez.
+    const bildirilenler = uyeler.map((i) => kartlar.get(String(i + 1))?.kanonikRowId ?? "");
+    if (bildirilenler.some((id) => !id || id !== bildirilenler[0])) continue;
+    const kanonik = /^\d+$/.test(bildirilenler[0]) ? Number(bildirilenler[0]) - 1 : -1;
+    if (!uyeler.includes(kanonik)) continue;
     for (const i of uyeler) {
       if (i !== kanonik) karar.indirgenen.set(String(i + 1), kanonik + 1);
     }
@@ -174,7 +166,8 @@ export async function kartPresetYanitiniOku(cevap: Response, okuma: GoruSonucu) 
       };
     }
     eslesen += 1;
-    const gorsel = adres(kart.gorselAdresi) || adres(kart.gorselKaynakSayfa);
+    // Kaynak sayfası fotoğraf URL’si değildir. Görsel yalnız ikinci presetin image_url alanıdır.
+    const gorsel = adres(kart.gorselAdresi);
     const kaynak = adres(kart.resmiSayfa);
     const eksikler = kart.eksikler.filter((v): v is string => typeof v === "string");
     if (kimlikEksik) eksikler.push(kimlikNotu);

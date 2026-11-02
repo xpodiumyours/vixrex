@@ -40,7 +40,7 @@ describe("gerçek ikinci preset JSON sözleşmesi",()=>{
     const satir = faturaSatiriniAktar(result.sonuc.satirlar[0],"Tedarikçi");
     expect(satir.marka).toBe("X");
     expect(satir.varyant).toBe("Sade");
-    expect(satir.katalog).toMatchObject({marka:"Üreticinin markası",varyant:"175 g tekli paket",gramaj:"175 g",izinDurumu:"var",gorseller:["https://example.com/p/1.jpg"]});
+    expect(satir.katalog).toMatchObject({marka:"Üreticinin markası",varyant:"175 g tekli paket",gramaj:"175 g",izinDurumu:"var",gorseller:[]});
     expect(faturaKatalogMetadatasi(satir.katalog ?? {}).attributes?.map(a=>a.value)).toEqual(expect.arrayContaining(["Sade","175 g tekli paket","175 g"]));
     expect(satirdanFaturaTaslagi(satir)).toMatchObject({brand:"Üreticinin markası",satisFiyati:null,stokOnerisi:3,ownerApproved:false,isVisible:false});
   });
@@ -118,23 +118,24 @@ describe("gerçek ikinci preset JSON sözleşmesi",()=>{
     expect(satir.eksikler).toEqual(["Tüm ürün özellikleri: resmî ürün sayfası bulunamadı"]);
     expect(satir.siteSayfa).toBe("");
   });
-  it("ilk araştırmanın açıklama, görsel, özellik ve kaynaklarını kendi satırıyla ikinci presete taşır",()=>{
-    const arastirma = {siteAciklama:"Kaynak açıklaması",siteSayfa:"https://example.com/ilk",
-      siteGorseller:["https://example.com/ilk-1.jpg","https://example.com/ilk-2.jpg"],
-      siteKategori:"Gıda",uretici:"Üretici",ozellikler:[{key:"ingredients",value:"Fındık"}],
-      dogrulamaDurumu:"Belirsiz",eslesenBilgiler:["Marka"],eksikler:["Gramaj"],
-      gorselDogrulamaDurumu:"Araştırılamadı",kaynaklar:[{url:"https://example.com/ilk",type:"manufacturer"}]};
+  it("ilk preset yalnız okuma verir; önceki ürün araştırması ikinci presete taşınmaz",()=>{
+    const arastirma = {siteAciklama:"Eski açıklama",siteSayfa:"https://example.com/ilk",
+      siteGorseller:["https://example.com/ilk-1.jpg"],dogrulamaDurumu:"Belirsiz"};
     const req=kartPresetIstekGovdesi({...first,satirlar:[{...first.satirlar[0],...arastirma},first.satirlar[1]]});
     const content=(req.messages as Array<{content:string}>)[0].content;
     const payload=JSON.parse(content.slice(content.lastIndexOf("\n")+1));
-    expect(payload.groups[0].rows[0]).toMatchObject({row_id:"1",previous_product_research:{
-      description:arastirma.siteAciklama,product_url:arastirma.siteSayfa,image_urls:arastirma.siteGorseller,
-      category:"Gıda",manufacturer:"Üretici",attributes:arastirma.ozellikler,
-      validation_status:"Belirsiz",matched_attributes:["Marka"],unmatched_attributes:["Gramaj"],
-      image_validation_status:"Araştırılamadı",sources:arastirma.kaynaklar,
-    }});
-    expect(payload.groups[1].rows[0]).toMatchObject({row_id:"2",barcode:"222"});
-    expect(payload.groups[1].rows[0].previous_product_research).not.toHaveProperty("product_url");
+    expect(payload.groups[0].rows[0]).toMatchObject({row_id:"1",barcode:"111"});
+    expect(payload.groups[0].rows[0]).not.toHaveProperty("previous_product_research");
+    expect(content).not.toContain("Eski açıklama");
+    expect(content).not.toContain("https://example.com/ilk");
+  });
+  it("source_url resmî ürün sayfasıysa fotoğraf diye kullanılmaz",async()=>{
+    const result=await kartPresetYanitiniOku(response([{
+      ...item("1","A ürün"),
+      media:{image_url:null,source_url:"https://example.com/urun",verification_status:"not_researched"},
+    }]),{...first,satirlar:[first.satirlar[0]]});
+    expect(result.sonuc.satirlar[0].siteSayfa).toBe("https://example.com/p/1");
+    expect(result.sonuc.satirlar[0].siteGorseller).toEqual([]);
   });
   it("ikinci presetin açık bulunamadı kararını ilk araştırmanın görseliyle değiştirmez",async()=>{
     const okuma={...first,satirlar:[{...first.satirlar[0],siteAciklama:"İlk açıklama",siteSayfa:"https://example.com/ilk",siteGorseller:["https://example.com/ilk.jpg"]}]};
