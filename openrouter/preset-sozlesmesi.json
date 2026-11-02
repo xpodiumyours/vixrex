@@ -57,7 +57,8 @@
         "openrouter:web_search"
       ],
       "system_prompt_sha256": "a39b2e425171d2d7e1485285a53fadaca054a9bcc39b78b335849f2a94941119",
-      "system_prompt_length": 6144
+      "system_prompt_length": 6144,
+      "require_parameters": true
     }
   ]
 }
