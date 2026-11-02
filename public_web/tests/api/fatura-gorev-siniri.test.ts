@@ -1,1 +1,18 @@
-{"name":"fatura-gorev-siniri.test.ts","path":"public_web/tests/api/fatura-gorev-siniri.test.ts","sha":"7eea409555e4c938c695f0b347bca89fbf48a455","size":913,"url":"https://api.github.com/repos/xpodiumyours/vixrex/contents/public_web/tests/api/fatura-gorev-siniri.test.ts?ref=fix/openrouter-vixrex-gorev-ayrimi-20261102","html_url":"https://github.com/xpodiumyours/vixrex/blob/fix/openrouter-vixrex-gorev-ayrimi-20261102/public_web/tests/api/fatura-gorev-siniri.test.ts","git_url":"https://api.github.com/repos/xpodiumyours/vixrex/git/blobs/7eea409555e4c938c695f0b347bca89fbf48a455","download_url":"https://raw.githubusercontent.com/xpodiumyours/vixrex/fix/openrouter-vixrex-gorev-ayrimi-20261102/public_web/tests/api/fatura-gorev-siniri.test.ts","type":"file","content":"aW1wb3J0IHsgcmVhZEZpbGVTeW5jIH0gZnJvbSAibm9kZTpmcyI7CmltcG9y\ndCB7IGZpbGVVUkxUb1BhdGggfSBmcm9tICJub2RlOnVybCI7CmltcG9ydCB7\nIGV4cGVjdCwgaXQgfSBmcm9tICJ2aXRlc3QiOwppbXBvcnQgeyBGQVRVUkFf\nSlNPTl9JU1RFR0kgfSBmcm9tICJAL2xpYi9mYXR1cmFQcmVzZXRTb3psZXNt\nZXNpIjsKCml0KCJWaXhyZXggbmloYWkga2FydHRhbiBzb25yYSByZXNtw64g\nc2F5ZmEgdGFyYW1heiB2ZXlhIGfDtnJzZWwgc2XDp21leiIsICgpID0+IHsK\nICBjb25zdCBzb3VyY2UgPSByZWFkRmlsZVN5bmMoZmlsZVVSTFRvUGF0aChu\nZXcgVVJMKCIuLi8uLi9zcmMvbGliL2ZhdHVyYUFya2FQbGFuSXNsZW1pLnRz\nIiwgaW1wb3J0Lm1ldGEudXJsKSksICJ1dGY4Iik7CiAgZXhwZWN0KHNvdXJj\nZSkubm90LnRvQ29udGFpbigiZ29yc2Vsc2l6U2F0aXJsYXJpVGFtYW1sYSIp\nOwogIGV4cGVjdChzb3VyY2UpLm5vdC50b0NvbnRhaW4oImFkYXlHb3JzZWxs\nZXJpbmlTZWMiKTsKICBleHBlY3Qoc291cmNlKS50b0NvbnRhaW4oImNvbnN0\nIGJpcmxlc2lrT2t1bWEgPSBva3VtYTsiKTsKfSk7CgppdCgiYmlyaW5jaSBw\ncmVzZXQgYXJhxZ90xLFybWEgdmUgZ8O2cnNlbCBzZcOnaW1pIHlhcG1heiIs\nICgpID0+IHsKICBleHBlY3QoRkFUVVJBX0pTT05fSVNURUdJKS50b0NvbnRh\naW4oInlhbG7EsXpjYSBiZWxnZSBhbGFubGFyxLFuxLEiKTsKICBleHBlY3Qo\nRkFUVVJBX0pTT05fSVNURUdJKS50b0NvbnRhaW4oImlraW5jaSBPcGVuUm91\ndGVyIHByZXNldGluaW4gZ8O2cmV2aWRpciIpOwogIGV4cGVjdChGQVRVUkFf\nSlNPTl9JU1RFR0kpLm5vdC50b0NvbnRhaW4oIndlYl9zZWFyY2giKTsKICBl\neHBlY3QoRkFUVVJBX0pTT05fSVNURUdJKS5ub3QudG9Db250YWluKCJ3ZWJf\nZmV0Y2giKTsKfSk7Cg==\n","encoding":"base64","_links":{"self":"https://api.github.com/repos/xpodiumyours/vixrex/contents/public_web/tests/api/fatura-gorev-siniri.test.ts?ref=fix/openrouter-vixrex-gorev-ayrimi-20261102","git":"https://api.github.com/repos/xpodiumyours/vixrex/git/blobs/7eea409555e4c938c695f0b347bca89fbf48a455","html":"https://github.com/xpodiumyours/vixrex/blob/fix/openrouter-vixrex-gorev-ayrimi-20261102/public_web/tests/api/fatura-gorev-siniri.test.ts"}}
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { expect, it } from "vitest";
+import { FATURA_JSON_ISTEGI } from "@/lib/faturaPresetSozlesmesi";
+
+it("Vixrex nihai karttan sonra resmî sayfa taramaz veya görsel seçmez", () => {
+  const source = readFileSync(fileURLToPath(new URL("../../src/lib/faturaArkaPlanIslemi.ts", import.meta.url)), "utf8");
+  expect(source).not.toContain("gorselsizSatirlariTamamla");
+  expect(source).not.toContain("adayGorselleriniSec");
+  expect(source).toContain("const birlesikOkuma = okuma;");
+});
+
+it("birinci preset araştırma ve görsel seçimi yapmaz", () => {
+  expect(FATURA_JSON_ISTEGI).toContain("yalnızca belge alanlarını");
+  expect(FATURA_JSON_ISTEGI).toContain("ikinci OpenRouter presetinin görevidir");
+  expect(FATURA_JSON_ISTEGI).not.toContain("web_search");
+  expect(FATURA_JSON_ISTEGI).not.toContain("web_fetch");
+});

@@ -1,1 +1,116 @@
-{"name":"fatura-preset-kaynak-sozlesmesi.test.ts","path":"public_web/tests/api/fatura-preset-kaynak-sozlesmesi.test.ts","sha":"36252c83506a4f5de5859c77aeac4080bfb45bbd","size":6211,"url":"https://api.github.com/repos/xpodiumyours/vixrex/contents/public_web/tests/api/fatura-preset-kaynak-sozlesmesi.test.ts?ref=fix/openrouter-vixrex-gorev-ayrimi-20261102","html_url":"https://github.com/xpodiumyours/vixrex/blob/fix/openrouter-vixrex-gorev-ayrimi-20261102/public_web/tests/api/fatura-preset-kaynak-sozlesmesi.test.ts","git_url":"https://api.github.com/repos/xpodiumyours/vixrex/git/blobs/36252c83506a4f5de5859c77aeac4080bfb45bbd","download_url":"https://raw.githubusercontent.com/xpodiumyours/vixrex/fix/openrouter-vixrex-gorev-ayrimi-20261102/public_web/tests/api/fatura-preset-kaynak-sozlesmesi.test.ts","type":"file","content":"aW1wb3J0IHsgcmVhZEZpbGVTeW5jIH0gZnJvbSAibm9kZTpmcyI7CmltcG9y\ndCBwYXRoIGZyb20gIm5vZGU6cGF0aCI7CmltcG9ydCB7IGRlc2NyaWJlLCBl\neHBlY3QsIGl0IH0gZnJvbSAidml0ZXN0IjsKaW1wb3J0IHsgZmF0dXJhSXN0\nZWtHb3ZkZXNpIH0gZnJvbSAiQC9saWIvZmF0dXJhR29ydSI7CmltcG9ydCB7\nIGthcnRQcmVzZXRJc3Rla0dvdmRlc2ksIFVSVU5fS0FSVF9QUkVTRVQgfSBm\ncm9tICJAL2xpYi9mYXR1cmFLYXJ0UHJlc2V0IjsKaW1wb3J0IHR5cGUgeyBH\nb3J1U29udWN1IH0gZnJvbSAiQC9saWIvZmF0dXJhR29ydSI7Cgp0eXBlIEpz\nb24gPSBSZWNvcmQ8c3RyaW5nLCB1bmtub3duPjsKY29uc3QgcHJlc2V0ID0g\nKGFkOiBzdHJpbmcpOiBKc29uID0+CiAgSlNPTi5wYXJzZShyZWFkRmlsZVN5\nbmMocGF0aC5yZXNvbHZlKF9fZGlybmFtZSwgIi4uLy4uLy4uL29wZW5yb3V0\nZXIiLCBhZCksICJ1dGY4IikpIGFzIEpzb247CmNvbnN0IG9rdW1hID0gcHJl\nc2V0KCJwcmVzZXQtb2t1bWEuanNvbiIpOwpjb25zdCBrYXJ0ID0gcHJlc2V0\nKCJwcmVzZXQta2FydC5qc29uIik7CmNvbnN0IHNpc3RlbSA9IChwOiBKc29u\nKTogc3RyaW5nID0+CiAgKHAubWVzc2FnZXMgYXMgQXJyYXk8eyByb2xlOiBz\ndHJpbmc7IGNvbnRlbnQ6IHN0cmluZyB9PikuZmluZCgobSkgPT4gbS5yb2xl\nID09PSAic3lzdGVtIik/LmNvbnRlbnQgPz8gIiI7Cgpjb25zdCBpbGtTb251\nYyA9IHsKICB0ZWRhcmlrY2k6ICJUZWRhcmlrw6dpIiwKICBzYXRpcmxhcjog\nWwogICAgeyBzYXRpck5vOiAxLCBoYW1TYXRpcjogIkJpcmluY2kgw7xyw7xu\nIiwgbW9kZWw6ICJBLTEiLCBhZDogIkJpcmluY2kiLCBtYXJrYTogIk1hcmth\nIiwgYmFya29kOiAiMTExIiwgdmFyeWFudDogIlNpeWFoIiwgYmVkZW46ICI0\nIiwgZ3JhbWFqOiAiIiwgYWRldDogMiwgYmlyaW06ICJhZGV0IiwgYmlyaW1G\naXlhdDogMTUsIHR1dGFyOiAzMCwgb2t1bWFHdXZlbmk6IDAuOCB9LAogICAg\neyBzYXRpck5vOiAyLCBoYW1TYXRpcjogIsSwa2luY2kgw7xyw7xuIiwgbW9k\nZWw6ICJBLTIiLCBhZDogIsSwa2luY2kiLCBtYXJrYTogIk1hcmthIiwgYmFy\na29kOiAiMjIyIiwgdmFyeWFudDogIiIsIGJlZGVuOiAiIiwgZ3JhbWFqOiAi\nNDAwIGciLCBhZGV0OiAzLCBiaXJpbTogImFkZXQiLCBiaXJpbUZpeWF0OiAx\nMiwgdHV0YXI6IDM2LCBva3VtYUd1dmVuaTogbnVsbCB9LAogIF0sCn0gYXMg\nR29ydVNvbnVjdTsKCmRlc2NyaWJlKCJkZXBvZGFraSBPcGVuUm91dGVyIHBy\nZXNldCB0YW7EsW3EsSDihpQgVml4cmV4IHRhxZ/EsW1hIHPDtnpsZcWfbWVz\naSIsICgpID0+IHsKICBpdCgiaWxrIHByZXNldCB2ZSDDvHJldGltIGlzdGXE\nn2kgYXluxLEgSlNPTiBtb2R1bnUga3VsbGFuxLFyLCB3ZWIgYXJhY8SxIMOn\nYcSfxLFybWF6IiwgKCkgPT4gewogICAgY29uc3QgaXN0ZWsgPSBmYXR1cmFJ\nc3Rla0dvdmRlc2koImRhdGE6aW1hZ2UvanBlZztiYXNlNjQsQUFBQSIpOwog\nICAgZXhwZWN0KG9rdW1hLnJlc3BvbnNlX2Zvcm1hdCkudG9FcXVhbCh7IHR5\ncGU6ICJqc29uX29iamVjdCIgfSk7CiAgICBleHBlY3QoaXN0ZWspLm5vdC50\nb0hhdmVQcm9wZXJ0eSgicmVzcG9uc2VfZm9ybWF0Iik7CiAgICBleHBlY3Qo\naXN0ZWspLm5vdC50b0hhdmVQcm9wZXJ0eSgicHJvdmlkZXIiKTsKICAgIGV4\ncGVjdChpc3Rlay5zdHJlYW0pLnRvQmUodHJ1ZSk7CiAgICBleHBlY3Qob2t1\nbWEpLm5vdC50b0hhdmVQcm9wZXJ0eSgidG9vbHMiKTsKICAgIGV4cGVjdChp\nc3Rlaykubm90LnRvSGF2ZVByb3BlcnR5KCJ0b29scyIpOwogICAgZXhwZWN0\nKHNpc3RlbShva3VtYSkpLnRvQ29udGFpbigiQVJBxZ5USVJNQSBZT0siKTsK\nICB9KTsKCiAgaXQoImlraW5jaSBwcmVzZXQgZ2Vyw6dlayAxMSBnaXJpxZ8g\nYWxhbsSxbsSxIGJpbGlyOyBlc2tpIGFyYcWfdMSxcm1hIMOnxLFrdMSxc8Sx\nIGlzdGVtZXoiLCAoKSA9PiB7CiAgICBjb25zdCBnb3ZkZSA9IGthcnRQcmVz\nZXRJc3Rla0dvdmRlc2koaWxrU29udWMpOwogICAgZXhwZWN0KGdvdmRlLm1v\nZGVsKS50b0JlKFVSVU5fS0FSVF9QUkVTRVQpOwogICAgZXhwZWN0KGdvdmRl\nLnN0cmVhbSkudG9CZSh0cnVlKTsKICAgIGV4cGVjdChnb3ZkZSkubm90LnRv\nSGF2ZVByb3BlcnR5KCJ0b29scyIpOwogICAgY29uc3QgbWV0aW4gPSAoZ292\nZGUubWVzc2FnZXMgYXMgQXJyYXk8e2NvbnRlbnQ6IHN0cmluZ30+KVswXS5j\nb250ZW50OwogICAgY29uc3QgdmVyaSA9IEpTT04ucGFyc2UobWV0aW4uc2xp\nY2UobWV0aW4ubGFzdEluZGV4T2YoIlxuIikgKyAxKSkgYXMgewogICAgICBn\ncm91cHM6IEFycmF5PHticmFuZDogc3RyaW5nOyByb3dzOiBBcnJheTxSZWNv\ncmQ8c3RyaW5nLCB1bmtub3duPj59PjsKICAgIH07CiAgICBjb25zdCBpbGsg\nPSB2ZXJpLmdyb3Vwc1swXS5yb3dzWzBdOwogICAgZXhwZWN0KE9iamVjdC5r\nZXlzKGlsaykuc29ydCgpKS50b0VxdWFsKFsKICAgICAgInJvd19pZCIsICJz\nYXRpcl9ubyIsICJyYXdfaW52b2ljZV9saW5lIiwgImJyYW5kIiwgIm5hbWUi\nLCAiY29kZSIsCiAgICAgICJiYXJjb2RlIiwgInZhcmlhbnQiLCAic2l6ZSIs\nICJuZXRfcXVhbnRpdHkiLCAiaW52b2ljZV9kYXRhIiwKICAgIF0uc29ydCgp\nKTsKICAgIGZvciAoY29uc3QgYWxhbiBvZiBPYmplY3Qua2V5cyhpbGspKSBl\neHBlY3Qoc2lzdGVtKGthcnQpKS50b0NvbnRhaW4oYWxhbik7CiAgICBleHBl\nY3QobWV0aW4pLm5vdC50b0NvbnRhaW4oInByZXZpb3VzX3Byb2R1Y3RfcmVz\nZWFyY2giKTsKICAgIGV4cGVjdChzaXN0ZW0oa2FydCkpLm5vdC50b0NvbnRh\naW4oInByZXZpb3VzX3Byb2R1Y3RfcmVzZWFyY2giKTsKICAgIGV4cGVjdCh2\nZXJpLmdyb3Vwc1swXS5yb3dzLm1hcCgocykgPT4gcy5yb3dfaWQpKS50b0Vx\ndWFsKFsiMSIsICIyIl0pOwogIH0pOwoKICBpdCgiaWtpbmNpIHByZXNldGlu\nIHpvcnVubHUga2FydCDFn2VtYXPEsW5kYSBzYXTEsXIsIGthbsSxdCB2ZSBm\nb3RvxJ9yYWYgYXlyxLEgYWxhbmxhcmTEsXIiLCAoKSA9PiB7CiAgICBjb25z\ndCBmb3JtYXQgPSBrYXJ0LnJlc3BvbnNlX2Zvcm1hdCBhcyB7IHR5cGU6IHN0\ncmluZzsganNvbl9zY2hlbWE6IHsgc3RyaWN0OiBib29sZWFuOyBzY2hlbWE6\nIHsKICAgICAgcHJvcGVydGllczoge2l0ZW1zOiB7IGl0ZW1zOiB7cmVxdWly\nZWQ6IHN0cmluZ1tdOyBwcm9wZXJ0aWVzOiBSZWNvcmQ8c3RyaW5nLCB7cmVx\ndWlyZWQ/OiBzdHJpbmdbXX0+fX19CiAgICB9fX07CiAgICBleHBlY3QoZm9y\nbWF0LnR5cGUpLnRvQmUoImpzb25fc2NoZW1hIik7CiAgICBleHBlY3QoZm9y\nbWF0Lmpzb25fc2NoZW1hLnN0cmljdCkudG9CZSh0cnVlKTsKICAgIGNvbnN0\nIGthbGVtID0gZm9ybWF0Lmpzb25fc2NoZW1hLnNjaGVtYS5wcm9wZXJ0aWVz\nLml0ZW1zLml0ZW1zOwogICAgZXhwZWN0KGthbGVtLnJlcXVpcmVkKS50b0Vx\ndWFsKGV4cGVjdC5hcnJheUNvbnRhaW5pbmcoWwogICAgICAicm93X2lkIiwg\nImludm9pY2VfZGF0YSIsICJ2aXhyZXhfcHJvZHVjdF9qc29uIiwgInZhbGlk\nYXRpb24iLCAibWVkaWEiLAogICAgICAiZHVwbGljYXRlX2dyb3VwIiwgImNh\nbm9uaWNhbF9yb3dfaWQiLAogICAgXSkpOwogICAgZXhwZWN0KGthbGVtLnBy\nb3BlcnRpZXMubWVkaWEucmVxdWlyZWQpLnRvRXF1YWwoWwogICAgICAiaW1h\nZ2VfdXJsIiwgInNvdXJjZV91cmwiLCAidmVyaWZpY2F0aW9uX3N0YXR1cyIs\nICJyaWdodHNfc3RhdHVzIiwKICAgIF0pOwogICAgZXhwZWN0KGthbGVtLnBy\nb3BlcnRpZXMudmFsaWRhdGlvbi5yZXF1aXJlZCkudG9Db250YWluKCJvZmZp\nY2lhbF9wcm9kdWN0X3VybCIpOwogIH0pOwoKICBpdCgia29weWEgc2F0xLFy\nIHRhbGltYXTEsSBzdHJpY3QgxZ9lbWFuxLFuIHpvcnVubHUgYWxhbmxhcsSx\neWxhIMOnZWxpxZ9tZXoiLCAoKSA9PiB7CiAgICBjb25zdCBtZXRpbj1zaXN0\nZW0oa2FydCk7CiAgICBleHBlY3QobWV0aW4pLnRvQ29udGFpbigidml4cmV4\nX3Byb2R1Y3RfanNvbi50aXRsZSB2ZSBicmFuZCB6b3J1bmx1IHN0cmluZyIp\nOwogICAgZXhwZWN0KG1ldGluKS50b0NvbnRhaW4oInZhbGlkYXRpb24gbmVz\nbmVzaSBBU0xBIGJvxZ8gYsSxcmFrxLFsbWF6Iik7CiAgICBleHBlY3QobWV0\naW4pLnRvQ29udGFpbigibWVkaWEgbmVzbmVzaSBkZSB6b3J1bmx1ZHVyIik7\nCiAgICB0eXBlIFN0cmljdEl0ZW0gPSB7IHByb3BlcnRpZXM6IFJlY29yZDxz\ndHJpbmcsIHsgcmVxdWlyZWQ/OiBzdHJpbmdbXSB9PiB9OwogICAgdHlwZSBT\ndHJpY3RGb3JtYXQgPSB7IGpzb25fc2NoZW1hOiB7IHNjaGVtYTogeyBwcm9w\nZXJ0aWVzOiB7IGl0ZW1zOiB7IGl0ZW1zOiBTdHJpY3RJdGVtIH0gfSB9IH0g\nfTsKICAgIGNvbnN0IGl0ZW0gPSAoa2FydC5yZXNwb25zZV9mb3JtYXQgYXMg\nU3RyaWN0Rm9ybWF0KS5qc29uX3NjaGVtYS5zY2hlbWEucHJvcGVydGllcy5p\ndGVtcy5pdGVtczsKICAgIGV4cGVjdChpdGVtLnByb3BlcnRpZXMudml4cmV4\nX3Byb2R1Y3RfanNvbi5yZXF1aXJlZCkudG9Db250YWluKCJ0aXRsZSIpOwog\nICAgZXhwZWN0KGl0ZW0ucHJvcGVydGllcy52YWxpZGF0aW9uLnJlcXVpcmVk\nKS50b0NvbnRhaW4oIm9mZmljaWFsX3Byb2R1Y3RfdXJsIik7CiAgICBleHBl\nY3QoaXRlbS5wcm9wZXJ0aWVzLm1lZGlhLnJlcXVpcmVkKS50b0NvbnRhaW4o\nImltYWdlX3VybCIpOwogIH0pOwoKICBpdCgiw7xyw7xuIGFyYcWfdMSxcm1h\nc8SxIHlhbG7EsXogaWtpbmNpIHByZXNldGluZGlyIHZlIMO8cmV0aW0gaXN0\nZcSfaSBwcmVzZXQgYXlhcmxhcsSxbmEgZG9rdW5tYXoiLCAoKSA9PiB7CiAg\nICBjb25zdCBpc3RlayA9IGthcnRQcmVzZXRJc3Rla0dvdmRlc2koaWxrU29u\ndWMpOwogICAgY29uc3QgYXJhY2xhciA9IGthcnQudG9vbHMgYXMgQXJyYXk8\ne3R5cGU6IHN0cmluZ30+OwogICAgZXhwZWN0KGFyYWNsYXIubWFwKChhcmFj\nKSA9PiBhcmFjLnR5cGUpKS50b0VxdWFsKFsKICAgICAgIm9wZW5yb3V0ZXI6\nd2ViX3NlYXJjaCIsICJvcGVucm91dGVyOndlYl9mZXRjaCIsCiAgICBdKTsK\nICAgIGV4cGVjdChpc3Rlaykubm90LnRvSGF2ZVByb3BlcnR5KCJyZXNwb25z\nZV9mb3JtYXQiKTsKICAgIGV4cGVjdChpc3Rlaykubm90LnRvSGF2ZVByb3Bl\ncnR5KCJwcm92aWRlciIpOwogICAgZXhwZWN0KGlzdGVrKS5ub3QudG9IYXZl\nUHJvcGVydHkoInN5c3RlbSIpOwogICAgZXhwZWN0KGlzdGVrKS5ub3QudG9I\nYXZlUHJvcGVydHkoInRvb2xzIik7CiAgICBleHBlY3Qoc2lzdGVtKGthcnQp\nKS50b0NvbnRhaW4oImltYWdlX3VybCIpOwogICAgZXhwZWN0KHNpc3RlbShr\nYXJ0KSkudG9Db250YWluKCJzb3VyY2VfdXJsIik7CiAgICBleHBlY3Qoc2lz\ndGVtKGthcnQpKS50b0NvbnRhaW4oIndlYl9mZXRjaCIpOwogIH0pOwoKICBp\ndCgiZmF0dXJhbsSxbiBmaXlhdMSxLCBtaWt0YXLEsSwgYmFya29kdSB2ZSBz\nYXTEsXIgc8SxcmFzxLEgaWtpbmNpIHByZXNldGUga2F5xLFwc8SxeiBnZcOn\nZXIiLCAoKSA9PiB7CiAgICBjb25zdCBpc3RlayA9IGthcnRQcmVzZXRJc3Rl\na0dvdmRlc2koaWxrU29udWMpOwogICAgY29uc3QgY29udGVudCA9IChpc3Rl\nay5tZXNzYWdlcyBhcyBBcnJheTx7Y29udGVudDpzdHJpbmd9PilbMF0uY29u\ndGVudDsKICAgIGNvbnN0IHZlcmkgPSBKU09OLnBhcnNlKGNvbnRlbnQuc2xp\nY2UoY29udGVudC5sYXN0SW5kZXhPZigiXG4iKSArIDEpKSBhcyB7IGdyb3Vw\nczogQXJyYXk8e3Jvd3M6IEpzb25bXX0+IH07CiAgICBjb25zdCBzYXRpcmxh\nciA9IHZlcmkuZ3JvdXBzLmZsYXRNYXAoKGcpID0+IGcucm93cyk7CiAgICBl\neHBlY3Qoc2F0aXJsYXJbMF0pLnRvTWF0Y2hPYmplY3QoewogICAgICByb3df\naWQ6ICIxIiwgYmFyY29kZTogIjExMSIsIHZhcmlhbnQ6ICJTaXlhaCIsIHNp\nemU6ICI0IiwKICAgICAgaW52b2ljZV9kYXRhOiB7IHF1YW50aXR5OiAyLCB1\nbml0OiAiYWRldCIsIHVuaXRfcHJpY2U6IDE1LCB0b3RhbF9hbW91bnQ6IDMw\nIH0sCiAgICB9KTsKICAgIGV4cGVjdChzYXRpcmxhclsxXSkudG9NYXRjaE9i\namVjdCh7CiAgICAgIHJvd19pZDogIjIiLCBiYXJjb2RlOiAiMjIyIiwgbmV0\nX3F1YW50aXR5OiAiNDAwIGciLAogICAgICBpbnZvaWNlX2RhdGE6IHsgcXVh\nbnRpdHk6IDMsIHVuaXQ6ICJhZGV0IiwgdW5pdF9wcmljZTogMTIsIHRvdGFs\nX2Ftb3VudDogMzYgfSwKICAgIH0pOwogICAgZXhwZWN0KGNvbnRlbnQpLm5v\ndC50b0NvbnRhaW4oIlNhdMSxxZ8gZml5YXTEsTogMTUiKTsKICB9KTsKfSk7\nCg==\n","encoding":"base64","_links":{"self":"https://api.github.com/repos/xpodiumyours/vixrex/contents/public_web/tests/api/fatura-preset-kaynak-sozlesmesi.test.ts?ref=fix/openrouter-vixrex-gorev-ayrimi-20261102","git":"https://api.github.com/repos/xpodiumyours/vixrex/git/blobs/36252c83506a4f5de5859c77aeac4080bfb45bbd","html":"https://github.com/xpodiumyours/vixrex/blob/fix/openrouter-vixrex-gorev-ayrimi-20261102/public_web/tests/api/fatura-preset-kaynak-sozlesmesi.test.ts"}}
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import { describe, expect, it } from "vitest";
+import { faturaIstekGovdesi } from "@/lib/faturaGoru";
+import { kartPresetIstekGovdesi, URUN_KART_PRESET } from "@/lib/faturaKartPreset";
+import type { GoruSonucu } from "@/lib/faturaGoru";
+
+type Json = Record<string, unknown>;
+const preset = (ad: string): Json =>
+  JSON.parse(readFileSync(path.resolve(__dirname, "../../../openrouter", ad), "utf8")) as Json;
+const okuma = preset("preset-okuma.json");
+const kart = preset("preset-kart.json");
+const sistem = (p: Json): string =>
+  (p.messages as Array<{ role: string; content: string }>).find((m) => m.role === "system")?.content ?? "";
+
+const ilkSonuc = {
+  tedarikci: "Tedarikçi",
+  satirlar: [
+    { satirNo: 1, hamSatir: "Birinci ürün", model: "A-1", ad: "Birinci", marka: "Marka", barkod: "111", varyant: "Siyah", beden: "4", gramaj: "", adet: 2, birim: "adet", birimFiyat: 15, tutar: 30, okumaGuveni: 0.8 },
+    { satirNo: 2, hamSatir: "İkinci ürün", model: "A-2", ad: "İkinci", marka: "Marka", barkod: "222", varyant: "", beden: "", gramaj: "400 g", adet: 3, birim: "adet", birimFiyat: 12, tutar: 36, okumaGuveni: null },
+  ],
+} as GoruSonucu;
+
+describe("depodaki OpenRouter preset tanımı ↔ Vixrex taşıma sözleşmesi", () => {
+  it("ilk preset ve üretim isteği aynı JSON modunu kullanır, web aracı çağırmaz", () => {
+    const istek = faturaIstekGovdesi("data:image/jpeg;base64,AAAA");
+    expect(okuma.response_format).toEqual({ type: "json_object" });
+    expect(istek).not.toHaveProperty("response_format");
+    expect(istek).not.toHaveProperty("provider");
+    expect(istek.stream).toBe(true);
+    expect(okuma).not.toHaveProperty("tools");
+    expect(istek).not.toHaveProperty("tools");
+    expect(sistem(okuma)).toContain("ARAŞTIRMA YOK");
+  });
+
+  it("ikinci preset gerçek 11 giriş alanını bilir; eski araştırma çıktısı istemez", () => {
+    const govde = kartPresetIstekGovdesi(ilkSonuc);
+    expect(govde.model).toBe(URUN_KART_PRESET);
+    expect(govde.stream).toBe(true);
+    expect(govde).not.toHaveProperty("tools");
+    const metin = (govde.messages as Array<{content: string}>)[0].content;
+    const veri = JSON.parse(metin.slice(metin.lastIndexOf("\n") + 1)) as {
+      groups: Array<{brand: string; rows: Array<Record<string, unknown>>}>;
+    };
+    const ilk = veri.groups[0].rows[0];
+    expect(Object.keys(ilk).sort()).toEqual([
+      "row_id", "satir_no", "raw_invoice_line", "brand", "name", "code",
+      "barcode", "variant", "size", "net_quantity", "invoice_data",
+    ].sort());
+    for (const alan of Object.keys(ilk)) expect(sistem(kart)).toContain(alan);
+    expect(metin).not.toContain("previous_product_research");
+    expect(sistem(kart)).not.toContain("previous_product_research");
+    expect(veri.groups[0].rows.map((s) => s.row_id)).toEqual(["1", "2"]);
+  });
+
+  it("ikinci presetin zorunlu kart şemasında satır, kanıt ve fotoğraf ayrı alanlardır", () => {
+    const format = kart.response_format as { type: string; json_schema: { strict: boolean; schema: {
+      properties: {items: { items: {required: string[]; properties: Record<string, {required?: string[]}>}}}
+    }}};
+    expect(format.type).toBe("json_schema");
+    expect(format.json_schema.strict).toBe(true);
+    const kalem = format.json_schema.schema.properties.items.items;
+    expect(kalem.required).toEqual(expect.arrayContaining([
+      "row_id", "invoice_data", "vixrex_product_json", "validation", "media",
+      "duplicate_group", "canonical_row_id",
+    ]));
+    expect(kalem.properties.media.required).toEqual([
+      "image_url", "source_url", "verification_status", "rights_status",
+    ]);
+    expect(kalem.properties.validation.required).toContain("official_product_url");
+  });
+
+  it("kopya satır talimatı strict şemanın zorunlu alanlarıyla çelişmez", () => {
+    const metin=sistem(kart);
+    expect(metin).toContain("vixrex_product_json.title ve brand zorunlu string");
+    expect(metin).toContain("validation nesnesi ASLA boş bırakılmaz");
+    expect(metin).toContain("media nesnesi de zorunludur");
+    type StrictItem = { properties: Record<string, { required?: string[] }> };
+    type StrictFormat = { json_schema: { schema: { properties: { items: { items: StrictItem } } } } };
+    const item = (kart.response_format as StrictFormat).json_schema.schema.properties.items.items;
+    expect(item.properties.vixrex_product_json.required).toContain("title");
+    expect(item.properties.validation.required).toContain("official_product_url");
+    expect(item.properties.media.required).toContain("image_url");
+  });
+
+  it("ürün araştırması yalnız ikinci presetindir ve üretim isteği preset ayarlarına dokunmaz", () => {
+    const istek = kartPresetIstekGovdesi(ilkSonuc);
+    const araclar = kart.tools as Array<{type: string}>;
+    expect(araclar.map((arac) => arac.type)).toEqual([
+      "openrouter:web_search", "openrouter:web_fetch",
+    ]);
+    expect(istek).not.toHaveProperty("response_format");
+    expect(istek).not.toHaveProperty("provider");
+    expect(istek).not.toHaveProperty("system");
+    expect(istek).not.toHaveProperty("tools");
+    expect(sistem(kart)).toContain("image_url");
+    expect(sistem(kart)).toContain("source_url");
+    expect(sistem(kart)).toContain("web_fetch");
+  });
+
+  it("faturanın fiyatı, miktarı, barkodu ve satır sırası ikinci presete kayıpsız geçer", () => {
+    const istek = kartPresetIstekGovdesi(ilkSonuc);
+    const content = (istek.messages as Array<{content:string}>)[0].content;
+    const veri = JSON.parse(content.slice(content.lastIndexOf("\n") + 1)) as { groups: Array<{rows: Json[]}> };
+    const satirlar = veri.groups.flatMap((g) => g.rows);
+    expect(satirlar[0]).toMatchObject({
+      row_id: "1", barcode: "111", variant: "Siyah", size: "4",
+      invoice_data: { quantity: 2, unit: "adet", unit_price: 15, total_amount: 30 },
+    });
+    expect(satirlar[1]).toMatchObject({
+      row_id: "2", barcode: "222", net_quantity: "400 g",
+      invoice_data: { quantity: 3, unit: "adet", unit_price: 12, total_amount: 36 },
+    });
+    expect(content).not.toContain("Satış fiyatı: 15");
+  });
+});

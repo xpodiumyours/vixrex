@@ -1,1 +1,113 @@
-{"name":"fatura-preset-sozlesmesi.test.ts","path":"public_web/tests/api/fatura-preset-sozlesmesi.test.ts","sha":"2b364442bef9196d7a02f1b52bbf2ee870b5dd93","size":8104,"url":"https://api.github.com/repos/xpodiumyours/vixrex/contents/public_web/tests/api/fatura-preset-sozlesmesi.test.ts?ref=fix/openrouter-vixrex-gorev-ayrimi-20261102","html_url":"https://github.com/xpodiumyours/vixrex/blob/fix/openrouter-vixrex-gorev-ayrimi-20261102/public_web/tests/api/fatura-preset-sozlesmesi.test.ts","git_url":"https://api.github.com/repos/xpodiumyours/vixrex/git/blobs/2b364442bef9196d7a02f1b52bbf2ee870b5dd93","download_url":"https://raw.githubusercontent.com/xpodiumyours/vixrex/fix/openrouter-vixrex-gorev-ayrimi-20261102/public_web/tests/api/fatura-preset-sozlesmesi.test.ts","type":"file","content":"aW1wb3J0IHsgYWZ0ZXJFYWNoLCBkZXNjcmliZSwgZXhwZWN0LCBpdCwgdmkg\nfSBmcm9tICJ2aXRlc3QiOwppbXBvcnQgeyBmYXR1cmFJc3Rla0dvdmRlc2ks\nIGZhdHVyYVByZXNldFJlZmVyYW5zaSwgZmF0dXJheWlPa3UsIGthdGFsb2dK\nc29udW51T2t1IH0gZnJvbSAiQC9saWIvZmF0dXJhR29ydSI7CmltcG9ydCB7\nIEZBVFVSQV9KU09OX0lTVEVHSSB9IGZyb20gIkAvbGliL2ZhdHVyYVByZXNl\ndFNvemxlc21lc2kiOwppbXBvcnQgeyBmYXR1cmFTYXRpcmluaUFrdGFyLCBw\ncmVzZXREdXJ1bXVudUFrdGFyIH0gZnJvbSAiQC9saWIvZmF0dXJhUHJlc2V0\nQWt0YXJpbWkiOwppbXBvcnQgeyBzYXRpcmRhbkZhdHVyYVRhc2xhZ2kgfSBm\ncm9tICJAL2xpYi9mYXR1cmFUYXNsYWdpIjsKaW1wb3J0IHsgaXNsZW1ZYW5p\ndGksIHR5cGUgS2F5aXRsaUlzbGVtIH0gZnJvbSAiQC9saWIvZmF0dXJhSXNs\nZW1Pa3UiOwoKY29uc3Qgc2F0aXIgPSB7CiAgc2F0aXJfbm86IDcsIGhhbV9z\nYXRpcjogIsOcTEtFUiBQw5ZUxLBCw5ZSIDE3NSBHIDIgQURFVCIsIGFkOiAi\nw5xMS0VSIFDDllTEsELDllIiLCBtb2RlbDogIiIsIGJhcmtvZDogIjAwMTIz\nNDU2Nzg5MDEiLAogIG1hcmthOiAiw5xMS0VSIiwgdXJldGljaTogIsOcbGtl\nciBTYW5heWkgQS7Fni4iLCBncmFtYWo6ICIxNzUgZyIsIHZhcnlhbnQ6ICJT\nYWRlIiwgYmVkZW46ICIiLAogIGFkZXQ6IDIsIGJpcmltOiAiYWRldCIsIGJp\ncmltX2ZpeWF0OiAyMCwgdHV0YXI6IDQwLCBva3VtYV9ndXZlbmk6IDAuOSwK\nICBzaXRlX3NheWZhOiAiaHR0cHM6Ly93d3cudWxrZXIuY29tLnRyL3RyL21h\ncmthbGFyL3BvdGlib3IiLCBzaXRlX2dvcnNlbGxlcjogWyJodHRwczovL3Jl\nc21pLmV4YW1wbGUvMTc1LmpwZyJdLAogIHNpdGVfYWNpa2xhbWE6ICJLYXlu\nYWt0YSBva3VuYW4gYcOnxLFrbGFtYSIsIG96ZWxsaWtsZXI6IFt7IGtleTog\nIm5ldFF1YW50aXR5IiwgbGFiZWw6ICJOZXQgbWlrdGFyIiwgdmFsdWU6ICIx\nNzUgZyIgfV0sCiAgZG9ncnVsYW1hX2R1cnVtdTogIj8gQmVsaXJzaXoiLCBl\nc2xlc2VuX2JpbGdpbGVyOiBbIsOccsO8biBhZMSxIGXFn2xlxZ90aSJdLAog\nIGVrc2lrbGVyOiBbIkdyYW1haiByZXNtw64gc2F5ZmFkYSB5b2siXSwgZ29y\nc2VsX2RvZ3J1bGFtYV9kdXJ1bXU6ICJpbmNlbGVubWVkaSIsCiAga2F5bmFr\nbGFyOiBbeyB1cmw6ICJodHRwczovL3d3dy51bGtlci5jb20udHIvdHIvbWFy\na2FsYXIvcG90aWJvciIsIGthbml0OiAiTWFya2Egc2F5ZmFzxLEiIH1dLAp9\nOwpjb25zdCBwYXJzZSA9IChzOiB1bmtub3duID0gc2F0aXIsIGVrOiBSZWNv\ncmQ8c3RyaW5nLCB1bmtub3duPiA9IHt9KSA9PiBrYXRhbG9nSnNvbnVudU9r\ndShKU09OLnN0cmluZ2lmeSh7IHNhdGlybGFyOiBbc10sIC4uLmVrIH0pKTsK\nCmFmdGVyRWFjaCgoKSA9PiB7IHZpLnVuc3R1YkFsbEVudnMoKTsgdmkudW5z\ndHViQWxsR2xvYmFscygpOyB9KTsKCmRlc2NyaWJlKCJWaXhyZXggcHJlc2V0\nIHRhxZ/EsW1hIHPDtnpsZcWfbWVzaSIsICgpID0+IHsKICBpdCgiYm/FnyBh\neWFyZGEgbWV2Y3V0IMOnYWzEscWfYW4gcHJlc2V0IHNlw6dpbGlyIiwgKCkg\nPT4gewogICAgdmkuc3R1YkVudigiT1BFTlJPVVRFUl9QUkVTRVQiLCAiIik7\nIHZpLnN0dWJFbnYoIk9QRU5ST1VURVJfRkFUVVJBX1BSRVNFVCIsICIiKTsK\nICAgIGV4cGVjdChmYXR1cmFQcmVzZXRSZWZlcmFuc2koKSkudG9CZSgiQHBy\nZXNldC92aXhyZXgtcXdlbi1mYXR1cmEtb2t1bWEtc3V6bWUiKTsKICB9KTsK\nICBpdCgiYcOnxLFrIHByZXNldCBzZcOnaW1pIGtvcnVudXIgdmUgw7ZuIGVr\nIHRla3Jhcmxhbm1heiIsICgpID0+IHsKICAgIHZpLnN0dWJFbnYoIk9QRU5S\nT1VURVJfUFJFU0VUIiwgIkBwcmVzZXQvb3plbCIpOyBleHBlY3QoZmF0dXJh\nUHJlc2V0UmVmZXJhbnNpKCkpLnRvQmUoIkBwcmVzZXQvb3plbCIpOwogIH0p\nOwogIGl0KCJsZWdhY3kgcHJlc2V0IG9ydGFtIGFkxLEga29ydW51ciIsICgp\nID0+IHsKICAgIHZpLnN0dWJFbnYoIk9QRU5ST1VURVJfUFJFU0VUIiwgIiIp\nOyB2aS5zdHViRW52KCJPUEVOUk9VVEVSX0ZBVFVSQV9QUkVTRVQiLCAiZXNr\naSIpOwogICAgZXhwZWN0KGZhdHVyYVByZXNldFJlZmVyYW5zaSgpKS50b0Jl\nKCJAcHJlc2V0L2Vza2kiKTsKICB9KTsKICBpdCgibW9kZWwsIHNpc3RlbSBp\nc3RlbWkgdmUgYXJhw6dsYXIgaXN0ZW1jaSB0YXJhZsSxbmRhbiBkZcSfacWf\ndGlyaWxtZXoiLCAoKSA9PiB7CiAgICBjb25zdCBib2R5ID0gZmF0dXJhSXN0\nZWtHb3ZkZXNpKCJkYXRhOmltYWdlL3BuZztiYXNlNjQsVEVTVCIpOwogICAg\nZXhwZWN0KGJvZHkpLm5vdC50b0hhdmVQcm9wZXJ0eSgidG9vbHMiKTsgZXhw\nZWN0KGJvZHkpLm5vdC50b0hhdmVQcm9wZXJ0eSgidGVtcGVyYXR1cmUiKTsK\nICAgIGV4cGVjdChib2R5KS5ub3QudG9IYXZlUHJvcGVydHkoInJlc3BvbnNl\nX2Zvcm1hdCIpOwogICAgZXhwZWN0KGJvZHkpLm5vdC50b0hhdmVQcm9wZXJ0\neSgicHJvdmlkZXIiKTsKICAgIGV4cGVjdChKU09OLnN0cmluZ2lmeShib2R5\nKSkudG9Db250YWluKEZBVFVSQV9KU09OX0lTVEVHSS5yZXBsYWNlKC9cbi9n\nLCAiXFxuIikuc2xpY2UoMCwgMTApKTsKICB9KTsKICBpdCgiYmlyaW5jaSBw\ncmVzZXQgeWFsbsSxeiBiZWxnZSBva3VyOyDDvHLDvG4gYXJhxZ90xLFybWFz\nxLEgdmUga2FydCDDvHJldGltaSBpa2luY2kgcHJlc2V0aW4gacWfaWRpciIs\nICgpID0+IHsKICAgIGV4cGVjdChGQVRVUkFfSlNPTl9JU1RFR0kpLnRvQ29u\ndGFpbigiYmlyaW5jaSBwcmVzZXQgc2FkZWNlIGJlbGdlIG9rdW1hIik7CiAg\nICBleHBlY3QoRkFUVVJBX0pTT05fSVNURUdJKS50b0NvbnRhaW4oImlraW5j\naSBPcGVuUm91dGVyIHByZXNldGluaW4gZ8O2cmV2aWRpciIpOwogICAgZXhw\nZWN0KEZBVFVSQV9KU09OX0lTVEVHSSkudG9Db250YWluKCJTYXTEscWfIGZp\neWF0xLEgdmUgZXNuYWYgb25hecSxIMO8cmV0bWUiKTsKICAgIGV4cGVjdChG\nQVRVUkFfSlNPTl9JU1RFR0kpLm5vdC50b0NvbnRhaW4oIndlYl9zZWFyY2gi\nKTsKICAgIGV4cGVjdChGQVRVUkFfSlNPTl9JU1RFR0kpLm5vdC50b0NvbnRh\naW4oIndlYl9mZXRjaCIpOwogICAgY29uc3QgYm9keSA9IGZhdHVyYUlzdGVr\nR292ZGVzaSgiZGF0YTppbWFnZS9wbmc7YmFzZTY0LFRFU1QiKTsKICAgIGV4\ncGVjdChib2R5Lm1vZGVsKS50b0NvbnRhaW4oIkBwcmVzZXQvIik7CiAgICBl\neHBlY3QoYm9keSkubm90LnRvSGF2ZVByb3BlcnR5KCJ0b29scyIpOwogIH0p\nOwogIGl0KCJQREYgZmlsZSwgZm90b8SfcmFmIGltYWdlX3VybCBvbGFyYWsg\nZ8O2bmRlcmlsaXIiLCAoKSA9PiB7CiAgICBjb25zdCBib2R5ID0gZmF0dXJh\nSXN0ZWtHb3ZkZXNpKFsiZGF0YTphcHBsaWNhdGlvbi9wZGY7YmFzZTY0LFRF\nU1QiLCAiZGF0YTppbWFnZS9qcGVnO2Jhc2U2NCxURVNUIl0pOwogICAgY29u\nc3QgbWVzc2FnZXMgPSBib2R5Lm1lc3NhZ2VzIGFzIEFycmF5PHsgY29udGVu\ndDogQXJyYXk8UmVjb3JkPHN0cmluZywgdW5rbm93bj4+IH0+OwogICAgZXhw\nZWN0KG1lc3NhZ2VzWzBdLmNvbnRlbnRbMV0pLnRvRXF1YWwoeyB0eXBlOiAi\nZmlsZSIsIGZpbGU6IHsgZmlsZW5hbWU6ICJmYXR1cmEucGRmIiwgZmlsZV9k\nYXRhOiAiZGF0YTphcHBsaWNhdGlvbi9wZGY7YmFzZTY0LFRFU1QiIH0gfSk7\nCiAgICBleHBlY3QobWVzc2FnZXNbMF0uY29udGVudFsyXS50eXBlKS50b0Jl\nKCJpbWFnZV91cmwiKTsKICB9KTsKICBpdCgiOTgga2VsaW1lbGlrIGVraW4g\nw7xyw7xuL2theW5hay9la3NpayBhbGFubGFyxLEga2F5xLFwc8SxeiB0YcWf\nxLFuxLFyIiwgKCkgPT4gewogICAgY29uc3Qgc29udWMgPSBwYXJzZSgpOyBj\nb25zdCBrYXJ0ID0gZmF0dXJhU2F0aXJpbmlBa3Rhcihzb251Yy5zYXRpcmxh\nclswXSwgIlRvcHRhbmPEsSIpOwogICAgZXhwZWN0KGthcnQua2F0YWxvZyku\ndG9NYXRjaE9iamVjdCh7IHVyZXRpY2k6IHNhdGlyLnVyZXRpY2ksIGdyYW1h\najogIjE3NSBnIiwgc2F0aXJObzogNywKICAgICAgb3plbGxpa2xlcjogc2F0\naXIub3plbGxpa2xlciwgZG9ncnVsYW1hRHVydW11OiAiPyBCZWxpcnNpeiIs\nIGVrc2lrbGVyOiBzYXRpci5la3Npa2xlciwKICAgICAga2F5bmFrbGFyOiBz\nYXRpci5rYXluYWtsYXIsIGVzbGVzZW5CaWxnaWxlcjogc2F0aXIuZXNsZXNl\nbl9iaWxnaWxlciB9KTsKICAgIGV4cGVjdChrYXJ0LmJhcmtvZCkudG9CZSgi\nMDAxMjM0NTY3ODkwMSIpOyBleHBlY3Qoa2FydC5zb251YykudG9CZSgiZWtz\naWsiKTsKICAgIGV4cGVjdChrYXJ0LmthdGFsb2c/Lml6aW5EdXJ1bXUpLnRv\nQmUoInlvayIpOyBleHBlY3Qoa2FydC5rYXRhbG9nPy5kYXlhbmFrKS50b0Jl\nKCJhZCIpOwogICAgY29uc3QgdGFzbGFrID0gc2F0aXJkYW5GYXR1cmFUYXNs\nYWdpKGthcnQsICJ0ZXN0LWlzbGVtIik7CiAgICBleHBlY3QodGFzbGFrKS50\nb01hdGNoT2JqZWN0KHsgdXJldGljaTogc2F0aXIudXJldGljaSwgZ3JhbWFq\nOiAiMTc1IGciLCBzYXRpc0ZpeWF0aTogbnVsbCwKICAgICAgb3duZXJBcHBy\nb3ZlZDogZmFsc2UsIGlzVmlzaWJsZTogZmFsc2UsIGtheW5ha2xhcjogc2F0\naXIua2F5bmFrbGFyLCBkb2dydWxhbWFEdXJ1bXU6ICI/IEJlbGlyc2l6IiB9\nKTsKICB9KTsKICBpdC5lYWNoKFsKICAgIFsi4pyTIERvxJ9ydWxhbmTEsSIs\nICJrYW5pdGxpIl0sIFsiPyBCZWxpcnNpeiIsICJla3NpayJdLCBbIuKclyBC\ndWx1bmFtYWTEsSIsICJpei15b2siXSwKICAgIFsi4pqgIEFyYcWfdMSxcsSx\nbGFtYWTEsSIsICJla3NpayJdLCBbIiIsICJla3NpayJdLCBbImJhxZ9rYSBk\nZcSfZXIiLCAiZWtzaWsiXSwKICBdKSgiT3BlblJvdXRlciAlcyBrYXJhcsSx\nIHllbmkgYXJhxZ90xLFybWEgb2xtYWRhbiAlcyBldGlrZXRpbmUgdGHFn8Sx\nbsSxciIsIChkdXJ1bSwgaGVkZWYpID0+IHsKICAgIGV4cGVjdChwcmVzZXRE\ndXJ1bXVudUFrdGFyKGR1cnVtKSkudG9CZShoZWRlZik7CiAgfSk7CiAgaXQo\nImJpbGlubWV5ZW4gZ8O8dmVuIHZlIGRvxJ9ydWxhbWEgdGFtIGfDvHZlbiB2\nZXlhIGthbsSxdGzEsSBzYXnEsWxtYXoiLCAoKSA9PiB7CiAgICBjb25zdCBy\nYXcgPSB7IC4uLnNhdGlyLCBva3VtYV9ndXZlbmk6IG51bGwsIGRvZ3J1bGFt\nYV9kdXJ1bXU6ICIiLCBla3Npa2xlcjogW10gfTsKICAgIGNvbnN0IGthcnQg\nPSBmYXR1cmFTYXRpcmluaUFrdGFyKHBhcnNlKHJhdykuc2F0aXJsYXJbMF0s\nICJUb3B0YW5jxLEiKTsKICAgIGV4cGVjdChrYXJ0Lmd1dmVuKS50b0JlKDAp\nOyBleHBlY3Qoa2FydC5zb251YykudG9CZSgiZWtzaWsiKTsKICAgIGV4cGVj\ndChrYXJ0LnV5YXJpKS50b0NvbnRhaW4oIm9rdW1hIGfDvHZlbmkgYmlsZGly\nbWVkaSIpOwogIH0pOwogIGl0KCJudWxsLCBzxLFmxLFyIHZlIFTDvHJrw6dl\nIG9uZGFsxLFrIGRvxJ9ydSB0YcWfxLFuxLFyOyBib29sZWFuIHNhecSxIG9s\nbWF6IiwgKCkgPT4gewogICAgY29uc3QgcyA9IHBhcnNlKHsgLi4uc2F0aXIs\nIGFkZXQ6IG51bGwsIGJpcmltX2ZpeWF0OiAwLCB0dXRhcjogIjEuMjM0LDUw\nIiwgb2t1bWFfZ3V2ZW5pOiB0cnVlIH0pLnNhdGlybGFyWzBdOwogICAgZXhw\nZWN0KHMuYWRldCkudG9CZU51bGwoKTsgZXhwZWN0KHMuYmlyaW1GaXlhdCku\ndG9CZSgwKTsgZXhwZWN0KHMudHV0YXIpLnRvQmUoMTIzNC41KTsgZXhwZWN0\nKHMub2t1bWFHdXZlbmkpLnRvQmVOdWxsKCk7CiAgfSk7CiAgaXQoIm1hcmth\nIGdydXBsYXLEsSB2ZSBiZWxnZSBla2xlcmkvdXlhcsSxbGFyIGtvcnVudXIi\nLCAoKSA9PiB7CiAgICBjb25zdCBlayA9IHsgZ3J1cGxhcjogW3sgbWFya2E6\nICLDnExLRVIiLCBzYXRpcmxhcjogWzddIH1dLCBiZWxnZV9la2xlcmk6IHsg\nbm90OiAiVEVTVCIgfSwgdXlhcmlsYXI6IFsiS0RWIGJlbGlyc2l6Il0gfTsK\nICAgIGNvbnN0IHNvbnVjID0gcGFyc2Uoc2F0aXIsIGVrKTsKICAgIGV4cGVj\ndChzb251Yy5ncnVwbGFyKS50b0VxdWFsKGVrLmdydXBsYXIpOyBleHBlY3Qo\nc29udWMuYmVsZ2VFa2xlcmkpLnRvRXF1YWwoZWsuYmVsZ2VfZWtsZXJpKTsg\nZXhwZWN0KHNvbnVjLnV5YXJpbGFyKS50b0VxdWFsKGVrLnV5YXJpbGFyKTsK\nICB9KTsKICBpdCgiZXNraSBzaXRlX296ZWxsaWtsZXIgYWxhbiBhZMSxIGth\neWJvbG1heiIsICgpID0+IHsKICAgIGV4cGVjdChwYXJzZSh7IC4uLnNhdGly\nLCBvemVsbGlrbGVyOiB1bmRlZmluZWQsIHNpdGVfb3plbGxpa2xlcjogc2F0\naXIub3plbGxpa2xlciB9KS5zYXRpcmxhclswXS5vemVsbGlrbGVyKS50b0Vx\ndWFsKHNhdGlyLm96ZWxsaWtsZXIpOwogIH0pOwogIGl0KCJpa2kgc2F0xLFy\nIHZlIHZhcnlhbnRsYXIgYmlybGXFn3RpcmlsbWV6IiwgKCkgPT4gewogICAg\nY29uc3Qgc29udWMgPSBrYXRhbG9nSnNvbnVudU9rdShKU09OLnN0cmluZ2lm\neSh7IHNhdGlybGFyOiBbc2F0aXIsIHsgLi4uc2F0aXIsIHNhdGlyX25vOiA4\nLCBncmFtYWo6ICI0NTAgZyIgfV0gfSkpOwogICAgZXhwZWN0KHNvbnVjLnNh\ndGlybGFyKS50b0hhdmVMZW5ndGgoMik7IGV4cGVjdChzb251Yy5zYXRpcmxh\nclsxXS5ncmFtYWopLnRvQmUoIjQ1MCBnIik7CiAgfSk7CiAgaXQoImdlw6dl\ncnNpei9raW1saWsgYmlsZ2lsaSBnw7Zyc2VsIFVSTCBrYXJ0YSB0YcWfxLFu\nbWF6IiwgKCkgPT4gewogICAgZXhwZWN0KHBhcnNlKHsgLi4uc2F0aXIsIHNp\ndGVfZ29yc2VsbGVyOiBbImphdmFzY3JpcHQ6YWxlcnQoMSkiLCAiaHR0cHM6\nLy9uYW1lOnBhc3NAZXhhbXBsZS5jb20vYS5qcGciLCAiaHR0cHM6Ly9yZXNt\naS5leGFtcGxlL2EuanBnIl0gfSkuc2F0aXJsYXJbMF0uc2l0ZUdvcnNlbGxl\ncikKICAgICAgLnRvRXF1YWwoWyJodHRwczovL3Jlc21pLmV4YW1wbGUvYS5q\ncGciXSk7CiAgfSk7CiAgaXQuZWFjaChbImJvenVrIGNldmFwIiwgJ3sic2F0\naXJsYXIiOltudWxsXX0nLCAneyJwcm9kdWN0cyI6W119JywgJ8OWbnPDtnog\neyJzYXRpcmxhciI6W119J10pCiAgICAoImJvenVrIHZleWEgc8O2emxlxZ9t\nZXNpeiBKU09OIHJlZGRlZGlsaXI6ICVzIiwgKHRleHQpID0+IHsgZXhwZWN0\nKCgpID0+IGthdGFsb2dKc29udW51T2t1KHRleHQpKS50b1Rocm93KCJPS1VN\nQV9DT1pVTEVNRURJIik7IH0pOwogIGl0KCJ0ZWsgZmVuY2VkIEpTT04gb2t1\nbmFiaWxpciIsICgpID0+IHsgZXhwZWN0KGthdGFsb2dKc29udW51T2t1KCdg\nYGBqc29uXG57InNhdGlybGFyIjpbXX1cbmBgYCcpLnNhdGlybGFyKS50b0Vx\ndWFsKFtdKTsgfSk7CiAgaXQoInllbmlkZW4gYcOnxLFsYW4gZmF0dXJhZGEg\nZ3J1cGxhci91eWFyxLFsYXIga29ydW51ciIsICgpID0+IHsKICAgIGNvbnN0\nIGRhdGEgPSBpc2xlbVlhbml0aSh7IHNhdGlybGFyOiBbXSwgYmVsZ2U6IHt9\nLCBhcmFtYUR1cnVtdTogeyBwcmVzZXRDZXZhYmk6IHsgZ3J1cGxhcjogWyLD\nnExLRVIiXSwgdXlhcmlsYXI6IFsiRWtzaWsiXSwgYmVsZ2VFa2xlcmk6IHsg\ndGVzdDogdHJ1ZSB9IH0gfSB9IGFzIHVua25vd24gYXMgS2F5aXRsaUlzbGVt\nKTsKICAgIGV4cGVjdChkYXRhLmdydXBsYXIpLnRvRXF1YWwoWyLDnExLRVIi\nXSk7IGV4cGVjdChkYXRhLnV5YXJpbGFyKS50b0VxdWFsKFsiRWtzaWsiXSk7\nCiAgfSk7CiAgaXQuZWFjaChbImxlbmd0aCIsICJ0b29sX2NhbGxzIl0pKCJ5\nYXLEsW0gQVBJIHlhbsSxdMSxIHlhecSxbiB2ZXJpc2luZSDDp2V2cmlsbWV6\nOiAlcyIsIGFzeW5jIChmaW5pc2gpID0+IHsKICAgIHZpLnN0dWJFbnYoIk9Q\nRU5ST1VURVJfQVBJX0tFWSIsICJ0ZXN0LWtleSIpOwogICAgdmkuc3R1Ykds\nb2JhbCgiZmV0Y2giLCB2aS5mbihhc3luYyAoKSA9PiAoeyBvazogdHJ1ZSwg\nanNvbjogYXN5bmMgKCkgPT4gKHsgY2hvaWNlczogW3sgZmluaXNoX3JlYXNv\nbjogZmluaXNoLAogICAgICBtZXNzYWdlOiB7IGNvbnRlbnQ6IEpTT04uc3Ry\naW5naWZ5KHsgc2F0aXJsYXI6IFtzYXRpcl0gfSksIC4uLihmaW5pc2ggPT09\nICJ0b29sX2NhbGxzIiA/IHsgdG9vbF9jYWxsczogW3sgaWQ6ICJwZW5kaW5n\nIiB9XSB9IDoge30pIH0gfV0gfSkgfSkpKTsKICAgIGF3YWl0IGV4cGVjdChm\nYXR1cmF5aU9rdSgiZGF0YTppbWFnZS9wbmc7YmFzZTY0LFRFU1QiKSkucmVq\nZWN0cy50b1Rocm93KGZpbmlzaCA9PT0gImxlbmd0aCIgPyAiT0tVWVVDVV9F\nS1NJS19DRVZBUCIgOiAiT0tVWVVDVV9UQU1BTUxBTk1BREkiKTsKICB9KTsK\nfSk7Cg==\n","encoding":"base64","_links":{"self":"https://api.github.com/repos/xpodiumyours/vixrex/contents/public_web/tests/api/fatura-preset-sozlesmesi.test.ts?ref=fix/openrouter-vixrex-gorev-ayrimi-20261102","git":"https://api.github.com/repos/xpodiumyours/vixrex/git/blobs/2b364442bef9196d7a02f1b52bbf2ee870b5dd93","html":"https://github.com/xpodiumyours/vixrex/blob/fix/openrouter-vixrex-gorev-ayrimi-20261102/public_web/tests/api/fatura-preset-sozlesmesi.test.ts"}}
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { faturaIstekGovdesi, faturaPresetReferansi, faturayiOku, katalogJsonunuOku } from "@/lib/faturaGoru";
+import { FATURA_JSON_ISTEGI } from "@/lib/faturaPresetSozlesmesi";
+import { faturaSatiriniAktar, presetDurumunuAktar } from "@/lib/faturaPresetAktarimi";
+import { satirdanFaturaTaslagi } from "@/lib/faturaTaslagi";
+import { islemYaniti, type KayitliIslem } from "@/lib/faturaIslemOku";
+
+const satir = {
+  satir_no: 7, ham_satir: "ÜLKER PÖTİBÖR 175 G 2 ADET", ad: "ÜLKER PÖTİBÖR", model: "", barkod: "0012345678901",
+  marka: "ÜLKER", uretici: "Ülker Sanayi A.Ş.", gramaj: "175 g", varyant: "Sade", beden: "",
+  adet: 2, birim: "adet", birim_fiyat: 20, tutar: 40, okuma_guveni: 0.9,
+  site_sayfa: "https://www.ulker.com.tr/tr/markalar/potibor", site_gorseller: ["https://resmi.example/175.jpg"],
+  site_aciklama: "Kaynakta okunan açıklama", ozellikler: [{ key: "netQuantity", label: "Net miktar", value: "175 g" }],
+  dogrulama_durumu: "? Belirsiz", eslesen_bilgiler: ["Ürün adı eşleşti"],
+  eksikler: ["Gramaj resmî sayfada yok"], gorsel_dogrulama_durumu: "incelenmedi",
+  kaynaklar: [{ url: "https://www.ulker.com.tr/tr/markalar/potibor", kanit: "Marka sayfası" }],
+};
+const parse = (s: unknown = satir, ek: Record<string, unknown> = {}) => katalogJsonunuOku(JSON.stringify({ satirlar: [s], ...ek }));
+
+afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals(); });
+
+describe("Vixrex preset taşıma sözleşmesi", () => {
+  it("boş ayarda mevcut çalışan preset seçilir", () => {
+    vi.stubEnv("OPENROUTER_PRESET", ""); vi.stubEnv("OPENROUTER_FATURA_PRESET", "");
+    expect(faturaPresetReferansi()).toBe("@preset/vixrex-qwen-fatura-okuma-suzme");
+  });
+  it("açık preset seçimi korunur ve ön ek tekrarlanmaz", () => {
+    vi.stubEnv("OPENROUTER_PRESET", "@preset/ozel"); expect(faturaPresetReferansi()).toBe("@preset/ozel");
+  });
+  it("legacy preset ortam adı korunur", () => {
+    vi.stubEnv("OPENROUTER_PRESET", ""); vi.stubEnv("OPENROUTER_FATURA_PRESET", "eski");
+    expect(faturaPresetReferansi()).toBe("@preset/eski");
+  });
+  it("model, sistem istemi ve araçlar istemci tarafından değiştirilmez", () => {
+    const body = faturaIstekGovdesi("data:image/png;base64,TEST");
+    expect(body).not.toHaveProperty("tools"); expect(body).not.toHaveProperty("temperature");
+    expect(body).not.toHaveProperty("response_format");
+    expect(body).not.toHaveProperty("provider");
+    expect(JSON.stringify(body)).toContain(FATURA_JSON_ISTEGI.replace(/\n/g, "\\n").slice(0, 10));
+  });
+  it("birinci preset yalnız belge okur; ürün araştırması ve kart üretimi ikinci presetin işidir", () => {
+    expect(FATURA_JSON_ISTEGI).toContain("birinci preset sadece belge okuma");
+    expect(FATURA_JSON_ISTEGI).toContain("ikinci OpenRouter presetinin görevidir");
+    expect(FATURA_JSON_ISTEGI).toContain("Satış fiyatı ve esnaf onayı üretme");
+    expect(FATURA_JSON_ISTEGI).not.toContain("web_search");
+    expect(FATURA_JSON_ISTEGI).not.toContain("web_fetch");
+    const body = faturaIstekGovdesi("data:image/png;base64,TEST");
+    expect(body.model).toContain("@preset/");
+    expect(body).not.toHaveProperty("tools");
+  });
+  it("PDF file, fotoğraf image_url olarak gönderilir", () => {
+    const body = faturaIstekGovdesi(["data:application/pdf;base64,TEST", "data:image/jpeg;base64,TEST"]);
+    const messages = body.messages as Array<{ content: Array<Record<string, unknown>> }>;
+    expect(messages[0].content[1]).toEqual({ type: "file", file: { filename: "fatura.pdf", file_data: "data:application/pdf;base64,TEST" } });
+    expect(messages[0].content[2].type).toBe("image_url");
+  });
+  it("98 kelimelik ekin ürün/kaynak/eksik alanları kayıpsız taşınır", () => {
+    const sonuc = parse(); const kart = faturaSatiriniAktar(sonuc.satirlar[0], "Toptancı");
+    expect(kart.katalog).toMatchObject({ uretici: satir.uretici, gramaj: "175 g", satirNo: 7,
+      ozellikler: satir.ozellikler, dogrulamaDurumu: "? Belirsiz", eksikler: satir.eksikler,
+      kaynaklar: satir.kaynaklar, eslesenBilgiler: satir.eslesen_bilgiler });
+    expect(kart.barkod).toBe("0012345678901"); expect(kart.sonuc).toBe("eksik");
+    expect(kart.katalog?.izinDurumu).toBe("yok"); expect(kart.katalog?.dayanak).toBe("ad");
+    const taslak = satirdanFaturaTaslagi(kart, "test-islem");
+    expect(taslak).toMatchObject({ uretici: satir.uretici, gramaj: "175 g", satisFiyati: null,
+      ownerApproved: false, isVisible: false, kaynaklar: satir.kaynaklar, dogrulamaDurumu: "? Belirsiz" });
+  });
+  it.each([
+    ["✓ Doğrulandı", "kanitli"], ["? Belirsiz", "eksik"], ["✗ Bulunamadı", "iz-yok"],
+    ["⚠ Araştırılamadı", "eksik"], ["", "eksik"], ["başka değer", "eksik"],
+  ])("OpenRouter %s kararı yeni araştırma olmadan %s etiketine taşınır", (durum, hedef) => {
+    expect(presetDurumunuAktar(durum)).toBe(hedef);
+  });
+  it("bilinmeyen güven ve doğrulama tam güven veya kanıtlı sayılmaz", () => {
+    const raw = { ...satir, okuma_guveni: null, dogrulama_durumu: "", eksikler: [] };
+    const kart = faturaSatiriniAktar(parse(raw).satirlar[0], "Toptancı");
+    expect(kart.guven).toBe(0); expect(kart.sonuc).toBe("eksik");
+    expect(kart.uyari).toContain("okuma güveni bildirmedi");
+  });
+  it("null, sıfır ve Türkçe ondalık doğru taşınır; boolean sayı olmaz", () => {
+    const s = parse({ ...satir, adet: null, birim_fiyat: 0, tutar: "1.234,50", okuma_guveni: true }).satirlar[0];
+    expect(s.adet).toBeNull(); expect(s.birimFiyat).toBe(0); expect(s.tutar).toBe(1234.5); expect(s.okumaGuveni).toBeNull();
+  });
+  it("marka grupları ve belge ekleri/uyarılar korunur", () => {
+    const ek = { gruplar: [{ marka: "ÜLKER", satirlar: [7] }], belge_ekleri: { not: "TEST" }, uyarilar: ["KDV belirsiz"] };
+    const sonuc = parse(satir, ek);
+    expect(sonuc.gruplar).toEqual(ek.gruplar); expect(sonuc.belgeEkleri).toEqual(ek.belge_ekleri); expect(sonuc.uyarilar).toEqual(ek.uyarilar);
+  });
+  it("eski site_ozellikler alan adı kaybolmaz", () => {
+    expect(parse({ ...satir, ozellikler: undefined, site_ozellikler: satir.ozellikler }).satirlar[0].ozellikler).toEqual(satir.ozellikler);
+  });
+  it("iki satır ve varyantlar birleştirilmez", () => {
+    const sonuc = katalogJsonunuOku(JSON.stringify({ satirlar: [satir, { ...satir, satir_no: 8, gramaj: "450 g" }] }));
+    expect(sonuc.satirlar).toHaveLength(2); expect(sonuc.satirlar[1].gramaj).toBe("450 g");
+  });
+  it("geçersiz/kimlik bilgili görsel URL karta taşınmaz", () => {
+    expect(parse({ ...satir, site_gorseller: ["javascript:alert(1)", "https://name:pass@example.com/a.jpg", "https://resmi.example/a.jpg"] }).satirlar[0].siteGorseller)
+      .toEqual(["https://resmi.example/a.jpg"]);
+  });
+  it.each(["bozuk cevap", '{"satirlar":[null]}', '{"products":[]}', 'Önsöz {"satirlar":[]}'])
+    ("bozuk veya sözleşmesiz JSON reddedilir: %s", (text) => { expect(() => katalogJsonunuOku(text)).toThrow("OKUMA_COZULEMEDI"); });
+  it("tek fenced JSON okunabilir", () => { expect(katalogJsonunuOku('```json\n{"satirlar":[]}\n```').satirlar).toEqual([]); });
+  it("yeniden açılan faturada gruplar/uyarılar korunur", () => {
+    const data = islemYaniti({ satirlar: [], belge: {}, aramaDurumu: { presetCevabi: { gruplar: ["ÜLKER"], uyarilar: ["Eksik"], belgeEkleri: { test: true } } } } as unknown as KayitliIslem);
+    expect(data.gruplar).toEqual(["ÜLKER"]); expect(data.uyarilar).toEqual(["Eksik"]);
+  });
+  it.each(["length", "tool_calls"])("yarım API yanıtı yayın verisine çevrilmez: %s", async (finish) => {
+    vi.stubEnv("OPENROUTER_API_KEY", "test-key");
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, json: async () => ({ choices: [{ finish_reason: finish,
+      message: { content: JSON.stringify({ satirlar: [satir] }), ...(finish === "tool_calls" ? { tool_calls: [{ id: "pending" }] } : {}) } }] }) })));
+    await expect(faturayiOku("data:image/png;base64,TEST")).rejects.toThrow(finish === "length" ? "OKUYUCU_EKSIK_CEVAP" : "OKUYUCU_TAMAMLANMADI");
+  });
+});

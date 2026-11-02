@@ -1,1 +1,248 @@
-{"name":"fatura-kart-tekillesme.test.ts","path":"public_web/tests/fatura-kart-tekillesme.test.ts","sha":"eb8ac0e3c821a0913b28fb7ca762038ab3a9cd00","size":13210,"url":"https://api.github.com/repos/xpodiumyours/vixrex/contents/public_web/tests/fatura-kart-tekillesme.test.ts?ref=fix/openrouter-vixrex-gorev-ayrimi-20261102","html_url":"https://github.com/xpodiumyours/vixrex/blob/fix/openrouter-vixrex-gorev-ayrimi-20261102/public_web/tests/fatura-kart-tekillesme.test.ts","git_url":"https://api.github.com/repos/xpodiumyours/vixrex/git/blobs/eb8ac0e3c821a0913b28fb7ca762038ab3a9cd00","download_url":"https://raw.githubusercontent.com/xpodiumyours/vixrex/fix/openrouter-vixrex-gorev-ayrimi-20261102/public_web/tests/fatura-kart-tekillesme.test.ts","type":"file","content":"aW1wb3J0IHsgZXhwZWN0LCBpdCB9IGZyb20gInZpdGVzdCI7CmltcG9ydCB7\nIGthcnRQcmVzZXRZYW5pdGluaU9rdSwgdGVraWxsZXNtZUthcmFyaSwgdGVr\ncmFyR3J1cGxhcmkgfSBmcm9tICJAL2xpYi9mYXR1cmFLYXJ0UHJlc2V0IjsK\naW1wb3J0IHR5cGUgeyBHb3J1U29udWN1IH0gZnJvbSAiQC9saWIvZmF0dXJh\nR29ydSI7Cgpjb25zdCBrYXJ0ID0gKGdydXA6IHN0cmluZywga2Fub25payA9\nICIxIiwgZHVydW0gPSAidmVyaWZpZWQiKSA9PiAoewogIGR1cGxpY2F0ZV9n\ncm91cDogZ3J1cCwgY2Fub25pY2FsX3Jvd19pZDoga2Fub25paywKICB2YWxp\nZGF0aW9uOiB7IHN0YXR1czogZHVydW0sIG9mZmljaWFsX3Byb2R1Y3RfdXJs\nOiAiaHR0cHM6Ly91cmV0aWNpLmV4YW1wbGUvdXJ1biIgfSwKICBtZWRpYTog\ne30sCn0pOwpjb25zdCBrYXlpdCA9IChncnVwOiBzdHJpbmcsIGthbm9uaWsg\nPSAiMSIsIGR1cnVtID0gInZlcmlmaWVkIikgPT4gbmV3IE1hcChbCiAgWyIx\nIiwga2FydChncnVwLCBrYW5vbmlrLCBkdXJ1bSldLCBbIjIiLCBrYXJ0KGdy\ndXAsIGthbm9uaWssIGR1cnVtKV0sIFsiMyIsIGthcnQoZ3J1cCwga2Fub25p\naywgZHVydW0pXSwKXSkgYXMgbmV2ZXI7CgppdCgiYXluxLEgYmFya29kICsg\nYXluxLEgYmVkZW4gdGVrIGthcnRhIGluZGlyaWxpciIsICgpID0+IHsKICBj\nb25zdCBzYXRpcmxhciA9IFsKICAgIHsgYmFya29kOiAiODY4MDUwODkxODk3\nMSIsIG1vZGVsOiAiVEVSMDEwNSIsIGFkOiAiVHV0a3UgRWxpdCBTxLFmxLFy\neWFrYSIsIG1hcmthOiAiVHV0a3UiLCBiZWRlbjogIjQiIH0sCiAgICB7IGJh\ncmtvZDogIjg2ODA1MDg5MTg5NzEiLCBtb2RlbDogIlRFUjAxMDUiLCBhZDog\nIlR1dGt1IEVsaXQgU8SxZsSxcnlha2EiLCBtYXJrYTogIlR1dGt1IiwgYmVk\nZW46ICI0IiB9LAogICAgeyBiYXJrb2Q6ICI4NjgwNTA4OTE4OTcxIiwgbW9k\nZWw6ICJURVIwMTA1IiwgYWQ6ICJUdXRrdSBFbGl0IFPEsWbEsXJ5YWthIiwg\nbWFya2E6ICJUdXRrdSIsIGJlZGVuOiAiNCIgfSwKICBdOwogIGNvbnN0IHNv\nbnVjID0gdGVrcmFyR3J1cGxhcmkoc2F0aXJsYXIsIGtheWl0KCJ0dXRrdS04\nNjgwNTA4OTE4OTcxIikpOwogIGV4cGVjdChbLi4uc29udWMuZW50cmllcygp\nXSkudG9FcXVhbChbWyIyIiwgMV0sIFsiMyIsIDFdXSk7Cn0pOwoKaXQoImF5\nbsSxIGJhcmtvZCBmYXJrbMSxIGJlZGVuZGUgYmlybGXFn3RpcmlsbWV6IHZl\nIGJlZGVuIGF5csSxxZ9tYXPEsSBpxZ9hcmV0bGVuaXIiLCAoKSA9PiB7CiAg\nY29uc3Qgc2F0aXJsYXIgPSBbCiAgICB7IGJhcmtvZDogIjg2ODA1MDg5MTg5\nNzEiLCBtb2RlbDogIlRFUjAxMDUiLCBhZDogIlR1dGt1IEVsaXQgU8SxZsSx\ncnlha2EiLCBtYXJrYTogIlR1dGt1IiwgYmVkZW46ICI0IiB9LAogICAgeyBi\nYXJrb2Q6ICI4NjgwNTA4OTE4OTcxIiwgbW9kZWw6ICJURVIwMTA1IiwgYWQ6\nICJUdXRrdSBFbGl0IFPEsWbEsXJ5YWthIiwgbWFya2E6ICJUdXRrdSIsIGJl\nZGVuOiAiNSIgfSwKICBdOwogIGNvbnN0IGthcmFyID0gdGVraWxsZXNtZUth\ncmFyaShzYXRpcmxhciwga2F5aXQoInR1dGt1LTg2ODA1MDg5MTg5NzEiKSk7\nCiAgZXhwZWN0KGthcmFyLmluZGlyZ2VuZW4uc2l6ZSkudG9CZSgwKTsKICBl\neHBlY3QoWy4uLmthcmFyLmJlZGVuQXlyaXNhbl0uc29ydCgpKS50b0VxdWFs\nKFsiMSIsICIyIl0pOwp9KTsKCml0KCJheW7EsSBiYXJrb2QgZmFya2zEsSB2\nYXJ5YW50dGEgYmlybGXFn3RpcmlsbWV6IiwgKCkgPT4gewogIGNvbnN0IHNh\ndGlybGFyID0gWwogICAgeyBiYXJrb2Q6ICI4NjgwNTA4OTE4OTcxIiwgbW9k\nZWw6ICJURVIwMTA1IiwgYWQ6ICJUdXRrdSBFbGl0IFPEsWbEsXJ5YWthIiwg\nbWFya2E6ICJUdXRrdSIsIHZhcnlhbnQ6ICJCZXlheiIgfSwKICAgIHsgYmFy\na29kOiAiODY4MDUwODkxODk3MSIsIG1vZGVsOiAiVEVSMDEwNSIsIGFkOiAi\nVHV0a3UgRWxpdCBTxLFmxLFyeWFrYSIsIG1hcmthOiAiVHV0a3UiLCB2YXJ5\nYW50OiAiU2l5YWgiIH0sCiAgXTsKICBleHBlY3QodGVrcmFyR3J1cGxhcmko\nc2F0aXJsYXIsIGtheWl0KCJ0dXRrdS1yZW5rIikpLnNpemUpLnRvQmUoMCk7\nCn0pOwoKaXQoImJhcmtvZHN1eiBzYXTEsXJkYSBtYXJrYSwgYWQgdmUgYmVk\nZW4gYXluxLF5c2EgYmlybGXFn3RpcmlsaXIiLCAoKSA9PiB7CiAgY29uc3Qg\nc2F0aXJsYXIgPSBbCiAgICB7IGJhcmtvZDogIiIsIG1vZGVsOiAiIiwgYWQ6\nICJQxLFuYXIgU8O8em1lIFBleW5pciA1MDAgZyIsIG1hcmthOiAiUMSxbmFy\nIiwgYmVkZW46ICI1MDAgZyIgfSwKICAgIHsgYmFya29kOiAiIiwgbW9kZWw6\nICIiLCBhZDogInDEsW5hciAgc8O8em1lIHBleW5pciA1MDAgZyIsIG1hcmth\nOiAiUMSxbmFyIiwgYmVkZW46ICI1MDAgZyIgfSwKICBdOwogIGV4cGVjdChb\nLi4udGVrcmFyR3J1cGxhcmkoc2F0aXJsYXIsIGtheWl0KCJwaW5hci1wZXlu\naXIiKSkua2V5cygpXSkudG9FcXVhbChbIjIiXSk7Cn0pOwoKaXQoImJhcmtv\nZHN1eiBheW7EsSBpc2ltbGkgZmFrYXQgZmFya2zEsSBncmFtYWpsxLEgw7xy\nw7xubGVyIHRla2lsbGXFn3RpcmlsbWV6IiwgKCkgPT4gewogIGNvbnN0IHNh\ndGlybGFyID0gWwogICAgeyBiYXJrb2Q6ICIiLCBhZDogIlDEsW5hciBTw7x6\nbWUgUGV5bmlyIiwgbWFya2E6ICJQxLFuYXIiLCBncmFtYWo6ICIyNTAgZyIg\nfSwKICAgIHsgYmFya29kOiAiIiwgYWQ6ICJQxLFuYXIgU8O8em1lIFBleW5p\nciIsIG1hcmthOiAiUMSxbmFyIiwgZ3JhbWFqOiAiNTAwIGciIH0sCiAgXTsK\nICBleHBlY3QodGVrcmFyR3J1cGxhcmkoc2F0aXJsYXIsIGtheWl0KCJwaW5h\nci1heXJpLWdyYW1haiIpKS5zaXplKS50b0JlKDApOwp9KTsKCml0KCJiYXJr\nb2RzdXogc2F0xLFyZGEgYWQgNiBrYXJha3RlcmRlbiBrxLFzYXlzYSBiaXJs\nZcWfdGlybWUgeWFwxLFsbWF6IiwgKCkgPT4gewogIGNvbnN0IHNhdGlybGFy\nID0gWwogICAgeyBiYXJrb2Q6ICIiLCBtb2RlbDogIiIsIGFkOiAiw4dheSIs\nIG1hcmthOiAiVG9ya3UiIH0sCiAgICB7IGJhcmtvZDogIiIsIG1vZGVsOiAi\nIiwgYWQ6ICLDh2F5IiwgbWFya2E6ICJUb3JrdSIgfSwKICBdOwogIGV4cGVj\ndCh0ZWtyYXJHcnVwbGFyaShzYXRpcmxhciwga2F5aXQoImNheSIpKS5zaXpl\nKS50b0JlKDApOwp9KTsKCml0KCJiYXJrb2RzdXogc2F0xLFyZGEgbWFya2Eg\nZmFya2zEsXlzYSBiaXJsZcWfdGlybWUgeWFwxLFsbWF6IiwgKCkgPT4gewog\nIGNvbnN0IHNhdGlybGFyID0gWwogICAgeyBiYXJrb2Q6ICIiLCBtb2RlbDog\nIiIsIGFkOiAiU8O8em1lIFBleW5pciA1MDAgZyIsIG1hcmthOiAiUMSxbmFy\nIiB9LAogICAgeyBiYXJrb2Q6ICIiLCBtb2RlbDogIiIsIGFkOiAiU8O8em1l\nIFBleW5pciA1MDAgZyIsIG1hcmthOiAiU8O8dGHFnyIgfSwKICBdOwogIGV4\ncGVjdCh0ZWtyYXJHcnVwbGFyaShzYXRpcmxhciwga2F5aXQoInBleW5pciIp\nKS5zaXplKS50b0JlKDApOwp9KTsKCml0KCJkb8SfcnVsYW5tYW3EscWfIHNh\ndMSxcmxhciBiaXJsZcWfdGlyaWxtZXogdmUga2ltbGlrIGt1cnVsYW1hZMSx\nIGRpeWUgacWfYXJldGxlbmlyIiwgKCkgPT4gewogIGNvbnN0IHNhdGlybGFy\nID0gWwogICAgeyBiYXJrb2Q6ICI4NjgwNTA4OTE4OTcxIiwgbW9kZWw6ICJU\nRVIwMTA1IiwgYWQ6ICJUdXRrdSBFbGl0IFPEsWbEsXJ5YWthIiwgbWFya2E6\nICJUdXRrdSIsIGJlZGVuOiAiNCIgfSwKICAgIHsgYmFya29kOiAiODY4MDUw\nODkxODk3MSIsIG1vZGVsOiAiVEVSMDEwNSIsIGFkOiAiVHV0a3UgRWxpdCBT\nxLFmxLFyeWFrYSIsIG1hcmthOiAiVHV0a3UiLCBiZWRlbjogIjQiIH0sCiAg\nXTsKICBjb25zdCBrYXJhciA9IHRla2lsbGVzbWVLYXJhcmkoc2F0aXJsYXIs\nIGtheWl0KCJ0dXRrdS1iZWxpcnNpeiIsICIxIiwgImFtYmlndW91cyIpKTsK\nICBleHBlY3Qoa2FyYXIuaW5kaXJnZW5lbi5zaXplKS50b0JlKDApOwogIGV4\ncGVjdChbLi4ua2FyYXIua2ltbGlrS3VydWxhbWF5YW5dLnNvcnQoKSkudG9F\ncXVhbChbIjEiLCAiMiJdKTsKfSk7CgppdCgicmVzbcOuIGtheW5hayBhZHJl\nc2kgb2xtYXlhbiBkb8SfcnVsYW5txLHFnyBzYXTEsXIgYmlybGXFn3Rpcmls\nbWV6IiwgKCkgPT4gewogIGNvbnN0IHNhdGlybGFyID0gWwogICAgeyBiYXJr\nb2Q6ICI4NjgwNTA4OTE4OTcxIiwgbW9kZWw6ICJURVIwMTA1IiwgYWQ6ICJU\ndXRrdSBFbGl0IFPEsWbEsXJ5YWthIiwgbWFya2E6ICJUdXRrdSIsIGJlZGVu\nOiAiNCIgfSwKICAgIHsgYmFya29kOiAiODY4MDUwODkxODk3MSIsIG1vZGVs\nOiAiVEVSMDEwNSIsIGFkOiAiVHV0a3UgRWxpdCBTxLFmxLFyeWFrYSIsIG1h\ncmthOiAiVHV0a3UiLCBiZWRlbjogIjQiIH0sCiAgXTsKICBjb25zdCBpdGVt\ncyA9IG5ldyBNYXAoW1siMSIsIHsgLi4ua2FydCgidHV0a3Uta2F5bmFrc2l6\nIiksIHZhbGlkYXRpb246IHsgc3RhdHVzOiAidmVyaWZpZWQiLCBvZmZpY2lh\nbF9wcm9kdWN0X3VybDogIiIgfSB9XSwKICAgIFsiMiIsIHsgLi4ua2FydCgi\ndHV0a3Uta2F5bmFrc2l6IiksIHZhbGlkYXRpb246IHsgc3RhdHVzOiAidmVy\naWZpZWQiLCBvZmZpY2lhbF9wcm9kdWN0X3VybDogIiIgfSB9XV0pIGFzIG5l\ndmVyOwogIGV4cGVjdCh0ZWtyYXJHcnVwbGFyaShzYXRpcmxhciwgaXRlbXMp\nLnNpemUpLnRvQmUoMCk7Cn0pOwoKaXQoImNhbm9uaWNhbF9yb3dfaWQgZ2XD\np2Vyc2l6c2UgVml4cmV4IGtlbmRpIGthbm9uaWsgc2F0xLFyxLFuxLEgdXlk\ndXJtYXoiLCAoKSA9PiB7CiAgY29uc3Qgc2F0aXJsYXIgPSBbCiAgICB7IGJh\ncmtvZDogIjg2OTAxMjM0NTY3ODkiLCBtb2RlbDogIkExIiwgYWQ6ICLDnGxr\nZXIgR29mcmV0IiwgbWFya2E6ICLDnGxrZXIiLCBiZWRlbjogIjQwIGciIH0s\nCiAgICB7IGJhcmtvZDogIjg2OTAxMjM0NTY3ODkiLCBtb2RlbDogIkExIiwg\nYWQ6ICLDnGxrZXIgR29mcmV0IiwgbWFya2E6ICLDnGxrZXIiLCBiZWRlbjog\nIjQwIGciIH0sCiAgXTsKICBjb25zdCBpdGVtcyA9IG5ldyBNYXAoW1siMSIs\nIGthcnQoInVsa2VyIiwgIjkiKV0sIFsiMiIsIGthcnQoInVsa2VyIiwgIjku\nNSIpXV0pIGFzIG5ldmVyOwogIGV4cGVjdChbLi4udGVrcmFyR3J1cGxhcmko\nc2F0aXJsYXIsIGl0ZW1zKS5lbnRyaWVzKCldKS50b0VxdWFsKFtdKTsKfSk7\nCgppdCgiaWtpbmNpIHByZXNldCBlbiBrw7zDp8O8ayByb3dfaWQgeWVyaW5l\nIGJhxZ9rYSBrYW5vbmlrIHNhdMSxciBiaWxkaXJpcnNlIGJpcmxlxZ90aXJp\nbG1leiIsICgpID0+IHsKICBjb25zdCBzYXRpcmxhciA9IFsKICAgIHsgYmFy\na29kOiAiODY5MDEyMzQ1Njc4OSIsIGFkOiAiw5xsa2VyIEdvZnJldCIsIG1h\ncmthOiAiw5xsa2VyIiwgYmVkZW46ICI0MCBnIiB9LAogICAgeyBiYXJrb2Q6\nICI4NjkwMTIzNDU2Nzg5IiwgYWQ6ICLDnGxrZXIgR29mcmV0IiwgbWFya2E6\nICLDnGxrZXIiLCBiZWRlbjogIjQwIGciIH0sCiAgXTsKICBleHBlY3QodGVr\ncmFyR3J1cGxhcmkoc2F0aXJsYXIsIGtheWl0KCJ1bGtlciIsICIyIikpLnNp\nemUpLnRvQmUoMCk7Cn0pOwoKaXQoInlhbG7EsXogbWVkaWEuc291cmNlX3Vy\nbCBpbGUgdmVyaWZpZWQgeWF6xLFsYW4gaWtpIGthecSxdCBiaXJsZcWfdGly\naWxtZXoiLCAoKSA9PiB7CiAgY29uc3Qgc2F0aXJsYXIgPSBbCiAgICB7IGJh\ncmtvZDogIjg2OTAxMjM0NTY3ODkiLCBhZDogIsOcbGtlciBHb2ZyZXQiLCBt\nYXJrYTogIsOcbGtlciIgfSwKICAgIHsgYmFya29kOiAiODY5MDEyMzQ1Njc4\nOSIsIGFkOiAiw5xsa2VyIEdvZnJldCIsIG1hcmthOiAiw5xsa2VyIiB9LAog\nIF07CiAgY29uc3Qga2FuaXRzaXogPSB7CiAgICBkdXBsaWNhdGVfZ3JvdXA6\nICJ1bGtlciIsIGNhbm9uaWNhbF9yb3dfaWQ6ICIxIiwKICAgIHZhbGlkYXRp\nb246IHsgc3RhdHVzOiAidmVyaWZpZWQiLCBvZmZpY2lhbF9wcm9kdWN0X3Vy\nbDogbnVsbCB9LAogICAgbWVkaWE6IHsgc291cmNlX3VybDogImh0dHBzOi8v\ndXJldGljaS5leGFtcGxlL2theW5hayIgfSwKICB9OwogIGV4cGVjdCh0ZWty\nYXJHcnVwbGFyaShzYXRpcmxhciwgbmV3IE1hcChbWyIxIiwga2FuaXRzaXpd\nLCBbIjIiLCBrYW5pdHNpel1dKSBhcyBuZXZlcikuc2l6ZSkudG9CZSgwKTsK\nfSk7CgppdCgiZmFya2zEsSBiYXJrb2RsYXIgYXluxLEgZ3J1YmEga29uc2Eg\nZGEgYmlybGXFn3RpcmlsbWV6IiwgKCkgPT4gewogIGNvbnN0IHNhdGlybGFy\nID0gWwogICAgeyBiYXJrb2Q6ICI4NjkwMTIzNDU2Nzg5IiwgbW9kZWw6ICJB\nMSIsIGFkOiAiw5xyw7xuIiwgbWFya2E6ICJNYXJrYSIgfSwKICAgIHsgYmFy\na29kOiAiODY5MDEyMzQ1Njc5MCIsIG1vZGVsOiAiQTIiLCBhZDogIsOccsO8\nbiIsIG1hcmthOiAiTWFya2EiIH0sCiAgXTsKICBleHBlY3QodGVrcmFyR3J1\ncGxhcmkoc2F0aXJsYXIsIGtheWl0KCJrYXJpc2lrIikpLnNpemUpLnRvQmUo\nMCk7Cn0pOwoKaXQoImdydXAgZXRpa2V0aSBvbG1heWFuIHNhdMSxcmxhciB0\nZWtpbGxlxZ90aXJpbG1leiIsICgpID0+IHsKICBjb25zdCBzYXRpcmxhciA9\nIFsKICAgIHsgYmFya29kOiAiODY5MDEyMzQ1Njc4OSIsIG1vZGVsOiAiQTEi\nLCBhZDogIsOccsO8biBBIiwgbWFya2E6ICJNYXJrYSIgfSwKICAgIHsgYmFy\na29kOiAiODY5MDEyMzQ1Njc4OSIsIG1vZGVsOiAiQTEiLCBhZDogIsOccsO8\nbiBBIiwgbWFya2E6ICJNYXJrYSIgfSwKICBdOwogIGV4cGVjdCh0ZWtyYXJH\ncnVwbGFyaShzYXRpcmxhciwgbmV3IE1hcCgpIGFzIG5ldmVyKS5zaXplKS50\nb0JlKDApOwp9KTsKCmNvbnN0IG9rdW1hID0gKHNhdGlybGFyOiBBcnJheTxS\nZWNvcmQ8c3RyaW5nLCB1bmtub3duPj4pID0+ICh7IHRlZGFyaWtjaTogIlRl\nZGFyaWvDp2kiLCBzYXRpcmxhciB9KSBhcyB1bmtub3duIGFzIEdvcnVTb251\nY3U7CmNvbnN0IHlhbml0ID0gKGl0ZW1zOiB1bmtub3duW10pID0+IG5ldyBS\nZXNwb25zZShKU09OLnN0cmluZ2lmeSh7CiAgY2hvaWNlczogW3sgbWVzc2Fn\nZTogeyBjb250ZW50OiBKU09OLnN0cmluZ2lmeSh7IGl0ZW1zIH0pIH0sIGZp\nbmlzaF9yZWFzb246ICJzdG9wIiB9XSwKfSksIHsgc3RhdHVzOiAyMDAsIGhl\nYWRlcnM6IHsgImNvbnRlbnQtdHlwZSI6ICJhcHBsaWNhdGlvbi9qc29uIiB9\nIH0pOwpjb25zdCBrYXJ0S2F5ZGkgPSAoaWQ6IHN0cmluZywgdGl0bGU6IHN0\ncmluZywgYmVkZW46IHN0cmluZywgZHVydW0gPSAidmVyaWZpZWQiKSA9PiAo\newogIHJvd19pZDogaWQsIGR1cGxpY2F0ZV9ncm91cDogInR1dGt1LTg2ODA1\nMDg5MTg5NzEiLCBjYW5vbmljYWxfcm93X2lkOiAiMSIsCiAgdml4cmV4X3By\nb2R1Y3RfanNvbjogeyB0aXRsZSB9LCB2YWxpZGF0aW9uOiB7IHN0YXR1czog\nZHVydW0sIG9mZmljaWFsX3Byb2R1Y3RfdXJsOiAiaHR0cHM6Ly91cmV0aWNp\nLmV4YW1wbGUvdXJ1biIgfSwKICBtZWRpYToge30sIGJlZGVuLAp9KTsKCml0\nKCJiZWRlbmxlIGF5csSxxZ9hbiBzYXTEsXJsYXLEsW4ga2FydCBiYcWfbMSx\nxJ/EsW5kYSBiZWRlbiBnw7Zyw7xuw7xyIiwgYXN5bmMgKCkgPT4gewogIGNv\nbnN0IHNvbnVjID0gYXdhaXQga2FydFByZXNldFlhbml0aW5pT2t1KHlhbml0\nKFsKICAgIGthcnRLYXlkaSgiMSIsICJUdXRrdSBFbGl0IFPEsWbEsXJ5YWth\nIiwgIjQiKSwga2FydEtheWRpKCIyIiwgIlR1dGt1IEVsaXQgU8SxZsSxcnlh\na2EiLCAiNSIpLAogIF0pLCBva3VtYShbCiAgICB7IGhhbVNhdGlyOiAiMSIs\nIG1vZGVsOiAiVEVSMDEwNSIsIGFkOiAiVHV0a3UgRWxpdCBTxLFmxLFyeWFr\nYSIsIGJhcmtvZDogIjg2ODA1MDg5MTg5NzEiLCBiZWRlbjogIjQiLCBtYXJr\nYTogIlR1dGt1IiwgYWRldDogNiB9LAogICAgeyBoYW1TYXRpcjogIjIiLCBt\nb2RlbDogIlRFUjAxMDUiLCBhZDogIlR1dGt1IEVsaXQgU8SxZsSxcnlha2Ei\nLCBiYXJrb2Q6ICI4NjgwNTA4OTE4OTcxIiwgYmVkZW46ICI1IiwgbWFya2E6\nICJUdXRrdSIsIGFkZXQ6IDYgfSwKICBdKSk7CiAgZXhwZWN0KHNvbnVjLnNv\nbnVjLnNhdGlybGFyLm1hcCgoc2F0aXIpID0+IHNhdGlyLmFkKSkKICAgIC50\nb0VxdWFsKFsiVHV0a3UgRWxpdCBTxLFmxLFyeWFrYSAoQmVkZW4gNCkiLCAi\nVHV0a3UgRWxpdCBTxLFmxLFyeWFrYSAoQmVkZW4gNSkiXSk7CiAgZXhwZWN0\nKHNvbnVjLnNvbnVjLnNhdGlybGFyLm1hcCgoc2F0aXIpID0+IHNhdGlyLmFk\nZXQpKS50b0VxdWFsKFs2LCA2XSk7Cn0pOwoKaXQoImRvxJ9ydWxhbm1hbcSx\nxZ8gaWtpIHNhdMSxciBheXLEsSBrYXJ0IGFsxLFyIHZlIGlraXNpIGRlIGnF\nn2FyZXRsZW5pciIsIGFzeW5jICgpID0+IHsKICBjb25zdCBzb251YyA9IGF3\nYWl0IGthcnRQcmVzZXRZYW5pdGluaU9rdSh5YW5pdChbCiAgICBrYXJ0S2F5\nZGkoIjEiLCAiVHV0a3UgRWxpdCBTxLFmxLFyeWFrYSIsICI0IiwgIm5vdF9m\nb3VuZCIpLAogICAga2FydEtheWRpKCIyIiwgIlR1dGt1IEVsaXQgU8SxZsSx\ncnlha2EiLCAiNCIsICJub3RfZm91bmQiKSwKICBdKSwgb2t1bWEoWwogICAg\neyBoYW1TYXRpcjogIjEiLCBtb2RlbDogIlRFUjAxMDUiLCBhZDogIlR1dGt1\nIEVsaXQgU8SxZsSxcnlha2EiLCBiYXJrb2Q6ICI4NjgwNTA4OTE4OTcxIiwg\nYmVkZW46ICI0IiwgbWFya2E6ICJUdXRrdSIsIGFkZXQ6IDYgfSwKICAgIHsg\naGFtU2F0aXI6ICIyIiwgbW9kZWw6ICJURVIwMTA1IiwgYWQ6ICJUdXRrdSBF\nbGl0IFPEsWbEsXJ5YWthIiwgYmFya29kOiAiODY4MDUwODkxODk3MSIsIGJl\nZGVuOiAiNCIsIG1hcmthOiAiVHV0a3UiLCBhZGV0OiA2IH0sCiAgXSkpOwog\nIGV4cGVjdChzb251Yy5zb251Yy5zYXRpcmxhci5tYXAoKHNhdGlyKSA9PiBz\nYXRpci5kb2dydWxhbWFEdXJ1bXUpKS50b0VxdWFsKFsiQnVsdW5hbWFkxLEi\nLCAiQnVsdW5hbWFkxLEiXSk7CiAgZm9yIChjb25zdCBzYXRpciBvZiBzb251\nYy5zb251Yy5zYXRpcmxhcikgewogICAgZXhwZWN0KHNhdGlyLmVrc2lrbGVy\nKS50b0NvbnRhaW4oIkF5bsSxIMO8csO8biBkb8SfcnVsYW5hbWFkxLE7IGF5\ncsSxIGthcnQgYcOnxLFsZMSxLiIpOwogIH0KfSk7CgppdCgiZG/En3J1bGFu\nbcSxxZ8gYXluxLEgw7xyw7xuIGlraSBzYXTEsXLEsSB0ZWsga2FydGEgaW5k\naXJpciIsIGFzeW5jICgpID0+IHsKICBjb25zdCBzb251YyA9IGF3YWl0IGth\ncnRQcmVzZXRZYW5pdGluaU9rdSh5YW5pdChbCiAgICBrYXJ0S2F5ZGkoIjEi\nLCAiVHV0a3UgRWxpdCBTxLFmxLFyeWFrYSIsICI0IiksIGthcnRLYXlkaSgi\nMiIsICJUdXRrdSBFbGl0IFPEsWbEsXJ5YWthIiwgIjQiKSwKICBdKSwgb2t1\nbWEoWwogICAgeyBoYW1TYXRpcjogIjEiLCBtb2RlbDogIlRFUjAxMDUiLCBh\nZDogIlR1dGt1IEVsaXQgU8SxZsSxcnlha2EiLCBiYXJrb2Q6ICI4NjgwNTA4\nOTE4OTcxIiwgYmVkZW46ICI0IiwgbWFya2E6ICJUdXRrdSIsIGFkZXQ6IDYg\nfSwKICAgIHsgaGFtU2F0aXI6ICIyIiwgbW9kZWw6ICJURVIwMTA1IiwgYWQ6\nICJUdXRrdSBFbGl0IFPEsWbEsXJ5YWthIiwgYmFya29kOiAiODY4MDUwODkx\nODk3MSIsIGJlZGVuOiAiNCIsIG1hcmthOiAiVHV0a3UiLCBhZGV0OiA2IH0s\nCiAgXSkpOwogIGV4cGVjdChzb251Yy5zb251Yy5zYXRpcmxhclswXS5hZCku\ndG9CZSgiVHV0a3UgRWxpdCBTxLFmxLFyeWFrYSIpOwogIGV4cGVjdChzb251\nYy5zb251Yy5zYXRpcmxhclswXS5hZGV0KS50b0JlKDEyKTsKICBleHBlY3Qo\nc29udWMuc29udWMuc2F0aXJsYXJbMV0uYWRldCkudG9CZSg2KTsKICBleHBl\nY3Qoc29udWMuc29udWMuc2F0aXJsYXJbMV0uZWtzaWtsZXIpLnRvQ29udGFp\nbigiQXluxLEgw7xyw7xuIGJlbGdlZGUgMS4gc2F0xLFyZGEgZGEgZ2XDp2l5\nb3I7IHRlayBrYXJ0IGHDp8SxbMSxci4iKTsKfSk7Cgpjb25zdCBtZXRpbllh\nbml0ID0gKGljZXJpazogc3RyaW5nKSA9PiBuZXcgUmVzcG9uc2UoSlNPTi5z\ndHJpbmdpZnkoewogIGNob2ljZXM6IFt7IG1lc3NhZ2U6IHsgY29udGVudDog\naWNlcmlrIH0sIGZpbmlzaF9yZWFzb246ICJzdG9wIiB9XSwKfSksIHsgc3Rh\ndHVzOiAyMDAsIGhlYWRlcnM6IHsgImNvbnRlbnQtdHlwZSI6ICJhcHBsaWNh\ndGlvbi9qc29uIiB9IH0pOwpjb25zdCBnb3JzZWxsaUthcnQgPSAoaWQ6IHN0\ncmluZywgYmFzbGlrOiBzdHJpbmcsIGJlZGVuOiBzdHJpbmcpID0+ICh7CiAg\nLi4ua2FydEtheWRpKGlkLCBiYXNsaWssIGJlZGVuKSwKICBtZWRpYTogeyBp\nbWFnZV91cmw6ICJodHRwczovL2Nkbi5leGFtcGxlL3VydW4ud2VicCIgfSwK\nfSk7CmNvbnN0IGlraVNhdGlyID0gWwogIHsgaGFtU2F0aXI6ICIxIiwgbW9k\nZWw6ICJURVIwMTA1IiwgYWQ6ICJUdXRrdSBFbGl0IFPEsWbEsXJ5YWthIiwg\nYmFya29kOiAiODY4MDUwODkxODk3MSIsIGJlZGVuOiAiNCIsIG1hcmthOiAi\nVHV0a3UiLCBhZGV0OiA2IH0sCiAgeyBoYW1TYXRpcjogIjIiLCBtb2RlbDog\nIlRFUjAxMDUiLCBhZDogIlR1dGt1IEVsaXQgU8SxZsSxcnlha2EiLCBiYXJr\nb2Q6ICI4NjgwNTA4OTE4OTg4IiwgYmVkZW46ICI1IiwgbWFya2E6ICJUdXRr\ndSIsIGFkZXQ6IDYgfSwKXTsKCml0KCJrYXJ0IHlhbsSxdMSxIGJhxZ/EsW5k\nYSBjw7xtbGUgdmUgSlNPTiDDp2l0aXlsZSBnZWxzZSBkZSDDp8O2esO8bMO8\nciIsIGFzeW5jICgpID0+IHsKICBjb25zdCBpY2VyaWsgPSAiSSdsbCByZXNl\nYXJjaCBlYWNoIGJyYW5kJ3Mgb2ZmaWNpYWwgd2Vic2l0ZS5cblxuYGBganNv\nblxuIiArCiAgICBKU09OLnN0cmluZ2lmeSh7IGl0ZW1zOiBbZ29yc2VsbGlL\nYXJ0KCIxIiwgIlR1dGt1IEVsaXQgU8SxZsSxcnlha2EiLCAiNCIpLCBnb3Jz\nZWxsaUthcnQoIjIiLCAiVHV0a3UgRWxpdCBTxLFmxLFyeWFrYSIsICI1Iild\nIH0sIG51bGwsIDIpICsKICAgICJcbmBgYFxuIjsKICBjb25zdCBzb251YyA9\nIGF3YWl0IGthcnRQcmVzZXRZYW5pdGluaU9rdShtZXRpbllhbml0KGljZXJp\nayksIG9rdW1hKGlraVNhdGlyKSk7CiAgZXhwZWN0KHNvbnVjLnNvbnVjLnNh\ndGlybGFyLm1hcCgoc2F0aXIpID0+IHNhdGlyLmRvZ3J1bGFtYUR1cnVtdSkp\nCiAgICAudG9FcXVhbChbIkRvxJ9ydWxhbmTEsSIsICJEb8SfcnVsYW5kxLEi\nXSk7CiAgZXhwZWN0KHNvbnVjLnNvbnVjLnNhdGlybGFyLm1hcCgoc2F0aXIp\nID0+IHNhdGlyLnNpdGVHb3JzZWxsZXIpKQogICAgLnRvRXF1YWwoW1siaHR0\ncHM6Ly9jZG4uZXhhbXBsZS91cnVuLndlYnAiXSwgWyJodHRwczovL2Nkbi5l\neGFtcGxlL3VydW4ud2VicCJdXSk7CiAgZXhwZWN0KHNvbnVjLnNvbnVjLnNh\ndGlybGFyWzBdLnNpdGVTYXlmYSkudG9CZSgiaHR0cHM6Ly91cmV0aWNpLmV4\nYW1wbGUvdXJ1biIpOwp9KTsKCml0KCJ5YWxuxLF6IEpTT04gw6dpdGl5bGUg\nZ2VsZW4ga2FydCB5YW7EsXTEsSBkYSDDp8O2esO8bMO8ciIsIGFzeW5jICgp\nID0+IHsKICBjb25zdCBpY2VyaWsgPSAiYGBganNvblxuIiArIEpTT04uc3Ry\naW5naWZ5KHsgaXRlbXM6IFtnb3JzZWxsaUthcnQoIjEiLCAiVHV0a3UgRWxp\ndCBTxLFmxLFyeWFrYSIsICI0IildIH0pICsgIlxuYGBgIjsKICBjb25zdCBz\nb251YyA9IGF3YWl0IGthcnRQcmVzZXRZYW5pdGluaU9rdShtZXRpbllhbml0\nKGljZXJpayksIG9rdW1hKFtpa2lTYXRpclswXV0pKTsKICBleHBlY3Qoc29u\ndWMuc29udWMuc2F0aXJsYXJbMF0uYWQpLnRvQmUoIlR1dGt1IEVsaXQgU8Sx\nZsSxcnlha2EiKTsKfSk7CgppdCgiSlNPTiBpw6dlcm1leWVuIGthcnQgeWFu\nxLF0xLEgaMOibMOiIHJlZGRlZGlsaXIiLCBhc3luYyAoKSA9PiB7CiAgYXdh\naXQgZXhwZWN0KGthcnRQcmVzZXRZYW5pdGluaU9rdShtZXRpbllhbml0KCLD\nnHLDvG4gYnVsdW5hbWFkxLEuIiksIG9rdW1hKFtpa2lTYXRpclswXV0pKSkK\nICAgIC5yZWplY3RzLnRvVGhyb3coIktBUlRfWUFOSVRJX0NPWlVMRU1FREki\nKTsKfSk7CgppdCgiZMO8eiDFn2VtYWzEsSBrYXJ0IHlhbsSxdMSxIGRvxJ9y\ndWxhbWEgdmUgw7xyw7xuIGFkcmVzaW5pIG9rdXIiLCBhc3luYyAoKSA9PiB7\nCiAgY29uc3QgZHV6S2FydCA9IHsKICAgIHJvd19pZDogIjEiLCB0aXRsZTog\nIlR1dGt1IEVsaXQgU8SxZsSxcnlha2EiLCBicmFuZDogIlR1dGt1IiwgdmFy\naWFudDogIjEwMCBCRVlBWiIsCiAgICBzaG9ydF9kZXNjcmlwdGlvbjogIlBh\nbXVrbHUgZmFuaWxhIiwgY2F0ZWdvcnlfc3VnZ2VzdGlvbjogIkVya2VrIMSw\nw6cgR2l5aW0iLAogICAgdmVyaWZpY2F0aW9uX3N0YXR1czogInZlcmlmaWVk\nIiwgcHJvZHVjdF91cmw6ICJodHRwczovL3VyZXRpY2kuZXhhbXBsZS91cnVu\nIiwKICAgIGltYWdlX3VybDogImh0dHBzOi8vY2RuLmV4YW1wbGUvdXJ1bi53\nZWJwIiwgc291cmNlX3VybDogImh0dHBzOi8vdXJldGljaS5leGFtcGxlL3Vy\ndW4iLAogICAgbWF0Y2hlZF9hdHRyaWJ1dGVzOiBbImJlZGVuOiA0Il0sIHVu\nbWF0Y2hlZF9hdHRyaWJ1dGVzOiBbXSwgc291cmNlczogW10sCiAgfTsKICBj\nb25zdCBzb251YyA9IGF3YWl0IGthcnRQcmVzZXRZYW5pdGluaU9rdShtZXRp\nbllhbml0KEpTT04uc3RyaW5naWZ5KHsgaXRlbXM6IFtkdXpLYXJ0XSB9KSks\nIG9rdW1hKFtpa2lTYXRpclswXV0pKTsKICBjb25zdCBzYXRpciA9IHNvbnVj\nLnNvbnVjLnNhdGlybGFyWzBdOwogIGV4cGVjdChzYXRpci5kb2dydWxhbWFE\ndXJ1bXUpLnRvQmUoIkRvxJ9ydWxhbmTEsSIpOwogIGV4cGVjdChzYXRpci5z\naXRlU2F5ZmEpLnRvQmUoImh0dHBzOi8vdXJldGljaS5leGFtcGxlL3VydW4i\nKTsKICBleHBlY3Qoc2F0aXIuc2l0ZUdvcnNlbGxlcikudG9FcXVhbChbImh0\ndHBzOi8vY2RuLmV4YW1wbGUvdXJ1bi53ZWJwIl0pOwogIGV4cGVjdChzYXRp\nci5hZCkudG9CZSgiVHV0a3UgRWxpdCBTxLFmxLFyeWFrYSIpOwp9KTsKCml0\nKCJhZGV0IHNhecSxIGRlxJ9pbHNlIGJpcmxlxZ9lbiBrYXJ0dGEgdG9wbGFt\nYSB5YXDEsWxtYXoiLCBhc3luYyAoKSA9PiB7CiAgY29uc3Qgc29udWMgPSBh\nd2FpdCBrYXJ0UHJlc2V0WWFuaXRpbmlPa3UoeWFuaXQoWwogICAga2FydEth\neWRpKCIxIiwgIlR1dGt1IEVsaXQgU8SxZsSxcnlha2EiLCAiNCIpLCBrYXJ0\nS2F5ZGkoIjIiLCAiVHV0a3UgRWxpdCBTxLFmxLFyeWFrYSIsICI0IiksCiAg\nXSksIG9rdW1hKFsKICAgIHsgaGFtU2F0aXI6ICIxIiwgbW9kZWw6ICJURVIw\nMTA1IiwgYWQ6ICJUdXRrdSBFbGl0IFPEsWbEsXJ5YWthIiwgYmFya29kOiAi\nODY4MDUwODkxODk3MSIsIGJlZGVuOiAiNCIsIG1hcmthOiAiVHV0a3UiLCBh\nZGV0OiA2IH0sCiAgICB7IGhhbVNhdGlyOiAiMiIsIG1vZGVsOiAiVEVSMDEw\nNSIsIGFkOiAiVHV0a3UgRWxpdCBTxLFmxLFyeWFrYSIsIGJhcmtvZDogIjg2\nODA1MDg5MTg5NzEiLCBiZWRlbjogIjQiLCBtYXJrYTogIlR1dGt1IiwgYWRl\ndDogbnVsbCB9LAogIF0pKTsKICBleHBlY3Qoc29udWMuc29udWMuc2F0aXJs\nYXJbMF0uYWRldCkudG9CZSg2KTsKfSk7Cg==\n","encoding":"base64","_links":{"self":"https://api.github.com/repos/xpodiumyours/vixrex/contents/public_web/tests/fatura-kart-tekillesme.test.ts?ref=fix/openrouter-vixrex-gorev-ayrimi-20261102","git":"https://api.github.com/repos/xpodiumyours/vixrex/git/blobs/eb8ac0e3c821a0913b28fb7ca762038ab3a9cd00","html":"https://github.com/xpodiumyours/vixrex/blob/fix/openrouter-vixrex-gorev-ayrimi-20261102/public_web/tests/fatura-kart-tekillesme.test.ts"}}
+import { expect, it } from "vitest";
+import { kartPresetYanitiniOku, tekillesmeKarari, tekrarGruplari } from "@/lib/faturaKartPreset";
+import type { GoruSonucu } from "@/lib/faturaGoru";
+
+const kart = (grup: string, kanonik = "1", durum = "verified") => ({
+  duplicate_group: grup, canonical_row_id: kanonik,
+  validation: { status: durum, official_product_url: "https://uretici.example/urun" },
+  media: {},
+});
+const kayit = (grup: string, kanonik = "1", durum = "verified") => new Map([
+  ["1", kart(grup, kanonik, durum)], ["2", kart(grup, kanonik, durum)], ["3", kart(grup, kanonik, durum)],
+]) as never;
+
+it("aynı barkod + aynı beden tek karta indirilir", () => {
+  const satirlar = [
+    { barkod: "8680508918971", model: "TER0105", ad: "Tutku Elit Sıfıryaka", marka: "Tutku", beden: "4" },
+    { barkod: "8680508918971", model: "TER0105", ad: "Tutku Elit Sıfıryaka", marka: "Tutku", beden: "4" },
+    { barkod: "8680508918971", model: "TER0105", ad: "Tutku Elit Sıfıryaka", marka: "Tutku", beden: "4" },
+  ];
+  const sonuc = tekrarGruplari(satirlar, kayit("tutku-8680508918971"));
+  expect([...sonuc.entries()]).toEqual([["2", 1], ["3", 1]]);
+});
+
+it("aynı barkod farklı bedende birleştirilmez ve beden ayrışması işaretlenir", () => {
+  const satirlar = [
+    { barkod: "8680508918971", model: "TER0105", ad: "Tutku Elit Sıfıryaka", marka: "Tutku", beden: "4" },
+    { barkod: "8680508918971", model: "TER0105", ad: "Tutku Elit Sıfıryaka", marka: "Tutku", beden: "5" },
+  ];
+  const karar = tekillesmeKarari(satirlar, kayit("tutku-8680508918971"));
+  expect(karar.indirgenen.size).toBe(0);
+  expect([...karar.bedenAyrisan].sort()).toEqual(["1", "2"]);
+});
+
+it("aynı barkod farklı varyantta birleştirilmez", () => {
+  const satirlar = [
+    { barkod: "8680508918971", model: "TER0105", ad: "Tutku Elit Sıfıryaka", marka: "Tutku", varyant: "Beyaz" },
+    { barkod: "8680508918971", model: "TER0105", ad: "Tutku Elit Sıfıryaka", marka: "Tutku", varyant: "Siyah" },
+  ];
+  expect(tekrarGruplari(satirlar, kayit("tutku-renk")).size).toBe(0);
+});
+
+it("barkodsuz satırda marka, ad ve beden aynıysa birleştirilir", () => {
+  const satirlar = [
+    { barkod: "", model: "", ad: "Pınar Süzme Peynir 500 g", marka: "Pınar", beden: "500 g" },
+    { barkod: "", model: "", ad: "pınar  süzme peynir 500 g", marka: "Pınar", beden: "500 g" },
+  ];
+  expect([...tekrarGruplari(satirlar, kayit("pinar-peynir")).keys()]).toEqual(["2"]);
+});
+
+it("barkodsuz aynı isimli fakat farklı gramajlı ürünler tekilleştirilmez", () => {
+  const satirlar = [
+    { barkod: "", ad: "Pınar Süzme Peynir", marka: "Pınar", gramaj: "250 g" },
+    { barkod: "", ad: "Pınar Süzme Peynir", marka: "Pınar", gramaj: "500 g" },
+  ];
+  expect(tekrarGruplari(satirlar, kayit("pinar-ayri-gramaj")).size).toBe(0);
+});
+
+it("barkodsuz satırda ad 6 karakterden kısaysa birleştirme yapılmaz", () => {
+  const satirlar = [
+    { barkod: "", model: "", ad: "Çay", marka: "Torku" },
+    { barkod: "", model: "", ad: "Çay", marka: "Torku" },
+  ];
+  expect(tekrarGruplari(satirlar, kayit("cay")).size).toBe(0);
+});
+
+it("barkodsuz satırda marka farklıysa birleştirme yapılmaz", () => {
+  const satirlar = [
+    { barkod: "", model: "", ad: "Süzme Peynir 500 g", marka: "Pınar" },
+    { barkod: "", model: "", ad: "Süzme Peynir 500 g", marka: "Sütaş" },
+  ];
+  expect(tekrarGruplari(satirlar, kayit("peynir")).size).toBe(0);
+});
+
+it("doğrulanmamış satırlar birleştirilmez ve kimlik kurulamadı diye işaretlenir", () => {
+  const satirlar = [
+    { barkod: "8680508918971", model: "TER0105", ad: "Tutku Elit Sıfıryaka", marka: "Tutku", beden: "4" },
+    { barkod: "8680508918971", model: "TER0105", ad: "Tutku Elit Sıfıryaka", marka: "Tutku", beden: "4" },
+  ];
+  const karar = tekillesmeKarari(satirlar, kayit("tutku-belirsiz", "1", "ambiguous"));
+  expect(karar.indirgenen.size).toBe(0);
+  expect([...karar.kimlikKurulamayan].sort()).toEqual(["1", "2"]);
+});
+
+it("resmî kaynak adresi olmayan doğrulanmış satır birleştirilmez", () => {
+  const satirlar = [
+    { barkod: "8680508918971", model: "TER0105", ad: "Tutku Elit Sıfıryaka", marka: "Tutku", beden: "4" },
+    { barkod: "8680508918971", model: "TER0105", ad: "Tutku Elit Sıfıryaka", marka: "Tutku", beden: "4" },
+  ];
+  const items = new Map([["1", { ...kart("tutku-kaynaksiz"), validation: { status: "verified", official_product_url: "" } }],
+    ["2", { ...kart("tutku-kaynaksiz"), validation: { status: "verified", official_product_url: "" } }]]) as never;
+  expect(tekrarGruplari(satirlar, items).size).toBe(0);
+});
+
+it("canonical_row_id geçersizse Vixrex kendi kanonik satırını uydurmaz", () => {
+  const satirlar = [
+    { barkod: "8690123456789", model: "A1", ad: "Ülker Gofret", marka: "Ülker", beden: "40 g" },
+    { barkod: "8690123456789", model: "A1", ad: "Ülker Gofret", marka: "Ülker", beden: "40 g" },
+  ];
+  const items = new Map([["1", kart("ulker", "9")], ["2", kart("ulker", "9.5")]]) as never;
+  expect([...tekrarGruplari(satirlar, items).entries()]).toEqual([]);
+});
+
+it("ikinci preset en küçük row_id yerine başka kanonik satır bildirirse birleştirilmez", () => {
+  const satirlar = [
+    { barkod: "8690123456789", ad: "Ülker Gofret", marka: "Ülker", beden: "40 g" },
+    { barkod: "8690123456789", ad: "Ülker Gofret", marka: "Ülker", beden: "40 g" },
+  ];
+  expect(tekrarGruplari(satirlar, kayit("ulker", "2")).size).toBe(0);
+});
+
+it("yalnız media.source_url ile verified yazılan iki kayıt birleştirilmez", () => {
+  const satirlar = [
+    { barkod: "8690123456789", ad: "Ülker Gofret", marka: "Ülker" },
+    { barkod: "8690123456789", ad: "Ülker Gofret", marka: "Ülker" },
+  ];
+  const kanitsiz = {
+    duplicate_group: "ulker", canonical_row_id: "1",
+    validation: { status: "verified", official_product_url: null },
+    media: { source_url: "https://uretici.example/kaynak" },
+  };
+  expect(tekrarGruplari(satirlar, new Map([["1", kanitsiz], ["2", kanitsiz]]) as never).size).toBe(0);
+});
+
+it("farklı barkodlar aynı gruba konsa da birleştirilmez", () => {
+  const satirlar = [
+    { barkod: "8690123456789", model: "A1", ad: "Ürün", marka: "Marka" },
+    { barkod: "8690123456790", model: "A2", ad: "Ürün", marka: "Marka" },
+  ];
+  expect(tekrarGruplari(satirlar, kayit("karisik")).size).toBe(0);
+});
+
+it("grup etiketi olmayan satırlar tekilleştirilmez", () => {
+  const satirlar = [
+    { barkod: "8690123456789", model: "A1", ad: "Ürün A", marka: "Marka" },
+    { barkod: "8690123456789", model: "A1", ad: "Ürün A", marka: "Marka" },
+  ];
+  expect(tekrarGruplari(satirlar, new Map() as never).size).toBe(0);
+});
+
+const okuma = (satirlar: Array<Record<string, unknown>>) => ({ tedarikci: "Tedarikçi", satirlar }) as unknown as GoruSonucu;
+const yanit = (items: unknown[]) => new Response(JSON.stringify({
+  choices: [{ message: { content: JSON.stringify({ items }) }, finish_reason: "stop" }],
+}), { status: 200, headers: { "content-type": "application/json" } });
+const kartKaydi = (id: string, title: string, beden: string, durum = "verified") => ({
+  row_id: id, duplicate_group: "tutku-8680508918971", canonical_row_id: "1",
+  vixrex_product_json: { title }, validation: { status: durum, official_product_url: "https://uretici.example/urun" },
+  media: {}, beden,
+});
+
+it("bedenle ayrışan satırların kart başlığında beden görünür", async () => {
+  const sonuc = await kartPresetYanitiniOku(yanit([
+    kartKaydi("1", "Tutku Elit Sıfıryaka", "4"), kartKaydi("2", "Tutku Elit Sıfıryaka", "5"),
+  ]), okuma([
+    { hamSatir: "1", model: "TER0105", ad: "Tutku Elit Sıfıryaka", barkod: "8680508918971", beden: "4", marka: "Tutku", adet: 6 },
+    { hamSatir: "2", model: "TER0105", ad: "Tutku Elit Sıfıryaka", barkod: "8680508918971", beden: "5", marka: "Tutku", adet: 6 },
+  ]));
+  expect(sonuc.sonuc.satirlar.map((satir) => satir.ad))
+    .toEqual(["Tutku Elit Sıfıryaka (Beden 4)", "Tutku Elit Sıfıryaka (Beden 5)"]);
+  expect(sonuc.sonuc.satirlar.map((satir) => satir.adet)).toEqual([6, 6]);
+});
+
+it("doğrulanmamış iki satır ayrı kart alır ve ikisi de işaretlenir", async () => {
+  const sonuc = await kartPresetYanitiniOku(yanit([
+    kartKaydi("1", "Tutku Elit Sıfıryaka", "4", "not_found"),
+    kartKaydi("2", "Tutku Elit Sıfıryaka", "4", "not_found"),
+  ]), okuma([
+    { hamSatir: "1", model: "TER0105", ad: "Tutku Elit Sıfıryaka", barkod: "8680508918971", beden: "4", marka: "Tutku", adet: 6 },
+    { hamSatir: "2", model: "TER0105", ad: "Tutku Elit Sıfıryaka", barkod: "8680508918971", beden: "4", marka: "Tutku", adet: 6 },
+  ]));
+  expect(sonuc.sonuc.satirlar.map((satir) => satir.dogrulamaDurumu)).toEqual(["Bulunamadı", "Bulunamadı"]);
+  for (const satir of sonuc.sonuc.satirlar) {
+    expect(satir.eksikler).toContain("Aynı ürün doğrulanamadı; ayrı kart açıldı.");
+  }
+});
+
+it("doğrulanmış aynı ürün iki satırı tek karta indirir", async () => {
+  const sonuc = await kartPresetYanitiniOku(yanit([
+    kartKaydi("1", "Tutku Elit Sıfıryaka", "4"), kartKaydi("2", "Tutku Elit Sıfıryaka", "4"),
+  ]), okuma([
+    { hamSatir: "1", model: "TER0105", ad: "Tutku Elit Sıfıryaka", barkod: "8680508918971", beden: "4", marka: "Tutku", adet: 6 },
+    { hamSatir: "2", model: "TER0105", ad: "Tutku Elit Sıfıryaka", barkod: "8680508918971", beden: "4", marka: "Tutku", adet: 6 },
+  ]));
+  expect(sonuc.sonuc.satirlar[0].ad).toBe("Tutku Elit Sıfıryaka");
+  expect(sonuc.sonuc.satirlar[0].adet).toBe(12);
+  expect(sonuc.sonuc.satirlar[1].adet).toBe(6);
+  expect(sonuc.sonuc.satirlar[1].eksikler).toContain("Aynı ürün belgede 1. satırda da geçiyor; tek kart açılır.");
+});
+
+const metinYanit = (icerik: string) => new Response(JSON.stringify({
+  choices: [{ message: { content: icerik }, finish_reason: "stop" }],
+}), { status: 200, headers: { "content-type": "application/json" } });
+const gorselliKart = (id: string, baslik: string, beden: string) => ({
+  ...kartKaydi(id, baslik, beden),
+  media: { image_url: "https://cdn.example/urun.webp" },
+});
+const ikiSatir = [
+  { hamSatir: "1", model: "TER0105", ad: "Tutku Elit Sıfıryaka", barkod: "8680508918971", beden: "4", marka: "Tutku", adet: 6 },
+  { hamSatir: "2", model: "TER0105", ad: "Tutku Elit Sıfıryaka", barkod: "8680508918988", beden: "5", marka: "Tutku", adet: 6 },
+];
+
+it("kart yanıtı başında cümle ve JSON çitiyle gelse de çözülür", async () => {
+  const icerik = "I'll research each brand's official website.\n\n```json\n" +
+    JSON.stringify({ items: [gorselliKart("1", "Tutku Elit Sıfıryaka", "4"), gorselliKart("2", "Tutku Elit Sıfıryaka", "5")] }, null, 2) +
+    "\n```\n";
+  const sonuc = await kartPresetYanitiniOku(metinYanit(icerik), okuma(ikiSatir));
+  expect(sonuc.sonuc.satirlar.map((satir) => satir.dogrulamaDurumu))
+    .toEqual(["Doğrulandı", "Doğrulandı"]);
+  expect(sonuc.sonuc.satirlar.map((satir) => satir.siteGorseller))
+    .toEqual([["https://cdn.example/urun.webp"], ["https://cdn.example/urun.webp"]]);
+  expect(sonuc.sonuc.satirlar[0].siteSayfa).toBe("https://uretici.example/urun");
+});
+
+it("yalnız JSON çitiyle gelen kart yanıtı da çözülür", async () => {
+  const icerik = "```json\n" + JSON.stringify({ items: [gorselliKart("1", "Tutku Elit Sıfıryaka", "4")] }) + "\n```";
+  const sonuc = await kartPresetYanitiniOku(metinYanit(icerik), okuma([ikiSatir[0]]));
+  expect(sonuc.sonuc.satirlar[0].ad).toBe("Tutku Elit Sıfıryaka");
+});
+
+it("JSON içermeyen kart yanıtı hâlâ reddedilir", async () => {
+  await expect(kartPresetYanitiniOku(metinYanit("Ürün bulunamadı."), okuma([ikiSatir[0]])))
+    .rejects.toThrow("KART_YANITI_COZULEMEDI");
+});
+
+it("düz şemalı kart yanıtı doğrulama ve ürün adresini okur", async () => {
+  const duzKart = {
+    row_id: "1", title: "Tutku Elit Sıfıryaka", brand: "Tutku", variant: "100 BEYAZ",
+    short_description: "Pamuklu fanila", category_suggestion: "Erkek İç Giyim",
+    verification_status: "verified", product_url: "https://uretici.example/urun",
+    image_url: "https://cdn.example/urun.webp", source_url: "https://uretici.example/urun",
+    matched_attributes: ["beden: 4"], unmatched_attributes: [], sources: [],
+  };
+  const sonuc = await kartPresetYanitiniOku(metinYanit(JSON.stringify({ items: [duzKart] })), okuma([ikiSatir[0]]));
+  const satir = sonuc.sonuc.satirlar[0];
+  expect(satir.dogrulamaDurumu).toBe("Doğrulandı");
+  expect(satir.siteSayfa).toBe("https://uretici.example/urun");
+  expect(satir.siteGorseller).toEqual(["https://cdn.example/urun.webp"]);
+  expect(satir.ad).toBe("Tutku Elit Sıfıryaka");
+});
+
+it("adet sayı değilse birleşen kartta toplama yapılmaz", async () => {
+  const sonuc = await kartPresetYanitiniOku(yanit([
+    kartKaydi("1", "Tutku Elit Sıfıryaka", "4"), kartKaydi("2", "Tutku Elit Sıfıryaka", "4"),
+  ]), okuma([
+    { hamSatir: "1", model: "TER0105", ad: "Tutku Elit Sıfıryaka", barkod: "8680508918971", beden: "4", marka: "Tutku", adet: 6 },
+    { hamSatir: "2", model: "TER0105", ad: "Tutku Elit Sıfıryaka", barkod: "8680508918971", beden: "4", marka: "Tutku", adet: null },
+  ]));
+  expect(sonuc.sonuc.satirlar[0].adet).toBe(6);
+});
