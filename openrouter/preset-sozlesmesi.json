@@ -49,7 +49,7 @@
       "slug": "vixrex-urun-karti-v2",
       "durum": "aday",
       "designated_version": 1,
-      "designated_version_id": null,
+      "designated_version_id": "9ca8bb16-41a2-4e69-95b2-b61f13ac1d22",
       "model": "deepseek/deepseek-v4.1-flash-1017",
       "response_format_type": "json_schema",
       "tools": [
