@@ -26,7 +26,6 @@ export function kartPresetIstekGovdesi(okuma: GoruSonucu): Record<string, unknow
   }));
   return {
     model: URUN_KART_PRESET, stream: true,
-    provider: { require_parameters: true },
     messages: [{ role: "user", content: [
       "İlk presetin faturadan okuduğu satırlar aşağıdadır. Presetindeki araştırma ve ürün kartı görevini tamamla.",
       "Her row_id değerini aynen koru; her girdi satırı için tam bir items kaydı döndür. Satır silme; aynı ürünü duplicate_group ve canonical_row_id ile işaretle.",

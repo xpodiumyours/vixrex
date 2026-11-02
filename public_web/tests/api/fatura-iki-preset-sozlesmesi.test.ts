@@ -192,6 +192,8 @@ describe("gerçek ikinci preset JSON sözleşmesi",()=>{
     const messages=req.messages as Array<{content:string}>;
     expect(messages[0].content).toContain("row_id");
     expect(req).not.toHaveProperty("tools");
+    expect(req).not.toHaveProperty("provider");
+    expect(req).not.toHaveProperty("response_format");
     expect(req).not.toHaveProperty("system");
   });
 });

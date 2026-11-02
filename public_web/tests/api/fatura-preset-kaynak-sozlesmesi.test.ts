@@ -24,7 +24,9 @@ const ilkSonuc = {
 describe("depodaki OpenRouter preset tanımı ↔ Vixrex taşıma sözleşmesi", () => {
   it("ilk preset ve üretim isteği aynı JSON modunu kullanır, web aracı çağırmaz", () => {
     const istek = faturaIstekGovdesi("data:image/jpeg;base64,AAAA");
-    expect(istek.response_format).toEqual(okuma.response_format);
+    expect(okuma.response_format).toEqual({ type: "json_object" });
+    expect(istek).not.toHaveProperty("response_format");
+    expect(istek).not.toHaveProperty("provider");
     expect(istek.stream).toBe(true);
     expect(okuma).not.toHaveProperty("tools");
     expect(istek).not.toHaveProperty("tools");
@@ -87,6 +89,7 @@ describe("depodaki OpenRouter preset tanımı ↔ Vixrex taşıma sözleşmesi",
       "openrouter:web_search", "openrouter:web_fetch",
     ]);
     expect(istek).not.toHaveProperty("response_format");
+    expect(istek).not.toHaveProperty("provider");
     expect(istek).not.toHaveProperty("system");
     expect(istek).not.toHaveProperty("tools");
     expect(sistem(kart)).toContain("image_url");

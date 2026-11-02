@@ -34,8 +34,8 @@ describe("Vixrex preset taşıma sözleşmesi", () => {
   it("model, sistem istemi ve araçlar istemci tarafından değiştirilmez", () => {
     const body = faturaIstekGovdesi("data:image/png;base64,TEST");
     expect(body).not.toHaveProperty("tools"); expect(body).not.toHaveProperty("temperature");
-    expect(body.response_format).toEqual({ type: "json_object" });
-    expect(body.provider).toEqual({ require_parameters: true });
+    expect(body).not.toHaveProperty("response_format");
+    expect(body).not.toHaveProperty("provider");
     expect(JSON.stringify(body)).toContain(FATURA_JSON_ISTEGI.replace(/\n/g, "\\n").slice(0, 10));
   });
   it("birinci preset yalnız belge okur; ürün araştırması ve kart üretimi ikinci presetin işidir", () => {
