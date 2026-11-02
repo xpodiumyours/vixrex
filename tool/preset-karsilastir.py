@@ -37,6 +37,7 @@ def sistem_ozet(veri):
         "model": cfg.get("model"),
         "response_format_type": rf.get("type") if isinstance(rf, dict) else None,
         "tools": tnames,
+        "require_parameters": bool((cfg.get("provider") or {}).get("require_parameters")),
         "system_prompt_sha256": hashlib.sha256(sistem.encode("utf-8")).hexdigest(),
     }
 
@@ -80,7 +81,7 @@ def main():
             continue
         vn, vv = bulunan
         canli = sistem_ozet(vv)
-        alanlar = ["model", "response_format_type", "tools", "system_prompt_sha256"]
+        alanlar = ["model", "response_format_type", "tools", "require_parameters", "system_prompt_sha256"]
         fark_list = [a for a in alanlar if canli.get(a) != beklenen.get(a)]
         if fark_list:
             print(slug + " (v" + str(vn) + "): FARK -> " + ", ".join(fark_list))
