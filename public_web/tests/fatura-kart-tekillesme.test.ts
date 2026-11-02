@@ -47,6 +47,14 @@ it("barkodsuz satırda marka, ad ve beden aynıysa birleştirilir", () => {
   expect([...tekrarGruplari(satirlar, kayit("pinar-peynir")).keys()]).toEqual(["2"]);
 });
 
+it("barkodsuz aynı isimli fakat farklı gramajlı ürünler tekilleştirilmez", () => {
+  const satirlar = [
+    { barkod: "", ad: "Pınar Süzme Peynir", marka: "Pınar", gramaj: "250 g" },
+    { barkod: "", ad: "Pınar Süzme Peynir", marka: "Pınar", gramaj: "500 g" },
+  ];
+  expect(tekrarGruplari(satirlar, kayit("pinar-ayri-gramaj")).size).toBe(0);
+});
+
 it("barkodsuz satırda ad 6 karakterden kısaysa birleştirme yapılmaz", () => {
   const satirlar = [
     { barkod: "", model: "", ad: "Çay", marka: "Torku" },
@@ -90,6 +98,27 @@ it("canonical_row_id geçersizse Vixrex kendi kanonik satırını uydurmaz", () 
   ];
   const items = new Map([["1", kart("ulker", "9")], ["2", kart("ulker", "9.5")]]) as never;
   expect([...tekrarGruplari(satirlar, items).entries()]).toEqual([]);
+});
+
+it("ikinci preset en küçük row_id yerine başka kanonik satır bildirirse birleştirilmez", () => {
+  const satirlar = [
+    { barkod: "8690123456789", ad: "Ülker Gofret", marka: "Ülker", beden: "40 g" },
+    { barkod: "8690123456789", ad: "Ülker Gofret", marka: "Ülker", beden: "40 g" },
+  ];
+  expect(tekrarGruplari(satirlar, kayit("ulker", "2")).size).toBe(0);
+});
+
+it("yalnız media.source_url ile verified yazılan iki kayıt birleştirilmez", () => {
+  const satirlar = [
+    { barkod: "8690123456789", ad: "Ülker Gofret", marka: "Ülker" },
+    { barkod: "8690123456789", ad: "Ülker Gofret", marka: "Ülker" },
+  ];
+  const kanitsiz = {
+    duplicate_group: "ulker", canonical_row_id: "1",
+    validation: { status: "verified", official_product_url: null },
+    media: { source_url: "https://uretici.example/kaynak" },
+  };
+  expect(tekrarGruplari(satirlar, new Map([["1", kanitsiz], ["2", kanitsiz]]) as never).size).toBe(0);
 });
 
 it("farklı barkodlar aynı gruba konsa da birleştirilmez", () => {

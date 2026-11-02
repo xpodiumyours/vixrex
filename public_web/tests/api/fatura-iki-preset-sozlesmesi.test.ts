@@ -151,6 +151,20 @@ describe("gerçek ikinci preset JSON sözleşmesi",()=>{
     expect(satir.dogrulamaDurumu).toBe("Belirsiz");
     expect(satir.eksikler).toEqual(["Beden belirsiz"]);
   });
+  it("yalnız görsel kaynak adresi verified kanıtı değildir",async()=>{
+    const sonuc=await kartPresetYanitiniOku(response([{
+      row_id:"1",
+      vixrex_product_json:{title:"A ürün",brand:"X"},
+      validation:{status:"verified",official_product_url:null,matched_attributes:[],unmatched_attributes:[]},
+      media:{image_url:"https://cdn.example.com/image.webp",source_url:"https://example.com/urun",verification_status:"verified"},
+    }]),{...first,satirlar:[first.satirlar[0]]});
+    const satir=sonuc.sonuc.satirlar[0];
+    expect(satir.siteSayfa).toBe("https://example.com/urun");
+    expect(satir.dogrulamaDurumu).toBe("Araştırılamadı");
+    expect(satir.eksikler).toContain("Doğrulanmış ürün için resmî sayfa kanıtı eksik; doğrulanmış kabul edilmedi.");
+    const aktarim=faturaSatiriniAktar(satir,"Tedarikçi");
+    expect(aktarim.sonuc).toBe("eksik");
+  });
   it("doğrulanmış resmî sayfa, görselin kaynak sayfasına göre önceliklidir",async()=>{
     const sonuc=await kartPresetYanitiniOku(response([{
       row_id:"1",
