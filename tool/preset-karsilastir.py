@@ -1,53 +1,94 @@
-import json, urllib.request, hashlib, pathlib
+import os, json, hashlib, pathlib, sys, urllib.request, urllib.error
 
+BASE = "https://openrouter.ai/api/v1"
 KOK = pathlib.Path(__file__).resolve().parent.parent
-ANAHTAR = ""
-for satir in (KOK / "public_web" / ".env").read_text(encoding="utf-8").splitlines():
-    if satir.startswith("OPENROUTER_MANAGEMENT_API_KEY="):
-        ANAHTAR = satir.split("=", 1)[1].strip()
-        break
-TEMEL = "https://openrouter.ai/api/v1"
 
-def istek(yol):
-    ist = urllib.request.Request(TEMEL + yol, headers={"Authorization": "Bearer " + ANAHTAR})
+def anahtar():
+    k = os.environ.get("OPENROUTER_MANAGEMENT_API_KEY", "")
+    if k:
+        return k
+    for ad in ("public_web/.env", "public_web/.env.local"):
+        p = KOK / ad
+        if p.exists():
+            for satir in p.read_text(encoding="utf-8").splitlines():
+                if satir.startswith("OPENROUTER_MANAGEMENT_API_KEY="):
+                    return satir.split("=", 1)[1].strip().strip('"')
+    return ""
+
+def get(path, key):
+    req = urllib.request.Request(BASE + path, headers={"Authorization": "Bearer " + key, "User-Agent": "Mozilla/5.0"})
     try:
-        with urllib.request.urlopen(ist, timeout=30) as y:
-            return json.loads(y.read().decode("utf-8"))
+        with urllib.request.urlopen(req, timeout=30) as r:
+            return r.status, json.loads(r.read().decode("utf-8", "ignore"))
     except urllib.error.HTTPError as e:
-        return {"error": {"message": e.read().decode("utf-8")[:120]}}
+        return e.code, e.read().decode("utf-8", "ignore")[:200]
+    except Exception as e:
+        return "ERR", str(e)[:120]
 
-def govde_ozet(metin):
-    return hashlib.sha256(metin.encode("utf-8")).hexdigest()[:12]
+def sistem_ozet(veri):
+    if not isinstance(veri, dict):
+        return {}
+    sistem = veri.get("system_prompt") or ""
+    cfg = veri.get("config") if isinstance(veri.get("config"), dict) else {}
+    tools = cfg.get("tools") or []
+    tnames = sorted({(t.get("type") or (t.get("function") or {}).get("name") or "?") for t in tools if isinstance(t, dict)})
+    rf = cfg.get("response_format")
+    return {
+        "model": cfg.get("model"),
+        "response_format_type": rf.get("type") if isinstance(rf, dict) else None,
+        "tools": tnames,
+        "system_prompt_sha256": hashlib.sha256(sistem.encode("utf-8")).hexdigest(),
+    }
 
-depo = {}
-for ad, dosya in [("okuma", "openrouter/preset-okuma.json"), ("kart", "openrouter/preset-kart.json")]:
-    govde = json.loads((KOK / dosya).read_text(encoding="utf-8"))
-    sistem = next((m["content"] for m in govde["messages"] if m.get("role") == "system"), "")
-    depo[ad] = {"sistem": sistem, "ozet": govde_ozet(sistem), "model": govde.get("model")}
+def main():
+    key = anahtar()
+    if not key:
+        print("OPENROUTER_MANAGEMENT_API_KEY bulunamadi (ortam veya public_web/.env[.local])")
+        return 2
+    manifest_path = KOK / "openrouter" / "preset-sozlesmesi.json"
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except Exception as e:
+        print("sozlesme okunamadi:", e)
+        return 2
+    st, data = get("/presets", key)
+    if st != 200:
+        print("presets:", st, data)
+        return 2
+    presets = data.get("data", data) if isinstance(data, dict) else data
+    by_slug = {p.get("slug"): p for p in presets if isinstance(p, dict)}
+    farkli = 0
+    for beklenen in manifest.get("presets", []):
+        slug = beklenen["slug"]
+        p = by_slug.get(slug)
+        if not p:
+            print(slug + ": FARK (canlida yok)")
+            farkli += 1
+            continue
+        des = p.get("designated_version_id")
+        bulunan = None
+        for v in range(1, 31):
+            s, x = get("/presets/" + slug + "/versions/" + str(v), key)
+            if s != 200:
+                continue
+            vv = x.get("data", x) if isinstance(x, dict) else x
+            if vv.get("id") == des:
+                bulunan = (v, vv)
+        if not bulunan:
+            print(slug + ": FARK (designated surum bulunamadi)")
+            farkli += 1
+            continue
+        vn, vv = bulunan
+        canli = sistem_ozet(vv)
+        alanlar = ["model", "response_format_type", "tools", "system_prompt_sha256"]
+        fark_list = [a for a in alanlar if canli.get(a) != beklenen.get(a)]
+        if fark_list:
+            print(slug + " (v" + str(vn) + "): FARK -> " + ", ".join(fark_list))
+            farkli += 1
+        else:
+            print(slug + " (v" + str(vn) + "): OK")
+    print("SONUC:", "ESLESME" if farkli == 0 else "FARK VAR")
+    return 0 if farkli == 0 else 1
 
-print("DEPO:")
-for ad, d in depo.items():
-    print(f"  {ad}: ozet={d['ozet']} model={d['model']} uzunluk={len(d['sistem'])}")
-
-liste = istek("/presets")
-kayitlar = liste.get("data", liste) if isinstance(liste, dict) else liste
-print("\nPRESETLER:")
-for p in kayitlar:
-    slug = p["slug"]
-    en_son, en_buyuk = None, 0
-    for v in range(1, 31):
-        y = istek(f"/presets/{slug}/versions/{v}")
-        veri = y.get("data") if isinstance(y, dict) else None
-        if isinstance(veri, dict) and isinstance(veri.get("version"), int):
-            en_son, en_buyuk = veri, veri["version"]
-    if not en_son:
-        print(f"  {slug}: SURUM OKUNAMADI")
-        continue
-    sistem = en_son.get("system_prompt") or ""
-    ozet = govde_ozet(sistem)
-    eslesme = ""
-    for ad, d in depo.items():
-        if ozet == d["ozet"]:
-            eslesme = f" == DEPO/{ad} (birebir)"
-    print(f"  {slug}: v{en_buyuk} ozet={ozet} uzunluk={len(sistem)}{eslesme}")
-    print(f"    baslik: {sistem[:70]!r}")
+if __name__ == "__main__":
+    sys.exit(main())
