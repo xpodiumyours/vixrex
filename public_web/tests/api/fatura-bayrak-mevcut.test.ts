@@ -13,7 +13,7 @@ const okuma = {
     dogrulamaDurumu: "Belirsiz", eslesenBilgiler: ["M"], eksikler: [], gorselDogrulamaDurumu: "Araştırılamadı",
     kaynaklar: [{ url: "https://x/1", type: "manufacturer" }],
   }],
-} as GoruSonucu;
+} as unknown as GoruSonucu;
 
 describe("PRESET_AKIS=mevcut (üretim varsayılanı — geri alınabilirlik)", () => {
   beforeAll(() => { process.env.PRESET_AKIS = "mevcut"; });
