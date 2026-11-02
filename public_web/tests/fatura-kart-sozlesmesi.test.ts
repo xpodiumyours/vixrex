@@ -44,6 +44,7 @@ it("düz şemalı gerçek yanıt: doğrulama, sayfa ve görsel alanlarını okur
   const sonuc = await kartPresetYanitiniOku(metinYanit(dosya("duz-sema.json")), ilkOkuma);
   expect(say(sonuc.sonuc.satirlar)).toEqual({ satir: 5, kart: 5, gorselli: 4 });
   expect(sonuc.sonuc.satirlar[2].siteGorseller).toEqual([]);
+  expect(sonuc.sonuc.satirlar[2].siteSayfa).toBe("https://sehermensucat.com/kadin-atlet");
   expect(sonuc.sonuc.satirlar[0].siteSayfa).toBe("https://sehermensucat.com/elt1301-elit-erkek-elastan-sifiryaka-fanila");
   expect(sonuc.sonuc.satirlar[0].dogrulamaDurumu).toBe("Doğrulandı");
   expect(sonuc.sonuc.satirlar[2].dogrulamaDurumu).toBe("Belirsiz");
