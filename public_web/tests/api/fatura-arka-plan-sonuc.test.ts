@@ -38,7 +38,7 @@ describe("tamamlanmış arka plan sonucunun gerçek taşıma yolu",()=>{
   const {admin,rpc}=client(receipt(first,{stage:"reading",readResult:null}));
   const data=await arkaPlanFaturaSonucunuAl(admin,"store","deneme",job);
   expect(data.hazirlaniyor).toBe(true); expect(m.save).not.toHaveBeenCalled();
-  expect(rpc).toHaveBeenCalledWith("advance_invoice_provider_job",expect.objectContaining({p_job_id:job,p_read_result:expect.objectContaining({satirlar:expect.any(Array)}),p_body:expect.objectContaining({model:"@preset/urun-kart-olusturucu"})}));
+  expect(rpc).toHaveBeenCalledWith("advance_invoice_provider_job",expect.objectContaining({p_job_id:job,p_read_result:expect.objectContaining({satirlar:expect.any(Array)}),p_body:expect.objectContaining({model:"@preset/vixrex-urun-karti-v2"})}));
  });
  it.each(["bozuk",'{"satirlar":[]}'])("hatalı veya boş sonuç ürün oluşturmaz: %s",async(content)=>{const {admin,rpc}=client(receipt(content));await expect(arkaPlanFaturaSonucunuAl(admin,"store","deneme",job)).rejects.toThrow();expect(m.save).not.toHaveBeenCalled();expect(rpc).toHaveBeenCalledWith("fail_invoice_provider_job",expect.objectContaining({p_job_id:job}));});
  it("model404 hazır karta dönüştürülmez",async()=>{const {admin}=client({stage:"reading",state:"received",httpStatus:200,contentType:"text/event-stream",body:'data: {"error":{"code":404}}\n\n',fingerprint:"a".repeat(64)});await expect(arkaPlanFaturaSonucunuAl(admin,"store","deneme",job)).rejects.toThrow("OKUYUCU_MODEL_BULUNAMADI");expect(m.save).not.toHaveBeenCalled();});

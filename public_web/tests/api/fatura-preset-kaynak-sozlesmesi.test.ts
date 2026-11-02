@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { faturaIstekGovdesi } from "@/lib/faturaGoru";
-import { kartPresetIstekGovdesi, URUN_KART_PRESET } from "@/lib/faturaKartPreset";
+import { kartPresetIstekGovdesi, URUN_KART_PRESET_YENI } from "@/lib/faturaKartPreset";
 import type { GoruSonucu } from "@/lib/faturaGoru";
 
 type Json = Record<string, unknown>;
@@ -35,7 +35,7 @@ describe("depodaki OpenRouter preset tanımı ↔ Vixrex taşıma sözleşmesi",
 
   it("ikinci preset gerçek 11 giriş alanını bilir; eski araştırma çıktısı istemez", () => {
     const govde = kartPresetIstekGovdesi(ilkSonuc);
-    expect(govde.model).toBe(URUN_KART_PRESET);
+    expect(govde.model).toBe(URUN_KART_PRESET_YENI);
     expect(govde.stream).toBe(true);
     expect(govde).not.toHaveProperty("tools");
     const metin = (govde.messages as Array<{content: string}>)[0].content;

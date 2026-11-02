@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { kartPresetIstekGovdesi, kartPresetYanitiniOku, URUN_KART_PRESET } from "@/lib/faturaKartPreset";
+import { kartPresetIstekGovdesi, kartPresetYanitiniOku, URUN_KART_PRESET_YENI } from "@/lib/faturaKartPreset";
 import type { GoruSonucu } from "@/lib/faturaGoru";
 import { faturaSatiriniAktar } from "@/lib/faturaPresetAktarimi";
 import { faturaKatalogMetadatasi } from "@/lib/faturaUrunIcerigi";
@@ -187,8 +187,8 @@ describe("gerçek ikinci preset JSON sözleşmesi",()=>{
   });
   it("OpenRouter preset ayarlarını değiştirmeden var olan model adresine gönderir",()=>{
     const req=kartPresetIstekGovdesi(first);
-    expect(req.model).toBe(URUN_KART_PRESET);
-    expect(req.model).toBe("@preset/urun-kart-olusturucu");
+    expect(req.model).toBe(URUN_KART_PRESET_YENI);
+    expect(req.model).toBe("@preset/vixrex-urun-karti-v2");
     const messages=req.messages as Array<{content:string}>;
     expect(messages[0].content).toContain("row_id");
     expect(req).not.toHaveProperty("tools");
