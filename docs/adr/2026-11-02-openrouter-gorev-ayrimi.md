@@ -12,9 +12,9 @@ Fatura -> urun karti hatti iki katmana ayrilir:
 - OpenRouter yerlesik primitifleri (structured outputs strict, server tools, subagent/advisor/fusion, preset surum + designated) tek giris + tip guvenli sozlesme saglar.
 
 ## Hedef mimari
-- 2 preset: vixrex-fatura-okuma-v2 (aracsiz), vixrex-urun-karti-v2 (web_search+web_fetch + arastirmaci + gorsel-secici subagent'lari + opsiyonel danisman advisor).
-- Tek sozlesme: openrouter/preset-sozlesmesi.json (JSON Schema, strict, additionalProperties:false); Vixrex'te Zod ile ayni sema dogrulanir.
-- Flag: PRESET_AKIS = mevcut | gozlem | yeni; geri alma = flag.
+- 2 preset: vixrex-qwen-fatura-okuma-suzme (aracsiz), vixrex-urun-karti-v2 (web_search+web_fetch + arastirmaci + gorsel-secici subagent'lari + opsiyonel danisman advisor).
+- Tek sozlesme: openrouter/preset-sozlesmesi.json (JSON Schema, strict, additionalProperties:false); Vixrex'te savunmaci elle parse ile dogrulanir; Zod dogrulamasi sonraki sertlestirme.
+- Flag: PRESET_AKIS = mevcut | yeni; geri alma = flag. (gozlem modu ileride eklenebilir.)
 
 ## Kaynak-of-truth
 - Canli designated surum = calisan gercek. Repo openrouter/*.json = sabitlenmis snapshot (slug + designated id + hash); sync scripti (read-only) eslesmeyi dogrular.
