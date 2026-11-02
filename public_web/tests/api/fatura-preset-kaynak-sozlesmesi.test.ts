@@ -75,8 +75,9 @@ describe("depodaki OpenRouter preset tanımı ↔ Vixrex taşıma sözleşmesi",
     expect(metin).toContain("vixrex_product_json.title ve brand zorunlu string");
     expect(metin).toContain("validation nesnesi ASLA boş bırakılmaz");
     expect(metin).toContain("media nesnesi de zorunludur");
-    const item = (kart.response_format as {json_schema:{schema:{properties:{items:{items:{properties:Record<string,{required?:string[]}>}}}}}}})
-      .json_schema.schema.properties.items.items;
+    type StrictItem = { properties: Record<string, { required?: string[] }> };
+    type StrictFormat = { json_schema: { schema: { properties: { items: { items: StrictItem } } } } };
+    const item = (kart.response_format as StrictFormat).json_schema.schema.properties.items.items;
     expect(item.properties.vixrex_product_json.required).toContain("title");
     expect(item.properties.validation.required).toContain("official_product_url");
     expect(item.properties.media.required).toContain("image_url");
