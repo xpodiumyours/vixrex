@@ -7,6 +7,9 @@ import {
 } from "@/lib/faturaKartSozlesmesi";
 
 export const URUN_KART_PRESET = "@preset/urun-kart-olusturucu";
+export const URUN_KART_PRESET_YENI = "@preset/vixrex-urun-karti-v2";
+const AKIS = process.env.PRESET_AKIS === "yeni" ? "yeni" : "mevcut";
+const secilenKartPreset = () => (AKIS === "yeni" ? URUN_KART_PRESET_YENI : URUN_KART_PRESET);
 
 type Kayit = Record<string, unknown>;
 
@@ -20,12 +23,29 @@ export function kartPresetIstekGovdesi(okuma: GoruSonucu): Record<string, unknow
     brand: s.marka, name: s.ad, code: s.model, barcode: s.barkod,
     variant: s.varyant, size: s.beden, net_quantity: s.gramaj,
     invoice_data: { quantity: s.adet, unit: s.birim, unit_price: s.birimFiyat, total_amount: s.tutar },
+    ...(AKIS === "mevcut"
+      ? {
+          previous_product_research: {
+            description: s.siteAciklama,
+            product_url: s.siteSayfa,
+            image_urls: s.siteGorseller ?? (s.siteGorsel ? [s.siteGorsel] : []),
+            category: s.siteKategori,
+            manufacturer: s.uretici,
+            attributes: s.ozellikler,
+            validation_status: s.dogrulamaDurumu,
+            matched_attributes: s.eslesenBilgiler,
+            unmatched_attributes: s.eksikler,
+            image_validation_status: s.gorselDogrulamaDurumu,
+            sources: s.kaynaklar,
+          },
+        }
+      : {}),
   }));
   const gruplar = [...new Set(satirlar.map((s) => s.brand))].map((brand) => ({
     brand, rows: satirlar.filter((s) => s.brand === brand),
   }));
   return {
-    model: URUN_KART_PRESET, stream: true,
+    model: secilenKartPreset(), stream: true,
     messages: [{ role: "user", content: [
       "İlk presetin faturadan okuduğu satırlar aşağıdadır. Presetindeki araştırma ve ürün kartı görevini tamamla.",
       "Her row_id değerini aynen koru; her girdi satırı için tam bir items kaydı döndür. Satır silme; aynı ürünü duplicate_group ve canonical_row_id ile işaretle.",
