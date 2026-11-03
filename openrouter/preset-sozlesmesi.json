@@ -48,16 +48,16 @@
     {
       "slug": "vixrex-urun-karti-v2",
       "durum": "aday",
-      "designated_version": 1,
-      "designated_version_id": "9ca8bb16-41a2-4e69-95b2-b61f13ac1d22",
+      "designated_version": 2,
+      "designated_version_id": "296a7567-f523-4d35-8858-76b61175a149",
       "model": "deepseek/deepseek-v4.1-flash-1017",
       "response_format_type": "json_schema",
       "tools": [
         "openrouter:web_fetch",
         "openrouter:web_search"
       ],
-      "system_prompt_sha256": "a39b2e425171d2d7e1485285a53fadaca054a9bcc39b78b335849f2a94941119",
-      "system_prompt_length": 6144,
+      "system_prompt_sha256": "724b5d919587fe51c4a36dba5f14f59b231a418574100abe366c682f3bf94ad1",
+      "system_prompt_length": 6238,
       "require_parameters": true
     }
   ]
