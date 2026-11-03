@@ -121,10 +121,7 @@ export async function arkaPlanFaturaSonucunuAl(
           satirlar: await gorselsizSatirlariTamamla({ satirlar: okuma.satirlar }),
         }),
       }
-    : {
-        ...okuma,
-        satirlar: await gorselsizSatirlariTamamla({ satirlar: okuma.satirlar }),
-      };
+    : okuma;
     const satirlar = birlesikOkuma.satirlar.map((s) => faturaSatiriniAktar(s, birlesikOkuma.tedarikci));
     const id = await islemKaydet({
       slug, parmakIzi: sonuc.fingerprint, providerJobId: islemKimligi,
