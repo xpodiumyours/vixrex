@@ -115,3 +115,8 @@ public_web/blob-report/
 android/*.jks
 .fatura-dogrulama/
 .fatura-kurtarma/
+
+# Ajan acilis kaydi ve gecici denetim (yerel, depoya girmez)
+.olcum/
+.denetim-tmp/
+.claude/skills/
