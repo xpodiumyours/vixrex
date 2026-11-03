@@ -21,6 +21,7 @@
    | 2 | Ana dal okunamadı | Durur, sebebi yazar; tahmin yürütmez |
    | 3 | Canlı ana daldan ayrı | "canlı geride" yazar; "canlıda" demez |
    | 4 | Sistem parçası eksik (bu belge/AGENTS/README bağı kopuk) | Kurcalamaz, bildirir |
+   | 5 | Yalnız `-Kod` ile: harita yok/bayat | Kod değiştirmez; önce `graphify update .` |
 
    `pwsh` yoksa (başka ortam): aşağıdaki tablodaki üç komutu elle koş, sonucu yine yaz.
    Kapı yok diye ölçümsüz konuşulmaz. `gh` de yoksa iki ölçüm curl ile alınır:
@@ -43,7 +44,7 @@ Kapı ölçüm kaydı: `.olcum/ajan/acilis.log` — bu makinede tutulur, depoya 
 | Veritabanı satırı | Supabase (proje `chfulefxczbgurtgavtp`) | Supabase MCP (okuma) veya SQL editör çıktısı | gerçek satırı | kodu |
 | OpenRouter preset içeriği | OpenRouter paneli | panel + `OPENROUTER_API_KEY` (yeri §2) | yayındaki preset metnini | kodun hangi preseti seçtiğini tek başına |
 | Görsel hakkı / ürün kartı | kod + DB | `public_web/src/lib/fatura*` · `usage_status` | kuralın kodda ne yaptığını | canlı davranışı (ekran/DB ölçümü ayrı) |
-| Kod ilişkisi / etki | Graphify (varsa) | bağlıysa `query_graph`, `graphify_impact` | kod bağımlılıklarını | canlıyı, DB'yi, preset içeriğini |
+| Kod ilişkisi / etki | Graphify (yerel CLI ya da MCP) | `graphify affected "X"` · `graphify query "..."` · MCP: `graphify_impact` | kod bağımlılıklarını | canlıyı, DB'yi, preset içeriğini |
 
 Not: her satır tek başına yeterli değildir. "Canlıda" cümlesi için canlı satırı,
 "düzeldi" cümlesi için test çıktısı şarttır. Yerel `git` ref'i kanıt sayılmaz.
@@ -61,6 +62,24 @@ Not: her satır tek başına yeterli değildir. "Canlıda" cümlesi için canlı
 Kural: ajan **anahtar istemez**. Anahtar yoksa "yok" der, okuma/ölçümle devam eder;
 canlıya/veritabanına yazmaz. Depo herkese açıktır; hiçbir anahtar veya kişisel not
 commit edilmez.
+
+## 2.5 Platform bağlantıları — canlı kanıt (2026-11-03)
+
+Kapı her açılışta bunları **salt okunur** ölçer; değer uydurulmaz.
+
+| Platform | Kanıt komutu | Bugünkü ölçüm | Yazma sınırı |
+|---|---|---|---|
+| GitHub | `gh auth status` | BAĞLI (xpodiumyours) | okuma serbest; push/merge onayla |
+| Vercel | `vercel whoami` + MCP ucu | BAĞLI (CLI: xpodiumyours) · MCP YETKİSİZ (OAuth) | deploy/rollback onayla |
+| Supabase | REST okuma + MCP ucu | BAĞLI (REST 200) · MCP YETKİSİZ (OAuth) | migration/veri yazma onayla |
+| OpenRouter | `GET /api/v1/models` + preset ucu | BAĞLI (modeller 200) · preset YETKİSİZ (401) | preset düzenleme onayla |
+| Graphify | yerel `graphify` + MCP ucu | YEREL HAZIR (12.072 düğüm) · MCP YETKİSİZ (OAuth) | harita okuma serbest; `remember`/`set_workspace` onayla |
+
+MCP uçları `https://api.graphify.com/mcp`, `https://mcp.vercel.com`,
+`https://mcp.supabase.com/mcp?project_ref=chfulefxczbgurtgavtp` ve `.mcp.json`'da tanımlıdır.
+OAuth oturumu bir kez açılır: Claude Code `/mcp` → Authenticate; Codex
+`codex mcp login graphify`; Cursor MCP ayarları. Oturum yokken durum **YETKİSİZ** yazılır,
+tahmin yürütülmez. Anahtar/adres istenmez; harita ve bağlantılar buradadır.
 
 ## 3. Hangi belge tarihsel — hangisi güncel (2026-11-03)
 
@@ -104,14 +123,27 @@ Bu belgeden gelen ek:
   Liste yoksa "başka yeri kırmadım" denmez.
 - Görünen değişiklikte öncesi/sonrası ekran; gösteremiyorsan "gösteremedim" de.
 
-## 6. Graphify — ne zaman kullanılır, ne zaman kullanılmaz
+## 6. Graphify — iki yol: yerel harita ve hosted MCP
 
-- **Bağlıysa:** oturum başında harita sorgusu; değişiklik öncesi etki; haritanın hangi
-  commit'i gösterdiği doğrulanmadan "harita güncel" denmez.
-- **Bağlı değilse:** kapı "Harita: BAĞLI DEĞİL" yazar. Ajan haritayı yok sayar; kanıtı
-  depodan ve canlı ölçümden alır. İş durmaz, "harita yok" diye ölçümsüz konuşulmaz.
-- **Sınır:** Graphify kod ilişkisi haritasıdır. Canlı Vercel, Supabase satırı ve
-  OpenRouter preset içeriği için kanıt değildir.
+**Yerel (her ajan, komutla):**
+- Kurulum: `uv tool install graphifyy` → `graphify` komutu.
+- Harita: `graphify extract . --code-only` → `graphify-out/graph.json` (makineye özel,
+  depoya girmez; `.gitignore`'da).
+- Sorgu: `graphify query "<soru>" --budget 1200` · `graphify affected "Sembol"` ·
+  `graphify path "A" "B"` · `graphify explain "Sembol"`. Her sonuç dosya:satır verir.
+- Tazeleme: kod değişince `graphify update .` (LLM gerekmez). Harita son kod
+  commit'inden eskiyse kapı "YEREL BAYAT" yazar ve `-Kod` ile kod değişikliğini engeller.
+
+**Hosted MCP (bulut haritası):**
+- Adres `https://api.graphify.com/mcp`; OAuth ile bir kez oturum açılır (API anahtarı yok).
+- İlk çağrı `list_repositories`, sonra `graph_stats` ile indeks commit'i ve yaşı alınır;
+  indeks commit'i çalışılan commit değilse "harita güncel değil" denir.
+- Değişiklik öncesi `graphify_impact`, `impact_and_risk`, `graphify_tests_for`.
+- Sınır: hosted harita varsayılan dalın son indeksidir; PR dalı ve canlı davranış
+  grafikten kanıtlanmaz.
+
+**İkisi de yoksa:** dosyayı oku, `grep` + dosya:satır kullan ve "harita yok" de; iş durmaz,
+ölçümsüz cümle kurulmaz.
 
 ## 7. Bu belgeyi kim günceller
 

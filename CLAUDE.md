@@ -10,3 +10,8 @@ Her oturumun başında:
 
 Kapı çıktısı olmadan "durum şu", "düzeldi", "canlıda" denmez. Anahtar, platform, defter
 yolu veya dosya adı sorulmaz; haritaya bakılır, ölçülemiyorsa "ölçemedim" denir.
+
+Graphify ve platform kanıtı: kod değişikliğinden önce `graphify affected "Sembol"` ile
+etkiyi çıkar; harita bayatsa `graphify update .`. Bağlantı durumu (BAĞLI / YETKİSİZ /
+ERİŞİLEMEDİ) yalnız kapı raporundaki ölçümle yazılır. Erişim salt okunurdur; yazma,
+deploy, migration ve preset düzenleme açık onay ister.

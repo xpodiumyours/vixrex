@@ -120,3 +120,7 @@ android/*.jks
 .olcum/
 .denetim-tmp/
 .claude/skills/
+
+# Graphify yerel harita ciktilari (makineye ozel, depoya girmez)
+graphify-out/
+.graphify/

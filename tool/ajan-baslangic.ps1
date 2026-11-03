@@ -1,7 +1,8 @@
 #requires -Version 7.0
 [CmdletBinding()]
 param(
-    [switch]$Json
+    [switch]$Json,
+    [switch]$Kod
 )
 
 $ErrorActionPreference = 'Continue'
@@ -29,6 +30,12 @@ $envKeys = @()
 $envFile = Join-Path $repoRoot 'public_web/.env.local'
 $mcpNames = @()
 $graphify = 'YOK'
+$graphPath = Join-Path $repoRoot 'graphify-out/graph.json'
+$graphSay = 'YOK'
+$graphFresh = $false
+$graphNode = ''
+$graphEdge = ''
+$graphMtime = ''
 $health = [ordered]@{}
 $warns = New-Object System.Collections.Generic.List[string]
 $exitCode = 0
@@ -104,7 +111,7 @@ if ($gitOk) {
     if ($b) { $localBranch = ([string]$b).Trim() }
     $d = @(& git status --porcelain=v1 2>$null | Where-Object { $_ -ne $null -and "$_".Trim() -ne '' })
     $localDirty = $d.Count
-    $r = & git rev-parse --short origin/main 2>$null
+    $r = & git rev-parse origin/main 2>$null
     if ($r) { $localRef = ([string]$r).Trim() }
 }
 
@@ -159,6 +166,11 @@ if (Test-Path -LiteralPath $agentsPath) {
 if (Test-Path -LiteralPath $readmePath) {
     $health['README harita baglantisi'] = (Get-Content -LiteralPath $readmePath -Raw).Contains('docs/AJAN-BASLANGIC.md')
 }
+$health['Ajan baglanti betigi'] = Test-Path -LiteralPath (Join-Path $repoRoot 'tool/baglanti-olcum.mjs')
+$health['AGENTS harita kurali'] = $false
+if (Test-Path -LiteralPath $agentsPath) {
+    $health['AGENTS harita kurali'] = ((Get-Content -LiteralPath $agentsPath -Raw) -match '(?i)graphify')
+}
 
 $docAge = $null
 if ($health['AJAN-BASLANGIC belgesi']) {
@@ -168,6 +180,109 @@ if ($health['AJAN-BASLANGIC belgesi']) {
         $docAge = [math]::Floor((New-TimeSpan -Start $docDate -End $now).TotalDays)
     }
 }
+
+$graphCli = ''
+$graphVer = ''
+$cliCmd = Get-Command graphify -ErrorAction SilentlyContinue
+if ($cliCmd) { $graphCli = $cliCmd.Source }
+elseif (Test-Path -LiteralPath (Join-Path $env:USERPROFILE '.local\bin\graphify.exe')) { $graphCli = Join-Path $env:USERPROFILE '.local\bin\graphify.exe' }
+if ($graphCli) {
+    try { $gv = & $graphCli --version 2>$null; if ($gv) { $graphVer = ([string]($gv | Select-Object -First 1)).Trim() } } catch { }
+}
+if (Test-Path -LiteralPath $graphPath) {
+    $gi = Get-Item -LiteralPath $graphPath
+    $graphMtime = $gi.LastWriteTime.ToString('yyyy-MM-dd HH:mm')
+    $graphSay = 'HAZIR'
+    try {
+        $cnt = & node -e "const g=require(process.argv[1]);const n=(g.nodes||[]).length;const e=(g.links||g.edges||[]).length;console.log(n+' '+e)" $graphPath 2>$null
+        if ($cnt) { $c = ([string]$cnt).Trim().Split(' '); $graphNode = $c[0]; $graphEdge = $c[1] }
+    } catch { }
+    $lc = & git log -1 --format=%ct -- lib public_web shared 2>$null
+    $lcEpoch = 0
+    if ($lc) { try { $lcEpoch = [int64]([string]$lc).Trim() } catch { } }
+    if ($lcEpoch -gt 0) {
+        $gEpoch = [int64]([DateTimeOffset]$gi.LastWriteTimeUtc).ToUnixTimeSeconds()
+        $graphFresh = ($gEpoch -ge $lcEpoch)
+    } else { $graphFresh = $true }
+    if (-not $graphFresh) { $graphSay = 'BAYAT' }
+}
+
+$probePath = Join-Path $repoRoot 'tool/baglanti-olcum.mjs'
+$probeMap = @{}
+if ((Test-Path -LiteralPath $probePath) -and (Get-Command node -ErrorAction SilentlyContinue)) {
+    try {
+        $probeRaw = & node $probePath 2>$null
+        if ($probeRaw) {
+            $probeObj = ($probeRaw | Out-String) | ConvertFrom-Json
+            foreach ($p in $probeObj.probes) { $probeMap[[string]$p.ad] = $p }
+        }
+    } catch { $warns.Add('baglanti olcumu calistirilamadi') }
+}
+
+function Probe-Durum([string]$ad) {
+    if ($probeMap.ContainsKey($ad)) { return [string]$probeMap[$ad].durum }
+    return 'OLCULMEDI'
+}
+function Probe-Http([string]$ad) {
+    if ($probeMap.ContainsKey($ad)) { return [int]$probeMap[$ad].http }
+    return 0
+}
+function Durum-Tr([string]$d) {
+    switch ($d) {
+        'BAGLI' { return 'BAĞLI' }
+        'YETKISIZ' { return 'YETKİSİZ' }
+        'ERISILEMEDI' { return 'ERİŞİLEMEDİ' }
+        'ANAHTAR_YOK' { return 'ANAHTAR YOK' }
+        'OLCULMEDI' { return 'ÖLÇÜLMEDİ' }
+        default { return 'HATA' }
+    }
+}
+
+$ghUser = ''
+$ghStatus = 'YOK'
+if ($ghOk) {
+    $authText = & gh auth status 2>&1
+    if ($LASTEXITCODE -eq 0) {
+        $ghStatus = 'BAGLI'
+        if (($authText | Out-String) -match 'account\s+(\S+)') { $ghUser = $Matches[1] }
+    } elseif (($authText | Out-String) -match '(?i)not logged') { $ghStatus = 'YETKISIZ' }
+    else { $ghStatus = 'ERISILEMEDI' }
+}
+
+$vercelWho = ''
+$vercelStatus = 'YOK'
+if ($null -ne (Get-Command vercel -ErrorAction SilentlyContinue)) {
+    $vw = & vercel whoami 2>$null
+    if ($LASTEXITCODE -eq 0 -and $vw) {
+        $vercelStatus = 'BAGLI'
+        $vercelWho = ([string]($vw | Select-Object -Last 1)).Trim()
+    } else { $vercelStatus = 'YETKISIZ' }
+}
+
+$graphLineFull = 'YOK'
+if ($graphSay -eq 'HAZIR' -or $graphSay -eq 'BAYAT') {
+    $parca = @()
+    if ($graphNode) { $parca += ($graphNode + ' düğüm') }
+    if ($graphEdge) { $parca += ($graphEdge + ' bağlantı') }
+    if ($graphMtime) { $parca += ('harita ' + $graphMtime) }
+    if ($graphVer) { $parca += $graphVer }
+    $graphLineFull = ('YEREL ' + $graphSay + ' (' + ($parca -join ' · ') + ')')
+}
+$graphLineFull = $graphLineFull + ' · MCP ' + (Durum-Tr (Probe-Durum 'graphify_mcp'))
+if ($mcpNames -contains 'graphify') { $graphLineFull = $graphLineFull + ' (.mcp.json)' }
+
+$platforms = [ordered]@{
+    github = [ordered]@{ durum = $ghStatus; kullanici = $ghUser }
+    vercel = [ordered]@{ durum = $vercelStatus; kullanici = $vercelWho; mcp = (Probe-Durum 'vercel_mcp'); mcp_http = (Probe-Http 'vercel_mcp') }
+    supabase = [ordered]@{ durum = (Probe-Durum 'supabase_rest'); http = (Probe-Http 'supabase_rest'); mcp = (Probe-Durum 'supabase_mcp'); mcp_http = (Probe-Http 'supabase_mcp') }
+    openrouter = [ordered]@{ durum = (Probe-Durum 'openrouter_models'); http = (Probe-Http 'openrouter_models'); presets = (Probe-Durum 'openrouter_presets'); presets_http = (Probe-Http 'openrouter_presets') }
+}
+
+$pLines = @()
+$pLines += ('GitHub     : ' + (Durum-Tr $ghStatus) + $(if ($ghUser) { ' (' + $ghUser + ')' } else { '' }))
+$pLines += ('Vercel     : ' + (Durum-Tr $vercelStatus) + $(if ($vercelWho) { ' (CLI: ' + $vercelWho + ')' } else { '' }) + ' · MCP ' + (Durum-Tr (Probe-Durum 'vercel_mcp')))
+$pLines += ('Supabase   : ' + (Durum-Tr (Probe-Durum 'supabase_rest')) + ' (REST ' + (Probe-Http 'supabase_rest') + ') · MCP ' + (Durum-Tr (Probe-Durum 'supabase_mcp')))
+$pLines += ('OpenRouter : ' + (Durum-Tr (Probe-Durum 'openrouter_models')) + ' (modeller ' + (Probe-Http 'openrouter_models') + ') · preset ' + (Durum-Tr (Probe-Durum 'openrouter_presets')) + ' (' + (Probe-Http 'openrouter_presets') + ')')
 
 $missing = @($health.Keys | Where-Object { -not $health[$_] })
 
@@ -191,6 +306,11 @@ if (-not $main) {
 if ($missing.Count -gt 0) {
     if ($exitCode -eq 0) { $exitCode = 4 }
     $verdict = $verdict + ' SİSTEM EKSİK: ' + ($missing -join ', ')
+}
+
+if ($Kod -and -not $graphFresh) {
+    if ($exitCode -eq 0) { $exitCode = 5 }
+    $verdict = $verdict + ' HARİTA BAYAT/YOK — kod değişikliği yok; önce graphify update .'
 }
 
 $logDir = Join-Path $repoRoot '.olcum/ajan'
@@ -225,14 +345,15 @@ if ($Json) {
         yerel_dal = $localBranch
         yerel_kirli = $localDirty
         yerel_origin_main = $localRef
-        yerel_ref_bayat = ($localRef -eq '' -or $localRef -ne $mainShort)
+        yerel_ref_bayat = ($localRef -eq '' -or $localRef -ne $main)
         acik_pr = $prTotal
         taslak_pr = $prDraft
         defterler = $defterLines
         anahtar_sayisi = $envKeys.Count
         anahtar_adlari = $envKeys
         mcp = $mcpNames
-        graphify = $graphify
+        graphify = [ordered]@{ durum = $graphSay; dugum = $graphNode; baglanti = $graphEdge; harita_zamani = $graphMtime; taze = $graphFresh; mcp = (Probe-Durum 'graphify_mcp'); tanimli = ($graphify -eq 'TANIMLI') }
+        platformlar = $platforms
         sistem = $health
         belge_yasi_gun = $docAge
         hukum = $verdict
@@ -256,8 +377,8 @@ if ($liveShort) {
 }
 $refLine = 'YOK'
 if ($localRef) {
-    if ($mainShort -and $localRef -ne $mainShort) { $refLine = ('{0}  BAYAT (ana dal {1})' -f $localRef, $mainShort) }
-    elseif ($localRef -eq $mainShort) { $refLine = $localRef + '  guncel' }
+    if ($main -and $localRef -ne $main) { $refLine = ('{0}  BAYAT (ana dal {1})' -f (Get-Short $localRef), $mainShort) }
+    elseif ($main -and $localRef -eq $main) { $refLine = (Get-Short $localRef) + '  guncel' }
 }
 $prLine = 'ÖLÇÜLEMEDİ'
 if ($null -ne $prTotal) { $prLine = ('{0} acik · {1} taslak' -f $prTotal, $prDraft) }
@@ -285,7 +406,9 @@ $out += ('Açık PR    : ' + $prLine)
 $out += ('Defter     : ' + ($defterLines -join ' | '))
 $out += ('Anahtarlar : ' + $keyLine)
 $out += ('MCP        : ' + $mcpLine)
-$out += ('Harita     : ' + $graphifyLine)
+$out += ('Graphify   : ' + $graphLineFull)
+$out += $pLines
+$out += ('Sınır      : salt okunur ölçüm; yazma/deploy/migration/preset yalnız açık onayla')
 $out += ('Belge tarihi: ' + $docLine)
 $out += ('Sistem     : ' + $healthLine)
 $out += ('Önceki     : ' + $prevLine)

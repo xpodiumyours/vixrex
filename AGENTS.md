@@ -45,8 +45,13 @@ Oturum açılışında iki şey daha yapılır; ikisi de ölçülür:
    ölçülemiyorsa "ölçemedim" denir. Anahtar sohbete istenmez, yapıştırılmaz.
 4. **Defter yoksa icat etme.** `C:\Projects\...` yolları yalnız sahibin bilgisayarında
    vardır; yoksa "defter yok" de, kapı + harita ile devam et.
-5. **Graphify sınırı.** Harita kod ilişkilerini gösterir; canlı Vercel, Supabase ve
-   OpenRouter doğrulamasının yerine geçmez. Bağlı değilse yok sayılır.
+5. **Graphify + bağlantı kanıtı.** Kapı çıktısındaki Graphify ve platform satırları tek
+   kanıttır. Kod değişikliğinden önce `graphify affected "X"` (MCP varsa
+   `graphify_impact`) ile etkiyi çıkar ve `graph_stats` ile indeksin commit'ini/yaşını al;
+   harita yoksa ya da BAYAT ise `graphify update .` koş, koşamıyorsan dosya:satır ile devam
+   et ve "harita yok" de. Platform durumu yalnız ölçümle yazılır: BAĞLI, YETKİSİZ,
+   ERİŞİLEMEDİ. Varsayım yürütme. Erişim salt okunurdur; değişiklik, deploy, migration ve
+   preset düzenleme yalnız açık onayla.
 
 Neden: 2026-11-03'te ajanlar anahtar/platform sordu ve tarihsel planı güncel iş listesi
 sandı; Graphify haritası bağlı olmadığı için "30 gündür ajan faaliyeti yok" görünüyordu.
