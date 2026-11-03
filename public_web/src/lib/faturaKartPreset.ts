@@ -154,17 +154,6 @@ export async function kartPresetYanitiniOku(cevap: Response, okuma: GoruSonucu) 
   const karar = tekillesmeKarariKartlardan(okuma.satirlar, items);
   const tekrarlar = karar.indirgenen;
   const kimlikNotu = "Aynı ürün doğrulanamadı; ayrı kart açıldı.";
-  const adetToplami = new Map<string, number>();
-  const uyeler = new Map<string, string[]>();
-  for (const [uye, kanonik] of karar.indirgenen) {
-    uyeler.set(String(kanonik), [...(uyeler.get(String(kanonik)) ?? []), uye]);
-  }
-  for (const [kanonik, digerleri] of uyeler) {
-    const adetler = [kanonik, ...digerleri]
-      .map((id) => okuma.satirlar[Number(id) - 1]?.adet);
-    if (adetler.some((adet) => typeof adet !== "number" || !Number.isFinite(adet))) continue;
-    adetToplami.set(kanonik, adetler.reduce<number>((toplam, adet) => toplam + (adet as number), 0));
-  }
   let eslesen = 0;
   const satirlar = okuma.satirlar.map((s, i) => {
     const sira = String(i + 1);
@@ -200,7 +189,7 @@ export async function kartPresetYanitiniOku(cevap: Response, okuma: GoruSonucu) 
       !temelAd.toLocaleLowerCase("tr-TR").includes(`beden ${beden.toLocaleLowerCase("tr-TR")}`)
       ? `${temelAd} (Beden ${beden})` : temelAd;
     return {
-      ...s, ad, adet: adetToplami.get(sira) ?? s.adet,
+      ...s, ad, adet: s.adet,
       siteAciklama: kart.aciklama, siteKategori: kart.kategori,
       siteMarka: kart.marka, siteVaryant: kart.varyant,
       gorselKullanimDurumu: kart.gorselHaklari,

@@ -181,7 +181,7 @@ it("doğrulanmış aynı ürün iki satırı tek karta indirir", async () => {
     { hamSatir: "2", model: "TER0105", ad: "Tutku Elit Sıfıryaka", barkod: "8680508918971", beden: "4", marka: "Tutku", adet: 6 },
   ]));
   expect(sonuc.sonuc.satirlar[0].ad).toBe("Tutku Elit Sıfıryaka");
-  expect(sonuc.sonuc.satirlar[0].adet).toBe(12);
+  expect(sonuc.sonuc.satirlar[0].adet).toBe(6);
   expect(sonuc.sonuc.satirlar[1].adet).toBe(6);
   expect(sonuc.sonuc.satirlar[1].eksikler).toContain("Aynı ürün belgede 1. satırda da geçiyor; tek kart açılır.");
 });
