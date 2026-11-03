@@ -297,8 +297,33 @@ if (-not $main) {
     $verdict = 'ÖLÇÜM EKSİK — canlı okunamadı; "canlıda" denmez.'
     $exitCode = 1
 } elseif ($liveShort -ne $mainShort) {
-    $verdict = 'CANLI ANA DALDAN AYRI — "canlıda" denmez; önce yayın kapısı.'
-    $exitCode = 3
+    $kapsam = 'BILINMIYOR'
+    if ($ghOk -and $live -and $main) {
+        $cmpRaw = & gh api ('repos/xpodiumyours/vixrex/compare/{0}...{1}' -f $live, $main) --jq '{status: .status, files: [.files[].filename]}' 2>$null
+        if ($cmpRaw) {
+            try {
+                $cmp = ($cmpRaw | Out-String) | ConvertFrom-Json
+                $yuzey = $false
+                foreach ($f in @($cmp.files)) {
+                    $p = ([string]$f).Replace('\', '/')
+                    $notr = $false
+                    if ($p -match '(?i)\.md$') { $notr = $true }
+                    elseif ($p -match '^(docs|\.github|\.agents|\.cursor|\.obsidian)/') { $notr = $true }
+                    elseif ($p -in @('.gitignore', '.gitattributes', 'LICENSE', 'README.md', 'AGENTS.md', 'CLAUDE.md')) { $notr = $true }
+                    if (-not $notr) { $yuzey = $true; break }
+                }
+                if ($cmp.status -eq 'ahead' -and -not $yuzey) { $kapsam = 'BELGE' }
+                elseif ($cmp.status -eq 'ahead') { $kapsam = 'KOD' }
+            } catch { }
+        }
+    }
+    if ($kapsam -eq 'BELGE') {
+        $verdict = 'CANLI GERİDE — aradaki fark yalnız belge; yayın atlandı (beklenen). Durum cümlesi kurulabilir.'
+        $exitCode = 0
+    } else {
+        $verdict = 'CANLI ANA DALDAN AYRI — "canlıda" denmez; önce yayın kapısı.'
+        $exitCode = 3
+    }
 } else {
     $verdict = 'Ölçüm tam: canlı = ana dal. Durum cümlesi kurulabilir.'
     $exitCode = 0

@@ -73,7 +73,7 @@ Kapı her açılışta bunları **salt okunur** ölçer; değer uydurulmaz.
 | Vercel | `vercel whoami` + MCP ucu | BAĞLI (CLI: xpodiumyours) · MCP YETKİSİZ (OAuth) | deploy/rollback onayla |
 | Supabase | REST okuma + MCP ucu | BAĞLI (REST 200) · MCP YETKİSİZ (OAuth) | migration/veri yazma onayla |
 | OpenRouter | `GET /api/v1/models` + preset ucu | BAĞLI (modeller 200) · preset YETKİSİZ (401) | preset düzenleme onayla |
-| Graphify | yerel `graphify` + MCP ucu | YEREL HAZIR (12.072 düğüm) · MCP oturum VAR (28 araç) · depo yetkisi yok (KISITLI) | harita okuma serbest; `remember`/`set_workspace` onayla |
+| Graphify | yerel `graphify` + MCP ucu | YEREL HAZIR (12.072 düğüm) · bulut MCP: hesap çakışması nedeniyle bekliyor | harita okuma serbest; `remember`/`set_workspace` onayla |
 
 MCP uçları `https://api.graphify.com/mcp`, `https://mcp.vercel.com`,
 `https://mcp.supabase.com/mcp?project_ref=chfulefxczbgurtgavtp` ve `.mcp.json`'da tanımlıdır.
@@ -82,10 +82,11 @@ OAuth oturumu bir kez açılır: Claude Code `/mcp` → Authenticate; Codex
 tahmin yürütülmez. Anahtar/adres istenmez; harita ve bağlantılar buradadır.
 
 Graphify oturumu 2026-11-03'te tarayıcıda onaylandı; kayıt `~/.mcp-auth` altında.
-`mcp-remote` köprüsü bu oturumu paylaşır (`.mcp.json` / `.cursor/mcp.json`). Panelde depo
-ajan erişimine açılmadığı için MCP şu an **KISITLI** (`no_authorized_repositories`);
-açılınca aynı oturum `xpodiumyours/vixrex` haritasını sorgular. O açılana kadar kanıt
-yerel `graphify` haritasından alınır.
+`mcp-remote` köprüsü bu oturumu paylaşır (`.mcp.json` / `.cursor/mcp.json`). Bulut tarafında
+depo yetkisi **hesap çakışması** yüzünden bekliyor: GitHub uygulaması başka bir Graphify
+hesabına bağlı, giriş yapılan hesap o grubun üyesi görünmüyor. Resmî çözüm: Graphify
+panosunda **Repositories → Claim** veya çakışma ekranındaki **destek ekibi** bağlantısıyla
+hesap birleştirme. Bu, ajanları **durdurmaz**: kod haritası yerel `graphify` ile çalışır.
 
 ## 3. Hangi belge tarihsel — hangisi güncel (2026-11-03)
 
