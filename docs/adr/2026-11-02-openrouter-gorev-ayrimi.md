@@ -14,7 +14,8 @@ Fatura -> urun karti hatti iki katmana ayrilir:
 ## Hedef mimari
 - 2 preset: vixrex-qwen-fatura-okuma-suzme (aracsiz), vixrex-urun-karti-v2 (web_search+web_fetch + arastirmaci + gorsel-secici subagent'lari + opsiyonel danisman advisor).
 - Tek sozlesme: openrouter/preset-sozlesmesi.json (JSON Schema, strict, additionalProperties:false); Vixrex'te savunmaci elle parse ile dogrulanir; Zod dogrulamasi sonraki sertlestirme.
-- Flag: PRESET_AKIS = mevcut | yeni; geri alma = flag. (gozlem modu ileride eklenebilir.)
+- Flag: PRESET_AKIS = mevcut | yeni; geri alma = flag.
+Semantik (karar B): mevcut = eski preset + eski gorsel adimlari + ortak (daha siki) parser; birebir eski DEGIL. Ortak parser degisiklikleri iki yolda da gecerlidir ve yalniz daha siki dogrular (verified icin official_product_url sart); veri uydurmaz. Bu yuzden mevcut'a donmek guvenlidir, ancak eski sartlarda verified sayilan bazi kartlar artik "Arastirilamadi" olabilir. (gozlem modu ileride eklenebilir.)
 
 ## Kaynak-of-truth
 - Canli designated surum = calisan gercek. Repo openrouter/*.json = sabitlenmis snapshot (slug + designated id + hash); sync scripti (read-only) eslesmeyi dogrular.
