@@ -233,6 +233,7 @@ function Durum-Tr([string]$d) {
         'YETKISIZ' { return 'YETKİSİZ' }
         'ERISILEMEDI' { return 'ERİŞİLEMEDİ' }
         'ANAHTAR_YOK' { return 'ANAHTAR YOK' }
+        'KISITLI' { return 'KISITLI (depo yetkisi yok)' }
         'OLCULMEDI' { return 'ÖLÇÜLMEDİ' }
         default { return 'HATA' }
     }

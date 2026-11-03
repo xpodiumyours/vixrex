@@ -9,8 +9,8 @@
       "url": "https://mcp.vercel.com"
     },
     "graphify": {
-      "type": "http",
-      "url": "https://api.graphify.com/mcp"
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://api.graphify.com/mcp"]
     }
   }
 }
