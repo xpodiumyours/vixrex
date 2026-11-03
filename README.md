@@ -4,7 +4,7 @@
 
 > **Ajanlar için:** Çalışmaya başlamadan önce [çalışma kurallarını](AGENTS.md) okuyun.
 
-Faturadan görselli ürün kartına, gerçek tüketici vitrinine ve firma izin görüşmesine kadar tamamlama planı: **[Faturadan Vitrine Master Plan](docs/FATURADAN-VITRINE-MASTER-PLAN.md)**.
+Faturadan görselli ürün kartına, gerçek tüketici vitrinine ve firma izin görüşmesine kadar tamamlama planı **[tarihsel kayıttır](docs/FATURADAN-VITRINE-MASTER-PLAN.md)** (30 Eylül 2026 — güncel iş listesi değil). Ajan başlangıcı, güncel durum ve platform haritası: **[Ajan Başlangıç Haritası](docs/AJAN-BASLANGIC.md)**.
 
 VixRex, küçük işletmelerin kod bilmeden dijital bir vitrin sahibi olmasını sağlar. İki ayrı, birbirinden bağımsız yayınlanan uygulamadan oluşur ve ikisi de aynı Supabase (PostgreSQL) veritabanını paylaşır.
 

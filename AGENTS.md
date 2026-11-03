@@ -32,6 +32,31 @@ Her oturumun ilk üç adımı, istisnasız:
 Neden: 2026-10-31'de bir oturum defterin yolunu bilmediği için 53 saniye aradı, bulamayınca
 **ikinci bir defter (`TAKİP.md`) açtı** ve içeriği ayrıştı. Kopya defter, kopya gerçek üretir.
 
+### Z.0.1 — Açılış kapısı ve harita (2026-11-03)
+
+Oturum açılışında iki şey daha yapılır; ikisi de ölçülür:
+
+1. **Kapıyı koş.** `pwsh -NoProfile -File tool/ajan-baslangic.ps1`
+   Çıktısı olmadan "durum şu", "düzeldi", "canlıda" denmez. Çıkış kodu 2 veya 4 ise dur,
+   sebebi yaz, tahmin yürütme; 1 ise "ölçülmedi" yaz; 3 ise "canlı geride" yaz.
+2. **Haritayı oku.** `docs/AJAN-BASLANGIC.md` — hangi bilgi hangi platformdan okunur,
+   anahtarlar nerede yaşar, hangi belge tarihseldir.
+3. **Anahtar, platform, defter yolu veya dosya adı Casper'a sorulmaz.** Haritaya bakılır;
+   ölçülemiyorsa "ölçemedim" denir. Anahtar sohbete istenmez, yapıştırılmaz.
+4. **Defter yoksa icat etme.** `C:\Projects\...` yolları yalnız sahibin bilgisayarında
+   vardır; yoksa "defter yok" de, kapı + harita ile devam et.
+5. **Graphify + bağlantı kanıtı.** Kapı çıktısındaki Graphify ve platform satırları tek
+   kanıttır. Kod değişikliğinden önce `graphify affected "X"` (MCP varsa
+   `graphify_impact`) ile etkiyi çıkar ve `graph_stats` ile indeksin commit'ini/yaşını al;
+   harita yoksa ya da BAYAT ise `graphify update .` koş, koşamıyorsan dosya:satır ile devam
+   et ve "harita yok" de. Platform durumu yalnız ölçümle yazılır: BAĞLI, YETKİSİZ,
+   ERİŞİLEMEDİ. Varsayım yürütme. Erişim salt okunurdur; değişiklik, deploy, migration ve
+   preset düzenleme yalnız açık onayla.
+
+Neden: 2026-11-03'te ajanlar anahtar/platform sordu ve tarihsel planı güncel iş listesi
+sandı; Graphify haritası bağlı olmadığı için "30 gündür ajan faaliyeti yok" görünüyordu.
+Kancası olmayan kural ölçülmez: bu kapı, kuralın koşulmuş hâlidir.
+
 > **Ölçüm kancaları hakkında not:** Bu dosyada adı geçen kanca betikleri
 > (`.claude/hooks/`) 2026-09-26'da depodan kaldırıldı. Kural metinleri kaldı;
 > kancaları geri getirmek Casper'ın kararıdır. Kancası olmayan bir kural,
