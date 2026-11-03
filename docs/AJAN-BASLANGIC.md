@@ -23,7 +23,9 @@
    | 4 | Sistem parçası eksik (bu belge/AGENTS/README bağı kopuk) | Kurcalamaz, bildirir |
 
    `pwsh` yoksa (başka ortam): aşağıdaki tablodaki üç komutu elle koş, sonucu yine yaz.
-   Kapı yok diye ölçümsüz konuşulmaz.
+   Kapı yok diye ölçümsüz konuşulmaz. `gh` de yoksa iki ölçüm curl ile alınır:
+   `curl -s https://api.github.com/repos/xpodiumyours/vixrex/commits/main` (ana dal `sha`)
+   ve `curl -s https://vixrex-public.vercel.app/deploy-info.json` (canlı `commit`).
 3. **Haritayı oku.** Bu belge.
 4. **Sonra cevap ver.** Başka ajanın raporu kanıt değildir.
 
