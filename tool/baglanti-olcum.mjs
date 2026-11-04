@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -49,18 +50,20 @@ async function probe(ad, url, options) {
   }
 }
 
-function readTokenStore(serverUrl) {
-  const dir = path.join(os.homedir(), ".mcp-auth", "mcp-remote-v1");
+function tokenForUrl(serverUrl) {
+  const hash = crypto.createHash("md5").update(serverUrl).digest("hex");
+  const file = path.join(os.homedir(), ".mcp-auth", "mcp-remote-v1", hash + "_tokens.json");
   try {
-    const files = fs.readdirSync(dir).filter((f) => f.endsWith("_tokens.json"));
-    for (const f of files) {
-      try {
-        const t = JSON.parse(fs.readFileSync(path.join(dir, f), "utf8"));
-        if (t.access_token) return t.access_token;
-      } catch {}
-    }
-  } catch {}
-  return "";
+    const t = JSON.parse(fs.readFileSync(file, "utf8"));
+    if (!t.access_token) return { token: "", expired: false };
+    const rawExp = Number(t.expires_at || 0);
+    const exp = rawExp > 1e12 ? Math.floor(rawExp / 1000) : rawExp;
+    const now = Math.floor(Date.now() / 1000);
+    if (exp && exp - now <= 120) return { token: "", expired: true };
+    return { token: t.access_token, expired: false };
+  } catch {
+    return { token: "", expired: false };
+  }
 }
 
 function parseMcpBody(text) {
@@ -110,63 +113,66 @@ async function mcpSession(url, token) {
 
 async function graphifyProbe() {
   const started = Date.now();
-  const tokens = readTokens();
-  if (!tokens.length) {
+  const auth = tokenForUrl("https://api.graphify.com/mcp");
+  if (auth.expired) {
+    return { ad: "graphify_mcp", durum: "OTURUM_ESKI", http: 401, sure_ms: 0 };
+  }
+  if (!auth.token) {
     return await probe("graphify_mcp", "https://api.graphify.com/mcp", { method: "POST", headers: mcpHeaders, body: initBody });
   }
-  let son = { ad: "graphify_mcp", durum: "YETKISIZ", http: 401, sure_ms: 0 };
-  for (const token of tokens) {
-    try {
-      const s = await mcpSession("https://api.graphify.com/mcp", token);
-      const init = await s.rpc("initialize", {
-        protocolVersion: "2025-03-26",
-        capabilities: {},
-        clientInfo: { name: "vixrex-baglanti-olcum", version: "1" },
-      });
-      if (init.status !== 200) {
-        son = { ad: "graphify_mcp", durum: init.status === 401 ? "YETKISIZ" : "HATA", http: init.status, sure_ms: Date.now() - started };
-        continue;
-      }
-      const list = await s.rpc("tools/list", {});
-      const tools = list.msg?.result?.tools || [];
-      const repos = await s.rpc("tools/call", { name: "list_repositories", arguments: {} });
-      const errCode = repos.msg?.error?.code || "";
-      const text = (repos.msg?.result?.content || []).filter((c) => c.type === "text").map((c) => c.text).join(" ");
-      const durum = errCode === "no_authorized_repositories" ? "KISITLI" : repos.status === 200 && text ? "BAGLI" : "HATA";
-      return { ad: "graphify_mcp", durum, http: repos.status, arac: tools.length, depo_metni: String(text || errCode).slice(0, 160), sure_ms: Date.now() - started };
-    } catch (e) {
-      son = { ad: "graphify_mcp", durum: "ERISILEMEDI", http: 0, sure_ms: Date.now() - started, not: String(e.message || e).slice(0, 120) };
-    }
-  }
-  return son;
-}
-
-function readTokens() {
-  const dir = path.join(os.homedir(), ".mcp-auth", "mcp-remote-v1");
+  const token = auth.token;
   try {
-    return fs
-      .readdirSync(dir)
-      .filter((f) => f.endsWith("_tokens.json"))
-      .map((f) => {
-        try {
-          return JSON.parse(fs.readFileSync(path.join(dir, f), "utf8")).access_token;
-        } catch {
-          return "";
-        }
-      })
-      .filter(Boolean);
-  } catch {
-    return [];
+    const s = await mcpSession("https://api.graphify.com/mcp", token);
+    const init = await s.rpc("initialize", {
+      protocolVersion: "2025-03-26",
+      capabilities: {},
+      clientInfo: { name: "vixrex-baglanti-olcum", version: "1" },
+    });
+    if (init.status !== 200) {
+      return { ad: "graphify_mcp", durum: init.status === 401 ? "YETKISIZ" : "HATA", http: init.status, sure_ms: Date.now() - started };
+    }
+    const list = await s.rpc("tools/list", {});
+    const tools = list.msg?.result?.tools || [];
+    const repos = await s.rpc("tools/call", { name: "list_repositories", arguments: {} });
+    const errCode = repos.msg?.error?.code || "";
+    const text = (repos.msg?.result?.content || []).filter((c) => c.type === "text").map((c) => c.text).join(" ");
+    const durum = errCode === "no_authorized_repositories" ? "KISITLI" : repos.status === 200 && text ? "BAGLI" : "HATA";
+    let bulutCommit = "";
+    let bulutYas = "";
+    let dugum = 0;
+    try {
+      const st = await s.rpc("tools/call", { name: "graph_stats", arguments: { repository_id: "xpodiumyours/vixrex" } });
+      const stText = (st.msg?.result?.content || []).filter((c) => c.type === "text").map((c) => c.text).join(" ");
+      const parsed = JSON.parse(stText);
+      bulutCommit = String(parsed.commitSha || parsed.result?.freshness?.commit || "");
+      bulutYas = String(parsed.result?.freshness?.age || "");
+      dugum = Number(parsed.result?.n_nodes || 0);
+    } catch {}
+    return {
+      ad: "graphify_mcp",
+      durum,
+      http: repos.status,
+      arac: tools.length,
+      dugum,
+      bulut_commit: bulutCommit.slice(0, 7),
+      bulut_yas: bulutYas,
+      depo_metni: String(text || errCode).slice(0, 160),
+      sure_ms: Date.now() - started,
+    };
+  } catch (e) {
+    return { ad: "graphify_mcp", durum: "ERISILEMEDI", http: 0, sure_ms: Date.now() - started, not: String(e.message || e).slice(0, 120) };
   }
 }
 
 async function authProbe(ad, url) {
   const started = Date.now();
-  for (const token of readTokens()) {
+  const auth = tokenForUrl(url);
+  if (auth.expired) return { ad, durum: "OTURUM_ESKI", http: 401, sure_ms: 0 };
+  if (auth.token) {
     try {
       const r = await fetch(url, {
         method: "POST",
-        headers: { ...mcpHeaders, authorization: "Bearer " + token },
+        headers: { ...mcpHeaders, authorization: "Bearer " + auth.token },
         body: initBody,
         signal: AbortSignal.timeout(timeoutMs),
       });
