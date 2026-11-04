@@ -52,6 +52,11 @@ Oturum açılışında iki şey daha yapılır; ikisi de ölçülür:
    et ve "harita yok" de. Platform durumu yalnız ölçümle yazılır: BAĞLI, YETKİSİZ,
    ERİŞİLEMEDİ. Varsayım yürütme. Erişim salt okunurdur; değişiklik, deploy, migration ve
    preset düzenleme yalnız açık onayla.
+6. **Etki kanıtı PR'da.** Kod değişikliği PR'ının gövdesinde `Graphify etki: <Sembol> →
+   <dosya:satır...>` satırı zorunludur. CI'daki **Ajan başlangıç haritası** işi
+   (`.github/workflows/ci.yml` → `tool/baslangic-kontrol.mjs --pr`) bu satırı denetler;
+   satır yoksa PR kırmızı olur. Etkiyi `graphify affected "Sembol"` veya MCP
+   `graphify_impact` ile üret.
 
 Neden: 2026-11-03'te ajanlar anahtar/platform sordu ve tarihsel planı güncel iş listesi
 sandı; Graphify haritası bağlı olmadığı için "30 gündür ajan faaliyeti yok" görünüyordu.

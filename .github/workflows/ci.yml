@@ -443,3 +443,31 @@ jobs:
         run: npm run e2e:blog
         env:
           E2E_PUBLIC_BASE_URL: http://localhost:3000
+
+  baslangic-kontrol:
+    name: Ajan başlangıç haritası
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Başlangıç haritası bütünlüğü
+        run: node tool/baslangic-kontrol.mjs
+
+      - name: PR etki kanıtı (kod değişikliği varsa)
+        if: github.event_name == 'pull_request'
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node tool/baslangic-kontrol.mjs --pr
+
