@@ -193,7 +193,11 @@ export function tekrarGruplari(
 
 export async function kartPresetYanitiniOku(cevap: Response, okuma: GoruSonucu) {
   const { icerik, ...kullanim } = await faturaYanitMetniniOku(cevap);
-  const { govde, kartlar } = await kartYanitiniCoz(icerik);
+  const yeniAkis = akis() === "yeni";
+  const { govde, kartlar } = await kartYanitiniCoz(icerik, {
+    beklenenSatirlar: yeniAkis ? okuma.satirlar.map((_, i) => String(i + 1)) : undefined,
+    eskiAkis: !yeniAkis,
+  });
   const items = new Map(kartlar.map((kart) => [kart.rowId, kart]));
   const karar = tekillesmeKarariKartlardan(okuma.satirlar, items);
   const tekrarlar = karar.indirgenen;

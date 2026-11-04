@@ -1,6 +1,9 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { expect, it } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
+
+beforeEach(() => vi.stubEnv("PRESET_AKIS", "mevcut"));
+afterEach(() => vi.unstubAllEnvs());
 import { kartPresetYanitiniOku } from "@/lib/faturaKartPreset";
 import { KartSozlesmeHatasi, kartSozlesmesineCevir } from "@/lib/faturaKartSozlesmesi";
 import type { GoruSonucu } from "@/lib/faturaGoru";
@@ -24,9 +27,9 @@ const say = (satirlar: Array<Record<string, unknown>>) => ({
   gorselli: satirlar.filter((satir) => Array.isArray(satir.siteGorseller) && satir.siteGorseller.length > 0).length,
 });
 
-it("gerçek çitli yanıt: geçmiş preset yanıtı: 5 satır, 4 kanonik kart, 3 kart görseli", async () => {
+it("eski akış: geçmiş preset yanıtında farklı barkodlu 5 satır ayrı kart kalır", async () => {
   const sonuc = await kartPresetYanitiniOku(metinYanit(dosya("gercek-citli.txt")), ilkOkuma);
-  expect(say(sonuc.sonuc.satirlar)).toEqual({ satir: 5, kart: 4, gorselli: 3 });
+  expect(say(sonuc.sonuc.satirlar)).toEqual({ satir: 5, kart: 5, gorselli: 4 });
   expect(sonuc.sonuc.satirlar[2].siteGorseller).toEqual([]);
   expect(sonuc.sonuc.satirlar[2].siteSayfa).toBe("https://sehermensucat.com/kadin-atlet");
   expect(sonuc.sonuc.satirlar[2].dogrulamaDurumu).toBe("Belirsiz");
@@ -40,7 +43,7 @@ it("gerçek akış yanıtı (text/event-stream): aynı satırları üretir", asy
 
 it("düz şemalı gerçek yanıt: doğrulama, sayfa ve görsel alanlarını okur", async () => {
   const sonuc = await kartPresetYanitiniOku(metinYanit(dosya("duz-sema.json")), ilkOkuma);
-  expect(say(sonuc.sonuc.satirlar)).toEqual({ satir: 5, kart: 4, gorselli: 3 });
+  expect(say(sonuc.sonuc.satirlar)).toEqual({ satir: 5, kart: 5, gorselli: 4 });
   expect(sonuc.sonuc.satirlar[2].siteGorseller).toEqual([]);
   expect(sonuc.sonuc.satirlar[2].siteSayfa).toBe("https://sehermensucat.com/kadin-atlet");
   expect(sonuc.sonuc.satirlar[0].siteSayfa).toBe("https://sehermensucat.com/elt1301-elit-erkek-elastan-sifiryaka-fanila");
@@ -58,12 +61,11 @@ it("aynı girdi aynı çıktı: üç biçim birebir aynı kartları verir", asyn
   expect(akan.sonuc.satirlar).toEqual(citli.sonuc.satirlar);
 });
 
-it("geçmiş preset iki farklı bedeni aynı grupta bildirdiyse Vixrex kanonik kararını değiştirmez", async () => {
+it("eski akışta farklı barkodlu satırlar gruplandırılmış olsa bile ayrı kalır", async () => {
   const sonuc = await kartPresetYanitiniOku(metinYanit(dosya("gercek-citli.txt")), ilkOkuma);
   expect(sonuc.sonuc.satirlar[3].ad).toBe("TER0105 Tutku Erkek Penye Sıfır Yaka Fanila");
-  // Kanonik olmayan satırın özgün fatura adı ve barkodu kaybolmaz.
-  expect(sonuc.sonuc.satirlar[4].ad).toBe("TUT ERK SIFIRYAKA");
-  expect(sonuc.sonuc.satirlar[4].eksikler).toContain("Aynı ürün belgede 4. satırda da geçiyor; tek kart açılır.");
+  expect(sonuc.sonuc.satirlar[4].ad).toBe("TER0105 Tutku Erkek Penye Sıfır Yaka Fanila");
+  expect(sonuc.sonuc.satirlar[4].eksikler).not.toContain("Aynı ürün belgede 4. satırda da geçiyor; tek kart açılır.");
   expect(sonuc.sonuc.satirlar[3].barkod).not.toBe(sonuc.sonuc.satirlar[4].barkod);
 });
 

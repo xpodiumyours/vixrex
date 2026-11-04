@@ -97,12 +97,26 @@ it("mevcut geri dönüş yolunda eski beden ayrımı korunur", () => {
 
 const okuma = (satirlar: Array<Record<string, unknown>>) => ({ tedarikci: "Tedarikçi", satirlar }) as unknown as GoruSonucu;
 const yanit = (items: unknown[]) => new Response(JSON.stringify({
-  choices: [{ message: { content: JSON.stringify({ items }) }, finish_reason: "stop" }],
+  choices: [{ message: { content: JSON.stringify({
+    summary: { total_rows: items.length, verified_count: items.length, draft_count: items.length, not_found_count: 0 },
+    items,
+  }) }, finish_reason: "stop" }],
 }), { status: 200, headers: { "content-type": "application/json" } });
 const kartKaydi = (id: string, title: string, beden: string, durum = "verified") => ({
-  row_id: id, duplicate_group: "tutku-8680508918971", canonical_row_id: "1",
-  vixrex_product_json: { title }, validation: { status: durum, official_product_url: "https://uretici.example/urun" },
-  media: {}, beden,
+  row_id: id, raw_invoice_line: "Beden " + beden, brand: "Tutku",
+  barcode: "8680508918971", code: "TER0105",
+  invoice_data: { quantity: 6, unit: "adet", unit_price: null, total_amount: null },
+  duplicate_group: "tutku-8680508918971", canonical_row_id: "1",
+  vixrex_product_json: {
+    title, brand: "Tutku", category_suggestion: null, variant: null,
+    short_description: null, consumer_sale_price: null, stock_quantity: null,
+  },
+  validation: {
+    status: durum, official_domain: "uretici.example", official_product_url: "https://uretici.example/urun",
+    matched_attributes: [], unmatched_attributes: [],
+  },
+  media: { image_url: null, source_url: null, verification_status: null, rights_status: "unknown" },
+  card_status: "draft",
 });
 
 it("yeni yolda Vixrex beden başlığı üretmez; kanonik kararı olduğu gibi taşır", async () => {
@@ -151,9 +165,11 @@ const metinYanit = (icerik: string) => new Response(JSON.stringify({
 }), { status: 200, headers: { "content-type": "application/json" } });
 const gorselliKart = (id: string, baslik: string, beden: string) => ({
   ...kartKaydi(id, baslik, beden),
-  // Bu testte preset iki satırı ayrı kart olarak bildirmiştir.
   duplicate_group: null, canonical_row_id: null,
-  media: { image_url: "https://cdn.example/urun.webp" },
+  media: {
+    image_url: "https://cdn.example/urun.webp", source_url: "https://uretici.example/urun",
+    verification_status: "verified", rights_status: "unknown",
+  },
 });
 const ikiSatir = [
   { hamSatir: "1", model: "TER0105", ad: "Tutku Elit Sıfıryaka", barkod: "8680508918971", beden: "4", marka: "Tutku", adet: 6 },
@@ -161,8 +177,9 @@ const ikiSatir = [
 ];
 
 it("kart yanıtı başında cümle ve JSON çitiyle gelse de çözülür", async () => {
+  const kartlar = [gorselliKart("1", "Tutku Elit Sıfıryaka", "4"), gorselliKart("2", "Tutku Elit Sıfıryaka", "5")];
   const icerik = "I'll research each brand's official website.\n\n```json\n" +
-    JSON.stringify({ items: [gorselliKart("1", "Tutku Elit Sıfıryaka", "4"), gorselliKart("2", "Tutku Elit Sıfıryaka", "5")] }, null, 2) +
+    JSON.stringify({ summary: { total_rows: 2, verified_count: 2, draft_count: 2, not_found_count: 0 }, items: kartlar }, null, 2) +
     "\n```\n";
   const sonuc = await kartPresetYanitiniOku(metinYanit(icerik), okuma(ikiSatir));
   expect(sonuc.sonuc.satirlar.map((satir) => satir.dogrulamaDurumu))
@@ -173,7 +190,10 @@ it("kart yanıtı başında cümle ve JSON çitiyle gelse de çözülür", async
 });
 
 it("yalnız JSON çitiyle gelen kart yanıtı da çözülür", async () => {
-  const icerik = "```json\n" + JSON.stringify({ items: [gorselliKart("1", "Tutku Elit Sıfıryaka", "4")] }) + "\n```";
+  const icerik = "```json\n" + JSON.stringify({
+    summary: { total_rows: 1, verified_count: 1, draft_count: 1, not_found_count: 0 },
+    items: [gorselliKart("1", "Tutku Elit Sıfıryaka", "4")],
+  }) + "\n```";
   const sonuc = await kartPresetYanitiniOku(metinYanit(icerik), okuma([ikiSatir[0]]));
   expect(sonuc.sonuc.satirlar[0].ad).toBe("Tutku Elit Sıfıryaka");
 });
@@ -183,7 +203,8 @@ it("JSON içermeyen kart yanıtı hâlâ reddedilir", async () => {
     .rejects.toThrow("KART_YANITI_COZULEMEDI");
 });
 
-it("düz şemalı kart yanıtı doğrulama ve ürün adresini okur", async () => {
+it("eski akış düz kart yanıtından ürün adresini okumaya devam eder", async () => {
+  vi.stubEnv("PRESET_AKIS", "mevcut");
   const duzKart = {
     row_id: "1", title: "Tutku Elit Sıfıryaka", brand: "Tutku", variant: "100 BEYAZ",
     short_description: "Pamuklu fanila", category_suggestion: "Erkek İç Giyim",

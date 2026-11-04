@@ -15,8 +15,27 @@ function client(receipt: unknown) {
   });
   return { admin:{rpc} as unknown as SupabaseClient, rpc };
 }
-const kartItem = {row_id:"1",vixrex_product_json:{title:"Kaynak ürünü",short_description:"Kaynak açıklaması",category_suggestion:"Tekstil"}, validation:{status:"ambiguous",official_product_url:"https://manufacturer.example/product",matched_attributes:[],unmatched_attributes:[]}, media:{image_url:"https://manufacturer.example/1.jpg",verification_status:"verified"}};
-const kartCevabi=JSON.stringify({items:[kartItem]});
+const kartItem = {
+  row_id:"1", raw_invoice_line:"K-1", brand:"", barcode:null, code:"K-1",
+  invoice_data:{quantity:2,unit:"",unit_price:100,total_amount:200},
+  vixrex_product_json:{
+    title:"Kaynak ürünü",brand:"",short_description:"Kaynak açıklaması",category_suggestion:"Tekstil",
+    variant:null,consumer_sale_price:null,stock_quantity:null,
+  },
+  validation:{
+    status:"ambiguous",official_domain:"manufacturer.example",
+    official_product_url:"https://manufacturer.example/product",matched_attributes:[],unmatched_attributes:[],
+  },
+  media:{
+    image_url:"https://manufacturer.example/1.jpg",source_url:"https://manufacturer.example/product",
+    verification_status:"verified",rights_status:"unknown",
+  },
+  card_status:"draft",duplicate_group:null,canonical_row_id:null,
+};
+const kartCevabi=JSON.stringify({
+  summary:{total_rows:1,verified_count:0,draft_count:1,not_found_count:0},
+  items:[kartItem],
+});
 const receipt=(content:string, extra:Record<string,unknown>={})=>({stage:"cards",state:"received",httpStatus:200,contentType:"application/json",body:JSON.stringify({choices:[{message:{content},finish_reason:"stop"}]}),fingerprint:"a".repeat(64),readResult:{tedarikci:"Tedarikçi",satirlar:[{hamSatir:"K-1",model:"K-1",ad:"Kaynak ürünü",barkod:"",varyant:"Lacivert",beden:"L",marka:"",adet:2,birim:"",birimFiyat:100,tutar:200,okumaGuveni:0.8,siteGorseller:[],uretici:"Üretici",ozellikler:[{key:"fabric",label:"Kumaş",value:"Pamuk"}]}],uyarilar:["Örnek test verisi"]},...extra});
 beforeEach(()=>{vi.clearAllMocks();m.save.mockResolvedValue(job);m.load.mockResolvedValue({islemKimligi:job,satirlar:[]});});
 describe("tamamlanmış arka plan sonucunun gerçek taşıma yolu",()=>{
