@@ -4,7 +4,7 @@
 > tek yerde cevaplamak ve ezbere konuşmayı ölçülebilir bir yasak yapmak. Kural kitabı
 > [AGENTS.md](../AGENTS.md)'de; bu belge **harita**dır.
 >
-> Son doğrulama: 2026-11-03 · Ana dal: `ef6a803` · Canlı: `ef6a803` (canlı = ana dal)
+> Son doğrulama: 2026-11-04 · Ana dal: `341919d` · Canlı: `341919d` (canlı = ana dal)
 
 ## 0. Oturum açılışı — 4 adım
 
@@ -70,10 +70,10 @@ Kapı her açılışta bunları **salt okunur** ölçer; değer uydurulmaz.
 | Platform | Kanıt komutu | Bugünkü ölçüm | Yazma sınırı |
 |---|---|---|---|
 | GitHub | `gh auth status` | BAĞLI (xpodiumyours) | okuma serbest; push/merge onayla |
-| Vercel | `vercel whoami` + MCP ucu | BAĞLI (CLI: xpodiumyours) · MCP YETKİSİZ (OAuth) | deploy/rollback onayla |
-| Supabase | REST okuma + MCP ucu | BAĞLI (REST 200) · MCP YETKİSİZ (OAuth) | migration/veri yazma onayla |
-| OpenRouter | `GET /api/v1/models` + preset ucu | BAĞLI (modeller 200) · preset YETKİSİZ (401) | preset düzenleme onayla |
-| Graphify | yerel `graphify` + MCP ucu | YEREL HAZIR (12.072 düğüm) · BULUT MCP BAĞLI (11.336 düğüm · indeks `341919d`) | harita okuma serbest; `remember`/`set_workspace` onayla |
+| Vercel | `vercel whoami` + MCP ucu | BAĞLI (CLI: xpodiumyours) · MCP köprüsü tanımlı; oturum bir kez onaylanır | deploy/rollback onayla |
+| Supabase | REST okuma + MCP ucu | BAĞLI (REST 200) · MCP yazma yetkisi ister; salt okunur ilkesi gereği yalnız REST okunur | migration/veri yazma onayla |
+| OpenRouter | `GET /api/v1/models` + preset dosyaları | BAĞLI (modeller 200) · preset depoda (`openrouter/`, 3 dosya); preset API ucu 401 | preset düzenleme onayla |
+| Graphify | yerel `graphify` + MCP ucu | YEREL HAZIR (12.072 düğüm) · BULUT MCP BAĞLI (11.336 düğüm · indeks `341919d`) · git kancası kurulu | harita okuma serbest; `remember`/`set_workspace` onayla |
 
 MCP uçları `https://api.graphify.com/mcp`, `https://mcp.vercel.com`,
 `https://mcp.supabase.com/mcp?project_ref=chfulefxczbgurtgavtp` ve `.mcp.json`'da tanımlıdır.
@@ -139,8 +139,10 @@ Bu belgeden gelen ek:
   depoya girmez; `.gitignore`'da).
 - Sorgu: `graphify query "<soru>" --budget 1200` · `graphify affected "Sembol"` ·
   `graphify path "A" "B"` · `graphify explain "Sembol"`. Her sonuç dosya:satır verir.
-- Tazeleme: kod değişince `graphify update .` (LLM gerekmez). Harita son kod
-  commit'inden eskiyse kapı "YEREL BAYAT" yazar ve `-Kod` ile kod değişikliğini engeller.
+- Tazeleme: kod değişince `graphify update .` (LLM gerekmez). Yerel harita ayrıca git
+  kancasıyla kendiliğinden tazelenir: her commit/checkout/merge sonrası `graphify hook install`
+  kancası çalışır (yeni makinede bir kez `graphify hook install`). Harita son kod commit'inden
+  eskiyse kapı "YEREL BAYAT" yazar ve `-Kod` ile kod değişikliğini engeller.
 
 **Hosted MCP (bulut haritası):**
 - Adres `https://api.graphify.com/mcp`; OAuth ile bir kez oturum açılır (API anahtarı yok).

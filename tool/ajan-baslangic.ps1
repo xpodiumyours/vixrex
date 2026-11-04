@@ -171,6 +171,12 @@ $health['AGENTS harita kurali'] = $false
 if (Test-Path -LiteralPath $agentsPath) {
     $health['AGENTS harita kurali'] = ((Get-Content -LiteralPath $agentsPath -Raw) -match '(?i)graphify')
 }
+$health['Preset dosyalari'] = ((Test-Path -LiteralPath (Join-Path $repoRoot 'openrouter/preset-okuma.json')) -and (Test-Path -LiteralPath (Join-Path $repoRoot 'openrouter/preset-kart.json')) -and (Test-Path -LiteralPath (Join-Path $repoRoot 'openrouter/preset-gorsel-secim.json')))
+$health['Graphify kancasi'] = $false
+$hookPath = Join-Path $repoRoot '.git/hooks/post-commit'
+if (Test-Path -LiteralPath $hookPath) { $health['Graphify kancasi'] = ((Get-Content -LiteralPath $hookPath -Raw) -match '(?i)graphify') }
+$health['README tarihsel etiket'] = $false
+if (Test-Path -LiteralPath $readmePath) { $health['README tarihsel etiket'] = ((Get-Content -LiteralPath $readmePath -Raw) -match '(?i)tarihsel') }
 
 $docAge = $null
 if ($health['AJAN-BASLANGIC belgesi']) {
@@ -180,6 +186,7 @@ if ($health['AJAN-BASLANGIC belgesi']) {
         $docAge = [math]::Floor((New-TimeSpan -Start $docDate -End $now).TotalDays)
     }
 }
+if ($docAge -ne $null -and $docAge -gt 30) { $warns.Add('belge 30+ gun bayat: ' + $docAge + ' gun') }
 
 $graphCli = ''
 $graphVer = ''
@@ -283,7 +290,10 @@ $pLines = @()
 $pLines += ('GitHub     : ' + (Durum-Tr $ghStatus) + $(if ($ghUser) { ' (' + $ghUser + ')' } else { '' }))
 $pLines += ('Vercel     : ' + (Durum-Tr $vercelStatus) + $(if ($vercelWho) { ' (CLI: ' + $vercelWho + ')' } else { '' }) + ' · MCP ' + (Durum-Tr (Probe-Durum 'vercel_mcp')))
 $pLines += ('Supabase   : ' + (Durum-Tr (Probe-Durum 'supabase_rest')) + ' (REST ' + (Probe-Http 'supabase_rest') + ') · MCP ' + (Durum-Tr (Probe-Durum 'supabase_mcp')))
-$pLines += ('OpenRouter : ' + (Durum-Tr (Probe-Durum 'openrouter_models')) + ' (modeller ' + (Probe-Http 'openrouter_models') + ') · preset ' + (Durum-Tr (Probe-Durum 'openrouter_presets')) + ' (' + (Probe-Http 'openrouter_presets') + ')')
+$presetFiles = @(Get-ChildItem -LiteralPath (Join-Path $repoRoot 'openrouter') -Filter 'preset-*.json' -ErrorAction SilentlyContinue)
+$presetLine = 'YOK'
+if ($presetFiles.Count -gt 0) { $presetLine = 'depoda (' + $presetFiles.Count + ' dosya)' }
+$pLines += ('OpenRouter : ' + (Durum-Tr (Probe-Durum 'openrouter_models')) + ' (modeller ' + (Probe-Http 'openrouter_models') + ') · preset ' + $presetLine + ' · API ' + (Durum-Tr (Probe-Durum 'openrouter_presets')))
 
 $missing = @($health.Keys | Where-Object { -not $health[$_] })
 
