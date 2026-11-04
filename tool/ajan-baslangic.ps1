@@ -171,6 +171,12 @@ $health['AGENTS harita kurali'] = $false
 if (Test-Path -LiteralPath $agentsPath) {
     $health['AGENTS harita kurali'] = ((Get-Content -LiteralPath $agentsPath -Raw) -match '(?i)graphify')
 }
+$health['Preset dosyalari'] = ((Test-Path -LiteralPath (Join-Path $repoRoot 'openrouter/preset-okuma.json')) -and (Test-Path -LiteralPath (Join-Path $repoRoot 'openrouter/preset-kart.json')) -and (Test-Path -LiteralPath (Join-Path $repoRoot 'openrouter/preset-gorsel-secim.json')))
+$health['Graphify kancasi'] = $false
+$hookPath = Join-Path $repoRoot '.git/hooks/post-commit'
+if (Test-Path -LiteralPath $hookPath) { $health['Graphify kancasi'] = ((Get-Content -LiteralPath $hookPath -Raw) -match '(?i)graphify') }
+$health['README tarihsel etiket'] = $false
+if (Test-Path -LiteralPath $readmePath) { $health['README tarihsel etiket'] = ((Get-Content -LiteralPath $readmePath -Raw) -match '(?i)tarihsel') }
 
 $docAge = $null
 if ($health['AJAN-BASLANGIC belgesi']) {
@@ -180,6 +186,7 @@ if ($health['AJAN-BASLANGIC belgesi']) {
         $docAge = [math]::Floor((New-TimeSpan -Start $docDate -End $now).TotalDays)
     }
 }
+if ($docAge -ne $null -and $docAge -gt 30) { $warns.Add('belge 30+ gun bayat: ' + $docAge + ' gun') }
 
 $graphCli = ''
 $graphVer = ''
@@ -257,7 +264,7 @@ if ($null -ne (Get-Command vercel -ErrorAction SilentlyContinue)) {
     if ($LASTEXITCODE -eq 0 -and $vw) {
         $vercelStatus = 'BAGLI'
         $vercelWho = ([string]($vw | Select-Object -Last 1)).Trim()
-    } else { $vercelStatus = 'YETKISIZ' }
+    } else { $vercelStatus = 'OLCULMEDI' }
 }
 
 $graphLineFull = 'YOK'
@@ -283,7 +290,10 @@ $pLines = @()
 $pLines += ('GitHub     : ' + (Durum-Tr $ghStatus) + $(if ($ghUser) { ' (' + $ghUser + ')' } else { '' }))
 $pLines += ('Vercel     : ' + (Durum-Tr $vercelStatus) + $(if ($vercelWho) { ' (CLI: ' + $vercelWho + ')' } else { '' }) + ' · MCP ' + (Durum-Tr (Probe-Durum 'vercel_mcp')))
 $pLines += ('Supabase   : ' + (Durum-Tr (Probe-Durum 'supabase_rest')) + ' (REST ' + (Probe-Http 'supabase_rest') + ') · MCP ' + (Durum-Tr (Probe-Durum 'supabase_mcp')))
-$pLines += ('OpenRouter : ' + (Durum-Tr (Probe-Durum 'openrouter_models')) + ' (modeller ' + (Probe-Http 'openrouter_models') + ') · preset ' + (Durum-Tr (Probe-Durum 'openrouter_presets')) + ' (' + (Probe-Http 'openrouter_presets') + ')')
+$presetFiles = @(Get-ChildItem -LiteralPath (Join-Path $repoRoot 'openrouter') -Filter 'preset-*.json' -ErrorAction SilentlyContinue)
+$presetLine = 'YOK'
+if ($presetFiles.Count -gt 0) { $presetLine = 'depoda (' + $presetFiles.Count + ' dosya)' }
+$pLines += ('OpenRouter : ' + (Durum-Tr (Probe-Durum 'openrouter_models')) + ' (modeller ' + (Probe-Http 'openrouter_models') + ') · preset ' + $presetLine + ' · API ' + (Durum-Tr (Probe-Durum 'openrouter_presets')))
 
 $missing = @($health.Keys | Where-Object { -not $health[$_] })
 
@@ -297,8 +307,33 @@ if (-not $main) {
     $verdict = 'ÖLÇÜM EKSİK — canlı okunamadı; "canlıda" denmez.'
     $exitCode = 1
 } elseif ($liveShort -ne $mainShort) {
-    $verdict = 'CANLI ANA DALDAN AYRI — "canlıda" denmez; önce yayın kapısı.'
-    $exitCode = 3
+    $kapsam = 'BILINMIYOR'
+    if ($ghOk -and $live -and $main) {
+        $cmpRaw = & gh api ('repos/xpodiumyours/vixrex/compare/{0}...{1}' -f $live, $main) --jq '{status: .status, files: [.files[].filename]}' 2>$null
+        if ($cmpRaw) {
+            try {
+                $cmp = ($cmpRaw | Out-String) | ConvertFrom-Json
+                $yuzey = $false
+                foreach ($f in @($cmp.files)) {
+                    $p = ([string]$f).Replace('\', '/')
+                    $notr = $false
+                    if ($p -match '(?i)\.md$') { $notr = $true }
+                    elseif ($p -match '^(docs|\.github|\.agents|\.cursor|\.obsidian)/') { $notr = $true }
+                    elseif ($p -in @('.gitignore', '.gitattributes', 'LICENSE', 'README.md', 'AGENTS.md', 'CLAUDE.md')) { $notr = $true }
+                    if (-not $notr) { $yuzey = $true; break }
+                }
+                if ($cmp.status -eq 'ahead' -and -not $yuzey) { $kapsam = 'BELGE' }
+                elseif ($cmp.status -eq 'ahead') { $kapsam = 'KOD' }
+            } catch { }
+        }
+    }
+    if ($kapsam -eq 'BELGE') {
+        $verdict = 'CANLI GERİDE — aradaki fark yalnız belge; yayın atlandı (beklenen). Durum cümlesi kurulabilir.'
+        $exitCode = 0
+    } else {
+        $verdict = 'CANLI ANA DALDAN AYRI — "canlıda" denmez; önce yayın kapısı.'
+        $exitCode = 3
+    }
 } else {
     $verdict = 'Ölçüm tam: canlı = ana dal. Durum cümlesi kurulabilir.'
     $exitCode = 0

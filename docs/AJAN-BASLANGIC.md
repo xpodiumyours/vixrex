@@ -4,7 +4,7 @@
 > tek yerde cevaplamak ve ezbere konuşmayı ölçülebilir bir yasak yapmak. Kural kitabı
 > [AGENTS.md](../AGENTS.md)'de; bu belge **harita**dır.
 >
-> Son doğrulama: 2026-11-03 · Ana dal: `ef6a803` · Canlı: `ef6a803` (canlı = ana dal)
+> Son doğrulama: 2026-11-04 · Ana dal: `341919d` · Canlı: `341919d` (canlı = ana dal)
 
 ## 0. Oturum açılışı — 4 adım
 
@@ -70,10 +70,10 @@ Kapı her açılışta bunları **salt okunur** ölçer; değer uydurulmaz.
 | Platform | Kanıt komutu | Bugünkü ölçüm | Yazma sınırı |
 |---|---|---|---|
 | GitHub | `gh auth status` | BAĞLI (xpodiumyours) | okuma serbest; push/merge onayla |
-| Vercel | `vercel whoami` + MCP ucu | BAĞLI (CLI: xpodiumyours) · MCP YETKİSİZ (OAuth) | deploy/rollback onayla |
-| Supabase | REST okuma + MCP ucu | BAĞLI (REST 200) · MCP YETKİSİZ (OAuth) | migration/veri yazma onayla |
-| OpenRouter | `GET /api/v1/models` + preset ucu | BAĞLI (modeller 200) · preset YETKİSİZ (401) | preset düzenleme onayla |
-| Graphify | yerel `graphify` + MCP ucu | YEREL HAZIR (12.072 düğüm) · MCP oturum VAR (28 araç) · depo yetkisi yok (KISITLI) | harita okuma serbest; `remember`/`set_workspace` onayla |
+| Vercel | `vercel whoami` + MCP ucu | MCP BAĞLI (kayıtlı oturum, 246 araç; yazma araçları yalnız açık onayla) | deploy/rollback onayla |
+| Supabase | REST okuma + MCP ucu | BAĞLI (REST 200) · MCP yazma yetkisi ister; salt okunur ilkesi gereği yalnız REST okunur | migration/veri yazma onayla |
+| OpenRouter | `GET /api/v1/models` + preset dosyaları | BAĞLI (modeller 200) · preset depoda (`openrouter/`, 3 dosya); preset API ucu 401 | preset düzenleme onayla |
+| Graphify | yerel `graphify` + MCP ucu | YEREL HAZIR (12.072 düğüm) · BULUT MCP BAĞLI (11.336 düğüm · indeks `341919d`) · git kancası kurulu | harita okuma serbest; `remember`/`set_workspace` onayla |
 
 MCP uçları `https://api.graphify.com/mcp`, `https://mcp.vercel.com`,
 `https://mcp.supabase.com/mcp?project_ref=chfulefxczbgurtgavtp` ve `.mcp.json`'da tanımlıdır.
@@ -82,10 +82,12 @@ OAuth oturumu bir kez açılır: Claude Code `/mcp` → Authenticate; Codex
 tahmin yürütülmez. Anahtar/adres istenmez; harita ve bağlantılar buradadır.
 
 Graphify oturumu 2026-11-03'te tarayıcıda onaylandı; kayıt `~/.mcp-auth` altında.
-`mcp-remote` köprüsü bu oturumu paylaşır (`.mcp.json` / `.cursor/mcp.json`). Panelde depo
-ajan erişimine açılmadığı için MCP şu an **KISITLI** (`no_authorized_repositories`);
-açılınca aynı oturum `xpodiumyours/vixrex` haritasını sorgular. O açılana kadar kanıt
-yerel `graphify` haritasından alınır.
+`mcp-remote` köprüsü bu oturumu paylaşır (`.mcp.json` / `.cursor/mcp.json`). 2026-11-03'te
+yaşanan hesap çakışması, GitHub uygulaması kaldırılıp yeniden bağlanarak çözüldü; bulut
+harita 2026-11-04'te açıldı: `xpodiumyours/vixrex` **queryable**, 11.336 düğüm / 19.195
+bağlantı / 580 bölge, indeks commit'i `341919d`. Ajan `list_repositories` → `graph_stats`
+ile bu commit'i ve yaşı doğrular; indeks çalışılan commit'ten eskiyse "harita güncel değil"
+der. Bulut harita varsayılan dalın son indeksidir; canlı davranış ve DB kanıtı yerine geçmez.
 
 ## 3. Hangi belge tarihsel — hangisi güncel (2026-11-03)
 
@@ -137,8 +139,10 @@ Bu belgeden gelen ek:
   depoya girmez; `.gitignore`'da).
 - Sorgu: `graphify query "<soru>" --budget 1200` · `graphify affected "Sembol"` ·
   `graphify path "A" "B"` · `graphify explain "Sembol"`. Her sonuç dosya:satır verir.
-- Tazeleme: kod değişince `graphify update .` (LLM gerekmez). Harita son kod
-  commit'inden eskiyse kapı "YEREL BAYAT" yazar ve `-Kod` ile kod değişikliğini engeller.
+- Tazeleme: kod değişince `graphify update .` (LLM gerekmez). Yerel harita ayrıca git
+  kancasıyla kendiliğinden tazelenir: her commit/checkout/merge sonrası `graphify hook install`
+  kancası çalışır (yeni makinede bir kez `graphify hook install`). Harita son kod commit'inden
+  eskiyse kapı "YEREL BAYAT" yazar ve `-Kod` ile kod değişikliğini engeller.
 
 **Hosted MCP (bulut haritası):**
 - Adres `https://api.graphify.com/mcp`; OAuth ile bir kez oturum açılır (API anahtarı yok).
