@@ -50,6 +50,7 @@ interface ProductCatalogProps {
   storeLocationText?: string | null;
   storeMapsUrl?: string | null;
   trackingEnabled?: boolean;
+  ownerPreview?: boolean;
   /** Mevcut çağrı sözleşmesini kırmamak için korunur. Yeni kart ürün görseli yoksa mağaza görselini ürünmüş gibi kullanmaz. */
   fallbackImage?: string | null;
   /** Mevcut çağrı sözleşmesini kırmamak için korunur. */
@@ -167,6 +168,7 @@ export default function ProductCatalog({
   storeLocationText = null,
   storeMapsUrl = null,
   trackingEnabled = true,
+  ownerPreview = false,
 }: ProductCatalogProps) {
   const searchParams = useSearchParams();
   const [quickView, setQuickView] = useState<QuickViewSelection | null>(null);
@@ -402,7 +404,7 @@ export default function ProductCatalog({
                       </span>
                     ) : null}
                   </div>
-                  {product.gorselIzinBekliyor ? (
+                  {ownerPreview && product.gorselIzinBekliyor ? (
                     <p className="mt-1 text-[10px] font-semibold text-amber-300 sm:text-[11px]">
                       İzin belgesi bekleniyor
                     </p>
