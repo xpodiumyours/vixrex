@@ -73,7 +73,7 @@ Kapı her açılışta bunları **salt okunur** ölçer; değer uydurulmaz.
 | Vercel | `vercel whoami` + MCP ucu | BAĞLI (CLI: xpodiumyours) · MCP YETKİSİZ (OAuth) | deploy/rollback onayla |
 | Supabase | REST okuma + MCP ucu | BAĞLI (REST 200) · MCP YETKİSİZ (OAuth) | migration/veri yazma onayla |
 | OpenRouter | `GET /api/v1/models` + preset ucu | BAĞLI (modeller 200) · preset YETKİSİZ (401) | preset düzenleme onayla |
-| Graphify | yerel `graphify` + MCP ucu | YEREL HAZIR (12.072 düğüm) · bulut MCP: hesap çakışması nedeniyle bekliyor | harita okuma serbest; `remember`/`set_workspace` onayla |
+| Graphify | yerel `graphify` + MCP ucu | YEREL HAZIR (12.072 düğüm) · BULUT MCP BAĞLI (11.336 düğüm · indeks `341919d`) | harita okuma serbest; `remember`/`set_workspace` onayla |
 
 MCP uçları `https://api.graphify.com/mcp`, `https://mcp.vercel.com`,
 `https://mcp.supabase.com/mcp?project_ref=chfulefxczbgurtgavtp` ve `.mcp.json`'da tanımlıdır.
@@ -82,11 +82,12 @@ OAuth oturumu bir kez açılır: Claude Code `/mcp` → Authenticate; Codex
 tahmin yürütülmez. Anahtar/adres istenmez; harita ve bağlantılar buradadır.
 
 Graphify oturumu 2026-11-03'te tarayıcıda onaylandı; kayıt `~/.mcp-auth` altında.
-`mcp-remote` köprüsü bu oturumu paylaşır (`.mcp.json` / `.cursor/mcp.json`). Bulut tarafında
-depo yetkisi **hesap çakışması** yüzünden bekliyor: GitHub uygulaması başka bir Graphify
-hesabına bağlı, giriş yapılan hesap o grubun üyesi görünmüyor. Resmî çözüm: Graphify
-panosunda **Repositories → Claim** veya çakışma ekranındaki **destek ekibi** bağlantısıyla
-hesap birleştirme. Bu, ajanları **durdurmaz**: kod haritası yerel `graphify` ile çalışır.
+`mcp-remote` köprüsü bu oturumu paylaşır (`.mcp.json` / `.cursor/mcp.json`). 2026-11-03'te
+yaşanan hesap çakışması, GitHub uygulaması kaldırılıp yeniden bağlanarak çözüldü; bulut
+harita 2026-11-04'te açıldı: `xpodiumyours/vixrex` **queryable**, 11.336 düğüm / 19.195
+bağlantı / 580 bölge, indeks commit'i `341919d`. Ajan `list_repositories` → `graph_stats`
+ile bu commit'i ve yaşı doğrular; indeks çalışılan commit'ten eskiyse "harita güncel değil"
+der. Bulut harita varsayılan dalın son indeksidir; canlı davranış ve DB kanıtı yerine geçmez.
 
 ## 3. Hangi belge tarihsel — hangisi güncel (2026-11-03)
 
