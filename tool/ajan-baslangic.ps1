@@ -172,9 +172,10 @@ if (Test-Path -LiteralPath $agentsPath) {
     $health['AGENTS harita kurali'] = ((Get-Content -LiteralPath $agentsPath -Raw) -match '(?i)graphify')
 }
 $health['Preset dosyalari'] = ((Test-Path -LiteralPath (Join-Path $repoRoot 'openrouter/preset-okuma.json')) -and (Test-Path -LiteralPath (Join-Path $repoRoot 'openrouter/preset-kart.json')) -and (Test-Path -LiteralPath (Join-Path $repoRoot 'openrouter/preset-gorsel-secim.json')))
-$health['Graphify kancasi'] = $false
 $hookPath = Join-Path $repoRoot '.git/hooks/post-commit'
-if (Test-Path -LiteralPath $hookPath) { $health['Graphify kancasi'] = ((Get-Content -LiteralPath $hookPath -Raw) -match '(?i)graphify') }
+$hookOk = $false
+if (Test-Path -LiteralPath $hookPath) { $hookOk = ((Get-Content -LiteralPath $hookPath -Raw) -match '(?i)graphify') }
+if (-not $hookOk) { $warns.Add('Graphify git kancasi yok (yeni makinede: graphify hook install)') }
 $health['README tarihsel etiket'] = $false
 if (Test-Path -LiteralPath $readmePath) { $health['README tarihsel etiket'] = ((Get-Content -LiteralPath $readmePath -Raw) -match '(?i)tarihsel') }
 
@@ -204,7 +205,7 @@ if (Test-Path -LiteralPath $graphPath) {
         $cnt = & node -e "const g=require(process.argv[1]);const n=(g.nodes||[]).length;const e=(g.links||g.edges||[]).length;console.log(n+' '+e)" $graphPath 2>$null
         if ($cnt) { $c = ([string]$cnt).Trim().Split(' '); $graphNode = $c[0]; $graphEdge = $c[1] }
     } catch { }
-    $lc = & git log -1 --format=%ct -- lib public_web shared 2>$null
+    $lc = & git log -1 --format=%ct -- lib public_web shared supabase openrouter tool .github .mcp.json .gitignore AGENTS.md README.md CLAUDE.md .cursorrules 2>$null
     $lcEpoch = 0
     if ($lc) { try { $lcEpoch = [int64]([string]$lc).Trim() } catch { } }
     if ($lcEpoch -gt 0) {
@@ -241,6 +242,7 @@ function Durum-Tr([string]$d) {
         'ERISILEMEDI' { return 'ERİŞİLEMEDİ' }
         'ANAHTAR_YOK' { return 'ANAHTAR YOK' }
         'KISITLI' { return 'KISITLI (depo yetkisi yok)' }
+        'OTURUM_ESKI' { return 'OTURUM ESKİ (köprü yeniler)' }
         'OLCULMEDI' { return 'ÖLÇÜLMEDİ' }
         default { return 'HATA' }
     }
@@ -278,6 +280,17 @@ if ($graphSay -eq 'HAZIR' -or $graphSay -eq 'BAYAT') {
 }
 $graphLineFull = $graphLineFull + ' · MCP ' + (Durum-Tr (Probe-Durum 'graphify_mcp'))
 if ($mcpNames -contains 'graphify') { $graphLineFull = $graphLineFull + ' (.mcp.json)' }
+$bulutCommit = ''
+$bulutDugum = 0
+if ($probeMap.ContainsKey('graphify_mcp')) {
+    $bulutCommit = [string]$probeMap['graphify_mcp'].bulut_commit
+    $bulutDugum = [int]$probeMap['graphify_mcp'].dugum
+}
+if ($bulutDugum -gt 0) { $graphLineFull = $graphLineFull + ' · bulut ' + $bulutDugum + ' düğüm' }
+if ($bulutCommit) {
+    $graphLineFull = $graphLineFull + ' · bulut indeks ' + $bulutCommit
+    if ($mainShort -and $bulutCommit -ne $mainShort) { $graphLineFull = $graphLineFull + ' (BULUT GERİDE)' }
+}
 
 $platforms = [ordered]@{
     github = [ordered]@{ durum = $ghStatus; kullanici = $ghUser }

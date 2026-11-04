@@ -53,8 +53,9 @@ npx eslint <değişen dosyalar>
 npm run build
 ```
 
-CI bu depoda çalışmıyor (bkz. `kapilar`); kapı yerelde koşulur. Merge kapısı
-ayrıca `bash tool/merge-hazir.sh`. Son düzenlemeden **sonra** hepsini tekrar koş.
+CI bu depoda çalışıyor (`.github/workflows/ci.yml`); PR'da zorunlu kontroller var. Kapılar
+yerelde de koşulur. Merge kapısı ayrıca `bash tool/merge-hazir.sh`. Son düzenlemeden
+**sonra** hepsini tekrar koş.
 
 **e) KANIT.** Commit SHA · `deploy-info.json` commit · ekran (390×844, 2x) ·
 kapı çıktısı. Görünen her değişiklikte öncesi/sonrası; gösteremiyorsan

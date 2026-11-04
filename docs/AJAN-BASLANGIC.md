@@ -73,10 +73,14 @@ Kapı her açılışta bunları **salt okunur** ölçer; değer uydurulmaz.
 | Vercel | `vercel whoami` + MCP ucu | MCP BAĞLI (kayıtlı oturum, 246 araç; yazma araçları yalnız açık onayla) | deploy/rollback onayla |
 | Supabase | REST okuma + MCP ucu | BAĞLI (REST 200) · MCP yazma yetkisi ister; salt okunur ilkesi gereği yalnız REST okunur | migration/veri yazma onayla |
 | OpenRouter | `GET /api/v1/models` + preset dosyaları | BAĞLI (modeller 200) · preset depoda (`openrouter/`, 3 dosya); preset API ucu 401 | preset düzenleme onayla |
-| Graphify | yerel `graphify` + MCP ucu | YEREL HAZIR (12.072 düğüm) · BULUT MCP BAĞLI (11.336 düğüm · indeks `341919d`) · git kancası kurulu | harita okuma serbest; `remember`/`set_workspace` onayla |
+| Graphify | yerel `graphify` + MCP ucu | YEREL HAZIR · BULUT MCP BAĞLI · bulut indeks ana dalla eşitlenir (kapı yazar) · git kancası varsa tazelenir | harita okuma serbest; `remember`/`set_workspace` onayla |
 
 MCP uçları `https://api.graphify.com/mcp`, `https://mcp.vercel.com`,
 `https://mcp.supabase.com/mcp?project_ref=chfulefxczbgurtgavtp` ve `.mcp.json`'da tanımlıdır.
+Her ölçüm yalnız o servisin kendi oturumunu kullanır (oturum dosyası uç adresinin özetiyle
+eşleşir); bir servisin jetonu başka servise gönderilmez. Oturum süresi dolunca kapı
+**GRAF OTURUM ESKİ** yazar; köprü bir kez çalıştırılır:
+`npx -y mcp-remote https://api.graphify.com/mcp` (tarayıcı bir kez onaylar, oturum yenilenir).
 OAuth oturumu bir kez açılır: Claude Code `/mcp` → Authenticate; Codex
 `codex mcp login graphify`; Cursor MCP ayarları. Oturum yokken durum **YETKİSİZ** yazılır,
 tahmin yürütülmez. Anahtar/adres istenmez; harita ve bağlantılar buradadır.
