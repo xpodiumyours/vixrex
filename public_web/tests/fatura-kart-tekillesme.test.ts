@@ -151,6 +151,8 @@ const metinYanit = (icerik: string) => new Response(JSON.stringify({
 }), { status: 200, headers: { "content-type": "application/json" } });
 const gorselliKart = (id: string, baslik: string, beden: string) => ({
   ...kartKaydi(id, baslik, beden),
+  // Bu testte preset iki satırı ayrı kart olarak bildirmiştir.
+  duplicate_group: null, canonical_row_id: null,
   media: { image_url: "https://cdn.example/urun.webp" },
 });
 const ikiSatir = [

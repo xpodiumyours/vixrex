@@ -24,9 +24,9 @@ const say = (satirlar: Array<Record<string, unknown>>) => ({
   gorselli: satirlar.filter((satir) => Array.isArray(satir.siteGorseller) && satir.siteGorseller.length > 0).length,
 });
 
-it("gerçek çitli yanıt: 5 satır → 5 kart; yalnız 4 gerçek görsel adresi", async () => {
+it("gerçek çitli yanıt: geçmiş preset yanıtı: 5 satır, 4 kanonik kart, 3 kart görseli", async () => {
   const sonuc = await kartPresetYanitiniOku(metinYanit(dosya("gercek-citli.txt")), ilkOkuma);
-  expect(say(sonuc.sonuc.satirlar)).toEqual({ satir: 5, kart: 5, gorselli: 4 });
+  expect(say(sonuc.sonuc.satirlar)).toEqual({ satir: 5, kart: 4, gorselli: 3 });
   expect(sonuc.sonuc.satirlar[2].siteGorseller).toEqual([]);
   expect(sonuc.sonuc.satirlar[2].siteSayfa).toBe("https://sehermensucat.com/kadin-atlet");
   expect(sonuc.sonuc.satirlar[2].dogrulamaDurumu).toBe("Belirsiz");
@@ -40,7 +40,7 @@ it("gerçek akış yanıtı (text/event-stream): aynı satırları üretir", asy
 
 it("düz şemalı gerçek yanıt: doğrulama, sayfa ve görsel alanlarını okur", async () => {
   const sonuc = await kartPresetYanitiniOku(metinYanit(dosya("duz-sema.json")), ilkOkuma);
-  expect(say(sonuc.sonuc.satirlar)).toEqual({ satir: 5, kart: 5, gorselli: 4 });
+  expect(say(sonuc.sonuc.satirlar)).toEqual({ satir: 5, kart: 4, gorselli: 3 });
   expect(sonuc.sonuc.satirlar[2].siteGorseller).toEqual([]);
   expect(sonuc.sonuc.satirlar[2].siteSayfa).toBe("https://sehermensucat.com/kadin-atlet");
   expect(sonuc.sonuc.satirlar[0].siteSayfa).toBe("https://sehermensucat.com/elt1301-elit-erkek-elastan-sifiryaka-fanila");
@@ -58,8 +58,21 @@ it("aynı girdi aynı çıktı: üç biçim birebir aynı kartları verir", asyn
   expect(akan.sonuc.satirlar).toEqual(citli.sonuc.satirlar);
 });
 
-it("farklı barkodlu iki beden ayrı kart kalır; ikisi de kendi barkoduyla eşleşir", async () => {
+it("geçmiş preset iki farklı bedeni aynı grupta bildirdiyse Vixrex kanonik kararını değiştirmez", async () => {
   const sonuc = await kartPresetYanitiniOku(metinYanit(dosya("gercek-citli.txt")), ilkOkuma);
+  expect(sonuc.sonuc.satirlar[3].ad).toBe("TER0105 Tutku Erkek Penye Sıfır Yaka Fanila");
+  // Kanonik olmayan satırın özgün fatura adı ve barkodu kaybolmaz.
+  expect(sonuc.sonuc.satirlar[4].ad).toBe("TUT ERK SIFIRYAKA");
+  expect(sonuc.sonuc.satirlar[4].eksikler).toContain("Aynı ürün belgede 4. satırda da geçiyor; tek kart açılır.");
+  expect(sonuc.sonuc.satirlar[3].barkod).not.toBe(sonuc.sonuc.satirlar[4].barkod);
+});
+
+it("OpenRouter farklı bedenlere ayrı grup kararı verdiğinde ikisi de kendi kartını alır", async () => {
+  const { items } = JSON.parse(dosya("duz-sema.json")) as { items: Array<Record<string, unknown>> };
+  const ayriSatirlar = items.map((item) => (item.row_id === "4" || item.row_id === "5")
+    ? { ...item, duplicate_group: null, canonical_row_id: null } : item);
+  const sonuc = await kartPresetYanitiniOku(metinYanit(JSON.stringify({ items: ayriSatirlar })), ilkOkuma);
+  expect(say(sonuc.sonuc.satirlar)).toEqual({ satir: 5, kart: 5, gorselli: 4 });
   expect(sonuc.sonuc.satirlar[3].ad).toBe("TER0105 Tutku Erkek Penye Sıfır Yaka Fanila");
   expect(sonuc.sonuc.satirlar[4].ad).toBe("TER0105 Tutku Erkek Penye Sıfır Yaka Fanila");
   expect(sonuc.sonuc.satirlar[3].barkod).not.toBe(sonuc.sonuc.satirlar[4].barkod);
