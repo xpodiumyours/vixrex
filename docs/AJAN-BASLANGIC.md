@@ -133,6 +133,9 @@ satırlar, yayılma alanı, kapılar, görsel kanıt, dal/canlı ayrımı ve ger
 Bu belgeden gelen ek:
 - Etki listesi: Graphify bağlıysa `graphify_impact`; değilse `grep` + `dosya:satır`.
   Liste yoksa "başka yeri kırmadım" denmez.
+- Kod değişikliği PR'ının gövdesinde **`Graphify etki: <Sembol> → <dosya:satır...>`** satırı
+  zorunludur. CI'daki **Ajan başlangıç haritası** işi bunu denetler
+  (`tool/baslangic-kontrol.mjs --pr`); satır yoksa PR kırmızı olur.
 - Görünen değişiklikte öncesi/sonrası ekran; gösteremiyorsan "gösteremedim" de.
 
 ## 6. Graphify — iki yol: yerel harita ve hosted MCP
