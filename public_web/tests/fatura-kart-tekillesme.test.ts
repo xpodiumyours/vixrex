@@ -82,7 +82,7 @@ it("boş canonical_row_id'li grup için satırlar korunur", () => {
   ]) as never).size).toBe(0);
 });
 
-it("mevcut geri dönüş yolunda eski beden ayrımı korunur", () => {
+it("mevcut geri dönüş yolu barkod veya bedenle yeniden ürün kararı vermez", () => {
   vi.stubEnv("PRESET_AKIS", "mevcut");
   const satirlar = [
     { barkod: "8680508918971", ad: "Tutku Fanila", marka: "Tutku", beden: "4" },
@@ -92,7 +92,6 @@ it("mevcut geri dönüş yolunda eski beden ayrımı korunur", () => {
     ["1", kart("tutku", "1")], ["2", kart("tutku", "1")],
   ]) as never);
   expect(karar.indirgenen.size).toBe(0);
-  expect([...karar.bedenAyrisan].sort()).toEqual(["1", "2"]);
 });
 
 const okuma = (satirlar: Array<Record<string, unknown>>) => ({ tedarikci: "Tedarikçi", satirlar }) as unknown as GoruSonucu;
@@ -128,8 +127,10 @@ it("yeni yolda Vixrex beden başlığı üretmez; kanonik kararı olduğu gibi t
   ]));
   expect(sonuc.sonuc.satirlar.map((satir) => satir.ad))
     .toEqual(["Tutku Elit Sıfıryaka", "Tutku Elit Sıfıryaka"]);
-  expect(sonuc.sonuc.satirlar[1].eksikler).toContain("Aynı ürün belgede 1. satırda da geçiyor; tek kart açılır.");
+  expect(sonuc.sonuc.satirlar[1].eksikler).toContain("OpenRouter aynı ürünü 1. satıra bağladı.");
   expect(sonuc.sonuc.satirlar.map((satir) => satir.adet)).toEqual([6, 6]);
+  expect(sonuc.sonuc.satirlar.map((satir) => [satir.duplicateGroup, satir.canonicalRowId]))
+    .toEqual([["tutku-8680508918971", "1"], ["tutku-8680508918971", "1"]]);
 });
 
 it("preset ayrı satır verdiyse Vixrex doğrulanmamış ürünleri kendisi tekilleştirmez", async () => {
@@ -143,7 +144,7 @@ it("preset ayrı satır verdiyse Vixrex doğrulanmamış ürünleri kendisi teki
   ]));
   expect(sonuc.sonuc.satirlar.map((satir) => satir.dogrulamaDurumu)).toEqual(["Bulunamadı", "Bulunamadı"]);
   for (const satir of sonuc.sonuc.satirlar) {
-    expect(satir.eksikler).not.toContain("Aynı ürün belgede 1. satırda da geçiyor; tek kart açılır.");
+    expect(satir.eksikler).not.toContain("OpenRouter aynı ürünü 1. satıra bağladı.");
   }
 });
 
@@ -157,7 +158,7 @@ it("doğrulanmış aynı ürün iki satırı tek karta indirir", async () => {
   expect(sonuc.sonuc.satirlar[0].ad).toBe("Tutku Elit Sıfıryaka");
   expect(sonuc.sonuc.satirlar[0].adet).toBe(6);
   expect(sonuc.sonuc.satirlar[1].adet).toBe(6);
-  expect(sonuc.sonuc.satirlar[1].eksikler).toContain("Aynı ürün belgede 1. satırda da geçiyor; tek kart açılır.");
+  expect(sonuc.sonuc.satirlar[1].eksikler).toContain("OpenRouter aynı ürünü 1. satıra bağladı.");
 });
 
 const metinYanit = (icerik: string) => new Response(JSON.stringify({

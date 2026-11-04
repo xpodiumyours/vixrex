@@ -94,6 +94,24 @@ describe("gerçek ikinci preset JSON sözleşmesi",()=>{
     await expect(kartPresetYanitiniOku(response([item("1","A"),item("2","B")],{total_rows:1}),first))
       .rejects.toThrow("KART_YANITI_COZULEMEDI");
   });
+  it("boşlukla değiştirilmiş duplicate_group reddedilir",async()=>{
+    await expect(kartPresetYanitiniOku(response([
+      {...item("1","A"),duplicate_group:" grup",canonical_row_id:"1"},
+      {...item("2","B"),duplicate_group:" grup",canonical_row_id:"1"},
+    ]),first)).rejects.toThrow("KART_YANITI_COZULEMEDI");
+  });
+  it("OpenRouter kanonik row_id=2 ve grup bilgisi kalıcı kataloga geçer",async()=>{
+    const result=await kartPresetYanitiniOku(response([
+      {...item("1","A"),duplicate_group:"grup-2",canonical_row_id:"2"},
+      {...item("2","B"),duplicate_group:"grup-2",canonical_row_id:"2"},
+    ]),first);
+    const satirlar=result.sonuc.satirlar.map(s=>faturaSatiriniAktar(s,"Tedarikçi"));
+    expect(satirlar.map(s=>[s.katalog?.duplicateGroup,s.katalog?.canonicalRowId]))
+      .toEqual([["grup-2","2"],["grup-2","2"]]);
+    expect(satirdanFaturaTaslagi(satirlar[1])).toMatchObject({
+      duplicateGroup:"grup-2",canonicalRowId:"2",
+    });
+  });
   it("bozuk kanonik grup bağlantısını yeni ürün kararı vermeden reddeder",async()=>{
     await expect(kartPresetYanitiniOku(response([
       {...item("1","A"),duplicate_group:"grup",canonical_row_id:"1"},

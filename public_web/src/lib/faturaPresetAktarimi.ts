@@ -21,7 +21,9 @@ export function faturaSatiriniAktar(satir: GoruSatiri, tedarikci: string): Esles
   const ekler = {
     satirNo: satir.satirNo, uretici: satir.uretici, gramaj: satir.gramaj,
     dogrulamaDurumu: satir.dogrulamaDurumu, eslesenBilgiler: satir.eslesenBilgiler,
-    eksikler, gorselDogrulamaDurumu: satir.gorselDogrulamaDurumu, kaynaklar: satir.kaynaklar,
+    eksikler, gorselDogrulamaDurumu: satir.gorselDogrulamaDurumu,
+    duplicateGroup: satir.duplicateGroup ?? null, canonicalRowId: satir.canonicalRowId ?? null,
+    kaynaklar: satir.kaynaklar,
   };
   return {
     ...ekler,

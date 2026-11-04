@@ -16,10 +16,6 @@ const secilenKartPreset = () => (akis() === "yeni" ? URUN_KART_PRESET_YENI : URU
 
 type Kayit = Record<string, unknown>;
 
-function metin(value: unknown): string {
-  return typeof value === "string" ? value.trim() : "";
-}
-
 export function kartPresetIstekGovdesi(okuma: GoruSonucu): Record<string, unknown> {
   const satirlar = okuma.satirlar.map((s, i) => ({
     row_id: String(i + 1), satir_no: s.satirNo, raw_invoice_line: s.hamSatir,
@@ -63,129 +59,51 @@ const DURUMLAR: Record<string, string> = {
   verified: "Doğrulandı", ambiguous: "Belirsiz", not_found: "Bulunamadı", not_researched: "Araştırılamadı",
 };
 
-type TekrarSatiri = { barkod?: string; model?: string; ad?: string; marka?: string; varyant?: string; beden?: string; gramaj?: string };
+/** Vixrex ürün kimliğini barkod, ad, marka, beden, varyant veya gramajdan yeniden belirlemez. */
+export type TekillesmeKarari = { indirgenen: Map<string, number> };
 
-function adAnahtari(ham: string | undefined): string {
-  return (ham ?? "")
-    .normalize("NFKC")
-    .toLocaleLowerCase("tr-TR")
-    .replace(/[^a-z0-9çğıöşü]+/g, " ")
-    .trim();
-}
-
-function ayniDeger(satirlar: TekrarSatiri[], sec: (satir: TekrarSatiri) => string | undefined): boolean {
-  return new Set(satirlar.map((satir) => adAnahtari(sec(satir)))).size === 1;
-}
-
-export type TekillesmeKarari = {
-  indirgenen: Map<string, number>;
-  bedenAyrisan: Set<string>;
-  kimlikKurulamayan: Set<string>;
-};
-
-/** Yalnız PRESET_AKIS=mevcut geri dönüş yolu: eski ürün-karşılaştırma davranışı korunur. */
-function eskiTekillesmeKarariKartlardan(
-  satirlar: TekrarSatiri[],
-  kartlar: Map<string, KartSozlesmesi>,
-): TekillesmeKarari {
-  const karar: TekillesmeKarari = {
-    indirgenen: new Map(), bedenAyrisan: new Set(), kimlikKurulamayan: new Set(),
-  };
-  const gruplar = new Map<string, number[]>();
-  satirlar.forEach((_, i) => {
-    const grup = kartlar.get(String(i + 1))?.tekrarGrubu ?? "";
-    if (!grup) return;
-    gruplar.set(grup, [...(gruplar.get(grup) ?? []), i]);
-  });
-
-  for (const [, uyeler] of gruplar) {
-    if (uyeler.length < 2) continue;
-    const satirlarUye = uyeler.map((i) => satirlar[i]);
-    const barkodlar = satirlarUye.map((s) => (s.barkod ?? "").trim());
-    const ayniBarkod = barkodlar.every(Boolean) && new Set(barkodlar).size === 1;
-    if (!ayniBarkod && barkodlar.some(Boolean)) continue;
-    if (!ayniBarkod) {
-      const adlar = satirlarUye.map((s) => adAnahtari(s.ad));
-      if (adlar.some((ad) => ad.replace(/\s/g, "").length < 6)) continue;
-      if (new Set(adlar).size !== 1) continue;
-      if (!ayniDeger(satirlarUye, (s) => s.marka)) continue;
-      if (!ayniDeger(satirlarUye, (s) => s.gramaj)) continue;
-    }
-    if (!ayniDeger(satirlarUye, (s) => s.varyant)) continue;
-    if (!ayniDeger(satirlarUye, (s) => s.beden)) {
-      for (const i of uyeler) karar.bedenAyrisan.add(String(i + 1));
-      continue;
-    }
-
-    const kurulamiyan = uyeler.filter((i) => !kartlar.get(String(i + 1))?.dogrulanmis);
-    if (kurulamiyan.length) {
-      for (const i of kurulamiyan) karar.kimlikKurulamayan.add(String(i + 1));
-      continue;
-    }
-
-    const bildirilenler = uyeler.map((i) => kartlar.get(String(i + 1))?.kanonikRowId ?? "");
-    if (bildirilenler.some((id) => !id || id !== bildirilenler[0])) continue;
-    const kanonik = /^\d+$/.test(bildirilenler[0]) ? Number(bildirilenler[0]) - 1 : -1;
-    if (!uyeler.includes(kanonik) || kanonik !== Math.min(...uyeler)) continue;
-    for (const i of uyeler) {
-      if (i !== kanonik) karar.indirgenen.set(String(i + 1), kanonik + 1);
-    }
-  }
-  return karar;
-}
-
-/**
- * Yeni akış: ürün kimliğine ilişkin hiçbir alan karşılaştırılmaz.
- * Yalnız OpenRouter'ın kanonik bağlantılarının satır/grup bütünlüğü denetlenir.
- */
-function presetTekillesmeKarariKartlardan(
-  satirlar: TekrarSatiri[],
-  kartlar: Map<string, KartSozlesmesi>,
-): TekillesmeKarari {
-  const karar: TekillesmeKarari = {
-    indirgenen: new Map(), bedenAyrisan: new Set(), kimlikKurulamayan: new Set(),
-  };
+/** OpenRouter kanonik bağlantılarının yapısal bütünlüğünü denetler, ürün seçmez. */
+function kanonikBaglantilari(satirlar: readonly unknown[], kartlar: Map<string, KartSozlesmesi>): Map<string, number> {
+  const baglantilar = new Map<string, number>();
   const gruplar = new Map<string, string[]>();
   for (let i = 0; i < satirlar.length; i++) {
-    const rowId = String(i + 1);
-    const grup = kartlar.get(rowId)?.tekrarGrubu;
+    const id = String(i + 1);
+    const grup = kartlar.get(id)?.tekrarGrubu;
     if (!grup) continue;
-    gruplar.set(grup, [...(gruplar.get(grup) ?? []), rowId]);
+    gruplar.set(grup, [...(gruplar.get(grup) ?? []), id]);
   }
-
   for (const [grup, uyeler] of gruplar) {
     if (uyeler.length < 2) continue;
     const kanonikler = uyeler.map((id) => kartlar.get(id)?.kanonikRowId ?? "");
     const kanonikId = kanonikler[0];
-    // Fatura dışı, bozuk, çelişkili veya kendi kendine işaret etmeyen bağlantı kabul edilmez.
     if (!/^[1-9]\d*$/.test(kanonikId) || kanonikler.some((id) => id !== kanonikId)) continue;
     if (!uyeler.includes(kanonikId)) continue;
     const kanonikKart = kartlar.get(kanonikId);
     if (kanonikKart?.tekrarGrubu !== grup || kanonikKart.kanonikRowId !== kanonikId) continue;
-    for (const id of uyeler) {
-      if (id !== kanonikId) karar.indirgenen.set(id, Number(kanonikId));
-    }
+    for (const id of uyeler) baglantilar.set(id, Number(kanonikId));
   }
-  return karar;
+  return baglantilar;
 }
 
-function tekillesmeKarariKartlardan(
-  satirlar: TekrarSatiri[],
-  kartlar: Map<string, KartSozlesmesi>,
-): TekillesmeKarari {
-  return akis() === "yeni"
-    ? presetTekillesmeKarariKartlardan(satirlar, kartlar)
-    : eskiTekillesmeKarariKartlardan(satirlar, kartlar);
+function tekillesmeKarariKartlardan(satirlar: readonly unknown[], kartlar: Map<string, KartSozlesmesi>): TekillesmeKarari {
+  const indirgenen = new Map<string, number>();
+  // Geri dönüş yolundaki eski preset satır tamlığını garanti etmediği için
+  // mevcut akışta ürün kartı azaltılmaz, yalnız grup bilgisi korunur.
+  if (akis() === "mevcut") return { indirgenen };
+  for (const [id, kanonik] of kanonikBaglantilari(satirlar, kartlar)) {
+    if (id !== String(kanonik)) indirgenen.set(id, kanonik);
+  }
+  return { indirgenen };
 }
 
-export function tekillesmeKarari(satirlar: TekrarSatiri[], items: Map<string, Kayit>): TekillesmeKarari {
+export function tekillesmeKarari(satirlar: readonly unknown[], items: Map<string, Kayit>): TekillesmeKarari {
   const kartlar = new Map<string, KartSozlesmesi>();
   for (const [id, item] of items) kartlar.set(id, tekKartSozlesmesi(item));
   return tekillesmeKarariKartlardan(satirlar, kartlar);
 }
 
 export function tekrarGruplari(
-  satirlar: TekrarSatiri[],
+  satirlar: readonly unknown[],
   items: Map<string, Kayit>,
 ): Map<string, number> {
   return tekillesmeKarari(satirlar, items).indirgenen;
@@ -199,29 +117,29 @@ export async function kartPresetYanitiniOku(cevap: Response, okuma: GoruSonucu) 
     eskiAkis: !yeniAkis,
   });
   const items = new Map(kartlar.map((kart) => [kart.rowId, kart]));
-  const karar = tekillesmeKarariKartlardan(okuma.satirlar, items);
-  const tekrarlar = karar.indirgenen;
-  const kimlikNotu = "Aynı ürün doğrulanamadı; ayrı kart açıldı.";
+  const baglantilar = kanonikBaglantilari(okuma.satirlar, items);
+  const tekrarlar = tekillesmeKarariKartlardan(okuma.satirlar, items).indirgenen;
   let eslesen = 0;
   const satirlar = okuma.satirlar.map((s, i) => {
     const sira = String(i + 1);
     const kart = items.get(sira);
-    const kimlikEksik = karar.kimlikKurulamayan.has(sira);
+    const kanonikId = baglantilar.get(sira);
+    const grupKimligi = {
+      duplicateGroup: kanonikId === undefined ? null : kart?.tekrarGrubu ?? null,
+      canonicalRowId: kanonikId === undefined ? null : String(kanonikId),
+    };
     if (!kart || !Object.hasOwn(DURUMLAR, kart.dogrulamaDurumu)) {
       return {
-        ...s,
+        ...s, ...grupKimligi,
         dogrulamaDurumu: "Araştırılamadı",
-        eksikler: [
-          ...(s.eksikler ?? []), "Ürün kartı bu satır için üretilemedi.",
-          ...(kimlikEksik ? [kimlikNotu] : []),
-        ],
+        eksikler: [...(s.eksikler ?? []), "Ürün kartı bu satır için üretilemedi."],
       };
     }
     const kanonik = tekrarlar.get(sira);
     if (kanonik !== undefined) {
       return {
-        ...s,
-        eksikler: [...(s.eksikler ?? []), `Aynı ürün belgede ${kanonik}. satırda da geçiyor; tek kart açılır.`],
+        ...s, ...grupKimligi,
+        eksikler: [...(s.eksikler ?? []), `OpenRouter aynı ürünü ${kanonik}. satıra bağladı.`],
       };
     }
     eslesen += 1;
@@ -230,14 +148,9 @@ export async function kartPresetYanitiniOku(cevap: Response, okuma: GoruSonucu) 
     const eksikler = kart.eksikler.filter((v): v is string => typeof v === "string");
     const resmiKanitEksik = kart.dogrulamaDurumu === "verified" && !kart.dogrulanmis;
     if (resmiKanitEksik) eksikler.push("Doğrulanmış ürün için resmî sayfa kanıtı eksik; doğrulanmış kabul edilmedi.");
-    if (kimlikEksik) eksikler.push(kimlikNotu);
-    const temelAd = kart.ad || s.ad;
-    const beden = metin(s.beden);
-    const ad = karar.bedenAyrisan.has(sira) && beden &&
-      !temelAd.toLocaleLowerCase("tr-TR").includes(`beden ${beden.toLocaleLowerCase("tr-TR")}`)
-      ? `${temelAd} (Beden ${beden})` : temelAd;
+    const ad = kart.ad || s.ad;
     return {
-      ...s, ad, adet: s.adet,
+      ...s, ...grupKimligi, ad, adet: s.adet,
       siteAciklama: kart.aciklama, siteKategori: kart.kategori,
       siteMarka: kart.marka, siteVaryant: kart.varyant,
       gorselKullanimDurumu: kart.gorselHaklari,

@@ -37,6 +37,9 @@ export interface GoruSatiri {
   eslesenBilgiler?: unknown;
   eksikler?: string[];
   gorselDogrulamaDurumu?: string;
+  /** OpenRouter ürüne ilişkin kanonik karar bilgileri. */
+  duplicateGroup?: string | null;
+  canonicalRowId?: string | null;
   kaynaklar?: KartKaynagi[];
 }
 

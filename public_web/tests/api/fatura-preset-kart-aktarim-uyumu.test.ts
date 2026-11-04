@@ -42,6 +42,14 @@ describe("OpenRouter → Vixrex kayıt sınırı (stok eşleştirmesi sabit)", (
     expect(satir.katalog?.urunVaryantlari).toBeUndefined();
   });
 
+  it("OpenRouter grup kararı katalog snapshot'a aynen taşınır", () => {
+    const satir=faturaSatiriniAktar(okunanSatir({
+      duplicateGroup:"üretici-ürün-grubu",canonicalRowId:"2",
+    }),"Tedarikçi");
+    expect(satir.katalog).toMatchObject({
+      duplicateGroup:"üretici-ürün-grubu",canonicalRowId:"2",
+    });
+  });
   it("üretici görseli uygulanırken esnaf görseli ve mevcut stok-varyant kuralı korunur", async () => {
     const sonuc = faturaSatiriniAktar(okunanSatir(), "Tedarikçi");
     const girdi = {

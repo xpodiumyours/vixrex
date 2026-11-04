@@ -213,6 +213,10 @@ function katiKartYanitiDogrula(kaynak: Kayit, beklenenSatirlar?: readonly string
     gorulen.add(rowId);
     const grup = item.duplicate_group as string | null;
     const kanonik = item.canonical_row_id as string | null;
+    // Grup kimliği temizlenip yeniden yorumlanmaz: bozuk anahtar reddedilir.
+    if (grup !== null && (grup.length > 128 || grup.trim() !== grup || !grup)) {
+      return `items[${i}].duplicate_group`;
+    }
     if (grup === null && kanonik === null) continue;
     if (!grup || !kanonik || !/^[1-9]\d*$/.test(kanonik)) return `items[${i}].canonical_row_id`;
     gruplar.set(grup, [...(gruplar.get(grup) ?? []), { rowId, kanonik }]);
