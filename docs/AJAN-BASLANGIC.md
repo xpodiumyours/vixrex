@@ -70,7 +70,7 @@ Kapı her açılışta bunları **salt okunur** ölçer; değer uydurulmaz.
 | Platform | Kanıt komutu | Bugünkü ölçüm | Yazma sınırı |
 |---|---|---|---|
 | GitHub | `gh auth status` | BAĞLI (xpodiumyours) | okuma serbest; push/merge onayla |
-| Vercel | `vercel whoami` + MCP ucu | BAĞLI (CLI: xpodiumyours) · MCP köprüsü tanımlı; oturum bir kez onaylanır | deploy/rollback onayla |
+| Vercel | `vercel whoami` + MCP ucu | MCP BAĞLI (kayıtlı oturum, 246 araç; yazma araçları yalnız açık onayla) | deploy/rollback onayla |
 | Supabase | REST okuma + MCP ucu | BAĞLI (REST 200) · MCP yazma yetkisi ister; salt okunur ilkesi gereği yalnız REST okunur | migration/veri yazma onayla |
 | OpenRouter | `GET /api/v1/models` + preset dosyaları | BAĞLI (modeller 200) · preset depoda (`openrouter/`, 3 dosya); preset API ucu 401 | preset düzenleme onayla |
 | Graphify | yerel `graphify` + MCP ucu | YEREL HAZIR (12.072 düğüm) · BULUT MCP BAĞLI (11.336 düğüm · indeks `341919d`) · git kancası kurulu | harita okuma serbest; `remember`/`set_workspace` onayla |

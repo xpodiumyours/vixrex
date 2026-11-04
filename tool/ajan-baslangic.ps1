@@ -264,7 +264,7 @@ if ($null -ne (Get-Command vercel -ErrorAction SilentlyContinue)) {
     if ($LASTEXITCODE -eq 0 -and $vw) {
         $vercelStatus = 'BAGLI'
         $vercelWho = ([string]($vw | Select-Object -Last 1)).Trim()
-    } else { $vercelStatus = 'YETKISIZ' }
+    } else { $vercelStatus = 'OLCULMEDI' }
 }
 
 $graphLineFull = 'YOK'

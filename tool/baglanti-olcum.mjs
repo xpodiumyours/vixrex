@@ -110,35 +110,76 @@ async function mcpSession(url, token) {
 
 async function graphifyProbe() {
   const started = Date.now();
-  const token = readTokenStore();
-  if (!token) {
+  const tokens = readTokens();
+  if (!tokens.length) {
     return await probe("graphify_mcp", "https://api.graphify.com/mcp", { method: "POST", headers: mcpHeaders, body: initBody });
   }
-  try {
-    const s = await mcpSession("https://api.graphify.com/mcp", token);
-    const init = await s.rpc("initialize", {
-      protocolVersion: "2025-03-26",
-      capabilities: {},
-      clientInfo: { name: "vixrex-baglanti-olcum", version: "1" },
-    });
-    if (init.status === 401) return { ad: "graphify_mcp", durum: "YETKISIZ", http: 401, sure_ms: Date.now() - started };
-    if (init.status !== 200) return { ad: "graphify_mcp", durum: "HATA", http: init.status, sure_ms: Date.now() - started };
-    const list = await s.rpc("tools/list", {});
-    const tools = list.msg?.result?.tools || [];
-    const repos = await s.rpc("tools/call", { name: "list_repositories", arguments: {} });
-    const errCode = repos.msg?.error?.code || "";
-    const text = (repos.msg?.result?.content || []).filter((c) => c.type === "text").map((c) => c.text).join(" ");
-    const durum = errCode === "no_authorized_repositories" ? "KISITLI" : repos.status === 200 && text ? "BAGLI" : "HATA";
-    return { ad: "graphify_mcp", durum, http: repos.status, arac: tools.length, depo_metni: String(text || errCode).slice(0, 160), sure_ms: Date.now() - started };
-  } catch (e) {
-    return { ad: "graphify_mcp", durum: "ERISILEMEDI", http: 0, sure_ms: Date.now() - started, not: String(e.message || e).slice(0, 120) };
+  let son = { ad: "graphify_mcp", durum: "YETKISIZ", http: 401, sure_ms: 0 };
+  for (const token of tokens) {
+    try {
+      const s = await mcpSession("https://api.graphify.com/mcp", token);
+      const init = await s.rpc("initialize", {
+        protocolVersion: "2025-03-26",
+        capabilities: {},
+        clientInfo: { name: "vixrex-baglanti-olcum", version: "1" },
+      });
+      if (init.status !== 200) {
+        son = { ad: "graphify_mcp", durum: init.status === 401 ? "YETKISIZ" : "HATA", http: init.status, sure_ms: Date.now() - started };
+        continue;
+      }
+      const list = await s.rpc("tools/list", {});
+      const tools = list.msg?.result?.tools || [];
+      const repos = await s.rpc("tools/call", { name: "list_repositories", arguments: {} });
+      const errCode = repos.msg?.error?.code || "";
+      const text = (repos.msg?.result?.content || []).filter((c) => c.type === "text").map((c) => c.text).join(" ");
+      const durum = errCode === "no_authorized_repositories" ? "KISITLI" : repos.status === 200 && text ? "BAGLI" : "HATA";
+      return { ad: "graphify_mcp", durum, http: repos.status, arac: tools.length, depo_metni: String(text || errCode).slice(0, 160), sure_ms: Date.now() - started };
+    } catch (e) {
+      son = { ad: "graphify_mcp", durum: "ERISILEMEDI", http: 0, sure_ms: Date.now() - started, not: String(e.message || e).slice(0, 120) };
+    }
   }
+  return son;
+}
+
+function readTokens() {
+  const dir = path.join(os.homedir(), ".mcp-auth", "mcp-remote-v1");
+  try {
+    return fs
+      .readdirSync(dir)
+      .filter((f) => f.endsWith("_tokens.json"))
+      .map((f) => {
+        try {
+          return JSON.parse(fs.readFileSync(path.join(dir, f), "utf8")).access_token;
+        } catch {
+          return "";
+        }
+      })
+      .filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+async function authProbe(ad, url) {
+  const started = Date.now();
+  for (const token of readTokens()) {
+    try {
+      const r = await fetch(url, {
+        method: "POST",
+        headers: { ...mcpHeaders, authorization: "Bearer " + token },
+        body: initBody,
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+      if (r.status === 200) return { ad, durum: "BAGLI", http: 200, oturum: true, sure_ms: Date.now() - started };
+    } catch {}
+  }
+  return await probe(ad, url, { method: "POST", headers: mcpHeaders, body: initBody });
 }
 
 const probes = [];
 probes.push(await graphifyProbe());
-probes.push(await probe("supabase_mcp", "https://mcp.supabase.com/mcp?project_ref=chfulefxczbgurtgavtp", { method: "POST", headers: mcpHeaders, body: initBody }));
-probes.push(await probe("vercel_mcp", "https://mcp.vercel.com", { method: "POST", headers: mcpHeaders, body: initBody }));
+probes.push(await authProbe("supabase_mcp", "https://mcp.supabase.com/mcp?project_ref=chfulefxczbgurtgavtp"));
+probes.push(await authProbe("vercel_mcp", "https://mcp.vercel.com"));
 
 const orKey = env.OPENROUTER_API_KEY || "";
 if (orKey) {
