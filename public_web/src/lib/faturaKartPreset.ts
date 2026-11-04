@@ -83,8 +83,8 @@ export type TekillesmeKarari = {
   kimlikKurulamayan: Set<string>;
 };
 
-/** Birleştirme yalnız barkod (ya da barkodsuzsa marka+ad) ve beden/varyant aynıyken ve kararlar doğrulanmışken yapılır. */
-function tekillesmeKarariKartlardan(
+/** Yalnız PRESET_AKIS=mevcut geri dönüş yolu: eski ürün-karşılaştırma davranışı korunur. */
+function eskiTekillesmeKarariKartlardan(
   satirlar: TekrarSatiri[],
   kartlar: Map<string, KartSozlesmesi>,
 ): TekillesmeKarari {
@@ -132,6 +132,50 @@ function tekillesmeKarariKartlardan(
     }
   }
   return karar;
+}
+
+/**
+ * Yeni akış: ürün kimliğine ilişkin hiçbir alan karşılaştırılmaz.
+ * Yalnız OpenRouter'ın kanonik bağlantılarının satır/grup bütünlüğü denetlenir.
+ */
+function presetTekillesmeKarariKartlardan(
+  satirlar: TekrarSatiri[],
+  kartlar: Map<string, KartSozlesmesi>,
+): TekillesmeKarari {
+  const karar: TekillesmeKarari = {
+    indirgenen: new Map(), bedenAyrisan: new Set(), kimlikKurulamayan: new Set(),
+  };
+  const gruplar = new Map<string, string[]>();
+  for (let i = 0; i < satirlar.length; i++) {
+    const rowId = String(i + 1);
+    const grup = kartlar.get(rowId)?.tekrarGrubu;
+    if (!grup) continue;
+    gruplar.set(grup, [...(gruplar.get(grup) ?? []), rowId]);
+  }
+
+  for (const [grup, uyeler] of gruplar) {
+    if (uyeler.length < 2) continue;
+    const kanonikler = uyeler.map((id) => kartlar.get(id)?.kanonikRowId ?? "");
+    const kanonikId = kanonikler[0];
+    // Fatura dışı, bozuk, çelişkili veya kendi kendine işaret etmeyen bağlantı kabul edilmez.
+    if (!/^[1-9]\d*$/.test(kanonikId) || kanonikler.some((id) => id !== kanonikId)) continue;
+    if (!uyeler.includes(kanonikId)) continue;
+    const kanonikKart = kartlar.get(kanonikId);
+    if (kanonikKart?.tekrarGrubu !== grup || kanonikKart.kanonikRowId !== kanonikId) continue;
+    for (const id of uyeler) {
+      if (id !== kanonikId) karar.indirgenen.set(id, Number(kanonikId));
+    }
+  }
+  return karar;
+}
+
+function tekillesmeKarariKartlardan(
+  satirlar: TekrarSatiri[],
+  kartlar: Map<string, KartSozlesmesi>,
+): TekillesmeKarari {
+  return akis() === "yeni"
+    ? presetTekillesmeKarariKartlardan(satirlar, kartlar)
+    : eskiTekillesmeKarariKartlardan(satirlar, kartlar);
 }
 
 export function tekillesmeKarari(satirlar: TekrarSatiri[], items: Map<string, Kayit>): TekillesmeKarari {
