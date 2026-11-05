@@ -93,12 +93,19 @@ bağlantı / 580 bölge, indeks commit'i `341919d`. Ajan `list_repositories` →
 ile bu commit'i ve yaşı doğrular; indeks çalışılan commit'ten eskiyse "harita güncel değil"
 der. Bulut harita varsayılan dalın son indeksidir; canlı davranış ve DB kanıtı yerine geçmez.
 
+## 2.6 Platformlar arası bağlantı navigasyonu (2026-11-05)
+
+Vercel, Supabase, OpenRouter, API anahtarlarının **adları** ve yetkiler, MCP, fatura RPC'leri ve callback için [Platform Bağlantı Haritası](PLATFORM-BAGLANTI-HARITASI.md) ile [makinece okunabilir ilişki grafiği](platform-baglanti-haritasi.json) birlikte okunur.
+
+Bu iki kayıt canlı anahtar veya canlı preset içermez. `main`, PR ve canlı bağımsız doğrulanır; sunucu sırları asla GitHub'a çıkarılmaz. Ajanın ilk görevi bu bağlantıları tekrar tahmin etmek değil, ilgili platformun kendi salt-okunur ölçümüyle teyit etmektir. Bağlantı **tanımlı** olması bağlantı **çalışıyor** demek değildir.
+
 ## 3. Hangi belge tarihsel — hangisi güncel (2026-11-03)
 
 | Belge | Sınıf | Not |
 |---|---|---|
 | [AGENTS.md](../AGENTS.md) | kural (tek adres) | çalışma tarzı; harita değil |
 | [README.md](../README.md) | tanıtım | depo mimarisi; durum kaynağı değil |
+| [PLATFORM-BAGLANTI-HARITASI.md](PLATFORM-BAGLANTI-HARITASI.md) ve [platform-baglanti-haritasi.json](platform-baglanti-haritasi.json) | 2026-11-05 bağlantı envanteri | kod/proje/anahtar ADI/izin ilişkileri; canlı çalışma kanıtı değil |
 | `docs/ANA-DENETIM-KAYDI.md` | yerel kayıt | bu makinede var, depoda **değil**; yoksa yok say |
 | `docs/FATURADAN-VITRINE-MASTER-PLAN.md` | **tarihsel** | 30 Eylül planı; güncel iş listesi değil |
 | `docs/FATURA-URUN-KARTI-PLAN.md` | plan | 7 Ekim; havuz kararı birkaç satırını geçersiz kılar |

@@ -1,0 +1,363 @@
+{
+  "schema_version": 1,
+  "document_type": "vixrex_platform_connection_navigation",
+  "observed_on": "2026-11-05",
+  "evidence_base": {
+    "repository": "xpodiumyours/vixrex",
+    "branch": "main",
+    "commit": "7fa1111c0ca21e11fbdadee22c9ac07a5115c4c9",
+    "live_deployment_commit": null,
+    "pr_741_source": "separate draft branch"
+  },
+  "safety": {
+    "repository_is_public": true,
+    "contains_secret_values": false,
+    "keys_are_names_only": true,
+    "secret_values_remain_in_provider": true,
+    "no_runtime_mutation": true
+  },
+  "source_of_truth": {
+    "code_and_branch": "GitHub exact commit/branch",
+    "production_deployment": "Vercel deployment and deploy-info.json measured separately",
+    "project_env_presence": "Vercel environment-variable metadata only (without decrypt)",
+    "database_runtime": "Supabase MCP/production measurement; migration files are intended schema, not proof of deployment",
+    "presets": "OpenRouter live preset read; repository preset JSON is not live proof",
+    "code_graph": "Graphify graph_stats; default-branch index != PR branch or runtime",
+    "approvals": "AGENTS.md and explicit owner decision"
+  },
+  "nodes": [
+    {
+      "id": "github_vixrex",
+      "type": "repository",
+      "name": "xpodiumyours/vixrex",
+      "ref": "xpodiumyours/vixrex"
+    },
+    {
+      "id": "vercel_public",
+      "type": "deployment_project",
+      "name": "vixrex-public",
+      "project_id": "prj_dCMDIaefrTHg6ysiUDT7veiWI52h",
+      "code_root": "public_web/",
+      "observed": "project metadata read 2026-11-05"
+    },
+    {
+      "id": "vercel_app",
+      "type": "deployment_project",
+      "name": "vixrex-app",
+      "project_id": "prj_AfdnDnAcIwSCaJuBoCQh1TP1GvWR",
+      "code_root": "Flutter lib/",
+      "observed": "project metadata read 2026-11-05"
+    },
+    {
+      "id": "supabase",
+      "type": "database_service",
+      "name": "Vixrex Project",
+      "project_ref": "chfulefxczbgurtgavtp",
+      "observed_project_status": "ACTIVE_HEALTHY",
+      "observed": "Supabase project metadata 2026-11-05"
+    },
+    {
+      "id": "openrouter",
+      "type": "model_api",
+      "name": "OpenRouter",
+      "endpoint": "https://openrouter.ai/api/v1/chat/completions",
+      "live_preset_contents_verified": false
+    },
+    {
+      "id": "invoice_entry",
+      "type": "api",
+      "name": "Fatura yükleme",
+      "code": "public_web/src/app/api/fatura-oku/route.ts"
+    },
+    {
+      "id": "invoice_orchestrator",
+      "type": "code",
+      "name": "Fatura arka plan işlemi",
+      "code": "public_web/src/lib/faturaArkaPlanIslemi.ts"
+    },
+    {
+      "id": "invoice_enqueue",
+      "type": "database_rpc",
+      "name": "enqueue_invoice_provider_job",
+      "code": "supabase/migrations/20261023173000_fatura_kart_preset_uyumu.sql"
+    },
+    {
+      "id": "invoice_advance",
+      "type": "database_rpc",
+      "name": "advance_invoice_provider_job",
+      "code": "supabase/migrations/20261023173000_fatura_kart_preset_uyumu.sql"
+    },
+    {
+      "id": "invoice_callback",
+      "type": "api",
+      "name": "Fatura provider callback",
+      "code": "public_web/src/app/api/cron/fatura-provider/route.ts"
+    },
+    {
+      "id": "invoice_read_preset",
+      "type": "preset_reference",
+      "name": "@preset/vixrex-qwen-fatura-okuma-suzme",
+      "code": "public_web/src/lib/faturaArkaPlanIslemi.ts",
+      "live_preset_revision_verified": false
+    },
+    {
+      "id": "invoice_card_preset",
+      "type": "preset_reference",
+      "name": "@preset/urun-kart-olusturucu",
+      "code": "supabase/migrations/20261023173000_fatura_kart_preset_uyumu.sql",
+      "live_preset_revision_verified": false
+    },
+    {
+      "id": "consumer_vitrin",
+      "type": "experience",
+      "name": "Vixrex public vitrin",
+      "code": "public_web/src/app/v/[slug]/ProductCatalog.tsx"
+    },
+    {
+      "id": "agent_mcp_config",
+      "type": "agent_config",
+      "name": "Repository MCP map",
+      "code": ".mcp.json"
+    },
+    {
+      "id": "graphify",
+      "type": "code_index",
+      "name": "Graphify hosted MCP",
+      "endpoint": "https://api.graphify.com/mcp",
+      "current_index_commit_verified": false
+    }
+  ],
+  "edges": [
+    {
+      "from": "github_vixrex",
+      "to": "vercel_public",
+      "relation": "git_deploy_source",
+      "evidence": "Vercel project and deployment metadata",
+      "note": "Preview branch push can trigger build; main is not changed by this map"
+    },
+    {
+      "from": "github_vixrex",
+      "to": "vercel_app",
+      "relation": "git_deploy_source",
+      "evidence": "Vercel project and deployment metadata"
+    },
+    {
+      "from": "invoice_entry",
+      "to": "invoice_orchestrator",
+      "relation": "fatura_workflow",
+      "evidence": "public_web/src/app/api/fatura-oku/route.ts"
+    },
+    {
+      "from": "invoice_orchestrator",
+      "to": "invoice_enqueue",
+      "relation": "supabase_rpc",
+      "evidence": "public_web/src/lib/faturaArkaPlanIslemi.ts:35-49"
+    },
+    {
+      "from": "invoice_orchestrator",
+      "to": "invoice_advance",
+      "relation": "supabase_rpc",
+      "evidence": "public_web/src/lib/faturaArkaPlanIslemi.ts:87-98"
+    },
+    {
+      "from": "invoice_enqueue",
+      "to": "openrouter",
+      "relation": "pg_net_http_post",
+      "preset": "invoice_read_preset",
+      "evidence": "supabase/migrations/20261023173000_fatura_kart_preset_uyumu.sql:65-125"
+    },
+    {
+      "from": "invoice_advance",
+      "to": "openrouter",
+      "relation": "pg_net_http_post",
+      "preset": "invoice_card_preset",
+      "evidence": "supabase/migrations/20261023173000_fatura_kart_preset_uyumu.sql:6-63"
+    },
+    {
+      "from": "supabase",
+      "to": "invoice_callback",
+      "relation": "pg_net_callback",
+      "evidence": "supabase/migrations/20261023173000_fatura_kart_preset_uyumu.sql:169-184",
+      "note": "Callback target code is Vercel public endpoint; runtime enablement not proven by source alone"
+    },
+    {
+      "from": "vercel_public",
+      "to": "supabase",
+      "relation": "server_data_access",
+      "env": [
+        "SUPABASE_URL",
+        "SUPABASE_SERVICE_ROLE_KEY"
+      ],
+      "evidence": "public_web/src/lib/supabaseAdmin.ts"
+    },
+    {
+      "from": "vercel_app",
+      "to": "supabase",
+      "relation": "project_environment_config",
+      "env": [
+        "SUPABASE_URL",
+        "SUPABASE_PUBLISHABLE_KEY"
+      ],
+      "evidence": "Vercel vixrex-app production env name inventory"
+    },
+    {
+      "from": "vercel_public",
+      "to": "openrouter",
+      "relation": "server_key_origin_then_rpc_forward",
+      "env": [
+        "OPENROUTER_API_KEY"
+      ],
+      "evidence": "public_web/src/lib/faturaArkaPlanIslemi.ts:35-43,90-96",
+      "note": "Secret is passed as RPC argument to Supabase; do not print or log"
+    },
+    {
+      "from": "vercel_public",
+      "to": "consumer_vitrin",
+      "relation": "serves",
+      "evidence": "README.md and Vercel project metadata"
+    },
+    {
+      "from": "agent_mcp_config",
+      "to": "supabase",
+      "relation": "agent_mcp",
+      "evidence": ".mcp.json",
+      "note": "Configured endpoint does not prove a given agent authenticated"
+    },
+    {
+      "from": "agent_mcp_config",
+      "to": "vercel_public",
+      "relation": "agent_mcp",
+      "evidence": ".mcp.json",
+      "note": "Vercel MCP is account scoped, not automatically confined to this project"
+    },
+    {
+      "from": "agent_mcp_config",
+      "to": "graphify",
+      "relation": "agent_mcp",
+      "evidence": ".mcp.json",
+      "note": "Index freshness must be checked separately"
+    },
+    {
+      "from": "github_vixrex",
+      "to": "graphify",
+      "relation": "code_index_input",
+      "evidence": "docs/AJAN-BASLANGIC.md:Graphify",
+      "note": "Hosted default-branch index may not index this separate branch automatically"
+    }
+  ],
+  "credentials": [
+    {
+      "name": "OPENROUTER_API_KEY",
+      "provider": "OpenRouter",
+      "expected_location": "Vercel vixrex-public production; local public_web/.env.local for local use",
+      "observed_production_key_name": true,
+      "used_by": [
+        "invoice_orchestrator"
+      ],
+      "privilege": "runtime API access; exact key scope not verified",
+      "secret": true
+    },
+    {
+      "name": "OPENROUTER_MANAGEMENT_API_KEY",
+      "provider": "OpenRouter",
+      "expected_location": "Operator-controlled environment only; not in Vercel production inventory",
+      "observed_production_key_name": false,
+      "used_by": [
+        "tool/openrouter-preset.sh",
+        "tool/preset-karsilastir.py"
+      ],
+      "privilege": "preset management, separate from runtime",
+      "secret": true
+    },
+    {
+      "name": "SUPABASE_SERVICE_ROLE_KEY",
+      "provider": "Supabase",
+      "expected_location": "Vercel vixrex-public production server-only",
+      "observed_production_key_name": true,
+      "used_by": [
+        "public_web/src/lib/supabaseAdmin.ts"
+      ],
+      "privilege": "privileged server key, never browser",
+      "secret": true
+    },
+    {
+      "name": "SUPABASE_URL",
+      "provider": "Supabase",
+      "expected_location": "Vercel vixrex-public and vixrex-app production",
+      "observed_production_key_name": true,
+      "used_by": [
+        "public_web/src/lib/supabaseAdmin.ts",
+        "public_web/src/lib/supabase.ts"
+      ],
+      "privilege": "project URL, not an auth secret",
+      "secret": false
+    },
+    {
+      "name": "SUPABASE_PUBLISHABLE_KEY",
+      "provider": "Supabase",
+      "expected_location": "Vercel vixrex-public and vixrex-app production",
+      "observed_production_key_name": true,
+      "used_by": [
+        "public_web/src/lib/supabase.ts"
+      ],
+      "privilege": "public client key, RLS still required",
+      "secret": false
+    },
+    {
+      "name": "NEXT_PUBLIC_SUPABASE_URL",
+      "provider": "Supabase",
+      "expected_location": "Vercel vixrex-public production",
+      "observed_production_key_name": true,
+      "used_by": [
+        "public_web/src/lib/supabase.ts"
+      ],
+      "privilege": "browser-visible project URL",
+      "secret": false
+    },
+    {
+      "name": "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+      "provider": "Supabase",
+      "expected_location": "Vercel vixrex-public production",
+      "observed_production_key_name": true,
+      "used_by": [
+        "public_web/src/lib/supabase.ts"
+      ],
+      "privilege": "legacy browser-visible anon key, RLS required",
+      "secret": false
+    }
+  ],
+  "platform_observations": {
+    "vercel_public": {
+      "project_found": true,
+      "production_variable_names_checked": true,
+      "secret_values_read": false,
+      "branch_preview_variable_sets_exist": true
+    },
+    "vercel_app": {
+      "project_found": true,
+      "production_variable_names_checked": true,
+      "secret_values_read": false
+    },
+    "supabase": {
+      "project_found": true,
+      "status": "ACTIVE_HEALTHY",
+      "schema_runtime_probed": false
+    },
+    "openrouter": {
+      "account_current_auth_checked": false,
+      "preset_revisions_checked": false
+    },
+    "graphify": {
+      "current_hosted_index_checked": false,
+      "new_branch_auto_index_verified": false
+    }
+  },
+  "unresolved": [
+    "OpenRouter live preset revisions and runtime key scope not inspected",
+    "Production fatura transaction not run",
+    "Graphify hosted graph_stats not available for direct check",
+    "New documentation branch is not the default branch and is not presumed indexed",
+    "Preview environment variables for this new branch not verified",
+    "Runtime database RPC installation not established by migration file alone"
+  ]
+}
