@@ -1,7 +1,6 @@
 begin;
 
--- Yeni kart presetini kabul ederken mevcut üretim yolunu varsayılan tut.
--- Akış, okuma sonucuyla saklanır; kart cevabında ortam değişse bile değişmez.
+-- Kart aşamasındaki akışı okuma kaydıyla taşı; kayıt yoksa modelden güvenle çıkar.
 create or replace function public.advance_invoice_provider_job(
   p_store_id uuid,
   p_job_id uuid,
@@ -15,7 +14,10 @@ declare
   v_request_id bigint;
   v_akis text;
 begin
-  v_akis := coalesce(nullif(p_read_result->>'presetAkis',''),'mevcut');
+  v_akis := coalesce(
+    nullif(p_read_result->>'presetAkis',''),
+    case when p_body->>'model' = '@preset/vixrex-urun-karti-v2' then 'yeni' else 'mevcut' end
+  );
   if p_read_result is null
     or jsonb_typeof(p_read_result) is distinct from 'object'
     or p_body is null
