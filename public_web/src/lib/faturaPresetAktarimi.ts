@@ -41,7 +41,8 @@ export function faturaSatiriniAktar(satir: GoruSatiri, tedarikci: string): Esles
     katalog: {
       ...ekler, firma: tedarikci, kaynakFirma: satir.uretici || satir.siteMarka || satir.marka || tedarikci,
       // Kod/barkodun mevcut olması onların resmî kaynakla doğrulandığı anlamına gelmez.
-      dayanak: "ad", izinDurumu: satir.gorselKullanimDurumu === "authorized" ? "var" : "yok",
+      // Modelin rights_status/authorized beyanı üretici izni kanıtı değildir.
+      dayanak: "ad", izinDurumu: "yok",
       resmiAd: satir.ad || satir.model, marka: satir.siteMarka || satir.marka,
       aciklama: satir.siteAciklama ?? "", gorseller, gorselAdaylari: gorseller,
       kaynak: satir.siteSayfa ?? "", kategori: satir.siteKategori, ozellikler,
