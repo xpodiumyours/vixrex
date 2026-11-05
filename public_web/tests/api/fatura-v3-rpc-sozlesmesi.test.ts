@@ -14,8 +14,9 @@ describe("V3 kart RPC sözleşmesi", () => {
     expect(sql).toContain("v_akis = 'yeni'");
   });
 
-  it("akış alanı olmayan mevcut işleri eski presetle geriye uyumlu tutar", () => {
-    expect(sql).toContain("coalesce(nullif(p_read_result->>'presetAkis',''),'mevcut')");
+  it("akış alanı olmayan işleri modelden geriye uyumlu ayırt eder", () => {
+    expect(sql).toContain("nullif(p_read_result->>'presetAkis','')");
+    expect(sql).toContain("case when p_body->>'model' = '@preset/vixrex-urun-karti-v2' then 'yeni' else 'mevcut' end");
     expect(sql).toContain("v_akis = 'mevcut'");
     expect(sql).toContain("@preset/urun-kart-olusturucu");
   });

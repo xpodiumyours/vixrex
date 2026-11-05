@@ -5,7 +5,7 @@ import { FATURA_JSON_ISTEGI } from "@/lib/faturaPresetSozlesmesi";
 
 it("Vixrex nihai karttan sonra resmî sayfa taramaz veya görsel seçmez", () => {
   const source = readFileSync(fileURLToPath(new URL("../../src/lib/faturaArkaPlanIslemi.ts", import.meta.url)), "utf8");
-  const mevcut = source.indexOf('akis() === "mevcut"');
+  const mevcut = source.indexOf('islemAkisi === "mevcut"');
   const yeni = source.indexOf(": okuma;", mevcut);
   expect(mevcut).toBeGreaterThan(-1);
   expect(yeni).toBeGreaterThan(mevcut);
