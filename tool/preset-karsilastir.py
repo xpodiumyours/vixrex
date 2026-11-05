@@ -41,6 +41,30 @@ def sistem_ozet(veri):
         "system_prompt_sha256": hashlib.sha256(sistem.encode("utf-8")).hexdigest(),
     }
 
+def calisan_surumler(slug, key):
+    # OpenRouter @preset/slug çağrısında designated değil, latest sürüm çalışır.
+    sonuc = []
+    offset = 0
+    while True:
+        st, data = get(f"/presets/{slug}/versions?limit=100&offset={offset}", key)
+        if st != 200:
+            return st, []
+        kayitlar = data.get("data", data) if isinstance(data, dict) else data
+        if not isinstance(kayitlar, list):
+            return "ERR", []
+        sonuc.extend(v for v in kayitlar if isinstance(v, dict))
+        if len(kayitlar) < 100:
+            return 200, sonuc
+        offset += len(kayitlar)
+
+
+def en_guncel_surum(kayitlar):
+    try:
+        return max(kayitlar, key=lambda v: int(v.get("version") or 0))
+    except (ValueError, TypeError):
+        return None
+
+
 def main():
     key = anahtar()
     if not key:
@@ -66,28 +90,27 @@ def main():
             print(slug + ": FARK (canlida yok)")
             farkli += 1
             continue
-        des = p.get("designated_version_id")
-        bulunan = None
-        for v in range(1, 31):
-            s, x = get("/presets/" + slug + "/versions/" + str(v), key)
-            if s != 200:
-                continue
-            vv = x.get("data", x) if isinstance(x, dict) else x
-            if vv.get("id") == des:
-                bulunan = (v, vv)
-        if not bulunan:
-            print(slug + ": FARK (designated surum bulunamadi)")
+        st, surumler = calisan_surumler(slug, key)
+        if st != 200:
+            print(slug + ": FARK (surumler okunamadi: " + str(st) + ")")
             farkli += 1
             continue
-        vn, vv = bulunan
+        vv = en_guncel_surum(surumler)
+        if not vv:
+            print(slug + ": FARK (calisan latest surum bulunamadi)")
+            farkli += 1
+            continue
+        vn = int(vv.get("version") or 0)
         canli = sistem_ozet(vv)
         alanlar = ["model", "response_format_type", "tools", "require_parameters", "system_prompt_sha256"]
         fark_list = [a for a in alanlar if canli.get(a) != beklenen.get(a)]
+        if vv.get("id") != beklenen.get("designated_version_id") or vn != beklenen.get("designated_version"):
+            fark_list.append("calisan latest surum")
         if fark_list:
             print(slug + " (v" + str(vn) + "): FARK -> " + ", ".join(fark_list))
             farkli += 1
         else:
-            print(slug + " (v" + str(vn) + "): OK")
+            print(slug + " (latest v" + str(vn) + "): OK")
     print("SONUC:", "ESLESME" if farkli == 0 else "FARK VAR")
     return 0 if farkli == 0 else 1
 
