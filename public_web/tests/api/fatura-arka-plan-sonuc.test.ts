@@ -1,6 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const m = vi.hoisted(() => ({ save: vi.fn(), load: vi.fn() }));
+vi.mock("@/lib/faturaGorsel", () => ({ gorselsizSatirlariTamamla: async ({ satirlar }: { satirlar: unknown[] }) => satirlar }));
+vi.mock("@/lib/faturaGorselSecimi", () => ({ adayGorselleriniSec: async ({ satirlar }: { satirlar: unknown[] }) => satirlar }));
 vi.mock("@/lib/faturaIslemKaydi", () => ({ islemKaydet: m.save }));
 vi.mock("@/lib/faturaIslemOku", () => ({ islemiYukle: m.load, islemYaniti: (x:{satirlar:unknown[]}) => ({tamam:true,satirlar:x.satirlar}) }));
 vi.mock("@/lib/faturaOtomatikTaslakKaydi", () => ({ faturaTaslakYanitiniHazirla: async (_admin: unknown, _store: string, _slug: string, kayit: { satirlar: never[]; islemKimligi: string }) => ({ tamam: true, satirlar: kayit.satirlar, taslaklar: (await import("@/lib/faturaTaslagi")).faturaTaslaklari(kayit.satirlar, kayit.islemKimligi) }) }));
@@ -36,8 +38,9 @@ const kartCevabi=JSON.stringify({
   summary:{total_rows:1,verified_count:0,draft_count:1,not_found_count:0},
   items:[kartItem],
 });
-const receipt=(content:string, extra:Record<string,unknown>={})=>({stage:"cards",state:"received",httpStatus:200,contentType:"application/json",body:JSON.stringify({choices:[{message:{content},finish_reason:"stop"}]}),fingerprint:"a".repeat(64),readResult:{tedarikci:"Tedarikçi",satirlar:[{hamSatir:"K-1",model:"K-1",ad:"Kaynak ürünü",barkod:"",varyant:"Lacivert",beden:"L",marka:"",adet:2,birim:"",birimFiyat:100,tutar:200,okumaGuveni:0.8,siteGorseller:[],uretici:"Üretici",ozellikler:[{key:"fabric",label:"Kumaş",value:"Pamuk"}]}],uyarilar:["Örnek test verisi"]},...extra});
+const receipt=(content:string, extra:Record<string,unknown>={})=>({stage:"cards",state:"received",httpStatus:200,contentType:"application/json",body:JSON.stringify({choices:[{message:{content},finish_reason:"stop"}]}),fingerprint:"a".repeat(64),readResult:{presetAkis:"yeni",tedarikci:"Tedarikçi",satirlar:[{hamSatir:"K-1",model:"K-1",ad:"Kaynak ürünü",barkod:"",varyant:"Lacivert",beden:"L",marka:"",adet:2,birim:"",birimFiyat:100,tutar:200,okumaGuveni:0.8,siteGorseller:[],uretici:"Üretici",ozellikler:[{key:"fabric",label:"Kumaş",value:"Pamuk"}]}],uyarilar:["Örnek test verisi"]},...extra});
 beforeEach(()=>{vi.clearAllMocks();m.save.mockResolvedValue(job);m.load.mockResolvedValue({islemKimligi:job,satirlar:[]});});
+afterEach(()=>{vi.unstubAllEnvs();});
 describe("tamamlanmış arka plan sonucunun gerçek taşıma yolu",()=>{
  it("bekleyen iş hazır kart sayılmaz ve tekrar model çalıştırmaz",async()=>{const {admin,rpc}=client({state:"queued"});const data=await arkaPlanFaturaSonucunuAl(admin,"store","deneme",job);expect(data.hazirlaniyor).toBe(true);expect(data.satirlar).toBeUndefined();expect(m.save).not.toHaveBeenCalled();expect(rpc).toHaveBeenCalledTimes(1);});
  it("tamamlanan kart kaynağını üretici/beden/kumaş ile atomik kayda taşır; fiyat/onay/yayın eklemez",async()=>{
@@ -57,7 +60,21 @@ describe("tamamlanmış arka plan sonucunun gerçek taşıma yolu",()=>{
   const {admin,rpc}=client(receipt(first,{stage:"reading",readResult:null}));
   const data=await arkaPlanFaturaSonucunuAl(admin,"store","deneme",job);
   expect(data.hazirlaniyor).toBe(true); expect(m.save).not.toHaveBeenCalled();
-  expect(rpc).toHaveBeenCalledWith("advance_invoice_provider_job",expect.objectContaining({p_job_id:job,p_read_result:expect.objectContaining({satirlar:expect.any(Array)}),p_body:expect.objectContaining({model:"@preset/vixrex-urun-karti-v2"})}));
+  expect(rpc).toHaveBeenCalledWith("advance_invoice_provider_job",expect.objectContaining({p_job_id:job,p_read_result:expect.objectContaining({presetAkis:"yeni",satirlar:expect.any(Array)}),p_body:expect.objectContaining({model:"@preset/vixrex-urun-karti-v2"})}));
+ });
+ it("kart cevabında ortam değişse bile işteki yeni akış korunur",async()=>{
+  vi.stubEnv("PRESET_AKIS","mevcut");
+  const {admin}=client(receipt(JSON.stringify({items:[kartItem]})));
+  await expect(arkaPlanFaturaSonucunuAl(admin,"store","deneme",job)).rejects.toThrow("KART_YANITI_COZULEMEDI");
+  expect(m.save).not.toHaveBeenCalled();
+ });
+ it("önceki işte akış alanı yoksa mevcut yol ve eski cevap biçimi korunur",async()=>{
+  const eskiIs=receipt(JSON.stringify({items:[kartItem]}));
+  delete (eskiIs.readResult as Record<string,unknown>).presetAkis;
+  const {admin}=client(eskiIs);
+  m.load.mockImplementation(async()=>({islemKimligi:job,satirlar:m.save.mock.calls[0]?.[0].satirlar ?? []}));
+  const data=await arkaPlanFaturaSonucunuAl(admin,"store","deneme",job);
+  expect(data.tamam).toBe(true);expect(m.save).toHaveBeenCalledTimes(1);
  });
  it.each(["bozuk",'{"satirlar":[]}'])("hatalı veya boş sonuç ürün oluşturmaz: %s",async(content)=>{const {admin,rpc}=client(receipt(content));await expect(arkaPlanFaturaSonucunuAl(admin,"store","deneme",job)).rejects.toThrow();expect(m.save).not.toHaveBeenCalled();expect(rpc).toHaveBeenCalledWith("fail_invoice_provider_job",expect.objectContaining({p_job_id:job}));});
  it("model404 hazır karta dönüştürülmez",async()=>{const {admin}=client({stage:"reading",state:"received",httpStatus:200,contentType:"text/event-stream",body:'data: {"error":{"code":404}}\n\n',fingerprint:"a".repeat(64)});await expect(arkaPlanFaturaSonucunuAl(admin,"store","deneme",job)).rejects.toThrow("OKUYUCU_MODEL_BULUNAMADI");expect(m.save).not.toHaveBeenCalled();});

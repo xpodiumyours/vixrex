@@ -50,15 +50,24 @@ describe("gerçek ikinci preset JSON sözleşmesi",()=>{
     const okuma = {...first,satirlar:[{...first.satirlar[0],varyant:"Sade",gramaj:"175 g"}]};
     const result = await kartPresetYanitiniOku(response([{
       ...kart,
-      vixrex_product_json:{...kart.vixrex_product_json,brand:"Üreticinin markası",variant:"175 g tekli paket",consumer_sale_price:999,stock_quantity:999},
+      vixrex_product_json:{...kart.vixrex_product_json,brand:"Üreticinin markası",variant:"175 g tekli paket",consumer_sale_price:null,stock_quantity:null},
       media:{...kart.media,image_url:"",source_url:"https://example.com/p/1.jpg",rights_status:"authorized"},
     }]),okuma);
     const satir = faturaSatiriniAktar(result.sonuc.satirlar[0],"Tedarikçi");
     expect(satir.marka).toBe("X");
     expect(satir.varyant).toBe("Sade");
-    expect(satir.katalog).toMatchObject({marka:"Üreticinin markası",varyant:"175 g tekli paket",gramaj:"175 g",izinDurumu:"var",gorseller:[]});
+    expect(satir.katalog).toMatchObject({marka:"Üreticinin markası",varyant:"175 g tekli paket",gramaj:"175 g",izinDurumu:"yok",gorseller:[]});
     expect(faturaKatalogMetadatasi(satir.katalog ?? {}).attributes?.map(a=>a.value)).toEqual(expect.arrayContaining(["Sade","175 g tekli paket","175 g"]));
     expect(satirdanFaturaTaslagi(satir)).toMatchObject({brand:"Üreticinin markası",satisFiyati:null,stokOnerisi:3,ownerApproved:false,isVisible:false});
+  });
+  it("OpenRouter satış fiyatı veya stok üretirse yeni kart yanıtını reddeder",async()=>{
+    for (const alan of ["consumer_sale_price", "stock_quantity"] as const) {
+      const bozuk = item("1", "A ürün");
+      await expect(kartPresetYanitiniOku(response([
+        { ...bozuk, vixrex_product_json: { ...bozuk.vixrex_product_json, [alan]: 1 } },
+        item("2", "B ürün"),
+      ]), first)).rejects.toThrow("KART_YANITI_COZULEMEDI");
+    }
   });
   it("faturadan eksik kalan row_id varsa tüm kart yanıtını reddeder",async()=>{
     await expect(kartPresetYanitiniOku(response([item("1","A ürün")]),first))
