@@ -209,6 +209,8 @@ function katiKartYanitiDogrula(kaynak: Kayit, beklenenSatirlar?: readonly string
     if (!satirSemasi(deger)) return `items[${i}] şeması`;
     const item = deger as Kayit;
     const rowId = item.row_id as string;
+    const urun = item.vixrex_product_json as Kayit;
+    if (urun.consumer_sale_price !== null || urun.stock_quantity !== null) return `items[${i}] satış fiyatı/stok`;
     if (!/^[1-9]\d*$/.test(rowId) || gorulen.has(rowId)) return `items[${i}].row_id`;
     gorulen.add(rowId);
     const grup = item.duplicate_group as string | null;

@@ -11,6 +11,7 @@ import {
   kartPresetIstekGovdesi,
   kartPresetYanitiniOku,
   URUN_KART_PRESET,
+  type PresetAkis,
 } from "@/lib/faturaKartPreset";
 import { faturaBaslangicZamani, faturaOzetSatiri, faturaOzetiniKaydet, gecenSaniye } from "@/lib/faturaOzeti";
 
@@ -85,24 +86,27 @@ export async function arkaPlanFaturaSonucunuAl(
     let okuma: GoruSonucu;
     let kartCevabi: unknown;
     let asamaKullanimlari: unknown;
+    let islemAkisi: PresetAkis = "mevcut";
     if (sonuc.stage === "reading") {
       okuma = await faturaYanitiniOku(cevap);
       if (!okuma.satirlar.length) throw new Error("FOTOGRAFTA_YAZI_YOK");
+      islemAkisi = akis();
       const ikinci = await admin.rpc("advance_invoice_provider_job", {
         p_store_id: storeId,
         p_job_id: islemKimligi,
-        p_read_result: okuma,
-        p_body: kartPresetIstekGovdesi(okuma),
+        p_read_result: { ...okuma, presetAkis: islemAkisi },
+        p_body: kartPresetIstekGovdesi(okuma, islemAkisi),
         p_api_key: process.env.OPENROUTER_API_KEY,
       });
       if (ikinci.error || ikinci.data?.success !== true) throw new Error("KART_ISLEYICI_HAZIR_DEGIL");
       return bekleyenFaturaYaniti(islemKimligi, "kartlaniyor");
     } else if (sonuc.stage === "cards") {
-      const ilkOkuma = sonuc.readResult as GoruSonucu | null;
+      const ilkOkuma = sonuc.readResult as (GoruSonucu & { presetAkis?: unknown }) | null;
       if (!ilkOkuma || !Array.isArray(ilkOkuma.satirlar) || !ilkOkuma.satirlar.length) {
         throw new Error("OKUYUCU_EKSIK_CEVAP");
       }
-      const kart = await kartPresetYanitiniOku(cevap, ilkOkuma);
+      islemAkisi = ilkOkuma.presetAkis === "yeni" ? "yeni" : "mevcut";
+      const kart = await kartPresetYanitiniOku(cevap, ilkOkuma, islemAkisi);
       okuma = kart.sonuc;
       kartCevabi = kart.kartCevabi;
       asamaKullanimlari = {
@@ -114,7 +118,7 @@ export async function arkaPlanFaturaSonucunuAl(
       throw new Error("OKUYUCU_EKSIK_CEVAP");
     }
     const birlesikOkuma =
-  akis() === "mevcut"
+  islemAkisi === "mevcut"
     ? {
         ...okuma,
         satirlar: await adayGorselleriniSec({

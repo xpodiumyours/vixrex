@@ -8,21 +8,22 @@ import {
 
 export const URUN_KART_PRESET = "@preset/urun-kart-olusturucu";
 export const URUN_KART_PRESET_YENI = "@preset/vixrex-urun-karti-v2";
-export const akis = () => {
+export type PresetAkis = "mevcut" | "yeni";
+export const akis = (): PresetAkis => {
   if (process.env.NODE_ENV === "test" && process.env.PRESET_AKIS === undefined) return "yeni";
   return process.env.PRESET_AKIS === "yeni" ? "yeni" : "mevcut";
 };
-const secilenKartPreset = () => (akis() === "yeni" ? URUN_KART_PRESET_YENI : URUN_KART_PRESET);
+const secilenKartPreset = (secilenAkis: PresetAkis) => (secilenAkis === "yeni" ? URUN_KART_PRESET_YENI : URUN_KART_PRESET);
 
 type Kayit = Record<string, unknown>;
 
-export function kartPresetIstekGovdesi(okuma: GoruSonucu): Record<string, unknown> {
+export function kartPresetIstekGovdesi(okuma: GoruSonucu, secilenAkis: PresetAkis = akis()): Record<string, unknown> {
   const satirlar = okuma.satirlar.map((s, i) => ({
     row_id: String(i + 1), satir_no: s.satirNo, raw_invoice_line: s.hamSatir,
     brand: s.marka, name: s.ad, code: s.model, barcode: s.barkod,
     variant: s.varyant, size: s.beden, net_quantity: s.gramaj,
     invoice_data: { quantity: s.adet, unit: s.birim, unit_price: s.birimFiyat, total_amount: s.tutar },
-    ...(akis() === "mevcut"
+    ...(secilenAkis === "mevcut"
       ? {
           previous_product_research: {
             description: s.siteAciklama,
@@ -44,7 +45,7 @@ export function kartPresetIstekGovdesi(okuma: GoruSonucu): Record<string, unknow
     brand, rows: satirlar.filter((s) => s.brand === brand),
   }));
   return {
-    model: secilenKartPreset(), stream: true,
+    model: secilenKartPreset(secilenAkis), stream: true,
     messages: [{ role: "user", content: [
       "İlk presetin faturadan okuduğu satırlar aşağıdadır. Presetindeki araştırma ve ürün kartı görevini tamamla.",
       "Her row_id değerini aynen koru; her girdi satırı için tam bir items kaydı döndür. Satır silme; aynı ürünü duplicate_group ve canonical_row_id ile işaretle.",
@@ -85,11 +86,11 @@ function kanonikBaglantilari(satirlar: readonly unknown[], kartlar: Map<string, 
   return baglantilar;
 }
 
-function tekillesmeKarariKartlardan(satirlar: readonly unknown[], kartlar: Map<string, KartSozlesmesi>): TekillesmeKarari {
+function tekillesmeKarariKartlardan(satirlar: readonly unknown[], kartlar: Map<string, KartSozlesmesi>, secilenAkis: PresetAkis = akis()): TekillesmeKarari {
   const indirgenen = new Map<string, number>();
   // Geri dönüş yolundaki eski preset satır tamlığını garanti etmediği için
   // mevcut akışta ürün kartı azaltılmaz, yalnız grup bilgisi korunur.
-  if (akis() === "mevcut") return { indirgenen };
+  if (secilenAkis === "mevcut") return { indirgenen };
   for (const [id, kanonik] of kanonikBaglantilari(satirlar, kartlar)) {
     if (id !== String(kanonik)) indirgenen.set(id, kanonik);
   }
@@ -109,16 +110,16 @@ export function tekrarGruplari(
   return tekillesmeKarari(satirlar, items).indirgenen;
 }
 
-export async function kartPresetYanitiniOku(cevap: Response, okuma: GoruSonucu) {
+export async function kartPresetYanitiniOku(cevap: Response, okuma: GoruSonucu, secilenAkis: PresetAkis = akis()) {
   const { icerik, ...kullanim } = await faturaYanitMetniniOku(cevap);
-  const yeniAkis = akis() === "yeni";
+  const yeniAkis = secilenAkis === "yeni";
   const { govde, kartlar } = await kartYanitiniCoz(icerik, {
     beklenenSatirlar: yeniAkis ? okuma.satirlar.map((_, i) => String(i + 1)) : undefined,
     eskiAkis: !yeniAkis,
   });
   const items = new Map(kartlar.map((kart) => [kart.rowId, kart]));
   const baglantilar = kanonikBaglantilari(okuma.satirlar, items);
-  const tekrarlar = tekillesmeKarariKartlardan(okuma.satirlar, items).indirgenen;
+  const tekrarlar = tekillesmeKarariKartlardan(okuma.satirlar, items, secilenAkis).indirgenen;
   let eslesen = 0;
   const satirlar = okuma.satirlar.map((s, i) => {
     const sira = String(i + 1);
