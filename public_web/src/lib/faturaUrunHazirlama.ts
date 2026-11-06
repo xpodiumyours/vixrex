@@ -27,7 +27,12 @@ export async function kayitliFaturaKatalogunuUygula(args: {
   girdi.description = typeof katalog.aciklama === "string" ? katalog.aciklama : "";
   girdi.brand = typeof katalog.marka === "string" ? katalog.marka : null;
   if (Array.isArray(katalog.gorseller)) {
-    girdi.imageUrls = katalog.gorseller.filter((url): url is string => typeof url === "string");
+    // Üretici görselleri OpenRouter'dan gelir; esnafın daha önce eklediği
+    // görselleri katalog aktarımı sırasında kaybetme.
+    const ureticiGorselleri = katalog.gorseller.filter(
+      (url): url is string => typeof url === "string",
+    );
+    girdi.imageUrls = [...new Set([...ureticiGorselleri, ...girdi.imageUrls])];
   }
   girdi.metadata = {
     ...girdi.metadata,

@@ -152,9 +152,9 @@ export function faturaIstekGovdesi(dataUrl: string | string[]): Record<string, u
       : { type: "image_url", image_url: { url } },
   );
   return {
+    // Model, çıktı şeması ve sağlayıcı yönlendirmesi canlı OpenRouter presetinde kalır.
+    // Vixrex yalnız akış taşıma biçimi ve fatura içeriğini gönderir.
     model: faturaPresetReferansi(), stream: true,
-    response_format: { type: "json_object" },
-    provider: { require_parameters: true },
     messages: [{ role: "user", content: [{ type: "text", text: FATURA_JSON_ISTEGI }, ...icerik] }],
   };
 }

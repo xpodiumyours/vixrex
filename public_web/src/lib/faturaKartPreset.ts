@@ -20,21 +20,12 @@ export function kartPresetIstekGovdesi(okuma: GoruSonucu): Record<string, unknow
     brand: s.marka, name: s.ad, code: s.model, barcode: s.barkod,
     variant: s.varyant, size: s.beden, net_quantity: s.gramaj,
     invoice_data: { quantity: s.adet, unit: s.birim, unit_price: s.birimFiyat, total_amount: s.tutar },
-    previous_product_research: {
-      description: s.siteAciklama, product_url: s.siteSayfa,
-      image_urls: s.siteGorseller ?? (s.siteGorsel ? [s.siteGorsel] : []),
-      category: s.siteKategori, manufacturer: s.uretici, attributes: s.ozellikler,
-      validation_status: s.dogrulamaDurumu, matched_attributes: s.eslesenBilgiler,
-      unmatched_attributes: s.eksikler, image_validation_status: s.gorselDogrulamaDurumu,
-      sources: s.kaynaklar,
-    },
   }));
   const gruplar = [...new Set(satirlar.map((s) => s.brand))].map((brand) => ({
     brand, rows: satirlar.filter((s) => s.brand === brand),
   }));
   return {
     model: URUN_KART_PRESET, stream: true,
-    provider: { require_parameters: true },
     messages: [{ role: "user", content: [
       "İlk presetin faturadan okuduğu satırlar aşağıdadır. Presetindeki araştırma ve ürün kartı görevini tamamla.",
       "Her row_id değerini aynen koru; her girdi satırı için tam bir items kaydı döndür. Satır silme; aynı ürünü duplicate_group ve canonical_row_id ile işaretle.",
@@ -49,7 +40,7 @@ const DURUMLAR: Record<string, string> = {
   verified: "Doğrulandı", ambiguous: "Belirsiz", not_found: "Bulunamadı", not_researched: "Araştırılamadı",
 };
 
-type TekrarSatiri = { barkod?: string; model?: string; ad?: string; marka?: string; varyant?: string; beden?: string };
+type TekrarSatiri = { barkod?: string; model?: string; ad?: string; marka?: string; varyant?: string; beden?: string; gramaj?: string };
 
 function adAnahtari(ham: string | undefined): string {
   return (ham ?? "")
@@ -95,6 +86,8 @@ function tekillesmeKarariKartlardan(
       if (adlar.some((ad) => ad.replace(/\s/g, "").length < 6)) continue;
       if (new Set(adlar).size !== 1) continue;
       if (!ayniDeger(satirlarUye, (s) => s.marka)) continue;
+      // Barkodsuz ürünlerin ambalaj miktarı farklıysa aynı kart altında toplanmaz.
+      if (!ayniDeger(satirlarUye, (s) => s.gramaj)) continue;
     }
     if (!ayniDeger(satirlarUye, (s) => s.varyant)) continue;
     if (!ayniDeger(satirlarUye, (s) => s.beden)) {
@@ -108,11 +101,12 @@ function tekillesmeKarariKartlardan(
       continue;
     }
 
-    const bildirilen = uyeler
-      .map((i) => kartlar.get(String(i + 1))?.kanonikRowId ?? "")
-      .map((deger) => (/^\d+$/.test(deger) ? Number(deger) - 1 : -1))
-      .find((sira) => uyeler.includes(sira));
-    const kanonik = bildirilen ?? uyeler[0];
+    // Her grup üyesi aynı, geçerli kanonik satırı bildirmelidir. Vixrex kendisi seçmez.
+    const bildirilenler = uyeler.map((i) => kartlar.get(String(i + 1))?.kanonikRowId ?? "");
+    if (bildirilenler.some((id) => !id || id !== bildirilenler[0])) continue;
+    const kanonik = /^\d+$/.test(bildirilenler[0]) ? Number(bildirilenler[0]) - 1 : -1;
+    // Presetin en küçük row_id kuralını yalnız denetle; Vixrex alternatif satır seçmez.
+    if (!uyeler.includes(kanonik) || kanonik !== Math.min(...uyeler)) continue;
     for (const i of uyeler) {
       if (i !== kanonik) karar.indirgenen.set(String(i + 1), kanonik + 1);
     }
@@ -174,9 +168,13 @@ export async function kartPresetYanitiniOku(cevap: Response, okuma: GoruSonucu) 
       };
     }
     eslesen += 1;
-    const gorsel = adres(kart.gorselAdresi) || adres(kart.gorselKaynakSayfa);
+    // Kaynak sayfası fotoğraf URL’si değildir. Görsel yalnız ikinci presetin image_url alanıdır.
+    const gorsel = adres(kart.gorselAdresi);
     const kaynak = adres(kart.resmiSayfa);
     const eksikler = kart.eksikler.filter((v): v is string => typeof v === "string");
+    // Kaynak görsel URL'si, verified için zorunlu resmî ürün sayfası kanıtı değildir.
+    const resmiKanitEksik = kart.dogrulamaDurumu === "verified" && !kart.dogrulanmis;
+    if (resmiKanitEksik) eksikler.push("Doğrulanmış ürün için resmî sayfa kanıtı eksik; doğrulanmış kabul edilmedi.");
     if (kimlikEksik) eksikler.push(kimlikNotu);
     const temelAd = kart.ad || s.ad;
     const beden = metin(s.beden);
@@ -189,7 +187,7 @@ export async function kartPresetYanitiniOku(cevap: Response, okuma: GoruSonucu) 
       siteMarka: kart.marka, siteVaryant: kart.varyant,
       gorselKullanimDurumu: kart.gorselHaklari,
       siteSayfa: kaynak, siteGorsel: gorsel, siteGorseller: gorsel ? [gorsel] : [],
-      dogrulamaDurumu: DURUMLAR[kart.dogrulamaDurumu],
+      dogrulamaDurumu: resmiKanitEksik ? "Araştırılamadı" : DURUMLAR[kart.dogrulamaDurumu],
       eslesenBilgiler: kart.eslesenBilgiler, eksikler,
       gorselDogrulamaDurumu: kart.gorselDogrulamaDurumu,
       kaynaklar: [kart.kanit, ...kart.kaynaklar],

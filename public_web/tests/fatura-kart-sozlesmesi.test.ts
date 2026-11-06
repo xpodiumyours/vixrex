@@ -24,9 +24,14 @@ const say = (satirlar: Array<Record<string, unknown>>) => ({
   gorselli: satirlar.filter((satir) => Array.isArray(satir.siteGorseller) && satir.siteGorseller.length > 0).length,
 });
 
-it("gerçek çitli yanıt: 5 satır → 5 kart → 5 görselli", async () => {
+it("gerçek çitli yanıt: 5 satır → 5 kart; yalnız 4 gerçek görsel adresi", async () => {
   const sonuc = await kartPresetYanitiniOku(metinYanit(dosya("gercek-citli.txt")), ilkOkuma);
-  expect(say(sonuc.sonuc.satirlar)).toEqual({ satir: 5, kart: 5, gorselli: 5 });
+  expect(say(sonuc.sonuc.satirlar)).toEqual({ satir: 5, kart: 5, gorselli: 4 });
+  // Üçüncü ürünün resmî sayfası var, fakat model doğrulanmış fotoğraf döndürmemiş.
+  // Sayfa adresi fotoğraf diye uydurulmaz; ürün kartı ve eksik kanıt korunur.
+  expect(sonuc.sonuc.satirlar[2].siteGorseller).toEqual([]);
+  expect(sonuc.sonuc.satirlar[2].siteSayfa).toBe("https://sehermensucat.com/kadin-atlet");
+  expect(sonuc.sonuc.satirlar[2].dogrulamaDurumu).toBe("Belirsiz");
 });
 
 it("gerçek akış yanıtı (text/event-stream): aynı satırları üretir", async () => {
@@ -37,7 +42,9 @@ it("gerçek akış yanıtı (text/event-stream): aynı satırları üretir", asy
 
 it("düz şemalı gerçek yanıt: doğrulama, sayfa ve görsel alanlarını okur", async () => {
   const sonuc = await kartPresetYanitiniOku(metinYanit(dosya("duz-sema.json")), ilkOkuma);
-  expect(say(sonuc.sonuc.satirlar)).toEqual({ satir: 5, kart: 5, gorselli: 5 });
+  expect(say(sonuc.sonuc.satirlar)).toEqual({ satir: 5, kart: 5, gorselli: 4 });
+  expect(sonuc.sonuc.satirlar[2].siteGorseller).toEqual([]);
+  expect(sonuc.sonuc.satirlar[2].siteSayfa).toBe("https://sehermensucat.com/kadin-atlet");
   expect(sonuc.sonuc.satirlar[0].siteSayfa).toBe("https://sehermensucat.com/elt1301-elit-erkek-elastan-sifiryaka-fanila");
   expect(sonuc.sonuc.satirlar[0].dogrulamaDurumu).toBe("Doğrulandı");
   expect(sonuc.sonuc.satirlar[2].dogrulamaDurumu).toBe("Belirsiz");
