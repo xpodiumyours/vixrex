@@ -20,7 +20,7 @@ const mocks = vi.hoisted(() => ({
   verifyOwner: vi.fn(() => ({ storeId: "store-1" })),
   createProduct: vi.fn(),
   publishProduct: vi.fn(
-    async (_args: Record<string, unknown>): Promise<{ success: boolean; id?: string; hata?: string }> => ({
+    async (_args: Record<string, unknown>): Promise<{ success: boolean; id?: string; gorunur?: boolean; izin_bekliyor?: boolean; hata?: string }> => ({
       success: true,
       id: "urun-1",
     }),
@@ -232,6 +232,23 @@ describe("faturadan gelen ürünün yayın kapısı", () => {
     expect(mocks.createProduct).not.toHaveBeenCalled();
     expect(mocks.publishProduct).toHaveBeenCalledTimes(1);
     expect(govde.yayinda).toBe(1);
+  });
+
+  it("görsel izni doğrulanmamışsa kart hazır kalır, vitrine çıkmaz", async () => {
+    mocks.publishProduct.mockResolvedValueOnce({
+      success: true,
+      id: "urun-1",
+      gorunur: false,
+      izin_bekliyor: true,
+    });
+    const cevap = await topluUrunEkle(istek([faturaSatiri()]));
+    const govde = await cevap.json();
+
+    expect(govde.yayinda).toBe(0);
+    expect(govde.hazir).toBe(1);
+    expect(govde.taslak).toBe(0);
+    expect(govde.satirlar[0].durum).toBe("hazir");
+    expect(govde.satirlar[0].sebep).toContain("görsel izni");
   });
 
   it("kapılar tam ama Yayınla denmemişse ürün taslak kaydedilir", async () => {
