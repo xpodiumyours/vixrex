@@ -4,7 +4,7 @@ import type { DogrulanmisSatir } from "@/lib/faturaUrunBaglantisi";
 import type { HazirUrunGirdisi } from "@/lib/productIntake";
 import { normalizeProductVariants } from "@/lib/productRichData";
 import { yonetilenUrunGorseliMi } from "@/lib/productImagePolicy";
-import { kaynakGorselleriniHazirla, sayfaGorselAlanAdlari } from "@/lib/faturaGorsel";
+import { kaynakGorselleriniHazirla } from "@/lib/faturaGorsel";
 import { faturaKatalogMetadatasi } from "@/lib/faturaUrunIcerigi";
 import { kategoriBirlestir } from "@/lib/kategoriBirlesim";
 import { gorselHakKaydiniRaporla } from "@/lib/faturaGorselHakDenetimi";
@@ -23,7 +23,7 @@ export async function kayitliFaturaKatalogunuUygula(args: {
   if (!katalog || typeof katalog.resmiAd !== "string" || typeof katalog.kaynak !== "string") {
     return "Kayıtlı resmî ürün kaynağı eksik; yeniden eşleştir.";
   }
-  girdi.name = katalog.resmiAd;
+  if (katalog.resmiAd.trim()) girdi.name = katalog.resmiAd.trim();
   girdi.description = typeof katalog.aciklama === "string" ? katalog.aciklama : "";
   girdi.brand = typeof katalog.marka === "string" ? katalog.marka : null;
   if (Array.isArray(katalog.gorseller)) {
@@ -99,10 +99,9 @@ export async function faturaUrunGorselleriniAktar(args: {
   let gorselDurumu = "";
   let gorselKaynaklari: Array<Record<string, unknown>> = [];
   let gorselRedleri: Array<{ kaynakGorsel: string; sebep: string }> = [];
-  const resmiSayfa = typeof satir.katalog?.kaynak === "string" ? satir.katalog.kaynak.trim() : "";
-  const resmiAlanlar = resmiSayfa ? await sayfaGorselAlanAdlari(resmiSayfa) : [];
   const aktarilacakGorseller = [...new Set([...disGorseller,
-    ...girdi.variants.flatMap((variant) => variant.imageUrls ?? []).filter((url) => !yonetilenUrunGorseliMi(url)),
+    ...girdi.variants.flatMap((variant) => variant.imageUrls ?? [])
+      .filter((url) => !yonetilenUrunGorseliMi(url) && satir.izinliGorseller.has(url.trim())),
   ])];
   if (aktarilacakGorseller.length > 0) {
     const hazir = await kaynakGorselleriniHazirla({
@@ -110,7 +109,6 @@ export async function faturaUrunGorselleriniAktar(args: {
       kaynakSayfa: typeof satir.katalog?.kaynak === "string" ? satir.katalog.kaynak : "",
       adaylar: aktarilacakGorseller,
       sonTarih: args.sonTarih,
-      izinliAlanAdlari: resmiAlanlar,
     });
     gorselRedleri = hazir.reddedilenler.map((red) => ({ kaynakGorsel: red.kaynakGorsel, sebep: String(red.sebep) }));
     const depodaki = new Map(hazir.gorseller.map((gorsel) => [gorsel.kaynakGorsel, gorsel]));
@@ -123,7 +121,6 @@ export async function faturaUrunGorselleriniAktar(args: {
     gorselKaynaklari = hazir.gorseller.map((gorsel) => ({
       depoUrl: gorsel.url, kaynakGorsel: gorsel.kaynakGorsel,
       kaynakSayfa: gorsel.kaynakSayfa, genislik: gorsel.genislik, yukseklik: gorsel.yukseklik,
-      // Gölge denetim alanlarıdır. Esnafın Yayınla kararı ve görsel sayısı değişmez.
       ...gorselHakKaydiniRaporla(gorsel.kaynakGorsel, satir.gorselHakDurumlari),
     }));
     gorselDurumu = altyapiHatasi ? "aktarim-bekliyor" : urunGorselleri.length === 0 ? "gorsel-yok" : "depoda";

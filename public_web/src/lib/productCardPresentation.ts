@@ -114,6 +114,12 @@ function metadataAttributeFacts(args: {
 
   for (const attribute of args.metadata.attributes || []) {
     if (args.existingKeys.has(attribute.key)) continue;
+    if (
+      args.surface !== "detail" &&
+      (attribute.key.endsWith("_reported") || String(attribute.label || "").includes("(aktarılan)"))
+    ) {
+      continue;
+    }
     const definition = definitionByKey.get(attribute.key);
     if (!definition && !args.metadata.lunaInvoice) continue;
     const rawValue = formatAttributeValue(attribute.value, attribute.unit);
@@ -337,9 +343,7 @@ export function productVariantLabel(value: unknown, templateKey?: string | null)
 }
 
 export interface ProductCardFacts {
-  /** Kartın en üstünde, ürün adının üzerinde gösterilir. */
   marka: string | null;
-  /** Adın altında küçük etiketler halinde gösterilir. */
   ozellikler: ProductQuickFact[];
 }
 
@@ -417,17 +421,12 @@ export function buildProductCardFacts(args: {
 
 const TUTAR_BICIMI = new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 2 });
 
-/** Eski fiyati guncel fiyatla ayni yazimda gosterir: 1800 -> "1.800 TL". */
 export function eskiFiyatYazisi(oldPriceAmount: unknown): string | null {
   const tutar = typeof oldPriceAmount === "number" ? oldPriceAmount : Number(oldPriceAmount);
   if (!Number.isFinite(tutar) || tutar <= 0) return null;
   return `${TUTAR_BICIMI.format(tutar)} TL`;
 }
 
-/**
- * Indirim orani. Profesyonel platformlarda bu oran esnafin elle yazdigi bir
- * metin degil, iki fiyattan hesaplanan bir degerdir.
- */
 export function indirimOrani(args: {
   priceAmount?: number | null;
   oldPriceAmount?: number | null;
@@ -440,7 +439,6 @@ export function indirimOrani(args: {
   return oran >= 1 && oran <= 99 ? oran : null;
 }
 
-/** Kartin kose rozeti: esnaf kendi rozetini yazdiysa ona dokunulmaz. */
 export function kartRozeti(args: {
   badgeTag?: string | null;
   priceAmount?: number | null;

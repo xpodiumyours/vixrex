@@ -76,7 +76,24 @@ export function adres(value: unknown): string {
 }
 
 function ilkAdres(value: unknown): string {
-  return Array.isArray(value) ? metin(value.find((v) => typeof v === "string")) : "";
+  if (!Array.isArray(value)) return "";
+  for (const eleman of value) {
+    if (typeof eleman === "string" && adres(eleman)) return metin(eleman);
+    if (nesne(eleman) && adres(eleman.url ?? eleman.image_url)) {
+      return metin(eleman.url ?? eleman.image_url);
+    }
+  }
+  return "";
+}
+
+function ilkKaynakAdres(value: unknown): string {
+  if (!Array.isArray(value)) return "";
+  for (const eleman of value) {
+    if (nesne(eleman) && adres(eleman.source_url ?? eleman.page_url)) {
+      return metin(eleman.source_url ?? eleman.page_url);
+    }
+  }
+  return "";
 }
 
 function doluDizi(ana: unknown, yedek: unknown): unknown[] {
@@ -106,16 +123,22 @@ export function tekKartSozlesmesi(item: Kayit): KartSozlesmesi {
   const kart = kartKaydi(item);
   const dogrulama: Kayit = nesne(item.validation) ? item.validation : {};
   const gorsel: Kayit = nesne(item.media) ? item.media : {};
+  const gorselDogrulamaNesnesi: Kayit = nesne(kart.image_validation) ? kart.image_validation : {};
   const durum = (metin(dogrulama.status) || metin(dogrulama.verification_status)
     || metin(item.verification_status) || metin(item.validation_status)
     || metin(item.match_status) || metin(item.status)) as KartDogrulamaDurumu;
   const resmiKaniti = metin(dogrulama.official_product_url) || metin(kart.official_product_url)
     || metin(kart.product_url) || metin(dogrulama.product_url);
-  const resmiSayfa = resmiKaniti || metin(kart.source_url) || metin(gorsel.source_url);
-  const gorselAdresi = metin(gorsel.image_url) || metin(kart.image_url) || ilkAdres(kart.image_urls);
-  const gorselKaynakSayfa = metin(gorsel.source_url) || metin(kart.source_url);
-  const gorselDogrulama = metin(gorsel.verification_status) || metin(kart.image_validation_status);
-  const gorselHaklari = metin(gorsel.rights_status) || metin(kart.rights_status);
+  const adayGorsel = ilkAdres(gorsel.image_candidates) || ilkAdres(kart.image_candidates);
+  const adayKaynak = ilkKaynakAdres(gorsel.image_candidates) || ilkKaynakAdres(kart.image_candidates);
+  const gorselAdresi = metin(gorsel.image_url) || metin(kart.image_url) || ilkAdres(kart.image_urls) || adayGorsel;
+  const gorselKaynakSayfa = metin(gorsel.source_url) || metin(kart.source_url)
+    || metin(gorselDogrulamaNesnesi.source_url) || adayKaynak;
+  const resmiSayfa = resmiKaniti || gorselKaynakSayfa;
+  const gorselDogrulama = metin(gorsel.verification_status) || metin(kart.image_validation_status)
+    || metin(gorselDogrulamaNesnesi.status);
+  const gorselHaklari = metin(gorsel.rights_status) || metin(kart.rights_status)
+    || metin(gorselDogrulamaNesnesi.rights_status);
   const rowId = metin(item.row_id) || metin(item.rowId);
   const fatura = nesne(item.invoice_data) ? item.invoice_data : {};
   const eslesenBilgiler = doluDizi(dogrulama.matched_attributes, kart.matched_attributes);
@@ -215,7 +238,6 @@ function katiKartYanitiDogrula(kaynak: Kayit, beklenenSatirlar?: readonly string
     gorulen.add(rowId);
     const grup = item.duplicate_group as string | null;
     const kanonik = item.canonical_row_id as string | null;
-    // Grup kimliği temizlenip yeniden yorumlanmaz: bozuk anahtar reddedilir.
     if (grup !== null && (grup.length > 128 || grup.trim() !== grup || !grup)) {
       return `items[${i}].duplicate_group`;
     }
@@ -245,7 +267,6 @@ async function yanitMetni(cevap: Response): Promise<string> {
   return typeof icerik === "string" ? icerik : "";
 }
 
-/** Model yanıtını (SSE ya da düz JSON; çitli, düz veya iç içe alan) kart sözleşmesine çevirir. */
 export async function kartSozlesmesineCevir(hamCevap: unknown): Promise<KartSozlesmesi[]> {
   return (await kartYanitiniCoz(hamCevap)).kartlar;
 }

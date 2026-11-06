@@ -1,7 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import sharp from "sharp";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { faturaSatiriniAktar } from "@/lib/faturaPresetAktarimi";
-import { kayitliFaturaKatalogunuUygula } from "@/lib/faturaUrunHazirlama";
+import { faturaUrunGorselleriniAktar, kayitliFaturaKatalogunuUygula } from "@/lib/faturaUrunHazirlama";
+import { tekKartSozlesmesi } from "@/lib/faturaKartSozlesmesi";
+import { buildProductCardFacts } from "@/lib/productCardPresentation";
 import type { GoruSatiri } from "@/lib/faturaGoru";
 import type { HazirUrunGirdisi } from "@/lib/productIntake";
 import type { DogrulanmisSatir } from "@/lib/faturaUrunBaglantisi";
@@ -50,6 +53,7 @@ describe("OpenRouter → Vixrex kayıt sınırı (stok eşleştirmesi sabit)", (
       duplicateGroup:"üretici-ürün-grubu",canonicalRowId:"2",
     });
   });
+
   it("üretici görseli uygulanırken esnaf görseli ve mevcut stok-varyant kuralı korunur", async () => {
     const sonuc = faturaSatiriniAktar(okunanSatir(), "Tedarikçi");
     const girdi = {
@@ -69,5 +73,88 @@ describe("OpenRouter → Vixrex kayıt sınırı (stok eşleştirmesi sabit)", (
       expect.objectContaining({ key: "size", value: "4" }),
       expect.objectContaining({ key: "variant", value: "Siyah" }),
     ]));
+  });
+
+  it("image_candidates içindeki resmî katalog görseli ve kaynağı düşürülmez", () => {
+    const sozlesme = tekKartSozlesmesi({
+      row_id: "1",
+      title: "Tutku Erkek Thermal Fanila",
+      brand: "Tutku",
+      image_url: null,
+      official_product_url: null,
+      image_candidates: [
+        {
+          url: "https://cdn.myikas.com/images/74e89546/image_1080.webp",
+          source_url: "https://sehermensucat.com/products.xml",
+        },
+      ],
+      validation: { status: "ambiguous" },
+    });
+    expect(sozlesme.gorselAdresi).toBe("https://cdn.myikas.com/images/74e89546/image_1080.webp");
+    expect(sozlesme.resmiSayfa).toBe("https://sehermensucat.com/products.xml");
+    expect(sozlesme.dogrulanmis).toBe(false);
+  });
+
+  it("tüketici vitrin kartında aktarılan iç varyant etiketi tekrarlanmaz", () => {
+    const satir = faturaSatiriniAktar(
+      okunanSatir({ varyant: "Y.Haki", beden: "S / 2", siteVaryant: "Y.Haki / S / 2" }),
+      "Tedarikçi",
+    );
+    const girdi = {
+      name: "Tutku Fanila", imageUrls: [resmiGorsel],
+      variants: [], metadata: {}, categoryId: "",
+    } as unknown as HazirUrunGirdisi;
+    void kayitliFaturaKatalogunuUygula({
+      admin: {} as SupabaseClient,
+      storeId: "store", editToken: "token", girdi,
+      satir: { sonuc: "kanitli", katalog: satir.katalog } as DogrulanmisSatir,
+      kategoriOnbellegi: new Map(),
+    });
+    const kart = buildProductCardFacts({ brand: "Tutku", metadata: girdi.metadata });
+    expect(kart.ozellikler.map((o) => o.value)).toContain("Y.Haki");
+    expect(kart.ozellikler.map((o) => o.value)).toContain("S / 2");
+    expect(kart.ozellikler.map((o) => o.value)).not.toContain("Y.Haki / S / 2");
+  });
+
+  it("faturaUrunGorselleriniAktar üretici sayfasını tekrar kazımadan CDN görselini karta yerleştirir", async () => {
+    const cdnGorsel = "https://cdn.myikas.com/images/74e89546/urun.jpg";
+    const piksel = await sharp({
+      create: { width: 1200, height: 1200, channels: 3, background: { r: 220, g: 220, b: 220 } },
+    }).jpeg().toBuffer();
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+      const url = String(input);
+      if (url === cdnGorsel) return new Response(new Uint8Array(piksel), { status: 200 });
+      return new Response("yok", { status: 404 });
+    });
+    const admin = {
+      storage: {
+        from: () => ({
+          upload: async () => ({ error: null }),
+          getPublicUrl: (yol: string) => ({
+            data: { publicUrl: `https://chfulefxczbgurtgavtp.supabase.co/storage/v1/object/public/shelf-images/${yol}` },
+          }),
+        }),
+      },
+    } as unknown as SupabaseClient;
+    const sonuc = await faturaUrunGorselleriniAktar({
+      admin,
+      slug: "deneme-vitrin",
+      girdi: { imageUrls: [cdnGorsel], variants: [] } as unknown as HazirUrunGirdisi,
+      satir: {
+        satirId: "satir-1",
+        sonuc: "kanitli",
+        urunId: null,
+        izinliGorseller: new Set([cdnGorsel]),
+        katalog: { kaynak: "https://sehermensucat.com/products.xml", resmiAd: "Tutku Fanila" },
+        alisBirimFiyati: 100,
+        varyant: "Beyaz",
+        beden: "M",
+      },
+    });
+    expect(sonuc.gorselDurumu).toBe("depoda");
+    expect(sonuc.urunGorselleri).toHaveLength(1);
+    expect(sonuc.urunGorselleri[0]).toContain("/storage/v1/object/public/shelf-images/deneme-vitrin/products/fatura/");
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    fetchSpy.mockRestore();
   });
 });
