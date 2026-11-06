@@ -2,12 +2,18 @@ import type { GoruSatiri } from "@/lib/faturaGoru";
 import type { EslesmisFaturaSatiri, SatirSonucu } from "@/lib/faturaEslestir";
 import { faturaKatalogMetadatasi } from "@/lib/faturaUrunIcerigi";
 
-/** Etiket çevirisi; ikinci bir araştırma veya ürün doğrulama kararı değildir. */
 export function presetDurumunuAktar(durum: string | undefined): SatirSonucu {
   const etiket = (durum ?? "").replace(/^[✓?✗⚠\s]+/, "").trim().toLocaleLowerCase("tr-TR");
   if (["doğrulandı", "dogrulandi", "doğrulanmış", "verified"].includes(etiket)) return "kanitli";
   if (["bulunamadı", "bulunamadi", "not_found"].includes(etiket)) return "iz-yok";
   return "eksik";
+}
+
+export function resmiUrunBasliginiTemizle(ad: string | undefined, model?: string): string {
+  const ham = (ad ?? "").trim();
+  if (!ham) return (model ?? "").trim();
+  const kodsuz = ham.replace(/^[A-Z]{2,5}\d{3,8}\s+(?=[A-ZÇĞİÖŞÜa-zçğıöşü]{2,})/u, "").trim();
+  return kodsuz || ham;
 }
 
 export function faturaSatiriniAktar(satir: GoruSatiri, tedarikci: string): EslesmisFaturaSatiri {
@@ -18,6 +24,7 @@ export function faturaSatiriniAktar(satir: GoruSatiri, tedarikci: string): Esles
   const eksikler = [...(satir.eksikler ?? [])];
   if (!satir.dogrulamaDurumu) eksikler.push("OpenRouter doğrulama durumu bildirmedi.");
   if (satir.okumaGuveni === null) eksikler.push("OpenRouter okuma güveni bildirmedi.");
+  const temizAd = resmiUrunBasliginiTemizle(satir.ad, satir.model);
   const ekler = {
     satirNo: satir.satirNo, uretici: satir.uretici, gramaj: satir.gramaj,
     dogrulamaDurumu: satir.dogrulamaDurumu, eslesenBilgiler: satir.eslesenBilgiler,
@@ -27,12 +34,11 @@ export function faturaSatiriniAktar(satir: GoruSatiri, tedarikci: string): Esles
   };
   return {
     ...ekler,
-    hamSatir: satir.hamSatir, model: satir.model, ad: satir.ad || satir.model,
+    hamSatir: satir.hamSatir, model: satir.model, ad: temizAd,
     barkod: satir.barkod, varyant: satir.varyant, beden: satir.beden, marka: satir.marka,
     adet: satir.adet, birim: satir.birim, alisBirimFiyat: satir.birimFiyat, satirToplam: satir.tutar,
-    // Eski Vixrex değerlendirme arayüzü sayısal güven ister; bilinmeyen, tam güvene çevrilmez.
     guven: satir.okumaGuveni ?? 0,
-    siteAd: satir.ad || satir.model, siteAciklama: satir.siteAciklama,
+    siteAd: temizAd, siteAciklama: satir.siteAciklama,
     siteGorsel: gorseller[0] ?? "", siteGorseller: gorseller, siteSayfa: satir.siteSayfa,
     siteKategori: satir.siteKategori, siteOzellikler: ozellikler,
     siteMarka: satir.siteMarka,
@@ -40,10 +46,8 @@ export function faturaSatiriniAktar(satir: GoruSatiri, tedarikci: string): Esles
     uyari: eksikler.length ? eksikler.join(" · ") : undefined,
     katalog: {
       ...ekler, firma: tedarikci, kaynakFirma: satir.uretici || satir.siteMarka || satir.marka || tedarikci,
-      // Kod/barkodun mevcut olması onların resmî kaynakla doğrulandığı anlamına gelmez.
-      // Modelin rights_status/authorized beyanı üretici izni kanıtı değildir.
       dayanak: "ad", izinDurumu: "yok",
-      resmiAd: satir.ad || satir.model, marka: satir.siteMarka || satir.marka,
+      resmiAd: temizAd, marka: satir.siteMarka || satir.marka,
       aciklama: satir.siteAciklama ?? "", gorseller, gorselAdaylari: gorseller,
       kaynak: satir.siteSayfa ?? "", kategori: satir.siteKategori, ozellikler,
       beden: satir.beden, varyant: satir.siteVaryant || satir.varyant,
