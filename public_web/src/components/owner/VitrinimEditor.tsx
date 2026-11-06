@@ -159,14 +159,11 @@ export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode 
     initialDraft.privacy_notice_acknowledged === true || initialDraft.aydinlatma_onay === true);
   const [termsAccepted, setTermsAccepted] = useState(() =>
     initialDraft.terms_accepted === true || initialDraft.sartlar_onay === true);
-  const [publicationConsent, setPublicationConsent] = useState(() =>
-    initialDraft.publication_consent_accepted === true || initialDraft.acik_riza_onay === true);
   const [legalAccepted, setLegalAccepted] = useState(() => Boolean(
     initialDraft.privacy_notice_acknowledged === true &&
-    initialDraft.terms_accepted === true &&
-    initialDraft.publication_consent_accepted === true
+    initialDraft.terms_accepted === true
   ));
-  const explicitDeclarationsReady = privacyAcknowledged && termsAccepted && publicationConsent;
+  const explicitDeclarationsReady = privacyAcknowledged && termsAccepted;
   const legalReady = isCreationMode ? explicitDeclarationsReady : legalAccepted;
   const [message, setMessage] = useState("");
   const [activeEditor, setActiveEditor] = useState<"about" | "campaign" | "faq" | "gallery" | "marketplace" | null>(null);
@@ -270,13 +267,11 @@ export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode 
       setMessage("");
       try {
         // Vitrin daha oluşmadı: onay sunucuya ayrı bir çağrıyla yazılamaz,
-        // ama onay ALINMIŞTIR ve create-store'a legal_consent olarak gider —
-        // orada aktif belge sürüm/hash'i sunucuda damgalanır.
+        // aydınlatma ve kullanım şartları ayrı boole değerleriyle iletilir;
+        // etkin belge sürüm/hash'i sunucuda damgalanır.
         await onCreate(
           explicitDeclarationsReady
-            ? { ...draft, legal_consent: true,
-                privacy_notice_acknowledged: true, terms_accepted: true,
-                publication_consent_accepted: true }
+            ? { ...draft, privacy_notice_acknowledged: true, terms_accepted: true }
             : draft,
         );
         refreshShellStatus();
@@ -315,7 +310,7 @@ export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode 
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          slug: store.slug, privacyAcknowledged, termsAccepted, publicationConsent,
+          slug: store.slug, privacyAcknowledged, termsAccepted,
         }),
       });
       const body = await response.json();
@@ -518,7 +513,7 @@ export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode 
           <div id="yasal-yayin-bolumu" className="scroll-mt-6 px-6 py-6">
             <div className={`rounded-[18px] border bg-lp-surface-soft p-4 ${legalAccepted ? "border-lp-primary" : "border-lp-border"}`}>
               <h2 className="flex items-center gap-2 text-[16px] font-black"><OnayIkonu boyut={20} className="text-lp-primary" /> Yasal Bilgilendirme ve Yayınlama Onayı</h2>
-              <p className="mt-2 text-[12px] font-medium leading-5 text-lp-muted">Taslağınızı onay vermeden düzenleyebilirsiniz. Bu beyanlar yalnızca herkese açık yayınlama için gereklidir.</p>
+              <p className="mt-2 text-[12px] font-medium leading-5 text-lp-muted">Taslağınızı onay vermeden düzenleyebilirsiniz. Aydınlatma bildirimi ve kullanım şartları yayımlama için gereklidir; genel açık rıza istenmez.</p>
               <div className="mt-4 space-y-3 text-[12.5px] font-semibold leading-5 text-lp-text">
                 <label className="flex cursor-pointer items-start gap-3">
                   <input type="checkbox" aria-label="Aydınlatma metnini okudum"
@@ -534,14 +529,7 @@ export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode 
                     className="mt-0.5 h-5 w-5 shrink-0 accent-[#147DFF]" />
                   <span><Link href="/legal/terms" target="_blank" className="font-bold text-lp-secondary underline">Kullanım Şartları</Link>&apos;nı kabul ediyorum.</span>
                 </label>
-                <label className="flex cursor-pointer items-start gap-3">
-                  <input type="checkbox" aria-label="Açık rıza veriyorum"
-                    checked={publicationConsent} disabled={legalAccepted || publishing}
-                    onChange={(event) => setPublicationConsent(event.target.checked)}
-                    className="mt-0.5 h-5 w-5 shrink-0 accent-[#147DFF]" />
-                  <span><Link href="/legal/consent" target="_blank" className="font-bold text-lp-secondary underline">Açık Rıza Beyanı</Link>&apos;nda açıklanan işleme kendi isteğimle rıza veriyorum.</span>
-                </label>
-                {!isCreationMode && !legalAccepted ? (
+{!isCreationMode && !legalAccepted ? (
                   <button type="button" onClick={() => void acceptLegal()}
                     disabled={!explicitDeclarationsReady || publishing}
                     className="rounded-lg border border-lp-primary px-4 py-2 font-bold text-lp-primary disabled:opacity-50">

@@ -118,7 +118,7 @@ class StorePublishPayloadBuilder {
       'publication_consent_accepted_at':
           data.publicationConsentAcceptedAt?.toIso8601String(),
       'consent_accepted_at':
-          data.privacyNoticeAcknowledgedAt?.toIso8601String(),
+          data.publicationConsentAcceptedAt?.toIso8601String(),
     };
   }
 

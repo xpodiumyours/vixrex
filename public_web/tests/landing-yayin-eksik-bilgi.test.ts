@@ -38,7 +38,7 @@ describe("yayinla dediyse eksik bilgi soyenilir, taslak sessiz kalmaz", () => {
     expect(rota).toContain('eksik.push("il")');
     expect(rota).toContain('eksik.push("ilçe")');
     expect(rota).toContain("anında yayına alınır");
-    expect(rota).toContain("üç yasal onayın tamamı gerekli");
+    expect(rota).toContain("aydınlatma bildirimi ve Kullanım Şartları gerekli");
     // İsim, alanlar ve yasal onay — üç ayrı erken ret.
     expect(rota.match(/\{ status: 422 \}/g)?.length).toBeGreaterThanOrEqual(3);
   });
@@ -81,11 +81,11 @@ describe("yayinla dediyse eksik bilgi soyenilir, taslak sessiz kalmaz", () => {
   });
 
   it("oluşturma modunda ayrı beyanlar toplanır ve birlikte sağlanmadan yayınlanmaz", () => {
-    expect(editor).toContain("privacyAcknowledged && termsAccepted && publicationConsent");
+    expect(editor).toContain("privacyAcknowledged && termsAccepted");
     expect(editor).toContain("isCreationMode ? explicitDeclarationsReady : legalAccepted");
     expect(editor).toContain("privacy_notice_acknowledged: true");
     expect(editor).toContain("terms_accepted: true");
-    expect(editor).toContain("publication_consent_accepted: true");
+    expect(editor).not.toContain("publication_consent_accepted: true");
     expect(editor).toContain("onClick={() => void acceptLegal()}");
     expect(rota).not.toContain("govde.legal_consent === true");
   });

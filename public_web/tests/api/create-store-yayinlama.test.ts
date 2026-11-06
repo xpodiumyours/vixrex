@@ -121,10 +121,22 @@ describe("landing asistanı vitrini gerçekten yayınlar", () => {
       terms_accepted: true,
       terms_version: "2026-02",
       terms_hash: "h-terms",
-      publication_consent_accepted: true,
-      publication_consent_version: "2026-03",
-      publication_consent_hash: "h-consent",
     });
+  });
+
+  it("genel açık rıza olmadan yalnız gerekli iki belgeyle yayınlar", async () => {
+    kuran(AKTIF_BELGELER.filter((belge) => belge.document_type !== "consent"));
+
+    const response = await POST(govde({ publication_consent_accepted: false }));
+
+    expect(response.status).toBe(200);
+    const store = rpcCagrisi("update_store_with_token")?.[1].p_store;
+    expect(store.is_published).toBe(true);
+    expect(store.privacy_notice_acknowledged).toBe(true);
+    expect(store.terms_accepted).toBe(true);
+    expect(store.publication_consent_accepted).toBeUndefined();
+    expect(store.publication_consent_version).toBeUndefined();
+    expect(store.publication_consent_hash).toBeUndefined();
   });
 
   it("yasal onay yoksa vitrin hiç oluşturmaz, neyin eksik olduğunu söyler", async () => {
@@ -136,7 +148,7 @@ describe("landing asistanı vitrini gerçekten yayınlar", () => {
     // ortada yayına alınamayan bir kayıt kalırdı. Artık baştan duruyoruz.
     expect(response.status).toBe(422);
     const govdeSonucu = await response.json();
-    expect(govdeSonucu.hata).toContain("üç yasal onayın tamamı gerekli");
+    expect(govdeSonucu.hata).toContain("aydınlatma bildirimi ve Kullanım Şartları gerekli");
     expect(rpcCagrisi("create_store_with_token")).toBeUndefined();
     expect(rpcCagrisi("update_store_with_token")).toBeUndefined();
   });

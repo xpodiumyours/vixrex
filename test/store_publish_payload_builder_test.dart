@@ -30,6 +30,21 @@ void main() {
   });
 
   group('StorePublishPayloadBuilder payload', () {
+    test('privacy acknowledgement does not stamp general consent', () {
+      final data = StoreData(
+        name: 'Vitrin',
+        privacyNoticeAcknowledged: true,
+        privacyNoticeAcknowledgedAt: DateTime.utc(2026, 11, 1),
+        termsAccepted: true,
+      );
+
+      final payload = builder.toStoreUpdateMap(data);
+      expect(payload['privacy_notice_acknowledged'], isTrue);
+      expect(payload['publication_consent_accepted'], isFalse);
+      expect(payload['explicit_consent_given'], isFalse);
+      expect(payload['consent_accepted_at'], isNull);
+    });
+
     test('store update payload alanlarını trimleyerek hazırlar', () {
       final data = StoreData(
         name: '  Aymira Giyim  ',

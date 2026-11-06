@@ -23,7 +23,7 @@ interface Props {
    * değil). true olduktan sonra bu ekrandan geri alınamaz (kapsam dışı). */
   yasalOnayli: boolean;
   onayVeriliyor: boolean;
-  onayVer: (beyanlar: { privacyAcknowledged: boolean; termsAccepted: boolean; publicationConsent: boolean }) => Promise<boolean>;
+  onayVer: (beyanlar: { privacyAcknowledged: boolean; termsAccepted: boolean }) => Promise<boolean>;
   /** Masaüstünde yayın ana eylemi üst editör çubuğundadır. Eksikler sekmesi
    * yalnız yasal onay + taslağı bırakma kontrollerini gösterebilir. */
   showPublishButton?: boolean;
@@ -47,9 +47,9 @@ export function PublishBar({
 }: Props) {
   const [privacyAcknowledged, setPrivacyAcknowledged] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
-  const [publicationConsent, setPublicationConsent] = useState(false);
+  
   const [reapproving, setReapproving] = useState(false);
-  const readyToRecord = privacyAcknowledged && termsAccepted && publicationConsent;
+  const readyToRecord = privacyAcknowledged && termsAccepted;
   const showConsentForm = !yasalOnayli || reapproving;
 
   // Kiralık şablon vitrin + aktif premium yoksa yayın premium ister.
@@ -75,7 +75,7 @@ export function PublishBar({
             onClick={() => {
               setPrivacyAcknowledged(false);
               setTermsAccepted(false);
-              setPublicationConsent(false);
+              
               setReapproving(true);
             }}
             disabled={onayVeriliyor}
@@ -87,7 +87,7 @@ export function PublishBar({
       ) : null}
       {showConsentForm ? (
         <div className="mb-3 space-y-2 text-[11px] leading-relaxed text-slate-300">
-          <p>Aydınlatma, kullanım şartları ve açık rıza birbirinden bağımsız beyanlardır.</p>
+          <p>Aydınlatma bilgilendirmesi ve kullanım şartları ayrı beyanlardır. Vitrinin yayınlanması için genel açık rıza istenmez.</p>
           <label className="flex items-start gap-2">
             <input
               type="checkbox"
@@ -116,30 +116,16 @@ export function PublishBar({
               {"'nı kabul ediyorum."}
             </span>
           </label>
-          <label className="flex items-start gap-2">
-            <input
-              type="checkbox"
-              aria-label="Açık rıza veriyorum"
-              checked={publicationConsent}
-              disabled={onayVeriliyor}
-              onChange={(e) => setPublicationConsent(e.target.checked)}
-              className="mt-0.5 h-3.5 w-3.5 shrink-0"
-            />
-            <span>
-              <a href="/legal/consent" target="_blank" rel="noopener noreferrer" className="font-semibold text-blue-400 underline">Açık Rıza Beyanı</a>
-              {"'nda açıklanan işleme kendi isteğimle rıza veriyorum."}
-            </span>
-          </label>
-          <button
+<button
             type="button"
             disabled={!readyToRecord || onayVeriliyor}
             onClick={() => {
-              void onayVer({ privacyAcknowledged, termsAccepted, publicationConsent }).then((success) => {
+              void onayVer({ privacyAcknowledged, termsAccepted }).then((success) => {
                 if (success) {
                   setReapproving(false);
                   setPrivacyAcknowledged(false);
                   setTermsAccepted(false);
-                  setPublicationConsent(false);
+                  
                 }
               });
             }}

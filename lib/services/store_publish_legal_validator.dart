@@ -10,9 +10,6 @@ class StorePublishLegalValidator {
     if (!data.termsAccepted) {
       return 'Yayınlamak için Kullanım Şartları’nı kabul etmelisiniz.';
     }
-    if (!data.publicationConsentAccepted) {
-      return 'Vitrininizi yayınlamak için açık rıza vermelisiniz.';
-    }
     // Version damgası publish() içinde doldurulur; burada sadece onay kutusu.
     return null;
   }
