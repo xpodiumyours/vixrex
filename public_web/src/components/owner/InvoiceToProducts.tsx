@@ -832,6 +832,7 @@ export default function InvoiceToProducts({
       }));
       const birlesenSatirlar: YazmaSonucu["satirlar"] = [];
       let yayinda = 0;
+      let hazir = 0;
       let taslak = 0;
       let hatali = 0;
       for (let baslangic = 0; baslangic < istekler.length; baslangic += TOPLU_UST_SINIR) {
@@ -856,18 +857,20 @@ export default function InvoiceToProducts({
           birlesenSatirlar.push({ ...kayit, sira: genelSira });
         }
         yayinda += typeof govde.yayinda === "number" ? govde.yayinda : 0;
+        hazir += typeof govde.hazir === "number" ? govde.hazir : 0;
         taslak += typeof govde.taslak === "number" ? govde.taslak : 0;
         hatali += typeof govde.hatali === "number" ? govde.hatali : 0;
       }
 
       // HTTP 200 veya tamam:true, tek başına ürün yazıldığını ispatlamaz.
-      if (birlesenSatirlar.filter((satir) => satir.durum === "yayinda" || satir.durum === "taslak").length < 1) {
+      if (birlesenSatirlar.filter((satir) => satir.durum === "yayinda" || satir.durum === "hazir" || satir.durum === "taslak").length < 1) {
         const hata = birlesenSatirlar.map((item) => item.sebep).filter(Boolean).join(" · ");
         throw new Error(hata || "Hiçbir ürün kartı kaydedilemedi. Değişiklikler faturada saklandı.");
       }
       setSonuc({
         toplam: birlesenSatirlar.length,
         yayinda,
+        hazir,
         taslak,
         hatali,
         satirlar: birlesenSatirlar,
@@ -892,6 +895,7 @@ export default function InvoiceToProducts({
     setHata(null);
     try {
       const yayinlananIdler = new Set<string>();
+      const hazirIdler = new Set<string>();
       const sebepler = new Map<string, string>();
       let dogrulandi = true;
       for (let baslangic = 0; baslangic < taslakIdler.length; baslangic += TOPLU_UST_SINIR) {
@@ -910,14 +914,24 @@ export default function InvoiceToProducts({
         dogrulandi = dogrulandi && govde?.tuketiciDogrulamasi === "tamam";
         for (const satir of ((govde?.satirlar ?? []) as Array<{ id: string; durum: string; sebep?: string }>)) {
           if (satir.durum === "yayinda") yayinlananIdler.add(satir.id);
-          else if (satir.sebep) sebepler.set(satir.id, satir.sebep);
+          else if (satir.durum === "hazir") hazirIdler.add(satir.id);
+          if (satir.sebep) sebepler.set(satir.id, satir.sebep);
         }
       }
       setSonuc((onceki) => {
         if (!onceki) return onceki;
         const satirlar = onceki.satirlar.map((satir) => {
-          if (satir.durum !== "taslak" || !satir.id || !yayinlananIdler.has(satir.id)) {
-            const yeniSebep = satir.id ? sebepler.get(satir.id) : undefined;
+          if (!satir.id) return satir;
+          if (hazirIdler.has(satir.id)) {
+            return {
+              ...satir,
+              durum: "hazir",
+              sebep: sebepler.get(satir.id)
+                ?? "Kart hazır; üretici görsel izni doğrulanınca vitrinde görünecek.",
+            };
+          }
+          if (satir.durum !== "taslak" || !yayinlananIdler.has(satir.id)) {
+            const yeniSebep = sebepler.get(satir.id);
             return yeniSebep ? { ...satir, sebep: yeniSebep } : satir;
           }
           return { ...satir, durum: "yayinda", sebep: undefined };
@@ -927,6 +941,7 @@ export default function InvoiceToProducts({
           ...onceki,
           tuketiciDogrulandi: dogrulandi,
           yayinda,
+          hazir: satirlar.filter((satir) => satir.durum === "hazir").length,
           taslak: satirlar.filter((satir) => satir.durum === "taslak").length,
           satirlar,
         };
@@ -1122,27 +1137,32 @@ export default function InvoiceToProducts({
   // ─── 4. Sonuç ──────────────────────────────────────────────────
 
   if (adim === "bitti" && sonuc) {
-    const yayindakiKartlar: FaturaSonucKarti[] = [];
+    const sonucKartlari: FaturaSonucKarti[] = [];
     for (const satir of sonuc.satirlar) {
-      if (satir.durum !== "yayinda") continue;
+      if (satir.durum !== "yayinda" && satir.durum !== "hazir") continue;
       const yerel = satirlar[satir.sira];
       if (!yerel) continue;
-      yayindakiKartlar.push({
+      sonucKartlari.push({
         sira: satir.sira, ad: yerel.katalog?.resmiAd || yerel.ad, fiyat: yerel.satisFiyati,
-        gorsel: onizlemeKartiGorseli(satir.gorsel),
+        gorsel: onizlemeKartiGorseli(satir.gorsel), durum: satir.durum === "hazir" ? "hazir" : "yayinda",
       });
     }
+    const hazirSayisi = sonuc.hazir ?? sonuc.satirlar.filter((satir) => satir.durum === "hazir").length;
     const baslik = sonuc.yayinda > 0
       ? sonuc.tuketiciDogrulandi ? "Vitrin hazır" : "Yayın kaydı alındı"
-      : "Onaylı kartların yayınlanmaya hazır";
+      : hazirSayisi > 0
+        ? "Kartlar hazır — üretici izni bekleniyor"
+        : "Onaylı kartların yayınlanmaya hazır";
     return (
       <div className="fatura-akis">
         <FaturaAkisBasligi adim={adim} baslik={baslik} yayinDogrulandi={sonuc.tuketiciDogrulandi && sonuc.yayinda > 0}
           aciklama={sonuc.yayinda > 0
             ? sonuc.tuketiciDogrulandi ? "Ürünlerin satış fiyatlarıyla vitrinde görünüyor. Vitrinini açıp kontrol edebilirsin."
               : "Ürünlerin yayın kaydı alındı. Tüketici görünümü henüz doğrulanamadı; vitrini açıp kontrol et."
-            : "Bilgilerin taslak olarak kaydedildi. Ürünleri vitrinde göstermek için yayınla."} />
-        <FaturaIslemSonucu sonuc={sonuc} kartlar={yayindakiKartlar} storeSlug={storeSlug} hata={hata}
+            : hazirSayisi > 0
+              ? "Kartlar hazırlandı. Üretici görsel izni doğrulanınca vitrinde görünecek; şu an tüketiciye gösterilmiyor."
+              : "Bilgilerin taslak olarak kaydedildi. Ürünleri vitrinde göstermek için yayınla."} />
+        <FaturaIslemSonucu sonuc={sonuc} kartlar={sonucKartlari} storeSlug={storeSlug} hata={hata}
           yukleniyor={yukleniyor} baglantiKopyalandi={baglantiKopyalandi}
           onYayinla={() => void taslaklariYayinla()} onPaylas={() => void vitriniPaylas()}
           onKartlaraDon={() => setAdim("urunler")} onYeniFatura={bastanBasla}

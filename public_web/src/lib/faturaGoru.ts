@@ -37,6 +37,9 @@ export interface GoruSatiri {
   eslesenBilgiler?: unknown;
   eksikler?: string[];
   gorselDogrulamaDurumu?: string;
+  /** OpenRouter ürüne ilişkin kanonik karar bilgileri. */
+  duplicateGroup?: string | null;
+  canonicalRowId?: string | null;
   kaynaklar?: KartKaynagi[];
 }
 
@@ -153,8 +156,6 @@ export function faturaIstekGovdesi(dataUrl: string | string[]): Record<string, u
   );
   return {
     model: faturaPresetReferansi(), stream: true,
-    response_format: { type: "json_object" },
-    provider: { require_parameters: true },
     messages: [{ role: "user", content: [{ type: "text", text: FATURA_JSON_ISTEGI }, ...icerik] }],
   };
 }

@@ -596,6 +596,13 @@ export function OwnerProductManager({
         Array.isArray(govde?.satirlar) ? govde.satirlar : []
       ) as Array<{ id?: string; durum?: string; sebep?: string }>;
       const satir = satirlar.find((s) => s.id === product.id);
+      if (satir?.durum === "hazir") {
+        await refreshAll();
+        setSuccess(
+          satir.sebep ?? "Kart hazır; üretici görsel izni doğrulanınca vitrinde görünecek.",
+        );
+        return;
+      }
       if (!satir || satir.durum !== "yayinda") {
         setError(
           satirlar.length === 0

@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { islemiYukle, islemYaniti, sahipDurumunuTemizle, type KayitliIslem, type SahipDurumu } from "@/lib/faturaIslemOku";
 import { faturaTaslaklari } from "@/lib/faturaTaslagi";
-import { faturaUrununuKaydet, satiriDogrula } from "@/lib/faturaUrunBaglantisi";
+import { faturaUrununuKaydet, satiriDogrula, satiriUrunleBagla } from "@/lib/faturaUrunBaglantisi";
 import { kayitliFaturaKatalogunuUygula, faturaUrunGorselleriniAktar } from "@/lib/faturaUrunHazirlama";
 import { urunGirdisiniHazirla } from "@/lib/productIntake";
 import { faturaKatalogMetadatasi } from "@/lib/faturaUrunIcerigi";
@@ -51,6 +51,14 @@ async function ilkSahipDurumu(
   return { durum: sahipDurumunuTemizle(guncel.data.owner_state), bagli: Boolean(guncel.data.product_id) };
 }
 
+function kanonikSatirIndeksi(satir: KayitliIslem["satirlar"][number], sira: number, toplam: number): number | null {
+  const ham = satir.katalog?.canonicalRowId ?? satir.canonicalRowId;
+  if (typeof ham !== "string" || !/^[1-9]\d*$/.test(ham)) return null;
+  const hedef = Number(ham) - 1;
+  if (hedef < 0 || hedef >= toplam || hedef === sira) return null;
+  return hedef;
+}
+
 export async function faturaTaslakYanitiniHazirla(
   admin: SupabaseClient,
   storeId: string,
@@ -62,8 +70,16 @@ export async function faturaTaslakYanitiniHazirla(
     atlandi: 0, bekleyen: 0, birlestirmeBekleyen: 0, gorselsiz: 0, hatalar: [],
   };
   let guncelKayit = kayit;
-  const eksik = kayit.satirlar.map((satir, sira) => ({ satir, sira })).filter(({ satir }) => !satir.urunId);
+  const tumEksik = kayit.satirlar.map((satir, sira) => ({ satir, sira })).filter(({ satir }) => !satir.urunId);
+  const eksik = [
+    ...tumEksik.filter(({ satir, sira }) => kanonikSatirIndeksi(satir, sira, kayit.satirlar.length) === null),
+    ...tumEksik.filter(({ satir, sira }) => kanonikSatirIndeksi(satir, sira, kayit.satirlar.length) !== null),
+  ];
   const sonTarih = Date.now() + 240_000;
+  const olusanUrunIdleri = new Map<number, string>();
+  kayit.satirlar.forEach((satir, sira) => {
+    if (satir.urunId) olusanUrunIdleri.set(sira, satir.urunId);
+  });
   if (eksik.length > 0) {
     try {
       const islem = await admin.from("invoice_jobs").select("same_purchase_of")
@@ -82,6 +98,13 @@ export async function faturaTaslakYanitiniHazirla(
             const sahip = await ilkSahipDurumu(admin, satir);
             if (!sahip.bagli) {
               if (!sahip.durum) throw new Error("Fatura seçimleri okunamadı.");
+              const kanonikSira = kanonikSatirIndeksi(satir, sira, kayit.satirlar.length);
+              const kanonikUrunId = kanonikSira !== null ? olusanUrunIdleri.get(kanonikSira) : undefined;
+              if (kanonikUrunId && typeof satiriUrunleBagla === "function") {
+                await satiriUrunleBagla(admin, dogrulanmis.satirId, kanonikUrunId);
+                olusanUrunIdleri.set(sira, kanonikUrunId);
+                continue;
+              }
               const durum = sahip.durum;
               const satisFiyati = fiyat(durum.satisFiyati);
               const katalog = satir.katalog;
@@ -122,6 +145,7 @@ export async function faturaTaslakYanitiniHazirla(
                 alisFiyati: dogrulanmis.alisBirimFiyati,
               });
               if (kayitSonucu.durum === "onay-bekliyor") continue;
+              olusanUrunIdleri.set(sira, kayitSonucu.id);
               if (medya.gorselDurumu === "aktarim-bekliyor") {
                 rapor.hatalar.push("Ürün taslağı kaydedildi; bazı fotoğraflar aktarılamadı.");
                 break;
@@ -153,7 +177,7 @@ export async function faturaTaslakYanitiniHazirla(
       );
     }
   }
-  const bagliIdler = guncelKayit.satirlar.flatMap((satir) => satir.urunId ? [satir.urunId] : []);
+  const bagliIdler = [...new Set(guncelKayit.satirlar.flatMap((satir) => satir.urunId ? [satir.urunId] : []))];
   rapor.kaydedildi = 0;
   let gorselliSayisi: number | null = bagliIdler.length ? null : 0;
   if (bagliIdler.length) {

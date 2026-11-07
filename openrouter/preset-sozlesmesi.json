@@ -1,0 +1,64 @@
+{
+  "sozlesme": "v1",
+  "olusturulma": "2026-11-02T18:07:14Z",
+  "kaynak": "OpenRouter Management API (read-only)",
+  "presets": [
+    {
+      "model": "qwen/qwen3.5-flash-02-23",
+      "response_format_type": "json_object",
+      "tools": [],
+      "max_tool_calls": null,
+      "stream": null,
+      "require_parameters": true,
+      "slug": "urun-gorsel-secim",
+      "designated_version": 2,
+      "designated_version_id": "659f366a-e737-4fa5-ada8-5df63fedaa2d",
+      "system_prompt_sha256": "42fb1e1296a348cf189e84ed39a80da8284f853bec6139d09200396ed2067c38",
+      "system_prompt_length": 1757
+    },
+    {
+      "model": "deepseek/deepseek-v4.1-flash-1017",
+      "response_format_type": "json_schema",
+      "tools": [
+        "openrouter:web_fetch",
+        "openrouter:web_search"
+      ],
+      "max_tool_calls": null,
+      "stream": null,
+      "require_parameters": true,
+      "slug": "urun-kart-olusturucu",
+      "designated_version": 9,
+      "designated_version_id": "1c78f35e-0c0b-4c91-ae6d-d37a4fdad2d6",
+      "system_prompt_sha256": "c3f62b1a4afca1d7d51216d8de51675a4d7d888231b00f7de5e38baf4df10f65",
+      "system_prompt_length": 3828
+    },
+    {
+      "model": "qwen/qwen3.5-flash-02-23",
+      "response_format_type": "json_object",
+      "tools": [],
+      "max_tool_calls": null,
+      "stream": null,
+      "require_parameters": true,
+      "slug": "vixrex-qwen-fatura-okuma-suzme",
+      "designated_version": 22,
+      "designated_version_id": "7f515171-a6bb-4447-9755-d8d5d6dcb9ba",
+      "system_prompt_sha256": "890274b55c0147d29d65d10a58780b9ce1e3d2f5fa09a70c1ffcbd3f1e5cbda2",
+      "system_prompt_length": 2051
+    },
+    {
+      "slug": "vixrex-urun-karti-v2",
+      "durum": "aday",
+      "designated_version": 3,
+      "designated_version_id": "d8c630bb-c129-4b17-a1cf-8fa990052edf",
+      "model": "deepseek/deepseek-v4.1-flash-1017",
+      "response_format_type": "json_schema",
+      "tools": [
+        "openrouter:web_fetch",
+        "openrouter:web_search"
+      ],
+      "system_prompt_sha256": "75df0258f251e8ce39e069171e8058e9bc199558ac1b8d4740b3e5f03b3d41a8",
+      "system_prompt_length": 6606,
+      "require_parameters": true
+    }
+  ]
+}
