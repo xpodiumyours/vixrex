@@ -138,3 +138,31 @@ taşıyan `Graphify etki:` satırı, madde başına öncesi/sonrası ölçüm. P
 - P2/P4 migration'ları yalnız ekleme yapar; mevcut tablolara dokunmaz. Geri alma: yeni tabloyu
   düşür, kodu eski dala al.
 - P4 en riskli parça; pgmq'ya geçmeden P1–P3 canlıya çıkabilir.
+## 7. P2 taslağı — onay bekliyor (2026-11-07)
+
+`supabase/migrations/20261107170000_fatura_deneme_olaylari.sql` yalnız ekleme yapar:
+mevcut kolonları değiştirmez, üç kolon ekler, bir tablo ve üç fonksiyon oluşturur.
+Yerelde migration zinciri sıfırdan uygulandı ve aşağıdakiler ölçüldü.
+
+- **Olay kaydı.** `invoice_job_events`: iş kimliği, mağaza, aşama (`reading/cards/save`),
+  deneme no, geçiş (`from_state → to_state`), gerekçe kodu, hata sınıfı, HTTP durumu,
+  `Retry-After`, süre, model, cevap boyu, gövde `sha256`, kim yaptı (`worker/owner/cron/admin`),
+  zaman (D7).
+- **Yalnız ekleme yetkiyle sağlanır.** `service_role` yalnız `select, insert` alır; `update`
+  ve `delete` gerçekten reddedilir (ölçüm: `permission denied for table invoice_job_events`).
+  `anon` ve `authenticated` hiçbir yetki almaz; RLS açık, politika yok. İlk yazımda revoke
+  listesinde `service_role` yoktu ve update/delete açık kalmıştı; liste düzeltildi.
+- **Deneme sayacı ve künye.** `invoice_provider_runs` tablosuna `attempt_count`,
+  `next_attempt_at`, `response_sha256` eklenir; bekleyen işler için kısmi indeks (D6).
+- **Hata sınıflandırma.** `invoice_error_class(http, kod)`: ayrıştırma ve kapsam hataları
+  kalıcı; zaman aşımı/bağlantı kopması (`http` boş), 408/409/425/429 ve 5xx geçici; gerisi
+  kalıcı (D3). Ölçüm: `null→transient, 401→permanent, 402→permanent, 429→transient,
+  503→transient, KART_KAPSAMI_EKSIK→permanent`.
+- **Geri çekilme.** `invoice_backoff_ms(deneme, sınıf, retry_after)`: tam jitter, taban 2 sn,
+  üst sınır 20 sn; sunucunun `Retry-After` değeri daha büyükse o kullanılır, en fazla 60 sn;
+  kalıcı sınıfta bekleme yok (D4). Ölçüm: 1. deneme ≤ 1998 ms, 2. ≤ 3996 ms, 6. ≤ 19966 ms.
+- **Olay yazma yolu.** `record_invoice_job_event(...)` iş ile mağazanın eşleştiğini doğrular,
+  sonra satırı yazar; yalnız `service_role` çağırabilir.
+
+Açık soru — Casper'ın kararı: olay satırları ne kadar saklanacak? Taslakta silme yolu yok;
+saklama süresi ve temizleme işi ayrı migration olarak yazılmalı.
