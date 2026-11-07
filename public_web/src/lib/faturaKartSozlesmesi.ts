@@ -13,6 +13,8 @@ export interface KartSozlesmesi {
   hamSatirNo: number | null;
   ad: string;
   marka: string;
+  uretici: string;
+  resmiAlanAdi: string;
   barkod: string;
   kod: string;
   varyant: string;
@@ -129,6 +131,8 @@ export function tekKartSozlesmesi(item: Kayit): KartSozlesmesi {
     || metin(item.match_status) || metin(item.status)) as KartDogrulamaDurumu;
   const resmiKaniti = metin(dogrulama.official_product_url) || metin(kart.official_product_url)
     || metin(kart.product_url) || metin(dogrulama.product_url);
+  const resmiAlanAdi = metin(dogrulama.official_domain) || metin(kart.official_domain);
+  const uretici = metin(kart.manufacturer) || metin(item.manufacturer);
   const adayGorsel = ilkAdres(gorsel.image_candidates) || ilkAdres(kart.image_candidates);
   const adayKaynak = ilkKaynakAdres(gorsel.image_candidates) || ilkKaynakAdres(kart.image_candidates);
   const gorselAdresi = metin(gorsel.image_url) || metin(kart.image_url) || ilkAdres(kart.image_urls) || adayGorsel;
@@ -148,6 +152,8 @@ export function tekKartSozlesmesi(item: Kayit): KartSozlesmesi {
     hamSatirNo: sayi(kart.satir_no ?? item.satir_no),
     ad: metin(kart.title),
     marka: metin(kart.brand),
+    uretici,
+    resmiAlanAdi,
     barkod: metin(kart.barcode) || metin(item.barcode),
     kod: metin(kart.code) || metin(item.code),
     varyant: metin(kart.variant),
@@ -168,7 +174,7 @@ export function tekKartSozlesmesi(item: Kayit): KartSozlesmesi {
     tekrarGrubu: metin(item.duplicate_group),
     kanonikRowId: metin(item.canonical_row_id),
     kartDurumu: item.card_status,
-    kanit: { ...dogrulama, status: durum, official_product_url: adres(resmiKaniti), matched_attributes: eslesenBilgiler, unmatched_attributes: eksikler, media: { ...gorsel, image_url: gorselAdresi, source_url: gorselKaynakSayfa, verification_status: gorselDogrulama, rights_status: gorselHaklari }, card_status: item.card_status },
+    kanit: { ...dogrulama, status: durum, official_domain: resmiAlanAdi || null, official_product_url: adres(resmiKaniti), matched_attributes: eslesenBilgiler, unmatched_attributes: eksikler, media: { ...gorsel, image_url: gorselAdresi, source_url: gorselKaynakSayfa, verification_status: gorselDogrulama, rights_status: gorselHaklari }, card_status: item.card_status },
     kaynaklar: Array.isArray(item.sources) ? item.sources.filter(nesne) : [],
     ham: item,
   };
