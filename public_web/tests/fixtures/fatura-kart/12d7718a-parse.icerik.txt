@@ -1,0 +1,841 @@
+{
+  "items": [
+    {
+      "row_id": "1",
+      "satir_no": 1,
+      "invoice_data": {
+        "quantity": 6,
+        "unit": "",
+        "unit_price": 62.5,
+        "total_amount": 375
+      },
+      "vixrex_product_json": {
+        "title": "Tutku Kadın Louis Bikini Külot Kombin 42-44",
+        "brand": "Tutku Kadın",
+        "category_suggestion": "Kadın İç Giyim / Bikini Külot",
+        "variant": "Kombin",
+        "short_description": "Tutku Kadın Louis Bikini Külot, 42-44 beden ve Kombin renk seçeneğiyle sunulur. Tutku kadın iç giyim koleksiyonundaki bikini külot modellerinden biridir.",
+        "consumer_sale_price": null,
+        "stock_quantity": null
+      },
+      "validation": {
+        "status": "verified",
+        "official_domain": "sehermensucat.com",
+        "official_product_url": "https://sehermensucat.com/tkd0305-tutku-kadin-louis-bikini-kulot",
+        "matched_attributes": [
+          "marka: Tutku",
+          "ürün kodu: TKD0305",
+          "ürün adı: Louis Bikini Külot",
+          "beden: 42-44",
+          "renk: Kombin"
+        ],
+        "unmatched_attributes": [
+          "barkod: faturada yok, resmî sayfada doğrulanamadı"
+        ]
+      },
+      "media": {
+        "image_url": "https://cdn.myikas.com/images/74e89546-a032-4dc5-a4cc-0765f50962f6/b7aef912-ab25-47be-b369-085af66f8651/3840/t-164763.webp",
+        "source_url": "https://sehermensucat.com/tkd0305-tutku-kadin-louis-bikini-kulot",
+        "verification_status": "verified",
+        "rights_status": "unknown"
+      },
+      "duplicate_group": null,
+      "canonical_row_id": null
+    },
+    {
+      "row_id": "2",
+      "satir_no": 2,
+      "invoice_data": {
+        "quantity": 6,
+        "unit": "",
+        "unit_price": 61.5,
+        "total_amount": 369
+      },
+      "vixrex_product_json": {
+        "title": "Bross Melek Kanatlı Dizaltı Çocuk Çorap Siyah 9-11 Yaş",
+        "brand": "Bross",
+        "category_suggestion": "Çorap / Çocuk Çorap",
+        "variant": "Siyah",
+        "short_description": "Bross Melek Kanatlı Dizaltı Çocuk Çorap, 9-11 yaş için Siyah renk seçeneğiyle sunulur. Melek kanadı detaylı dizaltı modelidir.",
+        "consumer_sale_price": null,
+        "stock_quantity": null
+      },
+      "validation": {
+        "status": "verified",
+        "official_domain": "bross.com.tr",
+        "official_product_url": "https://bross.com.tr/bross-melek-kanatli-dizalti-cocuk-corap-onl0049822",
+        "matched_attributes": [
+          "marka: Bross",
+          "ürün kodu: ONL.00498.22",
+          "ürün adı: Melek Kanatlı Dizaltı Çocuk Çorap",
+          "renk: Siyah",
+          "beden: 9-11 Yaş"
+        ],
+        "unmatched_attributes": [
+          "barkod: faturada yok, resmî sayfada doğrulanamadı"
+        ]
+      },
+      "media": {
+        "image_url": "https://cdn.myikas.com/images/4f0cdf9a-cb82-4e9e-965e-cffd646d0cae/fe809926-b903-40df-9f4d-9e3cd444bb75/image_3840.webp",
+        "source_url": "https://bross.com.tr/bross-melek-kanatli-dizalti-cocuk-corap-onl0049822",
+        "verification_status": "verified",
+        "rights_status": "unknown"
+      },
+      "duplicate_group": null,
+      "canonical_row_id": null
+    },
+    {
+      "row_id": "3",
+      "satir_no": 3,
+      "invoice_data": {
+        "quantity": 4,
+        "unit": "",
+        "unit_price": 98.5,
+        "total_amount": 394
+      },
+      "vixrex_product_json": {
+        "title": "Pınar Süzme Peynir 500 g",
+        "brand": "Pınar",
+        "category_suggestion": "Süt Ürünleri / Peynir",
+        "variant": null,
+        "short_description": "Pınar Süzme Peynir, 500 g ambalaj seçeneğiyle sunulan süzme peynirdir. Kahvaltıda ve tariflerde kullanılabilir.",
+        "consumer_sale_price": null,
+        "stock_quantity": null
+      },
+      "validation": {
+        "status": "verified",
+        "official_domain": "pinar.com.tr",
+        "official_product_url": "https://www.pinar.com.tr/urunler/detay-sut/Pinar-Suzme-Peynir/3662/0/0",
+        "matched_attributes": [
+          "marka: Pınar",
+          "ürün adı: Süzme Peynir",
+          "gramaj: 500 g ambalaj seçeneği mevcut"
+        ],
+        "unmatched_attributes": [
+          "barkod: faturada yok, resmî sayfada doğrulanamadı",
+          "ürün kodu: faturada yok"
+        ]
+      },
+      "media": {
+        "image_url": "https://www.pinar.com.tr/images/2026/urunler/suzme_peynir_500g.png",
+        "source_url": "https://www.pinar.com.tr/urunler/detay-sut/Pinar-Suzme-Peynir/3662/0/0",
+        "verification_status": "verified",
+        "rights_status": "unknown"
+      },
+      "duplicate_group": null,
+      "canonical_row_id": null
+    },
+    {
+      "row_id": "4",
+      "satir_no": 4,
+      "invoice_data": {
+        "quantity": 4,
+        "unit": "",
+        "unit_price": 64.75,
+        "total_amount": 259
+      },
+      "vixrex_product_json": {
+        "title": "Tutku Kadın Royce Bikini Külot Kombin 42-44",
+        "brand": "Tutku Kadın",
+        "category_suggestion": "Kadın İç Giyim / Bikini Külot",
+        "variant": "Kombin",
+        "short_description": "Tutku Kadın Royce Bikini Külot, 42-44 beden ve Kombin renk seçeneğiyle sunulur. Tutku kadın iç giyim koleksiyonundaki bikini külot modellerinden biridir.",
+        "consumer_sale_price": null,
+        "stock_quantity": null
+      },
+      "validation": {
+        "status": "verified",
+        "official_domain": "sehermensucat.com",
+        "official_product_url": "https://sehermensucat.com/tkd0304-tutku-kadin-royce-bikini-kulot",
+        "matched_attributes": [
+          "marka: Tutku",
+          "ürün kodu: TKD0304",
+          "ürün adı: Royce Bikini Külot",
+          "beden: 42-44",
+          "renk: Kombin"
+        ],
+        "unmatched_attributes": [
+          "barkod: faturada yok, resmî sayfada doğrulanamadı"
+        ]
+      },
+      "media": {
+        "image_url": "https://cdn.myikas.com/images/74e89546-a032-4dc5-a4cc-0765f50962f6/8408635f-6d70-432b-8d52-ebf23b91de8f/3840/t-233118.webp",
+        "source_url": "https://sehermensucat.com/tkd0304-tutku-kadin-royce-bikini-kulot",
+        "verification_status": "verified",
+        "rights_status": "unknown"
+      },
+      "duplicate_group": null,
+      "canonical_row_id": null
+    },
+    {
+      "row_id": "5",
+      "satir_no": 5,
+      "invoice_data": {
+        "quantity": 4,
+        "unit": "",
+        "unit_price": 105.9,
+        "total_amount": 423.6
+      },
+      "vixrex_product_json": {
+        "title": "Bross 3'lü Kız Çocuk Desensiz Dizaltı Çorap Gri 8-10 Yaş",
+        "brand": "Bross",
+        "category_suggestion": "Çorap / Çocuk Çorap",
+        "variant": "Gri",
+        "short_description": "Bross 3'lü Kız Çocuk Desensiz Dizaltı Çorap, 8-10 yaş için Gri renk seçeneğiyle üçlü paket olarak sunulur. Desensiz dizaltı modelidir.",
+        "consumer_sale_price": null,
+        "stock_quantity": null
+      },
+      "validation": {
+        "status": "verified",
+        "official_domain": "bross.com.tr",
+        "official_product_url": "https://bross.com.tr/bross-3-lu-kiz-cocuk-desensiz-dizalti-corap-gri-onl0229220",
+        "matched_attributes": [
+          "marka: Bross",
+          "ürün kodu: ONL.02292.20",
+          "ürün adı: 3 lü Kız Çocuk Desensiz Dizaltı Çorap",
+          "renk: Gri",
+          "beden: 8-10 Yaş"
+        ],
+        "unmatched_attributes": [
+          "barkod: faturada yok, resmî sayfada doğrulanamadı"
+        ]
+      },
+      "media": {
+        "image_url": "https://cdn.myikas.com/images/4f0cdf9a-cb82-4e9e-965e-cffd646d0cae/1fbff923-2c23-4a9f-8cdb-3f1589d7496f/image_3840.webp",
+        "source_url": "https://bross.com.tr/bross-3-lu-kiz-cocuk-desensiz-dizalti-corap-gri-onl0229220",
+        "verification_status": "verified",
+        "rights_status": "unknown"
+      },
+      "duplicate_group": null,
+      "canonical_row_id": null
+    },
+    {
+      "row_id": "6",
+      "satir_no": 6,
+      "invoice_data": {
+        "quantity": 5,
+        "unit": "",
+        "unit_price": 52,
+        "total_amount": 260
+      },
+      "vixrex_product_json": {
+        "title": "Pınar Labne",
+        "brand": "Pınar",
+        "category_suggestion": "Süt Ürünleri / Krem Peynir",
+        "variant": null,
+        "short_description": "Pınar Labne, sürülebilir kıvamıyla kızarmış ekmekten çorbaya, makarnadan tatlılara kadar birçok tarifte kullanılan krem peynirdir.",
+        "consumer_sale_price": null,
+        "stock_quantity": null
+      },
+      "validation": {
+        "status": "ambiguous",
+        "official_domain": "pinar.com.tr",
+        "official_product_url": "https://www.pinar.com.tr/urunler/detay-sut/Pinar-Labne/457/128/0",
+        "matched_attributes": [
+          "marka: Pınar",
+          "ürün adı: Labne"
+        ],
+        "unmatched_attributes": [
+          "gramaj: faturada 200 g, resmî sayfada 20 g, 180 g, 3x180 g, 400 g, 750 g ve 8x20 g ambalajlar yer alıyor",
+          "barkod: faturada yok, resmî sayfada doğrulanamadı",
+          "ürün kodu: faturada yok",
+          "resmî görsel 200 g ambalajla eşleşmediği için image_url boş bırakıldı"
+        ]
+      },
+      "media": {
+        "image_url": null,
+        "source_url": null,
+        "verification_status": null,
+        "rights_status": "unknown"
+      },
+      "duplicate_group": null,
+      "canonical_row_id": null
+    },
+    {
+      "row_id": "7",
+      "satir_no": 7,
+      "invoice_data": {
+        "quantity": 5,
+        "unit": "",
+        "unit_price": 59.9,
+        "total_amount": 299.5
+      },
+      "vixrex_product_json": {
+        "title": "Tutku Kadın Rubby Bikini Külot Kombin 42-44",
+        "brand": "Tutku Kadın",
+        "category_suggestion": "Kadın İç Giyim / Bikini Külot",
+        "variant": "Kombin",
+        "short_description": "Tutku Kadın Rubby Bikini Külot, 42-44 beden ve Kombin renk seçeneğiyle sunulur. Tutku kadın iç giyim koleksiyonundaki bikini külot modellerinden biridir.",
+        "consumer_sale_price": null,
+        "stock_quantity": null
+      },
+      "validation": {
+        "status": "verified",
+        "official_domain": "sehermensucat.com",
+        "official_product_url": "https://sehermensucat.com/tkd0302-tutku-kadin-rubby-bikini-kulot",
+        "matched_attributes": [
+          "marka: Tutku",
+          "ürün kodu: TKD0302",
+          "ürün adı: Rubby Bikini Külot",
+          "beden: 42-44",
+          "renk: Kombin"
+        ],
+        "unmatched_attributes": [
+          "barkod: faturada yok, resmî sayfada doğrulanamadı"
+        ]
+      },
+      "media": {
+        "image_url": "https://cdn.myikas.com/images/74e89546-a032-4dc5-a4cc-0765f50962f6/7e278faa-ad90-4d25-8377-25b0355075ac/3840/t-80179.webp",
+        "source_url": "https://sehermensucat.com/tkd0302-tutku-kadin-rubby-bikini-kulot",
+        "verification_status": "verified",
+        "rights_status": "unknown"
+      },
+      "duplicate_group": null,
+      "canonical_row_id": null
+    },
+    {
+      "row_id": "8",
+      "satir_no": 8,
+      "invoice_data": {
+        "quantity": 5,
+        "unit": "",
+        "unit_price": 84.9,
+        "total_amount": 424.5
+      },
+      "vixrex_product_json": {
+        "title": "Bross Erkek Kışlık Yün Soket Çorap Gri 39-42",
+        "brand": "Bross",
+        "category_suggestion": "Çorap / Erkek Çorap",
+        "variant": "Gri",
+        "short_description": "Bross Erkek Kışlık Yün Soket Çorap, 39-42 numara aralığında Gri renk seçeneğiyle sunulur. Kışlık yün soket modelidir.",
+        "consumer_sale_price": null,
+        "stock_quantity": null
+      },
+      "validation": {
+        "status": "verified",
+        "official_domain": "bross.com.tr",
+        "official_product_url": "https://bross.com.tr/erkek-kislik-gri-yun-soket-corap-onl0263401",
+        "matched_attributes": [
+          "marka: Bross",
+          "ürün kodu: ONL.02634.01",
+          "ürün adı: Erkek Kışlık Gri Yün Soket Çorap",
+          "renk: Gri",
+          "beden: 39-42"
+        ],
+        "unmatched_attributes": [
+          "barkod: faturada yok, resmî sayfada doğrulanamadı"
+        ]
+      },
+      "media": {
+        "image_url": "https://cdn.myikas.com/images/4f0cdf9a-cb82-4e9e-965e-cffd646d0cae/49a3874e-615e-4c91-a627-7f3b308c13b6/image_3840.webp",
+        "source_url": "https://bross.com.tr/erkek-kislik-gri-yun-soket-corap-onl0263401",
+        "verification_status": "verified",
+        "rights_status": "unknown"
+      },
+      "duplicate_group": null,
+      "canonical_row_id": null
+    },
+    {
+      "row_id": "9",
+      "satir_no": 9,
+      "invoice_data": {
+        "quantity": 6,
+        "unit": "",
+        "unit_price": 16.5,
+        "total_amount": 99
+      },
+      "vixrex_product_json": {
+        "title": "Pınar %1 Yağlı Süt 200 ml",
+        "brand": "Pınar",
+        "category_suggestion": "Süt Ürünleri / Süt",
+        "variant": null,
+        "short_description": "Pınar %1 Yağlı Süt, 200 ml ambalajında sunulan yağlı süt çeşididir. Katkı maddesi içermez; özel paketleme sayesinde uzun ömürlüdür.",
+        "consumer_sale_price": null,
+        "stock_quantity": null
+      },
+      "validation": {
+        "status": "verified",
+        "official_domain": "pinar.com.tr",
+        "official_product_url": "https://www.pinar.com.tr/urunler/detay-sut/Pinar-1-Yagli-Sut/3991/6705/0",
+        "matched_attributes": [
+          "marka: Pınar",
+          "ürün adı: %1 Yağlı Süt",
+          "hacim: 200 ml"
+        ],
+        "unmatched_attributes": [
+          "barkod: faturada yok, resmî sayfada doğrulanamadı",
+          "ürün kodu: faturada yok"
+        ]
+      },
+      "media": {
+        "image_url": "https://www.pinar.com.tr/images/2025/1-yagli-200-ml.png",
+        "source_url": "https://www.pinar.com.tr/urunler/detay-sut/Pinar-1-Yagli-Sut/3991/6705/0",
+        "verification_status": "verified",
+        "rights_status": "unknown"
+      },
+      "duplicate_group": null,
+      "canonical_row_id": null
+    },
+    {
+      "row_id": "10",
+      "satir_no": 10,
+      "invoice_data": {
+        "quantity": 3,
+        "unit": "",
+        "unit_price": 61,
+        "total_amount": 183
+      },
+      "vixrex_product_json": {
+        "title": "Tutku Kadın Wendy Bikini Külot Kombin 42-44",
+        "brand": "Tutku Kadın",
+        "category_suggestion": "Kadın İç Giyim / Bikini Külot",
+        "variant": "Kombin",
+        "short_description": "Tutku Kadın Wendy Bikini Külot, 42-44 beden ve Kombin renk seçeneğiyle sunulur. Tutku kadın iç giyim koleksiyonundaki bikini külot modellerinden biridir.",
+        "consumer_sale_price": null,
+        "stock_quantity": null
+      },
+      "validation": {
+        "status": "verified",
+        "official_domain": "sehermensucat.com",
+        "official_product_url": "https://sehermensucat.com/tkd0300-tutku-kadin-wendy-bikini-kulot",
+        "matched_attributes": [
+          "marka: Tutku",
+          "ürün kodu: TKD0300",
+          "ürün adı: Wendy Bikini Külot",
+          "beden: 42-44",
+          "renk: Kombin"
+        ],
+        "unmatched_attributes": [
+          "barkod: faturada yok, resmî sayfada doğrulanamadı",
+          "resmî sayfada ürün görseli yok"
+        ]
+      },
+      "media": {
+        "image_url": null,
+        "source_url": null,
+        "verification_status": null,
+        "rights_status": "unknown"
+      },
+      "duplicate_group": null,
+      "canonical_row_id": null
+    },
+    {
+      "row_id": "11",
+      "satir_no": 11,
+      "invoice_data": {
+        "quantity": 6,
+        "unit": "",
+        "unit_price": 73.9,
+        "total_amount": 443.4
+      },
+      "vixrex_product_json": {
+        "title": "Bross Simli Kıvrık Havlu Çorap Pembe 36-40",
+        "brand": "Bross",
+        "category_suggestion": "Çorap / Kadın Çorap",
+        "variant": "Pembe",
+        "short_description": "Bross Simli Kıvrık Havlu Çorap, 36-40 numarada Pembe renk seçeneğiyle sunulur. Simli kıvrık havlu modelidir.",
+        "consumer_sale_price": null,
+        "stock_quantity": null
+      },
+      "validation": {
+        "status": "verified",
+        "official_domain": "bross.com.tr",
+        "official_product_url": "https://bross.com.tr/bross-simli-kivrik-havlu-corap-onl0189301",
+        "matched_attributes": [
+          "marka: Bross",
+          "ürün kodu: ONL.01893.01",
+          "ürün adı: Simli Kıvrık Havlu Çorap",
+          "renk: Pembe",
+          "beden: 36-40"
+        ],
+        "unmatched_attributes": [
+          "barkod: faturada yok, resmî sayfada doğrulanamadı"
+        ]
+      },
+      "media": {
+        "image_url": "https://cdn.myikas.com/images/4f0cdf9a-cb82-4e9e-965e-cffd646d0cae/7f585535-2f47-47f7-b1f3-aedac6bec100/image_3840.webp",
+        "source_url": "https://bross.com.tr/bross-simli-kivrik-havlu-corap-onl0189301",
+        "verification_status": "verified",
+        "rights_status": "unknown"
+      },
+      "duplicate_group": null,
+      "canonical_row_id": null
+    },
+    {
+      "row_id": "12",
+      "satir_no": 12,
+      "invoice_data": {
+        "quantity": 6,
+        "unit": "",
+        "unit_price": 14.5,
+        "total_amount": 87
+      },
+      "vixrex_product_json": {
+        "title": "Pınar Lezzetin Alası Ayran 200 ml",
+        "brand": "Pınar",
+        "category_suggestion": "Süt Ürünleri / Ayran",
+        "variant": null,
+        "short_description": "Pınar Lezzetin Alası Ayran, 200 ml ambalajında sunulan ayrandır. Hafif ekşimsi ve kıvamlı tadıyla sofralarda yer alır.",
+        "consumer_sale_price": null,
+        "stock_quantity": null
+      },
+      "validation": {
+        "status": "verified",
+        "official_domain": "pinar.com.tr",
+        "official_product_url": "https://www.pinar.com.tr/urunler/detay-sut/Ayran/493/151/0",
+        "matched_attributes": [
+          "marka: Pınar",
+          "ürün adı: Lezzetin Alası Ayran",
+          "hacim: 200 ml"
+        ],
+        "unmatched_attributes": [
+          "barkod: faturada yok, resmî sayfada doğrulanamadı",
+          "ürün kodu: faturada yok"
+        ]
+      },
+      "media": {
+        "image_url": "https://www.pinar.com.tr/images/2020/urunler/sut/ayran_200ml-lezzetin-alasi.png",
+        "source_url": "https://www.pinar.com.tr/urunler/detay-sut/Ayran/493/151/0",
+        "verification_status": "verified",
+        "rights_status": "unknown"
+      },
+      "duplicate_group": null,
+      "canonical_row_id": null
+    },
+    {
+      "row_id": "13",
+      "satir_no": 13,
+      "invoice_data": {
+        "quantity": 6,
+        "unit": "",
+        "unit_price": 66,
+        "total_amount": 396
+      },
+      "vixrex_product_json": {
+        "title": "Tutku Kadın Forever Bikini Külot Kombin 42-44",
+        "brand": "Tutku Kadın",
+        "category_suggestion": "Kadın İç Giyim / Bikini Külot",
+        "variant": "Kombin",
+        "short_description": "Tutku Kadın Forever Bikini Külot, 42-44 beden ve Kombin renk seçeneğiyle sunulur. Tutku kadın iç giyim koleksiyonundaki bikini külot modellerinden biridir.",
+        "consumer_sale_price": null,
+        "stock_quantity": null
+      },
+      "validation": {
+        "status": "verified",
+        "official_domain": "sehermensucat.com",
+        "official_product_url": "https://sehermensucat.com/tkd0301-tutku-kadin-forever-bikini-kulot",
+        "matched_attributes": [
+          "marka: Tutku",
+          "ürün kodu: TKD0301",
+          "ürün adı: Forever Bikini Külot",
+          "beden: 42-44",
+          "renk: Kombin"
+        ],
+        "unmatched_attributes": [
+          "barkod: faturada yok, resmî sayfada doğrulanamadı"
+        ]
+      },
+      "media": {
+        "image_url": "https://cdn.myikas.com/images/74e89546-a032-4dc5-a4cc-0765f50962f6/10199d27-78ef-4d95-8157-b6168d325733/image_3840.webp",
+        "source_url": "https://sehermensucat.com/tkd0301-tutku-kadin-forever-bikini-kulot",
+        "verification_status": "verified",
+        "rights_status": "unknown"
+      },
+      "duplicate_group": null,
+      "canonical_row_id": null
+    },
+    {
+      "row_id": "14",
+      "satir_no": 14,
+      "invoice_data": {
+        "quantity": 3,
+        "unit": "",
+        "unit_price": 164.9,
+        "total_amount": 494.7
+      },
+      "vixrex_product_json": {
+        "title": "Bross Kadın Kaydırmaz Taban Yoga Çorap Mavi 36-40",
+        "brand": "Bross",
+        "category_suggestion": "Çorap / Kadın Çorap",
+        "variant": "Mavi",
+        "short_description": "Bross Kadın Kaydırmaz Taban Yoga Çorap, 36-40 numarada Mavi renk seçeneğiyle sunulur. Kaydırmaz tabanıyla yoga ve pilates kullanımına yönelik bir modeldir.",
+        "consumer_sale_price": null,
+        "stock_quantity": null
+      },
+      "validation": {
+        "status": "verified",
+        "official_domain": "bross.com.tr",
+        "official_product_url": "https://bross.com.tr/bross-kadin-mavi-kaydirmaz-taban-yoga-corap-onl0255806",
+        "matched_attributes": [
+          "marka: Bross",
+          "ürün kodu: ONL.02558.06",
+          "ürün adı: Kadın Mavi Kaydırmaz Taban Yoga Çorap",
+          "renk: Mavi",
+          "beden: 36-40"
+        ],
+        "unmatched_attributes": [
+          "barkod: faturada yok, resmî sayfada doğrulanamadı"
+        ]
+      },
+      "media": {
+        "image_url": "https://cdn.myikas.com/images/4f0cdf9a-cb82-4e9e-965e-cffd646d0cae/e4c4d3c2-4530-4f68-9a14-444689c4b031/image_3840.webp",
+        "source_url": "https://bross.com.tr/bross-kadin-mavi-kaydirmaz-taban-yoga-corap-onl0255806",
+        "verification_status": "verified",
+        "rights_status": "unknown"
+      },
+      "duplicate_group": null,
+      "canonical_row_id": null
+    },
+    {
+      "row_id": "15",
+      "satir_no": 15,
+      "invoice_data": {
+        "quantity": 4,
+        "unit": "",
+        "unit_price": 96,
+        "total_amount": 384
+      },
+      "vixrex_product_json": {
+        "title": "Pınar Yarım Yağlı ve Az Tuzlu Süzme Peynir 500 g",
+        "brand": "Pınar",
+        "category_suggestion": "Süt Ürünleri / Peynir",
+        "variant": null,
+        "short_description": "Pınar Yarım Yağlı ve Az Tuzlu Süzme Peynir, 500 g ambalajında sunulur. Yumuşak kıvamıyla dilimlenebilir ya da sürülebilir; hafif lezzetiyle geniş bir kullanım sunar.",
+        "consumer_sale_price": null,
+        "stock_quantity": null
+      },
+      "validation": {
+        "status": "verified",
+        "official_domain": "pinar.com.tr",
+        "official_product_url": "https://www.pinar.com.tr/urunler/detay-sut/Pinar-Yarim-Yagli-ve-Az-Tuzlu-Suzme-Peynir/3611/4832/0",
+        "matched_attributes": [
+          "marka: Pınar",
+          "ürün adı: Yarım Yağlı ve Az Tuzlu Süzme Peynir",
+          "gramaj: 500 g ambalaj seçeneği mevcut"
+        ],
+        "unmatched_attributes": [
+          "barkod: faturada yok, resmî sayfada doğrulanamadı",
+          "ürün kodu: faturada yok"
+        ]
+      },
+      "media": {
+        "image_url": "https://www.pinar.com.tr/images/urunler/peynirler/suzme_peynir-yarim-yagli_500g.png",
+        "source_url": "https://www.pinar.com.tr/urunler/detay-sut/Pinar-Yarim-Yagli-ve-Az-Tuzlu-Suzme-Peynir/3611/4832/0",
+        "verification_status": "verified",
+        "rights_status": "unknown"
+      },
+      "duplicate_group": null,
+      "canonical_row_id": null
+    },
+    {
+      "row_id": "16",
+      "satir_no": 16,
+      "invoice_data": {
+        "quantity": 4,
+        "unit": "",
+        "unit_price": 68.75,
+        "total_amount": 275
+      },
+      "vixrex_product_json": {
+        "title": "Tutku Kadın Joya Bato Külot Kombin M / 3",
+        "brand": "Tutku Kadın",
+        "category_suggestion": "Kadın İç Giyim / Külot",
+        "variant": "Kombin",
+        "short_description": "Tutku Kadın Joya Bato Külot, M / 3 beden ve Kombin renk seçeneğiyle sunulur. Bato kesim külot modelidir.",
+        "consumer_sale_price": null,
+        "stock_quantity": null
+      },
+      "validation": {
+        "status": "verified",
+        "official_domain": "sehermensucat.com",
+        "official_product_url": "https://sehermensucat.com/tkd0971-tutku-kadin-joya-bato-kulot",
+        "matched_attributes": [
+          "marka: Tutku",
+          "ürün kodu: TKD0971",
+          "ürün adı: Joya Bato Külot",
+          "beden: M / 3",
+          "renk: Kombin"
+        ],
+        "unmatched_attributes": [
+          "barkod: faturada yok, resmî sayfada doğrulanamadı"
+        ]
+      },
+      "media": {
+        "image_url": "https://cdn.myikas.com/images/74e89546-a032-4dc5-a4cc-0765f50962f6/19989203-6408-43e7-96c0-fb42e5112be5/image_3840.webp",
+        "source_url": "https://sehermensucat.com/tkd0971-tutku-kadin-joya-bato-kulot",
+        "verification_status": "verified",
+        "rights_status": "unknown"
+      },
+      "duplicate_group": null,
+      "canonical_row_id": null
+    },
+    {
+      "row_id": "17",
+      "satir_no": 17,
+      "invoice_data": {
+        "quantity": 4,
+        "unit": "",
+        "unit_price": 115.9,
+        "total_amount": 463.6
+      },
+      "vixrex_product_json": {
+        "title": "Bross Kuğu, Tavşan, Havlu 3'lü Kız Bebek Soket Asorti 12-18",
+        "brand": "Bross",
+        "category_suggestion": "Çorap / Bebek Çorap",
+        "variant": "Asorti",
+        "short_description": "Bross Kuğu, Tavşan, Havlu 3'lü Kız Bebek Soket, 12-18 ay için Asorti renk seçeneğiyle sunulur. Üçlü paket bebek soketidir.",
+        "consumer_sale_price": null,
+        "stock_quantity": null
+      },
+      "validation": {
+        "status": "verified",
+        "official_domain": "bross.com.tr",
+        "official_product_url": "https://bross.com.tr/kugutavsanhavlu-3lu-kiz-bebek-soket-onl0270403",
+        "matched_attributes": [
+          "marka: Bross",
+          "ürün kodu: ONL.02704.03",
+          "ürün adı: Kuğu,Tavşan,Havlu 3lü Kız Bebek Soket",
+          "renk: Asorti",
+          "beden: 12-18"
+        ],
+        "unmatched_attributes": [
+          "barkod: faturada yok, resmî sayfada doğrulanamadı"
+        ]
+      },
+      "media": {
+        "image_url": "https://cdn.myikas.com/images/4f0cdf9a-cb82-4e9e-965e-cffd646d0cae/b6a5d8a3-da8d-4e84-9639-1b0fc039c97c/image_3840.webp",
+        "source_url": "https://bross.com.tr/kugutavsanhavlu-3lu-kiz-bebek-soket-onl0270403",
+        "verification_status": "verified",
+        "rights_status": "unknown"
+      },
+      "duplicate_group": null,
+      "canonical_row_id": null
+    },
+    {
+      "row_id": "18",
+      "satir_no": 18,
+      "invoice_data": {
+        "quantity": 3,
+        "unit": "",
+        "unit_price": 179.9,
+        "total_amount": 539.7
+      },
+      "vixrex_product_json": {
+        "title": "Tutku Erkek Thermal Fanila Y. Haki S / 2",
+        "brand": "Tutku Erkek",
+        "category_suggestion": "Erkek İç Giyim / Fanila",
+        "variant": "Y. Haki",
+        "short_description": "Tutku Erkek Thermal Fanila, S / 2 beden ve Y. Haki renk seçeneğiyle sunulur. Tutku erkek iç giyim koleksiyonundaki termal fanila modelidir.",
+        "consumer_sale_price": null,
+        "stock_quantity": null
+      },
+      "validation": {
+        "status": "verified",
+        "official_domain": "sehermensucat.com",
+        "official_product_url": "https://sehermensucat.com/ter0126-tutku-erkek-thermal-fanila-2",
+        "matched_attributes": [
+          "marka: Tutku",
+          "ürün kodu: TER0126",
+          "ürün adı: Erkek Thermal Fanila",
+          "beden: S / 2",
+          "renk: Y.Haki"
+        ],
+        "unmatched_attributes": [
+          "barkod: faturada yok, resmî sayfada doğrulanamadı"
+        ]
+      },
+      "media": {
+        "image_url": "https://cdn.myikas.com/images/74e89546-a032-4dc5-a4cc-0765f50962f6/6ad16957-6ba1-4770-8f41-4d054013ee01/image_3840.webp",
+        "source_url": "https://sehermensucat.com/ter0126-tutku-erkek-thermal-fanila-2",
+        "verification_status": "verified",
+        "rights_status": "unknown"
+      },
+      "duplicate_group": null,
+      "canonical_row_id": null
+    },
+    {
+      "row_id": "19",
+      "satir_no": 19,
+      "invoice_data": {
+        "quantity": 3,
+        "unit": "",
+        "unit_price": 238.9,
+        "total_amount": 716.7
+      },
+      "vixrex_product_json": {
+        "title": "Bross Bambu Kadın Atlet 2'li Siyah Beyaz Asorti XL",
+        "brand": "Bross",
+        "category_suggestion": "Kadın İç Giyim / Atlet",
+        "variant": "Asorti",
+        "short_description": "Bross Bambu Kadın Atlet 2'li, XL beden ve Asorti renk seçeneğiyle sunulur. Siyah ve beyaz atletlerden oluşan ikili bambu paketidir.",
+        "consumer_sale_price": null,
+        "stock_quantity": null
+      },
+      "validation": {
+        "status": "verified",
+        "official_domain": "bross.com.tr",
+        "official_product_url": "https://bross.com.tr/bross-bambu-kadin-atlet-2li-siyah-beyaz-1425-onl0204304",
+        "matched_attributes": [
+          "marka: Bross",
+          "ürün kodu: ONL.02043.04",
+          "ürün adı: Bambu Kadın Atlet 2li Siyah Beyaz",
+          "beden: XL"
+        ],
+        "unmatched_attributes": [
+          "renk: faturada Siyah Beyaz, resmî sayfada renk seçeneği Asorti olarak geçiyor",
+          "barkod: faturada yok, resmî sayfada doğrulanamadı"
+        ]
+      },
+      "media": {
+        "image_url": "https://cdn.myikas.com/images/4f0cdf9a-cb82-4e9e-965e-cffd646d0cae/25a57a01-b18d-44b2-a718-aa4265842373/image_3840.webp",
+        "source_url": "https://bross.com.tr/bross-bambu-kadin-atlet-2li-siyah-beyaz-1425-onl0204304",
+        "verification_status": "verified",
+        "rights_status": "unknown"
+      },
+      "duplicate_group": null,
+      "canonical_row_id": null
+    },
+    {
+      "row_id": "20",
+      "satir_no": 20,
+      "invoice_data": {
+        "quantity": 3,
+        "unit": "",
+        "unit_price": 149.5,
+        "total_amount": 448.5
+      },
+      "vixrex_product_json": {
+        "title": "Tutku Erkek Thermal Tayt Y. Haki S / 2",
+        "brand": "Tutku Erkek",
+        "category_suggestion": "Erkek İç Giyim / Termal Alt",
+        "variant": "Y. Haki",
+        "short_description": "Tutku Erkek Thermal Tayt, S / 2 beden ve Y. Haki renk seçeneğiyle sunulur. Tutku erkek iç giyim koleksiyonundaki termal tayt modelidir.",
+        "consumer_sale_price": null,
+        "stock_quantity": null
+      },
+      "validation": {
+        "status": "verified",
+        "official_domain": "sehermensucat.com",
+        "official_product_url": "https://sehermensucat.com/ter0125-tutku-erkek-thermal-tayt-1",
+        "matched_attributes": [
+          "marka: Tutku",
+          "ürün kodu: TER0125",
+          "ürün adı: Erkek Thermal Tayt",
+          "beden: S / 2",
+          "renk: Y.Haki"
+        ],
+        "unmatched_attributes": [
+          "barkod: faturada yok, resmî sayfada doğrulanamadı"
+        ]
+      },
+      "media": {
+        "image_url": "https://cdn.myikas.com/images/74e89546-a032-4dc5-a4cc-0765f50962f6/8003645f-b934-491f-9a07-ef60274c82e5/image_3840.webp",
+        "source_url": "https://sehermensucat.com/ter0125-tutku-erkek-thermal-tayt-1",
+        "verification_status": "verified",
+        "rights_status": "unknown"
+      },
+      "duplicate_group": null,
+      "canonical_row_id": null
+    }
+  ]
+}

@@ -1,0 +1,329 @@
+I'll research each brand's official website, starting with searches for the brands and barcodes.
+
+```json
+{
+  "items": [
+    {
+      "row_id": "1",
+      "brand": "ELIT",
+      "title": "ELT1301 Elit Erkek Elastan Sıfır Yaka Fanila",
+      "category_suggestion": "Erkek İç Giyim > Erkek Fanila / Atlet",
+      "variant": "Beyaz / M (3)",
+      "short_description": "Elit erkek elastan sıfır yaka fanila. Resmî ürün sayfasında beyaz renk ve S/2 - 2XL/6 beden aralığı ile listelenmektedir.",
+      "manufacturer": "Seher Mensucat Tekstil San. ve Tic. A.Ş.",
+      "official_product_url": "https://sehermensucat.com/elt1301-elit-erkek-elastan-sifiryaka-fanila",
+      "image_url": "https://cdn.myikas.com/images/74e89546-a032-4dc5-a4cc-0765f50962f6/3ac5759d-36e6-4131-b723-2e1149825b1d/image_3840.webp",
+      "source_url": "https://sehermensucat.com/elt1301-elit-erkek-elastan-sifiryaka-fanila",
+      "rights_status": "unknown",
+      "consumer_sale_price": null,
+      "stock_quantity": null,
+      "invoice_data": {
+        "quantity": 1,
+        "unit": "ad",
+        "unit_price": 115,
+        "total_amount": 115
+      },
+      "attributes": [
+        { "name": "Ürün kodu", "value": "ELT1301" },
+        { "name": "Ürün tipi", "value": "Erkek fanila / atlet, sıfır yaka" },
+        { "name": "Renk", "value": "Beyaz" },
+        { "name": "Beden", "value": "M / 3" },
+        { "name": "Beden aralığı", "value": "S/2, M/3, L/4, XL/5, 2XL/6" },
+        { "name": "Marka", "value": "Tutku Elit" }
+      ],
+      "matched_attributes": ["ürün kodu (ELT1301)", "ürün adı", "renk (Beyaz)", "beden (M/3)"],
+      "unmatched_attributes": [
+        "barkod (8681128321035) resmî sayfada belirtilmemiş",
+        "kdv_orani",
+        "kumaş içeriği sayfada açık metin olarak görüntülenemedi"
+      ],
+      "duplicate_group": null,
+      "canonical_row_id": null,
+      "validation": {
+        "status": "verified",
+        "notes": "Resmî üretici sitesi (sehermensucat.com) ürün sayfası açıldı; ürün kodu, ad, renk ve beden eşleşti."
+      },
+      "image_validation_status": "verified",
+      "sources": [
+        "https://sehermensucat.com/elt1301-elit-erkek-elastan-sifiryaka-fanila",
+        "https://sehermensucat.com/",
+        "https://sehermensucat.com/products.xml"
+      ]
+    },
+    {
+      "row_id": "2",
+      "brand": "ELIT",
+      "title": "ELT1302 Elit Erkek Elastan Sıfır Yaka Uzun Kol Fanila",
+      "category_suggestion": "Erkek İç Giyim > Erkek Fanila / Uzun Kol Atlet",
+      "variant": "Beyaz / M (3)",
+      "short_description": "Elit erkek elastan sıfır yaka uzun kol fanila. Resmî ürün sayfasında beyaz renk ve S/2 - 2XL/6 beden aralığı ile listelenmektedir.",
+      "manufacturer": "Seher Mensucat Tekstil San. ve Tic. A.Ş.",
+      "official_product_url": "https://sehermensucat.com/elt1302-elit-erkek-elastan-sifiryaka-uzun-kol-fanila-fanila",
+      "image_url": "https://cdn.myikas.com/images/74e89546-a032-4dc5-a4cc-0765f50962f6/eebb417d-81e9-4e3f-a89a-17bcffd0e480/image_3840.webp",
+      "source_url": "https://sehermensucat.com/elt1302-elit-erkek-elastan-sifiryaka-uzun-kol-fanila-fanila",
+      "rights_status": "unknown",
+      "consumer_sale_price": null,
+      "stock_quantity": null,
+      "invoice_data": {
+        "quantity": 1,
+        "unit": "ad",
+        "unit_price": 137,
+        "total_amount": 137
+      },
+      "attributes": [
+        { "name": "Ürün kodu", "value": "ELT1302" },
+        { "name": "Ürün tipi", "value": "Erkek fanila / uzun kol atlet, sıfır yaka" },
+        { "name": "Renk", "value": "Beyaz" },
+        { "name": "Beden", "value": "M / 3" },
+        { "name": "Beden aralığı", "value": "S/2, M/3, L/4, XL/5, 2XL/6" },
+        { "name": "Marka", "value": "Tutku Elit" }
+      ],
+      "matched_attributes": ["ürün kodu (ELT1302)", "ürün adı", "renk (Beyaz)", "beden (M/3)"],
+      "unmatched_attributes": [
+        "barkod (8681128321653) resmî sayfada belirtilmemiş",
+        "kdv_orani",
+        "kumaş içeriği sayfada açık metin olarak görüntülenemedi"
+      ],
+      "duplicate_group": null,
+      "canonical_row_id": null,
+      "validation": {
+        "status": "verified",
+        "notes": "Resmî üretici sitesi (sehermensucat.com) ürün sayfası açıldı; ürün kodu, ad, renk ve beden eşleşti."
+      },
+      "image_validation_status": "verified",
+      "sources": [
+        "https://sehermensucat.com/elt1302-elit-erkek-elastan-sifiryaka-uzun-kol-fanila-fanila",
+        "https://sehermensucat.com/",
+        "https://sehermensucat.com/products.xml"
+      ]
+    },
+    {
+      "row_id": "3",
+      "brand": "SHR",
+      "title": "SKD0010 Seher Kadın Penye Kaşkorse Atlet",
+      "category_suggestion": "Kadın İç Giyim > Kadın Atlet / Kaşkorse",
+      "variant": "Beyaz / 3XL (7)",
+      "short_description": "Seher kadın penye kaşkorse atlet. Resmî ürün sayfasında beyaz renk ve XL/5 - 3XL/7 beden aralığı ile listelenmektedir.",
+      "manufacturer": "Seher Mensucat Tekstil San. ve Tic. A.Ş.",
+      "official_product_url": "https://sehermensucat.com/skd0010-seher-kadin-penye-kaskorse-atlet",
+      "image_url": "https://cdn.myikas.com/images/74e89546-a032-4dc5-a4cc-0765f50962f6/1d08cec6-c3bd-4839-aa56-f18e0b7a4627/image_3840.webp",
+      "source_url": "https://sehermensucat.com/skd0010-seher-kadin-penye-kaskorse-atlet",
+      "rights_status": "unknown",
+      "consumer_sale_price": null,
+      "stock_quantity": null,
+      "invoice_data": {
+        "quantity": 6,
+        "unit": "ad",
+        "unit_price": 47,
+        "total_amount": 282
+      },
+      "attributes": [
+        { "name": "Ürün kodu", "value": "SKD0010" },
+        { "name": "Ürün tipi", "value": "Kadın penye kaşkorse atlet" },
+        { "name": "Renk", "value": "Beyaz" },
+        { "name": "Beden", "value": "3XL / 7" },
+        { "name": "Beden aralığı", "value": "XL/5, 2XL/6, 3XL/7" },
+        { "name": "Marka", "value": "Seher Yıldızı" }
+      ],
+      "matched_attributes": ["ürün kodu (SKD0010)", "ürün adı", "renk (Beyaz)", "beden (7 / 3XL)"],
+      "unmatched_attributes": [
+        "barkod (8681128334561) resmî sayfada belirtilmemiş",
+        "kdv_orani",
+        "kumaş içeriği sayfada açık metin olarak görüntülenemedi"
+      ],
+      "duplicate_group": null,
+      "canonical_row_id": null,
+      "validation": {
+        "status": "verified",
+        "notes": "Resmî üretici sitesi (sehermensucat.com) ürün sayfası açıldı; ürün kodu, ad, renk ve beden (7/3XL) eşleşti."
+      },
+      "image_validation_status": "verified",
+      "sources": [
+        "https://sehermensucat.com/skd0010-seher-kadin-penye-kaskorse-atlet",
+        "https://sehermensucat.com/",
+        "https://sehermensucat.com/products.xml"
+      ]
+    },
+    {
+      "row_id": "4",
+      "brand": "TUT",
+      "title": "TER0105 Tutku Erkek Penye Sıfır Yaka Fanila",
+      "category_suggestion": "Erkek İç Giyim > Erkek Fanila / Sıfır Yaka Atlet",
+      "variant": "100 Beyaz / L (4)",
+      "short_description": "Tutku erkek penye sıfır yaka fanila. Resmî ürün sayfasında XS/1 - 2XL/6 beden aralığı ve renk seçenekleri ile listelenmektedir.",
+      "manufacturer": "Seher Mensucat Tekstil San. ve Tic. A.Ş.",
+      "official_product_url": "https://sehermensucat.com/ter0105-tutku-erkek--penye-sifir-yaka-fanila",
+      "image_url": "https://cdn.myikas.com/images/74e89546-a032-4dc5-a4cc-0765f50962f6/34e4bebd-1f63-4abb-87de-6d70bff2bb54/image_3840.webp",
+      "source_url": "https://sehermensucat.com/ter0105-tutku-erkek--penye-sifir-yaka-fanila",
+      "rights_status": "unknown",
+      "consumer_sale_price": null,
+      "stock_quantity": null,
+      "invoice_data": {
+        "quantity": 6,
+        "unit": "ad",
+        "unit_price": 86,
+        "total_amount": 516
+      },
+      "attributes": [
+        { "name": "Ürün kodu", "value": "TER0105" },
+        { "name": "Ürün tipi", "value": "Erkek penye sıfır yaka fanila" },
+        { "name": "Renk seçenekleri", "value": "Sayfada çoklu renk görseli mevcut (varsayılan gösterim: Siyah)" },
+        { "name": "Beden", "value": "L / 4" },
+        { "name": "Beden aralığı", "value": "XS/1, S/2, M/3, L/4, XL/5, 2XL/6" },
+        { "name": "Marka", "value": "Tutku" }
+      ],
+      "matched_attributes": ["ürün kodu (TER0105)", "ürün adı", "beden (4 / L)"],
+      "unmatched_attributes": [
+        "renk kodu 100 BEYAZ resmî sayfada kod olarak doğrulanamadı (sayfada yalnızca görsel renk seçenekleri var)",
+        "barkod (8680508918971) resmî sayfada belirtilmemiş",
+        "kdv_orani"
+      ],
+      "duplicate_group": "TER0105",
+      "canonical_row_id": "4",
+      "validation": {
+        "status": "verified",
+        "notes": "Resmî üretici sitesi (sehermensucat.com) ürün sayfası açıldı; ürün kodu ve beden (4/L) eşleşti. Renk kodu (100) sayfada kod düzeyinde doğrulanamadı."
+      },
+      "image_validation_status": "verified",
+      "sources": [
+        "https://sehermensucat.com/ter0105-tutku-erkek--penye-sifir-yaka-fanila",
+        "https://sehermensucat.com/",
+        "https://sehermensucat.com/products.xml"
+      ]
+    },
+    {
+      "row_id": "5",
+      "brand": "TUT",
+      "title": "TER0105 Tutku Erkek Penye Sıfır Yaka Fanila",
+      "category_suggestion": "Erkek İç Giyim > Erkek Fanila / Sıfır Yaka Atlet",
+      "variant": "100 Beyaz / XL (5)",
+      "short_description": "Tutku erkek penye sıfır yaka fanila. Resmî ürün sayfasında XS/1 - 2XL/6 beden aralığı ve renk seçenekleri ile listelenmektedir.",
+      "manufacturer": "Seher Mensucat Tekstil San. ve Tic. A.Ş.",
+      "official_product_url": "https://sehermensucat.com/ter0105-tutku-erkek--penye-sifir-yaka-fanila",
+      "image_url": "https://cdn.myikas.com/images/74e89546-a032-4dc5-a4cc-0765f50962f6/34e4bebd-1f63-4abb-87de-6d70bff2bb54/image_3840.webp",
+      "source_url": "https://sehermensucat.com/ter0105-tutku-erkek--penye-sifir-yaka-fanila",
+      "rights_status": "unknown",
+      "consumer_sale_price": null,
+      "stock_quantity": null,
+      "invoice_data": {
+        "quantity": 6,
+        "unit": "ad",
+        "unit_price": 86,
+        "total_amount": 516
+      },
+      "attributes": [
+        { "name": "Ürün kodu", "value": "TER0105" },
+        { "name": "Ürün tipi", "value": "Erkek penye sıfır yaka fanila" },
+        { "name": "Renk seçenekleri", "value": "Sayfada çoklu renk görseli mevcut (varsayılan gösterim: Siyah)" },
+        { "name": "Beden", "value": "XL / 5" },
+        { "name": "Beden aralığı", "value": "XS/1, S/2, M/3, L/4, XL/5, 2XL/6" },
+        { "name": "Marka", "value": "Tutku" }
+      ],
+      "matched_attributes": ["ürün kodu (TER0105)", "ürün adı", "beden (5 / XL)"],
+      "unmatched_attributes": [
+        "renk kodu 100 BEYAZ resmî sayfada kod olarak doğrulanamadı (sayfada yalnızca görsel renk seçenekleri var)",
+        "barkod (8680508918988) resmî sayfada belirtilmemiş",
+        "kdv_orani"
+      ],
+      "duplicate_group": "TER0105",
+      "canonical_row_id": "4",
+      "validation": {
+        "status": "verified",
+        "notes": "Resmî üretici sitesi (sehermensucat.com) ürün sayfası açıldı; ürün kodu ve beden (5/XL) eşleşti. Renk kodu (100) sayfada kod düzeyinde doğrulanamadı. Aynı ürün kodunun farklı bedeni (row 4 ile aynı ürün)."
+      },
+      "image_validation_status": "verified",
+      "sources": [
+        "https://sehermensucat.com/ter0105-tutku-erkek--penye-sifir-yaka-fanila",
+        "https://sehermensucat.com/",
+        "https://sehermensucat.com/products.xml"
+      ]
+    },
+    {
+      "row_id": "6",
+      "brand": "TUT",
+      "title": "TKD0599 Tutku Kadın Perla Bikini Külot",
+      "category_suggestion": "Kadın İç Giyim > Kadın Bikini / Külot",
+      "variant": "975 Kombin / 5",
+      "short_description": "",
+      "manufacturer": "Seher Mensucat Tekstil San. ve Tic. A.Ş.",
+      "official_product_url": "https://sehermensucat.com/tkd0599-tutku-kadin-perla-bikini-kulot",
+      "image_url": null,
+      "source_url": "https://sehermensucat.com/products.xml",
+      "rights_status": "unknown",
+      "consumer_sale_price": null,
+      "stock_quantity": null,
+      "invoice_data": {
+        "quantity": 24,
+        "unit": "ad",
+        "unit_price": 21.5,
+        "total_amount": 516
+      },
+      "attributes": [
+        { "name": "Ürün kodu", "value": "TKD0599" },
+        { "name": "Ürün tipi", "value": "Kadın bikini külot" }
+      ],
+      "matched_attributes": ["ürün kodu (TKD0599) resmî ürün akışında mevcut", "ürün adı (Perla bikini külot)"],
+      "unmatched_attributes": [
+        "ürün sayfası açılamadığı için varyant (975 KOMBIN) ve beden (5) doğrulanamadı",
+        "barkod (8681128342597) doğrulanamadı",
+        "resmî sayfada ürün görseli doğrulanamadı",
+        "kdv_orani"
+      ],
+      "duplicate_group": null,
+      "canonical_row_id": null,
+      "validation": {
+        "status": "ambiguous",
+        "notes": "Resmî üretici sitesinin ürün akışında (products.xml) TKD0599 'Tutku Kadın Perla Bikini Külot' kaydı görüldü, ancak ürün sayfası sayfa getirme limiti nedeniyle açılamadı; kimlik ve varyant kesinleştirilemedi."
+      },
+      "image_validation_status": "not_verified",
+      "sources": [
+        "https://sehermensucat.com/products.xml",
+        "https://sehermensucat.com/"
+      ]
+    },
+    {
+      "row_id": "7",
+      "brand": "TUT",
+      "title": "TKD0962 Tutku Kadın Pandora Bato Külot",
+      "category_suggestion": "Kadın İç Giyim > Kadın Bato Külot",
+      "variant": "975 Kombin / 4",
+      "short_description": "",
+      "manufacturer": "Seher Mensucat Tekstil San. ve Tic. A.Ş.",
+      "official_product_url": "https://sehermensucat.com/tkd0962-tutku-kadin-pandora-bato-kulot",
+      "image_url": null,
+      "source_url": "https://sehermensucat.com/products.xml",
+      "rights_status": "unknown",
+      "consumer_sale_price": null,
+      "stock_quantity": null,
+      "invoice_data": {
+        "quantity": 12,
+        "unit": "ad",
+        "unit_price": 35,
+        "total_amount": 420
+      },
+      "attributes": [
+        { "name": "Ürün kodu", "value": "TKD0962" },
+        { "name": "Ürün tipi", "value": "Kadın bato külot" }
+      ],
+      "matched_attributes": ["ürün kodu (TKD0962) resmî ürün akışında mevcut", "ürün adı (Pandora bato külot)"],
+      "unmatched_attributes": [
+        "ürün sayfası açılamadığı için varyant (975 Kombin) ve beden (4) doğrulanamadı",
+        "barkod (8681128341798) doğrulanamadı",
+        "resmî sayfada ürün görseli doğrulanamadı",
+        "kdv_orani"
+      ],
+      "duplicate_group": null,
+      "canonical_row_id": null,
+      "validation": {
+        "status": "ambiguous",
+        "notes": "Resmî üretici sitesinin ürün akışında (products.xml) TKD0962 'Tutku Kadın Pandora Bato Külot' kaydı görüldü, ancak ürün sayfası sayfa getirme limiti nedeniyle açılamadı; kimlik ve varyant kesinleştirilemedi."
+      },
+      "image_validation_status": "not_verified",
+      "sources": [
+        "https://sehermensucat.com/products.xml",
+        "https://sehermensucat.com/"
+      ]
+    }
+  ]
+}
+```
