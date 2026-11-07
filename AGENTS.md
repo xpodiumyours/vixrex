@@ -57,6 +57,21 @@ Oturum açılışında iki şey daha yapılır; ikisi de ölçülür:
    (`.github/workflows/ci.yml` → `tool/baslangic-kontrol.mjs --pr`) bu satırı denetler;
    satır yoksa PR kırmızı olur. Etkiyi `graphify affected "Sembol"` veya MCP
    `graphify_impact` ile üret.
+   Satır en az bir gerçek `dosya:satır` göstermek zorunda; depoda bulunmayan dosya kanıt sayılmaz, "bulunamadı" tek başına geçmez.
+   **Gövde push'tan önce güncellenir.** CI gövdeyi push anındaki hâliyle okur; sonradan düzeltilen gövde koşumu değiştirmez, kanıt kancası kırmızı kalır.
+
+   Neden (2026-11-07): #747'de gövde push'tan sonra düzeltildi; CI eski gövdeyi okudu ve "Ajan başlangıç haritası" kırmızı düştü. Aynı içerikle tetiklenen yeni koşum geçti.
+7. **Çalışma yeri tek: ana klasör** (2026-11-07). Ölçüm ve değişiklik `C:\Projects\vixrex` içinde yapılır.
+   Bulut/kopya çalışma alanı (uzak depo adresi, `public_web/.env.local` ve `graphify-out/` olmayan yer)
+   çalışma yeri değildir; orada yalnız okuma yapılır. Oturum kopyada açıldıysa önce yerel bağlantı
+   (Local) kurulur; kurulamıyorsa sebebi yazılır, elle yamalı ölçüm yapılmaz.
+   Kopya envanteri tek komut: `pwsh -NoProfile -File tool/kopya-durumu.ps1` (salt okunur).
+
+Neden (2026-11-07): yerel başlatma "Your folder isn't connected to Freebuff yet" verdi, oturum
+bulutta açıldı; buluttan yerele geçiş her seferinde yeni kopya doğurdu. Ölçüm: diskte 5 Freebuff
+kopyası, 6 bulut kopyası, ana klasör dışında 4 `vixrex-*` klasörü; kopyaların üçünde sahipsiz kirli
+iş (148, 9, 5 dosya). Kopyada `gh pr list` "no git remotes found" verdi; ana klasörde aynı kapı
+27 açık / 16 taslak PR gösterdi.
 
 Neden: 2026-11-03'te ajanlar anahtar/platform sordu ve tarihsel planı güncel iş listesi
 sandı; Graphify haritası bağlı olmadığı için "30 gündür ajan faaliyeti yok" görünüyordu.
