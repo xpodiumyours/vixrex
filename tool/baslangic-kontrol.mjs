@@ -81,13 +81,36 @@ if (isPrMode) {
     }
     const codePrefixes = ["lib/", "public_web/", "supabase/", "shared/", "android/", "ios/", "web/", "test/", "integration_test/", "tool/"];
     const codeChanged = changed.filter((f) => codePrefixes.some((p) => f.startsWith(p)));
-    if (codeChanged.length > 0 && !/graphify\s*etki/i.test(body)) {
-      errors.push(
-        "Kod değişikliği var ama PR gövdesinde 'Graphify etki:' satırı yok. " +
-          "Etkiyi `graphify affected \"<Sembol>\"` (veya MCP graphify_impact) ile çıkar ve PR gövdesine yaz. " +
-          "Değişen kod dosyası sayısı: " +
-          codeChanged.length,
-      );
+    if (codeChanged.length > 0) {
+      const etkiSatirlari = body.split(/\r?\n/).filter((satir) => /graphify\s*etki/i.test(satir));
+      if (etkiSatirlari.length === 0) {
+        errors.push(
+          "Kod değişikliği var ama PR gövdesinde 'Graphify etki:' satırı yok. " +
+            "Etkiyi `graphify affected <Sembol>` (veya MCP graphify_impact) ile çıkar ve PR gövdesine yaz. " +
+            "Değişen kod dosyası sayısı: " +
+            codeChanged.length,
+        );
+      } else {
+        const ayrac = String.fromCharCode(92);
+        const metin = etkiSatirlari.join(" ").split(ayrac).join("/");
+        const refs = [...metin.matchAll(/([A-Za-z0-9_./@-]+\.[A-Za-z0-9]+):[Ll]?(\d+)/g)];
+        const gercek = refs.filter((eslesme) => {
+          try {
+            return fs.statSync(eslesme[1]).isFile();
+          } catch {
+            return false;
+          }
+        });
+        if (gercek.length === 0) {
+          errors.push(
+            "'Graphify etki:' satırı gerçek bir dosya:satır kanıtı içermiyor" +
+              (refs.length > 0
+                ? " (yazılan: " + refs.map((e) => e[1] + ":" + e[2]).join(", ") + ")"
+                : " (hiç dosya:satır yok)") +
+              '. graphify affected <Sembol> çıktısından dosya:satır yaz; "bulunamadı" tek başına kanıt sayılmaz.',
+          );
+        }
+      }
     }
   }
 }
