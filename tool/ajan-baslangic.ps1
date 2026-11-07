@@ -212,7 +212,40 @@ if (Test-Path -LiteralPath $graphPath) {
         $gEpoch = [int64]([DateTimeOffset]$gi.LastWriteTimeUtc).ToUnixTimeSeconds()
         $graphFresh = ($gEpoch -ge $lcEpoch)
     } else { $graphFresh = $true }
+    if (-not $graphFresh) {
+        $damgaYolu = Join-Path $repoRoot 'graphify-out/.taze-commit'
+        $headSha = ([string](& git rev-parse HEAD 2>$null)).Trim()
+        if ($headSha -and (Test-Path -LiteralPath $damgaYolu)) {
+            if (([string](Get-Content -LiteralPath $damgaYolu -TotalCount 1)).Trim() -eq $headSha) { $graphFresh = $true }
+        }
+    }
     if (-not $graphFresh) { $graphSay = 'BAYAT' }
+}
+if ($Kod -and -not $graphFresh) {
+    if ($graphCli) {
+        Write-Host 'Harita tazeleniyor: graphify update .'
+        $cikti = & $graphCli update . 2>&1
+        $gOk = ($LASTEXITCODE -eq 0)
+        if ($gOk -and (Test-Path -LiteralPath $graphPath)) {
+            $graphFresh = $true
+            $graphSay = 'HAZIR (kendiliğinden tazelendi)'
+            $gi = Get-Item -LiteralPath $graphPath
+            $graphMtime = $gi.LastWriteTime.ToString('yyyy-MM-dd HH:mm')
+            try {
+                $cnt = & node -e "const g=require(process.argv[1]);const n=(g.nodes||[]).length;const e=(g.links||g.edges||[]).length;console.log(n+' '+e)" $graphPath 2>$null
+                if ($cnt) { $c = ([string]$cnt).Trim().Split(' '); $graphNode = $c[0]; $graphEdge = $c[1] }
+            } catch { }
+            $headSimdi = ([string](& git rev-parse HEAD 2>$null)).Trim()
+            if ($headSimdi) { Set-Content -LiteralPath (Join-Path $repoRoot 'graphify-out/.taze-commit') -Value $headSimdi -NoNewline -Encoding utf8 }
+            if (($cikti | Where-Object { "$_" -match 'No code-graph topology changes' })) {
+                $notes.Add('harita: topoloji degismedi, taze sayildi')
+            }
+        } else {
+            $notes.Add('graphify update basarisiz - harita BAYAT kaliyor')
+        }
+    } else {
+        $notes.Add('graphify yok - harita tazelenemedi')
+    }
 }
 
 $probePath = Join-Path $repoRoot 'tool/baglanti-olcum.mjs'
@@ -270,7 +303,7 @@ if ($null -ne (Get-Command vercel -ErrorAction SilentlyContinue)) {
 }
 
 $graphLineFull = 'YOK'
-if ($graphSay -eq 'HAZIR' -or $graphSay -eq 'BAYAT') {
+if ($graphSay -like 'HAZIR*' -or $graphSay -eq 'BAYAT') {
     $parca = @()
     if ($graphNode) { $parca += ($graphNode + ' düğüm') }
     if ($graphEdge) { $parca += ($graphEdge + ' bağlantı') }
