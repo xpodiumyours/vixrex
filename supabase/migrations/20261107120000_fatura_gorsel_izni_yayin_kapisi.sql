@@ -114,7 +114,8 @@ begin
   if v_product.is_visible then return jsonb_build_object('success',true,'id',p_product_id,'zaten_yayinda',true); end if;
   if exists(select 1 from jsonb_array_elements(case when jsonb_typeof(v_product.fatura_kanit->'gorselKaynaklari')='array'
       then v_product.fatura_kanit->'gorselKaynaklari' else '[]'::jsonb end) kaynak
-    where coalesce(kaynak->>'hakKayitDurumu','') in ('unknown','denied','kayit_yok'))
+    where kaynak ? 'hakKayitDurumu' and coalesce(kaynak->>'hakKayitDurumu','') not in
+      ('verified_supplier_permission','verified_feed_terms','merchant_owned_media','merchant_attestation'))
   then
     update public.products set is_visible=false,updated_at=now() where id=p_product_id and store_id=v_store;
     return jsonb_build_object('success',true,'id',p_product_id,'gorunur',false,'izin_bekliyor',true);
