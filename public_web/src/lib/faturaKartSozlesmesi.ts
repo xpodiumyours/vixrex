@@ -5,6 +5,7 @@ import { openrouterYanitiniOku } from "@/lib/openrouterYanitAkisi";
 type Kayit = Record<string, unknown>;
 
 export const KART_SOZLESMESI_KODU = "KART_YANITI_COZULEMEDI";
+export const KART_KAPSAMI_KODU = "KART_KAPSAMI_EKSIK";
 
 export type KartDogrulamaDurumu = "verified" | "ambiguous" | "not_found" | "not_researched" | "";
 

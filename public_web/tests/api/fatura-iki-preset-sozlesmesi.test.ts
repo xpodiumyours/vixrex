@@ -44,24 +44,17 @@ describe("gerçek ikinci preset JSON sözleşmesi",()=>{
     expect(faturaKatalogMetadatasi(satir.katalog ?? {}).attributes?.map(a=>a.value)).toEqual(expect.arrayContaining(["Sade","175 g tekli paket","175 g"]));
     expect(satirdanFaturaTaslagi(satir)).toMatchObject({brand:"Üreticinin markası",satisFiyati:null,stokOnerisi:3,ownerApproved:false,isVisible:false});
   });
-  it("tek satırın kart hatası tüm faturayı düşürmez",async()=>{
-    const result=await kartPresetYanitiniOku(response([item("1","A ürün")]),first);
-    expect(result.sonuc.satirlar.map(s=>s.ad)).toEqual(["A ürün","İkinci"]);
-    expect(result.sonuc.satirlar[0].dogrulamaDurumu).toBe("Doğrulandı");
-    expect(result.sonuc.satirlar[1].dogrulamaDurumu).toBe("Araştırılamadı");
-    expect(result.sonuc.satirlar[1].eksikler).toContain("Ürün kartı bu satır için üretilemedi.");
-    expect(result.sonuc.satirlar[1].barkod).toBe("222");
-    expect(result.sonuc.satirlar[1].tutar).toBe(80);
+  it("eksik kart tüm faturayı düşürür, kısmi kayıt yazılmaz",async()=>{
+    await expect(kartPresetYanitiniOku(response([item("1","A ürün")]),first)).rejects.toThrow("KART_KAPSAMI_EKSIK");
   });
-  it("mükerrer kimlikte ilki kazanır, bozuk kayıt yalnız kendi satırını düşürür",async()=>{
-    const result=await kartPresetYanitiniOku(response([item("1","A ürün"),item("1","B ürün"),{row_id:"2"}]),first);
-    expect(result.sonuc.satirlar.map(s=>s.ad)).toEqual(["A ürün","İkinci"]);
-    expect(result.sonuc.satirlar[1].dogrulamaDurumu).toBe("Araştırılamadı");
+  it("mükerrer kimlikte ilki kazanır",async()=>{
+    const result=await kartPresetYanitiniOku(response([item("1","A ürün"),item("1","B ürün"),item("2","B ürün")]),first);
+    expect(result.sonuc.satirlar.map(s=>s.ad)).toEqual(["A ürün","B ürün"]);
   });
   it("hiçbir satır eşleşmezse reddeder",async()=>{
-    await expect(kartPresetYanitiniOku(response([item("9","X")]),first)).rejects.toThrow("KART_SATIRLARI_ESLESMEDI");
-    await expect(kartPresetYanitiniOku(response([{row_id:"2",vixrex_product_json:{}}]),first)).rejects.toThrow("KART_SATIRLARI_ESLESMEDI");
-    await expect(kartPresetYanitiniOku(response([{row_id:"2",status:"tamamlandı"}]),first)).rejects.toThrow("KART_SATIRLARI_ESLESMEDI");
+    await expect(kartPresetYanitiniOku(response([item("9","X")]),first)).rejects.toThrow("KART_KAPSAMI_EKSIK");
+    await expect(kartPresetYanitiniOku(response([{row_id:"2",vixrex_product_json:{}}]),first)).rejects.toThrow("KART_KAPSAMI_EKSIK");
+    await expect(kartPresetYanitiniOku(response([{row_id:"2",status:"tamamlandı"}]),first)).rejects.toThrow("KART_KAPSAMI_EKSIK");
   });
   it("gerçek modelin düz/karma biçimini kabul eder: alanlar kökte, yalnız durum iç içe",async()=>{
     const duz={
@@ -80,7 +73,7 @@ describe("gerçek ikinci preset JSON sözleşmesi",()=>{
       sources:[{url:"https://example.com/elt1302",type:"official_manufacturer_product_page",fetched:true}],
       validation:{status:"ambiguous",notes:"Renk doğrulanamadı."},
     };
-    const result=await kartPresetYanitiniOku(response([duz]),first);
+    const result=await kartPresetYanitiniOku(response([duz,item("2","İkinci")]),first);
     const satir=result.sonuc.satirlar[0];
     expect(satir.ad).toBe("ELT1302 Elit Erkek Elastan Sıfır Yaka Uzun Kol Fanila");
     expect(satir.dogrulamaDurumu).toBe("Belirsiz");
@@ -108,7 +101,7 @@ describe("gerçek ikinci preset JSON sözleşmesi",()=>{
       unmatched_attributes:["Tüm ürün özellikleri: resmî ürün sayfası bulunamadı"],
       validation:{status:"not_found"},
     };
-    const result=await kartPresetYanitiniOku(response([duz]),first);
+    const result=await kartPresetYanitiniOku(response([duz,item("1","A ürün")]),first);
     const satir=result.sonuc.satirlar[1];
     expect(satir.dogrulamaDurumu).toBe("Bulunamadı");
     expect(satir.ad).toBe("İkinci");

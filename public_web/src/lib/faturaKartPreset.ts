@@ -1,6 +1,7 @@
 import { faturaYanitMetniniOku, type GoruSonucu } from "@/lib/faturaGoru";
 import {
   adres,
+  KART_KAPSAMI_KODU,
   kartYanitiniCoz,
   tekKartSozlesmesi,
   type KartSozlesmesi,
@@ -133,6 +134,10 @@ export function tekrarGruplari(
   return tekillesmeKarari(satirlar, items).indirgenen;
 }
 
+function bosKart(kart: KartSozlesmesi, satir: { ad?: string }): boolean {
+  return !kart.ad && !metin(satir.ad) && !kart.barkod && !kart.kod && !kart.resmiSayfa;
+}
+
 export async function kartPresetYanitiniOku(cevap: Response, okuma: GoruSonucu) {
   const { icerik, ...kullanim } = await faturaYanitMetniniOku(cevap);
   const { govde, kartlar } = await kartYanitiniCoz(icerik);
@@ -152,11 +157,13 @@ export async function kartPresetYanitiniOku(cevap: Response, okuma: GoruSonucu) 
     adetToplami.set(kanonik, adetler.reduce<number>((toplam, adet) => toplam + (adet as number), 0));
   }
   let eslesen = 0;
+  const kapsamsiz: number[] = [];
   const satirlar = okuma.satirlar.map((s, i) => {
     const sira = String(i + 1);
     const kart = items.get(sira);
     const kimlikEksik = karar.kimlikKurulamayan.has(sira);
-    if (!kart || !Object.hasOwn(DURUMLAR, kart.dogrulamaDurumu)) {
+    if (!kart || bosKart(kart, s) || !Object.hasOwn(DURUMLAR, kart.dogrulamaDurumu)) {
+      kapsamsiz.push(i + 1);
       return {
         ...s,
         dogrulamaDurumu: "Araştırılamadı",
@@ -195,6 +202,7 @@ export async function kartPresetYanitiniOku(cevap: Response, okuma: GoruSonucu) 
       kaynaklar: [kart.kanit, ...kart.kaynaklar],
     };
   });
+  if (kapsamsiz.length) throw new Error(KART_KAPSAMI_KODU);
   if (!eslesen) throw new Error("KART_SATIRLARI_ESLESMEDI");
   return { sonuc: { ...okuma, satirlar }, kartCevabi: govde, kullanim };
 }
