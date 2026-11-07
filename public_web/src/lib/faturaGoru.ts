@@ -1,6 +1,5 @@
 import { FATURA_JSON_ISTEGI, VARSAYILAN_FATURA_PRESET } from "@/lib/faturaPresetSozlesmesi";
-import { openrouterHataKodu, openrouterYanitiniOku } from "@/lib/openrouterYanitAkisi";
-import { aracCevabiniCoz, diziNesneleriniCikar } from "@/lib/faturaKesikKurtarma";
+import { openrouterYanitiniOku } from "@/lib/openrouterYanitAkisi";
 import { normalizeProductMetadata, type ProductAttributeValue } from "@/lib/productRichData";
 export { VARSAYILAN_FATURA_PRESET } from "@/lib/faturaPresetSozlesmesi";
 
@@ -64,7 +63,6 @@ export interface GoruSonucu {
   belgeEkleri?: unknown;
   gruplar?: unknown[];
   uyarilar?: string[];
-  kesik?: boolean;
 }
 
 function sayi(deger: unknown): number | null {
@@ -196,20 +194,23 @@ export async function faturaYanitMetniniOku(cevap: Response) {
     throw new Error("OKUYUCU_CEVAP_VERMEDI", { cause: hata });
   }
   if (!cevap.ok || ham?.error) {
-    throw new Error(openrouterHataKodu(
-      ham?.error?.code ?? (cevap.ok ? undefined : cevap.status), ham?.error?.message));
+    if (cevap.status === 404 || Number(ham?.error?.code) === 404) throw new Error("OKUYUCU_MODEL_BULUNAMADI");
+    if (cevap.status === 429 || Number(ham?.error?.code) === 429) {
+      throw new Error(ham?.error?.message?.includes("free-models-per-day")
+        ? "OKUYUCU_UCRETSIZ_KOTA_DOLDU" : "OKUYUCU_ISTEK_SINIRI");
+    }
+    throw new Error(cevap.status === 402 || ham?.error?.code === "insufficient_quota"
+      ? "OKUYUCU_BAKIYE_BITTI" : "OKUYUCU_CEVAP_VERMEDI");
   }
   const secim = ham?.choices?.[0];
-  const aracCevabi = secim?.message?.tool_calls?.length ? aracCevabiniCoz(secim.message.tool_calls) : null;
-  const metinCevap = typeof secim?.message?.content === "string" ? secim.message.content : "";
-  if (!metinCevap.trim() && !aracCevabi) {
-    throw new Error(secim?.message?.refusal ? "OKUYUCU_CEVAP_VERMEDI" : "FOTOGRAFTA_YAZI_YOK");
-  }
-  const icerik = metinCevap.trim() ? metinCevap : JSON.stringify(aracCevabi);
-  const kesik = secim?.finish_reason === "length";
+  if (secim?.finish_reason === "length") throw new Error("OKUYUCU_EKSIK_CEVAP");
+  if (secim?.message?.tool_calls?.length) throw new Error("OKUYUCU_TAMAMLANMADI");
+  if (secim?.message?.refusal) throw new Error("OKUYUCU_CEVAP_VERMEDI");
+  const icerik = secim?.message?.content;
+  if (typeof icerik !== "string" || !icerik.trim()) throw new Error("FOTOGRAFTA_YAZI_YOK");
   const usage = ham?.usage;
   return {
-    icerik, kesik, maliyet: sayi(usage?.cost), gercekMaliyet: sayi(usage?.cost),
+    icerik, maliyet: sayi(usage?.cost), gercekMaliyet: sayi(usage?.cost),
     girdiToken: Number(usage?.prompt_tokens ?? usage?.input_tokens ?? 0),
     ciktiToken: Number(usage?.completion_tokens ?? usage?.output_tokens ?? 0),
     akilToken: Number(usage?.completion_tokens_details?.reasoning_tokens ?? 0),
@@ -219,13 +220,5 @@ export async function faturaYanitMetniniOku(cevap: Response) {
 /** Fatura okuyucusunun JSON biçimini, kart preset'inden bağımsız çözümler. */
 export async function faturaYanitiniOku(cevap: Response): Promise<GoruSonucu> {
   const { icerik, ...kullanim } = await faturaYanitMetniniOku(cevap);
-  try { return { ...katalogJsonunuOku(icerik), ...kullanim }; }
-  catch (hata) {
-    if (!kullanim.kesik) throw hata;
-    const satirlar = diziNesneleriniCikar(icerik, "satirlar");
-    if (!satirlar.length) throw hata;
-    const kurtarilan = katalogJsonunuOku(JSON.stringify({ satirlar }));
-    return { ...kurtarilan, ...kullanim, kesik: true,
-      uyarilar: [...(kurtarilan.uyarilar ?? []), "OKUYUCU_KESIK_CEVAP", String(satirlar.length) + " satır okunabildi"] };
-  }
+  return { ...katalogJsonunuOku(icerik), ...kullanim };
 }
