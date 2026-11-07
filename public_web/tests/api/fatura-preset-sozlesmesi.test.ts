@@ -102,10 +102,12 @@ describe("Vixrex preset taşıma sözleşmesi", () => {
     const data = islemYaniti({ satirlar: [], belge: {}, aramaDurumu: { presetCevabi: { gruplar: ["ÜLKER"], uyarilar: ["Eksik"], belgeEkleri: { test: true } } } } as unknown as KayitliIslem);
     expect(data.gruplar).toEqual(["ÜLKER"]); expect(data.uyarilar).toEqual(["Eksik"]);
   });
-  it.each(["length", "tool_calls"])("yarım API yanıtı yayın verisine çevrilmez: %s", async (finish) => {
+  it.each(["length", "tool_calls"])("kesik bitiş sebebi tamamlanmış gövdeyi çöpe atmaz: %s", async (finish) => {
     vi.stubEnv("OPENROUTER_API_KEY", "test-key");
     vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, json: async () => ({ choices: [{ finish_reason: finish,
       message: { content: JSON.stringify({ satirlar: [satir] }), ...(finish === "tool_calls" ? { tool_calls: [{ id: "pending" }] } : {}) } }] }) })));
-    await expect(faturayiOku("data:image/png;base64,TEST")).rejects.toThrow(finish === "length" ? "OKUYUCU_EKSIK_CEVAP" : "OKUYUCU_TAMAMLANMADI");
+    const sonuc = await faturayiOku("data:image/png;base64,TEST");
+    expect(sonuc.satirlar).toHaveLength(1);
+    expect(sonuc.kesik).toBe(finish === "length");
   });
 });

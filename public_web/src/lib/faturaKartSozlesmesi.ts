@@ -1,6 +1,7 @@
 /** Fatura kart yanıtının tek sözleşmesi: biçim çözümü, alan eşanlamlıları ve kart alanları burada tanımlanır. */
 
 import { openrouterYanitiniOku } from "@/lib/openrouterYanitAkisi";
+import { aracCevabiniCoz, diziNesneleriniCikar } from "@/lib/faturaKesikKurtarma";
 
 type Kayit = Record<string, unknown>;
 
@@ -153,8 +154,11 @@ export function tekKartSozlesmesi(item: Kayit): KartSozlesmesi {
 
 async function yanitMetni(cevap: Response): Promise<string> {
   const birlesik = await openrouterYanitiniOku(cevap);
-  const icerik = birlesik?.choices?.[0]?.message?.content;
-  return typeof icerik === "string" ? icerik : "";
+  const secim = birlesik?.choices?.[0];
+  const icerik = typeof secim?.message?.content === "string" ? secim.message.content : "";
+  if (icerik.trim()) return icerik;
+  const arac = secim?.message?.tool_calls?.length ? aracCevabiniCoz(secim.message.tool_calls) : null;
+  return arac ? JSON.stringify(arac) : "";
 }
 
 /** Model yanıtını (SSE ya da düz JSON; çitli, düz veya iç içe alan) kart sözleşmesine çevirir. */
@@ -165,12 +169,16 @@ export async function kartSozlesmesineCevir(hamCevap: unknown): Promise<KartSozl
 export async function kartYanitiniCoz(hamCevap: unknown): Promise<{ govde: unknown; kartlar: KartSozlesmesi[] }> {
   const metinCevap = hamCevap instanceof Response ? await yanitMetni(hamCevap) : typeof hamCevap === "string" ? hamCevap : "";
   const kaynak = metinCevap ? adayJson(metinCevap) : hamCevap;
-  if (!nesne(kaynak) || !Array.isArray(kaynak.items)) {
+  const kurtarilan = !nesne(kaynak) || !Array.isArray(kaynak.items)
+    ? (metinCevap ? diziNesneleriniCikar(metinCevap, "items") : []) : [];
+  const govde: Kayit = nesne(kaynak) && Array.isArray(kaynak.items)
+    ? kaynak : kurtarilan.length ? { items: kurtarilan } : {};
+  if (!Array.isArray(govde.items)) {
     throw new KartSozlesmeHatasi(KART_SOZLESMESI_KODU, metinCevap || JSON.stringify(hamCevap ?? null));
   }
   const gorulen = new Set<string>();
   const kartlar: KartSozlesmesi[] = [];
-  for (const item of kaynak.items) {
+  for (const item of govde.items) {
     if (!nesne(item)) continue;
     const kart = tekKartSozlesmesi(item);
     if (!kart.rowId || gorulen.has(kart.rowId)) continue;
@@ -180,5 +188,5 @@ export async function kartYanitiniCoz(hamCevap: unknown): Promise<{ govde: unkno
   if (!kartlar.length) {
     throw new KartSozlesmeHatasi(KART_SOZLESMESI_KODU, metinCevap || JSON.stringify(hamCevap ?? null));
   }
-  return { govde: kaynak, kartlar };
+  return { govde, kartlar };
 }
