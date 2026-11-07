@@ -1,7 +1,16 @@
 {
   "mcpServers": {
     "supabase": {
+      "type": "http",
       "url": "https://mcp.supabase.com/mcp?project_ref=chfulefxczbgurtgavtp"
+    },
+    "vercel": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://mcp.vercel.com"]
+    },
+    "graphify": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://api.graphify.com/mcp"]
     }
   }
 }

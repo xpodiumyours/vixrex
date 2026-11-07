@@ -7,7 +7,7 @@ import { verifyStoreEditToken } from "@/lib/instagramServer";
 import { belgeParmakIzi } from "@/lib/faturaIslemKaydi";
 import { faturaTaslakYanitiniHazirla } from "@/lib/faturaOtomatikTaslakKaydi";
 import { islemiYukle, parmakIzindenIslemBul } from "@/lib/faturaIslemOku";
-import { faturayiArkaPlanaGonder, bekleyenFaturaYaniti, arkaPlanFaturaHatasi } from "@/lib/faturaArkaPlanIslemi";
+import { faturayiArkaPlanaGonder, bekleyenFaturaYaniti, arkaPlanFaturaHatasi, basarisizKartIsiniTekrarDene } from "@/lib/faturaArkaPlanIslemi";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -80,6 +80,9 @@ export async function POST(request: NextRequest) {
   if (onceki?.satirlar.length) {
     const sonuc = await faturaTaslakYanitiniHazirla(admin, storeId, ownerSlug, onceki);
     return NextResponse.json(sonuc, { status: sonuc.hazirlaniyor ? 202 : 200, headers: { "Cache-Control": "private, no-store" } });
+  }
+  if (eskiId && await basarisizKartIsiniTekrarDene(admin, storeId, eskiId)) {
+    return NextResponse.json(bekleyenFaturaYaniti(eskiId), { status: 202, headers: { "Cache-Control": "private, no-store" } });
   }
   if (!process.env.OPENROUTER_API_KEY) return NextResponse.json({ hata: "Fatura okuyucu hazır değil." }, { status: 503 });
   const fotograflar = baytlar.map((b, i) => `data:${turler[i]};base64,${Buffer.from(b).toString("base64")}`);

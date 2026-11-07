@@ -1,0 +1,693 @@
+```json
+{
+  "items": [
+    {
+      "row_id": "1",
+      "raw_invoice_line": "1 ÜLKER ÇİKOLATALI GOFRET 36 GR 8690504020509 24 12,50 300,00",
+      "invoice_data": {
+        "quantity": 24,
+        "unit": "Adet",
+        "unit_price": 12.5,
+        "total_amount": 300
+      },
+      "product": {
+        "title": "Ülker Çikolatalı Gofret",
+        "brand": "Ülker",
+        "category_suggestion": "Atıştırmalık/Bisküvi/Çikolata",
+        "variant": "Çikolatalı Gofret (resmî sayfada Sütlü / Bitter / Beyaz Çikolatalı varyantları)",
+        "short_description": "Ülker'in çikolatalı gofret ürünü. Resmî ürün sayfasında Ülker Çikolatalı Gofret'in Sütlü Çikolatalı, Bitter Çikolatalı, Beyaz Çikolatalı, 4'lü Paylaşmalık Paket, Mini Paket, Maxi, Çok Çıtırtı ve Dev Çıtırtı varyantları listelenmektedir; sayfada gramaj ve barkod bilgisi yer almamaktadır.",
+        "manufacturer": "Ülker (resmî site: ulker.com.tr)",
+        "attributes": [
+          { "name": "ürün ailesi", "value": "Ülker Çikolatalı Gofret" },
+          { "name": "resmî varyantlar", "value": "Sütlü Çikolatalı, Bitter Çikolatalı, Beyaz Çikolatalı, 4'lü Paylaşmalık Paket, Mini Paket, Maxi, Çok Çıtırtı, Dev Çıtırtı" }
+        ]
+      },
+      "official_product_url": "https://www.ulker.com.tr/tr/markalar/ulker-cikolatali-gofret",
+      "image_url": "https://www.ulker.com.tr/documents/ulker_cikolatali_gofret_ucgkv1920.webp",
+      "source_url": "https://www.ulker.com.tr/tr/markalar/ulker-cikolatali-gofret",
+      "consumer_sale_price": null,
+      "stock_quantity": null,
+      "matched_attributes": [
+        "marka (Ülker)",
+        "ürün adı (Çikolatalı Gofret)",
+        "ürün ailesi resmî sayfada mevcut"
+      ],
+      "unmatched_attributes": [
+        "barkod 8690504020509 resmî sayfada doğrulanamadı",
+        "36 g gramaj bilgisi resmî sayfada yer almıyor",
+        "faturadaki 'ÇİKOLATALI GOFRET' varyantı resmî sayfadaki çikolata tipi varyantlarıyla birebir eşleştirilemedi"
+      ],
+      "image_validation_status": "verified",
+      "rights_status": "unknown",
+      "validation": {
+        "status": "ambiguous",
+        "method": "web_fetch",
+        "official_page_opened": true,
+        "note": "Ülker'in resmî ürün sayfası açıldı; ürün ailesi doğrulandı ancak gramaj ve barkod sayfada bulunmadığı için varyant kesin eşleşmedi."
+      },
+      "sources": [
+        {
+          "url": "https://www.ulker.com.tr/tr/markalar/ulker-cikolatali-gofret",
+          "title": "Ülker Çikolatalı Gofret | Ülker",
+          "type": "official"
+        }
+      ]
+    },
+    {
+      "row_id": "2",
+      "raw_invoice_line": "2 ÜLKER ÇOKOPRENS 102 GR — 12 28,75 345,00",
+      "invoice_data": {
+        "quantity": 12,
+        "unit": "Adet",
+        "unit_price": 28.75,
+        "total_amount": 345
+      },
+      "product": {
+        "title": "ETİ Popkek",
+        "brand": "ETİ",
+        "category_suggestion": "Bisküvi/Tatlı",
+        "variant": "Kakaolu (resmî sayfada listelenen en yakın çeşit: Popkek Çikolatalı)",
+        "short_description": "ETİ Popkek; çikolatalı sosu, keki ve üzerindeki kaplamasıyla tanımlanan kek ürünü. Resmî sayfada Popkek Çikolatalı, Limonlu, Muzlu, Bitter Çikolatalı, Vişneli, Hindistan Cevizli, Portakallı ve Mini çeşitleri listelenmektedir; 'Kakaolu' adlı bir varyant ve gramaj bilgisi sayfada yer almamaktadır.",
+        "manufacturer": "ETİ (resmî site: etietieti.com)",
+        "attributes": [
+          { "name": "marka sloganı", "value": "Doyana da Popkek Doymayana Popkek!" },
+          { "name": "resmî varyantlar", "value": "Çikolatalı, Limonlu, Muzlu, Bitter Çikolatalı, Vişneli, Hindistan Cevizli, Portakallı ve Mini çeşitleri" }
+        ]
+      },
+      "official_product_url": "https://www.etietieti.com/tr-tr/markalarimiz/popkek",
+      "image_url": "https://cdn.sanity.io/images/b5tdibwp/production/541cc862fc1b90fc1bf24e6f983efe2e44ff0a23-280x220.png",
+      "source_url": "https://www.etietieti.com/tr-tr/markalarimiz/popkek",
+      "consumer_sale_price": null,
+      "stock_quantity": null,
+      "matched_attributes": [
+        "marka (ETİ)",
+        "ürün adı (Popkek)",
+        "ürün ailesi resmî sayfada mevcut"
+      ],
+      "unmatched_attributes": [
+        "fatura varyantı 'KAKAOLU' resmî sayfadaki çeşit listesinde yok (en yakın: Çikolatalı)",
+        "102 g gramaj bilgisi resmî sayfada yer almıyor",
+        "barkod (faturada boş)"
+      ],
+      "image_validation_status": "verified",
+      "rights_status": "unknown",
+      "validation": {
+        "status": "ambiguous",
+        "method": "web_fetch",
+        "official_page_opened": true,
+        "note": "ETİ'nin resmî Popkek sayfası açıldı; marka ve ürün ailesi doğrulandı fakat faturadaki 'Kakaolu' varyantı ve 102 g gramaj resmî sayfada bulunmadığı için kesin eşleşme yapılmadı."
+      },
+      "sources": [
+        {
+          "url": "https://www.etietieti.com/tr-tr/markalarimiz/popkek",
+          "title": "ETİ Popkek",
+          "type": "official"
+        }
+      ]
+    },
+    {
+      "row_id": "3",
+      "raw_invoice_line": "3 COCA-COLA 330 ML KUTU 5449000000996 24 22,50 540,00",
+      "invoice_data": {
+        "quantity": 24,
+        "unit": "Adet",
+        "unit_price": 22.5,
+        "total_amount": 540
+      },
+      "product": {
+        "title": "Coca‑Cola Orijinal Tat",
+        "brand": "Coca-Cola",
+        "category_suggestion": "İçecek",
+        "variant": "Orijinal Tat (fatura: 330 ML KUTU)",
+        "short_description": "Coca‑Cola'nın resmî Türkiye sayfasında Orijinal Tat, Zero Sugar ve Light çeşitleri ile 100 ml başına enerji ve besin değerleri yer alıyor. Orijinal Tat için enerji 180 kJ/42 kcal, karbonhidrat 10,6 g, şekerler 10,6 g; içindekiler: su, şeker, karbondioksit, renklendirici (karamel), asitlik düzenleyici (fosforik asit), doğal aroma vericiler, kafein (98 mg/l). Sayfada ambalaj (kutu) ve ml bilgisi belirtilmemiştir.",
+        "manufacturer": "The Coca‑Cola Company (Türkiye resmî sitesi: coca-cola.com/tr)",
+        "attributes": [
+          { "name": "enerji (100 ml)", "value": "180 kJ / 42 kcal" },
+          { "name": "karbonhidrat (100 ml)", "value": "10,6 g" },
+          { "name": "şekerler (100 ml)", "value": "10,6 g" },
+          { "name": "kafein", "value": "98 mg/l" }
+        ]
+      },
+      "official_product_url": "https://www.coca-cola.com/tr/tr/brands/coca-cola",
+      "image_url": "https://www.coca-cola.com/content/dam/onexp/tr/tr/coca-cola-single-page/tr_coca-cola_prod_coca-cola-orijinal-tat_750x750.jpg",
+      "source_url": "https://www.coca-cola.com/tr/tr/brands/coca-cola",
+      "consumer_sale_price": null,
+      "stock_quantity": null,
+      "matched_attributes": [
+        "marka (Coca‑Cola)",
+        "ürün (Coca‑Cola Orijinal Tat)"
+      ],
+      "unmatched_attributes": [
+        "330 ml kutu ambalaj bilgisi resmî sayfada yer almıyor",
+        "barkod 5449000000996 resmî sayfada doğrulanamadı",
+        "kutu (can) formu resmî sayfada teyit edilmedi"
+      ],
+      "image_validation_status": "verified",
+      "rights_status": "unknown",
+      "validation": {
+        "status": "ambiguous",
+        "method": "web_fetch",
+        "official_page_opened": true,
+        "note": "Coca‑Cola Türkiye resmî marka sayfası açıldı; ürün (Orijinal Tat) doğrulandı ancak ambalaj tipi ve 330 ml gramaj resmî sayfada belirtilmediği için varyant kesin eşleşmedi."
+      },
+      "sources": [
+        {
+          "url": "https://www.coca-cola.com/tr/tr/brands/coca-cola",
+          "title": "Coca-Cola Çeşitleri, Kalori & Besin Değerleri | Coca-Cola TR",
+          "type": "official"
+        }
+      ]
+    },
+    {
+      "row_id": "13",
+      "raw_invoice_line": "13 COCA-COLA 250 ML KUTU — 12 18,00 216,00",
+      "invoice_data": {
+        "quantity": 12,
+        "unit": "Adet",
+        "unit_price": 18,
+        "total_amount": 216
+      },
+      "product": {
+        "title": "Coca‑Cola Orijinal Tat",
+        "brand": "Coca-Cola",
+        "category_suggestion": "İçecek",
+        "variant": "Orijinal Tat (fatura: 250 ML KUTU)",
+        "short_description": "Coca‑Cola'nın resmî Türkiye sayfasında Orijinal Tat, Zero Sugar ve Light çeşitleri ile 100 ml başına besin değerleri listeleniyor. Orijinal Tat için enerji 180 kJ/42 kcal, karbonhidrat 10,6 g, şekerler 10,6 g; içindekiler: su, şeker, karbondioksit, renklendirici (karamel), asitlik düzenleyici (fosforik asit), doğal aroma vericiler, kafein (98 mg/l). Sayfada ambalaj (kutu) ve ml bilgisi belirtilmemiştir.",
+        "manufacturer": "The Coca‑Cola Company (Türkiye resmî sitesi: coca-cola.com/tr)",
+        "attributes": [
+          { "name": "enerji (100 ml)", "value": "180 kJ / 42 kcal" },
+          { "name": "karbonhidrat (100 ml)", "value": "10,6 g" },
+          { "name": "şekerler (100 ml)", "value": "10,6 g" },
+          { "name": "kafein", "value": "98 mg/l" }
+        ]
+      },
+      "official_product_url": "https://www.coca-cola.com/tr/tr/brands/coca-cola",
+      "image_url": "https://www.coca-cola.com/content/dam/onexp/tr/tr/coca-cola-single-page/tr_coca-cola_prod_coca-cola-orijinal-tat_750x750.jpg",
+      "source_url": "https://www.coca-cola.com/tr/tr/brands/coca-cola",
+      "consumer_sale_price": null,
+      "stock_quantity": null,
+      "matched_attributes": [
+        "marka (Coca‑Cola)",
+        "ürün (Coca‑Cola Orijinal Tat)"
+      ],
+      "unmatched_attributes": [
+        "250 ml kutu ambalaj bilgisi resmî sayfada yer almıyor",
+        "barkod (faturada boş)",
+        "kutu (can) formu resmî sayfada teyit edilmedi"
+      ],
+      "image_validation_status": "verified",
+      "rights_status": "unknown",
+      "validation": {
+        "status": "ambiguous",
+        "method": "web_fetch",
+        "official_page_opened": true,
+        "note": "Coca‑Cola Türkiye resmî marka sayfası açıldı; ürün doğrulandı ancak 250 ml kutu varyantı resmî sayfada listelenmediği için kesin eşleşme yapılmadı."
+      },
+      "sources": [
+        {
+          "url": "https://www.coca-cola.com/tr/tr/brands/coca-cola",
+          "title": "Coca-Cola Çeşitleri, Kalori & Besin Değerleri | Coca-Cola TR",
+          "type": "official"
+        }
+      ]
+    },
+    {
+      "row_id": "4",
+      "raw_invoice_line": "4 ETİ POPKEK KAKAOLU 60 GR 8690526083711 36 14,00 504,00",
+      "invoice_data": {
+        "quantity": 36,
+        "unit": "Adet",
+        "unit_price": 14,
+        "total_amount": 504
+      },
+      "product": {
+        "title": "ETİ Popkek",
+        "brand": "ETİ",
+        "category_suggestion": "Bisküvi/Tatlı",
+        "variant": "Kakaolu (resmî sayfada listelenen en yakın çeşit: Popkek Çikolatalı)",
+        "short_description": "ETİ Popkek; çikolatalı sosu, keki ve üzerindeki kaplamasıyla tanımlanan kek ürünü. Resmî sayfada Popkek Çikolatalı, Limonlu, Muzlu, Bitter Çikolatalı, Vişneli, Hindistan Cevizli, Portakallı ve Mini çeşitleri listelenmektedir; 'Kakaolu' adlı bir varyant ve gramaj bilgisi sayfada yer almamaktadır.",
+        "manufacturer": "ETİ (resmî site: etietieti.com)",
+        "attributes": [
+          { "name": "marka sloganı", "value": "Doyana da Popkek Doymayana Popkek!" },
+          { "name": "resmî varyantlar", "value": "Çikolatalı, Limonlu, Muzlu, Bitter Çikolatalı, Vişneli, Hindistan Cevizli, Portakallı ve Mini çeşitleri" }
+        ]
+      },
+      "official_product_url": "https://www.etietieti.com/tr-tr/markalarimiz/popkek",
+      "image_url": "https://cdn.sanity.io/images/b5tdibwp/production/541cc862fc1b90fc1bf24e6f983efe2e44ff0a23-280x220.png",
+      "source_url": "https://www.etietieti.com/tr-tr/markalarimiz/popkek",
+      "consumer_sale_price": null,
+      "stock_quantity": null,
+      "matched_attributes": [
+        "marka (ETİ)",
+        "ürün adı (Popkek)",
+        "ürün ailesi resmî sayfada mevcut"
+      ],
+      "unmatched_attributes": [
+        "fatura varyantı 'KAKAOLU' resmî sayfadaki çeşit listesinde yok (en yakın: Çikolatalı)",
+        "60 g gramaj bilgisi resmî sayfada yer almıyor",
+        "barkod 8690526083711 resmî sayfada doğrulanamadı"
+      ],
+      "image_validation_status": "verified",
+      "rights_status": "unknown",
+      "validation": {
+        "status": "ambiguous",
+        "method": "web_fetch",
+        "official_page_opened": true,
+        "note": "ETİ'nin resmî Popkek sayfası açıldı; marka ve ürün ailesi doğrulandı fakat 'Kakaolu' varyantı, 60 g gramaj ve barkod resmî sayfada bulunmadığı için kesin eşleşme yapılmadı."
+      },
+      "sources": [
+        {
+          "url": "https://www.etietieti.com/tr-tr/markalarimiz/popkek",
+          "title": "ETİ Popkek",
+          "type": "official"
+        }
+      ]
+    },
+    {
+      "row_id": "5",
+      "raw_invoice_line": "5 ETİ ÇİN ÇİLEKLİ BISKÜVİ 25 GR — 48 7,25 348,00",
+      "invoice_data": {
+        "quantity": 48,
+        "unit": "Adet",
+        "unit_price": 7.25,
+        "total_amount": 348
+      },
+      "product": {
+        "title": "ETİ Cin",
+        "brand": "ETİ",
+        "category_suggestion": "Bisküvi/Tatlı",
+        "variant": "Cin Tekli Çilekli",
+        "short_description": "ETİ Cin; sos, bisküvi ve granüllerin uyumuyla tanımlanan bisküvi ürünü. Resmî sayfada Cin Tekli Portakallı, Cin Tekli Çilekli, Cin Lokmalık Portakallı/Çilekli, Cin Silindir Portakallı/Çilekli ve 3'lü lokmalık çeşitleri listelenmektedir. Sayfada gramaj bilgisi yer almamaktadır.",
+        "manufacturer": "ETİ (resmî site: etietieti.com)",
+        "attributes": [
+          { "name": "çeşit", "value": "Cin Tekli Çilekli" },
+          { "name": "resmî varyantlar", "value": "Tekli Portakallı/Çilekli, Lokmalık Portakallı/Çilekli, Silindir Portakallı/Çilekli, Lokmalık 3'lü" }
+        ]
+      },
+      "official_product_url": "https://www.etietieti.com/tr-tr/markalarimiz/cin",
+      "image_url": "https://cdn.sanity.io/images/b5tdibwp/production/6ce6500f57c6c9ece47a803b35be58fa75b88a4a-280x220.png",
+      "source_url": "https://www.etietieti.com/tr-tr/markalarimiz/cin",
+      "consumer_sale_price": null,
+      "stock_quantity": null,
+      "matched_attributes": [
+        "marka (ETİ)",
+        "ürün adı (Cin)",
+        "varyant aroması (Çilekli)",
+        "ambalaj tipi (Tekli)"
+      ],
+      "unmatched_attributes": [
+        "25 g gramaj bilgisi resmî sayfada yer almıyor",
+        "barkod (faturada boş)"
+      ],
+      "image_validation_status": "verified",
+      "rights_status": "unknown",
+      "validation": {
+        "status": "verified",
+        "method": "web_fetch",
+        "official_page_opened": true,
+        "note": "ETİ'nin resmî Cin sayfası açıldı; 'Cin Tekli Çilekli' varyantı faturadaki ÇİN ÇİLEKLİ bisküvi ile kimlik ve varyant olarak eşleşti (gramaj resmî sayfada yazmıyor)."
+      },
+      "sources": [
+        {
+          "url": "https://www.etietieti.com/tr-tr/markalarimiz/cin",
+          "title": "ETİ Cin",
+          "type": "official"
+        }
+      ]
+    },
+    {
+      "row_id": "12",
+      "raw_invoice_line": "12 ETİ POPKEK KAKAOLU 60 GR 8690526083711 12 14,00 168,00",
+      "invoice_data": {
+        "quantity": 12,
+        "unit": "Adet",
+        "unit_price": 14,
+        "total_amount": 168
+      },
+      "product": {
+        "title": "ETİ Popkek",
+        "brand": "ETİ",
+        "category_suggestion": "Bisküvi/Tatlı",
+        "variant": "Kakaolu (resmî sayfada listelenen en yakın çeşit: Popkek Çikolatalı)",
+        "short_description": "ETİ Popkek; çikolatalı sosu, keki ve üzerindeki kaplamasıyla tanımlanan kek ürünü. Resmî sayfada Popkek Çikolatalı, Limonlu, Muzlu, Bitter Çikolatalı, Vişneli, Hindistan Cevizli, Portakallı ve Mini çeşitleri listelenmektedir; 'Kakaolu' adlı bir varyant ve gramaj bilgisi sayfada yer almamaktadır.",
+        "manufacturer": "ETİ (resmî site: etietieti.com)",
+        "attributes": [
+          { "name": "marka sloganı", "value": "Doyana da Popkek Doymayana Popkek!" },
+          { "name": "resmî varyantlar", "value": "Çikolatalı, Limonlu, Muzlu, Bitter Çikolatalı, Vişneli, Hindistan Cevizli, Portakallı ve Mini çeşitleri" }
+        ]
+      },
+      "official_product_url": "https://www.etietieti.com/tr-tr/markalarimiz/popkek",
+      "image_url": "https://cdn.sanity.io/images/b5tdibwp/production/541cc862fc1b90fc1bf24e6f983efe2e44ff0a23-280x220.png",
+      "source_url": "https://www.etietieti.com/tr-tr/markalarimiz/popkek",
+      "consumer_sale_price": null,
+      "stock_quantity": null,
+      "matched_attributes": [
+        "marka (ETİ)",
+        "ürün adı (Popkek)",
+        "ürün ailesi resmî sayfada mevcut"
+      ],
+      "unmatched_attributes": [
+        "fatura varyantı 'KAKAOLU' resmî sayfadaki çeşit listesinde yok (en yakın: Çikolatalı)",
+        "60 g gramaj bilgisi resmî sayfada yer almıyor",
+        "barkod 8690526083711 resmî sayfada doğrulanamadı"
+      ],
+      "image_validation_status": "verified",
+      "rights_status": "unknown",
+      "validation": {
+        "status": "ambiguous",
+        "method": "web_fetch",
+        "official_page_opened": true,
+        "note": "ETİ'nin resmî Popkek sayfası açıldı; marka ve ürün ailesi doğrulandı fakat 'Kakaolu' varyantı, 60 g gramaj ve barkod resmî sayfada bulunmadığı için kesin eşleşme yapılmadı."
+      },
+      "sources": [
+        {
+          "url": "https://www.etietieti.com/tr-tr/markalarimiz/popkek",
+          "title": "ETİ Popkek",
+          "type": "official"
+        }
+      ]
+    },
+    {
+      "row_id": "6",
+      "raw_invoice_line": "6 PINAR SÜZME BEYAZ PEYNİR 500 G 8690565011928 12 145,00 1.740,00",
+      "invoice_data": {
+        "quantity": 12,
+        "unit": "Adet",
+        "unit_price": 145,
+        "total_amount": 1740
+      },
+      "product": {
+        "title": "Pınar Süzme Peynir",
+        "brand": "Pınar",
+        "category_suggestion": "Süt Ürünleri",
+        "variant": "Süzme Peynir 500 g",
+        "short_description": "Süzme Peynir ultra filtrasyon (UF) tekniği ile üretilir ve ismini de buradan alır. Üretim ve paketleme teknolojisi sayesinde peynir paketin içinde mayalanır. Yumuşak yapısı olan süzme peynir dilimlenebildiği gibi sürülmesi de mümkündür. İçindekiler: Pastörize inek sütü, peynir mayası, peynir kültürü, tuz. Resmî sayfada 100 g, 250 g, 500 g, 750 g ve 1000 g gramaj seçenekleri yer alıyor (100 g için enerji 921 kJ/222 kcal, yağ 18 g, protein 12 g, tuz 2 g).",
+        "manufacturer": "Pınar Süt (Yaşar Holding) - resmî site: pinar.com.tr",
+        "attributes": [
+          { "name": "içindekiler", "value": "Pastörize inek sütü, peynir mayası, peynir kültürü, tuz" },
+          { "name": "enerji (100 g)", "value": "921 kJ / 222 kcal" },
+          { "name": "yağ (100 g)", "value": "18 g" },
+          { "name": "protein (100 g)", "value": "12 g" },
+          { "name": "tuz (100 g)", "value": "2 g" },
+          { "name": "gramaj seçenekleri", "value": "100 g, 250 g, 500 g, 750 g, 1000 g" }
+        ]
+      },
+      "official_product_url": "https://www.pinar.com.tr/urunler/detay-sut/Pinar-Suzme-Peynir/3662/3964/0",
+      "image_url": "https://www.pinar.com.tr/images/2026/urunler/suzme_peynir_500g.png",
+      "source_url": "https://www.pinar.com.tr/urunler/detay-sut/Pinar-Suzme-Peynir/3662/3964/0",
+      "consumer_sale_price": null,
+      "stock_quantity": null,
+      "matched_attributes": [
+        "marka (Pınar)",
+        "ürün adı (Süzme Peynir)",
+        "gramaj (500 g resmî sayfada listeleniyor)",
+        "ürün görseli (500 g)"
+      ],
+      "unmatched_attributes": [
+        "barkod 8690565011928 resmî sayfada doğrulanamadı",
+        "faturadaki 'BEYAZ PEYNİR' ifadesi resmî ürün adında geçmiyor (ürün adı: Pınar Süzme Peynir)"
+      ],
+      "image_validation_status": "verified",
+      "rights_status": "unknown",
+      "validation": {
+        "status": "verified",
+        "method": "web_fetch",
+        "official_page_opened": true,
+        "note": "Pınar'ın resmî ürün sayfası açıldı; ürün adı ve 500 g gramaj varyantı fatura ile eşleşti."
+      },
+      "sources": [
+        {
+          "url": "https://www.pinar.com.tr/urunler/detay-sut/Pinar-Suzme-Peynir/3662/3964/0",
+          "title": "Pınar Süzme Peynir",
+          "type": "official"
+        }
+      ]
+    },
+    {
+      "row_id": "7",
+      "raw_invoice_line": "7 PINAR TAM YAĞLI SÜT 1 LT 8690624105391 24 32,50 780,00",
+      "invoice_data": {
+        "quantity": 24,
+        "unit": "Adet",
+        "unit_price": 32.5,
+        "total_amount": 780
+      },
+      "product": {
+        "title": "Pınar Yağlı Süt (Tam Yağlı Süt)",
+        "brand": "Pınar",
+        "category_suggestion": "Süt Ürünleri",
+        "variant": "%3,3 Yağlı Süt 1 L (Tam Yağlı Süt)",
+        "short_description": "Pınar'ın resmî sayfasında 'Tam Yağlı Süt' besin değeri tablosuyla listelenen yağlı süt ürünü; 100 ml için enerji 250 kJ/60 kcal, yağ 3,3 g, karbonhidrat 4,5 g, protein 3 g, kalsiyum 120 mg. Ürün UHT teknolojisiyle üretilip aseptik ambalajlanır, koruyucu/katkı maddesi içermez. Resmî sayfada %3,3 Yağlı Süt 1L, 500 ml ve 200 ml gramajları yer alıyor.",
+        "manufacturer": "Pınar Süt (Yaşar Holding) - resmî site: pinar.com.tr",
+        "attributes": [
+          { "name": "enerji (100 ml)", "value": "250 kJ / 60 kcal" },
+          { "name": "yağ (100 ml)", "value": "3,3 g" },
+          { "name": "karbonhidrat (100 ml)", "value": "4,5 g" },
+          { "name": "protein (100 ml)", "value": "3 g" },
+          { "name": "kalsiyum (100 ml)", "value": "120 mg" },
+          { "name": "gramaj seçenekleri", "value": "%3,3 Yağlı Süt 1L, 500 ml, 200 ml" }
+        ]
+      },
+      "official_product_url": "https://www.pinar.com.tr/urunler/detay-sut/Tam-Yagli-Sut/591/432/0",
+      "image_url": "https://www.pinar.com.tr/images/2024/3-3-yagli-sut-1l.png",
+      "source_url": "https://www.pinar.com.tr/urunler/detay-sut/Tam-Yagli-Sut/591/432/0",
+      "consumer_sale_price": null,
+      "stock_quantity": null,
+      "matched_attributes": [
+        "marka (Pınar)",
+        "ürün (Tam Yağlı Süt)",
+        "gramaj (1 L resmî sayfada listeleniyor)",
+        "ürün görseli (1 L)"
+      ],
+      "unmatched_attributes": [
+        "barkod 8690624105391 resmî sayfada doğrulanamadı",
+        "resmî sayfadaki ürün adı 'Yağlı Süt', varyant adı '%3,3 Yağlı Süt 1L' (fatura: TAM YAĞLI SÜT)"
+      ],
+      "image_validation_status": "verified",
+      "rights_status": "unknown",
+      "validation": {
+        "status": "verified",
+        "method": "web_fetch",
+        "official_page_opened": true,
+        "note": "Pınar'ın resmî ürün sayfası açıldı; sayfadaki besin tablosu 'Tam Yağlı Süt' adını ve 1 L gramaj varyantını doğruluyor."
+      },
+      "sources": [
+        {
+          "url": "https://www.pinar.com.tr/urunler/detay-sut/Tam-Yagli-Sut/591/432/0",
+          "title": "Yağlı Süt | Pınar",
+          "type": "official"
+        }
+      ]
+    },
+    {
+      "row_id": "8",
+      "raw_invoice_line": "8 SÜTAŞ AYRAN 300 ML — 48 12,00 576,00",
+      "invoice_data": {
+        "quantity": 48,
+        "unit": "Adet",
+        "unit_price": 12,
+        "total_amount": 576
+      },
+      "product": {
+        "title": "Sütaş Ayran 300 ml",
+        "brand": "Sütaş",
+        "category_suggestion": "Süt Ürünleri",
+        "variant": "Ayran 300 ml",
+        "short_description": "Sütaş Ayran, 7'den 70'e herkesin beğendiği lezzeti ve lıkır lıkır içilebilen kıvamı ile susuzluğu gideren, ferahlatan içecek. İçindekiler: Yoğurt, su, tuz. Enerji ve besin öğeleri: enerji 135 kJ/32 kcal, yağ 1,8 g, doymuş yağ 1,2 g, karbonhidrat 2,0 g, şekerler 2,0 g, protein 2,0 g, tuz 0,6 g, kalsiyum 80 mg (100 ml için). İlave şeker içermez.",
+        "manufacturer": "Sütaş (resmî site: sutas.com.tr)",
+        "attributes": [
+          { "name": "içindekiler", "value": "Yoğurt, su, tuz" },
+          { "name": "enerji", "value": "135 kJ / 32 kcal (100 ml)" },
+          { "name": "yağ", "value": "1,8 g (100 ml)" },
+          { "name": "protein", "value": "2,0 g (100 ml)" },
+          { "name": "tuz", "value": "0,6 g (100 ml)" },
+          { "name": "gramaj", "value": "300 ml" }
+        ]
+      },
+      "official_product_url": "https://www.sutas.com.tr/sutas-ayran-300-ml",
+      "image_url": "https://www.sutas.com.tr/assets/uploads/product-detail/Ayran_300ml_V2.png",
+      "source_url": "https://www.sutas.com.tr/sutas-ayran-300-ml",
+      "consumer_sale_price": null,
+      "stock_quantity": null,
+      "matched_attributes": [
+        "marka (Sütaş)",
+        "ürün adı (Ayran)",
+        "gramaj (300 ml)",
+        "ürün görseli (Ayran 300 ml)"
+      ],
+      "unmatched_attributes": [
+        "barkod (faturada boş)"
+      ],
+      "image_validation_status": "verified",
+      "rights_status": "unknown",
+      "validation": {
+        "status": "verified",
+        "method": "web_fetch",
+        "official_page_opened": true,
+        "note": "Sütaş'ın resmî 'Sütaş Ayran 300 ml' sayfası açıldı; ürün adı ve 300 ml gramajı fatura ile eşleşti."
+      },
+      "sources": [
+        {
+          "url": "https://www.sutas.com.tr/sutas-ayran-300-ml",
+          "title": "Sütaş Ayran 300 ml – Doğal ve Besleyici | Sütaş",
+          "type": "official"
+        }
+      ]
+    },
+    {
+      "row_id": "9",
+      "raw_invoice_line": "9 ÇAYKUR RIZE TURIST ÇAY 1 KG 8690105000115 6 310,00 1.860,00",
+      "invoice_data": {
+        "quantity": 6,
+        "unit": "Adet",
+        "unit_price": 310,
+        "total_amount": 1860
+      },
+      "product": {
+        "title": "Rize Turist Çayı 1000 gr",
+        "brand": "Çaykur",
+        "category_suggestion": "Çay",
+        "variant": "Rize Turist Çayı 1000 gr",
+        "short_description": "Çaykur'un Rize Turist Çayı; 'Gerçek Sarı' olarak anılan, nesilden nesile aktarılan aromasıyla tanımlanan siyah çay. Resmî satış sayfasında 100 gr, 200 gr, 500 gr, 1000 gr ve 2000 gr ambalajlarda satıldığı, 1 koli = 10 adet olduğu belirtiliyor.",
+        "manufacturer": "Çay İşletmeleri Genel Müdürlüğü (Çaykur) - resmî site: caykur.gov.tr",
+        "attributes": [
+          { "name": "çay tipi", "value": "Siyah çay" },
+          { "name": "gramaj", "value": "1000 gr" },
+          { "name": "koli içi", "value": "1 koli = 10 adet" },
+          { "name": "ambalaj seçenekleri", "value": "100 gr, 200 gr, 500 gr, 1000 gr, 2000 gr" }
+        ]
+      },
+      "official_product_url": "https://caykursatis.com/rize-turist-cayi-1000gr-siyah-cay-caykur",
+      "image_url": "https://caykursatis.com/rize-turist-cayi-1000gr-siyah-cay-caykur-siyah-cay-caykur-siyah-cay-938-79-O.png",
+      "source_url": "https://caykursatis.com/rize-turist-cayi-1000gr-siyah-cay-caykur",
+      "consumer_sale_price": null,
+      "stock_quantity": null,
+      "matched_attributes": [
+        "marka (Çaykur)",
+        "ürün adı (Rize Turist Çayı)",
+        "gramaj (1000 gr)",
+        "ürün görseli (1000 gr)"
+      ],
+      "unmatched_attributes": [
+        "barkod 8690105000115 resmî sayfada doğrulanamadı",
+        "ürün bilgisi Çaykur'un resmî satış sitesinden alındı; caykur.gov.tr ürün katalog sayfasında gramaj bazlı ürün kaydı açılamadı"
+      ],
+      "image_validation_status": "verified",
+      "rights_status": "unknown",
+      "validation": {
+        "status": "verified",
+        "method": "web_fetch",
+        "official_page_opened": true,
+        "note": "Çaykur'un resmî satış sitesindeki 'Rize Turist Çayı 1000gr' sayfası açıldı; marka, ürün adı ve gramaj eşleşti."
+      },
+      "sources": [
+        {
+          "url": "https://caykursatis.com/rize-turist-cayi-1000gr-siyah-cay-caykur",
+          "title": "Rize Turist Çayı 1000gr - Çaykur",
+          "type": "official"
+        }
+      ]
+    },
+    {
+      "row_id": "10",
+      "raw_invoice_line": "10 TORKU TOZ ŞEKER 1 KG — 10 42,00 420,00",
+      "invoice_data": {
+        "quantity": 10,
+        "unit": "Adet",
+        "unit_price": 42,
+        "total_amount": 420
+      },
+      "product": {
+        "title": "Torku Kristal Şeker - Polietilen Ambalaj (Toz Şeker)",
+        "brand": "Torku",
+        "category_suggestion": "Şeker",
+        "variant": "1 kg polietilen ambalaj",
+        "short_description": "Torku, pancar şekerinden üretilen şeker ürünlerinde toz (kristal) şeker, küp şeker, pudra şekeri, sıvı şeker ve esmer şeker seçenekleri sunuyor. Resmî sayfada toz şekerin gramaj seçenekleri 1 kg, 2 kg, 3 kg ve 5 kg; paketleme polietilen ve kraft olarak belirtiliyor. Torku Kristal Şeker - Polietilen Ambalaj sayfasında 1 kg, 2 kg, 3 kg ve 5 kg seçenekleri listeleniyor.",
+        "manufacturer": "Konya Şeker / Torku (resmî site: torku.com.tr)",
+        "attributes": [
+          { "name": "ürün tipi", "value": "Kristal (toz) şeker" },
+          { "name": "hammadde", "value": "Pancar şekeri" },
+          { "name": "gramaj seçenekleri", "value": "1 kg, 2 kg, 3 kg, 5 kg" },
+          { "name": "paketleme", "value": "Polietilen ambalaj" }
+        ]
+      },
+      "official_product_url": "https://torku.com.tr/torku-kristal-seker-polietilen-ambalaj",
+      "image_url": "https://torku.com.tr/Upload/Contents/2070440_1000gr-kristal-seker.png",
+      "source_url": "https://torku.com.tr/torku-kristal-seker-polietilen-ambalaj",
+      "consumer_sale_price": null,
+      "stock_quantity": null,
+      "matched_attributes": [
+        "marka (Torku)",
+        "ürün ailesi (toz/kristal şeker)",
+        "gramaj (1 kg resmî sayfada listeleniyor)",
+        "paketleme (polietilen)",
+        "ürün görseli (1000 gr kristal şeker)"
+      ],
+      "unmatched_attributes": [
+        "barkod (faturada boş)",
+        "ürün adı resmî sayfada 'Kristal Şeker' olarak geçiyor (fatura: TOZ ŞEKER)"
+      ],
+      "image_validation_status": "verified",
+      "rights_status": "unknown",
+      "validation": {
+        "status": "verified",
+        "method": "web_fetch",
+        "official_page_opened": true,
+        "note": "Torku'nun resmî 'Kristal Şeker - Polietilen Ambalaj' sayfası açıldı; 1 kg gramaj seçeneği ve ürün görseli fatura ile eşleşti (toz şeker = kristal şeker)."
+      },
+      "sources": [
+        {
+          "url": "https://torku.com.tr/torku-kristal-seker-polietilen-ambalaj",
+          "title": "Polietilen Ambalaj - Torku Kristal Şeker",
+          "type": "official"
+        },
+        {
+          "url": "https://torku.com.tr/torku-seker-urunleri",
+          "title": "Şeker Çeşitleri - Torku",
+          "type": "official"
+        }
+      ]
+    },
+    {
+      "row_id": "11",
+      "raw_invoice_line": "11 PİYALE BURGU MAKARNA 500 G — 24 18,50 444,00",
+      "invoice_data": {
+        "quantity": 24,
+        "unit": "Adet",
+        "unit_price": 18.5,
+        "total_amount": 444
+      },
+      "product": {
+        "title": null,
+        "brand": "Piyale",
+        "category_suggestion": "Makarna",
+        "variant": null,
+        "short_description": null,
+        "manufacturer": null,
+        "attributes": []
+      },
+      "official_product_url": null,
+      "image_url": null,
+      "source_url": null,
+      "consumer_sale_price": null,
+      "stock_quantity": null,
+      "matched_attributes": [],
+      "unmatched_attributes": [
+        "resmî üretici/ürün sayfası açılamadı (sayfa erişim limiti nedeniyle doğrulama tamamlanamadı)",
+        "barkod (faturada boş)",
+        "ürün kodu, varyant ve 500 g gramaj resmî kaynakla doğrulanamadı",
+        "resmî sayfada ürün görseli doğrulanamadı"
+      ],
+      "image_validation_status": "not_checked",
+      "rights_status": "unknown",
+      "validation": {
+        "status": "not_researched",
+        "method": "web_search + web_fetch",
+        "official_page_opened": false,
+        "note": "Piyale markası için resmî site araması yapıldı ancak resmî ürün sayfası web_fetch ile açılamadığı için ürün kimliği doğrulanmadı; satır diğerleriyle karıştırılmadan not_researched olarak bırakıldı."
+      },
+      "sources": []
+    }
+  ]
+}
+```

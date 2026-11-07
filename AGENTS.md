@@ -32,6 +32,51 @@ Her oturumun ilk üç adımı, istisnasız:
 Neden: 2026-10-31'de bir oturum defterin yolunu bilmediği için 53 saniye aradı, bulamayınca
 **ikinci bir defter (`TAKİP.md`) açtı** ve içeriği ayrıştı. Kopya defter, kopya gerçek üretir.
 
+### Z.0.1 — Açılış kapısı ve harita (2026-11-03)
+
+Oturum açılışında iki şey daha yapılır; ikisi de ölçülür:
+
+1. **Kapıyı koş.** `pwsh -NoProfile -File tool/ajan-baslangic.ps1`
+   Çıktısı olmadan "durum şu", "düzeldi", "canlıda" denmez. Çıkış kodu 2 veya 4 ise dur,
+   sebebi yaz, tahmin yürütme; 1 ise "ölçülmedi" yaz; 3 ise "canlı geride" yaz.
+2. **Haritayı oku.** `docs/AJAN-BASLANGIC.md` — hangi bilgi hangi platformdan okunur,
+   anahtarlar nerede yaşar, hangi belge tarihseldir.
+3. **Anahtar, platform, defter yolu veya dosya adı Casper'a sorulmaz.** Haritaya bakılır;
+   ölçülemiyorsa "ölçemedim" denir. Anahtar sohbete istenmez, yapıştırılmaz.
+4. **Defter yoksa icat etme.** `C:\Projects\...` yolları yalnız sahibin bilgisayarında
+   vardır; yoksa "defter yok" de, kapı + harita ile devam et.
+5. **Graphify + bağlantı kanıtı.** Kapı çıktısındaki Graphify ve platform satırları tek
+   kanıttır. Kod değişikliğinden önce `graphify affected "X"` (MCP varsa
+   `graphify_impact`) ile etkiyi çıkar ve `graph_stats` ile indeksin commit'ini/yaşını al;
+   harita yoksa ya da BAYAT ise `graphify update .` koş, koşamıyorsan dosya:satır ile devam
+   et ve "harita yok" de. Platform durumu yalnız ölçümle yazılır: BAĞLI, YETKİSİZ,
+   ERİŞİLEMEDİ. Varsayım yürütme. Erişim salt okunurdur; değişiklik, deploy, migration ve
+   preset düzenleme yalnız açık onayla.
+6. **Etki kanıtı PR'da.** Kod değişikliği PR'ının gövdesinde `Graphify etki: <Sembol> →
+   <dosya:satır...>` satırı zorunludur. CI'daki **Ajan başlangıç haritası** işi
+   (`.github/workflows/ci.yml` → `tool/baslangic-kontrol.mjs --pr`) bu satırı denetler;
+   satır yoksa PR kırmızı olur. Etkiyi `graphify affected "Sembol"` veya MCP
+   `graphify_impact` ile üret.
+   Satır en az bir gerçek `dosya:satır` göstermek zorunda; depoda bulunmayan dosya kanıt sayılmaz, "bulunamadı" tek başına geçmez.
+   **Gövde push'tan önce güncellenir.** CI gövdeyi push anındaki hâliyle okur; sonradan düzeltilen gövde koşumu değiştirmez, kanıt kancası kırmızı kalır.
+
+   Neden (2026-11-07): #747'de gövde push'tan sonra düzeltildi; CI eski gövdeyi okudu ve "Ajan başlangıç haritası" kırmızı düştü. Aynı içerikle tetiklenen yeni koşum geçti.
+7. **Çalışma yeri tek: ana klasör** (2026-11-07). Ölçüm ve değişiklik `C:\Projects\vixrex` içinde yapılır.
+   Bulut/kopya çalışma alanı (uzak depo adresi, `public_web/.env.local` ve `graphify-out/` olmayan yer)
+   çalışma yeri değildir; orada yalnız okuma yapılır. Oturum kopyada açıldıysa önce yerel bağlantı
+   (Local) kurulur; kurulamıyorsa sebebi yazılır, elle yamalı ölçüm yapılmaz.
+   Kopya envanteri tek komut: `pwsh -NoProfile -File tool/kopya-durumu.ps1` (salt okunur).
+
+Neden (2026-11-07): yerel başlatma "Your folder isn't connected to Freebuff yet" verdi, oturum
+bulutta açıldı; buluttan yerele geçiş her seferinde yeni kopya doğurdu. Ölçüm: diskte 5 Freebuff
+kopyası, 6 bulut kopyası, ana klasör dışında 4 `vixrex-*` klasörü; kopyaların üçünde sahipsiz kirli
+iş (148, 9, 5 dosya). Kopyada `gh pr list` "no git remotes found" verdi; ana klasörde aynı kapı
+27 açık / 16 taslak PR gösterdi.
+
+Neden: 2026-11-03'te ajanlar anahtar/platform sordu ve tarihsel planı güncel iş listesi
+sandı; Graphify haritası bağlı olmadığı için "30 gündür ajan faaliyeti yok" görünüyordu.
+Kancası olmayan kural ölçülmez: bu kapı, kuralın koşulmuş hâlidir.
+
 > **Ölçüm kancaları hakkında not:** Bu dosyada adı geçen kanca betikleri
 > (`.claude/hooks/`) 2026-09-26'da depodan kaldırıldı. Kural metinleri kaldı;
 > kancaları geri getirmek Casper'ın kararıdır. Kancası olmayan bir kural,

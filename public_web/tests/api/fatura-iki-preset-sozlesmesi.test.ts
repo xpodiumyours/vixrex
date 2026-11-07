@@ -77,6 +77,21 @@ describe("gerçek ikinci preset JSON sözleşmesi",()=>{
     await expect(kartPresetYanitiniOku(response([item("1","A ürün"),item("1","B ürün"),item("2","C ürün")]),first))
       .rejects.toThrow("KART_YANITI_COZULEMEDI");
   });
+  it("eski yolda eksik kart tüm faturayı düşürür, kısmi kayıt yazılmaz",async()=>{
+    vi.stubEnv("PRESET_AKIS","mevcut");
+    await expect(kartPresetYanitiniOku(response([item("1","A ürün")]),first)).rejects.toThrow("KART_KAPSAMI_EKSIK");
+  });
+  it("eski yolda mükerrer kimlikte ilki kazanır",async()=>{
+    vi.stubEnv("PRESET_AKIS","mevcut");
+    const result=await kartPresetYanitiniOku(response([item("1","A ürün"),item("1","B ürün"),item("2","B ürün")]),first);
+    expect(result.sonuc.satirlar.map(s=>s.ad)).toEqual(["A ürün","B ürün"]);
+  });
+  it("eski yolda hiçbir satır eşleşmezse reddeder",async()=>{
+    vi.stubEnv("PRESET_AKIS","mevcut");
+    await expect(kartPresetYanitiniOku(response([item("9","X")]),first)).rejects.toThrow("KART_KAPSAMI_EKSIK");
+    await expect(kartPresetYanitiniOku(response([{row_id:"2",vixrex_product_json:{}}]),first)).rejects.toThrow("KART_KAPSAMI_EKSIK");
+    await expect(kartPresetYanitiniOku(response([{row_id:"2",status:"tamamlandı"}]),first)).rejects.toThrow("KART_KAPSAMI_EKSIK");
+  });
   it("yabancı, geçersiz veya bozuk satırları sessizce atmaz",async()=>{
     for (const items of [
       [item("9","X"),item("2","Y")],
@@ -145,7 +160,7 @@ describe("gerçek ikinci preset JSON sözleşmesi",()=>{
       sources:[{url:"https://example.com/elt1302",type:"official_manufacturer_product_page",fetched:true}],
       validation:{status:"ambiguous",notes:"Renk doğrulanamadı."},
     };
-    const result=await kartPresetYanitiniOku(response([duz]),first);
+    const result=await kartPresetYanitiniOku(response([duz,item("2","İkinci")]),first);
     const satir=result.sonuc.satirlar[0];
     expect(satir.ad).toBe("ELT1302 Elit Erkek Elastan Sıfır Yaka Uzun Kol Fanila");
     expect(satir.dogrulamaDurumu).toBe("Belirsiz");
@@ -174,7 +189,7 @@ describe("gerçek ikinci preset JSON sözleşmesi",()=>{
       unmatched_attributes:["Tüm ürün özellikleri: resmî ürün sayfası bulunamadı"],
       validation:{status:"not_found"},
     };
-    const result=await kartPresetYanitiniOku(response([duz]),first);
+    const result=await kartPresetYanitiniOku(response([duz,item("1","A ürün")]),first);
     const satir=result.sonuc.satirlar[1];
     expect(satir.dogrulamaDurumu).toBe("Bulunamadı");
     expect(satir.ad).toBe("İkinci");
