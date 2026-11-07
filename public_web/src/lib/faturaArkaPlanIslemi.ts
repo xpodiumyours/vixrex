@@ -160,5 +160,31 @@ export function arkaPlanFaturaHatasi(kod: string): string {
   if (kod === "KART_ISLEYICI_HAZIR_DEGIL") return "Fatura okundu ancak ürün kartı aşaması başlatılamadı. Aynı işlemden devam et.";
   if (kod === "KART_SATIRLARI_ESLESMEDI") return "Kart yanıtındaki ürün kimlikleri faturayla eşleşmedi; yanlış karta bilgi yazılmadı.";
   if (kod === "KART_YANITI_COZULEMEDI") return "İkinci preset JSON yanıtı doğrulanamadı; ürün kartı kaydedilmedi.";
+  if (kod === "KART_KAPSAMI_EKSIK") return "Faturanın bazı satırları için ürün kartı oluşmadı; hiçbir şey kaydedilmedi. Faturayı aynı fotoğrafla yeniden yükle, kayıtlı cevap yeniden okunur.";
   return "OpenRouter ürün hazırlamayı tamamlayamadı. Eksik cevap ürün kartı olarak kaydedilmedi.";
+}
+
+const TEKRAR_DENENEBILIR = new Set(["KART_YANITI_COZULEMEDI", "KART_SATIRLARI_ESLESMEDI", "KART_KAPSAMI_EKSIK"]);
+
+export async function basarisizKartIsiniTekrarDene(
+  admin: SupabaseClient,
+  storeId: string,
+  islemKimligi: string,
+): Promise<boolean> {
+  const { data } = await admin
+    .from("invoice_provider_runs")
+    .select("state,stage,error_code,response_body")
+    .eq("store_id", storeId)
+    .eq("job_id", islemKimligi)
+    .maybeSingle();
+  if (!data || data.state !== "failed" || data.stage !== "cards") return false;
+  if (!TEKRAR_DENENEBILIR.has(String(data.error_code ?? ""))) return false;
+  if (typeof data.response_body !== "string" || !data.response_body.trim()) return false;
+  const { error } = await admin
+    .from("invoice_provider_runs")
+    .update({ state: "received", error_code: null, finished_at: null })
+    .eq("store_id", storeId)
+    .eq("job_id", islemKimligi)
+    .eq("state", "failed");
+  return !error;
 }
