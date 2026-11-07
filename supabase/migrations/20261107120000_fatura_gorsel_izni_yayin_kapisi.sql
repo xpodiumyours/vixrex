@@ -50,16 +50,18 @@ begin
       return jsonb_build_object('success',false,'hata','Fatura grubundaki kartlar yeniden onaylanmalı.');
     end if;
     begin
-      v_stock:=coalesce(round(nullif(replace(coalesce(v_member.owner_state->>'stok',''),',','.'),'')::numeric),0)::integer;
+      v_stock:=case when nullif(replace(v_member.owner_state->>'stok',',','.'),'')::numeric=trunc(nullif(replace(v_member.owner_state->>'stok',',','.'),'')::numeric)
+    and nullif(replace(v_member.owner_state->>'stok',',','.'),'')::numeric between 0 and 2147483647
+    then nullif(replace(v_member.owner_state->>'stok',',','.'),'')::numeric::integer else null end;
       v_price:=nullif(case when strpos(v_member.owner_state->>'satisFiyati',',')>0 then
         replace(replace(v_member.owner_state->>'satisFiyati','.',''),',','.') else v_member.owner_state->>'satisFiyati' end,'')::numeric;
     exception when invalid_text_representation or numeric_value_out_of_range then
       return jsonb_build_object('success',false,'hata','Grup fiyatı veya stoku geçersiz.');
     end;
-    if v_stock<0 or v_price is null or v_price<=0 or v_price is distinct from v_product.price_amount then
+    if nullif(replace(v_member.owner_state->>'stok',',','.'),'')::numeric<0 or v_stock<0 or v_price is null or v_price<=0 or v_price is distinct from v_product.price_amount then
       return jsonb_build_object('success',false,'hata','Grup fiyatı veya stoku değişti.');
     end if;
-    v_total:=v_total+v_stock;
+    v_total:=v_total+coalesce(v_stock,0);
   end loop;
   if v_member_count<>jsonb_array_length(v_ids) or v_total is distinct from coalesce(v_product.stock_quantity,0) then
     return jsonb_build_object('success',false,'hata','Fatura grubu stok toplamı değişti.'); end if;
@@ -67,13 +69,15 @@ begin
   begin
     v_price:=nullif(case when strpos(v_state->>'satisFiyati',',')>0
       then replace(replace(v_state->>'satisFiyati','.',''),',','.') else v_state->>'satisFiyati' end,'')::numeric;
-    v_stock:=coalesce(round(nullif(replace(coalesce(v_state->>'stok',''),',','.'),'')::numeric),0)::integer;
+    v_stock:=case when nullif(replace(v_state->>'stok',',','.'),'')::numeric=trunc(nullif(replace(v_state->>'stok',',','.'),'')::numeric)
+    and nullif(replace(v_state->>'stok',',','.'),'')::numeric between 0 and 2147483647
+    then nullif(replace(v_state->>'stok',',','.'),'')::numeric::integer else null end;
   exception when invalid_text_representation or numeric_value_out_of_range then
     return jsonb_build_object('success',false,'hata','Satış fiyatı veya stok geçersiz.');
   end;
   if v_state is null or v_state->>'onayli' is distinct from 'true'
     or v_product.fatura_kanit->>'esnafOnayladi' is distinct from 'true'
-    or v_price is null or v_price<=0 or v_stock<0
+    or v_price is null or v_price<=0 or v_stock<0 or nullif(replace(v_state->>'stok',',','.'),'')::numeric<0
     or v_price is distinct from v_product.price_amount
   then return jsonb_build_object('success',false,'hata','Fiyat, stok ve kart onayını yeniden kontrol et.'); end if;
   if v_product.image_urls is null or jsonb_typeof(v_product.image_urls)<>'array' or jsonb_array_length(v_product.image_urls)<1 then
@@ -110,8 +114,7 @@ begin
   if v_product.is_visible then return jsonb_build_object('success',true,'id',p_product_id,'zaten_yayinda',true); end if;
   if exists(select 1 from jsonb_array_elements(case when jsonb_typeof(v_product.fatura_kanit->'gorselKaynaklari')='array'
       then v_product.fatura_kanit->'gorselKaynaklari' else '[]'::jsonb end) kaynak
-    where coalesce(kaynak->>'hakKayitDurumu','') not in
-      ('verified_supplier_permission','verified_feed_terms','merchant_owned_media','merchant_attestation'))
+    where coalesce(kaynak->>'hakKayitDurumu','') in ('unknown','denied','kayit_yok'))
   then
     update public.products set is_visible=false,updated_at=now() where id=p_product_id and store_id=v_store;
     return jsonb_build_object('success',true,'id',p_product_id,'gorunur',false,'izin_bekliyor',true);

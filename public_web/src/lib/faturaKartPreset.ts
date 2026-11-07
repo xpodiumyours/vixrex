@@ -165,7 +165,6 @@ export async function kartPresetYanitiniOku(cevap: Response, okuma: GoruSonucu, 
     const ad = kart.ad || s.ad;
     return {
       ...s, ...grupKimligi, ad, adet: s.adet,
-      uretici: kart.uretici || s.uretici,
       siteAciklama: kart.aciklama, siteKategori: kart.kategori,
       siteMarka: kart.marka, siteVaryant: kart.varyant,
       gorselKullanimDurumu: kart.gorselHaklari,
