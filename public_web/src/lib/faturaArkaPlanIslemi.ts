@@ -12,6 +12,7 @@ import {
 import { gorselsizSatirlariTamamla } from "@/lib/faturaGorsel";
 import { adayGorselleriniSec } from "@/lib/faturaGorselSecimi";
 import { faturaBaslangicZamani, faturaOzetSatiri, faturaOzetiniKaydet, gecenSaniye } from "@/lib/faturaOzeti";
+import { govdeOzeti, hataSinifi, kartDenemesiniTekrarla, olayYaz, saglayiciHataKodu } from "@/lib/faturaDeneme";
 
 export const OKUMA_PRESET = "@preset/vixrex-qwen-fatura-okuma-suzme";
 export const OTOMATIK_FATURA_PRESET = URUN_KART_PRESET;
@@ -72,9 +73,38 @@ export async function arkaPlanFaturaSonucunuAl(
   if (sonuc.state !== "received" || typeof sonuc.body !== "string" || typeof sonuc.fingerprint !== "string") {
     throw new Error("OKUYUCU_EKSIK_CEVAP");
   }
+  const deneme = (Number(sonuc.attempts) || 0) + 1;
+  const asama = sonuc.stage === "cards" ? "cards" : "reading";
+  const yanitBoyu = typeof sonuc.body === "string" ? sonuc.body.length : null;
+  const yanitOzeti = typeof sonuc.body === "string" ? govdeOzeti(sonuc.body) : null;
   try {
     const httpStatus = Number(sonuc.httpStatus);
     if (!Number.isInteger(httpStatus) || httpStatus < 200 || httpStatus > 599) throw new Error("OKUYUCU_CEVAP_VERMEDI");
+    if (httpStatus >= 400) {
+      const kod = saglayiciHataKodu(httpStatus);
+      const sinif = await hataSinifi(admin, httpStatus, kod);
+      const ilkOkuma = (sonuc.readResult ?? null) as GoruSonucu | null;
+      const tekrar =
+        sinif === "transient" && sonuc.stage === "cards" &&
+        ilkOkuma && Array.isArray(ilkOkuma.satirlar) && ilkOkuma.satirlar.length > 0
+          ? await kartDenemesiniTekrarla(admin, {
+              storeId,
+              islemKimligi,
+              deneme,
+              govde: kartPresetIstekGovdesi(ilkOkuma),
+            })
+          : false;
+      if (tekrar) {
+        await olayYaz(admin, {
+          jobId: islemKimligi, storeId, stage: "cards", attempt: deneme,
+          fromState: "received", toState: "queued", reasonCode: "GECICI_TEKRAR",
+          errorClass: "transient", httpStatus, model: OTOMATIK_FATURA_PRESET,
+          responseBytes: yanitBoyu, bodySha256: yanitOzeti,
+        });
+        return bekleyenFaturaYaniti(islemKimligi, "kartlaniyor");
+      }
+      throw new Error(kod);
+    }
     const cevap = new Response(sonuc.body, {
       status: httpStatus,
       headers: { "content-type": typeof sonuc.contentType === "string" ? sonuc.contentType : "application/json" },
@@ -95,6 +125,12 @@ export async function arkaPlanFaturaSonucunuAl(
         p_api_key: process.env.OPENROUTER_API_KEY,
       });
       if (ikinci.error || ikinci.data?.success !== true) throw new Error("KART_ISLEYICI_HAZIR_DEGIL");
+      await olayYaz(admin, {
+        jobId: islemKimligi, storeId, stage: "reading", attempt: deneme,
+        fromState: "received", toState: "queued", reasonCode: "OKUMA_TAMAM",
+        errorClass: "none", httpStatus, model: OKUMA_PRESET,
+        responseBytes: yanitBoyu, bodySha256: yanitOzeti,
+      });
       return bekleyenFaturaYaniti(islemKimligi, "kartlaniyor");
     } else if (sonuc.stage === "cards") {
       const ilkOkuma = sonuc.readResult as GoruSonucu | null;
@@ -135,9 +171,23 @@ export async function arkaPlanFaturaSonucunuAl(
     if (id !== islemKimligi) throw new Error("FATURA_KAYDI_EKSIK");
     const kayit = await islemiYukle(admin, storeId, islemKimligi);
     if (!kayit?.satirlar.length) throw new Error("FATURA_KAYDI_EKSIK");
+    await olayYaz(admin, {
+      jobId: islemKimligi, storeId, stage: "cards", attempt: deneme,
+      fromState: "received", toState: "processed", reasonCode: "KART_TAMAM",
+      errorClass: "none", httpStatus, model: OTOMATIK_FATURA_PRESET,
+      responseBytes: yanitBoyu, bodySha256: yanitOzeti,
+    });
     return faturaTaslakYanitiniHazirla(admin, storeId, slug, kayit);
   } catch (err) {
     const kod = err instanceof Error && /^[A-Z_]{1,96}$/.test(err.message) ? err.message : "OKUYUCU_CEVAP_VERMEDI";
+    const httpDurumu = Number.isInteger(Number(sonuc.httpStatus)) ? Number(sonuc.httpStatus) : null;
+    const sinif = await hataSinifi(admin, httpDurumu, kod);
+    await olayYaz(admin, {
+      jobId: islemKimligi, storeId, stage: asama, attempt: deneme,
+      fromState: "received", toState: "failed", reasonCode: kod,
+      errorClass: sinif === "none" ? "permanent" : sinif, httpStatus: httpDurumu,
+      responseBytes: yanitBoyu, bodySha256: yanitOzeti,
+    });
     await faturaOzetiniKaydet(admin, storeId, islemKimligi, faturaOzetSatiri({
       islemKimligi, satirSayisi: 0, kartSayisi: 0, gorselliSayisi: 0,
       sureSaniye: gecenSaniye(await faturaBaslangicZamani(admin, storeId, islemKimligi)), hataKodu: kod,
