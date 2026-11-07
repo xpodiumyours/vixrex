@@ -166,3 +166,13 @@ Yerelde migration zinciri sıfırdan uygulandı ve aşağıdakiler ölçüldü.
 
 Açık soru — Casper'ın kararı: olay satırları ne kadar saklanacak? Taslakta silme yolu yok;
 saklama süresi ve temizleme işi ayrı migration olarak yazılmalı.
+**Kod tarafı (aynı PR).** Çalışan hat her gözlemde bir olay satırı yazar: aşama
+(`reading`/`cards`), deneme no, geçiş, sebep kodu, hata sınıfı, HTTP durumu, gövde boyu ve
+gövde parmak izi. Sınıflandırma SQL'deki tek kaynaktan okunur, kopyalanmaz.
+
+HTTP 400 ve üzeri geldiğinde: kalıcı sınıf (401/403 → `ANAHTAR_GECERSIZ`, 402 → `KREDI_YOK`,
+400/404 → `OKUYUCU_ISTEGI_GECERSIZ`) işi **anında bitirir ve yeniden denemez**; geçici sınıf
+(429, 5xx) yalnız kart aşamasında ve toplam üç denemeye kadar yeniden ateşlenir
+(`retry_invoice_provider_job`), arada SQL'in hesapladığı bekleme uygulanır. Okuma aşamasında
+görsel saklanmadığı için yeniden ateşleme yoktur; kullanıcı aynı fotoğrafı yüklediğinde P1'in
+kayıtlı-cevap yolu devreye girer.

@@ -148,4 +148,86 @@ grant execute on function public.invoice_error_class(integer, text) to service_r
 revoke all on function public.invoice_backoff_ms(integer, text, integer) from public, anon, authenticated;
 grant execute on function public.invoice_backoff_ms(integer, text, integer) to service_role;
 
+create or replace function public.get_invoice_provider_response(p_store_id uuid,p_job_id uuid)
+returns jsonb language plpgsql security definer set search_path=pg_catalog,public
+as $$
+declare v_result jsonb;
+begin
+  if not exists(select 1 from public.invoice_jobs where id=p_job_id and store_id=p_store_id) then return null; end if;
+  perform public.sync_invoice_provider_responses();
+  select jsonb_build_object(
+    'state',r.state,'stage',r.stage,'httpStatus',r.http_status,'contentType',r.content_type,
+    'body',r.response_body,'readResult',r.read_result,'error',r.error_code,'fingerprint',j.document_fingerprint,
+    'attempts',r.attempt_count,'nextAttemptAt',r.next_attempt_at
+  ) into v_result from public.invoice_provider_runs r
+    join public.invoice_jobs j on j.id=r.job_id and j.store_id=r.store_id
+    where r.job_id=p_job_id and r.store_id=p_store_id;
+  return v_result;
+end;
+$$;
+alter function public.get_invoice_provider_response(uuid,uuid) owner to postgres;
+revoke all on function public.get_invoice_provider_response(uuid,uuid) from public,anon,authenticated;
+grant execute on function public.get_invoice_provider_response(uuid,uuid) to service_role;
+
+create or replace function public.retry_invoice_provider_job(
+  p_store_id uuid,
+  p_job_id uuid,
+  p_body jsonb,
+  p_api_key text
+) returns jsonb language plpgsql security definer set search_path=pg_catalog,public
+as $$
+declare
+  v_run public.invoice_provider_runs%rowtype;
+  v_request_id bigint;
+begin
+  if p_body is null
+    or jsonb_typeof(p_body) is distinct from 'object'
+    or coalesce(p_api_key,'') = ''
+  then
+    return jsonb_build_object('success',false,'reason','invalid');
+  end if;
+
+  select * into v_run from public.invoice_provider_runs
+    where job_id=p_job_id and store_id=p_store_id
+    for update;
+
+  if not found or v_run.state <> 'failed' or v_run.stage <> 'cards' then
+    return jsonb_build_object('success',false,'reason','state');
+  end if;
+
+  if v_run.attempt_count >= 2 then
+    return jsonb_build_object('success',false,'reason','limit');
+  end if;
+
+  if public.invoice_error_class(v_run.http_status, v_run.error_code) <> 'transient' then
+    return jsonb_build_object('success',false,'reason','permanent');
+  end if;
+
+  v_request_id := net.http_post(
+    url := 'https://openrouter.ai/api/v1/chat/completions',
+    body := p_body,
+    headers := jsonb_build_object(
+      'Content-Type','application/json',
+      'Authorization','Bearer '||p_api_key,
+      'HTTP-Referer','https://vixrex.com',
+      'X-Title','Vixrex Invoice Product Cards'
+    ),
+    timeout_milliseconds := 1800000
+  );
+
+  update public.invoice_provider_runs
+    set state='queued', request_id=v_request_id, attempt_count=v_run.attempt_count+1,
+        error_code=null, http_status=null, content_type=null, response_body=null,
+        finished_at=null, next_attempt_at=null
+    where job_id=p_job_id and store_id=p_store_id;
+
+  return jsonb_build_object('success',true,'id',p_job_id,'stage','cards','state','queued','attempt',v_run.attempt_count+1);
+end;
+$$;
+alter function public.retry_invoice_provider_job(uuid,uuid,jsonb,text) owner to postgres;
+revoke all on function public.retry_invoice_provider_job(uuid,uuid,jsonb,text) from public,anon,authenticated;
+grant execute on function public.retry_invoice_provider_job(uuid,uuid,jsonb,text) to service_role;
+
+notify pgrst, 'reload schema';
+
 commit;
