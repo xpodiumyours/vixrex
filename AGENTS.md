@@ -57,6 +57,10 @@ Oturum açılışında iki şey daha yapılır; ikisi de ölçülür:
    (`.github/workflows/ci.yml` → `tool/baslangic-kontrol.mjs --pr`) bu satırı denetler;
    satır yoksa PR kırmızı olur. Etkiyi `graphify affected "Sembol"` veya MCP
    `graphify_impact` ile üret.
+   Satır en az bir gerçek `dosya:satır` göstermek zorunda; depoda bulunmayan dosya kanıt sayılmaz, "bulunamadı" tek başına geçmez.
+   **Gövde push'tan önce güncellenir.** CI gövdeyi push anındaki hâliyle okur; sonradan düzeltilen gövde koşumu değiştirmez, kanıt kancası kırmızı kalır.
+
+   Neden (2026-11-07): #747'de gövde push'tan sonra düzeltildi; CI eski gövdeyi okudu ve "Ajan başlangıç haritası" kırmızı düştü. Aynı içerikle tetiklenen yeni koşum geçti.
 7. **Çalışma yeri tek: ana klasör** (2026-11-07). Ölçüm ve değişiklik `C:\Projects\vixrex` içinde yapılır.
    Bulut/kopya çalışma alanı (uzak depo adresi, `public_web/.env.local` ve `graphify-out/` olmayan yer)
    çalışma yeri değildir; orada yalnız okuma yapılır. Oturum kopyada açıldıysa önce yerel bağlantı
