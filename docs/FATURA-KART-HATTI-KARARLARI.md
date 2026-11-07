@@ -138,3 +138,31 @@ taşıyan `Graphify etki:` satırı, madde başına öncesi/sonrası ölçüm. P
 - P2/P4 migration'ları yalnız ekleme yapar; mevcut tablolara dokunmaz. Geri alma: yeni tabloyu
   düşür, kodu eski dala al.
 - P4 en riskli parça; pgmq'ya geçmeden P1–P3 canlıya çıkabilir.
+
+## 8. P3 — akış sözleşmesi (2026-11-07)
+
+Resmî sözleşme: OpenRouter `finish_reason` değerlerini `tool_calls, stop, length, content_filter, error`
+olarak normalleştirir; `tool_calls` normal bitiştir, hata değildir. Akış sırasında hata olursa HTTP 200
+kalır, hata gövdede `error` + `finish_reason: "error"` olarak gelir.
+*Dayanak:* https://openrouter.ai/docs/api_reference/overview · https://openrouter.ai/docs/api-reference/streaming
+
+Düzeltilen kayıplar:
+
+- **`length`** — cevabın tamamı atılıyordu. Artık kesik gövdeden tamamlanmış satır nesneleri çıkarılır
+  (`public_web/src/lib/faturaKesikKurtarma.ts:9`), sonuç `kesik: true` ve `OKUYUCU_KESIK_CEVAP` uyarısıyla
+  döner (`public_web/src/lib/faturaGoru.ts:220`). Kapsam kapısı (P1) bu kaydı "işlendi" saymaz.
+- **`tool_calls`** — parçalar `index`e göre birleştirilir (`public_web/src/lib/openrouterYanitAkisi.ts:70`),
+  `function.arguments` gövdesi cevap sayılır (`public_web/src/lib/faturaGoru.ts:203`,
+  `public_web/src/lib/faturaKartSozlesmesi.ts:160`).
+- **200 içi hata** — 401/403 → `OKUYUCU_ANAHTAR_GECERSIZ`, 402 → `OKUYUCU_BAKIYE_BITTI`, 429 → sınır/kota,
+  404 → model yok (`public_web/src/lib/openrouterYanitAkisi.ts:20`).
+
+Bilinçli sözleşme değişikliği: `public_web/tests/api/fatura-preset-sozlesmesi.test.ts` "yarım yanıt
+yayın verisine çevrilmez" diyordu; tamamlanmış gövde artık kesik bitiş sebebiyle atılmıyor, test yeni
+sözleşmeye çevrildi (silinmedi).
+
+Sınır: görsel hiçbir yerde saklanmadığı için (`invoice_provider_runs` yalnız yanıtı tutar) kesilen okumayı
+ikinci çağrıyla tamamlamak bugünkü şemayla mümkün değil; bu P4'ün (kuyruk + gövde saklama) işi.
+
+Ölçüm: 302 test dosyası / 2267 test geçti, `tsc` ve lint temiz; yeni `public_web/tests/fatura-kesik-cevap.test.ts`
+(6 test) kesik satır, araç çağrısı birleştirme, kart kurtarma ve 200 içi hata kodlarını kilitler.
