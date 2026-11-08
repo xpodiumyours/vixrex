@@ -39,6 +39,14 @@ describe("kart kapsamı", () => {
     await expect(kartPresetYanitiniOku(akis(bos), okuma(1, () => ""), "mevcut")).rejects.toThrow("KART_KAPSAMI_EKSIK");
   });
 
+  it("yeni yolda bir satır eksikse kalan 19 satır karantinayla döner", async () => {
+    const eksik = JSON.stringify({ ...json, items: json.items.slice(0, 19) });
+    const { sonuc, karantinadakiSatirlar } = await kartPresetYanitiniOku(akis(eksik), okuma(20), "yeni");
+    expect(sonuc.satirlar).toHaveLength(20);
+    expect(karantinadakiSatirlar).toEqual([20]);
+    expect(sonuc.satirlar[19].dogrulamaDurumu).toBe("Araştırılamadı");
+  });
+
   it("kullanıcıya hiçbir şeyin kaydedilmediği söylenir", () => {
     expect(arkaPlanFaturaHatasi("KART_KAPSAMI_EKSIK")).toContain("kaydedilmedi");
   });
