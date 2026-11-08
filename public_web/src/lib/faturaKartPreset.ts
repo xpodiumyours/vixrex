@@ -83,6 +83,18 @@ export function kartPresetIstekGovdesi(okuma: GoruSonucu, secilenAkis: PresetAki
   return govdeKur(okuma, okuma.satirlar.map((s, i) => satiriTasi(s, i, secilenAkis)), secilenAkis);
 }
 
+/** Belirli (1 tabanlı) satır numaraları için küresel row_id'leri koruyan tek gövde. */
+export function kartPresetIstekGovdesiSatirlar(
+  okuma: GoruSonucu,
+  satirNumaralari: readonly number[],
+  secilenAkis: PresetAkis = akis(),
+): Record<string, unknown> {
+  const secili = [...new Set(satirNumaralari)]
+    .filter((n) => Number.isInteger(n) && n >= 1 && n <= okuma.satirlar.length)
+    .sort((a, b) => a - b);
+  return govdeKur(okuma, secili.map((n) => satiriTasi(okuma.satirlar[n - 1], n - 1, secilenAkis)), secilenAkis);
+}
+
 export const KART_PARCA_BOYUTU = 5;
 
 /** Büyük faturayı araç bütçesi taşmadan çalıştırmak için küresel row_id'leri koruyan parçalar. */
