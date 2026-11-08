@@ -64,7 +64,8 @@ describe("tamamlanmış arka plan sonucunun gerçek taşıma yolu",()=>{
  });
  it("kart cevabında ortam değişse bile işteki yeni akış korunur",async()=>{
   vi.stubEnv("PRESET_AKIS","mevcut");
-  const {admin}=client(receipt(JSON.stringify({items:[kartItem]})));
+  const satisFiyatli={...kartItem,vixrex_product_json:{...kartItem.vixrex_product_json,consumer_sale_price:100}};
+  const {admin}=client(receipt(JSON.stringify({items:[satisFiyatli]})));
   await expect(arkaPlanFaturaSonucunuAl(admin,"store","deneme",job)).rejects.toThrow("KART_YANITI_COZULEMEDI");
   expect(m.save).not.toHaveBeenCalled();
  });

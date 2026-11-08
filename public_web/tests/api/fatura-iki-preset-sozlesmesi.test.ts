@@ -103,20 +103,29 @@ describe("gerçek ikinci preset JSON sözleşmesi",()=>{
         .rejects.toThrow("KART_YANITI_COZULEMEDI");
     }
   });
-  it("zorunlu iç alanlar, türler ve summary eksikse tüm yanıt reddedilir",async()=>{
+  it("yanlış türde alan ve draft dışı durum reddedilir",async()=>{
     for (const bozuk of [
-      {...item("1","A"),validation:{status:"verified"}},
-      {...item("1","A"),media:{image_url:null}},
       {...item("1","A"),invoice_data:{quantity:"2"}},
-      {...item("1","A"),vixrex_product_json:{title:"A"}},
       {...item("1","A"),card_status:"blocked"},
-      {...item("1","A"),unexpected: true},
+      {...item("1","A"),vixrex_product_json:{title:7}},
     ]) {
       await expect(kartPresetYanitiniOku(response([bozuk,item("2","B")]),first))
         .rejects.toThrow("KART_YANITI_COZULEMEDI");
     }
-    await expect(kartPresetYanitiniOku(response([item("1","A"),item("2","B")],{total_rows:1}),first))
-      .rejects.toThrow("KART_YANITI_COZULEMEDI");
+  });
+  it("summary yoksa, eksik alanlar ve fazladan anahtarlar kartı düşürmez",async()=>{
+    const eksikler=[
+      {...item("1","A"),validation:{status:"verified"}},
+      {...item("1","A"),media:{image_url:null}},
+      {...item("1","A"),vixrex_product_json:{title:"A"}},
+      {...item("1","A"),unexpected: true},
+    ];
+    for (const aday of eksikler) {
+      const sonuc=await kartPresetYanitiniOku(response([aday,item("2","B")]),first);
+      expect(sonuc.sonuc.satirlar.map((s)=>s.ad)).toEqual(["A","B"]);
+    }
+    const ozetsiz=await kartPresetYanitiniOku(response([item("1","A"),item("2","B")],{total_rows:1}),first);
+    expect(ozetsiz.sonuc.satirlar.map((s)=>s.ad)).toEqual(["A","B"]);
   });
   it("boşlukla değiştirilmiş duplicate_group reddedilir",async()=>{
     await expect(kartPresetYanitiniOku(response([

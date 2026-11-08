@@ -147,7 +147,7 @@ export function tekKartSozlesmesi(item: Kayit): KartSozlesmesi {
   return {
     rowId,
     hamSatirNo: sayi(kart.satir_no ?? item.satir_no),
-    ad: metin(kart.title),
+    ad: metin(kart.title) || metin(nesne(item.product) ? item.product.title : ""),
     marka: metin(kart.brand),
     barkod: metin(kart.barcode) || metin(item.barcode),
     kod: metin(kart.code) || metin(item.code),
@@ -168,8 +168,8 @@ export function tekKartSozlesmesi(item: Kayit): KartSozlesmesi {
     gorselHaklari,
     tekrarGrubu: metin(item.duplicate_group),
     kanonikRowId: metin(item.canonical_row_id),
-    kartDurumu: item.card_status,
-    kanit: { ...dogrulama, status: durum, official_product_url: adres(resmiKaniti), matched_attributes: eslesenBilgiler, unmatched_attributes: eksikler, media: { ...gorsel, image_url: gorselAdresi, source_url: gorselKaynakSayfa, verification_status: gorselDogrulama, rights_status: gorselHaklari }, card_status: item.card_status },
+    kartDurumu: metin(item.card_status) || "draft",
+    kanit: { ...dogrulama, status: durum, official_product_url: adres(resmiKaniti), matched_attributes: eslesenBilgiler, unmatched_attributes: eksikler, media: { ...gorsel, image_url: gorselAdresi, source_url: gorselKaynakSayfa, verification_status: gorselDogrulama, rights_status: gorselHaklari }, card_status: metin(item.card_status) || "draft" },
     kaynaklar: Array.isArray(item.sources) ? item.sources.filter(nesne) : [],
     ham: item,
   };
@@ -185,47 +185,57 @@ const tamSayi = (deger: unknown): boolean => typeof deger === "number" && Number
 const tamSayiVeyaNull = (deger: unknown): boolean => deger === null || tamSayi(deger);
 const sabit = (...secenekler: string[]): Denetim => (deger) => typeof deger === "string" && secenekler.includes(deger);
 
-function tamAlanlar(deger: unknown, alanlar: Record<string, Denetim>): boolean {
+function esnekAlanlar(
+  deger: unknown,
+  gerekli: Record<string, Denetim>,
+  istegeBagli: Record<string, Denetim> = {},
+): boolean {
   if (!nesne(deger)) return false;
-  const beklenen = Object.keys(alanlar);
-  return Object.keys(deger).length === beklenen.length &&
-    beklenen.every((anahtar) => Object.hasOwn(deger, anahtar) && alanlar[anahtar](deger[anahtar]));
+  if (!Object.keys(gerekli).every((anahtar) => Object.hasOwn(deger, anahtar) && gerekli[anahtar](deger[anahtar]))) {
+    return false;
+  }
+  return Object.keys(istegeBagli).every(
+    (anahtar) => !Object.hasOwn(deger, anahtar) || deger[anahtar] === undefined || istegeBagli[anahtar](deger[anahtar]),
+  );
 }
 
-const girdiSemasi = (deger: unknown): boolean => tamAlanlar(deger, {
+const girdiSemasi = (deger: unknown): boolean => esnekAlanlar(deger, {}, {
   quantity: sayiVeyaNull, unit: metinVeyaNull, unit_price: sayiVeyaNull, total_amount: sayiVeyaNull,
 });
-const urunSemasi = (deger: unknown): boolean => tamAlanlar(deger, {
-  title: metinTipi, brand: metinTipi, category_suggestion: metinVeyaNull,
+const urunSemasi = (deger: unknown): boolean => esnekAlanlar(deger, {}, {
+  title: metinVeyaNull, brand: metinVeyaNull, category_suggestion: metinVeyaNull,
   variant: metinVeyaNull, short_description: metinVeyaNull,
   consumer_sale_price: sayiVeyaNull, stock_quantity: tamSayiVeyaNull,
 });
-const dogrulamaSemasi = (deger: unknown): boolean => tamAlanlar(deger, {
-  status: sabit("verified", "ambiguous", "not_found", "not_researched"),
-  official_domain: metinVeyaNull, official_product_url: metinVeyaNull,
+const dogrulamaSemasi = (deger: unknown): boolean => esnekAlanlar(deger, {}, {
+  status: metinVeyaNull, official_domain: metinVeyaNull, official_product_url: metinVeyaNull,
   matched_attributes: diziMetin, unmatched_attributes: diziMetin,
 });
-const gorselSemasi = (deger: unknown): boolean => tamAlanlar(deger, {
+const gorselSemasi = (deger: unknown): boolean => esnekAlanlar(deger, {}, {
   image_url: metinVeyaNull, source_url: metinVeyaNull,
   verification_status: metinVeyaNull, rights_status: metinVeyaNull,
 });
-const satirSemasi = (deger: unknown): boolean => tamAlanlar(deger, {
-  row_id: metinTipi, raw_invoice_line: metinTipi, brand: metinTipi,
-  barcode: metinVeyaNull, code: metinVeyaNull, invoice_data: girdiSemasi,
-  vixrex_product_json: urunSemasi, validation: dogrulamaSemasi,
-  media: gorselSemasi, card_status: sabit("draft"),
+const satirSemasi = (deger: unknown): boolean => esnekAlanlar(deger, {
+  row_id: metinTipi,
+}, {
+  raw_invoice_line: metinVeyaNull, brand: metinVeyaNull, barcode: metinVeyaNull,
+  code: metinVeyaNull, name: metinVeyaNull, title: metinVeyaNull,
+  invoice_data: girdiSemasi, vixrex_product_json: urunSemasi,
+  validation: dogrulamaSemasi, media: gorselSemasi, card_status: sabit("draft"),
   duplicate_group: metinVeyaNull, canonical_row_id: metinVeyaNull,
 });
-const ozetSemasi = (deger: unknown): boolean => tamAlanlar(deger, {
+const ozetSemasi = (deger: unknown): boolean => esnekAlanlar(deger, {}, {
   total_rows: tamSayi, verified_count: tamSayi,
   draft_count: tamSayi, not_found_count: tamSayi,
 });
 
 function katiKartYanitiDogrula(kaynak: Kayit, beklenenSatirlar?: readonly string[]): string | null {
-  if (!tamAlanlar(kaynak, { items: Array.isArray, summary: ozetSemasi })) return "items/summary şeması";
+  if (!nesne(kaynak) || !Array.isArray(kaynak.items)) return "items şeması";
   const items = kaynak.items as unknown[];
-  const ozet = kaynak.summary as { total_rows: number };
-  if (!items.length || ozet.total_rows !== items.length) return "summary.total_rows";
+  if (!items.length) return "items boş";
+  if (Object.hasOwn(kaynak, "summary") && kaynak.summary !== null && !ozetSemasi(kaynak.summary)) {
+    return "summary şeması";
+  }
   const gorulen = new Set<string>();
   const gruplar = new Map<string, Array<{ rowId: string; kanonik: string }>>();
   for (let i = 0; i < items.length; i++) {
@@ -233,12 +243,17 @@ function katiKartYanitiDogrula(kaynak: Kayit, beklenenSatirlar?: readonly string
     if (!satirSemasi(deger)) return `items[${i}] şeması`;
     const item = deger as Kayit;
     const rowId = item.row_id as string;
-    const urun = item.vixrex_product_json as Kayit;
-    if (urun.consumer_sale_price !== null || urun.stock_quantity !== null) return `items[${i}] satış fiyatı/stok`;
+    const urun = nesne(item.vixrex_product_json) ? item.vixrex_product_json : {};
+    if (urun.consumer_sale_price != null || urun.stock_quantity != null) return `items[${i}] satış fiyatı/stok`;
     if (!/^[1-9]\d*$/.test(rowId) || gorulen.has(rowId)) return `items[${i}].row_id`;
+    const kimlik = metin(item.raw_invoice_line) || metin(item.title) || metin(item.name)
+      || metin(item.code) || metin(item.brand)
+      || metin(nesne(item.vixrex_product_json) ? item.vixrex_product_json.title : "")
+      || metin(nesne(item.product) ? item.product.title : "");
+    if (!kimlik) return `items[${i}] kimlik`;
     gorulen.add(rowId);
-    const grup = item.duplicate_group as string | null;
-    const kanonik = item.canonical_row_id as string | null;
+    const grup = typeof item.duplicate_group === "string" && item.duplicate_group.trim() ? item.duplicate_group : null;
+    const kanonik = typeof item.canonical_row_id === "string" && item.canonical_row_id.trim() ? item.canonical_row_id : null;
     if (grup !== null && (grup.length > 128 || grup.trim() !== grup || !grup)) {
       return `items[${i}].duplicate_group`;
     }
