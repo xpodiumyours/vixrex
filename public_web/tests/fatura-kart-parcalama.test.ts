@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { kartPresetIstekGovdeleri, URUN_KART_PRESET_YENI } from "@/lib/faturaKartPreset";
+import { kartPresetIstekGovdeleri, kartPresetIstekGovdesiSatirlar, URUN_KART_PRESET_YENI } from "@/lib/faturaKartPreset";
 import type { GoruSonucu } from "@/lib/faturaGoru";
 
 const okuma = (adet: number): GoruSonucu =>
@@ -33,6 +33,11 @@ describe("kart isteği parçalama", () => {
       ["16", "17", "18", "19", "20"],
     ]);
     for (const govde of govdeler) expect(govde.model).toBe(URUN_KART_PRESET_YENI);
+  });
+
+  it("karantina tamamlamada yalnız seçili satırları küresel kimliğiyle taşır", () => {
+    const govde = kartPresetIstekGovdesiSatirlar(okuma(20), [20, 3, 3, 99], "yeni");
+    expect(govdeSatirlari(govde).sort((a, b) => Number(a) - Number(b))).toEqual(["3", "20"]);
   });
 
   it("5 ve altı satırda tek gövde üretir", () => {
