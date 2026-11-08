@@ -69,9 +69,12 @@ describe("gerçek ikinci preset JSON sözleşmesi",()=>{
       ]), first)).rejects.toThrow("KART_YANITI_COZULEMEDI");
     }
   });
-  it("faturadan eksik kalan row_id varsa tüm kart yanıtını reddeder",async()=>{
-    await expect(kartPresetYanitiniOku(response([item("1","A ürün")]),first))
-      .rejects.toThrow("KART_YANITI_COZULEMEDI");
+  it("yeni yolda eksik row_id tüm işi düşürmez; satır karantinaya alınır",async()=>{
+    const result=await kartPresetYanitiniOku(response([item("1","A ürün")]),first);
+    expect(result.sonuc.satirlar).toHaveLength(2);
+    expect(result.sonuc.satirlar[0].ad).toBe("A ürün");
+    expect(result.sonuc.satirlar[1].dogrulamaDurumu).toBe("Araştırılamadı");
+    expect(result.karantinadakiSatirlar).toEqual([2]);
   });
   it("mükerrer row_id için ilk kayıt kazanmaz, tüm yanıt reddedilir",async()=>{
     await expect(kartPresetYanitiniOku(response([item("1","A ürün"),item("1","B ürün"),item("2","C ürün")]),first))
@@ -92,11 +95,14 @@ describe("gerçek ikinci preset JSON sözleşmesi",()=>{
     await expect(kartPresetYanitiniOku(response([{row_id:"2",vixrex_product_json:{}}]),first)).rejects.toThrow("KART_KAPSAMI_EKSIK");
     await expect(kartPresetYanitiniOku(response([{row_id:"2",status:"tamamlandı"}]),first)).rejects.toThrow("KART_KAPSAMI_EKSIK");
   });
-  it("yabancı, geçersiz veya bozuk satırları sessizce atmaz",async()=>{
+  it("yabancı satır faturaya yazılmaz; eksik satır karantinaya alınır",async()=>{
+    const result=await kartPresetYanitiniOku(response([item("9","X"),item("2","Y")]),first);
+    expect(result.sonuc.satirlar.map(s=>s.ad)).toEqual(["İlk","Y"]);
+    expect(result.karantinadakiSatirlar).toEqual([1]);
+  });
+  it("geçersiz veya bozuk satırları sessizce atmaz",async()=>{
     for (const items of [
-      [item("9","X"),item("2","Y")],
       [{...item("1","A"),row_id:"01"},item("2","B")],
-      [item("1","A"),{row_id:"2"}],
       [item("1","A"),null],
     ]) {
       await expect(kartPresetYanitiniOku(response(items),first))
