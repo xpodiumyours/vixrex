@@ -47,18 +47,24 @@
     },
     {
       "slug": "vixrex-urun-karti-v2",
-      "durum": "aday",
-      "designated_version": 3,
-      "designated_version_id": "d8c630bb-c129-4b17-a1cf-8fa990052edf",
+      "durum": "canli",
+      "designated_version": 7,
+      "designated_version_id": "c4ac7a35-25be-4a76-82eb-2a611ed74b00",
       "model": "deepseek/deepseek-v4.1-flash-1017",
       "response_format_type": "json_schema",
       "tools": [
         "openrouter:web_fetch",
         "openrouter:web_search"
       ],
-      "system_prompt_sha256": "75df0258f251e8ce39e069171e8058e9bc199558ac1b8d4740b3e5f03b3d41a8",
-      "system_prompt_length": 6606,
-      "require_parameters": true
+      "system_prompt_sha256": "eb10923f2bc9a49b2fbc694b57a4b0ba13a8f914b0d4906d7d8a25b3778ab8c3",
+      "system_prompt_length": 7626,
+      "require_parameters": true,
+      "aday_tarif": {
+        "dosya": "openrouter/preset-kart.json",
+        "durum": "aday - canliya yazilmadi",
+        "system_prompt_sha256": "13eaf8ba4bfc738807c68d55b9114042d762a0d607052dce467e3ff93b3ffba2",
+        "system_prompt_length": 4603
+      }
     }
   ]
 }
