@@ -24,8 +24,10 @@ function markaGrupAnahtari(marka: string | undefined): string {
     .trim();
 }
 
-export function kartPresetIstekGovdesi(okuma: GoruSonucu, secilenAkis: PresetAkis = akis()): Record<string, unknown> {
-  const satirlar = okuma.satirlar.map((s, i) => ({
+type TasinanSatir = ReturnType<typeof satiriTasi>;
+
+function satiriTasi(s: GoruSonucu["satirlar"][number], i: number, secilenAkis: PresetAkis) {
+  return ({
     row_id: String(i + 1), satir_no: s.satirNo, raw_invoice_line: s.hamSatir,
     brand: s.marka, name: s.ad, code: s.model, barcode: s.barkod,
     variant: s.varyant, size: s.beden, net_quantity: s.gramaj,
@@ -47,8 +49,11 @@ export function kartPresetIstekGovdesi(okuma: GoruSonucu, secilenAkis: PresetAki
           },
         }
       : {}),
-  }));
-  const grupHaritasi = new Map<string, { brand: string; rows: typeof satirlar }>();
+  });
+}
+
+function govdeKur(okuma: GoruSonucu, satirlar: TasinanSatir[], secilenAkis: PresetAkis): Record<string, unknown> {
+  const grupHaritasi = new Map<string, { brand: string; rows: TasinanSatir[] }>();
   for (const satir of satirlar) {
     const anahtar = markaGrupAnahtari(satir.brand);
     const mevcut = grupHaritasi.get(anahtar);
@@ -72,6 +77,27 @@ export function kartPresetIstekGovdesi(okuma: GoruSonucu, secilenAkis: PresetAki
       }),
     ].join("\n") }],
   };
+}
+
+export function kartPresetIstekGovdesi(okuma: GoruSonucu, secilenAkis: PresetAkis = akis()): Record<string, unknown> {
+  return govdeKur(okuma, okuma.satirlar.map((s, i) => satiriTasi(s, i, secilenAkis)), secilenAkis);
+}
+
+export const KART_PARCA_BOYUTU = 5;
+
+/** Büyük faturayı araç bütçesi taşmadan çalıştırmak için küresel row_id'leri koruyan parçalar. */
+export function kartPresetIstekGovdeleri(
+  okuma: GoruSonucu,
+  secilenAkis: PresetAkis = akis(),
+  parcaBoyutu: number = KART_PARCA_BOYUTU,
+): Array<Record<string, unknown>> {
+  const boyut = Math.max(1, Math.floor(parcaBoyutu) || KART_PARCA_BOYUTU);
+  const tasinan = okuma.satirlar.map((s, i) => satiriTasi(s, i, secilenAkis));
+  const govdeler: Array<Record<string, unknown>> = [];
+  for (let bas = 0; bas < tasinan.length; bas += boyut) {
+    govdeler.push(govdeKur(okuma, tasinan.slice(bas, bas + boyut), secilenAkis));
+  }
+  return govdeler;
 }
 
 const DURUMLAR: Record<string, string> = {
@@ -136,7 +162,6 @@ export async function kartPresetYanitiniOku(cevap: Response, okuma: GoruSonucu, 
   const { icerik, ...kullanim } = await faturaYanitMetniniOku(cevap);
   const yeniAkis = secilenAkis === "yeni";
   const { govde, kartlar } = await kartYanitiniCoz(icerik, {
-    beklenenSatirlar: yeniAkis ? okuma.satirlar.map((_, i) => String(i + 1)) : undefined,
     eskiAkis: !yeniAkis,
   });
   const items = new Map(kartlar.map((kart) => [kart.rowId, kart]));
@@ -186,7 +211,7 @@ export async function kartPresetYanitiniOku(cevap: Response, okuma: GoruSonucu, 
       kaynaklar: [kart.kanit, ...kart.kaynaklar],
     };
   });
-  if (kapsamsiz.length) throw new Error(KART_KAPSAMI_KODU);
+  if (kapsamsiz.length && !yeniAkis) throw new Error(KART_KAPSAMI_KODU);
   if (!eslesen) throw new Error("KART_SATIRLARI_ESLESMEDI");
-  return { sonuc: { ...okuma, satirlar }, kartCevabi: govde, kullanim };
+  return { sonuc: { ...okuma, satirlar }, kartCevabi: govde, kullanim, karantinadakiSatirlar: kapsamsiz };
 }
