@@ -24,7 +24,9 @@ describe("kart isteği parçalama", () => {
   it("20 satırı küresel row_id korunarak 5'erli parçalara böler", () => {
     const govdeler = kartPresetIstekGovdeleri(okuma(20), "yeni");
     expect(govdeler).toHaveLength(4);
-    expect(govdeler.map(govdeSatirlari)).toEqual([
+    // Govde satirlari marka gruplari icinde tasir; kimlik kumesi ve parca siniri korunur.
+    const kumeler = govdeler.map((g) => govdeSatirlari(g).sort((a, b) => Number(a) - Number(b)));
+    expect(kumeler).toEqual([
       ["1", "2", "3", "4", "5"],
       ["6", "7", "8", "9", "10"],
       ["11", "12", "13", "14", "15"],
