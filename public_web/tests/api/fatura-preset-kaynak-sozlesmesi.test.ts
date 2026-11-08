@@ -55,26 +55,32 @@ describe("depodaki OpenRouter preset tanımı ↔ Vixrex taşıma sözleşmesi",
 
   it("ikinci presetin zorunlu kart şemasında satır, kanıt ve fotoğraf ayrı alanlardır", () => {
     const format = kart.response_format as { type: string; json_schema: { strict: boolean; schema: {
-      properties: {items: { items: {required: string[]; properties: Record<string, {required?: string[]}>}}}
+      properties: {items: { items: {required: string[]; properties: Record<string, {required?: string[]; properties?: Record<string, unknown>}>}}}
     }}};
     expect(format.type).toBe("json_schema");
     expect(format.json_schema.strict).toBe(true);
     const kalem = format.json_schema.schema.properties.items.items;
-    expect(kalem.required).toEqual(expect.arrayContaining([
-      "row_id", "invoice_data", "vixrex_product_json", "validation", "media",
+    expect(kalem.required).toEqual([
+      "row_id", "vixrex_product_json", "validation", "media",
       "duplicate_group", "canonical_row_id",
-    ]));
-    expect(kalem.properties.media.required).toEqual([
-      "image_url", "source_url", "verification_status", "rights_status",
     ]);
+    expect(kalem.properties).not.toHaveProperty("invoice_data");
+    expect(kalem.properties).not.toHaveProperty("card_status");
+    expect(kalem.properties.vixrex_product_json.properties).not.toHaveProperty("consumer_sale_price");
+    expect(kalem.properties.vixrex_product_json.properties).not.toHaveProperty("stock_quantity");
+    expect(kalem.properties.media.required).toEqual([
+      "image_url", "source_url", "verification_status",
+    ]);
+    expect(kalem.properties.media.properties).not.toHaveProperty("rights_status");
     expect(kalem.properties.validation.required).toContain("official_product_url");
   });
 
   it("kopya satır talimatı strict şemanın zorunlu alanlarıyla çelişmez", () => {
     const metin=sistem(kart);
-    expect(metin).toContain("vixrex_product_json.title ve brand zorunlu string");
-    expect(metin).toContain("validation nesnesi ASLA boş bırakılmaz");
-    expect(metin).toContain("media nesnesi de zorunludur");
+    expect(metin).toContain("title ve brand boş dize");
+    expect(metin).toContain("validation ve media yine şemaya uygun döner");
+    expect(metin).toContain("summary, card_status, invoice_data");
+    expect(metin).toContain("rights_status alanlarını üretme");
     type StrictItem = { properties: Record<string, { required?: string[] }> };
     type StrictFormat = { json_schema: { schema: { properties: { items: { items: StrictItem } } } } };
     const item = (kart.response_format as StrictFormat).json_schema.schema.properties.items.items;
