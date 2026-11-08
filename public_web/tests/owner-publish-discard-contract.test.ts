@@ -115,7 +115,7 @@ describe("owner-accept-legal ucu — güvenlik sözleşmesi", () => {
   it("sunucu üç bağımsız beyanın her birini doğrulamadan damgalamaz", () => {
     expect(acceptLegalSource).toContain("govde.privacyAcknowledged !== true");
     expect(acceptLegalSource).toContain("govde.termsAccepted !== true");
-    expect(acceptLegalSource).toContain("govde.publicationConsent !== true");
+    expect(acceptLegalSource).not.toContain("govde.publicationConsent !== true");
     expect(ownerActionsSource).toContain("body: JSON.stringify({ slug, ...beyanlar })");
     expect(acceptLegalSource).toContain("status: 422");
   });

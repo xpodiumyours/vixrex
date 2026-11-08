@@ -277,18 +277,6 @@ export const LANDING_ESITLIK_ISTISNALARI_WEB: Istisna[] = [
       "kullanılıyor ama Flutter landing extractoru bu ekranı kapsamıyor.",
   },
   {
-    metin: "Açık Rıza Beyanı",
-    neden:
-      "Yasal onay checkbox link metni. Aynı neden.",
-  },
-  {
-    metin: "nı okudum, anladım ve kabul ediyorum.",
-    neden:
-      "Yasal onay checkbox açıklama metni parçası. Flutter Web'de " +
-      "aynı metin kullanılıyor ama Flutter landing extractoru bu " +
-      "ekranı kapsamıyor.",
-  },
-  {
     metin: "Vitrinini aç",
     neden:
       "Flutter Web bitiş butonu. Katalogda `landing_finish_buton` olarak " +

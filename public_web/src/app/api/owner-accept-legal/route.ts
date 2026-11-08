@@ -12,7 +12,7 @@ import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 //   → sahip çerezi doğrulanır
 //   → accept_store_legal_consent RPC'si çağrılır
 //   → RPC aktif legal_documents sürümünü SUNUCUDA okuyup stores'a yazar
-//   → başarıda owner-publish artık PRIVACY/TERMS/CONSENT hatası vermez
+//   → başarıda owner-publish artık PRIVACY/TERMS hatası vermez
 //
 // Bu uç genel taslak alan düzenleme yolundan (owner-draft) AYRIDIR —
 // yasal alanlar owner_forbidden_draft_keys()'te kalmaya devam eder
@@ -45,7 +45,7 @@ function supabaseAnon() {
 }
 
 export async function POST(request: NextRequest) {
-  let govde: { slug?: unknown; privacyAcknowledged?: unknown; termsAccepted?: unknown; publicationConsent?: unknown };
+  let govde: { slug?: unknown; privacyAcknowledged?: unknown; termsAccepted?: unknown };
   try {
     govde = await request.json();
   } catch {
@@ -60,11 +60,10 @@ export async function POST(request: NextRequest) {
 
   if (
     govde.privacyAcknowledged !== true ||
-    govde.termsAccepted !== true ||
-    govde.publicationConsent !== true
+    govde.termsAccepted !== true
   ) {
     return NextResponse.json(
-      { hata: "Aydınlatma, kullanım şartları ve açık rıza ayrı ayrı işaretlenmelidir." },
+      { hata: "Aydınlatma bildirimi ve kullanım şartları ayrı ayrı işaretlenmelidir." },
       { status: 422 }
     );
   }

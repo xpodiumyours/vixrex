@@ -55,9 +55,9 @@ class StoreLegalStampingService {
             data.termsHash = docs.terms.contentHash;
             data.termsAcceptedAt ??= DateTime.now();
           }
-          if (data.publicationConsentAccepted) {
-            data.publicationConsentVersion = docs.consent.version;
-            data.publicationConsentHash = docs.consent.contentHash;
+          if (data.publicationConsentAccepted && docs.consent != null) {
+            data.publicationConsentVersion = docs.consent!.version;
+            data.publicationConsentHash = docs.consent!.contentHash;
             data.publicationConsentAcceptedAt ??= DateTime.now();
           }
           return const LegalStampResult(isSuccess: true);

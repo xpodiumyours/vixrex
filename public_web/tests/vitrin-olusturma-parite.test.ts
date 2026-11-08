@@ -171,11 +171,11 @@ describe("vitrin olusturma parite (Flutter referansiyla)", () => {
   });
 
   it("yasal onay yoksa vitrin olusturmaz, neyin eksik oldugunu soyer", async () => {
-    const response = await POST(istek({ ...TAM_YUK, publication_consent_accepted: false }));
+    const response = await POST(istek({ ...TAM_YUK, terms_accepted: false }));
 
     expect(response.status).toBe(422);
     const sonuc = await response.json();
-    expect(sonuc.hata).toContain("üç yasal onayın tamamı gerekli");
+    expect(sonuc.hata).toContain("aydınlatma bildirimi ve Kullanım Şartları gerekli");
     expect(mocks.rpc).not.toHaveBeenCalled();
   });
 });

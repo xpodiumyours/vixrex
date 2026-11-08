@@ -46,7 +46,7 @@ function generateEditToken(): string {
   return Array.from(array, (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-const YASAL_BELGE_TURLERI = ["privacy", "terms", "consent"] as const;
+const YASAL_BELGE_TURLERI = ["privacy", "terms"] as const;
 type YasalBelgeTuru = (typeof YASAL_BELGE_TURLERI)[number];
 
 type AktifYasalBelgeler = Record<
@@ -284,20 +284,17 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Yayın için üç ayrı, açık beyan gerekir. Tek bir toplu onay bayrağı
-  // aydınlatma ve açık rıza yerine geçemez.
+  // Genel açık rıza hizmetin ön şartı değildir. Aydınlatma geri bildirimi
+  // ve kullanım sözleşmesi birbirinden bağımsız olarak istenir.
   const yayinOnayi =
     govde.privacy_notice_acknowledged === true &&
-    govde.terms_accepted === true &&
-    (govde.publication_consent_accepted === true ||
-      govde.explicit_consent_given === true);
+    govde.terms_accepted === true;
 
   if (!yayinOnayi) {
     return NextResponse.json(
       {
         hata:
-          "Vitrini yayınlamak için üç yasal onayın tamamı gerekli: " +
-          "Aydınlatma Metni, Kullanım Şartları ve Açık Rıza Beyanı. " +
+          "Vitrini yayınlamak için aydınlatma bildirimi ve Kullanım Şartları gerekli. " +
           "Onayları işaretle, vitrinin anında yayında olsun.",
         eksik: ["yasal onay"],
       },
@@ -473,9 +470,6 @@ export async function POST(request: NextRequest) {
         terms_accepted: true,
         terms_version: belgeler.terms.version,
         terms_hash: belgeler.terms.content_hash,
-        publication_consent_accepted: true,
-        publication_consent_version: belgeler.consent.version,
-        publication_consent_hash: belgeler.consent.content_hash,
       }
     : {};
 
