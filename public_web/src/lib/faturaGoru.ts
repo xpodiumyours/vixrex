@@ -211,7 +211,10 @@ export async function faturaYanitMetniniOku(cevap: Response) {
   if (typeof icerik !== "string" || !icerik.trim()) throw new Error("FOTOGRAFTA_YAZI_YOK");
   const usage = ham?.usage;
   return {
-    icerik, maliyet: sayi(usage?.cost), gercekMaliyet: sayi(usage?.cost),
+    icerik,
+    generationId: typeof ham?.id === "string" ? ham.id : null,
+    model: typeof ham?.model === "string" ? ham.model : null,
+    maliyet: sayi(usage?.cost), gercekMaliyet: sayi(usage?.cost),
     girdiToken: Number(usage?.prompt_tokens ?? usage?.input_tokens ?? 0),
     ciktiToken: Number(usage?.completion_tokens ?? usage?.output_tokens ?? 0),
     akilToken: Number(usage?.completion_tokens_details?.reasoning_tokens ?? 0),
