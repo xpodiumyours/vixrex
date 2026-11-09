@@ -1,8 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-const m = vi.hoisted(() => ({ save: vi.fn(), load: vi.fn() }));
-vi.mock("@/lib/faturaGorsel", () => ({ gorselsizSatirlariTamamla: async ({ satirlar }: { satirlar: unknown[] }) => satirlar }));
-vi.mock("@/lib/faturaGorselSecimi", () => ({ adayGorselleriniSec: async ({ satirlar }: { satirlar: unknown[] }) => satirlar }));
+const m = vi.hoisted(() => ({
+ save: vi.fn(),
+ load: vi.fn(),
+ localImageCompletion: vi.fn(async ({ satirlar }: { satirlar: unknown[] }) => satirlar),
+ localImageSelection: vi.fn(async ({ satirlar }: { satirlar: unknown[] }) => satirlar),
+}));
+vi.mock("@/lib/faturaGorsel", () => ({ gorselsizSatirlariTamamla: m.localImageCompletion }));
+vi.mock("@/lib/faturaGorselSecimi", () => ({ adayGorselleriniSec: m.localImageSelection }));
 vi.mock("@/lib/faturaIslemKaydi", () => ({ islemKaydet: m.save }));
 vi.mock("@/lib/faturaIslemOku", () => ({ islemiYukle: m.load, islemYaniti: (x:{satirlar:unknown[]}) => ({tamam:true,satirlar:x.satirlar}) }));
 vi.mock("@/lib/faturaOtomatikTaslakKaydi", () => ({ faturaTaslakYanitiniHazirla: async (_admin: unknown, _store: string, _slug: string, kayit: { satirlar: never[]; islemKimligi: string }) => ({ tamam: true, satirlar: kayit.satirlar, taslaklar: (await import("@/lib/faturaTaslagi")).faturaTaslaklari(kayit.satirlar, kayit.islemKimligi) }) }));
@@ -54,6 +59,12 @@ describe("tamamlanmış arka plan sonucunun gerçek taşıma yolu",()=>{
   expect(input.aramaDurumu.presetCevabi.uyarilar).toEqual(["Örnek test verisi"]);
   expect(input.satirlar[0].satisFiyati).toBeUndefined();expect(input.satirlar[0].onayli).toBeUndefined();
   const drafts=data.taslaklar as Array<{satisFiyati:unknown;ownerApproved:boolean;isVisible:boolean}>;expect(drafts).toHaveLength(1);expect(drafts[0].ownerApproved).toBe(false);expect(drafts[0].isVisible).toBe(false);expect(drafts[0].satisFiyati).toBeNull();
+ });
+ it("yeni akış OpenRouter araştırmasını Vixrex'te yeniden yapmaz",async()=>{
+  const {admin}=client(receipt(kartCevabi));
+  await arkaPlanFaturaSonucunuAl(admin,"store","deneme",job);
+  expect(m.localImageCompletion).not.toHaveBeenCalled();
+  expect(m.localImageSelection).not.toHaveBeenCalled();
  });
  it("okuma aşaması sonucu kart presetini tam bir kez kuyruğa alır",async()=>{
   const first=JSON.stringify({tedarikci:"Tedarikçi",satirlar:[line]});
