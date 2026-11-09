@@ -62,6 +62,7 @@ describe("tamamlanmış arka plan sonucunun gerçek taşıma yolu",()=>{
  });
  it("yeni akış OpenRouter araştırmasını Vixrex'te yeniden yapmaz",async()=>{
   const {admin}=client(receipt(kartCevabi));
+  m.load.mockImplementation(async()=>({islemKimligi:job,satirlar:m.save.mock.calls[0]?.[0].satirlar ?? []}));
   await arkaPlanFaturaSonucunuAl(admin,"store","deneme",job);
   expect(m.localImageCompletion).not.toHaveBeenCalled();
   expect(m.localImageSelection).not.toHaveBeenCalled();
@@ -88,7 +89,7 @@ describe("tamamlanmış arka plan sonucunun gerçek taşıma yolu",()=>{
   const data=await arkaPlanFaturaSonucunuAl(admin,"store","deneme",job);
   expect(data.tamam).toBe(true);expect(m.save).toHaveBeenCalledTimes(1);
  });
- it.each(["bozuk",'{"satirlar":[]}'])("hatalı veya boş sonuç ürün oluşturmaz: %s",async(content)=>{const {admin,rpc}=client(receipt(content));await expect(arkaPlanFaturaSonucunuAl(admin,"store","deneme",job)).rejects.toThrow();expect(m.save).not.toHaveBeenCalled();expect(rpc).toHaveBeenCalledWith("fail_invoice_provider_job",expect.objectContaining({p_job_id:job}));});
+ it.each(["bozuk",'{\"satirlar\":[]}'])("hatalı veya boş sonuç ürün oluşturmaz: %s",async(content)=>{const {admin,rpc}=client(receipt(content));await expect(arkaPlanFaturaSonucunuAl(admin,"store","deneme",job)).rejects.toThrow();expect(m.save).not.toHaveBeenCalled();expect(rpc).toHaveBeenCalledWith("fail_invoice_provider_job",expect.objectContaining({p_job_id:job}));});
  it("model404 hazır karta dönüştürülmez",async()=>{const {admin}=client({stage:"reading",state:"received",httpStatus:200,contentType:"text/event-stream",body:'data: {"error":{"code":404}}\n\n',fingerprint:"a".repeat(64)});await expect(arkaPlanFaturaSonucunuAl(admin,"store","deneme",job)).rejects.toThrow("OKUYUCU_MODEL_BULUNAMADI");expect(m.save).not.toHaveBeenCalled();});
  it("yarım SSE sonucu kaydedilmez",async()=>{const {admin}=client({state:"received",httpStatus:200,contentType:"text/event-stream",body:'data: {"choices":[{"delta":{"content":"{}"},"finish_reason":"stop"}]}\n\n',fingerprint:"a".repeat(64)});await expect(arkaPlanFaturaSonucunuAl(admin,"store","deneme",job)).rejects.toThrow("OKUYUCU_EKSIK_CEVAP");expect(m.save).not.toHaveBeenCalled();});
  it("kalıcı kayıt geçici başarısızsa alınmış yanıt silinmez ve yeni model çağrısı yapılmaz",async()=>{m.save.mockResolvedValue(null);const {admin,rpc}=client(receipt(kartCevabi));await expect(arkaPlanFaturaSonucunuAl(admin,"store","deneme",job)).rejects.toThrow("FATURA_KAYDI_EKSIK");expect(rpc.mock.calls.map(v=>v[0])).toEqual(["get_invoice_provider_response"]);});
