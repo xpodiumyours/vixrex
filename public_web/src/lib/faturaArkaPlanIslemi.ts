@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { faturaIstekGovdesi, faturaYanitiniOku, type GoruSonucu } from "@/lib/faturaGoru";
+import { faturaIstekGovdesi, faturaYanitiniOku, faturaYanitMetniniOku, type GoruSonucu } from "@/lib/faturaGoru";
 import { faturaSatiriniAktar } from "@/lib/faturaPresetAktarimi";
 import { islemKaydet } from "@/lib/faturaIslemKaydi";
 import { islemiYukle } from "@/lib/faturaIslemOku";
@@ -9,11 +9,13 @@ import { adayGorselleriniSec } from "@/lib/faturaGorselSecimi";
 import {
   akis,
   kartPresetIstekGovdesi,
+  kartPresetIstekGovdesiSatirlar,
   kartPresetYanitiniOku,
   URUN_KART_PRESET,
   type PresetAkis,
 } from "@/lib/faturaKartPreset";
 import { faturaBaslangicZamani, faturaOzetSatiri, faturaOzetiniKaydet, gecenSaniye } from "@/lib/faturaOzeti";
+import { kartYanitiniCoz } from "@/lib/faturaKartSozlesmesi";
 
 export const OKUMA_PRESET = "@preset/vixrex-qwen-fatura-okuma-suzme";
 export const OTOMATIK_FATURA_PRESET = URUN_KART_PRESET;
@@ -49,6 +51,52 @@ export async function faturayiArkaPlanaGonder(
     throw new Error("OKUYUCU_ISLEYICI_HAZIR_DEGIL");
   }
   return data.id;
+}
+
+/** Provider'ın gerçek sonucu, aynı mağazaya ait private işten okunur. */
+type KartSonucu = Awaited<ReturnType<typeof kartPresetYanitiniOku>>;
+
+/** Yeni yolda karantinaya düşen satırları bir kez, yalnız o satırlarla yeniden dener; başarısızlık ilk sonucu bozmaz. */
+async function karantinayiBirKeTamamla(
+  ilkOkuma: GoruSonucu,
+  kart: KartSonucu,
+  islemAkisi: PresetAkis,
+): Promise<KartSonucu> {
+  if (islemAkisi !== "yeni") return kart;
+  const eksikler = kart.karantinadakiSatirlar;
+  if (!eksikler.length || eksikler.length >= ilkOkuma.satirlar.length) return kart;
+  const anahtar = process.env.OPENROUTER_API_KEY;
+  if (!anahtar) return kart;
+  try {
+    const cevap = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json", Authorization: `Bearer ${anahtar}`,
+        "HTTP-Referer": "https://vixrex.com", "X-Title": "Vixrex Invoice Product Cards",
+      },
+      body: JSON.stringify(kartPresetIstekGovdesiSatirlar(ilkOkuma, eksikler, "yeni")),
+      signal: AbortSignal.timeout(240_000),
+    });
+    if (!cevap.ok) return kart;
+    const { icerik } = await faturaYanitMetniniOku(cevap);
+    const ek = await kartYanitiniCoz(icerik, { eskiAkis: false });
+    const govde = kart.kartCevabi as { items?: unknown[] } | null;
+    if (!govde || !Array.isArray(govde.items)) return kart;
+    const ekIdler = new Set(ek.kartlar.map((k) => k.rowId));
+    const birlesik = [
+      ...govde.items.filter((item) => {
+        const id = (item as { row_id?: unknown })?.row_id;
+        return typeof id !== "string" || !ekIdler.has(id);
+      }),
+      ...ek.kartlar.map((k) => k.ham),
+    ];
+    const sentetik = new Response(JSON.stringify({
+      choices: [{ message: { content: JSON.stringify({ items: birlesik }) }, finish_reason: "stop" }],
+    }), { status: 200, headers: { "content-type": "application/json" } });
+    return await kartPresetYanitiniOku(sentetik, ilkOkuma, "yeni");
+  } catch {
+    return kart;
+  }
 }
 
 /** Provider'ın gerçek sonucu, aynı mağazaya ait private işten okunur. */
@@ -106,7 +154,8 @@ export async function arkaPlanFaturaSonucunuAl(
         throw new Error("OKUYUCU_EKSIK_CEVAP");
       }
       islemAkisi = ilkOkuma.presetAkis === "yeni" ? "yeni" : "mevcut";
-      const kart = await kartPresetYanitiniOku(cevap, ilkOkuma, islemAkisi);
+      const ilkKart = await kartPresetYanitiniOku(cevap, ilkOkuma, islemAkisi);
+      const kart = await karantinayiBirKeTamamla(ilkOkuma, ilkKart, islemAkisi);
       okuma = kart.sonuc;
       kartCevabi = kart.kartCevabi;
       asamaKullanimlari = {
