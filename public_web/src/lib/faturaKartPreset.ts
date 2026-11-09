@@ -225,5 +225,9 @@ export async function kartPresetYanitiniOku(cevap: Response, okuma: GoruSonucu, 
   });
   if (kapsamsiz.length && !yeniAkis) throw new Error(KART_KAPSAMI_KODU);
   if (!eslesen) throw new Error("KART_SATIRLARI_ESLESMEDI");
-  return { sonuc: { ...okuma, satirlar }, kartCevabi: govde, kullanim, karantinadakiSatirlar: kapsamsiz };
+  return {
+    sonuc: { ...okuma, satirlar }, kartCevabi: govde,
+    kullanim: { ...kullanim, preset: secilenKartPreset(secilenAkis), presetAkis: secilenAkis },
+    karantinadakiSatirlar: kapsamsiz,
+  };
 }
