@@ -194,6 +194,7 @@ export async function POST(request: NextRequest) {
         : "",
     status: "Açık",
     is_published: true,
+    show_storefront_rating: false,
   };
 
   const latitude = typeof govde.latitude === "number" ? govde.latitude : null;
