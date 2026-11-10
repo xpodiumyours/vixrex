@@ -8,6 +8,7 @@ update public.stores
        review_count = null,
        show_storefront_rating = false
  where rating_score = 4.9
-   and review_count = 128;
+   and review_count = 128
+   and is_demo is not true;
 
 commit;
