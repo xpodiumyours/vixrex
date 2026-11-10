@@ -59,11 +59,18 @@ describe("Landing — niyet akışı konuşma köprüsünü kurar", () => {
     expect(kaynak).toContain("Konuşma köprüsü opsiyonel bir zenginleştirme — akışı hiç bloklamaz.");
   });
 
-  it("Sıfırdan Oluştur / Bakınıyorum dallarında konuşma köprüsü tetiklenmez", () => {
-    const sifirdanBlok = kaynak.slice(
-      kaynak.indexOf('setGirdi(\'\'); setAdim(0);'),
-      kaynak.indexOf("</div>", kaynak.indexOf('setGirdi(\'\'); setAdim(0);'))
-    );
-    expect(sifirdanBlok).not.toContain("niyetSohbetiKaydet");
+  const dugmeBlogu = (etiket: string) => {
+    const idx = kaynak.indexOf(`hizliSecenekEtiketi("${etiket}")`);
+    const bas = kaynak.lastIndexOf("<button", idx);
+    const son = kaynak.indexOf("</button>", idx);
+    return kaynak.slice(bas, son);
+  };
+
+  it("Sıfırdan Oluştur dalında anonim oturum açılır", () => {
+    expect(dugmeBlogu("sifirdan_olustur")).toContain("ensureAnonymousSession");
+  });
+
+  it("Bakınıyorum dalında oturum açılmaz — yalnız gezinme", () => {
+    expect(dugmeBlogu("bakiniyorum")).not.toContain("ensureAnonymousSession");
   });
 });
