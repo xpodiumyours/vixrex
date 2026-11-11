@@ -4,7 +4,7 @@
 > tek yerde cevaplamak ve ezbere konuşmayı ölçülebilir bir yasak yapmak. Kural kitabı
 > [AGENTS.md](../AGENTS.md)'de; bu belge **harita**dır.
 >
-> Son doğrulama: 2026-11-04 · Ana dal: `341919d` · Canlı: `341919d` (canlı = ana dal)
+> Son doğrulama: 2026-11-11 · Ana dal: `a2298e0` · Canlı: `a2298e0` (canlı = ana dal)
 
 ## 0. Oturum açılışı — 4 adım
 
@@ -115,10 +115,31 @@ Bu iki kayıt canlı anahtar veya canlı preset içermez. `main`, PR ve canlı b
 | `docs/vitrin-gorunum-referans.md` | aktüel referans | — |
 | `docs/vitrin-kart-standardi.md` | aktüel standart | — |
 | `docs/esnaf-yolculugu-kurumsal-kalite-tespit.md` | aktüel ölçüm | T1–T4, K1–K6, F1 |
-| `docs/IZIN-MIMARISI.md` | aktüel taslak | beş katman |
+| [docs/FATURA-KART-HATTI-KARARLARI.md](FATURA-KART-HATTI-KARARLARI.md) | **güncel karar kaydı** (2026-11-07) | fatura kart hattı kusur kararları (K1…); PR #750 |
+| `docs/P0-01-GORSEL-HAKLARI-KESINTISIZ-GECIS.md` | aktüel taslak (2026-11-01) | görsel hakları gölge denetimi |
+| [CLAUDE.md](../CLAUDE.md) | yönlendirme (kural yok) | yalnız açılış yolu; kural AGENTS.md'de |
+| [CONTRIBUTING.md](../CONTRIBUTING.md) | yönlendirme | AGENTS.md'ye gönderir |
+| [SECURITY.md](../SECURITY.md) | güvenlik | güvenlik açığı bildirimi |
+| [VIXREX_RULES.md](../VIXREX_RULES.md) | taşınmış gövde | gövdesi taşındı; içindeki MASTER-PLAN atfı tarihseldir — güncel karar: FATURA-KART-HATTI-KARARLARI.md |
+| [TAKIP.md](../TAKIP.md) | tarihsel takip (2026-10-29) | ikinci defter değildir; güncel iş listesi burada değildir |
+| `tool/barkod-tekillik-onerisi.md` | tarihsel öneri (2026-10-29) | barkod işin parçası değil (kural kararı) |
+| `control-map-system/protocol.md` | tarihsel / arşiv (2026-10-03) | klasör yalnız geçmiş kaydı |
 
 Kural: tarihsel belge okunabilir; **güncel iş listesi yerine geçmez**. Bir belge kendini
 "tarihsel" ilan etmiyorsa ve bu tabloda yoksa, önce bu tabloya eklenir.
+
+**Sicil denetimi (2026-11-11'de mekanizmaya bağlandı; ölçen araç
+`tool/baslangic-kontrol.mjs`, kural metni değil):** depoya izlenmiş her `.md` ya bu
+tabloda ya da muaftır. Muaf: `.github/**` (şablonlar), `.agents/**` (beceri tarifleri),
+`supabase/functions/**/README.md` (kod içi not), bu belge kendisi. Üç durum PR'ı
+kırmızı yapar: (1) sicile girmeyen `.md`, (2) sicilde gösterilip diskte olmayan belge
+(hayalet), (3) sınıfı **aktüel**/**güncel** ile başlayıp 30 gündür yazılmamış belge.
+Sınıfı tarihsel, arşiv, taşınmış, uygulanmış, plan, güvenlik, yönlendirme veya yerel
+kayıt olan belgeler yaş kontrolünden muaftır. Yerel kapı aynı sonucu "Belge denetimi"
+satırında yazar.
+
+Ölçüm notu (2026-11-11): `docs/IZIN-MIMARISI.md` satırı bu tablodan çıkarıldı — dosya
+diskte ve git geçmişinde hiç var olmadı; içeriği başka belgede de bulunamadı.
 
 ## 4. Ezbere konuşma yasağı — ölçülebilir tanım
 
