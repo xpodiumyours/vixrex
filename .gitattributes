@@ -43,3 +43,4 @@
 # ── Kilit dosyaları: diff gürültüsünü azalt ─────────────────────────────────
 pubspec.lock       -diff
 package-lock.json  -diff linguist-generated
+graphify-out/graph.json merge=graphify
