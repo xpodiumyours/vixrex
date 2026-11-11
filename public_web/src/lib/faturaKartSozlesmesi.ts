@@ -1,6 +1,7 @@
 /** Fatura kart yanıtının tek sözleşmesi: biçim çözümü, alan eşanlamlıları ve kart alanları burada tanımlanır. */
 
 import { openrouterYanitiniOku } from "@/lib/openrouterYanitAkisi";
+import { kaynakDenetimi, type DenetimSonucu } from "@/lib/faturaKapiDenetimi";
 
 type Kayit = Record<string, unknown>;
 
@@ -27,6 +28,7 @@ export interface KartSozlesmesi {
   kategori: string;
   dogrulamaDurumu: KartDogrulamaDurumu;
   dogrulanmis: boolean;
+  kanitEksigi: DenetimSonucu | null;
   eslesenBilgiler: unknown[];
   eksikler: unknown[];
   gorselDogrulamaDurumu: string;
@@ -144,6 +146,8 @@ export function tekKartSozlesmesi(item: Kayit): KartSozlesmesi {
   const fatura = nesne(item.invoice_data) ? item.invoice_data : {};
   const eslesenBilgiler = doluDizi(dogrulama.matched_attributes, kart.matched_attributes);
   const eksikler = doluDizi(dogrulama.unmatched_attributes, kart.unmatched_attributes);
+  const kaynaklar = Array.isArray(item.sources) ? item.sources.filter(nesne) : [];
+  const kanitEksigi = durum === "verified" ? kaynakDenetimi({ resmiSayfa, kaynaklar }) : null;
   return {
     rowId,
     hamSatirNo: sayi(kart.satir_no ?? item.satir_no),
@@ -161,7 +165,8 @@ export function tekKartSozlesmesi(item: Kayit): KartSozlesmesi {
     aciklama: metin(kart.short_description),
     kategori: metin(kart.category_suggestion),
     dogrulamaDurumu: durum,
-    dogrulanmis: durum === "verified" && Boolean(adres(resmiKaniti)),
+    dogrulanmis: durum === "verified" && Boolean(adres(resmiSayfa)) && kanitEksigi === null,
+    kanitEksigi,
     eslesenBilgiler,
     eksikler,
     gorselDogrulamaDurumu: gorselDogrulama,

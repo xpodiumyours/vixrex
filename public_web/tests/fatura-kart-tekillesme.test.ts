@@ -116,6 +116,7 @@ const kartKaydi = (id: string, title: string, beden: string, durum = "verified")
   },
   media: { image_url: null, source_url: null, verification_status: null, rights_status: "unknown" },
   card_status: "draft",
+  sources: [{ url: "https://uretici.example/urun", fetched_at: "2026-11-02T00:00:00Z", snippet: "Tutku Elit" }],
 });
 
 it("yeni yolda Vixrex beden başlığı üretmez; kanonik kararı olduğu gibi taşır", async () => {
@@ -211,7 +212,7 @@ it("eski akış düz kart yanıtından ürün adresini okumaya devam eder", asyn
     short_description: "Pamuklu fanila", category_suggestion: "Erkek İç Giyim",
     verification_status: "verified", product_url: "https://uretici.example/urun",
     image_url: "https://cdn.example/urun.webp", source_url: "https://uretici.example/urun",
-    matched_attributes: ["beden: 4"], unmatched_attributes: [], sources: [],
+    matched_attributes: ["beden: 4"], unmatched_attributes: [], sources: [{ url: "https://uretici.example/urun", fetched_at: "2026-11-02T00:00:00Z", snippet: "Tutku Elit" }],
   };
   const sonuc = await kartPresetYanitiniOku(metinYanit(JSON.stringify({ items: [duzKart] })), okuma([ikiSatir[0]]));
   const satir = sonuc.sonuc.satirlar[0];

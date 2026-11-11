@@ -1,6 +1,7 @@
 import { FATURA_JSON_ISTEGI, VARSAYILAN_FATURA_PRESET } from "@/lib/faturaPresetSozlesmesi";
 import { openrouterYanitiniOku } from "@/lib/openrouterYanitAkisi";
 import { normalizeProductMetadata, type ProductAttributeValue } from "@/lib/productRichData";
+import { barkodDenetimi, belgeAritmetigiDenetimi, satirAritmetigiDenetimi } from "@/lib/faturaKapiDenetimi";
 export { VARSAYILAN_FATURA_PRESET } from "@/lib/faturaPresetSozlesmesi";
 
 /** Fatura görselini OpenRouter'a gönderir. Araştırma ve doğrulama mevcut preset'te kalır. */
@@ -99,6 +100,19 @@ function webAdresi(deger: unknown): deger is string {
   } catch { return false; }
 }
 
+function okumaUyarilari(cozulen: Record<string, unknown>, satirlar: GoruSatiri[]): string[] {
+  const uyarilar = metinListesi(cozulen.uyarilar);
+  satirlar.forEach((satir, sira) => {
+    const etiket = `${satir.satirNo ?? sira + 1}. satır`;
+    for (const sonuc of [barkodDenetimi(satir.barkod), satirAritmetigiDenetimi(satir)]) {
+      if (sonuc && !sonuc.gecti) uyarilar.push(`${etiket}: ${sonuc.mesaj}`);
+    }
+  });
+  const belge = belgeAritmetigiDenetimi(satirlar.map((satir) => satir.tutar), sayi(cozulen.mal_bedeli));
+  if (belge && !belge.gecti) uyarilar.push(belge.mesaj);
+  return uyarilar;
+}
+
 /** JSON çözümleme taşıma kontrolüdür; ürün kimliğini/kanıtını değerlendirmez. */
 export function katalogJsonunuOku(icerik: string): GoruSonucu {
   let cozulen: unknown;
@@ -137,7 +151,7 @@ export function katalogJsonunuOku(icerik: string): GoruSonucu {
     belgeTarihi: metin(cozulen.belge_tarihi), malBedeli: sayi(cozulen.mal_bedeli),
     kdvTutari: sayi(cozulen.kdv_tutari), indirimTutari: sayi(cozulen.indirim_tutari),
     odenecekToplam: sayi(cozulen.odenecek_toplam), belgeEkleri: cozulen.belge_ekleri ?? {},
-    gruplar: Array.isArray(cozulen.gruplar) ? cozulen.gruplar : [], uyarilar: metinListesi(cozulen.uyarilar),
+    gruplar: Array.isArray(cozulen.gruplar) ? cozulen.gruplar : [], uyarilar: okumaUyarilari(cozulen, satirlar),
     maliyet: null, girdiToken: 0, ciktiToken: 0, akilToken: 0,
   };
 }

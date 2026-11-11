@@ -1,0 +1,205 @@
+{
+  "invoice_id": "12d7718a",
+  "products": [
+    {
+      "model": "",
+      "barcode": "",
+      "name": "Tutku Kadın Louis Bikini Külot Kombin 42-44",
+      "variant": "Kombin",
+      "size": "",
+      "qty": 6.0,
+      "buy": 62.5,
+      "total": 375.0
+    },
+    {
+      "model": "",
+      "barcode": "",
+      "name": "Bross Melek Kanatlı Dizaltı Çocuk Çorap Siyah 9-11 Yaş",
+      "variant": "Siyah",
+      "size": "",
+      "qty": 6.0,
+      "buy": 61.5,
+      "total": 369.0
+    },
+    {
+      "model": "",
+      "barcode": "",
+      "name": "Pınar Süzme Peynir 500 g",
+      "variant": "",
+      "size": "",
+      "qty": 4.0,
+      "buy": 98.5,
+      "total": 394.0
+    },
+    {
+      "model": "",
+      "barcode": "",
+      "name": "Tutku Kadın Royce Bikini Külot Kombin 42-44",
+      "variant": "Kombin",
+      "size": "",
+      "qty": 4.0,
+      "buy": 64.75,
+      "total": 259.0
+    },
+    {
+      "model": "",
+      "barcode": "",
+      "name": "Bross 3'lü Kız Çocuk Desensiz Dizaltı Çorap Gri 8-10 Yaş",
+      "variant": "Gri",
+      "size": "",
+      "qty": 4.0,
+      "buy": 105.9,
+      "total": 423.6
+    },
+    {
+      "model": "",
+      "barcode": "",
+      "name": "Pınar Labne",
+      "variant": "",
+      "size": "",
+      "qty": 5.0,
+      "buy": 52.0,
+      "total": 260.0
+    },
+    {
+      "model": "",
+      "barcode": "",
+      "name": "Tutku Kadın Rubby Bikini Külot Kombin 42-44",
+      "variant": "Kombin",
+      "size": "",
+      "qty": 5.0,
+      "buy": 59.9,
+      "total": 299.5
+    },
+    {
+      "model": "",
+      "barcode": "",
+      "name": "Bross Erkek Kışlık Yün Soket Çorap Gri 39-42",
+      "variant": "Gri",
+      "size": "",
+      "qty": 5.0,
+      "buy": 84.9,
+      "total": 424.5
+    },
+    {
+      "model": "",
+      "barcode": "",
+      "name": "Pınar %1 Yağlı Süt 200 ml",
+      "variant": "",
+      "size": "",
+      "qty": 6.0,
+      "buy": 16.5,
+      "total": 99.0
+    },
+    {
+      "model": "",
+      "barcode": "",
+      "name": "Tutku Kadın Wendy Bikini Külot Kombin 42-44",
+      "variant": "Kombin",
+      "size": "",
+      "qty": 3.0,
+      "buy": 61.0,
+      "total": 183.0
+    },
+    {
+      "model": "",
+      "barcode": "",
+      "name": "Bross Simli Kıvrık Havlu Çorap Pembe 36-40",
+      "variant": "Pembe",
+      "size": "",
+      "qty": 6.0,
+      "buy": 73.9,
+      "total": 443.4
+    },
+    {
+      "model": "",
+      "barcode": "",
+      "name": "Pınar Lezzetin Alası Ayran 200 ml",
+      "variant": "",
+      "size": "",
+      "qty": 6.0,
+      "buy": 14.5,
+      "total": 87.0
+    },
+    {
+      "model": "",
+      "barcode": "",
+      "name": "Tutku Kadın Forever Bikini Külot Kombin 42-44",
+      "variant": "Kombin",
+      "size": "",
+      "qty": 6.0,
+      "buy": 66.0,
+      "total": 396.0
+    },
+    {
+      "model": "",
+      "barcode": "",
+      "name": "Bross Kadın Kaydırmaz Taban Yoga Çorap Mavi 36-40",
+      "variant": "Mavi",
+      "size": "",
+      "qty": 3.0,
+      "buy": 164.9,
+      "total": 494.7
+    },
+    {
+      "model": "",
+      "barcode": "",
+      "name": "Pınar Yarım Yağlı ve Az Tuzlu Süzme Peynir 500 g",
+      "variant": "",
+      "size": "",
+      "qty": 4.0,
+      "buy": 96.0,
+      "total": 384.0
+    },
+    {
+      "model": "",
+      "barcode": "",
+      "name": "Tutku Kadın Joya Bato Külot Kombin M / 3",
+      "variant": "Kombin",
+      "size": "",
+      "qty": 4.0,
+      "buy": 68.75,
+      "total": 275.0
+    },
+    {
+      "model": "",
+      "barcode": "",
+      "name": "Bross Kuğu, Tavşan, Havlu 3'lü Kız Bebek Soket Asorti 12-18",
+      "variant": "Asorti",
+      "size": "",
+      "qty": 4.0,
+      "buy": 115.9,
+      "total": 463.6
+    },
+    {
+      "model": "",
+      "barcode": "",
+      "name": "Tutku Erkek Thermal Fanila Y. Haki S / 2",
+      "variant": "Y. Haki",
+      "size": "",
+      "qty": 3.0,
+      "buy": 179.9,
+      "total": 539.7
+    },
+    {
+      "model": "",
+      "barcode": "",
+      "name": "Bross Bambu Kadın Atlet 2'li Siyah Beyaz Asorti XL",
+      "variant": "Asorti",
+      "size": "",
+      "qty": 3.0,
+      "buy": 238.9,
+      "total": 716.7
+    },
+    {
+      "model": "",
+      "barcode": "",
+      "name": "Tutku Erkek Thermal Tayt Y. Haki S / 2",
+      "variant": "Y. Haki",
+      "size": "",
+      "qty": 3.0,
+      "buy": 149.5,
+      "total": 448.5
+    }
+  ]
+}

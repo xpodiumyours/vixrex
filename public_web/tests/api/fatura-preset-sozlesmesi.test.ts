@@ -84,7 +84,10 @@ describe("Vixrex preset taşıma sözleşmesi", () => {
   it("marka grupları ve belge ekleri/uyarılar korunur", () => {
     const ek = { gruplar: [{ marka: "ÜLKER", satirlar: [7] }], belge_ekleri: { not: "TEST" }, uyarilar: ["KDV belirsiz"] };
     const sonuc = parse(satir, ek);
-    expect(sonuc.gruplar).toEqual(ek.gruplar); expect(sonuc.belgeEkleri).toEqual(ek.belge_ekleri); expect(sonuc.uyarilar).toEqual(ek.uyarilar);
+    expect(sonuc.gruplar).toEqual(ek.gruplar); expect(sonuc.belgeEkleri).toEqual(ek.belge_ekleri);
+    const uyarilar = sonuc.uyarilar ?? [];
+    expect(uyarilar).toContain("KDV belirsiz");
+    expect(uyarilar.some((uyari) => uyari.includes("kontrol hanesi"))).toBe(true);
   });
   it("eski site_ozellikler alan adı kaybolmaz", () => {
     expect(parse({ ...satir, ozellikler: undefined, site_ozellikler: satir.ozellikler }).satirlar[0].ozellikler).toEqual(satir.ozellikler);

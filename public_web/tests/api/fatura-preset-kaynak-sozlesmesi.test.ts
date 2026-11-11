@@ -62,7 +62,7 @@ describe("depodaki OpenRouter preset tanımı ↔ Vixrex taşıma sözleşmesi",
     const kalem = format.json_schema.schema.properties.items.items;
     expect(kalem.required).toEqual([
       "row_id", "vixrex_product_json", "validation", "media",
-      "duplicate_group", "canonical_row_id",
+      "duplicate_group", "canonical_row_id", "sources",
     ]);
     expect(kalem.properties).not.toHaveProperty("invoice_data");
     expect(kalem.properties).not.toHaveProperty("card_status");
