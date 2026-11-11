@@ -48,6 +48,65 @@ if (!docDate) {
   else if (ageDays > 30) warnings.push("docs/AJAN-BASLANGIC.md " + ageDays + " gündür doğrulanmamış (30 gün uyarısı)");
 }
 
+const sicilBolumu = (() => {
+  const m = doc.match(/## 3\..*?(?=\n## )/s);
+  return m ? m[0] : doc;
+})();
+
+const exemptDoc = (rel) =>
+  rel === "docs/AJAN-BASLANGIC.md" ||
+  rel.startsWith(".github/") ||
+  rel.includes("/skills/") ||
+  rel.startsWith("supabase/functions/");
+
+let trackedDocs = [];
+try {
+  trackedDocs = execFileSync("git", ["ls-files", "*.md"], { encoding: "utf8" }).split(/\r?\n/).filter(Boolean);
+} catch (e) {
+  errors.push("izlenen .md listesi okunamadı: " + String(e.message || e).slice(0, 120));
+}
+for (const file of trackedDocs) {
+  if (exemptDoc(file)) continue;
+  const kisa = file.replace(/^docs\//, "");
+  if (!sicilBolumu.includes(file) && !sicilBolumu.includes(kisa)) {
+    errors.push("belge sicile girmedi: " + file + " — docs/AJAN-BASLANGIC.md §3 tablosuna ekle ya da muaf listesine yaz");
+  }
+}
+
+const sicilSatirlari = sicilBolumu.split(/\r?\n/).filter((l) => /^\|/.test(l) && l.includes(".md"));
+for (const row of sicilSatirlari) {
+  const cells = row.split("|").map((c) => c.trim()).filter((c) => c.length > 0);
+  const belgeCell = cells[0] || "";
+  const sinif = cells[1] || "";
+  const t = belgeCell.match(/([A-Za-z0-9_./-]+\.md)/);
+  if (!t) continue;
+  const token = t[1].replace(/^\.\.\//, "");
+  const adaylar = [token, "docs/" + token.replace(/^docs\//, "")];
+  const resolved = adaylar.find((p) => fs.existsSync(p));
+  if (!resolved) {
+    if (/yerel kayıt/i.test(sinif)) continue;
+    errors.push("sicil satırındaki belge diskte yok (hayalet): " + token + " — sınıf: " + sinif);
+    continue;
+  }
+  if (/^(aktüel|güncel)/i.test(sinif)) {
+    try {
+      const d = execFileSync("git", ["log", "-1", "--format=%ad", "--date=short", "--", resolved], { encoding: "utf8" }).trim();
+      if (!d) {
+        errors.push("güncel belge git geçmişinde yok: " + resolved);
+      } else {
+        const yas = Math.floor((Date.now() - new Date(d + "T00:00:00Z").getTime()) / 86400000);
+        if (yas > 30) {
+          errors.push(
+            "güncel belge bayatladı: " + resolved + " (" + yas + " gün önce yazılmış — 30 gün yasağı; tazele ya da sınıfını tarihsel/arşiv yap)",
+          );
+        }
+      }
+    } catch (e) {
+      errors.push("belge yaşı okunamadı: " + resolved + " — " + String(e.message || e).slice(0, 80));
+    }
+  }
+}
+
 try {
   const mcp = JSON.parse(read(".mcp.json"));
   const servers = mcp.mcpServers || {};

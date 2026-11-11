@@ -189,6 +189,18 @@ if ($health['AJAN-BASLANGIC belgesi']) {
 }
 if ($docAge -ne $null -and $docAge -gt 30) { $warns.Add('belge 30+ gun bayat: ' + $docAge + ' gun') }
 
+$belgeDenetim = 'node yok — atlandi'
+$kctlPath = Join-Path $repoRoot 'tool/baslangic-kontrol.mjs'
+if ((Test-Path -LiteralPath $kctlPath) -and (Get-Command node -ErrorAction SilentlyContinue)) {
+    try {
+        $kd = (& node $kctlPath 2>&1 | Out-String)
+        $sonSatir = (($kd -split "`r?`n") | Where-Object { $_ -match 'SONUÇ:' } | Select-Object -Last 1)
+        if ($sonSatir) { $belgeDenetim = $sonSatir.Trim() } else { $belgeDenetim = 'baslangic-kontrol calisamadi' }
+        if ($kd -match 'HATA:') { $warns.Add('belge denetimi hata verdi — PR kirmizi olur (araci tara: node tool/baslangic-kontrol.mjs)') }
+        elseif ($kd -match 'UYARI:') { $warns.Add('belge denetimi uyari verdi (araci tara: node tool/baslangic-kontrol.mjs)') }
+    } catch { $belgeDenetim = 'baslangic-kontrol okunamadi' }
+}
+
 $graphCli = ''
 $graphVer = ''
 $cliCmd = Get-Command graphify -ErrorAction SilentlyContinue
@@ -492,6 +504,7 @@ $out += ('Graphify   : ' + $graphLineFull)
 $out += $pLines
 $out += ('Sınır      : salt okunur ölçüm; yazma/deploy/migration/preset yalnız açık onayla')
 $out += ('Belge tarihi: ' + $docLine)
+$out += ('Belge denetimi: ' + $belgeDenetim)
 $out += ('Sistem     : ' + $healthLine)
 $out += ('Önceki     : ' + $prevLine)
 $out += ('HÜKÜM      : ' + $verdict)
