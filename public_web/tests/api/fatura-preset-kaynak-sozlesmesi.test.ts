@@ -95,7 +95,7 @@ describe("depodaki OpenRouter preset tanımı ↔ Vixrex taşıma sözleşmesi",
     expect(araclar.map((arac) => arac.type)).toEqual([
       "openrouter:web_search", "openrouter:web_fetch",
     ]);
-    expect(istek).not.toHaveProperty("response_format");
+    expect(istek.response_format).toEqual(kart.response_format);
     expect(istek).not.toHaveProperty("provider");
     expect(istek).not.toHaveProperty("system");
     expect(istek).not.toHaveProperty("tools");

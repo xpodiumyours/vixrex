@@ -60,6 +60,81 @@ function satiriTasi(s: GoruSonucu["satirlar"][number], i: number, secilenAkis: P
   });
 }
 
+const KART_YANIT_FORMATI = {
+  type: "json_schema",
+  json_schema: {
+    name: "vixrex_urun_karti",
+    strict: true,
+    schema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["items"],
+      properties: {
+        items: {
+          type: "array",
+          items: {
+            type: "object",
+            additionalProperties: false,
+            required: ["row_id", "vixrex_product_json", "validation", "media", "duplicate_group", "canonical_row_id", "sources"],
+            properties: {
+              row_id: { type: "string" },
+              vixrex_product_json: {
+                type: "object",
+                additionalProperties: false,
+                required: ["title", "brand", "category_suggestion", "variant", "short_description"],
+                properties: {
+                  brand: { type: "string" },
+                  title: { type: "string" },
+                  variant: { type: ["string", "null"] },
+                  short_description: { type: ["string", "null"] },
+                  category_suggestion: { type: ["string", "null"] },
+                },
+              },
+              validation: {
+                type: "object",
+                additionalProperties: false,
+                required: ["status", "official_domain", "official_product_url", "matched_attributes", "unmatched_attributes"],
+                properties: {
+                  status: { type: "string", enum: ["verified", "ambiguous", "not_found", "not_researched"] },
+                  official_domain: { type: ["string", "null"] },
+                  matched_attributes: { type: "array", items: { type: "string" } },
+                  official_product_url: { type: ["string", "null"] },
+                  unmatched_attributes: { type: "array", items: { type: "string" } },
+                },
+              },
+              media: {
+                type: "object",
+                additionalProperties: false,
+                required: ["image_url", "source_url", "verification_status"],
+                properties: {
+                  image_url: { type: ["string", "null"] },
+                  source_url: { type: ["string", "null"] },
+                  verification_status: { type: ["string", "null"] },
+                },
+              },
+              duplicate_group: { type: ["string", "null"] },
+              canonical_row_id: { type: ["string", "null"] },
+              sources: {
+                type: "array",
+                items: {
+                  type: "object",
+                  additionalProperties: false,
+                  required: ["url", "fetched_at", "snippet"],
+                  properties: {
+                    url: { type: "string" },
+                    fetched_at: { type: "string" },
+                    snippet: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+} as const;
+
 function govdeKur(okuma: GoruSonucu, satirlar: TasinanSatir[], secilenAkis: PresetAkis): Record<string, unknown> {
   const grupHaritasi = new Map<string, { brand: string; rows: TasinanSatir[] }>();
   for (const satir of satirlar) {
@@ -71,6 +146,7 @@ function govdeKur(okuma: GoruSonucu, satirlar: TasinanSatir[], secilenAkis: Pres
   const gruplar = [...grupHaritasi.values()];
   return {
     model: secilenKartPreset(secilenAkis), stream: true,
+    ...(secilenAkis === "yeni" ? { response_format: KART_YANIT_FORMATI } : {}),
     messages: [{ role: "user", content: [
       "İlk presetin faturadan okuduğu satırlar aşağıdadır. Presetindeki araştırma ve ürün kartı görevini tamamla.",
       "Her row_id değerini aynen koru; her girdi satırı için eksiksiz ürün kartı döndür, satır silme.",

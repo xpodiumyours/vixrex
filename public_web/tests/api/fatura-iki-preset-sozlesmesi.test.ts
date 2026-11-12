@@ -291,7 +291,7 @@ describe("gerçek ikinci preset JSON sözleşmesi",()=>{
     expect(messages[0].content).toContain("row_id");
     expect(req).not.toHaveProperty("tools");
     expect(req).not.toHaveProperty("provider");
-    expect(req).not.toHaveProperty("response_format");
+    expect(req.response_format).toMatchObject({ type: "json_schema", json_schema: { name: "vixrex_urun_karti", strict: true } });
     expect(req).not.toHaveProperty("system");
   });
 });
