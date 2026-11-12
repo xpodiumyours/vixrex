@@ -62,8 +62,8 @@
       "aday_tarif": {
         "dosya": "openrouter/preset-kart.json",
         "durum": "aday - canliya yazilmadi",
-        "system_prompt_sha256": "6eef0a254a57686fc4ad8b970a6228c582ff6eaeaedb8e0c50e9d9df30a3f79d",
-        "system_prompt_length": 4051
+        "system_prompt_sha256": "d908aa8244f356d4f849a2ee68c816be8e801d96c2fa31d29fd4f444f0c8e1f2",
+        "system_prompt_length": 3677
       }
     }
   ]
