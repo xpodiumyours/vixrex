@@ -374,15 +374,15 @@ export default function ProductCatalog({
             typeof product.stockQuantity === "number" && product.stockQuantity > 0
               ? product.stockQuantity
               : null;
-          const effectiveMaxQuantity = maxQuantity ?? 10;
-          const cartItem = cartItems.find((item) => item.productSlug === productSlug);
-          const cartQty = cartItem?.quantity ?? 0;
-          const variantKey = cartItem?.variantKey || "standart";
+          const matchingCartItems = cartItems.filter((item) => item.productSlug === productSlug);
+          const totalProductCartQty = matchingCartItems.reduce((acc, item) => acc + item.quantity, 0);
+          const singleCartItem = matchingCartItems[0];
+          const variantKey = singleCartItem?.variantKey || "standart";
           const priceText =
             fiyatTutar != null ? tutarYazisi(fiyatTutar) : String(product.price || "").trim();
           const hasVariants =
             !isService && productVariantCount(product.variants, metadata.templateKey) > 1;
-          const stokSinirinda = cartQty >= effectiveMaxQuantity;
+          const stokSinirinda = maxQuantity != null && totalProductCartQty >= maxQuantity;
 
           return (
             <article
@@ -492,7 +492,7 @@ export default function ProductCatalog({
                     >
                       Tükendi
                     </button>
-                  ) : hasVariants && cartQty === 0 ? (
+                  ) : hasVariants ? (
                     <button
                       type="button"
                       onClick={(event) => {
@@ -503,14 +503,21 @@ export default function ProductCatalog({
                       }}
                       className={`w-full rounded-xl py-2 text-[11px] font-extrabold ${vitrinGorunum.buton.ana}`}
                     >
-                      Seçenekleri gör →
+                      {totalProductCartQty > 0
+                        ? `Sepette (${totalProductCartQty}) · Seçenekler →`
+                        : "Seçenekleri gör →"}
                     </button>
-                  ) : cartQty === 0 ? (
+                  ) : totalProductCartQty === 0 ? (
                     <button
                       type="button"
                       onClick={(event) => {
                         event.preventDefault();
                         event.stopPropagation();
+                        if (!trackingEnabled) {
+                          setLocationProductId(null);
+                          setQuickView({ product, images: quickImages, productUrl, productSlug });
+                          return;
+                        }
                         const next = addToVitrinCart(storeSlug, {
                           productSlug,
                           productName: product.name,
@@ -519,14 +526,14 @@ export default function ProductCatalog({
                           priceText,
                           priceAmount: fiyatTutar,
                           imageUrl: image,
-                          maxQuantity: effectiveMaxQuantity,
+                          maxQuantity,
                           quantity: 1,
                         });
                         setCartItems(next);
                       }}
                       className={`w-full rounded-xl py-2 text-[11px] font-extrabold ${vitrinGorunum.buton.ana}`}
                     >
-                      Sepete ekle
+                      + Sepete ekle
                     </button>
                   ) : (
                     <div className="flex items-center justify-between rounded-xl border border-blue-500/40 bg-blue-500/10 px-1.5 py-1">
@@ -535,14 +542,19 @@ export default function ProductCatalog({
                         onClick={(event) => {
                           event.preventDefault();
                           event.stopPropagation();
+                          if (!trackingEnabled) {
+                            setLocationProductId(null);
+                            setQuickView({ product, images: quickImages, productUrl, productSlug });
+                            return;
+                          }
                           const next =
-                            cartQty <= 1
+                            totalProductCartQty <= 1
                               ? removeFromVitrinCart(storeSlug, productSlug, variantKey)
                               : setVitrinCartQuantity(
                                   storeSlug,
                                   productSlug,
                                   variantKey,
-                                  cartQty - 1,
+                                  totalProductCartQty - 1,
                                 );
                           setCartItems(next);
                         }}
@@ -552,7 +564,7 @@ export default function ProductCatalog({
                         −
                       </button>
                       <span aria-live="polite" className="text-xs font-extrabold text-white">
-                        {cartQty}
+                        {totalProductCartQty}
                       </span>
                       <button
                         type="button"
@@ -560,12 +572,17 @@ export default function ProductCatalog({
                         onClick={(event) => {
                           event.preventDefault();
                           event.stopPropagation();
+                          if (!trackingEnabled) {
+                            setLocationProductId(null);
+                            setQuickView({ product, images: quickImages, productUrl, productSlug });
+                            return;
+                          }
                           if (stokSinirinda) return;
                           const next = setVitrinCartQuantity(
                             storeSlug,
                             productSlug,
                             variantKey,
-                            cartQty + 1,
+                            totalProductCartQty + 1,
                           );
                           setCartItems(next);
                         }}
