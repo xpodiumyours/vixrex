@@ -41,7 +41,7 @@ describe("depodaki OpenRouter preset tanımı ↔ Vixrex taşıma sözleşmesi",
   });
 
   it("ikinci preset gerçek 11 giriş alanını bilir; eski araştırma çıktısı istemez", () => {
-    const govde = kartPresetIstekGovdesi(ilkSonuc);
+    const govde = kartPresetIstekGovdesi(ilkSonuc, "yeni");
     expect(govde.model).toBe(URUN_KART_PRESET_YENI);
     expect(govde.stream).toBe(true);
     expect(govde).not.toHaveProperty("tools");
@@ -101,7 +101,7 @@ describe("depodaki OpenRouter preset tanımı ↔ Vixrex taşıma sözleşmesi",
   });
 
   it("ürün araştırması yalnız ikinci presetindir ve üretim isteği preset ayarlarına dokunmaz", () => {
-    const istek = kartPresetIstekGovdesi(ilkSonuc);
+    const istek = kartPresetIstekGovdesi(ilkSonuc, "yeni");
     const araclar = kart.tools as Array<{type: string}>;
     expect(araclar.map((arac) => arac.type)).toEqual([
       "openrouter:web_search", "openrouter:web_fetch",
@@ -116,7 +116,7 @@ describe("depodaki OpenRouter preset tanımı ↔ Vixrex taşıma sözleşmesi",
   });
 
   it("faturadaki alış fiyatı ve tutar dışarı çıkmaz; miktar, barkod ve satır sırası korunur", () => {
-    const istek = kartPresetIstekGovdesi(ilkSonuc);
+    const istek = kartPresetIstekGovdesi(ilkSonuc, "yeni");
     const content = (istek.messages as Array<{content:string}>)[0].content;
     const veri = JSON.parse(content.slice(content.lastIndexOf("\n") + 1)) as { groups: Array<{rows: Json[]}> };
     const satirlar = veri.groups.flatMap((g) => g.rows);
@@ -154,8 +154,8 @@ describe("depodaki OpenRouter preset tanımı ↔ Vixrex taşıma sözleşmesi",
       ...ilkSonuc,
       satirlar: [ilkSonuc.satirlar[0], { ...ilkSonuc.satirlar[1], marka: "Başka Marka" }],
     };
-    expect(govdeVerisi(kartPresetIstekGovdesi(cokMarkali)).supplier.role).toBe("cok_markali_toptanci");
-    expect(govdeVerisi(kartPresetIstekGovdesi({ ...ilkSonuc, tedarikci: "Marka Tekstil" })).supplier.role).toBe("uretici");
-    expect(govdeVerisi(kartPresetIstekGovdesi(ilkSonuc)).supplier.role).toBe("bilinmiyor");
+    expect(govdeVerisi(kartPresetIstekGovdesi(cokMarkali, "yeni")).supplier.role).toBe("cok_markali_toptanci");
+    expect(govdeVerisi(kartPresetIstekGovdesi({ ...ilkSonuc, tedarikci: "Marka Tekstil" }, "yeni")).supplier.role).toBe("uretici");
+    expect(govdeVerisi(kartPresetIstekGovdesi(ilkSonuc, "yeni")).supplier.role).toBe("bilinmiyor");
   });
 });

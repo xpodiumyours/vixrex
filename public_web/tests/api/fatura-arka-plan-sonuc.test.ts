@@ -68,6 +68,7 @@ describe("tamamlanmış arka plan sonucunun gerçek taşıma yolu",()=>{
   expect(m.localImageSelection).not.toHaveBeenCalled();
  });
  it("okuma aşaması sonucu kart presetini tam bir kez kuyruğa alır",async()=>{
+  vi.stubEnv("PRESET_AKIS","yeni");
   const first=JSON.stringify({tedarikci:"Tedarikçi",satirlar:[line]});
   const {admin,rpc}=client(receipt(first,{stage:"reading",readResult:null}));
   const data=await arkaPlanFaturaSonucunuAl(admin,"store","deneme",job);

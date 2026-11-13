@@ -44,6 +44,13 @@ describe("fatura priz - tak-cikar", () => {
     expect(faturaPrizAnahtari()).toBe("sk-fallback-789");
   });
 
+  it("OPENROUTER_BASE_URL verilirse priz adresi buradan uretilir", () => {
+    vi.stubEnv("OPENROUTER_BASE_URL", "https://ozel-openrouter.example/api/v1/");
+    expect(faturaPrizAdresi()).toBe("https://ozel-openrouter.example/api/v1/chat/completions");
+    vi.stubEnv("OPENROUTER_BASE_URL", "https://ozel-openrouter.example/api/v1/chat/completions");
+    expect(faturaPrizAdresi()).toBe("https://ozel-openrouter.example/api/v1/chat/completions");
+  });
+
   it("zaman siniri 240 saniye varsayilanidir ve sinirlar dahilinde korunur", () => {
     vi.stubEnv("OPENROUTER_FATURA_TIMEOUT_MS", "600000");
     expect(faturaPrizZamanSiniri()).toBe(600_000);

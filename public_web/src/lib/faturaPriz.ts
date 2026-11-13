@@ -3,7 +3,13 @@ import { VARSAYILAN_FATURA_PRESET } from "@/lib/faturaPresetSozlesmesi";
 export const VARSAYILAN_PRIZ_ADRESI = "https://openrouter.ai/api/v1/chat/completions";
 
 export function faturaPrizAdresi(): string {
-  return (process.env.FATURA_PRIZ_URL || VARSAYILAN_PRIZ_ADRESI).trim();
+  const acikAdres = (process.env.FATURA_PRIZ_URL || "").trim();
+  if (acikAdres) return acikAdres;
+  const temelAdres = (process.env.OPENROUTER_BASE_URL || "").trim().replace(/\/+$/, "");
+  if (temelAdres) {
+    return temelAdres.endsWith("/chat/completions") ? temelAdres : `${temelAdres}/chat/completions`;
+  }
+  return VARSAYILAN_PRIZ_ADRESI;
 }
 
 export function faturaPrizAnahtari(): string {

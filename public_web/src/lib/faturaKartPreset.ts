@@ -12,7 +12,7 @@ export const URUN_KART_PRESET = "@preset/urun-kart-olusturucu";
 export const URUN_KART_PRESET_YENI = "@preset/vixrex-urun-karti-v2";
 export type PresetAkis = "mevcut" | "yeni";
 export const akis = (): PresetAkis =>
-  process.env.PRESET_AKIS === "mevcut" ? "mevcut" : "yeni";
+  process.env.PRESET_AKIS === "yeni" ? "yeni" : "mevcut";
 const secilenKartPreset = (secilenAkis: PresetAkis) => (secilenAkis === "yeni" ? URUN_KART_PRESET_YENI : URUN_KART_PRESET);
 
 function barkodKimligi(barkod: string | undefined): string | null {

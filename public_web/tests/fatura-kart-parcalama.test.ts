@@ -66,14 +66,14 @@ describe("kart isteği parçalama", () => {
 
   it("markası boş satırları GS1 üretici önekiyle aynı kümeye toplar", () => {
     const satirlar = [satir(1, "", "8691234000010"), satir(2, "", "8691234000029")];
-    const gruplar = govdeVerisi(kartPresetIstekGovdesi({ tedarikci: "Tedarikçi", satirlar } as unknown as GoruSonucu)).groups;
+    const gruplar = govdeVerisi(kartPresetIstekGovdesi({ tedarikci: "Tedarikçi", satirlar } as unknown as GoruSonucu, "yeni")).groups;
     expect(gruplar).toHaveLength(1);
     expect(gruplar[0].rows.map((r) => r.row_id)).toEqual(["1", "2"]);
   });
 
   it("markasız satırı tek markalı faturada markanın kümesine katar", () => {
     const satirlar = [satir(1, "Tutku", ""), satir(2, "", "")];
-    const gruplar = govdeVerisi(kartPresetIstekGovdesi({ tedarikci: "Tedarikçi", satirlar } as unknown as GoruSonucu)).groups;
+    const gruplar = govdeVerisi(kartPresetIstekGovdesi({ tedarikci: "Tedarikçi", satirlar } as unknown as GoruSonucu, "yeni")).groups;
     expect(gruplar).toHaveLength(1);
     expect(gruplar[0].rows.map((r) => r.row_id)).toEqual(["1", "2"]);
   });

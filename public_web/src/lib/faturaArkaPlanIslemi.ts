@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { faturaIstekGovdesi, faturaYanitiniOku, type GoruSonucu } from "@/lib/faturaGoru";
-import { faturaPrizAnahtari } from "@/lib/faturaPriz";
+import { faturaPrizAdresi, faturaPrizAnahtari } from "@/lib/faturaPriz";
 import { faturaSatiriniAktar } from "@/lib/faturaPresetAktarimi";
 import { islemKaydet } from "@/lib/faturaIslemKaydi";
 import { islemiYukle } from "@/lib/faturaIslemOku";
@@ -42,6 +42,7 @@ export async function faturayiArkaPlanaGonder(
     p_fingerprint: parmakIzi,
     p_body: body,
     p_api_key: anahtar,
+    p_url: faturaPrizAdresi(),
   });
   if (error || data?.success !== true || typeof data.id !== "string") {
     // RPC hata nesnesinde istek parametreleri bulunabilir; anahtar/fotoğraf loglanmaz.
@@ -96,6 +97,7 @@ export async function arkaPlanFaturaSonucunuAl(
         p_read_result: { ...okuma, presetAkis: islemAkisi },
         p_body: kartPresetIstekGovdesi(okuma, islemAkisi),
         p_api_key: faturaPrizAnahtari(),
+        p_url: faturaPrizAdresi(),
       });
       if (ikinci.error || ikinci.data?.success !== true) throw new Error("KART_ISLEYICI_HAZIR_DEGIL");
       return bekleyenFaturaYaniti(islemKimligi, "kartlaniyor");
