@@ -10,6 +10,7 @@ import { handleVixrexNluMessage } from "@/lib/vixrexNluPipeline";
 import { resolveVixrexIntentsAll } from "@/lib/vixrexIntentResolver";
 import { VIXREX_NIYET_ALAN_BY_ANAHTAR } from "@/lib/vixrexNiyetSozlugu";
 import { extractVixrexValue, digerAlanaAitIpucuVarMi } from "@/lib/vixrexValueExtractor";
+import { supabase } from "@/lib/supabase";
 import type { Mesaj } from "./useOwnerChat";
 
 /** Hangi alan hangi tür hazır görsele karşılık geliyor. */
@@ -202,7 +203,10 @@ export async function bonusAlanlariCikarVeKaydet(
     })
     .filter((x): x is { anahtar: string; kolon: string; etiket: string; deger: string } => x !== null);
 
-  if (bulunanlar.length === 0) return;
+  if (bulunanlar.length === 0) {
+    routerRefresh();
+    return;
+  }
 
   try {
     const commandId = crypto.randomUUID();
@@ -217,9 +221,8 @@ export async function bonusAlanlariCikarVeKaydet(
       }),
     });
     const govde = await yanit.json();
-    // Sessiz yutma yasağı (2026-09-25): bonus kayıt başarısızsa esnaf
-    // nedenini SOHBETTE görsün — sessiz return bırakılmaz.
     if (!yanit.ok) {
+      routerRefresh();
       mesajEkle("asistan", govde?.hata ?? "Ek alanlar kaydedilemedi.");
       return;
     }
@@ -250,16 +253,20 @@ export async function bonusAlanlariCikarVeKaydet(
     }
 
     if (basarili.length !== bulunanlar.length) {
-      // Sunucu başarılı dediği halde ayrıntı eksikse yerel state tahmin edilmez.
       routerRefresh();
       return;
     }
 
     routerRefresh();
     const liste = basarili.map(({ etiket }) => `✓ ${etiket}`).join("\n");
-    mesajEkle("asistan", `Yazdığından ayrıca şunları da anladım:\n${liste}`, undefined, "✨");
+    mesajEkle(
+      "asistan",
+      `Yazdığından ayrıca şunları da anladım:\n${liste}`,
+      [{ label: "Harika, devam et", payload: "onay_tamam" }],
+      "✨"
+    );
   } catch {
-    // Bonus bir zenginleştirme — asıl kaydı etkilemez ama esnaf haberdar edilir.
+    routerRefresh();
     mesajEkle("asistan", "Yazdığından çıkardığım ek alanlar kaydedilemedi; bağlantıyı kontrol et.");
   }
 }
@@ -509,18 +516,20 @@ export function useOwnerActions({
       setGiris("");
       setAlan(alan.kolon, gonderilecek);
       const tazeTaslak = { ...yerelTaslak, [alan.kolon]: gonderilecek };
-      // Sayfa sunucuda çizildiği için yeni değer ancak yeniden
-      // okununca vitrine yansır — yoksa esnaf kaydeder, sayfada
-      // eski yazı durmaya devam ederdi (Faz 2).
-      router.refresh();
+      const metinUzun = typeof gonderilecek === "string" && metin.length >= 15;
+
+      if (!metinUzun) {
+        router.refresh();
+      }
       alaniParlat(alan.anahtar);
       alanaGecVeyaBitir(alan.anahtar, tazeTaslak);
 
-      // "Esnaf 46 alanı tek tek dolaşmasın" (2026-09-02) — bu KUTUYA
-      // (ör. "İşletme adın?") normalden uzun bir cümle yazılırsa, arka
-      // planda diğer alanları da doldurmayı dener. Yeni bir ekran
-      // elemanı yok — yalnız zaten var olan bu giriş kutusu akıllanıyor.
-      if (typeof gonderilecek === "string" && metin.length >= 15) {
+      void supabase.rpc("set_assistant_pending_slot", { p_slot: null }).then(
+        () => {},
+        () => {}
+      );
+
+      if (metinUzun) {
         void bonusAlanlariCikarVeKaydet(
           metin,
           alan.kolon,
