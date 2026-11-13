@@ -52,7 +52,13 @@ type StoreSatiri = {
   whatsapp: string | null;
   updated_at: string | null;
   rating_score: number | null;
+  show_storefront_rating: boolean | null;
 };
+
+export function vitrinPuani(satir: { rating_score: number | null; show_storefront_rating: boolean | null }): number | null {
+  if (satir.show_storefront_rating !== true) return null;
+  return typeof satir.rating_score === "number" ? satir.rating_score : null;
+}
 
 function konumMetni(satir: StoreSatiri): string {
   const ilce = satir.district_name?.trim() ?? "";
@@ -134,7 +140,7 @@ async function _kesfetGetir(): Promise<KesfetVitrini[]> {
       urunAdlari: urunAdlari.get(satir.id) ?? [],
       whatsapp: satir.whatsapp?.trim() || null,
       guncellemeZamani: satir.updated_at,
-      puan: typeof satir.rating_score === "number" ? satir.rating_score : null,
+      puan: vitrinPuani(satir),
     };
   });
 }

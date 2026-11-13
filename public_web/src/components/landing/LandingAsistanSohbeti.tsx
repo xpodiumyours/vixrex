@@ -267,14 +267,18 @@ export function LandingAsistanSohbeti({
 
     try {
       // Supabase auth session kontrolü
-      const { data: { session } } = await supabase.auth.getSession();
+      let { data: { session } } = await supabase.auth.getSession();
 
       if (!session) {
-        // Giriş yapılmamış → /kayit sayfasına yönlendir
-        taslagiKaydet({ ...cevaplar, legal_consent: true,
-          aydinlatma_onay: aydinlatmaOnay, sartlar_onay: sartlarOnay, acik_riza_onay: acikRizaOnay });
-        window.location.href = "/kayit";
-        return;
+        const { data: anonim, error: anonimHata } = await supabase.auth.signInAnonymously();
+        if (anonimHata || !anonim.session) {
+          // Giriş yapılmamış → /kayit sayfasına yönlendir
+          taslagiKaydet({ ...cevaplar, legal_consent: true,
+            aydinlatma_onay: aydinlatmaOnay, sartlar_onay: sartlarOnay, acik_riza_onay: acikRizaOnay });
+          window.location.href = "/kayit";
+          return;
+        }
+        session = anonim.session;
       }
 
       // API'yi çağır — vitrin oluştur ve yayınla
@@ -317,6 +321,7 @@ export function LandingAsistanSohbeti({
       setAdim(ASISTAN_ADIMLARI.length); // bitti = true yapar
       taslagiKaydet({ ...cevaplar, legal_consent: true,
           aydinlatma_onay: aydinlatmaOnay, sartlar_onay: sartlarOnay, acik_riza_onay: acikRizaOnay });
+      router.push(`/v/${sonuc.slug}`);
     } catch (e) {
       setHata(HATA_TEKRAR_DENE);
       console.error("[landing-asistan] publish error:", e);
@@ -515,7 +520,7 @@ export function LandingAsistanSohbeti({
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => { setGirdi(''); setAdim(0); }}
+                onClick={() => { void ensureAnonymousSession(); setGirdi(''); setAdim(0); }}
                 className="flex items-center justify-center gap-1.5 rounded-xl border border-lp-border bg-lp-surface px-3 py-2.5 text-[11px] font-bold text-lp-text"
               >
                 <span className="text-[12px]">✨</span>

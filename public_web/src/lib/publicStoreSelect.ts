@@ -53,5 +53,6 @@ export const EXPLORE_STORE_SELECT = [
   "whatsapp",
   "rating_score",
   "review_count",
+  "show_storefront_rating",
   "updated_at",
 ].join(",");
