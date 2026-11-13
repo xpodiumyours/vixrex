@@ -29,16 +29,76 @@ function markaGrupAnahtari(marka: string | undefined): string {
     .trim();
 }
 
+export type TedarikciRolu = "uretici" | "cok_markali_toptanci" | "bilinmiyor";
+
+type UreticiKumesiGirdisi = {
+  marka?: string | null;
+  brand?: string | null;
+  uretici?: string | null;
+  barkod?: string | null;
+  barcode?: string | null;
+};
+
+type UreticiKumesiBaglami = {
+  tedarikci?: string | null;
+  tekMarka?: string | null;
+};
+
+function gs1UreticiOnegi(barkod: string | null | undefined): string {
+  const temiz = (barkod ?? "").replace(/[\s-]+/g, "");
+  if (!gtinBicimindeMi(temiz) || barkodDenetimi(temiz) !== null) return "";
+  return temiz.slice(0, 7);
+}
+
+export function ureticiKumesi(satir: UreticiKumesiGirdisi, baglam: UreticiKumesiBaglami = {}): string {
+  const marka = markaGrupAnahtari((satir.marka ?? satir.brand) ?? undefined);
+  if (marka) return `marka:${marka}`;
+  const uretici = markaGrupAnahtari(satir.uretici ?? undefined);
+  if (uretici) return `uretici:${uretici}`;
+  const gs1 = gs1UreticiOnegi(satir.barkod ?? satir.barcode);
+  if (gs1) return `gs1:${gs1}`;
+  const tekMarka = markaGrupAnahtari(baglam.tekMarka ?? undefined);
+  if (tekMarka) return `marka:${tekMarka}`;
+  const tedarikci = markaGrupAnahtari(baglam.tedarikci ?? undefined);
+  if (tedarikci) return `tedarikci:${tedarikci}`;
+  return "";
+}
+
+function faturaMarkalari(okuma: Pick<GoruSonucu, "satirlar">): string[] {
+  return [...new Set(okuma.satirlar.map((satir) => markaGrupAnahtari(satir.marka)).filter(Boolean))];
+}
+
+export function tedarikciRolu(okuma: Pick<GoruSonucu, "tedarikci" | "satirlar">): TedarikciRolu {
+  const markalar = faturaMarkalari(okuma);
+  if (markalar.length > 1) return "cok_markali_toptanci";
+  const tedarikci = markaGrupAnahtari(okuma.tedarikci);
+  if (!markalar.length || !tedarikci) return "bilinmiyor";
+  const marka = markalar[0];
+  return tedarikci === marka || tedarikci.includes(marka) || marka.includes(tedarikci)
+    ? "uretici"
+    : "bilinmiyor";
+}
+
+function ureticiKumeBaglami(okuma: Pick<GoruSonucu, "tedarikci" | "satirlar">): UreticiKumesiBaglami {
+  const markalar = faturaMarkalari(okuma);
+  return { tedarikci: okuma.tedarikci, tekMarka: markalar.length === 1 ? markalar[0] : null };
+}
+
 type TasinanSatir = ReturnType<typeof satiriTasi>;
 
 function satiriTasi(s: GoruSonucu["satirlar"][number], i: number, secilenAkis: PresetAkis) {
+  const yeniAkis = secilenAkis === "yeni";
   return ({
-    row_id: String(i + 1), satir_no: s.satirNo, raw_invoice_line: s.hamSatir,
+    row_id: String(i + 1), satir_no: s.satirNo,
+    ...(yeniAkis ? {} : { raw_invoice_line: s.hamSatir }),
     brand: s.marka, name: s.ad, code: s.model, barcode: barkodKimligi(s.barkod),
     variant: s.varyant, size: s.beden, net_quantity: s.gramaj,
-    invoice_data: { quantity: s.adet, unit: s.birim, unit_price: s.birimFiyat, total_amount: s.tutar },
-    ...(secilenAkis === "mevcut"
-      ? {
+    invoice_data: yeniAkis
+      ? { quantity: s.adet, unit: s.birim }
+      : { quantity: s.adet, unit: s.birim, unit_price: s.birimFiyat, total_amount: s.tutar },
+    ...(yeniAkis
+      ? {}
+      : {
           previous_product_research: {
             description: s.siteAciklama,
             product_url: s.siteSayfa,
@@ -52,8 +112,7 @@ function satiriTasi(s: GoruSonucu["satirlar"][number], i: number, secilenAkis: P
             image_validation_status: s.gorselDogrulamaDurumu,
             sources: s.kaynaklar,
           },
-        }
-      : {}),
+        }),
   });
 }
 
@@ -131,12 +190,16 @@ const KART_YANIT_FORMATI = {
 } as const;
 
 function govdeKur(okuma: GoruSonucu, satirlar: TasinanSatir[], secilenAkis: PresetAkis): Record<string, unknown> {
+  const yeniAkis = secilenAkis === "yeni";
+  const kumeBaglami = ureticiKumeBaglami(okuma);
   const grupHaritasi = new Map<string, { brand: string; rows: TasinanSatir[] }>();
   for (const satir of satirlar) {
-    const anahtar = markaGrupAnahtari(satir.brand);
+    const anahtar = yeniAkis ? ureticiKumesi(satir, kumeBaglami) : markaGrupAnahtari(satir.brand);
     const mevcut = grupHaritasi.get(anahtar);
-    if (mevcut) mevcut.rows.push(satir);
-    else grupHaritasi.set(anahtar, { brand: satir.brand, rows: [satir] });
+    if (mevcut) {
+      mevcut.rows.push(satir);
+      if (yeniAkis && !mevcut.brand) mevcut.brand = satir.brand;
+    } else grupHaritasi.set(anahtar, { brand: satir.brand, rows: [satir] });
   }
   const gruplar = [...grupHaritasi.values()];
   return {
@@ -151,6 +214,7 @@ function govdeKur(okuma: GoruSonucu, satirlar: TasinanSatir[], secilenAkis: Pres
         supplier: {
           name: okuma.tedarikci ?? "",
           website: okuma.tedarikciSite ?? "",
+          ...(yeniAkis ? { role: tedarikciRolu(okuma) } : {}),
         },
         groups: gruplar,
       }),
@@ -158,8 +222,19 @@ function govdeKur(okuma: GoruSonucu, satirlar: TasinanSatir[], secilenAkis: Pres
   };
 }
 
+function arastirilacakSatirlar(okuma: GoruSonucu, secilenAkis: PresetAkis): Array<{ satir: GoruSonucu["satirlar"][number]; sira: number }> {
+  const tekrarlar = secilenAkis === "yeni"
+    ? tekillesmeKarari(okuma.satirlar).indirgenen
+    : new Map<string, number>();
+  return okuma.satirlar
+    .map((satir, sira) => ({ satir, sira }))
+    .filter(({ sira }) => !tekrarlar.has(String(sira + 1)));
+}
+
 export function kartPresetIstekGovdesi(okuma: GoruSonucu, secilenAkis: PresetAkis = akis()): Record<string, unknown> {
-  return govdeKur(okuma, okuma.satirlar.map((s, i) => satiriTasi(s, i, secilenAkis)), secilenAkis);
+  const satirlar = arastirilacakSatirlar(okuma, secilenAkis)
+    .map(({ satir, sira }) => satiriTasi(satir, sira, secilenAkis));
+  return govdeKur(okuma, satirlar, secilenAkis);
 }
 
 /** Belirli (1 tabanlı) satır numaraları için küresel row_id'leri koruyan tek gövde. */
@@ -183,11 +258,41 @@ export function kartPresetIstekGovdeleri(
   parcaBoyutu: number = KART_PARCA_BOYUTU,
 ): Array<Record<string, unknown>> {
   const boyut = Math.max(1, Math.floor(parcaBoyutu) || KART_PARCA_BOYUTU);
-  const tasinan = okuma.satirlar.map((s, i) => satiriTasi(s, i, secilenAkis));
+  const tasinan = arastirilacakSatirlar(okuma, secilenAkis)
+    .map(({ satir, sira }) => satiriTasi(satir, sira, secilenAkis));
   const govdeler: Array<Record<string, unknown>> = [];
-  for (let bas = 0; bas < tasinan.length; bas += boyut) {
-    govdeler.push(govdeKur(okuma, tasinan.slice(bas, bas + boyut), secilenAkis));
+  if (secilenAkis !== "yeni") {
+    for (let bas = 0; bas < tasinan.length; bas += boyut) {
+      govdeler.push(govdeKur(okuma, tasinan.slice(bas, bas + boyut), secilenAkis));
+    }
+    return govdeler;
   }
+  const kumeBaglami = ureticiKumeBaglami(okuma);
+  const kumeler = new Map<string, TasinanSatir[]>();
+  for (const satir of tasinan) {
+    const anahtar = ureticiKumesi(satir, kumeBaglami);
+    const kume = kumeler.get(anahtar);
+    if (kume) kume.push(satir);
+    else kumeler.set(anahtar, [satir]);
+  }
+  let paket: TasinanSatir[] = [];
+  const paketiKapat = () => {
+    if (!paket.length) return;
+    govdeler.push(govdeKur(okuma, paket, secilenAkis));
+    paket = [];
+  };
+  for (const kume of kumeler.values()) {
+    if (kume.length > boyut) {
+      paketiKapat();
+      for (let bas = 0; bas < kume.length; bas += boyut) {
+        govdeler.push(govdeKur(okuma, kume.slice(bas, bas + boyut), secilenAkis));
+      }
+      continue;
+    }
+    if (paket.length + kume.length > boyut) paketiKapat();
+    paket.push(...kume);
+  }
+  paketiKapat();
   return govdeler;
 }
 
@@ -259,6 +364,29 @@ function bosKart(kart: KartSozlesmesi, satir: { ad?: string }): boolean {
   return !kart.ad && !metin(satir.ad) && !kart.barkod && !kart.kod && !kart.resmiSayfa;
 }
 
+function tekrarUyarisi(kanonik: number): string {
+  return `Aynı ürün belgede ${kanonik}. satırda da geçiyor; tek kart açılır.`;
+}
+
+function kartBilgisi(kart: KartSozlesmesi, satir: { ad?: string }) {
+  const gorsel = adres(kart.gorselAdresi);
+  const kaynak = adres(kart.resmiSayfa);
+  const eksikler = kart.eksikler.filter((v): v is string => typeof v === "string");
+  const resmiKanitEksik = kart.dogrulamaDurumu === "verified" && !kart.dogrulanmis;
+  if (resmiKanitEksik) eksikler.push("Doğrulanmış ürün için resmî sayfa kanıtı eksik; doğrulanmış kabul edilmedi.");
+  return {
+    ad: kart.ad || satir.ad || "",
+    siteAciklama: kart.aciklama, siteKategori: kart.kategori,
+    siteMarka: kart.marka, siteVaryant: kart.varyant,
+    gorselKullanimDurumu: kart.gorselHaklari,
+    siteSayfa: kaynak, siteGorsel: gorsel, siteGorseller: gorsel ? [gorsel] : [],
+    dogrulamaDurumu: resmiKanitEksik ? "Araştırılamadı" : DURUMLAR[kart.dogrulamaDurumu],
+    eslesenBilgiler: kart.eslesenBilgiler, eksikler,
+    gorselDogrulamaDurumu: kart.gorselDogrulamaDurumu,
+    kaynaklar: [kart.kanit, ...kart.kaynaklar],
+  };
+}
+
 export async function kartPresetYanitiniOku(cevap: Response, okuma: GoruSonucu, secilenAkis: PresetAkis = akis()) {
   const { icerik, ...kullanim } = await faturaYanitMetniniOku(cevap);
   const yeniAkis = secilenAkis === "yeni";
@@ -270,6 +398,7 @@ export async function kartPresetYanitiniOku(cevap: Response, okuma: GoruSonucu, 
   const tekrarlar = tekillesmeKarari(okuma.satirlar).indirgenen;
   let eslesen = 0;
   const kapsamsiz: number[] = [];
+  const kartBilgileri = new Map<number, ReturnType<typeof kartBilgisi>>();
   const satirlar = okuma.satirlar.map((s, i) => {
     const sira = String(i + 1);
     const kart = items.get(sira);
@@ -278,7 +407,12 @@ export async function kartPresetYanitiniOku(cevap: Response, okuma: GoruSonucu, 
       duplicateGroup: kimlik?.grup ?? null,
       canonicalRowId: kimlik === undefined ? null : String(kimlik.kanonik),
     };
+    const kanonik = tekrarlar.get(sira);
     if (!kart || bosKart(kart, s) || !Object.hasOwn(DURUMLAR, kart.dogrulamaDurumu)) {
+      const kaynak = kanonik !== undefined && yeniAkis ? kartBilgileri.get(kanonik) : undefined;
+      if (kanonik !== undefined && kaynak) {
+        return { ...s, ...grupKimligi, ...kaynak, eksikler: [...kaynak.eksikler, tekrarUyarisi(kanonik)] };
+      }
       kapsamsiz.push(i + 1);
       return {
         ...s, ...grupKimligi,
@@ -286,31 +420,20 @@ export async function kartPresetYanitiniOku(cevap: Response, okuma: GoruSonucu, 
         eksikler: [...(s.eksikler ?? []), "Ürün kartı bu satır için üretilemedi."],
       };
     }
-    const kanonik = tekrarlar.get(sira);
-    if (kanonik !== undefined) {
+    if (kanonik !== undefined && !yeniAkis) {
       return {
         ...s, ...grupKimligi,
-        eksikler: [...(s.eksikler ?? []), `Aynı ürün belgede ${kanonik}. satırda da geçiyor; tek kart açılır.`],
+        eksikler: [...(s.eksikler ?? []), tekrarUyarisi(kanonik)],
       };
     }
+    const bilgi = kartBilgisi(kart, s);
+    if (kanonik !== undefined) {
+      const kaynak = kartBilgileri.get(kanonik) ?? bilgi;
+      return { ...s, ...grupKimligi, ...kaynak, eksikler: [...kaynak.eksikler, tekrarUyarisi(kanonik)] };
+    }
     eslesen += 1;
-    const gorsel = adres(kart.gorselAdresi);
-    const kaynak = adres(kart.resmiSayfa);
-    const eksikler = kart.eksikler.filter((v): v is string => typeof v === "string");
-    const resmiKanitEksik = kart.dogrulamaDurumu === "verified" && !kart.dogrulanmis;
-    if (resmiKanitEksik) eksikler.push("Doğrulanmış ürün için resmî sayfa kanıtı eksik; doğrulanmış kabul edilmedi.");
-    const ad = kart.ad || s.ad;
-    return {
-      ...s, ...grupKimligi, ad, adet: s.adet,
-      siteAciklama: kart.aciklama, siteKategori: kart.kategori,
-      siteMarka: kart.marka, siteVaryant: kart.varyant,
-      gorselKullanimDurumu: kart.gorselHaklari,
-      siteSayfa: kaynak, siteGorsel: gorsel, siteGorseller: gorsel ? [gorsel] : [],
-      dogrulamaDurumu: resmiKanitEksik ? "Araştırılamadı" : DURUMLAR[kart.dogrulamaDurumu],
-      eslesenBilgiler: kart.eslesenBilgiler, eksikler,
-      gorselDogrulamaDurumu: kart.gorselDogrulamaDurumu,
-      kaynaklar: [kart.kanit, ...kart.kaynaklar],
-    };
+    if (yeniAkis) kartBilgileri.set(i + 1, bilgi);
+    return { ...s, ...grupKimligi, ...bilgi };
   });
   if (kapsamsiz.length && !yeniAkis) throw new Error(KART_KAPSAMI_KODU);
   if (!eslesen) throw new Error("KART_SATIRLARI_ESLESMEDI");

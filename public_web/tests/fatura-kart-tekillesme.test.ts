@@ -67,6 +67,26 @@ it("OpenRouter grup alanı göndermese de Vixrex kendi kimliğiyle karar verir",
     .toEqual([["barkod:8691234567890", "1"], ["barkod:8691234567890", "1"]]);
 });
 
+it("yeni akışta tek araştırma tekrar satırın kartını da doldurur", async () => {
+  const satirlar = [
+    { hamSatir: "1", model: "TER0105", ad: "Tutku Elit Sıfıryaka", barkod: "8691234567890", beden: "4", marka: "Tutku", adet: 6 },
+    { hamSatir: "2", model: "TER0105", ad: "Tutku Elit Sıfıryaka", barkod: "8691234567890", beden: "5", marka: "Tutku", adet: 6 },
+  ];
+  const sonuc = await kartPresetYanitiniOku(yanit([gorselliKart("1", "Tutku Elit Sıfıryaka", "4")]), okuma(satirlar));
+  expect(sonuc.karantinadakiSatirlar).toEqual([]);
+  expect(sonuc.sonuc.satirlar[1]).toMatchObject({
+    ad: "Tutku Elit Sıfıryaka",
+    siteSayfa: "https://uretici.example/urun",
+    siteGorseller: ["https://cdn.example/urun.webp"],
+    dogrulamaDurumu: "Doğrulandı",
+    duplicateGroup: "barkod:8691234567890",
+    canonicalRowId: "1",
+  });
+  expect(sonuc.sonuc.satirlar[1].eksikler).toContain("Aynı ürün belgede 1. satırda da geçiyor; tek kart açılır.");
+  expect(sonuc.sonuc.satirlar[1].beden).toBe("5");
+  expect(sonuc.sonuc.satirlar[1].adet).toBe(6);
+});
+
 it("modelin verdiği grup farklı barkodlu satırları birleştirmez", async () => {
   const ayniGrup = (id: string, baslik: string) => ({
     ...kartKaydi(id, baslik, "4"),

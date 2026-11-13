@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { faturaIstekGovdesi, faturaYanitiniOku, type GoruSonucu } from "@/lib/faturaGoru";
+import { faturaPrizAnahtari } from "@/lib/faturaPriz";
 import { faturaSatiriniAktar } from "@/lib/faturaPresetAktarimi";
 import { islemKaydet } from "@/lib/faturaIslemKaydi";
 import { islemiYukle } from "@/lib/faturaIslemOku";
@@ -33,7 +34,7 @@ export async function faturayiArkaPlanaGonder(
   parmakIzi: string,
   goruntu: string | string[],
 ): Promise<string> {
-  const anahtar = process.env.OPENROUTER_API_KEY;
+  const anahtar = faturaPrizAnahtari();
   if (!anahtar) throw new Error("OKUYUCU_HAZIR_DEGIL");
   const body = { ...faturaIstekGovdesi(goruntu), model: OKUMA_PRESET };
   const { data, error } = await admin.rpc("enqueue_invoice_provider_job", {
@@ -94,7 +95,7 @@ export async function arkaPlanFaturaSonucunuAl(
         p_job_id: islemKimligi,
         p_read_result: { ...okuma, presetAkis: islemAkisi },
         p_body: kartPresetIstekGovdesi(okuma, islemAkisi),
-        p_api_key: process.env.OPENROUTER_API_KEY,
+        p_api_key: faturaPrizAnahtari(),
       });
       if (ikinci.error || ikinci.data?.success !== true) throw new Error("KART_ISLEYICI_HAZIR_DEGIL");
       return bekleyenFaturaYaniti(islemKimligi, "kartlaniyor");

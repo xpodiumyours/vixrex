@@ -1,4 +1,5 @@
-import { FATURA_JSON_ISTEGI, VARSAYILAN_FATURA_PRESET } from "@/lib/faturaPresetSozlesmesi";
+import { FATURA_JSON_ISTEGI } from "@/lib/faturaPresetSozlesmesi";
+import { faturaOkumaPresetReferansi, faturaPrizIstegiGonder } from "@/lib/faturaPriz";
 import { openrouterYanitiniOku } from "@/lib/openrouterYanitAkisi";
 import { normalizeProductMetadata, type ProductAttributeValue } from "@/lib/productRichData";
 import { barkodDenetimi, belgeAritmetigiDenetimi, satirAritmetigiDenetimi } from "@/lib/faturaKapiDenetimi";
@@ -157,8 +158,7 @@ export function katalogJsonunuOku(icerik: string): GoruSonucu {
 }
 
 export function faturaPresetReferansi(): string {
-  const ham = (process.env.OPENROUTER_PRESET || process.env.OPENROUTER_FATURA_PRESET || VARSAYILAN_FATURA_PRESET).trim();
-  return ham.startsWith("@preset/") ? ham : `@preset/${ham}`;
+  return faturaOkumaPresetReferansi();
 }
 
 /** Aynı gövde hem üretimde hem gerçek API smoke testinde kullanılır. */
@@ -175,25 +175,7 @@ export function faturaIstekGovdesi(dataUrl: string | string[]): Record<string, u
 }
 
 export async function faturayiOku(dataUrl: string | string[]): Promise<GoruSonucu> {
-  const anahtar = process.env.OPENROUTER_API_KEY;
-  if (!anahtar) throw new Error("OKUYUCU_HAZIR_DEGIL");
-  // Uzun araştırma işleyicisinde ayarlanabilir; Vercel senkron uç varsayılanı 240 saniyedir.
-  const ayar = Number(process.env.OPENROUTER_FATURA_TIMEOUT_MS ?? 240_000);
-  const zamanSiniri = Number.isFinite(ayar) && ayar >= 30_000 && ayar <= 900_000 ? ayar : 240_000;
-  let cevap: Response;
-  try {
-    cevap = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST", headers: {
-        "Content-Type": "application/json", Authorization: `Bearer ${anahtar}`,
-        "HTTP-Referer": "https://vixrex.com", "X-Title": "Vixrex Fatura",
-      }, body: JSON.stringify(faturaIstekGovdesi(dataUrl)), signal: AbortSignal.timeout(zamanSiniri),
-    });
-  } catch (hata) {
-    if (hata instanceof Error && ["TimeoutError", "AbortError"].includes(hata.name)) {
-      throw new Error("OKUYUCU_ZAMAN_ASIMI");
-    }
-    throw new Error("OKUYUCU_CEVAP_VERMEDI", { cause: hata });
-  }
+  const cevap = await faturaPrizIstegiGonder(faturaIstekGovdesi(dataUrl));
   return faturaYanitiniOku(cevap);
 }
 
