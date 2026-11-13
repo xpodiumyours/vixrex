@@ -5,6 +5,8 @@ import { faturaUrununuKaydet, satiriDogrula, satiriUrunleBagla } from "@/lib/fat
 import { kayitliFaturaKatalogunuUygula, faturaUrunGorselleriniAktar } from "@/lib/faturaUrunHazirlama";
 import { urunGirdisiniHazirla } from "@/lib/productIntake";
 import { faturaKatalogMetadatasi } from "@/lib/faturaUrunIcerigi";
+import { barkodDenetimi } from "@/lib/faturaKapiDenetimi";
+import type { ProductAttributeValue, ProductMetadata } from "@/lib/productRichData";
 import { FATURA_MIN_PRODUCT_IMAGES } from "@/lib/productImagePolicy";
 import { faturaBaslangicZamani, faturaOzetSatiri, faturaOzetiniKaydet, gecenSaniye } from "@/lib/faturaOzeti";
 
@@ -108,19 +110,40 @@ export async function faturaTaslakYanitiniHazirla(
               const durum = sahip.durum;
               const satisFiyati = fiyat(durum.satisFiyati);
               const katalog = satir.katalog;
+              const barkodKontrolu = barkodDenetimi(satir.barkod);
+              const barkodGecerli = !barkodKontrolu || barkodKontrolu.gecti;
+              const metadata: ProductMetadata = katalog
+                ? faturaKatalogMetadatasi(katalog)
+                : { lunaInvoice: true };
+              const ekBilgiler: ProductAttributeValue[] = [];
+              if (!barkodGecerli) {
+                ekBilgiler.push({
+                  key: "rawBarcode", label: "Faturadaki barkod (kontrol hanesi tutmadı)",
+                  value: String(satir.barkod),
+                });
+              }
+              const faturaMarkasi = (satir.marka ?? "").trim();
+              if (katalog && katalog.marka.trim() && faturaMarkasi && katalog.marka.trim() !== faturaMarkasi) {
+                ekBilgiler.push({ key: "officialBrand", label: "Resmî marka", value: katalog.marka.trim() });
+              }
               const hazirlik = await urunGirdisiniHazirla({
                 admin, storeId, storeName: store.data.name,
                 gorselPolitikasi: "toplu", lunaVaryantlariniKoru: true,
                 enAzGorsel: FATURA_MIN_PRODUCT_IMAGES,
                 govde: {
                   name: katalog?.resmiAd || satir.ad || satir.model || satir.barkod || satir.hamSatir,
-                  description: katalog?.aciklama ?? "", brand: katalog?.marka || satir.marka,
-                  barcode: satir.barkod, categoryId: "",
+                  description: katalog?.aciklama ?? "", brand: satir.marka || katalog?.marka,
+                  barcode: barkodGecerli ? satir.barkod : "", categoryId: "",
                   priceText: satisFiyati === null ? "" : `${satisFiyati} TL`,
                   imageUrls: [...new Set([...(katalog?.gorseller ?? []), ...durum.esnafGorselleri])],
                   stockQuantity: stok(durum.stok),
-                  metadata: { ...(satir.model ? { identifiers: { sku: satir.model } } : {}),
-                    ...(katalog ? faturaKatalogMetadatasi(katalog) : { lunaInvoice: true }) },
+                  metadata: {
+                    ...(satir.model ? { identifiers: { sku: satir.model } } : {}),
+                    ...metadata,
+                    ...(ekBilgiler.length
+                      ? { attributes: [...(metadata.attributes ?? []), ...ekBilgiler] }
+                      : {}),
+                  },
                 },
               });
               if (hazirlik.durum === "reddedildi") throw new Error(hazirlik.sebep);

@@ -33,8 +33,6 @@ export interface KartSozlesmesi {
   eksikler: unknown[];
   gorselDogrulamaDurumu: string;
   gorselHaklari: string;
-  tekrarGrubu: string;
-  kanonikRowId: string;
   kartDurumu: unknown;
   kanit: Kayit;
   kaynaklar: Kayit[];
@@ -138,6 +136,7 @@ export function tekKartSozlesmesi(item: Kayit): KartSozlesmesi {
   const gorselKaynakSayfa = metin(gorsel.source_url) || metin(kart.source_url)
     || metin(gorselDogrulamaNesnesi.source_url) || adayKaynak;
   const resmiSayfa = resmiKaniti || gorselKaynakSayfa;
+  const resmiAlanAdi = metin(dogrulama.official_domain) || metin(kart.official_domain);
   const gorselDogrulama = metin(gorsel.verification_status) || metin(kart.image_validation_status)
     || metin(gorselDogrulamaNesnesi.status);
   const gorselHaklari = metin(gorsel.rights_status) || metin(kart.rights_status)
@@ -147,7 +146,9 @@ export function tekKartSozlesmesi(item: Kayit): KartSozlesmesi {
   const eslesenBilgiler = doluDizi(dogrulama.matched_attributes, kart.matched_attributes);
   const eksikler = doluDizi(dogrulama.unmatched_attributes, kart.unmatched_attributes);
   const kaynaklar = Array.isArray(item.sources) ? item.sources.filter(nesne) : [];
-  const kanitEksigi = durum === "verified" ? kaynakDenetimi({ resmiSayfa, kaynaklar }) : null;
+  const kanitEksigi = durum === "verified"
+    ? kaynakDenetimi({ resmiSayfa, kaynaklar, officialDomain: resmiAlanAdi })
+    : null;
   return {
     rowId,
     hamSatirNo: sayi(kart.satir_no ?? item.satir_no),
@@ -171,8 +172,6 @@ export function tekKartSozlesmesi(item: Kayit): KartSozlesmesi {
     eksikler,
     gorselDogrulamaDurumu: gorselDogrulama,
     gorselHaklari,
-    tekrarGrubu: metin(item.duplicate_group),
-    kanonikRowId: metin(item.canonical_row_id),
     kartDurumu: metin(item.card_status) || "draft",
     kanit: { ...dogrulama, status: durum, official_product_url: adres(resmiKaniti), matched_attributes: eslesenBilgiler, unmatched_attributes: eksikler, media: { ...gorsel, image_url: gorselAdresi, source_url: gorselKaynakSayfa, verification_status: gorselDogrulama, rights_status: gorselHaklari }, card_status: metin(item.card_status) || "draft" },
     kaynaklar: Array.isArray(item.sources) ? item.sources.filter(nesne) : [],
@@ -227,7 +226,6 @@ const satirSemasi = (deger: unknown): boolean => esnekAlanlar(deger, {
   code: metinVeyaNull, name: metinVeyaNull, title: metinVeyaNull,
   invoice_data: girdiSemasi, vixrex_product_json: urunSemasi,
   validation: dogrulamaSemasi, media: gorselSemasi, card_status: sabit("draft"),
-  duplicate_group: metinVeyaNull, canonical_row_id: metinVeyaNull,
 });
 const ozetSemasi = (deger: unknown): boolean => esnekAlanlar(deger, {}, {
   total_rows: tamSayi, verified_count: tamSayi,
@@ -242,7 +240,6 @@ function katiKartYanitiDogrula(kaynak: Kayit, beklenenSatirlar?: readonly string
     return "summary şeması";
   }
   const gorulen = new Set<string>();
-  const gruplar = new Map<string, Array<{ rowId: string; kanonik: string }>>();
   for (let i = 0; i < items.length; i++) {
     const deger = items[i];
     if (!satirSemasi(deger)) return `items[${i}] şeması`;
@@ -257,27 +254,10 @@ function katiKartYanitiDogrula(kaynak: Kayit, beklenenSatirlar?: readonly string
       || metin(nesne(item.product) ? item.product.title : "");
     if (!kimlik) return `items[${i}] kimlik`;
     gorulen.add(rowId);
-    const grup = typeof item.duplicate_group === "string" && item.duplicate_group.trim() ? item.duplicate_group : null;
-    const kanonik = typeof item.canonical_row_id === "string" && item.canonical_row_id.trim() ? item.canonical_row_id : null;
-    if (grup !== null && (grup.length > 128 || grup.trim() !== grup || !grup)) {
-      return `items[${i}].duplicate_group`;
-    }
-    if (grup === null && kanonik === null) continue;
-    if (!grup || !kanonik || !/^[1-9]\d*$/.test(kanonik)) return `items[${i}].canonical_row_id`;
-    gruplar.set(grup, [...(gruplar.get(grup) ?? []), { rowId, kanonik }]);
   }
   if (beklenenSatirlar &&
     (gorulen.size !== beklenenSatirlar.length || beklenenSatirlar.some((id) => !gorulen.has(id)))) {
     return "faturanın row_id kümesi";
-  }
-  for (const [grup, uyeler] of gruplar) {
-    const idler = new Set(uyeler.map((u) => u.rowId));
-    const kanonik = uyeler[0].kanonik;
-    if (uyeler.length < 2 || !idler.has(kanonik) ||
-      uyeler.some((u) => u.kanonik !== kanonik) ||
-      !uyeler.some((u) => u.rowId === kanonik && u.kanonik === kanonik)) {
-      return `duplicate_group ${grup}`;
-    }
   }
   return null;
 }

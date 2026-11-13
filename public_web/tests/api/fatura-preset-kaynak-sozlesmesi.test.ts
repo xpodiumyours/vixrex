@@ -61,8 +61,7 @@ describe("depodaki OpenRouter preset tanımı ↔ Vixrex taşıma sözleşmesi",
     expect(format.json_schema.strict).toBe(true);
     const kalem = format.json_schema.schema.properties.items.items;
     expect(kalem.required).toEqual([
-      "row_id", "vixrex_product_json", "validation", "media",
-      "duplicate_group", "canonical_row_id", "sources",
+      "row_id", "vixrex_product_json", "validation", "media", "sources",
     ]);
     expect(kalem.properties).not.toHaveProperty("invoice_data");
     expect(kalem.properties).not.toHaveProperty("card_status");
@@ -75,15 +74,16 @@ describe("depodaki OpenRouter preset tanımı ↔ Vixrex taşıma sözleşmesi",
     expect(kalem.properties.validation.required).toContain("official_product_url");
   });
 
-  it("kopya satır talimatı strict şemanın zorunlu alanlarıyla çelişmez", () => {
+  it("preset talimatı strict şemanın zorunlu alanlarıyla çelişmez", () => {
     const metin=sistem(kart);
-    expect(metin).toContain("title ve brand boş dize");
-    expect(metin).toContain("validation ve media yine şemaya uygun döner");
     expect(metin).toContain("summary, card_status, invoice_data");
     expect(metin).toContain("rights_status alanlarını üretme");
-    type StrictItem = { properties: Record<string, { required?: string[] }> };
+    expect(metin).not.toContain("duplicate_group");
+    expect(metin).not.toContain("canonical_row_id");
+    type StrictItem = { required: string[]; properties: Record<string, { required?: string[] }> };
     type StrictFormat = { json_schema: { schema: { properties: { items: { items: StrictItem } } } } };
     const item = (kart.response_format as StrictFormat).json_schema.schema.properties.items.items;
+    expect(item.required).toEqual(["row_id", "vixrex_product_json", "validation", "media", "sources"]);
     expect(item.properties.vixrex_product_json.required).toContain("title");
     expect(item.properties.validation.required).toContain("official_product_url");
     expect(item.properties.media.required).toContain("image_url");

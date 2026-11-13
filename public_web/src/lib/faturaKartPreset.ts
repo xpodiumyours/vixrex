@@ -3,11 +3,10 @@ import {
   adres,
   KART_KAPSAMI_KODU,
   kartYanitiniCoz,
-  tekKartSozlesmesi,
   type KartSozlesmesi,
 } from "@/lib/faturaKartSozlesmesi";
 
-import { barkodDenetimi } from "@/lib/faturaKapiDenetimi";
+import { barkodDenetimi, gtinBicimindeMi } from "@/lib/faturaKapiDenetimi";
 
 export const URUN_KART_PRESET = "@preset/urun-kart-olusturucu";
 export const URUN_KART_PRESET_YENI = "@preset/vixrex-urun-karti-v2";
@@ -21,8 +20,6 @@ function barkodKimligi(barkod: string | undefined): string | null {
   if (denetim && !denetim.gecti) return null;
   return barkod ?? "";
 }
-
-type Kayit = Record<string, unknown>;
 
 function markaGrupAnahtari(marka: string | undefined): string {
   return (marka ?? "")
@@ -75,7 +72,7 @@ const KART_YANIT_FORMATI = {
           items: {
             type: "object",
             additionalProperties: false,
-            required: ["row_id", "vixrex_product_json", "validation", "media", "duplicate_group", "canonical_row_id", "sources"],
+            required: ["row_id", "vixrex_product_json", "validation", "media", "sources"],
             properties: {
               row_id: { type: "string" },
               vixrex_product_json: {
@@ -112,8 +109,6 @@ const KART_YANIT_FORMATI = {
                   verification_status: { type: ["string", "null"] },
                 },
               },
-              duplicate_group: { type: ["string", "null"] },
-              canonical_row_id: { type: ["string", "null"] },
               sources: {
                 type: "array",
                 items: {
@@ -202,48 +197,58 @@ const DURUMLAR: Record<string, string> = {
 
 export type TekillesmeKarari = { indirgenen: Map<string, number> };
 
-function kanonikBaglantilari(satirlar: readonly unknown[], kartlar: Map<string, KartSozlesmesi>): Map<string, number> {
-  const baglantilar = new Map<string, number>();
-  const gruplar = new Map<string, string[]>();
-  for (let i = 0; i < satirlar.length; i++) {
-    const id = String(i + 1);
-    const grup = kartlar.get(id)?.tekrarGrubu;
-    if (!grup) continue;
-    gruplar.set(grup, [...(gruplar.get(grup) ?? []), id]);
-  }
-  for (const [grup, uyeler] of gruplar) {
-    if (uyeler.length < 2) continue;
-    const kanonikler = uyeler.map((id) => kartlar.get(id)?.kanonikRowId ?? "");
-    const kanonikId = kanonikler[0];
-    if (!/^[1-9]\d*$/.test(kanonikId) || kanonikler.some((id) => id !== kanonikId)) continue;
-    if (!uyeler.includes(kanonikId)) continue;
-    const kanonikKart = kartlar.get(kanonikId);
-    if (kanonikKart?.tekrarGrubu !== grup || kanonikKart.kanonikRowId !== kanonikId) continue;
-    for (const id of uyeler) baglantilar.set(id, Number(kanonikId));
-  }
-  return baglantilar;
+type KimlikSatiri = {
+  barkod?: string | null;
+  model?: string | null;
+  ad?: string | null;
+  marka?: string | null;
+  adet?: number | null;
+};
+
+type Kimlik = { grup: string; kanonik: number };
+
+function ayniYazi(deger: unknown): string {
+  return metin(deger).normalize("NFKC").toLocaleLowerCase("tr-TR").replace(/\s+/g, " ");
 }
 
-function tekillesmeKarariKartlardan(satirlar: readonly unknown[], kartlar: Map<string, KartSozlesmesi>, secilenAkis: PresetAkis = akis()): TekillesmeKarari {
+function kimlikAnahtari(satir: KimlikSatiri): string {
+  const barkod = metin(satir.barkod).replace(/[\s-]+/g, "");
+  if (barkod && gtinBicimindeMi(barkod) && barkodDenetimi(barkod) === null) return `barkod:${barkod}`;
+  const kod = ayniYazi(satir.model);
+  if (!kod) return "";
+  const miktar = typeof satir.adet === "number" ? String(satir.adet) : "";
+  return ["kod", kod, ayniYazi(satir.ad), ayniYazi(satir.marka), miktar].join("|");
+}
+
+function kimlikler(satirlar: readonly KimlikSatiri[]): Map<string, Kimlik> {
+  const ilkGorulen = new Map<string, number>();
+  const hepsi = new Map<string, Kimlik>();
+  satirlar.forEach((satir, sira) => {
+    const anahtar = kimlikAnahtari(satir);
+    if (!anahtar) return;
+    const kanonik = ilkGorulen.get(anahtar) ?? sira + 1;
+    ilkGorulen.set(anahtar, kanonik);
+    hepsi.set(String(sira + 1), { grup: anahtar, kanonik });
+  });
+  const sayilar = new Map<string, number>();
+  for (const kimlik of hepsi.values()) sayilar.set(kimlik.grup, (sayilar.get(kimlik.grup) ?? 0) + 1);
+  const tekrarlar = new Map<string, Kimlik>();
+  for (const [id, kimlik] of hepsi) {
+    if ((sayilar.get(kimlik.grup) ?? 0) > 1) tekrarlar.set(id, kimlik);
+  }
+  return tekrarlar;
+}
+
+export function tekillesmeKarari(satirlar: readonly KimlikSatiri[]): TekillesmeKarari {
   const indirgenen = new Map<string, number>();
-  if (secilenAkis === "mevcut") return { indirgenen };
-  for (const [id, kanonik] of kanonikBaglantilari(satirlar, kartlar)) {
-    if (id !== String(kanonik)) indirgenen.set(id, kanonik);
+  for (const [id, kimlik] of kimlikler(satirlar)) {
+    if (Number(id) !== kimlik.kanonik) indirgenen.set(id, kimlik.kanonik);
   }
   return { indirgenen };
 }
 
-export function tekillesmeKarari(satirlar: readonly unknown[], items: Map<string, Kayit>): TekillesmeKarari {
-  const kartlar = new Map<string, KartSozlesmesi>();
-  for (const [id, item] of items) kartlar.set(id, tekKartSozlesmesi(item));
-  return tekillesmeKarariKartlardan(satirlar, kartlar);
-}
-
-export function tekrarGruplari(
-  satirlar: readonly unknown[],
-  items: Map<string, Kayit>,
-): Map<string, number> {
-  return tekillesmeKarari(satirlar, items).indirgenen;
+export function tekrarGruplari(satirlar: readonly KimlikSatiri[]): Map<string, number> {
+  return tekillesmeKarari(satirlar).indirgenen;
 }
 
 function metin(value: unknown): string {
@@ -261,17 +266,17 @@ export async function kartPresetYanitiniOku(cevap: Response, okuma: GoruSonucu, 
     eskiAkis: !yeniAkis,
   });
   const items = new Map(kartlar.map((kart) => [kart.rowId, kart]));
-  const baglantilar = kanonikBaglantilari(okuma.satirlar, items);
-  const tekrarlar = tekillesmeKarariKartlardan(okuma.satirlar, items, secilenAkis).indirgenen;
+  const kimlikBilgisi = kimlikler(okuma.satirlar);
+  const tekrarlar = tekillesmeKarari(okuma.satirlar).indirgenen;
   let eslesen = 0;
   const kapsamsiz: number[] = [];
   const satirlar = okuma.satirlar.map((s, i) => {
     const sira = String(i + 1);
     const kart = items.get(sira);
-    const kanonikId = baglantilar.get(sira);
+    const kimlik = kimlikBilgisi.get(sira);
     const grupKimligi = {
-      duplicateGroup: kanonikId === undefined ? null : kart?.tekrarGrubu ?? null,
-      canonicalRowId: kanonikId === undefined ? null : String(kanonikId),
+      duplicateGroup: kimlik?.grup ?? null,
+      canonicalRowId: kimlik === undefined ? null : String(kimlik.kanonik),
     };
     if (!kart || bosKart(kart, s) || !Object.hasOwn(DURUMLAR, kart.dogrulamaDurumu)) {
       kapsamsiz.push(i + 1);
@@ -285,7 +290,7 @@ export async function kartPresetYanitiniOku(cevap: Response, okuma: GoruSonucu, 
     if (kanonik !== undefined) {
       return {
         ...s, ...grupKimligi,
-        eksikler: [...(s.eksikler ?? []), `OpenRouter aynı ürünü ${kanonik}. satıra bağladı.`],
+        eksikler: [...(s.eksikler ?? []), `Aynı ürün belgede ${kanonik}. satırda da geçiyor; tek kart açılır.`],
       };
     }
     eslesen += 1;

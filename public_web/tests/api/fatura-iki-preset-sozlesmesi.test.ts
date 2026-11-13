@@ -30,7 +30,7 @@ const item = (id: string, title: string) => ({
     image_url: "https://example.com/p/" + id + ".jpg", source_url: "https://example.com/p/" + id,
     verification_status: "verified", rights_status: "unknown",
   },
-  card_status: "draft", duplicate_group: null, canonical_row_id: null,
+  card_status: "draft",
 });
 const response = (items: unknown[], summary: Record<string, unknown> = {
   total_rows: items.length, verified_count: items.length, draft_count: items.length, not_found_count: 0,
@@ -133,29 +133,26 @@ describe("gerçek ikinci preset JSON sözleşmesi",()=>{
     const ozetsiz=await kartPresetYanitiniOku(response([item("1","A"),item("2","B")],{total_rows:1}),first);
     expect(ozetsiz.sonuc.satirlar.map((s)=>s.ad)).toEqual(["A","B"]);
   });
-  it("boşlukla değiştirilmiş duplicate_group reddedilir",async()=>{
-    await expect(kartPresetYanitiniOku(response([
+  it("modelin gönderdiği duplicate_group artık zorunlu değil ve reddedilmez",async()=>{
+    const result=await kartPresetYanitiniOku(response([
       {...item("1","A"),duplicate_group:" grup",canonical_row_id:"1"},
       {...item("2","B"),duplicate_group:" grup",canonical_row_id:"1"},
-    ]),first)).rejects.toThrow("KART_YANITI_COZULEMEDI");
-  });
-  it("OpenRouter kanonik row_id=2 ve grup bilgisi kalıcı kataloga geçer",async()=>{
-    const result=await kartPresetYanitiniOku(response([
-      {...item("1","A"),duplicate_group:"grup-2",canonical_row_id:"2"},
-      {...item("2","B"),duplicate_group:"grup-2",canonical_row_id:"2"},
     ]),first);
+    expect(result.sonuc.satirlar.map(s=>s.ad)).toEqual(["A","B"]);
+    expect(result.sonuc.satirlar.map(s=>s.duplicateGroup)).toEqual([null,null]);
+  });
+  it("Vixrex tekilleştirme kararı kalıcı kataloga geçer",async()=>{
+    const tekrar={...first,satirlar:[
+      {...first.satirlar[0],barkod:"8691234567890",model:"A",ad:"İlk",adet:3},
+      {...first.satirlar[1],barkod:"8691234567890",model:"A",ad:"İlk",adet:3},
+    ]};
+    const result=await kartPresetYanitiniOku(response([item("1","A"),item("2","A")]),tekrar);
     const satirlar=result.sonuc.satirlar.map(s=>faturaSatiriniAktar(s,"Tedarikçi"));
     expect(satirlar.map(s=>[s.katalog?.duplicateGroup,s.katalog?.canonicalRowId]))
-      .toEqual([["grup-2","2"],["grup-2","2"]]);
+      .toEqual([["barkod:8691234567890","1"],["barkod:8691234567890","1"]]);
     expect(satirdanFaturaTaslagi(satirlar[1])).toMatchObject({
-      duplicateGroup:"grup-2",canonicalRowId:"2",
+      duplicateGroup:"barkod:8691234567890",canonicalRowId:"1",
     });
-  });
-  it("bozuk kanonik grup bağlantısını yeni ürün kararı vermeden reddeder",async()=>{
-    await expect(kartPresetYanitiniOku(response([
-      {...item("1","A"),duplicate_group:"grup",canonical_row_id:"1"},
-      {...item("2","B"),duplicate_group:"grup",canonical_row_id:"2"},
-    ]),first)).rejects.toThrow("KART_YANITI_COZULEMEDI");
   });
   it("eski yol düz/karma biçimi kabul etmeye devam eder",async()=>{
     vi.stubEnv("PRESET_AKIS","mevcut");

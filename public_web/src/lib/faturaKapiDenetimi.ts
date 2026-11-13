@@ -54,10 +54,31 @@ export function belgeAritmetigiDenetimi(
   };
 }
 
+function alanAdi(deger: unknown): string {
+  const metin = String(deger ?? "").trim();
+  if (!metin) return "";
+  try {
+    const adres = new URL(metin.includes("://") ? metin : `https://${metin}`);
+    return adres.hostname.toLocaleLowerCase("tr-TR").replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+}
+
 export function kaynakDenetimi(args: {
   resmiSayfa: string;
   kaynaklar: unknown[];
+  officialDomain?: string;
 }): DenetimSonucu | null {
+  const beklenen = alanAdi(args.officialDomain);
+  const sayfaAlani = alanAdi(args.resmiSayfa);
+  if (beklenen && sayfaAlani && sayfaAlani !== beklenen && !sayfaAlani.endsWith(`.${beklenen}`)) {
+    return {
+      gecti: false,
+      kod: "ALAN_ADI_UYUSMUYOR",
+      mesaj: `Resmî ürün sayfasının alan adı (${sayfaAlani}) doğrulanan alan adıyla (${beklenen}) uyuşmuyor.`,
+    };
+  }
   const adresler = args.kaynaklar
     .map((kaynak) => (kaynak && typeof kaynak === "object"
       ? String((kaynak as Record<string, unknown>).url ?? "")

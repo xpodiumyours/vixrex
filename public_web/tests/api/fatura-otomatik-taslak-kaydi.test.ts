@@ -151,6 +151,49 @@ describe("sunucuda kalıcı görünmez fatura taslağı", () => {
     expect(m.save).not.toHaveBeenCalled(); expect(reply.hazirlaniyor).toBe(false);
   });
 
+  it("kontrol hanesi tutmayan barkod ürün taslağına yazılmaz, ham değer metadata'da saklanır", async () => {
+    const kayit = invoice();
+    kayit.satirlar[0] = { ...kayit.satirlar[0], barkod: "8691234567891", model: "M1" };
+    const c = client(kayit);
+    await faturaTaslakYanitiniHazirla(c.admin, "store", "demo", structuredClone(kayit));
+    const girdi = m.save.mock.calls[0][1].girdi;
+    expect(girdi.barcode).toBeNull();
+    expect(girdi.metadata.attributes).toContainEqual(
+      expect.objectContaining({ key: "rawBarcode", value: "8691234567891" }),
+    );
+  });
+
+  it("geçerli GTIN barkodu ürün taslağına yazılır", async () => {
+    const kayit = invoice();
+    kayit.satirlar[0] = { ...kayit.satirlar[0], barkod: "8691234567890", model: "M1" };
+    const c = client(kayit);
+    await faturaTaslakYanitiniHazirla(c.admin, "store", "demo", structuredClone(kayit));
+    const girdi = m.save.mock.calls[0][1].girdi;
+    expect(girdi.barcode).toBe("8691234567890");
+    expect(girdi.metadata.attributes ?? []).not.toContainEqual(
+      expect.objectContaining({ key: "rawBarcode" }),
+    );
+  });
+
+  it("faturadaki esnaf markası korunur, üreticinin resmî markası metadata'da saklanır", async () => {
+    const kayit = invoice();
+    kayit.satirlar[0] = {
+      ...kayit.satirlar[0], marka: "Tutku",
+      katalog: {
+        firma: "Firma", kaynakFirma: "Firma", dayanak: "ad", izinDurumu: "yok",
+        resmiAd: "Tutku Fanila", marka: "Resmî Marka", aciklama: "", gorseller: [],
+        gorselAdaylari: [], kaynak: "",
+      },
+    };
+    const c = client(kayit);
+    await faturaTaslakYanitiniHazirla(c.admin, "store", "demo", structuredClone(kayit));
+    const girdi = m.save.mock.calls[0][1].girdi;
+    expect(girdi.brand).toBe("Tutku");
+    expect(girdi.metadata.attributes).toContainEqual(
+      expect.objectContaining({ key: "officialBrand", value: "Resmî Marka" }),
+    );
+  });
+
   it("başka mağaza için kayıt yapmaz", async () => {
     const c = client();
     const reply = await faturaTaslakYanitiniHazirla(c.admin, "other-store", "demo", c.kayit);

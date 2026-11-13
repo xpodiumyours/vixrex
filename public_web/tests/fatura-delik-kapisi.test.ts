@@ -106,4 +106,31 @@ describe("kartın kaynak kaydı", () => {
     const dogru = [{ url: "https://sehermensucat.com/urun" }];
     expect(tekKartSozlesmesi(kart({ sources: dogru })).dogrulanmis).toBe(true);
   });
+
+  it("resmî ürün sayfasının alan adı official_domain ile uyuşmazsa doğrulanmış sayılmaz", () => {
+    const dogru = [{ url: "https://baskaalan.com/urun" }];
+    expect(kaynakDenetimi({
+      resmiSayfa: "https://baskaalan.com/urun", kaynaklar: dogru, officialDomain: "sehermensucat.com",
+    })?.kod).toBe("ALAN_ADI_UYUSMUYOR");
+    const baska = kart({
+      validation: { status: "verified", official_domain: "sehermensucat.com",
+        official_product_url: "https://baskaalan.com/urun", matched_attributes: [], unmatched_attributes: [] },
+      sources: dogru,
+    });
+    expect(tekKartSozlesmesi(baska).dogrulanmis).toBe(false);
+    expect(tekKartSozlesmesi(baska).kanitEksigi?.kod).toBe("ALAN_ADI_UYUSMUYOR");
+  });
+
+  it("alt alan adı ve www farkı alan adı uyuşmazlığı sayılmaz", () => {
+    expect(kaynakDenetimi({
+      resmiSayfa: "https://www.sehermensucat.com/urun",
+      kaynaklar: [{ url: "https://www.sehermensucat.com/urun" }],
+      officialDomain: "sehermensucat.com",
+    })).toBeNull();
+    expect(kaynakDenetimi({
+      resmiSayfa: "https://shop.sehermensucat.com/urun",
+      kaynaklar: [{ url: "https://shop.sehermensucat.com/urun" }],
+      officialDomain: "sehermensucat.com",
+    })).toBeNull();
+  });
 });
