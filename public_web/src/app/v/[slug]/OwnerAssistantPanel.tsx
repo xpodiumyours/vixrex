@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { useOwnerDraft } from "./hooks/useOwnerDraft";
 import { useOwnerChat } from "./hooks/useOwnerChat";
 import { useFieldSelection } from "./hooks/useFieldSelection";
@@ -26,6 +26,7 @@ import { alanOnemi, sonrakiRehberAlan } from "@/lib/vitrinReadiness";
 import type { AssistantHandoffV1 } from "@/lib/assistantHandoff";
 import { taslakClientId } from "@/lib/canliVitrinSenkron";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { gpsAdresiniCoz } from "@/lib/konumCozumleme";
 import { VITRIN_FIELDS } from "@/lib/vitrinFieldSchema";
 import { otomatikDeger } from "@/lib/otomatikVitrinIcerik";
@@ -253,10 +254,10 @@ export default function OwnerAssistantPanel({
       onAlanSecildi: () => {
         setAcik(true);
         if (window.matchMedia("(min-width: 640px)").matches) {
-          // Masaüstü/tablet: vitrindeki bir alana tıklamak doğrudan o alanın
-          // araçlarını gösterir. Sohbetin içine kart yığmak yerine "Alanlar"
-          // sekmesi tek düzenleme yüzeyi olur.
-          setSekme("alanlar");
+          // Masaüstü/tablet: kullanıcı aktif olarak sohbet sekmesindeyse
+          // araya girip sekmeyi zorla değiştirmiyoruz (soru netleştirme korunur).
+          // Diğer sekmelerdeyse "alanlar" yüzeyini odaklar.
+          setSekme((prev) => (prev === "sohbet" ? "sohbet" : "alanlar"));
           setHaritaAcik(true);
         } else {
           // Telefon: onaylanan compact composer davranışı korunur.
@@ -286,6 +287,15 @@ export default function OwnerAssistantPanel({
     if (payload === "ilk_eksik_alana_git") {
       const ilkEksik = sonrakiRehberAlan(yerelTaslak, null, atlanmisAlanlar);
       if (ilkEksik) alanSec(ilkEksik.anahtar);
+      return;
+    }
+    if (payload === "onay_tamam") {
+      mesajEkle(
+        "asistan",
+        "Kaydı onayladın. Sıradaki eksik alana geçelim mi?",
+        [{ label: "Sıradaki alana geç", payload: "ilk_eksik_alana_git" }],
+        "✅"
+      );
       return;
     }
     // Faz 5 (Çalışma masası / Yön C): onay kartındaki "Geri al" —
@@ -352,6 +362,24 @@ export default function OwnerAssistantPanel({
   const [gpsLoading, setGpsLoading] = useState(false);
   const router = useRouter();
 
+  // UpNextList içindeki "Atla" tıklandığında yalnızca yerel state'i değil,
+  // veritabanındaki draft_skipped_fields tablosunu da günceller (kalıcı atlama).
+  const anahtariAtlaVeKaydet = useCallback(
+    async (anahtar: string) => {
+      alanAtlandi(anahtar);
+      try {
+        await fetch("/api/owner-draft-skip", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ slug, anahtar }),
+        });
+      } catch {
+        // Ağ hatası olsa dahi yerel listede alan görünmez kılınmıştır.
+      }
+    },
+    [slug, alanAtlandi]
+  );
+
   // Faz D3 (Tek Asistan planı, 2026-09-02): kiralanan bir şablon ilk kez
   // açıldığında (draftYeniOlusturuldu) ve kategori zaten doluysa, yapısal/
   // kozmetik alanları (otomatikDoldurulabilir) kategoriye göre otomatik
@@ -372,7 +400,7 @@ export default function OwnerAssistantPanel({
     );
 
     (async () => {
-      const hazirlananEtiketler: string[] = [];
+      const degisiklikler: Array<{ anahtar: string; deger: unknown; kolon: string }> = [];
       for (const alan of otomatikAlanlar) {
         // Zaten doluysa üzerine yazma — yalnız boşu doldur.
         const mevcut = yerelTaslak[alan.kolon];
@@ -381,31 +409,33 @@ export default function OwnerAssistantPanel({
         const deger = otomatikDeger(alan, kategoriEtiketi);
         if (!deger) continue;
 
-        try {
-          const yanit = await fetch("/api/owner-draft", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              slug,
-              anahtar: alan.anahtar,
-              deger,
-              clientId: taslakClientId(),
-            }),
-          });
-          if (yanit.ok) {
-            setAlan(alan.kolon, deger);
-            hazirlananEtiketler.push(alan.etiket);
-          }
-        } catch {
-          // Tek alan başarısız olursa akışı durdurmaz, kalanlarla devam eder.
-        }
+        degisiklikler.push({ anahtar: alan.anahtar, deger, kolon: alan.kolon });
       }
 
-      if (hazirlananEtiketler.length > 0) {
-        router.refresh();
+      if (degisiklikler.length === 0) return;
+
+      try {
+        const yanit = await fetch("/api/owner-draft-batch", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            slug,
+            commandId: crypto.randomUUID(),
+            degisiklikler: degisiklikler.map(({ anahtar, deger }) => ({ anahtar, deger })),
+            clientId: taslakClientId(),
+          }),
+        });
+        if (yanit.ok) {
+          for (const d of degisiklikler) {
+            setAlan(d.kolon, d.deger);
+          }
+          router.refresh();
+        }
+      } catch {
+        // Ağ hatası durumunda akış sessizce devam eder.
       }
     })();
-  }, [draftYeniOlusturuldu, yerelTaslak, slug, setAlan, mesajEkle, router]);
+  }, [draftYeniOlusturuldu, yerelTaslak, slug, setAlan, router]);
 
   // Landing'de anlatılanın panele taşınması (2026-09-02) — "kullanıcı
   // landing'de yazdığı bilgilerle vitrin doldurulmaya başlasın" isteği.
@@ -732,7 +762,7 @@ export default function OwnerAssistantPanel({
                   suankiAnahtar={seciliAlan?.anahtar ?? null}
                   atlanmisAlanlar={atlanmisAlanlar}
                   alanSec={alanSec}
-                  alanAtla={alanAtlandi}
+                  alanAtla={anahtariAtlaVeKaydet}
                 />
                 <SectionProgressList yerelTaslak={yerelTaslak} alanSec={alanSec} />
                 <SectionVisibilityToggle
@@ -745,6 +775,33 @@ export default function OwnerAssistantPanel({
                   slug={slug}
                   mevcutAyarlar={bookingSettings as { is_enabled: boolean; capacity: number; working_hours: Record<string, { start: string; end: string; active: boolean }>; lunch_break: { start: string; end: string; active: boolean } } | null}
                 />
+                <div className="border-t border-white/10 px-4 py-3">
+                  <p className="mb-2 text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">
+                    İçerik düzenleme
+                  </p>
+                  <div className="space-y-1">
+                    <button type="button" onClick={() => setAboutAcik(true)} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[12px] font-semibold text-slate-300 hover:bg-white/5">
+                      <span className="flex-1">Hakkımızda</span>
+                      <span className="text-[9px] text-slate-600">{aboutSection?.title ? "Dolu" : "Boş"}</span>
+                    </button>
+                    <button type="button" onClick={() => setGaleriAcik(true)} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[12px] font-semibold text-slate-300 hover:bg-white/5">
+                      <span className="flex-1">Galeri</span>
+                      <span className="text-[9px] text-slate-600">{galleryItems && galleryItems.length > 0 ? `${galleryItems.length} görsel` : "Boş"}</span>
+                    </button>
+                    <button type="button" onClick={() => setMarketplaceAcik(true)} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[12px] font-semibold text-slate-300 hover:bg-white/5">
+                      <span className="flex-1">Pazaryeri bağlantıları</span>
+                      <span className="text-[9px] text-slate-600">{marketplaceLinks && marketplaceLinks.length > 0 ? `${marketplaceLinks.length} link` : "Boş"}</span>
+                    </button>
+                    <button type="button" onClick={() => setFaqAcik(true)} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[12px] font-semibold text-slate-300 hover:bg-white/5">
+                      <span className="flex-1">Sık Sorulan Sorular</span>
+                      <span className="text-[9px] text-slate-600">{faqItems && faqItems.length > 0 ? `${faqItems.length} soru` : "Boş"}</span>
+                    </button>
+                    <button type="button" onClick={() => setKampanyaAcik(true)} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[12px] font-semibold text-slate-300 hover:bg-white/5">
+                      <span className="flex-1">Öne Çıkan Kampanya</span>
+                      <span className="text-[9px] text-slate-600">{campaignBanner?.title ? "Dolu" : "Boş"}</span>
+                    </button>
+                  </div>
+                </div>
               </div>
               <div className="shrink-0 border-t border-white/10 px-3 py-2">
                 <FieldInputArea
@@ -982,7 +1039,7 @@ export default function OwnerAssistantPanel({
                       setHaritaAcik(true);
                       alanSec(anahtar);
                     }}
-                    alanAtla={alanAtlandi}
+                    alanAtla={anahtariAtlaVeKaydet}
                   />
 
                   <div className="border-b border-white/10 px-4 py-3">
@@ -1046,14 +1103,40 @@ export default function OwnerAssistantPanel({
                         yerelTaslak,
                         urunFiyatsizSayisi,
                         urunAciklamasizSayisi
-                      ).map((oneri) => (
-                        <div
-                          key={oneri.id}
-                          className="rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2.5 text-[10px] leading-relaxed text-slate-300"
-                        >
-                          {oneri.mesaj}
-                        </div>
-                      ))}
+                      ).map((oneri) => {
+                        const hedefLink = oneri.id.startsWith("urun_") ? "/app/urunler" : null;
+                        const hedefAlan = oneri.id === "calisma_saatleri" ? "working_hours" : oneri.id === "logo" ? "logo_url" : null;
+                        return (
+                          <div
+                            key={oneri.id}
+                            className="rounded-xl border border-white/10 bg-white/[0.035] p-3 text-[11px] leading-relaxed text-slate-300"
+                          >
+                            <p>{oneri.mesaj}</p>
+                            <div className="mt-2 flex items-center justify-end">
+                              {hedefLink ? (
+                                <Link
+                                  href={hedefLink}
+                                  className="inline-flex items-center gap-1 text-[10px] font-bold text-sky-400 hover:text-sky-300 hover:underline"
+                                >
+                                  Ürünleri Düzenle ›
+                                </Link>
+                              ) : hedefAlan ? (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setSekme("alanlar");
+                                    setHaritaAcik(true);
+                                    alanSec(hedefAlan);
+                                  }}
+                                  className="inline-flex items-center gap-1 text-[10px] font-bold text-sky-400 hover:text-sky-300 hover:underline"
+                                >
+                                  Alana Git ›
+                                </button>
+                              ) : null}
+                            </div>
+                          </div>
+                        );
+                      })}
 
                       {rapor.eksikler.filter((e) => e.onem === "kalite").length === 0 &&
                       yonetimOnerileriUret(

@@ -136,19 +136,6 @@ export function useOwnerChat(
   // Poll: 15sn’de bir ve sekme görünür olunca — başka cihaz/Flutter yazdıysa otomatik düşer
   useEffect(() => {
     if (opts?.initialDbMessages && opts.initialDbMessages.length > 0) return; // server’dan gelen varsa poll’a gerek yok (ileride eklenebilir)
-    let interval: ReturnType<typeof setInterval> | null = null;
-    let cancelled = false;
-
-    const startPoll = async () => {
-      // İlk poll’u 15sn sonra değil, 3sn sonra başlat — hızlı senkron için
-      await new Promise((r) => setTimeout(r, 3000));
-      if (cancelled) return;
-      interval = setInterval(() => {
-        if (document.visibilityState !== "visible") return;
-        fetchAndSync();
-      }, 15000);
-    };
-    startPoll();
 
     const onVisible = () => {
       if (document.visibilityState === "visible") fetchAndSync();
@@ -161,8 +148,6 @@ export function useOwnerChat(
     });
 
     return () => {
-      cancelled = true;
-      if (interval) clearInterval(interval);
       document.removeEventListener("visibilitychange", onVisible);
       sub.subscription.unsubscribe();
     };

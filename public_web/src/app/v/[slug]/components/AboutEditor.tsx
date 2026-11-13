@@ -77,17 +77,20 @@ export function AboutEditor({ slug, mevcut, onClose, inline = false }: Props) {
     ];
 
     try {
-      for (const [anahtar, deger] of alanlar) {
-        const res = await fetch("/api/owner-draft", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ slug, anahtar, deger, clientId: null }),
-        });
-        if (!res.ok) {
-          const govde = await res.json();
-          setMesaj(govde?.hata ?? "Kaydedilemedi.");
-          return;
-        }
+      const batchRes = await fetch("/api/owner-draft-batch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug,
+          commandId: crypto.randomUUID(),
+          degisiklikler: alanlar.map(([anahtar, deger]) => ({ anahtar, deger })),
+          clientId: null,
+        }),
+      });
+      if (!batchRes.ok) {
+        const govde = await batchRes.json();
+        setMesaj(govde?.hata ?? "Kaydedilemedi.");
+        return;
       }
       // about_values JSONB — şemada yok, yapılandırılmış alan yolu
       const valuesRes = await fetch("/api/owner-structured-field", {

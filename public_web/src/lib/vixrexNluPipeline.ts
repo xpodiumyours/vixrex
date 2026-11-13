@@ -12,6 +12,7 @@ import {
   vixrexBaglamsalCevapKarari,
   vixrexDegisiklikIptaliMi,
 } from "./vixrexConversationContext";
+import { ilIlceCikar } from "./turkeyPlaceMatcher";
 
 export type VixrexPipelineOutcome = "handled" | "needsClarification" | "notUnderstood" | "needsSpecialFlow" | "blockedLegal";
 
@@ -131,8 +132,8 @@ async function clearPending(): Promise<void> {
   } catch { /* sessizce yut */ }
 }
 
-function needsSpecialFlow(anahtar: string): boolean {
-  return anahtar === "il" || anahtar === "ilce";
+function needsSpecialFlow(_anahtar: string): boolean {
+  return false;
 }
 
 function clarifyAsk(alan: VixrexNiyetAlan): string {
@@ -166,6 +167,16 @@ function extractPipelineValue(input: string, alan: VixrexNiyetAlan): unknown | n
         .replace(/\s+(?:yap|olsun)\s*[.!]?\s*$/iu, "")
         .trim();
     }
+  }
+
+  if (alan.anahtar === "il") {
+    const yer = ilIlceCikar(input);
+    if (yer?.il) return yer.il;
+  }
+
+  if (alan.anahtar === "ilce") {
+    const yer = ilIlceCikar(input);
+    if (yer?.ilce) return yer.ilce;
   }
 
   return extractVixrexValue(input, alan);

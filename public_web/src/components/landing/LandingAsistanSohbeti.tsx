@@ -321,7 +321,7 @@ export function LandingAsistanSohbeti({
       setAdim(ASISTAN_ADIMLARI.length); // bitti = true yapar
       taslagiKaydet({ ...cevaplar, legal_consent: true,
           aydinlatma_onay: aydinlatmaOnay, sartlar_onay: sartlarOnay, acik_riza_onay: acikRizaOnay });
-      router.push(`/v/${sonuc.slug}`);
+      router.push(`/v/${encodeURIComponent(sonuc.slug)}?editor=1`);
     } catch (e) {
       setHata(HATA_TEKRAR_DENE);
       console.error("[landing-asistan] publish error:", e);
@@ -443,12 +443,12 @@ export function LandingAsistanSohbeti({
             <KategoriGrid
               secenekler={PROFILES.map((p) => p.label)}
               secilen=""
-              onSelect={(deger) => {
+              onSelect={async (deger) => {
                 const kategori = resolveBusinessCategory(deger);
                 const hedef = kategori
                   ? `/kesfet?kategori=${encodeURIComponent(kategoriUrlParcasi(kategori.id))}`
                   : "/kesfet";
-                void niyetSohbetiKaydet([
+                await niyetSohbetiKaydet([
                   { role: "user", text: deger },
                   { role: "assistant", text: `${deger} işletmesine uygun hazır vitrinleri buldum.` },
                 ]);
@@ -466,13 +466,13 @@ export function LandingAsistanSohbeti({
             {niyetSerbestMetin.trim().length > 0 ? (
               <button
                 type="button"
-                onClick={() => {
+                onClick={async () => {
                   const metin = niyetSerbestMetin.trim();
                   const kategori = resolveBusinessCategory(metin);
                   const hedef = kategori
                     ? `/kesfet?kategori=${encodeURIComponent(kategoriUrlParcasi(kategori.id))}`
                     : "/kesfet";
-                  void niyetSohbetiKaydet([
+                  await niyetSohbetiKaydet([
                     { role: "user", text: metin, messageKey: NIYET_SERBEST_METIN_ANAHTARI },
                     {
                       role: "assistant",
