@@ -169,10 +169,6 @@ export async function faturaTaslakYanitiniHazirla(
               });
               if (kayitSonucu.durum === "onay-bekliyor") continue;
               olusanUrunIdleri.set(sira, kayitSonucu.id);
-              if (medya.gorselDurumu === "aktarim-bekliyor") {
-                rapor.hatalar.push("Ürün taslağı kaydedildi; bazı fotoğraflar aktarılamadı.");
-                break;
-              }
             }
           }
         }
@@ -202,6 +198,7 @@ export async function faturaTaslakYanitiniHazirla(
   }
   const bagliIdler = [...new Set(guncelKayit.satirlar.flatMap((satir) => satir.urunId ? [satir.urunId] : []))];
   rapor.kaydedildi = 0;
+  const gorselUyarilari: string[] = [];
   let gorselliSayisi: number | null = bagliIdler.length ? null : 0;
   if (bagliIdler.length) {
     const urunler = await admin.from("products").select("id,is_visible,fatura_kanit,image_urls")
@@ -217,19 +214,20 @@ export async function faturaTaslakYanitiniHazirla(
         (urun) => Array.isArray(urun.image_urls) && urun.image_urls.length > 0,
       ).length;
       if (rapor.gorselsiz > 0) {
-        rapor.hatalar.push(`${rapor.gorselsiz} kart görselsiz kaydedildi.`);
+        gorselUyarilari.push(`${rapor.gorselsiz} kart görselsiz kaydedildi.`);
       }
-      if (urunler.data.some((urun) => urun.fatura_kanit?.gorselDurumu === "aktarim-bekliyor") &&
-        !rapor.hatalar.some((hata) => hata.includes("fotoğraf"))) {
-        rapor.hatalar.push("Bazı ürün fotoğrafları henüz aktarılamadı. Kartları düzenleyip yeniden kaydedebilirsin.");
+      if (urunler.data.some((urun) => urun.fatura_kanit?.gorselDurumu === "aktarim-bekliyor")) {
+        gorselUyarilari.push("Bazı ürün fotoğrafları henüz aktarılamadı. Kartları düzenleyip yeniden kaydedebilirsin.");
       }
     }
   }
+  const devamEdiyor = rapor.bekleyen > 0 && rapor.hatalar.length === 0;
+  rapor.hatalar.push(...gorselUyarilari);
   const durum = await admin.from("invoice_provider_runs")
-    .update({ error_code: rapor.hatalar.length ? "FATURA_TASLAKLARI_EKSIK" : null })
+    .update({ error_code: !devamEdiyor && rapor.hatalar.length ? "FATURA_TASLAKLARI_EKSIK" : null })
     .eq("job_id", kayit.islemKimligi).eq("store_id", storeId).eq("state", "processed");
   if (durum.error) rapor.hatalar.push("Taslak kayıt durumu saklanamadı.");
-  const hazirlaniyor = rapor.bekleyen > 0 && rapor.hatalar.length === 0;
+  const hazirlaniyor = devamEdiyor && !durum.error;
   let ozetSatiri: string | null = null;
   if (!hazirlaniyor) {
     const baslangic = await faturaBaslangicZamani(admin, storeId, kayit.islemKimligi);

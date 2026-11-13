@@ -110,6 +110,7 @@ describe("sunucuda kalıcı görünmez fatura taslağı", () => {
 
   it("üç satırlık parçadan sonra aynı kayıtla devam eder; ikinci ürünü kopyalamaz", async () => {
     const c = client(invoice(4));
+    m.media.mockResolvedValueOnce({ urunGorselleri: [], gorselDurumu: "aktarim-bekliyor", gorselKaynaklari: [] });
     const simdi = { an: Date.now() };
     const saat = vi.spyOn(Date, "now").mockImplementation(() => simdi.an);
     const asilKaydet = m.save.getMockImplementation()!;
@@ -122,8 +123,11 @@ describe("sunucuda kalıcı görünmez fatura taslağı", () => {
     });
     const first = await faturaTaslakYanitiniHazirla(c.admin, "store", "demo", structuredClone(c.kayit));
     expect(first).toMatchObject({ hazirlaniyor: true, otomatikTaslakRaporu: { bekleyen: 1, kaydedildi: 3 } });
+    expect(first.taslakKayitUyarisi).toContain("fotoğraf");
+    expect(c.errorCode()).toBeNull();
     const second = await faturaTaslakYanitiniHazirla(c.admin, "store", "demo", structuredClone(c.kayit));
     expect(second).toMatchObject({ hazirlaniyor: false, otomatikTaslakRaporu: { bekleyen: 0, kaydedildi: 4 } });
+    expect(c.errorCode()).toBe("FATURA_TASLAKLARI_EKSIK");
     expect(m.save).toHaveBeenCalledTimes(4);
     saat.mockRestore();
   });
@@ -143,6 +147,17 @@ describe("sunucuda kalıcı görünmez fatura taslağı", () => {
     expect(m.save).toHaveBeenCalledTimes(1);
     expect(reopened.taslakKayitUyarisi).toContain("fotoğraf");
     expect(c.errorCode()).toBe("FATURA_TASLAKLARI_EKSIK");
+  });
+
+  it("görsel aktarımı başarısız olsa da kalan satırları kaydeder", async () => {
+    const c = client(invoice(2));
+    m.media.mockResolvedValueOnce({ urunGorselleri: [], gorselDurumu: "aktarim-bekliyor", gorselKaynaklari: [] });
+
+    const reply = await faturaTaslakYanitiniHazirla(c.admin, "store", "demo", structuredClone(c.kayit));
+
+    expect(m.save).toHaveBeenCalledTimes(2);
+    expect(reply).toMatchObject({ tamam: true, hazirlaniyor: false, otomatikTaslakRaporu: { kaydedildi: 2, bekleyen: 0 } });
+    expect(reply.taslakKayitUyarisi).toContain("fotoğraf");
   });
 
   it("aynı alışveriş olarak doğrulanmış belgeyi tekrar ürüne dönüştürmez", async () => {
