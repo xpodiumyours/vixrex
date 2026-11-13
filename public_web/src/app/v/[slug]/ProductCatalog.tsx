@@ -31,6 +31,7 @@ import {
   eskiFiyatYazisi,
   kartRozeti,
   productPhotoCountBadge,
+  productVariantCount,
   productVariantLabel,
   tutarYazisi,
 } from "@/lib/productCardPresentation";
@@ -373,12 +374,15 @@ export default function ProductCatalog({
             typeof product.stockQuantity === "number" && product.stockQuantity > 0
               ? product.stockQuantity
               : null;
+          const effectiveMaxQuantity = maxQuantity ?? 10;
           const cartItem = cartItems.find((item) => item.productSlug === productSlug);
           const cartQty = cartItem?.quantity ?? 0;
           const variantKey = cartItem?.variantKey || "standart";
           const priceText =
             fiyatTutar != null ? tutarYazisi(fiyatTutar) : String(product.price || "").trim();
-          const stokSinirinda = maxQuantity != null && cartQty >= maxQuantity;
+          const hasVariants =
+            !isService && productVariantCount(product.variants, metadata.templateKey) > 1;
+          const stokSinirinda = cartQty >= effectiveMaxQuantity;
 
           return (
             <article
@@ -488,6 +492,19 @@ export default function ProductCatalog({
                     >
                       Tükendi
                     </button>
+                  ) : hasVariants && cartQty === 0 ? (
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        setLocationProductId(null);
+                        setQuickView({ product, images: quickImages, productUrl, productSlug });
+                      }}
+                      className={`w-full rounded-xl py-2 text-[11px] font-extrabold ${vitrinGorunum.buton.ana}`}
+                    >
+                      Seçenekleri gör →
+                    </button>
                   ) : cartQty === 0 ? (
                     <button
                       type="button"
@@ -502,7 +519,7 @@ export default function ProductCatalog({
                           priceText,
                           priceAmount: fiyatTutar,
                           imageUrl: image,
-                          maxQuantity,
+                          maxQuantity: effectiveMaxQuantity,
                           quantity: 1,
                         });
                         setCartItems(next);

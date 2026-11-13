@@ -65,4 +65,12 @@ describe("vitrin görünüm kartelası", () => {
     expect(kaynak("src/components/VitrinCartDock.tsx")).not.toContain("text-red-");
     expect(kaynak("src/components/ProductCommercePanel.tsx")).not.toContain("text-red-");
   });
+
+  it("kart varyantlı üründe seçenekleri gör, tekil üründe sepete ekle ve adet sınırı uygular", () => {
+    const kart = kaynak("src/app/v/[slug]/ProductCatalog.tsx");
+    expect(kart).toContain("Seçenekleri gör →");
+    expect(kart).toContain("Sepete ekle");
+    expect(kart).toContain("productVariantCount(product.variants, metadata.templateKey) > 1");
+    expect(kart).toContain("effectiveMaxQuantity = maxQuantity ?? 10");
+  });
 });
