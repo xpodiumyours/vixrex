@@ -21,7 +21,10 @@ const CART_PREFIX = "vixrex_cart:";
 const CART_TTL_MS = 24 * 60 * 60 * 1000;
 
 function cleanText(value: unknown, max = 180): string {
-  return String(value ?? "").trim().slice(0, max);
+  return Array.from(String(value ?? "").trim().replace(/[\r\n\t]+/g, " "))
+    .slice(0, max)
+    .join("")
+    .toWellFormed();
 }
 
 function normalizeMaxQuantity(value: unknown): number | null {
@@ -200,38 +203,72 @@ export function cartTotalQuantity(items: VitrinCartItem[]) {
 export function cartTotalAmount(items: VitrinCartItem[]): number | null {
   if (items.length === 0) return null;
   let toplam = 0;
+  let fiyatliBulundu = false;
   for (const item of items) {
     const tutar = normalizePriceAmount(item.priceAmount);
-    if (tutar == null) return null;
+    if (tutar == null) continue;
+    fiyatliBulundu = true;
     toplam += tutar * clampQuantity(item.quantity, item.maxQuantity);
   }
-  return toplam;
+  return fiyatliBulundu ? toplam : null;
+}
+
+function formatOrderShortCode(orderKey?: string | null): string {
+  const cleaned = String(orderKey ?? "")
+    .replace(/[^a-zA-Z0-9]/g, "")
+    .toUpperCase();
+  if (cleaned.length >= 4) {
+    return `#VX-${cleaned.slice(0, 4)}`;
+  }
+  const fallback = Date.now().toString(36).toUpperCase().slice(-4).padStart(4, "0");
+  return `#VX-${fallback}`;
 }
 
 export function buildWhatsappOrderUrl(
   baseUrl: string | null | undefined,
   storeName: string,
   items: VitrinCartItem[],
+  orderKey?: string | null,
 ): string | null {
   if (!baseUrl || items.length === 0) return null;
 
+  const shortCode = formatOrderShortCode(orderKey);
+  const tarihSaat = new Date().toLocaleString("tr-TR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
   const lines = items.map((item) => {
-    const variant = item.variantText ? ` — ${item.variantText}` : "";
-    const price = item.priceText ? ` — ${item.priceText}` : "";
-    return `• ${clampQuantity(item.quantity)} × ${cleanText(item.productName, 180)}${variant}${price}`;
+    const variant = item.variantText ? ` — ${cleanText(item.variantText, 180)}` : "";
+    const price = item.priceText ? ` — ${cleanText(item.priceText, 80)}` : "";
+    return `• ${clampQuantity(item.quantity, item.maxQuantity)} × ${cleanText(item.productName, 180)}${variant}${price}`;
   });
 
   const toplamTutar = cartTotalAmount(items);
+  const fiyatsizSayisi = items.filter(
+    (item) => normalizePriceAmount(item.priceAmount) == null,
+  ).length;
+  const fiyatsizEk =
+    fiyatsizSayisi > 0 ? ` (+ ${fiyatsizSayisi} ürün için fiyat sorulacak)` : "";
+
   const message = [
+    `Sipariş no: ${shortCode} · ${tarihSaat}`,
     `Merhaba, ${cleanText(storeName, 120)} vitrininizden sipariş vermek istiyorum:`,
     "",
     ...lines,
     "",
     `Toplam ürün adedi: ${cartTotalQuantity(items)}`,
-    toplamTutar == null
-      ? null
-      : `Toplam tutar: ${toplamTutar.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} TL`,
+    toplamTutar != null
+      ? `Toplam tutar: ${toplamTutar.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} TL${fiyatsizEk}`
+      : fiyatsizSayisi > 0
+        ? `Toplam tutar: (${fiyatsizSayisi} ürün için fiyat sorulacak)`
+        : null,
     "Uygunluk ve teslimat bilgisini paylaşabilir misiniz?",
+    "",
+    "⚠️ Bu sipariş özeti vitrinden otomatik derlenmiştir. Fiyat, stok ve teslimat işletme teyidinden sonra kesinleşir.",
   ]
     .filter((satir): satir is string => satir !== null)
     .join("\n");
