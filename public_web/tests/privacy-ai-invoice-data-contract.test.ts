@@ -7,6 +7,7 @@ const privacy = readFileSync(resolve(base, "src/app/privacy/page.tsx"), "utf8");
 const auth = readFileSync(resolve(base, "../.github/scripts/check_auth_policy.py"), "utf8");
 const invoice = readFileSync(resolve(base, "src/app/api/fatura-oku/route.ts"), "utf8");
 const vision = readFileSync(resolve(base, "src/lib/faturaGoru.ts"), "utf8");
+const priz = readFileSync(resolve(base, "src/lib/faturaPriz.ts"), "utf8");
 const provider = readFileSync(resolve(base, "src/lib/faturaArkaPlanIslemi.ts"), "utf8");
 
 describe("R02-GIZ-01: yayımlanan veri envanteri gerçek fatura ve hesap akışını açıklar", () => {
@@ -27,7 +28,8 @@ describe("R02-GIZ-01: yayımlanan veri envanteri gerçek fatura ve hesap akış�
   });
 
   it("fatura işlem amacı ile gerçek OpenRouter çağrısı tutarlıdır", () => {
-    expect(vision).toContain("https://openrouter.ai/api/v1/chat/completions");
+    expect(priz).toContain("https://openrouter.ai/api/v1/chat/completions");
+    expect(vision).toContain("faturaPrizIstegiGonder");
     expect(provider).toContain("faturaIstekGovdesi");
     expect(privacy).toContain("OpenRouter ve seçilen yapay zekâ model sağlayıcıları");
     expect(privacy).toContain("ürün kartı");

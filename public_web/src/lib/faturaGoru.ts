@@ -5,8 +5,7 @@ import { normalizeProductMetadata, type ProductAttributeValue } from "@/lib/prod
 import { barkodDenetimi, belgeAritmetigiDenetimi, satirAritmetigiDenetimi } from "@/lib/faturaKapiDenetimi";
 export { VARSAYILAN_FATURA_PRESET } from "@/lib/faturaPresetSozlesmesi";
 
-/** Fatura görselini OpenRouter'a gönderir. Araştırma ve doğrulama mevcut preset'te kalır. */
-export const GORU_MODELI = process.env.OPENROUTER_MODEL || "openai/gpt-5.6-luna";
+/** Fatura görselini okuma presetine gönderir; ürün araştırması ve doğrulama ikinci presette yürür. */
 export type UrunOzelligi = ProductAttributeValue;
 export type KartKaynagi = string | Record<string, unknown>;
 
@@ -39,7 +38,7 @@ export interface GoruSatiri {
   eslesenBilgiler?: unknown;
   eksikler?: string[];
   gorselDogrulamaDurumu?: string;
-  /** OpenRouter ürüne ilişkin kanonik karar bilgileri. */
+  /** VixRex tekilleştirme ve kanonik satır bağlama bilgileri. */
   duplicateGroup?: string | null;
   canonicalRowId?: string | null;
   kaynaklar?: KartKaynagi[];

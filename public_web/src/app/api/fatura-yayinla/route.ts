@@ -111,8 +111,8 @@ export async function POST(request: NextRequest) {
       continue;
     }
 
-    // Kilitli kapsam: üretici fotoğrafı yayını durdurmaz; kullanım izni
-    // sonra, çalışan sistemle istenir (kayıtlar invoice_image_rights'ta).
+    // Görsel hak durumu publish_invoice_product RPC'sinde denetlenir;
+    // üretici görsel izni doğrulanmamışsa kart vitrine açılmaz, "hazir" bekler.
     try {
       const yayin = await publishInvoiceProduct({ admin, productId: id, editToken });
       if (yayin.success && yayin.gorunur === false) {

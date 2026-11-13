@@ -61,7 +61,7 @@
       "require_parameters": true,
       "aday_tarif": {
         "dosya": "openrouter/preset-kart.json",
-        "durum": "aday - canliya yazilmadi",
+        "durum": "canlida (v19 ile esit)",
         "system_prompt_sha256": "46b6045df7a799cc43613ddc4dd042cfb55e941f40bce8a984258e4c2406a18d",
         "system_prompt_length": 3771
       }

@@ -85,7 +85,7 @@ export async function arkaPlanFaturaSonucunuAl(
     let okuma: GoruSonucu;
     let kartCevabi: unknown;
     let asamaKullanimlari: unknown;
-    let islemAkisi: PresetAkis = "mevcut";
+    let islemAkisi: PresetAkis = akis();
     if (sonuc.stage === "reading") {
       okuma = await faturaYanitiniOku(cevap);
       if (!okuma.satirlar.length) throw new Error("FOTOGRAFTA_YAZI_YOK");
@@ -104,7 +104,12 @@ export async function arkaPlanFaturaSonucunuAl(
       if (!ilkOkuma || !Array.isArray(ilkOkuma.satirlar) || !ilkOkuma.satirlar.length) {
         throw new Error("OKUYUCU_EKSIK_CEVAP");
       }
-      islemAkisi = ilkOkuma.presetAkis === "yeni" ? "yeni" : "mevcut";
+      islemAkisi =
+        ilkOkuma.presetAkis === "mevcut"
+          ? "mevcut"
+          : ilkOkuma.presetAkis === "yeni"
+            ? "yeni"
+            : akis();
       const kart = await kartPresetYanitiniOku(cevap, ilkOkuma, islemAkisi);
       okuma = kart.sonuc;
       kartCevabi = kart.kartCevabi;

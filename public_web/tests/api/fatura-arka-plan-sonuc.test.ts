@@ -81,7 +81,7 @@ describe("tamamlanmış arka plan sonucunun gerçek taşıma yolu",()=>{
   await expect(arkaPlanFaturaSonucunuAl(admin,"store","deneme",job)).rejects.toThrow("KART_YANITI_COZULEMEDI");
   expect(m.save).not.toHaveBeenCalled();
  });
- it("önceki işte akış alanı yoksa mevcut yol ve eski cevap biçimi korunur",async()=>{
+ it("önceki işte akış alanı yoksa varsayılan akış (akis()) korunur",async()=>{
   const eskiIs=receipt(JSON.stringify({items:[kartItem]}));
   delete (eskiIs.readResult as Record<string,unknown>).presetAkis;
   const {admin}=client(eskiIs);

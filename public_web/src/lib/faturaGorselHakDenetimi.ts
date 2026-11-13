@@ -1,9 +1,9 @@
 /**
- * Fatura görsel hakları için salt-okunur gölge denetimi.
+ * Fatura görsel hakları denetimi ve kanıt derlemesi.
  *
- * DİKKAT: invoice_image_rights.usage_status bir kayıt durumudur; bu alan tek
- * başına imzalı marka lisansının varlığını kanıtlamaz. Yayın uygunluğu,
- * eski deny kapısı ve esnaf onayı burada DEĞİŞTİRİLMEZ.
+ * `invoice_image_rights.usage_status` kayıt durumlarını derler; derlenen
+ * `hakKayitDurumu` alanı ürünün `fatura_kanit.gorselKaynaklari` kaydına yazılır
+ * ve SQL yayın kapısında (`publish_invoice_product`) vitrin görünürlüğünü denetler.
  */
 export type GorselHakDurumu =
   | "verified_supplier_permission"
@@ -58,8 +58,8 @@ export function gorselHakKayitlariniDerle(
 }
 
 /**
- * Ürün fatura_kanit.gorselKaynaklari alanına yalnızca ek kanıt yazar.
- * Buradaki işaretler hiçbir kartı engellemez, gizlemez veya yayımlamaz.
+ * Ürün fatura_kanit.gorselKaynaklari alanına görselin hak kayıt durumunu yazar.
+ * SQL yayın kapısı (`publish_invoice_product`) doğrulanmamış görsellerde kartı hazır bekletir.
  */
 export function gorselHakKaydiniRaporla(
   kaynakGorsel: string,

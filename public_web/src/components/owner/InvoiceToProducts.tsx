@@ -1503,7 +1503,7 @@ export default function InvoiceToProducts({
                   {" · "}
                   {katalog.izinDurumu === "var"
                     ? "üretici izni var"
-                    : "üretici fotoğrafı — kullanım izni sonra istenecek"}
+                    : "üretici fotoğrafı — izin doğrulanınca vitrinde görünür"}
                 </div>
               ) : (
                 <div className="fatura-eslesme fatura-eslesme-yok">
