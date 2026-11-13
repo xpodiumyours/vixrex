@@ -1,16 +1,17 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { faturaIstekGovdesi, faturaYanitiniOku, type GoruSonucu } from "@/lib/faturaGoru";
+import { faturaPrizAdresi, faturaPrizAnahtari } from "@/lib/faturaPriz";
 import { faturaSatiriniAktar } from "@/lib/faturaPresetAktarimi";
 import { islemKaydet } from "@/lib/faturaIslemKaydi";
 import { islemiYukle } from "@/lib/faturaIslemOku";
 import { faturaTaslakYanitiniHazirla } from "@/lib/faturaOtomatikTaslakKaydi";
 import {
+  akis,
   kartPresetIstekGovdesi,
   kartPresetYanitiniOku,
   URUN_KART_PRESET,
+  type PresetAkis,
 } from "@/lib/faturaKartPreset";
-import { gorselsizSatirlariTamamla } from "@/lib/faturaGorsel";
-import { adayGorselleriniSec } from "@/lib/faturaGorselSecimi";
 import { faturaBaslangicZamani, faturaOzetSatiri, faturaOzetiniKaydet, gecenSaniye } from "@/lib/faturaOzeti";
 
 export const OKUMA_PRESET = "@preset/vixrex-qwen-fatura-okuma-suzme";
@@ -33,7 +34,7 @@ export async function faturayiArkaPlanaGonder(
   parmakIzi: string,
   goruntu: string | string[],
 ): Promise<string> {
-  const anahtar = process.env.OPENROUTER_API_KEY;
+  const anahtar = faturaPrizAnahtari();
   if (!anahtar) throw new Error("OKUYUCU_HAZIR_DEGIL");
   const body = { ...faturaIstekGovdesi(goruntu), model: OKUMA_PRESET };
   const { data, error } = await admin.rpc("enqueue_invoice_provider_job", {
@@ -41,6 +42,7 @@ export async function faturayiArkaPlanaGonder(
     p_fingerprint: parmakIzi,
     p_body: body,
     p_api_key: anahtar,
+    p_url: faturaPrizAdresi(),
   });
   if (error || data?.success !== true || typeof data.id !== "string") {
     // RPC hata nesnesinde istek parametreleri bulunabilir; anahtar/fotoğraf loglanmaz.
@@ -84,24 +86,33 @@ export async function arkaPlanFaturaSonucunuAl(
     let okuma: GoruSonucu;
     let kartCevabi: unknown;
     let asamaKullanimlari: unknown;
+    let islemAkisi: PresetAkis = akis();
     if (sonuc.stage === "reading") {
       okuma = await faturaYanitiniOku(cevap);
       if (!okuma.satirlar.length) throw new Error("FOTOGRAFTA_YAZI_YOK");
+      islemAkisi = akis();
       const ikinci = await admin.rpc("advance_invoice_provider_job", {
         p_store_id: storeId,
         p_job_id: islemKimligi,
-        p_read_result: okuma,
-        p_body: kartPresetIstekGovdesi(okuma),
-        p_api_key: process.env.OPENROUTER_API_KEY,
+        p_read_result: { ...okuma, presetAkis: islemAkisi },
+        p_body: kartPresetIstekGovdesi(okuma, islemAkisi),
+        p_api_key: faturaPrizAnahtari(),
+        p_url: faturaPrizAdresi(),
       });
       if (ikinci.error || ikinci.data?.success !== true) throw new Error("KART_ISLEYICI_HAZIR_DEGIL");
       return bekleyenFaturaYaniti(islemKimligi, "kartlaniyor");
     } else if (sonuc.stage === "cards") {
-      const ilkOkuma = sonuc.readResult as GoruSonucu | null;
+      const ilkOkuma = sonuc.readResult as (GoruSonucu & { presetAkis?: unknown }) | null;
       if (!ilkOkuma || !Array.isArray(ilkOkuma.satirlar) || !ilkOkuma.satirlar.length) {
         throw new Error("OKUYUCU_EKSIK_CEVAP");
       }
-      const kart = await kartPresetYanitiniOku(cevap, ilkOkuma);
+      islemAkisi =
+        ilkOkuma.presetAkis === "mevcut"
+          ? "mevcut"
+          : ilkOkuma.presetAkis === "yeni"
+            ? "yeni"
+            : akis();
+      const kart = await kartPresetYanitiniOku(cevap, ilkOkuma, islemAkisi);
       okuma = kart.sonuc;
       kartCevabi = kart.kartCevabi;
       asamaKullanimlari = {
@@ -112,24 +123,22 @@ export async function arkaPlanFaturaSonucunuAl(
     } else {
       throw new Error("OKUYUCU_EKSIK_CEVAP");
     }
-    const tamamlanmis = await gorselsizSatirlariTamamla({ satirlar: okuma.satirlar });
-    const birlesikOkuma = { ...okuma, satirlar: await adayGorselleriniSec({ satirlar: tamamlanmis }) };
-    const satirlar = birlesikOkuma.satirlar.map((s) => faturaSatiriniAktar(s, birlesikOkuma.tedarikci));
+    const satirlar = okuma.satirlar.map((s) => faturaSatiriniAktar(s, okuma.tedarikci));
     const id = await islemKaydet({
       slug, parmakIzi: sonuc.fingerprint, providerJobId: islemKimligi,
-      belgeAdedi: birlesikOkuma.belgeAdedi, belgeToplami: birlesikOkuma.belgeToplami,
-      tedarikci: birlesikOkuma.tedarikci, tedarikciVergiNo: birlesikOkuma.tedarikciVergiNo,
-      tedarikciAdres: birlesikOkuma.tedarikciAdres, tedarikciSite: birlesikOkuma.tedarikciSite,
+      belgeAdedi: okuma.belgeAdedi, belgeToplami: okuma.belgeToplami,
+      tedarikci: okuma.tedarikci, tedarikciVergiNo: okuma.tedarikciVergiNo,
+      tedarikciAdres: okuma.tedarikciAdres, tedarikciSite: okuma.tedarikciSite,
       tedarikciIz: null, satirlar,
-      belgeTuru: birlesikOkuma.belgeTuru, belgeNo: birlesikOkuma.belgeNo, belgeTarihi: birlesikOkuma.belgeTarihi,
-      malBedeli: birlesikOkuma.malBedeli, kdvTutari: birlesikOkuma.kdvTutari,
-      indirimTutari: birlesikOkuma.indirimTutari, odenecekToplam: birlesikOkuma.odenecekToplam,
-      belgeUyarisi: (birlesikOkuma.uyarilar ?? []).join(" · "),
+      belgeTuru: okuma.belgeTuru, belgeNo: okuma.belgeNo, belgeTarihi: okuma.belgeTarihi,
+      malBedeli: okuma.malBedeli, kdvTutari: okuma.kdvTutari,
+      indirimTutari: okuma.indirimTutari, odenecekToplam: okuma.odenecekToplam,
+      belgeUyarisi: (okuma.uyarilar ?? []).join(" · "),
       aramaDurumu: {
         erisimHatasi: satirlar.some((s) => s.dogrulamaDurumu?.includes("Araştırılamadı")),
         sonrakiSatir: satirlar.length,
-        presetCevabi: { belgeEkleri: birlesikOkuma.belgeEkleri, gruplar: birlesikOkuma.gruplar,
-          uyarilar: birlesikOkuma.uyarilar, kartCevabi, asamaKullanimlari },
+        presetCevabi: { belgeEkleri: okuma.belgeEkleri, gruplar: okuma.gruplar,
+          uyarilar: okuma.uyarilar, kartCevabi, asamaKullanimlari },
       },
     });
     if (id !== islemKimligi) throw new Error("FATURA_KAYDI_EKSIK");

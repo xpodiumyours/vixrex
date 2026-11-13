@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   gorselHakKaydiniRaporla,
   gorselHakKayitlariniDerle,
+  gorselIzinBekliyorMu,
 } from "@/lib/faturaGorselHakDenetimi";
 
 describe("P0-01: fatura gorsel haklarinin yayini kilitlemeyen golge denetimi", () => {
@@ -41,6 +42,21 @@ describe("P0-01: fatura gorsel haklarinin yayini kilitlemeyen golge denetimi", (
     expect(haklar.has("")).toBe(false);
     expect(gorselHakKaydiniRaporla("https://uretici.example/4.jpg", haklar).hakKayitDurumu)
       .toBe("unknown");
+  });
+
+  it("SQL yayin kapisiyla ayni dogrulanmis durumlari tanir (feed sartlari, esnaf medyasi)", () => {
+    const haklar = gorselHakKayitlariniDerle([
+      { image_url: "https://uretici.example/feed.jpg", usage_status: "verified_feed_terms" },
+      { image_url: "https://esnaf.example/kendi.jpg", usage_status: "merchant_owned_media" },
+    ]);
+    expect(gorselHakKaydiniRaporla("https://uretici.example/feed.jpg", haklar))
+      .toEqual({ hakKayitDurumu: "verified_feed_terms", hakIncelemeGerekiyor: false });
+    expect(gorselHakKaydiniRaporla("https://esnaf.example/kendi.jpg", haklar))
+      .toEqual({ hakKayitDurumu: "merchant_owned_media", hakIncelemeGerekiyor: false });
+    expect(gorselIzinBekliyorMu({ gorselKaynaklari: [{ hakKayitDurumu: "verified_feed_terms" }] }))
+      .toBe(false);
+    expect(gorselIzinBekliyorMu({ gorselKaynaklari: [{ hakKayitDurumu: "unknown" }] }))
+      .toBe(true);
   });
 
   it("bos liste de mevcut fatura karti akisini bloke etmez", () => {

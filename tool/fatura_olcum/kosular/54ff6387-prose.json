@@ -1,0 +1,75 @@
+{
+  "invoice_id": "54ff6387",
+  "products": [
+    {
+      "model": "",
+      "barcode": "",
+      "name": "ELT1301 Elit Erkek Elastan Sıfır Yaka Fanila",
+      "variant": "Beyaz / M (3)",
+      "size": "",
+      "qty": 1.0,
+      "buy": 115.0,
+      "total": 115.0
+    },
+    {
+      "model": "",
+      "barcode": "",
+      "name": "ELT1302 Elit Erkek Elastan Sıfır Yaka Uzun Kol Fanila",
+      "variant": "Beyaz / M (3)",
+      "size": "",
+      "qty": 1.0,
+      "buy": 137.0,
+      "total": 137.0
+    },
+    {
+      "model": "",
+      "barcode": "",
+      "name": "SKD0010 Seher Kadın Penye Kaşkorse Atlet",
+      "variant": "Beyaz / 3XL (7)",
+      "size": "",
+      "qty": 6.0,
+      "buy": 47.0,
+      "total": 282.0
+    },
+    {
+      "model": "",
+      "barcode": "",
+      "name": "TER0105 Tutku Erkek Penye Sıfır Yaka Fanila",
+      "variant": "100 Beyaz / L (4)",
+      "size": "",
+      "qty": 6.0,
+      "buy": 86.0,
+      "total": 516.0
+    },
+    {
+      "model": "",
+      "barcode": "",
+      "name": "TER0105 Tutku Erkek Penye Sıfır Yaka Fanila",
+      "variant": "100 Beyaz / XL (5)",
+      "size": "",
+      "qty": 6.0,
+      "buy": 86.0,
+      "total": 516.0
+    },
+    {
+      "model": "",
+      "barcode": "",
+      "name": "TKD0599 Tutku Kadın Perla Bikini Külot",
+      "variant": "975 Kombin / 5",
+      "size": "",
+      "qty": 24.0,
+      "buy": 21.5,
+      "total": 516.0
+    },
+    {
+      "model": "",
+      "barcode": "",
+      "name": "TKD0962 Tutku Kadın Pandora Bato Külot",
+      "variant": "975 Kombin / 4",
+      "size": "",
+      "qty": 12.0,
+      "buy": 35.0,
+      "total": 420.0
+    }
+  ]
+}

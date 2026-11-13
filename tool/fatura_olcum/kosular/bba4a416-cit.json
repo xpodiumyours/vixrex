@@ -1,0 +1,135 @@
+{
+  "invoice_id": "bba4a416",
+  "products": [
+    {
+      "model": "",
+      "barcode": "",
+      "name": "",
+      "variant": "",
+      "size": "",
+      "qty": 24.0,
+      "buy": 12.5,
+      "total": 300.0
+    },
+    {
+      "model": "",
+      "barcode": "",
+      "name": "",
+      "variant": "",
+      "size": "",
+      "qty": 12.0,
+      "buy": 28.75,
+      "total": 345.0
+    },
+    {
+      "model": "",
+      "barcode": "",
+      "name": "",
+      "variant": "",
+      "size": "",
+      "qty": 24.0,
+      "buy": 22.5,
+      "total": 540.0
+    },
+    {
+      "model": "",
+      "barcode": "",
+      "name": "",
+      "variant": "",
+      "size": "",
+      "qty": 12.0,
+      "buy": 18.0,
+      "total": 216.0
+    },
+    {
+      "model": "",
+      "barcode": "",
+      "name": "",
+      "variant": "",
+      "size": "",
+      "qty": 36.0,
+      "buy": 14.0,
+      "total": 504.0
+    },
+    {
+      "model": "",
+      "barcode": "",
+      "name": "",
+      "variant": "",
+      "size": "",
+      "qty": 48.0,
+      "buy": 7.25,
+      "total": 348.0
+    },
+    {
+      "model": "",
+      "barcode": "",
+      "name": "",
+      "variant": "",
+      "size": "",
+      "qty": 12.0,
+      "buy": 14.0,
+      "total": 168.0
+    },
+    {
+      "model": "",
+      "barcode": "",
+      "name": "",
+      "variant": "",
+      "size": "",
+      "qty": 12.0,
+      "buy": 145.0,
+      "total": 1740.0
+    },
+    {
+      "model": "",
+      "barcode": "",
+      "name": "",
+      "variant": "",
+      "size": "",
+      "qty": 24.0,
+      "buy": 32.5,
+      "total": 780.0
+    },
+    {
+      "model": "",
+      "barcode": "",
+      "name": "",
+      "variant": "",
+      "size": "",
+      "qty": 48.0,
+      "buy": 12.0,
+      "total": 576.0
+    },
+    {
+      "model": "",
+      "barcode": "",
+      "name": "",
+      "variant": "",
+      "size": "",
+      "qty": 6.0,
+      "buy": 310.0,
+      "total": 1860.0
+    },
+    {
+      "model": "",
+      "barcode": "",
+      "name": "",
+      "variant": "",
+      "size": "",
+      "qty": 10.0,
+      "buy": 42.0,
+      "total": 420.0
+    },
+    {
+      "model": "",
+      "barcode": "",
+      "name": "",
+      "variant": "",
+      "size": "",
+      "qty": 24.0,
+      "buy": 18.5,
+      "total": 444.0
+    }
+  ]
+}

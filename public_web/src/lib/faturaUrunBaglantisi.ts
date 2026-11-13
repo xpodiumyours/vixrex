@@ -11,7 +11,7 @@ export interface DogrulanmisSatir {
   sonuc: KartDurumu;
   urunId: string | null;
   izinliGorseller: Set<string>;
-  /** Salt-okunur denetim: bu alan yayin izni yerine gecmez ve yayini durdurmaz. */
+  /** Görsel hak durumları: taslak kanıtına yazılır ve SQL yayın kapısında (`publish_invoice_product`) vitrin görünürlüğünü belirler. */
   gorselHakDurumlari?: ReadonlyMap<string, GorselHakDurumu>;
   katalog: Record<string, unknown> | null;
   alisBirimFiyati: number | null;
@@ -49,8 +49,8 @@ export async function satiriDogrula(
   if (!satir.data?.id) return null;
 
   // Kullanım izni: kümeye yalnızca açıkça `denied` işaretlenmemiş görseller girer.
-  // `unknown` bilinçli olarak KALIR — kilitli kapsam: üretici fotoğrafı karta
-  // girer ve yayınlanır, izin turu sonra yürür (bkz. products/batch yorumu).
+  // `unknown` taslak kart hazırlığında kalır; vitrine çıkışta SQL yayın kapısı
+  // (`publish_invoice_product`) doğrulanmış izin arar.
   // Süzgeç Dart/TS tarafında, `.neq()` ile değil: SQL'de `usage_status <> 'denied'`
   // NULL satırı da düşürür; yazılmamış usage_status 'denied' sayılmamalı.
   const gorseller = await admin

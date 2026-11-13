@@ -1,160 +1,142 @@
-import { expect, it } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { kartPresetYanitiniOku, tekillesmeKarari, tekrarGruplari } from "@/lib/faturaKartPreset";
 import type { GoruSonucu } from "@/lib/faturaGoru";
 
-const kart = (grup: string, kanonik = "1", durum = "verified") => ({
-  duplicate_group: grup, canonical_row_id: kanonik,
-  validation: { status: durum, official_product_url: "https://uretici.example/urun" },
-  media: {},
-});
-const kayit = (grup: string, kanonik = "1", durum = "verified") => new Map([
-  ["1", kart(grup, kanonik, durum)], ["2", kart(grup, kanonik, durum)], ["3", kart(grup, kanonik, durum)],
-]) as never;
+beforeEach(() => vi.stubEnv("PRESET_AKIS", "yeni"));
+afterEach(() => vi.unstubAllEnvs());
 
-it("aynı barkod + aynı beden tek karta indirilir", () => {
+it("aynı geçerli barkod Vixrex tarafından tek karta indirgenir", () => {
   const satirlar = [
-    { barkod: "8680508918971", model: "TER0105", ad: "Tutku Elit Sıfıryaka", marka: "Tutku", beden: "4" },
-    { barkod: "8680508918971", model: "TER0105", ad: "Tutku Elit Sıfıryaka", marka: "Tutku", beden: "4" },
-    { barkod: "8680508918971", model: "TER0105", ad: "Tutku Elit Sıfıryaka", marka: "Tutku", beden: "4" },
+    { barkod: "8691234567890", model: "P1", ad: "Peynir 250 g", marka: "A", adet: 2 },
+    { barkod: "8691234567890", model: "P1", ad: "Peynir 250 g", marka: "A", adet: 3 },
   ];
-  const sonuc = tekrarGruplari(satirlar, kayit("tutku-8680508918971"));
-  expect([...sonuc.entries()]).toEqual([["2", 1], ["3", 1]]);
+  expect([...tekrarGruplari(satirlar).entries()]).toEqual([["2", 1]]);
 });
 
-it("aynı barkod farklı bedende birleştirilmez ve beden ayrışması işaretlenir", () => {
+it("farklı geçerli barkodlar aynı kod ve ad olsa da birleştirilmez", () => {
   const satirlar = [
-    { barkod: "8680508918971", model: "TER0105", ad: "Tutku Elit Sıfıryaka", marka: "Tutku", beden: "4" },
-    { barkod: "8680508918971", model: "TER0105", ad: "Tutku Elit Sıfıryaka", marka: "Tutku", beden: "5" },
+    { barkod: "8691234567890", model: "TER0105", ad: "Fanila", marka: "Tutku", adet: 6 },
+    { barkod: "8691234567891", model: "TER0105", ad: "Fanila", marka: "Tutku", adet: 6 },
   ];
-  const karar = tekillesmeKarari(satirlar, kayit("tutku-8680508918971"));
-  expect(karar.indirgenen.size).toBe(0);
-  expect([...karar.bedenAyrisan].sort()).toEqual(["1", "2"]);
+  expect(tekrarGruplari(satirlar).size).toBe(0);
 });
 
-it("aynı barkod farklı varyantta birleştirilmez", () => {
+it("barkodsuz satırlarda kod, ad, marka ve miktar birlikte eşleşirse tekilleşir", () => {
   const satirlar = [
-    { barkod: "8680508918971", model: "TER0105", ad: "Tutku Elit Sıfıryaka", marka: "Tutku", varyant: "Beyaz" },
-    { barkod: "8680508918971", model: "TER0105", ad: "Tutku Elit Sıfıryaka", marka: "Tutku", varyant: "Siyah" },
+    { barkod: "", model: "TER0105", ad: "Fanila", marka: "Tutku", adet: 6 },
+    { barkod: "", model: "TER0105", ad: "Fanila", marka: "Tutku", adet: 6 },
+    { barkod: "", model: "TER0105", ad: "Fanila", marka: "Tutku", adet: 4 },
   ];
-  expect(tekrarGruplari(satirlar, kayit("tutku-renk")).size).toBe(0);
+  expect([...tekrarGruplari(satirlar).entries()]).toEqual([["2", 1]]);
 });
 
-it("barkodsuz satırda marka, ad ve beden aynıysa birleştirilir", () => {
-  const satirlar = [
-    { barkod: "", model: "", ad: "Pınar Süzme Peynir 500 g", marka: "Pınar", beden: "500 g" },
-    { barkod: "", model: "", ad: "pınar  süzme peynir 500 g", marka: "Pınar", beden: "500 g" },
-  ];
-  expect([...tekrarGruplari(satirlar, kayit("pinar-peynir")).keys()]).toEqual(["2"]);
+it("barkodsuz satırda yalnız ad aynıysa Vixrex ürün kararı vermez", () => {
+  const satirlar = [{ barkod: "", ad: "Çay" }, { barkod: "", ad: "Çay" }];
+  expect(tekrarGruplari(satirlar).size).toBe(0);
 });
 
-it("barkodsuz satırda ad 6 karakterden kısaysa birleştirme yapılmaz", () => {
-  const satirlar = [
-    { barkod: "", model: "", ad: "Çay", marka: "Torku" },
-    { barkod: "", model: "", ad: "Çay", marka: "Torku" },
+it("kontrol hanesi tutmayan barkod kimlik sayılmaz; kod varsa kodla eşleşir", () => {
+  const gecersiz = [
+    { barkod: "8691234567891", model: "", ad: "Fanila", marka: "Tutku", adet: 6 },
+    { barkod: "8691234567891", model: "", ad: "Fanila", marka: "Tutku", adet: 6 },
   ];
-  expect(tekrarGruplari(satirlar, kayit("cay")).size).toBe(0);
+  expect(tekrarGruplari(gecersiz).size).toBe(0);
+  const kodlu = [
+    { barkod: "8691234567891", model: "TER0105", ad: "Fanila", marka: "Tutku", adet: 6 },
+    { barkod: "8691234567891", model: "TER0105", ad: "Fanila", marka: "Tutku", adet: 6 },
+  ];
+  expect([...tekrarGruplari(kodlu).entries()]).toEqual([["2", 1]]);
 });
 
-it("barkodsuz satırda marka farklıysa birleştirme yapılmaz", () => {
-  const satirlar = [
-    { barkod: "", model: "", ad: "Süzme Peynir 500 g", marka: "Pınar" },
-    { barkod: "", model: "", ad: "Süzme Peynir 500 g", marka: "Sütaş" },
-  ];
-  expect(tekrarGruplari(satirlar, kayit("peynir")).size).toBe(0);
+it("tekilleştirme kararı model cevabından bağımsız olarak yalnız fatura satırlarından çıkar", () => {
+  const satirlar = [{ barkod: "8691234567890" }, { barkod: "8691234567890" }, { barkod: "8691234567890" }];
+  expect([...tekillesmeKarari(satirlar).indirgenen.entries()]).toEqual([["2", 1], ["3", 1]]);
 });
 
-it("doğrulanmamış satırlar birleştirilmez ve kimlik kurulamadı diye işaretlenir", () => {
-  const satirlar = [
-    { barkod: "8680508918971", model: "TER0105", ad: "Tutku Elit Sıfıryaka", marka: "Tutku", beden: "4" },
-    { barkod: "8680508918971", model: "TER0105", ad: "Tutku Elit Sıfıryaka", marka: "Tutku", beden: "4" },
-  ];
-  const karar = tekillesmeKarari(satirlar, kayit("tutku-belirsiz", "1", "ambiguous"));
-  expect(karar.indirgenen.size).toBe(0);
-  expect([...karar.kimlikKurulamayan].sort()).toEqual(["1", "2"]);
+it("OpenRouter grup alanı göndermese de Vixrex kendi kimliğiyle karar verir", async () => {
+  const sonuc = await kartPresetYanitiniOku(yanit([
+    kartKaydi("1", "Tutku Elit Sıfıryaka", "4"),
+    kartKaydi("2", "Tutku Elit Sıfıryaka", "4"),
+  ]), okuma([
+    { hamSatir: "1", model: "TER0105", ad: "Tutku Elit Sıfıryaka", barkod: "8691234567890", beden: "4", marka: "Tutku", adet: 6 },
+    { hamSatir: "2", model: "TER0105", ad: "Tutku Elit Sıfıryaka", barkod: "8691234567890", beden: "4", marka: "Tutku", adet: 6 },
+  ]));
+  expect(sonuc.sonuc.satirlar[0].ad).toBe("Tutku Elit Sıfıryaka");
+  expect(sonuc.sonuc.satirlar[1].eksikler).toContain("Aynı ürün belgede 1. satırda da geçiyor; tek kart açılır.");
+  expect(sonuc.sonuc.satirlar.map((satir) => [satir.duplicateGroup, satir.canonicalRowId]))
+    .toEqual([["barkod:8691234567890", "1"], ["barkod:8691234567890", "1"]]);
 });
 
-it("resmî kaynak adresi olmayan doğrulanmış satır birleştirilmez", () => {
+it("yeni akışta tek araştırma tekrar satırın kartını da doldurur", async () => {
   const satirlar = [
-    { barkod: "8680508918971", model: "TER0105", ad: "Tutku Elit Sıfıryaka", marka: "Tutku", beden: "4" },
-    { barkod: "8680508918971", model: "TER0105", ad: "Tutku Elit Sıfıryaka", marka: "Tutku", beden: "4" },
+    { hamSatir: "1", model: "TER0105", ad: "Tutku Elit Sıfıryaka", barkod: "8691234567890", beden: "4", marka: "Tutku", adet: 6 },
+    { hamSatir: "2", model: "TER0105", ad: "Tutku Elit Sıfıryaka", barkod: "8691234567890", beden: "5", marka: "Tutku", adet: 6 },
   ];
-  const items = new Map([["1", { ...kart("tutku-kaynaksiz"), validation: { status: "verified", official_product_url: "" } }],
-    ["2", { ...kart("tutku-kaynaksiz"), validation: { status: "verified", official_product_url: "" } }]]) as never;
-  expect(tekrarGruplari(satirlar, items).size).toBe(0);
+  const sonuc = await kartPresetYanitiniOku(yanit([gorselliKart("1", "Tutku Elit Sıfıryaka", "4")]), okuma(satirlar));
+  expect(sonuc.karantinadakiSatirlar).toEqual([]);
+  expect(sonuc.sonuc.satirlar[1]).toMatchObject({
+    ad: "Tutku Elit Sıfıryaka",
+    siteSayfa: "https://uretici.example/urun",
+    siteGorseller: ["https://cdn.example/urun.webp"],
+    dogrulamaDurumu: "Doğrulandı",
+    duplicateGroup: "barkod:8691234567890",
+    canonicalRowId: "1",
+  });
+  expect(sonuc.sonuc.satirlar[1].eksikler).toContain("Aynı ürün belgede 1. satırda da geçiyor; tek kart açılır.");
+  expect(sonuc.sonuc.satirlar[1].beden).toBe("5");
+  expect(sonuc.sonuc.satirlar[1].adet).toBe(6);
 });
 
-it("canonical_row_id geçersizse ilk satır kanonik olur", () => {
-  const satirlar = [
-    { barkod: "8690123456789", model: "A1", ad: "Ülker Gofret", marka: "Ülker", beden: "40 g" },
-    { barkod: "8690123456789", model: "A1", ad: "Ülker Gofret", marka: "Ülker", beden: "40 g" },
-  ];
-  const items = new Map([["1", kart("ulker", "9")], ["2", kart("ulker", "9.5")]]) as never;
-  expect([...tekrarGruplari(satirlar, items).entries()]).toEqual([["2", 1]]);
+it("modelin verdiği grup farklı barkodlu satırları birleştirmez", async () => {
+  const ayniGrup = (id: string, baslik: string) => ({
+    ...kartKaydi(id, baslik, "4"),
+    duplicate_group: "model-grubu", canonical_row_id: "1",
+  });
+  const sonuc = await kartPresetYanitiniOku(yanit([
+    ayniGrup("1", "Tutku Elit Sıfıryaka"),
+    ayniGrup("2", "Tutku Elit Sıfıryaka"),
+  ]), okuma([
+    { hamSatir: "1", model: "TER0105", ad: "Tutku Elit Sıfıryaka", barkod: "8691234567890", beden: "4", marka: "Tutku", adet: 6 },
+    { hamSatir: "2", model: "TER0105", ad: "Tutku Elit Sıfıryaka", barkod: "8691234567891", beden: "5", marka: "Tutku", adet: 6 },
+  ]));
+  for (const satir of sonuc.sonuc.satirlar) {
+    expect(satir.eksikler).not.toContain("Aynı ürün belgede 1. satırda da geçiyor; tek kart açılır.");
+    expect(satir.duplicateGroup).toBeNull();
+    expect(satir.canonicalRowId).toBeNull();
+  }
 });
 
-it("farklı barkodlar aynı gruba konsa da birleştirilmez", () => {
+it("mevcut geri dönüş yolu da tekilleştirmeyi Vixrex kimliğinden alır", async () => {
+  vi.stubEnv("PRESET_AKIS", "mevcut");
   const satirlar = [
-    { barkod: "8690123456789", model: "A1", ad: "Ürün", marka: "Marka" },
-    { barkod: "8690123456790", model: "A2", ad: "Ürün", marka: "Marka" },
+    { model: "TER0105", barkod: "8691234567890", ad: "Tutku Fanila", marka: "Tutku", adet: 6 },
+    { model: "TER0105", barkod: "8691234567890", ad: "Tutku Fanila", marka: "Tutku", adet: 6 },
   ];
-  expect(tekrarGruplari(satirlar, kayit("karisik")).size).toBe(0);
-});
-
-it("grup etiketi olmayan satırlar tekilleştirilmez", () => {
-  const satirlar = [
-    { barkod: "8690123456789", model: "A1", ad: "Ürün A", marka: "Marka" },
-    { barkod: "8690123456789", model: "A1", ad: "Ürün A", marka: "Marka" },
-  ];
-  expect(tekrarGruplari(satirlar, new Map() as never).size).toBe(0);
+  expect([...tekillesmeKarari(satirlar).indirgenen.entries()]).toEqual([["2", 1]]);
 });
 
 const okuma = (satirlar: Array<Record<string, unknown>>) => ({ tedarikci: "Tedarikçi", satirlar }) as unknown as GoruSonucu;
 const yanit = (items: unknown[]) => new Response(JSON.stringify({
-  choices: [{ message: { content: JSON.stringify({ items }) }, finish_reason: "stop" }],
+  choices: [{ message: { content: JSON.stringify({
+    summary: { total_rows: items.length, verified_count: items.length, draft_count: items.length, not_found_count: 0 },
+    items,
+  }) }, finish_reason: "stop" }],
 }), { status: 200, headers: { "content-type": "application/json" } });
 const kartKaydi = (id: string, title: string, beden: string, durum = "verified") => ({
-  row_id: id, duplicate_group: "tutku-8680508918971", canonical_row_id: "1",
-  vixrex_product_json: { title }, validation: { status: durum, official_product_url: "https://uretici.example/urun" },
-  media: {}, beden,
-});
-
-it("bedenle ayrışan satırların kart başlığında beden görünür", async () => {
-  const sonuc = await kartPresetYanitiniOku(yanit([
-    kartKaydi("1", "Tutku Elit Sıfıryaka", "4"), kartKaydi("2", "Tutku Elit Sıfıryaka", "5"),
-  ]), okuma([
-    { hamSatir: "1", model: "TER0105", ad: "Tutku Elit Sıfıryaka", barkod: "8680508918971", beden: "4", marka: "Tutku", adet: 6 },
-    { hamSatir: "2", model: "TER0105", ad: "Tutku Elit Sıfıryaka", barkod: "8680508918971", beden: "5", marka: "Tutku", adet: 6 },
-  ]));
-  expect(sonuc.sonuc.satirlar.map((satir) => satir.ad))
-    .toEqual(["Tutku Elit Sıfıryaka (Beden 4)", "Tutku Elit Sıfıryaka (Beden 5)"]);
-  expect(sonuc.sonuc.satirlar.map((satir) => satir.adet)).toEqual([6, 6]);
-});
-
-it("doğrulanmamış iki satır ayrı kart alır ve ikisi de işaretlenir", async () => {
-  const sonuc = await kartPresetYanitiniOku(yanit([
-    kartKaydi("1", "Tutku Elit Sıfıryaka", "4", "not_found"),
-    kartKaydi("2", "Tutku Elit Sıfıryaka", "4", "not_found"),
-  ]), okuma([
-    { hamSatir: "1", model: "TER0105", ad: "Tutku Elit Sıfıryaka", barkod: "8680508918971", beden: "4", marka: "Tutku", adet: 6 },
-    { hamSatir: "2", model: "TER0105", ad: "Tutku Elit Sıfıryaka", barkod: "8680508918971", beden: "4", marka: "Tutku", adet: 6 },
-  ]));
-  expect(sonuc.sonuc.satirlar.map((satir) => satir.dogrulamaDurumu)).toEqual(["Bulunamadı", "Bulunamadı"]);
-  for (const satir of sonuc.sonuc.satirlar) {
-    expect(satir.eksikler).toContain("Aynı ürün doğrulanamadı; ayrı kart açıldı.");
-  }
-});
-
-it("doğrulanmış aynı ürün iki satırı tek karta indirir", async () => {
-  const sonuc = await kartPresetYanitiniOku(yanit([
-    kartKaydi("1", "Tutku Elit Sıfıryaka", "4"), kartKaydi("2", "Tutku Elit Sıfıryaka", "4"),
-  ]), okuma([
-    { hamSatir: "1", model: "TER0105", ad: "Tutku Elit Sıfıryaka", barkod: "8680508918971", beden: "4", marka: "Tutku", adet: 6 },
-    { hamSatir: "2", model: "TER0105", ad: "Tutku Elit Sıfıryaka", barkod: "8680508918971", beden: "4", marka: "Tutku", adet: 6 },
-  ]));
-  expect(sonuc.sonuc.satirlar[0].ad).toBe("Tutku Elit Sıfıryaka");
-  expect(sonuc.sonuc.satirlar[0].adet).toBe(12);
-  expect(sonuc.sonuc.satirlar[1].adet).toBe(6);
-  expect(sonuc.sonuc.satirlar[1].eksikler).toContain("Aynı ürün belgede 1. satırda da geçiyor; tek kart açılır.");
+  row_id: id, raw_invoice_line: "Beden " + beden, brand: "Tutku",
+  barcode: "8691234567890", code: "TER0105",
+  invoice_data: { quantity: 6, unit: "adet", unit_price: null, total_amount: null },
+  vixrex_product_json: {
+    title, brand: "Tutku", category_suggestion: null, variant: null,
+    short_description: null, consumer_sale_price: null, stock_quantity: null,
+  },
+  validation: {
+    status: durum, official_domain: "uretici.example", official_product_url: "https://uretici.example/urun",
+    matched_attributes: [], unmatched_attributes: [],
+  },
+  media: { image_url: null, source_url: null, verification_status: null, rights_status: "unknown" },
+  card_status: "draft",
+  sources: [{ url: "https://uretici.example/urun", fetched_at: "2026-11-02T00:00:00Z", snippet: "Tutku Elit" }],
 });
 
 const metinYanit = (icerik: string) => new Response(JSON.stringify({
@@ -162,16 +144,20 @@ const metinYanit = (icerik: string) => new Response(JSON.stringify({
 }), { status: 200, headers: { "content-type": "application/json" } });
 const gorselliKart = (id: string, baslik: string, beden: string) => ({
   ...kartKaydi(id, baslik, beden),
-  media: { image_url: "https://cdn.example/urun.webp" },
+  media: {
+    image_url: "https://cdn.example/urun.webp", source_url: "https://uretici.example/urun",
+    verification_status: "verified", rights_status: "unknown",
+  },
 });
 const ikiSatir = [
-  { hamSatir: "1", model: "TER0105", ad: "Tutku Elit Sıfıryaka", barkod: "8680508918971", beden: "4", marka: "Tutku", adet: 6 },
-  { hamSatir: "2", model: "TER0105", ad: "Tutku Elit Sıfıryaka", barkod: "8680508918988", beden: "5", marka: "Tutku", adet: 6 },
+  { hamSatir: "1", model: "TER0105", ad: "Tutku Elit Sıfıryaka", barkod: "8691234567890", beden: "4", marka: "Tutku", adet: 6 },
+  { hamSatir: "2", model: "TER0105", ad: "Tutku Elit Sıfıryaka", barkod: "8691234567891", beden: "5", marka: "Tutku", adet: 6 },
 ];
 
 it("kart yanıtı başında cümle ve JSON çitiyle gelse de çözülür", async () => {
+  const kartlar = [gorselliKart("1", "Tutku Elit Sıfıryaka", "4"), gorselliKart("2", "Tutku Elit Sıfıryaka", "5")];
   const icerik = "I'll research each brand's official website.\n\n```json\n" +
-    JSON.stringify({ items: [gorselliKart("1", "Tutku Elit Sıfıryaka", "4"), gorselliKart("2", "Tutku Elit Sıfıryaka", "5")] }, null, 2) +
+    JSON.stringify({ summary: { total_rows: 2, verified_count: 2, draft_count: 2, not_found_count: 0 }, items: kartlar }, null, 2) +
     "\n```\n";
   const sonuc = await kartPresetYanitiniOku(metinYanit(icerik), okuma(ikiSatir));
   expect(sonuc.sonuc.satirlar.map((satir) => satir.dogrulamaDurumu))
@@ -182,7 +168,10 @@ it("kart yanıtı başında cümle ve JSON çitiyle gelse de çözülür", async
 });
 
 it("yalnız JSON çitiyle gelen kart yanıtı da çözülür", async () => {
-  const icerik = "```json\n" + JSON.stringify({ items: [gorselliKart("1", "Tutku Elit Sıfıryaka", "4")] }) + "\n```";
+  const icerik = "```json\n" + JSON.stringify({
+    summary: { total_rows: 1, verified_count: 1, draft_count: 1, not_found_count: 0 },
+    items: [gorselliKart("1", "Tutku Elit Sıfıryaka", "4")],
+  }) + "\n```";
   const sonuc = await kartPresetYanitiniOku(metinYanit(icerik), okuma([ikiSatir[0]]));
   expect(sonuc.sonuc.satirlar[0].ad).toBe("Tutku Elit Sıfıryaka");
 });
@@ -192,13 +181,14 @@ it("JSON içermeyen kart yanıtı hâlâ reddedilir", async () => {
     .rejects.toThrow("KART_YANITI_COZULEMEDI");
 });
 
-it("düz şemalı kart yanıtı doğrulama ve ürün adresini okur", async () => {
+it("eski akış düz kart yanıtından ürün adresini okumaya devam eder", async () => {
+  vi.stubEnv("PRESET_AKIS", "mevcut");
   const duzKart = {
     row_id: "1", title: "Tutku Elit Sıfıryaka", brand: "Tutku", variant: "100 BEYAZ",
     short_description: "Pamuklu fanila", category_suggestion: "Erkek İç Giyim",
     verification_status: "verified", product_url: "https://uretici.example/urun",
     image_url: "https://cdn.example/urun.webp", source_url: "https://uretici.example/urun",
-    matched_attributes: ["beden: 4"], unmatched_attributes: [], sources: [],
+    matched_attributes: ["beden: 4"], unmatched_attributes: [], sources: [{ url: "https://uretici.example/urun", fetched_at: "2026-11-02T00:00:00Z", snippet: "Tutku Elit" }],
   };
   const sonuc = await kartPresetYanitiniOku(metinYanit(JSON.stringify({ items: [duzKart] })), okuma([ikiSatir[0]]));
   const satir = sonuc.sonuc.satirlar[0];
@@ -212,8 +202,8 @@ it("adet sayı değilse birleşen kartta toplama yapılmaz", async () => {
   const sonuc = await kartPresetYanitiniOku(yanit([
     kartKaydi("1", "Tutku Elit Sıfıryaka", "4"), kartKaydi("2", "Tutku Elit Sıfıryaka", "4"),
   ]), okuma([
-    { hamSatir: "1", model: "TER0105", ad: "Tutku Elit Sıfıryaka", barkod: "8680508918971", beden: "4", marka: "Tutku", adet: 6 },
-    { hamSatir: "2", model: "TER0105", ad: "Tutku Elit Sıfıryaka", barkod: "8680508918971", beden: "4", marka: "Tutku", adet: null },
+    { hamSatir: "1", model: "TER0105", ad: "Tutku Elit Sıfıryaka", barkod: "8691234567890", beden: "4", marka: "Tutku", adet: 6 },
+    { hamSatir: "2", model: "TER0105", ad: "Tutku Elit Sıfıryaka", barkod: "8691234567890", beden: "4", marka: "Tutku", adet: null },
   ]));
   expect(sonuc.sonuc.satirlar[0].adet).toBe(6);
 });

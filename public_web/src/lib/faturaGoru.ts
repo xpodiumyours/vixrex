@@ -1,10 +1,11 @@
-import { FATURA_JSON_ISTEGI, VARSAYILAN_FATURA_PRESET } from "@/lib/faturaPresetSozlesmesi";
+import { FATURA_JSON_ISTEGI } from "@/lib/faturaPresetSozlesmesi";
+import { faturaOkumaPresetReferansi, faturaPrizIstegiGonder } from "@/lib/faturaPriz";
 import { openrouterYanitiniOku } from "@/lib/openrouterYanitAkisi";
 import { normalizeProductMetadata, type ProductAttributeValue } from "@/lib/productRichData";
+import { barkodDenetimi, belgeAritmetigiDenetimi, satirAritmetigiDenetimi } from "@/lib/faturaKapiDenetimi";
 export { VARSAYILAN_FATURA_PRESET } from "@/lib/faturaPresetSozlesmesi";
 
-/** Fatura görselini OpenRouter'a gönderir. Araştırma ve doğrulama mevcut preset'te kalır. */
-export const GORU_MODELI = process.env.OPENROUTER_MODEL || "openai/gpt-5.6-luna";
+/** Fatura görselini okuma presetine gönderir; ürün araştırması ve doğrulama ikinci presette yürür. */
 export type UrunOzelligi = ProductAttributeValue;
 export type KartKaynagi = string | Record<string, unknown>;
 
@@ -37,6 +38,9 @@ export interface GoruSatiri {
   eslesenBilgiler?: unknown;
   eksikler?: string[];
   gorselDogrulamaDurumu?: string;
+  /** VixRex tekilleştirme ve kanonik satır bağlama bilgileri. */
+  duplicateGroup?: string | null;
+  canonicalRowId?: string | null;
   kaynaklar?: KartKaynagi[];
 }
 
@@ -96,6 +100,19 @@ function webAdresi(deger: unknown): deger is string {
   } catch { return false; }
 }
 
+function okumaUyarilari(cozulen: Record<string, unknown>, satirlar: GoruSatiri[]): string[] {
+  const uyarilar = metinListesi(cozulen.uyarilar);
+  satirlar.forEach((satir, sira) => {
+    const etiket = `${satir.satirNo ?? sira + 1}. satır`;
+    for (const sonuc of [barkodDenetimi(satir.barkod), satirAritmetigiDenetimi(satir)]) {
+      if (sonuc && !sonuc.gecti) uyarilar.push(`${etiket}: ${sonuc.mesaj}`);
+    }
+  });
+  const belge = belgeAritmetigiDenetimi(satirlar.map((satir) => satir.tutar), sayi(cozulen.mal_bedeli));
+  if (belge && !belge.gecti) uyarilar.push(belge.mesaj);
+  return uyarilar;
+}
+
 /** JSON çözümleme taşıma kontrolüdür; ürün kimliğini/kanıtını değerlendirmez. */
 export function katalogJsonunuOku(icerik: string): GoruSonucu {
   let cozulen: unknown;
@@ -134,14 +151,13 @@ export function katalogJsonunuOku(icerik: string): GoruSonucu {
     belgeTarihi: metin(cozulen.belge_tarihi), malBedeli: sayi(cozulen.mal_bedeli),
     kdvTutari: sayi(cozulen.kdv_tutari), indirimTutari: sayi(cozulen.indirim_tutari),
     odenecekToplam: sayi(cozulen.odenecek_toplam), belgeEkleri: cozulen.belge_ekleri ?? {},
-    gruplar: Array.isArray(cozulen.gruplar) ? cozulen.gruplar : [], uyarilar: metinListesi(cozulen.uyarilar),
+    gruplar: Array.isArray(cozulen.gruplar) ? cozulen.gruplar : [], uyarilar: okumaUyarilari(cozulen, satirlar),
     maliyet: null, girdiToken: 0, ciktiToken: 0, akilToken: 0,
   };
 }
 
 export function faturaPresetReferansi(): string {
-  const ham = (process.env.OPENROUTER_PRESET || process.env.OPENROUTER_FATURA_PRESET || VARSAYILAN_FATURA_PRESET).trim();
-  return ham.startsWith("@preset/") ? ham : `@preset/${ham}`;
+  return faturaOkumaPresetReferansi();
 }
 
 /** Aynı gövde hem üretimde hem gerçek API smoke testinde kullanılır. */
@@ -153,32 +169,12 @@ export function faturaIstekGovdesi(dataUrl: string | string[]): Record<string, u
   );
   return {
     model: faturaPresetReferansi(), stream: true,
-    response_format: { type: "json_object" },
-    provider: { require_parameters: true },
     messages: [{ role: "user", content: [{ type: "text", text: FATURA_JSON_ISTEGI }, ...icerik] }],
   };
 }
 
 export async function faturayiOku(dataUrl: string | string[]): Promise<GoruSonucu> {
-  const anahtar = process.env.OPENROUTER_API_KEY;
-  if (!anahtar) throw new Error("OKUYUCU_HAZIR_DEGIL");
-  // Uzun araştırma işleyicisinde ayarlanabilir; Vercel senkron uç varsayılanı 240 saniyedir.
-  const ayar = Number(process.env.OPENROUTER_FATURA_TIMEOUT_MS ?? 240_000);
-  const zamanSiniri = Number.isFinite(ayar) && ayar >= 30_000 && ayar <= 900_000 ? ayar : 240_000;
-  let cevap: Response;
-  try {
-    cevap = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST", headers: {
-        "Content-Type": "application/json", Authorization: `Bearer ${anahtar}`,
-        "HTTP-Referer": "https://vixrex.com", "X-Title": "Vixrex Fatura",
-      }, body: JSON.stringify(faturaIstekGovdesi(dataUrl)), signal: AbortSignal.timeout(zamanSiniri),
-    });
-  } catch (hata) {
-    if (hata instanceof Error && ["TimeoutError", "AbortError"].includes(hata.name)) {
-      throw new Error("OKUYUCU_ZAMAN_ASIMI");
-    }
-    throw new Error("OKUYUCU_CEVAP_VERMEDI", { cause: hata });
-  }
+  const cevap = await faturaPrizIstegiGonder(faturaIstekGovdesi(dataUrl));
   return faturaYanitiniOku(cevap);
 }
 
@@ -210,7 +206,10 @@ export async function faturaYanitMetniniOku(cevap: Response) {
   if (typeof icerik !== "string" || !icerik.trim()) throw new Error("FOTOGRAFTA_YAZI_YOK");
   const usage = ham?.usage;
   return {
-    icerik, maliyet: sayi(usage?.cost), gercekMaliyet: sayi(usage?.cost),
+    icerik,
+    generationId: typeof ham?.id === "string" ? ham.id : null,
+    model: typeof ham?.model === "string" ? ham.model : null,
+    maliyet: sayi(usage?.cost), gercekMaliyet: sayi(usage?.cost),
     girdiToken: Number(usage?.prompt_tokens ?? usage?.input_tokens ?? 0),
     ciktiToken: Number(usage?.completion_tokens ?? usage?.output_tokens ?? 0),
     akilToken: Number(usage?.completion_tokens_details?.reasoning_tokens ?? 0),

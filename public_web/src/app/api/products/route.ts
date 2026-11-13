@@ -9,6 +9,7 @@ import {
   updateRichCoreProduct,
 } from "@/lib/productCoreServer";
 import {
+  FATURA_MIN_PRODUCT_IMAGES,
   MIN_PRODUCT_IMAGES,
   normalizeProductImageUrls,
   validateProductImageUrlsAllowingFewerImages,
@@ -183,7 +184,8 @@ export async function PATCH(request: NextRequest) {
   if (faturaTaslak) {
     gorunurlukYenidenHesaplanacak = false;
   }
-  const eksikFotografSayisi = Math.max(0, MIN_PRODUCT_IMAGES - imageUrls.length);
+  const enAzGorsel = faturaSatiri ? FATURA_MIN_PRODUCT_IMAGES : MIN_PRODUCT_IMAGES;
+  const eksikFotografSayisi = Math.max(0, enAzGorsel - imageUrls.length);
 
   const categoryId = hasOwn(govde, "categoryId")
     ? cleanString(govde.categoryId) || ""

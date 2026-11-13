@@ -47,12 +47,25 @@ export interface KayitliIslem {
   tedarikciDijitalIz?: Record<string, unknown> | null;
 }
 
+export type IslemAsamasi = "hazir" | "okunuyor" | "yarida";
+
 export interface IslemOzeti {
   islemKimligi: string;
   durum: string;
   tedarikci: string;
   olusturma: string;
   satirSayisi: number;
+  asama: IslemAsamasi;
+  hata: string | null;
+}
+
+export function islemAsamasi(
+  satirSayisi: number,
+  saglayiciDurumu: string | null | undefined,
+): IslemAsamasi {
+  if (satirSayisi > 0) return "hazir";
+  if (saglayiciDurumu === "queued" || saglayiciDurumu === "received") return "okunuyor";
+  return "yarida";
 }
 
 function sayiVeyaNull(deger: unknown): number | null {
@@ -227,10 +240,54 @@ export function islemYaniti(islem: KayitliIslem): Record<string, unknown> {
   };
 }
 
+interface GomuluIs {
+  id: string;
+  status?: string | null;
+  supplier_name?: string | null;
+  created_at?: string | null;
+  invoice_job_lines?: Array<{ count?: number | null }> | { count?: number | null } | null;
+  invoice_provider_runs?:
+    | Array<{ state?: string | null; error_code?: string | null }>
+    | { state?: string | null; error_code?: string | null }
+    | null;
+}
+
+const LISTE_SECIMI =
+  "id,status,supplier_name,created_at,invoice_job_lines(count),invoice_provider_runs(state,error_code)";
+
+export function gomuluIslemOzeti(kayit: GomuluIs): IslemOzeti {
+  const satir = Array.isArray(kayit.invoice_job_lines)
+    ? kayit.invoice_job_lines[0]
+    : kayit.invoice_job_lines;
+  const kosu = Array.isArray(kayit.invoice_provider_runs)
+    ? kayit.invoice_provider_runs[0]
+    : kayit.invoice_provider_runs;
+  const satirSayisi = Number(satir?.count ?? 0);
+  return {
+    islemKimligi: String(kayit.id),
+    durum: String(kayit.status ?? ""),
+    tedarikci: String(kayit.supplier_name ?? ""),
+    olusturma: String(kayit.created_at ?? ""),
+    satirSayisi,
+    asama: islemAsamasi(satirSayisi, kosu?.state ?? null),
+    hata: kosu?.error_code ?? null,
+  };
+}
+
 export async function islemleriListele(
   admin: SupabaseClient,
   storeId: string,
 ): Promise<IslemOzeti[]> {
+  const gomulu = await admin
+    .from("invoice_jobs")
+    .select(LISTE_SECIMI)
+    .eq("store_id", storeId)
+    .order("created_at", { ascending: false })
+    .limit(20);
+  if (!gomulu.error && Array.isArray(gomulu.data)) {
+    return (gomulu.data as unknown as GomuluIs[]).map(gomuluIslemOzeti);
+  }
+
   const isler = await admin
     .from("invoice_jobs")
     .select("id,status,supplier_name,created_at")
@@ -238,22 +295,41 @@ export async function islemleriListele(
     .order("created_at", { ascending: false })
     .limit(20);
   const kayitlar = Array.isArray(isler.data) ? isler.data : [];
+  if (!kayitlar.length) return [];
 
-  const sonuc: IslemOzeti[] = [];
-  for (const kayit of kayitlar) {
-    const say = await admin
-      .from("invoice_job_lines")
-      .select("id", { count: "exact", head: true })
-      .eq("job_id", kayit.id);
-    sonuc.push({
-      islemKimligi: String(kayit.id),
+  const kimlikler = kayitlar.map((kayit) => String(kayit.id));
+  const [satirlarSonucu, kosularSonucu] = await Promise.all([
+    admin.from("invoice_job_lines").select("job_id").in("job_id", kimlikler),
+    admin.from("invoice_provider_runs").select("job_id,state,error_code").in("job_id", kimlikler),
+  ]);
+
+  const satirSayilari = new Map<string, number>();
+  for (const satir of Array.isArray(satirlarSonucu.data) ? satirlarSonucu.data : []) {
+    const anahtar = String(satir.job_id);
+    satirSayilari.set(anahtar, (satirSayilari.get(anahtar) ?? 0) + 1);
+  }
+  const kosular = new Map<string, { state: string; error_code: string | null }>();
+  for (const kosu of Array.isArray(kosularSonucu.data) ? kosularSonucu.data : []) {
+    kosular.set(String(kosu.job_id), {
+      state: String(kosu.state ?? ""),
+      error_code: kosu.error_code ? String(kosu.error_code) : null,
+    });
+  }
+
+  return kayitlar.map((kayit) => {
+    const islemKimligi = String(kayit.id);
+    const satirSayisi = satirSayilari.get(islemKimligi) ?? 0;
+    const kosu = kosular.get(islemKimligi);
+    return {
+      islemKimligi,
       durum: String(kayit.status ?? ""),
       tedarikci: String(kayit.supplier_name ?? ""),
       olusturma: String(kayit.created_at ?? ""),
-      satirSayisi: say.count ?? 0,
-    });
-  }
-  return sonuc;
+      satirSayisi,
+      asama: islemAsamasi(satirSayisi, kosu?.state),
+      hata: kosu?.error_code ?? null,
+    };
+  });
 }
 
 export async function urundenIslemBul(

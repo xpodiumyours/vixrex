@@ -1,15 +1,24 @@
 /**
- * Fatura görsel hakları için salt-okunur gölge denetimi.
+ * Fatura görsel hakları denetimi ve kanıt derlemesi.
  *
- * DİKKAT: invoice_image_rights.usage_status bir kayıt durumudur; bu alan tek
- * başına imzalı marka lisansının varlığını kanıtlamaz. Yayın uygunluğu,
- * eski deny kapısı ve esnaf onayı burada DEĞİŞTİRİLMEZ.
+ * `invoice_image_rights.usage_status` kayıt durumlarını derler; derlenen
+ * `hakKayitDurumu` alanı ürünün `fatura_kanit.gorselKaynaklari` kaydına yazılır
+ * ve SQL yayın kapısında (`publish_invoice_product`) vitrin görünürlüğünü denetler.
  */
 export type GorselHakDurumu =
   | "verified_supplier_permission"
+  | "verified_feed_terms"
+  | "merchant_owned_media"
   | "unknown"
   | "denied"
   | "kayit_yok";
+
+/** SQL yayin kapisinin (publish_invoice_product) kabul ettigi dogrulanmis hak durumlariyla birebir ayni liste. */
+export const DOGRULANMIS_HAK_DURUMLARI: readonly string[] = [
+  "verified_supplier_permission",
+  "verified_feed_terms",
+  "merchant_owned_media",
+];
 
 export interface GorselHakSatiri {
   image_url?: unknown;
@@ -25,29 +34,32 @@ export function gorselHakKayitlariniDerle(
     if (!adres) continue;
 
     // Yeni/bilinmeyen değerleri izin verilmiş sayma.
+    const hamDurum = typeof kayit.usage_status === "string" ? kayit.usage_status : "";
     const durum: GorselHakDurumu =
-      kayit.usage_status === "denied"
+      hamDurum === "denied"
         ? "denied"
-        : kayit.usage_status === "verified_supplier_permission"
-          ? "verified_supplier_permission"
+        : DOGRULANMIS_HAK_DURUMLARI.includes(hamDurum)
+          ? (hamDurum as GorselHakDurumu)
           : "unknown";
 
     const onceki = durumlar.get(adres);
-    // Bir URL birden çok satırla gelirse açık ret her zaman baskındır.
+    // Bir URL birden çok satırla gelirse açık ret her zaman baskındır;
+    // doğrulanmış bir durum, bilinmeyeni yükseltir.
+    if (onceki === "denied") continue;
     if (
       onceki === undefined ||
       durum === "denied" ||
-      (onceki === "unknown" && durum === "verified_supplier_permission")
+      (onceki === "unknown" && DOGRULANMIS_HAK_DURUMLARI.includes(durum))
     ) {
-      if (onceki !== "denied") durumlar.set(adres, durum);
+      durumlar.set(adres, durum);
     }
   }
   return durumlar;
 }
 
 /**
- * Ürün fatura_kanit.gorselKaynaklari alanına yalnızca ek kanıt yazar.
- * Buradaki işaretler hiçbir kartı engellemez, gizlemez veya yayımlamaz.
+ * Ürün fatura_kanit.gorselKaynaklari alanına görselin hak kayıt durumunu yazar.
+ * SQL yayın kapısı (`publish_invoice_product`) doğrulanmamış görsellerde kartı hazır bekletir.
  */
 export function gorselHakKaydiniRaporla(
   kaynakGorsel: string,
@@ -56,7 +68,7 @@ export function gorselHakKaydiniRaporla(
   const hakKayitDurumu = durumlar?.get(kaynakGorsel.trim()) ?? "kayit_yok";
   return {
     hakKayitDurumu,
-    hakIncelemeGerekiyor: hakKayitDurumu !== "verified_supplier_permission",
+    hakIncelemeGerekiyor: !DOGRULANMIS_HAK_DURUMLARI.includes(hakKayitDurumu),
   };
 }
 
@@ -65,6 +77,6 @@ export function gorselIzinBekliyorMu(faturaKanit: unknown): boolean | undefined 
   if (!Array.isArray(kayitlar) || kayitlar.length === 0) return undefined;
   return kayitlar.some((kaynak) => {
     const durum = (kaynak as { hakKayitDurumu?: unknown } | null)?.hakKayitDurumu;
-    return durum !== "verified_supplier_permission";
+    return !DOGRULANMIS_HAK_DURUMLARI.includes(typeof durum === "string" ? durum : "");
   });
 }

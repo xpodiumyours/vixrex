@@ -21,7 +21,7 @@ export const dynamic = "force-dynamic";
 
 interface YayinSonucu {
   id: string;
-  durum: "yayinda" | "taslak";
+  durum: "yayinda" | "hazir" | "taslak";
   sebep?: string;
 }
 
@@ -83,6 +83,7 @@ export async function POST(request: NextRequest) {
 
   const sonuclar: YayinSonucu[] = [];
   let yayinda = 0;
+  let hazir = 0;
   let taslak = 0;
 
   for (const id of productIds) {
@@ -110,11 +111,18 @@ export async function POST(request: NextRequest) {
       continue;
     }
 
-    // Kilitli kapsam: üretici fotoğrafı yayını durdurmaz; kullanım izni
-    // sonra, çalışan sistemle istenir (kayıtlar invoice_image_rights'ta).
+    // Görsel hak durumu publish_invoice_product RPC'sinde denetlenir;
+    // üretici görsel izni doğrulanmamışsa kart vitrine açılmaz, "hazir" bekler.
     try {
       const yayin = await publishInvoiceProduct({ admin, productId: id, editToken });
-      if (yayin.success) {
+      if (yayin.success && yayin.gorunur === false) {
+        hazir += 1;
+        sonuclar.push({
+          id,
+          durum: "hazir",
+          sebep: "Kart hazır; üretici görsel izni doğrulanınca vitrinde görünecek.",
+        });
+      } else if (yayin.success) {
         yayinda += 1;
         sonuclar.push({ id, durum: "yayinda" });
       } else {
@@ -150,6 +158,7 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({
     tamam: true,
     yayinda,
+    hazir,
     taslak,
     satirlar: sonuclar,
     ...(dogrulanamayan > 0 ? { tuketiciDogrulamasi: "yapilamadi" } : { tuketiciDogrulamasi: "tamam" }),
