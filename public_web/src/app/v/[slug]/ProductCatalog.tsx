@@ -2,10 +2,18 @@
 
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import ProductQuickView from "@/components/ProductQuickView";
 import VitrinCartDock from "@/components/VitrinCartDock";
 import { TrackedDirectionsLink } from "@/components/TrackedContactLink";
+import {
+  readVitrinCart,
+  addToVitrinCart,
+  setVitrinCartQuantity,
+  removeFromVitrinCart,
+  VITRIN_CART_EVENT,
+  type VitrinCartItem,
+} from "@/lib/vitrinCart";
 import { MapPinIcon } from "@/lib/vitrinBrandIcons";
 import { MAX_PRODUCT_IMAGES } from "@/lib/productImagePolicy";
 import {
@@ -171,6 +179,22 @@ export default function ProductCatalog({
   const searchParams = useSearchParams();
   const [quickView, setQuickView] = useState<QuickViewSelection | null>(null);
   const [locationProductId, setLocationProductId] = useState<string | null>(null);
+  const [cartItems, setCartItems] = useState<VitrinCartItem[]>([]);
+
+  useEffect(() => {
+    const refresh = () => setCartItems(readVitrinCart(storeSlug).items);
+    refresh();
+    const listener = (event: Event) => {
+      const detail = (event as CustomEvent<{ storeSlug?: string }>).detail;
+      if (!detail?.storeSlug || detail.storeSlug === storeSlug) refresh();
+    };
+    window.addEventListener(VITRIN_CART_EVENT, listener);
+    window.addEventListener("storage", refresh);
+    return () => {
+      window.removeEventListener(VITRIN_CART_EVENT, listener);
+      window.removeEventListener("storage", refresh);
+    };
+  }, [storeSlug]);
 
   const currentPage = Math.max(1, parseInt(searchParams.get("page") || "1", 10) || 1);
   const currentCategory = searchParams.get("category") || "";
@@ -341,11 +365,25 @@ export default function ProductCatalog({
           const fulfillmentMapUrl = productLocationMapUrl(fulfillmentRegion);
           const productKey = product.id || productUrl;
           const showLocation = locationProductId === productKey;
+          const tukendi =
+            !isService &&
+            (product.stockQuantity === 0 ||
+              stockStatus.toLocaleLowerCase("tr-TR").includes("tükendi"));
+          const maxQuantity =
+            typeof product.stockQuantity === "number" && product.stockQuantity > 0
+              ? product.stockQuantity
+              : null;
+          const cartItem = cartItems.find((item) => item.productSlug === productSlug);
+          const cartQty = cartItem?.quantity ?? 0;
+          const variantKey = cartItem?.variantKey || "standart";
+          const priceText =
+            fiyatTutar != null ? tutarYazisi(fiyatTutar) : String(product.price || "").trim();
+          const stokSinirinda = maxQuantity != null && cartQty >= maxQuantity;
 
           return (
             <article
               key={product.id || `${product.name}-${index}`}
-              className="group relative min-w-0 overflow-hidden rounded-[22px] border border-blue-500/15 bg-slate-900/75 shadow-[0_14px_32px_rgba(0,0,0,0.24)] backdrop-blur-xl transition duration-300 hover:-translate-y-1 hover:border-blue-500/35 hover:shadow-[0_18px_44px_rgba(0,0,0,0.34)]"
+              className="group relative flex min-w-0 flex-col overflow-hidden rounded-[22px] border border-blue-500/15 bg-slate-900/75 shadow-[0_14px_32px_rgba(0,0,0,0.24)] backdrop-blur-xl transition duration-300 hover:-translate-y-1 hover:border-blue-500/35 hover:shadow-[0_18px_44px_rgba(0,0,0,0.34)]"
             >
               <a
                 href={productUrl}
@@ -355,7 +393,7 @@ export default function ProductCatalog({
                   setLocationProductId(null);
                   setQuickView({ product, images: quickImages, productUrl, productSlug });
                 }}
-                className="block min-w-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+                className="block min-w-0 flex-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
                 aria-label={`${product.name} ${isService ? "hizmetini" : "ürününü"} hızlı incele`}
               >
                 <div className="relative aspect-[4/5] w-full overflow-hidden bg-slate-950 v-product-media">
@@ -378,7 +416,7 @@ export default function ProductCatalog({
                   ) : null}
                 </div>
 
-                <div className="px-3.5 py-3.5">
+                <div className="px-3.5 pt-3.5 pb-2">
                   {brand ? (
                     <p className="mb-1 truncate text-[9px] font-extrabold uppercase tracking-[0.12em] text-slate-400 sm:text-[10px]">
                       {brand}
@@ -412,29 +450,121 @@ export default function ProductCatalog({
                       {birimFiyat.miktar} · <span className="text-slate-300">{birimFiyat.birimFiyat}</span>
                     </p>
                   ) : null}
-                  <div className="mt-2 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                    {!isService && stockStatus ? (
-                      <span className={`inline-flex min-w-0 items-center gap-2 text-[10px] font-bold sm:text-[11px] ${tone.text}`}>
-                        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${tone.dot}`} />
-                        <span className="truncate">{stockStatus}</span>
-                      </span>
-                    ) : null}
-                    {!isService && variantLabel ? (
-                      <span className="rounded-md border border-white/10 bg-white/[0.04] px-1.5 py-0.5 text-[9px] font-bold text-slate-400 sm:text-[10px]">
-                        {variantLabel}
-                      </span>
-                    ) : null}
-                    {isService ? (
-                      <span className="rounded-md border border-cyan-500/20 bg-cyan-500/10 px-1.5 py-0.5 text-[9px] font-bold text-cyan-300 sm:text-[10px]">
-                        Hizmet
-                      </span>
-                    ) : null}
-                    <span className="ml-auto text-[9px] font-extrabold text-blue-400 sm:text-[10px]">
-                      Hızlı incele →
-                    </span>
-                  </div>
+                  {(!isService && (stockStatus || variantLabel)) || isService ? (
+                    <div className="mt-2 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                      {!isService && stockStatus ? (
+                        <span className={`inline-flex min-w-0 items-center gap-2 text-[10px] font-bold sm:text-[11px] ${tone.text}`}>
+                          <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${tone.dot}`} />
+                          <span className="truncate">{stockStatus}</span>
+                        </span>
+                      ) : null}
+                      {!isService && variantLabel ? (
+                        <span className="rounded-md border border-white/10 bg-white/[0.04] px-1.5 py-0.5 text-[9px] font-bold text-slate-400 sm:text-[10px]">
+                          {variantLabel}
+                        </span>
+                      ) : null}
+                      {isService ? (
+                        <span className="rounded-md border border-cyan-500/20 bg-cyan-500/10 px-1.5 py-0.5 text-[9px] font-bold text-cyan-300 sm:text-[10px]">
+                          Hizmet
+                        </span>
+                      ) : null}
+                      {isService ? (
+                        <span className="ml-auto text-[9px] font-extrabold text-blue-400 sm:text-[10px]">
+                          Hizmeti incele →
+                        </span>
+                      ) : null}
+                    </div>
+                  ) : null}
                 </div>
               </a>
+
+              {!isService ? (
+                <div className="px-3.5 pb-3.5 pt-1">
+                  {tukendi ? (
+                    <button
+                      type="button"
+                      disabled
+                      className={`w-full rounded-xl py-2 text-[11px] font-extrabold ${vitrinGorunum.buton.devreDisi}`}
+                    >
+                      Tükendi
+                    </button>
+                  ) : cartQty === 0 ? (
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        const next = addToVitrinCart(storeSlug, {
+                          productSlug,
+                          productName: product.name,
+                          variantKey: "standart",
+                          variantText: "",
+                          priceText,
+                          priceAmount: fiyatTutar,
+                          imageUrl: image,
+                          maxQuantity,
+                          quantity: 1,
+                        });
+                        setCartItems(next);
+                      }}
+                      className={`w-full rounded-xl py-2 text-[11px] font-extrabold ${vitrinGorunum.buton.ana}`}
+                    >
+                      Sepete ekle
+                    </button>
+                  ) : (
+                    <div className="flex items-center justify-between rounded-xl border border-blue-500/40 bg-blue-500/10 px-1.5 py-1">
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          const next =
+                            cartQty <= 1
+                              ? removeFromVitrinCart(storeSlug, productSlug, variantKey)
+                              : setVitrinCartQuantity(
+                                  storeSlug,
+                                  productSlug,
+                                  variantKey,
+                                  cartQty - 1,
+                                );
+                          setCartItems(next);
+                        }}
+                        aria-label="Adedi azalt"
+                        className="flex h-7 w-7 items-center justify-center rounded-lg text-lg font-black text-white transition active:scale-90"
+                      >
+                        −
+                      </button>
+                      <span aria-live="polite" className="text-xs font-extrabold text-white">
+                        {cartQty}
+                      </span>
+                      <button
+                        type="button"
+                        disabled={stokSinirinda}
+                        onClick={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          if (stokSinirinda) return;
+                          const next = setVitrinCartQuantity(
+                            storeSlug,
+                            productSlug,
+                            variantKey,
+                            cartQty + 1,
+                          );
+                          setCartItems(next);
+                        }}
+                        aria-label={stokSinirinda ? "Stok sınırına ulaşıldı" : "Adedi artır"}
+                        className={`flex h-7 w-7 items-center justify-center rounded-lg text-lg font-black transition active:scale-90 ${
+                          stokSinirinda
+                            ? "cursor-not-allowed text-white/25"
+                            : "text-white hover:bg-white/10"
+                        }`}
+                      >
+                        +
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : null}
 
               {fulfillmentRegion || storeLocationText ? (
                 <button
