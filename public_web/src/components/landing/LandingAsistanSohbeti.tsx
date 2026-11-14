@@ -290,8 +290,7 @@ export function LandingAsistanSohbeti({
 
       if (!session) {
         const { data: anonim, error: anonimHata } = await supabase.auth.signInAnonymously();
-        if (anonimHata || !anonim.session) {
-          // Giriş yapılmamış → /kayit sayfasına yönlendir
+        if (anonimHata || !anonim?.session) {
           taslagiKaydet(
             yayinCevaplariHazirla(cevaplar, {
               aydinlatma: aydinlatmaOnay,
@@ -299,7 +298,8 @@ export function LandingAsistanSohbeti({
               acikRiza: acikRizaOnay,
             }),
           );
-          router.push("/kayit");
+          setHata(HATA_VITRIN_OLUSTURULAMADI);
+          setYayinliyor(false);
           return;
         }
         session = anonim.session;
