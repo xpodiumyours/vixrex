@@ -191,7 +191,8 @@ class ChatbotService {
         ...remote,
         ...local.where((message) {
           final paylasilanKimlik =
-              message.id.startsWith('next-') || message.id.startsWith('flutter-')
+              message.id.startsWith('next-') ||
+                      message.id.startsWith('flutter-')
                   ? message.id
                   : 'flutter-${message.id}';
           return !remoteIds.contains(message.id) &&

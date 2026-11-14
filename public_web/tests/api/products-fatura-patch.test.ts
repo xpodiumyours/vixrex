@@ -12,7 +12,7 @@ import { NextRequest } from "next/server";
 const { mockGet, mockUpdateRichCoreProduct, mockGetSupabaseAdmin, mockVerifyOwnerSession } =
   vi.hoisted(() => ({
     mockGet: vi.fn(() => ({ value: "cerez-degeri" })),
-    mockUpdateRichCoreProduct: vi.fn(async (_args: Record<string, unknown>) => (void _args, undefined)),
+    mockUpdateRichCoreProduct: vi.fn<(args: Record<string, unknown>) => Promise<undefined>>(async () => undefined),
     mockGetSupabaseAdmin: vi.fn(),
     mockVerifyOwnerSession: vi.fn(() => ({ storeId: "store-1", slug: "deneme-vitrin" })),
   }));

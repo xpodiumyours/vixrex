@@ -20,7 +20,7 @@ const mocks = vi.hoisted(() => ({
   verifyOwner: vi.fn(() => ({ storeId: "store-1" })),
   createProduct: vi.fn(),
   publishProduct: vi.fn(
-    async (_args: Record<string, unknown>): Promise<{ success: boolean; id?: string; hata?: string }> => (void _args, {
+    async (_args: Record<string, unknown>): Promise<{ success: boolean; id?: string; gorunur?: boolean; izin_bekliyor?: boolean; hata?: string }> => ({
       success: true,
       id: "urun-1",
     }),

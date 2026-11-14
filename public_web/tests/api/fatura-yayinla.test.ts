@@ -11,7 +11,7 @@ const mocks = vi.hoisted(() => ({
   verifyOwner: vi.fn((): { storeId: string; slug: string } | null => ({ storeId: "store-1", slug: "deneme-vitrin" })),
   verifyToken: vi.fn(),
   publish: vi.fn(
-    async (_args: Record<string, unknown>): Promise<{ success: boolean; id?: string; hata?: string }> => (void _args, {
+    async (_args: Record<string, unknown>): Promise<{ success: boolean; id?: string; gorunur?: boolean; izin_bekliyor?: boolean; hata?: string }> => ({
       success: true,
       id: "urun-1",
     }),
