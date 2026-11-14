@@ -146,9 +146,31 @@ export default function AppPage() {
           : "";
 
     if (slug) {
+      let workingDraftOverride = yeniWorkingDraft?.draft_data ?? null;
+      if (!workingDraftOverride) {
+        try {
+          const ownerWorkspaceResponse = await fetch("/api/owner-workspace/current", {
+            method: "GET",
+            cache: "no-store",
+          });
+          if (ownerWorkspaceResponse.ok) {
+            const ownerWorkspace = (await ownerWorkspaceResponse.json()) as {
+              working_draft?: { draft_data?: Record<string, unknown> } | null;
+            };
+            if (ownerWorkspace?.working_draft?.draft_data) {
+              workingDraftOverride = ownerWorkspace.working_draft.draft_data;
+            }
+          }
+        } catch (ownerWorkspaceError) {
+          console.warn(
+            "[app/bootstrap] yedek yolda working_draft okunamadı",
+            ownerWorkspaceError
+          );
+        }
+      }
       const tamam = await magazaDetayiniGetir(
         slug,
-        yeniWorkingDraft?.draft_data ?? null
+        workingDraftOverride
       );
       if (!tamam) {
         setHata("Vitrin bilgileri yüklenemedi. Lütfen sayfayı yenileyip tekrar dene.");
