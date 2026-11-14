@@ -4,6 +4,10 @@ import {
   vixRexMesajlari,
   type VixRexAsistanAkisAdimi,
 } from "@/lib/vixrexMesajlari";
+import type {
+  AssistantHandoffStep,
+  AssistantHandoffV1,
+} from "@/lib/assistantHandoff";
 
 /**
  * Ana sayfadaki Vixrex Asistan'ın konuşma akışı.
@@ -106,19 +110,7 @@ export interface AsistanCevaplari {
   aydinlatma_onay?: boolean;
   sartlar_onay?: boolean;
   acik_riza_onay?: boolean;
-  assistant_handoff?: {
-    version: 1;
-    completed_steps: [
-      "name",
-      "category",
-      "whatsapp",
-      "location",
-      "legal",
-      "publishing",
-    ];
-    next_step: null;
-    messages: { role: "assistant" | "user"; text: string }[];
-  };
+  assistant_handoff?: AssistantHandoffV1;
 }
 
 /**
@@ -130,7 +122,10 @@ export interface AsistanCevaplari {
  * "asistan konuşması aktarılamadı" hatası üretti; yayın adımı sessizce
  * reddediliyordu.
  */
-const HANDOFF_ADIMLARI: Record<AsistanAdimi["alan"], string> = {
+const HANDOFF_ADIMLARI: Record<
+  AsistanAdimi["alan"],
+  Exclude<AssistantHandoffStep, "done">
+> = {
   name: "name",
   category: "category",
   whatsapp: "whatsapp",
@@ -161,9 +156,41 @@ export function handoffMesajMetni(
   return adim.dugme;
 }
 
+export interface AsistanHandoffDurumu {
+  /** Vitrin gerçekten oluşturulup yayınlandıysa yayın adımı "tamamlandı" sayılır. */
+  yayinlandi?: boolean;
+}
+
+function tamamlananAdimlar(
+  cevaplar: AsistanCevaplari,
+  durum: AsistanHandoffDurumu,
+): Array<Exclude<AssistantHandoffStep, "done">> {
+  const tamamlanan: Array<Exclude<AssistantHandoffStep, "done">> = [];
+  if (cevaplar.name?.trim()) tamamlanan.push("name");
+  if (cevaplar.kategori?.trim()) tamamlanan.push("category");
+  if (cevaplar.whatsapp?.trim()) tamamlanan.push("whatsapp");
+  const konumVar = Boolean(
+    cevaplar.province_name?.trim() ||
+      cevaplar.district_name?.trim() ||
+      cevaplar.address?.trim(),
+  );
+  if (konumVar) tamamlanan.push("location");
+  if (cevaplar.legal_consent === true) tamamlanan.push("legal");
+  if (durum.yayinlandi) tamamlanan.push("publishing");
+  return tamamlanan;
+}
+
+/**
+ * Konuşma aktarımı yalnız GERÇEKTEN cevaplanmış adımları taşır. Yayın
+ * adımı ancak yayınlama çağrısı başarıyla tamamlandığında "tamamlandı"
+ * olur; aksi hâlde sahip paneli "onaylamadın" gibi yanlış bir geçmişle
+ * açılıyordu (2026-11-14 bulgusu).
+ */
 export function asistanHandoffOlustur(
   cevaplar: AsistanCevaplari,
-): NonNullable<AsistanCevaplari["assistant_handoff"]> {
+  durum: AsistanHandoffDurumu = {},
+): AssistantHandoffV1 {
+  const tamamlanan = tamamlananAdimlar(cevaplar, durum);
   const messages: { role: "assistant" | "user"; text: string }[] = [
     {
       role: "assistant",
@@ -171,18 +198,50 @@ export function asistanHandoffOlustur(
     },
   ];
   for (const adim of ASISTAN_ADIMLARI) {
+    const handoffAdim = HANDOFF_ADIMLARI[adim.alan];
+    if (!tamamlanan.includes(handoffAdim)) continue;
     messages.push(
       { role: "assistant", text: `${adim.baslik}\n${adim.aciklama}` },
       { role: "user", text: handoffMesajMetni(adim, cevaplar) },
     );
   }
+  const siradaki = ASISTAN_ADIMLARI.find(
+    (adim) => !tamamlanan.includes(HANDOFF_ADIMLARI[adim.alan]),
+  );
   return {
     version: 1,
-    completed_steps: ASISTAN_ADIMLARI.map(
-      (adim) => HANDOFF_ADIMLARI[adim.alan] as "name",
-    ) as NonNullable<AsistanCevaplari["assistant_handoff"]>["completed_steps"],
-    next_step: null,
+    completed_steps: tamamlanan,
+    next_step: siradaki ? HANDOFF_ADIMLARI[siradaki.alan] : "done",
     messages,
+  };
+}
+
+export interface AsistanYasalOnaylar {
+  aydinlatma: boolean;
+  sartlar: boolean;
+  acikRiza: boolean;
+}
+
+/**
+ * Yayın gövdesini ve kayıt sonrası taşınacak taslağı TEK yerden üretir.
+ * Handoff burada, yasal onay verildikten SONRA yeniden üretilir; konum
+ * adımında donmuş eski kopya artık gönderilmez.
+ */
+export function yayinCevaplariHazirla(
+  cevaplar: AsistanCevaplari,
+  onaylar: AsistanYasalOnaylar,
+  durum: AsistanHandoffDurumu = {},
+): AsistanCevaplari {
+  const birlesik: AsistanCevaplari = {
+    ...cevaplar,
+    legal_consent: true,
+    aydinlatma_onay: onaylar.aydinlatma,
+    sartlar_onay: onaylar.sartlar,
+    acik_riza_onay: onaylar.acikRiza,
+  };
+  return {
+    ...birlesik,
+    assistant_handoff: asistanHandoffOlustur(birlesik, durum),
   };
 }
 

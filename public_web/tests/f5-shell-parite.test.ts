@@ -30,7 +30,8 @@ describe("Flutter Web ↔ Next.js tek-shell paritesi", () => {
       expect(flutterIndexes[i]).toBeLessThan(flutterIndexes[i + 1]);
     }
     expect(appNav).toContain('href: "/app/vixrex"');
-    expect(vixrexPage).toContain("SharedVixrexAssistant");
+    expect(vixrexPage).toContain("<LandingAsistanSohbeti");
+    expect(vixrexPage).not.toContain("SharedVixrexAssistant");
     expect(appNav).not.toContain("AsistanPaneli");
     expect(kesfet).not.toContain("SharedVixrexAssistant");
   });

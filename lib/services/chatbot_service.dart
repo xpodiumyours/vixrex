@@ -189,7 +189,15 @@ class ChatbotService {
       final remoteIds = remote.map((message) => message.id).toSet();
       final merged = [
         ...remote,
-        ...local.where((message) => !remoteIds.contains(message.id)),
+        ...local.where((message) {
+          final paylasilanKimlik =
+              message.id.startsWith('next-') ||
+                      message.id.startsWith('flutter-')
+                  ? message.id
+                  : 'flutter-${message.id}';
+          return !remoteIds.contains(message.id) &&
+              !remoteIds.contains(paylasilanKimlik);
+        }),
       ];
       if (local.isNotEmpty) {
         await _conversationRepository.syncMessages(local);

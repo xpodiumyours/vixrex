@@ -8,6 +8,7 @@ import {
   buildWhatsappOrderUrl,
   cartTotalAmount,
   cartTotalQuantity,
+  clearVitrinCart,
   readVitrinCart,
   removeFromVitrinCart,
   setVitrinCartQuantity,
@@ -138,7 +139,14 @@ export default function VitrinCartDock({
   }
 
   function order() {
-    const url = buildWhatsappOrderUrl(whatsappBaseUrl, storeName, items);
+    const orderKey =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+    const snapshotItems = [...items];
+    const snapshotQuantity = totalQuantity;
+    const url = buildWhatsappOrderUrl(whatsappBaseUrl, storeName, snapshotItems, orderKey);
     if (!url) {
       setMessage("Bu vitrinde WhatsApp sipariş bağlantısı hazır değil.");
       return;
@@ -150,13 +158,12 @@ export default function VitrinCartDock({
     link.rel = "noopener noreferrer";
     link.click();
 
-    const orderKey =
-      typeof crypto !== "undefined" && "randomUUID" in crypto
-        ? crypto.randomUUID()
-        : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    clearVitrinCart(storeSlug);
+    setItems([]);
+    setMessage("Siparişiniz WhatsApp’a aktarıldı, sepet sıfırlandı.");
 
     void Promise.all([
-      ...items.map((item) =>
+      ...snapshotItems.map((item) =>
         recordVitrinEngagement({
           storeSlug,
           eventType: "cart_whatsapp_order",
@@ -165,14 +172,14 @@ export default function VitrinCartDock({
           metadata: {
             order_key: orderKey,
             variant: item.variantText || null,
-            item_count: items.length,
+            item_count: snapshotItems.length,
           },
         }),
       ),
       recordVitrinEngagement({
         storeSlug,
         eventType: "whatsapp_click",
-        quantity: totalQuantity,
+        quantity: snapshotQuantity,
         metadata: { surface: "cart", order_key: orderKey },
       }),
     ]);
@@ -180,16 +187,21 @@ export default function VitrinCartDock({
 
   return (
     <>
-      <button
-        ref={triggerRef}
-        type="button"
-        onClick={() => setOpen(true)}
-        className={`fixed bottom-5 left-4 z-[80] min-h-12 rounded-full border border-blue-400/30 bg-slate-950/95 px-4 text-sm font-extrabold text-white shadow-2xl backdrop-blur ${odakHalkasi}`}
-        aria-label={`Sepeti aç, ${totalQuantity} ürün`}
-      >
-        Sepet · {totalQuantity}
-        {toplamTutar != null ? ` · ${tutarYazisi(toplamTutar)}` : ""}
-      </button>
+      {items.length > 0 ? (
+        <button
+          ref={triggerRef}
+          type="button"
+          onClick={() => {
+            setMessage("");
+            setOpen(true);
+          }}
+          className={`fixed bottom-5 left-4 z-[80] min-h-12 rounded-full border border-blue-400/30 bg-slate-950/95 px-4 text-sm font-extrabold text-white shadow-2xl backdrop-blur ${odakHalkasi}`}
+          aria-label={`Sepeti aç, ${totalQuantity} ürün`}
+        >
+          Sepet · {totalQuantity}
+          {toplamTutar != null ? ` · ${tutarYazisi(toplamTutar)}` : ""}
+        </button>
+      ) : null}
 
       {open ? (
         <div className="fixed inset-0 z-[100] flex items-end bg-slate-950/75 backdrop-blur-sm sm:items-center sm:justify-center sm:p-5">
@@ -269,15 +281,17 @@ export default function VitrinCartDock({
               ))}
             </div>
 
-            <button
-              type="button"
-              onClick={order}
-              className={`mt-5 min-h-12 w-full rounded-xl px-5 text-sm font-black ${vitrinGorunum.buton.whatsappDolu} ${odakHalkasi}`}
-            >
-              {toplamTutar != null
-                ? `WhatsApp’tan siparişi gönder · ${tutarYazisi(toplamTutar)}`
-                : "WhatsApp’tan siparişi gönder"}
-            </button>
+            {items.length > 0 ? (
+              <button
+                type="button"
+                onClick={order}
+                className={`mt-5 min-h-12 w-full rounded-xl px-5 text-sm font-black ${vitrinGorunum.buton.whatsappDolu} ${odakHalkasi}`}
+              >
+                {toplamTutar != null
+                  ? `WhatsApp’tan siparişi gönder · ${tutarYazisi(toplamTutar)}`
+                  : "WhatsApp’tan siparişi gönder"}
+              </button>
+            ) : null}
             {message ? <p className="mt-3 text-xs font-semibold text-amber-200" role="status">{message}</p> : null}
             <p className="mt-3 text-[11px] leading-5 text-white/35">
               Vixrex siparişi otomatik olarak tamamlanmış saymaz; WhatsApp açılması ölçülür, son onay işletme ile müşteri arasındadır.

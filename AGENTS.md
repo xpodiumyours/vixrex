@@ -353,6 +353,56 @@ Neden: 2026-11-01'de #611 canlıda değilken "#734'e geçelim" denildi; #734'ün
 taslak olduğu ve canlıya hiç inmemiş olduğu ölçülmemişti. Casper: "niye bakmadan
 734'e geçelim diyorsun? bu hataları yapmaman için önlem al kendine."
 
+### 25. Altyapısı olmayan özellik ekrana basılmaz (2026-11-13)
+Veritabanı tablosu, API'si veya gerçek verisi hazır olmayan hiçbir özellik ekrana
+"Bu özellik henüz uygulanmadı", "Ölçüm kapısı hazır değil" gibi kırık uyarı
+kutuları veya "Bugün — ziyaret" gibi boş metriklerle konulamaz. Hazır olmayan şey
+ekranda yer işgal etmez; sessiz kalır (`return null`).
+
+Neden: 2026-11-13'te ChatGPT'nin PR #563 ile eklediği "Vitrin Ölçer" bileşeninin
+veritabanı kapısı hiç kurulmamıştı; esnaf hesap açıp panele girdiğinde formun
+tepesinde kırık amber uyarı kutusu ve boş metrikler çıktı.
+
+### 26. Ana iş akışının önüne barikat kurulamaz — hiyerarşi disiplini (2026-11-13)
+Esnaf panele vitrinini düzenlemek, ürününü yönetmek ve siparişini görmek için
+girer. İkincil istatistik, sayaç veya analitik kutuları temel yönetim formunun
+tepesine barikat gibi dikilemez. Analitik ancak ayrı bir sekmede veya en altta
+ikincil özet olarak yer alabilir.
+
+Neden: 2026-11-13'te Vitrin Ölçer bileşeni, esnafın vitrin bilgilerini gireceği
+formun tam tepesine yerleştirilmiş ve ekranı hiyerarşik olarak işgal etmişti.
+
+### 27. İşçi raporunu budama ve törpüleme yasağı (2026-11-14)
+Koordinatör (Antigravity), işçi ajanların (OpenCode, Luna, Claude, DeepSeek) sunduğu
+hiçbir teknik bulguyu, güvenlik açığını veya mimari riski "özetleme" adı altında
+silemez veya törpüleyemez. İşçinin raporundaki her A ve B sınıfı madde, numarası ve
+`dosya:satır` kanıtıyla tam liste olarak Casper'a sunulmak zorundadır.
+
+Neden: 2026-11-14'te DeepSeek'in WhatsApp sipariş ve kasa denetimindeki 17 maddelik
+teknik raporu (satır enjeksiyonu regex açığı, UTF-16 surrogate pair kesilmesi,
+durum desenkronizasyonu) "özet" adı altında 2-3 yüzeysel maddeye budandı; kritik
+güvenlik açıkları Casper'dan saklanmış gibi oldu.
+
+### 28. Kapsamı daraltarak mimari küçültme yasağı (2026-11-14)
+Bir bileşen, sayfa veya akış (özellikle `OwnerAssistantPanel` gibi 1000+ satırlık
+sahiplik omurgaları) incelenirken; dosyanın state makinesi, bağlı kancaları
+(`useFieldSelection`, `useOwnerActions`, `useOwnerChat`) ve çağıranları tam
+taranmadan "basit bir kutu" veya "ölü sayfa" hükmü verilemez. Kapsam Casper'ın açık
+onayı olmadan küçültülemez.
+
+Neden: 2026-11-14'te VixRex Asistan incelenirken 1138 satırlık sahiplik ekranı ve
+vitrin etkileşim kokpiti atlandı, asistan basit bir API kutusu sanıldı ve mimari
+kapsam daraltıldı.
+
+### 29. Model ve bölge ön-ölçüm şartı — kör çalıştırma yasak (2026-11-14)
+OpenCode üzerinde bir model tetiklenmeden önce kota penceresi (5-hour limit) ve
+konsol bölge kısıtı (Global vs US/EU) ölçülür. Ölçülmeden ve emin olunmadan kör
+komut fırlatılamaz; oturum kilitlenmesine sebep olunamaz.
+
+Neden: 2026-11-14'te konsol düzeyinde Global bölge açılmadan `deepseek-v4-pro` ve
+kota penceresi ölçülmeden `grok-4.7` tetiklendi; iki oturum da çalışma ortasında
+kilitlendi.
+
 ### Token ekonomisi (2026-09-16)
 Token en kıt kaynak. Bitince koordinasyon, doğrulama ve merge sorumluluğu
 duruyor — yani proje duruyor. Yavaş ajan, duran projeden iyidir.

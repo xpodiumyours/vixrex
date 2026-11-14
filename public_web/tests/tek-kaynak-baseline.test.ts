@@ -13,7 +13,6 @@ import { resolve } from "path";
  */
 
 const migrationsDir = resolve(__dirname, "../../supabase/migrations");
-const supabaseSchemaPath = resolve(__dirname, "../../supabase_schema.sql");
 
 function migrationContents(): string {
   const files = readdirSync(migrationsDir).filter((f) => f.endsWith(".sql"));
@@ -21,7 +20,6 @@ function migrationContents(): string {
 }
 
 const allMigrations = migrationContents();
-const schema = existsSync(supabaseSchemaPath) ? readFileSync(supabaseSchemaPath, "utf-8") : "";
 
 // ---------- 1. Sahiplik ----------
 describe("baseline — sahiplik tek kaynak: stores.user_id", () => {

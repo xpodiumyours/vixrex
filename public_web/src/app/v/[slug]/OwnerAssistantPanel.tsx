@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { useOwnerDraft } from "./hooks/useOwnerDraft";
 import { useOwnerChat } from "./hooks/useOwnerChat";
 import { useFieldSelection } from "./hooks/useFieldSelection";
@@ -26,12 +26,14 @@ import { alanOnemi, sonrakiRehberAlan } from "@/lib/vitrinReadiness";
 import type { AssistantHandoffV1 } from "@/lib/assistantHandoff";
 import { taslakClientId } from "@/lib/canliVitrinSenkron";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { gpsAdresiniCoz } from "@/lib/konumCozumleme";
 import { VITRIN_FIELDS } from "@/lib/vitrinFieldSchema";
 import { otomatikDeger } from "@/lib/otomatikVitrinIcerik";
 import { yonetimOnerileriUret } from "@/lib/yonetimOnerileri";
 import { supabase } from "@/lib/supabase";
 import { ensureAnonymousSession } from "@/lib/assistantConversation";
+import { safeParseJson } from "@/lib/products";
 import OwnerEditorBar from "./components/OwnerEditorBar";
 
 // Vixrex Asistan — sahip paneli (implementation_plan.md Commit 9;
@@ -83,6 +85,9 @@ interface Props {
   yayinlanmamisDegisiklik?: boolean;
   draftData: Record<string, unknown>;
   assistantHandoff?: AssistantHandoffV1 | null;
+  initialDbMessages?: Array<{ role: string; message_text: string; message_key?: string | null }> | null;
+  /** Sunucudaki konuşmanın kimliği — poll yalnız bu konuşmayı tazeler. */
+  initialConversationId?: string | null;
   /** "Boş geç" denen isteğe bağlı alanlar — sunucudan kalıcı gelir (ADR 0002,
    * 3. alt-faz). */
   atlananAlanlar?: readonly string[] | null;
@@ -112,6 +117,8 @@ export default function OwnerAssistantPanel({
   slug,
   draftData,
   assistantHandoff = null,
+  initialDbMessages = null,
+  initialConversationId = null,
   atlananAlanlar = null,
   premiumAktifMi = false,
   bookingSettings = null,
@@ -128,7 +135,14 @@ export default function OwnerAssistantPanel({
   oturumSaniye = null,
   yayinlanmamisDegisiklik = false,
 }: Props & { flowState?: Record<string, unknown> | null }) {
-  const [acik, setAcik] = useState(() => Boolean(flowState && typeof flowState === "object" && (flowState as { current_step?: string }).current_step));
+  const flowStateAdimi = flowState && typeof flowState === "object"
+    ? (flowState as { current_step?: string }).current_step
+    : null;
+  const yerelFlowAdimi =
+    typeof flowStateAdimi === "string" && flowStateAdimi.trim()
+      ? flowStateAdimi
+      : null;
+  const [acik, setAcik] = useState(() => Boolean(flowStateAdimi));
   // Harita = "Tüm alanlar" paneli. Faz 4 (Casper, 2026-08-22): mobilde
   // panel bütün sayfayı kapatıyordu — "sadece Vixrex maskotu olsun,
   // kutucuklarda zaten ne yapılacağı yazıyor". Artık alan seçilince
@@ -144,7 +158,7 @@ export default function OwnerAssistantPanel({
   const [masaustu, setMasaustu] = useState(false);
 
   useEffect(() => {
-    const sorgu = window.matchMedia("(min-width: 640px)");
+    const sorgu = window.matchMedia("(min-width: 1024px)");
     const guncelle = () => setMasaustu(sorgu.matches);
     guncelle();
     sorgu.addEventListener("change", guncelle);
@@ -158,6 +172,7 @@ export default function OwnerAssistantPanel({
   // (landing'den taşınmış veya gerçek hesap) hiçbir şey değişmez. Hata
   // sessizce yutulur — akışı bloklamaz, yalnız kalıcılık o oturumda
   // devreye girmez (bkz. vixrexNluPipeline.ts, useOwnerChat.ts).
+
   useEffect(() => {
     void ensureAnonymousSession();
   }, []);
@@ -234,7 +249,12 @@ export default function OwnerAssistantPanel({
     draftData,
     atlananAlanlar ?? []
   );
-  const { mesajlar, mesajEkle, akisRef } = useOwnerChat(rapor, assistantHandoff, { slug });
+  const { mesajlar, mesajEkle, akisRef } = useOwnerChat(rapor, assistantHandoff, {
+    slug,
+    initialDbMessages: initialDbMessages ?? undefined,
+    initialConversationId: initialConversationId ?? undefined,
+    akisAdimi: yerelFlowAdimi,
+  });
 
   const {
     seciliAlan,
@@ -253,10 +273,10 @@ export default function OwnerAssistantPanel({
       onAlanSecildi: () => {
         setAcik(true);
         if (window.matchMedia("(min-width: 640px)").matches) {
-          // Masaüstü/tablet: vitrindeki bir alana tıklamak doğrudan o alanın
-          // araçlarını gösterir. Sohbetin içine kart yığmak yerine "Alanlar"
-          // sekmesi tek düzenleme yüzeyi olur.
-          setSekme("alanlar");
+          // Masaüstü/tablet: kullanıcı aktif olarak sohbet sekmesindeyse
+          // araya girip sekmeyi zorla değiştirmiyoruz (soru netleştirme korunur).
+          // Diğer sekmelerdeyse "alanlar" yüzeyini odaklar.
+          setSekme((prev) => (prev === "sohbet" ? "sohbet" : "alanlar"));
           setHaritaAcik(true);
         } else {
           // Telefon: onaylanan compact composer davranışı korunur.
@@ -286,6 +306,15 @@ export default function OwnerAssistantPanel({
     if (payload === "ilk_eksik_alana_git") {
       const ilkEksik = sonrakiRehberAlan(yerelTaslak, null, atlanmisAlanlar);
       if (ilkEksik) alanSec(ilkEksik.anahtar);
+      return;
+    }
+    if (payload === "onay_tamam") {
+      mesajEkle(
+        "asistan",
+        "Kaydı onayladın. Sıradaki eksik alana geçelim mi?",
+        [{ label: "Sıradaki alana geç", payload: "ilk_eksik_alana_git" }],
+        "✅"
+      );
       return;
     }
     // Faz 5 (Çalışma masası / Yön C): onay kartındaki "Geri al" —
@@ -352,6 +381,93 @@ export default function OwnerAssistantPanel({
   const [gpsLoading, setGpsLoading] = useState(false);
   const router = useRouter();
 
+  const guncelAboutSection = {
+    kicker: String(yerelTaslak.about_kicker ?? aboutSection?.kicker ?? "").trim(),
+    title: String(yerelTaslak.about_title ?? aboutSection?.title ?? "").trim(),
+    body: String(yerelTaslak.corporate_bio ?? aboutSection?.body ?? "").trim(),
+    imageUrl: String(yerelTaslak.about_image_url ?? aboutSection?.imageUrl ?? "").trim(),
+    imageCaption: String(yerelTaslak.about_image_caption ?? aboutSection?.imageCaption ?? "").trim(),
+    values:
+      yerelTaslak.about_values !== undefined
+        ? safeParseJson<{ id?: string; title?: string; description?: string }>(yerelTaslak.about_values)
+            .map((v, i) => ({
+              id: String(v.id || `about-value-${i + 1}`),
+              title: String(v.title || "").trim(),
+              description: String(v.description || "").trim(),
+            }))
+            .filter((v) => v.title)
+        : (aboutSection?.values ?? []),
+  };
+
+  const guncelFaqItems =
+    yerelTaslak.faq_items !== undefined
+      ? safeParseJson<{ id?: string; question?: string; answer?: string }>(yerelTaslak.faq_items)
+          .map((f, i) => ({
+            id: String(f.id || `faq-${i + 1}`),
+            question: String(f.question || "").trim(),
+            answer: String(f.answer || "").trim(),
+          }))
+          .filter((f) => f.question && f.answer)
+      : (faqItems ?? []);
+
+  const guncelCampaignBanner = {
+    label: String(yerelTaslak.featured_banner_label ?? campaignBanner?.label ?? "").trim(),
+    title: String(yerelTaslak.featured_banner_title ?? campaignBanner?.title ?? "").trim(),
+    description: String(yerelTaslak.featured_banner_description ?? campaignBanner?.description ?? "").trim(),
+    priceText: String(yerelTaslak.featured_banner_price_text ?? campaignBanner?.priceText ?? "").trim(),
+    imageUrl: String(yerelTaslak.featured_banner_image_url ?? campaignBanner?.imageUrl ?? "").trim(),
+  };
+
+  const guncelMarketplaceLinks =
+    yerelTaslak.marketplace_links !== undefined
+      ? safeParseJson<{ id?: string; platform?: string; url?: string; subtitle?: string }>(yerelTaslak.marketplace_links)
+          .map((l, i) => ({
+            id: String(l.id || `ml-${i}`),
+            platform: String(l.platform || "").trim(),
+            url: String(l.url || "").trim(),
+            subtitle: String(l.subtitle || "").trim(),
+          }))
+          .filter((l) => l.platform && l.url)
+      : (marketplaceLinks ?? []).map((l, i) => ({
+          id: l.id || `ml-${i}`,
+          platform: l.platform || "",
+          url: l.url || "",
+          subtitle: l.subtitle || "",
+        }));
+
+  const guncelGalleryItems =
+    yerelTaslak.gallery_items !== undefined
+      ? safeParseJson<{ id?: string; imageUrl?: string; title?: string }>(yerelTaslak.gallery_items)
+          .map((g, i) => ({
+            id: String(g.id || `gallery-${i}`),
+            imageUrl: String(g.imageUrl || "").trim(),
+            title: String(g.title || "").trim(),
+          }))
+          .filter((g) => g.imageUrl)
+      : (galleryItems ?? []).map((g) => ({
+          id: g.id || "",
+          imageUrl: g.imageUrl || "",
+          title: g.title || "",
+        }));
+
+  // UpNextList içindeki "Atla" tıklandığında yalnızca yerel state'i değil,
+  // veritabanındaki draft_skipped_fields tablosunu da günceller (kalıcı atlama).
+  const anahtariAtlaVeKaydet = useCallback(
+    async (anahtar: string) => {
+      alanAtlandi(anahtar);
+      try {
+        await fetch("/api/owner-draft-skip", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ slug, anahtar }),
+        });
+      } catch {
+        // Ağ hatası olsa dahi yerel listede alan görünmez kılınmıştır.
+      }
+    },
+    [slug, alanAtlandi]
+  );
+
   // Faz D3 (Tek Asistan planı, 2026-09-02): kiralanan bir şablon ilk kez
   // açıldığında (draftYeniOlusturuldu) ve kategori zaten doluysa, yapısal/
   // kozmetik alanları (otomatikDoldurulabilir) kategoriye göre otomatik
@@ -372,7 +488,7 @@ export default function OwnerAssistantPanel({
     );
 
     (async () => {
-      const hazirlananEtiketler: string[] = [];
+      const degisiklikler: Array<{ anahtar: string; deger: unknown; kolon: string }> = [];
       for (const alan of otomatikAlanlar) {
         // Zaten doluysa üzerine yazma — yalnız boşu doldur.
         const mevcut = yerelTaslak[alan.kolon];
@@ -381,31 +497,37 @@ export default function OwnerAssistantPanel({
         const deger = otomatikDeger(alan, kategoriEtiketi);
         if (!deger) continue;
 
-        try {
+        degisiklikler.push({ anahtar: alan.anahtar, deger, kolon: alan.kolon });
+      }
+
+      if (degisiklikler.length === 0) return;
+
+      try {
+        const hazirlananEtiketler: string[] = [];
+        for (const d of degisiklikler) {
           const yanit = await fetch("/api/owner-draft", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               slug,
-              anahtar: alan.anahtar,
-              deger,
+              anahtar: d.anahtar,
+              deger: d.deger,
               clientId: taslakClientId(),
             }),
           });
           if (yanit.ok) {
-            setAlan(alan.kolon, deger);
-            hazirlananEtiketler.push(alan.etiket);
+            setAlan(d.kolon, d.deger);
+            hazirlananEtiketler.push(d.anahtar);
           }
-        } catch {
-          // Tek alan başarısız olursa akışı durdurmaz, kalanlarla devam eder.
         }
-      }
-
-      if (hazirlananEtiketler.length > 0) {
-        router.refresh();
+        if (hazirlananEtiketler.length > 0) {
+          router.refresh();
+        }
+      } catch {
+        // Ağ hatası durumunda akış sessizce devam eder.
       }
     })();
-  }, [draftYeniOlusturuldu, yerelTaslak, slug, setAlan, mesajEkle, router]);
+  }, [draftYeniOlusturuldu, yerelTaslak, slug, setAlan, router]);
 
   // Landing'de anlatılanın panele taşınması (2026-09-02) — "kullanıcı
   // landing'de yazdığı bilgilerle vitrin doldurulmaya başlasın" isteği.
@@ -518,15 +640,19 @@ export default function OwnerAssistantPanel({
             { anahtar: "ilce", deger: cozulen.districtName },
           ] as const;
           const clientId = taslakClientId();
-          const saves = await Promise.all(
-            alanlar.map(({ anahtar, deger }) => fetch("/api/owner-draft", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ slug, anahtar, deger, clientId }),
-            })),
-          );
-          if (saves.some((r) => !r.ok)) {
-            const firstErr = await saves.find((r) => !r.ok)?.json().catch(() => null);
+          const batchYanit = await fetch("/api/owner-draft-batch", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              slug,
+              commandId: crypto.randomUUID(),
+              degisiklikler: alanlar.map(({ anahtar, deger }) => ({ anahtar, deger })),
+              alanlar: alanlar.map(({ anahtar, deger }) => ({ anahtar, deger })),
+              clientId,
+            }),
+          });
+          if (!batchYanit.ok) {
+            const firstErr = await batchYanit.json().catch(() => null);
             mesajEkle("asistan", firstErr?.hata ?? "Konum kaydedilemedi.");
             setGpsLoading(false);
             return;
@@ -623,6 +749,18 @@ export default function OwnerAssistantPanel({
           >
             <span className="h-1 w-10 rounded-full bg-slate-400/70" />
           </div>
+
+          {seciliAlan === null ? (
+            <div className="mb-1.5 flex justify-end px-1">
+              <button
+                type="button"
+                onClick={() => setHaritaAcik(true)}
+                className="rounded-lg border border-sky-400/30 bg-sky-500/15 px-2.5 py-1 text-[10px] font-bold text-sky-300 hover:bg-sky-500/25"
+              >
+                Tüm Alanlar & Yayınla
+              </button>
+            </div>
+          ) : null}
 
           <FieldInputArea
             compact
@@ -732,7 +870,7 @@ export default function OwnerAssistantPanel({
                   suankiAnahtar={seciliAlan?.anahtar ?? null}
                   atlanmisAlanlar={atlanmisAlanlar}
                   alanSec={alanSec}
-                  alanAtla={alanAtlandi}
+                  alanAtla={anahtariAtlaVeKaydet}
                 />
                 <SectionProgressList yerelTaslak={yerelTaslak} alanSec={alanSec} />
                 <SectionVisibilityToggle
@@ -745,6 +883,33 @@ export default function OwnerAssistantPanel({
                   slug={slug}
                   mevcutAyarlar={bookingSettings as { is_enabled: boolean; capacity: number; working_hours: Record<string, { start: string; end: string; active: boolean }>; lunch_break: { start: string; end: string; active: boolean } } | null}
                 />
+                <div className="border-t border-white/10 px-4 py-3">
+                  <p className="mb-2 text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">
+                    İçerik düzenleme
+                  </p>
+                  <div className="space-y-1">
+                    <button type="button" onClick={() => setAboutAcik(true)} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[12px] font-semibold text-slate-300 hover:bg-white/5">
+                      <span className="flex-1">Hakkımızda</span>
+                      <span className="text-[9px] text-slate-600">{guncelAboutSection.title ? "Dolu" : "Boş"}</span>
+                    </button>
+                    <button type="button" onClick={() => setGaleriAcik(true)} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[12px] font-semibold text-slate-300 hover:bg-white/5">
+                      <span className="flex-1">Galeri</span>
+                      <span className="text-[9px] text-slate-600">{guncelGalleryItems.length > 0 ? `${guncelGalleryItems.length} görsel` : "Boş"}</span>
+                    </button>
+                    <button type="button" onClick={() => setMarketplaceAcik(true)} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[12px] font-semibold text-slate-300 hover:bg-white/5">
+                      <span className="flex-1">Pazaryeri bağlantıları</span>
+                      <span className="text-[9px] text-slate-600">{guncelMarketplaceLinks.length > 0 ? `${guncelMarketplaceLinks.length} link` : "Boş"}</span>
+                    </button>
+                    <button type="button" onClick={() => setFaqAcik(true)} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[12px] font-semibold text-slate-300 hover:bg-white/5">
+                      <span className="flex-1">Sık Sorulan Sorular</span>
+                      <span className="text-[9px] text-slate-600">{guncelFaqItems.length > 0 ? `${guncelFaqItems.length} soru` : "Boş"}</span>
+                    </button>
+                    <button type="button" onClick={() => setKampanyaAcik(true)} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[12px] font-semibold text-slate-300 hover:bg-white/5">
+                      <span className="flex-1">Öne Çıkan Kampanya</span>
+                      <span className="text-[9px] text-slate-600">{guncelCampaignBanner.title ? "Dolu" : "Boş"}</span>
+                    </button>
+                  </div>
+                </div>
               </div>
               <div className="shrink-0 border-t border-white/10 px-3 py-2">
                 <FieldInputArea
@@ -913,23 +1078,23 @@ export default function OwnerAssistantPanel({
                       <div className="space-y-1">
                         <button type="button" onClick={() => setAboutAcik(true)} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[12px] font-semibold text-slate-300 hover:bg-white/5">
                           <span className="flex-1">Hakkımızda</span>
-                          <span className="text-[9px] text-slate-600">{aboutSection?.title ? "Dolu" : "Boş"}</span>
+                          <span className="text-[9px] text-slate-600">{guncelAboutSection.title ? "Dolu" : "Boş"}</span>
                         </button>
                         <button type="button" onClick={() => setGaleriAcik(true)} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[12px] font-semibold text-slate-300 hover:bg-white/5">
                           <span className="flex-1">Galeri</span>
-                          <span className="text-[9px] text-slate-600">{galleryItems && galleryItems.length > 0 ? `${galleryItems.length} görsel` : "Boş"}</span>
+                          <span className="text-[9px] text-slate-600">{guncelGalleryItems.length > 0 ? `${guncelGalleryItems.length} görsel` : "Boş"}</span>
                         </button>
                         <button type="button" onClick={() => setMarketplaceAcik(true)} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[12px] font-semibold text-slate-300 hover:bg-white/5">
                           <span className="flex-1">Pazaryeri bağlantıları</span>
-                          <span className="text-[9px] text-slate-600">{marketplaceLinks && marketplaceLinks.length > 0 ? `${marketplaceLinks.length} link` : "Boş"}</span>
+                          <span className="text-[9px] text-slate-600">{guncelMarketplaceLinks.length > 0 ? `${guncelMarketplaceLinks.length} link` : "Boş"}</span>
                         </button>
                         <button type="button" onClick={() => setFaqAcik(true)} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[12px] font-semibold text-slate-300 hover:bg-white/5">
                           <span className="flex-1">Sık Sorulan Sorular</span>
-                          <span className="text-[9px] text-slate-600">{faqItems && faqItems.length > 0 ? `${faqItems.length} soru` : "Boş"}</span>
+                          <span className="text-[9px] text-slate-600">{guncelFaqItems.length > 0 ? `${guncelFaqItems.length} soru` : "Boş"}</span>
                         </button>
                         <button type="button" onClick={() => setKampanyaAcik(true)} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[12px] font-semibold text-slate-300 hover:bg-white/5">
                           <span className="flex-1">Öne Çıkan Kampanya</span>
-                          <span className="text-[9px] text-slate-600">{campaignBanner?.title ? "Dolu" : "Boş"}</span>
+                          <span className="text-[9px] text-slate-600">{guncelCampaignBanner.title ? "Dolu" : "Boş"}</span>
                         </button>
                       </div>
                     </div>
@@ -982,7 +1147,7 @@ export default function OwnerAssistantPanel({
                       setHaritaAcik(true);
                       alanSec(anahtar);
                     }}
-                    alanAtla={alanAtlandi}
+                    alanAtla={anahtariAtlaVeKaydet}
                   />
 
                   <div className="border-b border-white/10 px-4 py-3">
@@ -1046,14 +1211,40 @@ export default function OwnerAssistantPanel({
                         yerelTaslak,
                         urunFiyatsizSayisi,
                         urunAciklamasizSayisi
-                      ).map((oneri) => (
-                        <div
-                          key={oneri.id}
-                          className="rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2.5 text-[10px] leading-relaxed text-slate-300"
-                        >
-                          {oneri.mesaj}
-                        </div>
-                      ))}
+                      ).map((oneri) => {
+                        const hedefLink = oneri.id.startsWith("urun_") ? "/app/urunler" : null;
+                        const hedefAlan = oneri.id === "calisma_saatleri" ? "calismaSaatleri" : oneri.id === "logo" ? "logo" : null;
+                        return (
+                          <div
+                            key={oneri.id}
+                            className="rounded-xl border border-white/10 bg-white/[0.035] p-3 text-[11px] leading-relaxed text-slate-300"
+                          >
+                            <p>{oneri.mesaj}</p>
+                            <div className="mt-2 flex items-center justify-end">
+                              {hedefLink ? (
+                                <Link
+                                  href={hedefLink}
+                                  className="inline-flex items-center gap-1 text-[10px] font-bold text-sky-400 hover:text-sky-300 hover:underline"
+                                >
+                                  Ürünleri Düzenle ›
+                                </Link>
+                              ) : hedefAlan ? (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setSekme("alanlar");
+                                    setHaritaAcik(true);
+                                    alanSec(hedefAlan);
+                                  }}
+                                  className="inline-flex items-center gap-1 text-[10px] font-bold text-sky-400 hover:text-sky-300 hover:underline"
+                                >
+                                  Alana Git ›
+                                </button>
+                              ) : null}
+                            </div>
+                          </div>
+                        );
+                      })}
 
                       {rapor.eksikler.filter((e) => e.onem === "kalite").length === 0 &&
                       yonetimOnerileriUret(
@@ -1098,39 +1289,72 @@ export default function OwnerAssistantPanel({
         </div>
       )}
       {/* Hakkımızda / SSS / Kampanya düzenleme modalleri */}
-      {aboutAcik && aboutSection && (
+      {aboutAcik && (
         <AboutEditor
           slug={slug}
-          mevcut={aboutSection}
-          onClose={() => setAboutAcik(false)}
+          mevcut={guncelAboutSection}
+          onSaved={(d) => {
+            setAlan("about_kicker", d.kicker);
+            setAlan("about_title", d.title);
+            setAlan("corporate_bio", d.body);
+            setAlan("about_image_url", d.imageUrl);
+            setAlan("about_image_caption", d.imageCaption);
+            setAlan("about_values", d.values);
+          }}
+          onClose={() => {
+            setAboutAcik(false);
+            router.refresh();
+          }}
         />
       )}
       {faqAcik && (
         <FaqEditor
           slug={slug}
-          items={faqItems ?? []}
-          onClose={() => setFaqAcik(false)}
+          items={guncelFaqItems}
+          onSaved={(items) => setAlan("faq_items", items)}
+          onClose={() => {
+            setFaqAcik(false);
+            router.refresh();
+          }}
         />
       )}
       {kampanyaAcik && (
         <CampaignEditor
           slug={slug}
-          mevcut={campaignBanner ?? { label: "", title: "", description: "", priceText: "", imageUrl: "" }}
-          onClose={() => setKampanyaAcik(false)}
+          mevcut={guncelCampaignBanner}
+          onSaved={(d) => {
+            setAlan("featured_banner_label", d.label);
+            setAlan("featured_banner_title", d.title);
+            setAlan("featured_banner_description", d.description);
+            setAlan("featured_banner_price_text", d.priceText);
+            setAlan("featured_banner_image_url", d.imageUrl);
+          }}
+          onClose={() => {
+            setKampanyaAcik(false);
+            router.refresh();
+          }}
         />
       )}
       {marketplaceAcik && (
         <MarketplaceEditor
           slug={slug}
-          links={(marketplaceLinks ?? []).map((l, i) => ({ id: l.id || `ml-${i}`, platform: l.platform || "", url: l.url || "", subtitle: l.subtitle || "" }))}
-          onClose={() => setMarketplaceAcik(false)}
+          links={guncelMarketplaceLinks}
+          onSaved={(links) => setAlan("marketplace_links", links)}
+          onClose={() => {
+            setMarketplaceAcik(false);
+            router.refresh();
+          }}
         />
       )}
       {galeriAcik && (
         <GalleryEditor
           slug={slug}
-          items={(galleryItems ?? []).map((g) => ({ id: g.id || "", imageUrl: g.imageUrl || "", title: g.title || "" }))}
-          onClose={() => setGaleriAcik(false)}
+          items={guncelGalleryItems}
+          onSaved={(items) => setAlan("gallery_items", items)}
+          onClose={() => {
+            setGaleriAcik(false);
+            router.refresh();
+          }}
         />
       )}
     </>

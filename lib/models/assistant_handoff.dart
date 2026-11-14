@@ -28,7 +28,7 @@ class AssistantHandoffMessage {
 }
 
 class AssistantHandoffV1 {
-  static const _clientEnvelopeLimitBytes = 14 * 1024;
+  static const _clientEnvelopeLimitBytes = 16 * 1024;
 
   AssistantHandoffV1({
     required List<AssistantHandoffStep> completedSteps,
@@ -42,9 +42,6 @@ class AssistantHandoffV1 {
   factory AssistantHandoffV1.completedOnboarding({
     required Iterable<AssistantHandoffMessage> visibleMessages,
   }) {
-    final messages = visibleMessages.toList();
-    final recentMessages =
-        messages.length <= 6 ? messages : messages.sublist(messages.length - 6);
     return AssistantHandoffV1(
       completedSteps: const [
         AssistantHandoffStep.name,
@@ -55,7 +52,7 @@ class AssistantHandoffV1 {
         AssistantHandoffStep.publishing,
       ],
       nextStep: AssistantHandoffStep.done,
-      messages: recentMessages,
+      messages: visibleMessages.toList(),
     );
   }
 
@@ -102,8 +99,6 @@ class AssistantHandoffV1 {
         normalized.length <= 24
             ? List<AssistantHandoffMessage>.of(normalized)
             : normalized.sublist(normalized.length - 24);
-    // CORE 16 KiB sınırına varmadan durur; PostgreSQL jsonb metin
-    // serileştirmesindeki olası boşluklar için 2 KiB güvenlik payı bırakır.
     while (bounded.isNotEmpty &&
         _maximumEnvelopeSize(bounded) > _clientEnvelopeLimitBytes) {
       bounded.removeAt(0);

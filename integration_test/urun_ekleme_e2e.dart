@@ -91,9 +91,7 @@ void main() {
     await controller.initialize('E2E Mağaza');
 
     // Farklı fiyat formatları dene
-    await controller.addProduct(
-      Product(id: 'p1', name: 'Ürün', price: '100'),
-    );
+    await controller.addProduct(Product(id: 'p1', name: 'Ürün', price: '100'));
     expect(controller.products.first.price, '100');
 
     await controller.addProduct(

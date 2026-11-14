@@ -10,6 +10,8 @@ import { handleVixrexNluMessage } from "@/lib/vixrexNluPipeline";
 import { resolveVixrexIntentsAll } from "@/lib/vixrexIntentResolver";
 import { VIXREX_NIYET_ALAN_BY_ANAHTAR } from "@/lib/vixrexNiyetSozlugu";
 import { extractVixrexValue, digerAlanaAitIpucuVarMi } from "@/lib/vixrexValueExtractor";
+import { getDistrictsForProvince } from "@/lib/turkeyCities";
+import { supabase } from "@/lib/supabase";
 import type { Mesaj } from "./useOwnerChat";
 
 /** Hangi alan hangi tür hazır görsele karşılık geliyor. */
@@ -202,7 +204,29 @@ export async function bonusAlanlariCikarVeKaydet(
     })
     .filter((x): x is { anahtar: string; kolon: string; etiket: string; deger: string } => x !== null);
 
-  if (bulunanlar.length === 0) return;
+  const ilKaydi = bulunanlar.find((x) => x.anahtar === "il");
+  const ilceKaydiVar = bulunanlar.some((x) => x.anahtar === "ilce");
+  if (ilKaydi && !ilceKaydiVar && cevaplananKolon !== "district_name") {
+    const ilceler = getDistrictsForProvince(ilKaydi.deger);
+    const varsayilanIlce = ilceler.includes("Merkez") ? "Merkez" : (ilceler[0] ?? "");
+    const ilceAlan = FIELD_BY_KEY.get("ilce");
+    if (varsayilanIlce && ilceAlan) {
+      setAlan("district_name", "");
+      bulunanlar.push({
+        anahtar: "ilce",
+        kolon: ilceAlan.kolon,
+        etiket: ilceAlan.etiket,
+        deger: varsayilanIlce,
+      });
+    } else {
+      setAlan("district_name", "");
+    }
+  }
+
+  if (bulunanlar.length === 0) {
+    routerRefresh();
+    return;
+  }
 
   try {
     const commandId = crypto.randomUUID();
@@ -217,9 +241,8 @@ export async function bonusAlanlariCikarVeKaydet(
       }),
     });
     const govde = await yanit.json();
-    // Sessiz yutma yasağı (2026-09-25): bonus kayıt başarısızsa esnaf
-    // nedenini SOHBETTE görsün — sessiz return bırakılmaz.
     if (!yanit.ok) {
+      routerRefresh();
       mesajEkle("asistan", govde?.hata ?? "Ek alanlar kaydedilemedi.");
       return;
     }
@@ -250,16 +273,21 @@ export async function bonusAlanlariCikarVeKaydet(
     }
 
     if (basarili.length !== bulunanlar.length) {
-      // Sunucu başarılı dediği halde ayrıntı eksikse yerel state tahmin edilmez.
       routerRefresh();
       return;
     }
 
     routerRefresh();
     const liste = basarili.map(({ etiket }) => `✓ ${etiket}`).join("\n");
-    mesajEkle("asistan", `Yazdığından ayrıca şunları da anladım:\n${liste}`, undefined, "✨");
+    mesajEkle(
+      "asistan",
+      `Yazdığından ayrıca şunları da anladım:\n${liste}`,
+      [{ label: "Harika, devam et", payload: "onay_tamam" }],
+      "✨"
+    );
   } catch {
-    // Bonus bir zenginleştirme — asıl kaydı etkilemez ama esnaf haberdar edilir.
+    // Bonus bir zenginleştirme: esnaf haberdar edilir, asıl kayıt bozulmaz.
+    routerRefresh();
     mesajEkle("asistan", "Yazdığından çıkardığım ek alanlar kaydedilemedi; bağlantıyı kontrol et.");
   }
 }
@@ -502,25 +530,48 @@ export function useOwnerActions({
         return;
       }
 
+      const temizIlce = alan.anahtar === "il" && String(yerelTaslak.province_name ?? "") !== String(gonderilecek);
+      if (temizIlce) {
+        await fetch("/api/owner-draft", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            slug,
+            anahtar: "ilce",
+            deger: null,
+            clientId: taslakClientId(),
+          }),
+        }).catch(() => null);
+      }
+
       mesajEkle(
         "asistan",
         `${alan.etiket} güncellendi. Müşteriler yayınlayana kadar göremez.`
       );
       setGiris("");
       setAlan(alan.kolon, gonderilecek);
-      const tazeTaslak = { ...yerelTaslak, [alan.kolon]: gonderilecek };
-      // Sayfa sunucuda çizildiği için yeni değer ancak yeniden
-      // okununca vitrine yansır — yoksa esnaf kaydeder, sayfada
-      // eski yazı durmaya devam ederdi (Faz 2).
-      router.refresh();
+      if (temizIlce) {
+        setAlan("district_name", "");
+      }
+      const tazeTaslak = {
+        ...yerelTaslak,
+        [alan.kolon]: gonderilecek,
+        ...(temizIlce ? { district_name: "" } : {}),
+      };
+      const metinUzun = typeof gonderilecek === "string" && metin.length >= 15;
+
+      if (!metinUzun) {
+        router.refresh();
+      }
       alaniParlat(alan.anahtar);
       alanaGecVeyaBitir(alan.anahtar, tazeTaslak);
 
-      // "Esnaf 46 alanı tek tek dolaşmasın" (2026-09-02) — bu KUTUYA
-      // (ör. "İşletme adın?") normalden uzun bir cümle yazılırsa, arka
-      // planda diğer alanları da doldurmayı dener. Yeni bir ekran
-      // elemanı yok — yalnız zaten var olan bu giriş kutusu akıllanıyor.
-      if (typeof gonderilecek === "string" && metin.length >= 15) {
+      void supabase.rpc("set_assistant_pending_slot", { p_slot: null }).then(
+        () => {},
+        () => {}
+      );
+
+      if (metinUzun) {
         void bonusAlanlariCikarVeKaydet(
           metin,
           alan.kolon,
@@ -561,6 +612,12 @@ export function useOwnerActions({
         const cozulen = sonuc.tumu ?? [];
 
         if (sonuc.outcome !== "handled" || cozulen.length === 0) {
+          if (sonuc.outcome === "needsSpecialFlow" && sonuc.anahtar === "il" && typeof sonuc.deger === "string") {
+            setAlan("province_name", sonuc.deger);
+            setAlan("district_name", "");
+          } else if (sonuc.outcome === "needsSpecialFlow" && sonuc.anahtar === "ilce" && typeof sonuc.deger === "string") {
+            setAlan("district_name", sonuc.deger);
+          }
           mesajEkle("asistan", sonuc.message);
           // Motor alani anladi ama degeri eksikse o alani secili hale getir:
           // esnaf devaminda sadece degeri yazsin, alani tekrar tarif etmesin.
@@ -615,6 +672,13 @@ export function useOwnerActions({
         const kaydedilen: string[] = [];
         const kaydedilenSatirlar: string[] = [];
         const commandId = crypto.randomUUID();
+        const ilDegistiIlceYok =
+          cozulen.some((x) => x.anahtar === "il") &&
+          !cozulen.some((x) => x.anahtar === "ilce");
+        if (ilDegistiIlceYok) {
+          setAlan("district_name", "");
+          tazeTaslak = { ...tazeTaslak, district_name: "" };
+        }
 
         // Assistant serbest-metin yazımı TEK ALAN olsa bile aynı command
         // güvenlik kapısından geçer. Bir kullanıcı mesajı bir commandId alır;

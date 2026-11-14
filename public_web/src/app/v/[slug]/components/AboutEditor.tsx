@@ -28,10 +28,18 @@ interface Props {
     values: AboutValue[];
   };
   onClose: () => void;
+  onSaved?: (data: {
+    kicker: string | null;
+    title: string | null;
+    body: string | null;
+    imageUrl: string | null;
+    imageCaption: string | null;
+    values: AboutValue[];
+  }) => void;
   inline?: boolean;
 }
 
-export function AboutEditor({ slug, mevcut, onClose, inline = false }: Props) {
+export function AboutEditor({ slug, mevcut, onClose, onSaved, inline = false }: Props) {
   const router = useRouter();
   const [kicker, setKicker] = useState(mevcut.kicker);
   const [title, setTitle] = useState(mevcut.title);
@@ -77,17 +85,20 @@ export function AboutEditor({ slug, mevcut, onClose, inline = false }: Props) {
     ];
 
     try {
-      for (const [anahtar, deger] of alanlar) {
-        const res = await fetch("/api/owner-draft", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ slug, anahtar, deger, clientId: null }),
-        });
-        if (!res.ok) {
-          const govde = await res.json();
-          setMesaj(govde?.hata ?? "Kaydedilemedi.");
-          return;
-        }
+      const batchRes = await fetch("/api/owner-draft-batch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug,
+          commandId: crypto.randomUUID(),
+          degisiklikler: alanlar.map(([anahtar, deger]) => ({ anahtar, deger })),
+          clientId: null,
+        }),
+      });
+      if (!batchRes.ok) {
+        const govde = await batchRes.json();
+        setMesaj(govde?.hata ?? "Kaydedilemedi.");
+        return;
       }
       // about_values JSONB — şemada yok, yapılandırılmış alan yolu
       const valuesRes = await fetch("/api/owner-structured-field", {
@@ -100,6 +111,14 @@ export function AboutEditor({ slug, mevcut, onClose, inline = false }: Props) {
         setMesaj(govde?.hata ?? "Kaydedilemedi.");
         return;
       }
+      onSaved?.({
+        kicker: kicker.trim() || null,
+        title: title.trim() || null,
+        body: body.trim() || null,
+        imageUrl: imageUrl.trim() || null,
+        imageCaption: imageCaption.trim() || null,
+        values: temizValues,
+      });
       router.refresh();
       onClose();
     } catch {
@@ -107,7 +126,7 @@ export function AboutEditor({ slug, mevcut, onClose, inline = false }: Props) {
     } finally {
       setKaydediliyor(false);
     }
-  }, [slug, kicker, title, body, imageUrl, imageCaption, values, router, onClose]);
+  }, [slug, kicker, title, body, imageUrl, imageCaption, values, router, onClose, onSaved]);
 
   const content = (
     <>

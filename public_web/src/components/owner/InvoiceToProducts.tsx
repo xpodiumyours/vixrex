@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import { buildProductDetailFacts } from "@/lib/productCardPresentation";
 import { faturaKatalogMetadatasi } from "@/lib/faturaUrunIcerigi";
 import { faturaSonucunuBekle } from "@/lib/faturaOtomatikBekleme";
@@ -1070,7 +1071,7 @@ export default function InvoiceToProducts({
         <div className="fatura-tarama">
           <figure className={`fatura-tarama-belge${onizleme ? "" : " fatura-tarama-belge--bos"}`}>
             {onizleme ? (
-              <img src={onizleme} alt="Yüklediğin faturanın önizlemesi" />
+              <Image src={onizleme} alt="Yüklediğin faturanın önizlemesi" width={320} height={440} unoptimized />
             ) : (
               <span className="fatura-tarama-bos">
                 <b>PDF</b>
@@ -1320,11 +1321,14 @@ export default function InvoiceToProducts({
               {dusukGuven && <span className="fatura-rozet fatura-rozet-suphe">Kontrol et</span>}
 
               {kartGorseli ? (
-                <img
+                <Image
                   className="fatura-kart-gorsel"
                   src={kartGorseli}
                   alt={katalog?.resmiAd || satir.ad}
+                  width={96}
+                  height={96}
                   loading="lazy"
+                  unoptimized
                 />
               ) : (
                 <div className="fatura-kart-gorselsiz">Görsel hazırlanıyor</div>
