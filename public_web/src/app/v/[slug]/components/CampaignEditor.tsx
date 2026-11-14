@@ -21,10 +21,17 @@ interface Props {
     imageUrl: string;
   };
   onClose: () => void;
+  onSaved?: (data: {
+    label: string | null;
+    title: string | null;
+    description: string | null;
+    priceText: string | null;
+    imageUrl: string | null;
+  }) => void;
   inline?: boolean;
 }
 
-export function CampaignEditor({ slug, mevcut, onClose, inline = false }: Props) {
+export function CampaignEditor({ slug, mevcut, onClose, onSaved, inline = false }: Props) {
   const router = useRouter();
   const [label, setLabel] = useState(mevcut.label);
   const [title, setTitle] = useState(mevcut.title);
@@ -62,6 +69,13 @@ export function CampaignEditor({ slug, mevcut, onClose, inline = false }: Props)
         setMesaj(govde?.hata ?? "Kaydedilemedi.");
         return;
       }
+      onSaved?.({
+        label: label.trim() || null,
+        title: title.trim() || null,
+        description: description.trim() || null,
+        priceText: priceText.trim() || null,
+        imageUrl: imageUrl.trim() || null,
+      });
       router.refresh();
       onClose();
     } catch {
@@ -69,7 +83,7 @@ export function CampaignEditor({ slug, mevcut, onClose, inline = false }: Props)
     } finally {
       setKaydediliyor(false);
     }
-  }, [slug, label, title, description, priceText, imageUrl, router, onClose]);
+  }, [slug, label, title, description, priceText, imageUrl, router, onClose, onSaved]);
 
   const content = (
     <>

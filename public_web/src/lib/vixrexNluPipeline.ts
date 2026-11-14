@@ -243,10 +243,16 @@ export async function handleVixrexNluMessage(input: string): Promise<VixrexPipel
         }
 
         if (needsSpecialFlow(alan.anahtar)) {
+          const yer = ilIlceCikar(trimmed);
           return {
             outcome: "needsSpecialFlow",
             message: clarifyAsk(alan),
             anahtar: alan.anahtar,
+            ...(alan.anahtar === "il" && yer?.il
+              ? { deger: yer.il }
+              : alan.anahtar === "ilce" && yer?.ilce
+              ? { deger: yer.ilce }
+              : {}),
           };
         }
 
@@ -329,8 +335,18 @@ export async function handleVixrexNluMessage(input: string): Promise<VixrexPipel
   }
   const alan = all[0];
   if (needsSpecialFlow(alan.anahtar)) {
+    const yer = ilIlceCikar(trimmed);
     await savePending(alan);
-    return { outcome: "needsSpecialFlow", message: clarifyAsk(alan), anahtar: alan.anahtar };
+    return {
+      outcome: "needsSpecialFlow",
+      message: clarifyAsk(alan),
+      anahtar: alan.anahtar,
+      ...(alan.anahtar === "il" && yer?.il
+        ? { deger: yer.il }
+        : alan.anahtar === "ilce" && yer?.ilce
+        ? { deger: yer.ilce }
+        : {}),
+    };
   }
   const ham = extractPipelineValue(trimmed, alan);
   if (ham === null || ham === "") {

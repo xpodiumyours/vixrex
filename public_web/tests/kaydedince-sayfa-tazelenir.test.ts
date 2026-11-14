@@ -112,3 +112,41 @@ describe("kayıt sürerken sayfada iz kalır", () => {
     expect(css).toContain("prefers-reduced-motion");
   });
 });
+
+describe("A-04 ve B-02 — il/ilçe tutarlılığı ve 5 içerik modalinin taslak senkronu", () => {
+  it("A-04: il değiştiğinde eski ilçe sıfırlanır (panel, NLU, seçili alan ve bonus kayıt)", () => {
+    expect(panelSource).toContain('setAlan("province_name", il)');
+    expect(panelSource).toContain('setAlan("district_name", "")');
+    expect(actionsSource).toContain('alan.anahtar === "il"');
+    expect(actionsSource).toContain('setAlan("district_name", "")');
+    expect(actionsSource).toContain('sonuc.outcome === "needsSpecialFlow" && sonuc.anahtar === "il"');
+    const nluSource = readFileSync(
+      resolve(__dirname, "../src/lib/vixrexNluPipeline.ts"),
+      "utf8",
+    );
+    expect(nluSource).toContain('alan.anahtar === "il" && yer?.il');
+  });
+
+  it("B-02: 5 içerik düzenleme modali (About, Faq, Campaign, Marketplace, Gallery) yerel taslağı günceller ve router.refresh() ile tazeler", () => {
+    for (const editorName of [
+      "AboutEditor",
+      "FaqEditor",
+      "CampaignEditor",
+      "MarketplaceEditor",
+      "GalleryEditor",
+    ]) {
+      const editorSource = readFileSync(
+        resolve(__dirname, `../src/app/v/[slug]/components/${editorName}.tsx`),
+        "utf8",
+      );
+      expect(editorSource).toContain("router.refresh()");
+      expect(editorSource).toContain("onSaved?.(");
+      expect(panelSource).toContain(`<${editorName}`);
+    }
+    expect(panelSource).toContain("guncelAboutSection");
+    expect(panelSource).toContain("guncelFaqItems");
+    expect(panelSource).toContain("guncelCampaignBanner");
+    expect(panelSource).toContain("guncelMarketplaceLinks");
+    expect(panelSource).toContain("guncelGalleryItems");
+  });
+});

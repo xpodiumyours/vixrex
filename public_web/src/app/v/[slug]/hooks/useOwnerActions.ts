@@ -10,6 +10,7 @@ import { handleVixrexNluMessage } from "@/lib/vixrexNluPipeline";
 import { resolveVixrexIntentsAll } from "@/lib/vixrexIntentResolver";
 import { VIXREX_NIYET_ALAN_BY_ANAHTAR } from "@/lib/vixrexNiyetSozlugu";
 import { extractVixrexValue, digerAlanaAitIpucuVarMi } from "@/lib/vixrexValueExtractor";
+import { getDistrictsForProvince } from "@/lib/turkeyCities";
 import { supabase } from "@/lib/supabase";
 import type { Mesaj } from "./useOwnerChat";
 
@@ -202,6 +203,25 @@ export async function bonusAlanlariCikarVeKaydet(
       return { anahtar, kolon: alan.kolon, etiket: alan.etiket, deger };
     })
     .filter((x): x is { anahtar: string; kolon: string; etiket: string; deger: string } => x !== null);
+
+  const ilKaydi = bulunanlar.find((x) => x.anahtar === "il");
+  const ilceKaydiVar = bulunanlar.some((x) => x.anahtar === "ilce");
+  if (ilKaydi && !ilceKaydiVar && cevaplananKolon !== "district_name") {
+    const ilceler = getDistrictsForProvince(ilKaydi.deger);
+    const varsayilanIlce = ilceler.includes("Merkez") ? "Merkez" : (ilceler[0] ?? "");
+    const ilceAlan = FIELD_BY_KEY.get("ilce");
+    if (varsayilanIlce && ilceAlan) {
+      setAlan("district_name", "");
+      bulunanlar.push({
+        anahtar: "ilce",
+        kolon: ilceAlan.kolon,
+        etiket: ilceAlan.etiket,
+        deger: varsayilanIlce,
+      });
+    } else {
+      setAlan("district_name", "");
+    }
+  }
 
   if (bulunanlar.length === 0) {
     routerRefresh();
@@ -510,13 +530,34 @@ export function useOwnerActions({
         return;
       }
 
+      const temizIlce = alan.anahtar === "il" && String(yerelTaslak.province_name ?? "") !== String(gonderilecek);
+      if (temizIlce) {
+        await fetch("/api/owner-draft", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            slug,
+            anahtar: "ilce",
+            deger: null,
+            clientId: taslakClientId(),
+          }),
+        }).catch(() => null);
+      }
+
       mesajEkle(
         "asistan",
         `${alan.etiket} güncellendi. Müşteriler yayınlayana kadar göremez.`
       );
       setGiris("");
       setAlan(alan.kolon, gonderilecek);
-      const tazeTaslak = { ...yerelTaslak, [alan.kolon]: gonderilecek };
+      if (temizIlce) {
+        setAlan("district_name", "");
+      }
+      const tazeTaslak = {
+        ...yerelTaslak,
+        [alan.kolon]: gonderilecek,
+        ...(temizIlce ? { district_name: "" } : {}),
+      };
       const metinUzun = typeof gonderilecek === "string" && metin.length >= 15;
 
       if (!metinUzun) {
@@ -571,6 +612,12 @@ export function useOwnerActions({
         const cozulen = sonuc.tumu ?? [];
 
         if (sonuc.outcome !== "handled" || cozulen.length === 0) {
+          if (sonuc.outcome === "needsSpecialFlow" && sonuc.anahtar === "il" && typeof sonuc.deger === "string") {
+            setAlan("province_name", sonuc.deger);
+            setAlan("district_name", "");
+          } else if (sonuc.outcome === "needsSpecialFlow" && sonuc.anahtar === "ilce" && typeof sonuc.deger === "string") {
+            setAlan("district_name", sonuc.deger);
+          }
           mesajEkle("asistan", sonuc.message);
           // Motor alani anladi ama degeri eksikse o alani secili hale getir:
           // esnaf devaminda sadece degeri yazsin, alani tekrar tarif etmesin.
@@ -625,6 +672,13 @@ export function useOwnerActions({
         const kaydedilen: string[] = [];
         const kaydedilenSatirlar: string[] = [];
         const commandId = crypto.randomUUID();
+        const ilDegistiIlceYok =
+          cozulen.some((x) => x.anahtar === "il") &&
+          !cozulen.some((x) => x.anahtar === "ilce");
+        if (ilDegistiIlceYok) {
+          setAlan("district_name", "");
+          tazeTaslak = { ...tazeTaslak, district_name: "" };
+        }
 
         // Assistant serbest-metin yazımı TEK ALAN olsa bile aynı command
         // güvenlik kapısından geçer. Bir kullanıcı mesajı bir commandId alır;

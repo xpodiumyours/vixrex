@@ -33,6 +33,7 @@ import { otomatikDeger } from "@/lib/otomatikVitrinIcerik";
 import { yonetimOnerileriUret } from "@/lib/yonetimOnerileri";
 import { supabase } from "@/lib/supabase";
 import { ensureAnonymousSession } from "@/lib/assistantConversation";
+import { safeParseJson } from "@/lib/products";
 import OwnerEditorBar from "./components/OwnerEditorBar";
 
 // Vixrex Asistan — sahip paneli (implementation_plan.md Commit 9;
@@ -361,6 +362,75 @@ export default function OwnerAssistantPanel({
   const [galeriAcik, setGaleriAcik] = useState(false);
   const [gpsLoading, setGpsLoading] = useState(false);
   const router = useRouter();
+
+  const guncelAboutSection = {
+    kicker: String(yerelTaslak.about_kicker ?? aboutSection?.kicker ?? "").trim(),
+    title: String(yerelTaslak.about_title ?? aboutSection?.title ?? "").trim(),
+    body: String(yerelTaslak.corporate_bio ?? aboutSection?.body ?? "").trim(),
+    imageUrl: String(yerelTaslak.about_image_url ?? aboutSection?.imageUrl ?? "").trim(),
+    imageCaption: String(yerelTaslak.about_image_caption ?? aboutSection?.imageCaption ?? "").trim(),
+    values:
+      yerelTaslak.about_values !== undefined
+        ? safeParseJson<{ id?: string; title?: string; description?: string }>(yerelTaslak.about_values)
+            .map((v, i) => ({
+              id: String(v.id || `about-value-${i + 1}`),
+              title: String(v.title || "").trim(),
+              description: String(v.description || "").trim(),
+            }))
+            .filter((v) => v.title)
+        : (aboutSection?.values ?? []),
+  };
+
+  const guncelFaqItems =
+    yerelTaslak.faq_items !== undefined
+      ? safeParseJson<{ id?: string; question?: string; answer?: string }>(yerelTaslak.faq_items)
+          .map((f, i) => ({
+            id: String(f.id || `faq-${i + 1}`),
+            question: String(f.question || "").trim(),
+            answer: String(f.answer || "").trim(),
+          }))
+          .filter((f) => f.question && f.answer)
+      : (faqItems ?? []);
+
+  const guncelCampaignBanner = {
+    label: String(yerelTaslak.featured_banner_label ?? campaignBanner?.label ?? "").trim(),
+    title: String(yerelTaslak.featured_banner_title ?? campaignBanner?.title ?? "").trim(),
+    description: String(yerelTaslak.featured_banner_description ?? campaignBanner?.description ?? "").trim(),
+    priceText: String(yerelTaslak.featured_banner_price_text ?? campaignBanner?.priceText ?? "").trim(),
+    imageUrl: String(yerelTaslak.featured_banner_image_url ?? campaignBanner?.imageUrl ?? "").trim(),
+  };
+
+  const guncelMarketplaceLinks =
+    yerelTaslak.marketplace_links !== undefined
+      ? safeParseJson<{ id?: string; platform?: string; url?: string; subtitle?: string }>(yerelTaslak.marketplace_links)
+          .map((l, i) => ({
+            id: String(l.id || `ml-${i}`),
+            platform: String(l.platform || "").trim(),
+            url: String(l.url || "").trim(),
+            subtitle: String(l.subtitle || "").trim(),
+          }))
+          .filter((l) => l.platform && l.url)
+      : (marketplaceLinks ?? []).map((l, i) => ({
+          id: l.id || `ml-${i}`,
+          platform: l.platform || "",
+          url: l.url || "",
+          subtitle: l.subtitle || "",
+        }));
+
+  const guncelGalleryItems =
+    yerelTaslak.gallery_items !== undefined
+      ? safeParseJson<{ id?: string; imageUrl?: string; title?: string }>(yerelTaslak.gallery_items)
+          .map((g, i) => ({
+            id: String(g.id || `gallery-${i}`),
+            imageUrl: String(g.imageUrl || "").trim(),
+            title: String(g.title || "").trim(),
+          }))
+          .filter((g) => g.imageUrl)
+      : (galleryItems ?? []).map((g) => ({
+          id: g.id || "",
+          imageUrl: g.imageUrl || "",
+          title: g.title || "",
+        }));
 
   // UpNextList içindeki "Atla" tıklandığında yalnızca yerel state'i değil,
   // veritabanındaki draft_skipped_fields tablosunu da günceller (kalıcı atlama).
@@ -802,23 +872,23 @@ export default function OwnerAssistantPanel({
                   <div className="space-y-1">
                     <button type="button" onClick={() => setAboutAcik(true)} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[12px] font-semibold text-slate-300 hover:bg-white/5">
                       <span className="flex-1">Hakkımızda</span>
-                      <span className="text-[9px] text-slate-600">{aboutSection?.title ? "Dolu" : "Boş"}</span>
+                      <span className="text-[9px] text-slate-600">{guncelAboutSection.title ? "Dolu" : "Boş"}</span>
                     </button>
                     <button type="button" onClick={() => setGaleriAcik(true)} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[12px] font-semibold text-slate-300 hover:bg-white/5">
                       <span className="flex-1">Galeri</span>
-                      <span className="text-[9px] text-slate-600">{galleryItems && galleryItems.length > 0 ? `${galleryItems.length} görsel` : "Boş"}</span>
+                      <span className="text-[9px] text-slate-600">{guncelGalleryItems.length > 0 ? `${guncelGalleryItems.length} görsel` : "Boş"}</span>
                     </button>
                     <button type="button" onClick={() => setMarketplaceAcik(true)} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[12px] font-semibold text-slate-300 hover:bg-white/5">
                       <span className="flex-1">Pazaryeri bağlantıları</span>
-                      <span className="text-[9px] text-slate-600">{marketplaceLinks && marketplaceLinks.length > 0 ? `${marketplaceLinks.length} link` : "Boş"}</span>
+                      <span className="text-[9px] text-slate-600">{guncelMarketplaceLinks.length > 0 ? `${guncelMarketplaceLinks.length} link` : "Boş"}</span>
                     </button>
                     <button type="button" onClick={() => setFaqAcik(true)} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[12px] font-semibold text-slate-300 hover:bg-white/5">
                       <span className="flex-1">Sık Sorulan Sorular</span>
-                      <span className="text-[9px] text-slate-600">{faqItems && faqItems.length > 0 ? `${faqItems.length} soru` : "Boş"}</span>
+                      <span className="text-[9px] text-slate-600">{guncelFaqItems.length > 0 ? `${guncelFaqItems.length} soru` : "Boş"}</span>
                     </button>
                     <button type="button" onClick={() => setKampanyaAcik(true)} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[12px] font-semibold text-slate-300 hover:bg-white/5">
                       <span className="flex-1">Öne Çıkan Kampanya</span>
-                      <span className="text-[9px] text-slate-600">{campaignBanner?.title ? "Dolu" : "Boş"}</span>
+                      <span className="text-[9px] text-slate-600">{guncelCampaignBanner.title ? "Dolu" : "Boş"}</span>
                     </button>
                   </div>
                 </div>
@@ -990,23 +1060,23 @@ export default function OwnerAssistantPanel({
                       <div className="space-y-1">
                         <button type="button" onClick={() => setAboutAcik(true)} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[12px] font-semibold text-slate-300 hover:bg-white/5">
                           <span className="flex-1">Hakkımızda</span>
-                          <span className="text-[9px] text-slate-600">{aboutSection?.title ? "Dolu" : "Boş"}</span>
+                          <span className="text-[9px] text-slate-600">{guncelAboutSection.title ? "Dolu" : "Boş"}</span>
                         </button>
                         <button type="button" onClick={() => setGaleriAcik(true)} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[12px] font-semibold text-slate-300 hover:bg-white/5">
                           <span className="flex-1">Galeri</span>
-                          <span className="text-[9px] text-slate-600">{galleryItems && galleryItems.length > 0 ? `${galleryItems.length} görsel` : "Boş"}</span>
+                          <span className="text-[9px] text-slate-600">{guncelGalleryItems.length > 0 ? `${guncelGalleryItems.length} görsel` : "Boş"}</span>
                         </button>
                         <button type="button" onClick={() => setMarketplaceAcik(true)} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[12px] font-semibold text-slate-300 hover:bg-white/5">
                           <span className="flex-1">Pazaryeri bağlantıları</span>
-                          <span className="text-[9px] text-slate-600">{marketplaceLinks && marketplaceLinks.length > 0 ? `${marketplaceLinks.length} link` : "Boş"}</span>
+                          <span className="text-[9px] text-slate-600">{guncelMarketplaceLinks.length > 0 ? `${guncelMarketplaceLinks.length} link` : "Boş"}</span>
                         </button>
                         <button type="button" onClick={() => setFaqAcik(true)} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[12px] font-semibold text-slate-300 hover:bg-white/5">
                           <span className="flex-1">Sık Sorulan Sorular</span>
-                          <span className="text-[9px] text-slate-600">{faqItems && faqItems.length > 0 ? `${faqItems.length} soru` : "Boş"}</span>
+                          <span className="text-[9px] text-slate-600">{guncelFaqItems.length > 0 ? `${guncelFaqItems.length} soru` : "Boş"}</span>
                         </button>
                         <button type="button" onClick={() => setKampanyaAcik(true)} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[12px] font-semibold text-slate-300 hover:bg-white/5">
                           <span className="flex-1">Öne Çıkan Kampanya</span>
-                          <span className="text-[9px] text-slate-600">{campaignBanner?.title ? "Dolu" : "Boş"}</span>
+                          <span className="text-[9px] text-slate-600">{guncelCampaignBanner.title ? "Dolu" : "Boş"}</span>
                         </button>
                       </div>
                     </div>
@@ -1201,39 +1271,72 @@ export default function OwnerAssistantPanel({
         </div>
       )}
       {/* Hakkımızda / SSS / Kampanya düzenleme modalleri */}
-      {aboutAcik && aboutSection && (
+      {aboutAcik && (
         <AboutEditor
           slug={slug}
-          mevcut={aboutSection}
-          onClose={() => setAboutAcik(false)}
+          mevcut={guncelAboutSection}
+          onSaved={(d) => {
+            setAlan("about_kicker", d.kicker);
+            setAlan("about_title", d.title);
+            setAlan("corporate_bio", d.body);
+            setAlan("about_image_url", d.imageUrl);
+            setAlan("about_image_caption", d.imageCaption);
+            setAlan("about_values", d.values);
+          }}
+          onClose={() => {
+            setAboutAcik(false);
+            router.refresh();
+          }}
         />
       )}
       {faqAcik && (
         <FaqEditor
           slug={slug}
-          items={faqItems ?? []}
-          onClose={() => setFaqAcik(false)}
+          items={guncelFaqItems}
+          onSaved={(items) => setAlan("faq_items", items)}
+          onClose={() => {
+            setFaqAcik(false);
+            router.refresh();
+          }}
         />
       )}
       {kampanyaAcik && (
         <CampaignEditor
           slug={slug}
-          mevcut={campaignBanner ?? { label: "", title: "", description: "", priceText: "", imageUrl: "" }}
-          onClose={() => setKampanyaAcik(false)}
+          mevcut={guncelCampaignBanner}
+          onSaved={(d) => {
+            setAlan("featured_banner_label", d.label);
+            setAlan("featured_banner_title", d.title);
+            setAlan("featured_banner_description", d.description);
+            setAlan("featured_banner_price_text", d.priceText);
+            setAlan("featured_banner_image_url", d.imageUrl);
+          }}
+          onClose={() => {
+            setKampanyaAcik(false);
+            router.refresh();
+          }}
         />
       )}
       {marketplaceAcik && (
         <MarketplaceEditor
           slug={slug}
-          links={(marketplaceLinks ?? []).map((l, i) => ({ id: l.id || `ml-${i}`, platform: l.platform || "", url: l.url || "", subtitle: l.subtitle || "" }))}
-          onClose={() => setMarketplaceAcik(false)}
+          links={guncelMarketplaceLinks}
+          onSaved={(links) => setAlan("marketplace_links", links)}
+          onClose={() => {
+            setMarketplaceAcik(false);
+            router.refresh();
+          }}
         />
       )}
       {galeriAcik && (
         <GalleryEditor
           slug={slug}
-          items={(galleryItems ?? []).map((g) => ({ id: g.id || "", imageUrl: g.imageUrl || "", title: g.title || "" }))}
-          onClose={() => setGaleriAcik(false)}
+          items={guncelGalleryItems}
+          onSaved={(items) => setAlan("gallery_items", items)}
+          onClose={() => {
+            setGaleriAcik(false);
+            router.refresh();
+          }}
         />
       )}
     </>

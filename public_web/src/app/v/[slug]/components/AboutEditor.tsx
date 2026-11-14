@@ -28,10 +28,18 @@ interface Props {
     values: AboutValue[];
   };
   onClose: () => void;
+  onSaved?: (data: {
+    kicker: string | null;
+    title: string | null;
+    body: string | null;
+    imageUrl: string | null;
+    imageCaption: string | null;
+    values: AboutValue[];
+  }) => void;
   inline?: boolean;
 }
 
-export function AboutEditor({ slug, mevcut, onClose, inline = false }: Props) {
+export function AboutEditor({ slug, mevcut, onClose, onSaved, inline = false }: Props) {
   const router = useRouter();
   const [kicker, setKicker] = useState(mevcut.kicker);
   const [title, setTitle] = useState(mevcut.title);
@@ -103,6 +111,14 @@ export function AboutEditor({ slug, mevcut, onClose, inline = false }: Props) {
         setMesaj(govde?.hata ?? "Kaydedilemedi.");
         return;
       }
+      onSaved?.({
+        kicker: kicker.trim() || null,
+        title: title.trim() || null,
+        body: body.trim() || null,
+        imageUrl: imageUrl.trim() || null,
+        imageCaption: imageCaption.trim() || null,
+        values: temizValues,
+      });
       router.refresh();
       onClose();
     } catch {
@@ -110,7 +126,7 @@ export function AboutEditor({ slug, mevcut, onClose, inline = false }: Props) {
     } finally {
       setKaydediliyor(false);
     }
-  }, [slug, kicker, title, body, imageUrl, imageCaption, values, router, onClose]);
+  }, [slug, kicker, title, body, imageUrl, imageCaption, values, router, onClose, onSaved]);
 
   const content = (
     <>
