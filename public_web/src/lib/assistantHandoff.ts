@@ -129,6 +129,29 @@ const STEP_CONTINUATION: Record<Exclude<AssistantHandoffStep, "done">, string> =
   publishing: "Yayınlama adımından kaldığımız yerden devam edelim.",
 };
 
+const AKIS_ADIM_ESLEMESI: Record<
+  string,
+  Exclude<AssistantHandoffStep, "done"> | null
+> = {
+  name: "name",
+  category: "category",
+  whatsapp: "whatsapp",
+  location: "location",
+  address: "location",
+  legal: "legal",
+  publish: "publishing",
+  publishing: "publishing",
+  share: null,
+};
+
+export function handoffAdimDevami(
+  akisAdimi: string | null | undefined,
+): string | null {
+  if (!akisAdimi) return null;
+  const adim = AKIS_ADIM_ESLEMESI[akisAdimi];
+  return adim ? STEP_CONTINUATION[adim] : null;
+}
+
 const EDIT_PROMPT =
   "Değiştirmek istediğin yazıya vitrinde tıkla — buradan düzenleriz.";
 
@@ -148,7 +171,8 @@ function readinessMessages(rapor: HazirlikRaporu): Array<Omit<OwnerChatMessage, 
 /** Geçerli handoff varsa konuşmayı taşır; yoksa mevcut hazırlık akışını korur. */
 export function ownerChatInitialMessages(
   rapor: HazirlikRaporu,
-  handoff: AssistantHandoffV1 | null
+  handoff: AssistantHandoffV1 | null,
+  akisAdimi?: string | null
 ): OwnerChatMessage[] {
   const initial: Array<Omit<OwnerChatMessage, "id">> = handoff
     ? handoff.messages.map((message) => ({
@@ -166,6 +190,15 @@ export function ownerChatInitialMessages(
       initial.push({ kimden: "asistan", metin: continuation });
     }
     if (initial.at(-1)?.metin !== EDIT_PROMPT) {
+      initial.push({ kimden: "asistan", metin: EDIT_PROMPT });
+    }
+  } else {
+    const devam = handoffAdimDevami(akisAdimi);
+    if (devam) {
+      // Tek EDIT_PROMPT kalsın: sondaki edit istemini kaldır, devamı ekle,
+      // ardından tek bir edit istemi ile bitir.
+      if (initial.at(-1)?.metin === EDIT_PROMPT) initial.pop();
+      initial.push({ kimden: "asistan", metin: devam });
       initial.push({ kimden: "asistan", metin: EDIT_PROMPT });
     }
   }

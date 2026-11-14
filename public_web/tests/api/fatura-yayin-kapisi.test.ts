@@ -20,7 +20,7 @@ const mocks = vi.hoisted(() => ({
   verifyOwner: vi.fn(() => ({ storeId: "store-1" })),
   createProduct: vi.fn(),
   publishProduct: vi.fn(
-    async (_args: Record<string, unknown>): Promise<{ success: boolean; id?: string; hata?: string }> => ({
+    async (_args: Record<string, unknown>): Promise<{ success: boolean; id?: string; hata?: string }> => (void _args, {
       success: true,
       id: "urun-1",
     }),
@@ -28,7 +28,7 @@ const mocks = vi.hoisted(() => ({
   update: vi.fn(),
   upsert: vi.fn(),
 }));
-vi.mock("next/headers", () => ({ cookies: vi.fn(async () => ({ get: mocks.get })) }));
+vi.mock("next/headers", () => ({ cookies: vi.fn(async (_args: Record<string, unknown>) => (void _args, { get: mocks.get })) }));
 vi.mock("@/lib/supabaseAdmin", () => ({ getSupabaseAdmin: mocks.admin }));
 vi.mock("@/lib/ownerSession", () => ({
   OWNER_SESSION_COOKIE: "vixrex_owner_session",
@@ -88,7 +88,7 @@ function adminMock() {
           if (kolon === "barcode") sorgu.barkod = true;
           return query;
         }),
-        maybeSingle: vi.fn(async () => ({
+        maybeSingle: vi.fn(async (_args: Record<string, unknown>) => (void _args, {
           data: sorgu.barkod ? null : { id: "kategori-1", product_template_key: "fashion" },
           error: null,
         })),
@@ -96,7 +96,7 @@ function adminMock() {
       };
       query.select.mockReturnValue(query);
       mocks.update.mockReturnValue({
-        eq: vi.fn(async () => ({ error: null })),
+        eq: vi.fn(async (_args: Record<string, unknown>) => (void _args, { error: null })),
       });
       return query;
     }

@@ -29,6 +29,7 @@ import VitrinProfileView from "./VitrinProfileView";
 import OwnerWorkspaceShell, { WorkingDraftData } from "./OwnerWorkspaceShell";
 import { VixrexAvatar } from "./components/VixrexAvatar";
 import { parseAssistantHandoff } from "@/lib/assistantHandoff";
+import { loadAssistantMessagesForStore, loadOwnerFlowStateForStore } from "@/lib/assistantConversationServer";
 import { resolveVitrinProfile } from "@/lib/vitrinProfile";
 import { normalizeProductMetadata } from "@/lib/productRichData";
 import { gorselIzinBekliyorMu } from "@/lib/faturaGorselHakDenetimi";
@@ -574,6 +575,15 @@ export default async function StorePage(props: PageProps) {
     notFound();
   }
 
+  const assistantHistory =
+    isOwnerMode && draft
+      ? await loadAssistantMessagesForStore(params.slug, ownerSession?.storeId ?? null)
+      : { conversationId: null, messages: [] };
+  const ownerFlowState =
+    isOwnerMode && draft
+      ? await loadOwnerFlowStateForStore(params.slug, ownerSession?.storeId ?? null)
+      : null;
+
   const { store, bookingSettings, articles, visibleProducts, categories } = data;
 
   const galleryItems = safeParseJson<GalleryItem>(store.gallery_items);
@@ -962,6 +972,9 @@ export default async function StorePage(props: PageProps) {
           draft={draft}
           sessionExpiresAt={sessionExpiresAt}
           assistantHandoff={assistantHandoff}
+          flowState={ownerFlowState}
+          initialAssistantMessages={assistantHistory.messages}
+          initialAssistantConversationId={assistantHistory.conversationId}
           isDemo={Boolean(store.is_demo)}
         />
       ) : null}

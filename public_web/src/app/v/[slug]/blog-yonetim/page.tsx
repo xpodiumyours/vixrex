@@ -311,13 +311,20 @@ export default function BlogYonetimPage() {
         {konular.length > 0 || tazeleme.length > 0 ? (
           <div className="rounded-2xl owner-card p-4">
             <h2 className="mb-1 text-sm font-extrabold text-[var(--owner-text)]">
-              VixRex Asistanı
+              Blog Yazı Asistanı
             </h2>
-            <p className="mb-3 text-xs text-[var(--owner-muted)]">
-              Konu seçin; asistan SEO standardına uygun bir taslak hazırlar.
-              Taslak yayına hazır iskelet olarak açılır, siz düzenleyip
-              yayınlarsınız.
+            <p className="mb-2 text-xs text-[var(--owner-muted)]">
+              Bu araç ayrı bir yazı motorudur; ana VixRex Asistan sohbetine
+              yazmaz, vitrin taslağını değiştirmez. Konu seçin; asistan SEO
+              standardına uygun bir taslak hazırlar. Taslak yayına hazır
+              iskelet olarak açılır, siz düzenleyip yayınlarsınız.
             </p>
+            <Link
+              href={`/v/${slug}?editor=1`}
+              className="mb-3 inline-flex text-[11px] font-extrabold text-[var(--owner-secondary)] underline"
+            >
+              Vitrinin ana VixRex Asistanına dön
+            </Link>
             <div className="flex flex-col gap-2">
               {konular.map((aday) => (
                 <button

@@ -14,7 +14,7 @@ function fakeAdmin(data: unknown, error: unknown = null) {
   for (const name of ["select", "eq", "not", "gt"]) {
     query[name] = vi.fn(() => query);
   }
-  query.maybeSingle = vi.fn(async () => ({ data, error }));
+  query.maybeSingle = vi.fn(async (_args: Record<string, unknown>) => (void _args, { data, error }));
   const from = vi.fn(() => query);
   return { admin: { from } as unknown as SupabaseClient, query, from };
 }

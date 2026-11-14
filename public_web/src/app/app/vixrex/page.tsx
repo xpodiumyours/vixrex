@@ -3,11 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LandingAsistanSohbeti } from "@/components/landing/LandingAsistanSohbeti";
-import { SharedVixrexAssistant } from "@/components/vixrex/SharedVixrexAssistant";
 import { supabase } from "@/lib/supabase";
 import { sahipOturumuAc } from "@/lib/ownerCookie";
-
-export { SharedVixrexAssistant };
 
 type Gorunum = "kontrol" | "asistan" | "hata";
 
@@ -102,9 +99,23 @@ export default function VixrexPage() {
   }
   return (
     <main className="min-h-full bg-lp-bg-editor">
-      <div className="mx-auto h-[calc(100vh-61px)] max-w-2xl border-x border-lp-border/60 bg-lp-bg-editor shadow-2xl">
-        <LandingAsistanSohbeti />
-        {false ? <SharedVixrexAssistant onBrowse={() => router.push("/kesfet")} /> : null}
+      <div className="mx-auto grid h-[calc(100vh-61px)] w-full max-w-2xl grid-cols-1 border-x border-lp-border/60 bg-lp-bg-editor shadow-2xl md:max-w-3xl md:grid-cols-[minmax(0,1fr)_260px] lg:max-w-5xl lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="min-h-0">
+          <LandingAsistanSohbeti genisEkran />
+        </div>
+        <aside className="hidden min-h-0 flex-col gap-4 border-l border-lp-border/60 bg-lp-surface/40 p-5 md:flex" aria-label="Vixrex Asistan neler yapar">
+          <p className="text-[13px] font-black text-lp-text">Vixrex Asistan çalışma alanı</p>
+          <p className="text-[12px] leading-[1.5] text-lp-muted">
+            Soldaki sohbet vitrinini kurar; sağdaki kısa liste neyin birlikte
+            yapılabileceğini hatırlatır.
+          </p>
+          <ul className="space-y-3 text-[12px] font-semibold text-lp-text-alt">
+            <li>Vitrinini adım adım kurar, eksik alanı söyler.</li>
+            <li>Ürünlerini elle ya da faturadan eklemene yardım eder.</li>
+            <li>Hakkımızda, SSS ve kampanya metinlerini birlikte yazar.</li>
+            <li>Hazır vitrinleri kategorine göre keşfettirir.</li>
+          </ul>
+        </aside>
       </div>
     </main>
   );

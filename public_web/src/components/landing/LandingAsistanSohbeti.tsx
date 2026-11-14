@@ -10,6 +10,7 @@ import {
   asistanHandoffOlustur,
   handoffMesajMetni,
   taslagiKaydet,
+  yayinCevaplariHazirla,
   type AsistanCevaplari,
 } from "@/lib/landingAsistanAkisi";
 import { vixRexMesajlari, hizliSecenekEtiketi } from "@/lib/vixrexMesajlari";
@@ -102,9 +103,12 @@ const NIYET_SERBEST_METIN_ANAHTARI = "niyet_serbest_metin";
 export function LandingAsistanSohbeti({
   initialName = "",
   onClose,
+  genisEkran = false,
 }: {
   initialName?: string;
   onClose?: () => void;
+  /** `/app/vixrex` gibi tam ekran yüzeylerde balon genişliğini masaüstüne açar. */
+  genisEkran?: boolean;
 }) {
   const router = useRouter();
   const tasinanIsletmeAdi = initialName.trim();
@@ -265,6 +269,21 @@ export function LandingAsistanSohbeti({
     setYayinliyor(true);
     setHata("");
 
+    const yayinCevaplari = yayinCevaplariHazirla(
+      cevaplar,
+      {
+        aydinlatma: aydinlatmaOnay,
+        sartlar: sartlarOnay,
+        acikRiza: acikRizaOnay,
+      },
+      { yayinlandi: true },
+    );
+    const yayinIstegi = yayinCevaplariHazirla(cevaplar, {
+      aydinlatma: aydinlatmaOnay,
+      sartlar: sartlarOnay,
+      acikRiza: acikRizaOnay,
+    });
+
     try {
       // Supabase auth session kontrolü
       let { data: { session } } = await supabase.auth.getSession();
@@ -273,9 +292,14 @@ export function LandingAsistanSohbeti({
         const { data: anonim, error: anonimHata } = await supabase.auth.signInAnonymously();
         if (anonimHata || !anonim.session) {
           // Giriş yapılmamış → /kayit sayfasına yönlendir
-          taslagiKaydet({ ...cevaplar, legal_consent: true,
-            aydinlatma_onay: aydinlatmaOnay, sartlar_onay: sartlarOnay, acik_riza_onay: acikRizaOnay });
-          window.location.href = "/kayit";
+          taslagiKaydet(
+            yayinCevaplariHazirla(cevaplar, {
+              aydinlatma: aydinlatmaOnay,
+              sartlar: sartlarOnay,
+              acikRiza: acikRizaOnay,
+            }),
+          );
+          router.push("/kayit");
           return;
         }
         session = anonim.session;
@@ -289,7 +313,7 @@ export function LandingAsistanSohbeti({
           Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
-          ...cevaplar,
+          ...yayinIstegi,
           legal_consent: true,
           privacy_notice_acknowledged: aydinlatmaOnay,
           terms_accepted: sartlarOnay,
@@ -319,8 +343,7 @@ export function LandingAsistanSohbeti({
       }
       setYayinTamamlandi(true);
       setAdim(ASISTAN_ADIMLARI.length); // bitti = true yapar
-      taslagiKaydet({ ...cevaplar, legal_consent: true,
-          aydinlatma_onay: aydinlatmaOnay, sartlar_onay: sartlarOnay, acik_riza_onay: acikRizaOnay });
+      taslagiKaydet(yayinCevaplari);
       router.push(`/v/${encodeURIComponent(sonuc.slug)}?editor=1`);
     } catch (e) {
       setHata(HATA_TEKRAR_DENE);
@@ -328,7 +351,7 @@ export function LandingAsistanSohbeti({
     } finally {
       setYayinliyor(false);
     }
-  }, [cevaplar, yasalOnayVerildi, yayinliyor]);
+  }, [cevaplar, yasalOnayVerildi, yayinliyor, aydinlatmaOnay, sartlarOnay, acikRizaOnay, router]);
 
   async function hesabiGoogleaBagla() {
     if (!olusturulanSlug || hesapBaglaniyor) return;
@@ -382,13 +405,13 @@ export function LandingAsistanSohbeti({
 
       {/* Konuşma */}
       <div className="flex-1 space-y-3 overflow-y-auto px-3.5 py-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <Balon>
+        <Balon genis={genisEkran}>
           <p className="font-bold">{ASISTAN_KARSILAMA.baslik}</p>
           <p className="mt-1 text-lp-text-alt">{ASISTAN_KARSILAMA.aciklama}</p>
         </Balon>
 
         {niyetKategoriSoruluyor ? (
-          <Balon>
+          <Balon genis={genisEkran}>
             <p className="font-bold">{NIYET_KATEGORI_SORUSU}</p>
             <p className="mt-1 text-lp-text-alt">{NIYET_KATEGORI_ACIKLAMA}</p>
           </Balon>
@@ -396,7 +419,7 @@ export function LandingAsistanSohbeti({
 
         {ASISTAN_ADIMLARI.slice(0, Math.max(adim, 0)).map((gecmis) => (
           <div key={gecmis.alan} className="space-y-3 opacity-60">
-            <Balon gecmis>
+            <Balon gecmis genis={genisEkran}>
               <p className="font-bold">{gecmis.baslik}</p>
             </Balon>
             <p className="ml-auto max-w-[80%] rounded-xl rounded-tr-sm bg-lp-surface px-3 py-2.5 text-right text-[13px] font-semibold text-lp-text">
@@ -406,21 +429,21 @@ export function LandingAsistanSohbeti({
         ))}
 
         {aktif ? (
-          <Balon>
+          <Balon genis={genisEkran}>
             <p className="font-bold">{aktif.baslik}</p>
             <p className="mt-1 text-lp-text-alt">{aktif.aciklama}</p>
           </Balon>
         ) : null}
 
         {bitti && !yayinTamamlandi ? (
-          <Balon>
+          <Balon genis={genisEkran}>
             <p className="font-bold">{ASISTAN_BITIS.baslik}</p>
             <p className="mt-1 text-lp-text-alt">{ASISTAN_BITIS.aciklama}</p>
           </Balon>
         ) : null}
 
         {yayinTamamlandi ? (
-          <Balon>
+          <Balon genis={genisEkran}>
             <p className="font-bold">{BITIS_BASLIK}</p>
             <p className="mt-1 text-lp-text-alt">
               {BITIS_ACKLAMA}
@@ -672,7 +695,13 @@ export function LandingAsistanSohbeti({
                   setHata(HATA_YASAL_ONAY);
                   return;
                 }
-                setCevaplar({ ...cevaplar, legal_consent: true, aydinlatma_onay: aydinlatmaOnay, sartlar_onay: sartlarOnay, acik_riza_onay: acikRizaOnay });
+                const yeni = yayinCevaplariHazirla(cevaplar, {
+                  aydinlatma: aydinlatmaOnay,
+                  sartlar: sartlarOnay,
+                  acikRiza: acikRizaOnay,
+                });
+                setCevaplar(yeni);
+                taslagiKaydet(yeni);
                 setHata("");
                 setAdim(adim + 1);
               }}
@@ -780,7 +809,7 @@ export function LandingAsistanSohbeti({
   );
 }
 
-function Balon({ children, gecmis = false }: { children: React.ReactNode; gecmis?: boolean }) {
+function Balon({ children, gecmis = false, genis = false }: { children: React.ReactNode; gecmis?: boolean; genis?: boolean }) {
   return (
     <div className="flex gap-2.5">
       <div className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-lp-primary/20">
@@ -794,7 +823,7 @@ function Balon({ children, gecmis = false }: { children: React.ReactNode; gecmis
         />
       </div>
       {/* GAP-08: aktif adım border daha belirgin, geçmiş adım soluk */}
-      <div className={`max-w-[260px] rounded-xl rounded-tl-sm border px-3.5 py-3 text-[14px] leading-[1.5] text-lp-text ${gecmis ? "border-lp-border/40 bg-lp-surface/60" : "border-lp-primary/20 bg-lp-primary/[0.08]"}`}>
+      <div className={`rounded-xl rounded-tl-sm border px-3.5 py-3 text-[14px] leading-[1.5] text-lp-text ${genis ? "max-w-[85%] sm:max-w-[520px] lg:max-w-[640px]" : "max-w-[260px]"} ${gecmis ? "border-lp-border/40 bg-lp-surface/60" : "border-lp-primary/20 bg-lp-primary/[0.08]"}`}>
         {children}
       </div>
     </div>

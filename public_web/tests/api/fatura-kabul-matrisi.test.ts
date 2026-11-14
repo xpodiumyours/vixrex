@@ -20,14 +20,14 @@ const mocks = vi.hoisted(() => ({
   verifyOwner: vi.fn(() => ({ storeId: "store-1" })),
   createProduct: vi.fn(),
   publishProduct: vi.fn(
-    async (_args: Record<string, unknown>): Promise<{ success: boolean; id?: string; hata?: string }> => ({
+    async (_args: Record<string, unknown>): Promise<{ success: boolean; id?: string; hata?: string }> => (void _args, {
       success: true,
       id: "urun-1",
     }),
   ),
-  upsert: vi.fn(async () => ({ error: null })),
+  upsert: vi.fn(async (_args: Record<string, unknown>) => (void _args, { error: null })),
 }));
-vi.mock("next/headers", () => ({ cookies: vi.fn(async () => ({ get: mocks.get })) }));
+vi.mock("next/headers", () => ({ cookies: vi.fn(async (_args: Record<string, unknown>) => (void _args, { get: mocks.get })) }));
 vi.mock("@/lib/supabaseAdmin", () => ({ getSupabaseAdmin: mocks.admin }));
 vi.mock("@/lib/ownerSession", () => ({
   OWNER_SESSION_COOKIE: "vixrex_owner_session",
@@ -73,8 +73,8 @@ function adminMock() {
       const query = {
         select: vi.fn(),
         eq: vi.fn(),
-        maybeSingle: vi.fn(async () => ({ data: { product_id: null }, error: null })),
-        update: vi.fn(() => ({ eq: vi.fn(async () => ({ error: null })) })),
+        maybeSingle: vi.fn(async (_args: Record<string, unknown>) => (void _args, { data: { product_id: null }, error: null })),
+        update: vi.fn(() => ({ eq: vi.fn(async (_args: Record<string, unknown>) => (void _args, { error: null })) })),
       };
       query.select.mockReturnValue(query);
       query.eq.mockReturnValue(query);
@@ -88,11 +88,11 @@ function adminMock() {
           if (kolon === "barcode") sorgu.barkod = true;
           return query;
         }),
-        maybeSingle: vi.fn(async () => ({
+        maybeSingle: vi.fn(async (_args: Record<string, unknown>) => (void _args, {
           data: sorgu.barkod ? null : { id: "kategori-1", product_template_key: "fashion" },
           error: null,
         })),
-        update: vi.fn(() => ({ eq: vi.fn(async () => ({ error: null })) })),
+        update: vi.fn(() => ({ eq: vi.fn(async (_args: Record<string, unknown>) => (void _args, { error: null })) })),
       };
       query.select.mockReturnValue(query);
       return query;
@@ -102,7 +102,7 @@ function adminMock() {
       eq: vi.fn(),
       maybeSingle: vi.fn(),
       upsert: mocks.upsert,
-      update: vi.fn(() => ({ eq: vi.fn(async () => ({ error: null })) })),
+      update: vi.fn(() => ({ eq: vi.fn(async (_args: Record<string, unknown>) => (void _args, { error: null })) })),
     };
     query.select.mockReturnValue(query);
     query.eq.mockReturnValue(query);

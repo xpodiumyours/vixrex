@@ -8,18 +8,18 @@ import { NextRequest } from "next/server";
 const { mockGet, mockCreateRichCoreProduct, mockUpdateRichCoreProduct, mockGetSupabaseAdmin, mockVerifyOwnerSession } =
   vi.hoisted(() => ({
     mockGet: vi.fn(() => ({ value: "cerez-degeri" })),
-    mockCreateRichCoreProduct: vi.fn(async (_args: Record<string, unknown>) => ({
+    mockCreateRichCoreProduct: vi.fn(async (_args: Record<string, unknown>) => (void _args, {
       id: "prod-1",
       slug: "prod-1",
       created: true,
     })),
-    mockUpdateRichCoreProduct: vi.fn(async (_args: Record<string, unknown>) => undefined),
+    mockUpdateRichCoreProduct: vi.fn(async (_args: Record<string, unknown>) => (void _args, undefined)),
     mockGetSupabaseAdmin: vi.fn(),
     mockVerifyOwnerSession: vi.fn(() => ({ storeId: "store-1", slug: "deneme-vitrin" })),
   }));
 
 vi.mock("next/headers", () => ({
-  cookies: vi.fn(async () => ({ get: mockGet })),
+  cookies: vi.fn(async (_args: Record<string, unknown>) => (void _args, { get: mockGet })),
 }));
 
 vi.mock("@/lib/ownerSession", () => ({
@@ -52,7 +52,7 @@ function makeAdminStub(productRow: Record<string, unknown> | null) {
         return {
           select: vi.fn(() => ({
             eq: vi.fn(() => ({
-              single: vi.fn(async () => ({
+              single: vi.fn(async (_args: Record<string, unknown>) => (void _args, {
                 data: { id: "store-1", edit_token: "tok-1", name: "Test Mağaza" },
               })),
             })),
@@ -64,7 +64,7 @@ function makeAdminStub(productRow: Record<string, unknown> | null) {
           select: vi.fn(() => ({
             eq: vi.fn(() => ({
               eq: vi.fn(() => ({
-                maybeSingle: vi.fn(async () => ({ data: productRow })),
+                maybeSingle: vi.fn(async (_args: Record<string, unknown>) => (void _args, { data: productRow })),
               })),
             })),
           })),

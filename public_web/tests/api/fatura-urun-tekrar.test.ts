@@ -49,9 +49,9 @@ function adminKur(durum: Durum) {
     });
     q.update = vi.fn((yeni: Record<string, unknown>) => {
       if (tablo === "invoice_job_lines") mocks.baglamalar.push(yeni);
-      return { eq: vi.fn(async () => ({ error: null })) };
+      return { eq: vi.fn(async (_args: Record<string, unknown>) => (void _args, { error: null })) };
     });
-    q.upsert = vi.fn(async () => ({ error: null }));
+    q.upsert = vi.fn(async (_args: Record<string, unknown>) => (void _args, { error: null }));
     q.maybeSingle = vi.fn(async () => {
       if (tablo === "invoice_job_lines") {
         return { data: { product_id: durum.satirUrunId ?? null }, error: null };

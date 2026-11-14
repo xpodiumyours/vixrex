@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 export interface YazmaSonucu {
   tuketiciDogrulandi?: boolean;
   toplam: number;
@@ -39,7 +41,7 @@ export function FaturaIslemSonucu({ sonuc, kartlar, storeSlug, hata, yukleniyor,
           <ul className="fatura-vitrin-izgara">
             {kartlar.map((kart) => (
               <li key={kart.sira}>
-                {kart.gorsel ? <img src={kart.gorsel} alt={kart.ad} loading="lazy" />
+                {kart.gorsel ? <Image src={kart.gorsel} alt={kart.ad} width={64} height={64} loading="lazy" unoptimized />
                   : <div className="fatura-kart-gorselsiz">Görsel hazırlanıyor</div>}
                 <span>{kart.ad}</span>
                 {kart.fiyat && <strong>{kart.fiyat} TL</strong>}

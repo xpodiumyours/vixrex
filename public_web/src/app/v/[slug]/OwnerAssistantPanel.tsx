@@ -85,6 +85,9 @@ interface Props {
   yayinlanmamisDegisiklik?: boolean;
   draftData: Record<string, unknown>;
   assistantHandoff?: AssistantHandoffV1 | null;
+  initialDbMessages?: Array<{ role: string; message_text: string; message_key?: string | null }> | null;
+  /** Sunucudaki konuşmanın kimliği — poll yalnız bu konuşmayı tazeler. */
+  initialConversationId?: string | null;
   /** "Boş geç" denen isteğe bağlı alanlar — sunucudan kalıcı gelir (ADR 0002,
    * 3. alt-faz). */
   atlananAlanlar?: readonly string[] | null;
@@ -114,6 +117,8 @@ export default function OwnerAssistantPanel({
   slug,
   draftData,
   assistantHandoff = null,
+  initialDbMessages = null,
+  initialConversationId = null,
   atlananAlanlar = null,
   premiumAktifMi = false,
   bookingSettings = null,
@@ -130,7 +135,14 @@ export default function OwnerAssistantPanel({
   oturumSaniye = null,
   yayinlanmamisDegisiklik = false,
 }: Props & { flowState?: Record<string, unknown> | null }) {
-  const [acik, setAcik] = useState(() => Boolean(flowState && typeof flowState === "object" && (flowState as { current_step?: string }).current_step));
+  const flowStateAdimi = flowState && typeof flowState === "object"
+    ? (flowState as { current_step?: string }).current_step
+    : null;
+  const yerelFlowAdimi =
+    typeof flowStateAdimi === "string" && flowStateAdimi.trim()
+      ? flowStateAdimi
+      : null;
+  const [acik, setAcik] = useState(() => Boolean(flowStateAdimi));
   // Harita = "Tüm alanlar" paneli. Faz 4 (Casper, 2026-08-22): mobilde
   // panel bütün sayfayı kapatıyordu — "sadece Vixrex maskotu olsun,
   // kutucuklarda zaten ne yapılacağı yazıyor". Artık alan seçilince
@@ -160,6 +172,7 @@ export default function OwnerAssistantPanel({
   // (landing'den taşınmış veya gerçek hesap) hiçbir şey değişmez. Hata
   // sessizce yutulur — akışı bloklamaz, yalnız kalıcılık o oturumda
   // devreye girmez (bkz. vixrexNluPipeline.ts, useOwnerChat.ts).
+
   useEffect(() => {
     void ensureAnonymousSession();
   }, []);
@@ -236,7 +249,12 @@ export default function OwnerAssistantPanel({
     draftData,
     atlananAlanlar ?? []
   );
-  const { mesajlar, mesajEkle, akisRef } = useOwnerChat(rapor, assistantHandoff, { slug });
+  const { mesajlar, mesajEkle, akisRef } = useOwnerChat(rapor, assistantHandoff, {
+    slug,
+    initialDbMessages: initialDbMessages ?? undefined,
+    initialConversationId: initialConversationId ?? undefined,
+    akisAdimi: yerelFlowAdimi,
+  });
 
   const {
     seciliAlan,
