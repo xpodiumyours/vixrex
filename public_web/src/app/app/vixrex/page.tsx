@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { SharedVixrexAssistant } from "@/components/vixrex/SharedVixrexAssistant";
+import { LandingAsistanSohbeti } from "@/components/landing/LandingAsistanSohbeti";
 import { supabase } from "@/lib/supabase";
 import { sahipOturumuAc } from "@/lib/ownerCookie";
 
@@ -99,7 +99,9 @@ export default function VixrexPage() {
   }
   return (
     <main className="min-h-full bg-lp-bg-editor">
-      <SharedVixrexAssistant onBrowse={() => router.push("/kesfet")} />
+      <div className="mx-auto h-[calc(100vh-61px)] max-w-2xl border-x border-lp-border/60 bg-lp-bg-editor shadow-2xl">
+        <LandingAsistanSohbeti />
+      </div>
     </main>
   );
 }

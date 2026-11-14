@@ -369,13 +369,15 @@ export function LandingAsistanSohbeti({
             <p className="text-[11px] font-medium text-lp-muted">Dijital vitrin asistanı</p>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="text-[13px] font-bold text-lp-muted hover:text-lp-text"
-        >
-          Kapat
-        </button>
+        {onClose ? (
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-[13px] font-bold text-lp-muted hover:text-lp-text"
+          >
+            Kapat
+          </button>
+        ) : null}
       </div>
 
       {/* Konuşma */}
