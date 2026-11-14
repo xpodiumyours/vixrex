@@ -426,10 +426,14 @@ export default function OwnerAssistantPanel({
           }),
         });
         if (yanit.ok) {
+          const hazirlananEtiketler: string[] = [];
           for (const d of degisiklikler) {
             setAlan(d.kolon, d.deger);
+            hazirlananEtiketler.push(d.anahtar);
           }
-          router.refresh();
+          if (hazirlananEtiketler.length > 0) {
+            router.refresh();
+          }
         }
       } catch {
         // Ağ hatası durumunda akış sessizce devam eder.
