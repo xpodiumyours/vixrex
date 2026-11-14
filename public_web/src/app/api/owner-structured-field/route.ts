@@ -26,6 +26,7 @@ const ALLOWED_COLUMNS = new Set([
   "about_values",
   "gallery_items",
   "marketplace_links",
+  "section_visibility",
 ]);
 
 export async function POST(request: NextRequest) {

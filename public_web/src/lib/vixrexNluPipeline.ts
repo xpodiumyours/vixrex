@@ -132,8 +132,8 @@ async function clearPending(): Promise<void> {
   } catch { /* sessizce yut */ }
 }
 
-function needsSpecialFlow(_anahtar: string): boolean {
-  return false;
+function needsSpecialFlow(anahtar: string): boolean {
+  return anahtar === "il" || anahtar === "ilce";
 }
 
 function clarifyAsk(alan: VixrexNiyetAlan): string {

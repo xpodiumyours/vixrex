@@ -445,12 +445,12 @@ export function LandingAsistanSohbeti({
             <KategoriGrid
               secenekler={PROFILES.map((p) => p.label)}
               secilen=""
-              onSelect={async (deger) => {
+              onSelect={(deger) => {
                 const kategori = resolveBusinessCategory(deger);
                 const hedef = kategori
                   ? `/kesfet?kategori=${encodeURIComponent(kategoriUrlParcasi(kategori.id))}`
                   : "/kesfet";
-                await niyetSohbetiKaydet([
+                void niyetSohbetiKaydet([
                   { role: "user", text: deger },
                   { role: "assistant", text: `${deger} işletmesine uygun hazır vitrinleri buldum.` },
                 ]);
@@ -468,13 +468,13 @@ export function LandingAsistanSohbeti({
             {niyetSerbestMetin.trim().length > 0 ? (
               <button
                 type="button"
-                onClick={async () => {
+                onClick={() => {
                   const metin = niyetSerbestMetin.trim();
                   const kategori = resolveBusinessCategory(metin);
                   const hedef = kategori
                     ? `/kesfet?kategori=${encodeURIComponent(kategoriUrlParcasi(kategori.id))}`
                     : "/kesfet";
-                  await niyetSohbetiKaydet([
+                  void niyetSohbetiKaydet([
                     { role: "user", text: metin, messageKey: NIYET_SERBEST_METIN_ANAHTARI },
                     {
                       role: "assistant",

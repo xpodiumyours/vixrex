@@ -145,7 +145,7 @@ export default function OwnerAssistantPanel({
   const [masaustu, setMasaustu] = useState(false);
 
   useEffect(() => {
-    const sorgu = window.matchMedia("(min-width: 640px)");
+    const sorgu = window.matchMedia("(min-width: 1024px)");
     const guncelle = () => setMasaustu(sorgu.matches);
     guncelle();
     sorgu.addEventListener("change", guncelle);
@@ -415,25 +415,25 @@ export default function OwnerAssistantPanel({
       if (degisiklikler.length === 0) return;
 
       try {
-        const yanit = await fetch("/api/owner-draft-batch", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            slug,
-            commandId: crypto.randomUUID(),
-            degisiklikler: degisiklikler.map(({ anahtar, deger }) => ({ anahtar, deger })),
-            clientId: taslakClientId(),
-          }),
-        });
-        if (yanit.ok) {
-          const hazirlananEtiketler: string[] = [];
-          for (const d of degisiklikler) {
+        const hazirlananEtiketler: string[] = [];
+        for (const d of degisiklikler) {
+          const yanit = await fetch("/api/owner-draft", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              slug,
+              anahtar: d.anahtar,
+              deger: d.deger,
+              clientId: taslakClientId(),
+            }),
+          });
+          if (yanit.ok) {
             setAlan(d.kolon, d.deger);
             hazirlananEtiketler.push(d.anahtar);
           }
-          if (hazirlananEtiketler.length > 0) {
-            router.refresh();
-          }
+        }
+        if (hazirlananEtiketler.length > 0) {
+          router.refresh();
         }
       } catch {
         // Ağ hatası durumunda akış sessizce devam eder.
@@ -552,15 +552,19 @@ export default function OwnerAssistantPanel({
             { anahtar: "ilce", deger: cozulen.districtName },
           ] as const;
           const clientId = taslakClientId();
-          const saves = await Promise.all(
-            alanlar.map(({ anahtar, deger }) => fetch("/api/owner-draft", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ slug, anahtar, deger, clientId }),
-            })),
-          );
-          if (saves.some((r) => !r.ok)) {
-            const firstErr = await saves.find((r) => !r.ok)?.json().catch(() => null);
+          const batchYanit = await fetch("/api/owner-draft-batch", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              slug,
+              commandId: crypto.randomUUID(),
+              degisiklikler: alanlar.map(({ anahtar, deger }) => ({ anahtar, deger })),
+              alanlar: alanlar.map(({ anahtar, deger }) => ({ anahtar, deger })),
+              clientId,
+            }),
+          });
+          if (!batchYanit.ok) {
+            const firstErr = await batchYanit.json().catch(() => null);
             mesajEkle("asistan", firstErr?.hata ?? "Konum kaydedilemedi.");
             setGpsLoading(false);
             return;
@@ -657,6 +661,18 @@ export default function OwnerAssistantPanel({
           >
             <span className="h-1 w-10 rounded-full bg-slate-400/70" />
           </div>
+
+          {seciliAlan === null ? (
+            <div className="mb-1.5 flex justify-end px-1">
+              <button
+                type="button"
+                onClick={() => setHaritaAcik(true)}
+                className="rounded-lg border border-sky-400/30 bg-sky-500/15 px-2.5 py-1 text-[10px] font-bold text-sky-300 hover:bg-sky-500/25"
+              >
+                Tüm Alanlar & Yayınla
+              </button>
+            </div>
+          ) : null}
 
           <FieldInputArea
             compact
@@ -1109,7 +1125,7 @@ export default function OwnerAssistantPanel({
                         urunAciklamasizSayisi
                       ).map((oneri) => {
                         const hedefLink = oneri.id.startsWith("urun_") ? "/app/urunler" : null;
-                        const hedefAlan = oneri.id === "calisma_saatleri" ? "working_hours" : oneri.id === "logo" ? "logo_url" : null;
+                        const hedefAlan = oneri.id === "calisma_saatleri" ? "calismaSaatleri" : oneri.id === "logo" ? "logo" : null;
                         return (
                           <div
                             key={oneri.id}

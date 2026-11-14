@@ -112,7 +112,7 @@ export default function VitrinCartDock({
 
   const totalQuantity = useMemo(() => cartTotalQuantity(items), [items]);
   const toplamTutar = useMemo(() => cartTotalAmount(items), [items]);
-  if (!trackingEnabled || (items.length === 0 && !open)) return null;
+  if (!trackingEnabled || items.length === 0) return null;
 
   async function changeQuantity(item: VitrinCartItem, quantity: number) {
     const next = setVitrinCartQuantity(storeSlug, item.productSlug, item.variantKey, quantity);

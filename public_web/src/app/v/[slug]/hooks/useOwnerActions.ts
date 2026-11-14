@@ -266,6 +266,7 @@ export async function bonusAlanlariCikarVeKaydet(
       "✨"
     );
   } catch {
+    // Bonus bir zenginleştirme: esnaf haberdar edilir, asıl kayıt bozulmaz.
     routerRefresh();
     mesajEkle("asistan", "Yazdığından çıkardığım ek alanlar kaydedilemedi; bağlantıyı kontrol et.");
   }

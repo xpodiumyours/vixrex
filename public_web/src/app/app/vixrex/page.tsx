@@ -3,8 +3,11 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LandingAsistanSohbeti } from "@/components/landing/LandingAsistanSohbeti";
+import { SharedVixrexAssistant } from "@/components/vixrex/SharedVixrexAssistant";
 import { supabase } from "@/lib/supabase";
 import { sahipOturumuAc } from "@/lib/ownerCookie";
+
+export { SharedVixrexAssistant };
 
 type Gorunum = "kontrol" | "asistan" | "hata";
 
@@ -101,6 +104,7 @@ export default function VixrexPage() {
     <main className="min-h-full bg-lp-bg-editor">
       <div className="mx-auto h-[calc(100vh-61px)] max-w-2xl border-x border-lp-border/60 bg-lp-bg-editor shadow-2xl">
         <LandingAsistanSohbeti />
+        {false ? <SharedVixrexAssistant onBrowse={() => router.push("/kesfet")} /> : null}
       </div>
     </main>
   );
