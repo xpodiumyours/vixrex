@@ -277,6 +277,7 @@ class StoreEditorController extends ChangeNotifier
         _hasPendingExternalDraft = true;
         _lastExternalDraftEtiket = etiket;
         if (!_isDisposed) notifyListeners();
+        _hariciTaslakYenile();
       },
     );
   }
@@ -309,6 +310,24 @@ class StoreEditorController extends ChangeNotifier
       storage: storage,
     );
     if (guncel != null) _data = guncel;
+  }
+
+  Future<void> _hariciTaslakYenile() async {
+    final slug = _publishedInfo?.slug.trim() ?? '';
+    if (slug.isEmpty) return;
+
+    final client = _resolveClient();
+    if (client == null) return;
+
+    final guncel = await _realtimeSync.pullFromCloudIfNewer(
+      client: client,
+      slug: slug,
+      storage: storage,
+    );
+    if (guncel != null && !_isDisposed) {
+      _data = guncel;
+      notifyListeners();
+    }
   }
 
   SupabaseClient? _resolveClient() {

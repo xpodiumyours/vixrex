@@ -345,6 +345,7 @@ class FaturaOkuServisi {
       size: beden.isNotEmpty ? beden : null,
       purchaseUnitPrice: alisFiyat,
       lineTotal: satirToplam,
+      rightsStatus: izinDurumu,
     );
 
     final taslak = InvoiceProductDraft(

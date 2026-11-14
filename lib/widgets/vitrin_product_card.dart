@@ -13,6 +13,12 @@ class VitrinProductCard extends StatelessWidget {
   final String stockStatus;
   final VoidCallback? onTap;
   final VoidCallback? onWhatsAppTap;
+  final bool hasVariants;
+  final int cartQuantity;
+  final VoidCallback? onAddToCart;
+  final VoidCallback? onViewOptions;
+  final VoidCallback? onIncrement;
+  final VoidCallback? onDecrement;
 
   /// Görsel oranı (genişlik / yükseklik). Katalog kart yüksekliği buna göre hesaplanır.
   static const double imageAspectRatio = 1.15;
@@ -31,6 +37,12 @@ class VitrinProductCard extends StatelessWidget {
     this.stockStatus = 'Mevcut',
     this.onTap,
     this.onWhatsAppTap,
+    this.hasVariants = false,
+    this.cartQuantity = 0,
+    this.onAddToCart,
+    this.onViewOptions,
+    this.onIncrement,
+    this.onDecrement,
   });
 
   static double cardHeightForWidth(double width) {
@@ -227,12 +239,46 @@ class VitrinProductCard extends StatelessWidget {
                       ),
                     ],
                   ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: _buildCartSection(),
+                  ),
                 ],
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildCartSection() {
+    if (hasVariants) {
+      return TextButton(
+        onPressed: onViewOptions,
+        child: Text(
+          cartQuantity > 0
+              ? 'Sepette ($cartQuantity) · Seçenekler →'
+              : 'Seçenekleri gör →',
+        ),
+      );
+    }
+    if (cartQuantity == 0) {
+      return ElevatedButton(
+        onPressed: onAddToCart,
+        child: const Text('+ Sepete ekle'),
+      );
+    }
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        IconButton(onPressed: onDecrement, icon: const Text('−')),
+        Text('$cartQuantity'),
+        IconButton(
+          onPressed: cartQuantity >= 10 ? null : onIncrement,
+          icon: const Text('+'),
+        ),
+      ],
     );
   }
 

@@ -1,3 +1,5 @@
+import 'package:vixrex/models/invoice_product_draft.dart';
+
 /// OCR ile tespit edilen ürün.
 class DetectedProduct {
   final String id;
@@ -31,6 +33,12 @@ class DetectedProduct {
   double? purchaseUnitPrice;
   double? lineTotal;
 
+  /// Sunucu sözleşmesinden gelen kullanım hakkı (telif/görsel izni) durumu.
+  RightsStatus rightsStatus;
+
+  /// Sunucu sözleşmesinden gelen görünürlük durumu.
+  bool isVisible;
+
   /// İnsan kontrolü gerektiren somut doğrulama sorunları.
   List<String> issues;
 
@@ -54,6 +62,8 @@ class DetectedProduct {
     this.size,
     this.purchaseUnitPrice,
     this.lineTotal,
+    this.rightsStatus = RightsStatus.unknown,
+    this.isVisible = false,
     List<String>? issues,
   }) : issues = issues ?? <String>[];
 
@@ -79,6 +89,8 @@ class DetectedProduct {
     'size': size,
     'purchaseUnitPrice': purchaseUnitPrice,
     'lineTotal': lineTotal,
+    'rights_status': rightsStatus.wireValue,
+    'is_visible': isVisible,
     'issues': issues,
   };
 
@@ -103,6 +115,11 @@ class DetectedProduct {
       size: json['size'] as String?,
       purchaseUnitPrice: (json['purchaseUnitPrice'] as num?)?.toDouble(),
       lineTotal: (json['lineTotal'] as num?)?.toDouble(),
+      rightsStatus: rightsStatusFromWire(
+        json['rights_status'] ?? json['rightsStatus'],
+      ),
+      isVisible:
+          json['is_visible'] as bool? ?? json['isVisible'] as bool? ?? false,
       issues:
           (json['issues'] as List?)
               ?.map((value) => value.toString())

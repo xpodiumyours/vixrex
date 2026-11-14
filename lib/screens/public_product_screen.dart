@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:vixrex/config/public_site_config.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/services/product_service.dart';
+import 'package:vixrex/services/vitrin_cart_service.dart';
 import 'package:vixrex/services/public_store_service.dart';
 import 'package:vixrex/services/store_publish_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
@@ -324,8 +325,89 @@ class _PublicProductScreenState extends State<PublicProductScreen> {
               minimumSize: const Size.fromHeight(52),
             ),
           ),
+          const SizedBox(height: 12),
+          _buildCartButton(data.product),
         ],
       ),
+    );
+  }
+
+  int _cartQuantity(Product product) {
+    final items =
+        VitrinCartService.instance.items
+            .where((i) => i.productSlug == widget.productSlug)
+            .toList();
+    return items.fold<int>(0, (sum, i) => sum + i.quantity);
+  }
+
+  Widget _buildCartButton(Product product) {
+    final hasVariants = product.variants.length > 1;
+    final qty = _cartQuantity(product);
+    if (hasVariants) {
+      return OutlinedButton(
+        onPressed: () {},
+        child: Text(
+          qty > 0 ? 'Sepette ($qty) · Seçenekler →' : 'Seçenekleri gör →',
+        ),
+      );
+    }
+    if (qty == 0) {
+      return ElevatedButton(
+        onPressed: () {
+          VitrinCartService.instance.add(
+            VitrinCartItem(
+              productSlug: widget.productSlug,
+              productName: product.name,
+              variantKey: 'standart',
+              variantText: '',
+              priceText: product.price,
+              priceAmount: double.tryParse(
+                product.price
+                    .replaceAll(RegExp(r'[^0-9.,]'), '')
+                    .replaceAll(',', '.'),
+              ),
+              imageUrl:
+                  product.imagePath ??
+                  (product.imageUrls.isNotEmpty ? product.imageUrls.first : ''),
+              maxQuantity: product.stockQuantity,
+              quantity: 1,
+            ),
+          );
+          setState(() {});
+        },
+        child: const Text('+ Sepete ekle'),
+      );
+    }
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        IconButton(
+          onPressed: () {
+            VitrinCartService.instance.setQuantity(
+              widget.productSlug,
+              'standart',
+              qty - 1,
+            );
+            setState(() {});
+          },
+          icon: const Text('−'),
+        ),
+        Text('$qty'),
+        IconButton(
+          onPressed:
+              qty >= 10
+                  ? null
+                  : () {
+                    VitrinCartService.instance.setQuantity(
+                      widget.productSlug,
+                      'standart',
+                      qty + 1,
+                    );
+                    setState(() {});
+                  },
+          icon: const Text('+'),
+        ),
+      ],
     );
   }
 
