@@ -20,6 +20,8 @@ function migrationOku(sonEk: string): string {
 
 const migration = migrationOku("_fatura_yayin_kapisi.sql");
 
+const gorselIzinKapisi = migrationOku("_fatura_gorsel_izni_yayin_kapisi.sql");
+
 describe("fatura yayin kapisi migration", () => {
   it("fatura kanit ozeti icin kolon acar", () => {
     expect(migration).toContain("fatura_kanit jsonb");
@@ -61,6 +63,50 @@ describe("fatura yayin kapisi migration", () => {
     const guncellemeler = migration.match(/update public\.products/g) ?? [];
     expect(guncellemeler).toHaveLength(1);
     expect(migration).toMatch(/where id = p_product_id/);
+  });
+});
+
+describe("fatura gorsel izni yayin kapisi", () => {
+  it("publish RPC'sini yeniden tanimlar ve izin alanini okur", () => {
+    expect(gorselIzinKapisi).toContain("create or replace function public.publish_invoice_product");
+    expect(gorselIzinKapisi).toContain("gorselKaynaklari");
+    expect(gorselIzinKapisi).toContain("hakKayitDurumu");
+  });
+
+  it("yalniz dogrulanmis izin durumlarini gecerli sayar", () => {
+    for (const durum of [
+      "verified_supplier_permission",
+      "verified_feed_terms",
+      "merchant_owned_media",
+      "merchant_attestation",
+    ]) {
+      expect(gorselIzinKapisi).toContain(`'${durum}'`);
+    }
+  });
+
+  it("izin dogrulanmamissa karti gorunmez birakir ve hazir doner", () => {
+    expect(gorselIzinKapisi).toContain("set is_visible=false");
+    expect(gorselIzinKapisi).toContain("'gorunur',false");
+    expect(gorselIzinKapisi).toContain("'izin_bekliyor',true");
+  });
+
+  it("zaten gorunur urunleri izin kapisi kapatmaz", () => {
+    expect(gorselIzinKapisi.indexOf("'zaten_yayinda'"))
+      .toBeLessThan(gorselIzinKapisi.indexOf("hakKayitDurumu"));
+  });
+
+  it("gorsel kaynaklari bos ise esnaf gorseline izin verir", () => {
+    expect(gorselIzinKapisi).toContain("else '[]'::jsonb end");
+  });
+
+  it("mevcut gorunur satirlari topluca degistirmez", () => {
+    const guncellemeler = gorselIzinKapisi
+      .split("\n")
+      .filter((satir) => satir.includes("update public.products"));
+    expect(guncellemeler).toHaveLength(2);
+    for (const satir of guncellemeler) {
+      expect(satir).toContain("where id=p_product_id and store_id=v_store");
+    }
   });
 });
 

@@ -234,6 +234,23 @@ describe("faturadan gelen ürünün yayın kapısı", () => {
     expect(govde.yayinda).toBe(1);
   });
 
+  it("görsel izni doğrulanmamışsa kart hazır kalır, vitrine çıkmaz", async () => {
+    mocks.publishProduct.mockResolvedValueOnce({
+      success: true,
+      id: "urun-1",
+      gorunur: false,
+      izin_bekliyor: true,
+    });
+    const cevap = await topluUrunEkle(istek([faturaSatiri()]));
+    const govde = await cevap.json();
+
+    expect(govde.yayinda).toBe(0);
+    expect(govde.hazir).toBe(1);
+    expect(govde.taslak).toBe(0);
+    expect(govde.satirlar[0].durum).toBe("hazir");
+    expect(govde.satirlar[0].sebep).toContain("görsel izni");
+  });
+
   it("kapılar tam ama Yayınla denmemişse ürün taslak kaydedilir", async () => {
     const cevap = await topluUrunEkle(istek([faturaSatiri({ yayinIstegi: false })]));
     const govde = await cevap.json();

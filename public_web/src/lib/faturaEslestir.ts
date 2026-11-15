@@ -39,6 +39,8 @@ export interface HamFaturaSatiri {
   eslesenBilgiler?: unknown;
   eksikler?: string[];
   gorselDogrulamaDurumu?: string;
+  duplicateGroup?: string | null;
+  canonicalRowId?: string | null;
   kaynaklar?: Array<string | Record<string, unknown>>;
   siteUrunVaryantlari?: Array<{ id: string; secenekler: Array<{ key: string; value: string }>; barkod: string; gorseller: string[] }>;
   siteSayfa?: string;
@@ -77,6 +79,8 @@ export interface KatalogBilgisi {
   eslesenBilgiler?: unknown;
   eksikler?: string[];
   gorselDogrulamaDurumu?: string;
+  duplicateGroup?: string | null;
+  canonicalRowId?: string | null;
   kaynaklar?: Array<string | Record<string, unknown>>;
   urunVaryantlari?: Array<{ id: string; secenekler: Array<{ key: string; value: string }>; barkod: string; gorseller: string[] }>;
   fotografKaniti?: FotografKaniti;

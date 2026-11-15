@@ -164,6 +164,19 @@ describe("/api/fatura-yayinla — ayrı Yayınla kapısı", () => {
     expect(mocks.publish).not.toHaveBeenCalled();
   });
 
+  it("görsel izni doğrulanmamış kart hazır kalır, yayında sayılmaz", async () => {
+    mocks.publish.mockResolvedValue({ success: true, id: "urun-1", gorunur: false, izin_bekliyor: true });
+
+    const cevap = await faturaYayinla(istek({ slug: "deneme-vitrin", productIds: ["urun-1"] }));
+    const govde = await cevap.json();
+
+    expect(govde.yayinda).toBe(0);
+    expect(govde.hazir).toBe(1);
+    expect(govde.taslak).toBe(0);
+    expect(govde.satirlar[0].durum).toBe("hazir");
+    expect(govde.satirlar[0].sebep).toContain("görsel izni");
+  });
+
   it("publish RPC kapıyı kapatırsa taslak kalır ve sebep yazar", async () => {
     mocks.publish.mockResolvedValue({ success: false, hata: "Satış fiyatı girilmedi." });
 
