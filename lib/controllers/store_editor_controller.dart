@@ -442,7 +442,7 @@ class StoreEditorController extends ChangeNotifier
       d,
       label: label,
       title: title,
-      body: description,
+      description: description,
       priceText: priceText,
       imageUrl: imageUrl,
     ),
