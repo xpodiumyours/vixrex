@@ -452,15 +452,17 @@ Neden: 2026-11-14'te PR #741'de 2 migration canlıda koşulmadığı halde "haz�
 kod deploy edilseydi canlı RPC eski olduğu için izinsiz görseller fail-closed koruması
 olmadan doğrudan yayına çıkacaktı; Composio dış denetimi yakaladı.
 
-### 32. Ticari maliyet ve alış fiyatı sızıntı yasağı (2026-11-14)
-Tedarikçi/fatura alış fiyatları (`buy`, `unit_price`, `purchasePrice`, `total_amount`),
-numune ölçüm arşivi veya test fixture adı altında dahi olsa public depoya commit edilemez.
-Testler yalnız sentetik ve anonim verilerle çalışır. Güvenlik tarayıcıları salt API
-anahtarı değil, semantik ticari maliyet alanlarını da denetler.
+### 32. Fatura ticari sırrı ve özel veri maskeleme anayasası (2026-11-14, Genişletildi: 2026-11-15)
+Ticari sır maskelemesi **yalnızca** toptan alış fiyatını (`unit_price`, 10 TL, 15 TL) gizlemekle sınırlandırılamaz; faturadaki tüm hassas ticari, hukuki ve kişisel verileri kapsar. Bir faturadan ürün kartı üretilirken sistemin okumasına izin verilen **yegâne** veriler: ürün adı, model kodu, barkod, beden/renk/varyant, kumaş/ürün özellikleri ve stok adedidir. Bunların dışındaki tüm veriler **mutlak ticari sır ve KVKK verisidir**; istemciye, vitrine, loglara, test fikstürlerine veya depoya sızdırılamaz.
 
-Neden: 2026-11-14'te `76b8d391` commit'iyle 4 ölçüm JSON dosyası (`tool/fatura_olcum/kosular/*.json`)
-içinde gerçek alış fiyatları public repoya girdi ve standart API key tarayıcıları
-sayısal maliyet olduğu için yakalayamadı; Composio dış denetimi yakaladı.
+**5 Sütunlu Mutlak Koruma Kapsamı:**
+1. **Toptancı / Tedarikçi Mahremiyeti:** Toptancı ticari unvanı, şahıs adı, Vergi Kimlik Numarası (VKN), T.C. Kimlik Numarası (TCKN), vergi dairesi, açık adres, il/ilçe, telefon, e-posta, IBAN ve banka hesap bilgileri (esnafın malı nereden aldığı en büyük ticari sırrıdır, asla ifşa edilemez).
+2. **Esnaf (Alıcı) Kişisel ve Ticari Mahremiyeti:** Butiğin/esnafın kendi VKN/TCKN'si, cari hesap kodu, müşteri numarası, teslimat adresi ve şahsi iletişim bilgileri (KVKK koruması).
+3. **Fatura Resmi Kimliği:** Fatura numarası, seri/sıra no, E-Fatura/E-Arşiv ETTN (Evrensel Tekil Tanımlayıcı UUID), düzenleme tarihi ve saati, irsaliye numaraları (GİB üzerinden fatura detaylarının sorgulanmasını engeller).
+4. **Ticari Koşullar, Vadeler ve İskontolar:** Toptancının butiğe özel uyguladığı iskonto/indirim oranları (% iskonto), satır indirimleri, ödeme türü ve vadeleri (açık hesap, vadeli çek vb.), KDV matrah ve tevkifat detayları, fatura dipnotları.
+5. **Maliyet ve Alış Fiyatları:** Birim alış fiyatı, KDV hariç fiyat, satır toplam maliyeti, fatura genel yekûnu (`total_amount`, `odenecekToplam`).
+
+Neden: 2026-11-14'te `76b8d391` commit'iyle 4 ölçüm JSON dosyası (`tool/fatura_olcum/kosular/*.json`) içinde gerçek alış fiyatları public repoya girdi. Ancak 2026-11-15'e kadar kapsam dar tutularak yalnızca "alış fiyatı" sanıldı ve toptancı unvanı, VKN, ETTN UUID ve özel iskonto gibi hayati ticari sırlar açıkta bırakıldı. Casper'ın uyarısıyla kural 5 sütunlu tam kurumsal korumaya yükseltildi.
 
 ### 33. Ana hatta bağlanmamış ölü kodla özellik iddiası yasak (2026-11-14)
 Bir yardımcı fonksiyonun veya modülün unit testinin geçmesi, o özelliğin bittiği anlamına
