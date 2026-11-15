@@ -258,8 +258,9 @@ class VitrinProductCard extends StatelessWidget {
 
   Widget _buildCartSection() {
     if (!showCart) return const SizedBox.shrink();
-    if (maxQuantity != null && maxQuantity! <= 0)
+    if (maxQuantity != null && maxQuantity! <= 0) {
       return const SizedBox.shrink();
+    }
     final cap = maxQuantity ?? 10;
     if (hasVariants) {
       return TextButton(
