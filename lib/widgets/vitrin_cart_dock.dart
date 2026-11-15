@@ -25,7 +25,16 @@ class _VitrinCartDockState extends State<VitrinCartDock> {
   @override
   void initState() {
     super.initState();
+    _cart.setActiveStore(widget.storeSlug);
     _cart.addListener(_refresh);
+  }
+
+  @override
+  void didUpdateWidget(covariant VitrinCartDock oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.storeSlug != widget.storeSlug) {
+      _cart.setActiveStore(widget.storeSlug);
+    }
   }
 
   @override

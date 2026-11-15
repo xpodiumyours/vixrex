@@ -88,7 +88,22 @@ class VitrinCartService extends ChangeNotifier {
   VitrinCartService._();
   static final VitrinCartService instance = VitrinCartService._();
 
-  final Map<String, VitrinCartItem> _items = {};
+  final Map<String, Map<String, VitrinCartItem>> _itemsByStore = {};
+  String _activeStoreSlug = '';
+
+  Map<String, VitrinCartItem> _itemsFor(String storeSlug) {
+    final key = _cleanText(storeSlug, 120);
+    return _itemsByStore.putIfAbsent(key, () => {});
+  }
+
+  Map<String, VitrinCartItem> get _items => _itemsFor(_activeStoreSlug);
+
+  void setActiveStore(String storeSlug) {
+    final normalized = _cleanText(storeSlug, 120);
+    if (normalized.isEmpty || normalized == _activeStoreSlug) return;
+    _activeStoreSlug = normalized;
+    notifyListeners();
+  }
 
   List<VitrinCartItem> get items => _items.values.toList(growable: false);
 
@@ -98,8 +113,9 @@ class VitrinCartService extends ChangeNotifier {
   void add(VitrinCartItem item) {
     final normalized = item.normalized();
     if (normalized.maxQuantity == 0) return;
-    if (normalized.productSlug.isEmpty || normalized.productName.isEmpty)
+    if (normalized.productSlug.isEmpty || normalized.productName.isEmpty) {
       return;
+    }
     final key = '${normalized.productSlug}::${normalized.variantKey}';
     final existing = _items[key];
     if (existing == null) {
@@ -149,6 +165,7 @@ class VitrinCartService extends ChangeNotifier {
     required String storeName,
     required String storeSlug,
   }) {
+    final orderItems = _itemsFor(storeSlug).values;
     final cleanStore = _cleanText(storeName, 120);
     final codeSource =
         _cleanText(
@@ -164,7 +181,7 @@ class VitrinCartService extends ChangeNotifier {
                 .padLeft(4, '0')
                 .substring(0, 4);
     final lines =
-        _items.values.map((item) {
+        orderItems.map((item) {
           final ad = _cleanText(item.productName, 180);
           final variants = _cleanText(item.variantText, 180);
           final fiyat = _cleanText(item.priceText, 80);
@@ -172,13 +189,13 @@ class VitrinCartService extends ChangeNotifier {
           final price = fiyat.isNotEmpty ? ' - $fiyat' : '';
           return '- ${item.quantity} x $ad$variant$price';
         }).toList();
-    final totalQty = _items.values.fold<int>(
+    final totalQty = orderItems.fold<int>(
       0,
       (sum, item) => sum + item.quantity,
     );
     double? totalAmount;
     var unpricedCount = 0;
-    for (final item in _items.values) {
+    for (final item in orderItems) {
       final amount = item.priceAmount;
       if (amount == null) {
         unpricedCount++;
