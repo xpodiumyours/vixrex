@@ -1,4 +1,4 @@
-﻿import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vixrex/config/business_category_config.dart';
 import 'package:vixrex/config/public_site_config.dart';
@@ -313,24 +313,6 @@ class StoreEditorController extends ChangeNotifier
     if (guncel != null) _data = guncel;
   }
 
-  Future<void> _hariciTaslakYenile() async {
-    final slug = _publishedInfo?.slug.trim() ?? '';
-    if (slug.isEmpty) return;
-
-    final client = _resolveClient();
-    if (client == null) return;
-
-    final guncel = await _realtimeSync.pullFromCloudIfNewer(
-      client: client,
-      slug: slug,
-      storage: storage,
-    );
-    if (guncel != null && !_isDisposed) {
-      _data = guncel;
-      notifyListeners();
-    }
-  }
-
   SupabaseClient? _resolveClient() {
     if (supabaseClient != null) return supabaseClient;
     try {
@@ -431,14 +413,11 @@ class StoreEditorController extends ChangeNotifier
       updateField('galeriAksiyonMetni', value);
   void updateGalleryActionHref(String value) =>
       updateField('galeriAksiyonLinki', value);
-  void updateBlogSectionKicker(String value) =>
-      updateField('blogUstBaslik', value);
+  void updateBlogSectionKicker(String value) => updateField('blogUstBaslik', value);
   void updateBlogSectionTitle(String value) => updateField('blogBaslik', value);
-  void updateFaqSectionKicker(String value) =>
-      updateField('sssUstBaslik', value);
+  void updateFaqSectionKicker(String value) => updateField('sssUstBaslik', value);
   void updateFaqSectionTitle(String value) => updateField('sssBaslik', value);
-  void updateFaqSectionDescription(String value) =>
-      updateField('sssAciklama', value);
+  void updateFaqSectionDescription(String value) => updateField('sssAciklama', value);
 
   void updateSectionVisibility(String key, bool visible) {
     if (visible) {
@@ -449,10 +428,8 @@ class StoreEditorController extends ChangeNotifier
     notifyListeners();
   }
 
-  void updateShowStorefrontRating(bool value) =>
-      updateField('puanGoster', value);
-  void updateShowDirectionsLink(bool value) =>
-      updateField('yolTarifiGoster', value);
+  void updateShowStorefrontRating(bool value) => updateField('puanGoster', value);
+  void updateShowDirectionsLink(bool value) => updateField('yolTarifiGoster', value);
 
   void updateFeaturedCampaign({
     required String label,
@@ -465,7 +442,7 @@ class StoreEditorController extends ChangeNotifier
       d,
       label: label,
       title: title,
-      description: description,
+      body: description,
       priceText: priceText,
       imageUrl: imageUrl,
     ),
@@ -481,8 +458,7 @@ class StoreEditorController extends ChangeNotifier
 
   void updateFaqItems(List<StoreFaqItem> items) =>
       _guncelle((d) => d.faqItems = List.of(items));
-  void updateWorkingHoursText(String value) =>
-      updateField('calismaSaatleri', value);
+  void updateWorkingHoursText(String value) => updateField('calismaSaatleri', value);
   void updateInstagram(String value) => updateField('instagram', value);
 
   Future<Result<void>> applyConnectedInstagramUsername(String username) async {
@@ -810,8 +786,8 @@ class StoreEditorController extends ChangeNotifier
 
   Future<Result<void>> updateProductImported(Product product) async {
     final index = _data.products.indexWhere((p) => p.id == product.id);
-    if (index >= 0) return updateProduct(index, product);
-    return addProduct(product);
+    if (index < 0) return Result.failure(Failure('Ürün bulunamadı.'));
+    return updateProduct(index, product);
   }
 
   void _revalidateStoreCache() {
@@ -821,7 +797,7 @@ class StoreEditorController extends ChangeNotifier
   }
 
   Future<void> withdrawPublicationConsent() async {
-    final slug = _publishedInfo?.slug ?? _data.slug;
+    final slug = _publishedInfo?.slug.trim() ?? '';
     final editToken = _publishedInfo?.editToken;
     if (slug.isEmpty || editToken == null) return;
 
