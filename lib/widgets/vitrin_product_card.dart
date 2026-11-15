@@ -15,6 +15,8 @@ class VitrinProductCard extends StatelessWidget {
   final VoidCallback? onWhatsAppTap;
   final bool hasVariants;
   final int cartQuantity;
+  final int? maxQuantity;
+  final bool showCart;
   final VoidCallback? onAddToCart;
   final VoidCallback? onViewOptions;
   final VoidCallback? onIncrement;
@@ -39,6 +41,8 @@ class VitrinProductCard extends StatelessWidget {
     this.onWhatsAppTap,
     this.hasVariants = false,
     this.cartQuantity = 0,
+    this.maxQuantity,
+    this.showCart = true,
     this.onAddToCart,
     this.onViewOptions,
     this.onIncrement,
@@ -253,6 +257,10 @@ class VitrinProductCard extends StatelessWidget {
   }
 
   Widget _buildCartSection() {
+    if (!showCart) return const SizedBox.shrink();
+    if (maxQuantity != null && maxQuantity! <= 0)
+      return const SizedBox.shrink();
+    final cap = maxQuantity ?? 10;
     if (hasVariants) {
       return TextButton(
         onPressed: onViewOptions,
@@ -275,7 +283,7 @@ class VitrinProductCard extends StatelessWidget {
         IconButton(onPressed: onDecrement, icon: const Text('−')),
         Text('$cartQuantity'),
         IconButton(
-          onPressed: cartQuantity >= 10 ? null : onIncrement,
+          onPressed: cartQuantity >= cap ? null : onIncrement,
           icon: const Text('+'),
         ),
       ],

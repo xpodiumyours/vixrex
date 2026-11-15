@@ -15,6 +15,7 @@ import 'package:vixrex/screens/explore_screen.dart';
 import 'package:vixrex/screens/home_shell_screen.dart';
 import 'package:vixrex/screens/landing_screen.dart';
 import 'package:vixrex/screens/legal_screen.dart';
+import 'package:vixrex/screens/public_product_screen.dart';
 import 'package:vixrex/screens/public_site_redirect_screen.dart';
 import 'package:vixrex/screens/vixrex_onboarding_chat_screen.dart';
 import 'package:vixrex/services/demo_rental_service.dart';
@@ -107,7 +108,11 @@ class AppRouter {
       GoRoute(
         path: '/v/:slug/urun/:productSlug',
         builder: (context, state) {
-          return PublicSiteRedirectScreen.fromPath(state.uri.path);
+          return PublicProductScreen(
+            storeSlug: state.pathParameters['slug'] ?? '',
+            productSlug: state.pathParameters['productSlug'] ?? '',
+            previewMode: state.uri.queryParameters['onizleme'] == '1',
+          );
         },
       ),
       GoRoute(

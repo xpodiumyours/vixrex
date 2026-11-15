@@ -10,7 +10,7 @@ import { handleVixrexNluMessage } from "@/lib/vixrexNluPipeline";
 import { resolveVixrexIntentsAll } from "@/lib/vixrexIntentResolver";
 import { VIXREX_NIYET_ALAN_BY_ANAHTAR } from "@/lib/vixrexNiyetSozlugu";
 import { extractVixrexValue, digerAlanaAitIpucuVarMi } from "@/lib/vixrexValueExtractor";
-import { getDistrictsForProvince } from "@/lib/turkeyCities";
+import { resolveIlce } from "@/lib/turkeyPlaceMatcher";
 import { supabase } from "@/lib/supabase";
 import type { Mesaj } from "./useOwnerChat";
 
@@ -196,30 +196,31 @@ export async function bonusAlanlariCikarVeKaydet(
 ) {
   const sonuc = serbestMetindenAlanlariCikar(metin);
   const bulunanlar = SERBEST_ANLATIM_ESLEME
-    .map(([sonucAnahtari, anahtar]) => {
+    .map(([sonucAnahtari, anahtar]): {
+      anahtar: string;
+      kolon: string;
+      etiket: string;
+      deger: string | null;
+    } | null => {
       const deger = sonuc[sonucAnahtari];
       const alan = FIELD_BY_KEY.get(anahtar);
       if (!deger || !alan || alan.kolon === cevaplananKolon) return null;
       return { anahtar, kolon: alan.kolon, etiket: alan.etiket, deger };
     })
-    .filter((x): x is { anahtar: string; kolon: string; etiket: string; deger: string } => x !== null);
+    .filter((x): x is { anahtar: string; kolon: string; etiket: string; deger: string | null } => x !== null);
 
   const ilKaydi = bulunanlar.find((x) => x.anahtar === "il");
   const ilceKaydiVar = bulunanlar.some((x) => x.anahtar === "ilce");
   if (ilKaydi && !ilceKaydiVar && cevaplananKolon !== "district_name") {
-    const ilceler = getDistrictsForProvince(ilKaydi.deger);
-    const varsayilanIlce = ilceler.includes("Merkez") ? "Merkez" : (ilceler[0] ?? "");
     const ilceAlan = FIELD_BY_KEY.get("ilce");
-    if (varsayilanIlce && ilceAlan) {
-      setAlan("district_name", "");
+    setAlan("district_name", null);
+    if (ilceAlan) {
       bulunanlar.push({
         anahtar: "ilce",
         kolon: ilceAlan.kolon,
         etiket: ilceAlan.etiket,
-        deger: varsayilanIlce,
+        deger: null,
       });
-    } else {
-      setAlan("district_name", "");
     }
   }
 
@@ -616,7 +617,10 @@ export function useOwnerActions({
             setAlan("province_name", sonuc.deger);
             setAlan("district_name", "");
           } else if (sonuc.outcome === "needsSpecialFlow" && sonuc.anahtar === "ilce" && typeof sonuc.deger === "string") {
-            setAlan("district_name", sonuc.deger);
+            setAlan(
+              "district_name",
+              resolveIlce(String(yerelTaslak.province_name ?? ""), sonuc.deger) ?? ""
+            );
           }
           mesajEkle("asistan", sonuc.message);
           // Motor alani anladi ama degeri eksikse o alani secili hale getir:

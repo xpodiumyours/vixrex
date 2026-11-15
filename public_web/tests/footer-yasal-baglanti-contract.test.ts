@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "fs";
+﻿import { existsSync, readFileSync } from "fs";
 import { resolve } from "path";
 import { describe, expect, it } from "vitest";
 
@@ -36,15 +36,9 @@ describe("altbilgi yasal bağlantıları (#346)", () => {
     expect(existsSync(resolve(__dirname, "../src/app/terms"))).toBe(false);
   });
 
-  it("kırık /data-deletion bağlantısı eklenmez", () => {
-    // Yalnız /data-deletion/status/[code] var; dizinin kendisi 404.
-    // Sayfa açılınca bu iddia ters çevrilip bağlantı eklenmeli.
-    expect(footer).not.toContain('href="/data-deletion"');
-    expect(
-      existsSync(resolve(__dirname, "../src/app/data-deletion/page.tsx"))
-    ).toBe(false);
+  it("/legal/data-deletion baglantisi footerda var", () => {
+    expect(footer).toContain('href="/legal/data-deletion"');
   });
-
   it("başlık/altbilgi yalnız (site) grubunda, vitrin sayfalarında değil", () => {
     expect(siteLayout).toContain("SiteHeader");
     expect(siteLayout).toContain("SiteFooter");

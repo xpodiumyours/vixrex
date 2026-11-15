@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vixrex/config/public_site_config.dart';
+import 'package:vixrex/models/product_rich_data.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/services/product_service.dart';
 import 'package:vixrex/services/vitrin_cart_service.dart';
@@ -13,16 +14,20 @@ import 'package:vixrex/services/public_store_service.dart';
 import 'package:vixrex/services/store_publish_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
 import 'package:vixrex/utils/whatsapp_link_helper.dart';
+import 'package:vixrex/widgets/vitrin_cart_dock.dart';
+import 'package:vixrex/widgets/vitrin_product_card.dart';
 
 class PublicProductScreen extends StatefulWidget {
   const PublicProductScreen({
     super.key,
     required this.storeSlug,
     required this.productSlug,
+    this.previewMode = false,
   });
 
   final String storeSlug;
   final String productSlug;
+  final bool previewMode;
 
   @override
   State<PublicProductScreen> createState() => _PublicProductScreenState();
@@ -78,6 +83,7 @@ class _PublicProductScreenState extends State<PublicProductScreen> {
       fallbackImage:
           (row['shelf_image_url'] ?? row['logo_url'] ?? '').toString(),
       product: found,
+      products: products,
     );
   }
 
@@ -148,6 +154,20 @@ class _PublicProductScreenState extends State<PublicProductScreen> {
           ),
         ],
       ),
+      bottomNavigationBar: FutureBuilder<_PublicProductData?>(
+        future: _dataFuture,
+        builder: (_, snapshot) {
+          final data = snapshot.data;
+          if (data == null || widget.previewMode) {
+            return const SizedBox.shrink();
+          }
+          return VitrinCartDock(
+            storeSlug: widget.storeSlug,
+            storeName: data.storeName,
+            whatsappNumber: data.whatsapp,
+          );
+        },
+      ),
       body: FutureBuilder<_PublicProductData?>(
         future: _dataFuture,
         builder: (context, snapshot) {
@@ -173,7 +193,9 @@ class _PublicProductScreenState extends State<PublicProductScreen> {
                 child: Center(
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 1100),
-                    child:
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
                         wide
                             ? Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -190,6 +212,21 @@ class _PublicProductScreenState extends State<PublicProductScreen> {
                                 details,
                               ],
                             ),
+                        if (data.products.length > 1) ...[
+                          const SizedBox(height: 28),
+                          const Text(
+                            'Vitrinin diğer ürünleri',
+                            style: TextStyle(
+                              color: AppColors.darkText,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          _buildOtherProducts(data),
+                        ],
+                      ],
+                    ),
                   ),
                 ),
               );
@@ -341,11 +378,12 @@ class _PublicProductScreenState extends State<PublicProductScreen> {
   }
 
   Widget _buildCartButton(Product product) {
-    final hasVariants = product.variants.length > 1;
+    final hasVariants = product.variants.isNotEmpty;
     final qty = _cartQuantity(product);
+    if (_stockCap(product) <= 0) return const SizedBox.shrink();
     if (hasVariants) {
       return OutlinedButton(
-        onPressed: () {},
+        onPressed: () => _openVariantSheet(product),
         child: Text(
           qty > 0 ? 'Sepette ($qty) · Seçenekler →' : 'Seçenekleri gör →',
         ),
@@ -395,7 +433,7 @@ class _PublicProductScreenState extends State<PublicProductScreen> {
         Text('$qty'),
         IconButton(
           onPressed:
-              qty >= 10
+              qty >= _stockCap(product)
                   ? null
                   : () {
                     VitrinCartService.instance.setQuantity(
@@ -409,6 +447,128 @@ class _PublicProductScreenState extends State<PublicProductScreen> {
         ),
       ],
     );
+  }
+
+  int _stockCap(Product product) => product.stockQuantity ?? 10;
+
+  double? _priceAmount(String price) {
+    final clean = price
+        .replaceAll(RegExp(r'[^0-9.,]'), '')
+        .replaceAll('.', '')
+        .replaceAll(',', '.');
+    return double.tryParse(clean);
+  }
+
+  Future<void> _openVariantSheet(Product product) async {
+    final secilen = await showModalBottomSheet<ProductVariantData>(
+      context: context,
+      builder:
+          (context) => SafeArea(
+            child: ListView(
+              shrinkWrap: true,
+              children:
+                  product.variants.map((variant) {
+                    final etiket = variant.options.values
+                        .where((value) => value.trim().isNotEmpty)
+                        .join(' / ');
+                    final stok = variant.stockQuantity ?? product.stockQuantity;
+                    return ListTile(
+                      title: Text(etiket.isEmpty ? 'Standart' : etiket),
+                      subtitle: Text(
+                        variant.priceAmount != null
+                            ? '${variant.priceAmount!.toStringAsFixed(2)} TL'
+                            : product.price,
+                      ),
+                      enabled: stok == null || stok > 0,
+                      onTap: () => Navigator.of(context).pop(variant),
+                    );
+                  }).toList(),
+            ),
+          ),
+    );
+    if (secilen == null || !mounted) return;
+    final etiket = secilen.options.values
+        .where((value) => value.trim().isNotEmpty)
+        .join(' / ');
+    VitrinCartService.instance.add(
+      VitrinCartItem(
+        productSlug: widget.productSlug,
+        productName: product.name,
+        variantKey: secilen.id.isNotEmpty ? secilen.id : etiket,
+        variantText: etiket,
+        priceText:
+            secilen.priceAmount != null
+                ? '${secilen.priceAmount!.toStringAsFixed(2)} TL'
+                : product.price,
+        priceAmount: secilen.priceAmount ?? _priceAmount(product.price),
+        imageUrl:
+            secilen.imageUrls.isNotEmpty
+                ? secilen.imageUrls.first
+                : (product.primaryImageUrl ?? ''),
+        maxQuantity: secilen.stockQuantity ?? product.stockQuantity,
+        quantity: 1,
+      ),
+    );
+    setState(() {});
+  }
+
+  Widget _buildOtherProducts(_PublicProductData data) {
+    final digerleri = <Widget>[];
+    for (var index = 0; index < data.products.length; index++) {
+      final urun = data.products[index];
+      if (urun.id == data.product.id) continue;
+      final slug = _productSlug(urun, index);
+      final qty = VitrinCartService.instance.items
+          .where((item) => item.productSlug == slug)
+          .fold<int>(0, (sum, item) => sum + item.quantity);
+      digerleri.add(
+        SizedBox(
+          width: 220,
+          height: VitrinProductCard.cardHeightForWidth(220),
+          child: VitrinProductCard(
+            name: urun.name,
+            price: urun.price,
+            category: urun.category,
+            description: urun.description,
+            imageUrls: urun.displayImageUrls,
+            stockStatus: urun.stockStatus,
+            hasVariants: urun.variants.isNotEmpty,
+            cartQuantity: qty,
+            maxQuantity: urun.stockQuantity,
+            showCart: !widget.previewMode,
+            onTap: () => context.push('/v/${widget.storeSlug}/urun/$slug'),
+            onViewOptions:
+                () => context.push('/v/${widget.storeSlug}/urun/$slug'),
+            onAddToCart: () {
+              VitrinCartService.instance.add(
+                VitrinCartItem(
+                  productSlug: slug,
+                  productName: urun.name,
+                  variantKey: 'standart',
+                  variantText: '',
+                  priceText: urun.price,
+                  priceAmount: _priceAmount(urun.price),
+                  imageUrl: urun.primaryImageUrl ?? '',
+                  maxQuantity: urun.stockQuantity,
+                  quantity: 1,
+                ),
+              );
+              setState(() {});
+            },
+            onIncrement: () {
+              VitrinCartService.instance.setQuantity(slug, 'standart', qty + 1);
+              setState(() {});
+            },
+            onDecrement: () {
+              VitrinCartService.instance.setQuantity(slug, 'standart', qty - 1);
+              setState(() {});
+            },
+          ),
+        ),
+      );
+    }
+    if (digerleri.isEmpty) return const SizedBox.shrink();
+    return Wrap(spacing: 12, runSpacing: 12, children: digerleri);
   }
 
   Widget _infoCard(String label, String value, bool stock) {
@@ -450,12 +610,14 @@ class _PublicProductData {
     required this.whatsapp,
     required this.fallbackImage,
     required this.product,
+    required this.products,
   });
 
   final String storeName;
   final String whatsapp;
   final String fallbackImage;
   final Product product;
+  final List<Product> products;
 }
 
 class _ProductNotFound extends StatelessWidget {

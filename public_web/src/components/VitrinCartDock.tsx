@@ -37,6 +37,7 @@ export default function VitrinCartDock({
   const [items, setItems] = useState<VitrinCartItem[]>([]);
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState("");
+  const [orderUrl, setOrderUrl] = useState<string | null>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
@@ -138,6 +139,13 @@ export default function VitrinCartDock({
     });
   }
 
+  function siparisiOnayla() {
+    clearVitrinCart(storeSlug);
+    setItems([]);
+    setOrderUrl(null);
+    setMessage("");
+  }
+
   function order() {
     const orderKey =
       typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -158,9 +166,10 @@ export default function VitrinCartDock({
     link.rel = "noopener noreferrer";
     link.click();
 
-    clearVitrinCart(storeSlug);
-    setItems([]);
-    setMessage("Siparişiniz WhatsApp’a aktarıldı, sepet sıfırlandı.");
+    setOrderUrl(url);
+    setMessage(
+      "WhatsApp penceresi açıldıysa sipariş özetini oradan gönderin. Pencere açılmadıysa aşağıdaki bağlantıya dokunun; sepetiniz siz onaylayana kadar korunur.",
+    );
 
     void Promise.all([
       ...snapshotItems.map((item) =>
@@ -193,6 +202,7 @@ export default function VitrinCartDock({
           type="button"
           onClick={() => {
             setMessage("");
+            setOrderUrl(null);
             setOpen(true);
           }}
           className={`fixed bottom-5 left-4 z-[80] min-h-12 rounded-full border border-blue-400/30 bg-slate-950/95 px-4 text-sm font-extrabold text-white shadow-2xl backdrop-blur ${odakHalkasi}`}
@@ -293,6 +303,25 @@ export default function VitrinCartDock({
               </button>
             ) : null}
             {message ? <p className="mt-3 text-xs font-semibold text-amber-200" role="status">{message}</p> : null}
+            {orderUrl ? (
+              <div className="mt-3 space-y-2 rounded-xl border border-amber-300/30 bg-amber-400/10 p-3">
+                <a
+                  href={orderUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`inline-flex min-h-10 items-center text-xs font-bold text-white underline ${odakHalkasi}`}
+                >
+                  WhatsApp açılmadıysa buraya tıklayın
+                </a>
+                <button
+                  type="button"
+                  onClick={siparisiOnayla}
+                  className={`block min-h-10 text-xs font-semibold text-white/70 underline ${odakHalkasi}`}
+                >
+                  Siparişi WhatsApp’tan gönderdim, sepeti temizle
+                </button>
+              </div>
+            ) : null}
             <p className="mt-3 text-[11px] leading-5 text-white/35">
               Vixrex siparişi otomatik olarak tamamlanmış saymaz; WhatsApp açılması ölçülür, son onay işletme ile müşteri arasındadır.
             </p>

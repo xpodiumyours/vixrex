@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+﻿import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vixrex/config/business_category_config.dart';
 import 'package:vixrex/config/public_site_config.dart';
@@ -277,7 +277,8 @@ class StoreEditorController extends ChangeNotifier
         _hasPendingExternalDraft = true;
         _lastExternalDraftEtiket = etiket;
         if (!_isDisposed) notifyListeners();
-        _hariciTaslakYenile();
+        // Taslak degisikligi published satira yansimamis olabilir; published
+        // veriyi cekip _data'yi ezmek yerine pending bayragi korunur.
       },
     );
   }

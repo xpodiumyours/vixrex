@@ -8,8 +8,8 @@
     "model": "deepseek/deepseek-v4.1-flash-1017",
     "arac_calisti": 30,
     "tarih": "2026-11-07T09:06:19.006593+00:00",
-    "ham_bayt": 650686,
-    "icerik_bayt": 30927,
+    "ham_bayt": 652869,
+    "icerik_bayt": 31502,
     "json_gecerli": true,
     "job_tam": "12d7718a-3fcf-411a-96fc-7fc4c14b7f16",
     "fatura_satir": 20
@@ -23,8 +23,8 @@
     "model": "deepseek/deepseek-v4.1-flash-1017",
     "arac_calisti": 28,
     "tarih": "2026-10-30T08:46:20.739815+00:00",
-    "ham_bayt": 417729,
-    "icerik_bayt": 13367,
+    "ham_bayt": 423457,
+    "icerik_bayt": 13895,
     "json_gecerli": false,
     "job_tam": "73718906-fa5b-4759-9bd6-c90eb92c208d",
     "fatura_satir": 7
@@ -38,8 +38,8 @@
     "model": "deepseek/deepseek-v4.1-flash-1017",
     "arac_calisti": 18,
     "tarih": "2026-10-30T07:43:04.543418+00:00",
-    "ham_bayt": 369153,
-    "icerik_bayt": 14940,
+    "ham_bayt": 371839,
+    "icerik_bayt": 15442,
     "json_gecerli": false,
     "job_tam": "54ff6387-7e9b-415d-9d2d-2e97c9b3c8ea",
     "fatura_satir": 7
@@ -53,8 +53,8 @@
     "model": "deepseek/deepseek-v4.1-flash-1017",
     "arac_calisti": 26,
     "tarih": "2026-10-29T17:35:04.028562+00:00",
-    "ham_bayt": 821575,
-    "icerik_bayt": 31566,
+    "ham_bayt": 827657,
+    "icerik_bayt": 32601,
     "json_gecerli": false,
     "job_tam": "bba4a416-62a0-4a75-882f-4450eedeb5d8",
     "fatura_satir": 13

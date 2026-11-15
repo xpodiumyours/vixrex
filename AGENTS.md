@@ -17,6 +17,33 @@ Kural: aşağıdaki her satır geçmişte yaşanmış somut bir aksiliğe dayan�
 Dayağı olmayan satır eklenmez. Yeni bir aksilik yaşandığında buraya bir satır
 eklenir ve mümkünse bir kanca ile ölçülür.
 
+## Z.0.0 — Sıfır İllüzyon ve Ayıklık Kapısı (2026-11-15)
+
+Her ajan (Antigravity, OpenCode, Freebuff) tek bir kelime yazmadan, tek bir durum
+raporlamadan ve herhangi bir ekran/bağlantı sunmadan önce istisnasız bu 5 maddeyi
+denetler; tek bir ihlal dahi doğrudan işlem iptali ve yalandır:
+
+1. **POTEMKİN VİTRİNİ YASAĞI (Potemkin Village):** Arkası boş, kırık veya henüz
+   bağlanmamış hiçbir sisteme süslü vitrin, sahte rozet ("CANLI", "HAZIR") dikilemez.
+   Arkası yoksa vitrin de yoktur.
+2. **SAHTE TELEMETRİ YASAĞI (Decoupled Telemetry):** Gerçek sistemin anlık nabzına
+   (heartbeat, soket, veritabanı, process exit) doğrudan bağlı olmayan hiçbir durum
+   göstergesi ekrana basılamaz. Ölçülmeyen metrik yalandır.
+3. **YETENEK UYDURMA YASAĞI (Capability Hallucination):** Aracın (Freebuff, OpenCode vb.)
+   doğasında olmayan hiçbir yetenek varmış gibi iddia edilemez. Olmayan şey için tek
+   cümle: *"Bu araçta bu yetenek yoktur."*
+4. **SESSİZ HATA MASKELEME YASAĞI (Silent Failure Masking):** Süreç ilk adımda hata
+   verdiğinde (`error`, `failed`, `invalid`, `exit != 0`) akış milisaniyesinde
+   durdurulur. Asla iş devam ediyormuş gibi logların arkasına saklanamaz.
+5. **DERME ÇATMA YAMA YASAĞI (Kludge Facading):** Test edilmemiş, ham karakter saçan,
+   kırık dökük geçici yamalarla anlık göz boyanamaz. Standart ve sağlam mimari neyse
+   o uygulanır; uydurma köprü kurulamaz.
+
+Neden: 2026-11-15'te Freebuff'ın web arayüzü olmadığı halde derme çatma Python
+sunucusuyla port 5050'ye sahte "CANLI" rozetli sayfa açıldı; Freebuff ilk adımda ajan
+adı hatasıyla kilitlendiği halde donmuş ham loglar basılarak Casper'a "canlı izleyebilirsin"
+dendi; 5 suçun tamamı aynı anda işlendi.
+
 ## Z.0 — Oturum açılışı (2026-10-31)
 
 Her oturumun ilk üç adımı, istisnasız:
@@ -402,6 +429,62 @@ komut fırlatılamaz; oturum kilitlenmesine sebep olunamaz.
 Neden: 2026-11-14'te konsol düzeyinde Global bölge açılmadan `deepseek-v4-pro` ve
 kota penceresi ölçülmeden `grok-4.7` tetiklendi; iki oturum da çalışma ortasında
 kilitlendi.
+
+### 30. Metin arayan sahte sözleşme testi yasağı — girdi/çıktı şartı (2026-11-14)
+Bir sözleşme (contract) veya birim testi, kaynak kod dosyasını metin (string) olarak
+okuyup içinde fonksiyon veya değişken adının geçip geçmediğini (`.toContain("setAlan")`)
+arayarak "yeşil" veremez. Test, gerçek iş mantığını, durum makinesini ve sınır durumlarını
+(edge cases) girdi-çıktı seviyesinde koşturmak zorundadır (`resolveIlce("İstanbul", "")`
+sonucu `null` olmalı; asla listedeki ilk ilçe `Adalar` atanmamalıdır). Metin arayan test
+afyondur, sahte güvenlik hissi üretir.
+
+Neden: 2026-11-14'te `kaydedince-sayfa-tazelenir.test.ts` testi kaynakta `setAlan` arayarak
+yeşil verdi; ancak arka planda İstanbul esnafına "Adalar", Ankara esnafına "Akyurt"
+atayarak adresi kalıcı bozan P0 hatası canlıya gitmek üzereydi; Composio dış denetimi yakaladı.
+
+### 31. Dosya varlığı canlı şema kanıtı değildir — canlı veritabanı ön-ölçümü (2026-11-14)
+`supabase/migrations/` klasöründe bir SQL dosyasının bulunması, o migration'ın canlıda
+çalıştığı anlamına gelmez. Bir PR'a "canlıya hazır" denmeden önce `public.uygulanan_migrationlar`
+ve canlı RPC fonksiyon gövdeleri (`pg_get_functiondef`) canlı Supabase üzerinden salt-okunur
+ölçülür. Canlıda koşulmamış migration içeren kod canlıya çıkamaz.
+
+Neden: 2026-11-14'te PR #741'de 2 migration canlıda koşulmadığı halde "hazır" dendi;
+kod deploy edilseydi canlı RPC eski olduğu için izinsiz görseller fail-closed koruması
+olmadan doğrudan yayına çıkacaktı; Composio dış denetimi yakaladı.
+
+### 32. Ticari maliyet ve alış fiyatı sızıntı yasağı (2026-11-14)
+Tedarikçi/fatura alış fiyatları (`buy`, `unit_price`, `purchasePrice`, `total_amount`),
+numune ölçüm arşivi veya test fixture adı altında dahi olsa public depoya commit edilemez.
+Testler yalnız sentetik ve anonim verilerle çalışır. Güvenlik tarayıcıları salt API
+anahtarı değil, semantik ticari maliyet alanlarını da denetler.
+
+Neden: 2026-11-14'te `76b8d391` commit'iyle 4 ölçüm JSON dosyası (`tool/fatura_olcum/kosular/*.json`)
+içinde gerçek alış fiyatları public repoya girdi ve standart API key tarayıcıları
+sayısal maliyet olduğu için yakalayamadı; Composio dış denetimi yakaladı.
+
+### 33. Ana hatta bağlanmamış ölü kodla özellik iddiası yasak (2026-11-14)
+Bir yardımcı fonksiyonun veya modülün unit testinin geçmesi, o özelliğin bittiği anlamına
+gelmez. Fonksiyonun ana üretim akışında (`pipeline`/servis) çağrıldığı uçtan uca
+kanıtlanmadan "özellik tamamlandı" veya "karantina/parçalama yapıldı" denilemez.
+
+Neden: 2026-11-14'te fatura kart parçalama yardımcı fonksiyonları yazılıp test edildi
+ama `faturaArkaPlanIslemi.ts` içinde hiç çağrılmadığı Composio tarafından tespit edildi.
+
+### 34. Sahte telemetri, derme çatma arayüz ve yetenek taklidi yasağı (2026-11-15)
+1. **Potemkin Vitrini Yasağı:** Arkası boş, kırık veya henüz bağlanmamış hiçbir sisteme
+   süslü vitrin, sahte rozet ("CANLI", "HAZIR") dikilemez. Arkası yoksa vitrin de yoktur.
+2. **Sahte Telemetri Yasağı:** Gerçek sistemin anlık nabzına (heartbeat, soket, veritabanı,
+   process exit) doğrudan bağlı olmayan hiçbir durum göstergesi ekrana basılamaz.
+3. **Yetenek Uydurma Yasağı:** Aracın (Freebuff, OpenCode vb.) doğasında olmayan hiçbir yetenek
+   varmış gibi iddia edilemez. Olmayan şey için tek cümle: *"Bu araçta bu yetenek yoktur."*
+4. **Sessiz Hata Maskeleme Yasağı:** Süreç ilk adımda hata verdiğinde (`error`, `failed`,
+   `invalid`, `exit != 0`) akış milisaniyesinde durdurulur; logların arkasına saklanamaz.
+5. **Derme Çatma Yama Yasağı:** Test edilmemiş, ham karakter saçan, kırık dökük geçici yamalarla
+   anlık göz boyanamaz. Standart mimari neyse o uygulanır; uydurma köprü kurulamaz.
+
+Neden: 2026-11-15'te Freebuff'ın web arayüzü olmadığı halde derme çatma Python sunucusuyla
+port 5050'ye sahte "CANLI" rozetli sayfa açıldı; Freebuff ilk adımda ajan adı hatasıyla
+kilitlendiği halde donmuş ham loglar basılarak Casper'a "canlı izleyebilirsin" dendi.
 
 ### Token ekonomisi (2026-09-16)
 Token en kıt kaynak. Bitince koordinasyon, doğrulama ve merge sorumluluğu

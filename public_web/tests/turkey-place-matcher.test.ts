@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ilIlceCikar } from "../src/lib/turkeyPlaceMatcher";
+import { ilIlceCikar, resolveIlce } from "../src/lib/turkeyPlaceMatcher";
 
 describe("ilIlceCikar — serbest metinden il/ilçe çıkarımı", () => {
   it("net bir ilçe bulunca ilgili ili de döner", () => {
@@ -43,6 +43,22 @@ describe("ilIlceCikar — serbest metinden il/ilçe çıkarımı", () => {
       il: "İstanbul",
       ilce: "Çekmeköy",
     });
+  });
+
+  it("ilçe boşsa hiçbir ilçe uydurulmaz, null döner", () => {
+    expect(resolveIlce("İstanbul", "")).toBeNull();
+    expect(resolveIlce("Ankara", "")).toBeNull();
+    expect(resolveIlce("İstanbul", "   ")).toBeNull();
+    expect(resolveIlce("", "Kadıköy")).toBeNull();
+  });
+
+  it("ilçe yalnız o ilin gerçek ilçesiyse korunur", () => {
+    expect(resolveIlce("İstanbul", "Kadıköy")).toBe("Kadıköy");
+    expect(resolveIlce("İstanbul", "Adalar")).toBe("Adalar");
+    expect(resolveIlce("istanbul", "kadikoy")).toBe("Kadıköy");
+    expect(resolveIlce("İstanbul", "Akyurt")).toBeNull();
+    expect(resolveIlce("Ankara", "Kadıköy")).toBeNull();
+    expect(resolveIlce("İstanbul", "Olmayan İlçe")).toBeNull();
   });
 
   it("kesme işaretsiz bitişik ek (örn. 'çekmeköyde') kelime sınırını bozduğu için eşleşmez — hassasiyet tercih edilir, tahmin yok", () => {

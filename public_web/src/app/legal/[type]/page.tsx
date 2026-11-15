@@ -14,9 +14,9 @@ const GECERLI_TURLER = ["privacy", "terms", "consent", "data-deletion"] as const
 type GecerliTur = (typeof GECERLI_TURLER)[number];
 
 const BASLIK: Record<GecerliTur, string> = {
-  privacy: "Aydinlatma Metni",
-  terms: "Kullanim Sartlari",
-  consent: "Acik Riza Beyani",
+  privacy: "Aydınlatma Metni",
+  terms: "Kullanım Şartları",
+  consent: "Açık Rıza Beyanı",
   "data-deletion": "Hesap ve Veri Silme",
 };
 

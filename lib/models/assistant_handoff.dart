@@ -28,7 +28,7 @@ class AssistantHandoffMessage {
 }
 
 class AssistantHandoffV1 {
-  static const _clientEnvelopeLimitBytes = 16 * 1024;
+  static const _clientEnvelopeLimitBytes = 14 * 1024;
 
   AssistantHandoffV1({
     required List<AssistantHandoffStep> completedSteps,

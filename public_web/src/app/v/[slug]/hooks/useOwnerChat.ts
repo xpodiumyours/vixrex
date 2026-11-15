@@ -110,6 +110,20 @@ export function useOwnerChat(
                 : msg
             );
           const devamMetni = handoff ? null : handoffAdimDevami(akisAdimi);
+          const gecmisiKoru = (hedef: Mesaj[]) => {
+            if (prev.length <= hedef.length) return hedef;
+            const anahtar = (mesaj: Mesaj) => `${mesaj.kimden}|${mesaj.metin}`;
+            const gorulen = new Set(prev.map(anahtar));
+            const eklenecek = hedef.filter((mesaj) => !gorulen.has(anahtar(mesaj)));
+            if (eklenecek.length === 0) return prev;
+            return [
+              ...prev,
+              ...eklenecek.map((mesaj) => {
+                sayacRef.current += 1;
+                return { ...mesaj, id: sayacRef.current };
+              }),
+            ];
+          };
           const devamiKoru = (hedef: Mesaj[]) => {
             if (!devamMetni) return hedef;
             if (!prev.some((mesaj) => mesaj.metin === devamMetni)) return hedef;
@@ -120,7 +134,7 @@ export function useOwnerChat(
               { id: sayacRef.current, kimden: "asistan" as const, metin: devamMetni },
             ];
           };
-          if (opts2?.forceReplace) return devamiKoru(zenginlestir(mapped));
+          if (opts2?.forceReplace) return devamiKoru(gecmisiKoru(zenginlestir(mapped)));
           const oncekiIcerik = devamMetni
             ? prev.filter((mesaj) => mesaj.metin !== devamMetni)
             : prev;
@@ -131,7 +145,7 @@ export function useOwnerChat(
                 msg.kimden === oncekiIcerik[i]?.kimden &&
                 msg.metin === oncekiIcerik[i]?.metin
             );
-          return ayniIcerik ? prev : devamiKoru(zenginlestir(mapped));
+          return ayniIcerik ? prev : devamiKoru(gecmisiKoru(zenginlestir(mapped)));
         });
         sayacRef.current = Math.max(sayacRef.current, mapped.length);
       } catch {

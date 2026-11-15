@@ -346,6 +346,11 @@ class FaturaOkuServisi {
       purchaseUnitPrice: alisFiyat,
       lineTotal: satirToplam,
       rightsStatus: izinDurumu,
+      isVisible:
+          sahipDurumu['isVisible'] == true ||
+          sahipDurumu['is_visible'] == true ||
+          satir['isVisible'] == true ||
+          satir['is_visible'] == true,
     );
 
     final taslak = InvoiceProductDraft(
@@ -454,6 +459,11 @@ class FaturaOkuServisi {
       supplierIdentityStrength: tedarikciGucu,
       productIdentityStrength: urunGucu,
       rightsStatus: izinDurumu,
+      isVisible:
+          sahipDurumu['isVisible'] == true ||
+          sahipDurumu['is_visible'] == true ||
+          satir['isVisible'] == true ||
+          satir['is_visible'] == true,
       kartDurumu: kartDurumu,
       celiskiAdaylari: celiskiAdaylari,
       celiskiDayanak: celiskiDayanak.isEmpty ? null : celiskiDayanak,

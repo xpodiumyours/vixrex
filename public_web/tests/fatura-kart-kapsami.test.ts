@@ -25,18 +25,18 @@ const json = JSON.parse(icerik) as { items: Array<Record<string, unknown>> };
 
 describe("kart kapsamı", () => {
   it("tam gövde 20 satırın tamamını kartlar", async () => {
-    const { sonuc } = await kartPresetYanitiniOku(akis(icerik), okuma(20));
+    const { sonuc } = await kartPresetYanitiniOku(akis(icerik), okuma(20), "mevcut");
     expect(sonuc.satirlar).toHaveLength(20);
   });
 
   it("bir satır eksikse fatura işlenmiş sayılmaz", async () => {
     const eksik = JSON.stringify({ ...json, items: json.items.slice(0, 19) });
-    await expect(kartPresetYanitiniOku(akis(eksik), okuma(20))).rejects.toThrow("KART_KAPSAMI_EKSIK");
+    await expect(kartPresetYanitiniOku(akis(eksik), okuma(20))).rejects.toThrow("KART_YANITI_COZULEMEDI");
   });
 
   it("içi boş kart satırı kapatmaz", async () => {
     const bos = JSON.stringify({ items: [{ row_id: "1", validation: { status: "verified" } }] });
-    await expect(kartPresetYanitiniOku(akis(bos), okuma(1, () => ""))).rejects.toThrow("KART_KAPSAMI_EKSIK");
+    await expect(kartPresetYanitiniOku(akis(bos), okuma(1, () => ""))).rejects.toThrow("KART_YANITI_COZULEMEDI");
   });
 
   it("kullanıcıya hiçbir şeyin kaydedilmediği söylenir", () => {

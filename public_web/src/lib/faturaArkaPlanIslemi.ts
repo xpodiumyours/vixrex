@@ -10,13 +10,11 @@ import {
   akis,
   kartPresetIstekGovdesi,
   kartPresetYanitiniOku,
-  URUN_KART_PRESET,
   type PresetAkis,
 } from "@/lib/faturaKartPreset";
 import { faturaBaslangicZamani, faturaOzetSatiri, faturaOzetiniKaydet, gecenSaniye } from "@/lib/faturaOzeti";
 
 export const OKUMA_PRESET = "@preset/vixrex-qwen-fatura-okuma-suzme";
-export const OTOMATIK_FATURA_PRESET = URUN_KART_PRESET;
 
 export function bekleyenFaturaYaniti(islemKimligi: string, asama: "okunuyor" | "kartlaniyor" = "okunuyor") {
   return {

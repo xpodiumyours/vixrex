@@ -456,13 +456,16 @@ export default function OwnerAssistantPanel({
     async (anahtar: string) => {
       alanAtlandi(anahtar);
       try {
-        await fetch("/api/owner-draft-skip", {
+        const yanit = await fetch("/api/owner-draft-skip", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ slug, anahtar }),
         });
-      } catch {
-        // Ağ hatası olsa dahi yerel listede alan görünmez kılınmıştır.
+        if (!yanit.ok) {
+          console.error("owner-draft-skip kaydı başarısız", yanit.status, anahtar);
+        }
+      } catch (hata) {
+        console.error("owner-draft-skip isteği başarısız", hata, anahtar);
       }
     },
     [slug, alanAtlandi]

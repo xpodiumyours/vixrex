@@ -6,27 +6,27 @@ I'll research each brand's official website.
     {
       "row_id": "1",
       "satir_no": 1,
-      "brand": "ELIT",
-      "title": "ELT1301 Elit Erkek Elastan Sıfır Yaka Fanila",
+      "brand": "DENEME",
+      "title": "ELT1301 Deneme Erkek Elastan Sıfır Yaka Fanila",
       "category_suggestion": "Erkek İç Giyim > Erkek Atlet / Fanila",
       "variant": "Beyaz / S-2, M-3, L-4, XL-5, 2XL-6",
-      "short_description": "Elit erkek elastan sıfır yaka fanila; beyaz ve siyah renk seçenekleri ile S/2, M/3, L/4, XL/5 ve 2XL/6 bedenlerinde sunulur.",
-      "product_url": "https://sehermensucat.com/elt1301-elit-erkek-elastan-sifiryaka-fanila",
+      "short_description": "Deneme erkek elastan sıfır yaka fanila; beyaz ve siyah renk seçenekleri ile S/2, M/3, L/4, XL/5 ve 2XL/6 bedenlerinde sunulur.",
+      "product_url": "https://ornektekstil.example/elt1301-deneme-erkek-elastan-sifiryaka-fanila",
       "image_url": "https://cdn.myikas.com/images/74e89546-a032-4dc5-a4cc-0765f50962f6/3ac5759d-36e6-4131-b723-2e1149825b1d/image_3840.webp",
-      "source_url": "https://sehermensucat.com/elt1301-elit-erkek-elastan-sifiryaka-fanila",
+      "source_url": "https://ornektekstil.example/elt1301-deneme-erkek-elastan-sifiryaka-fanila",
       "verification_status": "verified",
       "rights_status": "unknown",
-      "manufacturer": "Seher Mensucat A.Ş. (Tutku Elit markası)",
+      "manufacturer": "Örnek Tekstil A.Ş. (Örnek Marka markası)",
       "invoice_data": {
         "quantity": 1,
         "unit": "ad",
-        "unit_price": 115,
-        "total_amount": 115
+        "unit_price": 10,
+        "total_amount": 10
       },
       "matched_attributes": [
         "ürün kodu: ELT1301",
-        "ürün adı: Elit Erkek Elastan Sıfır Yaka Fanila",
-        "marka: Tutku Elit",
+        "ürün adı: Deneme Erkek Elastan Sıfır Yaka Fanila",
+        "marka: Örnek Marka",
         "cinsiyet: erkek",
         "renk: Beyaz (faturadaki 100 BEYAZ)",
         "beden: M (resmî beden tablosunda M / 3)"
@@ -42,41 +42,41 @@ I'll research each brand's official website.
       "canonical_row_id": null,
       "sources": [
         {
-          "url": "https://sehermensucat.com/elt1301-elit-erkek-elastan-sifiryaka-fanila",
+          "url": "https://ornektekstil.example/elt1301-deneme-erkek-elastan-sifiryaka-fanila",
           "type": "resmî üretici ürün sayfası",
           "note": "Sayfa açıldı; ürün kodu, adı, renk ve beden seçenekleri ile ürün görseli doğrulandı."
         },
         {
-          "url": "https://sehermensucat.com/pages/hakkimizda",
+          "url": "https://ornektekstil.example/pages/hakkimizda",
           "type": "resmî kurumsal sayfa",
-          "note": "Tutku / Tutku Elit markalarının Seher Mensucat A.Ş. bünyesinde olduğu doğrulandı."
+          "note": "Örnek / Örnek Marka markalarının Örnek Tekstil A.Ş. bünyesinde olduğu doğrulandı."
         }
       ]
     },
     {
       "row_id": "2",
       "satir_no": 2,
-      "brand": "ELIT",
-      "title": "ELT1302 Elit Erkek Elastan Sıfır Yaka Uzun Kol Fanila",
+      "brand": "DENEME",
+      "title": "ELT1302 Deneme Erkek Elastan Sıfır Yaka Uzun Kol Fanila",
       "category_suggestion": "Erkek İç Giyim > Erkek Atlet / Fanila",
       "variant": "Beyaz / Siyah; S-2, M-3, L-4, XL-5, 2XL-6",
-      "short_description": "Elit erkek elastan sıfır yaka uzun kol fanila; beyaz ve siyah renk seçenekleri ile S/2–2XL/6 beden aralığında sunulur.",
-      "product_url": "https://sehermensucat.com/elt1302-elit-erkek-elastan-sifiryaka-uzun-kol-fanila-fanila",
+      "short_description": "Deneme erkek elastan sıfır yaka uzun kol fanila; beyaz ve siyah renk seçenekleri ile S/2–2XL/6 beden aralığında sunulur.",
+      "product_url": "https://ornektekstil.example/elt1302-deneme-erkek-elastan-sifiryaka-uzun-kol-fanila-fanila",
       "image_url": "https://cdn.myikas.com/images/74e89546-a032-4dc5-a4cc-0765f50962f6/eebb417d-81e9-4e3f-a89a-17bcffd0e480/image_3840.webp",
-      "source_url": "https://sehermensucat.com/elt1302-elit-erkek-elastan-sifiryaka-uzun-kol-fanila-fanila",
+      "source_url": "https://ornektekstil.example/elt1302-deneme-erkek-elastan-sifiryaka-uzun-kol-fanila-fanila",
       "verification_status": "verified",
       "rights_status": "unknown",
-      "manufacturer": "Seher Mensucat A.Ş. (Tutku Elit markası)",
+      "manufacturer": "Örnek Tekstil A.Ş. (Örnek Marka markası)",
       "invoice_data": {
         "quantity": 1,
         "unit": "ad",
-        "unit_price": 137,
-        "total_amount": 137
+        "unit_price": 15,
+        "total_amount": 15
       },
       "matched_attributes": [
         "ürün kodu: ELT1302",
-        "ürün adı: Elit Erkek Elastan Sıfır Yaka Uzun Kol Fanila",
-        "marka: Tutku Elit",
+        "ürün adı: Deneme Erkek Elastan Sıfır Yaka Uzun Kol Fanila",
+        "marka: Örnek Marka",
         "cinsiyet: erkek",
         "kol tipi: uzun kol",
         "renk: Siyah (faturadaki 750 SIYAH)",
@@ -93,7 +93,7 @@ I'll research each brand's official website.
       "canonical_row_id": null,
       "sources": [
         {
-          "url": "https://sehermensucat.com/elt1302-elit-erkek-elastan-sifiryaka-uzun-kol-fanila-fanila",
+          "url": "https://ornektekstil.example/elt1302-deneme-erkek-elastan-sifiryaka-uzun-kol-fanila-fanila",
           "type": "resmî üretici ürün sayfası",
           "note": "Sayfa açıldı; ürün kodu, adı, renk ve beden seçenekleri ile ürün görseli doğrulandı."
         }
@@ -103,26 +103,26 @@ I'll research each brand's official website.
       "row_id": "3",
       "satir_no": 3,
       "brand": "SHR",
-      "title": "SKD0010 Seher Kadın Penye Kaşkorse Atlet",
+      "title": "SKD0010 Örnek Kadın Penye Kaşkorse Atlet",
       "category_suggestion": "Kadın İç Giyim > Kadın Atlet",
       "variant": "Beyaz; XL-5, 2XL-6, 3XL-7",
       "short_description": null,
       "product_url": null,
       "image_url": null,
-      "source_url": "https://sehermensucat.com/kadin-atlet",
+      "source_url": "https://ornektekstil.example/kadin-atlet",
       "verification_status": "ambiguous",
       "rights_status": "unknown",
-      "manufacturer": "Seher Mensucat A.Ş. (Seher markası)",
+      "manufacturer": "Örnek Tekstil A.Ş. (Örnek markası)",
       "invoice_data": {
         "quantity": 6,
         "unit": "ad",
-        "unit_price": 47,
-        "total_amount": 282
+        "unit_price": 20,
+        "total_amount": 120
       },
       "matched_attributes": [
         "ürün kodu: SKD0010",
-        "ürün adı: Seher Kadın Penye Kaşkorse Atlet",
-        "marka: Seher (faturadaki SHR kısaltması)",
+        "ürün adı: Örnek Kadın Penye Kaşkorse Atlet",
+        "marka: Örnek (faturadaki SHR kısaltması)",
         "renk seçeneği: Beyaz",
         "beden aralığında 7 (3XL) seçeneği listeleniyor"
       ],
@@ -138,9 +138,9 @@ I'll research each brand's official website.
       "canonical_row_id": null,
       "sources": [
         {
-          "url": "https://sehermensucat.com/kadin-atlet",
+          "url": "https://ornektekstil.example/kadin-atlet",
           "type": "resmî üretici kategori sayfası",
-          "note": "Sayfa açıldı; SKD0010 Seher Kadın Penye Kaşkorse Atlet ürünü ve Beyaz renk seçeneği listelendi, ürün sayfası erişim limiti nedeniyle açılamadı."
+          "note": "Sayfa açıldı; SKD0010 Örnek Kadın Penye Kaşkorse Atlet ürünü ve Beyaz renk seçeneği listelendi, ürün sayfası erişim limiti nedeniyle açılamadı."
         }
       ]
     },
@@ -148,26 +148,26 @@ I'll research each brand's official website.
       "row_id": "4",
       "satir_no": 4,
       "brand": "TUT",
-      "title": "TER0105 Tutku Erkek Penye Sıfır Yaka Fanila",
+      "title": "TER0105 Örnek Erkek Penye Sıfır Yaka Fanila",
       "category_suggestion": "Erkek İç Giyim > Erkek Atlet / Fanila",
       "variant": "Beyaz / Gri / Siyah; XS-1, S-2, M-3, L-4, XL-5, 2XL-6",
-      "short_description": "Tutku erkek penye sıfır yaka fanila; beyaz, gri ve siyah renk seçenekleri ile XS/1–2XL/6 beden aralığında sunulur.",
-      "product_url": "https://sehermensucat.com/ter0105-tutku-erkek--penye-sifir-yaka-fanila",
+      "short_description": "Örnek erkek penye sıfır yaka fanila; beyaz, gri ve siyah renk seçenekleri ile XS/1–2XL/6 beden aralığında sunulur.",
+      "product_url": "https://ornektekstil.example/ter0105-ornek-erkek--penye-sifir-yaka-fanila",
       "image_url": "https://cdn.myikas.com/images/74e89546-a032-4dc5-a4cc-0765f50962f6/34e4bebd-1f63-4abb-87de-6d70bff2bb54/image_3840.webp",
-      "source_url": "https://sehermensucat.com/ter0105-tutku-erkek--penye-sifir-yaka-fanila",
+      "source_url": "https://ornektekstil.example/ter0105-ornek-erkek--penye-sifir-yaka-fanila",
       "verification_status": "verified",
       "rights_status": "unknown",
-      "manufacturer": "Seher Mensucat A.Ş. (Tutku markası)",
+      "manufacturer": "Örnek Tekstil A.Ş. (Örnek markası)",
       "invoice_data": {
         "quantity": 6,
         "unit": "ad",
-        "unit_price": 86,
-        "total_amount": 516
+        "unit_price": 25,
+        "total_amount": 150
       },
       "matched_attributes": [
         "ürün kodu: TER0105",
-        "ürün adı: Tutku Erkek Penye Sıfır Yaka Fanila",
-        "marka: Tutku",
+        "ürün adı: Örnek Erkek Penye Sıfır Yaka Fanila",
+        "marka: Örnek",
         "cinsiyet: erkek",
         "kumaş tipi: penye",
         "yaka: sıfır yaka",
@@ -184,7 +184,7 @@ I'll research each brand's official website.
       "canonical_row_id": "4",
       "sources": [
         {
-          "url": "https://sehermensucat.com/ter0105-tutku-erkek--penye-sifir-yaka-fanila",
+          "url": "https://ornektekstil.example/ter0105-ornek-erkek--penye-sifir-yaka-fanila",
           "type": "resmî üretici ürün sayfası",
           "note": "Sayfa açıldı; ürün kodu, adı, renk-bedен seçenekleri ve ürün görseli doğrulandı."
         }
@@ -194,26 +194,26 @@ I'll research each brand's official website.
       "row_id": "5",
       "satir_no": 5,
       "brand": "TUT",
-      "title": "TER0105 Tutku Erkek Penye Sıfır Yaka Fanila",
+      "title": "TER0105 Örnek Erkek Penye Sıfır Yaka Fanila",
       "category_suggestion": "Erkek İç Giyim > Erkek Atlet / Fanila",
       "variant": "Beyaz / Gri / Siyah; XS-1, S-2, M-3, L-4, XL-5, 2XL-6",
-      "short_description": "Tutku erkek penye sıfır yaka fanila; beyaz, gri ve siyah renk seçenekleri ile XS/1–2XL/6 beden aralığında sunulur.",
-      "product_url": "https://sehermensucat.com/ter0105-tutku-erkek--penye-sifir-yaka-fanila",
+      "short_description": "Örnek erkek penye sıfır yaka fanila; beyaz, gri ve siyah renk seçenekleri ile XS/1–2XL/6 beden aralığında sunulur.",
+      "product_url": "https://ornektekstil.example/ter0105-ornek-erkek--penye-sifir-yaka-fanila",
       "image_url": "https://cdn.myikas.com/images/74e89546-a032-4dc5-a4cc-0765f50962f6/34e4bebd-1f63-4abb-87de-6d70bff2bb54/image_3840.webp",
-      "source_url": "https://sehermensucat.com/ter0105-tutku-erkek--penye-sifir-yaka-fanila",
+      "source_url": "https://ornektekstil.example/ter0105-ornek-erkek--penye-sifir-yaka-fanila",
       "verification_status": "verified",
       "rights_status": "unknown",
-      "manufacturer": "Seher Mensucat A.Ş. (Tutku markası)",
+      "manufacturer": "Örnek Tekstil A.Ş. (Örnek markası)",
       "invoice_data": {
         "quantity": 6,
         "unit": "ad",
-        "unit_price": 86,
-        "total_amount": 516
+        "unit_price": 30,
+        "total_amount": 180
       },
       "matched_attributes": [
         "ürün kodu: TER0105",
-        "ürün adı: Tutku Erkek Penye Sıfır Yaka Fanila",
-        "marka: Tutku",
+        "ürün adı: Örnek Erkek Penye Sıfır Yaka Fanila",
+        "marka: Örnek",
         "cinsiyet: erkek",
         "kumaş tipi: penye",
         "yaka: sıfır yaka",
@@ -230,7 +230,7 @@ I'll research each brand's official website.
       "canonical_row_id": "4",
       "sources": [
         {
-          "url": "https://sehermensucat.com/ter0105-tutku-erkek--penye-sifir-yaka-fanila",
+          "url": "https://ornektekstil.example/ter0105-ornek-erkek--penye-sifir-yaka-fanila",
           "type": "resmî üretici ürün sayfası",
           "note": "Sayfa açıldı; ürün kodu, adı, renk-bedен seçenekleri ve ürün görseli doğrulandı. Aynı ürünün farklı bedeni olduğu için canonical kayıt 4. satırdır."
         }

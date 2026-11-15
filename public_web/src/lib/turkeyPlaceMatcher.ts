@@ -9,7 +9,7 @@
  * Antalya'nın ilçeleri); burada kod→isim eşlemesi `turkeyProvinces`
  * üzerinden yapılıp ilçe→il(ler) ters haritası kurulur.
  */
-import { turkeyProvinces, turkeyDistricts } from "./turkeyCities";
+import { getDistrictsForProvince, turkeyProvinces, turkeyDistricts } from "./turkeyCities";
 import { normalizeBusinessCategoryTerm as normalizeTr } from "./businessCategories";
 
 export interface YerSonucu {
@@ -71,6 +71,17 @@ function eslesenleriBul<T>(
 
 function ilAdiMetindeGeciyorMu(il: string, normalizedMetin: string): boolean {
   return new RegExp(`\\b${kaciril(normalizeTr(il))}\\b`).test(normalizedMetin);
+}
+
+export function resolveIlce(il: string, ilce: string): string | null {
+  const temizIl = il.trim();
+  const temizIlce = ilce.trim();
+  if (!temizIl || !temizIlce) return null;
+  const ilAdi = IL_ADAYLARI.get(normalizeTr(temizIl));
+  if (!ilAdi) return null;
+  const aranan = normalizeTr(temizIlce);
+  const eslesen = getDistrictsForProvince(ilAdi).find((ad) => normalizeTr(ad) === aranan);
+  return eslesen ?? null;
 }
 
 export function ilIlceCikar(paragraf: string): YerSonucu | null {

@@ -44,7 +44,7 @@ void main() {
     },
   );
 
-  test('çok baytlı mesajlarda CORE 16 KiB sınırını aşmaz', () {
+  test('çok baytlı mesajlarda CORE 14 KiB güvenli sınırını aşmaz', () {
     final handoff = AssistantHandoffV1(
       completedSteps: const [AssistantHandoffStep.name],
       nextStep: AssistantHandoffStep.category,
@@ -56,7 +56,7 @@ void main() {
 
     final encodedSize = utf8.encode(jsonEncode(handoff.toJson())).length;
 
-    expect(encodedSize, lessThanOrEqualTo(16384));
+    expect(encodedSize, lessThanOrEqualTo(14336));
     expect(handoff.messages, isNotEmpty);
   });
 }

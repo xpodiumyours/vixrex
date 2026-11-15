@@ -1,5 +1,41 @@
 import 'package:flutter/foundation.dart';
 
+String _cleanText(Object? value, [int max = 180]) {
+  final raw =
+      (value ?? '')
+          .toString()
+          .replaceAll(RegExp(r'[\u0000-\u001F\u007F\u2028\u2029]+'), ' ')
+          .trim();
+  if (raw.length <= max) return raw;
+  return raw.substring(0, max);
+}
+
+int? _normalizeMaxQuantity(Object? value) {
+  if (value == null || value == '') return null;
+  final parsed =
+      (value is num) ? value.toDouble() : double.tryParse(value.toString());
+  if (parsed == null || !parsed.isFinite) return null;
+  return parsed.round().clamp(0, 999);
+}
+
+double? _normalizePriceAmount(Object? value) {
+  if (value == null) return null;
+  final parsed =
+      (value is num) ? value.toDouble() : double.tryParse(value.toString());
+  if (parsed == null || !parsed.isFinite || parsed <= 0) return null;
+  return parsed;
+}
+
+int _clampQuantity(int value, int? maxQuantity) {
+  var normalized = value < 1 ? 1 : value;
+  if (normalized > 999) normalized = 999;
+  if (maxQuantity != null && maxQuantity > 0 && normalized > maxQuantity) {
+    normalized = maxQuantity;
+  }
+  if (maxQuantity == 0) return 0;
+  return normalized < 1 ? 1 : normalized;
+}
+
 class VitrinCartItem {
   const VitrinCartItem({
     required this.productSlug,
@@ -34,6 +70,18 @@ class VitrinCartItem {
     maxQuantity: maxQuantity,
     quantity: quantity ?? this.quantity,
   );
+
+  VitrinCartItem normalized() => VitrinCartItem(
+    productSlug: _cleanText(productSlug, 120),
+    productName: _cleanText(productName, 180),
+    variantKey: _cleanText(variantKey, 180),
+    variantText: _cleanText(variantText, 180),
+    priceText: _cleanText(priceText, 80),
+    priceAmount: _normalizePriceAmount(priceAmount),
+    imageUrl: imageUrl.trim().isEmpty ? '' : _cleanText(imageUrl, 500),
+    maxQuantity: _normalizeMaxQuantity(maxQuantity),
+    quantity: _clampQuantity(quantity, _normalizeMaxQuantity(maxQuantity)),
+  );
 }
 
 class VitrinCartService extends ChangeNotifier {
@@ -48,36 +96,47 @@ class VitrinCartService extends ChangeNotifier {
       _items.values.fold(0, (sum, item) => sum + item.quantity);
 
   void add(VitrinCartItem item) {
-    final key = '${item.productSlug}::${item.variantKey}';
+    final normalized = item.normalized();
+    if (normalized.maxQuantity == 0) return;
+    if (normalized.productSlug.isEmpty || normalized.productName.isEmpty)
+      return;
+    final key = '${normalized.productSlug}::${normalized.variantKey}';
     final existing = _items[key];
     if (existing == null) {
-      _items[key] = item;
+      _items[key] = normalized;
     } else {
-      final next = existing.quantity + item.quantity;
+      final next = existing.quantity + normalized.quantity;
       final capped =
-          (item.maxQuantity != null && next > item.maxQuantity!)
-              ? item.maxQuantity!
+          (normalized.maxQuantity != null && next > normalized.maxQuantity!)
+              ? normalized.maxQuantity!
               : next;
-      _items[key] = existing.copyWith(quantity: capped.clamp(1, 10));
+      _items[key] = existing.copyWith(
+        quantity: _clampQuantity(capped, normalized.maxQuantity),
+      );
     }
     notifyListeners();
   }
 
   void setQuantity(String productSlug, String variantKey, int quantity) {
-    final key = '$productSlug::$variantKey';
+    final key =
+        '${_cleanText(productSlug, 120)}::${_cleanText(variantKey, 180)}';
     final existing = _items[key];
     if (existing == null) return;
-    if (quantity <= 0) {
+    if (quantity <= 0 || existing.maxQuantity == 0) {
       _items.remove(key);
-    } else {
-      final capped = quantity.clamp(1, 10);
-      _items[key] = existing.copyWith(quantity: capped);
+      notifyListeners();
+      return;
     }
+    _items[key] = existing.copyWith(
+      quantity: _clampQuantity(quantity, existing.maxQuantity),
+    );
     notifyListeners();
   }
 
   void remove(String productSlug, String variantKey) {
-    _items.remove('$productSlug::$variantKey');
+    _items.remove(
+      '${_cleanText(productSlug, 120)}::${_cleanText(variantKey, 180)}',
+    );
     notifyListeners();
   }
 
@@ -90,24 +149,68 @@ class VitrinCartService extends ChangeNotifier {
     required String storeName,
     required String storeSlug,
   }) {
-    final buffer = StringBuffer();
-    buffer.writeln('Sipariş no: #VX-${storeSlug.toUpperCase()}');
-    buffer.writeln('Mağaza: $storeName');
-    buffer.writeln('---');
-    for (final item in _items.values) {
-      buffer.writeln(
-        '${item.productName} x${item.quantity} - ${item.priceText}',
-      );
-      if (item.variantText.isNotEmpty) {
-        buffer.writeln('  Seçenek: ${item.variantText}');
-      }
-    }
-    final total = _items.values.fold<double>(
+    final cleanStore = _cleanText(storeName, 120);
+    final codeSource =
+        _cleanText(
+          storeSlug,
+          120,
+        ).replaceAll(RegExp(r'[^a-zA-Z0-9]'), '').toUpperCase();
+    final shortCode =
+        codeSource.length >= 4
+            ? codeSource.substring(0, 4)
+            : DateTime.now().millisecondsSinceEpoch
+                .toRadixString(36)
+                .toUpperCase()
+                .padLeft(4, '0')
+                .substring(0, 4);
+    final lines =
+        _items.values.map((item) {
+          final ad = _cleanText(item.productName, 180);
+          final variants = _cleanText(item.variantText, 180);
+          final fiyat = _cleanText(item.priceText, 80);
+          final variant = variants.isNotEmpty ? ' - $variants' : '';
+          final price = fiyat.isNotEmpty ? ' - $fiyat' : '';
+          return '- ${item.quantity} x $ad$variant$price';
+        }).toList();
+    final totalQty = _items.values.fold<int>(
       0,
-      (sum, item) => sum + ((item.priceAmount ?? 0) * item.quantity),
+      (sum, item) => sum + item.quantity,
     );
-    buffer.writeln('Toplam: ${total.toStringAsFixed(2)}');
-    buffer.writeln('Fiyat/stok/teslimat işletme teyidinden sonra kesinleşir.');
+    double? totalAmount;
+    var unpricedCount = 0;
+    for (final item in _items.values) {
+      final amount = item.priceAmount;
+      if (amount == null) {
+        unpricedCount++;
+        continue;
+      }
+      totalAmount = (totalAmount ?? 0) + amount * item.quantity;
+    }
+    final buffer = StringBuffer();
+    buffer.writeln('Siparis no: #VX-$shortCode');
+    buffer.writeln(
+      'Merhaba, $cleanStore vitrininizden siparis vermek istiyorum:',
+    );
+    buffer.writeln();
+    for (final line in lines) {
+      buffer.writeln(line);
+    }
+    buffer.writeln();
+    buffer.writeln('Toplam urun adedi: $totalQty');
+    if (totalAmount != null) {
+      buffer.writeln(
+        'Toplam tutar: ${totalAmount.toStringAsFixed(2)} TL${unpricedCount > 0 ? ' (+ $unpricedCount urun icin fiyat sorulacak)' : ''}',
+      );
+    } else if (unpricedCount > 0) {
+      buffer.writeln(
+        'Toplam tutar: ($unpricedCount urun icin fiyat sorulacak)',
+      );
+    }
+    buffer.writeln('Uygunluk ve teslimat bilgisini paylasabilir misiniz?');
+    buffer.writeln();
+    buffer.writeln(
+      '!! Bu siparis ozeti vitrinden otomatik derlenmistir. Fiyat, stok ve teslimat isletme teyidinden sonra kesinlesir.',
+    );
     return buffer.toString();
   }
 }
