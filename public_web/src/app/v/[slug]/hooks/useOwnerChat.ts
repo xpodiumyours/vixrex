@@ -8,9 +8,13 @@ import {
   type OwnerChatMessage,
 } from "@/lib/assistantHandoff";
 import type { HazirlikRaporu } from "@/lib/vitrinReadiness";
+import { mergeOwnerChatHistory } from "@/lib/ownerChatMerge";
 import { supabase } from "@/lib/supabase";
 
-export type Mesaj = OwnerChatMessage;
+export type Mesaj = OwnerChatMessage & {
+  serverSeq?: number;
+  clientMessageId?: string | null;
+};
 
 // Owner panelindeki dinamik Assistant cevapları katalog metni değildir; alan
 // adı/değeri gibi çalışma zamanı verisi taşır. Yine de kullanıcı-facing gerçek
@@ -38,7 +42,13 @@ export function useOwnerChat(
   handoff: AssistantHandoffV1 | null,
   opts?: {
     slug?: string;
-    initialDbMessages?: Array<{ role: string; message_text: string; message_key?: string | null }>;
+    initialDbMessages?: Array<{
+      role: string;
+      message_text: string;
+      message_key?: string | null;
+      seq?: number;
+      client_message_id?: string | null;
+    }>;
     initialConversationId?: string | null;
     akisAdimi?: string | null;
   }
@@ -52,6 +62,8 @@ export function useOwnerChat(
         id: i + 1,
         kimden: (m.role === "assistant" ? "asistan" : "kullanici") as Mesaj["kimden"],
         metin: m.message_text,
+        ...(typeof m.seq === "number" ? { serverSeq: m.seq } : {}),
+        ...(m.client_message_id ? { clientMessageId: m.client_message_id } : {}),
       }));
     }
     return ownerChatInitialMessages(rapor, handoff, akisAdimi);
@@ -93,6 +105,8 @@ export function useOwnerChat(
           id: i + 1,
           kimden: (m.role === "assistant" ? "asistan" : "kullanici") as Mesaj["kimden"],
           metin: m.message_text,
+          serverSeq: m.seq,
+          clientMessageId: m.client_message_id ?? null,
         }));
         setMesajlar((prev) => {
           // Faz C2: hizliCevaplar DB'ye yazılmıyor (yalnız oturum belleği) —
@@ -110,20 +124,11 @@ export function useOwnerChat(
                 : msg
             );
           const devamMetni = handoff ? null : handoffAdimDevami(akisAdimi);
-          const gecmisiKoru = (hedef: Mesaj[]) => {
-            if (prev.length <= hedef.length) return hedef;
-            const anahtar = (mesaj: Mesaj) => `${mesaj.kimden}|${mesaj.metin}`;
-            const gorulen = new Set(prev.map(anahtar));
-            const eklenecek = hedef.filter((mesaj) => !gorulen.has(anahtar(mesaj)));
-            if (eklenecek.length === 0) return prev;
-            return [
-              ...prev,
-              ...eklenecek.map((mesaj) => {
-                sayacRef.current += 1;
-                return { ...mesaj, id: sayacRef.current };
-              }),
-            ];
-          };
+          const gecmisiKoru = (hedef: Mesaj[]) =>
+            mergeOwnerChatHistory(prev, hedef, (mesaj) => {
+              sayacRef.current += 1;
+              return { ...mesaj, id: sayacRef.current };
+            });
           const devamiKoru = (hedef: Mesaj[]) => {
             if (!devamMetni) return hedef;
             if (!prev.some((mesaj) => mesaj.metin === devamMetni)) return hedef;

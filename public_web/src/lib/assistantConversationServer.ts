@@ -5,6 +5,8 @@ export interface ServerAssistantMessage {
   role: "assistant" | "user";
   message_text: string;
   message_key: string | null;
+  seq: number;
+  client_message_id: string | null;
 }
 
 export interface ServerAssistantHistory {
@@ -57,7 +59,7 @@ export async function loadAssistantMessagesForStore(
 
     const { data: rows, error: messagesError } = await admin
       .from("assistant_messages")
-      .select("role, message_key, message_text")
+      .select("role, message_key, message_text, seq, client_message_id")
       .eq("conversation_id", conversationId)
       .order("seq", { ascending: false })
       .limit(500);
@@ -72,12 +74,16 @@ export async function loadAssistantMessagesForStore(
       role: string;
       message_key: string | null;
       message_text: string;
+      seq: number;
+      client_message_id: string | null;
     }>)
       .reverse()
       .map((row) => ({
         role: row.role === "assistant" ? "assistant" : "user",
         message_text: row.message_text,
         message_key: row.message_key ?? null,
+        seq: row.seq,
+        client_message_id: row.client_message_id ?? null,
       })) as ServerAssistantMessage[];
 
     return { conversationId, messages };
