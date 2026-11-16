@@ -488,6 +488,24 @@ Neden: 2026-11-15'te Freebuff'ın web arayüzü olmadığı halde derme çatma P
 port 5050'ye sahte "CANLI" rozetli sayfa açıldı; Freebuff ilk adımda ajan adı hatasıyla
 kilitlendiği halde donmuş ham loglar basılarak Casper'a "canlı izleyebilirsin" dendi.
 
+### 35. Görsel değişiklikte önizleme ve görsel onay şartı (2026-11-16)
+Kullanıcı arayüzünde (UI), temada, bileşen yerleşiminde, renk veya tipografide
+bir değişiklik teklif edildiğinde veya onay istenirken, **salt yazılı anlatımla
+onay istenemez**. Kod okuyarak veya metin dökerek "şöyle yapacağız, böyle görünecek"
+demek yasaktır.
+
+Her görsel değişiklik öncesinde:
+1. **Görsel Önizleme / Mockup:** Değişecek arayüzün şu anki (öncesi) ve önerilen
+   (sonrası) hâlini yan yana gösteren görsel bir önizleme (etkileşimli HTML widget'ı,
+   çalışan ekran çıktısı veya net kontrast mockup'ı) doğrudan sohbete sunulur.
+2. **Kör Onay Yasağı:** Casper değişikliğin neye benzeyeceğini gözüyle görmeden
+   asla kod değişikliği için onay sorulamaz.
+
+Neden: 2026-11-16'da çerez kutusundaki beyaz zemin ve beyaz-üstüne-beyaz görünmez
+yazı sorunu için salt metinle cerrahi plan anlatıldı; Casper: "Bu görünüm ile alakalı
+değişimleri bana yazılı değil görsel olarak gösterip onay istemeni istiyorum...
+Görünüm değişecekse önce ne olacağı bana gösterilmeli" diyerek kuralı sabitledi.
+
 ### Token ekonomisi (2026-09-16)
 Token en kıt kaynak. Bitince koordinasyon, doğrulama ve merge sorumluluğu
 duruyor — yani proje duruyor. Yavaş ajan, duran projeden iyidir.
