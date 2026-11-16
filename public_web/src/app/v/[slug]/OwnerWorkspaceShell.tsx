@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import OwnerAssistantPanel from "./OwnerAssistantPanel";
 import "./ownerStorefrontPolish.css";
-import { vixRexMesajlari } from "@/lib/vixrexMesajlari";
 import type {
   VitrinFeaturedBanner,
   VitrinAboutSection,
@@ -189,6 +188,7 @@ export default function OwnerWorkspaceShell({
 
   const [tazeleniyor, setTazeleniyor] = useState(false);
   const [tazelemeHatasi, setTazelemeHatasi] = useState<string | null>(null);
+  const [cakismaGizlendi, setCakismaGizlendi] = useState(false);
 
   /// Taslağı canlı vitrinden tazeler.
   ///
@@ -220,18 +220,33 @@ export default function OwnerWorkspaceShell({
 
   return (
     <>
-      {draft?.version_conflict && (
-        <div className="fixed top-0 left-0 right-0 z-[70] bg-amber-600 text-white text-xs font-bold px-4 py-2 flex items-center justify-between gap-3">
-          <span>
-            {tazelemeHatasi ?? vixRexMesajlari["taslak_cakismasi"]}
-          </span>
-          <button
-            onClick={taslagiTazele}
-            disabled={tazeleniyor}
-            className="shrink-0 rounded bg-white/20 px-2.5 py-1 hover:bg-white/30 disabled:opacity-60"
-          >
-            {tazeleniyor ? "Alınıyor…" : "Canlı sürümü al"}
-          </button>
+      {draft?.version_conflict && !cakismaGizlendi && (
+        <div className="fixed top-0 left-0 right-0 z-[70] border-b border-amber-500/30 bg-[#0B1730]/98 px-4 py-2 text-xs text-amber-100 shadow-md backdrop-blur-md flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span className="shrink-0 rounded bg-amber-500/20 border border-amber-500/30 px-2 py-0.5 text-[11px] font-semibold text-amber-300">
+              Canlı Güncellendi
+            </span>
+            <span className="truncate text-slate-200">
+              {tazelemeHatasi ?? "Vitrininiz canlıda güncellendi; masanızı tazelemek ister misiniz?"}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={taslagiTazele}
+              disabled={tazeleniyor}
+              className="rounded bg-amber-500 hover:bg-amber-400 text-slate-950 px-3 py-1 font-semibold text-xs transition-colors disabled:opacity-60 shadow-sm"
+            >
+              {tazeleniyor ? "Alınıyor…" : "Canlı sürümü al"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setCakismaGizlendi(true)}
+              className="text-slate-400 hover:text-slate-200 text-xs px-1.5 py-1 transition-colors"
+            >
+              Taslakta Kal
+            </button>
+          </div>
         </div>
       )}
 

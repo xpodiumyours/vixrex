@@ -52,7 +52,7 @@ export function CookieBanner() {
           setReopened(true);
           setDismissed(false);
         }}
-        className="fixed bottom-3 left-3 z-40 rounded-full border border-lp-border bg-lp-surface px-3.5 py-2 text-xs font-semibold text-lp-text shadow-lg hover:bg-lp-surface-soft transition-colors"
+        className="fixed bottom-1 left-2 z-30 text-[11px] text-lp-muted/40 hover:text-lp-text underline bg-transparent border-0 p-1 shadow-none transition-opacity focus:opacity-100"
       >
         Çerez tercihleri
       </button>
@@ -63,84 +63,84 @@ export function CookieBanner() {
 
   return (
     <div
-      className="fixed inset-x-4 bottom-4 z-50 mx-auto max-w-2xl rounded-2xl border border-lp-border bg-lp-surface/95 p-5 shadow-2xl backdrop-blur-md md:inset-x-auto md:left-1/2 md:w-[calc(100%-2rem)] md:-translate-x-1/2"
+      className="fixed inset-x-0 bottom-0 z-50 border-t border-lp-border bg-lp-surface/98 px-4 py-3 shadow-2xl backdrop-blur-md md:px-8"
       role="dialog"
       aria-label="Çerez tercihleri"
     >
-      <div className="flex flex-col gap-3">
-        <p className="text-sm leading-relaxed text-lp-text-alt">
-          Gerekli çerezler siteyi çalıştırmak için kullanılır. Analitik ve
-          pazarlama çerezleri yalnızca izninizle açılır. Resmi çerez politikası
-          yakında yayınlanacaktır.
-        </p>
+      <div className="mx-auto flex max-w-6xl flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="flex-1">
+          <p className="text-xs leading-relaxed text-lp-text-alt md:text-sm">
+            Sitemizde temel işlevler için gerekli çerezler kullanılmaktadır. Analitik ve pazarlama çerezleri yalnızca izninizle açılır.
+          </p>
+        </div>
 
-        {customize ? (
-          <div className="flex flex-col gap-2.5 rounded-xl border border-lp-border/70 bg-lp-surface-soft/60 p-3.5">
-            <label className="flex items-center justify-between gap-3 text-sm font-medium text-lp-text cursor-pointer">
-              <span>Gerekli (zorunlu)</span>
-              <input type="checkbox" checked disabled readOnly className="accent-lp-primary opacity-60" />
-            </label>
-            <label className="flex items-center justify-between gap-3 text-sm font-medium text-lp-text cursor-pointer">
-              <span>Analitik</span>
-              <input
-                type="checkbox"
-                checked={analytics}
-                onChange={(e) => setAnalytics(e.target.checked)}
-                className="accent-lp-primary cursor-pointer"
-              />
-            </label>
-            <label className="flex items-center justify-between gap-3 text-sm font-medium text-lp-text cursor-pointer">
-              <span>Pazarlama</span>
-              <input
-                type="checkbox"
-                checked={marketing}
-                onChange={(e) => setMarketing(e.target.checked)}
-                className="accent-lp-primary cursor-pointer"
-              />
-            </label>
-            <button
-              type="button"
-              className="mt-2 w-full rounded-lg bg-lp-primary px-4 py-2 text-sm font-black text-lp-on-primary transition-colors hover:bg-lp-secondary shadow"
-              onClick={() => persist({ analytics, marketing })}
-            >
-              Tercihleri kaydet
-            </button>
-          </div>
-        ) : null}
-
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
           <button
             type="button"
-            className="rounded-lg bg-lp-primary px-4 py-2 text-sm font-black text-lp-on-primary transition-colors hover:bg-lp-secondary shadow"
+            className="rounded-lg border border-lp-border bg-lp-surface-soft px-3.5 py-1.5 text-xs font-semibold text-lp-text transition-colors hover:bg-lp-surface md:text-sm"
+            onClick={() => persist({ analytics: false, marketing: false })}
+          >
+            Yalnızca gerekli
+          </button>
+          <button
+            type="button"
+            className="rounded-lg bg-lp-primary px-4 py-1.5 text-xs font-black text-lp-on-primary transition-colors hover:bg-lp-secondary shadow md:text-sm"
             onClick={() => persist({ analytics: true, marketing: true })}
           >
             Tümünü kabul et
           </button>
           <button
             type="button"
-            className="rounded-lg border border-lp-border bg-lp-surface-soft px-4 py-2 text-sm font-semibold text-lp-text transition-colors hover:bg-lp-surface"
-            onClick={() => persist({ analytics: false, marketing: false })}
+            className="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-lp-muted underline-offset-2 hover:text-lp-text hover:underline transition-colors"
+            onClick={() => setCustomize((v) => !v)}
           >
-            Yalnızca gerekli
+            {customize ? "Gizle" : "Özelleştir"}
           </button>
           {reopened ? (
             <button
               type="button"
-              className="rounded-lg px-4 py-2 text-sm font-semibold text-lp-muted underline-offset-2 hover:text-lp-text hover:underline transition-colors"
+              className="rounded-lg px-2 py-1.5 text-xs font-semibold text-lp-muted underline-offset-2 hover:text-lp-text hover:underline transition-colors"
               onClick={() => setReopened(false)}
             >
               Vazgeç
             </button>
           ) : null}
-          <button
-            type="button"
-            className="rounded-lg px-4 py-2 text-sm font-semibold text-lp-muted underline-offset-2 hover:text-lp-text hover:underline transition-colors"
-            onClick={() => setCustomize((v) => !v)}
-          >
-            {customize ? "Gizle" : "Özelleştir"}
-          </button>
         </div>
       </div>
+
+      {customize ? (
+        <div className="mx-auto mt-3 max-w-6xl flex flex-col gap-2.5 rounded-xl border border-lp-border/70 bg-lp-surface-soft/60 p-3.5">
+          <label className="flex items-center justify-between gap-3 text-xs md:text-sm font-medium text-lp-text cursor-pointer">
+            <span>Gerekli (zorunlu)</span>
+            <input type="checkbox" checked disabled readOnly className="accent-lp-primary opacity-60" />
+          </label>
+          <label className="flex items-center justify-between gap-3 text-xs md:text-sm font-medium text-lp-text cursor-pointer">
+            <span>Analitik</span>
+            <input
+              type="checkbox"
+              checked={analytics}
+              onChange={(e) => setAnalytics(e.target.checked)}
+              className="accent-lp-primary cursor-pointer"
+            />
+          </label>
+          <label className="flex items-center justify-between gap-3 text-xs md:text-sm font-medium text-lp-text cursor-pointer">
+            <span>Pazarlama</span>
+            <input
+              type="checkbox"
+              checked={marketing}
+              onChange={(e) => setMarketing(e.target.checked)}
+              className="accent-lp-primary cursor-pointer"
+            />
+          </label>
+          <button
+            type="button"
+            className="mt-1 w-full rounded-lg bg-lp-primary px-4 py-2 text-xs md:text-sm font-black text-lp-on-primary transition-colors hover:bg-lp-secondary shadow"
+            onClick={() => persist({ analytics, marketing })}
+          >
+            Tercihleri kaydet
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }

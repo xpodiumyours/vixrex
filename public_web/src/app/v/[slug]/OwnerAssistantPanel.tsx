@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import Image from "next/image";
 import { useOwnerDraft } from "./hooks/useOwnerDraft";
 import { useOwnerChat } from "./hooks/useOwnerChat";
 import { useFieldSelection } from "./hooks/useFieldSelection";
@@ -801,6 +802,30 @@ export default function OwnerAssistantPanel({
           />
         </div>
       ) : null}
+
+      {/* 2026-11-16 (Casper Kararı & Kurumsal Deneyim): Asistan kapalıyken sağ altta sabit parlayan tek parça orijinal Vixrex Maskot FAB */}
+      {((masaustu && !acik) || (!masaustu && !mobilGecmisAcik && !haritaAcik)) && (
+        <button
+          type="button"
+          onClick={() => {
+            setAcik(true);
+            if (!masaustu) {
+              setMobilGecmisAcik(true);
+            }
+          }}
+          aria-label="Vixrex Asistanı Aç"
+          className="fixed bottom-6 right-6 z-[74] flex h-14 w-14 items-center justify-center rounded-full border border-sky-400/50 bg-[#0E1B2E] shadow-[0_4px_24px_rgba(56,160,228,0.35)] transition-all duration-200 hover:scale-105 active:scale-95 group focus:outline-none focus:ring-2 focus:ring-sky-400"
+        >
+          <Image
+            src="/images/vixrex_v_crystal_mascot.webp"
+            alt="Vixrex Asistan"
+            width={40}
+            height={40}
+            priority
+            className="h-10 w-10 object-contain drop-shadow-[0_0_8px_rgba(56,160,228,0.5)] transition-transform duration-200 group-hover:scale-110"
+          />
+        </button>
+      )}
 
       {(masaustu ? acik : mobilGecmisAcik || haritaAcik) && (
         // 2026-09-03 (Çalışma masası / Yön C, Faz 3) — Casper'ın kararı:
