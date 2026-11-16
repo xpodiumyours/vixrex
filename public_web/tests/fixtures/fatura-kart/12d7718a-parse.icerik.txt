@@ -6,24 +6,24 @@
       "invoice_data": {
         "quantity": 6,
         "unit": "",
-        "unit_price": 10,
-        "total_amount": 60
+        "unit_price": 62.5,
+        "total_amount": 375
       },
       "vixrex_product_json": {
-        "title": "Örnek Kadın Louis Bikini Külot Kombin 42-44",
-        "brand": "Örnek Kadın",
+        "title": "Tutku Kadın Louis Bikini Külot Kombin 42-44",
+        "brand": "Tutku Kadın",
         "category_suggestion": "Kadın İç Giyim / Bikini Külot",
         "variant": "Kombin",
-        "short_description": "Örnek Kadın Louis Bikini Külot, 42-44 beden ve Kombin renk seçeneğiyle sunulur. Örnek kadın iç giyim koleksiyonundaki bikini külot modellerinden biridir.",
+        "short_description": "Tutku Kadın Louis Bikini Külot, 42-44 beden ve Kombin renk seçeneğiyle sunulur. Tutku kadın iç giyim koleksiyonundaki bikini külot modellerinden biridir.",
         "consumer_sale_price": null,
         "stock_quantity": null
       },
       "validation": {
         "status": "verified",
-        "official_domain": "ornektekstil.example",
-        "official_product_url": "https://ornektekstil.example/tkd0305-ornek-kadin-louis-bikini-kulot",
+        "official_domain": "sehermensucat.com",
+        "official_product_url": "https://sehermensucat.com/tkd0305-tutku-kadin-louis-bikini-kulot",
         "matched_attributes": [
-          "marka: Örnek",
+          "marka: Tutku",
           "ürün kodu: TKD0305",
           "ürün adı: Louis Bikini Külot",
           "beden: 42-44",
@@ -35,7 +35,7 @@
       },
       "media": {
         "image_url": "https://cdn.myikas.com/images/74e89546-a032-4dc5-a4cc-0765f50962f6/b7aef912-ab25-47be-b369-085af66f8651/3840/t-164763.webp",
-        "source_url": "https://ornektekstil.example/tkd0305-ornek-kadin-louis-bikini-kulot",
+        "source_url": "https://sehermensucat.com/tkd0305-tutku-kadin-louis-bikini-kulot",
         "verification_status": "verified",
         "rights_status": "unknown"
       },
@@ -48,8 +48,8 @@
       "invoice_data": {
         "quantity": 6,
         "unit": "",
-        "unit_price": 15,
-        "total_amount": 90
+        "unit_price": 61.5,
+        "total_amount": 369
       },
       "vixrex_product_json": {
         "title": "Bross Melek Kanatlı Dizaltı Çocuk Çorap Siyah 9-11 Yaş",
@@ -90,8 +90,8 @@
       "invoice_data": {
         "quantity": 4,
         "unit": "",
-        "unit_price": 20,
-        "total_amount": 80
+        "unit_price": 98.5,
+        "total_amount": 394
       },
       "vixrex_product_json": {
         "title": "Pınar Süzme Peynir 500 g",
@@ -131,24 +131,24 @@
       "invoice_data": {
         "quantity": 4,
         "unit": "",
-        "unit_price": 25,
-        "total_amount": 100
+        "unit_price": 64.75,
+        "total_amount": 259
       },
       "vixrex_product_json": {
-        "title": "Örnek Kadın Royce Bikini Külot Kombin 42-44",
-        "brand": "Örnek Kadın",
+        "title": "Tutku Kadın Royce Bikini Külot Kombin 42-44",
+        "brand": "Tutku Kadın",
         "category_suggestion": "Kadın İç Giyim / Bikini Külot",
         "variant": "Kombin",
-        "short_description": "Örnek Kadın Royce Bikini Külot, 42-44 beden ve Kombin renk seçeneğiyle sunulur. Örnek kadın iç giyim koleksiyonundaki bikini külot modellerinden biridir.",
+        "short_description": "Tutku Kadın Royce Bikini Külot, 42-44 beden ve Kombin renk seçeneğiyle sunulur. Tutku kadın iç giyim koleksiyonundaki bikini külot modellerinden biridir.",
         "consumer_sale_price": null,
         "stock_quantity": null
       },
       "validation": {
         "status": "verified",
-        "official_domain": "ornektekstil.example",
-        "official_product_url": "https://ornektekstil.example/tkd0304-ornek-kadin-royce-bikini-kulot",
+        "official_domain": "sehermensucat.com",
+        "official_product_url": "https://sehermensucat.com/tkd0304-tutku-kadin-royce-bikini-kulot",
         "matched_attributes": [
-          "marka: Örnek",
+          "marka: Tutku",
           "ürün kodu: TKD0304",
           "ürün adı: Royce Bikini Külot",
           "beden: 42-44",
@@ -160,7 +160,7 @@
       },
       "media": {
         "image_url": "https://cdn.myikas.com/images/74e89546-a032-4dc5-a4cc-0765f50962f6/8408635f-6d70-432b-8d52-ebf23b91de8f/3840/t-233118.webp",
-        "source_url": "https://ornektekstil.example/tkd0304-ornek-kadin-royce-bikini-kulot",
+        "source_url": "https://sehermensucat.com/tkd0304-tutku-kadin-royce-bikini-kulot",
         "verification_status": "verified",
         "rights_status": "unknown"
       },
@@ -173,8 +173,8 @@
       "invoice_data": {
         "quantity": 4,
         "unit": "",
-        "unit_price": 30,
-        "total_amount": 120
+        "unit_price": 105.9,
+        "total_amount": 423.6
       },
       "vixrex_product_json": {
         "title": "Bross 3'lü Kız Çocuk Desensiz Dizaltı Çorap Gri 8-10 Yaş",
@@ -215,8 +215,8 @@
       "invoice_data": {
         "quantity": 5,
         "unit": "",
-        "unit_price": 35,
-        "total_amount": 175
+        "unit_price": 52,
+        "total_amount": 260
       },
       "vixrex_product_json": {
         "title": "Pınar Labne",
@@ -257,24 +257,24 @@
       "invoice_data": {
         "quantity": 5,
         "unit": "",
-        "unit_price": 40,
-        "total_amount": 200
+        "unit_price": 59.9,
+        "total_amount": 299.5
       },
       "vixrex_product_json": {
-        "title": "Örnek Kadın Rubby Bikini Külot Kombin 42-44",
-        "brand": "Örnek Kadın",
+        "title": "Tutku Kadın Rubby Bikini Külot Kombin 42-44",
+        "brand": "Tutku Kadın",
         "category_suggestion": "Kadın İç Giyim / Bikini Külot",
         "variant": "Kombin",
-        "short_description": "Örnek Kadın Rubby Bikini Külot, 42-44 beden ve Kombin renk seçeneğiyle sunulur. Örnek kadın iç giyim koleksiyonundaki bikini külot modellerinden biridir.",
+        "short_description": "Tutku Kadın Rubby Bikini Külot, 42-44 beden ve Kombin renk seçeneğiyle sunulur. Tutku kadın iç giyim koleksiyonundaki bikini külot modellerinden biridir.",
         "consumer_sale_price": null,
         "stock_quantity": null
       },
       "validation": {
         "status": "verified",
-        "official_domain": "ornektekstil.example",
-        "official_product_url": "https://ornektekstil.example/tkd0302-ornek-kadin-rubby-bikini-kulot",
+        "official_domain": "sehermensucat.com",
+        "official_product_url": "https://sehermensucat.com/tkd0302-tutku-kadin-rubby-bikini-kulot",
         "matched_attributes": [
-          "marka: Örnek",
+          "marka: Tutku",
           "ürün kodu: TKD0302",
           "ürün adı: Rubby Bikini Külot",
           "beden: 42-44",
@@ -286,7 +286,7 @@
       },
       "media": {
         "image_url": "https://cdn.myikas.com/images/74e89546-a032-4dc5-a4cc-0765f50962f6/7e278faa-ad90-4d25-8377-25b0355075ac/3840/t-80179.webp",
-        "source_url": "https://ornektekstil.example/tkd0302-ornek-kadin-rubby-bikini-kulot",
+        "source_url": "https://sehermensucat.com/tkd0302-tutku-kadin-rubby-bikini-kulot",
         "verification_status": "verified",
         "rights_status": "unknown"
       },
@@ -299,8 +299,8 @@
       "invoice_data": {
         "quantity": 5,
         "unit": "",
-        "unit_price": 45,
-        "total_amount": 225
+        "unit_price": 84.9,
+        "total_amount": 424.5
       },
       "vixrex_product_json": {
         "title": "Bross Erkek Kışlık Yün Soket Çorap Gri 39-42",
@@ -341,8 +341,8 @@
       "invoice_data": {
         "quantity": 6,
         "unit": "",
-        "unit_price": 50,
-        "total_amount": 300
+        "unit_price": 16.5,
+        "total_amount": 99
       },
       "vixrex_product_json": {
         "title": "Pınar %1 Yağlı Süt 200 ml",
@@ -382,24 +382,24 @@
       "invoice_data": {
         "quantity": 3,
         "unit": "",
-        "unit_price": 10,
-        "total_amount": 30
+        "unit_price": 61,
+        "total_amount": 183
       },
       "vixrex_product_json": {
-        "title": "Örnek Kadın Wendy Bikini Külot Kombin 42-44",
-        "brand": "Örnek Kadın",
+        "title": "Tutku Kadın Wendy Bikini Külot Kombin 42-44",
+        "brand": "Tutku Kadın",
         "category_suggestion": "Kadın İç Giyim / Bikini Külot",
         "variant": "Kombin",
-        "short_description": "Örnek Kadın Wendy Bikini Külot, 42-44 beden ve Kombin renk seçeneğiyle sunulur. Örnek kadın iç giyim koleksiyonundaki bikini külot modellerinden biridir.",
+        "short_description": "Tutku Kadın Wendy Bikini Külot, 42-44 beden ve Kombin renk seçeneğiyle sunulur. Tutku kadın iç giyim koleksiyonundaki bikini külot modellerinden biridir.",
         "consumer_sale_price": null,
         "stock_quantity": null
       },
       "validation": {
         "status": "verified",
-        "official_domain": "ornektekstil.example",
-        "official_product_url": "https://ornektekstil.example/tkd0300-ornek-kadin-wendy-bikini-kulot",
+        "official_domain": "sehermensucat.com",
+        "official_product_url": "https://sehermensucat.com/tkd0300-tutku-kadin-wendy-bikini-kulot",
         "matched_attributes": [
-          "marka: Örnek",
+          "marka: Tutku",
           "ürün kodu: TKD0300",
           "ürün adı: Wendy Bikini Külot",
           "beden: 42-44",
@@ -425,8 +425,8 @@
       "invoice_data": {
         "quantity": 6,
         "unit": "",
-        "unit_price": 15,
-        "total_amount": 90
+        "unit_price": 73.9,
+        "total_amount": 443.4
       },
       "vixrex_product_json": {
         "title": "Bross Simli Kıvrık Havlu Çorap Pembe 36-40",
@@ -467,8 +467,8 @@
       "invoice_data": {
         "quantity": 6,
         "unit": "",
-        "unit_price": 20,
-        "total_amount": 120
+        "unit_price": 14.5,
+        "total_amount": 87
       },
       "vixrex_product_json": {
         "title": "Pınar Lezzetin Alası Ayran 200 ml",
@@ -508,24 +508,24 @@
       "invoice_data": {
         "quantity": 6,
         "unit": "",
-        "unit_price": 25,
-        "total_amount": 150
+        "unit_price": 66,
+        "total_amount": 396
       },
       "vixrex_product_json": {
-        "title": "Örnek Kadın Forever Bikini Külot Kombin 42-44",
-        "brand": "Örnek Kadın",
+        "title": "Tutku Kadın Forever Bikini Külot Kombin 42-44",
+        "brand": "Tutku Kadın",
         "category_suggestion": "Kadın İç Giyim / Bikini Külot",
         "variant": "Kombin",
-        "short_description": "Örnek Kadın Forever Bikini Külot, 42-44 beden ve Kombin renk seçeneğiyle sunulur. Örnek kadın iç giyim koleksiyonundaki bikini külot modellerinden biridir.",
+        "short_description": "Tutku Kadın Forever Bikini Külot, 42-44 beden ve Kombin renk seçeneğiyle sunulur. Tutku kadın iç giyim koleksiyonundaki bikini külot modellerinden biridir.",
         "consumer_sale_price": null,
         "stock_quantity": null
       },
       "validation": {
         "status": "verified",
-        "official_domain": "ornektekstil.example",
-        "official_product_url": "https://ornektekstil.example/tkd0301-ornek-kadin-forever-bikini-kulot",
+        "official_domain": "sehermensucat.com",
+        "official_product_url": "https://sehermensucat.com/tkd0301-tutku-kadin-forever-bikini-kulot",
         "matched_attributes": [
-          "marka: Örnek",
+          "marka: Tutku",
           "ürün kodu: TKD0301",
           "ürün adı: Forever Bikini Külot",
           "beden: 42-44",
@@ -537,7 +537,7 @@
       },
       "media": {
         "image_url": "https://cdn.myikas.com/images/74e89546-a032-4dc5-a4cc-0765f50962f6/10199d27-78ef-4d95-8157-b6168d325733/image_3840.webp",
-        "source_url": "https://ornektekstil.example/tkd0301-ornek-kadin-forever-bikini-kulot",
+        "source_url": "https://sehermensucat.com/tkd0301-tutku-kadin-forever-bikini-kulot",
         "verification_status": "verified",
         "rights_status": "unknown"
       },
@@ -550,8 +550,8 @@
       "invoice_data": {
         "quantity": 3,
         "unit": "",
-        "unit_price": 30,
-        "total_amount": 90
+        "unit_price": 164.9,
+        "total_amount": 494.7
       },
       "vixrex_product_json": {
         "title": "Bross Kadın Kaydırmaz Taban Yoga Çorap Mavi 36-40",
@@ -592,8 +592,8 @@
       "invoice_data": {
         "quantity": 4,
         "unit": "",
-        "unit_price": 35,
-        "total_amount": 140
+        "unit_price": 96,
+        "total_amount": 384
       },
       "vixrex_product_json": {
         "title": "Pınar Yarım Yağlı ve Az Tuzlu Süzme Peynir 500 g",
@@ -633,24 +633,24 @@
       "invoice_data": {
         "quantity": 4,
         "unit": "",
-        "unit_price": 40,
-        "total_amount": 160
+        "unit_price": 68.75,
+        "total_amount": 275
       },
       "vixrex_product_json": {
-        "title": "Örnek Kadın Joya Bato Külot Kombin M / 3",
-        "brand": "Örnek Kadın",
+        "title": "Tutku Kadın Joya Bato Külot Kombin M / 3",
+        "brand": "Tutku Kadın",
         "category_suggestion": "Kadın İç Giyim / Külot",
         "variant": "Kombin",
-        "short_description": "Örnek Kadın Joya Bato Külot, M / 3 beden ve Kombin renk seçeneğiyle sunulur. Bato kesim külot modelidir.",
+        "short_description": "Tutku Kadın Joya Bato Külot, M / 3 beden ve Kombin renk seçeneğiyle sunulur. Bato kesim külot modelidir.",
         "consumer_sale_price": null,
         "stock_quantity": null
       },
       "validation": {
         "status": "verified",
-        "official_domain": "ornektekstil.example",
-        "official_product_url": "https://ornektekstil.example/tkd0971-ornek-kadin-joya-bato-kulot",
+        "official_domain": "sehermensucat.com",
+        "official_product_url": "https://sehermensucat.com/tkd0971-tutku-kadin-joya-bato-kulot",
         "matched_attributes": [
-          "marka: Örnek",
+          "marka: Tutku",
           "ürün kodu: TKD0971",
           "ürün adı: Joya Bato Külot",
           "beden: M / 3",
@@ -662,7 +662,7 @@
       },
       "media": {
         "image_url": "https://cdn.myikas.com/images/74e89546-a032-4dc5-a4cc-0765f50962f6/19989203-6408-43e7-96c0-fb42e5112be5/image_3840.webp",
-        "source_url": "https://ornektekstil.example/tkd0971-ornek-kadin-joya-bato-kulot",
+        "source_url": "https://sehermensucat.com/tkd0971-tutku-kadin-joya-bato-kulot",
         "verification_status": "verified",
         "rights_status": "unknown"
       },
@@ -675,8 +675,8 @@
       "invoice_data": {
         "quantity": 4,
         "unit": "",
-        "unit_price": 45,
-        "total_amount": 180
+        "unit_price": 115.9,
+        "total_amount": 463.6
       },
       "vixrex_product_json": {
         "title": "Bross Kuğu, Tavşan, Havlu 3'lü Kız Bebek Soket Asorti 12-18",
@@ -717,24 +717,24 @@
       "invoice_data": {
         "quantity": 3,
         "unit": "",
-        "unit_price": 50,
-        "total_amount": 150
+        "unit_price": 179.9,
+        "total_amount": 539.7
       },
       "vixrex_product_json": {
-        "title": "Örnek Erkek Thermal Fanila Y. Haki S / 2",
-        "brand": "Örnek Erkek",
+        "title": "Tutku Erkek Thermal Fanila Y. Haki S / 2",
+        "brand": "Tutku Erkek",
         "category_suggestion": "Erkek İç Giyim / Fanila",
         "variant": "Y. Haki",
-        "short_description": "Örnek Erkek Thermal Fanila, S / 2 beden ve Y. Haki renk seçeneğiyle sunulur. Örnek erkek iç giyim koleksiyonundaki termal fanila modelidir.",
+        "short_description": "Tutku Erkek Thermal Fanila, S / 2 beden ve Y. Haki renk seçeneğiyle sunulur. Tutku erkek iç giyim koleksiyonundaki termal fanila modelidir.",
         "consumer_sale_price": null,
         "stock_quantity": null
       },
       "validation": {
         "status": "verified",
-        "official_domain": "ornektekstil.example",
-        "official_product_url": "https://ornektekstil.example/ter0126-ornek-erkek-thermal-fanila-2",
+        "official_domain": "sehermensucat.com",
+        "official_product_url": "https://sehermensucat.com/ter0126-tutku-erkek-thermal-fanila-2",
         "matched_attributes": [
-          "marka: Örnek",
+          "marka: Tutku",
           "ürün kodu: TER0126",
           "ürün adı: Erkek Thermal Fanila",
           "beden: S / 2",
@@ -746,7 +746,7 @@
       },
       "media": {
         "image_url": "https://cdn.myikas.com/images/74e89546-a032-4dc5-a4cc-0765f50962f6/6ad16957-6ba1-4770-8f41-4d054013ee01/image_3840.webp",
-        "source_url": "https://ornektekstil.example/ter0126-ornek-erkek-thermal-fanila-2",
+        "source_url": "https://sehermensucat.com/ter0126-tutku-erkek-thermal-fanila-2",
         "verification_status": "verified",
         "rights_status": "unknown"
       },
@@ -759,8 +759,8 @@
       "invoice_data": {
         "quantity": 3,
         "unit": "",
-        "unit_price": 10,
-        "total_amount": 30
+        "unit_price": 238.9,
+        "total_amount": 716.7
       },
       "vixrex_product_json": {
         "title": "Bross Bambu Kadın Atlet 2'li Siyah Beyaz Asorti XL",
@@ -801,24 +801,24 @@
       "invoice_data": {
         "quantity": 3,
         "unit": "",
-        "unit_price": 15,
-        "total_amount": 45
+        "unit_price": 149.5,
+        "total_amount": 448.5
       },
       "vixrex_product_json": {
-        "title": "Örnek Erkek Thermal Tayt Y. Haki S / 2",
-        "brand": "Örnek Erkek",
+        "title": "Tutku Erkek Thermal Tayt Y. Haki S / 2",
+        "brand": "Tutku Erkek",
         "category_suggestion": "Erkek İç Giyim / Termal Alt",
         "variant": "Y. Haki",
-        "short_description": "Örnek Erkek Thermal Tayt, S / 2 beden ve Y. Haki renk seçeneğiyle sunulur. Örnek erkek iç giyim koleksiyonundaki termal tayt modelidir.",
+        "short_description": "Tutku Erkek Thermal Tayt, S / 2 beden ve Y. Haki renk seçeneğiyle sunulur. Tutku erkek iç giyim koleksiyonundaki termal tayt modelidir.",
         "consumer_sale_price": null,
         "stock_quantity": null
       },
       "validation": {
         "status": "verified",
-        "official_domain": "ornektekstil.example",
-        "official_product_url": "https://ornektekstil.example/ter0125-ornek-erkek-thermal-tayt-1",
+        "official_domain": "sehermensucat.com",
+        "official_product_url": "https://sehermensucat.com/ter0125-tutku-erkek-thermal-tayt-1",
         "matched_attributes": [
-          "marka: Örnek",
+          "marka: Tutku",
           "ürün kodu: TER0125",
           "ürün adı: Erkek Thermal Tayt",
           "beden: S / 2",
@@ -830,7 +830,7 @@
       },
       "media": {
         "image_url": "https://cdn.myikas.com/images/74e89546-a032-4dc5-a4cc-0765f50962f6/8003645f-b934-491f-9a07-ef60274c82e5/image_3840.webp",
-        "source_url": "https://ornektekstil.example/ter0125-ornek-erkek-thermal-tayt-1",
+        "source_url": "https://sehermensucat.com/ter0125-tutku-erkek-thermal-tayt-1",
         "verification_status": "verified",
         "rights_status": "unknown"
       },

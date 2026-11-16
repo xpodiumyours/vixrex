@@ -38,7 +38,6 @@ function girdi(satirlar: EslesmisFaturaSatiri[]): IslemKaydiGirdisi {
       platform: "",
       izinDurumu: "yok",
       kaynak: "https://sehermensucat.com",
-      havuzda: true,
     },
     satirlar,
   };

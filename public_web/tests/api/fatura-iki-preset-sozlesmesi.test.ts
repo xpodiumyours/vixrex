@@ -30,7 +30,7 @@ const item = (id: string, title: string) => ({
     image_url: "https://example.com/p/" + id + ".jpg", source_url: "https://example.com/p/" + id,
     verification_status: "verified", rights_status: "unknown",
   },
-  card_status: "draft", duplicate_group: null, canonical_row_id: null,
+  card_status: "draft",
 });
 const response = (items: unknown[], summary: Record<string, unknown> = {
   total_rows: items.length, verified_count: items.length, draft_count: items.length, not_found_count: 0,
@@ -69,63 +69,90 @@ describe("gerçek ikinci preset JSON sözleşmesi",()=>{
       ]), first)).rejects.toThrow("KART_YANITI_COZULEMEDI");
     }
   });
-  it("faturadan eksik kalan row_id varsa tüm kart yanıtını reddeder",async()=>{
-    await expect(kartPresetYanitiniOku(response([item("1","A ürün")]),first))
-      .rejects.toThrow("KART_YANITI_COZULEMEDI");
+  it("yeni yolda eksik row_id tüm işi düşürmez; satır karantinaya alınır",async()=>{
+    const result=await kartPresetYanitiniOku(response([item("1","A ürün")]),first);
+    expect(result.sonuc.satirlar).toHaveLength(2);
+    expect(result.sonuc.satirlar[0].ad).toBe("A ürün");
+    expect(result.sonuc.satirlar[1].dogrulamaDurumu).toBe("Araştırılamadı");
+    expect(result.karantinadakiSatirlar).toEqual([2]);
   });
   it("mükerrer row_id için ilk kayıt kazanmaz, tüm yanıt reddedilir",async()=>{
     await expect(kartPresetYanitiniOku(response([item("1","A ürün"),item("1","B ürün"),item("2","C ürün")]),first))
       .rejects.toThrow("KART_YANITI_COZULEMEDI");
   });
-  it("yabancı, geçersiz veya bozuk satırları sessizce atmaz",async()=>{
+  it("eski yolda eksik kart tüm faturayı düşürür, kısmi kayıt yazılmaz",async()=>{
+    vi.stubEnv("PRESET_AKIS","mevcut");
+    await expect(kartPresetYanitiniOku(response([item("1","A ürün")]),first)).rejects.toThrow("KART_KAPSAMI_EKSIK");
+  });
+  it("eski yolda mükerrer kimlikte ilki kazanır",async()=>{
+    vi.stubEnv("PRESET_AKIS","mevcut");
+    const result=await kartPresetYanitiniOku(response([item("1","A ürün"),item("1","B ürün"),item("2","B ürün")]),first);
+    expect(result.sonuc.satirlar.map(s=>s.ad)).toEqual(["A ürün","B ürün"]);
+  });
+  it("eski yolda hiçbir satır eşleşmezse reddeder",async()=>{
+    vi.stubEnv("PRESET_AKIS","mevcut");
+    await expect(kartPresetYanitiniOku(response([item("9","X")]),first)).rejects.toThrow("KART_KAPSAMI_EKSIK");
+    await expect(kartPresetYanitiniOku(response([{row_id:"2",vixrex_product_json:{}}]),first)).rejects.toThrow("KART_KAPSAMI_EKSIK");
+    await expect(kartPresetYanitiniOku(response([{row_id:"2",status:"tamamlandı"}]),first)).rejects.toThrow("KART_KAPSAMI_EKSIK");
+  });
+  it("yabancı satır faturaya yazılmaz; eksik satır karantinaya alınır",async()=>{
+    const result=await kartPresetYanitiniOku(response([item("9","X"),item("2","Y")]),first);
+    expect(result.sonuc.satirlar.map(s=>s.ad)).toEqual(["İlk","Y"]);
+    expect(result.karantinadakiSatirlar).toEqual([1]);
+  });
+  it("geçersiz veya bozuk satırları sessizce atmaz",async()=>{
     for (const items of [
-      [item("9","X"),item("2","Y")],
       [{...item("1","A"),row_id:"01"},item("2","B")],
-      [item("1","A"),{row_id:"2"}],
       [item("1","A"),null],
     ]) {
       await expect(kartPresetYanitiniOku(response(items),first))
         .rejects.toThrow("KART_YANITI_COZULEMEDI");
     }
   });
-  it("zorunlu iç alanlar, türler ve summary eksikse tüm yanıt reddedilir",async()=>{
+  it("yanlış türde alan ve draft dışı durum reddedilir",async()=>{
     for (const bozuk of [
-      {...item("1","A"),validation:{status:"verified"}},
-      {...item("1","A"),media:{image_url:null}},
       {...item("1","A"),invoice_data:{quantity:"2"}},
-      {...item("1","A"),vixrex_product_json:{title:"A"}},
       {...item("1","A"),card_status:"blocked"},
-      {...item("1","A"),unexpected: true},
+      {...item("1","A"),vixrex_product_json:{title:7}},
     ]) {
       await expect(kartPresetYanitiniOku(response([bozuk,item("2","B")]),first))
         .rejects.toThrow("KART_YANITI_COZULEMEDI");
     }
-    await expect(kartPresetYanitiniOku(response([item("1","A"),item("2","B")],{total_rows:1}),first))
-      .rejects.toThrow("KART_YANITI_COZULEMEDI");
   });
-  it("boşlukla değiştirilmiş duplicate_group reddedilir",async()=>{
-    await expect(kartPresetYanitiniOku(response([
+  it("summary yoksa, eksik alanlar ve fazladan anahtarlar kartı düşürmez",async()=>{
+    const eksikler=[
+      {...item("1","A"),validation:{status:"verified"}},
+      {...item("1","A"),media:{image_url:null}},
+      {...item("1","A"),vixrex_product_json:{title:"A"}},
+      {...item("1","A"),unexpected: true},
+    ];
+    for (const aday of eksikler) {
+      const sonuc=await kartPresetYanitiniOku(response([aday,item("2","B")]),first);
+      expect(sonuc.sonuc.satirlar.map((s)=>s.ad)).toEqual(["A","B"]);
+    }
+    const ozetsiz=await kartPresetYanitiniOku(response([item("1","A"),item("2","B")],{total_rows:1}),first);
+    expect(ozetsiz.sonuc.satirlar.map((s)=>s.ad)).toEqual(["A","B"]);
+  });
+  it("modelin gönderdiği duplicate_group artık zorunlu değil ve reddedilmez",async()=>{
+    const result=await kartPresetYanitiniOku(response([
       {...item("1","A"),duplicate_group:" grup",canonical_row_id:"1"},
       {...item("2","B"),duplicate_group:" grup",canonical_row_id:"1"},
-    ]),first)).rejects.toThrow("KART_YANITI_COZULEMEDI");
-  });
-  it("OpenRouter kanonik row_id=2 ve grup bilgisi kalıcı kataloga geçer",async()=>{
-    const result=await kartPresetYanitiniOku(response([
-      {...item("1","A"),duplicate_group:"grup-2",canonical_row_id:"2"},
-      {...item("2","B"),duplicate_group:"grup-2",canonical_row_id:"2"},
     ]),first);
+    expect(result.sonuc.satirlar.map(s=>s.ad)).toEqual(["A","B"]);
+    expect(result.sonuc.satirlar.map(s=>s.duplicateGroup)).toEqual([null,null]);
+  });
+  it("Vixrex tekilleştirme kararı kalıcı kataloga geçer",async()=>{
+    const tekrar={...first,satirlar:[
+      {...first.satirlar[0],barkod:"8691234567890",model:"A",ad:"İlk",adet:3},
+      {...first.satirlar[1],barkod:"8691234567890",model:"A",ad:"İlk",adet:3},
+    ]};
+    const result=await kartPresetYanitiniOku(response([item("1","A"),item("2","A")]),tekrar);
     const satirlar=result.sonuc.satirlar.map(s=>faturaSatiriniAktar(s,"Tedarikçi"));
     expect(satirlar.map(s=>[s.katalog?.duplicateGroup,s.katalog?.canonicalRowId]))
-      .toEqual([["grup-2","2"],["grup-2","2"]]);
+      .toEqual([["barkod:8691234567890","1"],["barkod:8691234567890","1"]]);
     expect(satirdanFaturaTaslagi(satirlar[1])).toMatchObject({
-      duplicateGroup:"grup-2",canonicalRowId:"2",
+      duplicateGroup:"barkod:8691234567890",canonicalRowId:"1",
     });
-  });
-  it("bozuk kanonik grup bağlantısını yeni ürün kararı vermeden reddeder",async()=>{
-    await expect(kartPresetYanitiniOku(response([
-      {...item("1","A"),duplicate_group:"grup",canonical_row_id:"1"},
-      {...item("2","B"),duplicate_group:"grup",canonical_row_id:"2"},
-    ]),first)).rejects.toThrow("KART_YANITI_COZULEMEDI");
   });
   it("eski yol düz/karma biçimi kabul etmeye devam eder",async()=>{
     vi.stubEnv("PRESET_AKIS","mevcut");
@@ -145,7 +172,7 @@ describe("gerçek ikinci preset JSON sözleşmesi",()=>{
       sources:[{url:"https://example.com/elt1302",type:"official_manufacturer_product_page",fetched:true}],
       validation:{status:"ambiguous",notes:"Renk doğrulanamadı."},
     };
-    const result=await kartPresetYanitiniOku(response([duz]),first);
+    const result=await kartPresetYanitiniOku(response([duz,item("2","İkinci")]),first);
     const satir=result.sonuc.satirlar[0];
     expect(satir.ad).toBe("ELT1302 Elit Erkek Elastan Sıfır Yaka Uzun Kol Fanila");
     expect(satir.dogrulamaDurumu).toBe("Belirsiz");
@@ -174,7 +201,7 @@ describe("gerçek ikinci preset JSON sözleşmesi",()=>{
       unmatched_attributes:["Tüm ürün özellikleri: resmî ürün sayfası bulunamadı"],
       validation:{status:"not_found"},
     };
-    const result=await kartPresetYanitiniOku(response([duz]),first);
+    const result=await kartPresetYanitiniOku(response([duz,item("1","A ürün")]),first);
     const satir=result.sonuc.satirlar[1];
     expect(satir.dogrulamaDurumu).toBe("Bulunamadı");
     expect(satir.ad).toBe("İkinci");
@@ -261,7 +288,7 @@ describe("gerçek ikinci preset JSON sözleşmesi",()=>{
     expect(messages[0].content).toContain("row_id");
     expect(req).not.toHaveProperty("tools");
     expect(req).not.toHaveProperty("provider");
-    expect(req).not.toHaveProperty("response_format");
+    expect(req.response_format).toMatchObject({ type: "json_schema", json_schema: { name: "vixrex_urun_karti", strict: true } });
     expect(req).not.toHaveProperty("system");
   });
 });

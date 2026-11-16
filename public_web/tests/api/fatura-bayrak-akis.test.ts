@@ -16,12 +16,10 @@ describe("PRESET_AKIS kararı (runtime bayrak)", () => {
     process.env.PRESET_AKIS = "yeni";
     expect(akis()).toBe("yeni");
   });
-  it("tanımsızsa güvenli mevcut akış döner", () => {
+  it("tanımsızsa veya geçersizse mevcut döner", () => {
     delete process.env.PRESET_AKIS;
     expect(akis()).toBe("mevcut");
-  });
-  it("bilinmeyen değer yeni akışı kendiliğinden açmaz", () => {
-    process.env.PRESET_AKIS = "gecersiz-deger";
+    process.env.PRESET_AKIS = "gecersiz";
     expect(akis()).toBe("mevcut");
   });
 });

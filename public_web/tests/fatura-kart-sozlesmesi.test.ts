@@ -11,7 +11,7 @@ import type { GoruSonucu } from "@/lib/faturaGoru";
 const kok = path.resolve(__dirname, "fixtures", "fatura-kart");
 const dosya = (ad: string) => readFileSync(path.join(kok, ad), "utf8");
 const okuma = JSON.parse(dosya("gercek-okuma.json")) as { satirlar: Array<Record<string, unknown>> };
-const ilkOkuma = { tedarikci: "Örnek Tekstil", satirlar: okuma.satirlar } as unknown as GoruSonucu;
+const ilkOkuma = { tedarikci: "Seher Mensucat", satirlar: okuma.satirlar } as unknown as GoruSonucu;
 
 const metinYanit = (icerik: string) => new Response(JSON.stringify({
   choices: [{ message: { content: icerik }, finish_reason: "stop" }],
@@ -31,7 +31,7 @@ it("eski akış: geçmiş preset yanıtında farklı barkodlu 5 satır ayrı kar
   const sonuc = await kartPresetYanitiniOku(metinYanit(dosya("gercek-citli.txt")), ilkOkuma);
   expect(say(sonuc.sonuc.satirlar)).toEqual({ satir: 5, kart: 5, gorselli: 4 });
   expect(sonuc.sonuc.satirlar[2].siteGorseller).toEqual([]);
-  expect(sonuc.sonuc.satirlar[2].siteSayfa).toBe("https://ornektekstil.example/kadin-atlet");
+  expect(sonuc.sonuc.satirlar[2].siteSayfa).toBe("https://sehermensucat.com/kadin-atlet");
   expect(sonuc.sonuc.satirlar[2].dogrulamaDurumu).toBe("Belirsiz");
 });
 
@@ -45,8 +45,8 @@ it("düz şemalı gerçek yanıt: doğrulama, sayfa ve görsel alanlarını okur
   const sonuc = await kartPresetYanitiniOku(metinYanit(dosya("duz-sema.json")), ilkOkuma);
   expect(say(sonuc.sonuc.satirlar)).toEqual({ satir: 5, kart: 5, gorselli: 4 });
   expect(sonuc.sonuc.satirlar[2].siteGorseller).toEqual([]);
-  expect(sonuc.sonuc.satirlar[2].siteSayfa).toBe("https://ornektekstil.example/kadin-atlet");
-  expect(sonuc.sonuc.satirlar[0].siteSayfa).toBe("https://ornektekstil.example/elt1301-deneme-erkek-elastan-sifiryaka-fanila");
+  expect(sonuc.sonuc.satirlar[2].siteSayfa).toBe("https://sehermensucat.com/kadin-atlet");
+  expect(sonuc.sonuc.satirlar[0].siteSayfa).toBe("https://sehermensucat.com/elt1301-elit-erkek-elastan-sifiryaka-fanila");
   expect(sonuc.sonuc.satirlar[0].dogrulamaDurumu).toBe("Doğrulandı");
   expect(sonuc.sonuc.satirlar[2].dogrulamaDurumu).toBe("Belirsiz");
   const kanit = sonuc.sonuc.satirlar[0].kaynaklar?.[0] as { media?: { image_url?: string } };
@@ -63,8 +63,8 @@ it("aynı girdi aynı çıktı: üç biçim birebir aynı kartları verir", asyn
 
 it("eski akışta farklı barkodlu satırlar gruplandırılmış olsa bile ayrı kalır", async () => {
   const sonuc = await kartPresetYanitiniOku(metinYanit(dosya("gercek-citli.txt")), ilkOkuma);
-  expect(sonuc.sonuc.satirlar[3].ad).toBe("TER0105 Örnek Erkek Penye Sıfır Yaka Fanila");
-  expect(sonuc.sonuc.satirlar[4].ad).toBe("TER0105 Örnek Erkek Penye Sıfır Yaka Fanila");
+  expect(sonuc.sonuc.satirlar[3].ad).toBe("TER0105 Tutku Erkek Penye Sıfır Yaka Fanila");
+  expect(sonuc.sonuc.satirlar[4].ad).toBe("TER0105 Tutku Erkek Penye Sıfır Yaka Fanila");
   expect(sonuc.sonuc.satirlar[4].eksikler).not.toContain("Aynı ürün belgede 4. satırda da geçiyor; tek kart açılır.");
   expect(sonuc.sonuc.satirlar[3].barkod).not.toBe(sonuc.sonuc.satirlar[4].barkod);
 });
@@ -75,8 +75,8 @@ it("OpenRouter farklı bedenlere ayrı grup kararı verdiğinde ikisi de kendi k
     ? { ...item, duplicate_group: null, canonical_row_id: null } : item);
   const sonuc = await kartPresetYanitiniOku(metinYanit(JSON.stringify({ items: ayriSatirlar })), ilkOkuma);
   expect(say(sonuc.sonuc.satirlar)).toEqual({ satir: 5, kart: 5, gorselli: 4 });
-  expect(sonuc.sonuc.satirlar[3].ad).toBe("TER0105 Örnek Erkek Penye Sıfır Yaka Fanila");
-  expect(sonuc.sonuc.satirlar[4].ad).toBe("TER0105 Örnek Erkek Penye Sıfır Yaka Fanila");
+  expect(sonuc.sonuc.satirlar[3].ad).toBe("TER0105 Tutku Erkek Penye Sıfır Yaka Fanila");
+  expect(sonuc.sonuc.satirlar[4].ad).toBe("TER0105 Tutku Erkek Penye Sıfır Yaka Fanila");
   expect(sonuc.sonuc.satirlar[3].barkod).not.toBe(sonuc.sonuc.satirlar[4].barkod);
 });
 

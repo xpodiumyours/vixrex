@@ -1,8 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-const m = vi.hoisted(() => ({ save: vi.fn(), load: vi.fn() }));
-vi.mock("@/lib/faturaGorsel", () => ({ gorselsizSatirlariTamamla: async ({ satirlar }: { satirlar: unknown[] }) => satirlar }));
-vi.mock("@/lib/faturaGorselSecimi", () => ({ adayGorselleriniSec: async ({ satirlar }: { satirlar: unknown[] }) => satirlar }));
+const m = vi.hoisted(() => ({
+ save: vi.fn(),
+ load: vi.fn(),
+ localImageCompletion: vi.fn(async ({ satirlar }: { satirlar: unknown[] }) => satirlar),
+ localImageSelection: vi.fn(async ({ satirlar }: { satirlar: unknown[] }) => satirlar),
+}));
+vi.mock("@/lib/faturaGorsel", () => ({ gorselsizSatirlariTamamla: m.localImageCompletion }));
+vi.mock("@/lib/faturaGorselSecimi", () => ({ adayGorselleriniSec: m.localImageSelection }));
 vi.mock("@/lib/faturaIslemKaydi", () => ({ islemKaydet: m.save }));
 vi.mock("@/lib/faturaIslemOku", () => ({ islemiYukle: m.load, islemYaniti: (x:{satirlar:unknown[]}) => ({tamam:true,satirlar:x.satirlar}) }));
 vi.mock("@/lib/faturaOtomatikTaslakKaydi", () => ({ faturaTaslakYanitiniHazirla: async (_admin: unknown, _store: string, _slug: string, kayit: { satirlar: never[]; islemKimligi: string }) => ({ tamam: true, satirlar: kayit.satirlar, taslaklar: (await import("@/lib/faturaTaslagi")).faturaTaslaklari(kayit.satirlar, kayit.islemKimligi) }) }));
@@ -55,7 +60,15 @@ describe("tamamlanmış arka plan sonucunun gerçek taşıma yolu",()=>{
   expect(input.satirlar[0].satisFiyati).toBeUndefined();expect(input.satirlar[0].onayli).toBeUndefined();
   const drafts=data.taslaklar as Array<{satisFiyati:unknown;ownerApproved:boolean;isVisible:boolean}>;expect(drafts).toHaveLength(1);expect(drafts[0].ownerApproved).toBe(false);expect(drafts[0].isVisible).toBe(false);expect(drafts[0].satisFiyati).toBeNull();
  });
+ it("yeni akış OpenRouter araştırmasını Vixrex'te yeniden yapmaz",async()=>{
+  const {admin}=client(receipt(kartCevabi));
+  m.load.mockImplementation(async()=>({islemKimligi:job,satirlar:m.save.mock.calls[0]?.[0].satirlar ?? []}));
+  await arkaPlanFaturaSonucunuAl(admin,"store","deneme",job);
+  expect(m.localImageCompletion).not.toHaveBeenCalled();
+  expect(m.localImageSelection).not.toHaveBeenCalled();
+ });
  it("okuma aşaması sonucu kart presetini tam bir kez kuyruğa alır",async()=>{
+  vi.stubEnv("PRESET_AKIS","yeni");
   const first=JSON.stringify({tedarikci:"Tedarikçi",satirlar:[line]});
   const {admin,rpc}=client(receipt(first,{stage:"reading",readResult:null}));
   const data=await arkaPlanFaturaSonucunuAl(admin,"store","deneme",job);
@@ -64,11 +77,12 @@ describe("tamamlanmış arka plan sonucunun gerçek taşıma yolu",()=>{
  });
  it("kart cevabında ortam değişse bile işteki yeni akış korunur",async()=>{
   vi.stubEnv("PRESET_AKIS","mevcut");
-  const {admin}=client(receipt(JSON.stringify({items:[kartItem]})));
+  const satisFiyatli={...kartItem,vixrex_product_json:{...kartItem.vixrex_product_json,consumer_sale_price:100}};
+  const {admin}=client(receipt(JSON.stringify({items:[satisFiyatli]})));
   await expect(arkaPlanFaturaSonucunuAl(admin,"store","deneme",job)).rejects.toThrow("KART_YANITI_COZULEMEDI");
   expect(m.save).not.toHaveBeenCalled();
  });
- it("önceki işte akış alanı yoksa mevcut yol ve eski cevap biçimi korunur",async()=>{
+ it("önceki işte akış alanı yoksa varsayılan akış (akis()) korunur",async()=>{
   const eskiIs=receipt(JSON.stringify({items:[kartItem]}));
   delete (eskiIs.readResult as Record<string,unknown>).presetAkis;
   const {admin}=client(eskiIs);
@@ -76,7 +90,7 @@ describe("tamamlanmış arka plan sonucunun gerçek taşıma yolu",()=>{
   const data=await arkaPlanFaturaSonucunuAl(admin,"store","deneme",job);
   expect(data.tamam).toBe(true);expect(m.save).toHaveBeenCalledTimes(1);
  });
- it.each(["bozuk",'{"satirlar":[]}'])("hatalı veya boş sonuç ürün oluşturmaz: %s",async(content)=>{const {admin,rpc}=client(receipt(content));await expect(arkaPlanFaturaSonucunuAl(admin,"store","deneme",job)).rejects.toThrow();expect(m.save).not.toHaveBeenCalled();expect(rpc).toHaveBeenCalledWith("fail_invoice_provider_job",expect.objectContaining({p_job_id:job}));});
+ it.each(["bozuk",'{\"satirlar\":[]}'])("hatalı veya boş sonuç ürün oluşturmaz: %s",async(content)=>{const {admin,rpc}=client(receipt(content));await expect(arkaPlanFaturaSonucunuAl(admin,"store","deneme",job)).rejects.toThrow();expect(m.save).not.toHaveBeenCalled();expect(rpc).toHaveBeenCalledWith("fail_invoice_provider_job",expect.objectContaining({p_job_id:job}));});
  it("model404 hazır karta dönüştürülmez",async()=>{const {admin}=client({stage:"reading",state:"received",httpStatus:200,contentType:"text/event-stream",body:'data: {"error":{"code":404}}\n\n',fingerprint:"a".repeat(64)});await expect(arkaPlanFaturaSonucunuAl(admin,"store","deneme",job)).rejects.toThrow("OKUYUCU_MODEL_BULUNAMADI");expect(m.save).not.toHaveBeenCalled();});
  it("yarım SSE sonucu kaydedilmez",async()=>{const {admin}=client({state:"received",httpStatus:200,contentType:"text/event-stream",body:'data: {"choices":[{"delta":{"content":"{}"},"finish_reason":"stop"}]}\n\n',fingerprint:"a".repeat(64)});await expect(arkaPlanFaturaSonucunuAl(admin,"store","deneme",job)).rejects.toThrow("OKUYUCU_EKSIK_CEVAP");expect(m.save).not.toHaveBeenCalled();});
  it("kalıcı kayıt geçici başarısızsa alınmış yanıt silinmez ve yeni model çağrısı yapılmaz",async()=>{m.save.mockResolvedValue(null);const {admin,rpc}=client(receipt(kartCevabi));await expect(arkaPlanFaturaSonucunuAl(admin,"store","deneme",job)).rejects.toThrow("FATURA_KAYDI_EKSIK");expect(rpc.mock.calls.map(v=>v[0])).toEqual(["get_invoice_provider_response"]);});

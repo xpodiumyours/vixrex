@@ -45,7 +45,7 @@ describe("OpenRouter → Vixrex kayıt sınırı (stok eşleştirmesi sabit)", (
     expect(satir.katalog?.urunVaryantlari).toBeUndefined();
   });
 
-  it("OpenRouter grup kararı katalog snapshot'a aynen taşınır", () => {
+  it("Vixrex tekilleştirme kararı katalog snapshot'a aynen taşınır", () => {
     const satir=faturaSatiriniAktar(okunanSatir({
       duplicateGroup:"üretici-ürün-grubu",canonicalRowId:"2",
     }),"Tedarikçi");

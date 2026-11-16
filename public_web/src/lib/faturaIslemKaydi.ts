@@ -14,7 +14,6 @@ export interface TedarikciDijitalIzi {
   platform?: string;
   izinDurumu?: string;
   kaynak?: string;
-  havuzda?: boolean;
   dogrulama?: unknown;
 }
 
@@ -65,10 +64,10 @@ export interface AyniAlisverisAdayi {
   satirlar: AlisverisSatiri[];
 }
 
-// Kilitli kapsam: üretici görseli karta girer ve yayınlanır; kullanım izni
-// sonra, çalışan sistemle istenir. Bu yüzden izni olmayan görsel `denied`
-// değil `unknown` (izin turu bekliyor) olarak kaydedilir; izin turu bu
-// listeden yürür. `denied`, firmanın açıkça reddettiği durum için saklıdır.
+// Üretici görseli taslak karta girer; doğrulanmış izin yoksa `denied` değil
+// `unknown` (izin doğrulaması bekliyor) olarak kaydedilir ve yayın kapısı
+// (`publish_invoice_product`) izin doğrulanana kadar vitrin görünürlüğünü tutar.
+// `denied`, firmanın açıkça reddettiği durum için saklıdır.
 function gorselIzinDurumu(izin: "yok" | "bekliyor" | "var"): string {
   if (izin === "var") return "verified_supplier_permission";
   return "unknown";
@@ -161,7 +160,6 @@ export async function islemKaydet(girdi: IslemKaydiGirdisi): Promise<string | nu
                 platform: girdi.tedarikciIz.platform,
                 izinDurumu: girdi.tedarikciIz.izinDurumu,
                 kaynak: girdi.tedarikciIz.kaynak,
-                havuzda: girdi.tedarikciIz.havuzda,
                 dogrulama: girdi.tedarikciIz.dogrulama ?? null,
               }
             : null,

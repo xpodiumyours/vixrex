@@ -28,9 +28,9 @@ export interface YayinGirdisi {
 }
 
 /**
- * Esnafın vitrine yayına alabilmesi için gereken TEK şart:
+ * Esnafın kartı taslak olarak onaylayabilmesi için gereken şartlar:
  * Satış fiyatının girilmiş olması ve esnafın onay vermiş olmasıdır.
- * Resim adedi veya yapay puanlama vitrine çıkmayı engellemez.
+ * Vitrine çıkışta üretici görsel izni ve kanıt bütünlüğü ayrıca SQL yayın kapısında (`publish_invoice_product`) denetlenir.
  */
 export function yayinEksikleri(girdi: YayinGirdisi): string[] {
   const eksikler: string[] = [];

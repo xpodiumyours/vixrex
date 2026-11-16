@@ -17,7 +17,7 @@ const mocks = vi.hoisted(() => ({
     }),
   ),
 }));
-vi.mock("next/headers", () => ({ cookies: vi.fn(async (_args: Record<string, unknown>) => (void _args, { get: mocks.get })) }));
+vi.mock("next/headers", () => ({ cookies: vi.fn(async () => ({ get: mocks.get })) }));
 vi.mock("@/lib/supabaseAdmin", () => ({ getSupabaseAdmin: mocks.admin }));
 vi.mock("@/lib/ownerSession", () => ({
   OWNER_SESSION_COOKIE: "vixrex_owner_session",
@@ -55,7 +55,7 @@ function adminMock() {
         return {
           select: vi.fn(() => ({
             eq: vi.fn(() => ({
-              single: vi.fn(async (_args: Record<string, unknown>) => (void _args, { data: STORE, error: null })),
+              single: vi.fn(async () => ({ data: STORE, error: null })),
             })),
           })),
         };
@@ -65,7 +65,7 @@ function adminMock() {
           select: vi.fn(() => ({
             eq: vi.fn(() => ({
               eq: vi.fn(() => ({
-                maybeSingle: vi.fn(async (_args: Record<string, unknown>) => (void _args, { data: urunSatiri, error: null })),
+                maybeSingle: vi.fn(async () => ({ data: urunSatiri, error: null })),
               })),
             })),
           })),

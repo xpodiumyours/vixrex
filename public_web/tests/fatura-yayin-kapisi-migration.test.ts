@@ -78,10 +78,17 @@ describe("fatura gorsel izni yayin kapisi", () => {
       "verified_supplier_permission",
       "verified_feed_terms",
       "merchant_owned_media",
-      "merchant_attestation",
     ]) {
       expect(gorselIzinKapisi).toContain(`'${durum}'`);
     }
+  });
+
+  it("eksik veya bilinmeyen izin durumu üretici görselini yayına açmaz", () => {
+    expect(gorselIzinKapisi).toContain("jsonb_array_elements_text(v_product.image_urls) image(url)");
+    expect(gorselIzinKapisi).toContain("kaynak->>'depoUrl'=image.url");
+    expect(gorselIzinKapisi).toContain("coalesce(kaynak->>'hakKayitDurumu','') not in");
+    expect(gorselIzinKapisi).not.toContain("kaynak ? 'hakKayitDurumu'");
+    expect(gorselIzinKapisi).not.toContain("'merchant_attestation'");
   });
 
   it("izin dogrulanmamissa karti gorunmez birakir ve hazir doner", () => {

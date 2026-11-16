@@ -5,23 +5,23 @@ I'll research each brand's official website, starting with searches for the bran
   "items": [
     {
       "row_id": "1",
-      "brand": "DENEME",
-      "title": "ELT1301 Deneme Erkek Elastan Sıfır Yaka Fanila",
+      "brand": "ELIT",
+      "title": "ELT1301 Elit Erkek Elastan Sıfır Yaka Fanila",
       "category_suggestion": "Erkek İç Giyim > Erkek Fanila / Atlet",
       "variant": "Beyaz / M (3)",
-      "short_description": "Deneme erkek elastan sıfır yaka fanila. Resmî ürün sayfasında beyaz renk ve S/2 - 2XL/6 beden aralığı ile listelenmektedir.",
-      "manufacturer": "Örnek Tekstil San. ve Tic. A.Ş.",
-      "official_product_url": "https://ornektekstil.example/elt1301-deneme-erkek-elastan-sifiryaka-fanila",
+      "short_description": "Elit erkek elastan sıfır yaka fanila. Resmî ürün sayfasında beyaz renk ve S/2 - 2XL/6 beden aralığı ile listelenmektedir.",
+      "manufacturer": "Seher Mensucat Tekstil San. ve Tic. A.Ş.",
+      "official_product_url": "https://sehermensucat.com/elt1301-elit-erkek-elastan-sifiryaka-fanila",
       "image_url": "https://cdn.myikas.com/images/74e89546-a032-4dc5-a4cc-0765f50962f6/3ac5759d-36e6-4131-b723-2e1149825b1d/image_3840.webp",
-      "source_url": "https://ornektekstil.example/elt1301-deneme-erkek-elastan-sifiryaka-fanila",
+      "source_url": "https://sehermensucat.com/elt1301-elit-erkek-elastan-sifiryaka-fanila",
       "rights_status": "unknown",
       "consumer_sale_price": null,
       "stock_quantity": null,
       "invoice_data": {
         "quantity": 1,
         "unit": "ad",
-        "unit_price": 10,
-        "total_amount": 10
+        "unit_price": 115,
+        "total_amount": 115
       },
       "attributes": [
         { "name": "Ürün kodu", "value": "ELT1301" },
@@ -29,7 +29,7 @@ I'll research each brand's official website, starting with searches for the bran
         { "name": "Renk", "value": "Beyaz" },
         { "name": "Beden", "value": "M / 3" },
         { "name": "Beden aralığı", "value": "S/2, M/3, L/4, XL/5, 2XL/6" },
-        { "name": "Marka", "value": "Örnek Marka" }
+        { "name": "Marka", "value": "Tutku Elit" }
       ],
       "matched_attributes": ["ürün kodu (ELT1301)", "ürün adı", "renk (Beyaz)", "beden (M/3)"],
       "unmatched_attributes": [
@@ -41,34 +41,34 @@ I'll research each brand's official website, starting with searches for the bran
       "canonical_row_id": null,
       "validation": {
         "status": "verified",
-        "notes": "Resmî üretici sitesi (ornektekstil.example) ürün sayfası açıldı; ürün kodu, ad, renk ve beden eşleşti."
+        "notes": "Resmî üretici sitesi (sehermensucat.com) ürün sayfası açıldı; ürün kodu, ad, renk ve beden eşleşti."
       },
       "image_validation_status": "verified",
       "sources": [
-        "https://ornektekstil.example/elt1301-deneme-erkek-elastan-sifiryaka-fanila",
-        "https://ornektekstil.example/",
-        "https://ornektekstil.example/products.xml"
+        "https://sehermensucat.com/elt1301-elit-erkek-elastan-sifiryaka-fanila",
+        "https://sehermensucat.com/",
+        "https://sehermensucat.com/products.xml"
       ]
     },
     {
       "row_id": "2",
-      "brand": "DENEME",
-      "title": "ELT1302 Deneme Erkek Elastan Sıfır Yaka Uzun Kol Fanila",
+      "brand": "ELIT",
+      "title": "ELT1302 Elit Erkek Elastan Sıfır Yaka Uzun Kol Fanila",
       "category_suggestion": "Erkek İç Giyim > Erkek Fanila / Uzun Kol Atlet",
       "variant": "Beyaz / M (3)",
-      "short_description": "Deneme erkek elastan sıfır yaka uzun kol fanila. Resmî ürün sayfasında beyaz renk ve S/2 - 2XL/6 beden aralığı ile listelenmektedir.",
-      "manufacturer": "Örnek Tekstil San. ve Tic. A.Ş.",
-      "official_product_url": "https://ornektekstil.example/elt1302-deneme-erkek-elastan-sifiryaka-uzun-kol-fanila-fanila",
+      "short_description": "Elit erkek elastan sıfır yaka uzun kol fanila. Resmî ürün sayfasında beyaz renk ve S/2 - 2XL/6 beden aralığı ile listelenmektedir.",
+      "manufacturer": "Seher Mensucat Tekstil San. ve Tic. A.Ş.",
+      "official_product_url": "https://sehermensucat.com/elt1302-elit-erkek-elastan-sifiryaka-uzun-kol-fanila-fanila",
       "image_url": "https://cdn.myikas.com/images/74e89546-a032-4dc5-a4cc-0765f50962f6/eebb417d-81e9-4e3f-a89a-17bcffd0e480/image_3840.webp",
-      "source_url": "https://ornektekstil.example/elt1302-deneme-erkek-elastan-sifiryaka-uzun-kol-fanila-fanila",
+      "source_url": "https://sehermensucat.com/elt1302-elit-erkek-elastan-sifiryaka-uzun-kol-fanila-fanila",
       "rights_status": "unknown",
       "consumer_sale_price": null,
       "stock_quantity": null,
       "invoice_data": {
         "quantity": 1,
         "unit": "ad",
-        "unit_price": 15,
-        "total_amount": 15
+        "unit_price": 137,
+        "total_amount": 137
       },
       "attributes": [
         { "name": "Ürün kodu", "value": "ELT1302" },
@@ -76,7 +76,7 @@ I'll research each brand's official website, starting with searches for the bran
         { "name": "Renk", "value": "Beyaz" },
         { "name": "Beden", "value": "M / 3" },
         { "name": "Beden aralığı", "value": "S/2, M/3, L/4, XL/5, 2XL/6" },
-        { "name": "Marka", "value": "Örnek Marka" }
+        { "name": "Marka", "value": "Tutku Elit" }
       ],
       "matched_attributes": ["ürün kodu (ELT1302)", "ürün adı", "renk (Beyaz)", "beden (M/3)"],
       "unmatched_attributes": [
@@ -88,34 +88,34 @@ I'll research each brand's official website, starting with searches for the bran
       "canonical_row_id": null,
       "validation": {
         "status": "verified",
-        "notes": "Resmî üretici sitesi (ornektekstil.example) ürün sayfası açıldı; ürün kodu, ad, renk ve beden eşleşti."
+        "notes": "Resmî üretici sitesi (sehermensucat.com) ürün sayfası açıldı; ürün kodu, ad, renk ve beden eşleşti."
       },
       "image_validation_status": "verified",
       "sources": [
-        "https://ornektekstil.example/elt1302-deneme-erkek-elastan-sifiryaka-uzun-kol-fanila-fanila",
-        "https://ornektekstil.example/",
-        "https://ornektekstil.example/products.xml"
+        "https://sehermensucat.com/elt1302-elit-erkek-elastan-sifiryaka-uzun-kol-fanila-fanila",
+        "https://sehermensucat.com/",
+        "https://sehermensucat.com/products.xml"
       ]
     },
     {
       "row_id": "3",
       "brand": "SHR",
-      "title": "SKD0010 Örnek Kadın Penye Kaşkorse Atlet",
+      "title": "SKD0010 Seher Kadın Penye Kaşkorse Atlet",
       "category_suggestion": "Kadın İç Giyim > Kadın Atlet / Kaşkorse",
       "variant": "Beyaz / 3XL (7)",
-      "short_description": "Örnek kadın penye kaşkorse atlet. Resmî ürün sayfasında beyaz renk ve XL/5 - 3XL/7 beden aralığı ile listelenmektedir.",
-      "manufacturer": "Örnek Tekstil San. ve Tic. A.Ş.",
-      "official_product_url": "https://ornektekstil.example/skd0010-ornek-kadin-penye-kaskorse-atlet",
+      "short_description": "Seher kadın penye kaşkorse atlet. Resmî ürün sayfasında beyaz renk ve XL/5 - 3XL/7 beden aralığı ile listelenmektedir.",
+      "manufacturer": "Seher Mensucat Tekstil San. ve Tic. A.Ş.",
+      "official_product_url": "https://sehermensucat.com/skd0010-seher-kadin-penye-kaskorse-atlet",
       "image_url": "https://cdn.myikas.com/images/74e89546-a032-4dc5-a4cc-0765f50962f6/1d08cec6-c3bd-4839-aa56-f18e0b7a4627/image_3840.webp",
-      "source_url": "https://ornektekstil.example/skd0010-ornek-kadin-penye-kaskorse-atlet",
+      "source_url": "https://sehermensucat.com/skd0010-seher-kadin-penye-kaskorse-atlet",
       "rights_status": "unknown",
       "consumer_sale_price": null,
       "stock_quantity": null,
       "invoice_data": {
         "quantity": 6,
         "unit": "ad",
-        "unit_price": 20,
-        "total_amount": 120
+        "unit_price": 47,
+        "total_amount": 282
       },
       "attributes": [
         { "name": "Ürün kodu", "value": "SKD0010" },
@@ -123,7 +123,7 @@ I'll research each brand's official website, starting with searches for the bran
         { "name": "Renk", "value": "Beyaz" },
         { "name": "Beden", "value": "3XL / 7" },
         { "name": "Beden aralığı", "value": "XL/5, 2XL/6, 3XL/7" },
-        { "name": "Marka", "value": "Örnek Yıldız" }
+        { "name": "Marka", "value": "Seher Yıldızı" }
       ],
       "matched_attributes": ["ürün kodu (SKD0010)", "ürün adı", "renk (Beyaz)", "beden (7 / 3XL)"],
       "unmatched_attributes": [
@@ -135,34 +135,34 @@ I'll research each brand's official website, starting with searches for the bran
       "canonical_row_id": null,
       "validation": {
         "status": "verified",
-        "notes": "Resmî üretici sitesi (ornektekstil.example) ürün sayfası açıldı; ürün kodu, ad, renk ve beden (7/3XL) eşleşti."
+        "notes": "Resmî üretici sitesi (sehermensucat.com) ürün sayfası açıldı; ürün kodu, ad, renk ve beden (7/3XL) eşleşti."
       },
       "image_validation_status": "verified",
       "sources": [
-        "https://ornektekstil.example/skd0010-ornek-kadin-penye-kaskorse-atlet",
-        "https://ornektekstil.example/",
-        "https://ornektekstil.example/products.xml"
+        "https://sehermensucat.com/skd0010-seher-kadin-penye-kaskorse-atlet",
+        "https://sehermensucat.com/",
+        "https://sehermensucat.com/products.xml"
       ]
     },
     {
       "row_id": "4",
       "brand": "TUT",
-      "title": "TER0105 Örnek Erkek Penye Sıfır Yaka Fanila",
+      "title": "TER0105 Tutku Erkek Penye Sıfır Yaka Fanila",
       "category_suggestion": "Erkek İç Giyim > Erkek Fanila / Sıfır Yaka Atlet",
       "variant": "100 Beyaz / L (4)",
-      "short_description": "Örnek erkek penye sıfır yaka fanila. Resmî ürün sayfasında XS/1 - 2XL/6 beden aralığı ve renk seçenekleri ile listelenmektedir.",
-      "manufacturer": "Örnek Tekstil San. ve Tic. A.Ş.",
-      "official_product_url": "https://ornektekstil.example/ter0105-ornek-erkek--penye-sifir-yaka-fanila",
+      "short_description": "Tutku erkek penye sıfır yaka fanila. Resmî ürün sayfasında XS/1 - 2XL/6 beden aralığı ve renk seçenekleri ile listelenmektedir.",
+      "manufacturer": "Seher Mensucat Tekstil San. ve Tic. A.Ş.",
+      "official_product_url": "https://sehermensucat.com/ter0105-tutku-erkek--penye-sifir-yaka-fanila",
       "image_url": "https://cdn.myikas.com/images/74e89546-a032-4dc5-a4cc-0765f50962f6/34e4bebd-1f63-4abb-87de-6d70bff2bb54/image_3840.webp",
-      "source_url": "https://ornektekstil.example/ter0105-ornek-erkek--penye-sifir-yaka-fanila",
+      "source_url": "https://sehermensucat.com/ter0105-tutku-erkek--penye-sifir-yaka-fanila",
       "rights_status": "unknown",
       "consumer_sale_price": null,
       "stock_quantity": null,
       "invoice_data": {
         "quantity": 6,
         "unit": "ad",
-        "unit_price": 25,
-        "total_amount": 150
+        "unit_price": 86,
+        "total_amount": 516
       },
       "attributes": [
         { "name": "Ürün kodu", "value": "TER0105" },
@@ -170,7 +170,7 @@ I'll research each brand's official website, starting with searches for the bran
         { "name": "Renk seçenekleri", "value": "Sayfada çoklu renk görseli mevcut (varsayılan gösterim: Siyah)" },
         { "name": "Beden", "value": "L / 4" },
         { "name": "Beden aralığı", "value": "XS/1, S/2, M/3, L/4, XL/5, 2XL/6" },
-        { "name": "Marka", "value": "Örnek" }
+        { "name": "Marka", "value": "Tutku" }
       ],
       "matched_attributes": ["ürün kodu (TER0105)", "ürün adı", "beden (4 / L)"],
       "unmatched_attributes": [
@@ -182,34 +182,34 @@ I'll research each brand's official website, starting with searches for the bran
       "canonical_row_id": "4",
       "validation": {
         "status": "verified",
-        "notes": "Resmî üretici sitesi (ornektekstil.example) ürün sayfası açıldı; ürün kodu ve beden (4/L) eşleşti. Renk kodu (100) sayfada kod düzeyinde doğrulanamadı."
+        "notes": "Resmî üretici sitesi (sehermensucat.com) ürün sayfası açıldı; ürün kodu ve beden (4/L) eşleşti. Renk kodu (100) sayfada kod düzeyinde doğrulanamadı."
       },
       "image_validation_status": "verified",
       "sources": [
-        "https://ornektekstil.example/ter0105-ornek-erkek--penye-sifir-yaka-fanila",
-        "https://ornektekstil.example/",
-        "https://ornektekstil.example/products.xml"
+        "https://sehermensucat.com/ter0105-tutku-erkek--penye-sifir-yaka-fanila",
+        "https://sehermensucat.com/",
+        "https://sehermensucat.com/products.xml"
       ]
     },
     {
       "row_id": "5",
       "brand": "TUT",
-      "title": "TER0105 Örnek Erkek Penye Sıfır Yaka Fanila",
+      "title": "TER0105 Tutku Erkek Penye Sıfır Yaka Fanila",
       "category_suggestion": "Erkek İç Giyim > Erkek Fanila / Sıfır Yaka Atlet",
       "variant": "100 Beyaz / XL (5)",
-      "short_description": "Örnek erkek penye sıfır yaka fanila. Resmî ürün sayfasında XS/1 - 2XL/6 beden aralığı ve renk seçenekleri ile listelenmektedir.",
-      "manufacturer": "Örnek Tekstil San. ve Tic. A.Ş.",
-      "official_product_url": "https://ornektekstil.example/ter0105-ornek-erkek--penye-sifir-yaka-fanila",
+      "short_description": "Tutku erkek penye sıfır yaka fanila. Resmî ürün sayfasında XS/1 - 2XL/6 beden aralığı ve renk seçenekleri ile listelenmektedir.",
+      "manufacturer": "Seher Mensucat Tekstil San. ve Tic. A.Ş.",
+      "official_product_url": "https://sehermensucat.com/ter0105-tutku-erkek--penye-sifir-yaka-fanila",
       "image_url": "https://cdn.myikas.com/images/74e89546-a032-4dc5-a4cc-0765f50962f6/34e4bebd-1f63-4abb-87de-6d70bff2bb54/image_3840.webp",
-      "source_url": "https://ornektekstil.example/ter0105-ornek-erkek--penye-sifir-yaka-fanila",
+      "source_url": "https://sehermensucat.com/ter0105-tutku-erkek--penye-sifir-yaka-fanila",
       "rights_status": "unknown",
       "consumer_sale_price": null,
       "stock_quantity": null,
       "invoice_data": {
         "quantity": 6,
         "unit": "ad",
-        "unit_price": 30,
-        "total_amount": 180
+        "unit_price": 86,
+        "total_amount": 516
       },
       "attributes": [
         { "name": "Ürün kodu", "value": "TER0105" },
@@ -217,7 +217,7 @@ I'll research each brand's official website, starting with searches for the bran
         { "name": "Renk seçenekleri", "value": "Sayfada çoklu renk görseli mevcut (varsayılan gösterim: Siyah)" },
         { "name": "Beden", "value": "XL / 5" },
         { "name": "Beden aralığı", "value": "XS/1, S/2, M/3, L/4, XL/5, 2XL/6" },
-        { "name": "Marka", "value": "Örnek" }
+        { "name": "Marka", "value": "Tutku" }
       ],
       "matched_attributes": ["ürün kodu (TER0105)", "ürün adı", "beden (5 / XL)"],
       "unmatched_attributes": [
@@ -229,34 +229,34 @@ I'll research each brand's official website, starting with searches for the bran
       "canonical_row_id": "4",
       "validation": {
         "status": "verified",
-        "notes": "Resmî üretici sitesi (ornektekstil.example) ürün sayfası açıldı; ürün kodu ve beden (5/XL) eşleşti. Renk kodu (100) sayfada kod düzeyinde doğrulanamadı. Aynı ürün kodunun farklı bedeni (row 4 ile aynı ürün)."
+        "notes": "Resmî üretici sitesi (sehermensucat.com) ürün sayfası açıldı; ürün kodu ve beden (5/XL) eşleşti. Renk kodu (100) sayfada kod düzeyinde doğrulanamadı. Aynı ürün kodunun farklı bedeni (row 4 ile aynı ürün)."
       },
       "image_validation_status": "verified",
       "sources": [
-        "https://ornektekstil.example/ter0105-ornek-erkek--penye-sifir-yaka-fanila",
-        "https://ornektekstil.example/",
-        "https://ornektekstil.example/products.xml"
+        "https://sehermensucat.com/ter0105-tutku-erkek--penye-sifir-yaka-fanila",
+        "https://sehermensucat.com/",
+        "https://sehermensucat.com/products.xml"
       ]
     },
     {
       "row_id": "6",
       "brand": "TUT",
-      "title": "TKD0599 Örnek Kadın Perla Bikini Külot",
+      "title": "TKD0599 Tutku Kadın Perla Bikini Külot",
       "category_suggestion": "Kadın İç Giyim > Kadın Bikini / Külot",
       "variant": "975 Kombin / 5",
       "short_description": "",
-      "manufacturer": "Örnek Tekstil San. ve Tic. A.Ş.",
-      "official_product_url": "https://ornektekstil.example/tkd0599-ornek-kadin-perla-bikini-kulot",
+      "manufacturer": "Seher Mensucat Tekstil San. ve Tic. A.Ş.",
+      "official_product_url": "https://sehermensucat.com/tkd0599-tutku-kadin-perla-bikini-kulot",
       "image_url": null,
-      "source_url": "https://ornektekstil.example/products.xml",
+      "source_url": "https://sehermensucat.com/products.xml",
       "rights_status": "unknown",
       "consumer_sale_price": null,
       "stock_quantity": null,
       "invoice_data": {
         "quantity": 24,
         "unit": "ad",
-        "unit_price": 35,
-        "total_amount": 840
+        "unit_price": 21.5,
+        "total_amount": 516
       },
       "attributes": [
         { "name": "Ürün kodu", "value": "TKD0599" },
@@ -273,33 +273,33 @@ I'll research each brand's official website, starting with searches for the bran
       "canonical_row_id": null,
       "validation": {
         "status": "ambiguous",
-        "notes": "Resmî üretici sitesinin ürün akışında (products.xml) TKD0599 'Örnek Kadın Perla Bikini Külot' kaydı görüldü, ancak ürün sayfası sayfa getirme limiti nedeniyle açılamadı; kimlik ve varyant kesinleştirilemedi."
+        "notes": "Resmî üretici sitesinin ürün akışında (products.xml) TKD0599 'Tutku Kadın Perla Bikini Külot' kaydı görüldü, ancak ürün sayfası sayfa getirme limiti nedeniyle açılamadı; kimlik ve varyant kesinleştirilemedi."
       },
       "image_validation_status": "not_verified",
       "sources": [
-        "https://ornektekstil.example/products.xml",
-        "https://ornektekstil.example/"
+        "https://sehermensucat.com/products.xml",
+        "https://sehermensucat.com/"
       ]
     },
     {
       "row_id": "7",
       "brand": "TUT",
-      "title": "TKD0962 Örnek Kadın Pandora Bato Külot",
+      "title": "TKD0962 Tutku Kadın Pandora Bato Külot",
       "category_suggestion": "Kadın İç Giyim > Kadın Bato Külot",
       "variant": "975 Kombin / 4",
       "short_description": "",
-      "manufacturer": "Örnek Tekstil San. ve Tic. A.Ş.",
-      "official_product_url": "https://ornektekstil.example/tkd0962-ornek-kadin-pandora-bato-kulot",
+      "manufacturer": "Seher Mensucat Tekstil San. ve Tic. A.Ş.",
+      "official_product_url": "https://sehermensucat.com/tkd0962-tutku-kadin-pandora-bato-kulot",
       "image_url": null,
-      "source_url": "https://ornektekstil.example/products.xml",
+      "source_url": "https://sehermensucat.com/products.xml",
       "rights_status": "unknown",
       "consumer_sale_price": null,
       "stock_quantity": null,
       "invoice_data": {
         "quantity": 12,
         "unit": "ad",
-        "unit_price": 40,
-        "total_amount": 480
+        "unit_price": 35,
+        "total_amount": 420
       },
       "attributes": [
         { "name": "Ürün kodu", "value": "TKD0962" },
@@ -316,12 +316,12 @@ I'll research each brand's official website, starting with searches for the bran
       "canonical_row_id": null,
       "validation": {
         "status": "ambiguous",
-        "notes": "Resmî üretici sitesinin ürün akışında (products.xml) TKD0962 'Örnek Kadın Pandora Bato Külot' kaydı görüldü, ancak ürün sayfası sayfa getirme limiti nedeniyle açılamadı; kimlik ve varyant kesinleştirilemedi."
+        "notes": "Resmî üretici sitesinin ürün akışında (products.xml) TKD0962 'Tutku Kadın Pandora Bato Külot' kaydı görüldü, ancak ürün sayfası sayfa getirme limiti nedeniyle açılamadı; kimlik ve varyant kesinleştirilemedi."
       },
       "image_validation_status": "not_verified",
       "sources": [
-        "https://ornektekstil.example/products.xml",
-        "https://ornektekstil.example/"
+        "https://sehermensucat.com/products.xml",
+        "https://sehermensucat.com/"
       ]
     }
   ]

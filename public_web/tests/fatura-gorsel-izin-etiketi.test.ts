@@ -57,6 +57,6 @@ describe("üretici izni görünürlük sınırı", () => {
 
   it("esnafın mevcut izin uyarısı korunur", () => {
     expect(kaynak("src/components/owner/InvoiceToProducts.tsx"))
-      .toContain("üretici fotoğrafı — kullanım izni sonra istenecek");
+      .toContain("üretici fotoğrafı — izin doğrulanınca vitrinde görünür");
   });
 });
