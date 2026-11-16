@@ -8,6 +8,12 @@ import {
 } from "@/lib/faturaKartSozlesmesi";
 
 export const URUN_KART_PRESET = "@preset/urun-kart-olusturucu";
+export const URUN_KART_PRESET_YENI = "@preset/vixrex-urun-karti-v2";
+export type PresetAkis = "mevcut" | "yeni";
+export const akis = (): PresetAkis =>
+  process.env.PRESET_AKIS === "yeni" ? "yeni" : "mevcut";
+const secilenKartPreset = (secilenAkis: PresetAkis) =>
+  secilenAkis === "yeni" ? URUN_KART_PRESET_YENI : URUN_KART_PRESET;
 
 type Kayit = Record<string, unknown>;
 
@@ -15,26 +21,30 @@ function metin(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
 }
 
-export function kartPresetIstekGovdesi(okuma: GoruSonucu): Record<string, unknown> {
+export function kartPresetIstekGovdesi(okuma: GoruSonucu, secilenAkis: PresetAkis = akis()): Record<string, unknown> {
   const satirlar = okuma.satirlar.map((s, i) => ({
     row_id: String(i + 1), satir_no: s.satirNo, raw_invoice_line: s.hamSatir,
     brand: s.marka, name: s.ad, code: s.model, barcode: s.barkod,
     variant: s.varyant, size: s.beden, net_quantity: s.gramaj,
     invoice_data: { quantity: s.adet, unit: s.birim, unit_price: s.birimFiyat, total_amount: s.tutar },
-    previous_product_research: {
-      description: s.siteAciklama, product_url: s.siteSayfa,
-      image_urls: s.siteGorseller ?? (s.siteGorsel ? [s.siteGorsel] : []),
-      category: s.siteKategori, manufacturer: s.uretici, attributes: s.ozellikler,
-      validation_status: s.dogrulamaDurumu, matched_attributes: s.eslesenBilgiler,
-      unmatched_attributes: s.eksikler, image_validation_status: s.gorselDogrulamaDurumu,
-      sources: s.kaynaklar,
-    },
+    ...(secilenAkis === "mevcut"
+      ? {
+          previous_product_research: {
+            description: s.siteAciklama, product_url: s.siteSayfa,
+            image_urls: s.siteGorseller ?? (s.siteGorsel ? [s.siteGorsel] : []),
+            category: s.siteKategori, manufacturer: s.uretici, attributes: s.ozellikler,
+            validation_status: s.dogrulamaDurumu, matched_attributes: s.eslesenBilgiler,
+            unmatched_attributes: s.eksikler, image_validation_status: s.gorselDogrulamaDurumu,
+            sources: s.kaynaklar,
+          },
+        }
+      : {}),
   }));
   const gruplar = [...new Set(satirlar.map((s) => s.brand))].map((brand) => ({
     brand, rows: satirlar.filter((s) => s.brand === brand),
   }));
   return {
-    model: URUN_KART_PRESET, stream: true,
+    model: secilenKartPreset(secilenAkis), stream: true,
     provider: { require_parameters: true },
     messages: [{ role: "user", content: [
       "İlk presetin faturadan okuduğu satırlar aşağıdadır. Presetindeki araştırma ve ürün kartı görevini tamamla.",
@@ -138,7 +148,8 @@ function bosKart(kart: KartSozlesmesi, satir: { ad?: string }): boolean {
   return !kart.ad && !metin(satir.ad) && !kart.barkod && !kart.kod && !kart.resmiSayfa;
 }
 
-export async function kartPresetYanitiniOku(cevap: Response, okuma: GoruSonucu) {
+export async function kartPresetYanitiniOku(cevap: Response, okuma: GoruSonucu, _secilenAkis: PresetAkis = akis()) {
+  void _secilenAkis;
   const { icerik, ...kullanim } = await faturaYanitMetniniOku(cevap);
   const { govde, kartlar } = await kartYanitiniCoz(icerik);
   const items = new Map(kartlar.map((kart) => [kart.rowId, kart]));
