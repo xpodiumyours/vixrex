@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { VixrexAvatar } from "@/app/v/[slug]/components/VixrexAvatar";
 import {
   parseConsentSnapshot,
   readConsentSnapshot,
@@ -84,17 +85,10 @@ export function MascotFab({
       <button
         type="button"
         onClick={onToggle}
-        className="pointer-events-auto flex h-[60px] w-[60px] items-center justify-center overflow-hidden rounded-full border-[1.5px] border-[#38A0E4]/60 bg-[#0E1B2E]/80 transition-transform hover:scale-105 animate-mascot-pulse"
+        className="pointer-events-auto flex items-center justify-center p-0 bg-transparent border-0 cursor-pointer transition-transform duration-300 hover:scale-110 active:scale-95 group focus:outline-none"
         aria-label="Vixrex Asistan'ı aç"
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/images/vixrex_v_crystal_mascot.webp"
-          alt=""
-          width={60}
-          height={60}
-          className="h-full w-full object-contain p-1"
-        />
+        <VixrexAvatar size={72} variant="fab" decorative />
       </button>
     </div>
   );

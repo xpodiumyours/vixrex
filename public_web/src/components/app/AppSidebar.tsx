@@ -1,23 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { KesfetIkonu, StorefrontIkonu } from "@/components/site/icons";
 import { useAppShell } from "@/components/app/AppShellContext";
+import { VixrexAvatar } from "@/app/v/[slug]/components/VixrexAvatar";
 
 function MaskotIkonu({ boyut = 20, opacity = 1 }: { boyut?: number; opacity?: number }) {
   return (
-    <Image
-      src="/images/vixrex_maskot_ikon.png"
-      alt=""
-      aria-hidden="true"
-      width={boyut}
-      height={boyut}
-      className="object-contain"
-      style={{ opacity }}
-    />
+    <div style={{ opacity }}>
+      <VixrexAvatar size={boyut} decorative />
+    </div>
   );
 }
 

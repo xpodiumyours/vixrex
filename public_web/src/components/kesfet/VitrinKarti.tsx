@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import type { KesfetVitrini } from "@/lib/explore";
 import { useKesfetKirala } from "@/lib/useKesfetKirala";
 import { AYLIK_PREMIUM_BEDEL, PREMIUM_DEGIL_ROZET } from "@/lib/fiyatlandirma";
+import { VixrexAvatar } from "@/app/v/[slug]/components/VixrexAvatar";
 
 export type PremiumBilgisi = {
   aktif: boolean;
@@ -335,10 +336,7 @@ export function VitrinKarti({
       >
         <div className="p-5">
           <div className="flex items-start gap-3">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-lp-primary/60 bg-lp-surface-soft" aria-hidden="true">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/images/vixrex_v_crystal_mascot.webp" alt="" className="h-9 w-9 object-contain" />
-            </span>
+            <VixrexAvatar size={40} halo decorative />
             <div className="min-w-0">
               <h2 id={`kirala-baslik-${vitrin.slug}`} className="truncate text-[14px] font-black">Vixrex</h2>
               <p className="mt-1 text-[12px] font-semibold text-lp-muted">{vitrin.ad} vitrini işletmene ayarlıyorum</p>

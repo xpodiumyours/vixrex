@@ -1,3 +1,5 @@
+import { VixrexAvatar } from "@/app/v/[slug]/components/VixrexAvatar";
+
 interface FaturaAkisBasligiProps {
   adim: "sec" | "okunuyor" | "urunler" | "yaziliyor" | "bitti";
   baslik: string;
@@ -21,7 +23,7 @@ export function FaturaAkisBasligi({ adim, baslik, aciklama, yayinDogrulandi = fa
         ))}
       </ol>
       <div className="fatura-asistan">
-        <Image src="/images/vixrex_v_crystal_mascot.webp" alt="" width={20} height={20} />
+        <VixrexAvatar size={24} decorative />
         <div>
           <span className="fatura-asistan-adi">Vixrex Asistan</span>
           <h3>{baslik}</h3>
@@ -31,4 +33,3 @@ export function FaturaAkisBasligi({ adim, baslik, aciklama, yayinDogrulandi = fa
     </header>
   );
 }
-import Image from "next/image";
