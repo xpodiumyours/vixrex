@@ -15,8 +15,8 @@ export function SiteChromeBoundary({
   footer,
 }: SiteChromeBoundaryProps) {
   const pathname = usePathname();
-  const kesfetMi = pathname === "/kesfet" || pathname.startsWith("/kesfet/");
-  const anaSayfaMi = pathname === "/";
+  const anaSayfaMi = !pathname || pathname === "/" || pathname === "";
+  const kesfetMi = Boolean(pathname && (pathname === "/kesfet" || pathname.startsWith("/kesfet/")));
 
   return (
     <>
