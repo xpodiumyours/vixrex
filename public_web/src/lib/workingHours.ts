@@ -34,7 +34,7 @@ const TIMEZONE = "Europe/Istanbul";
 function padTime(value: string): string | null {
   const m = String(value || "")
     .trim()
-    .match(/^(\d{1,2}):(\d{2})$/);
+    .match(/^(\d{1,2})[:.,](\d{2})$/);
   if (!m) return null;
   const h = Number(m[1]);
   const min = Number(m[2]);
@@ -73,7 +73,7 @@ export function normalizeWeekMap(raw: unknown): WeekMap | null {
  * serbest metinden çıkarımının da kullandığı TEK DOĞRU KAYNAK (bkz.
  * serbestMetinCikarim.ts). Anchor YOK: bir cümlenin/paragrafın ortasında
  * geçen bir aralığı da bulur, yalnız tam eşleşen bir string'i değil. */
-export const TIME_RANGE_REGEX = /(\d{1,2}:\d{2})\s*[-–]\s*(\d{1,2}:\d{2})/;
+export const TIME_RANGE_REGEX = /(\d{1,2}[:.,]\d{2})\s*[-–—]\s*(\d{1,2}[:.,]\d{2})/;
 
 /** Bir metindeki ilk "HH:MM - HH:MM" aralığını bulur. */
 export function findTimeRange(

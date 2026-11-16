@@ -47,3 +47,33 @@ describe("findTimeRange — serbest metin çıkarımının TEK DOĞRU KAYNAĞI",
     expect(eski?.["1"]).toEqual({ start: yeni?.start, end: yeni?.end, active: true });
   });
 });
+
+describe("noktalama hoşgörüsü — esnaf nasıl yazarsa yazsın tek tipe iner", () => {
+  it("nokta ayracını kabul eder", () => {
+    expect(findTimeRange("Hafta ici 09.00-20.00")).toEqual({
+      start: "09:00",
+      end: "20:00",
+      raw: "09:00 - 20:00",
+    });
+  });
+
+  it("virgül ayracını ve boşluksuz tireyi kabul eder", () => {
+    expect(findTimeRange("Hafta içi 09,00 – 20,00")).toEqual({
+      start: "09:00",
+      end: "20:00",
+      raw: "09:00 - 20:00",
+    });
+  });
+
+  it("noktalı yazım vitrinde haftalık haritaya döner", () => {
+    const parsed = weekMapFromPlainString("Hafta içi 09.00-20.00, Cumartesi 09.00-19.00, Pazar kapalı");
+    expect(parsed?.["1"]).toEqual({ start: "09:00", end: "20:00", active: true });
+    expect(parsed?.["7"].active).toBe(false);
+  });
+
+  it("aralıksız yazımda null döner, uydurma saat üretilmez", () => {
+    expect(findTimeRange("Pazar kapalı")).toBeNull();
+    expect(findTimeRange("25.00-26.00")).toBeNull();
+    expect(weekMapFromPlainString("Pazar kapalı")).toBeNull();
+  });
+});

@@ -298,6 +298,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
     bolum: "contact",
     maxUzunluk: 400,
     kalite: true,
+    ipucu: "Örn: Hafta içi 09:00 - 20:00",
   },
   {
     anahtar: "instagram",
