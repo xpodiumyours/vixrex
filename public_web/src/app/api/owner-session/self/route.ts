@@ -89,10 +89,10 @@ export async function POST(request: NextRequest) {
 
   if (sonuc.has_store !== true) {
     // Hata değil: hesabın henüz vitrini yok. Çağıran taraf kurulum
-    // akışına yönlendirsin.
+    // akışına yönlendirsin. Konsolda 404 kirliliği yaratmaması için 200 döner.
     return NextResponse.json(
       { tamam: false, sebep: sonuc.reason ?? "NO_STORE" },
-      { status: 404 }
+      { status: 200 }
     );
   }
 

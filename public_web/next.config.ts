@@ -163,6 +163,15 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: "/app/fatura",
+        destination: "/app/urunler",
+        permanent: false,
+      },
+    ];
+  },
   async headers() {
     return [
       {
