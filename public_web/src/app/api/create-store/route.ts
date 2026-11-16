@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { yayinSahiplikKarari } from "@/lib/yayinSahiplikKarari";
 import { kesfetOnbelleginiYenile } from "@/lib/explore";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { sektorelPaketUret, type SektorelVitrinPaketi } from "@/lib/sektorelSablonlar";
 
 /**
  * Yeni vitrin oluşturma (sıfırdan).
@@ -80,7 +81,10 @@ function aktifYasalBelgeleriHaritala(
   return sonuc;
 }
 
-async function taslakYasalOnayiEsitle(slug: string): Promise<void> {
+async function taslakYasalOnayiEsitle(
+  slug: string,
+  sektorelPaket?: SektorelVitrinPaketi,
+): Promise<void> {
   const admin = getSupabaseAdmin();
   const satir = await admin
     .from("stores")
@@ -100,6 +104,7 @@ async function taslakYasalOnayiEsitle(slug: string): Promise<void> {
     .from("store_working_drafts")
     .update({
       draft_data: {
+        ...(sektorelPaket ?? {}),
         ...veri,
         privacy_notice_acknowledged: true,
         terms_accepted: true,
@@ -209,9 +214,13 @@ export async function POST(request: NextRequest) {
   const editToken = generateEditToken();
 
   // Store data hazırla
+  const kategoriGirdi = typeof govde.kategori === "string" ? govde.kategori.trim() : "";
+  const aciklamaGirdi = typeof govde.description === "string" ? govde.description.trim() : "";
+  const sektorelPaket = sektorelPaketUret(kategoriGirdi, aciklamaGirdi);
+
   const storeData: Record<string, unknown> = {
     name,
-    kategori: typeof govde.kategori === "string" ? govde.kategori.trim() : "",
+    kategori: kategoriGirdi,
     whatsapp:
       typeof govde.whatsapp === "string" ? govde.whatsapp.trim() : "",
     address: typeof govde.address === "string" ? govde.address.trim() : "",
@@ -219,8 +228,7 @@ export async function POST(request: NextRequest) {
       typeof govde.province_name === "string" ? govde.province_name.trim() : "",
     district_name:
       typeof govde.district_name === "string" ? govde.district_name.trim() : "",
-    description:
-      typeof govde.description === "string" ? govde.description.trim() : "",
+    description: sektorelPaket.description,
     business_type:
       typeof govde.business_type === "string"
         ? govde.business_type.trim()
@@ -228,6 +236,22 @@ export async function POST(request: NextRequest) {
     status: "Açık",
     is_published: true,
     show_storefront_rating: false,
+    hero_badge: sektorelPaket.hero_badge,
+    category_section_title: sektorelPaket.category_section_title,
+    product_section_title: sektorelPaket.product_section_title,
+    featured_banner_label: sektorelPaket.featured_banner_label,
+    featured_banner_title: sektorelPaket.featured_banner_title,
+    featured_banner_description: sektorelPaket.featured_banner_description,
+    about_kicker: sektorelPaket.about_kicker,
+    about_title: sektorelPaket.about_title,
+    corporate_bio: sektorelPaket.corporate_bio,
+    about_values: sektorelPaket.about_values,
+    faq_section_kicker: sektorelPaket.faq_section_kicker,
+    faq_section_title: sektorelPaket.faq_section_title,
+    faq_section_description: sektorelPaket.faq_section_description,
+    faq_items: sektorelPaket.faq_items,
+    gallery_section_kicker: sektorelPaket.gallery_section_kicker,
+    gallery_section_title: sektorelPaket.gallery_section_title,
   };
 
   const latitude = typeof govde.latitude === "number" ? govde.latitude : null;
@@ -541,7 +565,7 @@ export async function POST(request: NextRequest) {
 
   if (yasalOnay) {
     try {
-      await taslakYasalOnayiEsitle(slug);
+      await taslakYasalOnayiEsitle(slug, sektorelPaket);
     } catch (esitlemeHatasi) {
       console.error("[create-store] taslak onay eşitlenemedi:", esitlemeHatasi);
     }
