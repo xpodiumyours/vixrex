@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
   const { error } = await admin.rpc("update_working_draft_field", {
     p_session_token: ownerSession.sessionToken,
     p_key: kolon,
-    p_value: deger === null ? null : JSON.stringify(deger),
+    p_value: deger ?? null,
   });
 
   if (error) {
