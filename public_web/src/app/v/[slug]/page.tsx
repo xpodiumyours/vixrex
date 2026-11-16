@@ -914,10 +914,11 @@ export default async function StorePage(props: PageProps) {
         <Link
           href={`/v/${encodeURIComponent(store.slug)}?editor=1`}
           prefetch={false}
-          className="fixed bottom-5 right-5 z-40 flex min-h-14 items-center gap-3 rounded-2xl border border-sky-400/45 bg-[#0D1B2D] py-2 pl-2 pr-4 text-white shadow-2xl transition-colors hover:bg-[#14283F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+          aria-label="Vixrex Asistan ile düzenle"
+          className="fixed bottom-5 right-5 z-40 flex items-center justify-center p-0 bg-transparent border-0 cursor-pointer transition-transform duration-300 hover:scale-110 active:scale-95 group focus:outline-none"
         >
-          <VixrexAvatar size={44} decorative />
-          <span className="text-sm font-bold">Vixrex Asistan ile düzenle</span>
+          <VixrexAvatar size={72} variant="fab" decorative />
+          <span className="sr-only">Vixrex Asistan ile düzenle</span>
         </Link>
       ) : null}
       {isOwnerMode ? (

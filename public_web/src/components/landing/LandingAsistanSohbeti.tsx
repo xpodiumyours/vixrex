@@ -17,6 +17,7 @@ import { vixRexMesajlari, hizliSecenekEtiketi } from "@/lib/vixrexMesajlari";
 import { validateField } from "@/lib/vitrinFieldValidation";
 import { PROFILES } from "@/lib/vitrinProfile";
 import { resolveBusinessCategory, kategoriUrlParcasi } from "@/lib/businessCategories";
+import { VixrexAvatar } from "@/app/v/[slug]/components/VixrexAvatar";
 
 /**
  * Yayınlama sonrası bitiş metinleri — Flutter Web'deki "İşte bu kadar!"
@@ -377,16 +378,7 @@ export function LandingAsistanSohbeti({
       {/* Başlık çubuğu — Flutter ChatTopBar ile parite: 40px avatar, 13px başlık */}
       <div className="flex items-center justify-between border-b border-lp-border/60 px-3.5 py-3">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-lp-primary/20">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/images/vixrex_v_crystal_mascot.webp"
-              alt=""
-              width={20}
-              height={20}
-              className="h-5 w-5 object-contain"
-            />
-          </div>
+          <VixrexAvatar size={32} halo decorative />
           <div>
             <p className="text-[13px] font-black text-lp-text">Vixrex</p>
             <p className="text-[11px] font-medium text-lp-muted">Dijital vitrin asistanı</p>
@@ -812,16 +804,7 @@ export function LandingAsistanSohbeti({
 function Balon({ children, gecmis = false, genis = false }: { children: React.ReactNode; gecmis?: boolean; genis?: boolean }) {
   return (
     <div className="flex gap-2.5">
-      <div className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-lp-primary/20">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/images/vixrex_v_crystal_mascot.webp"
-          alt=""
-          width={20}
-          height={20}
-          className="h-5 w-5 object-contain"
-        />
-      </div>
+      <VixrexAvatar size={24} decorative />
       {/* GAP-08: aktif adım border daha belirgin, geçmiş adım soluk */}
       <div className={`rounded-xl rounded-tl-sm border px-3.5 py-3 text-[14px] leading-[1.5] text-lp-text ${genis ? "max-w-[85%] sm:max-w-[520px] lg:max-w-[640px]" : "max-w-[260px]"} ${gecmis ? "border-lp-border/40 bg-lp-surface/60" : "border-lp-primary/20 bg-lp-primary/[0.08]"}`}>
         {children}

@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
-import Image from "next/image";
 import { useOwnerDraft } from "./hooks/useOwnerDraft";
 import { useOwnerChat } from "./hooks/useOwnerChat";
 import { useFieldSelection } from "./hooks/useFieldSelection";
@@ -773,7 +772,7 @@ export default function OwnerAssistantPanel({
                 type="button"
                 aria-label="Sohbet geçmişini aç"
                 onClick={mobilGecmisiAc}
-                className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-sky-400/45 bg-[#0D1B2D] shadow-[0_0_16px_rgba(14,165,233,0.20)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70"
+                className="grid h-11 w-11 shrink-0 place-items-center bg-transparent border-0 p-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70"
               >
                 <VixrexAvatar size={44} decorative />
               </button>
@@ -816,14 +815,7 @@ export default function OwnerAssistantPanel({
           aria-label="Vixrex Asistanı Aç"
           className="fixed bottom-5 right-5 z-[74] flex items-center justify-center p-0 bg-transparent border-0 cursor-pointer transition-transform duration-300 hover:scale-110 active:scale-95 group focus:outline-none"
         >
-          <Image
-            src="/images/vixrex_v_crystal_mascot.webp"
-            alt="Vixrex Asistan"
-            width={72}
-            height={72}
-            priority
-            className="h-16 w-16 md:h-[72px] md:w-[72px] object-contain drop-shadow-[0_0_16px_rgba(56,160,228,0.6)] transition-all duration-300 group-hover:drop-shadow-[0_0_24px_rgba(56,160,228,0.9)]"
-          />
+          <VixrexAvatar size={72} variant="fab" decorative />
         </button>
       )}
 
