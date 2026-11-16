@@ -1,3 +1,4 @@
+// Graphify etki: YonetmenMasasi -> public_web/src/lib/sektorelSablonlar.ts:360
 import { describe, it, expect } from "vitest";
 import {
   sektorelYonetmenSecenekleri,
