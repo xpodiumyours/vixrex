@@ -822,7 +822,7 @@ export default function OwnerAssistantPanel({
             width={72}
             height={72}
             priority
-            className="h-16 w-16 md:h-18 md:w-18 object-contain drop-shadow-[0_0_18px_rgba(56,160,228,0.7)] transition-all duration-300 group-hover:drop-shadow-[0_0_28px_rgba(56,160,228,0.95)]"
+            className="h-16 w-16 md:h-[72px] md:w-[72px] object-contain drop-shadow-[0_0_16px_rgba(56,160,228,0.6)] transition-all duration-300 group-hover:drop-shadow-[0_0_24px_rgba(56,160,228,0.9)]"
           />
         </button>
       )}
