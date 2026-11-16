@@ -2,14 +2,19 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  handoffAdimDevami,
   ownerChatInitialMessages,
   type AssistantHandoffV1,
   type OwnerChatMessage,
 } from "@/lib/assistantHandoff";
 import type { HazirlikRaporu } from "@/lib/vitrinReadiness";
+import { mergeOwnerChatHistory } from "@/lib/ownerChatMerge";
 import { supabase } from "@/lib/supabase";
 
-export type Mesaj = OwnerChatMessage;
+export type Mesaj = OwnerChatMessage & {
+  serverSeq?: number;
+  clientMessageId?: string | null;
+};
 
 // Owner panelindeki dinamik Assistant cevapları katalog metni değildir; alan
 // adı/değeri gibi çalışma zamanı verisi taşır. Yine de kullanıcı-facing gerçek
@@ -35,22 +40,39 @@ export interface OwnerChatHook {
 export function useOwnerChat(
   rapor: HazirlikRaporu,
   handoff: AssistantHandoffV1 | null,
-  opts?: { slug?: string; initialDbMessages?: Array<{ role: string; message_text: string; message_key?: string | null }> }
+  opts?: {
+    slug?: string;
+    initialDbMessages?: Array<{
+      role: string;
+      message_text: string;
+      message_key?: string | null;
+      seq?: number;
+      client_message_id?: string | null;
+    }>;
+    initialConversationId?: string | null;
+    akisAdimi?: string | null;
+  }
 ): OwnerChatHook {
+  const initialDbMessages = opts?.initialDbMessages;
+  const initialConversationId = opts?.initialConversationId ?? null;
+  const akisAdimi = opts?.akisAdimi ?? null;
   const [mesajlar, setMesajlar] = useState<Mesaj[]>(() => {
-    if (opts?.initialDbMessages && opts.initialDbMessages.length > 0) {
-      return opts.initialDbMessages.map((m, i) => ({
+    if (initialDbMessages && initialDbMessages.length > 0) {
+      return initialDbMessages.map((m, i) => ({
         id: i + 1,
         kimden: (m.role === "assistant" ? "asistan" : "kullanici") as Mesaj["kimden"],
         metin: m.message_text,
+        ...(typeof m.seq === "number" ? { serverSeq: m.seq } : {}),
+        ...(m.client_message_id ? { clientMessageId: m.client_message_id } : {}),
       }));
     }
-    return ownerChatInitialMessages(rapor, handoff);
+    return ownerChatInitialMessages(rapor, handoff, akisAdimi);
   });
-  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [conversationId, setConversationId] = useState<string | null>(initialConversationId);
   const akisRef = useRef<HTMLDivElement>(null);
   const sayacRef = useRef(mesajlar.length);
   const initialLoadDoneRef = useRef(false);
+  const akisDevamiEklendiRef = useRef<string | null>(null);
 
   // Faz 1: Kalıcı hesaplarda ortak Supabase konuşmasına bağlan
   // - Flutter ve landing aynı `assistant_conversations` tablosunu kullanıyor
@@ -75,6 +97,7 @@ export function useOwnerChat(
           messages?: Array<{ role: string; message_text: string; message_key?: string | null; seq: number; client_message_id?: string | null }>;
         };
         if (!conv.id) return;
+        if (initialConversationId && conv.id !== initialConversationId) return;
         setConversationId((prev) => prev ?? conv.id!);
         const dbMessages = Array.isArray(conv.messages) ? conv.messages : [];
         if (dbMessages.length === 0) return;
@@ -82,8 +105,9 @@ export function useOwnerChat(
           id: i + 1,
           kimden: (m.role === "assistant" ? "asistan" : "kullanici") as Mesaj["kimden"],
           metin: m.message_text,
+          serverSeq: m.seq,
+          clientMessageId: m.client_message_id ?? null,
         }));
-        // Dedup: DB daha uzunsa veya ilk mesaj farklıysa (handoff → gerçek DB geçişi) senkronize et
         setMesajlar((prev) => {
           // Faz C2: hizliCevaplar DB'ye yazılmıyor (yalnız oturum belleği) —
           // poll DB'den taze bir dizi getirdiğinde aynı index'teki metin
@@ -99,15 +123,34 @@ export function useOwnerChat(
                   }
                 : msg
             );
-          if (opts2?.forceReplace) return zenginlestir(mapped);
-          if (mapped.length > prev.length) return zenginlestir(mapped);
-          // Aynı uzunlukta ama içerik farklıysa (başka cihaz yazdı, poll geç yakaladı) — seq’e göre en günceli al
-          if (mapped.length === prev.length && mapped.length > 0) {
-            const prevFirst = prev[0]?.metin ?? "";
-            const mappedFirst = mapped[0]?.metin ?? "";
-            if (prevFirst !== mappedFirst) return zenginlestir(mapped);
-          }
-          return prev;
+          const devamMetni = handoff ? null : handoffAdimDevami(akisAdimi);
+          const gecmisiKoru = (hedef: Mesaj[]) =>
+            mergeOwnerChatHistory(prev, hedef, (mesaj) => {
+              sayacRef.current += 1;
+              return { ...mesaj, id: sayacRef.current };
+            });
+          const devamiKoru = (hedef: Mesaj[]) => {
+            if (!devamMetni) return hedef;
+            if (!prev.some((mesaj) => mesaj.metin === devamMetni)) return hedef;
+            if (hedef.some((mesaj) => mesaj.metin === devamMetni)) return hedef;
+            sayacRef.current += 1;
+            return [
+              ...hedef,
+              { id: sayacRef.current, kimden: "asistan" as const, metin: devamMetni },
+            ];
+          };
+          if (opts2?.forceReplace) return devamiKoru(gecmisiKoru(zenginlestir(mapped)));
+          const oncekiIcerik = devamMetni
+            ? prev.filter((mesaj) => mesaj.metin !== devamMetni)
+            : prev;
+          const ayniIcerik =
+            mapped.length === oncekiIcerik.length &&
+            mapped.every(
+              (msg, i) =>
+                msg.kimden === oncekiIcerik[i]?.kimden &&
+                msg.metin === oncekiIcerik[i]?.metin
+            );
+          return ayniIcerik ? prev : devamiKoru(gecmisiKoru(zenginlestir(mapped)));
         });
         sayacRef.current = Math.max(sayacRef.current, mapped.length);
       } catch {
@@ -116,11 +159,11 @@ export function useOwnerChat(
         pollActiveRef.current = false;
       }
     },
-    []
+    [initialConversationId, akisAdimi, handoff]
   );
 
   useEffect(() => {
-    if (opts?.initialDbMessages && opts.initialDbMessages.length > 0) return;
+    if (initialDbMessages && initialDbMessages.length > 0) return;
     if (initialLoadDoneRef.current) return;
     initialLoadDoneRef.current = true;
     let cancelled = false;
@@ -131,25 +174,10 @@ export function useOwnerChat(
     return () => {
       cancelled = true;
     };
-  }, [opts?.initialDbMessages, fetchAndSync]);
+  }, [initialDbMessages, fetchAndSync]);
 
   // Poll: 15sn’de bir ve sekme görünür olunca — başka cihaz/Flutter yazdıysa otomatik düşer
   useEffect(() => {
-    if (opts?.initialDbMessages && opts.initialDbMessages.length > 0) return; // server’dan gelen varsa poll’a gerek yok (ileride eklenebilir)
-    let interval: ReturnType<typeof setInterval> | null = null;
-    let cancelled = false;
-
-    const startPoll = async () => {
-      // İlk poll’u 15sn sonra değil, 3sn sonra başlat — hızlı senkron için
-      await new Promise((r) => setTimeout(r, 3000));
-      if (cancelled) return;
-      interval = setInterval(() => {
-        if (document.visibilityState !== "visible") return;
-        fetchAndSync();
-      }, 15000);
-    };
-    startPoll();
-
     const onVisible = () => {
       if (document.visibilityState === "visible") fetchAndSync();
     };
@@ -160,13 +188,31 @@ export function useOwnerChat(
       fetchAndSync({ forceReplace: true });
     });
 
+    const pollId = window.setInterval(() => {
+      if (document.visibilityState === "visible") fetchAndSync();
+    }, 15_000);
+
     return () => {
-      cancelled = true;
-      if (interval) clearInterval(interval);
+      window.clearInterval(pollId);
       document.removeEventListener("visibilitychange", onVisible);
       sub.subscription.unsubscribe();
     };
-  }, [fetchAndSync, opts?.initialDbMessages]);
+  }, [fetchAndSync]);
+
+  useEffect(() => {
+    if (handoff) return;
+    const devam = handoffAdimDevami(akisAdimi);
+    if (!devam || akisDevamiEklendiRef.current === devam) return;
+    akisDevamiEklendiRef.current = devam;
+    setMesajlar((prev) => {
+      if (prev.some((mesaj) => mesaj.metin === devam)) return prev;
+      sayacRef.current += 1;
+      return [
+        ...prev,
+        { id: sayacRef.current, kimden: "asistan", metin: devam },
+      ];
+    });
+  }, [akisAdimi, handoff]);
 
   const mesajEkle = useCallback(
     (

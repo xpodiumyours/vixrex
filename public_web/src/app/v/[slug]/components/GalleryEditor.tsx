@@ -13,10 +13,11 @@ interface Props {
   slug: string;
   items: GalleryItem[];
   onClose: () => void;
+  onSaved?: (items: GalleryItem[]) => void;
   inline?: boolean;
 }
 
-export function GalleryEditor({ slug, items, onClose, inline = false }: Props) {
+export function GalleryEditor({ slug, items, onClose, onSaved, inline = false }: Props) {
   const router = useRouter();
   const [drafts, setDrafts] = useState<GalleryItem[]>(
     () => (items.length > 0 ? items : [{ imageUrl: "", title: "" }])
@@ -107,6 +108,7 @@ export function GalleryEditor({ slug, items, onClose, inline = false }: Props) {
         setMesaj(govde?.hata ?? "Kaydedilemedi.");
         return;
       }
+      onSaved?.(temiz);
       router.refresh();
       onClose();
     } catch {
@@ -114,7 +116,7 @@ export function GalleryEditor({ slug, items, onClose, inline = false }: Props) {
     } finally {
       setKaydediliyor(false);
     }
-  }, [slug, drafts, router, onClose]);
+  }, [slug, drafts, router, onClose, onSaved]);
 
   const content = (
     <>

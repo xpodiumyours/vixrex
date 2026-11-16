@@ -110,6 +110,23 @@ KartDurumu? kartDurumuFromWire(dynamic deger) {
   return null;
 }
 
+RightsStatus rightsStatusFromWire(dynamic deger) {
+  final ham = (deger ?? '').toString().trim().toLowerCase();
+  for (final status in RightsStatus.values) {
+    if (status.wireValue == ham) return status;
+  }
+  if (ham == 'var' || ham == 'izinli' || ham == 'onayli') {
+    return RightsStatus.verifiedSupplierPermission;
+  }
+  if (ham == 'reddedildi' || ham == 'red' || ham == 'denied') {
+    return RightsStatus.denied;
+  }
+  if (ham == 'esnaf' || ham == 'merchant') {
+    return RightsStatus.merchantOwnedMedia;
+  }
+  return RightsStatus.unknown;
+}
+
 /// Aynı kod/barkod birden çok ürüne düştüğünde gösterilen aday.
 class InvoiceConflictCandidate {
   final String ad;

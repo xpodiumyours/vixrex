@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 
@@ -64,9 +64,14 @@ const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 export function useCanliVitrinSenkron(
   slug: string,
   etkin: boolean,
-  taslakDinle = false
+  taslakDinle = false,
+  onTaslakDegisti?: () => void | Promise<void>
 ): void {
   const router = useRouter();
+  const onTaslakDegistiRef = useRef(onTaslakDegisti);
+  useEffect(() => {
+    onTaslakDegistiRef.current = onTaslakDegisti;
+  });
 
   useEffect(() => {
     if (!etkin) return;
@@ -89,6 +94,7 @@ export function useCanliVitrinSenkron(
         },
         () => {
           router.refresh();
+          void onTaslakDegistiRef.current?.();
         }
       )
       .subscribe();
@@ -105,6 +111,7 @@ export function useCanliVitrinSenkron(
             (payload) => {
               if (payload.payload?.clientId === senkronClientId) return;
               router.refresh();
+              void onTaslakDegistiRef.current?.();
             }
           )
           .subscribe()

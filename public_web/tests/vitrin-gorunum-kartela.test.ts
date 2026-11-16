@@ -65,4 +65,16 @@ describe("vitrin görünüm kartelası", () => {
     expect(kaynak("src/components/VitrinCartDock.tsx")).not.toContain("text-red-");
     expect(kaynak("src/components/ProductCommercePanel.tsx")).not.toContain("text-red-");
   });
+
+  it("kart varyantlı üründe sepet doluyken bile seçenekler düğmesini korur, tekil üründe sepete ekle ve stok sınırı uygular", () => {
+    const kart = kaynak("src/app/v/[slug]/ProductCatalog.tsx");
+    expect(kart).toContain("Seçenekleri gör →");
+    expect(kart).toContain("Sepette (${totalProductCartQty}) · Seçenekler →");
+    expect(kart).toContain("+ Sepete ekle");
+    expect(kart).toContain("productVariantCount(product.variants, metadata.templateKey) > 1");
+    expect(kart).toContain("const matchingCartItems = cartItems.filter((item) => item.productSlug === productSlug);");
+    expect(kart).toContain("const totalProductCartQty = matchingCartItems.reduce((acc, item) => acc + item.quantity, 0);");
+    expect(kart).toContain("const stokSinirinda = maxQuantity != null && totalProductCartQty >= maxQuantity;");
+    expect(kart).toContain("if (!trackingEnabled)");
+  });
 });

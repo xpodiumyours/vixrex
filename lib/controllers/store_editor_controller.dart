@@ -277,6 +277,8 @@ class StoreEditorController extends ChangeNotifier
         _hasPendingExternalDraft = true;
         _lastExternalDraftEtiket = etiket;
         if (!_isDisposed) notifyListeners();
+        // Taslak degisikligi published satira yansimamis olabilir; published
+        // veriyi cekip _data'yi ezmek yerine pending bayragi korunur.
       },
     );
   }
@@ -790,8 +792,8 @@ class StoreEditorController extends ChangeNotifier
 
   Future<Result<void>> updateProductImported(Product product) async {
     final index = _data.products.indexWhere((p) => p.id == product.id);
-    if (index >= 0) return updateProduct(index, product);
-    return addProduct(product);
+    if (index < 0) return Result.failure(Failure('Ürün bulunamadı.'));
+    return updateProduct(index, product);
   }
 
   void _revalidateStoreCache() {
@@ -801,7 +803,7 @@ class StoreEditorController extends ChangeNotifier
   }
 
   Future<void> withdrawPublicationConsent() async {
-    final slug = _publishedInfo?.slug ?? _data.slug;
+    final slug = _publishedInfo?.slug.trim() ?? '';
     final editToken = _publishedInfo?.editToken;
     if (slug.isEmpty || editToken == null) return;
 

@@ -21,10 +21,17 @@ interface Props {
     imageUrl: string;
   };
   onClose: () => void;
+  onSaved?: (data: {
+    label: string | null;
+    title: string | null;
+    description: string | null;
+    priceText: string | null;
+    imageUrl: string | null;
+  }) => void;
   inline?: boolean;
 }
 
-export function CampaignEditor({ slug, mevcut, onClose, inline = false }: Props) {
+export function CampaignEditor({ slug, mevcut, onClose, onSaved, inline = false }: Props) {
   const router = useRouter();
   const [label, setLabel] = useState(mevcut.label);
   const [title, setTitle] = useState(mevcut.title);
@@ -47,18 +54,28 @@ export function CampaignEditor({ slug, mevcut, onClose, inline = false }: Props)
     ];
 
     try {
-      for (const [anahtar, deger] of alanlar) {
-        const res = await fetch("/api/owner-draft", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ slug, anahtar, deger, clientId: null }),
-        });
-        if (!res.ok) {
-          const govde = await res.json();
-          setMesaj(govde?.hata ?? "Kaydedilemedi.");
-          return;
-        }
+      const batchRes = await fetch("/api/owner-draft-batch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug,
+          commandId: crypto.randomUUID(),
+          degisiklikler: alanlar.map(([anahtar, deger]) => ({ anahtar, deger })),
+          clientId: null,
+        }),
+      });
+      if (!batchRes.ok) {
+        const govde = await batchRes.json();
+        setMesaj(govde?.hata ?? "Kaydedilemedi.");
+        return;
       }
+      onSaved?.({
+        label: label.trim() || null,
+        title: title.trim() || null,
+        description: description.trim() || null,
+        priceText: priceText.trim() || null,
+        imageUrl: imageUrl.trim() || null,
+      });
       router.refresh();
       onClose();
     } catch {
@@ -66,7 +83,7 @@ export function CampaignEditor({ slug, mevcut, onClose, inline = false }: Props)
     } finally {
       setKaydediliyor(false);
     }
-  }, [slug, label, title, description, priceText, imageUrl, router, onClose]);
+  }, [slug, label, title, description, priceText, imageUrl, router, onClose, onSaved]);
 
   const content = (
     <>

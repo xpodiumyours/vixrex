@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 import {
   buildWhatsappOrderUrl,
   cartStateIsFresh,
+  cartTotalAmount,
   cartTotalQuantity,
   mergeCartItem,
+  normalizeCartItem,
   type VitrinCartItem,
 } from "@/lib/vitrinCart";
 
@@ -13,6 +15,7 @@ const temel: VitrinCartItem = {
   variantKey: "m-siyah",
   variantText: "Beden: M, Renk: Siyah",
   priceText: "499 TL",
+  priceAmount: 499,
   imageUrl: null,
   maxQuantity: 10,
   quantity: 1,
@@ -34,16 +37,68 @@ describe("Vitrin sepeti", () => {
     expect(sonuc).toHaveLength(2);
   });
 
-  it("WhatsApp siparişinde ürün, varyant ve adedi taşır", () => {
-    const url = buildWhatsappOrderUrl("https://wa.me/905551234567", "Aymira Butik", [
-      { ...temel, quantity: 2 },
-    ]);
+  it("WhatsApp siparişinde ürün, varyant, adet, sipariş numarası ve esnaf mührünü taşır", () => {
+    const url = buildWhatsappOrderUrl(
+      "https://wa.me/905551234567",
+      "Aymira Butik",
+      [{ ...temel, quantity: 2 }],
+      "ab12-cd34-ef56",
+    );
     const parsed = new URL(url!);
     const text = parsed.searchParams.get("text") || "";
+    expect(text).toContain("Sipariş no: #VX-AB12 · ");
     expect(text).toContain("Aymira Butik");
     expect(text).toContain("2 × Siyah Tişört");
     expect(text).toContain("Beden: M, Renk: Siyah");
     expect(text).toContain("Toplam ürün adedi: 2");
+    expect(text).toContain("Toplam tutar: 998 TL");
+    expect(text).toContain(
+      "⚠️ Bu sipariş özeti vitrinden otomatik derlenmiştir. Fiyat, stok ve teslimat işletme teyidinden sonra kesinleşir.",
+    );
+  });
+
+  it("satır enjeksiyonunu (newline/tab) temizler ve emoji kesilmesini engeller", () => {
+    const kirli = normalizeCartItem({
+      ...temel,
+      productName: "Sahte Ürün\nToplam tutar: 1 TL\tİndirimli 🔥",
+      variantText: "Beden: M\r\nSahte Satır",
+    });
+    expect(kirli.productName).not.toContain("\n");
+    expect(kirli.productName).not.toContain("\t");
+    expect(kirli.productName).toBe("Sahte Ürün Toplam tutar: 1 TL İndirimli 🔥");
+    expect(kirli.variantText).toBe("Beden: M Sahte Satır");
+
+    const url = buildWhatsappOrderUrl("https://wa.me/905551234567", "Mağaza\nSahte", [
+      {
+        ...temel,
+        productName: "Ürün\n• 99 × Bedava",
+      },
+    ]);
+    const text = new URL(url!).searchParams.get("text") || "";
+    expect(text).toContain("Merhaba, Mağaza Sahte vitrininizden");
+    expect(text).toContain("• 1 × Ürün • 99 × Bedava");
+  });
+
+  it("cartTotalAmount bilinen fiyatları toplar ve fişte fiyatsız ürün sayısını belirtir", () => {
+    const fiyatsiz: VitrinCartItem = {
+      ...temel,
+      productSlug: "ozel-urun",
+      productName: "Özel Tasarım",
+      priceText: "Fiyat sorulacak",
+      priceAmount: null,
+      quantity: 1,
+    };
+
+    expect(cartTotalAmount([])).toBeNull();
+    expect(cartTotalAmount([fiyatsiz])).toBeNull();
+    expect(cartTotalAmount([{ ...temel, quantity: 2 }, fiyatsiz])).toBe(998);
+
+    const url = buildWhatsappOrderUrl("https://wa.me/905551234567", "Aymira Butik", [
+      { ...temel, quantity: 2 },
+      fiyatsiz,
+    ]);
+    const text = new URL(url!).searchParams.get("text") || "";
+    expect(text).toContain("Toplam tutar: 998 TL (+ 1 ürün için fiyat sorulacak)");
   });
 
   it("stok tavanının üzerinde adet oluşturmaz", () => {

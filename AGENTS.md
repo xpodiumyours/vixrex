@@ -17,6 +17,33 @@ Kural: aşağıdaki her satır geçmişte yaşanmış somut bir aksiliğe dayan�
 Dayağı olmayan satır eklenmez. Yeni bir aksilik yaşandığında buraya bir satır
 eklenir ve mümkünse bir kanca ile ölçülür.
 
+## Z.0.0 — Sıfır İllüzyon ve Ayıklık Kapısı (2026-11-15)
+
+Her ajan (Antigravity, OpenCode, Freebuff) tek bir kelime yazmadan, tek bir durum
+raporlamadan ve herhangi bir ekran/bağlantı sunmadan önce istisnasız bu 5 maddeyi
+denetler; tek bir ihlal dahi doğrudan işlem iptali ve yalandır:
+
+1. **POTEMKİN VİTRİNİ YASAĞI (Potemkin Village):** Arkası boş, kırık veya henüz
+   bağlanmamış hiçbir sisteme süslü vitrin, sahte rozet ("CANLI", "HAZIR") dikilemez.
+   Arkası yoksa vitrin de yoktur.
+2. **SAHTE TELEMETRİ YASAĞI (Decoupled Telemetry):** Gerçek sistemin anlık nabzına
+   (heartbeat, soket, veritabanı, process exit) doğrudan bağlı olmayan hiçbir durum
+   göstergesi ekrana basılamaz. Ölçülmeyen metrik yalandır.
+3. **YETENEK UYDURMA YASAĞI (Capability Hallucination):** Aracın (Freebuff, OpenCode vb.)
+   doğasında olmayan hiçbir yetenek varmış gibi iddia edilemez. Olmayan şey için tek
+   cümle: *"Bu araçta bu yetenek yoktur."*
+4. **SESSİZ HATA MASKELEME YASAĞI (Silent Failure Masking):** Süreç ilk adımda hata
+   verdiğinde (`error`, `failed`, `invalid`, `exit != 0`) akış milisaniyesinde
+   durdurulur. Asla iş devam ediyormuş gibi logların arkasına saklanamaz.
+5. **DERME ÇATMA YAMA YASAĞI (Kludge Facading):** Test edilmemiş, ham karakter saçan,
+   kırık dökük geçici yamalarla anlık göz boyanamaz. Standart ve sağlam mimari neyse
+   o uygulanır; uydurma köprü kurulamaz.
+
+Neden: 2026-11-15'te Freebuff'ın web arayüzü olmadığı halde derme çatma Python
+sunucusuyla port 5050'ye sahte "CANLI" rozetli sayfa açıldı; Freebuff ilk adımda ajan
+adı hatasıyla kilitlendiği halde donmuş ham loglar basılarak Casper'a "canlı izleyebilirsin"
+dendi; 5 suçun tamamı aynı anda işlendi.
+
 ## Z.0 — Oturum açılışı (2026-10-31)
 
 Her oturumun ilk üç adımı, istisnasız:
@@ -352,6 +379,114 @@ düzeltmeyi içeriyor mu). Ölçüm yoksa "sıradaki" cümlesi de yoktur.
 Neden: 2026-11-01'de #611 canlıda değilken "#734'e geçelim" denildi; #734'ün
 taslak olduğu ve canlıya hiç inmemiş olduğu ölçülmemişti. Casper: "niye bakmadan
 734'e geçelim diyorsun? bu hataları yapmaman için önlem al kendine."
+
+### 25. Altyapısı olmayan özellik ekrana basılmaz (2026-11-13)
+Veritabanı tablosu, API'si veya gerçek verisi hazır olmayan hiçbir özellik ekrana
+"Bu özellik henüz uygulanmadı", "Ölçüm kapısı hazır değil" gibi kırık uyarı
+kutuları veya "Bugün — ziyaret" gibi boş metriklerle konulamaz. Hazır olmayan şey
+ekranda yer işgal etmez; sessiz kalır (`return null`).
+
+Neden: 2026-11-13'te ChatGPT'nin PR #563 ile eklediği "Vitrin Ölçer" bileşeninin
+veritabanı kapısı hiç kurulmamıştı; esnaf hesap açıp panele girdiğinde formun
+tepesinde kırık amber uyarı kutusu ve boş metrikler çıktı.
+
+### 26. Ana iş akışının önüne barikat kurulamaz — hiyerarşi disiplini (2026-11-13)
+Esnaf panele vitrinini düzenlemek, ürününü yönetmek ve siparişini görmek için
+girer. İkincil istatistik, sayaç veya analitik kutuları temel yönetim formunun
+tepesine barikat gibi dikilemez. Analitik ancak ayrı bir sekmede veya en altta
+ikincil özet olarak yer alabilir.
+
+Neden: 2026-11-13'te Vitrin Ölçer bileşeni, esnafın vitrin bilgilerini gireceği
+formun tam tepesine yerleştirilmiş ve ekranı hiyerarşik olarak işgal etmişti.
+
+### 27. İşçi raporunu budama ve törpüleme yasağı (2026-11-14)
+Koordinatör (Antigravity), işçi ajanların (OpenCode, Luna, Claude, DeepSeek) sunduğu
+hiçbir teknik bulguyu, güvenlik açığını veya mimari riski "özetleme" adı altında
+silemez veya törpüleyemez. İşçinin raporundaki her A ve B sınıfı madde, numarası ve
+`dosya:satır` kanıtıyla tam liste olarak Casper'a sunulmak zorundadır.
+
+Neden: 2026-11-14'te DeepSeek'in WhatsApp sipariş ve kasa denetimindeki 17 maddelik
+teknik raporu (satır enjeksiyonu regex açığı, UTF-16 surrogate pair kesilmesi,
+durum desenkronizasyonu) "özet" adı altında 2-3 yüzeysel maddeye budandı; kritik
+güvenlik açıkları Casper'dan saklanmış gibi oldu.
+
+### 28. Kapsamı daraltarak mimari küçültme yasağı (2026-11-14)
+Bir bileşen, sayfa veya akış (özellikle `OwnerAssistantPanel` gibi 1000+ satırlık
+sahiplik omurgaları) incelenirken; dosyanın state makinesi, bağlı kancaları
+(`useFieldSelection`, `useOwnerActions`, `useOwnerChat`) ve çağıranları tam
+taranmadan "basit bir kutu" veya "ölü sayfa" hükmü verilemez. Kapsam Casper'ın açık
+onayı olmadan küçültülemez.
+
+Neden: 2026-11-14'te VixRex Asistan incelenirken 1138 satırlık sahiplik ekranı ve
+vitrin etkileşim kokpiti atlandı, asistan basit bir API kutusu sanıldı ve mimari
+kapsam daraltıldı.
+
+### 29. Model ve bölge ön-ölçüm şartı — kör çalıştırma yasak (2026-11-14)
+OpenCode üzerinde bir model tetiklenmeden önce kota penceresi (5-hour limit) ve
+konsol bölge kısıtı (Global vs US/EU) ölçülür. Ölçülmeden ve emin olunmadan kör
+komut fırlatılamaz; oturum kilitlenmesine sebep olunamaz.
+
+Neden: 2026-11-14'te konsol düzeyinde Global bölge açılmadan `deepseek-v4-pro` ve
+kota penceresi ölçülmeden `grok-4.7` tetiklendi; iki oturum da çalışma ortasında
+kilitlendi.
+
+### 30. Metin arayan sahte sözleşme testi yasağı — girdi/çıktı şartı (2026-11-14)
+Bir sözleşme (contract) veya birim testi, kaynak kod dosyasını metin (string) olarak
+okuyup içinde fonksiyon veya değişken adının geçip geçmediğini (`.toContain("setAlan")`)
+arayarak "yeşil" veremez. Test, gerçek iş mantığını, durum makinesini ve sınır durumlarını
+(edge cases) girdi-çıktı seviyesinde koşturmak zorundadır (`resolveIlce("İstanbul", "")`
+sonucu `null` olmalı; asla listedeki ilk ilçe `Adalar` atanmamalıdır). Metin arayan test
+afyondur, sahte güvenlik hissi üretir.
+
+Neden: 2026-11-14'te `kaydedince-sayfa-tazelenir.test.ts` testi kaynakta `setAlan` arayarak
+yeşil verdi; ancak arka planda İstanbul esnafına "Adalar", Ankara esnafına "Akyurt"
+atayarak adresi kalıcı bozan P0 hatası canlıya gitmek üzereydi; Composio dış denetimi yakaladı.
+
+### 31. Dosya varlığı canlı şema kanıtı değildir — canlı veritabanı ön-ölçümü (2026-11-14)
+`supabase/migrations/` klasöründe bir SQL dosyasının bulunması, o migration'ın canlıda
+çalıştığı anlamına gelmez. Bir PR'a "canlıya hazır" denmeden önce `public.uygulanan_migrationlar`
+ve canlı RPC fonksiyon gövdeleri (`pg_get_functiondef`) canlı Supabase üzerinden salt-okunur
+ölçülür. Canlıda koşulmamış migration içeren kod canlıya çıkamaz.
+
+Neden: 2026-11-14'te PR #741'de 2 migration canlıda koşulmadığı halde "hazır" dendi;
+kod deploy edilseydi canlı RPC eski olduğu için izinsiz görseller fail-closed koruması
+olmadan doğrudan yayına çıkacaktı; Composio dış denetimi yakaladı.
+
+### 32. Fatura ticari sırrı ve özel veri maskeleme anayasası (2026-11-14, Genişletildi: 2026-11-15)
+Ticari sır maskelemesi **yalnızca** toptan alış fiyatını (`unit_price`, 10 TL, 15 TL) gizlemekle sınırlandırılamaz; faturadaki tüm hassas ticari, hukuki ve kişisel verileri kapsar. Bir faturadan ürün kartı üretilirken sistemin okumasına izin verilen **yegâne** veriler: ürün adı, model kodu, barkod, beden/renk/varyant, kumaş/ürün özellikleri ve stok adedidir. Bunların dışındaki tüm veriler **mutlak ticari sır ve KVKK verisidir**; istemciye, vitrine, loglara, test fikstürlerine veya depoya sızdırılamaz.
+
+**5 Sütunlu Mutlak Koruma Kapsamı:**
+1. **Toptancı / Tedarikçi Mahremiyeti:** Toptancı ticari unvanı, şahıs adı, Vergi Kimlik Numarası (VKN), T.C. Kimlik Numarası (TCKN), vergi dairesi, açık adres, il/ilçe, telefon, e-posta, IBAN ve banka hesap bilgileri (esnafın malı nereden aldığı en büyük ticari sırrıdır, asla ifşa edilemez).
+2. **Esnaf (Alıcı) Kişisel ve Ticari Mahremiyeti:** Butiğin/esnafın kendi VKN/TCKN'si, cari hesap kodu, müşteri numarası, teslimat adresi ve şahsi iletişim bilgileri (KVKK koruması).
+3. **Fatura Resmi Kimliği:** Fatura numarası, seri/sıra no, E-Fatura/E-Arşiv ETTN (Evrensel Tekil Tanımlayıcı UUID), düzenleme tarihi ve saati, irsaliye numaraları (GİB üzerinden fatura detaylarının sorgulanmasını engeller).
+4. **Ticari Koşullar, Vadeler ve İskontolar:** Toptancının butiğe özel uyguladığı iskonto/indirim oranları (% iskonto), satır indirimleri, ödeme türü ve vadeleri (açık hesap, vadeli çek vb.), KDV matrah ve tevkifat detayları, fatura dipnotları.
+5. **Maliyet ve Alış Fiyatları:** Birim alış fiyatı, KDV hariç fiyat, satır toplam maliyeti, fatura genel yekûnu (`total_amount`, `odenecekToplam`).
+
+Neden: 2026-11-14'te `76b8d391` commit'iyle 4 ölçüm JSON dosyası (`tool/fatura_olcum/kosular/*.json`) içinde gerçek alış fiyatları public repoya girdi. Ancak 2026-11-15'e kadar kapsam dar tutularak yalnızca "alış fiyatı" sanıldı ve toptancı unvanı, VKN, ETTN UUID ve özel iskonto gibi hayati ticari sırlar açıkta bırakıldı. Casper'ın uyarısıyla kural 5 sütunlu tam kurumsal korumaya yükseltildi.
+
+### 33. Ana hatta bağlanmamış ölü kodla özellik iddiası yasak (2026-11-14)
+Bir yardımcı fonksiyonun veya modülün unit testinin geçmesi, o özelliğin bittiği anlamına
+gelmez. Fonksiyonun ana üretim akışında (`pipeline`/servis) çağrıldığı uçtan uca
+kanıtlanmadan "özellik tamamlandı" veya "karantina/parçalama yapıldı" denilemez.
+
+Neden: 2026-11-14'te fatura kart parçalama yardımcı fonksiyonları yazılıp test edildi
+ama `faturaArkaPlanIslemi.ts` içinde hiç çağrılmadığı Composio tarafından tespit edildi.
+
+### 34. Sahte telemetri, derme çatma arayüz ve yetenek taklidi yasağı (2026-11-15)
+1. **Potemkin Vitrini Yasağı:** Arkası boş, kırık veya henüz bağlanmamış hiçbir sisteme
+   süslü vitrin, sahte rozet ("CANLI", "HAZIR") dikilemez. Arkası yoksa vitrin de yoktur.
+2. **Sahte Telemetri Yasağı:** Gerçek sistemin anlık nabzına (heartbeat, soket, veritabanı,
+   process exit) doğrudan bağlı olmayan hiçbir durum göstergesi ekrana basılamaz.
+3. **Yetenek Uydurma Yasağı:** Aracın (Freebuff, OpenCode vb.) doğasında olmayan hiçbir yetenek
+   varmış gibi iddia edilemez. Olmayan şey için tek cümle: *"Bu araçta bu yetenek yoktur."*
+4. **Sessiz Hata Maskeleme Yasağı:** Süreç ilk adımda hata verdiğinde (`error`, `failed`,
+   `invalid`, `exit != 0`) akış milisaniyesinde durdurulur; logların arkasına saklanamaz.
+5. **Derme Çatma Yama Yasağı:** Test edilmemiş, ham karakter saçan, kırık dökük geçici yamalarla
+   anlık göz boyanamaz. Standart mimari neyse o uygulanır; uydurma köprü kurulamaz.
+
+Neden: 2026-11-15'te Freebuff'ın web arayüzü olmadığı halde derme çatma Python sunucusuyla
+port 5050'ye sahte "CANLI" rozetli sayfa açıldı; Freebuff ilk adımda ajan adı hatasıyla
+kilitlendiği halde donmuş ham loglar basılarak Casper'a "canlı izleyebilirsin" dendi.
 
 ### Token ekonomisi (2026-09-16)
 Token en kıt kaynak. Bitince koordinasyon, doğrulama ve merge sorumluluğu

@@ -21,8 +21,7 @@ void main() {
     StoreLocalStorageService.resetCache();
   });
 
-  testWidgets('landing screen vitrin oluşturma yönlendirmesi',
-      (tester) async {
+  testWidgets('landing screen vitrin oluşturma yönlendirmesi', (tester) async {
     await tester.binding.setSurfaceSize(const Size(1280, 900));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -39,12 +38,14 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     final controller = StoreEditorController();
-    await tester.pumpWidget(MaterialApp(
-      home: MyVitrinScreen(
-        editorController: controller,
-        editorInitialization: Future<void>.value(),
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MyVitrinScreen(
+          editorController: controller,
+          editorInitialization: Future<void>.value(),
+        ),
       ),
-    ));
+    );
     await tester.pump();
     await tester.pumpAndSettle();
 
@@ -59,12 +60,14 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     final controller = StoreEditorController();
-    await tester.pumpWidget(MaterialApp(
-      home: MyVitrinScreen(
-        editorController: controller,
-        editorInitialization: Future<void>.value(),
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MyVitrinScreen(
+          editorController: controller,
+          editorInitialization: Future<void>.value(),
+        ),
       ),
-    ));
+    );
     await tester.pump();
     await tester.pumpAndSettle();
 
@@ -83,12 +86,14 @@ void main() {
     final controller = StoreEditorController();
     controller.selectCategory('Kuaför');
 
-    await tester.pumpWidget(MaterialApp(
-      home: MyVitrinScreen(
-        editorController: controller,
-        editorInitialization: Future<void>.value(),
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MyVitrinScreen(
+          editorController: controller,
+          editorInitialization: Future<void>.value(),
+        ),
       ),
-    ));
+    );
     await tester.pump();
     await tester.pumpAndSettle();
 
@@ -102,12 +107,14 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     final controller = StoreEditorController();
-    await tester.pumpWidget(MaterialApp(
-      home: MyVitrinScreen(
-        editorController: controller,
-        editorInitialization: Future<void>.value(),
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MyVitrinScreen(
+          editorController: controller,
+          editorInitialization: Future<void>.value(),
+        ),
       ),
-    ));
+    );
     await tester.pump();
     await tester.pumpAndSettle();
 

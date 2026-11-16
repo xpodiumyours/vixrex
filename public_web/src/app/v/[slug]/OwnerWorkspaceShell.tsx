@@ -86,6 +86,16 @@ export interface OwnerWorkspaceShellProps {
   draft?: WorkingDraftData | null;
   sessionExpiresAt?: number | null;
   assistantHandoff?: AssistantHandoffV1 | null;
+  /** Handoff adım bilgisi — OwnerAssistantPanel akış devamı için. */
+  flowState?: Record<string, unknown> | null;
+  /** Sunucuda okunmuş konuşma geçmişi — ilk boyamada doğru geçmiş. */
+  initialAssistantMessages?: Array<{
+    role: string;
+    message_text: string;
+    message_key?: string | null;
+  }> | null;
+  /** Sunucuda okunan konuşmanın kimliği — istemci poll'u yalnız bunu tazeler. */
+  initialAssistantConversationId?: string | null;
   bookingSettings?: Record<string, unknown> | null;
   campaignBanner?: { label: string; title: string; description: string; priceText: string; imageUrl: string } | null;
   /** Kiralık ŞABLONUN kendisi mi (stores.is_demo) — yalnız ek güvenlik
@@ -98,6 +108,9 @@ export default function OwnerWorkspaceShell({
   draft,
   sessionExpiresAt,
   assistantHandoff,
+  flowState,
+  initialAssistantMessages,
+  initialAssistantConversationId,
   bookingSettings,
   campaignBanner,
   isDemo,
@@ -239,6 +252,9 @@ export default function OwnerWorkspaceShell({
         urunFiyatsizSayisi={vitrinProps.urunFiyatsizSayisi ?? 0}
         urunAciklamasizSayisi={vitrinProps.urunAciklamasizSayisi ?? 0}
         assistantHandoff={assistantHandoff}
+        flowState={flowState}
+        initialDbMessages={initialAssistantMessages ?? null}
+        initialConversationId={initialAssistantConversationId ?? null}
         atlananAlanlar={
           Array.isArray(draft?.atlanan_alanlar) ? draft.atlanan_alanlar : []
         }

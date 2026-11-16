@@ -65,12 +65,12 @@ export function SectionVisibilityToggle({
       // Supabase'e kaydet
       setKaydediliyor(true);
       try {
-        const yanit = await fetch("/api/owner-draft", {
+        const yanit = await fetch("/api/owner-structured-field", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             slug,
-            anahtar: "section_visibility",
+            kolon: "section_visibility",
             deger: mevcut,
             clientId: taslakClientId(),
           }),

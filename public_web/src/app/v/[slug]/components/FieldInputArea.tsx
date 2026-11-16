@@ -109,8 +109,32 @@ export function FieldInputArea({
   };
 
   if (compact) {
+    const isGorsel = seciliAlan?.tip === "gorsel";
     return (
       <div data-vixrex-mobile-composer="true" className="flex items-center gap-2">
+        {isGorsel ? (
+          <label
+            className="grid h-11 w-11 shrink-0 cursor-pointer place-items-center rounded-xl border border-sky-400/30 bg-sky-500/15 text-sky-300 shadow-[0_4px_12px_rgba(56,189,248,0.15)] transition hover:bg-sky-500/25 active:scale-95"
+            title="Görsel veya Fotoğraf Yükle"
+            aria-label="Görsel veya Fotoğraf Yükle"
+          >
+            <input
+              type="file"
+              accept="image/*"
+              className="sr-only"
+              disabled={kaydediliyor}
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) void gorselYukle(f);
+              }}
+            />
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+              <circle cx="8.5" cy="8.5" r="1.5" />
+              <polyline points="21 15 16 10 5 21" />
+            </svg>
+          </label>
+        ) : null}
         <div className="flex h-11 min-w-0 flex-1 items-center overflow-hidden rounded-xl border border-sky-200/20 bg-slate-900/70 pl-3 pr-1 focus-within:border-blue-500/60">
           <textarea
             ref={girisRef}
@@ -235,57 +259,81 @@ export function FieldInputArea({
         </div>
       ) : seciliAlan?.anahtar === "il" ? (
         /* İl dropdown — Flutter Web FormLocationInfo karşılığı */
-        <div className="flex items-end gap-2">
-          <select
-            value={mevcutIl}
-            onChange={(e) => {
-              const secilen = e.target.value;
-              setGiris(secilen);
-              onIlDegisti?.(secilen);
-            }}
-            disabled={kaydediliyor}
-            className="h-12 flex-1 rounded-lg border border-white/10 bg-slate-900/70 px-3.5 text-sm text-white outline-none focus:border-blue-500/60"
-          >
-            <option value="" disabled>İl seçin…</option>
-            {turkeyProvinces.map((p) => (
-              <option key={p.code} value={p.name}>{p.name}</option>
-            ))}
-          </select>
-          <button
-            type="button"
-            onClick={() => void gonderVeVitriniGoster()}
-            disabled={kaydediliyor || !mevcutIl}
-            className="h-12 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
-          >
-            {kaydediliyor ? "…" : "Gönder"}
-          </button>
+        <div className="space-y-2">
+          {onGpsKonumAl && (
+            <button
+              type="button"
+              onClick={onGpsKonumAl}
+              disabled={gpsLoading || kaydediliyor}
+              className="w-full rounded-lg border border-blue-500/30 bg-blue-500/10 px-3 py-1.5 text-[11px] font-bold text-blue-300 hover:bg-blue-500/20 disabled:opacity-50"
+            >
+              {gpsLoading ? "Konum alınıyor…" : "📍 GPS ile konumumu al"}
+            </button>
+          )}
+          <div className="flex items-end gap-2">
+            <select
+              value={mevcutIl}
+              onChange={(e) => {
+                const secilen = e.target.value;
+                setGiris(secilen);
+                onIlDegisti?.(secilen);
+              }}
+              disabled={kaydediliyor}
+              className="h-12 flex-1 rounded-lg border border-white/10 bg-slate-900/70 px-3.5 text-sm text-white outline-none focus:border-blue-500/60"
+            >
+              <option value="" disabled>İl seçin…</option>
+              {turkeyProvinces.map((p) => (
+                <option key={p.code} value={p.name}>{p.name}</option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={() => void gonderVeVitriniGoster()}
+              disabled={kaydediliyor || !mevcutIl}
+              className="h-12 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+            >
+              {kaydediliyor ? "…" : "Gönder"}
+            </button>
+          </div>
         </div>
       ) : seciliAlan?.anahtar === "ilce" ? (
         /* İlçe dropdown — seçili ile göre filtrelenmiş */
-        <div className="flex items-end gap-2">
-          <select
-            value={mevcutIlce}
-            onChange={(e) => {
-              const secilen = e.target.value;
-              setGiris(secilen);
-              onIlceDegisti?.(secilen);
-            }}
-            disabled={kaydediliyor || !mevcutIl}
-            className="h-12 flex-1 rounded-lg border border-white/10 bg-slate-900/70 px-3.5 text-sm text-white outline-none focus:border-blue-500/60 disabled:opacity-50"
-          >
-            <option value="" disabled>{mevcutIl ? "İlçe seçin…" : "Önce il seçin"}</option>
-            {getDistrictsForProvince(mevcutIl).map((d) => (
-              <option key={d} value={d}>{d}</option>
-            ))}
-          </select>
-          <button
-            type="button"
-            onClick={() => void gonderVeVitriniGoster()}
-            disabled={kaydediliyor || !mevcutIlce}
-            className="h-12 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
-          >
-            {kaydediliyor ? "…" : "Gönder"}
-          </button>
+        <div className="space-y-2">
+          {onGpsKonumAl && (
+            <button
+              type="button"
+              onClick={onGpsKonumAl}
+              disabled={gpsLoading || kaydediliyor}
+              className="w-full rounded-lg border border-blue-500/30 bg-blue-500/10 px-3 py-1.5 text-[11px] font-bold text-blue-300 hover:bg-blue-500/20 disabled:opacity-50"
+            >
+              {gpsLoading ? "Konum alınıyor…" : "📍 GPS ile konumumu al"}
+            </button>
+          )}
+          <div className="flex items-end gap-2">
+            <select
+              value={mevcutIlce}
+              onChange={(e) => {
+                const secilen = e.target.value;
+                setGiris(secilen);
+                onIlceDegisti?.(secilen);
+              }}
+              disabled={kaydediliyor || !mevcutIl}
+              className="h-12 flex-1 rounded-lg border border-white/10 bg-slate-900/70 px-3.5 text-sm text-white outline-none focus:border-blue-500/60 disabled:opacity-50"
+            >
+              <option value="" disabled>{mevcutIl ? "İlçe seçin…" : "Önce il seçin"}</option>
+              {getDistrictsForProvince(mevcutIl).map((d) => (
+                <option key={d} value={d}>{d}</option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={() => void gonderVeVitriniGoster()}
+              disabled={kaydediliyor || !mevcutIlce}
+              className="h-12 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+            >
+              {kaydediliyor ? "…" : "Gönder"}
+            </button>
+          </div>
         </div>
       ) : seciliAlan?.tip === "secim" && seciliAlan.secenekler ? (
         <div className="flex items-end gap-2">

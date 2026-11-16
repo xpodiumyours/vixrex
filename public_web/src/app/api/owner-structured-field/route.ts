@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { cookies } from "next/headers";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
-
+import { broadcastTaslakGuncellendi } from "@/lib/workingDraftBroadcast";
 /**
  * Yapılandırılmış JSONB alanları için API route.
  * faq_items, about_values gibi VITRIN_FIELDS şemasında olmayan
@@ -26,6 +26,7 @@ const ALLOWED_COLUMNS = new Set([
   "about_values",
   "gallery_items",
   "marketplace_links",
+  "section_visibility",
 ]);
 
 export async function POST(request: NextRequest) {
@@ -39,7 +40,7 @@ export async function POST(request: NextRequest) {
   const slug = typeof govde.slug === "string" ? govde.slug.trim() : "";
   const kolon = typeof govde.kolon === "string" ? govde.kolon.trim() : "";
   const deger = govde.deger;
-
+  const clientId = typeof govde.clientId === "string" ? govde.clientId : null;
   if (!slug || !kolon) {
     return NextResponse.json(
       { hata: "Vitrin veya alan belirtilmedi." },
@@ -91,6 +92,8 @@ export async function POST(request: NextRequest) {
     const durum = error.message === "INVALID_SESSION_TOKEN" ? 401 : 400;
     return NextResponse.json({ hata: metin }, { status: durum });
   }
+
+  broadcastTaslakGuncellendi(slug, clientId);
 
   return NextResponse.json({ tamam: true, kolon });
 }

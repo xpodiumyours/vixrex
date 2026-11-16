@@ -26,10 +26,11 @@ interface Props {
   slug: string;
   links: MarketplaceLink[];
   onClose: () => void;
+  onSaved?: (links: MarketplaceLink[]) => void;
   inline?: boolean;
 }
 
-export function MarketplaceEditor({ slug, links, onClose, inline = false }: Props) {
+export function MarketplaceEditor({ slug, links, onClose, onSaved, inline = false }: Props) {
   const router = useRouter();
   const [drafts, setDrafts] = useState<MarketplaceLink[]>(
     () => (links.length > 0 ? links : [{ id: `ml-${Date.now()}`, platform: "", url: "", subtitle: "" }])
@@ -84,6 +85,7 @@ export function MarketplaceEditor({ slug, links, onClose, inline = false }: Prop
         setMesaj(govde?.hata ?? "Kaydedilemedi.");
         return;
       }
+      onSaved?.(temiz);
       router.refresh();
       onClose();
     } catch {
@@ -91,7 +93,7 @@ export function MarketplaceEditor({ slug, links, onClose, inline = false }: Prop
     } finally {
       setKaydediliyor(false);
     }
-  }, [slug, drafts, router, onClose]);
+  }, [slug, drafts, router, onClose, onSaved]);
 
   const content = (
     <>

@@ -8,7 +8,7 @@ const oku = (yol: string) =>
 /**
  * Tek konuşma köprüsü (UI/UX cilası devamı, 2026-09-02) — landing'in
  * niyet akışı artık `assistant_conversations`'a yazıyor; sahip paneli ve
- * Keşfet'in Vixrex sekmesi (SharedVixrexAssistant) aynı auth.uid() ile
+ * sahip paneli aynı auth.uid() ile:
  * aynı konuşmayı devralıyor. Anonim Supabase Auth oturumu (signInAnonymously)
  * köprüyü kurar, Google linkIdentity() aynı uid'i koruduğu için konuşma
  * hesap bağlanınca da kaybolmaz.

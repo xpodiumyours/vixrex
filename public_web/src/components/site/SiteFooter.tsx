@@ -11,9 +11,7 @@ import { blogYayindaMi } from "@/data/blogYazilari";
  *   - `/privacy`  → mevcut, statik KVKK metni
  *   - `/terms`    → BÖYLE BİR ROTA YOK. Doğrusu `/legal/terms`
  *                   (src/app/legal/[type], türler: privacy|terms|consent)
- *   - `/data-deletion` → yalnız `/data-deletion/status/[code]` var,
- *                   dizinin kendisi 404. Kırık bağlantı eklemek yerine
- *                   şimdilik dışarıda bırakıldı; o sayfa açılınca eklenir.
+ *   - `/legal/data-deletion` → hesap ve veri silme metni (/legal/[type])
  */
 export function SiteFooter() {
   return (
@@ -70,6 +68,12 @@ export function SiteFooter() {
             className="px-3 py-2 text-[13px] font-extrabold text-lp-muted transition-colors hover:text-lp-text-alt"
           >
             Kullanım Şartları
+          </Link>
+          <Link
+            href="/legal/data-deletion"
+            className="px-3 py-2 text-[13px] font-extrabold text-lp-muted transition-colors hover:text-lp-text-alt"
+          >
+            Hesap ve Veri Silme
           </Link>
         </nav>
       </div>

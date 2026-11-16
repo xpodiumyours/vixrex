@@ -13,6 +13,14 @@ class VitrinProductCard extends StatelessWidget {
   final String stockStatus;
   final VoidCallback? onTap;
   final VoidCallback? onWhatsAppTap;
+  final bool hasVariants;
+  final int cartQuantity;
+  final int? maxQuantity;
+  final bool showCart;
+  final VoidCallback? onAddToCart;
+  final VoidCallback? onViewOptions;
+  final VoidCallback? onIncrement;
+  final VoidCallback? onDecrement;
 
   /// Görsel oranı (genişlik / yükseklik). Katalog kart yüksekliği buna göre hesaplanır.
   static const double imageAspectRatio = 1.15;
@@ -31,6 +39,14 @@ class VitrinProductCard extends StatelessWidget {
     this.stockStatus = 'Mevcut',
     this.onTap,
     this.onWhatsAppTap,
+    this.hasVariants = false,
+    this.cartQuantity = 0,
+    this.maxQuantity,
+    this.showCart = true,
+    this.onAddToCart,
+    this.onViewOptions,
+    this.onIncrement,
+    this.onDecrement,
   });
 
   static double cardHeightForWidth(double width) {
@@ -227,12 +243,51 @@ class VitrinProductCard extends StatelessWidget {
                       ),
                     ],
                   ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: _buildCartSection(),
+                  ),
                 ],
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildCartSection() {
+    if (!showCart) return const SizedBox.shrink();
+    if (maxQuantity != null && maxQuantity! <= 0) {
+      return const SizedBox.shrink();
+    }
+    final cap = maxQuantity ?? 10;
+    if (hasVariants) {
+      return TextButton(
+        onPressed: onViewOptions,
+        child: Text(
+          cartQuantity > 0
+              ? 'Sepette ($cartQuantity) · Seçenekler →'
+              : 'Seçenekleri gör →',
+        ),
+      );
+    }
+    if (cartQuantity == 0) {
+      return ElevatedButton(
+        onPressed: onAddToCart,
+        child: const Text('+ Sepete ekle'),
+      );
+    }
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        IconButton(onPressed: onDecrement, icon: const Text('−')),
+        Text('$cartQuantity'),
+        IconButton(
+          onPressed: cartQuantity >= cap ? null : onIncrement,
+          icon: const Text('+'),
+        ),
+      ],
     );
   }
 

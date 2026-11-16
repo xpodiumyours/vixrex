@@ -20,10 +20,11 @@ interface Props {
   slug: string;
   items: FaqItem[];
   onClose: () => void;
+  onSaved?: (items: FaqItem[]) => void;
   inline?: boolean;
 }
 
-export function FaqEditor({ slug, items, onClose, inline = false }: Props) {
+export function FaqEditor({ slug, items, onClose, onSaved, inline = false }: Props) {
   const router = useRouter();
   const [drafts, setDrafts] = useState<FaqItem[]>(
     () => items.length > 0 ? items : [{ id: `faq-${Date.now()}`, question: "", answer: "" }]
@@ -73,6 +74,7 @@ export function FaqEditor({ slug, items, onClose, inline = false }: Props) {
         setMesaj(govde?.hata ?? "Kaydedilemedi.");
         return;
       }
+      onSaved?.(temizItems);
       router.refresh();
       onClose();
     } catch {
@@ -80,7 +82,7 @@ export function FaqEditor({ slug, items, onClose, inline = false }: Props) {
     } finally {
       setKaydediliyor(false);
     }
-  }, [slug, drafts, router, onClose]);
+  }, [slug, drafts, router, onClose, onSaved]);
 
   const content = (
     <>

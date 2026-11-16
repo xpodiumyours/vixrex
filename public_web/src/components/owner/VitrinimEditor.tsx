@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { OnayIkonu, StorefrontIkonu } from "@/components/site/icons";
 import { useAppShell } from "@/components/app/AppShellContext";
+import { useCanliVitrinSenkron } from "@/lib/canliVitrinSenkron";
 import { VitrinPaylasimKarti } from "@/components/owner/VitrinPaylasimKarti";
 import { OwnerDashboardMetrics } from "@/components/owner/OwnerDashboardMetrics";
 import { FIELD_BY_KEY } from "@/lib/vitrinFieldSchema";
@@ -149,6 +150,12 @@ function filled(value: unknown): boolean {
 
 export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode = false, onCreate }: Props) {
   const { refreshShellStatus } = useAppShell();
+  useCanliVitrinSenkron(
+    store.slug,
+    !isCreationMode && Boolean(store.slug) && store.slug !== "taslak",
+    true,
+    () => { void onRefresh(); }
+  );
   const [draft, setDraft] = useState<Draft>({ name: store.name, ...initialDraft });
   const [openSection, setOpenSection] = useState(0);
   const [savingKey, setSavingKey] = useState<string | null>(null);
@@ -489,15 +496,15 @@ export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode 
 
                       {section.title === "İçerik ve SEO" ? (
                         <div className="space-y-6 pt-2">
-                          <div className="space-y-4"><h3 className="text-[13px] font-black text-lp-text">Hakkımızda</h3><AboutEditor inline slug={store.slug} mevcut={{ kicker: String(draft.about_kicker || ""), title: String(draft.about_title || ""), body: String(draft.corporate_bio || ""), imageUrl: String(draft.about_image_url || ""), imageCaption: String(draft.about_image_caption || ""), values: aboutValues }} onClose={() => { void onRefresh(); }} /></div>
-                          <div className="space-y-4"><h3 className="text-[13px] font-black text-lp-text">Öne çıkan kampanya</h3><CampaignEditor inline slug={store.slug} mevcut={{ label: String(draft.featured_banner_label || ""), title: String(draft.featured_banner_title || ""), description: String(draft.featured_banner_description || ""), priceText: String(draft.featured_banner_price_text || ""), imageUrl: String(draft.featured_banner_image_url || "") }} onClose={() => { void onRefresh(); }} /></div>
-                          <div className="space-y-4"><h3 className="text-[13px] font-black text-lp-text">Sık sorulanlar</h3><FaqEditor inline slug={store.slug} items={faqItems} onClose={() => { void onRefresh(); }} /></div>
-                          <div className="space-y-4"><h3 className="text-[13px] font-black text-lp-text">Pazar yeri bağlantıları</h3><MarketplaceEditor inline slug={store.slug} links={marketplaceLinks} onClose={() => { void onRefresh(); }} /></div>
+                          <div className="space-y-4"><h3 className="text-[13px] font-black text-lp-text">Hakkımızda</h3><AboutEditor inline slug={store.slug} mevcut={{ kicker: String(draft.about_kicker || ""), title: String(draft.about_title || ""), body: String(draft.corporate_bio || ""), imageUrl: String(draft.about_image_url || ""), imageCaption: String(draft.about_image_caption || ""), values: aboutValues }} onSaved={(d) => { setDraft((current) => ({ ...current, about_kicker: d.kicker, about_title: d.title, corporate_bio: d.body, about_image_url: d.imageUrl, about_image_caption: d.imageCaption, about_values: d.values })); void onRefresh(); }} onClose={() => { void onRefresh(); }} /></div>
+                          <div className="space-y-4"><h3 className="text-[13px] font-black text-lp-text">Öne çıkan kampanya</h3><CampaignEditor inline slug={store.slug} mevcut={{ label: String(draft.featured_banner_label || ""), title: String(draft.featured_banner_title || ""), description: String(draft.featured_banner_description || ""), priceText: String(draft.featured_banner_price_text || ""), imageUrl: String(draft.featured_banner_image_url || "") }} onSaved={(d) => { setDraft((current) => ({ ...current, featured_banner_label: d.label, featured_banner_title: d.title, featured_banner_description: d.description, featured_banner_price_text: d.priceText, featured_banner_image_url: d.imageUrl })); void onRefresh(); }} onClose={() => { void onRefresh(); }} /></div>
+                          <div className="space-y-4"><h3 className="text-[13px] font-black text-lp-text">Sık sorulanlar</h3><FaqEditor inline slug={store.slug} items={faqItems} onSaved={(items) => { setDraft((current) => ({ ...current, faq_items: items })); void onRefresh(); }} onClose={() => { void onRefresh(); }} /></div>
+                          <div className="space-y-4"><h3 className="text-[13px] font-black text-lp-text">Pazar yeri bağlantıları</h3><MarketplaceEditor inline slug={store.slug} links={marketplaceLinks} onSaved={(links) => { setDraft((current) => ({ ...current, marketplace_links: links })); void onRefresh(); }} onClose={() => { void onRefresh(); }} /></div>
                           <Link href={`/v/${store.slug}/blog-yonetim`} className={`${editorButtonClass} flex items-center justify-center`}>Blog yönetimi</Link>
                         </div>
                       ) : null}
                       {section.title === "Konum ve saatler" ? <button type="button" onClick={() => void konumuAl()} disabled={locating} className={`${editorButtonClass} w-full`}>{locating ? "Konum alınıyor…" : "📍 Konumumu al (GPS)"}</button> : null}
-                      {section.title === "Görseller" ? <div className="pt-2"><h3 className="mb-3 text-[13px] font-black text-lp-text">Galeri</h3><GalleryEditor inline slug={store.slug} items={galleryItems} onClose={() => { void onRefresh(); }} /></div> : null}
+                      {section.title === "Görseller" ? <div className="pt-2"><h3 className="mb-3 text-[13px] font-black text-lp-text">Galeri</h3><GalleryEditor inline slug={store.slug} items={galleryItems} onSaved={(items) => { setDraft((current) => ({ ...current, gallery_items: items })); void onRefresh(); }} onClose={() => { void onRefresh(); }} /></div> : null}
                     </div>
                   ) : null}
                 </section>

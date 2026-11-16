@@ -146,9 +146,31 @@ export default function AppPage() {
           : "";
 
     if (slug) {
+      let workingDraftOverride = yeniWorkingDraft?.draft_data ?? null;
+      if (!workingDraftOverride) {
+        try {
+          const ownerWorkspaceResponse = await fetch("/api/owner-workspace/current", {
+            method: "GET",
+            cache: "no-store",
+          });
+          if (ownerWorkspaceResponse.ok) {
+            const ownerWorkspace = (await ownerWorkspaceResponse.json()) as {
+              working_draft?: { draft_data?: Record<string, unknown> } | null;
+            };
+            if (ownerWorkspace?.working_draft?.draft_data) {
+              workingDraftOverride = ownerWorkspace.working_draft.draft_data;
+            }
+          }
+        } catch (ownerWorkspaceError) {
+          console.warn(
+            "[app/bootstrap] yedek yolda working_draft okunamadı",
+            ownerWorkspaceError
+          );
+        }
+      }
       const tamam = await magazaDetayiniGetir(
         slug,
-        yeniWorkingDraft?.draft_data ?? null
+        workingDraftOverride
       );
       if (!tamam) {
         setHata("Vitrin bilgileri yüklenemedi. Lütfen sayfayı yenileyip tekrar dene.");
@@ -212,16 +234,12 @@ export default function AppPage() {
           const { data: anonData } = await supabase.auth.signInAnonymously();
           if (anonData?.session) {
             session = anonData.session;
-          } else {
-            router.push("/giris");
-            return;
           }
         } catch {
-          router.push("/giris");
-          return;
+          session = null;
         }
       }
-      setUser(session.user);
+      if (session) setUser(session.user);
 
       // PR3-C11: hesap sonrası yerel landing başlangıcını tek active conversation'a aktar
       await importLandingFlowStateIfNeeded();
@@ -294,9 +312,17 @@ export default function AppPage() {
               setOlusturuyor(true);
               setHata("");
               try {
-                const { data: { session } } = await supabase.auth.getSession();
+                let { data: { session } } = await supabase.auth.getSession();
                 if (!session) {
-                  setHata("Oturum bulunamadı.");
+                  try {
+                    const { data: anonData } = await supabase.auth.signInAnonymously();
+                    session = anonData?.session ?? null;
+                  } catch {
+                    session = null;
+                  }
+                }
+                if (!session) {
+                  setHata("Oturum kurulamadı. Lütfen sayfayı yenileyip tekrar dene.");
                   return;
                 }
                 const payload: Record<string, unknown> = { name: ad, ...asistanTaslagi };

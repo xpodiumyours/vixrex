@@ -10,13 +10,14 @@ import { supabase } from "@/lib/supabase";
 // mantık Flutter tarafında lib/screens/legal_screen.dart'ta da var, ikisi de
 // aynı tabloyu okur.
 
-const GECERLI_TURLER = ["privacy", "terms", "consent"] as const;
+const GECERLI_TURLER = ["privacy", "terms", "consent", "data-deletion"] as const;
 type GecerliTur = (typeof GECERLI_TURLER)[number];
 
 const BASLIK: Record<GecerliTur, string> = {
   privacy: "Aydınlatma Metni",
   terms: "Kullanım Şartları",
   consent: "Açık Rıza Beyanı",
+  "data-deletion": "Hesap ve Veri Silme",
 };
 
 interface LegalSection {

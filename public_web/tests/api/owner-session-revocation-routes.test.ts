@@ -11,7 +11,7 @@ const m = vi.hoisted(() => ({
   active: vi.fn(async () => false),
   admin: vi.fn(() => ({ from: vi.fn(), rpc: vi.fn() })),
   edit: vi.fn(async () => { throw new Error("INVALID_EDIT_TOKEN"); }),
-  intake: vi.fn(async () => ({ durum: "reddedildi", sebep: "Test ürünü kaydedilmiyor" })),
+  intake: vi.fn(async (_args: Record<string, unknown>) => (void _args, { durum: "reddedildi", sebep: "Test ürünü kaydedilmiyor" })),
 }));
 
 vi.mock("next/headers", () => ({ cookies: async () => ({ get: m.cookie }) }));
@@ -82,7 +82,7 @@ describe("#611: iptal edilmiş fakat çerezi geçerli görünen oturum", () => {
   it("iptal edilmiş çerez yanında geçerli Flutter anahtarı toplu ürüne erişebilir", async () => {
     m.edit.mockResolvedValueOnce({ id: "11111111-1111-4111-8111-111111111111" } as never);
     const store = { id: "11111111-1111-4111-8111-111111111111", edit_token: "valid", name: "Esnaf" };
-    const single = vi.fn(async () => ({ data: store, error: null }));
+    const single = vi.fn(async (_args: Record<string, unknown>) => (void _args, { data: store, error: null }));
     const eq = vi.fn(() => ({ single }));
     const select = vi.fn(() => ({ eq }));
     m.admin.mockImplementationOnce(() => ({ from: vi.fn(() => ({ select })), rpc: vi.fn() }));

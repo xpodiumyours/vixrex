@@ -67,14 +67,16 @@ void main() {
     expect(controller.data.name, 'Asistan Yeni İsim');
 
     // UI'da da görünmeli
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ListenableBuilder(
-          listenable: controller,
-          builder: (context, _) => Text(controller.data.name),
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ListenableBuilder(
+            listenable: controller,
+            builder: (context, _) => Text(controller.data.name),
+          ),
         ),
       ),
-    ));
+    );
     await tester.pump();
 
     expect(find.text('Asistan Yeni İsim'), findsOneWidget);
@@ -93,14 +95,16 @@ void main() {
 
     expect(controller.data.kategori, 'Kafe & Lokanta');
 
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ListenableBuilder(
-          listenable: controller,
-          builder: (context, _) => Text(controller.data.kategori),
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ListenableBuilder(
+            listenable: controller,
+            builder: (context, _) => Text(controller.data.kategori),
+          ),
         ),
       ),
-    ));
+    );
     await tester.pump();
 
     expect(find.text('Kafe & Lokanta'), findsOneWidget);

@@ -126,10 +126,9 @@ class StoreRealtimeSyncService {
               .onBroadcast(
                 event: 'alan_guncellendi',
                 callback: (payload) {
-                  // Payload: {kolon, anahtar, etiket, deger} — yalnız
-                  // etiket kullanılır (Türkçe alan adı, örn. "İşletme
-                  // Adı"). Veri Flutter'ın yerel kaydına yazılmaz; yalnız
-                  // bildirim.
+                  // Payload: {kolon, anahtar, etiket} - yalniz
+                  // etiket kullanilir (Turkce alan adi). Veri Flutter'in yerel kaydina
+                  // yazilmaz; yalniz bildirim. Payload deger tasimaz (guvenlik notu).
                   final etiket =
                       (payload['etiket'] as String?) ??
                       (payload['anahtar'] as String?) ??

@@ -23,7 +23,7 @@ class VixrexConversationRepository {
   SupabaseClient? get _persistentAccountClient {
     final client = _resolvedClient;
     final user = client?.auth.currentUser;
-    if (user == null || user.isAnonymous) return null;
+    if (user == null) return null;
     return client;
   }
 
@@ -38,7 +38,7 @@ class VixrexConversationRepository {
   }
 
   /// Next.js `vixrexNluPipeline.ts` ile aynı kanonik pending-slot RPC'si.
-  /// Kalıcı hesap yoksa uzak veri sınırı devre dışıdır; çağıran yerel önbelleğe
+  /// Oturum yoksa uzak veri sınırı devre dışıdır; çağıran yerel önbelleğe
   /// düşer. `null`, kanonik konuşmada bekleyen alan olmadığı anlamına gelir.
   Future<Map<String, dynamic>?> loadPendingSlot() async {
     final client = _persistentAccountClient;

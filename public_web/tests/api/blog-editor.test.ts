@@ -7,7 +7,7 @@ const mocks = vi.hoisted(() => ({
   verifyOwner: vi.fn(() => ({ storeId: "store-1" })),
   revalidateTag: vi.fn(),
 }));
-vi.mock("next/headers", () => ({ cookies: vi.fn(async () => ({ get: mocks.get })) }));
+vi.mock("next/headers", () => ({ cookies: vi.fn(async (_args: Record<string, unknown>) => (void _args, { get: mocks.get })) }));
 vi.mock("@/lib/supabaseAdmin", () => ({ getSupabaseAdmin: mocks.admin }));
 vi.mock("@/lib/ownerSession", () => ({
   OWNER_SESSION_COOKIE: "vixrex_owner_session",

@@ -11,7 +11,7 @@ const { mockGet, mockGetSupabaseAdmin } = vi.hoisted(() => ({
 }));
 
 vi.mock("next/headers", () => ({
-  cookies: vi.fn(async () => ({ get: mockGet })),
+  cookies: vi.fn(async (_args: Record<string, unknown>) => (void _args, { get: mockGet })),
 }));
 
 vi.mock("@/lib/supabaseAdmin", () => ({

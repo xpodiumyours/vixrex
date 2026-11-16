@@ -18,7 +18,7 @@ const { mockGet, mockUpdateRichCoreProduct, mockGetSupabaseAdmin, mockVerifyOwne
   }));
 
 vi.mock("next/headers", () => ({
-  cookies: vi.fn(async () => ({ get: mockGet })),
+  cookies: vi.fn(async (_args: Record<string, unknown>) => (void _args, { get: mockGet })),
 }));
 
 vi.mock("@/lib/ownerSession", () => ({
@@ -70,7 +70,7 @@ function makeAdminStub(productRow: Record<string, unknown> | null) {
         return {
           select: vi.fn(() => ({
             eq: vi.fn(() => ({
-              single: vi.fn(async () => ({
+              single: vi.fn(async (_args: Record<string, unknown>) => (void _args, {
                 data: { id: "store-1", edit_token: "tok-1", name: "Test Mağaza" },
               })),
             })),
@@ -82,7 +82,7 @@ function makeAdminStub(productRow: Record<string, unknown> | null) {
           select: vi.fn(() => ({
             eq: vi.fn(() => ({
               eq: vi.fn(() => ({
-                maybeSingle: vi.fn(async () => ({ data: productRow })),
+                maybeSingle: vi.fn(async (_args: Record<string, unknown>) => (void _args, { data: productRow })),
               })),
             })),
           })),

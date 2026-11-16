@@ -29,7 +29,9 @@ describe("Flutter ve Next.js tek Vixrex konuşmasını paylaşır", () => {
     expect(sidebar).toContain('"/app/vixrex"');
     expect(explore).not.toContain('/#vixrex-hero');
     expect(explore).toContain('/app/vixrex');
-    expect(vixrexSekmesi).toContain("<SharedVixrexAssistant");
+    expect(vixrexSekmesi).toContain("<LandingAsistanSohbeti");
+    expect(vixrexSekmesi).not.toContain("SharedVixrexAssistant");
+    expect(vixrexSekmesi).not.toContain("{false ?");
   });
 
   it("Flutter yerel geçmişi yalnız önbellek olarak tutup uzak geçmişle birleştirir", () => {

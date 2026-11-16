@@ -69,8 +69,8 @@ class InvoiceOcrDraftAdapter {
       supplierIdentityStrength: EvidenceStrength.weak,
       productIdentityStrength:
           hasIdentity ? EvidenceStrength.partial : EvidenceStrength.weak,
-      rightsStatus: RightsStatus.unknown,
-      isVisible: false,
+      rightsStatus: product.rightsStatus,
+      isVisible: product.isVisible,
     );
   }
 }

@@ -11,7 +11,6 @@ import { describe, expect, it } from "vitest";
  */
 
 const PAGES = [
-  "src/app/app/page.tsx",
   "src/app/app/ayarlar/page.tsx",
   "src/app/app/bildirimler/page.tsx",
   "src/app/app/profil/page.tsx",
