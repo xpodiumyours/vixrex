@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { yayinSahiplikKarari } from "@/lib/yayinSahiplikKarari";
 import { kesfetOnbelleginiYenile } from "@/lib/explore";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
 /**
  * Yeni vitrin oluşturma (sıfırdan).
@@ -77,6 +78,38 @@ function aktifYasalBelgeleriHaritala(
     sonuc[tur] = belge;
   }
   return sonuc;
+}
+
+async function taslakYasalOnayiEsitle(slug: string): Promise<void> {
+  const admin = getSupabaseAdmin();
+  const satir = await admin
+    .from("stores")
+    .select("id, version")
+    .eq("slug", slug)
+    .maybeSingle();
+  const kayit = satir.data as { id: string; version: number } | null;
+  if (satir.error || !kayit) return;
+  const taslak = await admin
+    .from("store_working_drafts")
+    .select("draft_data")
+    .eq("store_id", kayit.id)
+    .maybeSingle();
+  const veri = taslak.data?.draft_data as Record<string, unknown> | null;
+  if (taslak.error || !veri) return;
+  const sonuc = await admin
+    .from("store_working_drafts")
+    .update({
+      draft_data: {
+        ...veri,
+        privacy_notice_acknowledged: true,
+        terms_accepted: true,
+        publication_consent_accepted: true,
+      },
+      base_live_version: kayit.version,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("store_id", kayit.id);
+  if (sonuc.error) throw sonuc.error;
 }
 
 /**
@@ -504,6 +537,14 @@ export async function POST(request: NextRequest) {
       },
       { status: 500 },
     );
+  }
+
+  if (yasalOnay) {
+    try {
+      await taslakYasalOnayiEsitle(slug);
+    } catch (esitlemeHatasi) {
+      console.error("[create-store] taslak onay eşitlenemedi:", esitlemeHatasi);
+    }
   }
 
   // Yayın bitti. Keşfet listesi 5 dakika saklanıyor; hemen düşürülmezse
