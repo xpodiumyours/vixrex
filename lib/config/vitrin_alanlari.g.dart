@@ -202,6 +202,7 @@ const List<VitrinAlani> vitrinAlanlari = [
     bolum: 'contact',
     kalite: true,
     maxUzunluk: 400,
+    ipucu: 'Örn: Hafta içi 09:00 - 20:00',
   ),
   VitrinAlani(
     anahtar: 'instagram',

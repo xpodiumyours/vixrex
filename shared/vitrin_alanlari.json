@@ -297,7 +297,7 @@
       "min": null,
       "max": null,
       "secenekler": null,
-      "ipucu": null,
+      "ipucu": "Örn: Hafta içi 09:00 - 20:00",
       "dogrulama": null,
       "bosDegerler": null
     },
