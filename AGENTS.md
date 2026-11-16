@@ -94,6 +94,19 @@ Oturum açılışında iki şey daha yapılır; ikisi de ölçülür:
    (Local) kurulur; kurulamıyorsa sebebi yazılır, elle yamalı ölçüm yapılmaz.
    Kopya envanteri tek komut: `pwsh -NoProfile -File tool/kopya-durumu.ps1` (salt okunur).
 
+### Z.0.2 — Kör başlangıç ve ezbere teklif yasağı (2026-11-16)
+
+Yeni oturumda veya gün başlangıcında:
+1. `c:\Projects\vixrex\AGENTS.md` (Ana Anayasa)
+2. `C:\Projects\Casper\DEFTER.md` (Kişisel Hafıza)
+3. `C:\Projects\vixrex\CALISMA-DEFTERI.md` (Proje Hafızası)
+4. `C:\Projects\Casper\AJAN-TAKIP.md` (Son 15 satır)
+5. `C:\Projects\vixrex\docs\AJAN-BASLANGIC.md` (Platform Haritası)
+6. `C:\Projects\Casper\raporlar\` altındaki en güncel denetim/uygunluk raporu (ör. `vixrex_canliya_uygunluk_raporu.md`)
+okunmadan **hiçbir durum tespiti, PR sıralaması veya iş teklifi cümlesi kurulamaz.**
+
+Neden (2026-11-16): Dün gece çıkarılan 315 satırlık `vixrex_canliya_uygunluk_raporu.md` ve PR #759'un #741'i ezdiği gerçeği okunmadan ezbere #760 ve #759 canlıya alma teklifi yapıldı; 3 oturum üst üste aynı disiplinsizlik tekrarlandı. Kanca (`C:\Projects\Casper\hooks\tarif-bekcisi.mjs`) bunu teknik olarak kilitler.
+
 Neden (2026-11-07): yerel başlatma "Your folder isn't connected to Freebuff yet" verdi, oturum
 bulutta açıldı; buluttan yerele geçiş her seferinde yeni kopya doğurdu. Ölçüm: diskte 5 Freebuff
 kopyası, 6 bulut kopyası, ana klasör dışında 4 `vixrex-*` klasörü; kopyaların üçünde sahipsiz kirli

@@ -33,6 +33,8 @@ for (const file of requiredFiles) must(fs.existsSync(file), "eksik dosya: " + fi
 const agents = read("AGENTS.md");
 must(/tool\/ajan-baslangic\.ps1/.test(agents), "AGENTS.md açılış kapısı satırını içermiyor");
 must(/Graphify etki/i.test(agents), "AGENTS.md 'Graphify etki' kanıt kuralını içermiyor");
+must(/Z\.0\.2/i.test(agents), "AGENTS.md 'Z.0.2 — Kör başlangıç ve ezbere teklif yasağı' kuralını içermiyor");
+must(/AJAN-TAKIP\.md/.test(agents), "AGENTS.md Z.0.2 hafıza zorunluluğunu içermiyor");
 
 const readme = read("README.md");
 must(/docs\/AJAN-BASLANGIC\.md/.test(readme), "README.md başlangıç haritasına bağlantı vermiyor");
@@ -46,6 +48,27 @@ if (!docDate) {
   const ageDays = Math.floor((Date.now() - new Date(docDate[1] + "T00:00:00Z").getTime()) / 86400000);
   if (ageDays > 60) errors.push("docs/AJAN-BASLANGIC.md " + ageDays + " gündür doğrulanmamış (60 gün sınırı)");
   else if (ageDays > 30) warnings.push("docs/AJAN-BASLANGIC.md " + ageDays + " gündür doğrulanmamış (30 gün uyarısı)");
+}
+
+// Belge sicili ve bayatlık denetimi
+try {
+  const diskDocs = fs.readdirSync("docs").filter((f) => f.endsWith(".md") && f !== "AJAN-BASLANGIC.md");
+  for (const f of diskDocs) {
+    const rel = "docs/" + f;
+    if (!doc.includes(f)) {
+      errors.push("Belge sicilinde eksik: " + rel + " docs/AJAN-BASLANGIC.md §3 tablosuna eklenmeli");
+    }
+  }
+
+  const tableMatches = [...doc.matchAll(/\|\s*`?(?:\[.*?\]\(.*?\)|`?(docs\/[a-zA-Z0-9_.-]+\.md)`?)/g)];
+  for (const m of tableMatches) {
+    const filePath = m[1];
+    if (filePath && filePath !== "docs/ANA-DENETIM-KAYDI.md" && !fs.existsSync(filePath)) {
+      errors.push("Belge sicili hayalet dosya içeriyor: " + filePath + " diskte yok");
+    }
+  }
+} catch (e) {
+  warnings.push("Belge sicil denetimi yapılamadı: " + String(e.message || e));
 }
 
 try {

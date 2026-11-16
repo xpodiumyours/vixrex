@@ -4,7 +4,7 @@
 > tek yerde cevaplamak ve ezbere konuşmayı ölçülebilir bir yasak yapmak. Kural kitabı
 > [AGENTS.md](../AGENTS.md)'de; bu belge **harita**dır.
 >
-> Son doğrulama: 2026-11-04 · Ana dal: `341919d` · Canlı: `341919d` (canlı = ana dal)
+> Son doğrulama: 2026-11-16 · Ana dal: `08e2d90` · Canlı: `08e2d90` (canlı = ana dal)
 
 ## 0. Oturum açılışı — 4 adım
 
@@ -99,7 +99,7 @@ Vercel, Supabase, OpenRouter, API anahtarlarının **adları** ve yetkiler, MCP,
 
 Bu iki kayıt canlı anahtar veya canlı preset içermez. `main`, PR ve canlı bağımsız doğrulanır; sunucu sırları asla GitHub'a çıkarılmaz. Ajanın ilk görevi bu bağlantıları tekrar tahmin etmek değil, ilgili platformun kendi salt-okunur ölçümüyle teyit etmektir. Bağlantı **tanımlı** olması bağlantı **çalışıyor** demek değildir.
 
-## 3. Hangi belge tarihsel — hangisi güncel (2026-11-03)
+## 3. Hangi belge tarihsel — hangisi güncel (2026-11-16)
 
 | Belge | Sınıf | Not |
 |---|---|---|
@@ -112,8 +112,10 @@ Bu iki kayıt canlı anahtar veya canlı preset içermez. `main`, PR ve canlı b
 | `docs/URUN-EKLE-FATURA-DURUM.md` | tarihsel ölçüm | havuz satırları geçersiz |
 | `docs/PRESET-TEMIZLIK-PLANI.md` | plan | uygulanmış |
 | `docs/vixrex_faturadan_vitrin_HEDEF-ve-tasarim-plani.md` | tarihsel/çelişkili | kaldırılan kataloğa atıf yapar (kural 20) |
-| `docs/vitrin-gorunum-referans.md` | aktüel referans | — |
-| `docs/vitrin-kart-standardi.md` | aktüel standart | — |
+| `docs/FATURA-KART-HATTI-KARARLARI.md` | aktüel karar | fatura kart hattı kalıcı kararları |
+| `docs/P0-01-GORSEL-HAKLARI-KESINTISIZ-GECIS.md` | aktüel plan | görsel hakları geçiş planı |
+| `docs/vitrin-gorunum-referans.md` | aktüel referans | vitrin görünüm kuralları |
+| `docs/vitrin-kart-standardi.md` | aktüel standart | ürün kartı arayüz standardı |
 | `docs/esnaf-yolculugu-kurumsal-kalite-tespit.md` | aktüel ölçüm | T1–T4, K1–K6, F1 |
 
 Kural: tarihsel belge okunabilir; **güncel iş listesi yerine geçmez**. Bir belge kendini
