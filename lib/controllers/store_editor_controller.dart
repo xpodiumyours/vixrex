@@ -413,11 +413,14 @@ class StoreEditorController extends ChangeNotifier
       updateField('galeriAksiyonMetni', value);
   void updateGalleryActionHref(String value) =>
       updateField('galeriAksiyonLinki', value);
-  void updateBlogSectionKicker(String value) => updateField('blogUstBaslik', value);
+  void updateBlogSectionKicker(String value) =>
+      updateField('blogUstBaslik', value);
   void updateBlogSectionTitle(String value) => updateField('blogBaslik', value);
-  void updateFaqSectionKicker(String value) => updateField('sssUstBaslik', value);
+  void updateFaqSectionKicker(String value) =>
+      updateField('sssUstBaslik', value);
   void updateFaqSectionTitle(String value) => updateField('sssBaslik', value);
-  void updateFaqSectionDescription(String value) => updateField('sssAciklama', value);
+  void updateFaqSectionDescription(String value) =>
+      updateField('sssAciklama', value);
 
   void updateSectionVisibility(String key, bool visible) {
     if (visible) {
@@ -428,8 +431,10 @@ class StoreEditorController extends ChangeNotifier
     notifyListeners();
   }
 
-  void updateShowStorefrontRating(bool value) => updateField('puanGoster', value);
-  void updateShowDirectionsLink(bool value) => updateField('yolTarifiGoster', value);
+  void updateShowStorefrontRating(bool value) =>
+      updateField('puanGoster', value);
+  void updateShowDirectionsLink(bool value) =>
+      updateField('yolTarifiGoster', value);
 
   void updateFeaturedCampaign({
     required String label,
@@ -458,7 +463,8 @@ class StoreEditorController extends ChangeNotifier
 
   void updateFaqItems(List<StoreFaqItem> items) =>
       _guncelle((d) => d.faqItems = List.of(items));
-  void updateWorkingHoursText(String value) => updateField('calismaSaatleri', value);
+  void updateWorkingHoursText(String value) =>
+      updateField('calismaSaatleri', value);
   void updateInstagram(String value) => updateField('instagram', value);
 
   Future<Result<void>> applyConnectedInstagramUsername(String username) async {
