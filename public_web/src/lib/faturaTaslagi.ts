@@ -36,6 +36,8 @@ export interface FaturaTaslagi {
   eslesenBilgiler?: unknown;
   eksikler?: string[];
   gorselDogrulamaDurumu?: string;
+  duplicateGroup?: string | null;
+  canonicalRowId?: string | null;
   kaynaklar?: Array<string | Record<string, unknown>>;
 }
 
@@ -84,6 +86,8 @@ export function satirdanFaturaTaslagi(
     eslesenBilgiler: katalog.eslesenBilgiler,
     eksikler: katalog.eksikler ?? [],
     gorselDogrulamaDurumu: katalog.gorselDogrulamaDurumu,
+    duplicateGroup: katalog.duplicateGroup ?? null,
+    canonicalRowId: katalog.canonicalRowId ?? null,
     kaynaklar: katalog.kaynaklar ?? [],
   };
 }

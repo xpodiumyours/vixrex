@@ -115,7 +115,6 @@ Bu iki kayıt canlı anahtar veya canlı preset içermez. `main`, PR ve canlı b
 | `docs/vitrin-gorunum-referans.md` | aktüel referans | — |
 | `docs/vitrin-kart-standardi.md` | aktüel standart | — |
 | `docs/esnaf-yolculugu-kurumsal-kalite-tespit.md` | aktüel ölçüm | T1–T4, K1–K6, F1 |
-| `docs/IZIN-MIMARISI.md` | aktüel taslak | beş katman |
 
 Kural: tarihsel belge okunabilir; **güncel iş listesi yerine geçmez**. Bir belge kendini
 "tarihsel" ilan etmiyorsa ve bu tabloda yoksa, önce bu tabloya eklenir.

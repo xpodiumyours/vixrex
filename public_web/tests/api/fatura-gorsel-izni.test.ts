@@ -59,7 +59,7 @@ describe("fatura görseli kullanım izni", () => {
     expect(satir?.izinliGorseller.has(VERIFIED)).toBe(true);
   });
 
-  it("usage_status='unknown' görsel kümede kalır: izin turu sonra yürür, kart yine de yayınlanır", async () => {
+  it("usage_status='unknown' görsel kart hazırlığında kalır; görünürlük ayrı kapıda tutulur", async () => {
     const satir = await dogrula([{ image_url: UNKNOWN, usage_status: "unknown" }]);
 
     expect(satir?.izinliGorseller.has(UNKNOWN)).toBe(true);

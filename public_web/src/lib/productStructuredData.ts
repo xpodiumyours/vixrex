@@ -7,21 +7,22 @@ const VARIANT_SCHEMA_PROPERTIES: Record<string, { property: string; field: strin
   shade: { property: "https://schema.org/color", field: "color" },
   size: { property: "https://schema.org/size", field: "size" },
   material: { property: "https://schema.org/material", field: "material" },
+  fabric: { property: "https://schema.org/material", field: "material" },
   pattern: { property: "https://schema.org/pattern", field: "pattern" },
 };
 
-/**
- * Urunun kendi ozelliklerini (renk, beden, materyal, desen ve kategoriye ozel
- * diger alanlar) schema.org alanlarina cevirir. Varyant yolundaki esleme ile
- * ayni tabloyu kullanir; varyanti olmayan urunlerde de arama motoru bu
- * bilgileri gorebilsin diye ayri bir giris noktasi.
- */
 export function productAttributeSchemaFields(metadataInput: unknown) {
   const metadata = normalizeProductMetadata(metadataInput);
   const recognized: Record<string, string> = {};
   const additionalProperty: Array<Record<string, string>> = [];
 
   for (const attribute of metadata.attributes || []) {
+    if (
+      attribute.key.endsWith("_reported") ||
+      String(attribute.label || "").includes("(aktarılan)")
+    ) {
+      continue;
+    }
     const value = Array.isArray(attribute.value)
       ? attribute.value.join(", ")
       : String(attribute.value ?? "").trim();
@@ -71,11 +72,6 @@ function productIsInStock(stockStatus?: string | null, stockQuantity?: number | 
   ].some((token) => status.includes(token));
 }
 
-/**
- * Google/GS1 için yalnız doğrulanabilen GTIN değerini döndürür. Vixrex'teki
- * barkod alanı daha geniş kalır; yerel/özel barkodlar ürün verisinden silinmez,
- * yalnız GTIN olarak structured data'ya yazılmaz.
- */
 export function normalizeGoogleGtin(value: string | null | undefined): string | undefined {
   const digits = String(value || "").replace(/[\s-]+/g, "");
   if (!/^(?:\d{8}|\d{12}|\d{13}|\d{14})$/.test(digits)) return undefined;
@@ -106,10 +102,6 @@ function structuredGtin(value: string | null | undefined): Record<string, string
   return { [`gtin${gtin.length}`]: gtin };
 }
 
-/**
- * Vixrex fiyat metinleri Türkçe binlik ayırıcıyı destekler: 1.299 TL => 1299.
- * Ondalık örnekleri de korunur: 1299,90 => 1299.90; 1.299,90 => 1299.90.
- */
 export function parseProductPriceAmount(value: string | undefined): string | undefined {
   return parseProductPriceString(value);
 }
@@ -128,11 +120,6 @@ export interface SellerLocation {
   longitude?: number | null;
 }
 
-/**
- * Satici (isletme) dugumunu kurar. Konum alanlari yalniz dogrulanabildiginde
- * yazilir; eksik konum uydurulmaz, satici adiyla kalir. "En yakin X nereden"
- * gibi yerel sorgularda arama motorunun urunu yere baglamasi icin kullanilir.
- */
 export function buildLocalBusinessSeller(storeName: string, storeLocation?: SellerLocation) {
   const url = typeof storeLocation?.url === "string" ? storeLocation.url.trim() : "";
   const address = typeof storeLocation?.address === "string" ? storeLocation.address.trim() : "";
@@ -206,6 +193,7 @@ export function buildPhysicalProductStructuredData(args: {
   };
 
   if (variants.length <= 1) {
+    const attributeFields = productAttributeSchemaFields(product.metadata);
     return {
       ...common,
       "@type": "Product",
@@ -213,6 +201,10 @@ export function buildPhysicalProductStructuredData(args: {
       ...structuredGtin(product.barcode),
       sku: metadata.identifiers?.sku || undefined,
       mpn: metadata.identifiers?.mpn || undefined,
+      ...attributeFields.recognized,
+      ...(attributeFields.additionalProperty
+        ? { additionalProperty: attributeFields.additionalProperty }
+        : {}),
       offers: offer({
         url: productUrl,
         price: parentPrice,

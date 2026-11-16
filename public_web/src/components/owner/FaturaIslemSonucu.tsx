@@ -2,6 +2,7 @@ export interface YazmaSonucu {
   tuketiciDogrulandi?: boolean;
   toplam: number;
   yayinda: number;
+  hazir?: number;
   taslak: number;
   hatali: number;
   satirlar: Array<{ sira: number; ad: string; durum: string; sebep?: string; id?: string; gorsel?: string | null }>;
@@ -12,6 +13,7 @@ export interface FaturaSonucKarti {
   ad: string;
   fiyat: string;
   gorsel: string | null;
+  durum?: "yayinda" | "hazir";
 }
 
 interface FaturaIslemSonucuProps {
@@ -35,7 +37,7 @@ export function FaturaIslemSonucu({ sonuc, kartlar, storeSlug, hata, yukleniyor,
     <>
       {kartlar.length > 0 && (
         <section className="fatura-vitrin-hazir">
-          <h4>Yayınlanan ürünler</h4>
+          <h4>Hazırlanan ürünler</h4>
           <ul className="fatura-vitrin-izgara">
             {kartlar.map((kart) => (
               <li key={kart.sira}>
@@ -43,6 +45,7 @@ export function FaturaIslemSonucu({ sonuc, kartlar, storeSlug, hata, yukleniyor,
                   : <div className="fatura-kart-gorselsiz">Görsel hazırlanıyor</div>}
                 <span>{kart.ad}</span>
                 {kart.fiyat && <strong>{kart.fiyat} TL</strong>}
+                {kart.durum === "hazir" && <small>İzin bekliyor — tüketici vitrininde görünmüyor</small>}
               </li>
             ))}
           </ul>
@@ -57,11 +60,13 @@ export function FaturaIslemSonucu({ sonuc, kartlar, storeSlug, hata, yukleniyor,
       <ul className="fatura-ozet" role="status">
         {sonuc.yayinda > 0 && <li><strong>{sonuc.yayinda}</strong> ürün {sonuc.tuketiciDogrulandi
           ? "vitrinde görünüyor" : "için yayın kaydı alındı; tüketici görünümü doğrulanamadı"}</li>}
+        {(sonuc.hazir ?? 0) > 0 && <li><strong>{sonuc.hazir}</strong> ürün hazır — üretici görsel izni
+          doğrulanınca vitrinde görünecek; şu an tüketiciye gösterilmiyor</li>}
         {sonuc.taslak > 0 && <li><strong>{sonuc.taslak}</strong> ürün taslak — yayınlamadan görünmez</li>}
         {sonuc.hatali > 0 && <li><strong>{sonuc.hatali}</strong> satır eklenemedi</li>}
       </ul>
       <ul className="fatura-satir-ozet">
-        {sonuc.satirlar.filter((satir) => satir.durum !== "yayinda").map((satir) => (
+        {sonuc.satirlar.filter((satir) => satir.durum !== "yayinda" && satir.durum !== "hazir").map((satir) => (
           <li key={satir.sira}>{satir.ad} — {satir.sebep ?? satir.durum}</li>
         ))}
       </ul>

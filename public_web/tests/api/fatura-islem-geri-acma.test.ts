@@ -184,9 +184,15 @@ describe("fatura-islem ucu", () => {
     mocks.admin.mockReturnValue(
       sahteAdmin({
         invoice_jobs: {
-          liste: [{ id: ISLEM, status: "inceleme", supplier_name: "Glisa", created_at: "2026-09-30T10:00:00Z" }],
+          liste: [{
+            id: ISLEM,
+            status: "inceleme",
+            supplier_name: "Glisa",
+            created_at: "2026-09-30T10:00:00Z",
+            invoice_job_lines: [{ count: 3 }],
+            invoice_provider_runs: [{ state: "processed", error_code: null }],
+          }],
         },
-        invoice_job_lines: { sayi: 3 },
       }),
     );
 

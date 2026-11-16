@@ -266,7 +266,7 @@ export async function publishInvoiceProduct(args: {
   admin: SupabaseClient;
   productId: string;
   editToken: string;
-}): Promise<{ success: boolean; id?: string; zatenYayinda?: boolean; hata?: string }> {
+}): Promise<{ success: boolean; id?: string; zatenYayinda?: boolean; gorunur?: boolean; izin_bekliyor?: boolean; hata?: string }> {
   const { data, error } = await args.admin.rpc("publish_invoice_product", {
     p_product_id: args.productId,
     p_edit_token: args.editToken,
@@ -276,6 +276,8 @@ export async function publishInvoiceProduct(args: {
     success: boolean;
     id?: string;
     zatenYayinda?: boolean;
+    gorunur?: boolean;
+    izin_bekliyor?: boolean;
     hata?: string;
   };
 }

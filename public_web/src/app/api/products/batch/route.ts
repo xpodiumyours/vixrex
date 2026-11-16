@@ -103,7 +103,7 @@ interface ProductBatchItem {
 interface SatirSonucu {
   sira: number;
   ad: string;
-  durum: "yayinda" | "taslak" | "atlandi";
+  durum: "yayinda" | "hazir" | "taslak" | "atlandi";
   sebep?: string;
   id?: string;
   kayit?: "yeni" | "guncellendi" | "mevcut";
@@ -170,6 +170,7 @@ export async function POST(request: NextRequest) {
   const lunaKategoriOnbellegi = new Map<string, { id: string; templateKey: string }>();
   const sonuclar: SatirSonucu[] = [];
   let yayinda = 0;
+  let hazir = 0;
   let taslak = 0;
   let atlandi = 0;
 
@@ -310,10 +311,16 @@ export async function POST(request: NextRequest) {
           sebep: kayitli?.gorunur ? undefined : faturaKapisiSebebi({ hazirlik, faturaKaynakli, faturaEksikleri, yayinIstegi }) };
         if (faturaKapisi) {
           const yayin = await publishInvoiceProduct({ admin, productId: olusan.id, editToken: store.edit_token });
-          if (yayin.success) sonuc = { ...sonuc, durum: "yayinda", sebep: undefined };
-          else sonuc.sebep = yayin.hata ?? (sonuc.durum === "yayinda" ? "Yayın onayı yenilenemedi." : "Ürün yayınlanamadı; taslak kaydedildi.");
+          if (yayin.success && yayin.gorunur === false) {
+            sonuc = { ...sonuc, durum: "hazir", sebep: "Kart hazır; üretici görsel izni doğrulanınca vitrinde görünecek." };
+          } else if (yayin.success) {
+            sonuc = { ...sonuc, durum: "yayinda", sebep: undefined };
+          } else {
+            sonuc.sebep = yayin.hata ?? (sonuc.durum === "yayinda" ? "Yayın onayı yenilenemedi." : "Ürün yayınlanamadı; taslak kaydedildi.");
+          }
         }
         if (sonuc.durum === "yayinda") yayinda += 1;
+        else if (sonuc.durum === "hazir") hazir += 1;
         else taslak += 1;
         sonuclar.push(sonuc);
         continue;
@@ -455,7 +462,16 @@ export async function POST(request: NextRequest) {
           productId: olusan.id,
           editToken: store.edit_token,
         });
-        if (yayin.success) {
+        if (yayin.success && yayin.gorunur === false) {
+          hazir += 1;
+          sonuclar.push({
+            sira: index,
+            ad,
+            durum: "hazir",
+            id: olusan.id,
+            sebep: "Kart hazır; üretici görsel izni doğrulanınca vitrinde görünecek.",
+          });
+        } else if (yayin.success) {
           yayinda += 1;
           sonuclar.push({ sira: index, ad, durum: "yayinda", id: olusan.id });
         } else {
@@ -520,7 +536,7 @@ export async function POST(request: NextRequest) {
   // "İstek işlendi" (tamam) ve "gerçek ürün ID'si kaydedildi"
   // farklı sonuçlardır. Sıfır ürün yazıldığında sahte başarı üretme.
   const kayitliUrunIdleri = [...new Set(
-    sonuclar.filter((satir) => (satir.durum === "taslak" || satir.durum === "yayinda") && satir.id)
+    sonuclar.filter((satir) => (satir.durum === "taslak" || satir.durum === "yayinda" || satir.durum === "hazir") && satir.id)
       .map((satir) => satir.id as string),
   )];
   return NextResponse.json({
@@ -528,8 +544,9 @@ export async function POST(request: NextRequest) {
     kayitBasarili: kayitliUrunIdleri.length > 0,
     kayitliUrunIdleri,
     toplam: sonuclar.length,
-    eklenen: yayinda + taslak,
+    eklenen: yayinda + hazir + taslak,
     yayinda,
+    hazir,
     taslak,
     hatali: atlandi,
     satirlar: sonuclar,

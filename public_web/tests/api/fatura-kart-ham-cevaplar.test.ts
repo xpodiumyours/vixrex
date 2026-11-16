@@ -23,7 +23,7 @@ describe("fatura kartı ham cevapları (gerçek koşulardan)", () => {
   it("ayrıştırıcı her ham gövdeden içindeki her satırı çıkarır", async () => {
     for (const k of kunye) {
       const icerik = oku(k.dosya, "icerik.txt");
-      const { kartlar } = await kartYanitiniCoz(icerik);
+      const { kartlar } = await kartYanitiniCoz(icerik, { eskiAkis: true });
       expect(kartlar).toHaveLength(satirSayisi(icerik));
       expect(new Set(kartlar.map((satir) => satir.rowId)).size).toBe(kartlar.length);
     }
@@ -31,7 +31,7 @@ describe("fatura kartı ham cevapları (gerçek koşulardan)", () => {
 
   it("eksiksiz koşu faturanın 20 satırının tamamını kartlar", async () => {
     const k = bul("12d7718a");
-    const { kartlar } = await kartYanitiniCoz(oku(k.dosya, "icerik.txt"));
+    const { kartlar } = await kartYanitiniCoz(oku(k.dosya, "icerik.txt"), { eskiAkis: true });
     expect(k.fatura_satir).toBe(20);
     expect(kartlar).toHaveLength(k.fatura_satir as number);
   });
@@ -44,7 +44,7 @@ describe("fatura kartı ham cevapları (gerçek koşulardan)", () => {
 
   it("her koşuda kart sayısı fatura satır sayısına eşit", async () => {
     for (const k of kunye) {
-      const { kartlar } = await kartYanitiniCoz(oku(k.dosya, "icerik.txt"));
+      const { kartlar } = await kartYanitiniCoz(oku(k.dosya, "icerik.txt"), { eskiAkis: true });
       expect(kartlar).toHaveLength(k.fatura_satir as number);
     }
   });

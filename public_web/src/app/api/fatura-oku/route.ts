@@ -5,6 +5,7 @@ import { ownerSessionStillActive } from "@/lib/ownerSessionValidity";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 import { verifyStoreEditToken } from "@/lib/instagramServer";
 import { belgeParmakIzi } from "@/lib/faturaIslemKaydi";
+import { faturaPrizAnahtari } from "@/lib/faturaPriz";
 import { faturaTaslakYanitiniHazirla } from "@/lib/faturaOtomatikTaslakKaydi";
 import { islemiYukle, parmakIzindenIslemBul } from "@/lib/faturaIslemOku";
 import { faturayiArkaPlanaGonder, bekleyenFaturaYaniti, arkaPlanFaturaHatasi, basarisizKartIsiniTekrarDene } from "@/lib/faturaArkaPlanIslemi";
@@ -84,7 +85,7 @@ export async function POST(request: NextRequest) {
   if (eskiId && await basarisizKartIsiniTekrarDene(admin, storeId, eskiId)) {
     return NextResponse.json(bekleyenFaturaYaniti(eskiId), { status: 202, headers: { "Cache-Control": "private, no-store" } });
   }
-  if (!process.env.OPENROUTER_API_KEY) return NextResponse.json({ hata: "Fatura okuyucu hazır değil." }, { status: 503 });
+  if (!faturaPrizAnahtari()) return NextResponse.json({ hata: "Fatura okuyucu hazır değil." }, { status: 503 });
   const fotograflar = baytlar.map((b, i) => `data:${turler[i]};base64,${Buffer.from(b).toString("base64")}`);
   try {
     const id = await faturayiArkaPlanaGonder(admin, storeId, parmakIzi, fotograflar);
