@@ -1,4 +1,4 @@
-import { sonrakiRehberAlanlar } from "@/lib/vitrinReadiness";
+import { sonrakiRehberAlanlar, alanOnemi } from "@/lib/vitrinReadiness";
 
 interface Props {
   yerelTaslak: Record<string, unknown>;
@@ -9,12 +9,9 @@ interface Props {
   alanAtla?: (anahtar: string) => void;
 }
 
-// "SIRADA" — sonraki üç alan. Sıra ŞEMADAN gelir, elle tutulmaz
-// (`sonrakiRehberAlanlar`).
-//
-// Mobilde üç görevi aynı anda göstermek asistanı bir form listesine
-// çeviriyordu. Esnafın o anda tek karar vermesi yeter: ilk görev görünür,
-// kalan iki görev masaüstünde korunur. Sıralama/atlama iş mantığı değişmez.
+// "SIRADA" — sonraki eksik alanlar.
+// Faz 2 Yaratıcı Yönetmen: İsteğe bağlı mikro-alanlar (buton metni vb.)
+// esnafa form sorusu olarak dayatılmaz; yalnız temel ve kalite alanları listelenir.
 export function UpNextList({
   yerelTaslak,
   suankiAnahtar,
@@ -27,7 +24,7 @@ export function UpNextList({
     suankiAnahtar,
     atlanmisAlanlar,
     3,
-  );
+  ).filter((alan) => alanOnemi(alan) !== "istege-bagli");
 
   if (sonrakiler.length === 0) return null;
 

@@ -345,3 +345,304 @@ export function sektorelPaketUret(
     description: nihaiAciklama,
   };
 }
+
+// ============================================================================
+// FAZ 2: ASİSTAN YARATICI YÖNETMEN SEÇENEKLERİ (5 KURUMSAL KATMAN)
+// ============================================================================
+
+export interface YonetmenKampanyaSecenegi {
+  id: string;
+  etiket: string;
+  baslik: string;
+  aciklama: string;
+  rozet: string;
+}
+
+export interface YonetmenHikayeSecenegi {
+  id: string;
+  tonAdi: string;
+  kicker: string;
+  title: string;
+  bio: string;
+  values: Array<{ id: string; title: string; description: string }>;
+}
+
+export interface SektorelYonetmenSecenekleri {
+  kampanyalar: YonetmenKampanyaSecenegi[];
+  hikayeler: YonetmenHikayeSecenegi[];
+}
+
+const BUTIK_YONETMEN: SektorelYonetmenSecenekleri = {
+  kampanyalar: [
+    {
+      id: "camp-butik-1",
+      rozet: "YENİ SEZON",
+      etiket: "Sezon Koleksiyonu",
+      baslik: "Sonbahar & Kış Koleksiyonu Vitrinde",
+      aciklama: "Gardırobunuzu tazeleyecek en yeni modeller ve seçili parçalarda butiğimize özel avantajlar.",
+    },
+    {
+      id: "camp-butik-2",
+      rozet: "FIRSAT HAFTASI",
+      etiket: "Tanışma İndirimi",
+      baslik: "Seçili Triko & Kabanlarda %20 İndirim",
+      aciklama: "Bu haftaya özel tüm triko gruplarında ve kaban modellerinde butik esnafı samimiyetiyle indirim fırsatı.",
+    },
+    {
+      id: "camp-butik-3",
+      rozet: "SINIRLI STOK",
+      etiket: "Özel Kombinler",
+      baslik: "Haftanın Özel Kombinleri Askıda!",
+      aciklama: "Seri üretim yerine özenle seçilmiş, tükenmeden yakalamanız gereken sınırlı adetli stil parçaları.",
+    },
+  ],
+  hikayeler: [
+    {
+      id: "story-butik-1",
+      tonAdi: "Samimi Aile Butiği",
+      kicker: "HİKAYEMİZ",
+      title: "Butik Modasında Samimi Dokunuş",
+      bio: "Modayı kalıplardan çıkarıp mahallemizin sıcaklığıyla harmanlıyoruz. Her bir parçayı kumaş kalitesinden dikişine kadar bizzat seçiyor, kendimiz giymeyeceğimiz hiçbir ürünü askımıza asmıyoruz. Tarzınızı yansıtan kombinler için dükkânımıza her zaman bir kahveye bekleriz.",
+      values: [
+        { id: "val-1", title: "Özenli Seçki", description: "Seri üretim yerine her bedene ve zevke uygun özel parçalar." },
+        { id: "val-2", title: "Kaliteli Kumaş", description: "Yıkandığında formunu kaybetmeyen, gün boyu rahat hissettiren dokular." },
+        { id: "val-3", title: "Güler Yüzlü Hizmet", description: "Stilinize en uygun kombini bulma konusunda samimi danışmanlık." },
+      ],
+    },
+    {
+      id: "story-butik-2",
+      tonAdi: "Modern & Trend Butik",
+      kicker: "DURUŞUMUZ",
+      title: "Şehrin Ritmine Uygun Seçkiler",
+      bio: "Modanın hızlı tüketimine inat, zamansız ve kaliteli parçalarla gardırobunuzu sadeleştiriyor, stilinize modern bir imza atıyoruz. Az ama öz giyinmeyi seven kadınlar için her hafta yenilenen dinamik koleksiyon.",
+      values: [
+        { id: "val-1", title: "Zamansız Çizgi", description: "Yıllarca giyilebilecek kaliteli dikiş ve kumaş." },
+        { id: "val-2", title: "Özel Tasarım", description: "Pazaryerlerinde bulunmayan özgün stiller." },
+        { id: "val-3", title: "Hızlı Stil Danışmanlığı", description: "WhatsApp'tan anlık stil ve beden desteği." },
+      ],
+    },
+    {
+      id: "story-butik-3",
+      tonAdi: "Dürüst Fiyat & Kalite Güvencesi",
+      kicker: "GÜVENCEMİZ",
+      title: "Ulaşılabilir Şıklık ve Sağlam Kumaş",
+      bio: "En kaliteli yerli dokumaları aracı olmadan doğrudan tezgâhımıza getiriyor, dürüst esnaflık ilkesiyle her bütçeye şıklık sunuyoruz. Ne aldığınızı bildiğiniz, sürpriz faturasız güvenli butik alışverişi.",
+      values: [
+        { id: "val-1", title: "Dürüst Fiyat", description: "Aracı komisyonu olmadan net esnaf fiyatı." },
+        { id: "val-2", title: "Kumaş Garantisi", description: "Çekmeyen, renk atmayan garantili dokular." },
+        { id: "val-3", title: "Koşulsuz Değişim", description: "14 gün boyunca mağazadan birebir değişim." },
+      ],
+    },
+  ],
+};
+
+const GIDA_YONETMEN: SektorelYonetmenSecenekleri = {
+  kampanyalar: [
+    {
+      id: "camp-gida-1",
+      rozet: "GÜNÜN TAZESİ",
+      etiket: "Taş Fırın",
+      baslik: "Taş Fırından Yeni Çıkan Taptaze Lezzetler",
+      aciklama: "Doğal ekşi maya ve katkısız unlarla her sabah fırınlanan sıcacık ekmek ve unlu mamuller.",
+    },
+    {
+      id: "camp-gida-2",
+      rozet: "ÇAY SAATİ",
+      etiket: "İkindi Lezzeti",
+      baslik: "İkindi Çayına Özel Kurabiye & Pasta Seçkisi",
+      aciklama: "Geleneksel tariflerle tereyağlı un kurabiyeleri ve günlük tatlılarda komşularımıza özel tatlar.",
+    },
+    {
+      id: "camp-gida-3",
+      rozet: "KAHVALTI KEYFİ",
+      etiket: "Hafta Sonu",
+      baslik: "Kahvaltı Sofralarına Özel Çıtır Simit & Börek",
+      aciklama: "Ailenizle yapacağınız kahvaltı için çıtır çıtır simit ve su böreği tezgâhta sıcak hazır.",
+    },
+  ],
+  hikayeler: [
+    {
+      id: "story-gida-1",
+      tonAdi: "Geleneksel Mahalle Fırını",
+      kicker: "HİKAYEMİZ",
+      title: "Dededen Toruna Taş Fırın Emeği",
+      bio: "Unun, suyun ve sabrın hikayesi... Katkı maddesi kullanmadan, atalık tohum unlarıyla yoğurduğumuz hamurlarımızı taş fırının odun ateşinde pişiriyor, sofralarınıza sağlık ve bereket taşıyoruz.",
+      values: [
+        { id: "val-1", title: "Doğal Ekşi Maya", description: "Geleneksel fermantasyonla sindirimi kolay ekmekler." },
+        { id: "val-2", title: "Katkısız Un", description: "Koruyucu ve kimyasal içermeyen temiz tahıllar." },
+        { id: "val-3", title: "Sıcak Çıkarım", description: "Günün belirli saatlerinde dumanı üstünde taze pişirim." },
+      ],
+    },
+    {
+      id: "story-gida-2",
+      tonAdi: "Modern Butik Pastane",
+      kicker: "LEZZET YOLCULUĞUMUZ",
+      title: "Her Dilimde Özenli Ustalık",
+      bio: "En kaliteli çikolatalar ve mevsiminde taze meyvelerle hazırladığımız pasta ve tatlılarımızla en güzel anlarınıza lezzet katıyoruz.",
+      values: [
+        { id: "val-1", title: "Gerçek Tereyağı", description: "Margarin yerine hakiki tereyağlı geleneksel tarifler." },
+        { id: "val-2", title: "Günlük Taze Üretim", description: "Tezgâhta beklemeyen, siparişe göre hazırlanan lezzetler." },
+        { id: "val-3", title: "Özel Sipariş Desteği", description: "Doğum günü ve kutlamalarınız için kişiye özel tasarım." },
+      ],
+    },
+    {
+      id: "story-gida-3",
+      tonAdi: "Temiz ve Sağlıklı Beslenme",
+      kicker: "İLKEMİZ",
+      title: "Temiz İçerik, Güvenilir Gıda",
+      bio: "GDO'suz, koruyucusuz ve tam tahıllı ürünlerle sağlıklı beslenmeyi mahallenize ve sofranıza taşıyoruz.",
+      values: [
+        { id: "val-1", title: "Şeffaf Reçete", description: "İçinde ne olduğunu bildiğiniz katkısız ürünler." },
+        { id: "val-2", title: "Yerel Üretici Desteği", description: "Tarladan doğrudan temin edilen temiz hammaddeler." },
+        { id: "val-3", title: "Hijyenik Üretim", description: "Açık mutfak disiplininde titiz standartlar." },
+      ],
+    },
+  ],
+};
+
+const KAFE_YONETMEN: SektorelYonetmenSecenekleri = {
+  kampanyalar: [
+    {
+      id: "camp-kafe-1",
+      rozet: "ŞEFİN MENÜSÜ",
+      etiket: "Ev Yemekleri",
+      baslik: "Günün Ev Yemekleri & Anne Eli Lezzetleri",
+      aciklama: "Her gün mevsiminde sebzeler ve taze etlerle hazırlanan doyurucu ve sağlıklı tabaklar masanızda.",
+    },
+    {
+      id: "camp-kafe-2",
+      rozet: "KAHVE MOLASI",
+      etiket: "Nitelikli Kahve",
+      baslik: "Taze Çekilmiş Nitelikli Kahve & Tatlı İkilisi",
+      aciklama: "Özel kavrum çekirdeklerden demlenen kahvenizin yanında günlük fırınlanmış tatlı avantajı.",
+    },
+    {
+      id: "camp-kafe-3",
+      rozet: "ÖĞLE ARASI",
+      etiket: "Hızlı Menü",
+      baslik: "Çalışanlara Özel Hızlı & Doyurucu Öğle Menüsü",
+      aciklama: "Vaktinizi iyi değerlendirmeniz için hızlı servis, sıcak çorba ve ana yemek menüsü hazır.",
+    },
+  ],
+  hikayeler: [
+    {
+      id: "story-kafe-1",
+      tonAdi: "Sıcak Esnaf Lokantası",
+      kicker: "HİKAYEMİZ",
+      title: "Aynı Kazandan Kardeşçe Sofralar",
+      bio: "Kapımızdan giren her misafiri evimize gelmiş gibi ağırlıyoruz. Taze malzeme, bol porsiyon ve güler yüzlü hizmetle mahallemizin sofrası olmaktan gurur duyuyoruz.",
+      values: [
+        { id: "val-1", title: "Mevsiminde Malzeme", description: "Hale bizzat gidilerek seçilen taze sebze ve etler." },
+        { id: "val-2", title: "Doyurucu Porsiyon", description: "Gözü de gönlü de doyuran esnaf cömertliği." },
+        { id: "val-3", title: "Güler Yüzlü Hizmet", description: "Yıllardır değişmeyen mahalle sıcaklığı." },
+      ],
+    },
+    {
+      id: "story-kafe-2",
+      tonAdi: "Nitelikli Butik Kafe",
+      kicker: "RUHUMUZ",
+      title: "Sakin Bir Mola, İyi Bir Fincan",
+      bio: "Şehrin gürültüsünden kaçıp kitabınızı okuyabileceğiniz, dostlarınızla sohbet edebileceğiniz samimi bir yaşam alanı.",
+      values: [
+        { id: "val-1", title: "Özel Çekirdekler", description: "Dünyanın en iyi kahve çiftliklerinden nitelikli seçki." },
+        { id: "val-2", title: "Huzurlu Atmosfer", description: "Çalışmaya ve dinlenmeye uygun rahat ortam." },
+        { id: "val-3", title: "Taze Eşlikçiler", description: "Kahvenize eşlik eden ev yapımı tatlılar." },
+      ],
+    },
+    {
+      id: "story-kafe-3",
+      tonAdi: "Usta Şef Mutfağı",
+      kicker: "USTALIĞIMIZ",
+      title: "Gelenekten Geleceğe Lezzet İmzası",
+      bio: "Klasik lezzetleri modern dokunuşlarla yeniden yorumluyor, damaklarda unutulmaz tatlar bırakıyoruz.",
+      values: [
+        { id: "val-1", title: "Özel Reçeteler", description: "Ustasından sırrını alan özgün tabaklar." },
+        { id: "val-2", title: "Yüksek Hijyen", description: "A sınıfı gıda güvenliği ve titiz mutfak." },
+        { id: "val-3", title: "Hızlı Servis", description: "Yemeğinizi soğutmadan masanıza getiren özen." },
+      ],
+    },
+  ],
+};
+
+const EVRENSEL_YONETMEN: SektorelYonetmenSecenekleri = {
+  kampanyalar: [
+    {
+      id: "camp-univ-1",
+      rozet: "ÖNE ÇIKAN",
+      etiket: "Haftanın Fırsatı",
+      baslik: "Vitrinin En Çok Tercih Edilen Seçkisi",
+      aciklama: "Müşterilerimizin en çok ilgi gösterdiği kaliteli ve güvenilir ürünlerde avantajlı teklifler.",
+    },
+    {
+      id: "camp-univ-2",
+      rozet: "YENİ DÖNEM",
+      etiket: "Özel Seçki",
+      baslik: "Sezonun Yeni ve Gözde Modelleri",
+      aciklama: "İşletmemizin özenle hazırladığı güncel koleksiyon ve geniş ürün yelpazesi yayında.",
+    },
+    {
+      id: "camp-univ-3",
+      rozet: "TANIŞMA",
+      etiket: "Müşteri Memnuniyeti",
+      baslik: "İlk Alışverişe Özel Esnaf Avantajı",
+      aciklama: "Bizimle tanışan tüm müşterilerimize samimi hizmet ve avantajlı alışveriş deneyimi.",
+    },
+  ],
+  hikayeler: [
+    {
+      id: "story-univ-1",
+      tonAdi: "Güvenilir Mahalle Esnafı",
+      kicker: "HİKAYEMİZ",
+      title: "Dürüst Hizmet ve Müşteri Güveni",
+      bio: "Yılların tecrübesiyle kapımızdan giren her müşterimize dürüst esnaflık anlayışıyla hizmet veriyoruz. İşimizi sevgiyle yapıyor, mahallemize değer katıyoruz.",
+      values: [
+        { id: "val-1", title: "Dürüstlük", description: "Şeffaf fiyatlandırma ve açık iletişim." },
+        { id: "val-2", title: "Kalite Güvencesi", description: "Arkadasında durduğumuz sağlam ürünler." },
+        { id: "val-3", title: "Hızlı Destek", description: "Satış sonrasında da yanınızda olan esnaf yaklaşımı." },
+      ],
+    },
+    {
+      id: "story-univ-2",
+      tonAdi: "Modern ve Dinamik İşletme",
+      kicker: "VİZYONUMUZ",
+      title: "Gelişen Dünyada Kalıcı Kalite",
+      bio: "Müşterilerimizin ihtiyaçlarını yakından takip ediyor, en güncel ürün ve hizmetleri en yüksek kalite standartlarında sunuyoruz.",
+      values: [
+        { id: "val-1", title: "Yenilikçi Seçki", description: "Sürekli güncellenen modern ürün çeşitliliği." },
+        { id: "val-2", title: "Müşteri Odaklılık", description: "Sizin memnuniyetinizi merkeze alan çözümler." },
+        { id: "val-3", title: "Kolay İletişim", description: "WhatsApp üzerinden hızlı ve doğrudan iletişim." },
+      ],
+    },
+    {
+      id: "story-univ-3",
+      tonAdi: "Özenli ve Usta Hizmet",
+      kicker: "İLKEMİZ",
+      title: "İşin Ehli Olmanın Verdiği Güven",
+      bio: "Yaptığımız her işte ustalığı ve titizliği ön planda tutuyoruz. Bizi tercih eden herkesin memnun ayrılması en büyük sermayemizdir.",
+      values: [
+        { id: "val-1", title: "Ustalık", description: "Yılların birikimiyle doğru yönlendirme." },
+        { id: "val-2", title: "Özenli Seçim", description: "Yalnızca beğendiğimiz ürünleri tezgâha koyma." },
+        { id: "val-3", title: "Koşulsuz Memnuniyet", description: "Sorunsuz ve güvenli alışveriş deneyimi." },
+      ],
+    },
+  ],
+};
+
+export function sektorelYonetmenSecenekleri(
+  kategoriEtiketi: string | null | undefined,
+): SektorelYonetmenSecenekleri {
+  const kategori = kategoriEtiketi ? resolveBusinessCategory(kategoriEtiketi) : null;
+  const kategoriId = kategori?.id ?? "";
+
+  if (kategoriId === "butik" || kategoriId === "giyim") {
+    return BUTIK_YONETMEN;
+  }
+  if (kategoriId === "gida" || kategoriId === "firin") {
+    return GIDA_YONETMEN;
+  }
+  if (kategoriId === "kafe_lokanta") {
+    return KAFE_YONETMEN;
+  }
+  return EVRENSEL_YONETMEN;
+}
+

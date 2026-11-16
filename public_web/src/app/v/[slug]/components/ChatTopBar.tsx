@@ -15,7 +15,6 @@ interface Props {
 // masaüstü sağ sütunda SAĞDA kalır; tabletin mevcut yüzen paneli korunur.
 export function ChatTopBar({ rapor, onKapat }: Props) {
   const mobilTutamakRef = useRef<number | null>(null);
-  const asama = rapor.yuzde < 34 ? 1 : rapor.yuzde < 67 ? 2 : 3;
 
   const tutamakBasla = (olay: ReactPointerEvent<HTMLDivElement>) => {
     if (window.matchMedia("(min-width: 640px)").matches) return;
@@ -76,10 +75,10 @@ export function ChatTopBar({ rapor, onKapat }: Props) {
             </p>
           </div>
 
-          <div className="order-2 shrink-0 rounded-xl border border-white/10 bg-white/[0.045] px-2.5 py-1.5 text-right sm:order-3 lg:order-2">
-            <p className="text-[12px] font-black leading-none text-sky-300">Aşama {asama}/3</p>
-            <p className="mt-1 text-[9px] font-semibold leading-none text-slate-500">
-              {rapor.doluSayisi}/{rapor.toplamSayisi} alan
+          <div className="order-2 shrink-0 rounded-xl border border-emerald-400/20 bg-emerald-500/[0.08] px-2.5 py-1.5 text-right sm:order-3 lg:order-2">
+            <p className="text-[12px] font-black leading-none text-emerald-300">✓ %{rapor.yuzde} Hazır</p>
+            <p className="mt-1 text-[9px] font-semibold leading-none text-slate-400">
+              {rapor.temelTamam ? "Temel hazır" : "Yönetmen modu"}
             </p>
           </div>
 
