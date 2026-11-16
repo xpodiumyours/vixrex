@@ -75,4 +75,13 @@ describe("R02-CEREZ-01: değiştirilebilir çerez tercihleri", () => {
     expect(saved.has(COOKIE_CONSENT_KEY)).toBe(true);
     expect((window as unknown as Record<string, unknown>)["ga-disable-G-VIXREX-TEST"]).toBe(true);
   });
+
+  it("çerez kutusu VixRex kurumsal paletine (bg-lp-surface / border-lp-border) baglidir ve beyaz zemin uretmez", () => {
+    // Kural 35 ve kontrast kilidi: cift tema/beyaz zemin hatasini engeller
+    expect(banner).toContain("bg-lp-surface");
+    expect(banner).toContain("border-lp-border");
+    expect(banner).toContain("text-lp-text");
+    expect(banner).not.toContain("bg-white");
+    expect(banner).not.toContain("text-[#182028]");
+  });
 });

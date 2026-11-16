@@ -52,7 +52,7 @@ export function CookieBanner() {
           setReopened(true);
           setDismissed(false);
         }}
-        className="fixed bottom-3 left-3 z-40 rounded-full border border-black/15 bg-white px-3 py-2 text-xs font-semibold text-[#182028] shadow-md dark:border-white/20 dark:bg-[#121820] dark:text-[#E2E8F0]"
+        className="fixed bottom-3 left-3 z-40 rounded-full border border-lp-border bg-lp-surface px-3.5 py-2 text-xs font-semibold text-lp-text shadow-lg hover:bg-lp-surface-soft transition-colors"
       >
         Çerez tercihleri
       </button>
@@ -63,42 +63,44 @@ export function CookieBanner() {
 
   return (
     <div
-      className="fixed inset-x-4 bottom-4 z-50 mx-auto max-w-2xl rounded-2xl border border-black/10 bg-white p-5 shadow-2xl dark:border-white/10 dark:bg-[#121820] md:inset-x-auto md:left-1/2 md:w-[calc(100%-2rem)] md:-translate-x-1/2"
+      className="fixed inset-x-4 bottom-4 z-50 mx-auto max-w-2xl rounded-2xl border border-lp-border bg-lp-surface/95 p-5 shadow-2xl backdrop-blur-md md:inset-x-auto md:left-1/2 md:w-[calc(100%-2rem)] md:-translate-x-1/2"
       role="dialog"
       aria-label="Çerez tercihleri"
     >
       <div className="flex flex-col gap-3">
-        <p className="text-sm leading-relaxed text-[#182028] dark:text-[#E2E8F0]">
+        <p className="text-sm leading-relaxed text-lp-text-alt">
           Gerekli çerezler siteyi çalıştırmak için kullanılır. Analitik ve
           pazarlama çerezleri yalnızca izninizle açılır. Resmi çerez politikası
           yakında yayınlanacaktır.
         </p>
 
         {customize ? (
-          <div className="flex flex-col gap-2 rounded-xl border border-black/10 p-3 dark:border-white/10">
-            <label className="flex items-center justify-between gap-3 text-sm">
+          <div className="flex flex-col gap-2.5 rounded-xl border border-lp-border/70 bg-lp-surface-soft/60 p-3.5">
+            <label className="flex items-center justify-between gap-3 text-sm font-medium text-lp-text cursor-pointer">
               <span>Gerekli (zorunlu)</span>
-              <input type="checkbox" checked disabled readOnly />
+              <input type="checkbox" checked disabled readOnly className="accent-lp-primary opacity-60" />
             </label>
-            <label className="flex items-center justify-between gap-3 text-sm">
+            <label className="flex items-center justify-between gap-3 text-sm font-medium text-lp-text cursor-pointer">
               <span>Analitik</span>
               <input
                 type="checkbox"
                 checked={analytics}
                 onChange={(e) => setAnalytics(e.target.checked)}
+                className="accent-lp-primary cursor-pointer"
               />
             </label>
-            <label className="flex items-center justify-between gap-3 text-sm">
+            <label className="flex items-center justify-between gap-3 text-sm font-medium text-lp-text cursor-pointer">
               <span>Pazarlama</span>
               <input
                 type="checkbox"
                 checked={marketing}
                 onChange={(e) => setMarketing(e.target.checked)}
+                className="accent-lp-primary cursor-pointer"
               />
             </label>
             <button
               type="button"
-              className="mt-1 rounded-lg bg-[#00F0FF] px-4 py-2 text-sm font-bold text-black"
+              className="mt-2 w-full rounded-lg bg-lp-primary px-4 py-2 text-sm font-black text-lp-on-primary transition-colors hover:bg-lp-secondary shadow"
               onClick={() => persist({ analytics, marketing })}
             >
               Tercihleri kaydet
@@ -106,17 +108,17 @@ export function CookieBanner() {
           </div>
         ) : null}
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
-            className="rounded-lg bg-[#00F0FF] px-4 py-2 text-sm font-bold text-black"
+            className="rounded-lg bg-lp-primary px-4 py-2 text-sm font-black text-lp-on-primary transition-colors hover:bg-lp-secondary shadow"
             onClick={() => persist({ analytics: true, marketing: true })}
           >
             Tümünü kabul et
           </button>
           <button
             type="button"
-            className="rounded-lg border border-black/15 px-4 py-2 text-sm font-semibold dark:border-white/20"
+            className="rounded-lg border border-lp-border bg-lp-surface-soft px-4 py-2 text-sm font-semibold text-lp-text transition-colors hover:bg-lp-surface"
             onClick={() => persist({ analytics: false, marketing: false })}
           >
             Yalnızca gerekli
@@ -124,7 +126,7 @@ export function CookieBanner() {
           {reopened ? (
             <button
               type="button"
-              className="rounded-lg px-4 py-2 text-sm font-semibold underline-offset-2 hover:underline"
+              className="rounded-lg px-4 py-2 text-sm font-semibold text-lp-muted underline-offset-2 hover:text-lp-text hover:underline transition-colors"
               onClick={() => setReopened(false)}
             >
               Vazgeç
@@ -132,7 +134,7 @@ export function CookieBanner() {
           ) : null}
           <button
             type="button"
-            className="rounded-lg px-4 py-2 text-sm font-semibold underline-offset-2 hover:underline"
+            className="rounded-lg px-4 py-2 text-sm font-semibold text-lp-muted underline-offset-2 hover:text-lp-text hover:underline transition-colors"
             onClick={() => setCustomize((v) => !v)}
           >
             {customize ? "Gizle" : "Özelleştir"}
