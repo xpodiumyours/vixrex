@@ -18,6 +18,7 @@ import { FaqEditor } from "./components/FaqEditor";
 import { CampaignEditor } from "./components/CampaignEditor";
 import { MarketplaceEditor } from "./components/MarketplaceEditor";
 import { GalleryEditor } from "./components/GalleryEditor";
+import { YonetmenMasasi } from "./components/YonetmenMasasi";
 import { PublishBar } from "./components/PublishBar";
 import { VixrexAvatar } from "./components/VixrexAvatar";
 import { SpotlightGuide } from "./components/SpotlightGuide";
@@ -874,6 +875,16 @@ export default function OwnerAssistantPanel({
               ref={akisRef}
               className="vixrex-panel-kaydirici min-h-0 flex-1 space-y-2 overflow-y-auto px-4 py-3"
             >
+              <YonetmenMasasi
+                slug={slug}
+                kategoriEtiketi={typeof yerelTaslak.kategori === "string" ? yerelTaslak.kategori : null}
+                onDuzenleAc={(mod) => {
+                  if (mod === "kampanya") setKampanyaAcik(true);
+                  if (mod === "hikaye") setAboutAcik(true);
+                  if (mod === "sss") setFaqAcik(true);
+                }}
+                onMesajGonder={(metin) => mesajEkle("kullanici", metin)}
+              />
               {mesajlar.map((m) => (
                 <ChatBubble key={m.id} mesaj={m} onHizliCevap={handleHizliCevap} />
               ))}
@@ -1019,6 +1030,16 @@ export default function OwnerAssistantPanel({
                     ref={akisRef}
                     className="vixrex-panel-kaydirici min-h-0 flex-1 space-y-2 overflow-y-auto px-4 py-3"
                   >
+                    <YonetmenMasasi
+                      slug={slug}
+                      kategoriEtiketi={typeof yerelTaslak.kategori === "string" ? yerelTaslak.kategori : null}
+                      onDuzenleAc={(mod) => {
+                        if (mod === "kampanya") setKampanyaAcik(true);
+                        if (mod === "hikaye") setAboutAcik(true);
+                        if (mod === "sss") setFaqAcik(true);
+                      }}
+                      onMesajGonder={(metin) => mesajEkle("kullanici", metin)}
+                    />
                     {mesajlar.map((m) => (
                       <ChatBubble key={m.id} mesaj={m} onHizliCevap={handleHizliCevap} />
                     ))}
