@@ -803,7 +803,7 @@ export default function OwnerAssistantPanel({
         </div>
       ) : null}
 
-      {/* 2026-11-16 (Casper Kararı & Kurumsal Deneyim): Asistan kapalıyken sağ altta sabit parlayan tek parça orijinal Vixrex Maskot FAB */}
+      {/* 2026-11-16 (Casper Kararı & Kurumsal Marka Yüzü): Kutusuz, çerçevesiz, doğrudan süzülen parıltılı Vixrex Maskot FAB */}
       {((masaustu && !acik) || (!masaustu && !mobilGecmisAcik && !haritaAcik)) && (
         <button
           type="button"
@@ -814,15 +814,15 @@ export default function OwnerAssistantPanel({
             }
           }}
           aria-label="Vixrex Asistanı Aç"
-          className="fixed bottom-6 right-6 z-[74] flex h-14 w-14 items-center justify-center rounded-full border border-sky-400/50 bg-[#0E1B2E] shadow-[0_4px_24px_rgba(56,160,228,0.35)] transition-all duration-200 hover:scale-105 active:scale-95 group focus:outline-none focus:ring-2 focus:ring-sky-400"
+          className="fixed bottom-5 right-5 z-[74] flex items-center justify-center p-0 bg-transparent border-0 cursor-pointer transition-transform duration-300 hover:scale-110 active:scale-95 group focus:outline-none"
         >
           <Image
             src="/images/vixrex_v_crystal_mascot.webp"
             alt="Vixrex Asistan"
-            width={40}
-            height={40}
+            width={72}
+            height={72}
             priority
-            className="h-10 w-10 object-contain drop-shadow-[0_0_8px_rgba(56,160,228,0.5)] transition-transform duration-200 group-hover:scale-110"
+            className="h-16 w-16 md:h-18 md:w-18 object-contain drop-shadow-[0_0_18px_rgba(56,160,228,0.7)] transition-all duration-300 group-hover:drop-shadow-[0_0_28px_rgba(56,160,228,0.95)]"
           />
         </button>
       )}
