@@ -1121,46 +1121,6 @@ export default function OwnerAssistantPanel({
             {mesajlar.map((m) => (
               <ChatBubble key={m.id} mesaj={m} onHizliCevap={handleHizliCevap} />
             ))}
-
-            {seciliAlan ? (
-              <div className="flex gap-2 items-start pt-1">
-                <div className="shrink-0 mt-0.5" aria-hidden="true">
-                  <VixrexAvatar size={24} halo decorative />
-                </div>
-                <div className="space-y-1.5 w-full max-w-[90%]">
-                  <div className="rounded-2xl rounded-tl-xs border border-sky-400/35 bg-[#0f213a] p-3 shadow-xl space-y-2 text-xs">
-                    <div className="flex items-center justify-between pb-1 border-b border-white/10">
-                      <span className="font-bold text-white text-[11px] flex items-center gap-1.5">
-                        <span className="h-1.5 w-1.5 rounded-full bg-sky-400 animate-pulse" />
-                        {seciliAlan.etiket} Düzenleniyor
-                      </span>
-                      <span className="text-[9px] text-slate-400 font-mono">Tıkla-Düzenle</span>
-                    </div>
-                    {seciliAlanKayitliDeger ? (
-                      <p className="text-[10px] text-slate-400">
-                        Kayıtlı: <span className="text-slate-200 font-medium">&quot;{seciliAlanKayitliDeger}&quot;</span>
-                      </p>
-                    ) : null}
-                    <div className="flex items-center justify-between pt-1">
-                      <span className="text-[9px] text-slate-500">
-                        {seciliAlan.neden ?? "Aşağıdaki kutudan yeni değeri yazabilirsin."}
-                      </span>
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSeciliAlan(null);
-                          }}
-                          className="px-2 py-0.5 rounded text-[10px] text-slate-400 hover:text-white transition"
-                        >
-                          Vazgeç
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : null}
           </div>
 
           {yuzey.panelKutusu ? (

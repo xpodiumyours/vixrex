@@ -287,7 +287,7 @@ export function SpotlightGuide(props: Props) {
   const yatayOk = balonYeri === "sag" || balonYeri === "sol";
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-[80]" aria-hidden={false}>
+    <div className="pointer-events-none fixed inset-0 z-[70] lg:right-[var(--owner-rail-w)]" aria-hidden={false}>
       {/* Hedef halkası — vitrin ARTIK KARARMIYOR (Faz 4, Çalışma masası /
        * Yön C, 2026-09-03). Eskiden dışı `boxShadow: 0 0 0 9999px rgba(...)`
        * ile karartılıyordu; esnaf neyi değiştirdiğini vitrinin geri kalanına
@@ -317,15 +317,14 @@ export function SpotlightGuide(props: Props) {
         <VixrexAvatar size={22} decorative />
       </div>
 
+      {kartGoster ? (
+      <>
       <div
         className="pointer-events-none absolute max-w-[240px] truncate rounded-lg border border-sky-400/25 bg-[#0B1120]/90 px-2 py-1 text-[10px] font-semibold text-sky-300/80 opacity-70 shadow-lg"
         style={{ top: rect.top + rect.height + 6, left: Math.max(8, rect.left) }}
       >
         Tıkla düzenle · {seciliAlan.etiket}
       </div>
-
-      {kartGoster ? (
-      <>
       {/* Ok + balon.
        * 2026-08-22 mobil/masaüstü uyum düzeltmesi: balonun kendisi
        * yükseklik sınırı taşımıyordu — uzun açıklama metni kısa/mobil
