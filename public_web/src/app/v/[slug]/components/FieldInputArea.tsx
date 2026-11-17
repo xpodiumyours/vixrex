@@ -177,6 +177,18 @@ export function FieldInputArea({
           </div>
         ) : null}
 
+        {isGorsel ? (
+          <div className="px-1">
+            <ImagePickerPanel
+              hazirGorseller={hazirGorseller}
+              hazirYukleniyor={hazirYukleniyor}
+              kaydediliyor={kaydediliyor}
+              hazirGorselleriAc={hazirGorselleriAc}
+              hazirGorselSec={hazirGorselSec}
+            />
+          </div>
+        ) : null}
+
         <div className="flex items-center gap-2">
         {isGorsel ? (
           <label
