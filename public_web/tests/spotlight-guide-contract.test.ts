@@ -44,12 +44,9 @@ describe("SpotlightGuide — sayfada dolaşan rehber", () => {
     );
   });
 
-  it("panel açık ve bir alan seçiliyken SpotlightGuide render edilir", () => {
-    // 2026-08-22 (Faz 4): koşula bir şart daha eklendi — mobilde "tüm
-    // alanlar" haritası açıkken balon gizlenir, yoksa ikisi üst üste
-    // biniyordu. Asistan açıkken balonun görünmesi kuralı DEĞİŞMEDİ.
+  it("bir alan seçiliyken SpotlightGuide render edilir", () => {
     expect(panelSource).toContain("<SpotlightGuide");
-    expect(panelSource).toMatch(/\{acik\s*&&[^\n]*&&\s*\(\s*<SpotlightGuide/);
+    expect(panelSource).toMatch(/\{seciliAlan\s*&&[^\n]*&&\s*\(\s*<SpotlightGuide/);
     expect(panelSource).toContain("!(!masaustu && haritaAcik)");
   });
 

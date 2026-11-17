@@ -44,10 +44,11 @@ describe("Dilim 1 hero kimlik alanları", () => {
     expect(viewSource).not.toContain("lg:px-12 lg:py-16");
   });
 
-  it("masaüstünde aksiyonlar sağ sütunda değil kimlik bilgilerinin altında kompakt satırdadır", () => {
-    expect(viewSource).toContain("mt-3 hidden flex-wrap items-center gap-2 lg:flex");
+  it("aksiyonlar her ekran genişliğinde kimlik altında aynı kompakt satırdadır", () => {
+    expect(viewSource).toContain("mt-3 flex flex-wrap items-center gap-2");
     expect(viewSource).toContain("px-3 py-1.5 text-[13px]");
-    expect(viewSource).toContain("sm:flex-row md:flex-col lg:hidden");
+    expect(viewSource).not.toContain("sm:flex-row md:flex-col lg:hidden");
+    expect(viewSource).not.toContain("primaryActionClass");
     expect(viewSource).not.toContain("lg:w-[260px] lg:min-w-0");
   });
 
@@ -61,7 +62,6 @@ describe("Dilim 1 hero kimlik alanları", () => {
   it("uydurma Google Maps ikonu yok; mevcut pin ve gerçek WhatsApp glifi kullanılır", () => {
     expect(viewSource).not.toContain("GoogleMapsIcon");
     expect(viewSource).toContain("<MapPinIcon size={16} />");
-    expect(viewSource).toContain("<MapPinIcon size={18} />");
     expect(viewSource).toContain('text-[#25D366]');
   });
 

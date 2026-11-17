@@ -84,6 +84,12 @@ interface Props {
    * kapanıyor — geri dönmenin yolu balondaki bu düğme.
    */
   onHaritaAc?: () => void;
+  /**
+   * false → yalnız halka ve yürüyen sembol çizilir, bilgi balonu çizilmez.
+   * Bilgi artık panelin içinde, mesaj kutusunun hemen üstünde duruyor;
+   * ikinci balon açmak tek yüz kuralını bozuyordu.
+   */
+  kartGoster?: boolean;
 }
 
 /** Sayfada gezen spot ışığı — panel açıkken, bir alan seçiliyken görünür.
@@ -98,6 +104,7 @@ export function SpotlightGuide(props: Props) {
     olcumTetikleyici,
     gecisSuruyor = false,
     onHaritaAc,
+    kartGoster = true,
   } = props;
   const [rect, setRect] = useState<Rect | null>(null);
   const [viewport, setViewport] = useState<{
@@ -304,12 +311,21 @@ export function SpotlightGuide(props: Props) {
        * gittiğini gösteren tek şey bu: sembol hedefin köşesine kayar,
        * CSS geçişiyle yürür gibi görünür. Varınca balon açılır. */}
       <div
-        className="pointer-events-none absolute flex h-8 w-8 items-center justify-center rounded-full border border-blue-400/40 bg-[#0B1120] shadow-lg transition-all duration-500 ease-out"
+        className="pointer-events-none absolute flex h-8 w-8 items-center justify-center rounded-full border border-blue-400/40 bg-[#0B1120] opacity-60 shadow-lg"
         style={{ top: rect.top - 22, left: Math.max(8, rect.left - 14) }}
       >
         <VixrexAvatar size={22} decorative />
       </div>
 
+      <div
+        className="pointer-events-none absolute max-w-[240px] truncate rounded-lg border border-sky-400/25 bg-[#0B1120]/90 px-2 py-1 text-[10px] font-semibold text-sky-300/80 opacity-70 shadow-lg"
+        style={{ top: rect.top + rect.height + 6, left: Math.max(8, rect.left) }}
+      >
+        Tıkla düzenle · {seciliAlan.etiket}
+      </div>
+
+      {kartGoster ? (
+      <>
       {/* Ok + balon.
        * 2026-08-22 mobil/masaüstü uyum düzeltmesi: balonun kendisi
        * yükseklik sınırı taşımıyordu — uzun açıklama metni kısa/mobil
@@ -429,6 +445,8 @@ export function SpotlightGuide(props: Props) {
           </button>
         </div>
       </div>
+      </>
+      ) : null}
     </div>
   );
 }

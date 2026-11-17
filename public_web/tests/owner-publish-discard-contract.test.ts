@@ -30,6 +30,10 @@ const publishBarSource = readFileSync(
   resolve(__dirname, "../src/app/v/[slug]/components/PublishBar.tsx"),
   "utf-8"
 );
+const topBarSource = readFileSync(
+  resolve(__dirname, "../src/app/v/[slug]/components/ChatTopBar.tsx"),
+  "utf-8"
+);
 const ownerActionsSource = readFileSync(
   resolve(__dirname, "../src/app/v/[slug]/hooks/useOwnerActions.ts"),
   "utf-8"
@@ -159,17 +163,17 @@ describe("panel — yayınla / vazgeç sözleşmesi", () => {
     );
   });
 
-  it("yasal onay verilmeden PublishBar yayın eylemini kilitli tutar", () => {
+  it("yasal onay verilmeden PublishBar yayın eylemini başlatmaz, onay formunu açar", () => {
     expect(panelSource).toContain("/api/owner-accept-legal");
     expect(publishBarSource).toContain("yasalOnayli");
-    expect(publishBarSource).toMatch(
-      /disabled=\{\s*yayinlaniyor \|\| !yasalOnayli \|\|/
-    );
+    expect(publishBarSource).toMatch(/yasalOnayli \? void yayinla\(\) : setOnayAcik/);
+    expect(publishBarSource).toMatch(/disabled=\{\s*yayinlaniyor \|\| \(yasalOnayli && !premiumGerekli && !temelTamam\)/);
   });
 
-  it("masaüstünde ikinci yayın düğmesi gizlense de güvenlik kontrolleri korunur", () => {
-    expect(ownerPanelSource).toContain("showPublishButton={false}");
-    expect(publishBarSource).toContain("showPublishButton = true");
+  it("başlıkta tek yayın çubuğu çizilse de güvenlik kontrolleri korunur", () => {
+    expect(ownerPanelSource).not.toContain("<PublishBar");
+    expect(topBarSource).toContain("<PublishBar");
+    expect(publishBarSource).toContain("Yayınla — önce yasal onay gerekiyor");
     expect(publishBarSource).toContain("Değişiklikleri bırak");
     expect(publishBarSource).toContain("Aydınlatma Metni");
   });

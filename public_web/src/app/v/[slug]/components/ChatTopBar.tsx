@@ -2,18 +2,37 @@
 
 import { useRef, type PointerEvent as ReactPointerEvent } from "react";
 import { VixrexAvatar } from "./VixrexAvatar";
+import { PublishBar } from "./PublishBar";
 import type { HazirlikRaporu } from "@/lib/vitrinReadiness";
+
+export interface YayinDegerleri {
+  yayinlaniyor: boolean;
+  yayinla: () => Promise<void>;
+  yasalOnayli: boolean;
+  onayVeriliyor: boolean;
+  onayVer: (beyanlar: { privacyAcknowledged: boolean; termsAccepted: boolean; publicationConsent: boolean }) => Promise<boolean>;
+  temelTamam: boolean;
+  eksikTemelSayisi: number;
+  kiralikVitrinMi: boolean;
+  premiumAktifMi: boolean;
+  silmeOnayi: boolean;
+  sil: () => Promise<void>;
+  silmeOnayla: () => void;
+  setSilmeOnayi: (v: boolean) => void;
+  durumMetni?: string;
+}
 
 interface Props {
   rapor: HazirlikRaporu;
   onKapat: () => void;
+  yayin?: YayinDegerleri;
 }
 
 // Sahiplik sayfasındaki Vixrex Asistan kabuğunun tek başlığı.
 // Mobilde bu başlık yalnız çekmece yukarı açıldığında görünür; günlük
 // kullanım yüzeyi alttaki compact composer'dır. Maskot telefonda ve
 // masaüstü sağ sütunda SAĞDA kalır; tabletin mevcut yüzen paneli korunur.
-export function ChatTopBar({ rapor, onKapat }: Props) {
+export function ChatTopBar({ rapor, onKapat, yayin }: Props) {
   const mobilTutamakRef = useRef<number | null>(null);
 
   const tutamakBasla = (olay: ReactPointerEvent<HTMLDivElement>) => {
@@ -35,7 +54,7 @@ export function ChatTopBar({ rapor, onKapat }: Props) {
 
   return (
     <>
-      <div className="relative shrink-0 border-b border-white/10 bg-[linear-gradient(180deg,rgba(24,37,63,0.96),rgba(11,17,32,0.96))] px-4 pb-3 pt-2.5 sm:pt-3">
+      <div className="relative shrink-0 border-b border-white/10 bg-[linear-gradient(180deg,rgba(20,32,54,0.98),rgba(10,17,30,0.98))] px-3.5 py-2.5">
         <div
           role="separator"
           aria-orientation="horizontal"
@@ -46,62 +65,50 @@ export function ChatTopBar({ rapor, onKapat }: Props) {
             mobilTutamakRef.current = null;
           }}
           onDoubleClick={onKapat}
-          className="mx-auto mb-2 flex h-3 w-14 touch-none select-none items-center justify-center sm:hidden"
+          className="mx-auto mb-1.5 flex h-2 w-12 touch-none select-none items-center justify-center sm:hidden"
         >
-          <span className="h-1 w-10 rounded-full bg-white/25" />
+          <span className="h-0.5 w-8 rounded-full bg-white/20" />
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="order-4 relative shrink-0 sm:order-1 lg:order-4">
-            <VixrexAvatar size={38} halo decorative />
-            <span
-              className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-[#111b2d] bg-emerald-400"
-              aria-hidden="true"
-            />
-          </div>
-
-          <div className="order-1 min-w-0 flex-1 sm:order-2 lg:order-1">
-            <div className="flex min-w-0 items-center gap-2">
-              <p className="truncate text-[15px] font-black tracking-[-0.01em] text-white">
-                Vixrex Asistan
-              </p>
-              <span className="hidden shrink-0 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2 py-0.5 text-[9px] font-bold text-emerald-300 sm:inline lg:hidden">
-                Sahiplik modu
-              </span>
+        <div className="flex items-center justify-between gap-2">
+          {/* Sol: Maskot & Başlık */}
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="order-4 relative shrink-0 sm:order-1 lg:order-4">
+              <VixrexAvatar size={38} halo decorative />
+              <span
+                className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#0b111e] bg-emerald-400"
+                aria-hidden="true"
+              />
             </div>
-            <p className="mt-0.5 min-w-0 truncate text-[11px] font-medium text-slate-400">
-              <span className="lg:hidden">Sohbet geçmişi</span>
-              <span className="hidden lg:inline">Vitrinini düzenle</span>
-            </p>
+
+            <div className="order-1 min-w-0 flex-1 sm:order-2 lg:order-1">
+              <div className="flex items-center gap-1.5">
+                <p className="shrink-0 text-xs font-black tracking-[-0.01em] text-white">
+                  Vixrex Asistan
+                </p>
+              </div>
+              <p className="truncate text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
+                <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400" />
+                <span className="truncate">{yayin?.durumMetni || "Vitrinin yayındaki hâliyle aynı."}</span>
+              </p>
+            </div>
           </div>
 
-          <div className="order-2 shrink-0 rounded-xl border border-emerald-400/20 bg-emerald-500/[0.08] px-2.5 py-1.5 text-right sm:order-3 lg:order-2">
-            <p className="text-[12px] font-black leading-none text-emerald-300">✓ %{rapor.yuzde} Hazır</p>
-            <p className="mt-1 text-[9px] font-semibold leading-none text-slate-400">
-              {rapor.temelTamam ? "Temel hazır" : "Yönetmen modu"}
-            </p>
-          </div>
+          {/* Sağ: Kompakt Yayın Barı & Kapat */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            {yayin ? <PublishBar {...yayin} yuzde={rapor.yuzde} /> : null}
 
-          <button
-            type="button"
-            onClick={onKapat}
-            className="order-3 grid h-9 w-9 shrink-0 place-items-center rounded-full border border-white/10 bg-white/[0.045] text-slate-300 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 sm:order-4 lg:hidden"
-            aria-label="Asistanı küçült"
-          >
-            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-              <path d="M6 6l12 12M18 6L6 18" strokeLinecap="round" />
-            </svg>
-          </button>
-        </div>
-
-        <div className="mt-3 hidden items-center gap-2 sm:flex lg:hidden">
-          <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-white/10">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-sky-500 to-blue-500 transition-all duration-500"
-              style={{ width: `${rapor.yuzde}%` }}
-            />
+            <button
+              type="button"
+              onClick={onKapat}
+              className="grid h-7 w-7 place-items-center rounded-lg border border-white/10 bg-white/[0.045] text-slate-400 transition hover:bg-white/10 hover:text-white focus-visible:outline-none lg:hidden"
+              aria-label="Asistanı küçült"
+            >
+              <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <path d="M6 6l12 12M18 6L6 18" strokeLinecap="round" />
+              </svg>
+            </button>
           </div>
-          <span className="shrink-0 text-[10px] font-semibold text-slate-500">%{rapor.yuzde} hazır</span>
         </div>
       </div>
 

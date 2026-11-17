@@ -341,10 +341,6 @@ export default function VitrinProfileView({
   const telForVcard = displayPhone || "";
   const vcardContent = `BEGIN:VCARD\nVERSION:3.0\nFN:${storeName}\nTEL:${telForVcard}\nEMAIL:${displayEmail}\nEND:VCARD`;
   const vcardHref = `data:text/vcard;charset=utf-8,${encodeURIComponent(vcardContent)}`;
-  const primaryActionClass =
-    "flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-xl font-semibold bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:-translate-y-0.5 transition";
-  const ghostActionClass =
-    "flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-transparent text-slate-200 border border-white/15 backdrop-blur-md hover:bg-white/10 hover:text-white transition";
 
   // Hero butonları kategori profiline göre üretilir (vitrinHeroActions).
   const heroButonlari = heroActions(profile, {
@@ -380,10 +376,13 @@ export default function VitrinProfileView({
     >
       {!ownerMode && !isPreviewMode && <VitrinViewTracker storeSlug={storeSlug} />}
       {isPreviewMode && (
-        <div className="fixed top-0 left-0 right-0 z-[60] h-9 bg-amber-500 text-[#0B1120] text-xs sm:text-sm font-bold flex items-center justify-center gap-2 lg:hidden">
-          {isPublished
-            ? "Taslak önizleme — müşteriler yayındaki hâli görüyor, buradaki değişiklikler henüz yayınlanmadı."
-            : "Taslak önizleme — bu vitrin henüz yayında değil, müşteriler göremez."}
+        <div className="fixed top-0 left-0 right-0 z-[60] h-8 bg-[#0c1628]/95 border-b border-amber-500/25 text-amber-300 text-xs font-semibold px-4 shadow-lg backdrop-blur-md flex items-center justify-center gap-2 lg:hidden">
+          <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" aria-hidden="true" />
+          <span className="truncate">
+            {isPublished
+              ? "Taslak önizleme — müşteriler yayındaki hâli görüyor, buradaki değişiklikler henüz yayınlanmadı."
+              : "Taslak önizleme — bu vitrin henüz yayında değil, müşteriler göremez."}
+          </span>
         </div>
       )}
       {/* ===== NAVBAR ===== */}
@@ -632,10 +631,10 @@ export default function VitrinProfileView({
             )}
 
             {heroButonlari.length > 0 && (
-              <div className="mt-3 hidden flex-wrap items-center gap-2 lg:flex">
+              <div className="mt-3 flex flex-wrap items-center gap-2">
                 {heroButonlari.map((buton) => (
                   <a
-                    key={`desktop-${buton.anahtar}`}
+                    key={buton.anahtar}
                     href={buton.href}
                     onClick={
                       buton.anahtar === "whatsapp" &&
@@ -675,48 +674,6 @@ export default function VitrinProfileView({
               </div>
             )}
           </div>
-
-          {heroButonlari.length > 0 && (
-            <div className="flex flex-col gap-3 min-w-[200px] sm:flex-row md:flex-col lg:hidden">
-              {heroButonlari.map((buton, index) => (
-                <a
-                  key={buton.anahtar}
-                  href={buton.href}
-                  onClick={
-                    buton.anahtar === "whatsapp" &&
-                    !ownerMode &&
-                    !isPreviewMode
-                      ? () =>
-                          trackWhatsAppClick(window.gtag, {
-                            storeSlug,
-                            clickLocation: "storefront_hero",
-                          })
-                      : undefined
-                  }
-                  {...(buton.disKapi
-                    ? { target: "_blank", rel: "noopener noreferrer" }
-                    : {})}
-                  {...editableProps(EYLEM_ALANI[buton.anahtar] ?? "", ownerMode)}
-                  className={index === 0 ? primaryActionClass : ghostActionClass}
-                >
-                  {buton.anahtar === "telefon" && (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-                    </svg>
-                  )}
-                  {buton.anahtar === "whatsapp" && <WhatsAppIcon size={18} />}
-                  {buton.anahtar === "randevu" && (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                      <rect x="3" y="4.5" width="18" height="16" rx="2.5" />
-                      <path d="M3 9.5h18M8 2.5v4M16 2.5v4" />
-                    </svg>
-                  )}
-                  {buton.anahtar === "maps" && <MapPinIcon size={18} />}
-                  {buton.etiket}
-                </a>
-              ))}
-            </div>
-          )}
         </div>
         <BolumEksikleri bolum="hero" taslak={ownerDraft} ownerMode={ownerMode} />
       </section>
