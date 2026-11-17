@@ -45,10 +45,7 @@ interface Deps {
   atlanmisAlanlar: ReadonlySet<string>;
   mesajEkle: (kimden: Mesaj["kimden"], metin: string) => void;
   /**
-   * Vitrinde bir alana tıklanınca çağrılır. Panel kapalıyken vitrinden
-   * seçim yapmak paneli de açmalı — aksi halde esnaf tıklar, hiçbir şey
-   * açılmamış gibi görünür (regresyon, code-review 2026-08-10: refactor
-   * sırasında orijinal `setAcik(true)` çağrısı kaybolmuştu).
+   * Vitrinde bir alana tıklanınca çağrılır; karar asistanYuzeyi'ndedir.
    */
   onAlanSecildi?: () => void;
 }
@@ -144,8 +141,7 @@ export function useFieldSelection({
 
       // Gönder sonrası mobil işlem sürerken sıradaki alan otomatik seçilir.
       // Bu seçim paneli tekrar açmamalı; kullanıcı "Düzenleniyor…" sırasında
-      // vitrini görmeye devam eder. İşlem dışındaki normal alan tıklamalarında
-      // eski davranış aynen korunur ve panel açılır.
+      // vitrini görmeye devam eder.
       const mobilIslemSuruyor =
         typeof document !== "undefined" &&
         document.body.classList.contains("vixrex-asistan-isliyor");
@@ -153,17 +149,13 @@ export function useFieldSelection({
         onAlanSecildi?.();
       }
       setSeciliAlan(alan);
-      const mevcut = yerelTaslak[alan.kolon];
-      setGiris(
-        alan.tip === "acikKapali"
-          ? ""
-          : mevcut === null || mevcut === undefined
-          ? ""
-          : String(mevcut)
-      );
       sonMesajlananAlanRef.current = anahtar;
+      // Kutu BOŞ açılır. Önceden alanın kayıtlı değeri kutuya yazılıyordu;
+      // esnaf bunu kendi yazdığı mesaj sanıp "yanlış alana yazıyor" diyordu.
+      // Kayıtlı değer artık yalnız kutunun üst şeridinde özet olarak görünür.
+      setGiris("");
     },
-    [yerelTaslak, vurguyuTemizle, onAlanSecildi, hedefeGit]
+    [vurguyuTemizle, onAlanSecildi, hedefeGit]
   );
 
   const alanaGecVeyaBitir = useCallback(

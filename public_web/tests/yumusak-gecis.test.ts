@@ -87,11 +87,11 @@ describe("balon yolda kapalı, sembol yürür", () => {
     expect(balonKaynak).toContain("pointer-events-none scale-95 opacity-0");
   });
 
-  it("hedefin yanında ayrı bir Vixrex sembolü var ve kayarak gider", () => {
+  it("hedefin yanında sabit soluk bir Vixrex sembolü var", () => {
     const semboller = balonKaynak.match(/<VixrexAvatar/g) ?? [];
-    // Biri balonun içinde (başlık), biri hedefin yanında yürüyen.
     expect(semboller.length).toBeGreaterThanOrEqual(2);
-    expect(balonKaynak).toContain("transition-all duration-500 ease-out");
+    expect(balonKaynak).toContain("opacity-60");
+    expect(balonKaynak).not.toContain("transition-all duration-500 ease-out");
   });
 });
 

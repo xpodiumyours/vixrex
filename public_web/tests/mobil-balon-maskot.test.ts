@@ -57,11 +57,10 @@ describe("mobil sahiplik asistanı — compact composer + çekmece", () => {
     expect(panel).toContain("lg:w-[var(--owner-rail-w)]");
   });
 
-  it("mobil geçmiş masaüstü yönetim yüzünden yapısal olarak ayrıdır", () => {
-    expect(panel).toContain("!masaustu && mobilGecmisAcik && !haritaAcik");
-    expect(panel).toContain("!masaustu && haritaAcik");
-    expect(panel).toContain("{masaustu ? (");
-    expect(panel).toContain('data-vixrex-desktop-tabs="true"');
+  it("mobil geçmiş ile masaüstü aynı tek gövdeyi kullanır", () => {
+    expect(panel).toContain('data-vixrex-tek-govde="true"');
+    expect(panel).not.toContain('data-vixrex-desktop-tabs="true"');
+    expect(panel).not.toContain("data-vixrex-mobile-details=\"true\" className=");
   });
 
   it("genişletilmiş mobil başlıkta canonical maskot sağdadır", () => {

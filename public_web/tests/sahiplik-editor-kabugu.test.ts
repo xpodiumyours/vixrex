@@ -1,6 +1,10 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import {
+  alanSecimiPaneliAcarMi,
+  asistanYuzeyi,
+} from "../src/app/v/[slug]/asistanYuzeyi";
 
 const oku = (relativePath: string) =>
   readFileSync(resolve(__dirname, relativePath), "utf-8");
@@ -22,12 +26,12 @@ describe("sahiplik modu editör kabuğu", () => {
     expect(bar).toContain("lg:flex");
   });
 
-  it("çubuk panelin kendi durumundan besleniyor, yayın eksikse Eksikler sekmesine yönlendiriyor", () => {
+  it("çubuk panelin kendi durumundan besleniyor, yayın eksikse alan listesini açıyor", () => {
     expect(panel).toContain("<OwnerEditorBar");
     expect(panel).toContain("kaydediliyor={actions.kaydediliyor}");
     expect(panel).toContain("rapor.temelTamam");
     expect(panel).toContain("actions.yayinla");
-    expect(panel).toContain('setSekme("eksikler")');
+    expect(panel).not.toContain("setSekme");
   });
 
   it("yasal onay yoksa çubuk yayınlamaz, paneli açar", () => {
@@ -38,15 +42,21 @@ describe("sahiplik modu editör kabuğu", () => {
     expect(bar).not.toContain("%{yuzde}");
     const top = oku("../src/app/v/[slug]/components/ChatTopBar.tsx");
     expect(top).toContain("lg:hidden");
-    expect(top).toContain("hidden items-center gap-2 sm:flex lg:hidden");
+    expect(top).not.toContain("%{rapor.yuzde}");
+    expect(top).toContain("<PublishBar {...yayin} yuzde={rapor.yuzde} />");
   });
 
-  it("masaüstü paneli sohbet / alanlar / eksikler olarak ayrılır", () => {
-    expect(panel).toContain('useState<"sohbet" | "alanlar" | "eksikler">');
-    expect(panel).toContain('data-vixrex-desktop-tabs="true"');
-    expect(panel).toContain('["sohbet", "Sohbet"]');
-    expect(panel).toContain('["alanlar", "Alanlar"]');
-    expect(panel).toContain('["eksikler", "Eksikler"]');
+  it("hazırlık yüzdesi yayın düğmesinin içinde doluluk olarak durur", () => {
+    const publish = oku("../src/app/v/[slug]/components/PublishBar.tsx");
+    expect(publish).toContain("style={{ width: `${doluluk}%` }}");
+    expect(publish).toContain("%{doluluk}");
+    expect(publish).toContain("yasalOnayli ? void yayinla() : setOnayAcik");
+  });
+
+  it("panel tek gövde: sekme yok, liste ve öneriler aynı sohbette", () => {
+    expect(panel).toContain('data-vixrex-tek-govde="true"');
+    expect(panel).not.toContain("data-vixrex-desktop-tabs");
+    expect(panel).not.toContain('["alanlar", "Alanlar"]');
     expect(panel).toContain("SectionProgressList");
     expect(panel).toContain("Yayın için gerekli");
     expect(panel).toContain("Kalite önerileri");
@@ -76,9 +86,14 @@ describe("sahiplik modu editör kabuğu", () => {
   });
 
   it("alan seçimi sohbete yazılmaz — kart gösterir", () => {
-    expect(oku("../src/app/v/[slug]/hooks/useFieldSelection.ts")).not.toContain(
-      "alanını seçtin. Yeni değeri yaz"
-    );
+    const hook = oku("../src/app/v/[slug]/hooks/useFieldSelection.ts");
+    expect(hook).not.toContain("alanını seçtin. Yeni değeri yaz");
+    expect(hook).not.toContain("Bu alanı mı düzelteceksiniz");
+  });
+
+  it("alana tıklamak panel açmaz", () => {
+    expect(alanSecimiPaneliAcarMi()).toBe(false);
+    expect(panel).toContain("alanSecimiPaneliAcarMi()");
   });
 
   it("uzun asistan mesajları katlanır", () => {
@@ -96,10 +111,68 @@ describe("sahiplik modu editör kabuğu", () => {
     expect(top).not.toContain("@media (min-width: 640px) {");
   });
 
-  it("mobil compact composer masaüstünde çizilmez", () => {
-    expect(panel).toContain('data-vixrex-mobile-dock="true"');
-    expect(panel).toContain("sm:hidden");
-    expect(panel).toContain("!masaustu && !haritaAcik");
+  it("telefon çubuğu masaüstünde ve tablette çizilmez, tablette kutu çizilir", () => {
+    const telefon = asistanYuzeyi({
+      masaustu: false,
+      genisEkran: false,
+      acik: false,
+      haritaAcik: false,
+      mobilGecmisAcik: false,
+    });
+    expect(telefon.telefonCubugu).toBe(true);
+
+    const tablet = asistanYuzeyi({
+      masaustu: false,
+      genisEkran: true,
+      acik: true,
+      haritaAcik: false,
+      mobilGecmisAcik: true,
+    });
+    expect(tablet.telefonCubugu).toBe(false);
+    expect(tablet.panelKutusu).toBe(true);
+
+    const masaustu = asistanYuzeyi({
+      masaustu: true,
+      genisEkran: true,
+      acik: true,
+      haritaAcik: false,
+      mobilGecmisAcik: false,
+    });
+    expect(masaustu.telefonCubugu).toBe(false);
+    expect(masaustu.panelKutusu).toBe(true);
+
+    const telefondaPanel = asistanYuzeyi({
+      masaustu: false,
+      genisEkran: false,
+      acik: true,
+      haritaAcik: false,
+      mobilGecmisAcik: true,
+    });
+    expect(telefondaPanel.telefonCubugu).toBe(true);
+    expect(telefondaPanel.panelKutusu).toBe(false);
+  });
+
+  it("detay açılsa da tek gövde sohbet kalır, telefon çubuğu kaybolmaz", () => {
+    const detay = asistanYuzeyi({
+      masaustu: false,
+      genisEkran: false,
+      acik: true,
+      haritaAcik: true,
+      mobilGecmisAcik: true,
+    });
+    expect(detay.govde).toBe("sohbet");
+    expect(detay.detayAcik).toBe(true);
+    expect(detay.telefonCubugu).toBe(true);
+
+    const detayKapali = asistanYuzeyi({
+      masaustu: true,
+      genisEkran: true,
+      acik: true,
+      haritaAcik: false,
+      mobilGecmisAcik: false,
+    });
+    expect(detayKapali.govde).toBe("sohbet");
+    expect(detayKapali.detayAcik).toBe(false);
   });
 
   it("vitrin tuvali çubuk ve sütun payını alır", () => {
@@ -116,25 +189,26 @@ describe("masaüstü asistan bilgi mimarisi", () => {
     expect(top).toContain("<VixrexAvatar size={38} halo decorative />");
   });
 
-  it("sohbet sekmesi sade compact composer kullanır", () => {
-    expect(panel).toContain('sekme === "sohbet"');
-    expect(panel).toContain("<FieldInputArea\n                      compact");
-    expect(panel).toContain("Tek mesajla birden fazla alan");
+  it("panel tek compact composer kullanır", () => {
+    expect(panel).toContain("compact");
+    expect(panel).toContain("kayitliDeger={seciliAlanKayitliDeger}");
   });
 
-  it("yayın düğmesi panelde ikinci kez gösterilmez", () => {
-    expect(panel).toContain("showPublishButton={false}");
-    const publish = oku("../src/app/v/[slug]/components/PublishBar.tsx");
-    expect(publish).toContain("showPublishButton = true");
-    expect(publish).toContain("{showPublishButton ? (");
+  it("yayın çubuğu başlıkta tek kez çizilir, altta yok", () => {
+    expect(panel).not.toContain("<PublishBar");
+    expect(panel).toContain("yayin={{");
+    const top = oku("../src/app/v/[slug]/components/ChatTopBar.tsx");
+    expect(top.split("<PublishBar").length - 1).toBe(1);
+    expect(top).not.toContain("showPublishButton={false}");
   });
 
-  it("ayarlar butonu alanlar sekmesini açar", () => {
-    expect(panel).toContain('setSekme("alanlar")');
+  it("ayarlar butonu alan listesini açar", () => {
+    expect(panel).toContain("onAyarlar={() => {");
     expect(panel).toContain("setHaritaAcik(true)");
   });
 
-  it("yasal onay ihtiyacı eksikler sekmesine gider", () => {
-    expect(panel).toContain('setSekme("eksikler")');
+  it("yasal onay ihtiyacı alan listesini açar", () => {
+    expect(panel).toContain("onYasalOnayGerek={() => {");
+    expect(panel).not.toContain("setSekme");
   });
 });

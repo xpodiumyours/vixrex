@@ -14,6 +14,12 @@ import type { HazirGorsel } from "../hooks/useOwnerActions";
 
 interface Props {
   compact?: boolean;
+  /** Seçili alanın kayıtlı değeri — kutuya yazılmaz, üst şeritte özet olarak
+   * görünür (esnaf mevcut değeri kendi mesajı sanmasın). */
+  kayitliDeger?: string;
+  /** "Tüm alanlar" haritasını açar — bilgi artık panelin içinde olduğu için
+   * erişim buradan verilir. */
+  onHaritaAc?: () => void;
   trailing?: ReactNode;
   seciliAlan: VitrinField | null;
   giris: string;
@@ -47,6 +53,8 @@ interface Props {
 
 export function FieldInputArea({
   compact = false,
+  kayitliDeger = "",
+  onHaritaAc,
   trailing,
   seciliAlan,
   giris,
@@ -75,6 +83,16 @@ export function FieldInputArea({
   const istegeBagliMi = seciliAlan ? alanOnemi(seciliAlan) === "istege-bagli" : false;
 
   const kaliteMi = seciliAlan ? alanOnemi(seciliAlan) === "kalite" : false;
+
+  const onem = seciliAlan ? alanOnemi(seciliAlan) : null;
+  const onemEtiket =
+    onem === "temel" ? "Zorunlu" : onem === "kalite" ? "Kalite" : "İsteğe bağlı";
+  const onemSinif =
+    onem === "temel"
+      ? "border-red-400/30 bg-red-500/15 text-red-300"
+      : onem === "kalite"
+        ? "border-sky-400/30 bg-sky-500/15 text-sky-300"
+        : "border-white/15 bg-white/10 text-slate-400";
 
   // Normal detay görünümünde eski mobil davranış korunur. Compact mobil
   // composer ise kapanmaz: mesaj kutusu sürekli görünür, kayıt sürerken küçük
@@ -111,7 +129,55 @@ export function FieldInputArea({
   if (compact) {
     const isGorsel = seciliAlan?.tip === "gorsel";
     return (
-      <div data-vixrex-mobile-composer="true" className="flex items-center gap-2">
+      <div data-vixrex-mobile-composer="true" className="flex flex-col gap-1.5">
+        {seciliAlan ? (
+          <div className="flex items-center justify-between text-[10px] px-1 text-slate-400">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="h-1.5 w-1.5 rounded-full bg-sky-400 shrink-0" />
+              <span className="font-bold text-white truncate">{seciliAlan.etiket}</span>
+              {kayitliDeger ? (
+                <span className="text-slate-500 truncate max-w-[140px]">({kayitliDeger})</span>
+              ) : null}
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => void canliyaDondur()}
+                disabled={geriAliniyor}
+                className="text-[10px] text-slate-400 hover:text-slate-200 underline decoration-dotted disabled:opacity-50"
+              >
+                {geriAliniyor ? "Döndürülüyor…" : "Canlı hâline döndür"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setGiris("")}
+                disabled={kaydediliyor || !giris}
+                className="text-[10px] text-slate-500 hover:text-slate-300 disabled:opacity-40"
+              >
+                Vazgeç
+              </button>
+              <button
+                type="button"
+                onClick={() => void gonder()}
+                disabled={kaydediliyor || !giris.trim()}
+                className="rounded-md bg-blue-600 px-1.5 py-0.5 text-[10px] font-bold text-white hover:bg-blue-500 disabled:opacity-40"
+              >
+                {kaydediliyor ? "…" : "Kaydet ✓"}
+              </button>
+              {onHaritaAc ? (
+                <button
+                  type="button"
+                  onClick={onHaritaAc}
+                  className="text-[10px] text-slate-400 hover:text-white"
+                >
+                  ☰ Tüm alanlar
+                </button>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+
+        <div className="flex items-center gap-2">
         {isGorsel ? (
           <label
             className="grid h-11 w-11 shrink-0 cursor-pointer place-items-center rounded-xl border border-sky-400/30 bg-sky-500/15 text-sky-300 shadow-[0_4px_12px_rgba(56,189,248,0.15)] transition hover:bg-sky-500/25 active:scale-95"
@@ -177,14 +243,34 @@ export function FieldInputArea({
               </svg>
             )}
           </button>
+          </div>
+          {trailing}
         </div>
-        {trailing}
       </div>
     );
   }
 
   return (
     <div>
+      {seciliAlan && (
+        <div className="mb-2 rounded-xl border border-sky-400/20 bg-sky-500/[0.07] px-3 py-2">
+          <div className="flex items-center gap-2">
+            <span
+              className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${onemSinif}`}
+            >
+              {onemEtiket}
+            </span>
+            <span className="truncate text-[13px] font-extrabold text-white">
+              {seciliAlan.etiket}
+            </span>
+          </div>
+          {seciliAlan.neden ? (
+            <p className="mt-1 text-[12px] leading-relaxed text-slate-400">
+              {seciliAlan.neden}
+            </p>
+          ) : null}
+        </div>
+      )}
       {seciliAlan && (
         <p className="mb-2 flex items-center justify-end gap-2 text-[11px] text-slate-400">
           <button

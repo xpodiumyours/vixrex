@@ -40,10 +40,10 @@ describe("yonetimOnerileriUret — kural motoru", () => {
 describe("OwnerAssistantPanel — yönetim modu yalnız yayınlanmış vitrinde konuşur", () => {
   const panel = oku("app/v/[slug]/OwnerAssistantPanel.tsx");
 
-  it("öneriler sayfa açılınca sohbete yazılmaz — Eksikler sekmesinde durur", () => {
+  it("öneriler sayfa açılınca sohbete yazılmaz — aynı gövdedeki listede durur", () => {
     expect(panel).not.toContain("yonetimOnerisiSoylendiRef");
-    expect(panel).toContain('useState<"sohbet" | "alanlar" | "eksikler">');
-    expect(panel).toContain('["eksikler", "Eksikler"]');
+    expect(panel).toContain('data-vixrex-tek-govde="true"');
+    expect(panel).not.toContain('["eksikler", "Eksikler"]');
     expect(panel).toContain("yonetimOnerileriUret(");
   });
 
