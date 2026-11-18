@@ -429,7 +429,7 @@ export async function resmiUrunSayfasiGroundingIleBul(
             },
           ],
           tools: [
-            { googleSearch: { searchTypes: { webSearch: {}, imageSearch: {} } } },
+            { googleSearch: {} },
             { urlContext: {} },
           ],
           generationConfig: { temperature: 0.1 },
@@ -464,21 +464,38 @@ export async function kayitliFaturaKatalogunuUygula(args: {
     hamKatalog?.official_domain,
     hamKatalog?.resmiAlanAdi,
     hamKatalog?.kaynak,
+    hamKatalog?.siteSayfa,
+    hamKatalog?.official_product_url,
   ]);
-  const mevcutKaynak = typeof hamKatalog?.kaynak === "string" ? hamKatalog.kaynak.trim() : "";
+  const mevcutKaynak =
+    (typeof hamKatalog?.kaynak === "string" ? hamKatalog.kaynak.trim() : "") ||
+    (typeof hamKatalog?.siteSayfa === "string" ? hamKatalog.siteSayfa.trim() : "") ||
+    (typeof hamKatalog?.official_product_url === "string"
+      ? hamKatalog.official_product_url.trim()
+      : "");
   const mevcutKaynakPazaryeri = Boolean(mevcutKaynak) && pazaryeriVeyaAraciMi(mevcutKaynak);
   const mevcutKaynakGecerli =
     Boolean(mevcutKaynak) && resmiAlanAdiUygunMu(mevcutKaynak, kilitliAlanAdi);
   const mevcutResmiAdGecerli =
     typeof hamKatalog?.resmiAd === "string" && Boolean(hamKatalog.resmiAd.trim());
 
-  let katalog = hamKatalog;
+  let katalog =
+    hamKatalog && !hamKatalog.kaynak && mevcutKaynak
+      ? { ...hamKatalog, kaynak: mevcutKaynak }
+      : hamKatalog;
+  const googleSokettenHazir =
+    Boolean(katalog) &&
+    mevcutResmiAdGecerli &&
+    mevcutKaynakGecerli &&
+    !mevcutKaynakPazaryeri &&
+    (satir.izinliGorseller?.size ?? 0) > 0;
   const groundingGerekli =
-    !katalog ||
-    !mevcutResmiAdGecerli ||
-    mevcutKaynakPazaryeri ||
-    (Boolean(mevcutKaynak) && !mevcutKaynakGecerli) ||
-    (!mevcutKaynak && satir.sonuc !== "kanitli");
+    !googleSokettenHazir &&
+    (!katalog ||
+      !mevcutResmiAdGecerli ||
+      mevcutKaynakPazaryeri ||
+      (Boolean(mevcutKaynak) && !mevcutKaynakGecerli) ||
+      (!mevcutKaynak && satir.sonuc !== "kanitli"));
 
   if (groundingGerekli && geminiAramaAnahtari()) {
     const grounding = await resmiUrunSayfasiGroundingIleBul(

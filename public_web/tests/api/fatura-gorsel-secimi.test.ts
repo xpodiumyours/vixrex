@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import sharp from "sharp";
 import { adayGorselleriniSec, gorselSecimIstekGovdesi, GORSEL_SECIM_PRESET } from "@/lib/faturaGorselSecimi";
 import type { GoruSatiri } from "@/lib/faturaGoru";
@@ -55,6 +55,35 @@ async function gorselHaritasi() {
 }
 
 describe("fatura görsel seçimi — OpenRouter kararı", () => {
+  beforeEach(() => {
+    vi.stubEnv("GEMINI_API_KEY", "");
+    vi.stubEnv("GOOGLE_API_KEY", "");
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("Google prizi aktifken paralel görsel seçici devreye girmez, mevcut görseller doğrudan döner", async () => {
+    vi.stubEnv("GEMINI_API_KEY", "AIzaSyGoogleAktif");
+    const satirlar = [satir({ siteGorsel: A, siteGorseller: [A, B] })];
+    const fetcher = vi.fn();
+    const modelCagrisi = vi.fn();
+
+    const sonuc = await adayGorselleriniSec({
+      satirlar,
+      bagimliliklar: {
+        fetcher,
+        resolveHost,
+        modelCagrisi,
+      },
+    });
+
+    expect(sonuc).toEqual(satirlar);
+    expect(fetcher).not.toHaveBeenCalled();
+    expect(modelCagrisi).not.toHaveBeenCalled();
+  });
+
   it("modelin seçtiği aday ilk sıraya geçer, sıralama kararı uygulanır", async () => {
     const harita = await gorselHaritasi();
     const satirlar = [satir({ siteGorsel: A, siteGorseller: [A, B] })];

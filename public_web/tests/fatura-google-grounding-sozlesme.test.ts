@@ -241,7 +241,7 @@ describe("Google Grounding ve Telif Kalkanı Sözleşmesi", () => {
 
     // 3. Resmi Google Grounding ve urlContext araçları resmi tools formatında iletilmiştir
     expect(yakalananIstekGovdesi).toContain(
-      '"tools":[{"googleSearch":{"searchTypes":{"webSearch":{},"imageSearch":{}}}},{"urlContext":{}}]',
+      '"tools":[{"googleSearch":{}},{"urlContext":{}}]',
     );
   });
 
@@ -402,6 +402,87 @@ describe("Google Grounding ve Telif Kalkanı Sözleşmesi", () => {
     expect(satir.izinliGorseller.has("https://www.vestel.com.tr/media/tv-2.webp")).toBe(true);
     expect(girdi.imageUrls).toContain("https://www.vestel.com.tr/media/tv-1.jpg");
     expect(girdi.imageUrls).toContain("https://www.vestel.com.tr/media/tv-2.webp");
+  });
+
+  it("kayitliFaturaKatalogunuUygula Google soketinden dogrulanmis siteSayfa ve izinliGorseller varsa mukerrer arama yapmaz", async () => {
+    const groundingFetcher = vi.fn() as unknown as typeof fetch;
+    const girdi: HazirUrunGirdisi = {
+      name: "Bosch TWK7203 Su Isıtıcı",
+      description: "",
+      priceText: "",
+      priceAmount: null,
+      categoryId: "",
+      stockStatus: "Stokta",
+      stockQuantity: 1,
+      brand: "Bosch",
+      barcode: null,
+      variants: [],
+      imageUrls: [],
+      metadata: { attributes: [] },
+    };
+
+    const satir: DogrulanmisSatir = {
+      satirId: "satir-hazir-1",
+      sonuc: "eksik",
+      urunId: null,
+      izinliGorseller: new Set<string>(["https://www.bosch-home.com.tr/media/twk7203.jpg"]),
+      katalog: {
+        resmiAd: "Bosch TWK7203 Su Isıtıcı",
+        marka: "Bosch",
+        siteSayfa: "https://www.bosch-home.com.tr/urun/TWK7203",
+        gorseller: ["https://www.bosch-home.com.tr/media/twk7203.jpg"],
+      },
+      alisBirimFiyati: null,
+      varyant: "",
+      beden: "",
+      urunAdi: "Bosch TWK7203",
+      marka: "Bosch",
+      resmiAlanAdi: "bosch-home.com.tr",
+    };
+
+    const hata = await kayitliFaturaKatalogunuUygula({
+      admin: {} as SupabaseClient,
+      storeId: "store-1",
+      editToken: "token-1",
+      girdi,
+      satir,
+      kategoriOnbellegi: new Map(),
+      fetcher: groundingFetcher,
+    });
+
+    expect(hata).toBeNull();
+    expect(groundingFetcher).not.toHaveBeenCalled();
+    expect(girdi.imageUrls).toContain("https://www.bosch-home.com.tr/media/twk7203.jpg");
+
+    const pazaryeriFetcher = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ candidates: [] }),
+    })) as unknown as typeof fetch;
+
+    const pazaryeriSatir: DogrulanmisSatir = {
+      ...satir,
+      satirId: "satir-pazaryeri-1",
+      sonuc: "kanitli",
+      izinliGorseller: new Set<string>(["https://cdn.dsmcdn.com/korsan.jpg"]),
+      katalog: {
+        resmiAd: "Bosch TWK7203",
+        kaynak: "https://www.trendyol.com/bosch/twk7203",
+      },
+      resmiAlanAdi: null,
+    };
+
+    const pazaryeriHata = await kayitliFaturaKatalogunuUygula({
+      admin: {} as SupabaseClient,
+      storeId: "store-1",
+      editToken: "token-1",
+      girdi,
+      satir: pazaryeriSatir,
+      kategoriOnbellegi: new Map(),
+      fetcher: pazaryeriFetcher,
+    });
+
+    expect(pazaryeriFetcher).toHaveBeenCalledTimes(1);
+    expect(pazaryeriHata).toBe("Kayıtlı resmî ürün kaynağı eksik; yeniden eşleştir.");
   });
 
   it("ProductCatalog tuketiciye isVisible=false urunu gizler, esnafa tum urunleri ve gorselleri gosterir", () => {

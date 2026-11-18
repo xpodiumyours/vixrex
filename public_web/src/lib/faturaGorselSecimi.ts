@@ -1,6 +1,7 @@
 import sharp from "sharp";
 import { faturaYanitMetniniOku, type GoruSatiri } from "@/lib/faturaGoru";
 import { kaynakGorseliniDogrula, type GorselBagimliliklari } from "@/lib/faturaGorsel";
+import { faturaPrizIstegiGonder, geminiPrizAktifMi } from "@/lib/faturaPriz";
 import { FATURA_MIN_SOURCE_SHORT_EDGE } from "@/lib/productImagePolicy";
 
 export const GORSEL_SECIM_PRESET = "@preset/urun-gorsel-secim";
@@ -14,8 +15,6 @@ interface SecimKarari {
   sira: number[];
   red: number[];
 }
-
-const SECIM_ZAMAN_ASIMI_MS = 120_000;
 
 function nesne(deger: unknown): deger is Record<string, unknown> {
   return typeof deger === "object" && deger !== null && !Array.isArray(deger);
@@ -83,19 +82,7 @@ async function kucukVeriUrl(bayt: Uint8Array): Promise<string> {
 }
 
 async function varsayilanModelCagrisi(govde: Record<string, unknown>): Promise<Response> {
-  const anahtar = process.env.OPENROUTER_API_KEY;
-  if (!anahtar) throw new Error("OKUYUCU_HAZIR_DEGIL");
-  return fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${anahtar}`,
-      "HTTP-Referer": "https://vixrex.com",
-      "X-Title": "Vixrex Fatura",
-    },
-    body: JSON.stringify(govde),
-    signal: AbortSignal.timeout(SECIM_ZAMAN_ASIMI_MS),
-  });
+  return faturaPrizIstegiGonder(govde);
 }
 
 export async function adayGorselleriniSec(args: {
@@ -103,6 +90,7 @@ export async function adayGorselleriniSec(args: {
   bagimliliklar?: GorselSecimBagimliliklari;
 }): Promise<GoruSatiri[]> {
   const { satirlar } = args;
+  if (geminiPrizAktifMi()) return satirlar;
   const girdiler: Array<{ row_id: string; ad: string; marka: string; aday_indeksleri: number[] }> = [];
   const veriUrler: string[] = [];
   const satirPozisyonlari = new Map<string, number[]>();

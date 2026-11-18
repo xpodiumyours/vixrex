@@ -20,6 +20,7 @@ import {
   faturaPrizZamanSiniri,
   faturaPrizBasliklari,
   geminiGovdesineCevir,
+  geminiPrizAktifMi,
   googleFaturaUrunKartlariUret,
 } from "@/lib/faturaPriz";
 
@@ -91,10 +92,26 @@ describe("fatura priz - tak-cikar", () => {
     expect(source).not.toContain("openrouter.ai/api/v1/chat/completions");
   });
 
-  it("hem OPENROUTER_API_KEY hem GEMINI_API_KEY varken OpenRouter onceliklidir ve anahtar cakismasi yapmaz", () => {
+  it("hem OPENROUTER_API_KEY hem GEMINI_API_KEY varken Google prizi birincildir ve anahtar cakismasi yapmaz", () => {
     vi.stubEnv("OPENROUTER_API_KEY", "sk-or-real-openrouter-key");
     vi.stubEnv("GEMINI_API_KEY", "AIzaSyFakeGeminiKey123");
 
+    expect(geminiPrizAktifMi()).toBe(true);
+    expect(faturaPrizAdresi()).toBe(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSyFakeGeminiKey123",
+    );
+    expect(faturaPrizAnahtari()).toBe("AIzaSyFakeGeminiKey123");
+    expect(faturaPrizBasliklari(faturaPrizAnahtari())).toEqual({
+      "Content-Type": "application/json",
+    });
+  });
+
+  it("FATURA_PRIZ_URL acikca baska saglayiciya ayarlanirsa GEMINI_API_KEY varken bile OpenRouter veya ozel saglayici devreye girer", () => {
+    vi.stubEnv("OPENROUTER_API_KEY", "sk-or-real-openrouter-key");
+    vi.stubEnv("GEMINI_API_KEY", "AIzaSyFakeGeminiKey123");
+    vi.stubEnv("FATURA_PRIZ_URL", VARSAYILAN_PRIZ_ADRESI);
+
+    expect(geminiPrizAktifMi()).toBe(false);
     expect(faturaPrizAdresi()).toBe(VARSAYILAN_PRIZ_ADRESI);
     expect(faturaPrizAnahtari()).toBe("sk-or-real-openrouter-key");
     expect(faturaPrizBasliklari(faturaPrizAnahtari())).toEqual({
@@ -103,6 +120,19 @@ describe("fatura priz - tak-cikar", () => {
       "HTTP-Referer": "https://vixrex.com",
       "X-Title": "Vixrex Fatura",
     });
+  });
+
+  it("GEMINI_FATURA_MODEL ile model esnek secilir, bos degerde gemini-2.5-flash korunur", () => {
+    vi.stubEnv("GOOGLE_API_KEY", "AIzaSyGoogleModelKey");
+    vi.stubEnv("GEMINI_FATURA_MODEL", "gemini-2.5-pro");
+    expect(faturaPrizAdresi()).toBe(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=AIzaSyGoogleModelKey",
+    );
+
+    vi.stubEnv("GEMINI_FATURA_MODEL", "   ");
+    expect(faturaPrizAdresi()).toBe(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSyGoogleModelKey",
+    );
   });
 
   it("sadece GEMINI_API_KEY varken Gemini prizi devreye girer", () => {
@@ -245,7 +275,7 @@ describe("fatura priz - tak-cikar", () => {
       "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSyDirectSocketKey",
     );
     expect(yakalananGovde.tools).toEqual([
-      { googleSearch: { searchTypes: { webSearch: {}, imageSearch: {} } } },
+      { googleSearch: {} },
       { urlContext: {} },
     ]);
     expect(yakalananGovde.generationConfig).toEqual({
