@@ -36,6 +36,11 @@ vi.mock("@/lib/ownerSession", () => ({
 }));
 vi.mock("@/lib/faturaGorsel", () => ({
   sayfaGorselAlanAdlari: async () => [],
+  gorselsizSatirlariTamamla: async () => ({
+    tamamlanan: 0,
+    gorselliSatirlar: 0,
+    kalanGorselsizSatirlar: 0,
+  }),
   kaynakGorselleriniHazirla: async (args: { adaylar: string[]; kaynakSayfa: string }) => ({
     gorseller: args.adaylar.map((adres) => ({
       url: adres,

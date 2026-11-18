@@ -201,6 +201,7 @@ describe("fatura priz - tak-cikar", () => {
       "short_description",
       "official_domain",
       "official_product_url",
+      "selected_image_url",
       "image_urls",
     ]);
     expect(keys).not.toContain("unit_price");
@@ -302,6 +303,7 @@ describe("fatura priz - tak-cikar", () => {
       short_description: "4K UHD Smart LED TV",
       official_domain: "vestel.com.tr",
       official_product_url: "https://www.vestel.com.tr/vestel-55ua9600",
+      selected_image_url: "https://www.vestel.com.tr/media/55ua9600-front.jpg",
       image_urls: [
         "https://www.vestel.com.tr/media/55ua9600-front.jpg",
         "https://www.vestel.com.tr/media/55ua9600-side.webp",

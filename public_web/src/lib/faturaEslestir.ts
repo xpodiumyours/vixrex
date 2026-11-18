@@ -71,6 +71,7 @@ export interface KatalogBilgisi {
   kategori?: string;
   beden?: string;
   varyant?: string;
+  faturaRengi?: string;
   ozellikler?: ProductAttributeValue[];
   uretici?: string;
   gramaj?: string;

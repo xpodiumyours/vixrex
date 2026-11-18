@@ -369,7 +369,8 @@ function tekrarUyarisi(kanonik: number): string {
 }
 
 function kartBilgisi(kart: KartSozlesmesi, satir: { ad?: string }) {
-  const gorsel = adres(kart.gorselAdresi);
+  const gorsel = adres(kart.seciliGorsel || kart.gorselAdresi);
+  const gorseller = kart.gorselAdaylari.length ? kart.gorselAdaylari : gorsel ? [gorsel] : [];
   const kaynak = adres(kart.resmiSayfa);
   const eksikler = kart.eksikler.filter((v): v is string => typeof v === "string");
   const resmiKanitEksik = kart.dogrulamaDurumu === "verified" && !kart.dogrulanmis;
@@ -379,7 +380,7 @@ function kartBilgisi(kart: KartSozlesmesi, satir: { ad?: string }) {
     siteAciklama: kart.aciklama, siteKategori: kart.kategori,
     siteMarka: kart.marka, siteVaryant: kart.varyant,
     gorselKullanimDurumu: kart.gorselHaklari,
-    siteSayfa: kaynak, siteGorsel: gorsel, siteGorseller: gorsel ? [gorsel] : [],
+    siteSayfa: kaynak, siteGorsel: gorsel, siteGorseller: gorseller,
     dogrulamaDurumu: resmiKanitEksik ? "Araştırılamadı" : DURUMLAR[kart.dogrulamaDurumu],
     eslesenBilgiler: kart.eslesenBilgiler, eksikler,
     gorselDogrulamaDurumu: kart.gorselDogrulamaDurumu,

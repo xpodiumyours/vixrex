@@ -4,7 +4,7 @@ import type { DogrulanmisSatir } from "@/lib/faturaUrunBaglantisi";
 import type { HazirUrunGirdisi } from "@/lib/productIntake";
 import { normalizeProductVariants } from "@/lib/productRichData";
 import { yonetilenUrunGorseliMi } from "@/lib/productImagePolicy";
-import { kaynakGorselleriniHazirla } from "@/lib/faturaGorsel";
+import { kaynakGorselleriniHazirla, gorselsizSatirlariTamamla, sayfaGorselAlanAdlari } from "@/lib/faturaGorsel";
 import { faturaKatalogMetadatasi } from "@/lib/faturaUrunIcerigi";
 import { kategoriBirlestir } from "@/lib/kategoriBirlesim";
 import { gorselHakKaydiniRaporla } from "@/lib/faturaGorselHakDenetimi";
@@ -69,6 +69,104 @@ const PAZARYERI_VEYA_ARACI_ALANLAR = new Set([
   "gtinsearch.org",
   "vertexaisearch.cloud.google.com",
 ]);
+
+const MESRU_ETICARET_CDN_ALANLARI = new Set([
+  "akinoncdn.com",
+  "mncdn.com",
+  "ticimax.cloud",
+  "ideacdn.net",
+  "shopify.com",
+  "shopifycdn.com",
+  "myikas.com",
+  "ikas.com",
+  "tsoftcdn.com",
+  "tsoft.com.tr",
+  "cloudfront.net",
+  "akamaized.net",
+  "imgix.net",
+  "cloudinary.com",
+  "fastly.net",
+  "azureedge.net",
+  "scene7.com",
+  "mediacdn.com",
+  "fashfed.com",
+]);
+
+const RENK_KISALTMALARI: Record<string, string> = {
+  SYH: "Siyah",
+  SIYAH: "Siyah",
+  SİYAH: "Siyah",
+  BYZ: "Beyaz",
+  BEYAZ: "Beyaz",
+  LCV: "Lacivert",
+  LACIVERT: "Lacivert",
+  LACİVERT: "Lacivert",
+  MVI: "Mavi",
+  MVİ: "Mavi",
+  MAVI: "Mavi",
+  MAVİ: "Mavi",
+  KRM: "Kırmızı",
+  KMZ: "Kırmızı",
+  KIRMIZI: "Kırmızı",
+  GRI: "Gri",
+  GRİ: "Gri",
+  ANT: "Antrasit",
+  ANTRASIT: "Antrasit",
+  ANTRASİT: "Antrasit",
+  BEJ: "Bej",
+  BRD: "Bordo",
+  BORDO: "Bordo",
+  HKI: "Haki",
+  HKİ: "Haki",
+  HAKI: "Haki",
+  HAKİ: "Haki",
+  YSL: "Yeşil",
+  YESIL: "Yeşil",
+  YEŞİL: "Yeşil",
+  KHV: "Kahverengi",
+  KAHVE: "Kahverengi",
+  KAHVERENGI: "Kahverengi",
+  KAHVERENGİ: "Kahverengi",
+  EKR: "Ekru",
+  EKRU: "Ekru",
+  PMB: "Pembe",
+  PEMBE: "Pembe",
+  MOR: "Mor",
+  SRI: "Sarı",
+  SARI: "Sarı",
+  TRN: "Turuncu",
+  TRNC: "Turuncu",
+  TURUNCU: "Turuncu",
+  FME: "Füme",
+  FUME: "Füme",
+  FÜME: "Füme",
+  IND: "İndigo",
+  INDG: "İndigo",
+  INDIGO: "İndigo",
+  İNDİGO: "İndigo",
+  KREM: "Krem",
+  KML: "Camel",
+  CAMEL: "Camel",
+  VZN: "Vizon",
+  VIZON: "Vizon",
+  VİZON: "Vizon",
+  TABA: "Taba",
+  KOBALT: "Kobalt",
+  TURKUAZ: "Turkuaz",
+  HARDAL: "Hardal",
+  SOMON: "Somon",
+  LILA: "Lila",
+  LİLA: "Lila",
+  PUDRA: "Pudra",
+  KOMBIN: "Kombin",
+  KOMBİN: "Kombin",
+};
+
+export const TURKIYE_FATURA_KISALTMA_TALIMATI = [
+  "Türkiye toptan fatura kısaltmalarını otomatik çözümle: SLM=Slim Fit, REG=Regular Fit, OVS=Oversize, RLX=Relaxed Fit, SYH=Siyah, BYZ=Beyaz, LCV=Lacivert, MVI=Mavi, KRM=Kırmızı/Krem, GRI=Gri, ANT=Antrasit, BEJ=Bej, BRD=Bordo, HKI=Haki, YSL=Yeşil, PNT=Pantolon, GMLK=Gömlek, TSH/TSRT=Tişört, SWT=Sweatshirt, CKT=Ceket, KZK=Kazak, DNM=Denim, KDN=Kadın, ERK=Erkek, CCK=Çocuk, PMK=Pamuk, ELST=Elastan, UK=Uzun Kol, KK=Kısa Kol, SY=Sıfır Yaka, VY=V Yaka.",
+  "Akıllı kademeli eşleme uygula: Faturadaki model kodu veya barkodu üretici/marka resmî web sitesinde arayıp doğrula; ürün bulunduğunda faturadaki kısaltmalı satır yerine üretici sayfasındaki tüketici dostu tam ürün adını al ve faturadaki renk bilgisini kısaltmadan açarak ürün açıklamasında net belirt.",
+  "Doğrulanmış her ürün kartında sayfadaki birincil/ana mankenli stüdyo fotoğrafını selected_image_url alanına, diğer renk ve açı fotoğraflarını image_urls dizisine ekle; akinoncdn.com, mncdn.com, ticimax.cloud, ideacdn.net, shopify.com, myikas.com gibi kurumsal e-ticaret CDN görsellerini koru ve doğrulanan ürünü kesinlikle görselsiz bırakma.",
+].join("\n");
 
 const HASSAS_ALAN_ANAHTARLARI = new Set([
   "vergino",
@@ -149,7 +247,25 @@ export function kilitliResmiAlanAdiSec(kaynaklar: readonly unknown[]): string | 
   return null;
 }
 
-export function resmiAlanAdiUygunMu(adayUrl: unknown, kilitliResmiAlan?: string | null): boolean {
+export function mesruEticaretCdnMi(deger: unknown): boolean {
+  const host = alanAdiCikar(deger);
+  if (!host || pazaryeriVeyaAraciMi(host)) return false;
+  for (const alan of MESRU_ETICARET_CDN_ALANLARI) {
+    if (host === alan || host.endsWith(`.${alan}`)) return true;
+  }
+  return false;
+}
+
+export interface AlanAdiUygunlukSecenekleri {
+  gorsel?: boolean;
+  izinliGorselAlanlari?: readonly string[];
+}
+
+export function resmiAlanAdiUygunMu(
+  adayUrl: unknown,
+  kilitliResmiAlan?: string | null,
+  secenekler?: AlanAdiUygunlukSecenekleri,
+): boolean {
   if (typeof adayUrl !== "string") return false;
   let url: URL;
   try {
@@ -162,7 +278,49 @@ export function resmiAlanAdiUygunMu(adayUrl: unknown, kilitliResmiAlan?: string 
   if (!adayHost || pazaryeriVeyaAraciMi(adayHost)) return false;
   const kilitli = alanAdiCikar(kilitliResmiAlan);
   if (!kilitli || pazaryeriVeyaAraciMi(kilitli)) return true;
-  return adayHost === kilitli || adayHost.endsWith(`.${kilitli}`);
+  if (adayHost === kilitli || adayHost.endsWith(`.${kilitli}`)) return true;
+  if (secenekler?.gorsel !== false && mesruEticaretCdnMi(adayHost)) return true;
+  if (!secenekler?.gorsel) return false;
+  for (const izinli of secenekler.izinliGorselAlanlari ?? []) {
+    const temiz = alanAdiCikar(izinli);
+    if (temiz && !pazaryeriVeyaAraciMi(temiz) && (adayHost === temiz || adayHost.endsWith(`.${temiz}`))) {
+      return true;
+    }
+  }
+  return false;
+}
+
+export function faturaRenginiCoz(varyant: unknown, urunAdi?: unknown, hamSatir?: unknown): string {
+  const varyantMetin = metinDegeri(varyant);
+  if (varyantMetin) {
+    const parcalar = varyantMetin.split(/[\s/,;|·\-_.]+/).filter(Boolean);
+    for (const parca of parcalar) {
+      const anahtar = parca.toLocaleUpperCase("tr-TR");
+      if (Object.hasOwn(RENK_KISALTMALARI, anahtar)) {
+        return RENK_KISALTMALARI[anahtar];
+      }
+    }
+  }
+  for (const metin of [urunAdi, hamSatir].map(metinDegeri).filter(Boolean)) {
+    const parcalar = metin.split(/[\s/,;|·\-_.]+/).filter(Boolean);
+    for (let i = parcalar.length - 1; i >= 0; i--) {
+      const anahtar = parcalar[i].toLocaleUpperCase("tr-TR");
+      if (Object.hasOwn(RENK_KISALTMALARI, anahtar)) {
+        return RENK_KISALTMALARI[anahtar];
+      }
+    }
+  }
+  return "";
+}
+
+export function aciklamayaFaturaRengiEkle(aciklama: string, faturaRengi: string): string {
+  const temizAciklama = metinDegeri(aciklama);
+  const temizRenk = metinDegeri(faturaRengi);
+  if (!temizRenk) return temizAciklama;
+  if (temizAciklama.toLocaleLowerCase("tr-TR").includes(temizRenk.toLocaleLowerCase("tr-TR"))) {
+    return temizAciklama;
+  }
+  return temizAciklama ? `${temizAciklama} · Renk: ${temizRenk}` : `Renk: ${temizRenk}`;
 }
 
 function hassasAnahtarMi(anahtar: string): boolean {
@@ -217,6 +375,7 @@ export interface GroundingEslesmeSonucu {
   marka: string;
   aciklama: string;
   kategori: string;
+  selectedImageUrl?: string | null;
   gorseller: string[];
   groundingKaynaklari: string[];
 }
@@ -253,47 +412,159 @@ function jsonGovdeCoz(ham: string): Record<string, unknown> | null {
   return null;
 }
 
-function groundingUrlListesi(aday: Record<string, unknown>): string[] {
+export function geminiGroundingBilgileriniCikar(
+  aday: Record<string, unknown>,
+  resmiAlan?: string | null,
+  izinliGorselAlanlari?: readonly string[],
+): { webUrller: string[]; gorselUrller: string[] } {
+  const webUrller: string[] = [];
+  const gorselUrller: string[] = [];
+  const ekleWeb = (ham: unknown) => {
+    const uri = metinDegeri(ham);
+    if (uri && resmiAlanAdiUygunMu(uri, null, { gorsel: false }) && !webUrller.includes(uri)) {
+      webUrller.push(uri);
+    }
+  };
+  const ekleGorsel = (ham: unknown) => {
+    const uri = metinDegeri(ham);
+    if (
+      uri &&
+      resmiAlanAdiUygunMu(uri, resmiAlan ?? null, { gorsel: true, izinliGorselAlanlari }) &&
+      !gorselUrller.includes(uri)
+    ) {
+      gorselUrller.push(uri);
+    }
+  };
   const meta = aday.groundingMetadata;
-  if (!meta || typeof meta !== "object") return [];
-  const chunks = (meta as { groundingChunks?: unknown }).groundingChunks;
-  if (!Array.isArray(chunks)) return [];
-  const urller: string[] = [];
-  for (const chunk of chunks) {
-    if (!chunk || typeof chunk !== "object") continue;
-    const web = (chunk as { web?: unknown }).web;
-    if (!web || typeof web !== "object") continue;
-    const uri = metinDegeri((web as { uri?: unknown }).uri);
-    if (!uri || !resmiAlanAdiUygunMu(uri)) continue;
-    if (!urller.includes(uri)) urller.push(uri);
+  const chunks = meta && typeof meta === "object" ? (meta as { groundingChunks?: unknown }).groundingChunks : null;
+  if (Array.isArray(chunks)) {
+    for (const chunk of chunks) {
+      if (!chunk || typeof chunk !== "object") continue;
+      const web = (chunk as { web?: unknown }).web;
+      if (web && typeof web === "object") {
+        const uri = metinDegeri((web as { uri?: unknown }).uri);
+        ekleWeb(uri);
+        if (/\.(?:png|jpe?g|webp|avif|gif)(?:\?.*)?$/i.test(uri)) ekleGorsel(uri);
+      }
+      const img = (chunk as { image?: unknown }).image;
+      if (img && typeof img === "object") {
+        const imgKaydi = img as { imageUri?: unknown; uri?: unknown; sourceUri?: unknown };
+        ekleGorsel(imgKaydi.imageUri ?? imgKaydi.uri);
+        ekleWeb(imgKaydi.sourceUri);
+      }
+    }
   }
-  return urller;
+  const urlCtx = aday.urlContextMetadata;
+  const urlMetaList = urlCtx && typeof urlCtx === "object" ? (urlCtx as { urlMetadata?: unknown }).urlMetadata : null;
+  if (Array.isArray(urlMetaList)) {
+    for (const kayit of urlMetaList) {
+      if (!kayit || typeof kayit !== "object") continue;
+      const durum = metinDegeri((kayit as { urlRetrievalStatus?: unknown }).urlRetrievalStatus);
+      if (durum && durum !== "URL_RETRIEVAL_STATUS_SUCCESS") continue;
+      ekleWeb((kayit as { retrievedUrl?: unknown }).retrievedUrl);
+    }
+  }
+  return { webUrller, gorselUrller };
 }
 
-function groundingGorselListesi(aday: Record<string, unknown>, resmiAlan: string): string[] {
-  const meta = aday.groundingMetadata;
-  if (!meta || typeof meta !== "object") return [];
-  const chunks = (meta as { groundingChunks?: unknown }).groundingChunks;
-  if (!Array.isArray(chunks)) return [];
-  const urller: string[] = [];
-  for (const chunk of chunks) {
-    if (!chunk || typeof chunk !== "object") continue;
-    const web = (chunk as { web?: unknown }).web;
-    if (web && typeof web === "object") {
-      const uri = metinDegeri((web as { uri?: unknown }).uri);
-      if (uri && /\.(?:png|jpe?g|webp|avif|gif)(?:\?.*)?$/i.test(uri) && resmiAlanAdiUygunMu(uri, resmiAlan)) {
-        if (!urller.includes(uri)) urller.push(uri);
-      }
+function groundingUrlListesi(aday: Record<string, unknown>): string[] {
+  return geminiGroundingBilgileriniCikar(aday).webUrller;
+}
+
+function groundingGorselListesi(
+  aday: Record<string, unknown>,
+  resmiAlan: string,
+  izinliGorselAlanlari?: readonly string[],
+): string[] {
+  return geminiGroundingBilgileriniCikar(aday, resmiAlan, izinliGorselAlanlari).gorselUrller;
+}
+
+export function gorselAdaylariniSuz(args: {
+  adaylar: readonly unknown[];
+  seciliGorsel?: unknown;
+  tespitEdilenAlan: string | null;
+  izinliGorselAlanlari?: readonly string[];
+}): string[] {
+  const hamSirali = [args.seciliGorsel, ...args.adaylar];
+  const sonuc: string[] = [];
+  for (const ham of hamSirali) {
+    const url = metinDegeri(ham);
+    if (!url || !url.startsWith("https://") || pazaryeriVeyaAraciMi(url)) continue;
+    if (!resmiAlanAdiUygunMu(url, args.tespitEdilenAlan, { gorsel: true, izinliGorselAlanlari: args.izinliGorselAlanlari })) {
+      continue;
     }
-    const img = (chunk as { image?: unknown }).image;
-    if (img && typeof img === "object") {
-      const uri = metinDegeri((img as { uri?: unknown }).uri);
-      if (uri && resmiAlanAdiUygunMu(uri, resmiAlan)) {
-        if (!urller.includes(uri)) urller.push(uri);
+    if (!sonuc.includes(url)) sonuc.push(url);
+  }
+  return sonuc;
+}
+
+export async function resmiSayfadanGorselleriTamamla(args: {
+  resmiSayfa: string;
+  tespitEdilenAlan: string | null;
+  mevcutAdaylar: readonly unknown[];
+  seciliGorsel?: unknown;
+  fetcher?: typeof fetch;
+}): Promise<{ selectedImageUrl: string | null; gorseller: string[]; izinliGorselAlanlari: string[] }> {
+  const fetcher = args.fetcher ?? globalThis.fetch;
+  let gorseller = gorselAdaylariniSuz({
+    adaylar: args.mevcutAdaylar,
+    seciliGorsel: args.seciliGorsel,
+    tespitEdilenAlan: args.tespitEdilenAlan,
+  });
+  const elenmisPazaryeriDisiVar = [args.seciliGorsel, ...args.mevcutAdaylar]
+    .map(metinDegeri)
+    .some((url) => url.startsWith("https://") && !pazaryeriVeyaAraciMi(url) && !gorseller.includes(url));
+  let izinliGorselAlanlari: string[] = [];
+  if (args.resmiSayfa.startsWith("https://") && (gorseller.length === 0 || elenmisPazaryeriDisiVar)) {
+    izinliGorselAlanlari = await sayfaGorselAlanAdlari(args.resmiSayfa, fetcher).catch(() => []);
+    if (izinliGorselAlanlari.length > 0) {
+      gorseller = gorselAdaylariniSuz({
+        adaylar: args.mevcutAdaylar,
+        seciliGorsel: args.seciliGorsel,
+        tespitEdilenAlan: args.tespitEdilenAlan,
+        izinliGorselAlanlari,
+      });
+    }
+    if (gorseller.length === 0) {
+      const tamamlanan = await gorselsizSatirlariTamamla({
+        satirlar: [
+          {
+            hamSatir: "",
+            model: "",
+            ad: "",
+            barkod: "",
+            varyant: "",
+            beden: "",
+            marka: "",
+            adet: null,
+            birim: "",
+            birimFiyat: null,
+            tutar: null,
+            okumaGuveni: 1,
+            siteSayfa: args.resmiSayfa,
+            dogrulamaDurumu: "Doğrulandı",
+          },
+        ],
+        bagimliliklar: { fetcher },
+      }).catch(() => []);
+      const sayfaGorselleri = tamamlanan[0]?.siteGorseller ?? [];
+      if (sayfaGorselleri.length > 0) {
+        const alanlar = sayfaGorselleri.map((u) => alanAdiCikar(u)).filter(Boolean);
+        izinliGorselAlanlari = [...new Set([...izinliGorselAlanlari, ...alanlar])];
+        gorseller = gorselAdaylariniSuz({
+          adaylar: [...sayfaGorselleri, ...args.mevcutAdaylar],
+          seciliGorsel: args.seciliGorsel ?? sayfaGorselleri[0],
+          tespitEdilenAlan: args.tespitEdilenAlan,
+          izinliGorselAlanlari,
+        });
       }
     }
   }
-  return urller;
+  return {
+    selectedImageUrl: gorseller[0] ?? null,
+    gorseller,
+    izinliGorselAlanlari,
+  };
 }
 
 export function groundingIstemiOlustur(
@@ -315,12 +586,13 @@ export function groundingIstemiOlustur(
     ? `Resmî üretici alan adı ${kilitliAlan} olarak kilitlidir. Aramayı yalnızca site:${kilitliAlan} içinde daralt ve başka hiçbir domain döndürme.`
     : "Önce ürünün/markanın tek resmî üretici veya marka alan adını (official_domain) belirle, ardından aramayı site:<official_domain> içinde daraltarak resmî ürün sayfasını bul.";
   return [
-    "Google Search kullanarak aşağıdaki ürün için resmî üretici/marka web sitesini ve doğrudan ürün sayfasını tek seferde eşleştir.",
+    "Google Search ve urlContext kullanarak aşağıdaki ürün için resmî üretici/marka web sitesini ve doğrudan ürün sayfasını tek seferde eşleştir.",
     aramaKurali,
+    TURKIYE_FATURA_KISALTMA_TALIMATI,
     "Trendyol, Hepsiburada, N11, Amazon, Çiçeksepeti, PttAVM, Akakçe, Cimri, Epey, Sahibinden gibi pazaryeri veya aracı siteleri kesinlikle kullanma ve döndürme.",
     "Doğrulanmış bir resmî ürün sayfası yoksa tahmin yürütme; official_product_url değerini null döndür.",
     "Yalnızca geçerli JSON nesnesi döndür:",
-    '{"official_domain":string|null,"official_product_url":string|null,"official_name":string|null,"brand":string|null,"description":string|null,"category":string|null,"image_urls":string[]}',
+    '{"official_domain":string|null,"official_product_url":string|null,"official_name":string|null,"brand":string|null,"description":string|null,"category":string|null,"selected_image_url":string|null,"image_urls":string[]}',
     JSON.stringify(kimlik),
   ].join("\n");
 }
@@ -328,6 +600,7 @@ export function groundingIstemiOlustur(
 export function groundingYanitiniCoz(
   veri: unknown,
   kilitliAlan: string | null,
+  izinliGorselAlanlari?: readonly string[],
 ): GroundingEslesmeSonucu | null {
   if (!veri || typeof veri !== "object") return null;
   const adaylar = (veri as { candidates?: unknown }).candidates;
@@ -356,32 +629,31 @@ export function groundingYanitiniCoz(
 
   let resmiSayfa = "";
   if (jsonSayfa) {
-    if (resmiAlanAdiUygunMu(jsonSayfa, tespitEdilenAlan)) {
+    if (resmiAlanAdiUygunMu(jsonSayfa, tespitEdilenAlan, { gorsel: false })) {
       resmiSayfa = jsonSayfa;
     } else {
-      const kilitliGrounded = groundedUrller.find((url) => resmiAlanAdiUygunMu(url, tespitEdilenAlan));
+      const kilitliGrounded = groundedUrller.find((url) => resmiAlanAdiUygunMu(url, tespitEdilenAlan, { gorsel: false }));
       if (!kilitliGrounded) return null;
       resmiSayfa = kilitliGrounded;
     }
   } else {
-    resmiSayfa = groundedUrller.find((url) => resmiAlanAdiUygunMu(url, tespitEdilenAlan)) ?? "";
+    resmiSayfa = groundedUrller.find((url) => resmiAlanAdiUygunMu(url, tespitEdilenAlan, { gorsel: false })) ?? "";
   }
-  if (!resmiSayfa || !resmiAlanAdiUygunMu(resmiSayfa, tespitEdilenAlan)) return null;
+  if (!resmiSayfa || !resmiAlanAdiUygunMu(resmiSayfa, tespitEdilenAlan, { gorsel: false })) return null;
 
   const hamGorseller = [
     ...(Array.isArray(cozulmus?.image_urls) ? cozulmus.image_urls : []),
     ...(Array.isArray(cozulmus?.gorseller) ? cozulmus.gorseller : []),
     ...(Array.isArray(cozulmus?.images) ? cozulmus.images : []),
-    ...groundingGorselListesi(adayKaydi, tespitEdilenAlan),
+    ...groundingGorselListesi(adayKaydi, tespitEdilenAlan, izinliGorselAlanlari),
   ];
-  const gorseller = hamGorseller
-    .map((url) => metinDegeri(url))
-    .filter(
-      (url) =>
-        url.startsWith("https://") &&
-        !pazaryeriVeyaAraciMi(url) &&
-        resmiAlanAdiUygunMu(url, tespitEdilenAlan),
-    );
+  const seciliGorsel = cozulmus?.selected_image_url ?? cozulmus?.image_url;
+  const gorseller = gorselAdaylariniSuz({
+    adaylar: hamGorseller,
+    seciliGorsel,
+    tespitEdilenAlan,
+    izinliGorselAlanlari,
+  });
 
   const temiz = kural32NesneTemizle({
     official_name: cozulmus?.official_name ?? cozulmus?.resmi_ad,
@@ -397,8 +669,9 @@ export function groundingYanitiniCoz(
     marka: metinDegeri(temiz.brand),
     aciklama: metinDegeri(temiz.description),
     kategori: metinDegeri(temiz.category),
-    gorseller: [...new Set(gorseller)],
-    groundingKaynaklari: groundedUrller.filter((url) => resmiAlanAdiUygunMu(url, tespitEdilenAlan)),
+    selectedImageUrl: gorseller[0] ?? null,
+    gorseller,
+    groundingKaynaklari: groundedUrller.filter((url) => resmiAlanAdiUygunMu(url, tespitEdilenAlan, { gorsel: false })),
   };
 }
 
@@ -439,7 +712,29 @@ export async function resmiUrunSayfasiGroundingIleBul(
     );
     if (!yanit.ok) return null;
     const veri = await yanit.json().catch(() => null);
-    return groundingYanitiniCoz(veri, kilitliAlan);
+    const sonuc = groundingYanitiniCoz(veri, kilitliAlan);
+    if (!sonuc) return null;
+    const faturaRengi = faturaRenginiCoz(temizGirdi.varyant, temizGirdi.urunAdi);
+    const aciklama = aciklamayaFaturaRengiEkle(sonuc.aciklama, faturaRengi);
+    if (sonuc.gorseller.length > 0) {
+      return { ...sonuc, aciklama, selectedImageUrl: sonuc.gorseller[0] };
+    }
+    const tamamlanan = await resmiSayfadanGorselleriTamamla({
+      resmiSayfa: sonuc.resmiSayfa,
+      tespitEdilenAlan: sonuc.resmiAlanAdi,
+      mevcutAdaylar: [],
+      fetcher,
+    });
+    const finalSonuc = tamamlanan.izinliGorselAlanlari.length > 0
+      ? groundingYanitiniCoz(veri, kilitliAlan, tamamlanan.izinliGorselAlanlari) ?? sonuc
+      : sonuc;
+    const gorseller = [...new Set([...finalSonuc.gorseller, ...tamamlanan.gorseller])];
+    return {
+      ...finalSonuc,
+      aciklama,
+      selectedImageUrl: gorseller[0] ?? null,
+      gorseller,
+    };
   } catch {
     return null;
   }
@@ -475,7 +770,7 @@ export async function kayitliFaturaKatalogunuUygula(args: {
       : "");
   const mevcutKaynakPazaryeri = Boolean(mevcutKaynak) && pazaryeriVeyaAraciMi(mevcutKaynak);
   const mevcutKaynakGecerli =
-    Boolean(mevcutKaynak) && resmiAlanAdiUygunMu(mevcutKaynak, kilitliAlanAdi);
+    Boolean(mevcutKaynak) && resmiAlanAdiUygunMu(mevcutKaynak, kilitliAlanAdi, { gorsel: false });
   const mevcutResmiAdGecerli =
     typeof hamKatalog?.resmiAd === "string" && Boolean(hamKatalog.resmiAd.trim());
 
@@ -513,6 +808,9 @@ export async function kayitliFaturaKatalogunuUygula(args: {
       args.fetcher,
     );
     if (grounding) {
+      const faturaRengiGrounding =
+        metinDegeri(katalog?.faturaRengi) ||
+        faturaRenginiCoz(satir.varyant || katalog?.varyant, satir.urunAdi || girdi.name);
       katalog = kural32NesneTemizle({
         ...(katalog ?? {}),
         resmiAd: grounding.resmiAd || metinDegeri(katalog?.resmiAd) || metinDegeri(girdi.name),
@@ -524,13 +822,16 @@ export async function kayitliFaturaKatalogunuUygula(args: {
         resmiAlanAdi: grounding.resmiAlanAdi,
         dogrulamaDurumu: "Doğrulandı",
         groundingKaynaklari: grounding.groundingKaynaklari,
+        selected_image_url: grounding.selectedImageUrl ?? grounding.gorseller[0] ?? null,
         gorseller: grounding.gorseller,
+        gorselAdaylari: grounding.gorseller,
+        ...(faturaRengiGrounding ? { faturaRengi: faturaRengiGrounding } : {}),
       });
       satir.katalog = katalog;
       satir.resmiAlanAdi = grounding.resmiAlanAdi;
       for (const url of grounding.gorseller) {
-        if (url.trim()) {
-          satir.izinliGorseller.add(url.trim());
+        if (url.trim() && satir.gorselHakDurumlari?.get(url.trim()) !== "denied") {
+          satir.izinliGorseller?.add(url.trim());
         }
       }
     }
@@ -548,13 +849,58 @@ export async function kayitliFaturaKatalogunuUygula(args: {
     return "Kayıtlı resmî ürün kaynağı eksik; yeniden eşleştir.";
   }
   if (katalog.resmiAd.trim()) girdi.name = katalog.resmiAd.trim();
-  girdi.description = typeof katalog.aciklama === "string" ? katalog.aciklama : "";
+  const faturaRengi =
+    metinDegeri(katalog.faturaRengi) ||
+    faturaRenginiCoz(satir.varyant || katalog.varyant, satir.urunAdi || girdi.name);
+  if (faturaRengi) katalog.faturaRengi = faturaRengi;
+  satir.katalog = katalog;
+  girdi.description = aciklamayaFaturaRengiEkle(
+    typeof katalog.aciklama === "string" ? katalog.aciklama : "",
+    faturaRengi,
+  );
   girdi.brand = typeof katalog.marka === "string" ? katalog.marka : null;
-  if (Array.isArray(katalog.gorseller)) {
-    const ureticiGorselleri = katalog.gorseller.filter(
-      (url): url is string => typeof url === "string" && !pazaryeriVeyaAraciMi(url),
-    );
+  const gorselKaynagiListesi = [
+    katalog.selected_image_url,
+    ...(Array.isArray(katalog.gorseller) ? katalog.gorseller : []),
+    ...(Array.isArray(katalog.gorselAdaylari) ? katalog.gorselAdaylari : []),
+  ];
+  const ureticiGorselleri = [
+    ...new Set(
+      gorselKaynagiListesi
+        .map((url) => metinDegeri(url))
+        .filter((url) => url.startsWith("https://") && !pazaryeriVeyaAraciMi(url)),
+    ),
+  ];
+  if (ureticiGorselleri.length > 0) {
     girdi.imageUrls = [...new Set([...ureticiGorselleri, ...girdi.imageUrls])];
+    for (const url of ureticiGorselleri) {
+      if (satir.gorselHakDurumlari?.get(url) !== "denied") {
+        satir.izinliGorseller?.add(url);
+      }
+    }
+  } else if (
+    girdi.imageUrls.length === 0 &&
+    katalog.kaynak.startsWith("https://") &&
+    !pazaryeriVeyaAraciMi(katalog.kaynak) &&
+    (args.fetcher || satir.sonuc === "kanitli")
+  ) {
+    const kurtarilan = await resmiSayfadanGorselleriTamamla({
+      resmiSayfa: katalog.kaynak,
+      tespitEdilenAlan: kilitliAlanAdi || alanAdiCikar(katalog.kaynak),
+      mevcutAdaylar: [],
+      fetcher: args.fetcher,
+    });
+    if (kurtarilan.gorseller.length > 0) {
+      girdi.imageUrls = [...kurtarilan.gorseller];
+      katalog.selected_image_url = kurtarilan.selectedImageUrl;
+      katalog.gorseller = kurtarilan.gorseller;
+      katalog.gorselAdaylari = kurtarilan.gorseller;
+      for (const url of kurtarilan.gorseller) {
+        if (satir.gorselHakDurumlari?.get(url) !== "denied") {
+          satir.izinliGorseller?.add(url);
+        }
+      }
+    }
   }
   girdi.metadata = kural32NesneTemizle({
     ...girdi.metadata,

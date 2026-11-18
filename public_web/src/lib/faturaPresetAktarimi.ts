@@ -1,6 +1,7 @@
 import type { GoruSatiri } from "@/lib/faturaGoru";
 import type { EslesmisFaturaSatiri, SatirSonucu } from "@/lib/faturaEslestir";
 import { faturaKatalogMetadatasi } from "@/lib/faturaUrunIcerigi";
+import { aciklamayaFaturaRengiEkle, faturaRenginiCoz } from "@/lib/faturaUrunHazirlama";
 
 export function presetDurumunuAktar(durum: string | undefined): SatirSonucu {
   const etiket = (durum ?? "").replace(/^[✓?✗⚠\s]+/, "").trim().toLocaleLowerCase("tr-TR");
@@ -17,7 +18,7 @@ export function resmiUrunBasliginiTemizle(ad: string | undefined, model?: string
 }
 
 export function faturaSatiriniAktar(satir: GoruSatiri, tedarikci: string): EslesmisFaturaSatiri {
-  const gorseller = satir.siteGorseller ?? [];
+  const gorseller = [...new Set([satir.siteGorsel ?? "", ...(satir.siteGorseller ?? [])].map((url) => url.trim()).filter(Boolean))];
   const ozellikler = satir.siteVaryant
     ? faturaKatalogMetadatasi({ ozellikler: satir.ozellikler, varyant: satir.varyant }).attributes
     : satir.ozellikler;
@@ -25,6 +26,8 @@ export function faturaSatiriniAktar(satir: GoruSatiri, tedarikci: string): Esles
   if (!satir.dogrulamaDurumu) eksikler.push("Doğrulama durumu bildirmedi.");
   if (satir.okumaGuveni === null) eksikler.push("Okuma güveni bildirmedi.");
   const temizAd = resmiUrunBasliginiTemizle(satir.ad, satir.model);
+  const faturaRengi = faturaRenginiCoz(satir.varyant, satir.ad, satir.hamSatir);
+  const aciklama = aciklamayaFaturaRengiEkle(satir.siteAciklama ?? "", faturaRengi);
   const ekler = {
     satirNo: satir.satirNo, uretici: satir.uretici, gramaj: satir.gramaj,
     dogrulamaDurumu: satir.dogrulamaDurumu, eslesenBilgiler: satir.eslesenBilgiler,
@@ -38,7 +41,7 @@ export function faturaSatiriniAktar(satir: GoruSatiri, tedarikci: string): Esles
     barkod: satir.barkod, varyant: satir.varyant, beden: satir.beden, marka: satir.marka,
     adet: satir.adet, birim: satir.birim, alisBirimFiyat: satir.birimFiyat, satirToplam: satir.tutar,
     guven: satir.okumaGuveni ?? 0,
-    siteAd: temizAd, siteAciklama: satir.siteAciklama,
+    siteAd: temizAd, siteAciklama: aciklama,
     siteGorsel: gorseller[0] ?? "", siteGorseller: gorseller, siteSayfa: satir.siteSayfa,
     siteKategori: satir.siteKategori, siteOzellikler: ozellikler,
     siteMarka: satir.siteMarka,
@@ -48,9 +51,10 @@ export function faturaSatiriniAktar(satir: GoruSatiri, tedarikci: string): Esles
       ...ekler, firma: tedarikci, kaynakFirma: satir.uretici || satir.siteMarka || satir.marka || tedarikci,
       dayanak: "ad", izinDurumu: (satir.siteSayfa ? "bekliyor" : "yok"),
       resmiAd: temizAd, marka: satir.siteMarka || satir.marka,
-      aciklama: satir.siteAciklama ?? "", gorseller, gorselAdaylari: gorseller,
+      aciklama, gorseller, gorselAdaylari: gorseller,
       kaynak: satir.siteSayfa ?? "", kategori: satir.siteKategori, ozellikler,
       beden: satir.beden, varyant: satir.siteVaryant || satir.varyant,
+      ...(faturaRengi ? { faturaRengi } : {}),
     },
   };
 }
