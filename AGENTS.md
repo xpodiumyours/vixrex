@@ -506,6 +506,27 @@ yazı sorunu için salt metinle cerrahi plan anlatıldı; Casper: "Bu görünüm
 değişimleri bana yazılı değil görsel olarak gösterip onay istemeni istiyorum...
 Görünüm değişecekse önce ne olacağı bana gösterilmeli" diyerek kuralı sabitledi.
 
+### 36. Çift Dikiş, Paralel Yapı ve Araştırmasız Kod Yazma Yasağı (2026-11-18)
+Mevcut mimariyi ve depodaki bileşenleri araştırmadan körlemesine kod yazmak ve aynı amaca
+hizmet eden paralel kopya dosyalar (`*-copy`, `*-v2`, `*new*`, `*yedek*`) veya mükerrer UI
+butonları üretmek kesinlikle yasaktır.
+
+1. **Önce Araştır, Sonra Dokun:** Bir dosyada düzenleme yapmadan önce o dosya `read_file`
+   veya arama araçlarıyla baştan sona okunur; mevcut yetenekler ve bileşenler incelenir.
+   Okunmamış dosyada kod değişikliği yapılamaz (`tarif-bekcisi.mjs` kancası kilitler).
+2. **Tek Amaç = Tek Adres:** Depoda zaten var olan bir sistemin (ör. fatura akışı
+   `InvoiceToProducts.tsx`, harita/konum tetikleyicisi, sepet `vitrinCart`, randevu, ödeme)
+   yanına paralel ikinci bir servis, dosya veya arayüz tetikleyicisi açılamaz.
+3. **Mükerrer Tetikleyici Yasağı:** Aynı kartta veya ekranda aynı amaca giden iki farklı
+   buton (ör. hem sağ-üst açılır harita pini hem gövdede yol tarifi rozeti) yan yana
+   barındırılamaz; mevcut yapı tekilleştirilir.
+
+Neden: 2026-11-18'de ürün kartında canlıda zaten var olan `MapPinIcon` açılır kutusu
+incelenmeden gövdeye ikinci bir yol tarifi rozeti eklendi; aynı kartta iki ayrı harita
+tetikleyicisi oluşarak çift dikiş riski doğdu. Casper: "Bunlar zaten canlı yayındaki
+VixRex'te yok muydu? Paralel yapı oluşturmayalım bak... Kalıcı olarak bir daha çift dikişe
+sebep olmayacak araştırma yapmadan işlem yapma kancası da takalım" diyerek kuralı sabitledi.
+
 ### Token ekonomisi (2026-09-16)
 Token en kıt kaynak. Bitince koordinasyon, doğrulama ve merge sorumluluğu
 duruyor — yani proje duruyor. Yavaş ajan, duran projeden iyidir.
