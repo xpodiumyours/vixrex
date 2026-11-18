@@ -112,7 +112,6 @@ export async function faturayiArkaPlanaGonder(
     p_api_key: anahtar,
   });
   if (error || data?.success !== true || typeof data.id !== "string") {
-    // RPC hata nesnesinde istek parametreleri bulunabilir; anahtar/fotoğraf loglanmaz.
     throw new Error("OKUYUCU_ISLEYICI_HAZIR_DEGIL");
   }
   return data.id;

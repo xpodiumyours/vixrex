@@ -183,7 +183,9 @@ describe("Google Grounding ve Telif Kalkanı Sözleşmesi", () => {
     let yakalananIstekGovdesi = "";
 
     const captureFetcher = vi.fn(async (_url, init) => {
-      yakalananIstekGovdesi = String(init?.body ?? "");
+      if (init?.body) {
+        yakalananIstekGovdesi = String(init.body);
+      }
       return {
         ok: true,
         json: async () => ({
@@ -196,6 +198,7 @@ describe("Google Grounding ve Telif Kalkanı Sözleşmesi", () => {
                       official_domain: "vestel.com.tr",
                       official_product_url: "https://www.vestel.com.tr/tv",
                       official_name: "Vestel TV",
+                      image_urls: ["https://www.vestel.com.tr/tv.jpg"],
                     }),
                   },
                 ],

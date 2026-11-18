@@ -23,6 +23,8 @@ export interface KartSozlesmesi {
   alisFiyati: number | null;
   resmiSayfa: string;
   gorselAdresi: string;
+  seciliGorsel: string;
+  gorselAdaylari: string[];
   gorselKaynakSayfa: string;
   aciklama: string;
   kategori: string;
@@ -87,6 +89,17 @@ function ilkAdres(value: unknown): string {
   return "";
 }
 
+function tumAdresler(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  const sonuc: string[] = [];
+  for (const eleman of value) {
+    const ham = typeof eleman === "string" ? eleman : nesne(eleman) ? (eleman.url ?? eleman.image_url) : "";
+    const temiz = adres(ham);
+    if (temiz && !sonuc.includes(temiz)) sonuc.push(temiz);
+  }
+  return sonuc;
+}
+
 function ilkKaynakAdres(value: unknown): string {
   if (!Array.isArray(value)) return "";
   for (const eleman of value) {
@@ -132,7 +145,28 @@ export function tekKartSozlesmesi(item: Kayit): KartSozlesmesi {
     || metin(kart.product_url) || metin(dogrulama.product_url);
   const adayGorsel = ilkAdres(gorsel.image_candidates) || ilkAdres(kart.image_candidates);
   const adayKaynak = ilkKaynakAdres(gorsel.image_candidates) || ilkKaynakAdres(kart.image_candidates);
-  const gorselAdresi = metin(gorsel.image_url) || metin(kart.image_url) || ilkAdres(kart.image_urls) || adayGorsel;
+  const seciliGorsel =
+    adres(gorsel.selected_image_url) ||
+    adres(kart.selected_image_url) ||
+    adres(gorsel.image_url) ||
+    adres(kart.image_url) ||
+    ilkAdres(gorsel.image_urls) ||
+    ilkAdres(kart.image_urls) ||
+    adayGorsel;
+  const gorselAdaylari = [
+    ...new Set(
+      [
+        seciliGorsel,
+        adres(gorsel.image_url),
+        adres(kart.image_url),
+        ...tumAdresler(gorsel.image_urls),
+        ...tumAdresler(kart.image_urls),
+        ...tumAdresler(gorsel.image_candidates),
+        ...tumAdresler(kart.image_candidates),
+      ].filter(Boolean),
+    ),
+  ];
+  const gorselAdresi = seciliGorsel;
   const gorselKaynakSayfa = metin(gorsel.source_url) || metin(kart.source_url)
     || metin(gorselDogrulamaNesnesi.source_url) || adayKaynak;
   const resmiSayfa = resmiKaniti || gorselKaynakSayfa;
@@ -162,6 +196,8 @@ export function tekKartSozlesmesi(item: Kayit): KartSozlesmesi {
     alisFiyati: sayi(fatura.unit_price),
     resmiSayfa,
     gorselAdresi,
+    seciliGorsel,
+    gorselAdaylari,
     gorselKaynakSayfa,
     aciklama: metin(kart.short_description),
     kategori: metin(kart.category_suggestion),
@@ -216,7 +252,7 @@ const dogrulamaSemasi = (deger: unknown): boolean => esnekAlanlar(deger, {}, {
   matched_attributes: diziMetin, unmatched_attributes: diziMetin,
 });
 const gorselSemasi = (deger: unknown): boolean => esnekAlanlar(deger, {}, {
-  image_url: metinVeyaNull, source_url: metinVeyaNull,
+  image_url: metinVeyaNull, selected_image_url: metinVeyaNull, image_urls: diziMetin, source_url: metinVeyaNull,
   verification_status: metinVeyaNull, rights_status: metinVeyaNull,
 });
 const satirSemasi = (deger: unknown): boolean => esnekAlanlar(deger, {
