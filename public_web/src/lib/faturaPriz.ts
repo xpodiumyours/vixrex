@@ -1,8 +1,15 @@
 import { VARSAYILAN_FATURA_PRESET } from "@/lib/faturaPresetSozlesmesi";
 
 export const VARSAYILAN_PRIZ_ADRESI = "https://openrouter.ai/api/v1/chat/completions";
+const GEMINI_PRIZ_ADRESI = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
+
+function geminiPrizAnahtari(): string {
+  return (process.env.GEMINI_API_KEY || "").trim() || (process.env.GOOGLE_API_KEY || "").trim();
+}
 
 export function faturaPrizAdresi(): string {
+  const geminiKey = geminiPrizAnahtari();
+  if (geminiKey) return `${GEMINI_PRIZ_ADRESI}?key=${geminiKey}`;
   const acikAdres = (process.env.FATURA_PRIZ_URL || "").trim();
   if (acikAdres) return acikAdres;
   const temelAdres = (process.env.OPENROUTER_BASE_URL || "").trim().replace(/\/+$/, "");
@@ -13,7 +20,9 @@ export function faturaPrizAdresi(): string {
 }
 
 export function faturaPrizAnahtari(): string {
-  return (process.env.FATURA_PRIZ_API_KEY || process.env.OPENROUTER_API_KEY || "").trim();
+  const geminiKey = geminiPrizAnahtari();
+  if (geminiKey) return geminiKey;
+  return (process.env.FATURA_PRIZ_API_KEY || "").trim() || (process.env.OPENROUTER_API_KEY || "").trim();
 }
 
 export function faturaOkumaPresetReferansi(): string {
@@ -27,6 +36,9 @@ export function faturaPrizZamanSiniri(): number {
 }
 
 export function faturaPrizBasliklari(anahtar: string): Record<string, string> {
+  if (geminiPrizAnahtari()) {
+    return { "Content-Type": "application/json" };
+  }
   return {
     "Content-Type": "application/json",
     Authorization: `Bearer ${anahtar}`,
@@ -35,16 +47,114 @@ export function faturaPrizBasliklari(anahtar: string): Record<string, string> {
   };
 }
 
+function dataUrlToGeminiPart(url: string): Record<string, unknown> {
+  const eslesme = /^data:([^;,]+)(?:;[^,]*)?;base64,([\s\S]+)$/.exec(url);
+  if (eslesme) {
+    return { inlineData: { mimeType: eslesme[1], data: eslesme[2] } };
+  }
+  return { fileData: { fileUri: url } };
+}
+
+function icerikParcasiniCevir(parca: unknown): Record<string, unknown> | null {
+  if (typeof parca === "string") return { text: parca };
+  if (!parca || typeof parca !== "object") return null;
+  const o = parca as Record<string, unknown>;
+  if (o.type === "text" && typeof o.text === "string") {
+    return { text: o.text };
+  }
+  if (o.type === "image_url" && o.image_url && typeof o.image_url === "object") {
+    const url = (o.image_url as Record<string, unknown>).url;
+    if (typeof url === "string" && url) return dataUrlToGeminiPart(url);
+  }
+  if (o.type === "file" && o.file && typeof o.file === "object") {
+    const fileData = (o.file as Record<string, unknown>).file_data;
+    if (typeof fileData === "string" && fileData) return dataUrlToGeminiPart(fileData);
+  }
+  return null;
+}
+
+function mesajParcalarListesi(icerik: unknown): Array<Record<string, unknown>> {
+  if (typeof icerik === "string") return icerik ? [{ text: icerik }] : [];
+  if (!Array.isArray(icerik)) return [];
+  return icerik.map(icerikParcasiniCevir).filter((p): p is Record<string, unknown> => p !== null);
+}
+
+function geminiGovdesineCevir(govde: Record<string, unknown>): Record<string, unknown> {
+  if (Array.isArray(govde.contents) || !Array.isArray(govde.messages)) return govde;
+  const contents: Array<{ role: string; parts: Array<Record<string, unknown>> }> = [];
+  const systemParts: Array<Record<string, unknown>> = [];
+  for (const mesaj of govde.messages) {
+    if (!mesaj || typeof mesaj !== "object") continue;
+    const m = mesaj as Record<string, unknown>;
+    const parts = mesajParcalarListesi(m.content);
+    if (!parts.length) continue;
+    if (m.role === "system") {
+      systemParts.push(...parts);
+      continue;
+    }
+    contents.push({ role: m.role === "assistant" ? "model" : "user", parts });
+  }
+  const sonuc: Record<string, unknown> = { contents };
+  if (systemParts.length) sonuc.systemInstruction = { parts: systemParts };
+  const rf = govde.response_format;
+  if (rf && typeof rf === "object" && ["json_object", "json_schema"].includes(String((rf as Record<string, unknown>).type))) {
+    sonuc.generationConfig = { responseMimeType: "application/json" };
+  }
+  return sonuc;
+}
+
+async function geminiYanitiniOpenRouterBicimineCevir(yanit: Response): Promise<Response> {
+  if (!yanit.ok || typeof yanit.clone !== "function") return yanit;
+  const veri = await yanit.clone().json().catch(() => null) as Record<string, unknown> | null;
+  if (!veri || !Array.isArray(veri.candidates) || Array.isArray(veri.choices)) return yanit;
+  const aday = (veri.candidates[0] ?? {}) as Record<string, unknown>;
+  const icerikNesnesi = (aday.content ?? {}) as Record<string, unknown>;
+  const hamParcalar = Array.isArray(icerikNesnesi.parts) ? icerikNesnesi.parts : [];
+  const metinParcalari = hamParcalar
+    .filter((p): p is Record<string, unknown> => Boolean(p && typeof p === "object" && typeof (p as Record<string, unknown>).text === "string" && (p as Record<string, unknown>).thought !== true))
+    .map((p) => String(p.text));
+  const icerik = metinParcalari.join("");
+  const hamNeden = typeof aday.finishReason === "string" ? aday.finishReason : "STOP";
+  const finishReason = hamNeden === "MAX_TOKENS" ? "length" : hamNeden === "STOP" ? "stop" : "content_filter";
+  const usageMeta = (veri.usageMetadata ?? {}) as Record<string, unknown>;
+  const openrouterYanit = {
+    id: typeof veri.responseId === "string" ? veri.responseId : null,
+    model: typeof veri.modelVersion === "string" ? veri.modelVersion : "gemini-2.5-flash",
+    choices: [{
+      finish_reason: finishReason,
+      message: {
+        content: icerik,
+        ...(finishReason === "content_filter" && !icerik ? { refusal: hamNeden } : {}),
+      },
+    }],
+    usage: {
+      prompt_tokens: Number(usageMeta.promptTokenCount ?? 0),
+      completion_tokens: Number(usageMeta.candidatesTokenCount ?? 0),
+      ...(usageMeta.thoughtsTokenCount !== undefined
+        ? { completion_tokens_details: { reasoning_tokens: Number(usageMeta.thoughtsTokenCount ?? 0) } }
+        : {}),
+    },
+  };
+  return new Response(JSON.stringify(openrouterYanit), {
+    status: yanit.status,
+    statusText: yanit.statusText,
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
 export async function faturaPrizIstegiGonder(govde: Record<string, unknown>): Promise<Response> {
   const anahtar = faturaPrizAnahtari();
   if (!anahtar) throw new Error("OKUYUCU_HAZIR_DEGIL");
+  const geminiAktif = Boolean(geminiPrizAnahtari());
+  const istekGovdesi = geminiAktif ? geminiGovdesineCevir(govde) : govde;
   try {
-    return await fetch(faturaPrizAdresi(), {
+    const yanit = await fetch(faturaPrizAdresi(), {
       method: "POST",
       headers: faturaPrizBasliklari(anahtar),
-      body: JSON.stringify(govde),
+      body: JSON.stringify(istekGovdesi),
       signal: AbortSignal.timeout(faturaPrizZamanSiniri()),
     });
+    return geminiAktif ? await geminiYanitiniOpenRouterBicimineCevir(yanit) : yanit;
   } catch (hata) {
     if (hata instanceof Error && ["TimeoutError", "AbortError"].includes(hata.name)) {
       throw new Error("OKUYUCU_ZAMAN_ASIMI");

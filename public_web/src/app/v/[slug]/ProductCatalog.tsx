@@ -157,7 +157,7 @@ function CatalogProductImage({
       fill
       sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
       onError={() => setHasError(true)}
-      className={`${contain ? "object-contain p-2" : "object-cover"} object-center transition duration-500 group-hover:scale-[1.035]`}
+      className={`${contain ? "object-contain p-2.5" : "object-cover"} max-h-full max-w-full object-center transition duration-500 group-hover:scale-[1.03]`}
     />
   );
 }
@@ -333,11 +333,13 @@ export default function ProductCatalog({
           const variantLabel = isService
             ? null
             : productVariantLabel(product.variants, metadata.templateKey);
-          const kartOzellikleri = buildProductCardFacts({
+          const kartBilgileri = buildProductCardFacts({
             brand: product.brand,
+            barcode: isService ? undefined : product.barcode,
             metadata: product.metadata,
             variants: isService ? undefined : product.variants,
-          }).ozellikler;
+          });
+          const kartOzellikleri = kartBilgileri.ozellikler;
           const kategoriEtiketi =
             category && category.toLocaleLowerCase("tr-TR") !== "tümü"
               ? kategoriBirlestir(category).ad || category
@@ -387,7 +389,7 @@ export default function ProductCatalog({
           return (
             <article
               key={product.id || `${product.name}-${index}`}
-              className="group relative flex min-w-0 flex-col overflow-hidden rounded-[22px] border border-blue-500/15 bg-slate-900/75 shadow-[0_14px_32px_rgba(0,0,0,0.24)] backdrop-blur-xl transition duration-300 hover:-translate-y-1 hover:border-blue-500/35 hover:shadow-[0_18px_44px_rgba(0,0,0,0.34)]"
+              className={`group relative flex min-w-0 flex-col overflow-hidden rounded-2xl ${vitrinGorunum.yuzey.panel} shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-blue-400/35 hover:shadow-[0_14px_32px_rgba(2,6,23,0.42)]`}
             >
               <a
                 href={productUrl}
@@ -400,7 +402,7 @@ export default function ProductCatalog({
                 className="block min-w-0 flex-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
                 aria-label={`${product.name} ${isService ? "hizmetini" : "ürününü"} hızlı incele`}
               >
-                <div className="relative aspect-[4/5] w-full overflow-hidden bg-slate-950 v-product-media">
+                <div className="relative aspect-square w-full overflow-hidden bg-slate-950">
                   <CatalogProductImage
                     src={image}
                     alt={product.name}
@@ -472,6 +474,28 @@ export default function ProductCatalog({
                           Hizmeti incele →
                         </span>
                       ) : null}
+                    </div>
+                  ) : null}
+                  {kartBilgileri.resmiKatalogRozeti ? (
+                    <div className="mt-2 flex min-w-0 items-center">
+                      <span
+                        className="inline-flex max-w-full min-w-0 items-center gap-1 rounded-full border border-emerald-400/25 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-300"
+                        title={
+                          kartBilgileri.resmiKaynak
+                            ? `${kartBilgileri.resmiKatalogRozeti} (${kartBilgileri.resmiKaynak.alanAdi})`
+                            : kartBilgileri.resmiKatalogRozeti
+                        }
+                      >
+                        <svg
+                          className="h-3 w-3 shrink-0 text-emerald-400"
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                          aria-hidden="true"
+                        >
+                          <path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3zm-1.06 13.54L7.4 12l1.41-1.41 2.12 2.12 4.24-4.24 1.41 1.41-5.64 5.66z" />
+                        </svg>
+                        <span className="truncate">{kartBilgileri.resmiKatalogRozeti}</span>
+                      </span>
                     </div>
                   ) : null}
                 </div>
