@@ -58,6 +58,8 @@ interface ProductCatalogProps {
   whatsappBaseUrl?: string | null;
   storeLocationText?: string | null;
   storeMapsUrl?: string | null;
+  storeDistrictName?: string | null;
+  storeProvinceName?: string | null;
   trackingEnabled?: boolean;
   /** Mevcut çağrı sözleşmesini kırmamak için korunur. Yeni kart ürün görseli yoksa mağaza görselini ürünmüş gibi kullanmaz. */
   fallbackImage?: string | null;
@@ -175,6 +177,8 @@ export default function ProductCatalog({
   whatsappBaseUrl = null,
   storeLocationText = null,
   storeMapsUrl = null,
+  storeDistrictName = null,
+  storeProvinceName = null,
   trackingEnabled = true,
 }: ProductCatalogProps) {
   const searchParams = useSearchParams();
@@ -333,13 +337,32 @@ export default function ProductCatalog({
           const variantLabel = isService
             ? null
             : productVariantLabel(product.variants, metadata.templateKey);
-          const kartBilgileri = buildProductCardFacts({
+          const fulfillmentRegion = String(product.fulfillmentRegion || "").trim();
+          const fulfillmentMapUrl = productLocationMapUrl(fulfillmentRegion);
+          const storeLocationInput =
+            storeDistrictName || storeProvinceName || storeLocationText || storeMapsUrl
+              ? {
+                  district_name: storeDistrictName,
+                  province_name: storeProvinceName,
+                  address: storeLocationText,
+                  mapsUrl: storeMapsUrl,
+                }
+              : fulfillmentRegion
+                ? {
+                    address: fulfillmentRegion,
+                    mapsUrl: fulfillmentMapUrl,
+                  }
+                : null;
+          const cardFacts = buildProductCardFacts({
             brand: product.brand,
             barcode: isService ? undefined : product.barcode,
             metadata: product.metadata,
             variants: isService ? undefined : product.variants,
+            stockStatus,
+            stockQuantity: product.stockQuantity,
+            storeLocation: storeLocationInput,
           });
-          const kartOzellikleri = kartBilgileri.ozellikler;
+          const kartOzellikleri = cardFacts.ozellikler;
           const kategoriEtiketi =
             category && category.toLocaleLowerCase("tr-TR") !== "tümü"
               ? kategoriBirlestir(category).ad || category
@@ -364,8 +387,6 @@ export default function ProductCatalog({
           const birimFiyat = isService
             ? null
             : birimFiyatBilgisi(product.metadata, fiyatTutar);
-          const fulfillmentRegion = String(product.fulfillmentRegion || "").trim();
-          const fulfillmentMapUrl = productLocationMapUrl(fulfillmentRegion);
           const productKey = product.id || productUrl;
           const showLocation = locationProductId === productKey;
           const tukendi =
@@ -476,14 +497,14 @@ export default function ProductCatalog({
                       ) : null}
                     </div>
                   ) : null}
-                  {kartBilgileri.resmiKatalogRozeti ? (
+                  {cardFacts.resmiKatalogRozeti ? (
                     <div className="mt-2 flex min-w-0 items-center">
                       <span
                         className="inline-flex max-w-full min-w-0 items-center gap-1 rounded-full border border-emerald-400/25 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-300"
                         title={
-                          kartBilgileri.resmiKaynak
-                            ? `${kartBilgileri.resmiKatalogRozeti} (${kartBilgileri.resmiKaynak.alanAdi})`
-                            : kartBilgileri.resmiKatalogRozeti
+                          cardFacts.resmiKaynak
+                            ? `${cardFacts.resmiKatalogRozeti} (${cardFacts.resmiKaynak.alanAdi})`
+                            : cardFacts.resmiKatalogRozeti
                         }
                       >
                         <svg
@@ -494,12 +515,39 @@ export default function ProductCatalog({
                         >
                           <path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3zm-1.06 13.54L7.4 12l1.41-1.41 2.12 2.12 4.24-4.24 1.41 1.41-5.64 5.66z" />
                         </svg>
-                        <span className="truncate">{kartBilgileri.resmiKatalogRozeti}</span>
+                        <span className="truncate">{cardFacts.resmiKatalogRozeti}</span>
                       </span>
                     </div>
                   ) : null}
                 </div>
               </a>
+
+              {cardFacts.location?.raftaHazirMi && cardFacts.location.rozetMetni ? (
+                <div className="px-3.5 pb-2">
+                  {cardFacts.location.mapsUrl ? (
+                    <TrackedDirectionsLink
+                      href={cardFacts.location.mapsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      storeSlug={storeSlug}
+                      clickLocation="product_card"
+                      productSlug={productSlug}
+                      trackingEnabled={trackingEnabled}
+                      onClick={(event) => event.stopPropagation()}
+                      className="inline-flex max-w-full min-w-0 items-center gap-1 rounded-full border border-blue-400/25 bg-blue-500/10 px-2 py-0.5 text-[10px] font-bold text-blue-200 transition hover:border-blue-400/50 hover:bg-blue-500/20 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+                      title="Google Maps ile yol tarifi al"
+                    >
+                      <span aria-hidden="true">📍</span>
+                      <span className="truncate">{cardFacts.location.rozetMetni}</span>
+                    </TrackedDirectionsLink>
+                  ) : (
+                    <span className="inline-flex max-w-full min-w-0 items-center gap-1 rounded-full border border-blue-400/20 bg-blue-500/10 px-2 py-0.5 text-[10px] font-bold text-blue-200">
+                      <span aria-hidden="true">📍</span>
+                      <span className="truncate">{cardFacts.location.rozetMetni}</span>
+                    </span>
+                  )}
+                </div>
+              ) : null}
 
               {!isService ? (
                 <div className="px-3.5 pb-3.5 pt-1">

@@ -887,6 +887,8 @@ export default async function StorePage(props: PageProps) {
             whatsappBaseUrl={waBaseUrl}
             storeLocationText={displayAddress}
             storeMapsUrl={mapsUrl}
+            storeDistrictName={store.district_name}
+            storeProvinceName={store.province_name}
             trackingEnabled={!isOwnerMode}
             products={visibleProducts}
             categoryMap={(categories || []).map((c) => ({ id: c.id, name: c.name }))}
