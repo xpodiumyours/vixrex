@@ -24,11 +24,11 @@ function geminiPrizAdresi(): string {
   return `https://generativelanguage.googleapis.com/v1beta/models/${geminiFaturaModeli()}:generateContent`;
 }
 
-function geminiPrizAnahtari(): string {
+export function geminiPrizAnahtari(): string {
   return (process.env.GEMINI_API_KEY || "").trim() || (process.env.GOOGLE_API_KEY || "").trim();
 }
 
-function openRouterPrizAnahtari(): string {
+export function openRouterPrizAnahtari(): string {
   return (process.env.FATURA_PRIZ_API_KEY || "").trim() || (process.env.OPENROUTER_API_KEY || "").trim();
 }
 
