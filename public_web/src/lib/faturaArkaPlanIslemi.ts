@@ -1,6 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { faturaIstekGovdesi, faturaYanitiniOku, type GoruSonucu } from "@/lib/faturaGoru";
-import { faturaPrizAnahtari } from "@/lib/faturaPriz";
+import {
+  faturaPrizAnahtari,
+  geminiPrizAktifMi,
+  googleFaturaUrunKartlariUret,
+} from "@/lib/faturaPriz";
 import { faturaSatiriniAktar } from "@/lib/faturaPresetAktarimi";
 import { islemKaydet } from "@/lib/faturaIslemKaydi";
 import { islemiYukle } from "@/lib/faturaIslemOku";
@@ -34,6 +38,70 @@ export async function faturayiArkaPlanaGonder(
   parmakIzi: string,
   goruntu: string | string[],
 ): Promise<string> {
+  if (geminiPrizAktifMi()) {
+    const { data: magaza, error: magazaHatasi } = await admin
+      .from("stores")
+      .select("slug")
+      .eq("id", storeId)
+      .maybeSingle();
+    const magazaSlug = typeof magaza?.slug === "string" ? magaza.slug.trim() : "";
+    if (magazaHatasi || !magazaSlug) {
+      throw new Error("OKUYUCU_ISLEYICI_HAZIR_DEGIL");
+    }
+    const kartlar = await googleFaturaUrunKartlariUret(goruntu);
+    if (!kartlar.length) throw new Error("FOTOGRAFTA_YAZI_YOK");
+    const satirlar = kartlar.map((kart, sira) =>
+      faturaSatiriniAktar(
+        {
+          satirNo: sira + 1,
+          hamSatir: kart.title,
+          model: kart.model ?? "",
+          ad: kart.title,
+          barkod: kart.barcode ?? "",
+          varyant: kart.variant ?? "",
+          beden: kart.size ?? "",
+          marka: kart.brand ?? "",
+          adet: kart.quantity,
+          birim: kart.unit ?? "",
+          birimFiyat: null,
+          tutar: null,
+          okumaGuveni: 1,
+          dogrulamaDurumu: kart.official_product_url ? "Doğrulandı" : "Araştırılamadı",
+          siteGorsel: kart.image_urls[0] ?? "",
+          siteGorseller: kart.image_urls,
+          siteSayfa: kart.official_product_url ?? "",
+          siteKategori: kart.category ?? "",
+          siteAciklama: kart.short_description ?? "",
+          siteMarka: kart.brand ?? "",
+          siteVaryant: kart.variant ?? "",
+          kaynaklar: kart.grounding_sources,
+        },
+        "",
+      ),
+    );
+    const id = await islemKaydet({
+      slug: magazaSlug,
+      parmakIzi,
+      belgeAdedi: kartlar.length,
+      belgeToplami: null,
+      tedarikci: "",
+      tedarikciVergiNo: "",
+      tedarikciAdres: "",
+      tedarikciSite: "",
+      tedarikciIz: null,
+      satirlar,
+      belgeTuru: "fatura",
+      belgeNo: "",
+      belgeTarihi: "",
+      malBedeli: null,
+      kdvTutari: null,
+      indirimTutari: null,
+      odenecekToplam: null,
+      aramaDurumu: { erisimHatasi: false, sonrakiSatir: satirlar.length },
+    });
+    if (!id) throw new Error("OKUYUCU_ISLEYICI_HAZIR_DEGIL");
+    return id;
+  }
   const anahtar = faturaPrizAnahtari();
   if (!anahtar) throw new Error("OKUYUCU_HAZIR_DEGIL");
   const body = { ...faturaIstekGovdesi(goruntu), model: OKUMA_PRESET };

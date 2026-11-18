@@ -277,7 +277,8 @@ export default function ProductCatalog({
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
-      if (!isPublicCatalogProduct(product)) return false;
+      if (!isOwnerSession && !isPublicCatalogProduct(product)) return false;
+      if (isOwnerSession && !String(product.name || "").trim()) return false;
       if (
         currentCategory &&
         product.categoryId !== currentCategory &&
@@ -293,7 +294,7 @@ export default function ProductCatalog({
       }
       return true;
     });
-  }, [products, currentCategory, currentQuery]);
+  }, [products, currentCategory, currentQuery, isOwnerSession]);
 
   const totalCount = filteredProducts.length;
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);

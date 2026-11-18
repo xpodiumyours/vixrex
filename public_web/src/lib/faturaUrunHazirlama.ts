@@ -511,6 +511,11 @@ export async function kayitliFaturaKatalogunuUygula(args: {
       });
       satir.katalog = katalog;
       satir.resmiAlanAdi = grounding.resmiAlanAdi;
+      for (const url of grounding.gorseller) {
+        if (url.trim()) {
+          satir.izinliGorseller.add(url.trim());
+        }
+      }
     }
   }
 

@@ -313,7 +313,9 @@ async function _buildStoreDataBundle(
         metadata: p.metadata,
         gorselIzinBekliyor: gorselIzinDurumlari.get(String(p.id ?? "")) === true,
       }))
-      .filter((p: ProductItem) => isPublicCatalogProduct(p));
+      .filter((p: ProductItem) =>
+        Boolean(ownerCatalog) ? Boolean(p.name?.trim()) : isPublicCatalogProduct(p),
+      );
 
     return {
       store,
@@ -565,6 +567,15 @@ export default async function StorePage(props: PageProps) {
     }
   } else {
     data = await getStoreData(params.slug);
+    if (
+      data &&
+      ownerSession &&
+      draft?.store_id === ownerSession.storeId &&
+      ownerCatalog &&
+      ownerCatalog.products.length > 0
+    ) {
+      data = await _buildStoreDataBundle(data.store, ownerCatalog);
+    }
   }
 
   const assistantHandoff = draft
@@ -890,6 +901,8 @@ export default async function StorePage(props: PageProps) {
             storeDistrictName={store.district_name}
             storeProvinceName={store.province_name}
             trackingEnabled={!isOwnerMode}
+            isOwner={Boolean(ownerSession)}
+            isOwnerMode={isOwnerMode}
             products={visibleProducts}
             categoryMap={(categories || []).map((c) => ({ id: c.id, name: c.name }))}
             fallbackImage={store.logo_url || "/images/vixrex_v_crystal_mascot.webp"}

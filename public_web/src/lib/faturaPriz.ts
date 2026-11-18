@@ -1,4 +1,12 @@
 import { VARSAYILAN_FATURA_PRESET } from "@/lib/faturaPresetSozlesmesi";
+import {
+  alanAdiCikar,
+  kilitliResmiAlanAdiSec,
+  kural32MetinTemizle,
+  kural32NesneTemizle,
+  pazaryeriVeyaAraciMi,
+  resmiAlanAdiUygunMu,
+} from "@/lib/faturaUrunHazirlama";
 
 export const VARSAYILAN_PRIZ_ADRESI = "https://openrouter.ai/api/v1/chat/completions";
 const GEMINI_PRIZ_ADRESI = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
@@ -192,4 +200,300 @@ export async function faturaPrizIstegiGonder(govde: Record<string, unknown>): Pr
     }
     throw new Error("OKUYUCU_CEVAP_VERMEDI", { cause: hata });
   }
+}
+
+export interface GoogleFaturaUrunKarti {
+  row_id: string;
+  title: string;
+  brand: string | null;
+  model: string | null;
+  barcode: string | null;
+  variant: string | null;
+  size: string | null;
+  quantity: number | null;
+  unit: string | null;
+  category: string | null;
+  short_description: string | null;
+  official_domain: string | null;
+  official_product_url: string | null;
+  image_urls: string[];
+  grounding_sources: string[];
+}
+
+export const GOOGLE_FATURA_URUN_KARTI_SEMASI = {
+  type: "object",
+  additionalProperties: false,
+  required: ["items"],
+  properties: {
+    items: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: [
+          "row_id",
+          "title",
+          "brand",
+          "model",
+          "barcode",
+          "variant",
+          "size",
+          "quantity",
+          "unit",
+          "category",
+          "short_description",
+          "official_domain",
+          "official_product_url",
+          "image_urls",
+        ],
+        properties: {
+          row_id: { type: "string" },
+          title: { type: "string" },
+          brand: { type: ["string", "null"] },
+          model: { type: ["string", "null"] },
+          barcode: { type: ["string", "null"] },
+          variant: { type: ["string", "null"] },
+          size: { type: ["string", "null"] },
+          quantity: { type: ["number", "null"] },
+          unit: { type: ["string", "null"] },
+          category: { type: ["string", "null"] },
+          short_description: { type: ["string", "null"] },
+          official_domain: { type: ["string", "null"] },
+          official_product_url: { type: ["string", "null"] },
+          image_urls: {
+            type: "array",
+            items: { type: "string" },
+          },
+        },
+      },
+    },
+  },
+} as const;
+
+const GOOGLE_FATURA_URUN_KARTI_ISTEMI = [
+  "Fatura görsellerindeki satılabilir ürün kalemlerini çıkar ve her ürün için Google Search (webSearch + imageSearch) ve urlContext kullanarak resmî üretici/marka ürün kartını tek seferde oluştur.",
+  "Toptancı VKN/TCKN, ETTN, fatura numarası, iskonto, birim alış fiyatı ve satır tutarı gibi ticari/mali bilgileri kesinlikle yok say ve çıktıda yer verme.",
+  "Trendyol, Hepsiburada, N11, Amazon, Çiçeksepeti, PttAVM, Akakçe, Cimri, Epey, Sahibinden gibi pazaryeri veya aracı siteleri kesinlikle kullanma; yalnızca resmî üretici/marka alan adını (official_domain), resmî ürün sayfasını (official_product_url) ve resmî ürün görsellerini (image_urls) döndür.",
+  "Doğrulanmış bir resmî ürün sayfası bulunamazsa tahmin yürütme; official_domain ve official_product_url alanlarını null, image_urls alanını [] döndür.",
+].join("\n");
+
+function metinVeyaNull(deger: unknown): string | null {
+  if (typeof deger !== "string") return null;
+  const temiz = deger.trim();
+  return temiz ? temiz : null;
+}
+
+function temizMetinVeyaNull(deger: unknown): string | null {
+  const ham = metinVeyaNull(deger);
+  if (!ham) return null;
+  const temiz = kural32MetinTemizle(ham);
+  return temiz ? temiz : null;
+}
+
+function googleJsonMetniniCoz(ham: string): Record<string, unknown> | null {
+  const temiz = ham.trim();
+  if (!temiz) return null;
+  const parcalar = temiz
+    .split("```")
+    .map((parca) => parca.replace(/^json\s*/i, "").trim())
+    .filter(Boolean);
+  for (const aday of [temiz, ...parcalar]) {
+    try {
+      const cozulen = JSON.parse(aday);
+      if (cozulen && typeof cozulen === "object" && !Array.isArray(cozulen)) {
+        return cozulen as Record<string, unknown>;
+      }
+    } catch {
+      continue;
+    }
+  }
+  return null;
+}
+
+function googleGroundingBilgileriniCikar(aday: Record<string, unknown>): {
+  webUrller: string[];
+  gorselUrller: string[];
+} {
+  const webUrller: string[] = [];
+  const gorselUrller: string[] = [];
+  const meta = aday.groundingMetadata;
+  if (!meta || typeof meta !== "object") return { webUrller, gorselUrller };
+  const chunks = (meta as { groundingChunks?: unknown }).groundingChunks;
+  if (!Array.isArray(chunks)) return { webUrller, gorselUrller };
+  for (const chunk of chunks) {
+    if (!chunk || typeof chunk !== "object") continue;
+    const web = (chunk as { web?: unknown }).web;
+    if (web && typeof web === "object") {
+      const uri = metinVeyaNull((web as { uri?: unknown }).uri);
+      if (uri && resmiAlanAdiUygunMu(uri)) {
+        if (!webUrller.includes(uri)) webUrller.push(uri);
+        if (/\.(?:png|jpe?g|webp|avif|gif)(?:\?.*)?$/i.test(uri) && !gorselUrller.includes(uri)) {
+          gorselUrller.push(uri);
+        }
+      }
+    }
+    const img = (chunk as { image?: unknown }).image;
+    if (img && typeof img === "object") {
+      const uri = metinVeyaNull((img as { uri?: unknown }).uri);
+      if (uri && resmiAlanAdiUygunMu(uri) && !gorselUrller.includes(uri)) {
+        gorselUrller.push(uri);
+      }
+    }
+  }
+  return { webUrller, gorselUrller };
+}
+
+function googleFaturaYanitiniCoz(veri: unknown): GoogleFaturaUrunKarti[] {
+  if (!veri || typeof veri !== "object") return [];
+  const adaylar = (veri as { candidates?: unknown }).candidates;
+  if (!Array.isArray(adaylar) || !adaylar.length) return [];
+  const aday = adaylar[0];
+  if (!aday || typeof aday !== "object") return [];
+  const adayKaydi = aday as Record<string, unknown>;
+  const icerik = adayKaydi.content as { parts?: unknown } | undefined;
+  const parcalar = Array.isArray(icerik?.parts) ? icerik.parts : [];
+  const hamMetin = parcalar
+    .filter(
+      (p): p is Record<string, unknown> =>
+        Boolean(
+          p &&
+            typeof p === "object" &&
+            typeof (p as Record<string, unknown>).text === "string" &&
+            (p as Record<string, unknown>).thought !== true,
+        ),
+    )
+    .map((p) => String(p.text))
+    .join("");
+  const cozulmus = googleJsonMetniniCoz(hamMetin);
+  const hamItems = Array.isArray(cozulmus?.items) ? cozulmus.items : [];
+  if (!hamItems.length) return [];
+
+  const { webUrller, gorselUrller } = googleGroundingBilgileriniCikar(adayKaydi);
+  const kartlar: GoogleFaturaUrunKarti[] = [];
+
+  hamItems.forEach((hamItem, sira) => {
+    if (!hamItem || typeof hamItem !== "object" || Array.isArray(hamItem)) return;
+    const temiz = kural32NesneTemizle(hamItem as Record<string, unknown>);
+    const title = temizMetinVeyaNull(temiz.title);
+    if (!title) return;
+
+    const tekSatirFallback = hamItems.length === 1 ? kilitliResmiAlanAdiSec(webUrller) : null;
+    const tespitEdilenAlan =
+      kilitliResmiAlanAdiSec([temiz.official_domain, temiz.official_product_url]) ?? tekSatirFallback;
+
+    let officialProductUrl: string | null = null;
+    if (tespitEdilenAlan) {
+      const adaySayfa = metinVeyaNull(temiz.official_product_url);
+      if (adaySayfa && resmiAlanAdiUygunMu(adaySayfa, tespitEdilenAlan)) {
+        officialProductUrl = adaySayfa;
+      } else {
+        officialProductUrl =
+          webUrller.find((url) => resmiAlanAdiUygunMu(url, tespitEdilenAlan)) ?? null;
+      }
+    }
+
+    const officialDomain = tespitEdilenAlan
+      ? alanAdiCikar(officialProductUrl) || tespitEdilenAlan
+      : null;
+
+    const hamGorseller = Array.isArray(temiz.image_urls) ? temiz.image_urls : [];
+    const imageUrls = tespitEdilenAlan
+      ? [
+          ...new Set(
+            [...hamGorseller, ...gorselUrller]
+              .map((url) => metinVeyaNull(url))
+              .filter(
+                (url): url is string =>
+                  Boolean(
+                    url &&
+                      url.startsWith("https://") &&
+                      !pazaryeriVeyaAraciMi(url) &&
+                      resmiAlanAdiUygunMu(url, tespitEdilenAlan),
+                  ),
+              ),
+          ),
+        ]
+      : [];
+
+    const groundingSources = tespitEdilenAlan
+      ? webUrller.filter((url) => resmiAlanAdiUygunMu(url, tespitEdilenAlan))
+      : [];
+
+    kartlar.push({
+      row_id: metinVeyaNull(temiz.row_id) ?? String(sira + 1),
+      title,
+      brand: temizMetinVeyaNull(temiz.brand),
+      model: temizMetinVeyaNull(temiz.model),
+      barcode: metinVeyaNull(temiz.barcode),
+      variant: temizMetinVeyaNull(temiz.variant),
+      size: temizMetinVeyaNull(temiz.size),
+      quantity:
+        typeof temiz.quantity === "number" && Number.isFinite(temiz.quantity)
+          ? temiz.quantity
+          : null,
+      unit: temizMetinVeyaNull(temiz.unit),
+      category: temizMetinVeyaNull(temiz.category),
+      short_description: temizMetinVeyaNull(temiz.short_description),
+      official_domain: officialDomain,
+      official_product_url: officialProductUrl,
+      image_urls: imageUrls,
+      grounding_sources: groundingSources,
+    });
+  });
+
+  return kartlar;
+}
+
+export async function googleFaturaUrunKartlariUret(
+  fotograflar: string | string[],
+  fetcher: typeof fetch = globalThis.fetch,
+): Promise<GoogleFaturaUrunKarti[]> {
+  const liste = (Array.isArray(fotograflar) ? fotograflar : [fotograflar])
+    .map((deger) => (typeof deger === "string" ? deger.trim() : ""))
+    .filter(Boolean);
+  if (!liste.length) return [];
+
+  const anahtar = geminiPrizAnahtari();
+  if (!anahtar) throw new Error("OKUYUCU_HAZIR_DEGIL");
+
+  const parcalar = [
+    { text: GOOGLE_FATURA_URUN_KARTI_ISTEMI },
+    ...liste.map(dataUrlToGeminiPart),
+  ];
+
+  let yanit: Response;
+  try {
+    yanit = await fetcher(
+      `${GEMINI_PRIZ_ADRESI}?key=${encodeURIComponent(anahtar)}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ role: "user", parts: parcalar }],
+          tools: [
+            { googleSearch: { searchTypes: { webSearch: {}, imageSearch: {} } } },
+            { urlContext: {} },
+          ],
+          generationConfig: {
+            temperature: 0.1,
+            responseMimeType: "application/json",
+            responseJsonSchema: GOOGLE_FATURA_URUN_KARTI_SEMASI,
+          },
+        }),
+        signal: AbortSignal.timeout(faturaPrizZamanSiniri()),
+      },
+    );
+  } catch (hata) {
+    if (hata instanceof Error && ["TimeoutError", "AbortError"].includes(hata.name)) {
+      throw new Error("OKUYUCU_ZAMAN_ASIMI");
+    }
+    throw new Error("OKUYUCU_CEVAP_VERMEDI", { cause: hata });
+  }
+
+  if (!yanit.ok) {
+    throw new Error("OKUYUCU_CEVAP_VERMEDI");
+  }
+
+  const veri = (await yanit.json().catch(() => null)) as Record<string, unknown> | null;
+  return googleFaturaYanitiniCoz(veri);
 }
