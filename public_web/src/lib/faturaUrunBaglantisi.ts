@@ -3,6 +3,12 @@ import { durumGecerliMi, type KartDurumu } from "@/lib/faturaKartDurumu";
 import { normalizeProductMetadata, normalizeProductVariants } from "@/lib/productRichData";
 import { updateRichCoreProduct } from "@/lib/productCoreServer";
 import { gorselHakKayitlariniDerle, type GorselHakDurumu } from "@/lib/faturaGorselHakDenetimi";
+import {
+  alanAdiCikar,
+  kilitliResmiAlanAdiSec,
+  kural32NesneTemizle,
+  pazaryeriVeyaAraciMi,
+} from "@/lib/faturaUrunHazirlama";
 
 const KIMLIK = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -17,6 +23,13 @@ export interface DogrulanmisSatir {
   alisBirimFiyati: number | null;
   varyant: string;
   beden: string;
+  marka?: string;
+  model?: string;
+  barkod?: string;
+  urunAdi?: string;
+  tedarikci?: string;
+  tedarikciSite?: string;
+  resmiAlanAdi?: string | null;
 }
 
 export async function satiriDogrula(
@@ -34,7 +47,7 @@ export async function satiriDogrula(
 
   const is = await admin
     .from("invoice_jobs")
-    .select("id")
+    .select("id,supplier_name,supplier_site")
     .eq("id", islemKimligi)
     .eq("store_id", storeId)
     .maybeSingle();
@@ -42,7 +55,7 @@ export async function satiriDogrula(
 
   const satir = await admin
     .from("invoice_job_lines")
-    .select("id,outcome,product_id,catalog_snapshot,unit_price,variant_name,size_text")
+    .select("id,outcome,product_id,catalog_snapshot,unit_price,variant_name,size_text,product_name,brand,model,barcode")
     .eq("job_id", islemKimligi)
     .eq("line_index", sira)
     .maybeSingle();
@@ -69,8 +82,35 @@ export async function satiriDogrula(
 
   if (gorseller.error) return null;
 
+  const hamKatalog =
+    satir.data.catalog_snapshot && typeof satir.data.catalog_snapshot === "object"
+      ? kural32NesneTemizle(satir.data.catalog_snapshot as Record<string, unknown>)
+      : null;
+  if (hamKatalog && typeof hamKatalog.kaynak === "string" && hamKatalog.kaynak.trim() && pazaryeriVeyaAraciMi(hamKatalog.kaynak)) {
+    hamKatalog.kaynak = "";
+  }
+  const isVerisi = is.data as Record<string, unknown>;
+  const satirVerisi = satir.data as Record<string, unknown>;
+  const tedarikci = String(isVerisi.supplier_name ?? "");
+  const tedarikciSite = typeof isVerisi.supplier_site === "string" ? isVerisi.supplier_site.trim() : "";
+  const marka = String(satirVerisi.brand ?? "");
+  const markaAnahtari = harfKatla(marka);
+  const tedarikciAnahtari = harfKatla(tedarikci);
+  const siteAnahtari = harfKatla(alanAdiCikar(tedarikciSite));
+  const tedarikciMarkaUyumlu =
+    !markaAnahtari ||
+    tedarikciAnahtari.includes(markaAnahtari) ||
+    markaAnahtari.includes(tedarikciAnahtari) ||
+    siteAnahtari.includes(markaAnahtari.replace(/\s+/g, ""));
+  const resmiAlanAdi = kilitliResmiAlanAdiSec([
+    hamKatalog?.official_domain,
+    hamKatalog?.resmiAlanAdi,
+    hamKatalog?.kaynak,
+    tedarikciMarkaUyumlu ? tedarikciSite : null,
+  ]);
+
   return {
-    katalog: satir.data.catalog_snapshot && typeof satir.data.catalog_snapshot === "object" ? satir.data.catalog_snapshot : null,
+    katalog: hamKatalog,
     alisBirimFiyati: typeof satir.data.unit_price === "number" ? satir.data.unit_price : null,
     satirId: String(satir.data.id),
     sonuc: durumGecerliMi(satir.data.outcome) ? satir.data.outcome : "eksik",
@@ -79,6 +119,13 @@ export async function satiriDogrula(
     gorselHakDurumlari: hakDurumlari,
     varyant: String(satir.data.variant_name ?? ""),
     beden: String(satir.data.size_text ?? ""),
+    marka,
+    model: String(satirVerisi.model ?? ""),
+    barkod: String(satirVerisi.barcode ?? ""),
+    urunAdi: String(satirVerisi.product_name ?? ""),
+    tedarikci,
+    tedarikciSite,
+    resmiAlanAdi,
   };
 }
 
@@ -449,6 +496,9 @@ export async function faturaUrununuKaydet(
   admin: SupabaseClient,
   args: { storeId: string; editToken: string; satirId: string; girdi: Record<string, unknown>; kanit: Record<string, unknown>; alisFiyati: number | null },
 ): Promise<FaturaKayitSonucu> {
+  const guvenliGirdi = kural32NesneTemizle(args.girdi);
+  const guvenliKanit = kural32NesneTemizle(args.kanit);
+  const guvenliArgs = { ...args, girdi: guvenliGirdi, kanit: guvenliKanit };
   let satirDurumu = await admin
     .from("invoice_job_lines")
     .select("product_id,merge_candidate_product_id,merge_decision")
@@ -464,24 +514,24 @@ export async function faturaUrununuKaydet(
   }
   const bagliSatir = Boolean(satirDurumu.data?.product_id);
   if (!satirDurumu.error && !bagliSatir) {
-    const mevcut = await ayniUrunuBul(admin, args.storeId, args.girdi);
+    const mevcut = await ayniUrunuBul(admin, args.storeId, guvenliGirdi);
     if (mevcut) {
-      const baglanan = await mevcudaBagla(admin, args, mevcut);
+      const baglanan = await mevcudaBagla(admin, guvenliArgs, mevcut);
       if (baglanan) return baglanan;
     }
 
     // Barkodsuz satır: ad yazımı farklıysa aynı ürün olup olmadığı makinece
     // kanıtlanamaz. Kart sessizce açılmaz; aday gösterilip esnafa sorulur.
-    if (!String(args.girdi.barcode ?? "").trim()) {
+    if (!String(guvenliGirdi.barcode ?? "").trim()) {
       const karar = String(satirDurumu.data?.merge_decision ?? "");
       if (karar !== "ayri") {
         const kayitliAdayId = String(satirDurumu.data?.merge_candidate_product_id ?? "");
         const aday = kayitliAdayId
           ? await urunKimligiyleOku(admin, args.storeId, kayitliAdayId)
-          : await ayniUrunAdayiBul(admin, args.storeId, args.girdi);
+          : await ayniUrunAdayiBul(admin, args.storeId, guvenliGirdi);
         if (aday) {
           if (karar === "birlestir") {
-            const baglanan = await mevcudaBagla(admin, args, aday);
+            const baglanan = await mevcudaBagla(admin, guvenliArgs, aday);
             if (baglanan) return baglanan;
           } else if (String(aday.id) !== kayitliAdayId) {
             await admin
@@ -501,8 +551,8 @@ export async function faturaUrununuKaydet(
     p_store_id: args.storeId,
     p_edit_token: args.editToken,
     p_line_id: args.satirId,
-    p_product: args.girdi,
-    p_evidence: args.kanit,
+    p_product: guvenliGirdi,
+    p_evidence: guvenliKanit,
     p_purchase_price: args.alisFiyati,
   });
   if (error || data?.success !== true || !data.id) throw new Error(error?.message || "FATURA_KAYDI_TAMAMLANAMADI");

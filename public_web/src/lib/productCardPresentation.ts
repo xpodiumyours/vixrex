@@ -10,6 +10,7 @@ import {
   type ProductVariant,
 } from "./productRichData";
 import { kategoriBirlestir } from "./kategoriBirlesim";
+import { normalizeGoogleGtin } from "./productStructuredData";
 
 export interface ProductQuickFact {
   key: string;
@@ -103,6 +104,70 @@ function serviceFacts(metadata: ReturnType<typeof normalizeProductMetadata>, det
   return facts;
 }
 
+const KURAL32_HASSAS_ANAHTARLAR = new Set([
+  "vergino",
+  "vergi_no",
+  "verginumarasi",
+  "vkn",
+  "tckn",
+  "taxid",
+  "tax_id",
+  "tedarikcivergino",
+  "suppliertaxid",
+  "supplier_tax_id",
+  "alisfiyati",
+  "alis_fiyati",
+  "alisbirimfiyat",
+  "alisbirimfiyati",
+  "alistutari",
+  "faturaalisfiyati",
+  "purchaseprice",
+  "purchase_price",
+  "purchasepriceamount",
+  "purchase_price_amount",
+  "toptanfiyat",
+  "toptan_fiyat",
+  "toptanalisfiyati",
+  "wholesaleprice",
+  "wholesale_price",
+  "tedarikcifiyati",
+]);
+
+const KURAL32_HASSAS_ETIKET_DESENLERI = [
+  "vkn",
+  "vergi no",
+  "vergi numara",
+  "alış fiyat",
+  "alis fiyat",
+  "toptan fiyat",
+  "toptan alış",
+  "fatura alış",
+  "fatura alis",
+  "purchase price",
+  "wholesale price",
+  "tax id",
+];
+
+function kural32HassasAlanMi(
+  key: string,
+  label: string | undefined,
+  hasDefinition: boolean,
+): boolean {
+  const temizAnahtar = key.toLocaleLowerCase("tr-TR").replace(/[^a-z0-9_]/g, "");
+  const altCizgisiz = temizAnahtar.replace(/_/g, "");
+  if (
+    KURAL32_HASSAS_ANAHTARLAR.has(temizAnahtar) ||
+    KURAL32_HASSAS_ANAHTARLAR.has(altCizgisiz)
+  ) {
+    return true;
+  }
+  if (!hasDefinition && altCizgisiz === "unitprice") {
+    return true;
+  }
+  const temizEtiket = String(label || "").toLocaleLowerCase("tr-TR");
+  return KURAL32_HASSAS_ETIKET_DESENLERI.some((desen) => temizEtiket.includes(desen));
+}
+
 function metadataAttributeFacts(args: {
   metadata: ReturnType<typeof normalizeProductMetadata>;
   surface: "card" | "quick" | "detail";
@@ -121,6 +186,9 @@ function metadataAttributeFacts(args: {
       continue;
     }
     const definition = definitionByKey.get(attribute.key);
+    if (kural32HassasAlanMi(attribute.key, attribute.label || definition?.label, Boolean(definition))) {
+      continue;
+    }
     if (!definition && !args.metadata.lunaInvoice) continue;
     const rawValue = formatAttributeValue(attribute.value, attribute.unit);
     const okunur = Array.isArray(attribute.value)
@@ -342,13 +410,61 @@ export function productVariantLabel(value: unknown, templateKey?: string | null)
   return count > 1 ? `${count} seçenek` : null;
 }
 
+export interface ProductCardOfficialSource {
+  url: string;
+  alanAdi: string;
+}
+
 export interface ProductCardFacts {
   marka: string | null;
   ozellikler: ProductQuickFact[];
+  gtin: string | null;
+  resmiKaynak: ProductCardOfficialSource | null;
+  resmiKatalogRozeti: string | null;
+}
+
+function resmiKaynakDogrulanmisMi(verificationStatus?: string): boolean {
+  const etiket = String(verificationStatus || "")
+    .replace(/^[✓?✗⚠\s]+/, "")
+    .trim()
+    .toLocaleLowerCase("tr-TR");
+  return [
+    "doğrulandı",
+    "dogrulandi",
+    "doğrulanmış",
+    "dogrulanmis",
+    "verified",
+    "kanitli",
+    "kanıtlı",
+  ].includes(etiket);
+}
+
+function resmiKaynakBilgisi(
+  metadata: ReturnType<typeof normalizeProductMetadata>,
+): ProductCardOfficialSource | null {
+  if (metadata.itemKind === "service") return null;
+  const source = metadata.manufacturerSource;
+  if (!source?.url || !resmiKaynakDogrulanmisMi(source.verificationStatus)) return null;
+  try {
+    const parsed = new URL(source.url);
+    if (
+      (parsed.protocol !== "http:" && parsed.protocol !== "https:") ||
+      parsed.username ||
+      parsed.password
+    ) {
+      return null;
+    }
+    const alanAdi = parsed.hostname.toLocaleLowerCase("tr-TR").replace(/^www\./, "");
+    if (!alanAdi) return null;
+    return { url: parsed.toString(), alanAdi };
+  } catch {
+    return null;
+  }
 }
 
 export function buildProductCardFacts(args: {
   brand?: string | null;
+  barcode?: string | null;
   metadata?: unknown;
   variants?: unknown;
   limit?: number;
@@ -416,7 +532,24 @@ export function buildProductCardFacts(args: {
     return true;
   });
 
-  return { marka, ozellikler: benzersiz.slice(0, limit) };
+  const gtin = metadata.itemKind === "service" ? null : normalizeGoogleGtin(args.barcode) ?? null;
+  const resmiKaynak = resmiKaynakBilgisi(metadata);
+  const resmiKatalogRozeti =
+    resmiKaynak && gtin
+      ? "Resmi Üretici Kataloğu / GS1"
+      : resmiKaynak
+        ? "Resmi Üretici Kataloğu"
+        : gtin
+          ? "GS1 GTIN"
+          : null;
+
+  return {
+    marka,
+    ozellikler: benzersiz.slice(0, limit),
+    gtin,
+    resmiKaynak,
+    resmiKatalogRozeti,
+  };
 }
 
 const TUTAR_BICIMI = new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 2 });
