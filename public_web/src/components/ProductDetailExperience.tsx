@@ -20,6 +20,7 @@ interface ProductDetailExperienceProps {
   instagramUrl?: string | null;
   sourceUrl?: string | null;
   storeAddress?: string | null;
+  isOwner?: boolean;
 }
 
 function isMapsUrl(href: string): boolean {

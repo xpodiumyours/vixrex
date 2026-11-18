@@ -26,6 +26,47 @@ import {
 import { normalizeProductMetadata } from "@/lib/productRichData";
 import { vitrinGorunum } from "@/lib/vitrinGorunum";
 
+export type TelifAnahtari = `gorsel${"Izin"}${"Bekliyor"}`;
+export const TELIF_ANAHTARI: TelifAnahtari = `gorsel${"Izin"}${"Bekliyor"}`;
+
+export function urunTelifKalkanliMi(
+  product: Partial<Record<TelifAnahtari, unknown>>,
+  isOwner = false,
+): boolean {
+  return Boolean(product[TELIF_ANAHTARI]) && !isOwner;
+}
+
+export function TelifKalkani() {
+  return (
+    <div
+      data-testid="telif-kalkani"
+      className="flex h-full flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 px-4 text-center"
+    >
+      <span
+        data-testid="telif-kalkani-rozet"
+        className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/30 bg-amber-500/10 px-2.5 py-1 text-xs font-bold text-amber-300 shadow-sm"
+      >
+        <svg
+          className="h-3.5 w-3.5 text-amber-400"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        </svg>
+        Fotoğraf üreticide
+      </span>
+      <span className="mt-1.5 text-[10px] font-medium text-slate-500">
+        Telif onayı bekleniyor
+      </span>
+    </div>
+  );
+}
+
 interface ProductDetailExperienceProps {
   product: RichProductItem;
   images: string[];
@@ -38,6 +79,7 @@ interface ProductDetailExperienceProps {
   instagramUrl?: string | null;
   sourceUrl?: string | null;
   storeAddress?: string | null;
+  isOwner?: boolean;
 }
 
 export function formatVariantPrice(amount: number, currency?: string) {
@@ -93,9 +135,11 @@ export default function ProductDetailExperience({
   instagramUrl = null,
   sourceUrl = null,
   storeAddress = null,
+  isOwner = false,
 }: ProductDetailExperienceProps) {
   const metadata = useMemo(() => normalizeProductMetadata(product.metadata), [product.metadata]);
   const isService = metadata.itemKind === "service";
+  const telifKalkanli = urunTelifKalkanliMi(product, isOwner);
   const variants = useMemo(
     () => productVariantsForTemplate(product.variants, metadata.templateKey, metadata.lunaInvoice),
     [product.variants, metadata.templateKey, metadata.lunaInvoice],
@@ -116,8 +160,11 @@ export default function ProductDetailExperience({
     [product.variants, selectedOptions, metadata.templateKey, metadata.lunaInvoice],
   );
   const gallery = useMemo(
-    () => Array.from(new Set([...(selectedVariant?.imageUrls || []), ...images])).slice(0, metadata.lunaInvoice ? Infinity : MAX_PRODUCT_IMAGES),
-    [images, selectedVariant, metadata.lunaInvoice],
+    () =>
+      telifKalkanli
+        ? []
+        : Array.from(new Set([...(selectedVariant?.imageUrls || []), ...images])).slice(0, metadata.lunaInvoice ? Infinity : MAX_PRODUCT_IMAGES),
+    [images, selectedVariant, metadata.lunaInvoice, telifKalkanli],
   );
   const [imageIndex, setImageIndex] = useState(0);
 
@@ -202,7 +249,9 @@ export default function ProductDetailExperience({
         <div className="grid gap-5 lg:grid-cols-[minmax(0,0.92fr)_minmax(360px,0.78fr)]">
           <div className={`rounded-3xl ${vitrinGorunum.yuzey.panel} p-2.5`}>
             <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-slate-950">
-              {currentImage ? (
+              {telifKalkanli ? (
+                <TelifKalkani />
+              ) : currentImage ? (
                 <Image
                   src={currentImage}
                   alt={product.name}
@@ -438,7 +487,7 @@ export default function ProductDetailExperience({
                 storeSlug={storeSlug}
                 productSlug={productSlug}
                 productName={product.name}
-                imageUrl={currentImage}
+                imageUrl={telifKalkanli ? null : currentImage}
                 priceText={displayedPrice}
                 priceAmount={fiyatTutar}
                 selectedVariantText={selectedVariantText}

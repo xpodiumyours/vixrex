@@ -70,10 +70,12 @@ class FaturaYayinlaServisi {
       if (hamSatirlar is List) {
         for (final satir in hamSatirlar) {
           if (satir is! Map) continue;
+          final durum = (satir['durum'] ?? '').toString();
           satirlar.add(
             YayinlananSatir(
               id: (satir['id'] ?? '').toString(),
-              yayinda: satir['durum'] == 'yayinda',
+              yayinda: durum == 'yayinda',
+              durum: durum,
               sebep: (satir['sebep'] ?? '').toString(),
             ),
           );
@@ -83,7 +85,11 @@ class FaturaYayinlaServisi {
       if (govde['tamam'] != true ||
           satirlar.length != temizIdler.toSet().length ||
           satirlar.map((satir) => satir.id).toSet().length != satirlar.length ||
-          satirlar.any((satir) => !temizIdler.contains(satir.id))) {
+          satirlar.any(
+            (satir) =>
+                !temizIdler.contains(satir.id) ||
+                !['taslak', 'hazir', 'yayinda'].contains(satir.durum),
+          )) {
         return Result.failure(
           Failure(
             'Sunucu bütün ürünlerin yayın sonucunu vermedi. Tekrar dene.',
@@ -95,6 +101,8 @@ class FaturaYayinlaServisi {
         FaturaYayinlaSonucu(
           yayinda:
               (govde['yayinda'] is num) ? (govde['yayinda'] as num).toInt() : 0,
+          hazir:
+              (govde['hazir'] is num) ? (govde['hazir'] as num).toInt() : 0,
           taslak:
               (govde['taslak'] is num) ? (govde['taslak'] as num).toInt() : 0,
           satirlar: satirlar,
@@ -133,12 +141,14 @@ class FaturaYayinlaServisi {
 /// Yayın isteğinin özeti: kaçı vitrine çıktı, kaçı hangi sebeple taslak kaldı.
 class FaturaYayinlaSonucu {
   final int yayinda;
+  final int hazir;
   final int taslak;
   final List<YayinlananSatir> satirlar;
   final bool tuketiciDogrulandi;
 
   const FaturaYayinlaSonucu({
     required this.yayinda,
+    this.hazir = 0,
     required this.taslak,
     required this.satirlar,
     this.tuketiciDogrulandi = false,
@@ -148,11 +158,13 @@ class FaturaYayinlaSonucu {
 class YayinlananSatir {
   final String id;
   final bool yayinda;
+  final String durum;
   final String sebep;
 
   const YayinlananSatir({
     required this.id,
     required this.yayinda,
+    this.durum = '',
     this.sebep = '',
   });
 }

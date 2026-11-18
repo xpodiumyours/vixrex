@@ -1,7 +1,9 @@
 import { Metadata } from "next";
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabase";
+import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 import {
   getProductImages,
   normalizeExternalUrl,
@@ -182,12 +184,29 @@ const getProductData = (slug: string, productSlug: string) =>
     },
   )();
 
+async function resolveIsOwner(slug: string, storeId: string): Promise<boolean> {
+  const ownerToken = (await cookies()).get(OWNER_SESSION_COOKIE)?.value;
+  const ownerSession = verifyOwnerSession(ownerToken, slug);
+  return Boolean(ownerSession && ownerSession.storeId === storeId);
+}
+
+function maskVariantImages(variants: unknown): unknown {
+  if (!Array.isArray(variants)) return variants;
+  return variants.map((variant) =>
+    variant && typeof variant === "object"
+      ? { ...(variant as Record<string, unknown>), imageUrls: [] }
+      : variant,
+  );
+}
+
 export async function generateMetadata(props: PageProps): Promise<Metadata> {
   const params = await props.params;
   const data = await getProductData(params.slug, params.productSlug);
   if (!data) return { robots: { index: false, follow: false } };
 
   const { store, product, productSlug } = data;
+  const isOwner = await resolveIsOwner(params.slug, store.id);
+  const telifMaskeli = !isOwner && Boolean(product.gorselIzinBekliyor);
   const metadata = normalizeProductMetadata(product.metadata);
   const isService = metadata.itemKind === "service";
 
@@ -200,7 +219,9 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
     product.seoDescription ||
     product.description ||
     `${store.name} vitrindeki ${product.name} ${isService ? "hizmeti" : "ürünü"} için detay ve iletişim bilgileri.`;
-  const image = getProductImages(product)[0] || store.shelf_image_url || store.logo_url || "";
+  const image = telifMaskeli
+    ? store.shelf_image_url || store.logo_url || "/images/vixrex_v_crystal_mascot.webp"
+    : getProductImages(product)[0] || store.shelf_image_url || store.logo_url || "";
   const canonicalPath = `/v/${store.slug}/urun/${productSlug}`;
   const canonicalUrl = buildSiteUrl(canonicalPath);
   const ogImages = image
@@ -236,7 +257,17 @@ export default async function ProductDetailPage(props: PageProps) {
   if (!data) notFound();
 
   const { store, product, productSlug } = data;
-  const metadata = normalizeProductMetadata(product.metadata);
+  const isOwner = await resolveIsOwner(params.slug, store.id);
+  const telifMaskeli = !isOwner && Boolean(product.gorselIzinBekliyor);
+  const maskedProduct: RichProductItem = telifMaskeli
+    ? {
+        ...product,
+        imageUrls: [],
+        imagePath: undefined,
+        variants: maskVariantImages(product.variants),
+      }
+    : product;
+  const metadata = normalizeProductMetadata(maskedProduct.metadata);
   const isService = metadata.itemKind === "service";
   const siteUrl = getSiteUrl();
   const publicUrl = buildSiteUrl(`/v/${store.slug}/urun/${productSlug}`);
@@ -262,9 +293,15 @@ export default async function ProductDetailPage(props: PageProps) {
     return username ? `https://instagram.com/${username}` : null;
   })();
   const sourceUrl = normalizeExternalUrl(product.sourcePermalink);
-  const productImages = getProductImages(product);
+  const productImages = telifMaskeli ? [] : getProductImages(maskedProduct);
   const fallbackImage = store.shelf_image_url || store.logo_url || "";
-  const images = productImages.length > 0 ? productImages : fallbackImage ? [fallbackImage] : [];
+  const images = telifMaskeli
+    ? []
+    : productImages.length > 0
+      ? productImages
+      : fallbackImage
+        ? [fallbackImage]
+        : [];
   const productDescription =
     product.description ||
     store.description ||
@@ -302,7 +339,7 @@ export default async function ProductDetailPage(props: PageProps) {
           : undefined,
       }
     : buildPhysicalProductStructuredData({
-        product,
+        product: maskedProduct,
         productUrl: publicUrl,
         storeName: store.name,
         description: productDescription,
@@ -337,7 +374,7 @@ export default async function ProductDetailPage(props: PageProps) {
         dangerouslySetInnerHTML={{ __html: safeJsonLdHtml(breadcrumbJsonLd) }}
       />
       <ProductDetailExperience
-        product={product}
+        product={maskedProduct}
         images={images}
         storeName={store.name}
         storeSlug={store.slug}
@@ -348,6 +385,7 @@ export default async function ProductDetailPage(props: PageProps) {
         instagramUrl={instagramUrl}
         sourceUrl={sourceUrl}
         storeAddress={store.address || null}
+        isOwner={isOwner}
       />
 
       <VitrinCartDock

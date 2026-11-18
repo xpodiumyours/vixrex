@@ -101,7 +101,7 @@ class FaturaUrunKaydiServisi {
               (satir) =>
                   satir.sira < baslangic ||
                   satir.sira >= baslangic + parca.length ||
-                  !['taslak', 'yayinda', 'atlandi'].contains(satir.durum) ||
+                  !['taslak', 'hazir', 'yayinda', 'atlandi'].contains(satir.durum) ||
                   (satir.durum != 'atlandi' &&
                       (satir.id == null || satir.id!.trim().isEmpty)),
             )) {
