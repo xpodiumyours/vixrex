@@ -101,8 +101,7 @@ class FaturaYayinlaServisi {
         FaturaYayinlaSonucu(
           yayinda:
               (govde['yayinda'] is num) ? (govde['yayinda'] as num).toInt() : 0,
-          hazir:
-              (govde['hazir'] is num) ? (govde['hazir'] as num).toInt() : 0,
+          hazir: (govde['hazir'] is num) ? (govde['hazir'] as num).toInt() : 0,
           taslak:
               (govde['taslak'] is num) ? (govde['taslak'] as num).toInt() : 0,
           satirlar: satirlar,
