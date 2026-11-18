@@ -127,7 +127,8 @@ describe("sunucuda kalıcı görünmez fatura taslağı", () => {
     expect(c.errorCode()).toBeNull();
     const second = await faturaTaslakYanitiniHazirla(c.admin, "store", "demo", structuredClone(c.kayit));
     expect(second).toMatchObject({ hazirlaniyor: false, otomatikTaslakRaporu: { bekleyen: 0, kaydedildi: 4 } });
-    expect(c.errorCode()).toBe("FATURA_TASLAKLARI_EKSIK");
+    expect(c.errorCode()).toBeNull();
+    expect(second.ozetSatiri).toContain("hata: yok");
     expect(m.save).toHaveBeenCalledTimes(4);
     saat.mockRestore();
   });
@@ -137,6 +138,7 @@ describe("sunucuda kalıcı görünmez fatura taslağı", () => {
     const reply = await faturaTaslakYanitiniHazirla(c.admin, "store", "demo", structuredClone(c.kayit));
     expect(reply).toMatchObject({ tamam: true, hazirlaniyor: false, satirlar: [{ urunId: null }], taslakKayitUyarisi: "Kayıt başarısız." });
     expect(c.errorCode()).toBe("FATURA_TASLAKLARI_EKSIK");
+    expect(reply.ozetSatiri).toContain("hata: FATURA_TASLAKLARI_EKSIK");
   });
 
   it("fotoğraf aktarım hatasını kaydedilmiş taslağı silmeden sonraki açılışta da gösterir", async () => {
@@ -146,7 +148,22 @@ describe("sunucuda kalıcı görünmez fatura taslağı", () => {
     const reopened = await faturaTaslakYanitiniHazirla(c.admin, "store", "demo", structuredClone(c.kayit));
     expect(m.save).toHaveBeenCalledTimes(1);
     expect(reopened.taslakKayitUyarisi).toContain("fotoğraf");
-    expect(c.errorCode()).toBe("FATURA_TASLAKLARI_EKSIK");
+    expect(c.errorCode()).toBeNull();
+    expect(reopened.ozetSatiri).toContain("hata: yok");
+  });
+
+  it("görselsiz ama eksiksiz kaydedilen taslaklarda error_code null olur, taslakKayitUyarisi korunur", async () => {
+    const c = client();
+    m.media.mockResolvedValue({ urunGorselleri: [], gorselDurumu: "gorsel-yok", gorselKaynaklari: [] });
+    const reply = await faturaTaslakYanitiniHazirla(c.admin, "store", "demo", structuredClone(c.kayit));
+    expect(reply).toMatchObject({
+      tamam: true,
+      hazirlaniyor: false,
+      otomatikTaslakRaporu: { kaydedildi: 1, gorselsiz: 1 },
+    });
+    expect(reply.taslakKayitUyarisi).toContain("1 kart görselsiz kaydedildi.");
+    expect(c.errorCode()).toBeNull();
+    expect(reply.ozetSatiri).toContain("hata: yok");
   });
 
   it("görsel aktarımı başarısız olsa da kalan satırları kaydeder", async () => {

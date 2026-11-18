@@ -44,7 +44,10 @@ describe("depodaki OpenRouter preset tanımı ↔ Vixrex taşıma sözleşmesi",
     const govde = kartPresetIstekGovdesi(ilkSonuc, "yeni");
     expect(govde.model).toBe(URUN_KART_PRESET_YENI);
     expect(govde.stream).toBe(true);
-    expect(govde).not.toHaveProperty("tools");
+    expect(govde.tools).toEqual([
+      { type: "openrouter:web_search", parameters: { max_results: 8, max_uses: 35, max_total_results: 120 } },
+      { type: "openrouter:web_fetch", parameters: { engine: "firecrawl", max_uses: 35 } },
+    ]);
     const metin = (govde.messages as Array<{content: string}>)[0].content;
     const veri = JSON.parse(metin.slice(metin.lastIndexOf("\n") + 1)) as {
       groups: Array<{brand: string; rows: Array<Record<string, unknown>>}>;
@@ -109,7 +112,10 @@ describe("depodaki OpenRouter preset tanımı ↔ Vixrex taşıma sözleşmesi",
     expect(istek.response_format).toEqual(kart.response_format);
     expect(istek).not.toHaveProperty("provider");
     expect(istek).not.toHaveProperty("system");
-    expect(istek).not.toHaveProperty("tools");
+    expect(istek.tools).toEqual([
+      { type: "openrouter:web_search", parameters: { max_results: 8, max_uses: 35, max_total_results: 120 } },
+      { type: "openrouter:web_fetch", parameters: { engine: "firecrawl", max_uses: 35 } },
+    ]);
     expect(sistem(kart)).toContain("image_url");
     expect(sistem(kart)).toContain("source_url");
     expect(sistem(kart)).toContain("web_fetch");

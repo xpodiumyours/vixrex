@@ -17,7 +17,7 @@ import {
 export const VARSAYILAN_PRIZ_ADRESI = "https://openrouter.ai/api/v1/chat/completions";
 
 function geminiFaturaModeli(): string {
-  return (process.env.GEMINI_FATURA_MODEL || "").trim() || "gemini-2.5-flash";
+  return (process.env.GEMINI_FATURA_MODEL || "").trim() || "gemini-3.8-flash";
 }
 
 function geminiPrizAdresi(): string {
@@ -477,6 +477,9 @@ export async function googleFaturaUrunKartlariUret(
   }
 
   if (!yanit.ok) {
+    const hamHata = typeof yanit.text === "function" ? await yanit.text().catch(() => "") : "";
+    const temizHata = hamHata.replace(/([?&]key=)[^&\s"']+/gi, "$1***").slice(0, 300);
+    console.warn("[faturaPriz] Gemini yanıt hatası:", { status: yanit.status, body: temizHata });
     throw new Error("OKUYUCU_CEVAP_VERMEDI");
   }
 

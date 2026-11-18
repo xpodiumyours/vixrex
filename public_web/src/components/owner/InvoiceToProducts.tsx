@@ -1477,7 +1477,9 @@ export default function InvoiceToProducts({
                   unoptimized
                 />
               ) : (
-                <div className="fatura-kart-gorselsiz">Görsel hazırlanıyor</div>
+                <div className="fatura-kart-gorselsiz">
+                  {yukleniyor || belge?.aramaSuruyor ? "Görsel hazırlanıyor" : "Görsel bulunamadı"}
+                </div>
               )}
 
               {satir.model && <div className="fatura-model">{satir.model}</div>}

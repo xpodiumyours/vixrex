@@ -54,10 +54,19 @@ it("satır yanıtı depodaki görseli taşır", () => {
   expect(kaynak).toContain("yonetilenUrunGorseliMi(url)");
 });
 
-it("kopya hazır değilse kart fotoğraf yerine hazırlanıyor der", () => {
+it("sonuç ekranında görsel yoksa Görsel bulunamadı der", () => {
   const kaynak = fs.readFileSync(
     path.join(__dirname, "..", "src", "components", "owner", "FaturaIslemSonucu.tsx"),
     "utf8",
   );
-  expect(kaynak).toContain("Görsel hazırlanıyor");
+  expect(kaynak).toContain("Görsel bulunamadı");
+  expect(kaynak).not.toContain("Görsel hazırlanıyor");
+});
+
+it("ürün kartı listesinde işlem sürerken hazırlanıyor, bitince bulunamadı der", () => {
+  const kaynak = fs.readFileSync(
+    path.join(__dirname, "..", "src", "components", "owner", "InvoiceToProducts.tsx"),
+    "utf8",
+  );
+  expect(kaynak).toContain('yukleniyor || belge?.aramaSuruyor ? "Görsel hazırlanıyor" : "Görsel bulunamadı"');
 });

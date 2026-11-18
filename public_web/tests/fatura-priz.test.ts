@@ -98,7 +98,7 @@ describe("fatura priz - tak-cikar", () => {
 
     expect(geminiPrizAktifMi()).toBe(true);
     expect(faturaPrizAdresi()).toBe(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSyFakeGeminiKey123",
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=AIzaSyFakeGeminiKey123",
     );
     expect(faturaPrizAnahtari()).toBe("AIzaSyFakeGeminiKey123");
     expect(faturaPrizBasliklari(faturaPrizAnahtari())).toEqual({
@@ -122,7 +122,7 @@ describe("fatura priz - tak-cikar", () => {
     });
   });
 
-  it("GEMINI_FATURA_MODEL ile model esnek secilir, bos degerde gemini-2.5-flash korunur", () => {
+  it("GEMINI_FATURA_MODEL ile model esnek secilir, bos degerde gemini-3.8-flash korunur", () => {
     vi.stubEnv("GOOGLE_API_KEY", "AIzaSyGoogleModelKey");
     vi.stubEnv("GEMINI_FATURA_MODEL", "gemini-2.5-pro");
     expect(faturaPrizAdresi()).toBe(
@@ -131,7 +131,7 @@ describe("fatura priz - tak-cikar", () => {
 
     vi.stubEnv("GEMINI_FATURA_MODEL", "   ");
     expect(faturaPrizAdresi()).toBe(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSyGoogleModelKey",
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=AIzaSyGoogleModelKey",
     );
   });
 
@@ -273,7 +273,7 @@ describe("fatura priz - tak-cikar", () => {
     );
 
     expect(yakalananUrl).toBe(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSyDirectSocketKey",
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=AIzaSyDirectSocketKey",
     );
     expect(yakalananGovde.tools).toEqual([
       { googleSearch: {} },
@@ -332,13 +332,21 @@ describe("fatura priz - tak-cikar", () => {
       googleFaturaUrunKartlariUret("data:image/png;base64,AA==", timeoutFetcher),
     ).rejects.toThrow("OKUYUCU_ZAMAN_ASIMI");
 
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     const http500Fetcher = vi.fn(async () => ({
       ok: false,
       status: 500,
+      text: async () => "Backend error at https://generativelanguage.googleapis.com?key=AIzaSyErrKey",
     })) as unknown as typeof fetch;
     await expect(
       googleFaturaUrunKartlariUret("data:image/png;base64,AA==", http500Fetcher),
     ).rejects.toThrow("OKUYUCU_CEVAP_VERMEDI");
+    expect(warnSpy).toHaveBeenCalledWith(
+      "[faturaPriz] Gemini yanıt hatası:",
+      expect.objectContaining({ status: 500 }),
+    );
+    expect(JSON.stringify(warnSpy.mock.calls)).not.toContain("AIzaSyErrKey");
+    warnSpy.mockRestore();
 
     const badJsonFetcher = vi.fn(async () => ({
       ok: true,
