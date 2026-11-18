@@ -1,11 +1,20 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { DogrulanmisSatir } from "@/lib/faturaUrunBaglantisi";
+import type { HazirUrunGirdisi } from "@/lib/productIntake";
+
+vi.mock("next/navigation", () => ({
+  useSearchParams: () => new URLSearchParams(),
+}));
+
 import {
+  kayitliFaturaKatalogunuUygula,
   resmiUrunSayfasiGroundingIleBul,
   type GroundingAramaGirdisi,
 } from "@/lib/faturaUrunHazirlama";
-import { CatalogProductImage } from "@/app/v/[slug]/ProductCatalog";
+import ProductCatalog, { CatalogProductImage } from "@/app/v/[slug]/ProductCatalog";
 
 describe("Google Grounding ve Telif Kalkanı Sözleşmesi", () => {
   const originalApiKey = process.env.GEMINI_API_KEY;
@@ -315,5 +324,140 @@ describe("Google Grounding ve Telif Kalkanı Sözleşmesi", () => {
       http500Fetcher,
     );
     expect(http500Result).toBeNull();
+  });
+
+  it("kayitliFaturaKatalogunuUygula grounding gorsellerini satir.izinliGorseller kumesine ekler", async () => {
+    const groundingFetcher = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        candidates: [
+          {
+            content: {
+              parts: [
+                {
+                  text: JSON.stringify({
+                    official_domain: "vestel.com.tr",
+                    official_product_url: "https://www.vestel.com.tr/tv",
+                    official_name: "Vestel 55UA9600 Smart TV",
+                    brand: "Vestel",
+                    description: "4K Smart TV",
+                    category: "",
+                    image_urls: ["https://www.vestel.com.tr/media/tv-1.jpg"],
+                  }),
+                },
+              ],
+            },
+            groundingMetadata: {
+              groundingChunks: [
+                { web: { uri: "https://www.vestel.com.tr/tv" } },
+                { image: { uri: "https://www.vestel.com.tr/media/tv-2.webp" } },
+              ],
+            },
+          },
+        ],
+      }),
+    })) as unknown as typeof fetch;
+
+    const girdi: HazirUrunGirdisi = {
+      name: "Vestel TV",
+      description: "",
+      priceText: "",
+      priceAmount: null,
+      categoryId: "",
+      stockStatus: "Stokta",
+      stockQuantity: 1,
+      brand: "Vestel",
+      barcode: null,
+      variants: [],
+      imageUrls: [],
+      metadata: { attributes: [] },
+    };
+
+    const satir: DogrulanmisSatir = {
+      satirId: "satir-1",
+      sonuc: "eksik",
+      urunId: null,
+      izinliGorseller: new Set<string>(),
+      katalog: null,
+      alisBirimFiyati: null,
+      varyant: "",
+      beden: "",
+      urunAdi: "Vestel 55UA9600",
+      marka: "Vestel",
+      resmiAlanAdi: "vestel.com.tr",
+    };
+
+    const hata = await kayitliFaturaKatalogunuUygula({
+      admin: {} as SupabaseClient,
+      storeId: "store-1",
+      editToken: "token-1",
+      girdi,
+      satir,
+      kategoriOnbellegi: new Map(),
+      fetcher: groundingFetcher,
+    });
+
+    expect(hata).toBeNull();
+    expect(satir.izinliGorseller.has("https://www.vestel.com.tr/media/tv-1.jpg")).toBe(true);
+    expect(satir.izinliGorseller.has("https://www.vestel.com.tr/media/tv-2.webp")).toBe(true);
+    expect(girdi.imageUrls).toContain("https://www.vestel.com.tr/media/tv-1.jpg");
+    expect(girdi.imageUrls).toContain("https://www.vestel.com.tr/media/tv-2.webp");
+  });
+
+  it("ProductCatalog tuketiciye isVisible=false urunu gizler, esnafa tum urunleri ve gorselleri gosterir", () => {
+    const products = [
+      {
+        id: "p-hidden",
+        slug: "gizli-urun",
+        name: "Gizli Fatura Ürünü",
+        imageUrls: ["https://cdn.uretici.com/gizli.jpg"],
+        isVisible: false,
+        gorselIzinBekliyor: true,
+        source: "luna_invoice",
+      },
+      {
+        id: "p-visible-shielded",
+        slug: "gorunur-kalkanli",
+        name: "Görünür Kalkanlı Ürün",
+        imageUrls: ["https://cdn.uretici.com/kalkanli.jpg"],
+        isVisible: true,
+        gorselIzinBekliyor: true,
+        source: "luna_invoice",
+      },
+    ];
+
+    const consumerHtml = renderToStaticMarkup(
+      createElement(ProductCatalog, {
+        storeSlug: "ornek-magaza",
+        storeName: "Örnek Mağaza",
+        products,
+        categoryMap: [],
+        isOwner: false,
+        isOwnerMode: false,
+      }),
+    );
+
+    expect(consumerHtml).not.toContain("Gizli Fatura Ürünü");
+    expect(consumerHtml).not.toContain("gizli.jpg");
+    expect(consumerHtml).toContain("Görünür Kalkanlı Ürün");
+    expect(consumerHtml).toContain("Fotoğraf üreticide");
+    expect(consumerHtml).not.toContain("kalkanli.jpg");
+
+    const ownerHtml = renderToStaticMarkup(
+      createElement(ProductCatalog, {
+        storeSlug: "ornek-magaza",
+        storeName: "Örnek Mağaza",
+        products,
+        categoryMap: [],
+        isOwner: true,
+        isOwnerMode: false,
+      }),
+    );
+
+    expect(ownerHtml).toContain("Gizli Fatura Ürünü");
+    expect(ownerHtml).toContain("gizli.jpg");
+    expect(ownerHtml).toContain("Görünür Kalkanlı Ürün");
+    expect(ownerHtml).toContain("kalkanli.jpg");
+    expect(ownerHtml).not.toContain("Fotoğraf üreticide");
   });
 });
