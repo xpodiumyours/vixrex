@@ -22,8 +22,8 @@ export function faturaSatiriniAktar(satir: GoruSatiri, tedarikci: string): Esles
     ? faturaKatalogMetadatasi({ ozellikler: satir.ozellikler, varyant: satir.varyant }).attributes
     : satir.ozellikler;
   const eksikler = [...(satir.eksikler ?? [])];
-  if (!satir.dogrulamaDurumu) eksikler.push("OpenRouter doğrulama durumu bildirmedi.");
-  if (satir.okumaGuveni === null) eksikler.push("OpenRouter okuma güveni bildirmedi.");
+  if (!satir.dogrulamaDurumu) eksikler.push("Doğrulama durumu bildirmedi.");
+  if (satir.okumaGuveni === null) eksikler.push("Okuma güveni bildirmedi.");
   const temizAd = resmiUrunBasliginiTemizle(satir.ad, satir.model);
   const ekler = {
     satirNo: satir.satirNo, uretici: satir.uretici, gramaj: satir.gramaj,
@@ -46,7 +46,7 @@ export function faturaSatiriniAktar(satir: GoruSatiri, tedarikci: string): Esles
     uyari: eksikler.length ? eksikler.join(" · ") : undefined,
     katalog: {
       ...ekler, firma: tedarikci, kaynakFirma: satir.uretici || satir.siteMarka || satir.marka || tedarikci,
-      dayanak: "ad", izinDurumu: "yok",
+      dayanak: "ad", izinDurumu: (satir.siteSayfa ? "bekliyor" : "yok"),
       resmiAd: temizAd, marka: satir.siteMarka || satir.marka,
       aciklama: satir.siteAciklama ?? "", gorseller, gorselAdaylari: gorseller,
       kaynak: satir.siteSayfa ?? "", kategori: satir.siteKategori, ozellikler,

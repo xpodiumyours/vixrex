@@ -56,7 +56,7 @@ describe("gerçek ikinci preset JSON sözleşmesi",()=>{
     const satir = faturaSatiriniAktar(result.sonuc.satirlar[0],"Tedarikçi");
     expect(satir.marka).toBe("X");
     expect(satir.varyant).toBe("Sade");
-    expect(satir.katalog).toMatchObject({marka:"Üreticinin markası",varyant:"175 g tekli paket",gramaj:"175 g",izinDurumu:"yok",gorseller:[]});
+    expect(satir.katalog).toMatchObject({marka:"Üreticinin markası",varyant:"175 g tekli paket",gramaj:"175 g",izinDurumu:"bekliyor",gorseller:[]});
     expect(faturaKatalogMetadatasi(satir.katalog ?? {}).attributes?.map(a=>a.value)).toEqual(expect.arrayContaining(["Sade","175 g tekli paket","175 g"]));
     expect(satirdanFaturaTaslagi(satir)).toMatchObject({brand:"Üreticinin markası",satisFiyati:null,stokOnerisi:3,ownerApproved:false,isVisible:false});
   });
