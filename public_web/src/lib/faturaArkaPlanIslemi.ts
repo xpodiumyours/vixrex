@@ -4,6 +4,7 @@ import {
   faturaPrizAnahtari,
   geminiPrizAktifMi,
   googleFaturaUrunKartlariUret,
+  openRouterPrizAnahtari,
 } from "@/lib/faturaPriz";
 import { faturaSatiriniAktar } from "@/lib/faturaPresetAktarimi";
 import { islemKaydet } from "@/lib/faturaIslemKaydi";
@@ -39,70 +40,75 @@ export async function faturayiArkaPlanaGonder(
   goruntu: string | string[],
 ): Promise<string> {
   if (geminiPrizAktifMi()) {
-    const { data: magaza, error: magazaHatasi } = await admin
-      .from("stores")
-      .select("slug")
-      .eq("id", storeId)
-      .maybeSingle();
-    const magazaSlug = typeof magaza?.slug === "string" ? magaza.slug.trim() : "";
-    if (magazaHatasi || !magazaSlug) {
-      throw new Error("OKUYUCU_ISLEYICI_HAZIR_DEGIL");
+    try {
+      const { data: magaza, error: magazaHatasi } = await admin
+        .from("stores")
+        .select("slug")
+        .eq("id", storeId)
+        .maybeSingle();
+      const magazaSlug = typeof magaza?.slug === "string" ? magaza.slug.trim() : "";
+      if (magazaHatasi || !magazaSlug) {
+        throw new Error("OKUYUCU_ISLEYICI_HAZIR_DEGIL");
+      }
+      const kartlar = await googleFaturaUrunKartlariUret(goruntu);
+      if (!kartlar.length) throw new Error("FOTOGRAFTA_YAZI_YOK");
+      const satirlar = kartlar.map((kart, sira) =>
+        faturaSatiriniAktar(
+          {
+            satirNo: sira + 1,
+            hamSatir: kart.title,
+            model: kart.model ?? "",
+            ad: kart.title,
+            barkod: kart.barcode ?? "",
+            varyant: kart.variant ?? "",
+            beden: kart.size ?? "",
+            marka: kart.brand ?? "",
+            adet: kart.quantity,
+            birim: kart.unit ?? "",
+            birimFiyat: null,
+            tutar: null,
+            okumaGuveni: 1,
+            dogrulamaDurumu: kart.official_product_url ? "Doğrulandı" : "Araştırılamadı",
+            siteGorsel: kart.image_urls[0] ?? "",
+            siteGorseller: kart.image_urls,
+            siteSayfa: kart.official_product_url ?? "",
+            siteKategori: kart.category ?? "",
+            siteAciklama: kart.short_description ?? "",
+            siteMarka: kart.brand ?? "",
+            siteVaryant: kart.variant ?? "",
+            kaynaklar: kart.grounding_sources,
+          },
+          "",
+        ),
+      );
+      const id = await islemKaydet({
+        slug: magazaSlug,
+        parmakIzi,
+        belgeAdedi: kartlar.length,
+        belgeToplami: null,
+        tedarikci: "",
+        tedarikciVergiNo: "",
+        tedarikciAdres: "",
+        tedarikciSite: "",
+        tedarikciIz: null,
+        satirlar,
+        belgeTuru: "fatura",
+        belgeNo: "",
+        belgeTarihi: "",
+        malBedeli: null,
+        kdvTutari: null,
+        indirimTutari: null,
+        odenecekToplam: null,
+        aramaDurumu: { erisimHatasi: false, sonrakiSatir: satirlar.length },
+      });
+      if (!id) throw new Error("OKUYUCU_ISLEYICI_HAZIR_DEGIL");
+      return id;
+    } catch (hata) {
+      if (hata instanceof Error && hata.message === "FOTOGRAFTA_YAZI_YOK") throw hata;
+      console.warn("[faturaArkaPlanIslemi] Google Gemini cagrisi basarisiz, OpenRouter yedek hattina devrediliyor:", hata);
     }
-    const kartlar = await googleFaturaUrunKartlariUret(goruntu);
-    if (!kartlar.length) throw new Error("FOTOGRAFTA_YAZI_YOK");
-    const satirlar = kartlar.map((kart, sira) =>
-      faturaSatiriniAktar(
-        {
-          satirNo: sira + 1,
-          hamSatir: kart.title,
-          model: kart.model ?? "",
-          ad: kart.title,
-          barkod: kart.barcode ?? "",
-          varyant: kart.variant ?? "",
-          beden: kart.size ?? "",
-          marka: kart.brand ?? "",
-          adet: kart.quantity,
-          birim: kart.unit ?? "",
-          birimFiyat: null,
-          tutar: null,
-          okumaGuveni: 1,
-          dogrulamaDurumu: kart.official_product_url ? "Doğrulandı" : "Araştırılamadı",
-          siteGorsel: kart.image_urls[0] ?? "",
-          siteGorseller: kart.image_urls,
-          siteSayfa: kart.official_product_url ?? "",
-          siteKategori: kart.category ?? "",
-          siteAciklama: kart.short_description ?? "",
-          siteMarka: kart.brand ?? "",
-          siteVaryant: kart.variant ?? "",
-          kaynaklar: kart.grounding_sources,
-        },
-        "",
-      ),
-    );
-    const id = await islemKaydet({
-      slug: magazaSlug,
-      parmakIzi,
-      belgeAdedi: kartlar.length,
-      belgeToplami: null,
-      tedarikci: "",
-      tedarikciVergiNo: "",
-      tedarikciAdres: "",
-      tedarikciSite: "",
-      tedarikciIz: null,
-      satirlar,
-      belgeTuru: "fatura",
-      belgeNo: "",
-      belgeTarihi: "",
-      malBedeli: null,
-      kdvTutari: null,
-      indirimTutari: null,
-      odenecekToplam: null,
-      aramaDurumu: { erisimHatasi: false, sonrakiSatir: satirlar.length },
-    });
-    if (!id) throw new Error("OKUYUCU_ISLEYICI_HAZIR_DEGIL");
-    return id;
   }
-  const anahtar = faturaPrizAnahtari();
+  const anahtar = openRouterPrizAnahtari() || faturaPrizAnahtari();
   if (!anahtar) throw new Error("OKUYUCU_HAZIR_DEGIL");
   const body = { ...faturaIstekGovdesi(goruntu), model: OKUMA_PRESET };
   const { data, error } = await admin.rpc("enqueue_invoice_provider_job", {
@@ -162,7 +168,7 @@ export async function arkaPlanFaturaSonucunuAl(
         p_job_id: islemKimligi,
         p_read_result: { ...okuma, presetAkis: islemAkisi },
         p_body: kartPresetIstekGovdesi(okuma, islemAkisi),
-        p_api_key: faturaPrizAnahtari(),
+        p_api_key: openRouterPrizAnahtari() || faturaPrizAnahtari(),
       });
       if (ikinci.error || ikinci.data?.success !== true) throw new Error("KART_ISLEYICI_HAZIR_DEGIL");
       return bekleyenFaturaYaniti(islemKimligi, "kartlaniyor");
@@ -226,16 +232,16 @@ export async function arkaPlanFaturaSonucunuAl(
 
 export function arkaPlanFaturaHatasi(kod: string): string {
   if (kod === "OKUYUCU_ISLEYICI_HAZIR_DEGIL") return "Otomatik fatura işleyicisi şu anda hazır değil. Ürün oluşturulmadı.";
-  if (kod === "OKUYUCU_MODEL_BULUNAMADI") return "OpenRouter modeline şu anda erişilemiyor. Ürün kartları tamamlanmadı.";
-  if (kod === "OKUYUCU_UCRETSIZ_KOTA_DOLDU") return "OpenRouter günlük ücretsiz model sınırına ulaştı. Ürün kartları tamamlanmadı.";
-  if (kod === "OKUYUCU_BAKIYE_BITTI") return "OpenRouter fatura işlemini tamamlayamadı. Hesabın kullanım durumunu kontrol edin.";
+  if (kod === "OKUYUCU_MODEL_BULUNAMADI") return "Fatura okuyucu modeline şu anda erişilemiyor. Ürün kartları tamamlanmadı.";
+  if (kod === "OKUYUCU_UCRETSIZ_KOTA_DOLDU") return "Fatura okuyucu günlük model sınırına ulaştı. Ürün kartları tamamlanmadı.";
+  if (kod === "OKUYUCU_BAKIYE_BITTI") return "Fatura okuyucu fatura işlemini tamamlayamadı. Hesabın kullanım durumunu kontrol edin.";
   if (kod === "FOTOGRAFTA_YAZI_YOK") return "Fotoğraftan ürün satırı alınamadı. Ürün oluşturulmadı.";
   if (kod === "FATURA_KAYDI_EKSIK") return "Gerçek sonuç alındı ancak kaydı henüz tamamlanmadı. Aynı işlemden devam edebilirsin.";
   if (kod === "KART_ISLEYICI_HAZIR_DEGIL") return "Fatura okundu ancak ürün kartı aşaması başlatılamadı. Aynı işlemden devam et.";
   if (kod === "KART_SATIRLARI_ESLESMEDI") return "Kart yanıtındaki ürün kimlikleri faturayla eşleşmedi; yanlış karta bilgi yazılmadı.";
   if (kod === "KART_YANITI_COZULEMEDI") return "İkinci preset JSON yanıtı doğrulanamadı; ürün kartı kaydedilmedi.";
   if (kod === "KART_KAPSAMI_EKSIK") return "Faturanın bazı satırları için ürün kartı oluşmadı; hiçbir şey kaydedilmedi. Faturayı aynı fotoğrafla yeniden yükle, kayıtlı cevap yeniden okunur.";
-  return "OpenRouter ürün hazırlamayı tamamlayamadı. Eksik cevap ürün kartı olarak kaydedilmedi.";
+  return "Fatura işleyicisi ürün hazırlamayı tamamlayamadı. Eksik cevap ürün kartı olarak kaydedilmedi.";
 }
 
 const TEKRAR_DENENEBILIR = new Set(["KART_YANITI_COZULEMEDI", "KART_SATIRLARI_ESLESMEDI", "KART_KAPSAMI_EKSIK"]);
