@@ -7,9 +7,27 @@ function geminiPrizAnahtari(): string {
   return (process.env.GEMINI_API_KEY || "").trim() || (process.env.GOOGLE_API_KEY || "").trim();
 }
 
-export function faturaPrizAdresi(): string {
+function openRouterPrizAnahtari(): string {
+  return (process.env.FATURA_PRIZ_API_KEY || "").trim() || (process.env.OPENROUTER_API_KEY || "").trim();
+}
+
+export function geminiPrizAktifMi(): boolean {
   const geminiKey = geminiPrizAnahtari();
-  if (geminiKey) return `${GEMINI_PRIZ_ADRESI}?key=${geminiKey}`;
+  if (!geminiKey) return false;
+  const acikAdres = (process.env.FATURA_PRIZ_URL || "").trim();
+  if (acikAdres.includes("generativelanguage.googleapis.com")) return true;
+  const orKey = openRouterPrizAnahtari();
+  return !orKey;
+}
+
+export function faturaPrizAdresi(): string {
+  if (geminiPrizAktifMi()) {
+    const acikAdres = (process.env.FATURA_PRIZ_URL || "").trim();
+    if (acikAdres.includes("generativelanguage.googleapis.com")) {
+      return acikAdres.includes("?key=") ? acikAdres : `${acikAdres}?key=${geminiPrizAnahtari()}`;
+    }
+    return `${GEMINI_PRIZ_ADRESI}?key=${geminiPrizAnahtari()}`;
+  }
   const acikAdres = (process.env.FATURA_PRIZ_URL || "").trim();
   if (acikAdres) return acikAdres;
   const temelAdres = (process.env.OPENROUTER_BASE_URL || "").trim().replace(/\/+$/, "");
@@ -20,9 +38,12 @@ export function faturaPrizAdresi(): string {
 }
 
 export function faturaPrizAnahtari(): string {
-  const geminiKey = geminiPrizAnahtari();
-  if (geminiKey) return geminiKey;
-  return (process.env.FATURA_PRIZ_API_KEY || "").trim() || (process.env.OPENROUTER_API_KEY || "").trim();
+  if (geminiPrizAktifMi()) {
+    return geminiPrizAnahtari();
+  }
+  const orKey = openRouterPrizAnahtari();
+  if (orKey) return orKey;
+  return geminiPrizAnahtari();
 }
 
 export function faturaOkumaPresetReferansi(): string {
@@ -36,7 +57,7 @@ export function faturaPrizZamanSiniri(): number {
 }
 
 export function faturaPrizBasliklari(anahtar: string): Record<string, string> {
-  if (geminiPrizAnahtari()) {
+  if (geminiPrizAktifMi()) {
     return { "Content-Type": "application/json" };
   }
   return {
@@ -79,7 +100,7 @@ function mesajParcalarListesi(icerik: unknown): Array<Record<string, unknown>> {
   return icerik.map(icerikParcasiniCevir).filter((p): p is Record<string, unknown> => p !== null);
 }
 
-function geminiGovdesineCevir(govde: Record<string, unknown>): Record<string, unknown> {
+export function geminiGovdesineCevir(govde: Record<string, unknown>): Record<string, unknown> {
   if (Array.isArray(govde.contents) || !Array.isArray(govde.messages)) return govde;
   const contents: Array<{ role: string; parts: Array<Record<string, unknown>> }> = [];
   const systemParts: Array<Record<string, unknown>> = [];
@@ -96,9 +117,19 @@ function geminiGovdesineCevir(govde: Record<string, unknown>): Record<string, un
   }
   const sonuc: Record<string, unknown> = { contents };
   if (systemParts.length) sonuc.systemInstruction = { parts: systemParts };
-  const rf = govde.response_format;
-  if (rf && typeof rf === "object" && ["json_object", "json_schema"].includes(String((rf as Record<string, unknown>).type))) {
-    sonuc.generationConfig = { responseMimeType: "application/json" };
+  const rf = govde.response_format as Record<string, unknown> | undefined;
+  if (rf && typeof rf === "object") {
+    const rfType = String(rf.type ?? "");
+    if (rfType === "json_schema") {
+      const jsonSchemaObj = rf.json_schema as Record<string, unknown> | undefined;
+      const sema = jsonSchemaObj && typeof jsonSchemaObj === "object" ? jsonSchemaObj.schema : undefined;
+      sonuc.generationConfig = {
+        responseMimeType: "application/json",
+        ...(sema && typeof sema === "object" ? { responseJsonSchema: sema } : {}),
+      };
+    } else if (rfType === "json_object") {
+      sonuc.generationConfig = { responseMimeType: "application/json" };
+    }
   }
   return sonuc;
 }
@@ -145,7 +176,7 @@ async function geminiYanitiniOpenRouterBicimineCevir(yanit: Response): Promise<R
 export async function faturaPrizIstegiGonder(govde: Record<string, unknown>): Promise<Response> {
   const anahtar = faturaPrizAnahtari();
   if (!anahtar) throw new Error("OKUYUCU_HAZIR_DEGIL");
-  const geminiAktif = Boolean(geminiPrizAnahtari());
+  const geminiAktif = geminiPrizAktifMi();
   const istekGovdesi = geminiAktif ? geminiGovdesineCevir(govde) : govde;
   try {
     const yanit = await fetch(faturaPrizAdresi(), {

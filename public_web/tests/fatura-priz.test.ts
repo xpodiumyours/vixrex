@@ -8,6 +8,7 @@ import {
   faturaOkumaPresetReferansi,
   faturaPrizZamanSiniri,
   faturaPrizBasliklari,
+  geminiGovdesineCevir,
 } from "@/lib/faturaPriz";
 
 afterEach(() => {
@@ -74,5 +75,68 @@ describe("fatura priz - tak-cikar", () => {
       "utf8",
     );
     expect(source).not.toContain("openrouter.ai/api/v1/chat/completions");
+  });
+
+  it("hem OPENROUTER_API_KEY hem GEMINI_API_KEY varken OpenRouter onceliklidir ve anahtar cakismasi yapmaz", () => {
+    vi.stubEnv("OPENROUTER_API_KEY", "sk-or-real-openrouter-key");
+    vi.stubEnv("GEMINI_API_KEY", "AIzaSyFakeGeminiKey123");
+
+    expect(faturaPrizAdresi()).toBe(VARSAYILAN_PRIZ_ADRESI);
+    expect(faturaPrizAnahtari()).toBe("sk-or-real-openrouter-key");
+    expect(faturaPrizBasliklari(faturaPrizAnahtari())).toEqual({
+      "Content-Type": "application/json",
+      Authorization: "Bearer sk-or-real-openrouter-key",
+      "HTTP-Referer": "https://vixrex.com",
+      "X-Title": "Vixrex Fatura",
+    });
+  });
+
+  it("sadece GEMINI_API_KEY varken Gemini prizi devreye girer", () => {
+    vi.stubEnv("OPENROUTER_API_KEY", "");
+    vi.stubEnv("FATURA_PRIZ_API_KEY", "");
+    vi.stubEnv("GEMINI_API_KEY", "AIzaSyGeminiOnlyKey");
+
+    expect(faturaPrizAdresi()).toContain("generativelanguage.googleapis.com");
+    expect(faturaPrizAdresi()).toContain("key=AIzaSyGeminiOnlyKey");
+    expect(faturaPrizAnahtari()).toBe("AIzaSyGeminiOnlyKey");
+    expect(faturaPrizBasliklari(faturaPrizAnahtari())).toEqual({
+      "Content-Type": "application/json",
+    });
+  });
+
+  it("FATURA_PRIZ_URL acikca generativelanguage iceriyorsa her iki anahtar varken de Gemini devreye girer", () => {
+    vi.stubEnv("OPENROUTER_API_KEY", "sk-or-real-key");
+    vi.stubEnv("GEMINI_API_KEY", "AIzaSyGoogleKey");
+    vi.stubEnv("FATURA_PRIZ_URL", "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent");
+
+    expect(faturaPrizAdresi()).toContain("generativelanguage.googleapis.com");
+    expect(faturaPrizAnahtari()).toBe("AIzaSyGoogleKey");
+  });
+
+  it("geminiGovdesineCevir json_schema icin responseJsonSchema uretir", () => {
+    const sema = {
+      type: "object",
+      properties: {
+        faturaNo: { type: "string" },
+        kalemler: { type: "array" },
+      },
+      required: ["faturaNo"],
+    };
+    const govde = {
+      messages: [{ role: "user", content: "Faturayi oku" }],
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "fatura_semasi",
+          schema: sema,
+        },
+      },
+    };
+
+    const geminiGovde = geminiGovdesineCevir(govde);
+    expect(geminiGovde.generationConfig).toEqual({
+      responseMimeType: "application/json",
+      responseJsonSchema: sema,
+    });
   });
 });

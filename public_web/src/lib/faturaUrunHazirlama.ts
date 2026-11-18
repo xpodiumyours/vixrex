@@ -428,7 +428,10 @@ export async function resmiUrunSayfasiGroundingIleBul(
               parts: [{ text: groundingIstemiOlustur(temizGirdi, kilitliAlan) }],
             },
           ],
-          tools: [{ googleSearch: { searchTypes: { webSearch: {}, imageSearch: {} } } }],
+          tools: [
+            { googleSearch: { searchTypes: { webSearch: {}, imageSearch: {} } } },
+            { urlContext: {} },
+          ],
           generationConfig: { temperature: 0.1 },
         }),
         signal: AbortSignal.timeout(GROUNDING_ZAMAN_ASIMI_MS),

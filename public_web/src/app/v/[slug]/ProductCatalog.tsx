@@ -230,16 +230,12 @@ export default function ProductCatalog({
   isPreview = false,
 }: ProductCatalogProps) {
   const searchParams = useSearchParams();
-  const [hasOwnerCookie, setHasOwnerCookie] = useState(false);
+  const [hasOwnerCookie] = useState(
+    () => typeof document !== "undefined" && document.cookie.includes("vixrex_owner_session"),
+  );
   const [quickView, setQuickView] = useState<QuickViewSelection | null>(null);
   const [locationProductId, setLocationProductId] = useState<string | null>(null);
   const [cartItems, setCartItems] = useState<VitrinCartItem[]>([]);
-
-  useEffect(() => {
-    if (typeof document !== "undefined" && document.cookie.includes("vixrex_owner_session")) {
-      setHasOwnerCookie(true);
-    }
-  }, []);
 
   const isOwnerSession =
     isOwner ||

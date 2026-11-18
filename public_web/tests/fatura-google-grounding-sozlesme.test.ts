@@ -230,9 +230,9 @@ describe("Google Grounding ve Telif Kalkanı Sözleşmesi", () => {
     expect(yakalananIstekGovdesi).not.toContain("1200 TL");
     expect(yakalananIstekGovdesi).not.toContain("850 TL");
 
-    // 3. Resmi Google Grounding şeması resmi tools formatında iletilmiştir
+    // 3. Resmi Google Grounding ve urlContext araçları resmi tools formatında iletilmiştir
     expect(yakalananIstekGovdesi).toContain(
-      '"tools":[{"googleSearch":{"searchTypes":{"webSearch":{},"imageSearch":{}}}}]',
+      '"tools":[{"googleSearch":{"searchTypes":{"webSearch":{},"imageSearch":{}}}},{"urlContext":{}}]',
     );
   });
 
