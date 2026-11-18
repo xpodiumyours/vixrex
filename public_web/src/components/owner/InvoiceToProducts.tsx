@@ -10,6 +10,7 @@ import { FaturaAkisBasligi } from "./FaturaAkisBasligi";
 import { FaturaIslemSonucu, type FaturaSonucKarti, type YazmaSonucu } from "./FaturaIslemSonucu";
 import "./faturaAkis.css";
 import type { ProductAttributeValue } from "@/lib/productRichData";
+import { SUPPLIER_PERMISSION_UUID_RE, sanitizePermissionText } from "@/lib/supplierPermissionRequest";
 import {
   KART_DURUM_ETIKETI,
   durumBilgisi,
@@ -91,6 +92,7 @@ interface KayitliSahipDurumu {
 }
 
 interface FaturaOkumaSatiri extends FaturaSatiri {
+  satirId?: string;
   sahipDurumu?: KayitliSahipDurumu | null;
   urunId?: string | null;
   birlestirmeAdayi?: { id: string; ad: string } | null;
@@ -135,6 +137,7 @@ interface FaturaOkumaSonucu {
 }
 
 interface SatirDurumu extends FaturaSatiri {
+  satirId?: string;
   satisFiyati: string;
   onayli: boolean;
   kategoriId: string;
@@ -234,6 +237,71 @@ export function faturaSatiriDurumunuHazirla(
   };
 }
 
+export interface IzinTalebiGonderi {
+  slug: string;
+  supplierName: string;
+  brand: string;
+  lineIds: string[];
+  productIds: string[];
+}
+
+export function izinTalebiIstekGovdesi(
+  storeSlug: string,
+  tedarikci: string | null | undefined,
+  satirlar: Array<{
+    satirId?: string;
+    urunId?: string | null;
+    marka?: string;
+    katalog?: { marka?: string } | null;
+  }>,
+): IzinTalebiGonderi | null {
+  const slug = storeSlug.trim();
+  const temizTedarikci = sanitizePermissionText(tedarikci);
+  if (!slug || !temizTedarikci) return null;
+
+  const lineIds = [
+    ...new Set(
+      satirlar
+        .map((satir) => (typeof satir.satirId === "string" ? satir.satirId.trim() : ""))
+        .filter((id) => SUPPLIER_PERMISSION_UUID_RE.test(id)),
+    ),
+  ];
+  const productIds = [
+    ...new Set(
+      satirlar
+        .map((satir) => (typeof satir.urunId === "string" ? satir.urunId.trim() : ""))
+        .filter((id) => SUPPLIER_PERMISSION_UUID_RE.test(id)),
+    ),
+  ];
+  if (lineIds.length === 0 && productIds.length === 0) return null;
+
+  const ilkMarka = satirlar
+    .map((satir) => sanitizePermissionText(satir.katalog?.marka || satir.marka))
+    .find(Boolean);
+
+  return {
+    slug,
+    supplierName: temizTedarikci,
+    brand: ilkMarka || temizTedarikci,
+    lineIds,
+    productIds,
+  };
+}
+
+export function tamIzinBaglantisi(urlYolu: string, origin: string): string {
+  const temiz = urlYolu.trim();
+  if (/^https?:\/\//i.test(temiz)) return temiz;
+  const taban = origin.replace(/\/+$/, "");
+  const yol = temiz.startsWith("/") ? temiz : `/${temiz}`;
+  return `${taban}${yol}`;
+}
+
+export function izinWhatsappPaylasimLinki(tedarikci: string, tamUrl: string): string {
+  const temizTedarikci = sanitizePermissionText(tedarikci) || "Yetkili";
+  const mesaj = `Merhaba, ${temizTedarikci} ürünlerinizi Vixrex vitrinimizde resmi görselleriyle sergileyebilmek için tek tıkla görsel kullanım izni onay bağlantımız: ${tamUrl}`;
+  return `https://wa.me/?text=${encodeURIComponent(mesaj)}`;
+}
+
 
 /** Tek hazırlama yolu: otomatik taslak ve esnaf onayında aynı ürün alanları. */
 function faturaUrunIstekGirdisi(
@@ -322,6 +390,10 @@ export default function InvoiceToProducts({
 
   const [beklemeAsamasi, setBeklemeAsamasi] = useState<"okunuyor" | "kartlaniyor">("okunuyor");
   const [yuklenenBelge, setYuklenenBelge] = useState<{ sayfa: number; bayt: number; pdf: boolean } | null>(null);
+  const [izinYukleniyor, setIzinYukleniyor] = useState(false);
+  const [izinLinki, setIzinLinki] = useState<string | null>(null);
+  const [izinKopyalandi, setIzinKopyalandi] = useState(false);
+  const [izinHata, setIzinHata] = useState<string | null>(null);
   const aktifFaturaBeklemesi = useRef<Promise<FaturaOkumaSonucu> | null>(null);
   const faturaBeklemeIptali = useRef<AbortController | null>(null);
 
@@ -493,6 +565,9 @@ export default function InvoiceToProducts({
 
   async function islemiAc(islemKimligi: string) {
     setHata(null);
+    setIzinLinki(null);
+    setIzinKopyalandi(false);
+    setIzinHata(null);
     setYukleniyor(true);
     try {
       const cevap = await fetch(
@@ -649,6 +724,9 @@ export default function InvoiceToProducts({
   const dosyaSecildi = useCallback(
     async (dosyalar: File[]) => {
       setHata(null);
+      setIzinLinki(null);
+      setIzinKopyalandi(false);
+      setIzinHata(null);
       setOtomatikTaslakRaporu(null);
       if (!dosyalar.length || dosyalar.length > MAKS_SAYFA) {
         setHata("Bir faturaya ait en fazla 3 sayfa fotoğrafı seç.");
@@ -746,6 +824,51 @@ export default function InvoiceToProducts({
       setBaglantiKopyalandi(true);
     } catch {
       setBaglantiKopyalandi(false);
+    }
+  }
+
+  async function ureticiIzniTalepEt() {
+    if (izinYukleniyor || adim === "yaziliyor") return;
+    setIzinHata(null);
+    setIzinKopyalandi(false);
+    const govde = izinTalebiIstekGovdesi(storeSlug, belge?.tedarikci, satirlar);
+    if (!govde) {
+      setIzinHata("İzin talebi için kayıtlı ürün veya fatura satırı bulunamadı.");
+      return;
+    }
+
+    setIzinYukleniyor(true);
+    try {
+      const cevap = await fetch("/api/izin-talebi", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(govde),
+      });
+      const yanit = await cevap.json().catch(() => null);
+      if (!cevap.ok || !yanit || typeof yanit.url !== "string" || !yanit.url.trim()) {
+        throw new Error(
+          yanit && typeof yanit.hata === "string"
+            ? yanit.hata
+            : "İzin talebi bağlantısı oluşturulamadı.",
+        );
+      }
+      const origin = typeof window !== "undefined" ? window.location.origin : "";
+      setIzinLinki(tamIzinBaglantisi(yanit.url, origin));
+    } catch (err) {
+      setIzinHata(err instanceof Error ? err.message : "İzin talebi oluşturulamadı.");
+    } finally {
+      setIzinYukleniyor(false);
+    }
+  }
+
+  async function izinLinkiniKopyala() {
+    if (!izinLinki) return;
+    try {
+      await navigator.clipboard.writeText(izinLinki);
+      setIzinKopyalandi(true);
+    } catch {
+      setIzinKopyalandi(false);
+      setIzinHata("Bağlantı panoya kopyalanamadı.");
     }
   }
 
@@ -964,6 +1087,9 @@ export default function InvoiceToProducts({
     setOtomatikTaslakRaporu(null);
     setYuklenenBelge(null);
     setHata(null);
+    setIzinLinki(null);
+    setIzinKopyalandi(false);
+    setIzinHata(null);
     if (dosyaRef.current) dosyaRef.current.value = "";
   }
 
@@ -1021,7 +1147,7 @@ export default function InvoiceToProducts({
         <p className="fatura-aciklama">Fatura fotoğrafını (1–3 sayfa) veya PDF dosyasını seç. Toplam en fazla 4 MB. Başka belge gerekmiyor.</p>
         <p id="fatura-veri-aktarim-bilgisi" className="fatura-aciklama">
           Fatura görseli veya PDF, ürün satırlarını okumak ve ürün kartı taslakları hazırlamak amacıyla
-          OpenRouter ve işlemde seçilen yapay zekâ model sağlayıcılarına iletilir.
+          Google Gemini yapay zekâ model sağlayıcısına iletilir.
           Belgede tedarikçi veya diğer kişilere ait bilgiler bulunabileceğinden, yalnız bu işlem için gerekli belgeyi yükleyin.
         </p>
         {onClose && (
@@ -1547,7 +1673,7 @@ export default function InvoiceToProducts({
                 </section>
               )}
               {katalog?.dogrulamaDurumu && (
-                <p className="fatura-durum">OpenRouter eşleşmesi: {katalog.dogrulamaDurumu}</p>
+                <p className="fatura-durum">Google eşleşmesi: {katalog.dogrulamaDurumu}</p>
               )}
               </details>
 
@@ -1586,6 +1712,61 @@ export default function InvoiceToProducts({
           );
         })}
       </div>
+
+      {satirlar.length > 0 && Boolean(belge?.tedarikci?.trim()) && (
+        <section className="fatura-araclar grid gap-3" aria-label="Üretici İzin Köprüsü">
+          <div>
+            <h4>Üretici İzin Köprüsü</h4>
+            <p className="fatura-aciklama">
+              Faturadaki ürünler için tek tıkla görsel kullanım izni bağlantısı oluşturun. Alış fiyatı, VKN, iskonto ve ETTN paylaşılmaz.
+            </p>
+          </div>
+          {izinHata && <p className="fatura-hata" role="alert">{izinHata}</p>}
+          {!izinLinki ? (
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                className="fatura-birincil"
+                onClick={() => void ureticiIzniTalepEt()}
+                disabled={yaziliyor || izinYukleniyor}
+              >
+                {izinYukleniyor ? "Bağlantı hazırlanıyor…" : "Üretici İzni Talep Et (WhatsApp / Link)"}
+              </button>
+            </div>
+          ) : (
+            <div className="grid gap-2">
+              <p role="status" className="fatura-aciklama">
+                <strong>Onay Linki Hazır</strong>
+              </p>
+              <input
+                type="text"
+                readOnly
+                aria-label="Üretici onay bağlantısı"
+                value={izinLinki}
+                className="w-full rounded-lg border border-[var(--owner-border)] bg-[var(--owner-bg-soft)] px-3 py-2 text-xs text-[var(--owner-text)]"
+              />
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className="fatura-ikincil"
+                  onClick={() => void izinLinkiniKopyala()}
+                  disabled={yaziliyor}
+                >
+                  {izinKopyalandi ? "Link Kopyalandı" : "Linki Kopyala"}
+                </button>
+                <a
+                  className="fatura-birincil"
+                  href={izinWhatsappPaylasimLinki(belge?.tedarikci ?? "", izinLinki)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  WhatsApp ile Üreticiye İlet
+                </a>
+              </div>
+            </div>
+          )}
+        </section>
+      )}
 
       {belge?.aramaSuruyor && (
         <button

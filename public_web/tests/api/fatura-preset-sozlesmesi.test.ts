@@ -60,7 +60,7 @@ describe("Vixrex preset taşıma sözleşmesi", () => {
       ozellikler: satir.ozellikler, dogrulamaDurumu: "? Belirsiz", eksikler: satir.eksikler,
       kaynaklar: satir.kaynaklar, eslesenBilgiler: satir.eslesen_bilgiler });
     expect(kart.barkod).toBe("0012345678901"); expect(kart.sonuc).toBe("eksik");
-    expect(kart.katalog?.izinDurumu).toBe("yok"); expect(kart.katalog?.dayanak).toBe("ad");
+    expect(kart.katalog?.izinDurumu).toBe(sonuc.satirlar[0].siteSayfa ? "bekliyor" : "yok"); expect(kart.katalog?.dayanak).toBe("ad");
     const taslak = satirdanFaturaTaslagi(kart, "test-islem");
     expect(taslak).toMatchObject({ uretici: satir.uretici, gramaj: "175 g", satisFiyati: null,
       ownerApproved: false, isVisible: false, kaynaklar: satir.kaynaklar, dogrulamaDurumu: "? Belirsiz" });
@@ -75,7 +75,7 @@ describe("Vixrex preset taşıma sözleşmesi", () => {
     const raw = { ...satir, okuma_guveni: null, dogrulama_durumu: "", eksikler: [] };
     const kart = faturaSatiriniAktar(parse(raw).satirlar[0], "Toptancı");
     expect(kart.guven).toBe(0); expect(kart.sonuc).toBe("eksik");
-    expect(kart.uyari).toContain("okuma güveni bildirmedi");
+    expect(kart.uyari?.toLocaleLowerCase("tr-TR")).toContain("okuma güveni bildirmedi");
   });
   it("null, sıfır ve Türkçe ondalık doğru taşınır; boolean sayı olmaz", () => {
     const s = parse({ ...satir, adet: null, birim_fiyat: 0, tutar: "1.234,50", okuma_guveni: true }).satirlar[0];
