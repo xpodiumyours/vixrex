@@ -23,6 +23,7 @@ interface ProductQuickViewProps {
   storeLocationText?: string | null;
   storeMapsUrl?: string | null;
   trackingEnabled?: boolean;
+  isOwner?: boolean;
   onClose: () => void;
 }
 
@@ -73,6 +74,7 @@ function ProductQuickViewSession({
   storeLocationText = null,
   storeMapsUrl = null,
   trackingEnabled = true,
+  isOwner = false,
   onClose,
 }: ProductQuickViewProps) {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -205,6 +207,7 @@ function ProductQuickViewSession({
         whatsappBaseUrl={whatsappBaseUrl}
         storeLocationText={storeLocationText}
         storeMapsUrl={storeMapsUrl}
+        isOwner={isOwner}
         onClose={onClose}
       />
     </div>

@@ -42,6 +42,11 @@ import { prototipKartlari, PrototipAnahtar } from "./prototip/prototipOrtak";
 import PrototipVaryantA from "./prototip/VaryantA";
 import PrototipVaryantB from "./prototip/VaryantB";
 import PrototipVaryantC from "./prototip/VaryantC";
+import {
+  TELIF_ANAHTARI,
+  TelifKalkani,
+  type TelifAnahtari,
+} from "@/components/ProductDetailExperienceBase";
 
 type CatalogProduct = RichProductItem;
 
@@ -123,9 +128,6 @@ function stockTone(stockStatus: string | undefined) {
   };
 }
 
-type TelifAnahtari = `gorsel${"Izin"}${"Bekliyor"}`;
-const TELIF_ANAHTARI: TelifAnahtari = `gorsel${"Izin"}${"Bekliyor"}`;
-
 export function CatalogProductImage(props: {
   src: string | null;
   alt: string;
@@ -156,34 +158,7 @@ export function CatalogProductImage(props: {
   // Genel tüketici vitrininde telif onayı bekleyen üretici görseli kalkan arkasına alınır;
   // esnaf önizlemesinde (isOwner === true) ise tam görsel gösterilir.
   if (telifBekliyor && !isOwner) {
-    return (
-      <div
-        data-testid="telif-kalkani"
-        className="flex h-full flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 px-4 text-center"
-      >
-        <span
-          data-testid="telif-kalkani-rozet"
-          className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/30 bg-amber-500/10 px-2.5 py-1 text-xs font-bold text-amber-300 shadow-sm"
-        >
-          <svg
-            className="h-3.5 w-3.5 text-amber-400"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-          </svg>
-          Fotoğraf üreticide
-        </span>
-        <span className="mt-1.5 text-[10px] font-medium text-slate-500">
-          Telif onayı bekleniyor
-        </span>
-      </div>
-    );
+    return <TelifKalkani />;
   }
 
   if (!imgSrc || hasError) {
@@ -226,25 +201,13 @@ export default function ProductCatalog({
   storeProvinceName = null,
   trackingEnabled = true,
   isOwner = false,
-  isOwnerMode = false,
-  isPreview = false,
 }: ProductCatalogProps) {
   const searchParams = useSearchParams();
-  const [hasOwnerCookie] = useState(
-    () => typeof document !== "undefined" && document.cookie.includes("vixrex_owner_session"),
-  );
   const [quickView, setQuickView] = useState<QuickViewSelection | null>(null);
   const [locationProductId, setLocationProductId] = useState<string | null>(null);
   const [cartItems, setCartItems] = useState<VitrinCartItem[]>([]);
 
-  const isOwnerSession =
-    isOwner ||
-    isOwnerMode ||
-    isPreview ||
-    !trackingEnabled ||
-    hasOwnerCookie ||
-    searchParams?.get("preview") === "true" ||
-    searchParams?.get("owner") === "true";
+  const isOwnerSession = Boolean(isOwner);
 
   useEffect(() => {
     const refresh = () => setCartItems(readVitrinCart(storeSlug).items);
@@ -382,8 +345,8 @@ export default function ProductCatalog({
           const globalIndex = from + index;
           const productSlug = getProductUrlSlug(product, globalIndex);
           const productUrl = `/v/${storeSlug}/urun/${productSlug}`;
-          const image = productImageOnly(product);
           const urunTelifBekliyor = Boolean(product[TELIF_ANAHTARI]);
+          const image = urunTelifBekliyor && !isOwnerSession ? null : productImageOnly(product);
           const quickImages =
             urunTelifBekliyor && !isOwnerSession ? [] : productImagesOnly(product);
           const photoCountBadge = productPhotoCountBadge(quickImages.length);
@@ -856,6 +819,7 @@ export default function ProductCatalog({
           storeLocationText={storeLocationText}
           storeMapsUrl={storeMapsUrl}
           trackingEnabled={trackingEnabled}
+          isOwner={isOwnerSession}
           onClose={() => setQuickView(null)}
         />
       ) : null}

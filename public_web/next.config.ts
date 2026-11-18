@@ -130,6 +130,7 @@ const SHARP_ROUTES = [
   "/api/fatura-eslestirme",
   "/api/fatura-islem",
   "/api/fatura-oku",
+  "/api/fatura-okuyucu-durumu",
   "/api/instagram/import",
   "/api/owner-upload",
   "/api/product-image-upload",

@@ -26,6 +26,7 @@ import {
 } from "@/lib/productRichData";
 import ProductCommercePanel from "@/components/ProductCommercePanel";
 import ManufacturerProductSource from "@/components/ManufacturerProductSource";
+import { TelifKalkani, urunTelifKalkanliMi } from "@/components/ProductDetailExperienceBase";
 
 interface ProductQuickViewProps {
   product: RichProductItem;
@@ -38,6 +39,7 @@ interface ProductQuickViewProps {
   whatsappBaseUrl?: string | null;
   storeLocationText?: string | null;
   storeMapsUrl?: string | null;
+  isOwner?: boolean;
   onClose: () => void;
 }
 
@@ -90,6 +92,7 @@ export default function ProductQuickView({
   whatsappBaseUrl = null,
   storeLocationText = null,
   storeMapsUrl = null,
+  isOwner = false,
   onClose,
 }: ProductQuickViewProps) {
   const metadata = useMemo(
@@ -97,6 +100,7 @@ export default function ProductQuickView({
     [product.metadata],
   );
   const isService = productIsService(product.metadata);
+  const telifKalkanli = urunTelifKalkanliMi(product, isOwner);
   const variants = useMemo(
     () => productVariantsForTemplate(product.variants, metadata.templateKey, metadata.lunaInvoice),
     [product.variants, metadata.templateKey, metadata.lunaInvoice],
@@ -120,9 +124,10 @@ export default function ProductQuickView({
   );
 
   const displayImages = useMemo(() => {
+    if (telifKalkanli) return [];
     const variantImages = selectedVariant?.imageUrls || [];
     return Array.from(new Set([...variantImages, ...images])).slice(0, metadata.lunaInvoice ? Infinity : MAX_PRODUCT_IMAGES);
-  }, [images, selectedVariant, metadata.lunaInvoice]);
+  }, [images, selectedVariant, metadata.lunaInvoice, telifKalkanli]);
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -240,7 +245,9 @@ export default function ProductQuickView({
       >
         <div className="relative bg-slate-950 p-2.5 sm:min-h-[610px]">
           <div className="relative aspect-[4/5] overflow-hidden rounded-[22px] bg-slate-900 sm:h-full sm:min-h-[590px] sm:aspect-auto">
-            {currentImage ? (
+            {telifKalkanli ? (
+              <TelifKalkani />
+            ) : currentImage ? (
               <Image
                 src={currentImage}
                 alt={product.name}
@@ -525,7 +532,7 @@ export default function ProductQuickView({
             storeSlug={storeSlug}
             productSlug={productSlug}
             productName={product.name}
-            imageUrl={currentImage}
+            imageUrl={telifKalkanli ? null : currentImage}
             priceText={displayedPrice}
             priceAmount={fiyatTutar}
             selectedVariantText={selectedVariantText}

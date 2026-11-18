@@ -164,6 +164,15 @@ function bosGorunumDegeri(value: unknown): boolean {
   return value === null || value === undefined || (typeof value === "string" && value.trim() === "");
 }
 
+function maskVariantImages(variants: unknown): unknown {
+  if (!Array.isArray(variants)) return variants;
+  return variants.map((variant) =>
+    variant && typeof variant === "object"
+      ? { ...(variant as Record<string, unknown>), imageUrls: [] }
+      : variant,
+  );
+}
+
 /**
  * Kiralanan demo vitrinde gerçek işletme kimliği DB'ye bilinçli olarak boş
  * yazılır. Ancak sahip ekranı bu yüzden satın alınan/incelemede görülen kaliteli
@@ -283,36 +292,44 @@ async function _buildStoreDataBundle(
 
     const visibleProducts = productRows
       .filter((p: Record<string, unknown>) => (p.name as string)?.trim())
-      .map((p: Record<string, unknown>) => ({
-        id: p.id as string,
-        slug: p.slug as string,
-        name: p.name as string,
-        description: (p.description as string) || undefined,
-        price:
-          (p.price_text as string) ||
-          (p.price_amount != null
-            ? `${p.price_amount} ${p.currency}`
-            : undefined),
-        priceAmount: (p.price_amount as number | null) ?? null,
-        currency: (p.currency as string) || undefined,
-        stockQuantity: (p.stock_quantity as number | null) ?? null,
-        brand: (p.brand as string | null) ?? null,
-        barcode: (p.barcode as string | null) ?? null,
-        variants: p.variants,
-        oldPriceAmount: (p.old_price_amount as number | null) ?? null,
-        badgeTag: (p.badge_tag as string | null) ?? null,
-        fulfillmentRegion: (p.fulfillment_region as string | null) ?? null,
-        imageUrls: Array.isArray(p.image_urls) ? (p.image_urls as string[]) : [],
-        categoryId: (p.category_id as string) || undefined,
-        category:
-          (p.category_id ? categoryMap.get(p.category_id as string) : undefined) ||
-          undefined,
-        stockStatus: (p.stock_status as string) || undefined,
-        isVisible: p.is_visible as boolean,
-        source: p.source_type as string,
-        metadata: p.metadata,
-        gorselIzinBekliyor: gorselIzinDurumlari.get(String(p.id ?? "")) === true,
-      }))
+      .map((p: Record<string, unknown>) => {
+        const telifBekliyor = gorselIzinDurumlari.get(String(p.id ?? "")) === true;
+        const gorselGizli = !ownerCatalog && telifBekliyor;
+        return {
+          id: p.id as string,
+          slug: p.slug as string,
+          name: p.name as string,
+          description: (p.description as string) || undefined,
+          price:
+            (p.price_text as string) ||
+            (p.price_amount != null
+              ? `${p.price_amount} ${p.currency}`
+              : undefined),
+          priceAmount: (p.price_amount as number | null) ?? null,
+          currency: (p.currency as string) || undefined,
+          stockQuantity: (p.stock_quantity as number | null) ?? null,
+          brand: (p.brand as string | null) ?? null,
+          barcode: (p.barcode as string | null) ?? null,
+          variants: gorselGizli ? maskVariantImages(p.variants) : p.variants,
+          oldPriceAmount: (p.old_price_amount as number | null) ?? null,
+          badgeTag: (p.badge_tag as string | null) ?? null,
+          fulfillmentRegion: (p.fulfillment_region as string | null) ?? null,
+          imageUrls: gorselGizli
+            ? []
+            : Array.isArray(p.image_urls)
+              ? (p.image_urls as string[])
+              : [],
+          categoryId: (p.category_id as string) || undefined,
+          category:
+            (p.category_id ? categoryMap.get(p.category_id as string) : undefined) ||
+            undefined,
+          stockStatus: (p.stock_status as string) || undefined,
+          isVisible: p.is_visible as boolean,
+          source: p.source_type as string,
+          metadata: p.metadata,
+          gorselIzinBekliyor: telifBekliyor,
+        };
+      })
       .filter((p: ProductItem) =>
         Boolean(ownerCatalog) ? Boolean(p.name?.trim()) : isPublicCatalogProduct(p),
       );
@@ -595,7 +612,15 @@ export default async function StorePage(props: PageProps) {
       ? await loadOwnerFlowStateForStore(params.slug, ownerSession?.storeId ?? null)
       : null;
 
-  const { store, bookingSettings, articles, visibleProducts, categories } = data;
+  const { store, bookingSettings, articles, visibleProducts: rawVisibleProducts, categories } = data;
+  const isOwner = Boolean(ownerSession && draft?.store_id === ownerSession.storeId);
+  const visibleProducts = isOwner
+    ? rawVisibleProducts
+    : rawVisibleProducts.map((p) =>
+        p.gorselIzinBekliyor
+          ? { ...p, imageUrls: [], variants: maskVariantImages(p.variants) }
+          : p,
+      );
 
   const galleryItems = safeParseJson<GalleryItem>(store.gallery_items);
   const marketplaceLinks = safeParseJson<MarketplaceLinkItem>(store.marketplace_links);
@@ -901,7 +926,7 @@ export default async function StorePage(props: PageProps) {
             storeDistrictName={store.district_name}
             storeProvinceName={store.province_name}
             trackingEnabled={!isOwnerMode}
-            isOwner={Boolean(ownerSession)}
+            isOwner={isOwner}
             isOwnerMode={isOwnerMode}
             products={visibleProducts}
             categoryMap={(categories || []).map((c) => ({ id: c.id, name: c.name }))}
