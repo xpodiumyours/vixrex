@@ -90,6 +90,7 @@ const MESRU_ETICARET_CDN_ALANLARI = new Set([
   "scene7.com",
   "mediacdn.com",
   "fashfed.com",
+  "sercdn.com",
 ]);
 
 const RENK_KISALTMALARI: Record<string, string> = {
