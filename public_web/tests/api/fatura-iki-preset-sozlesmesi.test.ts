@@ -280,15 +280,21 @@ describe("gerçek ikinci preset JSON sözleşmesi",()=>{
     expect(result.sonuc.satirlar[0]).toMatchObject({siteAciklama:"",siteSayfa:"",siteGorseller:[],dogrulamaDurumu:"Bulunamadı",eksikler:["Ürün"]});
     expect(okuma.satirlar[0].siteGorseller).toEqual(["https://example.com/ilk.jpg"]);
   });
-  it("OpenRouter preset ayarlarını değiştirmeden var olan model adresine gönderir",()=>{
+  it("OpenRouter runtime tools override ve katalog arama yönergesi ile var olan model adresine gönderir",()=>{
     const req=kartPresetIstekGovdesi(first);
     expect(req.model).toBe(URUN_KART_PRESET_YENI);
     expect(req.model).toBe("@preset/vixrex-urun-karti-v2");
     const messages=req.messages as Array<{content:string}>;
     expect(messages[0].content).toContain("row_id");
-    expect(req).not.toHaveProperty("tools");
+    expect(messages[0].content).toContain("supplier.website / supplier.name");
+    expect(req.tools).toEqual([
+      { type: "openrouter:web_search", parameters: { max_results: 8, max_uses: 35, max_total_results: 120 } },
+      { type: "openrouter:web_fetch", parameters: { engine: "firecrawl", max_uses: 35 } },
+    ]);
     expect(req).not.toHaveProperty("provider");
     expect(req.response_format).toMatchObject({ type: "json_schema", json_schema: { name: "vixrex_urun_karti", strict: true } });
     expect(req).not.toHaveProperty("system");
+    const mevcutReq=kartPresetIstekGovdesi(first,"mevcut");
+    expect(mevcutReq.tools).toEqual(req.tools);
   });
 });
