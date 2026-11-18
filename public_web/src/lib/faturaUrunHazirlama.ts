@@ -41,6 +41,11 @@ const PAZARYERI_VEYA_ARACI_ALANLAR = new Set([
   "shein.com",
   "etsy.com",
   "walmart.com",
+  "dsmcdn.com",
+  "hepsiburada.net",
+  "n11cdn.com",
+  "media-amazon.com",
+  "ssl-images-amazon.com",
   "bit.ly",
   "tinyurl.com",
   "ty.gl",
@@ -69,6 +74,10 @@ const HASSAS_ALAN_ANAHTARLARI = new Set([
   "vergino",
   "vergi_no",
   "vkn",
+  "tckn",
+  "tc_kimlik_no",
+  "tc_no",
+  "ettn",
   "taxid",
   "tax_id",
   "tedarikcivergino",
@@ -88,7 +97,22 @@ const HASSAS_ALAN_ANAHTARLARI = new Set([
   "toptan_fiyat",
   "wholesaleprice",
   "wholesale_price",
+  "iskonto",
+  "discount",
+  "faturano",
+  "fatura_no",
+  "invoiceno",
+  "invoice_no",
 ]);
+
+export function kural32MetinTemizle(metin: string): string {
+  if (!metin) return "";
+  return metin
+    .replace(/\b\d{10,11}\b/g, "")
+    .replace(/(?:alış|toptan|maliyet|birim\s*fiyat|unit\s*price|purchase\s*price)[^,\n;]*/gi, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
 export function alanAdiCikar(deger: unknown): string {
   if (typeof deger !== "string") return "";
@@ -246,18 +270,45 @@ function groundingUrlListesi(aday: Record<string, unknown>): string[] {
   return urller;
 }
 
-function groundingIstemiOlustur(
+function groundingGorselListesi(aday: Record<string, unknown>, resmiAlan: string): string[] {
+  const meta = aday.groundingMetadata;
+  if (!meta || typeof meta !== "object") return [];
+  const chunks = (meta as { groundingChunks?: unknown }).groundingChunks;
+  if (!Array.isArray(chunks)) return [];
+  const urller: string[] = [];
+  for (const chunk of chunks) {
+    if (!chunk || typeof chunk !== "object") continue;
+    const web = (chunk as { web?: unknown }).web;
+    if (web && typeof web === "object") {
+      const uri = metinDegeri((web as { uri?: unknown }).uri);
+      if (uri && /\.(?:png|jpe?g|webp|avif|gif)(?:\?.*)?$/i.test(uri) && resmiAlanAdiUygunMu(uri, resmiAlan)) {
+        if (!urller.includes(uri)) urller.push(uri);
+      }
+    }
+    const img = (chunk as { image?: unknown }).image;
+    if (img && typeof img === "object") {
+      const uri = metinDegeri((img as { uri?: unknown }).uri);
+      if (uri && resmiAlanAdiUygunMu(uri, resmiAlan)) {
+        if (!urller.includes(uri)) urller.push(uri);
+      }
+    }
+  }
+  return urller;
+}
+
+export function groundingIstemiOlustur(
   girdi: GroundingAramaGirdisi,
   kilitliAlan: string | null,
 ): string {
+  const temiz = kural32NesneTemizle(girdi as unknown as Record<string, unknown>) as Record<string, unknown>;
   const kimlik = {
-    product_name: metinDegeri(girdi.urunAdi),
-    brand: metinDegeri(girdi.marka),
-    model: metinDegeri(girdi.model),
-    barcode: metinDegeri(girdi.barkod),
-    variant: metinDegeri(girdi.varyant),
-    size: metinDegeri(girdi.beden),
-    supplier: metinDegeri(girdi.tedarikci),
+    product_name: kural32MetinTemizle(metinDegeri(temiz.urunAdi ?? temiz.product_name)),
+    brand: kural32MetinTemizle(metinDegeri(temiz.marka ?? temiz.brand)),
+    model: kural32MetinTemizle(metinDegeri(temiz.model)),
+    barcode: metinDegeri(temiz.barkod ?? temiz.barcode),
+    variant: metinDegeri(temiz.varyant ?? temiz.variant),
+    size: metinDegeri(temiz.beden ?? temiz.size),
+    supplier: kural32MetinTemizle(metinDegeri(temiz.tedarikci ?? temiz.supplier)),
     ...(kilitliAlan ? { locked_official_domain: kilitliAlan } : {}),
   };
   const aramaKurali = kilitliAlan
@@ -274,7 +325,7 @@ function groundingIstemiOlustur(
   ].join("\n");
 }
 
-function groundingYanitiniCoz(
+export function groundingYanitiniCoz(
   veri: unknown,
   kilitliAlan: string | null,
 ): GroundingEslesmeSonucu | null {
@@ -317,10 +368,20 @@ function groundingYanitiniCoz(
   }
   if (!resmiSayfa || !resmiAlanAdiUygunMu(resmiSayfa, tespitEdilenAlan)) return null;
 
-  const hamGorseller = Array.isArray(cozulmus?.image_urls) ? cozulmus.image_urls : [];
+  const hamGorseller = [
+    ...(Array.isArray(cozulmus?.image_urls) ? cozulmus.image_urls : []),
+    ...(Array.isArray(cozulmus?.gorseller) ? cozulmus.gorseller : []),
+    ...(Array.isArray(cozulmus?.images) ? cozulmus.images : []),
+    ...groundingGorselListesi(adayKaydi, tespitEdilenAlan),
+  ];
   const gorseller = hamGorseller
     .map((url) => metinDegeri(url))
-    .filter((url) => url.startsWith("https://") && !pazaryeriVeyaAraciMi(url));
+    .filter(
+      (url) =>
+        url.startsWith("https://") &&
+        !pazaryeriVeyaAraciMi(url) &&
+        resmiAlanAdiUygunMu(url, tespitEdilenAlan),
+    );
 
   const temiz = kural32NesneTemizle({
     official_name: cozulmus?.official_name ?? cozulmus?.resmi_ad,
@@ -347,12 +408,13 @@ export async function resmiUrunSayfasiGroundingIleBul(
 ): Promise<GroundingEslesmeSonucu | null> {
   const apiKey = geminiAramaAnahtari();
   if (!apiKey) return null;
-  const aramaTerimiVar = [girdi.urunAdi, girdi.marka, girdi.model, girdi.barkod].some((deger) =>
+  const temizGirdi = kural32NesneTemizle(girdi as unknown as Record<string, unknown>) as unknown as GroundingAramaGirdisi;
+  const aramaTerimiVar = [temizGirdi.urunAdi, temizGirdi.marka, temizGirdi.model, temizGirdi.barkod].some((deger) =>
     Boolean(metinDegeri(deger)),
   );
   if (!aramaTerimiVar) return null;
 
-  const kilitliAlan = kilitliResmiAlanAdiSec([girdi.kilitliAlanAdi, girdi.tedarikciSite]);
+  const kilitliAlan = kilitliResmiAlanAdiSec([temizGirdi.kilitliAlanAdi, temizGirdi.tedarikciSite]);
   try {
     const yanit = await fetcher(
       `${GEMINI_GROUNDING_ADRESI}?key=${encodeURIComponent(apiKey)}`,
@@ -363,10 +425,13 @@ export async function resmiUrunSayfasiGroundingIleBul(
           contents: [
             {
               role: "user",
-              parts: [{ text: groundingIstemiOlustur(girdi, kilitliAlan) }],
+              parts: [{ text: groundingIstemiOlustur(temizGirdi, kilitliAlan) }],
             },
           ],
-          tools: [{ google_search: {} }],
+          tools: [
+            { googleSearch: { searchTypes: { webSearch: {}, imageSearch: {} } } },
+            { urlContext: {} },
+          ],
           generationConfig: { temperature: 0.1 },
         }),
         signal: AbortSignal.timeout(GROUNDING_ZAMAN_ASIMI_MS),
@@ -442,6 +507,7 @@ export async function kayitliFaturaKatalogunuUygula(args: {
         resmiAlanAdi: grounding.resmiAlanAdi,
         dogrulamaDurumu: "Doğrulandı",
         groundingKaynaklari: grounding.groundingKaynaklari,
+        gorseller: grounding.gorseller,
       });
       satir.katalog = katalog;
       satir.resmiAlanAdi = grounding.resmiAlanAdi;
