@@ -9,7 +9,14 @@ import {
 } from "@/lib/faturaUrunHazirlama";
 
 export const VARSAYILAN_PRIZ_ADRESI = "https://openrouter.ai/api/v1/chat/completions";
-const GEMINI_PRIZ_ADRESI = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
+
+function geminiFaturaModeli(): string {
+  return (process.env.GEMINI_FATURA_MODEL || "").trim() || "gemini-2.5-flash";
+}
+
+function geminiPrizAdresi(): string {
+  return `https://generativelanguage.googleapis.com/v1beta/models/${geminiFaturaModeli()}:generateContent`;
+}
 
 function geminiPrizAnahtari(): string {
   return (process.env.GEMINI_API_KEY || "").trim() || (process.env.GOOGLE_API_KEY || "").trim();
@@ -23,9 +30,8 @@ export function geminiPrizAktifMi(): boolean {
   const geminiKey = geminiPrizAnahtari();
   if (!geminiKey) return false;
   const acikAdres = (process.env.FATURA_PRIZ_URL || "").trim();
-  if (acikAdres.includes("generativelanguage.googleapis.com")) return true;
-  const orKey = openRouterPrizAnahtari();
-  return !orKey;
+  if (!acikAdres) return true;
+  return acikAdres.includes("generativelanguage.googleapis.com");
 }
 
 export function faturaPrizAdresi(): string {
@@ -34,7 +40,7 @@ export function faturaPrizAdresi(): string {
     if (acikAdres.includes("generativelanguage.googleapis.com")) {
       return acikAdres.includes("?key=") ? acikAdres : `${acikAdres}?key=${geminiPrizAnahtari()}`;
     }
-    return `${GEMINI_PRIZ_ADRESI}?key=${geminiPrizAnahtari()}`;
+    return `${geminiPrizAdresi()}?key=${geminiPrizAnahtari()}`;
   }
   const acikAdres = (process.env.FATURA_PRIZ_URL || "").trim();
   if (acikAdres) return acikAdres;
@@ -158,7 +164,7 @@ async function geminiYanitiniOpenRouterBicimineCevir(yanit: Response): Promise<R
   const usageMeta = (veri.usageMetadata ?? {}) as Record<string, unknown>;
   const openrouterYanit = {
     id: typeof veri.responseId === "string" ? veri.responseId : null,
-    model: typeof veri.modelVersion === "string" ? veri.modelVersion : "gemini-2.5-flash",
+    model: typeof veri.modelVersion === "string" ? veri.modelVersion : geminiFaturaModeli(),
     choices: [{
       finish_reason: finishReason,
       message: {
@@ -271,7 +277,7 @@ export const GOOGLE_FATURA_URUN_KARTI_SEMASI = {
 } as const;
 
 const GOOGLE_FATURA_URUN_KARTI_ISTEMI = [
-  "Fatura görsellerindeki satılabilir ürün kalemlerini çıkar ve her ürün için Google Search (webSearch + imageSearch) ve urlContext kullanarak resmî üretici/marka ürün kartını tek seferde oluştur.",
+  "Fatura görsellerindeki satılabilir ürün kalemlerini çıkar ve her ürün için Google Search ve urlContext kullanarak resmî üretici/marka ürün kartını tek seferde oluştur.",
   "Toptancı VKN/TCKN, ETTN, fatura numarası, iskonto, birim alış fiyatı ve satır tutarı gibi ticari/mali bilgileri kesinlikle yok say ve çıktıda yer verme.",
   "Trendyol, Hepsiburada, N11, Amazon, Çiçeksepeti, PttAVM, Akakçe, Cimri, Epey, Sahibinden gibi pazaryeri veya aracı siteleri kesinlikle kullanma; yalnızca resmî üretici/marka alan adını (official_domain), resmî ürün sayfasını (official_product_url) ve resmî ürün görsellerini (image_urls) döndür.",
   "Doğrulanmış bir resmî ürün sayfası bulunamazsa tahmin yürütme; official_domain ve official_product_url alanlarını null, image_urls alanını [] döndür.",
@@ -464,14 +470,14 @@ export async function googleFaturaUrunKartlariUret(
   let yanit: Response;
   try {
     yanit = await fetcher(
-      `${GEMINI_PRIZ_ADRESI}?key=${encodeURIComponent(anahtar)}`,
+      `${geminiPrizAdresi()}?key=${encodeURIComponent(anahtar)}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [{ role: "user", parts: parcalar }],
           tools: [
-            { googleSearch: { searchTypes: { webSearch: {}, imageSearch: {} } } },
+            { googleSearch: {} },
             { urlContext: {} },
           ],
           generationConfig: {
