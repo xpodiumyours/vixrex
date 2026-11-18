@@ -44,7 +44,7 @@ export function FaturaIslemSonucu({ sonuc, kartlar, storeSlug, hata, yukleniyor,
             {kartlar.map((kart) => (
               <li key={kart.sira}>
                 {kart.gorsel ? <Image src={kart.gorsel} alt={kart.ad} width={64} height={64} loading="lazy" unoptimized />
-                  : <div className="fatura-kart-gorselsiz">Görsel hazırlanıyor</div>}
+                  : <div className="fatura-kart-gorselsiz">Görsel bulunamadı</div>}
                 <span>{kart.ad}</span>
                 {kart.fiyat && <strong>{kart.fiyat} TL</strong>}
                 {kart.durum === "hazir" && <small>İzin bekliyor — tüketici vitrininde görünmüyor</small>}

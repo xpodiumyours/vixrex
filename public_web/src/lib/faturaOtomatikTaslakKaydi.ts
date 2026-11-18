@@ -221,10 +221,11 @@ export async function faturaTaslakYanitiniHazirla(
       }
     }
   }
-  const devamEdiyor = rapor.bekleyen > 0 && rapor.hatalar.length === 0;
+  const kayitHatasiVar = rapor.hatalar.length > 0;
+  const devamEdiyor = rapor.bekleyen > 0 && !kayitHatasiVar;
   rapor.hatalar.push(...gorselUyarilari);
   const durum = await admin.from("invoice_provider_runs")
-    .update({ error_code: !devamEdiyor && rapor.hatalar.length ? "FATURA_TASLAKLARI_EKSIK" : null })
+    .update({ error_code: !devamEdiyor && kayitHatasiVar ? "FATURA_TASLAKLARI_EKSIK" : null })
     .eq("job_id", kayit.islemKimligi).eq("store_id", storeId).eq("state", "processed");
   if (durum.error) rapor.hatalar.push("Taslak kayıt durumu saklanamadı.");
   const hazirlaniyor = devamEdiyor && !durum.error;
@@ -237,7 +238,7 @@ export async function faturaTaslakYanitiniHazirla(
       kartSayisi: bagliIdler.length,
       gorselliSayisi,
       sureSaniye: gecenSaniye(baslangic),
-      hataKodu: rapor.hatalar.length ? "FATURA_TASLAKLARI_EKSIK" : null,
+      hataKodu: kayitHatasiVar || Boolean(durum.error) ? "FATURA_TASLAKLARI_EKSIK" : null,
     });
     await faturaOzetiniKaydet(admin, storeId, kayit.islemKimligi, ozetSatiri);
   }
