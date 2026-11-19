@@ -19,7 +19,7 @@ export const FATURA_JSON_ORNEGI = {
 
 export const FATURA_JSON_ISTEGI = [
   "Bu fatura fotoğrafından yalnızca belge alanlarını ve bütün özgün fatura satırlarını oku.",
-  "Her satırı ayrı, kayıpsız ve aynı sırada aktar. Marka, ürün kodu, barkod, beden, varyant, gramaj, miktar ve alış fiyatını yalnız belgede görüldüğü kadar yaz.",
+  "Her satırı ayrı, kayıpsız ve aynı sırada aktar. Marka, ürün kodu, barkod, beden, varyant, gramaj, miktar ve alış fiyatını yalnız belgede görüldüğü kadar yaz; belgede basılı Model Kodu / Stok Kodu sütunu varsa model alanına aynen yaz, boş bırakma.",
   "Belgede basılı tedarikci_site web adresini aynen oku; basılı birim_fiyat, tutar, mal_bedeli, kdv_tutari ve odenecek_toplam alanlarını yeniden hesaplamadan mutlaka sayı olarak doldur.",
   "Bu birinci preset sadece belge okuma aşamasıdır. Ürün araştırması, resmî kaynak doğrulaması, görsel arama/seçimi, ürün kartı hazırlama ve tekilleştirme yapma; bunlar ikinci OpenRouter presetinin görevidir.",
   "Site, görsel, kategori, ürün açıklaması ve doğrulama/kanıt alanlarını boş bırak; bu alanlara tahmin veya karar yazma.",

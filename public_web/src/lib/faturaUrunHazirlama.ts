@@ -177,6 +177,7 @@ const HASSAS_ALAN_ANAHTARLARI = new Set([
   "tc_kimlik_no",
   "tc_no",
   "ettn",
+  "iban",
   "taxid",
   "tax_id",
   "tedarikcivergino",
