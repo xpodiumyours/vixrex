@@ -110,7 +110,8 @@ describe("depodaki OpenRouter preset tanımı ↔ Vixrex taşıma sözleşmesi",
       "openrouter:web_search", "openrouter:web_fetch",
     ]);
     expect(istek.response_format).toEqual(kart.response_format);
-    expect(istek).not.toHaveProperty("provider");
+    expect(istek.provider).toEqual({ require_parameters: true });
+    expect(istek.reasoning).toEqual({ effort: "low" });
     expect(istek).not.toHaveProperty("system");
     expect(istek.tools).toEqual([
       { type: "openrouter:web_search", parameters: { max_results: 8, max_uses: 35, max_total_results: 120 } },

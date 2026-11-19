@@ -208,7 +208,9 @@ function govdeKur(okuma: GoruSonucu, satirlar: TasinanSatir[], secilenAkis: Pres
       { type: "openrouter:web_search", parameters: { max_results: 8, max_uses: 35, max_total_results: 120 } },
       { type: "openrouter:web_fetch", parameters: { engine: "firecrawl", max_uses: 35 } },
     ],
-    ...(secilenAkis === "yeni" ? { response_format: KART_YANIT_FORMATI } : {}),
+    response_format: KART_YANIT_FORMATI,
+    provider: { require_parameters: true },
+    reasoning: { effort: "low" },
     messages: [{ role: "user", content: [
       "İlk presetin faturadan okuduğu satırlar aşağıdadır. Presetindeki araştırma ve ürün kartı görevini tamamla.",
       "Her row_id değerini aynen koru; her girdi satırı için eksiksiz ürün kartı döndür, satır silme.",

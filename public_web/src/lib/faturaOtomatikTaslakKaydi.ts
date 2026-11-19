@@ -53,12 +53,123 @@ async function ilkSahipDurumu(
   return { durum: sahipDurumunuTemizle(guncel.data.owner_state), bagli: Boolean(guncel.data.product_id) };
 }
 
+const ESZAMANLI_TASLAK_SAYISI = 4;
+
 function kanonikSatirIndeksi(satir: KayitliIslem["satirlar"][number], sira: number, toplam: number): number | null {
   const ham = satir.katalog?.canonicalRowId ?? satir.canonicalRowId;
   if (typeof ham !== "string" || !/^[1-9]\d*$/.test(ham)) return null;
   const hedef = Number(ham) - 1;
   if (hedef < 0 || hedef >= toplam || hedef === sira) return null;
   return hedef;
+}
+
+async function tekSatirTaslakIsle(
+  admin: SupabaseClient,
+  storeId: string,
+  slug: string,
+  storeData: { edit_token: string; name: string },
+  kayit: KayitliIslem,
+  satir: KayitliIslem["satirlar"][number],
+  sira: number,
+  sonTarih: number,
+  olusanUrunIdleri: Map<number, string>,
+): Promise<void> {
+  const dogrulanmis = await satiriDogrula(admin, storeId,
+    { islemKimligi: kayit.islemKimligi, satirSirasi: sira }, satir.sonuc);
+  if (!dogrulanmis || dogrulanmis.satirId !== satir.satirId) throw new Error("Fatura satırı doğrulanamadı.");
+  if (dogrulanmis.urunId) return;
+  const sahip = await ilkSahipDurumu(admin, satir);
+  if (sahip.bagli) return;
+  if (!sahip.durum) throw new Error("Fatura seçimleri okunamadı.");
+  const kanonikSira = kanonikSatirIndeksi(satir, sira, kayit.satirlar.length);
+  const kanonikUrunId = kanonikSira !== null ? olusanUrunIdleri.get(kanonikSira) : undefined;
+  if (kanonikUrunId && typeof satiriUrunleBagla === "function") {
+    await satiriUrunleBagla(admin, dogrulanmis.satirId, kanonikUrunId);
+    olusanUrunIdleri.set(sira, kanonikUrunId);
+    return;
+  }
+  const durum = sahip.durum;
+  const satisFiyati = fiyat(durum.satisFiyati);
+  const katalog = satir.katalog;
+  const barkodKontrolu = barkodDenetimi(satir.barkod);
+  const barkodGecerli = !barkodKontrolu || barkodKontrolu.gecti;
+  const metadata: ProductMetadata = katalog
+    ? faturaKatalogMetadatasi(katalog)
+    : { lunaInvoice: true };
+  const ekBilgiler: ProductAttributeValue[] = [];
+  if (!barkodGecerli) {
+    ekBilgiler.push({
+      key: "rawBarcode", label: "Faturadaki barkod (kontrol hanesi tutmadı)",
+      value: String(satir.barkod),
+    });
+  }
+  const faturaMarkasi = (satir.marka ?? "").trim();
+  if (katalog && katalog.marka.trim() && faturaMarkasi && katalog.marka.trim() !== faturaMarkasi) {
+    ekBilgiler.push({ key: "officialBrand", label: "Resmî marka", value: katalog.marka.trim() });
+  }
+  const hazirlik = await urunGirdisiniHazirla({
+    admin, storeId, storeName: storeData.name,
+    gorselPolitikasi: "toplu", lunaVaryantlariniKoru: true,
+    enAzGorsel: FATURA_MIN_PRODUCT_IMAGES,
+    govde: {
+      name: katalog?.resmiAd || satir.ad || satir.model || satir.barkod || satir.hamSatir,
+      description: katalog?.aciklama ?? "", brand: satir.marka || katalog?.marka,
+      barcode: barkodGecerli ? satir.barkod : "", categoryId: "",
+      priceText: satisFiyati === null ? "" : `${satisFiyati} TL`,
+      imageUrls: [...new Set([...(katalog?.gorseller ?? []), ...durum.esnafGorselleri])],
+      stockQuantity: stok(durum.stok),
+      metadata: {
+        ...(satir.model ? { identifiers: { sku: satir.model } } : {}),
+        ...metadata,
+        ...(ekBilgiler.length
+          ? { attributes: [...(metadata.attributes ?? []), ...ekBilgiler] }
+          : {}),
+      },
+    },
+  });
+  if (hazirlik.durum === "reddedildi") throw new Error(hazirlik.sebep);
+  const katalogHatasi = await kayitliFaturaKatalogunuUygula({
+    admin, storeId, editToken: storeData.edit_token, girdi: hazirlik.girdi,
+    satir: dogrulanmis, kategoriOnbellegi: new Map(),
+  });
+  if (katalogHatasi) throw new Error(katalogHatasi);
+  const medya = await faturaUrunGorselleriniAktar({
+    admin, slug, girdi: hazirlik.girdi, satir: dogrulanmis, sonTarih,
+  });
+  const kayitSonucu = await faturaUrununuKaydet(admin, {
+    storeId, editToken: storeData.edit_token, satirId: dogrulanmis.satirId,
+    girdi: { ...hazirlik.girdi, imageUrls: medya.urunGorselleri, sortOrder: sira },
+    kanit: {
+      automaticDraft: true, kartDurumu: dogrulanmis.sonuc,
+      stokOnaylandi: durum.stokOnaylandi, esnafOnayladi: durum.onayli,
+      sablonTam: true, ureticiGorsel: false,
+      gorselDurumu: medya.gorselDurumu, gorselKaynaklari: medya.gorselKaynaklari,
+      gorselRedleri: medya.gorselRedleri,
+    },
+    alisFiyati: dogrulanmis.alisBirimFiyati,
+  });
+  if (kayitSonucu.durum === "onay-bekliyor") return;
+  olusanUrunIdleri.set(sira, kayitSonucu.id);
+}
+
+async function paralelTaslakGrubuIsle(
+  grup: Array<{ satir: KayitliIslem["satirlar"][number]; sira: number }>,
+  sonTarih: number,
+  rapor: OtomatikTaslakRaporu,
+  isleyici: (eleman: { satir: KayitliIslem["satirlar"][number]; sira: number }) => Promise<void>,
+): Promise<boolean> {
+  for (let i = 0; i < grup.length; i += ESZAMANLI_TASLAK_SAYISI) {
+    if (Date.now() + 10_000 >= sonTarih) return false;
+    const parca = grup.slice(i, i + ESZAMANLI_TASLAK_SAYISI);
+    const sonuclar = await Promise.allSettled(parca.map((eleman) => isleyici(eleman)));
+    for (const sonuc of sonuclar) {
+      if (sonuc.status === "rejected") {
+        rapor.hatalar.push(sonuc.reason instanceof Error ? sonuc.reason.message : "Ürün taslağı kaydedilemedi.");
+        rapor.atlandi += 1;
+      }
+    }
+  }
+  return true;
 }
 
 export async function faturaTaslakYanitiniHazirla(
@@ -73,16 +184,14 @@ export async function faturaTaslakYanitiniHazirla(
   };
   let guncelKayit = kayit;
   const tumEksik = kayit.satirlar.map((satir, sira) => ({ satir, sira })).filter(({ satir }) => !satir.urunId);
-  const eksik = [
-    ...tumEksik.filter(({ satir, sira }) => kanonikSatirIndeksi(satir, sira, kayit.satirlar.length) === null),
-    ...tumEksik.filter(({ satir, sira }) => kanonikSatirIndeksi(satir, sira, kayit.satirlar.length) !== null),
-  ];
+  const bagimsizEksik = tumEksik.filter(({ satir, sira }) => kanonikSatirIndeksi(satir, sira, kayit.satirlar.length) === null);
+  const mukerrerEksik = tumEksik.filter(({ satir, sira }) => kanonikSatirIndeksi(satir, sira, kayit.satirlar.length) !== null);
   const sonTarih = Date.now() + 240_000;
   const olusanUrunIdleri = new Map<number, string>();
   kayit.satirlar.forEach((satir, sira) => {
     if (satir.urunId) olusanUrunIdleri.set(sira, satir.urunId);
   });
-  if (eksik.length > 0) {
+  if (tumEksik.length > 0) {
     try {
       const islem = await admin.from("invoice_jobs").select("same_purchase_of")
         .eq("id", kayit.islemKimligi).eq("store_id", storeId).maybeSingle();
@@ -91,86 +200,14 @@ export async function faturaTaslakYanitiniHazirla(
         const store = await admin.from("stores").select("id,edit_token,name")
           .eq("id", storeId).eq("slug", slug).maybeSingle();
         if (store.error || !store.data?.edit_token) throw new Error("Vitrin kayıt yetkisi doğrulanamadı.");
-        for (const { satir, sira } of eksik) {
-          if (Date.now() + 10_000 >= sonTarih) break;
-          const dogrulanmis = await satiriDogrula(admin, storeId,
-            { islemKimligi: kayit.islemKimligi, satirSirasi: sira }, satir.sonuc);
-          if (!dogrulanmis || dogrulanmis.satirId !== satir.satirId) throw new Error("Fatura satırı doğrulanamadı.");
-          if (!dogrulanmis.urunId) {
-            const sahip = await ilkSahipDurumu(admin, satir);
-            if (!sahip.bagli) {
-              if (!sahip.durum) throw new Error("Fatura seçimleri okunamadı.");
-              const kanonikSira = kanonikSatirIndeksi(satir, sira, kayit.satirlar.length);
-              const kanonikUrunId = kanonikSira !== null ? olusanUrunIdleri.get(kanonikSira) : undefined;
-              if (kanonikUrunId && typeof satiriUrunleBagla === "function") {
-                await satiriUrunleBagla(admin, dogrulanmis.satirId, kanonikUrunId);
-                olusanUrunIdleri.set(sira, kanonikUrunId);
-                continue;
-              }
-              const durum = sahip.durum;
-              const satisFiyati = fiyat(durum.satisFiyati);
-              const katalog = satir.katalog;
-              const barkodKontrolu = barkodDenetimi(satir.barkod);
-              const barkodGecerli = !barkodKontrolu || barkodKontrolu.gecti;
-              const metadata: ProductMetadata = katalog
-                ? faturaKatalogMetadatasi(katalog)
-                : { lunaInvoice: true };
-              const ekBilgiler: ProductAttributeValue[] = [];
-              if (!barkodGecerli) {
-                ekBilgiler.push({
-                  key: "rawBarcode", label: "Faturadaki barkod (kontrol hanesi tutmadı)",
-                  value: String(satir.barkod),
-                });
-              }
-              const faturaMarkasi = (satir.marka ?? "").trim();
-              if (katalog && katalog.marka.trim() && faturaMarkasi && katalog.marka.trim() !== faturaMarkasi) {
-                ekBilgiler.push({ key: "officialBrand", label: "Resmî marka", value: katalog.marka.trim() });
-              }
-              const hazirlik = await urunGirdisiniHazirla({
-                admin, storeId, storeName: store.data.name,
-                gorselPolitikasi: "toplu", lunaVaryantlariniKoru: true,
-                enAzGorsel: FATURA_MIN_PRODUCT_IMAGES,
-                govde: {
-                  name: katalog?.resmiAd || satir.ad || satir.model || satir.barkod || satir.hamSatir,
-                  description: katalog?.aciklama ?? "", brand: satir.marka || katalog?.marka,
-                  barcode: barkodGecerli ? satir.barkod : "", categoryId: "",
-                  priceText: satisFiyati === null ? "" : `${satisFiyati} TL`,
-                  imageUrls: [...new Set([...(katalog?.gorseller ?? []), ...durum.esnafGorselleri])],
-                  stockQuantity: stok(durum.stok),
-                  metadata: {
-                    ...(satir.model ? { identifiers: { sku: satir.model } } : {}),
-                    ...metadata,
-                    ...(ekBilgiler.length
-                      ? { attributes: [...(metadata.attributes ?? []), ...ekBilgiler] }
-                      : {}),
-                  },
-                },
-              });
-              if (hazirlik.durum === "reddedildi") throw new Error(hazirlik.sebep);
-              const katalogHatasi = await kayitliFaturaKatalogunuUygula({
-                admin, storeId, editToken: store.data.edit_token, girdi: hazirlik.girdi,
-                satir: dogrulanmis, kategoriOnbellegi: new Map(),
-              });
-              if (katalogHatasi) throw new Error(katalogHatasi);
-              const medya = await faturaUrunGorselleriniAktar({
-                admin, slug, girdi: hazirlik.girdi, satir: dogrulanmis, sonTarih,
-              });
-              const kayitSonucu = await faturaUrununuKaydet(admin, {
-                storeId, editToken: store.data.edit_token, satirId: dogrulanmis.satirId,
-                girdi: { ...hazirlik.girdi, imageUrls: medya.urunGorselleri, sortOrder: sira },
-                kanit: {
-                  automaticDraft: true, kartDurumu: dogrulanmis.sonuc,
-                  stokOnaylandi: durum.stokOnaylandi, esnafOnayladi: durum.onayli,
-                  sablonTam: true, ureticiGorsel: false,
-                  gorselDurumu: medya.gorselDurumu, gorselKaynaklari: medya.gorselKaynaklari,
-                  gorselRedleri: medya.gorselRedleri,
-                },
-                alisFiyati: dogrulanmis.alisBirimFiyati,
-              });
-              if (kayitSonucu.durum === "onay-bekliyor") continue;
-              olusanUrunIdleri.set(sira, kayitSonucu.id);
-            }
-          }
+        const storeData = { edit_token: store.data.edit_token, name: store.data.name };
+        const zamanYetti = await paralelTaslakGrubuIsle(bagimsizEksik, sonTarih, rapor, ({ satir, sira }) =>
+          tekSatirTaslakIsle(admin, storeId, slug, storeData, kayit, satir, sira, sonTarih, olusanUrunIdleri),
+        );
+        if (zamanYetti) {
+          await paralelTaslakGrubuIsle(mukerrerEksik, sonTarih, rapor, ({ satir, sira }) =>
+            tekSatirTaslakIsle(admin, storeId, slug, storeData, kayit, satir, sira, sonTarih, olusanUrunIdleri),
+          );
         }
         const yenilenen = await islemiYukle(admin, storeId, kayit.islemKimligi);
         if (!yenilenen?.satirlar.length) throw new Error("Ürün taslağının kalıcı kaydı doğrulanamadı.");
@@ -179,12 +216,14 @@ export async function faturaTaslakYanitiniHazirla(
         rapor.birlestirmeBekleyen = yenilenen.satirlar.filter(
           (satir) => !satir.urunId && satir.birlestirmeAdayi,
         ).length;
-        rapor.bekleyen =
-          yenilenen.satirlar.length - rapor.kaydedildi - rapor.birlestirmeBekleyen;
+        rapor.bekleyen = Math.max(
+          0,
+          yenilenen.satirlar.length - rapor.kaydedildi - rapor.birlestirmeBekleyen - rapor.atlandi,
+        );
       }
     } catch (err) {
       rapor.hatalar.push(err instanceof Error ? err.message : "Ürün taslağı kaydedilemedi.");
-      rapor.atlandi = 1;
+      rapor.atlandi = Math.max(rapor.atlandi, 1);
       const yenilenen = await islemiYukle(admin, storeId, kayit.islemKimligi).catch(() => null);
       if (yenilenen?.satirlar.length) guncelKayit = yenilenen;
       rapor.birlestirmeBekleyen = guncelKayit.satirlar.filter(
@@ -192,7 +231,7 @@ export async function faturaTaslakYanitiniHazirla(
       ).length;
       rapor.bekleyen = Math.max(
         0,
-        guncelKayit.satirlar.filter((satir) => !satir.urunId && !satir.birlestirmeAdayi).length - 1,
+        guncelKayit.satirlar.filter((satir) => !satir.urunId && !satir.birlestirmeAdayi).length - rapor.atlandi,
       );
     }
   }

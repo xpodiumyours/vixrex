@@ -36,6 +36,7 @@ describe("Vixrex preset taşıma sözleşmesi", () => {
     expect(body).not.toHaveProperty("tools"); expect(body).not.toHaveProperty("temperature");
     expect(body).not.toHaveProperty("response_format");
     expect(body).not.toHaveProperty("provider");
+    expect(body.reasoning).toEqual({ effort: "low" });
     expect(JSON.stringify(body)).toContain(FATURA_JSON_ISTEGI.replace(/\n/g, "\\n").slice(0, 10));
   });
   it("birinci preset yalnız belge okur; ürün araştırması ve kart üretimi ikinci presetin işidir", () => {
