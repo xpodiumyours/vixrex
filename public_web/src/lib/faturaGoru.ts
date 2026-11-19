@@ -169,6 +169,7 @@ export function faturaIstekGovdesi(dataUrl: string | string[]): Record<string, u
   );
   return {
     model: faturaPresetReferansi(), stream: true,
+    reasoning: { effort: "low" },
     messages: [{ role: "user", content: [{ type: "text", text: FATURA_JSON_ISTEGI }, ...icerik] }],
   };
 }

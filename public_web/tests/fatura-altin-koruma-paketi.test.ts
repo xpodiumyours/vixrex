@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { faturaYanitiniOku, type GoruSatiri } from "@/lib/faturaGoru";
+import { faturaIstekGovdesi, faturaYanitiniOku, type GoruSatiri } from "@/lib/faturaGoru";
 import { FATURA_JSON_ISTEGI } from "@/lib/faturaPresetSozlesmesi";
 import {
   gorselAdaylariniSuz,
@@ -272,6 +272,13 @@ describe("Aşama 1 — Fatura Altın Koruma Paketi", () => {
     expect(webSearch?.parameters.max_results).toBeGreaterThanOrEqual(8);
     expect(webSearch?.parameters.max_uses).toBeGreaterThanOrEqual(35);
     expect(webFetch?.parameters.max_uses).toBeGreaterThanOrEqual(35);
+    expect(govde.response_format).toMatchObject({
+      type: "json_schema",
+      json_schema: { strict: true },
+    });
+    expect(govde.provider).toEqual({ require_parameters: true });
+    expect(govde.reasoning).toEqual({ effort: "low" });
+    expect(faturaIstekGovdesi("data:image/png;base64,TEST").reasoning).toEqual({ effort: "low" });
 
     const content = (govde.messages as Array<{ content: string }>)[0].content;
     const payload = JSON.parse(content.slice(content.lastIndexOf("\n") + 1)) as {

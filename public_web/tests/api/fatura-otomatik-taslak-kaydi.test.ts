@@ -108,8 +108,8 @@ describe("sunucuda kalıcı görünmez fatura taslağı", () => {
     expect(reply).toMatchObject({ otomatikTaslakRaporu: { kaydedildi: 0 }, hazirlaniyor: false });
   });
 
-  it("üç satırlık parçadan sonra aynı kayıtla devam eder; ikinci ürünü kopyalamaz", async () => {
-    const c = client(invoice(4));
+  it("dört satırlık paralel parçadan sonra aynı kayıtla devam eder; ikinci ürünü kopyalamaz", async () => {
+    const c = client(invoice(5));
     m.media.mockResolvedValueOnce({ urunGorselleri: [], gorselDurumu: "aktarim-bekliyor", gorselKaynaklari: [] });
     const simdi = { an: Date.now() };
     const saat = vi.spyOn(Date, "now").mockImplementation(() => simdi.an);
@@ -118,19 +118,38 @@ describe("sunucuda kalıcı görünmez fatura taslağı", () => {
     m.save.mockImplementation(async (...args) => {
       const sonuc = await asilKaydet(...args);
       kayitSayisi += 1;
-      if (kayitSayisi === 3) simdi.an += 231_000;
+      if (kayitSayisi === 4) simdi.an += 231_000;
       return sonuc;
     });
     const first = await faturaTaslakYanitiniHazirla(c.admin, "store", "demo", structuredClone(c.kayit));
-    expect(first).toMatchObject({ hazirlaniyor: true, otomatikTaslakRaporu: { bekleyen: 1, kaydedildi: 3 } });
+    expect(first).toMatchObject({ hazirlaniyor: true, otomatikTaslakRaporu: { bekleyen: 1, kaydedildi: 4 } });
     expect(first.taslakKayitUyarisi).toContain("fotoğraf");
     expect(c.errorCode()).toBeNull();
     const second = await faturaTaslakYanitiniHazirla(c.admin, "store", "demo", structuredClone(c.kayit));
-    expect(second).toMatchObject({ hazirlaniyor: false, otomatikTaslakRaporu: { bekleyen: 0, kaydedildi: 4 } });
+    expect(second).toMatchObject({ hazirlaniyor: false, otomatikTaslakRaporu: { bekleyen: 0, kaydedildi: 5 } });
     expect(c.errorCode()).toBeNull();
     expect(second.ozetSatiri).toContain("hata: yok");
-    expect(m.save).toHaveBeenCalledTimes(4);
+    expect(m.save).toHaveBeenCalledTimes(5);
     saat.mockRestore();
+  });
+
+  it("paralel taslak kaydında bir satır hata fırlatsa bile diğer bağımsız satırlar eksiksiz kaydedilir", async () => {
+    const c = client(invoice(6));
+    const asilKaydet = m.save.getMockImplementation()!;
+    m.save.mockImplementation(async (admin, args) => {
+      if (args.satirId === "line-1") throw new Error("Satır 2 kayıt hatası.");
+      return asilKaydet(admin, args);
+    });
+    const reply = await faturaTaslakYanitiniHazirla(c.admin, "store", "demo", structuredClone(c.kayit));
+    expect(m.save).toHaveBeenCalledTimes(6);
+    expect(reply).toMatchObject({
+      tamam: true,
+      hazirlaniyor: false,
+      otomatikTaslakRaporu: { kaydedildi: 5, atlandi: 1, bekleyen: 0 },
+    });
+    expect(reply.taslakKayitUyarisi).toContain("Satır 2 kayıt hatası.");
+    expect(c.errorCode()).toBe("FATURA_TASLAKLARI_EKSIK");
+    expect(reply.ozetSatiri).toContain("hata: FATURA_TASLAKLARI_EKSIK");
   });
 
   it("kalıcı yazma hatasında faturayı korur, otomatik tekrarı durdurur ve sebebi gösterir", async () => {

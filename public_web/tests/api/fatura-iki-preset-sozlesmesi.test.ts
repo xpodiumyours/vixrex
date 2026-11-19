@@ -291,10 +291,14 @@ describe("gerçek ikinci preset JSON sözleşmesi",()=>{
       { type: "openrouter:web_search", parameters: { max_results: 8, max_uses: 35, max_total_results: 120 } },
       { type: "openrouter:web_fetch", parameters: { engine: "firecrawl", max_uses: 35 } },
     ]);
-    expect(req).not.toHaveProperty("provider");
+    expect(req.provider).toEqual({ require_parameters: true });
+    expect(req.reasoning).toEqual({ effort: "low" });
     expect(req.response_format).toMatchObject({ type: "json_schema", json_schema: { name: "vixrex_urun_karti", strict: true } });
     expect(req).not.toHaveProperty("system");
     const mevcutReq=kartPresetIstekGovdesi(first,"mevcut");
     expect(mevcutReq.tools).toEqual(req.tools);
+    expect(mevcutReq.response_format).toMatchObject({ type: "json_schema", json_schema: { name: "vixrex_urun_karti", strict: true } });
+    expect(mevcutReq.provider).toEqual({ require_parameters: true });
+    expect(mevcutReq.reasoning).toEqual({ effort: "low" });
   });
 });
