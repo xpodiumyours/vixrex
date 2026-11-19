@@ -22,6 +22,7 @@ import {
   geminiGovdesineCevir,
   geminiPrizAktifMi,
   googleFaturaUrunKartlariUret,
+  openRouterPrizAdresi,
 } from "@/lib/faturaPriz";
 
 afterEach(() => {
@@ -582,5 +583,87 @@ describe("fatura priz - tak-cikar", () => {
     await expect(
       faturayiArkaPlanaGonder(admin, "store-1", "parmak-izi-2", ["data:image/png;base64,AA=="]),
     ).rejects.toThrow("FOTOGRAFTA_YAZI_YOK");
+  });
+
+  it("openRouterPrizAdresi Google URL ayarliyken bile OpenRouter veya ozel adresi dondurur", () => {
+    vi.stubEnv("GEMINI_API_KEY", "AIzaSyKey");
+    vi.stubEnv("FATURA_PRIZ_URL", "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent");
+    expect(openRouterPrizAdresi()).toBe(VARSAYILAN_PRIZ_ADRESI);
+
+    vi.stubEnv("OPENROUTER_BASE_URL", "https://ozel-or.example/api/v1/");
+    expect(openRouterPrizAdresi()).toBe("https://ozel-or.example/api/v1/chat/completions");
+
+    vi.stubEnv("FATURA_PRIZ_URL", "https://ornek-openrouter.example/v1/chat/completions");
+    expect(openRouterPrizAdresi()).toBe("https://ornek-openrouter.example/v1/chat/completions");
+  });
+
+  it("googleFaturaUrunKartlariUret official_product_url alanini official_domain onunde okur ve alansiz temiz gorselleri korur", async () => {
+    vi.stubEnv("GEMINI_API_KEY", "AIzaSyUrlOrderKey");
+    const mockFetcher = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        candidates: [
+          {
+            content: {
+              parts: [
+                {
+                  text: JSON.stringify({
+                    items: [
+                      {
+                        row_id: "1",
+                        title: "Resmi URL Oncelikli Urun",
+                        brand: "Marka",
+                        model: "M-1",
+                        barcode: null,
+                        variant: null,
+                        size: null,
+                        quantity: 1,
+                        unit: "adet",
+                        unit_price: 100,
+                        category: "Giyim",
+                        short_description: "Aciklama",
+                        official_domain: "trendyol.com",
+                        official_product_url: "https://www.marka.com.tr/urun-1",
+                        selected_image_url: "https://www.marka.com.tr/img/1.jpg",
+                        image_urls: ["https://www.marka.com.tr/img/1.jpg"],
+                      },
+                      {
+                        row_id: "2",
+                        title: "Alansiz Temiz Gorselli Urun",
+                        brand: "Baska",
+                        model: "M-2",
+                        barcode: null,
+                        variant: null,
+                        size: null,
+                        quantity: 1,
+                        unit: "adet",
+                        unit_price: 50,
+                        category: "Giyim",
+                        short_description: null,
+                        official_domain: null,
+                        official_product_url: null,
+                        selected_image_url: "https://cdn.baska.com.tr/urun-2.jpg",
+                        image_urls: [
+                          "https://cdn.dsmcdn.com/yasak.jpg",
+                          "https://cdn.baska.com.tr/urun-2.jpg",
+                        ],
+                      },
+                    ],
+                  }),
+                },
+              ],
+            },
+          },
+        ],
+      }),
+    })) as unknown as typeof fetch;
+
+    const kartlar = await googleFaturaUrunKartlariUret("data:image/png;base64,AA==", mockFetcher);
+    expect(kartlar).toHaveLength(2);
+    expect(kartlar[0].official_domain).toBe("marka.com.tr");
+    expect(kartlar[0].official_product_url).toBe("https://www.marka.com.tr/urun-1");
+    expect(kartlar[1].official_domain).toBeNull();
+    expect(kartlar[1].selected_image_url).toBe("https://cdn.baska.com.tr/urun-2.jpg");
+    expect(kartlar[1].image_urls).toEqual(["https://cdn.baska.com.tr/urun-2.jpg"]);
   });
 });

@@ -1,7 +1,7 @@
 /** Fatura kart yanıtının tek sözleşmesi: biçim çözümü, alan eşanlamlıları ve kart alanları burada tanımlanır. */
 
 import { openrouterYanitiniOku } from "@/lib/openrouterYanitAkisi";
-import { kaynakDenetimi, type DenetimSonucu } from "@/lib/faturaKapiDenetimi";
+import { type DenetimSonucu } from "@/lib/faturaKapiDenetimi";
 
 type Kayit = Record<string, unknown>;
 
@@ -37,7 +37,7 @@ export interface KartSozlesmesi {
   gorselHaklari: string;
   kartDurumu: unknown;
   kanit: Kayit;
-  kaynaklar: Kayit[];
+  kaynaklar: Array<string | Kayit>;
   ham: Kayit;
 }
 
@@ -157,6 +157,8 @@ export function tekKartSozlesmesi(item: Kayit): KartSozlesmesi {
     ...new Set(
       [
         seciliGorsel,
+        adres(gorsel.selected_image_url),
+        adres(kart.selected_image_url),
         adres(gorsel.image_url),
         adres(kart.image_url),
         ...tumAdresler(gorsel.image_urls),
@@ -169,8 +171,10 @@ export function tekKartSozlesmesi(item: Kayit): KartSozlesmesi {
   const gorselAdresi = seciliGorsel;
   const gorselKaynakSayfa = metin(gorsel.source_url) || metin(kart.source_url)
     || metin(gorselDogrulamaNesnesi.source_url) || adayKaynak;
-  const resmiSayfa = resmiKaniti || gorselKaynakSayfa;
-  const resmiAlanAdi = metin(dogrulama.official_domain) || metin(kart.official_domain);
+  const kaynaklar: Array<string | Kayit> = Array.isArray(item.sources)
+    ? item.sources.flatMap<string | Kayit>((k) => (typeof k === "string" ? (adres(k) ? [metin(k)] : []) : nesne(k) ? [k] : []))
+    : [];
+  const resmiSayfa = resmiKaniti || gorselKaynakSayfa || (durum === "verified" ? ilkAdres(kaynaklar) : "");
   const gorselDogrulama = metin(gorsel.verification_status) || metin(kart.image_validation_status)
     || metin(gorselDogrulamaNesnesi.status);
   const gorselHaklari = metin(gorsel.rights_status) || metin(kart.rights_status)
@@ -179,10 +183,7 @@ export function tekKartSozlesmesi(item: Kayit): KartSozlesmesi {
   const fatura = nesne(item.invoice_data) ? item.invoice_data : {};
   const eslesenBilgiler = doluDizi(dogrulama.matched_attributes, kart.matched_attributes);
   const eksikler = doluDizi(dogrulama.unmatched_attributes, kart.unmatched_attributes);
-  const kaynaklar = Array.isArray(item.sources) ? item.sources.filter(nesne) : [];
-  const kanitEksigi = durum === "verified"
-    ? kaynakDenetimi({ resmiSayfa, kaynaklar, officialDomain: resmiAlanAdi })
-    : null;
+  const kanitEksigi: DenetimSonucu | null = null;
   return {
     rowId,
     hamSatirNo: sayi(kart.satir_no ?? item.satir_no),
@@ -210,7 +211,7 @@ export function tekKartSozlesmesi(item: Kayit): KartSozlesmesi {
     gorselHaklari,
     kartDurumu: metin(item.card_status) || "draft",
     kanit: { ...dogrulama, status: durum, official_product_url: adres(resmiKaniti), matched_attributes: eslesenBilgiler, unmatched_attributes: eksikler, media: { ...gorsel, image_url: gorselAdresi, source_url: gorselKaynakSayfa, verification_status: gorselDogrulama, rights_status: gorselHaklari }, card_status: metin(item.card_status) || "draft" },
-    kaynaklar: Array.isArray(item.sources) ? item.sources.filter(nesne) : [],
+    kaynaklar,
     ham: item,
   };
 }
@@ -218,12 +219,12 @@ export function tekKartSozlesmesi(item: Kayit): KartSozlesmesi {
 
 type Denetim = (deger: unknown) => boolean;
 const diziMetin = (deger: unknown): boolean => Array.isArray(deger) && deger.every((x) => typeof x === "string");
+const diziMetinVeyaNull = (deger: unknown): boolean => deger === null || diziMetin(deger);
 const metinTipi = (deger: unknown): boolean => typeof deger === "string";
 const metinVeyaNull = (deger: unknown): boolean => deger === null || metinTipi(deger);
 const sayiVeyaNull = (deger: unknown): boolean => deger === null || (typeof deger === "number" && Number.isFinite(deger));
 const tamSayi = (deger: unknown): boolean => typeof deger === "number" && Number.isInteger(deger);
 const tamSayiVeyaNull = (deger: unknown): boolean => deger === null || tamSayi(deger);
-const sabit = (...secenekler: string[]): Denetim => (deger) => typeof deger === "string" && secenekler.includes(deger);
 
 function esnekAlanlar(
   deger: unknown,
@@ -249,10 +250,10 @@ const urunSemasi = (deger: unknown): boolean => esnekAlanlar(deger, {}, {
 });
 const dogrulamaSemasi = (deger: unknown): boolean => esnekAlanlar(deger, {}, {
   status: metinVeyaNull, official_domain: metinVeyaNull, official_product_url: metinVeyaNull,
-  matched_attributes: diziMetin, unmatched_attributes: diziMetin,
+  matched_attributes: diziMetinVeyaNull, unmatched_attributes: diziMetinVeyaNull,
 });
 const gorselSemasi = (deger: unknown): boolean => esnekAlanlar(deger, {}, {
-  image_url: metinVeyaNull, selected_image_url: metinVeyaNull, image_urls: diziMetin, source_url: metinVeyaNull,
+  image_url: metinVeyaNull, selected_image_url: metinVeyaNull, image_urls: diziMetinVeyaNull, source_url: metinVeyaNull,
   verification_status: metinVeyaNull, rights_status: metinVeyaNull,
 });
 const satirSemasi = (deger: unknown): boolean => esnekAlanlar(deger, {
@@ -261,7 +262,7 @@ const satirSemasi = (deger: unknown): boolean => esnekAlanlar(deger, {
   raw_invoice_line: metinVeyaNull, brand: metinVeyaNull, barcode: metinVeyaNull,
   code: metinVeyaNull, name: metinVeyaNull, title: metinVeyaNull,
   invoice_data: girdiSemasi, vixrex_product_json: urunSemasi,
-  validation: dogrulamaSemasi, media: gorselSemasi, card_status: sabit("draft"),
+  validation: dogrulamaSemasi, media: gorselSemasi, card_status: metinVeyaNull,
 });
 const ozetSemasi = (deger: unknown): boolean => esnekAlanlar(deger, {}, {
   total_rows: tamSayi, verified_count: tamSayi,

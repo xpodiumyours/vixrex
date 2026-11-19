@@ -109,14 +109,21 @@ describe("gerçek ikinci preset JSON sözleşmesi",()=>{
         .rejects.toThrow("KART_YANITI_COZULEMEDI");
     }
   });
-  it("yanlış türde alan ve draft dışı durum reddedilir",async()=>{
+  it("yanlış türde alan reddedilir; metin veya null card_status kabul edilir",async()=>{
     for (const bozuk of [
       {...item("1","A"),invoice_data:{quantity:"2"}},
-      {...item("1","A"),card_status:"blocked"},
+      {...item("1","A"),card_status:123},
       {...item("1","A"),vixrex_product_json:{title:7}},
     ]) {
       await expect(kartPresetYanitiniOku(response([bozuk,item("2","B")]),first))
         .rejects.toThrow("KART_YANITI_COZULEMEDI");
+    }
+    for (const gecerli of [
+      {...item("1","A"),card_status:"blocked"},
+      {...item("1","A"),card_status:null},
+    ]) {
+      const sonuc=await kartPresetYanitiniOku(response([gecerli,item("2","B")]),first);
+      expect(sonuc.sonuc.satirlar.map(s=>s.ad)).toEqual(["A","B"]);
     }
   });
   it("summary yoksa, eksik alanlar ve fazladan anahtarlar kartı düşürmez",async()=>{
@@ -244,19 +251,26 @@ describe("gerçek ikinci preset JSON sözleşmesi",()=>{
     expect(satir.dogrulamaDurumu).toBe("Belirsiz");
     expect(satir.eksikler).toEqual(["Beden belirsiz"]);
   });
-  it("yalnız görsel kaynak adresi verified kanıtı değildir",async()=>{
+  it("resmî sayfa ve kaynak yoksa verified kanıtı sayılmaz; media.source_url varsa sayfa korunur",async()=>{
     const temel=item("1","A ürün");
-    const sonuc=await kartPresetYanitiniOku(response([{
+    const kaynaksiz=await kartPresetYanitiniOku(response([{
+      ...temel,
+      validation:{...temel.validation,official_product_url:null},
+      media:{...temel.media,image_url:"https://cdn.example.com/image.webp",source_url:null},
+    }]),{...first,satirlar:[first.satirlar[0]]});
+    const eksikSatir=kaynaksiz.sonuc.satirlar[0];
+    expect(eksikSatir.siteSayfa).toBe("");
+    expect(eksikSatir.dogrulamaDurumu).toBe("Araştırılamadı");
+    expect(eksikSatir.eksikler).toContain("Doğrulanmış ürün için resmî sayfa kanıtı eksik; doğrulanmış kabul edilmedi.");
+    expect(faturaSatiriniAktar(eksikSatir,"Tedarikçi").sonuc).toBe("eksik");
+
+    const kaynakli=await kartPresetYanitiniOku(response([{
       ...temel,
       validation:{...temel.validation,official_product_url:null},
       media:{...temel.media,image_url:"https://cdn.example.com/image.webp",source_url:"https://example.com/urun"},
     }]),{...first,satirlar:[first.satirlar[0]]});
-    const satir=sonuc.sonuc.satirlar[0];
-    expect(satir.siteSayfa).toBe("https://example.com/urun");
-    expect(satir.dogrulamaDurumu).toBe("Araştırılamadı");
-    expect(satir.eksikler).toContain("Doğrulanmış ürün için resmî sayfa kanıtı eksik; doğrulanmış kabul edilmedi.");
-    const aktarim=faturaSatiriniAktar(satir,"Tedarikçi");
-    expect(aktarim.sonuc).toBe("eksik");
+    expect(kaynakli.sonuc.satirlar[0].siteSayfa).toBe("https://example.com/urun");
+    expect(kaynakli.sonuc.satirlar[0].dogrulamaDurumu).toBe("Doğrulandı");
   });
   it("doğrulanmış resmî sayfa, görselin kaynak sayfasına göre önceliklidir",async()=>{
     const temel=item("1","A ürün");

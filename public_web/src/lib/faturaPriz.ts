@@ -38,6 +38,18 @@ export function geminiPrizAktifMi(): boolean {
   return acikAdres.includes("generativelanguage.googleapis.com");
 }
 
+export function openRouterPrizAdresi(): string {
+  const acikAdres = (process.env.FATURA_PRIZ_URL || "").trim();
+  if (acikAdres && !acikAdres.includes("generativelanguage.googleapis.com")) {
+    return acikAdres;
+  }
+  const temelAdres = (process.env.OPENROUTER_BASE_URL || "").trim().replace(/\/+$/, "");
+  if (temelAdres) {
+    return temelAdres.endsWith("/chat/completions") ? temelAdres : `${temelAdres}/chat/completions`;
+  }
+  return VARSAYILAN_PRIZ_ADRESI;
+}
+
 export function faturaPrizAdresi(): string {
   if (geminiPrizAktifMi()) {
     const acikAdres = (process.env.FATURA_PRIZ_URL || "").trim();
@@ -46,13 +58,7 @@ export function faturaPrizAdresi(): string {
     }
     return `${geminiPrizAdresi()}?key=${geminiPrizAnahtari()}`;
   }
-  const acikAdres = (process.env.FATURA_PRIZ_URL || "").trim();
-  if (acikAdres) return acikAdres;
-  const temelAdres = (process.env.OPENROUTER_BASE_URL || "").trim().replace(/\/+$/, "");
-  if (temelAdres) {
-    return temelAdres.endsWith("/chat/completions") ? temelAdres : `${temelAdres}/chat/completions`;
-  }
-  return VARSAYILAN_PRIZ_ADRESI;
+  return openRouterPrizAdresi();
 }
 
 export function faturaPrizAnahtari(): string {
@@ -364,7 +370,7 @@ function googleFaturaYanitiniCoz(veri: unknown): GoogleFaturaUrunKarti[] {
 
     const tekSatirFallback = hamItems.length === 1 ? kilitliResmiAlanAdiSec(webUrller) : null;
     const tespitEdilenAlan =
-      kilitliResmiAlanAdiSec([temiz.official_domain, temiz.official_product_url]) ?? tekSatirFallback;
+      kilitliResmiAlanAdiSec([temiz.official_product_url, temiz.official_domain]) ?? tekSatirFallback;
 
     let officialProductUrl: string | null = null;
     if (tespitEdilenAlan) {
@@ -383,13 +389,11 @@ function googleFaturaYanitiniCoz(veri: unknown): GoogleFaturaUrunKarti[] {
 
     const hamGorseller = Array.isArray(temiz.image_urls) ? temiz.image_urls : [];
     const tumAdaylar = [...hamGorseller, ...gorselUrller];
-    const imageUrls = tespitEdilenAlan
-      ? gorselAdaylariniSuz({
-          adaylar: tumAdaylar,
-          seciliGorsel: temiz.selected_image_url,
-          tespitEdilenAlan,
-        })
-      : [];
+    const imageUrls = gorselAdaylariniSuz({
+      adaylar: tespitEdilenAlan ? tumAdaylar : hamGorseller,
+      seciliGorsel: temiz.selected_image_url,
+      tespitEdilenAlan,
+    });
 
     const groundingSources = tespitEdilenAlan
       ? webUrller.filter((url) => resmiAlanAdiUygunMu(url, tespitEdilenAlan, { gorsel: false }))

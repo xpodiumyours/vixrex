@@ -393,13 +393,60 @@ function kartBilgisi(kart: KartSozlesmesi, satir: { ad?: string }) {
   };
 }
 
-export async function kartPresetYanitiniOku(cevap: Response, okuma: GoruSonucu, secilenAkis: PresetAkis = akis()) {
-  const { icerik, ...kullanim } = await faturaYanitMetniniOku(cevap);
+function maliyetTopla(degerler: Array<number | null | undefined>): number | null {
+  let toplam = 0;
+  let varMi = false;
+  for (const deger of degerler) {
+    if (typeof deger === "number" && Number.isFinite(deger)) {
+      toplam += deger;
+      varMi = true;
+    }
+  }
+  return varMi ? toplam : null;
+}
+
+export async function kartPresetYanitiniOku(
+  cevap: Response | readonly Response[],
+  okuma: GoruSonucu,
+  secilenAkis: PresetAkis = akis(),
+) {
+  const cevaplar: readonly Response[] = Array.isArray(cevap) ? cevap : [cevap as Response];
+  if (!cevaplar.length) throw new Error("OKUYUCU_EKSIK_CEVAP");
   const yeniAkis = secilenAkis === "yeni";
-  const { govde, kartlar } = await kartYanitiniCoz(icerik, {
-    eskiAkis: !yeniAkis,
-  });
-  const items = new Map(kartlar.map((kart) => [kart.rowId, kart]));
+  const cozumler = await Promise.all(
+    cevaplar.map(async (tekCevap) => {
+      const { icerik, ...kullanim } = await faturaYanitMetniniOku(tekCevap);
+      const { govde, kartlar } = await kartYanitiniCoz(icerik, {
+        eskiAkis: !yeniAkis,
+      });
+      return { govde, kartlar, kullanim };
+    }),
+  );
+  const items = new Map<string, KartSozlesmesi>();
+  for (const cozum of cozumler) {
+    for (const kart of cozum.kartlar) {
+      if (!items.has(kart.rowId)) items.set(kart.rowId, kart);
+    }
+  }
+  const govde = cozumler.length === 1
+    ? cozumler[0].govde
+    : {
+        items: cozumler.flatMap((cozum) =>
+          cozum.govde && typeof cozum.govde === "object" && Array.isArray((cozum.govde as { items?: unknown }).items)
+            ? (cozum.govde as { items: unknown[] }).items
+            : [],
+        ),
+      };
+  const ilkKullanim = cozumler[0].kullanim;
+  const kullanim = {
+    generationId: cozumler.find((c) => c.kullanim.generationId)?.kullanim.generationId ?? ilkKullanim.generationId,
+    model: cozumler.find((c) => c.kullanim.model)?.kullanim.model ?? ilkKullanim.model,
+    maliyet: maliyetTopla(cozumler.map((c) => c.kullanim.maliyet)),
+    gercekMaliyet: maliyetTopla(cozumler.map((c) => c.kullanim.gercekMaliyet)),
+    girdiToken: cozumler.reduce((toplam, c) => toplam + c.kullanim.girdiToken, 0),
+    ciktiToken: cozumler.reduce((toplam, c) => toplam + c.kullanim.ciktiToken, 0),
+    akilToken: cozumler.reduce((toplam, c) => toplam + c.kullanim.akilToken, 0),
+  };
   const kimlikBilgisi = kimlikler(okuma.satirlar);
   const tekrarlar = tekillesmeKarari(okuma.satirlar).indirgenen;
   let eslesen = 0;

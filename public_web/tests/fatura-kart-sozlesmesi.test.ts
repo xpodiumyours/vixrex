@@ -5,7 +5,12 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 beforeEach(() => vi.stubEnv("PRESET_AKIS", "mevcut"));
 afterEach(() => vi.unstubAllEnvs());
 import { kartPresetYanitiniOku } from "@/lib/faturaKartPreset";
-import { KartSozlesmeHatasi, kartSozlesmesineCevir } from "@/lib/faturaKartSozlesmesi";
+import {
+  KartSozlesmeHatasi,
+  kartSozlesmesineCevir,
+  kartYanitiniCoz,
+  tekKartSozlesmesi,
+} from "@/lib/faturaKartSozlesmesi";
 import type { GoruSonucu } from "@/lib/faturaGoru";
 
 const kok = path.resolve(__dirname, "fixtures", "fatura-kart");
@@ -90,4 +95,85 @@ it("okunamayan yanıtta ham cevap hatada saklanır ve kullanıcı mesajı ayrıd
     expect(ozel.hamCevap).toContain("Ürün bulunamadı.");
     expect(String(ozel.cause)).toContain("teknik kayıt");
   }
+});
+
+it("string sources ve null şema alanları güvenli işlenir; geçersiz tip ve boş dizi listesi reddedilir", async () => {
+  const kart = tekKartSozlesmesi({
+    row_id: "1",
+    title: "Test Ürün",
+    validation: { status: "verified", official_domain: "baska.com", matched_attributes: null, unmatched_attributes: null },
+    media: { selected_image_url: "https://cdn.example/ana.jpg", image_urls: null },
+    vixrex_product_json: { title: "Test Ürün", selected_image_url: "https://cdn.example/kart.jpg" },
+    sources: ["https://uretici.example/urun-1", "javascript:alert(1)", { url: "https://uretici.example/ek" }],
+  });
+  expect(kart.resmiSayfa).toBe("https://uretici.example/urun-1");
+  expect(kart.dogrulanmis).toBe(true);
+  expect(kart.kanitEksigi).toBeNull();
+  expect(kart.kaynaklar).toEqual(["https://uretici.example/urun-1", { url: "https://uretici.example/ek" }]);
+  expect(kart.gorselAdaylari).toEqual(["https://cdn.example/ana.jpg", "https://cdn.example/kart.jpg"]);
+
+  const belirsiz = tekKartSozlesmesi({
+    row_id: "2",
+    title: "Belirsiz Ürün",
+    validation: { status: "ambiguous" },
+    sources: ["https://uretici.example/urun-2"],
+  });
+  expect(belirsiz.resmiSayfa).toBe("");
+  expect(belirsiz.dogrulanmis).toBe(false);
+
+  const cozulen = await kartYanitiniCoz(
+    JSON.stringify({
+      items: [
+        {
+          row_id: "1",
+          vixrex_product_json: { title: "Null Alanlı Ürün" },
+          validation: { status: "verified", matched_attributes: null, unmatched_attributes: null },
+          media: { image_urls: null },
+          card_status: null,
+        },
+      ],
+    }),
+  );
+  expect(cozulen.kartlar).toHaveLength(1);
+
+  for (const bozuk of [
+    { row_id: "1", vixrex_product_json: { title: "Bozuk" }, validation: { matched_attributes: "metin" } },
+    { row_id: "1", vixrex_product_json: { title: "Bozuk" }, media: { image_urls: [123] } },
+    { row_id: "1", vixrex_product_json: { title: "Bozuk" }, card_status: 42 },
+  ]) {
+    await expect(kartYanitiniCoz(JSON.stringify({ items: [bozuk] }))).rejects.toThrow("KART_YANITI_COZULEMEDI");
+  }
+});
+
+it("kartPresetYanitiniOku çoklu yanıtları, öğeleri ve kullanım metriklerini birleştirir; boş veya hatalı yanıtı reddeder", async () => {
+  const yanitUret = (items: unknown[], usage: Record<string, unknown>) =>
+    new Response(
+      JSON.stringify({
+        id: "gen-1",
+        model: "test-model",
+        choices: [{ message: { content: JSON.stringify({ items }) }, finish_reason: "stop" }],
+        usage,
+      }),
+      { status: 200, headers: { "content-type": "application/json" } },
+    );
+  const { items } = JSON.parse(dosya("duz-sema.json")) as { items: Array<Record<string, unknown>> };
+  const ilk = yanitUret(items.slice(0, 2), { prompt_tokens: 100, completion_tokens: 50, cost: 0.01 });
+  const ikinci = yanitUret(items.slice(2, 5), { prompt_tokens: 150, completion_tokens: 75, cost: 0.02 });
+
+  const birlesik = await kartPresetYanitiniOku([ilk, ikinci], ilkOkuma, "mevcut");
+  expect(birlesik.sonuc.satirlar).toHaveLength(5);
+  expect((birlesik.kartCevabi as { items: unknown[] }).items).toHaveLength(5);
+  expect(birlesik.kullanim.girdiToken).toBe(250);
+  expect(birlesik.kullanim.ciktiToken).toBe(125);
+  expect(birlesik.kullanim.maliyet).toBeCloseTo(0.03, 6);
+
+  await expect(kartPresetYanitiniOku([], ilkOkuma, "yeni")).rejects.toThrow("OKUYUCU_EKSIK_CEVAP");
+
+  const hatali = new Response(JSON.stringify({ error: { code: 404 } }), {
+    status: 404,
+    headers: { "content-type": "application/json" },
+  });
+  await expect(
+    kartPresetYanitiniOku([yanitUret(items.slice(0, 2), { prompt_tokens: 10, completion_tokens: 5 }), hatali], ilkOkuma, "yeni"),
+  ).rejects.toThrow("OKUYUCU_MODEL_BULUNAMADI");
 });

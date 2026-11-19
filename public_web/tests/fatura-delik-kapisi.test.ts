@@ -91,15 +91,17 @@ describe("kartın kaynak kaydı", () => {
     ...ek,
   });
 
-  it("kaynak kaydı yoksa kart doğrulanmış sayılmaz", () => {
+  it("kaynak kaydı yoksa bile doğrulanmış sayfa adresi varsa kart doğrulanmış kalır; kaynakDenetimi ayrı uyarır", () => {
     expect(kaynakDenetimi({ resmiSayfa: "https://sehermensucat.com/urun", kaynaklar: [] })?.kod).toBe("KAYNAK_KAYDI_YOK");
-    expect(tekKartSozlesmesi(kart()).dogrulanmis).toBe(false);
+    expect(tekKartSozlesmesi(kart()).dogrulanmis).toBe(true);
+    expect(tekKartSozlesmesi(kart()).kanitEksigi).toBeNull();
   });
 
-  it("başka sayfayı gösteren kaynak kanıt sayılmaz", () => {
+  it("başka sayfayı gösteren kaynakDenetimi uyarısı sürer; kart görselleri ve doğrulaması korunur", () => {
     const yanlis = [{ url: "https://sehermensucat.com/baska-urun" }];
     expect(kaynakDenetimi({ resmiSayfa: "https://sehermensucat.com/urun", kaynaklar: yanlis })?.kod).toBe("KAYNAK_UYUSMUYOR");
-    expect(tekKartSozlesmesi(kart({ sources: yanlis })).dogrulanmis).toBe(false);
+    expect(tekKartSozlesmesi(kart({ sources: yanlis })).dogrulanmis).toBe(true);
+    expect(tekKartSozlesmesi(kart({ sources: yanlis })).kanitEksigi).toBeNull();
   });
 
   it("açılan sayfanın kaydı varsa doğrulanmış sayılır", () => {
@@ -107,7 +109,7 @@ describe("kartın kaynak kaydı", () => {
     expect(tekKartSozlesmesi(kart({ sources: dogru })).dogrulanmis).toBe(true);
   });
 
-  it("resmî ürün sayfasının alan adı official_domain ile uyuşmazsa doğrulanmış sayılmaz", () => {
+  it("resmî ürün sayfasının alan adı official_domain ile uyuşmasa da kart kanitEksigi üretmez", () => {
     const dogru = [{ url: "https://baskaalan.com/urun" }];
     expect(kaynakDenetimi({
       resmiSayfa: "https://baskaalan.com/urun", kaynaklar: dogru, officialDomain: "sehermensucat.com",
@@ -117,8 +119,8 @@ describe("kartın kaynak kaydı", () => {
         official_product_url: "https://baskaalan.com/urun", matched_attributes: [], unmatched_attributes: [] },
       sources: dogru,
     });
-    expect(tekKartSozlesmesi(baska).dogrulanmis).toBe(false);
-    expect(tekKartSozlesmesi(baska).kanitEksigi?.kod).toBe("ALAN_ADI_UYUSMUYOR");
+    expect(tekKartSozlesmesi(baska).dogrulanmis).toBe(true);
+    expect(tekKartSozlesmesi(baska).kanitEksigi).toBeNull();
   });
 
   it("alt alan adı ve www farkı alan adı uyuşmazlığı sayılmaz", () => {

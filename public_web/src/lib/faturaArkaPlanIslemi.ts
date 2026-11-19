@@ -2,8 +2,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { faturaIstekGovdesi, faturaYanitiniOku, type GoruSonucu } from "@/lib/faturaGoru";
 import {
   faturaPrizAnahtari,
+  faturaPrizZamanSiniri,
   geminiPrizAktifMi,
   googleFaturaUrunKartlariUret,
+  openRouterPrizAdresi,
   openRouterPrizAnahtari,
 } from "@/lib/faturaPriz";
 import { faturaSatiriniAktar } from "@/lib/faturaPresetAktarimi";
@@ -12,6 +14,7 @@ import { islemiYukle } from "@/lib/faturaIslemOku";
 import { faturaTaslakYanitiniHazirla } from "@/lib/faturaOtomatikTaslakKaydi";
 import {
   akis,
+  kartPresetIstekGovdeleri,
   kartPresetIstekGovdesi,
   kartPresetYanitiniOku,
   URUN_KART_PRESET,
@@ -166,15 +169,71 @@ export async function arkaPlanFaturaSonucunuAl(
       okuma = await faturaYanitiniOku(cevap);
       if (!okuma.satirlar.length) throw new Error("FOTOGRAFTA_YAZI_YOK");
       islemAkisi = akis();
-      const ikinci = await admin.rpc("advance_invoice_provider_job", {
-        p_store_id: storeId,
-        p_job_id: islemKimligi,
-        p_read_result: { ...okuma, presetAkis: islemAkisi },
-        p_body: kartPresetIstekGovdesi(okuma, islemAkisi),
-        p_api_key: openRouterPrizAnahtari() || faturaPrizAnahtari(),
-      });
-      if (ikinci.error || ikinci.data?.success !== true) throw new Error("KART_ISLEYICI_HAZIR_DEGIL");
-      return bekleyenFaturaYaniti(islemKimligi, "kartlaniyor");
+      const govdeler = kartPresetIstekGovdeleri(okuma, islemAkisi);
+      if (govdeler.length <= 1) {
+        const ikinci = await admin.rpc("advance_invoice_provider_job", {
+          p_store_id: storeId,
+          p_job_id: islemKimligi,
+          p_read_result: { ...okuma, presetAkis: islemAkisi },
+          p_body: kartPresetIstekGovdesi(okuma, islemAkisi),
+          p_api_key: openRouterPrizAnahtari() || faturaPrizAnahtari(),
+        });
+        if (ikinci.error || ikinci.data?.success !== true) throw new Error("KART_ISLEYICI_HAZIR_DEGIL");
+        return bekleyenFaturaYaniti(islemKimligi, "kartlaniyor");
+      } else {
+        const { data: kilit, error: kilitHatasi } = await admin
+          .from("invoice_provider_runs")
+          .update({
+            stage: "cards",
+            state: "queued",
+            request_id: null,
+            read_result: { ...okuma, presetAkis: islemAkisi },
+            created_at: new Date().toISOString(),
+            error_code: null,
+            finished_at: null,
+          })
+          .eq("job_id", islemKimligi)
+          .eq("store_id", storeId)
+          .eq("stage", "reading")
+          .eq("state", "received")
+          .select("job_id")
+          .maybeSingle();
+        if (kilitHatasi || !kilit) return bekleyenFaturaYaniti(islemKimligi, "kartlaniyor");
+        const kartAnahtari = openRouterPrizAnahtari() || faturaPrizAnahtari();
+        if (!kartAnahtari) throw new Error("OKUYUCU_HAZIR_DEGIL");
+        const cevaplar = await Promise.all(
+          govdeler.map((govde) =>
+            fetch(openRouterPrizAdresi(), {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + kartAnahtari,
+                "HTTP-Referer": "https://vixrex.com",
+                "X-Title": "Vixrex Fatura",
+              },
+              body: JSON.stringify(govde),
+              signal: AbortSignal.timeout(faturaPrizZamanSiniri()),
+            }),
+          ),
+        );
+        const kart = await kartPresetYanitiniOku(cevaplar, okuma, islemAkisi);
+        const okumaKullanim = {
+          gercekMaliyet: okuma.gercekMaliyet,
+          girdiToken: okuma.girdiToken,
+          ciktiToken: okuma.ciktiToken,
+          akilToken: okuma.akilToken,
+        };
+        okuma = kart.sonuc;
+        kartCevabi = kart.kartCevabi;
+        asamaKullanimlari = { okuma: okumaKullanim, kart: kart.kullanim };
+        await admin
+          .from("invoice_provider_runs")
+          .update({ state: "received" })
+          .eq("job_id", islemKimligi)
+          .eq("store_id", storeId)
+          .eq("stage", "cards")
+          .eq("state", "queued");
+      }
     } else if (sonuc.stage === "cards") {
       const ilkOkuma = sonuc.readResult as (GoruSonucu & { presetAkis?: unknown }) | null;
       if (!ilkOkuma || !Array.isArray(ilkOkuma.satirlar) || !ilkOkuma.satirlar.length) {

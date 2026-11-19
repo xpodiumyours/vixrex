@@ -96,4 +96,120 @@ describe("tamamlanmış arka plan sonucunun gerçek taşıma yolu",()=>{
  it("kalıcı kayıt geçici başarısızsa alınmış yanıt silinmez ve yeni model çağrısı yapılmaz",async()=>{m.save.mockResolvedValue(null);const {admin,rpc}=client(receipt(kartCevabi));await expect(arkaPlanFaturaSonucunuAl(admin,"store","deneme",job)).rejects.toThrow("FATURA_KAYDI_EKSIK");expect(rpc.mock.calls.map(v=>v[0])).toEqual(["get_invoice_provider_response"]);});
  it("kaydı alınmış iş için yeniden işlenmez",async()=>{const {admin}=client({state:"processed"});m.load.mockResolvedValue({satirlar:[{hamSatir:"1",ad:"Ürün",model:"1",barkod:"",varyant:"",beden:"",adet:1,alisBirimFiyat:0,guven:1,sonuc:"eksik",katalog:null}]});expect((await arkaPlanFaturaSonucunuAl(admin,"store","deneme",job)).tamam).toBe(true);expect(m.save).not.toHaveBeenCalled();});
  it("mağazaya ait kayıt yoksa sonuç vermez",async()=>{const {admin,rpc}=client(null);await expect(arkaPlanFaturaSonucunuAl(admin,"other-store","deneme",job)).rejects.toThrow("FATURA_ISLEMI_BULUNAMADI");expect(rpc).toHaveBeenCalledWith("get_invoice_provider_response",{p_store_id:"other-store",p_job_id:job});expect(m.save).not.toHaveBeenCalled();});
+
+ describe("çok parçalı kart isteğinde atomik CAS kilidi ve paralel fetch", () => {
+  const cokluOkuma = (adet: number) =>
+    JSON.stringify({
+      tedarikci: "Tedarikçi",
+      satirlar: Array.from({ length: adet }, (_, i) => ({
+        ...line,
+        satir_no: i + 1,
+        model: `K-${i + 1}`,
+        ad: `Ürün ${i + 1}`,
+        ham_satir: `K-${i + 1}`,
+      })),
+    });
+
+  function casClient(receiptData: unknown, lockData: unknown) {
+    const rpc = vi.fn(async () => ({ data: receiptData, error: null }));
+    const guncellemeler: Array<Record<string, unknown>> = [];
+    const zincir = (payload: Record<string, unknown>) => {
+      const api = {
+        eq: () => api,
+        select: () => ({ maybeSingle: async () => ({ data: lockData, error: null }) }),
+        then: (resolve: (v: { error: null }) => void) => {
+          void payload;
+          resolve({ error: null });
+        },
+      };
+      return api;
+    };
+    const from = vi.fn(() => ({
+      update: (payload: Record<string, unknown>) => {
+        guncellemeler.push(payload);
+        return zincir(payload);
+      },
+    }));
+    return { admin: { rpc, from } as unknown as SupabaseClient, rpc, from, guncellemeler };
+  }
+
+  it("7 satırlı faturada CAS kilidi alıp paralel fetch ile tüm parçaları tek seferde kaydeder", async () => {
+    vi.stubEnv("PRESET_AKIS", "yeni");
+    vi.stubEnv("OPENROUTER_API_KEY", "sk-or-test-key");
+    const fetchMock = vi.fn(async (_url: unknown, init?: RequestInit) => {
+      const reqBody = JSON.parse(String(init?.body ?? "{}")) as {
+        messages: Array<{ content: string }>;
+      };
+      const payload = JSON.parse(reqBody.messages[0].content.slice(reqBody.messages[0].content.lastIndexOf("\n") + 1)) as {
+        groups: Array<{ rows: Array<{ row_id: string }> }>;
+      };
+      const items = payload.groups.flatMap((g) => g.rows).map((r) => ({ ...kartItem, row_id: r.row_id }));
+      return new Response(
+        JSON.stringify({
+          choices: [{ message: { content: JSON.stringify({ items }) }, finish_reason: "stop" }],
+          usage: { prompt_tokens: 50, completion_tokens: 25, cost: 0.01 },
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      );
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { admin, rpc, guncellemeler } = casClient(
+      receipt(cokluOkuma(7), { stage: "reading", readResult: null }),
+      { job_id: job },
+    );
+    m.load.mockImplementation(async () => ({ islemKimligi: job, satirlar: m.save.mock.calls[0]?.[0].satirlar ?? [] }));
+
+    const data = await arkaPlanFaturaSonucunuAl(admin, "store", "deneme", job);
+    expect(data.tamam).toBe(true);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(guncellemeler[0]).toMatchObject({ stage: "cards", state: "queued" });
+    expect(guncellemeler[1]).toEqual({ state: "received" });
+    expect(m.save).toHaveBeenCalledTimes(1);
+    expect(m.save.mock.calls[0][0].satirlar).toHaveLength(7);
+    expect(rpc).not.toHaveBeenCalledWith("advance_invoice_provider_job", expect.anything());
+    vi.unstubAllGlobals();
+  });
+
+  it("CAS kilidi alınamazsa fetch veya kayıt yapmadan kartlaniyor döner", async () => {
+    vi.stubEnv("PRESET_AKIS", "yeni");
+    vi.stubEnv("OPENROUTER_API_KEY", "sk-or-test-key");
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const { admin } = casClient(receipt(cokluOkuma(7), { stage: "reading", readResult: null }), null);
+
+    const data = await arkaPlanFaturaSonucunuAl(admin, "store", "deneme", job);
+    expect(data).toMatchObject({ hazirlaniyor: true, asama: "kartlaniyor", islemKimligi: job });
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(m.save).not.toHaveBeenCalled();
+    vi.unstubAllGlobals();
+  });
+
+  it("çok parçalı yolda anahtar yoksa veya fetch hata verirse işi fail eder", async () => {
+    vi.stubEnv("PRESET_AKIS", "yeni");
+    vi.stubEnv("OPENROUTER_API_KEY", "");
+    vi.stubEnv("FATURA_PRIZ_API_KEY", "");
+    vi.stubEnv("GEMINI_API_KEY", "");
+    vi.stubEnv("GOOGLE_API_KEY", "");
+    const { admin: noKeyAdmin, rpc: noKeyRpc } = casClient(
+      receipt(cokluOkuma(7), { stage: "reading", readResult: null }),
+      { job_id: job },
+    );
+    await expect(arkaPlanFaturaSonucunuAl(noKeyAdmin, "store", "deneme", job)).rejects.toThrow("OKUYUCU_HAZIR_DEGIL");
+    expect(noKeyRpc).toHaveBeenCalledWith("fail_invoice_provider_job", expect.objectContaining({ p_error: "OKUYUCU_HAZIR_DEGIL" }));
+
+    vi.stubEnv("OPENROUTER_API_KEY", "sk-or-test-key");
+    vi.stubGlobal("fetch", vi.fn(async () => {
+      throw new Error("network down");
+    }));
+    const { admin: netAdmin, rpc: netRpc } = casClient(
+      receipt(cokluOkuma(7), { stage: "reading", readResult: null }),
+      { job_id: job },
+    );
+    await expect(arkaPlanFaturaSonucunuAl(netAdmin, "store", "deneme", job)).rejects.toThrow("OKUYUCU_CEVAP_VERMEDI");
+    expect(netRpc).toHaveBeenCalledWith("fail_invoice_provider_job", expect.objectContaining({ p_error: "OKUYUCU_CEVAP_VERMEDI" }));
+    expect(m.save).not.toHaveBeenCalled();
+    vi.unstubAllGlobals();
+  });
+ });
 });
