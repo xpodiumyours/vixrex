@@ -65,8 +65,11 @@ export async function faturayiArkaPlanaGonder(
             marka: kart.brand ?? "",
             adet: kart.quantity,
             birim: kart.unit ?? "",
-            birimFiyat: null,
-            tutar: null,
+            birimFiyat: kart.unit_price,
+            tutar:
+              kart.unit_price !== null && kart.quantity !== null && Number.isFinite(kart.quantity)
+                ? Number((kart.unit_price * kart.quantity).toFixed(2))
+                : null,
             okumaGuveni: 1,
             dogrulamaDurumu: kart.official_product_url ? "Doğrulandı" : "Araştırılamadı",
             siteGorsel: kart.image_urls[0] ?? "",

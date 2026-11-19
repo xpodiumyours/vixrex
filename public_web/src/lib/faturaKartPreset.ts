@@ -93,9 +93,7 @@ function satiriTasi(s: GoruSonucu["satirlar"][number], i: number, secilenAkis: P
     ...(yeniAkis ? {} : { raw_invoice_line: s.hamSatir }),
     brand: s.marka, name: s.ad, code: s.model, barcode: barkodKimligi(s.barkod),
     variant: s.varyant, size: s.beden, net_quantity: s.gramaj,
-    invoice_data: yeniAkis
-      ? { quantity: s.adet, unit: s.birim }
-      : { quantity: s.adet, unit: s.birim, unit_price: s.birimFiyat, total_amount: s.tutar },
+    invoice_data: { quantity: s.adet, unit: s.birim, unit_price: s.birimFiyat, total_amount: s.tutar },
     ...(yeniAkis
       ? {}
       : {

@@ -58,7 +58,7 @@ describe("depodaki OpenRouter preset tanımı ↔ Vixrex taşıma sözleşmesi",
       "barcode", "variant", "size", "net_quantity", "invoice_data",
     ].sort());
     expect(ilk).not.toHaveProperty("raw_invoice_line");
-    expect(ilk.invoice_data).toEqual({ quantity: 2, unit: "adet" });
+    expect(ilk.invoice_data).toEqual({ quantity: 2, unit: "adet", unit_price: 15, total_amount: 30 });
     for (const alan of Object.keys(ilk)) expect(sistem(kart)).toContain(alan);
     expect(sistem(kart)).toContain("invoice_data yalnız quantity ve unit içerir");
     expect(sistem(kart)).not.toContain("row_id, satir_no, raw_invoice_line");
@@ -122,27 +122,34 @@ describe("depodaki OpenRouter preset tanımı ↔ Vixrex taşıma sözleşmesi",
     expect(sistem(kart)).toContain("web_fetch");
   });
 
-  it("faturadaki alış fiyatı ve tutar dışarı çıkmaz; miktar, barkod ve satır sırası korunur", () => {
+  it("yeni akista raw_invoice_line gizlenir; unit_price ve total_amount kar marji verisi olarak tasinir", () => {
     const istek = kartPresetIstekGovdesi(ilkSonuc, "yeni");
     const content = (istek.messages as Array<{content:string}>)[0].content;
     const veri = JSON.parse(content.slice(content.lastIndexOf("\n") + 1)) as { groups: Array<{rows: Json[]}> };
     const satirlar = veri.groups.flatMap((g) => g.rows);
     expect(satirlar[0]).toMatchObject({
       row_id: "1", barcode: "111", variant: "Siyah", size: "4",
-      invoice_data: { quantity: 2, unit: "adet" },
+      invoice_data: { quantity: 2, unit: "adet", unit_price: 15, total_amount: 30 },
     });
     expect(satirlar[1]).toMatchObject({
       row_id: "2", barcode: "222", net_quantity: "400 g",
-      invoice_data: { quantity: 3, unit: "adet" },
+      invoice_data: { quantity: 3, unit: "adet", unit_price: 12, total_amount: 36 },
     });
     for (const satir of satirlar) {
       expect(satir).not.toHaveProperty("raw_invoice_line");
-      expect(satir.invoice_data).not.toHaveProperty("unit_price");
-      expect(satir.invoice_data).not.toHaveProperty("total_amount");
     }
     expect(content).not.toContain("Satış fiyatı: 15");
-    expect(content).not.toContain("unit_price");
-    expect(content).not.toContain("total_amount");
+
+    const fiyatsizIstek = kartPresetIstekGovdesi(
+      {
+        ...ilkSonuc,
+        satirlar: [{ ...ilkSonuc.satirlar[0], birimFiyat: null, tutar: null }],
+      },
+      "yeni",
+    );
+    const fiyatsizSatir = govdeVerisi(fiyatsizIstek).groups[0].rows[0];
+    expect(fiyatsizSatir).not.toHaveProperty("raw_invoice_line");
+    expect(fiyatsizSatir.invoice_data).toEqual({ quantity: 2, unit: "adet", unit_price: null, total_amount: null });
   });
 
   it("geri dönüş yolunda ham satır ve alış fiyatı gövdede kalır", () => {

@@ -132,56 +132,58 @@ describe("VixRex Türkiye Üretici Gerçekliği & Boş Kart Yok Sözleşmesi", (
     );
   });
 
-  it("Boş Kart Yok: doğrulanmış ürün sayfası varsa image_urls=[] dönse bile sayfadan ana görsel kurtarılır", async () => {
+  it("Saf platform prizi: doğrulanmış ürün sayfasında grounding görseli ek HTML kazıma yapmadan karta taşınır", async () => {
     const fetcher = vi.fn(async (url: string, init?: RequestInit) => {
-      if (url.includes("generativelanguage.googleapis.com")) {
-        const body = String(init?.body ?? "");
-        expect(body).toContain("SLM=Slim Fit");
-        expect(body).not.toContain("1234567890");
-        return {
-          ok: true,
-          json: async () => ({
-            candidates: [
-              {
-                content: {
-                  parts: [
-                    {
-                      text: JSON.stringify({
-                        items: [
-                          {
-                            row_id: "1",
-                            title: "Mavi Jake Slim Fit Siyah Jean Pantolon",
-                            brand: "Mavi",
-                            model: "0042228479",
-                            barcode: "8684245011223",
-                            variant: "SYH",
-                            size: "32/32",
-                            quantity: 4,
-                            unit: "adet",
-                            category: "Pantolon",
-                            short_description: "Dar kesim siyah denim pantolon",
-                            official_domain: "mavi.com",
-                            official_product_url: "https://www.mavi.com/jake-siyah-jean-p-004222",
-                            selected_image_url: null,
-                            image_urls: [],
-                          },
-                        ],
-                      }),
-                    },
-                  ],
-                },
+      expect(url).toContain("generativelanguage.googleapis.com");
+      const body = String(init?.body ?? "");
+      expect(body).toContain("SLM=Slim Fit");
+      expect(body).not.toContain("1234567890");
+      return {
+        ok: true,
+        json: async () => ({
+          candidates: [
+            {
+              content: {
+                parts: [
+                  {
+                    text: JSON.stringify({
+                      items: [
+                        {
+                          row_id: "1",
+                          title: "Mavi Jake Slim Fit Siyah Jean Pantolon",
+                          brand: "Mavi",
+                          model: "0042228479",
+                          barcode: "8684245011223",
+                          variant: "SYH",
+                          size: "32/32",
+                          quantity: 4,
+                          unit: "adet",
+                          unit_price: 450,
+                          category: "Pantolon",
+                          short_description: "Dar kesim siyah denim pantolon",
+                          official_domain: "mavi.com",
+                          official_product_url: "https://www.mavi.com/jake-siyah-jean-p-004222",
+                          selected_image_url: null,
+                          image_urls: [],
+                        },
+                      ],
+                    }),
+                  },
+                ],
               },
-            ],
-          }),
-        };
-      }
-      return new Response(
-        '<html><head><meta property="og:image" content="https://img-mavi.akinoncdn.com/products/2025/02/jake-siyah-manken.jpg"/></head></html>',
-        { status: 200, headers: { "content-type": "text/html" } },
-      );
+              groundingMetadata: {
+                groundingChunks: [
+                  { image: { imageUri: "https://img-mavi.akinoncdn.com/products/2025/02/jake-siyah-manken.jpg" } },
+                ],
+              },
+            },
+          ],
+        }),
+      };
     }) as unknown as typeof fetch;
 
     const kartlar = await googleFaturaUrunKartlariUret("data:image/png;base64,iVBORw0KGgo=", fetcher);
+    expect(fetcher).toHaveBeenCalledTimes(1);
     expect(kartlar).toHaveLength(1);
     expect(kartlar[0].official_product_url).toBe("https://www.mavi.com/jake-siyah-jean-p-004222");
     expect(kartlar[0].selected_image_url).toBe("https://img-mavi.akinoncdn.com/products/2025/02/jake-siyah-manken.jpg");

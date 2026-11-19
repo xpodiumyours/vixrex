@@ -9,6 +9,7 @@ vi.mock("@/lib/faturaIslemOku", async (original) => ({
 vi.mock("@/lib/faturaUrunBaglantisi", () => ({ faturaUrununuKaydet: m.save, satiriDogrula: m.row }));
 vi.mock("@/lib/faturaUrunHazirlama", () => ({ kayitliFaturaKatalogunuUygula: m.catalog, faturaUrunGorselleriniAktar: m.media }));
 import { faturaTaslakYanitiniHazirla } from "@/lib/faturaOtomatikTaslakKaydi";
+import { faturaOzetiniKaydet } from "@/lib/faturaOzeti";
 
 const jobId = "11111111-1111-4111-8111-111111111111";
 const owner = (price = ""): SahipDurumu => ({
@@ -249,5 +250,108 @@ describe("sunucuda kalıcı görünmez fatura taslağı", () => {
     const c = client();
     const reply = await faturaTaslakYanitiniHazirla(c.admin, "other-store", "demo", c.kayit);
     expect(m.save).not.toHaveBeenCalled(); expect(reply.taslakKayitUyarisi).toContain("doğrulanamadı");
+  });
+
+  it("donmuş süre telemetrisi: tamamlanmış fatura saatler sonra açıldığında 82 sn korunur ve üzerine yazılmaz", async () => {
+    const donmusOzet = `Fatura ${jobId} → 1 satır → 1 kart → 1 görselli → 82 sn → hata: yok`;
+    const kayit = invoice();
+    kayit.satirlar[0].urunId = "published-1";
+    kayit.aramaDurumu = { presetCevabi: { gruplar: [] }, ozetSatiri: donmusOzet } as KayitliIslem["aramaDurumu"];
+    const jobUpdate = vi.fn();
+    const admin = {
+      from: vi.fn((table: string) => {
+        const q = {
+          select: () => q,
+          eq: () => q,
+          in: () => q,
+          update: (val: Record<string, unknown>) => {
+            if (table === "invoice_jobs") jobUpdate(val);
+            return q;
+          },
+          maybeSingle: async () => ({
+            data: table === "invoice_jobs"
+              ? {
+                  same_purchase_of: null,
+                  created_at: new Date(Date.now() - 12_638_000).toISOString(),
+                  discovery_state: { ozetSatiri: donmusOzet },
+                }
+              : null,
+            error: null,
+          }),
+          then: (resolve: (value: unknown) => unknown) =>
+            Promise.resolve(
+              resolve({
+                data: table === "products"
+                  ? [{ id: "published-1", is_visible: true, fatura_kanit: {}, image_urls: ["https://cdn.example.com/a.jpg"] }]
+                  : null,
+                error: null,
+              }),
+            ),
+        };
+        return q;
+      }),
+    } as unknown as SupabaseClient;
+
+    const reply = await faturaTaslakYanitiniHazirla(admin, "store", "demo", kayit);
+    expect(reply.ozetSatiri).toBe(donmusOzet);
+    expect(jobUpdate).not.toHaveBeenCalled();
+
+    const saklanan = await faturaOzetiniKaydet(
+      admin,
+      "store",
+      jobId,
+      `Fatura ${jobId} → 1 satır → 1 kart → 1 görselli → 12638 sn → hata: yok`,
+    );
+    expect(saklanan).toBe(donmusOzet);
+    expect(jobUpdate).not.toHaveBeenCalled();
+
+    const hataliSaklanan = await faturaOzetiniKaydet(
+      admin,
+      "store",
+      jobId,
+      `Fatura ${jobId} → 1 satır → 0 kart → 0 görselli → 95 sn → hata: FATURA_TASLAKLARI_EKSIK`,
+    );
+    expect(hataliSaklanan).toContain("hata: FATURA_TASLAKLARI_EKSIK");
+    expect(jobUpdate).toHaveBeenCalledTimes(1);
+  });
+
+  it("tumEksik sıfır ve presetCevabi varken mevcut ozetSatiri yoksa da süreyi yeniden hesaplamaz", async () => {
+    const kayit = invoice();
+    kayit.satirlar[0].urunId = "published-2";
+    kayit.aramaDurumu = { presetCevabi: { gruplar: [] } };
+    const jobUpdate = vi.fn();
+    const admin = {
+      from: vi.fn((table: string) => {
+        const q = {
+          select: () => q,
+          eq: () => q,
+          in: () => q,
+          update: (val: Record<string, unknown>) => {
+            if (table === "invoice_jobs") jobUpdate(val);
+            return q;
+          },
+          maybeSingle: async () => ({
+            data: table === "invoice_jobs"
+              ? { same_purchase_of: null, created_at: new Date(Date.now() - 12_638_000).toISOString(), discovery_state: {} }
+              : null,
+            error: null,
+          }),
+          then: (resolve: (value: unknown) => unknown) =>
+            Promise.resolve(
+              resolve({
+                data: table === "products"
+                  ? [{ id: "published-2", is_visible: true, fatura_kanit: {}, image_urls: ["https://cdn.example.com/a.jpg"] }]
+                  : null,
+                error: null,
+              }),
+            ),
+        };
+        return q;
+      }),
+    } as unknown as SupabaseClient;
+
+    const reply = await faturaTaslakYanitiniHazirla(admin, "store", "demo", kayit);
+    expect(reply).not.toHaveProperty("ozetSatiri");
+    expect(jobUpdate).not.toHaveBeenCalled();
   });
 });

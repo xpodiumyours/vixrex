@@ -183,20 +183,6 @@ const HASSAS_ALAN_ANAHTARLARI = new Set([
   "tedarikcivergino",
   "suppliertaxid",
   "supplier_tax_id",
-  "alisfiyati",
-  "alis_fiyati",
-  "alisbirimfiyat",
-  "alisbirimfiyati",
-  "unitprice",
-  "unit_price",
-  "purchaseprice",
-  "purchase_price",
-  "purchasepriceamount",
-  "purchase_price_amount",
-  "toptanfiyat",
-  "toptan_fiyat",
-  "wholesaleprice",
-  "wholesale_price",
   "iskonto",
   "discount",
   "faturano",
@@ -209,7 +195,6 @@ export function kural32MetinTemizle(metin: string): string {
   if (!metin) return "";
   return metin
     .replace(/\b\d{10,11}\b/g, "")
-    .replace(/(?:alış|toptan|maliyet|birim\s*fiyat|unit\s*price|purchase\s*price)[^,\n;]*/gi, "")
     .replace(/\s+/g, " ")
     .trim();
 }

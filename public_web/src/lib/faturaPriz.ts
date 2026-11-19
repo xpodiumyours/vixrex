@@ -8,9 +8,7 @@ import {
   kilitliResmiAlanAdiSec,
   kural32MetinTemizle,
   kural32NesneTemizle,
-  pazaryeriVeyaAraciMi,
   resmiAlanAdiUygunMu,
-  resmiSayfadanGorselleriTamamla,
   TURKIYE_FATURA_KISALTMA_TALIMATI,
 } from "@/lib/faturaUrunHazirlama";
 
@@ -224,6 +222,7 @@ export interface GoogleFaturaUrunKarti {
   size: string | null;
   quantity: number | null;
   unit: string | null;
+  unit_price: number | null;
   category: string | null;
   short_description: string | null;
   official_domain: string | null;
@@ -253,6 +252,7 @@ export const GOOGLE_FATURA_URUN_KARTI_SEMASI = {
           "size",
           "quantity",
           "unit",
+          "unit_price",
           "category",
           "short_description",
           "official_domain",
@@ -270,6 +270,7 @@ export const GOOGLE_FATURA_URUN_KARTI_SEMASI = {
           size: { type: ["string", "null"] },
           quantity: { type: ["number", "null"] },
           unit: { type: ["string", "null"] },
+          unit_price: { type: ["number", "null"] },
           category: { type: ["string", "null"] },
           short_description: { type: ["string", "null"] },
           official_domain: { type: ["string", "null"] },
@@ -288,7 +289,8 @@ export const GOOGLE_FATURA_URUN_KARTI_SEMASI = {
 const GOOGLE_FATURA_URUN_KARTI_ISTEMI = [
   "Fatura görsellerindeki satılabilir ürün kalemlerini çıkar ve her ürün için Google Search ve urlContext kullanarak resmî üretici/marka ürün kartını tek seferde oluştur.",
   TURKIYE_FATURA_KISALTMA_TALIMATI,
-  "Toptancı VKN/TCKN, ETTN, fatura numarası, iskonto, birim alış fiyatı ve satır tutarı gibi ticari/mali bilgileri kesinlikle yok say ve çıktıda yer verme.",
+  "Üretici/toptancı ve esnaf VKN/TCKN, IBAN, adres, cari kodu, ETTN, fatura numarası, seri, saat, özel iskonto ve vade/çek/dipnot gibi ticari sırları kesinlikle yok say ve çıktıda yer verme.",
+  "Ürünün birim alış fiyatını faturadan kâr marjı verisi olarak okuyup sayısal değerle unit_price alanına yaz (okunamazsa null döndür); alış fiyatını short_description veya title alanlarına yazma.",
   "Trendyol, Hepsiburada, N11, Amazon, Çiçeksepeti, PttAVM, Akakçe, Cimri, Epey, Sahibinden gibi pazaryeri veya aracı siteleri kesinlikle kullanma; yalnızca resmî üretici/marka alan adını (official_domain), resmî ürün sayfasını (official_product_url), birincil görseli (selected_image_url) ve resmî ürün/CDN görsellerini (image_urls) döndür.",
   "Doğrulanmış bir resmî ürün sayfası bulunamazsa tahmin yürütme; official_domain, official_product_url ve selected_image_url alanlarını null, image_urls alanını [] döndür.",
 ].join("\n");
@@ -326,10 +328,7 @@ function googleJsonMetniniCoz(ham: string): Record<string, unknown> | null {
   return null;
 }
 
-function googleFaturaYanitiniCoz(veri: unknown): Array<{
-  kart: GoogleFaturaUrunKarti;
-  hamGorseller: unknown[];
-}> {
+function googleFaturaYanitiniCoz(veri: unknown): GoogleFaturaUrunKarti[] {
   if (!veri || typeof veri !== "object") return [];
   const adaylar = (veri as { candidates?: unknown }).candidates;
   if (!Array.isArray(adaylar) || !adaylar.length) return [];
@@ -355,7 +354,7 @@ function googleFaturaYanitiniCoz(veri: unknown): Array<{
   if (!hamItems.length) return [];
 
   const { webUrller, gorselUrller } = geminiGroundingBilgileriniCikar(adayKaydi);
-  const kartlar: Array<{ kart: GoogleFaturaUrunKarti; hamGorseller: unknown[] }> = [];
+  const kartlar: GoogleFaturaUrunKarti[] = [];
 
   hamItems.forEach((hamItem, sira) => {
     if (!hamItem || typeof hamItem !== "object" || Array.isArray(hamItem)) return;
@@ -402,28 +401,29 @@ function googleFaturaYanitiniCoz(veri: unknown): Array<{
     const aciklama = aciklamayaFaturaRengiEkle(hamAciklama, faturaRengi);
 
     kartlar.push({
-      hamGorseller: tumAdaylar,
-      kart: {
-        row_id: metinVeyaNull(temiz.row_id) ?? String(sira + 1),
-        title,
-        brand: temizMetinVeyaNull(temiz.brand),
-        model: temizMetinVeyaNull(temiz.model),
-        barcode: metinVeyaNull(temiz.barcode),
-        variant,
-        size: temizMetinVeyaNull(temiz.size),
-        quantity:
-          typeof temiz.quantity === "number" && Number.isFinite(temiz.quantity)
-            ? temiz.quantity
-            : null,
-        unit: temizMetinVeyaNull(temiz.unit),
-        category: temizMetinVeyaNull(temiz.category),
-        short_description: aciklama ? aciklama : null,
-        official_domain: officialDomain,
-        official_product_url: officialProductUrl,
-        selected_image_url: imageUrls[0] ?? null,
-        image_urls: imageUrls,
-        grounding_sources: groundingSources,
-      },
+      row_id: metinVeyaNull(temiz.row_id) ?? String(sira + 1),
+      title,
+      brand: temizMetinVeyaNull(temiz.brand),
+      model: temizMetinVeyaNull(temiz.model),
+      barcode: metinVeyaNull(temiz.barcode),
+      variant,
+      size: temizMetinVeyaNull(temiz.size),
+      quantity:
+        typeof temiz.quantity === "number" && Number.isFinite(temiz.quantity)
+          ? temiz.quantity
+          : null,
+      unit: temizMetinVeyaNull(temiz.unit),
+      unit_price:
+        typeof temiz.unit_price === "number" && Number.isFinite(temiz.unit_price) && temiz.unit_price >= 0
+          ? temiz.unit_price
+          : null,
+      category: temizMetinVeyaNull(temiz.category),
+      short_description: aciklama ? aciklama : null,
+      official_domain: officialDomain,
+      official_product_url: officialProductUrl,
+      selected_image_url: imageUrls[0] ?? null,
+      image_urls: imageUrls,
+      grounding_sources: groundingSources,
     });
   });
 
@@ -484,33 +484,5 @@ export async function googleFaturaUrunKartlariUret(
   }
 
   const veri = (await yanit.json().catch(() => null)) as Record<string, unknown> | null;
-  const cozulmus = googleFaturaYanitiniCoz(veri);
-  const sonuc: GoogleFaturaUrunKarti[] = [];
-  for (const { kart, hamGorseller } of cozulmus) {
-    if (!kart.official_product_url) {
-      sonuc.push(kart);
-      continue;
-    }
-    const elenmisPazaryeriDisiVar = hamGorseller
-      .map((u) => metinVeyaNull(u) ?? "")
-      .some((url) => url.startsWith("https://") && !pazaryeriVeyaAraciMi(url) && !kart.image_urls.includes(url));
-    if (kart.image_urls.length > 0 && !elenmisPazaryeriDisiVar) {
-      sonuc.push(kart);
-      continue;
-    }
-    const tamamlanan = await resmiSayfadanGorselleriTamamla({
-      resmiSayfa: kart.official_product_url,
-      tespitEdilenAlan: kart.official_domain,
-      mevcutAdaylar: hamGorseller,
-      seciliGorsel: kart.selected_image_url,
-      fetcher,
-    });
-    const gorseller = [...new Set([...kart.image_urls, ...tamamlanan.gorseller])];
-    sonuc.push({
-      ...kart,
-      selected_image_url: gorseller[0] ?? kart.selected_image_url,
-      image_urls: gorseller,
-    });
-  }
-  return sonuc;
+  return googleFaturaYanitiniCoz(veri);
 }

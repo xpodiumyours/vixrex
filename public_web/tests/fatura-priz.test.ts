@@ -184,7 +184,7 @@ describe("fatura priz - tak-cikar", () => {
     });
   });
 
-  it("GOOGLE_FATURA_URUN_KARTI_SEMASI Kural 32 geregi fiyat ve vergi alanlari icermez", () => {
+  it("GOOGLE_FATURA_URUN_KARTI_SEMASI Kural 32 geregi 4 sutunlu ticari sir alanlarini icermez, unit_price alanini kar marji verisi olarak acar", () => {
     const itemProps = GOOGLE_FATURA_URUN_KARTI_SEMASI.properties.items.items.properties;
     const keys = Object.keys(itemProps);
     expect(keys).toEqual([
@@ -197,6 +197,7 @@ describe("fatura priz - tak-cikar", () => {
       "size",
       "quantity",
       "unit",
+      "unit_price",
       "category",
       "short_description",
       "official_domain",
@@ -204,14 +205,17 @@ describe("fatura priz - tak-cikar", () => {
       "selected_image_url",
       "image_urls",
     ]);
-    expect(keys).not.toContain("unit_price");
+    expect(keys).toContain("unit_price");
     expect(keys).not.toContain("total_amount");
     expect(keys).not.toContain("vkn");
+    expect(keys).not.toContain("tckn");
+    expect(keys).not.toContain("iban");
     expect(keys).not.toContain("ettn");
     expect(keys).not.toContain("iskonto");
+    expect(keys).not.toContain("fatura_no");
   });
 
-  it("googleFaturaUrunKartlariUret inlineData/fileData ile tek adimda urun karti ve grounding gorseli dondurur", async () => {
+  it("googleFaturaUrunKartlariUret inlineData/fileData ile tek adimda urun karti, unit_price ve grounding gorseli dondurur", async () => {
     vi.stubEnv("GEMINI_API_KEY", "AIzaSyDirectSocketKey");
     let yakalananUrl = "";
     let yakalananGovde: Record<string, unknown> = {};
@@ -240,8 +244,9 @@ describe("fatura priz - tak-cikar", () => {
                           size: null,
                           quantity: 2,
                           unit: "adet",
+                          unit_price: 15000,
                           category: "Televizyon",
-                          short_description: "4K UHD Smart LED TV Alış fiyatı 15000 TL",
+                          short_description: "4K UHD Smart LED TV 12345678901",
                           official_domain: "vestel.com.tr",
                           official_product_url: "https://www.vestel.com.tr/vestel-55ua9600",
                           image_urls: [
@@ -285,6 +290,10 @@ describe("fatura priz - tak-cikar", () => {
       responseJsonSchema: GOOGLE_FATURA_URUN_KARTI_SEMASI,
     });
     const parts = ((yakalananGovde.contents as Array<{ parts: unknown[] }>)[0]?.parts ?? []) as Array<Record<string, unknown>>;
+    expect(parts[0]).toEqual({
+      text: expect.stringContaining("unit_price"),
+    });
+    expect((parts[0] as { text: string }).text).toContain("VKN/TCKN, IBAN");
     expect(parts[1]).toEqual({ inlineData: { mimeType: "image/png", data: "iVBORw0KGgo=" } });
     expect(parts[2]).toEqual({ fileData: { fileUri: "https://cdn.example.com/fatura-2.jpg" } });
 
@@ -299,6 +308,7 @@ describe("fatura priz - tak-cikar", () => {
       size: null,
       quantity: 2,
       unit: "adet",
+      unit_price: 15000,
       category: "Televizyon",
       short_description: "4K UHD Smart LED TV",
       official_domain: "vestel.com.tr",
@@ -310,6 +320,117 @@ describe("fatura priz - tak-cikar", () => {
       ],
       grounding_sources: ["https://www.vestel.com.tr/vestel-55ua9600"],
     });
+  });
+
+  it("googleFaturaUrunKartlariUret gecersiz veya negatif unit_price degerini null olarak dondurur", async () => {
+    vi.stubEnv("GEMINI_API_KEY", "AIzaSyNegPriceKey");
+    const negFetcher = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        candidates: [
+          {
+            content: {
+              parts: [
+                {
+                  text: JSON.stringify({
+                    items: [
+                      {
+                        row_id: "1",
+                        title: "Negatif Fiyatlı Ürün",
+                        brand: "Marka",
+                        model: "M-1",
+                        barcode: null,
+                        variant: null,
+                        size: null,
+                        quantity: 2,
+                        unit: "adet",
+                        unit_price: -50,
+                        category: null,
+                        short_description: null,
+                        official_domain: null,
+                        official_product_url: null,
+                        selected_image_url: null,
+                        image_urls: [],
+                      },
+                      {
+                        row_id: "2",
+                        title: "Metin Fiyatlı Ürün",
+                        brand: "Marka",
+                        model: "M-2",
+                        barcode: null,
+                        variant: null,
+                        size: null,
+                        quantity: 1,
+                        unit: "adet",
+                        unit_price: "250",
+                        category: null,
+                        short_description: null,
+                        official_domain: null,
+                        official_product_url: null,
+                        selected_image_url: null,
+                        image_urls: [],
+                      },
+                    ],
+                  }),
+                },
+              ],
+            },
+          },
+        ],
+      }),
+    })) as unknown as typeof fetch;
+
+    const kartlar = await googleFaturaUrunKartlariUret("data:image/png;base64,AA==", negFetcher);
+    expect(kartlar).toHaveLength(2);
+    expect(kartlar[0].unit_price).toBeNull();
+    expect(kartlar[1].unit_price).toBeNull();
+  });
+
+  it("googleFaturaUrunKartlariUret official_product_url varken gorsel eksikse bile HTML kaziyici ek fetch atmaz", async () => {
+    vi.stubEnv("GEMINI_API_KEY", "AIzaSyNoScrapeKey");
+    const singleFetch = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        candidates: [
+          {
+            content: {
+              parts: [
+                {
+                  text: JSON.stringify({
+                    items: [
+                      {
+                        row_id: "1",
+                        title: "Resmi Sayfali Gorselsiz Urun",
+                        brand: "Vestel",
+                        model: "V-10",
+                        barcode: null,
+                        variant: null,
+                        size: null,
+                        quantity: 1,
+                        unit: "adet",
+                        unit_price: 500,
+                        category: "Elektronik",
+                        short_description: "Aciklama",
+                        official_domain: "vestel.com.tr",
+                        official_product_url: "https://www.vestel.com.tr/v-10",
+                        selected_image_url: null,
+                        image_urls: [],
+                      },
+                    ],
+                  }),
+                },
+              ],
+            },
+          },
+        ],
+      }),
+    })) as unknown as typeof fetch;
+
+    const kartlar = await googleFaturaUrunKartlariUret("data:image/png;base64,AA==", singleFetch);
+    expect(singleFetch).toHaveBeenCalledTimes(1);
+    expect(kartlar).toHaveLength(1);
+    expect(kartlar[0].official_product_url).toBe("https://www.vestel.com.tr/v-10");
+    expect(kartlar[0].image_urls).toEqual([]);
   });
 
   it("googleFaturaUrunKartlariUret bos girdi, eksik anahtar ve hata durumlarinda dogru davranir", async () => {
@@ -382,6 +503,7 @@ describe("fatura priz - tak-cikar", () => {
                         size: "1.7 L",
                         quantity: 3,
                         unit: "adet",
+                        unit_price: 420.5,
                         category: "Küçük Ev Aletleri",
                         short_description: "Paslanmaz çelik su ısıtıcı",
                         official_domain: "bosch-home.com.tr",
@@ -441,6 +563,8 @@ describe("fatura priz - tak-cikar", () => {
       marka: "Bosch",
       model: "TWK7203",
       barkod: "4242002975658",
+      alisBirimFiyat: 420.5,
+      satirToplam: 1261.5,
       sonuc: "kanitli",
       siteSayfa: "https://www.bosch-home.com.tr/urun/TWK7203",
       siteGorseller: ["https://www.bosch-home.com.tr/media/twk7203.jpg"],

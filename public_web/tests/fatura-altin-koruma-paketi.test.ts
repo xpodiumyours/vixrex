@@ -3,6 +3,7 @@ import { faturaIstekGovdesi, faturaYanitiniOku, type GoruSatiri } from "@/lib/fa
 import { FATURA_JSON_ISTEGI } from "@/lib/faturaPresetSozlesmesi";
 import {
   gorselAdaylariniSuz,
+  kural32MetinTemizle,
   kural32NesneTemizle,
   resmiAlanAdiUygunMu,
 } from "@/lib/faturaUrunHazirlama";
@@ -135,7 +136,7 @@ describe("Aşama 1 — Fatura Altın Koruma Paketi", () => {
     expect(degerlendirme.yayinaHazir).toBe(false);
   });
 
-  it("Kilit 4: kural32NesneTemizle ticari sırları siler ve telif kalkanı fail-closed kalır", () => {
+  it("Kilit 4: kural32NesneTemizle 4 sutunlu ticari sirlari siler, alis fiyatini kar marji verisi olarak korur ve telif kalkani fail-closed kalir", () => {
     const temiz = kural32NesneTemizle({
       name: "Bebek Zıbın",
       vkn: "1234567890",
@@ -159,13 +160,16 @@ describe("Aşama 1 — Fatura Altın Koruma Paketi", () => {
     expect(temiz).not.toHaveProperty("tckn");
     expect(temiz).not.toHaveProperty("ettn");
     expect(temiz).not.toHaveProperty("iban");
-    expect(temiz).not.toHaveProperty("alisFiyati");
-    expect(temiz).not.toHaveProperty("unit_price");
-    expect(temiz).not.toHaveProperty("purchase_price");
+    expect(temiz.alisFiyati).toBe(120);
+    expect(temiz.unit_price).toBe(120);
+    expect(temiz.purchase_price).toBe(120);
     expect(temiz).not.toHaveProperty("iskonto");
     expect(temiz).not.toHaveProperty("discount");
     expect(temiz.nested).toEqual({ model: "GB-1042" });
     expect(temiz.attributes).toEqual([{ key: "fabric", label: "Kumaş", value: "%100 Pamuk" }]);
+    expect(kural32MetinTemizle("Bebek Zıbın VKN 1234567890 Alış fiyatı 120 TL")).toBe(
+      "Bebek Zıbın VKN Alış fiyatı 120 TL",
+    );
 
     const durumHaritasi = gorselHakKayitlariniDerle([
       { image_url: "https://cdn.example.com/unknown.jpg", usage_status: "unknown" },
