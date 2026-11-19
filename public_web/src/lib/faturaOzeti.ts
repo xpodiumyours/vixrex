@@ -36,21 +36,50 @@ export function gecenSaniye(baslangic: string | null): number | null {
   return Number.isFinite(fark) && fark >= 0 ? fark / 1000 : null;
 }
 
+function hataliOzetMi(ozet: string): boolean {
+  return /hata:\s*(?!yok\b)\S+/i.test(ozet);
+}
+
+export function tamamlanmisOzetSatiri(discoveryState: unknown): string | null {
+  if (!discoveryState || typeof discoveryState !== "object") return null;
+  const ozet = (discoveryState as Record<string, unknown>).ozetSatiri;
+  if (typeof ozet !== "string") return null;
+  const temiz = ozet.trim();
+  return temiz && !hataliOzetMi(temiz) ? temiz : null;
+}
+
+export async function mevcutFaturaOzeti(
+  admin: SupabaseClient,
+  storeId: string,
+  islemKimligi: string,
+): Promise<string | null> {
+  try {
+    const { data } = await admin.from("invoice_jobs").select("discovery_state")
+      .eq("id", islemKimligi).eq("store_id", storeId).maybeSingle();
+    return tamamlanmisOzetSatiri(data?.discovery_state);
+  } catch {
+    return null;
+  }
+}
+
 export async function faturaOzetiniKaydet(
   admin: SupabaseClient,
   storeId: string,
   islemKimligi: string,
   ozetSatiri: string,
-): Promise<void> {
+): Promise<string> {
   try {
     const { data } = await admin.from("invoice_jobs").select("discovery_state")
       .eq("id", islemKimligi).eq("store_id", storeId).maybeSingle();
-    if (!data) return;
+    if (!data) return ozetSatiri;
     const mevcut = data.discovery_state && typeof data.discovery_state === "object"
       ? data.discovery_state as Record<string, unknown> : {};
+    const donmusOzet = tamamlanmisOzetSatiri(mevcut);
+    if (donmusOzet && !hataliOzetMi(ozetSatiri)) return donmusOzet;
     await admin.from("invoice_jobs").update({ discovery_state: { ...mevcut, ozetSatiri } })
       .eq("id", islemKimligi).eq("store_id", storeId);
+    return ozetSatiri;
   } catch {
-    return;
+    return ozetSatiri;
   }
 }

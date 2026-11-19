@@ -8,7 +8,14 @@ import { faturaKatalogMetadatasi } from "@/lib/faturaUrunIcerigi";
 import { barkodDenetimi } from "@/lib/faturaKapiDenetimi";
 import type { ProductAttributeValue, ProductMetadata } from "@/lib/productRichData";
 import { FATURA_MIN_PRODUCT_IMAGES } from "@/lib/productImagePolicy";
-import { faturaBaslangicZamani, faturaOzetSatiri, faturaOzetiniKaydet, gecenSaniye } from "@/lib/faturaOzeti";
+import {
+  faturaBaslangicZamani,
+  faturaOzetSatiri,
+  faturaOzetiniKaydet,
+  gecenSaniye,
+  mevcutFaturaOzeti,
+  tamamlanmisOzetSatiri,
+} from "@/lib/faturaOzeti";
 
 export interface OtomatikTaslakRaporu {
   kaydedildi: number;
@@ -270,16 +277,28 @@ export async function faturaTaslakYanitiniHazirla(
   const hazirlaniyor = devamEdiyor && !durum.error;
   let ozetSatiri: string | null = null;
   if (!hazirlaniyor) {
-    const baslangic = await faturaBaslangicZamani(admin, storeId, kayit.islemKimligi);
-    ozetSatiri = faturaOzetSatiri({
-      islemKimligi: kayit.islemKimligi,
-      satirSayisi: guncelKayit.satirlar.length,
-      kartSayisi: bagliIdler.length,
-      gorselliSayisi,
-      sureSaniye: gecenSaniye(baslangic),
-      hataKodu: kayitHatasiVar || Boolean(durum.error) ? "FATURA_TASLAKLARI_EKSIK" : null,
-    });
-    await faturaOzetiniKaydet(admin, storeId, kayit.islemKimligi, ozetSatiri);
+    const temizYenidenAcilis = tumEksik.length === 0 && !kayitHatasiVar && !durum.error;
+    const donmusOzet = temizYenidenAcilis
+      ? (tamamlanmisOzetSatiri(guncelKayit.aramaDurumu) ?? await mevcutFaturaOzeti(admin, storeId, kayit.islemKimligi))
+      : null;
+    if (donmusOzet) {
+      ozetSatiri = donmusOzet;
+    } else if (!temizYenidenAcilis || !guncelKayit.aramaDurumu?.presetCevabi) {
+      const baslangic = await faturaBaslangicZamani(admin, storeId, kayit.islemKimligi);
+      ozetSatiri = await faturaOzetiniKaydet(
+        admin,
+        storeId,
+        kayit.islemKimligi,
+        faturaOzetSatiri({
+          islemKimligi: kayit.islemKimligi,
+          satirSayisi: guncelKayit.satirlar.length,
+          kartSayisi: bagliIdler.length,
+          gorselliSayisi,
+          sureSaniye: gecenSaniye(baslangic),
+          hataKodu: kayitHatasiVar || Boolean(durum.error) ? "FATURA_TASLAKLARI_EKSIK" : null,
+        }),
+      );
+    }
   }
   return {
     ...islemYaniti(guncelKayit),

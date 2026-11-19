@@ -178,8 +178,7 @@ describe("Google Grounding ve Telif Kalkanı Sözleşmesi", () => {
     expect(kilitliSonuc).toBeNull();
   });
 
-  // c) Kural 32 sızıntı testi (toptan alış fiyatı/VKN asla Gemini prompt'a sızmaz)
-  it("kural 32 sızıntı testi: toptan alış fiyatı ve VKN asla arama promptuna sızmaz", async () => {
+  it("kural 32 sızıntı testi: 4 sütunlu ticari sır (VKN/TCKN/IBAN/ETTN/faturaNo/iskonto) arama promptuna sızmaz", async () => {
     let yakalananIstekGovdesi = "";
 
     const captureFetcher = vi.fn(async (_url, init) => {
@@ -210,39 +209,37 @@ describe("Google Grounding ve Telif Kalkanı Sözleşmesi", () => {
     }) as unknown as typeof fetch;
 
     const riskliGirdi: GroundingAramaGirdisi & Record<string, unknown> = {
-      urunAdi: "Akıllı Televizyon VKN 5555555555 Alış Fiyatı 1200 TL",
+      urunAdi: "Akıllı Televizyon VKN 5555555555",
       marka: "Vestel",
       model: "55UA9600",
-      tedarikci: "Tedarikçi A.Ş. VKN: 9876543210 toptan 850 TL",
+      tedarikci: "Tedarikçi A.Ş. VKN: 9876543210",
       kilitliAlanAdi: "vestel.com.tr",
       alisFiyati: 1200,
-      toptanFiyat: 850,
       vkn: "1234567890",
       vergi_no: "9998887776",
+      ettn: "11111111-2222-3333-4444-555555555555",
+      iban: "TR330006100519786457841326",
+      faturaNo: "FTR2026001",
       unit_price: 1200,
-      purchase_price: 1200,
       iskonto: 20,
     };
 
     await resmiUrunSayfasiGroundingIleBul(riskliGirdi, captureFetcher);
 
-    // 1. Hassas alan anahtarları asla yer almaz
     expect(yakalananIstekGovdesi).not.toContain("alisFiyati");
-    expect(yakalananIstekGovdesi).not.toContain("toptanFiyat");
     expect(yakalananIstekGovdesi).not.toContain("unit_price");
-    expect(yakalananIstekGovdesi).not.toContain("purchase_price");
     expect(yakalananIstekGovdesi).not.toContain("vergi_no");
+    expect(yakalananIstekGovdesi).not.toContain("ettn");
+    expect(yakalananIstekGovdesi).not.toContain("iban");
+    expect(yakalananIstekGovdesi).not.toContain("FTR2026001");
     expect(yakalananIstekGovdesi).not.toContain("iskonto");
 
-    // 2. VKN/TCKN ve alış fiyatları metinlerden de maskelenmiştir
     expect(yakalananIstekGovdesi).not.toContain("1234567890");
     expect(yakalananIstekGovdesi).not.toContain("9876543210");
     expect(yakalananIstekGovdesi).not.toContain("5555555555");
     expect(yakalananIstekGovdesi).not.toContain("9998887776");
-    expect(yakalananIstekGovdesi).not.toContain("1200 TL");
-    expect(yakalananIstekGovdesi).not.toContain("850 TL");
+    expect(yakalananIstekGovdesi).not.toContain("TR330006100519786457841326");
 
-    // 3. Resmi Google Grounding ve urlContext araçları resmi tools formatında iletilmiştir
     expect(yakalananIstekGovdesi).toContain(
       '"tools":[{"googleSearch":{}},{"urlContext":{}}]',
     );

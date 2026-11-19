@@ -452,17 +452,18 @@ Neden: 2026-11-14'te PR #741'de 2 migration canlıda koşulmadığı halde "haz�
 kod deploy edilseydi canlı RPC eski olduğu için izinsiz görseller fail-closed koruması
 olmadan doğrudan yayına çıkacaktı; Composio dış denetimi yakaladı.
 
-### 32. Fatura ticari sırrı ve özel veri maskeleme anayasası (2026-11-14, Genişletildi: 2026-11-15)
-Ticari sır maskelemesi **yalnızca** toptan alış fiyatını (`unit_price`, 10 TL, 15 TL) gizlemekle sınırlandırılamaz; faturadaki tüm hassas ticari, hukuki ve kişisel verileri kapsar. Bir faturadan ürün kartı üretilirken sistemin okumasına izin verilen **yegâne** veriler: ürün adı, model kodu, barkod, beden/renk/varyant, kumaş/ürün özellikleri ve stok adedidir. Bunların dışındaki tüm veriler **mutlak ticari sır ve KVKK verisidir**; istemciye, vitrine, loglara, test fikstürlerine veya depoya sızdırılamaz.
+### 32. Fatura ticari sırrı ve özel veri maskeleme anayasası (2026-11-14, Güncellendi: 2026-11-19)
+Fatura ticari sırrı yalnızca aşağıdaki **4 sütundan** oluşur; istemciye, vitrine, üretici izin linkine, loglara veya depoya sızdırılamaz. Ürünün alış fiyatı (`unit_price`, `alisFiyati`) ise ticari sır **değildir**; sistem içinde kâr marjı değerlendirmesi için kullanılması gereken temel veridir (yalnız müşteri vitrininde ve üreticiye giden izin linkinde gizli kalmaya devam eder).
 
-**5 Sütunlu Mutlak Koruma Kapsamı:**
-1. **Toptancı / Tedarikçi Mahremiyeti:** Toptancı ticari unvanı, şahıs adı, Vergi Kimlik Numarası (VKN), T.C. Kimlik Numarası (TCKN), vergi dairesi, açık adres, il/ilçe, telefon, e-posta, IBAN ve banka hesap bilgileri (esnafın malı nereden aldığı en büyük ticari sırrıdır, asla ifşa edilemez).
-2. **Esnaf (Alıcı) Kişisel ve Ticari Mahremiyeti:** Butiğin/esnafın kendi VKN/TCKN'si, cari hesap kodu, müşteri numarası, teslimat adresi ve şahsi iletişim bilgileri (KVKK koruması).
+**4 Sütunlu Mutlak Koruma Kapsamı:**
+1. **Toptancı / Tedarikçi Mahremiyeti:** Üretici/toptancı ticari unvanı, şahıs adı, Vergi Kimlik Numarası (VKN), T.C. Kimlik Numarası (TCKN), vergi dairesi, açık adres, il/ilçe, telefon, e-posta, IBAN ve banka hesap bilgileri (esnafın malı nereden aldığı ticari sırdır, asla ifşa edilemez).
+2. **Esnaf (Alıcı) Kişisel ve Ticari Mahremiyeti:** Butiğin/esnafın kendi VKN/TCKN'si, cari hesap kodu, müşteri numarası, açık/teslimat adresi ve şahsi iletişim bilgileri (KVKK koruması).
 3. **Fatura Resmi Kimliği:** Fatura numarası, seri/sıra no, E-Fatura/E-Arşiv ETTN (Evrensel Tekil Tanımlayıcı UUID), düzenleme tarihi ve saati, irsaliye numaraları (GİB üzerinden fatura detaylarının sorgulanmasını engeller).
-4. **Ticari Koşullar, Vadeler ve İskontolar:** Toptancının butiğe özel uyguladığı iskonto/indirim oranları (% iskonto), satır indirimleri, ödeme türü ve vadeleri (açık hesap, vadeli çek vb.), KDV matrah ve tevkifat detayları, fatura dipnotları.
-5. **Maliyet ve Alış Fiyatları:** Birim alış fiyatı, KDV hariç fiyat, satır toplam maliyeti, fatura genel yekûnu (`total_amount`, `odenecekToplam`).
+4. **Ticari Koşullar, Vadeler ve İskontolar:** Toptancının butiğe özel uyguladığı özel iskonto/indirim oranları (% iskonto), satır indirimleri, ödeme türü ve vadeleri (açık hesap, vadeli çek vb.), KDV matrah ve tevkifat detayları, fatura dipnotları.
 
-Neden: 2026-11-14'te `76b8d391` commit'iyle 4 ölçüm JSON dosyası (`tool/fatura_olcum/kosular/*.json`) içinde gerçek alış fiyatları public repoya girdi. Ancak 2026-11-15'e kadar kapsam dar tutularak yalnızca "alış fiyatı" sanıldı ve toptancı unvanı, VKN, ETTN UUID ve özel iskonto gibi hayati ticari sırlar açıkta bırakıldı. Casper'ın uyarısıyla kural 5 sütunlu tam kurumsal korumaya yükseltildi.
+**Kâr Marjı Verisi (Ticari Sır Kapsamı Dışı):** Birim alış fiyatı (`unit_price`, `alisFiyati`) ve satır maliyeti kâr marjı hesaplaması için sistem içinde okunur ve taşınır; ancak müşteri vitrininde (`productCardPresentation.ts`) ve üretici izin ekranında (`supplierPermissionRequest.ts`) gizli kalmaya devam eder.
+
+Neden: 2026-11-14'te `76b8d391` commit'iyle 4 ölçüm JSON dosyası (`tool/fatura_olcum/kosular/*.json`) içinde gerçek alış fiyatları public repoya girdi. 2026-11-15'te kapsam genişletildi; 2026-11-19'da Casper'ın kesin kararıyla fatura ticari sırrı yalnız yukarıdaki 4 sütunla sınırlandırıldı ve alış fiyatı (`unit_price`, `alisFiyati`) kâr marjı verisi olarak ayrıştırıldı.
 
 ### 33. Ana hatta bağlanmamış ölü kodla özellik iddiası yasak (2026-11-14)
 Bir yardımcı fonksiyonun veya modülün unit testinin geçmesi, o özelliğin bittiği anlamına
