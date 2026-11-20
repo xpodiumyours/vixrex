@@ -797,15 +797,20 @@ export function OwnerProductManager({
       {queuedCount > 0 ? <p className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm font-bold text-amber-600" role="status">{queuedCount} ürün işlemi kuyrukta — bağlantı gelince otomatik gönderilecek (vitrin metin kuyruğundan ayrı).</p> : null}
       {success ? <p className="mb-4 rounded-xl border border-[var(--owner-success)]/40 bg-[var(--owner-success)]/10 p-3 text-sm text-[var(--owner-success)]" role="status">{success}</p> : null}
 
+      {!showInvoice ? (
       <OwnerKatalogAsistani
         onFaturaCikar={() => { setError(""); setSuccess(""); setShowBulkUpload(false); setEditing(null); setShowInvoice(true); }}
         onBaslikOnerileri={() => { void baslikOnerileriniUygula(); }}
       />
+      ) : null}
 
+      {!showInvoice ? (
       <div className="mt-4">
         <OwnerCategoryManager storeSlug={storeSlug} categories={categoriesWithCount} varsayilanUrunTipi={varsayilanUrunTipi} onRefresh={refreshAll} acik={kategoriAcik} onAcikDegis={setKategoriAcik} />
       </div>
+      ) : null}
 
+      {!showInvoice ? (
       <div className="mt-4 flex flex-col gap-3">
         <div className="flex flex-wrap gap-2">
           <input value={filterText} onChange={(e) => setFilterText(e.target.value)} placeholder="Ürün ara..." className="owner-input min-w-[200px] flex-[1_1_240px] text-sm" />
@@ -833,6 +838,7 @@ export function OwnerProductManager({
           <button type="button" className="owner-button-secondary" onClick={() => setKategoriAcik(true)} disabled={busy}>Kategoriler</button>
         </div>
       </div>
+      ) : null}
 
       {showInvoice && !editing && (
         <InvoiceToProducts
@@ -845,6 +851,8 @@ export function OwnerProductManager({
         />
       )}
 
+      {!showInvoice ? (
+      <>
       {showBulkUpload && !editing && (
         <BulkProductUpload storeSlug={storeSlug} categories={resolvedCategories} onUploaded={async () => { await refreshAll(); setShowBulkUpload(false); setSuccess("Ürünler toplu olarak eklendi."); }} />
       )}
@@ -1223,6 +1231,8 @@ export function OwnerProductManager({
             </div>
           </div>
         </div>
+      ) : null}
+      </>
       ) : null}
     </section>
   );

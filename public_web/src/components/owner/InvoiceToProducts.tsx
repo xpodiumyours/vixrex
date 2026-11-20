@@ -218,13 +218,6 @@ function stokSayisi(ham: string): number | null {
   return Number.isSafeInteger(n) && n >= 0 ? n : null;
 }
 
-export function sureMetni(toplamSaniye: number): string {
-  const guvenli = Number.isFinite(toplamSaniye) && toplamSaniye > 0 ? Math.floor(toplamSaniye) : 0;
-  const dakika = Math.floor(guvenli / 60);
-  const saniye = guvenli % 60;
-  return `${String(dakika).padStart(2, "0")}:${String(saniye).padStart(2, "0")}`;
-}
-
 export function faturaSatiriDurumunuHazirla(
   satir: FaturaOkumaSatiri,
   kategoriId: string,
@@ -383,7 +376,6 @@ export default function InvoiceToProducts({
   const [adim, setAdim] = useState<"sec" | "okunuyor" | "urunler" | "yaziliyor" | "bitti">(
     "sec",
   );
-  const [onizleme, setOnizleme] = useState<string | null>(null);
   const [belge, setBelge] = useState<FaturaOkumaSonucu | null>(null);
   const [satirlar, setSatirlar] = useState<SatirDurumu[]>([]);
   const [kar, setKar] = useState("30");
@@ -412,18 +404,8 @@ export default function InvoiceToProducts({
   const [izinLinki, setIzinLinki] = useState<string | null>(null);
   const [izinKopyalandi, setIzinKopyalandi] = useState(false);
   const [izinHata, setIzinHata] = useState<string | null>(null);
-  const [gecenSaniye, setGecenSaniye] = useState(0);
   const aktifFaturaBeklemesi = useRef<Promise<FaturaOkumaSonucu> | null>(null);
   const faturaBeklemeIptali = useRef<AbortController | null>(null);
-
-  useEffect(() => {
-    if (adim !== "okunuyor") return;
-    const baslangic = Date.now();
-    const aralik = setInterval(() => {
-      setGecenSaniye(Math.max(0, Math.floor((Date.now() - baslangic) / 1000)));
-    }, 1000);
-    return () => clearInterval(aralik);
-  }, [adim]);
 
   const bekleyenFaturaSonucunuAl = useCallback(
     (ilk: FaturaOkumaSonucu): Promise<FaturaOkumaSonucu> => {
@@ -609,7 +591,7 @@ export default function InvoiceToProducts({
       }
       const ilk = govde as FaturaOkumaSonucu;
       if (ilk.hazirlaniyor === true) {
-        setGecenSaniye(0);
+        setBelge(null); setSatirlar([]); setSonuc(null); setBeklemeAsamasi("okunuyor");
         setAdim("okunuyor");
         if (ilk.islemKimligi) bekleyenIslemKimliginiKaydet(storeSlug, ilk.islemKimligi);
       }
@@ -773,20 +755,16 @@ export default function InvoiceToProducts({
         return;
       }
       sonFaturaDosyasi.current = dosyalar;
+      setBelge(null);
+      setSatirlar([]);
+      setSonuc(null);
+      setBeklemeAsamasi("okunuyor");
       setYuklenenBelge({
         sayfa: dosyalar.length,
         bayt: dosyalar.reduce((toplam, dosya) => toplam + dosya.size, 0),
         pdf: pdfMi,
       });
-      if (pdfMi) {
-        setOnizleme(null);
-      } else {
-        const okuyucu = new FileReader();
-        okuyucu.onload = () => setOnizleme(String(okuyucu.result));
-        okuyucu.readAsDataURL(dosyalar[0]);
-      }
 
-      setGecenSaniye(0);
       setAdim("okunuyor");
 
       try {
@@ -1110,7 +1088,6 @@ export default function InvoiceToProducts({
 
   function bastanBasla() {
     setAdim("sec");
-    setOnizleme(null);
     setBelge(null);
     setSatirlar([]);
     setSonuc(null);
@@ -1206,7 +1183,7 @@ export default function InvoiceToProducts({
         detay: yuklenenBelge
           ? `${yuklenenBelge.sayfa} ${yuklenenBelge.pdf ? "sayfa PDF" : yuklenenBelge.sayfa > 1 ? "sayfa fotoğraf" : "fotoğraf"} · ${(yuklenenBelge.bayt / (1024 * 1024)).toLocaleString("tr-TR", { maximumFractionDigits: 1 })} MB`
           : "Belge Vixrex'e ulaştı.",
-        durum: "tamam",
+        durum: yuklenenBelge || belge ? "tamam" : "bekliyor",
       },
       {
         baslik: belgeOkundu ? `${satirlar.length} ürün satırı bulundu` : "Ürün satırları okunuyor",
@@ -1227,82 +1204,51 @@ export default function InvoiceToProducts({
         detay: belgeOkundu
           ? "Ürün kaynağı faturadaki ad, model ve barkodla aranır."
           : "Resmî ürün kaynağı faturadaki ad, model ve barkoda göre aranıyor.",
-        durum: belgeOkundu ? "tamam" : "bekliyor",
+        durum: beklemeAsamasi === "kartlaniyor" ? "aktif" : "bekliyor",
       },
       {
         baslik: "Ürün kartları hazırlanıyor",
         detay: "Alış fiyatı satış fiyatı olarak kullanılmaz. Açıklamalar yalnız faturadaki doğrulanmış bilgiye dayanır.",
-        durum: belgeOkundu ? "aktif" : "bekliyor",
+        durum: beklemeAsamasi === "kartlaniyor" ? "aktif" : "bekliyor",
       },
     ];
     return (
       <div className="fatura-akis">
         <FaturaAkisBasligi adim={adim} baslik="Faturan hazırlanıyor"
           aciklama="Faturan okunuyor ve ürün kartların hazırlanıyor. Aynı faturayı tekrar yüklemene gerek yok." />
-        <div className="fatura-hologram-kart">
-          <div className="fatura-hologram-sahne">
-            <span className="fatura-hologram-halka" aria-hidden="true" />
-            <span className="fatura-hologram-halka fatura-hologram-halka--ic" aria-hidden="true" />
-            <span className="fatura-hologram-parilti" aria-hidden="true" />
-            <VixrexAvatar size={84} decorative halo priority className="fatura-hologram-avatar" />
+        <div className="fatura-okuma">
+          <div className="fatura-okuma-ring">
+            <span className="fatura-okuma-halka" aria-hidden="true" />
+            <VixrexAvatar size={64} decorative />
           </div>
-          <time className="fatura-sayac" aria-live="off">{sureMetni(gecenSaniye)}</time>
-          <p className="fatura-bekleme" role="status">
-            <span className="fatura-yukleyici" aria-hidden="true" />
-            {beklemeAsamasi === "kartlaniyor" ? "Ürün bilgileri araştırılıyor ve kartlar hazırlanıyor…" : "Fatura satırları okunuyor…"}
-          </p>
-          <p className="fatura-guvence">
-            Faturanız okunuyor ve üretici sitesinden ürün kartları hazırlanıyor. Pencereyi kapatsanız bile arkada hazırlanmaya devam eder.
-          </p>
-        </div>
-        {belgeOkundu ? (
-          <div className="fatura-tarama">
-            <figure className={`fatura-tarama-belge${onizleme ? "" : " fatura-tarama-belge--bos"}`}>
-              {onizleme ? (
-                <Image src={onizleme} alt="Yüklediğin faturanın önizlemesi" width={320} height={440} unoptimized />
-              ) : (
-                <span className="fatura-tarama-bos">
-                  <b>PDF</b>
-                  <small>{yuklenenBelge ? `${yuklenenBelge.sayfa} sayfa` : "belge"}</small>
-                </span>
-              )}
-              <span className="fatura-tarama-kose" aria-hidden="true" />
-              <span className="fatura-tarama-kose fatura-tarama-kose--ters" aria-hidden="true" />
-              <figcaption className="fatura-tarama-etiket">
-                <span className="fatura-tarama-nokta" aria-hidden="true" />
-                Belge okundu
-              </figcaption>
-            </figure>
-            <div className="fatura-tarama-panel">
-              <dl className="fatura-sayilar">
-                <div>
-                  <dt>Satır</dt>
-                  <dd>{satirlar.length}</dd>
-                </div>
-                <div>
-                  <dt>Miktar</dt>
-                  <dd>{kontrol.miktarOzeti || "okunamadı"}</dd>
-                </div>
-                <div>
-                  <dt>Tutar</dt>
-                  <dd>{paraYaz(kontrol.tutarToplam)}</dd>
-                </div>
-              </dl>
-              <ol className="fatura-adim-ray">
-                {kanitlar.map((kanit, sira) => (
-                  <li key={kanit.baslik} className={`fatura-adim-satir fatura-adim-satir--${kanit.durum}`}>
-                    <span className="fatura-adim-no" aria-hidden="true">{String(sira + 1).padStart(2, "0")}</span>
-                    <span className="fatura-adim-govde">
-                      <b>{kanit.baslik}</b>
-                      <small>{kanit.detay}</small>
-                    </span>
-                    <span className="fatura-adim-durum">{kanit.durum === "tamam" ? "tamam" : kanit.durum === "aktif" ? "sürüyor" : "bekliyor"}</span>
-                  </li>
-                ))}
-              </ol>
+          <p className="fatura-bekleme" role="status"><span className="fatura-yukleyici" aria-hidden="true" />{beklemeAsamasi === "kartlaniyor" ? "Ürün bilgileri araştırılıyor ve kartlar hazırlanıyor…" : "Fatura satırları okunuyor…"}</p>
+          <dl className="fatura-sayilar">
+            <div>
+              <dt>Satır</dt>
+              <dd>{belgeOkundu ? satirlar.length : "—"}</dd>
             </div>
-          </div>
-        ) : null}
+            <div>
+              <dt>Miktar</dt>
+              <dd>{belgeOkundu ? kontrol.miktarOzeti || "okunamadı" : "—"}</dd>
+            </div>
+            <div>
+              <dt>Tutar</dt>
+              <dd>{belgeOkundu ? paraYaz(kontrol.tutarToplam) : "—"}</dd>
+            </div>
+          </dl>
+          <ol className="fatura-adim-ray">
+            {kanitlar.map((kanit, sira) => (
+              <li key={kanit.baslik} className={`fatura-adim-satir fatura-adim-satir--${kanit.durum}`}>
+                <span className="fatura-adim-no" aria-hidden="true">{String(sira + 1).padStart(2, "0")}</span>
+                <span className="fatura-adim-govde">
+                  <b>{kanit.baslik}</b>
+                  <small>{kanit.detay}</small>
+                </span>
+                <span className="fatura-adim-durum">{kanit.durum === "tamam" ? "tamam" : kanit.durum === "aktif" ? "sürüyor" : "bekliyor"}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
       </div>
     );
   }

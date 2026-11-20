@@ -505,7 +505,7 @@ describe("Kural 32 ticari sır zırhı (A2) ve alış fiyatı koruması", () => 
     };
     mocks.stateValues = {
       0: "urunler",
-      2: {
+      1: {
         satirlar: [satir],
         belgeAdedi: 2,
         belgeToplami: 850,
@@ -513,7 +513,7 @@ describe("Kural 32 ticari sır zırhı (A2) ve alış fiyatı koruması", () => 
         tedarikciVergiNo: "9876543210",
         tedarikciAdres: "GİZLİ ADRES CADDESİ NO:99",
       },
-      3: [satir],
+      2: [satir],
     };
 
     const html = renderToStaticMarkup(

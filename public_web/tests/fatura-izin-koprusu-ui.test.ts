@@ -63,16 +63,16 @@ function renderEkran(args: {
   state.index = 0;
   state.values = {
     0: args.adim,
-    2: {
+    1: {
       satirlar: args.satirlar,
       belgeAdedi: null,
       belgeToplami: null,
       tedarikci: args.tedarikci,
       tedarikciVergiNo: "1234567890",
     },
-    3: args.satirlar,
-    ...(args.izinLinki !== undefined ? { 17: args.izinLinki } : {}),
-    ...(args.izinHata !== undefined ? { 19: args.izinHata } : {}),
+    2: args.satirlar,
+    ...(args.izinLinki !== undefined ? { 16: args.izinLinki } : {}),
+    ...(args.izinHata !== undefined ? { 18: args.izinHata } : {}),
   };
   return renderToStaticMarkup(
     createElement(InvoiceToProducts, {
@@ -191,7 +191,7 @@ describe("InvoiceToProducts Üretici İzin Köprüsü UI", () => {
     state.index = 0;
     state.values = {
       0: "sec",
-      10: [
+      9: [
         {
           islemKimligi: LINE_UUID_1,
           durum: "inceleme",
