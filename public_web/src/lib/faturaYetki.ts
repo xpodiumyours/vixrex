@@ -1,5 +1,7 @@
 import { cookies } from "next/headers";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
+import { ownerSessionStillActive } from "@/lib/ownerSessionValidity";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { verifyStoreEditToken } from "@/lib/instagramServer";
 
 export type YetkiSonucu =
@@ -11,7 +13,7 @@ export async function sahipYetkisi(slug: string, editToken: string): Promise<Yet
 
   const cookieStore = await cookies();
   const cerezliOturum = verifyOwnerSession(cookieStore.get(OWNER_SESSION_COOKIE)?.value, slug);
-  if (cerezliOturum) {
+  if (cerezliOturum && (await ownerSessionStillActive(getSupabaseAdmin(), cerezliOturum))) {
     return { tamam: true, storeId: cerezliOturum.storeId, slug: cerezliOturum.slug ?? slug };
   }
 

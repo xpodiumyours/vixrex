@@ -1,4 +1,6 @@
 import type { RichProductItem } from "./richProductItem";
+import { productAttributesForTemplate } from "./productAttributeSchema";
+import { kural32HassasAlanMi } from "./productCardPresentation";
 import { normalizeProductMetadata, normalizeProductVariants } from "./productRichData";
 import { parseProductPriceString } from "./productPrice";
 
@@ -13,6 +15,9 @@ const VARIANT_SCHEMA_PROPERTIES: Record<string, { property: string; field: strin
 
 export function productAttributeSchemaFields(metadataInput: unknown) {
   const metadata = normalizeProductMetadata(metadataInput);
+  const definitionKeys = new Set(
+    productAttributesForTemplate(metadata.templateKey).map((definition) => definition.key),
+  );
   const recognized: Record<string, string> = {};
   const additionalProperty: Array<Record<string, string>> = [];
 
@@ -21,6 +26,9 @@ export function productAttributeSchemaFields(metadataInput: unknown) {
       attribute.key.endsWith("_reported") ||
       String(attribute.label || "").includes("(aktarılan)")
     ) {
+      continue;
+    }
+    if (kural32HassasAlanMi(attribute.key, attribute.label, definitionKeys.has(attribute.key))) {
       continue;
     }
     const value = Array.isArray(attribute.value)
@@ -231,10 +239,13 @@ export function buildPhysicalProductStructuredData(args: {
   const groupNodeId = `${productUrl}#product-group`;
 
   const hasVariant = variants.map((variant) => {
-    const optionValues = Object.values(variant.options).filter(Boolean);
+    const safeVariantOptions = Object.entries(variant.options).filter(
+      ([key]) => !kural32HassasAlanMi(key, key, false),
+    );
+    const optionValues = safeVariantOptions.map(([, value]) => value).filter(Boolean);
     const recognized: Record<string, string> = {};
     const additionalProperty: Array<Record<string, string>> = [];
-    for (const [key, value] of Object.entries(variant.options)) {
+    for (const [key, value] of safeVariantOptions) {
       const mapped = VARIANT_SCHEMA_PROPERTIES[key];
       if (mapped) recognized[mapped.field] = value;
       else {

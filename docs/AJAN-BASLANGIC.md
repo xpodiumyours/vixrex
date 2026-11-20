@@ -4,7 +4,7 @@
 > tek yerde cevaplamak ve ezbere konuşmayı ölçülebilir bir yasak yapmak. Kural kitabı
 > [AGENTS.md](../AGENTS.md)'de; bu belge **harita**dır.
 >
-> Son doğrulama: 2026-11-04 · Ana dal: `341919d` · Canlı: `341919d` (canlı = ana dal)
+> Son doğrulama: 2026-11-20 · Temel SHA: `63ad4287` (yerel kod tabanı; canlı `deploy-info.json` kapı ile ayrı ölçülür)
 
 ## 0. Oturum açılışı — 4 adım
 
@@ -53,6 +53,8 @@ Not: her satır tek başına yeterli değildir. "Canlıda" cümlesi için canlı
 
 | Anahtar türü | Yeri | Not |
 |---|---|---|
+| Google Gemini (`GEMINI_API_KEY`, `GOOGLE_API_KEY`, `GEMINI_FATURA_MODEL`, `GEMINI_FILE_SEARCH_STORE_NAMES`) | `public_web/.env.local` · Vercel `vixrex-public` | Birincil fatura okuma + Google Search / URL Context / File Search değişken **adları** (değer yazılmaz) |
+| Fatura Priz & Yedek Hat (`FATURA_PRIZ_URL`, `FATURA_PRIZ_API_KEY`, `OPENROUTER_FATURA_TIMEOUT_MS`, `PRESET_AKIS`) | `public_web/.env.local` · Vercel `vixrex-public` | Priz yönlendirme, zaman aşımı ve `mevcut`/`yeni` preset akışı değişken **adları** |
 | OpenRouter, Supabase, Instagram, Turnstile, reCAPTCHA, OneSignal | `public_web/.env.local` | depo dışı; değer sohbete yapıştırılmaz |
 | Canlı ortam | Vercel `vixrex-public` ortam değişkenleri | panelden yönetilir; depoya girmez |
 | Flutter panel | `dart_defines.local.json` | depo dışı; örneği `dart_defines.example.json` |
@@ -93,9 +95,9 @@ bağlantı / 580 bölge, indeks commit'i `341919d`. Ajan `list_repositories` →
 ile bu commit'i ve yaşı doğrular; indeks çalışılan commit'ten eskiyse "harita güncel değil"
 der. Bulut harita varsayılan dalın son indeksidir; canlı davranış ve DB kanıtı yerine geçmez.
 
-## 2.6 Platformlar arası bağlantı navigasyonu (2026-11-05)
+## 2.6 Platformlar arası bağlantı navigasyonu (2026-11-20)
 
-Vercel, Supabase, OpenRouter, API anahtarlarının **adları** ve yetkiler, MCP, fatura RPC'leri ve callback için [Platform Bağlantı Haritası](PLATFORM-BAGLANTI-HARITASI.md) ile [makinece okunabilir ilişki grafiği](platform-baglanti-haritasi.json) birlikte okunur.
+Google Gemini (birincil), Vercel, Supabase, OpenRouter (yedek hat), API anahtarlarının **adları** ve yetkiler, MCP, B2B izin köprüsü, yayın kapısı, fatura RPC'leri ve callback için [Platform Bağlantı Haritası](PLATFORM-BAGLANTI-HARITASI.md) ile [makinece okunabilir ilişki grafiği](platform-baglanti-haritasi.json) birlikte okunur.
 
 Bu iki kayıt canlı anahtar veya canlı preset içermez. `main`, PR ve canlı bağımsız doğrulanır; sunucu sırları asla GitHub'a çıkarılmaz. Ajanın ilk görevi bu bağlantıları tekrar tahmin etmek değil, ilgili platformun kendi salt-okunur ölçümüyle teyit etmektir. Bağlantı **tanımlı** olması bağlantı **çalışıyor** demek değildir.
 
@@ -105,7 +107,7 @@ Bu iki kayıt canlı anahtar veya canlı preset içermez. `main`, PR ve canlı b
 |---|---|---|
 | [AGENTS.md](../AGENTS.md) | kural (tek adres) | çalışma tarzı; harita değil |
 | [README.md](../README.md) | tanıtım | depo mimarisi; durum kaynağı değil |
-| [PLATFORM-BAGLANTI-HARITASI.md](PLATFORM-BAGLANTI-HARITASI.md) ve [platform-baglanti-haritasi.json](platform-baglanti-haritasi.json) | 2026-11-05 bağlantı envanteri | kod/proje/anahtar ADI/izin ilişkileri; canlı çalışma kanıtı değil |
+| [PLATFORM-BAGLANTI-HARITASI.md](PLATFORM-BAGLANTI-HARITASI.md) ve [platform-baglanti-haritasi.json](platform-baglanti-haritasi.json) | 2026-11-20 bağlantı envanteri (`63ad4287`) | 10 adımlı zincir, Gemini birincil / OpenRouter failover, SPOF, kırmızı-yeşil bölge, anahtar ADLARI; canlı çalışma kanıtı değil |
 | `docs/ANA-DENETIM-KAYDI.md` | yerel kayıt | bu makinede var, depoda **değil**; yoksa yok say |
 | `docs/FATURADAN-VITRINE-MASTER-PLAN.md` | **tarihsel** | 30 Eylül planı; güncel iş listesi değil |
 | `docs/FATURA-URUN-KARTI-PLAN.md` | plan | 7 Ekim; havuz kararı birkaç satırını geçersiz kılar |

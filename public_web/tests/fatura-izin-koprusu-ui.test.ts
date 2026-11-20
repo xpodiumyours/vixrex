@@ -157,6 +157,60 @@ describe("InvoiceToProducts Üretici İzin Köprüsü UI", () => {
     expect(html).toContain("İzin talebi bağlantısı oluşturulamadı.");
     expect(html).not.toContain("Onay Linki Hazır");
   });
+
+  it("belge.tedarikci bos iken satir markasindan Uretici Izin Koprusunu gosterir ve marka ile link paylasir", () => {
+    const satirMarkali = {
+      ...ornekSatir(),
+      marka: "Tutku",
+      katalog: { ...ornekSatir().katalog!, marka: "Tutku" },
+    };
+    const ilkHtml = renderEkran({
+      adim: "urunler",
+      tedarikci: "",
+      satirlar: [satirMarkali],
+    });
+    expect(ilkHtml).toContain("Üretici İzin Köprüsü");
+    expect(ilkHtml).toContain("Üretici İzni Talep Et (WhatsApp / Link)");
+
+    const url = "https://www.vixrex.com/izin-talebi/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+    const linkHtml = renderEkran({
+      adim: "urunler",
+      tedarikci: "",
+      satirlar: [satirMarkali],
+      izinLinki: url,
+    });
+    const waHref = linkHtml.match(/href="(https:\/\/wa\.me\/\?text=[^"]+)"/)?.[1] ?? "";
+    expect(waHref).not.toBe("");
+    const decoded = decodeURIComponent(waHref.replace("https://wa.me/?text=", ""));
+    expect(decoded).toContain("Tutku");
+    expect(decoded).not.toContain("Yetkili");
+    expect(decoded).not.toContain("1234567890");
+  });
+
+  it("sec adiminda tedarikci bos gelen onceki islemlerde Firma okunamadi yazmaz", () => {
+    state.index = 0;
+    state.values = {
+      0: "sec",
+      10: [
+        {
+          islemKimligi: LINE_UUID_1,
+          durum: "inceleme",
+          tedarikci: "",
+          olusturma: "2026-11-19T10:00:00Z",
+          satirSayisi: 4,
+          asama: "hazir",
+        },
+      ],
+    };
+    const html = renderToStaticMarkup(
+      createElement(InvoiceToProducts, {
+        storeSlug: "ornek-butik",
+        onUploaded: async () => {},
+      }),
+    );
+    expect(html).toContain("Fatura kaydı");
+    expect(html).not.toContain("Firma okunamadı");
+  });
 });
 
 describe("Kural 32 izin talebi payload ve link yardimcilari", () => {
@@ -214,6 +268,29 @@ describe("Kural 32 izin talebi payload ve link yardimcilari", () => {
       ]),
     ).toBeNull();
     expect(izinTalebiIstekGovdesi("ornek-butik", "Tutku", [])).toBeNull();
+    expect(
+      izinTalebiIstekGovdesi("ornek-butik", "", [
+        { satirId: LINE_UUID_1, marka: "VKN 1234567890" },
+      ]),
+    ).toBeNull();
+  });
+
+  it("tedarikci bos iken satir markasindan Kural 32 uyumlu izin talebi payloadu uretir", () => {
+    const payload = izinTalebiIstekGovdesi("ornek-butik", "", [
+      {
+        satirId: LINE_UUID_1,
+        urunId: PRODUCT_UUID_1,
+        marka: "Tutku",
+        katalog: null,
+      },
+    ]);
+    expect(payload).toEqual({
+      slug: "ornek-butik",
+      supplierName: "Tutku",
+      brand: "Tutku",
+      lineIds: [LINE_UUID_1],
+      productIds: [PRODUCT_UUID_1],
+    });
   });
 
   it("tamIzinBaglantisi ve izinWhatsappPaylasimLinki temiz URL uretir", () => {

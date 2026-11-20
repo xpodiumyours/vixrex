@@ -89,7 +89,9 @@ it("hazırlama ekranı faturadan çıkan gerçek sayıları ve alış fiyatı ku
   const html = akisEkrani("okunuyor", [{ ...ornekKart(), satirToplam: 100 }]);
   expect(html).toContain("Fatura görüntüsü alındı");
   expect(html).toContain("1 ürün satırı bulundu");
-  expect(html).toContain("Test toptancı");
+  expect(html).not.toContain("Test toptancı");
+  expect(html).not.toContain("Belgede yazmiyor");
+  expect(html).toContain("Ürün kaynağı faturadaki ad, model ve barkodla aranır.");
   expect(html).toContain("belgede karşılaştırılacak toplam yok");
   expect(html).toContain("Alış fiyatı satış fiyatı olarak kullanılmaz");
 });

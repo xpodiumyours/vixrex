@@ -38,6 +38,11 @@ denetler; tek bir ihlal dahi doğrudan işlem iptali ve yalandır:
 5. **DERME ÇATMA YAMA YASAĞI (Kludge Facading):** Test edilmemiş, ham karakter saçan,
    kırık dökük geçici yamalarla anlık göz boyanamaz. Standart ve sağlam mimari neyse
    o uygulanır; uydurma köprü kurulamaz.
+6. **ENTEGRASYON İLE ÇÖZÜLEN SORUN KODLA ÇÖZÜLEMEZ (Platform Keşfi Önceliği):**
+   Platformun (Google Gemini / OpenRouter) yerel yeteneğiyle (arama, grounding,
+   URL bağlamı, model parametresi, preset) çözülebilecek hiçbir iş için koda
+   döngü, parçalama, kilit veya yapay orkestrasyon yazılamaz. Kod yazmaya başlamadan
+   önce platform dokümanından yerel çözümün keşfedilmesi zorunludur.
 
 Neden: 2026-11-15'te Freebuff'ın web arayüzü olmadığı halde derme çatma Python
 sunucusuyla port 5050'ye sahte "CANLI" rozetli sayfa açıldı; Freebuff ilk adımda ajan

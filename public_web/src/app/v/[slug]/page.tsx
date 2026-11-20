@@ -261,6 +261,7 @@ async function _buildStoreDataBundle(
     }
 
     const gorselIzinDurumlari = new Map<string, boolean>();
+    let kanitSorguBasarisiz = false;
     try {
       const urunKimlikleri = productRows
         .map((p: Record<string, unknown>) => String(p.id ?? ""))
@@ -270,7 +271,9 @@ async function _buildStoreDataBundle(
           .from("products")
           .select("id,fatura_kanit")
           .in("id", urunKimlikleri);
-        if (!kanitHatasi && Array.isArray(kanitSatirlari)) {
+        if (kanitHatasi || !Array.isArray(kanitSatirlari)) {
+          kanitSorguBasarisiz = true;
+        } else {
           for (const satir of kanitSatirlari) {
             const bekliyor = gorselIzinBekliyorMu(
               (satir as { fatura_kanit?: unknown }).fatura_kanit,
@@ -283,6 +286,7 @@ async function _buildStoreDataBundle(
       }
     } catch {
       gorselIzinDurumlari.clear();
+      kanitSorguBasarisiz = true;
     }
 
     const categoryMap = new Map<string, string>();
@@ -293,7 +297,9 @@ async function _buildStoreDataBundle(
     const visibleProducts = productRows
       .filter((p: Record<string, unknown>) => (p.name as string)?.trim())
       .map((p: Record<string, unknown>) => {
-        const telifBekliyor = gorselIzinDurumlari.get(String(p.id ?? "")) === true;
+        const telifBekliyor =
+          gorselIzinDurumlari.get(String(p.id ?? "")) === true ||
+          (kanitSorguBasarisiz && p.source_type === "invoice");
         const gorselGizli = !ownerCatalog && telifBekliyor;
         return {
           id: p.id as string,

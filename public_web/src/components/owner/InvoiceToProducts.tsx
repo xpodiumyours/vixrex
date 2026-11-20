@@ -8,6 +8,7 @@ import { faturaSonucunuBekle } from "@/lib/faturaOtomatikBekleme";
 import { onizlemeKartiGorseli } from "@/lib/faturaOnizlemeGorseli";
 import { FaturaAkisBasligi } from "./FaturaAkisBasligi";
 import { FaturaIslemSonucu, type FaturaSonucKarti, type YazmaSonucu } from "./FaturaIslemSonucu";
+import { VixrexAvatar } from "@/app/v/[slug]/components/VixrexAvatar";
 import "./faturaAkis.css";
 import type { ProductAttributeValue } from "@/lib/productRichData";
 import { SUPPLIER_PERMISSION_UUID_RE, sanitizePermissionText } from "@/lib/supplierPermissionRequest";
@@ -17,9 +18,6 @@ import {
   kartDegerlendir,
   type KartDurumu,
 } from "@/lib/faturaKartDurumu";
-function belgedeYazi(deger: string | null | undefined): string {
-  return (deger ?? "").trim() || "Belgede yazmiyor";
-}
 // Faturadan ürün kartına.
 // Esnaf satış fiyatını ve satışa açacağı tam-adet stoku kontrol eder; fatura miktarı öneridir.
 // Alış fiyatı satış fiyatı olmaz. Sunucu fiyatı ve fotoğrafı ayrıca kontrol eder.
@@ -220,6 +218,13 @@ function stokSayisi(ham: string): number | null {
   return Number.isSafeInteger(n) && n >= 0 ? n : null;
 }
 
+export function sureMetni(toplamSaniye: number): string {
+  const guvenli = Number.isFinite(toplamSaniye) && toplamSaniye > 0 ? Math.floor(toplamSaniye) : 0;
+  const dakika = Math.floor(guvenli / 60);
+  const saniye = guvenli % 60;
+  return `${String(dakika).padStart(2, "0")}:${String(saniye).padStart(2, "0")}`;
+}
+
 export function faturaSatiriDurumunuHazirla(
   satir: FaturaOkumaSatiri,
   kategoriId: string,
@@ -245,6 +250,25 @@ export interface IzinTalebiGonderi {
   productIds: string[];
 }
 
+function izinAliciAdiCoz(
+  tedarikci: string | null | undefined,
+  satirlar: Array<{
+    marka?: string;
+    katalog?: { marka?: string } | null;
+  }>,
+): { temizTedarikci: string; ilkMarka: string; aliciAdi: string } {
+  const temizTedarikci = sanitizePermissionText(tedarikci);
+  const ilkMarka =
+    satirlar
+      .map((satir) => sanitizePermissionText(satir.katalog?.marka || satir.marka))
+      .find(Boolean) ?? "";
+  return {
+    temizTedarikci,
+    ilkMarka,
+    aliciAdi: temizTedarikci || ilkMarka,
+  };
+}
+
 export function izinTalebiIstekGovdesi(
   storeSlug: string,
   tedarikci: string | null | undefined,
@@ -256,8 +280,8 @@ export function izinTalebiIstekGovdesi(
   }>,
 ): IzinTalebiGonderi | null {
   const slug = storeSlug.trim();
-  const temizTedarikci = sanitizePermissionText(tedarikci);
-  if (!slug || !temizTedarikci) return null;
+  const { temizTedarikci, ilkMarka, aliciAdi } = izinAliciAdiCoz(tedarikci, satirlar);
+  if (!slug || !aliciAdi) return null;
 
   const lineIds = [
     ...new Set(
@@ -275,13 +299,9 @@ export function izinTalebiIstekGovdesi(
   ];
   if (lineIds.length === 0 && productIds.length === 0) return null;
 
-  const ilkMarka = satirlar
-    .map((satir) => sanitizePermissionText(satir.katalog?.marka || satir.marka))
-    .find(Boolean);
-
   return {
     slug,
-    supplierName: temizTedarikci,
+    supplierName: aliciAdi,
     brand: ilkMarka || temizTedarikci,
     lineIds,
     productIds,
@@ -329,9 +349,7 @@ function faturaUrunIstekGirdisi(
               stokOnaylandi: satir.stokOnaylandi,
               externalProductId:
                 satir.barkod || satir.model
-                  ? [kaynakBelge?.tedarikciVergiNo || kaynakBelge?.tedarikci || "", satir.barkod || satir.model]
-                      .filter(Boolean)
-                      .join(":")
+                  ? satir.barkod || satir.model
                   : undefined,
               islemKimligi: kaynakBelge?.islemKimligi || undefined,
               satirSirasi: sira,
@@ -394,8 +412,18 @@ export default function InvoiceToProducts({
   const [izinLinki, setIzinLinki] = useState<string | null>(null);
   const [izinKopyalandi, setIzinKopyalandi] = useState(false);
   const [izinHata, setIzinHata] = useState<string | null>(null);
+  const [gecenSaniye, setGecenSaniye] = useState(0);
   const aktifFaturaBeklemesi = useRef<Promise<FaturaOkumaSonucu> | null>(null);
   const faturaBeklemeIptali = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    if (adim !== "okunuyor") return;
+    const baslangic = Date.now();
+    const aralik = setInterval(() => {
+      setGecenSaniye(Math.max(0, Math.floor((Date.now() - baslangic) / 1000)));
+    }, 1000);
+    return () => clearInterval(aralik);
+  }, [adim]);
 
   const bekleyenFaturaSonucunuAl = useCallback(
     (ilk: FaturaOkumaSonucu): Promise<FaturaOkumaSonucu> => {
@@ -581,6 +609,7 @@ export default function InvoiceToProducts({
       }
       const ilk = govde as FaturaOkumaSonucu;
       if (ilk.hazirlaniyor === true) {
+        setGecenSaniye(0);
         setAdim("okunuyor");
         if (ilk.islemKimligi) bekleyenIslemKimliginiKaydet(storeSlug, ilk.islemKimligi);
       }
@@ -757,6 +786,7 @@ export default function InvoiceToProducts({
         okuyucu.readAsDataURL(dosyalar[0]);
       }
 
+      setGecenSaniye(0);
       setAdim("okunuyor");
 
       try {
@@ -1110,7 +1140,7 @@ export default function InvoiceToProducts({
               {oncekiIslemler.map((islem) => (
                 <li key={islem.islemKimligi}>
                   <span>
-                    {islem.tedarikci || "Firma okunamadı"} • {islem.satirSayisi} satır •{" "}
+                    {islem.tedarikci || "Fatura kaydı"} • {islem.satirSayisi} satır •{" "}
                     {new Date(islem.olusturma).toLocaleDateString("tr-TR")}
                   </span>
                   <button
@@ -1193,10 +1223,10 @@ export default function InvoiceToProducts({
         durum: belgeOkundu ? "tamam" : "bekliyor",
       },
       {
-        baslik: "Faturayı kesen firma ve ürün kaynağı araştırılıyor",
+        baslik: "Ürün kaynağı araştırılıyor",
         detay: belgeOkundu
-          ? `Firma: ${belgedeYazi(belge?.tedarikci)}. Ürün kaynağı faturadaki ad, model ve barkodla aranır.`
-          : "Resmî ürün kaynağı yalnız faturadaki firmaya bağlı aranıyor.",
+          ? "Ürün kaynağı faturadaki ad, model ve barkodla aranır."
+          : "Resmî ürün kaynağı faturadaki ad, model ve barkoda göre aranıyor.",
         durum: belgeOkundu ? "tamam" : "bekliyor",
       },
       {
@@ -1209,54 +1239,70 @@ export default function InvoiceToProducts({
       <div className="fatura-akis">
         <FaturaAkisBasligi adim={adim} baslik="Faturan hazırlanıyor"
           aciklama="Faturan okunuyor ve ürün kartların hazırlanıyor. Aynı faturayı tekrar yüklemene gerek yok." />
-        <div className="fatura-tarama">
-          <figure className={`fatura-tarama-belge${onizleme ? "" : " fatura-tarama-belge--bos"}`}>
-            {onizleme ? (
-              <Image src={onizleme} alt="Yüklediğin faturanın önizlemesi" width={320} height={440} unoptimized />
-            ) : (
-              <span className="fatura-tarama-bos">
-                <b>PDF</b>
-                <small>{yuklenenBelge ? `${yuklenenBelge.sayfa} sayfa` : "belge"}</small>
-              </span>
-            )}
-            <span className="fatura-tarama-kose" aria-hidden="true" />
-            <span className="fatura-tarama-kose fatura-tarama-kose--ters" aria-hidden="true" />
-            {!belgeOkundu && <span className="fatura-tarama-cizgi" aria-hidden="true" />}
-            <figcaption className="fatura-tarama-etiket">
-              <span className="fatura-tarama-nokta" aria-hidden="true" />
-              {belgeOkundu ? "Belge okundu" : "Satırlar okunuyor"}
-            </figcaption>
-          </figure>
-          <div className="fatura-tarama-panel">
-            <dl className="fatura-sayilar">
-              <div>
-                <dt>Satır</dt>
-                <dd>{belgeOkundu ? satirlar.length : "—"}</dd>
-              </div>
-              <div>
-                <dt>Miktar</dt>
-                <dd>{belgeOkundu ? kontrol.miktarOzeti || "okunamadı" : "—"}</dd>
-              </div>
-              <div>
-                <dt>Tutar</dt>
-                <dd>{belgeOkundu ? paraYaz(kontrol.tutarToplam) : "—"}</dd>
-              </div>
-            </dl>
-            <p className="fatura-bekleme" role="status"><span className="fatura-yukleyici" aria-hidden="true" />{beklemeAsamasi === "kartlaniyor" ? "Ürün bilgileri araştırılıyor ve kartlar hazırlanıyor…" : "Fatura satırları okunuyor…"}</p>
-            <ol className="fatura-adim-ray">
-              {kanitlar.map((kanit, sira) => (
-                <li key={kanit.baslik} className={`fatura-adim-satir fatura-adim-satir--${kanit.durum}`}>
-                  <span className="fatura-adim-no" aria-hidden="true">{String(sira + 1).padStart(2, "0")}</span>
-                  <span className="fatura-adim-govde">
-                    <b>{kanit.baslik}</b>
-                    <small>{kanit.detay}</small>
-                  </span>
-                  <span className="fatura-adim-durum">{kanit.durum === "tamam" ? "tamam" : kanit.durum === "aktif" ? "sürüyor" : "bekliyor"}</span>
-                </li>
-              ))}
-            </ol>
+        <div className="fatura-hologram-kart">
+          <div className="fatura-hologram-sahne">
+            <span className="fatura-hologram-halka" aria-hidden="true" />
+            <span className="fatura-hologram-halka fatura-hologram-halka--ic" aria-hidden="true" />
+            <span className="fatura-hologram-parilti" aria-hidden="true" />
+            <VixrexAvatar size={84} decorative halo priority className="fatura-hologram-avatar" />
           </div>
+          <time className="fatura-sayac" aria-live="off">{sureMetni(gecenSaniye)}</time>
+          <p className="fatura-bekleme" role="status">
+            <span className="fatura-yukleyici" aria-hidden="true" />
+            {beklemeAsamasi === "kartlaniyor" ? "Ürün bilgileri araştırılıyor ve kartlar hazırlanıyor…" : "Fatura satırları okunuyor…"}
+          </p>
+          <p className="fatura-guvence">
+            Faturanız okunuyor ve üretici sitesinden ürün kartları hazırlanıyor. Pencereyi kapatsanız bile arkada hazırlanmaya devam eder.
+          </p>
         </div>
+        {belgeOkundu ? (
+          <div className="fatura-tarama">
+            <figure className={`fatura-tarama-belge${onizleme ? "" : " fatura-tarama-belge--bos"}`}>
+              {onizleme ? (
+                <Image src={onizleme} alt="Yüklediğin faturanın önizlemesi" width={320} height={440} unoptimized />
+              ) : (
+                <span className="fatura-tarama-bos">
+                  <b>PDF</b>
+                  <small>{yuklenenBelge ? `${yuklenenBelge.sayfa} sayfa` : "belge"}</small>
+                </span>
+              )}
+              <span className="fatura-tarama-kose" aria-hidden="true" />
+              <span className="fatura-tarama-kose fatura-tarama-kose--ters" aria-hidden="true" />
+              <figcaption className="fatura-tarama-etiket">
+                <span className="fatura-tarama-nokta" aria-hidden="true" />
+                Belge okundu
+              </figcaption>
+            </figure>
+            <div className="fatura-tarama-panel">
+              <dl className="fatura-sayilar">
+                <div>
+                  <dt>Satır</dt>
+                  <dd>{satirlar.length}</dd>
+                </div>
+                <div>
+                  <dt>Miktar</dt>
+                  <dd>{kontrol.miktarOzeti || "okunamadı"}</dd>
+                </div>
+                <div>
+                  <dt>Tutar</dt>
+                  <dd>{paraYaz(kontrol.tutarToplam)}</dd>
+                </div>
+              </dl>
+              <ol className="fatura-adim-ray">
+                {kanitlar.map((kanit, sira) => (
+                  <li key={kanit.baslik} className={`fatura-adim-satir fatura-adim-satir--${kanit.durum}`}>
+                    <span className="fatura-adim-no" aria-hidden="true">{String(sira + 1).padStart(2, "0")}</span>
+                    <span className="fatura-adim-govde">
+                      <b>{kanit.baslik}</b>
+                      <small>{kanit.detay}</small>
+                    </span>
+                    <span className="fatura-adim-durum">{kanit.durum === "tamam" ? "tamam" : kanit.durum === "aktif" ? "sürüyor" : "bekliyor"}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          </div>
+        ) : null}
       </div>
     );
   }
@@ -1304,6 +1350,7 @@ export default function InvoiceToProducts({
   const kanitliSayisi = satirlar.filter((satir) => satir.sonuc === "kanitli").length;
   const bekleyenSatir = satirlar.length - hazirSayisi;
   const ozet = belge?.sonucOzeti;
+  const izinAliciAdi = izinAliciAdiCoz(belge?.tedarikci, satirlar).aliciAdi;
 
   return (
     <div className="fatura-akis">
@@ -1330,15 +1377,14 @@ export default function InvoiceToProducts({
         {belge?.ozetSatiri && (
           <p className="fatura-aciklama">{belge.ozetSatiri}</p>
         )}
-        {belge && (
+        {belge && (belge.belgeAdedi !== null || belge.belgeToplami !== null) && (
           <p className="fatura-aciklama">
-            Firma: {belgedeYazi(belge.tedarikci)}
-            {" · "}
-            Vergi no: {belgedeYazi(belge.tedarikciVergiNo)}
-            {" · "}
-            Adres: {belgedeYazi(belge.tedarikciAdres)}
-            {belge.belgeAdedi !== null ? ` · Belgede toplam miktar: ${belge.belgeAdedi}` : ""}
-            {belge.belgeToplami !== null ? ` · ${paraYaz(belge.belgeToplami)} alış toplamı` : ""}
+            {[
+              belge.belgeAdedi !== null ? `Belgede toplam miktar: ${belge.belgeAdedi}` : "",
+              belge.belgeToplami !== null ? `${paraYaz(belge.belgeToplami)} alış toplamı` : "",
+            ]
+              .filter(Boolean)
+              .join(" · ")}
           </p>
         )}
       </div>
@@ -1715,7 +1761,7 @@ export default function InvoiceToProducts({
         })}
       </div>
 
-      {satirlar.length > 0 && Boolean(belge?.tedarikci?.trim()) && (
+      {satirlar.length > 0 && Boolean(izinAliciAdi) && (
         <section className="fatura-araclar grid gap-3" aria-label="Üretici İzin Köprüsü">
           <div>
             <h4>Üretici İzin Köprüsü</h4>
@@ -1758,7 +1804,7 @@ export default function InvoiceToProducts({
                 </button>
                 <a
                   className="fatura-birincil"
-                  href={izinWhatsappPaylasimLinki(belge?.tedarikci ?? "", izinLinki)}
+                  href={izinWhatsappPaylasimLinki(izinAliciAdi, izinLinki)}
                   target="_blank"
                   rel="noopener noreferrer"
                 >

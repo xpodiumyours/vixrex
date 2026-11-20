@@ -108,7 +108,12 @@ export async function faturayiArkaPlanaGonder(
       return id;
     } catch (hata) {
       if (hata instanceof Error && hata.message === "FOTOGRAFTA_YAZI_YOK") throw hata;
-      console.warn("[faturaArkaPlanIslemi] Google Gemini cagrisi basarisiz, OpenRouter yedek hattina devrediliyor:", hata);
+      const hataMesaji = (hata instanceof Error ? hata.message : String(hata ?? "BILINMEYEN_HATA"))
+        .replace(/([?&]key=)[^&\s"']+/gi, "$1***")
+        .replace(/(x-goog-api-key[:=]\s*|Bearer\s+)\S+/gi, "$1***")
+        .replace(/AIza[0-9A-Za-z_-]{10,}/g, "***")
+        .slice(0, 200);
+      console.warn("[faturaArkaPlanIslemi] Google Gemini cagrisi basarisiz, OpenRouter yedek hattina devrediliyor:", hataMesaji);
     }
   }
   const anahtar = openRouterPrizAnahtari() || faturaPrizAnahtari();
@@ -197,21 +202,21 @@ export async function arkaPlanFaturaSonucunuAl(
     } else {
       throw new Error("OKUYUCU_EKSIK_CEVAP");
     }
-    const satirlar = okuma.satirlar.map((s) => faturaSatiriniAktar(s, okuma.tedarikci));
+    const satirlar = okuma.satirlar.map((s) => faturaSatiriniAktar(s, ""));
     const id = await islemKaydet({
       slug, parmakIzi: sonuc.fingerprint, providerJobId: islemKimligi,
       belgeAdedi: okuma.belgeAdedi, belgeToplami: okuma.belgeToplami,
-      tedarikci: okuma.tedarikci, tedarikciVergiNo: okuma.tedarikciVergiNo,
-      tedarikciAdres: okuma.tedarikciAdres, tedarikciSite: okuma.tedarikciSite,
+      tedarikci: "", tedarikciVergiNo: "",
+      tedarikciAdres: "", tedarikciSite: okuma.tedarikciSite,
       tedarikciIz: null, satirlar,
-      belgeTuru: okuma.belgeTuru, belgeNo: okuma.belgeNo, belgeTarihi: okuma.belgeTarihi,
+      belgeTuru: okuma.belgeTuru, belgeNo: "", belgeTarihi: "",
       malBedeli: okuma.malBedeli, kdvTutari: okuma.kdvTutari,
-      indirimTutari: okuma.indirimTutari, odenecekToplam: okuma.odenecekToplam,
+      indirimTutari: null, odenecekToplam: okuma.odenecekToplam,
       belgeUyarisi: (okuma.uyarilar ?? []).join(" · "),
       aramaDurumu: {
         erisimHatasi: satirlar.some((s) => s.dogrulamaDurumu?.includes("Araştırılamadı")),
         sonrakiSatir: satirlar.length,
-        presetCevabi: { belgeEkleri: okuma.belgeEkleri, gruplar: okuma.gruplar,
+        presetCevabi: { belgeEkleri: {}, gruplar: okuma.gruplar,
           uyarilar: okuma.uyarilar, kartCevabi, asamaKullanimlari },
       },
     });

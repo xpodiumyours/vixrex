@@ -159,27 +159,39 @@ export async function islemiYukle(
     }
   }
 
+  const hamAramaDurumu =
+    is.data.discovery_state && typeof is.data.discovery_state === "object"
+      ? (is.data.discovery_state as DijitalIzAramaDurumu)
+      : undefined;
+  const aramaDurumu = hamAramaDurumu?.presetCevabi
+    ? {
+        ...hamAramaDurumu,
+        presetCevabi: {
+          ...hamAramaDurumu.presetCevabi,
+          belgeEkleri: {},
+        },
+      }
+    : hamAramaDurumu;
+
   return {
-    tedarikciDijitalIz: is.data.supplier_trace && typeof is.data.supplier_trace === "object"
-      ? { ...is.data.supplier_trace, firma: String(is.data.supplier_name ?? "") } : null,
-    aramaDurumu: is.data.discovery_state && typeof is.data.discovery_state === "object"
-      ? is.data.discovery_state as DijitalIzAramaDurumu : undefined,
+    tedarikciDijitalIz: null,
+    aramaDurumu,
     islemKimligi: String(is.data.id),
     durum: String(is.data.status ?? ""),
-    tedarikci: String(is.data.supplier_name ?? ""),
-    tedarikciVergiNo: String(is.data.supplier_tax_id ?? ""),
-    tedarikciAdres: String(is.data.supplier_address ?? ""),
+    tedarikci: "",
+    tedarikciVergiNo: "",
+    tedarikciAdres: "",
     tedarikciSite: String(is.data.supplier_site ?? ""),
     belgeAdedi: sayiVeyaNull(is.data.document_adet),
     belgeToplami: sayiVeyaNull(is.data.document_total),
     belgeUyarisi: is.data.document_warning ? String(is.data.document_warning) : null,
     belge: {
       belgeTuru: String(is.data.document_type ?? ""),
-      belgeNo: String(is.data.document_no ?? ""),
-      belgeTarihi: is.data.document_date ? String(is.data.document_date) : null,
+      belgeNo: "",
+      belgeTarihi: null,
       malBedeli: sayiVeyaNull(is.data.goods_total),
       kdvTutari: sayiVeyaNull(is.data.vat_total),
-      indirimTutari: sayiVeyaNull(is.data.discount_total),
+      indirimTutari: null,
       odenecekToplam: sayiVeyaNull(is.data.payable_total),
     },
     satirlar: kayitlar.map((kayit) => ({
@@ -222,19 +234,24 @@ export function islemYaniti(islem: KayitliIslem): Record<string, unknown> {
     belgeToplami: islem.belgeToplami,
     belgeAdedi: islem.belgeAdedi,
     ...(islem.belgeUyarisi ? { belgeUyarisi: islem.belgeUyarisi } : {}),
-    tedarikci: islem.tedarikci,
-    tedarikciVergiNo: islem.tedarikciVergiNo,
-    tedarikciAdres: islem.tedarikciAdres,
+    tedarikci: "",
+    tedarikciVergiNo: "",
+    tedarikciAdres: "",
     tedarikciSite: islem.tedarikciSite,
-    tedarikciDijitalIz: islem.tedarikciDijitalIz,
+    tedarikciDijitalIz: null,
     siteDurumu: islem.aramaDurumu?.siteDurumu ?? null,
     katalogEslesmesi: islem.satirlar.filter((satir) => satir.katalog !== null).length,
     sonucOzeti: sonucOzeti(islem.satirlar),
     islemKimligi: islem.islemKimligi,
     aramaSuruyor: islem.aramaDurumu?.sinirDoldu === true,
-    belge: islem.belge,
+    belge: {
+      ...islem.belge,
+      belgeNo: "",
+      belgeTarihi: null,
+      indirimTutari: null,
+    },
     ayniAlisveris: [],
-    belgeEkleri: islem.aramaDurumu?.presetCevabi?.belgeEkleri ?? {},
+    belgeEkleri: {},
     gruplar: islem.aramaDurumu?.presetCevabi?.gruplar ?? [],
     uyarilar: islem.aramaDurumu?.presetCevabi?.uyarilar ?? [],
   };
@@ -253,7 +270,7 @@ interface GomuluIs {
 }
 
 const LISTE_SECIMI =
-  "id,status,supplier_name,created_at,invoice_job_lines(count),invoice_provider_runs(state,error_code)";
+  "id,status,created_at,invoice_job_lines(count),invoice_provider_runs(state,error_code)";
 
 export function gomuluIslemOzeti(kayit: GomuluIs): IslemOzeti {
   const satir = Array.isArray(kayit.invoice_job_lines)
@@ -266,7 +283,7 @@ export function gomuluIslemOzeti(kayit: GomuluIs): IslemOzeti {
   return {
     islemKimligi: String(kayit.id),
     durum: String(kayit.status ?? ""),
-    tedarikci: String(kayit.supplier_name ?? ""),
+    tedarikci: "",
     olusturma: String(kayit.created_at ?? ""),
     satirSayisi,
     asama: islemAsamasi(satirSayisi, kosu?.state ?? null),
@@ -290,7 +307,7 @@ export async function islemleriListele(
 
   const isler = await admin
     .from("invoice_jobs")
-    .select("id,status,supplier_name,created_at")
+    .select("id,status,created_at")
     .eq("store_id", storeId)
     .order("created_at", { ascending: false })
     .limit(20);
@@ -323,7 +340,7 @@ export async function islemleriListele(
     return {
       islemKimligi,
       durum: String(kayit.status ?? ""),
-      tedarikci: String(kayit.supplier_name ?? ""),
+      tedarikci: "",
       olusturma: String(kayit.created_at ?? ""),
       satirSayisi,
       asama: islemAsamasi(satirSayisi, kosu?.state),

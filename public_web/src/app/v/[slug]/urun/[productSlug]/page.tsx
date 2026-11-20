@@ -3,7 +3,9 @@ import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabase";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
+import { ownerSessionStillActive } from "@/lib/ownerSessionValidity";
 import {
   getProductImages,
   normalizeExternalUrl,
@@ -107,18 +109,21 @@ async function _getProductData(slug: string, productSlug: string) {
 
     let gorselIzinBekliyor = false;
     if (productRow?.id) {
+      const faturaUrunu = productRow.source_type === "invoice";
       try {
         const { data: kanitSatiri, error: kanitHatasi } = await supabase
           .from("products")
           .select("id,fatura_kanit")
           .eq("id", productRow.id)
           .maybeSingle();
-        if (!kanitHatasi && kanitSatiri) {
+        if (kanitHatasi || !kanitSatiri) {
+          gorselIzinBekliyor = faturaUrunu;
+        } else {
           gorselIzinBekliyor =
             gorselIzinBekliyorMu((kanitSatiri as { fatura_kanit?: unknown }).fatura_kanit) === true;
         }
       } catch {
-        gorselIzinBekliyor = false;
+        gorselIzinBekliyor = faturaUrunu;
       }
     }
 
@@ -187,7 +192,8 @@ const getProductData = (slug: string, productSlug: string) =>
 async function resolveIsOwner(slug: string, storeId: string): Promise<boolean> {
   const ownerToken = (await cookies()).get(OWNER_SESSION_COOKIE)?.value;
   const ownerSession = verifyOwnerSession(ownerToken, slug);
-  return Boolean(ownerSession && ownerSession.storeId === storeId);
+  if (!ownerSession || ownerSession.storeId !== storeId) return false;
+  return ownerSessionStillActive(getSupabaseAdmin(), ownerSession);
 }
 
 function maskVariantImages(variants: unknown): unknown {

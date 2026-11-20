@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { cookies } from "next/headers";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
+import { ownerSessionStillActive } from "@/lib/ownerSessionValidity";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { verifyStoreEditToken } from "@/lib/instagramServer";
 
@@ -38,22 +39,23 @@ export async function POST(request: NextRequest) {
 
   const cookieStore = await cookies();
   const cerezliOturum = verifyOwnerSession(cookieStore.get(OWNER_SESSION_COOKIE)?.value, slug);
+  const admin = getSupabaseAdmin();
 
-  let storeId = cerezliOturum?.storeId ?? "";
-  if (!cerezliOturum) {
-    if (!editTokenGovde) {
-      return NextResponse.json({ hata: "Oturumun geçersiz veya süresi dolmuş." }, { status: 401 });
-    }
+  let storeId = "";
+  if (cerezliOturum && (await ownerSessionStillActive(admin, cerezliOturum))) {
+    storeId = cerezliOturum.storeId;
+  } else if (editTokenGovde) {
     try {
       const store = await verifyStoreEditToken(slug, editTokenGovde);
       storeId = store.id;
     } catch {
       return NextResponse.json({ hata: "Oturumun geçersiz veya süresi dolmuş." }, { status: 401 });
     }
+  } else {
+    return NextResponse.json({ hata: "Oturumun geçersiz veya süresi dolmuş." }, { status: 401 });
   }
   if (!storeId) return NextResponse.json({ hata: "Vitrin bulunamadı." }, { status: 404 });
 
-  const admin = getSupabaseAdmin();
   const { data: isler } = await admin
     .from("invoice_jobs")
     .select("id")

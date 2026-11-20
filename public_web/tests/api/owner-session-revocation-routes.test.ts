@@ -32,6 +32,12 @@ vi.mock("@/lib/productIntake", async (importOriginal) => ({
 import { GET, POST, PATCH, DELETE } from "@/app/api/products/route";
 import { POST as batch } from "@/app/api/products/batch/route";
 import { POST as invoice } from "@/app/api/fatura-oku/route";
+import { GET as faturaIslemGet, PUT as faturaIslemPut } from "@/app/api/fatura-islem/route";
+import { POST as faturaEslestirmePost } from "@/app/api/fatura-eslestirme/route";
+import { POST as faturaSatirDuzeltPost } from "@/app/api/fatura-satir-duzelt/route";
+import { POST as izinTalebiPost } from "@/app/api/izin-talebi/route";
+import { POST as faturaYayinlaPost } from "@/app/api/fatura-yayinla/route";
+import { POST as faturaAlisverisTeyitPost } from "@/app/api/fatura-alisveris-teyit/route";
 
 function productRequest(method: "GET" | "POST" | "PATCH" | "DELETE") {
   const id = "11111111-1111-4111-8111-111111111111";
@@ -100,5 +106,103 @@ describe("#611: iptal edilmiş fakat çerezi geçerli görünen oturum", () => {
     expect(response.status).toBe(401);
     expect(m.active).toHaveBeenCalledOnce();
     expect(m.admin.mock.results[0]?.value.rpc).not.toHaveBeenCalled();
+  });
+
+  it("fatura-islem GET ve PUT isteklerinde 401 döner ve DB okumaz", async () => {
+    const islemId = "22222222-2222-4222-8222-222222222222";
+    const getRes = await faturaIslemGet(new NextRequest("http://localhost/api/fatura-islem?slug=esnaf"));
+    expect(getRes.status).toBe(401);
+
+    const putRes = await faturaIslemPut(
+      new NextRequest("http://localhost/api/fatura-islem", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug: "esnaf",
+          islemKimligi: islemId,
+          satirlar: [{ satirSirasi: 0, sahipDurumu: { onay: true } }],
+        }),
+      }),
+    );
+    expect(putRes.status).toBe(401);
+    expect(m.active).toHaveBeenCalledTimes(2);
+    expect(m.admin.mock.results[0]?.value.from).not.toHaveBeenCalled();
+  });
+
+  it("fatura-eslestirme, fatura-satir-duzelt ve izin-talebi POST isteklerinde 401 döner", async () => {
+    const uuid1 = "22222222-2222-4222-8222-222222222222";
+    const eslestirmeRes = await faturaEslestirmePost(
+      new NextRequest("http://localhost/api/fatura-eslestirme", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug: "esnaf",
+          islemKimligi: uuid1,
+          satirSirasi: 0,
+          karar: "ayri",
+        }),
+      }),
+    );
+    expect(eslestirmeRes.status).toBe(401);
+
+    const duzeltRes = await faturaSatirDuzeltPost(
+      new NextRequest("http://localhost/api/fatura-satir-duzelt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug: "esnaf",
+          islemKimligi: uuid1,
+          satirSirasi: 0,
+          ad: "Yeni Ad",
+        }),
+      }),
+    );
+    expect(duzeltRes.status).toBe(401);
+
+    const izinRes = await izinTalebiPost(
+      new NextRequest("http://localhost/api/izin-talebi", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug: "esnaf",
+          brand: "Tutku",
+          lineIds: [uuid1],
+        }),
+      }),
+    );
+    expect(izinRes.status).toBe(401);
+    expect(m.active).toHaveBeenCalledTimes(3);
+    expect(m.admin.mock.results[0]?.value.from).not.toHaveBeenCalled();
+    expect(m.admin.mock.results[0]?.value.rpc).not.toHaveBeenCalled();
+  });
+
+  it("fatura-yayinla ve fatura-alisveris-teyit POST isteklerinde 401 döner ve DB yazmaz", async () => {
+    const uuid1 = "22222222-2222-4222-8222-222222222222";
+    const uuid2 = "33333333-3333-4333-8333-333333333333";
+
+    const yayinRes = await faturaYayinlaPost(
+      new NextRequest("http://localhost/api/fatura-yayinla", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug: "esnaf", productIds: [uuid1] }),
+      }),
+    );
+    expect(yayinRes.status).toBe(401);
+
+    const teyitRes = await faturaAlisverisTeyitPost(
+      new NextRequest("http://localhost/api/fatura-alisveris-teyit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug: "esnaf",
+          islemKimligi: uuid1,
+          digerIslemKimligi: uuid2,
+          ayni: true,
+        }),
+      }),
+    );
+    expect(teyitRes.status).toBe(401);
+    expect(m.active).toHaveBeenCalledTimes(2);
+    expect(m.admin.mock.results[0]?.value.from).not.toHaveBeenCalled();
   });
 });
