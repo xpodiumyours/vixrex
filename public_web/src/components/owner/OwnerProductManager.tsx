@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import BulkProductUpload from "./BulkProductUpload";
 import InvoiceToProducts from "./InvoiceToProducts";
 import { OwnerCategoryManager } from "./OwnerCategoryManager";
@@ -99,6 +99,48 @@ function urunBasliginiDuzelt(ham: string): string {
       return kelime[0].toUpperCase() + kelime.slice(1).toLowerCase();
     })
     .join(" ");
+}
+
+export function kartSatisFiyatiHazirla(
+  ham: string,
+  mevcutFiyat?: string | null,
+): { gecerli: boolean; degisti: boolean; priceText: string | null } {
+  const temiz = ham.trim();
+  if (!temiz || temiz.includes("-")) {
+    return { gecerli: false, degisti: false, priceText: null };
+  }
+  const tutar = parseProductPriceNumber(temiz);
+  if (tutar === null || tutar <= 0) {
+    return { gecerli: false, degisti: false, priceText: null };
+  }
+  const onceki = (mevcutFiyat ?? "").trim();
+  return {
+    gecerli: true,
+    degisti: temiz !== onceki,
+    priceText: temiz,
+  };
+}
+
+export function kartStokAdimiHesapla(
+  mevcutStok: number | null | undefined,
+  delta: number,
+): number {
+  const taban =
+    typeof mevcutStok === "number" && Number.isFinite(mevcutStok) && mevcutStok > 0
+      ? Math.floor(mevcutStok)
+      : 0;
+  if (!Number.isFinite(delta)) return taban;
+  return Math.max(0, Math.floor(taban + delta));
+}
+
+export type KartAnaAksiyonu = "fatura-yayinla" | "duzenle" | "yayinda";
+
+export function kartAnaAksiyonu(
+  product: Pick<OwnerProduct, "is_visible" | "source_type">,
+): KartAnaAksiyonu {
+  if (product.is_visible !== false) return "yayinda";
+  if (product.source_type === "invoice") return "fatura-yayinla";
+  return "duzenle";
 }
 
 async function fetchCategoryTemplateKeys(
@@ -250,6 +292,26 @@ export function OwnerProductManager({
   const [yalnizTaslak, setYalnizTaslak] = useState(false);
   const [publishingId, setPublishingId] = useState<string | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
+  const [fiyatTaslaklari, setFiyatTaslaklari] = useState<Record<string, string>>({});
+  const [stokTaslaklari, setStokTaslaklari] = useState<Record<string, number>>({});
+  const [satirGuncellenenId, setSatirGuncellenenId] = useState<string | null>(null);
+  const [acikMenuId, setAcikMenuId] = useState<string | null>(null);
+  const fiyatKayitIslemleriRef = useRef<Map<string, Promise<boolean>>>(new Map());
+  const yayinKilidiRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!acikMenuId) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setAcikMenuId(null);
+    };
+    const onClick = () => setAcikMenuId(null);
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("click", onClick);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("click", onClick);
+    };
+  }, [acikMenuId]);
 
   const filteredProducts = useMemo(() => {
     const q = filterText.trim().toLowerCase();
@@ -439,6 +501,99 @@ export function OwnerProductManager({
     }
   }
 
+  async function kartFiyatKaydet(product: OwnerProduct): Promise<boolean> {
+    const devamEden = fiyatKayitIslemleriRef.current.get(product.id);
+    if (devamEden) return devamEden;
+    if (yayinKilidiRef.current === product.id || publishingId === product.id) return false;
+    if (satirGuncellenenId === product.id) return false;
+    if (!Object.hasOwn(fiyatTaslaklari, product.id)) return true;
+    const taslak = fiyatTaslaklari[product.id];
+    const sonuc = kartSatisFiyatiHazirla(taslak, product.price_text);
+    if (!sonuc.gecerli) {
+      setFiyatTaslaklari((onceki) => {
+        const sonraki = { ...onceki };
+        delete sonraki[product.id];
+        return sonraki;
+      });
+      if (taslak.trim() !== "") {
+        setError("Geçerli bir satış fiyatı girin (0'dan büyük olmalı).");
+      }
+      return false;
+    }
+    if (!sonuc.degisti || !sonuc.priceText) {
+      setFiyatTaslaklari((onceki) => {
+        const sonraki = { ...onceki };
+        delete sonraki[product.id];
+        return sonraki;
+      });
+      return true;
+    }
+    const islem = (async () => {
+      setSatirGuncellenenId(product.id);
+      setError("");
+      setSuccess("");
+      try {
+        const yanit = await urunGuncelleBody({ productId: product.id, priceText: sonuc.priceText });
+        if (!yanit.ok) {
+          setError(yanit.hata);
+          return false;
+        }
+        await refreshAll();
+        setFiyatTaslaklari((onceki) => {
+          const sonraki = { ...onceki };
+          delete sonraki[product.id];
+          return sonraki;
+        });
+        setSuccess("Satış fiyatı güncellendi.");
+        return true;
+      } finally {
+        fiyatKayitIslemleriRef.current.delete(product.id);
+        setSatirGuncellenenId(null);
+      }
+    })();
+    fiyatKayitIslemleriRef.current.set(product.id, islem);
+    return islem;
+  }
+
+  async function kartStokGuncelle(product: OwnerProduct, delta: number) {
+    const mevcut = Object.hasOwn(stokTaslaklari, product.id)
+      ? stokTaslaklari[product.id]
+      : kartStokAdimiHesapla(product.stock_quantity, 0);
+    const sonraki = kartStokAdimiHesapla(mevcut, delta);
+    if (sonraki === mevcut && product.stock_quantity === sonraki) return;
+    setStokTaslaklari((onceki) => ({ ...onceki, [product.id]: sonraki }));
+    setSatirGuncellenenId(product.id);
+    setError("");
+    setSuccess("");
+    try {
+      const yanit = await urunGuncelleBody({ productId: product.id, stockQuantity: sonraki });
+      if (!yanit.ok) {
+        setStokTaslaklari((onceki) => {
+          const kopya = { ...onceki };
+          delete kopya[product.id];
+          return kopya;
+        });
+        setError(yanit.hata);
+        return;
+      }
+      await refreshAll();
+      setStokTaslaklari((onceki) => {
+        const kopya = { ...onceki };
+        delete kopya[product.id];
+        return kopya;
+      });
+    } finally {
+      setSatirGuncellenenId(null);
+    }
+  }
+
+  async function kartOnaylaVeYayinla(product: OwnerProduct) {
+    if (yayinKilidiRef.current || publishingId) return;
+    const fiyatTamam = await kartFiyatKaydet(product);
+    if (!fiyatTamam) return;
+    await urunYayinla(product);
+  }
+
   async function saveProduct(form: ProductFormValue) {
     setBusy(true);
     setError("");
@@ -577,7 +732,8 @@ export function OwnerProductManager({
   // APK'deki menüdeki "Yayınla" ile AYNI kapı: /api/fatura-yayinla sunucuda
   // kartı yeniden okur, kapılar kapalıysa ürün taslak kalır.
   async function urunYayinla(product: OwnerProduct) {
-    if (publishingId) return;
+    if (publishingId || yayinKilidiRef.current) return;
+    yayinKilidiRef.current = product.id;
     setError("");
     setSuccess("");
     setPublishingId(product.id);
@@ -620,6 +776,7 @@ export function OwnerProductManager({
     } catch {
       setError("Ürün yayınlanamadı. Tekrar dene.");
     } finally {
+      yayinKilidiRef.current = null;
       setPublishingId(null);
     }
   }
@@ -640,15 +797,20 @@ export function OwnerProductManager({
       {queuedCount > 0 ? <p className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm font-bold text-amber-600" role="status">{queuedCount} ürün işlemi kuyrukta — bağlantı gelince otomatik gönderilecek (vitrin metin kuyruğundan ayrı).</p> : null}
       {success ? <p className="mb-4 rounded-xl border border-[var(--owner-success)]/40 bg-[var(--owner-success)]/10 p-3 text-sm text-[var(--owner-success)]" role="status">{success}</p> : null}
 
+      {!showInvoice ? (
       <OwnerKatalogAsistani
         onFaturaCikar={() => { setError(""); setSuccess(""); setShowBulkUpload(false); setEditing(null); setShowInvoice(true); }}
         onBaslikOnerileri={() => { void baslikOnerileriniUygula(); }}
       />
+      ) : null}
 
+      {!showInvoice ? (
       <div className="mt-4">
         <OwnerCategoryManager storeSlug={storeSlug} categories={categoriesWithCount} varsayilanUrunTipi={varsayilanUrunTipi} onRefresh={refreshAll} acik={kategoriAcik} onAcikDegis={setKategoriAcik} />
       </div>
+      ) : null}
 
+      {!showInvoice ? (
       <div className="mt-4 flex flex-col gap-3">
         <div className="flex flex-wrap gap-2">
           <input value={filterText} onChange={(e) => setFilterText(e.target.value)} placeholder="Ürün ara..." className="owner-input min-w-[200px] flex-[1_1_240px] text-sm" />
@@ -676,6 +838,7 @@ export function OwnerProductManager({
           <button type="button" className="owner-button-secondary" onClick={() => setKategoriAcik(true)} disabled={busy}>Kategoriler</button>
         </div>
       </div>
+      ) : null}
 
       {showInvoice && !editing && (
         <InvoiceToProducts
@@ -688,6 +851,8 @@ export function OwnerProductManager({
         />
       )}
 
+      {!showInvoice ? (
+      <>
       {showBulkUpload && !editing && (
         <BulkProductUpload storeSlug={storeSlug} categories={resolvedCategories} onUploaded={async () => { await refreshAll(); setShowBulkUpload(false); setSuccess("Ürünler toplu olarak eklendi."); }} />
       )}
@@ -727,13 +892,27 @@ export function OwnerProductManager({
               !filterCategory &&
               !yalnizTaslak &&
               products.length > 1;
+            const fiyatDegeri = Object.hasOwn(fiyatTaslaklari, product.id)
+              ? fiyatTaslaklari[product.id]
+              : (product.price_text ?? "");
+            const mevcutStok = Object.hasOwn(stokTaslaklari, product.id)
+              ? stokTaslaklari[product.id]
+              : kartStokAdimiHesapla(product.stock_quantity, 0);
+            const satirIslemde = satirGuncellenenId === product.id;
+            const taslakMi = product.is_visible === false;
+            const anaAksiyon = kartAnaAksiyonu(product);
             return (
               <article
                 key={product.id}
-                className={`owner-card overflow-hidden${secimModu ? " cursor-pointer" : ""}${secili ? " ring-2 ring-[var(--owner-primary)]" : ""}${siralamaAcik ? " cursor-grab active:cursor-grabbing" : ""}${dragId === product.id ? " opacity-50" : ""}`}
+                className={`owner-card relative${secimModu ? " cursor-pointer" : ""}${secili ? " ring-2 ring-[var(--owner-primary)]" : ""}${siralamaAcik ? " cursor-grab active:cursor-grabbing" : ""}${dragId === product.id ? " opacity-50" : ""}`}
                 onClick={secimModu ? () => urunSecimiDegistir(product.id) : undefined}
                 draggable={siralamaAcik && !secili}
                 onDragStart={(e) => {
+                  const hedef = e.target as HTMLElement | null;
+                  if (hedef && hedef.closest("input, button, a, select, textarea, [role='menu']")) {
+                    e.preventDefault();
+                    return;
+                  }
                   e.dataTransfer.effectAllowed = "move";
                   setDragId(product.id);
                 }}
@@ -749,15 +928,9 @@ export function OwnerProductManager({
                   if (from >= 0 && to >= 0 && from !== to) void urunTasi(from, to);
                 }}
               >
-                <div className="relative aspect-[4/3] bg-[var(--owner-bg-soft)]">
-                  {image ? <Image src={image} alt={`${product.name} ürün görseli`} fill unoptimized sizes="(min-width: 1024px) 300px, (min-width: 640px) 45vw, 100vw" className="object-cover" /> : <div className="flex h-full items-center justify-center text-sm text-[var(--owner-muted)]">Görsel eklenmedi</div>}
-                  {product.is_visible === false ? (
-                    <span className="absolute left-2 top-2 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-black">Taslak — vitrinde görünmüyor</span>
-                  ) : null}
-                </div>
-                <div className="p-4">
+                <div className="flex flex-col gap-3 p-4">
                   {secimModu ? (
-                    <label className="mb-2 flex cursor-pointer items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                    <label className="flex cursor-pointer items-center gap-2" onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         checked={secili}
@@ -768,35 +941,233 @@ export function OwnerProductManager({
                       <span className="text-xs font-bold text-[var(--owner-text)]">Bu ürünü seç</span>
                     </label>
                   ) : null}
-                  <div className="flex items-start justify-between gap-3">
-                    <h3 className="line-clamp-2 font-bold text-[var(--owner-text)]">{product.name}</h3>
-                    {!isService ? (
-                      <span className="shrink-0 rounded-full border border-[var(--owner-border)] px-2 py-1 text-[11px] text-[var(--owner-text-alt)]">{product.stock_status || "Mevcut"}</span>
-                    ) : (
-                      <span className="shrink-0 rounded-full border border-[var(--owner-border)] px-2 py-1 text-[11px] text-[var(--owner-text-alt)]">Hizmet</span>
-                    )}
+
+                  <div className="flex items-start gap-3">
+                    <div className="relative h-[92px] w-[92px] shrink-0 overflow-hidden rounded-2xl border-2 border-[#1e3f73] bg-[var(--owner-bg-soft)]">
+                      {image ? (
+                        <Image src={image} alt={`${product.name} ürün görseli`} fill unoptimized sizes="92px" className="object-cover" />
+                      ) : (
+                        <div className="flex h-full items-center justify-center px-2 text-center text-[11px] text-[var(--owner-muted)]">Görsel yok</div>
+                      )}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className="line-clamp-2 text-sm font-bold leading-snug text-[var(--owner-text)]">{product.name}</h3>
+                        {taslakMi ? (
+                          <span className="shrink-0 rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-bold text-amber-300">Taslak</span>
+                        ) : null}
+                      </div>
+                      <p className="mt-1 truncate text-xs text-[var(--owner-muted)]">{product.product_categories?.name || "Kategorisiz"}</p>
+                      <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                        {isService ? (
+                          <span className="rounded-full border border-[var(--owner-border)] px-2 py-0.5 text-[10px] text-[var(--owner-text-alt)]">Hizmet</span>
+                        ) : null}
+                        {product.old_price_amount != null && <span className="text-[11px] line-through text-[var(--owner-muted)]">{product.old_price_amount} TL</span>}
+                        {product.badge_tag && <span className="rounded bg-blue-500/15 px-1.5 py-0.5 text-[10px] font-bold text-blue-400">{product.badge_tag}</span>}
+                        {product.fulfillment_region && <span className="text-[10px] text-[var(--owner-muted)]">• {product.fulfillment_region}</span>}
+                      </div>
+                    </div>
                   </div>
-                  <p className="mt-2 text-sm font-bold text-[var(--owner-secondary)]">{product.price_text?.trim() || "Fiyat belirtilmedi"}</p>
-                  <div className="mt-1 flex flex-wrap gap-1.5">
-                    {product.old_price_amount != null && <span className="text-[11px] line-through text-[var(--owner-muted)]">{product.old_price_amount} TL</span>}
-                    {product.badge_tag && <span className="rounded bg-blue-500/15 px-1.5 py-0.5 text-[10px] font-bold text-blue-400">{product.badge_tag}</span>}
-                    {product.fulfillment_region && <span className="text-[10px] text-[var(--owner-muted)]">• {product.fulfillment_region}</span>}
-                  </div>
-                  <p className="mt-1 text-xs text-[var(--owner-muted)]">{product.product_categories?.name || "Kategorisiz"}</p>
+
                   {!secimModu ? (
                     <>
-                      {product.source_type === "invoice" ? (
-                        <>
-                          <button type="button" className="owner-button-secondary mt-3 w-full text-xs" onClick={() => faturayaDon(product)} disabled={busy}>🧾 Faturaya dön</button>
-                          {product.is_visible === false ? (
-                            <button type="button" className="owner-button-primary mt-2 w-full text-xs" onClick={() => void urunYayinla(product)} disabled={busy || publishingId === product.id}>{publishingId === product.id ? "Yayınlanıyor…" : "Yayınla"}</button>
-                          ) : null}
-                        </>
-                      ) : null}
-                      <div className="mt-4 grid grid-cols-3 gap-2">
-                        <button type="button" className="owner-button-secondary text-xs" onClick={() => openEditProduct(product)} disabled={busy} title="Düzenle">✏️</button>
-                        <button type="button" className="owner-button-secondary text-xs" onClick={() => void urunCogalt(product)} disabled={busy} title="Çoğalt">⧉</button>
-                        <button type="button" className="owner-button-danger text-xs" onClick={() => setDeleting(product)} disabled={busy} title="Sil">🗑️</button>
+                      <div className={`grid gap-2 ${isService ? "grid-cols-1" : "grid-cols-2"}`}>
+                        <div
+                          className="min-w-0 rounded-xl border border-[var(--owner-border)] bg-[var(--owner-bg-soft)] px-2.5 py-2"
+                          onClick={(e) => e.stopPropagation()}
+                          onMouseDown={(e) => e.stopPropagation()}
+                          onPointerDown={(e) => e.stopPropagation()}
+                        >
+                          <label
+                            htmlFor={`kart-fiyat-${product.id}`}
+                            className="block text-[10px] font-bold uppercase tracking-wider text-[var(--owner-muted)]"
+                          >
+                            Satış Fiyatı
+                          </label>
+                          <input
+                            id={`kart-fiyat-${product.id}`}
+                            type="text"
+                            inputMode="decimal"
+                            value={fiyatDegeri}
+                            placeholder="Ör. 499 TL"
+                            disabled={busy || satirIslemde}
+                            onChange={(e) => {
+                              const deger = e.target.value;
+                              setFiyatTaslaklari((onceki) => ({ ...onceki, [product.id]: deger }));
+                            }}
+                            onBlur={() => {
+                              void kartFiyatKaydet(product);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.currentTarget.blur();
+                              }
+                            }}
+                            className="mt-1 w-full bg-transparent text-sm font-bold text-[var(--owner-secondary)] outline-none placeholder:font-normal placeholder:text-[var(--owner-muted)]/60"
+                          />
+                        </div>
+
+                        {!isService ? (
+                          <div
+                            className="min-w-0 rounded-xl border border-[var(--owner-border)] bg-[var(--owner-bg-soft)] px-2.5 py-2"
+                            onClick={(e) => e.stopPropagation()}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onPointerDown={(e) => e.stopPropagation()}
+                          >
+                            <span className="block text-[10px] font-bold uppercase tracking-wider text-[var(--owner-muted)]">
+                              Dükkân Stoğu
+                            </span>
+                            <div className="mt-1 flex items-center justify-between gap-1.5">
+                              <button
+                                type="button"
+                                aria-label={`${product.name} stoğu azalt`}
+                                disabled={busy || satirIslemde || mevcutStok <= 0}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  void kartStokGuncelle(product, -1);
+                                }}
+                                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-[var(--owner-border)] bg-[var(--owner-surface)] text-sm font-bold text-[var(--owner-text)] transition hover:border-[var(--owner-secondary)] disabled:cursor-not-allowed disabled:opacity-40"
+                              >
+                                −
+                              </button>
+                              <span
+                                aria-live="polite"
+                                className="min-w-[2ch] text-center font-mono text-sm font-bold tabular-nums text-[var(--owner-text)]"
+                              >
+                                {mevcutStok}
+                              </span>
+                              <button
+                                type="button"
+                                aria-label={`${product.name} stoğu artır`}
+                                disabled={busy || satirIslemde}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  void kartStokGuncelle(product, 1);
+                                }}
+                                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-[var(--owner-border)] bg-[var(--owner-surface)] text-sm font-bold text-[var(--owner-text)] transition hover:border-[var(--owner-secondary)] disabled:cursor-not-allowed disabled:opacity-40"
+                              >
+                                +
+                              </button>
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
+
+                      <div
+                        className="relative flex items-center gap-2"
+                        onClick={(e) => e.stopPropagation()}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onPointerDown={(e) => e.stopPropagation()}
+                      >
+                        {anaAksiyon === "fatura-yayinla" ? (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              void kartOnaylaVeYayinla(product);
+                            }}
+                            disabled={busy || satirIslemde || publishingId === product.id}
+                            className="flex min-h-[40px] flex-1 items-center justify-center rounded-xl bg-gradient-to-r from-[#147DFF] to-[#00C2FF] px-3 py-2 text-xs font-extrabold text-white shadow-sm transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {publishingId === product.id ? "Yayınlanıyor…" : "Kartı Onayla & Vitrine Koy"}
+                          </button>
+                        ) : anaAksiyon === "duzenle" ? (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openEditProduct(product);
+                            }}
+                            disabled={busy || satirIslemde}
+                            className="flex min-h-[40px] flex-1 items-center justify-center rounded-xl bg-gradient-to-r from-[#147DFF] to-[#00C2FF] px-3 py-2 text-xs font-extrabold text-white shadow-sm transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            Düzenle ve Yayınla
+                          </button>
+                        ) : (
+                          <div className="flex min-h-[40px] flex-1 items-center justify-center rounded-xl border border-teal-500/40 bg-emerald-500/15 px-3 py-2 text-xs font-bold text-emerald-300">
+                            ✓ Vitrinde Yayında
+                          </div>
+                        )}
+
+                        <button
+                          type="button"
+                          aria-label={`${product.name} seçenekleri`}
+                          aria-expanded={acikMenuId === product.id}
+                          aria-haspopup="menu"
+                          disabled={busy}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setAcikMenuId((onceki) => (onceki === product.id ? null : product.id));
+                          }}
+                          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[var(--owner-border)] bg-[var(--owner-bg-soft)] text-base font-bold text-[var(--owner-muted)] transition hover:border-[var(--owner-secondary)] hover:text-[var(--owner-text)] disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          ⋮
+                        </button>
+
+                        {acikMenuId === product.id ? (
+                          <div
+                            role="menu"
+                            aria-label={`${product.name} işlemleri`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="absolute bottom-full right-0 z-20 mb-2 w-48 overflow-hidden rounded-xl border border-[var(--owner-border)] bg-[var(--owner-surface)] p-1 shadow-xl"
+                          >
+                            {product.source_type === "invoice" ? (
+                              <button
+                                type="button"
+                                role="menuitem"
+                                disabled={busy}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setAcikMenuId(null);
+                                  void faturayaDon(product);
+                                }}
+                                className="flex w-full items-center rounded-lg px-3 py-2 text-left text-xs font-semibold text-[var(--owner-text-alt)] transition hover:bg-[var(--owner-surface-soft)]"
+                              >
+                                Fatura Detayı
+                              </button>
+                            ) : null}
+                            <button
+                              type="button"
+                              role="menuitem"
+                              disabled={busy}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setAcikMenuId(null);
+                                openEditProduct(product);
+                              }}
+                              className="flex w-full items-center rounded-lg px-3 py-2 text-left text-xs font-semibold text-[var(--owner-text-alt)] transition hover:bg-[var(--owner-surface-soft)]"
+                            >
+                              Başlık & Açıklama
+                            </button>
+                            <button
+                              type="button"
+                              role="menuitem"
+                              disabled={busy}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setAcikMenuId(null);
+                                void urunCogalt(product);
+                              }}
+                              className="flex w-full items-center rounded-lg px-3 py-2 text-left text-xs font-semibold text-[var(--owner-text-alt)] transition hover:bg-[var(--owner-surface-soft)]"
+                            >
+                              Ürünü Çoğalt (Kopya)
+                            </button>
+                            <button
+                              type="button"
+                              role="menuitem"
+                              disabled={busy}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setAcikMenuId(null);
+                                setDeleting(product);
+                              }}
+                              className="flex w-full items-center rounded-lg px-3 py-2 text-left text-xs font-semibold text-red-400 transition hover:bg-red-500/10"
+                            >
+                              Ürünü Sil
+                            </button>
+                          </div>
+                        ) : null}
                       </div>
                     </>
                   ) : null}
@@ -860,6 +1231,8 @@ export function OwnerProductManager({
             </div>
           </div>
         </div>
+      ) : null}
+      </>
       ) : null}
     </section>
   );

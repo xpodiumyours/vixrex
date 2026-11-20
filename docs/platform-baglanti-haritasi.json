@@ -1,20 +1,21 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "document_type": "vixrex_platform_connection_navigation",
-  "observed_on": "2026-11-05",
+  "observed_on": "2026-11-20",
   "evidence_base": {
     "repository": "xpodiumyours/vixrex",
     "branch": "main",
-    "commit": "7fa1111c0ca21e11fbdadee22c9ac07a5115c4c9",
-    "live_deployment_commit": null,
-    "pr_741_source": "separate draft branch"
+    "commit": "63ad428710c81c044ff939a12c42500f4180ba21",
+    "short_commit": "63ad4287",
+    "live_deployment_commit": null
   },
   "safety": {
     "repository_is_public": true,
     "contains_secret_values": false,
     "keys_are_names_only": true,
     "secret_values_remain_in_provider": true,
-    "no_runtime_mutation": true
+    "no_runtime_mutation": true,
+    "local_test_invoices_isolated": ".olcum/yerel-test-faturalari/"
   },
   "source_of_truth": {
     "code_and_branch": "GitHub exact commit/branch",
@@ -38,7 +39,7 @@
       "name": "vixrex-public",
       "project_id": "prj_dCMDIaefrTHg6ysiUDT7veiWI52h",
       "code_root": "public_web/",
-      "observed": "project metadata read 2026-11-05"
+      "observed": "project metadata read 2026-11-05; code refs refreshed 2026-11-20"
     },
     {
       "id": "vercel_app",
@@ -53,27 +54,59 @@
       "type": "database_service",
       "name": "Vixrex Project",
       "project_ref": "chfulefxczbgurtgavtp",
+      "storage_bucket": "shelf-images",
       "observed_project_status": "ACTIVE_HEALTHY",
       "observed": "Supabase project metadata 2026-11-05"
     },
     {
+      "id": "google_gemini",
+      "type": "primary_model_api",
+      "name": "Google Gemini Direct Priz",
+      "default_model": "gemini-3.8-flash",
+      "endpoint_pattern": "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
+      "native_tools": [
+        "googleSearch",
+        "urlContext",
+        "fileSearch (optional)"
+      ],
+      "code": "public_web/src/lib/faturaPriz.ts:17-27,456-545"
+    },
+    {
       "id": "openrouter",
-      "type": "model_api",
-      "name": "OpenRouter",
+      "type": "failover_model_api",
+      "name": "OpenRouter (Automatic Failover)",
       "endpoint": "https://openrouter.ai/api/v1/chat/completions",
+      "models": [
+        "qwen/qwen3.5-flash-02-23",
+        "deepseek/deepseek-v4.1-flash-1017"
+      ],
+      "web_fetch_engine": "firecrawl",
       "live_preset_contents_verified": false
     },
     {
       "id": "invoice_entry",
       "type": "api",
-      "name": "Fatura yükleme",
+      "name": "Fatura yükleme (/api/fatura-oku)",
       "code": "public_web/src/app/api/fatura-oku/route.ts"
+    },
+    {
+      "id": "invoice_reader_status",
+      "type": "api",
+      "name": "Okuyucu hazır mı (/api/fatura-okuyucu-durumu)",
+      "code": "public_web/src/app/api/fatura-okuyucu-durumu/route.ts"
     },
     {
       "id": "invoice_orchestrator",
       "type": "code",
       "name": "Fatura arka plan işlemi",
       "code": "public_web/src/lib/faturaArkaPlanIslemi.ts"
+    },
+    {
+      "id": "invoice_draft_builder",
+      "type": "code",
+      "name": "4'lü paralel taslak + sharp + shelf-images",
+      "concurrency": 4,
+      "code": "public_web/src/lib/faturaOtomatikTaslakKaydi.ts"
     },
     {
       "id": "invoice_enqueue",
@@ -85,32 +118,74 @@
       "id": "invoice_advance",
       "type": "database_rpc",
       "name": "advance_invoice_provider_job",
-      "code": "supabase/migrations/20261023173000_fatura_kart_preset_uyumu.sql"
+      "code": "supabase/migrations/20261105080000_fatura_v3_preset_akisi.sql"
+    },
+    {
+      "id": "invoice_save_product",
+      "type": "database_rpc",
+      "name": "save_invoice_product (beden/varyant kimliği)",
+      "code": "supabase/migrations/20261113224000_fatura_kimlik_beden_ek.sql"
     },
     {
       "id": "invoice_callback",
       "type": "api",
-      "name": "Fatura provider callback",
+      "name": "Fatura provider callback (/api/cron/fatura-provider)",
       "code": "public_web/src/app/api/cron/fatura-provider/route.ts"
+    },
+    {
+      "id": "invoice_process_api",
+      "type": "api",
+      "name": "Esnaf işlem masası (/api/fatura-islem)",
+      "code": "public_web/src/app/api/fatura-islem/route.ts"
+    },
+    {
+      "id": "supplier_permission_api",
+      "type": "api",
+      "name": "B2B üretici izin talebi (/api/izin-talebi)",
+      "code": "public_web/src/app/api/izin-talebi/route.ts"
+    },
+    {
+      "id": "supplier_permission_page",
+      "type": "experience",
+      "name": "B2B üretici izin onay sayfası (/izin-talebi/[token])",
+      "code": "public_web/src/app/izin-talebi/[token]/page.tsx"
+    },
+    {
+      "id": "supplier_permission_migration",
+      "type": "database_rpc",
+      "name": "supplier_permission_requests + B2B RPCs",
+      "code": "supabase/migrations/20261118190000_supplier_permission_requests.sql"
+    },
+    {
+      "id": "invoice_publish_api",
+      "type": "api",
+      "name": "Fatura yayın kapısı (/api/fatura-yayinla)",
+      "code": "public_web/src/app/api/fatura-yayinla/route.ts"
+    },
+    {
+      "id": "publish_invoice_product",
+      "type": "database_rpc",
+      "name": "publish_invoice_product",
+      "code": "supabase/migrations/20261107120000_fatura_gorsel_izni_yayin_kapisi.sql"
     },
     {
       "id": "invoice_read_preset",
       "type": "preset_reference",
       "name": "@preset/vixrex-qwen-fatura-okuma-suzme",
-      "code": "public_web/src/lib/faturaArkaPlanIslemi.ts",
+      "code": "public_web/src/lib/faturaArkaPlanIslemi.ts:22",
       "live_preset_revision_verified": false
     },
     {
       "id": "invoice_card_preset",
       "type": "preset_reference",
-      "name": "@preset/urun-kart-olusturucu",
-      "code": "supabase/migrations/20261023173000_fatura_kart_preset_uyumu.sql",
+      "name": "@preset/urun-kart-olusturucu | @preset/vixrex-urun-karti-v2",
+      "code": "supabase/migrations/20261105080000_fatura_v3_preset_akisi.sql:26-27",
       "live_preset_revision_verified": false
     },
     {
       "id": "consumer_vitrin",
       "type": "experience",
-      "name": "Vixrex public vitrin",
+      "name": "Vixrex public vitrin (fail-closed telif maskesi)",
       "code": "public_web/src/app/v/[slug]/ProductCatalog.tsx"
     },
     {
@@ -145,40 +220,85 @@
       "from": "invoice_entry",
       "to": "invoice_orchestrator",
       "relation": "fatura_workflow",
-      "evidence": "public_web/src/app/api/fatura-oku/route.ts"
+      "evidence": "public_web/src/app/api/fatura-oku/route.ts:91"
+    },
+    {
+      "from": "invoice_orchestrator",
+      "to": "google_gemini",
+      "relation": "primary_direct_generate_content",
+      "env": [
+        "GEMINI_API_KEY",
+        "GOOGLE_API_KEY",
+        "GEMINI_FATURA_MODEL",
+        "GEMINI_FILE_SEARCH_STORE_NAMES"
+      ],
+      "evidence": "public_web/src/lib/faturaArkaPlanIslemi.ts:42-108"
     },
     {
       "from": "invoice_orchestrator",
       "to": "invoice_enqueue",
-      "relation": "supabase_rpc",
-      "evidence": "public_web/src/lib/faturaArkaPlanIslemi.ts:35-49"
+      "relation": "failover_supabase_rpc",
+      "evidence": "public_web/src/lib/faturaArkaPlanIslemi.ts:109-126",
+      "note": "Triggered when Gemini key is absent or direct call fails (except FOTOGRAFTA_YAZI_YOK)"
     },
     {
       "from": "invoice_orchestrator",
       "to": "invoice_advance",
-      "relation": "supabase_rpc",
-      "evidence": "public_web/src/lib/faturaArkaPlanIslemi.ts:87-98"
+      "relation": "failover_supabase_rpc",
+      "env": [
+        "PRESET_AKIS"
+      ],
+      "evidence": "public_web/src/lib/faturaArkaPlanIslemi.ts:169-175"
     },
     {
       "from": "invoice_enqueue",
       "to": "openrouter",
-      "relation": "pg_net_http_post",
+      "relation": "pg_net_http_post_failover",
       "preset": "invoice_read_preset",
       "evidence": "supabase/migrations/20261023173000_fatura_kart_preset_uyumu.sql:65-125"
     },
     {
       "from": "invoice_advance",
       "to": "openrouter",
-      "relation": "pg_net_http_post",
+      "relation": "pg_net_http_post_failover",
       "preset": "invoice_card_preset",
-      "evidence": "supabase/migrations/20261023173000_fatura_kart_preset_uyumu.sql:6-63"
+      "evidence": "supabase/migrations/20261105080000_fatura_v3_preset_akisi.sql:4-65"
     },
     {
       "from": "supabase",
       "to": "invoice_callback",
       "relation": "pg_net_callback",
-      "evidence": "supabase/migrations/20261023173000_fatura_kart_preset_uyumu.sql:169-184",
-      "note": "Callback target code is Vercel public endpoint; runtime enablement not proven by source alone"
+      "evidence": "public_web/src/app/api/cron/fatura-provider/route.ts:13-43"
+    },
+    {
+      "from": "invoice_orchestrator",
+      "to": "invoice_draft_builder",
+      "relation": "parallel_draft_creation",
+      "evidence": "public_web/src/lib/faturaOtomatikTaslakKaydi.ts:63,162-180"
+    },
+    {
+      "from": "invoice_draft_builder",
+      "to": "invoice_save_product",
+      "relation": "atomic_product_draft_save",
+      "evidence": "supabase/migrations/20261113224000_fatura_kimlik_beden_ek.sql:5-47"
+    },
+    {
+      "from": "supplier_permission_api",
+      "to": "supplier_permission_migration",
+      "relation": "b2b_permission_token_rpc",
+      "evidence": "public_web/src/app/api/izin-talebi/route.ts:96-153"
+    },
+    {
+      "from": "supplier_permission_page",
+      "to": "supplier_permission_api",
+      "relation": "supplier_approval_ui",
+      "evidence": "public_web/src/app/izin-talebi/[token]/page.tsx"
+    },
+    {
+      "from": "invoice_publish_api",
+      "to": "publish_invoice_product",
+      "relation": "sql_publish_gate",
+      "evidence": "public_web/src/app/api/fatura-yayinla/route.ts:117"
     },
     {
       "from": "vercel_public",
@@ -203,18 +323,19 @@
     {
       "from": "vercel_public",
       "to": "openrouter",
-      "relation": "server_key_origin_then_rpc_forward",
+      "relation": "failover_key_origin_then_rpc_forward",
       "env": [
-        "OPENROUTER_API_KEY"
+        "OPENROUTER_API_KEY",
+        "FATURA_PRIZ_API_KEY"
       ],
-      "evidence": "public_web/src/lib/faturaArkaPlanIslemi.ts:35-43,90-96",
-      "note": "Secret is passed as RPC argument to Supabase; do not print or log"
+      "evidence": "public_web/src/lib/faturaArkaPlanIslemi.ts:114-122,174",
+      "note": "Secret is passed as RPC argument to Supabase on failover path; do not print or log"
     },
     {
       "from": "vercel_public",
       "to": "consumer_vitrin",
-      "relation": "serves",
-      "evidence": "README.md and Vercel project metadata"
+      "relation": "serves_with_fail_closed_copyright_mask",
+      "evidence": "public_web/src/app/v/[slug]/page.tsx:296-330"
     },
     {
       "from": "agent_mcp_config",
@@ -247,6 +368,90 @@
   ],
   "credentials": [
     {
+      "name": "GEMINI_API_KEY",
+      "provider": "Google Gemini",
+      "expected_location": "Vercel vixrex-public production; local public_web/.env.local",
+      "used_by": [
+        "google_gemini",
+        "invoice_orchestrator"
+      ],
+      "privilege": "primary invoice extraction & Google Search/urlContext grounding key",
+      "secret": true
+    },
+    {
+      "name": "GOOGLE_API_KEY",
+      "provider": "Google Gemini",
+      "expected_location": "Vercel vixrex-public production; local public_web/.env.local",
+      "used_by": [
+        "google_gemini"
+      ],
+      "privilege": "fallback env name when GEMINI_API_KEY is unset",
+      "secret": true
+    },
+    {
+      "name": "GEMINI_FATURA_MODEL",
+      "provider": "Google Gemini",
+      "expected_location": "Vercel vixrex-public; local public_web/.env.local",
+      "used_by": [
+        "google_gemini"
+      ],
+      "privilege": "optional model override (defaults to gemini-3.8-flash)",
+      "secret": false
+    },
+    {
+      "name": "GEMINI_FILE_SEARCH_STORE_NAMES",
+      "provider": "Google Gemini",
+      "expected_location": "Vercel vixrex-public; local public_web/.env.local",
+      "used_by": [
+        "google_gemini"
+      ],
+      "privilege": "optional comma-separated File Search store resource names",
+      "secret": false
+    },
+    {
+      "name": "FATURA_PRIZ_URL",
+      "provider": "AI Priz Config",
+      "expected_location": "Vercel vixrex-public; local public_web/.env.local",
+      "used_by": [
+        "google_gemini",
+        "openrouter"
+      ],
+      "privilege": "optional custom endpoint override",
+      "secret": false
+    },
+    {
+      "name": "FATURA_PRIZ_API_KEY",
+      "provider": "AI Priz Config",
+      "expected_location": "Vercel vixrex-public; local public_web/.env.local",
+      "used_by": [
+        "openrouter"
+      ],
+      "privilege": "optional failover key overriding OPENROUTER_API_KEY",
+      "secret": true
+    },
+    {
+      "name": "OPENROUTER_FATURA_TIMEOUT_MS",
+      "provider": "AI Priz Config",
+      "expected_location": "Vercel vixrex-public; local public_web/.env.local",
+      "used_by": [
+        "google_gemini",
+        "openrouter"
+      ],
+      "privilege": "timeout setting in ms (30000-900000, default 240000)",
+      "secret": false
+    },
+    {
+      "name": "PRESET_AKIS",
+      "provider": "OpenRouter Failover Config",
+      "expected_location": "Vercel vixrex-public; local public_web/.env.local",
+      "used_by": [
+        "invoice_orchestrator",
+        "invoice_advance"
+      ],
+      "privilege": "selects 'yeni' or 'mevcut' failover card preset flow",
+      "secret": false
+    },
+    {
       "name": "OPENROUTER_API_KEY",
       "provider": "OpenRouter",
       "expected_location": "Vercel vixrex-public production; local public_web/.env.local for local use",
@@ -254,7 +459,7 @@
       "used_by": [
         "invoice_orchestrator"
       ],
-      "privilege": "runtime API access; exact key scope not verified",
+      "privilege": "failover runtime API access; exact key scope not verified",
       "secret": true
     },
     {
@@ -326,6 +531,30 @@
       "secret": false
     }
   ],
+  "spofs": [
+    "Supabase DB/Auth/RPC/Storage (chfulefxczbgurtgavtp)",
+    "Vercel vixrex-public Next.js server & API routes",
+    "Both primary Gemini and failover OpenRouter AI keys unavailable simultaneously",
+    "Supplier copyright permission state (invoice_image_rights / supplier_permissions) — fail-closed"
+  ],
+  "zones": {
+    "red_locked_core": [
+      "public_web/src/lib/faturaArkaPlanIslemi.ts",
+      "public_web/src/lib/faturaPriz.ts",
+      "public_web/src/lib/faturaUrunHazirlama.ts",
+      "public_web/src/lib/faturaKartPreset.ts",
+      "public_web/src/lib/faturaGorselHakDenetimi.ts",
+      "public_web/src/app/api/fatura-yayinla/route.ts",
+      "public_web/src/app/api/izin-talebi/route.ts",
+      "supabase/migrations/20261107120000_fatura_gorsel_izni_yayin_kapisi.sql",
+      "supabase/migrations/20261113224000_fatura_kimlik_beden_ek.sql",
+      "supabase/migrations/20261118190000_supplier_permission_requests.sql"
+    ],
+    "green_safe_surfaces": [
+      "Storefront/landing UI layout and typography without altering fail-closed copyright shield logic",
+      "Founder brand presentation layer without opening parallel pages/routes (Rule 36)"
+    ]
+  },
   "platform_observations": {
     "vercel_public": {
       "project_found": true,
@@ -356,8 +585,6 @@
     "OpenRouter live preset revisions and runtime key scope not inspected",
     "Production fatura transaction not run",
     "Graphify hosted graph_stats not available for direct check",
-    "New documentation branch is not the default branch and is not presumed indexed",
-    "Preview environment variables for this new branch not verified",
     "Runtime database RPC installation not established by migration file alone"
   ]
 }

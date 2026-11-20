@@ -3,11 +3,16 @@ import { resolve } from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 
-const { mockAdminRpc, mockAdminFrom, mockAnonRpc, mockSahipYetkisi } = vi.hoisted(() => ({
+const { mockAdminRpc, mockAdminFrom, mockAnonRpc, mockSahipYetkisi, mockRevalidateTag } = vi.hoisted(() => ({
   mockAdminRpc: vi.fn(),
   mockAdminFrom: vi.fn(),
   mockAnonRpc: vi.fn(),
   mockSahipYetkisi: vi.fn(),
+  mockRevalidateTag: vi.fn(),
+}));
+
+vi.mock("next/cache", () => ({
+  revalidateTag: mockRevalidateTag,
 }));
 
 vi.mock("@/lib/supabaseAdmin", () => ({
@@ -302,6 +307,16 @@ describe("/api/izin-talebi ucu", () => {
       data: { success: true, status: "onaylandi", updated_rights_count: 2 },
       error: null,
     });
+    mockAdminFrom.mockImplementation((tablo: string) => ({
+      select: () => ({
+        eq: () => ({
+          maybeSingle: async () =>
+            tablo === "supplier_permission_requests"
+              ? { data: { store_id: STORE_ID }, error: null }
+              : { data: { slug: "ornek-magaza" }, error: null },
+        }),
+      }),
+    }));
     const okRes = await PUT(
       new NextRequest("http://localhost/api/izin-talebi", {
         method: "PUT",
@@ -315,6 +330,9 @@ describe("/api/izin-talebi ucu", () => {
       alreadyApproved: false,
       updatedRightsCount: 2,
     });
+    expect(mockRevalidateTag).toHaveBeenCalledWith("store-ornek-magaza", { expire: 0 });
+    expect(mockRevalidateTag).toHaveBeenCalledWith("products-ornek-magaza", { expire: 0 });
+    expect(mockRevalidateTag).toHaveBeenCalledWith("kesfet", { expire: 0 });
   });
 });
 

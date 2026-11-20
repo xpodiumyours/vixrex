@@ -3,6 +3,7 @@ import {
   buildPhysicalProductStructuredData,
   normalizeGoogleGtin,
   parseProductPriceAmount,
+  productAttributeSchemaFields,
 } from "../src/lib/productStructuredData";
 import type { RichProductItem } from "../src/lib/richProductItem";
 
@@ -221,5 +222,71 @@ describe("product structured data", () => {
 
     const offers = (result as { offers?: { seller?: unknown } }).offers;
     expect(offers?.seller).toEqual({ "@type": "LocalBusiness", name: "Örnek Mağaza" });
+  });
+
+  it("Kural 32: alış fiyatı, VKN, IBAN, iskonto ve fatura sırları JSON-LD özelliklerine sızmaz", () => {
+    const fields = productAttributeSchemaFields({
+      schemaVersion: 2,
+      itemKind: "physical",
+      templateKey: "fashion",
+      attributes: [
+        { key: "material", label: "Materyal", value: "Pamuk" },
+        { key: "alisFiyati", label: "Alış Fiyatı", value: "420 TL" },
+        { key: "vkn", label: "VKN", value: "1234567890" },
+        { key: "IBAN", label: "IBAN", value: "TR330006100519786457841326" },
+        { key: "iskonto", label: "İskonto", value: "%15" },
+        { key: "unit_price", label: "Birim Fiyat", value: "400 TL" },
+        { key: "tax_id", label: "Vergi No", value: "9876543210" },
+        { key: "custom_note", label: "Toptan Alış Fiyatı", value: "390 TL" },
+      ],
+    });
+
+    expect(fields.recognized).toEqual({ material: "Pamuk" });
+    expect(fields.additionalProperty).toBeUndefined();
+
+    const jsonLd = buildPhysicalProductStructuredData({
+      product: {
+        ...baseProduct,
+        metadata: {
+          schemaVersion: 2,
+          itemKind: "physical",
+          templateKey: "fashion",
+          attributes: [
+            { key: "material", label: "Materyal", value: "Keten" },
+            { key: "alisFiyati", label: "Alış Fiyatı", value: "420 TL" },
+            { key: "vkn", label: "VKN", value: "1234567890" },
+            { key: "iban", label: "IBAN", value: "TR330006100519786457841326" },
+            { key: "iskonto", label: "İskonto", value: "%15" },
+          ],
+        },
+        variants: [
+          {
+            id: "v1",
+            options: { color: "Siyah", vkn: "1234567890", iban: "TR330006100519786457841326", iskonto: "%15" },
+            priceAmount: 1299,
+          },
+          {
+            id: "v2",
+            options: { color: "Beyaz", alisFiyati: "420 TL" },
+            priceAmount: 1299,
+          },
+        ],
+      },
+      productUrl: "https://vixrex.com/v/magaza/urun/keten-gomlek",
+      storeName: "Örnek Mağaza",
+      description: "Keten karışımlı gömlek",
+      images: ["https://example.com/product.jpg"],
+    });
+
+    const serialized = JSON.stringify(jsonLd);
+    expect(serialized).not.toContain("420 TL");
+    expect(serialized).not.toContain("1234567890");
+    expect(serialized).not.toContain("TR330006100519786457841326");
+    expect(serialized).not.toContain("%15");
+    expect(serialized).not.toContain("iskonto");
+    expect(serialized).not.toContain("iban");
+    expect(serialized).not.toContain("alisFiyati");
+    expect(serialized).toContain("Siyah");
+    expect(serialized).toContain("Beyaz");
   });
 });

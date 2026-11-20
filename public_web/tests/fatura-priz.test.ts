@@ -92,17 +92,19 @@ describe("fatura priz - tak-cikar", () => {
     expect(source).not.toContain("openrouter.ai/api/v1/chat/completions");
   });
 
-  it("hem OPENROUTER_API_KEY hem GEMINI_API_KEY varken Google prizi birincildir ve anahtar cakismasi yapmaz", () => {
+  it("hem OPENROUTER_API_KEY hem GEMINI_API_KEY varken Google prizi birincildir ve anahtari baslikta tasir", () => {
     vi.stubEnv("OPENROUTER_API_KEY", "sk-or-real-openrouter-key");
     vi.stubEnv("GEMINI_API_KEY", "AIzaSyFakeGeminiKey123");
 
     expect(geminiPrizAktifMi()).toBe(true);
     expect(faturaPrizAdresi()).toBe(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=AIzaSyFakeGeminiKey123",
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent",
     );
+    expect(faturaPrizAdresi()).not.toContain("key=");
     expect(faturaPrizAnahtari()).toBe("AIzaSyFakeGeminiKey123");
     expect(faturaPrizBasliklari(faturaPrizAnahtari())).toEqual({
       "Content-Type": "application/json",
+      "x-goog-api-key": "AIzaSyFakeGeminiKey123",
     });
   });
 
@@ -126,12 +128,12 @@ describe("fatura priz - tak-cikar", () => {
     vi.stubEnv("GOOGLE_API_KEY", "AIzaSyGoogleModelKey");
     vi.stubEnv("GEMINI_FATURA_MODEL", "gemini-2.5-pro");
     expect(faturaPrizAdresi()).toBe(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=AIzaSyGoogleModelKey",
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent",
     );
 
     vi.stubEnv("GEMINI_FATURA_MODEL", "   ");
     expect(faturaPrizAdresi()).toBe(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=AIzaSyGoogleModelKey",
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent",
     );
   });
 
@@ -141,19 +143,25 @@ describe("fatura priz - tak-cikar", () => {
     vi.stubEnv("GEMINI_API_KEY", "AIzaSyGeminiOnlyKey");
 
     expect(faturaPrizAdresi()).toContain("generativelanguage.googleapis.com");
-    expect(faturaPrizAdresi()).toContain("key=AIzaSyGeminiOnlyKey");
+    expect(faturaPrizAdresi()).not.toContain("key=");
     expect(faturaPrizAnahtari()).toBe("AIzaSyGeminiOnlyKey");
     expect(faturaPrizBasliklari(faturaPrizAnahtari())).toEqual({
       "Content-Type": "application/json",
+      "x-goog-api-key": "AIzaSyGeminiOnlyKey",
     });
   });
 
-  it("FATURA_PRIZ_URL acikca generativelanguage iceriyorsa her iki anahtar varken de Gemini devreye girer", () => {
-    vi.stubEnv("OPENROUTER_API_KEY", "sk-or-real-key");
+  it("FATURA_PRIZ_URL icinde yanlislikla ?key= verilse bile URL temizlenir", () => {
     vi.stubEnv("GEMINI_API_KEY", "AIzaSyGoogleKey");
-    vi.stubEnv("FATURA_PRIZ_URL", "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent");
+    vi.stubEnv(
+      "FATURA_PRIZ_URL",
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSySizdirilacakKey",
+    );
 
-    expect(faturaPrizAdresi()).toContain("generativelanguage.googleapis.com");
+    expect(faturaPrizAdresi()).toBe(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+    );
+    expect(faturaPrizAdresi()).not.toContain("AIzaSySizdirilacakKey");
     expect(faturaPrizAnahtari()).toBe("AIzaSyGoogleKey");
   });
 
@@ -218,10 +226,12 @@ describe("fatura priz - tak-cikar", () => {
   it("googleFaturaUrunKartlariUret inlineData/fileData ile tek adimda urun karti, unit_price ve grounding gorseli dondurur", async () => {
     vi.stubEnv("GEMINI_API_KEY", "AIzaSyDirectSocketKey");
     let yakalananUrl = "";
+    let yakalananBasliklar: Record<string, string> = {};
     let yakalananGovde: Record<string, unknown> = {};
 
     const mockFetcher = vi.fn(async (url, init) => {
       yakalananUrl = String(url);
+      yakalananBasliklar = (init?.headers ?? {}) as Record<string, string>;
       yakalananGovde = JSON.parse(String(init?.body ?? "{}"));
       return {
         ok: true,
@@ -278,8 +288,10 @@ describe("fatura priz - tak-cikar", () => {
     );
 
     expect(yakalananUrl).toBe(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=AIzaSyDirectSocketKey",
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent",
     );
+    expect(yakalananUrl).not.toContain("key=");
+    expect(yakalananBasliklar["x-goog-api-key"]).toBe("AIzaSyDirectSocketKey");
     expect(yakalananGovde.tools).toEqual([
       { googleSearch: {} },
       { urlContext: {} },
@@ -582,5 +594,60 @@ describe("fatura priz - tak-cikar", () => {
     await expect(
       faturayiArkaPlanaGonder(admin, "store-1", "parmak-izi-2", ["data:image/png;base64,AA=="]),
     ).rejects.toThrow("FOTOGRAFTA_YAZI_YOK");
+  });
+
+  it("googleFaturaUrunKartlariUret fileSearch store adlarini opsiyonlar ve env uzerinden tools dizisine ekler", async () => {
+    vi.stubEnv("GEMINI_API_KEY", "AIzaSyFileSearchKey");
+    const yakalananAraclar: unknown[] = [];
+    const fetcher = vi.fn(async (_url, init) => {
+      const govde = JSON.parse(String(init?.body ?? "{}")) as { tools?: unknown[] };
+      yakalananAraclar.push(govde.tools);
+      return {
+        ok: true,
+        json: async () => ({
+          candidates: [{ content: { parts: [{ text: JSON.stringify({ items: [] }) }] } }],
+        }),
+      };
+    }) as unknown as typeof fetch;
+
+    await googleFaturaUrunKartlariUret("data:image/png;base64,AA==", fetcher, {
+      fileSearchStoreNames: ["fileSearchStores/katalog-1", "fileSearchStores/katalog-2"],
+    });
+    expect(yakalananAraclar[0]).toEqual([
+      { googleSearch: {} },
+      { urlContext: {} },
+      { fileSearch: { fileSearchStoreNames: ["fileSearchStores/katalog-1", "fileSearchStores/katalog-2"] } },
+    ]);
+
+    vi.stubEnv("GEMINI_FILE_SEARCH_STORE_NAMES", "fileSearchStores/env-1, , fileSearchStores/env-2");
+    await googleFaturaUrunKartlariUret("data:image/png;base64,AA==", fetcher);
+    expect(yakalananAraclar[1]).toEqual([
+      { googleSearch: {} },
+      { urlContext: {} },
+      { fileSearch: { fileSearchStoreNames: ["fileSearchStores/env-1", "fileSearchStores/env-2"] } },
+    ]);
+
+    vi.stubEnv("GEMINI_FILE_SEARCH_STORE_NAMES", "   ");
+    await googleFaturaUrunKartlariUret("data:image/png;base64,AA==", fetcher);
+    expect(yakalananAraclar[2]).toEqual([
+      { googleSearch: {} },
+      { urlContext: {} },
+    ]);
+  });
+
+  it("hata durumunda firlatilan hatanin cause icerigi API anahtarini maskeler", async () => {
+    vi.stubEnv("GEMINI_API_KEY", "AIzaSyGizliKey999999");
+    const leakFetcher = vi.fn(async () => {
+      throw new Error("fetch failed for https://generativelanguage.googleapis.com?key=AIzaSyGizliKey999999");
+    }) as unknown as typeof fetch;
+
+    let yakalananHata: Error | null = null;
+    try {
+      await googleFaturaUrunKartlariUret("data:image/png;base64,AA==", leakFetcher);
+    } catch (err) {
+      yakalananHata = err as Error;
+    }
+    expect(yakalananHata?.message).toBe("OKUYUCU_CEVAP_VERMEDI");
+    expect(String(yakalananHata?.cause ?? "")).not.toContain("AIzaSyGizliKey999999");
   });
 });

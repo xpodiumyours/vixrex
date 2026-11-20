@@ -38,16 +38,36 @@ export function geminiPrizAktifMi(): boolean {
   return acikAdres.includes("generativelanguage.googleapis.com");
 }
 
-export function faturaPrizAdresi(): string {
-  if (geminiPrizAktifMi()) {
-    const acikAdres = (process.env.FATURA_PRIZ_URL || "").trim();
-    if (acikAdres.includes("generativelanguage.googleapis.com")) {
-      return acikAdres.includes("?key=") ? acikAdres : `${acikAdres}?key=${geminiPrizAnahtari()}`;
-    }
-    return `${geminiPrizAdresi()}?key=${geminiPrizAnahtari()}`;
+function keyParametresizUrl(adres: string): string {
+  try {
+    const u = new URL(adres);
+    u.searchParams.delete("key");
+    return u.toString();
+  } catch {
+    return adres.replace(/([?&])key=[^&#]*(?:&|$)/gi, "$1").replace(/[?&]$/, "");
   }
+}
+
+function maskeliHataMesaji(hata: unknown): string {
+  const ham = hata instanceof Error ? hata.message : String(hata ?? "");
+  return ham
+    .replace(/([?&]key=)[^&\s"']+/gi, "$1***")
+    .replace(/(x-goog-api-key[:=]\s*)\S+/gi, "$1***")
+    .replace(/(Bearer\s+)\S+/gi, "$1***")
+    .replace(/AIza[0-9A-Za-z_-]{10,}/g, "***")
+    .replace(/sk-or-[0-9A-Za-z_-]{6,}/g, "***")
+    .slice(0, 300);
+}
+
+export function faturaPrizAdresi(): string {
   const acikAdres = (process.env.FATURA_PRIZ_URL || "").trim();
-  if (acikAdres) return acikAdres;
+  if (geminiPrizAktifMi()) {
+    if (acikAdres.includes("generativelanguage.googleapis.com")) {
+      return keyParametresizUrl(acikAdres);
+    }
+    return geminiPrizAdresi();
+  }
+  if (acikAdres) return keyParametresizUrl(acikAdres);
   const temelAdres = (process.env.OPENROUTER_BASE_URL || "").trim().replace(/\/+$/, "");
   if (temelAdres) {
     return temelAdres.endsWith("/chat/completions") ? temelAdres : `${temelAdres}/chat/completions`;
@@ -76,7 +96,10 @@ export function faturaPrizZamanSiniri(): number {
 
 export function faturaPrizBasliklari(anahtar: string): Record<string, string> {
   if (geminiPrizAktifMi()) {
-    return { "Content-Type": "application/json" };
+    return {
+      "Content-Type": "application/json",
+      "x-goog-api-key": anahtar,
+    };
   }
   return {
     "Content-Type": "application/json",
@@ -208,7 +231,7 @@ export async function faturaPrizIstegiGonder(govde: Record<string, unknown>): Pr
     if (hata instanceof Error && ["TimeoutError", "AbortError"].includes(hata.name)) {
       throw new Error("OKUYUCU_ZAMAN_ASIMI");
     }
-    throw new Error("OKUYUCU_CEVAP_VERMEDI", { cause: hata });
+    throw new Error("OKUYUCU_CEVAP_VERMEDI", { cause: maskeliHataMesaji(hata) });
   }
 }
 
@@ -287,7 +310,7 @@ export const GOOGLE_FATURA_URUN_KARTI_SEMASI = {
 } as const;
 
 const GOOGLE_FATURA_URUN_KARTI_ISTEMI = [
-  "Fatura görsellerindeki satılabilir ürün kalemlerini çıkar ve her ürün için Google Search ve urlContext kullanarak resmî üretici/marka ürün kartını tek seferde oluştur.",
+  "Fatura görsellerindeki satılabilir ürün kalemlerini çıkar ve her ürün için Google Search, urlContext ve üretici katalog araması (fileSearch) kullanarak resmî üretici/marka ürün kartını tek seferde oluştur.",
   TURKIYE_FATURA_KISALTMA_TALIMATI,
   "Üretici/toptancı ve esnaf VKN/TCKN, IBAN, adres, cari kodu, ETTN, fatura numarası, seri, saat, özel iskonto ve vade/çek/dipnot gibi ticari sırları kesinlikle yok say ve çıktıda yer verme.",
   "Ürünün birim alış fiyatını faturadan kâr marjı verisi olarak okuyup sayısal değerle unit_price alanına yaz (okunamazsa null döndür); alış fiyatını short_description veya title alanlarına yazma.",
@@ -432,8 +455,27 @@ function googleFaturaYanitiniCoz(veri: unknown): GoogleFaturaUrunKarti[] {
 
 export async function googleFaturaUrunKartlariUret(
   fotograflar: string | string[],
-  fetcher: typeof fetch = globalThis.fetch,
+  opsiyonlar?: { fileSearchStoreNames?: string[] },
+): Promise<GoogleFaturaUrunKarti[]>;
+export async function googleFaturaUrunKartlariUret(
+  fotograflar: string | string[],
+  fetcher?: typeof fetch,
+  opsiyonlar?: { fileSearchStoreNames?: string[] },
+): Promise<GoogleFaturaUrunKarti[]>;
+export async function googleFaturaUrunKartlariUret(
+  fotograflar: string | string[],
+  fetcherVeyaOpsiyonlar?: typeof fetch | { fileSearchStoreNames?: string[] },
+  opsiyonlar?: { fileSearchStoreNames?: string[] },
 ): Promise<GoogleFaturaUrunKarti[]> {
+  const fetcher =
+    typeof fetcherVeyaOpsiyonlar === "function"
+      ? fetcherVeyaOpsiyonlar
+      : globalThis.fetch;
+  const secenekler =
+    typeof fetcherVeyaOpsiyonlar === "object" && fetcherVeyaOpsiyonlar !== null
+      ? fetcherVeyaOpsiyonlar
+      : opsiyonlar;
+
   const liste = (Array.isArray(fotograflar) ? fotograflar : [fotograflar])
     .map((deger) => (typeof deger === "string" ? deger.trim() : ""))
     .filter(Boolean);
@@ -447,19 +489,34 @@ export async function googleFaturaUrunKartlariUret(
     ...liste.map(dataUrlToGeminiPart),
   ];
 
+  const tools: Array<Record<string, unknown>> = [
+    { googleSearch: {} },
+    { urlContext: {} },
+  ];
+  const fileSearchStores = secenekler?.fileSearchStoreNames?.length
+    ? secenekler.fileSearchStoreNames
+    : (process.env.GEMINI_FILE_SEARCH_STORE_NAMES || "")
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+  if (fileSearchStores.length) {
+    tools.push({ fileSearch: { fileSearchStoreNames: fileSearchStores } });
+  }
+
   let yanit: Response;
+  const hedefAdres = geminiPrizAktifMi() ? faturaPrizAdresi() : geminiPrizAdresi();
   try {
     yanit = await fetcher(
-      `${geminiPrizAdresi()}?key=${encodeURIComponent(anahtar)}`,
+      hedefAdres,
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": anahtar,
+        },
         body: JSON.stringify({
           contents: [{ role: "user", parts: parcalar }],
-          tools: [
-            { googleSearch: {} },
-            { urlContext: {} },
-          ],
+          tools,
           generationConfig: {
             temperature: 0.1,
             responseMimeType: "application/json",
@@ -473,12 +530,12 @@ export async function googleFaturaUrunKartlariUret(
     if (hata instanceof Error && ["TimeoutError", "AbortError"].includes(hata.name)) {
       throw new Error("OKUYUCU_ZAMAN_ASIMI");
     }
-    throw new Error("OKUYUCU_CEVAP_VERMEDI", { cause: hata });
+    throw new Error("OKUYUCU_CEVAP_VERMEDI", { cause: maskeliHataMesaji(hata) });
   }
 
   if (!yanit.ok) {
     const hamHata = typeof yanit.text === "function" ? await yanit.text().catch(() => "") : "";
-    const temizHata = hamHata.replace(/([?&]key=)[^&\s"']+/gi, "$1***").slice(0, 300);
+    const temizHata = maskeliHataMesaji(hamHata);
     console.warn("[faturaPriz] Gemini yanıt hatası:", { status: yanit.status, body: temizHata });
     throw new Error("OKUYUCU_CEVAP_VERMEDI");
   }

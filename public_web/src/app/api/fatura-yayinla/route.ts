@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { cookies } from "next/headers";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
+import { ownerSessionStillActive } from "@/lib/ownerSessionValidity";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { verifyStoreEditToken } from "@/lib/instagramServer";
 import { publishInvoiceProduct } from "@/lib/productCoreServer";
@@ -53,10 +54,11 @@ export async function POST(request: NextRequest) {
   const cerezliOturum = verifyOwnerSession(cookieStore.get(OWNER_SESSION_COOKIE)?.value, slug);
 
   const admin = getSupabaseAdmin();
-  let storeId = cerezliOturum?.storeId ?? "";
+  let storeId = "";
   let editToken = "";
 
-  if (cerezliOturum) {
+  if (cerezliOturum && (await ownerSessionStillActive(admin, cerezliOturum))) {
+    storeId = cerezliOturum.storeId;
     const { data: store } = await admin
       .from("stores")
       .select("id, edit_token")

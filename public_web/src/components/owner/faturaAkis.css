@@ -33,6 +33,12 @@
 
 .owner-shell .fatura-onizleme { object-fit: contain; background: var(--owner-surface); }
 
+.owner-shell .fatura-okuma { display: grid; gap: .85rem; justify-items: stretch; }
+.owner-shell .fatura-okuma-ring { position: relative; display: grid; place-items: center; width: 132px; height: 132px; margin: .25rem auto 0; }
+.owner-shell .fatura-okuma-halka { position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(from 0deg, var(--owner-primary), var(--owner-secondary), var(--owner-primary)); animation: fatura-halka-don 1.6s linear infinite; -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px)); mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px)); filter: drop-shadow(0 0 14px rgba(87, 183, 255, .45)); }
+@keyframes fatura-halka-don { to { transform: rotate(360deg); } }
+.owner-shell .fatura-okuma img { position: relative; z-index: 1; }
+
 .owner-shell .fatura-tarama { display: grid; gap: 1rem; align-items: start; }
 .owner-shell .fatura-tarama-belge { position: relative; display: grid; place-items: center; width: 100%; margin: 0; aspect-ratio: 3 / 4; overflow: hidden; border: 1px solid var(--owner-border); border-radius: 10px; background: var(--owner-bg); }
 .owner-shell .fatura-tarama-belge img { width: 100%; height: 100%; object-fit: contain; opacity: .96; }
@@ -108,6 +114,7 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .fatura-yukleyici { animation: none; border-top-color: var(--owner-secondary); }
+  .owner-shell .fatura-okuma-halka { animation: none; }
   .owner-shell .fatura-tarama-cizgi { animation: none; top: 50%; opacity: .8; }
   .owner-shell .fatura-tarama-nokta { animation: none; }
   .owner-shell .fatura-adim-satir--aktif .fatura-adim-no { outline: 2px solid var(--owner-secondary); outline-offset: 2px; }

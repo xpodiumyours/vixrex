@@ -18,6 +18,8 @@ export const maxDuration = 300;
 
 const KIMLIK = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const EN_FAZLA_SATIR = 200;
+const ISLEM_OKUMA_SAATLIK_LIMIT = 180;
+const PENCERE_SANIYE = 3600;
 
 export async function GET(request: NextRequest) {
   const slug = (request.nextUrl.searchParams.get("slug") ?? "").trim();
@@ -28,6 +30,27 @@ export async function GET(request: NextRequest) {
   if (!yetki.tamam) return NextResponse.json({ hata: yetki.hata }, { status: yetki.durum });
 
   const admin = getSupabaseAdmin();
+  const limitSonucu = await admin.rpc("consume_assistant_request", {
+    p_client_key: `fatura_islem:${yetki.storeId}`,
+    p_max_requests: ISLEM_OKUMA_SAATLIK_LIMIT,
+    p_window_seconds: PENCERE_SANIYE,
+  });
+  const limit = Array.isArray(limitSonucu.data) ? limitSonucu.data[0] : limitSonucu.data;
+  if (limitSonucu.error || typeof limit?.allowed !== "boolean") {
+    console.error("[fatura-islem] kota sayaci kullanilamiyor", {
+      code: limitSonucu.error?.code ?? "INVALID_RATE_LIMIT_RESPONSE",
+    });
+    return NextResponse.json(
+      { hata: "Fatura işlemi geçici olarak kullanılamıyor. Bir dakika sonra tekrar dene." },
+      { status: 503, headers: { "Retry-After": "60" } },
+    );
+  }
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { hata: `Çok fazla fatura sorgusu yaptın. ${limit.retry_after_seconds} sn sonra dene.` },
+      { status: 429, headers: { "Retry-After": String(limit.retry_after_seconds ?? 60) } },
+    );
+  }
 
   const urunId = (request.nextUrl.searchParams.get("urunId") ?? "").trim();
   if (urunId) {

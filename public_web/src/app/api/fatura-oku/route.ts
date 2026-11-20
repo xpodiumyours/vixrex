@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { cookies } from "next/headers";
+import { inflateSync } from "node:zlib";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { ownerSessionStillActive } from "@/lib/ownerSessionValidity";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
@@ -15,9 +16,56 @@ export const maxDuration = 300;
 
 const MAKS_BAYT = 4 * 1024 * 1024;
 const MAKS_SAYFA = 3;
+const MAKS_PDF_AKIS_BAYT = 4 * 1024 * 1024;
 const VITRIN_BASINA_LIMIT = 30;
 const PENCERE_SANIYE = 3600;
 const IZINLI_TURLER = new Set(["image/jpeg", "image/png", "image/webp", "application/pdf"]);
+
+function pdfMetinParcalari(bayt: Uint8Array): string[] {
+  const ham = Buffer.from(bayt).toString("latin1");
+  const parcalar = [ham];
+  const akisDeseni = /<<(?:(?!<<|>>)[\s\S])*?\/Type\s*\/ObjStm\b(?:(?!<<|>>)[\s\S])*?>>\s*stream\r?\n([\s\S]*?)\r?\nendstream/g;
+  let toplamAcilan = 0;
+  let sayac = 0;
+  for (const eslesme of ham.matchAll(akisDeseni)) {
+    if (sayac >= 32 || toplamAcilan >= MAKS_PDF_AKIS_BAYT) break;
+    sayac += 1;
+    try {
+      const acilan = inflateSync(Buffer.from(eslesme[1], "latin1"), {
+        maxOutputLength: Math.min(2 * 1024 * 1024, MAKS_PDF_AKIS_BAYT - toplamAcilan),
+      });
+      toplamAcilan += acilan.byteLength;
+      parcalar.push(acilan.toString("latin1"));
+    } catch {
+      continue;
+    }
+  }
+  return parcalar;
+}
+
+function pdfSayfaSayisi(bayt: Uint8Array): number {
+  let etiketSayisi = 0;
+  let agacSayisi = 0;
+  for (const metin of pdfMetinParcalari(bayt)) {
+    etiketSayisi += metin.match(/\/Type\s*\/Page\b(?![sS])/g)?.length ?? 0;
+    for (const eslesme of metin.matchAll(
+      /<<(?:(?!<<|>>)[\s\S])*?\/Type\s*\/Pages\b(?:(?!<<|>>)[\s\S])*?\/Count\s+(\d+)/g,
+    )) {
+      agacSayisi = Math.max(agacSayisi, Number(eslesme[1]));
+    }
+    for (const eslesme of metin.matchAll(
+      /<<(?:(?!<<|>>)[\s\S])*?\/Count\s+(\d+)(?:(?!<<|>>)[\s\S])*?\/Type\s*\/Pages\b/g,
+    )) {
+      agacSayisi = Math.max(agacSayisi, Number(eslesme[1]));
+    }
+    for (const eslesme of metin.matchAll(
+      /<<(?:(?!<<|>>)[\s\S])*?\/Linearized\b(?:(?!<<|>>)[\s\S])*?\/N\s+(\d+)/g,
+    )) {
+      agacSayisi = Math.max(agacSayisi, Number(eslesme[1]));
+    }
+  }
+  return Math.max(etiketSayisi, agacSayisi);
+}
 
 function gercekTur(bayt: Uint8Array): string | null {
   if (bayt.length < 12) return null;
@@ -71,6 +119,16 @@ export async function POST(request: NextRequest) {
   const baytlar = await Promise.all(secilen.map(async (f) => new Uint8Array(await f.arrayBuffer())));
   const turler = baytlar.map(gercekTur);
   if (turler.some((t) => !t || !IZINLI_TURLER.has(t))) return NextResponse.json({ hata: "Fatura yalnız JPG, PNG, WebP veya PDF biçiminde olmalıdır." }, { status: 415 });
+  const toplamSayfa = baytlar.reduce(
+    (toplam, bayt, i) => toplam + (turler[i] === "application/pdf" ? Math.max(1, pdfSayfaSayisi(bayt)) : 1),
+    0,
+  );
+  if (toplamSayfa > MAKS_SAYFA) {
+    return NextResponse.json(
+      { hata: `Tek faturada en fazla ${MAKS_SAYFA} sayfa yüklenebilir.` },
+      { status: 400 },
+    );
+  }
   const ozet = Buffer.concat(baytlar.map((b) => {
     const uzunluk = Buffer.alloc(4); uzunluk.writeUInt32BE(b.length, 0);
     return Buffer.concat([uzunluk, Buffer.from(b)]);

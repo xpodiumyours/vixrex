@@ -166,6 +166,7 @@ const RENK_KISALTMALARI: Record<string, string> = {
 export const TURKIYE_FATURA_KISALTMA_TALIMATI = [
   "Türkiye toptan fatura kısaltmalarını otomatik çözümle: SLM=Slim Fit, REG=Regular Fit, OVS=Oversize, RLX=Relaxed Fit, SYH=Siyah, BYZ=Beyaz, LCV=Lacivert, MVI=Mavi, KRM=Kırmızı/Krem, GRI=Gri, ANT=Antrasit, BEJ=Bej, BRD=Bordo, HKI=Haki, YSL=Yeşil, PNT=Pantolon, GMLK=Gömlek, TSH/TSRT=Tişört, SWT=Sweatshirt, CKT=Ceket, KZK=Kazak, DNM=Denim, KDN=Kadın, ERK=Erkek, CCK=Çocuk, PMK=Pamuk, ELST=Elastan, UK=Uzun Kol, KK=Kısa Kol, SY=Sıfır Yaka, VY=V Yaka.",
   "Akıllı kademeli eşleme uygula: Faturadaki model kodu veya barkodu üretici/marka resmî web sitesinde arayıp doğrula; ürün bulunduğunda faturadaki kısaltmalı satır yerine üretici sayfasındaki tüketici dostu tam ürün adını al ve faturadaki renk bilgisini kısaltmadan açarak ürün açıklamasında net belirt.",
+  "Toptan faturalarda model kodları bazen yalın/tekil (ör. 11375) yazılırken üreticinin sitesinde veya kataloğunda paketli/tireli/varyantlı (ör. 11375-78, 11375-55, 1013-1 vb.) kodlarla yer alabilir; model kodu önekiyle veya barkodla eşleştiğinde de ürünü doğrulanmış resmî ürün kabul et ve görsellerini al.",
   "Doğrulanmış her ürün kartında sayfadaki birincil/ana mankenli stüdyo fotoğrafını selected_image_url alanına, diğer renk ve açı fotoğraflarını image_urls dizisine ekle; akinoncdn.com, mncdn.com, ticimax.cloud, ideacdn.net, shopify.com, myikas.com gibi kurumsal e-ticaret CDN görsellerini koru ve doğrulanan ürünü kesinlikle görselsiz bırakma.",
 ].join("\n");
 
@@ -183,8 +184,27 @@ const HASSAS_ALAN_ANAHTARLARI = new Set([
   "tedarikcivergino",
   "suppliertaxid",
   "supplier_tax_id",
+  "supplier_name",
+  "suppliername",
+  "supplier_address",
+  "supplieraddress",
+  "tedarikci",
+  "tedarikci_adres",
+  "tedarikciadres",
   "iskonto",
   "discount",
+  "vade",
+  "tevkifat",
+  "dipnot",
+  "cari_kodu",
+  "carikodu",
+  "musteri_no",
+  "musterino",
+  "irsaliye",
+  "vergi_dairesi",
+  "vergidairesi",
+  "seri_no",
+  "serino",
   "faturano",
   "fatura_no",
   "invoiceno",
@@ -194,7 +214,14 @@ const HASSAS_ALAN_ANAHTARLARI = new Set([
 export function kural32MetinTemizle(metin: string): string {
   if (!metin) return "";
   return metin
+    .replace(/\bTR\d{2}(?:\s?[0-9A-Z]{4}){5}\s?[0-9A-Z]{2}\b/gi, "")
+    .replace(/\bTR\d{2}[0-9A-Z]{22,24}\b/gi, "")
+    .replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi, "")
     .replace(/\b\d{10,11}\b/g, "")
+    .replace(/(^|[\s,.;:(\[\-])%?\s*\d+(?:[.,]\d+)?\s*%?\s*(?:[oöOÖ]zel\s+|genel\s+|sat[iıIİ]r\s+)?[iİıI]skonto(?:\s+(?:oran[iıIİ]|tutar[iıIİ]))?(?=$|[\s,.;:)\]\-])/gi, "$1")
+    .replace(/(^|[\s,.;:(\[\-])(?:[oöOÖ]zel\s+|genel\s+|sat[iıIİ]r\s+)?[iİıI]skonto(?:\s+(?:oran[iıIİ]|tutar[iıIİ]))?(?:\s*[:\-]?\s*%?\s*\d+(?:[.,]\d+)?\s*%?(?:\s*(?:tl|try|usd|eur|₺|\$|€))?)?(?=$|[\s,.;:)\]\-])/gi, "$1")
+    .replace(/\b\d+\s*(?:g[uüUÜ]n|ay|y[iıIİ]l)\s+vade(?:li|si)?(?=$|[\s,.;:)\]\-])/gi, "")
+    .replace(/(^|[\s,.;:(\[\-])(?:[oöOÖ]deme\s+)?vade(?:\s+(?:fark[iıIİ]|tarihi|g[uüUÜ]n[uüUÜ]|s[uüUÜ]resi)|si)?(?:\s*[:\-]?\s*\d+\s*(?:g[uüUÜ]n|ay|y[iıIİ]l)?)?(?=$|[\s,.;:)\]\-])/gi, "$1")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -677,10 +704,13 @@ export async function resmiUrunSayfasiGroundingIleBul(
   const kilitliAlan = kilitliResmiAlanAdiSec([temizGirdi.kilitliAlanAdi, temizGirdi.tedarikciSite]);
   try {
     const yanit = await fetcher(
-      `${GEMINI_GROUNDING_ADRESI}?key=${encodeURIComponent(apiKey)}`,
+      GEMINI_GROUNDING_ADRESI,
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": apiKey,
+        },
         body: JSON.stringify({
           contents: [
             {

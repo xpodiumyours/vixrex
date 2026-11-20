@@ -1,6 +1,10 @@
 # Yerel calisma defteri ve gecici test belgeleri (depoda tutulmaz)
 CALISMA-DEFTERI.md
 test-fatura.png
+*test_fatura*
+/*_fatura.html
+/*_fatura.pdf
+/*_fatura.png
 
 # Miscellaneous
 *.class

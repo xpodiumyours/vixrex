@@ -132,29 +132,57 @@ const KURAL32_HASSAS_ANAHTARLAR = new Set([
   "wholesaleprice",
   "wholesale_price",
   "tedarikcifiyati",
+  "iban",
+  "iskonto",
+  "discount",
+  "ettn",
+  "faturano",
+  "fatura_no",
+  "invoiceno",
+  "invoice_no",
+  "tckimlikno",
+  "tc_kimlik_no",
+  "tcno",
+  "tc_no",
+  "maliyet",
+  "costprice",
+  "cost_price",
 ]);
 
 const KURAL32_HASSAS_ETIKET_DESENLERI = [
   "vkn",
+  "tckn",
   "vergi no",
   "vergi numara",
-  "alış fiyat",
   "alis fiyat",
   "toptan fiyat",
-  "toptan alış",
-  "fatura alış",
+  "toptan alis",
   "fatura alis",
   "purchase price",
   "wholesale price",
   "tax id",
+  "iban",
+  "iskonto",
+  "discount",
+  "ettn",
+  "fatura no",
+  "maliyet",
 ];
 
-function kural32HassasAlanMi(
+function kural32NormalizeMetin(deger: string): string {
+  return deger
+    .toLocaleLowerCase("tr-TR")
+    .replace(/ı/g, "i")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+export function kural32HassasAlanMi(
   key: string,
   label: string | undefined,
   hasDefinition: boolean,
 ): boolean {
-  const temizAnahtar = key.toLocaleLowerCase("tr-TR").replace(/[^a-z0-9_]/g, "");
+  const temizAnahtar = kural32NormalizeMetin(key).replace(/[^a-z0-9_]/g, "");
   const altCizgisiz = temizAnahtar.replace(/_/g, "");
   if (
     KURAL32_HASSAS_ANAHTARLAR.has(temizAnahtar) ||
@@ -165,7 +193,7 @@ function kural32HassasAlanMi(
   if (!hasDefinition && altCizgisiz === "unitprice") {
     return true;
   }
-  const temizEtiket = String(label || "").toLocaleLowerCase("tr-TR");
+  const temizEtiket = kural32NormalizeMetin(String(label || ""));
   return KURAL32_HASSAS_ETIKET_DESENLERI.some((desen) => temizEtiket.includes(desen));
 }
 

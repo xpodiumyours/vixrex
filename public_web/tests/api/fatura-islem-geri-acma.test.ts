@@ -129,7 +129,10 @@ describe("işlemi kapatıp yeniden açma", () => {
 
     const islem = await islemiYukle(admin, "store-1", ISLEM);
 
-    expect(islem?.tedarikci).toBe("Glisa Tekstil");
+    expect(islem?.tedarikci).toBe("");
+    expect(islem?.tedarikciVergiNo).toBe("");
+    expect(islem?.belge.belgeNo).toBe("");
+    expect(islem?.satirlar[0].alisBirimFiyat).toBe(450);
     expect(islem?.belge.malBedeli).toBe(3600);
     expect(islem?.belge.odenecekToplam).toBe(3960);
     expect(islem?.satirlar[0].katalog?.resmiAd).toContain("16747");
@@ -167,7 +170,12 @@ describe("işlemi kapatıp yeniden açma", () => {
 describe("fatura-islem ucu", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.rpc.mockResolvedValue({ data: { success: true, kaydedilen: 1 }, error: null });
+    mocks.rpc.mockImplementation(async (ad: string) => {
+      if (ad === "consume_assistant_request") {
+        return { data: [{ allowed: true, retry_after_seconds: 0 }], error: null };
+      }
+      return { data: { success: true, kaydedilen: 1 }, error: null };
+    });
     mocks.yetki.mockResolvedValue({ tamam: true, storeId: "store-1", slug: "deneme-vitrin" });
   });
 
@@ -201,7 +209,8 @@ describe("fatura-islem ucu", () => {
     ).json();
 
     expect(govde.islemler).toHaveLength(1);
-    expect(govde.islemler[0]).toMatchObject({ islemKimligi: ISLEM, tedarikci: "Glisa", satirSayisi: 3 });
+    expect(govde.islemler[0]).toMatchObject({ islemKimligi: ISLEM, tedarikci: "", satirSayisi: 3 });
+    expect(JSON.stringify(govde)).not.toContain("Glisa");
   });
 
   it("esnaf girdileri satıra kaydedilir", async () => {
@@ -265,7 +274,12 @@ describe("fatura-islem ucu", () => {
 describe("ürün yönetiminden faturaya dönme", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.rpc.mockResolvedValue({ data: { success: true, kaydedilen: 1 }, error: null });
+    mocks.rpc.mockImplementation(async (ad: string) => {
+      if (ad === "consume_assistant_request") {
+        return { data: [{ allowed: true, retry_after_seconds: 0 }], error: null };
+      }
+      return { data: { success: true, kaydedilen: 1 }, error: null };
+    });
     mocks.yetki.mockResolvedValue({ tamam: true, storeId: "store-1", slug: "deneme-vitrin" });
   });
 
@@ -307,5 +321,22 @@ describe("ürün yönetiminden faturaya dönme", () => {
     );
 
     expect(cevap.status).toBe(422);
+  });
+
+  it("GET hiz siniri asilinca 429, kota sayaci arizaliysa fail-closed 503 doner", async () => {
+    mocks.admin.mockReturnValue(sahteAdmin({}));
+    mocks.rpc.mockResolvedValueOnce({
+      data: [{ allowed: false, retry_after_seconds: 45 }],
+      error: null,
+    });
+    const asilan = await GET(new NextRequest("http://localhost/api/fatura-islem?slug=deneme-vitrin"));
+    expect(asilan.status).toBe(429);
+
+    mocks.rpc.mockResolvedValueOnce({
+      data: null,
+      error: { code: "RPC_DOWN" },
+    });
+    const arizali = await GET(new NextRequest("http://localhost/api/fatura-islem?slug=deneme-vitrin"));
+    expect(arizali.status).toBe(503);
   });
 });

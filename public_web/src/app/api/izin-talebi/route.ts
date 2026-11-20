@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { supabase } from "@/lib/supabase";
 import { sahipYetkisi } from "@/lib/faturaYetki";
+import { vitrinOnbelleginiYenile } from "@/lib/vitrinYayinDogrula";
 import {
   fetchSupplierPermissionRequest,
   SUPPLIER_PERMISSION_TOKEN_RE,
@@ -178,6 +179,28 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ hata: "İzin talebi bulunamadı." }, { status: 404 });
     }
     return NextResponse.json({ hata: "İzin onayı tamamlanamadı." }, { status: 400 });
+  }
+
+  try {
+    const admin = getSupabaseAdmin();
+    const { data: talep } = await admin
+      .from("supplier_permission_requests")
+      .select("store_id")
+      .eq("token", token)
+      .maybeSingle();
+    const storeId = typeof talep?.store_id === "string" ? talep.store_id : "";
+    if (storeId) {
+      const { data: magaza } = await admin
+        .from("stores")
+        .select("slug")
+        .eq("id", storeId)
+        .maybeSingle();
+      const storeSlug = typeof magaza?.slug === "string" ? magaza.slug.trim() : "";
+      if (storeSlug) {
+        vitrinOnbelleginiYenile(storeSlug);
+      }
+    }
+  } catch {
   }
 
   return NextResponse.json(

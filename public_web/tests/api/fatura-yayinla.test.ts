@@ -8,7 +8,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   get: vi.fn(() => "owner-cookie"),
   admin: vi.fn(),
-  verifyOwner: vi.fn((): { storeId: string; slug: string } | null => ({ storeId: "store-1", slug: "deneme-vitrin" })),
+  verifyOwner: vi.fn((): { storeId: string; slug: string; sessionToken?: string } | null => ({
+    storeId: "store-1",
+    slug: "deneme-vitrin",
+    sessionToken: "a".repeat(64),
+  })),
+  active: vi.fn(async () => true),
   verifyToken: vi.fn(),
   publish: vi.fn(
     async (_args: Record<string, unknown>): Promise<{ success: boolean; id?: string; gorunur?: boolean; izin_bekliyor?: boolean; hata?: string }> => ({
@@ -22,6 +27,9 @@ vi.mock("@/lib/supabaseAdmin", () => ({ getSupabaseAdmin: mocks.admin }));
 vi.mock("@/lib/ownerSession", () => ({
   OWNER_SESSION_COOKIE: "vixrex_owner_session",
   verifyOwnerSession: mocks.verifyOwner,
+}));
+vi.mock("@/lib/ownerSessionValidity", () => ({
+  ownerSessionStillActive: mocks.active,
 }));
 vi.mock("@/lib/instagramServer", () => ({ verifyStoreEditToken: mocks.verifyToken }));
 vi.mock("@/lib/productCoreServer", () => ({ publishInvoiceProduct: mocks.publish }));
@@ -88,7 +96,8 @@ describe("/api/fatura-yayinla — ayrı Yayınla kapısı", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.get.mockReturnValue("owner-cookie");
-    mocks.verifyOwner.mockReturnValue({ storeId: "store-1", slug: "deneme-vitrin" });
+    mocks.verifyOwner.mockReturnValue({ storeId: "store-1", slug: "deneme-vitrin", sessionToken: "a".repeat(64) });
+    mocks.active.mockResolvedValue(true);
     mocks.admin.mockImplementation(adminMock);
     mocks.publish.mockResolvedValue({ success: true, id: "urun-1" });
     urunSatiri = { ...TASLAK_FATURA_URUNU };
@@ -128,6 +137,16 @@ describe("/api/fatura-yayinla — ayrı Yayınla kapısı", () => {
     const cevap = await faturaYayinla(istek({ slug: "deneme-vitrin", productIds: ["urun-1"] }));
 
     expect(cevap.status).toBe(401);
+    expect(mocks.publish).not.toHaveBeenCalled();
+  });
+
+  it("iptal edilmiş oturum çereziyle 401 döner ve yayınlamaz", async () => {
+    mocks.active.mockResolvedValueOnce(false);
+
+    const cevap = await faturaYayinla(istek({ slug: "deneme-vitrin", productIds: ["urun-1"] }));
+
+    expect(cevap.status).toBe(401);
+    expect(mocks.active).toHaveBeenCalledOnce();
     expect(mocks.publish).not.toHaveBeenCalled();
   });
 

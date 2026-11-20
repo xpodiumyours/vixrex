@@ -1,8 +1,6 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname } from "node:path";
-import { afterAll, expect, it, vi } from "vitest";
+import { expect, it, vi } from "vitest";
 
 const state = vi.hoisted(() => ({ index: 0, values: {} as Record<number, unknown> }));
 vi.mock("react", async (importOriginal) => {
@@ -19,7 +17,6 @@ vi.mock("react", async (importOriginal) => {
 import InvoiceToProducts, { faturaSatiriDurumunuHazirla } from "@/components/owner/InvoiceToProducts";
 import { katalogJsonunuOku } from "@/lib/faturaGoru";
 import { faturaSatiriniAktar } from "@/lib/faturaPresetAktarimi";
-import { satirdanFaturaTaslagi } from "@/lib/faturaTaslagi";
 import { faturaKatalogMetadatasi } from "@/lib/faturaUrunIcerigi";
 import { buildProductDetailFacts } from "@/lib/productCardPresentation";
 
@@ -53,15 +50,16 @@ const cases = [
     visible: ["Test Tekstil Üreticisi", "%100 pamuk (örnek)", "Örnek kaynak bakım bilgisi", "Lacivert", "Beden"],
   },
 ];
-const results: unknown[] = [];
 
-function akisEkrani(adim: string, satirlar: unknown[], sonuc?: unknown) {
+function akisEkrani(adim: string, satirlar: unknown[], sonuc?: unknown, beklemeAsamasi?: string) {
   state.index = 0;
   state.values = {
     0: adim,
-    2: { satirlar, belgeAdedi: null, belgeToplami: null, tedarikci: "Test toptancı" },
-    3: satirlar,
-    ...(sonuc ? { 7: sonuc } : {}),
+    1: null,
+    2: satirlar,
+    ...(sonuc ? { 6: sonuc } : {}),
+    ...(beklemeAsamasi ? { 13: beklemeAsamasi } : {}),
+    14: { sayfa: 1, bayt: 1024, pdf: false },
   };
   return renderToStaticMarkup(createElement(InvoiceToProducts, {
     storeSlug: "offline-test", onUploaded: async () => {},
@@ -71,6 +69,12 @@ function akisEkrani(adim: string, satirlar: unknown[], sonuc?: unknown) {
 function ornekKart() {
   const parsed = katalogJsonunuOku(JSON.stringify({ satirlar: [cases[0].product] }));
   return faturaSatiriDurumunuHazirla(faturaSatiriniAktar(parsed.satirlar[0], "Test toptancı"), "");
+}
+
+function adimDurumEtiketleri(html: string): string[] {
+  return [...html.matchAll(/<span class="fatura-adim-durum">(tamam|sürüyor|bekliyor)<\/span>/g)].map(
+    (eslesme) => eslesme[1],
+  );
 }
 
 it("fiyatı yazılmış kart açık onay verilmeden hazır sayılmaz", () => {
@@ -88,22 +92,31 @@ it("fiyatı yazılmış kart açık onay verilmeden hazır sayılmaz", () => {
 it("hazırlama ekranı faturadan çıkan gerçek sayıları ve alış fiyatı kuralını gösterir", () => {
   const html = akisEkrani("okunuyor", [{ ...ornekKart(), satirToplam: 100 }]);
   expect(html).toContain("Fatura görüntüsü alındı");
-  expect(html).toContain("1 ürün satırı bulundu");
-  expect(html).toContain("Test toptancı");
-  expect(html).toContain("belgede karşılaştırılacak toplam yok");
+  expect(html).toContain("Ürün satırları okunuyor");
+  expect(html).not.toContain("Test toptancı");
+  expect(html).not.toContain("Belgede yazmiyor");
+  expect(html).toContain("Resmî ürün kaynağı faturadaki ad, model ve barkoda göre aranıyor.");
+  expect(html).toContain("Uydurma sayı kullanılmaz");
   expect(html).toContain("Alış fiyatı satış fiyatı olarak kullanılmaz");
+  expect((html.match(/<dd>—<\/dd>/g) ?? []).length).toBe(3);
 });
 
-it("hazırlama ekranı belge panelini, bulunan sayıları ve adım durumlarını birlikte gösterir", () => {
+it("hazırlama ekranı dönen halkayı, bulunan sayıları ve adım durumlarını birlikte gösterir", () => {
   const html = akisEkrani("okunuyor", [{ ...ornekKart(), satirToplam: 100 }]);
-  expect(html).toContain("fatura-tarama-belge");
-  expect(html).toContain("Belge okundu");
+  expect(html).toContain("fatura-okuma-ring");
+  expect(html).toContain("fatura-okuma-halka");
+  expect(html).toContain("fatura-adim-ray");
+  expect(html).not.toContain("fatura-tarama-belge");
+  expect(html).not.toContain("Belge okundu");
   expect(html).toContain("fatura-sayilar");
   expect(html).toContain("<dt>Satır</dt>");
   expect(html).toContain("<dt>Tutar</dt>");
-  expect(html).toContain("fatura-adim-satir--tamam");
-  expect(html).toContain(">tamam</span>");
-  expect(html).toContain("sürüyor");
+  expect((html.match(/class="fatura-adim-satir fatura-adim-satir--/g) ?? []).length).toBe(5);
+  expect(adimDurumEtiketleri(html)).toEqual(["tamam", "sürüyor", "bekliyor", "bekliyor", "bekliyor"]);
+  const kartlanirken = akisEkrani(
+    "okunuyor", [{ ...ornekKart(), satirToplam: 100 }], undefined, "kartlaniyor",
+  );
+  expect(adimDurumEtiketleri(kartlanirken)).toEqual(["tamam", "sürüyor", "bekliyor", "sürüyor", "sürüyor"]);
 });
 
 it("hazırlama ekranı belgeyle tutmayan miktarı gizlemez", () => {
@@ -111,8 +124,8 @@ it("hazırlama ekranı belgeyle tutmayan miktarı gizlemez", () => {
   const kart = { ...ornekKart(), satirToplam: 100 };
   state.values = {
     0: "okunuyor",
-    2: { satirlar: [kart], belgeAdedi: 5, belgeToplami: null, tedarikci: "Test toptancı" },
-    3: [kart],
+    1: { satirlar: [kart], belgeAdedi: 5, belgeToplami: null, tedarikci: "Test toptancı" },
+    2: [kart],
   };
   const html = renderToStaticMarkup(createElement(InvoiceToProducts, {
     storeSlug: "offline-test", onUploaded: async () => {},
@@ -158,8 +171,8 @@ it.each(cases)("$sector: gelen alanlar esnaf ve tüketici kartına taşınır", 
   state.index = 0;
   state.values = {
     0: "urunler",
-    2: { satirlar: [row], belgeAdedi: 2, belgeToplami: null, tedarikci: "Test toptancı" },
-    3: [ownerRow],
+    1: { satirlar: [row], belgeAdedi: 2, belgeToplami: null, tedarikci: "Test toptancı" },
+    2: [ownerRow],
   };
   const html = renderToStaticMarkup(createElement(InvoiceToProducts, {
     storeSlug: "offline-test", onUploaded: async () => {},
@@ -178,31 +191,4 @@ it.each(cases)("$sector: gelen alanlar esnaf ve tüketici kartına taşınır", 
     ]));
     expect(facts.some((fact) => fact.key === "netQuantity")).toBe(false);
   }
-  results.push({
-    sektor: sector, ornekJson: input, vixrexTaslagi: satirdanFaturaTaslagi(row),
-    tuketiciMetadatasi: metadata, tuketiciOzellikleri: facts,
-    esnafEkraninda: visible.map((value) => ({ deger: value, gercekHtmlIcindeGorunuyor: html.includes(value) })),
-    satisFiyati: ownerRow.satisFiyati, esnafOnayi: ownerRow.onayli,
-  });
-});
-
-afterAll(() => {
-  const output = process.env.VIXREX_KART_TEST_LOG;
-  if (!output) return;
-  let lastRealCall: Record<string, unknown> = {};
-  try {
-    const raw = JSON.parse(readFileSync("/tmp/vixrex-minimax-taslak-aktarim-test.json", "utf8"));
-    for (const key of ["started", "finished", "success", "apiStatus", "generationId", "error"]) {
-      lastRealCall[key] = raw[key];
-    }
-  } catch { lastRealCall = { durum: "Gerçek çağrı kaydı bu test ortamında mevcut değil." }; }
-  mkdirSync(dirname(output), { recursive: true });
-  writeFileSync(output, JSON.stringify({
-    kapsam: "Gerçek Vixrex dönüştürme ve esnaf render koduyla çevrimdışı sözleşme testi",
-    uyari: "Aşağıdaki gıda/tekstil JSON'ları sınama örnekleridir; gerçek OpenRouter fatura yanıtı veya resmî üretici verisi değildir. .example adresleri örnektir.",
-    gercekOpenRouterSonKayit: lastRealCall,
-    gercekFaturadanTamamlanmisKartAlindi: false,
-    buKontroldeModelCagrisi: 0, buKontroldeCanliUrunKaydi: 0,
-    ornekler: results,
-  }, null, 2) + "\n");
 });
