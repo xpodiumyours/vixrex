@@ -1,13 +1,30 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { supabase } from "@/lib/supabase";
 import { ziyaretAnahtariniOkuyaUret } from "@/lib/vitrinZiyaretAnahtari";
 import { addToVitrinCart, cartItemKey } from "@/lib/vitrinCart";
 import { tutarYazisi } from "@/lib/productCardPresentation";
 import { vitrinGorunum } from "@/lib/vitrinGorunum";
 import { recordVitrinEngagement } from "@/lib/vitrinEngagement";
+import { useRecaptcha } from "@/components/recaptcha/RecaptchaProvider";
+
+function holdErrorMessage(raw: string): string {
+  if (raw.includes("STOCK_UNAVAILABLE")) {
+    return "Bu ürün için yeterli stok kalmadı.";
+  }
+  if (raw.includes("DAILY_LIMIT_EXCEEDED")) {
+    return "Günlük ayırtma sınırına ulaştın. Lütfen daha sonra tekrar dene.";
+  }
+  if (raw.includes("PRODUCT_NOT_FOUND")) {
+    return "Ürün şu anda ayırtmaya kapalı.";
+  }
+  if (raw.includes("INVALID_HOLD_INPUT")) {
+    return "Lütfen ad, telefon ve adet bilgilerini kontrol et.";
+  }
+  return raw || "Ayırtma talebi şu anda oluşturulamadı.";
+}
 
 type SocialComment = {
   id: string;
@@ -53,6 +70,7 @@ export default function ProductCommercePanel({
   cartDisabledReason = "",
   enabled = true,
 }: ProductCommercePanelProps) {
+  const { executeRecaptcha, hazirla } = useRecaptcha();
   const [social, setSocial] = useState<SocialState>({
     like_count: 0,
     liked: false,
@@ -64,6 +82,13 @@ export default function ProductCommercePanel({
   const [busy, setBusy] = useState(false);
   const [adet, setAdet] = useState(1);
   const [sepetTeyidi, setSepetTeyidi] = useState("");
+  const [holdFormOpen, setHoldFormOpen] = useState(false);
+  const [holdName, setHoldName] = useState("");
+  const [holdPhone, setHoldPhone] = useState("");
+  const [holdNotes, setHoldNotes] = useState("");
+  const [holdBusy, setHoldBusy] = useState(false);
+  const [holdError, setHoldError] = useState("");
+  const [holdSuccess, setHoldSuccess] = useState<{ token: string; expiresAt: string } | null>(null);
 
   useEffect(() => {
     if (!enabled) return;
@@ -228,6 +253,74 @@ export default function ProductCommercePanel({
     );
   }
 
+  function openHoldForm() {
+    hazirla();
+    setHoldError("");
+    setHoldFormOpen((current) => !current);
+  }
+
+  async function submitHold(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (holdBusy || !cartEnabled || stockQuantity === 0) return;
+
+    const customerName = holdName.trim();
+    const customerPhone = holdPhone.trim();
+    if (!customerName || !customerPhone) {
+      setHoldError("Lütfen ad soyad ve telefon bilgilerini gir.");
+      return;
+    }
+    if (adet < 1 || adet > 10) {
+      setHoldError("Tek seferde en fazla 10 adet ayırtabilirsin.");
+      return;
+    }
+
+    setHoldBusy(true);
+    setHoldError("");
+    try {
+      const recaptchaToken = await executeRecaptcha("booking_create");
+      if (!recaptchaToken) {
+        setHoldError("Güvenlik doğrulaması tamamlanamadı. Lütfen tekrar dene.");
+        return;
+      }
+
+      const variantKey = selectedVariantId?.trim() || selectedVariantText.trim() || null;
+      const response = await fetch("/api/create-booking", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          kind: "product_hold",
+          storeSlug,
+          productSlug,
+          customerName,
+          customerPhone,
+          customerNotes: holdNotes.trim(),
+          variantKey,
+          quantity: adet,
+          recaptchaToken,
+        }),
+      });
+      const payload = (await response.json().catch(() => null)) as {
+        data?: { token?: string; expires_at?: string };
+        error?: { message?: string };
+      } | null;
+
+      if (!response.ok || !payload?.data?.token) {
+        setHoldError(holdErrorMessage(payload?.error?.message || ""));
+        return;
+      }
+
+      setHoldSuccess({
+        token: payload.data.token,
+        expiresAt: payload.data.expires_at || "",
+      });
+      setHoldFormOpen(false);
+    } catch {
+      setHoldError("Bağlantı kurulamadı. Lütfen tekrar dene.");
+    } finally {
+      setHoldBusy(false);
+    }
+  }
+
   return (
     <section className="mt-5 rounded-2xl border border-white/10 bg-white/[0.03] p-4" aria-label="Ürün etkileşimleri">
       {stockQuantity === 0 ? (
@@ -283,10 +376,84 @@ export default function ProductCommercePanel({
               ? `Sepete ekle · ${tutarYazisi(priceAmount * adet)}`
               : "Sepete ekle"}
           </button>
+          <button
+            type="button"
+            onClick={openHoldForm}
+            className={`mt-2 min-h-10 w-full rounded-xl px-4 text-xs font-extrabold ${vitrinGorunum.buton.ikincil}`}
+          >
+            Adıma Ayırt (2 Saat)
+          </button>
           {sepetTeyidi ? (
             <p aria-live="polite" className={`mt-2 text-center text-xs font-bold ${vitrinGorunum.durum.teyit}`}>
               {sepetTeyidi}
             </p>
+          ) : null}
+          {holdFormOpen ? (
+            <form
+              onSubmit={(event) => void submitHold(event)}
+              className="mt-3 space-y-2.5 rounded-xl border border-white/10 bg-slate-950/75 p-3"
+            >
+              <div className="text-xs font-extrabold text-white">2 saatliğine ürün ayırt ({adet} adet)</div>
+              <input
+                type="text"
+                value={holdName}
+                onChange={(event) => setHoldName(event.target.value)}
+                placeholder="Ad Soyad"
+                required
+                className="min-h-10 w-full rounded-lg border border-white/10 bg-slate-950 px-3 text-xs text-white outline-none placeholder:text-white/35 focus:border-blue-500/50"
+              />
+              <input
+                type="tel"
+                value={holdPhone}
+                onChange={(event) => setHoldPhone(event.target.value)}
+                placeholder="Telefon (05xx...)"
+                required
+                className="min-h-10 w-full rounded-lg border border-white/10 bg-slate-950 px-3 text-xs text-white outline-none placeholder:text-white/35 focus:border-blue-500/50"
+              />
+              <input
+                type="text"
+                value={holdNotes}
+                onChange={(event) => setHoldNotes(event.target.value)}
+                placeholder="İsteğe bağlı not"
+                maxLength={240}
+                className="min-h-10 w-full rounded-lg border border-white/10 bg-slate-950 px-3 text-xs text-white outline-none placeholder:text-white/35 focus:border-blue-500/50"
+              />
+              {holdError ? (
+                <p role="alert" className={`text-xs font-semibold ${vitrinGorunum.durum.uyari}`}>
+                  {holdError}
+                </p>
+              ) : null}
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  disabled={holdBusy}
+                  className={`min-h-10 flex-1 rounded-lg px-3 text-xs font-extrabold disabled:opacity-55 ${vitrinGorunum.buton.ana}`}
+                >
+                  {holdBusy ? "Ayırtılıyor..." : "Ayırtmayı Onayla"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setHoldFormOpen(false)}
+                  className={`min-h-10 rounded-lg px-3 text-xs font-extrabold ${vitrinGorunum.buton.ikincil}`}
+                >
+                  Vazgeç
+                </button>
+              </div>
+            </form>
+          ) : null}
+          {holdSuccess ? (
+            <div
+              role="status"
+              className="mt-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-200"
+            >
+              <p className="font-bold">Ürün 2 saatliğine adına ayrıldı.</p>
+              <Link
+                href={`/v/${storeSlug}/randevu/${holdSuccess.token}`}
+                className="mt-1 inline-flex font-extrabold text-emerald-300 underline"
+              >
+                Rezervasyon takip bağlantısını aç
+              </Link>
+            </div>
           ) : null}
         </div>
       ) : (
