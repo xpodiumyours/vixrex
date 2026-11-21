@@ -92,4 +92,85 @@ describe("faturaSonucunuBekle", () => {
     ).rejects.toThrow("işlem kimliği eksik");
     expect(fetcher).toHaveBeenCalledTimes(1);
   });
+
+  it("429 yanıtında Retry-After kadar bekleyip aynı işten devam eder", async () => {
+    const beklemeler: number[] = [];
+    const bekle = vi.fn(async (ms: number) => { beklemeler.push(ms); });
+    const fetcher = vi.fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ hata: "Çok fazla fatura sorgusu yaptın." }), {
+          status: 429,
+          headers: { "Content-Type": "application/json", "Retry-After": "2" },
+        }),
+      )
+      .mockResolvedValueOnce(jsonResponse({ tamam: true, satirlar: [{ ad: "Ürün" }] }));
+
+    const sonuc = await faturaSonucunuBekle(
+      { hazirlaniyor: true, islemKimligi: ISLEM },
+      { slug: "dukkan", fetcher, bekle, rastgele: () => 0 },
+    );
+
+    expect(sonuc).toEqual({ tamam: true, satirlar: [{ ad: "Ürün" }] });
+    expect(beklemeler).toEqual([5_000, 2_000]);
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(String(fetcher.mock.calls[1][0])).toBe(
+      `/api/fatura-islem?slug=dukkan&islemKimligi=${ISLEM}`,
+    );
+  });
+
+  it("503 yanıtında pes etmez, varsayılan süre kadar bekleyip devam eder", async () => {
+    const beklemeler: number[] = [];
+    const bekle = vi.fn(async (ms: number) => { beklemeler.push(ms); });
+    const fetcher = vi.fn()
+      .mockResolvedValueOnce(jsonResponse({ hata: "Fatura işlemi geçici olarak kullanılamıyor." }, 503))
+      .mockResolvedValueOnce(jsonResponse({ tamam: true, satirlar: [] }));
+
+    const sonuc = await faturaSonucunuBekle(
+      { hazirlaniyor: true, islemKimligi: ISLEM },
+      { slug: "dukkan", fetcher, bekle, rastgele: () => 0 },
+    );
+
+    expect(sonuc).toEqual({ tamam: true, satirlar: [] });
+    expect(beklemeler).toEqual([5_000, 5_000]);
+    expect(fetcher).toHaveBeenCalledTimes(2);
+  });
+
+  it("yeniden denenemeyecek hata (403) beklemeden akışı durdurur", async () => {
+    const bekle = vi.fn(async () => undefined);
+    const fetcher = vi.fn(async () => jsonResponse({ hata: "Oturumun geçersiz." }, 403));
+
+    await expect(
+      faturaSonucunuBekle(
+        { hazirlaniyor: true, islemKimligi: ISLEM },
+        { slug: "dukkan", fetcher, bekle },
+      ),
+    ).rejects.toThrow("Oturumun geçersiz.");
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(bekle).toHaveBeenCalledTimes(1);
+  });
+
+  it("uzun bekleyişte sorgulama aralığı 10 saniyeye çıkar", async () => {
+    vi.useFakeTimers({ now: 0 });
+    const beklemeler: number[] = [];
+    const bekle = vi.fn(async (ms: number) => {
+      beklemeler.push(ms);
+      vi.advanceTimersByTime(ms);
+    });
+    let cagri = 0;
+    const fetcher = vi.fn(async () => {
+      cagri += 1;
+      return cagri <= 12
+        ? jsonResponse({ hazirlaniyor: true, islemKimligi: ISLEM })
+        : jsonResponse({ tamam: true, satirlar: [] });
+    });
+
+    await faturaSonucunuBekle(
+      { hazirlaniyor: true, islemKimligi: ISLEM },
+      { slug: "dukkan", fetcher, bekle, rastgele: () => 0 },
+    );
+
+    expect(beklemeler.slice(0, 13)).toEqual(
+      [5_000, 5_000, 5_000, 5_000, 5_000, 5_000, 5_000, 5_000, 5_000, 5_000, 5_000, 5_000, 10_000],
+    );
+  });
 });

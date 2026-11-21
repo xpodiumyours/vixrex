@@ -22,6 +22,12 @@ import { faturaBaslangicZamani, faturaOzetSatiri, faturaOzetiniKaydet, gecenSani
 export const OKUMA_PRESET = "@preset/vixrex-qwen-fatura-okuma-suzme";
 export const OTOMATIK_FATURA_PRESET = URUN_KART_PRESET;
 
+export function googleKartlariBelgeAdedi(kartlar: ReadonlyArray<{ quantity: number | null }>): number | null {
+  if (!kartlar.length) return null;
+  if (!kartlar.every((kart) => typeof kart.quantity === "number" && Number.isFinite(kart.quantity))) return null;
+  return kartlar.reduce((toplam, kart) => toplam + (kart.quantity ?? 0), 0);
+}
+
 export function bekleyenFaturaYaniti(islemKimligi: string, asama: "okunuyor" | "kartlaniyor" = "okunuyor") {
   return {
     tamam: false,
@@ -87,7 +93,7 @@ export async function faturayiArkaPlanaGonder(
       const id = await islemKaydet({
         slug: magazaSlug,
         parmakIzi,
-        belgeAdedi: kartlar.length,
+        belgeAdedi: googleKartlariBelgeAdedi(kartlar),
         belgeToplami: null,
         tedarikci: "",
         tedarikciVergiNo: "",

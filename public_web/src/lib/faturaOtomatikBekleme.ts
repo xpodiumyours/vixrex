@@ -5,7 +5,15 @@ export type FaturaBeklemeDurumu = {
 };
 
 const BEKLEME_ARALIGI_MS = 5_000;
+const YAVASLAMA_SONRASI_DENEME = 12;
+const YAVAS_BEKLEME_ARALIGI_MS = 10_000;
+const COK_YAVASLAMA_SONRASI_DENEME = 36;
+const COK_YAVAS_BEKLEME_ARALIGI_MS = 20_000;
 const BEKLEME_ZAMAN_ASIMI_MS = 70 * 60 * 1_000;
+const YENIDEN_DENEME_ALT_SINIRI_MS = 1_000;
+const YENIDEN_DENEME_UST_SINIRI_MS = 60_000;
+const YENIDEN_DENEME_VARSAYILAN_MS = 5_000;
+const YENIDEN_DENEME_SAPMA_MS = 250;
 
 type Kayit = Record<string, unknown>;
 
@@ -91,6 +99,34 @@ async function httpHatasi(yanit: Response): Promise<Error> {
   );
 }
 
+function yenidenDenenebilirDurum(status: number): boolean {
+  return status === 408 || status === 429 || status >= 500;
+}
+
+function saniyeVeyaTarih(deger: string | null): number | null {
+  if (!deger) return null;
+  const ham = deger.trim();
+  if (!ham) return null;
+  const saniye = Number(ham);
+  if (Number.isFinite(saniye) && saniye >= 0) return saniye * 1_000;
+  const tarih = Date.parse(ham);
+  if (Number.isFinite(tarih)) return Math.max(0, tarih - Date.now());
+  return null;
+}
+
+function yenidenDenemeBeklemesi(yanit: Response, rastgele: () => number): number {
+  const istenen = saniyeVeyaTarih(yanit.headers.get("retry-after")) ?? YENIDEN_DENEME_VARSAYILAN_MS;
+  const sinirli = Math.min(Math.max(istenen, YENIDEN_DENEME_ALT_SINIRI_MS), YENIDEN_DENEME_UST_SINIRI_MS);
+  const sapma = Math.round(Math.min(Math.max(rastgele(), 0), 1) * YENIDEN_DENEME_SAPMA_MS);
+  return sinirli + sapma;
+}
+
+function sorgulamaAraligi(deneme: number): number {
+  if (deneme >= COK_YAVASLAMA_SONRASI_DENEME) return COK_YAVAS_BEKLEME_ARALIGI_MS;
+  if (deneme >= YAVASLAMA_SONRASI_DENEME) return YAVAS_BEKLEME_ARALIGI_MS;
+  return BEKLEME_ARALIGI_MS;
+}
+
 function timeoutHatasi(): Error {
   return new Error("Fatura ürünleri bekleme süresi içinde hazırlanamadı. Aynı işlemden devam edebilirsin.");
 }
@@ -107,6 +143,7 @@ export async function faturaSonucunuBekle<T>(
     signal?: AbortSignal;
     fetcher?: typeof fetch;
     bekle?: (ms: number) => Promise<void>;
+    rastgele?: () => number;
     onDurum?: (durum: FaturaBeklemeDurumu) => void;
   },
 ): Promise<T> {
@@ -128,7 +165,10 @@ export async function faturaSonucunuBekle<T>(
   const bekle = options.bekle ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
   const url = `/api/fatura-islem?slug=${encodeURIComponent(options.slug)}&islemKimligi=${encodeURIComponent(bekleyenKimlik)}`;
   const baslangicZamani = Date.now();
+  const rastgele = options.rastgele ?? Math.random;
   let planlananBekleme = 0;
+  let deneme = 0;
+  let hemenSorgula = false;
 
   while (true) {
     if (signal?.aborted) throw iptalHatasi(signal);
@@ -136,9 +176,12 @@ export async function faturaSonucunuBekle<T>(
     const kalan = BEKLEME_ZAMAN_ASIMI_MS - Math.max(gecen, planlananBekleme);
     if (kalan <= 0) throw timeoutHatasi();
 
-    const aralik = Math.min(BEKLEME_ARALIGI_MS, kalan);
-    await abortAwareDelay(aralik, signal, bekle);
-    planlananBekleme += aralik;
+    if (!hemenSorgula) {
+      const aralik = Math.min(sorgulamaAraligi(deneme), kalan);
+      await abortAwareDelay(aralik, signal, bekle);
+      planlananBekleme += aralik;
+    }
+    hemenSorgula = false;
 
     if (signal?.aborted) throw iptalHatasi(signal);
     if (Date.now() - baslangicZamani >= BEKLEME_ZAMAN_ASIMI_MS || planlananBekleme >= BEKLEME_ZAMAN_ASIMI_MS) {
@@ -146,7 +189,15 @@ export async function faturaSonucunuBekle<T>(
     }
 
     const yanit = await fetcher(url, { signal });
-    if (!yanit.ok) throw await httpHatasi(yanit);
+    if (!yanit.ok) {
+      if (!yenidenDenenebilirDurum(yanit.status)) throw await httpHatasi(yanit);
+      const beklenecek = yenidenDenemeBeklemesi(yanit, rastgele);
+      if (Date.now() - baslangicZamani + beklenecek >= BEKLEME_ZAMAN_ASIMI_MS) throw await httpHatasi(yanit);
+      await abortAwareDelay(beklenecek, signal, bekle);
+      planlananBekleme += beklenecek;
+      hemenSorgula = true;
+      continue;
+    }
     const govde = await yanitGovdesi(yanit);
 
     if (kayitMi(govde) && govde.hazirlaniyor === true) {
@@ -162,6 +213,7 @@ export async function faturaSonucunuBekle<T>(
         islemKimligi: donenKimlik,
         asama: typeof govde.asama === "string" ? govde.asama : undefined,
       });
+      deneme += 1;
       continue;
     }
 
