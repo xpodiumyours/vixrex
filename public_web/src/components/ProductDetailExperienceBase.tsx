@@ -87,6 +87,7 @@ interface ProductDetailExperienceProps {
   storeDistrictName?: string | null;
   storeNeighborhoodName?: string | null;
   storeProvinceName?: string | null;
+  storeMapsUrl?: string | null;
   isOwner?: boolean;
 }
 
@@ -123,6 +124,7 @@ export default function ProductDetailExperience({
   storeDistrictName = null,
   storeNeighborhoodName = null,
   storeProvinceName = null,
+  storeMapsUrl = null,
   isOwner = false,
 }: ProductDetailExperienceProps) {
   const metadata = useMemo(() => normalizeProductMetadata(product.metadata), [product.metadata]);
@@ -222,7 +224,7 @@ export default function ProductDetailExperience({
     districtName: storeDistrictName,
     provinceName: storeProvinceName,
   });
-  const storeMapUrl = productMapsUrl(storeAddress);
+  const storeMapUrl = storeMapsUrl || productMapsUrl(storeAddress || storeLocationLabel);
   const gorselAlt = productImageAlt({
     name: product.name,
     storeName,

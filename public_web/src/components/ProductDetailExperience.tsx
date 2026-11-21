@@ -23,6 +23,7 @@ interface ProductDetailExperienceProps {
   storeDistrictName?: string | null;
   storeNeighborhoodName?: string | null;
   storeProvinceName?: string | null;
+  storeMapsUrl?: string | null;
   isOwner?: boolean;
 }
 
