@@ -11,6 +11,9 @@ import {
   blogYayindaMi,
   yayindakiYazilar,
 } from "@/data/blogYazilari";
+import { gorselIzinBekliyorMu } from "@/lib/faturaGorselHakDenetimi";
+import { MAX_PRODUCT_IMAGES } from "@/lib/productImagePolicy";
+import { getProductImages } from "@/lib/products";
 
 export const revalidate = 300;
 
@@ -22,13 +25,13 @@ async function _getSitemapData() {
   // dolu ama is_demo false) gerçek müşterilerin vitrinidir, indekslenir.
   const { data: stores } = await supabase
     .from("stores")
-    .select("id, slug, updated_at, is_demo")
+    .select("id, slug, name, updated_at, is_demo")
     .eq("is_published", true)
     .eq("is_demo", false);
 
   const { data: products } = await supabase
     .from("products")
-    .select("store_id, slug, updated_at")
+    .select("store_id, slug, name, image_urls, source_type, fatura_kanit, updated_at")
     .eq("is_active", true)
     .eq("is_visible", true);
 
@@ -66,7 +69,14 @@ export async function GET() {
     const articleLastModByStore = new Map<string, string>();
     const productsByStoreId = new Map<
       string,
-      Array<{ slug: string; updated_at: string | null }>
+      Array<{
+        slug: string;
+        name: string;
+        image_urls: unknown;
+        source_type: string | null;
+        fatura_kanit: unknown;
+        updated_at: string | null;
+      }>
     >();
 
     for (const product of products) {
@@ -77,6 +87,11 @@ export async function GET() {
       const storeProducts = productsByStoreId.get(storeId) || [];
       storeProducts.push({
         slug: productSlug,
+        name: String(product.name || "").trim(),
+        image_urls: product.image_urls,
+        source_type:
+          typeof product.source_type === "string" ? product.source_type : null,
+        fatura_kanit: product.fatura_kanit,
         updated_at: product.updated_at || null,
       });
       productsByStoreId.set(storeId, storeProducts);
@@ -100,7 +115,7 @@ export async function GET() {
     const simdi = new Date().toISOString();
     const blogLastMod = blogSonAnlamliDegisiklikTarihi();
     let xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`;
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">`;
 
     const platformUrlleri: Array<{
       yol: string;
@@ -173,18 +188,60 @@ export async function GET() {
     <priority>0.8</priority>
   </url>`;
 
+        const storeName = String(store.name || "").trim();
         const storeProducts = productsByStoreId.get(store.id) || [];
         for (const product of storeProducts) {
           const productLastMod = product.updated_at
             ? new Date(product.updated_at).toISOString()
             : lastMod;
 
+          const izinDurumu = gorselIzinBekliyorMu(product.fatura_kanit);
+          const telifEngelli =
+            izinDurumu === true ||
+            (product.source_type === "invoice" && izinDurumu !== false);
+
+          const productImages = telifEngelli
+            ? []
+            : getProductImages({
+                name: product.name,
+                imageUrls: Array.isArray(product.image_urls)
+                  ? product.image_urls.filter(
+                      (u): u is string => typeof u === "string",
+                    )
+                  : [],
+                source: product.source_type || undefined,
+              })
+                .filter((url) => {
+                  if (!url.startsWith("https://")) return false;
+                  try {
+                    return new URL(url).protocol === "https:";
+                  } catch {
+                    return false;
+                  }
+                })
+                .slice(0, MAX_PRODUCT_IMAGES);
+
+          const imageTitle = [product.name, storeName].filter(Boolean).join(" - ");
+          const imageTags = productImages
+            .map(
+              (imgUrl) => `
+    <image:image>
+      <image:loc>${escapeXml(imgUrl)}</image:loc>${
+        imageTitle
+          ? `
+      <image:title>${escapeXml(imageTitle)}</image:title>`
+          : ""
+      }
+    </image:image>`,
+            )
+            .join("");
+
           xml += `
   <url>
     <loc>${escapeXml(`${baseUrl}/v/${store.slug}/urun/${product.slug}`)}</loc>
     <lastmod>${productLastMod}</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.65</priority>
+    <priority>0.65</priority>${imageTags}
   </url>`;
         }
 
