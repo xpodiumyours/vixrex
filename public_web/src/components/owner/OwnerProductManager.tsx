@@ -817,7 +817,7 @@ export function OwnerProductManager({
           <label className="self-center text-sm"><input type="checkbox" checked={yalnizTaslak} onChange={(e) => setYalnizTaslak(e.target.checked)} /> Yalnız taslaklar</label>
           {(filterText || filterCategory || yalnizTaslak) && <span className="self-center text-xs text-[var(--owner-muted)]">{filteredProducts.length}/{products.length}</span>}
         </div>
-        <div className="flex gap-2 overflow-x-auto pb-1">
+        <div className="flex flex-wrap gap-2">
           {[{ id: "", name: "Tümü" }, ...resolvedCategories].map((cip) => (
             <button
               key={cip.id || "tumu"}
@@ -1418,7 +1418,7 @@ function ProductForm({ product, categories, busy, storeSlug, storeName, baslangi
           <span className="text-sm font-bold text-[var(--owner-text)]">Ürün görselleri *</span>
           <span className="text-xs text-[var(--owner-muted)]">{imageUrls.length}/{MAX_PRODUCT_IMAGES}</span>
         </div>
-        <div className="mt-2 flex gap-2 overflow-x-auto pb-2">
+        <div className="vixrex-yatay-serit mt-2 flex gap-2 overflow-x-auto pb-2">
           {imageUrls.map((url, idx) => (
             <div key={`${url}-${idx}`} className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl border border-[var(--owner-border)] bg-[var(--owner-bg-soft)]">
               {url ? <Image src={url} alt={`görsel ${idx + 1}`} fill unoptimized sizes="96px" className="object-cover" /> : null}
