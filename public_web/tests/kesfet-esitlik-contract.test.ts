@@ -167,8 +167,9 @@ describe("Keşfet eşitlik sözleşmesi", () => {
     }
   });
 
-  it("ana Keşfet sayfası canlı veriyi build sırasında istemez", () => {
-    expect(webKaynak).toContain('export const dynamic = "force-dynamic"');
+  it("ana Keşfet sayfası gerçek Edge ISR (revalidate = 300) kullanır", () => {
+    expect(webKaynak).toContain("export const revalidate = 300;");
+    expect(webKaynak).not.toContain("force-dynamic");
   });
 
   it("mobil sabit alt menü aynı dört hedefle var — masaüstü gizli kuralı yakalar", () => {

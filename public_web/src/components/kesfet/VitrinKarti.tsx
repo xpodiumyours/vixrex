@@ -43,6 +43,15 @@ function premiumEtiketi(premium: PremiumBilgisi | null): string | null {
   return `Premium aktif · ${gun} gün kaldı`;
 }
 
+function mesafeEtiketi(mesafeMetre?: number | null): string | null {
+  if (typeof mesafeMetre !== "number" || !Number.isFinite(mesafeMetre) || mesafeMetre < 0) {
+    return null;
+  }
+  const yuvarlanmis = Math.round(mesafeMetre);
+  if (yuvarlanmis < 1000) return `${yuvarlanmis} m`;
+  return `${(yuvarlanmis / 1000).toFixed(1)} km`;
+}
+
 function WhatsappIkonu() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -79,6 +88,7 @@ export function VitrinKarti({
     sifirla: kiralaSifirla,
   } = useKesfetKirala(vitrin.slug);
   const premiumMetni = sahipMi ? premiumEtiketi(premium) : null;
+  const mesafeMetni = mesafeEtiketi(vitrin.mesafeMetre);
   const vitrinAdi = vitrin.ad.trim() || "vitrininiz";
   const mesajlar = [
     {
@@ -192,6 +202,11 @@ export function VitrinKarti({
               <path d="M12 2C8.1 2 5 5.1 5 9c0 5.3 7 13 7 13s7-7.7 7-13c0-3.9-3.1-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5z" />
             </svg>
             <span className="truncate">{vitrin.konum}</span>
+            {mesafeMetni ? (
+              <span className="ml-auto shrink-0 rounded-full border border-lp-primary/30 bg-lp-primary/10 px-1.5 py-0.5 text-[9px] font-black text-lp-primary">
+                {mesafeMetni}
+              </span>
+            ) : null}
           </p>
           {typeof vitrin.puan === "number" ? (
             <p className="mt-1 flex items-center gap-1 text-[10px] font-bold text-lp-text">

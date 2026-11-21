@@ -33,6 +33,7 @@ export type KesfetVitrini = {
   whatsapp: string | null;
   guncellemeZamani: string | null;
   puan: number | null;
+  mesafeMetre?: number | null;
 };
 
 type StoreSatiri = {
@@ -53,6 +54,7 @@ type StoreSatiri = {
   updated_at: string | null;
   rating_score: number | null;
   show_storefront_rating: boolean | null;
+  distance_meters?: number | null;
 };
 
 export function vitrinPuani(satir: { rating_score: number | null; show_storefront_rating: boolean | null }): number | null {
@@ -77,21 +79,19 @@ function kategoriEtiketi(satir: StoreSatiri): {
   return { etiket: cozulen?.label ?? ham, kimlik: cozulen?.id ?? null };
 }
 
-async function _kesfetGetir(): Promise<KesfetVitrini[]> {
-  const { data, error } = await supabase
-    .from("stores")
-    .select(EXPLORE_STORE_SELECT)
-    .eq("is_published", true)
-    .order("updated_at", { ascending: false })
-    .limit(KESFET_LIMIT);
+export function koordinatGecerliMi(lat: number, lng: number): boolean {
+  return (
+    Number.isFinite(lat) &&
+    Number.isFinite(lng) &&
+    lat >= -90 &&
+    lat <= 90 &&
+    lng >= -180 &&
+    lng <= 180
+  );
+}
 
-  if (error) {
-    console.error("[kesfet] vitrin sorgusu başarısız:", error.message);
-    throw new Error("Vitrinler okunamadı");
-  }
-  if (!data) return [];
-
-  const satirlar = (data as unknown as StoreSatiri[]).filter(
+async function vitrinleriUrunlerleDoldur(hamSatirlar: StoreSatiri[]): Promise<KesfetVitrini[]> {
+  const satirlar = hamSatirlar.filter(
     (satir) => (satir.slug ?? "").trim().length > 0
   );
   if (satirlar.length === 0) return [];
@@ -111,21 +111,25 @@ async function _kesfetGetir(): Promise<KesfetVitrini[]> {
   if (urunHatasi) {
     console.error("[kesfet] ürün sayısı okunamadı:", urunHatasi.message);
     throw new Error("Vitrin ürünleri okunamadı");
-  } else {
-    for (const urun of (urunler ?? []) as { store_id: string; name: string | null }[]) {
-      sayaclar.set(urun.store_id, (sayaclar.get(urun.store_id) ?? 0) + 1);
-      const ad = urun.name?.trim();
-      if (ad) {
-        const adlar = urunAdlari.get(urun.store_id) ?? [];
-        adlar.push(ad);
-        urunAdlari.set(urun.store_id, adlar);
-      }
+  }
+
+  for (const urun of (urunler ?? []) as { store_id: string; name: string | null }[]) {
+    sayaclar.set(urun.store_id, (sayaclar.get(urun.store_id) ?? 0) + 1);
+    const ad = urun.name?.trim();
+    if (ad) {
+      const adlar = urunAdlari.get(urun.store_id) ?? [];
+      adlar.push(ad);
+      urunAdlari.set(urun.store_id, adlar);
     }
   }
 
   return satirlar.map((satir) => {
     const { etiket, kimlik } = kategoriEtiketi(satir);
     const durum = (satir.status ?? "").trim().toLocaleLowerCase("tr-TR");
+    const mesafe =
+      typeof satir.distance_meters === "number" && Number.isFinite(satir.distance_meters)
+        ? satir.distance_meters
+        : undefined;
     return {
       slug: (satir.slug ?? "").trim(),
       ad: satir.name?.trim() || "İsimsiz vitrin",
@@ -141,8 +145,60 @@ async function _kesfetGetir(): Promise<KesfetVitrini[]> {
       whatsapp: satir.whatsapp?.trim() || null,
       guncellemeZamani: satir.updated_at,
       puan: vitrinPuani(satir),
+      ...(mesafe !== undefined ? { mesafeMetre: mesafe } : {}),
     };
   });
+}
+
+async function _kesfetGetir(): Promise<KesfetVitrini[]> {
+  const { data, error } = await supabase
+    .from("stores")
+    .select(EXPLORE_STORE_SELECT)
+    .eq("is_published", true)
+    .order("updated_at", { ascending: false })
+    .limit(KESFET_LIMIT);
+
+  if (error) {
+    console.error("[kesfet] vitrin sorgusu başarısız:", error.message);
+    throw new Error("Vitrinler okunamadı");
+  }
+  if (!data) return [];
+
+  return vitrinleriUrunlerleDoldur(data as unknown as StoreSatiri[]);
+}
+
+export async function yakinVitrinleriGetir({
+  lat,
+  lng,
+  radiusMeters = 5000,
+}: {
+  lat: number;
+  lng: number;
+  radiusMeters?: number;
+}): Promise<KesfetVitrini[]> {
+  if (!koordinatGecerliMi(lat, lng)) {
+    throw new Error("Geçersiz konum koordinatı");
+  }
+
+  const yaricap =
+    typeof radiusMeters === "number" && Number.isFinite(radiusMeters)
+      ? Math.min(Math.max(Math.round(radiusMeters), 100), 100000)
+      : 5000;
+
+  const { data, error } = await supabase.rpc("search_nearby_stores", {
+    p_lat: lat,
+    p_lng: lng,
+    p_radius_m: yaricap,
+    p_limit: 50,
+  });
+
+  if (error) {
+    console.error("[kesfet] yakın vitrin sorgusu başarısız:", error.message);
+    throw new Error("Yakındaki vitrinler okunamadı");
+  }
+  if (!data) return [];
+
+  return vitrinleriUrunlerleDoldur(data as unknown as StoreSatiri[]);
 }
 
 /** Yayındaki vitrinler, en son güncellenen önce. */

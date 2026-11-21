@@ -8,11 +8,13 @@ import {
   AKTIF_BUSINESS_CATEGORIES,
   BUSINESS_CATEGORIES,
   kategoriUrlParcasi,
+  kategoriUrlParcasindanCoz,
   type BusinessTemplateGroup,
 } from "@/lib/businessCategories";
 import type { KesfetVitrini } from "@/lib/explore";
 import { kesfetVitrinleriniFiltrele } from "@/lib/kesfetFiltreleme";
 import { supabase } from "@/lib/supabase";
+import { hizliSecenekEtiketi } from "@/lib/vixrexMesajlari";
 import { VitrinKarti, type PremiumBilgisi } from "./VitrinKarti";
 import { MascotFab } from "@/components/landing/MascotFab";
 
@@ -45,16 +47,37 @@ export function KesfetIcerik({
   const { globalSearch: sorgu, setGlobalSearch: setSorgu } = useAppShellSearch();
   const [grup, setGrup] = useState<BusinessTemplateGroup | undefined>(undefined);
   const [kategoriKimligi, setKategoriKimligi] = useState<string | null>(ilkKategoriKimligi);
+  const [sadeceKiralikAktif, setSadeceKiralikAktif] = useState(sadeceKiralik);
   const [sadeceFavoriler, setSadeceFavoriler] = useState(false);
   const [favoriAdlari, setFavoriAdlari] = useState<string[]>([]);
+  const [sadeceYakinim, setSadeceYakinim] = useState(false);
+  const [yakinVitrinler, setYakinVitrinler] = useState<KesfetVitrini[] | null>(null);
+  const [konumYukleniyor, setKonumYukleniyor] = useState(false);
+  const [konumHatasi, setKonumHatasi] = useState<string | null>(null);
   const [sahipSlug, setSahipSlug] = useState<string | null>(ilkSahipSlug);
   const [premium, setPremium] = useState<PremiumBilgisi | null>(null);
 
   useEffect(() => {
+    let iptal = false;
     const params = new URLSearchParams(window.location.search);
     const query = params.get("q")?.trim() ?? "";
     if (query) setSorgu(query);
     if (params.get("vixrex") === "1") router.replace("/app/vixrex");
+    const yalnizKiralik = params.get("yalniz_kiralik") === "1";
+    const kategoriParam = params.get("kategori");
+    const cozulenKategori = kategoriParam
+      ? (kategoriUrlParcasindanCoz(kategoriParam)?.id ?? null)
+      : null;
+    if (yalnizKiralik || cozulenKategori) {
+      void Promise.resolve().then(() => {
+        if (iptal) return;
+        if (yalnizKiralik) setSadeceKiralikAktif(true);
+        if (cozulenKategori) setKategoriKimligi(cozulenKategori);
+      });
+    }
+    return () => {
+      iptal = true;
+    };
   }, [router, setSorgu]);
 
   useEffect(() => {
@@ -111,24 +134,93 @@ export function KesfetIcerik({
   );
 
   const filtreliVitrinler = useMemo(() => {
+    const kaynakVitrinler =
+      sadeceYakinim && yakinVitrinler ? yakinVitrinler : vitrinler;
     const sonuc = kesfetVitrinleriniFiltrele(
-      vitrinler,
+      kaynakVitrinler,
       {
         sorgu,
         grup,
         kategoriKimligi,
         sadeceFavoriler,
         favoriAdlari,
-        sadeceKiralik,
+        sadeceKiralik: sadeceKiralikAktif,
       },
       KATEGORI_GRUPLARI
     );
+    if (sadeceYakinim) return sonuc;
     const sahipIndex = sahipSlug
       ? sonuc.findIndex((vitrin) => vitrin.slug === sahipSlug)
       : -1;
     if (sahipIndex <= 0) return sonuc;
     return [sonuc[sahipIndex], ...sonuc.slice(0, sahipIndex), ...sonuc.slice(sahipIndex + 1)];
-  }, [vitrinler, sorgu, grup, kategoriKimligi, sadeceFavoriler, favoriAdlari, sadeceKiralik, sahipSlug]);
+  }, [
+    vitrinler,
+    sadeceYakinim,
+    yakinVitrinler,
+    sorgu,
+    grup,
+    kategoriKimligi,
+    sadeceFavoriler,
+    favoriAdlari,
+    sadeceKiralikAktif,
+    sahipSlug,
+  ]);
+
+  function yakinimdakileriAcKapat() {
+    if (konumYukleniyor) return;
+    if (sadeceYakinim) {
+      setSadeceYakinim(false);
+      setYakinVitrinler(null);
+      setKonumHatasi(null);
+      return;
+    }
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      setKonumHatasi("Tarayıcınız konum paylaşımını desteklemiyor.");
+      return;
+    }
+
+    setKonumHatasi(null);
+    setKonumYukleniyor(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const params = new URLSearchParams({
+            lat: String(pos.coords.latitude),
+            lng: String(pos.coords.longitude),
+          });
+          const yanit = await fetch(`/api/kesfet/yakin?${params.toString()}`);
+          if (!yanit.ok) {
+            setKonumHatasi("Yakındaki vitrinler yüklenemedi.");
+            return;
+          }
+          const veri = (await yanit.json()) as { vitrinler?: KesfetVitrini[] };
+          setYakinVitrinler(Array.isArray(veri.vitrinler) ? veri.vitrinler : []);
+          setSadeceYakinim(true);
+        } catch {
+          setKonumHatasi("Yakındaki vitrinler yüklenemedi.");
+        } finally {
+          setKonumYukleniyor(false);
+        }
+      },
+      (err) => {
+        setKonumYukleniyor(false);
+        setSadeceYakinim(false);
+        if (err.code === err.PERMISSION_DENIED) {
+          setKonumHatasi(
+            "Konum izni reddedildi. Yakındaki vitrinleri görmek için tarayıcıdan konum izni verin."
+          );
+          return;
+        }
+        if (err.code === err.TIMEOUT) {
+          setKonumHatasi("Konum bilgisi zaman aşımına uğradı. Tekrar deneyin.");
+          return;
+        }
+        setKonumHatasi("Konum bilgisi alınamadı.");
+      },
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
+    );
+  }
 
   function favoriyiDegistir(ad: string) {
     setFavoriAdlari((onceki) => {
@@ -149,6 +241,9 @@ export function KesfetIcerik({
     setGrup(undefined);
     setKategoriKimligi(null);
     setSadeceFavoriler(false);
+    setSadeceYakinim(false);
+    setYakinVitrinler(null);
+    setKonumHatasi(null);
   }
 
   function kategoriBaglantisiniFiltreyeCevir(
@@ -162,8 +257,18 @@ export function KesfetIcerik({
   }
 
   const filtreVar = Boolean(
-    sorgu.trim() || grup !== undefined || kategoriKimligi || sadeceFavoriler
+    sorgu.trim() ||
+      grup !== undefined ||
+      kategoriKimligi ||
+      sadeceFavoriler ||
+      sadeceYakinim
   );
+  const gosterilenBaslik = sadeceKiralikAktif
+    ? hizliSecenekEtiketi("hazir_vitrin_sec")
+    : baslik;
+  const gosterilenAciklama = sadeceKiralikAktif
+    ? "Beğendiğini kirala, kendi vitrinin olsun"
+    : aciklama;
 
   return (
     <main className="min-h-full min-w-0 bg-lp-bg-editor text-lp-text">
@@ -173,16 +278,16 @@ export function KesfetIcerik({
         <header className="px-4 pt-4 min-[901px]:px-6 min-[901px]:pt-5">
           <div className="flex flex-col gap-4 pb-4 min-[901px]:flex-row min-[901px]:items-end min-[901px]:justify-between">
             <div className="min-w-0">
-              {sadeceKiralik ? (
+              {sadeceKiralikAktif ? (
                 <p className="mb-2 text-[10px] font-black uppercase tracking-[0.12em] text-lp-muted">
                   {filtreliVitrinler.length} hazır vitrin
                 </p>
               ) : null}
               <h1 id="kesfet-baslik" className="text-[22px] font-black leading-[1.1] tracking-[-0.03em] text-lp-text min-[901px]:text-[26px]">
-                {baslik}
+                {gosterilenBaslik}
               </h1>
               <p className="mt-1.5 text-[12px] font-normal leading-[1.45] text-lp-muted">
-                {aciklama}
+                {gosterilenAciklama}
               </p>
             </div>
 
@@ -235,6 +340,26 @@ export function KesfetIcerik({
                   <path d="M12 21s-6.5-4.2-8.2-8.2A5.2 5.2 0 0 1 12 5.2a5.2 5.2 0 0 1 8.2 7.6C18.5 16.8 12 21 12 21z" />
                 </svg>
               </button>
+
+              <button
+                type="button"
+                aria-label="Yakınımdakiler"
+                title="Yakınımdakiler"
+                aria-pressed={sadeceYakinim}
+                disabled={konumYukleniyor}
+                onClick={yakinimdakileriAcKapat}
+                className={`flex h-10 shrink-0 items-center gap-1.5 rounded-[10px] border px-2.5 text-[11px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary disabled:opacity-60 sm:px-3 sm:text-[12px] ${
+                  sadeceYakinim
+                    ? "border-lp-primary bg-lp-primary/15 text-lp-primary"
+                    : "border-lp-border bg-lp-bg-light text-lp-muted hover:text-lp-text"
+                }`}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                  <path d="M12 21s-6-5.3-6-10a6 6 0 1 1 12 0c0 4.7-6 10-6 10z" />
+                  <circle cx="12" cy="11" r="2.2" />
+                </svg>
+                <span>{konumYukleniyor ? "Aranıyor..." : "Yakınımdakiler"}</span>
+              </button>
             </div>
           </div>
 
@@ -274,6 +399,15 @@ export function KesfetIcerik({
               </Link>
             ))}
           </nav>
+
+          {konumHatasi ? (
+            <p
+              role="alert"
+              className="mt-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3.5 py-2.5 text-[12px] font-semibold text-lp-text-alt"
+            >
+              {konumHatasi}
+            </p>
+          ) : null}
         </header>
 
         {filtreliVitrinler.length === 0 ? (
@@ -283,19 +417,34 @@ export function KesfetIcerik({
               <path d="M8 20v-6h8v6" />
             </svg>
             <p className="mt-3 text-[15px] font-black text-lp-text">
-              {sadeceFavoriler ? "Favorilere ekli vitrin yok" : "Aramanızla eşleşen vitrin yok"}
+              {sadeceFavoriler
+                ? "Favorilere ekli vitrin yok"
+                : sadeceYakinim
+                  ? "Yakınınızda kayıtlı vitrin yok"
+                  : "Aramanızla eşleşen vitrin yok"}
             </p>
             <p className="mt-2 text-[13px] font-semibold text-lp-muted">
               {sadeceFavoriler
                 ? "Beğendiğiniz vitrinleri kalp simgesiyle kaydedin."
-                : "Farklı bir kelime deneyin veya filtreleri temizleyin."}
+                : sadeceYakinim
+                  ? "Yakın çevrenizde konumu eklenmiş yayında vitrin bulunamadı."
+                  : "Farklı bir kelime deneyin veya filtreleri temizleyin."}
             </p>
             <button
               type="button"
-              onClick={sadeceFavoriler ? () => setSadeceFavoriler(false) : filtreleriTemizle}
+              onClick={
+                sadeceFavoriler
+                  ? () => setSadeceFavoriler(false)
+                  : sadeceYakinim
+                    ? () => {
+                        setSadeceYakinim(false);
+                        setYakinVitrinler(null);
+                      }
+                    : filtreleriTemizle
+              }
               className="mt-4 min-h-11 rounded-xl border border-lp-border bg-lp-surface-soft px-4 text-[12px] font-black text-lp-text-alt hover:bg-lp-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary"
             >
-              {sadeceFavoriler ? "Tüm vitrinleri gör" : "Filtreleri temizle"}
+              {sadeceFavoriler || sadeceYakinim ? "Tüm vitrinleri gör" : "Filtreleri temizle"}
             </button>
           </div>
         ) : (
@@ -321,7 +470,7 @@ export function KesfetIcerik({
           </ul>
         )}
 
-        {sadeceKiralik ? (
+        {sadeceKiralikAktif ? (
           <div className="px-6 pb-3 pt-2">
             <Link
               href="/"
