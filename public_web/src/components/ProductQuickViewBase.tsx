@@ -207,7 +207,7 @@ export default function ProductQuickView({
       provinceName: storeProvinceName,
     }) || String(storeLocationText || "").trim();
   const storeDirectionsUrl =
-    storeMapsUrl || productMapsUrl(storeLocationText);
+    storeMapsUrl || productMapsUrl(storeLocationText || storeLocationLabel);
   const selectedVariantText = variantGroups
     .map((group) => {
       const value = selectedOptions[group.key];

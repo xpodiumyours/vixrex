@@ -433,6 +433,11 @@ export default async function ProductDetailPage(props: PageProps) {
         storeDistrictName={store.district_name || null}
         storeNeighborhoodName={store.neighborhood_name || null}
         storeProvinceName={store.province_name || null}
+        storeMapsUrl={
+          typeof store.latitude === "number" && typeof store.longitude === "number"
+            ? `https://www.google.com/maps/search/?api=1&query=${store.latitude},${store.longitude}`
+            : null
+        }
         isOwner={isOwner}
       />
 
