@@ -1,10 +1,6 @@
 import type { Metadata } from "next";
-import { hizliSecenekEtiketi } from "@/lib/vixrexMesajlari";
-import { cookies } from "next/headers";
 import { KesfetIcerik } from "@/components/kesfet/KesfetIcerik";
 import { kesfetVitrinleriniGetir } from "@/lib/explore";
-import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
-import { kategoriUrlParcasindanCoz } from "@/lib/businessCategories";
 
 /**
  * Keşfet dizini (#344).
@@ -15,9 +11,6 @@ import { kategoriUrlParcasindanCoz } from "@/lib/businessCategories";
  * hem de her vitrine giden iç bağlantıyı üreten yüzey.
  */
 export const revalidate = 300;
-// Çerez ve canlı vitrin verisi kullanan ana Keşfet build sırasında
-// ön-üretilmez. Veri sorgusunun 5 dakikalık cache'i ayrı olarak korunur.
-export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Keşfet — yayındaki Vixrex vitrinleri",
@@ -35,35 +28,14 @@ export const metadata: Metadata = {
   },
 };
 
-type Props = { searchParams: Promise<{ yalniz_kiralik?: string; kategori?: string }> };
-
-export default async function KesfetPage({ searchParams }: Props) {
+export default async function KesfetPage() {
   const vitrinler = await kesfetVitrinleriniGetir();
-  const params = await searchParams;
-  const sadeceKiralik = params.yalniz_kiralik === "1";
-  // Faz B (Tek Asistan planı): asistan "Ne iş yapıyorsun?" cevabından
-  // buraya `?kategori=<kanonik-veya-tire-id>` ile yönlendirir. Bilinmeyen
-  // değer sessizce yoksayılır — sayfa filtresiz açılır, hata vermez.
-  const ilkKategoriKimligi = params.kategori
-    ? (kategoriUrlParcasindanCoz(params.kategori)?.id ?? null)
-    : null;
-  const sahipCerezi = (await cookies()).get(OWNER_SESSION_COOKIE)?.value;
-  const ilkSahipSlug = sahipCerezi
-    ? vitrinler.find((vitrin) => verifyOwnerSession(sahipCerezi, vitrin.slug))?.slug ?? null
-    : null;
 
   return (
     <KesfetIcerik
       vitrinler={vitrinler}
-      ilkSahipSlug={ilkSahipSlug}
-      sadeceKiralik={sadeceKiralik}
-      ilkKategoriKimligi={ilkKategoriKimligi}
-      baslik={sadeceKiralik ? hizliSecenekEtiketi("hazir_vitrin_sec") : "Vixrex'leri Keşfet"}
-      aciklama={
-        sadeceKiralik
-          ? "Beğendiğini kirala, kendi vitrinin olsun"
-          : "Yayındaki tüm Vixrex vitrinlerini inceleyin. Beğendiğin hazır vitrini kirala, kendi işletmenin vitrini olsun."
-      }
+      baslik="Vixrex'leri Keşfet"
+      aciklama="Yayındaki tüm Vixrex vitrinlerini inceleyin. Beğendiğin hazır vitrini kirala, kendi işletmenin vitrini olsun."
     />
   );
 }
