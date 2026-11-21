@@ -79,6 +79,9 @@ interface ProductDetailExperienceProps {
   instagramUrl?: string | null;
   sourceUrl?: string | null;
   storeAddress?: string | null;
+  storeDistrictName?: string | null;
+  storeNeighborhoodName?: string | null;
+  storeProvinceName?: string | null;
   isOwner?: boolean;
 }
 
@@ -135,6 +138,9 @@ export default function ProductDetailExperience({
   instagramUrl = null,
   sourceUrl = null,
   storeAddress = null,
+  storeDistrictName = null,
+  storeNeighborhoodName = null,
+  storeProvinceName = null,
   isOwner = false,
 }: ProductDetailExperienceProps) {
   const metadata = useMemo(() => normalizeProductMetadata(product.metadata), [product.metadata]);
@@ -223,6 +229,20 @@ export default function ProductDetailExperience({
   const fulfillmentRegion = String(product.fulfillmentRegion || "").trim();
   const productMapUrl = mapsSearchUrl(fulfillmentRegion);
   const storeMapUrl = mapsSearchUrl(storeAddress);
+  const konumEtiketi = [
+    String(storeNeighborhoodName || "").trim(),
+    String(storeDistrictName || "").trim(),
+    String(storeProvinceName || "").trim(),
+  ]
+    .filter((parca, index, dizi) => Boolean(parca) && dizi.indexOf(parca) === index)
+    .join(", ");
+  const gorselAlt = [
+    product.name,
+    storeName,
+    String(storeDistrictName || storeNeighborhoodName || "").trim(),
+  ]
+    .filter(Boolean)
+    .join(" - ");
   const visibleDetailFacts = detailFacts.filter((fact) => !variantKeys.has(fact.key));
   const selectedVariantText = groups
     .map((group) => {
@@ -254,7 +274,7 @@ export default function ProductDetailExperience({
               ) : currentImage ? (
                 <Image
                   src={currentImage}
-                  alt={product.name}
+                  alt={gorselAlt}
                   fill
                   sizes="(max-width: 1024px) 100vw, 55vw"
                   className={metadata.lunaInvoice ? "object-contain p-3" : "object-cover"}
@@ -287,7 +307,7 @@ export default function ProductDetailExperience({
                   >
                     <Image
                       src={imageUrl}
-                      alt=""
+                      alt={`${gorselAlt} - ${index + 1}. fotoğraf`}
                       fill
                       sizes="56px"
                       className={metadata.lunaInvoice ? "object-contain p-1" : "object-cover"}
@@ -400,7 +420,7 @@ export default function ProductDetailExperience({
 
             <ManufacturerProductSource source={metadata.manufacturerSource} />
 
-            {(fulfillmentRegion || storeAddress) ? (
+            {(fulfillmentRegion || konumEtiketi || storeAddress) ? (
               <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
                 <div className="flex items-start gap-3">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/[0.06]">
@@ -427,14 +447,21 @@ export default function ProductDetailExperience({
                         ) : null}
                       </div>
                     ) : null}
-                    {storeAddress ? (
+                    {konumEtiketi || storeAddress ? (
                       <div className={fulfillmentRegion ? "mt-3 border-t border-white/10 pt-3" : ""}>
                         <p className="text-[10px] font-extrabold uppercase tracking-wider text-white/35">
                           İşletme konumu
                         </p>
-                        <p className="mt-1 text-xs font-semibold leading-5 text-white/75">
-                          {storeAddress}
-                        </p>
+                        {konumEtiketi ? (
+                          <p className="mt-1 text-xs font-semibold leading-5 text-white/75">
+                            {konumEtiketi}
+                          </p>
+                        ) : null}
+                        {storeAddress ? (
+                          <p className="mt-1 text-xs font-semibold leading-5 text-white/60">
+                            {storeAddress}
+                          </p>
+                        ) : null}
                         {storeMapUrl ? (
                           <a
                             href={storeMapUrl}

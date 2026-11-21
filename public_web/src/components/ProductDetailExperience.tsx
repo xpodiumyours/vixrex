@@ -20,6 +20,9 @@ interface ProductDetailExperienceProps {
   instagramUrl?: string | null;
   sourceUrl?: string | null;
   storeAddress?: string | null;
+  storeDistrictName?: string | null;
+  storeNeighborhoodName?: string | null;
+  storeProvinceName?: string | null;
   isOwner?: boolean;
 }
 

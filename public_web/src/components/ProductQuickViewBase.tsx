@@ -38,6 +38,7 @@ interface ProductQuickViewProps {
   commerceEnabled?: boolean;
   whatsappBaseUrl?: string | null;
   storeLocationText?: string | null;
+  storeDistrictName?: string | null;
   storeMapsUrl?: string | null;
   isOwner?: boolean;
   onClose: () => void;
@@ -91,6 +92,7 @@ export default function ProductQuickView({
   commerceEnabled = true,
   whatsappBaseUrl = null,
   storeLocationText = null,
+  storeDistrictName = null,
   storeMapsUrl = null,
   isOwner = false,
   onClose,
@@ -228,6 +230,9 @@ export default function ProductQuickView({
     selectedVariantText,
   );
   const currentImage = displayImages[imageIndex] || null;
+  const gorselAlt = [product.name, storeName, String(storeDistrictName || "").trim()]
+    .filter(Boolean)
+    .join(" - ");
 
   return (
     <div
@@ -250,7 +255,7 @@ export default function ProductQuickView({
             ) : currentImage ? (
               <Image
                 src={currentImage}
-                alt={product.name}
+                alt={gorselAlt}
                 fill
                 sizes="(max-width: 640px) 100vw, 50vw"
                 className={metadata.lunaInvoice ? "object-contain object-center p-3" : "object-cover object-center"}

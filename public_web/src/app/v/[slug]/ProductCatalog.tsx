@@ -64,6 +64,7 @@ interface ProductCatalogProps {
   storeLocationText?: string | null;
   storeMapsUrl?: string | null;
   storeDistrictName?: string | null;
+  storeNeighborhoodName?: string | null;
   storeProvinceName?: string | null;
   trackingEnabled?: boolean;
   isOwner?: boolean;
@@ -198,6 +199,7 @@ export default function ProductCatalog({
   storeLocationText = null,
   storeMapsUrl = null,
   storeDistrictName = null,
+  storeNeighborhoodName = null,
   storeProvinceName = null,
   trackingEnabled = true,
   isOwner = false,
@@ -345,6 +347,13 @@ export default function ProductCatalog({
           const globalIndex = from + index;
           const productSlug = getProductUrlSlug(product, globalIndex);
           const productUrl = `/v/${storeSlug}/urun/${productSlug}`;
+          const gorselAlt = [
+            product.name,
+            storeName,
+            String(storeDistrictName || storeNeighborhoodName || "").trim(),
+          ]
+            .filter(Boolean)
+            .join(" - ");
           const urunTelifBekliyor = Boolean(product[TELIF_ANAHTARI]);
           const image = urunTelifBekliyor && !isOwnerSession ? null : productImageOnly(product);
           const quickImages =
@@ -366,10 +375,11 @@ export default function ProductCatalog({
           const fulfillmentRegion = String(product.fulfillmentRegion || "").trim();
           const fulfillmentMapUrl = productLocationMapUrl(fulfillmentRegion);
           const storeLocationInput =
-            storeDistrictName || storeProvinceName || storeLocationText || storeMapsUrl
+            storeDistrictName || storeProvinceName || storeNeighborhoodName || storeLocationText || storeMapsUrl
               ? {
                   district_name: storeDistrictName,
                   province_name: storeProvinceName,
+                  neighborhood_name: storeNeighborhoodName,
                   address: storeLocationText,
                   mapsUrl: storeMapsUrl,
                 }
@@ -452,7 +462,7 @@ export default function ProductCatalog({
                 <div className="relative aspect-square w-full overflow-hidden bg-slate-950">
                   <CatalogProductImage
                     src={image}
-                    alt={product.name}
+                    alt={gorselAlt}
                     contain={isLunaInvoiceProduct(product)}
                     emptyLabel={isService ? "Hizmet görseli yok" : "Ürün görseli yok"}
                     {...{ [TELIF_ANAHTARI]: urunTelifBekliyor }}
@@ -550,7 +560,7 @@ export default function ProductCatalog({
                 </div>
               </a>
 
-              {cardFacts.location?.raftaHazirMi && cardFacts.location.rozetMetni ? (
+              {cardFacts.location?.konumMetni ? (
                 <div className="px-3.5 pb-2">
                   {cardFacts.location.mapsUrl ? (
                     <TrackedDirectionsLink
@@ -565,13 +575,13 @@ export default function ProductCatalog({
                       className="inline-flex max-w-full min-w-0 items-center gap-1 rounded-full border border-blue-400/25 bg-blue-500/10 px-2 py-0.5 text-[10px] font-bold text-blue-200 transition hover:border-blue-400/50 hover:bg-blue-500/20 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
                       title="Google Maps ile yol tarifi al"
                     >
-                      <span aria-hidden="true">📍</span>
-                      <span className="truncate">{cardFacts.location.rozetMetni}</span>
+                      <MapPinIcon className="h-3 w-3 shrink-0" aria-hidden="true" />
+                      <span className="truncate">{cardFacts.location.konumMetni}</span>
                     </TrackedDirectionsLink>
                   ) : (
                     <span className="inline-flex max-w-full min-w-0 items-center gap-1 rounded-full border border-blue-400/20 bg-blue-500/10 px-2 py-0.5 text-[10px] font-bold text-blue-200">
-                      <span aria-hidden="true">📍</span>
-                      <span className="truncate">{cardFacts.location.rozetMetni}</span>
+                      <MapPinIcon className="h-3 w-3 shrink-0" aria-hidden="true" />
+                      <span className="truncate">{cardFacts.location.konumMetni}</span>
                     </span>
                   )}
                 </div>
@@ -817,6 +827,7 @@ export default function ProductCatalog({
           storeName={storeName}
           whatsappBaseUrl={whatsappBaseUrl}
           storeLocationText={storeLocationText}
+          storeDistrictName={storeDistrictName}
           storeMapsUrl={storeMapsUrl}
           trackingEnabled={trackingEnabled}
           isOwner={isOwnerSession}

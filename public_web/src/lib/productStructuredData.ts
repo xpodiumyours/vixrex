@@ -124,6 +124,8 @@ function structuredPrice(product: RichProductItem): string | undefined {
 export interface SellerLocation {
   url?: string | null;
   address?: string | null;
+  locality?: string | null;
+  region?: string | null;
   latitude?: number | null;
   longitude?: number | null;
 }
@@ -131,17 +133,22 @@ export interface SellerLocation {
 export function buildLocalBusinessSeller(storeName: string, storeLocation?: SellerLocation) {
   const url = typeof storeLocation?.url === "string" ? storeLocation.url.trim() : "";
   const address = typeof storeLocation?.address === "string" ? storeLocation.address.trim() : "";
+  const locality =
+    typeof storeLocation?.locality === "string" ? storeLocation.locality.trim() : "";
+  const region = typeof storeLocation?.region === "string" ? storeLocation.region.trim() : "";
   const latitude = storeLocation?.latitude;
   const longitude = storeLocation?.longitude;
   return {
     "@type": "LocalBusiness",
     name: storeName,
     ...(url ? { url } : {}),
-    ...(address
+    ...(address || locality || region
       ? {
           address: {
             "@type": "PostalAddress",
-            streetAddress: address,
+            ...(address ? { streetAddress: address } : {}),
+            ...(locality ? { addressLocality: locality } : {}),
+            ...(region ? { addressRegion: region } : {}),
             addressCountry: "TR",
           },
         }
