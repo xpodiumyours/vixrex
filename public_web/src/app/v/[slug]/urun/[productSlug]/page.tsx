@@ -358,34 +358,33 @@ export default async function ProductDetailPage(props: PageProps) {
         storeLocation,
       });
 
-  const storeAddressJsonLd =
+  const storeJsonLd =
     store.address || store.district_name || store.province_name
       ? {
-          "@type": "PostalAddress",
-          ...(store.address ? { streetAddress: store.address } : {}),
-          ...(store.district_name ? { addressLocality: store.district_name } : {}),
-          ...(store.province_name ? { addressRegion: store.province_name } : {}),
-          addressCountry: "TR",
-        }
-      : undefined;
-  const storeJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "LocalBusiness",
-    "@id": `${buildSiteUrl(storeUrl)}#store`,
-    name: store.name,
-    url: buildSiteUrl(storeUrl),
-    image: store.logo_url || store.shelf_image_url || undefined,
-    address: storeAddressJsonLd,
-    ...(typeof store.latitude === "number" && typeof store.longitude === "number"
-      ? {
-          geo: {
-            "@type": "GeoCoordinates",
-            latitude: store.latitude,
-            longitude: store.longitude,
+          "@context": "https://schema.org",
+          "@type": "LocalBusiness",
+          "@id": `${buildSiteUrl(storeUrl)}#store`,
+          name: store.name,
+          url: buildSiteUrl(storeUrl),
+          image: store.logo_url || store.shelf_image_url || undefined,
+          address: {
+            "@type": "PostalAddress",
+            ...(store.address ? { streetAddress: store.address } : {}),
+            ...(store.district_name ? { addressLocality: store.district_name } : {}),
+            ...(store.province_name ? { addressRegion: store.province_name } : {}),
+            addressCountry: "TR",
           },
+          ...(typeof store.latitude === "number" && typeof store.longitude === "number"
+            ? {
+                geo: {
+                  "@type": "GeoCoordinates",
+                  latitude: store.latitude,
+                  longitude: store.longitude,
+                },
+              }
+            : {}),
         }
-      : {}),
-  };
+      : null;
 
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
@@ -413,7 +412,7 @@ export default async function ProductDetailPage(props: PageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: safeJsonLdHtml(breadcrumbJsonLd) }}
       />
-      {storeAddressJsonLd ? (
+      {storeJsonLd ? (
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: safeJsonLdHtml(storeJsonLd) }}
