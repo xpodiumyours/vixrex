@@ -15,6 +15,7 @@ import {
   validateProductImageUrlsAllowingFewerImages,
 } from "@/lib/productImagePolicy";
 import { productTemplateByKey } from "@/lib/productAttributeSchema";
+import { faturaSahipGuncellemesi } from "@/lib/faturaYayinKilidi";
 import { parseProductPriceNumber } from "@/lib/productPrice";
 import { eksikZorunluAlanlar, eksikZorunluAlanMesaji } from "@/lib/productRequiredFields";
 import {
@@ -151,7 +152,7 @@ export async function PATCH(request: NextRequest) {
 
   const { data: current } = await owned.admin
     .from("products")
-    .select("name,description,price_text,price_amount,category_id,metadata,variants,brand,barcode,stock_quantity,stock_status,image_urls,old_price_amount,badge_tag,fulfillment_region,source_type,is_visible")
+    .select("name,description,price_text,price_amount,category_id,metadata,variants,brand,barcode,stock_quantity,stock_status,image_urls,old_price_amount,badge_tag,fulfillment_region,source_type,is_visible,fatura_kanit")
     .eq("id", productId)
     .eq("store_id", owned.store.id)
     .maybeSingle();
@@ -280,6 +281,44 @@ export async function PATCH(request: NextRequest) {
       variants,
       isVisible: gorunurlukYenidenHesaplanacak ? eksikFotografSayisi === 0 : undefined,
     });
+
+    if (faturaSatiri && (hasOwn(govde, "priceText") || hasOwn(govde, "stockQuantity"))) {
+      const faturaKanitGirdi = (current as { fatura_kanit?: Record<string, unknown> | null }).fatura_kanit ?? null;
+      const satirId = typeof faturaKanitGirdi?.satirId === "string" ? faturaKanitGirdi.satirId : "";
+      if (satirId) {
+        const { data: satir, error: satirHata } = await owned.admin
+          .from("invoice_job_lines")
+          .select("id,line_index,job_id,owner_state,product_id")
+          .eq("id", satirId)
+          .maybeSingle();
+        if (satirHata || !satir) {
+          console.error("[products] invoice line read failed:", satirHata);
+          return NextResponse.json({ hata: "Ürün güncellenemedi." }, { status: 500 });
+        }
+        const sahipGuncellemesi = faturaSahipGuncellemesi({
+          priceAmount,
+          stockQuantity,
+          mevcutOwnerState: (satir as { owner_state?: Record<string, unknown> | null }).owner_state ?? null,
+          mevcutFaturaKanit: faturaKanitGirdi ?? {},
+        });
+        if (sahipGuncellemesi) {
+          const { error: satirGuncellemeHata } = await owned.admin
+            .from("invoice_job_lines")
+            .update({ owner_state: sahipGuncellemesi.ownerState })
+            .eq("id", satirId);
+          const { error: kanitGuncellemeHata } = await owned.admin
+            .from("products")
+            .update({ fatura_kanit: sahipGuncellemesi.faturaKanitGuncellemesi })
+            .eq("id", productId)
+            .eq("store_id", owned.store.id);
+          if (satirGuncellemeHata || kanitGuncellemeHata) {
+            console.error("[products] invoice sync failed:", satirGuncellemeHata, kanitGuncellemeHata);
+            return NextResponse.json({ hata: "Ürün güncellenemedi." }, { status: 500 });
+          }
+        }
+      }
+    }
+
     return NextResponse.json({
       tamam: true,
       // Fatura taslağı fotoğrafı tam olsa da taslaktır; yalnız Yayınla açar.
