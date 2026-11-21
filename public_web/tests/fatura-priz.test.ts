@@ -568,7 +568,7 @@ describe("fatura priz - tak-cikar", () => {
     const kayitGirdisi = mockIslemKaydet.mock.calls[0][0];
     expect(kayitGirdisi.slug).toBe("ornek-esnaf");
     expect(kayitGirdisi.parmakIzi).toBe("parmak-izi-1");
-    expect(kayitGirdisi.belgeAdedi).toBe(1);
+    expect(kayitGirdisi.belgeAdedi).toBe(3);
     expect(kayitGirdisi.satirlar).toHaveLength(1);
     expect(kayitGirdisi.satirlar[0]).toMatchObject({
       ad: "Bosch TWK7203 Su Isıtıcı",

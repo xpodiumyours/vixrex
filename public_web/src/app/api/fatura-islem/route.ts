@@ -19,6 +19,7 @@ export const maxDuration = 300;
 const KIMLIK = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const EN_FAZLA_SATIR = 200;
 const ISLEM_OKUMA_SAATLIK_LIMIT = 180;
+const ISLEM_DURUM_SAATLIK_LIMIT = 1200;
 const PENCERE_SANIYE = 3600;
 
 export async function GET(request: NextRequest) {
@@ -30,9 +31,10 @@ export async function GET(request: NextRequest) {
   if (!yetki.tamam) return NextResponse.json({ hata: yetki.hata }, { status: yetki.durum });
 
   const admin = getSupabaseAdmin();
+  const durumSorgusu = Boolean(islemKimligi);
   const limitSonucu = await admin.rpc("consume_assistant_request", {
-    p_client_key: `fatura_islem:${yetki.storeId}`,
-    p_max_requests: ISLEM_OKUMA_SAATLIK_LIMIT,
+    p_client_key: durumSorgusu ? `fatura_durum:${yetki.storeId}` : `fatura_islem:${yetki.storeId}`,
+    p_max_requests: durumSorgusu ? ISLEM_DURUM_SAATLIK_LIMIT : ISLEM_OKUMA_SAATLIK_LIMIT,
     p_window_seconds: PENCERE_SANIYE,
   });
   const limit = Array.isArray(limitSonucu.data) ? limitSonucu.data[0] : limitSonucu.data;

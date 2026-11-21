@@ -339,4 +339,26 @@ describe("ürün yönetiminden faturaya dönme", () => {
     const arizali = await GET(new NextRequest("http://localhost/api/fatura-islem?slug=deneme-vitrin"));
     expect(arizali.status).toBe(503);
   });
+
+  it("durum sorgusu ayrı ve geniş kotadan, işlem listesi 180'lik kotadan düşer", async () => {
+    mocks.admin.mockReturnValue(sahteAdmin({ invoice_jobs: { tekil: null, liste: [] } }));
+
+    const durum = await GET(
+      new NextRequest(`http://localhost/api/fatura-islem?slug=deneme-vitrin&islemKimligi=${ISLEM}`),
+    );
+    expect(durum.status).toBe(404);
+    expect(mocks.rpc).toHaveBeenLastCalledWith("consume_assistant_request", {
+      p_client_key: "fatura_durum:store-1",
+      p_max_requests: 1200,
+      p_window_seconds: 3600,
+    });
+
+    const liste = await GET(new NextRequest("http://localhost/api/fatura-islem?slug=deneme-vitrin"));
+    expect(liste.status).toBe(200);
+    expect(mocks.rpc).toHaveBeenLastCalledWith("consume_assistant_request", {
+      p_client_key: "fatura_islem:store-1",
+      p_max_requests: 180,
+      p_window_seconds: 3600,
+    });
+  });
 });
