@@ -110,9 +110,12 @@ async function _getProductData(slug: string, productSlug: string) {
       .eq("is_active", true)
       .maybeSingle<ProductRow>();
 
-    let gorselIzinBekliyor = false;
-    if (productRow?.id) {
-      const faturaUrunu = productRow.source_type === "invoice";
+    if (!productRow?.id || !productRow.name?.trim() || !productRow.is_visible) {
+      return null;
+    }
+
+    const faturaUrunu = productRow.source_type === "invoice";
+    const kanitSorgusu = (async (): Promise<boolean> => {
       try {
         const { data: kanitSatiri, error: kanitHatasi } = await supabase
           .from("products")
@@ -120,63 +123,65 @@ async function _getProductData(slug: string, productSlug: string) {
           .eq("id", productRow.id)
           .maybeSingle();
         if (kanitHatasi || !kanitSatiri) {
-          gorselIzinBekliyor = faturaUrunu;
-        } else {
-          gorselIzinBekliyor =
-            gorselIzinBekliyorMu((kanitSatiri as { fatura_kanit?: unknown }).fatura_kanit) === true;
+          return faturaUrunu;
         }
+        return (
+          gorselIzinBekliyorMu((kanitSatiri as { fatura_kanit?: unknown }).fatura_kanit) === true
+        );
       } catch {
-        gorselIzinBekliyor = faturaUrunu;
+        return faturaUrunu;
       }
-    }
+    })();
 
-    if (productRow && productRow.name?.trim() && productRow.is_visible) {
-      let categoryName = "";
-      if (productRow.category_id) {
-        const { data: cat } = await supabase
+    const kategoriSorgusu = productRow.category_id
+      ? supabase
           .from("product_categories")
           .select("name")
           .eq("id", productRow.category_id)
-          .maybeSingle<CategoryRow>();
-        categoryName = cat?.name || "";
-      }
+          .maybeSingle<CategoryRow>()
+      : Promise.resolve({ data: null as CategoryRow | null });
 
-      const product: RichProductItem = {
-        id: productRow.id,
-        slug: productRow.slug,
-        name: productRow.name,
-        description: productRow.description || undefined,
-        price:
-          productRow.price_text ||
-          (productRow.price_amount != null
-            ? `${productRow.price_amount} ${productRow.currency}`
-            : undefined),
-        priceAmount: productRow.price_amount,
-        currency: productRow.currency,
-        oldPriceAmount: productRow.old_price_amount ?? null,
-        badgeTag: productRow.badge_tag ?? null,
-        fulfillmentRegion: productRow.fulfillment_region ?? null,
-        imageUrls: Array.isArray(productRow.image_urls) ? productRow.image_urls : [],
-        category: categoryName || undefined,
-        stockStatus: productRow.stock_status || undefined,
-        stockQuantity: productRow.stock_quantity,
-        brand: productRow.brand,
-        barcode: productRow.barcode,
-        metadata: productRow.metadata,
-        variants: productRow.variants,
-        seoTitle: productRow.seo_title,
-        seoDescription: productRow.seo_description,
-        isVisible: productRow.is_visible,
-        source: productRow.source_type,
-        gorselIzinBekliyor,
-      };
+    const [gorselIzinBekliyor, { data: cat }] = await Promise.all([
+      kanitSorgusu,
+      kategoriSorgusu,
+    ]);
+    const categoryName = cat?.name || "";
 
-      return {
-        store,
-        product,
-        productSlug: productRow.slug,
-      };
-    }
+    const product: RichProductItem = {
+      id: productRow.id,
+      slug: productRow.slug,
+      name: productRow.name,
+      description: productRow.description || undefined,
+      price:
+        productRow.price_text ||
+        (productRow.price_amount != null
+          ? `${productRow.price_amount} ${productRow.currency}`
+          : undefined),
+      priceAmount: productRow.price_amount,
+      currency: productRow.currency,
+      oldPriceAmount: productRow.old_price_amount ?? null,
+      badgeTag: productRow.badge_tag ?? null,
+      fulfillmentRegion: productRow.fulfillment_region ?? null,
+      imageUrls: Array.isArray(productRow.image_urls) ? productRow.image_urls : [],
+      category: categoryName || undefined,
+      stockStatus: productRow.stock_status || undefined,
+      stockQuantity: productRow.stock_quantity,
+      brand: productRow.brand,
+      barcode: productRow.barcode,
+      metadata: productRow.metadata,
+      variants: productRow.variants,
+      seoTitle: productRow.seo_title,
+      seoDescription: productRow.seo_description,
+      isVisible: productRow.is_visible,
+      source: productRow.source_type,
+      gorselIzinBekliyor,
+    };
+
+    return {
+      store,
+      product,
+      productSlug: productRow.slug,
+    };
   }
 
   return null;

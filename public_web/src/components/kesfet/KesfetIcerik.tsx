@@ -8,11 +8,13 @@ import {
   AKTIF_BUSINESS_CATEGORIES,
   BUSINESS_CATEGORIES,
   kategoriUrlParcasi,
+  kategoriUrlParcasindanCoz,
   type BusinessTemplateGroup,
 } from "@/lib/businessCategories";
 import type { KesfetVitrini } from "@/lib/explore";
 import { kesfetVitrinleriniFiltrele } from "@/lib/kesfetFiltreleme";
 import { supabase } from "@/lib/supabase";
+import { hizliSecenekEtiketi } from "@/lib/vixrexMesajlari";
 import { VitrinKarti, type PremiumBilgisi } from "./VitrinKarti";
 import { MascotFab } from "@/components/landing/MascotFab";
 
@@ -45,16 +47,33 @@ export function KesfetIcerik({
   const { globalSearch: sorgu, setGlobalSearch: setSorgu } = useAppShellSearch();
   const [grup, setGrup] = useState<BusinessTemplateGroup | undefined>(undefined);
   const [kategoriKimligi, setKategoriKimligi] = useState<string | null>(ilkKategoriKimligi);
+  const [sadeceKiralikAktif, setSadeceKiralikAktif] = useState(sadeceKiralik);
   const [sadeceFavoriler, setSadeceFavoriler] = useState(false);
   const [favoriAdlari, setFavoriAdlari] = useState<string[]>([]);
   const [sahipSlug, setSahipSlug] = useState<string | null>(ilkSahipSlug);
   const [premium, setPremium] = useState<PremiumBilgisi | null>(null);
 
   useEffect(() => {
+    let iptal = false;
     const params = new URLSearchParams(window.location.search);
     const query = params.get("q")?.trim() ?? "";
     if (query) setSorgu(query);
     if (params.get("vixrex") === "1") router.replace("/app/vixrex");
+    const yalnizKiralik = params.get("yalniz_kiralik") === "1";
+    const kategoriParam = params.get("kategori");
+    const cozulenKategori = kategoriParam
+      ? (kategoriUrlParcasindanCoz(kategoriParam)?.id ?? null)
+      : null;
+    if (yalnizKiralik || cozulenKategori) {
+      void Promise.resolve().then(() => {
+        if (iptal) return;
+        if (yalnizKiralik) setSadeceKiralikAktif(true);
+        if (cozulenKategori) setKategoriKimligi(cozulenKategori);
+      });
+    }
+    return () => {
+      iptal = true;
+    };
   }, [router, setSorgu]);
 
   useEffect(() => {
@@ -119,7 +138,7 @@ export function KesfetIcerik({
         kategoriKimligi,
         sadeceFavoriler,
         favoriAdlari,
-        sadeceKiralik,
+        sadeceKiralik: sadeceKiralikAktif,
       },
       KATEGORI_GRUPLARI
     );
@@ -128,7 +147,7 @@ export function KesfetIcerik({
       : -1;
     if (sahipIndex <= 0) return sonuc;
     return [sonuc[sahipIndex], ...sonuc.slice(0, sahipIndex), ...sonuc.slice(sahipIndex + 1)];
-  }, [vitrinler, sorgu, grup, kategoriKimligi, sadeceFavoriler, favoriAdlari, sadeceKiralik, sahipSlug]);
+  }, [vitrinler, sorgu, grup, kategoriKimligi, sadeceFavoriler, favoriAdlari, sadeceKiralikAktif, sahipSlug]);
 
   function favoriyiDegistir(ad: string) {
     setFavoriAdlari((onceki) => {
@@ -164,6 +183,12 @@ export function KesfetIcerik({
   const filtreVar = Boolean(
     sorgu.trim() || grup !== undefined || kategoriKimligi || sadeceFavoriler
   );
+  const gosterilenBaslik = sadeceKiralikAktif
+    ? hizliSecenekEtiketi("hazir_vitrin_sec")
+    : baslik;
+  const gosterilenAciklama = sadeceKiralikAktif
+    ? "Beğendiğini kirala, kendi vitrinin olsun"
+    : aciklama;
 
   return (
     <main className="min-h-full min-w-0 bg-lp-bg-editor text-lp-text">
@@ -173,16 +198,16 @@ export function KesfetIcerik({
         <header className="px-4 pt-4 min-[901px]:px-6 min-[901px]:pt-5">
           <div className="flex flex-col gap-4 pb-4 min-[901px]:flex-row min-[901px]:items-end min-[901px]:justify-between">
             <div className="min-w-0">
-              {sadeceKiralik ? (
+              {sadeceKiralikAktif ? (
                 <p className="mb-2 text-[10px] font-black uppercase tracking-[0.12em] text-lp-muted">
                   {filtreliVitrinler.length} hazır vitrin
                 </p>
               ) : null}
               <h1 id="kesfet-baslik" className="text-[22px] font-black leading-[1.1] tracking-[-0.03em] text-lp-text min-[901px]:text-[26px]">
-                {baslik}
+                {gosterilenBaslik}
               </h1>
               <p className="mt-1.5 text-[12px] font-normal leading-[1.45] text-lp-muted">
-                {aciklama}
+                {gosterilenAciklama}
               </p>
             </div>
 
@@ -321,7 +346,7 @@ export function KesfetIcerik({
           </ul>
         )}
 
-        {sadeceKiralik ? (
+        {sadeceKiralikAktif ? (
           <div className="px-6 pb-3 pt-2">
             <Link
               href="/"
