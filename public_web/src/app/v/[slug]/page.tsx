@@ -930,6 +930,7 @@ export default async function StorePage(props: PageProps) {
             storeLocationText={displayAddress}
             storeMapsUrl={mapsUrl}
             storeDistrictName={store.district_name}
+            storeNeighborhoodName={store.neighborhood_name}
             storeProvinceName={store.province_name}
             trackingEnabled={!isOwnerMode}
             isOwner={isOwner}

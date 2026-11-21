@@ -21,6 +21,9 @@ interface ProductQuickViewProps {
   storeName: string;
   whatsappBaseUrl?: string | null;
   storeLocationText?: string | null;
+  storeDistrictName?: string | null;
+  storeNeighborhoodName?: string | null;
+  storeProvinceName?: string | null;
   storeMapsUrl?: string | null;
   trackingEnabled?: boolean;
   isOwner?: boolean;
@@ -72,6 +75,9 @@ function ProductQuickViewSession({
   storeName,
   whatsappBaseUrl = null,
   storeLocationText = null,
+  storeDistrictName = null,
+  storeNeighborhoodName = null,
+  storeProvinceName = null,
   storeMapsUrl = null,
   trackingEnabled = true,
   isOwner = false,
@@ -206,6 +212,9 @@ function ProductQuickViewSession({
         commerceEnabled={trackingEnabled}
         whatsappBaseUrl={whatsappBaseUrl}
         storeLocationText={storeLocationText}
+        storeDistrictName={storeDistrictName}
+        storeNeighborhoodName={storeNeighborhoodName}
+        storeProvinceName={storeProvinceName}
         storeMapsUrl={storeMapsUrl}
         isOwner={isOwner}
         onClose={onClose}

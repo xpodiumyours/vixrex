@@ -447,6 +447,7 @@ export interface ProductCardOfficialSource {
 export interface ProductCardStoreLocationInput {
   district_name?: string | null;
   province_name?: string | null;
+  neighborhood_name?: string | null;
   address?: string | null;
   mapsUrl?: string | null;
 }
@@ -577,16 +578,21 @@ function buildProductCardLocationFact(args: {
 
   const ilce = kural32TemizKonumMetni(raw.district_name);
   const il = kural32TemizKonumMetni(raw.province_name);
+  const mahalle = kural32TemizKonumMetni(raw.neighborhood_name);
   const adres = kural32TemizKonumMetni(raw.address);
 
   let ilceIlMetni: string | null = null;
-  if (ilce && il) {
-    ilceIlMetni =
-      ilce.toLocaleLowerCase("tr-TR") === il.toLocaleLowerCase("tr-TR")
-        ? il
-        : `${ilce}, ${il}`;
-  } else if (ilce || il) {
-    ilceIlMetni = ilce || il;
+  const konumParcalari = [mahalle, ilce, il].filter(
+    (parca): parca is string => Boolean(parca),
+  );
+  const tekilKonumParcalari = konumParcalari.filter(
+    (parca, index) =>
+      index === 0 ||
+      parca.toLocaleLowerCase("tr-TR") !==
+        konumParcalari[index - 1].toLocaleLowerCase("tr-TR"),
+  );
+  if (tekilKonumParcalari.length > 0) {
+    ilceIlMetni = tekilKonumParcalari.join(", ");
   } else if (adres) {
     const yer = ilIlceCikar(adres);
     if (yer?.ilce && yer.il) ilceIlMetni = `${yer.ilce}, ${yer.il}`;

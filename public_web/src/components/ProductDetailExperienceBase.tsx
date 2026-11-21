@@ -4,7 +4,6 @@ import {
   birimFiyatBilgisi,
   eskiFiyatYazisi,
   indirimOrani,
-  kartRozeti,
   tutarYazisi,
 } from "@/lib/productCardPresentation";
 import Image from "next/image";
@@ -12,9 +11,13 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { TrackedWhatsAppLink } from "@/components/TrackedWhatsAppLink";
 import ProductCommercePanel from "@/components/ProductCommercePanel";
-import ManufacturerProductSource from "@/components/ManufacturerProductSource";
+import {
+  ProductInfoBody,
+  productImageAlt,
+  productLocationLabel,
+  productMapsUrl,
+} from "@/components/ProductSurfaceShared";
 import type { RichProductItem } from "@/lib/richProductItem";
-import { MapPinIcon } from "@/lib/vitrinBrandIcons";
 import { MAX_PRODUCT_IMAGES } from "@/lib/productImagePolicy";
 import {
   buildVariantOptionGroups,
@@ -25,6 +28,8 @@ import {
 } from "@/lib/productCardPresentation";
 import { normalizeProductMetadata } from "@/lib/productRichData";
 import { vitrinGorunum } from "@/lib/vitrinGorunum";
+
+export { formatVariantPrice, stockTone } from "@/components/ProductSurfaceShared";
 
 export type TelifAnahtari = `gorsel${"Izin"}${"Bekliyor"}`;
 export const TELIF_ANAHTARI: TelifAnahtari = `gorsel${"Izin"}${"Bekliyor"}`;
@@ -79,30 +84,10 @@ interface ProductDetailExperienceProps {
   instagramUrl?: string | null;
   sourceUrl?: string | null;
   storeAddress?: string | null;
+  storeDistrictName?: string | null;
+  storeNeighborhoodName?: string | null;
+  storeProvinceName?: string | null;
   isOwner?: boolean;
-}
-
-export function formatVariantPrice(amount: number, currency?: string) {
-  return new Intl.NumberFormat("tr-TR", {
-    style: "currency",
-    currency: currency || "TRY",
-    maximumFractionDigits: 2,
-  }).format(amount);
-}
-
-function mapsSearchUrl(value: string | null | undefined) {
-  const clean = String(value || "").trim();
-  if (!clean) return null;
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(clean)}`;
-}
-
-export function stockTone(status?: string | null) {
-  const value = String(status || "").toLocaleLowerCase("tr-TR");
-  if (value.includes("tükendi")) return "text-red-300";
-  if (value.includes("son") || value.includes("az") || value.includes("sınırl")) {
-    return "text-amber-300";
-  }
-  return "text-emerald-300";
 }
 
 export function whatsappWithVariantSelection(
@@ -135,6 +120,9 @@ export default function ProductDetailExperience({
   instagramUrl = null,
   sourceUrl = null,
   storeAddress = null,
+  storeDistrictName = null,
+  storeNeighborhoodName = null,
+  storeProvinceName = null,
   isOwner = false,
 }: ProductDetailExperienceProps) {
   const metadata = useMemo(() => normalizeProductMetadata(product.metadata), [product.metadata]);
@@ -195,20 +183,28 @@ export default function ProductDetailExperience({
     }
   };
 
+  const isOptionAvailable = (key: string, value: string) =>
+    variantOptionIsAvailable(
+      product.variants,
+      selectedOptions,
+      key,
+      value,
+      metadata.templateKey, metadata.lunaInvoice,
+    );
+
   const currentImage = gallery[imageIndex] || null;
-  const rozet = kartRozeti({
-    badgeTag: product.badgeTag,
-    priceAmount: product.priceAmount,
-    oldPriceAmount: product.oldPriceAmount,
-  });
+  const rozet = String(product.badgeTag || "").trim() || null;
   const hamFiyat = selectedVariant?.priceAmount ?? product.priceAmount ?? null;
   const fiyatTutar =
     typeof hamFiyat === "number" && Number.isFinite(hamFiyat) && hamFiyat > 0 ? hamFiyat : null;
   const displayedPrice = fiyatTutar != null ? tutarYazisi(fiyatTutar) : product.price || "Fiyat sorun";
-  const oran = indirimOrani({
-    priceAmount: fiyatTutar,
-    oldPriceAmount: product.oldPriceAmount,
-  });
+  const oran =
+    !isService && fiyatTutar != null
+      ? indirimOrani({
+          priceAmount: fiyatTutar,
+          oldPriceAmount: product.oldPriceAmount,
+        })
+      : null;
   const miktarBilgisi = isService ? null : birimFiyatBilgisi(product.metadata, fiyatTutar);
   const stockQuantity = selectedVariant?.stockQuantity ?? product.stockQuantity ?? null;
   const stockStatus =
@@ -221,8 +217,17 @@ export default function ProductDetailExperience({
       .toLocaleLowerCase("tr-TR")
       .includes("tükendi");
   const fulfillmentRegion = String(product.fulfillmentRegion || "").trim();
-  const productMapUrl = mapsSearchUrl(fulfillmentRegion);
-  const storeMapUrl = mapsSearchUrl(storeAddress);
+  const storeLocationLabel = productLocationLabel({
+    neighborhoodName: storeNeighborhoodName,
+    districtName: storeDistrictName,
+    provinceName: storeProvinceName,
+  });
+  const storeMapUrl = productMapsUrl(storeAddress);
+  const gorselAlt = productImageAlt({
+    name: product.name,
+    storeName,
+    locality: storeDistrictName || storeNeighborhoodName,
+  });
   const visibleDetailFacts = detailFacts.filter((fact) => !variantKeys.has(fact.key));
   const selectedVariantText = groups
     .map((group) => {
@@ -254,7 +259,7 @@ export default function ProductDetailExperience({
               ) : currentImage ? (
                 <Image
                   src={currentImage}
-                  alt={product.name}
+                  alt={gorselAlt}
                   fill
                   sizes="(max-width: 1024px) 100vw, 55vw"
                   className={metadata.lunaInvoice ? "object-contain p-3" : "object-cover"}
@@ -265,11 +270,6 @@ export default function ProductDetailExperience({
                   {isService ? "Hizmet görseli bekleniyor" : "Ürün görseli bekleniyor"}
                 </div>
               )}
-              {rozet ? (
-                <span className={`absolute left-2 top-2 z-10 max-w-[calc(100%-3.5rem)] truncate ${vitrinGorunum.rozet.gorsel} px-2 py-0.5 text-[10px] font-black`}>
-                  {rozet}
-                </span>
-              ) : null}
             </div>
             {gallery.length > 1 ? (
               <div className="mt-2.5 flex gap-2 overflow-x-auto pb-1">
@@ -287,7 +287,7 @@ export default function ProductDetailExperience({
                   >
                     <Image
                       src={imageUrl}
-                      alt=""
+                      alt={`${gorselAlt} - ${index + 1}. fotoğraf`}
                       fill
                       sizes="56px"
                       className={metadata.lunaInvoice ? "object-contain p-1" : "object-cover"}
@@ -299,242 +299,85 @@ export default function ProductDetailExperience({
           </div>
 
           <aside className={`rounded-3xl ${vitrinGorunum.yuzey.panel} p-5 sm:p-7`}>
-            {product.category ? (
-              <span className="inline-flex rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider text-slate-300">
-                {product.category}
-              </span>
-            ) : null}
-            <h1 className="mt-4 text-[clamp(1.6rem,4.6vw,2.3rem)] font-black leading-[1.08] tracking-tight text-white">
-              {product.name}
-            </h1>
-            {!isService && product.brand ? (
-              <p className={`mt-2 ${vitrinGorunum.metin.marka}`}>
-                {product.brand}
-              </p>
-            ) : null}
-
-            <div className="mt-5 flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
-              <span className={`text-2xl font-black ${vitrinGorunum.fiyat.ana}`}>{displayedPrice}</span>
-              {oran != null ? (
-                <span className={`${vitrinGorunum.rozet.indirim} px-1.5 py-0.5 text-[10px] font-black`}>
-                  %{oran}
-                </span>
-              ) : null}
-              {eskiFiyatYazisi(product.oldPriceAmount) ? (
-                <span className={`text-sm font-medium ${vitrinGorunum.fiyat.eski}`}>
-                  {eskiFiyatYazisi(product.oldPriceAmount)}
-                </span>
-              ) : null}
-            </div>
-            {miktarBilgisi ? (
-              <p className={`mt-1.5 flex flex-wrap items-center gap-x-1.5 text-xs font-semibold ${vitrinGorunum.fiyat.birim}`}>
-                <span>{miktarBilgisi.miktar}</span>
-                <span aria-hidden="true">·</span>
-                <span className={vitrinGorunum.fiyat.birimDeger}>{miktarBilgisi.birimFiyat}</span>
-              </p>
-            ) : null}
-
-            {!isService && groups.length > 0 ? (
-              <div className="mt-6 space-y-5 border-t border-white/10 pt-5">
-                {groups.map((group) => (
-                  <div key={group.key}>
-                    <p className="mb-2 text-[10px] font-extrabold uppercase tracking-wider text-white/35">
-                      {group.label}
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {group.values.map((value) => {
-                        const selected = selectedOptions[group.key] === value;
-                        const available = variantOptionIsAvailable(
-                          product.variants,
-                          selectedOptions,
-                          group.key,
-                          value,
-                          metadata.templateKey, metadata.lunaInvoice,
-                        );
-                        return (
-                          <button
-                            key={value}
-                            type="button"
-                            onClick={() => selectOption(group.key, value)}
-                            disabled={!available}
-                            className={`min-h-10 rounded-xl border px-3 text-xs font-extrabold transition ${
-                              selected
-                                ? "border-blue-400/70 bg-blue-500/15 text-white"
-                                : available
-                                  ? "border-white/10 bg-white/[0.03] text-white/65 hover:border-blue-500/35"
-                                  : "cursor-not-allowed border-white/5 bg-white/[0.02] text-white/20 line-through"
-                            }`}
-                            aria-pressed={selected}
-                            aria-disabled={!available}
-                          >
-                            {value}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : null}
-
-            {!isService && (stockStatus || stockQuantity != null) ? (
-              <div className="mt-4 flex flex-wrap items-center gap-2">
-                {stockStatus ? (
-                  <span className={`text-xs font-extrabold ${stockTone(stockStatus)}`}>
-                    {stockStatus}
-                  </span>
+            <ProductInfoBody
+              isService={isService}
+              category={product.category}
+              name={product.name}
+              brand={product.brand}
+              heading="h1"
+              displayedPrice={displayedPrice}
+              discountPercent={oran}
+              oldPriceText={eskiFiyatYazisi(product.oldPriceAmount)}
+              badge={rozet}
+              unitPrice={miktarBilgisi}
+              variantGroups={groups}
+              selectedOptions={selectedOptions}
+              onSelectOption={selectOption}
+              isOptionAvailable={isOptionAvailable}
+              stockStatus={stockStatus}
+              stockQuantity={stockQuantity}
+              facts={visibleDetailFacts}
+              manufacturerSource={metadata.manufacturerSource}
+              fulfillmentRegion={fulfillmentRegion}
+              storeLocationLabel={storeLocationLabel}
+              storeAddress={storeAddress}
+              storeMapUrl={storeMapUrl}
+              description={product.description}
+            >
+              <div className="mt-6 grid gap-2 sm:grid-cols-2">
+                {selectedWhatsappUrl ? (
+                  <TrackedWhatsAppLink
+                    href={selectedWhatsappUrl}
+                    storeSlug={storeSlug}
+                    productSlug={productSlug}
+                    clickLocation="product_detail"
+                    className={`flex min-h-12 items-center justify-center rounded-xl px-5 text-center text-sm font-extrabold ${vitrinGorunum.buton.whatsapp}`}
+                  >
+                    {isService ? "WhatsApp’tan hizmeti sor" : "WhatsApp’tan ürünü sor"}
+                  </TrackedWhatsAppLink>
                 ) : null}
-                {stockQuantity != null ? (
-                  <span className={`rounded-md border border-white/10 bg-white/[0.04] px-2 py-1 text-[11px] font-bold ${vitrinGorunum.metin.soluk}`}>
-                    {stockQuantity} adet
-                  </span>
+                {instagramUrl ? (
+                  <Link
+                    href={instagramUrl}
+                    className={`flex min-h-12 items-center justify-center rounded-xl px-5 text-center text-sm font-extrabold ${vitrinGorunum.buton.ikincil}`}
+                  >
+                    Instagram
+                  </Link>
                 ) : null}
               </div>
-            ) : null}
-
-            {product.description ? (
-              <p className={`mt-6 whitespace-pre-wrap text-sm font-medium leading-6 ${vitrinGorunum.metin.ikincil}`}>
-                {product.description}
-              </p>
-            ) : null}
-
-            <ManufacturerProductSource source={metadata.manufacturerSource} />
-
-            {(fulfillmentRegion || storeAddress) ? (
-              <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                <div className="flex items-start gap-3">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/[0.06]">
-                    <MapPinIcon className="h-4 w-4 text-slate-300" aria-hidden="true" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    {fulfillmentRegion ? (
-                      <div>
-                        <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
-                          {isService ? "Hizmet bölgesi" : "Ürün konumu / teslim bölgesi"}
-                        </p>
-                        <p className="mt-1 text-xs font-semibold leading-5 text-white/75">
-                          {fulfillmentRegion}
-                        </p>
-                        {productMapUrl ? (
-                          <a
-                            href={productMapUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="mt-1.5 inline-flex text-xs font-extrabold text-blue-300"
-                          >
-                            Haritada ara →
-                          </a>
-                        ) : null}
-                      </div>
-                    ) : null}
-                    {storeAddress ? (
-                      <div className={fulfillmentRegion ? "mt-3 border-t border-white/10 pt-3" : ""}>
-                        <p className="text-[10px] font-extrabold uppercase tracking-wider text-white/35">
-                          İşletme konumu
-                        </p>
-                        <p className="mt-1 text-xs font-semibold leading-5 text-white/75">
-                          {storeAddress}
-                        </p>
-                        {storeMapUrl ? (
-                          <a
-                            href={storeMapUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="mt-1.5 inline-flex text-xs font-extrabold text-blue-300"
-                          >
-                            Yol tarifi →
-                          </a>
-                        ) : null}
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-              </div>
-            ) : null}
-
-            <div className="mt-6 grid gap-2 sm:grid-cols-2">
-              {selectedWhatsappUrl ? (
-                <TrackedWhatsAppLink
-                  href={selectedWhatsappUrl}
-                  storeSlug={storeSlug}
-                  productSlug={productSlug}
-                  clickLocation="product_detail"
-                  className={`flex min-h-12 items-center justify-center rounded-xl px-5 text-center text-sm font-extrabold ${vitrinGorunum.buton.whatsapp}`}
-                >
-                  {isService ? "WhatsApp’tan hizmeti sor" : "WhatsApp’tan ürünü sor"}
-                </TrackedWhatsAppLink>
-              ) : null}
-              {instagramUrl ? (
+              {sourceUrl ? (
                 <Link
-                  href={instagramUrl}
-                  className={`flex min-h-12 items-center justify-center rounded-xl px-5 text-center text-sm font-extrabold ${vitrinGorunum.buton.ikincil}`}
+                  href={sourceUrl}
+                  className="mt-2 flex min-h-11 items-center justify-center rounded-xl border border-white/10 px-5 text-center text-xs font-extrabold text-white/60"
                 >
-                  Instagram
+                  Kaynak paylaşımı
                 </Link>
               ) : null}
-            </div>
-            {sourceUrl ? (
-              <Link
-                href={sourceUrl}
-                className="mt-2 flex min-h-11 items-center justify-center rounded-xl border border-white/10 px-5 text-center text-xs font-extrabold text-white/60"
-              >
-                Kaynak paylaşımı
-              </Link>
-            ) : null}
 
-            <div className="mt-6 border-t border-white/10 pt-5">
-              <ProductCommercePanel
-                storeSlug={storeSlug}
-                productSlug={productSlug}
-                productName={product.name}
-                imageUrl={telifKalkanli ? null : currentImage}
-                priceText={displayedPrice}
-                priceAmount={fiyatTutar}
-                selectedVariantText={selectedVariantText}
-                selectedVariantId={selectedVariant?.id ?? null}
-                stockQuantity={stockQuantity}
-                cartEnabled={!isService && !tukendi}
-                cartDisabledReason={
-                  isService
-                    ? "Hizmetler sipariş sepetine eklenmez; WhatsApp üzerinden bilgi alabilirsin."
-                    : tukendi
-                      ? "Bu ürün şu anda tükendi."
-                      : ""
-                }
-              />
-            </div>
+              <div className="mt-6 border-t border-white/10 pt-5">
+                <ProductCommercePanel
+                  storeSlug={storeSlug}
+                  productSlug={productSlug}
+                  productName={product.name}
+                  imageUrl={telifKalkanli ? null : currentImage}
+                  priceText={displayedPrice}
+                  priceAmount={fiyatTutar}
+                  selectedVariantText={selectedVariantText}
+                  selectedVariantId={selectedVariant?.id ?? null}
+                  stockQuantity={stockQuantity}
+                  cartEnabled={!isService && !tukendi}
+                  cartDisabledReason={
+                    isService
+                      ? "Hizmetler sipariş sepetine eklenmez; WhatsApp üzerinden bilgi alabilirsin."
+                      : tukendi
+                        ? "Bu ürün şu anda tükendi."
+                        : ""
+                  }
+                />
+              </div>
+            </ProductInfoBody>
           </aside>
         </div>
-
-        {visibleDetailFacts.length > 0 ? (
-          <section className={`mt-6 overflow-hidden rounded-3xl ${vitrinGorunum.yuzey.panel}`}>
-            <div className="border-b border-white/8 px-5 py-4 sm:px-6">
-              <h2 className="text-lg font-extrabold text-white">
-                {isService ? "Hizmet detayları" : "Ürün özellikleri"}
-              </h2>
-              <p className="mt-1 text-xs font-medium text-white/35">
-                {metadata.lunaInvoice
-                  ? "Faturadan hazırlanan ve esnafın onayladığı ürün bilgileri."
-                  : `Yalnız işletmenin bu ${isService ? "hizmet" : "ürün"} için girdiği gerçek bilgiler gösterilir.`}
-              </p>
-            </div>
-            <dl>
-              {visibleDetailFacts.map((fact) => (
-                <div
-                  key={fact.key}
-                  className="grid border-b border-white/8 last:border-b-0 sm:grid-cols-[220px_minmax(0,1fr)]"
-                >
-                  <dt className="bg-white/[0.025] px-5 py-3 text-xs font-extrabold text-white/40 sm:px-6">
-                    {fact.label}
-                  </dt>
-                  <dd className="px-5 py-3 text-sm font-semibold text-white/75 sm:px-6">
-                    {fact.value}
-                  </dd>
-                </div>
-              ))}
-            </dl>
-          </section>
-        ) : null}
       </section>
     </main>
   );

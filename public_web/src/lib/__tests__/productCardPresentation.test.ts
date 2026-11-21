@@ -139,6 +139,7 @@ describe("buildProductCardFacts resmi kaynak, GTIN ve konum sözleşmesi", () =>
     });
     expect(sifirStok.location?.raftaHazirMi).toBe(false);
     expect(sifirStok.location?.rozetMetni).toBeNull();
+    expect(sifirStok.location?.ilceIlMetni).toBe("Beşiktaş, İstanbul");
 
     const tukendiMetni = buildProductCardFacts({
       stockStatus: "Tükendi",
@@ -178,6 +179,19 @@ describe("buildProductCardFacts resmi kaynak, GTIN ve konum sözleşmesi", () =>
     expect(kart.resmiKatalogRozeti).toBeNull();
     expect(kart.location?.raftaHazirMi).toBe(false);
     expect(kart.location?.rozetMetni).toBeNull();
+    expect(kart.location?.ilceIlMetni).toBe("Çankaya, Ankara");
+  });
+
+  it("mahalle, ilçe ve ili tekrarsız tek konum metninde birleştirir", () => {
+    const kart = buildProductCardFacts({
+      storeLocation: {
+        neighborhood_name: "Caddebostan",
+        district_name: "Kadıköy",
+        province_name: "İstanbul",
+      },
+    });
+
+    expect(kart.location?.ilceIlMetni).toBe("Caddebostan, Kadıköy, İstanbul");
   });
 
   it("geçersiz veya tehlikeli URL şemalarını reddeder", () => {
@@ -286,6 +300,7 @@ describe("ProductCatalog kart konumu ve Material görünüm render doğrulaması
     expect(html).toContain("aspect-square");
     expect(html).toContain("Resmi Üretici Kataloğu / GS1");
     expect(html).toContain("Kadıköy, İstanbul · Rafta Hazır");
+    expect(html).toContain("alt=\"Tutku Pamuklu Fanila - Örnek Mağaza - Kadıköy\"");
     expect(html).toContain('href="https://www.google.com/maps/search/?api=1&amp;query=Kadikoy"');
     expect(html).toContain('target="_blank"');
     expect(html).toContain('rel="noopener noreferrer"');
@@ -319,5 +334,6 @@ describe("ProductCatalog kart konumu ve Material görünüm render doğrulaması
     );
 
     expect(html).not.toContain("Rafta Hazır");
+    expect(html).toContain("Kadıköy, İstanbul");
   });
 });

@@ -43,6 +43,9 @@ interface StoreRow {
   instagram?: string;
   website?: string;
   address?: string;
+  district_name?: string | null;
+  neighborhood_name?: string | null;
+  province_name?: string | null;
   latitude?: number | null;
   longitude?: number | null;
   logo_url?: string;
@@ -88,7 +91,7 @@ async function _getProductData(slug: string, productSlug: string) {
   const { data: store, error } = await supabase
     .from("stores")
     .select(
-      "id,slug,name,description,corporate_bio,whatsapp,instagram,website,address,latitude,longitude,logo_url,shelf_image_url,products,is_published,is_demo,product_storage_version",
+      "id,slug,name,description,corporate_bio,whatsapp,instagram,website,address,district_name,neighborhood_name,province_name,latitude,longitude,logo_url,shelf_image_url,products,is_published,is_demo,product_storage_version",
     )
     .eq("slug", slug)
     .eq("is_published", true)
@@ -281,6 +284,8 @@ export default async function ProductDetailPage(props: PageProps) {
   const storeLocation: SellerLocation = {
     url: buildSiteUrl(storeUrl),
     address: store.address || null,
+    locality: store.district_name || null,
+    region: store.province_name || null,
     latitude: store.latitude ?? null,
     longitude: store.longitude ?? null,
   };
@@ -353,6 +358,34 @@ export default async function ProductDetailPage(props: PageProps) {
         storeLocation,
       });
 
+  const storeJsonLd =
+    store.address || store.district_name || store.province_name
+      ? {
+          "@context": "https://schema.org",
+          "@type": "LocalBusiness",
+          "@id": `${buildSiteUrl(storeUrl)}#store`,
+          name: store.name,
+          url: buildSiteUrl(storeUrl),
+          image: store.logo_url || store.shelf_image_url || undefined,
+          address: {
+            "@type": "PostalAddress",
+            ...(store.address ? { streetAddress: store.address } : {}),
+            ...(store.district_name ? { addressLocality: store.district_name } : {}),
+            ...(store.province_name ? { addressRegion: store.province_name } : {}),
+            addressCountry: "TR",
+          },
+          ...(typeof store.latitude === "number" && typeof store.longitude === "number"
+            ? {
+                geo: {
+                  "@type": "GeoCoordinates",
+                  latitude: store.latitude,
+                  longitude: store.longitude,
+                },
+              }
+            : {}),
+        }
+      : null;
+
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -379,6 +412,12 @@ export default async function ProductDetailPage(props: PageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: safeJsonLdHtml(breadcrumbJsonLd) }}
       />
+      {storeJsonLd ? (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: safeJsonLdHtml(storeJsonLd) }}
+        />
+      ) : null}
       <ProductDetailExperience
         product={maskedProduct}
         images={images}
@@ -391,6 +430,9 @@ export default async function ProductDetailPage(props: PageProps) {
         instagramUrl={instagramUrl}
         sourceUrl={sourceUrl}
         storeAddress={store.address || null}
+        storeDistrictName={store.district_name || null}
+        storeNeighborhoodName={store.neighborhood_name || null}
+        storeProvinceName={store.province_name || null}
         isOwner={isOwner}
       />
 
