@@ -10,9 +10,13 @@ function kaynak(relative: string) {
 describe("vitrin görünüm kartelası", () => {
   it("fiyat her yüzeyde beyaz ve aynı kaynaktan okunur", () => {
     expect(vitrinGorunum.fiyat.ana).toBe("text-white");
-    expect(kaynak("src/components/ProductDetailExperienceBase.tsx")).toContain(
+    expect(kaynak("src/components/ProductSurfaceShared.tsx")).toContain(
       "vitrinGorunum.fiyat.ana",
     );
+    expect(kaynak("src/components/ProductDetailExperienceBase.tsx")).toContain(
+      "<ProductInfoBody",
+    );
+    expect(kaynak("src/components/ProductQuickViewBase.tsx")).toContain("<ProductInfoBody");
     expect(kaynak("src/app/v/[slug]/ProductCatalog.tsx")).toContain("vitrinGorunum.fiyat.ana");
   });
 
@@ -34,7 +38,8 @@ describe("vitrin görünüm kartelası", () => {
   it("ürün penceresi detayla aynı fiyatı ve sepet toplamını gösterir", () => {
     const pencere = kaynak("src/components/ProductQuickViewBase.tsx");
     expect(pencere).toContain("priceAmount={fiyatTutar}");
-    expect(pencere).toContain("vitrinGorunum.fiyat.ana");
+    expect(pencere).toContain("<ProductInfoBody");
+    expect(kaynak("src/components/ProductSurfaceShared.tsx")).toContain("vitrinGorunum.fiyat.ana");
     expect(pencere).not.toContain("from-blue-600");
   });
 

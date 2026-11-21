@@ -524,11 +524,6 @@ export default function ProductCatalog({
                           Hizmet
                         </span>
                       ) : null}
-                      {isService ? (
-                        <span className="ml-auto text-[9px] font-extrabold text-blue-400 sm:text-[10px]">
-                          Hizmeti incele →
-                        </span>
-                      ) : null}
                     </div>
                   ) : null}
                   {cardFacts.resmiKatalogRozeti ? (
@@ -556,6 +551,7 @@ export default function ProductCatalog({
                 </div>
               </a>
 
+              <div className="mt-auto">
               {cardFacts.location?.ilceIlMetni ? (
                 <div className="px-3.5 pb-2">
                   {cardFacts.location.mapsUrl ? (
@@ -571,25 +567,43 @@ export default function ProductCatalog({
                       className="inline-flex max-w-full min-w-0 items-center gap-1 rounded-full border border-blue-400/25 bg-blue-500/10 px-2 py-0.5 text-[10px] font-bold text-blue-200 transition hover:border-blue-400/50 hover:bg-blue-500/20 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
                       title="Google Maps ile yol tarifi al"
                     >
-                      <MapPinIcon className="h-3 w-3 shrink-0" aria-hidden="true" />
-                      <span className="truncate">{cardFacts.location.rozetMetni ?? cardFacts.location.ilceIlMetni}</span>
+                      <MapPinIcon className="mt-0.5 h-3 w-3 shrink-0" aria-hidden="true" />
+                      <span className="min-w-0 break-words text-left leading-4">
+                        {cardFacts.location.rozetMetni ?? cardFacts.location.ilceIlMetni}
+                      </span>
                     </TrackedDirectionsLink>
                   ) : (
                     <span className="inline-flex max-w-full min-w-0 items-center gap-1 rounded-full border border-blue-400/20 bg-blue-500/10 px-2 py-0.5 text-[10px] font-bold text-blue-200">
-                      <MapPinIcon className="h-3 w-3 shrink-0" aria-hidden="true" />
-                      <span className="truncate">{cardFacts.location.rozetMetni ?? cardFacts.location.ilceIlMetni}</span>
+                      <MapPinIcon className="mt-0.5 h-3 w-3 shrink-0" aria-hidden="true" />
+                      <span className="min-w-0 break-words text-left leading-4">
+                        {cardFacts.location.rozetMetni ?? cardFacts.location.ilceIlMetni}
+                      </span>
                     </span>
                   )}
                 </div>
               ) : null}
 
-              {!isService ? (
+              {isService ? (
+                <div className="px-3.5 pb-3.5 pt-1">
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      setQuickView({ product, images: quickImages, productUrl, productSlug });
+                    }}
+                    className={`flex h-9 w-full items-center justify-center rounded-xl text-[11px] font-extrabold ${vitrinGorunum.buton.ikincil}`}
+                  >
+                    Hizmeti incele →
+                  </button>
+                </div>
+              ) : (
                 <div className="px-3.5 pb-3.5 pt-1">
                   {tukendi ? (
                     <button
                       type="button"
                       disabled
-                      className={`w-full rounded-xl py-2 text-[11px] font-extrabold ${vitrinGorunum.buton.devreDisi}`}
+                      className={`flex h-9 w-full items-center justify-center rounded-xl text-[11px] font-extrabold ${vitrinGorunum.buton.devreDisi}`}
                     >
                       Tükendi
                     </button>
@@ -601,7 +615,7 @@ export default function ProductCatalog({
                         event.stopPropagation();
                         setQuickView({ product, images: quickImages, productUrl, productSlug });
                       }}
-                      className={`w-full rounded-xl py-2 text-[11px] font-extrabold ${vitrinGorunum.buton.ana}`}
+                      className={`flex h-9 w-full items-center justify-center rounded-xl text-[11px] font-extrabold ${vitrinGorunum.buton.ana}`}
                     >
                       {totalProductCartQty > 0
                         ? `Sepette (${totalProductCartQty}) · Seçenekler →`
@@ -630,12 +644,12 @@ export default function ProductCatalog({
                         });
                         setCartItems(next);
                       }}
-                      className={`w-full rounded-xl py-2 text-[11px] font-extrabold ${vitrinGorunum.buton.ana}`}
+                      className={`flex h-9 w-full items-center justify-center rounded-xl text-[11px] font-extrabold ${vitrinGorunum.buton.ana}`}
                     >
                       + Sepete ekle
                     </button>
                   ) : (
-                    <div className="flex items-center justify-between rounded-xl border border-blue-500/40 bg-blue-500/10 px-1.5 py-1">
+                    <div className="flex h-9 items-center justify-between rounded-xl border border-blue-500/40 bg-blue-500/10 px-1.5">
                       <button
                         type="button"
                         onClick={(event) => {
@@ -695,7 +709,8 @@ export default function ProductCatalog({
                     </div>
                   )}
                 </div>
-              ) : null}
+              )}
+              </div>
 
             </article>
           );
@@ -741,6 +756,8 @@ export default function ProductCatalog({
           whatsappBaseUrl={whatsappBaseUrl}
           storeLocationText={storeLocationText}
           storeDistrictName={storeDistrictName}
+          storeNeighborhoodName={storeNeighborhoodName}
+          storeProvinceName={storeProvinceName}
           storeMapsUrl={storeMapsUrl}
           trackingEnabled={trackingEnabled}
           isOwner={isOwnerSession}
