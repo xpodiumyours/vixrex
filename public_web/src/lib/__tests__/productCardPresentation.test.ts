@@ -56,7 +56,6 @@ describe("buildProductCardFacts resmi kaynak, GTIN ve konum sözleşmesi", () =>
     expect(kart.resmiKatalogRozeti).toBe("Resmi Üretici Kataloğu / GS1");
     expect(kart.location).toEqual({
       ilceIlMetni: "Kadıköy, İstanbul",
-      konumMetni: "Kadıköy, İstanbul",
       mapsUrl: "https://www.google.com/maps/search/?api=1&query=Kadikoy",
       raftaHazirMi: true,
       rozetMetni: "Kadıköy, İstanbul · Rafta Hazır",
@@ -109,7 +108,6 @@ describe("buildProductCardFacts resmi kaynak, GTIN ve konum sözleşmesi", () =>
 
     expect(kart.location).toEqual({
       ilceIlMetni: "Kadıköy, İstanbul",
-      konumMetni: "Kadıköy, İstanbul",
       mapsUrl:
         "https://www.google.com/maps/search/?api=1&query=Ba%C4%9Fdat%20Cad.%20No%3A120%2C%20Kad%C4%B1k%C3%B6y%2C%20%C4%B0stanbul",
       raftaHazirMi: true,
@@ -128,7 +126,6 @@ describe("buildProductCardFacts resmi kaynak, GTIN ve konum sözleşmesi", () =>
 
     expect(kart.location).toEqual({
       ilceIlMetni: "İstanbul",
-      konumMetni: "İstanbul",
       mapsUrl: null,
       raftaHazirMi: true,
       rozetMetni: "İstanbul · Rafta Hazır",
@@ -142,7 +139,7 @@ describe("buildProductCardFacts resmi kaynak, GTIN ve konum sözleşmesi", () =>
     });
     expect(sifirStok.location?.raftaHazirMi).toBe(false);
     expect(sifirStok.location?.rozetMetni).toBeNull();
-    expect(sifirStok.location?.konumMetni).toBe("Beşiktaş, İstanbul");
+    expect(sifirStok.location?.ilceIlMetni).toBe("Beşiktaş, İstanbul");
 
     const tukendiMetni = buildProductCardFacts({
       stockStatus: "Tükendi",
@@ -182,7 +179,7 @@ describe("buildProductCardFacts resmi kaynak, GTIN ve konum sözleşmesi", () =>
     expect(kart.resmiKatalogRozeti).toBeNull();
     expect(kart.location?.raftaHazirMi).toBe(false);
     expect(kart.location?.rozetMetni).toBeNull();
-    expect(kart.location?.konumMetni).toBe("Çankaya, Ankara");
+    expect(kart.location?.ilceIlMetni).toBe("Çankaya, Ankara");
   });
 
   it("mahalle, ilçe ve ili tekrarsız tek konum metninde birleştirir", () => {
@@ -194,7 +191,7 @@ describe("buildProductCardFacts resmi kaynak, GTIN ve konum sözleşmesi", () =>
       },
     });
 
-    expect(kart.location?.konumMetni).toBe("Caddebostan, Kadıköy, İstanbul");
+    expect(kart.location?.ilceIlMetni).toBe("Caddebostan, Kadıköy, İstanbul");
   });
 
   it("geçersiz veya tehlikeli URL şemalarını reddeder", () => {
@@ -302,7 +299,7 @@ describe("ProductCatalog kart konumu ve Material görünüm render doğrulaması
 
     expect(html).toContain("aspect-square");
     expect(html).toContain("Resmi Üretici Kataloğu / GS1");
-    expect(html).toContain("Kadıköy, İstanbul");
+    expect(html).toContain("Kadıköy, İstanbul · Rafta Hazır");
     expect(html).toContain("alt=\"Tutku Pamuklu Fanila - Örnek Mağaza - Kadıköy\"");
     expect(html).toContain('href="https://www.google.com/maps/search/?api=1&amp;query=Kadikoy"');
     expect(html).toContain('target="_blank"');

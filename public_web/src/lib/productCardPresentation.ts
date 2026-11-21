@@ -454,7 +454,6 @@ export interface ProductCardStoreLocationInput {
 
 export interface ProductCardLocationFact {
   ilceIlMetni: string | null;
-  konumMetni: string | null;
   mapsUrl: string | null;
   raftaHazirMi: boolean;
   rozetMetni: string | null;
@@ -624,7 +623,6 @@ function buildProductCardLocationFact(args: {
 
   return {
     ilceIlMetni,
-    konumMetni: ilceIlMetni,
     mapsUrl,
     raftaHazirMi,
     rozetMetni,

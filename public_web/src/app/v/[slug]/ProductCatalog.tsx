@@ -560,7 +560,7 @@ export default function ProductCatalog({
                 </div>
               </a>
 
-              {cardFacts.location?.konumMetni ? (
+              {cardFacts.location?.ilceIlMetni ? (
                 <div className="px-3.5 pb-2">
                   {cardFacts.location.mapsUrl ? (
                     <TrackedDirectionsLink
@@ -576,12 +576,12 @@ export default function ProductCatalog({
                       title="Google Maps ile yol tarifi al"
                     >
                       <MapPinIcon className="h-3 w-3 shrink-0" aria-hidden="true" />
-                      <span className="truncate">{cardFacts.location.konumMetni}</span>
+                      <span className="truncate">{cardFacts.location.rozetMetni ?? cardFacts.location.ilceIlMetni}</span>
                     </TrackedDirectionsLink>
                   ) : (
                     <span className="inline-flex max-w-full min-w-0 items-center gap-1 rounded-full border border-blue-400/20 bg-blue-500/10 px-2 py-0.5 text-[10px] font-bold text-blue-200">
                       <MapPinIcon className="h-3 w-3 shrink-0" aria-hidden="true" />
-                      <span className="truncate">{cardFacts.location.konumMetni}</span>
+                      <span className="truncate">{cardFacts.location.rozetMetni ?? cardFacts.location.ilceIlMetni}</span>
                     </span>
                   )}
                 </div>
