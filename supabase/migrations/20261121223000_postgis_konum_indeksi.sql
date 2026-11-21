@@ -34,16 +34,45 @@ CREATE TRIGGER trg_stores_sync_location_geography
   FOR EACH ROW
   EXECUTE FUNCTION public.stores_sync_location_geography();
 
-UPDATE public.stores
-SET location = extensions.st_setsrid(
-  extensions.st_makepoint(longitude, latitude),
-  4326
-)::extensions.geography
-WHERE latitude IS NOT NULL
-  AND longitude IS NOT NULL
-  AND latitude BETWEEN -90 AND 90
-  AND longitude BETWEEN -180 AND 180
-  AND location IS NULL;
+DO $$
+DECLARE
+  v_demo_trigger_exists boolean;
+BEGIN
+  SELECT EXISTS (
+    SELECT 1
+    FROM pg_trigger
+    WHERE tgname = 'protect_landing_demo_stores'
+      AND tgrelid = 'public.stores'::regclass
+      AND NOT tgisinternal
+  ) INTO v_demo_trigger_exists;
+
+  IF v_demo_trigger_exists THEN
+    EXECUTE 'ALTER TABLE public.stores DISABLE TRIGGER protect_landing_demo_stores';
+  END IF;
+
+  BEGIN
+    UPDATE public.stores
+    SET location = extensions.st_setsrid(
+      extensions.st_makepoint(longitude, latitude),
+      4326
+    )::extensions.geography
+    WHERE latitude IS NOT NULL
+      AND longitude IS NOT NULL
+      AND latitude BETWEEN -90 AND 90
+      AND longitude BETWEEN -180 AND 180
+      AND location IS NULL;
+  EXCEPTION WHEN OTHERS THEN
+    IF v_demo_trigger_exists THEN
+      EXECUTE 'ALTER TABLE public.stores ENABLE TRIGGER protect_landing_demo_stores';
+    END IF;
+    RAISE;
+  END;
+
+  IF v_demo_trigger_exists THEN
+    EXECUTE 'ALTER TABLE public.stores ENABLE TRIGGER protect_landing_demo_stores';
+  END IF;
+END
+$$;
 
 CREATE INDEX IF NOT EXISTS idx_stores_location_gist
   ON public.stores USING GIST (location)
