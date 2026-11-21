@@ -138,13 +138,13 @@ describe("OwnerProductManager kart arayuz sozlesmesi", () => {
   it("taslak ve yayindaki kartlari yeni duzenle render eder", () => {
     const html = renderKartYonetimi([FATURA_URUNU, MANUEL_URUN]);
 
-    expect(html).toContain("w-[92px]");
-    expect(html).toContain("h-[92px]");
-    expect(html).toContain("border-[#1e3f73]");
-    expect(html).toContain("Satış Fiyatı");
-    expect(html).toContain("Dükkân Stoğu");
-    expect(html).toContain("Kartı Onayla &amp; Vitrine Koy");
-    expect(html).toContain("✓ Vitrinde Yayında");
+    expect(html).toContain("aspect-[16/11]");
+    expect(html).toContain("Fotoğraf yok");
+    expect(html).toContain("min-h-[44px]");
+    expect(html).toContain("Satış fiyatı");
+    expect(html).toContain("Stok");
+    expect(html).toContain("Yayınla");
+    expect(html).toContain("✓ Yayında");
     expect(html).toContain("⋮");
     expect(html).not.toContain("🧾 Faturaya dön");
   });
