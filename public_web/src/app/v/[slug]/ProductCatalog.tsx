@@ -206,7 +206,6 @@ export default function ProductCatalog({
 }: ProductCatalogProps) {
   const searchParams = useSearchParams();
   const [quickView, setQuickView] = useState<QuickViewSelection | null>(null);
-  const [locationProductId, setLocationProductId] = useState<string | null>(null);
   const [cartItems, setCartItems] = useState<VitrinCartItem[]>([]);
 
   const isOwnerSession = Boolean(isOwner);
@@ -423,8 +422,6 @@ export default function ProductCatalog({
           const birimFiyat = isService
             ? null
             : birimFiyatBilgisi(product.metadata, fiyatTutar);
-          const productKey = product.id || productUrl;
-          const showLocation = locationProductId === productKey;
           const tukendi =
             !isService &&
             (product.stockQuantity === 0 ||
@@ -453,7 +450,6 @@ export default function ProductCatalog({
                 onClick={(event) => {
                   if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
                   event.preventDefault();
-                  setLocationProductId(null);
                   setQuickView({ product, images: quickImages, productUrl, productSlug });
                 }}
                 className="block min-w-0 flex-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
@@ -603,7 +599,6 @@ export default function ProductCatalog({
                       onClick={(event) => {
                         event.preventDefault();
                         event.stopPropagation();
-                        setLocationProductId(null);
                         setQuickView({ product, images: quickImages, productUrl, productSlug });
                       }}
                       className={`w-full rounded-xl py-2 text-[11px] font-extrabold ${vitrinGorunum.buton.ana}`}
@@ -619,7 +614,6 @@ export default function ProductCatalog({
                         event.preventDefault();
                         event.stopPropagation();
                         if (!trackingEnabled) {
-                          setLocationProductId(null);
                           setQuickView({ product, images: quickImages, productUrl, productSlug });
                           return;
                         }
@@ -648,7 +642,6 @@ export default function ProductCatalog({
                           event.preventDefault();
                           event.stopPropagation();
                           if (!trackingEnabled) {
-                            setLocationProductId(null);
                             setQuickView({ product, images: quickImages, productUrl, productSlug });
                             return;
                           }
@@ -678,7 +671,6 @@ export default function ProductCatalog({
                           event.preventDefault();
                           event.stopPropagation();
                           if (!trackingEnabled) {
-                            setLocationProductId(null);
                             setQuickView({ product, images: quickImages, productUrl, productSlug });
                             return;
                           }
@@ -705,85 +697,6 @@ export default function ProductCatalog({
                 </div>
               ) : null}
 
-              {fulfillmentRegion || storeLocationText ? (
-                <button
-                  type="button"
-                  onClick={() => setLocationProductId(showLocation ? null : productKey)}
-                  className="absolute right-2.5 top-2.5 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-slate-950/75 text-white shadow-lg backdrop-blur-md transition hover:border-blue-400/40 hover:bg-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
-                  aria-label={`${product.name} konum bilgilerini göster`}
-                  aria-expanded={showLocation}
-                  title="Konum bilgileri"
-                >
-                  <MapPinIcon className="h-4 w-4" aria-hidden="true" />
-                </button>
-              ) : null}
-
-              {showLocation && (fulfillmentRegion || storeLocationText) ? (
-                <div className="absolute right-2.5 top-[3.25rem] z-30 w-[min(240px,calc(100%_-_20px))] rounded-xl border border-blue-500/20 bg-slate-950/95 p-3 text-left shadow-2xl backdrop-blur-xl">
-                  <div className="flex items-start gap-2">
-                    <MapPinIcon className="mt-0.5 h-4 w-4 shrink-0 text-blue-400" aria-hidden="true" />
-                    <div className="min-w-0 flex-1">
-                      {fulfillmentRegion ? (
-                        <div>
-                          <p className="text-[10px] font-extrabold uppercase tracking-wider text-blue-300">
-                            {isService ? "Hizmet bölgesi" : "Ürün konumu / teslim bölgesi"}
-                          </p>
-                          <p className="mt-1 break-words text-xs font-semibold leading-5 text-slate-200">
-                            {fulfillmentRegion}
-                          </p>
-                          {fulfillmentMapUrl ? (
-                            <TrackedDirectionsLink
-                              href={fulfillmentMapUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              storeSlug={storeSlug}
-                              clickLocation="product_card"
-                              productSlug={productSlug}
-                              trackingEnabled={trackingEnabled}
-                              onClick={(event) => event.stopPropagation()}
-                              className="mt-1.5 inline-flex text-[11px] font-extrabold text-blue-400 hover:text-blue-300"
-                            >
-                              Haritada ara →
-                            </TrackedDirectionsLink>
-                          ) : null}
-                        </div>
-                      ) : null}
-
-                      {storeLocationText ? (
-                        <div className={fulfillmentRegion ? "mt-3 border-t border-white/10 pt-3" : ""}>
-                          <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
-                            İşletme konumu
-                          </p>
-                          <p className="mt-1 break-words text-xs font-semibold leading-5 text-slate-200">
-                            {storeLocationText}
-                          </p>
-                          {storeMapsUrl ? (
-                            <TrackedDirectionsLink
-                              href={storeMapsUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              storeSlug={storeSlug}
-                              clickLocation="product_card"
-                              productSlug={productSlug}
-                              trackingEnabled={trackingEnabled}
-                              onClick={(event) => event.stopPropagation()}
-                              className="mt-1.5 inline-flex text-[11px] font-extrabold text-blue-400 hover:text-blue-300"
-                            >
-                              Yol tarifi →
-                            </TrackedDirectionsLink>
-                          ) : null}
-                        </div>
-                      ) : null}
-
-                      {!fulfillmentRegion && !storeLocationText ? (
-                        <p className="text-xs font-semibold leading-5 text-slate-300">
-                          Bu {isService ? "hizmet" : "ürün"} için konum bilgisi eklenmemiş.
-                        </p>
-                      ) : null}
-                    </div>
-                  </div>
-                </div>
-              ) : null}
             </article>
           );
         })}

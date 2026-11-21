@@ -102,6 +102,8 @@ export default function ProductQuickView({
     [product.metadata],
   );
   const isService = productIsService(product.metadata);
+  const storeDirectionsUrl =
+    storeMapsUrl || (storeLocationText ? productLocationMapUrl(storeLocationText) : null);
   const telifKalkanli = urunTelifKalkanliMi(product, isOwner);
   const variants = useMemo(
     () => productVariantsForTemplate(product.variants, metadata.templateKey, metadata.lunaInvoice),
@@ -487,9 +489,9 @@ export default function ProductQuickView({
                       <p className="mt-1 text-xs font-semibold leading-5 text-slate-200">
                         {storeLocationText}
                       </p>
-                      {storeMapsUrl ? (
+                      {storeDirectionsUrl ? (
                         <a
-                          href={storeMapsUrl}
+                          href={storeDirectionsUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="mt-1.5 inline-flex text-xs font-extrabold text-blue-400 hover:text-blue-300"
