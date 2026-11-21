@@ -1231,3 +1231,21 @@ body.vixrex-kaydediliyor .vixrex-secili-alan {
 .vixrex-panel-kaydirici::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.34);
 }
+
+.vixrex-yatay-serit {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(169, 187, 218, 0.32) transparent;
+}
+.vixrex-yatay-serit::-webkit-scrollbar {
+  height: 6px;
+}
+.vixrex-yatay-serit::-webkit-scrollbar-track {
+  background: transparent;
+}
+.vixrex-yatay-serit::-webkit-scrollbar-thumb {
+  background: rgba(169, 187, 218, 0.28);
+  border-radius: 9999px;
+}
+.vixrex-yatay-serit::-webkit-scrollbar-thumb:hover {
+  background: rgba(169, 187, 218, 0.48);
+}

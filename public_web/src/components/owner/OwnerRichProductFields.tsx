@@ -528,7 +528,7 @@ export function OwnerRichProductFields({
                       <p className="mt-1 text-[10px] text-[var(--owner-muted)]">
                         Bu varyant seçilince önce bu fotoğraflar gösterilir.
                       </p>
-                      <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
+                      <div className="vixrex-yatay-serit mt-2 flex gap-2 overflow-x-auto pb-1">
                         {cleanImageUrls.map((imageUrl, imageIndex) => {
                           const selected = variant.imageUrls?.includes(imageUrl) ?? false;
                           return (
