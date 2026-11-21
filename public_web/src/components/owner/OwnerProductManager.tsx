@@ -904,7 +904,7 @@ export function OwnerProductManager({
             return (
               <article
                 key={product.id}
-                className={`owner-card relative${secimModu ? " cursor-pointer" : ""}${secili ? " ring-2 ring-[var(--owner-primary)]" : ""}${siralamaAcik ? " cursor-grab active:cursor-grabbing" : ""}${dragId === product.id ? " opacity-50" : ""}`}
+                className={`owner-card relative overflow-hidden${secimModu ? " cursor-pointer" : ""}${secili ? " ring-2 ring-[var(--owner-primary)]" : ""}${siralamaAcik ? " cursor-grab active:cursor-grabbing" : ""}${dragId === product.id ? " opacity-50" : ""}`}
                 onClick={secimModu ? () => urunSecimiDegistir(product.id) : undefined}
                 draggable={siralamaAcik && !secili}
                 onDragStart={(e) => {
@@ -928,9 +928,9 @@ export function OwnerProductManager({
                   if (from >= 0 && to >= 0 && from !== to) void urunTasi(from, to);
                 }}
               >
-                <div className="flex flex-col gap-3 p-4">
+                <div className="flex flex-col">
                   {secimModu ? (
-                    <label className="flex cursor-pointer items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                    <label className="flex cursor-pointer items-center gap-2 px-4 pt-3" onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         checked={secili}
@@ -942,55 +942,70 @@ export function OwnerProductManager({
                     </label>
                   ) : null}
 
-                  <div className="flex items-start gap-3">
-                    <div className="relative h-[92px] w-[92px] shrink-0 overflow-hidden rounded-2xl border-2 border-[#1e3f73] bg-[var(--owner-bg-soft)]">
-                      {image ? (
-                        <Image src={image} alt={`${product.name} ürün görseli`} fill unoptimized sizes="92px" className="object-cover" />
-                      ) : (
-                        <div className="flex h-full items-center justify-center px-2 text-center text-[11px] text-[var(--owner-muted)]">Görsel yok</div>
-                      )}
-                    </div>
-
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-start justify-between gap-2">
-                        <h3 className="line-clamp-2 text-sm font-bold leading-snug text-[var(--owner-text)]">{product.name}</h3>
-                        {taslakMi ? (
-                          <span className="shrink-0 rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-bold text-amber-300">Taslak</span>
-                        ) : null}
+                  <div className="relative">
+                    {image ? (
+                      <div className="relative aspect-[16/11] w-full overflow-hidden bg-[var(--owner-bg-soft)]">
+                        <Image src={image} alt={`${product.name} ürün görseli`} fill unoptimized sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" className="object-cover" />
+                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#050b1a]/45 via-transparent to-[#050b1a]/25" />
                       </div>
-                      <p className="mt-1 truncate text-xs text-[var(--owner-muted)]">{product.product_categories?.name || "Kategorisiz"}</p>
+                    ) : (
+                      <div className="flex aspect-[16/11] w-full items-center justify-center bg-[var(--owner-bg-soft)]">
+                        <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-[var(--owner-border)] px-7 py-5 text-[11px] text-[var(--owner-muted)]">
+                          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6 opacity-80">
+                            <rect x="3" y="4" width="18" height="16" rx="3" />
+                            <circle cx="9" cy="10" r="1.6" />
+                            <path d="M4 17l4.5-4.5 3.5 3.5 3-3L20 17" />
+                          </svg>
+                          Fotoğraf yok
+                        </div>
+                      </div>
+                    )}
+                    <div className="pointer-events-none absolute left-3 top-3 flex flex-wrap gap-1.5">
+                      {taslakMi ? (
+                        <span className="rounded-full border border-amber-500/40 bg-[#091226]/80 px-2.5 py-[3px] text-[10px] font-bold uppercase tracking-[0.08em] text-amber-300 backdrop-blur">Taslak</span>
+                      ) : null}
+                      {product.badge_tag && <span className="rounded-full border border-blue-400/40 bg-[#091226]/80 px-2.5 py-[3px] text-[10px] font-bold text-blue-300 backdrop-blur">{product.badge_tag}</span>}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-3 p-4">
+                  <div className="min-w-0">
+                    <h3 className="line-clamp-2 min-h-[40px] text-[15px] font-bold leading-[1.32] text-[var(--owner-text)]">{product.name}</h3>
+                    <p className="mt-1 truncate text-xs text-[var(--owner-muted)]">{product.product_categories?.name || "Kategorisiz"}</p>
+                    {isService || product.old_price_amount != null || product.fulfillment_region ? (
                       <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                         {isService ? (
                           <span className="rounded-full border border-[var(--owner-border)] px-2 py-0.5 text-[10px] text-[var(--owner-text-alt)]">Hizmet</span>
                         ) : null}
                         {product.old_price_amount != null && <span className="text-[11px] line-through text-[var(--owner-muted)]">{product.old_price_amount} TL</span>}
-                        {product.badge_tag && <span className="rounded bg-blue-500/15 px-1.5 py-0.5 text-[10px] font-bold text-blue-400">{product.badge_tag}</span>}
                         {product.fulfillment_region && <span className="text-[10px] text-[var(--owner-muted)]">• {product.fulfillment_region}</span>}
                       </div>
-                    </div>
+                    ) : null}
                   </div>
 
                   {!secimModu ? (
                     <>
-                      <div className={`grid gap-2 ${isService ? "grid-cols-1" : "grid-cols-2"}`}>
-                        <div
-                          className="min-w-0 rounded-xl border border-[var(--owner-border)] bg-[var(--owner-bg-soft)] px-2.5 py-2"
-                          onClick={(e) => e.stopPropagation()}
-                          onMouseDown={(e) => e.stopPropagation()}
-                          onPointerDown={(e) => e.stopPropagation()}
-                        >
+                      <div className="h-px w-full bg-[#294D88]/55" />
+
+                      <div
+                        className="flex items-end justify-between gap-3"
+                        onClick={(e) => e.stopPropagation()}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onPointerDown={(e) => e.stopPropagation()}
+                      >
+                        <div className="min-w-0 flex-1">
                           <label
                             htmlFor={`kart-fiyat-${product.id}`}
-                            className="block text-[10px] font-bold uppercase tracking-wider text-[var(--owner-muted)]"
+                            className="block text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--owner-muted)]"
                           >
-                            Satış Fiyatı
+                            Satış fiyatı
                           </label>
                           <input
                             id={`kart-fiyat-${product.id}`}
                             type="text"
                             inputMode="decimal"
                             value={fiyatDegeri}
-                            placeholder="Ör. 499 TL"
+                            placeholder="Fiyat gir"
                             disabled={busy || satirIslemde}
                             onChange={(e) => {
                               const deger = e.target.value;
@@ -1004,21 +1019,16 @@ export function OwnerProductManager({
                                 e.currentTarget.blur();
                               }
                             }}
-                            className="mt-1 w-full bg-transparent text-sm font-bold text-[var(--owner-secondary)] outline-none placeholder:font-normal placeholder:text-[var(--owner-muted)]/60"
+                            className="mt-1 w-full bg-transparent text-[21px] font-bold leading-none tracking-[-0.02em] text-[var(--owner-text)] outline-none placeholder:text-sm placeholder:font-medium placeholder:text-[var(--owner-muted)]/70"
                           />
                         </div>
 
                         {!isService ? (
-                          <div
-                            className="min-w-0 rounded-xl border border-[var(--owner-border)] bg-[var(--owner-bg-soft)] px-2.5 py-2"
-                            onClick={(e) => e.stopPropagation()}
-                            onMouseDown={(e) => e.stopPropagation()}
-                            onPointerDown={(e) => e.stopPropagation()}
-                          >
-                            <span className="block text-[10px] font-bold uppercase tracking-wider text-[var(--owner-muted)]">
-                              Dükkân Stoğu
+                          <div className="flex shrink-0 flex-col items-end gap-1.5">
+                            <span className="block text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--owner-muted)]">
+                              Stok
                             </span>
-                            <div className="mt-1 flex items-center justify-between gap-1.5">
+                            <div className="flex items-center gap-0.5">
                               <button
                                 type="button"
                                 aria-label={`${product.name} stoğu azalt`}
@@ -1027,13 +1037,13 @@ export function OwnerProductManager({
                                   e.stopPropagation();
                                   void kartStokGuncelle(product, -1);
                                 }}
-                                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-[var(--owner-border)] bg-[var(--owner-surface)] text-sm font-bold text-[var(--owner-text)] transition hover:border-[var(--owner-secondary)] disabled:cursor-not-allowed disabled:opacity-40"
+                                className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-[9px] border border-[var(--owner-border)] bg-transparent text-sm font-semibold text-[var(--owner-text-alt)] transition hover:border-[var(--owner-secondary)] disabled:cursor-not-allowed disabled:opacity-40"
                               >
                                 −
                               </button>
                               <span
                                 aria-live="polite"
-                                className="min-w-[2ch] text-center font-mono text-sm font-bold tabular-nums text-[var(--owner-text)]"
+                                className="min-w-[34px] text-center text-[15px] font-bold tabular-nums text-[var(--owner-text)]"
                               >
                                 {mevcutStok}
                               </span>
@@ -1045,7 +1055,7 @@ export function OwnerProductManager({
                                   e.stopPropagation();
                                   void kartStokGuncelle(product, 1);
                                 }}
-                                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-[var(--owner-border)] bg-[var(--owner-surface)] text-sm font-bold text-[var(--owner-text)] transition hover:border-[var(--owner-secondary)] disabled:cursor-not-allowed disabled:opacity-40"
+                                className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-[9px] border border-[var(--owner-border)] bg-transparent text-sm font-semibold text-[var(--owner-text-alt)] transition hover:border-[var(--owner-secondary)] disabled:cursor-not-allowed disabled:opacity-40"
                               >
                                 +
                               </button>
@@ -1068,9 +1078,9 @@ export function OwnerProductManager({
                               void kartOnaylaVeYayinla(product);
                             }}
                             disabled={busy || satirIslemde || publishingId === product.id}
-                            className="flex min-h-[40px] flex-1 items-center justify-center rounded-xl bg-gradient-to-r from-[#147DFF] to-[#00C2FF] px-3 py-2 text-xs font-extrabold text-white shadow-sm transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="flex min-h-[44px] flex-1 items-center justify-center rounded-xl bg-gradient-to-br from-[#147DFF] to-[#0B5FD7] px-3 py-2 text-[13.5px] font-bold tracking-[0.01em] text-white shadow-sm transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
                           >
-                            {publishingId === product.id ? "Yayınlanıyor…" : "Kartı Onayla & Vitrine Koy"}
+                            {publishingId === product.id ? "Yayınlanıyor…" : "Yayınla"}
                           </button>
                         ) : anaAksiyon === "duzenle" ? (
                           <button
@@ -1080,13 +1090,13 @@ export function OwnerProductManager({
                               openEditProduct(product);
                             }}
                             disabled={busy || satirIslemde}
-                            className="flex min-h-[40px] flex-1 items-center justify-center rounded-xl bg-gradient-to-r from-[#147DFF] to-[#00C2FF] px-3 py-2 text-xs font-extrabold text-white shadow-sm transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="flex min-h-[44px] flex-1 items-center justify-center rounded-xl bg-gradient-to-br from-[#147DFF] to-[#0B5FD7] px-3 py-2 text-[13.5px] font-bold tracking-[0.01em] text-white shadow-sm transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
                           >
                             Düzenle ve Yayınla
                           </button>
                         ) : (
-                          <div className="flex min-h-[40px] flex-1 items-center justify-center rounded-xl border border-teal-500/40 bg-emerald-500/15 px-3 py-2 text-xs font-bold text-emerald-300">
-                            ✓ Vitrinde Yayında
+                          <div className="flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-xl border border-teal-500/40 bg-emerald-500/12 px-3 py-2 text-[12.5px] font-bold text-emerald-300">
+                            ✓ Yayında
                           </div>
                         )}
 
@@ -1100,7 +1110,7 @@ export function OwnerProductManager({
                             e.stopPropagation();
                             setAcikMenuId((onceki) => (onceki === product.id ? null : product.id));
                           }}
-                          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[var(--owner-border)] bg-[var(--owner-bg-soft)] text-base font-bold text-[var(--owner-muted)] transition hover:border-[var(--owner-secondary)] hover:text-[var(--owner-text)] disabled:cursor-not-allowed disabled:opacity-50"
+                          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[var(--owner-border)] bg-[var(--owner-bg-soft)] text-base font-bold text-[var(--owner-muted)] transition hover:border-[var(--owner-secondary)] hover:text-[var(--owner-text)] disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           ⋮
                         </button>
@@ -1171,6 +1181,7 @@ export function OwnerProductManager({
                       </div>
                     </>
                   ) : null}
+                  </div>
                 </div>
               </article>
             );
