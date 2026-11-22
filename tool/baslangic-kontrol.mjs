@@ -26,6 +26,7 @@ const requiredFiles = [
   "README.md",
   ".cursorrules",
   ".mcp.json",
+  "DESIGN.md",
 ];
 for (const file of requiredFiles) must(fs.existsSync(file), "eksik dosya: " + file);
 
@@ -36,6 +37,38 @@ must(/Graphify etki/i.test(agents), "AGENTS.md 'Graphify etki' kanıt kuralını
 const readme = read("README.md");
 must(/docs\/AJAN-BASLANGIC\.md/.test(readme), "README.md başlangıç haritasına bağlantı vermiyor");
 must(/tarihsel/i.test(readme), "README.md tarihsel plan etiketini içermiyor");
+
+const design = read("DESIGN.md");
+must(/Durum:\*\*\s*Kilitli/.test(design), "DESIGN.md kurucu kararıyla kilitli değil ('Durum: Kilitli' satırı yok)");
+must(/Tek Marka Mavisi/.test(design) && /#147DFF/.test(design), "DESIGN.md tek marka mavisi kararını (#147DFF) içermiyor");
+
+let renkPrimary = "";
+try {
+  renkPrimary = (JSON.parse(read("shared/renkler.json")).renkler || []).find((renk) => renk.anahtar === "primary")?.hex || "";
+} catch {
+  errors.push("shared/renkler.json geçerli JSON değil");
+}
+const designPrimary = (design.match(/\|\s*`primary`[^|]*\|\s*`(#[0-9A-Fa-f]{6})`/) || [])[1] || "";
+must(Boolean(designPrimary), "DESIGN.md primary renk token satırını içermiyor");
+if (designPrimary && renkPrimary) {
+  must(
+    designPrimary.toUpperCase() === renkPrimary.toUpperCase(),
+    "DESIGN.md primary (" + designPrimary + ") shared/renkler.json primary (" + renkPrimary + ") ile ayrışmış",
+  );
+}
+
+const avatarYolu = "public_web/src/app/v/[slug]/components/VixrexAvatar.tsx";
+const avatar = read(avatarYolu);
+must(avatar.length > 0, "eksik dosya: " + avatarYolu);
+must(!/rgba\(\s*56\s*,\s*160\s*,\s*228/.test(avatar), "VixrexAvatar.tsx eski #38A0E4 parıltısını (rgba(56,160,228,...)) hâlâ kullanıyor");
+must(/rgba\(\s*20\s*,\s*125\s*,\s*255/.test(avatar), "VixrexAvatar.tsx parıltısı DESIGN.md marka mavisine (#147DFF) bağlı değil");
+
+const logoDosyalari = [
+  "public_web/public/images/vixrex_v_crystal_mascot.webp",
+  "public_web/public/vixrex_v_crystal_mascot.png",
+  "assets/images/vixrex_v_crystal_mascot.png",
+];
+for (const file of logoDosyalari) must(fs.existsSync(file), "eksik resmi logo dosyası: " + file);
 
 const doc = read("docs/AJAN-BASLANGIC.md");
 const docDate = doc.match(/Son doğrulama:\s*(\d{4}-\d{2}-\d{2})/);
