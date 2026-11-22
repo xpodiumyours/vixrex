@@ -146,12 +146,26 @@ export async function GET(request: NextRequest) {
     }),
     rapor(anahtar.mulk, jeton, {
       dateRanges: [{ startDate: `${gun}daysAgo`, endDate: "today" }],
-      dimensions: [{ name: "sessionSourceMedium" }],
-      metrics: [{ name: "sessions" }],
+      dimensions: [{ name: "pageReferrer" }],
+      metrics: [{ name: "screenPageViews" }],
       dimensionFilter: {
-        filter: { fieldName: "pagePath", stringFilter: { matchType: "FULL_REGEXP", value: olayYolu } },
+        andGroup: {
+          expressions: [
+            {
+              filter: { fieldName: "pagePath", stringFilter: { matchType: "FULL_REGEXP", value: olayYolu } },
+            },
+            {
+              notExpression: {
+                filter: {
+                  fieldName: "pageReferrer",
+                  stringFilter: { matchType: "CONTAINS", value: "vixrex.com" },
+                },
+              },
+            },
+          ],
+        },
       },
-      limit: 50,
+      limit: 100,
     }),
   ]);
 
@@ -184,10 +198,10 @@ export async function GET(request: NextRequest) {
   for (const satir of kaynakRaporu?.rows ?? []) {
     const kaynak = (satir.dimensionValues?.[0]?.value ?? "").toLowerCase();
     const adet = Number(satir.metricValues?.[0]?.value ?? 0) || 0;
-    if (kaynak.includes("maps")) kaynaklar.haritalar += adet;
-    else if (/^google\s*\//.test(kaynak)) kaynaklar.google += adet;
+    if (!kaynak) kaynaklar.dogrudan += adet;
+    else if (kaynak.includes("maps.") || kaynak.includes("/maps")) kaynaklar.haritalar += adet;
+    else if (kaynak.includes("google.")) kaynaklar.google += adet;
     else if (kaynak.includes("instagram")) kaynaklar.instagram += adet;
-    else if (kaynak.startsWith("(direct)") || kaynak.startsWith("direct /")) kaynaklar.dogrudan += adet;
     else kaynaklar.diger += adet;
   }
 
