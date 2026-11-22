@@ -64,10 +64,13 @@ must(/graphify-out\//.test(gitignore), ".gitignore graphify-out/ dizinini dışl
 
 const isPrMode = process.argv.includes("--pr");
 if (isPrMode) {
+  const prAuthor = (process.env.PR_AUTHOR || "").toLowerCase();
   const body = process.env.PR_BODY || "";
   const base = process.env.BASE_SHA || "";
   const head = process.env.HEAD_SHA || "HEAD";
-  if (!base) {
+  if (prAuthor === "dependabot[bot]") {
+    warnings.push("PR modu: dependabot[bot] bağımlılık güncellemesi, Graphify etki satırı muaf");
+  } else if (!base) {
     warnings.push("PR modu: BASE_SHA yok, değişiklik listesi okunamadı");
   } else {
     let changed = [];
