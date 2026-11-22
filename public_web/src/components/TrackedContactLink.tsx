@@ -2,8 +2,6 @@
 
 import type { AnchorHTMLAttributes, MouseEvent } from "react";
 import type { GtagCommand, WhatsAppClickLocation } from "./TrackedWhatsAppLink";
-import { supabase } from "@/lib/supabase";
-import { ziyaretAnahtariniOkuyaUret } from "@/lib/vitrinZiyaretAnahtari";
 
 export const PHONE_CLICK_EVENT = "phone_click";
 export const DIRECTIONS_CLICK_EVENT = "directions_click";
@@ -43,14 +41,6 @@ function trackContactEvent(
     gtag("event", eventName, parameters);
   }
 
-  supabase
-    .rpc("record_vitrin_engagement", {
-      p_store_slug: storeSlug,
-      p_event_type: eventName,
-      p_session_key: ziyaretAnahtariniOkuyaUret(),
-      p_product_slug: productSlug || null,
-    })
-    .then(() => {});
 }
 
 export function trackPhoneClick(

@@ -57,10 +57,6 @@ vi.mock("@/components/VitrinCartDock", () => ({
   default: () => null,
 }));
 
-vi.mock("@/components/ProductViewTracker", () => ({
-  default: () => null,
-}));
-
 vi.mock("@/app/v/[slug]/ProductCatalog", () => ({
   default: (props: Record<string, unknown>) => {
     m.catalogProps(props);

@@ -14,7 +14,7 @@ import {
   setVitrinCartQuantity,
   type VitrinCartItem,
 } from "@/lib/vitrinCart";
-import { recordVitrinEngagement } from "@/lib/vitrinEngagement";
+import { siparisiKaydet } from "@/lib/vitrinSiparis";
 import { tutarYazisi } from "@/lib/productCardPresentation";
 import { vitrinGorunum } from "@/lib/vitrinGorunum";
 
@@ -118,25 +118,11 @@ export default function VitrinCartDock({
   async function changeQuantity(item: VitrinCartItem, quantity: number) {
     const next = setVitrinCartQuantity(storeSlug, item.productSlug, item.variantKey, quantity);
     setItems(next);
-    await recordVitrinEngagement({
-      storeSlug,
-      eventType: "cart_quantity_change",
-      productSlug: item.productSlug,
-      quantity,
-      metadata: { variant: item.variantText || null },
-    });
   }
 
   async function remove(item: VitrinCartItem) {
     const next = removeFromVitrinCart(storeSlug, item.productSlug, item.variantKey);
     setItems(next);
-    await recordVitrinEngagement({
-      storeSlug,
-      eventType: "cart_remove",
-      productSlug: item.productSlug,
-      quantity: item.quantity,
-      metadata: { variant: item.variantText || null },
-    });
   }
 
   function siparisiOnayla() {
@@ -171,27 +157,24 @@ export default function VitrinCartDock({
       "WhatsApp penceresi açıldıysa sipariş özetini oradan gönderin. Pencere açılmadıysa aşağıdaki bağlantıya dokunun; sepetiniz siz onaylayana kadar korunur.",
     );
 
-    void Promise.all([
-      ...snapshotItems.map((item) =>
-        recordVitrinEngagement({
-          storeSlug,
-          eventType: "cart_whatsapp_order",
-          productSlug: item.productSlug,
-          quantity: item.quantity,
-          metadata: {
-            order_key: orderKey,
-            variant: item.variantText || null,
-            item_count: snapshotItems.length,
-          },
-        }),
-      ),
-      recordVitrinEngagement({
-        storeSlug,
-        eventType: "whatsapp_click",
-        quantity: snapshotQuantity,
-        metadata: { surface: "cart", order_key: orderKey },
-      }),
-    ]);
+    window.gtag?.("event", "whatsapp_order", {
+      store_slug: storeSlug,
+      item_count: String(snapshotItems.length),
+      total_quantity: String(snapshotQuantity),
+    });
+    void siparisiKaydet({
+      storeSlug,
+      orderKey,
+      items: snapshotItems.map((item) => ({
+        product_slug: item.productSlug,
+        name: item.productName,
+        quantity: item.quantity,
+        unit_price: item.priceAmount ?? null,
+        variant: item.variantText || null,
+      })),
+      totalQuantity: snapshotQuantity,
+      totalAmount: toplamTutar,
+    });
   }
 
   return (
