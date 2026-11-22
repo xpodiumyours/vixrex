@@ -93,7 +93,7 @@ if (isPrMode) {
       } else {
         const ayrac = String.fromCharCode(92);
         const metin = etkiSatirlari.join(" ").split(ayrac).join("/");
-        const refs = [...metin.matchAll(/([A-Za-z0-9_./@-]+\.[A-Za-z0-9]+):[Ll]?(\d+)/g)];
+        const refs = [...metin.matchAll(/([A-Za-z0-9_./@\[\]-]+\.[A-Za-z0-9]+):[Ll]?(\d+)/g)];
         const gercek = refs.filter((eslesme) => {
           try {
             return fs.statSync(eslesme[1]).isFile();
