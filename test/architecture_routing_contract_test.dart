@@ -71,10 +71,7 @@ void main() {
           File('lib/screens/public_product_screen.dart').existsSync(),
           isFalse,
         );
-        expect(
-          File('lib/widgets/vitrin_cart_dock.dart').existsSync(),
-          isFalse,
-        );
+        expect(File('lib/widgets/vitrin_cart_dock.dart').existsSync(), isFalse);
         expect(
           File('lib/widgets/vitrin_product_card.dart').existsSync(),
           isFalse,
@@ -88,10 +85,10 @@ void main() {
           isFalse,
         );
 
-        final vRoutes = RegExp(r"path:\s*'(/v/[^']*)'")
-            .allMatches(source)
-            .map((match) => match.group(1)!)
-            .toList();
+        final vRoutes =
+            RegExp(
+              r"path:\s*'(/v/[^']*)'",
+            ).allMatches(source).map((match) => match.group(1)!).toList();
         expect(
           vRoutes,
           containsAll([
@@ -102,17 +99,17 @@ void main() {
           ]),
         );
 
-        final vRouteBlocks = source
-            .split('GoRoute(')
-            .where((block) => RegExp(r"path:\s*'/v/").hasMatch(block))
-            .toList();
+        final vRouteBlocks =
+            source
+                .split('GoRoute(')
+                .where((block) => RegExp(r"path:\s*'/v/").hasMatch(block))
+                .toList();
         expect(vRouteBlocks, isNotEmpty);
         for (final block in vRouteBlocks) {
           expect(
             block,
             contains('PublicSiteRedirectScreen.fromPath'),
-            reason:
-                '/v/* route must use PublicSiteRedirectScreen: $block',
+            reason: '/v/* route must use PublicSiteRedirectScreen: $block',
           );
           expect(
             block,
