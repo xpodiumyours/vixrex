@@ -113,7 +113,7 @@ export async function GET(request: NextRequest) {
   const vitrinYolu = `^/v/${slug.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(/urun/.*)?$`;
   const olayYolu = `^/v/${slug.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(/|$)`;
 
-  const [sayfaRaporu, olayRaporu] = await Promise.all([
+  const [sayfaRaporu, olayRaporu, kaynakRaporu] = await Promise.all([
     rapor(anahtar.mulk, jeton, {
       dateRanges: [{ startDate: `${gun}daysAgo`, endDate: "today" }],
       dimensions: [{ name: "pagePath" }],
@@ -144,6 +144,15 @@ export async function GET(request: NextRequest) {
       },
       limit: 10000,
     }),
+    rapor(anahtar.mulk, jeton, {
+      dateRanges: [{ startDate: `${gun}daysAgo`, endDate: "today" }],
+      dimensions: [{ name: "sessionSourceMedium" }],
+      metrics: [{ name: "sessions" }],
+      dimensionFilter: {
+        filter: { fieldName: "pagePath", stringFilter: { matchType: "FULL_REGEXP", value: olayYolu } },
+      },
+      limit: 50,
+    }),
   ]);
 
   if (!sayfaRaporu || !olayRaporu) return new NextResponse(null, { status: 502 });
@@ -165,6 +174,23 @@ export async function GET(request: NextRequest) {
     olaylar[ad] += Number(satir.metricValues?.[0]?.value ?? 0) || 0;
   }
 
+  const kaynaklar: Record<string, number> = {
+    google: 0,
+    haritalar: 0,
+    dogrudan: 0,
+    instagram: 0,
+    diger: 0,
+  };
+  for (const satir of kaynakRaporu?.rows ?? []) {
+    const kaynak = (satir.dimensionValues?.[0]?.value ?? "").toLowerCase();
+    const adet = Number(satir.metricValues?.[0]?.value ?? 0) || 0;
+    if (kaynak.includes("maps")) kaynaklar.haritalar += adet;
+    else if (/^google\s*\//.test(kaynak)) kaynaklar.google += adet;
+    else if (kaynak.includes("instagram")) kaynaklar.instagram += adet;
+    else if (kaynak.startsWith("(direct)") || kaynak.startsWith("direct /")) kaynaklar.dogrudan += adet;
+    else kaynaklar.diger += adet;
+  }
+
   return NextResponse.json(
     {
       kaynak: "Google Analytics 4",
@@ -174,6 +200,7 @@ export async function GET(request: NextRequest) {
       whatsapp: olaylar.whatsapp_click,
       telefon: olaylar.phone_click,
       yolTarifi: olaylar.directions_click,
+      kaynaklar,
     },
     { headers: { "cache-control": "private, no-store" } },
   );

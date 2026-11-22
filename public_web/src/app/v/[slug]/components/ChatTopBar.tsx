@@ -3,6 +3,7 @@
 import { useRef, type PointerEvent as ReactPointerEvent } from "react";
 import { VixrexAvatar } from "./VixrexAvatar";
 import { PublishBar } from "./PublishBar";
+import { GoogleOlcumKarti } from "./GoogleOlcumKarti";
 import type { HazirlikRaporu } from "@/lib/vitrinReadiness";
 
 export interface YayinDegerleri {
@@ -96,6 +97,7 @@ export function ChatTopBar({ rapor, onKapat, yayin }: Props) {
 
           {/* Sağ: Kompakt Yayın Barı & Kapat */}
           <div className="flex items-center gap-1.5 shrink-0">
+            <GoogleOlcumKarti />
             {yayin ? <PublishBar {...yayin} yuzde={rapor.yuzde} /> : null}
 
             <button
