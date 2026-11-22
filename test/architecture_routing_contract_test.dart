@@ -61,6 +61,69 @@ void main() {
     });
 
     test(
+      'App router inside lib/config/app_router.dart routes all /v/* paths strictly to PublicSiteRedirectScreen',
+      () {
+        final source = File('lib/config/app_router.dart').readAsStringSync();
+
+        expect(source, isNot(contains('public_product_screen.dart')));
+        expect(source, isNot(contains('PublicProductScreen')));
+        expect(
+          File('lib/screens/public_product_screen.dart').existsSync(),
+          isFalse,
+        );
+        expect(
+          File('lib/widgets/vitrin_cart_dock.dart').existsSync(),
+          isFalse,
+        );
+        expect(
+          File('lib/widgets/vitrin_product_card.dart').existsSync(),
+          isFalse,
+        );
+        expect(
+          File('lib/services/vitrin_cart_service.dart').existsSync(),
+          isFalse,
+        );
+        expect(
+          File('test/vitrin_cart_service_test.dart').existsSync(),
+          isFalse,
+        );
+
+        final vRoutes = RegExp(r"path:\s*'(/v/[^']*)'")
+            .allMatches(source)
+            .map((match) => match.group(1)!)
+            .toList();
+        expect(
+          vRoutes,
+          containsAll([
+            '/v/:slug/randevu/:token',
+            '/v/:slug/randevu',
+            '/v/:slug/urun/:productSlug',
+            '/v/:slug',
+          ]),
+        );
+
+        final vRouteBlocks = source
+            .split('GoRoute(')
+            .where((block) => RegExp(r"path:\s*'/v/").hasMatch(block))
+            .toList();
+        expect(vRouteBlocks, isNotEmpty);
+        for (final block in vRouteBlocks) {
+          expect(
+            block,
+            contains('PublicSiteRedirectScreen.fromPath'),
+            reason:
+                '/v/* route must use PublicSiteRedirectScreen: $block',
+          );
+          expect(
+            block,
+            isNot(contains('PublicProductScreen')),
+            reason: '/v/* route must not use PublicProductScreen: $block',
+          );
+        }
+      },
+    );
+
+    test(
       'Next.js fallback origins point to canonical public and active app hosts',
       () {
         final siteUrl =
