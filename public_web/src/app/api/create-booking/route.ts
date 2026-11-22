@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { fingerprintClient, getClientIp } from "@/lib/rentDemoSecurity";
 import { verifyRecaptchaToken } from "@/lib/recaptchaServer";
 
 // V-21 (attack-vectors.md, 2026-08-18): BookingWizardClient.tsx reCAPTCHA
@@ -51,6 +53,39 @@ async function verifyBookingRecaptcha(recaptchaToken: string): Promise<NextRespo
   return null;
 }
 
+type AdminClient = ReturnType<typeof getSupabaseAdmin>;
+
+async function checkProductHoldRateLimit(
+  request: Request,
+): Promise<{ admin: AdminClient } | { response: NextResponse }> {
+  try {
+    const admin = getSupabaseAdmin();
+    const { data } = await admin.rpc("consume_assistant_request", {
+      p_client_key: `product_hold:ip:${fingerprintClient(getClientIp(request))}`,
+      p_max_requests: 8,
+      p_window_seconds: 3600,
+    });
+    const limit = Array.isArray(data) ? data[0] : data;
+    if (limit && limit.allowed === false) {
+      return {
+        response: NextResponse.json(
+          { error: { message: "Çok fazla ürün ayırtma isteği. Lütfen daha sonra tekrar dene." } },
+          { status: 429 },
+        ),
+      };
+    }
+    return { admin };
+  } catch (error) {
+    console.error("[create-booking] product_hold oran sınırı doğrulanamadı:", error);
+    return {
+      response: NextResponse.json(
+        { error: { message: "Ürün ayırtma şu an kullanılamıyor. Lütfen daha sonra tekrar dene." } },
+        { status: 503 },
+      ),
+    };
+  }
+}
+
 export async function POST(request: Request) {
   let body: CreateBookingBody;
   try {
@@ -91,10 +126,26 @@ export async function POST(request: Request) {
       );
     }
 
+    if (
+      customerName.length < 2 ||
+      customerName.length > 120 ||
+      customerPhone.length < 7 ||
+      customerPhone.length > 32 ||
+      customerNotes.length > 240
+    ) {
+      return NextResponse.json(
+        { error: { message: "Eksik veya geçersiz ürün ayırtma bilgisi." } },
+        { status: 400 },
+      );
+    }
+
     const recaptchaError = await verifyBookingRecaptcha(recaptchaToken);
     if (recaptchaError) return recaptchaError;
 
-    const { data, error } = await supabase.rpc("create_product_hold", {
+    const gate = await checkProductHoldRateLimit(request);
+    if ("response" in gate) return gate.response;
+
+    const { data, error } = await gate.admin.rpc("create_product_hold", {
       p_store_slug: storeSlug,
       p_product_slug: productSlug,
       p_customer_name: customerName,
