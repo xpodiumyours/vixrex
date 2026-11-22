@@ -24,7 +24,6 @@ const requiredFiles = [
   "docs/AJAN-BASLANGIC.md",
   "AGENTS.md",
   "README.md",
-  "CLAUDE.md",
   ".cursorrules",
   ".mcp.json",
 ];

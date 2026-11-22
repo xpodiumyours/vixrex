@@ -205,7 +205,7 @@ if (Test-Path -LiteralPath $graphPath) {
         $cnt = & node -e "const g=require(process.argv[1]);const n=(g.nodes||[]).length;const e=(g.links||g.edges||[]).length;console.log(n+' '+e)" $graphPath 2>$null
         if ($cnt) { $c = ([string]$cnt).Trim().Split(' '); $graphNode = $c[0]; $graphEdge = $c[1] }
     } catch { }
-    $lc = & git log -1 --format=%ct -- lib public_web shared supabase openrouter tool .github .mcp.json .gitignore AGENTS.md README.md CLAUDE.md .cursorrules 2>$null
+    $lc = & git log -1 --format=%ct -- lib public_web shared supabase openrouter tool .github .mcp.json .gitignore AGENTS.md README.md .cursorrules 2>$null
     $lcEpoch = 0
     if ($lc) { try { $lcEpoch = [int64]([string]$lc).Trim() } catch { } }
     if ($lcEpoch -gt 0) {
@@ -365,7 +365,7 @@ if (-not $main) {
                     $notr = $false
                     if ($p -match '(?i)\.md$') { $notr = $true }
                     elseif ($p -match '^(docs|\.github|\.agents|\.cursor|\.obsidian)/') { $notr = $true }
-                    elseif ($p -in @('.gitignore', '.gitattributes', 'LICENSE', 'README.md', 'AGENTS.md', 'CLAUDE.md')) { $notr = $true }
+                    elseif ($p -in @('.gitignore', '.gitattributes', 'LICENSE', 'README.md', 'AGENTS.md')) { $notr = $true }
                     if (-not $notr) { $yuzey = $true; break }
                 }
                 if ($cmp.status -eq 'ahead' -and -not $yuzey) { $kapsam = 'BELGE' }
