@@ -23,8 +23,9 @@ describe("Vitrin Ölçer sahip yüzeyi", () => {
     expect(metrics).toContain('mevcutDurum === "hidden" ? "published" : "hidden"');
   });
 
-  it("şema deploy sırası geçici farklıysa mevcut pano çalışmaya devam eder", () => {
-    expect(route).toContain("Vitrin Ölçer henüz hazır değil");
-    expect(route).toContain("olcer,");
+  it("pano rotası sayaç RPC'si çağırmaz", () => {
+    expect(route).not.toContain("get_vitrin_olcer_summary");
+    expect(route).not.toContain("bugunkuZiyaret");
+    expect(route).not.toContain("get_today_vitrin_view_count(");
   });
 });

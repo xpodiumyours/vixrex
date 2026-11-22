@@ -1,8 +1,6 @@
 "use client";
 
 import type { AnchorHTMLAttributes, MouseEvent } from "react";
-import { supabase } from "@/lib/supabase";
-import { ziyaretAnahtariniOkuyaUret } from "@/lib/vitrinZiyaretAnahtari";
 
 export const WHATSAPP_CLICK_EVENT = "whatsapp_click";
 
@@ -61,14 +59,6 @@ export function trackWhatsAppClick(
     gtag("event", WHATSAPP_CLICK_EVENT, parameters);
   }
 
-  supabase
-    .rpc("record_vitrin_engagement", {
-      p_store_slug: storeSlug,
-      p_event_type: "whatsapp_click",
-      p_session_key: ziyaretAnahtariniOkuyaUret(),
-      p_product_slug: productSlug || null,
-    })
-    .then(() => {});
 }
 
 interface TrackedWhatsAppLinkProps

@@ -7,7 +7,6 @@ import { ziyaretAnahtariniOkuyaUret } from "@/lib/vitrinZiyaretAnahtari";
 import { addToVitrinCart, cartItemKey } from "@/lib/vitrinCart";
 import { tutarYazisi } from "@/lib/productCardPresentation";
 import { vitrinGorunum } from "@/lib/vitrinGorunum";
-import { recordVitrinEngagement } from "@/lib/vitrinEngagement";
 import { useRecaptcha } from "@/components/recaptcha/RecaptchaProvider";
 
 function holdErrorMessage(raw: string): string {
@@ -237,16 +236,6 @@ export default function ProductCommercePanel({
       (item) => cartItemKey(item) === cartItemKey({ productSlug, variantKey }),
     );
     const toplamAdet = kalem?.quantity ?? adet;
-    await recordVitrinEngagement({
-      storeSlug,
-      eventType: "cart_add",
-      productSlug,
-      quantity: adet,
-      metadata: {
-        variant: selectedVariantText.trim() || null,
-        surface: "product",
-      },
-    });
     setMessage("");
     setSepetTeyidi(
       `${toplamAdet} adet sepette${priceAmount != null ? ` · ${tutarYazisi(toplamAdet * priceAmount)}` : ""}`,

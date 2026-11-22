@@ -42,7 +42,6 @@ import {
   TrackedDirectionsLink,
   TrackedPhoneLink,
 } from "@/components/TrackedContactLink";
-import VitrinViewTracker from "@/components/VitrinViewTracker";
 
 export interface VitrinGalleryItem {
   id?: string;
@@ -374,7 +373,6 @@ export default function VitrinProfileView({
           : ""
       }`}
     >
-      {!ownerMode && !isPreviewMode && <VitrinViewTracker storeSlug={storeSlug} />}
       {isPreviewMode && (
         <div className="fixed top-0 left-0 right-0 z-[60] h-8 bg-[#0c1628]/95 border-b border-amber-500/25 text-amber-300 text-xs font-semibold px-4 shadow-lg backdrop-blur-md flex items-center justify-center gap-2 lg:hidden">
           <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" aria-hidden="true" />

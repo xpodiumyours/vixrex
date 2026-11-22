@@ -36,7 +36,7 @@ describe("Vitrin Ölçer müşteri etkileşim sözleşmesi", () => {
 
   it("WhatsApp sekmesini ölçüm ağ çağrılarını beklemeden kullanıcı tıklaması içinde açar", () => {
     const openIndex = dock.indexOf('link.click()');
-    const trackingIndex = dock.indexOf('void Promise.all');
+    const trackingIndex = dock.indexOf("void siparisiKaydet");
     expect(openIndex).toBeGreaterThan(-1);
     expect(trackingIndex).toBeGreaterThan(openIndex);
   });
@@ -47,10 +47,10 @@ describe("Vitrin Ölçer müşteri etkileşim sözleşmesi", () => {
     expect(dock).toContain("Stok sınırı");
   });
 
-  it("sepet WhatsApp geçişini ayrı dönüşüm olayı olarak ölçer", () => {
-    expect(dock).toContain('eventType: "cart_whatsapp_order"');
-    expect(dock).toContain("order_key: orderKey");
-    expect(dock).toContain("productSlug: item.productSlug");
-    expect(dock).toContain('eventType: "whatsapp_click"');
+  it("sepet WhatsApp geçişini Google'a olay, siparişi kendi tablosuna yazar", () => {
+    expect(dock).toContain('window.gtag?.("event", "whatsapp_order"');
+    expect(dock).toContain("void siparisiKaydet({");
+    expect(dock).toContain("      orderKey,");
+    expect(dock).not.toContain("recordVitrinEngagement");
   });
 });

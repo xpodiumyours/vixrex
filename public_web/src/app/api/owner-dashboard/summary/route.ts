@@ -1,6 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
-import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
 type BootstrapSonucu = {
   has_store?: boolean;
@@ -12,8 +11,6 @@ type PremiumSonucu = {
   is_premium?: boolean;
   premium_expires_at?: string | null;
 };
-
-type VitrinOlcerSonucu = Record<string, unknown>;
 
 function hataYaniti(mesaj: string, durum: number) {
   return NextResponse.json({ hata: mesaj }, { status: durum });
@@ -78,44 +75,25 @@ export async function GET(request: NextRequest) {
     return hataYaniti("Vitrin bulunamadı.", 404);
   }
 
-  const [ziyaretYaniti, premiumYaniti, olcerYaniti] = await Promise.all([
-    getSupabaseAdmin().rpc("get_today_vitrin_view_count", {
-      p_slug: slug,
-      p_edit_token: editToken,
-    }),
-    supabaseUser.rpc("get_store_premium_status", {
-      p_slug: slug,
-      p_edit_token: editToken,
-    }),
-    supabaseUser.rpc("get_vitrin_olcer_summary", { p_days: 7 }),
-  ]);
+  const premiumYaniti = await supabaseUser.rpc("get_store_premium_status", {
+    p_slug: slug,
+    p_edit_token: editToken,
+  });
 
-  if (ziyaretYaniti.error || premiumYaniti.error) {
+  if (premiumYaniti.error) {
     console.error(
       "[owner-dashboard/summary] ölçüm hatası:",
-      ziyaretYaniti.error?.message ?? premiumYaniti.error?.message
+      premiumYaniti.error.message
     );
     return hataYaniti("Pano bilgileri alınamadı.", 500);
   }
 
-  if (olcerYaniti.error) {
-    console.warn("[owner-dashboard/summary] Vitrin Ölçer henüz hazır değil:", olcerYaniti.error.message);
-  }
-
-  const ziyaretSayisi = Number(ziyaretYaniti.data);
   const premium = (premiumYaniti.data ?? {}) as PremiumSonucu;
-  const olcer =
-    !olcerYaniti.error && olcerYaniti.data && typeof olcerYaniti.data === "object"
-      ? (olcerYaniti.data as VitrinOlcerSonucu)
-      : null;
 
   return NextResponse.json({
     tamam: true,
     slug,
-    bugunkuZiyaret:
-      Number.isFinite(ziyaretSayisi) && ziyaretSayisi >= 0 ? ziyaretSayisi : 0,
     premiumAktif: premium.is_premium === true,
     premiumBitis: premium.premium_expires_at ?? null,
-    olcer,
   });
 }
