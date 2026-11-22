@@ -76,6 +76,21 @@ export async function GET(request: NextRequest) {
 
   const admin = getSupabaseAdmin();
 
+  const { error: expiredHoldError } = await admin
+    .from("appointments")
+    .update({ status: "expired" })
+    .eq("store_slug", slug)
+    .eq("reservation_kind", "product_hold")
+    .eq("status", "pending")
+    .lte("expires_at", new Date().toISOString());
+
+  if (expiredHoldError) {
+    console.error(
+      "[appointments] expired product hold cleanup failed:",
+      expiredHoldError.message
+    );
+  }
+
   const { data, error } = await admin
     .from("appointments")
     .select("*, appointment_reschedule_requests(*)")

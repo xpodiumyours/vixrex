@@ -25,13 +25,13 @@ async function _getSitemapData() {
   // dolu ama is_demo false) gerçek müşterilerin vitrinidir, indekslenir.
   const { data: stores } = await supabase
     .from("stores")
-    .select("id, slug, name, updated_at, is_demo")
+    .select("id, slug, name, updated_at, is_demo, district_name, province_name")
     .eq("is_published", true)
     .eq("is_demo", false);
 
   const { data: products } = await supabase
     .from("products")
-    .select("store_id, slug, name, image_urls, source_type, fatura_kanit, updated_at")
+    .select("store_id, slug, name, description, image_urls, source_type, fatura_kanit, updated_at")
     .eq("is_active", true)
     .eq("is_visible", true);
 
@@ -72,6 +72,7 @@ export async function GET() {
       Array<{
         slug: string;
         name: string;
+        description: string;
         image_urls: unknown;
         source_type: string | null;
         fatura_kanit: unknown;
@@ -88,6 +89,7 @@ export async function GET() {
       storeProducts.push({
         slug: productSlug,
         name: String(product.name || "").trim(),
+        description: String(product.description || "").trim(),
         image_urls: product.image_urls,
         source_type:
           typeof product.source_type === "string" ? product.source_type : null,
@@ -222,6 +224,16 @@ export async function GET() {
                 .slice(0, MAX_PRODUCT_IMAGES);
 
           const imageTitle = [product.name, storeName].filter(Boolean).join(" - ");
+          const captionSource = product.description || imageTitle;
+          const imageCaption = captionSource
+            ? Array.from(captionSource).slice(0, 200).join("")
+            : "";
+          const geoParts = [
+            String(store.district_name || "").trim(),
+            String(store.province_name || "").trim(),
+          ].filter(Boolean);
+          const imageGeo = geoParts.length > 0 ? `${geoParts.join(", ")}, Türkiye` : "";
+
           const imageTags = productImages
             .map(
               (imgUrl) => `
@@ -230,6 +242,16 @@ export async function GET() {
         imageTitle
           ? `
       <image:title>${escapeXml(imageTitle)}</image:title>`
+          : ""
+      }${
+        imageCaption
+          ? `
+      <image:caption>${escapeXml(imageCaption)}</image:caption>`
+          : ""
+      }${
+        imageGeo
+          ? `
+      <image:geo_location>${escapeXml(imageGeo)}</image:geo_location>`
           : ""
       }
     </image:image>`,
