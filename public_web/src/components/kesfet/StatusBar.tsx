@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAppShell } from "@/components/app/AppShellContext";
 import { VitrinQrSheet } from "@/components/app/VitrinQrSheet";
 import { supabase } from "@/lib/supabase";
+import { OwnerGoogleOlcumHapi } from "@/components/owner/OwnerGoogleOlcumHapi";
 
 type BootstrapSonucu = {
   has_store?: boolean;
@@ -80,17 +81,23 @@ export function StatusBar() {
 
   return (
     <>
-      <div className="hidden min-h-[61px] items-center gap-3 border-b border-[#182E5B] bg-lp-bg-light px-5 py-3 min-[901px]:flex">
+      <div className="flex min-h-[61px] items-center gap-3 border-b border-[#182E5B] bg-lp-bg-light px-5 py-3">
         <div className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-[5px] text-[12px] font-bold ${yayinda ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400" : "border-lp-border bg-lp-surface-soft text-lp-muted"}`}>
           <span className={`h-1.5 w-1.5 rounded-full ${yayinda ? "bg-emerald-400" : "bg-lp-muted"}`} aria-hidden="true" />
           {yukleniyor ? "Yükleniyor…" : yayinda === null ? "Vitrin durumu" : yayinda ? "Yayında" : "Yayında değil"}
         </div>
-        <p className="min-w-0 flex-1 truncate text-[12px] font-semibold text-lp-muted">
+        <p className="hidden min-w-0 flex-1 truncate text-[12px] font-semibold text-lp-muted min-[901px]:block">
           {yayinda && slug ? `vixrex.com/v/${slug}` : yayinda === false ? "Vitrininiz henüz yayınlanmadı" : yukleniyor ? "Vitrin bilgileri yükleniyor" : "Vitrin bilgisi doğrulanamadı"}
         </p>
 
         {yayinda && slug ? (
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="ml-auto min-[901px]:ml-0">
+            <OwnerGoogleOlcumHapi />
+          </div>
+        ) : null}
+
+        {yayinda && slug ? (
+          <div className="hidden shrink-0 items-center gap-2 min-[901px]:flex">
             <button type="button" onClick={() => void linkiKopyala()} className="min-h-9 rounded-xl border border-lp-border bg-lp-surface px-3 text-[12px] font-bold text-lp-text-alt hover:bg-lp-surface-soft">Kopyala</button>
             <button type="button" onClick={() => setQrAcik(true)} className="min-h-9 rounded-xl border border-lp-border bg-lp-surface px-3 text-[12px] font-bold text-lp-text-alt hover:bg-lp-surface-soft">QR</button>
             <button type="button" onClick={() => router.push(`/v/${slug}`)} className="min-h-9 rounded-xl bg-lp-primary px-4 text-[12px] font-black text-lp-on-primary hover:brightness-110">Vitrini aç</button>

@@ -1249,3 +1249,33 @@ body.vixrex-kaydediliyor .vixrex-secili-alan {
 .vixrex-yatay-serit::-webkit-scrollbar-thumb:hover {
   background: rgba(169, 187, 218, 0.48);
 }
+
+html:has(.vixrex-app-shell),
+html:has(.owner-shell) {
+  background-color: #050B1A;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(87, 183, 255, 0.32) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgba(87, 183, 255, 0.3);
+  background-clip: padding-box;
+  border: 2px solid transparent;
+  border-radius: 9999px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(87, 183, 255, 0.55);
+  background-clip: padding-box;
+}
