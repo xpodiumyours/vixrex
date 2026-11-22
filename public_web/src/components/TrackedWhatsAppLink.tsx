@@ -12,7 +12,8 @@ export type WhatsAppClickLocation =
   | "product_card"
   | "product_quick_view"
   | "product_detail"
-  | "storefront_floating";
+  | "storefront_floating"
+  | "kesfet_card";
 
 export type GtagCommand = (
   command: "event",

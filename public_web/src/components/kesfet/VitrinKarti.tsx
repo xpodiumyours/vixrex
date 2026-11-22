@@ -6,6 +6,7 @@ import type { KesfetVitrini } from "@/lib/explore";
 import { useKesfetKirala } from "@/lib/useKesfetKirala";
 import { AYLIK_PREMIUM_BEDEL, PREMIUM_DEGIL_ROZET } from "@/lib/fiyatlandirma";
 import { VixrexAvatar } from "@/app/v/[slug]/components/VixrexAvatar";
+import { TrackedWhatsAppLink } from "@/components/TrackedWhatsAppLink";
 
 export type PremiumBilgisi = {
   aktif: boolean;
@@ -316,8 +317,10 @@ export function VitrinKarti({
           <div className="mt-4 flex flex-col gap-2">
             {numara
               ? mesajlar.map((mesaj) => (
-                  <a
+                  <TrackedWhatsAppLink
                     key={mesaj.etiket}
+                    storeSlug={vitrin.slug}
+                    clickLocation="kesfet_card"
                     href={`https://wa.me/${numara}?text=${encodeURIComponent(mesaj.metin)}`}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -328,7 +331,7 @@ export function VitrinKarti({
                     <svg className="shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                       <path d="m9 18 6-6-6-6" />
                     </svg>
-                  </a>
+                  </TrackedWhatsAppLink>
                 ))
               : null}
           </div>
