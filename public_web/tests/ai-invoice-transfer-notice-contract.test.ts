@@ -10,7 +10,11 @@ describe("R02-AI-01: fatura dosyası dış AI sağlayıcısına aktarılmadan ö
   it("dosya seçimi erişilebilir veri aktarım bilgilendirmesine bağlanır", () => {
     expect(ui).toContain('aria-describedby="fatura-veri-aktarim-bilgisi"');
     expect(ui).toContain('id="fatura-veri-aktarim-bilgisi"');
-    expect(ui).toContain("Google Gemini yapay zekâ model sağlayıcısına iletilir");
+    expect(ui).toContain(
+      "Yüklediğiniz belge yalnızca ürün satırlarını okumak ve ürün kartlarınızı hazırlamak amacıyla güvenli şekilde işlenir.",
+    );
+    expect(ui).not.toContain("Gemini");
+    expect(ui).not.toContain("OpenRouter");
   });
 
   it("belgede üçüncü kişilerin bilgilerinin bulunabileceğini belirtir", () => {

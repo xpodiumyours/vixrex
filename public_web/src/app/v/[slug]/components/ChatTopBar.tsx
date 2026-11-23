@@ -71,45 +71,47 @@ export function ChatTopBar({ rapor, onKapat, yayin }: Props) {
           <span className="h-0.5 w-8 rounded-full bg-white/20" />
         </div>
 
-        <div className="flex items-center justify-between gap-2">
-          {/* Sol: Maskot & Başlık */}
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="order-4 relative shrink-0 sm:order-1 lg:order-4">
-              <VixrexAvatar size={38} halo decorative />
-              <span
-                className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#0b111e] bg-emerald-400"
-                aria-hidden="true"
-              />
-            </div>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-2.5">
+            {/* Sol: Maskot & Başlık */}
+            <div className="flex min-w-0 flex-1 items-center justify-between gap-2.5 sm:justify-start lg:justify-between">
+              <div className="order-4 relative shrink-0 sm:order-1 lg:order-4">
+                <VixrexAvatar size={38} halo decorative />
+                <span
+                  className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#0b111e] bg-emerald-400"
+                  aria-hidden="true"
+                />
+              </div>
 
-            <div className="order-1 min-w-0 flex-1 sm:order-2 lg:order-1">
-              <div className="flex items-center gap-1.5">
-                <p className="shrink-0 text-xs font-black tracking-[-0.01em] text-white">
-                  Vixrex Asistan
+              <div className="order-1 min-w-0 flex-1 sm:order-2 lg:order-1">
+                <div className="flex items-center gap-1.5">
+                  <p className="shrink-0 text-xs font-black tracking-[-0.01em] text-white">
+                    Vixrex Asistan
+                  </p>
+                </div>
+                <p className="mt-0.5 flex items-center gap-1 truncate text-[10px] text-slate-400">
+                  <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400" />
+                  <span className="truncate">{yayin?.durumMetni || "Vitrinin yayındaki hâliyle aynı."}</span>
                 </p>
               </div>
-              <p className="truncate text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
-                <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400" />
-                <span className="truncate">{yayin?.durumMetni || "Vitrinin yayındaki hâliyle aynı."}</span>
-              </p>
             </div>
-          </div>
-
-          {/* Sağ: Kompakt Yayın Barı & Kapat */}
-          <div className="flex items-center gap-1.5 shrink-0">
-            <GoogleOlcumKarti />
-            {yayin ? <PublishBar {...yayin} yuzde={rapor.yuzde} /> : null}
 
             <button
               type="button"
               onClick={onKapat}
-              className="grid h-7 w-7 place-items-center rounded-lg border border-white/10 bg-white/[0.045] text-slate-400 transition hover:bg-white/10 hover:text-white focus-visible:outline-none lg:hidden"
+              className="grid h-7 w-7 shrink-0 place-items-center rounded-lg border border-white/10 bg-white/[0.045] text-slate-400 transition hover:bg-white/10 hover:text-white focus-visible:outline-none lg:hidden"
               aria-label="Asistanı küçült"
             >
               <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                 <path d="M6 6l12 12M18 6L6 18" strokeLinecap="round" />
               </svg>
             </button>
+          </div>
+
+          {/* Sağ: Kompakt Yayın Barı & Kapat */}
+          <div className="flex flex-wrap items-center justify-between gap-1.5 border-t border-white/10 pt-2">
+            <GoogleOlcumKarti />
+            {yayin ? <PublishBar {...yayin} yuzde={rapor.yuzde} /> : null}
           </div>
         </div>
       </div>

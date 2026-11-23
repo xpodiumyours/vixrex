@@ -231,7 +231,7 @@ const List<VitrinAlani> vitrinAlanlari = [
   VitrinAlani(
     anahtar: 'enlem',
     tip: 'sayi',
-    etiket: 'Konum — Enlem',
+    etiket: 'Mağaza Konumu',
     kolon: 'latitude',
     bolum: 'contact',
     min: -90,
@@ -240,7 +240,7 @@ const List<VitrinAlani> vitrinAlanlari = [
   VitrinAlani(
     anahtar: 'boylam',
     tip: 'sayi',
-    etiket: 'Konum — Boylam',
+    etiket: 'Mağaza Konumu',
     kolon: 'longitude',
     bolum: 'contact',
     min: -180,

@@ -1153,8 +1153,7 @@ export default function InvoiceToProducts({
         </label>
         <p className="fatura-aciklama">Fatura fotoğrafını (1–3 sayfa) veya PDF dosyasını seç. Toplam en fazla 4 MB. Başka belge gerekmiyor.</p>
         <p id="fatura-veri-aktarim-bilgisi" className="fatura-aciklama">
-          Fatura görseli veya PDF, ürün satırlarını okumak ve ürün kartı taslakları hazırlamak amacıyla
-          Google Gemini yapay zekâ model sağlayıcısına iletilir.
+          Yüklediğiniz belge yalnızca ürün satırlarını okumak ve ürün kartlarınızı hazırlamak amacıyla güvenli şekilde işlenir.
           Belgede tedarikçi veya diğer kişilere ait bilgiler bulunabileceğinden, yalnız bu işlem için gerekli belgeyi yükleyin.
         </p>
         {onClose && (
@@ -1304,15 +1303,6 @@ export default function InvoiceToProducts({
         aciklama="Satış fiyatlarını belirle ve yayınlamak istediğin kartları onayla. Bilgilerin önce taslak olarak kaydedilir." />
       <div className="fatura-baslik">
         <h3>{satirlar.length} satır okundu</h3>
-        {belge?.maliyetOzeti && (
-          <p role="status" className="fatura-aciklama">
-            OpenRouter bildirilen gerçek tutar: ${belge.maliyetOzeti.gercekUsd.toFixed(4)} USD.
-            ${belge.maliyetOzeti.tahminiKayitSayisi > 0
-              ? ` ${belge.maliyetOzeti.tahminiKayitSayisi} kullanımın maliyeti henüz doğrulanamadı; ${belge.maliyetOzeti.tahminiUsd.toFixed(4)} USD tahmin.`
-              : ""}
-            {" "}Bütçe payı ${belge.maliyetOzeti.ayrilanButceUsd.toFixed(4)} USD gerçek ödeme değildir.
-          </p>
-        )}
         {otomatikTaslakRaporu && <p role="status" className="fatura-aciklama">
           {otomatikTaslakRaporu.kaydedildi} ürün görünmez taslak olarak kaydedildi.
           {(otomatikTaslakRaporu.birlestirmeBekleyen ?? 0) > 0

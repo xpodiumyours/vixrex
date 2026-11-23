@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
     merchantId: env.merchantId,
     merchantKey: env.merchantKey,
     merchantSalt: env.merchantSalt,
-    name: "VixRex Premium — Aylık",
+    name: "Vixrex Premium — Aylık",
     callbackId,
     callbackLink: `${request.nextUrl.origin}/api/paytr/callback`,
   });
