@@ -87,35 +87,22 @@ export default function VixrexPage() {
   }, [router]);
 
   if (gorunum === "kontrol") {
-    return <main className="min-h-full bg-lp-bg-editor p-6" role="status">Vitrinin açılıyor…</main>;
+    return <main className="min-h-full bg-[#060B18] p-6" role="status">Vitrinin açılıyor…</main>;
   }
   if (gorunum === "hata") {
     return (
-      <main className="min-h-full bg-lp-bg-editor p-6">
+      <main className="min-h-full bg-[#060B18] p-6">
         <p className="rounded-xl border border-lp-border bg-lp-surface p-4 text-sm text-lp-text" role="alert">{hata}</p>
         <button className="mt-4 rounded-xl bg-lp-primary px-4 py-2 font-bold text-lp-on-primary" onClick={() => router.push("/app")}>Vitrinim</button>
       </main>
     );
   }
   return (
-    <main className="min-h-full bg-lp-bg-editor">
-      <div className="mx-auto grid h-[calc(100vh-61px)] w-full max-w-2xl grid-cols-1 border-x border-lp-border/60 bg-lp-bg-editor shadow-2xl md:max-w-3xl md:grid-cols-[minmax(0,1fr)_260px] lg:max-w-5xl lg:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="min-h-0">
+    <main className="min-h-full bg-[#060B18]">
+      <div className="mx-auto flex h-[calc(100vh-61px)] w-full max-w-3xl flex-col border-x border-white/10 bg-[#060B18] shadow-2xl">
+        <div className="min-h-0 flex-1">
           <LandingAsistanSohbeti genisEkran />
         </div>
-        <aside className="hidden min-h-0 flex-col gap-4 border-l border-lp-border/60 bg-lp-surface/40 p-5 md:flex" aria-label="Vixrex Asistan neler yapar">
-          <p className="text-[13px] font-black text-lp-text">Vixrex Asistan çalışma alanı</p>
-          <p className="text-[12px] leading-[1.5] text-lp-muted">
-            Soldaki sohbet vitrinini kurar; sağdaki kısa liste neyin birlikte
-            yapılabileceğini hatırlatır.
-          </p>
-          <ul className="space-y-3 text-[12px] font-semibold text-lp-text-alt">
-            <li>Vitrinini adım adım kurar, eksik alanı söyler.</li>
-            <li>Ürünlerini elle ya da faturadan eklemene yardım eder.</li>
-            <li>Hakkımızda, SSS ve kampanya metinlerini birlikte yazar.</li>
-            <li>Hazır vitrinleri kategorine göre keşfettirir.</li>
-          </ul>
-        </aside>
       </div>
     </main>
   );

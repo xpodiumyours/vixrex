@@ -374,21 +374,27 @@ export function LandingAsistanSohbeti({
   }
 
   return (
-    <div className="flex h-full flex-col bg-lp-bg-editor">
+    <div className="flex h-full flex-col bg-[#060B18]">
       {/* Başlık çubuğu — Flutter ChatTopBar ile parite: 40px avatar, 13px başlık */}
-      <div className="flex items-center justify-between border-b border-lp-border/60 px-3.5 py-3">
+      <div className="flex items-center justify-between border-b border-white/10 bg-[linear-gradient(180deg,rgba(20,32,54,0.98),rgba(10,17,30,0.98))] px-3.5 py-2.5">
         <div className="flex items-center gap-2.5">
-          <VixrexAvatar size={32} halo decorative />
+          <div className="relative shrink-0">
+            <VixrexAvatar size={36} halo decorative />
+            <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#0b111e] bg-emerald-400" aria-hidden="true" />
+          </div>
           <div>
-            <p className="text-[13px] font-black text-lp-text">Vixrex</p>
-            <p className="text-[11px] font-medium text-lp-muted">Dijital vitrin asistanı</p>
+            <p className="text-xs font-black tracking-[-0.01em] text-white">Vixrex</p>
+            <p className="mt-0.5 flex items-center gap-1 text-[10px] font-medium text-slate-400">
+              <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400" />
+              <span>Dijital vitrin asistanı</span>
+            </p>
           </div>
         </div>
         {onClose ? (
           <button
             type="button"
             onClick={onClose}
-            className="text-[13px] font-bold text-lp-muted hover:text-lp-text"
+            className="rounded-lg border border-white/10 bg-white/[0.045] px-2.5 py-1 text-xs font-bold text-slate-300 transition hover:bg-white/10 hover:text-white"
           >
             Kapat
           </button>
@@ -396,7 +402,7 @@ export function LandingAsistanSohbeti({
       </div>
 
       {/* Konuşma */}
-      <div className="flex-1 space-y-3 overflow-y-auto px-3.5 py-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className={`flex-1 space-y-3 overflow-y-auto px-3.5 py-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${genisEkran ? "mx-auto w-full max-w-2xl md:px-6" : ""}`}>
         <Balon genis={genisEkran}>
           <p className="font-bold">{ASISTAN_KARSILAMA.baslik}</p>
           <p className="mt-1 text-lp-text-alt">{ASISTAN_KARSILAMA.aciklama}</p>
@@ -414,7 +420,7 @@ export function LandingAsistanSohbeti({
             <Balon gecmis genis={genisEkran}>
               <p className="font-bold">{gecmis.baslik}</p>
             </Balon>
-            <p className="ml-auto max-w-[80%] rounded-xl rounded-tr-sm bg-lp-surface px-3 py-2.5 text-right text-[13px] font-semibold text-lp-text">
+            <p className="ml-auto max-w-[80%] rounded-2xl rounded-tr-xs border border-sky-400/30 bg-gradient-to-r from-sky-600 to-blue-600 px-3.5 py-2 text-right text-xs font-medium text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_4px_16px_rgba(2,132,199,0.2)]">
               {cevapOzeti(gecmis) || "—"}
             </p>
           </div>
@@ -445,7 +451,7 @@ export function LandingAsistanSohbeti({
       </div>
 
       {/* Girdi alanı */}
-      <div className="border-t border-lp-border/60 p-3">
+      <div className="border-t border-white/10 bg-[#081422]/95 p-3">
         {/* Karşılama — hızlı seçenekler tek katalogdan (PR2-C6) */}
         {adim === -1 && niyetKategoriSoruluyor ? (
           /* Faz C1 (Tek Asistan planı): "Hazır Vitrin Seç" niyet sorusu —
@@ -526,7 +532,7 @@ export function LandingAsistanSohbeti({
                   { role: "assistant", text: `${NIYET_KATEGORI_SORUSU} ${NIYET_KATEGORI_ACIKLAMA}` },
                 ]);
               }}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-lp-primary px-3 py-2.5 text-[12px] font-black text-lp-on-primary"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-sky-400/30 bg-[#147DFF] px-3 py-2.5 text-[12px] font-black text-white transition hover:bg-blue-500"
             >
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                 <path d="M3 10.5 12 4l9 6.5V20H3z" />
@@ -538,7 +544,7 @@ export function LandingAsistanSohbeti({
               <button
                 type="button"
                 onClick={() => { void ensureAnonymousSession(); setGirdi(''); setAdim(0); }}
-                className="flex items-center justify-center gap-1.5 rounded-xl border border-lp-border bg-lp-surface px-3 py-2.5 text-[11px] font-bold text-lp-text"
+                className="flex items-center justify-center gap-1.5 rounded-xl border border-white/12 bg-[#0C1426] px-3 py-2.5 text-[11px] font-bold text-white transition hover:border-[#147DFF]/50 hover:bg-[#101B34]"
               >
                 <span className="text-[12px]">✨</span>
                 {hizliSecenekEtiketi("sifirdan_olustur")}
@@ -546,12 +552,58 @@ export function LandingAsistanSohbeti({
               <button
                 type="button"
                 onClick={() => router.push("/kesfet")}
-                className="flex items-center justify-center gap-1.5 rounded-xl border border-lp-border bg-lp-surface px-3 py-2.5 text-[11px] font-bold text-lp-text"
+                className="flex items-center justify-center gap-1.5 rounded-xl border border-white/12 bg-[#0C1426] px-3 py-2.5 text-[11px] font-bold text-white transition hover:border-[#147DFF]/50 hover:bg-[#101B34]"
               >
                 <span className="text-[12px]">👁️</span>
                 {hizliSecenekEtiketi("bakiniyorum")}
               </button>
             </div>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const metin = niyetSerbestMetin.trim();
+                if (!metin) return;
+                const kategori = resolveBusinessCategory(metin);
+                const hedef = kategori
+                  ? `/kesfet?kategori=${encodeURIComponent(kategoriUrlParcasi(kategori.id))}`
+                  : "/kesfet";
+                void niyetSohbetiKaydet([
+                  { role: "user", text: metin, messageKey: NIYET_SERBEST_METIN_ANAHTARI },
+                  {
+                    role: "assistant",
+                    text: vixRexMesajlari.niyet_ack,
+                  },
+                ]);
+                router.push(hedef);
+              }}
+              className="flex h-11 items-center overflow-hidden rounded-xl border border-sky-200/20 bg-slate-900/70 pl-3 pr-1 focus-within:border-blue-500/60"
+            >
+              <input
+                value={niyetSerbestMetin}
+                onChange={(e) => setNiyetSerbestMetin(e.target.value)}
+                placeholder={vixRexMesajlari.niyet_serbest_yertutucu}
+                className="h-10 min-w-0 flex-1 bg-transparent text-xs font-medium text-white outline-none placeholder:text-slate-500"
+              />
+              <button
+                type="submit"
+                disabled={!niyetSerbestMetin.trim()}
+                className="grid h-9 w-9 shrink-0 place-items-center rounded-[10px] border border-blue-400/30 bg-blue-600 text-white shadow-[0_6px_14px_rgba(37,99,235,0.22)] transition hover:bg-blue-500 disabled:opacity-40"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-[15px] w-[15px]"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M12 19V5" />
+                  <path d="M5 12l7-7 7 7" />
+                </svg>
+              </button>
+            </form>
           </div>
         ) : null}
 
@@ -803,10 +855,12 @@ export function LandingAsistanSohbeti({
 
 function Balon({ children, gecmis = false, genis = false }: { children: React.ReactNode; gecmis?: boolean; genis?: boolean }) {
   return (
-    <div className="flex gap-2.5">
-      <VixrexAvatar size={24} decorative />
+    <div className="flex gap-2 items-start">
+      <div className="shrink-0 mt-0.5" aria-hidden="true">
+        <VixrexAvatar size={24} halo decorative />
+      </div>
       {/* GAP-08: aktif adım border daha belirgin, geçmiş adım soluk */}
-      <div className={`rounded-xl rounded-tl-sm border px-3.5 py-3 text-[14px] leading-[1.5] text-lp-text ${genis ? "max-w-[85%] sm:max-w-[520px] lg:max-w-[640px]" : "max-w-[260px]"} ${gecmis ? "border-lp-border/40 bg-lp-surface/60" : "border-lp-primary/20 bg-lp-primary/[0.08]"}`}>
+      <div className={`rounded-2xl rounded-tl-xs border px-3.5 py-2.5 text-xs leading-relaxed text-slate-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_16px_rgba(0,0,0,0.3)] ${genis ? "max-w-[88%] sm:max-w-[540px] lg:max-w-[620px]" : "max-w-[260px]"} ${gecmis ? "border-white/10 bg-[#0C1426]/70" : "border-sky-400/20 bg-[linear-gradient(180deg,rgba(15,31,54,0.92)_0%,rgba(10,21,38,0.96)_100%)]"}`}>
         {children}
       </div>
     </div>
