@@ -290,7 +290,7 @@ describe("product structured data", () => {
     expect(serialized).toContain("Beyaz");
   });
 
-  it("Offer içinde priceValidUntil ve hasMerchantReturnPolicy bulunur", () => {
+  it("Offer içinde yalnız priceValidUntil bulunur, iade politikası uydurulmaz", () => {
     const result = buildPhysicalProductStructuredData({
       product: baseProduct,
       productUrl: "https://vixrex.com/v/magaza/urun/keten-gomlek",
@@ -302,13 +302,8 @@ describe("product structured data", () => {
     expect(result.offers?.priceValidUntil).toBe(
       `${new Date().getUTCFullYear()}-12-31`,
     );
-    expect(result.offers?.hasMerchantReturnPolicy).toMatchObject({
-      "@type": "MerchantReturnPolicy",
-      applicableCountry: "TR",
-      returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
-      merchantReturnDays: 14,
-      returnMethod: "https://schema.org/ReturnInStore",
-      returnFees: "https://schema.org/FreeReturn",
-    });
+    expect(result.offers?.hasMerchantReturnPolicy).toBeUndefined();
+    expect(JSON.stringify(result)).not.toContain("MerchantReturnPolicy");
+    expect(JSON.stringify(result)).not.toContain("merchantReturnDays");
   });
 });

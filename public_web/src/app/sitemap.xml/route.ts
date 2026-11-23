@@ -17,12 +17,24 @@ import { getProductImages } from "@/lib/products";
 
 export const revalidate = 300;
 
+const SITEMAP_DISI_SLUGLAR = new Set([
+  "aasd-mwj3ln80",
+  "sssss-mwpepeiq",
+  "dename-mwjm5i7b",
+  "drbrme-mwjho6k1",
+  "deneri-m-mvlf57cg",
+]);
+
 export function isTestOrDenemeStore(store: {
   slug?: string | null;
   name?: string | null;
 }): boolean {
   const slug = (store.slug || "").trim().toLowerCase();
   const name = (store.name || "").trim().toLowerCase();
+
+  if (SITEMAP_DISI_SLUGLAR.has(slug)) {
+    return true;
+  }
 
   const baseSlug = slug.replace(/-(mw[a-z0-9]+|[a-z0-9]{6,10})$/, "");
 

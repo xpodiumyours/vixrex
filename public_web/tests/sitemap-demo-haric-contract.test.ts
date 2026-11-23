@@ -92,4 +92,23 @@ describe("site haritası ve indeksleme kuralları (#345)", () => {
     expect(isTestOrDenemeStore({ slug: "dename-mwjm5i7b", name: "Vitrin" })).toBe(true);
     expect(isTestOrDenemeStore({ slug: "aksakal-butik-mw12ab34", name: "Aksakal Butik" })).toBe(false);
   });
+
+  it("canlı sitemap'te görünen beş deneme vitrini kesin olarak elenir", () => {
+    const denemeSluglari = [
+      "aasd-mwj3ln80",
+      "sssss-mwpepeiq",
+      "dename-mwjm5i7b",
+      "drbrme-mwjho6k1",
+      "deneri-m-mvlf57cg",
+    ];
+
+    for (const slug of denemeSluglari) {
+      expect(isTestOrDenemeStore({ slug, name: "Vitrin" })).toBe(true);
+      expect(isTestOrDenemeStore({ slug, name: slug })).toBe(true);
+    }
+
+    expect(
+      isTestOrDenemeStore({ slug: "meram-kebap-mvmugivx", name: "meram-kebap" }),
+    ).toBe(false);
+  });
 });
