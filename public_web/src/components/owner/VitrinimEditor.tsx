@@ -117,7 +117,7 @@ const SECTIONS: Array<{ title: string; required?: boolean; fields: FieldSpec[] }
       { key: "bantBaslik", placeholder: "Örn: Sezon indirimi" },
       { key: "bantAciklama", kind: "textarea", placeholder: "Kampanyayı bir iki cümleyle anlatın" },
       { key: "bantGorsel", kind: "url", placeholder: "Görsel bağlantısı" },
-      { key: "bantFiyat", placeholder: "Örn: 499 TL'den başlayan" },
+      { key: "bantFiyat", placeholder: "Örn: Fiyat bilgisi yazın" },
       { key: "kategoriBolumBaslik", placeholder: "Kategoriler" },
       { key: "urunBolumBaslik", placeholder: "Ürünler" },
       { key: "blogUstBaslik", placeholder: "Bilgi köşesi" },

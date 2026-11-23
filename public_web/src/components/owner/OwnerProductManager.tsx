@@ -1452,7 +1452,7 @@ function ProductForm({ product, categories, busy, storeSlug, storeName, baslangi
 
       <div className="mt-5 grid gap-4 sm:grid-cols-2">
         <label className="space-y-2 sm:col-span-2"><span className="owner-label">Ürün adı *</span><input className="owner-input" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} disabled={busy} /></label>
-        <label className="space-y-2"><span className="owner-label">Fiyat</span><input className="owner-input" value={priceText} onChange={(e) => setPriceText(e.target.value)} maxLength={30} placeholder="Ör. 499 TL" disabled={busy} /></label>
+        <label className="space-y-2"><span className="owner-label">Fiyat</span><input className="owner-input" value={priceText} onChange={(e) => setPriceText(e.target.value)} maxLength={30} placeholder="Ör. Fiyat girin" disabled={busy} /></label>
         <label className="space-y-2">
           <span className="owner-label">Eski fiyat (üstü çizili)</span>
           <input className="owner-input" value={oldPriceText} onChange={(e) => setOldPriceText(e.target.value)} maxLength={30} placeholder="Ör. 799" disabled={busy} />

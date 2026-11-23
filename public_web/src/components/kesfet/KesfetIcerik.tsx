@@ -304,7 +304,7 @@ export function KesfetIcerik({
                 </span>
                 <input
                   id="kesfet-arama"
-                  type="search"
+                  type="text"
                   value={sorgu}
                   onChange={(event) => setSorgu(event.target.value)}
                   placeholder="Vitrin, ürün veya il/ilçe ara"

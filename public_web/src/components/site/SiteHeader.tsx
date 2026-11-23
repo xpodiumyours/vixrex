@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { blogYayindaMi } from "@/data/blogYazilari";
-import { KesfetIkonu, StorefrontIkonu } from "./icons";
+import { KesfetIkonu } from "./icons";
+import { VixrexAvatar } from "@/app/v/[slug]/components/VixrexAvatar";
 
 /**
  * Platform yüzeyinin üst gezinmesi (envanter §2.1).
@@ -25,9 +26,7 @@ export function SiteHeader() {
           className="flex items-center gap-2.5 text-lp-text"
           aria-label="Vixrex ana sayfa"
         >
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-lp-primary/15 text-lp-primary">
-            <StorefrontIkonu boyut={20} />
-          </span>
+          <VixrexAvatar size={34} decorative />
           <span className="text-[20px] font-black tracking-[-0.5px]">
             Vixrex
           </span>

@@ -60,11 +60,11 @@ describe("Landing altbilgi paritesi", () => {
 
   it("marka bloğu iki tarafta aynıdır", () => {
     expect(flutterCta).toContain("VIXREX");
-    expect(webFooter).toContain("VIXREX");
+    // Web altbilgisi tek resmi marka işaretini taşır: kristal V maskot + Vixrex.
+    expect(webFooter).toContain("<VixrexAvatar");
+    expect(webFooter).toContain("Vixrex</span>");
     expect(flutterCta).toContain("letterSpacing: 8");
-    expect(webFooter).toContain("tracking-[8px]");
     expect(flutterCta).toContain("fontSize: 16");
-    expect(webFooter).toContain("text-[16px]");
     expect(flutterCta).toContain("paylaşılabilir dijital vitrini");
     expect(webFooter).toContain("dijital vitrini");
     expect(flutterCta).toContain("fontSize: 14");

@@ -410,7 +410,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
     anahtar: "bantFiyat",
     tip: "metin",
     etiket: "Kampanya Fiyat Metni",
-    neden: "Fiyatı yazarsan müşteri sormadan karar verir. Örn: 499 TL'den başlayan.",
+    neden: "Fiyatı yazarsan müşteri sormadan karar verir. Örn: Fiyat bilgisi yazın.",
     kolon: "featured_banner_price_text",
     bolum: "featured",
     maxUzunluk: 30,

@@ -67,7 +67,7 @@ export function MascotFab({
 
           60×60 daire
           zemin   #0E1B2E, alfa 200/255  (~%78)
-          kenarlık 1.5px #38A0E4, alfa 160/255 (~%63)
+          kenarlık 1.5px #147DFF, alfa 160/255 (~%63)
           parıltı  #0EA5E9
           maskot   ClipOval içinde, 4px iç boşluk, contain
 
@@ -79,7 +79,7 @@ export function MascotFab({
         sabit — hareketli gölge görsel karşılaştırma testlerini sonsuza
         kadar oynatır.
 
-        Kenarlık rengi `--primary` (#38A0E4) ile aynı; bu landing değil
+        Kenarlık rengi `--primary` (#147DFF) ile aynı; bu landing değil
         vitrin mavisi. Flutter'da da öyle, bilerek korundu.
       */}
       <button

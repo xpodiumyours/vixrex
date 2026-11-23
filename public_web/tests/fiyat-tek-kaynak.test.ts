@@ -4,6 +4,7 @@ import { join, resolve } from "node:path";
 
 import {
   AYLIK_PREMIUM_BEDEL,
+  AYLIK_PREMIUM_FIYAT,
   AYLIK_PREMIUM_KURUS,
   ODEME_SEPET_TUTARI,
   PREMIUM_DEGIL_ROZET,
@@ -61,11 +62,12 @@ describe("fiyat tek kaynak sözleşmesi", () => {
     );
   });
 
-  it("ödeme tutarı ile gösterilen bedel aynı sayıdan gelir", () => {
+  it("ödeme tutarı ile bedel sabiti aynı sayıdan gelir", () => {
     expect(ODEME_SEPET_TUTARI).toBe((AYLIK_PREMIUM_KURUS / 100).toFixed(2));
-    expect(AYLIK_PREMIUM_BEDEL).toContain(
+    expect(AYLIK_PREMIUM_FIYAT).toContain(
       String(Math.floor(AYLIK_PREMIUM_KURUS / 100)),
     );
+    expect(AYLIK_PREMIUM_BEDEL).toBe("Aylık 299 TL");
   });
 
   it("çalışan kodda elle yazılmış aylık bedel kalmadı", () => {

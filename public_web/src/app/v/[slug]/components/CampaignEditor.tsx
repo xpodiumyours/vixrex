@@ -99,7 +99,7 @@ export function CampaignEditor({ slug, mevcut, onClose, onSaved, inline = false 
           <Field label="Etiket" value={label} onChange={setLabel} placeholder="Örn: Bu haftaya özel" />
           <Field label="Başlık" value={title} onChange={setTitle} placeholder="Kampanya başlığı" />
           <Field label="Açıklama" value={description} onChange={setDescription} placeholder="Kısa açıklama" multiline rows={3} />
-          <Field label="Fiyat metni" value={priceText} onChange={setPriceText} placeholder="Örn: 499 TL'den başlayan" />
+          <Field label="Fiyat metni" value={priceText} onChange={setPriceText} placeholder="Örn: Fiyat bilgisi yazın" />
           <Field label="Görsel bağlantısı" value={imageUrl} onChange={setImageUrl} placeholder="https://..." />
         </div>
 

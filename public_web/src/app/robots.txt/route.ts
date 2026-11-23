@@ -4,6 +4,12 @@ import { buildSiteUrl } from "@/lib/siteUrl";
 export function GET() {
   const robots = `User-agent: *
 Allow: /
+Disallow: /app
+Disallow: /giris
+Disallow: /kayit
+Disallow: /sifre-sifirla
+Disallow: /hesap-bagla
+Disallow: /izin-talebi/*
 Disallow: /v/*/randevu/*
 Disallow: /api/*
 Disallow: /rent-demo

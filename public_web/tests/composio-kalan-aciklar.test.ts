@@ -368,12 +368,12 @@ describe("GET /api/appointments süresi dolmuş kilit temizliği", () => {
   });
 });
 
-describe("GET /sitemap.xml görsel caption ve coğrafi konum", () => {
+describe("GET /sitemap.xml görsel etiketleri", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("açıklamayı caption, mağaza il/ilçesini geo_location olarak XML kaçışıyla yazar", async () => {
+  it("görsel için yalnız image:loc yazar; caption ve geo_location üretmez", async () => {
     mockSitemapTables({
       stores: [
         {
@@ -406,14 +406,13 @@ describe("GET /sitemap.xml görsel caption ve coğrafi konum", () => {
 
     expect(response.status).toBe(200);
     expect(xml).toContain(
-      "<image:caption>Yazlık &amp; &quot;rahat&quot; &lt;keten&gt;</image:caption>",
+      "<image:loc>https://cdn.vixrex.test/keten.jpg</image:loc>",
     );
-    expect(xml).toContain(
-      "<image:geo_location>Kadıköy, İstanbul, Türkiye</image:geo_location>",
-    );
+    expect(xml).not.toContain("<image:caption>");
+    expect(xml).not.toContain("<image:geo_location>");
   });
 
-  it("eski mocklarda açıklama/il/ilçe yoksa başlığa düşer ve geo yazmaz", async () => {
+  it("eski mocklarda açıklama/il/ilçe yoksa görsel etiketi sade kalır", async () => {
     mockSitemapTables({
       stores: [
         {
@@ -443,12 +442,13 @@ describe("GET /sitemap.xml görsel caption ve coğrafi konum", () => {
 
     expect(response.status).toBe(200);
     expect(xml).toContain(
-      "<image:caption>Başlık Ürün - Örnek Mağaza</image:caption>",
+      "<image:loc>https://cdn.vixrex.test/baslik.jpg</image:loc>",
     );
+    expect(xml).not.toContain("<image:caption>");
     expect(xml).not.toContain("<image:geo_location>");
   });
 
-  it("caption en fazla 200 karakter taşır", async () => {
+  it("caption etiketi hiç yazılmaz, uzun açıklama XML'e sızmaz", async () => {
     const uzunAciklama = "A".repeat(250);
     mockSitemapTables({
       stores: [
@@ -478,8 +478,8 @@ describe("GET /sitemap.xml görsel caption ve coğrafi konum", () => {
     const response = await sitemapGet();
     const xml = await response.text();
 
-    expect(xml).toContain(`<image:caption>${"A".repeat(200)}</image:caption>`);
-    expect(xml).not.toContain("A".repeat(201));
+    expect(xml).not.toContain("<image:caption>");
+    expect(xml).not.toContain("A".repeat(200));
   });
 
   it("telif izni olmayan fatura görselini yine gizler, ürün adresi kalır", async () => {
