@@ -201,19 +201,29 @@ export function OwnerProductManager({
   );
 
   const normalizedCategories = useMemo(() => {
-    const gorulen = new Set<string>();
-    const liste: typeof resolvedCategories = [];
+    const gruplar = new Map<
+      string,
+      (typeof resolvedCategories)[number] & { idler: string[] }
+    >();
     for (const c of resolvedCategories) {
       const duzeltilmisAd = (c.name || "")
         .replace(/\s*\/\s*/g, " > ")
         .replace(/\s*>\s*/g, " > ")
         .trim();
       const anahtar = duzeltilmisAd.toLowerCase();
-      if (!anahtar || gorulen.has(anahtar)) continue;
-      gorulen.add(anahtar);
-      liste.push({ ...c, name: duzeltilmisAd });
+      if (!anahtar) continue;
+      const grup = gruplar.get(anahtar);
+      if (!grup) {
+        gruplar.set(anahtar, {
+          ...c,
+          name: duzeltilmisAd,
+          idler: c.id ? [c.id] : [],
+        });
+        continue;
+      }
+      if (c.id && !grup.idler.includes(c.id)) grup.idler.push(c.id);
     }
-    return liste;
+    return [...gruplar.values()];
   }, [resolvedCategories]);
 
   useEffect(() => {
@@ -331,9 +341,19 @@ export function OwnerProductManager({
 
   const filteredProducts = useMemo(() => {
     const q = filterText.trim().toLowerCase();
+    const seciliKategoriIdleri = filterCategory
+      ? normalizedCategories.find((kat) => kat.id === filterCategory)?.idler ?? [
+          filterCategory,
+        ]
+      : [];
     return products.filter((p) => {
       if (yalnizTaslak && p.is_visible !== false) return false;
-      if (filterCategory && p.category_id !== filterCategory) return false;
+      if (
+        seciliKategoriIdleri.length > 0 &&
+        !seciliKategoriIdleri.includes(p.category_id ?? "")
+      ) {
+        return false;
+      }
       if (!q) return true;
       return (
         p.name.toLowerCase().includes(q) ||
@@ -342,7 +362,7 @@ export function OwnerProductManager({
         (p.badge_tag || "").toLowerCase().includes(q)
       );
     });
-  }, [products, filterText, filterCategory, yalnizTaslak]);
+  }, [products, filterText, filterCategory, yalnizTaslak, normalizedCategories]);
 
   async function faturayaDon(product: OwnerProduct) {
     setError("");

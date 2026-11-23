@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import type { KesfetVitrini } from "@/lib/explore";
 import { useKesfetKirala } from "@/lib/useKesfetKirala";
-import { PREMIUM_DEGIL_ROZET } from "@/lib/fiyatlandirma";
+import { AYLIK_PREMIUM_BEDEL, PREMIUM_DEGIL_ROZET } from "@/lib/fiyatlandirma";
 import { VixrexAvatar } from "@/app/v/[slug]/components/VixrexAvatar";
 import { TrackedWhatsAppLink } from "@/components/TrackedWhatsAppLink";
 
@@ -228,8 +228,8 @@ export function VitrinKarti({
 
           {vitrin.kiralikMi ? (
             <p className="mt-2 flex min-w-0 items-baseline gap-1.5">
-              <span className="shrink-0 text-[12px] font-black text-amber-400">Kiralık Vitrin</span>
-              <span className="truncate text-[10px] font-semibold text-slate-300">· Pilot dönem</span>
+              <span className="shrink-0 text-[12px] font-black text-amber-400">{AYLIK_PREMIUM_BEDEL}</span>
+              <span className="truncate text-[10px] font-semibold text-slate-300">· 14 gün ücretsiz dene</span>
             </p>
           ) : null}
 
