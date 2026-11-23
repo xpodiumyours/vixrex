@@ -7,6 +7,7 @@ import {
   ASISTAN_ADIMLARI,
   ASISTAN_BITIS,
   ASISTAN_KARSILAMA,
+  ASISTAN_SAHNE_METINLERI,
   asistanHandoffOlustur,
   handoffMesajMetni,
   taslagiKaydet,
@@ -173,6 +174,24 @@ export function LandingAsistanSohbeti({
     setGirdi("");
     setHata("");
     setAdim(adim + 1);
+  }
+
+  function baslangicAdiniGonder(deger: string) {
+    const temiz = deger.trim();
+    if (!temiz) return;
+    void ensureAnonymousSession();
+    const sonuc = validateField("isletmeAdi", temiz);
+    if (!sonuc.ok || sonuc.deger === null) {
+      setHata(sonuc.ok ? "Bu alan zorunlu." : sonuc.hata);
+      setAdim(0);
+      return;
+    }
+    const yeni = { ...cevaplar, name: String(sonuc.deger) };
+    setCevaplar(yeni);
+    taslagiKaydet(yeni);
+    setGirdi("");
+    setHata("");
+    setAdim(1);
   }
 
   function konumEksigi(): string | null {
@@ -390,23 +409,109 @@ export function LandingAsistanSohbeti({
             </p>
           </div>
         </div>
-        {onClose ? (
+        <div className="flex items-center gap-1.5">
           <button
             type="button"
-            onClick={onClose}
+            onClick={() => {
+              setAdim(-1);
+              setNiyetKategoriSoruluyor(false);
+              setNiyetSerbestMetin("");
+              setGirdi("");
+              setHata("");
+            }}
             className="rounded-lg border border-white/10 bg-white/[0.045] px-2.5 py-1 text-xs font-bold text-slate-300 transition hover:bg-white/10 hover:text-white"
           >
-            Kapat
+            {ASISTAN_SAHNE_METINLERI.yeniSohbet}
           </button>
-        ) : null}
+          {onClose ? (
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg border border-white/10 bg-white/[0.045] px-2.5 py-1 text-xs font-bold text-slate-300 transition hover:bg-white/10 hover:text-white"
+            >
+              Kapat
+            </button>
+          ) : null}
+        </div>
       </div>
 
       {/* Konuşma */}
       <div className={`flex-1 space-y-3 overflow-y-auto px-3.5 py-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${genisEkran ? "mx-auto w-full max-w-2xl md:px-6" : ""}`}>
-        <Balon genis={genisEkran}>
-          <p className="font-bold">{ASISTAN_KARSILAMA.baslik}</p>
-          <p className="mt-1 text-lp-text-alt">{ASISTAN_KARSILAMA.aciklama}</p>
-        </Balon>
+        {adim === -1 && !niyetKategoriSoruluyor ? (
+          <div className="mx-auto flex min-h-full max-w-md flex-col items-center justify-center py-2 text-center">
+            <p className="sr-only">Hızlı Seçenekler</p>
+            <div className="mb-3">
+              <VixrexAvatar size={genisEkran ? 64 : 52} variant="fab" decorative />
+            </div>
+            <h2 className="text-lg font-black tracking-tight text-white sm:text-xl">
+              {ASISTAN_SAHNE_METINLERI.sahneBaslik}
+            </h2>
+            <p className="mt-1.5 max-w-sm text-xs leading-relaxed text-slate-400">
+              {ASISTAN_SAHNE_METINLERI.sahneAciklama}
+            </p>
+            <div className="mt-5 w-full space-y-2.5 text-left">
+              <button
+                type="button"
+                onClick={() => {
+                  setNiyetKategoriSoruluyor(true);
+                  void niyetSohbetiKaydet([
+                    {
+                      role: "user",
+                      text: hizliSecenekEtiketi("hazir_vitrin_sec"),
+                    },
+                    { role: "assistant", text: `${NIYET_KATEGORI_SORUSU} ${NIYET_KATEGORI_ACIKLAMA}` },
+                  ]);
+                }}
+                className="flex w-full items-center justify-between gap-3 rounded-xl border border-sky-400/30 bg-[#0C182D] px-3.5 py-3 text-left transition hover:border-sky-400/60 hover:bg-[#10203B]"
+              >
+                <div className="min-w-0">
+                  <p className="text-xs font-extrabold text-white">
+                    {hizliSecenekEtiketi("hazir_vitrin_sec")}
+                  </p>
+                  <p className="mt-0.5 text-[11px] text-slate-400">
+                    {ASISTAN_SAHNE_METINLERI.hazirVitrinAciklama}
+                  </p>
+                </div>
+                <span className="shrink-0 text-sm font-bold text-sky-400" aria-hidden="true">→</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => { void ensureAnonymousSession(); setGirdi(""); setAdim(0); }}
+                className="flex w-full items-center justify-between gap-3 rounded-xl border border-white/10 bg-[#0A1324] px-3.5 py-3 text-left transition hover:border-sky-400/40 hover:bg-[#0E1A30]"
+              >
+                <div className="min-w-0">
+                  <p className="text-xs font-extrabold text-white">
+                    {hizliSecenekEtiketi("sifirdan_olustur")}
+                  </p>
+                  <p className="mt-0.5 text-[11px] text-slate-400">
+                    {ASISTAN_SAHNE_METINLERI.sifirdanAciklama}
+                  </p>
+                </div>
+                <span className="shrink-0 text-sm font-bold text-slate-400" aria-hidden="true">→</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push("/kesfet")}
+                className="flex w-full items-center justify-between gap-3 rounded-xl border border-white/10 bg-[#0A1324] px-3.5 py-3 text-left transition hover:border-sky-400/40 hover:bg-[#0E1A30]"
+              >
+                <div className="min-w-0">
+                  <p className="text-xs font-extrabold text-white">
+                    {hizliSecenekEtiketi("bakiniyorum")}
+                  </p>
+                  <p className="mt-0.5 text-[11px] text-slate-400">
+                    {ASISTAN_SAHNE_METINLERI.bakiniyorumAciklama}
+                  </p>
+                </div>
+                <span className="shrink-0 text-sm font-bold text-slate-400" aria-hidden="true">→</span>
+              </button>
+            </div>
+          </div>
+        ) : (
+          <Balon genis={genisEkran}>
+            <p className="font-bold">{ASISTAN_KARSILAMA.baslik}</p>
+            <p className="mt-1 text-lp-text-alt">{ASISTAN_KARSILAMA.aciklama}</p>
+          </Balon>
+        )}
 
         {niyetKategoriSoruluyor ? (
           <Balon genis={genisEkran}>
@@ -518,93 +623,39 @@ export function LandingAsistanSohbeti({
             </button>
           </div>
         ) : adim === -1 ? (
-          <div className="space-y-2">
-            <p className="text-center text-[11px] font-bold text-lp-muted">Hızlı Seçenekler</p>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              baslangicAdiniGonder(girdi);
+            }}
+            className="flex h-11 items-center overflow-hidden rounded-xl border border-sky-200/20 bg-slate-900/70 pl-3 pr-1 focus-within:border-blue-500/60"
+          >
+            <input
+              value={girdi}
+              onChange={(e) => setGirdi(e.target.value)}
+              placeholder={ASISTAN_SAHNE_METINLERI.girdiYerTutucu}
+              className="h-10 min-w-0 flex-1 bg-transparent text-xs font-medium text-white outline-none placeholder:text-slate-500"
+            />
             <button
-              type="button"
-              onClick={() => {
-                setNiyetKategoriSoruluyor(true);
-                void niyetSohbetiKaydet([
-                  {
-                    role: "user",
-                    text: hizliSecenekEtiketi("hazir_vitrin_sec"),
-                  },
-                  { role: "assistant", text: `${NIYET_KATEGORI_SORUSU} ${NIYET_KATEGORI_ACIKLAMA}` },
-                ]);
-              }}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-sky-400/30 bg-[#147DFF] px-3 py-2.5 text-[12px] font-black text-white transition hover:bg-blue-500"
+              type="submit"
+              disabled={!girdi.trim()}
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-[10px] border border-blue-400/30 bg-blue-600 text-white shadow-[0_6px_14px_rgba(37,99,235,0.22)] transition hover:bg-blue-500 disabled:opacity-40"
             >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                <path d="M3 10.5 12 4l9 6.5V20H3z" />
-                <path d="M8 20v-6h8v6" />
+              <svg
+                viewBox="0 0 24 24"
+                className="h-[15px] w-[15px]"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M12 19V5" />
+                <path d="M5 12l7-7 7 7" />
               </svg>
-              {hizliSecenekEtiketi("hazir_vitrin_sec")}
             </button>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => { void ensureAnonymousSession(); setGirdi(''); setAdim(0); }}
-                className="flex items-center justify-center gap-1.5 rounded-xl border border-white/12 bg-[#0C1426] px-3 py-2.5 text-[11px] font-bold text-white transition hover:border-[#147DFF]/50 hover:bg-[#101B34]"
-              >
-                <span className="text-[12px]">✨</span>
-                {hizliSecenekEtiketi("sifirdan_olustur")}
-              </button>
-              <button
-                type="button"
-                onClick={() => router.push("/kesfet")}
-                className="flex items-center justify-center gap-1.5 rounded-xl border border-white/12 bg-[#0C1426] px-3 py-2.5 text-[11px] font-bold text-white transition hover:border-[#147DFF]/50 hover:bg-[#101B34]"
-              >
-                <span className="text-[12px]">👁️</span>
-                {hizliSecenekEtiketi("bakiniyorum")}
-              </button>
-            </div>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                const metin = niyetSerbestMetin.trim();
-                if (!metin) return;
-                const kategori = resolveBusinessCategory(metin);
-                const hedef = kategori
-                  ? `/kesfet?kategori=${encodeURIComponent(kategoriUrlParcasi(kategori.id))}`
-                  : "/kesfet";
-                void niyetSohbetiKaydet([
-                  { role: "user", text: metin, messageKey: NIYET_SERBEST_METIN_ANAHTARI },
-                  {
-                    role: "assistant",
-                    text: vixRexMesajlari.niyet_ack,
-                  },
-                ]);
-                router.push(hedef);
-              }}
-              className="flex h-11 items-center overflow-hidden rounded-xl border border-sky-200/20 bg-slate-900/70 pl-3 pr-1 focus-within:border-blue-500/60"
-            >
-              <input
-                value={niyetSerbestMetin}
-                onChange={(e) => setNiyetSerbestMetin(e.target.value)}
-                placeholder={vixRexMesajlari.niyet_serbest_yertutucu}
-                className="h-10 min-w-0 flex-1 bg-transparent text-xs font-medium text-white outline-none placeholder:text-slate-500"
-              />
-              <button
-                type="submit"
-                disabled={!niyetSerbestMetin.trim()}
-                className="grid h-9 w-9 shrink-0 place-items-center rounded-[10px] border border-blue-400/30 bg-blue-600 text-white shadow-[0_6px_14px_rgba(37,99,235,0.22)] transition hover:bg-blue-500 disabled:opacity-40"
-              >
-                <svg
-                  viewBox="0 0 24 24"
-                  className="h-[15px] w-[15px]"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="M12 19V5" />
-                  <path d="M5 12l7-7 7 7" />
-                </svg>
-              </button>
-            </form>
-          </div>
+          </form>
         ) : null}
 
         {/* Konum adımı — Flutter FormLocationInfo ile parite */}
