@@ -17,6 +17,14 @@ import { getProductImages } from "@/lib/products";
 
 export const revalidate = 300;
 
+const SITEMAP_DISI_SLUGLAR = new Set([
+  "aasd-mwj3ln80",
+  "sssss-mwpepeiq",
+  "dename-mwjm5i7b",
+  "drbrme-mwjho6k1",
+  "deneri-m-mvlf57cg",
+]);
+
 export function isTestOrDenemeStore(store: {
   slug?: string | null;
   name?: string | null;
@@ -24,23 +32,30 @@ export function isTestOrDenemeStore(store: {
   const slug = (store.slug || "").trim().toLowerCase();
   const name = (store.name || "").trim().toLowerCase();
 
-  const yasakliKelimeler = ["test", "deneme", "debug", "demo"];
-  for (const kelime of yasakliKelimeler) {
-    if (slug.includes(kelime) || name.includes(kelime)) {
-      return true;
+  if (SITEMAP_DISI_SLUGLAR.has(slug)) {
+    return true;
+  }
+
+  const baseSlug = slug.replace(/-(mw[a-z0-9]+|[a-z0-9]{6,10})$/, "");
+
+  const yasakliKelimeler = ["test", "deneme", "debug", "demo", "dename"];
+  const hedefler = [slug, baseSlug, name];
+  for (const hedef of hedefler) {
+    for (const kelime of yasakliKelimeler) {
+      if (hedef.includes(kelime)) {
+        return true;
+      }
     }
   }
 
-  // Çöp (junk) slug tespiti:
-  // 1. Aynı karakterin 3 veya daha fazla kez tekrarı (örn. 'cccc', 'xxxxx')
-  if (/^(.)\1{2,}$/.test(slug)) {
-    return true;
-  }
-
-  // 2. Klavye rastgele harfleri / yaygın junk slug'lar
-  const junkSluglar = ["asdf", "asdfg", "qwerty", "qwert", "zxcv", "1234", "12345"];
-  if (junkSluglar.some((j) => slug === j || slug.startsWith(`${j}-`))) {
-    return true;
+  const junkSluglar = ["asdf", "asdfg", "qwerty", "qwert", "zxcv", "1234", "12345", "aasd", "sssss"];
+  for (const hedef of hedefler) {
+    if (/^(.)\1{2,}$/.test(hedef)) {
+      return true;
+    }
+    if (junkSluglar.some((j) => hedef === j || hedef.startsWith(`${j}-`))) {
+      return true;
+    }
   }
 
   return false;

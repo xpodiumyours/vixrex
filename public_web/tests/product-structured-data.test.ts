@@ -289,4 +289,21 @@ describe("product structured data", () => {
     expect(serialized).toContain("Siyah");
     expect(serialized).toContain("Beyaz");
   });
+
+  it("Offer içinde yalnız priceValidUntil bulunur, iade politikası uydurulmaz", () => {
+    const result = buildPhysicalProductStructuredData({
+      product: baseProduct,
+      productUrl: "https://vixrex.com/v/magaza/urun/keten-gomlek",
+      storeName: "Örnek Mağaza",
+      description: "Keten karışımlı gömlek",
+      images: ["https://example.com/product.jpg"],
+    }) as { offers?: Record<string, unknown> };
+
+    expect(result.offers?.priceValidUntil).toBe(
+      `${new Date().getUTCFullYear()}-12-31`,
+    );
+    expect(result.offers?.hasMerchantReturnPolicy).toBeUndefined();
+    expect(JSON.stringify(result)).not.toContain("MerchantReturnPolicy");
+    expect(JSON.stringify(result)).not.toContain("merchantReturnDays");
+  });
 });

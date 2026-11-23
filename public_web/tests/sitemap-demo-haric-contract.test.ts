@@ -85,4 +85,30 @@ describe("site haritası ve indeksleme kuralları (#345)", () => {
     expect(isTestOrDenemeStore({ slug: "lezzet-doner", name: "Lezzet Döner" })).toBe(false);
     expect(isTestOrDenemeStore({ slug: "karanfil-cicekcilik", name: "Karanfil Çiçekçilik" })).toBe(false);
   });
+
+  it("üretim eki taşıyan çöp slug'lar elenir, gerçek mağaza elenmez", () => {
+    expect(isTestOrDenemeStore({ slug: "aasd-mwj3ln80", name: "Vitrin" })).toBe(true);
+    expect(isTestOrDenemeStore({ slug: "sssss-mwpepeiq", name: "Vitrin" })).toBe(true);
+    expect(isTestOrDenemeStore({ slug: "dename-mwjm5i7b", name: "Vitrin" })).toBe(true);
+    expect(isTestOrDenemeStore({ slug: "aksakal-butik-mw12ab34", name: "Aksakal Butik" })).toBe(false);
+  });
+
+  it("canlı sitemap'te görünen beş deneme vitrini kesin olarak elenir", () => {
+    const denemeSluglari = [
+      "aasd-mwj3ln80",
+      "sssss-mwpepeiq",
+      "dename-mwjm5i7b",
+      "drbrme-mwjho6k1",
+      "deneri-m-mvlf57cg",
+    ];
+
+    for (const slug of denemeSluglari) {
+      expect(isTestOrDenemeStore({ slug, name: "Vitrin" })).toBe(true);
+      expect(isTestOrDenemeStore({ slug, name: slug })).toBe(true);
+    }
+
+    expect(
+      isTestOrDenemeStore({ slug: "meram-kebap-mvmugivx", name: "meram-kebap" }),
+    ).toBe(false);
+  });
 });
