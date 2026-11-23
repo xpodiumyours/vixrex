@@ -85,4 +85,11 @@ describe("site haritası ve indeksleme kuralları (#345)", () => {
     expect(isTestOrDenemeStore({ slug: "lezzet-doner", name: "Lezzet Döner" })).toBe(false);
     expect(isTestOrDenemeStore({ slug: "karanfil-cicekcilik", name: "Karanfil Çiçekçilik" })).toBe(false);
   });
+
+  it("üretim eki taşıyan çöp slug'lar elenir, gerçek mağaza elenmez", () => {
+    expect(isTestOrDenemeStore({ slug: "aasd-mwj3ln80", name: "Vitrin" })).toBe(true);
+    expect(isTestOrDenemeStore({ slug: "sssss-mwpepeiq", name: "Vitrin" })).toBe(true);
+    expect(isTestOrDenemeStore({ slug: "dename-mwjm5i7b", name: "Vitrin" })).toBe(true);
+    expect(isTestOrDenemeStore({ slug: "aksakal-butik-mw12ab34", name: "Aksakal Butik" })).toBe(false);
+  });
 });

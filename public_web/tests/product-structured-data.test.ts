@@ -289,4 +289,26 @@ describe("product structured data", () => {
     expect(serialized).toContain("Siyah");
     expect(serialized).toContain("Beyaz");
   });
+
+  it("Offer içinde priceValidUntil ve hasMerchantReturnPolicy bulunur", () => {
+    const result = buildPhysicalProductStructuredData({
+      product: baseProduct,
+      productUrl: "https://vixrex.com/v/magaza/urun/keten-gomlek",
+      storeName: "Örnek Mağaza",
+      description: "Keten karışımlı gömlek",
+      images: ["https://example.com/product.jpg"],
+    }) as { offers?: Record<string, unknown> };
+
+    expect(result.offers?.priceValidUntil).toBe(
+      `${new Date().getUTCFullYear()}-12-31`,
+    );
+    expect(result.offers?.hasMerchantReturnPolicy).toMatchObject({
+      "@type": "MerchantReturnPolicy",
+      applicableCountry: "TR",
+      returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
+      merchantReturnDays: 14,
+      returnMethod: "https://schema.org/ReturnInStore",
+      returnFees: "https://schema.org/FreeReturn",
+    });
+  });
 });

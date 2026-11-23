@@ -179,6 +179,15 @@ function offer(args: {
       ? "https://schema.org/InStock"
       : "https://schema.org/OutOfStock",
     itemCondition: args.itemCondition,
+    priceValidUntil: `${new Date().getUTCFullYear()}-12-31`,
+    hasMerchantReturnPolicy: {
+      "@type": "MerchantReturnPolicy",
+      applicableCountry: "TR",
+      returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
+      merchantReturnDays: 14,
+      returnMethod: "https://schema.org/ReturnInStore",
+      returnFees: "https://schema.org/FreeReturn",
+    },
     seller: buildLocalBusinessSeller(args.storeName, args.storeLocation),
   };
 }
