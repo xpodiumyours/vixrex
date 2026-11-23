@@ -179,6 +179,7 @@ function offer(args: {
       ? "https://schema.org/InStock"
       : "https://schema.org/OutOfStock",
     itemCondition: args.itemCondition,
+    priceValidUntil: `${new Date().getUTCFullYear()}-12-31`,
     seller: buildLocalBusinessSeller(args.storeName, args.storeLocation),
   };
 }
