@@ -98,11 +98,9 @@ export default function VixrexPage() {
     );
   }
   return (
-    <main className="min-h-full bg-[#060B18]">
-      <div className="mx-auto flex h-[calc(100vh-61px)] w-full max-w-3xl flex-col border-x border-white/10 bg-[#060B18] shadow-2xl">
-        <div className="min-h-0 flex-1">
-          <LandingAsistanSohbeti genisEkran />
-        </div>
+    <main className="flex h-[calc(100dvh-var(--vx-app-bottom-nav-height,68px))] min-h-[calc(100dvh-var(--vx-app-bottom-nav-height,68px))] w-full flex-col bg-[#060B18] min-[901px]:h-dvh min-[901px]:min-h-dvh">
+      <div className="flex min-h-0 w-full flex-1 flex-col bg-[#060B18]">
+        <LandingAsistanSohbeti genisEkran />
       </div>
     </main>
   );

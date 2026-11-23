@@ -68,7 +68,7 @@ export const ASISTAN_SAHNE_METINLERI = {
   hazirVitrinAciklama: "Sektörüne uygun vitrini hemen dene",
   sifirdanAciklama: "Adım adım işletme bilgilerini gir",
   bakiniyorumAciklama: "Keşfet sayfasındaki canlı örnekleri gör",
-  girdiYerTutucu: vixRexMesajlari.niyet_serbest_yertutucu,
+  girdiYerTutucu: "İşletmeni anlat ya da dükkân adını yaz...",
 };
 
 const CEVAP_ANAHTARLARI: Readonly<Record<string, keyof AsistanCevaplari>> = {
