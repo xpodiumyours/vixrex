@@ -57,7 +57,7 @@ export default function PrivacyPage() {
         <li><strong>Google reCAPTCHA:</strong> otomatik/kötüye kullanım (bot) girişlerini engellemek için.</li>
         <li><strong>Cloudflare Turnstile:</strong> bazı formlarda (ör. içerik bildirimi) bot koruması için.</li>
         <li><strong>Sentry:</strong> uygulama hatalarını tespit edip düzeltebilmemiz için hata/performans kaydı.</li>
-        <li><strong>Meta / Instagram:</strong> yalnızca Instagram hesabınızı VixRex&apos;e bağlarsanız, ürün fotoğraflarınızı içe aktarmak için.</li>
+        <li><strong>Meta / Instagram:</strong> yalnızca Instagram hesabınızı Vixrex&apos;e bağlarsanız, ürün fotoğraflarınızı içe aktarmak için.</li>
         <li><strong>PayTR:</strong> premium abonelik ödemesi alıyorsanız, ödeme işlemini gerçekleştiren ödeme kuruluşu.</li>
         <li><strong>OneSignal:</strong> abonelik/randevu hatırlatma bildirimleri gönderebilmemiz için.</li>
       </ul>

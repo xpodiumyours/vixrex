@@ -438,7 +438,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
   ),
   VixrexNiyetAlan(
     anahtar: 'enlem',
-    etiket: 'Konum — Enlem',
+    etiket: 'Mağaza Konumu',
     tip: 'sayi',
     kolon: 'latitude',
     bolum: 'contact',
@@ -452,7 +452,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
   ),
   VixrexNiyetAlan(
     anahtar: 'boylam',
-    etiket: 'Konum — Boylam',
+    etiket: 'Mağaza Konumu',
     tip: 'sayi',
     kolon: 'longitude',
     bolum: 'contact',

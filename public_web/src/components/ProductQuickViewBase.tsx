@@ -253,7 +253,7 @@ export default function ProductQuickView({
         </button>
 
         <div className="relative bg-slate-950 p-2.5 sm:min-h-[610px]">
-          <div className="relative aspect-[4/5] overflow-hidden rounded-[22px] bg-slate-900 sm:h-full sm:min-h-[590px] sm:aspect-auto">
+          <div className={`relative aspect-[4/5] overflow-hidden rounded-[22px] ${!telifKalkanli && currentImage ? "bg-white" : "bg-slate-900"} sm:h-full sm:min-h-[590px] sm:aspect-auto`}>
             {telifKalkanli ? (
               <TelifKalkani />
             ) : currentImage ? (
@@ -302,7 +302,7 @@ export default function ProductQuickView({
                     key={`${imageUrl}-${index}`}
                     type="button"
                     onClick={() => setImageIndex(index)}
-                    className={`relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border bg-slate-950/90 transition ${
+                    className={`relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border bg-white transition ${
                       index === imageIndex
                         ? "border-blue-400 ring-2 ring-blue-400/20"
                         : "border-white/15 opacity-75 hover:opacity-100"
