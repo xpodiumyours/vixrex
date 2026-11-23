@@ -36,7 +36,7 @@ export function VixrexAvatar({
           width={size}
           height={size}
           priority={priority || true}
-          className="h-full w-full object-contain drop-shadow-[0_0_16px_rgba(56,160,228,0.65)] transition-all duration-300 group-hover:drop-shadow-[0_0_24px_rgba(56,160,228,0.95)]"
+          className="h-full w-full object-contain drop-shadow-[0_0_16px_rgba(20,125,255,0.65)] transition-all duration-300 group-hover:drop-shadow-[0_0_24px_rgba(20,125,255,0.95)]"
         />
       </span>
     );
@@ -57,8 +57,8 @@ export function VixrexAvatar({
         priority={priority}
         className={`h-full w-full object-contain ${
           halo
-            ? "drop-shadow-[0_0_10px_rgba(56,160,228,0.6)]"
-            : "drop-shadow-[0_0_6px_rgba(56,160,228,0.35)]"
+            ? "drop-shadow-[0_0_10px_rgba(20,125,255,0.6)]"
+            : "drop-shadow-[0_0_6px_rgba(20,125,255,0.35)]"
         }`}
       />
     </span>

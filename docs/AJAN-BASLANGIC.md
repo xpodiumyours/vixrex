@@ -4,7 +4,7 @@
 > tek yerde cevaplamak ve ezbere konuşmayı ölçülebilir bir yasak yapmak. Kural kitabı
 > [AGENTS.md](../AGENTS.md)'de; bu belge **harita**dır.
 >
-> Son doğrulama: 2026-11-20 · Temel SHA: `63ad4287` (yerel kod tabanı; canlı `deploy-info.json` kapı ile ayrı ölçülür)
+> Son doğrulama: 2026-11-22 · Temel SHA: `41c272d` (ana dal = canlı; `tool/ajan-baslangic.ps1` 2026-11-22 ölçümü)
 
 ## 0. Oturum açılışı — 4 adım
 
@@ -106,6 +106,7 @@ Bu iki kayıt canlı anahtar veya canlı preset içermez. `main`, PR ve canlı b
 | Belge | Sınıf | Not |
 |---|---|---|
 | [AGENTS.md](../AGENTS.md) | kural (tek adres) | çalışma tarzı; harita değil |
+| [DESIGN.md](../DESIGN.md) | kural (görsel anayasa, kilitli 22 Kasım 2026) | 6 çekirdek tasarım kararı, renk tokenları, tek logo kaynağı, kesin yasaklar; `node tool/baslangic-kontrol.mjs` denetler |
 | [README.md](../README.md) | tanıtım | depo mimarisi; durum kaynağı değil |
 | [PLATFORM-BAGLANTI-HARITASI.md](PLATFORM-BAGLANTI-HARITASI.md) ve [platform-baglanti-haritasi.json](platform-baglanti-haritasi.json) | 2026-11-20 bağlantı envanteri (`63ad4287`) | 10 adımlı zincir, Gemini birincil / OpenRouter failover, SPOF, kırmızı-yeşil bölge, anahtar ADLARI; canlı çalışma kanıtı değil |
 | `docs/ANA-DENETIM-KAYDI.md` | yerel kayıt | bu makinede var, depoda **değil**; yoksa yok say |
@@ -117,6 +118,7 @@ Bu iki kayıt canlı anahtar veya canlı preset içermez. `main`, PR ve canlı b
 | `docs/vitrin-gorunum-referans.md` | aktüel referans | — |
 | `docs/vitrin-kart-standardi.md` | aktüel standart | — |
 | `docs/esnaf-yolculugu-kurumsal-kalite-tespit.md` | aktüel ölçüm | T1–T4, K1–K6, F1 |
+| `TAKIP.md`, `VIXREX_RULES.md`, `control-map-system/` | **kaldırıldı** | Eski/bölünmüş kural ve takip kalıntıları; tek kural adresi [AGENTS.md](../AGENTS.md), canlı iş takibi `CALISMA-DEFTERI.md` (depo dışı), harita burasıdır; geri getirilmez |
 
 Kural: tarihsel belge okunabilir; **güncel iş listesi yerine geçmez**. Bir belge kendini
 "tarihsel" ilan etmiyorsa ve bu tabloda yoksa, önce bu tabloya eklenir.
