@@ -17,6 +17,35 @@ import { getProductImages } from "@/lib/products";
 
 export const revalidate = 300;
 
+export function isTestOrDenemeStore(store: {
+  slug?: string | null;
+  name?: string | null;
+}): boolean {
+  const slug = (store.slug || "").trim().toLowerCase();
+  const name = (store.name || "").trim().toLowerCase();
+
+  const yasakliKelimeler = ["test", "deneme", "debug", "demo"];
+  for (const kelime of yasakliKelimeler) {
+    if (slug.includes(kelime) || name.includes(kelime)) {
+      return true;
+    }
+  }
+
+  // Çöp (junk) slug tespiti:
+  // 1. Aynı karakterin 3 veya daha fazla kez tekrarı (örn. 'cccc', 'xxxxx')
+  if (/^(.)\1{2,}$/.test(slug)) {
+    return true;
+  }
+
+  // 2. Klavye rastgele harfleri / yaygın junk slug'lar
+  const junkSluglar = ["asdf", "asdfg", "qwerty", "qwert", "zxcv", "1234", "12345"];
+  if (junkSluglar.some((j) => slug === j || slug.startsWith(`${j}-`))) {
+    return true;
+  }
+
+  return false;
+}
+
 async function _getSitemapData() {
   // is_demo eklendi (#345): demo/örnek vitrinler site haritasından çıkar.
   // Bunlar gerçek işletme değil, kiralanmayı bekleyen şablonlar; arama
@@ -65,6 +94,7 @@ function escapeXml(value: string) {
 export async function GET() {
   try {
     const { stores, products, articles } = await getSitemapData();
+    const filteredStores = (stores || []).filter((s) => !isTestOrDenemeStore(s));
     const baseUrl = getSiteUrl();
     const articleLastModByStore = new Map<string, string>();
     const productsByStoreId = new Map<
@@ -177,8 +207,8 @@ export async function GET() {
     }
 
     // Add stores + blog list pages only when they have published articles
-    if (stores) {
-      for (const store of stores) {
+    if (filteredStores) {
+      for (const store of filteredStores) {
         const lastMod = store.updated_at ? new Date(store.updated_at).toISOString() : new Date().toISOString();
         const blogLastMod = articleLastModByStore.get(store.slug);
         xml += `
@@ -254,7 +284,7 @@ export async function GET() {
     // Demo vitrinlerin yazıları da çıkar (#345): makale sorgusu store_slug
     // üzerinden geliyor, yukarıdaki demo süzgecinden habersiz.
     const yayindakiSluglar = new Set(
-      (stores || []).map((store) => String(store.slug || "").trim())
+      filteredStores.map((store) => String(store.slug || "").trim())
     );
 
     if (articles) {

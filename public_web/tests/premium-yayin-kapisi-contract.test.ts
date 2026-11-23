@@ -69,7 +69,7 @@ describe("api/owner-publish — kullanıcıya anlamlı hata", () => {
 
   it("PREMIUM_REQUIRED için Türkçe mesaj ve 402 durum kodu tanımlı", () => {
     expect(routeSource).toContain("PREMIUM_REQUIRED:");
-    expect(YAYIN_KAPISI_UYARISI).toContain("ücretsiz");
+    expect(YAYIN_KAPISI_UYARISI).toContain("299 TL");
     expect(routeSource).toContain("YAYIN_KAPISI_UYARISI");
     expect(routeSource).toContain("PREMIUM_REQUIRED: 402");
   });

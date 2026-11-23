@@ -39,7 +39,7 @@ describe("demo vitrin 'Bu vitrini kirala' CTA — pilot dönemde ücretsiz, güv
   });
 
   it("dürüst fiyat bilgisi var: tek kaynaktan gelen bedel cümlesi + abonelik açıklaması", () => {
-    expect(AYLIK_PREMIUM_BEDEL).toBe("Pilot dönemde ücretsiz");
+    expect(AYLIK_PREMIUM_BEDEL).toBe("Aylık 299 TL");
     expect(ctaBlock).toContain("{AYLIK_PREMIUM_BEDEL}");
     expect(ctaBlock).toContain("Kiralık vitrin aboneliği");
   });

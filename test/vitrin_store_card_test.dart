@@ -139,7 +139,7 @@ void main() {
       );
 
       expect(
-        find.text('Premium değil · pilot dönemde ücretsiz yayınla'),
+        find.text('Premium değil · Aylık 299 TL ile yayınla'),
         findsOneWidget,
       );
     },
@@ -354,7 +354,7 @@ void main() {
 
     // Kiralık kartlarda fiyat bilgisi var, ürün sayısı yok
     expect(find.text('2 ürün'), findsNothing);
-    expect(find.text('Pilot dönemde ücretsiz'), findsOneWidget);
+    expect(find.text('Aylık 299 TL'), findsOneWidget);
   });
 }
 

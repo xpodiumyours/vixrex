@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useSyncExternalStore } from "react";
 import {
   type CookieConsent,
@@ -70,7 +71,11 @@ export function CookieBanner() {
       <div className="mx-auto flex max-w-6xl flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="flex-1">
           <p className="text-xs leading-relaxed text-lp-text-alt md:text-sm">
-            Sitemizde temel işlevler için gerekli çerezler kullanılmaktadır. Analitik ve pazarlama çerezleri yalnızca izninizle açılır.
+            Sitemizde temel işlevler için gerekli çerezler kullanılmaktadır. Analitik ve pazarlama çerezleri yalnızca izninizle açılır. Detaylar için{" "}
+            <Link href="/privacy" className="underline hover:text-lp-text">
+              Gizlilik Politikası
+            </Link>
+            &apos;nı inceleyebilirsiniz.
           </p>
         </div>
 

@@ -1,6 +1,7 @@
 import { readFileSync } from "fs";
 import { resolve } from "path";
 import { describe, expect, it } from "vitest";
+import { isTestOrDenemeStore } from "../src/app/sitemap.xml/route";
 
 function yorumsuz(kaynak: string): string {
   return kaynak
@@ -63,5 +64,25 @@ describe("site haritası ve indeksleme kuralları (#345)", () => {
     expect(vitrin).toContain("robots: { index: false, follow: true }");
     expect(urun).toContain("store.is_demo");
     expect(urun).toContain("robots: { index: false, follow: true }");
+  });
+
+  it("test ve deneme vitrinlerini tespit edip haritadan eler", () => {
+    expect(sitemap).toContain("isTestOrDenemeStore");
+    expect(sitemap).toContain("filteredStores");
+
+    // Test ve deneme kelimeleri
+    expect(isTestOrDenemeStore({ slug: "lezzet-test-firmasi", name: "Lezzet Firması" })).toBe(true);
+    expect(isTestOrDenemeStore({ slug: "ahmet-usta", name: "Ahmet Usta Deneme" })).toBe(true);
+    expect(isTestOrDenemeStore({ slug: "debug-magazasi", name: "Mağaza" })).toBe(true);
+    expect(isTestOrDenemeStore({ slug: "demo-butik", name: "Demo Butik" })).toBe(true);
+
+    // Çöp (junk) slug'lar
+    expect(isTestOrDenemeStore({ slug: "cccc", name: "Vitrin" })).toBe(true);
+    expect(isTestOrDenemeStore({ slug: "xxxxx", name: "Vitrin" })).toBe(true);
+    expect(isTestOrDenemeStore({ slug: "asdf", name: "Vitrin" })).toBe(true);
+
+    // Gerçek vitrinler elenmez
+    expect(isTestOrDenemeStore({ slug: "lezzet-doner", name: "Lezzet Döner" })).toBe(false);
+    expect(isTestOrDenemeStore({ slug: "karanfil-cicekcilik", name: "Karanfil Çiçekçilik" })).toBe(false);
   });
 });

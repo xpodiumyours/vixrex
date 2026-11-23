@@ -67,8 +67,7 @@ describe("fiyat tek kaynak sözleşmesi", () => {
     expect(AYLIK_PREMIUM_FIYAT).toContain(
       String(Math.floor(AYLIK_PREMIUM_KURUS / 100)),
     );
-    // Pilot dönemde arayüz fiyat rakamı basmaz; ücret yalnız PayTR tutarında yaşar.
-    expect(AYLIK_PREMIUM_BEDEL).toBe("Pilot dönemde ücretsiz");
+    expect(AYLIK_PREMIUM_BEDEL).toBe("Aylık 299 TL");
   });
 
   it("çalışan kodda elle yazılmış aylık bedel kalmadı", () => {
