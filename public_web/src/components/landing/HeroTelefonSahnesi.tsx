@@ -26,7 +26,7 @@ const SOL_KARTLAR: CamKart[] = [
   {
     Ikon: InstagramIkonu,
     baslik: "Instagram",
-    alt: "Sosyal medyada sizi keşfetsinler",
+    alt: "Sosyal medyada seni keşfetsinler",
     renk: "bg-gradient-to-br from-[#F58529] via-[#DD2A7B] to-[#8134AF] text-white",
   },
 ];
@@ -35,7 +35,7 @@ const SAG_KARTLAR: CamKart[] = [
   {
     Ikon: RandevuIkonu,
     baslik: "Randevu",
-    alt: "Kolay randevu oluşturun",
+    alt: "Kolay randevu aldır",
     renk: "bg-[#FF2D78] text-white",
   },
   {
@@ -71,7 +71,7 @@ function ElYazisiNot({ metin, yon }: { metin: string; yon: "sol" | "sag" }) {
   return (
     <div
       aria-hidden="true"
-      className={`hidden w-[168px] md:block ${solTaraf ? "text-left" : "text-right"}`}
+      className={`hidden w-[195px] md:block ${solTaraf ? "text-left" : "text-right"}`}
     >
       <p
         className={`text-[15px] font-bold italic leading-snug text-white/80 ${
@@ -151,14 +151,14 @@ export function HeroTelefonSahnesi({
 
         <div className="absolute left-0 top-[4%] z-20 hidden flex-col items-start gap-3 md:flex">
           <CamKartGorunumu kart={SOL_KARTLAR[0]} />
-          <ElYazisiNot metin="Tüm bilgileriniz tek vitrinde" yon="sol" />
+          <ElYazisiNot metin="Tüm bilgilerin tek vitrinde" yon="sol" />
           <CamKartGorunumu kart={SOL_KARTLAR[1]} />
         </div>
 
         <div className="absolute right-0 top-[6%] z-20 hidden flex-col items-end gap-3 md:flex">
           <CamKartGorunumu kart={SAG_KARTLAR[0]} />
           <ElYazisiNot
-            metin="İşletmenizi daha fazla kişiye ulaştırın"
+            metin="İşletmeni daha fazla kişiye ulaştır"
             yon="sag"
           />
           <CamKartGorunumu kart={SAG_KARTLAR[1]} />

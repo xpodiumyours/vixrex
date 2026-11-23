@@ -74,7 +74,8 @@ export function StatusBar() {
     return () => { aktif = false; };
   }, [statusVersion]);
 
-  if (yayinda === null && !yukleniyor && !slug) return null;
+  if (!slug) return null;
+  if (yayinda === null && !yukleniyor) return null;
 
   async function linkiKopyala() {
     if (!slug) return;
@@ -89,7 +90,7 @@ export function StatusBar() {
           {yukleniyor ? "Yükleniyor…" : yayinda === null ? "Vitrin durumu" : yayinda ? "Yayında" : "Yayında değil"}
         </div>
         <p className="hidden min-w-0 flex-1 truncate text-[12px] font-semibold text-lp-muted min-[901px]:block">
-          {yayinda && slug ? `vixrex.com/v/${slug}` : yayinda === false ? "Vitrininiz henüz yayınlanmadı" : yukleniyor ? "Vitrin bilgileri yükleniyor" : "Vitrin bilgisi doğrulanamadı"}
+          {yayinda && slug ? `vixrex.com/v/${slug}` : yayinda === false ? "Vitrinin henüz yayınlanmadı" : yukleniyor ? "Vitrin bilgileri yükleniyor" : "Vitrin bilgisi doğrulanamadı"}
         </p>
 
         {yayinda && slug ? (

@@ -65,6 +65,10 @@ export function HeroSection({
           </Link>
           <Link
             href="#nasil-calisir"
+            onClick={(e) => {
+              e.preventDefault();
+              document.getElementById("nasil-calisir")?.scrollIntoView({ behavior: "smooth" });
+            }}
             className="text-[14px] font-bold text-white/70 transition-colors hover:text-white"
           >
             Nasıl Çalışır?

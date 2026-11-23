@@ -517,6 +517,8 @@ export default async function StorePage(props: PageProps) {
   }
 
   const cookieStore = await cookies();
+  const sp = await props.searchParams;
+  const editorNiyeti = sp.editor === "1" || sp.owner === "true";
   // DİKKAT: bu çerezin TAMAMI (imzalı paket), oturum tokenının kendisi DEĞİL.
   // Gerçek 64 hex karakterlik token paketin içindedir ve yalnız
   // verifyOwnerSession() ile çıkarılır. İkisine aynı ad verilirse RPC'ye
@@ -541,8 +543,6 @@ export default async function StorePage(props: PageProps) {
     if (!draft) {
       isOwnerMode = false;
     } else {
-      const sp = await props.searchParams;
-      const editorNiyeti = sp.editor === "1" || sp.owner === "true";
       if (!editorNiyeti && (await getStoreData(params.slug))) {
         isOwnerMode = false;
       }
@@ -955,6 +955,7 @@ export default async function StorePage(props: PageProps) {
         isDemo={Boolean(store.is_demo)}
       />
       {!isOwnerMode &&
+      !editorNiyeti &&
       ownerSession &&
       draft?.store_id === ownerSession.storeId &&
       draft.slug === store.slug ? (

@@ -44,7 +44,7 @@ describe("Flutter Web ↔ Next.js tek-shell paritesi", () => {
     expect(appBoundary).toContain("vixrex-app-shell");
     expect(kesfet).not.toContain("<StatusBar");
     expect(vitrinEditor).not.toContain("sticky top-0 z-20");
-    expect(statusBar).toContain("Vitrininiz henüz yayınlanmadı");
+    expect(statusBar).toContain("Vitrinin henüz yayınlanmadı");
     expect(statusBar).toContain("Vitrini yayınla");
     expect(statusBar).toContain("Kopyala");
     expect(statusBar).toContain("QR");

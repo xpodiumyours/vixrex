@@ -200,6 +200,22 @@ export function OwnerProductManager({
     [categories, fetchedTemplateKeys],
   );
 
+  const normalizedCategories = useMemo(() => {
+    const gorulen = new Set<string>();
+    const liste: typeof resolvedCategories = [];
+    for (const c of resolvedCategories) {
+      const duzeltilmisAd = (c.name || "")
+        .replace(/\s*\/\s*/g, " > ")
+        .replace(/\s*>\s*/g, " > ")
+        .trim();
+      const anahtar = duzeltilmisAd.toLowerCase();
+      if (!anahtar || gorulen.has(anahtar)) continue;
+      gorulen.add(anahtar);
+      liste.push({ ...c, name: duzeltilmisAd });
+    }
+    return liste;
+  }, [resolvedCategories]);
+
   useEffect(() => {
     let cancelled = false;
     const sor = async () => {
@@ -818,7 +834,7 @@ export function OwnerProductManager({
           {(filterText || filterCategory || yalnizTaslak) && <span className="self-center text-xs text-[var(--owner-muted)]">{filteredProducts.length}/{products.length}</span>}
         </div>
         <div className="flex flex-wrap gap-2">
-          {[{ id: "", name: "Tümü" }, ...resolvedCategories].map((cip) => (
+          {[{ id: "", name: "Tümü" }, ...normalizedCategories].map((cip) => (
             <button
               key={cip.id || "tumu"}
               type="button"

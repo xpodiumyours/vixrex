@@ -9,9 +9,8 @@ describe("Vitrinim ve Yayinla Google giris yasagi sozlesmesi", () => {
   const appPage = oku("src/app/app/page.tsx");
   const landing = oku("src/components/landing/LandingAsistanSohbeti.tsx");
 
-  it("app/page.tsx icinde /giris veya /kayit zorla yonlendirmesi yok", () => {
-    expect(appPage).not.toContain('router.push("/giris")');
-    expect(appPage).not.toContain('router.replace("/giris")');
+  it("app/page.tsx icinde oturumu kapali kullanici icin /giris yonlendirmesi var", () => {
+    expect(appPage).toContain('router.replace("/giris")');
     expect(appPage).not.toContain('router.push("/kayit")');
   });
 

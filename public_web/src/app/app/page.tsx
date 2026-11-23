@@ -239,7 +239,12 @@ export default function AppPage() {
           session = null;
         }
       }
-      if (session) setUser(session.user);
+      if (!session) {
+        setYukleniyor(false);
+        router.replace("/giris");
+        return;
+      }
+      setUser(session.user);
 
       // PR3-C11: hesap sonrası yerel landing başlangıcını tek active conversation'a aktar
       await importLandingFlowStateIfNeeded();
