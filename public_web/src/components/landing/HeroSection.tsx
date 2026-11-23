@@ -197,7 +197,7 @@ export function HeroSection({
             >
               <div className="flex h-[52px] flex-1 items-center overflow-hidden rounded-2xl border border-white/[0.12] bg-white/[0.06]">
                 <span className="hidden whitespace-nowrap px-4 text-[14px] font-bold text-white/60 sm:inline">{adresOneki}</span>
-                <span className="px-4 text-[14px] font-bold text-white/60 sm:hidden">/v/</span>
+                <span aria-hidden="true" className="px-4 text-[14px] font-bold text-white/60 sm:hidden">/v/</span>
                 <input
                   type="text"
                   name="isletme"

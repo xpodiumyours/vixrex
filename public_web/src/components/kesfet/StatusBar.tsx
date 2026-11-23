@@ -74,6 +74,8 @@ export function StatusBar() {
     return () => { aktif = false; };
   }, [statusVersion]);
 
+  if (yayinda === null && !yukleniyor && !slug) return null;
+
   async function linkiKopyala() {
     if (!slug) return;
     await navigator.clipboard.writeText(`${window.location.origin}/v/${slug}`);

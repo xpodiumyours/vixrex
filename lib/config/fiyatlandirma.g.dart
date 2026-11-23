@@ -11,14 +11,15 @@ const String paraBirimi = 'TRY';
 const String aylikPremiumFiyat = '299 TL';
 
 /// Aylık bedel cümlesi, ör. Aylık 299 TL.
-const String aylikPremiumBedel = 'Aylık 299 TL';
+const String aylikPremiumBedel = 'Pilot dönemde ücretsiz';
 
 /// Premium olmayan vitrin kartı rozeti.
-const String premiumDegilRozet = 'Premium değil · Aylık 299 TL ile yayınla';
+const String premiumDegilRozet =
+    'Premium değil · pilot dönemde ücretsiz yayınla';
 
 /// Yayın çağrısı düğmesi.
-const String premiumIleYayinla = 'Premium ile yayınla — aylık 299 TL';
+const String premiumIleYayinla = 'Yayınla — pilot dönemde ücretsiz';
 
 /// Yayın kapısı uyarısı.
 const String yayinKapisiUyarisi =
-    'Bu hazır vitrin yalnız premium üyelikle yayınlanır. Aylık 299 TL ile devam et.';
+    'Bu hazır vitrin yalnız premium üyelikle yayınlanır. Pilot dönemde ücretsiz.';

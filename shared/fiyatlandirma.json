@@ -4,11 +4,11 @@
   "paraBirimi": "TRY",
   "paraBirimiSimgesi": "TL",
   "metinKaliplari": {
-    "aylikBedel": "Aylık {fiyat}",
-    "premiumDegilRozet": "Premium değil · {aylikBedel} ile yayınla",
-    "premiumIleYayinla": "Premium ile yayınla — aylık {fiyat}",
-    "yayinKapisiUyarisi": "Bu hazır vitrin yalnız premium üyelikle yayınlanır. {aylikBedel} ile devam et.",
-    "odemeAciklamasi": "{aylikBedel} · Kiralık vitrininizi yayınlamak için premium üyelik.",
-    "odemeSepetBasligi": "VixRex Premium — Aylık"
+    "aylikBedel": "Pilot dönemde ücretsiz",
+    "premiumDegilRozet": "Premium değil · pilot dönemde ücretsiz yayınla",
+    "premiumIleYayinla": "Yayınla — pilot dönemde ücretsiz",
+    "yayinKapisiUyarisi": "Bu hazır vitrin yalnız premium üyelikle yayınlanır. Pilot dönemde ücretsiz.",
+    "odemeAciklamasi": "Pilot dönemde ücretsiz · Kiralık vitrininizi yayınlamak için premium üyelik.",
+    "odemeSepetBasligi": "Vixrex Premium — Aylık"
   }
 }

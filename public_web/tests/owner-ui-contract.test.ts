@@ -35,14 +35,13 @@ const YONETIM_SAYFALARI = [
 
 describe("sahip yönetim arayüzü sözleşmesi", () => {
   it("üç palet ayrı kalıyor — yönetim, landing ve canlı vitrin", () => {
-    // Bu ayrım kazara değil: yayındaki vitrinlerin rengi (#38A0E4) yönetim
-    // ve landing renginden (#147DFF) bağımsız olmak zorunda. "Tasarımı
-    // tekleştirelim" diye bunları birleştiren bir değişiklik, canlıdaki
-    // bütün vitrinlerin görünümünü sessizce değiştirir.
+    // Marka mavisi tektir: yönetim, landing ve yayındaki vitrin aynı
+    // #147DFF değerini kullanır. Palet değişirse üç yüzey birlikte değişir;
+    // sessizce ayrışmış ikinci bir mavi kalmaz.
     expect(globals).toMatch(/\.owner-shell\s*\{/);
     expect(globals).toMatch(/--owner-primary:\s*#147DFF/);
     expect(globals).toMatch(/--color-lp-primary:\s*#147DFF/);
-    expect(globals).toMatch(/--primary:\s*#38A0E4/);
+    expect(globals).toMatch(/--primary:\s*#147DFF/);
     expect(globals).toMatch(/\.vitrin-shell\s*\{/);
   });
 

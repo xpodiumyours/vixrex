@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { blogYayindaMi } from "@/data/blogYazilari";
+import { VixrexAvatar } from "@/app/v/[slug]/components/VixrexAvatar";
 
 /**
  * Platform altbilgisi (envanter §2.11) — aynı zamanda #346'nın çözümü.
@@ -17,9 +18,10 @@ export function SiteFooter() {
   return (
     <footer className="bg-lp-bg-editor py-[60px]">
       <div className="mx-auto flex w-full max-w-[1200px] flex-col items-center gap-4 px-5 text-center">
-        <p className="text-[16px] font-black tracking-[8px] text-lp-primary/80">
-          VIXREX
-        </p>
+        <div className="flex items-center gap-2.5 text-lp-text">
+          <VixrexAvatar size={32} decorative />
+          <span className="text-[20px] font-black tracking-[-0.5px]">Vixrex</span>
+        </div>
         <p className="text-[14px] font-semibold text-lp-muted">
           İşletmenizin paylaşılabilir dijital vitrini
         </p>

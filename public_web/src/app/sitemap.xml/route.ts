@@ -160,7 +160,6 @@ export async function GET() {
           ]
         : []),
       { yol: "/privacy", oncelik: "0.3", siklik: "yearly" },
-      { yol: "/legal/privacy", oncelik: "0.3", siklik: "yearly" },
       { yol: "/legal/terms", oncelik: "0.3", siklik: "yearly" },
     ];
 
@@ -190,7 +189,6 @@ export async function GET() {
     <priority>0.8</priority>
   </url>`;
 
-        const storeName = String(store.name || "").trim();
         const storeProducts = productsByStoreId.get(store.id) || [];
         for (const product of storeProducts) {
           const productLastMod = product.updated_at
@@ -223,37 +221,11 @@ export async function GET() {
                 })
                 .slice(0, MAX_PRODUCT_IMAGES);
 
-          const imageTitle = [product.name, storeName].filter(Boolean).join(" - ");
-          const captionSource = product.description || imageTitle;
-          const imageCaption = captionSource
-            ? Array.from(captionSource).slice(0, 200).join("")
-            : "";
-          const geoParts = [
-            String(store.district_name || "").trim(),
-            String(store.province_name || "").trim(),
-          ].filter(Boolean);
-          const imageGeo = geoParts.length > 0 ? `${geoParts.join(", ")}, Türkiye` : "";
-
           const imageTags = productImages
             .map(
               (imgUrl) => `
     <image:image>
-      <image:loc>${escapeXml(imgUrl)}</image:loc>${
-        imageTitle
-          ? `
-      <image:title>${escapeXml(imageTitle)}</image:title>`
-          : ""
-      }${
-        imageCaption
-          ? `
-      <image:caption>${escapeXml(imageCaption)}</image:caption>`
-          : ""
-      }${
-        imageGeo
-          ? `
-      <image:geo_location>${escapeXml(imageGeo)}</image:geo_location>`
-          : ""
-      }
+      <image:loc>${escapeXml(imgUrl)}</image:loc>
     </image:image>`,
             )
             .join("");

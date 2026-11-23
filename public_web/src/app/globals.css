@@ -77,9 +77,9 @@ html:has(.vixrex-koyu-yuzey) {
   --font-vitrin-display: var(--font-vitrin-display-src), 'Instrument Serif', Georgia, serif;
   
   /* Brand Palette (Light Mode Default) */
-  --primary: #38A0E4;
+  --primary: #147DFF;
   --primary-dark: #1E6FA8;
-  --secondary: #38A0E4;
+  --secondary: #147DFF;
   --bg-app: #071322;
   --surface: #0E1B2E;
   --surface-soft: #162A42;
@@ -87,7 +87,7 @@ html:has(.vixrex-koyu-yuzey) {
   --text-soft: #C4D1E3;
   --text-muted: #8FA6BE;
   --border: #25415F;
-  --border-focus: #38A0E4;
+  --border-focus: #147DFF;
   --success: #10B981;
   --danger: #EF4444;
   --warning: #F59E0B;
@@ -109,7 +109,7 @@ html:has(.vixrex-koyu-yuzey) {
     --text-soft: #C4D1E3;
     --text-muted: #8FA6BE;
     --border: #25415F;
-    --border-focus: #38A0E4;
+    --border-focus: #147DFF;
   }
 }
 

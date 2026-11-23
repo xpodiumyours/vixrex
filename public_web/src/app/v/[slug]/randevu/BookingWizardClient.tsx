@@ -310,7 +310,7 @@ export default function BookingWizardClient({ store }: BookingWizardClientProps)
                       </span>
                     )}
                   </div>
-                  <div className="text-sm font-extrabold text-[#38A0E4] shrink-0">
+                  <div className="text-sm font-extrabold text-[#147DFF] shrink-0">
                     {service.price || "Fiyat Sorun"}
                   </div>
                 </button>

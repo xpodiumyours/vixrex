@@ -55,9 +55,10 @@ describe("Keşfet kartı 'Kirala' CTA'sı", () => {
   });
 
   it("fiyat vaadi vitrin CTA'sıyla aynı", () => {
-    expect(AYLIK_PREMIUM_BEDEL).toBe("Aylık 299 TL");
+    expect(AYLIK_PREMIUM_BEDEL).toBe("Pilot dönemde ücretsiz");
     expect(kart).toContain("{AYLIK_PREMIUM_BEDEL}");
     expect(kart).toContain("14 gün ücretsiz dene");
+    expect(kart).not.toMatch(/\\d+\\s*TL/);
   });
 
   it("kiralık ayrımı is_demo'dan gelen alana bakar", () => {

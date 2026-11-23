@@ -95,17 +95,17 @@ export function PhoneMockupSlaytlari({
         ))}
       </div>
 
-      {/* Vitrin galerisi + fotoğraf şeridi */}
-      <div className="px-3 pt-3">
-        <div className="flex items-center justify-between">
-          <p className="text-[11px] font-black text-white">Vitrin galerisi</p>
-          <span className="rounded-full bg-lp-primary/20 px-2 py-0.5 text-[9px] font-bold text-lp-primary">
-            {profil.galeriUrlleri.length} fotoğraf
-          </span>
-        </div>
-        <div className="mt-1.5 flex gap-1.5">
-          {profil.galeriUrlleri.length > 0 ? (
-            profil.galeriUrlleri.map((url) => (
+      {/* Vitrin galerisi + fotoğraf şeridi — galeri yoksa bölüm hiç çizilmez. */}
+      {profil.galeriUrlleri.length > 0 ? (
+        <div className="px-3 pt-3">
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] font-black text-white">Vitrin galerisi</p>
+            <span className="rounded-full bg-lp-primary/20 px-2 py-0.5 text-[9px] font-bold text-lp-primary">
+              {profil.galeriUrlleri.length} fotoğraf
+            </span>
+          </div>
+          <div className="mt-1.5 flex gap-1.5">
+            {profil.galeriUrlleri.map((url) => (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 key={url}
@@ -114,12 +114,10 @@ export function PhoneMockupSlaytlari({
                 className="h-[72px] flex-1 rounded-lg object-cover"
                 loading="lazy"
               />
-            ))
-          ) : (
-            <div className="h-[72px] flex-1 rounded-lg bg-lp-surface" />
-          )}
+            ))}
+          </div>
         </div>
-      </div>
+      ) : null}
 
       {/* Vitrin hazır — Flutter phone_mockup.dart:520-580: bgLight zemin,
           lp-border kenarlık, radius 14, 12×8 padding; sağda 32×32, %14 alfa

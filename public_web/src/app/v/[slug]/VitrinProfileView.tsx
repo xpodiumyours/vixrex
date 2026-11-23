@@ -1409,7 +1409,7 @@ export default function VitrinProfileView({
                 {AYLIK_PREMIUM_BEDEL}
               </span>
               <span className="mt-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                İlk 14 gün ücretsiz deneme
+                Kiralık vitrin aboneliği
               </span>
               <a
                 href={`/rent-demo?slug=${encodeURIComponent(storeSlug)}`}
