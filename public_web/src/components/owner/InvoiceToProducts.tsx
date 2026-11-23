@@ -1153,7 +1153,7 @@ export default function InvoiceToProducts({
         </label>
         <p className="fatura-aciklama">Fatura fotoğrafını (1–3 sayfa) veya PDF dosyasını seç. Toplam en fazla 4 MB. Başka belge gerekmiyor.</p>
         <p id="fatura-veri-aktarim-bilgisi" className="fatura-aciklama">
-          Yüklediğiniz belge yalnızca ürün satırlarını okumak ve ürün kartlarınızı hazırlamak amacıyla güvenli şekilde işlenir.
+          Yüklediğin belge yalnızca ürün satırlarını okumak ve ürün kartlarını hazırlamak amacıyla güvenli şekilde işlenir.
           Belgede tedarikçi veya diğer kişilere ait bilgiler bulunabileceğinden, yalnız bu işlem için gerekli belgeyi yükleyin.
         </p>
         {onClose && (

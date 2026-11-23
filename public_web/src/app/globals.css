@@ -1,6 +1,10 @@
 /* VixRex Premium Style System */
 @import "tailwindcss";
 
+html {
+  scroll-behavior: smooth;
+}
+
 /* ---------------------------------------------------------------------------
    @theme — Tailwind v4 token kaydi (2026-08-26, #344)
    ---------------------------------------------------------------------------

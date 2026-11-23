@@ -57,7 +57,7 @@ const List<VitrinAlani> vitrinAlanlari = [
   VitrinAlani(
     anahtar: 'heroRozet',
     tip: 'metin',
-    etiket: 'Hero Rozet Metni',
+    etiket: 'Üst Tanıtım Rozeti',
     kolon: 'hero_badge',
     bolum: 'hero',
     kalite: true,

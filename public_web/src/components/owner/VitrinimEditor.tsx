@@ -44,7 +44,7 @@ type FieldSpec = {
    *  etiketini `vitrinFieldSchema`'dan alır — iki istemci aynı ismi görsün. */
   label?: string;
   placeholder?: string;
-  kind?: "text" | "textarea" | "url" | "email" | "tel" | "select" | "toggle";
+  kind?: "text" | "textarea" | "url" | "email" | "tel" | "select" | "toggle" | "hidden";
   required?: boolean;
   options?: readonly string[];
 };
@@ -85,8 +85,8 @@ const SECTIONS: Array<{ title: string; required?: boolean; fields: FieldSpec[] }
       { key: "haritaEtiketi", placeholder: "Örn: Çarşı içi" },
       { key: "calismaSaatleri", placeholder: "Pzt–Cmt 09.00–19.00", kind: "textarea" },
       { key: "yolTarifiGoster", kind: "toggle" },
-      { key: "enlem", placeholder: "41.015", kind: "text" },
-      { key: "boylam", placeholder: "28.978", kind: "text" },
+      { key: "enlem", kind: "hidden" },
+      { key: "boylam", kind: "hidden" },
     ],
   },
   {
@@ -124,7 +124,7 @@ const SECTIONS: Array<{ title: string; required?: boolean; fields: FieldSpec[] }
       { key: "blogBaslik", placeholder: "Yazılar" },
       { key: "sssUstBaslik", placeholder: "Merak edilenler" },
       { key: "sssBaslik", placeholder: "Sıkça sorulan sorular" },
-      { key: "sssAciklama", kind: "textarea", placeholder: "Müşterilerinizin sık sorduğu konular" },
+      { key: "sssAciklama", kind: "textarea", placeholder: "Müşterilerinin sık sorduğu konular" },
       { key: "haritaLinki", kind: "url", placeholder: "https://" },
       { key: "referansLinki", kind: "url", placeholder: "https://" },
     ],
@@ -420,7 +420,7 @@ export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode 
       <div className="mx-auto w-full max-w-[1200px] px-4 py-[18px] min-[901px]:px-8 min-[901px]:py-7">
         <div className="mb-2 flex items-center justify-between gap-4">
           <h1 className="text-[24px] font-black leading-[1.15]">{store.is_published ? "Vixrex Düzenle" : "Vixrex Oluştur"}</h1>
-          <span className="flex shrink-0 items-center gap-1 rounded-full bg-lp-primary px-2.5 py-[5px] text-[12px] font-extrabold text-lp-on-primary">
+          <span className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-lp-primary px-3 py-1.5 text-[12px] font-extrabold text-lp-on-primary">
             <StorefrontIkonu boyut={13} /> Vixrex ile
           </span>
         </div>
@@ -467,6 +467,7 @@ export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode 
                       {section.fields.map((field) => {
                         const id = `vitrin-${field.key}`;
                         const value = valueFor(draft, field.key);
+                        if (field.kind === "hidden") return null;
                         const common = "min-h-12 w-full rounded-xl border border-lp-border bg-lp-bg-light px-4 text-[14px] font-semibold text-lp-text outline-none transition placeholder:text-lp-muted/70 focus:border-lp-secondary focus:ring-2 focus:ring-lp-primary/25";
                         return (
                           <div key={field.key}>
@@ -480,7 +481,7 @@ export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode 
                             ) : field.kind === "textarea" ? (
                               <textarea id={id} value={value} placeholder={field.placeholder} onChange={(event) => updateLocal(field.key, event.target.value)} onBlur={() => save(field.key)} className={`${common} min-h-24 resize-y py-3`} />
                             ) : field.kind === "select" ? (
-                              <select id={id} value={value} onChange={(event) => updateLocal(field.key, event.target.value)} onBlur={() => save(field.key)} className={common}><option value="">Seçiniz</option>{field.options?.map((option) => <option key={option} value={option}>{option}</option>)}</select>
+                              <select id={id} value={value} onChange={(event) => updateLocal(field.key, event.target.value)} onBlur={() => save(field.key)} className={common}><option value="">Seç</option>{field.options?.map((option) => <option key={option} value={option}>{option}</option>)}</select>
                             ) : field.kind === "toggle" ? (
                               <label htmlFor={id} className="flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border border-lp-border bg-lp-bg-light px-4">
                                 <input id={id} type="checkbox" checked={boolFor(draft, field.key)} onChange={(event) => { updateBool(field.key, event.target.checked); void saveBool(field.key, event.target.checked); }} className="h-5 w-5 shrink-0 accent-[#147DFF]" />
@@ -503,7 +504,17 @@ export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode 
                           <Link href={`/v/${store.slug}/blog-yonetim`} className={`${editorButtonClass} flex items-center justify-center`}>Blog yönetimi</Link>
                         </div>
                       ) : null}
-                      {section.title === "Konum ve saatler" ? <button type="button" onClick={() => void konumuAl()} disabled={locating} className={`${editorButtonClass} w-full`}>{locating ? "Konum alınıyor…" : "📍 Konumumu al (GPS)"}</button> : null}
+                      {section.title === "Konum ve saatler" ? (
+                        <div className="space-y-2">
+                          <button type="button" onClick={() => void konumuAl()} disabled={locating} className={`${editorButtonClass} w-full`}>{locating ? "Konum alınıyor…" : "📍 Konumumu al (GPS)"}</button>
+                          {valueFor(draft, "enlem") && valueFor(draft, "boylam") ? (
+                            <p className="flex items-center gap-1.5 text-xs text-emerald-400">
+                              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden="true" />
+                              Konum haritada işaretli
+                            </p>
+                          ) : null}
+                        </div>
+                      ) : null}
                       {section.title === "Görseller" ? <div className="pt-2"><h3 className="mb-3 text-[13px] font-black text-lp-text">Galeri</h3><GalleryEditor inline slug={store.slug} items={galleryItems} onSaved={(items) => { setDraft((current) => ({ ...current, gallery_items: items })); void onRefresh(); }} onClose={() => { void onRefresh(); }} /></div> : null}
                     </div>
                   ) : null}
@@ -525,7 +536,7 @@ export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode 
           <div id="yasal-yayin-bolumu" className="scroll-mt-6 px-6 py-6">
             <div className={`rounded-[18px] border bg-lp-surface-soft p-4 ${legalAccepted ? "border-lp-primary" : "border-lp-border"}`}>
               <h2 className="flex items-center gap-2 text-[16px] font-black"><OnayIkonu boyut={20} className="text-lp-primary" /> Yasal Bilgilendirme ve Yayınlama Onayı</h2>
-              <p className="mt-2 text-[12px] font-medium leading-5 text-lp-muted">Taslağınızı onay vermeden düzenleyebilirsiniz. Bu beyanlar yalnızca herkese açık yayınlama için gereklidir.</p>
+              <p className="mt-2 text-[12px] font-medium leading-5 text-lp-muted">Taslağını onay vermeden düzenleyebilirsin. Bu beyanlar yalnızca herkese açık yayınlama için gereklidir.</p>
               <div className="mt-4 space-y-3 text-[12.5px] font-semibold leading-5 text-lp-text">
                 <label className="flex cursor-pointer items-start gap-3">
                   <input type="checkbox" aria-label="Aydınlatma metnini okudum"

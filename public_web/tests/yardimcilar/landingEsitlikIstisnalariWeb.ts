@@ -342,7 +342,7 @@ export const LANDING_ESITLIK_ISTISNALARI_WEB: Istisna[] = [
     neden: HERO_REFERANS_DEKOR,
   },
   {
-    metin: "Kolay randevu oluşturun",
+    metin: "Kolay randevu aldır",
     neden: HERO_REFERANS_DEKOR,
   },
   {
@@ -350,7 +350,7 @@ export const LANDING_ESITLIK_ISTISNALARI_WEB: Istisna[] = [
     neden: HERO_REFERANS_DEKOR,
   },
   {
-    metin: "İşletmenizi daha fazla kişiye ulaştırın",
+    metin: "İşletmeni daha fazla kişiye ulaştır",
     neden: HERO_REFERANS_DEKOR,
   },
   {
