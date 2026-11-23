@@ -60,6 +60,17 @@ export const ASISTAN_KARSILAMA = {
   dugme: metin("welcome_buton"),
 };
 
+export const ASISTAN_SAHNE_METINLERI = {
+  yeniSohbet: "+ Yeni sohbet",
+  sahneBaslik: "Vitrinini birlikte kuralım.",
+  sahneAciklama:
+    "Dükkânının adını yaz, fatura fotoğrafı yükle ya da hazır vitrinle başla.",
+  hazirVitrinAciklama: "Sektörüne uygun vitrini hemen dene",
+  sifirdanAciklama: "Adım adım işletme bilgilerini gir",
+  bakiniyorumAciklama: "Keşfet sayfasındaki canlı örnekleri gör",
+  girdiYerTutucu: "İşletmeni anlat ya da dükkân adını yaz...",
+};
+
 const CEVAP_ANAHTARLARI: Readonly<Record<string, keyof AsistanCevaplari>> = {
   isletmeAdi: "name",
   kategori: "kategori",

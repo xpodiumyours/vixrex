@@ -330,7 +330,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   {
     anahtar: "enlem",
     tip: "sayi",
-    etiket: "Konum — Enlem",
+    etiket: "Mağaza Konumu",
     neden: "Haritadaki iğnenin tam yeri. Adres tam bulunamıyorsa bunu düzeltir.",
     kolon: "latitude",
     bolum: "contact",
@@ -340,7 +340,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   {
     anahtar: "boylam",
     tip: "sayi",
-    etiket: "Konum — Boylam",
+    etiket: "Mağaza Konumu",
     neden: "Enlemle birlikte çalışır; ikisi olmadan harita tam oturmaz.",
     kolon: "longitude",
     bolum: "contact",
@@ -410,7 +410,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
     anahtar: "bantFiyat",
     tip: "metin",
     etiket: "Kampanya Fiyat Metni",
-    neden: "Fiyatı yazarsan müşteri sormadan karar verir. Örn: 499 TL'den başlayan.",
+    neden: "Fiyatı yazarsan müşteri sormadan karar verir. Örn: Fiyat bilgisi yazın.",
     kolon: "featured_banner_price_text",
     bolum: "featured",
     maxUzunluk: 30,

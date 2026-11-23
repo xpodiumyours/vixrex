@@ -146,9 +146,9 @@ describe("GET /sitemap.xml product URLs", () => {
     expect(xml).toContain(
       "<image:loc>https://cdn.vixrex.test/urun.jpg?w=800&amp;h=800</image:loc>",
     );
-    expect(xml).toContain(
-      "<image:title>Çay &quot;Özel&quot; &amp; Kahve - Kral &amp; Ticaret &lt;A.Ş.&gt;</image:title>",
-    );
+    expect(xml).not.toContain("<image:title>");
+    expect(xml).not.toContain("<image:caption>");
+    expect(xml).not.toContain("<image:geo_location>");
     expect(xml).toContain(
       "<image:loc>https://cdn.vixrex.test/fatura-1.jpg</image:loc>",
     );

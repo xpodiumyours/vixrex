@@ -26,7 +26,7 @@ const ctaBlock = viewSource.slice(
  * orası reCAPTCHA doğrulamasını yapıp asıl POST'u gönderiyor (bkz.
  * app/rent-demo/page.tsx, app/api/rent-demo/route.ts).
  */
-describe("demo vitrin 'Bu vitrini kirala' CTA — Aylık 299 TL, 14 gün deneme, güvenli köprü", () => {
+describe("demo vitrin 'Bu vitrini kirala' CTA — pilot dönemde ücretsiz, güvenli köprü", () => {
   it("güvenli köprü sayfasına (/rent-demo) bağlanır, doğrudan API'ye veya getAppUrl()'e değil", () => {
     expect(ctaBlock).toContain("/rent-demo?slug=");
     expect(ctaBlock).not.toContain("/api/rent-demo?slug=");
@@ -38,10 +38,10 @@ describe("demo vitrin 'Bu vitrini kirala' CTA — Aylık 299 TL, 14 gün deneme,
     expect(ctaBlock).not.toContain("+ KDV");
   });
 
-  it("dürüst fiyat bilgisi var: tek kaynaktan gelen aylık bedel + 'İlk 14 gün ücretsiz deneme'", () => {
+  it("dürüst fiyat bilgisi var: tek kaynaktan gelen bedel cümlesi + abonelik açıklaması", () => {
     expect(AYLIK_PREMIUM_BEDEL).toBe("Aylık 299 TL");
     expect(ctaBlock).toContain("{AYLIK_PREMIUM_BEDEL}");
-    expect(ctaBlock).toContain("İlk 14 gün ücretsiz deneme");
+    expect(ctaBlock).toContain("Kiralık vitrin aboneliği");
   });
 
   it("vitrindeki fiyatların örnek ürün fiyatı olduğunu söyler", () => {

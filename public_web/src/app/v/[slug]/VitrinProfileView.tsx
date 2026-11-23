@@ -1399,17 +1399,13 @@ export default function VitrinProfileView({
               ))}
             </ul>
 
-            {/* Fiyat modeli (spec 2026-08-17): 14 gün ücretsiz deneme,
-                sonra aylık 299 TL. Ödeme tahsilatı (PayTR) ayrı bir
-                PR'dadır — bu bant fiyatı dürüstçe gösterir, kirala
-                akışının kendisi değişmez. Vitrindeki ürün fiyatları
-                örnek içeriktir, kira bedeli değildir. */}
+            {/* Fiyat modeli: Pilot dönemde ücretsiz kullanım, tek kaynaktan gelen abonelik bilgisi. */}
             <div className="mt-8 inline-flex flex-col items-center rounded-2xl border border-blue-500/25 bg-[#0B1120] px-8 py-6">
               <span className="text-3xl font-extrabold tracking-tight text-white">
                 {AYLIK_PREMIUM_BEDEL}
               </span>
               <span className="mt-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                İlk 14 gün ücretsiz deneme
+                Kiralık vitrin aboneliği
               </span>
               <a
                 href={`/rent-demo?slug=${encodeURIComponent(storeSlug)}`}

@@ -117,7 +117,7 @@ const SECTIONS: Array<{ title: string; required?: boolean; fields: FieldSpec[] }
       { key: "bantBaslik", placeholder: "Örn: Sezon indirimi" },
       { key: "bantAciklama", kind: "textarea", placeholder: "Kampanyayı bir iki cümleyle anlatın" },
       { key: "bantGorsel", kind: "url", placeholder: "Görsel bağlantısı" },
-      { key: "bantFiyat", placeholder: "Örn: 499 TL'den başlayan" },
+      { key: "bantFiyat", placeholder: "Örn: Fiyat bilgisi yazın" },
       { key: "kategoriBolumBaslik", placeholder: "Kategoriler" },
       { key: "urunBolumBaslik", placeholder: "Ürünler" },
       { key: "blogUstBaslik", placeholder: "Bilgi köşesi" },
@@ -391,9 +391,9 @@ export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode 
         if (cozum.districtName) { updateLocal("ilce", cozum.districtName); await save("ilce"); }
         const mevcutAdres = valueFor(draft, "adres").trim();
         if (!mevcutAdres && cozum.address) { updateLocal("adres", cozum.address); await save("adres"); }
-        setMessage("Konum alındı — enlem/boylam ve il/ilçe güncellendi.");
+        setMessage("Konum haritada işaretlendi ve il/ilçe güncellendi.");
       } catch (e) {
-        setMessage(e instanceof Error ? e.message : "Konum alındı, adres çözümlenemedi. Enlem/boylam kaydedildi.");
+        setMessage(e instanceof Error ? e.message : "Konum haritada işaretlendi, açık adresi istersen elle yazabilirsin.");
       }
     } catch (e) {
       const msg = e instanceof GeolocationPositionError ? e.message : "Konum alınamadı. İzin verin ve tekrar deneyin.";

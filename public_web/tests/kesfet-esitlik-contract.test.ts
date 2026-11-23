@@ -78,6 +78,7 @@ describe("Keşfet eşitlik sözleşmesi", () => {
       "utf-8"
     );
     expect(AYLIK_PREMIUM_BEDEL).toBe("Aylık 299 TL");
+    expect(kart).not.toMatch(/\\d+\\s*TL/);
     expect(kart).toContain("{AYLIK_PREMIUM_BEDEL}");
     expect(kart).toContain("14 gün ücretsiz dene");
     // Flutter: VitrinStoreCard içinde aynı metinler

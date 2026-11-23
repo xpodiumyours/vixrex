@@ -82,4 +82,25 @@ describe("vitrin görünüm kartelası", () => {
     expect(kart).toContain("const stokSinirinda = maxQuantity != null && totalProductCartQty >= maxQuantity;");
     expect(kart).toContain("if (!trackingEnabled)");
   });
+
+  it("ürün kartı, hızlı inceleme ve detay sayfasında fotoğraf varken beyaz stüdyo zemini, fotoğraf yokken veya telif kalkanındayken koyu zemin kullanır", () => {
+    const kart = kaynak("src/app/v/[slug]/ProductCatalog.tsx");
+    const pencere = kaynak("src/components/ProductQuickViewBase.tsx");
+    const detay = kaynak("src/components/ProductDetailExperienceBase.tsx");
+
+    expect(kart).toContain(
+      '${image && !(urunTelifBekliyor && !isOwnerSession) ? "bg-white" : "bg-slate-950"}',
+    );
+    expect(kart).not.toContain("from-[#0B1120]/45");
+
+    expect(pencere).toContain(
+      '${!telifKalkanli && currentImage ? "bg-white" : "bg-slate-900"}',
+    );
+    expect(pencere).toContain("rounded-lg border bg-white transition");
+
+    expect(detay).toContain(
+      '${!telifKalkanli && currentImage ? "bg-white" : "bg-slate-950"}',
+    );
+    expect(detay).toContain("rounded-xl border bg-white transition");
+  });
 });

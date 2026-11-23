@@ -53,9 +53,9 @@ describe("tasarım zemini — ekleyici @theme, next/font ile fontlar", () => {
   });
 
   it("vitrin paleti ayrı kalır — landing renkleri lp- önekiyle yaşar", () => {
-    // 29 canlı vitrin --primary: #38A0E4 ailesini kullanıyor. Landing'in
+    // Canlı vitrin, yönetim ve landing aynı marka mavisini kullanıyor.
     // #147DFF ailesi onu EZMEMELİ; iki palet yan yana durur.
-    expect(globals).toContain("--primary: #38A0E4");
+    expect(globals).toContain("--primary: #147DFF");
     expect(themeBlock).toContain("--color-lp-primary: #147DFF");
     expect(themeBlock).not.toContain("--color-primary:");
   });

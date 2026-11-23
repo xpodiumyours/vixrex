@@ -238,13 +238,22 @@ export default function ProductQuickView({
       }}
     >
       <div
-        className="grid max-h-[94vh] w-full max-w-5xl overflow-y-auto rounded-t-[28px] border border-blue-500/20 bg-[#081321] shadow-[0_30px_100px_rgba(0,0,0,0.6)] sm:max-h-[90vh] sm:grid-cols-[1.02fr_0.98fr] sm:grid-rows-[minmax(0,90vh)] sm:overflow-hidden sm:rounded-[28px]"
+        className="relative grid max-h-[94vh] w-full max-w-5xl overflow-y-auto rounded-t-[28px] border border-blue-500/20 bg-[#081321] shadow-[0_30px_100px_rgba(0,0,0,0.6)] sm:max-h-[90vh] sm:grid-cols-[1.02fr_0.98fr] sm:grid-rows-[minmax(0,90vh)] sm:overflow-hidden sm:rounded-[28px]"
         role="dialog"
         aria-modal="true"
         aria-labelledby="product-quick-view-title"
       >
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute right-4 top-4 z-30 flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-slate-950/80 text-xl text-white backdrop-blur hover:bg-slate-900"
+          aria-label="Hızlı incelemeyi kapat"
+        >
+          ×
+        </button>
+
         <div className="relative bg-slate-950 p-2.5 sm:min-h-[610px]">
-          <div className="relative aspect-[4/5] overflow-hidden rounded-[22px] bg-slate-900 sm:h-full sm:min-h-[590px] sm:aspect-auto">
+          <div className={`relative aspect-[4/5] overflow-hidden rounded-[22px] ${!telifKalkanli && currentImage ? "bg-white" : "bg-slate-900"} sm:h-full sm:min-h-[590px] sm:aspect-auto`}>
             {telifKalkanli ? (
               <TelifKalkani />
             ) : currentImage ? (
@@ -293,7 +302,7 @@ export default function ProductQuickView({
                     key={`${imageUrl}-${index}`}
                     type="button"
                     onClick={() => setImageIndex(index)}
-                    className={`relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border bg-slate-950/90 transition ${
+                    className={`relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border bg-white transition ${
                       index === imageIndex
                         ? "border-blue-400 ring-2 ring-blue-400/20"
                         : "border-white/15 opacity-75 hover:opacity-100"
@@ -313,14 +322,6 @@ export default function ProductQuickView({
             </>
           ) : null}
 
-          <button
-            type="button"
-            onClick={onClose}
-            className="absolute right-5 top-5 z-30 flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-slate-950/80 text-xl text-white backdrop-blur hover:bg-slate-900"
-            aria-label="Hızlı incelemeyi kapat"
-          >
-            ×
-          </button>
         </div>
 
         <div className="min-h-0 overflow-y-auto p-5 sm:p-8">

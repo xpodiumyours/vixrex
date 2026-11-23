@@ -270,7 +270,7 @@ export default function BookingTrackerClient({ initialAppointment, token }: Book
         <button 
           onClick={fetchLatestInfo}
           disabled={loading}
-          className="text-xs font-bold text-[#38A0E4] hover:text-[#10D8D8] flex items-center gap-1 disabled:opacity-50"
+          className="text-xs font-bold text-[#147DFF] hover:text-[#10D8D8] flex items-center gap-1 disabled:opacity-50"
         >
           {loading ? "Güncelleniyor..." : "Yenile"}
         </button>
@@ -310,7 +310,7 @@ export default function BookingTrackerClient({ initialAppointment, token }: Book
           {appointment.service_price && (
             <div className="flex justify-between">
               <span className="font-bold text-[#64748B]">Hizmet Bedeli</span>
-              <span className="font-extrabold text-[#38A0E4]">{appointment.service_price}</span>
+              <span className="font-extrabold text-[#147DFF]">{appointment.service_price}</span>
             </div>
           )}
           <div className="flex justify-between">
@@ -369,7 +369,7 @@ export default function BookingTrackerClient({ initialAppointment, token }: Book
 
       {/* Reschedule UI form */}
       {showRescheduleForm && (
-        <div className="card space-y-4 bg-white dark:bg-[#131A22] animate-fade-in border-[#38A0E4]/30">
+        <div className="card space-y-4 bg-white dark:bg-[#131A22] animate-fade-in border-[#147DFF]/30">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-extrabold">Yeni Randevu Saati Seçin</h2>
             <button 
@@ -415,7 +415,7 @@ export default function BookingTrackerClient({ initialAppointment, token }: Book
                     setSelectedDate("");
                     setSelectedSlot(null);
                   }}
-                  className="text-[10px] text-[#38A0E4] font-extrabold hover:underline"
+                  className="text-[10px] text-[#147DFF] font-extrabold hover:underline"
                 >
                   Tarihi Değiştir
                 </button>

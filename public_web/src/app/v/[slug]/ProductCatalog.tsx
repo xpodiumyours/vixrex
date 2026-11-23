@@ -455,7 +455,7 @@ export default function ProductCatalog({
                 className="block min-w-0 flex-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
                 aria-label={`${product.name} ${isService ? "hizmetini" : "ürününü"} hızlı incele`}
               >
-                <div className="relative aspect-square w-full overflow-hidden bg-slate-950">
+                <div className={`relative aspect-square w-full overflow-hidden ${image && !(urunTelifBekliyor && !isOwnerSession) ? "bg-white" : "bg-slate-950"}`}>
                   <CatalogProductImage
                     src={image}
                     alt={gorselAlt}
@@ -464,7 +464,6 @@ export default function ProductCatalog({
                     {...{ [TELIF_ANAHTARI]: urunTelifBekliyor }}
                     isOwner={isOwnerSession}
                   />
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0B1120]/45 via-transparent to-transparent" />
                   {rozet ? (
                     <span className={`absolute left-2.5 top-2.5 z-10 max-w-[70%] truncate ${vitrinGorunum.rozet.gorsel} px-2.5 py-1 text-[10px] font-extrabold shadow-md`}>
                       {rozet}

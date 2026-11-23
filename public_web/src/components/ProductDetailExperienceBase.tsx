@@ -255,7 +255,7 @@ export default function ProductDetailExperience({
 
         <div className="grid gap-5 lg:grid-cols-[minmax(0,0.92fr)_minmax(360px,0.78fr)]">
           <div className={`rounded-3xl ${vitrinGorunum.yuzey.panel} p-2.5`}>
-            <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-slate-950">
+            <div className={`relative aspect-[4/5] overflow-hidden rounded-2xl ${!telifKalkanli && currentImage ? "bg-white" : "bg-slate-950"}`}>
               {telifKalkanli ? (
                 <TelifKalkani />
               ) : currentImage ? (
@@ -280,7 +280,7 @@ export default function ProductDetailExperience({
                     key={`${imageUrl}-${index}`}
                     type="button"
                     onClick={() => setImageIndex(index)}
-                    className={`relative h-16 w-14 shrink-0 overflow-hidden rounded-xl border transition ${
+                    className={`relative h-16 w-14 shrink-0 overflow-hidden rounded-xl border bg-white transition ${
                       index === imageIndex
                         ? "border-blue-400 ring-2 ring-blue-400/15"
                         : "border-white/10 opacity-70 hover:opacity-100"

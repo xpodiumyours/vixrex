@@ -17,6 +17,50 @@ import { getProductImages } from "@/lib/products";
 
 export const revalidate = 300;
 
+const SITEMAP_DISI_SLUGLAR = new Set([
+  "aasd-mwj3ln80",
+  "sssss-mwpepeiq",
+  "dename-mwjm5i7b",
+  "drbrme-mwjho6k1",
+  "deneri-m-mvlf57cg",
+]);
+
+export function isTestOrDenemeStore(store: {
+  slug?: string | null;
+  name?: string | null;
+}): boolean {
+  const slug = (store.slug || "").trim().toLowerCase();
+  const name = (store.name || "").trim().toLowerCase();
+
+  if (SITEMAP_DISI_SLUGLAR.has(slug)) {
+    return true;
+  }
+
+  const baseSlug = slug.replace(/-(mw[a-z0-9]+|[a-z0-9]{6,10})$/, "");
+
+  const yasakliKelimeler = ["test", "deneme", "debug", "demo", "dename"];
+  const hedefler = [slug, baseSlug, name];
+  for (const hedef of hedefler) {
+    for (const kelime of yasakliKelimeler) {
+      if (hedef.includes(kelime)) {
+        return true;
+      }
+    }
+  }
+
+  const junkSluglar = ["asdf", "asdfg", "qwerty", "qwert", "zxcv", "1234", "12345", "aasd", "sssss"];
+  for (const hedef of hedefler) {
+    if (/^(.)\1{2,}$/.test(hedef)) {
+      return true;
+    }
+    if (junkSluglar.some((j) => hedef === j || hedef.startsWith(`${j}-`))) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 async function _getSitemapData() {
   // is_demo eklendi (#345): demo/örnek vitrinler site haritasından çıkar.
   // Bunlar gerçek işletme değil, kiralanmayı bekleyen şablonlar; arama
@@ -65,6 +109,7 @@ function escapeXml(value: string) {
 export async function GET() {
   try {
     const { stores, products, articles } = await getSitemapData();
+    const filteredStores = (stores || []).filter((s) => !isTestOrDenemeStore(s));
     const baseUrl = getSiteUrl();
     const articleLastModByStore = new Map<string, string>();
     const productsByStoreId = new Map<
@@ -160,7 +205,6 @@ export async function GET() {
           ]
         : []),
       { yol: "/privacy", oncelik: "0.3", siklik: "yearly" },
-      { yol: "/legal/privacy", oncelik: "0.3", siklik: "yearly" },
       { yol: "/legal/terms", oncelik: "0.3", siklik: "yearly" },
     ];
 
@@ -178,8 +222,8 @@ export async function GET() {
     }
 
     // Add stores + blog list pages only when they have published articles
-    if (stores) {
-      for (const store of stores) {
+    if (filteredStores) {
+      for (const store of filteredStores) {
         const lastMod = store.updated_at ? new Date(store.updated_at).toISOString() : new Date().toISOString();
         const blogLastMod = articleLastModByStore.get(store.slug);
         xml += `
@@ -190,7 +234,6 @@ export async function GET() {
     <priority>0.8</priority>
   </url>`;
 
-        const storeName = String(store.name || "").trim();
         const storeProducts = productsByStoreId.get(store.id) || [];
         for (const product of storeProducts) {
           const productLastMod = product.updated_at
@@ -223,37 +266,11 @@ export async function GET() {
                 })
                 .slice(0, MAX_PRODUCT_IMAGES);
 
-          const imageTitle = [product.name, storeName].filter(Boolean).join(" - ");
-          const captionSource = product.description || imageTitle;
-          const imageCaption = captionSource
-            ? Array.from(captionSource).slice(0, 200).join("")
-            : "";
-          const geoParts = [
-            String(store.district_name || "").trim(),
-            String(store.province_name || "").trim(),
-          ].filter(Boolean);
-          const imageGeo = geoParts.length > 0 ? `${geoParts.join(", ")}, Türkiye` : "";
-
           const imageTags = productImages
             .map(
               (imgUrl) => `
     <image:image>
-      <image:loc>${escapeXml(imgUrl)}</image:loc>${
-        imageTitle
-          ? `
-      <image:title>${escapeXml(imageTitle)}</image:title>`
-          : ""
-      }${
-        imageCaption
-          ? `
-      <image:caption>${escapeXml(imageCaption)}</image:caption>`
-          : ""
-      }${
-        imageGeo
-          ? `
-      <image:geo_location>${escapeXml(imageGeo)}</image:geo_location>`
-          : ""
-      }
+      <image:loc>${escapeXml(imgUrl)}</image:loc>
     </image:image>`,
             )
             .join("");
@@ -282,7 +299,7 @@ export async function GET() {
     // Demo vitrinlerin yazıları da çıkar (#345): makale sorgusu store_slug
     // üzerinden geliyor, yukarıdaki demo süzgecinden habersiz.
     const yayindakiSluglar = new Set(
-      (stores || []).map((store) => String(store.slug || "").trim())
+      filteredStores.map((store) => String(store.slug || "").trim())
     );
 
     if (articles) {

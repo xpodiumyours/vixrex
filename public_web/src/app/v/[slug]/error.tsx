@@ -23,7 +23,7 @@ export default function StoreError({
         <button
           type="button"
           onClick={() => reset()}
-          className="mt-6 rounded-2xl bg-[#38A0E4] px-5 py-3 text-sm font-black text-white transition hover:opacity-90"
+          className="mt-6 rounded-2xl bg-[#147DFF] px-5 py-3 text-sm font-black text-white transition hover:opacity-90"
         >
           Tekrar dene
         </button>
