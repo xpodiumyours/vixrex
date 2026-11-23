@@ -20,4 +20,5 @@ const String premiumDegilRozet = 'Premium değil · Aylık 299 TL ile yayınla';
 const String premiumIleYayinla = 'Premium ile yayınla — aylık 299 TL';
 
 /// Yayın kapısı uyarısı.
-const String yayinKapisiUyarisi = 'Bu hazır vitrin yalnız premium üyelikle yayınlanır. Aylık 299 TL ile devam et.';
+const String yayinKapisiUyarisi =
+    'Bu hazır vitrin yalnız premium üyelikle yayınlanır. Aylık 299 TL ile devam et.';
