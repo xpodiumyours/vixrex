@@ -944,9 +944,8 @@ export function OwnerProductManager({
 
                   <div className="relative">
                     {image ? (
-                      <div className="relative aspect-[16/11] w-full overflow-hidden bg-[var(--owner-bg-soft)]">
-                        <Image src={image} alt={`${product.name} ürün görseli`} fill unoptimized sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" className="object-cover" />
-                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#050b1a]/45 via-transparent to-[#050b1a]/25" />
+                      <div className="relative aspect-[16/11] w-full overflow-hidden bg-white">
+                        <Image src={image} alt={`${product.name} ürün görseli`} fill unoptimized sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" className="object-contain" />
                       </div>
                     ) : (
                       <div className="flex aspect-[16/11] w-full items-center justify-center bg-[var(--owner-bg-soft)]">
@@ -1420,8 +1419,8 @@ function ProductForm({ product, categories, busy, storeSlug, storeName, baslangi
         </div>
         <div className="vixrex-yatay-serit mt-2 flex gap-2 overflow-x-auto pb-2">
           {imageUrls.map((url, idx) => (
-            <div key={`${url}-${idx}`} className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl border border-[var(--owner-border)] bg-[var(--owner-bg-soft)]">
-              {url ? <Image src={url} alt={`görsel ${idx + 1}`} fill unoptimized sizes="96px" className="object-cover" /> : null}
+            <div key={`${url}-${idx}`} className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl border border-[var(--owner-border)] bg-white">
+              {url ? <Image src={url} alt={`görsel ${idx + 1}`} fill unoptimized sizes="96px" className="object-contain" /> : null}
               <button type="button" onClick={() => setImageUrls((p) => p.filter((_, i) => i !== idx))} className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-[10px] text-white">✕</button>
               <div className="absolute bottom-1 left-1 right-1 flex justify-between gap-1">
                 <button type="button" onClick={() => moveImage(idx, -1)} disabled={idx === 0} className="flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-[10px] text-white disabled:opacity-30">‹</button>
