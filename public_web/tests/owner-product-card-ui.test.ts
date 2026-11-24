@@ -248,6 +248,9 @@ describe("InvoiceToProducts okunuyor okuma ekrani", () => {
     expect([...html.matchAll(/<span class="fatura-adim-durum">(tamam|sürüyor|bekliyor)<\/span>/g)].map((e) => e[1]))
       .toEqual(["bekliyor", "sürüyor", "bekliyor"]);
     expect(html).not.toContain("fatura-hologram-kart");
-    expect(html).not.toContain("fatura-sayilar");
+    expect(html).toContain("fatura-sayilar");
+    expect(html).toContain("<dt>Satır</dt>");
+    expect(html).toContain("<dt>Miktar</dt>");
+    expect(html).toContain("<dt>Tutar</dt>");
   });
 });

@@ -103,4 +103,43 @@ describe("vitrin görünüm kartelası", () => {
     );
     expect(detay).toContain("rounded-xl border bg-white transition");
   });
+
+  it("tüm esnaf yüzeylerinde ürün fotoğrafı kutuları beyaz stüdyo zemini, object-contain ve karartma perdesizdir", () => {
+    const faturaCss = kaynak("src/components/owner/faturaAkis.css");
+    const globalCss = kaynak("src/app/globals.css");
+    const urunYonetimi = kaynak("src/components/owner/OwnerProductManager.tsx");
+    const zenginAlanlar = kaynak("src/components/owner/OwnerRichProductFields.tsx");
+
+    expect(faturaCss).toContain(
+      ".owner-shell .fatura-kart-gorsel { height: 180px; object-fit: contain; background: #ffffff; }",
+    );
+    expect(faturaCss).not.toContain(
+      ".owner-shell .fatura-kart-gorsel { height: 180px; object-fit: contain; background: var(--owner-surface-soft); }",
+    );
+
+    const gorselBlok = globalCss.match(/\.fatura-kart-gorsel\s*\{[^}]*\}/)?.[0] ?? "";
+    expect(gorselBlok).toContain("background: #ffffff;");
+    expect(gorselBlok).toContain("object-fit: contain;");
+
+    const sonucImgBlok = globalCss.match(/\.fatura-vitrin-izgara img\s*\{[^}]*\}/)?.[0] ?? "";
+    expect(sonucImgBlok).toContain("background: #ffffff;");
+    expect(sonucImgBlok).toContain("object-fit: contain;");
+
+    expect(urunYonetimi).toContain(
+      '<div className="relative aspect-[16/11] w-full overflow-hidden bg-white">',
+    );
+    expect(urunYonetimi).toContain(
+      'sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" className="object-contain"',
+    );
+    expect(urunYonetimi).not.toContain("from-[#050b1a]/45");
+    expect(urunYonetimi).toContain(
+      'className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl border border-[var(--owner-border)] bg-white"',
+    );
+    expect(urunYonetimi).toContain('sizes="96px" className="object-contain"');
+
+    expect(zenginAlanlar).toContain(
+      "relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border-2 bg-white transition",
+    );
+    expect(zenginAlanlar).toContain('sizes="56px" className="object-contain"');
+  });
 });

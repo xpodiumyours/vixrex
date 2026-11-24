@@ -57,7 +57,7 @@ Tüm renkler `shared/renkler.json` dosyasından türetilir; bileşen içine serb
 
 ### Kontrast ve Fotoğraf Kuralı
 - **WCAG AA Zorunluluğu:** Koyu zemin üzerindeki tüm okunabilir gövde metinlerinde minimum **4.5:1** kontrast sağlanır.
-- **Beyaz Zeminli Ürün Fotoğrafları:** Üretici kataloglarından gelen beyaz arka planlı ürün fotoğrafları asla ters çevrilmez (`invert`) veya karartılmaz; yuvarlatılmış, temiz ve kontrollü bir çerçeve içinde doğal renkleriyle sunulur.
+- **Beyaz Zeminli Ürün Fotoğrafları (Tüm Ekranlar İçin Kalıcı Kural):** Müşteri vitrini, hızlı inceleme, ürün detayı, esnaf ürün listesi, ürün düzenleme, fatura onay kartı ve fatura sonuç listesi dâhil tüm VixRex ekranlarında ürün fotoğrafı kutuları daima beyaz stüdyo zemini (`#ffffff` / `bg-white`), `object-contain` ve karartma perdesiz olur. Ürün fotoğrafları asla ters çevrilmez (`invert`), kırpılmaz (`object-cover`) veya koyu gradyan perdesiyle karartılmaz. Yalnız fotoğraf yokken veya telif kalkanı etkinken koyu zemin gösterilir.
 - **Kaydırma Çubukları (Scrollbar):** Koyu temada sistemin parlak beyaz/gri kaydırma çubuğu bırakılmaz; koyu lacivert zeminle uyumlu ince mavi kaydırma çubuğu kullanılır.
 
 ---
@@ -113,6 +113,7 @@ Aşağıdaki hataların herhangi biri görüldüğünde PR kabul edilmez ve canl
 6. **Geliştirici Jargonu ve Ham Kod Metni:** Arayüzde `Enlem/Boylam`, `in_stock`, `null`, `undefined`, ham İngilizce durum kodları veya tek ondalıklı fiyat (`54,6 TL`) bırakmak.
 7. **Kırık Modal ve Boş Küçük Resimler:** Sola taşan `×` butonu veya boş siyah thumbnail kareleri.
 8. **Kontrolsüz Gradyan / Beyaz Vitrin:** Koyu lacivert kimliği bozan beyaz vitrin zeminleri veya çok renkli neon efektler.
+9. **Koyu Zeminli / Karartılmış Ürün Fotoğrafı Kutusu:** Müşteri vitrini, hızlı inceleme, ürün detayı, esnaf ürün listesi, ürün düzenleme, fatura onay kartı veya fatura sonuç listesinde ürün fotoğrafı kutusuna koyu arka plan, `object-cover` veya karartma perdesi (`from-[#050b1a]/45` vb.) koymak. Ürün fotoğrafı kutusu her zaman `#ffffff` / `bg-white` + `object-contain` + karartma perdesizdir.
 
 ---
 

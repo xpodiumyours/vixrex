@@ -97,7 +97,11 @@ it("hazırlama ekranı gerçek 3 aşamalı adım kartlarını, dönen halkayı v
   expect(html).toContain("00:00");
   expect(html).toContain("fatura-adim-ray");
   expect(html).not.toContain("fatura-tarama-belge");
-  expect(html).not.toContain("fatura-sayilar");
+  expect(html).toContain("fatura-sayilar");
+  expect(html).toContain("<dt>Satır</dt>");
+  expect(html).toContain("<dt>Miktar</dt>");
+  expect(html).toContain("<dt>Tutar</dt>");
+  expect((html.match(/<dd>—<\/dd>/g) ?? []).length).toBe(3);
   expect(html).toContain("Fatura görüntüsü alındı");
   expect(html).toContain("Fatura okunuyor ve resmî ürünler araştırılıyor");
   expect(html).toContain("Ürün kartları ve görseller hazırlanıyor");
@@ -154,6 +158,9 @@ it("hazırlama ekranında belge geldiğinde üç gerçek adım tamamlanır", () 
     storeSlug: "offline-test", onUploaded: async () => {},
   }));
   expect(adimDurumEtiketleri(html)).toEqual(["tamam", "tamam", "tamam"]);
+  expect(html).toContain("<dd>1</dd>");
+  expect(html).toContain("<dd>2 adet</dd>");
+  expect(html).toContain("100,00 TL");
 });
 
 it("resmî kaynak gelmeyen kartın taslakta korunduğunu açıklar", () => {

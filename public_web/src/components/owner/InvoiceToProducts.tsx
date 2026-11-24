@@ -1223,6 +1223,20 @@ export default function InvoiceToProducts({
           </div>
           <p className="fatura-gecen-sure" aria-label="Geçen süre">{gecenSureMetni(gecenSureSn)}</p>
           <p className="fatura-bekleme" role="status"><span className="fatura-yukleyici" aria-hidden="true" />{beklemeAsamasi === "kartlaniyor" ? "Ürün kartları ve görseller hazırlanıyor…" : "Fatura okunuyor ve resmî ürünler araştırılıyor…"}</p>
+          <dl className="fatura-sayilar">
+            <div>
+              <dt>Satır</dt>
+              <dd>{belgeOkundu ? satirlar.length : "—"}</dd>
+            </div>
+            <div>
+              <dt>Miktar</dt>
+              <dd>{belgeOkundu ? kontrol.miktarOzeti || "okunamadı" : "—"}</dd>
+            </div>
+            <div>
+              <dt>Tutar</dt>
+              <dd>{belgeOkundu ? paraYaz(kontrol.tutarToplam) : "—"}</dd>
+            </div>
+          </dl>
           <ol className="fatura-adim-ray">
             {kanitlar.map((kanit, sira) => (
               <li key={kanit.baslik} className={`fatura-adim-satir fatura-adim-satir--${kanit.durum}`}>
