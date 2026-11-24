@@ -64,33 +64,33 @@ export async function gorseliSikistir(
 
   try {
     const kaynak = Buffer.from(bayt);
-    const ilk = await kodla(kaynak, pngMi, UZUN_KENAR, KALITE);
+    let aday = await kodla(kaynak, pngMi, UZUN_KENAR, KALITE);
 
     // Flutter'daki ikinci deneme: 1 MB'ı aşarsa daha sert sıkıştır.
     // PNG'de ayrıca uzun kenar 1200'e iner (fotoğrafik PNG çok şişiyor).
-    if (ilk.length > TERCIH_EDILEN_EN_FAZLA_BAYT) {
+    if (aday.length > TERCIH_EDILEN_EN_FAZLA_BAYT) {
       const ikinci = await kodla(
         kaynak,
         pngMi,
         pngMi ? YEDEK_UZUN_KENAR : UZUN_KENAR,
         YEDEK_KALITE
       );
-      if (ikinci.length > 0 && ikinci.length < ilk.length) {
-        return sonuc(ikinci, pngMi);
+      if (ikinci.length > 0 && ikinci.length < aday.length) {
+        aday = ikinci;
       }
     }
 
-    if (ilk.length === 0) {
+    if (aday.length === 0) {
       throw new GorselSikistirmaHatasi("Görsel işlenemedi.");
     }
 
     // Sıkıştırma kaynaktan büyük çıkarsa kaynağı koru — küçük ve zaten
     // optimize edilmiş görsellerde olabiliyor.
-    if (ilk.length >= bayt.length) {
+    if (aday.length >= bayt.length) {
       return { bayt, tur, uzanti: pngMi ? "png" : "jpg" };
     }
 
-    return sonuc(ilk, pngMi);
+    return sonuc(aday, pngMi);
   } catch (hata) {
     if (hata instanceof GorselSikistirmaHatasi) throw hata;
     throw new GorselSikistirmaHatasi(
@@ -114,14 +114,14 @@ async function kodla(
   });
 
   return pngMi
-    ? boru.png({ compressionLevel: 9, palette: true, quality: kalite }).toBuffer()
+    ? boru.webp({ quality: kalite, alphaQuality: 90, effort: 4 }).toBuffer()
     : boru.jpeg({ quality: kalite, mozjpeg: true }).toBuffer();
 }
 
 function sonuc(bayt: Buffer, pngMi: boolean): SikistirilmisGorsel {
   return {
     bayt: new Uint8Array(bayt),
-    tur: pngMi ? "image/png" : "image/jpeg",
-    uzanti: pngMi ? "png" : "jpg",
+    tur: pngMi ? "image/webp" : "image/jpeg",
+    uzanti: pngMi ? "webp" : "jpg",
   };
 }

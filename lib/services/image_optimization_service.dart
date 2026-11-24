@@ -66,7 +66,7 @@ class ImageOptimizationService {
       );
       final format =
           sourceType == _ImageSourceType.png
-              ? CompressFormat.png
+              ? CompressFormat.webp
               : CompressFormat.jpeg;
 
       var optimized = await FlutterImageCompress.compressWithList(
@@ -109,11 +109,20 @@ class ImageOptimizationService {
         );
       }
 
+      if (optimized.length >= bytes.length) {
+        return OptimizedImage(
+          bytes: bytes,
+          extension: sourceType == _ImageSourceType.png ? 'png' : 'jpg',
+          contentType:
+              sourceType == _ImageSourceType.png ? 'image/png' : 'image/jpeg',
+        );
+      }
+
       return OptimizedImage(
         bytes: optimized,
-        extension: sourceType == _ImageSourceType.png ? 'png' : 'jpg',
+        extension: sourceType == _ImageSourceType.png ? 'webp' : 'jpg',
         contentType:
-            sourceType == _ImageSourceType.png ? 'image/png' : 'image/jpeg',
+            sourceType == _ImageSourceType.png ? 'image/webp' : 'image/jpeg',
       );
     } on ImageOptimizationException {
       rethrow;

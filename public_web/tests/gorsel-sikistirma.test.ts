@@ -36,6 +36,24 @@ async function ornekJpeg(genislik: number, yukseklik: number) {
     .toBuffer();
 }
 
+async function ornekSeffafPng(genislik: number, yukseklik: number) {
+  const pikseller = Buffer.alloc(genislik * yukseklik * 4);
+  for (let y = 0; y < yukseklik; y++) {
+    for (let x = 0; x < genislik; x++) {
+      const idx = (y * genislik + x) * 4;
+      pikseller[idx] = Math.floor((x * 255) / Math.max(1, genislik - 1));
+      pikseller[idx + 1] = Math.floor((y * 255) / Math.max(1, yukseklik - 1));
+      pikseller[idx + 2] = ((x * 7 + y * 13) % 256);
+      pikseller[idx + 3] = x < genislik / 4 ? 0 : x < genislik / 2 ? 128 : 255;
+    }
+  }
+  return sharp(pikseller, {
+    raw: { width: genislik, height: yukseklik, channels: 4 },
+  })
+    .png({ compressionLevel: 9 })
+    .toBuffer();
+}
+
 describe("görsel sıkıştırma", () => {
   it("1600 pikselden büyük görseli küçültür", async () => {
     const kaynak = await ornekJpeg(3000, 2000);
@@ -81,6 +99,57 @@ describe("görsel sıkıştırma", () => {
     await expect(
       gorseliSikistir(new Uint8Array(), "image/jpeg")
     ).rejects.toThrow();
+  });
+
+  it("PNG girdisini WebP olarak sıkıştırır, 256+ rengi ve şeffaflığı korur", async () => {
+    const kaynak = await ornekSeffafPng(400, 400);
+    const sonuc = await gorseliSikistir(new Uint8Array(kaynak), "image/png");
+
+    expect(sonuc.tur).toBe("image/webp");
+    expect(sonuc.uzanti).toBe("webp");
+    expect(sonuc.bayt.length).toBeLessThan(kaynak.length * 0.5);
+
+    const olcu = await sharp(Buffer.from(sonuc.bayt)).metadata();
+    expect(olcu.format).toBe("webp");
+    expect(olcu.hasAlpha).toBe(true);
+
+    const { data, info } = await sharp(Buffer.from(sonuc.bayt))
+      .ensureAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+
+    const renkler = new Set<number>();
+    let seffafPikselVar = false;
+    let opakPikselVar = false;
+    for (let i = 0; i < data.length; i += info.channels) {
+      renkler.add((data[i] << 16) | (data[i + 1] << 8) | data[i + 2]);
+      const alfa = data[i + 3];
+      if (alfa === 0) seffafPikselVar = true;
+      if (alfa === 255) opakPikselVar = true;
+    }
+
+    expect(renkler.size).toBeGreaterThan(256);
+    expect(seffafPikselVar).toBe(true);
+    expect(opakPikselVar).toBe(true);
+  });
+
+  it("sıkıştırma PNG kaynaktan büyük veya eşit çıkarsa kaynağı korur", async () => {
+    const kaynak = await sharp({
+      create: {
+        width: 2,
+        height: 2,
+        channels: 4,
+        background: { r: 255, g: 0, b: 0, alpha: 0.5 },
+      },
+    })
+      .png({ compressionLevel: 9 })
+      .toBuffer();
+
+    const sonuc = await gorseliSikistir(new Uint8Array(kaynak), "image/png");
+
+    expect(sonuc.tur).toBe("image/png");
+    expect(sonuc.uzanti).toBe("png");
+    expect(sonuc.bayt.length).toBe(kaynak.length);
   });
 });
 
