@@ -23,6 +23,7 @@ export interface DijitalIzAramaDurumu {
   sonrakiSatir?: number;
   hatalar?: Record<string, string>;
   siteDurumu?: unknown;
+  baslangicZamani?: string;
   presetCevabi?: { belgeEkleri?: unknown; gruplar?: unknown[]; uyarilar?: string[]; kartCevabi?: unknown; asamaKullanimlari?: unknown };
 }
 

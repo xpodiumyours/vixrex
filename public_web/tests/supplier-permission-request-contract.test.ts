@@ -48,6 +48,10 @@ const migrationSql = readFileSync(
   resolve(repoRoot, "supabase/migrations/20261118190000_supplier_permission_requests.sql"),
   "utf8",
 );
+const scopeDefaultMigrationSql = readFileSync(
+  resolve(repoRoot, "supabase/migrations/20261124180000_supplier_permission_requests_scope_default.sql"),
+  "utf8",
+);
 const pageSource = readFileSync(
   resolve(repoRoot, "public_web/src/app/izin-talebi/[token]/page.tsx"),
   "utf8",
@@ -97,6 +101,14 @@ describe("Faz 2: Uretici izin talep koprusu migration sozlesmesi", () => {
     ]) {
       expect(getFnSql).not.toContain(secretField);
     }
+  });
+
+  it("scope default ileri yonlu migration mevcut scope kolonuna varsayilan deger atar ve yetki gevsetmez", () => {
+    expect(scopeDefaultMigrationSql).toContain("column_name = 'scope'");
+    expect(scopeDefaultMigrationSql).toContain("alter column scope set default ''data_and_images''");
+    expect(scopeDefaultMigrationSql).toContain("notify pgrst, 'reload schema'");
+    expect(scopeDefaultMigrationSql.toLowerCase()).not.toContain("grant ");
+    expect(scopeDefaultMigrationSql.toLowerCase()).not.toContain("revoke ");
   });
 });
 
@@ -219,6 +231,80 @@ describe("/api/izin-talebi ucu", () => {
       p_line_ids: [LINE_ID],
       p_product_ids: [PRODUCT_ID],
     });
+  });
+
+  it.each([
+    {
+      rpcMessage: "DEMO_STORE_IMMUTABLE",
+      expectedStatus: 403,
+      expectedError: "Demo vitrinlerde üretici izin bağlantısı oluşturulamaz.",
+    },
+    {
+      rpcMessage: "OWNER_AUTHORIZATION_REQUIRED",
+      expectedStatus: 401,
+      expectedError: "Vitrin düzenleme yetkisi doğrulanamadı. Lütfen yeniden giriş yapın.",
+    },
+    {
+      rpcMessage: "EMPTY_PERMISSION_SCOPE",
+      expectedStatus: 422,
+      expectedError: "İzin talebi için geçerli bir fatura satırı veya ürün bulunamadı.",
+    },
+    {
+      rpcMessage: "INVALID_BRAND",
+      expectedStatus: 422,
+      expectedError: "Marka bilgisi belirtilmedi.",
+    },
+  ])("POST: RPC $rpcMessage hatasini $expectedStatus durum koduyla acik dondurur", async ({
+    rpcMessage,
+    expectedStatus,
+    expectedError,
+  }) => {
+    mockSahipYetkisi.mockResolvedValueOnce({ tamam: true, storeId: STORE_ID, slug: "bayi" });
+    mockAdminRpc.mockResolvedValueOnce({ data: null, error: { code: "P0001", message: rpcMessage } });
+
+    const res = await POST(
+      new NextRequest("http://localhost/api/izin-talebi", {
+        method: "POST",
+        headers: { "x-vixrex-edit-token": "secret-edit-token-1234567890" },
+        body: JSON.stringify({
+          slug: "bayi",
+          brand: "Tutku",
+          lineIds: [LINE_ID],
+        }),
+      }),
+    );
+
+    expect(res.status).toBe(expectedStatus);
+    expect(await res.json()).toEqual({ hata: expectedError });
+  });
+
+  it("POST: beklenmedik RPC hatasinda SQL detayi sizdirmadan 500 dondurur", async () => {
+    const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockSahipYetkisi.mockResolvedValueOnce({ tamam: true, storeId: STORE_ID, slug: "bayi" });
+    mockAdminRpc.mockResolvedValueOnce({
+      data: null,
+      error: { code: "23502", message: 'null value in column "scope" violates not-null constraint' },
+    });
+
+    const res = await POST(
+      new NextRequest("http://localhost/api/izin-talebi", {
+        method: "POST",
+        headers: { "x-vixrex-edit-token": "secret-edit-token-1234567890" },
+        body: JSON.stringify({
+          slug: "bayi",
+          brand: "Tutku",
+          lineIds: [LINE_ID],
+        }),
+      }),
+    );
+
+    expect(res.status).toBe(500);
+    const body = await res.json();
+    expect(body).toEqual({ hata: "İzin talebi bağlantısı oluşturulamadı." });
+    expect(JSON.stringify(body)).not.toContain("23502");
+    expect(JSON.stringify(body)).not.toContain("scope");
+    expect(errSpy).toHaveBeenCalledWith("[izin-talebi] rpc hatasi:", { code: "23502" });
+    errSpy.mockRestore();
   });
 
   it("GET: gecersiz token 400, bulunamayan 404, gecerli talep Kural 32 temizlenmis veri doner", async () => {

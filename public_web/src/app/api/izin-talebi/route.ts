@@ -104,6 +104,32 @@ export async function POST(request: NextRequest) {
   });
 
   if (error || typeof token !== "string" || !SUPPLIER_PERMISSION_TOKEN_RE.test(token)) {
+    const mesaj = typeof error?.message === "string" ? error.message : "";
+    if (mesaj.includes("DEMO_STORE_IMMUTABLE")) {
+      return NextResponse.json(
+        { hata: "Demo vitrinlerde üretici izin bağlantısı oluşturulamaz." },
+        { status: 403 },
+      );
+    }
+    if (mesaj.includes("OWNER_AUTHORIZATION_REQUIRED")) {
+      return NextResponse.json(
+        { hata: "Vitrin düzenleme yetkisi doğrulanamadı. Lütfen yeniden giriş yapın." },
+        { status: 401 },
+      );
+    }
+    if (mesaj.includes("EMPTY_PERMISSION_SCOPE")) {
+      return NextResponse.json(
+        { hata: "İzin talebi için geçerli bir fatura satırı veya ürün bulunamadı." },
+        { status: 422 },
+      );
+    }
+    if (mesaj.includes("INVALID_BRAND")) {
+      return NextResponse.json(
+        { hata: "Marka bilgisi belirtilmedi." },
+        { status: 422 },
+      );
+    }
+    console.error("[izin-talebi] rpc hatasi:", { code: error?.code ?? "UNKNOWN" });
     return NextResponse.json(
       { hata: "İzin talebi bağlantısı oluşturulamadı." },
       { status: 500 },

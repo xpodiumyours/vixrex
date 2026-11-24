@@ -47,6 +47,7 @@ export async function faturayiArkaPlanaGonder(
 ): Promise<string> {
   if (geminiPrizAktifMi()) {
     try {
+      const islemBaslangici = new Date().toISOString();
       const { data: magaza, error: magazaHatasi } = await admin
         .from("stores")
         .select("slug")
@@ -108,7 +109,7 @@ export async function faturayiArkaPlanaGonder(
         kdvTutari: null,
         indirimTutari: null,
         odenecekToplam: null,
-        aramaDurumu: { erisimHatasi: false, sonrakiSatir: satirlar.length },
+        aramaDurumu: { erisimHatasi: false, sonrakiSatir: satirlar.length, baslangicZamani: islemBaslangici },
       });
       if (!id) throw new Error("OKUYUCU_ISLEYICI_HAZIR_DEGIL");
       return id;

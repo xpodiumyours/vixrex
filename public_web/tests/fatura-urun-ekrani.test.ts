@@ -14,7 +14,7 @@ vi.mock("react", async (importOriginal) => {
   };
 });
 
-import InvoiceToProducts, { faturaSatiriDurumunuHazirla } from "@/components/owner/InvoiceToProducts";
+import InvoiceToProducts, { faturaSatiriDurumunuHazirla, gecenSureMetni } from "@/components/owner/InvoiceToProducts";
 import { katalogJsonunuOku } from "@/lib/faturaGoru";
 import { faturaSatiriniAktar } from "@/lib/faturaPresetAktarimi";
 import { faturaKatalogMetadatasi } from "@/lib/faturaUrunIcerigi";
@@ -89,37 +89,60 @@ it("fiyatı yazılmış kart açık onay verilmeden hazır sayılmaz", () => {
   expect(onayli).toContain("1 kartla devam et");
 });
 
-it("hazırlama ekranı faturadan çıkan gerçek sayıları ve alış fiyatı kuralını gösterir", () => {
-  const html = akisEkrani("okunuyor", [{ ...ornekKart(), satirToplam: 100 }]);
-  expect(html).toContain("Fatura görüntüsü alındı");
-  expect(html).toContain("Ürün satırları okunuyor");
-  expect(html).not.toContain("Test toptancı");
-  expect(html).not.toContain("Belgede yazmiyor");
-  expect(html).toContain("Resmî ürün kaynağı faturadaki ad, model ve barkoda göre aranıyor.");
-  expect(html).toContain("Uydurma sayı kullanılmaz");
-  expect(html).toContain("Alış fiyatı satış fiyatı olarak kullanılmaz");
-  expect((html.match(/<dd>—<\/dd>/g) ?? []).length).toBe(3);
-});
-
-it("hazırlama ekranı dönen halkayı, bulunan sayıları ve adım durumlarını birlikte gösterir", () => {
+it("hazırlama ekranı gerçek 3 aşamalı adım kartlarını, dönen halkayı ve geçen süre sayacını gösterir", () => {
   const html = akisEkrani("okunuyor", [{ ...ornekKart(), satirToplam: 100 }]);
   expect(html).toContain("fatura-okuma-ring");
   expect(html).toContain("fatura-okuma-halka");
+  expect(html).toContain("fatura-gecen-sure");
+  expect(html).toContain("00:00");
   expect(html).toContain("fatura-adim-ray");
   expect(html).not.toContain("fatura-tarama-belge");
-  expect(html).not.toContain("Belge okundu");
-  expect(html).toContain("fatura-sayilar");
-  expect(html).toContain("<dt>Satır</dt>");
-  expect(html).toContain("<dt>Tutar</dt>");
-  expect((html.match(/class="fatura-adim-satir fatura-adim-satir--/g) ?? []).length).toBe(5);
-  expect(adimDurumEtiketleri(html)).toEqual(["tamam", "sürüyor", "bekliyor", "bekliyor", "bekliyor"]);
+  expect(html).not.toContain("fatura-sayilar");
+  expect(html).toContain("Fatura görüntüsü alındı");
+  expect(html).toContain("Fatura okunuyor ve resmî ürünler araştırılıyor");
+  expect(html).toContain("Ürün kartları ve görseller hazırlanıyor");
+  expect((html.match(/class="fatura-adim-satir fatura-adim-satir--/g) ?? []).length).toBe(3);
+  expect(adimDurumEtiketleri(html)).toEqual(["tamam", "sürüyor", "bekliyor"]);
+  expect(html).toContain("fatura-adim-tik");
+  expect(html).toContain("fatura-adim-nabiz");
+
   const kartlanirken = akisEkrani(
     "okunuyor", [{ ...ornekKart(), satirToplam: 100 }], undefined, "kartlaniyor",
   );
-  expect(adimDurumEtiketleri(kartlanirken)).toEqual(["tamam", "sürüyor", "bekliyor", "sürüyor", "sürüyor"]);
+  expect(adimDurumEtiketleri(kartlanirken)).toEqual(["tamam", "tamam", "sürüyor"]);
+
+  expect(gecenSureMetni(0)).toBe("00:00");
+  expect(gecenSureMetni(9)).toBe("00:09");
+  expect(gecenSureMetni(65)).toBe("01:05");
+  expect(gecenSureMetni(-5)).toBe("00:00");
+  expect(gecenSureMetni(Number.NaN)).toBe("00:00");
 });
 
-it("hazırlama ekranı belgeyle tutmayan miktarı gizlemez", () => {
+it("esnaf kontrol ekranında teknik ozetSatiri gizlenir, ürün hazırlandı başlığı ve Fatura rozeti görünür", () => {
+  state.index = 0;
+  const kart = { ...ornekKart(), satirToplam: 100 };
+  state.values = {
+    0: "urunler",
+    1: {
+      satirlar: [kart],
+      belgeAdedi: 2,
+      belgeToplami: 100,
+      tedarikci: "Test toptancı",
+      ozetSatiri: "Fatura 11111111 → 1 satır → 1 kart → 1 görselli → 42 sn → hata: yok",
+    },
+    2: [kart],
+  };
+  const html = renderToStaticMarkup(createElement(InvoiceToProducts, {
+    storeSlug: "offline-test", onUploaded: async () => {},
+  }));
+  expect(html).toContain("1 ürün hazırlandı");
+  expect(html).toContain("Fatura ✓");
+  expect(html).not.toContain("1 satır okundu");
+  expect(html).not.toContain("Fatura 11111111");
+  expect(html).not.toContain("hata: yok");
+});
+
+it("hazırlama ekranında belge geldiğinde üç gerçek adım tamamlanır", () => {
   state.index = 0;
   const kart = { ...ornekKart(), satirToplam: 100 };
   state.values = {
@@ -130,7 +153,7 @@ it("hazırlama ekranı belgeyle tutmayan miktarı gizlemez", () => {
   const html = renderToStaticMarkup(createElement(InvoiceToProducts, {
     storeSlug: "offline-test", onUploaded: async () => {},
   }));
-  expect(html).toContain("belgede toplam 5 yazıyor, tutmuyor");
+  expect(adimDurumEtiketleri(html)).toEqual(["tamam", "tamam", "tamam"]);
 });
 
 it("resmî kaynak gelmeyen kartın taslakta korunduğunu açıklar", () => {

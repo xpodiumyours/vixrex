@@ -15,16 +15,35 @@ export function faturaOzetSatiri(girdi: FaturaOzetGirdisi): string {
   return `Fatura ${girdi.islemKimligi} → ${girdi.satirSayisi} satır → ${girdi.kartSayisi} kart → ${gorselli} görselli → ${sure} sn → hata: ${girdi.hataKodu || "yok"}`;
 }
 
+function gecerliIsoTarih(deger: unknown): string | null {
+  return typeof deger === "string" && Number.isFinite(Date.parse(deger)) ? deger : null;
+}
+
 export async function faturaBaslangicZamani(
   admin: SupabaseClient,
   storeId: string,
   islemKimligi: string,
 ): Promise<string | null> {
   try {
-    const { data } = await admin.from("invoice_jobs").select("created_at")
+    const { data } = await admin.from("invoice_jobs").select("created_at, discovery_state")
       .eq("id", islemKimligi).eq("store_id", storeId).maybeSingle();
-    const zaman = data?.created_at;
-    return typeof zaman === "string" && Number.isFinite(Date.parse(zaman)) ? zaman : null;
+    const aramaDurumu = data?.discovery_state && typeof data.discovery_state === "object"
+      ? (data.discovery_state as Record<string, unknown>)
+      : null;
+    const islemBaslangici = gecerliIsoTarih(aramaDurumu?.baslangicZamani);
+    if (islemBaslangici) return islemBaslangici;
+
+    const jobCreatedAt = gecerliIsoTarih(data?.created_at);
+    try {
+      const { data: runData } = await admin.from("invoice_provider_runs").select("created_at")
+        .eq("job_id", islemKimligi).eq("store_id", storeId).maybeSingle();
+      const runCreatedAt = gecerliIsoTarih(runData?.created_at);
+      if (runCreatedAt && (!jobCreatedAt || Date.parse(runCreatedAt) < Date.parse(jobCreatedAt))) {
+        return runCreatedAt;
+      }
+    } catch {
+    }
+    return jobCreatedAt;
   } catch {
     return null;
   }

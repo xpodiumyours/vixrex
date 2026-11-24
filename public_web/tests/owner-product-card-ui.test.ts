@@ -222,7 +222,7 @@ describe("OwnerProductManager kart arayuz sozlesmesi", () => {
 });
 
 describe("InvoiceToProducts okunuyor okuma ekrani", () => {
-  it("belge gelmeden halka, sayilar, adim rayi ve bes kontrol metnini gosterir", () => {
+  it("belge gelmeden halka, gecen sure sayaci ve uc gercek adim kartini gosterir", () => {
     hookState.index = 0;
     hookState.values = {
       0: "okunuyor",
@@ -238,17 +238,16 @@ describe("InvoiceToProducts okunuyor okuma ekrani", () => {
 
     expect(html).toContain("fatura-okuma-ring");
     expect(html).toContain("fatura-okuma-halka");
-    expect(html).toContain("fatura-sayilar");
+    expect(html).toContain("fatura-gecen-sure");
+    expect(html).toContain("00:00");
     expect(html).toContain("fatura-adim-ray");
     expect(html).toContain("Fatura görüntüsü alındı");
-    expect(html).toContain("Ürün satırları okunuyor");
-    expect(html).toContain("Miktar ve tutar belgeyle karşılaştırıldı");
-    expect(html).toContain("Ürün kaynağı araştırılıyor");
-    expect(html).toContain("Ürün kartları hazırlanıyor");
-    expect((html.match(/class="fatura-adim-satir fatura-adim-satir--/g) ?? []).length).toBe(5);
+    expect(html).toContain("Fatura okunuyor ve resmî ürünler araştırılıyor");
+    expect(html).toContain("Ürün kartları ve görseller hazırlanıyor");
+    expect((html.match(/class="fatura-adim-satir fatura-adim-satir--/g) ?? []).length).toBe(3);
     expect([...html.matchAll(/<span class="fatura-adim-durum">(tamam|sürüyor|bekliyor)<\/span>/g)].map((e) => e[1]))
-      .toEqual(["bekliyor", "sürüyor", "bekliyor", "bekliyor", "bekliyor"]);
+      .toEqual(["bekliyor", "sürüyor", "bekliyor"]);
     expect(html).not.toContain("fatura-hologram-kart");
-    expect(html).not.toContain("fatura-sayac");
+    expect(html).not.toContain("fatura-sayilar");
   });
 });

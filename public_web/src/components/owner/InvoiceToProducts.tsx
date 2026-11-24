@@ -218,6 +218,13 @@ function stokSayisi(ham: string): number | null {
   return Number.isSafeInteger(n) && n >= 0 ? n : null;
 }
 
+export function gecenSureMetni(saniye: number): string {
+  const guvenli = Number.isFinite(saniye) ? Math.max(0, Math.floor(saniye)) : 0;
+  const dk = String(Math.floor(guvenli / 60)).padStart(2, "0");
+  const sn = String(guvenli % 60).padStart(2, "0");
+  return `${dk}:${sn}`;
+}
+
 export function faturaSatiriDurumunuHazirla(
   satir: FaturaOkumaSatiri,
   kategoriId: string,
@@ -404,8 +411,18 @@ export default function InvoiceToProducts({
   const [izinLinki, setIzinLinki] = useState<string | null>(null);
   const [izinKopyalandi, setIzinKopyalandi] = useState(false);
   const [izinHata, setIzinHata] = useState<string | null>(null);
+  const [gecenSureSn, setGecenSureSn] = useState(0);
   const aktifFaturaBeklemesi = useRef<Promise<FaturaOkumaSonucu> | null>(null);
   const faturaBeklemeIptali = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    if (adim !== "okunuyor") return;
+    const baslangic = Date.now();
+    const zamanlayici = setInterval(() => {
+      setGecenSureSn(Math.max(0, Math.floor((Date.now() - baslangic) / 1000)));
+    }, 1000);
+    return () => clearInterval(zamanlayici);
+  }, [adim]);
 
   const bekleyenFaturaSonucunuAl = useCallback(
     (ilk: FaturaOkumaSonucu): Promise<FaturaOkumaSonucu> => {
@@ -591,7 +608,7 @@ export default function InvoiceToProducts({
       }
       const ilk = govde as FaturaOkumaSonucu;
       if (ilk.hazirlaniyor === true) {
-        setBelge(null); setSatirlar([]); setSonuc(null); setBeklemeAsamasi("okunuyor");
+        setBelge(null); setSatirlar([]); setSonuc(null); setBeklemeAsamasi("okunuyor"); setGecenSureSn(0);
         setAdim("okunuyor");
         if (ilk.islemKimligi) bekleyenIslemKimliginiKaydet(storeSlug, ilk.islemKimligi);
       }
@@ -759,6 +776,7 @@ export default function InvoiceToProducts({
       setSatirlar([]);
       setSonuc(null);
       setBeklemeAsamasi("okunuyor");
+      setGecenSureSn(0);
       setYuklenenBelge({
         sayfa: dosyalar.length,
         bayt: dosyalar.reduce((toplam, dosya) => toplam + dosya.size, 0),
@@ -1093,6 +1111,7 @@ export default function InvoiceToProducts({
     setSonuc(null);
     setOtomatikTaslakRaporu(null);
     setYuklenenBelge(null);
+    setGecenSureSn(0);
     setHata(null);
     setIzinLinki(null);
     setIzinKopyalandi(false);
@@ -1169,13 +1188,7 @@ export default function InvoiceToProducts({
 
   if (adim === "okunuyor") {
     const belgeOkundu = belge !== null;
-    const faturaTutuyor = kontrol.adetTutuyor === false
-      ? `belgede toplam ${belge?.belgeAdedi} yazıyor, tutmuyor`
-      : kontrol.tutarTutuyor === false
-        ? "belgedeki ara toplamla tutmuyor"
-        : kontrol.adetTutuyor === null && kontrol.tutarTutuyor === null
-          ? "belgede karşılaştırılacak toplam yok"
-          : "belgeyle eşleşiyor";
+    const okumaTamam = belgeOkundu || beklemeAsamasi === "kartlaniyor";
     const kanitlar: Array<{ baslik: string; detay: string; durum: "tamam" | "aktif" | "bekliyor" }> = [
       {
         baslik: "Fatura görüntüsü alındı",
@@ -1185,30 +1198,18 @@ export default function InvoiceToProducts({
         durum: yuklenenBelge || belge ? "tamam" : "bekliyor",
       },
       {
-        baslik: belgeOkundu ? `${satirlar.length} ürün satırı bulundu` : "Ürün satırları okunuyor",
-        detay: belgeOkundu
-          ? "Barkod, ürün adı, beden ve miktar satır satır çıkarıldı."
-          : "Barkod, ürün adı, miktar ve alış fiyatı satır satır çıkarılıyor.",
-        durum: belgeOkundu ? "tamam" : "aktif",
+        baslik: "Fatura okunuyor ve resmî ürünler araştırılıyor",
+        detay: okumaTamam
+          ? "Fatura satırları ve resmî ürün eşleşmeleri alındı."
+          : "Faturadaki ürünler okunuyor ve resmî kaynaklar taranıyor.",
+        durum: okumaTamam ? "tamam" : "aktif",
       },
       {
-        baslik: "Miktar ve tutar belgeyle karşılaştırıldı",
+        baslik: "Ürün kartları ve görseller hazırlanıyor",
         detay: belgeOkundu
-          ? `${kontrol.miktarOzeti || "miktar okunamadı"} · ${paraYaz(kontrol.tutarToplam)} — ${faturaTutuyor}`
-          : "Uydurma sayı kullanılmaz; belgeyle tutmayan değer işaretlenir.",
-        durum: belgeOkundu ? "tamam" : "bekliyor",
-      },
-      {
-        baslik: "Ürün kaynağı araştırılıyor",
-        detay: belgeOkundu
-          ? "Ürün kaynağı faturadaki ad, model ve barkodla aranır."
-          : "Resmî ürün kaynağı faturadaki ad, model ve barkoda göre aranıyor.",
-        durum: beklemeAsamasi === "kartlaniyor" ? "aktif" : "bekliyor",
-      },
-      {
-        baslik: "Ürün kartları hazırlanıyor",
-        detay: "Alış fiyatı satış fiyatı olarak kullanılmaz. Açıklamalar yalnız faturadaki doğrulanmış bilgiye dayanır.",
-        durum: beklemeAsamasi === "kartlaniyor" ? "aktif" : "bekliyor",
+          ? "Ürün kartları ve görseller hazır."
+          : "Ürün başlıkları, açıklamaları ve görselleri kartlara aktarılıyor.",
+        durum: belgeOkundu ? "tamam" : beklemeAsamasi === "kartlaniyor" ? "aktif" : "bekliyor",
       },
     ];
     return (
@@ -1220,25 +1221,14 @@ export default function InvoiceToProducts({
             <span className="fatura-okuma-halka" aria-hidden="true" />
             <VixrexAvatar size={64} decorative />
           </div>
-          <p className="fatura-bekleme" role="status"><span className="fatura-yukleyici" aria-hidden="true" />{beklemeAsamasi === "kartlaniyor" ? "Ürün bilgileri araştırılıyor ve kartlar hazırlanıyor…" : "Fatura satırları okunuyor…"}</p>
-          <dl className="fatura-sayilar">
-            <div>
-              <dt>Satır</dt>
-              <dd>{belgeOkundu ? satirlar.length : "—"}</dd>
-            </div>
-            <div>
-              <dt>Miktar</dt>
-              <dd>{belgeOkundu ? kontrol.miktarOzeti || "okunamadı" : "—"}</dd>
-            </div>
-            <div>
-              <dt>Tutar</dt>
-              <dd>{belgeOkundu ? paraYaz(kontrol.tutarToplam) : "—"}</dd>
-            </div>
-          </dl>
+          <p className="fatura-gecen-sure" aria-label="Geçen süre">{gecenSureMetni(gecenSureSn)}</p>
+          <p className="fatura-bekleme" role="status"><span className="fatura-yukleyici" aria-hidden="true" />{beklemeAsamasi === "kartlaniyor" ? "Ürün kartları ve görseller hazırlanıyor…" : "Fatura okunuyor ve resmî ürünler araştırılıyor…"}</p>
           <ol className="fatura-adim-ray">
             {kanitlar.map((kanit, sira) => (
               <li key={kanit.baslik} className={`fatura-adim-satir fatura-adim-satir--${kanit.durum}`}>
-                <span className="fatura-adim-no" aria-hidden="true">{String(sira + 1).padStart(2, "0")}</span>
+                <span className={`fatura-adim-no${kanit.durum === "tamam" ? " fatura-adim-tik" : ""}`} aria-hidden="true">
+                  {kanit.durum === "tamam" ? "✓" : kanit.durum === "aktif" ? <span className="fatura-adim-nabiz" /> : String(sira + 1).padStart(2, "0")}
+                </span>
                 <span className="fatura-adim-govde">
                   <b>{kanit.baslik}</b>
                   <small>{kanit.detay}</small>
@@ -1302,7 +1292,10 @@ export default function InvoiceToProducts({
       <FaturaAkisBasligi adim={adim} baslik={`${satirlar.length} ürün kartını kontrol et`}
         aciklama="Satış fiyatlarını belirle ve yayınlamak istediğin kartları onayla. Bilgilerin önce taslak olarak kaydedilir." />
       <div className="fatura-baslik">
-        <h3>{satirlar.length} satır okundu</h3>
+        <div className="fatura-baslik-ust">
+          <h3>{satirlar.length} ürün hazırlandı</h3>
+          <span className="fatura-tamam-rozet">Fatura ✓</span>
+        </div>
         {otomatikTaslakRaporu && <p role="status" className="fatura-aciklama">
           {otomatikTaslakRaporu.kaydedildi} ürün görünmez taslak olarak kaydedildi.
           {(otomatikTaslakRaporu.birlestirmeBekleyen ?? 0) > 0
@@ -1310,9 +1303,6 @@ export default function InvoiceToProducts({
             : ""}
           {otomatikTaslakRaporu.atlandi > 0 ? ` ${otomatikTaslakRaporu.atlandi} satır kaydedilemedi.` : ""}
         </p>}
-        {belge?.ozetSatiri && (
-          <p className="fatura-aciklama">{belge.ozetSatiri}</p>
-        )}
         {belge && (belge.belgeAdedi !== null || belge.belgeToplami !== null) && (
           <p className="fatura-aciklama">
             {[

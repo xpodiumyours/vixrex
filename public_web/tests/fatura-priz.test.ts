@@ -570,6 +570,8 @@ describe("fatura priz - tak-cikar", () => {
     expect(kayitGirdisi.slug).toBe("ornek-esnaf");
     expect(kayitGirdisi.parmakIzi).toBe("parmak-izi-1");
     expect(kayitGirdisi.belgeAdedi).toBe(3);
+    expect(typeof kayitGirdisi.aramaDurumu?.baslangicZamani).toBe("string");
+    expect(Number.isFinite(Date.parse(kayitGirdisi.aramaDurumu.baslangicZamani))).toBe(true);
     expect(kayitGirdisi.satirlar).toHaveLength(1);
     expect(kayitGirdisi.satirlar[0]).toMatchObject({
       ad: "Bosch TWK7203 Su Isıtıcı",

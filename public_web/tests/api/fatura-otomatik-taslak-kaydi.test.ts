@@ -9,7 +9,7 @@ vi.mock("@/lib/faturaIslemOku", async (original) => ({
 vi.mock("@/lib/faturaUrunBaglantisi", () => ({ faturaUrununuKaydet: m.save, satiriDogrula: m.row }));
 vi.mock("@/lib/faturaUrunHazirlama", () => ({ kayitliFaturaKatalogunuUygula: m.catalog, faturaUrunGorselleriniAktar: m.media }));
 import { faturaTaslakYanitiniHazirla } from "@/lib/faturaOtomatikTaslakKaydi";
-import { faturaOzetiniKaydet } from "@/lib/faturaOzeti";
+import { faturaBaslangicZamani, faturaOzetiniKaydet, gecenSaniye } from "@/lib/faturaOzeti";
 
 const jobId = "11111111-1111-4111-8111-111111111111";
 const owner = (price = ""): SahipDurumu => ({
@@ -353,5 +353,52 @@ describe("sunucuda kalıcı görünmez fatura taslağı", () => {
     const reply = await faturaTaslakYanitiniHazirla(admin, "store", "demo", kayit);
     expect(reply).not.toHaveProperty("ozetSatiri");
     expect(jobUpdate).not.toHaveBeenCalled();
+  });
+
+  it("faturaBaslangicZamani discovery_state.baslangicZamani uzerinden gercek toplam sureyi hesaplar", async () => {
+    const baslangic = new Date(Date.now() - 47_000).toISOString();
+    const jobCreated = new Date(Date.now() - 3_000).toISOString();
+    const admin = {
+      from: vi.fn((table: string) => {
+        const q = {
+          select: () => q,
+          eq: () => q,
+          maybeSingle: async () => ({
+            data: table === "invoice_jobs"
+              ? { created_at: jobCreated, discovery_state: { baslangicZamani: baslangic } }
+              : null,
+            error: null,
+          }),
+        };
+        return q;
+      }),
+    } as unknown as SupabaseClient;
+
+    const bulunan = await faturaBaslangicZamani(admin, "store", jobId);
+    expect(bulunan).toBe(baslangic);
+    const sure = gecenSaniye(bulunan);
+    expect(sure).not.toBeNull();
+    expect(Math.round(sure!)).toBeGreaterThanOrEqual(46);
+    expect(Math.round(sure!)).toBeLessThanOrEqual(50);
+
+    const gecersizBaslangicAdmin = {
+      from: vi.fn((table: string) => {
+        const q = {
+          select: () => q,
+          eq: () => q,
+          maybeSingle: async () => ({
+            data: table === "invoice_jobs"
+              ? { created_at: jobCreated, discovery_state: { baslangicZamani: "gecersiz-tarih" } }
+              : table === "invoice_provider_runs"
+                ? { created_at: baslangic }
+                : null,
+            error: null,
+          }),
+        };
+        return q;
+      }),
+    } as unknown as SupabaseClient;
+
+    expect(await faturaBaslangicZamani(gecersizBaslangicAdmin, "store", jobId)).toBe(baslangic);
   });
 });
