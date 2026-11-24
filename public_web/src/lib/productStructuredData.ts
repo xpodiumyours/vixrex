@@ -210,6 +210,17 @@ export function buildPhysicalProductStructuredData(args: {
 
   if (variants.length <= 1) {
     const attributeFields = productAttributeSchemaFields(product.metadata);
+    const singleOffer = offer({
+      url: productUrl,
+      price: parentPrice,
+      currency,
+      stockStatus: product.stockStatus,
+      stockQuantity: product.stockQuantity,
+      storeName,
+      storeLocation,
+      itemCondition,
+    });
+    if (!singleOffer) return null;
     return {
       ...common,
       "@type": "Product",
@@ -221,16 +232,7 @@ export function buildPhysicalProductStructuredData(args: {
       ...(attributeFields.additionalProperty
         ? { additionalProperty: attributeFields.additionalProperty }
         : {}),
-      offers: offer({
-        url: productUrl,
-        price: parentPrice,
-        currency,
-        stockStatus: product.stockStatus,
-        stockQuantity: product.stockQuantity,
-        storeName,
-        storeLocation,
-        itemCondition,
-      }),
+      offers: singleOffer,
     };
   }
 
@@ -246,7 +248,7 @@ export function buildPhysicalProductStructuredData(args: {
   const groupId = product.id || product.slug || productUrl;
   const groupNodeId = `${productUrl}#product-group`;
 
-  const hasVariant = variants.map((variant) => {
+  const variantNodes = variants.map((variant) => {
     const safeVariantOptions = Object.entries(variant.options).filter(
       ([key]) => !kural32HassasAlanMi(key, key, false),
     );
@@ -290,6 +292,9 @@ export function buildPhysicalProductStructuredData(args: {
       }),
     };
   });
+
+  const hasVariant = variantNodes.filter((node) => Boolean(node.offers));
+  if (!hasVariant.length) return null;
 
   return {
     ...common,

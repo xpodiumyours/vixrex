@@ -306,4 +306,86 @@ describe("product structured data", () => {
     expect(JSON.stringify(result)).not.toContain("MerchantReturnPolicy");
     expect(JSON.stringify(result)).not.toContain("merchantReturnDays");
   });
+
+  it("fiyatlı tekil ürün geçerli Product ve Offer şeması üretmeye devam eder", () => {
+    const result = buildPhysicalProductStructuredData({
+      product: baseProduct,
+      productUrl: "https://vixrex.com/v/magaza/urun/keten-gomlek",
+      storeName: "Örnek Mağaza",
+      description: "Keten karışımlı gömlek",
+      images: ["https://example.com/product.jpg"],
+    }) as { "@type"?: string; offers?: Record<string, unknown> };
+
+    expect(result["@type"]).toBe("Product");
+    expect(result.offers).toMatchObject({
+      "@type": "Offer",
+      priceCurrency: "TRY",
+      price: "1299",
+      priceValidUntil: `${new Date().getUTCFullYear()}-12-31`,
+      availability: "https://schema.org/InStock",
+    });
+  });
+
+  it("fiyatı olmayan tekil ürün için geçersiz Product şeması üretmez", () => {
+    const result = buildPhysicalProductStructuredData({
+      product: { ...baseProduct, price: undefined, priceAmount: null },
+      productUrl: "https://vixrex.com/v/magaza/urun/keten-gomlek",
+      storeName: "Örnek Mağaza",
+      description: "Keten karışımlı gömlek",
+      images: ["https://example.com/product.jpg"],
+    });
+
+    expect(result).toBeNull();
+  });
+
+  it("tüm varyantları fiyatsız ürün için ProductGroup şeması üretmez", () => {
+    const result = buildPhysicalProductStructuredData({
+      product: {
+        ...baseProduct,
+        price: undefined,
+        priceAmount: null,
+        variants: [
+          { id: "red-s", options: { color: "Kırmızı", size: "S" } },
+          { id: "blue-m", options: { color: "Mavi", size: "M" } },
+        ],
+      },
+      productUrl: "https://vixrex.com/v/magaza/urun/keten-gomlek",
+      storeName: "Örnek Mağaza",
+      description: "Keten karışımlı gömlek",
+      images: ["https://example.com/product.jpg"],
+    });
+
+    expect(result).toBeNull();
+  });
+
+  it("kısmen fiyatlı üründe yalnız fiyatlı varyantları hasVariant içine alır", () => {
+    const result = buildPhysicalProductStructuredData({
+      product: {
+        ...baseProduct,
+        price: undefined,
+        priceAmount: null,
+        variants: [
+          { id: "red-s", options: { color: "Kırmızı", size: "S" }, priceAmount: 1299 },
+          { id: "blue-m", options: { color: "Mavi", size: "M" } },
+        ],
+      },
+      productUrl: "https://vixrex.com/v/magaza/urun/keten-gomlek",
+      storeName: "Örnek Mağaza",
+      description: "Keten karışımlı gömlek",
+      images: ["https://example.com/product.jpg"],
+    }) as {
+      "@type"?: string;
+      hasVariant?: Array<Record<string, unknown> & { offers?: Record<string, unknown> }>;
+    };
+
+    expect(result["@type"]).toBe("ProductGroup");
+    expect(result.hasVariant).toHaveLength(1);
+    expect(result.hasVariant?.[0]).toMatchObject({
+      "@type": "Product",
+      color: "Kırmızı",
+      size: "S",
+      offers: { price: "1299", priceCurrency: "TRY" },
+    });
+    expect(result.hasVariant?.map((node) => node.color)).toEqual(["Kırmızı"]);
+  });
 });
