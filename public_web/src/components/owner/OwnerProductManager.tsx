@@ -853,7 +853,7 @@ export function OwnerProductManager({
           <label className="self-center text-sm"><input type="checkbox" checked={yalnizTaslak} onChange={(e) => setYalnizTaslak(e.target.checked)} /> Yalnız taslaklar</label>
           {(filterText || filterCategory || yalnizTaslak) && <span className="self-center text-xs text-[var(--owner-muted)]">{filteredProducts.length}/{products.length}</span>}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <div className="vixrex-yatay-serit flex min-w-0 flex-1 items-center gap-2 overflow-x-auto pb-1.5">
             {[{ id: "", name: "Tümü" }, ...normalizedCategories].map((cip) => (
               <button
@@ -862,8 +862,8 @@ export function OwnerProductManager({
                 onClick={() => setFilterCategory(cip.id)}
                 className={
                   filterCategory === cip.id
-                    ? "whitespace-nowrap shrink-0 rounded-full border border-[var(--owner-primary)] bg-[var(--owner-primary)]/10 px-3 py-1.5 text-xs font-bold text-[var(--owner-primary)]"
-                    : "whitespace-nowrap shrink-0 rounded-full border border-[var(--owner-border)] px-3 py-1.5 text-xs text-[var(--owner-text-alt)] hover:border-[var(--owner-primary)]"
+                    ? "min-h-[36px] inline-flex items-center whitespace-nowrap shrink-0 rounded-full border border-[var(--owner-primary)] bg-[var(--owner-primary)]/10 px-3.5 py-1.5 text-xs font-bold text-[var(--owner-primary)]"
+                    : "min-h-[36px] inline-flex items-center whitespace-nowrap shrink-0 rounded-full border border-[var(--owner-border)] px-3.5 py-1.5 text-xs text-[var(--owner-text-alt)] hover:border-[var(--owner-primary)]"
                 }
               >
                 {cip.name}
@@ -874,7 +874,7 @@ export function OwnerProductManager({
             aria-label="Kategori filtresi"
             value={filterCategory}
             onChange={(e) => setFilterCategory(e.target.value)}
-            className="owner-input !min-h-[36px] !w-[152px] sm:!w-[200px] shrink-0 truncate !py-1.5 text-xs"
+            className="owner-input !min-h-[38px] w-full sm:!w-[220px] shrink-0 truncate !py-1.5 text-xs"
           >
             <option value="">{`Tüm Kategoriler (${normalizedCategories.length})`}</option>
             {normalizedCategories.map((cip) => (
@@ -929,7 +929,7 @@ export function OwnerProductManager({
       ) : filteredProducts.length === 0 ? (
         <p className="mt-6 text-center text-sm text-[var(--owner-muted)]">Aramana uygun ürün bulunamadı.</p>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(min(100%,280px),1fr))]">
           {filteredProducts.map((product) => {
             const image = product.image_urls?.find((url) => url.trim());
             const isService = product.product_categories?.product_template_key === "service";
@@ -1089,7 +1089,7 @@ export function OwnerProductManager({
                               }}
                               className="min-w-0 flex-1 bg-transparent text-[17px] font-bold leading-none tracking-[-0.02em] text-[var(--owner-text)] outline-none placeholder:text-sm placeholder:font-medium placeholder:text-[var(--owner-muted)]/70"
                             />
-                            <span className="shrink-0 text-xs font-bold text-[#57B7FF]">₺</span>
+                            {!/(?:tl|₺)/i.test(fiyatDegeri) ? <span className="shrink-0 text-xs font-bold text-[#57B7FF]">₺</span> : null}
                           </div>
                         </div>
 

@@ -79,8 +79,8 @@ export default function UrunlerPage() {
 
   if (yukleniyor && !store) {
     return (
-      <div className="owner-shell p-6">
-        <div className="mx-auto max-w-[900px] space-y-4">
+      <div className="owner-shell p-4 sm:p-6">
+        <div className="mx-auto max-w-7xl space-y-4">
           <div className="h-8 w-40 animate-pulse rounded bg-white/10" />
           <div className="h-32 animate-pulse rounded-2xl bg-white/5" />
         </div>
@@ -90,8 +90,8 @@ export default function UrunlerPage() {
 
   if (!store) {
     return (
-      <div className="owner-shell p-6">
-        <div className="mx-auto max-w-[900px] rounded-2xl border border-white/10 bg-white/5 p-8 text-center">
+      <div className="owner-shell p-4 sm:p-6">
+        <div className="mx-auto max-w-7xl rounded-2xl border border-white/10 bg-white/5 p-8 text-center">
           <p className="text-sm font-bold text-white">{hata || "Vitrin yok"}</p>
           <Link href="/app" className="owner-button-primary mt-4 inline-flex">Vitrinime dön</Link>
         </div>
@@ -100,8 +100,8 @@ export default function UrunlerPage() {
   }
 
   return (
-    <div className="owner-shell p-6">
-      <div className="mx-auto max-w-[900px] space-y-4">
+    <div className="owner-shell p-4 sm:p-6">
+      <div className="mx-auto max-w-7xl space-y-4">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-[22px] font-black text-white">Faturadan ürün kartı</h1>
