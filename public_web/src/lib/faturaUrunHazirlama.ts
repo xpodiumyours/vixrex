@@ -164,9 +164,9 @@ const RENK_KISALTMALARI: Record<string, string> = {
 };
 
 export const TURKIYE_FATURA_KISALTMA_TALIMATI = [
-  "Türkiye toptan fatura kısaltmalarını otomatik çözümle: SLM=Slim Fit, REG=Regular Fit, OVS=Oversize, RLX=Relaxed Fit, SYH=Siyah, BYZ=Beyaz, LCV=Lacivert, MVI=Mavi, KRM=Kırmızı/Krem, GRI=Gri, ANT=Antrasit, BEJ=Bej, BRD=Bordo, HKI=Haki, YSL=Yeşil, PNT=Pantolon, GMLK=Gömlek, TSH/TSRT=Tişört, SWT=Sweatshirt, CKT=Ceket, KZK=Kazak, DNM=Denim, KDN=Kadın, ERK=Erkek, CCK=Çocuk, PMK=Pamuk, ELST=Elastan, UK=Uzun Kol, KK=Kısa Kol, SY=Sıfır Yaka, VY=V Yaka.",
+  "Türkiye toptan fatura kısaltmalarını otomatik çözümle: SLM=Slim Fit, REG=Regular Fit, OVS=Oversize, RLX=Relaxed Fit, SYH=Siyah, BYZ=Beyaz, LCV=Lacivert, MVI=Mavi, KRM=Kırmızı/Krem, GRI=Gri, ANT=Antrasit, BEJ=Bej, BRD=Bordo, HKI=Haki, YSL=Yeşil, PNT=Pantolon, GMLK=Gömlek, TSH/TSRT=Tişört, SWT=Sweatshirt, CKT=Ceket, KZK=Kazak, DNM=Denim, KDN=Kadın, ERK=Erkek, CCK=Çocuk, PMK=Pamuk, ELST=Elastan, UK=Uzun Kol, KK=Kısa Kol, SY=Sıfır Yaka, VY=V Yaka. Hangi sektör olursa olsun faturadaki kısaltmaları, renk/beden/ölçü kodlarını ve sektörel terimleri faturanın bağlamından otomatik çözümleyip tam tüketici diline aç.",
   "Akıllı kademeli eşleme uygula: Faturadaki model kodu veya barkodu üretici/marka resmî web sitesinde arayıp doğrula; ürün bulunduğunda faturadaki kısaltmalı satır yerine üretici sayfasındaki tüketici dostu tam ürün adını al ve faturadaki renk bilgisini kısaltmadan açarak ürün açıklamasında net belirt.",
-  "Toptan faturalarda model kodları bazen yalın/tekil (ör. 11375) yazılırken üreticinin sitesinde veya kataloğunda paketli/tireli/varyantlı (ör. 11375-78, 11375-55, 1013-1 vb.) kodlarla yer alabilir; model kodu önekiyle veya barkodla eşleştiğinde de ürünü doğrulanmış resmî ürün kabul et ve görsellerini al.",
+  "Toptan faturalarda model kodları bazen yalın/tekil (ör. 11375) yazılırken üreticinin sitesinde veya kataloğunda paketli/tireli/varyantlı (ör. 11375-78, 11375-55, 1013-1 vb.) kodlarla yer alabilir; tersine faturada model kodu renk/beden ekleriyle bitişik veya tireli yazılmışsa (ör. 167-1-3XL, 049-19-3XL, 328-1-4), sondaki renk ve beden eklerini ayırarak baştaki kök model numarası ve açılmış ürün adıyla da arama yap; model kodu önekiyle, kök model numarasıyla veya barkodla eşleştiğinde de ürünü doğrulanmış resmî ürün kabul et ve görsellerini al.",
   "Doğrulanmış her ürün kartında sayfadaki birincil/ana mankenli stüdyo fotoğrafını selected_image_url alanına, diğer renk ve açı fotoğraflarını image_urls dizisine ekle; akinoncdn.com, mncdn.com, ticimax.cloud, ideacdn.net, shopify.com, myikas.com gibi kurumsal e-ticaret CDN görsellerini koru ve doğrulanan ürünü kesinlikle görselsiz bırakma.",
 ].join("\n");
 
@@ -599,12 +599,14 @@ export function groundingIstemiOlustur(
   const aramaKurali = kilitliAlan
     ? `Resmî üretici alan adı ${kilitliAlan} olarak kilitlidir. Aramayı yalnızca site:${kilitliAlan} içinde daralt ve başka hiçbir domain döndürme.`
     : "Önce ürünün/markanın tek resmî üretici veya marka alan adını (official_domain) belirle, ardından aramayı site:<official_domain> içinde daraltarak resmî ürün sayfasını bul.";
+  const ekTalimat = (process.env.GEMINI_FATURA_EK_TALIMAT || "").trim();
   return [
     "Google Search ve urlContext kullanarak aşağıdaki ürün için resmî üretici/marka web sitesini ve doğrudan ürün sayfasını tek seferde eşleştir.",
     aramaKurali,
     TURKIYE_FATURA_KISALTMA_TALIMATI,
-    "Trendyol, Hepsiburada, N11, Amazon, Çiçeksepeti, PttAVM, Akakçe, Cimri, Epey, Sahibinden gibi pazaryeri veya aracı siteleri kesinlikle kullanma ve döndürme.",
+    "official_domain, official_product_url, selected_image_url ve image_urls alanları için pazaryeri/aracı siteleri (Trendyol, Hepsiburada, N11, Amazon, Çiçeksepeti, PttAVM, Akakçe, Cimri, Epey, Sahibinden vb.) kesinlikle kullanma ve döndürme; ancak ürünün hangi markaya ait olduğunu (brand) tespit ederken üreticinin kendi sitesinde listelenmeyen kodlar için pazaryeri veya toptancı sayfalarındaki ürün başlıklarından yararlanabilirsin.",
     "Doğrulanmış bir resmî ürün sayfası yoksa tahmin yürütme; official_product_url değerini null döndür.",
+    ...(ekTalimat ? [ekTalimat] : []),
     "Yalnızca geçerli JSON nesnesi döndür:",
     '{"official_domain":string|null,"official_product_url":string|null,"official_name":string|null,"brand":string|null,"description":string|null,"category":string|null,"selected_image_url":string|null,"image_urls":string[]}',
     JSON.stringify(kimlik),

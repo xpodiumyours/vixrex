@@ -21,6 +21,7 @@ import {
   faturaPrizBasliklari,
   geminiGovdesineCevir,
   geminiPrizAktifMi,
+  googleFaturaUrunKartiIstemi,
   googleFaturaUrunKartlariUret,
 } from "@/lib/faturaPriz";
 
@@ -649,5 +650,144 @@ describe("fatura priz - tak-cikar", () => {
     }
     expect(yakalananHata?.message).toBe("OKUYUCU_CEVAP_VERMEDI");
     expect(String(yakalananHata?.cause ?? "")).not.toContain("AIzaSyGizliKey999999");
+  });
+
+  it("varsayilan googleFaturaUrunKartlariUret cagrisinda 4 yeni kurali eksiksiz gonderir", async () => {
+    vi.stubEnv("GEMINI_API_KEY", "AIzaSyRulesKey");
+    vi.stubEnv("GEMINI_FATURA_TALIMAT", "");
+    vi.stubEnv("GEMINI_FATURA_EK_TALIMAT", "");
+    let gonderilenIstekMetni = "";
+    const fetcher = vi.fn(async (_url, init) => {
+      const govde = JSON.parse(String(init?.body ?? "{}")) as {
+        contents?: Array<{ parts?: Array<{ text?: string }> }>;
+      };
+      gonderilenIstekMetni = govde.contents?.[0]?.parts?.[0]?.text ?? "";
+      return {
+        ok: true,
+        json: async () => ({
+          candidates: [{ content: { parts: [{ text: JSON.stringify({ items: [] }) }] } }],
+        }),
+      };
+    }) as unknown as typeof fetch;
+
+    await googleFaturaUrunKartlariUret("data:image/png;base64,AA==", fetcher);
+
+    expect(gonderilenIstekMetni).toContain("Hangi sektör olursa olsun faturadaki kısaltmaları, renk/beden/ölçü kodlarını ve sektörel terimleri faturanın bağlamından otomatik çözümleyip tam tüketici diline aç.");
+    expect(gonderilenIstekMetni).not.toContain("RB/RİB");
+    expect(gonderilenIstekMetni).not.toContain("G.ASK=");
+    expect(gonderilenIstekMetni).toContain("167-1-3XL");
+    expect(gonderilenIstekMetni).toContain("kök model numarası");
+    expect(gonderilenIstekMetni).toContain("ortak üretici/markayı tespit edip ilgili tüm satırların brand alanına uygula");
+    expect(gonderilenIstekMetni).toContain("official_domain, official_product_url, selected_image_url ve image_urls");
+    expect(gonderilenIstekMetni).toContain("pazaryeri veya toptancı sayfalarındaki ürün başlıklarından yararlanabilirsin");
+  });
+
+  it("GEMINI_FATURA_EK_TALIMAT temel talimati koruyarak ek kurali yeni satirla ekler", async () => {
+    vi.stubEnv("GEMINI_API_KEY", "AIzaSyEkTalimatKey");
+    vi.stubEnv("GEMINI_FATURA_TALIMAT", "");
+    vi.stubEnv("GEMINI_FATURA_EK_TALIMAT", "  İç giyim paket içi adedini kısa açıklamaya yaz.  ");
+
+    const istem = googleFaturaUrunKartiIstemi();
+    expect(istem).toContain("Hangi sektör olursa olsun faturadaki kısaltmaları");
+    expect(istem).toContain("ortak üretici/markayı tespit edip");
+    expect(istem.endsWith("\nİç giyim paket içi adedini kısa açıklamaya yaz.")).toBe(true);
+
+    let yakalananMetin = "";
+    const fetcher = vi.fn(async (_url, init) => {
+      const govde = JSON.parse(String(init?.body ?? "{}")) as {
+        contents?: Array<{ parts?: Array<{ text?: string }> }>;
+      };
+      yakalananMetin = govde.contents?.[0]?.parts?.[0]?.text ?? "";
+      return {
+        ok: true,
+        json: async () => ({
+          candidates: [{ content: { parts: [{ text: JSON.stringify({ items: [] }) }] } }],
+        }),
+      };
+    }) as unknown as typeof fetch;
+
+    await googleFaturaUrunKartlariUret("data:image/png;base64,AA==", fetcher);
+    expect(yakalananMetin).toBe(istem);
+
+    vi.stubEnv("GEMINI_FATURA_EK_TALIMAT", "   ");
+    expect(googleFaturaUrunKartiIstemi()).not.toContain("İç giyim paket içi adedini");
+  });
+
+  it("GEMINI_FATURA_TALIMAT ile dis talimat verilse bile Kural 32 ve pazaryeri link/gorsel engeli calisir, brand korunur", async () => {
+    vi.stubEnv("GEMINI_API_KEY", "AIzaSyDisTalimatKey");
+    vi.stubEnv("GEMINI_FATURA_TALIMAT", "  Özel harici fatura okuma talimatı  ");
+    vi.stubEnv("GEMINI_FATURA_EK_TALIMAT", "Ek kural satırı");
+
+    let yakalananMetin = "";
+    const fetcher = vi.fn(async (_url, init) => {
+      const govde = JSON.parse(String(init?.body ?? "{}")) as {
+        contents?: Array<{ parts?: Array<{ text?: string }> }>;
+      };
+      yakalananMetin = govde.contents?.[0]?.parts?.[0]?.text ?? "";
+      return {
+        ok: true,
+        json: async () => ({
+          candidates: [
+            {
+              content: {
+                parts: [
+                  {
+                    text: JSON.stringify({
+                      items: [
+                        {
+                          row_id: "1",
+                          title: "Berrak Bayan Ribana Geniş Askılı Atlet 1234567890",
+                          brand: "Berrak",
+                          model: "167-1-3XL",
+                          barcode: null,
+                          variant: "BYZ",
+                          size: "3XL",
+                          quantity: 6,
+                          unit: "adet",
+                          unit_price: 95,
+                          category: "İç Giyim",
+                          short_description: "Pamuklu atlet TR330006100519786457841326 %15 iskonto 60 gün vade",
+                          official_domain: "trendyol.com",
+                          official_product_url: "https://www.trendyol.com/berrak/bayan-atlet-167-p-12345",
+                          selected_image_url: "https://cdn.dsmcdn.com/ty100/product/media/images/berrak-167.jpg",
+                          image_urls: [
+                            "https://cdn.dsmcdn.com/ty100/product/media/images/berrak-167.jpg",
+                            "https://www.trendyol.com/img/berrak-167-2.jpg",
+                          ],
+                          vkn: "1234567890",
+                          iban: "TR330006100519786457841326",
+                        },
+                      ],
+                    }),
+                  },
+                ],
+              },
+              groundingMetadata: {
+                groundingChunks: [
+                  { web: { uri: "https://www.trendyol.com/berrak/bayan-atlet-167-p-12345" } },
+                  { image: { imageUri: "https://cdn.dsmcdn.com/ty100/product/media/images/berrak-167.jpg" } },
+                ],
+              },
+            },
+          ],
+        }),
+      };
+    }) as unknown as typeof fetch;
+
+    const kartlar = await googleFaturaUrunKartlariUret("data:image/png;base64,AA==", fetcher);
+
+    expect(yakalananMetin).toBe("Özel harici fatura okuma talimatı\nEk kural satırı");
+    expect(kartlar).toHaveLength(1);
+    expect(kartlar[0].brand).toBe("Berrak");
+    expect(kartlar[0].title).toBe("Berrak Bayan Ribana Geniş Askılı Atlet");
+    expect(kartlar[0].title).not.toContain("1234567890");
+    expect(kartlar[0].short_description).not.toContain("TR330006100519786457841326");
+    expect(kartlar[0].short_description).not.toContain("iskonto");
+    expect(kartlar[0].short_description).not.toContain("vade");
+    expect(kartlar[0].official_domain).toBeNull();
+    expect(kartlar[0].official_product_url).toBeNull();
+    expect(kartlar[0].selected_image_url).toBeNull();
+    expect(kartlar[0].image_urls).toEqual([]);
+    expect(kartlar[0].grounding_sources).toEqual([]);
   });
 });
