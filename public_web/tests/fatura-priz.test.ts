@@ -672,15 +672,9 @@ describe("fatura priz - tak-cikar", () => {
 
     await googleFaturaUrunKartlariUret("data:image/png;base64,AA==", fetcher);
 
-    expect(gonderilenIstekMetni).toContain("RB/RİB=RİBANA");
-    expect(gonderilenIstekMetni).toContain("BYN/BYL=Bayan");
-    expect(gonderilenIstekMetni).toContain("G.ASK=Geniş Askılı");
-    expect(gonderilenIstekMetni).toContain("ATL=Atlet");
-    expect(gonderilenIstekMetni).toContain("UZN=Uzun");
-    expect(gonderilenIstekMetni).toContain("LİK=Likralı");
-    expect(gonderilenIstekMetni).toContain("EMP=Empirme");
-    expect(gonderilenIstekMetni).toContain("CCK/ÇO=Çocuk");
-    expect(gonderilenIstekMetni).toContain("K.GRİ=Koyu Gri");
+    expect(gonderilenIstekMetni).toContain("Hangi sektör olursa olsun faturadaki kısaltmaları, renk/beden/ölçü kodlarını ve sektörel terimleri faturanın bağlamından otomatik çözümleyip tam tüketici diline aç.");
+    expect(gonderilenIstekMetni).not.toContain("RB/RİB");
+    expect(gonderilenIstekMetni).not.toContain("G.ASK=");
     expect(gonderilenIstekMetni).toContain("167-1-3XL");
     expect(gonderilenIstekMetni).toContain("kök model numarası");
     expect(gonderilenIstekMetni).toContain("ortak üretici/markayı tespit edip ilgili tüm satırların brand alanına uygula");
@@ -694,7 +688,7 @@ describe("fatura priz - tak-cikar", () => {
     vi.stubEnv("GEMINI_FATURA_EK_TALIMAT", "  İç giyim paket içi adedini kısa açıklamaya yaz.  ");
 
     const istem = googleFaturaUrunKartiIstemi();
-    expect(istem).toContain("RB/RİB=RİBANA");
+    expect(istem).toContain("Hangi sektör olursa olsun faturadaki kısaltmaları");
     expect(istem).toContain("ortak üretici/markayı tespit edip");
     expect(istem.endsWith("\nİç giyim paket içi adedini kısa açıklamaya yaz.")).toBe(true);
 

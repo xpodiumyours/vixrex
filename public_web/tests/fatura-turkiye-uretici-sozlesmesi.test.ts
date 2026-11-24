@@ -506,22 +506,17 @@ describe("VixRex Türkiye Üretici Gerçekliği & Boş Kart Yok Sözleşmesi", (
     expect(sonuc?.groundingKaynaklari).toEqual(["https://www.mavi.com/denim-ceket"]);
   });
 
-  it("groundingIstemiOlustur ic giyim kisaltmalarini, ters yonlu kod kirmayi, marka/link-gorsel ayrimini ve GEMINI_FATURA_EK_TALIMAT destegini tasir", () => {
+  it("groundingIstemiOlustur genel kisaltma acma kuralini, ters yonlu kod kirmayi, marka/link-gorsel ayrimini ve GEMINI_FATURA_EK_TALIMAT destegini tasir", () => {
     vi.stubEnv("GEMINI_FATURA_EK_TALIMAT", "  Sadece üreticinin güncel sezon görsellerini tercih et.  ");
     const istem = groundingIstemiOlustur(
       { urunAdi: "167-1-3XL BYN RB G.ASK ATL K.GRİ", model: "167-1-3XL", varyant: "K.GRİ", beden: "3XL" },
       null,
     );
 
-    expect(istem).toContain("RB/RİB=RİBANA");
-    expect(istem).toContain("BYN/BYL=Bayan");
-    expect(istem).toContain("G.ASK=Geniş Askılı");
-    expect(istem).toContain("ATL=Atlet");
-    expect(istem).toContain("UZN=Uzun");
-    expect(istem).toContain("LİK=Likralı");
-    expect(istem).toContain("EMP=Empirme");
-    expect(istem).toContain("CCK/ÇO=Çocuk");
-    expect(istem).toContain("K.GRİ=Koyu Gri");
+    expect(istem).toContain("Hangi sektör olursa olsun faturadaki kısaltmaları, renk/beden/ölçü kodlarını ve sektörel terimleri faturanın bağlamından otomatik çözümleyip tam tüketici diline aç.");
+    expect(istem).not.toContain("RB/RİB");
+    expect(istem).not.toContain("BYN/BYL");
+    expect(istem).not.toContain("G.ASK=");
     expect(istem).toContain("167-1-3XL, 049-19-3XL, 328-1-4");
     expect(istem).toContain("baştaki kök model numarası ve açılmış ürün adıyla da arama yap");
     expect(istem).toContain("official_domain, official_product_url, selected_image_url ve image_urls alanları için pazaryeri/aracı siteleri");
