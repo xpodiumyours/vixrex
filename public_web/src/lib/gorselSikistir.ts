@@ -113,9 +113,10 @@ async function kodla(
     withoutEnlargement: true,
   });
 
-  return pngMi
-    ? boru.png({ compressionLevel: 9, palette: true, quality: kalite }).toBuffer()
-    : boru.jpeg({ quality: kalite, mozjpeg: true }).toBuffer();
+  if (pngMi) {
+    return boru.png({ compressionLevel: 9 }).toBuffer();
+  }
+  return boru.jpeg({ quality: kalite, mozjpeg: true }).toBuffer();
 }
 
 function sonuc(bayt: Buffer, pngMi: boolean): SikistirilmisGorsel {

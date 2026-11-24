@@ -71,6 +71,45 @@ describe("görsel sıkıştırma", () => {
     expect(sonuc.uzanti).toBe("webp");
   });
 
+  it("yumuşak geçişli PNG'yi 256 renge indirmez", async () => {
+    // Üretici sitesinden gelen stüdyo PNG'si: üst üste binen yumuşak renk
+    // geçişleri. Palet uygulanırsa bu geçişler basamaklara bölünür (renk
+    // kırılması). Flutter PNG'yi kayıpsız küçültüyor; web de öyle yapmalı.
+    const genislik = 400;
+    const yukseklik = 300;
+    const pikseller = Buffer.alloc(genislik * yukseklik * 3);
+    for (let y = 0; y < yukseklik; y++) {
+      for (let x = 0; x < genislik; x++) {
+        const i = (y * genislik + x) * 3;
+        pikseller[i] = Math.floor((x / genislik) * 255);
+        pikseller[i + 1] = Math.floor((y / yukseklik) * 255);
+        pikseller[i + 2] = Math.floor(((x + y) / (genislik + yukseklik)) * 255);
+      }
+    }
+    const kaynak = await sharp(pikseller, {
+      raw: { width: genislik, height: yukseklik, channels: 3 },
+    })
+      .png()
+      .toBuffer();
+
+    const sonuc = await gorseliSikistir(new Uint8Array(kaynak), "image/png");
+    const olcu = await sharp(Buffer.from(sonuc.bayt)).metadata();
+    expect(sonuc.uzanti).toBe("png");
+    expect(Math.max(olcu.width ?? 0, olcu.height ?? 0)).toBeLessThanOrEqual(
+      UZUN_KENAR
+    );
+
+    const ham = await sharp(Buffer.from(sonuc.bayt))
+      .removeAlpha()
+      .raw()
+      .toBuffer();
+    const renkler = new Set<number>();
+    for (let i = 0; i + 2 < ham.length; i += 3) {
+      renkler.add((ham[i] << 16) | (ham[i + 1] << 8) | ham[i + 2]);
+    }
+    expect(renkler.size).toBeGreaterThan(256);
+  }, 15_000);
+
   it("bozuk veriyi anlaşılır hatayla reddeder", async () => {
     await expect(
       gorseliSikistir(new Uint8Array([1, 2, 3, 4]), "image/jpeg")
