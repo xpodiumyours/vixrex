@@ -2,6 +2,7 @@ import { revalidateTag, unstable_cache } from "next/cache";
 import { supabase } from "./supabase";
 import { EXPLORE_STORE_SELECT } from "./publicStoreSelect";
 import { resolveBusinessCategory } from "./businessCategories";
+import { isTestOrDenemeStore } from "./denemeVitrinFiltresi";
 
 /**
  * Keşfet dizininin veri katmanı.
@@ -92,7 +93,8 @@ export function koordinatGecerliMi(lat: number, lng: number): boolean {
 
 async function vitrinleriUrunlerleDoldur(hamSatirlar: StoreSatiri[]): Promise<KesfetVitrini[]> {
   const satirlar = hamSatirlar.filter(
-    (satir) => (satir.slug ?? "").trim().length > 0
+    (satir) =>
+      (satir.slug ?? "").trim().length > 0 && !isTestOrDenemeStore(satir)
   );
   if (satirlar.length === 0) return [];
 
