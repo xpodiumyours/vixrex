@@ -853,21 +853,34 @@ export function OwnerProductManager({
           <label className="self-center text-sm"><input type="checkbox" checked={yalnizTaslak} onChange={(e) => setYalnizTaslak(e.target.checked)} /> Yalnız taslaklar</label>
           {(filterText || filterCategory || yalnizTaslak) && <span className="self-center text-xs text-[var(--owner-muted)]">{filteredProducts.length}/{products.length}</span>}
         </div>
-        <div className="flex flex-wrap gap-2">
-          {[{ id: "", name: "Tümü" }, ...normalizedCategories].map((cip) => (
-            <button
-              key={cip.id || "tumu"}
-              type="button"
-              onClick={() => setFilterCategory(cip.id)}
-              className={
-                filterCategory === cip.id
-                  ? "shrink-0 rounded-full border border-[var(--owner-primary)] bg-[var(--owner-primary)]/10 px-3 py-1.5 text-xs font-bold text-[var(--owner-primary)]"
-                  : "shrink-0 rounded-full border border-[var(--owner-border)] px-3 py-1.5 text-xs text-[var(--owner-text-alt)] hover:border-[var(--owner-primary)]"
-              }
-            >
-              {cip.name}
-            </button>
-          ))}
+        <div className="flex items-center gap-2">
+          <div className="vixrex-yatay-serit flex min-w-0 flex-1 items-center gap-2 overflow-x-auto pb-1.5">
+            {[{ id: "", name: "Tümü" }, ...normalizedCategories].map((cip) => (
+              <button
+                key={cip.id || "tumu"}
+                type="button"
+                onClick={() => setFilterCategory(cip.id)}
+                className={
+                  filterCategory === cip.id
+                    ? "whitespace-nowrap shrink-0 rounded-full border border-[var(--owner-primary)] bg-[var(--owner-primary)]/10 px-3 py-1.5 text-xs font-bold text-[var(--owner-primary)]"
+                    : "whitespace-nowrap shrink-0 rounded-full border border-[var(--owner-border)] px-3 py-1.5 text-xs text-[var(--owner-text-alt)] hover:border-[var(--owner-primary)]"
+                }
+              >
+                {cip.name}
+              </button>
+            ))}
+          </div>
+          <select
+            aria-label="Kategori filtresi"
+            value={filterCategory}
+            onChange={(e) => setFilterCategory(e.target.value)}
+            className="owner-input !min-h-[36px] !w-[152px] sm:!w-[200px] shrink-0 truncate !py-1.5 text-xs"
+          >
+            <option value="">{`Tüm Kategoriler (${normalizedCategories.length})`}</option>
+            {normalizedCategories.map((cip) => (
+              <option key={cip.id} value={cip.id}>{cip.name}</option>
+            ))}
+          </select>
         </div>
         <div className="flex flex-wrap gap-2">
           <button type="button" className="owner-button-secondary" onClick={secimModunuDegistir} disabled={busy}>{secimModu ? "Vazgeç" : "Seç"}</button>
@@ -978,32 +991,51 @@ export function OwnerProductManager({
                     </label>
                   ) : null}
 
-                  <div className="relative">
-                    {image ? (
+                  {image ? (
+                    <div className="relative">
                       <div className="relative aspect-[16/11] w-full overflow-hidden bg-white">
                         <Image src={image} alt={`${product.name} ürün görseli`} fill unoptimized sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" className="object-contain" />
                       </div>
-                    ) : (
-                      <div className="flex aspect-[16/11] w-full items-center justify-center bg-[var(--owner-bg-soft)]">
-                        <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-[var(--owner-border)] px-7 py-5 text-[11px] text-[var(--owner-muted)]">
-                          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6 opacity-80">
-                            <rect x="3" y="4" width="18" height="16" rx="3" />
-                            <circle cx="9" cy="10" r="1.6" />
-                            <path d="M4 17l4.5-4.5 3.5 3.5 3-3L20 17" />
-                          </svg>
-                          Fotoğraf yok
-                        </div>
+                      <div className="pointer-events-none absolute left-3 top-3 flex flex-wrap gap-1.5">
+                        {taslakMi ? (
+                          <span className="rounded-full border border-amber-500/40 bg-[#091226]/80 px-2.5 py-[3px] text-[10px] font-bold uppercase tracking-[0.08em] text-amber-300 backdrop-blur">Taslak</span>
+                        ) : null}
+                        {product.badge_tag && <span className="rounded-full border border-blue-400/40 bg-[#091226]/80 px-2.5 py-[3px] text-[10px] font-bold text-blue-300 backdrop-blur">{product.badge_tag}</span>}
                       </div>
-                    )}
-                    <div className="pointer-events-none absolute left-3 top-3 flex flex-wrap gap-1.5">
-                      {taslakMi ? (
-                        <span className="rounded-full border border-amber-500/40 bg-[#091226]/80 px-2.5 py-[3px] text-[10px] font-bold uppercase tracking-[0.08em] text-amber-300 backdrop-blur">Taslak</span>
-                      ) : null}
-                      {product.badge_tag && <span className="rounded-full border border-blue-400/40 bg-[#091226]/80 px-2.5 py-[3px] text-[10px] font-bold text-blue-300 backdrop-blur">{product.badge_tag}</span>}
                     </div>
-                  </div>
+                  ) : (
+                    <div className="h-[72px] w-full flex items-center justify-between gap-3 bg-[var(--owner-bg-soft)] px-4 border-b border-[var(--owner-border)]/60">
+                      <div className="flex items-center gap-2 text-xs text-[var(--owner-muted)]">
+                        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 shrink-0 opacity-80">
+                          <rect x="3" y="4" width="18" height="16" rx="3" />
+                          <circle cx="9" cy="10" r="1.6" />
+                          <path d="M4 17l4.5-4.5 3.5 3.5 3-3L20 17" />
+                        </svg>
+                        <span>Fotoğraf yok</span>
+                      </div>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openEditProduct(product);
+                        }}
+                        className="shrink-0 rounded-lg border border-[var(--owner-border)] bg-[var(--owner-surface)] px-3 py-1.5 text-xs font-semibold text-[var(--owner-text)] transition hover:border-[var(--owner-primary)] disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        Düzenle
+                      </button>
+                    </div>
+                  )}
 
                   <div className="flex flex-col gap-3 p-4">
+                  {!image && (taslakMi || product.badge_tag) ? (
+                    <div className="flex flex-wrap gap-1.5">
+                      {taslakMi ? (
+                        <span className="rounded-full border border-amber-500/40 bg-[#091226]/80 px-2.5 py-[3px] text-[10px] font-bold uppercase tracking-[0.08em] text-amber-300">Taslak</span>
+                      ) : null}
+                      {product.badge_tag && <span className="rounded-full border border-blue-400/40 bg-[#091226]/80 px-2.5 py-[3px] text-[10px] font-bold text-blue-300">{product.badge_tag}</span>}
+                    </div>
+                  ) : null}
                   <div className="min-w-0">
                     <h3 className="line-clamp-2 min-h-[40px] text-[15px] font-bold leading-[1.32] text-[var(--owner-text)]">{product.name}</h3>
                     <p className="mt-1 truncate text-xs text-[var(--owner-muted)]">{product.product_categories?.name || "Kategorisiz"}</p>
@@ -1035,35 +1067,38 @@ export function OwnerProductManager({
                           >
                             Satış fiyatı
                           </label>
-                          <input
-                            id={`kart-fiyat-${product.id}`}
-                            type="text"
-                            inputMode="decimal"
-                            value={fiyatDegeri}
-                            placeholder="Fiyat gir"
-                            disabled={busy || satirIslemde}
-                            onChange={(e) => {
-                              const deger = e.target.value;
-                              setFiyatTaslaklari((onceki) => ({ ...onceki, [product.id]: deger }));
-                            }}
-                            onBlur={() => {
-                              void kartFiyatKaydet(product);
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                e.currentTarget.blur();
-                              }
-                            }}
-                            className="mt-1 w-full bg-transparent text-[21px] font-bold leading-none tracking-[-0.02em] text-[var(--owner-text)] outline-none placeholder:text-sm placeholder:font-medium placeholder:text-[var(--owner-muted)]/70"
-                          />
+                          <div className="mt-1 flex items-center justify-between gap-2 rounded-xl border border-[var(--owner-border)] bg-[var(--owner-bg-soft)] px-3 py-1.5 focus-within:border-[#147DFF]">
+                            <input
+                              id={`kart-fiyat-${product.id}`}
+                              type="text"
+                              inputMode="decimal"
+                              value={fiyatDegeri}
+                              placeholder="Fiyat gir"
+                              disabled={busy || satirIslemde}
+                              onChange={(e) => {
+                                const deger = e.target.value;
+                                setFiyatTaslaklari((onceki) => ({ ...onceki, [product.id]: deger }));
+                              }}
+                              onBlur={() => {
+                                void kartFiyatKaydet(product);
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  e.currentTarget.blur();
+                                }
+                              }}
+                              className="min-w-0 flex-1 bg-transparent text-[17px] font-bold leading-none tracking-[-0.02em] text-[var(--owner-text)] outline-none placeholder:text-sm placeholder:font-medium placeholder:text-[var(--owner-muted)]/70"
+                            />
+                            <span className="shrink-0 text-xs font-bold text-[#57B7FF]">₺</span>
+                          </div>
                         </div>
 
                         {!isService ? (
-                          <div className="flex shrink-0 flex-col items-end gap-1.5">
+                          <div className="flex shrink-0 flex-col items-end">
                             <span className="block text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--owner-muted)]">
                               Stok
                             </span>
-                            <div className="flex items-center gap-0.5">
+                            <div className="mt-1 flex items-center gap-1 rounded-xl border border-[var(--owner-border)] bg-[var(--owner-bg-soft)] p-1">
                               <button
                                 type="button"
                                 aria-label={`${product.name} stoğu azalt`}
@@ -1072,13 +1107,13 @@ export function OwnerProductManager({
                                   e.stopPropagation();
                                   void kartStokGuncelle(product, -1);
                                 }}
-                                className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-[9px] border border-[var(--owner-border)] bg-transparent text-sm font-semibold text-[var(--owner-text-alt)] transition hover:border-[var(--owner-secondary)] disabled:cursor-not-allowed disabled:opacity-40"
+                                className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-lg border border-[var(--owner-border)] bg-transparent text-sm font-semibold text-[var(--owner-text-alt)] transition hover:border-[var(--owner-secondary)] disabled:cursor-not-allowed disabled:opacity-40"
                               >
                                 −
                               </button>
                               <span
                                 aria-live="polite"
-                                className="min-w-[34px] text-center text-[15px] font-bold tabular-nums text-[var(--owner-text)]"
+                                className="min-w-[28px] text-center text-[15px] font-bold tabular-nums text-[var(--owner-text)]"
                               >
                                 {mevcutStok}
                               </span>
@@ -1090,7 +1125,7 @@ export function OwnerProductManager({
                                   e.stopPropagation();
                                   void kartStokGuncelle(product, 1);
                                 }}
-                                className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-[9px] border border-[var(--owner-border)] bg-transparent text-sm font-semibold text-[var(--owner-text-alt)] transition hover:border-[var(--owner-secondary)] disabled:cursor-not-allowed disabled:opacity-40"
+                                className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-lg border border-[var(--owner-border)] bg-transparent text-sm font-semibold text-[var(--owner-text-alt)] transition hover:border-[var(--owner-secondary)] disabled:cursor-not-allowed disabled:opacity-40"
                               >
                                 +
                               </button>
@@ -1113,7 +1148,7 @@ export function OwnerProductManager({
                               void kartOnaylaVeYayinla(product);
                             }}
                             disabled={busy || satirIslemde || publishingId === product.id}
-                            className="flex min-h-[44px] flex-1 items-center justify-center rounded-xl bg-gradient-to-br from-[#147DFF] to-[#0B5FD7] px-3 py-2 text-[13.5px] font-bold tracking-[0.01em] text-white shadow-sm transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="flex min-h-[44px] flex-1 items-center justify-center rounded-xl bg-[#147DFF] px-3 py-2 text-[13.5px] font-bold tracking-[0.01em] text-white shadow-sm transition hover:bg-[#147DFF]/90 disabled:cursor-not-allowed disabled:opacity-50"
                           >
                             {publishingId === product.id ? "Yayınlanıyor…" : "Yayınla"}
                           </button>
@@ -1125,12 +1160,12 @@ export function OwnerProductManager({
                               openEditProduct(product);
                             }}
                             disabled={busy || satirIslemde}
-                            className="flex min-h-[44px] flex-1 items-center justify-center rounded-xl bg-gradient-to-br from-[#147DFF] to-[#0B5FD7] px-3 py-2 text-[13.5px] font-bold tracking-[0.01em] text-white shadow-sm transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="flex min-h-[44px] flex-1 items-center justify-center rounded-xl bg-[#147DFF] px-3 py-2 text-[13.5px] font-bold tracking-[0.01em] text-white shadow-sm transition hover:bg-[#147DFF]/90 disabled:cursor-not-allowed disabled:opacity-50"
                           >
                             Düzenle ve Yayınla
                           </button>
                         ) : (
-                          <div className="flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-xl border border-teal-500/40 bg-emerald-500/12 px-3 py-2 text-[12.5px] font-bold text-emerald-300">
+                          <div className="flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-xl border border-[#10B981]/40 bg-[#10B981]/12 px-3 py-2 text-[12.5px] font-bold text-[#6EE7B7]">
                             ✓ Yayında
                           </div>
                         )}
