@@ -61,6 +61,7 @@ const MANUEL_URUN: OwnerProduct = {
 function renderKartYonetimi(
   products: OwnerProduct[],
   values: Record<number, unknown> = {},
+  categories: Array<{ id: string; name: string; product_template_key?: string | null }> = KATEGORILER,
 ): string {
   hookState.index = 0;
   hookState.values = values;
@@ -68,7 +69,7 @@ function renderKartYonetimi(
     createElement(OwnerProductManager, {
       storeSlug: "test-vitrin",
       products,
-      categories: KATEGORILER,
+      categories,
       onRefresh: async () => {},
     }),
   );
@@ -173,6 +174,40 @@ describe("OwnerProductManager kart arayuz sozlesmesi", () => {
 
     expect(html).not.toContain('draggable="true"');
     expect(html).toContain("Bu ürünü seç");
+  });
+
+  it("yalniz fotografsiz urun kartinda aspect-[16/11] yerine kompakt serit ve Duzenle butonu gosterir", () => {
+    const html = renderKartYonetimi([MANUEL_URUN]);
+
+    expect(html).not.toContain("aspect-[16/11]");
+    expect(html).toContain("h-[72px]");
+    expect(html).toContain("Fotoğraf yok");
+    expect(html).toContain("Düzenle");
+  });
+
+  it("hizmet urununde stok butonlari gizlenir, fiyat birimi ve yayinda rozeti gosterilir", () => {
+    const html = renderKartYonetimi([MANUEL_URUN]);
+
+    expect(html).not.toContain("stoğu azalt");
+    expect(html).not.toContain("stoğu artır");
+    expect(html).toContain("₺");
+    expect(html).toContain("✓ Yayında");
+  });
+
+  it("bos kategori listesinde select ve Tum Kategoriler (0) secenegi gosterir", () => {
+    const html = renderKartYonetimi([FATURA_URUNU], {}, []);
+
+    expect(html).toContain("<select");
+    expect(html).toContain("Tüm Kategoriler (0)");
+  });
+
+  it("secim modunda fiyat, stok ve aksiyon satiri gizlenir", () => {
+    const html = renderKartYonetimi([FATURA_URUNU, MANUEL_URUN], { 11: true });
+
+    expect(html).not.toContain("kart-fiyat-");
+    expect(html).not.toContain("stoğu azalt");
+    expect(html).not.toContain("Yayınla");
+    expect(html).not.toContain("✓ Yayında");
   });
 });
 
