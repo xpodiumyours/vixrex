@@ -262,7 +262,7 @@ export default function ProductQuickView({
                 alt={gorselAlt}
                 fill
                 sizes="(max-width: 640px) 100vw, 50vw"
-                className={metadata.lunaInvoice ? "object-contain object-center p-3" : "object-cover object-center"}
+                className="object-contain object-center p-3"
                 priority
               />
             ) : (
@@ -314,7 +314,7 @@ export default function ProductQuickView({
                       alt=""
                       fill
                       sizes="56px"
-                      className={metadata.lunaInvoice ? "object-contain p-1" : "object-cover"}
+                      className="object-contain p-1"
                     />
                   </button>
                 ))}

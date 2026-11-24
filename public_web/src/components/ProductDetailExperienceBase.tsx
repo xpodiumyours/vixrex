@@ -264,7 +264,7 @@ export default function ProductDetailExperience({
                   alt={gorselAlt}
                   fill
                   sizes="(max-width: 1024px) 100vw, 55vw"
-                  className={metadata.lunaInvoice ? "object-contain p-3" : "object-cover"}
+                  className="object-contain p-3"
                   priority
                 />
               ) : (
@@ -292,7 +292,7 @@ export default function ProductDetailExperience({
                       alt={`${gorselAlt} - ${index + 1}. fotoğraf`}
                       fill
                       sizes="56px"
-                      className={metadata.lunaInvoice ? "object-contain p-1" : "object-cover"}
+                      className="object-contain p-1"
                     />
                   </button>
                 ))}
