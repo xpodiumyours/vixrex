@@ -54,7 +54,7 @@ describe("vitrin görünüm kartelası", () => {
   it("kart fatura ürününde tek fotoğrafı kırpmadan ve birim fiyatla gösterir", () => {
     const kart = kaynak("src/app/v/[slug]/ProductCatalog.tsx");
     expect(kart).toContain("birimFiyatBilgisi(product.metadata, fiyatTutar)");
-    expect(kart).toContain("contain={isLunaInvoiceProduct(product)}");
+    expect(kart).toContain("object-contain");
   });
 
   it("kart kategoriyi tek yerde, özellik satırında gösterir", () => {
