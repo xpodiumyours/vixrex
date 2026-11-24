@@ -537,7 +537,7 @@ export function OwnerRichProductFields({
                               type="button"
                               onClick={() => toggleVariantImage(index, imageUrl)}
                               disabled={disabled}
-                              className={`relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border-2 transition ${
+                              className={`relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border-2 bg-white transition ${
                                 selected
                                   ? "border-blue-500 ring-2 ring-blue-500/15"
                                   : "border-[var(--owner-border)] opacity-65 hover:opacity-100"
@@ -545,7 +545,7 @@ export function OwnerRichProductFields({
                               aria-pressed={selected}
                               aria-label={`${imageIndex + 1}. ürün fotoğrafını bu varyanta ${selected ? "kaldır" : "bağla"}`}
                             >
-                              <Image src={imageUrl} alt="" fill unoptimized sizes="56px" className="object-cover" />
+                              <Image src={imageUrl} alt="" fill unoptimized sizes="56px" className="object-contain" />
                             </button>
                           );
                         })}
