@@ -82,7 +82,7 @@
 .owner-shell .fatura-izgara { grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); align-items: start; gap: 1rem; }
 .owner-shell .fatura-kart { min-width: 0; gap: .6rem; padding: .875rem; border-radius: 18px; overflow-wrap: anywhere; }
 .owner-shell .fatura-kart-onayli { border-color: var(--owner-success); }
-.owner-shell .fatura-kart-gorsel { height: 180px; object-fit: contain; background: var(--owner-surface-soft); }
+.owner-shell .fatura-kart-gorsel { height: 180px; object-fit: contain; background: #ffffff; }
 .owner-shell .fatura-kart-gorselsiz { height: 180px; }
 .owner-shell .fatura-kart .fatura-fiyat { margin-top: .4rem; }
 .owner-shell .fatura-fiyat input { width: 100%; font-size: 1.125rem; font-weight: 800; }
