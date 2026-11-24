@@ -49,7 +49,7 @@ const List<VixrexNiyetAlan> vixrexNiyetSozlugu = [
   ),
   VixrexNiyetAlan(
     anahtar: 'heroRozet',
-    etiket: 'Hero Rozet Metni',
+    etiket: 'Üst Tanıtım Rozeti',
     tip: 'metin',
     kolon: 'hero_badge',
     bolum: 'hero',

@@ -228,8 +228,8 @@ export function VitrinKarti({
 
           {vitrin.kiralikMi ? (
             <p className="mt-2 flex min-w-0 items-baseline gap-1.5">
-              <span className="shrink-0 text-[12px] font-black text-amber-500">{AYLIK_PREMIUM_BEDEL}</span>
-              <span className="truncate text-[10px] font-semibold text-lp-muted">· 14 gün ücretsiz dene</span>
+              <span className="shrink-0 text-[12px] font-black text-amber-400">{AYLIK_PREMIUM_BEDEL}</span>
+              <span className="truncate text-[10px] font-semibold text-slate-300">· 14 gün ücretsiz dene</span>
             </p>
           ) : null}
 
@@ -245,7 +245,7 @@ export function VitrinKarti({
           <div className="mt-auto pt-3">
             {vitrin.kiralikMi ? (
               <div className="grid grid-cols-2 gap-1.5">
-                <Link href={`/v/${vitrin.slug}`} className="flex min-h-11 items-center justify-center gap-1.5 rounded-[10px] border border-lp-primary px-2 text-[11px] font-black text-lp-primary transition-colors hover:bg-lp-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary">
+                <Link href={`/v/${vitrin.slug}`} className="flex min-h-11 items-center justify-center gap-1.5 rounded-[10px] border border-blue-400/50 bg-blue-500/15 px-2 text-[11px] font-black text-white transition-colors hover:bg-blue-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400">
                   {/* Flutter kartıyla parite: butonlarda ikon var (dükkân / anahtar). */}
                   <svg className="shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                     <path d="M3 9.5 4.5 5h15L21 9.5" />
@@ -260,7 +260,7 @@ export function VitrinKarti({
                     kiralaDialogRef.current?.showModal();
                     kiralaBaslat();
                   }}
-                  className="flex min-h-11 items-center justify-center gap-1.5 rounded-[10px] bg-lp-primary px-2 text-[11px] font-black text-lp-on-primary transition-colors hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary focus-visible:ring-offset-2"
+                  className="flex min-h-11 items-center justify-center gap-1.5 rounded-[10px] bg-blue-600 px-2 text-[11px] font-black text-white transition-colors hover:bg-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2"
                 >
                   <svg className="shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                     <circle cx="8" cy="12" r="3.5" />

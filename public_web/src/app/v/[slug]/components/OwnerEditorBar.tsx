@@ -83,14 +83,16 @@ export default function OwnerEditorBar({
           {panelAcik ? "Önizleme" : "Düzenlemeye dön"}
         </button>
 
-        <button
-          type="button"
-          onClick={yasalOnayli ? onYayinla : onYasalOnayGerek}
-          disabled={yayinlaniyor}
-          className="rounded-xl bg-blue-600 px-4 py-2 text-[12px] font-black text-white transition-colors hover:bg-blue-500 disabled:opacity-60"
-        >
-          {yayinlaniyor ? "Yayınlanıyor…" : "Yayınla"}
-        </button>
+        {!panelAcik ? (
+          <button
+            type="button"
+            onClick={yasalOnayli ? onYayinla : onYasalOnayGerek}
+            disabled={yayinlaniyor}
+            className="rounded-xl bg-blue-600 px-4 py-2 text-[12px] font-black text-white transition-colors hover:bg-blue-500 disabled:opacity-60"
+          >
+            {yayinlaniyor ? "Yayınlanıyor…" : "Yayınla"}
+          </button>
+        ) : null}
 
         <button
           type="button"

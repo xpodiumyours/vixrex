@@ -126,7 +126,7 @@ export const VITRIN_FIELDS: readonly VitrinField[] = [
   {
     anahtar: "heroRozet",
     tip: "metin",
-    etiket: "Hero Rozet Metni",
+    etiket: "Üst Tanıtım Rozeti",
     neden: "Adının yanında duran küçük vurgu — seni benzer işletmelerden ayıran cümle.",
     kolon: "hero_badge",
     bolum: "hero",

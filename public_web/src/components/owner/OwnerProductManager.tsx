@@ -200,6 +200,32 @@ export function OwnerProductManager({
     [categories, fetchedTemplateKeys],
   );
 
+  const normalizedCategories = useMemo(() => {
+    const gruplar = new Map<
+      string,
+      (typeof resolvedCategories)[number] & { idler: string[] }
+    >();
+    for (const c of resolvedCategories) {
+      const duzeltilmisAd = (c.name || "")
+        .replace(/\s*\/\s*/g, " > ")
+        .replace(/\s*>\s*/g, " > ")
+        .trim();
+      const anahtar = duzeltilmisAd.toLowerCase();
+      if (!anahtar) continue;
+      const grup = gruplar.get(anahtar);
+      if (!grup) {
+        gruplar.set(anahtar, {
+          ...c,
+          name: duzeltilmisAd,
+          idler: c.id ? [c.id] : [],
+        });
+        continue;
+      }
+      if (c.id && !grup.idler.includes(c.id)) grup.idler.push(c.id);
+    }
+    return [...gruplar.values()];
+  }, [resolvedCategories]);
+
   useEffect(() => {
     let cancelled = false;
     const sor = async () => {
@@ -315,9 +341,19 @@ export function OwnerProductManager({
 
   const filteredProducts = useMemo(() => {
     const q = filterText.trim().toLowerCase();
+    const seciliKategoriIdleri = filterCategory
+      ? normalizedCategories.find((kat) => kat.id === filterCategory)?.idler ?? [
+          filterCategory,
+        ]
+      : [];
     return products.filter((p) => {
       if (yalnizTaslak && p.is_visible !== false) return false;
-      if (filterCategory && p.category_id !== filterCategory) return false;
+      if (
+        seciliKategoriIdleri.length > 0 &&
+        !seciliKategoriIdleri.includes(p.category_id ?? "")
+      ) {
+        return false;
+      }
       if (!q) return true;
       return (
         p.name.toLowerCase().includes(q) ||
@@ -326,7 +362,7 @@ export function OwnerProductManager({
         (p.badge_tag || "").toLowerCase().includes(q)
       );
     });
-  }, [products, filterText, filterCategory, yalnizTaslak]);
+  }, [products, filterText, filterCategory, yalnizTaslak, normalizedCategories]);
 
   async function faturayaDon(product: OwnerProduct) {
     setError("");
@@ -818,7 +854,7 @@ export function OwnerProductManager({
           {(filterText || filterCategory || yalnizTaslak) && <span className="self-center text-xs text-[var(--owner-muted)]">{filteredProducts.length}/{products.length}</span>}
         </div>
         <div className="flex flex-wrap gap-2">
-          {[{ id: "", name: "Tümü" }, ...resolvedCategories].map((cip) => (
+          {[{ id: "", name: "Tümü" }, ...normalizedCategories].map((cip) => (
             <button
               key={cip.id || "tumu"}
               type="button"

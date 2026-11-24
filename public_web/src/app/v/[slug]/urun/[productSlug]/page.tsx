@@ -407,10 +407,12 @@ export default async function ProductDetailPage(props: PageProps) {
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: safeJsonLdHtml(structuredData) }}
-      />
+      {structuredData ? (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: safeJsonLdHtml(structuredData) }}
+        />
+      ) : null}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: safeJsonLdHtml(breadcrumbJsonLd) }}
