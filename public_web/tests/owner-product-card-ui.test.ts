@@ -190,7 +190,7 @@ describe("OwnerProductManager kart arayuz sozlesmesi", () => {
 
     expect(html).not.toContain("stoğu azalt");
     expect(html).not.toContain("stoğu artır");
-    expect(html).toContain("₺");
+    expect(html).toContain("900 TL");
     expect(html).toContain("✓ Yayında");
   });
 
@@ -208,6 +208,16 @@ describe("OwnerProductManager kart arayuz sozlesmesi", () => {
     expect(html).not.toContain("stoğu azalt");
     expect(html).not.toContain("Yayınla");
     expect(html).not.toContain("✓ Yayında");
+  });
+
+  it("birim iceren fiyatta ekstra TL simgesi render edilmez ve yeni kapsayici siniflari bulunur", () => {
+    const htmlBirimli = renderKartYonetimi([{ ...FATURA_URUNU, price_text: "325 TL" }]);
+    const htmlBirimsiz = renderKartYonetimi([{ ...FATURA_URUNU, price_text: "325" }]);
+
+    expect(htmlBirimli).not.toContain(">₺<");
+    expect(htmlBirimsiz).toContain(">₺<");
+    expect(htmlBirimli).toContain("min-h-[36px]");
+    expect(htmlBirimli).toContain("minmax(min(100%,280px),1fr)");
   });
 });
 
