@@ -230,7 +230,7 @@ export default function VitrinCartDock({
                           alt=""
                           width={56}
                           height={56}
-                          className="h-14 w-14 rounded-xl border border-white/10 object-cover"
+                          className="h-14 w-14 rounded-xl border border-white/10 bg-white object-contain"
                         />
                       </Link>
                     ) : null}
