@@ -133,7 +133,6 @@ export function CatalogProductImage(props: {
   src: string | null;
   alt: string;
   emptyLabel?: string;
-  contain?: boolean;
   isOwner?: boolean;
 } & {
   [K in TelifAnahtari]?: boolean;
@@ -142,7 +141,6 @@ export function CatalogProductImage(props: {
     src,
     alt,
     emptyLabel = "Ürün görseli yok",
-    contain = false,
     isOwner = false,
   } = props;
   const telifBekliyor = Boolean(props[TELIF_ANAHTARI]);
@@ -180,7 +178,7 @@ export function CatalogProductImage(props: {
       fill
       sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
       onError={() => setHasError(true)}
-      className={`${contain ? "object-contain p-2.5" : "object-cover"} max-h-full max-w-full object-center transition duration-500 group-hover:scale-[1.03]`}
+      className="object-contain p-2.5 max-h-full max-w-full object-center transition duration-500 group-hover:scale-[1.03]"
     />
   );
 }
@@ -459,7 +457,6 @@ export default function ProductCatalog({
                   <CatalogProductImage
                     src={image}
                     alt={gorselAlt}
-                    contain={isLunaInvoiceProduct(product)}
                     emptyLabel={isService ? "Hizmet görseli yok" : "Ürün görseli yok"}
                     {...{ [TELIF_ANAHTARI]: urunTelifBekliyor }}
                     isOwner={isOwnerSession}
