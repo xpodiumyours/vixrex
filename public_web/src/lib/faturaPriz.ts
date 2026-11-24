@@ -312,11 +312,19 @@ export const GOOGLE_FATURA_URUN_KARTI_SEMASI = {
 const GOOGLE_FATURA_URUN_KARTI_ISTEMI = [
   "Fatura görsellerindeki satılabilir ürün kalemlerini çıkar ve her ürün için Google Search, urlContext ve üretici katalog araması (fileSearch) kullanarak resmî üretici/marka ürün kartını tek seferde oluştur.",
   TURKIYE_FATURA_KISALTMA_TALIMATI,
+  "Faturada marka adı basılı değilse satırları tek tek izole etme; faturadaki farklı model kodlarının birlikte işaret ettiği ortak üretici/markayı tespit edip ilgili tüm satırların brand alanına uygula.",
   "Üretici/toptancı ve esnaf VKN/TCKN, IBAN, adres, cari kodu, ETTN, fatura numarası, seri, saat, özel iskonto ve vade/çek/dipnot gibi ticari sırları kesinlikle yok say ve çıktıda yer verme.",
   "Ürünün birim alış fiyatını faturadan kâr marjı verisi olarak okuyup sayısal değerle unit_price alanına yaz (okunamazsa null döndür); alış fiyatını short_description veya title alanlarına yazma.",
-  "Trendyol, Hepsiburada, N11, Amazon, Çiçeksepeti, PttAVM, Akakçe, Cimri, Epey, Sahibinden gibi pazaryeri veya aracı siteleri kesinlikle kullanma; yalnızca resmî üretici/marka alan adını (official_domain), resmî ürün sayfasını (official_product_url), birincil görseli (selected_image_url) ve resmî ürün/CDN görsellerini (image_urls) döndür.",
+  "Esnafın kartında official_domain, official_product_url, selected_image_url ve image_urls alanları için Trendyol, Hepsiburada, N11, Amazon, Çiçeksepeti, PttAVM, Akakçe, Cimri, Epey, Sahibinden gibi pazaryeri veya aracı siteleri kesinlikle kullanma ve döndürme (yalnızca resmî üretici/marka sitesi ve resmî ürün/CDN görselleri kabul edilir); ancak ürünün hangi markaya ait olduğunu (brand) tespit ederken üreticinin kendi sitesinde listelenmeyen kodlar için pazaryeri veya toptancı sayfalarındaki ürün başlıklarından yararlanabilirsin.",
   "Doğrulanmış bir resmî ürün sayfası bulunamazsa tahmin yürütme; official_domain, official_product_url ve selected_image_url alanlarını null, image_urls alanını [] döndür.",
 ].join("\n");
+
+export function googleFaturaUrunKartiIstemi(): string {
+  const ozelTalimat = (process.env.GEMINI_FATURA_TALIMAT || "").trim();
+  const temel = ozelTalimat || GOOGLE_FATURA_URUN_KARTI_ISTEMI;
+  const ekTalimat = (process.env.GEMINI_FATURA_EK_TALIMAT || "").trim();
+  return ekTalimat ? `${temel}\n${ekTalimat}` : temel;
+}
 
 function metinVeyaNull(deger: unknown): string | null {
   if (typeof deger !== "string") return null;
@@ -485,7 +493,7 @@ export async function googleFaturaUrunKartlariUret(
   if (!anahtar) throw new Error("OKUYUCU_HAZIR_DEGIL");
 
   const parcalar = [
-    { text: GOOGLE_FATURA_URUN_KARTI_ISTEMI },
+    { text: googleFaturaUrunKartiIstemi() },
     ...liste.map(dataUrlToGeminiPart),
   ];
 
