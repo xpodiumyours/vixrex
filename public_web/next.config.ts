@@ -84,7 +84,7 @@ const CSP =
   (isDev ? " 'unsafe-eval'" : "") +
   " https://challenges.cloudflare.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com; " +
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-  `img-src 'self' data: blob: https://*.supabase.co ${r2ImgSrc} https://*.cdninstagram.com https://*.gstatic.com https://www.google.com https://www.google-analytics.com https://*.analytics.google.com https://challenges.cloudflare.com https://images.unsplash.com https://api.qrserver.com; ` +
+  `img-src 'self' data: blob: https://*.supabase.co ${r2ImgSrc} https://cdn.vixrex.com https://*.cdninstagram.com https://*.gstatic.com https://www.google.com https://www.google-analytics.com https://*.analytics.google.com https://challenges.cloudflare.com https://images.unsplash.com https://api.qrserver.com; ` +
   "font-src 'self' data: https://fonts.gstatic.com; " +
   "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://challenges.cloudflare.com https://www.google.com https://www.googleapis.com https://www.google-analytics.com https://*.analytics.google.com; " +
   "frame-src 'self' https://challenges.cloudflare.com https://www.google.com https://maps.google.com; " +
