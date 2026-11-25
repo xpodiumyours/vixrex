@@ -134,6 +134,6 @@ class _BusinessOwnershipCardState extends State<BusinessOwnershipCard> {
     if (_status?.hasPublishedStore != true) {
       return 'Önce vitrininizi yayınlayın. Doğrulama yayınlamak için zorunlu değildir.';
     }
-    return 'Ücretsiz ve isteğe bağlıdır. Doğrulamadan da vitrininizi yayınlamaya devam edebilirsiniz.';
+    return 'İsteğe bağlıdır. Doğrulamadan da vitrininizi yayınlamaya devam edebilirsiniz.';
   }
 }

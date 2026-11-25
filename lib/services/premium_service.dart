@@ -3,12 +3,12 @@ import 'package:vixrex/core/result.dart';
 import 'package:vixrex/core/supabase_error_mapper.dart';
 import 'package:vixrex/utils/failure.dart';
 
-/// Premium üyelik servisi — VİTRİN bazlı (spec 2026-08-17).
+/// Vitrin özellik durumu servisi — VİTRİN bazlı (spec 2026-08-17).
 ///
 /// Premium `stores.premium_expires_at` üzerinde tutulur (esnaf hesap
 /// açmaz, vitrinin sahipliği edit_token üzerindendir — PR #1). İstemci
-/// premium YAZAMAZ: ödeme yalnız doğrulanmış PayTR callback'i tarafından
-/// işlenir (PR #4, record_premium_payment). Bu servis yalnız okur.
+/// premium YAZAMAZ: durum yalnız sunucu tarafından yönetilir.
+/// Bu servis yalnız okur.
 ///
 /// Okuma yolu: `get_store_premium_status` RPC'si edit_token kanıtı ister
 /// (create_owner_session ile aynı güven deseni) — başkasının vitrininin

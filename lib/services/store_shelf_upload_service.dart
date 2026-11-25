@@ -12,8 +12,8 @@ class StoreShelfUploadService {
   /// Depoya yazılan nesnelerin önbellek süresi: 1 yıl.
   ///
   /// Dosya adı zaman damgalı, içerik hiç değişmiyor. Varsayılan bir saatlik
-  /// önbellek tekrar eden ziyaretlerde boşuna trafik harcıyordu — ücretsiz
-  /// planda aylık 5 GB sınırı var (28 Ağustos 2026 ölçümü).
+  /// önbellek tekrar eden ziyaretlerde boşuna trafik harcıyordu — barındırma
+  /// planında aylık 5 GB sınırı var (28 Ağustos 2026 ölçümü).
   /// Web tarafındaki karşılığı: `public_web/src/lib/gorselSikistir.ts`
   static const String _onbellekSaniye = '31536000';
 

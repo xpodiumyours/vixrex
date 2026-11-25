@@ -264,7 +264,7 @@
     },
     {
       "anahtar": "membership_info",
-      "metin": "Temel vitrin oluşturma şu an ücretsizdir. Gelişmiş özellikler uygulama içinde ayrıca gösterilecektir."
+      "metin": "Vitrinini oluşturup yayına alabilirsin. Gelişmiş araçları Vitrinim bölümünde inceleyebilirsin."
     },
     {
       "anahtar": "vitrin_kurulum",
@@ -324,11 +324,11 @@
     },
     {
       "anahtar": "ocr_info",
-      "metin": "Nasıl Çalışır:\n1. Fotoğrafınızı çekin veya galeriden seçin\n2. Ürünler otomatik olarak tanınır\n3. Ürünleri onaylayın veya düzenleyin\n4. Onaylanan ürünler vitrininize eklenir\n\nNot: Bu özellik premium gerektirir."
+      "metin": "Nasıl Çalışır:\n1. Fotoğrafınızı çekin veya galeriden seçin\n2. Ürünler otomatik olarak tanınır\n3. Ürünleri onaylayın veya düzenleyin\n4. Onaylanan ürünler vitrininize eklenir\n\nNot: Bu araç Vitrinim bölümünde."
     },
     {
       "anahtar": "ocr_premium",
-      "metin": "Premium üyelik ile:\n• Fotoğraftan sınırsız ürün çıkarma\n• Faturadan otomatik ürün kaydı\n• Toplu Excel yükleme\n• Barkod tarama\n\nÜcretsiz deneme: Günde 3 ücretsiz OCR hakkı.\nPremium üyelik ayrıntıları Vitrinim sayfasında."
+      "metin": "Fotoğraftan ürün çıkarma araçları:\n• Fotoğraftan ürünleri ayıklama\n• Faturadan otomatik ürün kaydı\n• Toplu Excel yükleme\n• Barkod tarama\n\nAyrıntılar Vitrinim bölümünde."
     },
     {
       "anahtar": "hesap",
@@ -968,7 +968,7 @@
       "mesaj": "ocr_info",
       "hizli": [
         {
-          "etiket": "Premium Bilgisi",
+          "etiket": "OCR Bilgisi",
           "payload": "ocr_premium",
           "aksiyon": "none"
         },

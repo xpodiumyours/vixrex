@@ -1,12 +1,12 @@
-/// Premium özellikleri için yapılandırma.
+/// Vitrin özellikleri için yapılandırma.
 class PremiumConfig {
   const PremiumConfig._();
 
-  /// Ücretsiz kullanıcılar için günlük OCR limiti.
+  /// Günlük OCR kullanım limiti.
   static const int freeOcrDailyLimit = 3;
 
-  /// Premium özellikler.
-  static const bool ocrEnabledForFree = true; // Sınırlı ücretsiz
+  /// Özellik anahtarları.
+  static const bool ocrEnabledForFree = true; // Sınırlı kullanım
   static const bool bulkUploadEnabledForFree = false;
   static const bool advancedAnalyticsEnabledForFree = false;
 
@@ -15,7 +15,7 @@ class PremiumConfig {
     return dailyUsage < freeOcrDailyLimit;
   }
 
-  /// Kalan ücretsiz hakkını hesapla.
+  /// Kalan kullanım hakkını hesapla.
   static int remainingFreeOcr(int dailyUsage) {
     final remaining = freeOcrDailyLimit - dailyUsage;
     return remaining > 0 ? remaining : 0;

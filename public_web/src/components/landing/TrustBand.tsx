@@ -2,8 +2,8 @@ import { OnayIkonu } from "@/components/site/icons";
 
 /** Güven bandı — envanter §2.7. */
 const ROZETLER = [
-  "Kredi kartı gerekmez",
-  "Satıştan komisyon alınmaz",
+  "Hızlı kurulum",
+  "Doğrudan paylaşım",
   "Kodsuz kurulum",
   "Link ve QR kod hazırdır",
   "WhatsApp ile doğrudan iletişim",

@@ -17,10 +17,10 @@ class VitrinStoreCard extends StatelessWidget {
   /// null) eski tek-buton davranışı korunur.
   final VoidCallback? onRentPressed;
 
-  /// YALNIZ kendi vitrininde dolu gelir (PR #6): vitrinin premium durumu.
-  /// Başkasının vitrininde asla dolu gelmez — premium bilgisi yalnız
+  /// YALNIZ kendi vitrininde dolu gelir (PR #6): vitrinin özellik durumu.
+  /// Başkasının vitrininde asla dolu gelmez — özellik bilgisi yalnız
   /// sahibine görünür (get_store_premium_status edit_token ister).
-  /// null ise premium satırı gösterilmez (eski davranış birebir korunur).
+  /// null ise özellik satırı gösterilmez (eski davranış birebir korunur).
   final StorePremiumStatus? premiumStatus;
 
   // Theme Colors from AppColors
@@ -44,19 +44,15 @@ class VitrinStoreCard extends StatelessWidget {
 
   bool get _isRentalTemplate => store.isRentalTemplate;
 
-  /// Kendi vitrininin premium satırı metni. premiumStatus null ise (kendi
+  /// Kendi vitrininin özellik satırı metni. premiumStatus null ise (kendi
   /// vitrini değil ya da durum okunamadı) satır hiç gösterilmez.
   String? get _ownPremiumLabel {
     final status = premiumStatus;
     if (status == null) return null;
     if (!status.isPremium) {
-      return 'Premium üyelik · ayrıntılar Vitrinim sayfasında';
+      return 'Vitrin özellikleri · ayrıntılar Vitrinim sayfasında';
     }
-    final expiry = status.premiumExpiresAt;
-    if (expiry == null) return 'Premium aktif';
-    final days = expiry.difference(DateTime.now()).inDays;
-    if (days <= 0) return 'Premium aktif · bugün bitiyor';
-    return 'Premium aktif · $days gün kaldı';
+    return 'Vitrin özellikleri açık';
   }
 
   String get _whatsappButtonLabel {
@@ -349,11 +345,9 @@ class VitrinStoreCard extends StatelessWidget {
                         ),
                       ),
 
-                    // Play Billing bağlanmadan mobilde fiyat vaadi gösterilmez:
+                    // Mobil kartta fiyat veya promosyon metni gösterilmez;
                     // `aylikPremiumBedel` ve "14 gün ücretsiz dene" yalnız
-                    // web yüzeyinde kullanılır. Bu kartta nötr bilgi vardır;
-                    // üyelik ayrıntıları Vitrinim sayfasındadır. Ödeme yalnız
-                    // web'de, doğrulanmış ödeme akışıyla yapılır.
+                    // web yüzeyinin metinleridir, burada görünmez.
                     if (_isRentalTemplate)
                       const Padding(
                         padding: EdgeInsets.only(top: 6),
@@ -369,10 +363,8 @@ class VitrinStoreCard extends StatelessWidget {
                         ),
                       ),
 
-                    // Kendi vitrininin premium durumu (yalnız kendi
-                    // vitrininde). "Premium değil" bilgisi esnafı web
-                    // panelindeki yayın kapısına yönlendirir — ödeme
-                    // orada yapılır (PR #4).
+                    // Kendi vitrininin özellik durumu (yalnız kendi
+                    // vitrininde). Ayrıntılar Vitrinim bölümündedir.
                     if (isOwnStore && _ownPremiumLabel != null)
                       Padding(
                         padding: const EdgeInsets.only(top: 6),
@@ -401,7 +393,7 @@ class VitrinStoreCard extends StatelessWidget {
                       ),
 
                     // Kiralık kart hem gövdesinden hem butonundan kategoriye
-                    // özel hazırlanmış vitrini açar. Deneme/ödeme detaydadır.
+                    // özel hazırlanmış vitrini açar. Ayrıntılar detaydadır.
                     //
                     // onRentPressed varsa (kiralık kartlarda) "İncele" ve
                     // "Kirala" yan yana ayrı butonlar — önce gör, sonra

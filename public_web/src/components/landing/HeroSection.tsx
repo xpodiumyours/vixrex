@@ -7,8 +7,8 @@ import type { MockupProfili } from "./mockupProfilleri";
 /** Hero — envanter §2.2. Flutter referans: landing_hero_section.dart:613-616 (4 rozet) */
 const GUVEN_ROZETLERI = [
   "SSL Güvenli Koruma",
-  "Kredi kartı gerekmez",
-  "Komisyon yok",
+  "Hızlı kurulum",
+  "Doğrudan paylaşım",
   "Link ve QR hazır",
 ] as const;
 
@@ -213,7 +213,7 @@ export function HeroSection({
                 type="submit"
                 className="flex h-[52px] items-center justify-center gap-2 rounded-2xl bg-lp-primary px-6 text-[15px] font-black text-lp-on-primary transition-transform hover:-translate-y-0.5"
               >
-                Ücretsiz Vitrinimi Hazırla
+                Vitrinimi Hazırla
                 <IleriOkIkonu boyut={16} />
               </button>
             </form>

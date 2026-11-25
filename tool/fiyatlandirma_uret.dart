@@ -47,7 +47,7 @@ void main() {
         ..writeln('/// Aylık premium bedeli, kuruş.')
         ..writeln('const int aylikPremiumKurus = $kurus;')
         ..writeln()
-        ..writeln('/// Para birimi kodu (PayTR ve yapısal veri için).')
+        ..writeln('/// Para birimi kodu (yapısal veri için).')
         ..writeln('const String paraBirimi = ${quote(paraBirimi)};')
         ..writeln()
         ..writeln('/// Görüntülenen bedel, ör. 1295 TL.')

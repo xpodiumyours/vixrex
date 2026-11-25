@@ -402,8 +402,7 @@ class AppRouter {
   /// MİSAFİR YOLU (giriş yok / anonim oturum): eski davranış aynen korunur —
   /// `/rent-demo` köprü sayfası, reCAPTCHA, servis rolüyle sahipsiz klon.
   /// Kullanıcıya uyarı diyaloğu gösterilir: vitrin yalnız bu cihazda
-  /// kalır, 14 gün ücretsiz deneme süresi vardır, Google ile hesap
-  /// bağlanarak vitrini kalıcı hale getirebilir.
+  /// kalır; Google ile hesap bağlanarak vitrini kalıcı hale getirebilir.
   static Future<void> navigateToRentDemo(
     BuildContext context,
     String demoSlug,

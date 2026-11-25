@@ -26,7 +26,7 @@ void main() {
         find.widgetWithText(TextField, 'isletmeniz'),
         'Ada Kahve',
       );
-      await tester.tap(find.text('Ücretsiz Vitrinimi Hazırla'));
+      await tester.tap(find.text('Vitrinimi Hazırla'));
       for (var i = 0; i < 8; i++) {
         await tester.pump(const Duration(milliseconds: 250));
       }

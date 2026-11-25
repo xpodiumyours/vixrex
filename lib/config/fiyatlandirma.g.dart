@@ -4,7 +4,7 @@
 /// Aylık premium bedeli, kuruş.
 const int aylikPremiumKurus = 129500;
 
-/// Para birimi kodu (PayTR ve yapısal veri için).
+/// Para birimi kodu (yapısal veri için).
 const String paraBirimi = 'TRY';
 
 /// Görüntülenen bedel, ör. 1295 TL.

@@ -11,8 +11,8 @@ describe("Landing güven bandı paritesi", () => {
 
   it("beş rozet metni iki tarafta aynıdır", () => {
     const rozetler = [
-      "Kredi kartı gerekmez",
-      "Satıştan komisyon alınmaz",
+      "Hızlı kurulum",
+      "Doğrudan paylaşım",
       "Kodsuz kurulum",
       "Link ve QR kod hazırdır",
       "WhatsApp ile doğrudan iletişim",

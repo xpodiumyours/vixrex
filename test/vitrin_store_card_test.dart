@@ -118,7 +118,7 @@ void main() {
         ),
       );
 
-      expect(find.text('Premium aktif · 25 gün kaldı'), findsOneWidget);
+      expect(find.text('Vitrin özellikleri açık'), findsOneWidget);
     },
   );
 
@@ -139,7 +139,7 @@ void main() {
       );
 
       expect(
-        find.text('Premium üyelik · ayrıntılar Vitrinim sayfasında'),
+        find.text('Vitrin özellikleri · ayrıntılar Vitrinim sayfasında'),
         findsOneWidget,
       );
     },
@@ -162,7 +162,7 @@ void main() {
       ),
     );
 
-    expect(find.textContaining('Premium aktif'), findsNothing);
+    expect(find.textContaining('Vitrin özellikleri'), findsNothing);
   });
 
   testWidgets('4. Favori butonu callback’i çalışıyor', (
