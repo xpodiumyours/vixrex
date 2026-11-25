@@ -24,13 +24,13 @@ function kalipDoldur(kalip: string, fiyat: string, aylikBedel: string): string {
 
 const kaliplar = fiyatSozlesmesi.metinKaliplari;
 
-/** Görüntülenen bedel, ör. "299 TL". */
+/** Görüntülenen bedel, ör. "1295 TL". */
 export const AYLIK_PREMIUM_FIYAT = fiyatMetni(
   AYLIK_PREMIUM_KURUS,
   fiyatSozlesmesi.paraBirimiSimgesi,
 );
 
-/** Aylık bedel cümlesi, ör. "Aylık 299 TL". */
+/** Aylık bedel cümlesi, ör. "Aylık 1295 TL". */
 export const AYLIK_PREMIUM_BEDEL = kalipDoldur(
   kaliplar.aylikBedel,
   AYLIK_PREMIUM_FIYAT,
@@ -56,5 +56,5 @@ export const ODEME_ACIKLAMASI = metin(kaliplar.odemeAciklamasi);
 /** PayTR sepet satırı başlığı. */
 export const ODEME_SEPET_BASLIGI = kaliplar.odemeSepetBasligi;
 
-/** PayTR sepet tutarı, ör. "299.00". */
+/** PayTR sepet tutarı, ör. "1295.00". */
 export const ODEME_SEPET_TUTARI = (AYLIK_PREMIUM_KURUS / 100).toFixed(2);

@@ -67,7 +67,7 @@ describe("fiyat tek kaynak sözleşmesi", () => {
     expect(AYLIK_PREMIUM_FIYAT).toContain(
       String(Math.floor(AYLIK_PREMIUM_KURUS / 100)),
     );
-    expect(AYLIK_PREMIUM_BEDEL).toBe("Aylık 299 TL");
+    expect(AYLIK_PREMIUM_BEDEL).toBe("Aylık 1295 TL");
   });
 
   it("çalışan kodda elle yazılmış aylık bedel kalmadı", () => {

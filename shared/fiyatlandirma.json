@@ -1,6 +1,6 @@
 {
   "_not": "Premium üyelik bedelinin tek kaynağı. Flutter tarafı tool/fiyatlandirma_uret.dart ile lib/config/fiyatlandirma.g.dart'a üretir; Next.js tarafı public_web/src/lib/fiyatlandirma.ts içinden doğrudan okur. Fiyat değişince yalnız bu dosya düzenlenir.",
-  "aylikPremiumKurus": 29900,
+  "aylikPremiumKurus": 129500,
   "paraBirimi": "TRY",
   "paraBirimiSimgesi": "TL",
   "metinKaliplari": {
