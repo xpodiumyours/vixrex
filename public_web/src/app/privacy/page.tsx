@@ -52,6 +52,7 @@ export default function PrivacyPage() {
       <ul>
         <li><strong>Supabase:</strong> veritabanı, kimlik doğrulama ve dosya depolama altyapısı. Fatura işlemleri için gerekli içerikler ayrıca OpenRouter ve yapay zekâ hizmet sağlayıcılarına iletilir.</li>
         <li><strong>Vercel:</strong> web sitemizi barındıran sunucu sağlayıcısı.</li>
+        <li><strong>Google Gemini API:</strong> İşletmenin başlattığı fatura okuma, belge analizi ve ürün kartı oluşturma işlemlerinde birincil yapay zekâ motoru olarak belge ve ürün bilgileri işlenir; ürün doğrulama ve eşleştirme amacıyla Google Arama temellendirme araçları kullanılabilir.</li>
         <li><strong>OpenRouter ve seçilen yapay zekâ model sağlayıcıları:</strong> İşletmenin başlattığı fatura okuma ve ürün kartı oluşturma işleminde belge ve ürün bilgileri işlenir. Ürün eşleştirme amacıyla OpenRouter web arama/erişim araçları ve bunların altyapı sağlayıcıları kullanılabilir.</li>
         <li><strong>Google Analytics:</strong> yalnızca çerez onayı verdiyseniz, kullanım istatistikleri için (IP adresi anonimleştirilir).</li>
         <li><strong>Google reCAPTCHA:</strong> otomatik/kötüye kullanım (bot) girişlerini engellemek için.</li>

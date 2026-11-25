@@ -27,6 +27,15 @@ export function OwnerAuthLayout({
         </h1>
         <p className="mt-2 text-sm leading-6 text-[var(--owner-muted)]">{description}</p>
         <div className="mt-6">{children}</div>
+        <footer className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 border-t border-[var(--owner-border)] pt-4 text-xs text-[var(--owner-muted)]">
+          <Link href="/privacy" className="owner-link">
+            Gizlilik Politikası
+          </Link>
+          <span aria-hidden="true">·</span>
+          <Link href="/legal/terms" className="owner-link">
+            Kullanım Şartları
+          </Link>
+        </footer>
       </section>
     </main>
   );

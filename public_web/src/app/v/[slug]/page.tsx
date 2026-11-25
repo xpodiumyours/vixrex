@@ -215,12 +215,12 @@ async function _buildStoreDataBundle(
     const [bookingResult, articlesResult] = await Promise.all([
       supabase
         .from("booking_settings")
-        .select("*")
+        .select("is_enabled, capacity, working_hours, lunch_break")
         .eq("store_slug", slug)
         .maybeSingle(),
       supabase
         .from("store_articles")
-        .select("*")
+        .select("id, slug, title, summary, content")
         .eq("store_slug", slug)
         .eq("status", "published")
         .order("published_at", { ascending: false, nullsFirst: false })
@@ -390,7 +390,7 @@ const getStoreData = (slug: string) =>
   unstable_cache(
     () => _getStoreData(slug),
     [`store-${slug}`],
-    { tags: [`store-${slug}`, `products-${slug}`], revalidate: 60 }
+    { tags: [`store-${slug}`, `products-${slug}`], revalidate: 300 }
   )();
 
 // getStorePreviewData KALDIRILDI (Commit 12): kalıcı edit_token ile açılan

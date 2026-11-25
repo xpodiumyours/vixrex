@@ -7,7 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { buildSiteUrl, getSiteUrl } from "@/lib/siteUrl";
 import { safeJsonLdHtml } from "@/lib/jsonLd";
 
-export const revalidate = 300;
+export const revalidate = 900;
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -25,7 +25,7 @@ async function _getBlogData(slug: string) {
 
   const { data: articles } = await supabase
     .from("store_articles")
-    .select("*")
+    .select("id, slug, title, summary, content, cover_image_url, article_type, published_at, created_at, target_city")
     .eq("store_slug", slug)
     .eq("status", "published")
     .order("published_at", { ascending: false, nullsFirst: false })
@@ -41,7 +41,7 @@ const getBlogData = (slug: string) =>
   unstable_cache(
     () => _getBlogData(slug),
     [`store-${slug}`],
-    { tags: [`store-${slug}`], revalidate: 300 }
+    { tags: [`store-${slug}`], revalidate: 900 }
   )();
 
 export async function generateMetadata(props: PageProps): Promise<Metadata> {

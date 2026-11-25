@@ -26,7 +26,7 @@ import { safeJsonLdHtml } from "@/lib/jsonLd";
 import ProductDetailExperience from "@/components/ProductDetailExperience";
 import VitrinCartDock from "@/components/VitrinCartDock";
 
-export const revalidate = 300;
+export const revalidate = 900;
 
 interface PageProps {
   params: Promise<{ slug: string; productSlug: string }>;
@@ -49,7 +49,6 @@ interface StoreRow {
   longitude?: number | null;
   logo_url?: string;
   shelf_image_url?: string;
-  products?: unknown;
   is_published?: boolean;
   is_demo?: boolean | null;
   product_storage_version?: number;
@@ -90,7 +89,7 @@ async function _getProductData(slug: string, productSlug: string) {
   const { data: store, error } = await supabase
     .from("stores")
     .select(
-      "id,slug,name,description,corporate_bio,whatsapp,instagram,website,address,district_name,neighborhood_name,province_name,latitude,longitude,logo_url,shelf_image_url,products,is_published,is_demo,product_storage_version",
+      "id,slug,name,description,corporate_bio,whatsapp,instagram,website,address,district_name,neighborhood_name,province_name,latitude,longitude,logo_url,shelf_image_url,is_published,is_demo,product_storage_version",
     )
     .eq("slug", slug)
     .eq("is_published", true)
@@ -192,7 +191,7 @@ const getProductData = (slug: string, productSlug: string) =>
     [`product-${slug}-${productSlug}`],
     {
       tags: [`store-${slug}`, `products-${slug}`, `product-${slug}-${productSlug}`],
-      revalidate: 300,
+      revalidate: 900,
     },
   )();
 
