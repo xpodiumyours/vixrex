@@ -36,6 +36,13 @@ describe("ayarlar parite (Flutter referansiyla)", () => {
     expect(nextSettings).toContain("Gizlilik");
   });
 
+  it("Flutter gibi cikis sunar", () => {
+    const cikis = readFileSync(resolve(__dirname, "../src/lib/cikis.ts"), "utf8");
+    expect(flutterSettings).toContain("_signOut");
+    expect(nextSettings).toContain("globalCikisYap");
+    expect(cikis).toContain('scope: "global"');
+  });
+
   it("Flutter gibi profil yonlendirmesi yapar", () => {
     expect(nextSettings).toContain("profil");
   });

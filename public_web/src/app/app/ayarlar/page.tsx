@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { globalCikisYap } from "@/lib/cikis";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +13,9 @@ export default function AyarlarPage() {
   const [yukleniyor, setYukleniyor] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [exportMsg, setExportMsg] = useState("");
+  const [eposta, setEposta] = useState("");
+  const [cikisiliyor, setCikisiliyor] = useState(false);
+  const [cikisHata, setCikisHata] = useState("");
 
   useEffect(() => {
     async function init() {
@@ -29,10 +33,22 @@ export default function AyarlarPage() {
           return;
         }
       }
+      setEposta(session?.user.email ?? "");
       setYukleniyor(false);
     }
     init();
   }, [router]);
+
+  async function cikisYap() {
+    setCikisiliyor(true);
+    setCikisHata("");
+    const sonuc = await globalCikisYap(supabase.auth, router);
+    if (!sonuc.ok) {
+      setCikisHata(sonuc.hata ?? "Çıkış yapılamadı. Lütfen tekrar deneyin.");
+      setCikisiliyor(false);
+      return;
+    }
+  }
 
   async function verileriDisaAktar() {
     setExporting(true);
@@ -140,6 +156,31 @@ export default function AyarlarPage() {
             </div>
             <span className="text-[var(--owner-muted)]">→</span>
           </Link>
+        </section>
+
+        <section className="owner-card p-5 sm:p-6">
+          <h2 className="text-lg font-bold text-[var(--owner-text)]">Hesap</h2>
+          <p className="mt-1 text-sm text-[var(--owner-muted)]">
+            {eposta ? "Giriş yapmış hesap" : "Misafir oturum (giriş yapılmamış)"}
+          </p>
+          {eposta ? (
+            <>
+              <p className="mt-3 break-all text-sm font-semibold text-[var(--owner-text-alt)]">{eposta}</p>
+              {cikisHata ? (
+                <p role="alert" className="mt-3 rounded-xl border border-[var(--owner-error)]/40 bg-[var(--owner-error)]/10 p-3 text-sm text-[var(--owner-error)]">
+                  {cikisHata}
+                </p>
+              ) : null}
+              <button
+                type="button"
+                className="owner-button-secondary mt-4 w-full"
+                onClick={() => void cikisYap()}
+                disabled={cikisiliyor}
+              >
+                {cikisiliyor ? "Çıkılıyor…" : "Çıkış yap"}
+              </button>
+            </>
+          ) : null}
         </section>
 
         {/* Verilerimi İndir */}
