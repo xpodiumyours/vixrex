@@ -147,3 +147,16 @@ export async function GET(request: Request) {
   // session_token loga/hata mesajına GİRMESİN
   return response;
 }
+
+export async function DELETE() {
+  const response = NextResponse.json({ tamam: true });
+  response.headers.set("cache-control", "no-store");
+  response.cookies.set(OWNER_SESSION_COOKIE, "", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "lax",
+    path: "/",
+    maxAge: 0,
+  });
+  return response;
+}
