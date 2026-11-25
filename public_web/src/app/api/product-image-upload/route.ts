@@ -9,6 +9,7 @@ import {
   ONBELLEK_SANIYE,
   type SikistirilmisGorsel,
 } from "@/lib/gorselSikistir";
+import { gorselDepoyaYukle } from "@/lib/gorselDepo";
 
 // Ürün görseli yükleme — Flutter'daki StoreShelfUploadService.uploadProductImage
 // karşılığı (maks 5 MB, JPG/PNG/WebP, bayttan tür doğrulama, sharp ile 1600px).
@@ -109,17 +110,15 @@ export async function POST(request: NextRequest) {
   const yol = `${guvenliSlug}/products/${guvenliProduct}/${dosyaAdi}`;
 
   try {
-    const { error } = await admin.storage.from("shelf-images").upload(yol, sikistirilmis.bayt, {
+    const url = await gorselDepoyaYukle({
+      admin,
+      yol,
+      bayt: sikistirilmis.bayt,
       contentType: sikistirilmis.tur,
       cacheControl: ONBELLEK_SANIYE,
       upsert: false,
     });
-    if (error) {
-      console.error("[product-image-upload] storage:", error.message);
-      return NextResponse.json({ hata: "Görsel yüklenemedi." }, { status: 500 });
-    }
-    const { data } = admin.storage.from("shelf-images").getPublicUrl(yol);
-    return NextResponse.json({ tamam: true, url: data.publicUrl });
+    return NextResponse.json({ tamam: true, url });
   } catch (err) {
     console.error("[product-image-upload] failed:", err instanceof Error ? err.message : "unknown");
     return NextResponse.json({ hata: "Görsel yüklenemedi." }, { status: 500 });

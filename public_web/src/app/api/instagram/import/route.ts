@@ -8,6 +8,7 @@ import {
 } from "@/lib/products";
 import { sanitizeInstagramMedia } from "@/lib/instagram";
 import { gorseliSikistir, ONBELLEK_SANIYE } from "@/lib/gorselSikistir";
+import { gorselDepoyaYukle } from "@/lib/gorselDepo";
 import { getConnectedInstagramAccess, revalidateProductTargets } from "@/lib/instagramServer";
 import {
   instagramErrorStatus,
@@ -233,18 +234,14 @@ async function uploadInstagramMedia(args: {
     contentType
   );
 
-  const { error } = await args.admin.storage
-    .from("shelf-images")
-    .upload(objectPath, sikistirilmis.bayt, {
-      contentType: sikistirilmis.tur,
-      cacheControl: ONBELLEK_SANIYE,
-      upsert: true,
-    });
-
-  if (error) throw error;
-
-  const { data } = args.admin.storage.from("shelf-images").getPublicUrl(objectPath);
-  return data.publicUrl;
+  return gorselDepoyaYukle({
+    admin: args.admin,
+    yol: objectPath,
+    bayt: sikistirilmis.bayt,
+    contentType: sikistirilmis.tur,
+    cacheControl: ONBELLEK_SANIYE,
+    upsert: true,
+  });
 }
 
 export async function POST(req: NextRequest) {

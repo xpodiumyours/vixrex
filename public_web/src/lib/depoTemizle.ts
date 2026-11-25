@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { vitrinR2GorselleriniSil } from "@/lib/gorselDepo";
 
 /**
  * SİLİNEN VİTRİNİN GÖRSELLERİNİ DEPODAN KALDIRIR.
@@ -57,17 +58,7 @@ async function dosyalariTopla(
   return yollar;
 }
 
-/**
- * Vitrine ait tüm görselleri siler. Kaç dosya silindiğini döner.
- *
- * Hata fırlatmaz: bu çağrı vitrin/hesap zaten silindikten SONRA yapılıyor.
- * Depo temizliği başarısız olursa kullanıcıya "silinemedi" demek yanlış
- * olur — silinmiştir. Başarısızlık loglanır, sonuç 0 döner.
- */
-export async function vitrinGorsellerinisil(slug: string): Promise<number> {
-  const guvenliSlug = slug.replace(/[^a-zA-Z0-9-]/g, "");
-  if (!guvenliSlug) return 0;
-
+async function supabaseVitrinGorselleriniSil(guvenliSlug: string): Promise<number> {
   try {
     const admin = getSupabaseAdmin();
     const yollar = await dosyalariTopla(admin, guvenliSlug);
@@ -91,4 +82,22 @@ export async function vitrinGorsellerinisil(slug: string): Promise<number> {
     );
     return 0;
   }
+}
+
+/**
+ * Vitrine ait tüm görselleri siler. Kaç dosya silindiğini döner.
+ *
+ * Hata fırlatmaz: bu çağrı vitrin/hesap zaten silindikten SONRA yapılıyor.
+ * Depo temizliği başarısız olursa kullanıcıya "silinemedi" demek yanlış
+ * olur — silinmiştir. Başarısızlık loglanır, sonuç 0 döner.
+ */
+export async function vitrinGorsellerinisil(slug: string): Promise<number> {
+  const guvenliSlug = slug.replace(/[^a-zA-Z0-9-]/g, "");
+  if (!guvenliSlug) return 0;
+
+  const [supabaseSilinen, r2Silinen] = await Promise.all([
+    supabaseVitrinGorselleriniSil(guvenliSlug),
+    vitrinR2GorselleriniSil(guvenliSlug),
+  ]);
+  return supabaseSilinen + r2Silinen;
 }

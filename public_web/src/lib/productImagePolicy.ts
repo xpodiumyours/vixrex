@@ -87,6 +87,27 @@ function validateCountAndUrls(
   return { ok: true, imageUrls };
 }
 
+export function yonetilenR2Originleri(): Set<string> {
+  const originler = new Set<string>();
+  const adaylar = [
+    process.env.R2_PUBLIC_URL,
+    process.env.NEXT_PUBLIC_R2_PUBLIC_URL,
+  ];
+  for (const ham of adaylar) {
+    const temiz = String(ham || "").trim();
+    if (!temiz) continue;
+    try {
+      const parsed = new URL(temiz);
+      if (parsed.protocol === "https:" && !parsed.username && !parsed.password) {
+        originler.add(parsed.origin);
+      }
+    } catch {
+      continue;
+    }
+  }
+  return originler;
+}
+
 export function yonetilenUrunGorseliMi(url: string): boolean {
   return managedProductImageUrl(url);
 }
@@ -94,16 +115,31 @@ export function yonetilenUrunGorseliMi(url: string): boolean {
 function managedProductImageUrl(url: string): boolean {
   try {
     const parsed = new URL(url);
-    const configuredOrigin = String(process.env.NEXT_PUBLIC_SUPABASE_URL || "").trim();
-    if (configuredOrigin) {
-      const expected = new URL(configuredOrigin);
-      if (parsed.origin !== expected.origin) return false;
-    }
-    const path = decodeURIComponent(parsed.pathname);
-    return (
+    if (parsed.protocol !== "https:") return false;
+
+    const rawPath = parsed.pathname;
+    if (rawPath.includes("..") || /%2e/i.test(rawPath)) return false;
+    const path = decodeURIComponent(rawPath);
+    if (path.includes("..") || path.includes("\\")) return false;
+
+    const isSupabasePath =
       path.includes("/storage/v1/object/public/shelf-images/") &&
-      path.includes("/products/")
-    );
+      path.includes("/products/");
+    if (isSupabasePath) {
+      const configuredOrigin = String(process.env.NEXT_PUBLIC_SUPABASE_URL || "").trim();
+      if (configuredOrigin) {
+        const expected = new URL(configuredOrigin);
+        if (parsed.origin !== expected.origin) return false;
+      }
+      return true;
+    }
+
+    const r2Originleri = yonetilenR2Originleri();
+    if (r2Originleri.has(parsed.origin)) {
+      return /\/products\/[^/]+/.test(path);
+    }
+
+    return false;
   } catch {
     return false;
   }

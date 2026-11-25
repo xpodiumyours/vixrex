@@ -8,6 +8,7 @@ import {
 } from "@/lib/instagramApi";
 import { revalidateTag } from "next/cache";
 import { deleteCoreProductsBySource } from "@/lib/productCoreServer";
+import { vitrinR2OnekSil } from "@/lib/gorselDepo";
 
 export const runtime = "nodejs";
 
@@ -98,6 +99,11 @@ export async function POST(req: NextRequest) {
           if (removeError) {
             console.error("Failed to remove storage files during Mod B disconnect:", removeError);
           }
+        }
+
+        const guvenliSlug = store.slug.replace(/[^a-zA-Z0-9-]/g, "");
+        if (guvenliSlug) {
+          await vitrinR2OnekSil(`${guvenliSlug}/instagram/`);
         }
 
         // 5. Update connection status

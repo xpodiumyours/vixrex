@@ -114,6 +114,7 @@
 | GitHub → Vercel `vixrex-app` | Proje kimliği `prj_AfdnDnAcIwSCaJuBoCQh1TP1GvWR` (`lib/`) | Flutter kabuğu; test adresi olarak `vixrex-public` yerine verilmez (Kural 19) |
 | Vercel `vixrex-public` → Google Gemini | `public_web/src/lib/faturaPriz.ts:21-27, 456-545` | Birincil fatura okuma + Google Search + URL Context (+ File Search) |
 | Vercel `vixrex-public` → Supabase | `public_web/src/lib/supabaseAdmin.ts` | `SUPABASE_SERVICE_ROLE_KEY` yalnız sunucudadır; tarayıcıya verilmez |
+| Vercel `vixrex-public` → Cloudflare R2 *(tak-çıkar görsel deposu)* | `public_web/src/lib/gorselDepo.ts` | R2 ortam değişkenleri tam tanımlıysa `PutObject`/`ListObjectsV2`/`DeleteObjects` (SigV4) R2'ye gider; hepsi boşsa Supabase `shelf-images` fallback aktiftir; kısmi/hatalı config fail-closed durur |
 | Vercel `vixrex-public` → Supabase RPC | `public_web/src/lib/faturaArkaPlanIslemi.ts:42-126, 169-175` | Yalnız yedek hatta `enqueue_invoice_provider_job` / `advance_invoice_provider_job` çağrılır; `OPENROUTER_API_KEY` loglanmaz |
 | Supabase → OpenRouter (Yedek) | `20261023173000_fatura_kart_preset_uyumu.sql` + `20261105080000_fatura_v3_preset_akisi.sql` | `pg_net` HTTP POST; `@preset/vixrex-qwen-fatura-okuma-suzme`, `@preset/urun-kart-olusturucu`, `@preset/vixrex-urun-karti-v2` |
 | Supabase → Vercel Callback (Yedek) | `public_web/src/app/api/cron/fatura-provider/route.ts:13-43` | `pg_cron` her dakika hazır işleri `https://vixrex.com/api/cron/fatura-provider` ucuna bildirir (`x-vixrex-callback` zaman sabitli karşılaştırma) |
@@ -160,6 +161,12 @@
 | `SUPABASE_URL` | Her iki Vercel projesi (`vixrex-public`, `vixrex-app`) | Supabase proje adresi |
 | `SUPABASE_PUBLISHABLE_KEY` | Her iki Vercel projesi | Normal istemci erişimi (RLS kurallarına tabi) |
 | `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `vixrex-public` | Tarayıcıya açık eski uyumluluk değişkenleri (RLS gerekli) |
+| `R2_ACCOUNT_ID` | `public_web/src/lib/gorselDepo.ts` (`vixrex-public` sunucu) | Cloudflare R2 hesap kimliği (tüm R2 değişkenleri boşsa Supabase fallback; kısmi tanımlıysa fail-closed hata) |
+| `R2_ACCESS_KEY_ID` | `public_web/src/lib/gorselDepo.ts` (`vixrex-public` sunucu sırrı) | Cloudflare R2 S3 uyumlu erişim anahtarı kimliği (sunucu sırrı) |
+| `R2_SECRET_ACCESS_KEY` | `public_web/src/lib/gorselDepo.ts` (`vixrex-public` sunucu sırrı) | Cloudflare R2 S3 SigV4 imzalama gizli anahtarı (tarayıcıya **asla** verilmez) |
+| `R2_BUCKET_NAME` | `public_web/src/lib/gorselDepo.ts` (`vixrex-public` sunucu) | Cloudflare R2 hedef kova adı |
+| `R2_PUBLIC_URL` | `public_web/src/lib/gorselDepo.ts`, `productImagePolicy.ts`, `next.config.ts` | Cloudflare R2 herkese açık `https://` taban URL'i |
+| `NEXT_PUBLIC_R2_PUBLIC_URL` | `public_web/src/lib/gorselDepo.ts`, `productImagePolicy.ts`, `next.config.ts` | Tarayıcı/istemci doğrulaması ve CSP `img-src` için opsiyonel R2 `https://` taban URL'i (`R2_PUBLIC_URL` ile aynı origin olmalıdır) |
 
 **Ortam ayrımı ve güvenlik notu:** Production'da bir değişken adının bulunması, önizleme (preview) dalında da bulunduğunu kanıtlamaz. Yerelde gerçek fatura/env değişkenleri yalnızca `public_web/.env.local` içinde tutulur; kök dizindeki test faturaları depoya girmemesi için `.olcum/yerel-test-faturalari/` altında izoledir ve `.gitignore` ile kilitlidir.
 
