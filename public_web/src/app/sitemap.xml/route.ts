@@ -15,7 +15,7 @@ import { gorselIzinBekliyorMu } from "@/lib/faturaGorselHakDenetimi";
 import { MAX_PRODUCT_IMAGES } from "@/lib/productImagePolicy";
 import { getProductImages } from "@/lib/products";
 
-export const revalidate = 300;
+export const revalidate = 3600;
 
 const SITEMAP_DISI_SLUGLAR = new Set([
   "aasd-mwj3ln80",
@@ -69,13 +69,13 @@ async function _getSitemapData() {
   // dolu ama is_demo false) gerçek müşterilerin vitrinidir, indekslenir.
   const { data: stores } = await supabase
     .from("stores")
-    .select("id, slug, name, updated_at, is_demo, district_name, province_name")
+    .select("id, slug, name, updated_at, is_demo")
     .eq("is_published", true)
     .eq("is_demo", false);
 
   const { data: products } = await supabase
     .from("products")
-    .select("store_id, slug, name, description, image_urls, source_type, fatura_kanit, updated_at")
+    .select("store_id, slug, name, image_urls, source_type, fatura_kanit, updated_at")
     .eq("is_active", true)
     .eq("is_visible", true);
 
@@ -94,7 +94,7 @@ async function _getSitemapData() {
 const getSitemapData = () =>
   unstable_cache(_getSitemapData, ["sitemap"], {
     tags: ["sitemap"],
-    revalidate: 300,
+    revalidate: 3600,
   })();
 
 function escapeXml(value: string) {
@@ -117,7 +117,6 @@ export async function GET() {
       Array<{
         slug: string;
         name: string;
-        description: string;
         image_urls: unknown;
         source_type: string | null;
         fatura_kanit: unknown;
@@ -134,7 +133,6 @@ export async function GET() {
       storeProducts.push({
         slug: productSlug,
         name: String(product.name || "").trim(),
-        description: String(product.description || "").trim(),
         image_urls: product.image_urls,
         source_type:
           typeof product.source_type === "string" ? product.source_type : null,
@@ -323,7 +321,8 @@ export async function GET() {
     return new NextResponse(xml, {
       headers: {
         "Content-Type": "application/xml",
-        "Cache-Control": "public, max-age=300, s-maxage=300",
+        "Cache-Control":
+          "public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400",
       },
     });
   } catch (error) {
