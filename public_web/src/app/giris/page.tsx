@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, useSyncExternalStore } from "react";
 import { supabase } from "@/lib/supabase";
 import { OwnerAuthLayout } from "@/components/owner/OwnerAuthLayout";
+import { GoogleGirisButonu } from "@/components/owner/GoogleGirisButonu";
 import { guvenliDonusYolu } from "@/lib/guvenliDonus";
 
 export const dynamic = "force-dynamic";
@@ -61,14 +62,7 @@ export default function GirisPage() {
         </p>
       ) : null}
 
-      <button
-        type="button"
-        disabled={gonderiliyor}
-        onClick={googleIleDevamEt}
-        className="owner-button-primary mt-5 flex w-full items-center justify-center gap-2.5"
-      >
-        {gonderiliyor ? "Google açılıyor…" : "Google ile Devam Et"}
-      </button>
+      <GoogleGirisButonu disabled={gonderiliyor} onClick={googleIleDevamEt} />
 
       <Link
         href="/kesfet?yalniz_kiralik=1"

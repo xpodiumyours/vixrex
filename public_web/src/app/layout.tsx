@@ -51,13 +51,6 @@ export const metadata: Metadata = {
   description:
     "İşletme bilgilerinizi, fotoğraflarınızı, ürün ve hizmetlerinizi, adresinizi ve WhatsApp iletişiminizi tek vitrin linkinde toplayın ve QR kodla paylaşın.",
   metadataBase: new URL(getSiteUrl()),
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      "max-image-preview": "large",
-    },
-  },
   verification: {
     google: "EDYISkto7FZ88bohG5vwlJJgR4UEqRcL8lkV48cu7t0",
   },

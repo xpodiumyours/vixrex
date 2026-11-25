@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, useSyncExternalStore } from "react";
 import { supabase } from "@/lib/supabase";
 import { OwnerAuthLayout } from "@/components/owner/OwnerAuthLayout";
+import { GoogleGirisButonu } from "@/components/owner/GoogleGirisButonu";
 import { guvenliDonusYolu } from "@/lib/guvenliDonus";
 
 export const dynamic = "force-dynamic";
@@ -57,14 +58,7 @@ export default function KayitPage() {
 
       {hata ? <p className="owner-error mt-4 text-sm" role="alert">{hata}</p> : null}
 
-      <button
-        type="button"
-        disabled={gonderiliyor}
-        onClick={googleIleDevamEt}
-        className="owner-button-primary mt-5 w-full"
-      >
-        {gonderiliyor ? "Google açılıyor…" : "Google ile Devam Et"}
-      </button>
+      <GoogleGirisButonu disabled={gonderiliyor} onClick={googleIleDevamEt} />
 
       <Link
         href="/kesfet?yalniz_kiralik=1"
