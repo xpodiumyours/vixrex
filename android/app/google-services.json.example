@@ -7,9 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:939936730019:android:com.xpodiumyours.vixrex",
+        "mobilesdk_app_id": "1:939936730019:android:com.vixrex.app",
         "android_client_info": {
-          "package_name": "com.xpodiumyours.vixrex"
+          "package_name": "com.vixrex.app"
         }
       },
       "oauth_client": [

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:vixrex/config/fiyatlandirma.g.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/services/premium_service.dart';
 import 'package:vixrex/theme/app_colors.dart';
@@ -50,7 +49,9 @@ class VitrinStoreCard extends StatelessWidget {
   String? get _ownPremiumLabel {
     final status = premiumStatus;
     if (status == null) return null;
-    if (!status.isPremium) return premiumDegilRozet;
+    if (!status.isPremium) {
+      return 'Premium üyelik · ayrıntılar Vitrinim sayfasında';
+    }
     final expiry = status.premiumExpiresAt;
     if (expiry == null) return 'Premium aktif';
     final days = expiry.difference(DateTime.now()).inDays;
@@ -348,41 +349,23 @@ class VitrinStoreCard extends StatelessWidget {
                         ),
                       ),
 
-                    // Kiralık vitrin fiyat bilgisi — iş modeli (spec
-                    // 2026-08-17): 14 gün ücretsiz deneme, sonra aylık
-                    // 299 TL. Karttaki premium ayrımı: kiralık şablonun
-                    // ücretli olduğu en baştan dürüstçe söylenir. Fiyat
-                    // şimdilik tek seçenek; ödeme PR'ında sunucu tarafı
-                    // tek doğruluk kaynağı olacak.
+                    // Play Billing bağlanmadan mobilde fiyat vaadi gösterilmez:
+                    // `aylikPremiumBedel` ve "14 gün ücretsiz dene" yalnız
+                    // web yüzeyinde kullanılır. Bu kartta nötr bilgi vardır;
+                    // üyelik ayrıntıları Vitrinim sayfasındadır. Ödeme yalnız
+                    // web'de, doğrulanmış ödeme akışıyla yapılır.
                     if (_isRentalTemplate)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 6),
-                        child: Row(
-                          children: [
-                            const Text(
-                              aylikPremiumBedel,
-                              style: TextStyle(
-                                color: Color(0xFFF59E0B),
-                                fontSize: 12,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              child: Text(
-                                '· 14 gün ücretsiz dene',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: AppColors.mutedText.withValues(
-                                    alpha: 0.9,
-                                  ),
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ],
+                      const Padding(
+                        padding: EdgeInsets.only(top: 6),
+                        child: Text(
+                          'Kiralık vitrin · ayrıntılar Vitrinim sayfasında',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Color(0xFFF59E0B),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w900,
+                          ),
                         ),
                       ),
 

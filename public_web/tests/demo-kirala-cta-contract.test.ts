@@ -17,7 +17,7 @@ const ctaBlock = viewSource.slice(
  * Demo vitrindeki "Bu vitrini kirala" CTA'sı. 2026-08-14'teki geçici
  * karar ("şimdilik ücretsiz kalsın, ödeme altyapısı bağlanmadı") yerini
  * fiyat modeline bıraktı (spec 2026-08-17): 14 gün ücretsiz deneme,
- * sonra aylık 299 TL. Buton daha önce hiç çalışan bir akışa bağlı
+ * sonra aylık 1295 TL. Buton daha önce hiç çalışan bir akışa bağlı
  * değildi (getAppUrl(), genel uygulama sayfası) ve "499 TL/ay" yazan
  * bir fiyat gösteriyordu — gerçekte çalışmayan bir vaat.
  *
@@ -39,7 +39,7 @@ describe("demo vitrin 'Bu vitrini kirala' CTA — pilot dönemde ücretsiz, güv
   });
 
   it("dürüst fiyat bilgisi var: tek kaynaktan gelen bedel cümlesi + abonelik açıklaması", () => {
-    expect(AYLIK_PREMIUM_BEDEL).toBe("Aylık 299 TL");
+    expect(AYLIK_PREMIUM_BEDEL).toBe("Aylık 1295 TL");
     expect(ctaBlock).toContain("{AYLIK_PREMIUM_BEDEL}");
     expect(ctaBlock).toContain("Kiralık vitrin aboneliği");
   });

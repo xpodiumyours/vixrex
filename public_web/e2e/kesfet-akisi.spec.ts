@@ -92,7 +92,7 @@ test.describe("Keşfet dizini", () => {
     // Keşfet içi <dialog> açar, misafir yolunda gizli form POST eder.
     if (adet > 0) {
       const html = await page.content();
-      expect(html).toContain("Aylık 299 TL");
+      expect(html).toContain("Aylık 1295 TL");
       expect(html).toContain('action="/api/rent-demo"');
 
       // Kartta İKİ pencere var: WhatsApp paneli (whatsapp-baslik-…) ile
