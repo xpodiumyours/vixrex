@@ -533,6 +533,24 @@ tetikleyicisi oluşarak çift dikiş riski doğdu. Casper: "Bunlar zaten canlı 
 VixRex'te yok muydu? Paralel yapı oluşturmayalım bak... Kalıcı olarak bir daha çift dikişe
 sebep olmayacak araştırma yapmadan işlem yapma kancası da takalım" diyerek kuralı sabitledi.
 
+### 37. Önleyici Maliyet, Kota ve Trafik Kalkanı (2026-11-25)
+Bulut ve veritabanı faturalarında kontrolsüz egress, depolama veya kota patlamasını önlemek
+için aşağıdaki koruma kalkanları zorunludur ve CI tarafından denetlenir:
+
+1. **Spend Cap Açık Tutulur:** Supabase/Vercel/Cloudflare projelerinde harcama sınırı
+   (Spend Cap) ve uyarı eşikleri açık tutulur; sınırsız otomatik fatura artışına izin verilmez.
+2. **R2 Dışı Doğrudan Depo Yazımı Yasaktır:** Tüm görsel/medya yüklemeleri tek adaptör
+   (`src/lib/gorselDepo.ts`) ve `gorselSikistir.ts` (`ONBELLEK_SANIYE = "31536000"`)
+   üzerinden geçer; `src/app/api/**` ve `src/lib/**` altında doğrudan
+   `.storage.from(...).upload(` çağrısı yazılamaz.
+3. **Public Sayfalarda `select("*")` ve Kısa ISR Yasaktır:** `src/app/v/**`,
+   `src/app/sitemap.xml/**` ve `src/app/(site)/kesfet/**` içinde `.select("*")` / `.select("*,`
+   kullanılamaz; yalnızca gereken sütunlar seçilir. Minimum önbellek eşikleri:
+   `sitemap.xml` `revalidate >= 3600` ve `s-maxage >= 3600`, vitrin ana sayfası
+   `unstable_cache` `revalidate >= 300`, ürün ve yazı sayfaları `revalidate >= 900`.
+4. **Kalıcı CI Kancası:** `public_web/scripts/kontrol/maliyet-egress-bekcisi.mjs` her
+   `public_web` CI koşusunda bu kuralları otomatik doğrular ve ihlalde merge'i durdurur.
+
 ### Token ekonomisi (2026-09-16)
 Token en kıt kaynak. Bitince koordinasyon, doğrulama ve merge sorumluluğu
 duruyor — yani proje duruyor. Yavaş ajan, duran projeden iyidir.
