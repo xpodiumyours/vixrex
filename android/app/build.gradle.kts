@@ -14,8 +14,8 @@ if (hasReleaseKeystore) {
 }
 
 android {
-    namespace = "com.xpodiumyours.vixrex"
-    compileSdk = flutter.compileSdkVersion
+    namespace = "com.vixrex.app"
+    compileSdk = 36
     ndkVersion = "29.0.14206865"
 
     compileOptions {
@@ -41,20 +41,18 @@ android {
                 storeFile = file(storePath)
                 storePassword = storePasswordValue
                 keyAlias = keyAliasValue
-            // Eski/kati yukleyiciler icin v1 (JAR) imzasi da uretilsin.
-            enableV1Signing = true
-            enableV2Signing = true
-                keyPassword = keyPasswordValue
+                // Eski/kati yukleyiciler icin v1 (JAR) imzasi da uretilsin.
                 enableV1Signing = true
                 enableV2Signing = true
+                keyPassword = keyPasswordValue
             }
         }
     }
 
     defaultConfig {
-        applicationId = "com.xpodiumyours.vixrex"
+        applicationId = "com.vixrex.app"
         minSdk = 24
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }

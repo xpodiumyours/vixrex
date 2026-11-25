@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 env:
-  PUBLIC_SITE_URL: https://vixrex-public.vercel.app
+  PUBLIC_SITE_URL: https://vixrex.com
   FLUTTER_VERSION: "3.44.4"
 
 jobs:
@@ -207,7 +207,7 @@ jobs:
           fi
           echo "Upload certificate SHA-256 signature verified successfully."
           {
-            echo "- Package: \`com.xpodiumyours.vixrex\`"
+            echo "- Package: \`com.vixrex.app\`"
             echo "- AAB Cert SHA-256: \`$CERT_SHA256\`"
           } >> "$GITHUB_STEP_SUMMARY"
 

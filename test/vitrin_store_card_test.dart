@@ -139,7 +139,7 @@ void main() {
       );
 
       expect(
-        find.text('Premium değil · Aylık 299 TL ile yayınla'),
+        find.text('Premium üyelik · ayrıntılar Vitrinim sayfasında'),
         findsOneWidget,
       );
     },
@@ -352,9 +352,12 @@ void main() {
       ),
     );
 
-    // Kiralık kartlarda fiyat bilgisi var, ürün sayısı yok
+    // Kiralık kartlarda nötr üyelik bilgisi var, ürün sayısı yok
     expect(find.text('2 ürün'), findsNothing);
-    expect(find.text('Aylık 299 TL'), findsOneWidget);
+    expect(
+      find.text('Kiralık vitrin · ayrıntılar Vitrinim sayfasında'),
+      findsOneWidget,
+    );
   });
 }
 
