@@ -5,6 +5,7 @@ import { getSiteUrl } from "@/lib/siteUrl";
 import { CookieConsentRoot } from "@/components/cookie-consent/CookieConsentRoot";
 import { RecaptchaProvider } from "@/components/recaptcha/RecaptchaProvider";
 import { AppShellBoundary } from "@/components/app/AppShellBoundary";
+import { organizationJsonLd, safeJsonLdHtml, webSiteJsonLd } from "@/lib/jsonLd";
 import "./globals.css";
 import "./vixrex-app-ui.css";
 
@@ -96,6 +97,18 @@ export default function RootLayout({
       className={`h-full antialiased font-outfit ${outfit.variable} ${instrumentSerif.variable}`}
     >
       <body className="min-h-full flex flex-col bg-[#F4F5F8] dark:bg-[#0B0F13] text-[#182028] dark:text-[#F1F5F9]">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: safeJsonLdHtml(organizationJsonLd(getSiteUrl())),
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: safeJsonLdHtml(webSiteJsonLd(getSiteUrl())),
+          }}
+        />
         <Sentry.ErrorBoundary fallback={<p>Bir hata oluştu.</p>}>
           <RecaptchaProvider>
             <AppShellBoundary>{children}</AppShellBoundary>

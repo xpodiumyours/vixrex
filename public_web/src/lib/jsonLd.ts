@@ -39,6 +39,11 @@ export function organizationJsonLd(siteUrl: string) {
     description:
       "İşletmelerin bilgilerini, ürünlerini, adresini ve WhatsApp iletişimini tek linkte toplayan dijital vitrin platformu.",
     areaServed: "TR",
+    identifier: {
+      "@type": "PropertyValue",
+      propertyID: "D-U-N-S",
+      value: "751147069",
+    },
   };
 }
 
