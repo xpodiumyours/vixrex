@@ -354,6 +354,9 @@ jobs:
       - name: sharp izleme kapsamı (libvips .so paketleniyor mu)
         run: node scripts/kontrol/sharp-trace-kapsam.mjs .
 
+      - name: Maliyet ve egress bekçisi
+        run: node scripts/kontrol/maliyet-egress-bekcisi.mjs .
+
       - name: Production build
         run: npm run build
         env:

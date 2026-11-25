@@ -1,8 +1,19 @@
+import type { Metadata } from "next";
 import { SiteChromeBoundary } from "@/components/site/SiteChromeBoundary";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { organizationJsonLd, safeJsonLdHtml, webSiteJsonLd } from "@/lib/jsonLd";
 import { getSiteUrl } from "@/lib/siteUrl";
+
+export const metadata: Metadata = {
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      "max-image-preview": "large",
+    },
+  },
+};
 
 /**
  * Platform yüzeyinin düzeni: ana sayfa, Keşfet ve kategori sayfaları.

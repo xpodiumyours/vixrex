@@ -29,15 +29,39 @@ interface Params {
   params: Promise<{ type: string }>;
 }
 
+const YEDEK_VERI_SILME_BELGESI = {
+  title: BASLIK["data-deletion"],
+  subtitle: "Hesabınızı ve verilerinizi nasıl silebileceğiniz.",
+  version: "data-deletion-2026-08-28",
+  sections: [
+    {
+      title: "Uygulama İçinden Silme",
+      body: "Hesap ve Veri Yönetimi ekranından vitrininizi yayından kaldırabilir, vitrininizi kalıcı olarak silebilir veya hesabınızı tüm verileriyle birlikte silebilirsiniz. Kalıcı silme işlemleri geri alınamaz ve onay yazmanızı gerektirir.",
+    },
+    {
+      title: "Silinen Veriler",
+      body: "Hesap silindiğinde; giriş hesabınız, vitriniz, ürünleriniz, blog yazılarınız, randevu kayıtlarınız, galeri görselleriniz ve bağlantılı kayıtlarınız silinir. Vergi ve ticaret mevzuatı gereği saklanması zorunlu olan faturalandırma ve muhasebe kayıtları, ilgili yasal süreler boyunca saklanmaya devam eder.",
+    },
+    {
+      title: "E-posta ile Talep",
+      body: "Uygulamaya erişemiyorsanız destek@vixrex.com adresine talebinizi iletebilirsiniz. Kimliğinizin doğrulanmasının ardından talep en geç 30 gün içinde sonuçlandırılır.",
+    },
+  ] satisfies LegalSection[],
+};
+
 function gecerliTurMu(deger: string): deger is GecerliTur {
   return (GECERLI_TURLER as readonly string[]).includes(deger);
 }
 
 async function belgeyiGetir(tur: GecerliTur) {
-  const { data } = await supabase
+  const sorgu = supabase
     .from("legal_documents")
-    .select("title, subtitle, sections, version")
-    .eq("document_type", tur)
+    .select("title, subtitle, sections, version");
+  const filtreliSorgu =
+    tur === "data-deletion"
+      ? sorgu.in("document_type", ["data-deletion", "dataDeletion"])
+      : sorgu.eq("document_type", tur);
+  const { data } = await filtreliSorgu
     .eq("is_active", true)
     .limit(1)
     .maybeSingle();
@@ -55,10 +79,11 @@ export default async function LegalTypePage({ params }: Params) {
   if (!gecerliTurMu(type)) notFound();
 
   const belge = await belgeyiGetir(type);
-  if (!belge) notFound();
+  if (!belge && type !== "data-deletion") notFound();
 
-  const sections = Array.isArray(belge.sections)
-    ? (belge.sections as LegalSection[])
+  const gosterilecekBelge = belge ?? YEDEK_VERI_SILME_BELGESI;
+  const sections = Array.isArray(gosterilecekBelge.sections)
+    ? (gosterilecekBelge.sections as LegalSection[])
     : [];
 
   return (
@@ -70,8 +95,8 @@ export default async function LegalTypePage({ params }: Params) {
         color: "#EDEDED",
       }}
     >
-      <h1>{belge.title || BASLIK[type]}</h1>
-      {belge.subtitle ? <p>{belge.subtitle}</p> : null}
+      <h1>{gosterilecekBelge.title || BASLIK[type]}</h1>
+      {gosterilecekBelge.subtitle ? <p>{gosterilecekBelge.subtitle}</p> : null}
 
       {sections.map((section, index) => (
         <section key={index}>
@@ -81,7 +106,7 @@ export default async function LegalTypePage({ params }: Params) {
       ))}
 
       <p style={{ opacity: 0.6, fontSize: 13, marginTop: 32 }}>
-        Sürüm: {belge.version}
+        Sürüm: {gosterilecekBelge.version}
       </p>
     </main>
   );

@@ -36,6 +36,14 @@ export const metadata: Metadata = {
     description:
       "Tek linkte işletme bilgilerin, ürünlerin, adresin ve WhatsApp iletişimin.",
     url: "/",
+    images: [{ url: "/icon-512.png", width: 512, height: 512, alt: "Vixrex" }],
+  },
+  twitter: {
+    card: "summary",
+    title: "Vixrex — İşletmenin dijital vitrini",
+    description:
+      "Tek linkte işletme bilgilerin, ürünlerin, adresin ve WhatsApp iletişimin.",
+    images: ["/icon-512.png"],
   },
 };
 

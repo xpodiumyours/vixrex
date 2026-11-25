@@ -23,7 +23,7 @@ export default function PrivacyPage() {
 
       <h2>2. Toplanan Veriler</h2>
       <ul>
-        <li><strong>Hesap ve oturum bilgileri:</strong> Kalıcı hesaplarda Google girişiyle alınan e-posta ve hesap kimliği, ücretsiz vitrin denemesinde anonim/misafir oturum kimliği. Vixrex kalıcı hesap açılışında kullanıcı şifresi toplamaz.</li>
+        <li><strong>Hesap ve oturum bilgileri (Google OAuth):</strong> Kalıcı hesaplarda Google girişiyle (<code>openid</code>, <code>email</code>, <code>profile</code> kapsamları) alınan ad-soyad, e-posta adresi, profil fotoğrafı ve hesap kimliği; ücretsiz vitrin denemesinde anonim/misafir oturum kimliği. Vixrex kalıcı hesap açılışında kullanıcı şifresi toplamaz.</li>
         <li><strong>İşletme bilgileri:</strong> Ad, adres, telefon, sosyal medya linkleri, ürünler, fotoğraflar</li>
         <li><strong>Fatura ve yapay zekâ işleme verileri:</strong> İşletmenin yüklediği fatura fotoğrafı/PDF, tedarikçi ve belge bilgileri, vergi numarası, fatura satırları, üretilen ürün taslakları, model yanıtları ve işlem kullanım kayıtları.</li>
         <li><strong>Randevu verileri:</strong> Müşteri adı, telefonu, notları, randevu saati</li>
@@ -34,6 +34,7 @@ export default function PrivacyPage() {
 
       <h2>3. Verilerin Kullanım Amacı</h2>
       <ul>
+        <li>Google girişiyle alınan kullanıcı verilerinin yalnızca kimlik doğrulama, oturum açma ve Vixrex hesabı oluşturma/yönetme amacıyla kullanılması</li>
         <li>Hizmetin sağlanması ve işletilmesi</li>
         <li>İşletmenin yüklediği faturalardan yapay zekâ destekli ürün kartı taslakları oluşturulması ve doğrulanması</li>
         <li>Randevu yönetimi ve müşteri iletişimi</li>
@@ -75,6 +76,12 @@ export default function PrivacyPage() {
         Yasal saklama yükümlülüğü bulunan bazı kayıtlar hesap silindikten sonra da ilgili süreler boyunca saklanabilir.
         Yürürlükteki veri işleme ve saklama açıklamaları için <Link href="/legal/privacy">KVKK Aydınlatma Metni</Link>ni inceleyebilirsiniz.
       </p>
+      <p>
+        Hesabınızı ve verilerinizi silmek için uygulama içindeki Hesap ve Veri Yönetimi ekranını kullanabilir,
+        {" "}<Link href="/legal/data-deletion">Veri Silme Talebi</Link> sayfasındaki adımları izleyebilir veya{" "}
+        <a href="mailto:destek@vixrex.com">destek@vixrex.com</a> adresine e-posta gönderebilirsiniz.
+        Kimlik doğrulamasının ardından veri silme talepleri en geç 30 gün içinde sonuçlandırılır.
+      </p>
 
       <h2>6. Haklarınız (KVKK)</h2>
       <ul>
@@ -88,6 +95,20 @@ export default function PrivacyPage() {
       <p>
         Gizlilikle ilgili sorularınız için: <a href="mailto:destek@vixrex.com">destek@vixrex.com</a>.
         KVKK başvuru yöntemleri için <a href="/iletisim">İletişim</a> sayfasını inceleyebilirsiniz.
+      </p>
+
+      <h2>8. Google OAuth Kullanıcı Verileri ve Sınırlı Kullanım (Limited Use)</h2>
+      <ul>
+        <li><strong>Alınan veriler:</strong> Google ile oturum açma sırasında yalnızca <code>openid</code>, <code>email</code> ve <code>profile</code> kapsamları aracılığıyla ad-soyad, e-posta adresi, profil fotoğrafı ve hesap kimliği alınır.</li>
+        <li><strong>Kullanım amacı:</strong> Alınan Google verileri yalnızca kimlik doğrulama, oturum açma ve Vixrex hesabı oluşturma/yönetme amaçlarıyla kullanılır.</li>
+        <li><strong>Reklam ve satış yasağı (Limited Use):</strong> Google kullanıcı verileri reklam, kişiselleştirilmiş pazarlama, veri simsarlığı veya üçüncü taraflara satış amacıyla kullanılmaz ve aktarılmaz. Google verilerinin kullanımı Google API Hizmetleri Kullanıcı Verileri Politikası (<em>Limited Use</em>) ilkelerine tabidir.</li>
+        <li><strong>Yapay Zekâ (AI/ML) Eğitim Yasağı:</strong> Google girişiyle alınan kullanıcı verileri (ad-soyad, e-posta adresi, profil fotoğrafı ve oturum bilgileri) hiçbir genel yapay zekâ veya makine öğrenmesi (AI/ML) modelini eğitmek ya da iyileştirmek için kullanılmaz ve yapay zekâ sağlayıcılarına aktarılmaz.</li>
+      </ul>
+
+      <h2>9. Veri Güvenliği</h2>
+      <p>
+        Tüm veri aktarımları aktarım sırasında <strong>HTTPS/TLS</strong> şifrelemesi ile korunur.
+        Kullanıcı ve işletme verilerine erişim; sunucu tarafı erişim kontrolü ve veritabanında satır düzeyinde güvenlik (<strong>RLS — Row Level Security</strong>) politikaları ile sınırlandırılır.
       </p>
     </main>
   );
