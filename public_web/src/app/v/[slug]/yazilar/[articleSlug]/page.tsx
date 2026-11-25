@@ -8,10 +8,28 @@ import { sanitizeHtml } from "@/lib/sanitize";
 import { buildSiteUrl, getSiteUrl, isExternalHttpUrl } from "@/lib/siteUrl";
 import { safeJsonLdHtml } from "@/lib/jsonLd";
 
-export const revalidate = 300; // Enable 5-minute ISR
+export const revalidate = 900; // Enable 5-minute ISR
 
 interface PageProps {
   params: Promise<{ slug: string; articleSlug: string }>;
+}
+
+interface ArticleRow {
+  slug: string;
+  title: string;
+  summary: string | null;
+  content: string;
+  cover_image_url: string | null;
+  article_type: string | null;
+  target_city: string | null;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string | null;
+  store: {
+    name: string;
+    logo_url: string | null;
+    slug: string;
+  };
 }
 
 function sanitizeExternalLinks(htmlContent: string): string {
@@ -56,11 +74,13 @@ function formatContent(text: string): string {
 async function _getArticleData(slug: string, articleSlug: string) {
   const { data: article, error } = await supabase
     .from("store_articles")
-    .select("*, store:stores(name, logo_url, slug)")
+    .select(
+      "slug, title, summary, content, cover_image_url, article_type, target_city, published_at, created_at, updated_at, store:stores(name, logo_url, slug)",
+    )
     .eq("store_slug", slug)
     .eq("slug", articleSlug)
     .eq("status", "published")
-    .single();
+    .single<ArticleRow>();
 
   if (error || !article) return null;
   return article;
@@ -70,7 +90,7 @@ const getArticleData = (slug: string, articleSlug: string) =>
   unstable_cache(
     () => _getArticleData(slug, articleSlug),
     [`article-${slug}-${articleSlug}`],
-    { tags: [`store-${slug}`, `article-${slug}-${articleSlug}`], revalidate: 300 }
+    { tags: [`store-${slug}`, `article-${slug}-${articleSlug}`], revalidate: 900 }
   )();
 
 export async function generateMetadata(props: PageProps): Promise<Metadata> {
