@@ -689,7 +689,7 @@ describe("DB egress daraltma ve cache davranış sözleşmesi", () => {
     renderToStaticMarkup(element);
 
     expect(m.unstableCache).toHaveBeenCalledWith(
-      [`store-${SAMPLE_STORE.slug}`],
+      [`store-${SAMPLE_STORE.slug}-v2`],
       {
         tags: [`store-${SAMPLE_STORE.slug}`, `products-${SAMPLE_STORE.slug}`],
         revalidate: 300,
