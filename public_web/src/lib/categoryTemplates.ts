@@ -105,7 +105,7 @@ async function _sablonlariGetir(): Promise<KategoriSablonu[]> {
 
 /** Tüm kanonik kategoriler, şablon görselleriyle. Boş kategori de döner. */
 export const kategoriSablonlariniGetir = () =>
-  unstable_cache(_sablonlariGetir, ["category-templates"], {
+  unstable_cache(_sablonlariGetir, ["category-templates-v2"], {
     tags: ["category-templates"],
     revalidate: 300,
   })();

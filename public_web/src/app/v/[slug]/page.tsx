@@ -389,7 +389,7 @@ async function _getStoreData(slug: string) {
 const getStoreData = (slug: string) =>
   unstable_cache(
     () => _getStoreData(slug),
-    [`store-${slug}`],
+    [`store-${slug}-v2`],
     { tags: [`store-${slug}`, `products-${slug}`], revalidate: 300 }
   )();
 
