@@ -94,6 +94,7 @@ async function hostCozumlenipGuvenliMi(
   );
 }
 import { gorseliSikistir, ONBELLEK_SANIYE, UZUN_KENAR } from "@/lib/gorselSikistir";
+import { gorselDepoyaYukle, type DepoIstemcisi } from "@/lib/gorselDepo";
 import {
   MAX_PRODUCT_IMAGE_SOURCE_BYTES,
 } from "@/lib/productImagePolicy";
@@ -266,19 +267,6 @@ export async function kaynakGorseliniDogrula(
   return { tamam: true, genislik, yukseklik, tur, bayt };
 }
 
-interface DepoIstemcisi {
-  storage: {
-    from: (kova: string) => {
-      upload: (
-        yol: string,
-        bayt: Uint8Array,
-        secenekler: { contentType: string; cacheControl: string; upsert: boolean },
-      ) => Promise<{ error: { message: string } | null }>;
-      getPublicUrl: (yol: string) => { data: { publicUrl: string } };
-    };
-  };
-}
-
 function alanAdiUyuyorMu(hostname: string, izinli: string[]): boolean {
   const host = hostname.toLowerCase();
   return izinli.some((alan) => host === alan || host.endsWith(`.${alan}`));
@@ -327,19 +315,16 @@ export async function kaynakGorselleriniHazirla(args: {
       const sikistirilmis = await gorseliSikistir(kontrol.bayt, kontrol.tur);
       const ozet = createHash("sha256").update(kontrol.bayt).digest("hex").slice(0, 24);
       const yol = `${guvenliSlug}/products/fatura/${ozet}.${sikistirilmis.uzanti}`;
-      const { error } = await args.admin.storage.from("shelf-images").upload(yol, sikistirilmis.bayt, {
+      const url = await gorselDepoyaYukle({
+        admin: args.admin,
+        yol,
+        bayt: sikistirilmis.bayt,
         contentType: sikistirilmis.tur,
         cacheControl: ONBELLEK_SANIYE,
         upsert: true,
       });
-      if (error) {
-        altyapiSorunu = true;
-        reddedilenler.push({ kaynakGorsel: aday, sebep: "depoya-yazilamadi" });
-        continue;
-      }
-      const { data } = args.admin.storage.from("shelf-images").getPublicUrl(yol);
       gorseller.push({
-        url: data.publicUrl,
+        url,
         kaynakGorsel: aday,
         kaynakSayfa: args.kaynakSayfa,
         genislik: kontrol.genislik ?? 0,

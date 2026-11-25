@@ -10,6 +10,7 @@ import {
   ONBELLEK_SANIYE,
   type SikistirilmisGorsel,
 } from "@/lib/gorselSikistir";
+import { gorselDepoyaYukle } from "@/lib/gorselDepo";
 
 // Sahip görsel yükleme (implementation_plan.md Commit 10).
 //
@@ -246,31 +247,22 @@ export async function POST(request: NextRequest) {
   const yol = `${guvenliSlug}/owner/${alan.anahtar}/${dosyaAdi}`;
 
   try {
-    const { error } = await admin.storage
-      .from("shelf-images")
-      // Dosya adı zaman damgalı ve içerik hiç değişmiyor; önbellek bir saat
-      // yerine bir yıl. Tekrar eden ziyaretler Supabase trafiğini yemesin.
-      .upload(yol, sikistirilmis.bayt, {
-        contentType: sikistirilmis.tur,
-        cacheControl: ONBELLEK_SANIYE,
-        upsert: false,
-      });
-
-    if (error) {
-      console.error("[owner-upload] storage error:", error.message);
-      return NextResponse.json(
-        { hata: "Görsel yüklenemedi. Tekrar dene." },
-        { status: 500 }
-      );
-    }
-
-    const { data } = admin.storage.from("shelf-images").getPublicUrl(yol);
+    // Dosya adı zaman damgalı ve içerik hiç değişmiyor; önbellek bir saat
+    // yerine bir yıl. Tekrar eden ziyaretler Supabase trafiğini yemesin.
+    const url = await gorselDepoyaYukle({
+      admin,
+      yol,
+      bayt: sikistirilmis.bayt,
+      contentType: sikistirilmis.tur,
+      cacheControl: ONBELLEK_SANIYE,
+      upsert: false,
+    });
 
     return NextResponse.json({
       tamam: true,
       anahtar: alan.anahtar,
       etiket: alan.etiket,
-      url: data.publicUrl,
+      url,
     });
   } catch (err) {
     // Anahtar veya yapılandırma eksikse buraya düşer. Ayrıntı loglanmaz.

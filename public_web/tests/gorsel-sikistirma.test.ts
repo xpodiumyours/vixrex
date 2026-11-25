@@ -159,7 +159,8 @@ describe("yükleme yolları sıkıştırmadan geçiyor", () => {
     expect(kaynak).toMatch(/gorseliSikistir\(bayt, tur\)/);
     // Ham `bayt` doğrudan upload'a verilirse sıkıştırma atlanmış olur.
     expect(kaynak).not.toMatch(/\.upload\(\s*yol,\s*bayt\b/);
-    expect(kaynak).toMatch(/upload\(yol, sikistirilmis\.bayt/);
+    expect(kaynak).not.toMatch(/bayt:\s*bayt\b/);
+    expect(kaynak).toMatch(/bayt:\s*sikistirilmis\.bayt/);
   });
 
   it("Instagram içe aktarma da sıkıştırıyor", () => {

@@ -3,6 +3,7 @@ import crypto from "crypto";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { deleteCoreProductsBySource } from "@/lib/productCoreServer";
 import { revalidateTag } from "next/cache";
+import { vitrinR2OnekSil } from "@/lib/gorselDepo";
 
 export const runtime = "nodejs";
 
@@ -173,6 +174,11 @@ export async function POST(req: NextRequest) {
         if (removeError) {
           console.error("Failed to remove storage files during Meta data-deletion:", removeError);
         }
+      }
+
+      const guvenliSlug = String(connection.store_slug || "").replace(/[^a-zA-Z0-9-]/g, "");
+      if (guvenliSlug) {
+        await vitrinR2OnekSil(`${guvenliSlug}/instagram/`);
       }
 
       // 5. Update connection status

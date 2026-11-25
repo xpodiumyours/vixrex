@@ -5,12 +5,15 @@ import { describe, expect, it } from "vitest";
 describe("F3 medya eşitliği — Flutter StoreShelfUploadService vs Next owner-upload", () => {
   const flutter = readFileSync(resolve(__dirname, "../../lib/services/store_shelf_upload_service.dart"), "utf-8");
   const next = readFileSync(resolve(__dirname, "../src/app/api/owner-upload/route.ts"), "utf-8");
+  const nextDepo = readFileSync(resolve(__dirname, "../src/lib/gorselDepo.ts"), "utf-8");
   const nextLib = readFileSync(resolve(__dirname, "../src/lib/gorselSikistir.ts"), "utf-8");
   const flutterOpt = readFileSync(resolve(__dirname, "../../lib/services/image_optimization_service.dart"), "utf-8");
 
   it("her iki yüzey aynı bucket'ta yazar: shelf-images", () => {
     expect(flutter).toContain("shelf-images");
-    expect(next).toContain('from("shelf-images")');
+    expect(next).toContain("gorselDepoyaYukle");
+    expect(nextDepo).toContain('const KOVA = "shelf-images"');
+    expect(nextDepo).toContain("from(KOVA)");
   });
 
   it("her iki yüzey aynı önbellek süresini kullanır: 31536000 (1 yıl)", () => {
