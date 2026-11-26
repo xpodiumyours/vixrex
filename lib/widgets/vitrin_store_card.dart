@@ -55,22 +55,6 @@ class VitrinStoreCard extends StatelessWidget {
     return 'Vitrin özellikleri açık';
   }
 
-  String get _whatsappButtonLabel {
-    final cat =
-        (store.kategori.isNotEmpty ? store.kategori : store.businessType)
-            .toLowerCase()
-            .trim();
-    if (cat.contains('kuaför') ||
-        cat.contains('güzellik') ||
-        cat.contains('hizmet') ||
-        cat.contains('servis') ||
-        cat.contains('klinik') ||
-        cat.contains('danışmanlık')) {
-      return 'WhatsApp İletişim';
-    }
-    return 'WhatsApp Sipariş';
-  }
-
   @override
   Widget build(BuildContext context) {
     final hasImage = store.shelfImageUrl.isNotEmpty;
@@ -476,34 +460,20 @@ class VitrinStoreCard extends StatelessWidget {
                       SizedBox(
                         width: double.infinity,
                         height: 38,
-                        child: ElevatedButton.icon(
-                          onPressed:
-                              _isRentalTemplate ? onTap : onWhatsAppPressed,
-                          icon: Icon(
-                            _isRentalTemplate
-                                ? Icons.storefront_rounded
-                                : Icons.chat_bubble_rounded,
-                            size: 15,
-                            color: Colors.white,
-                          ),
-                          label: Text(
-                            _isRentalTemplate
-                                ? 'Vitrini İncele'
-                                : _whatsappButtonLabel,
-                            style: const TextStyle(
+                        child: OutlinedButton.icon(
+                          onPressed: onTap,
+                          icon: const Icon(Icons.storefront_rounded, size: 14),
+                          label: const Text(
+                            'İncele',
+                            style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w900,
-                              color: Colors.white,
                               letterSpacing: 0.2,
                             ),
                           ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                _isRentalTemplate
-                                    ? AppColors.primary
-                                    : const Color(0xFF00A884),
-                            foregroundColor: Colors.white,
-                            elevation: 0,
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.primary,
+                            side: const BorderSide(color: AppColors.primary),
                             padding: const EdgeInsets.symmetric(horizontal: 10),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(
