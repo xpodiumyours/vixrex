@@ -417,7 +417,7 @@ export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode 
 
   return (
     <main className="min-w-0 flex-1 bg-lp-bg-editor text-lp-text">
-      <div className="mx-auto w-full max-w-[1200px] px-4 py-[18px] min-[901px]:px-8 min-[901px]:py-7">
+      <div className="mx-auto w-full max-w-[1440px] px-4 py-[18px] min-[901px]:px-8 min-[901px]:py-7">
         <div className="mb-2 flex items-center justify-between gap-4">
           <h1 className="text-[24px] font-black leading-[1.15]">{store.is_published ? "Vixrex Düzenle" : "Vixrex Oluştur"}</h1>
           <span className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-lp-primary px-3 py-1.5 text-[12px] font-extrabold text-lp-on-primary">
@@ -430,13 +430,49 @@ export function VitrinimEditor({ store, initialDraft, onRefresh, isCreationMode 
 
         {store.is_published && !isCreationMode ? <OwnerDashboardMetrics /> : null}
 
-        <VitrinPaylasimKarti
-          slug={store.slug}
-          adVar={Boolean(valueFor(draft, "isletmeAdi").trim())}
-          yayinda={store.is_published}
-          olusturmaModu={isCreationMode}
-          yayinaKaydir={() => document.getElementById("yasal-yayin-bolumu")?.scrollIntoView({ behavior: "smooth", block: "start" })}
-        />
+        <div className="grid gap-4 min-[901px]:grid-cols-2 min-[901px]:items-stretch">
+          <div className="rounded-2xl border border-lp-border bg-lp-surface p-4">
+            <VitrinPaylasimKarti
+              slug={store.slug}
+              adVar={Boolean(valueFor(draft, "isletmeAdi").trim())}
+              yayinda={store.is_published}
+              olusturmaModu={isCreationMode}
+              yayinaKaydir={() => document.getElementById("yasal-yayin-bolumu")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+            />
+          </div>
+
+          <section
+            aria-label="Faturadan ürün ekleme"
+            className="flex flex-col justify-between rounded-2xl border border-lp-primary/45 bg-lp-surface p-4"
+          >
+            <div>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[12px] font-extrabold text-lp-secondary">Hızlı Katalog &amp; Raf Kurulumu</p>
+                <span className="rounded-lg bg-lp-primary/15 px-2.5 py-1 text-[11px] font-extrabold text-lp-secondary">
+                  {store.products?.length ?? 0} ürün
+                </span>
+              </div>
+              <h2 className="mt-1.5 text-[16px] font-black text-lp-text">Toptancı Faturasından Rafları Doldur</h2>
+              <p className="mt-1 text-[12.5px] font-semibold leading-[1.45] text-lp-muted">
+                Fatura fotoğrafını veya PDF belgeni yükle; ürünlerin fiyat ve fotoğraflarıyla incelemene hazır gelsin.
+              </p>
+            </div>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <Link
+                href="/app/urunler?fatura=1"
+                className="inline-flex min-h-10 items-center justify-center rounded-xl bg-lp-primary px-4 text-[12.5px] font-black text-lp-on-primary transition-colors hover:brightness-110"
+              >
+                + Faturadan Ürün Ekle
+              </Link>
+              <Link
+                href="/app/urunler"
+                className="inline-flex min-h-10 items-center justify-center rounded-xl border border-lp-border bg-lp-bg-light px-3.5 text-[12px] font-bold text-lp-text transition-colors hover:border-lp-primary"
+              >
+                Ürünlerimi Yönet
+              </Link>
+            </div>
+          </section>
+        </div>
 
         <section className="mt-4 overflow-hidden rounded-2xl border border-lp-border bg-lp-surface" aria-labelledby="vitrinim-editor-title">
           <div className="border-b border-lp-border px-6 py-5">

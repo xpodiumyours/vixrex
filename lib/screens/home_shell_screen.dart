@@ -13,6 +13,8 @@ import 'package:vixrex/screens/my_vitrin_screen.dart';
 import 'package:vixrex/screens/ocr_scanner_screen.dart';
 import 'package:vixrex/screens/vixrex_screen.dart';
 import 'package:vixrex/screens/profile_screen.dart';
+import 'package:vixrex/screens/app_settings_screen.dart';
+import 'package:vixrex/screens/notifications_screen.dart';
 import 'package:vixrex/controllers/ocr_controller.dart';
 import 'package:vixrex/controllers/store_editor_controller.dart';
 import 'package:vixrex/services/store_local_storage_service.dart';
@@ -756,6 +758,43 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
                 setState(() => _selectedIndex = index);
                 if (index == 1) _exploreKey.currentState?.reloadStores();
               },
+              quickActions: [
+                ShellSidebarQuickAction(
+                  icon: Icons.receipt_long_rounded,
+                  label: 'Faturadan Ürün Ekle',
+                  highlighted: true,
+                  onTap: () => _openOcrScanner(scanMode: 'invoice'),
+                ),
+                ShellSidebarQuickAction(
+                  icon: Icons.grid_view_rounded,
+                  label: 'Ürünlerim',
+                  onTap:
+                      () =>
+                          _vixrexScrollToAction(VixRexAction.scrollToProducts),
+                ),
+                ShellSidebarQuickAction(
+                  icon: Icons.notifications_none_rounded,
+                  label: 'Bildirimler',
+                  onTap:
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const NotificationsScreen(),
+                        ),
+                      ),
+                ),
+                ShellSidebarQuickAction(
+                  icon: Icons.settings_outlined,
+                  label: 'Ayarlar',
+                  onTap:
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const AppSettingsScreen(),
+                        ),
+                      ),
+                ),
+              ],
               searchController: _globalSearchController,
               onSearchSubmitted: _applyGlobalSearch,
               onSearchChanged: (value) {

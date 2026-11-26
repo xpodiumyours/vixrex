@@ -81,39 +81,74 @@ class ProfileScreen extends StatelessWidget {
       title: 'Profil',
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _accountCard(),
-            const SizedBox(height: 16),
-            _linkCard(context),
-            const SizedBox(height: 12),
-            _qrCard(context),
-            const SizedBox(height: 20),
-            _option(
-              Icons.settings_outlined,
-              'Uygulama Ayarları',
-              () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const AppSettingsScreen()),
-              ),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1440),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final isDesktop = constraints.maxWidth > 900;
+                final leftCol = Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _accountCard(),
+                    const SizedBox(height: 16),
+                    _linkCard(context),
+                    const SizedBox(height: 12),
+                    _qrCard(context),
+                  ],
+                );
+                final rightCol = Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _option(
+                      Icons.settings_outlined,
+                      'Uygulama Ayarları',
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const AppSettingsScreen(),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    _option(
+                      Icons.help_outline_rounded,
+                      'Kullanım Bilgisi & Destek',
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const HelpSupportScreen(),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    _option(
+                      Icons.shield_outlined,
+                      'Gizlilik ve Güvenlik politikası',
+                      () => AppRouter.navigateToLegal(
+                        context,
+                        LegalPageType.privacy,
+                      ),
+                    ),
+                  ],
+                );
+                if (isDesktop) {
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: leftCol),
+                      const SizedBox(width: 16),
+                      Expanded(child: rightCol),
+                    ],
+                  );
+                }
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [leftCol, const SizedBox(height: 20), rightCol],
+                );
+              },
             ),
-            const SizedBox(height: 10),
-            _option(
-              Icons.help_outline_rounded,
-              'Kullanım Bilgisi & Destek',
-              () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const HelpSupportScreen()),
-              ),
-            ),
-            const SizedBox(height: 10),
-            _option(
-              Icons.shield_outlined,
-              'Gizlilik ve Güvenlik politikası',
-              () => AppRouter.navigateToLegal(context, LegalPageType.privacy),
-            ),
-          ],
+          ),
         ),
       ),
     );

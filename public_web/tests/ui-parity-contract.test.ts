@@ -85,13 +85,13 @@ describe("main Flutter referanslı uygulama UI sözleşmesi", () => {
   });
 
   it("Vitrinim dış sayfa ölçüleri Flutter ile aynı kalır", () => {
-    expect(flutterVitrin).toContain("constraints: const BoxConstraints(maxWidth: 1200)");
+    expect(flutterVitrin).toContain("constraints: const BoxConstraints(maxWidth: 1440)");
     expect(flutterVitrin).toContain("horizontal: isDesktop ? 32 : 16");
     expect(flutterVitrin).toContain("vertical: isDesktop ? 28 : 18");
-    expect(vitrinEditor).toContain("max-w-[1200px]");
+    expect(vitrinEditor).toContain("max-w-[1440px]");
     expect(vitrinEditor).toContain("px-4 py-[18px]");
     expect(vitrinEditor).toContain("min-[901px]:px-8 min-[901px]:py-7");
-    expect(appCss).toContain("--vx-app-page-max-width: 1200px");
+    expect(appCss).toContain("--vx-app-page-max-width: 1440px");
   });
 
   it("Vitrinim alan tokenları Flutter EditorTextField referans değerlerini kaydeder", () => {

@@ -12,6 +12,7 @@ class ShellSidebar extends StatelessWidget {
     required this.searchController,
     required this.onSearchSubmitted,
     required this.onSearchChanged,
+    this.quickActions = const [],
     this.version = 'v1.0.0',
     this.width = 220,
   });
@@ -22,6 +23,7 @@ class ShellSidebar extends StatelessWidget {
   final TextEditingController searchController;
   final ValueChanged<String> onSearchSubmitted;
   final ValueChanged<String> onSearchChanged;
+  final List<ShellSidebarQuickAction> quickActions;
   final String version;
   final double width;
 
@@ -76,19 +78,32 @@ class ShellSidebar extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: ListView.builder(
+            child: ListView(
               padding: const EdgeInsets.symmetric(
                 horizontal: AppColors.spacing12,
                 vertical: AppColors.spacing4,
               ),
-              itemCount: items.length,
-              itemBuilder: (context, index) {
-                return _SidebarRow(
-                  item: items[index],
-                  isSelected: selectedIndex == index,
-                  onTap: () => onSelected(index),
-                );
-              },
+              children: [
+                for (var index = 0; index < items.length; index++)
+                  _SidebarRow(
+                    item: items[index],
+                    isSelected: selectedIndex == index,
+                    onTap: () => onSelected(index),
+                  ),
+                if (quickActions.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  const Divider(height: 1),
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(12, 12, 12, 6),
+                    child: Text(
+                      'MAĞAZA YÖNETİMİ',
+                      style: AppTextStyles.labelSmall,
+                    ),
+                  ),
+                  for (final action in quickActions)
+                    _SidebarQuickActionRow(action: action),
+                ],
+              ],
             ),
           ),
           Padding(
@@ -123,6 +138,85 @@ class ShellSidebarItem {
 
   /// Doluysa [icon]/[selectedIcon] yerine bu görsel çizilir.
   final String? gorselYolu;
+}
+
+class ShellSidebarQuickAction {
+  const ShellSidebarQuickAction({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.highlighted = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final bool highlighted;
+}
+
+class _SidebarQuickActionRow extends StatelessWidget {
+  const _SidebarQuickActionRow({required this.action});
+
+  final ShellSidebarQuickAction action;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Material(
+        color: action.highlighted ? AppColors.brandSoft : Colors.transparent,
+        borderRadius: BorderRadius.circular(AppColors.radius12),
+        child: InkWell(
+          onTap: action.onTap,
+          borderRadius: BorderRadius.circular(AppColors.radius12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppColors.spacing12,
+              vertical: 10,
+            ),
+            decoration:
+                action.highlighted
+                    ? BoxDecoration(
+                      borderRadius: BorderRadius.circular(AppColors.radius12),
+                      border: Border.all(
+                        color: AppColors.primary.withValues(alpha: 0.45),
+                      ),
+                    )
+                    : null,
+            child: Row(
+              children: [
+                Icon(
+                  action.icon,
+                  color:
+                      action.highlighted
+                          ? AppColors.secondary
+                          : AppColors.mutedText,
+                  size: 18,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    action.label,
+                    style: AppTextStyles.labelSmall.copyWith(
+                      fontSize: 12.5,
+                      color:
+                          action.highlighted
+                              ? AppColors.darkText
+                              : AppColors.mutedText,
+                      fontWeight:
+                          action.highlighted
+                              ? FontWeight.w800
+                              : FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _SidebarRow extends StatelessWidget {
