@@ -26,8 +26,8 @@ void main() {
   );
 
   group('Kirala tek kapıdan köprüye gider', () {
-    test('karttaki Kirala yalnız geri-cagirir, kendi kiralamaz', () {
-      expect(kart, contains("'Kirala'"));
+    test('karttaki Kullan yalnız geri-cagirir, kendi kiralamaz', () {
+      expect(kart, contains("'Kullan'"));
       expect(kart, contains('onRentPressed'));
       // Kart RPC bilmez, URL kurmaz, captcha sormaz.
       expect(kart, isNot(contains('rent_demo_for_account')));

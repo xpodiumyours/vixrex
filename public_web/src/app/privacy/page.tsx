@@ -10,7 +10,7 @@ export default function PrivacyPage() {
   return (
     <main style={{ maxWidth: 720, margin: '0 auto', padding: '40px 20px', color: '#EDEDED' }}>
       <h1>Gizlilik Politikası</h1>
-      <p>Son güncelleme: 1 Kasım 2026</p>
+      <p>Son güncelleme: 26 Kasım 2026</p>
 
       <h2>1. Veri Sorumlusu</h2>
       <p>
@@ -30,6 +30,13 @@ export default function PrivacyPage() {
         <li><strong>Kullanım verileri:</strong> cihaz/tarayıcı bilgisi ve görüntülenme kayıtları. Web vitrin ölçümünde IP adresi ham olarak saklanmaz; kötüye kullanım kontrolü için tek yönlü teknik özet (hash) üretilir.</li>
         <li><strong>Vitrin etkileşim verileri:</strong> ürün görüntüleme, beğeni, yorum, sepete ekleme ve WhatsApp sipariş geçişi. İşletme sahibine ham ziyaretçi kimliği gösterilmez.</li>
         <li><strong>Sepet verisi:</strong> ürün, varyant ve adet bilgisi sipariş WhatsApp&apos;a aktarılana kadar tarayıcınızda yerel olarak tutulabilir.</li>
+      </ul>
+
+      <h2>Mobil Uygulama İzinleri ve Veri Paylaşımı</h2>
+      <ul>
+        <li><strong>Kamera ve Fotoğraf İzni (Mobil Uygulama — CAMERA):</strong> Ürün veya fatura fotoğrafı çekerek katalog/vitrin oluşturmak için yalnızca kullanıcının açık izniyle kullanılır; zorunlu değildir.</li>
+        <li><strong>Konum İzni ve Ters Coğrafi Kodlama (Mobil Uygulama — ACCESS_FINE_LOCATION / ACCESS_COARSE_LOCATION):</strong> İşletme adresini hızlı doldurmak için yalnızca kullanıcı isteğiyle alınır; koordinatlar adres çözümlemesi amacıyla OpenStreetMap Nominatim servisine iletilir, arka planda konum takibi yapılmaz.</li>
+        <li><strong>Görsel Depolama ve CDN (Cloudflare R2):</strong> Yüklenen vitrin ve ürün görselleri Cloudflare R2 (cdn.vixrex.com) ve Supabase altyapısında barındırılır.</li>
       </ul>
 
       <h2>3. Verilerin Kullanım Amacı</h2>
@@ -58,6 +65,8 @@ export default function PrivacyPage() {
         <li><strong>Google Analytics:</strong> yalnızca çerez onayı verdiyseniz, kullanım istatistikleri için (IP adresi anonimleştirilir).</li>
         <li><strong>Google reCAPTCHA:</strong> otomatik/kötüye kullanım (bot) girişlerini engellemek için.</li>
         <li><strong>Cloudflare Turnstile:</strong> bazı formlarda (ör. içerik bildirimi) bot koruması için.</li>
+        <li><strong>Cloudflare R2:</strong> yüklenen vitrin ve ürün görsellerinin CDN barındırma altyapısı.</li>
+        <li><strong>OpenStreetMap Nominatim:</strong> kullanıcı isteğiyle alınan koordinatların adres çözümlemesi için.</li>
         <li><strong>Sentry:</strong> uygulama hatalarını tespit edip düzeltebilmemiz için hata/performans kaydı.</li>
         <li><strong>Meta / Instagram:</strong> yalnızca Instagram hesabınızı Vixrex&apos;e bağlarsanız, ürün fotoğraflarınızı içe aktarmak için.</li>
         <li><strong>PayTR:</strong> premium abonelik ödemesi alıyorsanız, ödeme işlemini gerçekleştiren ödeme kuruluşu.</li>
@@ -96,6 +105,17 @@ export default function PrivacyPage() {
         Gizlilikle ilgili sorularınız için: <a href="mailto:destek@vixrex.com">destek@vixrex.com</a>.
         KVKK başvuru yöntemleri için <a href="/iletisim">İletişim</a> sayfasını inceleyebilirsiniz.
       </p>
+
+      <h2>English Summary (for Google OAuth & Play Store)</h2>
+      <p>
+        <strong>Data Controller:</strong> Furkan Aksakal — Aksakal Ticaret, Esenevler Mah. Lokman Hekim Cad. No:18 İç Kapı No:10 Ümraniye/İstanbul, Türkiye. Contact: destek@vixrex.com.
+      </p>
+      <ul>
+        <li><strong>OAuth scopes used:</strong> openid, email, profile (Limited Use — used only for authentication, account creation and management; not sold, not used for ads/AI training).</li>
+        <li><strong>Mobile permissions:</strong> Camera (optional, for OCR/product photo), Location (optional, store address autofill via OpenStreetMap Nominatim), Notifications (optional, via OneSignal).</li>
+        <li><strong>Account deletion:</strong> in-app Account &amp; Data Management screen or https://vixrex.com/legal/data-deletion; e-mail destek@vixrex.com. Requests fulfilled within 30 days.</li>
+        <li><strong>Privacy policy:</strong> https://vixrex.com/privacy — Data deletion: https://vixrex.com/legal/data-deletion.</li>
+      </ul>
 
       <h2>8. Google OAuth Kullanıcı Verileri ve Sınırlı Kullanım (Limited Use)</h2>
       <ul>

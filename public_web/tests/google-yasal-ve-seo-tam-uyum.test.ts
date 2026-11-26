@@ -192,16 +192,30 @@ describe("Google OAuth, Play yasal gereksinimleri ve SEO tam uyum paketi", () =>
       expect(mocks.notFound).toHaveBeenCalledOnce();
     });
 
-    it("privacy, terms ve consent türlerinde DB null döndüğünde notFound fırlatır", async () => {
+    it("privacy ve consent türlerinde DB null döndüğünde notFound fırlatır", async () => {
       kurLegalSupabaseMock(null);
 
-      for (const type of ["privacy", "terms", "consent"]) {
+      for (const type of ["privacy", "consent"]) {
         mocks.notFound.mockClear();
         await expect(
           LegalTypePage({ params: Promise.resolve({ type }) }),
         ).rejects.toThrow("NEXT_NOT_FOUND");
         expect(mocks.notFound).toHaveBeenCalledOnce();
       }
+    });
+
+    it("terms türünde DB null döndüğünde statik yedek belge ile 200 döner", async () => {
+      kurLegalSupabaseMock(null);
+
+      const html = renderToStaticMarkup(
+        await LegalTypePage({ params: Promise.resolve({ type: "terms" }) }),
+      );
+
+      expect(mocks.notFound).not.toHaveBeenCalled();
+      expect(html).toContain("Kullanım Şartları");
+      expect(html).toContain("Taraflar ve Hizmet");
+      expect(html).toContain("Uyuşmazlık ve Uygulanacak Hukuk");
+      expect(html).toContain("destek@vixrex.com");
     });
   });
 

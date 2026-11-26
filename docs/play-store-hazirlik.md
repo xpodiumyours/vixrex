@@ -28,7 +28,8 @@ Uygulama ayrıca Google ile giriş yapar (Google Sign-In): **Personal info** (ad
 - **Purposes:** App functionality, Account management, Analytics yok, Advertising yok,
   Developer communications yok (vitrin sahibine yönelik bildirimler uygulama işlevidir).
 - **Shared with third parties:** Evet — Supabase (veri ve görsel barındırma),
-  OpenStreetMap Nominatim (koordinat → adres), OneSignal (push kimliği), Google (giriş).
+  Cloudflare R2 (görsel CDN), OpenStreetMap Nominatim (koordinat → adres),
+  OneSignal (push kimliği), Google (giriş).
 - **Data is encrypted in transit:** Evet.
 - **Data can be deleted:** Evet — `https://vixrex.com/legal/data-deletion` (ölçüm: HTTP 200).
 - **Data collected in background:** Hayır.

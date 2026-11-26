@@ -25,6 +25,15 @@ export function SiteFooter() {
         <p className="text-[14px] font-semibold text-lp-muted">
           İşletmenizin paylaşılabilir dijital vitrini
         </p>
+        <p className="text-[12px] text-lp-muted">
+          Aksakal Ticaret ·{" "}
+          <a
+            href="mailto:destek@vixrex.com"
+            className="font-semibold hover:text-lp-text-alt"
+          >
+            destek@vixrex.com
+          </a>
+        </p>
 
         <nav
           aria-label="Yardım ve yasal bilgiler"

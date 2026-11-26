@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vixrex/config/vixrex_mesajlar.g.dart';
 
@@ -33,5 +35,12 @@ void main() {
       isEmpty,
       reason: 'Play Billing olmadan ödeme/üyelik vaadi verilmez: $ihlaller',
     );
+  });
+
+  test('vitrin kartı nötr etiket kullanır (KİRALIK/Kirala yok)', () {
+    final kaynak = File('lib/widgets/vitrin_store_card.dart').readAsStringSync();
+    expect(kaynak, contains('ÖRNEK'));
+    expect(kaynak, contains('Örnek vitrin · şablon olarak kullan'));
+    expect(kaynak, contains("'Kullan'"));
   });
 }
