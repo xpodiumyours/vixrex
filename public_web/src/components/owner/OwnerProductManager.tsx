@@ -178,7 +178,11 @@ export function OwnerProductManager({
   const [editing, setEditing] = useState<OwnerProduct | "new" | null>(null);
   const [deleting, setDeleting] = useState<OwnerProduct | null>(null);
   const [showBulkUpload, setShowBulkUpload] = useState(false);
-  const [showInvoice, setShowInvoice] = useState(false);
+  const [showInvoice, setShowInvoice] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      new URLSearchParams(window.location.search).get("fatura") === "1",
+  );
   const [faturaIslemKimligi, setFaturaIslemKimligi] = useState<string | null>(null);
   const [faturaOkuyucuHazir, setFaturaOkuyucuHazir] = useState(false);
   const [busy, setBusy] = useState(false);

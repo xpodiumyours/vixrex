@@ -24,6 +24,44 @@ function KisiIkonu({ boyut = 20 }: { boyut?: number }) {
   );
 }
 
+function FaturaIkonu({ boyut = 18 }: { boyut?: number }) {
+  return (
+    <svg width={boyut} height={boyut} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16l3-2 3 2 3-2 3 2 2-1.3V8Z" />
+      <path d="M14 2v6h6M8 13h8M8 9h4" />
+    </svg>
+  );
+}
+
+function UrunlerIkonu({ boyut = 18 }: { boyut?: number }) {
+  return (
+    <svg width={boyut} height={boyut} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+      <rect x="3" y="4" width="7" height="7" rx="1.5" />
+      <rect x="14" y="4" width="7" height="7" rx="1.5" />
+      <rect x="3" y="14" width="7" height="7" rx="1.5" />
+      <rect x="14" y="14" width="7" height="7" rx="1.5" />
+    </svg>
+  );
+}
+
+function BildirimIkonu({ boyut = 18 }: { boyut?: number }) {
+  return (
+    <svg width={boyut} height={boyut} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+      <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+      <path d="M13.7 21a2 2 0 0 1-3.4 0" />
+    </svg>
+  );
+}
+
+function AyarIkonu({ boyut = 18 }: { boyut?: number }) {
+  return (
+    <svg width={boyut} height={boyut} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21h-4v-.1A1.7 1.7 0 0 0 9 19.3a1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H3v-4h.1A1.7 1.7 0 0 0 4.7 9a1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.7 1.7 1.7 0 0 0 10 3.1V3h4v.1A1.7 1.7 0 0 0 15 4.7a1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1A1.7 1.7 0 0 0 19.3 9a1.7 1.7 0 0 0 1.6 1H21v4h-.1a1.7 1.7 0 0 0-1.5 1Z" />
+    </svg>
+  );
+}
+
 type NavItem = {
   href: string;
   label: string;
@@ -100,7 +138,7 @@ export function AppSidebar() {
         </form>
       )}
 
-      <nav className="flex-1 px-3 py-1" aria-label="Ana bölümler">
+      <nav className="flex-1 overflow-y-auto px-3 py-1" aria-label="Ana bölümler">
         {NAV.map((item) => {
           const active = item.match(pathname);
           return (
@@ -121,6 +159,52 @@ export function AppSidebar() {
             </Link>
           );
         })}
+
+        <div className="mt-4 border-t border-lp-border/70 pt-3">
+          <p className="px-3 pb-1.5 text-[10px] font-extrabold uppercase tracking-[0.08em] text-lp-muted">
+            Mağaza Yönetimi
+          </p>
+          <Link
+            href="/app/urunler?fatura=1"
+            className="my-1 flex min-h-10 items-center gap-2.5 rounded-xl border border-lp-primary/40 bg-lp-primary/15 px-3 text-[12.5px] font-extrabold text-lp-text transition-colors hover:bg-lp-primary/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary"
+          >
+            <span className="text-lp-secondary"><FaturaIkonu boyut={18} /></span>
+            Faturadan Ürün Ekle
+          </Link>
+          <Link
+            href="/app/urunler"
+            className={`my-[2px] flex min-h-10 items-center gap-2.5 rounded-xl px-3 text-[12.5px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
+              pathname.startsWith("/app/urunler")
+                ? "font-extrabold text-lp-text bg-lp-surface-soft"
+                : "font-semibold text-lp-muted hover:bg-lp-surface-soft hover:text-lp-text"
+            }`}
+          >
+            <span className="text-current"><UrunlerIkonu boyut={18} /></span>
+            Ürünlerim
+          </Link>
+          <Link
+            href="/app/bildirimler"
+            className={`my-[2px] flex min-h-10 items-center gap-2.5 rounded-xl px-3 text-[12.5px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
+              pathname.startsWith("/app/bildirimler")
+                ? "font-extrabold text-lp-text bg-lp-surface-soft"
+                : "font-semibold text-lp-muted hover:bg-lp-surface-soft hover:text-lp-text"
+            }`}
+          >
+            <span className="text-current"><BildirimIkonu boyut={18} /></span>
+            Bildirimler
+          </Link>
+          <Link
+            href="/app/ayarlar"
+            className={`my-[2px] flex min-h-10 items-center gap-2.5 rounded-xl px-3 text-[12.5px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
+              pathname.startsWith("/app/ayarlar") || pathname.startsWith("/app/hesap")
+                ? "font-extrabold text-lp-text bg-lp-surface-soft"
+                : "font-semibold text-lp-muted hover:bg-lp-surface-soft hover:text-lp-text"
+            }`}
+          >
+            <span className="text-current"><AyarIkonu boyut={18} /></span>
+            Ayarlar
+          </Link>
+        </div>
       </nav>
 
       <p className="px-4 py-4 text-[11px] font-semibold text-lp-muted">v1.0.0</p>

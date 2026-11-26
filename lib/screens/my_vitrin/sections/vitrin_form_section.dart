@@ -117,7 +117,20 @@ class VitrinFormSection extends StatelessWidget {
         // (bkz. Adım 5 planı: "yayın aksiyonları formun altında sabit
         // kalır"). Kapalı bir akordeon bölümünün içine gömülürse kullanıcı
         // linke/QR'a/önizlemeye ulaşamaz.
-        _buildPublicLinkCard(context, hasPublished),
+        if (isDesktop)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: _buildPublicLinkCard(context, hasPublished)),
+              const SizedBox(width: 16),
+              Expanded(child: _buildInvoiceQuickCard(context)),
+            ],
+          )
+        else ...[
+          _buildPublicLinkCard(context, hasPublished),
+          const SizedBox(height: 16),
+          _buildInvoiceQuickCard(context),
+        ],
         const SizedBox(height: 16),
         Container(
           decoration: _cardDecoration(),
@@ -366,6 +379,118 @@ class VitrinFormSection extends StatelessWidget {
           hasPublished
               ? null
               : () => state.scrollToVixRexAction(VixRexAction.scrollToLegal),
+    );
+  }
+
+  Widget _buildInvoiceQuickCard(BuildContext context) {
+    final productCount = controller.data.products.length;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.45)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Hızlı Katalog & Raf Kurulumu',
+                style: TextStyle(
+                  color: AppColors.secondary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '$productCount ürün',
+                  style: const TextStyle(
+                    color: AppColors.secondary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Toptancı Faturasından Rafları Doldur',
+            style: TextStyle(
+              color: AppColors.darkText,
+              fontSize: 16,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Fatura fotoğrafını veya PDF belgeni yükle; ürünlerin fiyat ve fotoğraflarıyla incelemene hazır gelsin.',
+            style: TextStyle(
+              color: AppColors.mutedText,
+              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              ElevatedButton(
+                onPressed:
+                    () => state.scrollToVixRexAction(
+                      VixRexAction.scrollToProducts,
+                    ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: AppColors.onPrimary,
+                  minimumSize: const Size(0, 40),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(
+                  '+ Faturadan Ürün Ekle',
+                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w900),
+                ),
+              ),
+              OutlinedButton(
+                onPressed:
+                    () => state.scrollToVixRexAction(
+                      VixRexAction.scrollToProducts,
+                    ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.darkText,
+                  side: const BorderSide(color: AppColors.border),
+                  minimumSize: const Size(0, 40),
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(
+                  'Ürünlerimi Yönet',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 

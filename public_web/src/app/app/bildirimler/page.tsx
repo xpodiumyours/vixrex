@@ -89,7 +89,7 @@ export default function BildirimlerPage() {
   return (
     <main className="owner-shell">
       <header className="border-b border-[var(--owner-border)] bg-[var(--owner-bg)]/90 px-4 py-4 sm:px-6">
-        <div className="mx-auto flex max-w-3xl items-center justify-between gap-3">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--owner-secondary)]">Vixrex</p>
             <h1 className="mt-1 text-xl font-bold text-[var(--owner-text)]">Bildirimler</h1>
@@ -98,7 +98,7 @@ export default function BildirimlerPage() {
         </div>
       </header>
 
-      <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
+      <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-[var(--owner-muted)]">Randevu talepleri ve durum güncellemeleri burada görünür.</p>
           {okunmamisVar ? (

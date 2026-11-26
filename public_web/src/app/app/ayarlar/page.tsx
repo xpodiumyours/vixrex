@@ -127,7 +127,7 @@ export default function AyarlarPage() {
   return (
     <main className="owner-shell">
       <header className="border-b border-[var(--owner-border)] bg-[var(--owner-bg)]/90 px-4 py-4 sm:px-6">
-        <div className="mx-auto flex max-w-3xl items-center gap-3">
+        <div className="mx-auto flex max-w-5xl items-center gap-3">
           <Link href="/app" className="owner-button-secondary px-3 py-2 text-xs">
             ← Geri
           </Link>
@@ -135,7 +135,7 @@ export default function AyarlarPage() {
         </div>
       </header>
 
-      <div className="mx-auto max-w-3xl space-y-6 px-4 py-8 sm:px-6">
+      <div className="mx-auto grid max-w-5xl gap-5 px-4 py-8 sm:px-6 min-[901px]:grid-cols-2 min-[901px]:items-start">
         {/* Profil Yönetimi */}
         <section className="owner-card p-5 sm:p-6">
           <Link href="/app/profil" className="group flex items-center justify-between no-underline">

@@ -105,40 +105,41 @@ export default function ProfilPage() {
 
   return (
     <main className="min-h-full bg-lp-bg-editor text-lp-text">
-      <header className="flex h-14 items-center px-6"><h1 className="text-[18px] font-black">Profil</h1></header>
-      <div className="w-full px-6 pb-8 pt-2">
+      <div className="mx-auto w-full max-w-[1440px] px-4 py-[18px] min-[901px]:px-8 min-[901px]:py-7">
+        <header className="mb-4 flex items-center"><h1 className="text-[22px] font-black">Profil</h1></header>
         {mesaj ? <p className="mb-4 rounded-2xl border border-lp-border bg-lp-surface px-4 py-3 text-[12px] font-semibold text-lp-muted" role="status">{mesaj}</p> : null}
 
-        <section className="rounded-2xl border border-lp-border bg-lp-surface p-4">
-          <div className="flex items-center gap-3.5">
-            <div className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full bg-lp-surface-soft text-lp-primary"><KisiIkonu /></div>
-            <div className="min-w-0"><p className="truncate text-[16px] font-extrabold text-lp-text">{kullaniciEtiketi}</p><p className="mt-0.5 text-[12px] font-semibold text-lp-muted">{publicLink ? "Vitrininiz yayında" : "Hesabınız aktif"}</p></div>
+        <div className="grid gap-4 min-[901px]:grid-cols-2 min-[901px]:items-start">
+          <div className="space-y-3">
+            <section className="rounded-2xl border border-lp-border bg-lp-surface p-4">
+              <div className="flex items-center gap-3.5">
+                <div className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full bg-lp-surface-soft text-lp-primary"><KisiIkonu /></div>
+                <div className="min-w-0"><p className="truncate text-[16px] font-extrabold text-lp-text">{kullaniciEtiketi}</p><p className="mt-0.5 text-[12px] font-semibold text-lp-muted">{publicLink ? "Vitrininiz yayında" : "Hesabınız aktif"}</p></div>
+              </div>
+            </section>
+
+            <button type="button" onClick={() => void linkiKopyala()} className="w-full rounded-2xl border border-lp-border bg-lp-surface p-4 text-left">
+              <p className="text-[14px] font-bold text-lp-text">Vitrin Bağlantısı</p>
+              <div className="mt-2 flex items-center gap-2 rounded-xl bg-lp-surface-soft px-3 py-2.5">
+                <span className="shrink-0 text-lp-primary"><BaglantiIkonu /></span>
+                <span className={`min-w-0 flex-1 truncate text-[12px] font-bold ${publicLink ? "text-lp-text" : "text-lp-muted"}`}>{publicLink ? (typeof window !== "undefined" ? `${window.location.host}${publicLink}` : publicLink) : "Henüz yayınlanmamış"}</span>
+                {publicLink ? <span className="shrink-0 text-lp-muted"><KopyalaIkonu /></span> : null}
+              </div>
+            </button>
+
+            <button type="button" onClick={qrAc} className="flex w-full items-center gap-3.5 rounded-2xl border border-lp-border bg-lp-surface p-4 text-left">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-lp-primary/10 text-lp-primary"><QrIkonu /></div>
+              <div className="min-w-0 flex-1"><p className="text-[14px] font-bold text-lp-text">Hızlı QR Kod Paylaşımı</p><p className="mt-0.5 text-[12px] font-semibold text-lp-muted">Vitrin QR kodunuza hızlıca ulaşın.</p></div>
+              <span className="shrink-0 text-lp-muted"><OkIkonu /></span>
+            </button>
           </div>
-        </section>
 
-        <div className="h-4" />
-        <button type="button" onClick={() => void linkiKopyala()} className="w-full rounded-2xl border border-lp-border bg-lp-surface p-4 text-left">
-          <p className="text-[14px] font-bold text-lp-text">Vitrin Bağlantısı</p>
-          <div className="mt-2 flex items-center gap-2 rounded-xl bg-lp-surface-soft px-3 py-2.5">
-            <span className="shrink-0 text-lp-primary"><BaglantiIkonu /></span>
-            <span className={`min-w-0 flex-1 truncate text-[12px] font-bold ${publicLink ? "text-lp-text" : "text-lp-muted"}`}>{publicLink ? (typeof window !== "undefined" ? `${window.location.host}${publicLink}` : publicLink) : "Henüz yayınlanmamış"}</span>
-            {publicLink ? <span className="shrink-0 text-lp-muted"><KopyalaIkonu /></span> : null}
+          <div className="space-y-2.5">
+            <Link href="/app/ayarlar" className="flex items-center gap-3.5 rounded-2xl border border-lp-border bg-lp-surface p-4 text-lp-muted hover:bg-lp-surface-soft"><AyarIkonu /><span className="flex-1 text-[14px] font-bold text-lp-text">Uygulama Ayarları</span><OkIkonu /></Link>
+            <Link href="/yardim" className="flex items-center gap-3.5 rounded-2xl border border-lp-border bg-lp-surface p-4 text-lp-muted hover:bg-lp-surface-soft"><YardimIkonu /><span className="flex-1 text-[14px] font-bold text-lp-text">Kullanım Bilgisi & Destek</span><OkIkonu /></Link>
+            <Link href="/legal/privacy" className="flex items-center gap-3.5 rounded-2xl border border-lp-border bg-lp-surface p-4 text-lp-muted hover:bg-lp-surface-soft"><KalkanIkonu /><span className="flex-1 text-[14px] font-bold text-lp-text">Gizlilik ve Güvenlik politikası</span><OkIkonu /></Link>
           </div>
-        </button>
-
-        <div className="h-3" />
-        <button type="button" onClick={qrAc} className="flex w-full items-center gap-3.5 rounded-2xl border border-lp-border bg-lp-surface p-4 text-left">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-lp-primary/10 text-lp-primary"><QrIkonu /></div>
-          <div className="min-w-0 flex-1"><p className="text-[14px] font-bold text-lp-text">Hızlı QR Kod Paylaşımı</p><p className="mt-0.5 text-[12px] font-semibold text-lp-muted">Vitrin QR kodunuza hızlıca ulaşın.</p></div>
-          <span className="shrink-0 text-lp-muted"><OkIkonu /></span>
-        </button>
-
-        <div className="h-5" />
-        <Link href="/app/ayarlar" className="flex items-center gap-3.5 rounded-2xl border border-lp-border bg-lp-surface p-4 text-lp-muted hover:bg-lp-surface-soft"><AyarIkonu /><span className="flex-1 text-[14px] font-bold text-lp-text">Uygulama Ayarları</span><OkIkonu /></Link>
-        <div className="h-2.5" />
-        <Link href="/yardim" className="flex items-center gap-3.5 rounded-2xl border border-lp-border bg-lp-surface p-4 text-lp-muted hover:bg-lp-surface-soft"><YardimIkonu /><span className="flex-1 text-[14px] font-bold text-lp-text">Kullanım Bilgisi & Destek</span><OkIkonu /></Link>
-        <div className="h-2.5" />
-        <Link href="/legal/privacy" className="flex items-center gap-3.5 rounded-2xl border border-lp-border bg-lp-surface p-4 text-lp-muted hover:bg-lp-surface-soft"><KalkanIkonu /><span className="flex-1 text-[14px] font-bold text-lp-text">Gizlilik ve Güvenlik politikası</span><OkIkonu /></Link>
+        </div>
       </div>
 
       <VitrinQrSheet slug={publicLink ? storeSlug : null} acik={qrAcik} kapat={() => setQrAcik(false)} />
