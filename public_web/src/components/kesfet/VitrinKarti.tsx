@@ -199,7 +199,7 @@ export function VitrinKarti({
           <div className="mt-auto pt-3">
             {vitrin.kiralikMi ? (
               <div className="grid grid-cols-2 gap-1.5">
-                <Link href={`/v/${vitrin.slug}`} className="flex min-h-11 items-center justify-center gap-1.5 rounded-[10px] border border-blue-400/50 bg-blue-500/15 px-2 text-[11px] font-black text-white transition-colors hover:bg-blue-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400">
+                <Link href={`/v/${vitrin.slug}`} className="flex min-h-11 items-center justify-center gap-1.5 rounded-[10px] border border-lp-primary px-2 text-[11px] font-black text-lp-primary transition-colors hover:bg-lp-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary">
                   <DukkanIkonu />
                   İncele
                 </Link>
@@ -209,7 +209,7 @@ export function VitrinKarti({
                     kiralaDialogRef.current?.showModal();
                     kiralaBaslat();
                   }}
-                  className="flex min-h-11 items-center justify-center gap-1.5 rounded-[10px] bg-blue-600 px-2 text-[11px] font-black text-white transition-colors hover:bg-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2"
+                  className="flex min-h-11 items-center justify-center gap-1.5 rounded-[10px] bg-lp-primary px-2 text-[11px] font-black text-white transition-colors hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary focus-visible:ring-offset-2"
                 >
                   <svg className="shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                     <circle cx="8" cy="12" r="3.5" />
@@ -219,7 +219,7 @@ export function VitrinKarti({
                 </button>
               </div>
             ) : (
-              <Link href={`/v/${vitrin.slug}`} className="flex min-h-11 w-full items-center justify-center gap-1.5 rounded-[10px] border border-blue-400/50 bg-blue-500/15 px-2 text-[11px] font-black text-white transition-colors hover:bg-blue-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400">
+              <Link href={`/v/${vitrin.slug}`} className="flex min-h-11 w-full items-center justify-center gap-1.5 rounded-[10px] border border-lp-primary px-2 text-[11px] font-black text-lp-primary transition-colors hover:bg-lp-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary">
                 <DukkanIkonu />
                 İncele
               </Link>
