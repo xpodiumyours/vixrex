@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.vixrex.app",
+      "sha256_cert_fingerprints": [
+        "29:5A:F3:E2:89:E1:3B:C9:FE:A2:73:F2:24:FA:7C:1F:CB:18:79:47:27:90:D4:8E:D3:EE:A8:23:9C:0F:FC:24"
+      ]
+    }
+  }
+]
