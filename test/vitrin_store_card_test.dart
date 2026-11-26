@@ -354,10 +354,7 @@ void main() {
 
     // Kiralık kartlarda nötr üyelik bilgisi var, ürün sayısı yok
     expect(find.text('2 ürün'), findsNothing);
-    expect(
-      find.text('Örnek vitrin · şablon olarak kullan'),
-      findsOneWidget,
-    );
+    expect(find.text('Örnek vitrin · şablon olarak kullan'), findsOneWidget);
   });
 }
 

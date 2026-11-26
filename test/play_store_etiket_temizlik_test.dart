@@ -38,7 +38,8 @@ void main() {
   });
 
   test('vitrin kartı nötr etiket kullanır (KİRALIK/Kirala yok)', () {
-    final kaynak = File('lib/widgets/vitrin_store_card.dart').readAsStringSync();
+    final kaynak =
+        File('lib/widgets/vitrin_store_card.dart').readAsStringSync();
     expect(kaynak, contains('ÖRNEK'));
     expect(kaynak, contains('Örnek vitrin · şablon olarak kullan'));
     expect(kaynak, contains("'Kullan'"));
