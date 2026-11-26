@@ -56,7 +56,7 @@ def build_feature() -> None:
     draw.text((72, 150), "Vixrex", font=font(104), fill=WHITE)
     draw.text(
         (76, 276),
-        "Dijital vitrinini olustur, link ve QR ile paylas.",
+        "Dijital vitrinini oluştur, link ve QR ile paylaş.",
         font=font(34, bold=False),
         fill=BLUE,
     )

@@ -13,7 +13,7 @@ Kaynak: `android/app/src/main/AndroidManifest.xml`
 |---|---|---|
 | `CAMERA` | Fotoğraftan/faturadan ürün çıkarma (OCR). Görsel cihazda işlenir, ürün eklendiğinde seçilen görsel Supabase depolamaya yüklenir. | **Photos** → "Collected" + "Shared"; amaç: App functionality |
 | `ACCESS_FINE_LOCATION` / `ACCESS_COARSE_LOCATION` | Vitrin adresini GPS ile doldurma; ters coğrafi kodlama için OpenStreetMap Nominatim'e koordinat gönderilir. | **Precise location** → "Collected" + "Shared"; amaç: App functionality |
-| `POST_NOTIFICATIONS` | OneSignal ile randevu/ürün bildirimleri; kullanıcı açıkça izin verir, ayarlardan kapatabilir. | **Identifiers** (OneSignalplayer ID) → "Collected" + "Shared"; amaç: App functionality / Notifications |
+| `POST_NOTIFICATIONS` | OneSignal ile randevu/ürün bildirimleri; kullanıcı açıkça izin verir, ayarlardan kapatabilir. | **Identifiers** (OneSignal player ID) → "Collected" + "Shared"; amaç: App functionality / Notifications |
 | `INTERNET` | Supabase, vixrex.com, OpenStreetMap, OneSignal HTTPS çağrıları. | Veri aktarımı **TLS/HTTPS** ile şifrelenir → "Data is encrypted in transit" işaretli |
 | `READ/WRITE_EXTERNAL_STORAGE` (`maxSdkVersion=32`) | Eski Android sürümlerinde galeriden görsel seçimi. | Ek veri kategorisi açmaz (Photos zaten işaretli) |
 

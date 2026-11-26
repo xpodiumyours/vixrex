@@ -9,18 +9,20 @@ describe("Landing güven bandı paritesi", () => {
   const flutterTrust = oku("../../lib/widgets/landing/landing_trust_band.dart");
   const webTrust = oku("../src/components/landing/TrustBand.tsx");
 
-  it("beş rozet metni iki tarafta aynıdır", () => {
-    const rozetler = [
-      "Hızlı kurulum",
-      "Doğrudan paylaşım",
+  it("ortak üç rozet metni iki tarafta aynıdır, politika rozetleri platforma göre ayrılır", () => {
+    const ortakRozetler = [
       "Kodsuz kurulum",
       "Link ve QR kod hazırdır",
       "WhatsApp ile doğrudan iletişim",
     ];
-    for (const rozet of rozetler) {
+    for (const rozet of ortakRozetler) {
       expect(flutterTrust).toContain(rozet);
       expect(webTrust).toContain(rozet);
     }
+    expect(flutterTrust).toContain("Hızlı kurulum");
+    expect(flutterTrust).toContain("Doğrudan paylaşım");
+    expect(webTrust).toContain("Kredi kartı gerekmez");
+    expect(webTrust).toContain("Satıştan komisyon alınmaz");
   });
 
   it("başlık ve kabuk ölçüleri Flutter ile aynıdır", () => {

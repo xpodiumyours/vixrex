@@ -24,6 +24,29 @@ const ROUTES = [
   });
   const page = await context.newPage();
 
+  await page.route("**/rest/v1/stores*", async (route) => {
+    const response = await route.fetch();
+    const contentType = response.headers()["content-type"] || "";
+    if (!contentType.includes("application/json")) {
+      return route.fulfill({ response });
+    }
+    const body = await response.json();
+    if (!Array.isArray(body)) {
+      return route.fulfill({ response });
+    }
+    const temiz = body.filter(
+      (item) =>
+        item &&
+        typeof item.name === "string" &&
+        !/^deneme/i.test(item.name.trim()) &&
+        (item.shelf_image_url || item.logo_url)
+    );
+    return route.fulfill({
+      response,
+      body: JSON.stringify(temiz.length > 0 ? temiz : body),
+    });
+  });
+
   for (const [route, filename] of ROUTES) {
     await page.goto(`${BASE}${route}`, { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(12000);

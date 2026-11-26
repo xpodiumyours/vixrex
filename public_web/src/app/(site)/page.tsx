@@ -26,7 +26,7 @@ export const revalidate = 300;
 export const metadata: Metadata = {
   title: "Vixrex — İşletmenin dijital vitrini, dakikalar içinde",
   description:
-    "İşletme bilgilerini, fotoğraflarını, ürün ve hizmetlerini, adresini ve WhatsApp iletişimini tek vitrin linkinde topla. Kodsuz kurulum, doğrudan paylaşım.",
+    "İşletme bilgilerini, fotoğraflarını, ürün ve hizmetlerini, adresini ve WhatsApp iletişimini tek vitrin linkinde topla. Kredi kartı gerekmez, komisyon yok.",
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",
