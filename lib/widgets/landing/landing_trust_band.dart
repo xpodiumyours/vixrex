@@ -13,8 +13,8 @@ class LandingTrustBand extends StatelessWidget {
             ? AppColors.landingGutterWide
             : AppColors.landingGutter;
     const items = [
-      (Icons.credit_card_off_rounded, 'Kredi kartı gerekmez'),
-      (Icons.percent_rounded, 'Satıştan komisyon alınmaz'),
+      (Icons.bolt_rounded, 'Hızlı kurulum'),
+      (Icons.share_rounded, 'Doğrudan paylaşım'),
       (Icons.code_off_rounded, 'Kodsuz kurulum'),
       (Icons.qr_code_2_rounded, 'Link ve QR kod hazırdır'),
       (Icons.chat_bubble_rounded, 'WhatsApp ile doğrudan iletişim'),

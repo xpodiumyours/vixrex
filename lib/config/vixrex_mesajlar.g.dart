@@ -183,7 +183,7 @@ const Map<String, String> vixRexMesajlari = {
   'vixrex_info':
       'Vixrex ile işletme bilgilerini tek yerde toplar, vitrinini yayınlar ve link, QR veya WhatsApp ile müşterilerine duyurursun.',
   'membership_info':
-      'Temel vitrin oluşturma şu an ücretsizdir. Gelişmiş özellikler uygulama içinde ayrıca gösterilecektir.',
+      'Vitrinini oluşturup yayına alabilirsin. Gelişmiş araçları Vitrinim bölümünde inceleyebilirsin.',
   'vitrin_kurulum':
       'Vitrin kurulumu için yalnızca İşletme Adı, WhatsApp, Adres ve Yasal Onay adımlarını tamamlamanız yeterlidir.',
   'kapak':
@@ -209,9 +209,9 @@ const Map<String, String> vixRexMesajlari = {
   'ocr_scan':
       'Fiş/fatura veya raf etiketi ile ürün aktar — mevcut tarayıcıyı aç.',
   'ocr_info':
-      'Nasıl Çalışır:\n1. Fotoğrafınızı çekin veya galeriden seçin\n2. Ürünler otomatik olarak tanınır\n3. Ürünleri onaylayın veya düzenleyin\n4. Onaylanan ürünler vitrininize eklenir\n\nNot: Bu özellik premium gerektirir.',
+      'Nasıl Çalışır:\n1. Fotoğrafınızı çekin veya galeriden seçin\n2. Ürünler otomatik olarak tanınır\n3. Ürünleri onaylayın veya düzenleyin\n4. Onaylanan ürünler vitrininize eklenir\n\nNot: Bu araç Vitrinim bölümünde.',
   'ocr_premium':
-      'Premium üyelik ile:\n• Fotoğraftan sınırsız ürün çıkarma\n• Faturadan otomatik ürün kaydı\n• Toplu Excel yükleme\n• Barkod tarama\n\nÜcretsiz deneme: Günde 3 ücretsiz OCR hakkı.\nPremium üyelik ayrıntıları Vitrinim sayfasında.',
+      'Fotoğraftan ürün çıkarma araçları:\n• Fotoğraftan ürünleri ayıklama\n• Faturadan otomatik ürün kaydı\n• Toplu Excel yükleme\n• Barkod tarama\n\nAyrıntılar Vitrinim bölümünde.',
   'hesap':
       'Vitrinini güvenceye almak için giriş yap / üye ol. Mevcut Auth ekranı açılır; vitrin token ile hesaba bağlanır.',
   'anlasilamadi':
@@ -585,7 +585,7 @@ const Map<String, VixRexYanit> vixRexYanitlar = {
     mesaj: 'ocr_info',
     hizli: [
       VixRexYanitHizli(
-        etiket: 'Premium Bilgisi',
+        etiket: 'OCR Bilgisi',
         payload: 'ocr_premium',
         aksiyon: 'none',
       ),

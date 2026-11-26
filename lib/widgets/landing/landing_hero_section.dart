@@ -574,7 +574,7 @@ class LandingHeroSection extends StatelessWidget {
                       // Taşma testi kırmızıya düşürüyordu (RenderFlex overflow).
                       Flexible(
                         child: Text(
-                          'Ücretsiz Vitrinimi Hazırla',
+                          'Vitrinimi Hazırla',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
@@ -618,12 +618,10 @@ class LandingHeroSection extends StatelessWidget {
           runSpacing: 10,
           alignment: isDesktop ? WrapAlignment.start : WrapAlignment.center,
           children: [
-            // 2026-08-22: metin içindeki emoji önekleri kaldırıldı —
-            // 'Komisyon yok' önünde ❌ vardı, hemen yanındaki yeşil
-            // check_circle ikonuyla çelişip "olumsuz/hata" gibi okunuyordu.
+            // Rozetler yalnız ürün özelliklerini anlatır.
             _buildCheckBadge('SSL Güvenli Koruma'),
-            _buildCheckBadge('Kredi kartı gerekmez'),
-            _buildCheckBadge('Komisyon yok'),
+            _buildCheckBadge('Hızlı kurulum'),
+            _buildCheckBadge('Doğrudan paylaşım'),
             _buildCheckBadge('Link ve QR hazır'),
           ],
         ),

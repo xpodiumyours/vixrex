@@ -53,7 +53,7 @@ class _ChatbotBadgeState extends State<ChatbotBadge>
   /// Balon açık mı. Bir süre sonra kendiliğinden kapanır.
   ///
   /// NEDEN: balon sağ altta sürekli duruyordu ve telefonda karşılama
-  /// ekranındaki rozetlerin ("Kredi kartı gerekmez", "Link ve QR hazır")
+  /// ekranındaki rozetlerin ("Hızlı kurulum", "Link ve QR hazır")
   /// üstünü kapatıyordu. Casper 2026-08-07'de ekran görüntüsüyle gösterdi.
   ///
   /// Maskot yerinde kalır — kaybolan yalnız yazı. Mesaj değişince (yeni

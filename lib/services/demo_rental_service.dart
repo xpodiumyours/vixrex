@@ -61,7 +61,7 @@ class DemoRentalResult {
 /// (AppRouter.navigateToRentDemo). Vitrin sahipsiz doğuyordu.
 ///
 /// Token süresi 2026-09-01'de 24 saatten 14 güne çıkarıldı — misafir
-/// kullanıcıya "14 gün ücretsiz deneme" vaadini yerine getirmek için.
+/// kullanıcıya yeterli özelleştirme süresi tanımak için.
 /// Kalıcı hesaplarda rent_demo_for_account token'ı 1 yıl'a çekiyor.
 ///
 /// Hesaplı yolda klon SAHİPLİ doğar (`rent_demo_for_account`): kiralama

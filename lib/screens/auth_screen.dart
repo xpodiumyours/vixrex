@@ -150,7 +150,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                   const SizedBox(height: 10),
                   const Text(
-                    '14 günlük ücretsiz vitrin denemesi için Google gerekmez. '
+                    'Vitrinini oluşturmak için Google gerekmez. '
                     'Hazır vitrini seçip hemen özelleştirebilirsin. '
                     'Google yalnız vitrini kalıcı hesabına bağlamak ve başka '
                     'cihazlardan erişmek için gerekir.',
@@ -178,7 +178,7 @@ class _AuthScreenState extends State<AuthScreen> {
                               context,
                               initialIndex: 1,
                             ),
-                    child: const Text('14 Gün Ücretsiz Vitrin Dene'),
+                    child: const Text('Vitrinini Oluştur'),
                   ),
                 ],
               ),
