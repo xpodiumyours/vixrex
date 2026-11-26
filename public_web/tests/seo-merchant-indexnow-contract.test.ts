@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
@@ -29,6 +31,7 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("next/cache", () => ({
   unstable_cache: <T extends (...args: never[]) => unknown>(fn: T) => fn,
+  revalidateTag: vi.fn(),
 }));
 
 vi.mock("@/components/ProductDetailExperience", () => ({
@@ -42,9 +45,11 @@ vi.mock("@/components/VitrinCartDock", () => ({
 import { generateMetadata as generateProductMetadata } from "@/app/v/[slug]/urun/[productSlug]/page";
 import { GET as getMerchantFeed } from "@/app/api/feeds/merchant.xml/route";
 import { GET as getIndexNowKey } from "@/app/api/indexnow/key/route";
+import { kesfetVitrinleriniGetir } from "@/lib/explore";
 import { indexnowBildir } from "@/lib/indexnow";
 import { webSiteJsonLd } from "@/lib/jsonLd";
 import { MAX_PRODUCT_IMAGES } from "@/lib/productImagePolicy";
+import { isTestOrDenemeStore } from "@/lib/testStoreFilter";
 
 type MockError = {
   code?: string;
@@ -61,6 +66,7 @@ type MockQueryBuilder<T = unknown> = {
   eq: ReturnType<typeof vi.fn>;
   in: ReturnType<typeof vi.fn>;
   order: ReturnType<typeof vi.fn>;
+  limit: ReturnType<typeof vi.fn>;
   single: ReturnType<typeof vi.fn>;
   maybeSingle: ReturnType<typeof vi.fn>;
   range?: ReturnType<typeof vi.fn>;
@@ -77,6 +83,7 @@ function createQueryBuilder<T>(
   builder.eq = vi.fn(() => builder);
   builder.in = vi.fn(() => builder);
   builder.order = vi.fn(() => builder);
+  builder.limit = vi.fn(() => builder);
   builder.single = vi.fn(async () => result);
   builder.maybeSingle = vi.fn(async () => result);
   builder.then = (onFulfilled, onRejected) =>
@@ -754,6 +761,134 @@ describe("SEO, Google Merchant Feed ve IndexNow kurumsal sözleşmesi", () => {
           "query-input": "required name=search_term_string",
         },
       });
+    });
+  });
+
+  describe("Keşfet VitrinKarti buton anayasası ve ortak deneme vitrini süzgeci", () => {
+    it("VitrinKarti İncele ve Kirala butonları lp-primary marka mavisini kullanır, bozuk beyaz/blue-400 sınıflarını barındırmaz", () => {
+      const vitrinKartiKaynak = readFileSync(
+        resolve(__dirname, "../src/components/kesfet/VitrinKarti.tsx"),
+        "utf-8",
+      );
+
+      expect(vitrinKartiKaynak).toContain("border-lp-primary");
+      expect(vitrinKartiKaynak).toContain("text-lp-primary");
+      expect(vitrinKartiKaynak).toContain("bg-lp-primary");
+      expect(vitrinKartiKaynak).not.toContain("border-blue-400");
+      expect(vitrinKartiKaynak).not.toContain("bg-blue-600");
+    });
+
+    it("isTestOrDenemeStore is_demo: true resmi kiralık şablonları korur ve explore.ts deneme vitrinlerini eler", async () => {
+      expect(
+        isTestOrDenemeStore({
+          slug: "demo-butik",
+          name: "Demo Butik",
+          is_demo: true,
+        }),
+      ).toBe(false);
+      expect(
+        isTestOrDenemeStore({
+          slug: "demo-butik",
+          name: "Demo Butik",
+          is_demo: false,
+        }),
+      ).toBe(true);
+
+      const exploreKaynak = readFileSync(
+        resolve(__dirname, "../src/lib/explore.ts"),
+        "utf-8",
+      );
+      expect(exploreKaynak).toContain("isTestOrDenemeStore");
+
+      mocks.from.mockImplementation((table: string) => {
+        if (table === "stores") {
+          return createQueryBuilder([
+            {
+              id: "s-gercek",
+              slug: "aksakal-butik",
+              name: "Aksakal Butik",
+              description: "Giyim",
+              address: null,
+              kategori: "butik",
+              business_type: null,
+              shelf_image_url: null,
+              logo_url: null,
+              province_name: "İstanbul",
+              district_name: "Ümraniye",
+              status: "açık",
+              is_demo: false,
+              whatsapp: null,
+              updated_at: "2026-11-26T10:00:00Z",
+              rating_score: null,
+              show_storefront_rating: false,
+            },
+            {
+              id: "s-kiralik",
+              slug: "demo-butik",
+              name: "Demo Butik",
+              description: "Şablon",
+              address: null,
+              kategori: "butik",
+              business_type: null,
+              shelf_image_url: null,
+              logo_url: null,
+              province_name: "İstanbul",
+              district_name: "Kadıköy",
+              status: "açık",
+              is_demo: true,
+              whatsapp: null,
+              updated_at: "2026-11-26T09:00:00Z",
+              rating_score: null,
+              show_storefront_rating: false,
+            },
+            {
+              id: "s-deneme",
+              slug: "deneme-vitrin",
+              name: "Deneme",
+              description: null,
+              address: null,
+              kategori: "butik",
+              business_type: null,
+              shelf_image_url: null,
+              logo_url: null,
+              province_name: null,
+              district_name: null,
+              status: "açık",
+              is_demo: false,
+              whatsapp: null,
+              updated_at: "2026-11-26T08:00:00Z",
+              rating_score: null,
+              show_storefront_rating: false,
+            },
+            {
+              id: "s-junk",
+              slug: "asdf-123",
+              name: "Vitrin",
+              description: null,
+              address: null,
+              kategori: "butik",
+              business_type: null,
+              shelf_image_url: null,
+              logo_url: null,
+              province_name: null,
+              district_name: null,
+              status: "açık",
+              is_demo: false,
+              whatsapp: null,
+              updated_at: "2026-11-26T07:00:00Z",
+              rating_score: null,
+              show_storefront_rating: false,
+            },
+          ]);
+        }
+        return createQueryBuilder([]);
+      });
+
+      const vitrinler = await kesfetVitrinleriniGetir();
+      expect(vitrinler.map((v) => v.slug)).toEqual([
+        "aksakal-butik",
+        "demo-butik",
+      ]);
     });
   });
 });

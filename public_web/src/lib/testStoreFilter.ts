@@ -9,7 +9,12 @@ const SITEMAP_DISI_SLUGLAR = new Set([
 export function isTestOrDenemeStore(store: {
   slug?: string | null;
   name?: string | null;
+  is_demo?: boolean | null;
 }): boolean {
+  if (store.is_demo === true) {
+    return false;
+  }
+
   const slug = (store.slug || "").trim().toLowerCase();
   const name = (store.name || "").trim().toLowerCase();
 
