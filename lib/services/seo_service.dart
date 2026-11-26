@@ -1,23 +1,52 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vixrex/config/public_site_config.dart';
 import 'package:vixrex/models/store_data.dart';
 import 'package:vixrex/utils/whatsapp_link_helper.dart';
 
 /// Next.js ISR önbelleğini geçersiz kılmak ve SEO şemaları üretmek için kullanılan servis.
+///
+/// Revalidation yetkilendirmesi artık **kullanıcının kendi doğrulanmış
+/// Supabase oturumundan** (`Authorization: Bearer <access_token>`) gelir — APK/AAB
+/// derlemelerine sunucu sırrı gömülmez (2026-11-26 güvenlik düzeltmesi).
 class SeoService {
   final http.Client? _httpClient;
+  final SupabaseClient? _supabaseClient;
 
-  const SeoService({http.Client? httpClient}) : _httpClient = httpClient;
+  const SeoService({http.Client? httpClient, SupabaseClient? supabaseClient})
+    : _httpClient = httpClient,
+      _supabaseClient = supabaseClient;
+
+  /// Oturumdaki kullanıcının doğrulanmış access token'i.
+  String? get _mevcutAccessToken {
+    final client = _supabaseClient;
+    if (client != null) return client.auth.currentSession?.accessToken;
+    try {
+      return Supabase.instance.client.auth.currentSession?.accessToken;
+    } catch (_) {
+      return null;
+    }
+  }
 
   /// Vitrin profil sayfasını ve blog listesini yeniden oluşturur.
-  Future<void> revalidateStore(String slug) async {
-    await _revalidate(tags: ['store-$slug', 'products-$slug']);
+  Future<void> revalidateStore(String slug, {String? accessToken}) async {
+    await _revalidate(
+      tags: ['store-$slug', 'products-$slug'],
+      accessToken: accessToken,
+    );
   }
 
   /// Belirli bir blog makalesini yeniden oluşturur.
-  Future<void> revalidateArticle(String storeSlug, String articleSlug) async {
-    await _revalidate(tags: ['article-$storeSlug-$articleSlug']);
+  Future<void> revalidateArticle(
+    String storeSlug,
+    String articleSlug, {
+    String? accessToken,
+  }) async {
+    await _revalidate(
+      tags: ['article-$storeSlug-$articleSlug'],
+      accessToken: accessToken,
+    );
   }
 
   /// Ürün detay sayfasını, ürün listesini ve gerekirse sitemap'i yeniler.
@@ -25,6 +54,7 @@ class SeoService {
     required String storeSlug,
     required String productSlug,
     bool sitemapChanged = false,
+    String? accessToken,
   }) async {
     final tags = <String>[
       'store-$storeSlug',
@@ -33,17 +63,26 @@ class SeoService {
       if (sitemapChanged) 'sitemap',
     ];
 
-    await _revalidate(tags: tags, paths: ['/v/$storeSlug/urun/$productSlug']);
+    await _revalidate(
+      tags: tags,
+      paths: ['/v/$storeSlug/urun/$productSlug'],
+      accessToken: accessToken,
+    );
   }
 
   /// Vitrin + blog listesi + makale sayfasını birlikte yeniler.
   Future<void> revalidateAll({
     required String storeSlug,
     String? articleSlug,
+    String? accessToken,
   }) async {
-    final futures = <Future>[revalidateStore(storeSlug)];
+    final futures = <Future>[
+      revalidateStore(storeSlug, accessToken: accessToken),
+    ];
     if (articleSlug != null && articleSlug.isNotEmpty) {
-      futures.add(revalidateArticle(storeSlug, articleSlug));
+      futures.add(
+        revalidateArticle(storeSlug, articleSlug, accessToken: accessToken),
+      );
     }
     await Future.wait(futures, eagerError: false);
   }
@@ -51,14 +90,16 @@ class SeoService {
   Future<void> _revalidate({
     required List<String> tags,
     List<String> paths = const [],
+    String? accessToken,
   }) async {
     final endpoint = _resolveEndpoint();
     if (endpoint == null) {
       return;
     }
 
-    final secret = const String.fromEnvironment('REVALIDATION_SECRET');
-    if (secret.isEmpty) {
+    final token = accessToken ?? _mevcutAccessToken;
+    if (token == null || token.isEmpty) {
+      // Oturum yoksa istek atılmaz — sessiz geçiş (fail-open yaratmaz).
       return;
     }
 
@@ -81,7 +122,7 @@ class SeoService {
             Uri.parse(endpoint),
             headers: {
               'Content-Type': 'application/json',
-              'x-revalidate-secret': secret,
+              'Authorization': 'Bearer $token',
             },
             body: jsonEncode({'tags': cleanTags, 'paths': cleanPaths}),
           )

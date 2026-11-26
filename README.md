@@ -236,11 +236,10 @@ Kod içinde `String.fromEnvironment` / `bool.fromEnvironment` ile okunan tüm de
 | `ONESIGNAL_APP_ID` | Hayır | Push bildirim |
 | `SENTRY_DSN` | Hayır | Hata izleme |
 | `GOOGLE_WEB_CLIENT_ID` / `GOOGLE_IOS_CLIENT_ID` | Hayır | Google ile giriş |
-| `REVALIDATION_SECRET` | **Evet** (APK/AAB derlemesi) | `/api/revalidate` ile web önbelleğini düşüren ortak anahtar. Android derlemesinde yoksa `android-apk.yml` build'i düşürür |
 | `INSTAGRAM_SYNC_ENABLED` | Hayır | `true`/`false` — Instagram içe aktarmayı açar (varsayılan `false`) |
 | `LEGAL_DATA_CONTROLLER_TITLE`, `LEGAL_DATA_CONTROLLER_ADDRESS`, `LEGAL_MERSIS_NUMBER`, `LEGAL_TAX_NUMBER`, `LEGAL_PRIVACY_EMAIL` | Hayır | Gizlilik/KVKK metinlerindeki veri sorumlusu bilgileri (varsayılanları kodda var) |
 
-> `REVALIDATION_SECRET` uygulamaya gömülü çalışır (APK / `main.dart.js`) — sunucu sırrı değil, `/api/revalidate` isteklerinin yetkisiz tetiklenmesini engelleyen paylaşımlı anahtardır. Değiştirilirse üç yer **aynı anda** güncellenmelidir: GitHub repo secret (APK/AAB), Vercel `vixrex-app` (Flutter web derlemesi) ve `public_web` üretim ortamı (uç taraf). Değerler eşleşmezse uygulamadan gelen önbellek tazeleme 401 ile geri döner ve site önbellekte bayat kalır; sunucuda tanımlı değilse uç fail-closed 401 döner.
+> Revalidation yetkilendirmesi artık **kullanıcının kendi doğrulanmış Supabase oturumundan** (`Authorization: Bearer <access_token>`) gelir; APK/AAB derlemelerine (Flutter `dart-define`) hiçbir sunucu sırrı gömülmez (2026-11-26). Sunucu içi tetikleyiciler (Supabase webhook / operasyon) yalnız `x-revalidate-secret` + `REVALIDATION_SECRET` ortam değişkeniyle çalışır.
 
 ### Next.js (`public_web/.env.local`)
 
@@ -253,7 +252,6 @@ SUPABASE_PUBLISHABLE_KEY=
 SUPABASE_SERVICE_ROLE_KEY=       # yalnız sunucu tarafı, NEXT_PUBLIC_ ÖNEKİ ASLA ALMAZ
 
 # Sunucu-yalnız sırlar
-REVALIDATION_SECRET=
 TURNSTILE_SECRET_KEY=
 RECAPTCHA_SECRET_KEY=
 OWNER_SESSION_SECRET=            # sahip önizleme çerezini imzalar, en az 32 karakter
