@@ -209,7 +209,7 @@ void main() {
     expect(find.text('Örnek'), findsNothing);
   });
 
-  testWidgets('WhatsApp hızlı mesaj seçenekleri güncel metinleri gösterir', (
+  testWidgets('Keşfet kartında WhatsApp yerine İncele butonu gösterilir', (
     WidgetTester tester,
   ) async {
     final repo = _FakeExploreRepository(
@@ -229,16 +229,9 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
-    final whatsappButton = find.byIcon(Icons.chat_bubble_rounded).first;
-    await tester.ensureVisible(whatsappButton);
-    await tester.pumpAndSettle();
-    await tester.tap(whatsappButton);
-    await tester.pumpAndSettle();
-
-    expect(find.text('Hazır mesaj seçin:'), findsOneWidget);
-    expect(find.text('Ürün ve fiyat bilgisi'), findsOneWidget);
-    expect(find.text('Sipariş vermek istiyorum'), findsOneWidget);
-    expect(find.text('Adres ve çalışma saatleri'), findsOneWidget);
+    expect(find.byIcon(Icons.chat_bubble_rounded), findsNothing);
+    expect(find.text('WhatsApp Sipariş'), findsNothing);
+    expect(find.text('İncele'), findsOneWidget);
   });
 
   // Akış 1 paritesi (2026-09-03): niyet sorusundan gelen initialCategory
