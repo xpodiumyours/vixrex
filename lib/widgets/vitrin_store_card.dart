@@ -462,10 +462,7 @@ class VitrinStoreCard extends StatelessWidget {
                         height: 38,
                         child: OutlinedButton.icon(
                           onPressed: onTap,
-                          icon: const Icon(
-                            Icons.storefront_rounded,
-                            size: 14,
-                          ),
+                          icon: const Icon(Icons.storefront_rounded, size: 14),
                           label: const Text(
                             'İncele',
                             style: TextStyle(
@@ -476,12 +473,8 @@ class VitrinStoreCard extends StatelessWidget {
                           ),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: AppColors.primary,
-                            side: const BorderSide(
-                              color: AppColors.primary,
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                            ),
+                            side: const BorderSide(color: AppColors.primary),
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(
                                 AppColors.radius10,
