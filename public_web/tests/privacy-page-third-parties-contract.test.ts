@@ -36,6 +36,8 @@ describe("Gizlilik politikası — üçüncü taraf paylaşımı doğru beyan ed
     "Google Analytics",
     "Google reCAPTCHA",
     "Cloudflare Turnstile",
+    "Cloudflare R2",
+    "OpenStreetMap Nominatim",
     "Sentry",
     "Meta / Instagram",
     "PayTR",

@@ -44,6 +44,8 @@ export function organizationJsonLd(siteUrl: string) {
       propertyID: "D-U-N-S",
       value: "751147069",
     },
+    duns: "751147069",
+    iso6523Code: "0060:751147069",
   };
 }
 

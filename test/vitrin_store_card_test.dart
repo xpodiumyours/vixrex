@@ -253,11 +253,11 @@ void main() {
       );
 
       expect(find.text('İncele'), findsOneWidget);
-      expect(find.text('Kirala'), findsOneWidget);
+      expect(find.text('Kullan'), findsOneWidget);
       // Eski tek-buton metni artık görünmemeli.
       expect(find.text('Vitrini İncele'), findsNothing);
 
-      await tester.tap(find.text('Kirala'));
+      await tester.tap(find.text('Kullan'));
       await tester.pump();
       expect(kiralandi, isTrue);
       expect(incelendi, isFalse);
@@ -289,7 +289,7 @@ void main() {
       );
 
       expect(find.text('İncele'), findsOneWidget);
-      expect(find.text('Kirala'), findsNothing);
+      expect(find.text('Kullan'), findsNothing);
 
       await tester.tap(find.text('İncele'));
       await tester.pump();
@@ -360,10 +360,7 @@ void main() {
 
     // Kiralık kartlarda nötr üyelik bilgisi var, ürün sayısı yok
     expect(find.text('2 ürün'), findsNothing);
-    expect(
-      find.text('Kiralık vitrin · ayrıntılar Vitrinim sayfasında'),
-      findsOneWidget,
-    );
+    expect(find.text('Örnek vitrin · şablon olarak kullan'), findsOneWidget);
   });
 }
 

@@ -36,8 +36,10 @@ test.describe("ana sayfa", () => {
 
     await expect(page.locator('a[href^="/kesfet"]').first()).toBeVisible();
     // #346: yasal sayfalara sitenin hiçbir yerinden bağlantı yoktu.
-    await expect(page.locator('a[href="/privacy"]')).toHaveCount(1);
-    await expect(page.locator('a[href="/legal/terms"]')).toHaveCount(1);
+    await expect(page.locator('footer a[href="/privacy"]')).toHaveCount(1);
+    await expect(page.locator('footer a[href="/legal/terms"]')).toHaveCount(1);
+    await expect(page.locator('footer a[href="/privacy"]')).toBeVisible();
+    await expect(page.locator('footer a[href="/legal/terms"]')).toBeVisible();
   });
 
   test("platform yapılandırılmış verisi basılır", async ({ page }) => {

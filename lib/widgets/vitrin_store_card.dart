@@ -12,7 +12,7 @@ class VitrinStoreCard extends StatelessWidget {
   final VoidCallback onFavoritePressed;
   final VoidCallback onWhatsAppPressed;
 
-  /// Yalnız kiralık kartlarda kullanılır — doluysa "İncele"/"Kirala" ayrı
+  /// Yalnız kiralık kartlarda kullanılır — doluysa "İncele"/"Kullan" ayrı
   /// butonlar olarak gösterilir. null ise (WhatsApp'lı kartlarda hep
   /// null) eski tek-buton davranışı korunur.
   final VoidCallback? onRentPressed;
@@ -153,7 +153,7 @@ class VitrinStoreCard extends StatelessWidget {
                         child: _buildStatusBadge(isOpen),
                       ),
 
-                    // KİRALIK Köşegen Şerit (Sol Üst — sadece kiralık vitrinde)
+                    // ÖRNEK Köşegen Şerit (Sol Üst — sadece örnek vitrinde; eski web etiketi: "KİRALIK")
                     if (_isRentalTemplate)
                       Positioned(
                         top: 0,
@@ -182,7 +182,7 @@ class VitrinStoreCard extends StatelessWidget {
                                         color: Color(0xFFF59E0B),
                                       ),
                                       child: const Text(
-                                        'KİRALIK',
+                                        'ÖRNEK',
                                         style: TextStyle(
                                           color: Color(0xFF1C1917),
                                           fontSize: 9,
@@ -336,7 +336,7 @@ class VitrinStoreCard extends StatelessWidget {
                       const Padding(
                         padding: EdgeInsets.only(top: 6),
                         child: Text(
-                          'Kiralık vitrin · ayrıntılar Vitrinim sayfasında',
+                          'Örnek vitrin · şablon olarak kullan',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
@@ -380,7 +380,7 @@ class VitrinStoreCard extends StatelessWidget {
                     // özel hazırlanmış vitrini açar. Ayrıntılar detaydadır.
                     //
                     // onRentPressed varsa (kiralık kartlarda) "İncele" ve
-                    // "Kirala" yan yana ayrı butonlar — önce gör, sonra
+                    // "Kullan" (web etiketi: "Kirala") yan yana ayrı butonlar — önce gör, sonra
                     // dene. onRentPressed yoksa (WhatsApp'lı normal
                     // vitrinler, ya da eski çağrı yerleri) tek buton,
                     // eski davranış birebir korunuyor.
@@ -430,7 +430,7 @@ class VitrinStoreCard extends StatelessWidget {
                                   color: Colors.white,
                                 ),
                                 label: const Text(
-                                  'Kirala',
+                                  'Kullan',
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w900,
