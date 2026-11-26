@@ -1,7 +1,7 @@
 import { readFileSync } from "fs";
 import { resolve } from "path";
 import { describe, expect, it } from "vitest";
-import { isTestOrDenemeStore } from "../src/app/sitemap.xml/route";
+import { isTestOrDenemeStore } from "../src/lib/denemeVitrinFiltresi";
 
 function yorumsuz(kaynak: string): string {
   return kaynak
@@ -84,6 +84,12 @@ describe("site haritası ve indeksleme kuralları (#345)", () => {
     // Gerçek vitrinler elenmez
     expect(isTestOrDenemeStore({ slug: "lezzet-doner", name: "Lezzet Döner" })).toBe(false);
     expect(isTestOrDenemeStore({ slug: "karanfil-cicekcilik", name: "Karanfil Çiçekçilik" })).toBe(false);
+    expect(isTestOrDenemeStore({ slug: "deneme", name: "DENEME" })).toBe(true);
+    expect(isTestOrDenemeStore({ slug: "deneme2222-mw1a2b3c", name: "Deneme2222" })).toBe(true);
+    expect(isTestOrDenemeStore({ slug: "deneme2222s", name: "Deneme2222s" })).toBe(true);
+
+    // Kiralık şablon vitrinleri is_demo ile etiketlidir; ada bakılmaz.
+    expect(isTestOrDenemeStore({ slug: "demo-butik", name: "Demo Butik", is_demo: true })).toBe(false);
   });
 
   it("üretim eki taşıyan çöp slug'lar elenir, gerçek mağaza elenmez", () => {
