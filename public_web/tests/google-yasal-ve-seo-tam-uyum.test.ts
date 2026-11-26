@@ -232,6 +232,10 @@ describe("Google OAuth, Play yasal gereksinimleri ve SEO tam uyum paketi", () =>
       expect(html).toContain("kimlik doğrulama");
       expect(html).toContain("Limited Use");
       expect(html).toContain("Google API Hizmetleri Kullanıcı Verileri Politikası");
+      expect(html).toContain("Google API Services User Data Policy");
+      expect(html).toContain(
+        'href="https://developers.google.com/terms/api-services-user-data-policy"',
+      );
       expect(html).toContain("AI/ML");
       expect(html).toContain("makine öğrenmesi");
       expect(html).toContain("HTTPS/TLS");

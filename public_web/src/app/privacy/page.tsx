@@ -111,7 +111,7 @@ export default function PrivacyPage() {
         <strong>Data Controller:</strong> Furkan Aksakal — Aksakal Ticaret, Esenevler Mah. Lokman Hekim Cad. No:18 İç Kapı No:10 Ümraniye/İstanbul, Türkiye. Contact: destek@vixrex.com.
       </p>
       <ul>
-        <li><strong>OAuth scopes used:</strong> openid, email, profile (Limited Use — used only for authentication, account creation and management; not sold, not used for ads/AI training).</li>
+        <li><strong>OAuth scopes used:</strong> openid, email, profile (Limited Use — used only for authentication, account creation and management; not sold, not used for ads/AI training). Vixrex&apos;s use and transfer to any other app of information received from Google APIs will adhere to the <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener noreferrer">Google API Services User Data Policy</a>, including the Limited Use requirements.</li>
         <li><strong>Mobile permissions:</strong> Camera (optional, for OCR/product photo), Location (optional, store address autofill via OpenStreetMap Nominatim), Notifications (optional, via OneSignal).</li>
         <li><strong>Account deletion:</strong> in-app Account &amp; Data Management screen or https://vixrex.com/legal/data-deletion; e-mail destek@vixrex.com. Requests fulfilled within 30 days.</li>
         <li><strong>Privacy policy:</strong> https://vixrex.com/privacy — Data deletion: https://vixrex.com/legal/data-deletion.</li>
