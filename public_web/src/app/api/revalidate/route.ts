@@ -5,7 +5,13 @@ import { revalidateTag, revalidatePath } from "next/cache";
  * POST /api/revalidate
  *
  * Flutter'dan ve Supabase webhook'larından gelen ISR geçersizleştirme isteklerini
- * işler. Secret, query param yerine header üzerinden okunur.
+ * işler. Kimlik doğrulaması iki yoldan yapılır (2026-11-26 güvenlik düzeltmesi):
+ *
+ *   1) Mobil uygulama (Flutter / vixrex-app): kullanıcının kendi doğrulanmış
+ *      Supabase oturum token'i (`Authorization: Bearer <access_token>`) ile
+ *      yetkilendirilir — sunucu sırrı gömülmez.
+ *   2) Sunucu içi tetikleyiciler (Supabase webhook / operasyon): `x-revalidate-secret`
+ *      başlığı, `REVALIDATION_SECRET` ortam değişkeniyle karşılaştırılır (fail-closed).
  *
  * Body (JSON):
  *   { "tag": "store-nova-kuafor" }          → revalidateTag kullanır
@@ -14,18 +20,40 @@ import { revalidateTag, revalidatePath } from "next/cache";
  *   { "paths": ["/v/x/urun/y"] }            → çoklu path yeniler
  *
  * Header:
- *   x-revalidate-secret: <REVALIDATION_SECRET>
+ *   Authorization: Bearer <supabase access token>   (kullanıcı oturumu)
+ *   x-revalidate-secret: <REVALIDATION_SECRET>      (sunucu içi tetikleyici)
  */
 export async function POST(req: NextRequest) {
-  const localSecret = process.env.REVALIDATION_SECRET;
+  const bearerToken =
+    req.headers.get("authorization")?.startsWith("Bearer ") === true
+      ? (req.headers.get("authorization") as string).slice(7).trim()
+      : "";
 
-  if (!localSecret) {
-    console.warn("[REVALIDATION] REVALIDATION_SECRET env variable is not set! Revalidation webhook will always fail.");
+  let userAuthorized = false;
+  if (bearerToken) {
+    const supabaseUrl =
+      process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "";
+    const supabaseKey =
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+      process.env.SUPABASE_PUBLISHABLE_KEY ||
+      "";
+    if (supabaseUrl && supabaseKey) {
+      const userResponse = await fetch(`${supabaseUrl}/auth/v1/user`, {
+        headers: {
+          apikey: supabaseKey,
+          Authorization: `Bearer ${bearerToken}`,
+        },
+      });
+      userAuthorized = userResponse.ok;
+    }
   }
 
+  const localSecret = process.env.REVALIDATION_SECRET;
   const headerSecret = req.headers.get("x-revalidate-secret");
+  const internalAuthorized =
+    Boolean(localSecret) && headerSecret === localSecret;
 
-  if (!localSecret || headerSecret !== localSecret) {
+  if (!userAuthorized && !internalAuthorized) {
     return NextResponse.json({ message: "Invalid secret token" }, { status: 401 });
   }
 

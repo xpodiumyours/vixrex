@@ -126,7 +126,11 @@ class OcrController extends ChangeNotifier {
 
   /// Görüntüyü analiz et.
   ///
-  /// Fotoğraf her zaman `/api/fatura-oku` ucuna gider.
+  /// Fotoğraf her zaman `/api/fatura-oku` ucuna gider: mobil cihazdan sunucuya
+  /// iletilir ve okuma (Gemini / OpenRouter) sunucu tarafında yapılır. Cihaz
+  /// üstü yerel OCR kullanılmaz.
+  /// Play Console Data Safety'de bu akış **Photos → Collected + Shared**
+  /// (App functionality) olarak beyan edilir.
   Future<void> analyzeImage(Uint8List imageBytes) async {
     if (_isSaving || _isProcessing || _isPublishing) return;
     _isProcessing = true;

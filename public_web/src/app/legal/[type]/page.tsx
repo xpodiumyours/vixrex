@@ -72,7 +72,7 @@ const YEDEK_KULLANIM_SARTLARI_BELGESI = {
     },
     {
       title: "Abonelik Süresi ve Fesih",
-      body: "Abonelikler belirsiz sürelidir. Kullanıcı, aboneliğini herhangi bir gerekçe göstermeden, cezai şart ödemeksizin dilediği zaman feshedebilir; fesih, hesap ayarlarından ya da destek@vixrex.com adresine bildirim ile yapılır. Fesih, içinde bulunulan ödenmiş dönemin sonunda yürürlüğe girer ve o döneme ait ücret iade edilmez. Ücretsiz deneme vitrinleri, hesaba bağlanmamışsa 30 saat sonra otomatik silinir.",
+      body: "Abonelikler belirsiz sürelidir. Kullanıcı, aboneliğini herhangi bir gerekçe göstermeden, cezai şart ödemeksizin dilediği zaman feshedebilir; fesih, hesap ayarlarından ya da destek@vixrex.com adresine bildirim ile yapılır. Fesih, içinde bulunulan ödenmiş dönemin sonunda yürürlüğe girer ve o döneme ait ücret iade edilmez. Ücretsiz deneme vitrinleri, hesaba bağlanmamışsa 14 gün sonra otomatik silinir.",
     },
     {
       title: "Hizmetin Askıya Alınması ve Sona Erdirilmesi",

@@ -5,147 +5,149 @@ import { NextRequest } from "next/server";
 
 const mockRevalidateTag = vi.fn();
 const mockRevalidatePath = vi.fn();
+const mockFetch = vi.fn();
 
 vi.mock("next/cache", () => ({
   revalidateTag: (...args: unknown[]) => mockRevalidateTag(...args),
   revalidatePath: (...args: unknown[]) => mockRevalidatePath(...args),
 }));
 
+vi.stubGlobal("fetch", mockFetch);
+
 import { POST } from "@/app/api/revalidate/route";
 
 /**
- * `REVALIDATION_SECRET` kablosu.
+ * `/api/revalidate` kimlik doğrulama kontrolu (2026-11-26 güncellemesi).
  *
- * Uygulamadaki (Flutter) kayıt/publish sonrası `/api/revalidate` çağrısı web
- * önbelleğini anında düşürür. Uç, anahtar sunucuda tanımlı değilse ya da
- * başlık eşleşmiyorsa 401 döner (fail-closed).
+ * Güncel davranış:
+ *   1) Mobil uygulama → kullanıcının doğrulanmış Supabase oturum token'i
+ *      (`Authorization: Bearer <access_token>`) ile yetkilidir; token Supabase
+ *      Auth (`/auth/v1/user`) üzerinden doğrulanır (fail-closed).
+ *   2) Sunucu içi tetikleyiciler (Supabase webhook / operasyon) → `x-revalidate-secret`
+ *      başlığı `REVALIDATION_SECRET` ortam değişkeniyle eşleşirse geçer.
  *
- * 2026-10-03 bulgusu: uç Vercel'de tanımlıydı ama HİÇBİR Flutter derlemesine
- * `--dart-define=REVALIDATION_SECRET` verilmiyordu → `String.fromEnvironment`
- * hep boş → `SeoService` isteği hiç atmıyor, atsa da 401 yeriyordu. Bu test
- * hem uç davranışını hem de derleme dosyalarındaki kabloyu kilitler.
+ * Ortamda `REVALIDATION_SECRET` yoksa veya başlık eşleşmiyorsa 401 döner (fail-closed).
+ * Mobil derlemeye (APK/AAB, Flutter dart-define) hiçbir zaman sır değildir.
  */
-describe("POST /api/revalidate — güvenlik", () => {
-  const ANAHTAR = "test-revalidation-secret";
 
-  function istek(govde: unknown, secret?: string) {
+describe("POST /api/revalidate — güvenlik", () => {
+  const ANAHTAR = "test-internal-trigger";
+
+  function istek(govde: unknown, headers: Record<string, string> = {}) {
     return new NextRequest("http://localhost/api/revalidate", {
       method: "POST",
-      headers: secret ? { "x-revalidate-secret": secret } : {},
+      headers,
       body: JSON.stringify(govde),
     });
   }
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubGlobal("fetch", mockFetch);
+    process.env.SUPABASE_URL = "https://test.supabase.co";
+    process.env.SUPABASE_PUBLISHABLE_KEY = "test-anon-key";
     delete process.env.REVALIDATION_SECRET;
   });
 
   afterEach(() => {
+    vi.unstubAllGlobals();
     delete process.env.REVALIDATION_SECRET;
   });
 
-  it("REVALIDATION_SECRET tanımlı değilse fail-closed 401 döner", async () => {
-    const res = await POST(istek({ tags: ["store-x"] }, ANAHTAR));
-    expect(res.status).toBe(401);
-    expect(mockRevalidateTag).not.toHaveBeenCalled();
-    expect(mockRevalidatePath).not.toHaveBeenCalled();
-  });
-
-  it("başlık yoksa 401 döner, hiçbir önbellek düşürülmez", async () => {
-    process.env.REVALIDATION_SECRET = ANAHTAR;
-    const res = await POST(istek({ tags: ["store-x"] }));
-    expect(res.status).toBe(401);
-    expect(mockRevalidateTag).not.toHaveBeenCalled();
-  });
-
-  it("başlık yanlışsa 401 döner", async () => {
-    process.env.REVALIDATION_SECRET = ANAHTAR;
-    const res = await POST(istek({ tags: ["store-x"] }, "yanlis-deger"));
-    expect(res.status).toBe(401);
-    expect(mockRevalidateTag).not.toHaveBeenCalled();
-  });
-
-  it("doğru anahtarla tag düşürülür ve expire:0 verilir (anında tazelensin)", async () => {
-    process.env.REVALIDATION_SECRET = ANAHTAR;
-    const res = await POST(istek({ tags: ["store-x", "products-x"] }, ANAHTAR));
+  it("geçerli Supabase oturum token'ı ile yetkilendirme geçerli → tag düşürülür", async () => {
+    mockFetch.mockResolvedValue({ ok: true, status: 200 });
+    const res = await POST(
+      istek({ tags: ["store-x", "products-x"] }, { authorization: "Bearer gecerli-token" })
+    );
 
     expect(res.status).toBe(200);
+    expect(mockFetch).toHaveBeenCalledWith(
+      "https://test.supabase.co/auth/v1/user",
+      expect.objectContaining({
+        headers: expect.objectContaining({ Authorization: "Bearer gecerli-token" }),
+      })
+    );
     expect(mockRevalidateTag).toHaveBeenCalledTimes(2);
     expect(mockRevalidateTag).toHaveBeenCalledWith("store-x", { expire: 0 });
-    expect(mockRevalidateTag).toHaveBeenCalledWith("products-x", {
-      expire: 0,
-    });
     expect(mockRevalidatePath).not.toHaveBeenCalled();
+  });
+
+  it("geçersiz Supabase oturum token'ı → 401 döner, önbellek düşürülmez", async () => {
+    mockFetch.mockResolvedValue({ ok: false, status: 401 });
+    const res = await POST(
+      istek({ tags: ["store-x"] }, { authorization: "Bearer yanlis-token" })
+    );
+
+    expect(res.status).toBe(401);
+    expect(mockRevalidateTag).not.toHaveBeenCalled();
+    expect(mockRevalidatePath).not.toHaveBeenCalled();
+  });
+
+  it("bearer yoksa ve sunucu içi secret eşleşmiyorsa → fail-closed 401 döner", async () => {
+    process.env.REVALIDATION_SECRET = ANAHTAR;
+    const res = await POST(istek({ tags: ["store-x"] }, { "x-revalidate-secret": "yanlis-deger" }));
+
+    expect(res.status).toBe(401);
+    expect(mockRevalidateTag).not.toHaveBeenCalled();
+  });
+
+  it("sunucu içi x-revalidate-secret ile yetkilendirme geçerli → revalidation çalışır", async () => {
+    process.env.REVALIDATION_SECRET = ANAHTAR;
+    const res = await POST(
+      istek({ tags: ["store-x"] }, { "x-revalidate-secret": ANAHTAR })
+    );
+
+    expect(res.status).toBe(200);
+    expect(mockRevalidateTag).toHaveBeenCalledWith("store-x", { expire: 0 });
+  });
+
+  it("ne bearer ne de geçerli internal trigger yoksa → fail-closed 401 döner", async () => {
+    const res = await POST(istek({ tags: ["store-x"] }, {}));
+
+    expect(res.status).toBe(401);
+    expect(mockRevalidateTag).not.toHaveBeenCalled();
+  });
+
+  it("ne tag ne path varsa 400 döner", async () => {
+    mockFetch.mockResolvedValue({ ok: true, status: 200 });
+    const res = await POST(
+      istek({}, { authorization: "Bearer gecerli-token" })
+    );
+
+    expect(res.status).toBe(400);
+    expect(mockRevalidateTag).not.toHaveBeenCalled();
   });
 
   it("path istekleri revalidatePath ile karşılanır", async () => {
-    process.env.REVALIDATION_SECRET = ANAHTAR;
+    mockFetch.mockResolvedValue({ ok: true, status: 200 });
     const res = await POST(
-      istek({ paths: ["/v/x", "/v/x/urun/y"] }, ANAHTAR)
+      istek({ paths: ["/v/x", "/v/x/urun/y"] }, { authorization: "Bearer gecerli-token" })
     );
 
     expect(res.status).toBe(200);
     expect(mockRevalidatePath).toHaveBeenCalledTimes(2);
     expect(mockRevalidatePath).toHaveBeenCalledWith("/v/x", "page");
-    expect(mockRevalidateTag).not.toHaveBeenCalled();
-  });
-
-  it("tag + path birlikte gelebilir — ikisi de işlenir", async () => {
-    process.env.REVALIDATION_SECRET = ANAHTAR;
-    const res = await POST(
-      istek({ tag: "sitemap", path: "/v/x" }, ANAHTAR)
-    );
-
-    expect(res.status).toBe(200);
-    expect(mockRevalidateTag).toHaveBeenCalledWith("sitemap", { expire: 0 });
-    expect(mockRevalidatePath).toHaveBeenCalledWith("/v/x", "page");
-  });
-
-  it("ne tag ne path varsa 400 döner", async () => {
-    process.env.REVALIDATION_SECRET = ANAHTAR;
-    const res = await POST(istek({}, ANAHTAR));
-    expect(res.status).toBe(400);
-    expect(mockRevalidateTag).not.toHaveBeenCalled();
-    expect(mockRevalidatePath).not.toHaveBeenCalled();
-  });
-
-  it("boş/whitespace tag'ler elenir", async () => {
-    process.env.REVALIDATION_SECRET = ANAHTAR;
-    const res = await POST(istek({ tags: ["   "] }, ANAHTAR));
-    expect(res.status).toBe(400);
-    expect(mockRevalidateTag).not.toHaveBeenCalled();
   });
 });
 
-describe("REVALIDATION_SECRET — derleme kablosu", () => {
+describe("REVALIDATION — derleme kablosu", () => {
   const oku = (goreli: string) =>
     readFileSync(resolve(__dirname, "..", "..", goreli), "utf8");
 
-  it("APK/AAB derlemesi anahtarı ZORUNLU tutuyor ve dart-define ile veriyor", () => {
+  it("APK/AAB derlemesinde REVALIDATION_SECRET / dart-define bulunmaz", () => {
     const kaynak = oku(".github/workflows/android-apk.yml");
-
-    // Zorunlu kılınmış — yoksa derleme düşsün, sessiz bozulma yaşanmasın.
-    expect(kaynak).toContain("REVALIDATION_SECRET: ${{ secrets.REVALIDATION_SECRET }}");
-    expect(kaynak).toContain("            REVALIDATION_SECRET");
-    expect(kaynak).toContain('--dart-define=REVALIDATION_SECRET="$REVALIDATION_SECRET"');
-
-    // APK ve AAB (Play Store) aynı anda derleniyor — ikisi de almalı.
-    const adet = (
-      kaynak.match(/--dart-define=REVALIDATION_SECRET=/g) || []
-    ).length;
-    expect(adet).toBe(2);
+    expect(kaynak).not.toContain("REVALIDATION_SECRET");
+    expect(kaynak).not.toContain("--dart-define=REVALIDATION_SECRET");
   });
 
-  it("Flutter web derlemesi (vercel-build.sh) anahtarı dart-define ile veriyor", () => {
+  it("Flutter web derlemesi (vercel-build.sh) REVALIDATION_SECRET tanımı içermez", () => {
     const kaynak = oku("vercel-build.sh");
-    expect(kaynak).toContain('--dart-define=REVALIDATION_SECRET="${REVALIDATION_SECRET:-}"');
+    expect(kaynak).not.toContain("REVALIDATION_SECRET");
   });
 
-  it("Flutter tarafı boş anahtarla istek ATMIYOR (boşsa sessizce geçer)", () => {
+  it("Flutter tarafı sunucu sırrı yerine kullanıcı oturumu tokeni kullanır", () => {
     const kaynak = oku("lib/services/seo_service.dart");
-    expect(kaynak).toContain("String.fromEnvironment('REVALIDATION_SECRET')");
-    expect(kaynak).toMatch(/if \(secret\.isEmpty\) \{\s*return;/);
-    expect(kaynak).toContain("'x-revalidate-secret': secret");
+    expect(kaynak).not.toContain("String.fromEnvironment('REVALIDATION_SECRET')");
+    expect(kaynak).toContain("'Authorization': 'Bearer $token'");
   });
 });
