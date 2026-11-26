@@ -15,6 +15,15 @@ export const metadata: Metadata = {
   description:
     "Vixrex ile iletişime geçin. Destek, iş birliği ve yasal konular için destek@vixrex.com adresine yazabilirsiniz.",
   alternates: { canonical: "/iletisim" },
+  openGraph: {
+    type: "website",
+    siteName: "Vixrex",
+    locale: "tr_TR",
+    title: "İletişim | Vixrex",
+    description:
+      "Vixrex ile iletişime geçin. Destek, iş birliği ve yasal konular için destek@vixrex.com adresine yazabilirsiniz.",
+    url: "/iletisim",
+  },
 };
 
 const KONULAR = [

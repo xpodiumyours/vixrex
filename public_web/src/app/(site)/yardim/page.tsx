@@ -4,6 +4,16 @@ export const metadata: Metadata = {
   title: "Yardım ve Destek | Vixrex",
   description:
     "Vixrex vitrini yayınlama, ürün ekleme, paylaşma, randevu yönetimi ve hesap işlemleri hakkında yardım.",
+  alternates: { canonical: "/yardim" },
+  openGraph: {
+    type: "website",
+    siteName: "Vixrex",
+    locale: "tr_TR",
+    title: "Yardım ve Destek | Vixrex",
+    description:
+      "Vixrex vitrini yayınlama, ürün ekleme, paylaşma, randevu yönetimi ve hesap işlemleri hakkında yardım.",
+    url: "/yardim",
+  },
 };
 
 const SORULAR = [

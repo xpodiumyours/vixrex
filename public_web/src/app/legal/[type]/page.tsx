@@ -131,7 +131,19 @@ async function belgeyiGetir(tur: GecerliTur) {
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { type } = await params;
   if (!gecerliTurMu(type)) return { title: "Yasal Belge | Vixrex" };
-  return { title: `${BASLIK[type]} | Vixrex` };
+  const baslik = `${BASLIK[type]} | Vixrex`;
+  const yol = `/legal/${type}`;
+  return {
+    title: baslik,
+    alternates: { canonical: yol },
+    openGraph: {
+      type: "article",
+      siteName: "Vixrex",
+      locale: "tr_TR",
+      title: baslik,
+      url: yol,
+    },
+  };
 }
 
 export default async function LegalTypePage({ params }: Params) {

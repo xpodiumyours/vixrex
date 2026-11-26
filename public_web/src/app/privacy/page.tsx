@@ -4,6 +4,15 @@ import Link from 'next/link';
 export const metadata: Metadata = {
   title: 'Gizlilik Politikası | Vixrex',
   description: 'Vixrex gizlilik politikası ve KVKK aydınlatma metni.',
+  alternates: { canonical: '/privacy' },
+  openGraph: {
+    type: 'website',
+    siteName: 'Vixrex',
+    locale: 'tr_TR',
+    title: 'Gizlilik Politikası | Vixrex',
+    description: 'Vixrex gizlilik politikası ve KVKK aydınlatma metni.',
+    url: '/privacy',
+  },
 };
 
 export default function PrivacyPage() {

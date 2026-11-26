@@ -680,6 +680,11 @@ export default async function StorePage(props: PageProps) {
     store.shelf_image_url || store.logo_url || "";
   const hasPhysicalLocation =
     store.address && store.latitude != null && store.longitude != null;
+  // Aktif Görev #6: adres/il/ilçe girilmişse koordinat olmasa da PostalAddress
+  // üretilsin (perakende mağaza şeması ve Google Merchant için).
+  const hasAddressInfo = Boolean(
+    store.address || store.province_name || store.district_name || store.neighborhood_name,
+  );
   const isBookingEnabled = bookingSettings?.is_enabled ?? false;
   const whatsappDigits = normalizeWhatsappDigits(store.whatsapp);
   const waBaseUrl = whatsappDigits ? `https://wa.me/${whatsappDigits}` : null;
@@ -753,15 +758,21 @@ export default async function StorePage(props: PageProps) {
   const displayAddress = normalizeAddressDisplay(store.address);
 
   const categoryLower = (store.kategori || "").toLowerCase();
+  // Aktif Görev #6: perakende (fiziksel ürün satan) mağazalar için Store alt
+  // tipi; hizmet mağazaları mevcut tipleri korur.
   let businessType = "LocalBusiness";
-  if (categoryLower.includes("kuaför") || categoryLower.includes("hair")) {
-    businessType = "HairSalon";
-  } else if (
-    categoryLower.includes("güzellik") ||
-    categoryLower.includes("beauty") ||
-    categoryLower.includes("bakım")
-  ) {
-    businessType = "BeautySalon";
+  if (isServiceStore) {
+    if (categoryLower.includes("kuaför") || categoryLower.includes("hair")) {
+      businessType = "HairSalon";
+    } else if (
+      categoryLower.includes("güzellik") ||
+      categoryLower.includes("beauty") ||
+      categoryLower.includes("bakım")
+    ) {
+      businessType = "BeautySalon";
+    }
+  } else if (visibleProducts.length > 0) {
+    businessType = "Store";
   }
 
   const weekMap = resolveWeekMap(
@@ -810,13 +821,16 @@ export default async function StorePage(props: PageProps) {
         logo: store.logo_url,
         telephone: phoneDigitsForSchema ? `+${phoneDigitsForSchema}` : undefined,
         url: publicUrl,
-        address: hasPhysicalLocation
-          ? {
-              "@type": "PostalAddress",
-              streetAddress: displayAddress || store.address,
-              addressCountry: "TR",
-            }
-          : undefined,
+        address:
+          hasPhysicalLocation || hasAddressInfo
+            ? {
+                "@type": "PostalAddress",
+                streetAddress: displayAddress || store.address || undefined,
+                addressLocality: store.district_name || undefined,
+                addressRegion: store.province_name || undefined,
+                addressCountry: "TR",
+              }
+            : undefined,
         geo: hasPhysicalLocation
           ? {
               "@type": "GeoCoordinates",

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { KesfetIcerik } from "@/components/kesfet/KesfetIcerik";
 import { kesfetVitrinleriniGetir } from "@/lib/explore";
+import { getSiteUrl, buildSiteUrl } from "@/lib/siteUrl";
+import { safeJsonLdHtml } from "@/lib/jsonLd";
 
 /**
  * Keşfet dizini (#344).
@@ -30,12 +32,27 @@ export const metadata: Metadata = {
 
 export default async function KesfetPage() {
   const vitrinler = await kesfetVitrinleriniGetir();
+  const siteUrl = getSiteUrl();
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Ana Sayfa", item: siteUrl },
+      { "@type": "ListItem", position: 2, name: "Keşfet", item: buildSiteUrl("/kesfet") },
+    ],
+  };
 
   return (
-    <KesfetIcerik
-      vitrinler={vitrinler}
-      baslik="Vixrex'leri Keşfet"
-      aciklama="Yayındaki tüm Vixrex vitrinlerini inceleyin. Beğendiğin hazır vitrini kirala, kendi işletmenin vitrini olsun."
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: safeJsonLdHtml(breadcrumbJsonLd) }}
+      />
+      <KesfetIcerik
+        vitrinler={vitrinler}
+        baslik="Vixrex'leri Keşfet"
+        aciklama="Yayındaki tüm Vixrex vitrinlerini inceleyin. Beğendiğin hazır vitrini kirala, kendi işletmenin vitrini olsun."
+      />
+    </>
   );
 }

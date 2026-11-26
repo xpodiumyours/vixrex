@@ -57,11 +57,21 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
   const title = `${data.store.name} İçerik ve Duyurular - Vixrex`;
   const description = `${data.store.name} işletmesinin güncel yazıları, duyuruları ve rehberleri.`;
 
+  const canonicalPath = `/v/${data.store.slug}/yazilar`;
+  const canonicalUrl = buildSiteUrl(canonicalPath);
   return {
     title,
     description,
     alternates: {
-      canonical: `/v/${data.store.slug}/yazilar`,
+      canonical: canonicalPath,
+    },
+    openGraph: {
+      type: "website",
+      siteName: "Vixrex",
+      locale: "tr_TR",
+      title,
+      description,
+      url: canonicalUrl,
     },
   };
 }

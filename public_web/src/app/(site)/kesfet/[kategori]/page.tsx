@@ -10,6 +10,8 @@ import {
 } from "@/lib/businessCategories";
 import { kategoriSablonuGetir } from "@/lib/categoryTemplates";
 import { kategoriVitrinleriniGetir } from "@/lib/explore";
+import { getSiteUrl, buildSiteUrl } from "@/lib/siteUrl";
+import { safeJsonLdHtml } from "@/lib/jsonLd";
 
 /**
  * Kategori sayfası (#344).
@@ -69,8 +71,33 @@ export default async function KategoriPage({ params }: Props) {
     ...(sablon?.galeri ?? []),
   ].slice(0, 8);
 
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Ana Sayfa", item: getSiteUrl() },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Keşfet",
+        item: buildSiteUrl("/kesfet"),
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: kategori.label,
+        item: buildSiteUrl(`/kesfet/${kategoriUrlParcasi(kategori.id)}`),
+      },
+    ],
+  };
+
   return (
-    <div className="px-6 py-12">
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: safeJsonLdHtml(breadcrumbJsonLd) }}
+      />
+      <div className="px-6 py-12">
       <div className="mx-auto w-full max-w-[1200px]">
         <p className="text-[12px] font-black tracking-[1.5px] text-lp-primary">
           <Link href="/kesfet">KEŞFET</Link>
@@ -139,5 +166,6 @@ export default async function KategoriPage({ params }: Props) {
         ) : null}
       </div>
     </div>
+    </>
   );
 }

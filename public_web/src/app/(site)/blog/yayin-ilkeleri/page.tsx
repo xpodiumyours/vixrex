@@ -8,6 +8,15 @@ export const metadata: Metadata = {
   description:
     "Vixrex Blog içeriklerinin kaynak, doğrulama, güncellik ve yayın güvenliği ilkeleri.",
   alternates: { canonical: "/blog/yayin-ilkeleri" },
+  openGraph: {
+    type: "article",
+    siteName: "Vixrex",
+    locale: "tr_TR",
+    title: "Yayın ilkeleri | Vixrex Blog",
+    description:
+      "Vixrex Blog içeriklerinin kaynak, doğrulama, güncellik ve yayın güvenliği ilkeleri.",
+    url: "/blog/yayin-ilkeleri",
+  },
 };
 
 export default function BlogYayinIlkeleriPage() {

@@ -799,7 +799,7 @@ export default function VitrinProfileView({
             <span className="text-sm font-semibold text-slate-400">{productCount} {isServiceStore ? "Hizmet" : "Ürün"} Listeleniyor</span>
           </div>
 
-          <Suspense fallback={<div className="h-64 flex items-center justify-center text-slate-400">Ürünler yükleniyor...</div>}>
+          <Suspense fallback={null}>
             {catalog}
           </Suspense>
           <BolumEksikleri bolum="products" taslak={ownerDraft} ownerMode={ownerMode} />

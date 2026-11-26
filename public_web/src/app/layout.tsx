@@ -52,6 +52,15 @@ export const metadata: Metadata = {
   description:
     "İşletme bilgilerinizi, fotoğraflarınızı, ürün ve hizmetlerinizi, adresinizi ve WhatsApp iletişiminizi tek vitrin linkinde toplayın ve QR kodla paylaşın.",
   metadataBase: new URL(getSiteUrl()),
+  openGraph: {
+    type: "website",
+    siteName: "Vixrex",
+    locale: "tr_TR",
+    title: "Vixrex | İşletmenizin Dijital Vitrini",
+    description:
+      "İşletme bilgilerinizi, fotoğraflarınızı, ürün ve hizmetlerinizi, adresinizi ve WhatsApp iletişiminizi tek vitrin linkinde toplayın ve QR kodla paylaşın.",
+    url: "/",
+  },
   verification: {
     google: "EDYISkto7FZ88bohG5vwlJJgR4UEqRcL8lkV48cu7t0",
   },

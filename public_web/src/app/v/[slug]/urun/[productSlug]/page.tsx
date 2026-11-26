@@ -252,8 +252,8 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
       siteName: "Vixrex",
       locale: "tr_TR",
       images: ogImages,
-      type: "website",
-    },
+      type: "product",
+    } as unknown as NonNullable<Metadata["openGraph"]>,
     twitter: {
       card: "summary_large_image",
       title,

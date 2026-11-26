@@ -26,8 +26,9 @@ export function safeJsonLdHtml(data: unknown): string {
  * zaten 1. basamakta siteUrl'e "Ana Sayfa" diye işaret ediyordu — o
  * adres bugüne kadar başka bir yere yönleniyordu.
  *
- * `potentialAction`/`SearchAction` BİLEREK yok: gerçek bir site içi arama
- * yokken beyan etmek boş sinyaldir.
+ * 2026-11-26 (Aktif Görev #6): site içi arama (KesfetIcerik'te
+ * globalSearch ile filtre) gerçekleştirdiği için SearchAction eklendi;
+ * hedef URL /kesfet?q={search_term_string}.
  */
 export function organizationJsonLd(siteUrl: string) {
   return {
@@ -57,5 +58,10 @@ export function webSiteJsonLd(siteUrl: string) {
     url: siteUrl,
     inLanguage: "tr-TR",
     publisher: { "@type": "Organization", name: "Vixrex", url: siteUrl },
+    potentialAction: {
+      "@type": "SearchAction",
+      target: `${siteUrl}/kesfet?q={search_term_string}`,
+      "query-input": "required name=search_term_string",
+    },
   };
 }

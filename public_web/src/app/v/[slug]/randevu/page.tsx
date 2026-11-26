@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
+import { buildSiteUrl } from "@/lib/siteUrl";
 import BookingWizardClient from "./BookingWizardClient";
 
 interface PageProps {
@@ -27,6 +29,30 @@ async function getStoreData(slug: string) {
   return {
     store,
     isBookingEnabled: bookingSettings?.is_enabled ?? false,
+  };
+}
+
+export async function generateMetadata(props: PageProps): Promise<Metadata> {
+  const params = await props.params;
+  const { data: store } = await supabase
+    .from("stores")
+    .select("slug, name")
+    .eq("slug", params.slug)
+    .eq("is_published", true)
+    .maybeSingle();
+  const name = store?.name ? `${store.name} — Online randevu` : "Online randevu";
+  const canonicalPath = `/v/${params.slug}/randevu`;
+  const canonicalUrl = buildSiteUrl(canonicalPath);
+  return {
+    title: `${name} | Vixrex`,
+    alternates: { canonical: canonicalPath },
+    openGraph: {
+      type: "website",
+      siteName: "Vixrex",
+      locale: "tr_TR",
+      title: `${name} | Vixrex`,
+      url: canonicalUrl,
+    },
   };
 }
 

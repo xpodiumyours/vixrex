@@ -6,6 +6,8 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { verifyStoreEditToken } from "@/lib/instagramServer";
 import { publishInvoiceProduct } from "@/lib/productCoreServer";
 import { tuketicideGorunenler, vitrinOnbelleginiYenile } from "@/lib/vitrinYayinDogrula";
+import { indexnowBildir } from "@/lib/indexnow";
+import { getSiteUrl } from "@/lib/siteUrl";
 
 // Fatura taslaklarının AYRI Yayınla ucu (P5 + P6).
 //
@@ -156,6 +158,7 @@ export async function POST(request: NextRequest) {
     dogrulanamayan = yayindakiler.length;
   }
   if (yayinda > 0) vitrinOnbelleginiYenile(slug);
+  if (yayinda > 0) void indexnowBildir([`${getSiteUrl()}/v/${slug}`]);
 
   return NextResponse.json({
     tamam: true,

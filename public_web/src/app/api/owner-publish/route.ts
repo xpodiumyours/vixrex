@@ -5,6 +5,8 @@ import { createClient } from "@supabase/supabase-js";
 import { OWNER_SESSION_COOKIE, verifyOwnerSession } from "@/lib/ownerSession";
 import { YAYIN_KAPISI_UYARISI } from "@/lib/fiyatlandirma";
 import { kesfetOnbelleginiYenile } from "@/lib/explore";
+import { indexnowBildir } from "@/lib/indexnow";
+import { getSiteUrl } from "@/lib/siteUrl";
 
 // Sahip çalışma taslağını canlı vitrine yayınlar (implementation_plan.md Faz 11).
 //
@@ -133,6 +135,9 @@ export async function POST(request: NextRequest) {
   revalidatePath(`/v/${slug}`);
   // Keşfet listesi de tazelenir: yayınlanan vitrin anında görünsün.
   kesfetOnbelleginiYenile();
+
+  // IndexNow bildirimi (fire-and-forget; hata ana yayını kesmez).
+  void indexnowBildir([`${getSiteUrl()}/v/${slug}`]);
 
   return NextResponse.json({
     tamam: true,

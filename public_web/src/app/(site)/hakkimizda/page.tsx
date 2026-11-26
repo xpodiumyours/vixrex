@@ -19,6 +19,15 @@ export const metadata: Metadata = {
   description:
     "Vixrex, küçük işletmelerin dakikalar içinde kendi dijital vitrinini kurup WhatsApp üzerinden müşteriyle buluşmasını sağlayan Türkiye merkezli bir platformdur.",
   alternates: { canonical: "/hakkimizda" },
+  openGraph: {
+    type: "website",
+    siteName: "Vixrex",
+    locale: "tr_TR",
+    title: "Hakkımızda | Vixrex",
+    description:
+      "Vixrex, küçük işletmelerin dakikalar içinde kendi dijital vitrinini kurup WhatsApp üzerinden müşteriyle buluşmasını sağlayan Türkiye merkezli bir platformdur.",
+    url: "/hakkimizda",
+  },
 };
 
 const YAPTIKLARIMIZ = [

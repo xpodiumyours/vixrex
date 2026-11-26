@@ -174,9 +174,16 @@ describe("Keşfet gerçek Edge ISR ve istemci query parametreleri", () => {
 
   it("KesfetPage sunucu bileşeni çerez veya searchParams olmadan vitrinleri geçirir", async () => {
     const element = await KesfetPage();
-    expect(element.props.vitrinler).toEqual(ORNEK_VITRINLER);
-    expect(element.props.baslik).toBe("Vixrex'leri Keşfet");
-    expect(element.props.aciklama).toContain("Beğendiğin hazır vitrini");
+    const kesfet =
+      Array.isArray(element.props.children)
+        ? element.props.children.find(
+            (c: { type?: { name?: string } } | null) =>
+              c?.type?.name === "KesfetIcerik",
+          )
+        : element;
+    expect(kesfet.props.vitrinler).toEqual(ORNEK_VITRINLER);
+    expect(kesfet.props.baslik).toBe("Vixrex'leri Keşfet");
+    expect(kesfet.props.aciklama).toContain("Beğendiğin hazır vitrini");
   });
 
   it("?yalniz_kiralik=1 parametresinde kiralık görünümüne ve filtreye geçer", async () => {
