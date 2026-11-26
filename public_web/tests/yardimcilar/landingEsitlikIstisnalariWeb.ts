@@ -365,6 +365,24 @@ export const LANDING_ESITLIK_ISTISNALARI_WEB: Istisna[] = [
     metin: "Ev & Temizlik",
     neden: PASIF_KATEGORI_ETIKETI,
   },
+  {
+    metin: "Kredi kartı gerekmez",
+    neden:
+      "Web ana sayfasındaki esnaf güven vaadi; Google Play Payments Policy gereği " +
+      "Android mobil uygulamada ödeme/ücretsiz/komisyon ifadeleri nötrleştirildi.",
+  },
+  {
+    metin: "Ücretsiz Vitrinimi Hazırla",
+    neden:
+      "Web ana sayfasındaki CTA butonu; Google Play Payments Policy gereği Android " +
+      "mobil uygulamada ücretsiz/ödeme vaadi yerine 'Vitrinimi Hazırla' kullanılıyor.",
+  },
+  {
+    metin: "Satıştan komisyon alınmaz",
+    neden:
+      "Web ana sayfasındaki esnaf güven vaadi; Google Play Payments Policy gereği " +
+      "Android mobil uygulamada komisyon/ödeme ifadeleri nötrleştirildi.",
+  },
 ];
 
 // Blog altbilgi bağlantısı (28 Ağustos) buraya İSTİSNA OLARAK GİRMEDİ ve

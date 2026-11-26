@@ -83,4 +83,16 @@ export const LANDING_ESITLIK_ISTISNALARI: Istisna[] = [
       "Flutter asistan motorunun (VixRexGuidanceService) dinamik mesajı. " +
       "Web'de bu motor henüz yok (Faz 2); asistan web'e taşındığında bu istisna kaldırılmalı.",
   },
+  {
+    metin: "Hızlı kurulum",
+    neden:
+      "Google Play Payments Policy gereği Android mobil uygulamada ödeme/komisyon/ücret " +
+      "vaatleri yerine nötr ifade kullanılır; web ana sayfası esnaf güven vaadini korur.",
+  },
+  {
+    metin: "Doğrudan paylaşım",
+    neden:
+      "Google Play Payments Policy gereği Android mobil uygulamada ödeme/komisyon/ücret " +
+      "vaatleri yerine nötr ifade kullanılır; web ana sayfası esnaf güven vaadini korur.",
+  },
 ];
