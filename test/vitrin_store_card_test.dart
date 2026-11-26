@@ -185,25 +185,31 @@ void main() {
     expect(favoritePressed, isTrue);
   });
 
-  testWidgets('5. WhatsApp butonu callback’i çalışıyor', (
-    WidgetTester tester,
-  ) async {
-    var whatsappPressed = false;
-    await tester.pumpWidget(
-      buildCard(
-        store: testStore,
-        onFavoritePressed: () {},
-        onWhatsAppPressed: () => whatsappPressed = true,
-      ),
-    );
+  testWidgets(
+    '5. Gerçek vitrin kartında WhatsApp yerine İncele butonu çalışıyor',
+    (WidgetTester tester) async {
+      var incelendi = false;
+      await tester.pumpWidget(
+        buildCard(
+          store: testStore,
+          onTap: () => incelendi = true,
+          onFavoritePressed: () {},
+          onWhatsAppPressed: () {},
+        ),
+      );
 
-    final waButton = find.byIcon(Icons.chat_bubble_rounded);
-    expect(waButton, findsOneWidget);
-    await tester.tap(waButton);
-    await tester.pump();
+      expect(find.byIcon(Icons.chat_bubble_rounded), findsNothing);
+      expect(find.text('WhatsApp Sipariş'), findsNothing);
+      expect(find.text('WhatsApp İletişim'), findsNothing);
 
-    expect(whatsappPressed, isTrue);
-  });
+      final inceleButton = find.text('İncele');
+      expect(inceleButton, findsOneWidget);
+      await tester.tap(inceleButton);
+      await tester.pump();
+
+      expect(incelendi, isTrue);
+    },
+  );
 
   testWidgets('6. Kartın onTap davranışı doğru çalışıyor', (
     WidgetTester tester,
@@ -282,10 +288,10 @@ void main() {
         ),
       );
 
-      expect(find.text('Vitrini İncele'), findsOneWidget);
+      expect(find.text('İncele'), findsOneWidget);
       expect(find.text('Kirala'), findsNothing);
 
-      await tester.tap(find.text('Vitrini İncele'));
+      await tester.tap(find.text('İncele'));
       await tester.pump();
       expect(incelendi, isTrue);
     },
