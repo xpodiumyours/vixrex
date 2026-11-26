@@ -136,7 +136,6 @@ export async function POST(request: NextRequest) {
   // Keşfet listesi de tazelenir: yayınlanan vitrin anında görünsün.
   kesfetOnbelleginiYenile();
 
-  // IndexNow bildirimi (fire-and-forget; hata ana yayını kesmez).
   void indexnowBildir([`${getSiteUrl()}/v/${slug}`]);
 
   return NextResponse.json({

@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
+import { readValidIndexNowKey } from "@/lib/indexnow";
 
-// IndexNow anahtar doğrulama ucu (Aktif Görev #6). INDEXNOW_KEY ortam
-// değişkeni tanımlı değilse sistem sessizce pasif kalır (404).
 export async function GET() {
-  const key = (process.env.INDEXNOW_KEY || "").trim();
+  const key = readValidIndexNowKey();
   if (!key) {
     return new NextResponse(null, { status: 404 });
   }

@@ -64,7 +64,7 @@ function productCondition(metadata: ReturnType<typeof normalizeProductMetadata>)
   return typeof raw === "string" ? CONDITION_URLS[raw] : undefined;
 }
 
-function productIsInStock(stockStatus?: string | null, stockQuantity?: number | null) {
+export function productIsInStock(stockStatus?: string | null, stockQuantity?: number | null) {
   if (stockQuantity != null) return stockQuantity > 0;
   const status = String(stockStatus || "")
     .trim()

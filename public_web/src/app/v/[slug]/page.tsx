@@ -680,8 +680,6 @@ export default async function StorePage(props: PageProps) {
     store.shelf_image_url || store.logo_url || "";
   const hasPhysicalLocation =
     store.address && store.latitude != null && store.longitude != null;
-  // Aktif Görev #6: adres/il/ilçe girilmişse koordinat olmasa da PostalAddress
-  // üretilsin (perakende mağaza şeması ve Google Merchant için).
   const hasAddressInfo = Boolean(
     store.address || store.province_name || store.district_name || store.neighborhood_name,
   );
@@ -758,8 +756,6 @@ export default async function StorePage(props: PageProps) {
   const displayAddress = normalizeAddressDisplay(store.address);
 
   const categoryLower = (store.kategori || "").toLowerCase();
-  // Aktif Görev #6: perakende (fiziksel ürün satan) mağazalar için Store alt
-  // tipi; hizmet mağazaları mevcut tipleri korur.
   let businessType = "LocalBusiness";
   if (isServiceStore) {
     if (categoryLower.includes("kuaför") || categoryLower.includes("hair")) {
