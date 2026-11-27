@@ -352,7 +352,7 @@ export default function ProductQuickView({
             description={product.description}
             clampDescription
           >
-            <div className="mt-6 grid gap-2 sm:grid-cols-2">
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
               {whatsappUrl ? (
                 <a
                   href={whatsappUrl}

@@ -16,6 +16,34 @@ export function productMapsUrl(value: string | null | undefined): string | null 
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(clean)}`;
 }
 
+const COGRAFI_OLMAYAN_BOLGE_DESENLERI = [
+  "magaza stogu",
+  "magazada",
+  "stokta",
+  "rafta",
+  "isletmede",
+  "isletme stogu",
+  "depoda",
+  "depo stogu",
+].map((ifade) => new RegExp(`(?:^|\\s)${ifade}(?:$|\\s)`));
+
+export function bolgeHaritadaAranabilirMi(region: string): boolean {
+  const temiz = String(region || "").trim();
+  if (!temiz) return false;
+  const katlanmis = temiz
+    .toLocaleLowerCase("tr-TR")
+    .replace(/ı/g, "i")
+    .replace(/ğ/g, "g")
+    .replace(/ü/g, "u")
+    .replace(/ş/g, "s")
+    .replace(/ö/g, "o")
+    .replace(/ç/g, "c")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+  if (!katlanmis) return false;
+  return !COGRAFI_OLMAYAN_BOLGE_DESENLERI.some((desen) => desen.test(katlanmis));
+}
+
 export function productImageAlt(parts: {
   name?: string | null;
   storeName?: string | null;
@@ -73,7 +101,8 @@ export function ProductLocationPanel({
   storeAddress,
   storeMapUrl,
 }: ProductLocationPanelProps) {
-  const region = String(fulfillmentRegion || "").trim();
+  const rawRegion = String(fulfillmentRegion || "").trim();
+  const region = bolgeHaritadaAranabilirMi(rawRegion) ? rawRegion : "";
   const label = String(storeLocationLabel || "").trim();
   const address = String(storeAddress || "").trim();
   const addressFarkli = Boolean(address) && address !== label;
@@ -296,6 +325,8 @@ export function ProductInfoBody({
         </div>
       ) : null}
 
+      {children}
+
       {facts.length > 0 ? (
         // Ozellikler ince satir listesi olarak cizilir: etiket solda, deger
         // sagda. Onceki iki sutunlu kutu duzeni tek sayida bilgide yaninda
@@ -335,7 +366,6 @@ export function ProductInfoBody({
         </p>
       ) : null}
 
-      {children}
     </>
   );
 }

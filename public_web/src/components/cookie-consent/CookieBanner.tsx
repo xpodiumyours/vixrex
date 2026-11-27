@@ -53,7 +53,7 @@ export function CookieBanner() {
           setReopened(true);
           setDismissed(false);
         }}
-        className="fixed bottom-1 left-2 z-30 text-[11px] text-lp-muted/40 hover:text-lp-text underline bg-transparent border-0 p-1 shadow-none transition-opacity focus:opacity-100"
+        className="fixed bottom-1.5 left-1/2 -translate-x-1/2 z-30 rounded-full bg-lp-surface/85 px-2.5 py-0.5 text-[10px] text-lp-muted/70 hover:text-lp-text underline backdrop-blur-sm focus:opacity-100"
       >
         Çerez tercihleri
       </button>

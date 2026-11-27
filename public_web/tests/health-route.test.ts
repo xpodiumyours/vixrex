@@ -85,14 +85,14 @@ describe("GET /api/health", () => {
     errorSpy.mockRestore();
   });
 
-  it("PayTR yapılandırılmamışsa 503 döner", async () => {
+  it("PayTR yapılandırılmamış ve veritabanı sağlıklıysa 200 döner", async () => {
     mocks.paytrEnv.mockReturnValue(null);
 
     const response = await GET();
     const body = await response.json();
 
-    expect(response.status).toBe(503);
-    expect(body.status).toBe("unhealthy");
+    expect(response.status).toBe(200);
+    expect(body.status).toBe("ok");
     expect(body.checks.paytr).toEqual({ status: "unconfigured" });
   });
 });

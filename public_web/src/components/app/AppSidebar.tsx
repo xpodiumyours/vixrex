@@ -207,7 +207,7 @@ export function AppSidebar() {
         </div>
       </nav>
 
-      <p className="px-4 py-4 text-[11px] font-semibold text-lp-muted">v1.0.0</p>
+      <p className="px-4 pb-8 pt-4 text-[11px] font-semibold text-lp-muted">v1.0.0</p>
     </aside>
   );
 }
