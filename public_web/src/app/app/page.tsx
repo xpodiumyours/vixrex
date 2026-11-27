@@ -350,7 +350,10 @@ export default function AppPage() {
                 if (sonuc.slug) {
                   if (sonuc.yonlendir) await fetch(sonuc.yonlendir, { redirect: "manual" });
                   else await sahipOturumuAc();
-                  router.push(`/v/${sonuc.slug}`);
+                  const faturadanMi =
+                    typeof window !== "undefined" &&
+                    new URLSearchParams(window.location.search).get("fatura") === "1";
+                  router.push(faturadanMi ? "/app/urunler?fatura=1" : `/v/${sonuc.slug}`);
                 } else {
                   await magazalariGetir();
                 }

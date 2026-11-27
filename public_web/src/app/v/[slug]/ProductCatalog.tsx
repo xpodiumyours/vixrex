@@ -25,6 +25,7 @@ import {
   resolveCatalogImage,
 } from "@/lib/products";
 import type { RichProductItem } from "@/lib/richProductItem";
+import { resmiMarkaRafiniAyir } from "@/lib/resmiMarkaRafi";
 import {
   birimFiyatBilgisi,
   buildProductCardFacts,
@@ -306,6 +307,13 @@ export default function ProductCatalog({
     );
   }
 
+  const resmiRaf =
+    currentCategory === "" && currentQuery === ""
+      ? resmiMarkaRafiniAyir(paginatedProducts)
+      : { resmiMarkaAdi: null, resmiUrunler: [] as RichProductItem[], digerUrunler: paginatedProducts };
+
+  const gosterilecekStandartUrunler = resmiRaf.resmiMarkaAdi ? resmiRaf.digerUrunler : paginatedProducts;
+
   return (
     <section>
       {birlesikCipler.length > 1 && (
@@ -336,11 +344,80 @@ export default function ProductCatalog({
         </div>
       )}
 
+      {resmiRaf.resmiMarkaAdi && resmiRaf.resmiUrunler.length > 0 && (
+        <div
+          className="mb-8 rounded-2xl border border-[#294D88] bg-[#102B59] p-4 sm:p-5"
+          data-testid="resmi-marka-rafi"
+        >
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2.5">
+              <span className="inline-flex items-center rounded-full border border-[#10B981]/40 bg-[#10B981]/15 px-3 py-1 text-xs font-bold text-[#10B981]">
+                Resmi Katalogdan Doğrulanmış
+              </span>
+              <h3 className="text-base font-extrabold text-white sm:text-lg">
+                {resmiRaf.resmiMarkaAdi}
+              </h3>
+            </div>
+            <span className="text-xs font-semibold text-slate-300">
+              {resmiRaf.resmiUrunler.length} ürün
+            </span>
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {resmiRaf.resmiUrunler.map((product, idx) => {
+              const pSlug = getProductUrlSlug(product, idx);
+              const pUrl = `/v/${storeSlug}/urun/${pSlug}`;
+              const img = productImageOnly(product);
+              return (
+                <a
+                  key={product.id || pSlug}
+                  href={pUrl}
+                  className="group flex flex-col overflow-hidden rounded-xl border border-[#294D88] bg-[#0B1E40] transition hover:border-[#147DFF]"
+                >
+                  <div className="relative aspect-[16/10] w-full overflow-hidden bg-white">
+                    {img ? (
+                      <Image
+                        src={img}
+                        alt={product.name}
+                        fill
+                        unoptimized
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        className="object-contain p-2 transition duration-200 group-hover:scale-[1.03]"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-slate-400">
+                        Fotoğraf bekleniyor
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex flex-1 flex-col justify-between gap-2 p-3.5">
+                    <p className="line-clamp-2 text-sm font-bold text-white">
+                      {product.name}
+                    </p>
+                    <div className="flex items-center justify-between gap-2 pt-1">
+                      <span className="text-sm font-extrabold text-[#10B981]">
+                        {typeof product.price === "number" && product.price > 0
+                          ? `${product.price} TL`
+                          : typeof product.price === "string" && product.price.trim()
+                            ? product.price
+                            : "Fiyat sor"}
+                      </span>
+                      <span className="rounded-lg bg-[#147DFF] px-3 py-1.5 text-xs font-bold text-white">
+                        Bugün Rafta Ayırt
+                      </span>
+                    </div>
+                  </div>
+                </a>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <div
         className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
         style={{ gap: "var(--v-card-gap, 0.75rem)" }}
       >
-        {paginatedProducts.map((product, index) => {
+        {gosterilecekStandartUrunler.map((product, index) => {
           const globalIndex = from + index;
           const productSlug = getProductUrlSlug(product, globalIndex);
           const productUrl = `/v/${storeSlug}/urun/${productSlug}`;
