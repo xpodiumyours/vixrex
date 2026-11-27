@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { supabase } from "@/lib/supabase";
 import { ziyaretAnahtariniOkuyaUret } from "@/lib/vitrinZiyaretAnahtari";
 import { addToVitrinCart, cartItemKey } from "@/lib/vitrinCart";
@@ -53,6 +53,12 @@ interface ProductCommercePanelProps {
   cartEnabled?: boolean;
   cartDisabledReason?: string;
   enabled?: boolean;
+  /** İç çerçeve (border/padding) gösterilsin mi. Detay sayfasında sipariş kutusuna düz entegre etmek için false. */
+  framed?: boolean;
+  /** Yorumlar bölümü gösterilsin mi. Detay sayfasında yorumlar sol sütuna taşındığı için false. */
+  showComments?: boolean;
+  /** WhatsApp butonu (sipariş kutusunda Adıma Ayırt ile yan yana eşit 2 sütun için). */
+  whatsappSlot?: ReactNode;
 }
 
 export default function ProductCommercePanel({
@@ -68,6 +74,9 @@ export default function ProductCommercePanel({
   cartEnabled = true,
   cartDisabledReason = "",
   enabled = true,
+  framed = true,
+  showComments = true,
+  whatsappSlot = null,
 }: ProductCommercePanelProps) {
   const { executeRecaptcha, hazirla } = useRecaptcha();
   const [social, setSocial] = useState<SocialState>({
@@ -311,7 +320,10 @@ export default function ProductCommercePanel({
   }
 
   return (
-    <section className="mt-5 rounded-2xl border border-white/10 bg-white/[0.03] p-4" aria-label="Ürün etkileşimleri">
+    <section
+      className={`mt-5 ${framed ? "rounded-2xl border border-white/10 bg-white/[0.03] p-4" : ""}`}
+      aria-label="Ürün etkileşimleri"
+    >
       {stockQuantity === 0 ? (
         <button
           type="button"
@@ -365,13 +377,27 @@ export default function ProductCommercePanel({
               ? `Sepete ekle · ${tutarYazisi(priceAmount * adet)}`
               : "Sepete ekle"}
           </button>
-          <button
-            type="button"
-            onClick={openHoldForm}
-            className={`mt-2 min-h-10 w-full rounded-xl px-4 text-xs font-extrabold ${vitrinGorunum.buton.ikincil}`}
-          >
-            Adıma Ayırt (2 Saat)
-          </button>
+
+          {whatsappSlot ? (
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <div>{whatsappSlot}</div>
+              <button
+                type="button"
+                onClick={openHoldForm}
+                className={`flex min-h-11 items-center justify-center rounded-xl px-3 text-xs font-extrabold ${vitrinGorunum.buton.ikincil}`}
+              >
+                Adıma Ayırt (2 Saat)
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={openHoldForm}
+              className={`mt-2 min-h-10 w-full rounded-xl px-4 text-xs font-extrabold ${vitrinGorunum.buton.ikincil}`}
+            >
+              Adıma Ayırt (2 Saat)
+            </button>
+          )}
           {sepetTeyidi ? (
             <p aria-live="polite" className={`mt-2 text-center text-xs font-bold ${vitrinGorunum.durum.teyit}`}>
               {sepetTeyidi}
@@ -469,11 +495,12 @@ export default function ProductCommercePanel({
         {social.liked ? "♥ Beğendin" : "♡ Beğen"} · {social.like_count}
       </button>
 
-      <div className="mt-4 border-t border-white/10 pt-4">
-        <div className="flex items-center justify-between gap-3">
-          <h3 className="text-sm font-extrabold text-white">Yorumlar</h3>
-          <span className="text-xs font-bold text-white/40">{social.comment_count}</span>
-        </div>
+      {showComments ? (
+        <div className="mt-4 border-t border-white/10 pt-4">
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="text-sm font-extrabold text-white">Yorumlar</h3>
+            <span className="text-xs font-bold text-white/40">{social.comment_count}</span>
+          </div>
 
         <div className="mt-3 flex gap-2">
           <input
@@ -529,6 +556,7 @@ export default function ProductCommercePanel({
           <p className="mt-3 text-xs font-medium text-white/40">Henüz yorum yok.</p>
         )}
       </div>
+      ) : null}
 
       {message ? <p className="mt-3 text-xs font-semibold text-blue-200" role="status">{message}</p> : null}
     </section>

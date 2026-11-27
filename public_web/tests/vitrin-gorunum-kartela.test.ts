@@ -98,9 +98,7 @@ describe("vitrin görünüm kartelası", () => {
     );
     expect(pencere).toContain("rounded-lg border bg-white transition");
 
-    expect(detay).toContain(
-      '${!telifKalkanli && currentImage ? "bg-white" : "bg-slate-950"}',
-    );
-    expect(detay).toContain("rounded-xl border bg-white transition");
+    expect(detay).toContain("rounded-2xl bg-slate-950");
+    expect(detay).toContain("rounded-xl border bg-slate-950 transition");
   });
 });

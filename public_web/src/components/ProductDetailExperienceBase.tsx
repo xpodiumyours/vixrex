@@ -11,8 +11,11 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { TrackedWhatsAppLink } from "@/components/TrackedWhatsAppLink";
 import ProductCommercePanel from "@/components/ProductCommercePanel";
+import ProductComments from "@/components/ProductComments";
+import ManufacturerProductSource from "@/components/ManufacturerProductSource";
 import {
   ProductInfoBody,
+  ProductLocationPanel,
   productImageAlt,
   productLocationLabel,
   productMapsUrl,
@@ -118,8 +121,8 @@ export default function ProductDetailExperience({
   productSlug,
   detailFacts,
   whatsappUrl = null,
-  instagramUrl = null,
-  sourceUrl = null,
+  instagramUrl: _instagramUrl = null,
+  sourceUrl: _sourceUrl = null,
   storeAddress = null,
   storeDistrictName = null,
   storeNeighborhoodName = null,
@@ -243,64 +246,123 @@ export default function ProductDetailExperience({
     selectedVariantText,
   );
 
+  const whatsappButton = selectedWhatsappUrl ? (
+    <TrackedWhatsAppLink
+      href={selectedWhatsappUrl}
+      storeSlug={storeSlug}
+      productSlug={productSlug}
+      clickLocation="product_detail"
+      className={`flex min-h-11 items-center justify-center rounded-xl px-3 text-xs font-extrabold ${vitrinGorunum.buton.whatsapp}`}
+    >
+      {"WhatsApp'tan ürünü sor"}
+    </TrackedWhatsAppLink>
+  ) : null;
+
   return (
     <main className="min-h-screen bg-[#0c0d10] px-4 py-6 text-[#f4f1ea] sm:px-6 sm:py-10">
-      <section className="mx-auto w-full max-w-[1120px]">
+      <section className="mx-auto w-full max-w-[1140px]">
         <Link
           href={storeUrl}
-          className="mb-5 inline-flex rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-xs font-extrabold text-white/70 transition hover:border-blue-500/30 hover:text-white"
+          className="mb-3 inline-flex rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-xs font-extrabold text-white/70 transition hover:border-blue-500/30 hover:text-white"
         >
           ← {storeName} vitrinine dön
         </Link>
 
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,0.92fr)_minmax(360px,0.78fr)]">
-          <div className={`rounded-3xl ${vitrinGorunum.yuzey.panel} p-2.5`}>
-            <div className={`relative aspect-[4/5] overflow-hidden rounded-2xl ${!telifKalkanli && currentImage ? "bg-white" : "bg-slate-950"}`}>
-              {telifKalkanli ? (
-                <TelifKalkani />
-              ) : currentImage ? (
-                <Image
-                  src={currentImage}
-                  alt={gorselAlt}
-                  fill
-                  sizes="(max-width: 1024px) 100vw, 55vw"
-                  className="object-contain p-3"
-                  priority
-                />
-              ) : (
-                <div className="flex h-full items-center justify-center text-sm font-bold text-white/40">
-                  {isService ? "Hizmet görseli bekleniyor" : "Ürün görseli bekleniyor"}
-                </div>
-              )}
-            </div>
-            {gallery.length > 1 ? (
-              <div className="mt-2.5 flex gap-2 overflow-x-auto pb-1">
-                {gallery.map((imageUrl, index) => (
-                  <button
-                    key={`${imageUrl}-${index}`}
-                    type="button"
-                    onClick={() => setImageIndex(index)}
-                    className={`relative h-16 w-14 shrink-0 overflow-hidden rounded-xl border bg-white transition ${
-                      index === imageIndex
-                        ? "border-blue-400 ring-2 ring-blue-400/15"
-                        : "border-white/10 opacity-70 hover:opacity-100"
-                    }`}
-                    aria-label={`${index + 1}. görseli göster`}
-                  >
-                    <Image
-                      src={imageUrl}
-                      alt={`${gorselAlt} - ${index + 1}. fotoğraf`}
-                      fill
-                      sizes="56px"
-                      className="object-contain p-1"
-                    />
-                  </button>
-                ))}
+        <nav aria-label="Yön izi" className="mb-5 flex flex-wrap items-center gap-1.5 text-[11px] font-semibold text-slate-400">
+          <span>{storeName}</span>
+          {product.category ? (
+            <>
+              <span className="text-slate-600">/</span>
+              <span>{product.category}</span>
+            </>
+          ) : null}
+          <span className="text-slate-600">/</span>
+          <span className="font-bold text-slate-200">{product.name}</span>
+        </nav>
+
+        <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,0.92fr)_minmax(320px,0.78fr)]">
+          {/* SOL SÜTUN */}
+          <div className="space-y-5">
+            <div className={`rounded-3xl ${vitrinGorunum.yuzey.panel} p-2.5`}>
+              <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-slate-950">
+                {telifKalkanli ? (
+                  <TelifKalkani />
+                ) : currentImage ? (
+                  <Image
+                    src={currentImage}
+                    alt={gorselAlt}
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 55vw"
+                    className="object-contain"
+                    priority
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-sm font-bold text-white/40">
+                    {isService ? "Hizmet görseli bekleniyor" : "Ürün görseli bekleniyor"}
+                  </div>
+                )}
               </div>
-            ) : null}
+              {gallery.length > 1 ? (
+                <div className="mt-2.5 flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:gap-2">
+                  {gallery.map((imageUrl, index) => (
+                    <button
+                      key={`${imageUrl}-${index}`}
+                      type="button"
+                      onClick={() => setImageIndex(index)}
+                      className={`relative h-16 w-14 shrink-0 overflow-hidden rounded-xl border bg-slate-950 transition lg:h-20 lg:w-full ${
+                        index === imageIndex
+                          ? "border-blue-400 ring-2 ring-blue-400/15"
+                          : "border-white/10 opacity-70 hover:opacity-100"
+                      }`}
+                      aria-label={`${index + 1}. görseli göster`}
+                    >
+                      <Image
+                        src={imageUrl}
+                        alt={`${gorselAlt} - ${index + 1}. fotoğraf`}
+                        fill
+                        sizes="56px"
+                        className="object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+
+            <section className={`rounded-3xl ${vitrinGorunum.yuzey.panel} p-5 sm:p-6`}>
+              <h2 className="text-sm font-extrabold text-white">Ürün Özellikleri ve Açıklama</h2>
+              {visibleDetailFacts.length > 0 ? (
+                <dl className="mt-3 flex flex-col">
+                  {visibleDetailFacts.map((fact) => (
+                    <div
+                      key={fact.key}
+                      className="flex items-baseline justify-between gap-4 border-b border-white/8 py-2 last:border-b-0"
+                    >
+                      <dt className="shrink-0 text-[11px] font-semibold text-slate-400">{fact.label}</dt>
+                      <dd className="min-w-0 break-words text-right text-xs font-bold leading-5 text-slate-200">
+                        {fact.value}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              ) : null}
+              {product.description ? (
+                <p className="mt-4 whitespace-pre-wrap text-sm font-medium leading-6 text-slate-300">
+                  {product.description}
+                </p>
+              ) : null}
+              <ManufacturerProductSource source={metadata.manufacturerSource} />
+            </section>
+
+            <ProductComments
+              storeSlug={storeSlug}
+              productSlug={productSlug}
+              enabled={!isService}
+            />
           </div>
 
-          <aside className={`rounded-3xl ${vitrinGorunum.yuzey.panel} p-5 sm:p-7`}>
+          {/* SAĞ SÜTUN — yapışkan sipariş kutusu */}
+          <aside className={`rounded-3xl ${vitrinGorunum.yuzey.panel} p-5 sm:p-6 lg:sticky lg:top-4`}>
             <ProductInfoBody
               isService={isService}
               category={product.category}
@@ -318,63 +380,42 @@ export default function ProductDetailExperience({
               isOptionAvailable={isOptionAvailable}
               stockStatus={stockStatus}
               stockQuantity={stockQuantity}
-              facts={visibleDetailFacts}
-              manufacturerSource={metadata.manufacturerSource}
+              facts={[]}
+              manufacturerSource={undefined}
               fulfillmentRegion={fulfillmentRegion}
-              storeLocationLabel={storeLocationLabel}
-              storeAddress={storeAddress}
-              storeMapUrl={storeMapUrl}
-              description={product.description}
+              storeLocationLabel={null}
+              storeAddress={null}
+              storeMapUrl={null}
+              description={null}
             >
-              <div className="mt-6 grid gap-2 sm:grid-cols-2">
-                {selectedWhatsappUrl ? (
-                  <TrackedWhatsAppLink
-                    href={selectedWhatsappUrl}
-                    storeSlug={storeSlug}
-                    productSlug={productSlug}
-                    clickLocation="product_detail"
-                    className={`flex min-h-12 items-center justify-center rounded-xl px-5 text-center text-sm font-extrabold ${vitrinGorunum.buton.whatsapp}`}
-                  >
-                    {isService ? "WhatsApp’tan hizmeti sor" : "WhatsApp’tan ürünü sor"}
-                  </TrackedWhatsAppLink>
-                ) : null}
-                {instagramUrl ? (
-                  <Link
-                    href={instagramUrl}
-                    className={`flex min-h-12 items-center justify-center rounded-xl px-5 text-center text-sm font-extrabold ${vitrinGorunum.buton.ikincil}`}
-                  >
-                    Instagram
-                  </Link>
-                ) : null}
-              </div>
-              {sourceUrl ? (
-                <Link
-                  href={sourceUrl}
-                  className="mt-2 flex min-h-11 items-center justify-center rounded-xl border border-white/10 px-5 text-center text-xs font-extrabold text-white/60"
-                >
-                  Kaynak paylaşımı
-                </Link>
-              ) : null}
-
-              <div className="mt-6 border-t border-white/10 pt-5">
-                <ProductCommercePanel
-                  storeSlug={storeSlug}
-                  productSlug={productSlug}
-                  productName={product.name}
-                  imageUrl={telifKalkanli ? null : currentImage}
-                  priceText={displayedPrice}
-                  priceAmount={fiyatTutar}
-                  selectedVariantText={selectedVariantText}
-                  selectedVariantId={selectedVariant?.id ?? null}
-                  stockQuantity={stockQuantity}
-                  cartEnabled={!isService && !tukendi}
-                  cartDisabledReason={
-                    isService
-                      ? "Hizmetler sipariş sepetine eklenmez; WhatsApp üzerinden bilgi alabilirsin."
-                      : tukendi
-                        ? "Bu ürün şu anda tükendi."
-                        : ""
-                  }
+              <ProductCommercePanel
+                storeSlug={storeSlug}
+                productSlug={productSlug}
+                productName={product.name}
+                imageUrl={telifKalkanli ? null : currentImage}
+                priceText={displayedPrice}
+                priceAmount={fiyatTutar}
+                selectedVariantText={selectedVariantText}
+                selectedVariantId={selectedVariant?.id ?? null}
+                stockQuantity={stockQuantity}
+                cartEnabled={!isService && !tukendi}
+                cartDisabledReason={
+                  isService
+                    ? "Hizmetler sipariş sepetine eklenmez; WhatsApp üzerinden bilgi alabilirsin."
+                    : tukendi
+                      ? "Bu ürün şu anda tükendi."
+                      : ""
+                }
+                framed={false}
+                showComments={false}
+                whatsappSlot={whatsappButton}
+              />
+              <div className="mt-4">
+                <ProductLocationPanel
+                  isService={isService}
+                  storeLocationLabel={storeLocationLabel}
+                  storeAddress={storeAddress}
+                  storeMapUrl={storeMapUrl}
                 />
               </div>
             </ProductInfoBody>

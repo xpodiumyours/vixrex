@@ -68,16 +68,13 @@ interface ProductLocationPanelProps {
 
 export function ProductLocationPanel({
   isService,
-  fulfillmentRegion,
   storeLocationLabel,
   storeAddress,
   storeMapUrl,
 }: ProductLocationPanelProps) {
-  const region = String(fulfillmentRegion || "").trim();
   const label = String(storeLocationLabel || "").trim();
   const address = String(storeAddress || "").trim();
   const addressFarkli = Boolean(address) && address !== label;
-  const regionMapUrl = productMapsUrl(region);
 
   return (
     <div className="mt-5 rounded-2xl border border-blue-500/20 bg-gradient-to-br from-blue-500/10 to-cyan-500/5 p-4">
@@ -86,26 +83,8 @@ export function ProductLocationPanel({
           <MapPinIcon className="h-4 w-4 text-blue-300" aria-hidden="true" />
         </div>
         <div className="min-w-0 flex-1">
-          {region ? (
-            <div>
-              <p className="text-[10px] font-extrabold uppercase tracking-wider text-blue-300">
-                {isService ? "Hizmet bölgesi" : "Ürün konumu / teslim bölgesi"}
-              </p>
-              <p className="mt-1 text-xs font-semibold leading-5 text-slate-200">{region}</p>
-              {regionMapUrl ? (
-                <a
-                  href={regionMapUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-1.5 inline-flex text-xs font-extrabold text-blue-400 hover:text-blue-300"
-                >
-                  Haritada ara →
-                </a>
-              ) : null}
-            </div>
-          ) : null}
           {label || address ? (
-            <div className={region ? "mt-3 border-t border-white/10 pt-3" : ""}>
+            <div>
               <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
                 İşletme konumu
               </p>
@@ -127,7 +106,7 @@ export function ProductLocationPanel({
               ) : null}
             </div>
           ) : null}
-          {!region && !label && !address ? (
+          {!label && !address ? (
             <p className="text-xs font-semibold leading-5 text-slate-300">
               Bu {isService ? "hizmet" : "ürün"} için konum bilgisi eklenmemiş.
             </p>
