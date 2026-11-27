@@ -493,6 +493,18 @@ function groundingGorselListesi(
   return geminiGroundingBilgileriniCikar(aday, resmiAlan, izinliGorselAlanlari).gorselUrller;
 }
 
+const LOGO_URL_DESENI =
+  /(?:^|[/._-])(logo|brand[-_]?logo|marka[-_]?logo|favicon|site[-_]?logo|header[-_]?logo)(?:$|[/._-])/i;
+
+export function logoGorselUrliMi(adres: string): boolean {
+  try {
+    const url = new URL(adres);
+    return LOGO_URL_DESENI.test(url.pathname);
+  } catch {
+    return false;
+  }
+}
+
 export function gorselAdaylariniSuz(args: {
   adaylar: readonly unknown[];
   seciliGorsel?: unknown;
@@ -504,6 +516,7 @@ export function gorselAdaylariniSuz(args: {
   for (const ham of hamSirali) {
     const url = metinDegeri(ham);
     if (!url || !url.startsWith("https://") || pazaryeriVeyaAraciMi(url)) continue;
+    if (logoGorselUrliMi(url)) continue;
     if (!resmiAlanAdiUygunMu(url, args.tespitEdilenAlan, { gorsel: true, izinliGorselAlanlari: args.izinliGorselAlanlari })) {
       continue;
     }

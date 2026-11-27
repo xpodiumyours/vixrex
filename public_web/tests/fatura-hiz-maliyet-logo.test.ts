@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
-import sharp from "sharp";
 import { googleFaturaUrunKartlariVeKullanimUret } from "../src/lib/faturaPriz";
-import { kaynakGorseliniDogrula } from "../src/lib/faturaGorsel";
+import { gorselAdaylariniSuz, logoGorselUrliMi } from "../src/lib/faturaUrunHazirlama";
 
 describe("fatura hiz, maliyet ve logo kilidi", () => {
   it("Gemini istegine varsayilan LOW thinkingConfig gonderir ve usageMetadata doner", async () => {
@@ -77,29 +76,20 @@ describe("fatura hiz, maliyet ve logo kilidi", () => {
     }
   });
 
-  it("URL adinda logo gecen gorseli indirip yuklemeden eler", async () => {
-    const sonuc = await kaynakGorseliniDogrula("https://cdn.example.com/assets/seher-logo.png", {
-      fetcher: async () => {
-        throw new Error("Logo URL indirilmemeli");
-      },
-      resolveHost: async () => ["93.184.216.34"],
-    });
-    expect(sonuc.tamam).toBe(false);
-    expect(sonuc.sebep).toBe("logo-veya-yer-tutucu");
-  });
+  it("URL adinda logo veya favicon gecen firma logosu adaylarini eler, gercek urun fotografini korur", () => {
+    expect(logoGorselUrliMi("https://sehermensucat.com/assets/seher-logo.png")).toBe(true);
+    expect(logoGorselUrliMi("https://cdn.myikas.com/images/header_logo.webp")).toBe(true);
+    expect(logoGorselUrliMi("https://cdn.myikas.com/images/ter0126-front.webp")).toBe(false);
 
-  it("asiri yatay banner/logo oranina (>2.2) sahip gorseli eler", async () => {
-    const yatayLogo = await sharp({
-      create: { width: 900, height: 220, channels: 3, background: { r: 255, g: 255, b: 255 } },
-    })
-      .png()
-      .toBuffer();
-
-    const sonuc = await kaynakGorseliniDogrula("https://cdn.myikas.com/images/product-1.png", {
-      fetcher: async () => new Response(new Uint8Array(yatayLogo), { status: 200 }),
-      resolveHost: async () => ["93.184.216.34"],
+    const suzulen = gorselAdaylariniSuz({
+      seciliGorsel: "https://sehermensucat.com/assets/seher-logo.png",
+      adaylar: [
+        "https://sehermensucat.com/favicon.ico",
+        "https://cdn.myikas.com/images/ter0126-front.webp",
+      ],
+      tespitEdilenAlan: "sehermensucat.com",
     });
-    expect(sonuc.tamam).toBe(false);
-    expect(sonuc.sebep).toBe("logo-veya-yer-tutucu");
+
+    expect(suzulen).toEqual(["https://cdn.myikas.com/images/ter0126-front.webp"]);
   });
 });

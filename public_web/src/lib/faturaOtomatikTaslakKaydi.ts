@@ -60,7 +60,7 @@ async function ilkSahipDurumu(
   return { durum: sahipDurumunuTemizle(guncel.data.owner_state), bagli: Boolean(guncel.data.product_id) };
 }
 
-const ESZAMANLI_TASLAK_SAYISI = 8;
+const ESZAMANLI_TASLAK_SAYISI = 4;
 
 function kanonikSatirIndeksi(satir: KayitliIslem["satirlar"][number], sira: number, toplam: number): number | null {
   const ham = satir.katalog?.canonicalRowId ?? satir.canonicalRowId;

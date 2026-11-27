@@ -182,10 +182,6 @@ async function govdeyiSinirlaOku(
   return { durum: "ok", bayt: new Uint8Array(Buffer.concat(parcalar)) };
 }
 
-const LOGO_URL_DESENI =
-  /(?:^|[/._-])(logo|brand[-_]?logo|marka[-_]?logo|favicon|site[-_]?logo|header[-_]?logo)(?:$|[/._-])/i;
-const MAKS_LOGO_EN_BOY_ORANI = 2.2;
-
 export async function kaynakGorseliniDogrula(
   adres: string,
   bagimliliklar: GorselBagimliliklari = {},
@@ -201,9 +197,6 @@ export async function kaynakGorseliniDogrula(
   }
   if (url.protocol !== "https:" || url.username || url.password || url.port) {
     return { tamam: false, sebep: "acilmadi" };
-  }
-  if (LOGO_URL_DESENI.test(url.pathname)) {
-    return { tamam: false, sebep: "logo-veya-yer-tutucu" };
   }
   if (!(await hostCozumlenipGuvenliMi(url.hostname, resolveHost))) {
     return { tamam: false, sebep: "erisilemedi" };
@@ -270,9 +263,6 @@ export async function kaynakGorseliniDogrula(
   }
 
   if (genislik <= 0 || yukseklik <= 0) return { tamam: false, sebep: "gorsel-degil" };
-  if (genislik / yukseklik > MAKS_LOGO_EN_BOY_ORANI) {
-    return { tamam: false, sebep: "logo-veya-yer-tutucu" };
-  }
 
   return { tamam: true, genislik, yukseklik, tur, bayt };
 }
