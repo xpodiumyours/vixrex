@@ -41,7 +41,7 @@ describe("kaynak görseli doğrulama", () => {
     expect(sonuc.genislik).toBe(1200);
   });
 
-  it("yalnız teknik erişim sorunu reddedilir; Luna'nın seçtiği resim kodla yeniden yargılanmaz", async () => {
+  it("erişim hatası ve firma logosu reddedilir; diğer geçerli görseller kabul edilir", async () => {
     const kirik = "https://firma.example/yok.jpg";
     const kucuk = "https://firma.example/kucuk.jpg";
     const bos = "https://firma.example/beyaz.jpg";
@@ -55,10 +55,13 @@ describe("kaynak görseli doğrulama", () => {
     expect((await kaynakGorseliniDogrula(kirik, { fetcher, resolveHost })).sebep).toBe("acilmadi");
     expect((await kaynakGorseliniDogrula(kucuk, { fetcher, resolveHost })).tamam).toBe(true);
     expect((await kaynakGorseliniDogrula(bos, { fetcher, resolveHost })).tamam).toBe(true);
-    expect((await kaynakGorseliniDogrula(logo, { fetcher, resolveHost })).tamam).toBe(true);
+    expect(await kaynakGorseliniDogrula(logo, { fetcher, resolveHost })).toEqual({
+      tamam: false,
+      sebep: "logo-veya-yer-tutucu",
+    });
   });
 
-  it("görsel olmayan içerik reddedilir, resmin biçimiyle ürün kimliği belirlenmez", async () => {
+  it("görsel olmayan içerik ve aşırı en-boy oranlı banner reddedilir", async () => {
     const html = "https://firma.example/sayfa.jpg";
     const banner = "https://firma.example/kapak.jpg";
     const fetcher = fetcherIle({
@@ -67,7 +70,10 @@ describe("kaynak görseli doğrulama", () => {
     });
 
     expect((await kaynakGorseliniDogrula(html, { fetcher, resolveHost })).sebep).toBe("gorsel-degil");
-    expect((await kaynakGorseliniDogrula(banner, { fetcher, resolveHost })).tamam).toBe(true);
+    expect(await kaynakGorseliniDogrula(banner, { fetcher, resolveHost })).toEqual({
+      tamam: false,
+      sebep: "logo-veya-yer-tutucu",
+    });
   });
 
   it("ağ hatası 'erişilemedi' olur; içerik hatasıyla karıştırılmaz", async () => {
