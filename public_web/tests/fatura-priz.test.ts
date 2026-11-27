@@ -23,6 +23,7 @@ import {
   geminiPrizAktifMi,
   googleFaturaUrunKartiIstemi,
   googleFaturaUrunKartlariUret,
+  googleFaturaUrunKartlariVeKullanimUret,
 } from "@/lib/faturaPriz";
 
 afterEach(() => {
@@ -789,5 +790,260 @@ describe("fatura priz - tak-cikar", () => {
     expect(kartlar[0].selected_image_url).toBeNull();
     expect(kartlar[0].image_urls).toEqual([]);
     expect(kartlar[0].grounding_sources).toEqual([]);
+  });
+
+  it("usageMetadata dolu Gemini yanitinda islemKaydet aramaDurumu.presetCevabi.asamaKullanimlari.okuma tum alanlari ve kart:null ile yazar", async () => {
+    vi.stubEnv("OPENROUTER_API_KEY", "");
+    vi.stubEnv("FATURA_PRIZ_API_KEY", "");
+    vi.stubEnv("GEMINI_API_KEY", "AIzaSyUsageKey");
+
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        modelVersion: "gemini-3.8-flash-preview",
+        responseId: "resp_gemini_987654",
+        usageMetadata: {
+          promptTokenCount: 1840,
+          candidatesTokenCount: 620,
+          thoughtsTokenCount: 310,
+          toolUsePromptTokenCount: 450,
+          totalTokenCount: 3220,
+        },
+        candidates: [
+          {
+            content: {
+              parts: [
+                {
+                  text: JSON.stringify({
+                    items: [
+                      {
+                        row_id: "1",
+                        title: "Tutku Erkek Ribana Atlet",
+                        brand: "Tutku",
+                        model: "0101",
+                        barcode: "8691234500101",
+                        variant: "Beyaz",
+                        size: "L",
+                        quantity: 12,
+                        unit: "adet",
+                        unit_price: 85,
+                        category: "İç Giyim",
+                        short_description: "Pamuklu erkek atlet",
+                        official_domain: "tutku.com.tr",
+                        official_product_url: "https://www.tutku.com.tr/urun/0101",
+                        selected_image_url: "https://www.tutku.com.tr/products/0101-beyaz.jpg",
+                        image_urls: ["https://www.tutku.com.tr/products/0101-beyaz.jpg"],
+                      },
+                    ],
+                  }),
+                },
+              ],
+            },
+          },
+        ],
+      }),
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+    mockIslemKaydet.mockResolvedValue("islem-usage-1");
+
+    const admin = {
+      from: (table: string) => ({
+        select: () => ({
+          eq: () => ({
+            maybeSingle: async () => ({
+              data: table === "stores" ? { slug: "kullanim-magaza" } : null,
+              error: null,
+            }),
+          }),
+        }),
+      }),
+      rpc: vi.fn(),
+    } as unknown as SupabaseClient;
+
+    const sonucId = await faturayiArkaPlanaGonder(
+      admin,
+      "store-usage-1",
+      "parmak-usage-1",
+      ["data:image/png;base64,iVBORw0KGgo="],
+    );
+
+    expect(sonucId).toBe("islem-usage-1");
+    expect(mockIslemKaydet).toHaveBeenCalledTimes(1);
+    const kayitGirdisi = mockIslemKaydet.mock.calls[0][0];
+    expect(kayitGirdisi.aramaDurumu).toEqual({
+      erisimHatasi: false,
+      sonrakiSatir: 1,
+      presetCevabi: {
+        asamaKullanimlari: {
+          okuma: {
+            saglayici: "gemini",
+            model: "gemini-3.8-flash-preview",
+            generationId: "resp_gemini_987654",
+            maliyet: null,
+            gercekMaliyet: null,
+            girdiToken: 1840,
+            ciktiToken: 620,
+            akilToken: 310,
+            aracGirdiToken: 450,
+            toplamToken: 3220,
+          },
+          kart: null,
+        },
+      },
+    });
+  });
+
+  it("usageMetadata eksik veya bozuk (negatif/NaN/string) oldugunda fail-closed 0 doner ve kartlar uretilir", async () => {
+    vi.stubEnv("GEMINI_API_KEY", "AIzaSyBrokenUsageKey");
+    const ornekKart = {
+      row_id: "1",
+      title: "Berrak Bayan Atlet",
+      brand: "Berrak",
+      model: "1001",
+      barcode: null,
+      variant: "Siyah",
+      size: "M",
+      quantity: 6,
+      unit: "adet",
+      unit_price: 90,
+      category: "İç Giyim",
+      short_description: "Pamuklu atlet",
+      official_domain: "berrak.com.tr",
+      official_product_url: "https://www.berrak.com.tr/urun/1001",
+      selected_image_url: "https://www.berrak.com.tr/products/atlet-1001.jpg",
+      image_urls: ["https://www.berrak.com.tr/products/atlet-1001.jpg"],
+    };
+
+    const eksikMetaFetcher = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        candidates: [{ content: { parts: [{ text: JSON.stringify({ items: [ornekKart] }) }] } }],
+      }),
+    })) as unknown as typeof fetch;
+
+    const eksikSonuc = await googleFaturaUrunKartlariVeKullanimUret(
+      "data:image/png;base64,AA==",
+      eksikMetaFetcher,
+    );
+    expect(eksikSonuc.kartlar).toHaveLength(1);
+    expect(eksikSonuc.kullanim).toEqual({
+      saglayici: "gemini",
+      model: "gemini-3.8-flash",
+      generationId: null,
+      maliyet: null,
+      gercekMaliyet: null,
+      girdiToken: 0,
+      ciktiToken: 0,
+      akilToken: 0,
+      aracGirdiToken: 0,
+      toplamToken: 0,
+    });
+
+    const bozukMetaFetcher = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        modelVersion: "  ",
+        responseId: 12345,
+        usageMetadata: {
+          promptTokenCount: -120,
+          candidatesTokenCount: Number.NaN,
+          thoughtsTokenCount: "450",
+          toolUsePromptTokenCount: Number.POSITIVE_INFINITY,
+          totalTokenCount: -1,
+        },
+        candidates: [{ content: { parts: [{ text: JSON.stringify({ items: [ornekKart] }) }] } }],
+      }),
+    })) as unknown as typeof fetch;
+
+    const bozukSonuc = await googleFaturaUrunKartlariVeKullanimUret(
+      "data:image/png;base64,AA==",
+      bozukMetaFetcher,
+    );
+    expect(bozukSonuc.kartlar).toHaveLength(1);
+    expect(bozukSonuc.kullanim).toEqual({
+      saglayici: "gemini",
+      model: "gemini-3.8-flash",
+      generationId: null,
+      maliyet: null,
+      gercekMaliyet: null,
+      girdiToken: 0,
+      ciktiToken: 0,
+      akilToken: 0,
+      aracGirdiToken: 0,
+      toplamToken: 0,
+    });
+  });
+
+  it("googleFaturaUrunKartlariUret yalniz logo URL'i geldiginde selected_image_url null ve image_urls bos dondurur, urun fotografini korur", async () => {
+    vi.stubEnv("GEMINI_API_KEY", "AIzaSyLogoFilterKey");
+    const logoFetcher = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        candidates: [
+          {
+            content: {
+              parts: [
+                {
+                  text: JSON.stringify({
+                    items: [
+                      {
+                        row_id: "1",
+                        title: "Sadece Logolu Urun",
+                        brand: "Berrak",
+                        model: "2001",
+                        barcode: null,
+                        variant: null,
+                        size: null,
+                        quantity: 1,
+                        unit: "adet",
+                        unit_price: 100,
+                        category: "İç Giyim",
+                        short_description: "Aciklama",
+                        official_domain: "berrak.com.tr",
+                        official_product_url: "https://www.berrak.com.tr/urun/2001",
+                        selected_image_url: "https://www.berrak.com.tr/theme-images/site-logo.png",
+                        image_urls: [
+                          "https://www.berrak.com.tr/theme-images/site-logo.png",
+                          "https://www.berrak.com.tr/assets/berrak-logo-dark.png",
+                          "https://www.berrak.com.tr/favicon.ico",
+                          "https://www.berrak.com.tr/media/marka.svg",
+                        ],
+                      },
+                      {
+                        row_id: "2",
+                        title: "Logo Baskili Tisort",
+                        brand: "Mavi",
+                        model: "065123",
+                        barcode: null,
+                        variant: "Mavi",
+                        size: "M",
+                        quantity: 2,
+                        unit: "adet",
+                        unit_price: 300,
+                        category: "Tişört",
+                        short_description: "Pamuklu tişört",
+                        official_domain: "mavi.com",
+                        official_product_url: "https://www.mavi.com/urun/065123",
+                        selected_image_url: "https://www.mavi.com/theme-images/header-logo.png",
+                        image_urls: [
+                          "https://www.mavi.com/products/mavi-logo-baskili-tisort-065123.jpg",
+                        ],
+                      },
+                    ],
+                  }),
+                },
+              ],
+            },
+          },
+        ],
+      }),
+    })) as unknown as typeof fetch;
+
+    const kartlar = await googleFaturaUrunKartlariUret("data:image/png;base64,AA==", logoFetcher);
+    expect(kartlar).toHaveLength(2);
+    expect(kartlar[0].selected_image_url).toBeNull();
+    expect(kartlar[0].image_urls).toEqual([]);
+    expect(kartlar[1].selected_image_url).toBe("https://www.mavi.com/products/mavi-logo-baskili-tisort-065123.jpg");
+    expect(kartlar[1].image_urls).toEqual(["https://www.mavi.com/products/mavi-logo-baskili-tisort-065123.jpg"]);
   });
 });

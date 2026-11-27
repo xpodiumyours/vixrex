@@ -255,6 +255,24 @@ export interface GoogleFaturaUrunKarti {
   grounding_sources: string[];
 }
 
+export interface GoogleFaturaKullanim {
+  saglayici: "gemini";
+  model: string;
+  generationId: string | null;
+  maliyet: null;
+  gercekMaliyet: null;
+  girdiToken: number;
+  ciktiToken: number;
+  akilToken: number;
+  aracGirdiToken: number;
+  toplamToken: number;
+}
+
+export interface GoogleFaturaUrunKartlariSonucu {
+  kartlar: GoogleFaturaUrunKarti[];
+  kullanim: GoogleFaturaKullanim;
+}
+
 export const GOOGLE_FATURA_URUN_KARTI_SEMASI = {
   type: "object",
   additionalProperties: false,
@@ -317,6 +335,7 @@ const GOOGLE_FATURA_URUN_KARTI_ISTEMI = [
   "Ürünün birim alış fiyatını faturadan kâr marjı verisi olarak okuyup sayısal değerle unit_price alanına yaz (okunamazsa null döndür); alış fiyatını short_description veya title alanlarına yazma.",
   "Esnafın kartında official_domain, official_product_url, selected_image_url ve image_urls alanları için Trendyol, Hepsiburada, N11, Amazon, Çiçeksepeti, PttAVM, Akakçe, Cimri, Epey, Sahibinden gibi pazaryeri veya aracı siteleri kesinlikle kullanma ve döndürme (yalnızca resmî üretici/marka sitesi ve resmî ürün/CDN görselleri kabul edilir); ancak ürünün hangi markaya ait olduğunu (brand) tespit ederken üreticinin kendi sitesinde listelenmeyen kodlar için pazaryeri veya toptancı sayfalarındaki ürün başlıklarından yararlanabilirsin.",
   "Doğrulanmış bir resmî ürün sayfası bulunamazsa tahmin yürütme; official_domain, official_product_url ve selected_image_url alanlarını null, image_urls alanını [] döndür.",
+  "selected_image_url ve image_urls alanlarına firma/marka logosu, favicon, tema/başlık görseli, banner, ikon, yer tutucu veya SVG/ICO dosyası kesinlikle seçme; gerçek ürün fotoğrafı yoksa selected_image_url alanını null, image_urls alanını [] döndür.",
 ].join("\n");
 
 export function googleFaturaUrunKartiIstemi(): string {
@@ -461,20 +480,50 @@ function googleFaturaYanitiniCoz(veri: unknown): GoogleFaturaUrunKarti[] {
   return kartlar;
 }
 
-export async function googleFaturaUrunKartlariUret(
+function guvenliTokenSayisi(deger: unknown): number {
+  return typeof deger === "number" && Number.isFinite(deger) && deger >= 0 ? Math.trunc(deger) : 0;
+}
+
+function googleFaturaKullaniminiCoz(veri: Record<string, unknown> | null): GoogleFaturaKullanim {
+  const hamMeta = veri?.usageMetadata;
+  const meta =
+    hamMeta && typeof hamMeta === "object" && !Array.isArray(hamMeta)
+      ? (hamMeta as Record<string, unknown>)
+      : null;
+  const girdiToken = guvenliTokenSayisi(meta?.promptTokenCount);
+  const ciktiToken = guvenliTokenSayisi(meta?.candidatesTokenCount);
+  const akilToken = guvenliTokenSayisi(meta?.thoughtsTokenCount);
+  const aracGirdiToken = guvenliTokenSayisi(meta?.toolUsePromptTokenCount);
+  const hamToplam = guvenliTokenSayisi(meta?.totalTokenCount);
+  const toplamToken = hamToplam > 0 ? hamToplam : girdiToken + ciktiToken + akilToken + aracGirdiToken;
+  return {
+    saglayici: "gemini",
+    model: metinVeyaNull(veri?.modelVersion) ?? geminiFaturaModeli(),
+    generationId: metinVeyaNull(veri?.responseId),
+    maliyet: null,
+    gercekMaliyet: null,
+    girdiToken,
+    ciktiToken,
+    akilToken,
+    aracGirdiToken,
+    toplamToken,
+  };
+}
+
+export async function googleFaturaUrunKartlariVeKullanimUret(
   fotograflar: string | string[],
   opsiyonlar?: { fileSearchStoreNames?: string[] },
-): Promise<GoogleFaturaUrunKarti[]>;
-export async function googleFaturaUrunKartlariUret(
+): Promise<GoogleFaturaUrunKartlariSonucu>;
+export async function googleFaturaUrunKartlariVeKullanimUret(
   fotograflar: string | string[],
   fetcher?: typeof fetch,
   opsiyonlar?: { fileSearchStoreNames?: string[] },
-): Promise<GoogleFaturaUrunKarti[]>;
-export async function googleFaturaUrunKartlariUret(
+): Promise<GoogleFaturaUrunKartlariSonucu>;
+export async function googleFaturaUrunKartlariVeKullanimUret(
   fotograflar: string | string[],
   fetcherVeyaOpsiyonlar?: typeof fetch | { fileSearchStoreNames?: string[] },
   opsiyonlar?: { fileSearchStoreNames?: string[] },
-): Promise<GoogleFaturaUrunKarti[]> {
+): Promise<GoogleFaturaUrunKartlariSonucu> {
   const fetcher =
     typeof fetcherVeyaOpsiyonlar === "function"
       ? fetcherVeyaOpsiyonlar
@@ -487,7 +536,7 @@ export async function googleFaturaUrunKartlariUret(
   const liste = (Array.isArray(fotograflar) ? fotograflar : [fotograflar])
     .map((deger) => (typeof deger === "string" ? deger.trim() : ""))
     .filter(Boolean);
-  if (!liste.length) return [];
+  if (!liste.length) return { kartlar: [], kullanim: googleFaturaKullaniminiCoz(null) };
 
   const anahtar = geminiPrizAnahtari();
   if (!anahtar) throw new Error("OKUYUCU_HAZIR_DEGIL");
@@ -549,5 +598,29 @@ export async function googleFaturaUrunKartlariUret(
   }
 
   const veri = (await yanit.json().catch(() => null)) as Record<string, unknown> | null;
-  return googleFaturaYanitiniCoz(veri);
+  return {
+    kartlar: googleFaturaYanitiniCoz(veri),
+    kullanim: googleFaturaKullaniminiCoz(veri),
+  };
+}
+
+export async function googleFaturaUrunKartlariUret(
+  fotograflar: string | string[],
+  opsiyonlar?: { fileSearchStoreNames?: string[] },
+): Promise<GoogleFaturaUrunKarti[]>;
+export async function googleFaturaUrunKartlariUret(
+  fotograflar: string | string[],
+  fetcher?: typeof fetch,
+  opsiyonlar?: { fileSearchStoreNames?: string[] },
+): Promise<GoogleFaturaUrunKarti[]>;
+export async function googleFaturaUrunKartlariUret(
+  fotograflar: string | string[],
+  fetcherVeyaOpsiyonlar?: typeof fetch | { fileSearchStoreNames?: string[] },
+  opsiyonlar?: { fileSearchStoreNames?: string[] },
+): Promise<GoogleFaturaUrunKarti[]> {
+  const sonuc =
+    typeof fetcherVeyaOpsiyonlar === "function"
+      ? await googleFaturaUrunKartlariVeKullanimUret(fotograflar, fetcherVeyaOpsiyonlar, opsiyonlar)
+      : await googleFaturaUrunKartlariVeKullanimUret(fotograflar, fetcherVeyaOpsiyonlar);
+  return sonuc.kartlar;
 }

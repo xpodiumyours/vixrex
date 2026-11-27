@@ -26,7 +26,8 @@ vi.mock("@/lib/ownerSession", () => ({
   OWNER_SESSION_COOKIE: "vixrex_owner_session",
   verifyOwnerSession: mocks.verifyOwner,
 }));
-vi.mock("@/lib/faturaGorsel", () => ({
+vi.mock("@/lib/faturaGorsel", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/faturaGorsel")>()),
   sayfaGorselAlanAdlari: async () => [],
   kaynakGorselleriniHazirla: async (args: { adaylar: string[]; kaynakSayfa: string }) => ({
     gorseller: args.adaylar.map((adres) => ({

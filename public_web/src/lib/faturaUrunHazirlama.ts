@@ -4,7 +4,12 @@ import type { DogrulanmisSatir } from "@/lib/faturaUrunBaglantisi";
 import type { HazirUrunGirdisi } from "@/lib/productIntake";
 import { normalizeProductVariants } from "@/lib/productRichData";
 import { yonetilenUrunGorseliMi } from "@/lib/productImagePolicy";
-import { kaynakGorselleriniHazirla, gorselsizSatirlariTamamla, sayfaGorselAlanAdlari } from "@/lib/faturaGorsel";
+import {
+  kaynakGorselleriniHazirla,
+  gorselsizSatirlariTamamla,
+  logoVeyaTemaGorseliMi,
+  sayfaGorselAlanAdlari,
+} from "@/lib/faturaGorsel";
 import { faturaKatalogMetadatasi } from "@/lib/faturaUrunIcerigi";
 import { kategoriBirlestir } from "@/lib/kategoriBirlesim";
 import { gorselHakKaydiniRaporla } from "@/lib/faturaGorselHakDenetimi";
@@ -504,6 +509,7 @@ export function gorselAdaylariniSuz(args: {
   for (const ham of hamSirali) {
     const url = metinDegeri(ham);
     if (!url || !url.startsWith("https://") || pazaryeriVeyaAraciMi(url)) continue;
+    if (logoVeyaTemaGorseliMi(url)) continue;
     if (!resmiAlanAdiUygunMu(url, args.tespitEdilenAlan, { gorsel: true, izinliGorselAlanlari: args.izinliGorselAlanlari })) {
       continue;
     }
@@ -887,7 +893,7 @@ export async function kayitliFaturaKatalogunuUygula(args: {
     ...new Set(
       gorselKaynagiListesi
         .map((url) => metinDegeri(url))
-        .filter((url) => url.startsWith("https://") && !pazaryeriVeyaAraciMi(url)),
+        .filter((url) => url.startsWith("https://") && !pazaryeriVeyaAraciMi(url) && !logoVeyaTemaGorseliMi(url)),
     ),
   ];
   if (ureticiGorselleri.length > 0) {
@@ -1004,7 +1010,9 @@ export async function faturaUrunGorselleriniAktar(args: {
     });
     gorselRedleri = hazir.reddedilenler.map((red) => ({ kaynakGorsel: red.kaynakGorsel, sebep: String(red.sebep) }));
     const depodaki = new Map(hazir.gorseller.map((gorsel) => [gorsel.kaynakGorsel, gorsel]));
-    const altyapiHatasi = hazir.reddedilenler.some((red) => red.sebep !== "kaynak-uyumsuz");
+    const altyapiHatasi = hazir.reddedilenler.some(
+      (red) => red.sebep !== "kaynak-uyumsuz" && red.sebep !== "logo-veya-yer-tutucu" && red.sebep !== "cok-kucuk",
+    );
     urunGorselleri = kaynakGorselleri.flatMap((adres) => {
       if (yonetilenUrunGorseliMi(adres)) return [adres];
       const kopya = depodaki.get(adres);

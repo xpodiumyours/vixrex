@@ -1,5 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import sharp from "sharp";
 import { faturaIstekGovdesi, faturaYanitiniOku, type GoruSatiri } from "@/lib/faturaGoru";
+import { kaynakGorseliniDogrula, logoVeyaTemaGorseliMi } from "@/lib/faturaGorsel";
 import { FATURA_JSON_ISTEGI } from "@/lib/faturaPresetSozlesmesi";
 import {
   gorselAdaylariniSuz,
@@ -292,5 +294,93 @@ describe("Aşama 1 — Fatura Altın Koruma Paketi", () => {
       .flatMap((g) => g.rows.map((r) => r.row_id))
       .sort((a, b) => Number(a) - Number(b));
     expect(rowIds).toEqual(Array.from({ length: 20 }, (_, i) => String(i + 1)));
+  });
+
+  it("Kilit 6: logo/tema/favicon/SVG/banner URL'leri reddedilir, urun fotograflari yanlis pozitif olmadan korunur", () => {
+    const reddedilecekler = [
+      "https://www.berrak.com.tr/theme-images/logo.png",
+      "https://www.berrak.com.tr/theme_images/site-logo-dark.png",
+      "https://www.berrak.com.tr/assets/berrak-logo.png",
+      "https://www.berrak.com.tr/assets/header_logo_200x60.webp",
+      "https://www.berrak.com.tr/favicon.ico",
+      "https://www.berrak.com.tr/icons/cart.png",
+      "https://www.berrak.com.tr/banners/kampanya.jpg",
+      "https://www.berrak.com.tr/img/no-image.jpg",
+      "https://www.berrak.com.tr/img/marka-vector.svg",
+    ];
+    const korunacaklar = [
+      "https://www.mavi.com/products/mavi-logo-baskili-tisort-065123.jpg",
+      "https://brandname.com/products/atlet-1001.jpg",
+    ];
+
+    for (const url of reddedilecekler) {
+      expect(logoVeyaTemaGorseliMi(url)).toBe(true);
+    }
+    for (const url of korunacaklar) {
+      expect(logoVeyaTemaGorseliMi(url)).toBe(false);
+    }
+
+    const suzulenMavi = gorselAdaylariniSuz({
+      adaylar: [
+        "https://www.mavi.com/theme-images/site-logo.png",
+        "https://www.mavi.com/products/mavi-logo-baskili-tisort-065123.jpg",
+      ],
+      seciliGorsel: "https://www.mavi.com/assets/mavi-logo.svg",
+      tespitEdilenAlan: "mavi.com",
+    });
+    expect(suzulenMavi).toEqual(["https://www.mavi.com/products/mavi-logo-baskili-tisort-065123.jpg"]);
+
+    const suzulenBrand = gorselAdaylariniSuz({
+      adaylar: ["https://brandname.com/products/atlet-1001.jpg"],
+      tespitEdilenAlan: "brandname.com",
+    });
+    expect(suzulenBrand).toEqual(["https://brandname.com/products/atlet-1001.jpg"]);
+  });
+
+  it("Kilit 7: kaynakGorseliniDogrula 500x100 banner PNG, gecerli SVG ve tema logo URL'ini reddeder; 600x800 urun PNG'sini kabul eder", async () => {
+    const bannerPng = await sharp({
+      create: { width: 500, height: 100, channels: 3, background: { r: 220, g: 40, b: 40 } },
+    })
+      .png()
+      .toBuffer();
+    const urunPng = await sharp({
+      create: { width: 600, height: 800, channels: 3, background: { r: 40, g: 120, b: 220 } },
+    })
+      .png()
+      .toBuffer();
+    const svgBayt = Buffer.from(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400"><rect width="400" height="400" fill="#111"/></svg>',
+      "utf8",
+    );
+
+    const pngYanit = (buf: Buffer, contentType: string) =>
+      new Response(new Uint8Array(buf), {
+        status: 200,
+        headers: { "content-type": contentType, "content-length": String(buf.byteLength) },
+      });
+
+    const bannerSonuc = await kaynakGorseliniDogrula("https://www.ornek.com/products/serit.png", {
+      fetcher: vi.fn(async () => pngYanit(bannerPng, "image/png")),
+    });
+    expect(bannerSonuc).toEqual({ tamam: false, sebep: "logo-veya-yer-tutucu" });
+
+    const svgSonuc = await kaynakGorseliniDogrula("https://www.ornek.com/products/vektor-gorsel", {
+      fetcher: vi.fn(async () => pngYanit(svgBayt, "image/svg+xml")),
+    });
+    expect(svgSonuc).toEqual({ tamam: false, sebep: "logo-veya-yer-tutucu" });
+
+    const urunSonuc = await kaynakGorseliniDogrula("https://www.ornek.com/products/atlet-600x800.png", {
+      fetcher: vi.fn(async () => pngYanit(urunPng, "image/png")),
+    });
+    expect(urunSonuc.tamam).toBe(true);
+    expect(urunSonuc.genislik).toBe(600);
+    expect(urunSonuc.yukseklik).toBe(800);
+
+    const cagrilmamaliFetcher = vi.fn();
+    const temaLogoSonuc = await kaynakGorseliniDogrula("https://www.ornek.com/theme-images/logo.png", {
+      fetcher: cagrilmamaliFetcher,
+    });
+    expect(cagrilmamaliFetcher).not.toHaveBeenCalled();
+    expect(temaLogoSonuc).toEqual({ tamam: false, sebep: "logo-veya-yer-tutucu" });
   });
 });
