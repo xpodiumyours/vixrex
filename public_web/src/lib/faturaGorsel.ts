@@ -146,6 +146,63 @@ export interface GorselHazirlamaSonucu {
 
 const ZAMAN_ASIMI_MS = 6000;
 
+const LOGO_VEYA_TEMA_SEGMENTLERI = new Set([
+  "theme-images",
+  "theme_images",
+  "site-images",
+  "favicons",
+  "favicon",
+  "icons",
+  "sprites",
+  "branding",
+  "brand-logos",
+  "site-logos",
+  "header-logos",
+  "footer-logos",
+  "logos",
+  "logo",
+  "banners",
+  "placeholders",
+  "no-image",
+  "default-image",
+]);
+
+const TAM_LOGO_DOSYA_ADI =
+  /^(?:site|header|footer|brand|company|store|main|dark|light|white|black)?[-_]?logo(?:[-_](?:dark|light|white|black|mobile|desktop|header|footer|main|tr|en|new|v\d+|\d+x\d+))?$/;
+
+const SON_EK_LOGO_DOSYA_ADI = /[-_]logo(?:[-_](?:dark|light|white|black|tr|en|\d+x\d+))?$/;
+
+const YER_TUTUCU_DOSYA_ADI = /favicon|apple-touch-icon|placeholder|no[-_]?image|watermark/;
+
+export function logoVeyaTemaGorseliMi(adayUrl: unknown): boolean {
+  if (typeof adayUrl !== "string") return false;
+  const ham = adayUrl.trim();
+  if (!ham) return false;
+  let url: URL;
+  try {
+    url = new URL(ham);
+  } catch {
+    return false;
+  }
+  let pathname: string;
+  try {
+    pathname = decodeURIComponent(url.pathname).toLowerCase();
+  } catch {
+    pathname = url.pathname.toLowerCase();
+  }
+  if (/\.(?:svg|ico)$/.test(pathname)) return true;
+  const segmentler = pathname.split("/").filter(Boolean);
+  if (segmentler.some((segment) => LOGO_VEYA_TEMA_SEGMENTLERI.has(segment))) return true;
+  const sonSegment = segmentler.at(-1) ?? "";
+  const dosyaAdi = sonSegment.replace(/\.[^.]+$/, "");
+  if (!dosyaAdi) return false;
+  return (
+    TAM_LOGO_DOSYA_ADI.test(dosyaAdi) ||
+    SON_EK_LOGO_DOSYA_ADI.test(dosyaAdi) ||
+    YER_TUTUCU_DOSYA_ADI.test(dosyaAdi)
+  );
+}
+
 function cozumleyiciSec(
   bagimliliklar?: GorselBagimliliklari,
 ): ((hostname: string) => Promise<string[]>) | undefined {
@@ -198,6 +255,9 @@ export async function kaynakGorseliniDogrula(
   if (url.protocol !== "https:" || url.username || url.password || url.port) {
     return { tamam: false, sebep: "acilmadi" };
   }
+  if (logoVeyaTemaGorseliMi(adres)) {
+    return { tamam: false, sebep: "logo-veya-yer-tutucu" };
+  }
   if (!(await hostCozumlenipGuvenliMi(url.hostname, resolveHost))) {
     return { tamam: false, sebep: "erisilemedi" };
   }
@@ -245,6 +305,9 @@ export async function kaynakGorseliniDogrula(
   try {
     const goruntu = sharp(Buffer.from(bayt));
     const bilgi = await goruntu.metadata();
+    if (bilgi.format === "svg") {
+      return { tamam: false, sebep: "logo-veya-yer-tutucu" };
+    }
     const turler: Record<string, string> = { jpeg: "image/jpeg", png: "image/png", webp: "image/webp" };
     tur = turler[bilgi.format ?? ""];
     genislik = bilgi.width ?? 0;
@@ -263,6 +326,9 @@ export async function kaynakGorseliniDogrula(
   }
 
   if (genislik <= 0 || yukseklik <= 0) return { tamam: false, sebep: "gorsel-degil" };
+  if (genislik > 0 && yukseklik > 0 && Math.max(genislik / yukseklik, yukseklik / genislik) > 3.2) {
+    return { tamam: false, sebep: "logo-veya-yer-tutucu" };
+  }
 
   return { tamam: true, genislik, yukseklik, tur, bayt };
 }
