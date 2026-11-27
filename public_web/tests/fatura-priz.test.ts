@@ -299,6 +299,7 @@ describe("fatura priz - tak-cikar", () => {
     ]);
     expect(yakalananGovde.generationConfig).toEqual({
       temperature: 0.1,
+      thinkingConfig: { thinkingLevel: "LOW" },
       responseMimeType: "application/json",
       responseJsonSchema: GOOGLE_FATURA_URUN_KARTI_SEMASI,
     });

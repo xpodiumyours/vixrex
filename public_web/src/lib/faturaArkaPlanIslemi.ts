@@ -3,7 +3,7 @@ import { faturaIstekGovdesi, faturaYanitiniOku, type GoruSonucu } from "@/lib/fa
 import {
   faturaPrizAnahtari,
   geminiPrizAktifMi,
-  googleFaturaUrunKartlariUret,
+  googleFaturaUrunKartlariVeKullanimUret,
   openRouterPrizAnahtari,
 } from "@/lib/faturaPriz";
 import { faturaSatiriniAktar } from "@/lib/faturaPresetAktarimi";
@@ -56,7 +56,7 @@ export async function faturayiArkaPlanaGonder(
       if (magazaHatasi || !magazaSlug) {
         throw new Error("OKUYUCU_ISLEYICI_HAZIR_DEGIL");
       }
-      const kartlar = await googleFaturaUrunKartlariUret(goruntu);
+      const { kartlar, kullanim } = await googleFaturaUrunKartlariVeKullanimUret(goruntu);
       if (!kartlar.length) throw new Error("FOTOGRAFTA_YAZI_YOK");
       const satirlar = kartlar.map((kart, sira) =>
         faturaSatiriniAktar(
@@ -108,7 +108,11 @@ export async function faturayiArkaPlanaGonder(
         kdvTutari: null,
         indirimTutari: null,
         odenecekToplam: null,
-        aramaDurumu: { erisimHatasi: false, sonrakiSatir: satirlar.length },
+        aramaDurumu: {
+          erisimHatasi: false,
+          sonrakiSatir: satirlar.length,
+          presetCevabi: { asamaKullanimlari: { google: kullanim } },
+        },
       });
       if (!id) throw new Error("OKUYUCU_ISLEYICI_HAZIR_DEGIL");
       return id;
