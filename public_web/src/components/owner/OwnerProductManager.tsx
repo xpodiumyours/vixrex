@@ -29,6 +29,12 @@ import {
 import { parseProductPriceNumber } from "@/lib/productPrice";
 import { fiyatUygula } from "@/lib/topluAlanGuncelle";
 import { eksikZorunluAlanlar, eksikZorunluAlanMesaji } from "@/lib/productRequiredFields";
+import {
+  b2bStokYenileWhatsappUrl,
+  toptanciHatKaydet,
+  toptanciHatOku,
+} from "@/lib/b2bWhatsappSiparis";
+import { normalizeProductMetadata } from "@/lib/productRichData";
 
 export interface OwnerProductCategory {
   id: string;
@@ -66,6 +72,7 @@ interface OwnerProductManagerProps {
   categories: OwnerProductCategory[];
   varsayilanUrunTipi?: string;
   storeName?: string | null;
+  storeLocationText?: string | null;
   onRefresh: () => Promise<void>;
   onClose?: () => void;
 }
@@ -172,6 +179,7 @@ export function OwnerProductManager({
   categories,
   varsayilanUrunTipi = "generic",
   storeName,
+  storeLocationText = null,
   onRefresh,
   onClose,
 }: OwnerProductManagerProps) {
@@ -326,6 +334,11 @@ export function OwnerProductManager({
   const [stokTaslaklari, setStokTaslaklari] = useState<Record<string, number>>({});
   const [satirGuncellenenId, setSatirGuncellenenId] = useState<string | null>(null);
   const [acikMenuId, setAcikMenuId] = useState<string | null>(null);
+  const [stokYenileUrun, setStokYenileUrun] = useState<OwnerProduct | null>(null);
+  const [stokYenileTel, setStokYenileTel] = useState("");
+  const [stokYenileAdet, setStokYenileAdet] = useState("10");
+  const [stokYenileNot, setStokYenileNot] = useState("");
+  const [stokYenileHata, setStokYenileHata] = useState("");
   const fiyatKayitIslemleriRef = useRef<Map<string, Promise<boolean>>>(new Map());
   const yayinKilidiRef = useRef<string | null>(null);
 
@@ -393,6 +406,41 @@ export function OwnerProductManager({
     setError("");
     setSuccess("");
     setEditing(product);
+  }
+
+  function stokYenileAc(product: OwnerProduct) {
+    setStokYenileUrun(product);
+    setStokYenileTel(toptanciHatOku(storeSlug, product.brand || ""));
+    setStokYenileAdet("10");
+    setStokYenileNot("");
+    setStokYenileHata("");
+  }
+
+  function stokYenileGonder(event: React.FormEvent) {
+    event.preventDefault();
+    if (!stokYenileUrun) return;
+    const adet = Number(stokYenileAdet);
+    const metadata = normalizeProductMetadata(stokYenileUrun.metadata);
+    const modelKodu = metadata.identifiers?.mpn || metadata.identifiers?.sku || null;
+    const url = b2bStokYenileWhatsappUrl({
+      toptanciWhatsapp: stokYenileTel,
+      urunAdi: stokYenileUrun.name,
+      marka: stokYenileUrun.brand,
+      modelKodu,
+      barkod: stokYenileUrun.barcode,
+      adet,
+      esnafMagazaAdi: (storeName || storeSlug || "").trim(),
+      esnafKonum: storeLocationText,
+      not: stokYenileNot,
+    });
+    if (!url) {
+      setStokYenileHata("Geçerli bir toptancı WhatsApp numarası ve 1-9999 arası tam sayı adet girin.");
+      return;
+    }
+    toptanciHatKaydet(storeSlug, stokYenileUrun.brand || "", stokYenileTel);
+    setStokYenileHata("");
+    window.open(url, "_blank", "noopener,noreferrer");
+    setStokYenileUrun(null);
   }
 
   function secimModunuDegistir() {
@@ -1211,6 +1259,21 @@ export function OwnerProductManager({
                                 Fatura Detayı
                               </button>
                             ) : null}
+                            {Boolean(product.brand?.trim()) || product.source_type === "invoice" ? (
+                              <button
+                                type="button"
+                                role="menuitem"
+                                disabled={busy}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setAcikMenuId(null);
+                                  stokYenileAc(product);
+                                }}
+                                className="flex w-full items-center rounded-lg px-3 py-2 text-left text-xs font-semibold text-emerald-300 transition hover:bg-emerald-500/10"
+                              >
+                                Stok Yenile (WhatsApp)
+                              </button>
+                            ) : null}
                             <button
                               type="button"
                               role="menuitem"
@@ -1315,6 +1378,57 @@ export function OwnerProductManager({
               <button type="button" className="owner-button-danger" onClick={deleteProduct} disabled={busy}>{busy ? "Siliniyor…" : "Kalıcı Sil"}</button>
             </div>
           </div>
+        </div>
+      ) : null}
+
+      {stokYenileUrun ? (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-4 sm:items-center" role="presentation">
+          <form onSubmit={stokYenileGonder} className="owner-card w-full max-w-md space-y-4 p-5 sm:p-6" role="dialog" aria-modal="true" aria-labelledby="b2b-restock-title">
+            <div>
+              <h2 id="b2b-restock-title" className="text-lg font-bold text-[var(--owner-text)]">Stok Yenile (WhatsApp)</h2>
+              <p className="mt-1 text-xs text-[var(--owner-muted)]">{stokYenileUrun.name}{stokYenileUrun.brand ? ` · ${stokYenileUrun.brand}` : ""}</p>
+            </div>
+            <label className="block space-y-1.5">
+              <span className="owner-label">Toptancı WhatsApp numarası *</span>
+              <input
+                type="tel"
+                value={stokYenileTel}
+                onChange={(e) => setStokYenileTel(e.target.value)}
+                placeholder="Örn. 0532 111 22 33"
+                className="owner-input"
+                required
+              />
+            </label>
+            <label className="block space-y-1.5">
+              <span className="owner-label">Talep edilen adet *</span>
+              <input
+                type="number"
+                min={1}
+                max={9999}
+                step={1}
+                value={stokYenileAdet}
+                onChange={(e) => setStokYenileAdet(e.target.value)}
+                className="owner-input"
+                required
+              />
+            </label>
+            <label className="block space-y-1.5">
+              <span className="owner-label">Kısa not (opsiyonel)</span>
+              <input
+                type="text"
+                maxLength={200}
+                value={stokYenileNot}
+                onChange={(e) => setStokYenileNot(e.target.value)}
+                placeholder="Örn. Bu hafta sevk uygundur"
+                className="owner-input"
+              />
+            </label>
+            {stokYenileHata ? <p className="owner-error text-xs" role="alert">{stokYenileHata}</p> : null}
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <button type="button" className="owner-button-secondary" onClick={() => setStokYenileUrun(null)}>Vazgeç</button>
+              <button type="submit" className="owner-button-primary">WhatsApp ile Gönder</button>
+            </div>
+          </form>
         </div>
       ) : null}
       </>

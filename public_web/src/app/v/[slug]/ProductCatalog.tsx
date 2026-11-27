@@ -36,6 +36,7 @@ import {
   tutarYazisi,
 } from "@/lib/productCardPresentation";
 import { normalizeProductMetadata } from "@/lib/productRichData";
+import { resmiMarkaRaflariniDerle } from "@/lib/resmiMarkaRafi";
 import { kategoriBirlestir } from "@/lib/kategoriBirlesim";
 import { vitrinGorunum } from "@/lib/vitrinGorunum";
 import { prototipKartlari, PrototipAnahtar } from "./prototip/prototipOrtak";
@@ -258,6 +259,11 @@ export default function ProductCatalog({
     });
   }, [products, currentCategory, currentQuery, isOwnerSession]);
 
+  const resmiRaflar = useMemo(
+    () => resmiMarkaRaflariniDerle(filteredProducts, { isOwner: isOwnerSession }),
+    [filteredProducts, isOwnerSession],
+  );
+
   const totalCount = filteredProducts.length;
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
   const safePage = Math.min(currentPage, Math.max(1, totalPages));
@@ -335,6 +341,80 @@ export default function ProductCatalog({
           ))}
         </div>
       )}
+
+      {resmiRaflar.length > 0 ? (
+        <div className="mb-8 space-y-4">
+          {resmiRaflar.map((raf) => (
+            <div
+              key={raf.markaAnahtari}
+              className={`rounded-2xl p-3.5 sm:p-4 ${vitrinGorunum.yuzey.panel}`}
+            >
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <div className="flex min-w-0 items-center gap-2">
+                  <span className="truncate text-xs font-extrabold uppercase tracking-[0.08em] text-white sm:text-sm">
+                    {raf.marka}
+                  </span>
+                  <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-emerald-400/25 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-300">
+                    {raf.resmiAlanAdi}
+                  </span>
+                </div>
+                <span className="text-[11px] font-semibold text-slate-400">
+                  {raf.urunSayisi} doğrulanmış ürün
+                </span>
+              </div>
+              <div className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-none">
+                {raf.urunler.slice(0, 8).map((urun, idx) => {
+                  const urunSlug = getProductUrlSlug(urun, idx);
+                  const urunUrl = `/v/${storeSlug}/urun/${urunSlug}`;
+                  const telifBekliyor = Boolean(urun[TELIF_ANAHTARI]);
+                  const gorsel = telifBekliyor && !isOwnerSession ? null : productImageOnly(urun);
+                  const hizliGorseller =
+                    telifBekliyor && !isOwnerSession ? [] : productImagesOnly(urun);
+                  const tutar =
+                    typeof urun.priceAmount === "number" && urun.priceAmount > 0
+                      ? tutarYazisi(urun.priceAmount)
+                      : String(urun.price || "").trim() || "Fiyat sorun";
+                  return (
+                    <a
+                      key={urun.id || `${raf.markaAnahtari}-${idx}`}
+                      href={urunUrl}
+                      onClick={(event) => {
+                        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                        event.preventDefault();
+                        setQuickView({
+                          product: urun,
+                          images: hizliGorseller,
+                          productUrl: urunUrl,
+                          productSlug: urunSlug,
+                        });
+                      }}
+                      className="group flex w-36 shrink-0 flex-col overflow-hidden rounded-xl border border-white/10 bg-slate-950/70 transition hover:border-blue-400/40 sm:w-40"
+                    >
+                      <div className={`relative aspect-square w-full overflow-hidden ${gorsel && !(telifBekliyor && !isOwnerSession) ? "bg-white" : "bg-slate-950"}`}>
+                        <CatalogProductImage
+                          src={gorsel}
+                          alt={`${urun.name} - ${raf.marka}`}
+                          emptyLabel="Ürün görseli yok"
+                          {...{ [TELIF_ANAHTARI]: telifBekliyor }}
+                          isOwner={isOwnerSession}
+                        />
+                      </div>
+                      <div className="p-2">
+                        <p className="line-clamp-2 min-h-[2.4em] text-[11px] font-bold leading-snug text-white">
+                          {urun.name}
+                        </p>
+                        <p className={`mt-1 truncate text-[11px] font-extrabold ${vitrinGorunum.fiyat.ana}`}>
+                          {tutar}
+                        </p>
+                      </div>
+                    </a>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : null}
 
       <div
         className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4"

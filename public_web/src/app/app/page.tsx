@@ -10,6 +10,12 @@ import {
   taslagiTemizle,
   type AsistanCevaplari,
 } from "@/lib/landingAsistanAkisi";
+import {
+  faturaVitrinTaslagiOku,
+  faturaVitrinTaslagiTemizle,
+  mevcutVitriniEzmedenBirlestir,
+  type FaturaVitrinTaslagi,
+} from "@/lib/faturaVitrinTaslagi";
 import { importLandingFlowStateIfNeeded } from "@/lib/ownerFlowImport";
 import type {
   OwnerProduct,
@@ -52,6 +58,7 @@ export default function AppPage() {
   // duruyor. Vitrin kurulurken doğrudan kullanılır; kullanıcıya aynı
   // soruları ikinci kez sormayız.
   const [asistanTaslagi, setAsistanTaslagi] = useState<AsistanCevaplari>({});
+  const [faturaTaslagi, setFaturaTaslagi] = useState<FaturaVitrinTaslagi | null>(null);
 
   const magazaDetayiniGetir = useCallback(async function magazaDetayiniGetir(
     slug: string,
@@ -256,6 +263,13 @@ export default function AppPage() {
         setAsistanTaslagi(taslak);
         if (taslak.name) setYeniAd(taslak.name);
       }
+      const okunanFaturaTaslagi = faturaVitrinTaslagiOku();
+      if (okunanFaturaTaslagi) {
+        setFaturaTaslagi(okunanFaturaTaslagi);
+        if (!taslak.name && okunanFaturaTaslagi.name) {
+          setYeniAd(okunanFaturaTaslagi.name);
+        }
+      }
 
       // Sahip çerezi kısa ömürlü. Panoya her dönüşte yeniden kuruluyor —
       // yoksa kullanıcı ikinci ziyaretinde ürün ekleyemez/silemez, her
@@ -294,6 +308,13 @@ export default function AppPage() {
     );
   }
 
+  const creationInitialDraft = mevcutVitriniEzmedenBirlestir(
+    { ...asistanTaslagi, ...workingDraft, name: yeniAd },
+    faturaTaslagi,
+  );
+  const creationStoreName =
+    typeof creationInitialDraft.name === "string" ? creationInitialDraft.name : yeniAd;
+
   return (
     <main className="owner-shell">
       {/* Flutter'daki Vitrinim ekranıyla hizalı: ikinci üst çubuk (Vixrex/Vitrinim +
@@ -305,11 +326,11 @@ export default function AppPage() {
 
         <div className="space-y-6">
           <VitrinimEditor
-            store={{ slug: "taslak", name: yeniAd, is_published: false, products: [], product_categories: [] }}
-            initialDraft={{ ...asistanTaslagi, ...workingDraft, name: yeniAd }}
+            store={{ slug: "taslak", name: creationStoreName, is_published: false, products: [], product_categories: [] }}
+            initialDraft={creationInitialDraft}
             isCreationMode
             onCreate={async (draft) => {
-              const ad = String((draft as Record<string, unknown>).name || yeniAd || "").trim();
+              const ad = String((draft as Record<string, unknown>).name || creationStoreName || "").trim();
               if (!ad) {
                 setHata("İşletme adı zorunludur.");
                 return;
@@ -331,6 +352,7 @@ export default function AppPage() {
                   return;
                 }
                 const payload: Record<string, unknown> = { name: ad, ...asistanTaslagi };
+                Object.assign(payload, mevcutVitriniEzmedenBirlestir(payload, faturaTaslagi));
                 // VitrinimEditor draft'ı kolon isimleriyle gelir — direkt ekle
                 for (const [k, v] of Object.entries(draft as Record<string, unknown>)) {
                   if (v != null && String(v).trim() !== "") payload[k] = v;
@@ -346,7 +368,9 @@ export default function AppPage() {
                   return;
                 }
                 taslagiTemizle();
+                faturaVitrinTaslagiTemizle();
                 setAsistanTaslagi({});
+                setFaturaTaslagi(null);
                 if (sonuc.slug) {
                   if (sonuc.yonlendir) await fetch(sonuc.yonlendir, { redirect: "manual" });
                   else await sahipOturumuAc();
@@ -362,6 +386,23 @@ export default function AppPage() {
               await magazalariGetir(false);
             }}
           />
+          {faturaTaslagi ? (
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[var(--owner-border)] bg-[var(--owner-bg-soft)] px-4 py-2.5 text-xs text-[var(--owner-muted)]">
+              <span>
+                Faturadan gelen temel vitrin bilgileri boş alanlara ön dolduruldu.
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  faturaVitrinTaslagiTemizle();
+                  setFaturaTaslagi(null);
+                }}
+                className="font-semibold text-[var(--owner-primary)] hover:underline"
+              >
+                Taslağı temizle
+              </button>
+            </div>
+          ) : null}
           {hata ? <p className="owner-error text-sm" role="alert">{hata}</p> : null}
           {olusturuyor ? <p className="text-sm text-[var(--owner-muted)]" role="status">Vitrin oluşturuluyor…</p> : null}
         </div>

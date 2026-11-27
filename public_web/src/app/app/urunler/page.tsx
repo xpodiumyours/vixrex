@@ -13,6 +13,8 @@ interface Store {
   name: string;
   kategori: string | null;
   business_type: string | null;
+  province_name?: string | null;
+  district_name?: string | null;
   products: OwnerProduct[];
   product_categories: OwnerProductCategory[];
 }
@@ -40,7 +42,7 @@ export default function UrunlerPage() {
           if (!slug) throw new Error("Vitrin bilgileri okunamadı. Lütfen tekrar dene.");
           const { data, error } = await supabase
             .from("stores")
-            .select("id, slug, name, kategori, business_type, products(id, slug, name, description, price_text, price_amount, currency, image_urls, category_id, stock_status, stock_quantity, brand, barcode, metadata, variants, old_price_amount, badge_tag, fulfillment_region, is_visible, source_type, product_categories(name, product_template_key)), product_categories(id, name, product_template_key)")
+            .select("id, slug, name, kategori, business_type, province_name, district_name, products(id, slug, name, description, price_text, price_amount, currency, image_urls, category_id, stock_status, stock_quantity, brand, barcode, metadata, variants, old_price_amount, badge_tag, fulfillment_region, is_visible, source_type, product_categories(name, product_template_key)), product_categories(id, name, product_template_key)")
             .eq("slug", slug)
             .maybeSingle();
           if (error || !data) throw new Error("Ürünler yüklenemedi. Lütfen tekrar dene.");
@@ -99,6 +101,12 @@ export default function UrunlerPage() {
     );
   }
 
+  const storeLocationText =
+    [store.district_name, store.province_name]
+      .map((parca) => String(parca || "").trim())
+      .filter(Boolean)
+      .join(" / ") || null;
+
   return (
     <div className="owner-shell p-4 sm:p-6">
       <div className="mx-auto max-w-7xl space-y-4">
@@ -110,7 +118,7 @@ export default function UrunlerPage() {
           <Link href="/app" className="owner-button-secondary">← Pano</Link>
         </div>
         {hata && <p role="alert" className="owner-error text-sm">{hata}</p>}
-        <OwnerProductManager storeSlug={store.slug} products={store.products ?? []} categories={store.product_categories ?? []} varsayilanUrunTipi={isletmeUrunSablonu(store.kategori, store.business_type)} storeName={store.name} onRefresh={yukle} />
+        <OwnerProductManager storeSlug={store.slug} products={store.products ?? []} categories={store.product_categories ?? []} varsayilanUrunTipi={isletmeUrunSablonu(store.kategori, store.business_type)} storeName={store.name} storeLocationText={storeLocationText} onRefresh={yukle} />
       </div>
     </div>
   );
