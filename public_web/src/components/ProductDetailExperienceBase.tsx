@@ -255,7 +255,7 @@ export default function ProductDetailExperience({
 
         <div className="grid gap-5 lg:grid-cols-[minmax(0,0.92fr)_minmax(360px,0.78fr)]">
           <div className={`rounded-3xl ${vitrinGorunum.yuzey.panel} p-2.5`}>
-            <div className={`relative aspect-[4/5] overflow-hidden rounded-2xl ${!telifKalkanli && currentImage ? "bg-white" : "bg-slate-950"}`}>
+            <div className={`relative aspect-[4/5] overflow-hidden rounded-2xl lg:max-h-[560px] ${!telifKalkanli && currentImage ? "bg-white" : "bg-slate-950"}`}>
               {telifKalkanli ? (
                 <TelifKalkani />
               ) : currentImage ? (
@@ -326,7 +326,7 @@ export default function ProductDetailExperience({
               storeMapUrl={storeMapUrl}
               description={product.description}
             >
-              <div className="mt-6 grid gap-2 sm:grid-cols-2">
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 {selectedWhatsappUrl ? (
                   <TrackedWhatsAppLink
                     href={selectedWhatsappUrl}
@@ -356,7 +356,7 @@ export default function ProductDetailExperience({
                 </Link>
               ) : null}
 
-              <div className="mt-6 border-t border-white/10 pt-5">
+              <div className="mt-3 border-t border-white/10 pt-3">
                 <ProductCommercePanel
                   storeSlug={storeSlug}
                   productSlug={productSlug}

@@ -311,7 +311,7 @@ export default function ProductCommercePanel({
   }
 
   return (
-    <section className="mt-5 rounded-2xl border border-white/10 bg-white/[0.03] p-4" aria-label="Ürün etkileşimleri">
+    <section className="mt-3 rounded-2xl border border-white/10 bg-white/[0.03] p-3" aria-label="Ürün etkileşimleri">
       {stockQuantity === 0 ? (
         <button
           type="button"
@@ -321,7 +321,7 @@ export default function ProductCommercePanel({
           Tükendi
         </button>
       ) : cartEnabled ? (
-        <div className="mt-4">
+        <div className="mt-1">
           <div className="flex items-center justify-between rounded-xl border border-blue-500/40 bg-blue-500/10 px-2 py-2">
             <button
               type="button"

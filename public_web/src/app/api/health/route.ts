@@ -46,7 +46,7 @@ export async function GET() {
   const paytr = paytrEnv()
     ? ({ status: "configured" } as const)
     : ({ status: "unconfigured" } as const);
-  const healthy = database.status === "ok" && paytr.status === "configured";
+  const healthy = database.status === "ok";
 
   return NextResponse.json(
     {
