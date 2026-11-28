@@ -252,8 +252,8 @@ export default function ProductQuickView({
           ×
         </button>
 
-        <div className="relative bg-slate-950 p-2.5 sm:min-h-[610px]">
-          <div className={`relative aspect-[4/5] overflow-hidden rounded-[22px] ${!telifKalkanli && currentImage ? "bg-white" : "bg-slate-900"} sm:h-full sm:min-h-[590px] sm:aspect-auto`}>
+        <div className="relative bg-[#08132D] p-2.5 sm:min-h-[610px]">
+          <div className={`relative aspect-[4/5] overflow-hidden rounded-[22px] ring-1 ring-inset ring-[#294D88]/35 ${!telifKalkanli && currentImage ? (isService ? "bg-[#112448]/70" : "bg-[#0B1730]") : "bg-slate-900"} sm:h-full sm:min-h-[590px] sm:aspect-auto`}>
             {telifKalkanli ? (
               <TelifKalkani />
             ) : currentImage ? (
@@ -262,7 +262,7 @@ export default function ProductQuickView({
                 alt={gorselAlt}
                 fill
                 sizes="(max-width: 640px) 100vw, 50vw"
-                className="object-contain object-center p-3"
+                className={isService ? "object-cover object-top" : "object-contain object-center p-3"}
                 priority
               />
             ) : (
@@ -302,7 +302,7 @@ export default function ProductQuickView({
                     key={`${imageUrl}-${index}`}
                     type="button"
                     onClick={() => setImageIndex(index)}
-                    className={`relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border bg-white transition ${
+                    className={`relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border bg-[#0B1730] transition ${
                       index === imageIndex
                         ? "border-blue-400 ring-2 ring-blue-400/20"
                         : "border-white/15 opacity-75 hover:opacity-100"
@@ -324,78 +324,82 @@ export default function ProductQuickView({
 
         </div>
 
-        <div className="min-h-0 overflow-y-auto p-5 sm:p-8">
-          <ProductInfoBody
-            isService={isService}
-            category={product.category}
-            name={product.name}
-            brand={product.brand}
-            heading="h2"
-            headingId="product-quick-view-title"
-            displayedPrice={displayedPrice}
-            discountPercent={indirim}
-            oldPriceText={eskiFiyatYazisi(product.oldPriceAmount)}
-            badge={rozet}
-            unitPrice={miktarBilgisi}
-            variantGroups={variantGroups}
-            selectedOptions={selectedOptions}
-            onSelectOption={selectOption}
-            isOptionAvailable={isOptionAvailable}
-            stockStatus={selectedStockStatus}
-            stockQuantity={selectedStockQuantity}
-            facts={quickFacts}
-            manufacturerSource={metadata.manufacturerSource}
-            fulfillmentRegion={fulfillmentRegion}
-            storeLocationLabel={storeLocationLabel}
-            storeAddress={storeLocationText}
-            storeMapUrl={storeDirectionsUrl}
-            description={product.description}
-            clampDescription
-          >
-            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+        <div className="flex min-h-0 flex-col sm:max-h-[90vh]">
+          <div className="min-h-0 flex-1 overflow-y-auto p-5 pr-14 sm:p-7 sm:pr-14">
+            <ProductInfoBody
+              isService={isService}
+              category={product.category}
+              name={product.name}
+              brand={product.brand}
+              heading="h2"
+              headingId="product-quick-view-title"
+              displayedPrice={displayedPrice}
+              discountPercent={indirim}
+              oldPriceText={eskiFiyatYazisi(product.oldPriceAmount)}
+              badge={rozet}
+              unitPrice={miktarBilgisi}
+              variantGroups={variantGroups}
+              selectedOptions={selectedOptions}
+              onSelectOption={selectOption}
+              isOptionAvailable={isOptionAvailable}
+              stockStatus={selectedStockStatus}
+              stockQuantity={selectedStockQuantity}
+              facts={quickFacts}
+              manufacturerSource={metadata.manufacturerSource}
+              fulfillmentRegion={fulfillmentRegion}
+              storeLocationLabel={storeLocationLabel}
+              storeAddress={storeLocationText}
+              storeMapUrl={storeDirectionsUrl}
+              description={product.description}
+              clampDescription
+            >
+              <ProductCommercePanel
+                storeSlug={storeSlug}
+                productSlug={productSlug}
+                productName={product.name}
+                imageUrl={telifKalkanli ? null : currentImage}
+                priceText={displayedPrice}
+                priceAmount={fiyatTutar}
+                selectedVariantText={selectedVariantText}
+                selectedVariantId={selectedVariant?.id ?? null}
+                stockQuantity={selectedStockQuantity}
+                cartEnabled={
+                  !isService &&
+                  selectedStockQuantity !== 0 &&
+                  !String(selectedStockStatus || "").toLocaleLowerCase("tr-TR").includes("tükendi")
+                }
+                enabled={commerceEnabled}
+                cartDisabledReason={
+                  isService
+                    ? "Hizmetler sipariş sepetine eklenmez; WhatsApp üzerinden bilgi alabilirsin."
+                    : String(selectedStockStatus || "").toLocaleLowerCase("tr-TR").includes("tükendi")
+                      ? "Bu seçenek şu anda stokta görünmüyor."
+                      : ""
+                }
+              />
+            </ProductInfoBody>
+          </div>
+
+          <div className="sticky bottom-0 z-20 shrink-0 border-t border-[#294D88]/60 bg-[#08132D] px-5 py-3 sm:static sm:px-7">
+            <div className="flex items-center gap-2">
               {whatsappUrl ? (
                 <a
                   href={whatsappUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`flex min-h-12 items-center justify-center rounded-xl px-5 text-center text-sm font-extrabold ${vitrinGorunum.buton.whatsapp}`}
+                  className={`flex min-h-11 min-w-0 flex-1 items-center justify-center overflow-hidden text-ellipsis whitespace-nowrap rounded-xl px-3 text-center text-xs font-extrabold sm:px-4 sm:text-sm ${vitrinGorunum.buton.whatsapp}`}
                 >
                   {isService ? "WhatsApp'tan hizmeti sor" : "WhatsApp'tan ürünü sor"}
                 </a>
               ) : null}
               <a
                 href={productUrl}
-                className={`flex min-h-12 items-center justify-center rounded-xl px-5 text-center text-sm font-extrabold ${vitrinGorunum.buton.ikincil}`}
+                className={`flex min-h-11 items-center justify-center whitespace-nowrap rounded-xl px-3.5 text-center text-xs font-extrabold sm:px-4 sm:text-sm ${whatsappUrl ? "shrink-0" : "flex-1"} ${vitrinGorunum.buton.ikincil}`}
               >
-                {isService ? "Tüm hizmet detayları" : "Tüm ürün detayları"}
+                Tüm detaylar →
               </a>
             </div>
-
-            <ProductCommercePanel
-              storeSlug={storeSlug}
-              productSlug={productSlug}
-              productName={product.name}
-              imageUrl={telifKalkanli ? null : currentImage}
-              priceText={displayedPrice}
-              priceAmount={fiyatTutar}
-              selectedVariantText={selectedVariantText}
-              selectedVariantId={selectedVariant?.id ?? null}
-              stockQuantity={selectedStockQuantity}
-              cartEnabled={
-                !isService &&
-                selectedStockQuantity !== 0 &&
-                !String(selectedStockStatus || "").toLocaleLowerCase("tr-TR").includes("tükendi")
-              }
-              enabled={commerceEnabled}
-              cartDisabledReason={
-                isService
-                  ? "Hizmetler sipariş sepetine eklenmez; WhatsApp üzerinden bilgi alabilirsin."
-                  : String(selectedStockStatus || "").toLocaleLowerCase("tr-TR").includes("tükendi")
-                    ? "Bu seçenek şu anda stokta görünmüyor."
-                    : ""
-              }
-            />
-          </ProductInfoBody>
+          </div>
         </div>
       </div>
     </div>

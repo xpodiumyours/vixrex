@@ -26,7 +26,8 @@ vi.mock("next/image", () => ({
 }));
 
 import ProductCatalog from "../src/app/v/[slug]/ProductCatalog";
-import { TELIF_ANAHTARI } from "../src/components/ProductDetailExperienceBase";
+import ProductDetailExperienceBase, { TELIF_ANAHTARI } from "../src/components/ProductDetailExperienceBase";
+import ProductQuickViewBase from "../src/components/ProductQuickViewBase";
 
 function kaynak(relative: string) {
   return readFileSync(fileURLToPath(new URL(`../${relative}`, import.meta.url)), "utf8");
@@ -120,15 +121,15 @@ describe("vitrin görünüm kartelası", () => {
     expect(kart).not.toContain("from-[#0B1120]/45");
     expect(profil).toContain('min-h-[2.5em] text-[15px] font-bold leading-tight text-white line-clamp-2');
 
-    expect(pencere).toContain(
-      '${!telifKalkanli && currentImage ? "bg-white" : "bg-slate-900"}',
-    );
-    expect(pencere).toContain("rounded-lg border bg-white transition");
+    expect(pencere).toContain('bg-[#0B1730]');
+    expect(pencere).toContain("rounded-lg border bg-[#0B1730] transition");
+    expect(pencere).toContain("sticky bottom-0 z-20 shrink-0 border-t border-[#294D88]/60 bg-[#08132D]");
+    expect(pencere).toContain("whitespace-nowrap");
 
-    expect(detay).toContain(
-      '${!telifKalkanli && currentImage ? "bg-white" : "bg-slate-950"}',
-    );
-    expect(detay).toContain("rounded-xl border bg-white transition");
+    expect(detay).toContain('bg-[#0B1730]');
+    expect(detay).toContain("rounded-xl border bg-[#0B1730] transition");
+    expect(detay).toContain("lg:sticky lg:top-20");
+    expect(detay).toContain("whitespace-nowrap");
   });
 
   it("fiyat biçimi iki kuruş basamağı ve ₺ simgesi üretir, geçersiz değerleri reddeder", () => {
@@ -344,5 +345,141 @@ describe("vitrin görünüm kartelası", () => {
     expect(whatsappYokHtml).not.toContain("WhatsApp&#x27;tan Sor");
     expect(whatsappYokHtml).not.toContain("bg-[#F4F7FC]");
     expect(whatsappYokHtml).toContain("h-5 min-h-[20px]");
+  });
+
+  it("ProductQuickViewBase ve ProductDetailExperienceBase koyu sahne, yapışkan bar ve tek satır WhatsApp çıktısı üretir", () => {
+    const quickServiceHtml = renderToStaticMarkup(
+      createElement(ProductQuickViewBase, {
+        product: {
+          id: "h-10",
+          slug: "iphone-ekran",
+          name: "iPhone Ekran Değişimi",
+          priceAmount: 2450,
+          imageUrls: ["https://cdn.example/ekran.jpg"],
+          metadata: { itemKind: "service", templateKey: "service" },
+        },
+        images: ["https://cdn.example/ekran.jpg"],
+        productUrl: "/v/teknofix/urun/iphone-ekran",
+        storeName: "TeknoFix",
+        storeSlug: "teknofix",
+        productSlug: "iphone-ekran",
+        whatsappBaseUrl: "https://wa.me/905551112233",
+        commerceEnabled: false,
+        onClose: () => undefined,
+      }),
+    );
+
+    expect(quickServiceHtml).toContain("WhatsApp&#x27;tan hizmeti sor");
+    expect(quickServiceHtml).toContain("whitespace-nowrap");
+    expect(quickServiceHtml).toContain("sticky bottom-0 z-20 shrink-0 border-t border-[#294D88]/60 bg-[#08132D]");
+    expect(quickServiceHtml).toContain("object-cover object-top");
+    expect(quickServiceHtml).toContain("2.450,00 ₺");
+    expect(quickServiceHtml).not.toContain("ürün fotoğrafını göster");
+
+    const quickWapsizVeCokluHtml = renderToStaticMarkup(
+      createElement(ProductQuickViewBase, {
+        product: {
+          id: "u-11",
+          slug: "coklu-urun",
+          name: "Çoklu Foto Ürün",
+          priceAmount: 990,
+          imageUrls: ["https://cdn.example/1.jpg", "https://cdn.example/2.jpg"],
+          metadata: { itemKind: "physical", templateKey: "fashion" },
+        },
+        images: ["https://cdn.example/1.jpg", "https://cdn.example/2.jpg"],
+        productUrl: "/v/aymira/urun/coklu-urun",
+        storeName: "Aymira Giyim",
+        storeSlug: "aymira",
+        productSlug: "coklu-urun",
+        whatsappBaseUrl: null,
+        commerceEnabled: false,
+        onClose: () => undefined,
+      }),
+    );
+
+    expect(quickWapsizVeCokluHtml).toContain("1. ürün fotoğrafını göster");
+    expect(quickWapsizVeCokluHtml).toContain("2. ürün fotoğrafını göster");
+    expect(quickWapsizVeCokluHtml).toContain("flex-1");
+    expect(quickWapsizVeCokluHtml).not.toContain("WhatsApp&#x27;tan");
+
+    const quickTelifHtml = renderToStaticMarkup(
+      createElement(ProductQuickViewBase, {
+        product: {
+          id: "u-12",
+          slug: "telif-modal",
+          name: "Telifli Modal Ürünü",
+          priceAmount: 450,
+          imageUrls: ["https://cdn.example/gizli-modal.jpg"],
+          [TELIF_ANAHTARI]: true,
+          metadata: { itemKind: "physical", templateKey: "generic" },
+        },
+        images: ["https://cdn.example/gizli-modal.jpg"],
+        productUrl: "/v/aymira/urun/telif-modal",
+        storeName: "Aymira Giyim",
+        storeSlug: "aymira",
+        productSlug: "telif-modal",
+        whatsappBaseUrl: null,
+        commerceEnabled: false,
+        onClose: () => undefined,
+      }),
+    );
+
+    expect(quickTelifHtml).toContain("Fotoğraf üreticide");
+    expect(quickTelifHtml).not.toContain("gizli-modal.jpg");
+
+    const pdpServiceHtml = renderToStaticMarkup(
+      createElement(ProductDetailExperienceBase, {
+        product: {
+          id: "h-11",
+          slug: "pdp-hizmet",
+          name: "Laptop Bakım",
+          priceAmount: 1500,
+          imageUrls: ["https://cdn.example/laptop-bakim.jpg"],
+          metadata: { itemKind: "service", templateKey: "service" },
+        },
+        images: ["https://cdn.example/laptop-bakim.jpg"],
+        storeName: "TeknoFix",
+        storeSlug: "teknofix",
+        storeUrl: "/v/teknofix",
+        productSlug: "pdp-hizmet",
+        detailFacts: [],
+        whatsappUrl: "https://wa.me/905551112233",
+        instagramUrl: "https://instagram.com/teknofix",
+      }),
+    );
+
+    expect(pdpServiceHtml).toContain("object-cover object-top");
+    expect(pdpServiceHtml).toContain("bg-[#112448]/70");
+    expect(pdpServiceHtml).toContain("sm:grid-cols-[1fr_auto]");
+    expect(pdpServiceHtml).toContain("WhatsApp’tan hizmeti sor");
+    expect(pdpServiceHtml).toContain("Instagram");
+
+    const pdpTelifHtml = renderToStaticMarkup(
+      createElement(ProductDetailExperienceBase, {
+        product: {
+          id: "u-10",
+          slug: "keten-elbise",
+          name: "Keten Elbise",
+          priceAmount: 1290,
+          stockQuantity: 3,
+          imageUrls: ["https://cdn.example/telifli-pdp.jpg"],
+          [TELIF_ANAHTARI]: true,
+          metadata: { itemKind: "physical", templateKey: "fashion" },
+        },
+        images: ["https://cdn.example/telifli-pdp.jpg"],
+        storeName: "Aymira Giyim",
+        storeSlug: "aymira",
+        storeUrl: "/v/aymira",
+        productSlug: "keten-elbise",
+        detailFacts: [],
+        whatsappUrl: "https://wa.me/905551112233",
+      }),
+    );
+
+    expect(pdpTelifHtml).toContain("lg:sticky lg:top-20");
+    expect(pdpTelifHtml).toContain("Fotoğraf üreticide");
+    expect(pdpTelifHtml).not.toContain("telifli-pdp.jpg");
+    expect(pdpTelifHtml).toContain("1.290,00 ₺");
+    expect(pdpTelifHtml).toContain("whitespace-nowrap");
   });
 });
