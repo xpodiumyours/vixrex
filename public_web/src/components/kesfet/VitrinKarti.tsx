@@ -85,7 +85,7 @@ export function VitrinKarti({
               <img
                 src={vitrin.kapakUrl}
                 alt={`${vitrin.ad} vitrin kapak görseli`}
-                className="h-full w-full object-cover"
+                className="h-full w-full object-cover object-top"
                 loading="lazy"
               />
             ) : (

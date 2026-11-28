@@ -730,12 +730,15 @@ export function buildProductCardFacts(args: {
   };
 }
 
-const TUTAR_BICIMI = new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 2 });
+const TUTAR_BICIMI = new Intl.NumberFormat("tr-TR", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
 
 export function eskiFiyatYazisi(oldPriceAmount: unknown): string | null {
   const tutar = typeof oldPriceAmount === "number" ? oldPriceAmount : Number(oldPriceAmount);
   if (!Number.isFinite(tutar) || tutar <= 0) return null;
-  return `${TUTAR_BICIMI.format(tutar)} TL`;
+  return `${TUTAR_BICIMI.format(tutar)} ₺`;
 }
 
 export function indirimOrani(args: {
@@ -762,7 +765,10 @@ export function kartRozeti(args: {
 }
 
 export function tutarYazisi(tutar: number): string {
-  return `${TUTAR_BICIMI.format(tutar)} TL`;
+  if (typeof tutar !== "number" || !Number.isFinite(tutar) || tutar <= 0) {
+    return "Fiyat sorun";
+  }
+  return `${TUTAR_BICIMI.format(tutar)} ₺`;
 }
 
 export function birimFiyatBilgisi(
@@ -792,7 +798,7 @@ export function birimFiyatBilgisi(
     const gosterilenMiktar = `${eslesme[1]} ${birim === "gr" ? "g" : birim === "lt" ? "L" : eslesme[2]}`;
     return {
       miktar: gosterilenMiktar,
-      birimFiyat: `${TUTAR_BICIMI.format(fiyatTutar / olcu)} TL/${birimAd}`,
+      birimFiyat: `${TUTAR_BICIMI.format(fiyatTutar / olcu)} ₺/${birimAd}`,
     };
   }
   return null;

@@ -7,6 +7,8 @@ type AppShellContextValue = {
   setGlobalSearch: (value: string) => void;
   statusVersion: number;
   refreshShellStatus: () => void;
+  hasOwnerStore: boolean;
+  setHasOwnerStore: (value: boolean) => void;
 };
 
 const FALLBACK_SHELL: AppShellContextValue = {
@@ -14,6 +16,8 @@ const FALLBACK_SHELL: AppShellContextValue = {
   setGlobalSearch: () => {},
   statusVersion: 0,
   refreshShellStatus: () => {},
+  hasOwnerStore: false,
+  setHasOwnerStore: () => {},
 };
 
 const AppShellContext = createContext<AppShellContextValue | null>(null);
@@ -21,6 +25,7 @@ const AppShellContext = createContext<AppShellContextValue | null>(null);
 export function AppShellProvider({ children }: { children: React.ReactNode }) {
   const [globalSearch, setGlobalSearch] = useState("");
   const [statusVersion, setStatusVersion] = useState(0);
+  const [hasOwnerStore, setHasOwnerStore] = useState(false);
 
   const value = useMemo<AppShellContextValue>(
     () => ({
@@ -28,8 +33,10 @@ export function AppShellProvider({ children }: { children: React.ReactNode }) {
       setGlobalSearch,
       statusVersion,
       refreshShellStatus: () => setStatusVersion((current) => current + 1),
+      hasOwnerStore,
+      setHasOwnerStore,
     }),
-    [globalSearch, statusVersion],
+    [globalSearch, statusVersion, hasOwnerStore],
   );
 
   return <AppShellContext.Provider value={value}>{children}</AppShellContext.Provider>;

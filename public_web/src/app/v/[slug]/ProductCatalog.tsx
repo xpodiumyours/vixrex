@@ -4,8 +4,10 @@ import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import ProductQuickView from "@/components/ProductQuickView";
+import { productWhatsappUrl } from "@/components/ProductQuickViewBase";
 import VitrinCartDock from "@/components/VitrinCartDock";
 import { TrackedDirectionsLink } from "@/components/TrackedContactLink";
+import { TrackedWhatsAppLink } from "@/components/TrackedWhatsAppLink";
 import {
   readVitrinCart,
   addToVitrinCart,
@@ -14,7 +16,7 @@ import {
   VITRIN_CART_EVENT,
   type VitrinCartItem,
 } from "@/lib/vitrinCart";
-import { MapPinIcon } from "@/lib/vitrinBrandIcons";
+import { MapPinIcon, WhatsAppIcon } from "@/lib/vitrinBrandIcons";
 import { MAX_PRODUCT_IMAGES } from "@/lib/productImagePolicy";
 import {
   getProductImages,
@@ -134,6 +136,7 @@ export function CatalogProductImage(props: {
   alt: string;
   emptyLabel?: string;
   isOwner?: boolean;
+  isService?: boolean;
 } & {
   [K in TelifAnahtari]?: boolean;
 }) {
@@ -142,6 +145,7 @@ export function CatalogProductImage(props: {
     alt,
     emptyLabel = "Ürün görseli yok",
     isOwner = false,
+    isService = false,
   } = props;
   const telifBekliyor = Boolean(props[TELIF_ANAHTARI]);
   const [prevSrc, setPrevSrc] = useState(src);
@@ -178,7 +182,7 @@ export function CatalogProductImage(props: {
       fill
       sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
       onError={() => setHasError(true)}
-      className="object-contain p-2.5 max-h-full max-w-full object-center transition duration-500 group-hover:scale-[1.03]"
+      className={`${isService ? "object-cover object-top" : "object-contain p-3 max-h-full max-w-full object-center"} transition duration-500 group-hover:scale-[1.03]`}
     />
   );
 }
@@ -360,6 +364,10 @@ export default function ProductCatalog({
           const metadata = normalizeProductMetadata(product.metadata);
           const isService = metadata.itemKind === "service";
           const brand = isService ? "" : String(product.brand || "").trim();
+          const serviceLabel = isService
+            ? String(metadata.service?.serviceType || "").trim() || "HİZMET"
+            : "";
+          const ustSatirMetni = isService ? serviceLabel : brand;
           const stockStatus = isService
             ? ""
             : product.stockQuantity === 0
@@ -404,8 +412,8 @@ export default function ProductCatalog({
             kategoriEtiketi && !kartOzellikleri.some((ozellik) => ozellik.key === "category")
               ? [
                   { key: "category", label: "Kategori", value: kategoriEtiketi },
-                  ...kartOzellikleri.slice(0, -1),
-                ]
+                  ...kartOzellikleri,
+                ].slice(0, 3)
               : kartOzellikleri;
           const rozet = kartRozeti({
             badgeTag: product.badgeTag,
@@ -437,6 +445,13 @@ export default function ProductCatalog({
           const hasVariants =
             !isService && productVariantCount(product.variants, metadata.templateKey) > 1;
           const stokSinirinda = maxQuantity != null && totalProductCartQty >= maxQuantity;
+          const whatsappAskUrl = productWhatsappUrl(
+            whatsappBaseUrl,
+            storeName,
+            product.name,
+            isService,
+            "",
+          );
 
           return (
             <article
@@ -453,41 +468,58 @@ export default function ProductCatalog({
                 className="block min-w-0 flex-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
                 aria-label={`${product.name} ${isService ? "hizmetini" : "ürününü"} hızlı incele`}
               >
-                <div className={`relative aspect-square w-full overflow-hidden ${image && !(urunTelifBekliyor && !isOwnerSession) ? "bg-white" : "bg-slate-950"}`}>
-                  <CatalogProductImage
-                    src={image}
-                    alt={gorselAlt}
-                    emptyLabel={isService ? "Hizmet görseli yok" : "Ürün görseli yok"}
-                    {...{ [TELIF_ANAHTARI]: urunTelifBekliyor }}
-                    isOwner={isOwnerSession}
-                  />
-                  {rozet ? (
-                    <span className={`absolute left-2.5 top-2.5 z-10 max-w-[70%] truncate ${vitrinGorunum.rozet.gorsel} px-2.5 py-1 text-[10px] font-extrabold shadow-md`}>
-                      {rozet}
-                    </span>
-                  ) : null}
-                  {photoCountBadge ? (
-                    <span className="absolute bottom-2.5 right-2.5 z-10 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm">
-                      {photoCountBadge}
-                    </span>
-                  ) : null}
+                <div className="bg-[#08132D] p-2">
+                  <div
+                    className={`relative aspect-[4/5] w-full overflow-hidden rounded-xl ring-1 ring-inset ring-[#294D88]/35 ${
+                      image && !(urunTelifBekliyor && !isOwnerSession)
+                        ? isService
+                          ? "bg-[#112448]/70"
+                          : "bg-[#0B1730]"
+                        : "bg-slate-950"
+                    }`}
+                  >
+                    <CatalogProductImage
+                      src={image}
+                      alt={gorselAlt}
+                      emptyLabel={isService ? "Hizmet görseli yok" : "Ürün görseli yok"}
+                      {...{ [TELIF_ANAHTARI]: urunTelifBekliyor }}
+                      isOwner={isOwnerSession}
+                      isService={isService}
+                    />
+                    {rozet ? (
+                      <span className={`absolute left-2 top-2 z-10 max-w-[70%] truncate ${vitrinGorunum.rozet.gorsel} px-2.5 py-1 text-[10px] font-extrabold shadow-md`}>
+                        {rozet}
+                      </span>
+                    ) : null}
+                    {photoCountBadge ? (
+                      <span className="absolute bottom-2 right-2 z-10 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm">
+                        {photoCountBadge}
+                      </span>
+                    ) : null}
+                  </div>
                 </div>
 
-                <div className="px-3.5 pt-3.5 pb-2">
-                  {brand ? (
-                    <p className="mb-1 truncate text-[9px] font-extrabold uppercase tracking-[0.12em] text-slate-400 sm:text-[10px]">
-                      {brand}
-                    </p>
-                  ) : null}
-                  <h3 className="line-clamp-2 min-h-[2.5em] text-xs font-extrabold leading-snug text-white sm:text-sm">
+                <div className="px-3 pt-3 pb-2">
+                  <div className="mb-1 flex h-5 min-h-[20px] items-center">
+                    {ustSatirMetni ? (
+                      <p
+                        className={`truncate text-[9px] font-extrabold uppercase tracking-[0.12em] sm:text-[10px] ${
+                          isService ? "text-[#57B7FF]" : "text-slate-400"
+                        }`}
+                      >
+                        {ustSatirMetni}
+                      </p>
+                    ) : null}
+                  </div>
+                  <h3 className="line-clamp-2 min-h-[2.5rem] text-xs font-extrabold leading-snug text-[#F7FBFF] sm:text-sm">
                     {product.name}
                   </h3>
-                  {kartEtiketleri.length > 0 ? (
-                    <p className="mt-1 truncate text-[10px] font-semibold text-slate-400 sm:text-[11px]">
-                      {kartEtiketleri.map((ozellik) => ozellik.value).join(" · ")}
-                    </p>
-                  ) : null}
-                  <div className="mt-2.5 flex min-w-0 items-baseline gap-2">
+                  <p className="mt-1 min-h-[1.125rem] truncate text-[10px] font-semibold text-slate-400 sm:text-[11px]">
+                    {kartEtiketleri.length > 0
+                      ? kartEtiketleri.map((ozellik) => ozellik.value).join(" · ")
+                      : null}
+                  </p>
+                  <div className="mt-2.5 flex min-w-0 items-baseline gap-2 tabular-nums">
                     <p className={`truncate text-xs font-extrabold sm:text-sm ${vitrinGorunum.fiyat.ana}`}>
                       {fiyatTutar != null ? tutarYazisi(fiyatTutar) : product.price || "Fiyat sorun"}
                     </p>
@@ -498,7 +530,7 @@ export default function ProductCatalog({
                     ) : null}
                   </div>
                   {birimFiyat ? (
-                    <p className="mt-0.5 truncate text-[10px] font-semibold text-slate-400 sm:text-[11px]">
+                    <p className="mt-0.5 truncate text-[10px] font-semibold text-slate-400 tabular-nums sm:text-[11px]">
                       {birimFiyat.miktar} · <span className="text-slate-300">{birimFiyat.birimFiyat}</span>
                     </p>
                   ) : null}
@@ -549,7 +581,7 @@ export default function ProductCatalog({
 
               <div className="mt-auto">
               {cardFacts.location?.ilceIlMetni ? (
-                <div className="px-3.5 pb-2">
+                <div className="px-3 pb-2">
                   {cardFacts.location.mapsUrl ? (
                     <TrackedDirectionsLink
                       href={cardFacts.location.mapsUrl}
@@ -579,31 +611,9 @@ export default function ProductCatalog({
                 </div>
               ) : null}
 
-              {isService ? (
-                <div className="px-3.5 pb-3.5 pt-1">
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.preventDefault();
-                      event.stopPropagation();
-                      setQuickView({ product, images: quickImages, productUrl, productSlug });
-                    }}
-                    className={`flex h-9 w-full items-center justify-center rounded-xl text-[11px] font-extrabold ${vitrinGorunum.buton.ikincil}`}
-                  >
-                    Hizmeti incele →
-                  </button>
-                </div>
-              ) : (
-                <div className="px-3.5 pb-3.5 pt-1">
-                  {tukendi ? (
-                    <button
-                      type="button"
-                      disabled
-                      className={`flex h-9 w-full items-center justify-center rounded-xl text-[11px] font-extrabold ${vitrinGorunum.buton.devreDisi}`}
-                    >
-                      Tükendi
-                    </button>
-                  ) : hasVariants ? (
+              <div className="flex flex-col gap-1.5 px-3 pb-3 pt-1">
+                {isService ? (
+                  <>
                     <button
                       type="button"
                       onClick={(event) => {
@@ -611,101 +621,205 @@ export default function ProductCatalog({
                         event.stopPropagation();
                         setQuickView({ product, images: quickImages, productUrl, productSlug });
                       }}
-                      className={`flex h-9 w-full items-center justify-center rounded-xl text-[11px] font-extrabold ${vitrinGorunum.buton.ana}`}
+                      className={`flex h-9 w-full items-center justify-center rounded-xl px-2 text-[11px] font-extrabold whitespace-nowrap ${vitrinGorunum.buton.ikincil}`}
                     >
-                      {totalProductCartQty > 0
-                        ? `Sepette (${totalProductCartQty}) · Seçenekler →`
-                        : "Seçenekleri gör →"}
+                      Hizmeti incele →
                     </button>
-                  ) : totalProductCartQty === 0 ? (
+                    {whatsappAskUrl ? (
+                      <TrackedWhatsAppLink
+                        href={whatsappAskUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        storeSlug={storeSlug}
+                        productSlug={productSlug}
+                        clickLocation="product_card"
+                        trackingEnabled={trackingEnabled}
+                        aria-label="WhatsApp'tan Sor"
+                        title="WhatsApp'tan Sor"
+                        onClick={(event) => event.stopPropagation()}
+                        className="flex h-8 w-full items-center justify-center gap-1.5 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-2 text-[11px] font-extrabold text-emerald-300 transition hover:bg-emerald-500/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400"
+                      >
+                        <WhatsAppIcon size={14} />
+                        <span className="truncate">WhatsApp&apos;tan Sor</span>
+                      </TrackedWhatsAppLink>
+                    ) : null}
+                  </>
+                ) : tukendi ? (
+                  <>
+                    <button
+                      type="button"
+                      disabled
+                      className={`flex h-9 w-full items-center justify-center rounded-xl px-2 text-[11px] font-extrabold whitespace-nowrap ${vitrinGorunum.buton.devreDisi}`}
+                    >
+                      Tükendi
+                    </button>
+                    {whatsappAskUrl ? (
+                      <TrackedWhatsAppLink
+                        href={whatsappAskUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        storeSlug={storeSlug}
+                        productSlug={productSlug}
+                        clickLocation="product_card"
+                        trackingEnabled={trackingEnabled}
+                        aria-label="WhatsApp'tan Sor"
+                        title="WhatsApp'tan Sor"
+                        onClick={(event) => event.stopPropagation()}
+                        className="flex h-8 w-full items-center justify-center gap-1.5 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-2 text-[11px] font-extrabold text-emerald-300 transition hover:bg-emerald-500/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400"
+                      >
+                        <WhatsAppIcon size={14} />
+                        <span className="truncate">WhatsApp&apos;tan Sor</span>
+                      </TrackedWhatsAppLink>
+                    ) : null}
+                  </>
+                ) : (
+                  <>
                     <button
                       type="button"
                       onClick={(event) => {
                         event.preventDefault();
                         event.stopPropagation();
-                        if (!trackingEnabled) {
-                          setQuickView({ product, images: quickImages, productUrl, productSlug });
-                          return;
-                        }
-                        const next = addToVitrinCart(storeSlug, {
-                          productSlug,
-                          productName: product.name,
-                          variantKey: "standart",
-                          variantText: "",
-                          priceText,
-                          priceAmount: fiyatTutar,
-                          imageUrl: image,
-                          maxQuantity,
-                          quantity: 1,
-                        });
-                        setCartItems(next);
+                        setQuickView({ product, images: quickImages, productUrl, productSlug });
                       }}
-                      className={`flex h-9 w-full items-center justify-center rounded-xl text-[11px] font-extrabold ${vitrinGorunum.buton.ana}`}
+                      className={`flex h-9 w-full items-center justify-center rounded-xl px-2 text-[11px] font-extrabold whitespace-nowrap ${vitrinGorunum.buton.ana}`}
                     >
-                      + Sepete ekle
+                      Rafta Ayırt
                     </button>
-                  ) : (
-                    <div className="flex h-9 items-center justify-between rounded-xl border border-blue-500/40 bg-blue-500/10 px-1.5">
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                          if (!trackingEnabled) {
+                    <div className="flex items-center gap-1.5">
+                      {hasVariants ? (
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
                             setQuickView({ product, images: quickImages, productUrl, productSlug });
-                            return;
-                          }
-                          const next =
-                            totalProductCartQty <= 1
-                              ? removeFromVitrinCart(storeSlug, productSlug, variantKey)
-                              : setVitrinCartQuantity(
-                                  storeSlug,
-                                  productSlug,
-                                  variantKey,
-                                  totalProductCartQty - 1,
-                                );
-                          setCartItems(next);
-                        }}
-                        aria-label="Adedi azalt"
-                        className="flex h-7 w-7 items-center justify-center rounded-lg text-lg font-black text-white transition active:scale-90"
-                      >
-                        −
-                      </button>
-                      <span aria-live="polite" className="text-xs font-extrabold text-white">
-                        {totalProductCartQty}
-                      </span>
-                      <button
-                        type="button"
-                        disabled={stokSinirinda}
-                        onClick={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                          if (!trackingEnabled) {
-                            setQuickView({ product, images: quickImages, productUrl, productSlug });
-                            return;
-                          }
-                          if (stokSinirinda) return;
-                          const next = setVitrinCartQuantity(
-                            storeSlug,
-                            productSlug,
-                            variantKey,
-                            totalProductCartQty + 1,
-                          );
-                          setCartItems(next);
-                        }}
-                        aria-label={stokSinirinda ? "Stok sınırına ulaşıldı" : "Adedi artır"}
-                        className={`flex h-7 w-7 items-center justify-center rounded-lg text-lg font-black transition active:scale-90 ${
-                          stokSinirinda
-                            ? "cursor-not-allowed text-white/25"
-                            : "text-white hover:bg-white/10"
-                        }`}
-                      >
-                        +
-                      </button>
+                          }}
+                          aria-label="Seçenekleri gör"
+                          className={`relative flex h-8 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-xl px-2 text-[11px] font-bold whitespace-nowrap ${vitrinGorunum.buton.ikincil}`}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                            <circle cx="9" cy="20" r="1.5" />
+                            <circle cx="18" cy="20" r="1.5" />
+                            <path d="M2 3h3l2.5 12h11l2-8H6" />
+                          </svg>
+                          <span className="truncate">
+                            {totalProductCartQty > 0 ? `Sepette (${totalProductCartQty})` : "Seçenekler"}
+                          </span>
+                        </button>
+                      ) : totalProductCartQty === 0 ? (
+                        <button
+                          type="button"
+                          aria-label="Sepete ekle"
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            if (!trackingEnabled) {
+                              setQuickView({ product, images: quickImages, productUrl, productSlug });
+                              return;
+                            }
+                            const next = addToVitrinCart(storeSlug, {
+                              productSlug,
+                              productName: product.name,
+                              variantKey: "standart",
+                              variantText: "",
+                              priceText,
+                              priceAmount: fiyatTutar,
+                              imageUrl: image,
+                              maxQuantity,
+                              quantity: 1,
+                            });
+                            setCartItems(next);
+                          }}
+                          className={`flex h-8 min-w-0 flex-1 items-center justify-center gap-1 rounded-xl px-2 text-[11px] font-bold whitespace-nowrap ${vitrinGorunum.buton.ikincil}`}
+                        >
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                            <circle cx="9" cy="20" r="1.5" />
+                            <circle cx="18" cy="20" r="1.5" />
+                            <path d="M2 3h3l2.5 12h11l2-8H6" />
+                          </svg>
+                          <span className="truncate">Sepete ekle</span>
+                        </button>
+                      ) : (
+                        <div className="flex h-8 min-w-0 flex-1 items-center justify-between rounded-xl border border-blue-500/40 bg-blue-500/10 px-1.5">
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              if (!trackingEnabled) {
+                                setQuickView({ product, images: quickImages, productUrl, productSlug });
+                                return;
+                              }
+                              const next =
+                                totalProductCartQty <= 1
+                                  ? removeFromVitrinCart(storeSlug, productSlug, variantKey)
+                                  : setVitrinCartQuantity(
+                                      storeSlug,
+                                      productSlug,
+                                      variantKey,
+                                      totalProductCartQty - 1,
+                                    );
+                              setCartItems(next);
+                            }}
+                            aria-label="Adedi azalt"
+                            className="flex h-6 w-6 items-center justify-center rounded-lg text-base font-black text-white transition active:scale-90"
+                          >
+                            −
+                          </button>
+                          <span aria-live="polite" className="text-xs font-extrabold text-white">
+                            {totalProductCartQty}
+                          </span>
+                          <button
+                            type="button"
+                            disabled={stokSinirinda}
+                            onClick={(event) => {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              if (!trackingEnabled) {
+                                setQuickView({ product, images: quickImages, productUrl, productSlug });
+                                return;
+                              }
+                              if (stokSinirinda) return;
+                              const next = setVitrinCartQuantity(
+                                storeSlug,
+                                productSlug,
+                                variantKey,
+                                totalProductCartQty + 1,
+                              );
+                              setCartItems(next);
+                            }}
+                            aria-label={stokSinirinda ? "Stok sınırına ulaşıldı" : "Adedi artır"}
+                            className={`flex h-6 w-6 items-center justify-center rounded-lg text-base font-black transition active:scale-90 ${
+                              stokSinirinda
+                                ? "cursor-not-allowed text-white/25"
+                                : "text-white hover:bg-white/10"
+                            }`}
+                          >
+                            +
+                          </button>
+                        </div>
+                      )}
+                      {whatsappAskUrl ? (
+                        <TrackedWhatsAppLink
+                          href={whatsappAskUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          storeSlug={storeSlug}
+                          productSlug={productSlug}
+                          clickLocation="product_card"
+                          trackingEnabled={trackingEnabled}
+                          aria-label="WhatsApp'tan Sor"
+                          title="WhatsApp'tan Sor"
+                          onClick={(event) => event.stopPropagation()}
+                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-emerald-500/40 bg-emerald-500/10 text-emerald-300 transition hover:bg-emerald-500/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400"
+                        >
+                          <WhatsAppIcon size={15} />
+                        </TrackedWhatsAppLink>
+                      ) : null}
                     </div>
-                  )}
-                </div>
-              )}
+                  </>
+                )}
+              </div>
               </div>
 
             </article>

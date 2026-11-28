@@ -15,7 +15,7 @@ type BootstrapSonucu = {
 
 export function StatusBar() {
   const router = useRouter();
-  const { statusVersion } = useAppShell();
+  const { statusVersion, setHasOwnerStore } = useAppShell();
   const [slug, setSlug] = useState<string | null>(null);
   const [yayinda, setYayinda] = useState<boolean | null>(null);
   const [yukleniyor, setYukleniyor] = useState(true);
@@ -66,13 +66,23 @@ export function StatusBar() {
 
       if (!aktif) return;
       setSlug(bulunanSlug || null);
+      setHasOwnerStore(Boolean(bulunanSlug) && yayinDurumu !== null);
       setYayinda(yayinDurumu);
       setYukleniyor(false);
     }
 
     void durumuGetir();
-    return () => { aktif = false; };
-  }, [statusVersion]);
+    const authSubscription =
+      typeof supabase.auth.onAuthStateChange === "function"
+        ? supabase.auth.onAuthStateChange(() => {
+            void durumuGetir();
+          })
+        : null;
+    return () => {
+      aktif = false;
+      authSubscription?.data?.subscription?.unsubscribe();
+    };
+  }, [statusVersion, setHasOwnerStore]);
 
   if (!slug) return null;
   if (yayinda === null && !yukleniyor) return null;
