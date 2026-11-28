@@ -68,6 +68,10 @@ export const LANDING_ESITLIK_ISTISNALARI_WEB: Istisna[] = [
     metin: "Vixrex Asistan'ı aç",
     neden: ERISEBILIRLIK,
   },
+  {
+    metin: "Vixrex Yapay Zeka Asistanını Başlat",
+    neden: ERISEBILIRLIK,
+  },
 
   // --- Çıkarıcı kapsamı ---
   {
@@ -382,6 +386,12 @@ export const LANDING_ESITLIK_ISTISNALARI_WEB: Istisna[] = [
     neden:
       "Web ana sayfasındaki esnaf güven vaadi; Google Play Payments Policy gereği " +
       "Android mobil uygulamada komisyon/ödeme ifadeleri nötrleştirildi.",
+  },
+  {
+    metin: "Tümünü gör →",
+    neden:
+      "Web ana sayfası sinematik telefon mockup'ında 2x2 vitrin kategori bölümü " +
+      "başlık satırındaki görsel etiket; Flutter landing eski mockup yapısını korur.",
   },
 ];
 

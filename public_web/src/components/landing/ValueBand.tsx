@@ -9,9 +9,9 @@ const KANALLAR = [
 
 export function ValueBand() {
   return (
-    <section id="neden-vixrex" className="bg-lp-bg-light lp-yan-bosluk py-lp-section">
+    <section id="neden-vixrex" className="border-t border-white/5 lp-yan-bosluk py-lp-section">
       <div className="mx-auto w-full max-w-lp">
-        <div className="flex flex-col gap-6 md:flex-row md:items-center md:gap-12">
+        <div className="lp-glass-panel flex flex-col gap-6 rounded-[32px] p-7 sm:p-10 md:flex-row md:items-center md:gap-12">
           <div className="md:flex-[5]">
             <h2 className="text-[30px] font-black leading-[1.2] text-lp-text">
               Müşterin ihtiyaç duyduğu her bilgiye tek linkten ulaşsın
@@ -21,11 +21,11 @@ export function ValueBand() {
               paket veya işletme içi QR kod üzerinden paylaşın.
             </p>
           </div>
-          <ul className="flex flex-wrap justify-center gap-2.5 md:flex-[4] md:justify-end">
+          <ul className="flex flex-wrap justify-start gap-2.5 md:flex-[4] md:justify-end">
             {KANALLAR.map((kanal) => (
               <li
                 key={kanal}
-                className="rounded-full border border-lp-border bg-lp-surface-soft px-3.5 py-[11px] text-[12px] font-black text-lp-text-alt"
+                className="rounded-full border border-sky-400/35 bg-[#147DFF]/18 px-4 py-2.5 text-[12.5px] font-black text-sky-200 backdrop-blur-md"
               >
                 {kanal}
               </li>

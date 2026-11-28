@@ -396,46 +396,75 @@ export function LandingAsistanSohbeti({
   return (
     <div className="flex h-full w-full flex-col bg-[#060B18]">
       {/* Başlık çubuğu — Flutter ChatTopBar ile parite: 40px avatar, 13px başlık */}
-      <div className="flex w-full items-center justify-between border-b border-white/10 bg-[linear-gradient(180deg,rgba(20,32,54,0.98),rgba(10,17,30,0.98))] px-3.5 py-2.5">
-        <div className="flex items-center gap-2.5">
+      <div className="flex w-full items-center justify-between gap-2 border-b border-white/10 bg-gradient-to-b from-[#0f1b2f]/98 to-[#09101d]/98 px-3.5 py-2.5 backdrop-blur-md">
+        <div className="flex min-w-0 items-center gap-2.5">
           <div className="relative shrink-0">
-            <VixrexAvatar size={36} halo decorative />
+            <VixrexAvatar size={32} halo decorative />
             <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#0b111e] bg-emerald-400" aria-hidden="true" />
           </div>
-          <div>
-            <p className="text-xs font-black tracking-[-0.01em] text-white">Vixrex</p>
+          <div className="min-w-0">
+            <p className="truncate text-xs font-black tracking-[-0.01em] text-white">Vixrex</p>
             <p className="mt-0.5 flex items-center gap-1 text-[10px] font-medium text-slate-400">
               <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400" />
-              <span>Dijital vitrin asistanı</span>
+              <span className="truncate">Dijital vitrin asistanı</span>
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={() => {
-              setAdim(-1);
-              setNiyetKategoriSoruluyor(false);
-              setNiyetSerbestMetin("");
-              setGirdi("");
-              setHata("");
-              setCevaplar({});
-              setIl("");
-              setIlce("");
-              setAdres("");
-              taslagiTemizle();
-            }}
-            className="rounded-lg border border-white/10 bg-white/[0.045] px-2.5 py-1 text-xs font-bold text-slate-300 transition hover:bg-white/10 hover:text-white"
-          >
-            {ASISTAN_SAHNE_METINLERI.yeniSohbet}
-          </button>
+        <div className="flex shrink-0 items-center gap-1.5">
+          {(adim !== -1 || niyetKategoriSoruluyor) ? (
+            <button
+              type="button"
+              onClick={() => {
+                setAdim(-1);
+                setNiyetKategoriSoruluyor(false);
+                setNiyetSerbestMetin("");
+                setGirdi("");
+                setHata("");
+                setCevaplar({});
+                setIl("");
+                setIlce("");
+                setAdres("");
+                taslagiTemizle();
+              }}
+              aria-label={ASISTAN_SAHNE_METINLERI.yeniSohbet}
+              title={ASISTAN_SAHNE_METINLERI.yeniSohbet}
+              className="grid h-7 w-7 place-items-center rounded-full border border-white/10 bg-white/[0.06] text-slate-300 shadow-sm transition hover:bg-white/[0.12] hover:text-white"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                className="h-3.5 w-3.5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
+                <path d="M3 3v5h5" />
+              </svg>
+            </button>
+          ) : null}
           {onClose ? (
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border border-white/10 bg-white/[0.045] px-2.5 py-1 text-xs font-bold text-slate-300 transition hover:bg-white/10 hover:text-white"
+              aria-label="Kapat"
+              className="grid h-7 w-7 place-items-center rounded-full border border-white/10 bg-white/[0.06] text-slate-400 shadow-sm transition hover:border-rose-400/40 hover:bg-rose-500/20 hover:text-rose-200"
             >
-              Kapat
+              <svg
+                viewBox="0 0 24 24"
+                className="h-3.5 w-3.5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M18 6 6 18" />
+                <path d="m6 6 12 12" />
+              </svg>
             </button>
           ) : null}
         </div>
@@ -468,7 +497,7 @@ export function LandingAsistanSohbeti({
                     { role: "assistant", text: `${NIYET_KATEGORI_SORUSU} ${NIYET_KATEGORI_ACIKLAMA}` },
                   ]);
                 }}
-                className="flex w-full items-center justify-between gap-3 rounded-xl border border-sky-400/30 bg-[#0C182D] px-3.5 py-3 text-left transition hover:border-sky-400/60 hover:bg-[#10203B]"
+                className="flex w-full items-center justify-between gap-3 rounded-xl border border-sky-400/30 bg-white/[0.04] px-3.5 py-3 text-left shadow-sm backdrop-blur-sm transition hover:border-sky-400/60 hover:bg-white/[0.08]"
               >
                 <div className="min-w-0">
                   <p className="text-xs font-extrabold text-white">
@@ -483,7 +512,7 @@ export function LandingAsistanSohbeti({
               <button
                 type="button"
                 onClick={() => { void ensureAnonymousSession(); setGirdi(""); setAdim(0); }}
-                className="flex w-full items-center justify-between gap-3 rounded-xl border border-white/10 bg-[#0A1324] px-3.5 py-3 text-left transition hover:border-sky-400/40 hover:bg-[#0E1A30]"
+                className="flex w-full items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-3 text-left shadow-sm backdrop-blur-sm transition hover:border-sky-400/40 hover:bg-white/[0.06]"
               >
                 <div className="min-w-0">
                   <p className="text-xs font-extrabold text-white">
@@ -498,7 +527,7 @@ export function LandingAsistanSohbeti({
               <button
                 type="button"
                 onClick={() => router.push("/kesfet")}
-                className="flex w-full items-center justify-between gap-3 rounded-xl border border-white/10 bg-[#0A1324] px-3.5 py-3 text-left transition hover:border-sky-400/40 hover:bg-[#0E1A30]"
+                className="flex w-full items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-3 text-left shadow-sm backdrop-blur-sm transition hover:border-sky-400/40 hover:bg-white/[0.06]"
               >
                 <div className="min-w-0">
                   <p className="text-xs font-extrabold text-white">
@@ -564,7 +593,7 @@ export function LandingAsistanSohbeti({
       </div>
 
       {/* Girdi alanı */}
-      <div className="w-full border-t border-white/10 bg-[#081422]/95 p-3">
+      <div className="w-full border-t border-white/10 bg-gradient-to-b from-[#0b1324]/95 to-[#060b16]/98 p-3 backdrop-blur-md">
         <div className={genisEkran ? "mx-auto w-full max-w-2xl" : ""}>
         {/* Karşılama — hızlı seçenekler tek katalogdan (PR2-C6) */}
         {adim === -1 && niyetKategoriSoruluyor ? (
@@ -637,18 +666,18 @@ export function LandingAsistanSohbeti({
               e.preventDefault();
               baslangicAdiniGonder(girdi);
             }}
-            className="flex h-11 items-center gap-2 overflow-hidden rounded-xl border border-sky-200/20 bg-slate-900/70 pl-3.5 pr-1.5 focus-within:border-blue-500/60"
+            className="flex h-11 items-center gap-2 overflow-hidden rounded-2xl border border-white/12 bg-white/[0.04] px-3 shadow-[inset_0_1px_1px_rgba(255,255,255,0.06),0_4px_16px_rgba(0,0,0,0.4)] backdrop-blur-md transition focus-within:border-sky-400/50 focus-within:ring-2 focus-within:ring-sky-400/20"
           >
             <input
               value={girdi}
               onChange={(e) => setGirdi(e.target.value)}
               placeholder={ASISTAN_SAHNE_METINLERI.girdiYerTutucu}
-              className="h-10 min-w-0 flex-1 bg-transparent pr-2 text-xs font-medium text-white outline-none placeholder:text-slate-500"
+              className="h-10 min-w-0 flex-1 bg-transparent text-xs font-medium text-white outline-none placeholder:text-slate-400/70"
             />
             <button
               type="submit"
               disabled={!girdi.trim()}
-              className="grid h-9 w-9 shrink-0 place-items-center rounded-[10px] border border-blue-400/30 bg-blue-600 text-white shadow-[0_6px_14px_rgba(37,99,235,0.22)] transition hover:bg-blue-500 disabled:opacity-40"
+              className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-gradient-to-tr from-sky-500 to-blue-600 text-white shadow-[0_0_12px_rgba(56,189,248,0.35)] transition-all hover:scale-105 active:scale-95 disabled:scale-100 disabled:opacity-30 disabled:shadow-none"
             >
               <svg
                 viewBox="0 0 24 24"
@@ -834,7 +863,7 @@ export function LandingAsistanSohbeti({
               e.preventDefault();
               ilerle(girdi);
             }}
-            className="flex gap-2"
+            className={aktif.girdi === "secim" ? "flex flex-col gap-2" : "flex gap-2"}
           >
             <label className="sr-only" htmlFor={`asistan-${aktif.alan}`}>
               {aktif.baslik}
@@ -848,12 +877,16 @@ export function LandingAsistanSohbeti({
                 value={girdi}
                 onChange={(e) => setGirdi(e.target.value)}
                 placeholder={aktif.yerTutucu}
-                className="flex h-12 min-w-0 flex-1 rounded-xl border border-lp-border bg-lp-surface px-3.5 text-[13px] font-semibold text-lp-text outline-none placeholder:text-lp-muted"
+                className="flex h-11 min-w-0 flex-1 rounded-2xl border border-white/12 bg-white/[0.04] px-3.5 text-xs font-medium text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.06),0_4px_16px_rgba(0,0,0,0.4)] outline-none backdrop-blur-md transition placeholder:text-slate-400/70 focus:border-sky-400/50 focus:ring-2 focus:ring-sky-400/20"
               />
             )}
             <button
               type="submit"
-              className="flex h-12 shrink-0 items-center justify-center whitespace-nowrap rounded-xl bg-lp-primary px-3 text-[11px] font-black text-lp-on-primary disabled:opacity-50"
+              className={
+                aktif.girdi === "secim"
+                  ? "flex h-[46px] w-full items-center justify-center rounded-xl bg-gradient-to-tr from-sky-500 to-blue-600 px-3.5 text-[11px] font-black text-white shadow-[0_0_12px_rgba(56,189,248,0.35)] transition-all hover:scale-105 active:scale-95 disabled:scale-100 disabled:opacity-30 disabled:shadow-none"
+                  : "flex h-11 shrink-0 items-center justify-center whitespace-nowrap rounded-xl bg-gradient-to-tr from-sky-500 to-blue-600 px-3.5 text-[11px] font-black text-white shadow-[0_0_12px_rgba(56,189,248,0.35)] transition-all hover:scale-105 active:scale-95 disabled:scale-100 disabled:opacity-30 disabled:shadow-none"
+              }
               disabled={!girdi.trim()}
             >
               {aktif.dugme}

@@ -189,7 +189,20 @@ class PhoneMockup extends StatelessWidget {
                                           ),
                                         ],
                                       ),
-                                      const SizedBox(height: 6),
+                                      const Padding(
+                                        padding: EdgeInsets.only(
+                                          top: 6,
+                                          bottom: 4,
+                                        ),
+                                        child: Text(
+                                          'Örnek vitrin',
+                                          style: TextStyle(
+                                            color: Color(0xFF6EE7B7),
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                        ),
+                                      ),
                                       Text(
                                         profile.name,
                                         style: const TextStyle(

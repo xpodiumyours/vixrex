@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AKTIF_BUSINESS_CATEGORIES, kategoriUrlParcasi } from "@/lib/businessCategories";
 import { kategoriSablonHaritasi } from "@/lib/categoryTemplates";
+import { TiltCard } from "./TiltCard";
 
 /**
  * Şablon kataloğu — envanter §2.9.
@@ -22,9 +23,9 @@ export async function TemplateCatalog() {
   const kategoriSayisi = AKTIF_BUSINESS_CATEGORIES.length;
 
   return (
-    <section className="bg-lp-bg-light lp-yan-bosluk py-lp-section">
+    <section className="border-t border-white/5 lp-yan-bosluk py-lp-section">
       <div className="mx-auto w-full max-w-lp">
-        <p className="text-center text-[12px] font-black tracking-[1.5px] text-lp-primary">
+        <p className="text-center text-[12px] font-black tracking-[1.5px] text-sky-400">
           HAZIR ŞABLONLAR
         </p>
         <h2 className="mt-3 text-center text-[32px] font-black leading-[1.15] text-lp-text md:text-[38px]">
@@ -35,36 +36,52 @@ export async function TemplateCatalog() {
           vitrinini saniyeler içinde oluştur.
         </p>
 
-        <ul className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+        <ul className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {AKTIF_BUSINESS_CATEGORIES.map((kategori) => {
             const sablon = sablonlar.get(kategori.id);
             const kapak = sablon?.kapaklar[0]?.url ?? null;
             return (
               <li key={kategori.id}>
-                <Link
-                  href={`/kesfet/${kategoriUrlParcasi(kategori.id)}`}
-                  className="group flex h-full flex-col overflow-hidden rounded-3xl border border-lp-border/70 bg-lp-surface transition-colors hover:border-lp-primary/50"
-                >
-                  <span className="block aspect-[3/2] w-full overflow-hidden bg-lp-surface-soft">
-                    {kapak ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={kapak}
-                        alt=""
-                        className="h-full w-full object-cover"
-                        loading="lazy"
+                <TiltCard className="lp-glass-panel h-full rounded-[26px]">
+                  <Link
+                    href={`/kesfet/${kategoriUrlParcasi(kategori.id)}`}
+                    className="group flex h-full flex-col overflow-hidden rounded-[26px]"
+                  >
+                    <span className="relative block aspect-[16/10] w-full overflow-hidden bg-slate-900">
+                      {kapak ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={kapak}
+                          alt=""
+                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <span className="block h-full w-full bg-gradient-to-br from-[#102B59] to-[#08132D]" />
+                      )}
+                      <span
+                        aria-hidden="true"
+                        className="pointer-events-none absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-[#081226]/90 to-transparent"
                       />
-                    ) : null}
-                  </span>
-                  <span className="flex flex-1 flex-col justify-between gap-2 p-4">
-                    <span className="text-[13px] font-black text-lp-text">
-                      {kategori.label}
                     </span>
-                    <span className="text-[11px] font-bold text-lp-primary">
-                      Hazır görseller →
+                    <span className="flex flex-1 items-center justify-between gap-3 bg-[#081226]/90 px-5 py-4">
+                      <span>
+                        <span className="block text-[16px] font-black leading-tight text-white">
+                          {kategori.label}
+                        </span>
+                        <span className="mt-0.5 block text-[12px] font-bold text-sky-400">
+                          Hazır görseller →
+                        </span>
+                      </span>
+                      <span
+                        aria-hidden="true"
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/[0.06] text-sm font-black text-sky-300 transition-all duration-300 group-hover:translate-x-0.5 group-hover:bg-[#147DFF] group-hover:text-white"
+                      >
+                        →
+                      </span>
                     </span>
-                  </span>
-                </Link>
+                  </Link>
+                </TiltCard>
               </li>
             );
           })}

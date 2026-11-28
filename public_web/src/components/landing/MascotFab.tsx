@@ -54,7 +54,7 @@ export function MascotFab({
       {/* Balon — tıklanınca da asistan açılır */}
       {mesajGoster ? (
         <p
-          className="pointer-events-auto max-w-[230px] cursor-pointer rounded-2xl border border-lp-border bg-lp-surface px-4 py-3 text-[13px] font-semibold text-lp-text-alt shadow-lp-card transition-opacity hover:opacity-90"
+          className="pointer-events-auto max-w-[230px] cursor-pointer rounded-2xl rounded-br-sm border border-sky-400/35 bg-[#0A162E]/95 px-4 py-3 text-[13px] font-bold leading-snug text-white shadow-[0_12px_32px_rgba(0,0,0,0.55)] backdrop-blur-xl transition hover:border-sky-400/70"
           onClick={onToggle}
         >
           👋 Dijital vitrinini hazırlayayım mı?

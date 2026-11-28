@@ -5,6 +5,7 @@ import {
   PaylasIkonu,
   SimsekIkonu,
 } from "@/components/site/icons";
+import { TiltCard } from "./TiltCard";
 
 /** Özellik kartları — envanter §2.5. */
 type Kart = {
@@ -46,7 +47,7 @@ const KARTLAR: Kart[] = [
 
 export function FeaturesSection() {
   return (
-    <section className="bg-lp-bg-light lp-yan-bosluk py-lp-section">
+    <section className="border-t border-white/5 lp-yan-bosluk py-lp-section">
       <div className="mx-auto w-full max-w-lp">
         <h2 className="text-center text-[38px] font-black leading-[1.1] text-lp-text">
           Dijital vitrinini kolayca hazırla
@@ -56,24 +57,26 @@ export function FeaturesSection() {
           yönet, istediğin yerde paylaş.
         </p>
 
-        <div className="mt-12 flex flex-wrap justify-center gap-[18px]">
+        <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {KARTLAR.map((kart) => (
-            <article
+            <TiltCard
               key={kart.baslik}
-              className="w-full rounded-[28px] border-[1.2px] border-lp-border/85 bg-lp-surface p-6 shadow-lp-card sm:w-[calc(50%-9px)] lg:w-[calc(25%-14px)]"
+              className="lp-glass-panel h-full rounded-[28px] p-6"
             >
-              <span
-                className={`flex h-[54px] w-[54px] items-center justify-center rounded-[18px] bg-current/15 ${kart.renk}`}
-              >
-                {kart.ikon}
-              </span>
-              <h3 className="mt-[18px] text-[22px] font-black leading-[1.15] tracking-[-0.6px] text-lp-text">
-                {kart.baslik}
-              </h3>
-              <p className="mt-2.5 text-[16px] font-semibold leading-[1.6] text-lp-text-alt">
-                {kart.aciklama}
-              </p>
-            </article>
+              <article className="h-full">
+                <span
+                  className={`flex h-[54px] w-[54px] items-center justify-center rounded-[18px] bg-current/15 ${kart.renk}`}
+                >
+                  {kart.ikon}
+                </span>
+                <h3 className="mt-[18px] text-[22px] font-black leading-[1.15] tracking-[-0.6px] text-lp-text">
+                  {kart.baslik}
+                </h3>
+                <p className="mt-2.5 text-[16px] font-semibold leading-[1.6] text-lp-text-alt">
+                  {kart.aciklama}
+                </p>
+              </article>
+            </TiltCard>
           ))}
         </div>
       </div>

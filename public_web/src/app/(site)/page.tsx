@@ -51,7 +51,7 @@ export default async function HomePage() {
   const profiller = await mockupProfilleriniGetir();
 
   return (
-    <>
+    <div className="lp-cinematic-bg">
       <LandingChatWrapper profiller={profiller} blogErisimi={blogYayindaMi()}>
         <ValueBand />
         <FeaturesSection />
@@ -61,6 +61,6 @@ export default async function HomePage() {
         <TemplateCatalog />
         <BlogRehberleri />
       </LandingChatWrapper>
-    </>
+    </div>
   );
 }
