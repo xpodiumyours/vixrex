@@ -1413,6 +1413,7 @@ html:has(.owner-shell) {
     rgba(20, 125, 255, 0.55) 360deg
   );
   filter: blur(56px);
+  transform: translate(-50%, -50%);
   animation: lpSpinSlow 24s linear infinite;
 }
 
@@ -1427,6 +1428,7 @@ html:has(.owner-shell) {
   );
   -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1px));
   mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1px));
+  transform: translate(-50%, -50%);
   animation: lpSpinSlow 18s linear infinite;
 }
 
@@ -1439,6 +1441,7 @@ html:has(.owner-shell) {
 }
 
 .lp-ring-pulse {
+  transform: translate(-50%, -50%);
   animation: lpPulseRing 5.6s ease-in-out infinite;
 }
 
