@@ -161,7 +161,7 @@ export function HeroSection({
                 }}
                 className="flex flex-col gap-3 @min-[500px]:flex-row @min-[500px]:items-center"
               >
-                <div className="flex h-[56px] min-w-0 flex-1 items-center overflow-hidden rounded-2xl border border-white/[0.14] bg-white/[0.06] backdrop-blur-md transition focus-within:border-[#147DFF] focus-within:shadow-[0_0_0_3px_rgba(20,125,255,0.22)] sm:h-[52px]">
+                <div className="flex h-[56px] min-w-0 w-full shrink-0 items-center overflow-hidden rounded-2xl border border-white/[0.14] bg-white/[0.06] backdrop-blur-md transition focus-within:border-[#147DFF] focus-within:shadow-[0_0_0_3px_rgba(20,125,255,0.22)] sm:h-[52px] @min-[500px]:w-auto @min-[500px]:flex-1 @min-[500px]:shrink">
                   <span className="hidden whitespace-nowrap pl-4 pr-1 text-[14px] font-bold text-white/60 sm:inline">
                     {adresOneki}
                   </span>
