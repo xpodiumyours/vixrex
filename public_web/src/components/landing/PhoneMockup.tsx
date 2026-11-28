@@ -116,10 +116,15 @@ export function PhoneMockup({
                 event.stopPropagation();
                 setAktif(sira);
               }}
-              className={`mx-1 h-2 cursor-pointer rounded-full border-0 p-0 transition-all duration-[260ms] ${
-                sira === aktif ? "w-6 bg-lp-primary" : "w-2 bg-lp-border"
-              }`}
-            />
+              className="grid h-7 w-7 cursor-pointer place-items-center border-0 bg-transparent p-0"
+            >
+              <span
+                aria-hidden="true"
+                className={`block h-2 rounded-full transition-all duration-[260ms] ${
+                  sira === aktif ? "w-6 bg-lp-primary" : "w-2 bg-lp-border"
+                }`}
+              />
+            </button>
           ))}
         </div>
       )}

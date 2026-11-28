@@ -863,7 +863,7 @@ export function LandingAsistanSohbeti({
               e.preventDefault();
               ilerle(girdi);
             }}
-            className="flex gap-2"
+            className={aktif.girdi === "secim" ? "flex flex-col gap-2" : "flex gap-2"}
           >
             <label className="sr-only" htmlFor={`asistan-${aktif.alan}`}>
               {aktif.baslik}
@@ -882,7 +882,11 @@ export function LandingAsistanSohbeti({
             )}
             <button
               type="submit"
-              className="flex h-11 shrink-0 items-center justify-center whitespace-nowrap rounded-xl bg-gradient-to-tr from-sky-500 to-blue-600 px-3.5 text-[11px] font-black text-white shadow-[0_0_12px_rgba(56,189,248,0.35)] transition-all hover:scale-105 active:scale-95 disabled:scale-100 disabled:opacity-30 disabled:shadow-none"
+              className={
+                aktif.girdi === "secim"
+                  ? "flex h-[46px] w-full items-center justify-center rounded-xl bg-gradient-to-tr from-sky-500 to-blue-600 px-3.5 text-[11px] font-black text-white shadow-[0_0_12px_rgba(56,189,248,0.35)] transition-all hover:scale-105 active:scale-95 disabled:scale-100 disabled:opacity-30 disabled:shadow-none"
+                  : "flex h-11 shrink-0 items-center justify-center whitespace-nowrap rounded-xl bg-gradient-to-tr from-sky-500 to-blue-600 px-3.5 text-[11px] font-black text-white shadow-[0_0_12px_rgba(56,189,248,0.35)] transition-all hover:scale-105 active:scale-95 disabled:scale-100 disabled:opacity-30 disabled:shadow-none"
+              }
               disabled={!girdi.trim()}
             >
               {aktif.dugme}

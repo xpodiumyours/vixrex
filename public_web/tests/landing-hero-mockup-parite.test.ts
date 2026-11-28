@@ -204,11 +204,20 @@ describe("landing telefon mockup — gerçek davranış doğrulaması", () => {
     elemanTopla(tree, (el) => el.type === "button" && adlar.has(el.props?.["aria-label"] as string), noktalar);
 
     expect(noktalar).toHaveLength(profiller.length);
-    for (const nokta of noktalar) {
+    for (const [sira, nokta] of noktalar.entries()) {
       expect(kasa && altAgacindaMi(kasa, nokta)).toBe(false);
       const sinif = nokta.props?.className as string;
-      expect(sinif).toContain("duration-[260ms]");
-      expect(sinif).toContain(sinif.includes("w-6") ? "w-6 bg-lp-primary" : "w-2 bg-lp-border");
+      expect(sinif).toContain("h-7");
+      expect(sinif).toContain("w-7");
+      expect(nokta.props?.["aria-pressed"]).toBe(sira === 0);
+      const gorsel = elemanBul(nokta, (el) => el.type === "span");
+      expect(gorsel).not.toBeNull();
+      const gorselSinif = gorsel?.props?.className as string;
+      expect(gorselSinif).toContain("h-2");
+      expect(gorselSinif).toContain("duration-[260ms]");
+      expect(gorselSinif).toContain(
+        gorselSinif.includes("w-6") ? "w-6 bg-lp-primary" : "w-2 bg-lp-border",
+      );
       expect(typeof nokta.props?.onClick).toBe("function");
     }
     expect(html).toContain("w-6 bg-lp-primary");
