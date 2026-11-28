@@ -383,6 +383,18 @@ export const LANDING_ESITLIK_ISTISNALARI_WEB: Istisna[] = [
       "Web ana sayfasındaki esnaf güven vaadi; Google Play Payments Policy gereği " +
       "Android mobil uygulamada komisyon/ödeme ifadeleri nötrleştirildi.",
   },
+  {
+    metin: "ŞU AN AÇIK",
+    neden:
+      "Web ana sayfası sinematik telefon mockup'ında canlı mobil vitrin üst durum " +
+      "rozeti gösterilir; Flutter landing eski mockup kart yapısını korur.",
+  },
+  {
+    metin: "Tümünü gör →",
+    neden:
+      "Web ana sayfası sinematik telefon mockup'ında 2x2 vitrin kategori bölümü " +
+      "başlık satırındaki görsel etiket; Flutter landing eski mockup yapısını korur.",
+  },
 ];
 
 // Blog altbilgi bağlantısı (28 Ağustos) buraya İSTİSNA OLARAK GİRMEDİ ve

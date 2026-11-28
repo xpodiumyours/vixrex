@@ -16,7 +16,7 @@ import { VixrexAvatar } from "@/app/v/[slug]/components/VixrexAvatar";
  */
 export function SiteFooter() {
   return (
-    <footer className="bg-lp-bg-editor py-[60px]">
+    <footer className="border-t border-white/10 bg-lp-bg-editor py-[60px]">
       <div className="mx-auto flex w-full max-w-[1200px] flex-col items-center gap-4 px-5 text-center">
         <div className="flex items-center gap-2.5 text-lp-text">
           <VixrexAvatar size={32} decorative />

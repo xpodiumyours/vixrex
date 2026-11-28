@@ -1,3 +1,4 @@
+import { VixrexAvatar } from "@/app/v/[slug]/components/VixrexAvatar";
 import { TikIkonu, YonOkuIkonu } from "@/components/site/icons";
 
 function DunyaIkonu() {
@@ -64,7 +65,7 @@ const VIXREX_ILE = [
 
 export function ComparisonSection() {
   return (
-    <section className="bg-lp-bg-editor lp-yan-bosluk py-lp-section">
+    <section className="border-t border-white/5 lp-yan-bosluk py-lp-section">
       <div className="mx-auto w-full max-w-lp">
         <h2 className="text-center text-[38px] font-black tracking-[-0.5px] text-lp-text">
           Dijital vitrinin için gerekenler tek yerde
@@ -74,7 +75,7 @@ export function ComparisonSection() {
         </p>
 
         <div className="mt-12 flex flex-col items-stretch md:flex-row md:items-center">
-          <div className="flex-1 rounded-[28px] border border-lp-border bg-lp-surface p-[26px] shadow-lp-card">
+          <div className="lp-glass-panel flex-1 rounded-[28px] p-[26px]">
             <p className="text-[13px] font-black tracking-[0.2px] text-lp-muted">
               Ayrı ayrı kurulum
             </p>
@@ -83,7 +84,7 @@ export function ComparisonSection() {
                 <li key={satir.metin} className="flex items-center gap-3 pb-[14px]">
                   <span
                     aria-hidden
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-lp-bg-editor text-lp-muted"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/5 text-lp-muted"
                   >
                     {satir.ikon}
                   </span>
@@ -93,28 +94,31 @@ export function ComparisonSection() {
                 </li>
               ))}
             </ul>
-            <p className="mt-1 rounded-[14px] border border-lp-border bg-lp-surface-soft px-[14px] py-[13px] text-center text-[12px] font-black leading-[1.35] text-lp-muted">
+            <p className="mt-1 rounded-[14px] border border-white/10 bg-white/[0.04] px-[14px] py-[13px] text-center text-[12px] font-black leading-[1.35] text-lp-muted">
               Birden fazla araç ve işlem
             </p>
           </div>
 
           <span
             aria-hidden
-            className="mx-auto my-[18px] flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-full border border-lp-primary/35 bg-lp-surface-soft text-lp-primary shadow-lp-card md:mx-[18px] md:my-0 [&>svg]:rotate-90 md:[&>svg]:rotate-0"
+            className="mx-auto my-[18px] flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-full border border-sky-400/35 bg-[#0A162E]/85 text-sky-300 shadow-lp-card backdrop-blur-md md:mx-[18px] md:my-0 [&>svg]:rotate-90 md:[&>svg]:rotate-0"
           >
             <YonOkuIkonu boyut={22} />
           </span>
 
-          <div className="flex-1 rounded-[28px] border border-lp-primary/40 bg-gradient-to-br from-lp-surface to-lp-turquoise-surface p-[26px] shadow-lp-panel">
-            <p className="text-[13px] font-black tracking-[0.2px] text-lp-primary">
-              Vixrex ile
-            </p>
+          <div className="lp-glass-panel-primary flex-1 rounded-[28px] p-[26px]">
+            <div className="flex items-center gap-2.5">
+              <VixrexAvatar size={26} decorative />
+              <p className="text-[13px] font-black tracking-[0.2px] text-sky-300">
+                Vixrex ile
+              </p>
+            </div>
             <ul className="mt-[22px]">
               {VIXREX_ILE.map((satir) => (
                 <li key={satir} className="flex items-center gap-3 pb-[14px]">
                   <span
                     aria-hidden
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/10 text-[#65E7E7]"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#147DFF]/30 text-emerald-300"
                   >
                     <TikIkonu boyut={19} />
                   </span>
@@ -124,7 +128,7 @@ export function ComparisonSection() {
                 </li>
               ))}
             </ul>
-            <p className="mt-1 rounded-[14px] border border-white/10 bg-white/10 px-[14px] py-[13px] text-center text-[12px] font-black leading-[1.35] text-[#BFF7F7]">
+            <p className="mt-1 rounded-[14px] border border-sky-400/25 bg-white/10 px-[14px] py-[13px] text-center text-[12px] font-black leading-[1.35] text-[#BFF7F7]">
               Tek panel, tek link, doğrudan iletişim
             </p>
           </div>

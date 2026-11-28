@@ -1,18 +1,17 @@
 "use client";
 
-import type { MockupProfili } from "./mockupProfilleri";
+import type { MockupAksiyonHapi, MockupProfili } from "./mockupProfilleri";
 
-/**
- * Mockup slayt içeriği — envanter §2.3, Flutter phone_mockup.dart iç yapısı.
- *
- * Slayt SIRASI PhoneMockup'ta tutulur (2026-09-08 canlı karşılaştırma
- * düzeltmesi): yüzen rozetler aktif slaydı izlediği için state iki
- * bileşenin ortak atasında yaşar. Burada yalnız çizim var.
- *
- * Flutter ölçüleri (phone_mockup.dart:63-67): çentik için 22px üst boşluk,
- * ardından 156px kapak. Next'te kapak 196px idi ve boşluk yoktu — telefon
- * içeriği Flutter'dan uzundu, alttaki "Vitrin hazır" kartı taşiyordu.
- */
+function aksiyonSinifi(vurgu: MockupAksiyonHapi["vurgu"]): string {
+  if (vurgu === "whatsapp") {
+    return "border-emerald-400/35 bg-emerald-500/20 text-emerald-200";
+  }
+  if (vurgu === "birincil") {
+    return "border-sky-400/35 bg-[#147DFF]/25 text-white";
+  }
+  return "border-white/15 bg-black/35 text-slate-100";
+}
+
 export function PhoneMockupSlaytlari({
   profiller,
   aktif,
@@ -24,120 +23,121 @@ export function PhoneMockupSlaytlari({
   if (!profil) return null;
 
   return (
-    <div className="flex h-full flex-col">
-      {/* Kapak + isim/kategori (Flutter: 22px çentik boşluğu + 156px kapak) */}
-      <div className="relative mt-[22px] h-[156px] w-full shrink-0 bg-lp-surface">
+    <div className="flex h-full w-full flex-col overflow-hidden bg-[#080F20]">
+      <div className="relative overflow-hidden bg-gradient-to-b from-[#1E293B] via-[#0F172A] to-[#080F20] px-3.5 pb-3 pt-9">
         {profil.kapakUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={profil.kapakUrl}
             alt=""
-            className="h-full w-full object-cover"
+            className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-40"
             loading="eager"
           />
-        ) : (
-          <div className="h-full w-full bg-gradient-to-br from-lp-surface to-lp-turquoise-surface" />
-        )}
-        {/* Üst rozet — etiket Flutter landing_screen.dart rozet metinlerinden,
-            mockupProfilleri'nde tek kaynak olarak tutulur */}
-        <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-lp-bg-editor/90 px-2 py-1">
-          <span className="text-[10px]">{profil.uStRozet.simge}</span>
-          <span className="text-[9px] font-extrabold text-white">
-            {profil.uStRozet.metin}
-          </span>
-        </div>
-        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-lp-bg-editor to-transparent p-3">
-          <p className="text-[10px] font-extrabold tracking-[1.5px] text-lp-secondary">
-            {profil.kategoriSeridi}
-          </p>
-          <p className="text-[16px] font-black text-white">{profil.ad}</p>
-        </div>
-      </div>
+        ) : null}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#080F20]/60 via-[#080F20]/88 to-[#080F20]"
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-tr from-[#147DFF]/25 via-transparent to-sky-400/20 opacity-45"
+        />
 
-      {/* Hakkında bölümü */}
-      <div className="px-3 pt-4">
-        <p className="text-[12px] font-black text-white">Hakkında</p>
-        <p className="mt-1 text-[11px] leading-snug text-white/60">{profil.aciklama}</p>
-      </div>
-
-      {/* Eylem simgeleri */}
-      <div className="flex gap-2 px-3 pt-3">
-        {profil.eylemler.map((eylem, i) => (
-          <div
-            key={i}
-            className="flex h-7 w-7 items-center justify-center rounded-full"
-            style={{ backgroundColor: eylem.renk }}
-          >
-            <span className="text-[11px]">{eylem.simge}</span>
-          </div>
-        ))}
-      </div>
-
-      {/* Eylem satırları */}
-      <div className="flex flex-col gap-2 px-3 pt-3">
-        {profil.eylemSatirlari.map((satir, i) => (
-          <div
-            key={i}
-            className="flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.04] px-2.5 py-2.5"
-          >
-            <div
-              className="flex h-6 w-6 items-center justify-center rounded-lg"
-              style={{ backgroundColor: satir.renk }}
-            >
-              <span className="text-[10px]">{i === 0 ? profil.uStRozet.simge : profil.altRozet.simge}</span>
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[11px] font-bold text-white">{satir.baslik}</p>
-              <p className="text-[10px] text-white/50">{satir.altBaslik}</p>
-            </div>
-            <span className="text-[10px] text-white/40">›</span>
-          </div>
-        ))}
-      </div>
-
-      {/* Vitrin galerisi + fotoğraf şeridi — galeri yoksa bölüm hiç çizilmez. */}
-      {profil.galeriUrlleri.length > 0 ? (
-        <div className="px-3 pt-3">
-          <div className="flex items-center justify-between">
-            <p className="text-[11px] font-black text-white">Vitrin galerisi</p>
-            <span className="rounded-full bg-lp-primary/20 px-2 py-0.5 text-[9px] font-bold text-lp-primary">
-              {profil.galeriUrlleri.length} fotoğraf
+        <div className="relative z-10">
+          <div className="flex flex-col items-start gap-1.5">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-sky-400/35 bg-[#147DFF]/25 px-2.5 py-0.5 text-[8.5px] font-black uppercase tracking-wider text-sky-300">
+              <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-sky-300" />
+              {profil.kategoriSeridi}
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/35 bg-emerald-500/20 px-2.5 py-0.5 text-[8.5px] font-black uppercase tracking-wider text-emerald-300">
+              <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              ŞU AN AÇIK
             </span>
           </div>
-          <div className="mt-1.5 flex gap-1.5">
-            {profil.galeriUrlleri.map((url) => (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                key={url}
-                src={url}
-                alt=""
-                className="h-[72px] flex-1 rounded-lg object-cover"
-                loading="lazy"
-              />
+
+          <div className="mt-2.5 flex items-center gap-2.5">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/30 bg-white text-xs font-black text-slate-900 shadow-md">
+              {profil.basHarfler}
+            </span>
+            <div className="min-w-0">
+              <p className="truncate text-[16px] font-black uppercase leading-none tracking-tight text-white">
+                {profil.ad}
+              </p>
+              <p className="mt-1 truncate text-[9px] font-extrabold uppercase tracking-wider text-sky-400">
+                {profil.kategoriSeridi} · {profil.konumSatiri}
+              </p>
+            </div>
+          </div>
+
+          <p className="mt-2 line-clamp-2 text-[10px] leading-[1.4] text-slate-300">
+            {profil.aciklama}
+          </p>
+
+          <div className="mt-2 space-y-0.5 text-[9px] font-medium text-slate-300">
+            <p className="flex items-center gap-1 truncate">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" className="h-2.5 w-2.5 shrink-0 text-sky-400">
+                <path d="M12 21s-6-5.2-6-10a6 6 0 1 1 12 0c0 4.8-6 10-6 10Z" />
+                <circle cx="12" cy="11" r="2" />
+              </svg>
+              <span className="truncate">{profil.konumSatiri}</span>
+            </p>
+            <p className="flex items-center gap-1 truncate text-slate-400">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" className="h-2.5 w-2.5 shrink-0 text-emerald-400">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 7v5l3 2" />
+              </svg>
+              <span className="truncate">{profil.calismaSaati}</span>
+            </p>
+          </div>
+
+          <div className="mt-2.5 grid grid-cols-2 gap-1.5">
+            {profil.aksiyonHaplari.map((hap) => (
+              <div
+                key={hap.etiket}
+                className={`truncate rounded-full border px-2 py-1.5 text-center text-[9.5px] font-bold backdrop-blur-sm ${aksiyonSinifi(hap.vurgu)}`}
+              >
+                {hap.etiket}
+              </div>
             ))}
           </div>
         </div>
-      ) : null}
-
-      {/* Vitrin hazır — Flutter phone_mockup.dart:520-580: bgLight zemin,
-          lp-border kenarlık, radius 14, 12×8 padding; sağda 32×32, %14 alfa
-          accent zeminde QR ikonu. "N bağlantı" sayısı profil verisinden
-          gelir (Flutter: profile.links.length) — sabit "2" değil. */}
-      <div className="mx-3 mt-auto flex items-center justify-between rounded-[14px] border border-lp-border bg-lp-bg-light px-3 py-2">
-        <div>
-          <p className="text-[12px] font-black text-lp-text">Vitrin hazır</p>
-          <p className="mt-0.5 text-[11px] font-semibold text-lp-muted">
-            {profil.eylemSatirlari.length} bağlantı
-          </p>
-        </div>
-        <span
-          className="flex h-8 w-8 items-center justify-center rounded-[10px] text-[16px]"
-          style={{ backgroundColor: `${profil.uStRozet.renk}24` }}
-        >
-          🔳
-        </span>
       </div>
 
+      <div className="flex flex-1 flex-col overflow-hidden bg-[#070D1D] px-3.5 pb-6 pt-2.5">
+        <div className="mb-2 flex shrink-0 items-center justify-between">
+          <span className="text-[12px] font-black text-white">{profil.bolumBasligi}</span>
+          <span className="text-[9.5px] font-bold text-sky-400">Tümünü gör →</span>
+        </div>
+
+        <div className="grid flex-1 grid-cols-2 gap-2">
+          {profil.vitrinKartlari.map((kart) => (
+            <div
+              key={kart.baslik}
+              className="relative overflow-hidden rounded-xl border border-white/15 bg-slate-900"
+            >
+              {kart.gorselUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={kart.gorselUrl}
+                  alt=""
+                  className="h-full w-full object-cover"
+                  loading="eager"
+                />
+              ) : (
+                <div className="h-full w-full bg-gradient-to-br from-[#102B59] to-[#08132D]" />
+              )}
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/95 via-slate-950/60 to-transparent p-2">
+                <p className="truncate text-[8.5px] font-bold leading-none text-slate-300">
+                  {kart.altBilgi}
+                </p>
+                <p className="mt-0.5 truncate text-[11px] font-black leading-tight text-white">
+                  {kart.baslik}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

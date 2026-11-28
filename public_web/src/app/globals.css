@@ -1288,3 +1288,180 @@ html:has(.owner-shell) {
   background: rgba(87, 183, 255, 0.55);
   background-clip: padding-box;
 }
+
+.lp-cinematic-bg {
+  background-color: #040916;
+  background-image:
+    radial-gradient(ellipse 80% 50% at 72% 14%, rgba(20, 125, 255, 0.25) 0%, transparent 65%),
+    radial-gradient(ellipse 55% 42% at 12% 10%, rgba(56, 189, 248, 0.14) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 45% at 50% 95%, rgba(20, 125, 255, 0.12) 0%, transparent 70%),
+    linear-gradient(rgba(148, 163, 184, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.04) 1px, transparent 1px),
+    linear-gradient(180deg, #050B1A 0%, #07122B 48%, #040916 100%);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 48px 48px, 48px 48px, 100% 100%;
+}
+
+.lp-glass-panel {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.065) 0%, rgba(12, 22, 46, 0.78) 100%);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 20px 46px -18px rgba(0, 0, 0, 0.78), inset 0 1px 0 rgba(255, 255, 255, 0.09);
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.lp-glass-panel:hover {
+  border-color: rgba(56, 189, 248, 0.44);
+  box-shadow: 0 28px 62px -16px rgba(20, 125, 255, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+.lp-glass-panel-primary {
+  background: linear-gradient(155deg, rgba(20, 125, 255, 0.22) 0%, rgba(10, 24, 56, 0.90) 60%, rgba(5, 11, 26, 0.96) 100%);
+  border: 1px solid rgba(56, 189, 248, 0.42);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 26px 64px -16px rgba(20, 125, 255, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s ease;
+}
+
+.lp-glass-panel-primary:hover {
+  box-shadow: 0 32px 72px -14px rgba(20, 125, 255, 0.48), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.lp-tilt-wrap {
+  perspective: 1100px;
+}
+
+.lp-tilt-card {
+  transform-style: preserve-3d;
+  will-change: transform;
+  position: relative;
+  overflow: hidden;
+}
+
+.lp-tilt-glare {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  z-index: 15;
+}
+
+.lp-tilt-card:hover .lp-tilt-glare {
+  opacity: 1;
+}
+
+.lp-phone-perspective {
+  perspective: 1400px;
+}
+
+.lp-phone-chassis {
+  transform-style: preserve-3d;
+  transition: transform 0.65s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.5s ease;
+  transform: rotate(7.5deg) rotateY(-9deg) rotateX(3.5deg);
+  box-shadow:
+    0 0 0 1.5px rgba(56, 189, 248, 0.34),
+    -18px 34px 70px rgba(0, 0, 0, 0.72),
+    0 18px 46px rgba(20, 125, 255, 0.30);
+}
+
+.lp-phone-chassis:hover {
+  transform: rotate(3.5deg) rotateY(-4deg) rotateX(1.5deg) translateY(-4px);
+  box-shadow:
+    0 0 0 1.5px rgba(56, 189, 248, 0.55),
+    -12px 38px 75px rgba(0, 0, 0, 0.75),
+    0 22px 58px rgba(20, 125, 255, 0.44);
+}
+
+.lp-phone-chassis-straight,
+.lp-phone-chassis-straight:hover {
+  transform: rotate(0deg) rotateY(0deg) rotateX(0deg) scale(1.03);
+  box-shadow:
+    0 0 0 2px rgba(20, 125, 255, 0.72),
+    0 34px 85px rgba(0, 0, 0, 0.82),
+    0 0 70px rgba(20, 125, 255, 0.42);
+}
+
+@keyframes lpFloatSlow {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes lpFloatSlowReverse {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(6px); }
+}
+
+@keyframes lpPulseRing {
+  0%, 100% { opacity: 0.48; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 0.85; transform: translate(-50%, -50%) scale(1.035); }
+}
+
+@keyframes lpSpinSlow {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+.lp-aurora {
+  background: conic-gradient(
+    from 210deg at 50% 50%,
+    rgba(20, 125, 255, 0.55) 0deg,
+    rgba(56, 189, 248, 0.42) 85deg,
+    rgba(99, 102, 241, 0.35) 180deg,
+    rgba(14, 165, 233, 0.48) 275deg,
+    rgba(20, 125, 255, 0.55) 360deg
+  );
+  filter: blur(56px);
+  animation: lpSpinSlow 24s linear infinite;
+}
+
+.lp-rim-ring {
+  background: conic-gradient(
+    from 0deg,
+    rgba(56, 189, 248, 0.75),
+    rgba(20, 125, 255, 0.12) 30%,
+    rgba(99, 102, 241, 0.55) 60%,
+    rgba(20, 125, 255, 0.08) 85%,
+    rgba(56, 189, 248, 0.75)
+  );
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1px));
+  animation: lpSpinSlow 18s linear infinite;
+}
+
+.lp-float-a {
+  animation: lpFloatSlow 5.4s ease-in-out infinite;
+}
+
+.lp-float-b {
+  animation: lpFloatSlowReverse 6.2s ease-in-out infinite;
+}
+
+.lp-ring-pulse {
+  animation: lpPulseRing 5.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-aurora,
+  .lp-rim-ring,
+  .lp-float-a,
+  .lp-float-b,
+  .lp-ring-pulse {
+    animation: none;
+    transition: none;
+  }
+  .lp-phone-chassis,
+  .lp-phone-chassis:hover,
+  .lp-phone-chassis-straight,
+  .lp-phone-chassis-straight:hover {
+    transform: none;
+    transition: none;
+  }
+  .lp-glass-panel,
+  .lp-glass-panel-primary,
+  .lp-tilt-card,
+  .lp-tilt-glare {
+    transition: none;
+  }
+}

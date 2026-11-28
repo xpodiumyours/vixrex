@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { KesfetIkonu, OnayIkonu, IleriOkIkonu, StorefrontIkonu, GirisIkonu } from "@/components/site/icons";
+import { VixrexAvatar } from "@/app/v/[slug]/components/VixrexAvatar";
+import { KesfetIkonu, OnayIkonu, IleriOkIkonu, GirisIkonu } from "@/components/site/icons";
 import { getSiteUrl } from "@/lib/siteUrl";
 import { HeroTelefonSahnesi } from "./HeroTelefonSahnesi";
 import type { MockupProfili } from "./mockupProfilleri";
@@ -40,230 +41,204 @@ export function HeroSection({
   const adresOneki = `${getSiteUrl().replace(/^https?:\/\//, "")}/v/`;
 
   return (
-    <section id="vixrex-hero" className="relative overflow-hidden bg-gradient-to-b from-lp-bg-editor to-lp-bg-light lp-yan-bosluk pb-lp-section pt-0">
-      {/* Top Nav — Flutter landing_hero_section.dart:189-363 ile parite */}
-      <nav
-        aria-label="Ana gezinme"
-        className="relative mx-auto flex w-full max-w-lp items-center justify-between py-4"
-      >
-        <Link
-          href="/"
-          className="flex items-center gap-2 text-lp-text"
-          aria-label="Vixrex ana sayfa"
+    <>
+      <header className="sticky top-0 z-40 border-b border-white/10 bg-[#050B1A]/85 backdrop-blur-xl lp-yan-bosluk">
+        {/* Top Nav — Flutter landing_hero_section.dart:189-363 ile parite */}
+        <nav
+          aria-label="Ana gezinme"
+          className="relative mx-auto flex w-full max-w-lp items-center justify-between py-3.5"
         >
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-lp-primary/15 text-lp-primary">
-            <StorefrontIkonu boyut={20} />
-          </span>
-          <span className="text-[20px] font-black tracking-[-0.5px]">Vixrex</span>
-        </Link>
-        <div className="hidden items-center gap-8 lg:flex">
           <Link
-            href="#neden-vixrex"
-            className="text-[14px] font-bold text-white/70 transition-colors hover:text-white"
+            href="/"
+            className="group flex items-center gap-2.5 text-lp-text"
+            aria-label="Vixrex ana sayfa"
           >
-            Neden Vixrex?
+            <VixrexAvatar size={36} halo decorative />
+            <span className="text-[20px] font-black tracking-[-0.5px]">Vixrex</span>
           </Link>
-          <Link
-            href="#nasil-calisir"
-            onClick={(e) => {
-              e.preventDefault();
-              document.getElementById("nasil-calisir")?.scrollIntoView({ behavior: "smooth" });
-            }}
-            className="text-[14px] font-bold text-white/70 transition-colors hover:text-white"
-          >
-            Nasıl Çalışır?
-          </Link>
-        </div>
-        <div className="flex items-center gap-2.5">
-          {blogErisimi ? <Link href="/blog" className="inline-flex min-h-11 items-center rounded-lg px-2 text-sm font-semibold text-lp-text outline-none hover:text-lp-secondary focus-visible:ring-2 focus-visible:ring-lp-secondary">Blog</Link> : null}
-          {/* Vitrinleri Keşfet — Flutter: rounded-[14px], border lp-primary/45 */}
-          <Link
-            href="/kesfet"
-            className="hidden items-center gap-2 rounded-[14px] border border-lp-primary/45 bg-lp-surface-soft px-4 py-3 text-[12px] font-black text-lp-primary transition-colors hover:bg-lp-surface md:flex"
-            aria-label="Vitrinleri Keşfet"
-          >
-            <KesfetIkonu boyut={16} />
-            Vitrinleri Keşfet
-          </Link>
-          <Link
-            href="/kesfet"
-            className="flex h-10 w-10 items-center justify-center rounded-[14px] border border-lp-border bg-lp-surface-soft text-lp-text md:hidden"
-            aria-label="Vitrinleri Keşfet"
-          >
-            <KesfetIkonu boyut={18} />
-          </Link>
-          {/* Giriş Yap — Flutter: rounded-[14px], Icons.login_rounded ikonu */}
-          <Link
-            href="/giris"
-            className="hidden items-center gap-2 rounded-[14px] bg-lp-primary px-4 py-3 text-[12px] font-black text-lp-on-primary transition-colors hover:opacity-90 md:flex"
-          >
-            <GirisIkonu boyut={16} />
-            Giriş Yap
-          </Link>
-          <Link
-            href="/giris"
-            className="flex h-10 w-10 items-center justify-center rounded-[14px] bg-lp-primary text-lp-on-primary md:hidden"
-            aria-label="Giriş Yap"
-          >
-            <GirisIkonu boyut={18} />
-          </Link>
-        </div>
-      </nav>
-      {/* Ambient Mesh Glows — Flutter landing_hero_section.dart:65-100 orta noktası */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 overflow-hidden"
-      >
-        <div
-          aria-hidden="true"
-          className="absolute rounded-full"
-          style={{
-            width: 300,
-            height: 300,
-            top: 100,
-            left: -100,
-            background:
-              "radial-gradient(closest-side, color-mix(in srgb, var(--color-lp-primary) 30%, transparent), transparent)",
-          }}
-        />
-        <div
-          aria-hidden="true"
-          className="absolute rounded-full"
-          style={{
-            width: 400,
-            height: 400,
-            bottom: 50,
-            right: -50,
-            background:
-              "radial-gradient(closest-side, color-mix(in srgb, var(--color-lp-secondary) 25%, transparent), transparent)",
-          }}
-        />
-        <div
-          aria-hidden="true"
-          className="absolute rounded-full"
-          style={{
-            width: 250,
-            height: 250,
-            top: 200,
-            right: 150,
-            background:
-              "radial-gradient(closest-side, color-mix(in srgb, var(--color-lp-pink) 20%, transparent), transparent)",
-          }}
-        />
-        <div
-          aria-hidden="true"
-          className="absolute hidden rounded-full md:block"
-          style={{
-            width: 560,
-            height: 560,
-            top: 40,
-            right: -80,
-            background:
-              "radial-gradient(closest-side, color-mix(in srgb, var(--color-lp-primary) 22%, transparent), transparent)",
-          }}
-        />
-      </div>
-      <div className="relative mx-auto mt-5 flex w-full max-w-lp flex-col items-center gap-10 md:mt-10 md:flex-row md:items-center md:gap-10">
-        <div className="w-full flex-1">
-          <p className="inline-block rounded-[30px] border border-lp-secondary/45 bg-lp-primary/[0.18] px-3.5 py-2 text-[11px] font-black tracking-[1px] text-lp-secondary">
-            VİXREX ASİSTAN İLE DİJİTAL VİTRİN
-          </p>
-
-          <h1 className="mt-5 text-[36px] font-black leading-[1.15] tracking-[-0.8px] text-lp-text md:text-[48px]">
-            Vitrininiz
-            <br />
-            <span className="text-lp-secondary">Vixrex Asistan</span> ile
-            <br />
-            birkaç dakikada hazır
-          </h1>
-
-          <p className="mt-5 max-w-[560px] text-[16px] font-medium leading-[1.5] text-white/70">
-            İşletme bilgilerini, fotoğraflarını, ürün ve hizmetlerini, adresini
-            ve WhatsApp iletişimini Vixrex Asistan ile konuşarak tek vitrinde
-            topla.
-          </p>
-
-          {/*
-            Kurulum başlangıcı — uygulamadaki iki kutulu yapıyla eşitlenir
-            (landing_hero_section.dart:495-541). Flutter kendi form
-            container'ını 500px'de ölçer; web de viewport yerine aynı gerçek
-            alanı container query ile ölçer.
-          */}
-          <div className="mt-8 @container">
-            <form
-              onSubmit={(event) => {
-                event.preventDefault();
-                const form = new FormData(event.currentTarget);
-                const isletmeAdi = String(form.get("isletme") ?? "");
-                onStartAssistant(isletmeAdi.trim());
-              }}
-              className="flex flex-col gap-3 @min-[500px]:flex-row @min-[500px]:items-center"
+          <div className="hidden items-center gap-8 lg:flex">
+            <Link
+              href="#neden-vixrex"
+              className="text-[14px] font-bold text-white/75 transition-colors hover:text-white"
             >
-              <div className="flex h-[52px] flex-1 items-center overflow-hidden rounded-2xl border border-white/[0.12] bg-white/[0.06]">
-                <span className="hidden whitespace-nowrap px-4 text-[14px] font-bold text-white/60 sm:inline">{adresOneki}</span>
-                <span aria-hidden="true" className="px-4 text-[14px] font-bold text-white/60 sm:hidden">/v/</span>
-                <input
-                  type="text"
-                  name="isletme"
-                  placeholder="isletmeniz"
-                  className="h-full flex-1 bg-transparent text-[14px] font-bold text-white outline-none placeholder:text-white/30"
-                />
-              </div>
-              <button
-                type="submit"
-                className="flex h-[52px] items-center justify-center gap-2 rounded-2xl bg-lp-primary px-6 text-[15px] font-black text-lp-on-primary transition-transform hover:-translate-y-0.5"
+              Neden Vixrex?
+            </Link>
+            <Link
+              href="#nasil-calisir"
+              onClick={(e) => {
+                e.preventDefault();
+                document.getElementById("nasil-calisir")?.scrollIntoView({ behavior: "smooth" });
+              }}
+              className="text-[14px] font-bold text-white/75 transition-colors hover:text-white"
+            >
+              Nasıl Çalışır?
+            </Link>
+          </div>
+          <div className="flex items-center gap-2.5">
+            {blogErisimi ? (
+              <Link
+                href="/blog"
+                className="inline-flex min-h-11 items-center rounded-lg px-2 text-sm font-semibold text-lp-text outline-none hover:text-lp-secondary focus-visible:ring-2 focus-visible:ring-lp-secondary"
               >
-                Ücretsiz Vitrinimi Hazırla
-                <IleriOkIkonu boyut={16} />
-              </button>
-            </form>
+                Blog
+              </Link>
+            ) : null}
+            {/* Vitrinleri Keşfet — Flutter: rounded-[14px], border lp-primary/45 */}
+            <Link
+              href="/kesfet"
+              className="hidden items-center gap-2 rounded-[14px] border border-sky-400/35 bg-[#147DFF]/15 px-4 py-2.5 text-[12px] font-black text-sky-200 backdrop-blur-md transition-colors hover:border-sky-400/60 hover:bg-[#147DFF]/25 md:flex"
+              aria-label="Vitrinleri Keşfet"
+            >
+              <KesfetIkonu boyut={16} />
+              Vitrinleri Keşfet
+            </Link>
+            <Link
+              href="/kesfet"
+              className="flex h-10 w-10 items-center justify-center rounded-[14px] border border-white/15 bg-white/[0.06] text-lp-text backdrop-blur-md md:hidden"
+              aria-label="Vitrinleri Keşfet"
+            >
+              <KesfetIkonu boyut={18} />
+            </Link>
+            {/* Giriş Yap — Flutter: rounded-[14px], Icons.login_rounded ikonu */}
+            <Link
+              href="/giris"
+              className="hidden items-center gap-2 rounded-[14px] bg-gradient-to-r from-[#147DFF] to-[#2563EB] px-4 py-2.5 text-[12px] font-black text-white shadow-lg shadow-[#147DFF]/30 transition-all hover:from-[#2589FF] hover:to-[#1D4ED8] md:flex"
+            >
+              <GirisIkonu boyut={16} />
+              Giriş Yap
+            </Link>
+            <Link
+              href="/giris"
+              className="flex h-10 w-10 items-center justify-center rounded-[14px] bg-gradient-to-r from-[#147DFF] to-[#2563EB] text-white shadow-lg shadow-[#147DFF]/30 md:hidden"
+              aria-label="Giriş Yap"
+            >
+              <GirisIkonu boyut={18} />
+            </Link>
+          </div>
+        </nav>
+      </header>
+
+      <section
+        id="vixrex-hero"
+        className="relative overflow-x-clip lp-yan-bosluk pb-lp-section pt-8 sm:pt-10 lg:pt-12"
+      >
+        <div className="relative mx-auto grid w-full max-w-lp grid-cols-1 items-center gap-8 md:grid-cols-12 lg:gap-10">
+          <div className="z-10 w-full md:col-span-5">
+            <p className="inline-block rounded-[30px] border border-sky-400/45 bg-[#147DFF]/20 px-3.5 py-2 text-[11px] font-black tracking-[1px] text-sky-300 backdrop-blur-md">
+              VİXREX ASİSTAN İLE DİJİTAL VİTRİN
+            </p>
+
+            <h1 className="mt-5 text-[36px] font-black leading-[1.12] tracking-[-0.8px] text-lp-text md:text-[48px]">
+              Vitrininiz
+              <br />
+              <span className="bg-gradient-to-r from-[#38BDF8] via-[#147DFF] to-[#60A5FA] bg-clip-text text-transparent">
+                Vixrex Asistan
+              </span>{" "}
+              ile
+              <br />
+              birkaç dakikada hazır
+            </h1>
+
+            <p className="mt-5 max-w-[540px] text-[16px] font-medium leading-[1.58] text-white/75">
+              İşletme bilgilerini, fotoğraflarını, ürün ve hizmetlerini, adresini
+              ve WhatsApp iletişimini Vixrex Asistan ile konuşarak tek vitrinde
+              topla.
+            </p>
+
+            {/*
+              Kurulum başlangıcı — uygulamadaki iki kutulu yapıyla eşitlenir
+              (landing_hero_section.dart:495-541). Flutter kendi form
+              container'ını 500px'de ölçer; web de viewport yerine aynı gerçek
+              alanı container query ile ölçer.
+            */}
+            <div className="mt-8 @container">
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  const form = new FormData(event.currentTarget);
+                  const isletmeAdi = String(form.get("isletme") ?? "");
+                  onStartAssistant(isletmeAdi.trim());
+                }}
+                className="flex flex-col gap-3 @min-[500px]:flex-row @min-[500px]:items-center"
+              >
+                <div className="flex h-[52px] min-w-0 flex-1 items-center overflow-hidden rounded-2xl border border-white/[0.14] bg-white/[0.06] backdrop-blur-md transition focus-within:border-[#147DFF] focus-within:shadow-[0_0_0_3px_rgba(20,125,255,0.22)]">
+                  <span className="hidden whitespace-nowrap pl-4 pr-1 text-[14px] font-bold text-white/60 sm:inline">
+                    {adresOneki}
+                  </span>
+                  <span
+                    aria-hidden="true"
+                    className="pl-4 pr-1 text-[14px] font-bold text-white/60 sm:hidden"
+                  >
+                    /v/
+                  </span>
+                  <input
+                    type="text"
+                    name="isletme"
+                    placeholder="isletmeniz"
+                    className="h-full min-w-0 flex-1 bg-transparent pr-3 text-[14px] font-bold text-white outline-none placeholder:text-white/30"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="flex h-[52px] shrink-0 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#147DFF] to-[#2563EB] px-6 text-[15px] font-black text-white shadow-xl shadow-[#147DFF]/35 transition-all hover:-translate-y-0.5 hover:from-[#2589FF] hover:to-[#1D4ED8] active:scale-[0.98]"
+                >
+                  Ücretsiz Vitrinimi Hazırla
+                  <IleriOkIkonu boyut={16} />
+                </button>
+              </form>
+            </div>
+
+            <ul className="mt-6 flex flex-wrap gap-2.5">
+              {GUVEN_ROZETLERI.map((rozet) => (
+                <li
+                  key={rozet}
+                  className="flex items-center gap-2 rounded-[20px] border border-white/[0.1] bg-white/[0.06] px-3.5 py-2 text-[12px] font-bold text-white/80 backdrop-blur-md"
+                >
+                  <span className="text-lp-mint">
+                    <OnayIkonu boyut={16} />
+                  </span>
+                  {rozet}
+                </li>
+              ))}
+            </ul>
           </div>
 
-          <ul className="mt-6 flex flex-wrap gap-2.5">
-            {GUVEN_ROZETLERI.map((rozet) => (
-              <li
-                key={rozet}
-                className="flex items-center gap-2 rounded-[20px] border border-white/[0.08] bg-white/[0.06] px-3.5 py-2 text-[12px] font-bold text-white/70"
-              >
-                <span className="text-lp-mint">
-                  <OnayIkonu boyut={16} />
+          <div className="flex w-full justify-center md:col-span-7">
+            <HeroTelefonSahnesi
+              profiller={profiller}
+              isChatOpen={isChatOpen}
+              initialAssistantName={initialAssistantName}
+              onOpenChat={() => onStartAssistant("")}
+              onChatClose={onChatClose}
+            />
+          </div>
+        </div>
+
+        <div className="relative mx-auto mt-12 grid w-full max-w-lp grid-cols-1 gap-4 sm:grid-cols-3">
+          {[
+            { simge: "⚡", baslik: "Hızlı Kurulum", alt: "Dakikalar içinde hazır" },
+            { simge: "👥", baslik: "Tüm İşletmeler İçin", alt: "Küçük, orta, büyük fark etmez" },
+            { simge: "💙", baslik: "Müşterine Daha Yakın", alt: "Tek link ile her yerde" },
+          ].map((ozellik) => (
+            <div
+              key={ozellik.baslik}
+              className="lp-glass-panel flex items-center gap-3.5 rounded-2xl p-4"
+            >
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#147DFF]/20 text-[20px] text-lp-primary">
+                {ozellik.simge}
+              </span>
+              <span>
+                <span className="block text-[14px] font-extrabold text-white">
+                  {ozellik.baslik}
                 </span>
-                {rozet}
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="flex w-full justify-center md:flex-1">
-          <HeroTelefonSahnesi
-            profiller={profiller}
-            isChatOpen={isChatOpen}
-            initialAssistantName={initialAssistantName}
-            onChatClose={onChatClose}
-          />
-        </div>
-      </div>
-      <div className="relative mx-auto mt-12 grid w-full max-w-lp grid-cols-1 gap-6 sm:grid-cols-3">
-        {[
-          { simge: "⚡", baslik: "Hızlı Kurulum", alt: "Dakikalar içinde hazır" },
-          { simge: "👥", baslik: "Tüm İşletmeler İçin", alt: "Küçük, orta, büyük fark etmez" },
-          { simge: "💙", baslik: "Müşterine Daha Yakın", alt: "Tek link ile her yerde" },
-        ].map((ozellik) => (
-          <div key={ozellik.baslik} className="flex items-center gap-3.5">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-lp-primary/15 text-[20px] text-lp-primary">
-              {ozellik.simge}
-            </span>
-            <span>
-              <span className="block text-[14px] font-extrabold text-white">
-                {ozellik.baslik}
+                <span className="block text-[12px] font-semibold text-white/60">
+                  {ozellik.alt}
+                </span>
               </span>
-              <span className="block text-[12px] font-semibold text-white/60">
-                {ozellik.alt}
-              </span>
-            </span>
-          </div>
-        ))}
-      </div>
-    </section>
+            </div>
+          ))}
+        </div>
+      </section>
+    </>
   );
 }

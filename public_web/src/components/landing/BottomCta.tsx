@@ -26,23 +26,31 @@ export function BottomCta({
   return (
     <section
       id="basla"
-      className="bg-gradient-to-br from-lp-bg-editor via-lp-turquoise-surface to-lp-primary lp-yan-bosluk py-lp-section"
+      className="border-t border-white/5 lp-yan-bosluk py-lp-section"
     >
-      <div className="mx-auto w-full max-w-lp-dar text-center">
-        <h2 className="text-[36px] font-black leading-[1.2]">
-          İşletmenizi tek linkte müşterilerinizle buluşturun
-        </h2>
-        <p className="mx-auto mt-6 max-w-[640px] text-[18px] leading-[1.5] text-lp-text-alt">
-          Vixrex’ini oluştur; linkini, QR kodunu ve WhatsApp iletişimini
-          paylaşmaya başla.
-        </p>
-        <button
-          type="button"
-          onClick={onStartAssistant}
-          className="mt-12 inline-flex items-center justify-center rounded-3xl bg-lp-primary px-10 py-6 text-[18px] font-black text-white shadow-lp-panel transition-transform hover:-translate-y-0.5"
-        >
-          Vixrex Oluştur
-        </button>
+      <div className="mx-auto w-full max-w-lp">
+        <div className="lp-glass-panel-primary relative overflow-hidden rounded-[32px] bg-gradient-to-br from-lp-bg-editor/85 via-lp-turquoise-surface/75 to-lp-primary/35 px-6 py-12 text-center sm:px-10">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -top-20 left-1/2 h-48 w-96 -translate-x-1/2 rounded-full bg-[#147DFF]/30 blur-3xl"
+          />
+          <div className="relative z-10 mx-auto w-full max-w-lp-dar text-center">
+            <h2 className="text-[36px] font-black leading-[1.2]">
+              İşletmenizi tek linkte müşterilerinizle buluşturun
+            </h2>
+            <p className="mx-auto mt-6 max-w-[640px] text-[18px] leading-[1.5] text-lp-text-alt">
+              Vixrex’ini oluştur; linkini, QR kodunu ve WhatsApp iletişimini
+              paylaşmaya başla.
+            </p>
+            <button
+              type="button"
+              onClick={onStartAssistant}
+              className="mt-12 inline-flex items-center justify-center rounded-3xl bg-lp-primary px-10 py-6 text-[18px] font-black text-white shadow-lp-panel transition-transform hover:-translate-y-0.5"
+            >
+              Vixrex Oluştur
+            </button>
+          </div>
+        </div>
       </div>
     </section>
   );
