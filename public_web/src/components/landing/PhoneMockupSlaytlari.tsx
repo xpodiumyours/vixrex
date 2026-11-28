@@ -51,7 +51,7 @@ export function PhoneMockupSlaytlari({
             </span>
             <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/35 bg-emerald-500/20 px-2.5 py-0.5 text-[8.5px] font-black uppercase tracking-wider text-emerald-300">
               <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-              ŞU AN AÇIK
+              Örnek vitrin
             </span>
           </div>
 

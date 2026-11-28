@@ -166,7 +166,7 @@ describe("landing sinematik giydirme — gerçek girdi/çıktı doğrulaması", 
         expect(html).toContain(profil.basHarfler);
         expect(html).toContain(profil.konumSatiri);
         expect(html).toContain(profil.calismaSaati);
-        expect(html).toContain("ŞU AN AÇIK");
+        expect(html).toContain("Örnek vitrin");
         expect(gorunurMetin).not.toContain("★");
         expect(gorunurMetin).not.toContain("4.9");
         expect(gorunurMetin).not.toContain("4.8");
