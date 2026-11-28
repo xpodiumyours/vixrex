@@ -10,6 +10,11 @@ it("depodaki fotoğraf adresi önizleme kartında korunur", () => {
   expect(onizlemeKartiGorseli(depoAdresi)).toBe(depoAdresi);
 });
 
+it("R2/CDN depo adresi önizleme kartında korunur", () => {
+  const r2Adresi = "https://cdn.vixrex.com/elif-market-test-3-mvqfxnwm/products/fatura/abc123.webp";
+  expect(onizlemeKartiGorseli(r2Adresi)).toBe(r2Adresi);
+});
+
 it("üretici sitesinden gelen adres karta giremez", () => {
   for (const adres of [
     "https://cdn.myikas.com/images/74e89546/image_3840.webp",
