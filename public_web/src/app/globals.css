@@ -1414,6 +1414,7 @@ html:has(.owner-shell) {
   );
   filter: blur(56px);
   transform: translate(-50%, -50%);
+  will-change: transform;
   animation: lpSpinSlow 24s linear infinite;
 }
 
@@ -1429,6 +1430,7 @@ html:has(.owner-shell) {
   -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1px));
   mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1px));
   transform: translate(-50%, -50%);
+  will-change: transform;
   animation: lpSpinSlow 18s linear infinite;
 }
 
