@@ -21,8 +21,12 @@ export function SiteChromeBoundary({
   return (
     <>
       {!anaSayfaMi && !kesfetMi ? header : null}
-      <main className="flex-1">{children}</main>
-      {!kesfetMi ? footer : null}
+      {kesfetMi ? (
+        <div className="flex-1">{children}</div>
+      ) : (
+        <main className="flex-1">{children}</main>
+      )}
+      {footer}
     </>
   );
 }

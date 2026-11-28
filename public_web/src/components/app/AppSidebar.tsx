@@ -99,8 +99,9 @@ const NAV: NavItem[] = [
 export function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { globalSearch, setGlobalSearch } = useAppShell();
+  const { globalSearch, setGlobalSearch, hasOwnerStore } = useAppShell();
   const kesfetSayfasi = pathname.startsWith("/kesfet");
+  const yonetimMenusuGoster = !kesfetSayfasi || hasOwnerStore;
 
   function onSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -160,51 +161,53 @@ export function AppSidebar() {
           );
         })}
 
-        <div className="mt-4 border-t border-lp-border/70 pt-3">
-          <p className="px-3 pb-1.5 text-[10px] font-extrabold uppercase tracking-[0.08em] text-lp-muted">
-            Mağaza Yönetimi
-          </p>
-          <Link
-            href="/app/urunler?fatura=1"
-            className="my-1 flex min-h-10 items-center gap-2.5 rounded-xl border border-lp-primary/40 bg-lp-primary/15 px-3 text-[12.5px] font-extrabold text-lp-text transition-colors hover:bg-lp-primary/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary"
-          >
-            <span className="text-lp-secondary"><FaturaIkonu boyut={18} /></span>
-            Faturadan Ürün Ekle
-          </Link>
-          <Link
-            href="/app/urunler"
-            className={`my-[2px] flex min-h-10 items-center gap-2.5 rounded-xl px-3 text-[12.5px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
-              pathname.startsWith("/app/urunler")
-                ? "font-extrabold text-lp-text bg-lp-surface-soft"
-                : "font-semibold text-lp-muted hover:bg-lp-surface-soft hover:text-lp-text"
-            }`}
-          >
-            <span className="text-current"><UrunlerIkonu boyut={18} /></span>
-            Ürünlerim
-          </Link>
-          <Link
-            href="/app/bildirimler"
-            className={`my-[2px] flex min-h-10 items-center gap-2.5 rounded-xl px-3 text-[12.5px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
-              pathname.startsWith("/app/bildirimler")
-                ? "font-extrabold text-lp-text bg-lp-surface-soft"
-                : "font-semibold text-lp-muted hover:bg-lp-surface-soft hover:text-lp-text"
-            }`}
-          >
-            <span className="text-current"><BildirimIkonu boyut={18} /></span>
-            Bildirimler
-          </Link>
-          <Link
-            href="/app/ayarlar"
-            className={`my-[2px] flex min-h-10 items-center gap-2.5 rounded-xl px-3 text-[12.5px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
-              pathname.startsWith("/app/ayarlar") || pathname.startsWith("/app/hesap")
-                ? "font-extrabold text-lp-text bg-lp-surface-soft"
-                : "font-semibold text-lp-muted hover:bg-lp-surface-soft hover:text-lp-text"
-            }`}
-          >
-            <span className="text-current"><AyarIkonu boyut={18} /></span>
-            Ayarlar
-          </Link>
-        </div>
+        {yonetimMenusuGoster ? (
+          <div className="mt-4 border-t border-lp-border/70 pt-3">
+            <p className="px-3 pb-1.5 text-[10px] font-extrabold uppercase tracking-[0.08em] text-lp-muted">
+              Mağaza Yönetimi
+            </p>
+            <Link
+              href="/app/urunler?fatura=1"
+              className="my-1 flex min-h-10 items-center gap-2.5 rounded-xl border border-lp-primary/40 bg-lp-primary/15 px-3 text-[12.5px] font-extrabold text-lp-text transition-colors hover:bg-lp-primary/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary"
+            >
+              <span className="text-lp-secondary"><FaturaIkonu boyut={18} /></span>
+              Faturadan Ürün Ekle
+            </Link>
+            <Link
+              href="/app/urunler"
+              className={`my-[2px] flex min-h-10 items-center gap-2.5 rounded-xl px-3 text-[12.5px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
+                pathname.startsWith("/app/urunler")
+                  ? "font-extrabold text-lp-text bg-lp-surface-soft"
+                  : "font-semibold text-lp-muted hover:bg-lp-surface-soft hover:text-lp-text"
+              }`}
+            >
+              <span className="text-current"><UrunlerIkonu boyut={18} /></span>
+              Ürünlerim
+            </Link>
+            <Link
+              href="/app/bildirimler"
+              className={`my-[2px] flex min-h-10 items-center gap-2.5 rounded-xl px-3 text-[12.5px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
+                pathname.startsWith("/app/bildirimler")
+                  ? "font-extrabold text-lp-text bg-lp-surface-soft"
+                  : "font-semibold text-lp-muted hover:bg-lp-surface-soft hover:text-lp-text"
+              }`}
+            >
+              <span className="text-current"><BildirimIkonu boyut={18} /></span>
+              Bildirimler
+            </Link>
+            <Link
+              href="/app/ayarlar"
+              className={`my-[2px] flex min-h-10 items-center gap-2.5 rounded-xl px-3 text-[12.5px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
+                pathname.startsWith("/app/ayarlar") || pathname.startsWith("/app/hesap")
+                  ? "font-extrabold text-lp-text bg-lp-surface-soft"
+                  : "font-semibold text-lp-muted hover:bg-lp-surface-soft hover:text-lp-text"
+              }`}
+            >
+              <span className="text-current"><AyarIkonu boyut={18} /></span>
+              Ayarlar
+            </Link>
+          </div>
+        ) : null}
       </nav>
 
       <p className="px-4 pb-8 pt-4 text-[11px] font-semibold text-lp-muted">v1.0.0</p>

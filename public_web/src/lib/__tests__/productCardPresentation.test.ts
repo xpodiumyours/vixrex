@@ -252,7 +252,7 @@ describe("buildProductCardFacts resmi kaynak, GTIN ve konum sözleşmesi", () =>
 });
 
 describe("ProductCatalog kart konumu ve Material görünüm render doğrulaması", () => {
-  it("rafta hazır üründe aspect-square, resmi katalog rozeti ve tıklanabilir Google Maps rozeti basar; Kural 32 verisi sızdırmaz", () => {
+  it("rafta hazır üründe aspect-[4/5], resmi katalog rozeti ve tıklanabilir Google Maps rozeti basar; Kural 32 verisi sızdırmaz", () => {
     const html = renderToStaticMarkup(
       createElement(ProductCatalog, {
         storeSlug: "ornek-magaza",
@@ -297,7 +297,9 @@ describe("ProductCatalog kart konumu ve Material görünüm render doğrulaması
       }),
     );
 
-    expect(html).toContain("aspect-square");
+    expect(html).toContain("aspect-[4/5]");
+    expect(html).toContain("bg-[#08132D]");
+    expect(html).toContain("249,00 ₺");
     expect(html).toContain("Resmi Üretici Kataloğu / GS1");
     expect(html).toContain("Kadıköy, İstanbul · Rafta Hazır");
     expect(html).toContain("alt=\"Tutku Pamuklu Fanila - Örnek Mağaza - Kadıköy\"");

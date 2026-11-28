@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  birimFiyatBilgisi,
   buildProductCardFacts,
   eskiFiyatYazisi,
   indirimOrani,
   kartRozeti,
+  tutarYazisi,
 } from "../src/lib/productCardPresentation";
 
 describe("ürün kartında gösterilen bilgiler", () => {
@@ -139,10 +141,36 @@ describe("kart fiyat ve indirim gösterimi", () => {
   });
 
   it("eski fiyatı güncel fiyatla aynı yazımda gösterir", () => {
-    expect(eskiFiyatYazisi(1800)).toBe("1.800 TL");
-    expect(eskiFiyatYazisi(499)).toBe("499 TL");
+    expect(eskiFiyatYazisi(1800)).toBe("1.800,00 ₺");
+    expect(eskiFiyatYazisi(499)).toBe("499,00 ₺");
+    expect(eskiFiyatYazisi(54.6)).toBe("54,60 ₺");
     expect(eskiFiyatYazisi(0)).toBeNull();
+    expect(eskiFiyatYazisi(-10)).toBeNull();
+    expect(eskiFiyatYazisi(Number.NaN)).toBeNull();
     expect(eskiFiyatYazisi(null)).toBeNull();
+    expect(tutarYazisi(1290)).toBe("1.290,00 ₺");
+    expect(tutarYazisi(54.6)).toBe("54,60 ₺");
+    expect(
+      birimFiyatBilgisi(
+        { attributes: [{ key: "netQuantity", value: "500 g" }] },
+        64.5,
+      ),
+    ).toEqual({
+      miktar: "500 g",
+      birimFiyat: "129,00 ₺/kg",
+    });
+    expect(
+      birimFiyatBilgisi(
+        { attributes: [{ key: "netQuantity", value: "0 g" }] },
+        100,
+      ),
+    ).toBeNull();
+    expect(
+      birimFiyatBilgisi(
+        { attributes: [{ key: "netQuantity", value: "500 g" }] },
+        null,
+      ),
+    ).toBeNull();
   });
 });
 

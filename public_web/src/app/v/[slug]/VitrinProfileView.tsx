@@ -715,7 +715,7 @@ export default function VitrinProfileView({
                     <span className="mb-1.5 inline-block whitespace-nowrap rounded-full bg-black/55 px-2.5 py-0.5 text-[11px] font-semibold text-slate-200 backdrop-blur-md">
                       {cat.count} ürün
                     </span>
-                    <p className="text-[15px] font-bold leading-tight text-white line-clamp-2">
+                    <p className="min-h-[2.5em] text-[15px] font-bold leading-tight text-white line-clamp-2">
                       {cat.name}
                     </p>
                   </div>

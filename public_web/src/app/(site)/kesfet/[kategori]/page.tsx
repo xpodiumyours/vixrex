@@ -70,7 +70,7 @@ export default async function KategoriPage({ params }: Props) {
   ].slice(0, 8);
 
   return (
-    <div className="px-6 py-12">
+    <main className="px-6 py-12">
       <div className="mx-auto w-full max-w-[1200px]">
         <p className="text-[12px] font-black tracking-[1.5px] text-lp-primary">
           <Link href="/kesfet">KEŞFET</Link>
@@ -123,7 +123,7 @@ export default async function KategoriPage({ params }: Props) {
                   <img
                     src={gorsel.kucukUrl ?? gorsel.url}
                     alt={gorsel.baslik ?? ""}
-                    className="h-full w-full object-cover"
+                    className="h-full w-full object-cover object-top"
                     loading="lazy"
                   />
                 </li>
@@ -138,6 +138,6 @@ export default async function KategoriPage({ params }: Props) {
           </>
         ) : null}
       </div>
-    </div>
+    </main>
   );
 }

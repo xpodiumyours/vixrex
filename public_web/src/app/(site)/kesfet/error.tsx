@@ -14,7 +14,7 @@ export default function KesfetHata({
   }, [error]);
 
   return (
-    <div className="px-6 py-12">
+    <main className="px-6 py-12">
       <div className="mx-auto w-full max-w-[1200px] rounded-2xl border border-red-400/40 bg-red-400/10 px-5 py-8 text-center">
         <h1 className="text-[20px] font-black text-lp-text">
           Vitrinler yüklenemedi
@@ -30,6 +30,6 @@ export default function KesfetHata({
           Tekrar dene
         </button>
       </div>
-    </div>
+    </main>
   );
 }

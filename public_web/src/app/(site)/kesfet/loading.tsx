@@ -1,6 +1,6 @@
 export default function KesfetYukleniyor() {
   return (
-    <div className="px-6 py-12" role="status" aria-label="Vitrinler yükleniyor">
+    <main className="px-6 py-12" role="status" aria-label="Vitrinler yükleniyor">
       <div className="mx-auto w-full max-w-[1200px] animate-pulse motion-reduce:animate-none">
         <div className="h-10 w-64 rounded-xl bg-lp-surface-soft" />
         <div className="mt-3 h-6 w-full max-w-xl rounded-lg bg-lp-surface-soft" />
@@ -17,6 +17,6 @@ export default function KesfetYukleniyor() {
         </div>
         <span className="sr-only">Vitrinler yükleniyor.</span>
       </div>
-    </div>
+    </main>
   );
 }
