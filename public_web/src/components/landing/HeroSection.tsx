@@ -161,21 +161,21 @@ export function HeroSection({
                 }}
                 className="flex flex-col gap-3 @min-[500px]:flex-row @min-[500px]:items-center"
               >
-                <div className="flex h-[52px] min-w-0 flex-1 items-center overflow-hidden rounded-2xl border border-white/[0.14] bg-white/[0.06] backdrop-blur-md transition focus-within:border-[#147DFF] focus-within:shadow-[0_0_0_3px_rgba(20,125,255,0.22)]">
+                <div className="flex h-[56px] min-w-0 flex-1 items-center overflow-hidden rounded-2xl border border-white/[0.14] bg-white/[0.06] backdrop-blur-md transition focus-within:border-[#147DFF] focus-within:shadow-[0_0_0_3px_rgba(20,125,255,0.22)] sm:h-[52px]">
                   <span className="hidden whitespace-nowrap pl-4 pr-1 text-[14px] font-bold text-white/60 sm:inline">
                     {adresOneki}
                   </span>
                   <span
                     aria-hidden="true"
-                    className="pl-4 pr-1 text-[14px] font-bold text-white/60 sm:hidden"
+                    className="pl-4 pr-1 text-[15px] font-bold text-white/75 sm:hidden sm:text-[14px] sm:text-white/60"
                   >
-                    /v/
+                    {adresOneki}
                   </span>
                   <input
                     type="text"
                     name="isletme"
                     placeholder="isletmeniz"
-                    className="h-full min-w-0 flex-1 bg-transparent pr-3 text-[14px] font-bold text-white outline-none placeholder:text-white/30"
+                    className="h-full min-w-0 flex-1 bg-transparent pr-3 text-[15px] font-bold text-white outline-none placeholder:text-white/30 sm:text-[14px]"
                   />
                 </div>
                 <button
