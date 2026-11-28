@@ -123,7 +123,7 @@ export function HeroSection({
         className="relative overflow-x-clip lp-yan-bosluk pb-lp-section pt-8 sm:pt-10 lg:pt-12"
       >
         <div className="relative mx-auto grid w-full max-w-lp grid-cols-1 items-center gap-8 md:grid-cols-12 lg:gap-10">
-          <div className="z-10 w-full md:col-span-5">
+          <div className="z-10 min-w-0 w-full md:col-span-5">
             <p className="inline-block rounded-[30px] border border-sky-400/45 bg-[#147DFF]/20 px-3.5 py-2 text-[11px] font-black tracking-[1px] text-sky-300 backdrop-blur-md">
               VİXREX ASİSTAN İLE DİJİTAL VİTRİN
             </p>
@@ -203,7 +203,7 @@ export function HeroSection({
             </ul>
           </div>
 
-          <div className="flex w-full justify-center md:col-span-7">
+          <div className="flex min-w-0 w-full justify-center md:col-span-7">
             <HeroTelefonSahnesi
               profiller={profiller}
               isChatOpen={isChatOpen}

@@ -79,7 +79,7 @@ function ElYazisiNot({ metin, yon }: { metin: string; yon: "sol" | "sag" }) {
   return (
     <div
       aria-hidden="true"
-      className={`hidden w-full max-w-[168px] md:block ${solTaraf ? "text-left" : "text-right"}`}
+      className={`hidden w-full max-w-[168px] xl:block ${solTaraf ? "text-left" : "text-right"}`}
     >
       <p
         className={`text-[12.5px] font-bold italic leading-snug text-sky-200/85 ${
@@ -129,8 +129,8 @@ export function HeroTelefonSahnesi({
   const tumKartlar = [...SOL_KARTLAR, ...SAG_KARTLAR];
 
   return (
-    <div className="relative flex w-full flex-col items-center">
-      <div className="relative grid w-full grid-cols-1 items-center justify-items-center gap-3 py-4 md:grid-cols-[minmax(118px,1fr)_auto_minmax(118px,1fr)] lg:gap-4">
+    <div className="relative flex min-w-0 w-full flex-col items-center">
+      <div className="relative grid w-full grid-cols-1 items-center justify-items-center gap-3 py-4 xl:grid-cols-[minmax(118px,1fr)_auto_minmax(118px,1fr)] xl:gap-4">
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-visible"
@@ -142,7 +142,7 @@ export function HeroTelefonSahnesi({
         </div>
 
         <div
-          className={`z-20 hidden w-full flex-col items-end justify-center gap-3.5 transition-opacity duration-500 md:flex lg:gap-5 ${
+          className={`z-20 hidden min-w-0 w-full flex-col items-end justify-center gap-3.5 transition-opacity duration-500 xl:flex xl:gap-5 ${
             isChatOpen ? "opacity-40" : "opacity-100"
           }`}
         >
@@ -151,7 +151,7 @@ export function HeroTelefonSahnesi({
           <CamKartGorunumu kart={SOL_KARTLAR[1]} animasyonSinifi="lp-float-b" />
         </div>
 
-        <div className="relative z-30 flex flex-col items-center">
+        <div className="relative z-30 flex min-w-0 flex-col items-center">
           <PhoneMockup
             profiller={profiller}
             isChatOpen={isChatOpen}
@@ -162,7 +162,7 @@ export function HeroTelefonSahnesi({
         </div>
 
         <div
-          className={`z-20 hidden w-full flex-col items-start justify-center gap-3.5 transition-opacity duration-500 md:flex lg:gap-5 ${
+          className={`z-20 hidden min-w-0 w-full flex-col items-start justify-center gap-3.5 transition-opacity duration-500 xl:flex xl:gap-5 ${
             isChatOpen ? "opacity-40" : "opacity-100"
           }`}
         >
@@ -175,7 +175,7 @@ export function HeroTelefonSahnesi({
         </div>
       </div>
 
-      <div className="z-20 mt-4 grid w-full max-w-[340px] grid-cols-2 gap-2.5 md:hidden">
+      <div className="z-20 mt-4 grid w-full max-w-[340px] grid-cols-2 gap-2.5 xl:hidden">
         {tumKartlar.map((kart) => (
           <div
             key={kart.baslik}

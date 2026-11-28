@@ -38,10 +38,52 @@ vi.mock("next/image", () => ({
     }),
 }));
 
+vi.mock("@/components/landing/LandingApkAssistant", () => ({
+  LandingApkAssistant: (props: { initialName?: string }) =>
+    createElement("div", {
+      "data-testid": "mock-apk-assistant",
+      "data-initial-name": props.initialName ?? "",
+    }),
+}));
+
 import { HeroSection } from "@/components/landing/HeroSection";
+import { PhoneMockup } from "@/components/landing/PhoneMockup";
 import { PhoneMockupSlaytlari } from "@/components/landing/PhoneMockupSlaytlari";
 import { TemplateCatalog } from "@/components/landing/TemplateCatalog";
+import { TiltCard } from "@/components/landing/TiltCard";
 import { mockupProfilleriniGetir, type MockupProfili } from "@/components/landing/mockupProfilleri";
+
+type ReactNodeShape = {
+  type?: unknown;
+  props?: Record<string, unknown>;
+};
+
+function elemanBul(
+  node: unknown,
+  kosul: (el: ReactNodeShape) => boolean,
+): ReactNodeShape | null {
+  if (!node || typeof node !== "object") return null;
+  if (Array.isArray(node)) {
+    for (const item of node) {
+      const sonuc = elemanBul(item, kosul);
+      if (sonuc) return sonuc;
+    }
+    return null;
+  }
+  const el = node as ReactNodeShape;
+  if (kosul(el)) return el;
+  return elemanBul(el.props?.children, kosul);
+}
+
+function bilesenAgaciYakala<T>(renderFn: () => T): { tree: T; html: string } {
+  let captured: T | undefined;
+  function Yakalayici() {
+    captured = renderFn();
+    return captured as never;
+  }
+  const html = renderToStaticMarkup(createElement(Yakalayici));
+  return { tree: captured as T, html };
+}
 
 function ornekSablonHaritasi(): Map<string, KategoriSablonu> {
   const harita = new Map<string, KategoriSablonu>();
@@ -271,6 +313,204 @@ describe("landing sinematik giydirme — gerçek girdi/çıktı doğrulaması", 
       for (const kat of AKTIF_BUSINESS_CATEGORIES) {
         expect(html).toContain(`href="/kesfet/${kategoriUrlParcasi(kat.id)}"`);
       }
+    });
+  });
+
+  describe("TiltCard negatif durumları ve fare etkileşimi", () => {
+    function tiltKur(reducedMotion: boolean) {
+      const originalWindow = globalThis.window;
+      Object.defineProperty(globalThis, "window", {
+        configurable: true,
+        value: {
+          matchMedia: () => ({ matches: reducedMotion }),
+        },
+      });
+
+      const { tree } = bilesenAgaciYakala(() =>
+        TiltCard({ children: createElement("span", null, "Kart") }),
+      );
+      const cardEl = elemanBul(
+        tree,
+        (el) =>
+          typeof el.props?.className === "string" &&
+          el.props.className.includes("lp-tilt-card"),
+      );
+      const glareEl = elemanBul(
+        tree,
+        (el) =>
+          typeof el.props?.className === "string" &&
+          el.props.className.includes("lp-tilt-glare"),
+      );
+
+      const cardNode = {
+        style: { transform: "" },
+        getBoundingClientRect: () => ({ left: 0, top: 0, width: 200, height: 100 }),
+      };
+      const glareNode = { style: { background: "" } };
+
+      const cardRef = cardEl?.props?.ref as { current: unknown };
+      const glareRef = glareEl?.props?.ref as { current: unknown };
+      cardRef.current = cardNode;
+      glareRef.current = glareNode;
+
+      return {
+        cardNode,
+        glareNode,
+        onPointerMove: cardEl?.props?.onPointerMove as (event: unknown) => void,
+        onPointerLeave: cardEl?.props?.onPointerLeave as () => void,
+        temizle: () => {
+          Object.defineProperty(globalThis, "window", {
+            configurable: true,
+            value: originalWindow,
+          });
+        },
+      };
+    }
+
+    it("pointerType touch iken transform uygulamaz", () => {
+      const ctx = tiltKur(false);
+      try {
+        ctx.onPointerMove({ pointerType: "touch", clientX: 150, clientY: 25 });
+        expect(ctx.cardNode.style.transform).toBe("");
+        expect(ctx.glareNode.style.background).toBe("");
+      } finally {
+        ctx.temizle();
+      }
+    });
+
+    it("prefers-reduced-motion aktifken fare hareketinde transform uygulamaz", () => {
+      const ctx = tiltKur(true);
+      try {
+        ctx.onPointerMove({ pointerType: "mouse", clientX: 150, clientY: 25 });
+        expect(ctx.cardNode.style.transform).toBe("");
+        expect(ctx.glareNode.style.background).toBe("");
+      } finally {
+        ctx.temizle();
+      }
+    });
+
+    it("fare hareketinde 3D transform uygular ve pointerLeave sonrası sıfırlar", () => {
+      const ctx = tiltKur(false);
+      try {
+        ctx.onPointerMove({ pointerType: "mouse", clientX: 150, clientY: 25 });
+        expect(ctx.cardNode.style.transform).toContain("rotateX(");
+        expect(ctx.cardNode.style.transform).toContain("rotateY(");
+        expect(ctx.cardNode.style.transform).toContain("translateY(-4px)");
+        expect(ctx.glareNode.style.background).toContain("radial-gradient");
+
+        ctx.onPointerLeave();
+        expect(ctx.cardNode.style.transform).toBe("");
+      } finally {
+        ctx.temizle();
+      }
+    });
+  });
+
+  describe("PhoneMockup erişilebilirlik, overlay ve slayt düğmesi etkileşimleri", () => {
+    it("isChatOpen false iken klavye Enter/Space ile sohbeti açar, diğer tuşları yok sayar", async () => {
+      const profiller = await mockupProfilleriniGetir();
+      const onOpenChat = vi.fn();
+
+      const { tree, html } = bilesenAgaciYakala(() =>
+        PhoneMockup({
+          profiller,
+          isChatOpen: false,
+          onOpenChat,
+        }),
+      );
+
+      expect(html).not.toContain('data-testid="mock-apk-assistant"');
+
+      const chassis = elemanBul(
+        tree,
+        (el) =>
+          typeof el.props?.className === "string" &&
+          el.props.className.includes("lp-phone-chassis"),
+      );
+      expect(chassis?.props?.role).toBe("button");
+      expect(chassis?.props?.tabIndex).toBe(0);
+      expect(chassis?.props?.["aria-label"]).toBe(
+        "Vixrex Yapay Zeka Asistanını Başlat",
+      );
+
+      const onKeyDown = chassis?.props?.onKeyDown as (event: unknown) => void;
+      const preventEnter = vi.fn();
+      onKeyDown({ key: "Enter", preventDefault: preventEnter });
+      expect(preventEnter).toHaveBeenCalledTimes(1);
+      expect(onOpenChat).toHaveBeenCalledTimes(1);
+
+      const preventSpace = vi.fn();
+      onKeyDown({ key: " ", preventDefault: preventSpace });
+      expect(preventSpace).toHaveBeenCalledTimes(1);
+      expect(onOpenChat).toHaveBeenCalledTimes(2);
+
+      const preventEscape = vi.fn();
+      onKeyDown({ key: "Escape", preventDefault: preventEscape });
+      expect(preventEscape).not.toHaveBeenCalled();
+      expect(onOpenChat).toHaveBeenCalledTimes(2);
+    });
+
+    it("slayt düğmesine tıklanırken stopPropagation çağrılır ve onOpenChat tetiklenmez", async () => {
+      const profiller = await mockupProfilleriniGetir();
+      const onOpenChat = vi.fn();
+
+      const { tree } = bilesenAgaciYakala(() =>
+        PhoneMockup({
+          profiller,
+          isChatOpen: false,
+          onOpenChat,
+        }),
+      );
+
+      const slaytButonu = elemanBul(
+        tree,
+        (el) => el.type === "button" && el.props?.["aria-label"] === profiller[1].ad,
+      );
+      expect(slaytButonu).not.toBeNull();
+
+      const stopPropagation = vi.fn();
+      const onClick = slaytButonu?.props?.onClick as (event: unknown) => void;
+      onClick({ stopPropagation });
+
+      expect(stopPropagation).toHaveBeenCalledTimes(1);
+      expect(onOpenChat).not.toHaveBeenCalled();
+    });
+
+    it("isChatOpen true iken asistan overlay aktiftir ve kasa odak/tıklama dışı kalır", async () => {
+      const profiller = await mockupProfilleriniGetir();
+      const onOpenChat = vi.fn();
+
+      const { tree, html } = bilesenAgaciYakala(() =>
+        PhoneMockup({
+          profiller,
+          isChatOpen: true,
+          initialAssistantName: "Test Mağaza",
+          onOpenChat,
+        }),
+      );
+
+      expect(html).toContain('data-testid="mock-apk-assistant"');
+      expect(html).toContain('data-initial-name="Test Mağaza"');
+      expect(html).toContain("lp-phone-chassis-straight");
+
+      const chassis = elemanBul(
+        tree,
+        (el) =>
+          typeof el.props?.className === "string" &&
+          el.props.className.includes("lp-phone-chassis"),
+      );
+      expect(chassis?.props?.role).toBeUndefined();
+      expect(chassis?.props?.tabIndex).toBe(-1);
+      expect(chassis?.props?.["aria-label"]).toBeUndefined();
+
+      const onClick = chassis?.props?.onClick as () => void;
+      const onKeyDown = chassis?.props?.onKeyDown as (event: unknown) => void;
+      const preventEnter = vi.fn();
+      onClick();
+      onKeyDown({ key: "Enter", preventDefault: preventEnter });
+
+      expect(preventEnter).not.toHaveBeenCalled();
+      expect(onOpenChat).not.toHaveBeenCalled();
     });
   });
 });

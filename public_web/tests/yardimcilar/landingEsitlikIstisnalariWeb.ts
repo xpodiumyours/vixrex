@@ -68,6 +68,10 @@ export const LANDING_ESITLIK_ISTISNALARI_WEB: Istisna[] = [
     metin: "Vixrex Asistan'ı aç",
     neden: ERISEBILIRLIK,
   },
+  {
+    metin: "Vixrex Yapay Zeka Asistanını Başlat",
+    neden: ERISEBILIRLIK,
+  },
 
   // --- Çıkarıcı kapsamı ---
   {

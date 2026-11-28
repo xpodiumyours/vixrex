@@ -59,11 +59,20 @@ export function PhoneMockup({
   return (
     <div className="lp-phone-perspective relative mx-auto w-[280px] shrink-0 sm:w-[296px] lg:w-[304px]">
       <div
+        role={isChatOpen ? undefined : "button"}
+        tabIndex={isChatOpen ? -1 : 0}
+        aria-label={isChatOpen ? undefined : "Vixrex Yapay Zeka Asistanını Başlat"}
         className={`lp-phone-chassis relative overflow-hidden rounded-[40px] border-[2.5px] border-sky-200/25 bg-[#0A101C] p-[8px] ${
           isChatOpen ? "lp-phone-chassis-straight" : "cursor-pointer"
         }`}
         onClick={() => {
           if (!isChatOpen) onOpenChat?.();
+        }}
+        onKeyDown={(event) => {
+          if (!isChatOpen && (event.key === "Enter" || event.key === " ")) {
+            event.preventDefault();
+            onOpenChat?.();
+          }
         }}
       >
         <div className="relative h-[536px] overflow-hidden rounded-[32px] border border-[#25415F] bg-[#070E1F] sm:h-[560px]">
