@@ -1,28 +1,82 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
-import { describe, expect, it } from "vitest";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { describe, expect, it, vi } from "vitest";
 import { isTestOrDenemeStore } from "@/lib/testStoreFilter";
+import type { KesfetVitrini } from "@/lib/explore";
 
-describe("VitrinKarti İncele butonu stilleri", () => {
-  it("hem kiralık hem normal karttaki İncele Link butonları text-lp-primary ve border-lp-primary kullanır, text-white veya bg-blue-500/15 içermez", () => {
-    const kaynak = readFileSync(
-      resolve(process.cwd(), "src/components/kesfet/VitrinKarti.tsx"),
-      "utf8"
-    );
-    const inceleLinkleri = kaynak.match(
-      /<Link\s+href=\{`\/v\/\$\{vitrin\.slug\}`\}\s+className="[^"]*"\s*>\s*<DukkanIkonu\s*\/>\s*İncele\s*<\/Link>/g
-    );
+vi.mock("next/link", () => ({
+  default: (props: { href: string; children?: unknown; className?: string }) =>
+    createElement("a", { href: props.href, className: props.className }, props.children as never),
+}));
 
-    expect(inceleLinkleri).not.toBeNull();
-    expect(inceleLinkleri).toHaveLength(2);
+vi.mock("@/lib/useKesfetKirala", () => ({
+  useKesfetKirala: () => ({
+    durum: "kapali",
+    hataMesaji: "",
+    mevcutSlug: "",
+    token: null,
+    formRef: { current: null },
+    baslat: () => {},
+    sifirla: () => {},
+  }),
+}));
 
-    for (const linkHtml of inceleLinkleri ?? []) {
-      expect(linkHtml).toContain("text-lp-primary");
-      expect(linkHtml).toContain("border-lp-primary");
-      expect(linkHtml).not.toContain("text-white");
-      expect(linkHtml).not.toContain("bg-blue-500/15");
-    }
-  });
+vi.mock("@/lib/fiyatlandirma", () => ({
+  AYLIK_PREMIUM_BEDEL: "aylik-bedel",
+  PREMIUM_DEGIL_ROZET: "premium-degil",
+}));
+
+vi.mock("@/app/v/[slug]/components/VixrexAvatar", () => ({
+  VixrexAvatar: () => createElement("span", { "data-testid": "mock-avatar" }),
+}));
+
+import { VitrinKarti } from "@/components/kesfet/VitrinKarti";
+
+function ornekVitrin(kiralikMi: boolean): KesfetVitrini {
+  return {
+    slug: kiralikMi ? "kiralik-vitrin-42" : "normal-vitrin-17",
+    ad: "Örnek Dükkan",
+    aciklama: "",
+    kategoriEtiketi: "Yeme İçme",
+    kategoriKimligi: null,
+    kapakUrl: null,
+    konum: "İstanbul",
+    kiralikMi,
+    acikMi: true,
+    urunSayisi: 3,
+    urunAdlari: [],
+    whatsapp: null,
+    guncellemeZamani: null,
+    puan: null,
+    mesafeMetre: null,
+  };
+}
+
+function renderEdilenBaglantilar(html: string): Array<{ href: string; ad: string }> {
+  const baglantilar: Array<{ href: string; ad: string }> = [];
+  for (const eslesme of html.matchAll(/<a\b[^>]*\bhref="([^"]*)"[^>]*>([\s\S]*?)<\/a>/g)) {
+    baglantilar.push({
+      href: eslesme[1],
+      ad: eslesme[2].replace(/<[^>]*>/g, "").trim(),
+    });
+  }
+  return baglantilar;
+}
+
+describe("VitrinKarti İncele bağlantısı — gerçek render", () => {
+  for (const kiralikMi of [true, false]) {
+    it(`kiralikMi=${kiralikMi} vitrinde İncele bağlantısı doğru /v/<slug> adresini taşır`, () => {
+      const vitrin = ornekVitrin(kiralikMi);
+      const html = renderToStaticMarkup(createElement(VitrinKarti, { vitrin }));
+
+      const inceleBaglantilari = renderEdilenBaglantilar(html).filter(
+        (baglanti) => baglanti.ad === "İncele",
+      );
+
+      expect(inceleBaglantilari).toHaveLength(1);
+      expect(inceleBaglantilari[0].href).toBe(`/v/${vitrin.slug}`);
+    });
+  }
 });
 
 describe("isTestOrDenemeStore", () => {

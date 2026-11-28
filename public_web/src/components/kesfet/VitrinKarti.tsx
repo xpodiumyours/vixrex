@@ -72,20 +72,18 @@ export function VitrinKarti({
   return (
     <>
       <article
-        className={`group flex min-h-[320px] h-full flex-col overflow-hidden rounded-[18px] border bg-lp-surface shadow-[0_8px_16px_rgba(0,0,0,0.28)] transition duration-200 ease-out hover:scale-[1.015] hover:shadow-[0_12px_24px_rgba(0,0,0,0.2)] motion-reduce:transform-none ${
-          sahipMi
-            ? "border-2 border-lp-primary shadow-[0_0_14px_rgba(20,125,255,0.2)]"
-            : "border-lp-border"
+        className={`group kesfet-card flex min-h-[320px] h-full flex-col overflow-hidden rounded-2xl motion-reduce:transform-none${
+          sahipMi ? " border-2! border-lp-primary! shadow-[0_0_14px_rgba(20,125,255,0.2)]" : ""
         }`}
       >
-        <div className="relative min-h-0 flex-[4] overflow-hidden bg-gradient-to-br from-lp-surface-soft to-lp-bg-editor">
+        <div className="relative aspect-[16/9] shrink-0 overflow-hidden bg-gradient-to-br from-lp-surface-soft to-lp-bg-editor">
           <Link href={`/v/${vitrin.slug}`} className="absolute inset-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-lp-primary">
             {vitrin.kapakUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={vitrin.kapakUrl}
                 alt={`${vitrin.ad} vitrin kapak görseli`}
-                className="h-full w-full object-cover object-top"
+                className="kesfet-card-img h-full w-full object-cover object-top"
                 loading="lazy"
               />
             ) : (
@@ -106,11 +104,11 @@ export function VitrinKarti({
                 </span>
               </span>
             )}
-            <span className="absolute inset-0 bg-gradient-to-b from-black/15 via-transparent to-lp-surface/90" aria-hidden="true" />
+            <span className="absolute inset-0 bg-gradient-to-t from-[#0A1728] via-[#0A1728]/20 to-transparent" aria-hidden="true" />
           </Link>
 
           {vitrin.kiralikMi ? (
-            <span className="absolute -left-8 top-3 w-28 -rotate-45 bg-amber-500 py-1 text-center text-[9px] font-black tracking-[0.8px] text-stone-900">
+            <span className="kesfet-glass absolute left-2.5 top-2.5 rounded-[6px] border-amber-400/35! px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-400">
               KİRALIK
             </span>
           ) : (
@@ -134,7 +132,7 @@ export function VitrinKarti({
               onClick={favoriyiDegistir}
               aria-label={favoriMi ? `${vitrin.ad} favorilerden çıkar` : `${vitrin.ad} favorilere ekle`}
               aria-pressed={favoriMi}
-              className="absolute right-1.5 top-1.5 flex h-11 w-11 items-center justify-center rounded-full border border-white/25 bg-black/45 text-white backdrop-blur-sm transition-colors hover:bg-black/65 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+              className="kesfet-glass absolute right-1.5 top-1.5 flex h-11 w-11 items-center justify-center rounded-full border-white/25! bg-[#050C1C]/70 text-white backdrop-blur-md transition-all hover:bg-[#050C1C]/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill={favoriMi ? "#ff5252" : "none"} stroke={favoriMi ? "#ff5252" : "currentColor"} strokeWidth="1.8" aria-hidden="true">
                 <path d="M12 21s-6.5-4.2-8.2-8.2A5.2 5.2 0 0 1 12 5.2a5.2 5.2 0 0 1 8.2 7.6C18.5 16.8 12 21 12 21z" />
@@ -143,87 +141,91 @@ export function VitrinKarti({
           ) : null}
         </div>
 
-        <div className="flex flex-[3] flex-col p-3">
-          <p className="line-clamp-2 text-[9px] font-black uppercase leading-[1.25] tracking-[0.6px] text-lp-primary">
-            {vitrin.kategoriEtiketi}
-          </p>
-          <h3 className="mt-1 truncate text-[15px] font-black leading-[1.15] text-lp-text">
-            <Link href={`/v/${vitrin.slug}`} className="rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary">
-              {vitrin.ad}
-            </Link>
-          </h3>
-          <p className="mt-1 flex min-w-0 items-center gap-1 text-[10px] font-semibold text-lp-muted">
-            <svg className="shrink-0 text-red-400" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M12 2C8.1 2 5 5.1 5 9c0 5.3 7 13 7 13s7-7.7 7-13c0-3.9-3.1-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5z" />
-            </svg>
-            <span className="truncate">{vitrin.konum}</span>
-            {mesafeMetni ? (
-              <span className="ml-auto shrink-0 rounded-full border border-lp-primary/30 bg-lp-primary/10 px-1.5 py-0.5 text-[9px] font-black text-lp-primary">
-                {mesafeMetni}
+        <div className="flex flex-1 flex-col justify-between gap-3 p-4">
+          <div className="space-y-1">
+            <p className="line-clamp-2 text-[10px] font-bold uppercase leading-[1.25] tracking-[0.12em] text-lp-primary">
+              {vitrin.kategoriEtiketi}
+            </p>
+            <h3 className="truncate text-base font-extrabold tracking-tight text-lp-text">
+              <Link href={`/v/${vitrin.slug}`} className="rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary">
+                {vitrin.ad}
+              </Link>
+            </h3>
+            <div className="flex items-center justify-between gap-2 pt-0.5 text-[11px] font-semibold text-lp-muted">
+              <span className="flex min-w-0 items-center gap-1 truncate">
+                <svg className="shrink-0 text-lp-primary" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M12 2C8.1 2 5 5.1 5 9c0 5.3 7 13 7 13s7-7.7 7-13c0-3.9-3.1-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5z" />
+                </svg>
+                <span className="truncate">{vitrin.konum}</span>
+                {mesafeMetni ? (
+                  <span className="shrink-0 rounded-full border border-lp-primary/30 bg-lp-primary/10 px-1.5 py-0.5 text-[9px] font-black text-lp-primary">
+                    {mesafeMetni}
+                  </span>
+                ) : null}
               </span>
+              {typeof vitrin.puan === "number" ? (
+                <span className="flex shrink-0 items-center gap-1 font-bold text-lp-text">
+                  <svg className="shrink-0 text-amber-400" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="m12 2 3 6 6.5 1-4.7 4.6 1.1 6.4L12 17l-5.9 3 1.1-6.4L2.5 9 9 8z" />
+                  </svg>
+                  <span>{vitrin.puan.toFixed(1)}</span>
+                </span>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="space-y-2.5 pt-1">
+            {!vitrin.kiralikMi ? (
+              <p className="text-[10px] font-semibold text-lp-muted">
+                {vitrin.urunSayisi > 0 ? `${vitrin.urunSayisi} ürün` : "Henüz ürün eklenmedi"}
+              </p>
             ) : null}
-          </p>
-          {typeof vitrin.puan === "number" ? (
-            <p className="mt-1 flex items-center gap-1 text-[10px] font-bold text-lp-text">
-              <svg className="shrink-0 text-amber-500" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="m12 2 3 6 6.5 1-4.7 4.6 1.1 6.4L12 17l-5.9 3 1.1-6.4L2.5 9 9 8z" />
-              </svg>
-              <span>{vitrin.puan.toFixed(1)}</span>
-            </p>
-          ) : null}
 
-          {!vitrin.kiralikMi ? (
-            <p className="mt-2 text-[10px] font-semibold text-lp-muted">
-              {vitrin.urunSayisi > 0
-                ? `${vitrin.urunSayisi} ürün`
-                : "Henüz ürün eklenmedi"}
-            </p>
-          ) : null}
-
-          {vitrin.kiralikMi ? (
-            <p className="mt-2 flex min-w-0 items-baseline gap-1.5">
-              <span className="shrink-0 text-[12px] font-black text-amber-400">{AYLIK_PREMIUM_BEDEL}</span>
-              <span className="truncate text-[10px] font-semibold text-slate-300">· 14 gün ücretsiz dene</span>
-            </p>
-          ) : null}
-
-          {premiumMetni ? (
-            <p className="mt-2 flex min-w-0 items-center gap-1 text-[10px] font-bold text-amber-600">
-              <svg className="shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                <path d="m12 2 3 6 6.5 1-4.7 4.6 1.1 6.4L12 17l-5.9 3 1.1-6.4L2.5 9 9 8z" />
-              </svg>
-              <span className="truncate">{premiumMetni}</span>
-            </p>
-          ) : null}
-
-          <div className="mt-auto pt-3">
             {vitrin.kiralikMi ? (
-              <div className="grid grid-cols-2 gap-1.5">
-                <Link href={`/v/${vitrin.slug}`} className="flex min-h-11 items-center justify-center gap-1.5 rounded-[10px] border border-lp-primary px-2 text-[11px] font-black text-lp-primary transition-colors hover:bg-lp-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary">
+              <p className="flex min-w-0 items-baseline gap-1.5 text-xs">
+                <span className="shrink-0 font-extrabold text-amber-400">{AYLIK_PREMIUM_BEDEL}</span>
+                <span className="truncate text-[11px] text-slate-300">· 14 gün ücretsiz dene</span>
+              </p>
+            ) : null}
+
+            {premiumMetni ? (
+              <p className="flex min-w-0 items-center gap-1 text-[10px] font-bold text-amber-600">
+                <svg className="shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                  <path d="m12 2 3 6 6.5 1-4.7 4.6 1.1 6.4L12 17l-5.9 3 1.1-6.4L2.5 9 9 8z" />
+                </svg>
+                <span className="truncate">{premiumMetni}</span>
+              </p>
+            ) : null}
+
+            <div className="grid grid-cols-2 gap-2">
+              {vitrin.kiralikMi ? (
+                <>
+                  <Link href={`/v/${vitrin.slug}`} className="flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-white/[0.06] px-3 text-xs font-bold text-slate-100 transition-colors hover:bg-white/[0.12] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary">
+                    <DukkanIkonu />
+                    İncele
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      kiralaDialogRef.current?.showModal();
+                      kiralaBaslat();
+                    }}
+                    className="kesfet-btn-primary flex min-h-11 items-center justify-center gap-1.5 rounded-xl px-3 text-xs font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary focus-visible:ring-offset-2"
+                  >
+                    <svg className="shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                      <circle cx="8" cy="12" r="3.5" />
+                      <path d="M11.5 12H21l-1.5 2.5M17 12v2.5" />
+                    </svg>
+                    Kirala
+                  </button>
+                </>
+              ) : (
+                <Link href={`/v/${vitrin.slug}`} className="col-span-2 flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-white/[0.06] px-3 text-xs font-bold text-slate-100 transition-colors hover:bg-white/[0.12] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary">
                   <DukkanIkonu />
                   İncele
                 </Link>
-                <button
-                  type="button"
-                  onClick={() => {
-                    kiralaDialogRef.current?.showModal();
-                    kiralaBaslat();
-                  }}
-                  className="flex min-h-11 items-center justify-center gap-1.5 rounded-[10px] bg-lp-primary px-2 text-[11px] font-black text-white transition-colors hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary focus-visible:ring-offset-2"
-                >
-                  <svg className="shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                    <circle cx="8" cy="12" r="3.5" />
-                    <path d="M11.5 12H21l-1.5 2.5M17 12v2.5" />
-                  </svg>
-                  Kirala
-                </button>
-              </div>
-            ) : (
-              <Link href={`/v/${vitrin.slug}`} className="flex min-h-11 w-full items-center justify-center gap-1.5 rounded-[10px] border border-lp-primary px-2 text-[11px] font-black text-lp-primary transition-colors hover:bg-lp-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary">
-                <DukkanIkonu />
-                İncele
-              </Link>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </article>

@@ -271,7 +271,7 @@ export function KesfetIcerik({
     : aciklama;
 
   return (
-    <main className="min-h-full min-w-0 bg-lp-bg-editor text-lp-text">
+    <main className="kesfet-ambient min-h-full min-w-0 bg-lp-bg-editor text-lp-text">
       <MascotFab mesajGoster={false} onToggle={() => router.push("/app/vixrex")} />
 
       <section className="pb-[84px] min-[901px]:pb-0" aria-labelledby="kesfet-baslik">
@@ -291,7 +291,7 @@ export function KesfetIcerik({
               </p>
             </div>
 
-            <div className="flex w-full items-center gap-2 min-[901px]:w-auto">
+            <div className="kesfet-glass flex h-12 w-full items-center gap-1.5 rounded-2xl border-0! bg-[#0A1728]/90! shadow-[0_6px_20px_rgba(0,0,0,0.35)] min-[901px]:w-auto">
               <label htmlFor="kesfet-arama" className="sr-only">
                 Vitrin, ürün veya il/ilçe ara
               </label>
@@ -308,7 +308,7 @@ export function KesfetIcerik({
                   value={sorgu}
                   onChange={(event) => setSorgu(event.target.value)}
                   placeholder="Vitrin, ürün veya il/ilçe ara"
-                  className="h-10 w-full rounded-[10px] border border-lp-border bg-lp-bg-light py-2 pl-10 pr-10 text-[12px] font-normal text-lp-text placeholder:text-lp-muted focus:border-lp-secondary focus:outline-none focus:ring-2 focus:ring-lp-primary/20"
+                  className="h-10 w-full rounded-xl bg-white/[0.04] py-2 pl-10 pr-10 text-[12px] font-normal text-lp-text placeholder:text-lp-muted focus:bg-white/[0.08] focus:outline-none focus:ring-2 focus:ring-lp-primary/20"
                 />
                 {sorgu ? (
                   <button
@@ -330,10 +330,10 @@ export function KesfetIcerik({
                 title="Favorilerim"
                 aria-pressed={sadeceFavoriler}
                 onClick={() => setSadeceFavoriler((deger) => !deger)}
-                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
+                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
                   sadeceFavoriler
-                    ? "border-lp-primary bg-lp-primary/15 text-red-400"
-                    : "border-lp-border bg-lp-bg-light text-lp-muted hover:text-lp-text"
+                    ? "bg-lp-primary/15 text-red-400"
+                    : "bg-white/[0.04] text-lp-muted hover:bg-white/[0.09] hover:text-lp-text"
                 }`}
               >
                 <svg width="17" height="17" viewBox="0 0 24 24" fill={sadeceFavoriler ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -348,10 +348,10 @@ export function KesfetIcerik({
                 aria-pressed={sadeceYakinim}
                 disabled={konumYukleniyor}
                 onClick={yakinimdakileriAcKapat}
-                className={`flex h-10 shrink-0 items-center gap-1.5 rounded-[10px] border px-2.5 text-[11px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary disabled:opacity-60 sm:px-3 sm:text-[12px] ${
+                className={`flex h-10 shrink-0 items-center gap-1.5 rounded-xl px-2.5 text-[11px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary disabled:opacity-60 sm:px-3 sm:text-[12px] ${
                   sadeceYakinim
-                    ? "border-lp-primary bg-lp-primary/15 text-lp-primary"
-                    : "border-lp-border bg-lp-bg-light text-lp-muted hover:text-lp-text"
+                    ? "bg-lp-primary/15 text-lp-primary"
+                    : "bg-white/[0.04] text-lp-muted hover:bg-white/[0.09] hover:text-lp-text"
                 }`}
               >
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -364,7 +364,7 @@ export function KesfetIcerik({
           </div>
 
           <nav
-            className="flex h-12 gap-6 overflow-x-auto border-y border-lp-border [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="kesfet-drag kesfet-no-scrollbar flex gap-2 overflow-x-auto py-0.5"
             aria-label="Vitrin kategorileri"
           >
             <button
@@ -374,10 +374,10 @@ export function KesfetIcerik({
                 setGrup(undefined);
                 setKategoriKimligi(null);
               }}
-              className={`relative h-full shrink-0 px-0.5 text-[12px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-lp-primary ${
+              className={`shrink-0 whitespace-nowrap rounded-full px-4 py-2 text-[12px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
                 kategoriKimligi === null
-                  ? "text-lp-text after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-full after:bg-lp-primary"
-                  : "text-lp-muted hover:text-lp-text"
+                  ? "bg-lp-primary text-white shadow-lg shadow-lp-primary/30"
+                  : "bg-white/[0.04] text-lp-muted hover:bg-white/[0.09] hover:text-lp-text"
               }`}
             >
               Tümü
@@ -389,10 +389,10 @@ export function KesfetIcerik({
                 href={`/kesfet/${kategoriUrlParcasi(kategori.id)}`}
                 onClick={(event) => kategoriBaglantisiniFiltreyeCevir(event, kategori.id)}
                 aria-current={kategoriKimligi === kategori.id ? "page" : undefined}
-                className={`relative flex h-full shrink-0 items-center px-0.5 text-[12px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-lp-primary ${
+                className={`flex shrink-0 items-center whitespace-nowrap rounded-full px-4 py-2 text-[12px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lp-primary ${
                   kategoriKimligi === kategori.id
-                    ? "text-lp-text after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-full after:bg-lp-primary"
-                    : "text-lp-muted hover:text-lp-text"
+                    ? "bg-lp-primary text-white shadow-lg shadow-lp-primary/30"
+                    : "bg-white/[0.04] text-lp-muted hover:bg-white/[0.09] hover:text-lp-text"
                 }`}
               >
                 {kategori.label}
@@ -449,13 +449,13 @@ export function KesfetIcerik({
           </div>
         ) : (
           <ul
-            className="grid grid-cols-2 gap-3 p-3 min-[700px]:grid-cols-3 min-[1000px]:grid-cols-4"
+            className="grid grid-cols-1 gap-3 p-3 sm:gap-4 min-[700px]:grid-cols-3 min-[1000px]:grid-cols-4 min-[1000px]:gap-5"
             aria-label="Vitrinler"
           >
             {filtreliVitrinler.map((vitrin, index) => (
               <li
                 key={vitrin.slug}
-                className="h-[280px] animate-fade-in motion-reduce:animate-none [&>article]:min-h-[280px] min-[700px]:h-[305px] min-[700px]:[&>article]:min-h-[305px] min-[1000px]:h-[320px] min-[1000px]:[&>article]:min-h-[320px]"
+                className="animate-fade-in motion-reduce:animate-none"
                 style={{ animationDelay: `${Math.min(index, 6) * 30}ms` }}
               >
                 <VitrinKarti
