@@ -244,8 +244,8 @@ export default function ProductDetailExperience({
   );
 
   return (
-    <main className="min-h-screen bg-[#0c0d10] px-4 py-6 text-[#f4f1ea] sm:px-6 sm:py-10">
-      <section className="mx-auto w-full max-w-[1120px]">
+    <main className="min-h-screen bg-[#050B1A] px-4 py-6 text-[#f4f1ea] sm:px-6 sm:py-10">
+      <section className="mx-auto w-full max-w-[1160px]">
         <Link
           href={storeUrl}
           className="mb-5 inline-flex rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-xs font-extrabold text-white/70 transition hover:border-blue-500/30 hover:text-white"
@@ -253,9 +253,9 @@ export default function ProductDetailExperience({
           ← {storeName} vitrinine dön
         </Link>
 
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,0.92fr)_minmax(360px,0.78fr)]">
-          <div className={`rounded-3xl ${vitrinGorunum.yuzey.panel} p-2.5`}>
-            <div className={`relative aspect-[4/5] overflow-hidden rounded-2xl lg:max-h-[560px] ${!telifKalkanli && currentImage ? "bg-white" : "bg-slate-950"}`}>
+        <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,0.92fr)_minmax(360px,0.78fr)]">
+          <div className={`rounded-3xl ${vitrinGorunum.yuzey.panel} p-2.5 lg:sticky lg:top-20`}>
+            <div className={`relative aspect-[4/5] overflow-hidden rounded-2xl ring-1 ring-inset ring-[#294D88]/35 lg:max-h-[560px] ${!telifKalkanli && currentImage ? (isService ? "bg-[#112448]/70" : "bg-[#0B1730]") : "bg-slate-950"}`}>
               {telifKalkanli ? (
                 <TelifKalkani />
               ) : currentImage ? (
@@ -264,7 +264,7 @@ export default function ProductDetailExperience({
                   alt={gorselAlt}
                   fill
                   sizes="(max-width: 1024px) 100vw, 55vw"
-                  className="object-contain p-3"
+                  className={isService ? "object-cover object-top" : "object-contain p-3"}
                   priority
                 />
               ) : (
@@ -280,7 +280,7 @@ export default function ProductDetailExperience({
                     key={`${imageUrl}-${index}`}
                     type="button"
                     onClick={() => setImageIndex(index)}
-                    className={`relative h-16 w-14 shrink-0 overflow-hidden rounded-xl border bg-white transition ${
+                    className={`relative h-16 w-14 shrink-0 overflow-hidden rounded-xl border bg-[#0B1730] transition ${
                       index === imageIndex
                         ? "border-blue-400 ring-2 ring-blue-400/15"
                         : "border-white/10 opacity-70 hover:opacity-100"
@@ -326,14 +326,14 @@ export default function ProductDetailExperience({
               storeMapUrl={storeMapUrl}
               description={product.description}
             >
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]">
                 {selectedWhatsappUrl ? (
                   <TrackedWhatsAppLink
                     href={selectedWhatsappUrl}
                     storeSlug={storeSlug}
                     productSlug={productSlug}
                     clickLocation="product_detail"
-                    className={`flex min-h-12 items-center justify-center rounded-xl px-5 text-center text-sm font-extrabold ${vitrinGorunum.buton.whatsapp}`}
+                    className={`flex min-h-12 items-center justify-center whitespace-nowrap rounded-xl px-5 text-center text-sm font-extrabold ${vitrinGorunum.buton.whatsapp}`}
                   >
                     {isService ? "WhatsApp’tan hizmeti sor" : "WhatsApp’tan ürünü sor"}
                   </TrackedWhatsAppLink>
