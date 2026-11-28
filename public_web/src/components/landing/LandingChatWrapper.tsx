@@ -60,7 +60,7 @@ export function LandingChatWrapper({
   const asistaniAc = useCallback(
     (initialName = "") => {
       const temizAd = initialName.trim();
-      if (temizAd) setInitialAssistantName(temizAd);
+      setInitialAssistantName(temizAd);
       setIsChatOpen(true);
       window.requestAnimationFrame(mockupKonumunaKaydir);
     },
@@ -74,17 +74,18 @@ export function LandingChatWrapper({
     [asistaniAc],
   );
 
+  const handleChatClose = useCallback(() => {
+    setIsChatOpen(false);
+    setInitialAssistantName("");
+  }, []);
+
   const handleToggle = useCallback(() => {
     if (isChatOpen) {
-      setIsChatOpen(false);
+      handleChatClose();
       return;
     }
     asistaniAc();
-  }, [asistaniAc, isChatOpen]);
-
-  const handleChatClose = useCallback(() => {
-    setIsChatOpen(false);
-  }, []);
+  }, [asistaniAc, handleChatClose, isChatOpen]);
 
   return (
     <>
